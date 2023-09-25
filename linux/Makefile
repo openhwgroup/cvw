@@ -5,6 +5,7 @@ WALLY := $(shell dirname $(shell pwd))
 WALLYLINUX := $(shell pwd)
 DIS := ${IMAGES}/disassembly
 BRPACKAGES := $(WALLYLINUX)/buildroot-packages
+BR2023 := $(WALLYLINUX)/buildroot-config-src/buildroot-2023.05.1
 
 # Buildroot Config Stuff
 WALLYBOARDSRC := $(WALLYLINUX)/buildroot-config-src/wally
@@ -26,6 +27,14 @@ BINARIES := fw_jump.elf vmlinux busybox
 OBJDUMPS := $(foreach name, $(BINARIES), $(basename $(name) .elf))
 OBJDUMPS := $(foreach name, $(OBJDUMPS), $(DIS)/$(name).objdump)
 
+# LINUXDIR := $(shell ls $(BUILDROOT)/output/build | grep -e '^linux-[0-9]\+\.[0-9]\+\.[0-9]\+$$' )
+# LINUXDIR := $(BUILDROOT)/output/build/$(LINUXDIR)
+# BUSYBOXDIR := $(shell ls $(BUILDROOT)/output/build | grep -e '^linux-[0-9]\+\.[0-9]\+\.[0-9]\+$$' )
+# BUSYBOXDIR := $(BUILDROOT)/output/build/$(BUSYBOXDIR)
+
+LINUXDIR := $(shell find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/linux-[0-9]+\.[0-9]+\.[0-9]+$$")
+BUSYBOXDIR := $(shell find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/busybox-[0-9]+\.[0-9]+\.[0-9]+$$")
+
 .PHONY: all generate disassemble install clean cleanDTB cleanDriver test
 
 # Generate all device trees -------------------------------------------
@@ -41,7 +50,8 @@ all:
 
 # Temp rule for debugging
 test:
-	@echo $(OBJDUMPS)
+	@echo $(LINUXDIR)
+	@echo $(BUSYBOXDIR)
 
 generate: $(DTB) $(IMAGES)
 
@@ -68,10 +78,10 @@ $(DIS)/%.objdump: $(IMAGES)/%.elf
 $(DIS)/%.objdump: $(IMAGES)/%
 	riscv64-unknown-elf-objdump -S $< >> $@
 
-$(IMAGES)/vmlinux: $(BUILDROOT)/output/build/linux-5.10.7/vmlinux
+$(IMAGES)/vmlinux: $(LINUXDIR)/vmlinux
 	cp $< $@
 
-$(IMAGES)/busybox: $(BUILDROOT)/output/build/busybox-1.33.0/busybox
+$(IMAGES)/busybox: $(BUSYBOXDIR)/busybox
 	cp $< $@
 
 # Generating new Buildroot directories --------------------------------
@@ -87,10 +97,16 @@ install: $(BUILDROOT)/package/fpga-axi-sdc $(WALLYBOARD) $(DRIVER)
 # $(WALLYBOARD)/linux.config: $(BRPACKAGES)/linux.config $(WALLYBOARD)
 # 	cp $(BRPACKAGES)/linux.config $@
 
+# $(WALLYBOARD): $(BUILDROOT)
+# 	cp -r $(WALLYBOARDSRC) $(BUILDROOT)/board
+# 	cp $(BRPACKAGES)/wally.config $(WALLYBOARD)/main.config
+# 	cp $(BRPACKAGES)/linux.config $(WALLYBOARD)/linux.config
+
+# CONFIG DEPENDENCIES 2023.05.1 ---------------------------------------
 $(WALLYBOARD): $(BUILDROOT)
 	cp -r $(WALLYBOARDSRC) $(BUILDROOT)/board
-	cp $(BRPACKAGES)/wally.config $(WALLYBOARD)/main.config
-	cp $(BRPACKAGES)/linux.config $(WALLYBOARD)/linux.config
+	cp $(BR2023)/main.config $(WALLYBOARD)/main.config
+	cp $(BR2023)/linux.config $(WALLYBOARD)/linux.config
 
 # Buildroot Package ---------------------------------------------------
 $(BUILDROOT)/package/fpga-axi-sdc: $(BUILDROOT) $(PATCHFILE) $(BRPACKAGES)/fpga-axi-sdc
@@ -103,14 +119,14 @@ $(PATCHFILE):
 
 $(BUILDROOT):
 	git clone https://github.com/buildroot/buildroot.git $@
-	# cd $@; git checkout 2023.05.x
-	cd $@; git checkout 2021.05
+	cd $@; git checkout 2023.05.x
+	#cd $@; git checkout 2021.05
 
 $(DRIVER):
 	@ if [ -d "$(WALLY)/addins/vivado-risc-v" ] ; then git submodule update --init $(WALLY)/addins/vivado-risc-v; fi
 	cp ../addins/vivado-risc-v/patches/fpga-axi-sdc.c $@
 	# For 2021.05
-	sed -i "s|card_hw_reset|hw_reset|1" $@
+	#sed -i "s|card_hw_reset|hw_reset|1" $@
 
 # ---------------------------------------------------------------------
 
