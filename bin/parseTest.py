@@ -321,6 +321,7 @@ def ReportAsGraph(benchmarkDict, bar):
         # the space between groups is 1
         EffectiveNumInGroup = NumberInGroup + 2
         barWidth = 1 / EffectiveNumInGroup
+        colors = ['blue', 'blue', 'blue', 'blue', 'blue', 'blue', 'black', 'black', 'black', 'black', 'black', 'black']
         for benchmarkName in benchmarkDict:
             currBenchmark = benchmarkDict[benchmarkName]
             xlabelList.append(benchmarkName)
@@ -344,10 +345,13 @@ def ReportAsGraph(benchmarkDict, bar):
             xpos = [x + index*barWidth for x in xpos]
             values = seriesDict[name]
             print(f'xpos = {xpos}, values={values}')
-            plt.bar(xpos, values, width=barWidth, edgecolor='grey', label=name)
+            plt.bar(xpos, values, width=barWidth, edgecolor='grey', label=name, color=colors[index%len(colors)])
             index += 1
         plt.xticks([r + barWidth*(NumberInGroup/2-0.5) for r in range(0, testLimit)], xlabelList)
-        plt.legend()
+        plt.xlabel('Benchmark')
+        if(not args.invert): plt.ylabel('Misprediction Rate Accuracy (%)')
+        else:  plt.ylabel('Prediction Accuracy (%)') 
+        plt.legend(loc='upper left', ncol=2)
     plt.show()
 
 
