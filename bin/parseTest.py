@@ -29,7 +29,7 @@ import os
 import sys
 import matplotlib.pyplot as plt
 import math
-
+import numpy as np
 import argparse
 
 
@@ -285,6 +285,25 @@ def ReportAsGraph(benchmarkDict, bar):
         axes.set_xticklabels(xdata)
         axes.grid(color='b', alpha=0.5, linestyle='dashed', linewidth=0.5)
 
+    # if(not args.summary):
+    #     size = len(benchmarkDict)
+    #     sizeSqrt = math.sqrt(size)
+    #     isSquare = math.isclose(sizeSqrt, round(sizeSqrt))
+    #     numCol = math.floor(sizeSqrt)
+    #     numRow = numCol + (0 if isSquare else 1)
+    #     index = 1
+    #     fig = plt.figure()
+    #     for benchmarkName in benchmarkDict:
+    #         currBenchmark = benchmarkDict[benchmarkName]
+    #         (names, typs, sizes, values) = FormatToPlot(currBenchmark)
+    #         #axes.plot(numRow, numCol, index)
+    #         ax = fig.add_subplot(numRow, numCol, index)
+    #         ax.bar(names, values)
+    #         ax.title.set_text(benchmarkName)
+    #         #plt.ylabel('BR Dir Miss Rate (%)')
+    #         #plt.xlabel('Predictor')
+    #         index += 1
+
     if(not args.summary):
         size = len(benchmarkDict)
         sizeSqrt = math.sqrt(size)
@@ -292,17 +311,43 @@ def ReportAsGraph(benchmarkDict, bar):
         numCol = math.floor(sizeSqrt)
         numRow = numCol + (0 if isSquare else 1)
         index = 1
-        fig = plt.figure()
+        fig = plt.subplots()
+        testLimit = 7
+
+        xlabelList = []
+        seriesDict = {}
+        NumberInGroup = len(benchmarkDict['Mean'])
+        # Figure out width of bars.  NumberInGroup bars + want 2 bar space
+        # the space between groups is 1
+        EffectiveNumInGroup = NumberInGroup + 2
+        barWidth = 1 / EffectiveNumInGroup
         for benchmarkName in benchmarkDict:
             currBenchmark = benchmarkDict[benchmarkName]
-            (names, typs, sizes, values) = FormatToPlot(currBenchmark)
-            #axes.plot(numRow, numCol, index)
-            ax = fig.add_subplot(numRow, numCol, index)
-            ax.bar(names, values)
-            ax.title.set_text(benchmarkName)
-            #plt.ylabel('BR Dir Miss Rate (%)')
-            #plt.xlabel('Predictor')
+            xlabelList.append(benchmarkName)
+            for (name, typ, size, value) in currBenchmark:
+                if(name not in seriesDict):
+                    seriesDict[name] = [value]
+                else:
+                    seriesDict[name].append(value)
+            #print(currBenchmark)
+            #(names, typs, sizes, values) = FormatToPlot(currBenchmark)
+            #xpos = np.arange(testLimit + index*barWidth)
+            #print(f'xpos = {xpos}, values={values}')
+            #plt.bar(xpos, values, wdith=barWidth, edgecolor='grey', label=names)
+            if(index >= testLimit): break
             index += 1
+        print(f'xlabelList = {xlabelList}')
+        print(f'seriesDict = {seriesDict}')
+        index = 0
+        for name in seriesDict:
+            xpos = np.arange(testLimit)
+            xpos = [x + index*barWidth for x in xpos]
+            values = seriesDict[name]
+            print(f'xpos = {xpos}, values={values}')
+            plt.bar(xpos, values, width=barWidth, edgecolor='grey', label=name)
+            index += 1
+        plt.xticks([r + barWidth*(NumberInGroup/2-0.5) for r in range(0, testLimit)], xlabelList)
+        plt.legend()
     plt.show()
 
 
