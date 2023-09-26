@@ -27,23 +27,6 @@ BINARIES := fw_jump.elf vmlinux busybox
 OBJDUMPS := $(foreach name, $(BINARIES), $(basename $(name) .elf))
 OBJDUMPS := $(foreach name, $(OBJDUMPS), $(DIS)/$(name).objdump)
 
-# LINUXDIR := $(shell ls $(BUILDROOT)/output/build | grep -e '^linux-[0-9]\+\.[0-9]\+\.[0-9]\+$$' )
-# LINUXDIR := $(BUILDROOT)/output/build/$(LINUXDIR)
-# BUSYBOXDIR := $(shell ls $(BUILDROOT)/output/build | grep -e '^linux-[0-9]\+\.[0-9]\+\.[0-9]\+$$' )
-# BUSYBOXDIR := $(BUILDROOT)/output/build/$(BUSYBOXDIR)
-
-# Gets Linux and Busybox output folders for objedect dumps
-# LINUXDIR ?= $(shell find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/linux-[0-9]+\.[0-9]+\.[0-9]+$$")
-# BUSYBOXDIR ?= $(shell find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/busybox-[0-9]+\.[0-9]+\.[0-9]+$$")
-
-define linuxDir =
-$(shell find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/linux-[0-9]+\.[0-9]+\.[0-9]+$$")
-endef
-
-define busyboxDir =
-$(shell find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/busybox-[0-9]+\.[0-9]+\.[0-9]+$$")
-endef
-
 .PHONY: all generate disassemble install clean cleanDTB cleanDriver test
 
 # Generate all device trees -------------------------------------------
@@ -59,8 +42,7 @@ all:
 
 # Temp rule for debugging
 test:
-	@echo $(linuxDir)
-	@echo $(busyboxDir)
+	echo $(shell find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/linux-[0-9]+\.[0-9]+\.[0-9]+$$")
 
 generate: $(DTB) $(IMAGES)
 
@@ -87,11 +69,13 @@ $(DIS)/%.objdump: $(IMAGES)/%.elf
 $(DIS)/%.objdump: $(IMAGES)/%
 	riscv64-unknown-elf-objdump -S $< >> $@
 
-$(IMAGES)/vmlinux: $(call linuxDir)/vmlinux
-	cp $< $@
+$(IMAGES)/vmlinux:
+	linuxDir=$$(find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/linux-[0-9]+\.[0-9]+\.[0-9]+$$") ;\
+	cp $$linuxDir/vmlinux $@ ;\
 
-$(IMAGES)/busybox: $(call busyboxDir)/busybox
-	cp $< $@
+$(IMAGES)/busybox:
+	busyboxDir=$$(find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/busybox-[0-9]+\.[0-9]+\.[0-9]+$$") ;\
+	cp $$busyboxDir/busybox $@ ;\
 
 # Generating new Buildroot directories --------------------------------
 
