@@ -32,6 +32,10 @@ import math
 import numpy as np
 import argparse
 
+RefData = [('twobitCModel6', 'twobitCModel', 64, 9.65280765420711), ('twobitCModel8', 'twobitCModel', 256, 8.75120245829945), ('twobitCModel10', 'twobitCModel', 1024, 8.1318382397263),
+           ('twobitCModel12', 'twobitCModel', 4096, 7.53026646633342), ('twobitCModel14', 'twobitCModel', 16384, 6.07679338544009), ('twobitCModel16', 'twobitCModel', 65536, 6.07679338544009),
+           ('gshareCModel6', 'gshareCModel', 64, 10.6602835418646), ('gshareCModel8', 'gshareCModel', 256, 8.38384710559667), ('gshareCModel10', 'gshareCModel', 1024, 6.36847432155534),
+           ('gshareCModel12', 'gshareCModel', 4096, 3.91108491151983), ('gshareCModel14', 'gshareCModel', 16384, 2.83926519215395), ('gshareCModel16', 'gshareCModel', 65536, .60213659066941)]
 
 def ParseBranchListFile(path):
     '''Take the path to the list of Questa Sim log files containing the performance counters outputs.  File
@@ -65,7 +69,7 @@ def ProcessFile(fileName):
             HPMClist = { }
         elif(len(lineToken) > 4 and lineToken[1][0:3] == 'Cnt'):
             countToken = line.split('=')[1].split()
-            value = int(countToken[0])
+            value = int(countToken[0]) if countToken[0] != 'x' else 0
             name = ' '.join(countToken[1:])
             HPMClist[name] = value
         elif ('is done' in line):
@@ -111,7 +115,7 @@ def ComputeGeometricAverage(benchmarks):
     benchmarks.append(('Mean', '', AllAve))
 
 def GenerateName(predictorType, predictorParams):
-    if(predictorType == 'gshare' or  predictorType == 'twobit'):
+    if(predictorType == 'gshare' or  predictorType == 'twobit' or predictorType == 'btb' or predictorType == 'class'):
         return predictorType + predictorParams[0]
     elif(predictorParams == 'local'):
         return predictorType + predictorParams[0] + '_' + predictorParams[1]
@@ -120,7 +124,7 @@ def GenerateName(predictorType, predictorParams):
         sys.exit(-1)
 
 def ComputePredNumEntries(predictorType, predictorParams):
-    if(predictorType == 'gshare' or  predictorType == 'twobit'):
+    if(predictorType == 'gshare' or  predictorType == 'twobit' or predictorType == 'btb' or predictorType == 'class'):
         return 2**int(predictorParams[0])
     elif(predictorParams == 'local'):
         return 2**int(predictorParams[0]) * int(predictorParams[1]) + 2**int(predictorParams[1])
@@ -286,7 +290,7 @@ def ReportAsGraph(benchmarkDict, bar):
               'ClassMPR': 'Class Misprediction'}
     if(args.summary):
         markers = ['x', '.', '+', '*', '^', 'o', ',', 's']
-        colors = ['black', 'blue', 'dodgerblue', 'turquoise', 'lightsteelblue', 'gray', 'black', 'blue']
+        colors = ['blue', 'black', 'dodgerblue', 'gray', 'lightsteelblue', 'turquoise', 'black', 'blue']
         temp = benchmarkDict['Mean']
 
         # the benchmarkDict['Mean'] contains sequencies of results for multiple
@@ -429,6 +433,7 @@ performanceCounterList = BuildDataBase(predictorLogs)         # builds a databas
 benchmarkFirstList = ReorderDataBase(performanceCounterList)  # reorder first by benchmark then trace
 benchmarkDict = ExtractSelectedData(benchmarkFirstList)       # filters to just the desired performance counter metric
 
+if(args.reference): benchmarkDict['Mean'].extend(RefData)
 #print(benchmarkDict['Mean'])
 #print(benchmarkDict['aha-mont64Speed'])
 #print(benchmarkDict)
