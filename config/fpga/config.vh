@@ -156,6 +156,7 @@ localparam BPRED_TYPE = `BP_GSHARE; // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BAS
 localparam BPRED_NUM_LHR = 32'd6;
 localparam BPRED_SIZE = 32'd12;
 localparam BTB_SIZE = 32'd10;
+localparam RAS_SIZE = 32'd16;
 
 localparam SVADU_SUPPORTED = 1;
 localparam ZMMUL_SUPPORTED = 0;

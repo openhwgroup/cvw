@@ -89,6 +89,7 @@ localparam cvw_t P = '{
   BPRED_SIZE :        BPRED_SIZE,
   BPRED_NUM_LHR : BPRED_NUM_LHR,                       
   BTB_SIZE :        BTB_SIZE,
+  RAS_SIZE :        RAS_SIZE,
   RADIX :        RADIX,
   DIVCOPIES :        DIVCOPIES,
   ZBA_SUPPORTED :        ZBA_SUPPORTED,
