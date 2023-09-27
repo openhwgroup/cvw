@@ -109,13 +109,14 @@ def ComputeGeometricAverage(benchmarks):
         index = 0
         for (testName, opt, HPMCList) in benchmarks:
             #print(HPMCList)
-            Product *= HPMCList[field]
+            value = HPMCList[field]
+            if(value != 0): Product *= value # if that value is 0 exclude from mean because it destories the geo mean
             index += 1
         AllAve[field] = Product ** (1.0/index)
     benchmarks.append(('Mean', '', AllAve))
 
 def GenerateName(predictorType, predictorParams):
-    if(predictorType == 'gshare' or  predictorType == 'twobit' or predictorType == 'btb' or predictorType == 'class'):
+    if(predictorType == 'gshare' or  predictorType == 'twobit' or predictorType == 'btb' or predictorType == 'class' or predictorType == 'ras'):
         return predictorType + predictorParams[0]
     elif(predictorParams == 'local'):
         return predictorType + predictorParams[0] + '_' + predictorParams[1]
@@ -126,6 +127,8 @@ def GenerateName(predictorType, predictorParams):
 def ComputePredNumEntries(predictorType, predictorParams):
     if(predictorType == 'gshare' or  predictorType == 'twobit' or predictorType == 'btb' or predictorType == 'class'):
         return 2**int(predictorParams[0])
+    elif(predictorType == 'ras'):
+        return int(predictorParams[0])
     elif(predictorParams == 'local'):
         return 2**int(predictorParams[0]) * int(predictorParams[1]) + 2**int(predictorParams[1])
     else:
@@ -290,7 +293,7 @@ def ReportAsGraph(benchmarkDict, bar):
               'ClassMPR': 'Class Misprediction'}
     if(args.summary):
         markers = ['x', '.', '+', '*', '^', 'o', ',', 's']
-        colors = ['blue', 'black', 'dodgerblue', 'gray', 'lightsteelblue', 'turquoise', 'black', 'blue']
+        colors = ['blue', 'black', 'gray', 'dodgerblue', 'lightsteelblue', 'turquoise', 'black', 'blue']
         temp = benchmarkDict['Mean']
 
         # the benchmarkDict['Mean'] contains sequencies of results for multiple
