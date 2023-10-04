@@ -156,6 +156,7 @@ typedef struct packed {
   int                  BPRED_NUM_LHR;
   int                  BPRED_SIZE;
   int                  BTB_SIZE;
+  int                  RAS_SIZE;
 
 // FPU division architecture
   int           RADIX;
