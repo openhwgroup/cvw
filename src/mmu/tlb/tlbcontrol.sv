@@ -115,8 +115,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   end
 
   // Determine wheter to update DA bits.  With SVADU, it is done in hardware
-  if (P.SVADU_SUPPORTED) assign UpdateDA = PreUpdateDA & Translate & TLBHit & ~TLBPageFault & ENVCFG_HADE;
-  else                   assign UpdateDA = PreUpdateDA;
+  assign UpdateDA = P.SVADU_SUPPORTED & PreUpdateDA & Translate & TLBHit & ~TLBPageFault & ENVCFG_HADE;
 
   // Determine whether page fault occurs
   assign PrePageFault = UpperBitsUnequal | Misaligned | ~PTE_V | ImproperPrivilege | (P.XLEN == 64 & (BadPBMT | BadNAPOT | BadReserved)) | (PreUpdateDA & (~P.SVADU_SUPPORTED | ~ENVCFG_HADE));
