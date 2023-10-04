@@ -1,0 +1,12 @@
+gshare6.log gshare 6
+gshare8.log gshare 8
+gshare10.log gshare 10
+gshare12.log gshare 12
+gshare14.log gshare 14
+gshare16.log gshare 16
+twobit6.log twobit 6
+twobit8.log twobit 8
+twobit10.log twobit 10
+twobit12.log twobit 12
+twobit14.log twobit 14
+twobit16.log twobit 16
