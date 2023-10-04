@@ -161,6 +161,12 @@ typedef struct packed {
   logic         ZBC_SUPPORTED;
   logic         ZBS_SUPPORTED;
 
+// compressed
+  logic         ZCA_SUPPORTED;
+  logic         ZCB_SUPPORTED;
+  logic         ZCD_SUPPORTED;
+  logic         ZCF_SUPPORTED;
+
 // Memory synthesis configuration
   logic         USE_SRAM;
 
