@@ -172,7 +172,8 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
     assign MENVCFG_WriteValM = {
       MENVCFG_PreWriteValM[63]  & P.SSTC_SUPPORTED,
       MENVCFG_PreWriteValM[62]  & P.SVPBMT_SUPPORTED,
-      54'b0,
+      MENVCFG_PreWriteValM[61]  & P.SVADU_SUPPORTED,
+      53'b0,
       MENVCFG_PreWriteValM[7]   & P.ZICBOZ_SUPPORTED,
       MENVCFG_PreWriteValM[6:4] & {3{P.ZICBOM_SUPPORTED}},
       3'b0,

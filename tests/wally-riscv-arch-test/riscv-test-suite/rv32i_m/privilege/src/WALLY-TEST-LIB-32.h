@@ -1324,6 +1324,18 @@ write_mideleg:
     csrw mideleg, t4
     j test_loop
 
+write_menvcfg:
+    // writes the value in t4 to the menvcfg register
+    // Doesn't log anything
+    csrw menvcfg, t4
+    j test_loop
+
+write_menvcfgh:
+    // writes the value in t4 to the menvcfgh register
+    // Doesn't log anything
+    csrw menvcfgh, t4
+    j test_loop
+
 executable_test:
     // Execute the code at the address in t3, returning the value in t2.
     // Assumes the code modifies t2, to become the value stored in t4 for this test.  
