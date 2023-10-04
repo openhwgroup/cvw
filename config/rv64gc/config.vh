@@ -164,6 +164,12 @@ localparam ZBB_SUPPORTED = 1;
 localparam ZBC_SUPPORTED = 1;
 localparam ZBS_SUPPORTED = 1;
 
+// New compressed instructions
+localparam ZCB_SUPPORTED = 1;
+localparam ZCA_SUPPORTED = 0;
+localparam ZCF_SUPPORTED = 0;
+localparam ZCD_SUPPORTED = 0;
+
 // Memory synthesis configuration
 localparam USE_SRAM = 0;
 
