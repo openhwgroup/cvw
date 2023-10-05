@@ -262,7 +262,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   flopenrc #(32)    InstrRawEReg (clk, reset, FlushE, ~StallE, InstrRawD, InstrRawE);
   flopenrc #(32)    InstrRawMReg (clk, reset, FlushM, ~StallM, InstrRawE, InstrRawM);
   flopenrc #(32)    InstrRawWReg (clk, reset, FlushW, ~StallW, InstrRawM, InstrRawW);
-  flopenrc #(32)    PCWReg (clk, reset, FlushW, ~StallW, PCM, PCW);
+  flopenrc #(P.XLEN)PCWReg       (clk, reset, FlushW, ~StallW, PCM, PCW);
   flopenrc #(1)     InstrValidMReg (clk, reset, FlushW, ~StallW, InstrValidM, InstrValidW);
   flopenrc #(1)     TrapWReg (clk, reset, 1'b0, ~StallW, TrapM, TrapW);
   flopenrc #(1)     HaltWReg (clk, reset, 1'b0, ~StallW, HaltM, HaltW);
