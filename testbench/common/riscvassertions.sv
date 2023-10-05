@@ -63,6 +63,11 @@ module riscvassertions import cvw::*; #(parameter cvw_t P);
     assert ((P.ZICBOP_SUPPORTED == 0) || (P.DCACHE_SUPPORTED == 1)) else $error("ZICBOP requires DCACHE_SUPPORTED");
     assert ((P.SVPBMT_SUPPORTED == 0) || (P.VIRTMEM_SUPPORTED == 1 && P.XLEN==64)) else $error("SVPBMT requires VIRTMEM_SUPPORTED and RV64");
     assert ((P.SVNAPOT_SUPPORTED == 0) || (P.VIRTMEM_SUPPORTED == 1 && P.XLEN==64)) else $error("SVNAPOT requires VIRTMEM_SUPPORTED and RV64");
+    assert ((P.ZCB_SUPPORTED == 0) || (P.M_SUPPORTED == 1 && (P.ZBA_SUPPORTED == 1 || P.XLEN == 32) && P.ZBB_SUPPORTED == 1)) else $error("ZCB requires M and ZBB (and also ZBA for RV64)");
+    assert ((P.C_SUPPORTED == 0) || (P.ZCA_SUPPORTED == 0 && P.ZCF_SUPPORTED == 0 && P.ZCD_SUPPORTED == 0)) else $error("C and ZCA/ZCD/ZCF cannot simultaneously be supported");
+    assert ((P.ZCA_SUPPORTED == 1) || (P.ZCD_SUPPORTED == 0 && P.ZCF_SUPPORTED == 0)) else $error("ZCF or ZCD requires ZCA");
+    assert ((P.ZCF_SUPPORTED == 0) || (P.F_SUPPORTED == 1)) else $error("ZCF requires F");
+    assert ((P.ZCD_SUPPORTED == 0) || (P.D_SUPPORTED == 1)) else $error("ZCD requires D");   
   end
 
 endmodule

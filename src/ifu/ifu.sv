@@ -70,23 +70,24 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   output logic                 IClassWrongM,                             // Class prediction is wrong
   output logic                 ICacheStallF,                             // I$ busy with multicycle operation
   // Faults
-  input logic                  IllegalBaseInstrD,                        // Illegal non-compressed instruction
-  input logic                  IllegalFPUInstrD,                         // Illegal FP instruction
+  input  logic                 IllegalBaseInstrD,                        // Illegal non-compressed instruction
+  input  logic                 IllegalFPUInstrD,                         // Illegal FP instruction
   output logic                 InstrPageFaultF,                          // Instruction page fault 
   output logic                 IllegalIEUFPUInstrD,                      // Illegal instruction including compressed & FP
   output logic                 InstrMisalignedFaultM,                    // Branch target not aligned to 4 bytes if no compressed allowed (2 bytes if allowed)
   // mmu management
-  input logic [1:0]            PrivilegeModeW,                           // Priviledge mode in Writeback stage
-  input logic [P.XLEN-1:0]     PTE,                                      // Hardware page table walker (HPTW) writes Page table entry (PTE) to ITLB
-  input logic [1:0]            PageType,                                 // Hardware page table walker (HPTW) writes PageType to ITLB
-  input logic                  ITLBWriteF,                               // Writes PTE and PageType to ITLB
-  input logic [P.XLEN-1:0]     SATP_REGW,                                // Location of the root page table and page table configuration
-  input logic                  STATUS_MXR,                               // Status CSR: make executable page readable 
-  input logic                  STATUS_SUM,                               // Status CSR: Supervisor access to user memory
-  input logic                  STATUS_MPRV,                              // Status CSR: modify machine privilege
-  input logic [1:0]            STATUS_MPP,                               // Status CSR: previous machine privilege level
+  input  logic [1:0]           PrivilegeModeW,                           // Priviledge mode in Writeback stage
+  input  logic [P.XLEN-1:0]    PTE,                                      // Hardware page table walker (HPTW) writes Page table entry (PTE) to ITLB
+  input  logic [1:0]           PageType,                                 // Hardware page table walker (HPTW) writes PageType to ITLB
+  input  logic                 ITLBWriteF,                               // Writes PTE and PageType to ITLB
+  input  logic [P.XLEN-1:0]    SATP_REGW,                                // Location of the root page table and page table configuration
+  input  logic                 STATUS_MXR,                               // Status CSR: make executable page readable 
+  input  logic                 STATUS_SUM,                               // Status CSR: Supervisor access to user memory
+  input  logic                 STATUS_MPRV,                              // Status CSR: modify machine privilege
+  input  logic [1:0]           STATUS_MPP,                               // Status CSR: previous machine privilege level
   input  logic                 ENVCFG_PBMTE,                             // Page-based memory types enabled
-  input logic                  sfencevmaM,                               // Virtual memory address fence, invalidate TLB entries
+  input  logic                 ENVCFG_HADE,                              // HPTW A/D Update enable
+  input  logic                 sfencevmaM,                               // Virtual memory address fence, invalidate TLB entries
   output logic                 ITLBMissF,                                // ITLB miss causes HPTW (hardware pagetable walker) walk
   output logic                 InstrUpdateDAF,                           // ITLB hit needs to update dirty or access bits
   input  var logic [7:0]       PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0],     // PMP configuration from privileged unit
@@ -171,7 +172,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     assign TLBFlush = sfencevmaM & ~StallMQ;
 
     mmu #(.P(P), .TLB_ENTRIES(P.ITLB_ENTRIES), .IMMU(1))
-    immu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_PBMTE,
+    immu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_HADE,
          .PrivilegeModeW, .DisableTranslation(1'b0),
          .VAdr(PCFExt),
          .Size(2'b10),
@@ -352,9 +353,9 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(P.XLEN) PCDReg(clk, reset, FlushD, ~StallD, PCF, PCD);
    
   // expand 16-bit compressed instructions to 32 bits
-  if (P.C_SUPPORTED) begin
+  if (P.C_SUPPORTED | P.ZCA_SUPPORTED) begin
     logic IllegalCompInstrD;
-    decompress #(P.XLEN) decomp(.InstrRawD, .InstrD, .IllegalCompInstrD); 
+    decompress #(P) decomp(.InstrRawD, .InstrD, .IllegalCompInstrD); 
     assign IllegalIEUInstrD = IllegalBaseInstrD | IllegalCompInstrD; // illegal if bad 32 or 16-bit instr
   end else begin  
     assign InstrD = InstrRawD;
