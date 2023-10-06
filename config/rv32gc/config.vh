@@ -141,10 +141,22 @@ localparam PLIC_UART_ID = 32'd10;
 localparam PLIC_SDC_ID = 32'd9;
 
 localparam BPRED_SUPPORTED = 1;
+// this is an annoying hack for the branch predictor parameterization override.
+`ifdef BPRED_OVERRIDE
+localparam BPRED_TYPE = `BPRED_TYPE;
+localparam BPRED_SIZE = `BPRED_SIZE;
+`else
 localparam BPRED_TYPE = `BP_GSHARE; // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BASIC, BP_TWOBIT
-localparam BPRED_SIZE = 32'd16;
+localparam BPRED_SIZE = 32'd10;
+`endif
 localparam BPRED_NUM_LHR = 32'd6;
+`ifdef BTB_OVERRIDE
+localparam BTB_SIZE = `BTB_SIZE;
+localparam RAS_SIZE = `RAS_SIZE;
+`else
 localparam BTB_SIZE = 32'd10;
+localparam RAS_SIZE = 32'd16;
+`endif
 
 localparam SVADU_SUPPORTED = 1;
 localparam ZMMUL_SUPPORTED = 0;
@@ -158,6 +170,12 @@ localparam ZBA_SUPPORTED = 1;
 localparam ZBB_SUPPORTED = 1;
 localparam ZBC_SUPPORTED = 1;
 localparam ZBS_SUPPORTED = 1;
+
+// New compressed instructions
+localparam ZCB_SUPPORTED = 1;
+localparam ZCA_SUPPORTED = 0;
+localparam ZCF_SUPPORTED = 0;
+localparam ZCD_SUPPORTED = 0;
 
 // Memory synthesis configuration
 localparam USE_SRAM = 0;
