@@ -49,4 +49,13 @@ You'll find the resulting disassembled files in `<BUILDROOT>/output/images/disas
 
 ## Creating a Bootable SD Card <a name="sdcard"></a>
 
+To flash a bootable sd card for Wally's bootloader, use the `flash-sd.sh` script located in `<WALLY>/linux/sdcard`. The script allows you to specify which buildroot directory you would like to use and to specify the device tree. By default it is set up for the default location of buildroot in `/opt/riscv` and uses the vcu108 device tree. To use the script with your own buildroot directory and device tree, type:
+
+    $ cd sdcard
+    $ ./flash-sd.sh -b <path/to/buildroot> -d <device tree name> <DEVICE>
+    
+    for example
+    
+    $ ./flash-sd.sh -b ~/repos/buildroot -d wally-vcu118.dtb /dev/sdb
+    
 

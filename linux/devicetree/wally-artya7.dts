@@ -9,7 +9,7 @@
 	chosen {
 		linux,initrd-end = <0x85c43a00>;
 		linux,initrd-start = <0x84200000>;
-		bootargs = "root=/dev/vda ro";
+		bootargs = "root=/dev/vda ro  console=ttyS0,115200";
 		stdout-path = "/soc/uart@10000000";
 	};
 

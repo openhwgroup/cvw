@@ -126,6 +126,164 @@ CBOMTest_inval_step4_all:
         addi s0, s0, 8
 
         ################################################################################
+        # INVALIDATE  all ways D$
+        ################################################################################
+
+        # theory of operation
+        # 1. Read several cachelines of data from memory into the d cache and copy to a second region of memory
+        # 2. Then verify the second region has the same data
+        # 3. Invalidate the second region
+        # 4. Verify the second region has the original invalid data
+        # DON'T batch each step.  We want to see the transition between cachelines. The current should be invalidated
+        # but the next should have the copied data.
+	
+        # step 0 copy deadbeef to remote regions spaced 4KiB apart
+CBOMTest_way_inval_4096_step0: 
+        la a0, DeadBeafData1
+        la a1, Destination1+4096
+        li a2, 8
+        jal ra, memcpy8
+CBOMTest_way_inval_8192_step0: 
+        la a0, DeadBeafData1
+        la a1, Destination1+8192
+        li a2, 8
+        jal ra, memcpy8
+CBOMTest_way_inval_12288_step0: 
+        la a0, DeadBeafData1
+        la a1, Destination1+12288
+        li a2, 8
+        jal ra, memcpy8
+CBOMTest_way_inval_16384_step0:       
+        la a0, DeadBeafData1
+        la a1, Destination1+16384
+        li a2, 8
+        jal ra, memcpy8
+        # one of the following will force an eviction of each of the previous
+CBOMTest_way_inval_20480_step0:       # this one should force eviction of _4096
+        la a0, DeadBeafData1
+        la a1, Destination1+20480
+        li a2, 8
+        jal ra, memcpy8
+CBOMTest_way_inval_24576_step0:       # this one should force eviction of _4096
+        la a0, DeadBeafData1
+        la a1, Destination1+24576
+        li a2, 8
+        jal ra, memcpy8
+CBOMTest_way_inval_28672_step0:       # this one should force eviction of _4096
+        la a0, DeadBeafData1
+        la a1, Destination1+28672
+        li a2, 8
+        jal ra, memcpy8
+CBOMTest_way_inval_32768_step0:       # this one should force eviction of _4096
+        la a0, DeadBeafData1
+        la a1, Destination1+32768
+        li a2, 8
+        jal ra, memcpy8
+        
+        # step 1
+CBOMTest_way_inval_4096_step1: 
+        la a0, SourceData
+        la a1, Destination1+4096
+        li a2, 8
+        jal ra, memcpy8
+
+CBOMTest_way_inval_8192_step1: 
+        la a0, SourceData
+        la a1, Destination1+8192
+        li a2, 8
+        jal ra, memcpy8
+
+CBOMTest_way_inval_12288_step1: 
+        la a0, SourceData
+        la a1, Destination1+12288
+        li a2, 8
+        jal ra, memcpy8
+        
+CBOMTest_way_inval_16384_step1: 
+        la a0, SourceData
+        la a1, Destination1+16384
+        li a2, 8
+        jal ra, memcpy8
+
+        # don't want to ca      use a write back for the previous writes since we want to invalidate them
+	
+        # step 2
+CBOMTest_way_inval_4096_step2: 
+        la a0, SourceData
+        la a1, Destination1+4096
+        li a2, 8
+        jal ra, memcmp8
+        sd a0, 0(s0)     # should be -1
+        addi s0, s0, 8
+	
+CBOMTest_way_inval_8192_step2: 
+        la a0, SourceData
+        la a1, Destination1+8192
+        li a2, 8
+        jal ra, memcmp8
+        sd a0, 0(s0)     # should be -1
+        addi s0, s0, 8
+
+CBOMTest_way_inval_12288_step2: 
+        la a0, SourceData
+        la a1, Destination1+12288
+        li a2, 8
+        jal ra, memcmp8
+        sd a0, 0(s0)     # should be -1
+        addi s0, s0, 8
+
+CBOMTest_way_inval_16384_step2: 
+        la a0, SourceData
+        la a1, Destination1+16384
+        li a2, 8
+        jal ra, memcmp8
+        sd a0, 0(s0)     # should be -1
+        addi s0, s0, 8
+
+CBOMTest_way_inval_step3_all_again: 
+        la a1, Destination1+4096
+        la a2, Destination1+8192
+        la a3, Destination1+12288
+        la a4, Destination1+16384
+        cbo.inval (a1)
+        cbo.inval (a2)          
+        cbo.inval (a3)
+        cbo.inval (a4)          
+        
+        # step 4 All should be invalid
+CBOMTest_way_inval_4096_step4_all: 
+        la a0, DeadBeafData1
+        la a1, Destination1+4096
+        li a2, 8
+        jal ra, memcmp8
+        sd a0, 0(s0)    # should be -1
+        addi s0, s0, 8
+
+CBOMTest_way_inval_8192_step4_all: 
+        la a0, DeadBeafData1
+        la a1, Destination1+8192
+        li a2, 8
+        jal ra, memcmp8
+        sd a0, 0(s0)    # should be -1
+        addi s0, s0, 8
+
+CBOMTest_way_inval_12288_step4_all: 
+        la a0, DeadBeafData1
+        la a1, Destination1+12288
+        li a2, 8
+        jal ra, memcmp8
+        sd a0, 0(s0)    # should be -1
+        addi s0, s0, 8
+	
+CBOMTest_way_inval_16384_step4_all: 
+        la a0, DeadBeafData1
+        la a1, Destination1+16384
+        li a2, 8
+        jal ra, memcmp8
+        sd a0, 0(s0)    # should be -1
+        addi s0, s0, 8
+	
+        ################################################################################
         # Clean D$
         ################################################################################
 
@@ -151,7 +309,7 @@ CBOMTest_clean_step1:
 
         # step 2
 CBOMTest_clean_step2:
-         la a0, SourceData
+        la a0, SourceData
         la a1, Destination2
         li a2, 64
         jal ra, memcmp8
@@ -466,7 +624,7 @@ Destination2:
 Destination3:
         .fill 128, 4, 0xdeadbeef
 signature:
-        .fill 32, 4, 0x0bad0bad
+        .fill 40, 4, 0x0bad0bad
 	
 RVMODEL_DATA_END
 

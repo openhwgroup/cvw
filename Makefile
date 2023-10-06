@@ -4,8 +4,8 @@
 
 all:
 	make install
-	make testfloat	
-	make riscof
+	make riscof	
+	make testfloat
 	make verify
 	make coverage
 	make benchmarks
