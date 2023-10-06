@@ -38,6 +38,7 @@ vlog +incdir+../config/$1 \
      $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2api.sv  \
      $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2log.sv  \
      $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2cov.sv  \
+     $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2bin.sv  \
      ../src/cvw.sv \
      ../testbench/testbench_imperas.sv \
      ../testbench/common/*.sv   \
