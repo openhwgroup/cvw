@@ -32,7 +32,7 @@ module tlblru #(parameter TLB_ENTRIES = 8) (
   input  logic                    TLBWrite,
   input  logic                    TLBFlush,
   input  logic [TLB_ENTRIES-1:0]  Matches,
-  input  logic                    CAMHit,
+  input  logic                    TLBHit,
   output logic [TLB_ENTRIES-1:0]  WriteEnables
 );
 
@@ -50,5 +50,5 @@ module tlblru #(parameter TLB_ENTRIES = 8) (
   assign RUBitsAccessed = AccessLines | RUBits;
   assign AllUsed = &RUBitsAccessed; // if all recently used, then clear to none
   assign RUBitsNext = AllUsed ? 0 : RUBitsAccessed; 
-  flopenr #(TLB_ENTRIES) lrustate(clk, reset, (CAMHit | TLBWrite), RUBitsNext, RUBits);
+  flopenr #(TLB_ENTRIES) lrustate(clk, reset, (TLBHit | TLBWrite), RUBitsNext, RUBits);
 endmodule

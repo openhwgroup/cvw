@@ -106,8 +106,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   assign FlushFlag = FlushAdrFlag & FlushWayFlag;
 
   // outputs for the performance counters.
-  assign CacheAccess = (|CacheRW) & ((CurrState == STATE_READY & ~Stall & ~FlushStage) |
-                                     (CurrState == STATE_READ_HOLD & ~Stall & ~FlushStage)); // exclusion-tag: icache CacheW
+  assign CacheAccess = (|CacheRW) & ((CurrState == STATE_READY & ~Stall & ~FlushStage) | (CurrState == STATE_READ_HOLD & ~Stall & ~FlushStage)); // exclusion-tag: icache CacheW
   assign CacheMiss = CacheAccess & ~CacheHit;
 
   // special case on reset. When the fsm first exists reset the
@@ -172,9 +171,9 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   assign ClearValid = P.ZICBOM_SUPPORTED & ((CurrState == STATE_READY & CMOp[0] & CacheHit) |
                       (CurrState == STATE_CMO_WRITEBACK & CMOp[2] & CacheBusAck));
   // coverage off -item e 1 -fecexprrow 8
-  assign LRUWriteEn = (CurrState == STATE_READY & (AnyHit | CMOZeroNoEviction)) |
-                      (P.ZICBOZ_SUPPORTED & CurrState == STATE_WRITEBACK & CMOp[3] & CacheBusAck) | 
-                      (CurrState == STATE_WRITE_LINE) & ~FlushStage;
+  assign LRUWriteEn = (((CurrState == STATE_READY & (AnyHit | CMOZeroNoEviction)) |
+                       (CurrState == STATE_WRITE_LINE)) & ~FlushStage) |
+                      (P.ZICBOZ_SUPPORTED & CurrState == STATE_WRITEBACK & CMOp[3] & CacheBusAck);
   // exclusion-tag-start: icache flushdirtycontrols
   assign SetDirty = (CurrState == STATE_READY & (AnyUpdateHit | CMOZeroNoEviction)) |         // exclusion-tag: icache SetDirty  
                     (CurrState == STATE_WRITE_LINE & (CacheRW[0])) |

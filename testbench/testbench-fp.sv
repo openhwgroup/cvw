@@ -1000,7 +1000,7 @@ module testbenchfp;
 endmodule
 
 
-module readvectors (
+module readvectors import cvw::*; #(parameter cvw_t P) (
 		    input logic 	        clk,
 		    input logic [P.FLEN*4+7:0]  TestVector,
 		    input logic [P.FMTBITS-1:0] ModFmt,
@@ -1026,7 +1026,7 @@ module readvectors (
 		    );
 
    localparam Q_LEN = 32'd128;
-  `include "parameter-defs.vh"   
+  //`include "parameter-defs.vh"   
    
    logic 					XEn;
    logic 					YEn;

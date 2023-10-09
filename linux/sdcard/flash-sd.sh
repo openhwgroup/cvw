@@ -22,6 +22,7 @@ BOLDYELLOW="\e[1;33m"
 NC="\e[0m"
 NAME="$BOLDGREEN"${0:2}:"$NC"
 ERRORTEXT="$BOLDRED"ERROR:"$NC"
+WARNINGTEXT="$BOLDYELLOW"Warning:"$NC"
 
 # Default values for buildroot and device tree
 RISCV=/opt/riscv
@@ -110,7 +111,7 @@ echo -e "$NAME Device tree block size:     $DST_SIZE"
 echo -e "$NAME OpenSBI FW_JUMP block size: $FW_JUMP_SIZE"
 echo -e "$NAME Kernel block size:          $KERNEL_SIZE"
 
-read -p "Warning: Doing this will replace all data on this card. Continue? y/n: " -n 1 -r
+read -p $'\e[1;33mWarning:\e[0m Doing this will replace all data on this card. Continue? y/n: ' -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]] ; then
     DEVBASENAME=$(basename $SDCARD)
@@ -150,16 +151,16 @@ if [[ $REPLY =~ ^[Yy]$ ]] ; then
 
     sleep 3
 
-    echo -e "$NAME: Copying binaries into their partitions."
+    echo -e "$NAME Copying binaries into their partitions."
     DD_FLAGS="bs=4k iflag=fullblock oflag=direct conv=fsync status=progress"
 
-    echo -e "$NAME: Copying device tree"
+    echo -e "$NAME Copying device tree"
     sudo dd if=$DEVICE_TREE of="$SDCARD"1 $DD_FLAGS
 
-    echo -e "$NAME: Copying OpenSBI"
+    echo -e "$NAME Copying OpenSBI"
     sudo dd if=$FW_JUMP of="$SDCARD"2 $DD_FLAGS
 
-    echo -e "$NAME: Copying Kernel"
+    echo -e "$NAME Copying Kernel"
     sudo dd if=$LINUX_KERNEL of="$SDCARD"3 $DD_FLAGS
 
     sudo mkfs.ext4 "$SDCARD"4
