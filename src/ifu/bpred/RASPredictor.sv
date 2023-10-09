@@ -27,8 +27,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module RASPredictor import cvw::*;  #(parameter cvw_t P, 
-                                      parameter StackSize = 16 )(
+module RASPredictor import cvw::*;  #(parameter cvw_t P)(
   input  logic             clk,
   input  logic             reset, 
   input  logic             StallF, StallD, StallE, StallM, FlushD, FlushE, FlushM,
@@ -41,10 +40,10 @@ module RASPredictor import cvw::*;  #(parameter cvw_t P,
    );
 
   logic                     CounterEn;
-  localparam Depth = $clog2(StackSize);
+  localparam Depth = $clog2(P.RAS_SIZE);
 
   logic [Depth-1:0]         NextPtr, Ptr, P1, M1, IncDecPtr;
-  logic [StackSize-1:0]     [P.XLEN-1:0] memory;
+  logic [P.RAS_SIZE-1:0]     [P.XLEN-1:0] memory;
   integer        index;
 
   logic      PopF;
@@ -76,14 +75,20 @@ module RASPredictor import cvw::*;  #(parameter cvw_t P,
   assign P1 = 1;
   assign M1 = '1; // -1
   mux2 #(Depth) PtrMux(P1, M1, DecrementPtr, IncDecPtr);
-  assign NextPtr = Ptr + IncDecPtr;
+  logic [Depth-1:0] Sum;
+  assign Sum = Ptr + IncDecPtr;
+  if(|P.RAS_SIZE[Depth-1:0])
+    assign NextPtr = Sum >= P.RAS_SIZE[Depth-1:0] ? 0 : Sum; // wrap back around if our stack is not a power of 2
+  else
+    assign NextPtr = Sum;
+  //assign NextPtr = Ptr + IncDecPtr;
 
   flopenr #(Depth) PTR(clk, reset, CounterEn, NextPtr, Ptr);
 
   // RAS must be reset. 
   always_ff @ (posedge clk) begin
     if(reset) begin
-      for(index=0; index<StackSize; index++)
+      for(index=0; index<P.RAS_SIZE; index++)
     memory[index] <= {P.XLEN{1'b0}};
     end else if(PushE) begin
       memory[NextPtr] <= #1 PCLinkE;

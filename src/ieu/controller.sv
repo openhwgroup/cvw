@@ -182,7 +182,6 @@ module controller import cvw::*;  #(parameter cvw_t P) (
                               ((P.ZICBOZ_SUPPORTED & InstrD[31:20] == 12'd4 & ENVCFG_CBE[3]) |
                                (P.ZICBOM_SUPPORTED & ((InstrD[31:20] == 12'd0 & (ENVCFG_CBE[1:0] != 2'b00))) | 
                                                       (InstrD[31:20] == 12'd1 | InstrD[31:20] == 12'd2) & ENVCFG_CBE[2]));
-                               // *** need to get with enable bits such as MENVCFG_CBZE
     assign AFunctD          = (Funct3D == 3'b010) | (P.XLEN == 64 & Funct3D == 3'b011);
     assign AMOFunctD        = (InstrD[31:27] == 5'b00001) |
                               (InstrD[31:27] == 5'b00000) |
