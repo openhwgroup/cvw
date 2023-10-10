@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // spi_apb.sv
 //
-// Written: nwhyteaguayo@g.hmc.edu 11/16/2022
+// Written: Naiche Whyte-Aguayo nwhyteaguayo@g.hmc.edu 11/16/2022
 
 //
 // Purpose: SPI peripheral
@@ -25,8 +25,10 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-// CREATE HARDWARE INTERLOCKS FOR MODE CHANGES / CONTROL REGISTER UPDATES
-// last q's about reset values and how to test
+// Current limitations: Flash read sequencer mode not implemented, dual and quad modes untestable with current test plan.
+// Hardware interlocks to ensure transfer finishes before register changes unimplemented
+//TODO: change tests to reflect swizzled Delay0, Delay1, Format
+
 
 
 
@@ -146,7 +148,6 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     end
 
     // register access
-    //starting with single lane module no flash control
     always_ff@(posedge PCLK, negedge PRESETn)
         if (~PRESETn) begin 
             SckDiv <= #1 12'd3;
@@ -177,9 +178,9 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
                     8'h10: ChipSelectID <= Din[1:0];
                     8'h14: ChipSelectDef <= Din[3:0];
                     8'h18: ChipSelectMode <= Din[1:0];
-                    8'h28: Delay0 <= Din[15:0];
-                    8'h2C: Delay1 <= Din[15:0];
-                    8'h40: Format <= Din[7:0];
+                    8'h28: Delay0 <= {Din[23:16], Din[7:0]};
+                    8'h2C: Delay1 <= {Din[23:16], Din[7:0]};
+                    8'h40: Format <= {Din[19:16], Din[3:0]};
                     8'h48: if (~TransmitFIFOWriteFull) TransmitData[7:0] <= Din[7:0];
                     8'h50: TransmitWatermark <= Din[2:0];
                     8'h54: ReceiveWatermark <= Din[2:0];
@@ -195,9 +196,18 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
                 8'h10: Dout[1:0] <= #1 ChipSelectID;
                 8'h14: Dout[3:0] <= #1 ChipSelectDef;
                 8'h18: Dout[1:0] <= #1 ChipSelectMode;
-                8'h28: Dout[15:0] <= #1 Delay0;
-                8'h2C: Dout[15:0] <= #1 Delay1;
-                8'h40: Dout[7:0] <= #1 Format;
+                8'h28: begin 
+                        Dout[23:16] <= #1 Delay0[15:8]; // swizzle 
+                        Dout[7:0]   <= #1 Delay0[7:0];
+                    end
+                8'h2C: begin 
+                        Dout[23:16] <= #1 Delay1[15:8]; // swizzle 
+                        Dout[7:0]   <= #1 Delay1[7:0];
+                    end
+                8'h40: begin 
+                        Dout[19:16] <= #1 Format[7:4]; // swizzle 
+                        Dout[3:0]   <= #1 Delay0[3:0];
+                    end
                 8'h48: Dout[8:0] <= #1 {TransmitFIFOWriteFull, 8'b0};
                 8'h4C: Dout[8:0] <= #1 {ReceiveFIFOReadEmpty, ReceiveData[7:0]};
                 8'h50: Dout[2:0] <= #1 TransmitWatermark;
@@ -209,8 +219,8 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
         end
 
     //SCK_CONTROL
+    //multiplies frame count by 2 or 4 if in dual or quad mode
     
-
     always_comb
         case(Format[1:0])
             2'b00: FrameCountShifted = FrameCount;
@@ -219,6 +229,9 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
             default: FrameCountShifted = FrameCount;
         endcase
     
+    //Calculates penultimate frame 
+    //Frame compare doubles number of frames in dual or qyad mode to account for half-duplex communication
+    //FrameCompareProtocol further adjusts comparison according to dual or quad mode
 
     always_comb
         case(Format[1:0])
@@ -246,28 +259,42 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
 
         endcase
     
+    //Signals that track frame count comparisons
+
     assign FrameCompareBoolean = (FrameCountShifted < FrameCompareProtocol);
     assign ReceivePenultimateFrameCount = FrameCountShifted + ReceivePenultimateFrame;
     assign ReceivePenultimateFrameBoolean = (ReceivePenultimateFrameCount >= FrameCompareProtocol);
 
-    assign SCLKDuty = (DivCounter >= {1'b0,SckDiv});
+    // Computing delays
+    // When sckmode.pha = 0, an extra half-period delay is implicit in the cs-sck delay, and vice-versa for sck-cs
+
+    
     assign Delay0Compare = SckMode[0] ? (Delay0Count >= ({Delay0[7:0], 1'b0})) : (Delay0Count >= ({Delay0[7:0], 1'b0} + 9'b1));
     assign Delay1Compare = SckMode[0] ? (Delay1Count >= (({Delay0[15:8], 1'b0}) + 9'b1)) : (Delay1Count >= ({Delay0[15:8], 1'b0}));
     assign InterCSCompare = (InterCSCount >= ({Delay1[7:0],1'b0}));
     assign InterXFRCompare = (InterXFRCount >= ({Delay1[15:8], 1'b0}));
+
+
     // double number of frames in dual or quad mode because we must wait for peripheral to send back
     assign FrameCompare = (Format[0] | Format[1]) ? ({Format[7:4], 1'b0}) : {1'b0,Format[7:4]};
 
-    typedef enum logic [2:0] {CS_INACTIVE, DELAY_0, ACTIVE_0, ACTIVE_1, DELAY_1,INTER_CS, INTER_XFR} statetype;
-    statetype state;
 
-    //producing signal high every (2*scc_div)+1) cycles
+
+    // Producing SCLK
+    // SCLK = PCLK/(2*(sclk_div + 1))
+    // SCLKDuty is high every half-period of SCLK
+
+    assign SCLKDuty = (DivCounter >= {1'b0,SckDiv});
+
     always_ff @(posedge PCLK, negedge PRESETn)
         if (~PRESETn) DivCounter <= #1 0;
         else if (SCLKDuty) DivCounter <= 0;
         else DivCounter <= DivCounter + 13'b1;
 
-    
+    //Main FSM which controls SPI transmission
+
+    typedef enum logic [2:0] {CS_INACTIVE, DELAY_0, ACTIVE_0, ACTIVE_1, DELAY_1,INTER_CS, INTER_XFR} statetype;
+    statetype state;
 
     always_ff @(posedge PCLK, negedge PRESETn)
         if (~PRESETn) begin state <= CS_INACTIVE;
@@ -329,7 +356,9 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
             endcase
         end
             /* verilator lint_off CASEINCOMPLETE */
-    assign ChipSelectInternal = SckMode[0] ? ((state == CS_INACTIVE | state == INTER_CS | (state == DELAY_1 & ~|(Delay0[15:8]))) ? ChipSelectDef[3:0] : ~ChipSelectDef[3:0]) : ((state == CS_INACTIVE | state == INTER_CS | (state == ACTIVE_1 & ~|(Delay0[15:8]) & ReceiveShiftFull)) ? ChipSelectDef[3:0] : ~ChipSelectDef[3:0]);
+
+
+    assign ChipSelectInternal = SckMode[0] ? ((state == CS_INACTIVE | state == INTER_CS | (state == DELAY_1 & ~|(Delay0[15:8]))) ? ChipSelectDef : ~ChipSelectDef) : ((state == CS_INACTIVE | state == INTER_CS | (state == ACTIVE_1 & ~|(Delay0[15:8]) & ReceiveShiftFull)) ? ChipSelectDef : ~ChipSelectDef);
     assign sck = (state == ACTIVE_0) ? ~SckMode[1] : SckMode[1];
     assign busy = (state == DELAY_0 | state == ACTIVE_0 | ((state == ACTIVE_1) & ~((|(Delay1[15:8]) & (ChipSelectMode[1:0]) == 2'b10) & ((FrameCount << Format[1:0]) >= FrameCompare))) | state == DELAY_1);
     assign Active = (state == ACTIVE_0 | state == ACTIVE_1);
@@ -337,7 +366,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     assign Active0 = (state == ACTIVE_0);
     assign Inactive = (state == CS_INACTIVE);
     
-    always_ff @(posedge PCLK, negedge PRESETn, posedge Inactive)
+    always_ff @(posedge PCLK, negedge PRESETn)
         if (~PRESETn) HoldModeDeassert <= 0;
         else if (Inactive) HoldModeDeassert <= 0;
         /* verilator lint_off WIDTH */
@@ -415,27 +444,19 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
                 default: SPIOut = {3'b0, TransmitShiftReg[7]};
             endcase
         end else SPIOut = 4'b0;
+    logic [3:0] shiftin;
+    assign shiftin = P.SPI_LOOPBACK_TEST ? SPIOut : SPIIn;
     always_ff @(posedge PCLK, negedge PRESETn)
         if(~PRESETn)  ReceiveShiftReg <= 8'b0;
         else if (SampleEdge & SCLKDuty) begin
             if (~Active) ReceiveShiftReg <= 8'b0;
             else if (~Format[3]) begin
-                if(P.SPI_LOOPBACK_TEST) begin
                     case(Format[1:0])
-                        2'b00: ReceiveShiftReg <= { ReceiveShiftReg[6:0], SPIOut[0]};
-                        2'b01: ReceiveShiftReg <= { ReceiveShiftReg[5:0], SPIOut[0],SPIOut[1]};
-                        2'b10: ReceiveShiftReg <= { ReceiveShiftReg[3:0], SPIOut[0], SPIOut[1], SPIOut[2], SPIOut[3]};
-                        default: ReceiveShiftReg <= { ReceiveShiftReg[6:0], SPIOut[0]};
+                        2'b00: ReceiveShiftReg <= { ReceiveShiftReg[6:0], shiftin[0]};
+                        2'b01: ReceiveShiftReg <= { ReceiveShiftReg[5:0], shiftin[0],shiftin[1]};
+                        2'b10: ReceiveShiftReg <= { ReceiveShiftReg[3:0], shiftin[0], shiftin[1], shiftin[2], shiftin[3]};
+                        default: ReceiveShiftReg <= { ReceiveShiftReg[6:0], shiftin[0]};
                     endcase
-
-                end else begin
-                    case(Format[1:0])
-                        2'b00: ReceiveShiftReg <= { ReceiveShiftReg[6:0], SPIIn[0]};
-                        2'b01: ReceiveShiftReg <= { ReceiveShiftReg[5:0], SPIIn[0],SPIIn[1]};
-                        2'b10: ReceiveShiftReg <= { ReceiveShiftReg[3:0], SPIIn[0], SPIIn[1], SPIIn[2], SPIIn[3]};
-                        default: ReceiveShiftReg <= { ReceiveShiftReg[6:0], SPIIn[0]};
-                    endcase
-                end
             end
         end
     logic [7:0] ReceiveShiftRegInvert;
@@ -468,7 +489,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
             endcase
         end
 
-    assign SPIIntr = ((InterruptPending[0] & InterruptEnable[0]) | (InterruptPending[1] & InterruptEnable[1]));
+    assign SPIIntr = |(InterruptPending & InterruptEnable);
     
     always_comb
         case(ChipSelectID[1:0])
