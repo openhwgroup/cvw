@@ -87,7 +87,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
                       BreakpointFaultM | EcallFaultM |
                       LoadAccessFaultM | StoreAmoAccessFaultM;
   // coverage on
-  assign TrapM = ExceptionM | InterruptM; 
+  assign TrapM = (ExceptionM & ~CommittedF) | InterruptM; // *** RT: review this additional ~CommittedF with DH and update priv chapter.
   assign RetM  = mretM | sretM;
 
   ///////////////////////////////////////////
