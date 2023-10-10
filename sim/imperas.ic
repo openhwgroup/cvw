@@ -14,6 +14,9 @@
 --override cpu/add_implicit_Extensions=B 
 --override cpu/bitmanip_version=1.0.0
 
+# ????
+--override cpu/Zicbom=T
+
 #  clarify
 #--override refRoot/cpu/mtvec_sext=F
 
