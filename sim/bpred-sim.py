@@ -46,19 +46,41 @@ configs = [
     )
 ]
 
-bpdSize = [6, 8, 10, 12, 14, 16]
-bpdType = ['twobit', 'gshare', 'global', 'gshare_basic', 'global_basic', 'local_basic']
-for CurrBPType in bpdType:
-    for CurrBPSize in bpdSize:
-        name = CurrBPType+str(CurrBPSize)
-        configOptions = "+define+INSTR_CLASS_PRED=0 +define+BPRED_OVERRIDE +define+BPRED_TYPE=" + str(bpdType.index(CurrBPType)) + "+define+BPRED_SIZE=" + str(CurrBPSize)
-        tc = TestCase(
-            name=name,
-            variant="rv32gc",
-            cmd="vsim > {} -c <<!\ndo wally-batch.do  rv32gc configOptions " + name + " embench " + configOptions,
-            grepstr="")
-        configs.append(tc)
+# bpdSize = [6, 8, 10, 12, 14, 16]
+# bpdType = ['twobit', 'gshare', 'global', 'gshare_basic', 'global_basic', 'local_basic']
+# for CurrBPType in bpdType:
+#     for CurrBPSize in bpdSize:
+#         name = CurrBPType+str(CurrBPSize)
+#         configOptions = "+define+INSTR_CLASS_PRED=0 +define+BPRED_OVERRIDE +define+BPRED_TYPE=" + str(bpdType.index(CurrBPType)) + "+define+BPRED_SIZE=" + str(CurrBPSize)
+#         tc = TestCase(
+#             name=name,
+#             variant="rv32gc",
+#             cmd="vsim > {} -c <<!\ndo wally-batch.do  rv32gc configOptions " + name + " embench " + configOptions,
+#             grepstr="")
+#         configs.append(tc)
 
+# bpdSize = [6, 8, 10, 12, 14, 16]
+# for CurrBPSize in bpdSize:
+#     name = 'BTB'+str(CurrBPSize)
+#     configOptions = "+define+INSTR_CLASS_PRED=1 +define+BPRED_OVERRIDE +define+BPRED_TYPE=\`BP_GSHARE" + "+define+BPRED_SIZE=16" + "+define+BTB_SIZE=" + str(CurrBPSize) + "+define+BTB_OVERRIDE"
+#     tc = TestCase(
+#         name=name,
+#         variant="rv32gc",
+#         cmd="vsim > {} -c <<!\ndo wally-batch.do  rv32gc configOptions " + name + " embench " + configOptions,
+#         grepstr="")
+#     configs.append(tc)
+
+bpdSize = [2, 3, 4, 6, 10, 16]
+for CurrBPSize in bpdSize:
+    name = 'RAS'+str(CurrBPSize)
+    configOptions = "+define+INSTR_CLASS_PRED=0 +define+BPRED_OVERRIDE +define+BPRED_TYPE=\`BP_GSHARE" + "+define+BPRED_SIZE=16" + "+define+BTB_SIZE=16" + "+define+RAS_SIZE=" + str(CurrBPSize) + "+define+BTB_OVERRIDE+define+RAS_OVERRIDE"
+    tc = TestCase(
+        name=name,
+        variant="rv32gc",
+        cmd="vsim > {} -c <<!\ndo wally-batch.do  rv32gc configOptions " + name + " embench " + configOptions,
+        grepstr="")
+    configs.append(tc)
+    
 # bpdSize = [6, 8, 10, 12, 14, 16]
 # LHRSize = [4, 8, 10]
 # bpdType = ['local_repair']
