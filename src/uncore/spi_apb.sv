@@ -506,7 +506,20 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
 
 
 endmodule
+/*
+module synchFIFO #(parameter M =3 , N= 8(
+    input logic PCLK, wen, ren, PRESETn,
+    input logic winc,rinc,
+    input logic [N-1:0] wdata,
+    input logic [M-1:0] wwatermarklevel, rwatermarklevel,
+    output logic [N-1:0] rdata,
+    output logic wfull, rempty,
+    output logic wwatermark, rwatermark);
 
+
+    
+)
+*/
 module TransmitFIFO #(parameter M = 3, N = 8)(
     input logic wclk, rclk, PRESETn,
     input logic winc,rinc,
