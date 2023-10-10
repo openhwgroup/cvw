@@ -83,6 +83,7 @@ module spill import cvw::*;  #(parameter cvw_t P) (
     assign SpillF = CacheableF ? SpillCachedF : SpillUncachedF;
   end else
     assign SpillF = PCF[1]; // *** might relax - only spill if next instruction is uncompressed
+  // Don't take the spill if there is a stall, TLB miss, or hardware update to the D/A bits
   assign TakeSpillF = SpillF & ~IFUCacheBusStallF & ~(ITLBMissF | (P.SVADU_SUPPORTED & InstrUpdateDAF));
   
   always_ff @(posedge clk)

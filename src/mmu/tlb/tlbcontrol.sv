@@ -32,10 +32,11 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   input  logic                     STATUS_MXR, STATUS_SUM, STATUS_MPRV,
   input  logic [1:0]               STATUS_MPP,
   input  logic                     ENVCFG_PBMTE,       // Page-based memory types enabled
-  input  logic [1:0]               PrivilegeModeW, // Current privilege level of the processeor
+  input  logic                     ENVCFG_HADE,        // HPTW A/D Update enable
+  input  logic [1:0]               PrivilegeModeW,     // Current privilege level of the processeor
   input  logic                     ReadAccess, WriteAccess,
   input  logic                     DisableTranslation,
-  input  logic                     TLBFlush, // Invalidate all TLB entries
+  input  logic                     TLBFlush,           // Invalidate all TLB entries
   input  logic [11:0]              PTEAccessBits,
   input  logic                     CAMHit,
   input  logic                     Misaligned,
@@ -114,49 +115,11 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   end
 
   // Determine wheter to update DA bits.  With SVADU, it is done in hardware
-  if (P.SVADU_SUPPORTED) assign UpdateDA = PreUpdateDA & Translate & TLBHit & ~TLBPageFault;
-  else                   assign UpdateDA = PreUpdateDA;
+  assign UpdateDA = P.SVADU_SUPPORTED & PreUpdateDA & Translate & TLBHit & ~TLBPageFault & ENVCFG_HADE;
 
   // Determine whether page fault occurs
-  assign PrePageFault = UpperBitsUnequal | Misaligned | ~PTE_V | ImproperPrivilege | (P.XLEN == 64 & (BadPBMT | BadNAPOT | BadReserved)) | (PreUpdateDA & ~P.SVADU_SUPPORTED);
+  assign PrePageFault = UpperBitsUnequal | Misaligned | ~PTE_V | ImproperPrivilege | (P.XLEN == 64 & (BadPBMT | BadNAPOT | BadReserved)) | (PreUpdateDA & (~P.SVADU_SUPPORTED | ~ENVCFG_HADE));
   assign TLBPageFault = Translate & TLBHit & (PrePageFault | InvalidAccess);
-
-/*
-  // Check whether the access is allowed, page faulting if not.
-  if (ITLB == 1) begin:itlb // Instruction TLB fault checking
-    // User mode may only execute user mode pages, and supervisor mode may
-    // only execute non-user mode pages.
-    assign ImproperPrivilege = ((EffectivePrivilegeMode == P.U_MODE) & ~PTE_U) |
-      ((EffectivePrivilegeMode == P.S_MODE) & PTE_U);
-    assign CausePageFault = ImproperPrivilege | ~PTE_X | UpperBitsUnequal | BadPTE | BadPBMT | Misaligned | ~PTE_V | (~PTE_A & P.SVADU_SUPPORTED);
-    assign TLBPageFault = Translate  & TLBHit & CausePageFault;
-    // Determine wheter to update DA bits
-    if(P.SVADU_SUPPORTED) assign UpdateDA = Translate & TLBHit & ~PTE_A & ~TLBPageFault;
-    else                  assign UpdateDA = ~PTE_A;
-  end else begin:dtlb // Data TLB fault checking
-    logic InvalidRead, InvalidWrite;
-
-    // User mode may only load/store from user mode pages, and supervisor mode
-    // may only access user mode pages when STATUS_SUM is low.
-    assign ImproperPrivilege = ((EffectivePrivilegeMode == P.U_MODE) & ~PTE_U) |
-      ((EffectivePrivilegeMode == P.S_MODE) & PTE_U & ~STATUS_SUM);
-    // Check for read error. Reads are invalid when the page is not readable
-    // (and executable pages are not readable) or when the page is neither
-    // readable nor executable (and executable pages are readable).
-    assign InvalidRead = ReadAccess & ~PTE_R & (~STATUS_MXR | ~PTE_X);
-    // Check for write error. Writes are invalid when the page's write bit is
-    // low.
-    assign InvalidWrite = WriteAccess & ~PTE_W;
-    if(P.SVADU_SUPPORTED) begin : hptwwrites
-      assign UpdateDA = Translate & TLBHit & (~PTE_A | WriteAccess & ~PTE_D) & ~TLBPageFault; 
-      assign TLBPageFault =  (Translate & TLBHit & (ImproperPrivilege | InvalidRead | InvalidWrite | UpperBitsUnequal | Misaligned | ~PTE_V)); // *** update to match
-    end else begin
-      // Fault for software handling if access bit is off or writing a page with dirty bit off
-      assign UpdateDA = ~PTE_A | WriteAccess & ~PTE_D; 
-      assign TLBPageFault = (Translate & TLBHit & (ImproperPrivilege | InvalidRead | InvalidWrite | UpdateDA | UpperBitsUnequal | Misaligned | ~PTE_V));
-    end
-  end
-*/
 
   assign TLBHit = CAMHit & TLBAccess;
   assign TLBMiss = ~CAMHit & TLBAccess & Translate ;
