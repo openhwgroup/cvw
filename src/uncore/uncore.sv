@@ -54,28 +54,31 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   output logic [31:0]          GPIOOUT, GPIOEN,           // GPIO pin output value and enable
   input  logic                 UARTSin,                   // UART serial input
   output logic                 UARTSout,                  // UART serial output
-  input  logic                 SDCIntr                
+  input  logic                 SDCIntr,
+  input logic  [3:0]          SPIIn,
+  output logic [3:0]          SPIOut,
+  output logic [3:0]          SPICS                  
 );
   
   logic [P.XLEN-1:0]           HREADRam, HREADSDC;
 
-  logic [10:0]                 HSELRegions;
-  logic                        HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSDC;
-  logic                        HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD;
+  logic [11:0]                 HSELRegions;
+  logic                        HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSDC, HSELSPI;
+  logic                        HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD, HSELSPID;
   logic                        HRESPRam,  HRESPSDC;
   logic                        HREADYRam, HRESPSDCD;
   logic [P.XLEN-1:0]           HREADBootRom; 
   logic                        HSELBootRom, HSELBootRomD, HRESPBootRom, HREADYBootRom, HREADYSDC;
   logic                        HSELNoneD;
-  logic                        UARTIntr,GPIOIntr;
+  logic                        UARTIntr,GPIOIntr, SPIIntr;
   logic                        SDCIntM;
   
   logic                        PCLK, PRESETn, PWRITE, PENABLE;
-  logic [3:0]                  PSEL, PREADY;
+  logic [4:0]                  PSEL, PREADY;
   logic [31:0]                 PADDR;
   logic [P.XLEN-1:0]           PWDATA;
   logic [P.XLEN/8-1:0]         PSTRB;
-  logic [3:0][P.XLEN-1:0]      PRDATA;
+  logic [4:0][P.XLEN-1:0]      PRDATA;
   logic [P.XLEN-1:0]           HREADBRIDGE;
   logic                        HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
 
@@ -88,14 +91,14 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   adrdecs #(P) adrdecs(HADDR, 1'b1, 1'b1, 1'b1, HSIZE[1:0], HSELRegions);
 
   // unswizzle HSEL signals
-  assign {HSELDTIM, HSELIROM, HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELEXTSDC} = HSELRegions[10:1];
+  assign {HSELDTIM, HSELIROM, HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC, HSELSPI} = HSELRegions[11:1];
 
   // AHB -> APB bridge
-  ahbapbbridge #(P, 4) ahbapbbridge (
-    .HCLK, .HRESETn, .HSEL({HSELUART, HSELPLIC, HSELCLINT, HSELGPIO}), .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HTRANS, .HREADY, 
+  ahbapbbridge #(P, 5) ahbapbbridge (
+    .HCLK, .HRESETn, .HSEL({HSELSPI, HSELUART, HSELPLIC, HSELCLINT, HSELGPIO}), .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HTRANS, .HREADY, 
     .HRDATA(HREADBRIDGE), .HRESP(HRESPBRIDGE), .HREADYOUT(HREADYBRIDGE),
     .PCLK, .PRESETn, .PSEL, .PWRITE, .PENABLE, .PADDR, .PWDATA, .PSTRB, .PREADY, .PRDATA);
-  assign HSELBRIDGE = HSELGPIO | HSELCLINT | HSELPLIC | HSELUART; // if any of the bridge signals are selected
+  assign HSELBRIDGE = HSELGPIO | HSELCLINT | HSELPLIC | HSELUART | HSELSPI; // if any of the bridge signals are selected
                 
   // on-chip RAM
   if (P.UNCORE_RAM_SUPPORTED) begin : ram
@@ -121,7 +124,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
 
   if (P.PLIC_SUPPORTED == 1) begin : plic
     plic_apb #(P) plic(.PCLK, .PRESETn, .PSEL(PSEL[2]), .PADDR(PADDR[27:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
-      .PRDATA(PRDATA[2]), .PREADY(PREADY[2]), .UARTIntr, .GPIOIntr, .SDCIntr, .MExtInt, .SExtInt);
+      .PRDATA(PRDATA[2]), .PREADY(PREADY[2]), .UARTIntr, .GPIOIntr, .SDCIntr, .SPIIntr, .MExtInt, .SExtInt);
   end else begin : plic
     assign MExtInt = 0;
     assign SExtInt = 0;
@@ -144,6 +147,14 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
       .OUT1b(), .OUT2b(), .INTR(UARTIntr), .TXRDYb(), .RXRDYb());       // to CPU
   end else begin : uart
     assign UARTSout = 0; assign UARTIntr = 0; 
+  end
+  if (P.SPI_SUPPORTED == 1) begin : spi
+    spi_apb  #(P) spi (
+      .PCLK, .PRESETn, .PSEL(PSEL[4]), .PADDR(PADDR[7:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
+      .PREADY(PREADY[4]), .PRDATA(PRDATA[4]), 
+      .SPIOut, .SPIIn, .SPICS, .SPIIntr);
+  end else begin : spi
+    assign SPIOut = 0; assign SPICS = 0; assign SPIIntr = 0;
   end
 
   // AHB Read Multiplexer
@@ -168,6 +179,8 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   // takes more than 1 cycle to repsond it needs to hold on to the old select until the
   // device is ready.  Hense this register must be selectively enabled by HREADY.
   // However on reset None must be seleted.
-  flopenl #(11) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions, 11'b1, {HSELDTIMD, HSELIROMD, HSELEXTD, HSELBootRomD, HSELRamD, HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELEXTSDCD, HSELNoneD});
+  flopenl #(12) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions, 12'b1, 
+    {HSELDTIMD, HSELIROMD, HSELEXTD, HSELBootRomD, HSELRamD, 
+    HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELEXTSDCD, HSELSPID, HSELNoneD});
   flopenr #(1) hselbridgedelayreg(HCLK, ~HRESETn, HREADY, HSELBRIDGE, HSELBRIDGED);
 endmodule

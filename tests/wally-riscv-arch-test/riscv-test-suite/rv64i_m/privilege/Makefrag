@@ -55,6 +55,9 @@ target_tests_nosim = \
     WALLY-trap-s-01 \
     WALLY-trap-u-01 \
     WALLY-status-fp-enabled-01 \
+    WALLY-spi-01 \
+    WALLY-gpio-01 \
+    WALLY-uart-01 \
     WALLY-wfi-01 \
     WALLY-cbom-01 \
     WALLY-cboz-01 \
