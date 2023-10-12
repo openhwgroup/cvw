@@ -76,9 +76,9 @@ test_cases:
 .8byte cs_id, 0x00000000, read32_test       # cs_id reset to 0x0
 .8byte cs_def, 0x0000000F, read32_test      # cs_def reset to 0x1
 .8byte cs_mode, 0x00000000, read32_test     # cs_mode reset to 0x0
-.8byte delay0, 0x00000101, read32_test      # delay0 reset to [31:24] 0x0, [23:16] 0x1, [15:8] 0x0, [7:0] 0x1
+.8byte delay0, 0x00010001, read32_test      # delay0 reset to [31:24] 0x0, [23:16] 0x1, [15:8] 0x0, [7:0] 0x1
 .8byte delay1, 0x00000001, read32_test      # delay1 reset to 0x1
-.8byte fmt, 0x00000080, read32_test         # fmt reset to [31:20] 0x0, [19:16] 0x8, [15:0] 0x0 for non-flash enabled SPI controllers
+.8byte fmt, 0x00080000, read32_test         # fmt reset to [31:20] 0x0, [19:16] 0x8, [15:0] 0x0 for non-flash enabled SPI controllers
 .8byte tx_data, 0x00000000, read32_test     # tx_data [30:0] reset to 0x0, [31] read only
 .8byte tx_mark, 0x00000000, read32_test     # tx_mark reset to 0x0 for non-flash enabled controllers
 .8byte rx_mark, 0x00000000, read32_test     # rx_mark reset to 0x0
@@ -152,7 +152,7 @@ test_cases:
 # Test cs-sck delay of 0 with sck phase = 0 (implicit half cycle delay)
 
 .8byte cs_mode, 0x00000000, write32_test    # reset cs_mode to auto, all cs and sck mode settings should be defualt
-.8byte delay0, 0x0000100, write32_test     # set cs-sck delay to 0
+.8byte delay0, 0x00010000, write32_test     # set cs-sck delay to 0
 .8byte tx_data, 0x00000020, write32_test   # place 8'h11 into tx_data
 .8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 .8byte rx_data, 0x00000020, read32_test     # read rx_data
@@ -174,7 +174,7 @@ test_cases:
 # Test arbitrary cs-sck delay (sck phase 0)
 
 .8byte sck_mode, 0x00000000, write32_test   # set sck phase to 0
-.8byte delay0, 0x00000105, write32_test     # set cs-sck delay to AF cycles
+.8byte delay0, 0x00010005, write32_test     # set cs-sck delay to AF cycles
 .8byte tx_data, 0x000000AF, write32_test   # place 8'h11 into tx_data
 .8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 .8byte rx_data, 0x000000AF, read32_test     # read rx_data
@@ -196,7 +196,7 @@ test_cases:
 
 # Test arbitrary sck-cs delay (sck phase 1)
 
-.8byte delay0, 0x00000501, write32_test     # set cs-sck delay to A5 cycles
+.8byte delay0, 0x00050001, write32_test     # set cs-sck delay to A5 cycles
 .8byte tx_data, 0x00000011, write32_test   # place 8'h11 into tx_data
 .8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 .8byte rx_data, 0x00000011, read32_test     # read rx_data
@@ -204,7 +204,7 @@ test_cases:
 # Test arbitrary sck-cs delay (sck phase 0)
 
 .8byte sck_mode, 0x00000000, write32_test   # set sck phase to 0
-.8byte delay0, 0x00000501, write32_test     # set cs-sck delay to 5 cycles
+.8byte delay0, 0x00050001, write32_test     # set cs-sck delay to 5 cycles
 .8byte tx_data, 0x00000015, write32_test   # place 8'h11 into tx_data
 .8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 .8byte rx_data, 0x00000015, read32_test     # read rx_data
@@ -214,7 +214,7 @@ test_cases:
 # Test inter cs delay 
 
 
-.8byte delay0, 0x00000101, write32_test     # reset delay0 register
+.8byte delay0, 0x00010001, write32_test     # reset delay0 register
 .8byte delay1, 0x00000005, write32_test     # set inter_cs delay to 5
 .8byte tx_data, 0x44332211, spi_burst_send
 .8byte 0x0, 0x00000003, spi_data_wait           # wait for transmission to end
@@ -265,7 +265,7 @@ test_cases:
 
 # Test arbitrary inter_xfr delay
 
-.8byte delay1, 0x00000501, write32_test     # set inter_xfr delay to 5
+.8byte delay1, 0x00050001, write32_test     # set inter_xfr delay to 5
 .8byte sck_mode, 0x00000001, write32_test
 .8byte tx_data, 0x98877665, spi_burst_send
 .8byte 0x0, 0x00000003, spi_data_wait           # wait for transmission to end
@@ -275,7 +275,7 @@ test_cases:
 .8byte rx_data, 0x00000098, read32_test
 
 # test long inter_xfr delay
-.8byte delay1, 0x0000A501, write32_test
+.8byte delay1, 0x00A50001, write32_test
 .8byte tx_data, 0x00000048, write32_test
 .8byte 0x0, 0x00000000, spi_data_wait
 .8byte rx_data, 0x00000048, read32_test
@@ -283,7 +283,7 @@ test_cases:
 # Test cs-sck delay with cs_mode = HOLD
 
 .8byte delay1, 0x00000001, write32_test     # set inter_xfr delay to 0
-.8byte delay0, 0x00000105, write32_test     # set cs-sck delay to 5 (should have no effect because cs is never inactive)
+.8byte delay0, 0x00010005, write32_test     # set cs-sck delay to 5 (should have no effect because cs is never inactive)
 .8byte tx_data, 0xAABBCCDD, spi_burst_send
 .8byte 0x0, 0x00000003, spi_data_wait           # wait for transmission to end
 .8byte rx_data, 0x000000DD, read32_test     # read rx_data
@@ -306,10 +306,10 @@ test_cases:
 # Test frame length of 4
 
 .8byte delay1, 0x00000001, write32_test     # reset delay1 register
-.8byte delay0, 0x00000101, write32_test     # reset delay0 register
+.8byte delay0, 0x00010001, write32_test     # reset delay0 register
 .8byte sck_mode, 0x00000000, write32_test   #reset sckmode register
 .8byte cs_mode, 0x00000000, write32_test    # set cs_mode to AUTO 
-.8byte fmt, 0x00000040, write32_test        # set frame length to 4
+.8byte fmt, 0x00040000, write32_test        # set frame length to 4
 .8byte tx_data, 0x000000F0, write32_test   # place 8'h11 into tx_data
 .8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 .8byte rx_data, 0x000000F0, read32_test     # read rx_data
@@ -322,7 +322,7 @@ test_cases:
 #.8byte rx_data, 0x00000077, read32_test     # read rx_data
 
 # test frame length 1 burst
-.8byte fmt, 0x00000010, write32_test
+.8byte fmt, 0x00010000, write32_test
 .8byte tx_data, 0x80008000, spi_burst_send
 .8byte 0x0, 0x00000003, spi_data_wait
 .8byte rx_data, 0x00000000, read32_test
@@ -333,7 +333,7 @@ test_cases:
 
 # Test big endian with frame length = 5
 
-.8byte fmt, 0x00000050, write32_test        # set frame length to 5, big endian
+.8byte fmt, 0x00050000, write32_test        # set frame length to 5, big endian
 .8byte tx_data, 0x000000A8, write32_test   # place 8'h11 into tx_data
 .8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 .8byte rx_data, 0x000000A8, read32_test     # read rx_data
@@ -352,7 +352,7 @@ test_cases:
 
 # Test little endian with frame length = 5
 
-.8byte fmt, 0x00000054, write32_test        # set frame length to 5, little-endian
+.8byte fmt, 0x00050004, write32_test        # set frame length to 5, little-endian
 .8byte tx_data, 0x000000A8, write32_test   # place 8'h11 into tx_data
 .8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 .8byte rx_data, 0x00000008, read32_test     # read rx_data -> 08
@@ -368,21 +368,21 @@ test_cases:
 
 # Test dual SPI protocol, frame length = 8, big endian
 
-#.8byte fmt, 0x00000081, write32_test        # set frame length to 8, big-endian, dual SPI
+#.8byte fmt, 0x00080001, write32_test        # set frame length to 8, big-endian, dual SPI
 #.8byte tx_data, 0x000000C8, write32_test   # place 8'h11 into tx_data
 #.8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 #.8byte rx_data, 0x00000000, read32_test     # read rx_data
 
 # Test dual SPI protocol, frame length = 4
 
-#.8byte fmt, 0x00000041, write32_test        # set frame length to 8, big-endian, dual SPI
+#.8byte fmt, 0x00040001, write32_test        # set frame length to 8, big-endian, dual SPI
 #.8byte tx_data, 0x000000A2, write32_test   # place 8'h11 into tx_data
 #.8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 #.8byte rx_data, 0x000000A0, read32_test     # read rx_data
 
 # Test dual SPI protocol, frame length = 5
 
-#.8byte fmt, 0x00000051, write32_test        # set frame length to 8, big-endian, dual SPI
+#.8byte fmt, 0x00050001, write32_test        # set frame length to 8, big-endian, dual SPI
 #.8byte tx_data, 0x00000075, write32_test   # place 8'h11 into tx_data
 #.8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 #.8byte rx_data, 0x00000074, read32_test     # read rx_data
@@ -397,21 +397,21 @@ test_cases:
 
 # Test quad SPI protocol, frame length = 5
 
-#.8byte fmt, 0x00000052, write32_test        # set frame length to 8, big-endian, dual SPI
+#.8byte fmt, 0x00050002, write32_test        # set frame length to 8, big-endian, dual SPI
 #.8byte tx_data, 0x0000003F, write32_test   # place 8'h11 into tx_data
 #.8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 #.8byte rx_data, 0x0000003F, read32_test     # read rx_data
 
 # Test quad SPI protocol, frame length = 4
 
-#.8byte fmt, 0x00000042, write32_test        # set frame length to 8, big-endian, dual SPI
+#.8byte fmt, 0x00040002, write32_test        # set frame length to 8, big-endian, dual SPI
 #.8byte tx_data, 0x0000000F, write32_test   # place 8'h11 into tx_data
 #.8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 #.8byte rx_data, 0x00000000, read32_test     # read rx_data
 
 # Test quad SPI protocol, frame length = 8
 
-#.8byte fmt, 0x00000082, write32_test        # set frame length to 8, big-endian, dual SPI
+#.8byte fmt, 0x00080002, write32_test        # set frame length to 8, big-endian, dual SPI
 #.8byte tx_data, 0x000000F0, write32_test   # place 8'h11 into tx_data
 #.8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 #.8byte rx_data, 0x000000F0, read32_test     # read rx_data
@@ -422,7 +422,7 @@ test_cases:
 
 SETUP_PLIC
 
-.8byte fmt, 0x00000080, write32_test        # reset fmt register 
+.8byte fmt, 0x00080000, write32_test        # reset fmt register 
 .8byte tx_mark, 0x00000004, write32_test    # set transmit watermark to 4
 #.8byte ie, 0x00000000, write32_test         # enable transmit interrupt
 .8byte ip, 0x00000001, read32_test          # tx watermark interupt should be pending
