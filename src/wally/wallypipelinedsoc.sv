@@ -54,7 +54,10 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   output logic [31:0]         GPIOEN,           // output enables for GPIO
   input  logic                UARTSin,          // UART serial data input
   output logic                UARTSout,         // UART serial data output
-  input logic                 SDCIntr                 
+  input logic                 SDCIntr,
+  input logic  [3:0]          SPIIn,            // SPI pins in
+  output logic [3:0]          SPIOut,           // SPI pins out
+  output logic [3:0]          SPICS             // SPI chip select pins                    
 );
 
   // Uncore signals
@@ -80,7 +83,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
       .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
       .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT, .HSELEXTSDC,
       .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOIN, .GPIOOUT, .GPIOEN, .UARTSin, 
-      .UARTSout, .MTIME_CLINT, .SDCIntr);
+      .UARTSout, .MTIME_CLINT, .SDCIntr, .SPIIn, .SPIOut, .SPICS);
   end
 
 endmodule

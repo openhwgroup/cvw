@@ -64,7 +64,7 @@ module testbench;
 
   logic [31:0] GPIOIN, GPIOOUT, GPIOEN;
   logic        UARTSin, UARTSout;
-
+  logic [3:0]  SPIIn, SPIOut, SPICS;
   logic        SDCIntr;
 
   logic        HREADY;
@@ -367,6 +367,7 @@ module testbench;
   // instantiate device to be tested
   assign GPIOIN = 0;
   assign UARTSin = 1;
+  assign SPIIn = 0;
 
   if(P.EXT_MEM_SUPPORTED) begin
     ram_ahb #(.BASE(P.EXT_MEM_BASE), .RANGE(P.EXT_MEM_RANGE)) 
@@ -397,7 +398,7 @@ module testbench;
   wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
     .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
-    .UARTSin, .UARTSout, .SDCIntr); 
+    .UARTSin, .UARTSout, .SDCIntr, .SPIIn, .SPIOut, .SPICS); 
 
   // generate clock to sequence tests
   always begin

@@ -57,6 +57,7 @@ target_tests_nosim = \
     WALLY-clint-01 \
     WALLY-plic-01 \
     WALLY-uart-01 \
+    WALLY-spi-01 \
     WALLY-cbom-01 \
     WALLY-cboz-01 \
 
