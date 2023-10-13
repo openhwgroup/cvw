@@ -191,29 +191,20 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
             InterruptPending[0] <= TransmitReadMark;
             InterruptPending[1] <= RecieveWriteMark;  
             case(Entry) // flop to sample inputs
-                8'h00: Dout[11:0] <= #1 SckDiv;
-                8'h04: Dout[1:0] <= #1 SckMode;
-                8'h10: Dout[1:0] <= #1 ChipSelectID;
-                8'h14: Dout[3:0] <= #1 ChipSelectDef;
-                8'h18: Dout[1:0] <= #1 ChipSelectMode;
-                8'h28: begin 
-                        Dout[23:16] <= #1 Delay0[15:8]; // swizzle 
-                        Dout[7:0]   <= #1 Delay0[7:0];
-                    end
-                8'h2C: begin 
-                        Dout[23:16] <= #1 Delay1[15:8]; // swizzle 
-                        Dout[7:0]   <= #1 Delay1[7:0];
-                    end
-                8'h40: begin 
-                        Dout[19:16] <= #1 Format[7:4]; // swizzle 
-                        Dout[3:0]   <= #1 Delay0[3:0];
-                    end
-                8'h48: Dout[8:0] <= #1 {TransmitFIFOWriteFull, 8'b0};
-                8'h4C: Dout[8:0] <= #1 {ReceiveFIFOReadEmpty, ReceiveData[7:0]};
-                8'h50: Dout[2:0] <= #1 TransmitWatermark;
-                8'h54: Dout[2:0] <= #1 ReceiveWatermark;
-                8'h70: Dout[1:0] <= #1 InterruptEnable;
-                8'h74: Dout[1:0] <= #1 InterruptPending;
+                8'h00: Dout <= #1 {20'b0, SckDiv};
+                8'h04: Dout <= #1 {30'b0, SckMode};
+                8'h10: Dout <= #1 {30'b0, ChipSelectID};
+                8'h14: Dout <= #1 {28'b0, ChipSelectDef};
+                8'h18: Dout <= #1 {30'b0, ChipSelectMode};
+                8'h28: Dout <= {8'b0, Delay0[15:8], 8'b0, Delay0[7:0]};
+                8'h2C: Dout <= {8'b0, Delay1[15:8], 8'b0, Delay1[7:0]};
+                8'h40: Dout <= {12'b0, Format[7:4], 12'b0, Format[3:0]};
+                8'h48: Dout <= #1 {23'b0, TransmitFIFOWriteFull, 8'b0};
+                8'h4C: Dout <= #1 {23'b0, ReceiveFIFOReadEmpty, ReceiveData[7:0]};
+                8'h50: Dout <= #1 {29'b0, TransmitWatermark};
+                8'h54: Dout <= #1 {29'b0, ReceiveWatermark};
+                8'h70: Dout <= #1 {30'b0, InterruptEnable};
+                8'h74: Dout <= #1 {30'b0, InterruptPending};
                 default: Dout <= #1 32'b0;
             endcase
         end
@@ -507,7 +498,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
 
 endmodule
 /*
-module synchFIFO #(parameter M =3 , N= 8(
+module TransmitSynchFIFO #(parameter M =3 , N= 8(
     input logic PCLK, wen, ren, PRESETn,
     input logic winc,rinc,
     input logic [N-1:0] wdata,
@@ -515,6 +506,22 @@ module synchFIFO #(parameter M =3 , N= 8(
     output logic [N-1:0] rdata,
     output logic wfull, rempty,
     output logic wwatermark, rwatermark);
+
+    logic [N-1:0] mem[2**M];
+    logic [M:0] rptr, wptr;
+    logic [M:0] wbin, wbinnext;
+    logic [M:0] rbin, rbinnext;
+    logic rempty_val;
+    logic wfull_val;
+    logic [M-1:0] raddr;
+    logic [M-1:0] waddr;
+
+    assign rdata = mem[raddr];
+
+    always_ff @(posedge wclkc, negedge PRESETn)
+        if (~PRESETn) begin
+            
+
     
 )
 */
