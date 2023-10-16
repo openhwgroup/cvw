@@ -38,8 +38,8 @@ module testbench;
   parameter TEST="none";
   parameter PrintHPMCounters=1;
   parameter BPRED_LOGGER=0;
-  parameter I_CACHE_ADDR_LOGGER=0;
-  parameter D_CACHE_ADDR_LOGGER=0;
+  parameter I_CACHE_ADDR_LOGGER=1;
+  parameter D_CACHE_ADDR_LOGGER=1;
  
 `include "parameter-defs.vh"
 
@@ -98,6 +98,7 @@ module testbench;
                           if (P.ZICSR_SUPPORTED)  tests = {arch64c, arch64cpriv};
                           else                   tests = {arch64c};
         "arch64m":      if (P.M_SUPPORTED)        tests = arch64m;
+        "arch64a":      if (P.A_SUPPORTED)        tests = arch64a;
         "arch64f":      if (P.F_SUPPORTED)        tests = arch64f;
         "arch64d":      if (P.D_SUPPORTED)        tests = arch64d;  
         "arch64f_fma":      if (P.F_SUPPORTED)        tests = arch64f_fma;
@@ -131,6 +132,7 @@ module testbench;
                           if (P.ZICSR_SUPPORTED)  tests = {arch32c, arch32cpriv};
                           else                   tests = {arch32c};
         "arch32m":      if (P.M_SUPPORTED)        tests = arch32m;
+        "arch32a":      if (P.A_SUPPORTED)        tests = arch32a;
         "arch32f":      if (P.F_SUPPORTED)        tests = arch32f;
         "arch32d":      if (P.D_SUPPORTED)        tests = arch32d;
         "arch32f_fma":      if (P.F_SUPPORTED)        tests = arch32f_fma;

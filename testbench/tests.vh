@@ -864,13 +864,11 @@ string imperas32f[] = '{
 
  string wally64a[] = '{
     `WALLYTEST,
-    "rv64i_m/privilege/src/WALLY-amo-01.S",
     "rv64i_m/privilege/src/WALLY-lrsc-01.S"
   };
 
  string wally32a[] = '{
     `WALLYTEST,
-    "rv32i_m/privilege/src/WALLY-amo-01.S",
     "rv32i_m/privilege/src/WALLY-lrsc-01.S"
  };
 
@@ -901,6 +899,20 @@ string imperas32f[] = '{
     `RISCVARCHTEST,
     "rv64i_m/Zifencei/src/Fencei.S"
     };
+
+  string arch32a[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/A/src/amoadd.w-01.S",
+    "rv32i_m/A/src/amoand.w-01.S",
+    "rv32i_m/A/src/amomax.w-01.S",
+    "rv32i_m/A/src/amomaxu.w-01.S",
+    "rv32i_m/A/src/amomin.w-01.S",
+    "rv32i_m/A/src/amominu.w-01.S",
+    "rv32i_m/A/src/amoor.w-01.S",
+    "rv32i_m/A/src/amoswap.w-01.S",
+    "rv32i_m/A/src/amoxor.w-01.S"
+    };
+
 
   string arch32zi[] = '{
     `RISCVARCHTEST,
@@ -971,6 +983,28 @@ string imperas32f[] = '{
     "rv64i_m/M/src/remuw-01.S",
     "rv64i_m/M/src/remw-01.S"
    };
+
+  string arch64a[] = '{
+    `RISCVARCHTEST,
+    "rv64i_m/A/src/amoadd.w-01.S",
+    "rv64i_m/A/src/amoand.w-01.S",
+    "rv64i_m/A/src/amomax.w-01.S",
+    "rv64i_m/A/src/amomaxu.w-01.S",
+    "rv64i_m/A/src/amomin.w-01.S",
+    "rv64i_m/A/src/amominu.w-01.S",
+    "rv64i_m/A/src/amoor.w-01.S",
+    "rv64i_m/A/src/amoswap.w-01.S",
+    "rv64i_m/A/src/amoxor.w-01.S",
+    "rv64i_m/A/src/amoadd.d-01.S",
+    "rv64i_m/A/src/amoand.d-01.S",
+    "rv64i_m/A/src/amomax.d-01.S",
+    "rv64i_m/A/src/amomaxu.d-01.S",
+    "rv64i_m/A/src/amomin.d-01.S",
+    "rv64i_m/A/src/amominu.d-01.S",
+    "rv64i_m/A/src/amoor.d-01.S",
+    "rv64i_m/A/src/amoswap.d-01.S",
+    "rv64i_m/A/src/amoxor.d-01.S"
+    };
 
   string arch64c[] = '{
     `RISCVARCHTEST,
@@ -1936,6 +1970,7 @@ string arch64zbs[] = '{
  
  string wally64priv[] = '{
     `WALLYTEST,
+    "rv64i_m/privilege/src/WALLY-minfo-01.S",
     "rv64i_m/privilege/src/WALLY-csr-permission-s-01.S",
     "rv64i_m/privilege/src/WALLY-cboz-01.S",
     "rv64i_m/privilege/src/WALLY-cbom-01.S",
