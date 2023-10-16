@@ -61,10 +61,11 @@ WRITE_READ_CSR mvendorid, 0xAAA
 WRITE_READ_CSR marchid, 0xAAA
 WRITE_READ_CSR mimpid, 0xAAA
 WRITE_READ_CSR mhartid, 0xAAA
-# WRITE_READ_CSR mconfigptr, 0xAAA # mconfigptr unimplemented in spike as of 31 Jan 22
+WRITE_READ_CSR mconfigptr, 0xAAA # mconfigptr unimplemented in spike as of 31 Jan 22
 
 # Machine Trap Setup
 WRITE_READ_CSR mstatus, 0xAAA
+WRITE_READ_CSR mstatush, 0xAAA
 WRITE_READ_CSR misa, 0xAAA
 WRITE_READ_CSR medeleg, 0xAAA
 WRITE_READ_CSR mideleg, 0xAAA
@@ -78,12 +79,12 @@ WRITE_READ_CSR mepc, 0xAAA
 WRITE_READ_CSR mcause, 0xAAA
 WRITE_READ_CSR mtval, 0xAAA
 WRITE_READ_CSR mip, 0xAAA
-# WRITE_READ_CSR mtinst, 0xAAA # *** these appear not to be implemented in GCC
-# WRITE_READ_CSR mtval2, 0xAAA
 
 # Machine Configuration
-# WRITE_READ_CSR menvcfg, 0xAAA # *** these appear not to be implemented in GCC
-# WRITE_READ_CSR mseccgf, 0xAAA
+WRITE_READ_CSR menvcfg, 0xAAA
+WRITE_READ_CSR menvcfgh, 0xAAA 
+WRITE_READ_CSR senvcfg, 0xAAA 
+WRITE_READ_CSR mseccfg, 0xAAA
 
 # Machine Memory Protection
 WRITE_READ_CSR pmpcfg0, 0xAAA
