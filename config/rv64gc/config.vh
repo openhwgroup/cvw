@@ -1,5 +1,5 @@
 //////////////////////////////////////////
-// wally-config.vh
+// config.vh
 //
 // Written: David_Harris@hmc.edu 4 January 2021
 // Modified: 
@@ -24,9 +24,6 @@
 // either express or implied. See the License for the specific language governing permissions 
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
-
-// include shared configuration
-// `include "wally-shared.vh"
 
 `include "BranchPredictorType.vh"
 

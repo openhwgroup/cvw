@@ -1,5 +1,5 @@
 //////////////////////////////////////////
-// wally-config.vh
+// config.vh
 //
 // Written: David_Harris@hmc.edu 4 January 2021
 // Modified: 
