@@ -24,6 +24,12 @@
 00000000
 00000bad
 00000000
+00000002 # S mode write to mconfigptr with illegal instruction
+00000000
+00000002 # S mode read from mconfigptr with illegal instruction
+00000000
+00000bad
+00000000
 00000002 # S mode write to mstatus with illegal instruction
 00000000
 00000002 # S mode read from mstatus with illegal instruction
@@ -93,6 +99,18 @@
 00000002 # S mode write to mip with illegal instruction
 00000000
 00000002 # S mode read from mip with illegal instruction
+00000000
+00000bad
+00000000
+00000002 # S mode write to menvcfg with illegal instruction
+00000000
+00000002 # S mode read from menvcfg with illegal instruction
+00000000
+00000bad
+00000000
+00000002 # S mode write to mseccfg with illegal instruction
+00000000
+00000002 # S mode read from mseccfg with illegal instruction
 00000000
 00000bad
 00000000

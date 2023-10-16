@@ -85,7 +85,7 @@ for test in tests64i:
   configs.append(tc)
 
 tests32gcimperas = ["imperas32i", "imperas32f", "imperas32m", "imperas32c"] # unused
-tests32gc = ["arch32f", "arch32d", "arch32f_fma", "arch32d_fma", "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32zi", "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "wally32a",  "wally32priv", "wally32periph"]  
+tests32gc = ["arch32f", "arch32d", "arch32f_fma", "arch32d_fma", "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32a", "arch32zi", "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "wally32a",  "wally32priv", "wally32periph"]  
 for test in tests32gc:
   tc = TestCase(
         name=test,
@@ -133,7 +133,7 @@ for test in ahbTests:
   configs.append(tc)
 
 tests64gc = ["arch64f", "arch64d", "arch64f_fma", "arch64d_fma", "arch64i", "arch64zba", "arch64zbb", "arch64zbc", "arch64zbs", 
-             "arch64priv", "arch64c",  "arch64m", "arch64zi", "wally64a", "wally64periph", "wally64priv"] 
+             "arch64priv", "arch64c",  "arch64m", "arch64a", "arch64zi", "wally64a", "wally64periph", "wally64priv"] 
 if (coverage):  # delete all but 64gc tests when running coverage
     configs = []
     tests64gc = ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m", 
