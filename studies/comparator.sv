@@ -27,7 +27,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
+`include "config.vh"
 
 // This comparator is best
 module comparator_dc_flip #(parameter WIDTH=64) (

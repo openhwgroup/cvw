@@ -1,2 +1,2 @@
-vsim -do "do wally.do rv64gc arch64d"
+vsim -do "do wally.do rv64gc wally64priv"
 
