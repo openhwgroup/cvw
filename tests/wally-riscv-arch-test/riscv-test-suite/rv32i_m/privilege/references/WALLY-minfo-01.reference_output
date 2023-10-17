@@ -6,4 +6,7 @@
 00000011 # confirm read-only permissions of mimpid
 00000002 # write to read-only CSR failed with illegal instruction
 00000011 # confirm read-only permissions of mhartid
+00000002 # write to read-only CSR failed with illegal instruction
+00000011 # confirm read-only permissions of mconfigptr
 0000000b # ecall from terminating tests in M mode
+

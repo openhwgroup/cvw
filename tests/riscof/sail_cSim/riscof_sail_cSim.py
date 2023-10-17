@@ -57,6 +57,8 @@ class sail_cSim(pluginTemplate):
             self.isa += 'i'
         if "M" in ispec["ISA"]:
             self.isa += 'm'
+        if "A" in ispec["ISA"]:
+            self.isa += 'a'
         if "C" in ispec["ISA"]:
             self.isa += 'c'
         if "F" in ispec["ISA"]:

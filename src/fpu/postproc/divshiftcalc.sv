@@ -24,7 +24,7 @@
 // License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
 // either express or implied. See the License for the specific language governing permissions 
 // and limitations under the License.
-////////////////////////////////////////////////////////////////////////////////////////////////`include "wally-config.vh"
+////////////////////////////////////////////////////////////////////////////////////////////////
 
 module divshiftcalc import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.DIVb:0]              DivQm,              // divsqrt significand

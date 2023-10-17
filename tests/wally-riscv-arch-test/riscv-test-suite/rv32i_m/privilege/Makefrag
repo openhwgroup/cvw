@@ -29,19 +29,18 @@
 
 rv32i_sc_tests = \
     WALLY-mmu-sv32 \
-    WALLY-pmp \
+    WALLY-pm-01 \
     WALLY-csr-permission-s-01 \
     WALLY-csr-permission-u-01 \
-    WALLY-minfo-01 \
     WALLY-misa-01 \
-    WALLY-amo \
-    WALLY-lrsc \
+    WALLY-lrsc-01 \
     WALLY-status-mie-01 \
     WALLY-trap-sret-01 \
 
 
 target_tests_nosim = \
-    WALLY-pma \
+    WALLY-pma-01 \
+    WALLY-minfo-01 \
     WALLY-mtvec-01 \
     WALLY-stvec-01 \
     WALLY-mie-01 \

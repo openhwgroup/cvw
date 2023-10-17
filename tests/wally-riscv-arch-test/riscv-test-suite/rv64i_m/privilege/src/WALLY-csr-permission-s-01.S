@@ -45,7 +45,7 @@ WRITE_READ_CSR mvendorid, 0x111
 WRITE_READ_CSR marchid, 0x111
 WRITE_READ_CSR mimpid, 0x111
 WRITE_READ_CSR mhartid, 0x111
-# WRITE_READ_CSR mconfigptr, 0x111 # mconfigptr unimplemented in spike as of 31 Jan 22
+WRITE_READ_CSR mconfigptr, 0x111 # mconfigptr unimplemented in spike as of 31 Jan 22
 
 # Machine Trap Setup
 WRITE_READ_CSR mstatus, 0x111
@@ -62,12 +62,10 @@ WRITE_READ_CSR mepc, 0x111
 WRITE_READ_CSR mcause, 0x111
 WRITE_READ_CSR mtval, 0x111
 WRITE_READ_CSR mip, 0x111
-# WRITE_READ_CSR mtinst, 0x111 # *** these appear not to be implemented in GCC
-# WRITE_READ_CSR mtval2, 0x111
 
 # Machine Configuration
-# WRITE_READ_CSR menvcfg, 0x111 # *** these appear not to be implemented in GCC
-# WRITE_READ_CSR mseccgf, 0x111
+WRITE_READ_CSR menvcfg, 0x111
+WRITE_READ_CSR mseccfg, 0x111
 
 # Machine Memory Protection
 WRITE_READ_CSR pmpcfg0, 0x111
