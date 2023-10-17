@@ -205,7 +205,7 @@ always @(posedge clock)
     reset_sync <= {reset_sync[1:0], !async_resetn};
 
 reg [7:0] clock_cnt;
-reg clock_state;
+(* mark_debug = "true" *)   reg clock_state;
 (* mark_debug = "true" *) reg clock_posedge;
 reg clock_data_in;
 wire fifo_almost_full;
@@ -265,7 +265,7 @@ wire sd_dat_oe;
 // IOBUF IOBUF_dat2 (.O(sd_dat_i[2]), .IO(sdio_dat[2]), .I(sd_dat_reg_o[2]), .T(sd_dat_reg_t));
 // IOBUF IOBUF_dat3 (.O(sd_dat_i[3]), .IO(sdio_dat[3]), .I(sd_dat_reg_o[3]), .T(sd_dat_reg_t));
 
-always @(negedge clock) begin
+always @(negedge sdio_clk) begin
     // Output data delayed by 1/2 clock cycle (5ns) to ensure
     // required hold time: default speed - min 5ns, high speed - min 2ns (actual 5ns)
     if (sdio_reset) begin

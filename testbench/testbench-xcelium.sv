@@ -265,9 +265,7 @@ module testbench;
       // declare memory labels that interest us, the updateProgramAddrLabelArray task will find 
       // the addr of each label and fill the array. To expand, add more elements to this array 
       // and initialize them to zero (also initilaize them to zero at the start of the next test)
-      if(!P.FPGA) begin
-        updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
-      end
+      updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
     end
     
   ////////////////////////////////////////////////////////////////////////////////
@@ -361,21 +359,21 @@ module testbench;
   ////////////////////////////////////////////////////////////////////////////////
   // load memories with program image
   ////////////////////////////////////////////////////////////////////////////////
-  if (P.FPGA) `define TB_FPGA  // this is a gross hack for xcelium and verilator
+  if (P.SDC_SUPPORTED) `define TB_SDC_SUPPORTED  // this is a gross hack for xcelium and verilator
   if (P.IROM_SUPPORTED) `define TB_IROM_SUPPORTED
   if (P.DTIM_SUPPORTED) `define TB_DTIM_SUPPORTED
   if (P.BUS_SUPPORTED) `define TB_BUS_SUPPORTED
   always @(posedge clk) begin
     if (LoadMem) begin
-      if (P.FPGA) begin
-      `ifdef TB_FPGA
+      if (P.SDC_SUPPORTED) begin
+      `ifdef TB_SDC_SUPPORTED
         string romfilename, sdcfilename;
         romfilename = {"../tests/custom/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
         sdcfilename = {"../testbench/sdc/ramdisk2.hex"};   
-        $readmemh(romfilename, dut.uncore.uncore.bootrom.bootrom.memory.ROM);
-        $readmemh(sdcfilename, sdcard.sdcard.FLASHmem);
+        //$readmemh(romfilename, dut.uncore.uncore.bootrom.bootrom.memory.ROM);
+        //$readmemh(sdcfilename, sdcard.sdcard.FLASHmem);
         // shorten sdc timers for simulation
-        dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
+        //dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
       `endif
       end
       else if (P.IROM_SUPPORTED) begin

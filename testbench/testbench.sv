@@ -37,9 +37,9 @@ module testbench;
   parameter DEBUG=0;
   parameter TEST="none";
   parameter PrintHPMCounters=1;
-  parameter BPRED_LOGGER=0;
-  parameter I_CACHE_ADDR_LOGGER=0;
-  parameter D_CACHE_ADDR_LOGGER=0;
+  parameter BPRED_LOGGER=1;
+  parameter I_CACHE_ADDR_LOGGER=1;
+  parameter D_CACHE_ADDR_LOGGER=1;
  
 `include "parameter-defs.vh"
 
@@ -98,6 +98,7 @@ module testbench;
                           if (P.ZICSR_SUPPORTED)  tests = {arch64c, arch64cpriv};
                           else                   tests = {arch64c};
         "arch64m":      if (P.M_SUPPORTED)        tests = arch64m;
+        "arch64a":      if (P.A_SUPPORTED)        tests = arch64a;
         "arch64f":      if (P.F_SUPPORTED)        tests = arch64f;
         "arch64d":      if (P.D_SUPPORTED)        tests = arch64d;  
         "arch64f_fma":      if (P.F_SUPPORTED)        tests = arch64f_fma;
@@ -131,6 +132,7 @@ module testbench;
                           if (P.ZICSR_SUPPORTED)  tests = {arch32c, arch32cpriv};
                           else                   tests = {arch32c};
         "arch32m":      if (P.M_SUPPORTED)        tests = arch32m;
+        "arch32a":      if (P.A_SUPPORTED)        tests = arch32a;
         "arch32f":      if (P.F_SUPPORTED)        tests = arch32f;
         "arch32d":      if (P.D_SUPPORTED)        tests = arch32d;
         "arch32f_fma":      if (P.F_SUPPORTED)        tests = arch32f_fma;
@@ -260,9 +262,7 @@ module testbench;
       // declare memory labels that interest us, the updateProgramAddrLabelArray task will find 
       // the addr of each label and fill the array. To expand, add more elements to this array 
       // and initialize them to zero (also initilaize them to zero at the start of the next test)
-      if(!P.FPGA) begin
-        updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
-      end
+      updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
     end
     
   ////////////////////////////////////////////////////////////////////////////////
@@ -344,14 +344,14 @@ module testbench;
   ////////////////////////////////////////////////////////////////////////////////
   always @(posedge clk) begin
     if (LoadMem) begin
-      if (P.FPGA) begin
+      if (P.SDC_SUPPORTED) begin
         string romfilename, sdcfilename;
         romfilename = {"../tests/custom/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
         sdcfilename = {"../testbench/sdc/ramdisk2.hex"};   
-        $readmemh(romfilename, dut.uncore.uncore.bootrom.bootrom.memory.ROM);
-        $readmemh(sdcfilename, sdcard.sdcard.FLASHmem);
+        //$readmemh(romfilename, dut.uncore.uncore.bootrom.bootrom.memory.ROM);
+        //$readmemh(sdcfilename, sdcard.sdcard.FLASHmem);
         // shorten sdc timers for simulation
-        dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
+        //dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
       end 
       else if (P.IROM_SUPPORTED)     $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
       else if (P.BUS_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
@@ -377,7 +377,7 @@ module testbench;
     assign {HRESPEXT, HRDATAEXT} = '0;
   end
 
-  if(P.FPGA) begin : sdcard
+  if(P.SDC_SUPPORTED) begin : sdcard
     // *** fix later
 /* -----\/----- EXCLUDED -----\/-----
     sdModel sdcard
@@ -395,7 +395,7 @@ module testbench;
     assign SDCIntr = '0;
   end
 
-  wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
+  wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
     .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
     .UARTSin, .UARTSout, .SDCIntr); 

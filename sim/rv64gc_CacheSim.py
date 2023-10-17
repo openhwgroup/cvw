@@ -52,6 +52,8 @@ tests64gc = ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m",
              "arch64zi", "wally64a", "wally64periph", "wally64priv", 
              "arch64zba",  "arch64zbb",  "arch64zbc",  "arch64zbs", 
              "imperas64f", "imperas64d", "imperas64c", "imperas64i"]
+# arch64i is the most interesting case.  Uncomment line below to run just that case
+tests64gc = ["arch64i"]
 
 cachetypes = ["ICache", "DCache"]
 simdir = os.path.expanduser("~/cvw/sim")

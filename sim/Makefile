@@ -49,6 +49,7 @@ clean:
 riscoftests: 
 # 	Builds riscv-arch-test 64 and 32-bit versions and builds wally-riscv-arch-test 64 and 32-bit versions
 	make -C ../tests/riscof/ 
+	
 memfiles:
 	make -f makefile-memfile wally-sim-files --jobs
 

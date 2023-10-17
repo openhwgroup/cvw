@@ -51,6 +51,8 @@ module alu import cvw::*; #(parameter cvw_t P, parameter WIDTH) (
   logic             Asign, Bsign;                                                 // Sign bits of A, B
 
   // Addition
+  // CondMaskB is B for add/sub, or a masked version of B for certain bit manipulation instructions
+  // CondShiftA is A for add/sub or a shifted version of A for shift-and-add BMU instructions
   assign CondMaskInvB = SubArith ? ~CondMaskB : CondMaskB;
   assign {Carry, Sum} = CondShiftA + CondMaskInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
