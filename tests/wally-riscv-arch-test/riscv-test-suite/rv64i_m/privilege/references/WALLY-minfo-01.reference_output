@@ -14,5 +14,9 @@
 00000000
 00000011 # confirm read-only permissions of mhartid
 00000000
+00000002 # write to read-only CSR failed with illegal instruction
+00000000
+00000011 # confirm read-only permissions of mconfigptr
+00000000
 0000000b # ecall from terminating tests in M mode
 00000000

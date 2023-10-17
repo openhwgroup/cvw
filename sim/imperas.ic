@@ -14,8 +14,14 @@
 --override cpu/add_implicit_Extensions=B 
 --override cpu/bitmanip_version=1.0.0
 
-# ????
+# More extensions
 --override cpu/Zicbom=T
+--override cpu/Zicbop=T
+--override cpu/Zicboz=T
+--override cpu/Svpbmt=T
+# 64 KiB continuous huge pages supported
+--override cpu/Svnapot_page_mask=1<<16
+
 
 #  clarify
 #--override refRoot/cpu/mtvec_sext=F
