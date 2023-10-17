@@ -110,8 +110,14 @@
 00000002 # S mode write to mhartid with illegal instruction
 00000002 # S mode read from mhartid with illegal instruction
 00000bad
+00000002 # S mode write to mconfigptr with illegal instruction
+00000002 # S mode read from mconfigptr with illegal instruction
+00000bad
 00000002 # S mode write to mstatus with illegal instruction
 00000002 # S mode read from mstatus with illegal instruction
+00000bad
+00000002 # S mode write to mstatush with illegal instruction
+00000002 # S mode read from mstatush with illegal instruction
 00000bad
 00000002 # S mode write to misa with illegal instruction
 00000002 # S mode read from misa with illegal instruction
@@ -145,6 +151,15 @@
 00000bad
 00000002 # S mode write to mip with illegal instruction
 00000002 # S mode read from mip with illegal instruction
+00000bad
+00000002 # S mode write to menvcfg with illegal instruction
+00000002 # S mode read from menvcfg with illegal instruction
+00000bad
+00000002 # S mode write to menvcfgh with illegal instruction
+00000002 # S mode read from menvcfgh with illegal instruction
+00000bad
+00000002 # S mode write to mseccfg with illegal instruction
+00000002 # S mode read from mseccfg with illegal instruction
 00000bad
 00000002 # S mode write to pmpcfg0 with illegal instruction
 00000002 # S mode read from pmpcfg0 with illegal instruction
