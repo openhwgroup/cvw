@@ -380,8 +380,10 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     assign SampleEdge = SckMode[0] ? (state == ACTIVE_1) : (state == ACTIVE_0);
     assign TransmitDataEndian =  Format[2] ? {TransmitData[0], TransmitData[1], TransmitData[2], TransmitData[3], TransmitData[4], TransmitData[5], TransmitData[6], TransmitData[7]} : TransmitData[7:0];
 
-    TransmitFIFO #(3,8) txFIFO(PCLK, SCLKDuty, PRESETn, TransmitFIFOWriteIncrementDelay, TransmitFIFOReadIncrement, TransmitDataEndian,TransmitWriteWatermarkLevel, TransmitWatermark[2:0], TransmitFIFOReadData[7:0], TransmitFIFOWriteFull, TransmitFIFOReadEmpty, TransmitWriteMark, TransmitReadMark);
-    ReceiveFIFO #(3,8) rxFIFO(SCLKDuty, PCLK, PRESETn, ReceiveFIFOWriteIncrement, ReceiveFIFOReadIncrement, ReceiveShiftRegEndian, ReceiveWatermark[2:0], ReceiveReadWatermarkLevel, ReceiveData[7:0], ReceiveFIFOWriteFull, ReceiveFIFOReadEmpty, RecieveWriteMark, RecieveReadMark);
+    //TransmitFIFO #(3,8) txFIFO(PCLK, SCLKDuty, PRESETn, TransmitFIFOWriteIncrementDelay, TransmitFIFOReadIncrement, TransmitDataEndian,TransmitWriteWatermarkLevel, TransmitWatermark[2:0], TransmitFIFOReadData[7:0], TransmitFIFOWriteFull, TransmitFIFOReadEmpty, TransmitWriteMark, TransmitReadMark);
+    TransmitSynchFIFO #(3,8) txFIFO(PCLK, SCLKDuty, PRESETn, TransmitFIFOWriteIncrementDelay, TransmitFIFOReadIncrement, TransmitDataEndian, TransmitWriteWatermarkLevel, TransmitWatermark[2:0], TransmitFIFOReadData[7:0], TransmitFIFOWriteFull, TransmitFIFOReadEmpty, TransmitWriteMark, TransmitReadMark);
+    //ReceiveFIFO #(3,8) rxFIFO(SCLKDuty, PCLK, PRESETn, ReceiveFIFOWriteIncrement, ReceiveFIFOReadIncrement, ReceiveShiftRegEndian, ReceiveWatermark[2:0], ReceiveReadWatermarkLevel, ReceiveData[7:0], ReceiveFIFOWriteFull, ReceiveFIFOReadEmpty, RecieveWriteMark, RecieveReadMark);
+    ReceiveSynchFIFO #(3,8) rxFIFO(PCLK, SCLKDuty, PRESETn, ReceiveFIFOWriteIncrement, ReceiveFIFOReadIncrement, ReceiveShiftRegEndian, ReceiveWatermark[2:0], ReceiveReadWatermarkLevel, ReceiveData[7:0], ReceiveFIFOWriteFull, ReceiveFIFOReadEmpty, RecieveWriteMark, RecieveReadMark);
 
     TransmitShiftFSM TransmitShiftFSM_1 (PCLK, PRESETn, TransmitFIFOReadEmpty, ReceivePenultimateFrameBoolean, Active0, TransmitShiftEmpty);
     ReceiveShiftFSM ReceiveShiftFSM_1 (PCLK, PRESETn, SCLKDuty, ReceivePenultimateFrameBoolean, SampleEdge, SckMode[0], ReceiveShiftFull);
@@ -497,9 +499,9 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
 
 
 endmodule
-/*
-module TransmitSynchFIFO #(parameter M =3 , N= 8(
-    input logic PCLK, wen, ren, PRESETn,
+
+module TransmitSynchFIFO #(parameter M =3 , N= 8)(
+    input logic PCLK, ren, PRESETn,
     input logic winc,rinc,
     input logic [N-1:0] wdata,
     input logic [M-1:0] wwatermarklevel, rwatermarklevel,
@@ -509,22 +511,99 @@ module TransmitSynchFIFO #(parameter M =3 , N= 8(
 
     logic [N-1:0] mem[2**M];
     logic [M:0] rptr, wptr;
-    logic [M:0] wbin, wbinnext;
-    logic [M:0] rbin, rbinnext;
+    logic [M:0] rptrnext, wptrnext;
     logic rempty_val;
     logic wfull_val;
     logic [M-1:0] raddr;
     logic [M-1:0] waddr;
 
     assign rdata = mem[raddr];
+    always_ff @(posedge PCLK)
+        if (winc & ~wfull) mem[waddr] <= wdata;
 
-    always_ff @(posedge wclkc, negedge PRESETn)
-        if (~PRESETn) begin
-            
+    always_ff @(posedge PCLK, negedge PRESETn)
+        if (~PRESETn) rptr <= 0;
+        else if (ren) rptr <= rptrnext;
+    
+
+    assign raddr = rptr[M-1:0];
+    assign rptrnext = rptr + {3'b0, (rinc & ~rempty)};      
+
 
     
-)
-*/
+    always_ff @(posedge PCLK, negedge PRESETn)
+        if (~PRESETn) wptr <= 0;
+        else wptr <= wptrnext;
+
+    assign waddr = wptr[M-1:0];
+    assign wwatermark = ((wptr[M-1:0] - rptr[M-1:0]) > wwatermarklevel);
+    assign wptrnext = wptr + {3'b0, (winc & ~wfull)};
+
+    assign rempty_val = (wptr == rptrnext);
+    assign wfull_val = ({~wptrnext[M], wptrnext[M-1:0]} == rptr);
+
+    assign rwatermark = ((rptr[M-1:0] - wptr[M-1:0]) < rwatermarklevel);
+
+    always_ff @(posedge PCLK, negedge PRESETn)
+        if (~PRESETn) wfull <= 1'b0;
+        else          wfull <= wfull_val;
+
+    always_ff @(posedge PCLK, negedge PRESETn)
+        if (~PRESETn) rempty <= 1'b1;
+        else if (ren)         rempty <= rempty_val;
+
+
+endmodule
+
+
+module ReceiveSynchFIFO #(parameter M =3 , N= 8)(
+    input logic PCLK, ren, PRESETn,
+    input logic winc,rinc,
+    input logic [N-1:0] wdata,
+    input logic [M-1:0] wwatermarklevel, rwatermarklevel,
+    output logic [N-1:0] rdata,
+    output logic wfull, rempty,
+    output logic wwatermark, rwatermark);
+
+    logic [N-1:0] mem[2**M];
+    logic [M:0] rptr, wptr;
+    logic [M:0] rptrnext, wptrnext;
+    logic rempty_val;
+    logic wfull_val;
+    logic [M-1:0] raddr;
+    logic [M-1:0] waddr;
+
+    assign rdata = mem[raddr];
+    always_ff @(posedge PCLK)
+        if(winc & ~wfull & PCLK) mem[waddr] <= wdata;
+    always_ff @(posedge PCLK, negedge PRESETn)
+        if (~PRESETn) rptr <= 0;
+        else rptr <= rptrnext;
+    assign rwatermark = ((rptr[M-1:0] - wptr[M-1:0]) < rwatermarklevel);
+    assign raddr = rptr[M-1:0];
+    assign rptrnext = rptr + {3'b0, (rinc & ~rempty)};
+    assign rempty_val = (wptr == rptrnext);
+
+    always_ff @(posedge PCLK, negedge PRESETn)
+        if (~PRESETn) rempty <= 1'b1;
+        else rempty <= rempty_val;
+
+    always_ff @(posedge PCLK, negedge PRESETn)
+        if (~PRESETn) wptr <= 0;
+        else if (ren) wptr <= wptrnext;
+
+    assign waddr = wptr[M-1:0];
+    assign wwatermark = ((wptr[M-1:0] - rptr[M-1:0]) > wwatermarklevel);
+    assign wptrnext = wptr + {3'b0, (winc & ~wfull)};
+
+    assign wfull_val = ({~wptrnext[M], wptrnext[M-1:0]} == rptr);
+
+    always_ff @(posedge PCLK, negedge PRESETn)
+        if (~PRESETn) wfull <= 1'b0;
+        else if (ren) wfull <= wfull_val;
+    
+endmodule
+
 module TransmitFIFO #(parameter M = 3, N = 8)(
     input logic wclk, rclk, PRESETn,
     input logic winc,rinc,
