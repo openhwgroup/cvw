@@ -156,7 +156,7 @@ module testbench;
     end
     if (tests.size() == 0) begin
       $display("TEST %s not supported in this configuration", TEST);
-      $stop;
+      //$stop;
     end
   end // initial begin
 
