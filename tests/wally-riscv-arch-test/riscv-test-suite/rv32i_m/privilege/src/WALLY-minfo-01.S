@@ -24,7 +24,7 @@
 #include "WALLY-TEST-LIB-32.h"
 
 RVTEST_ISA("RV32I_Zicsr")
-RVTEST_CASE(0,"//check ISA:=regex(.*32.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;",minfo)
+RVTEST_CASE(0,"//check ISA:=regex(.*32.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True; def NO_SAIL=True;",minfo)
 
 INIT_TESTS
 
@@ -35,7 +35,7 @@ CSR_R_ACCESS mvendorid
 CSR_R_ACCESS marchid 
 CSR_R_ACCESS mimpid 
 CSR_R_ACCESS mhartid 
-# CSR_R_ACCESS mconfigptr # Unimplemented in spike as of 31 Jan 22
+CSR_R_ACCESS mconfigptr 
 
 END_TESTS
 

@@ -28,15 +28,13 @@
 # Description: Makefrag for RV64I architectural tests
 
 rv64i_sc_tests = \
-    WALLY-mmu-sv39 \
-    WALLY-mmu-sv48 \
-    WALLY-pmp \
-    WALLY-minfo-01 \
+    WALLY-mmu-sv39-01 \
+    WALLY-mmu-sv48-01 \
+    WALLY-pmp-01 \
     WALLY-csr-permission-s-01 \
     WALLY-csr-permission-u-01 \
     WALLY-misa-01 \
-    WALLY-amo \
-    WALLY-lrsc \
+    WALLY-lrsc-01 \
     WALLY-trap-sret-01 \
     WALLY-status-mie-01 \
     WALLY-status-sie-01 \
@@ -45,8 +43,9 @@ rv64i_sc_tests = \
 
 # Don't simulate these because they rely on SoC features that Spike does not offer.
 target_tests_nosim = \
-    WALLY-pma \
-    WALLY-periph \
+    WALLY-pma-01 \
+    WALLY-minfo-01 \
+    WALLY-periph-01 \
     WALLY-mtvec-01 \
     WALLY-stvec-01 \
     WALLY-mie-01 \
@@ -62,7 +61,11 @@ target_tests_nosim = \
     WALLY-cbom-01 \
     WALLY-cboz-01 \
 
+
 # unclear why status-fp-enabled and wfi aren't simulating ok
+# DH 10/9/23: minfo needs Privileged Spec 1.12 for the mconfigptr register, but 
+#   we don't have the right ISA string so it's compiling at 1.11
+#   and Sail throws an illegal instruction exception on csrr mconfigptr
 
 rv64i_tests = $(addsuffix .elf, $(rv64i_sc_tests))
 
