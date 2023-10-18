@@ -62,13 +62,19 @@ sed -i "81s/IDIV_ON_FPU.*/IDIV_ON_FPU = 0;/" $WALLY/config/rv32gc/config.vh
 
 # Synthesize Integer Divider
 synthIntDiv () {
-
+make -C $WALLY/synthDC synth DESIGN=div TECH=tsmc28 CONFIG=rv32gc FREQ=3000 WRAPPER=1 TITLE=$(getTitle)
+make -C $WALLY/synthDC synth DESIGN=div TECH=tsmc28 CONFIG=rv64gc FREQ=3000 WRAPPER=1 TITLE=$(getTitle)
+make -C $WALLY/synthDC synth DESIGN=div TECH=tsmc28 CONFIG=rv32gc FREQ=100 WRAPPER=1 TITLE=$(getTitle)
+make -C $WALLY/synthDC synth DESIGN=div TECH=tsmc28 CONFIG=rv64gc FREQ=100 WRAPPER=1 TITLE=$(getTitle)
 }
 
 # Synthesize FP Divider Unit
 
 synthFPDiv () {
-
+make -C $WALLY/synthDC synth DESIGN=drsu TECH=tsmc28 CONFIG=rv32gc FREQ=3000 WRAPPER=1 TITLE=$(getTitle)
+make -C $WALLY/synthDC synth DESIGN=drsu TECH=tsmc28 CONFIG=rv64gc FREQ=3000 WRAPPER=1 TITLE=$(getTitle)
+make -C $WALLY/synthDC synth DESIGN=drsu TECH=tsmc28 CONFIG=rv32gc FREQ=100 WRAPPER=1 TITLE=$(getTitle)
+make -C $WALLY/synthDC synth DESIGN=drsu TECH=tsmc28 CONFIG=rv64gc FREQ=100 WRAPPER=1 TITLE=$(getTitle)
 }
 
 # forms title for synthesis
@@ -77,4 +83,6 @@ RADIX=$(sed -n "157p" $WALLY/config/rv64gc/config.vh | tail -c 3 | head -c 1)
 K=$(sed -n "158p" $WALLY/config/rv64gc/config.vh | tail -c 3 | head -c 1)
 IDIV=$(sed -n "81p" $WALLY/config/rv64gc/config.vh | tail -c 3 | head -c 1)
 IDIVBITS=$(sed -n "80p" $WALLY/config/rv64gc/config.vh | tail -c 3 | head -c 1)
+title="RADIX_${RADIX}_K_${K}_INTDIV_${IDIV}_IDIVBITS_${IDIVBITS}"
+echo $title
 }
