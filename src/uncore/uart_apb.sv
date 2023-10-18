@@ -54,31 +54,9 @@ module uart_apb import cvw::*; #(parameter cvw_t P) (
   assign MEMRb    = ~memread;
   assign MEMWb    = ~memwrite;
 
-  if (P.XLEN == 64) begin:uart
-    always_comb begin
-      PRDATA = {Dout, Dout, Dout, Dout, Dout, Dout, Dout, Dout};
-      case (entry)
-        3'b000: Din = PWDATA[7:0];
-        3'b001: Din = PWDATA[15:8];
-        3'b010: Din = PWDATA[23:16];
-        3'b011: Din = PWDATA[31:24];
-        3'b100: Din = PWDATA[39:32];
-        3'b101: Din = PWDATA[47:40];
-        3'b110: Din = PWDATA[55:48];
-        3'b111: Din = PWDATA[63:56];
-      endcase 
-    end 
-  end else begin:uart // 32-bit
-    always_comb begin
-      PRDATA = {Dout, Dout, Dout, Dout};
-      case (entry[1:0])
-        2'b00: Din = PWDATA[7:0];
-        2'b01: Din = PWDATA[15:8];
-        2'b10: Din = PWDATA[23:16];
-        2'b11: Din = PWDATA[31:24];
-      endcase
-    end
-  end
+  assign Din = PWDATA[7:0]; 
+  if (P.XLEN == 64) assign PRDATA = {Dout, Dout, Dout, Dout, Dout, Dout, Dout, Dout};
+  else              assign PRDATA = {Dout, Dout, Dout, Dout};   
   
   logic BAUDOUTb;  // loop tx clock BAUDOUTb back to rx clock RCLK
   uartPC16550D #(P.UART_PRESCALE) u(  

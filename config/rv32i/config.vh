@@ -36,7 +36,7 @@ localparam XLEN = 32'd32;
 localparam IEEE754 = 0;
 
 // I
-localparam MISA = (32'h00000104);
+localparam MISA = (32'h00000100);
 localparam ZICSR_SUPPORTED = 0;
 localparam ZIFENCEI_SUPPORTED = 0;
 localparam COUNTERS = 0;

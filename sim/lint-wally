@@ -16,7 +16,7 @@ done
 echo "All lints run with no errors or warnings"
 
 # --lint-only just runs lint rather than trying to compile and simulate
-# -I points to the include directory where files such as `include wally-config.vh  are found
+# -I points to the include directory where files such as `include config.vh  are found
 
 # For more exhaustive (and sometimes spurious) warnings, add --Wall to the Verilator command
 # Unfortunately, this produces a bunch of UNUSED and UNDRIVEN signal warnings in blocks that are configured to not exist.
