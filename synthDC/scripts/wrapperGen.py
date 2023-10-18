@@ -43,7 +43,7 @@ index=0
 
 # string copy logic
 for l in lines:
-    if l.find("module") == 0:
+    if l.lstrip().find("module") == 0:
         lineModuleStart = index
         moduleName = l.split()[1]
         writeBuf = True
@@ -51,7 +51,7 @@ for l in lines:
         continue
     if (writeBuf):
         buf += l
-    if l.find (");") == 0:
+    if l.lstrip().find (");") == 0:
         lineModuleEnd = index
         break
     index+=1
