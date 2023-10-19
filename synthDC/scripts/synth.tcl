@@ -24,17 +24,19 @@ set hdl_src "../src"
 set saifpower $::env(SAIFPOWER)
 set maxopt $::env(MAXOPT)
 set drive $::env(DRIVE)
-set wrapper $::env(WRAPPER)
 
 eval file copy -force [glob ${cfg}/*.vh] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/cvw.sv] {$outputDir/hdl/}
-#eval file copy -force [glob ${hdl_src}/../fpga/src/wallypipelinedsocwrapper.sv] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/*.sv] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/*/*.sv] {$outputDir/hdl/}
-if {$wrapper ==1 } {
+
+# Check if a wrapper is needed (when cvw_t parameters are used)
+set wrapper 0
+if {[eval exec grep "cvw_t" {$outputDir/hdl/$::env(DESIGN).sv}] ne ""} {
+    set wrapper 1
+	exec python3 $::env(WALLY)/synthDC/scripts/wrapperGen.py $::env(DESIGN)
     eval file copy -force [glob ${hdl_src}/../synthDC/wrappers/$::env(DESIGN)wrapper.sv] {$outputDir/hdl/}
 }
-
 
 # Only for FMA class project; comment out when done
 # eval file copy -force [glob ${hdl_src}/fma/fma16.v] {hdl/}
