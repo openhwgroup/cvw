@@ -24,17 +24,19 @@ set hdl_src "../src"
 set saifpower $::env(SAIFPOWER)
 set maxopt $::env(MAXOPT)
 set drive $::env(DRIVE)
-set wrapper $::env(WRAPPER)
 
 eval file copy -force [glob ${cfg}/*.vh] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/cvw.sv] {$outputDir/hdl/}
-#eval file copy -force [glob ${hdl_src}/../fpga/src/wallypipelinedsocwrapper.sv] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/*.sv] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/*/*.sv] {$outputDir/hdl/}
-if {$wrapper ==1 } {
+
+# Check if a wrapper is needed (when cvw_t parameters are used)
+set wrapper 0
+if {[eval exec grep "cvw_t" {$outputDir/hdl/$::env(DESIGN).sv}] ne ""} {
+    set wrapper 1
+	exec python3 $::env(WALLY)/synthDC/scripts/wrapperGen.py $::env(DESIGN)
     eval file copy -force [glob ${hdl_src}/../synthDC/wrappers/$::env(DESIGN)wrapper.sv] {$outputDir/hdl/}
 }
-
 
 # Only for FMA class project; comment out when done
 # eval file copy -force [glob ${hdl_src}/fma/fma16.v] {hdl/}
@@ -53,6 +55,7 @@ if { $wrapper == 1 } {
 } else {
     set my_toplevel $::env(DESIGN)
 }
+set my_design $::env(DESIGN)
 
 # Set number of significant digits
 set report_default_significant_digits 6
@@ -238,6 +241,12 @@ set write_rep  1	;# generates estimated area and timing report
 set write_cst  1        ;# generate report of constraints
 set write_hier 1        ;# generate hierarchy report
 
+# Report on DESIGN, not wrapper.  However, design has a suffix for the parameters.
+if { $wrapper == 1 } {
+    set designname [format "%s%s" $my_design "__*"]
+    current_design $designname
+} 
+
 # Report Constraint Violators
 set filename [format "%s%s" $outputDir "/reports/constraint_all_violators.rpt"]
 redirect $filename {report_constraint -all_violators}
@@ -246,16 +255,16 @@ redirect $filename {report_constraint -all_violators}
 redirect $outputDir/reports/check_design.rpt { check_design }
 
 # Report Final Netlist (Hierarchical)
-set filename [format "%s%s%s%s" $outputDir "/mapped/" $my_toplevel ".sv"]
+set filename [format "%s%s%s%s" $outputDir "/mapped/" $my_design ".sv"]
 write_file -f verilog -hierarchy -output $filename
 
-set filename [format "%s%s%s%s" $outputDir "/mapped/" $my_toplevel ".sdc"]
+set filename [format "%s%s%s%s" $outputDir "/mapped/" $my_design ".sdc"]
 write_sdc $filename
 
-set filename [format "%s%s%s%s" $outputDir  "/mapped/" $my_toplevel ".ddc"]
+set filename [format "%s%s%s%s" $outputDir  "/mapped/" $my_design ".ddc"]
 write_file -format ddc -hierarchy -o $filename
 
-set filename [format "%s%s%s%s" $outputDir "/mapped/" $my_toplevel ".sdf"]
+set filename [format "%s%s%s%s" $outputDir "/mapped/" $my_design ".sdf"]
 write_sdf $filename
 
 # QoR
