@@ -7,7 +7,7 @@ import argparse
 
 def runSynth(config, mod, tech, freq, maxopt, usesram):
     global pool
-    command = "make synth DESIGN=wallypipelinedcore CONFIG={} MOD={} TECH={} DRIVE=FLOP FREQ={} MAXOPT={} USESRAM={} MAXCORES=1 WRAPPER=1".format(config, mod, tech, freq, maxopt, usesram)
+    command = "make synth DESIGN=wallypipelinedcore CONFIG={} MOD={} TECH={} DRIVE=FLOP FREQ={} MAXOPT={} USESRAM={} MAXCORES=1".format(config, mod, tech, freq, maxopt, usesram)
     pool.map(mask, [command])
 
 def mask(command):
