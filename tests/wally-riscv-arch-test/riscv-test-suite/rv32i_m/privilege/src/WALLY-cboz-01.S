@@ -17,7 +17,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # -----------
 #
-# This assembly file tests the cbo.inval, cbo.clean, and cbo.flush instructions of the RISC-V Zicbom extension.
+# This assembly file tests the cbo.zero instruction of the RISC-V Zicboz extension.
 # 
 
 #include "model_test.h"
