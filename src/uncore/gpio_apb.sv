@@ -59,14 +59,9 @@ module gpio_apb import cvw::*;  #(parameter cvw_t P) (
 
   // account for subword read/write circuitry
   // -- Note GPIO registers are 32 bits no matter what; access them with LW SW.
-  //    (At least that's what I think when FE310 spec says "only naturally aligned 32-bit accesses are supported")
-  if (P.XLEN == 64) begin
-    assign Din    = entry[2] ? PWDATA[63:32] : PWDATA[31:0];
-    assign PRDATA = entry[2] ? {Dout,32'b0}  : {32'b0,Dout};
-  end else begin // 32-bit
-    assign Din    = PWDATA[31:0];
-    assign PRDATA = Dout;
-  end
+  assign Din = PWDATA[31:0]; 
+  if (P.XLEN == 64) assign PRDATA = {Dout, Dout}; 
+  else              assign PRDATA = Dout;    
 
   // register access
   always_ff @(posedge PCLK, negedge PRESETn)
