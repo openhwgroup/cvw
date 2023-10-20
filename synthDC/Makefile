@@ -17,11 +17,9 @@ export TECH ?= sky90
 export MAXCORES ?= 1
 # MAXOPT turns on flattening, boundary optimization, and retiming
 # The output netlist is hard to interpret, but significantly better PPA
-# WRAPPER turns on wrapper generation
 export MAXOPT ?= 0
 export DRIVE ?= FLOP
 export USESRAM ?= 0
-export WRAPPER ?= 0
 
 
 time := $(shell date +%F-%H-%M)
@@ -120,11 +118,6 @@ ifeq ($(SAIFPOWER), 1)
 	cp -f ../sim/power.saif .
 endif
 
-
-mkwrapper:
-ifeq ($(WRAPPER),1)
-	python3 $(WALLY)/synthDC/scripts/wrapperGen.py $(DESIGN)
-endif
 mkdirecs:
 	@echo "DC Synthesis"
 	@mkdir -p $(OUTPUTDIR)
@@ -134,7 +127,7 @@ mkdirecs:
 	@mkdir -p $(OUTPUTDIR)/mapped
 	@mkdir -p $(OUTPUTDIR)/unmapped
 
-synth: mkwrapper mkdirecs configs rundc # clean
+synth: mkdirecs configs rundc # clean
 
 rundc:
 ifeq ($(TECH), tsmc28psyn)
