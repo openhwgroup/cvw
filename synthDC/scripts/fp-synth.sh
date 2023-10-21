@@ -101,6 +101,7 @@ wait
 
 synthAll () {
     synthIntDiv &
+    wait
     synthFPDiv &
     wait
 
