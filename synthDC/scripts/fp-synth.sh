@@ -117,12 +117,16 @@ writeCSV () {
     for FILE in $WALLY/synthDC/runs/*;
     do
         design="${FILE##*/}"
+
         # grab area
         areaString=($(grep "Total cell area" $FILE/reports/area.rep))
         area=${areaString[3]}
+
         # grab timing
         timingString=($(grep "data arrival time" $FILE/reports/timing.rep))
         timing=${timingString[3]}
+
+        # write to csv
         echo $design,$area,$timing >> $WALLY/synthDC/fp-synth.csv
         
     done;
