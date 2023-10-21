@@ -112,6 +112,7 @@ echo $title
 
 # writes area delay of runs to csv
 writeCSV () {
+    echo "design,area,timing" > $WALLY/synthDC/fp-synth.csv
     # iterate over all files in runs/
     for FILE in $WALLY/synthDC/runs/*;
     do
@@ -119,11 +120,10 @@ writeCSV () {
         # grab area
         areaString=($(grep "Total cell area" $FILE/reports/area.rep))
         area=${areaString[3]}
-        echo $area
         # grab timing
         timingString=($(grep "data arrival time" $FILE/reports/timing.rep))
         timing=${timingString[3]}
-        echo $timing
+        echo $design,$area,$timing >> $WALLY/synthDC/fp-synth.csv
         
     done;
 }
