@@ -13,7 +13,7 @@
 #          and does not write back.  Clean: Writes back dirty cacheline if needed
 #          and clears dirty bit.  Does NOT clear valid bit.  Flush:  Cleans and then
 #          Invalidates.  These operations apply to all caches in the memory system.
-#          The tests are divided into three parts one for the data cache, instruction cache
+#          The tests are divided into three parts one for the data cache
 #          and checks to verify the uncached regions of memory cause exceptions.
 # -----------
 # Copyright (c) 2020. RISC-V International. All rights reserved.
