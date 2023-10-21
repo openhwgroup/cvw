@@ -43,7 +43,7 @@ sed -i "80s/IDIV_BITSPERCYCLE.*/IDIV_BITSPERCYCLE = 32;\'d2/" $WALLY/config/rv32
 }
 
 # IDIVBITS = 4
-setIDIVBITSeq1 () {
+setIDIVBITSeq4 () {
 sed -i "80s/IDIV_BITSPERCYCLE.*/IDIV_BITSPERCYCLE = 32;\'d4/" $WALLY/config/rv64gc/config.vh
 sed -i "80s/IDIV_BITSPERCYCLE.*/IDIV_BITSPERCYCLE = 32;\'d4/" $WALLY/config/rv32gc/config.vh
 }
@@ -77,7 +77,30 @@ make -C $WALLY/synthDC synth DESIGN=drsu TECH=tsmc28 CONFIG=rv32gc FREQ=100 WRAP
 make -C $WALLY/synthDC synth DESIGN=drsu TECH=tsmc28 CONFIG=rv64gc FREQ=100 WRAPPER=1 TITLE=$(getTitle)
 }
 
+synthAll () {
+    synthIntDiv
+    synthFPDiv
+}
+
+
+# Synthesize DivSqrt Preprocessor
+
+synthFPDivsqrtpreproc () {
+make -C $WALLY/synthDC synth DESIGN=fdivsqrtpreproc TECH=tsmc28 CONFIG=rv32gc FREQ=3000 WRAPPER=1 TITLE=$(getTitle)
+make -C $WALLY/synthDC synth DESIGN=fdivsqrtpreproc TECH=tsmc28 CONFIG=rv64gc FREQ=3000 WRAPPER=1 TITLE=$(getTitle)
+make -C $WALLY/synthDC synth DESIGN=fdivsqrtpreproc TECH=tsmc28 CONFIG=rv32gc FREQ=100 WRAPPER=1 TITLE=$(getTitle)
+make -C $WALLY/synthDC synth DESIGN=fdivsqrtpreproc TECH=tsmc28 CONFIG=rv64gc FREQ=100 WRAPPER=1 TITLE=$(getTitle)
+}
+
+synthFPDiviter () {
+make -C $WALLY/synthDC synth DESIGN=fdivsqrtiter TECH=tsmc28 CONFIG=rv32gc FREQ=3000 WRAPPER=1 TITLE=$(getTitle)
+make -C $WALLY/synthDC synth DESIGN=fdivsqrtiter TECH=tsmc28 CONFIG=rv64gc FREQ=3000 WRAPPER=1 TITLE=$(getTitle)
+make -C $WALLY/synthDC synth DESIGN=fdivsqrtiter TECH=tsmc28 CONFIG=rv32gc FREQ=100 WRAPPER=1 TITLE=$(getTitle)
+make -C $WALLY/synthDC synth DESIGN=fdivsqrtiter TECH=tsmc28 CONFIG=rv64gc FREQ=100 WRAPPER=1 TITLE=$(getTitle)
+}
+
 # forms title for synthesis
+
 getTitle () {
 RADIX=$(sed -n "157p" $WALLY/config/rv64gc/config.vh | tail -c 3 | head -c 1)
 K=$(sed -n "158p" $WALLY/config/rv64gc/config.vh | tail -c 3 | head -c 1)
@@ -86,3 +109,28 @@ IDIVBITS=$(sed -n "80p" $WALLY/config/rv64gc/config.vh | tail -c 3 | head -c 1)
 title="RADIX_${RADIX}_K_${K}_INTDIV_${IDIV}_IDIVBITS_${IDIVBITS}"
 echo $title
 }
+
+# writes area delay of runs to csv
+writeCSV () {
+    # iterate over all files in runs/
+    for FILE in $WALLY/synthDC/runs/*;
+    do
+        design="${FILE##*/}"
+        # grab area
+        areaString=($(grep "Total cell area" $FILE/reports/area.rep))
+        area=${areaString[3]}
+        echo $area
+        # grab timing
+        timingString=($(grep "data arrival time" $FILE/reports/timing.rep))
+        timing=${timingString[3]}
+        echo $timing
+        
+    done;
+}
+
+setKeq1
+setRADIXeq4
+synthAll
+setKeq2
+setRADIXeq2
+synthAll
