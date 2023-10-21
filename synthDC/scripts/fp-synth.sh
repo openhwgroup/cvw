@@ -66,6 +66,7 @@ make -C $WALLY/synthDC synth DESIGN=div TECH=tsmc28 CONFIG=rv32gc FREQ=3000 WRAP
 make -C $WALLY/synthDC synth DESIGN=div TECH=tsmc28 CONFIG=rv64gc FREQ=3000 WRAPPER=1 TITLE=$(getTitle) &
 make -C $WALLY/synthDC synth DESIGN=div TECH=tsmc28 CONFIG=rv32gc FREQ=100 WRAPPER=1 TITLE=$(getTitle) &
 make -C $WALLY/synthDC synth DESIGN=div TECH=tsmc28 CONFIG=rv64gc FREQ=100 WRAPPER=1 TITLE=$(getTitle) &
+wait
 }
 
 # Synthesize FP Divider Unit
@@ -75,11 +76,14 @@ make -C $WALLY/synthDC synth DESIGN=drsu TECH=tsmc28 CONFIG=rv32gc FREQ=3000 WRA
 make -C $WALLY/synthDC synth DESIGN=drsu TECH=tsmc28 CONFIG=rv64gc FREQ=3000 WRAPPER=1 TITLE=$(getTitle) &
 make -C $WALLY/synthDC synth DESIGN=drsu TECH=tsmc28 CONFIG=rv32gc FREQ=100 WRAPPER=1 TITLE=$(getTitle) &
 make -C $WALLY/synthDC synth DESIGN=drsu TECH=tsmc28 CONFIG=rv64gc FREQ=100 WRAPPER=1 TITLE=$(getTitle) &
+wait
 }
 
 synthAll () {
     synthIntDiv &
     synthFPDiv &
+    wait
+
 }
 
 
