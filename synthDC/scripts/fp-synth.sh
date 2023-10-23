@@ -42,26 +42,26 @@ sed -i "${n32}s/DIVCOPIES.*/DIVCOPIES = 32\'h4;/" $WALLY/config/rv32gc/config.vh
 
 # IDIVBITS = 1
 setIDIVBITSeq1 () {
-n64=$(grep -n "IDIV_BITSPERCYCLE" $WALLY/config/rv64gc/config.vh | cut -d: -f1)
-n32=$(grep -n "IDIV_BITSPERCYCLE" $WALLY/config/rv32gc/config.vh | cut -d: -f1)
-sed -i "${n64}s/IDIV_BITSPERCYCLE.*/IDIV_BITSPERCYCLE = 32;\'d1/" $WALLY/config/rv64gc/config.vh
-sed -i "${n32}s/IDIV_BITSPERCYCLE.*/IDIV_BITSPERCYCLE = 32;\'d1/" $WALLY/config/rv32gc/config.vh
+n64=$(grep -n "IDIV_BITSPERCYCLE =" $WALLY/config/rv64gc/config.vh | cut -d: -f1)
+n32=$(grep -n "IDIV_BITSPERCYCLE =" $WALLY/config/rv32gc/config.vh | cut -d: -f1)
+sed -i "${n64}s/IDIV_BITSPERCYCLE.*/IDIV_BITSPERCYCLE = 32\'d1;/" $WALLY/config/rv64gc/config.vh
+sed -i "${n32}s/IDIV_BITSPERCYCLE.*/IDIV_BITSPERCYCLE = 32\'d1;/" $WALLY/config/rv32gc/config.vh
 }
 
 # IDIVBITS = 2
 setIDIVBITSeq2 () {
-n64=$(grep -n "IDIV_BITSPERCYCLE" $WALLY/config/rv64gc/config.vh | cut -d: -f1)
-n32=$(grep -n "IDIV_BITSPERCYCLE" $WALLY/config/rv32gc/config.vh | cut -d: -f1)
-sed -i "${n64}s/IDIV_BITSPERCYCLE.*/IDIV_BITSPERCYCLE = 32;\'d2/" $WALLY/config/rv64gc/config.vh
-sed -i "${n32}s/IDIV_BITSPERCYCLE.*/IDIV_BITSPERCYCLE = 32;\'d2/" $WALLY/config/rv32gc/config.vh
+n64=$(grep -n "IDIV_BITSPERCYCLE =" $WALLY/config/rv64gc/config.vh | cut -d: -f1)
+n32=$(grep -n "IDIV_BITSPERCYCLE =" $WALLY/config/rv32gc/config.vh | cut -d: -f1)
+sed -i "${n64}s/IDIV_BITSPERCYCLE.*/IDIV_BITSPERCYCLE = 32\'d2;/" $WALLY/config/rv64gc/config.vh
+sed -i "${n32}s/IDIV_BITSPERCYCLE.*/IDIV_BITSPERCYCLE = 32\'d2;/" $WALLY/config/rv32gc/config.vh
 }
 
 # IDIVBITS = 4
 setIDIVBITSeq4 () {
-n64=$(grep -n "IDIV_BITSPERCYCLE" $WALLY/config/rv64gc/config.vh | cut -d: -f1)
-n32=$(grep -n "IDIV_BITSPERCYCLE" $WALLY/config/rv32gc/config.vh | cut -d: -f1)
-sed -i "${n64}s/IDIV_BITSPERCYCLE.*/IDIV_BITSPERCYCLE = 32;\'d4/" $WALLY/config/rv64gc/config.vh
-sed -i "${n32}s/IDIV_BITSPERCYCLE.*/IDIV_BITSPERCYCLE = 32;\'d4/" $WALLY/config/rv32gc/config.vh
+n64=$(grep -n "IDIV_BITSPERCYCLE =" $WALLY/config/rv64gc/config.vh | cut -d: -f1)
+n32=$(grep -n "IDIV_BITSPERCYCLE =" $WALLY/config/rv32gc/config.vh | cut -d: -f1)
+sed -i "${n64}s/IDIV_BITSPERCYCLE.*/IDIV_BITSPERCYCLE = 32\'d4;/" $WALLY/config/rv64gc/config.vh
+sed -i "${n32}s/IDIV_BITSPERCYCLE.*/IDIV_BITSPERCYCLE = 32\'d4;/" $WALLY/config/rv32gc/config.vh
 }
 
 # IDIV ON FPU
@@ -159,12 +159,33 @@ writeCSV () {
 
 go() {
 
+<< comment
+setIDIVeq1
 setKeq1
 setRADIXeq4
-synthAll
+synthFPDiv
 wait
 setKeq2
 setRADIXeq2
-synthAll
+synthFPDiv
+wait
+comment
+setIDIVBITSeq1
+synthIntDiv
+setIDIVBITSeq2
+synthIntDiv
+setIDIVBITSeq4
+synthIntDiv
+<< comment
+setIDIVeq0
+setKeq1
+setRADIXeq4
+synthFPDiv
+wait
+setKeq2
+setRADIXeq2
+synthFPDiv
+comment
+
 
 }
