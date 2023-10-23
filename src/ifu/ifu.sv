@@ -340,8 +340,21 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
 
   end else begin : bpred
     mux2 #(P.XLEN) pcmux1(.d0(PCPlus2or4F), .d1(IEUAdrE), .s(PCSrcE), .y(PC1NextF));    
+    logic BranchM, JumpM, BranchW, JumpW;
+    logic CallD, CallE, CallM, CallW;
+    logic ReturnD, ReturnE, ReturnM, ReturnW;
     assign BPWrongE = PCSrcE;
-    assign {InstrClassM, BPDirPredWrongM, BTAWrongM, RASPredPCWrongM, IClassWrongM} = '0;
+    icpred #(P, 0) icpred(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+      .PostSpillInstrRawF, .InstrD, .BranchD, .BranchE, .JumpD, .JumpE, .BranchM, .BranchW, .JumpM, .JumpW,
+      .CallD, .CallE, .CallM, .CallW, .ReturnD, .ReturnE, .ReturnM, .ReturnW, 
+      .BTBCallF(1'b0), .BTBReturnF(1'b0), .BTBJumpF(1'b0),
+      .BTBBranchF(1'b0), .BPCallF(), .BPReturnF(), .BPJumpF(), .BPBranchF(), .IClassWrongM,
+      .IClassWrongE(), .BPReturnWrongD());
+    flopenrc #(1) PCSrcMReg(clk, reset, FlushM, ~StallM, PCSrcE, BPWrongM);
+    assign RASPredPCWrongM = '0;
+    assign BPDirPredWrongM = BPWrongM;
+    assign BTAWrongM = BPWrongM;
+    assign InstrClassM = {CallM, ReturnM, JumpM, BranchM};
     assign NextValidPCE = PCE;
   end      
 
