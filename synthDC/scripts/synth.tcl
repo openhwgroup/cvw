@@ -12,6 +12,8 @@ suppress_message {VER-130}
 # statements in initial blocks are ignored
 suppress_message {VER-281} 
 suppress_message {VER-173} 
+ # Unsupported system task '$warn'
+suppress_message {VER-274}
 
 # Enable Multicore
 set_host_options -max_cores $::env(MAXCORES)
@@ -107,6 +109,7 @@ if { $saifpower == 1 } {
 if {$drive != "INV"} {
     set_false_path -from [get_ports reset]
 }
+# for PPA multiplexer synthesis
 if {(($::env(DESIGN) == "ppa_mux2d_1") || ($::env(DESIGN) == "ppa_mux4d_1") || ($::env(DESIGN) == "ppa_mux8d_1"))} {
     set_false_path -from {s}
 }
@@ -124,11 +127,12 @@ if {  $find_clock != [list] } {
     set my_clk $my_clock_pin
     create_clock -period $my_period $my_clk
     set_clock_uncertainty $my_uncertainty [get_clocks $my_clk]
-} else {
+ } else {
     echo "Did not find clock! Design is probably combinational!"
     set my_clk vclk
     create_clock -period $my_period -name $my_clk
 }
+
 
 # Optimize paths that are close to critical
 set_critical_range 0.05 $current_design
