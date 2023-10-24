@@ -11,6 +11,7 @@
 #
 ##################################
 import sys,os,shutil
+import argparse
 
 class bcolors:
     HEADER = '\033[95m'
@@ -46,55 +47,6 @@ configs = [
     )
 ]
 
-# bpdSize = [6, 8, 10, 12, 14, 16]
-# bpdType = ['twobit', 'gshare', 'global', 'gshare_basic', 'global_basic', 'local_basic']
-# for CurrBPType in bpdType:
-#     for CurrBPSize in bpdSize:
-#         name = CurrBPType+str(CurrBPSize)
-#         configOptions = "+define+INSTR_CLASS_PRED=0 +define+BPRED_OVERRIDE +define+BPRED_TYPE=" + str(bpdType.index(CurrBPType)) + "+define+BPRED_SIZE=" + str(CurrBPSize)
-#         tc = TestCase(
-#             name=name,
-#             variant="rv32gc",
-#             cmd="vsim > {} -c <<!\ndo wally-batch.do  rv32gc configOptions " + name + " embench " + configOptions,
-#             grepstr="")
-#         configs.append(tc)
-
-# bpdSize = [6, 8, 10, 12, 14, 16]
-# for CurrBPSize in bpdSize:
-#     name = 'BTB'+str(CurrBPSize)
-#     configOptions = "+define+INSTR_CLASS_PRED=1 +define+BPRED_OVERRIDE +define+BPRED_TYPE=\`BP_GSHARE" + "+define+BPRED_SIZE=16" + "+define+BTB_SIZE=" + str(CurrBPSize) + "+define+BTB_OVERRIDE"
-#     tc = TestCase(
-#         name=name,
-#         variant="rv32gc",
-#         cmd="vsim > {} -c <<!\ndo wally-batch.do  rv32gc configOptions " + name + " embench " + configOptions,
-#         grepstr="")
-#     configs.append(tc)
-
-bpdSize = [2, 3, 4, 6, 10, 16]
-for CurrBPSize in bpdSize:
-    name = 'RAS'+str(CurrBPSize)
-    configOptions = "+define+INSTR_CLASS_PRED=0 +define+BPRED_OVERRIDE +define+BPRED_TYPE=\`BP_GSHARE" + "+define+BPRED_SIZE=16" + "+define+BTB_SIZE=16" + "+define+RAS_SIZE=" + str(CurrBPSize) + "+define+BTB_OVERRIDE+define+RAS_OVERRIDE"
-    tc = TestCase(
-        name=name,
-        variant="rv32gc",
-        cmd="vsim > {} -c <<!\ndo wally-batch.do  rv32gc configOptions " + name + " embench " + configOptions,
-        grepstr="")
-    configs.append(tc)
-    
-# bpdSize = [6, 8, 10, 12, 14, 16]
-# LHRSize = [4, 8, 10]
-# bpdType = ['local_repair']
-# for CurrBPType in bpdType:
-#     for CurrBPSize in bpdSize:
-#         for CurrLHRSize in  LHRSize:
-#             name = str(CurrLHRSize)+CurrBPType+str(CurrBPSize)
-#             configOptions = "+define+INSTR_CLASS_PRED=0 +define+BPRED_TYPE=\"BP_" + CurrBPType.upper() + "\" +define+BPRED_SIZE=" + str(CurrBPSize) + " +define+BPRED_NUM_LHR=" + str(CurrLHRSize) + " "
-#             tc = TestCase(
-#                 name=name,
-#                 variant="rv32gc",
-#                 cmd="vsim > {} -c <<!\ndo wally-batch.do  rv32gc configOptions " + name + " embench " + configOptions,
-#                 grepstr="")
-#             configs.append(tc)
 
 import os
 from multiprocessing import Pool, TimeoutError
@@ -138,10 +90,71 @@ def main():
     finally:
         os.mkdir("wkdir")
  
-    if '-makeTests' in sys.argv:
-        os.chdir(regressionDir)
-        os.system('./make-tests.sh | tee ./logs/make-tests.log')
+    parser = argparse.ArgumentParser(description='Runs embench with sweeps of branch predictor sizes and types.')
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument('-r', '--ras', action='store_const', help='Sweep size of return address stack (RAS).', default=False, const=True)
+    mode.add_argument('-d', '--direction', action='store_const', help='Sweep size of direction prediction (2-bit, Gshare, local, etc).', default=False, const=True)
+    mode.add_argument('-t', '--target', action='store_const', help='Sweep size of branch target buffer (BTB).', default=False, const=True)
+    mode.add_argument('-c', '--iclass', action='store_const', help='Sweep size of classification (BTB) Same as -t.', default=False, const=True)
 
+    args = parser.parse_args()
+
+    if(args.direction):
+        # for direction predictor size sweep
+        bpdSize = [6, 8, 10, 12, 14, 16]
+        bpdType = ['twobit', 'gshare', 'global', 'gshare_basic', 'global_basic', 'local_basic']
+        for CurrBPType in bpdType:
+            for CurrBPSize in bpdSize:
+                name = CurrBPType+str(CurrBPSize)
+                configOptions = "+define+INSTR_CLASS_PRED=0 +define+BPRED_OVERRIDE +define+BPRED_TYPE=" + str(bpdType.index(CurrBPType)) + "+define+BPRED_SIZE=" + str(CurrBPSize)
+                tc = TestCase(
+                    name=name,
+                    variant="rv32gc",
+                    cmd="vsim > {} -c <<!\ndo wally-batch.do  rv32gc configOptions " + name + " embench " + configOptions,
+                    grepstr="")
+                configs.append(tc)
+
+    if(args.target or args.iclass):
+        # BTB and class size sweep
+        bpdSize = [6, 8, 10, 12, 14, 16]
+        for CurrBPSize in bpdSize:
+            name = 'BTB'+str(CurrBPSize)
+            configOptions = "+define+INSTR_CLASS_PRED=1 +define+BPRED_OVERRIDE +define+BPRED_TYPE=\`BP_GSHARE" + "+define+BPRED_SIZE=16" + "+define+RAS_SIZE=16+define+BTB_SIZE=" + str(CurrBPSize) + "+define+BTB_OVERRIDE" 
+            tc = TestCase(
+                name=name,
+                variant="rv32gc",
+                cmd="vsim > {} -c <<!\ndo wally-batch.do  rv32gc configOptions " + name + " embench " + configOptions,
+                grepstr="")
+            configs.append(tc)
+
+    # ras size sweep
+    if(args.ras):
+        bpdSize = [2, 3, 4, 6, 10, 16]
+        for CurrBPSize in bpdSize:
+            name = 'RAS'+str(CurrBPSize)
+            configOptions = "+define+INSTR_CLASS_PRED=0 +define+BPRED_OVERRIDE +define+BPRED_TYPE=\`BP_GSHARE" + "+define+BPRED_SIZE=16" + "+define+BTB_SIZE=16" + "+define+RAS_SIZE=" + str(CurrBPSize) + "+define+BTB_OVERRIDE+define+RAS_OVERRIDE"
+            tc = TestCase(
+                name=name,
+                variant="rv32gc",
+                cmd="vsim > {} -c <<!\ndo wally-batch.do  rv32gc configOptions " + name + " embench " + configOptions,
+                grepstr="")
+            configs.append(tc)
+    
+    # bpdSize = [6, 8, 10, 12, 14, 16]
+    # LHRSize = [4, 8, 10]
+    # bpdType = ['local_repair']
+    # for CurrBPType in bpdType:
+    #     for CurrBPSize in bpdSize:
+    #         for CurrLHRSize in  LHRSize:
+    #             name = str(CurrLHRSize)+CurrBPType+str(CurrBPSize)
+    #             configOptions = "+define+INSTR_CLASS_PRED=0 +define+BPRED_TYPE=\"BP_" + CurrBPType.upper() + "\" +define+BPRED_SIZE=" + str(CurrBPSize) + " +define+BPRED_NUM_LHR=" + str(CurrLHRSize) + " "
+    #             tc = TestCase(
+    #                 name=name,
+    #                 variant="rv32gc",
+    #                 cmd="vsim > {} -c <<!\ndo wally-batch.do  rv32gc configOptions " + name + " embench " + configOptions,
+    #                 grepstr="")
+    #             configs.append(tc)
+    
     # Scale the number of concurrent processes to the number of test cases, but
     # max out at a limited number of concurrent processes to not overwhelm the system
     with Pool(processes=min(len(configs),40)) as pool:
