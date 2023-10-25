@@ -29,7 +29,7 @@
 
 module privdec import cvw::*;  #(parameter cvw_t P) (
   input  logic         clk, reset,
-  input  logic         StallM,
+  input  logic         StallM, StallW, FlushW, 
   input  logic [31:15] InstrM,                              // privileged instruction function field
   input  logic         PrivilegedM,                         // is this a privileged instruction (from IEU controller)
   input  logic         IllegalIEUFPUInstrM,                 // Not a legal IEU instruction
@@ -75,6 +75,8 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////
   // WFI timeout Privileged Spec 3.1.6.5
   ///////////////////////////////////////////
+  logic                wfiW;  // *** need to merge with others
+  flopenrc #(1) wfiWReg(clk, reset, FlushW, ~StallW, wfiM, wfiW); // *** remove 
 
   if (P.U_SUPPORTED) begin:wfi
     logic [P.WFI_TIMEOUT_BIT:0] WFICount, WFICountPlus1;

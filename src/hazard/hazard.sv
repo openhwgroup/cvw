@@ -50,8 +50,8 @@ module hazard (
 
   // WFI logic
   flopenrc #(1) wfiWReg(clk, reset, FlushW, ~StallW, wfiM, wfiW);
-  assign WFIStallM = wfiW & ~IntPendingM;         // WFI waiting for an interrupt or timeout
-  assign WFIInterruptedM = wfiW & IntPendingM;    // WFI detects a pending interrupt.  Retire WFI; trap if interrupt is enabled.
+  assign WFIStallM = wfiM & ~IntPendingM;         // WFI waiting for an interrupt or timeout
+  assign WFIInterruptedM = wfiM & IntPendingM;    // WFI detects a pending interrupt.  Retire WFI; trap if interrupt is enabled.
   
   // stalls and flushes
   // loads: stall for one cycle if the subsequent instruction depends on the load
@@ -76,8 +76,8 @@ module hazard (
   assign FlushDCause = TrapM | RetM | CSRWriteFenceM | BPWrongE;
   assign FlushECause = TrapM | RetM | CSRWriteFenceM |(BPWrongE & ~(DivBusyE | FDivBusyE));
   assign FlushMCause = TrapM | RetM | CSRWriteFenceM;
-  //assign FlushWCause = TrapM & ~WFIInterruptedM;
-  assign FlushWCause = TrapM;
+  assign FlushWCause = TrapM & ~WFIInterruptedM;
+  //assign FlushWCause = TrapM;
 
   // Stall causes
   //  Most data depenency stalls are identified in the decode stage
@@ -90,13 +90,13 @@ module hazard (
   assign StallFCause = '0;
   assign StallDCause = (LoadStallD | StoreStallD | MDUStallD | CSRRdStallD | FCvtIntStallD | FPUStallD) & ~FlushDCause;
   assign StallECause = (DivBusyE | FDivBusyE) & ~FlushECause; 
-  //assign StallMCause = WFIStallM & ~FlushMCause;
-  assign StallMCause = '0; 
+  assign StallMCause = WFIStallM & ~FlushMCause;
+  //assign StallMCause = '0; 
   // Need to gate IFUStallF when the equivalent FlushFCause = FlushDCause = 1.
   // assign StallWCause = ((IFUStallF & ~FlushDCause) | LSUStallM) & ~FlushWCause;
   // Because FlushWCause is a strict subset of FlushDCause, FlushWCause is factored out.
-  //assign StallWCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause);
-  assign StallWCause = (IFUStallF & ~FlushDCause) | ((LSUStallM | WFIStallM) & ~FlushWCause);
+  assign StallWCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause);
+  //assign StallWCause = (IFUStallF & ~FlushDCause) | ((LSUStallM | WFIStallM) & ~FlushWCause);
 
   // Stall each stage for cause or if the next stage is stalled
   // coverage off: StallFCause is always 0

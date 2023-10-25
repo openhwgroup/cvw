@@ -39,6 +39,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic                     CSRReadM, CSRWriteM,       // read or write CSR
   input  logic                     TrapM,                     // trap is occurring
   input  logic                     mretM, sretM, wfiM,        // return or WFI instruction
+  output logic                     wfiW, 
   input  logic                     IntPendingM,               // at least one interrupt is pending and could occur if enabled
   input  logic                     InterruptM,                // interrupt is occurring
   input  logic                     ExceptionM,                // interrupt is occurring
@@ -200,13 +201,10 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////
   // CSR Write values
   ///////////////////////////////////////////
-  logic [P.XLEN-1:0] PCW; // *** can optimize out it's just PCM for all now.
-  logic              wfiW;
-  flopenr #(P.XLEN) PCWReg(clk, reset, ~StallW, PCM, PCW);
   flopenrc #(1) wfiWReg(clk, reset, FlushW, ~StallW, wfiM, wfiW);
 
   assign CSRAdrM = InstrM[31:20];
-  assign UnalignedNextEPCM = TrapM ? ((wfiW & IntPendingM) ? PCW+4 : PCM) : CSRWriteValM;
+  assign UnalignedNextEPCM = TrapM ? PCM : CSRWriteValM;
   assign NextEPCM = P.C_SUPPORTED ? {UnalignedNextEPCM[P.XLEN-1:1], 1'b0} : {UnalignedNextEPCM[P.XLEN-1:2], 2'b00}; // 3.1.15 alignment
   assign NextCauseM = TrapM ? {InterruptM, CauseM}: {CSRWriteValM[P.XLEN-1], CSRWriteValM[3:0]};
   assign NextMtvalM = TrapM ? NextFaultMtvalM : CSRWriteValM;
