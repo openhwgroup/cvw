@@ -39,7 +39,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   output logic         IllegalInstrFaultM,                  // Illegal instruction
   output logic         EcallFaultM, BreakpointFaultM,       // Ecall or breakpoint; must retire, so don't flush it when the trap occurs
   output logic         sretM, mretM,                        // return instructions
-  output logic         wfiM, sfencevmaM                     // wfi / sfence.vma / sinval.vma instructions
+  output logic         wfiM, wfiW, sfencevmaM               // wfi / sfence.vma / sinval.vma instructions
 );
 
   logic                rs1zeroM;                            // rs1 field = 0
@@ -75,8 +75,6 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////
   // WFI timeout Privileged Spec 3.1.6.5
   ///////////////////////////////////////////
-  logic                wfiW;  // *** need to merge with others
-  flopenrc #(1) wfiWReg(clk, reset, FlushW, ~StallW, wfiM, wfiW); // *** remove 
 
   if (P.U_SUPPORTED) begin:wfi
     logic [P.WFI_TIMEOUT_BIT:0] WFICount, WFICountPlus1;
@@ -87,6 +85,8 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
     assign WFITimeoutM = ((STATUS_TW & PrivilegeModeW != P.M_MODE) | (P.S_SUPPORTED & PrivilegeModeW == P.U_MODE)) & WFICount[P.WFI_TIMEOUT_BIT]; 
   // coverage on
   end else assign WFITimeoutM = 0;
+
+  flopenrc #(1) wfiWReg(clk, reset, FlushW, ~StallW, wfiM, wfiW);
 
   ///////////////////////////////////////////
   // Extract exceptions by name and handle them 
