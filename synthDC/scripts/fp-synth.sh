@@ -188,4 +188,20 @@ synthFPDiv
 comment
 
 
+
+
+}
+
+go2() {
+
+setIDIVeq1
+setRADIXeq4
+setKeq2
+synthFPDiv
+wait
+setRADIXeq2
+setKeq4
+synthFPDiv
+wait
+
 }
