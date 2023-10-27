@@ -257,6 +257,19 @@ set write_hier 1        ;# generate hierarchy report
 if { $wrapper == 1 } {
     set designname [format "%s%s" $my_design "__*"]
     current_design $designname
+
+    # recreate clock below wrapper level or reporting doesn't work properly
+    set find_clock [ find port [list $my_clock_pin] ]
+    if {  $find_clock != [list] } {
+        echo "Found clock!"
+        set my_clk $my_clock_pin
+        create_clock -period $my_period $my_clk
+        set_clock_uncertainty $my_uncertainty [get_clocks $my_clk]
+    } else {
+        echo "Did not find clock! Design is probably combinational!"
+        set my_clk vclk
+        create_clock -period $my_period -name $my_clk
+    }
 } 
 
 # Report Constraint Violators
