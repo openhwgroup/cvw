@@ -402,7 +402,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
 
   flopenrc #(1) CompressedDReg(clk, reset, FlushD, ~StallD, CompressedF, CompressedD);
   flopenrc #(1) CompressedEReg(clk, reset, FlushE, ~StallE, CompressedD, CompressedE);
-  assign PCLinkE = PCE + (CompressedE ? 2 : 4);
+  assign PCLinkE = PCE + (CompressedE ? 'd2 : 'd4); // 'd4 means 4 but stops Design Compiler complaining about signed to unsigned conversion
 
   // pipeline original compressed instruction in case it is needed for MTVAL on an illegal instruction exception
   flopenrc #(16) InstrRawEReg(clk, reset, FlushE, ~StallE, InstrRawD[15:0], InstrRawE);
