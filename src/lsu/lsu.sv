@@ -234,6 +234,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign DTIMMemRWM = SelDTIM & ~IgnoreRequestTLB ? LSURWM : '0;
     // **** fix ReadDataWordM to be LLEN. ByteMask is wrong length.
     // **** create config to support DTIM with floating point.
+    // Add support for cboz
     dtim #(P) dtim(.clk, .ce(~GatedStallW), .MemRWM(DTIMMemRWM),
               .DTIMAdr, .FlushW, .WriteDataM(LSUWriteDataM), 
               .ReadDataWordM(DTIMReadDataWordM[P.LLEN-1:0]), .ByteMaskM(ByteMaskM[P.LLEN/8-1:0]));
@@ -268,8 +269,6 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       assign CacheAtomicM = CacheableM & ~SelDTIM ? LSUAtomicM : '0;
       assign FlushDCache = FlushDCacheM & ~(SelHPTW);
       
-      // *** need RT to add support for CMOpM and LSUPrefetchM (DH 7/2/23)
-      // *** prefetch can just act as a read operation
       cache #(.P(P), .PA_BITS(P.PA_BITS), .XLEN(P.XLEN), .LINELEN(P.DCACHE_LINELENINBITS), .NUMLINES(P.DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(P.DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(P.LLEN), .MUXINTERVAL(P.LLEN), .READ_ONLY_CACHE(0)) dcache(
         .clk, .reset, .Stall(GatedStallW), .SelBusBeat, .FlushStage(FlushW | IgnoreRequestTLB), .CacheRW(CacheRWM), .CacheAtomic(CacheAtomicM),
@@ -285,6 +284,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       assign DCacheStallM = CacheStall & ~IgnoreRequestTLB;
       assign CacheBusRW = CacheBusRWTemp;
 
+      // *** add support for cboz
       ahbcacheinterface #(.AHBW(P.AHBW), .LLEN(P.LLEN), .PA_BITS(P.PA_BITS), .BEATSPERLINE(BEATSPERLINE), .AHBWLOGBWPL(AHBWLOGBWPL), .LINELEN(LINELEN),  .LLENPOVERAHBW(LLENPOVERAHBW), .READ_ONLY_CACHE(0)) ahbcacheinterface(
         .HCLK(clk), .HRESETn(~reset), .Flush(FlushW | IgnoreRequestTLB),
         .HRDATA, .HWDATA(LSUHWDATA), .HWSTRB(LSUHWSTRB),
