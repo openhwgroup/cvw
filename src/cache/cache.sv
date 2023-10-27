@@ -175,10 +175,16 @@ module cache import cvw::*; #(parameter cvw_t P,
     logic [LINELEN/8-1:0]          DemuxedByteMask, FetchBufferByteSel;
 
     // Adjust byte mask from word to cache line
-    onehotdecoder #(LOGCWPL) adrdec(.bin(PAdr[LOGCWPL+LOGLLENBYTES-1:LOGLLENBYTES]), .decoded(MemPAdrDecoded));
-    for(index = 0; index < 2**LOGCWPL; index++) begin
-      assign DemuxedByteMask[(index+1)*(WORDLEN/8)-1:index*(WORDLEN/8)] = MemPAdrDecoded[index] ? ByteMask : '0;
-    end
+
+    localparam                     CACHEMUXINVERALPERLINE = LINELEN/MUXINTERVAL;// Number of words in cache line
+    localparam                     LOGMIPL = $clog2(CACHEMUXINVERALPERLINE);// Log2 of ^
+    
+    logic [LINELEN/8-1:0]          BlankByteMask;
+    assign BlankByteMask[WORDLEN/8-1:0] = ByteMask;
+    assign BlankByteMask[LINELEN/8-1:WORDLEN/8] = '0;
+
+    assign DemuxedByteMask = BlankByteMask << ((MUXINTERVAL/8) * WordOffsetAddr);
+
     assign FetchBufferByteSel = SetValid & ~SetDirty ? '1 : ~DemuxedByteMask;  // If load miss set all muxes to 1.
 
     // Merge write data into fetched cache line for store miss

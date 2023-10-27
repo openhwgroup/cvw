@@ -64,7 +64,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   
   localparam LLENINBYTES = P.LLEN/8;
-  logic [XLEN-1:0]     IEUAdrIncrementM;
+  logic [P.XLEN-1:0]     IEUAdrIncrementM;
   assign IEUAdrIncrementM = IEUAdrM + LLENINBYTES;
   mux2 #(P.XLEN) ieuadrspillemux(.d0(IEUAdrE), .d1(IEUAdrIncrementM), .s(SelSpillE), .y(IEUAdrSpillE));
   mux2 #(P.XLEN) ieuadrspillmmux(.d0({IEUAdrM[P.XLEN-1:2], 2'b10}), .d1(IEUAdrIncrementM), .s(SelSpillM), .y(IEUAdrSpillM));
