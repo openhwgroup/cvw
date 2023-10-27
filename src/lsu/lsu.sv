@@ -92,6 +92,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   input var logic [7:0]           PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0], // PMP configuration from privileged unit
   input var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0] // PMP address from privileged unit
 );
+  localparam MISALIGN_SUPPORT = P.ZICCLSM_SUPPORTED & P.DCACHE_SUPPORTED;
 
   logic [P.XLEN+1:0]     IEUAdrExtM;                             // Memory stage address zero-extended to PA_BITS or XLEN whichever is longer
   logic [P.XLEN+1:0]     IEUAdrExtE;                             // Execution stage address zero-extended to PA_BITS or XLEN whichever is longer
@@ -108,13 +109,18 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   
   logic                  BusStall;                               // Bus interface busy with multicycle operation
   logic                  HPTWStall;                              // HPTW busy with multicycle operation
+  logic                  CacheBusHPWTStall;                      // Cache, bus, or hptw is requesting a stall
+  logic                  SelSpillE;                              // Align logic detected a spill and needs to stall
 
   logic                  CacheableM;                             // PMA indicates memory address is cacheable
   logic                  BusCommittedM;                          // Bus memory operation in flight, delay interrupts
   logic                  DCacheCommittedM;                       // D$ memory operation started, delay interrupts
 
   logic [P.LLEN-1:0]     DTIMReadDataWordM;                      // DTIM read data
-  logic [P.LLEN-1:0]     DCacheReadDataWordM;                    // D$ read data
+  /* verilator lint_off WIDTHEXPAND */  
+  logic [(MISALIGN_SUPPORT+1)*P.LLEN-1:0]     DCacheReadDataWordM;                    // D$ read data
+  /* verilator lint_on WIDTHEXPAND */
+  logic [P.LLEN-1:0]     DCacheReadDataWordSpillM;               // D$ read data
   logic [P.LLEN-1:0]     ReadDataWordMuxM;                       // DTIM or D$ read data
   logic [P.LLEN-1:0]     LittleEndianReadDataWordM;              // Endian-swapped read data
   logic [P.LLEN-1:0]     ReadDataWordM;                          // Read data before subword selection
@@ -142,8 +148,19 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   flopenrc #(P.XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
-  assign IEUAdrExtM = {2'b00, IEUAdrM}; 
-  assign IEUAdrExtE = {2'b00, IEUAdrE};
+  if(MISALIGN_SUPPORT) begin : ziccslm_align
+    logic [P.LLEN-1:0] IEUAdrSpillE, IEUAdrSpillM;
+    align #(P) align(.clk, .reset, .StallM, .FlushM, .IEUAdrE, .IEUAdrM, .Funct3M,
+                     .DCacheReadDataWordM, .CacheBusHPWTStall, .DTLBMissM, .DataUpdateDAM,
+                     .IEUAdrSpillE, .IEUAdrSpillM, .SelSpillE, .DCacheReadDataWordSpillM);
+    assign IEUAdrExtM = {2'b00, IEUAdrSpillM}; 
+    assign IEUAdrExtE = {2'b00, IEUAdrSpillE};
+  end else begin : no_ziccslm_align
+    assign IEUAdrExtM = {2'b00, IEUAdrM}; 
+    assign IEUAdrExtE = {2'b00, IEUAdrE};
+    assign SelSpillE = '0;
+    assign DCacheReadDataWordSpillM = DCacheReadDataWordM;
+  end
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // HPTW (only needed if VM supported)
@@ -180,7 +197,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   // the trap module.
   assign CommittedM = SelHPTW | DCacheCommittedM | BusCommittedM;
   assign GatedStallW = StallW & ~SelHPTW;
-  assign LSUStallM = DCacheStallM | HPTWStall | BusStall;
+  assign CacheBusHPWTStall = DCacheStallM | HPTWStall | BusStall;
+  assign LSUStallM = CacheBusHPWTStall | SelSpillE;
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // MMU and misalignment fault logic required if privileged unit exists
@@ -273,7 +291,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       cache #(.P(P), .PA_BITS(P.PA_BITS), .XLEN(P.XLEN), .LINELEN(P.DCACHE_LINELENINBITS), .NUMLINES(P.DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(P.DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(CACHEWORDLEN), .MUXINTERVAL(P.LLEN), .READ_ONLY_CACHE(0)) dcache(
         .clk, .reset, .Stall(GatedStallW), .SelBusBeat, .FlushStage(FlushW | IgnoreRequestTLB), .CacheRW(CacheRWM), .CacheAtomic(CacheAtomicM),
-        .FlushCache(FlushDCache), .NextSet(IEUAdrE[11:0]), .PAdr(PAdrM), 
+        .FlushCache(FlushDCache), .NextSet(IEUAdrExtE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskM), .BeatCount(BeatCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
         .CacheWriteData(LSUWriteDataM), .SelHPTW,
         .CacheStall, .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
@@ -290,7 +308,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
         .HCLK(clk), .HRESETn(~reset), .Flush(FlushW | IgnoreRequestTLB),
         .HRDATA, .HWDATA(LSUHWDATA), .HWSTRB(LSUHWSTRB),
         .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HREADY(LSUHREADY),
-        .BeatCount, .SelBusBeat, .CacheReadDataWordM(DCacheReadDataWordM), .WriteDataM(LSUWriteDataM),
+        .BeatCount, .SelBusBeat, .CacheReadDataWordM(DCacheReadDataWordM[P.LLEN-1:0]), .WriteDataM(LSUWriteDataM),
         .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheBusRW, .CacheableOrFlushCacheM,
         .CacheBusAck(DCacheBusAck), .FetchBuffer, .PAdr(PAdrM),
         .Cacheable(CacheableOrFlushCacheM), .BusRW, .Stall(GatedStallW),
@@ -300,7 +318,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     // Uncache bus access may be smaller width than LLEN.  Duplicate LLENPOVERAHBW times.
       // *** DTIMReadDataWordM should be increased to LLEN.
       // pma should generate exception for LLEN read to periph.
-      mux3 #(P.LLEN) UnCachedDataMux(.d0(DCacheReadDataWordM), .d1({LLENPOVERAHBW{FetchBuffer[P.XLEN-1:0]}}),
+      mux3 #(P.LLEN) UnCachedDataMux(.d0(DCacheReadDataWordSpillM), .d1({LLENPOVERAHBW{FetchBuffer[P.XLEN-1:0]}}),
                                     .d2({{P.LLEN-P.XLEN{1'b0}}, DTIMReadDataWordM[P.XLEN-1:0]}),
                                     .s({SelDTIM, ~(CacheableOrFlushCacheM)}), .y(ReadDataWordMuxM));
     end else begin : passthrough // No Cache, use simple ahbinterface instad of ahbcacheinterface
