@@ -35,9 +35,11 @@ module align import cvw::*;  #(parameter cvw_t P) (
   input logic               StallM, FlushM,
   input logic [P.XLEN-1:0]  IEUAdrM,               // 2 byte aligned PC in Fetch stage
   input logic [P.XLEN-1:0]  IEUAdrE,           // The next IEUAdrM
+  input logic [2:0]         Funct3M,           // Size of memory operation
   input logic [31:0]        ReadDataWordMuxM,  // Instruction from the IROM, I$, or bus. Used to check if the instruction if compressed
   input logic               LSUStallM,         // I$ or bus are stalled. Transition to second fetch of spill after the first is fetched
   input logic               DTLBMissM,         // ITLB miss, ignore memory request
+  input logic               DataUpdateDAM,     // ITLB miss, ignore memory request
 
   output logic [P.XLEN-1:0] IEUAdrSpillE,      // The next PCF for one of the two memory addresses of the spill
   output logic [P.XLEN-1:0] IEUAdrSpillM,      // IEUAdrM for one of the two memory addresses of the spill
@@ -49,10 +51,10 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   statetype          CurrState, NextState;
   logic              TakeSpillM, TakeSpillE;
-  logic              SpillF;
+  logic              SpillM;
   logic              SelSpillF;
   logic              SpillSaveF;
-  logic [15:0]       InstrFirstHalfF;
+  logic [LLEN-8:0]   ReadDataWordFirstHalfM;
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // PC logic 
@@ -71,19 +73,23 @@ module align import cvw::*;  #(parameter cvw_t P) (
   // spill detection in lsu is more complex than ifu, depends on 3 factors
   // 1) operation size
   // 2) offset
-  // 3) access location within the cacheline or is the access is uncached.
-  // first consider uncached operations
-  // accesses are always aligned to the natural size of the bus (XLEN or AHBW)
-
-  if (P.ICACHE_SUPPORTED) begin
-    logic  SpillCachedF, SpillUncachedF;
-    assign SpillCachedF = &IEUAdrM[$clog2(P.ICACHE_LINELENINBITS/32)+1:1];
-    assign SpillUncachedF = IEUAdrM[1]; // *** try to optimize this based on whether the next instruction is 16 bits and by fetching 64 bits in RV64
-    assign SpillF = CacheableF ? SpillCachedF : SpillUncachedF;
-  end else
-    assign SpillF = IEUAdrM[1]; // *** might relax - only spill if next instruction is uncompressed
+  // 3) access location within the cacheline
+  logic [P.DCACHE_LINELENINBITS/8-1:P.LLEN/8] WordOffsetM;
+  logic [P.LLEN/8-1:0]                 ByteOffsetM;
+  logic                                HalfSpillM, WordSpillM;
+  assign {WordOffsetM, ByteOffsetM} = IEUAdrM[P.DCACHE_LINELENINBITS/8-1:0];
+  assign HalfSpillM = (WordOffsetM == '1) & Funct3M[1:0] == 2'b01 & ByteOffsetM[0] != 1'b0;
+  assign WordSpillM = (WordOffsetM == '1) & Funct3M[1:0] == 2'b10 & ByteOffsetM[1:0] != 2'b00;
+  if(P.LLEN == 64) begin
+    logic DoubleSpillM;
+    assign DoubleSpillM = (WordOffsetM == '1) & Funct3M[1:0] == 2'b11 & ByteOffsetM[2:0] != 3'b00;
+    assign SpillM = HalfSpillM | WordOffsetM | DoubleSpillM;
+  end else begin
+    assign SpillM = HalfSpillM | WordOffsetM;
+  end
+      
   // Don't take the spill if there is a stall, TLB miss, or hardware update to the D/A bits
-  assign TakeSpillF = SpillF & ~IFUCacheBusStallF & ~(ITLBMissF | (P.SVADU_SUPPORTED & InstrUpdateDAF));
+  assign TakeSpillM = SpillM & ~LSUStallM & ~(DTLBMissM | (P.SVADU_SUPPORTED & DataUpdateDAM));
   
   always_ff @(posedge clk)
     if (reset | FlushM)    CurrState <= #1 STATE_READY;
@@ -91,7 +97,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   always_comb begin
     case (CurrState)
-      STATE_READY: if (TakeSpillF)                NextState = STATE_SPILL;
+      STATE_READY: if (TakeSpillM)                NextState = STATE_SPILL;
                    else                           NextState = STATE_READY;
       STATE_SPILL: if(StallM)                     NextState = STATE_SPILL;
                    else                           NextState = STATE_READY;
@@ -99,16 +105,16 @@ module align import cvw::*;  #(parameter cvw_t P) (
     endcase
   end
 
-  assign SelSpillF = (CurrState == STATE_SPILL);
-  assign SelSpillNextF = (CurrState == STATE_READY & TakeSpillF) | (CurrState == STATE_SPILL & IFUCacheBusStallF);
-  assign SpillSaveF = (CurrState == STATE_READY) & TakeSpillF & ~FlushM;
+  assign SelSpillM = (CurrState == STATE_SPILL);
+  assign SelSpillE = (CurrState == STATE_READY & TakeSpillM) | (CurrState == STATE_SPILL & LSUStallM);
+  assign SpillSaveM = (CurrState == STATE_READY) & TakeSpillM & ~FlushM;
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // Merge spilled instruction
   ////////////////////////////////////////////////////////////////////////////////////////////////////
 
   // save the first 2 bytes
-  flopenr #(16) SpillInstrReg(clk, reset, SpillSaveF, InstrRawF[15:0], InstrFirstHalfF);
+  flopenr #(P.LLEN-8) SpillDataReg(clk, reset, SpillSaveM, ReadDataWordMuxM[LLEN-1:8], ReadDataWordFirstHalfM);
 
   // merge together
   mux2 #(32) postspillmux(InstrRawF, {InstrRawF[15:0], InstrFirstHalfF}, SpillF, PostSpillInstrRawF);
