@@ -36,15 +36,15 @@ module align import cvw::*;  #(parameter cvw_t P) (
   input logic [P.XLEN-1:0]  IEUAdrM,               // 2 byte aligned PC in Fetch stage
   input logic [P.XLEN-1:0]  IEUAdrE,           // The next IEUAdrM
   input logic [2:0]         Funct3M,           // Size of memory operation
-  input logic [P.LLEN*2-1:0]ReadDataWordMuxM,  // Instruction from the IROM, I$, or bus. Used to check if the instruction if compressed
-  input logic               LSUStallM,         // I$ or bus are stalled. Transition to second fetch of spill after the first is fetched
+  input logic [P.LLEN*2-1:0]DCacheReadDataWordM,  // Instruction from the IROM, I$, or bus. Used to check if the instruction if compressed
+  input logic               CacheBusHPWTStall,         // I$ or bus are stalled. Transition to second fetch of spill after the first is fetched
   input logic               DTLBMissM,         // ITLB miss, ignore memory request
   input logic               DataUpdateDAM,     // ITLB miss, ignore memory request
 
   output logic [P.XLEN-1:0] IEUAdrSpillE,      // The next PCF for one of the two memory addresses of the spill
   output logic [P.XLEN-1:0] IEUAdrSpillM,      // IEUAdrM for one of the two memory addresses of the spill
   output logic              SelSpillE,     // During the transition between the two spill operations, the IFU should stall the pipeline
-  output logic [P.LLEN-1:0] ReadDataWordSpillM);// The final 32 bit instruction after merging the two spilled fetches into 1 instruction
+  output logic [P.LLEN-1:0] DCacheReadDataWordSpillM);// The final 32 bit instruction after merging the two spilled fetches into 1 instruction
 
   // Spill threshold occurs when all the cache offset PC bits are 1 (except [0]).  Without a cache this is just PCF[1]
   typedef enum logic [1:0]  {STATE_READY, STATE_SPILL} statetype;
@@ -91,7 +91,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   end
       
   // Don't take the spill if there is a stall, TLB miss, or hardware update to the D/A bits
-  assign TakeSpillM = SpillM & ~LSUStallM & ~(DTLBMissM | (P.SVADU_SUPPORTED & DataUpdateDAM));
+  assign TakeSpillM = SpillM & ~CacheBusHPWTStall & ~(DTLBMissM | (P.SVADU_SUPPORTED & DataUpdateDAM));
   
   always_ff @(posedge clk)
     if (reset | FlushM)    CurrState <= #1 STATE_READY;
@@ -108,7 +108,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   end
 
   assign SelSpillM = (CurrState == STATE_SPILL);
-  assign SelSpillE = (CurrState == STATE_READY & TakeSpillM) | (CurrState == STATE_SPILL & LSUStallM);
+  assign SelSpillE = (CurrState == STATE_READY & TakeSpillM) | (CurrState == STATE_SPILL & CacheBusHPWTStall);
   assign SpillSaveM = (CurrState == STATE_READY) & TakeSpillM & ~FlushM;
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -116,10 +116,10 @@ module align import cvw::*;  #(parameter cvw_t P) (
   ////////////////////////////////////////////////////////////////////////////////////////////////////
 
   // save the first 2 bytes
-  flopenr #(P.LLEN) SpillDataReg(clk, reset, SpillSaveM, ReadDataWordMuxM[P.LLEN-1:0], ReadDataWordFirstHalfM);
+  flopenr #(P.LLEN) SpillDataReg(clk, reset, SpillSaveM, DCacheReadDataWordM[P.LLEN-1:0], ReadDataWordFirstHalfM);
 
   // merge together
-  mux2 #(2*P.LLEN) postspillmux(ReadDataWordMuxM, {ReadDataWordMuxM[P.LLEN-1:0], ReadDataWordFirstHalfM}, SpillM, ReadDataWordSpillAllM);
+  mux2 #(2*P.LLEN) postspillmux(DCacheReadDataWordM, {DCacheReadDataWordM[P.LLEN-1:0], ReadDataWordFirstHalfM}, SpillM, ReadDataWordSpillAllM);
 
   // align by shifting
   // *** optimize by merging with halfSpill, WordSpill, etc
@@ -136,6 +136,6 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   // shifter (4:1 mux for 32 bit, 8:1 mux for 64 bit)
   // 8 * is for shifting by bytes not bits
-  assign ReadDataWordSpillM = ReadDataWordSpillAllM >> (MisalignedM ? 8 * ByteOffsetM : '0);
+  assign DCacheReadDataWordSpillM = ReadDataWordSpillAllM >> (MisalignedM ? 8 * ByteOffsetM : '0);
   
 endmodule
