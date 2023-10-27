@@ -57,16 +57,17 @@ module align import cvw::*;  #(parameter cvw_t P) (
   logic [P.LLEN-1:0]   ReadDataWordFirstHalfM;
   logic              MisalignedM;
   logic [P.LLEN*2-1:0] ReadDataWordSpillAllM;
+  logic [P.LLEN*2-1:0] ReadDataWordSpillShiftedM;
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // PC logic 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   
   localparam LLENINBYTES = P.LLEN/8;
-  logic              IEUAdrIncrementM;
+  logic [XLEN-1:0]     IEUAdrIncrementM;
   assign IEUAdrIncrementM = IEUAdrM + LLENINBYTES;
-  mux2 #(P.XLEN) pcplus2mux(.d0({IEUAdrM[P.XLEN-1:2], 2'b10}), .d1(IEUAdrIncrementM), .s(TakeSpillM), .y(IEUAdrSpillM));
-  mux2 #(P.XLEN) pcnextspillmux(.d0(IEUAdrE), .d1(IEUAdrIncrementM), .s(TakeSpillE), .y(IEUAdrSpillE));
+  mux2 #(P.XLEN) ieuadrspillemux(.d0(IEUAdrE), .d1(IEUAdrIncrementM), .s(SelSpillE), .y(IEUAdrSpillE));
+  mux2 #(P.XLEN) ieuadrspillmmux(.d0({IEUAdrM[P.XLEN-1:2], 2'b10}), .d1(IEUAdrIncrementM), .s(SelSpillM), .y(IEUAdrSpillM));
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // Detect spill
@@ -85,9 +86,9 @@ module align import cvw::*;  #(parameter cvw_t P) (
   if(P.LLEN == 64) begin
     logic DoubleSpillM;
     assign DoubleSpillM = (WordOffsetM == '1) & Funct3M[1:0] == 2'b11 & ByteOffsetM[2:0] != 3'b00;
-    assign SpillM = HalfSpillM | WordOffsetM | DoubleSpillM;
+    assign SpillM = HalfSpillM | WordSpillM | DoubleSpillM;
   end else begin
-    assign SpillM = HalfSpillM | WordOffsetM;
+    assign SpillM = HalfSpillM | WordSpillM;
   end
       
   // Don't take the spill if there is a stall, TLB miss, or hardware update to the D/A bits
@@ -136,6 +137,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   // shifter (4:1 mux for 32 bit, 8:1 mux for 64 bit)
   // 8 * is for shifting by bytes not bits
-  assign DCacheReadDataWordSpillM = ReadDataWordSpillAllM >> (MisalignedM ? 8 * ByteOffsetM : '0);
+  assign ReadDataWordSpillShiftedM = ReadDataWordSpillAllM >> (MisalignedM ? 8 * ByteOffsetM : '0);
+  assign DCacheReadDataWordSpillM = ReadDataWordSpillShiftedM[P.LLEN-1:0];
   
 endmodule
