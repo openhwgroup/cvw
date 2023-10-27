@@ -116,5 +116,5 @@ module ebufsmarb (
   //  11          16     15
   always_comb 
     if (HBURST[2:1] == 2'b00) Threshold = 4'b0000;
-    else                      Threshold = (2 << HBURST[2:1]) - 1;
+    else                      Threshold = ('d2 << HBURST[2:1]) - 'd1;
 endmodule
