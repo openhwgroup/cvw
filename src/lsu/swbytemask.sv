@@ -27,13 +27,21 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module swbytemask #(parameter WORDLEN)(
+module swbytemask #(parameter WORDLEN, EXTEND = 0)(
   input logic  [2:0]                   Size,
   input logic  [$clog2(WORDLEN/8)-1:0] Adr,
-  output logic [WORDLEN/8-1:0]         ByteMask
+  output logic [WORDLEN/8-1:0]         ByteMask,
+  output logic [WORDLEN/8-1:0]         ByteMaskExtended
 );
-  
-  assign ByteMask = ((2**(2**Size))-1) << Adr; // merge with align.
+  if(EXTEND) begin
+    logic [WORDLEN*2/8-1:0]              ExtendedByteMask;
+    assign ExtendedByteMask = ((2**(2**Size))-1) << Adr;
+    assign ByteMask = ExtendedByteMask[WORDLEN/8-1:0];
+    assign ByteMaskExtended = ExtendedByteMask[WORDLEN*2/8-1:WORDLEN/8];
+  end else begin    
+    assign ByteMask = ((2**(2**Size))-1) << Adr;
+    assign ByteMaskExtended = '0;
+  end
 
 /* Equivalent to the following
 

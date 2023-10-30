@@ -44,6 +44,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   input logic               DataUpdateDAM,     // ITLB miss, ignore memory request
 
   input logic [(P.LLEN-1)/8:0] ByteMaskM,
+  input logic [(P.LLEN-1)/8:0] ByteMaskExtendedM,
   input logic [P.LLEN-1:0] LSUWriteDataM, 
 
   output logic [(P.LLEN*2-1)/8:0] ByteMaskSpillM,
@@ -156,7 +157,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   assign LSUWriteDataShiftedM = {LSUWriteDataM, LSUWriteDataM} << (MisalignedM ? 8 * ByteOffsetM : '0);
   mux2 #(2*P.LLEN) writedataspillmux(LSUWriteDataShiftedM, {{{P.LLEN}{1'b0}}, LSUWriteDataShiftedM[P.LLEN*2-1:P.LLEN]}, SelSpillM, LSUWriteDataSpillM);
   logic [P.LLEN*2/8-1:0] ByteMaskShiftedM;
-  assign ByteMaskShiftedM = {{{P.LLEN/8}{1'b0}}, ByteMaskM} << (MisalignedM ? ByteMaskM : '0); // *** merge with subword byte mask
-  mux2 #(2*P.LLEN/8) bytemaskspillmux(ByteMaskShiftedM, {{{P.LLEN/8}{1'b0}}, ByteMaskShiftedM[P.LLEN*2/8-1:P.LLEN/8]}, SelSpillM, ByteMaskSpillM);
+  assign ByteMaskShiftedM = {ByteMaskExtendedM, ByteMaskM};
+  mux2 #(2*P.LLEN/8) bytemaskspillmux(ByteMaskShiftedM, {{{P.LLEN/8}{1'b0}}, ByteMaskExtendedM}, SelSpillM, ByteMaskSpillM);
   
 endmodule
