@@ -153,6 +153,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   if(MISALIGN_SUPPORT) begin : ziccslm_align
     logic [P.LLEN-1:0] IEUAdrSpillE, IEUAdrSpillM;
     align #(P) align(.clk, .reset, .StallM, .FlushM, .IEUAdrE, .IEUAdrM, .Funct3M,
+                     .MemRWM, .CacheableM,
                      .DCacheReadDataWordM, .CacheBusHPWTStall, .DTLBMissM, .DataUpdateDAM,
                      .ByteMaskM, .LSUWriteDataM, .ByteMaskSpillM, .LSUWriteDataSpillM,
                      .IEUAdrSpillE, .IEUAdrSpillM, .SelSpillE, .DCacheReadDataWordSpillM);
