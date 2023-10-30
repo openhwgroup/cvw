@@ -94,7 +94,8 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   localparam DSCRATCH1     = 12'h7B3;
   // Constants
   localparam ZERO = {(P.XLEN){1'b0}};
-  localparam MEDELEG_MASK  = 16'hB3FF;
+  // when compressed instructions are supported, there can't be misaligned instructions
+  localparam MEDELEG_MASK  = P.COMPRESSED_SUPPORTED ? 16'hB3FE : 16'hB3FF;
   localparam MIDELEG_MASK  = 12'h222; // we choose to not make machine interrupts delegable
 
  // There are PMP_ENTRIES = 0, 16, or 64 PMPADDR registers, each of which has its own flop
