@@ -36,6 +36,8 @@ module align import cvw::*;  #(parameter cvw_t P) (
   input logic [P.XLEN-1:0]  IEUAdrM,               // 2 byte aligned PC in Fetch stage
   input logic [P.XLEN-1:0]  IEUAdrE,           // The next IEUAdrM
   input logic [2:0]         Funct3M,           // Size of memory operation
+  input logic [1:0]         MemRWM, 
+  input logic               CacheableM,
   input logic [P.LLEN*2-1:0]DCacheReadDataWordM,  // Instruction from the IROM, I$, or bus. Used to check if the instruction if compressed
   input logic               CacheBusHPWTStall,         // I$ or bus are stalled. Transition to second fetch of spill after the first is fetched
   input logic               DTLBMissM,         // ITLB miss, ignore memory request
@@ -56,7 +58,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   typedef enum logic [1:0]  {STATE_READY, STATE_SPILL} statetype;
 
   statetype          CurrState, NextState;
-  logic              TakeSpillM, TakeSpillE;
+  logic              TakeSpillM;
   logic              SpillM;
   logic              SelSpillM;
   logic              SpillSaveM;
@@ -75,7 +77,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   assign IEUAdrIncrementM = IEUAdrM + LLENINBYTES;
   /* verilator lint_on WIDTHEXPAND */
   mux2 #(P.XLEN) ieuadrspillemux(.d0(IEUAdrE), .d1(IEUAdrIncrementM), .s(SelSpillE), .y(IEUAdrSpillE));
-  mux2 #(P.XLEN) ieuadrspillmmux(.d0({IEUAdrM[P.XLEN-1:2], 2'b10}), .d1(IEUAdrIncrementM), .s(SelSpillM), .y(IEUAdrSpillM));
+  mux2 #(P.XLEN) ieuadrspillmmux(.d0(IEUAdrM), .d1(IEUAdrIncrementM), .s(SelSpillM), .y(IEUAdrSpillM));
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // Detect spill
@@ -94,9 +96,9 @@ module align import cvw::*;  #(parameter cvw_t P) (
   if(P.LLEN == 64) begin
     logic DoubleSpillM;
     assign DoubleSpillM = (WordOffsetM == '1) & Funct3M[1:0] == 2'b11 & ByteOffsetM[2:0] != 3'b00;
-    assign SpillM = HalfSpillM | WordSpillM | DoubleSpillM;
+    assign SpillM = (|MemRWM) & CacheableM & (HalfSpillM | WordSpillM | DoubleSpillM);
   end else begin
-    assign SpillM = HalfSpillM | WordSpillM;
+    assign SpillM = (|MemRWM) & CacheableM & (HalfSpillM | WordSpillM);
   end
       
   // Don't take the spill if there is a stall, TLB miss, or hardware update to the D/A bits
@@ -151,10 +153,10 @@ module align import cvw::*;  #(parameter cvw_t P) (
   // write path. Also has the 8:1 shifter muxing for the byteoffset
   // then it also has the mux to select when a spill occurs
   logic [P.LLEN*2-1:0] LSUWriteDataShiftedM;
-  assign LSUWriteDataShiftedM = {{{P.LLEN}{1'b0}}, LSUWriteDataM} << (MisalignedM ? 8 * ByteOffsetM : '0);
+  assign LSUWriteDataShiftedM = {LSUWriteDataM, LSUWriteDataM} << (MisalignedM ? 8 * ByteOffsetM : '0);
   mux2 #(2*P.LLEN) writedataspillmux(LSUWriteDataShiftedM, {{{P.LLEN}{1'b0}}, LSUWriteDataShiftedM[P.LLEN*2-1:P.LLEN]}, SelSpillM, LSUWriteDataSpillM);
   logic [P.LLEN*2/8-1:0] ByteMaskShiftedM;
-  assign ByteMaskShiftedM = {{{P.LLEN/8}{1'b0}}, ByteMaskM} << (MisalignedM ? ByteMaskM : '0);
+  assign ByteMaskShiftedM = {{{P.LLEN/8}{1'b0}}, ByteMaskM} << (MisalignedM ? ByteMaskM : '0); // *** merge with subword byte mask
   mux2 #(2*P.LLEN/8) bytemaskspillmux(ByteMaskShiftedM, {{{P.LLEN/8}{1'b0}}, ByteMaskShiftedM[P.LLEN*2/8-1:P.LLEN/8]}, SelSpillM, ByteMaskSpillM);
   
 endmodule
