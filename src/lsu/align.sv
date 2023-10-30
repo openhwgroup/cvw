@@ -41,6 +41,12 @@ module align import cvw::*;  #(parameter cvw_t P) (
   input logic               DTLBMissM,         // ITLB miss, ignore memory request
   input logic               DataUpdateDAM,     // ITLB miss, ignore memory request
 
+  input logic [(P.LLEN-1)/8:0] ByteMaskM,
+  input logic [P.LLEN-1:0] LSUWriteDataM, 
+
+  output logic [(P.LLEN*2-1)/8:0] ByteMaskSpillM,
+  output logic [P.LLEN*2-1:0] LSUWriteDataSpillM, 
+
   output logic [P.XLEN-1:0] IEUAdrSpillE,      // The next PCF for one of the two memory addresses of the spill
   output logic [P.XLEN-1:0] IEUAdrSpillM,      // IEUAdrM for one of the two memory addresses of the spill
   output logic              SelSpillE,     // During the transition between the two spill operations, the IFU should stall the pipeline
@@ -65,7 +71,9 @@ module align import cvw::*;  #(parameter cvw_t P) (
   
   localparam LLENINBYTES = P.LLEN/8;
   logic [P.XLEN-1:0]     IEUAdrIncrementM;
+  /* verilator lint_off WIDTHEXPAND */
   assign IEUAdrIncrementM = IEUAdrM + LLENINBYTES;
+  /* verilator lint_on WIDTHEXPAND */
   mux2 #(P.XLEN) ieuadrspillemux(.d0(IEUAdrE), .d1(IEUAdrIncrementM), .s(SelSpillE), .y(IEUAdrSpillE));
   mux2 #(P.XLEN) ieuadrspillmmux(.d0({IEUAdrM[P.XLEN-1:2], 2'b10}), .d1(IEUAdrIncrementM), .s(SelSpillM), .y(IEUAdrSpillM));
 
@@ -139,5 +147,14 @@ module align import cvw::*;  #(parameter cvw_t P) (
   // 8 * is for shifting by bytes not bits
   assign ReadDataWordSpillShiftedM = ReadDataWordSpillAllM >> (MisalignedM ? 8 * ByteOffsetM : '0);
   assign DCacheReadDataWordSpillM = ReadDataWordSpillShiftedM[P.LLEN-1:0];
+
+  // write path. Also has the 8:1 shifter muxing for the byteoffset
+  // then it also has the mux to select when a spill occurs
+  logic [P.LLEN*2-1:0] LSUWriteDataShiftedM;
+  assign LSUWriteDataShiftedM = {{{P.LLEN}{1'b0}}, LSUWriteDataM} << (MisalignedM ? 8 * ByteOffsetM : '0);
+  mux2 #(2*P.LLEN) writedataspillmux(LSUWriteDataShiftedM, {{{P.LLEN}{1'b0}}, LSUWriteDataShiftedM[P.LLEN*2-1:P.LLEN]}, SelSpillM, LSUWriteDataSpillM);
+  logic [P.LLEN*2/8-1:0] ByteMaskShiftedM;
+  assign ByteMaskShiftedM = {{{P.LLEN/8}{1'b0}}, ByteMaskM} << (MisalignedM ? ByteMaskM : '0);
+  mux2 #(2*P.LLEN/8) bytemaskspillmux(ByteMaskShiftedM, {{{P.LLEN/8}{1'b0}}, ByteMaskShiftedM[P.LLEN*2/8-1:P.LLEN/8]}, SelSpillM, ByteMaskSpillM);
   
 endmodule
