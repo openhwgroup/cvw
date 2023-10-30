@@ -112,7 +112,7 @@ FFFFFFFF # stimecmp low bits
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
-0000b3ff # medeleg after attempted write of all 1's (only some bits are writeable)
+0000b3fe # medeleg after attempted write of all 1's (only some bits are writeable)
 00000000
 00000222 # mideleg after attempted write of all 1's (only some bits are writeable)
 00000000 # skipping instruction address fault since they're impossible with compressed instrs enabled

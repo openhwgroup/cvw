@@ -144,7 +144,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   // Spill Support
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  if(P.C_SUPPORTED) begin : Spill
+  if(P.COMPRESSED_SUPPORTED) begin : Spill
     spill #(P) spill(.clk, .reset, .StallD, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF, .InstrUpdateDAF, .CacheableF, 
       .IFUCacheBusStallF, .ITLBMissF, .PCSpillNextF, .PCSpillF, .SelSpillNextF, .PostSpillInstrRawF, .CompressedF);
   end else begin : NoSpill
@@ -366,7 +366,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(P.XLEN) PCDReg(clk, reset, FlushD, ~StallD, PCF, PCD);
    
   // expand 16-bit compressed instructions to 32 bits
-  if (P.C_SUPPORTED | P.ZCA_SUPPORTED) begin
+  if (P.COMPRESSED_SUPPORTED) begin
     logic IllegalCompInstrD;
     decompress #(P) decomp(.InstrRawD, .InstrD, .IllegalCompInstrD); 
     assign IllegalIEUInstrD = IllegalBaseInstrD | IllegalCompInstrD; // illegal if bad 32 or 16-bit instr
@@ -386,7 +386,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   // only IALIGN=32, the two low bits (mepc[1:0]) are always zero.
   // Spec 3.1.14
   // Traps: Can’t happen.  The bottom two bits of MTVEC are ignored so the trap always is to a multiple of 4.  See 3.1.7 of the privileged spec.
-  assign BranchMisalignedFaultE = (IEUAdrE[1] & ~P.C_SUPPORTED) & PCSrcE;
+  assign BranchMisalignedFaultE = (IEUAdrE[1] & ~P.COMPRESSED_SUPPORTED) & PCSrcE;
   flopenr #(1) InstrMisalignedReg(clk, reset, ~StallM, BranchMisalignedFaultE, InstrMisalignedFaultM);
 
   // Instruction and PC/PCLink pipeline registers
