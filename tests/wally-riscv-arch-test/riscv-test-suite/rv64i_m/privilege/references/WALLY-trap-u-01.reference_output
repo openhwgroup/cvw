@@ -26,7 +26,7 @@
 00000000
 00000004 # scause from load address misaligned
 00000000
-80000411 # stval of misaligned address (0x80000409)
+02000001 # mtval of misaligned address 
 00000000
 00000000 # masked out mstatus.mpp = 0, mstatus.MPIE = 0, and mstatus.MIE = 0
 00000000
@@ -38,7 +38,7 @@
 00000000
 00000006 # scause from store misaligned
 00000000
-80000429 # stval of address with misaligned store instr (0x80000421)
+02000001 # mtval of misaligned address 
 00000000
 00000000 # masked out mstatus.mpp = 0, mstatus.MPIE = 0, and mstatus.MIE = 0
 00000000
@@ -122,7 +122,7 @@
 00000000
 00000004 # scause from load address misaligned
 00000000
-80000411 # stval of misaligned address (0x80000409)
+02000001 # mtval of misaligned address 
 00000000
 00000020 # masked out sstatus.SPP = 0, sstatus.SPIE = 1, and sstatus.SIE = 0
 00000000
@@ -134,7 +134,7 @@
 00000000
 00000006 # scause from store misaligned
 00000000
-80000429 # stval of address with misaligned store instr (0x80000421)
+02000001 # mtval of misaligned address 
 00000000
 00000020 # masked out sstatus.SPP = 0, sstatus.SPIE = 1, and sstatus.SIE = 0
 00000000
