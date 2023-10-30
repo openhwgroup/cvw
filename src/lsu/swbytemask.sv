@@ -33,7 +33,7 @@ module swbytemask #(parameter WORDLEN)(
   output logic [WORDLEN/8-1:0]         ByteMask
 );
   
-  assign ByteMask = ((2**(2**Size))-1) << Adr;
+  assign ByteMask = ((2**(2**Size))-1) << Adr; // merge with align.
 
 /* Equivalent to the following
 

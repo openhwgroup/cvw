@@ -87,10 +87,10 @@ module align import cvw::*;  #(parameter cvw_t P) (
   // 1) operation size
   // 2) offset
   // 3) access location within the cacheline
-  logic [P.DCACHE_LINELENINBITS/8-1:P.LLEN/8] WordOffsetM;
-  logic [P.LLEN/8-1:0]                 ByteOffsetM;
+  logic [$clog2(P.DCACHE_LINELENINBITS/8)-1:$clog2(LLENINBYTES)] WordOffsetM;
+  logic [$clog2(LLENINBYTES)-1:0]                 ByteOffsetM;
   logic                                HalfSpillM, WordSpillM;
-  assign {WordOffsetM, ByteOffsetM} = IEUAdrM[P.DCACHE_LINELENINBITS/8-1:0];
+  assign {WordOffsetM, ByteOffsetM} = IEUAdrM[$clog2(P.DCACHE_LINELENINBITS/8)-1:0];
   assign HalfSpillM = (WordOffsetM == '1) & Funct3M[1:0] == 2'b01 & ByteOffsetM[0] != 1'b0;
   assign WordSpillM = (WordOffsetM == '1) & Funct3M[1:0] == 2'b10 & ByteOffsetM[1:0] != 2'b00;
   if(P.LLEN == 64) begin
