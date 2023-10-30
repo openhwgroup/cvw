@@ -119,6 +119,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic [P.LLEN-1:0]     DTIMReadDataWordM;                      // DTIM read data
   /* verilator lint_off WIDTHEXPAND */  
   logic [(MISALIGN_SUPPORT+1)*P.LLEN-1:0]     DCacheReadDataWordM;                    // D$ read data
+  logic [(MISALIGN_SUPPORT+1)*P.LLEN-1:0]   LSUWriteDataSpillM;                     // Final write data
+  logic [((MISALIGN_SUPPORT+1)*P.LLEN-1)/8:0] ByteMaskSpillM;                       // Selects which bytes within a word to write
   /* verilator lint_on WIDTHEXPAND */
   logic [P.LLEN-1:0]     DCacheReadDataWordSpillM;               // D$ read data
   logic [P.LLEN-1:0]     ReadDataWordMuxM;                       // DTIM or D$ read data
@@ -152,6 +154,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     logic [P.LLEN-1:0] IEUAdrSpillE, IEUAdrSpillM;
     align #(P) align(.clk, .reset, .StallM, .FlushM, .IEUAdrE, .IEUAdrM, .Funct3M,
                      .DCacheReadDataWordM, .CacheBusHPWTStall, .DTLBMissM, .DataUpdateDAM,
+                     .ByteMaskM, .LSUWriteDataM, .ByteMaskSpillM, .LSUWriteDataSpillM,
                      .IEUAdrSpillE, .IEUAdrSpillM, .SelSpillE, .DCacheReadDataWordSpillM);
     assign IEUAdrExtM = {2'b00, IEUAdrSpillM}; 
     assign IEUAdrExtE = {2'b00, IEUAdrSpillE};
@@ -160,6 +163,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign IEUAdrExtE = {2'b00, IEUAdrE};
     assign SelSpillE = '0;
     assign DCacheReadDataWordSpillM = DCacheReadDataWordM;
+    assign ByteMaskSpillM = ByteMaskM;
+    assign LSUWriteDataSpillM = LSUWriteDataM;
   end
 
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -292,8 +297,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
               .NUMWAYS(P.DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(CACHEWORDLEN), .MUXINTERVAL(P.LLEN), .READ_ONLY_CACHE(0)) dcache(
         .clk, .reset, .Stall(GatedStallW), .SelBusBeat, .FlushStage(FlushW | IgnoreRequestTLB), .CacheRW(CacheRWM), .CacheAtomic(CacheAtomicM),
         .FlushCache(FlushDCache), .NextSet(IEUAdrExtE[11:0]), .PAdr(PAdrM), 
-        .ByteMask(ByteMaskM), .BeatCount(BeatCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
-        .CacheWriteData(LSUWriteDataM), .SelHPTW,
+        .ByteMask(ByteMaskSpillM), .BeatCount(BeatCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
+        .CacheWriteData(LSUWriteDataSpillM), .SelHPTW,
         .CacheStall, .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .CacheCommitted(DCacheCommittedM), 
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(DCacheReadDataWordM), 
