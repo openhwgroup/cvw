@@ -57,6 +57,7 @@ target_tests_nosim = \
     WALLY-wfi-01 \
     WALLY-cbom-01 \
     WALLY-cboz-01 \
+    WALLY-misaligned-access-01 \
 
 
 # unclear why status-fp-enabled and wfi aren't simulating ok

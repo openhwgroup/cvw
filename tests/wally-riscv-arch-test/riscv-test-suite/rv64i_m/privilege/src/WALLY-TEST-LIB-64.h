@@ -98,7 +98,8 @@ cause_breakpnt:
     ret
 
 cause_load_addr_misaligned:
-    auipc t3, 0      // get current PC, which is aligned
+    li t3, 0x02000000 // base address of clint, because with zicclsm misaligned cached access won't trap
+    //auipc t3, 0      // get current PC, which is aligned
     addi t3, t3, 1
     lw t4, 0(t3)    // load from a misaligned address
     ret
@@ -108,7 +109,8 @@ cause_load_acc:
     ret
 
 cause_store_addr_misaligned:
-    auipc t3, 0      // get current PC, which is aligned
+    li t3, 0x02000000 // base address of clint, because with zicclsm misaligned cached access won't trap
+    //auipc t3, 0      // get current PC, which is aligned
     addi t3, t3, 1
     sw t4, 0(t3)     // store to a misaligned address
     ret
