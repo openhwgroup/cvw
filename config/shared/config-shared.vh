@@ -24,6 +24,7 @@ localparam SV48 = 4'd9;
 localparam A_SUPPORTED = ((MISA >> 0) % 2 == 1);
 localparam B_SUPPORTED = ((ZBA_SUPPORTED | ZBB_SUPPORTED | ZBC_SUPPORTED | ZBS_SUPPORTED));// not based on MISA
 localparam C_SUPPORTED = ((MISA >> 2) % 2 == 1);
+localparam COMPRESSED_SUPPORTED = C_SUPPORTED | ZCA_SUPPORTED;
 localparam D_SUPPORTED = ((MISA >> 3) % 2 == 1);
 localparam E_SUPPORTED = ((MISA >> 4) % 2 == 1);
 localparam F_SUPPORTED = ((MISA >> 5) % 2 == 1);
