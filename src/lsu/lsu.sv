@@ -151,7 +151,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
 
   flopenrc #(P.XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
   if(MISALIGN_SUPPORT) begin : ziccslm_align
-    logic [P.LLEN-1:0] IEUAdrSpillE, IEUAdrSpillM;
+    logic [P.XLEN-1:0] IEUAdrSpillE, IEUAdrSpillM;
     align #(P) align(.clk, .reset, .StallM, .FlushM, .IEUAdrE, .IEUAdrM, .Funct3M,
                      .MemRWM, .CacheableM,
                      .DCacheReadDataWordM, .CacheBusHPWTStall, .DTLBMissM, .DataUpdateDAM,
