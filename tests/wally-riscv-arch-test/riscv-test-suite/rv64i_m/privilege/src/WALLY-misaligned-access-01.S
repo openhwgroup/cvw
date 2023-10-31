@@ -66,14 +66,14 @@ TEST_HALF0:
         jal ra, CheckAllWriteSignature
 
 TEST_HALF1:
-        la a0, SourceData+1
-        la a1, Half1DstData
+        la a0, SourceData
+        la a1, Half1DstData+1
         li a2, 16
         jal ra, memcpy8_2
         
         # check if the values are write for all sizes and offsets of misaligned loads.
-        la a0, SourceData+1
-        la a1, Half1DstData
+        la a0, SourceData
+        la a1, Half1DstData+1
         li a2, 16
         jal ra, CheckAllWriteSignature
 	
@@ -90,38 +90,38 @@ TEST_WORD0:
         jal ra, CheckAllWriteSignature
 	
 TEST_WORD1:
-        la a0, SourceData+1
-        la a1, Word1DstData
+        la a0, SourceData
+        la a1, Word1DstData+1
         li a2, 16
         jal ra, memcpy8_4
 	
         # check if the values are write for all sizes and offsets of misaligned loads.
-        la a0, SourceData+1
-        la a1, Word1DstData
+        la a0, SourceData
+        la a1, Word1DstData+1
         li a2, 16
         jal ra, CheckAllWriteSignature
 	
 TEST_WORD2:
-        la a0, SourceData+2
-        la a1, Word2DstData
+        la a0, SourceData
+        la a1, Word2DstData+2
         li a2, 16
         jal ra, memcpy8_4
 	
         # check if the values are write for all sizes and offsets of misaligned loads.
-        la a0, SourceData+2
-        la a1, Word2DstData
+        la a0, SourceData
+        la a1, Word2DstData+2
         li a2, 16
         jal ra, CheckAllWriteSignature
 	
 TEST_WORD3:
-        la a0, SourceData+3
-        la a1, Word3DstData
+        la a0, SourceData
+        la a1, Word3DstData+3
         li a2, 16
         jal ra, memcpy8_4
 
         # check if the values are write for all sizes and offsets of misaligned loads.
-        la a0, SourceData+3
-        la a1, Word3DstData
+        la a0, SourceData
+        la a1, Word3DstData+3
         li a2, 16
         jal ra, CheckAllWriteSignature
 	
@@ -138,86 +138,86 @@ TEST_DOUBLE0:
         jal ra, CheckAllWriteSignature
 	
 TEST_DOUBLE1:
-        la a0, SourceData+1
-        la a1, Double1DstData
+        la a0, SourceData
+        la a1, Double1DstData+1
         li a2, 16
         jal ra, memcpy8_8
 	
         # check if the values are write for all sizes and offsets of misaligned loads.
-        la a0, SourceData+1
-        la a1, Double1DstData
+        la a0, SourceData
+        la a1, Double1DstData+1
         li a2, 16
         jal ra, CheckAllWriteSignature
 	
 TEST_DOUBLE2:
-        la a0, SourceData+2
-        la a1, Double2DstData
+        la a0, SourceData
+        la a1, Double2DstData+2
         li a2, 16
         jal ra, memcpy8_8
 
         # check if the values are write for all sizes and offsets of misaligned loads.
-        la a0, SourceData+2
-        la a1, Double2DstData
+        la a0, SourceData
+        la a1, Double2DstData+2
         li a2, 16
         jal ra, CheckAllWriteSignature
 	
 TEST_DOUBLE3:
-        la a0, SourceData+3
-        la a1, Double3DstData
+        la a0, SourceData
+        la a1, Double3DstData+3
         li a2, 16
         jal ra, memcpy8_8
 
         # check if the values are write for all sizes and offsets of misaligned loads.
-        la a0, SourceData+3
-        la a1, Double3DstData
+        la a0, SourceData
+        la a1, Double3DstData+3
         li a2, 16
         jal ra, CheckAllWriteSignature
 	
 TEST_DOUBLE4:
-        la a0, SourceData+4
-        la a1, Double4DstData
+        la a0, SourceData
+        la a1, Double4DstData+4
         li a2, 16
         jal ra, memcpy8_8
         
         # check if the values are write for all sizes and offsets of misaligned loads.
-        la a0, SourceData+4
-        la a1, Double4DstData
+        la a0, SourceData
+        la a1, Double4DstData+4
         li a2, 16
         jal ra, CheckAllWriteSignature
 	
 TEST_DOUBLE5:
-        la a0, SourceData+5
-        la a1, Double5DstData
+        la a0, SourceData
+        la a1, Double5DstData+5
         li a2, 16
         jal ra, memcpy8_8
         
         # check if the values are write for all sizes and offsets of misaligned loads.
-        la a0, SourceData+5
-        la a1, Double5DstData
+        la a0, SourceData
+        la a1, Double5DstData+5
         li a2, 16
         jal ra, CheckAllWriteSignature
 	
 TEST_DOUBLE6:
-        la a0, SourceData+6
-        la a1, Double6DstData
+        la a0, SourceData
+        la a1, Double6DstData+6
         li a2, 16
         jal ra, memcpy8_8
 	
         # check if the values are write for all sizes and offsets of misaligned loads.
-        la a0, SourceData+6
-        la a1, Double6DstData
+        la a0, SourceData
+        la a1, Double6DstData+6
         li a2, 16
         jal ra, CheckAllWriteSignature
 	
 TEST_DOUBLE7:
-        la a0, SourceData+7
-        la a1, Double7DstData
+        la a0, SourceData
+        la a1, Double7DstData+7
         li a2, 16
         jal ra, memcpy8_8
 
         # check if the values are write for all sizes and offsets of misaligned loads.
-        la a0, SourceData+7
-        la a1, Double7DstData
+        la a0, SourceData
+        la a1, Double7DstData+7
         li a2, 16
         jal ra, CheckAllWriteSignature
 	
@@ -672,7 +672,7 @@ Half1DstData:
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
-
+.8byte 0xdeadbeefdeadbeef
 Word0DstData:    
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
@@ -684,19 +684,19 @@ Word1DstData:
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
-
+.8byte 0xdeadbeefdeadbeef
 Word2DstData:    
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
-	
+.8byte 0xdeadbeefdeadbeef	
 Word3DstData:    
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
-	
+.8byte 0xdeadbeefdeadbeef	
 Double0DstData:    
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
@@ -708,43 +708,43 @@ Double1DstData:
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
-	
+.8byte 0xdeadbeefdeadbeef	
 Double2DstData:    
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
-	
+.8byte 0xdeadbeefdeadbeef	
 Double3DstData:    
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
-	
+.8byte 0xdeadbeefdeadbeef	
 Double4DstData:    
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
-	
+.8byte 0xdeadbeefdeadbeef	
 Double5DstData:    
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
-	
+.8byte 0xdeadbeefdeadbeef	
 Double6DstData:    
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
-	
+.8byte 0xdeadbeefdeadbeef	
 Double7DstData:    
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
-
+.8byte 0xdeadbeefdeadbeef
 signature:
         .fill 225, 1, 0x00
 	
