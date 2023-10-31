@@ -43,9 +43,9 @@ module rom1p1r #(parameter ADDR_WIDTH = 8,
       rom1p1r_128x32 rom1 (.CLK(clk), .CEB(~ce), .A(addr[6:0]), .Q(dout));      
 
    end else begin */
-   always @ (posedge clk) begin
-   if(ce) dout <= ROM[addr];    
-   end
+   always @ (posedge clk) 
+      if(ce) dout <= ROM[addr];    
+   
    
    // for FPGA, initialize with zero-stage bootloader
    if(PRELOAD_ENABLED) begin
