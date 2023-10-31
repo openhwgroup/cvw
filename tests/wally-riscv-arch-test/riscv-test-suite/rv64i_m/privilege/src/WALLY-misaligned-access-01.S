@@ -240,7 +240,7 @@ CheckAllWriteSignature:
         mv a0, s0  # SourceData
         addi a1, s1, 1  # ie: ByteDstData+1
         srli a2, s2, 2  # * 4 -1
-        subi a2, a2, 1
+        addi a2, a2, -1
         jal ra, memcmp2
         sb a0, 2(s3)
         or s4, s4, a0
@@ -257,7 +257,7 @@ CheckAllWriteSignature:
         mv a0, s0  # SourceData
         addi a1, s1, 1  # ie: ByteDstData+1
         srli a2, s2, 1  # * 2 -1
-        subi a2, a2, 1
+        addi a2, a2, -1
         jal ra, memcmp4
         sb a0, 4(s3)
         or s4, s4, a0
@@ -266,7 +266,7 @@ CheckAllWriteSignature:
         mv a0, s0  # SourceData
         addi a1, s1, 2  # ie: ByteDstData+2
         srli a2, s2, 1  # * 2 -1
-        subi a2, a2, 1
+        addi a2, a2, -1
         jal ra, memcmp4
         sb a0, 5(s3)
         or s4, s4, a0
@@ -275,7 +275,7 @@ CheckAllWriteSignature:
         mv a0, s0  # SourceData
         addi a1, s1, 3  # ie: ByteDstData+3
         srli a2, s2, 1  # * 2 -1
-        subi a2, a2, 1
+        addi a2, a2, -1
         jal ra, memcmp4
         sb a0, 6(s3)
         or s4, s4, a0
@@ -291,7 +291,7 @@ CheckAllWriteSignature:
         mv a0, s0  # SourceData
         addi a1, s1, 1  # ie: ByteDstData+1
         srli a2, s2, 0  # * 1 -1
-        subi a2, a2, 1
+        addi a2, a2, -1
         jal ra, memcmp8
         sb a0, 8(s3)
 
@@ -299,7 +299,7 @@ CheckAllWriteSignature:
         mv a0, s0  # SourceData
         addi a1, s1, 2  # ie: ByteDstData+2
         srli a2, s2, 0  # * 1 -1
-        subi a2, a2, 1
+        addi a2, a2, -1
         jal ra, memcmp8
         sb a0, 9(s3)
         
@@ -307,7 +307,7 @@ CheckAllWriteSignature:
         mv a0, s0  # SourceData
         addi a1, s1, 3  # ie: ByteDstData+3 
         srli a2, s2, 0  # * 1 -1
-        subi a2, a2, 1
+        addi a2, a2, -1
         jal ra, memcmp8
         sb a0, 10(s3)
 	
@@ -315,7 +315,7 @@ CheckAllWriteSignature:
         mv a0, s0  # SourceData
         addi a1, s1, 4  # ie: ByteDstData+4
         srli a2, s2, 0  # * 1 -1
-        subi a2, a2, 1
+        addi a2, a2, -1
         jal ra, memcmp8
         sb a0, 11(s3)
 
@@ -323,7 +323,7 @@ CheckAllWriteSignature:
         mv a0, s0  # SourceData
         addi a1, s1, 5  # ie: ByteDstData+5
         srli a2, s2, 0  # * 1 -1
-        subi a2, a2, 1
+        addi a2, a2, -1
         jal ra, memcmp8
         sb a0, 12(s3)
 	
@@ -331,7 +331,7 @@ CheckAllWriteSignature:
         mv a0, s0  # SourceData
         addi a1, s1, 6  # ie: ByteDstData+6
         srli a2, s2, 0  # * 1 -1
-        subi a2, a2, 1
+        addi a2, a2, -1
         jal ra, memcmp8
         sb a0, 13(s3)
 	
@@ -339,7 +339,7 @@ CheckAllWriteSignature:
         mv a0, s0  # SourceData
         addi a1, s1, 7  # ie: ByteDstData+7
         srli a2, s2, 0  # * 1
-        subi a2, a2, 1
+        addi a2, a2, -1
         jal ra, memcmp8
         sb a0, 14(s3)
 	
@@ -347,7 +347,7 @@ CheckAllWriteSignature:
         mv a3, s3
         or a0, s4, a0
         mv ra, s4
-        ret ra
+        ret
 
 
 .type memcmp1, @function
@@ -505,7 +505,8 @@ memcpy8_2:
 
         # 16 bit mask
         lui t4, 0xf
-        ori t4, t4, 0xfff
+        li t3, 0xfff
+        or t4, t4, t3
 
 memcpy8_2_loop:   
         ld t3, 0(t0)
@@ -543,7 +544,8 @@ memcpy8_4:
 
         # 32 bit mask
         lui t4, 0xffff
-        ori t4, t4, 0xfff
+        li t3, 0xfff
+        or t4, t4, t3
 
 memcpy8_4_loop:   
         ld t3, 0(t0)
