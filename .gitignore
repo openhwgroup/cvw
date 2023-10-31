@@ -83,7 +83,6 @@ synthDC/ppa/plots
 synthDC/wallyplots/
 synthDC/runArchive
 synthDC/hdl
-synthDC/wrappers
 sim/power.saif
 tests/fp/vectors/*.tv
 synthDC/Summary.csv
