@@ -68,14 +68,25 @@ module align import cvw::*;  #(parameter cvw_t P) (
   logic [P.LLEN*2-1:0] ReadDataWordSpillAllM;
   logic [P.LLEN*2-1:0] ReadDataWordSpillShiftedM;
 
-  ////////////////////////////////////////////////////////////////////////////////////////////////////
-  // PC logic 
-  ////////////////////////////////////////////////////////////////////////////////////////////////////
-  
   localparam LLENINBYTES = P.LLEN/8;
   logic [P.XLEN-1:0]     IEUAdrIncrementM;
+  logic [3:0]            IncrementAmount;
+
+  logic [(P.LLEN-1)*2/8:0] ByteMaskSaveM;
+  logic [(P.LLEN-1)*2/8:0] ByteMaskMuxM;
+
+  always_comb begin
+    case(MemRWM)
+      2'b00: IncrementAmount = 4'd0;
+      2'b01: IncrementAmount = 4'd1;
+      2'b10: IncrementAmount = 4'd3;
+      2'b11: IncrementAmount = 4'd7;
+      default: IncrementAmount = 4'd7;
+    endcase
+  end
   /* verilator lint_off WIDTHEXPAND */
-  assign IEUAdrIncrementM = IEUAdrM + LLENINBYTES;
+  //assign IEUAdrIncrementM = IEUAdrM + LLENINBYTES;
+  assign IEUAdrIncrementM = IEUAdrM + IncrementAmount;
   /* verilator lint_on WIDTHEXPAND */
   mux2 #(P.XLEN) ieuadrspillemux(.d0(IEUAdrE), .d1(IEUAdrIncrementM), .s(SelSpillE), .y(IEUAdrSpillE));
   mux2 #(P.XLEN) ieuadrspillmmux(.d0(IEUAdrM), .d1(IEUAdrIncrementM), .s(SelSpillM), .y(IEUAdrSpillM));
@@ -88,15 +99,16 @@ module align import cvw::*;  #(parameter cvw_t P) (
   // 1) operation size
   // 2) offset
   // 3) access location within the cacheline
-  logic [$clog2(P.DCACHE_LINELENINBITS/8)-1:$clog2(LLENINBYTES)] WordOffsetM;
+  localparam OFFSET_BIT_POS =  $clog2(P.DCACHE_LINELENINBITS/8);
+  logic [OFFSET_BIT_POS-1:$clog2(LLENINBYTES)] WordOffsetM;
   logic [$clog2(LLENINBYTES)-1:0]                 ByteOffsetM;
   logic                                HalfSpillM, WordSpillM;
-  assign {WordOffsetM, ByteOffsetM} = IEUAdrM[$clog2(P.DCACHE_LINELENINBITS/8)-1:0];
-  assign HalfSpillM = (WordOffsetM == '1) & Funct3M[1:0] == 2'b01 & ByteOffsetM[0] != 1'b0;
-  assign WordSpillM = (WordOffsetM == '1) & Funct3M[1:0] == 2'b10 & ByteOffsetM[1:0] != 2'b00;
+  assign {WordOffsetM, ByteOffsetM} = IEUAdrM[OFFSET_BIT_POS-1:0];
+  assign HalfSpillM = (IEUAdrM[OFFSET_BIT_POS-1:0] == '1) & Funct3M[1:0] == 2'b01;
+  assign WordSpillM = (IEUAdrM[OFFSET_BIT_POS-1:1] == '1) & Funct3M[1:0] == 2'b10;
   if(P.LLEN == 64) begin
     logic DoubleSpillM;
-    assign DoubleSpillM = (WordOffsetM == '1) & Funct3M[1:0] == 2'b11 & ByteOffsetM[2:0] != 3'b00;
+    assign DoubleSpillM = (IEUAdrM[OFFSET_BIT_POS-1:2] == '1) & Funct3M[1:0] == 2'b11;
     assign SpillM = (|MemRWM) & CacheableM & (HalfSpillM | WordSpillM | DoubleSpillM);
   end else begin
     assign SpillM = (|MemRWM) & CacheableM & (HalfSpillM | WordSpillM);
@@ -154,10 +166,18 @@ module align import cvw::*;  #(parameter cvw_t P) (
   // write path. Also has the 8:1 shifter muxing for the byteoffset
   // then it also has the mux to select when a spill occurs
   logic [P.LLEN*2-1:0] LSUWriteDataShiftedM;
-  assign LSUWriteDataShiftedM = {LSUWriteDataM, LSUWriteDataM} << (MisalignedM ? 8 * ByteOffsetM : '0);
-  mux2 #(2*P.LLEN) writedataspillmux(LSUWriteDataShiftedM, {{{P.LLEN}{1'b0}}, LSUWriteDataShiftedM[P.LLEN*2-1:P.LLEN]}, SelSpillM, LSUWriteDataSpillM);
+  logic [P.LLEN*3-1:0] LSUWriteDataShiftedExtM;  // *** RT: Find a better way.  I've extending in both directions so we don't shift in zeros.  The cache expects the writedata to not have any zero data, but instead replicated data.
+
+  assign LSUWriteDataShiftedExtM = {LSUWriteDataM, LSUWriteDataM, LSUWriteDataM} << (MisalignedM ? 8 * ByteOffsetM : '0);
+  assign LSUWriteDataShiftedM = LSUWriteDataShiftedExtM[P.LLEN*3-1:P.LLEN];
+  assign LSUWriteDataSpillM = LSUWriteDataShiftedM;
+  //mux2 #(2*P.LLEN) writedataspillmux(LSUWriteDataShiftedM, {LSUWriteDataShiftedM[P.LLEN*2-1:P.LLEN], LSUWriteDataShiftedM[P.LLEN*2-1:P.LLEN]}, SelSpillM, LSUWriteDataSpillM);
+
   logic [P.LLEN*2/8-1:0] ByteMaskShiftedM;
-  assign ByteMaskShiftedM = {ByteMaskExtendedM, ByteMaskM};
-  mux2 #(2*P.LLEN/8) bytemaskspillmux(ByteMaskShiftedM, {{{P.LLEN/8}{1'b0}}, ByteMaskExtendedM}, SelSpillM, ByteMaskSpillM);
-  
+  assign ByteMaskShiftedM = ByteMaskMuxM;
+  mux3 #(2*P.LLEN/8) bytemaskspillmux(ByteMaskShiftedM, {{{P.LLEN/8}{1'b0}}, ByteMaskM}, 
+                                      {{{P.LLEN/8}{1'b0}}, ByteMaskMuxM[P.LLEN*2/8-1:P.LLEN/8]}, {SelSpillM, SelSpillE}, ByteMaskSpillM);
+
+  flopenr #(P.LLEN*2/8) bytemaskreg(clk, reset, SelSpillE, {ByteMaskExtendedM, ByteMaskM}, ByteMaskSaveM);
+  mux2 #(P.LLEN*2/8) bytemasksavemux({ByteMaskExtendedM, ByteMaskM}, ByteMaskSaveM, SelSpillM, ByteMaskMuxM);
 endmodule
