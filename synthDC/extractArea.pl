@@ -96,10 +96,11 @@ sub processRun {
         foreach my $kw (@keywords) {
            # print "$kw $line\n";
             if ($line =~ /^${kw}\s+(\S*)/) {
-                #print "$line $kw $1\n";
+                $results{$kw} = int($1);
+            } elsif ($line =~ /^${kw}__\S*\s+(\S*)/) {
                 $results{$kw} = int($1);
             }
-        }
+         }
     }
     foreach my $kw (@keywords) {
         #print "$kw\t$results{$kw}\n";

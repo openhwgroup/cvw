@@ -152,7 +152,6 @@ def areaDelay(tech, delays, areas, labels, fig, ax, norm=False):
     
     if (len(labels) > 0):
         texts = [plt.text(delays[i], areas[i], labels[i], ha='center', va='center') for i in range(len(labels))]
-        print ("Calling adjust_text with labels " + str(len(labels)) +" ***"+ str(texts) + "***")
         adjust_text(texts)
     return fig
 
