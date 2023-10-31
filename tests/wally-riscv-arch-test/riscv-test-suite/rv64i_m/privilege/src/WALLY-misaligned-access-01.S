@@ -40,6 +40,7 @@ RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_
 
         la a3, signature  # does not get overwritten by any functions
 
+TEST_BYTE:      
         # byte copy region. always naturally aligned
         la a0, SourceData
         la a1, ByteDstData
@@ -52,6 +53,7 @@ RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_
         li a2, 16
         jal ra, CheckAllWriteSignature
         
+TEST_HALF0:
         la a0, SourceData
         la a1, Half0DstData
         li a2, 16
@@ -63,6 +65,7 @@ RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_
         li a2, 16
         jal ra, CheckAllWriteSignature
 
+TEST_HALF1:
         la a0, SourceData+1
         la a1, Half1DstData
         li a2, 16
@@ -74,6 +77,7 @@ RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_
         li a2, 16
         jal ra, CheckAllWriteSignature
 	
+TEST_WORD0:
         la a0, SourceData
         la a1, Word0DstData
         li a2, 16
@@ -85,6 +89,7 @@ RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_
         li a2, 16
         jal ra, CheckAllWriteSignature
 	
+TEST_WORD1:
         la a0, SourceData+1
         la a1, Word1DstData
         li a2, 16
@@ -96,6 +101,7 @@ RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_
         li a2, 16
         jal ra, CheckAllWriteSignature
 	
+TEST_WORD2:
         la a0, SourceData+2
         la a1, Word2DstData
         li a2, 16
@@ -107,6 +113,7 @@ RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_
         li a2, 16
         jal ra, CheckAllWriteSignature
 	
+TEST_WORD3:
         la a0, SourceData+3
         la a1, Word3DstData
         li a2, 16
@@ -118,6 +125,7 @@ RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_
         li a2, 16
         jal ra, CheckAllWriteSignature
 	
+TEST_DOUBLE0:
         la a0, SourceData
         la a1, Double0DstData
         li a2, 16
@@ -129,6 +137,7 @@ RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_
         li a2, 16
         jal ra, CheckAllWriteSignature
 	
+TEST_DOUBLE1:
         la a0, SourceData+1
         la a1, Double1DstData
         li a2, 16
@@ -140,6 +149,7 @@ RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_
         li a2, 16
         jal ra, CheckAllWriteSignature
 	
+TEST_DOUBLE2:
         la a0, SourceData+2
         la a1, Double2DstData
         li a2, 16
@@ -151,6 +161,7 @@ RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_
         li a2, 16
         jal ra, CheckAllWriteSignature
 	
+TEST_DOUBLE3:
         la a0, SourceData+3
         la a1, Double3DstData
         li a2, 16
@@ -162,6 +173,7 @@ RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_
         li a2, 16
         jal ra, CheckAllWriteSignature
 	
+TEST_DOUBLE4:
         la a0, SourceData+4
         la a1, Double4DstData
         li a2, 16
@@ -173,6 +185,7 @@ RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_
         li a2, 16
         jal ra, CheckAllWriteSignature
 	
+TEST_DOUBLE5:
         la a0, SourceData+5
         la a1, Double5DstData
         li a2, 16
@@ -184,6 +197,7 @@ RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_
         li a2, 16
         jal ra, CheckAllWriteSignature
 	
+TEST_DOUBLE6:
         la a0, SourceData+6
         la a1, Double6DstData
         li a2, 16
@@ -195,6 +209,7 @@ RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_
         li a2, 16
         jal ra, CheckAllWriteSignature
 	
+TEST_DOUBLE7:
         la a0, SourceData+7
         la a1, Double7DstData
         li a2, 16
@@ -205,6 +220,8 @@ RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_
         la a1, Double7DstData
         li a2, 16
         jal ra, CheckAllWriteSignature
+	
+RVMODEL_HALT
 	
 .type CheckAll, @function
 # a0 is the SourceData, (golden), a1 is the data to be checked.
@@ -217,13 +234,13 @@ CheckAllWriteSignature:
         mv s1, a1
         mv s2, a2
         mv s3, a3
-        # there is no stack so I'm saving ra into s4
-        mv s4, ra
+        # there is no stack so I'm saving ra into s5
+        mv s5, ra
 
         # check values byte by byte
         mv a0, s0  # SourceData
         mv a1, s1  # ie: ByteDstData
-        srli a2, s2, 3  # * 8
+        slli a2, s2, 3  # * 8
         jal ra, memcmp1
         sb a0, 0(s3)
         mv s4, a0
@@ -231,50 +248,50 @@ CheckAllWriteSignature:
         # check values half by half
         mv a0, s0  # SourceData
         mv a1, s1  # ie: ByteDstData
-        srli a2, s2, 2  # * 4
+        slli a2, s2, 2  # * 4
         jal ra, memcmp2
         sb a0, 1(s3)
         or s4, s4, a0
 
         # check values half by half
-        mv a0, s0  # SourceData
-        addi a1, s1, 1  # ie: ByteDstData+1
-        srli a2, s2, 2  # * 4 -1
+        addi a0, s0, 1  # SourceData+1
+        addi a1, s1, 0  # ie: ByteDstData
+        slli a2, s2, 2  # * 4 -1
         addi a2, a2, -1
         jal ra, memcmp2
         sb a0, 2(s3)
         or s4, s4, a0
         
         # check values word by word
-        mv a0, s0  # SourceData
+        addi a0, s0, 0  # SourceData
         mv a1, s1  # ie: ByteDstData
-        srli a2, s2, 1  # * 2
+        slli a2, s2, 1  # * 2
         jal ra, memcmp4
         sb a0, 3(s3)
         or s4, s4, a0
 
         # check values word by word
-        mv a0, s0  # SourceData
-        addi a1, s1, 1  # ie: ByteDstData+1
-        srli a2, s2, 1  # * 2 -1
+        addi a0, s0, 1  # SourceData+1
+        addi a1, s1, 0  # ie: ByteDstData
+        slli a2, s2, 1  # * 2 -1
         addi a2, a2, -1
         jal ra, memcmp4
         sb a0, 4(s3)
         or s4, s4, a0
 
         # check values word by word
-        mv a0, s0  # SourceData
-        addi a1, s1, 2  # ie: ByteDstData+2
-        srli a2, s2, 1  # * 2 -1
+        addi a0, s0, 2  # SourceData+2
+        addi a1, s1, 0  # ie: ByteDstData
+        slli a2, s2, 1  # * 2 -1
         addi a2, a2, -1
         jal ra, memcmp4
         sb a0, 5(s3)
         or s4, s4, a0
         
         # check values word by word
-        mv a0, s0  # SourceData
-        addi a1, s1, 3  # ie: ByteDstData+3
-        srli a2, s2, 1  # * 2 -1
+        addi a0, s0, 3  # SourceData+3
+        addi a1, s1, 0  # ie: ByteDstData
+        slli a2, s2, 1  # * 2 -1
         addi a2, a2, -1
         jal ra, memcmp4
         sb a0, 6(s3)
@@ -283,62 +300,62 @@ CheckAllWriteSignature:
         # check values double by double
         mv a0, s0  # SourceData
         mv a1, s1  # ie: ByteDstData
-        srli a2, s2, 0  # * 1
+        slli a2, s2, 0  # * 1
         jal ra, memcmp8
         sb a0, 7(s3)
 
         # check values double by double
-        mv a0, s0  # SourceData
-        addi a1, s1, 1  # ie: ByteDstData+1
-        srli a2, s2, 0  # * 1 -1
+        addi a0, s0, 1  # SourceData+1
+        addi a1, s1, 0  # ie: ByteDstData
+        slli a2, s2, 0  # * 1 -1
         addi a2, a2, -1
         jal ra, memcmp8
         sb a0, 8(s3)
 
         # check values double by double
-        mv a0, s0  # SourceData
-        addi a1, s1, 2  # ie: ByteDstData+2
-        srli a2, s2, 0  # * 1 -1
+        addi a0, s0, 2  # SourceData+2
+        addi a1, s1, 0  # ie: ByteDstData
+        slli a2, s2, 0  # * 1 -1
         addi a2, a2, -1
         jal ra, memcmp8
         sb a0, 9(s3)
         
         # check values double by double
-        mv a0, s0  # SourceData
-        addi a1, s1, 3  # ie: ByteDstData+3 
-        srli a2, s2, 0  # * 1 -1
+        addi a0, s0, 3  # SourceData+3
+        addi a1, s1, 2  # ie: ByteDstData
+        slli a2, s2, 0  # * 1 -1
         addi a2, a2, -1
         jal ra, memcmp8
         sb a0, 10(s3)
 	
         # check values double by double
-        mv a0, s0  # SourceData
-        addi a1, s1, 4  # ie: ByteDstData+4
-        srli a2, s2, 0  # * 1 -1
+        addi a0, s0, 4  # SourceData+4
+        addi a1, s1, 0  # ie: ByteDstData
+        slli a2, s2, 0  # * 1 -1
         addi a2, a2, -1
         jal ra, memcmp8
         sb a0, 11(s3)
 
         # check values double by double
-        mv a0, s0  # SourceData
-        addi a1, s1, 5  # ie: ByteDstData+5
-        srli a2, s2, 0  # * 1 -1
+        addi a0, s0, 5  # SourceData+5
+        addi a1, s1, 0  # ie: ByteDstData
+        slli a2, s2, 0  # * 1 -1
         addi a2, a2, -1
         jal ra, memcmp8
         sb a0, 12(s3)
 	
         # check values double by double
-        mv a0, s0  # SourceData
-        addi a1, s1, 6  # ie: ByteDstData+6
-        srli a2, s2, 0  # * 1 -1
+        addi a0, s0, 6  # SourceData+6
+        addi a1, s1, 0  # ie: ByteDstData
+        slli a2, s2, 0  # * 1 -1
         addi a2, a2, -1
         jal ra, memcmp8
         sb a0, 13(s3)
 	
         # check values double by double
-        mv a0, s0  # SourceData
-        addi a1, s1, 7  # ie: ByteDstData+7
-        srli a2, s2, 0  # * 1
+        addi a0, s0, 7  # SourceData+7
+        addi a1, s1, 0  # ie: ByteDstData
+        slli a2, s2, 0  # * 1
         addi a2, a2, -1
         jal ra, memcmp8
         sb a0, 14(s3)
@@ -346,7 +363,7 @@ CheckAllWriteSignature:
         addi s3, s3, 15
         mv a3, s3
         or a0, s4, a0
-        mv ra, s4
+        mv ra, s5
         ret
 
 
@@ -444,7 +461,6 @@ memcmp8_ne:
         
 	
 RVTEST_CODE_END
-RVMODEL_HALT
 
 .type memcpy8_1, @function
 # load 8 bytes using load double then store using 8 sb
@@ -459,31 +475,31 @@ memcpy8_1_loop:
         ld t3, 0(t0)
         andi t4, t3, 0xff
         sb t4, 0(t1)
-        slli t4, t3, 8
+        srli t4, t3, 8
         andi t4, t4, 0xff
         sb t4, 1(t1)
 	
-        slli t4, t3, 16
+        srli t4, t3, 16
         andi t4, t4, 0xff
         sb t4, 2(t1)
 
-        slli t4, t3, 24
+        srli t4, t3, 24
         andi t4, t4, 0xff
         sb t4, 3(t1)
         
-        slli t4, t3, 32
+        srli t4, t3, 32
         andi t4, t4, 0xff
         sb t4, 4(t1)
 	
-        slli t4, t3, 40
+        srli t4, t3, 40
         andi t4, t4, 0xff
         sb t4, 5(t1)
 	
-        slli t4, t3, 48
+        srli t4, t3, 48
         andi t4, t4, 0xff
         sb t4, 6(t1)
 	
-        slli t4, t3, 56
+        srli t4, t3, 56
         andi t4, t4, 0xff
         sb t4, 7(t1)
 	
@@ -506,23 +522,23 @@ memcpy8_2:
         # 16 bit mask
         lui t4, 0xf
         li t3, 0xfff
-        or t4, t4, t3
+        or t5, t4, t3
 
 memcpy8_2_loop:   
         ld t3, 0(t0)
-        and t4, t4, t3
+        and t4, t3, t5
         sh t4, 0(t1)
 
-        slli t4, t3, 16
-        and t4, t4, t3
+        srli t4, t3, 16
+        and t4, t4, t5
         sh t4, 2(t1)
 	
-        slli t4, t3, 32
-        and t4, t4, t3
+        srli t4, t3, 32
+        and t4, t4, t5
         sh t4, 4(t1)
 
-        slli t4, t3, 48
-        and t4, t4, t3
+        srli t4, t3, 48
+        and t4, t4, t5
         sh t4, 6(t1)
         
 	
@@ -545,15 +561,15 @@ memcpy8_4:
         # 32 bit mask
         lui t4, 0xffff
         li t3, 0xfff
-        or t4, t4, t3
+        or t5, t4, t3
 
 memcpy8_4_loop:   
         ld t3, 0(t0)
-        and t4, t4, t3
+        and t4, t3, t5
         sw t4, 0(t1)
 
-        slli t4, t3, 32
-        and t4, t4, t3
+        srli t4, t3, 32
+        and t4, t4, t5
         sw t4, 4(t1)
 	
         addi t0, t0, 8
@@ -730,7 +746,7 @@ Double7DstData:
 .8byte 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef, 0xdeadbeefdeadbeef
 
 signature:
-        .fill 225, 1, 0xff
+        .fill 225, 1, 0x00
 	
 RVMODEL_DATA_END
 // ../wally-riscv-arch-test/riscv-test-suite/rv64i_m/I/src/WALLY-SLT.S
