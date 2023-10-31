@@ -37,17 +37,21 @@ module irom import cvw::*;  #(parameter cvw_t P) (
 
   logic [P.XLEN-1:0] IROMInstrFFull;
   logic [31:0]       RawIROMInstrF;
-  logic [1:0]        AdrD;
-  flopen #(2) AdrReg(clk, ce, Adr[2:1], AdrD);
+  logic [2:1]        AdrD;
 
   rom1p1r #(ADDR_WDITH, P.XLEN) rom(.clk, .ce, .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(IROMInstrFFull));
   if (P.XLEN == 32) assign RawIROMInstrF = IROMInstrFFull;
   else              begin
   // IROM is aligned to XLEN words, but instructions are 32 bits.  Select between the two
   // haves.  Adr is the Next PCF not PCF so we delay 1 cycle.
-    assign RawIROMInstrF = AdrD[1] ? IROMInstrFFull[63:32] : IROMInstrFFull[31:0];
+    flopen #(1) AdrReg2(clk, ce, Adr[2], AdrD[2]);
+    assign RawIROMInstrF = AdrD[2] ? IROMInstrFFull[63:32] : IROMInstrFFull[31:0];
   end
   // If the memory addres is aligned to 2 bytes return the upper 2 bytes in the lower 2 bytes.
   // The spill logic will handle merging the two together.
-  assign IROMInstrF = AdrD[0] ? {16'b0, RawIROMInstrF[31:16]} : RawIROMInstrF;
+  if (P.COMPRESSED_SUPPORTED) begin
+    flopen #(1) AdrReg1(clk, ce, Adr[1], AdrD[1]);
+    assign IROMInstrF = AdrD[1] ? {16'b0, RawIROMInstrF[31:16]} : RawIROMInstrF;
+  end else
+    assign IROMInstrF = RawIROMInstrF;
 endmodule  
