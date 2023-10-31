@@ -396,17 +396,20 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   flopenr #(32)     InstrEReg(clk, reset, ~StallE, NextInstrD, InstrE);
   flopenr #(32)     InstrMReg(clk, reset, ~StallM, NextInstrE, InstrM);
   flopenr #(P.XLEN) PCEReg(clk, reset, ~StallE, PCD, PCE);
-  flopenr #(P.XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
-  //flopenr #(P.XLEN) PCPDReg(clk, reset, ~StallD, PCPlus2or4F, PCLinkD);
-  //flopenr #(P.XLEN) PCPEReg(clk, reset, ~StallE, PCLinkD, PCLinkE);
+  // PCM is only needed with CSRs or branch prediction
+  if (P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED) 
+    flopenr #(P.XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
+  else assign PCM = 0;
 
   flopenrc #(1) CompressedDReg(clk, reset, FlushD, ~StallD, CompressedF, CompressedD);
   flopenrc #(1) CompressedEReg(clk, reset, FlushE, ~StallE, CompressedD, CompressedE);
   assign PCLinkE = PCE + (CompressedE ? 'd2 : 'd4); // 'd4 means 4 but stops Design Compiler complaining about signed to unsigned conversion
 
   // pipeline original compressed instruction in case it is needed for MTVAL on an illegal instruction exception
-  flopenrc #(16) InstrRawEReg(clk, reset, FlushE, ~StallE, InstrRawD[15:0], InstrRawE);
-  flopenrc #(16) InstrRawMReg(clk, reset, FlushM, ~StallM, InstrRawE, InstrRawM);
-  flopenrc #(1)  CompressedMReg(clk, reset, FlushM, ~StallM, CompressedE, CompressedM);
-  mux2     #(32) InstrOrigMux(InstrM, {16'b0, InstrRawM}, CompressedM, InstrOrigM); 
+  if (P.ZICSR_SUPPORTED) begin
+    flopenrc #(16) InstrRawEReg(clk, reset, FlushE, ~StallE, InstrRawD[15:0], InstrRawE);
+    flopenrc #(16) InstrRawMReg(clk, reset, FlushM, ~StallM, InstrRawE, InstrRawM);
+    flopenrc #(1)  CompressedMReg(clk, reset, FlushM, ~StallM, CompressedE, CompressedM);
+    mux2     #(32) InstrOrigMux(InstrM, {16'b0, InstrRawM}, CompressedM, InstrOrigM); 
+  end else assign InstrOrigM = 0;
 endmodule
