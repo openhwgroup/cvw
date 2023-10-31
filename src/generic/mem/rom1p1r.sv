@@ -36,6 +36,9 @@ module rom1p1r #(parameter ADDR_WIDTH = 8,
 
    // Core Memory
    logic [DATA_WIDTH-1:0]    ROM [(2**ADDR_WIDTH)-1:0];
+   
+   // dh 10/30/23 ROM macros are presently commented out
+   // because they don't point to a generated ROM
 /*   if ((`USE_SRAM == 1) & (ADDR_WDITH == 7) & (DATA_WIDTH == 64)) begin
       rom1p1r_128x64 rom1 (.CLK(clk), .CEB(~ce), .A(addr[6:0]), .Q(dout));
 
