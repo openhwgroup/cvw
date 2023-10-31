@@ -70,8 +70,10 @@ module cacheLRU
   // coverage off
   // Excluded from coverage b/c it is untestable without varying NUMWAYS.
   function integer log2 (integer value);
-    for (log2=0; value>0; log2=log2+1)
-      value = value>>1;
+    int val;
+    val = value;
+    for (log2 = 0; val > 0; log2 = log2+1)
+      val = val >> 1;
     return log2;
   endfunction // log2
   // coverage on

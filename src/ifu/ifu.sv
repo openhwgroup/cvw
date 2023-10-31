@@ -144,7 +144,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   // Spill Support
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  if(P.C_SUPPORTED) begin : Spill
+  if(P.COMPRESSED_SUPPORTED) begin : Spill
     spill #(P) spill(.clk, .reset, .StallD, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF, .InstrUpdateDAF, .CacheableF, 
       .IFUCacheBusStallF, .ITLBMissF, .PCSpillNextF, .PCSpillF, .SelSpillNextF, .PostSpillInstrRawF, .CompressedF);
   end else begin : NoSpill
@@ -340,8 +340,21 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
 
   end else begin : bpred
     mux2 #(P.XLEN) pcmux1(.d0(PCPlus2or4F), .d1(IEUAdrE), .s(PCSrcE), .y(PC1NextF));    
+    logic BranchM, JumpM, BranchW, JumpW;
+    logic CallD, CallE, CallM, CallW;
+    logic ReturnD, ReturnE, ReturnM, ReturnW;
     assign BPWrongE = PCSrcE;
-    assign {InstrClassM, BPDirPredWrongM, BTAWrongM, RASPredPCWrongM, IClassWrongM} = '0;
+    icpred #(P, 0) icpred(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+      .PostSpillInstrRawF, .InstrD, .BranchD, .BranchE, .JumpD, .JumpE, .BranchM, .BranchW, .JumpM, .JumpW,
+      .CallD, .CallE, .CallM, .CallW, .ReturnD, .ReturnE, .ReturnM, .ReturnW, 
+      .BTBCallF(1'b0), .BTBReturnF(1'b0), .BTBJumpF(1'b0),
+      .BTBBranchF(1'b0), .BPCallF(), .BPReturnF(), .BPJumpF(), .BPBranchF(), .IClassWrongM,
+      .IClassWrongE(), .BPReturnWrongD());
+    flopenrc #(1) PCSrcMReg(clk, reset, FlushM, ~StallM, PCSrcE, BPWrongM);
+    assign RASPredPCWrongM = '0;
+    assign BPDirPredWrongM = BPWrongM;
+    assign BTAWrongM = BPWrongM;
+    assign InstrClassM = {CallM, ReturnM, JumpM, BranchM};
     assign NextValidPCE = PCE;
   end      
 
@@ -353,7 +366,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(P.XLEN) PCDReg(clk, reset, FlushD, ~StallD, PCF, PCD);
    
   // expand 16-bit compressed instructions to 32 bits
-  if (P.C_SUPPORTED | P.ZCA_SUPPORTED) begin
+  if (P.COMPRESSED_SUPPORTED) begin
     logic IllegalCompInstrD;
     decompress #(P) decomp(.InstrRawD, .InstrD, .IllegalCompInstrD); 
     assign IllegalIEUInstrD = IllegalBaseInstrD | IllegalCompInstrD; // illegal if bad 32 or 16-bit instr
@@ -373,7 +386,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   // only IALIGN=32, the two low bits (mepc[1:0]) are always zero.
   // Spec 3.1.14
   // Traps: Can’t happen.  The bottom two bits of MTVEC are ignored so the trap always is to a multiple of 4.  See 3.1.7 of the privileged spec.
-  assign BranchMisalignedFaultE = (IEUAdrE[1] & ~P.C_SUPPORTED) & PCSrcE;
+  assign BranchMisalignedFaultE = (IEUAdrE[1] & ~P.COMPRESSED_SUPPORTED) & PCSrcE;
   flopenr #(1) InstrMisalignedReg(clk, reset, ~StallM, BranchMisalignedFaultE, InstrMisalignedFaultM);
 
   // Instruction and PC/PCLink pipeline registers
@@ -389,7 +402,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
 
   flopenrc #(1) CompressedDReg(clk, reset, FlushD, ~StallD, CompressedF, CompressedD);
   flopenrc #(1) CompressedEReg(clk, reset, FlushE, ~StallE, CompressedD, CompressedE);
-  assign PCLinkE = PCE + (CompressedE ? 2 : 4);
+  assign PCLinkE = PCE + (CompressedE ? 'd2 : 'd4); // 'd4 means 4 but stops Design Compiler complaining about signed to unsigned conversion
 
   // pipeline original compressed instruction in case it is needed for MTVAL on an illegal instruction exception
   flopenrc #(16) InstrRawEReg(clk, reset, FlushE, ~StallE, InstrRawD[15:0], InstrRawE);

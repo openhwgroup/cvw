@@ -167,3 +167,7 @@ sudo ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV32 /usr/bin/riscv_sim_RV32
 sudo pip3 install testresources
 pip3 install git+https://github.com/riscv/riscof.git
 
+# Download OSU Skywater 130 cell library
+sudo mkdir -p $RISCV/cad/lib
+cd $RISCV/cad/lib
+sudo git clone https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12
