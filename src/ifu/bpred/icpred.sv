@@ -51,32 +51,32 @@ module icpred import cvw::*;  #(parameter cvw_t P,
     // An alternative to using the BTB to store the instruction class is to partially decode
     // the instructions in the Fetch stage into, Call, Return, Jump, and Branch instructions.
     // This logic is not described in the text book as of 23 February 2023.
-    logic     ccall, cj, cjr, ccallr, CJumpF, CBranchF;
+    logic     cjal, cj, cjr, cjalr, CJumpF, CBranchF;
     logic     NCJumpF, NCBranchF;
 
-    if(P.C_SUPPORTED) begin
+    if(P.COMPRESSED_SUPPORTED) begin
       logic [4:0] CompressedOpcF;
       assign CompressedOpcF = {PostSpillInstrRawF[1:0], PostSpillInstrRawF[15:13]};
-      assign ccall = CompressedOpcF == 5'h09 & P.XLEN == 32;
+      assign cjal = CompressedOpcF == 5'h09 & P.XLEN == 32;
       assign cj = CompressedOpcF == 5'h0d;
       assign cjr = CompressedOpcF == 5'h14 & ~PostSpillInstrRawF[12] & PostSpillInstrRawF[6:2] == 5'b0 & PostSpillInstrRawF[11:7] != 5'b0;
-      assign ccallr = CompressedOpcF == 5'h14 & PostSpillInstrRawF[12] & PostSpillInstrRawF[6:2] == 5'b0 & PostSpillInstrRawF[11:7] != 5'b0;
-      assign CJumpF = ccall | cj | cjr | ccallr;
+      assign cjalr = CompressedOpcF == 5'h14 & PostSpillInstrRawF[12] & PostSpillInstrRawF[6:2] == 5'b0 & PostSpillInstrRawF[11:7] != 5'b0;
+      assign CJumpF = cjal | cj | cjr | cjalr;
       assign CBranchF = CompressedOpcF[4:1] == 4'h7;
     end else begin
-      assign {ccall, cj, cjr, ccallr, CJumpF, CBranchF} = '0;
+      assign {cjal, cj, cjr, cjalr, CJumpF, CBranchF} = '0;
     end
 
     assign NCJumpF = PostSpillInstrRawF[6:0] == 7'h67 | PostSpillInstrRawF[6:0] == 7'h6F;
     assign NCBranchF = PostSpillInstrRawF[6:0] == 7'h63;
     
-    assign BPBranchF = NCBranchF | (P.C_SUPPORTED & CBranchF);
-    assign BPJumpF = NCJumpF | (P.C_SUPPORTED & (CJumpF));
-    assign BPReturnF = (NCJumpF & (PostSpillInstrRawF[19:15] & 5'h1B) == 5'h01) | // returnurn must returnurn to ra or r5
-        (P.C_SUPPORTED & (ccallr | cjr) & ((PostSpillInstrRawF[11:7] & 5'h1B) == 5'h01));
+    assign BPBranchF = NCBranchF | (P.COMPRESSED_SUPPORTED & CBranchF);
+    assign BPJumpF = NCJumpF | (P.COMPRESSED_SUPPORTED & (CJumpF));
+    assign BPReturnF = (NCJumpF & (PostSpillInstrRawF[19:15] & 5'h1B) == 5'h01 & PostSpillInstrRawF[11:7] == 5'b0) | // return must return to ra or r5
+        (P.COMPRESSED_SUPPORTED & cjr & ((PostSpillInstrRawF[11:7] & 5'h1B) == 5'h01));
     
     assign BPCallF = (NCJumpF & (PostSpillInstrRawF[11:07] & 5'h1B) == 5'h01) | // call(r) must link to ra or x5
-        (P.C_SUPPORTED & (ccall | (ccallr & (PostSpillInstrRawF[11:7] & 5'h1b) == 5'h01)));
+        (P.COMPRESSED_SUPPORTED & (cjal | (cjalr & (PostSpillInstrRawF[11:7] & 5'h1b) == 5'h01)));
 
   end else begin
     // This section connects the BTB's instruction class prediction.

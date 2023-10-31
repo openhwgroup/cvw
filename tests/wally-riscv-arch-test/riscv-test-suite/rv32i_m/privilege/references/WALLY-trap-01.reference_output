@@ -55,7 +55,7 @@ FFFFFFFF # stimecmp readback
 8000000b # mcause value from m ext interrupt
 00000000 # mtval for mext interrupt (0x0)
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
-0000b3ff # medeleg after attempted write of all 1's (only some bits are writeable)
+0000b3fe # medeleg after attempted write of all 1's (only some bits are writeable)
 00000222 # mideleg after attempted write of all 1's (only some bits are writeable) # skipping instruction address fault since they're impossible with compressed instrs enabled
 00000001 # mcause from an instruction access fault
 00000000 # mtval of faulting instruction address (0x0)

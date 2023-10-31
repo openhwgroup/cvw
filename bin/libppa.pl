@@ -41,6 +41,16 @@ my @cr; my @cf; my @rt; my @ft;
 # cell and corners to analyze
 my $libpath; my $libbase; my $cellname; my @corners;
 
+# Sky130
+$libpath ="/opt/riscv/cad/lib/sky130_osu_sc_t12/12T_ms/lib";
+$libbase = "sky130_osu_sc_12T_ms_";
+$cellname = "sky130_osu_sc_12T_ms__inv_1";
+@corners = ("TT_1P8_25C.ccs", "tt_1P80_25C.ccs", "tt_1P62_25C.ccs", "tt_1P89_25C.ccs", "ss_1P60_-40C.ccs", "ss_1P60_100C.ccs", "ss_1P60_150C.ccs", "ff_1P95_-40C.ccs", "ff_1P95_100C.ccs", "ff_1P95_150C.ccs");
+printf("Library $libbase Cell $cellname\n");
+foreach my $corner (@corners) {
+    &analyzeCell($corner);
+}
+
 # Sky90
 $libpath ="/opt/riscv/cad/lib/sky90/sky90_sc/V1.7.4/lib";
 $libbase = "scc9gena_";
@@ -54,7 +64,7 @@ foreach my $corner (@corners) {
 # TSMC
 $libpath = "/proj/models/tsmc28/libraries/28nmtsmc/tcbn28hpcplusbwp30p140_190a/TSMCHOME/digital/Front_End/timing_power_noise/NLDM/tcbn28hpcplusbwp30p140_180a";
 $libbase = "tcbn28hpcplusbwp30p140";
-$cellname = "INVD1..."; // replace this with the full name of the library cell
+$cellname = "INVD1..."; # replace this with the full name of the library cell
 @corners = ("tt0p9v25c", "tt0p8v25c", "tt1v25c", "tt0p9v85c", "ssg0p9vm40c", "ssg0p9v125c", "ssg0p81vm40c", "ssg0p81v125c", "ffg0p88vm40c", "ffg0p88v125c", "ffg0p99vm40c", "ffg0p99v125c");
 printf("\nLibrary $libbase Cell $cellname\n");
 foreach my $corner (@corners) {
@@ -129,7 +139,7 @@ sub analyzeCell {
     my $delay = &computeDelay($cap);
     my $cornerr = sprintf("%20s", $corner);
     my $delayr = sprintf("%2.1f", $delay*1000);
-    my $leakager = sprintf("%3.1f", $leakage);
+    my $leakager = sprintf("%3.3f", $leakage);
     
     print("$cornerr: Delay $delayr Leakage: $leakager capacitance: $cap\n");
     #print("$cellname $corner: Area $area Leakage: $leakage capacitance: $cap delay $delay\n");

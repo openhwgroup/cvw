@@ -33,7 +33,7 @@ module swbytemask #(parameter WORDLEN)(
   output logic [WORDLEN/8-1:0]         ByteMask
 );
   
-  assign ByteMask = ((2**(2**Size))-1) << Adr;
+  assign ByteMask =(('d2**('d2**Size))-'d1) << Adr; // 'd2 means 2, but stops Design Compiler from complaining about signed to unsigned conversion
 
 /* Equivalent to the following
 
