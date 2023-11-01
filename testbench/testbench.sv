@@ -159,7 +159,7 @@ module testbench;
     end
     if (tests.size() == 0) begin
       $display("TEST %s not supported in this configuration", TEST);
-      //$stop;
+      $stop;
     end
   end // initial begin
 
@@ -511,7 +511,7 @@ module testbench;
         errors = errors+1;
         $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
 			     TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
-        //$stop; //***debug
+        $stop; //***debug
       end
       i = i + 1;
     end
