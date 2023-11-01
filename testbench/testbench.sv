@@ -64,7 +64,8 @@ module testbench;
 
   logic [31:0] GPIOIN, GPIOOUT, GPIOEN;
   logic        UARTSin, UARTSout;
-  logic [3:0]  SPIIn, SPIOut, SPICS;
+  logic        SPIIn, SPIOut;
+  logic [3:0]  SPICS;
   logic        SDCIntr;
 
   logic        HREADY;
