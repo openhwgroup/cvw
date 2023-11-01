@@ -53,10 +53,13 @@ module align import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0] IEUAdrSpillE,      // The next PCF for one of the two memory addresses of the spill
   output logic [P.XLEN-1:0] IEUAdrSpillM,      // IEUAdrM for one of the two memory addresses of the spill
   output logic              SelSpillE,     // During the transition between the two spill operations, the IFU should stall the pipeline
-  output logic [P.LLEN-1:0] DCacheReadDataWordSpillM);// The final 32 bit instruction after merging the two spilled fetches into 1 instruction
+  output logic [1:0]        MemRWSpillM, 
+  output logic              SelStoreDelay, //*** this is bad.  really don't like moving this outside
+  output logic [P.LLEN-1:0] DCacheReadDataWordSpillM, // The final 32 bit instruction after merging the two spilled fetches into 1 instruction
+  output logic SpillStallM);
 
   // Spill threshold occurs when all the cache offset PC bits are 1 (except [0]).  Without a cache this is just PCF[1]
-  typedef enum logic [1:0]  {STATE_READY, STATE_SPILL} statetype;
+  typedef enum logic [1:0]  {STATE_READY, STATE_SPILL, STATE_STORE_DELAY} statetype;
 
   statetype          CurrState, NextState;
   logic              TakeSpillM;
@@ -74,6 +77,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   logic [(P.LLEN-1)*2/8:0] ByteMaskSaveM;
   logic [(P.LLEN-1)*2/8:0] ByteMaskMuxM;
+  logic                    SaveByteMask;
 
   always_comb begin
     case(MemRWM)
@@ -123,17 +127,23 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   always_comb begin
     case (CurrState)
-      STATE_READY: if (TakeSpillM)                NextState = STATE_SPILL;
+      STATE_READY: if (TakeSpillM & ~MemRWM[0])   NextState = STATE_SPILL;
+                   else if(TakeSpillM & MemRWM[0])NextState = STATE_STORE_DELAY;
                    else                           NextState = STATE_READY;
       STATE_SPILL: if(StallM)                     NextState = STATE_SPILL;
                    else                           NextState = STATE_READY;
+      STATE_STORE_DELAY: NextState = STATE_SPILL;
       default:                                    NextState = STATE_READY;
     endcase
   end
 
-  assign SelSpillM = (CurrState == STATE_SPILL);
-  assign SelSpillE = (CurrState == STATE_READY & TakeSpillM) | (CurrState == STATE_SPILL & CacheBusHPWTStall);
+  assign SelSpillM = (CurrState == STATE_SPILL | CurrState == STATE_STORE_DELAY);
+  assign SelSpillE = (CurrState == STATE_READY & TakeSpillM) | (CurrState == STATE_SPILL & CacheBusHPWTStall) | (CurrState == STATE_STORE_DELAY);
+  assign SaveByteMask = (CurrState == STATE_READY & TakeSpillM);
   assign SpillSaveM = (CurrState == STATE_READY) & TakeSpillM & ~FlushM;
+  assign SelStoreDelay = (CurrState == STATE_STORE_DELAY);
+  assign SpillStallM = SelSpillE | CurrState == STATE_STORE_DELAY;
+  mux2 #(2) memrwmux(MemRWM, 2'b00, SelStoreDelay, MemRWSpillM);
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // Merge spilled data
@@ -178,6 +188,6 @@ module align import cvw::*;  #(parameter cvw_t P) (
   mux3 #(2*P.LLEN/8) bytemaskspillmux(ByteMaskShiftedM, {{{P.LLEN/8}{1'b0}}, ByteMaskM}, 
                                       {{{P.LLEN/8}{1'b0}}, ByteMaskMuxM[P.LLEN*2/8-1:P.LLEN/8]}, {SelSpillM, SelSpillE}, ByteMaskSpillM);
 
-  flopenr #(P.LLEN*2/8) bytemaskreg(clk, reset, SelSpillE, {ByteMaskExtendedM, ByteMaskM}, ByteMaskSaveM);
+  flopenr #(P.LLEN*2/8) bytemaskreg(clk, reset, SaveByteMask, {ByteMaskExtendedM, ByteMaskM}, ByteMaskSaveM);
   mux2 #(P.LLEN*2/8) bytemasksavemux({ByteMaskExtendedM, ByteMaskM}, ByteMaskSaveM, SelSpillM, ByteMaskMuxM);
 endmodule

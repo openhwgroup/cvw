@@ -135,7 +135,10 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic [P.LLEN-1:0]     LSUWriteDataM;                          // Final write data
   logic [(P.LLEN-1)/8:0] ByteMaskM;                              // Selects which bytes within a word to write
   logic [(P.LLEN-1)/8:0] ByteMaskExtendedM;                      // Selects which bytes within a word to write
-
+  logic [1:0]            MemRWSpillM;
+  logic                  SpillStallM;
+  logic                  SelStoreDelay;
+  
   logic                  DTLBMissM;                              // DTLB miss causes HPTW walk
   logic                  DTLBWriteM;                             // Writes PTE and PageType to DTLB
   logic                  DataUpdateDAM;                          // DTLB hit needs to update dirty or access bits
@@ -157,7 +160,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
                      .MemRWM, .CacheableM,
                      .DCacheReadDataWordM, .CacheBusHPWTStall, .DTLBMissM, .DataUpdateDAM,
                      .ByteMaskM, .ByteMaskExtendedM, .LSUWriteDataM, .ByteMaskSpillM, .LSUWriteDataSpillM,
-                     .IEUAdrSpillE, .IEUAdrSpillM, .SelSpillE, .DCacheReadDataWordSpillM);
+                     .IEUAdrSpillE, .IEUAdrSpillM, .SelSpillE, .MemRWSpillM, .DCacheReadDataWordSpillM, .SpillStallM,
+                     .SelStoreDelay);
     assign IEUAdrExtM = {2'b00, IEUAdrSpillM}; 
     assign IEUAdrExtE = {2'b00, IEUAdrSpillE};
   end else begin : no_ziccslm_align
@@ -167,6 +171,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign DCacheReadDataWordSpillM = DCacheReadDataWordM;
     assign ByteMaskSpillM = ByteMaskM;
     assign LSUWriteDataSpillM = LSUWriteDataM;
+    assign MemRWSpillM = MemRWM;
   end
 
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -205,7 +210,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   assign CommittedM = SelHPTW | DCacheCommittedM | BusCommittedM;
   assign GatedStallW = StallW & ~SelHPTW;
   assign CacheBusHPWTStall = DCacheStallM | HPTWStall | BusStall;
-  assign LSUStallM = CacheBusHPWTStall | SelSpillE;
+  assign LSUStallM = CacheBusHPWTStall | SpillStallM;
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // MMU and misalignment fault logic required if privileged unit exists
@@ -297,7 +302,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       
       cache #(.P(P), .PA_BITS(P.PA_BITS), .XLEN(P.XLEN), .LINELEN(P.DCACHE_LINELENINBITS), .NUMLINES(P.DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(P.DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(CACHEWORDLEN), .MUXINTERVAL(P.LLEN), .READ_ONLY_CACHE(0)) dcache(
-        .clk, .reset, .Stall(GatedStallW & ~SelSpillE), .SelBusBeat, .FlushStage(FlushW | IgnoreRequestTLB), .CacheRW(CacheRWM), .CacheAtomic(CacheAtomicM),
+        .clk, .reset, .Stall(GatedStallW & ~SelSpillE), .SelBusBeat, .FlushStage(FlushW | IgnoreRequestTLB), .CacheRW(SelStoreDelay ? 2'b00 : CacheRWM), .CacheAtomic(CacheAtomicM),
         .FlushCache(FlushDCache), .NextSet(IEUAdrExtE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskSpillM), .BeatCount(BeatCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
         .CacheWriteData(LSUWriteDataSpillM), .SelHPTW,
