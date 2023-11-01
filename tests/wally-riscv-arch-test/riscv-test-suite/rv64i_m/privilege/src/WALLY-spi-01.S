@@ -306,12 +306,26 @@ test_cases:
 .8byte rx_data, 0x000000BC, read32_test
 .8byte rx_data, 0x000000AB, read32_test
 
+# Test hold mode deassert conditions
+
+.8byte delay1, 0x00000001, write32_test     # reset delay1 register
+.8byte delay0, 0x00010001, write32_test     # reset delay0 register
+.8byte cs_mode, 0x00000002, write32_test    # set cs_mode to hold
+.8byte tx_data, 0x000000CE, write32_test    # place data into tx_data
+.8byte cs_id, 0x00000001, write32_test      #change selected cs pin. should deassert cs[0] in hold mode
+.8byte cs_def, 0x00001101, write32_test     # change selected cs pins def value. should deassert cs[1]
+.8byte cs_def, 0x00001111, write32_test     # reset cs_def
+.8byte cs_mode, 0x00000000, write32_test    # change cs_mode to auto, should deassert cs[1], have now gone through all deassertion conditions
+.8byte rx_data, 0x000000CE, read32_test     # clear rx_fifo
+
+# Test transmit and receive fifo full edge cases
+
+
 # =========== Test frame format (fmt) register ===========
 
 # Test frame length of 4
 
-.8byte delay1, 0x00000001, write32_test     # reset delay1 register
-.8byte delay0, 0x00010001, write32_test     # reset delay0 register
+
 .8byte sck_mode, 0x00000000, write32_test   #reset sckmode register
 .8byte cs_mode, 0x00000000, write32_test    # set cs_mode to AUTO 
 .8byte fmt, 0x00040000, write32_test        # set frame length to 4
