@@ -35,11 +35,12 @@ module swbytemask #(parameter WORDLEN, EXTEND = 0)(
 );
   if(EXTEND) begin
     logic [WORDLEN*2/8-1:0]              ExtendedByteMask;
-    assign ExtendedByteMask = ((2**(2**Size))-1) << Adr;
+    // 'd2 means 2, but stops Design Compiler from complaining about signed to unsigned conversion    
+    assign ExtendedByteMask = (('d2**('d2**Size))-'d1) << Adr;
     assign ByteMask = ExtendedByteMask[WORDLEN/8-1:0];
     assign ByteMaskExtended = ExtendedByteMask[WORDLEN*2/8-1:WORDLEN/8];
   end else begin    
-    assign ByteMask = ((2**(2**Size))-1) << Adr;
+    assign ByteMask = (('d2**('d2**Size))-'d1) << Adr;
     assign ByteMaskExtended = '0;
   end
 

@@ -144,7 +144,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   // Spill Support
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  if(P.C_SUPPORTED) begin : Spill
+  if(P.COMPRESSED_SUPPORTED) begin : Spill
     spill #(P) spill(.clk, .reset, .StallD, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF, .InstrUpdateDAF, .CacheableF, 
       .IFUCacheBusStallF, .ITLBMissF, .PCSpillNextF, .PCSpillF, .SelSpillNextF, .PostSpillInstrRawF, .CompressedF);
   end else begin : NoSpill
@@ -366,7 +366,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(P.XLEN) PCDReg(clk, reset, FlushD, ~StallD, PCF, PCD);
    
   // expand 16-bit compressed instructions to 32 bits
-  if (P.C_SUPPORTED | P.ZCA_SUPPORTED) begin
+  if (P.COMPRESSED_SUPPORTED) begin
     logic IllegalCompInstrD;
     decompress #(P) decomp(.InstrRawD, .InstrD, .IllegalCompInstrD); 
     assign IllegalIEUInstrD = IllegalBaseInstrD | IllegalCompInstrD; // illegal if bad 32 or 16-bit instr
@@ -386,27 +386,34 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   // only IALIGN=32, the two low bits (mepc[1:0]) are always zero.
   // Spec 3.1.14
   // Traps: Can’t happen.  The bottom two bits of MTVEC are ignored so the trap always is to a multiple of 4.  See 3.1.7 of the privileged spec.
-  assign BranchMisalignedFaultE = (IEUAdrE[1] & ~P.C_SUPPORTED) & PCSrcE;
+  assign BranchMisalignedFaultE = (IEUAdrE[1] & ~P.COMPRESSED_SUPPORTED) & PCSrcE;
   flopenr #(1) InstrMisalignedReg(clk, reset, ~StallM, BranchMisalignedFaultE, InstrMisalignedFaultM);
 
-  // Instruction and PC/PCLink pipeline registers
+  // Instruction and PC pipeline registers
   // Cannot use flopenrc for Instr(E/M) as it resets to NOP not 0.
   mux2    #(32)     FlushInstrEMux(InstrD, nop, FlushE, NextInstrD);
   mux2    #(32)     FlushInstrMMux(InstrE, nop, FlushM, NextInstrE);
   flopenr #(32)     InstrEReg(clk, reset, ~StallE, NextInstrD, InstrE);
-  flopenr #(32)     InstrMReg(clk, reset, ~StallM, NextInstrE, InstrM);
   flopenr #(P.XLEN) PCEReg(clk, reset, ~StallE, PCD, PCE);
-  flopenr #(P.XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
-  //flopenr #(P.XLEN) PCPDReg(clk, reset, ~StallD, PCPlus2or4F, PCLinkD);
-  //flopenr #(P.XLEN) PCPEReg(clk, reset, ~StallE, PCLinkD, PCLinkE);
+
+  // InstrM is only needed with CSRs or atomic operations
+  if (P.ZICSR_SUPPORTED | P.A_SUPPORTED)
+    flopenr #(32)     InstrMReg(clk, reset, ~StallM, NextInstrE, InstrM);
+  else assign InstrM = 0;
+  // PCM is only needed with CSRs or branch prediction
+  if (P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED) 
+    flopenr #(P.XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
+  else assign PCM = 0;
 
   flopenrc #(1) CompressedDReg(clk, reset, FlushD, ~StallD, CompressedF, CompressedD);
   flopenrc #(1) CompressedEReg(clk, reset, FlushE, ~StallE, CompressedD, CompressedE);
-  assign PCLinkE = PCE + (CompressedE ? 2 : 4);
+  assign PCLinkE = PCE + (CompressedE ? 'd2 : 'd4); // 'd4 means 4 but stops Design Compiler complaining about signed to unsigned conversion
 
   // pipeline original compressed instruction in case it is needed for MTVAL on an illegal instruction exception
-  flopenrc #(16) InstrRawEReg(clk, reset, FlushE, ~StallE, InstrRawD[15:0], InstrRawE);
-  flopenrc #(16) InstrRawMReg(clk, reset, FlushM, ~StallM, InstrRawE, InstrRawM);
-  flopenrc #(1)  CompressedMReg(clk, reset, FlushM, ~StallM, CompressedE, CompressedM);
-  mux2     #(32) InstrOrigMux(InstrM, {16'b0, InstrRawM}, CompressedM, InstrOrigM); 
+  if (P.ZICSR_SUPPORTED) begin
+    flopenrc #(16) InstrRawEReg(clk, reset, FlushE, ~StallE, InstrRawD[15:0], InstrRawE);
+    flopenrc #(16) InstrRawMReg(clk, reset, FlushM, ~StallM, InstrRawE, InstrRawM);
+    flopenrc #(1)  CompressedMReg(clk, reset, FlushM, ~StallM, CompressedE, CompressedM);
+    mux2     #(32) InstrOrigMux(InstrM, {16'b0, InstrRawM}, CompressedM, InstrOrigM); 
+  end else assign InstrOrigM = 0;
 endmodule

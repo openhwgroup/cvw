@@ -147,4 +147,4 @@ clean:
 	rm -f power.saif
 	rm -f Synopsys_stack_trace_*.txt
 	rm -f crte_*.txt
-	rm $(WALLY)/synthDC/wrappers/*
+	
