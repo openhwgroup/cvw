@@ -27,7 +27,6 @@
 
 // Current limitations: Flash read sequencer mode not implemented, dual and quad modes untestable with current test plan.
 // Hardware interlock change to busy signal
-// Get rid of dual/ quad mode 
 // write tests for fifo full and empty watermark edge cases
 // HoldModeDeassert make sure still works
 // Comment on FIFOs: watermark calculations
@@ -423,7 +422,7 @@ module SynchFIFO #(parameter M =3 , N= 8)(
     output logic wwatermark, rwatermark);
 
     logic [N-1:0] mem[2**M];
-    logic [M:0] rwpr, wptr;
+    logic [M:0] rptr, wptr;
     logic [M:0] rptrnext, wptrnext;
     logic rempty_val;
     logic wfull_val;
