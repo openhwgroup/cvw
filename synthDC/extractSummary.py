@@ -149,9 +149,10 @@ def areaDelay(tech, delays, areas, labels, fig, ax, norm=False):
     plt.ylim(ymin=0, ymax=1.1*ytop)
     
     ax.yaxis.set_major_formatter(ticker.StrMethodFormatter('{x:,.0f}'))
-
-    texts = [plt.text(delays[i], areas[i], labels[i], ha='center', va='center') for i in range(len(labels))]
-    adjust_text(texts)
+    
+    if (len(labels) > 0):
+        texts = [plt.text(delays[i], areas[i], labels[i], ha='center', va='center') for i in range(len(labels))]
+        adjust_text(texts)
     return fig
 
 
@@ -166,7 +167,7 @@ def plotFeatures(tech, width, config):
                 labels += [oneSynth.mod]
 
     if (delays == []):
-        print("No delays found for freq ", freq, ". Did you set --skyfreq and --tsmcfreq?\n")
+        print("No delays found for tech ", tech, " freq ", freq, ". Did you set --sky130freq, --sky90freq and --tsmcfreq?\n")
 
     fig, (ax) = plt.subplots(1, 1)
 
@@ -244,13 +245,15 @@ def addFO4axis(fig, ax, tech):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-s", "--skyfreq", type=int, default=1500, help = "Target frequency used for sky90 syntheses")
+    parser.add_argument("-s130", "--sky130freq", type=int, default=500, help = "Target frequency used for sky130 syntheses")
+    parser.add_argument("-s90", "--sky90freq", type=int, default=1500, help = "Target frequency used for sky90 syntheses")
     parser.add_argument("-t", "--tsmcfreq", type=int, default=5000, help = "Target frequency used for tsmc28 syntheses")
     args = parser.parse_args()
 
     TechSpec = namedtuple("TechSpec", "color shape targfreq fo4 add32area add32lpower add32denergy")
     techdict = {}
-    techdict['sky90'] = TechSpec('gray', 'o', args.skyfreq, 43.2e-3, 1440.600027, 714.057, 0.658023)
+    techdict['sky130'] = TechSpec('green', 'o', args.sky130freq, 99.5e-3, 1440.600027, 714.057, 0.658023)
+    techdict['sky90'] = TechSpec('gray', 'o', args.sky90freq, 43.2e-3, 1440.600027, 714.057, 0.658023)
     techdict['tsmc28psyn'] = TechSpec('blue', 's', args.tsmcfreq, 12.2e-3, 209.286002, 1060.0, .081533)
 
     current_directory = os.getcwd()
@@ -262,9 +265,12 @@ if __name__ == '__main__':
     synthsfromcsv('Summary.csv')
     freqPlot('tsmc28psyn', 'rv32', 'e')
     freqPlot('sky90', 'rv32', 'e')
+    freqPlot('sky130', 'rv32', 'e')
     plotFeatures('sky90', 'rv64', 'gc')
+    plotFeatures('sky130', 'rv64', 'gc')
     plotFeatures('tsmc28psyn', 'rv64', 'gc')
     plotConfigs('sky90', mod='orig')
+    plotConfigs('sky130', mod='orig')
     plotConfigs('tsmc28psyn', mod='orig')
     normAreaDelay(mod='orig')
     os.system("./extractArea.pl");
