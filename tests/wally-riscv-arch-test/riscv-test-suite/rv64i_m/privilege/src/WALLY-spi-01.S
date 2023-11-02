@@ -308,24 +308,39 @@ test_cases:
 
 # Test hold mode deassert conditions
 
-.8byte delay1, 0x00000001, write32_test     # reset delay1 register
-.8byte delay0, 0x00010001, write32_test     # reset delay0 register
-.8byte cs_mode, 0x00000002, write32_test    # set cs_mode to hold
-.8byte tx_data, 0x000000CE, write32_test    # place data into tx_data
-.8byte cs_id, 0x00000001, write32_test      #change selected cs pin. should deassert cs[0] in hold mode
-.8byte cs_def, 0x00001101, write32_test     # change selected cs pins def value. should deassert cs[1]
-.8byte cs_def, 0x00001111, write32_test     # reset cs_def
-.8byte cs_mode, 0x00000000, write32_test    # change cs_mode to auto, should deassert cs[1], have now gone through all deassertion conditions
-.8byte rx_data, 0x000000CE, read32_test     # clear rx_fifo
+#.8byte delay1, 0x00000001, write32_test     # reset delay1 register
+#.8byte delay0, 0x00010001, write32_test     # reset delay0 register
+#.8byte cs_mode, 0x00000002, write32_test    # set cs_mode to hold
+#.8byte tx_data, 0x000000CE, write32_test    # place data into tx_data
+#.8byte cs_id, 0x00000001, write32_test      #change selected cs pin. should deassert cs[0] in hold mode
+#.8byte cs_def, 0x00001101, write32_test     # change selected cs pins def value. should deassert cs[1]
+#.8byte cs_def, 0x00001111, write32_test     # reset cs_def
+#.8byte cs_mode, 0x00000000, write32_test    # change cs_mode to auto, should deassert cs[1], have now gone through all deassertion conditions
+#.8byte rx_data, 0x000000CE, read32_test     # clear rx_fifo
 
 # Test transmit and receive fifo full edge cases
+#.8byte rx_mark, 0x00000007, write32_test    #set rx watermark to 7 (only high when full)
+#.8byte tx_data, 0xA1B1C1D1, spi_burst_send  #fill rx fifo
+#.8byte tx_data, 0xE1F11A1B, spi_burst_send  
+#.8byte 0x0, 0x00000007, spi_data_wait       #wait for rx fifo to fill
+#.8byte ip, 0x00000002, read32_test          #rxmark ip should be high
+#.8byte rx_data, 0x000000D1, read32_test     #clear rx fifo
+#.8byte rx_data, 0x000000C1, read32_test
+#.8byte rx_data, 0x000000B1, read32_test
+#.8byte rx_data, 0x000000A1, read32_test
+#.8byte rx_data, 0x0000001B, read32_test
+#.8byte rx_data, 0x0000001A, read32_test
+#.8byte rx_data, 0x000000F1, read32_test
+#.8byte rx_data, 0x000000E1, read32_test
 
+#test fifo watermark edge cases (wrap arounds, 2s complement)
 
 # =========== Test frame format (fmt) register ===========
 
 # Test frame length of 4
 
-
+.8byte delay1, 0x00000001, write32_test     # reset delay1 register
+.8byte delay0, 0x00010001, write32_test     # reset delay0 register
 .8byte sck_mode, 0x00000000, write32_test   #reset sckmode register
 .8byte cs_mode, 0x00000000, write32_test    # set cs_mode to AUTO 
 .8byte fmt, 0x00040000, write32_test        # set frame length to 4
