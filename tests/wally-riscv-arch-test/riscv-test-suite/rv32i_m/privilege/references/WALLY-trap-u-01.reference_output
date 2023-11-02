@@ -45,7 +45,7 @@
 00000008 # scause from U mode ecall
 00000000 # stval of ecall (*** defined to be zero for now)
 00000000 # masked out mstatus.mpp = 0, mstatus.MPIE = 0, and mstatus.MIE = 0
-0000b3ff # medeleg after attempted write of all 1's (only some bits are writeable)
+0000b3fe # medeleg after attempted write of all 1's (only some bits are writeable)
 00000222 # mideleg after attempted write of all 1's (only some bits are writeable)
 0000000b # scause from M mode ecall 
 00000000 # stval of ecall (*** defined to be zero for now)

@@ -16,7 +16,7 @@ def mask(command):
 
 if __name__ == '__main__':
     
-    techs = ['sky90', 'tsmc28', 'tsmc28psyn']
+    techs = ['sky130', 'sky90', 'tsmc28', 'tsmc28psyn']
     allConfigs = ['rv32gc', 'rv32imc', 'rv64gc', 'rv64imc', 'rv32e', 'rv32i', 'rv64i']
     freqVaryPct = [-20, -12, -8, -6, -4, -2, 0, 2, 4, 6, 8, 12, 20]
 #    freqVaryPct = [-20, -10, 0, 10, 20]
