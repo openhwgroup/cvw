@@ -51,6 +51,8 @@ module wallywrapper;
 
   logic [31:0] GPIOIN, GPIOOUT, GPIOEN;
   logic        UARTSin, UARTSout;
+  logic        SPIIn, SPIOut;
+  logic [3:0]  SPICS;
   logic        SDCIntr;
 
   logic        HREADY;
@@ -70,6 +72,6 @@ module wallywrapper;
   wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT, .HSELEXTSDC,
                         .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
                         .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
-                        .UARTSin, .UARTSout, .SDCIntr); 
+                        .UARTSin, .UARTSout, .SPIIn, .SPIOut, .SPICS, .SDCIntr); 
 
 endmodule
