@@ -114,10 +114,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   logic [31:0]                 IROMInstrF;                               // Instruction from the IROM
   logic [31:0]                 ICacheInstrF;                             // Instruction from the I$
   logic [31:0]                 InstrRawF;                                // Instruction from the IROM, I$, or bus
-  logic                        CompressedF;                              // The fetched instruction is compressed
-  logic                        CompressedD;                              // The decoded instruction is compressed
-  logic                        CompressedE;                              // The execution instruction is compressed
-  logic                        CompressedM;                              // The execution instruction is compressed
+  logic                        CompressedF, CompressedE;                 // The fetched instruction is compressed
   logic [31:0]                 PostSpillInstrRawF;                       // Fetch instruction after merge two halves of spill
   logic [31:0]                 InstrRawD;                                // Non-decompressed instruction in the Decode stage
   logic                        IllegalIEUInstrD;                         // IEU Instruction (regular or compressed) is not good
@@ -403,17 +400,26 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   // PCM is only needed with CSRs or branch prediction
   if (P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED) 
     flopenr #(P.XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
-  else assign PCM = 0;
+  else assign PCM = 0; 
 
-  flopenrc #(1) CompressedDReg(clk, reset, FlushD, ~StallD, CompressedF, CompressedD);
-  flopenrc #(1) CompressedEReg(clk, reset, FlushE, ~StallE, CompressedD, CompressedE);
-  assign PCLinkE = PCE + (CompressedE ? 'd2 : 'd4); // 'd4 means 4 but stops Design Compiler complaining about signed to unsigned conversion
+  if (P.COMPRESSED_SUPPORTED) begin
+    logic CompressedD;  // instruction is compressed
+    flopenrc #(1) CompressedDReg(clk, reset, FlushD, ~StallD, CompressedF, CompressedD);
+    flopenrc #(1) CompressedEReg(clk, reset, FlushE, ~StallE, CompressedD, CompressedE);
+    assign PCLinkE = PCE + (CompressedE ? 'd2 : 'd4); // 'd4 means 4 but stops Design Compiler complaining about signed to unsigned conversion
+  end else begin
+    assign CompressedE = 0;
+    assign PCLinkE = PCE + 'd4;
+  end
 
   // pipeline original compressed instruction in case it is needed for MTVAL on an illegal instruction exception
-  if (P.ZICSR_SUPPORTED) begin
+  if (P.ZICSR_SUPPORTED & P.COMPRESSED_SUPPORTED) begin
+    logic CompressedM; // instruction is compressed
     flopenrc #(16) InstrRawEReg(clk, reset, FlushE, ~StallE, InstrRawD[15:0], InstrRawE);
     flopenrc #(16) InstrRawMReg(clk, reset, FlushM, ~StallM, InstrRawE, InstrRawM);
     flopenrc #(1)  CompressedMReg(clk, reset, FlushM, ~StallM, CompressedE, CompressedM);
     mux2     #(32) InstrOrigMux(InstrM, {16'b0, InstrRawM}, CompressedM, InstrOrigM); 
-  end else assign InstrOrigM = 0;
+  end else
+    assign InstrOrigM = InstrM;
+
 endmodule
