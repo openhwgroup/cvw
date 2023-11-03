@@ -36,8 +36,8 @@ eval file copy -force [glob ${hdl_src}/*/*/*.sv] {$outputDir/hdl/}
 set wrapper 0
 if {[eval exec grep "cvw_t" {$outputDir/hdl/$::env(DESIGN).sv}] ne ""} {
     set wrapper 1
-	exec python3 $::env(WALLY)/synthDC/scripts/wrapperGen.py $::env(DESIGN)
-    eval file copy -force [glob ${hdl_src}/../synthDC/wrappers/$::env(DESIGN)wrapper.sv] {$outputDir/hdl/}
+    # make the wrapper
+	exec python3 $::env(WALLY)/synthDC/scripts/wrapperGen.py $::env(DESIGN) $outputDir/hdl
 }
 
 # Only for FMA class project; comment out when done

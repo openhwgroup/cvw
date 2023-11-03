@@ -90,12 +90,12 @@ module ram1p1rwbe import cvw::*; #(parameter cvw_t P, parameter DEPTH=64, WIDTH=
       end
     end
     
-    // Read
+    // Combinational read: register address and read after clock edge
     logic [$clog2(DEPTH)-1:0] addrd;
     flopen #($clog2(DEPTH)) adrreg(clk, ce, addr, addrd);
     assign dout = RAM[addrd];
 
-    /*      // Read
+    /*      // Alternate read logic reads the old contents of mem[addr].  Increases setup time and adds dout reg, but reduces clk to q
      always_ff @(posedge clk) 
      if(ce) dout <= #1 mem[addr]; */
 
