@@ -212,10 +212,16 @@ module testbench;
   ///////////////////////////////////////////////////////////////////////////////
   /////////////////////////////// Cache Issue ///////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
+
+  // Duplicate copy of pipeline registers that are optimized out of some configurations
+  logic [31:0] NextInstrE, InstrM;
+  mux2    #(32)     FlushInstrMMux(dut.core.ifu.InstrE, dut.core.ifu.nop, dut.core.ifu.FlushM, NextInstrE);
+  flopenr #(32)     InstrMReg(dut.core.clk, dut.core.reset, ~dut.core.ifu.StallM, NextInstrE, InstrM);
+
   logic       probe;
   if (NO_SPOOFING)
     assign probe = testbench.dut.core.PCM == 64'hffffffff80200c8c
-                   & testbench.dut.core.InstrM != 32'h14021273
+                   & InstrM != 32'h14021273
                    & testbench.dut.core.InstrValidM;
 
 
@@ -280,7 +286,7 @@ module testbench;
   `define FLUSHW dut.core.FlushW
   `define STALLW dut.core.StallW
   flopenrc #(P.XLEN)         PCWReg(clk, reset, `FLUSHW, ~`STALLW, `PCM, PCW);
-  flopenr #(32)          InstrWReg(clk, reset, ~`STALLW, `FLUSHW ? nop : dut.core.ifu.InstrM, InstrW);
+  flopenr #(32)          InstrWReg(clk, reset, ~`STALLW, `FLUSHW ? nop : InstrM, InstrW);
   flopenrc #(1)        controlregW(clk, reset, `FLUSHW, ~`STALLW, dut.core.ieu.c.InstrValidM, InstrValidW);
   flopenrc #(P.XLEN)     IEUAdrWReg(clk, reset, `FLUSHW, ~`STALLW, dut.core.IEUAdrM, IEUAdrW);
   flopenrc #(P.XLEN)  WriteDataWReg(clk, reset, `FLUSHW, ~`STALLW, dut.core.lsu.WriteDataM, WriteDataW);  
@@ -794,7 +800,7 @@ module testbench;
   instrTrackerTB it(clk, reset, dut.core.ieu.dp.FlushE,
                 dut.core.ifu.InstrRawF[31:0],
                 dut.core.ifu.InstrD, dut.core.ifu.InstrE,
-                dut.core.ifu.InstrM,  InstrW,
+                InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // ------------------
