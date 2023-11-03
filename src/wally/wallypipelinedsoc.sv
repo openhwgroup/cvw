@@ -54,11 +54,14 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   output logic [31:0]         GPIOEN,           // output enables for GPIO
   input  logic                UARTSin,          // UART serial data input
   output logic                UARTSout,         // UART serial data output
-  input logic                 SDCIntr                 
+  input  logic                SDCIntr,
+  input  logic                SPIIn,            // SPI pins in
+  output logic                SPIOut,           // SPI pins out
+  output logic [3:0]          SPICS             // SPI chip select pins                    
 );
 
   // Uncore signals
-  logic [P.AHBW-1:0]            HRDATA;           // from AHB mux in uncore
+  logic [P.AHBW-1:0]          HRDATA;           // from AHB mux in uncore
   logic                       HRESP;            // response from AHB
   logic                       MTimerInt, MSwInt;// timer and software interrupts from CLINT
   logic [63:0]                MTIME_CLINT;      // from CLINT to CSRs
@@ -80,7 +83,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
       .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
       .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT, .HSELEXTSDC,
       .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOIN, .GPIOOUT, .GPIOEN, .UARTSin, 
-      .UARTSout, .MTIME_CLINT, .SDCIntr);
+      .UARTSout, .MTIME_CLINT, .SDCIntr, .SPIIn, .SPIOut, .SPICS);
   end
 
 endmodule
