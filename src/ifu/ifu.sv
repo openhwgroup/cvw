@@ -386,22 +386,22 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   assign BranchMisalignedFaultE = (IEUAdrE[1] & ~P.COMPRESSED_SUPPORTED) & PCSrcE;
   flopenr #(1) InstrMisalignedReg(clk, reset, ~StallM, BranchMisalignedFaultE, InstrMisalignedFaultM);
 
-  // Instruction and PC pipeline registers
-  // Cannot use flopenrc for Instr(E/M) as it resets to NOP not 0.
+  // Instruction and PC pipeline registers flush to NOP, not zero
   mux2    #(32)     FlushInstrEMux(InstrD, nop, FlushE, NextInstrD);
   mux2    #(32)     FlushInstrMMux(InstrE, nop, FlushM, NextInstrE);
   flopenr #(32)     InstrEReg(clk, reset, ~StallE, NextInstrD, InstrE);
   flopenr #(P.XLEN) PCEReg(clk, reset, ~StallE, PCD, PCE);
 
   // InstrM is only needed with CSRs or atomic operations
-  if (P.ZICSR_SUPPORTED | P.A_SUPPORTED)
+  if (P.ZICSR_SUPPORTED | P.A_SUPPORTED | 1) 
     flopenr #(32)     InstrMReg(clk, reset, ~StallM, NextInstrE, InstrM);
   else assign InstrM = 0;
   // PCM is only needed with CSRs or branch prediction
   if (P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED) 
     flopenr #(P.XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
   else assign PCM = 0; 
-
+  
+  // If compressed instructions are supported, increment PCLink by 2 or 4 for a jal.  Otherwise, just by 4
   if (P.COMPRESSED_SUPPORTED) begin
     logic CompressedD;  // instruction is compressed
     flopenrc #(1) CompressedDReg(clk, reset, FlushD, ~StallD, CompressedF, CompressedD);
@@ -411,9 +411,9 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     assign CompressedE = 0;
     assign PCLinkE = PCE + 'd4;
   end
-
+ 
   // pipeline original compressed instruction in case it is needed for MTVAL on an illegal instruction exception
-  if (P.ZICSR_SUPPORTED & P.COMPRESSED_SUPPORTED) begin
+  if (P.ZICSR_SUPPORTED & P.COMPRESSED_SUPPORTED | 1) begin
     logic CompressedM; // instruction is compressed
     flopenrc #(16) InstrRawEReg(clk, reset, FlushE, ~StallE, InstrRawD[15:0], InstrRawE);
     flopenrc #(16) InstrRawMReg(clk, reset, FlushM, ~StallM, InstrRawE, InstrRawM);
