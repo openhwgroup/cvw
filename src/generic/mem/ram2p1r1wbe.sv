@@ -31,7 +31,7 @@
 
 // WIDTH is number of bits in one "word" of the memory, DEPTH is number of such words
 
-module ram2p1r1wbe import cvw::*; #(parameter USE_SRAM, DEPTH=1024, WIDTH=68) (
+module ram2p1r1wbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=1024, WIDTH=68) (
   input  logic                     clk,
   input  logic                     ce1, ce2,
   input  logic [$clog2(DEPTH)-1:0] ra1,
