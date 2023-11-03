@@ -71,7 +71,7 @@ module ram_ahb import cvw::*;  #(parameter cvw_t P,
   mux2 #(P.PA_BITS) adrmux(HADDR, HADDRD, memwriteD | ~HREADY, RamAddr);
 
   // single-ported RAM
-  ram1p1rwbe #(.P(P), .DEPTH(RANGE/8), .WIDTH(P.XLEN), .PRELOAD_ENABLED(P.FPGA)) memory(.clk(HCLK), .ce(1'b1), 
+  ram1p1rwbe #(.USE_SRAM(P.USE_SRAM), .DEPTH(RANGE/8), .WIDTH(P.XLEN), .PRELOAD_ENABLED(P.FPGA)) memory(.clk(HCLK), .ce(1'b1), 
     .addr(RamAddr[ADDR_WIDTH+OFFSET-1:OFFSET]), .we(memwriteD), .din(HWDATA), .bwe(HWSTRB), .dout(HREADRam));
   
   // use this to add arbitrary latency to ram. Helps test AHB controller correctness
