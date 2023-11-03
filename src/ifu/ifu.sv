@@ -388,14 +388,14 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
 
   // Instruction and PC pipeline registers flush to NOP, not zero
   mux2    #(32)     FlushInstrEMux(InstrD, nop, FlushE, NextInstrD);
-  mux2    #(32)     FlushInstrMMux(InstrE, nop, FlushM, NextInstrE);
   flopenr #(32)     InstrEReg(clk, reset, ~StallE, NextInstrD, InstrE);
   flopenr #(P.XLEN) PCEReg(clk, reset, ~StallE, PCD, PCE);
 
   // InstrM is only needed with CSRs or atomic operations
-  if (P.ZICSR_SUPPORTED | P.A_SUPPORTED | 1) 
+  if (P.ZICSR_SUPPORTED | P.A_SUPPORTED) begin
+    mux2    #(32)     FlushInstrMMux(InstrE, nop, FlushM, NextInstrE);
     flopenr #(32)     InstrMReg(clk, reset, ~StallM, NextInstrE, InstrM);
-  else assign InstrM = 0;
+  end else assign InstrM = 0;
   // PCM is only needed with CSRs or branch prediction
   if (P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED) 
     flopenr #(P.XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
