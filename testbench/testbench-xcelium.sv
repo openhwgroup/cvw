@@ -70,6 +70,8 @@ module testbench;
   logic [3:0]  SDCDatIn;
   tri1  [3:0]  SDCDat;
   tri1         SDCCmd;
+  logic        SPIIn, SPIOut;
+  logic [3:0]  SPICS;
 
   logic        HREADY;
   logic        HSELEXT;
@@ -426,10 +428,10 @@ module testbench;
     assign SDCDat = '0;
   end
 
-  wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
-    .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
-    .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
-    .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
+  wallypipelinedsoc #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
+                        .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
+                        .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
+                        .UARTSin, .UARTSout, .SDCIntr, .SPICS, .SPIOut, .SPIIn); 
 
   // generate clock to sequence tests
   always begin
