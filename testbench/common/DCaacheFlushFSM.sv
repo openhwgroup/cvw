@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// shadowmem.sv
+// DCacheFlushFSM.sv
 //
 // Written: David Harris David_Harris@hmc.edu and Ross Thompson ross1728@gmail.com
 // Modified: 14 June 2023

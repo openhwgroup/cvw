@@ -31,8 +31,7 @@
 
 // WIDTH is number of bits in one "word" of the memory, DEPTH is number of such words
 
-module ram2p1r1wbe import cvw::*; #(parameter cvw_t P,
-                                    parameter DEPTH=1024, WIDTH=68) (
+module ram2p1r1wbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=1024, WIDTH=68) (
   input  logic                     clk,
   input  logic                     ce1, ce2,
   input  logic [$clog2(DEPTH)-1:0] ra1,
@@ -51,7 +50,7 @@ module ram2p1r1wbe import cvw::*; #(parameter cvw_t P,
   // TRUE Smem macro
   // ***************************************************************************
 
-  if ((P.USE_SRAM == 1) & (WIDTH == 68) & (DEPTH == 1024)) begin
+  if ((USE_SRAM == 1) & (WIDTH == 68) & (DEPTH == 1024)) begin
     
     ram2p1r1wbe_1024x68 memory1(.CLKA(clk), .CLKB(clk), 
       .CEBA(~ce1), .CEBB(~ce2),
@@ -63,7 +62,7 @@ module ram2p1r1wbe import cvw::*; #(parameter cvw_t P,
       .QA(rd1),
       .QB());
 
-  end else if ((P.USE_SRAM == 1) & (WIDTH == 36) & (DEPTH == 1024)) begin
+  end else if ((USE_SRAM == 1) & (WIDTH == 36) & (DEPTH == 1024)) begin
     
     ram2p1r1wbe_1024x36 memory1(.CLKA(clk), .CLKB(clk), 
       .CEBA(~ce1), .CEBB(~ce2),
@@ -75,7 +74,7 @@ module ram2p1r1wbe import cvw::*; #(parameter cvw_t P,
       .QA(rd1),
       .QB());      
 
-  end else if ((P.USE_SRAM == 1) & (WIDTH == 2) & (DEPTH == 1024)) begin
+  end else if ((USE_SRAM == 1) & (WIDTH == 2) & (DEPTH == 1024)) begin
 
     logic [SRAMWIDTH-1:0]     SRAMReadData;      
     logic [SRAMWIDTH-1:0]     SRAMWriteData;      

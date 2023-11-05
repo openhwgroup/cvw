@@ -20,7 +20,7 @@
 --override cpu/Zicboz=T
 --override cpu/Svpbmt=T
 # 64 KiB continuous huge pages supported
---override cpu/Svnapot_page_mask=1<<16
+--override cpu/Svnapot_page_mask=65536
 
 
 #  clarify

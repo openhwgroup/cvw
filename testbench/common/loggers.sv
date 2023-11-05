@@ -217,7 +217,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
       logic  PCSrcM;
       string LogFile;
       logic  resetD, resetEdge;
-      flopenrc #(1) PCSrcMReg(clk, reset, dut.core.FlushM, ~dut.core.StallM, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PCSrcE, PCSrcM);
+      flopenrc #(1) PCSrcMReg(clk, reset, dut.core.FlushM, ~dut.core.StallM, dut.core.ifu.PCSrcE, PCSrcM);
       flop #(1) ResetDReg(clk, reset, resetD);
       assign resetEdge = ~reset & resetD;
       initial begin

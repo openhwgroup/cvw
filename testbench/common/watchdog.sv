@@ -30,11 +30,13 @@ module watchdog #(parameter XLEN, WatchDogTimerThreshold)
    );
   
   // check for hang up.
-  logic [XLEN-1:0]    PCW;
-  flopenr #(XLEN) PCWReg(clk, reset, ~dut.core.ieu.dp.StallW, dut.core.ifu.PCM, PCW);
-  logic [XLEN-1:0]    OldPCW;
+  logic [XLEN-1:0]      PCM, PCW, OldPCW;
   integer               WatchDogTimerCount;
   logic                 WatchDogTimeOut;
+
+  flopenr #(XLEN) PCMReg(clk, reset, ~dut.core.ifu.StallM, dut.core.ifu.PCE, PCM); // duplicate PCM register because it is not in ifu for all configurations
+  flopenr #(XLEN) PCWReg(clk, reset, ~dut.core.ieu.dp.StallW, PCM, PCW);
+
   always_ff @(posedge clk) begin
     OldPCW <= PCW;
     if(OldPCW == PCW) WatchDogTimerCount = WatchDogTimerCount + 1'b1;
