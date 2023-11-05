@@ -84,7 +84,7 @@ module gshare import cvw::*; #(parameter cvw_t P,
   
   assign BPDirPredF = MatchX ? FwdNewDirPredF : TableBPDirPredF;
 
-  ram2p1r1wbe #(P, 2**k, 2) PHT(.clk(clk),
+  ram2p1r1wbe #(.USE_SRAM(P.USE_SRAM), .DEPTH(2**k), .WIDTH(2)) PHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallW & ~FlushW),
     .ra1(IndexNextF),
     .rd1(TableBPDirPredF),

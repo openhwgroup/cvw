@@ -212,10 +212,16 @@ module testbench;
   ///////////////////////////////////////////////////////////////////////////////
   /////////////////////////////// Cache Issue ///////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
+
+  // Duplicate copy of pipeline registers that are optimized out of some configurations
+  logic [31:0] NextInstrE, InstrM;
+  mux2    #(32)     FlushInstrMMux(dut.core.ifu.InstrE, dut.core.ifu.nop, dut.core.ifu.FlushM, NextInstrE);
+  flopenr #(32)     InstrMReg(dut.core.clk, dut.core.reset, ~dut.core.ifu.StallM, NextInstrE, InstrM);
+
   logic       probe;
   if (NO_SPOOFING)
     assign probe = testbench.dut.core.PCM == 64'hffffffff80200c8c
-                   & testbench.dut.core.InstrM != 32'h14021273
+                   & InstrM != 32'h14021273
                    & testbench.dut.core.InstrValidM;
 
 
@@ -252,6 +258,8 @@ module testbench;
   logic [31:0]      GPIOIN;
   logic [31:0]      GPIOOUT, GPIOEN;
   logic             UARTSin, UARTSout;
+  logic             SPIIn, SPIOut;
+  logic [3:0]       SPICS;
 
   // FPGA-specific Stuff
   logic             SDCIntr;
@@ -262,13 +270,10 @@ module testbench;
   assign SDCIntr = 0;
 
   // Wally
-  wallypipelinedsoc #(P) dut(.clk, .reset, .reset_ext,
-                        .HRDATAEXT, .HREADYEXT, .HREADY, .HSELEXT, .HSELEXTSDC, .HRESPEXT, .HCLK, 
-			.HRESETn, .HADDR, .HWDATA, .HWRITE, .HWSTRB, .HSIZE, .HBURST, .HPROT, 
-			.HTRANS, .HMASTLOCK, 
-			.TIMECLK('0), .GPIOIN, .GPIOOUT, .GPIOEN,
-                        .UARTSin, .UARTSout,
-			.SDCIntr);
+  wallypipelinedsoc #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
+                        .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
+                        .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
+                        .UARTSin, .UARTSout, .SDCIntr, .SPICS, .SPIOut, .SPIIn); 
 
   // W-stage hardware not needed by Wally itself 
   parameter nop = 'h13;
@@ -280,7 +285,7 @@ module testbench;
   `define FLUSHW dut.core.FlushW
   `define STALLW dut.core.StallW
   flopenrc #(P.XLEN)         PCWReg(clk, reset, `FLUSHW, ~`STALLW, `PCM, PCW);
-  flopenr #(32)          InstrWReg(clk, reset, ~`STALLW, `FLUSHW ? nop : dut.core.ifu.InstrM, InstrW);
+  flopenr #(32)          InstrWReg(clk, reset, ~`STALLW, `FLUSHW ? nop : InstrM, InstrW);
   flopenrc #(1)        controlregW(clk, reset, `FLUSHW, ~`STALLW, dut.core.ieu.c.InstrValidM, InstrValidW);
   flopenrc #(P.XLEN)     IEUAdrWReg(clk, reset, `FLUSHW, ~`STALLW, dut.core.IEUAdrM, IEUAdrW);
   flopenrc #(P.XLEN)  WriteDataWReg(clk, reset, `FLUSHW, ~`STALLW, dut.core.lsu.WriteDataM, WriteDataW);  
@@ -794,7 +799,7 @@ module testbench;
   instrTrackerTB it(clk, reset, dut.core.ieu.dp.FlushE,
                 dut.core.ifu.InstrRawF[31:0],
                 dut.core.ifu.InstrD, dut.core.ifu.InstrE,
-                dut.core.ifu.InstrM,  InstrW,
+                InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // ------------------

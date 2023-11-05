@@ -1,11 +1,10 @@
 ///////////////////////////////////////////
-// testbench.sv
+// wallywrapper.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
 //
-// Purpose: Wally Testbench and helper modules
-//          Applies test programs from the riscv-arch-test and Imperas suites
+// Purpose: Wrapper module to define parameters for Wally Verilator linting
 // 
 // A component of the Wally configurable RISC-V project.
 // 
