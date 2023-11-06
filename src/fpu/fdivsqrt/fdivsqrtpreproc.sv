@@ -43,8 +43,8 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   output logic                 ISpecialCaseE,
   output logic [P.DURLEN-1:0]  CyclesE,
   output logic [P.DIVBLEN:0]   nM, mM,
-  output logic                 NegQuotM, ALTBM, IntDivM, W64M,
-  output logic                 AsM, BZeroM,
+  output logic                 ALTBM, IntDivM, W64M,
+  output logic                 AsM, BsM, BZeroM,
   output logic [P.XLEN-1:0]    AM
 );
 
@@ -57,7 +57,6 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   logic                        NumerZeroE;                          // Numerator is zero (X or A)
   logic                        AZeroE, BZeroE;                      // A or B is Zero for integer division
   logic                        SignedDivE;                          // signed division
-  logic                        NegQuotE;                            // Integer quotient is negative
   logic                        AsE, BsE;                            // Signs of integer inputs
   logic [P.XLEN-1:0]           AE;                                  // input A after W64 adjustment
   logic  ALTBE;
@@ -84,7 +83,6 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     assign BZeroE = ~(|BE);
     assign AsE = AE[P.XLEN-1] & SignedDivE;
     assign BsE = BE[P.XLEN-1] & SignedDivE; 
-    assign NegQuotE = AsE ^ BsE; // Integer Quotient is negative
 
     // Force integer inputs to be postiive
     mux2 #(P.XLEN) posamux(AE, -AE, AsE, PosA);
@@ -192,9 +190,9 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     // pipeline registers
     flopen #(1)        mdureg(clk, IFDivStartE, IntDivE,  IntDivM);
     flopen #(1)       altbreg(clk, IFDivStartE, ALTBE,    ALTBM);
-    flopen #(1)    negquotreg(clk, IFDivStartE, NegQuotE, NegQuotM);
     flopen #(1)      bzeroreg(clk, IFDivStartE, BZeroE,   BZeroM);
     flopen #(1)      asignreg(clk, IFDivStartE, AsE,      AsM);
+    flopen #(1)      bsignreg(clk, IFDivStartE, BsE,      BsM);
     flopen #(P.DIVBLEN+1) nreg(clk, IFDivStartE, nE,       nM); 
     flopen #(P.DIVBLEN+1) mreg(clk, IFDivStartE, mE,       mM);
     flopen #(P.XLEN)   srcareg(clk, IFDivStartE, AE,       AM);
