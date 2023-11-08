@@ -1,6 +1,9 @@
 #!/usr/bin/python3
-# Madeleine Masser-Frye mmasserfrye@hmc.edu 6/22
-
+#
+# Python analysis for regression test run by ppaSynth.py
+# Madeleine Masser-Frye mmasserfrye@hmc.edu 5/22
+# James Stine james.stine@okstate.edu 15 October 2023
+#
 import subprocess
 import re
 from multiprocessing import Pool
@@ -56,7 +59,7 @@ if __name__ == '__main__':
     ##### Run specific syntheses
     widths = [8, 16, 32, 64, 128] 
     modules = ['mult', 'add', 'shiftleft', 'flop', 'comparator', 'priorityencoder', 'add', 'csa', 'mux2', 'mux4', 'mux8']
-    techs = ['sky90', 'tsmc28']
+    techs = ['sky90', 'sky130', 'tsmc28', 'tsmc28psyn']
     freqs = [5000]
     synthsToRun = allCombos(widths, modules, techs, freqs)
     
