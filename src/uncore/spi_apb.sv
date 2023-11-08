@@ -27,16 +27,14 @@
 
 // Current limitations: Flash read sequencer mode not implemented, dual and quad modes untestable with current test plan.
 
-// write tests for fifo full and empty watermark edge cases
-// test case for two's complement rollover on fifo watermark calculation + watermark calc redesign
-// rempty triggers when fifo full, txmark = 7 doesnt work
 // HoldModeDeassert make sure still works
 // Comment on FIFOs: watermark calculations
 // Comment all interface and internal signals on the lines they are declared
 // Get tabs correct so things line up
 // Relook at frame compare/ Delay count logic w/o multibit 
 // look at ReadIncrement/WriteIncrement delay necessity 
-/* high level explanation of architecture
+
+/* 
 SPI module is written to the specifications described in FU540-C000-v1.0. At the top level, it is consists of synchronous 8 byte transmit and recieve FIFOs connected to shift registers. 
 The FIFOs are connected to WALLY by an apb bus control register interface, which includes various control registers for modifying the SPI transmission along with registers for writing
 to the transmit FIFO and reading from the receive FIFO. The transmissions themselves are then controlled by a finite state machine. The SPI module uses 4 tristate pins for SPI input/output, 
@@ -184,7 +182,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
             //of entries in tx/rx fifo is strictly more/less than tx/rxmark
 
             /* verilator lint_off CASEINCOMPLETE */
-            if (Memwrite)
+            if (Memwrite & TransmitInactive)
                 case(Entry) //flop to sample inputs
                     8'h00: SckDiv <= Din[11:0];
                     8'h04: SckMode <= Din[1:0];
@@ -308,7 +306,6 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
                 ACTIVE_1: begin
                         InterXFRCount <= 9'b1;
                         if (FrameCompareBoolean) state <= ACTIVE_0;
-                        else if (HoldModeDeassert) state <= CS_INACTIVE;
                         else if ((ChipSelectMode[1:0] == 2'b10) & ~|(Delay1[15:8]) & (~TransmitFIFOReadEmpty)) begin
                             state <= ACTIVE_0;
                             Delay0Count <= 9'b1;
@@ -334,8 +331,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
                         FrameCount <= 5'b0;
                         InterCSCount <= 9'b10;
                         InterXFRCount <= InterXFRCount + 9'b1;
-                        if (HoldModeDeassert) state <= CS_INACTIVE;
-                        else if (InterXFRCompare & ~TransmitFIFOReadEmptyDelay) state <= ACTIVE_0;
+                        if (InterXFRCompare & ~TransmitFIFOReadEmptyDelay) state <= ACTIVE_0;
                         else if (~|ChipSelectMode[1:0]) state <= CS_INACTIVE;
                         end
             endcase
@@ -352,13 +348,6 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     assign TransmitInactive = ((state == INTER_CS) | (state == CS_INACTIVE) | (state == INTER_XFR) | (ReceiveShiftFullDelayPCLK & ZeroDelayHoldMode));
     assign Active0 = (state == ACTIVE_0);
     assign Inactive = (state == CS_INACTIVE);
-
-    // Ensures that when ChipSelectMode = hold, CS pin is deasserted only when a different value is written to csmode or csid or a write to csdeg changes the state
-    // of the selected pin
-    assign PWChipSelect = PWDATA[3:0];
-    always_ff @(posedge PCLK, negedge PRESETn)
-        if (~PRESETn) HoldModeDeassert <= 0;
-        else if (~Inactive & Memwrite & ((ChipSelectMode[1:0] == 2'b10) & (Entry == (8'h18 | 8'h10) | ((Entry == 8'h14) & (PWChipSelect[ChipSelectID] != ChipSelectDef[ChipSelectID]))))) HoldModeDeassert <= 1;
 
     // Signal tracks which edge of sck to shift data
     always_comb

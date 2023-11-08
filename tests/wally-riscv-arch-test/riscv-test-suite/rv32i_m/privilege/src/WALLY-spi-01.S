@@ -69,36 +69,6 @@ test_cases:
 .equ ie, (SPI+0x70)
 .equ ip, (SPI+0x74)
 
-test_cases:
-# ---------------------------------------------------------------------------------------------
-# Test Contents
-#
-#   Here is where the actual tests are held, or rather, what the actual tests do.
-#   each entry consists of 3 values that will be read in as follows:
-#   
-#   '.4byte [x28 Value], [x29 Value], [x30 value]'
-#                     or
-#   '.4byte [address], [value], [test type]'
-#
-#   The encoding for x30 test type values can be found in the test handler in the framework file
-# ---------------------------------------------------------------------------------------------
-
-.equ SPI, 0x10040000
-.equ sck_div, (SPI+0x00)
-.equ sck_mode, (SPI+0x04)
-.equ cs_id, (SPI+0x10)
-.equ cs_def, (SPI+0x14)
-.equ cs_mode, (SPI+0x18)
-.equ delay0, (SPI+0x28)
-.equ delay1, (SPI+0x2C)
-.equ fmt, (SPI+0x40)
-.equ tx_data, (SPI+0x48)
-.equ rx_data, (SPI+0x4C)
-.equ tx_mark, (SPI+0x50)
-.equ rx_mark, (SPI+0x54)
-.equ ie, (SPI+0x70)
-.equ ip, (SPI+0x74)
-
 # =========== Verify all registers reset to correct values ===========
 
 .4byte sck_div, 0x00000003, read32_test     # sck_div reset to 0x3
@@ -405,9 +375,10 @@ test_cases:
 .4byte cs_mode, 0x00000002, write32_test    # set cs_mode to hold
 .4byte tx_data, 0x000000CE, write32_test    # place data into tx_data
 .4byte cs_id, 0x00000001, write32_test      #change selected cs pin. should deassert cs[0] in hold mode
-.4byte cs_def, 0x00001101, write32_test     # change selected cs pins def value. should deassert cs[1]
-.4byte cs_def, 0x00001111, write32_test     # reset cs_def
+.4byte cs_def, 0x0000000D, write32_test     # change selected cs pins def value. should deassert cs[1]
 .4byte cs_mode, 0x00000000, write32_test    # change cs_mode to auto, should deassert cs[1], have now gone through all deassertion conditions
+.4byte cs_def, 0x0000000F, write32_test     # reset cs_def
+.4byte cs_id, 0x00000000, write32_test      # reset cs_id
 .4byte rx_data, 0x000000CE, read32_test     # clear rx_fifo
 
 # =========== Test frame format (fmt) register ===========
