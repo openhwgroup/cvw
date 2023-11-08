@@ -34,9 +34,9 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.DIVb:0]    FirstU, FirstUM, 
   input  logic [P.DIVb+1:0]  FirstC,
   input  logic               SqrtE,
-  input  logic               Firstun, SqrtM, SpecialCaseM, NegQuotM,
+  input  logic               Firstun, SqrtM, SpecialCaseM, 
   input  logic [P.XLEN-1:0]  AM,
-  input  logic               RemOpM, ALTBM, BZeroM, AsM, W64M,
+  input  logic               RemOpM, ALTBM, BZeroM, AsM, BsM, W64M,
   input  logic [P.DIVBLEN:0] nM, mM,
   output logic [P.DIVb:0]    QmM, 
   output logic               WZeroE,
@@ -49,6 +49,7 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
   logic                      NegStickyM;
   logic                      weq0E, WZeroM;
   logic [P.XLEN-1:0]         IntDivResultM;
+  logic                      NegQuotM; // Integer quotient is negative
 
   //////////////////////////
   // Execute Stage: Detect early termination for an exact result
@@ -103,6 +104,7 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
     assign UnsignedQuotM = {3'b000, PreQmM};
 
     // Integer remainder: sticky and sign correction muxes
+    assign NegQuotM = AsM ^ BsM; // Integer Quotient is negative
     mux2 #(P.DIVb+4) normremdmux(W, W+D, NegStickyM, NormRemDM);
     mux2 #(P.DIVb+4) normremsmux(NormRemDM, -NormRemDM, AsM, NormRemM);
     mux2 #(P.DIVb+4) quotresmux(UnsignedQuotM, -UnsignedQuotM, NegQuotM, NormQuotM);

@@ -11,7 +11,8 @@
 --override refRoot/cpu/tvec_align=64
 
 # bit manipulation
---override cpu/add_implicit_Extensions=B 
+--override cpu/add_Extensions=B 
+#--override cpu/add_implicit_Extensions=B 
 --override cpu/bitmanip_version=1.0.0
 
 # More extensions
