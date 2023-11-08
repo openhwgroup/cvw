@@ -85,6 +85,70 @@ test_cases:
 .8byte ie, 0x00000000, read32_test          # ie reset to 0x0
 .8byte ip, 0x00000000, read32_test          # ip reset to 0x0
 
+# =========== watermark interrupts ===============
+
+#test watermark interrupts at beginning where fifo read/write pointers are known b/c reset
+# txwmp raised when # of entries in txfifo < txmark, rxwm raised when # of entries in rxfifo > rxmark
+
+.8byte ip, 0x00000000, read32_test          # txfifo entries not < 0, rxfifo entries not > 0;
+.8byte tx_mark, 0x00000004, write32_test    # set tx_mark to 4
+.8byte rx_mark, 0x00000003, write32_test    # set rx_mark to 3
+.8byte ip, 0x00000001, read32_test          # tx entries < 4, rx entries ! > 3
+.8byte tx_data, 0x41526374, spi_burst_send
+.8byte 0x0, 0x00000003, spi_data_wait
+.8byte ip, 0x00000003, read32_test          # tx entries < 4, rx entries > 3, visual inspection should see tx TransmitFIFOReadIncrement
+
+# txfifo wptr now at 0011, rxfifo wptr at 0000
+
+.8byte rx_mark, 0x00000007, write32_test    # set rx_mark to 7
+.8byte tx_data, 0xD4C3B2A1, spi_burst_send
+.8byte 0x0, 0x00000007, spi_data_wait       # rxfifo full, txfifo wptr at 1000, rxfifo wptr at 0000
+.8byte ip, 0x00000003, read32_test        
+.8byte rx_data, 0x00000074, read32_test
+.8byte rx_data, 0x00000063, read32_test     # clear 2 entries, txfifo wptr at 1000, rxfifo wptr at 0010
+
+
+.8byte tx_data, 0x000000A4, write32_test
+.8byte tx_data, 0x000000B4, write32_test    # tx 1010, rx 0010
+.8byte 0x0, 0x00000007, spi_data_wait       # 8 tx 1010, rx 0010
+.8byte rx_mark, 0x00000004, write32_test
+.8byte rx_data, 0x00000052, read32_test     # 7 rx 0011
+.8byte rx_data, 0x00000041, read32_test     # 6 rx 0100
+.8byte rx_data, 0x000000A1, read32_test     # 5 rx 0101
+.8byte ip, 0x00000003, read32_test          # 5 things in rx fifo
+.8byte rx_data, 0x000000B2, read32_test     # 4 tx 1010, rx 0110
+.8byte ip, 0x00000001, read32_test          # 4 entries in rxfifo, not strictly greater than 4
+
+.8byte rx_mark, 0x00000007, write32_test
+.8byte tx_data, 0xD5C5B5A5, spi_burst_send  # 8 tx1110, rx 0110
+.8byte 0x0, 0x00000007, spi_data_wait       
+
+.8byte rx_mark, 0x00000005, write32_test
+.8byte rx_data, 0x000000C3, read32_test     # tx 1110, rx 0111
+.8byte rx_data, 0x000000D4, read32_test     # tx 1110, rx 1000
+.8byte ip, 0x00000003, read32_test          # 6 entries
+.8byte rx_data, 0x000000A4, read32_test     # tx 1110, rx 1001
+.8byte ip, 0x00000001, read32_test          # 5 entries
+.8byte rx_data, 0x000000B4, read32_test     # tx 1110, rx 1010
+.8byte rx_data, 0x000000A5, read32_test     # tx 1110, rx 1011
+
+.8byte rx_mark, 0x00000006, write32_test
+.8byte tx_data, 0xD7C7B7A7, spi_burst_send
+.8byte 0x0, 0x00000006, spi_data_wait       # tx 0010, rx 1011
+.8byte tx_mark, 0x00000000, write32_test
+.8byte rx_mark, 0x00000000, write32_test
+.8byte rx_data, 0x000000B5, read32_test     # tx 0010, rx 1100
+.8byte rx_data, 0x000000C5, read32_test     # tx 0010, rx 1101
+.8byte rx_data, 0x000000D5, read32_test     # tx 0010, rx 1110
+.8byte rx_data, 0x000000A7, read32_test     # tx 0010, rx 1111
+.8byte rx_data, 0x000000B7, read32_test     # tx 0010, rx 0000
+.8byte rx_data, 0x000000C7, read32_test     # tx 0010, rx 0001
+.8byte ip, 0x00000002, read32_test
+.8byte rx_data, 0x000000D7, read32_test     # tx 0010, rx 1010
+.8byte ip, 0x00000000, read32_test
+.8byte tx_mark, 0x00000000, write32_test
+.8byte rx_mark, 0x00000000, write32_test    # reset watermark registers
+
 # =========== Basic read-write ===========
 
 .8byte tx_data, 0x000000011, write32_test   # place 8'h11 into tx_data
@@ -308,32 +372,15 @@ test_cases:
 
 # Test hold mode deassert conditions
 
-#.8byte delay1, 0x00000001, write32_test     # reset delay1 register
-#.8byte delay0, 0x00010001, write32_test     # reset delay0 register
-#.8byte cs_mode, 0x00000002, write32_test    # set cs_mode to hold
-#.8byte tx_data, 0x000000CE, write32_test    # place data into tx_data
-#.8byte cs_id, 0x00000001, write32_test      #change selected cs pin. should deassert cs[0] in hold mode
-#.8byte cs_def, 0x00001101, write32_test     # change selected cs pins def value. should deassert cs[1]
-#.8byte cs_def, 0x00001111, write32_test     # reset cs_def
-#.8byte cs_mode, 0x00000000, write32_test    # change cs_mode to auto, should deassert cs[1], have now gone through all deassertion conditions
-#.8byte rx_data, 0x000000CE, read32_test     # clear rx_fifo
-
-# Test transmit and receive fifo full edge cases
-#.8byte rx_mark, 0x00000007, write32_test    #set rx watermark to 7 (only high when full)
-#.8byte tx_data, 0xA1B1C1D1, spi_burst_send  #fill rx fifo
-#.8byte tx_data, 0xE1F11A1B, spi_burst_send  
-#.8byte 0x0, 0x00000007, spi_data_wait       #wait for rx fifo to fill
-#.8byte ip, 0x00000002, read32_test          #rxmark ip should be high
-#.8byte rx_data, 0x000000D1, read32_test     #clear rx fifo
-#.8byte rx_data, 0x000000C1, read32_test
-#.8byte rx_data, 0x000000B1, read32_test
-#.8byte rx_data, 0x000000A1, read32_test
-#.8byte rx_data, 0x0000001B, read32_test
-#.8byte rx_data, 0x0000001A, read32_test
-#.8byte rx_data, 0x000000F1, read32_test
-#.8byte rx_data, 0x000000E1, read32_test
-
-#test fifo watermark edge cases (wrap arounds, 2s complement)
+.8byte delay1, 0x00000001, write32_test     # reset delay1 register
+.8byte delay0, 0x00010001, write32_test     # reset delay0 register
+.8byte cs_mode, 0x00000002, write32_test    # set cs_mode to hold
+.8byte tx_data, 0x000000CE, write32_test    # place data into tx_data
+.8byte cs_id, 0x00000001, write32_test      #change selected cs pin. should deassert cs[0] in hold mode
+.8byte cs_def, 0x00001101, write32_test     # change selected cs pins def value. should deassert cs[1]
+.8byte cs_def, 0x00001111, write32_test     # reset cs_def
+.8byte cs_mode, 0x00000000, write32_test    # change cs_mode to auto, should deassert cs[1], have now gone through all deassertion conditions
+.8byte rx_data, 0x000000CE, read32_test     # clear rx_fifo
 
 # =========== Test frame format (fmt) register ===========
 
@@ -560,12 +607,12 @@ SETUP_PLIC
 
 .8byte delay1, 0x0000001, write32_test      # reset delay1 register
 .8byte cs_mode, 0x00000000, write32_test    # reset cs_mode
-.8byte tx_mark, 0x00000004, write32_test    # set transmit watermark to 4
+.8byte tx_mark, 0x00000001, write32_test    # set transmit watermark to 1 (any entry turns mark off)
 #.8byte ie, 0x00000000, write32_test         # enable transmit interrupt
 .8byte ip, 0x00000001, read32_test          # tx watermark interupt should be pending
 .8byte 0x0, 0x00000000, readmip_test
 .8byte tx_data, 0x55443322, spi_burst_send    # place 4 entries in transmit fifo
-.8byte ip, 0x00000000, read32_test          # tx watermark interupt should be off
+.8byte ip, 0x00000000, read32_test          # tx watermark interupt should be off 125
 .8byte 0x0, 0x00000003, spi_data_wait           # wait for transmission to end
 
 # test recieve watermark interrupt (triggers when entries in rx FIFO > rx watermark)
@@ -584,16 +631,12 @@ SETUP_PLIC
 .8byte rx_data, 0x00000055, read32_test     # clear rx fifo
 
 
-.8byte tx_mark, 0x00000004, write32_test    # set transmit watermark to 4
+.8byte tx_mark, 0x00000001, write32_test    # set transmit watermark to 0
 .8byte ie, 0x00000001, write32_test         # enable transmit interrupt
 .8byte ip, 0x00000001, read32_test          # tx watermark interupt should be pending
 .8byte 0x0, 0x00000800, readmip_test
-.8byte tx_data, 0x55443322, spi_burst_send    # place 4 entries in transmit fifo
-.8byte tx_mark, 0x00000001, write32_test
-.8byte 0x0, 0x00000000, claim_m_plic_interrupts
-.8byte ip, 0x00000000, read32_test          # tx watermark interupt should be off
-.8byte 0x0, 0x00000000, readmip_test
 .8byte ie, 0x00000000, write32_test      # disable tx intr
+.8byte tx_data, 0x55443322, spi_burst_send    # place 4 entries in transmit fifo
 .8byte 0x0, 0x00000003, spi_data_wait           # wait for transmission to end
 
 # test recieve watermark interrupt (triggers when entries in rx FIFO > rx watermark)

@@ -26,15 +26,16 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Current limitations: Flash read sequencer mode not implemented, dual and quad modes untestable with current test plan.
-// Hardware interlock change to busy signal
+
 // write tests for fifo full and empty watermark edge cases
+// test case for two's complement rollover on fifo watermark calculation + watermark calc redesign
+// rempty triggers when fifo full, txmark = 7 doesnt work
 // HoldModeDeassert make sure still works
 // Comment on FIFOs: watermark calculations
 // Comment all interface and internal signals on the lines they are declared
 // Get tabs correct so things line up
 // Relook at frame compare/ Delay count logic w/o multibit 
 // look at ReadIncrement/WriteIncrement delay necessity 
-// test case for two's complement rollover on fifo watermark calculation + watermark calc redesign
 /* high level explanation of architecture
 SPI module is written to the specifications described in FU540-C000-v1.0. At the top level, it is consists of synchronous 8 byte transmit and recieve FIFOs connected to shift registers. 
 The FIFOs are connected to WALLY by an apb bus control register interface, which includes various control registers for modifying the SPI transmission along with registers for writing
@@ -153,8 +154,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     // APB access
     assign Entry = {PADDR[7:2],2'b00};  // 32-bit word-aligned accesses
     assign Memwrite = PWRITE & PENABLE & PSEL;  // only write in access phase
-    assign PREADY = 1'b1; // tie high if hardware interlock solution doesn't involve bus
-    //assign PREADY = TransmitInactive; // tie PREADY to transmission for hardware interlock
+    assign PREADY = TransmitInactive; // tie PREADY to transmission for hardware interlock
 
     // account for subword read/write circuitry
     // -- Note SPI registers are 32 bits no matter what; access them with LW SW.
@@ -249,7 +249,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     ReceiveShiftFSM ReceiveShiftFSM_1 (PCLK, PRESETn, SCLKenable, ReceivePenultimateFrameBoolean, SampleEdge, SckMode[0], ReceiveShiftFull);
 
     //calculate tx/rx fifo write and recieve increment signals 
-    assign TransmitFIFOWriteIncrement = (Memwrite & (Entry == 8'h48) & ~TransmitFIFOWriteFull);
+    assign TransmitFIFOWriteIncrement = (Memwrite & (Entry == 8'h48) & ~TransmitFIFOWriteFull & TransmitInactive);
 
     always_ff @(posedge PCLK, negedge PRESETn)
         if (~PRESETn) TransmitFIFOWriteIncrementDelay <= 0;
@@ -358,7 +358,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     assign PWChipSelect = PWDATA[3:0];
     always_ff @(posedge PCLK, negedge PRESETn)
         if (~PRESETn) HoldModeDeassert <= 0;
-        else if (~Inactive & ((ChipSelectMode[1:0] == 2'b10) & (Entry == (8'h18 | 8'h10) | ((Entry == 8'h14) & (PWChipSelect[ChipSelectID] != ChipSelectDef[ChipSelectID])))) & Memwrite) HoldModeDeassert <= 1;
+        else if (~Inactive & Memwrite & ((ChipSelectMode[1:0] == 2'b10) & (Entry == (8'h18 | 8'h10) | ((Entry == 8'h14) & (PWChipSelect[ChipSelectID] != ChipSelectDef[ChipSelectID]))))) HoldModeDeassert <= 1;
 
     // Signal tracks which edge of sck to shift data
     always_comb
@@ -455,10 +455,9 @@ module SynchFIFO #(parameter M =3 , N= 8)(
     assign raddr = rptr[M-1:0];
     assign rptrnext = rptr + {3'b0, (rinc & ~rempty)};      
     assign rempty_val = (wptr == rptrnext);
-    assign rwatermark = ((raddr - waddr) < rwatermarklevel);
-
+    assign rwatermark = ((waddr - raddr) < rwatermarklevel) & ~wfull;
     assign waddr = wptr[M-1:0];
-    assign wwatermark = ((waddr - raddr) > wwatermarklevel);
+    assign wwatermark = ((waddr - raddr) > wwatermarklevel) | wfull;
     assign wptrnext = wptr + {3'b0, (winc & ~wfull)};
     assign wfull_val = ({~wptrnext[M], wptrnext[M-1:0]} == rptr);
 endmodule
