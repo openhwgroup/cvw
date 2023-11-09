@@ -377,9 +377,10 @@ test_cases:
 .8byte cs_mode, 0x00000002, write32_test    # set cs_mode to hold
 .8byte tx_data, 0x000000CE, write32_test    # place data into tx_data
 .8byte cs_id, 0x00000001, write32_test      #change selected cs pin. should deassert cs[0] in hold mode
-.8byte cs_def, 0x00001101, write32_test     # change selected cs pins def value. should deassert cs[1]
-.8byte cs_def, 0x00001111, write32_test     # reset cs_def
+.8byte cs_def, 0x0000000D, write32_test     # change selected cs pins def value. should deassert cs[1]
 .8byte cs_mode, 0x00000000, write32_test    # change cs_mode to auto, should deassert cs[1], have now gone through all deassertion conditions
+.8byte cs_def, 0x0000000F, write32_test     # reset cs_def
+.8byte cs_id, 0x00000000, write32_test      # reset cs_id
 .8byte rx_data, 0x000000CE, read32_test     # clear rx_fifo
 
 # =========== Test frame format (fmt) register ===========
