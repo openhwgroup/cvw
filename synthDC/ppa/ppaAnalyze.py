@@ -1,5 +1,9 @@
 #!/usr/bin/python3
+#
+# Python regression test for DC
 # Madeleine Masser-Frye mmasserfrye@hmc.edu 5/22
+# James Stine james.stine@okstate.edu 15 October 2023
+#
 
 import scipy.optimize as opt
 import subprocess
@@ -565,6 +569,7 @@ def makeLineLegend():
     fullLeg += [lines.Line2D([0], [0], color='black', label='smallest', linestyle='--')]
     fullLeg += [lines.Line2D([0], [0], color='blue', label='tsmc28', marker='^')]
     fullLeg += [lines.Line2D([0], [0], color='green', label='sky90', marker='o')]
+    fullLeg += [lines.Line2D([0], [0], color='green', label='sky130', marker='+')]	
     fullLeg += [lines.Line2D([0], [0], color='red', label='combined', marker='_')]
     fig.legend(handles=fullLeg, ncol=5, handlelength=1.4, loc='center') 
     saveStr = './plots/legend.png'
@@ -689,7 +694,7 @@ def makePlotDirectory():
             os.makedirs(new_directory)
         os.chdir(new_directory)
         if 'freq' in folder:
-            for tech in ['sky90', 'tsmc28']:
+            for tech in ['sky90', 'sky130', 'tsmc28']:
                 for mod in modules:
                     tech_directory = os.path.join(new_directory, tech)
                     mod_directory = os.path.join(tech_directory, mod)
@@ -702,15 +707,14 @@ def makePlotDirectory():
 if __name__ == '__main__':
     ##############################
     # set up stuff, global variables
-    widths = [8, 16, 32, 64, 128]
-    modules = ['priorityencoder', 'add', 'csa', 'shiftleft', 'comparator', 'flop', 'mux2', 'mux4', 'mux8', 'mult'] #, 'mux2d', 'mux4d', 'mux8d']
+	widths = [8, 16, 32, 64, 128]
+    modules = ['priorityencoder', 'add', 'csa', 'shiftleft', 'comparator', 'flop', 'mux2', 'mux4', 'mux8', 'mult'] 
     normAddWidth = 32 # divisor to use with N since normalizing to add_32
 
-    fitDict = {'add': ['cg', 'l', 'l'], 'mult': ['cg', 's', 's'], 'comparator': ['cg', 'l', 'l'], 'csa': ['c', 'l', 'l'], 'shiftleft': ['cg', 'l', 'ln'], 'flop': ['c', 'l', 'l'], 'priorityencoder': ['cg', 'l', 'l']}
-    fitDict.update(dict.fromkeys(['mux2', 'mux4', 'mux8'], ['cg', 'l', 'l']))
+    fitDict = {'add': ['cg', 'l', 'l'], 'mult': ['cg', 's', 's'], 'comparator': ['cg', 'l', 'l'], 'csa': ['c', 'l', 'l'], 'shiftleft': ['cg', 'l', 'ln'], 'flop': ['c', 'l', 'l'], 'priorityencoder': ['cg', 'l', 'l']}  fitDict.update(dict.fromkeys(['mux2', 'mux4', 'mux8'], ['cg', 'l', 'l']))
 
     TechSpec = namedtuple("TechSpec", "tech color shape delay area lpower denergy")
-    techSpecs = [['sky90', 'green', 'o', 43.2e-3, 1440.600027, 714.057, 0.658022690438],  ['tsmc28', 'blue', '^', 12.2e-3, 209.286002, 1060.0, .08153281695882594]]
+    techSpecs = [['sky90', 'green', 'o', 43.2e-3, 1440.600027, 714.057, 0.658022690438],  ['sky130', 'red', 'o', 43.2e-3, 1440.600027, 714.057, 0.658022690438], ['tsmc28', 'blue', '^', 12.2e-3, 209.286002, 1060.0, .08153281695882594]]
     techSpecs = [TechSpec(*t) for t in techSpecs]
     combined = TechSpec('combined fit', 'red', '_', 0, 0, 0, 0)
     ##############################
@@ -731,7 +735,8 @@ if __name__ == '__main__':
     for mod in modules:
         for w in widths:
             freqPlot('sky90', mod, w)
-            freqPlot('tsmc28', mod, w)
-        plotPPA(mod, norm=False)
-        plotPPA(mod, aleOpt=True)
+            #freqPlot('sky130', mod, w)			
+            #freqPlot('tsmc28', mod, w)
+        #plotPPA(mod, norm=False)
+        #plotPPA(mod, aleOpt=True)
         plt.close('all')
