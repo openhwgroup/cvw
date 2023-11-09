@@ -6,7 +6,7 @@
 echo "Executing Wally setup.csh"
 
 # Path to Wally repository
-set WALLY = $PWD
+setenv WALLY $PWD
 echo '$WALLY set to ' ${WALLY}
 
 # Extend alias which makes extending PATH much easier.

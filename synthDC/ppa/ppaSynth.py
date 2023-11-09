@@ -1,5 +1,9 @@
 #!/usr/bin/python3
-# Madeleine Masser-Frye mmasserfrye@hmc.edu 6/22
+#
+# Python regression test for DC
+# Madeleine Masser-Frye mmasserfrye@hmc.edu 5/22
+# James Stine james.stine@okstate.edu 15 October 2023
+#
 
 import subprocess
 import re
@@ -7,7 +11,9 @@ from multiprocessing import Pool
 from ppaAnalyze import synthsfromcsv
 
 def runCommand(module, width, tech, freq):
-    command = "make synth DESIGN=ppa_{}_{} TECH={} DRIVE=INV FREQ={} MAXOPT=1 MAXCORES=1".format(module, width, tech, freq)
+    command = "make synth DESIGN={} WIDTH={} TECH={} DRIVE=INV FREQ={} MAXOPT=1 MAXCORES=1".format(module, width, tech, freq)
+    print('here we go')
+
     subprocess.Popen(command, shell=True)
 
 def deleteRedundant(synthsToRun):
@@ -20,7 +26,7 @@ def deleteRedundant(synthsToRun):
 def freqSweep(module, width, tech):
     synthsToRun = []
     arr = [-8, -6, -4, -2, 0, 2, 4, 6, 8]
-    allSynths = synthsfromcsv('bestSynths.csv')
+    allSynths = synthsfromcsv('ppa/bestSynths.csv')
     for synth in allSynths:
         if (synth.module == module) & (synth.tech == tech) & (synth.width == width):
             f = 1000/synth.delay
@@ -54,20 +60,20 @@ def allCombos(widths, modules, techs, freqs):
 if __name__ == '__main__':
     
     ##### Run specific syntheses
-    widths = [8, 16, 32, 64, 128] 
-    modules = ['mult', 'add', 'shiftleft', 'flop', 'comparator', 'priorityencoder', 'add', 'csa', 'mux2', 'mux4', 'mux8']
-    techs = ['sky90', 'tsmc28']
-    freqs = [5000]
-    synthsToRun = allCombos(widths, modules, techs, freqs)
+	widths = [8, 16, 32, 64, 128] 
+	modules = ['mult', 'add', 'shiftleft', 'flop', 'comparator', 'priorityencoder', 'add', 'csa', 'mux2', 'mux4', 'mux8']
+	techs = ['sky90', 'tsmc28']
+	freqs = [5000]
+	synthsToRun = allCombos(widths, modules, techs, freqs)
     
     ##### Run a sweep based on best delay found in existing syntheses
-    module = 'add'
-    width = 32
-    tech = 'sky90'
-    synthsToRun = freqSweep(module, width, tech)
+	module = 'add'
+	width = 32
+	tech = 'sky90'
+	synthsToRun = freqSweep(module, width, tech)
         
     ##### Only do syntheses for which a run doesn't already exist
-    synthsToRun = filterRedundant(synthsToRun)
-
-    pool = Pool(processes=25)
-    pool.starmap(print, synthsToRun)
+	synthsToRun = filterRedundant(synthsToRun)
+	
+	pool = Pool(processes=25)
+	pool.starmap(runCommand, synthsToRun)
