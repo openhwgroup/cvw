@@ -21,7 +21,7 @@ args=parser.parse_args()
 
 fin_path = glob.glob(f"{os.getenv('WALLY')}/src/**/{args.DESIGN}.sv",recursive=True)[0]
 
-fin = open(fin_path, "r")
+fin = open(fin_path, "r", encoding='utf-8')
 
 lines = fin.readlines()
 
