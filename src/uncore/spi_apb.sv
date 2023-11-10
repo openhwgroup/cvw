@@ -220,7 +220,6 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
         else DivCounter <= DivCounter + 12'b1;
 
     //Boolean logic that tracks frame progression
-    //assign FrameCompare = {1'b0,Format[4:1]}; mb not needed because of removal of dual/quad
     assign FrameCompare = (FrameCount < Format[4:1]);    
     assign ReceivePenultimateFrameBoolean = ((FrameCount + 4'b0001) == Format[4:1]);
 
@@ -249,7 +248,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
         if (~PRESETn) ReceiveFIFOReadIncrement <= 0;
         else ReceiveFIFOReadIncrement <= ((Entry == 8'h4C) & ~ReceiveFIFOReadEmpty & PSEL & ~ReceiveFIFOReadIncrement);
     
-    //Tx/Tx FIFOs
+    //Tx/Rx FIFOs
     SynchFIFO #(3,8) txFIFO(PCLK, 1'b1, SCLKenable, PRESETn, TransmitFIFOWriteIncrementDelay, TransmitShiftEmpty, TransmitData[7:0], TransmitWriteWatermarkLevel, TransmitWatermark[2:0], TransmitFIFOReadData[7:0], TransmitFIFOWriteFull, TransmitFIFOReadEmpty, TransmitWriteMark, TransmitReadMark);
     SynchFIFO #(3,8) rxFIFO(PCLK, SCLKenable, 1'b1, PRESETn, ReceiveShiftFullDelay, ReceiveFIFOReadIncrement, ReceiveShiftRegEndian, ReceiveWatermark[2:0], ReceiveReadWatermarkLevel, ReceiveData[7:0], ReceiveFIFOWriteFull, ReceiveFIFOReadEmpty, RecieveWriteMark, RecieveReadMark);
 
@@ -273,7 +272,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
 
     always_ff @(posedge PCLK, negedge PRESETn)
         if (~PRESETn) begin state <= CS_INACTIVE;
-                            FrameCount <= 4'b0;                      
+                        FrameCount <= 4'b0;                      
 
         /* verilator lint_off CASEINCOMPLETE */
         end else if (SCLKenable) begin
