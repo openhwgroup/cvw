@@ -589,7 +589,7 @@ memcpy8_8:
 
 memcpy8_8_loop:   
         ld t3, 0(t0)
-        sd t4, 0(t1)
+        sd t3, 0(t1)
 	
         addi t0, t0, 8
         addi t1, t1, 8
