@@ -37,7 +37,7 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
   input  logic               Firstun, SqrtM, SpecialCaseM, 
   input  logic [P.XLEN-1:0]  AM,
   input  logic               RemOpM, ALTBM, BZeroM, AsM, BsM, W64M,
-  input  logic [P.DIVBLEN:0] mM, IntDivNormShiftM,
+  input  logic [P.DIVBLEN:0] IntNormShiftM,
   output logic [P.DIVb:0]    UmM,               // result significand
   output logic               WZeroE,
   output logic               DivStickyM,
@@ -96,7 +96,6 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
 
   // Integer quotient or remainder correction, normalization, and special cases
   if (P.IDIV_ON_FPU) begin:intpostproc // Int supported
-    logic [P.DIVBLEN:0] NormShiftM;
     logic [P.DIVb+3:0] UnsignedQuotM, NormRemM, NormRemDM, NormQuotM;
     logic signed [P.DIVb+3:0] PreResultM, PreIntResultM;
 
@@ -110,10 +109,8 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
     mux2 #(P.DIVb+4) quotresmux(UnsignedQuotM, -UnsignedQuotM, NegQuotM, NormQuotM);
 
     // Select quotient or remainder and do normalization shift
-    localparam DIVa        = (P.DIVb+1-P.XLEN); // used for idiv on fpu: Shift residual right by b - (XLEN-1) to put remainder in lsbs of integer result
-    mux2 #(P.DIVBLEN+1) normshiftmux(IntDivNormShiftM, (mM + (P.DIVBLEN+1)'(DIVa)), RemOpM, NormShiftM);
     mux2 #(P.DIVb+4)    presresultmux(NormQuotM, NormRemM, RemOpM, PreResultM);
-    assign PreIntResultM = $signed(PreResultM >>> NormShiftM); 
+    assign PreIntResultM = $signed(PreResultM >>> IntNormShiftM); 
 
     // special case logic
     // terminates immediately when B is Zero (div 0) or |A| has more leading 0s than |B|

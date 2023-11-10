@@ -67,7 +67,7 @@ module fdivsqrt import cvw::*;  #(parameter cvw_t P) (
   // Integer div/rem signals                                
   logic                        BZeroM;                       // Denominator is zero
   logic                        IntDivM;                      // Integer operation
-  logic [P.DIVBLEN:0]          mM, IntDivNormShiftM;         // Shift amounts
+  logic [P.DIVBLEN:0]          IntNormShiftM;                // Integer normalizatoin shift amount
   logic                        ALTBM, AsM, BsM, W64M;        // Special handling for postprocessor
   logic [P.XLEN-1:0]           AM;                           // Original Numerator for postprocessor
   logic                        ISpecialCaseE;                // Integer div/remainder special cases
@@ -77,7 +77,7 @@ module fdivsqrt import cvw::*;  #(parameter cvw_t P) (
     .FmtE, .SqrtE, .XZeroE, .Funct3E, .UeM, .X, .D, .CyclesE,
     // Int-specific 
     .ForwardedSrcAE, .ForwardedSrcBE, .IntDivE, .W64E, .ISpecialCaseE,
-    .BZeroM, .IntDivNormShiftM, .mM, .AM, 
+    .BZeroM, .IntNormShiftM, .AM, 
     .IntDivM, .W64M, .ALTBM, .AsM, .BsM);
 
   fdivsqrtfsm #(P) fdivsqrtfsm(                                  // FSM
@@ -96,6 +96,6 @@ module fdivsqrt import cvw::*;  #(parameter cvw_t P) (
     .SqrtE, .Firstun, .SqrtM, .SpecialCaseM, 
     .UmM, .WZeroE, .DivStickyM, 
     // Int-specific 
-    .IntDivNormShiftM, .mM, .ALTBM, .AsM, .BsM, .BZeroM, .W64M, .RemOpM(Funct3M[1]), .AM, 
+    .IntNormShiftM, .ALTBM, .AsM, .BsM, .BZeroM, .W64M, .RemOpM(Funct3M[1]), .AM, 
     .FIntDivResultM);
 endmodule
