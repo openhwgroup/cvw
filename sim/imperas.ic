@@ -17,12 +17,14 @@
 
 # More extensions
 --override cpu/Zcb=T
+
+# Cache block operations
 --override cpu/Zicbom=T
 --override cpu/Zicbop=T
 --override cpu/Zicboz=T
---override cpu/Svpbmt=T
-#--override cpu/Svadu=T
+
 # 64 KiB continuous huge pages supported
+--override cpu/Svpbmt=T
 --override cpu/Svnapot_page_mask=65536
 
 
