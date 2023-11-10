@@ -112,7 +112,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   assign WordSpillM = (IEUAdrM[OFFSET_BIT_POS-1:2] == '1) & (ByteOffsetM[1:0] != '0) & Funct3M[1:0] == 2'b10;
   if(P.LLEN == 64) begin
     logic DoubleSpillM;
-    assign DoubleSpillM = (IEUAdrM[OFFSET_BIT_POS-1:2] == '1) & Funct3M[1:0] == 2'b11;
+    assign DoubleSpillM = (IEUAdrM[OFFSET_BIT_POS-1:3] == '1) & (ByteOffsetM[2:0] != '0) & Funct3M[1:0] == 2'b11;
     assign SpillM = (|MemRWM) & CacheableM & (HalfSpillM | WordSpillM | DoubleSpillM);
   end else begin
     assign SpillM = (|MemRWM) & CacheableM & (HalfSpillM | WordSpillM);
