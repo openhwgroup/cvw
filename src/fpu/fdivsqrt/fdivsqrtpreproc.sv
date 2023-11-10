@@ -42,7 +42,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   input  logic                 IntDivE, W64E,
   output logic                 ISpecialCaseE,
   output logic [P.DURLEN-1:0]  CyclesE,
-  output logic [P.DIVBLEN:0]   mM, IntDivNormShiftM,
+  output logic [P.DIVBLEN:0]   IntNormShiftM,
   output logic                 ALTBM, IntDivM, W64M,
   output logic                 AsM, BsM, BZeroM,
   output logic [P.XLEN-1:0]    AM
@@ -193,10 +193,15 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   fdivsqrtcycles #(P) cyclecalc(.FmtE, .SqrtE, .IntDivE, .IntResultBits, .CyclesE);
 
   if (P.IDIV_ON_FPU) begin:intpipelineregs
-    logic [P.DIVBLEN:0] IntDivNormShiftE;
+    logic [P.DIVBLEN:0] IntDivNormShiftE, IntRemNormShiftE, IntNormShiftE;
+    logic               RemOpE;
+
     /* verilator lint_off WIDTH */
     assign IntDivNormShiftE = P.DIVb - (CyclesE * P.RK - P.LOGR); // b - rn, used for integer normalization right shift.  rn = Cycles * r * k - r ***explain
+    assign IntRemNormShiftE = mE + (P.DIVb+1-P.XLEN);             // m + b - (N-1) for remainder normalization shift
     /* verilator lint_on WIDTH */
+    assign RemOpE = Funct3E[1];
+    mux2 #(P.DIVBLEN+1) normshiftmux(IntDivNormShiftE, IntRemNormShiftE, RemOpE, IntNormShiftE);
 
     // pipeline registers
     flopen #(1)          mdureg(clk, IFDivStartE, IntDivE,  IntDivM);
@@ -204,8 +209,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     flopen #(1)        bzeroreg(clk, IFDivStartE, BZeroE,   BZeroM);
     flopen #(1)        asignreg(clk, IFDivStartE, AsE,      AsM);
     flopen #(1)        bsignreg(clk, IFDivStartE, BsE,      BsM);
-    flopen #(P.DIVBLEN+1) nsreg(clk, IFDivStartE, IntDivNormShiftE, IntDivNormShiftM); 
-    flopen #(P.DIVBLEN+1)  mreg(clk, IFDivStartE, mE,       mM);
+    flopen #(P.DIVBLEN+1) nsreg(clk, IFDivStartE, IntNormShiftE, IntNormShiftM); 
     flopen #(P.XLEN)    srcareg(clk, IFDivStartE, AE,       AM);
     if (P.XLEN==64) 
       flopen #(1)        w64reg(clk, IFDivStartE, W64E,     W64M);
