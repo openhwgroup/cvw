@@ -35,7 +35,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   input  logic                 SqrtE,
   input  logic                 XZeroE,
   input  logic [2:0]           Funct3E,
-  output logic [P.NE+1:0]      QeM,
+  output logic [P.NE+1:0]      UeM,
   output logic [P.DIVb+3:0]    X, D,
   // Int-specific
   input  logic [P.XLEN-1:0]    ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
@@ -48,10 +48,10 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0]    AM
 );
 
-  logic [P.DIVb:0]             Xfract, Dfract;
+  logic [P.DIVb:0]             Xnorm, Dnorm;
   logic [P.DIVb:0]             PreSqrtX;
   logic [P.DIVb+3:0]           DivX, DivXShifted, SqrtX, PreShiftX; // Variations of dividend, to be muxed
-  logic [P.NE+1:0]             QeE;                                 // Quotient Exponent (FP only)
+  logic [P.NE+1:0]             UeE;                                 // Result Exponent (FP only)
   logic [P.DIVb:0]             IFX, IFD;                            // Correctly-sized inputs for iterator, selected from int or fp input
   logic [P.DIVBLEN:0]          mE, nE, ell;                         // Leading zeros of inputs
   logic                        NumerZeroE;                          // Numerator is zero (X or A)
@@ -106,9 +106,9 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   lzc #(P.DIVb+1) lzcX (IFX, ell);
   lzc #(P.DIVb+1) lzcY (IFD, mE);
 
-  // Normalization shift: shift off leading one
-  assign Xfract = (IFX << ell);
-  assign Dfract = (IFD << mE); 
+  // Normalization shift: shift leading one into most significant bit
+  assign Xnorm = (IFX << ell);
+  assign Dnorm = (IFD << mE); 
 
   //////////////////////////////////////////////////////
   // Integer Right Shift to digit boundary
@@ -133,10 +133,11 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
       logic [P.LOGRK-1:0] IntTrunc, RightShiftX;
       logic [P.DIVBLEN:0] TotalIntBits, IntSteps;
       /* verilator lint_off WIDTH */
+      // n = k*ceil((r+p)/rk) - 1
       assign TotalIntBits = P.LOGR + p;                            // Total number of result bits (r integer bits plus p fractional bits)
       assign IntTrunc = TotalIntBits % P.RK;                       // Truncation check for ceiling operator
       assign IntSteps = (TotalIntBits >> P.LOGRK) + |IntTrunc;     // Number of steps for int div
-      assign nE = (IntSteps * P.DIVCOPIES) - 1;                    // Fractional digits
+      assign nE = (IntSteps * P.DIVCOPIES) - 1;                    // Fractional digits = total digits - 1 integer digit
       assign RightShiftX = P.RK - 1 - ((TotalIntBits - 1) % P.RK); // Right shift amount
       assign DivXShifted = DivX >> RightShiftX;                    // shift X by up to R*K-1 to complete in nE steps
       /* verilator lint_on WIDTH */
@@ -150,18 +151,25 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
 
   //////////////////////////////////////////////////////
   // Floating-Point Preprocessing
-  // append leading 1 (for nonzero inputs)
+  // Extend to Q4.b format
   // shift square root to be in range [1/4, 1)
   // Normalized numbers are shifted right by 1 if the exponent is odd
   // Subnormal numbers have Xe = 0 and an unbiased exponent of 1-BIAS.  They are shifted right if the number of leading zeros is odd.
   // NOTE: there might be a discrepancy that X is never right shifted by 2.  However
-  //  it comes out in the wash and gives the right answer.  Investigate later if possible.
+  //  it comes out in the wash and gives the right answer.  Investigate later if possible. ***
   //////////////////////////////////////////////////////
 
-  assign DivX = {3'b000, Xfract};
+  assign DivX = {3'b000, Xnorm}; // Zero-extend numerator for division
 
   // Sqrt is initialized on step one as R(X-1), so depends on Radix
-  mux2 #(P.DIVb+1) sqrtxmux(Xfract, {1'b0, Xfract[P.DIVb:1]}, (Xe[0] ^ ell[0]), PreSqrtX);
+  // If X = 0, then special case logic sets sqrt = 0 so this portion doesn't matter
+  // Otherwise, X has a leading 1 after possible normalization shift and is now in range [1, 2)
+  // Next X is shifted right by 1 or 2 bits to range [1/4, 1) and exponent will be adjusted accordingly to be even
+  // Now (X-1) is negative.  Formed by placing all 1s in all four integer bits (in Q4.b) form, keeping X in fraciton bits
+  // Then multiply by R is left shift by r (1 or 2 for radix 2 or 4)
+  // For Radix 2, this gives 3 leading 1s, followed by the fraction bits
+  // For Radix 4, this gives 2 leading 1s, followed by the fraction bits (and a zero in the lsb)
+  mux2 #(P.DIVb+1) sqrtxmux(Xnorm, {1'b0, Xnorm[P.DIVb:1]}, (Xe[0] ^ ell[0]), PreSqrtX);
   if (P.RADIX == 2) assign SqrtX = {3'b111, PreSqrtX};
   else              assign SqrtX = {2'b11, PreSqrtX, 1'b0};
   mux2 #(P.DIVb+4) prexmux(DivX, SqrtX, SqrtE, PreShiftX);
@@ -177,11 +185,11 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   end
 
   // Divisior register
-  flopen #(P.DIVb+4) dreg(clk, IFDivStartE, {3'b000, Dfract}, D);
+  flopen #(P.DIVb+4) dreg(clk, IFDivStartE, {3'b000, Dnorm}, D);
  
   // Floating-point exponent
-  fdivsqrtexpcalc #(P) expcalc(.Fmt(FmtE), .Xe, .Ye, .Sqrt(SqrtE), .XZero(XZeroE), .ell, .m(mE), .Qe(QeE));
-  flopen #(P.NE+2) expreg(clk, IFDivStartE, QeE, QeM);
+  fdivsqrtexpcalc #(P) expcalc(.Fmt(FmtE), .Xe, .Ye, .Sqrt(SqrtE), .XZero(XZeroE), .ell, .m(mE), .Ue(UeE));
+  flopen #(P.NE+2) expreg(clk, IFDivStartE, UeE, UeM);
 
   // Number of FSM cycles (to FSM)
   fdivsqrtcycles #(P) cyclecalc(.FmtE, .SqrtE, .IntDivE, .nE, .CyclesE);
