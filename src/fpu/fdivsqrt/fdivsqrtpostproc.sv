@@ -110,7 +110,8 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
     mux2 #(P.DIVb+4) quotresmux(UnsignedQuotM, -UnsignedQuotM, NegQuotM, NormQuotM);
 
     // Select quotient or remainder and do normalization shift
-    mux2 #(P.DIVBLEN+1) normshiftmux(((P.DIVBLEN+1)'(P.DIVb) - (nM * (P.DIVBLEN+1)'(P.LOGR))), (mM + (P.DIVBLEN+1)'(P.DIVa)), RemOpM, NormShiftM);
+    localparam DIVa        = (P.DIVb+1-P.XLEN); // used for idiv on fpu: Shift residual right by b - (XLEN-1) to put remainder in lsbs of integer result
+    mux2 #(P.DIVBLEN+1) normshiftmux(((P.DIVBLEN+1)'(P.DIVb) - (nM * (P.DIVBLEN+1)'(P.LOGR))), (mM + (P.DIVBLEN+1)'(DIVa)), RemOpM, NormShiftM);
     mux2 #(P.DIVb+4)    presresultmux(NormQuotM, NormRemM, RemOpM, PreResultM);
     assign PreIntResultM = $signed(PreResultM >>> NormShiftM); 
 

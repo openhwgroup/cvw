@@ -48,7 +48,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0]    AM
 );
 
-  logic [P.DIVb-1:0]           Xfract, Dfract;
+  logic [P.DIVb:0]             Xfract, Dfract;
   logic [P.DIVb:0]             PreSqrtX;
   logic [P.DIVb+3:0]           DivX, DivXShifted, SqrtX, PreShiftX; // Variations of dividend, to be muxed
   logic [P.NE+1:0]             QeE;                                 // Quotient Exponent (FP only)
@@ -103,12 +103,12 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   //////////////////////////////////////////////////////
 
   // count leading zeros for Subnorm FP and to normalize integer inputs
-  lzc #(P.DIVb) lzcX (IFX[P.DIVb:1], ell);
-  lzc #(P.DIVb) lzcY (IFD[P.DIVb:1], mE);
+  lzc #(P.DIVb+1) lzcX (IFX, ell);
+  lzc #(P.DIVb+1) lzcY (IFD, mE);
 
   // Normalization shift: shift off leading one
-  assign Xfract = (IFX[P.DIVb:1] << ell) << 1;
-  assign Dfract = (IFD[P.DIVb:1] << mE)  << 1; 
+  assign Xfract = (IFX << ell);
+  assign Dfract = (IFD << mE); 
 
   //////////////////////////////////////////////////////
   // Integer Right Shift to digit boundary
@@ -158,10 +158,10 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   //  it comes out in the wash and gives the right answer.  Investigate later if possible.
   //////////////////////////////////////////////////////
 
-  assign DivX = {3'b000, ~NumerZeroE, Xfract};
+  assign DivX = {3'b000, Xfract};
 
   // Sqrt is initialized on step one as R(X-1), so depends on Radix
-  mux2 #(P.DIVb+1) sqrtxmux({~XZeroE, Xfract}, {1'b0, ~XZeroE, Xfract[P.DIVb-1:1]}, (Xe[0] ^ ell[0]), PreSqrtX);
+  mux2 #(P.DIVb+1) sqrtxmux(Xfract, {1'b0, Xfract[P.DIVb:1]}, (Xe[0] ^ ell[0]), PreSqrtX);
   if (P.RADIX == 2) assign SqrtX = {3'b111, PreSqrtX};
   else              assign SqrtX = {2'b11, PreSqrtX, 1'b0};
   mux2 #(P.DIVb+4) prexmux(DivX, SqrtX, SqrtE, PreShiftX);
@@ -176,8 +176,8 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     assign X = PreShiftX;
   end
 
-   // Divisior register
-  flopen #(P.DIVb+4) dreg(clk, IFDivStartE, {4'b0001, Dfract}, D);
+  // Divisior register
+  flopen #(P.DIVb+4) dreg(clk, IFDivStartE, {3'b000, Dfract}, D);
  
   // Floating-point exponent
   fdivsqrtexpcalc #(P) expcalc(.Fmt(FmtE), .Xe, .Ye, .Sqrt(SqrtE), .XZero(XZeroE), .ell, .m(mE), .Qe(QeE));
