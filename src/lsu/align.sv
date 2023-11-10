@@ -80,7 +80,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   logic                    SaveByteMask;
 
   always_comb begin
-    case(MemRWM)
+    case(Funct3M)
       2'b00: IncrementAmount = 4'd0;
       2'b01: IncrementAmount = 4'd1;
       2'b10: IncrementAmount = 4'd3;
@@ -108,8 +108,8 @@ module align import cvw::*;  #(parameter cvw_t P) (
   logic [$clog2(LLENINBYTES)-1:0]                 ByteOffsetM;
   logic                                HalfSpillM, WordSpillM;
   assign {WordOffsetM, ByteOffsetM} = IEUAdrM[OFFSET_BIT_POS-1:0];
-  assign HalfSpillM = (IEUAdrM[OFFSET_BIT_POS-1:0] == '1) & Funct3M[1:0] == 2'b01;
-  assign WordSpillM = (IEUAdrM[OFFSET_BIT_POS-1:1] == '1) & Funct3M[1:0] == 2'b10;
+  assign HalfSpillM = (IEUAdrM[OFFSET_BIT_POS-1:1] == '1) & (ByteOffsetM[0] != '0) & Funct3M[1:0] == 2'b01;
+  assign WordSpillM = (IEUAdrM[OFFSET_BIT_POS-1:2] == '1) & (ByteOffsetM[1:0] != '0) & Funct3M[1:0] == 2'b10;
   if(P.LLEN == 64) begin
     logic DoubleSpillM;
     assign DoubleSpillM = (IEUAdrM[OFFSET_BIT_POS-1:2] == '1) & Funct3M[1:0] == 2'b11;
