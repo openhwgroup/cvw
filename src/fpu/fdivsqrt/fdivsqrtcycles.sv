@@ -67,6 +67,13 @@ module fdivsqrtcycles import cvw::*;  #(parameter cvw_t P) (
         P.Q_FMT: Nf = P.Q_NF;
       endcase 
 
+  // Cycle logic
+  // P.DIVCOPIES = k. P.LOGR = log(R) = r.  P.RK = rk.  
+  // Integer division needs p fractional + r integer result bits
+  // FP Division needs at least Nf fractional bits + 2 guard/round bits and one integer digit (LOG R integer bits) = Nf + 2 + r bits
+  // FP Sqrt needs at least Nf fractional bits, 2 guard/round bits, and *** shift bits
+  // The datapath produces rk bits per cycle, so Cycles = ceil (ResultBits / rk)
+
   always_comb begin 
     if (SqrtE) FPResultBits = Nf + 2 + 1; // Nf + two fractional bits for round/guard + 2 for right shift by up to 2 *** unclear why it works with just +1 rather than +2; is it related to DIVCOPIES logic below?
     else       FPResultBits = Nf + 2 + P.LOGR; // Nf + two fractional bits for round/guard + integer bits - try this when placing results in msbs
@@ -74,7 +81,7 @@ module fdivsqrtcycles import cvw::*;  #(parameter cvw_t P) (
     if (P.IDIV_ON_FPU) ResultBits = IntDivE ? IntResultBits : FPResultBits;
     else               ResultBits = FPResultBits;
 
-    assign CyclesE = (ResultBits-1)/(P.RK) + 1;
+    assign CyclesE = (ResultBits-1)/(P.RK) + 1; // ceil (ResultBits/rk)
   end 
   /* verilator lint_on WIDTH */
 
