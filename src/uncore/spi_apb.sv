@@ -27,10 +27,8 @@
 
 // Current limitations: Flash read sequencer mode not implemented, dual and quad modes untestable with current test plan.
 
-// Comment on FIFOs: watermark calculations
-// Comment all interface and internal signals on the lines they are declared
-// Get tabs correct so things line up
-// Relook at frame compare/ Delay count logic w/o multibit 
+// Attempt to move from >= comparisons by initializing in FSM differently
+// Parameterize SynchFIFO
 // look at ReadIncrement/WriteIncrement delay necessity 
 
 /* 
@@ -56,8 +54,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     output logic                SPIIntr
 );
 
-    //SPI registers
-
+    //SPI control registers. Refer to SiFive FU540-C000 manual 
     logic [11:0] SckDiv;
     logic [1:0] SckMode;
     logic [1:0] ChipSelectID;
@@ -65,102 +62,96 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     logic [1:0] ChipSelectMode;
     logic [15:0] Delay0, Delay1;
     logic [4:0] Format;
-    logic [8:0] ReceiveData;
-    logic [8:0] ReceiveDataPlaceholder;
+    logic [7:0] ReceiveData;
     logic [2:0] TransmitWatermark, ReceiveWatermark;
     logic [8:0] TransmitData;
     logic [1:0] InterruptEnable, InterruptPending;
 
-    //bus interface signals
+    //Bus interface signals
     logic [7:0] Entry;
     logic Memwrite;
     logic [31:0] Din, Dout;
+    logic TransmitInactive;                         //High when there is no transmission, used as hardware interlock signal
 
     //FIFO FSM signals
-    logic TransmitWriteMark, TransmitReadMark, RecieveWriteMark, RecieveReadMark;
+    //Watermark signals - TransmitReadMark = ip[0], ReceiveWriteMark = ip[1]
+    logic TransmitWriteMark, TransmitReadMark, RecieveWriteMark, RecieveReadMark; 
     logic TransmitFIFOWriteFull, TransmitFIFOReadEmpty;
     logic TransmitFIFOReadIncrement;
     logic TransmitFIFOWriteIncrement;
     logic ReceiveFIFOReadIncrement;
-
     logic ReceiveFIFOWriteFull, ReceiveFIFOReadEmpty;
     logic [7:0] TransmitFIFOReadData, ReceiveFIFOWriteData;
     logic [2:0] TransmitWriteWatermarkLevel, ReceiveReadWatermarkLevel;
+    logic [7:0] ReceiveShiftRegEndian;              //reverses ReceiveShiftReg if Format[2] set (little endian transmission)
 
-    logic TransmitFIFOReadEmptyDelay;
-    logic [7:0] ReceiveShiftRegEndian;
-
-    //transmission signals
+    //Transmission signals
     logic sck;
-    logic [11:0] DivCounter;
-    logic SCLKenable;
-    logic [8:0] Delay0Count;
-    logic [8:0] Delay1Count;
-    logic Delay0Compare;
-    logic Delay1Compare;
-    logic InterCSCompare;
-    logic [8:0] InterCSCount;
-    logic InterXFRCompare;
-    logic [8:0] InterXFRCount;
-    logic [3:0] ChipSelectInternal;
-    logic [4:0] FrameCount;
-    logic [4:0] FrameCompare;
+    logic [11:0] DivCounter;                        //counter for sck 
+    logic SCLKenable;                               //flip flop enable high every sclk edge
 
-    logic FrameCompareBoolean;
-    logic [4:0] ReceivePenultimateFrame;
-    logic [4:0] ReceivePenultimateFrameCount;
-    logic ReceivePenultimateFrameBoolean;
-    logic [4:0] FrameCompareProtocol;
-    logic ReceiveShiftFull;
-    logic TransmitShiftEmpty;
-    logic HoldModeDeassert;
+    //Delay signals
+    logic [8:0] ImplicitDelay1;                     //Adds implicit delay to cs-sck delay counter based on phase  
+    logic [8:0] ImplicitDelay2;                     //Adds implicit delay to sck-cs delay counter based on phase 
+    logic [8:0] CS_SCKCount;                        //Counter for cs-sck delay
+    logic [8:0] SCK_CSCount;                        //Counter for sck-cs delay
+    logic [8:0] InterCSCount;                       //Counter for inter cs delay
+    logic [8:0] InterXFRCount;                      //Counter for inter xfr delay 
+    logic CS_SCKCompare;                            //Boolean comparison signal, high when CS_SCKCount >= cs-sck delay
+    logic SCK_CSCompare;                            //Boolean comparison signal, high when SCK_CSCount >= sck-cs delay
+    logic InterCSCompare;                           //Boolean comparison signal, high when InterCSCount >= inter cs delay
+    logic InterXFRCompare;                          //Boolean comparison signal, high when InterXFRCount >= inter xfr delay
+    logic ZeroDelayHoldMode;                        //High when ChipSelectMode is hold and Delay1[15:8] (InterXFR delay) is 0
 
+    //Frame counting signals
+    logic [3:0] FrameCount;                         //Counter for number of frames in transmission
+    logic FrameCompare;                             //Boolean comparison signal, high when FrameCount = Format[7:4]
+    logic [3:0] ReceivePenultimateFrame;            //Frame number - 1
+    logic [3:0] ReceivePenultimateFrameCount;       //Counter
+    logic ReceivePenultimateFrameBoolean;           //High when penultimate frame in transmission has been reached
 
-    //state fsm signals
-    logic Active;
-    logic Active0;
-    logic Inactive;
+    //State fsm signals
+    logic Active;                                   //High when state is either Active1 or Active0 (during transmission)
+    logic Active0;                                  //High when state is Active0
 
-    //shift reg signals
-    logic TransmitFIFOWriteIncrementDelay;
-    logic sckPhaseSelect;
-    logic [7:0] TransmitShiftReg;
-    logic [7:0] ReceiveShiftReg;
-    logic SampleEdge;
-    logic [7:0] TransmitDataEndian;
-    logic TransmitShiftRegLoad;
+    //Shift reg signals
+    logic ShiftEdge;                                //Determines which edge of sck to shift from TransmitShiftReg
+    logic [7:0] TransmitShiftReg;                   //Transmit shift register
+    logic [7:0] ReceiveShiftReg;                    //Receive shift register
+    logic SampleEdge;                               //Determines which edge of sck to sample from ReceiveShiftReg
+    logic [7:0] TransmitDataEndian;                 //Reverses TransmitData from txFIFO if littleendian, since TransmitReg always shifts MSB
+    logic TransmitShiftRegLoad;                     //Determines when to load TransmitShiftReg
+    logic ReceiveShiftFull;                         //High when receive shift register is full
+    logic TransmitShiftEmpty;                       //High when transmit shift register is empty
+    logic ShiftIn;                                  //Determines whether to shift from SPIIn or SPIOut (if SPI_LOOPBACK_TEST)  
+    logic [3:0] LeftShiftAmount;                    //Determines left shift amount to left-align data when little endian              
+    logic [7:0] ASR;                                //AlignedReceiveShiftReg    
 
     //CS signals
-    logic [3:0] ChipSelectAuto, ChipSelectHold, CSoff;
-    logic ChipSelectHoldSingle;
+    logic [3:0] ChipSelectAuto;                     //Assigns ChipSelect value to selected CS signal based on CS ID
+    logic [3:0] ChipSelectInternal;                 //Defines what each ChipSelect signal should be based on transmission status and ChipSelectDef
+    logic DelayMode;                                //Determines where to place implicit half cycle delay based on sck phase for CS assertion
 
-    logic ReceiveShiftFullDelay;
+    //Miscellaneous signals delayed/early by 1 PCLK cycle
+    logic ReceiveShiftFullDelay;                    //Delays ReceiveShiftFull signal by 1 PCLK cycle
+    logic TransmitFIFOWriteIncrementDelay;          //TransmitFIFOWriteIncrement delayed by 1 PCLK cycle
+    logic ReceiveShiftFullDelayPCLK;                //ReceiveShiftFull delayed by 1 PCLK cycle
+    logic TransmitFIFOReadEmptyDelay;
+    logic SCLKenableEarly;                          //SCLKenable 1 PCLK cycle early, needed for on time register changes when ChipSelectMode is hold and Delay1[15:8] (InterXFR delay) is 0
 
-    logic SCLKenableDelay;
-    logic shiftin;
-    logic [7:0] ReceiveShiftRegInvert;
-    logic ZeroDelayHoldMode;
-    logic TransmitInactive;
-    logic SCLKenableEarly;
-    logic ReceiveShiftFullDelayPCLK;
-    logic [3:0] LeftShiftAmount;
-    logic [7:0] ASR; // AlignedReceiveShiftReg
-    logic DelayMode;
-    logic [3:0] PWChipSelect;
-
-    // APB access
+    //APB access
     assign Entry = {PADDR[7:2],2'b00};  // 32-bit word-aligned accesses
     assign Memwrite = PWRITE & PENABLE & PSEL;  // only write in access phase
     assign PREADY = TransmitInactive; // tie PREADY to transmission for hardware interlock
 
-    // account for subword read/write circuitry
+    //Account for subword read/write circuitry
     // -- Note SPI registers are 32 bits no matter what; access them with LW SW.
    
     assign Din = PWDATA[31:0]; 
     if (P.XLEN == 64) assign PRDATA = {Dout, Dout}; 
     else              assign PRDATA = Dout;  
 
-    // register access  *** clean this up
+    //Register access  
     always_ff@(posedge PCLK, negedge PRESETn)
         if (~PRESETn) begin 
             SckDiv <= #1 12'd3;
@@ -219,8 +210,8 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
             endcase
         end
 
-    // SPI enable generation, where SCLK = PCLK/(2*(SckDiv + 1))
-    // generates a high signal at the rising and falling edge of SCLK by counting from 0 to SckDiv
+    //SPI enable generation, where SCLK = PCLK/(2*(SckDiv + 1))
+    //Generates a high signal at the rising and falling edge of SCLK by counting from 0 to SckDiv
     assign SCLKenable = (DivCounter == SckDiv);
     assign SCLKenableEarly = ((DivCounter + 12'b1) == SckDiv);
     always_ff @(posedge PCLK, negedge PRESETn)
@@ -229,23 +220,25 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
         else DivCounter <= DivCounter + 12'b1;
 
     //Boolean logic that tracks frame progression
-    assign FrameCompare = {1'b0,Format[4:1]};
-    assign FrameCompareBoolean = (FrameCount < FrameCompare);
-    assign ReceivePenultimateFrameCount = FrameCount + 5'b00001;
-    assign ReceivePenultimateFrameBoolean = (ReceivePenultimateFrameCount >= FrameCompare);
+    //assign FrameCompare = {1'b0,Format[4:1]}; mb not needed because of removal of dual/quad
+    assign FrameCompare = (FrameCount < Format[4:1]);    
+    assign ReceivePenultimateFrameBoolean = ((FrameCount + 4'b0001) == Format[4:1]);
 
-    // Computing delays
+    //Computing delays
     // When sckmode.pha = 0, an extra half-period delay is implicit in the cs-sck delay, and vice-versa for sck-cs
-    assign Delay0Compare = SckMode[0] ? (Delay0Count >= ({Delay0[7:0], 1'b0})) : (Delay0Count >= ({Delay0[7:0], 1'b0} + 9'b1));
-    assign Delay1Compare = SckMode[0] ? (Delay1Count >= (({Delay0[15:8], 1'b0}) + 9'b1)) : (Delay1Count >= ({Delay0[15:8], 1'b0}));
+    assign ImplicitDelay1 = SckMode[0] ? 9'b0 : 9'b1;
+    assign ImplicitDelay2 = SckMode[0] ? 9'b1 : 9'b0;
+
+    assign CS_SCKCompare = CS_SCKCount >= (({Delay0[7:0], 1'b0}) + ImplicitDelay1);
+    assign SCK_CSCompare = SCK_CSCount >= (({Delay0[15:8], 1'b0}) + ImplicitDelay2);
     assign InterCSCompare = (InterCSCount >= ({Delay1[7:0],1'b0}));
     assign InterXFRCompare = (InterXFRCount >= ({Delay1[15:8], 1'b0}));
 
-    //calculate when tx/rx shift registers are full/empty
+    //Calculate when tx/rx shift registers are full/empty
     TransmitShiftFSM TransmitShiftFSM_1 (PCLK, PRESETn, TransmitFIFOReadEmpty, ReceivePenultimateFrameBoolean, Active0, TransmitShiftEmpty);
     ReceiveShiftFSM ReceiveShiftFSM_1 (PCLK, PRESETn, SCLKenable, ReceivePenultimateFrameBoolean, SampleEdge, SckMode[0], ReceiveShiftFull);
 
-    //calculate tx/rx fifo write and recieve increment signals 
+    //Calculate tx/rx fifo write and recieve increment signals 
     assign TransmitFIFOWriteIncrement = (Memwrite & (Entry == 8'h48) & ~TransmitFIFOWriteFull & TransmitInactive);
 
     always_ff @(posedge PCLK, negedge PRESETn)
@@ -256,7 +249,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
         if (~PRESETn) ReceiveFIFOReadIncrement <= 0;
         else ReceiveFIFOReadIncrement <= ((Entry == 8'h4C) & ~ReceiveFIFOReadEmpty & PSEL & ~ReceiveFIFOReadIncrement);
     
-    //tx/rx FIFOs
+    //Tx/Tx FIFOs
     SynchFIFO #(3,8) txFIFO(PCLK, 1'b1, SCLKenable, PRESETn, TransmitFIFOWriteIncrementDelay, TransmitShiftEmpty, TransmitData[7:0], TransmitWriteWatermarkLevel, TransmitWatermark[2:0], TransmitFIFOReadData[7:0], TransmitFIFOWriteFull, TransmitFIFOReadEmpty, TransmitWriteMark, TransmitReadMark);
     SynchFIFO #(3,8) rxFIFO(PCLK, SCLKenable, 1'b1, PRESETn, ReceiveShiftFullDelay, ReceiveFIFOReadIncrement, ReceiveShiftRegEndian, ReceiveWatermark[2:0], ReceiveReadWatermarkLevel, ReceiveData[7:0], ReceiveFIFOWriteFull, ReceiveFIFOReadEmpty, RecieveWriteMark, RecieveReadMark);
 
@@ -280,36 +273,36 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
 
     always_ff @(posedge PCLK, negedge PRESETn)
         if (~PRESETn) begin state <= CS_INACTIVE;
-                            FrameCount <= 5'b0;                      
+                            FrameCount <= 4'b0;                      
 
         /* verilator lint_off CASEINCOMPLETE */
         end else if (SCLKenable) begin
             case (state)
                 CS_INACTIVE: begin
-                        Delay0Count <= 9'b1;
-                        Delay1Count <= 9'b10;
-                        FrameCount <= 5'b0;
+                        CS_SCKCount <= 9'b1;
+                        SCK_CSCount <= 9'b10;
+                        FrameCount <= 4'b0;
                         InterCSCount <= 9'b10;
                         InterXFRCount <= 9'b1;
                         if ((~TransmitFIFOReadEmpty | ~TransmitShiftEmpty) & ((|(Delay0[7:0])) | ~SckMode[0])) state <= DELAY_0;
                         else if ((~TransmitFIFOReadEmpty | ~TransmitShiftEmpty)) state <= ACTIVE_0;
                         end
                 DELAY_0: begin
-                        Delay0Count <= Delay0Count + 9'b1;
-                        if (Delay0Compare) state <= ACTIVE_0;
+                        CS_SCKCount <= CS_SCKCount + 9'b1;
+                        if (CS_SCKCompare) state <= ACTIVE_0;
                         end
                 ACTIVE_0: begin 
-                        FrameCount <= FrameCount + 5'b1;
+                        FrameCount <= FrameCount + 4'b1;
                         state <= ACTIVE_1;
                         end
                 ACTIVE_1: begin
                         InterXFRCount <= 9'b1;
-                        if (FrameCompareBoolean) state <= ACTIVE_0;
+                        if (FrameCompare) state <= ACTIVE_0;
                         else if ((ChipSelectMode[1:0] == 2'b10) & ~|(Delay1[15:8]) & (~TransmitFIFOReadEmpty)) begin
                             state <= ACTIVE_0;
-                            Delay0Count <= 9'b1;
-                            Delay1Count <= 9'b10;
-                            FrameCount <= 5'b0;
+                            CS_SCKCount <= 9'b1;
+                            SCK_CSCount <= 9'b10;
+                            FrameCount <= 4'b0;
                             InterCSCount <= 9'b10;
                         end
                         else if (ChipSelectMode[1:0] == 2'b10) state <= INTER_XFR;
@@ -317,17 +310,17 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
                         else state <= DELAY_1;
                         end
                 DELAY_1: begin
-                        Delay1Count <= Delay1Count + 9'b1;
-                        if (Delay1Compare) state <= INTER_CS;
+                        SCK_CSCount <= SCK_CSCount + 9'b1;
+                        if (SCK_CSCompare) state <= INTER_CS;
                         end
                 INTER_CS: begin
                         InterCSCount <= InterCSCount + 9'b1;
                         if (InterCSCompare ) state <= CS_INACTIVE;
                         end
                 INTER_XFR: begin
-                        Delay0Count <= 9'b1;
-                        Delay1Count <= 9'b10;
-                        FrameCount <= 5'b0;
+                        CS_SCKCount <= 9'b1;
+                        SCK_CSCount <= 9'b10;
+                        FrameCount <= 4'b0;
                         InterCSCount <= 9'b10;
                         InterXFRCount <= InterXFRCount + 9'b1;
                         if (InterXFRCompare & ~TransmitFIFOReadEmptyDelay) state <= ACTIVE_0;
@@ -346,16 +339,15 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     assign ZeroDelayHoldMode = ((ChipSelectMode == 2'b10) & (~|(Delay1[7:4])));
     assign TransmitInactive = ((state == INTER_CS) | (state == CS_INACTIVE) | (state == INTER_XFR) | (ReceiveShiftFullDelayPCLK & ZeroDelayHoldMode));
     assign Active0 = (state == ACTIVE_0);
-    assign Inactive = (state == CS_INACTIVE);
 
-    // Signal tracks which edge of sck to shift data
+    //Signal tracks which edge of sck to shift data
     always_comb
         case(SckMode[1:0])
-            2'b00: sckPhaseSelect = ~sck & SCLKenable;
-            2'b01: sckPhaseSelect = (sck & |(FrameCount) & SCLKenable);
-            2'b10: sckPhaseSelect = sck & SCLKenable;
-            2'b11: sckPhaseSelect = (~sck & |(FrameCount) & SCLKenable);
-            default: sckPhaseSelect = sck & SCLKenable;
+            2'b00: ShiftEdge = ~sck & SCLKenable;
+            2'b01: ShiftEdge = (sck & |(FrameCount) & SCLKenable);
+            2'b10: ShiftEdge = sck & SCLKenable;
+            2'b11: ShiftEdge = (~sck & |(FrameCount) & SCLKenable);
+            default: ShiftEdge = sck & SCLKenable;
         endcase
 
     //Transmit shift register
@@ -363,32 +355,31 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     always_ff @(posedge PCLK, negedge PRESETn)
         if(~PRESETn)                        TransmitShiftReg <= 8'b0; 
         else if (TransmitShiftRegLoad)      TransmitShiftReg <= TransmitDataEndian;
-        else if (sckPhaseSelect & Active)   TransmitShiftReg <= {TransmitShiftReg[6:0], 1'b0};
+        else if (ShiftEdge & Active)   TransmitShiftReg <= {TransmitShiftReg[6:0], 1'b0};
     
     assign SPIOut = TransmitShiftReg[7];
 
     //If in loopback mode, receive shift register is connected directly to module's output pins. Else, connected to SPIIn
     //There are no setup/hold time issues because transmit shift register and receive shift register always shift/sample on opposite edges
-    assign shiftin = P.SPI_LOOPBACK_TEST ? SPIOut : SPIIn;
+    assign ShiftIn = P.SPI_LOOPBACK_TEST ? SPIOut : SPIIn;
 
-    // Receive shift register
+    //Receive shift register
     always_ff @(posedge PCLK, negedge PRESETn)
         if(~PRESETn)  ReceiveShiftReg <= 8'b0;
         else if (SampleEdge & SCLKenable) begin
             if (~Active) ReceiveShiftReg <= 8'b0;
-            else ReceiveShiftReg <= {ReceiveShiftReg[6:0], shiftin};
+            else ReceiveShiftReg <= {ReceiveShiftReg[6:0], ShiftIn};
         end
 
-    // Aligns received data and reverses if little-endian
+    //Aligns received data and reverses if little-endian
     assign LeftShiftAmount = 4'h8 - Format[4:1];
     assign ASR = ReceiveShiftReg << LeftShiftAmount[2:0];
     assign ReceiveShiftRegEndian = Format[0] ? {ASR[0], ASR[1], ASR[2], ASR[3], ASR[4], ASR[5], ASR[6], ASR[7]} : ASR[7:0];
 
-    // Interrupt logic: raise interrupt if any enabled interrupts are pending
+    //Interrupt logic: raise interrupt if any enabled interrupts are pending
     assign SPIIntr = |(InterruptPending & InterruptEnable);
 
-    // Chip select logic
-    
+    //Chip select logic
     always_comb
         case(ChipSelectID[1:0])
             2'b00: ChipSelectAuto = {ChipSelectDef[3], ChipSelectDef[2], ChipSelectDef[1], ChipSelectInternal[0]};
@@ -409,6 +400,13 @@ module SynchFIFO #(parameter M =3 , N= 8)(
     output logic wfull, rempty,
     output logic wwatermark, rwatermark);
 
+    /* Pointer FIFO using design elements from "Simulation and Synthesis Techniques
+       for Asynchronous FIFO Design" by Clifford E. Cummings. Namely, M bit read and write pointers
+       are an extra bit larger than address size to determine full/empty conditions. 
+       Watermark comparisons use 2's complement subtraction between the M-1 bit pointers,
+       which are also used to address memory
+    */
+       
     logic [N-1:0] mem[2**M];
     logic [M:0] rptr, wptr;
     logic [M:0] rptrnext, wptrnext;
@@ -416,7 +414,7 @@ module SynchFIFO #(parameter M =3 , N= 8)(
     logic wfull_val;
     logic [M-1:0] raddr;
     logic [M-1:0] waddr;
-
+ 
     assign rdata = mem[raddr];
     always_ff @(posedge PCLK)
         if (winc & ~wfull) mem[waddr] <= wdata;
