@@ -559,9 +559,8 @@ memcpy8_4:
         li t2, 0
 
         # 32 bit mask
-        lui t4, 0xffff
-        li t3, 0xfff
-        or t5, t4, t3
+        addi t4, x0, -1
+        srli t5, t4, 32
 
 memcpy8_4_loop:   
         ld t3, 0(t0)
