@@ -308,6 +308,8 @@ set filename [format "%s%s" $outputDir  "/reports/mindelay.rep"]
 redirect $filename { report_timing -capacitance -transition_time -nets -delay_type min -nworst 1 }
 
 set filename [format "%s%s" $outputDir  "/reports/per_module_timing.rep"]
+redirect -append $filename { echo "\n\n\n//// Critical paths through Stall ////\n\n\n" }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {Stall*} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical paths through ifu ////\n\n\n" }
 redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ifu/*} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical paths through ieu ////\n\n\n" }
