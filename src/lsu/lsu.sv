@@ -172,6 +172,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign ByteMaskSpillM = ByteMaskM;
     assign LSUWriteDataSpillM = LSUWriteDataM;
     assign MemRWSpillM = MemRWM;
+    assign {SpillStallM, SelStoreDelay} = '0;
   end
 
   /////////////////////////////////////////////////////////////////////////////////////////////
