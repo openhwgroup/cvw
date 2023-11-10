@@ -42,7 +42,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   input  logic                 IntDivE, W64E,
   output logic                 ISpecialCaseE,
   output logic [P.DURLEN-1:0]  CyclesE,
-  output logic [P.DIVBLEN:0]   nM, mM,
+  output logic [P.DIVBLEN:0]   mM, IntDivNormShiftM,
   output logic                 ALTBM, IntDivM, W64M,
   output logic                 AsM, BsM, BZeroM,
   output logic [P.XLEN-1:0]    AM
@@ -53,7 +53,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   logic [P.DIVb+3:0]           DivX, DivXShifted, SqrtX, PreShiftX; // Variations of dividend, to be muxed
   logic [P.NE+1:0]             UeE;                                 // Result Exponent (FP only)
   logic [P.DIVb:0]             IFX, IFD;                            // Correctly-sized inputs for iterator, selected from int or fp input
-  logic [P.DIVBLEN:0]          mE, nE, ell;                         // Leading zeros of inputs
+  logic [P.DIVBLEN:0]          mE, ell;                             // Leading zeros of inputs
   logic [P.DIVBLEN:0]          IntResultBits;                       // bits in integer result
   logic                        NumerZeroE;                          // Numerator is zero (X or A)
   logic                        AZeroE, BZeroE;                      // A or B is Zero for integer division
@@ -126,27 +126,21 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     mux2 #(P.DIVBLEN+1) pmux(ZeroDiff, '0, ALTBE, p);          
 
     /* verilator lint_off WIDTH */
-    assign IntResultBits = P.LOGR + p;                            // Total number of result bits (r integer bits plus p fractional bits)
+    assign IntResultBits = P.LOGR + p;  // Total number of result bits (r integer bits plus p fractional bits)
     /* verilator lint_on WIDTH */
 
     // Integer special cases (terminate immediately)
     assign ISpecialCaseE = BZeroE | ALTBE;
 
-    // calculate number of fractional digits nE and right shift amount RightShiftX to complete in discrete number of steps
-
+    // calculate right shift amount RightShiftX to complete in discrete number of steps
     if (P.LOGRK > 0) begin // more than 1 bit per cycle
       logic [P.LOGRK-1:0] IntTrunc, RightShiftX;
       logic [P.DIVBLEN:0] IntSteps;
-      /* verilator lint_off WIDTH */
-      // n = k*ceil((r+p)/rk) - 1
-      assign IntTrunc = IntResultBits % P.RK;                       // Truncation check for ceiling operator
-      assign IntSteps = (IntResultBits >> P.LOGRK) + |IntTrunc;     // Number of steps for int div
-      assign nE = (IntSteps * P.DIVCOPIES) - 1;                     // Fractional digits = total digits - 1 integer digit
+      /* verilator lint_offf WIDTH */
       assign RightShiftX = P.RK - 1 - ((IntResultBits - 1) % P.RK); // Right shift amount
-      assign DivXShifted = DivX >> RightShiftX;                     // shift X by up to R*K-1 to complete in nE steps
+      assign DivXShifted = DivX >> RightShiftX;                     // shift X by up to R*K-1 to complete in n steps
       /* verilator lint_on WIDTH */
     end else begin // radix 2 1 copy doesn't require shifting
-      assign nE = p; 
       assign DivXShifted = DivX;
     end
   end else begin
@@ -199,17 +193,22 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   fdivsqrtcycles #(P) cyclecalc(.FmtE, .SqrtE, .IntDivE, .IntResultBits, .CyclesE);
 
   if (P.IDIV_ON_FPU) begin:intpipelineregs
+    logic [P.DIVBLEN:0] IntDivNormShiftE;
+    /* verilator lint_off WIDTH */
+    assign IntDivNormShiftE = P.DIVb - (CyclesE * P.RK - P.LOGR); // b - rn, used for integer normalization right shift.  rn = Cycles * r * k - r ***explain
+    /* verilator lint_on WIDTH */
+
     // pipeline registers
-    flopen #(1)        mdureg(clk, IFDivStartE, IntDivE,  IntDivM);
-    flopen #(1)       altbreg(clk, IFDivStartE, ALTBE,    ALTBM);
-    flopen #(1)      bzeroreg(clk, IFDivStartE, BZeroE,   BZeroM);
-    flopen #(1)      asignreg(clk, IFDivStartE, AsE,      AsM);
-    flopen #(1)      bsignreg(clk, IFDivStartE, BsE,      BsM);
-    flopen #(P.DIVBLEN+1) nreg(clk, IFDivStartE, nE,       nM); 
-    flopen #(P.DIVBLEN+1) mreg(clk, IFDivStartE, mE,       mM);
-    flopen #(P.XLEN)   srcareg(clk, IFDivStartE, AE,       AM);
+    flopen #(1)          mdureg(clk, IFDivStartE, IntDivE,  IntDivM);
+    flopen #(1)         altbreg(clk, IFDivStartE, ALTBE,    ALTBM);
+    flopen #(1)        bzeroreg(clk, IFDivStartE, BZeroE,   BZeroM);
+    flopen #(1)        asignreg(clk, IFDivStartE, AsE,      AsM);
+    flopen #(1)        bsignreg(clk, IFDivStartE, BsE,      BsM);
+    flopen #(P.DIVBLEN+1) nsreg(clk, IFDivStartE, IntDivNormShiftE, IntDivNormShiftM); 
+    flopen #(P.DIVBLEN+1)  mreg(clk, IFDivStartE, mE,       mM);
+    flopen #(P.XLEN)    srcareg(clk, IFDivStartE, AE,       AM);
     if (P.XLEN==64) 
-      flopen #(1)      w64reg(clk, IFDivStartE, W64E,     W64M);
+      flopen #(1)        w64reg(clk, IFDivStartE, W64E,     W64M);
   end
 
 endmodule
