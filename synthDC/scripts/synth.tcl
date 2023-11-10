@@ -32,16 +32,14 @@ eval file copy -force [glob ${hdl_src}/cvw.sv] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/*.sv] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/*/*.sv] {$outputDir/hdl/}
 
-# Check if a wrapper is needed (when cvw_t parameters are used)
+# Check if a wrapper is needed and create it (to pass parameters when cvw_t parameters are used)
 set wrapper 0
-if {[eval exec grep "cvw_t" {$outputDir/hdl/$::env(DESIGN).sv}] ne ""} {
+if {[catch {eval exec grep "cvw_t" $outputDir/hdl/$::env(DESIGN).sv}] == 0} {
+    echo "Creating wrapper"
     set wrapper 1
     # make the wrapper
 	exec python3 $::env(WALLY)/synthDC/scripts/wrapperGen.py $::env(DESIGN) $outputDir/hdl
 }
-
-# Only for FMA class project; comment out when done
-# eval file copy -force [glob ${hdl_src}/fma/fma16.v] {hdl/}
 
 # Enables name mapping
 if { $saifpower == 1 } {
@@ -310,6 +308,8 @@ set filename [format "%s%s" $outputDir  "/reports/mindelay.rep"]
 redirect $filename { report_timing -capacitance -transition_time -nets -delay_type min -nworst 1 }
 
 set filename [format "%s%s" $outputDir  "/reports/per_module_timing.rep"]
+redirect -append $filename { echo "\n\n\n//// Critical paths through Stall ////\n\n\n" }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {Stall*} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical paths through ifu ////\n\n\n" }
 redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ifu/*} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical paths through ieu ////\n\n\n" }

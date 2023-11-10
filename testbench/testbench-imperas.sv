@@ -72,6 +72,7 @@ module testbench;
   logic             HMASTLOCK;
   logic             HCLK, HRESETn;
   logic [P.XLEN-1:0] PCW;
+  logic [31:0]      NextInstrE, InstrM;
 
   string ProgramAddrMapFile, ProgramLabelMapFile;
   integer   	ProgramAddrLabelArray [string] = '{ "begin_signature" : 0, "tohost" : 0 };
@@ -81,7 +82,8 @@ module testbench;
 
   logic [31:0] GPIOIN, GPIOOUT, GPIOEN;
   logic        UARTSin, UARTSout;
-
+  logic        SPIIn, SPIOut;
+  logic [3:0]  SPICS;
   logic        SDCIntr;
 
   logic        HREADY;
@@ -214,7 +216,7 @@ module testbench;
 `endif
 
   flopenr #(P.XLEN) PCWReg(clk, reset, ~dut.core.ieu.dp.StallW, dut.core.ifu.PCM, PCW);
-  flopenr  #(32)   InstrWReg(clk, reset, ~dut.core.ieu.dp.StallW,  dut.core.ifu.InstrM, InstrW);
+  flopenr  #(32)   InstrWReg(clk, reset, ~dut.core.ieu.dp.StallW,  InstrM, InstrW);
 
   // check assertions for a legal configuration
   riscvassertions #(P) riscvassertions();
@@ -255,13 +257,13 @@ module testbench;
   wallypipelinedsoc #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
                         .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
                         .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
-                        .UARTSin, .UARTSout, .SDCIntr); 
+                        .UARTSin, .UARTSout, .SDCIntr, .SPICS, .SPIOut, .SPIIn); 
 
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.core.ieu.dp.FlushE,
                 dut.core.ifu.InstrRawF[31:0],
                 dut.core.ifu.InstrD, dut.core.ifu.InstrE,
-                dut.core.ifu.InstrM,  InstrW,
+                InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // initialize tests
@@ -298,6 +300,10 @@ module testbench;
 			      .ProgramLabelMapFile(ProgramLabelMapFile));
   end
 
+  // Duplicate copy of pipeline registers that are optimized out of some configurations
+  mux2    #(32)     FlushInstrMMux(dut.core.ifu.InstrE, dut.core.ifu.nop, dut.core.ifu.FlushM, NextInstrE);
+  flopenr #(32)     InstrMReg(clk, reset, ~dut.core.ifu.StallM, NextInstrE, InstrM);
+
   // Termination condition
   // terminate on a specific ECALL after li x3,1 for old Imperas tests,  *** remove this when old imperas tests are removed
   // or sw	gp,-56(t0) for new Imperas tests
@@ -311,7 +317,7 @@ module testbench;
 			     (dut.core.ieu.dp.regf.we3 & 
 			      dut.core.ieu.dp.regf.a3 == 3 & 
 			      dut.core.ieu.dp.regf.wd3 == 1)) |
-           ((dut.core.ifu.InstrM == 32'h6f | dut.core.ifu.InstrM == 32'hfc32a423 | dut.core.ifu.InstrM == 32'hfc32a823) & dut.core.ieu.c.InstrValidM ) |
+           ((InstrM == 32'h6f | InstrM == 32'hfc32a423 | InstrM == 32'hfc32a823) & dut.core.ieu.c.InstrValidM ) |
            ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"]) & InstrMName == "SW" ); 
 
   DCacheFlushFSM #(P) DCacheFlushFSM(.clk(clk),
