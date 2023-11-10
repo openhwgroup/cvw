@@ -54,6 +54,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   logic [P.NE+1:0]             UeE;                                 // Result Exponent (FP only)
   logic [P.DIVb:0]             IFX, IFD;                            // Correctly-sized inputs for iterator, selected from int or fp input
   logic [P.DIVBLEN:0]          mE, nE, ell;                         // Leading zeros of inputs
+  logic [P.DIVBLEN:0]          IntResultBits;                       // bits in integer result
   logic                        NumerZeroE;                          // Numerator is zero (X or A)
   logic                        AZeroE, BZeroE;                      // A or B is Zero for integer division
   logic                        SignedDivE;                          // signed division
@@ -122,7 +123,11 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     // calculate number of fractional bits p
     assign ZeroDiff = mE - ell;         // Difference in number of leading zeros
     assign ALTBE = ZeroDiff[P.DIVBLEN];  // A less than B (A has more leading zeros)
-    mux2 #(P.DIVBLEN+1) pmux(ZeroDiff, '0, ALTBE, p);              
+    mux2 #(P.DIVBLEN+1) pmux(ZeroDiff, '0, ALTBE, p);          
+
+    /* verilator lint_off WIDTH */
+    assign IntResultBits = P.LOGR + p;                            // Total number of result bits (r integer bits plus p fractional bits)
+    /* verilator lint_on WIDTH */
 
     // Integer special cases (terminate immediately)
     assign ISpecialCaseE = BZeroE | ALTBE;
@@ -131,15 +136,14 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
 
     if (P.LOGRK > 0) begin // more than 1 bit per cycle
       logic [P.LOGRK-1:0] IntTrunc, RightShiftX;
-      logic [P.DIVBLEN:0] TotalIntBits, IntSteps;
+      logic [P.DIVBLEN:0] IntSteps;
       /* verilator lint_off WIDTH */
       // n = k*ceil((r+p)/rk) - 1
-      assign TotalIntBits = P.LOGR + p;                            // Total number of result bits (r integer bits plus p fractional bits)
-      assign IntTrunc = TotalIntBits % P.RK;                       // Truncation check for ceiling operator
-      assign IntSteps = (TotalIntBits >> P.LOGRK) + |IntTrunc;     // Number of steps for int div
-      assign nE = (IntSteps * P.DIVCOPIES) - 1;                    // Fractional digits = total digits - 1 integer digit
-      assign RightShiftX = P.RK - 1 - ((TotalIntBits - 1) % P.RK); // Right shift amount
-      assign DivXShifted = DivX >> RightShiftX;                    // shift X by up to R*K-1 to complete in nE steps
+      assign IntTrunc = IntResultBits % P.RK;                       // Truncation check for ceiling operator
+      assign IntSteps = (IntResultBits >> P.LOGRK) + |IntTrunc;     // Number of steps for int div
+      assign nE = (IntSteps * P.DIVCOPIES) - 1;                     // Fractional digits = total digits - 1 integer digit
+      assign RightShiftX = P.RK - 1 - ((IntResultBits - 1) % P.RK); // Right shift amount
+      assign DivXShifted = DivX >> RightShiftX;                     // shift X by up to R*K-1 to complete in nE steps
       /* verilator lint_on WIDTH */
     end else begin // radix 2 1 copy doesn't require shifting
       assign nE = p; 
@@ -192,7 +196,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   flopen #(P.NE+2) expreg(clk, IFDivStartE, UeE, UeM);
 
   // Number of FSM cycles (to FSM)
-  fdivsqrtcycles #(P) cyclecalc(.FmtE, .SqrtE, .IntDivE, .nE, .CyclesE);
+  fdivsqrtcycles #(P) cyclecalc(.FmtE, .SqrtE, .IntDivE, .IntResultBits, .CyclesE);
 
   if (P.IDIV_ON_FPU) begin:intpipelineregs
     // pipeline registers
