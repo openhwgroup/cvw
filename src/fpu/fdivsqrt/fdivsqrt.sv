@@ -45,8 +45,8 @@ module fdivsqrt import cvw::*;  #(parameter cvw_t P) (
   input  logic                 IntDivE, W64E,
   output logic                 DivStickyM,
   output logic                 FDivBusyE, IFDivStartE, FDivDoneE,
-  output logic [P.NE+1:0]      QeM,
-  output logic [P.DIVb:0]      QmM,
+  output logic [P.NE+1:0]      UeM,                         // Exponent result 
+  output logic [P.DIVb:0]      UmM,                         // Significand result
   output logic [P.XLEN-1:0]    FIntDivResultM
 );
 
@@ -74,7 +74,7 @@ module fdivsqrt import cvw::*;  #(parameter cvw_t P) (
 
   fdivsqrtpreproc #(P) fdivsqrtpreproc(                          // Preprocessor
     .clk, .IFDivStartE, .Xm(XmE), .Ym(YmE), .Xe(XeE), .Ye(YeE),
-    .FmtE, .SqrtE, .XZeroE, .Funct3E, .QeM, .X, .D, .CyclesE,
+    .FmtE, .SqrtE, .XZeroE, .Funct3E, .UeM, .X, .D, .CyclesE,
     // Int-specific 
     .ForwardedSrcAE, .ForwardedSrcBE, .IntDivE, .W64E, .ISpecialCaseE,
     .BZeroM, .nM, .mM, .AM, 
@@ -94,7 +94,7 @@ module fdivsqrt import cvw::*;  #(parameter cvw_t P) (
   fdivsqrtpostproc #(P) fdivsqrtpostproc(                        // Postprocessor
     .clk, .reset, .StallM, .WS, .WC, .D, .FirstU, .FirstUM, .FirstC, 
     .SqrtE, .Firstun, .SqrtM, .SpecialCaseM, 
-    .QmM, .WZeroE, .DivStickyM, 
+    .UmM, .WZeroE, .DivStickyM, 
     // Int-specific 
     .nM, .mM, .ALTBM, .AsM, .BsM, .BZeroM, .W64M, .RemOpM(Funct3M[1]), .AM, 
     .FIntDivResultM);

@@ -39,7 +39,7 @@ module round import cvw::*;  #(parameter cvw_t P) (
   // divsqrt
   input  logic                     DivOp,              // is a division opperation being done
   input  logic                     DivSticky,          // divsqrt sticky bit
-  input  logic [P.NE+1:0]          Qe,                 // the divsqrt calculated expoent
+  input  logic [P.NE+1:0]          Ue,                 // the divsqrt calculated expoent
   // cvt
   input  logic                     CvtOp,              // is a convert opperation being done
   input  logic                     ToInt,              // is the cvt op a cvt to integer
@@ -300,8 +300,8 @@ module round import cvw::*;  #(parameter cvw_t P) (
       case(PostProcSel)
           2'b10:    Me = FmaMe; // fma
           2'b00:    Me = {CvtCe[P.NE], CvtCe}&{P.NE+2{~CvtResSubnormUf|CvtResUf}}; // cvt
-          // 2'b01: Me = DivDone ? Qe : '0; // divide
-          2'b01:    Me = Qe; // divide
+          // 2'b01: Me = DivDone ? Ue : '0; // divide
+          2'b01:    Me = Ue; // divide
           default:  Me = '0; 
       endcase
 

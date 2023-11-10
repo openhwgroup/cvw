@@ -68,7 +68,7 @@ module fdivsqrtcycles import cvw::*;  #(parameter cvw_t P) (
     if (SqrtE) fbits = Nf + 2 + 1; // Nf + two fractional bits for round/guard + 2 for right shift by up to 2 *** unclear why it works with just +1; is it related to DIVCOPIES logic below?
     // if (SqrtE) fbits = Nf + 2 + 2; // Nf + two fractional bits for round/guard + 2 for right shift by up to 2
     else       fbits = Nf + 2 + P.LOGR; // Nf + two fractional bits for round/guard + integer bits - try this when placing results in msbs
-    if (P.IDIV_ON_FPU) CyclesE =  IntDivE ? ((nE + 1)/P.DIVCOPIES) : (fbits + (P.LOGR*P.DIVCOPIES)-1)/(P.LOGR*P.DIVCOPIES);
+    if (P.IDIV_ON_FPU) CyclesE =  IntDivE ? ((nE + 1)/P.DIVCOPIES) : (fbits -1)/(P.RK) + 1;
     else              CyclesE = (fbits + (P.LOGR*P.DIVCOPIES)-1)/(P.LOGR*P.DIVCOPIES);
   end 
   /* verilator lint_on WIDTH */
