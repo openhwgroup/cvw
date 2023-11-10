@@ -8,15 +8,9 @@ basepath=$(dirname $0)/..
 #for config in rv32e rv64gc rv32gc rv32imc rv32i rv64i rv64fpquad; do
 for config in  rv64gc; do
     echo "$config simulating..."
-    if !($verilator --timescale "1ns/1ns" --timing --cc "$@" --top-module testbench "-I$basepath/config/shared" "-I$basepath/config/$config" $basepath/src/wally/cvw.sv $basepath/testbench/common/*.sv $basepath/testbench/testbench.sv $basepath/src/*/*.sv $basepath/src/*/*/*.sv --relative-includes ); then
+    if !($verilator --timescale "1ns/1ns" --timing --exe --cc "$@" --top-module testbench "-I$basepath/config/shared" "-I$basepath/config/$config" $basepath/src/cvw.sv $basepath/testbench/testbench.sv $basepath/testbench/common/*.sv   $basepath/src/*/*.sv $basepath/src/*/*/*.sv --relative-includes ); then
         echo "Exiting after $config lint due to errors or warnings"
         exit 1
     fi
 done
-echo "All lints run with no errors or warnings"
-
-# --lint-only just runs lint rather than trying to compile and simulate
-# -I points to the include directory where files such as `include config.vh  are found
-
-# For more exhaustive (and sometimes spurious) warnings, add --Wall to the Verilator command
-# Unfortunately, this produces a bunch of UNUSED and UNDRIVEN signal warnings in blocks that are configured to not exist.
+echo "Verilation complete"

@@ -644,11 +644,11 @@ module testbenchfp;
    // Read the first test
    initial begin
       //string testname = {`PATH, Tests[TestNum]}; 
-      string p = `PATH;
+      static string pp = `PATH;
       string testname;
       string tt0;
       tt0 = $psprintf("%s", Tests[TestNum]);
-      testname = {p, tt0};
+      testname = {pp, tt0};
       $display("Here you are %s", testname);     
       $display("\n\nRunning %s vectors ", Tests[TestNum]);
       $readmemh(testname, TestVectors);

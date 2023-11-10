@@ -31,3 +31,12 @@ SAIFPOWER
         0: switching factor power analysis
         1: RTL simulation driven power analysis.
 
+-----
+Extra Tool (PPA)
+
+To run ppa analysis that hones into target frequency, you can type:
+python3 ppa/ppaSynth.py from the synthDC directory.  This runs a sweep
+across all modules listed at the bottom of the ppaSynth.py file.
+
+
+
