@@ -52,7 +52,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   logic [P.DIVb:0]             PreSqrtX;
   logic [P.DIVb+3:0]           DivX, DivXShifted, SqrtX, PreShiftX; // Variations of dividend, to be muxed
   logic [P.NE+1:0]             QeE;                                 // Quotient Exponent (FP only)
-  logic [P.DIVb-1:0]           IFX, IFD;                            // Correctly-sized inputs for iterator, selected from int or fp input
+  logic [P.DIVb:0]             IFX, IFD;                            // Correctly-sized inputs for iterator, selected from int or fp input
   logic [P.DIVBLEN:0]          mE, nE, ell;                         // Leading zeros of inputs
   logic                        NumerZeroE;                          // Numerator is zero (X or A)
   logic                        AZeroE, BZeroE;                      // A or B is Zero for integer division
@@ -89,12 +89,12 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     mux2 #(P.XLEN) posbmux(BE, -BE, BsE, PosB);
 
     // Select integer or floating point inputs
-    mux2 #(P.DIVb) ifxmux({Xm, {(P.DIVb-P.NF-1){1'b0}}}, {PosA, {(P.DIVb-P.XLEN){1'b0}}}, IntDivE, IFX);
-    mux2 #(P.DIVb) ifdmux({Ym, {(P.DIVb-P.NF-1){1'b0}}}, {PosB, {(P.DIVb-P.XLEN){1'b0}}}, IntDivE, IFD);
+    mux2 #(P.DIVb+1) ifxmux({Xm, {(P.DIVb-P.NF){1'b0}}}, {PosA, {(P.DIVb-P.XLEN+1){1'b0}}}, IntDivE, IFX);
+    mux2 #(P.DIVb+1) ifdmux({Ym, {(P.DIVb-P.NF){1'b0}}}, {PosB, {(P.DIVb-P.XLEN+1){1'b0}}}, IntDivE, IFD);
     mux2 #(1)    numzmux(XZeroE, AZeroE, IntDivE, NumerZeroE);
   end else begin // Int not supported
-    assign IFX = {Xm, {(P.DIVb-P.NF-1){1'b0}}};
-    assign IFD = {Ym, {(P.DIVb-P.NF-1){1'b0}}};
+    assign IFX = {Xm, {(P.DIVb-P.NF){1'b0}}};
+    assign IFD = {Ym, {(P.DIVb-P.NF){1'b0}}};
     assign NumerZeroE = XZeroE;
   end
 
@@ -103,12 +103,12 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   //////////////////////////////////////////////////////
 
   // count leading zeros for Subnorm FP and to normalize integer inputs
-  lzc #(P.DIVb) lzcX (IFX, ell);
-  lzc #(P.DIVb) lzcY (IFD, mE);
+  lzc #(P.DIVb) lzcX (IFX[P.DIVb:1], ell);
+  lzc #(P.DIVb) lzcY (IFD[P.DIVb:1], mE);
 
   // Normalization shift: shift off leading one
-  assign Xfract = (IFX << ell) << 1;
-  assign Dfract = (IFD << mE)  << 1; 
+  assign Xfract = (IFX[P.DIVb:1] << ell) << 1;
+  assign Dfract = (IFD[P.DIVb:1] << mE)  << 1; 
 
   //////////////////////////////////////////////////////
   // Integer Right Shift to digit boundary
