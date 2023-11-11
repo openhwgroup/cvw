@@ -272,7 +272,6 @@ typedef struct packed {
   int DIVN       ;
   int LOGR       ;
   int RK         ;
-  int LOGRK      ;
   int FPDUR      ;
   int DURLEN     ;
   int DIVb       ;

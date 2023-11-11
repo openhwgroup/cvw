@@ -97,11 +97,10 @@ localparam BIAS2 = ((F_SUPPORTED & (LEN1 != S_LEN)) ? S_BIAS : H_BIAS);
 localparam DIVN        = ((NF+2<XLEN) & IDIV_ON_FPU) ? XLEN : NF+2; // standard length of input: max(XLEN, NF+2)
 localparam LOGR        = $clog2(RADIX);                             // r = log(R)
 localparam RK          = LOGR*DIVCOPIES;                            // r*k bits per cycle generated
-localparam LOGRK       = $clog2(RK);                                // log2(r*k)
-localparam FPDUR       = (DIVN+1)/RK + 1 + (RADIX/4);               // 
+localparam FPDUR       = (DIVN+1)/RK + 1 + (RADIX/4);               // *** relate to algorithm for rest of these
 localparam DURLEN      = $clog2(FPDUR+1);
 localparam DIVb        = FPDUR*RK - 1; // canonical fdiv size (b)
-localparam DIVBLEN     = $clog2(DIVb+2)-1;
+localparam DIVBLEN     = $clog2(DIVb+2)-1;                          // *** where is 2 coming from?
 
 // largest length in IEU/FPU
 localparam CVTLEN = ((NF<XLEN) ? (XLEN) : (NF));  // max(XLEN, NF)
