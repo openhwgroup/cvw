@@ -18,7 +18,6 @@ suppress_message {VER-274}
 # Enable Multicore
 set_host_options -max_cores $::env(MAXCORES)
 
-
 # get outputDir and configDir from environment (Makefile)
 set outputDir $::env(OUTPUTDIR)
 set cfg $::env(CONFIGDIR)
@@ -26,6 +25,7 @@ set hdl_src "../src"
 set saifpower $::env(SAIFPOWER)
 set maxopt $::env(MAXOPT)
 set drive $::env(DRIVE)
+set width $::env(WIDTH)
 
 eval file copy -force [glob ${cfg}/*.vh] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/cvw.sv] {$outputDir/hdl/}
@@ -88,7 +88,13 @@ if { [shell_is_in_topographical_mode] } {
 #set alib_library_analysis_path ./$outputDir
 define_design_lib WORK -path ./$outputDir/WORK
 analyze -f sverilog -lib WORK $my_verilog_files
-elaborate $my_toplevel -lib WORK 
+# If wrapper=0, we want to run against a specific module and pass
+# width to DC
+if { $wrapper == 1 } {
+    elaborate $my_toplevel -lib WORK 
+} else {
+    elaborate $my_toplevel -lib WORK -parameters WIDTH=$width
+}
 
 # Set the current_design 
 current_design $my_toplevel
@@ -308,6 +314,8 @@ set filename [format "%s%s" $outputDir  "/reports/mindelay.rep"]
 redirect $filename { report_timing -capacitance -transition_time -nets -delay_type min -nworst 1 }
 
 set filename [format "%s%s" $outputDir  "/reports/per_module_timing.rep"]
+redirect -append $filename { echo "\n\n\n//// Critical paths through Stall ////\n\n\n" }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {Stall*} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical paths through ifu ////\n\n\n" }
 redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ifu/*} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical paths through ieu ////\n\n\n" }
