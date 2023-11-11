@@ -145,11 +145,11 @@ module testbenchfp;
    
    initial begin
       // Information displayed for user on what is simulating
-      $display("\nThe start of simulation...");      
-      $display("This simulation for TEST is %s", TEST);
-      $display("This simulation for TEST is of the operand size of %s", TEST_SIZE);      
+      //$display("\nThe start of simulation...");      
+      //$display("This simulation for TEST is %s", TEST);
+      //$display("This simulation for TEST is of the operand size of %s", TEST_SIZE);      
 
-      $display("FPDUR %d %d DIVN %d LOGR %d RK %d RADIX %d DURLEN %d", FPDUR, DIVN, LOGR, RK, RADIX, DURLEN);
+      // $display("FPDUR %d %d DIVN %d LOGR %d RK %d RADIX %d DURLEN %d", FPDUR, DIVN, LOGR, RK, RADIX, DURLEN);
 
       if (P.Q_SUPPORTED & (TEST_SIZE == "QP" | TEST_SIZE == "all")) begin // if Quad percision is supported
 	 if (TEST === "cvtint" | TEST === "all") begin  // if testing integer conversion
@@ -652,7 +652,7 @@ module testbenchfp;
       string tt0;
       tt0 = $psprintf("%s", Tests[TestNum]);
       testname = {pp, tt0};
-      $display("Here you are %s", testname);     
+      //$display("Here you are %s", testname);     
       $display("\n\nRunning %s vectors ", Tests[TestNum]);
       $readmemh(testname, TestVectors);
       // set the test index to 0
