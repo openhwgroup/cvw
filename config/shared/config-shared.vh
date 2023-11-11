@@ -93,16 +93,20 @@ localparam NF2   = ((F_SUPPORTED & (LEN1 != S_LEN)) ? S_NF   : H_NF);
 localparam FMT2  = ((F_SUPPORTED & (LEN1 != S_LEN)) ? 2'd0    : 2'd2);
 localparam BIAS2 = ((F_SUPPORTED & (LEN1 != S_LEN)) ? S_BIAS : H_BIAS);
 
+// intermediate division parameters not directly used in Divider
+localparam FPDIVN      = NF+3; // length of floating-point inputs: Ns + 2 = Nf + 3 for 1 integer bit, Nf fracitonal bits, 2 extra bits to shift sqrt into [1/4, 1)]
+localparam DIVN        = ((FPDIVN<XLEN) & IDIV_ON_FPU) ? XLEN : FPDIVN+3; // standard length of input: max(XLEN, NF+2) ***
+
 // division constants
-localparam DIVN        = (((NF+2<XLEN) & IDIV_ON_FPU) ? XLEN : NF+2); // standard length of input
-localparam LOGR        = ($clog2(RADIX));           // r = log(R)
-localparam RK          = (LOGR*DIVCOPIES);         // r*k used for intdiv preproc
-localparam LOGRK       = ($clog2(RK));               // log2(r*k)
-localparam FPDUR       = ((DIVN+1+(LOGR*DIVCOPIES))/(LOGR*DIVCOPIES)+(RADIX/4));
-localparam DURLEN      = ($clog2(FPDUR+1));
-localparam DIVb        = (FPDUR*LOGR*DIVCOPIES-1); // canonical fdiv size (b)
-localparam DIVBLEN     = ($clog2(DIVb+1)-1);
-localparam DIVa        = (DIVb+1-XLEN); // used for idiv on fpu: Shift residual right by b - (XLEN-1) to put remainder in lsbs of integer result
+
+// *** define NF+2, justify, use in DIVN
+localparam LOGR        = $clog2(RADIX);                             // r = log(R)
+localparam RK          = LOGR*DIVCOPIES;                            // r*k bits per cycle generated
+//localparam FPDUR       = (DIVN+1)/RK + 1 + (RADIX/4);               // *** relate to algorithm for rest of these
+localparam FPDUR       = (DIVN+LOGR-1)/RK + 1 ;               // ceiling((DIVN+LOGR)/RK)
+localparam DURLEN      = $clog2(FPDUR+1);
+localparam DIVb        = FPDUR*RK - 1; // canonical fdiv size (b)
+localparam DIVBLEN     = $clog2(DIVb+2)-1;                          // *** where is 2 coming from?
 
 // largest length in IEU/FPU
 localparam CVTLEN = ((NF<XLEN) ? (XLEN) : (NF));  // max(XLEN, NF)
