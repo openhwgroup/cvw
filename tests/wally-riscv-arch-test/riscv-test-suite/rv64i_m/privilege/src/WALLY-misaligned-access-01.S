@@ -255,7 +255,7 @@ CheckAllWriteSignature:
 
         # check values half by half
         addi a0, s0, 1  # SourceData+1
-        addi a1, s1, 0  # ie: ByteDstData
+        addi a1, s1, 1  # ie: ByteDstData+1
         slli a2, s2, 2  # * 4 -1
         addi a2, a2, -1
         jal ra, memcmp2
@@ -272,7 +272,7 @@ CheckAllWriteSignature:
 
         # check values word by word
         addi a0, s0, 1  # SourceData+1
-        addi a1, s1, 0  # ie: ByteDstData
+        addi a1, s1, 1  # ie: ByteDstData+1
         slli a2, s2, 1  # * 2 -1
         addi a2, a2, -1
         jal ra, memcmp4
@@ -281,7 +281,7 @@ CheckAllWriteSignature:
 
         # check values word by word
         addi a0, s0, 2  # SourceData+2
-        addi a1, s1, 0  # ie: ByteDstData
+        addi a1, s1, 2  # ie: ByteDstData+2
         slli a2, s2, 1  # * 2 -1
         addi a2, a2, -1
         jal ra, memcmp4
@@ -290,7 +290,7 @@ CheckAllWriteSignature:
         
         # check values word by word
         addi a0, s0, 3  # SourceData+3
-        addi a1, s1, 0  # ie: ByteDstData
+        addi a1, s1, 3  # ie: ByteDstData+3
         slli a2, s2, 1  # * 2 -1
         addi a2, a2, -1
         jal ra, memcmp4
@@ -306,7 +306,7 @@ CheckAllWriteSignature:
 
         # check values double by double
         addi a0, s0, 1  # SourceData+1
-        addi a1, s1, 0  # ie: ByteDstData
+        addi a1, s1, 1  # ie: ByteDstData+1
         slli a2, s2, 0  # * 1 -1
         addi a2, a2, -1
         jal ra, memcmp8
@@ -314,7 +314,7 @@ CheckAllWriteSignature:
 
         # check values double by double
         addi a0, s0, 2  # SourceData+2
-        addi a1, s1, 0  # ie: ByteDstData
+        addi a1, s1, 2  # ie: ByteDstData+2
         slli a2, s2, 0  # * 1 -1
         addi a2, a2, -1
         jal ra, memcmp8
@@ -322,7 +322,7 @@ CheckAllWriteSignature:
         
         # check values double by double
         addi a0, s0, 3  # SourceData+3
-        addi a1, s1, 2  # ie: ByteDstData
+        addi a1, s1, 3  # ie: ByteDstData+3
         slli a2, s2, 0  # * 1 -1
         addi a2, a2, -1
         jal ra, memcmp8
@@ -330,7 +330,7 @@ CheckAllWriteSignature:
 	
         # check values double by double
         addi a0, s0, 4  # SourceData+4
-        addi a1, s1, 0  # ie: ByteDstData
+        addi a1, s1, 4  # ie: ByteDstData+4
         slli a2, s2, 0  # * 1 -1
         addi a2, a2, -1
         jal ra, memcmp8
@@ -338,7 +338,7 @@ CheckAllWriteSignature:
 
         # check values double by double
         addi a0, s0, 5  # SourceData+5
-        addi a1, s1, 0  # ie: ByteDstData
+        addi a1, s1, 5  # ie: ByteDstData+5
         slli a2, s2, 0  # * 1 -1
         addi a2, a2, -1
         jal ra, memcmp8
@@ -346,7 +346,7 @@ CheckAllWriteSignature:
 	
         # check values double by double
         addi a0, s0, 6  # SourceData+6
-        addi a1, s1, 0  # ie: ByteDstData
+        addi a1, s1, 6  # ie: ByteDstData+6
         slli a2, s2, 0  # * 1 -1
         addi a2, a2, -1
         jal ra, memcmp8
@@ -354,7 +354,7 @@ CheckAllWriteSignature:
 	
         # check values double by double
         addi a0, s0, 7  # SourceData+7
-        addi a1, s1, 0  # ie: ByteDstData
+        addi a1, s1, 7  # ie: ByteDstData+7
         slli a2, s2, 0  # * 1
         addi a2, a2, -1
         jal ra, memcmp8

@@ -107,7 +107,20 @@ module align import cvw::*;  #(parameter cvw_t P) (
   logic [OFFSET_BIT_POS-1:$clog2(LLENINBYTES)] WordOffsetM;
   logic [$clog2(LLENINBYTES)-1:0]                 ByteOffsetM;
   logic                                HalfSpillM, WordSpillM;
+  logic [$clog2(LLENINBYTES)-1:0]      AccessByteOffsetM;
+  
   assign {WordOffsetM, ByteOffsetM} = IEUAdrM[OFFSET_BIT_POS-1:0];
+
+  always_comb begin
+    case (Funct3M[1:0]) 
+      2'b00: AccessByteOffsetM = '0; // byte access
+      2'b01: AccessByteOffsetM = {2'b00, ByteOffsetM[0]}; // half access
+      2'b10: AccessByteOffsetM = {1'b0, ByteOffsetM[1:0]}; // word access
+      2'b11: AccessByteOffsetM = ByteOffsetM; // double access
+      default: AccessByteOffsetM = ByteOffsetM;
+    endcase
+  end
+  
   assign HalfSpillM = (IEUAdrM[OFFSET_BIT_POS-1:1] == '1) & (ByteOffsetM[0] != '0) & Funct3M[1:0] == 2'b01;
   assign WordSpillM = (IEUAdrM[OFFSET_BIT_POS-1:2] == '1) & (ByteOffsetM[1:0] != '0) & Funct3M[1:0] == 2'b10;
   if(P.LLEN == 64) begin
@@ -170,7 +183,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   // shifter (4:1 mux for 32 bit, 8:1 mux for 64 bit)
   // 8 * is for shifting by bytes not bits
-  assign ReadDataWordSpillShiftedM = ReadDataWordSpillAllM >> (MisalignedM ? 8 * ByteOffsetM : '0);
+  assign ReadDataWordSpillShiftedM = ReadDataWordSpillAllM >> (MisalignedM ? 8 * AccessByteOffsetM : '0);
   assign DCacheReadDataWordSpillM = ReadDataWordSpillShiftedM[P.LLEN-1:0];
 
   // write path. Also has the 8:1 shifter muxing for the byteoffset
@@ -178,7 +191,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   logic [P.LLEN*2-1:0] LSUWriteDataShiftedM;
   logic [P.LLEN*3-1:0] LSUWriteDataShiftedExtM;  // *** RT: Find a better way.  I've extending in both directions so we don't shift in zeros.  The cache expects the writedata to not have any zero data, but instead replicated data.
 
-  assign LSUWriteDataShiftedExtM = {LSUWriteDataM, LSUWriteDataM, LSUWriteDataM} << (MisalignedM ? 8 * ByteOffsetM : '0);
+  assign LSUWriteDataShiftedExtM = {LSUWriteDataM, LSUWriteDataM, LSUWriteDataM} << (MisalignedM ? 8 * AccessByteOffsetM : '0);
   assign LSUWriteDataShiftedM = LSUWriteDataShiftedExtM[P.LLEN*3-1:P.LLEN];
   assign LSUWriteDataSpillM = LSUWriteDataShiftedM;
   //mux2 #(2*P.LLEN) writedataspillmux(LSUWriteDataShiftedM, {LSUWriteDataShiftedM[P.LLEN*2-1:P.LLEN], LSUWriteDataShiftedM[P.LLEN*2-1:P.LLEN]}, SelSpillM, LSUWriteDataSpillM);
