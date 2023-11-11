@@ -95,16 +95,13 @@ localparam BIAS2 = ((F_SUPPORTED & (LEN1 != S_LEN)) ? S_BIAS : H_BIAS);
 
 // intermediate division parameters not directly used in Divider
 localparam FPDIVN      = NF+3; // length of floating-point inputs: Ns + 2 = Nf + 3 for 1 integer bit, Nf fracitonal bits, 2 extra bits to shift sqrt into [1/4, 1)]
-localparam DIVN        = ((FPDIVN<XLEN) & IDIV_ON_FPU) ? XLEN : FPDIVN+3; // standard length of input: max(XLEN, NF+2) ***
+localparam DIVN        = ((FPDIVN<XLEN) & IDIV_ON_FPU) ? XLEN : FPDIVN; // standard length of input: max(XLEN, NF+2) ***
 
 // division constants
-
-// *** define NF+2, justify, use in DIVN
 localparam LOGR        = $clog2(RADIX);                             // r = log(R)
 localparam RK          = LOGR*DIVCOPIES;                            // r*k bits per cycle generated
-//localparam FPDUR       = (DIVN+1)/RK + 1 + (RADIX/4);               // *** relate to algorithm for rest of these
-localparam FPDUR       = (DIVN+LOGR-1)/RK + 1 ;               // ceiling((DIVN+LOGR)/RK)
-localparam DURLEN      = $clog2(FPDUR+1);
+localparam FPDUR       = (DIVN+LOGR-1)/RK + 1 ;                     // ceiling((n+r)/rk)
+localparam DURLEN      = $clog2(FPDUR+1);                           // number of bits to represent the duration
 localparam DIVb        = FPDUR*RK - 1; // canonical fdiv size (b)
 localparam DIVBLEN     = $clog2(DIVb+2)-1;                          // *** where is 2 coming from?
 

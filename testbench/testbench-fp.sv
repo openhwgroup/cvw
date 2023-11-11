@@ -115,8 +115,8 @@ module testbenchfp;
    logic 			FlushE;
    logic 			IFDivStartE;
    logic 			FDivDoneE;
-   logic [P.NE+1:0] 		QeM;
-   logic [P.DIVb:0] 		QmM;
+   logic [P.NE+1:0] 		UeM;
+   logic [P.DIVb:0] 		UmM;
    logic [P.XLEN-1:0] 		FIntDivResultM;
    logic 			ResMatch;                   // Check if result match
    logic 			FlagMatch;                  // Check if IEEE flags match
@@ -705,7 +705,7 @@ module testbenchfp;
    end
    
    postprocess #(P) postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
-				.OpCtrl(OpCtrlVal), .DivQm(Quot), .DivQe(DivCalcExp),
+				.OpCtrl(OpCtrlVal), .DivUm(Quot), .DivUe(DivCalcExp),
 				.Xm(Xm), .Ym(Ym), .Zm(Zm), .CvtCe(CvtCalcExpE), .DivSticky(DivSticky), .FmaSs(Ss),
 				.XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResSubnormUf(CvtResSubnormUfE),
 				.XZero(XZero), .YZero(YZero), .CvtShiftAmt(CvtShiftAmtE),
@@ -734,8 +734,8 @@ module testbenchfp;
 			     .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), 
 			     .XNaNE(XNaN), .YNaNE(YNaN), 
 			     .FDivStartE(DivStart), .IDivStartE(1'b0), .W64E(1'b0),
-			     .StallM(1'b0), .DivStickyM(DivSticky), .FDivBusyE, .QeM(DivCalcExp),
-			     .QmM(Quot),
+			     .StallM(1'b0), .DivStickyM(DivSticky), .FDivBusyE, .UeM(DivCalcExp),
+			     .UmM(Quot),
 			     .FlushE(1'b0), .ForwardedSrcAE('0), .ForwardedSrcBE('0), .Funct3M(Funct3M),
 			     .Funct3E(Funct3E), .IntDivE(1'b0), .FIntDivResultM(FIntDivResultM),
 			     .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE));
