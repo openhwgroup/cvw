@@ -133,8 +133,8 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]           FCvtIntResM;                        // fcvt integer result (for IEU)
   
   // divide signals
-  logic [P.DIVb:0]             QmM;                                // fdivsqrt signifcand
-  logic [P.NE+1:0]             QeM;                                // fdivsqrt exponent
+  logic [P.DIVb:0]             UmM;                                // fdivsqrt signifcand
+  logic [P.NE+1:0]             UeM;                                // fdivsqrt exponent
   logic                        DivStickyM;                         // fdivsqrt sticky bit
   logic                        FDivDoneE, IFDivStartE;             // fdivsqrt control signals
   logic [P.XLEN-1:0]           FIntDivResultM;                     // fdivsqrt integer division result (for IEU)
@@ -242,8 +242,8 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   fdivsqrt #(P) fdivsqrt(.clk, .reset, .FmtE, .XmE, .YmE, .XeE, .YeE, .SqrtE(OpCtrlE[0]), .SqrtM(OpCtrlM[0]),
     .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, .FDivStartE, .IDivStartE, .XsE,
     .ForwardedSrcAE, .ForwardedSrcBE, .Funct3E, .Funct3M, .IntDivE, .W64E,
-    .StallM, .FlushE, .DivStickyM, .FDivBusyE, .IFDivStartE, .FDivDoneE, .QeM, 
-    .QmM, .FIntDivResultM);
+    .StallM, .FlushE, .DivStickyM, .FDivBusyE, .IFDivStartE, .FDivDoneE, .UeM, 
+    .UmM, .FIntDivResultM);
 
   // compare: fmin/fmax, flt/fle/feq
   fcmp #(P) fcmp (.Fmt(FmtE), .OpCtrl(OpCtrlE), .Xs(XsE), .Ys(YsE), .Xe(XeE), .Ye(YeE), 
@@ -326,9 +326,9 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   //////////////////////////////////////////////////////////////////////////////////////////
 
   postprocess #(P) postprocess(.Xs(XsM), .Ys(YsM), .Xm(XmM), .Ym(YmM), .Zm(ZmM), .Frm(FrmM), .Fmt(FmtM), 
-    .FmaASticky(FmaAStickyM), .XZero(XZeroM), .YZero(YZeroM), .XInf(XInfM), .YInf(YInfM), .DivQm(QmM), .FmaSs(SsM),
+    .FmaASticky(FmaAStickyM), .XZero(XZeroM), .YZero(YZeroM), .XInf(XInfM), .YInf(YInfM), .DivUm(UmM), .FmaSs(SsM),
     .ZInf(ZInfM), .XNaN(XNaNM), .YNaN(YNaNM), .ZNaN(ZNaNM), .XSNaN(XSNaNM), .YSNaN(YSNaNM), .ZSNaN(ZSNaNM), 
-    .FmaSm(SmM), .DivQe(QeM), .FmaAs(AsM), .FmaPs(PsM), .OpCtrl(OpCtrlM), .FmaSCnt(SCntM), .FmaSe(SeM),
+    .FmaSm(SmM), .DivUe(UeM), .FmaAs(AsM), .FmaPs(PsM), .OpCtrl(OpCtrlM), .FmaSCnt(SCntM), .FmaSe(SeM),
     .CvtCe(CeM), .CvtResSubnormUf(CvtResSubnormUfM),.CvtShiftAmt(CvtShiftAmtM), .CvtCs(CsM), 
     .ToInt(FWriteIntM), .DivSticky(DivStickyM), .CvtLzcIn(CvtLzcInM), .IntZero(IntZeroM), 
     .PostProcSel(PostProcSelM), .PostProcRes(PostProcResM), .PostProcFlg(PostProcFlgM), .FCvtIntRes(FCvtIntResM));
