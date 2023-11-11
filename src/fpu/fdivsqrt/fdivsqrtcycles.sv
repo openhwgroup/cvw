@@ -34,7 +34,7 @@ module fdivsqrtcycles import cvw::*;  #(parameter cvw_t P) (
   output logic [P.DURLEN-1:0]  CyclesE
 );
 
-  logic [P.DURLEN+1:0] Nf, FPResultBitsE; // number of fractional bits
+  logic [P.DIVBLEN:0] Nf, FPResultBitsE; // number of fractional bits
   logic [P.DIVBLEN:0]  ResultBitsE; // number of result bits;
 
   // DIVN = P.NF+3

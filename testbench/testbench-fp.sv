@@ -148,6 +148,9 @@ module testbenchfp;
       $display("\nThe start of simulation...");      
       $display("This simulation for TEST is %s", TEST);
       $display("This simulation for TEST is of the operand size of %s", TEST_SIZE);      
+
+      $display("FPDUR %d %d DIVN %d LOGR %d RK %d RADIX %d DURLEN %d", FPDUR, DIVN, LOGR, RK, RADIX, DURLEN);
+
       if (P.Q_SUPPORTED & (TEST_SIZE == "QP" | TEST_SIZE == "all")) begin // if Quad percision is supported
 	 if (TEST === "cvtint" | TEST === "all") begin  // if testing integer conversion
             // add the 128-bit cvtint tests to the to-be-tested list
