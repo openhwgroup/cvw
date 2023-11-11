@@ -83,7 +83,6 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
       assign BadNaNBox = ~(Fmt|(&In[P.FLEN-1:P.LEN1])); // Check NaN boxing
       always_comb
         if (BadNaNBox) begin
-//          PostBox = {{(P.FLEN-P.LEN1){1'b1}}, 1'b1, {(P.NE1+1){1'b1}}, In[P.LEN1-P.NE1-3:0]};
           PostBox = {{(P.FLEN-P.LEN1){1'b1}}, 1'b1, {(P.NE1+1){1'b1}}, {(P.LEN1-P.NE1-2){1'b0}}};
         end else 
           PostBox = In;
@@ -143,8 +142,6 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
         if (BadNaNBox) begin
           case (Fmt)
             P.FMT: PostBox = In;
-//            P.FMT1: PostBox = {{(P.FLEN-P.LEN1){1'b1}}, 1'b1, {(P.NE1+1){1'b1}}, In[P.LEN1-P.NE1-3:0]};
-//            P.FMT2: PostBox = {{(P.FLEN-P.LEN2){1'b1}}, 1'b1, {(P.NE2+1){1'b1}}, In[P.LEN2-P.NE2-3:0]};
             P.FMT1: PostBox = {{(P.FLEN-P.LEN1){1'b1}}, 1'b1, {(P.NE1+1){1'b1}}, {(P.LEN1-P.NE1-2){1'b0}}};
             P.FMT2: PostBox = {{(P.FLEN-P.LEN2){1'b1}}, 1'b1, {(P.NE2+1){1'b1}}, {(P.LEN2-P.NE2-2){1'b0}}};
             default: PostBox = 'x;
@@ -230,9 +227,6 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
         if (BadNaNBox) begin
           case (Fmt)
             2'b11: PostBox = In;
-//            2'b01: PostBox = {{(P.Q_LEN-P.D_LEN){1'b1}}, 1'b1, {(P.D_NE+1){1'b1}}, In[P.D_LEN-P.D_NE-3:0]};
-//            2'b00: PostBox = {{(P.Q_LEN-P.S_LEN){1'b1}}, 1'b1, {(P.S_NE+1){1'b1}}, In[P.S_LEN-P.S_NE-3:0]};
-//            2'b10: PostBox = {{(P.Q_LEN-P.H_LEN){1'b1}}, 1'b1, {(P.H_NE+1){1'b1}}, In[P.H_LEN-P.H_NE-3:0]};
             2'b01: PostBox = {{(P.Q_LEN-P.D_LEN){1'b1}}, 1'b1, {(P.D_NE+1){1'b1}}, {(P.D_LEN-P.D_NE-2){1'b0}}};
             2'b00: PostBox = {{(P.Q_LEN-P.S_LEN){1'b1}}, 1'b1, {(P.S_NE+1){1'b1}}, {(P.S_LEN-P.S_NE-2){1'b0}}};
             2'b10: PostBox = {{(P.Q_LEN-P.H_LEN){1'b1}}, 1'b1, {(P.H_NE+1){1'b1}}, {(P.H_LEN-P.H_NE-2){1'b0}}};

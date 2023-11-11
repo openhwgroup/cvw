@@ -54,7 +54,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   logic [P.NE+1:0]             UeE;                                 // Result Exponent (FP only)
   logic [P.DIVb:0]             IFX, IFD;                            // Correctly-sized inputs for iterator, selected from int or fp input
   logic [P.DIVBLEN:0]          mE, ell;                             // Leading zeros of inputs
-  logic [P.DIVBLEN:0]          IntResultBits;                       // bits in integer result
+  logic [P.DIVBLEN:0]          IntResultBitsE;                      // bits in integer result
   logic                        NumerZeroE;                          // Numerator is zero (X or A)
   logic                        AZeroE, BZeroE;                      // A or B is Zero for integer division
   logic                        SignedDivE;                          // signed division
@@ -126,7 +126,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     mux2 #(P.DIVBLEN+1) pmux(ZeroDiff, '0, ALTBE, p);          
 
     /* verilator lint_off WIDTH */
-    assign IntResultBits = P.LOGR + p;  // Total number of result bits (r integer bits plus p fractional bits)
+    assign IntResultBitsE = P.LOGR + p;  // Total number of result bits (r integer bits plus p fractional bits)
     /* verilator lint_on WIDTH */
 
     // Integer special cases (terminate immediately)
@@ -137,7 +137,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
       logic [P.LOGRK-1:0] IntTrunc, RightShiftX;
       logic [P.DIVBLEN:0] IntSteps;
       /* verilator lint_offf WIDTH */
-      assign RightShiftX = P.RK - 1 - ((IntResultBits - 1) % P.RK); // Right shift amount
+      assign RightShiftX = P.RK - 1 - ((IntResultBitsE - 1) % P.RK); // Right shift amount
       assign DivXShifted = DivX >> RightShiftX;                     // shift X by up to R*K-1 to complete in n steps
       /* verilator lint_on WIDTH */
     end else begin // radix 2 1 copy doesn't require shifting
@@ -190,7 +190,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   flopen #(P.NE+2) expreg(clk, IFDivStartE, UeE, UeM);
 
   // Number of FSM cycles (to FSM)
-  fdivsqrtcycles #(P) cyclecalc(.FmtE, .SqrtE, .IntDivE, .IntResultBits, .CyclesE);
+  fdivsqrtcycles #(P) cyclecalc(.FmtE, .SqrtE, .IntDivE, .IntResultBitsE, .CyclesE);
 
   if (P.IDIV_ON_FPU) begin:intpipelineregs
     logic [P.DIVBLEN:0] IntDivNormShiftE, IntRemNormShiftE, IntNormShiftE;
