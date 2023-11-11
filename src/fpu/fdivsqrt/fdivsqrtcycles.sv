@@ -30,12 +30,12 @@ module fdivsqrtcycles import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.FMTBITS-1:0] FmtE,
   input  logic                 SqrtE,
   input  logic                 IntDivE,
-  input  logic [P.DIVBLEN:0]   IntResultBits,
+  input  logic [P.DIVBLEN:0]   IntResultBitsE,
   output logic [P.DURLEN-1:0]  CyclesE
 );
 
-  logic [P.DURLEN+1:0] Nf, FPResultBits; // number of fractional bits
-  logic [P.DIVBLEN:0]  ResultBits; // number of result bits;
+  logic [P.DURLEN+1:0] Nf, FPResultBitsE; // number of fractional bits
+  logic [P.DIVBLEN:0]  ResultBitsE; // number of result bits;
 
   // DIVN = P.NF+3
   // NS = NF + 1
@@ -72,16 +72,16 @@ module fdivsqrtcycles import cvw::*;  #(parameter cvw_t P) (
   // Integer division needs p fractional + r integer result bits
   // FP Division needs at least Nf fractional bits + 2 guard/round bits and one integer digit (LOG R integer bits) = Nf + 2 + r bits
   // FP Sqrt needs at least Nf fractional bits, 2 guard/round bits, and *** shift bits
-  // The datapath produces rk bits per cycle, so Cycles = ceil (ResultBits / rk)
+  // The datapath produces rk bits per cycle, so Cycles = ceil (ResultBitsE / rk)
 
   always_comb begin 
-    if (SqrtE) FPResultBits = Nf + 2 + 1; // Nf + two fractional bits for round/guard + 2 for right shift by up to 2 *** unclear why it works with just +1 rather than +2; is it related to DIVCOPIES logic below?
-    else       FPResultBits = Nf + 2 + P.LOGR; // Nf + two fractional bits for round/guard + integer bits - try this when placing results in msbs
+    if (SqrtE) FPResultBitsE = Nf + 2 + 0; // Nf + two fractional bits for round/guard + 2 for right shift by up to 2 *** unclear why it works with just +1 and +0 rather than +2; is it related to DIVCOPIES logic below?
+    else       FPResultBitsE = Nf + 2 + P.LOGR; // Nf + two fractional bits for round/guard + integer bits - try this when placing results in msbs
 
-    if (P.IDIV_ON_FPU) ResultBits = IntDivE ? IntResultBits : FPResultBits;
-    else               ResultBits = FPResultBits;
+    if (P.IDIV_ON_FPU) ResultBitsE = IntDivE ? IntResultBitsE : FPResultBitsE;
+    else               ResultBitsE = FPResultBitsE;
 
-    assign CyclesE = (ResultBits-1)/(P.RK) + 1; // ceil (ResultBits/rk)
+    assign CyclesE = (ResultBitsE-1)/(P.RK) + 1; // ceil (ResultBitsE/rk)
   end 
   /* verilator lint_on WIDTH */
 
