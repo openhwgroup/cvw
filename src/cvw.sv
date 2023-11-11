@@ -269,7 +269,6 @@ typedef struct packed {
   int CORRSHIFTSZ;
 
 // division constants
-  int DIVN       ;
   int LOGR       ;
   int RK         ;
   int FPDUR      ;
