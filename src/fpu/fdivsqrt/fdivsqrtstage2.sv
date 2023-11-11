@@ -29,23 +29,23 @@
 
 /* verilator lint_off UNOPTFLAT */
 module fdivsqrtstage2 import cvw::*;  #(parameter cvw_t P) (
-  input  logic [P.DIVb+3:0] D, DBar, 
-  input  logic [P.DIVb:0]   U, UM,
-  input  logic [P.DIVb+3:0] WS, WC,
-  input  logic [P.DIVb+1:0] C,
+  input  logic [P.DIVb+3:0] D, DBar,        // Q4.DIVb
+  input  logic [P.DIVb:0]   U, UM,          // U1.DIVb
+  input  logic [P.DIVb+3:0] WS, WC,         // Q4.DIVb
+  input  logic [P.DIVb+1:0] C,              // Q2.DIVb
   input  logic             SqrtE,
   output logic             un,
-  output logic [P.DIVb+1:0] CNext,
-  output logic [P.DIVb:0]   UNext, UMNext, 
-  output logic [P.DIVb+3:0] WSNext, WCNext
+  output logic [P.DIVb+1:0] CNext,          // Q2.DIVb
+  output logic [P.DIVb:0]   UNext, UMNext,  // U1.DIVb
+  output logic [P.DIVb+3:0] WSNext, WCNext  // Q4.DIVb
 );
  /* verilator lint_on UNOPTFLAT */
 
-  logic [P.DIVb+3:0]        Dsel;
+  logic [P.DIVb+3:0]        Dsel;     // Q4.DIVb
   logic                    up, uz;
-  logic [P.DIVb+3:0]        F;
-  logic [P.DIVb+3:0]        AddIn;
-  logic [P.DIVb+3:0]        WSA, WCA;
+  logic [P.DIVb+3:0]        F;        // Q4.DIVb
+  logic [P.DIVb+3:0]        AddIn;    // Q4.DIVb
+  logic [P.DIVb+3:0]        WSA, WCA; // Q4.DIVb
 
   // Qmient Selection logic
   // Given partial remainder, select digit of +1, 0, or -1 (up, uz, un)
