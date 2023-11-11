@@ -79,6 +79,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   logic [(P.LLEN-1)*2/8:0] ByteMaskMuxM;
   logic                    SaveByteMask;
 
+/* -----\/----- EXCLUDED -----\/-----
   always_comb begin
     case(Funct3M)
       2'b00: IncrementAmount = 4'd0;
@@ -88,9 +89,10 @@ module align import cvw::*;  #(parameter cvw_t P) (
       default: IncrementAmount = 4'd7;
     endcase
   end
+ -----/\----- EXCLUDED -----/\----- */
   /* verilator lint_off WIDTHEXPAND */
-  //assign IEUAdrIncrementM = IEUAdrM + LLENINBYTES;
-  assign IEUAdrIncrementM = IEUAdrM + IncrementAmount;
+  assign IEUAdrIncrementM = IEUAdrM + LLENINBYTES;
+  //assign IEUAdrIncrementM = IEUAdrM + IncrementAmount;
   /* verilator lint_on WIDTHEXPAND */
   mux2 #(P.XLEN) ieuadrspillemux(.d0(IEUAdrE), .d1(IEUAdrIncrementM), .s(SelSpillE), .y(IEUAdrSpillE));
   mux2 #(P.XLEN) ieuadrspillmmux(.d0(IEUAdrM), .d1(IEUAdrIncrementM), .s(SelSpillM), .y(IEUAdrSpillM));
