@@ -5,7 +5,7 @@ This subdirectory contains synthesis scripts for use with Synopsys
 scripts/synth.tcl.
 
 Example Usage
-make synth DESIGN=wallypipelinedcore FREQ=500
+make synth DESIGN=wallypipelinedcore FREQ=500 CONFIG=rv32e
 
 environment variables
 
@@ -38,5 +38,25 @@ To run ppa analysis that hones into target frequency, you can type:
 python3 ppa/ppaSynth.py from the synthDC directory.  This runs a sweep
 across all modules listed at the bottom of the ppaSynth.py file.
 
+Two options for running the sweep.  The first run runs all modules for
+all techs around a given frequency (i.e., freqs).  The second option
+will run all designs for the specific module based on bestSynths.csv
+values.   Since the second option is 2nd, it has priority.  If the
+second set of values is commented out, it will run all widths.
 
+WARNING:  The first option may runs lots of runs that could expend all
+the licenses available for a license.  Therefore, care must be taken
+to be sure that enough licenses are available for this first option.
 
+##### Run specific syntheses
+	widths = [8, 16, 32, 64, 128] 
+	modules = ['mul', 'adder', 'shifter', 'flop', 'comparator', 'binencoder', 'csa', 'mux2', 'mux4', 'mux8']
+	techs = ['sky90', 'sky130', 'tsmc28', 'tsmc28psyn']
+	freqs = [5000]
+	synthsToRun = allCombos(widths, modules, techs, freqs)
+
+##### Run a sweep based on best delay found in existing syntheses
+	module = 'adder'
+	width = 32
+	tech = 'tsmc28psyn'
+ 	synthsToRun = freqSweep(module, width, tech)

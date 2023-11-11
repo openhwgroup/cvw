@@ -12,8 +12,6 @@ from ppaAnalyze import synthsfromcsv
 
 def runCommand(module, width, tech, freq):
     command = "make synth DESIGN={} WIDTH={} TECH={} DRIVE=INV FREQ={} MAXOPT=1 MAXCORES=1".format(module, width, tech, freq)
-    print('here we go')
-
     subprocess.Popen(command, shell=True)
 
 def deleteRedundant(synthsToRun):
@@ -61,15 +59,15 @@ if __name__ == '__main__':
     
     ##### Run specific syntheses
 	widths = [8, 16, 32, 64, 128] 
-	modules = ['mult', 'add', 'shiftleft', 'flop', 'comparator', 'priorityencoder', 'add', 'csa', 'mux2', 'mux4', 'mux8']
-	techs = ['sky90', 'tsmc28']
+	modules = ['mul', 'adder', 'shifter', 'flop', 'comparator', 'binencoder', 'csa', 'mux2', 'mux4', 'mux8']
+	techs = ['sky90', 'sky130', 'tsmc28', 'tsmc28psyn']
 	freqs = [5000]
 	synthsToRun = allCombos(widths, modules, techs, freqs)
     
     ##### Run a sweep based on best delay found in existing syntheses
-	module = 'add'
+	module = 'adder'
 	width = 32
-	tech = 'sky90'
+	tech = 'tsmc28psyn'
 	synthsToRun = freqSweep(module, width, tech)
         
     ##### Only do syntheses for which a run doesn't already exist
