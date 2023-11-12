@@ -99,6 +99,7 @@ localparam RK          = LOGR*DIVCOPIES;                            // r*k bits 
 
 // intermediate division parameters not directly used in fdivsqrt hardware
 localparam FPDIVMINb   = NF + 3; // minimum length of fractional part: Nf result bits + guard and round bits + 1 extra bit because square root could be shifted right *** explain better
+//localparam FPDIVMINb   = NF + 2 + (RADIX == 2); // minimum length of fractional part: Nf result bits + guard and round bits + 1 extra bit for preshifting radix2 square root right
 localparam DIVMINb     = ((FPDIVMINb<XLEN) & IDIV_ON_FPU) ? XLEN : FPDIVMINb; // minimum fractional bits b = max(XLEN, FPDIVMINb)
 localparam RESBITS     = DIVMINb + LOGR; // number of bits in a result: r integer + b fractional
 

@@ -50,7 +50,6 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
 );
 
   logic [P.DIVb:0]             Xnorm, Dnorm;
-  logic [P.DIVb:0]             PreSqrtX;
   logic [P.DIVb+3:0]           DivX, DivXShifted, SqrtX, PreShiftX; // Variations of dividend, to be muxed
   logic [P.NE+1:0]             UeE;                                 // Result Exponent (FP only)
   logic [P.DIVb:0]             IFX, IFD;                            // Correctly-sized inputs for iterator, selected from int or fp input
@@ -61,7 +60,8 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   logic                        SignedDivE;                          // signed division
   logic                        AsE, BsE;                            // Signs of integer inputs
   logic [P.XLEN-1:0]           AE;                                  // input A after W64 adjustment
-  logic  ALTBE;
+  logic                        ALTBE;
+  logic                        EvenExp;
 
   //////////////////////////////////////////////////////
   // Integer Preprocessing
@@ -153,9 +153,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   // shift square root to be in range [1/4, 1)
   // Normalized numbers are shifted right by 1 if the exponent is odd
   // Subnormal numbers have Xe = 0 and an unbiased exponent of 1-BIAS.  They are shifted right if the number of leading zeros is odd.
-  // NOTE: there might be a discrepancy that X is never right shifted by 2.  However
-  //  it comes out in the wash and gives the right answer.  Investigate later if possible. ***
-  //////////////////////////////////////////////////////
+   //////////////////////////////////////////////////////
 
   assign DivX = {3'b000, Xnorm}; // Zero-extend numerator for division
 
@@ -165,13 +163,32 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   // Next X is shifted right by 1 or 2 bits to range [1/4, 1) and exponent will be adjusted accordingly to be even
   // Now (X-1) is negative.  Formed by placing all 1s in all four integer bits (in Q4.b) form, keeping X in fraciton bits
   // Then multiply by R is left shift by r (1 or 2 for radix 2 or 4)
-  // For Radix 2, this gives 3 leading 1s, followed by the fraction bits
-  // For Radix 4, this gives 2 leading 1s, followed by the fraction bits (and a zero in the lsb)
-  mux2 #(P.DIVb+1) sqrtxmux(Xnorm, {1'b0, Xnorm[P.DIVb:1]}, (Xe[0] ^ ell[0]), PreSqrtX);
-  if (P.RADIX == 2) assign SqrtX = {3'b111, PreSqrtX};
-  else              assign SqrtX = {2'b11, PreSqrtX, 1'b0};
-  mux2 #(P.DIVb+4) prexmux(DivX, SqrtX, SqrtE, PreShiftX);
-  
+  // This is optimized in hardware by first right shifting by 0 or 1 bit (instead of 1 or 2), then left shifting by (r-1), then subtracting 2 or 4
+  // Subtracting 2 is equivalent to adding 1110.  Subtracting 4 is equivalent to adding 1100.  Prepend leading 1s to do a free subtraction.
+  // This also means only one extra fractional bit is needed becaue we never shift right by more than 1.
+  // Radix      Exponent odd          Exponent Even
+  // 2          x-2 = 2(x/2 - 1)      x/2 - 2 = 2(x/4 - 1)
+  // 4          2x-4 = 4(x/2 - 1))    x-4 = 4(x/4 - 1)
+  // Summary: PreSqrtX = r(x/2or4 - 1)
+
+  assign EvenExp = Xe[0] ^ ell[0]; // effective unbiased exponent after normalization is even
+/*  mux2 #(P.DIVb+1) sqrtxmux(Xnorm, {1'b0, Xnorm[P.DIVb:1]}, EvenExp, PreSqrtX); // X if exponent odd, X/2 if exponent even
+  if (P.RADIX == 2) assign SqrtX = {3'b111, PreSqrtX};                          // PreSqrtX - 2 = 2(PreSqrtX/2 - 1)
+  else              assign SqrtX = {2'b11, PreSqrtX, 1'b0};                     // 2PreSqrtX - 4 = 4(PreSqrtX/2 - 1) */
+
+  if (P.RADIX == 2) begin
+    logic [P.DIVb:0] PreSqrtX;    // U1.DIVb
+    mux2 #(P.DIVb+1) sqrtxmux(Xnorm, {1'b0, Xnorm[P.DIVb:1]}, EvenExp, PreSqrtX); // X if exponent odd, X/2 if exponent even
+    assign SqrtX = {3'b111, PreSqrtX};                          // PreSqrtX - 2 = 2(PreSqrtX/2 - 1)
+  end else begin
+    logic [P.DIVb+1:0] PreSqrtX;  // U2.DIVb
+    mux2 #(P.DIVb+2) sqrtxmux({Xnorm, 1'b0}, {1'b0, Xnorm}, EvenExp, PreSqrtX); // 2X if exponent odd, X if exponent even
+    assign SqrtX = {2'b11, PreSqrtX};                     // PreSqrtX - 4 = 4(PreSqrtX/4 - 1)
+  end
+
+  // Initialize X for division or square root
+  mux2 #(P.DIVb+4) prexmux(DivX, SqrtX, SqrtE, PreShiftX);                    
+
   //////////////////////////////////////////////////////
   // Selet integer or floating-point operands
   //////////////////////////////////////////////////////
