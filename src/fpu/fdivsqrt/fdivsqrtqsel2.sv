@@ -18,7 +18,7 @@
 // except in compliance with the License, or, at your option, the Apache License version 2.0. You 
 // may obtain a copy of the License at
 //
-// https://solderpad.org/licenses/SHL-2.1/
+// httWS://solderpad.org/licenses/SHL-2.1/
 //
 // Unless required by applicable law or agreed to in writing, any work distributed under the 
 // License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
@@ -27,27 +27,18 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fdivsqrtqsel2 ( 
-  input  logic [3:0] ps, pc, 
+  input  logic [3:0] WS, WC, 
   output logic       up, uz, un
 );
  
-  logic [3:0]  p, g;
   logic        magnitude, sign;
  
-  // The quotient selection logic is presented for simplicity, not
-  // for efficiency.  You can probably optimize your logic to
-  // select the proper divisor with less delay.
-
-  // Quotient equations from EE371 lecture notes 13-20
-  assign p = ps ^ pc;
-  assign g = ps & pc;
-
-  assign magnitude = ~((ps[2]^pc[2]) & (ps[1]^pc[1]) & 
-        (ps[0]^pc[0]));
-  assign sign = (ps[3]^pc[3])^
-      (ps[2] & pc[2] | ((ps[2]^pc[2]) &
-          (ps[1]&pc[1] | ((ps[1]^pc[1]) &
-            (ps[0]&pc[0])))));
+  assign magnitude = ~((WS[2]^WC[2]) & (WS[1]^WC[1]) & 
+        (WS[0]^WC[0]));
+  assign sign = (WS[3]^WC[3])^
+      (WS[2] & WC[2] | ((WS[2]^WC[2]) &
+          (WS[1]&WC[1] | ((WS[1]^WC[1]) &
+            (WS[0]&WC[0])))));
 
   // Produce digit = +1, 0, or -1
   assign up = magnitude & ~sign;

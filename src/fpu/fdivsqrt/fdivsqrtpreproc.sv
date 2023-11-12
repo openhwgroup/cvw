@@ -29,17 +29,18 @@
 module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   input  logic                 clk,
   input  logic                 IFDivStartE, 
-  input  logic [P.NF:0]        Xm, Ym,
-  input  logic [P.NE-1:0]      Xe, Ye,
+  input  logic [P.NF:0]        Xm, Ym,      // Floating-point significands
+  input  logic [P.NE-1:0]      Xe, Ye,      // Floating-point exponents
   input  logic [P.FMTBITS-1:0] FmtE,
   input  logic                 SqrtE,
   input  logic                 XZeroE,
   input  logic [2:0]           Funct3E,
-  output logic [P.NE+1:0]      UeM,
-  output logic [P.DIVb+3:0]    X, D,
+  output logic [P.NE+1:0]      UeM,         // biased exponent of result
+  output logic [P.DIVb+3:0]    X, D,        // Q4.DIVb
   // Int-specific
-  input  logic [P.XLEN-1:0]    ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
+  input  logic [P.XLEN-1:0]    ForwardedSrcAE, ForwardedSrcBE, // U(XLEN.0) inputs from IEU 
   input  logic                 IntDivE, W64E,
+  // Outputs
   output logic                 ISpecialCaseE,
   output logic [P.DURLEN-1:0]  CyclesE,
   output logic [P.DIVBLEN-1:0] IntNormShiftM,
