@@ -30,16 +30,11 @@ module fdivsqrtcycles import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.FMTBITS-1:0] FmtE,
   input  logic                 SqrtE,
   input  logic                 IntDivE,
-  input  logic [P.DIVBLEN:0]   IntResultBitsE,
+  input  logic [P.DIVBLEN-1:0] IntResultBitsE,
   output logic [P.DURLEN-1:0]  CyclesE
 );
 
-  logic [P.DURLEN+1:0] Nf, FPResultBitsE; // number of fractional bits
-  logic [P.DIVBLEN:0]  ResultBitsE; // number of result bits;
-
-  // DIVN = P.NF+3
-  // NS = NF + 1
-  // N = NS or NS+2 for div/sqrt.
+  logic [P.DIVBLEN-1:0] Nf, FPResultBitsE, ResultBitsE; // number of fractional (result) bits
 
   /* verilator lint_off WIDTH */
   if (P.FPSIZES == 1)
@@ -75,7 +70,7 @@ module fdivsqrtcycles import cvw::*;  #(parameter cvw_t P) (
   // The datapath produces rk bits per cycle, so Cycles = ceil (ResultBitsE / rk)
 
   always_comb begin 
-    if (SqrtE) FPResultBitsE = Nf + 2 + 0; // Nf + two fractional bits for round/guard + 2 for right shift by up to 2 *** unclear why it works with just +1 and +0 rather than +2; is it related to DIVCOPIES logic below?
+    if (SqrtE) FPResultBitsE = Nf + 2 + 0; // Nf + two fractional bits for round/guard; integer bit implicit
     else       FPResultBitsE = Nf + 2 + P.LOGR; // Nf + two fractional bits for round/guard + integer bits - try this when placing results in msbs
 
     if (P.IDIV_ON_FPU) ResultBitsE = IntDivE ? IntResultBitsE : FPResultBitsE;

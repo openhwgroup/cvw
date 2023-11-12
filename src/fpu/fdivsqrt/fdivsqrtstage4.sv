@@ -27,26 +27,26 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fdivsqrtstage4 import cvw::*;  #(parameter cvw_t P) (
-  input  logic [P.DIVb+3:0] D, DBar, D2, DBar2,
-  input  logic [P.DIVb:0]   U,UM,
-  input  logic [P.DIVb+3:0] WS, WC,
-  input  logic [P.DIVb+1:0] C,
+  input  logic [P.DIVb+3:0] D, DBar, D2, DBar2, // Q4.DIVb
+  input  logic [P.DIVb:0]   U,UM,               // U1.DIVb
+  input  logic [P.DIVb+3:0] WS, WC,             // Q4.DIVb
+  input  logic [P.DIVb+1:0] C,                  // Q2.DIVb
   input  logic             SqrtE, j1,
-  output logic [P.DIVb+1:0] CNext,
+  output logic [P.DIVb+1:0] CNext,              // Q2.DIVb
   output logic             un,
-  output logic [P.DIVb:0]   UNext, UMNext, 
-  output logic [P.DIVb+3:0] WSNext, WCNext
+  output logic [P.DIVb:0]   UNext, UMNext,      // U1.DIVb
+  output logic [P.DIVb+3:0] WSNext, WCNext      // Q4.DIVb
 );
 
-  logic [P.DIVb+3:0]        Dsel;
+  logic [P.DIVb+3:0]        Dsel;               // Q4.DIVb
   logic [3:0]              udigit;
-  logic [P.DIVb+3:0]        F;
-  logic [P.DIVb+3:0]        AddIn;
+  logic [P.DIVb+3:0]        F;                  // Q4.DIVb
+  logic [P.DIVb+3:0]        AddIn;              // Q4.DIVb
   logic [4:0]              Smsbs;
   logic [2:0]              Dmsbs;
   logic [7:0]              WCmsbs, WSmsbs;
   logic                    CarryIn;
-  logic [P.DIVb+3:0]        WSA, WCA;
+  logic [P.DIVb+3:0]        WSA, WCA;           // Q4.DIVb
 
   // Digit Selection logic
   // u encoding:
@@ -55,10 +55,10 @@ module fdivsqrtstage4 import cvw::*;  #(parameter cvw_t P) (
   // 0000 =  0
   // 0010 = -1
   // 0001 = -2
-  assign Smsbs  = U[P.DIVb:P.DIVb-4];
-  assign Dmsbs  = D[P.DIVb-1:P.DIVb-3];
-  assign WCmsbs = WC[P.DIVb+3:P.DIVb-4];
-  assign WSmsbs = WS[P.DIVb+3:P.DIVb-4];
+  assign Smsbs  = U[P.DIVb:P.DIVb-4];       // U1.4 most significant bits of square root
+  assign Dmsbs  = D[P.DIVb-1:P.DIVb-3];     // U0.3 most significant fractional bits of divisor after leading 1
+  assign WCmsbs = WC[P.DIVb+3:P.DIVb-4];    // Q4.4 most significant bits of residual
+  assign WSmsbs = WS[P.DIVb+3:P.DIVb-4];    // Q4.4 most significant bits of residual
 
   fdivsqrtqsel4cmp qsel4(.Dmsbs, .Smsbs, .WSmsbs, .WCmsbs, .SqrtE, .j1, .udigit);
   assign un = 1'b0; // unused for radix 4

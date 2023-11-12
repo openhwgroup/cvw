@@ -115,8 +115,8 @@ module testbenchfp;
    logic 			FlushE;
    logic 			IFDivStartE;
    logic 			FDivDoneE;
-   logic [P.NE+1:0] 		QeM;
-   logic [P.DIVb:0] 		QmM;
+   logic [P.NE+1:0] 		UeM;
+   logic [P.DIVb:0] 		UmM;
    logic [P.XLEN-1:0] 		FIntDivResultM;
    logic 			ResMatch;                   // Check if result match
    logic 			FlagMatch;                  // Check if IEEE flags match
@@ -145,9 +145,12 @@ module testbenchfp;
    
    initial begin
       // Information displayed for user on what is simulating
-      $display("\nThe start of simulation...");      
-      $display("This simulation for TEST is %s", TEST);
-      $display("This simulation for TEST is of the operand size of %s", TEST_SIZE);      
+      //$display("\nThe start of simulation...");      
+      //$display("This simulation for TEST is %s", TEST);
+      //$display("This simulation for TEST is of the operand size of %s", TEST_SIZE);      
+
+      // $display("FPDUR %d %d DIVN %d LOGR %d RK %d RADIX %d DURLEN %d", FPDUR, DIVN, LOGR, RK, RADIX, DURLEN);
+
       if (P.Q_SUPPORTED & (TEST_SIZE == "QP" | TEST_SIZE == "all")) begin // if Quad percision is supported
 	 if (TEST === "cvtint" | TEST === "all") begin  // if testing integer conversion
             // add the 128-bit cvtint tests to the to-be-tested list
@@ -649,7 +652,7 @@ module testbenchfp;
       string tt0;
       tt0 = $psprintf("%s", Tests[TestNum]);
       testname = {pp, tt0};
-      $display("Here you are %s", testname);     
+      //$display("Here you are %s", testname);     
       $display("\n\nRunning %s vectors ", Tests[TestNum]);
       $readmemh(testname, TestVectors);
       // set the test index to 0
@@ -705,7 +708,7 @@ module testbenchfp;
    end
    
    postprocess #(P) postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
-				.OpCtrl(OpCtrlVal), .DivQm(Quot), .DivQe(DivCalcExp),
+				.OpCtrl(OpCtrlVal), .DivUm(Quot), .DivUe(DivCalcExp),
 				.Xm(Xm), .Ym(Ym), .Zm(Zm), .CvtCe(CvtCalcExpE), .DivSticky(DivSticky), .FmaSs(Ss),
 				.XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResSubnormUf(CvtResSubnormUfE),
 				.XZero(XZero), .YZero(YZero), .CvtShiftAmt(CvtShiftAmtE),
@@ -734,8 +737,8 @@ module testbenchfp;
 			     .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), 
 			     .XNaNE(XNaN), .YNaNE(YNaN), 
 			     .FDivStartE(DivStart), .IDivStartE(1'b0), .W64E(1'b0),
-			     .StallM(1'b0), .DivStickyM(DivSticky), .FDivBusyE, .QeM(DivCalcExp),
-			     .QmM(Quot),
+			     .StallM(1'b0), .DivStickyM(DivSticky), .FDivBusyE, .UeM(DivCalcExp),
+			     .UmM(Quot),
 			     .FlushE(1'b0), .ForwardedSrcAE('0), .ForwardedSrcBE('0), .Funct3M(Funct3M),
 			     .Funct3E(Funct3E), .IntDivE(1'b0), .FIntDivResultM(FIntDivResultM),
 			     .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE));

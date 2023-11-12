@@ -27,21 +27,21 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
-  input  logic               clk, reset,
-  input  logic               StallM,
-  input  logic [P.DIVb+3:0]  WS, WC,
-  input  logic [P.DIVb+3:0]  D, 
-  input  logic [P.DIVb:0]    FirstU, FirstUM, 
-  input  logic [P.DIVb+1:0]  FirstC,
-  input  logic               SqrtE,
-  input  logic               Firstun, SqrtM, SpecialCaseM, 
-  input  logic [P.XLEN-1:0]  AM,
-  input  logic               RemOpM, ALTBM, BZeroM, AsM, BsM, W64M,
-  input  logic [P.DIVBLEN:0] IntNormShiftM,
-  output logic [P.DIVb:0]    UmM,               // result significand
-  output logic               WZeroE,
-  output logic               DivStickyM,
-  output logic [P.XLEN-1:0]  FIntDivResultM
+  input  logic                 clk, reset,
+  input  logic                 StallM,
+  input  logic [P.DIVb+3:0]    WS, WC,            // Q4.DIVb
+  input  logic [P.DIVb+3:0]    D,                 // Q4.DIVb
+  input  logic [P.DIVb:0]      FirstU, FirstUM,   // U1.DIVb
+  input  logic [P.DIVb+1:0]    FirstC,            // Q2.DIVb
+  input  logic                 SqrtE,
+  input  logic                 Firstun, SqrtM, SpecialCaseM, 
+  input  logic [P.XLEN-1:0]    AM,                // U/Q(XLEN.0)
+  input  logic                 RemOpM, ALTBM, BZeroM, AsM, BsM, W64M,
+  input  logic [P.DIVBLEN-1:0] IntNormShiftM,     
+  output logic [P.DIVb:0]      UmM,               // U1.DIVb result significand
+  output logic                 WZeroE,
+  output logic                 DivStickyM,
+  output logic [P.XLEN-1:0]    FIntDivResultM     // U/Q(XLEN.0)
 );
   
   logic [P.DIVb+3:0]         W, Sum;
