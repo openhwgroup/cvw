@@ -27,9 +27,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fdivsqrtqsel4cmp (
-  input  logic [2:0] Dmsbs,
-  input  logic [4:0] Smsbs,
-  input  logic [7:0] WSmsbs, WCmsbs,
+  input  logic [2:0] Dmsbs,             // U0.3 fractional bits after implicit leading 1
+  input  logic [4:0] Smsbs,             // U1.4 leading bits of square root approximation
+  input  logic [7:0] WSmsbs, WCmsbs,    // Q4.4
   input  logic       SqrtE, j1,
   output logic [3:0] udigit
 );

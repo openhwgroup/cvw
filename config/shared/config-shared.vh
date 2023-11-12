@@ -93,20 +93,20 @@ localparam NF2   = ((F_SUPPORTED & (LEN1 != S_LEN)) ? S_NF   : H_NF);
 localparam FMT2  = ((F_SUPPORTED & (LEN1 != S_LEN)) ? 2'd0    : 2'd2);
 localparam BIAS2 = ((F_SUPPORTED & (LEN1 != S_LEN)) ? S_BIAS : H_BIAS);
 
-// intermediate division parameters not directly used in Divider
-localparam FPDIVN      = NF+3; // length of floating-point inputs: Ns + 2 = Nf + 3 for 1 integer bit, Nf fracitonal bits, 2 extra bits to shift sqrt into [1/4, 1)]
-localparam DIVN        = ((FPDIVN<XLEN) & IDIV_ON_FPU) ? XLEN : FPDIVN+3; // standard length of input: max(XLEN, NF+2) ***
+// divider r and rk (bits per digit, bits per cycle)
+localparam LOGR        = $clog2(RADIX);                             // r = log(R) bits per digit
+localparam RK          = LOGR*DIVCOPIES;                            // r*k bits per cycle generated
+
+// intermediate division parameters not directly used in fdivsqrt hardware
+localparam FPDIVMINb   = NF + 3; // minimum length of fractional part: Nf result bits + guard and round bits + 1 extra bit because square root could be shifted right *** explain better
+localparam DIVMINb     = ((FPDIVMINb<XLEN) & IDIV_ON_FPU) ? XLEN : FPDIVMINb; // minimum fractional bits b = max(XLEN, FPDIVMINb)
+localparam RESBITS     = DIVMINb + LOGR; // number of bits in a result: r integer + b fractional
 
 // division constants
-
-// *** define NF+2, justify, use in DIVN
-localparam LOGR        = $clog2(RADIX);                             // r = log(R)
-localparam RK          = LOGR*DIVCOPIES;                            // r*k bits per cycle generated
-//localparam FPDUR       = (DIVN+1)/RK + 1 + (RADIX/4);               // *** relate to algorithm for rest of these
-localparam FPDUR       = (DIVN+LOGR-1)/RK + 1 ;               // ceiling((DIVN+LOGR)/RK)
-localparam DURLEN      = $clog2(FPDUR+1);
-localparam DIVb        = FPDUR*RK - 1; // canonical fdiv size (b)
-localparam DIVBLEN     = $clog2(DIVb+2)-1;                          // *** where is 2 coming from?
+localparam FPDUR       = (RESBITS-1)/RK + 1 ;                       // ceiling((r+b)/rk)
+localparam DIVb        = FPDUR*RK - LOGR;                           // divsqrt fractional bits, so total number of bits is a multiple of rk after r integer bits
+localparam DURLEN      = $clog2(FPDUR);                             // enough bits to count the duration
+localparam DIVBLEN     = $clog2(DIVb);                              // enough bits to count number of fractional bits
 
 // largest length in IEU/FPU
 localparam CVTLEN = ((NF<XLEN) ? (XLEN) : (NF));  // max(XLEN, NF)
@@ -114,7 +114,7 @@ localparam LLEN = (($unsigned(FLEN)<$unsigned(XLEN)) ? ($unsigned(XLEN)) : ($uns
 localparam LOGCVTLEN = $unsigned($clog2(CVTLEN+1));
 localparam NORMSHIFTSZ = (((CVTLEN+NF+1)>(DIVb + 1 +NF+1) & (CVTLEN+NF+1)>(3*NF+6)) ? (CVTLEN+NF+1) : ((DIVb + 1 +NF+1) > (3*NF+6) ? (DIVb + 1 +NF+1) : (3*NF+6)));
 localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));
-localparam CORRSHIFTSZ = (((CVTLEN+NF+1)>(DIVb + 1 +NF+1) & (CVTLEN+NF+1)>(3*NF+6)) ? (CVTLEN+NF+1) : ((DIVN+1+NF) > (3*NF+4) ? (DIVN+1+NF) : (3*NF+4)));
+localparam CORRSHIFTSZ = (((CVTLEN+NF+1)>(DIVb + 1 +NF+1) & (CVTLEN+NF+1)>(3*NF+6)) ? (CVTLEN+NF+1) : ((DIVMINb+1+NF) > (3*NF+4) ? (DIVMINb+1+NF) : (3*NF+4)));
 
 
 // Disable spurious Verilator warnings

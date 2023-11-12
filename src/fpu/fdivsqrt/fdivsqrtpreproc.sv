@@ -42,7 +42,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   input  logic                 IntDivE, W64E,
   output logic                 ISpecialCaseE,
   output logic [P.DURLEN-1:0]  CyclesE,
-  output logic [P.DIVBLEN:0]   IntNormShiftM,
+  output logic [P.DIVBLEN-1:0] IntNormShiftM,
   output logic                 ALTBM, IntDivM, W64M,
   output logic                 AsM, BsM, BZeroM,
   output logic [P.XLEN-1:0]    AM
@@ -53,8 +53,8 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   logic [P.DIVb+3:0]           DivX, DivXShifted, SqrtX, PreShiftX; // Variations of dividend, to be muxed
   logic [P.NE+1:0]             UeE;                                 // Result Exponent (FP only)
   logic [P.DIVb:0]             IFX, IFD;                            // Correctly-sized inputs for iterator, selected from int or fp input
-  logic [P.DIVBLEN:0]          mE, ell;                             // Leading zeros of inputs
-  logic [P.DIVBLEN:0]          IntResultBitsE;                      // bits in integer result
+  logic [P.DIVBLEN-1:0]        mE, ell;                             // Leading zeros of inputs
+  logic [P.DIVBLEN-1:0]        IntResultBitsE;                      // bits in integer result
   logic                        NumerZeroE;                          // Numerator is zero (X or A)
   logic                        AZeroE, BZeroE;                      // A or B is Zero for integer division
   logic                        SignedDivE;                          // signed division
@@ -118,12 +118,12 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   //////////////////////////////////////////////////////
 
   if (P.IDIV_ON_FPU) begin:intrightshift // Int Supported
-    logic [P.DIVBLEN:0] ZeroDiff, p;
+    logic [P.DIVBLEN-1:0] ZeroDiff, p;
 
     // calculate number of fractional bits p
     assign ZeroDiff = mE - ell;         // Difference in number of leading zeros
-    assign ALTBE = ZeroDiff[P.DIVBLEN];  // A less than B (A has more leading zeros)
-    mux2 #(P.DIVBLEN+1) pmux(ZeroDiff, '0, ALTBE, p);          
+    assign ALTBE = ZeroDiff[P.DIVBLEN-1];  // A less than B (A has more leading zeros)
+    mux2 #(P.DIVBLEN) pmux(ZeroDiff, '0, ALTBE, p);          
 
     /* verilator lint_off WIDTH */
     assign IntResultBitsE = P.LOGR + p;  // Total number of result bits (r integer bits plus p fractional bits)
@@ -192,7 +192,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   fdivsqrtcycles #(P) cyclecalc(.FmtE, .SqrtE, .IntDivE, .IntResultBitsE, .CyclesE);
 
   if (P.IDIV_ON_FPU) begin:intpipelineregs
-    logic [P.DIVBLEN:0] IntDivNormShiftE, IntRemNormShiftE, IntNormShiftE;
+    logic [P.DIVBLEN-1:0] IntDivNormShiftE, IntRemNormShiftE, IntNormShiftE;
     logic               RemOpE;
 
     /* verilator lint_off WIDTH */
@@ -200,7 +200,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     assign IntRemNormShiftE = mE + (P.DIVb-(P.XLEN-1));           // m + b - (N-1) for remainder normalization shift
     /* verilator lint_on WIDTH */
     assign RemOpE = Funct3E[1];
-    mux2 #(P.DIVBLEN+1) normshiftmux(IntDivNormShiftE, IntRemNormShiftE, RemOpE, IntNormShiftE);
+    mux2 #(P.DIVBLEN) normshiftmux(IntDivNormShiftE, IntRemNormShiftE, RemOpE, IntNormShiftE);
 
     // pipeline registers
     flopen #(1)          mdureg(clk, IFDivStartE, IntDivE,  IntDivM);
@@ -208,7 +208,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     flopen #(1)        bzeroreg(clk, IFDivStartE, BZeroE,   BZeroM);
     flopen #(1)        asignreg(clk, IFDivStartE, AsE,      AsM);
     flopen #(1)        bsignreg(clk, IFDivStartE, BsE,      BsM);
-    flopen #(P.DIVBLEN+1) nsreg(clk, IFDivStartE, IntNormShiftE, IntNormShiftM); 
+    flopen #(P.DIVBLEN)   nsreg(clk, IFDivStartE, IntNormShiftE, IntNormShiftM); 
     flopen #(P.XLEN)    srcareg(clk, IFDivStartE, AE,       AM);
     if (P.XLEN==64) 
       flopen #(1)        w64reg(clk, IFDivStartE, W64E,     W64M);
