@@ -104,14 +104,14 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
     for(i=0; $unsigned(i)<P.DIVCOPIES; i++) begin : iterations
       if (P.RADIX == 2) begin: stage
         fdivsqrtstage2 #(P) fdivsqrtstage(.D, .DBar, .SqrtE,
-        .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]),
-        .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
+          .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]),
+          .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
       end else begin: stage
         logic j1;
         assign j1 = (i == 0 & ~C[0][P.DIVb-1]);
         fdivsqrtstage4 #(P) fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtE, .j1,
-        .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]), 
-        .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
+          .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]), 
+          .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
       end
       assign WS[i+1] = WSNext[i];
       assign WC[i+1] = WCNext[i];

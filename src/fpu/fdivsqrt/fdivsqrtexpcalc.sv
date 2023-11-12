@@ -28,17 +28,19 @@
 
 module fdivsqrtexpcalc import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.FMTBITS-1:0] Fmt,
-  input  logic [P.NE-1:0]      Xe, Ye,
+  input  logic [P.NE-1:0]      Xe, Ye,    // input exponents
   input  logic                 Sqrt,
   input  logic                 XZero, 
-  input  logic [P.DIVBLEN-1:0] ell, m,
-  output logic [P.NE+1:0]      Ue
+  input  logic [P.DIVBLEN-1:0] ell, m,    // number of leading 0s in Xe and Ye
+  output logic [P.NE+1:0]      Ue         // result exponent
   );
   
   logic [P.NE-2:0] Bias;
   logic [P.NE+1:0] SXExp;
   logic [P.NE+1:0] SExp;
   logic [P.NE+1:0] DExp;
+
+  // Determine exponent bias according to the format
   
   if (P.FPSIZES == 1) begin
     assign Bias = (P.NE-1)'(P.BIAS); 

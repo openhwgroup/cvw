@@ -30,7 +30,7 @@ module fdivsqrtcycles import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.FMTBITS-1:0] FmtE,
   input  logic                 SqrtE,
   input  logic                 IntDivE,
-  input  logic [P.DIVBLEN-1:0] IntResultBitsE,
+  input  logic [P.DIVBLEN-1:0] IntResultBitsE,    
   output logic [P.DURLEN-1:0]  CyclesE
 );
 
