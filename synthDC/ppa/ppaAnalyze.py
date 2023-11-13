@@ -38,7 +38,7 @@ def synthsintocsv():
         each line contains the module, tech, width, target freq, and resulting metrics
     '''
     print("This takes a moment...")
-    bashCommand = "find . -path '*runs/ppa*' -prune"
+    bashCommand = "find . -path '*runs/*' -prune"
     output = subprocess.check_output(['bash','-c', bashCommand])
     allSynths = output.decode("utf-8").split('\n')[:-1]
 
@@ -50,7 +50,7 @@ def synthsintocsv():
     writer.writerow(['Module', 'Tech', 'Width', 'Target Freq', 'Delay', 'Area', 'L Power (nW)', 'D energy (nJ)'])
 
     for oneSynth in allSynths:
-        module, width, risc, tech, freq = specReg.findall(oneSynth)[2:7]
+        module, width, risc, tech, freq = specReg.findall(oneSynth)[1:6]
         metrics = []
         for phrase in [['Path Slack', 'qor'], ['Design Area', 'qor'], ['100', 'power']]:
             bashCommand = 'grep "{}" '+ oneSynth[2:]+'/reports/*{}*'
@@ -86,7 +86,7 @@ def cleanup():
             output = subprocess.check_output(['bash','-c', bc])
     except: pass
 
-    bashCommand = "find . -path '*runs/ppa*' -prune"
+    bashCommand = "find . -path '*runs/*' -prune"
     output = subprocess.check_output(['bash','-c', bashCommand])
     allSynths = output.decode("utf-8").split('\n')[:-1]
     for oneSynth in allSynths:
