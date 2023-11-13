@@ -103,7 +103,7 @@ module fdivsqrtuslc4 (
     if (Sqrt) begin 
       if (j1) A = 3'b101;                       // on first sqrt iteration        A = .101
       else if (Smsbs == 5'b10000) A = 3'b111;   // if S = 1.0, use                A = .111
-      else A = Smsbs[2:0];                      // otherwise use                  A = S (in U0.3 format)
+      else A = Smsbs[2:0];                      // otherwise use                  A = 2S (in U0.3 format)
     end else A = Dmsbs;                         // division Unless                A = D (IN U0.3 format, dropping leading 1)
 
   // Select quotient digit from lookup table based on A and W
