@@ -168,14 +168,20 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   // This also means only one extra fractional bit is needed becaue we never shift right by more than 1.
   // Radix      Exponent odd          Exponent Even
   // 2          x-2 = 2(x/2 - 1)      x/2 - 2 = 2(x/4 - 1)
-  // 4          2x-4 = 4(x/2 - 1))    x-4 = 4(x/4 - 1)
+  // 4          2(x)-4 = 4(x/2 - 1))  2(x/2)-4 = 4(x/4 - 1)
   // Summary: PreSqrtX = r(x/2or4 - 1)
 
+  logic [P.DIVb:0] PreSqrtX;
   assign EvenExp = Xe[0] ^ ell[0]; // effective unbiased exponent after normalization is even
-/*  mux2 #(P.DIVb+1) sqrtxmux(Xnorm, {1'b0, Xnorm[P.DIVb:1]}, EvenExp, PreSqrtX); // X if exponent odd, X/2 if exponent even
+  mux2 #(P.DIVb+1) sqrtxmux(Xnorm, {1'b0, Xnorm[P.DIVb:1]}, EvenExp, PreSqrtX); // X if exponent odd, X/2 if exponent even
   if (P.RADIX == 2) assign SqrtX = {3'b111, PreSqrtX};                          // PreSqrtX - 2 = 2(PreSqrtX/2 - 1)
-  else              assign SqrtX = {2'b11, PreSqrtX, 1'b0};                     // 2PreSqrtX - 4 = 4(PreSqrtX/2 - 1) */
+  else              assign SqrtX = {2'b11, PreSqrtX, 1'b0};                     // 2PreSqrtX - 4 = 4(PreSqrtX/2 - 1) 
 
+/*  
+  // Attempt to optimize radix 4 to use a left shift by 1 or zero initially, followed by no more left shift
+  // This saves one bit in DIVb because there is no initial right shift.
+  // However, C needs to be extended further, lest it create a k with a 1 in the lsb when C is all 1s.
+  // That is an optimization for another day.
   if (P.RADIX == 2) begin
     logic [P.DIVb:0] PreSqrtX;    // U1.DIVb
     mux2 #(P.DIVb+1) sqrtxmux(Xnorm, {1'b0, Xnorm[P.DIVb:1]}, EvenExp, PreSqrtX); // X if exponent odd, X/2 if exponent even
@@ -185,6 +191,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     mux2 #(P.DIVb+2) sqrtxmux({Xnorm, 1'b0}, {1'b0, Xnorm}, EvenExp, PreSqrtX); // 2X if exponent odd, X if exponent even
     assign SqrtX = {2'b11, PreSqrtX};                     // PreSqrtX - 4 = 4(PreSqrtX/4 - 1)
   end
+*/
 
   // Initialize X for division or square root
   mux2 #(P.DIVb+4) prexmux(DivX, SqrtX, SqrtE, PreShiftX);                    
