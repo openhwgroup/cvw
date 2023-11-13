@@ -32,6 +32,19 @@ def freqSweep(module, width, tech):
                 synthsToRun += [[synth.module, str(synth.width), synth.tech, str(freq)]]
     return synthsToRun
 
+def freqModuleSweep(widths, modules, tech):
+    synthsToRun = []
+    arr = [-8, -6, -4, -2, 0, 2, 4, 6, 8]
+    allSynths = synthsfromcsv('ppa/bestSynths.csv')
+    for w in widths:
+        for module in modules:
+            for synth in allSynths:
+                if (synth.module == str(module)) & (synth.tech == tech) & (synth.width == w):
+                    f = 1000/synth.delay
+                    for freq in [round(f+f*x/100) for x in arr]:
+                        synthsToRun += [[synth.module, str(synth.width), synth.tech, str(freq)]]
+    return synthsToRun
+
 def filterRedundant(synthsToRun):
     bashCommand = "find . -path '*runs/ppa*rv32e*' -prune"
     output = subprocess.check_output(['bash','-c', bashCommand])
@@ -57,7 +70,7 @@ def allCombos(widths, modules, techs, freqs):
 
 if __name__ == '__main__':
     
-    ##### Run specific syntheses
+    ##### Run specific syntheses for a specific frequency
 	widths = [8, 16, 32, 64, 128] 
 	modules = ['mul', 'adder', 'shifter', 'flop', 'comparator', 'binencoder', 'csa', 'mux2', 'mux4', 'mux8']
 	techs = ['sky90', 'sky130', 'tsmc28', 'tsmc28psyn']
@@ -69,9 +82,16 @@ if __name__ == '__main__':
 	width = 32
 	tech = 'tsmc28psyn'
 	synthsToRun = freqSweep(module, width, tech)
+
+    ##### Run a sweep for multiple modules/widths based on best delay found in existing syntheses
+	modules = ['adder', 'comparator']
+	widths = [64, 128] 
+	tech = 'sky130'
+	synthsToRun = freqModuleSweep(widths, modules, tech)	
         
     ##### Only do syntheses for which a run doesn't already exist
 	synthsToRun = filterRedundant(synthsToRun)
 	
 	pool = Pool(processes=25)
-	pool.starmap(runCommand, synthsToRun)
+
+pool.starmap(runCommand, synthsToRun)
