@@ -38,7 +38,7 @@ def synthsintocsv():
         each line contains the module, tech, width, target freq, and resulting metrics
     '''
     print("This takes a moment...")
-    bashCommand = "find . -path '*runs/ppa*rv32e*' -prune"
+    bashCommand = "find . -path '*runs/ppa*' -prune"
     output = subprocess.check_output(['bash','-c', bashCommand])
     allSynths = output.decode("utf-8").split('\n')[:-1]
 
@@ -51,7 +51,6 @@ def synthsintocsv():
 
     for oneSynth in allSynths:
         module, width, risc, tech, freq = specReg.findall(oneSynth)[2:7]
-        tech = tech[:-2]
         metrics = []
         for phrase in [['Path Slack', 'qor'], ['Design Area', 'qor'], ['100', 'power']]:
             bashCommand = 'grep "{}" '+ oneSynth[2:]+'/reports/*{}*'
@@ -87,7 +86,7 @@ def cleanup():
             output = subprocess.check_output(['bash','-c', bc])
     except: pass
 
-    bashCommand = "find . -path '*runs/ppa*rv32e*' -prune"
+    bashCommand = "find . -path '*runs/ppa*' -prune"
     output = subprocess.check_output(['bash','-c', bashCommand])
     allSynths = output.decode("utf-8").split('\n')[:-1]
     for oneSynth in allSynths:
@@ -186,7 +185,7 @@ def genLegend(fits, coefs, r2=None, spec=None, ale=False):
         legend_elements += [lines.Line2D([0], [0], color=spec.color, ls='', marker=spec.shape, label='$R^2$='+ str(round(r2, 4)))]
         return legend_elements
 
-def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True, color=None):
+def oneMetricPlot(module, widths, var, freq=None, ax=None, fits='clsgn', norm=True, color=None):
     ''' module: string module name
         freq: int freq (MHz)
         var: string delay, area, lpower, or denergy
@@ -519,7 +518,7 @@ def squarify(fig):
         l = (1.-axs/h)/2
         fig.subplots_adjust(bottom=l, top=1-l)
 
-def plotPPA(mod, freq=None, norm=True, aleOpt=False):
+def plotPPA(mod, widths, freq=None, norm=True, aleOpt=False):
     ''' for the module specified, plots width vs delay, area, leakage power, and dynamic energy with fits
         if no freq specified, uses the synthesis with best achievable delay for each width
         overlays data from both techs
@@ -539,7 +538,7 @@ def plotPPA(mod, freq=None, norm=True, aleOpt=False):
                 if (arr[i][j]=='delay') and (f==10):
                     pass
                 else:
-                    r2 = oneMetricPlot(mod, arr[i][j], ax=axs[i, j], freq=f, norm=norm)
+                    r2 = oneMetricPlot(mod, widths, arr[i][j], ax=axs[i, j], freq=f, norm=norm)
                     ls = '--' if f else '-'
                     leg += [lines.Line2D([0], [0], color='red', label='$R^2$='+str(round(r2, 4)), linestyle=ls)]
 
@@ -568,6 +567,7 @@ def makeLineLegend():
     fullLeg = [lines.Line2D([0], [0], color='black', label='fastest', linestyle='-')]
     fullLeg += [lines.Line2D([0], [0], color='black', label='smallest', linestyle='--')]
     fullLeg += [lines.Line2D([0], [0], color='blue', label='tsmc28', marker='^')]
+    fullLeg += [lines.Line2D([0], [0], color='blue', label='tsmc28psyn', marker='x')]	
     fullLeg += [lines.Line2D([0], [0], color='green', label='sky90', marker='o')]
     fullLeg += [lines.Line2D([0], [0], color='green', label='sky130', marker='+')]	
     fullLeg += [lines.Line2D([0], [0], color='red', label='combined', marker='_')]
@@ -694,7 +694,7 @@ def makePlotDirectory():
             os.makedirs(new_directory)
         os.chdir(new_directory)
         if 'freq' in folder:
-            for tech in ['sky90', 'sky130', 'tsmc28']:
+            for tech in ['sky90', 'sky130', 'tsmc28', 'tsmc28psyn']:
                 for mod in modules:
                     tech_directory = os.path.join(new_directory, tech)
                     mod_directory = os.path.join(tech_directory, mod)
@@ -707,24 +707,26 @@ def makePlotDirectory():
 if __name__ == '__main__':
     ##############################
     # set up stuff, global variables
-	widths = [8, 16, 32, 64, 128]
-    modules = ['priorityencoder', 'add', 'csa', 'shiftleft', 'comparator', 'flop', 'mux2', 'mux4', 'mux8', 'mult'] 
-    normAddWidth = 32 # divisor to use with N since normalizing to add_32
+	widths = [64, 128]
+	modules = ['adder', 'comparator']
 
-    fitDict = {'add': ['cg', 'l', 'l'], 'mult': ['cg', 's', 's'], 'comparator': ['cg', 'l', 'l'], 'csa': ['c', 'l', 'l'], 'shiftleft': ['cg', 'l', 'ln'], 'flop': ['c', 'l', 'l'], 'priorityencoder': ['cg', 'l', 'l']}  fitDict.update(dict.fromkeys(['mux2', 'mux4', 'mux8'], ['cg', 'l', 'l']))
+	normAddWidth = 32 # divisor to use with N since normalizing to add_32
 
-    TechSpec = namedtuple("TechSpec", "tech color shape delay area lpower denergy")
-    techSpecs = [['sky90', 'green', 'o', 43.2e-3, 1440.600027, 714.057, 0.658022690438],  ['sky130', 'red', 'o', 43.2e-3, 1440.600027, 714.057, 0.658022690438], ['tsmc28', 'blue', '^', 12.2e-3, 209.286002, 1060.0, .08153281695882594]]
-    techSpecs = [TechSpec(*t) for t in techSpecs]
-    combined = TechSpec('combined fit', 'red', '_', 0, 0, 0, 0)
+	fitDict = {'adder': ['cg', 'l', 'l'], 'mul': ['cg', 's', 's'], 'comparator': ['cg', 'l', 'l'], 'csa': ['c', 'l', 'l'], 'shifter': ['cg', 'l', 'ln'], 'flop': ['c', 'l', 'l'], 'binencoder': ['cg', 'l', 'l']}
+	fitDict.update(dict.fromkeys(['mux2', 'mux4', 'mux8'], ['cg', 'l', 'l']))
+
+	TechSpec = namedtuple("TechSpec", "tech color shape delay area lpower denergy")
+	techSpecs = [['sky90', 'green', 'o', 43.2e-3, 1440.600027, 714.057, 0.658022690438],  ['sky130', 'red', 'o', 43.2e-3, 1440.600027, 714.057, 0.658022690438], ['tsmc28', 'blue', '^', 12.2e-3, 209.286002, 1060.0, .08153281695882594], ['tsmc28psyn', 'blue', '^', 12.2e-3, 209.286002, 1060.0, .08153281695882594]]
+	techSpecs = [TechSpec(*t) for t in techSpecs]
+	combined = TechSpec('combined fit', 'red', '_', 0, 0, 0, 0)
     ##############################
 
     # cleanup() # run to remove garbage synth runs
-    synthsintocsv() # slow, run only when new synth runs to add to csv
+	synthsintocsv() # slow, run only when new synth runs to add to csv
   
-    allSynths = synthsfromcsv('ppaData.csv') # your csv here!
-    bestSynths = csvOfBest('bestSynths.csv')
-    makePlotDirectory()
+	allSynths = synthsfromcsv('ppaData.csv') # your csv here!
+	bestSynths = csvOfBest('bestSynths.csv')
+	makePlotDirectory()
 
     # ### other functions
     # makeCoefTable()
@@ -732,11 +734,12 @@ if __name__ == '__main__':
     # muxPlot()
     # stdDevError()
 
-    for mod in modules:
-        for w in widths:
-            freqPlot('sky90', mod, w)
-            #freqPlot('sky130', mod, w)			
-            #freqPlot('tsmc28', mod, w)
-        #plotPPA(mod, norm=False)
-        #plotPPA(mod, aleOpt=True)
-        plt.close('all')
+	for mod in modules:
+		for w in widths:
+			#freqPlot('sky90', mod, w)
+			freqPlot('sky130', mod, w)			
+			#freqPlot('tsmc28', mod, w)
+			#freqPlot('tsmc28psyn', mod, w)			
+			#plotPPA(mod, widths, norm=False)
+			#plotPPA(mod, aleOpt=True)
+			plt.close('all')

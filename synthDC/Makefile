@@ -11,7 +11,7 @@ export MOD ?= orig
 # title to add a note in the synth's directory name
 TITLE = 
 # tsmc28, sky130, and sky90 presently supported
-export TECH ?= sky90
+export TECH ?= sky130
 # MAXCORES allows parallel compilation, which is faster but less CPU-efficient
 # Avoid when doing sweeps of many optimization points in parallel
 export MAXCORES ?= 1
@@ -24,7 +24,7 @@ export WIDTH ?= 32
 
 time := $(shell date +%F-%H-%M)
 hash := $(shell git rev-parse --short HEAD)
-export OUTPUTDIR := runs/$(DESIGN)_$(WIDTH)_$(CONFIG)_$(MOD)_$(TECH)_$(FREQ)_MHz_$(time)_$(TITLE)_$(hash)
+export OUTPUTDIR := runs/ppa_$(DESIGN)_$(WIDTH)_$(CONFIG)_$(TECH)_$(FREQ)_MHz_$(time)_$(TITLE)_$(hash)
 export SAIFPOWER ?= 0
 
 OLDCONFIGDIR ?= ${WALLY}/config
