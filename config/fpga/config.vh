@@ -28,8 +28,6 @@
 // include shared configuration
 `include "BranchPredictorType.vh"
 
-localparam FPGA = 1;
-
 // RV32 or RV64: XLEN = 32 or 64
 localparam XLEN = 32'd64;
 
@@ -107,10 +105,12 @@ localparam logic [63:0] IROM_RANGE =      64'h00001FFF;
 localparam BOOTROM_SUPPORTED = 1'b1;
 localparam logic [63:0] BOOTROM_BASE =   64'h00001000;
 localparam logic [63:0] BOOTROM_RANGE =  64'h00000FFF;
+localparam BOOTROM_PRELOAD = 1'b1;
 
 localparam UNCORE_RAM_SUPPORTED = 1'b1;
 localparam logic [63:0] UNCORE_RAM_BASE =       64'h00002000;
 localparam logic [63:0] UNCORE_RAM_RANGE =      64'h00000FFF;
+localparam UNCORE_RAM_PRELOAD = 1'b1;
 
 localparam EXT_MEM_SUPPORTED = 1'b1;
 localparam logic [63:0] EXT_MEM_BASE =       64'h80000000;
