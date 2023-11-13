@@ -33,8 +33,8 @@ module fdivsqrtstage2 import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.DIVb:0]   U, UM,          // U1.DIVb
   input  logic [P.DIVb+3:0] WS, WC,         // Q4.DIVb
   input  logic [P.DIVb+1:0] C,              // Q2.DIVb
-  input  logic             SqrtE,
-  output logic             un,
+  input  logic              SqrtE,
+  output logic              un,
   output logic [P.DIVb+1:0] CNext,          // Q2.DIVb
   output logic [P.DIVb:0]   UNext, UMNext,  // U1.DIVb
   output logic [P.DIVb+3:0] WSNext, WCNext  // Q4.DIVb
@@ -42,20 +42,14 @@ module fdivsqrtstage2 import cvw::*;  #(parameter cvw_t P) (
  /* verilator lint_on UNOPTFLAT */
 
   logic [P.DIVb+3:0]        Dsel;     // Q4.DIVb
-  logic                    up, uz;
+  logic                     up, uz;
   logic [P.DIVb+3:0]        F;        // Q4.DIVb
   logic [P.DIVb+3:0]        AddIn;    // Q4.DIVb
   logic [P.DIVb+3:0]        WSA, WCA; // Q4.DIVb
 
-  // Qmient Selection logic
+  // Quotient Selection logic
   // Given partial remainder, select digit of +1, 0, or -1 (up, uz, un)
-  // q encoding:
-  // 1000 = +2
-  // 0100 = +1
-  // 0000 =  0
-  // 0010 = -1
-  // 0001 = -2
-  fdivsqrtqsel2 qsel2(WS[P.DIVb+3:P.DIVb], WC[P.DIVb+3:P.DIVb], up, uz, un);
+  fdivsqrtuslc2 uslc2(.WS(WS[P.DIVb+3:P.DIVb]), .WC(WC[P.DIVb+3:P.DIVb]), .up, .uz, .un);
 
   // Sqrt F generation.  Extend C, U, UM to Q4.k
   fdivsqrtfgen2 #(P) fgen2(.up, .uz, .C({2'b11, CNext}), .U({3'b000, U}), .UM({3'b000, UM}), .F);
@@ -66,7 +60,7 @@ module fdivsqrtstage2 import cvw::*;  #(parameter cvw_t P) (
     else if (uz) Dsel = '0;
     else         Dsel = D; // un
 
-  // Partial Product Generation
+  // Residual Update
   //  WSA, WCA = WS + WC - qD
   mux2 #(P.DIVb+4) addinmux(Dsel, F, SqrtE, AddIn);
   csa #(P.DIVb+4) csa(WS, WC, AddIn, up&~SqrtE, WSA, WCA);

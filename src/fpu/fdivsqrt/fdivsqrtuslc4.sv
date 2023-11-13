@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// fdivsqrtqsel4.sv
+// fdivsqrtuslc4.sv
 //
 // Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu 
 // Modified:13 January 2022
 //
-// Purpose: Radix 4 Quotient Digit Selection
+// Purpose: Table-based Radix 4 Unified Quotient/Square Root Digit Selection
 // 
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
@@ -26,25 +26,25 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module fdivsqrtqsel4 (
-  input  logic [2:0] Dmsbs,
-  input  logic [4:0] Smsbs,
-  input  logic [7:0] WSmsbs, WCmsbs,
+module fdivsqrtuslc4 (
+  input  logic [2:0] Dmsbs,             // U0.3 fractional bits after implicit leading 1
+  input  logic [4:0] Smsbs,             // U1.4 leading bits of square root approximation
+  input  logic [7:0] WSmsbs, WCmsbs,    // Q4.4 redundant residual most significant bits
   input  logic       Sqrt, j1,
-  output logic [3:0] udigit
+  output logic [3:0] udigit             // {2, 1, -1, -2} digit is 0 if none are hot
 );
-  logic [6:0] Wmsbs;
-  logic [7:0] PreWmsbs;
-  logic [2:0] A;
+  logic [7:0] PreWmsbs;                 // Q4.4 nonredundant residual msbs
+  logic [6:0] Wmsbs;                    // Q4.3 truncated nonredundant residual
+  logic [2:0] A;                        // U0.3 upper bits of D or Smsbs, discarding integer bit
 
-  assign PreWmsbs = WCmsbs + WSmsbs;
-  assign Wmsbs = PreWmsbs[7:1];
+  assign PreWmsbs = WCmsbs + WSmsbs;    // add redundant residual to find msbs
+  assign Wmsbs = PreWmsbs[7:1];         // truncate least significant bit to Q4.3 to index table
   // D = 0001.xxx...
   // Dmsbs = |   |
   // W =      xxxx.xxx...
   // Wmsbs = |        |
 
-  logic [3:0] USel4[1023:0];
+  logic [3:0] USel4[1023:0];            // 1024-bit table indexed with 3 bits of A and 7 bits of Wmsbs
 
   // Prepopulate selection table; this is constant at compile time
   always_comb begin 
@@ -101,10 +101,10 @@ module fdivsqrtqsel4 (
   // Select A
   always_comb
     if (Sqrt) begin 
-      if (j1) A = 3'b101;
-      else if (Smsbs == 5'b10000) A = 3'b111;
-      else A = Smsbs[2:0];
-    end else A = Dmsbs;
+      if (j1) A = 3'b101;                       // on first sqrt iteration        A = .101
+      else if (Smsbs == 5'b10000) A = 3'b111;   // if S = 1.0, use                A = .111
+      else A = Smsbs[2:0];                      // otherwise use                  A = 2S (in U0.3 format)
+    end else A = Dmsbs;                         // division Unless                A = D (IN U0.3 format, dropping leading 1)
 
   // Select quotient digit from lookup table based on A and W
   assign udigit = USel4[{A,Wmsbs}];

@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// fdivsqrtqsel2.sv
+// fdivsqrtuslc2.sv
 //
 // Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu 
 // Modified:13 January 2022
 //
-// Purpose: Radix 2 Quotient Digit Selection
+// Purpose: Radix 2 Unified Quotient/Square Root Digit Selection
 // 
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
@@ -18,7 +18,7 @@
 // except in compliance with the License, or, at your option, the Apache License version 2.0. You 
 // may obtain a copy of the License at
 //
-// https://solderpad.org/licenses/SHL-2.1/
+// httWS://solderpad.org/licenses/SHL-2.1/
 //
 // Unless required by applicable law or agreed to in writing, any work distributed under the 
 // License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
@@ -26,31 +26,26 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module fdivsqrtqsel2 ( 
-  input  logic [3:0] ps, pc, 
-  output logic       up, uz, un
+module fdivsqrtuslc2 ( 
+  input  logic [3:0] WS, WC,      // Q4.0 most significant bits of redundant residual
+  output logic       up, uz, un   // {+1, 0, -1}
 );
  
-  logic [3:0]  p, g;
-  logic        magnitude, sign;
+  logic        sign;
+
+  // Carry chain logic determines if W = WS + WC = -1, < -1, > -1 to choose 0, -1, 1 respectively
  
-  // The quotient selection logic is presented for simplicity, not
-  // for efficiency.  You can probably optimize your logic to
-  // select the proper divisor with less delay.
+  //if p2 * p1 * p0, W = -1 and choose digit of 0
+  assign uz = ((WS[2]^WC[2]) & (WS[1]^WC[1]) & 
+        (WS[0]^WC[0]));
 
-  // Quotient equations from EE371 lecture notes 13-20
-  assign p = ps ^ pc;
-  assign g = ps & pc;
-
-  assign magnitude = ~((ps[2]^pc[2]) & (ps[1]^pc[1]) & 
-        (ps[0]^pc[0]));
-  assign sign = (ps[3]^pc[3])^
-      (ps[2] & pc[2] | ((ps[2]^pc[2]) &
-          (ps[1]&pc[1] | ((ps[1]^pc[1]) &
-            (ps[0]&pc[0])))));
+  // Otherwise determine sign using carry chain: sign = p3 ^ g_2:0
+  assign sign = (WS[3]^WC[3])^
+      (WS[2] & WC[2] | ((WS[2]^WC[2]) &
+          (WS[1]&WC[1] | ((WS[1]^WC[1]) &
+            (WS[0]&WC[0])))));
 
   // Produce digit = +1, 0, or -1
-  assign up = magnitude & ~sign;
-  assign uz = ~magnitude;
-  assign un = magnitude & sign;
+  assign up = ~uz & ~sign;
+  assign un = ~uz & sign;
 endmodule

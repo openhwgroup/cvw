@@ -57,7 +57,7 @@ module fdivsqrtfsm import cvw::*;  #(parameter cvw_t P) (
   // terminate immediately on special cases
   assign FSpecialCaseE = XZeroE | XInfE  | XNaNE |  (XsE&SqrtE) | (YZeroE | YInfE | YNaNE)&~SqrtE;
   if (P.IDIV_ON_FPU) assign SpecialCaseE = IntDivE ? ISpecialCaseE : FSpecialCaseE;
-  else              assign SpecialCaseE = FSpecialCaseE;
+  else               assign SpecialCaseE = FSpecialCaseE;
   flopenr #(1) SpecialCaseReg(clk, reset, IFDivStartE, SpecialCaseE, SpecialCaseM); // save SpecialCase for checking in fdivsqrtpostproc
 
   always_ff @(posedge clk) begin
