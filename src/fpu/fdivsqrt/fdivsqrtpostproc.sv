@@ -86,9 +86,10 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
   //////////////////////////
 
   //  If the result is not exact, the sticky should be set
-  assign DivStickyM = ~WZeroM & ~(SpecialCaseM & SqrtM); // ***unsure why SpecialCaseM has to be gated by SqrtM, but otherwise fails regression on divide
+//  assign DivStickyM = ~WZeroM & ~(SpecialCaseM & SqrtM); // ***unsure why SpecialCaseM has to be gated by SqrtM, but otherwise fails regression on divide
+  assign DivStickyM = ~WZeroM & ~(SpecialCaseM); 
 
-  // Determine if sticky bit is negative  // *** look for ways to optimize this.  Shift shouldn't be needed.
+  // Determine if sticky bit is negative 
   assign Sum = WC + WS;
   assign NegStickyM = Sum[P.DIVb+3];
   mux2 #(P.DIVb+1) preummux(FirstU, FirstUM, NegStickyM, PreUmM); // Select U or U-1 depending on negative sticky bit
