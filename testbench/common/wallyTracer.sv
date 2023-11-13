@@ -267,6 +267,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   flopenrc #(1)     TrapWReg (clk, reset, 1'b0, ~StallW, TrapM, TrapW);
   flopenrc #(1)     HaltWReg (clk, reset, 1'b0, ~StallW, HaltM, HaltW);
 
+  // **** remove?  are these used?
   flopenrc #(1)     IntrFReg (clk, reset, 1'b0, ~StallF, TrapM, IntrF);
   flopenrc #(1)     IntrDReg (clk, reset, FlushD, ~StallD, IntrF, IntrD);
   flopenrc #(1)     IntrEReg (clk, reset, FlushE, ~StallE, IntrD, IntrE);
@@ -285,9 +286,9 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   assign rvvi.order[0][0]    = CSRArray[12'hB02];  // TODO: IMPERAS Should be event order
   assign rvvi.insn[0][0]     = InstrRawW;
   assign rvvi.pc_rdata[0][0] = PCW;
-  assign rvvi.trap[0][0]     = 0; // TODO: IMPERAS TrapW;
+  assign rvvi.trap[0][0]     = 0;
   assign rvvi.halt[0][0]     = HaltW;
-  assign rvvi.intr[0][0]     = IntrW;
+  assign rvvi.intr[0][0]     = 0;
   assign rvvi.mode[0][0]     = PrivilegeModeW;
   assign rvvi.ixl[0][0]      = PrivilegeModeW == 2'b11 ? 2'b10 :
 					           PrivilegeModeW == 2'b01 ? STATUS_SXL : STATUS_UXL;
