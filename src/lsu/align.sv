@@ -73,26 +73,13 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   localparam LLENINBYTES = P.LLEN/8;
   logic [P.XLEN-1:0]     IEUAdrIncrementM;
-  logic [3:0]            IncrementAmount;
 
   logic [(P.LLEN-1)*2/8:0] ByteMaskSaveM;
   logic [(P.LLEN-1)*2/8:0] ByteMaskMuxM;
   logic                    SaveByteMask;
 
-/* -----\/----- EXCLUDED -----\/-----
-  always_comb begin
-    case(Funct3M)
-      2'b00: IncrementAmount = 4'd0;
-      2'b01: IncrementAmount = 4'd1;
-      2'b10: IncrementAmount = 4'd3;
-      2'b11: IncrementAmount = 4'd7;
-      default: IncrementAmount = 4'd7;
-    endcase
-  end
- -----/\----- EXCLUDED -----/\----- */
   /* verilator lint_off WIDTHEXPAND */
   assign IEUAdrIncrementM = IEUAdrM + LLENINBYTES;
-  //assign IEUAdrIncrementM = IEUAdrM + IncrementAmount;
   /* verilator lint_on WIDTHEXPAND */
   mux2 #(P.XLEN) ieuadrspillemux(.d0(IEUAdrE), .d1(IEUAdrIncrementM), .s(SelSpillE), .y(IEUAdrSpillE));
   mux2 #(P.XLEN) ieuadrspillmmux(.d0(IEUAdrM), .d1(IEUAdrIncrementM), .s(SelSpillM), .y(IEUAdrSpillM));
@@ -156,7 +143,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   assign SelSpillE = (CurrState == STATE_READY & TakeSpillM) | (CurrState == STATE_SPILL & CacheBusHPWTStall) | (CurrState == STATE_STORE_DELAY);
   assign SaveByteMask = (CurrState == STATE_READY & TakeSpillM);
   assign SpillSaveM = (CurrState == STATE_READY) & TakeSpillM & ~FlushM;
-  assign SelStoreDelay = (CurrState == STATE_STORE_DELAY);
+  assign SelStoreDelay = (CurrState == STATE_STORE_DELAY);  // *** Can this be merged into the PreLSURWM logic?
   assign SpillStallM = SelSpillE | CurrState == STATE_STORE_DELAY;
   mux2 #(2) memrwmux(MemRWM, 2'b00, SelStoreDelay, MemRWSpillM);
 
