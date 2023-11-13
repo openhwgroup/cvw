@@ -113,7 +113,7 @@ module ahbcacheinterface #(
 
   // *** bummer need a second byte mask for bus as it is AHBW rather than LLEN.
   // probably can merge by muxing PAdrM's LLEN/8-1 index bit based on HTRANS being != 0.
-  swbytemask #(AHBW) busswbytemask(.Size(HSIZE), .Adr(HADDR[$clog2(AHBW/8)-1:0]), .ByteMask(BusByteMaskM));
+  swbytemask #(AHBW) busswbytemask(.Size(HSIZE), .Adr(HADDR[$clog2(AHBW/8)-1:0]), .ByteMask(BusByteMaskM), .ByteMaskExtended());
   
   flopen #(AHBW/8) HWSTRBReg(HCLK, HREADY, BusByteMaskM[AHBW/8-1:0], HWSTRB);
   

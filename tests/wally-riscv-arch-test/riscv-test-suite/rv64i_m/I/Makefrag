@@ -28,11 +28,11 @@
 # Description: Makefrag for RV64I architectural tests
 
 rv64i_sc_tests = \
-	WALLY-ADD \
+    WALLY-ADD \
     WALLY-SUB \
     WALLY-SLT \
-	WALLY-SLTU \
-	WALLY-XOR 
+    WALLY-SLTU \
+    WALLY-XOR \
 
 
 rv64i_tests = $(addsuffix .elf, $(rv64i_sc_tests))

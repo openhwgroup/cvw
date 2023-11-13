@@ -138,8 +138,8 @@ module mmu import cvw::*;  #(parameter cvw_t P,
       2'b10:  DataMisalignedM = VAdr[1] | VAdr[0]; // lw, sw, flw, fsw, lwu
       2'b11:  DataMisalignedM = |VAdr[2:0];        // ld, sd, fld, fsd
     endcase 
-  assign LoadMisalignedFaultM     = DataMisalignedM & ReadNoAmoAccessM;
-  assign StoreAmoMisalignedFaultM = DataMisalignedM & WriteAccessM;
+  assign LoadMisalignedFaultM     = DataMisalignedM & ReadNoAmoAccessM & ~(P.ZICCLSM_SUPPORTED & Cacheable); 
+  assign StoreAmoMisalignedFaultM = DataMisalignedM & WriteAccessM & ~(P.ZICCLSM_SUPPORTED & Cacheable);
 
   // Specify which type of page fault is occurring
   assign InstrPageFaultF    = TLBPageFault & ExecuteAccessF;
