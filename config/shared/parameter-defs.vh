@@ -4,7 +4,6 @@
 `include "BranchPredictorType.vh"
 
 localparam cvw_t P = '{ 
-  FPGA :                 FPGA,  
   XLEN :                 XLEN,  
   IEEE754 :              IEEE754, 
   MISA :                 MISA, 
@@ -53,9 +52,11 @@ localparam cvw_t P = '{
   BOOTROM_SUPPORTED :        BOOTROM_SUPPORTED,
   BOOTROM_BASE :        BOOTROM_BASE,
   BOOTROM_RANGE :        BOOTROM_RANGE,
+  BOOTROM_PRELOAD : BOOTROM_PRELOAD,
   UNCORE_RAM_SUPPORTED :        UNCORE_RAM_SUPPORTED,
   UNCORE_RAM_BASE :        UNCORE_RAM_BASE,
   UNCORE_RAM_RANGE :        UNCORE_RAM_RANGE,
+  UNCORE_RAM_PRELOAD : UNCORE_RAM_PRELOAD,
   EXT_MEM_SUPPORTED :        EXT_MEM_SUPPORTED,
   EXT_MEM_BASE :        EXT_MEM_BASE,
   EXT_MEM_RANGE :        EXT_MEM_RANGE,
