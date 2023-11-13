@@ -58,6 +58,8 @@ module align import cvw::*;  #(parameter cvw_t P) (
   output logic [P.LLEN-1:0] DCacheReadDataWordSpillM, // The final 32 bit instruction after merging the two spilled fetches into 1 instruction
   output logic SpillStallM);
 
+  localparam LLENINBYTES = P.LLEN/8;
+  localparam OFFSET_BIT_POS =  $clog2(P.DCACHE_LINELENINBITS/8);
   // Spill threshold occurs when all the cache offset PC bits are 1 (except [0]).  Without a cache this is just PCF[1]
   typedef enum logic [1:0]  {STATE_READY, STATE_SPILL, STATE_STORE_DELAY} statetype;
 
@@ -71,12 +73,16 @@ module align import cvw::*;  #(parameter cvw_t P) (
   logic [P.LLEN*2-1:0] ReadDataWordSpillAllM;
   logic [P.LLEN*2-1:0] ReadDataWordSpillShiftedM;
 
-  localparam LLENINBYTES = P.LLEN/8;
   logic [P.XLEN-1:0]     IEUAdrIncrementM;
 
   logic [(P.LLEN-1)*2/8:0] ByteMaskSaveM;
   logic [(P.LLEN-1)*2/8:0] ByteMaskMuxM;
   logic                    SaveByteMask;
+  logic HalfMisalignedM, WordMisalignedM;
+  logic [OFFSET_BIT_POS-1:$clog2(LLENINBYTES)] WordOffsetM;
+  logic [$clog2(LLENINBYTES)-1:0]                 ByteOffsetM;
+  logic                                HalfSpillM, WordSpillM;
+  logic [$clog2(LLENINBYTES)-1:0]      AccessByteOffsetM;
 
   /* verilator lint_off WIDTHEXPAND */
   assign IEUAdrIncrementM = IEUAdrM + LLENINBYTES;
@@ -92,11 +98,6 @@ module align import cvw::*;  #(parameter cvw_t P) (
   // 1) operation size
   // 2) offset
   // 3) access location within the cacheline
-  localparam OFFSET_BIT_POS =  $clog2(P.DCACHE_LINELENINBITS/8);
-  logic [OFFSET_BIT_POS-1:$clog2(LLENINBYTES)] WordOffsetM;
-  logic [$clog2(LLENINBYTES)-1:0]                 ByteOffsetM;
-  logic                                HalfSpillM, WordSpillM;
-  logic [$clog2(LLENINBYTES)-1:0]      AccessByteOffsetM;
   
   assign {WordOffsetM, ByteOffsetM} = IEUAdrM[OFFSET_BIT_POS-1:0];
 
@@ -109,17 +110,26 @@ module align import cvw::*;  #(parameter cvw_t P) (
       default: AccessByteOffsetM = ByteOffsetM;
     endcase
   end
-  
-  assign HalfSpillM = (IEUAdrM[OFFSET_BIT_POS-1:1] == '1) & (ByteOffsetM[0] != '0) & Funct3M[1:0] == 2'b01;
-  assign WordSpillM = (IEUAdrM[OFFSET_BIT_POS-1:2] == '1) & (ByteOffsetM[1:0] != '0) & Funct3M[1:0] == 2'b10;
+
+  // compute misalignement
+  assign HalfMisalignedM = (ByteOffsetM[0] != '0) & Funct3M[1:0] == 2'b01;
+  assign WordMisalignedM = (ByteOffsetM[1:0] != '0) & Funct3M[1:0] == 2'b10;
+  assign HalfSpillM = (IEUAdrM[OFFSET_BIT_POS-1:1] == '1) & HalfMisalignedM;
+  assign WordSpillM = (IEUAdrM[OFFSET_BIT_POS-1:2] == '1) & WordMisalignedM;
+
   if(P.LLEN == 64) begin
     logic DoubleSpillM;
-    assign DoubleSpillM = (IEUAdrM[OFFSET_BIT_POS-1:3] == '1) & (ByteOffsetM[2:0] != '0) & Funct3M[1:0] == 2'b11;
+    logic DoubleMisalignedM;
+    assign DoubleMisalignedM = (ByteOffsetM[2:0] != '0) & Funct3M[1:0] == 2'b11;
+    assign DoubleSpillM = (IEUAdrM[OFFSET_BIT_POS-1:3] == '1) & DoubleMisalignedM;
+    assign MisalignedM = HalfMisalignedM | WordMisalignedM | DoubleMisalignedM;
     assign SpillM = (|MemRWM) & CacheableM & (HalfSpillM | WordSpillM | DoubleSpillM);
   end else begin
     assign SpillM = (|MemRWM) & CacheableM & (HalfSpillM | WordSpillM);
+    assign MisalignedM = HalfMisalignedM | WordMisalignedM;
   end
       
+  // align by shifting
   // Don't take the spill if there is a stall, TLB miss, or hardware update to the D/A bits
   assign TakeSpillM = SpillM & ~CacheBusHPWTStall & ~(DTLBMissM | (P.SVADU_SUPPORTED & DataUpdateDAM));
   
@@ -151,24 +161,12 @@ module align import cvw::*;  #(parameter cvw_t P) (
   // Merge spilled data
   ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  // save the first 2 bytes
+  // save the first native word
   flopenr #(P.LLEN) SpillDataReg(clk, reset, SpillSaveM, DCacheReadDataWordM[P.LLEN-1:0], ReadDataWordFirstHalfM);
 
   // merge together
-  mux2 #(2*P.LLEN) postspillmux(DCacheReadDataWordM, {DCacheReadDataWordM[P.LLEN-1:0], ReadDataWordFirstHalfM}, SpillM, ReadDataWordSpillAllM);
+  mux2 #(2*P.LLEN) postspillmux(DCacheReadDataWordM, {DCacheReadDataWordM[P.LLEN-1:0], ReadDataWordFirstHalfM}, SelSpillM, ReadDataWordSpillAllM);
 
-  // align by shifting
-  // *** optimize by merging with halfSpill, WordSpill, etc
-  logic HalfMisalignedM, WordMisalignedM;
-  assign HalfMisalignedM = Funct3M[1:0] == 2'b01 & ByteOffsetM[0] != 1'b0;
-  assign WordMisalignedM = Funct3M[1:0] == 2'b10 & ByteOffsetM[1:0] != 2'b00;
-  if(P.LLEN == 64) begin
-    logic DoubleMisalignedM;
-    assign DoubleMisalignedM = Funct3M[1:0] == 2'b11 & ByteOffsetM[2:0] != 3'b00;
-    assign MisalignedM = HalfMisalignedM | WordMisalignedM | DoubleMisalignedM;
-  end else begin
-    assign MisalignedM = HalfMisalignedM | WordMisalignedM;
-  end
 
   // shifter (4:1 mux for 32 bit, 8:1 mux for 64 bit)
   // 8 * is for shifting by bytes not bits
