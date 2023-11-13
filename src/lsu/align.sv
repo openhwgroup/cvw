@@ -175,18 +175,15 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   // write path. Also has the 8:1 shifter muxing for the byteoffset
   // then it also has the mux to select when a spill occurs
-  logic [P.LLEN*2-1:0] LSUWriteDataShiftedM;
   logic [P.LLEN*3-1:0] LSUWriteDataShiftedExtM;  // *** RT: Find a better way.  I've extending in both directions so we don't shift in zeros.  The cache expects the writedata to not have any zero data, but instead replicated data.
 
   assign LSUWriteDataShiftedExtM = {LSUWriteDataM, LSUWriteDataM, LSUWriteDataM} << (MisalignedM ? 8 * AccessByteOffsetM : '0);
-  assign LSUWriteDataShiftedM = LSUWriteDataShiftedExtM[P.LLEN*3-1:P.LLEN];
-  assign LSUWriteDataSpillM = LSUWriteDataShiftedM;
-  //mux2 #(2*P.LLEN) writedataspillmux(LSUWriteDataShiftedM, {LSUWriteDataShiftedM[P.LLEN*2-1:P.LLEN], LSUWriteDataShiftedM[P.LLEN*2-1:P.LLEN]}, SelSpillM, LSUWriteDataSpillM);
+  assign LSUWriteDataSpillM = LSUWriteDataShiftedExtM[P.LLEN*3-1:P.LLEN];
 
-  logic [P.LLEN*2/8-1:0] ByteMaskShiftedM;
-  assign ByteMaskShiftedM = ByteMaskMuxM;
-  mux3 #(2*P.LLEN/8) bytemaskspillmux(ByteMaskShiftedM, {{{P.LLEN/8}{1'b0}}, ByteMaskM}, 
-                                      {{{P.LLEN/8}{1'b0}}, ByteMaskMuxM[P.LLEN*2/8-1:P.LLEN/8]}, {SelSpillM, SelSpillE}, ByteMaskSpillM);
+  mux3 #(2*P.LLEN/8) bytemaskspillmux(ByteMaskMuxM, // no spill
+                                      {{{P.LLEN/8}{1'b0}}, ByteMaskM}, // spill, first half
+                                      {{{P.LLEN/8}{1'b0}}, ByteMaskMuxM[P.LLEN*2/8-1:P.LLEN/8]}, // spill, second half
+                                      {SelSpillM, SelSpillE}, ByteMaskSpillM);
 
   flopenr #(P.LLEN*2/8) bytemaskreg(clk, reset, SaveByteMask, {ByteMaskExtendedM, ByteMaskM}, ByteMaskSaveM);
   mux2 #(P.LLEN*2/8) bytemasksavemux({ByteMaskExtendedM, ByteMaskM}, ByteMaskSaveM, SelSpillM, ByteMaskMuxM);
