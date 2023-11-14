@@ -12,11 +12,11 @@ from ppaAnalyze import synthsfromcsv
 
 def runCommand(module, width, tech, freq):
     command = "make synth DESIGN={} WIDTH={} TECH={} DRIVE=INV FREQ={} MAXOPT=1 MAXCORES=1".format(module, width, tech, freq)
-    subprocess.Popen(command, shell=True)
+    subprocess.call(command, shell=True)
 
 def deleteRedundant(synthsToRun):
     '''removes any previous runs for the current synthesis specifications'''
-    synthStr = "rm -rf runs/ppa_{}_{}_rv32e_{}nm_{}_*"
+    synthStr = "rm -rf runs/{}_{}_rv32e_{}_{}_*"
     for synth in synthsToRun:   
         bashCommand = synthStr.format(*synth)
         outputCPL = subprocess.check_output(['bash','-c', bashCommand])
@@ -46,7 +46,7 @@ def freqModuleSweep(widths, modules, tech):
     return synthsToRun
 
 def filterRedundant(synthsToRun):
-    bashCommand = "find . -path '*runs/ppa*rv32e*' -prune"
+    bashCommand = "find . -path '*runs/*' -prune"
     output = subprocess.check_output(['bash','-c', bashCommand])
     specReg = re.compile('[a-zA-Z0-9]+')
     allSynths = output.decode("utf-8").split('\n')[:-1]
@@ -84,14 +84,15 @@ if __name__ == '__main__':
 	synthsToRun = freqSweep(module, width, tech)
 
     ##### Run a sweep for multiple modules/widths based on best delay found in existing syntheses
-	modules = ['adder', 'comparator']
-	widths = [64, 128] 
+	modules = ['adder']
+	widths = [8, 16, 32, 64, 128]
 	tech = 'sky130'
 	synthsToRun = freqModuleSweep(widths, modules, tech)	
         
     ##### Only do syntheses for which a run doesn't already exist
-	synthsToRun = filterRedundant(synthsToRun)
-	
+	synthsToRun = filterRedundant(synthsToRun)	
 	pool = Pool(processes=25)
 
 pool.starmap(runCommand, synthsToRun)
+pool.close()
+pool.join()
