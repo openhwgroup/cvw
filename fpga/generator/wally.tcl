@@ -48,7 +48,7 @@ read_verilog [glob -type f ../../addins/vivado-risc-v/sdc/sd_cmd_serial_host.v]
 read_verilog [glob -type f ../../addins/vivado-risc-v/sdc/sd_data_master.v]
 read_verilog [glob -type f ../../addins/vivado-risc-v/sdc/sd_data_serial_host.v]
 
-set_property include_dirs {../../config/fpga ../../config/shared ../../addins/vivado-risc-v/sdc} [current_fileset]
+set_property include_dirs {../src/CopiedFiles_do_not_add_to_repo/config ../../config/shared ../../addins/vivado-risc-v/sdc} [current_fileset]
 
 if {$board=="ArtyA7"} {
     add_files -fileset constrs_1 -norecurse ../constraints/constraints-$board.xdc

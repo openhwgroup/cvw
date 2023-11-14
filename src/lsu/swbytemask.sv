@@ -27,13 +27,22 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module swbytemask #(parameter WORDLEN)(
+module swbytemask #(parameter WORDLEN, EXTEND = 0)(
   input logic  [2:0]                   Size,
   input logic  [$clog2(WORDLEN/8)-1:0] Adr,
-  output logic [WORDLEN/8-1:0]         ByteMask
+  output logic [WORDLEN/8-1:0]         ByteMask,
+  output logic [WORDLEN/8-1:0]         ByteMaskExtended
 );
-  
-  assign ByteMask =(('d2**('d2**Size))-'d1) << Adr; // 'd2 means 2, but stops Design Compiler from complaining about signed to unsigned conversion
+  if(EXTEND) begin
+    logic [WORDLEN*2/8-1:0]              ExtendedByteMask;
+    // 'd2 means 2, but stops Design Compiler from complaining about signed to unsigned conversion    
+    assign ExtendedByteMask = (('d2**('d2**Size))-'d1) << Adr;
+    assign ByteMask = ExtendedByteMask[WORDLEN/8-1:0];
+    assign ByteMaskExtended = ExtendedByteMask[WORDLEN*2/8-1:WORDLEN/8];
+  end else begin    
+    assign ByteMask = (('d2**('d2**Size))-'d1) << Adr;
+    assign ByteMaskExtended = '0;
+  end
 
 /* Equivalent to the following
 

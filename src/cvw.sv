@@ -37,7 +37,6 @@ package cvw;
   `include "BranchPredictorType.vh"
 
 typedef struct packed {
-  logic         FPGA;     // Modifications to tare
   int           XLEN;     // Machine width (32 or 64)
   logic         IEEE754;  // IEEE754 NaN handling (0 = use RISC-V NaN propagation instead)
   int           MISA;     // Machine Instruction Set Architecture
@@ -59,6 +58,7 @@ typedef struct packed {
   logic         ZICBOM_SUPPORTED;
   logic         ZICBOZ_SUPPORTED;
   logic         ZICBOP_SUPPORTED;
+  logic         ZICCLSM_SUPPORTED;
   logic         SVPBMT_SUPPORTED;
   logic         SVNAPOT_SUPPORTED;
   logic         SVINVAL_SUPPORTED;
@@ -107,9 +107,11 @@ typedef struct packed {
   logic         BOOTROM_SUPPORTED;
   logic [63:0]  BOOTROM_BASE;
   logic [63:0]  BOOTROM_RANGE;
+  logic         BOOTROM_PRELOAD;
   logic         UNCORE_RAM_SUPPORTED;
   logic [63:0]  UNCORE_RAM_BASE;
   logic [63:0]  UNCORE_RAM_RANGE;
+  logic         UNCORE_RAM_PRELOAD;
   logic         EXT_MEM_SUPPORTED;
   logic [63:0]  EXT_MEM_BASE;
   logic [63:0]  EXT_MEM_RANGE;

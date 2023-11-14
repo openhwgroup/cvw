@@ -27,7 +27,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module rom_ahb import cvw::*;  #(parameter cvw_t P, 
-                                 parameter BASE=0, RANGE = 65535) (
+                                 parameter BASE=0, RANGE = 65535, PRELOAD = 0) (
   input  logic                 HCLK, HRESETn, 
   input  logic                 HSELRom,
   input  logic [P.PA_BITS-1:0] HADDR,
@@ -45,6 +45,6 @@ module rom_ahb import cvw::*;  #(parameter cvw_t P,
   assign HRESPRom  = 0; // OK
 
   // single-ported ROM
-  rom1p1r #(ADDR_WIDTH, P.XLEN, P.FPGA)
+  rom1p1r #(ADDR_WIDTH, P.XLEN, PRELOAD)
     memory(.clk(HCLK), .ce(1'b1), .addr(HADDR[ADDR_WIDTH+OFFSET-1:OFFSET]), .dout(HREADRom));  
 endmodule
