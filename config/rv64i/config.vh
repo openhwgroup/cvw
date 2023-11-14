@@ -27,8 +27,6 @@
 
 `include "BranchPredictorType.vh"
 
-localparam FPGA = 0;
-
 // RV32 or RV64: XLEN = 32 or 64
 localparam XLEN = 32'd64;
 
@@ -47,6 +45,7 @@ localparam SSTC_SUPPORTED = 0;
 localparam ZICBOM_SUPPORTED = 0;
 localparam ZICBOZ_SUPPORTED = 0;
 localparam ZICBOP_SUPPORTED = 0;
+localparam ZICCLSM_SUPPORTED = 0;
 localparam SVPBMT_SUPPORTED = 0;
 localparam SVNAPOT_SUPPORTED = 0;
 localparam SVINVAL_SUPPORTED = 0;
@@ -103,9 +102,11 @@ localparam logic [63:0] IROM_RANGE =      64'h007FFFFF;
 localparam BOOTROM_SUPPORTED = 1'b0;
 localparam logic [63:0] BOOTROM_BASE =   64'h00001000; // spec had been 0x1000 to 0x2FFF, but dh truncated to 0x1000 to 0x1FFF because upper half seems to be all zeros and this is easier for decoder
 localparam logic [63:0] BOOTROM_RANGE =  64'h00000FFF;
+localparam BOOTROM_PRELOAD = 1'b0;
 localparam UNCORE_RAM_SUPPORTED = 1'b0;
 localparam logic [63:0] UNCORE_RAM_BASE =       64'h80000000;
 localparam logic [63:0] UNCORE_RAM_RANGE =      64'h7FFFFFFF;
+localparam UNCORE_RAM_PRELOAD = 1'b0;
 localparam EXT_MEM_SUPPORTED = 1'b0;
 localparam logic [63:0] EXT_MEM_BASE =       64'h80000000;
 localparam logic [63:0] EXT_MEM_RANGE =      64'h07FFFFFF;

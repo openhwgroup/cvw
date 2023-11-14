@@ -27,15 +27,6 @@ BINARIES := fw_jump.elf vmlinux busybox
 OBJDUMPS := $(foreach name, $(BINARIES), $(basename $(name) .elf))
 OBJDUMPS := $(foreach name, $(OBJDUMPS), $(DIS)/$(name).objdump)
 
-# LINUXDIR := $(shell ls $(BUILDROOT)/output/build | grep -e '^linux-[0-9]\+\.[0-9]\+\.[0-9]\+$$' )
-# LINUXDIR := $(BUILDROOT)/output/build/$(LINUXDIR)
-# BUSYBOXDIR := $(shell ls $(BUILDROOT)/output/build | grep -e '^linux-[0-9]\+\.[0-9]\+\.[0-9]\+$$' )
-# BUSYBOXDIR := $(BUILDROOT)/output/build/$(BUSYBOXDIR)
-
-# Gets Linux and Busybox output folders for objedect dumps
-# LINUXDIR ?= $(shell find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/linux-[0-9]+\.[0-9]+\.[0-9]+$$")
-# BUSYBOXDIR ?= $(shell find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/busybox-[0-9]+\.[0-9]+\.[0-9]+$$")
-
 define linuxDir =
 $(shell find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/linux-[0-9]+\.[0-9]+\.[0-9]+$$")
 endef
@@ -45,10 +36,6 @@ $(shell find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/busybox-[0
 endef
 
 .PHONY: all generate disassemble install clean cleanDTB cleanDriver test
-
-# Generate all device trees -------------------------------------------
-# TODO: Add configuration for only generating device tree for specified
-#       supported FPGA.
 
 all:
 	$(MAKE) install
@@ -99,18 +86,6 @@ $(IMAGES)/busybox: $(call busyboxDir)/busybox
 install: $(BUILDROOT)/package/fpga-axi-sdc $(WALLYBOARD)
 	cp $(WALLYBOARD)/main.config $(BUILDROOT)/.config
 
-# CONFIG DEPENDENCIES 2021.05 -----------------------------------------
-# $(WALLYBOARD)/main.config: $(WALLYBOARD) $(BRPACKAGES)/wally.config
-# 	cp $(BRPACKAGES)/wally.config $@
-
-# $(WALLYBOARD)/linux.config: $(BRPACKAGES)/linux.config $(WALLYBOARD)
-# 	cp $(BRPACKAGES)/linux.config $@
-
-# $(WALLYBOARD): $(BUILDROOT)
-# 	cp -r $(WALLYBOARDSRC) $(BUILDROOT)/board
-# 	cp $(BRPACKAGES)/wally.config $(WALLYBOARD)/main.config
-# 	cp $(BRPACKAGES)/linux.config $(WALLYBOARD)/linux.config
-
 # CONFIG DEPENDENCIES 2023.05.1 ---------------------------------------
 $(WALLYBOARD): $(BUILDROOT)
 	cp -r $(WALLYBOARDSRC) $(BUILDROOT)/board
@@ -129,13 +104,6 @@ $(PATCHFILE):
 $(BUILDROOT):
 	git clone https://github.com/buildroot/buildroot.git $@
 	cd $@; git checkout 2023.05.x
-	#cd $@; git checkout 2021.05
-
-#$(DRIVER):
-#	@ if [ -d "$(WALLY)/addins/vivado-risc-v" ] ; then git submodule update --init $(WALLY)/addins/vivado-risc-v; fi
-#	cp ../addins/vivado-risc-v/patches/fpga-axi-sdc.c $@
-	# For 2021.05
-	#sed -i "s|card_hw_reset|hw_reset|1" $@
 
 # ---------------------------------------------------------------------
 

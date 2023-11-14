@@ -30,7 +30,7 @@ LINKER		:=$(ROOT)/linker1000.x
 AFLAGS =$(MARCH) $(MABI) -W
 # Override directive allows us to prepend other options on the command line
 # e.g. $ make CFLAGS=-g
-override CFLAGS +=$(MARCH) $(MABI) -mcmodel=medany -O2
+override CFLAGS +=$(MARCH) $(MABI) -mcmodel=medany -O2 -g
 AS=riscv64-unknown-elf-as
 CC=riscv64-unknown-elf-gcc
 AR=riscv64-unknown-elf-ar

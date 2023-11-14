@@ -29,8 +29,6 @@
 // `include "wally-shared.vh"
 `include "BranchPredictorType.vh"
 
-localparam FPGA = 0;
-
 // RV32 or RV64: XLEN = 32 or 64
 localparam XLEN = 32'd32;
 
@@ -47,7 +45,8 @@ localparam ZFH_SUPPORTED = 0;
 localparam SSTC_SUPPORTED = 1;
 localparam ZICBOM_SUPPORTED = 1;
 localparam ZICBOZ_SUPPORTED = 1;
-localparam ZICBOP_SUPPORTED = 0;
+localparam ZICBOP_SUPPORTED = 1;
+localparam ZICCLSM_SUPPORTED = 0;
 localparam SVPBMT_SUPPORTED = 0;
 localparam SVNAPOT_SUPPORTED = 0;
 localparam SVINVAL_SUPPORTED = 1;
@@ -99,9 +98,11 @@ localparam logic [63:0] IROM_RANGE      = 64'h007FFFFF;
 localparam BOOTROM_SUPPORTED = 1'b1;
 localparam logic [63:0] BOOTROM_BASE   = 64'h00001000;
 localparam logic [63:0] BOOTROM_RANGE  = 64'h00000FFF;
+localparam BOOTROM_PRELOAD = 1'b0;
 localparam UNCORE_RAM_SUPPORTED = 1'b1;
 localparam logic [63:0] UNCORE_RAM_BASE       = 64'h80000000;
 localparam logic [63:0] UNCORE_RAM_RANGE      = 64'h07FFFFFF;
+localparam UNCORE_RAM_PRELOAD = 1'b0;
 localparam EXT_MEM_SUPPORTED = 1'b0;
 localparam logic [63:0] EXT_MEM_BASE       = 64'h80000000;
 localparam logic [63:0] EXT_MEM_RANGE      = 64'h07FFFFFF;
