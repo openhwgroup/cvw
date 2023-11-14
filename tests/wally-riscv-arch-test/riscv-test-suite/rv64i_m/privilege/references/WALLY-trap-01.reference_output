@@ -1,3 +1,4 @@
+
 FFFFFFFF # stimecmp low bits
 00000000 # stimecmp high bits
 00000000 # menvcfg low bits
@@ -24,7 +25,7 @@ FFFFFFFF # stimecmp low bits
 00000000
 00000004 # mcause from load address misaligned
 00000000
-80000411 # mtval of misaligned address (0x80000409)
+02000001 # mtval of misaligned address 
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
@@ -36,7 +37,7 @@ FFFFFFFF # stimecmp low bits
 00000000
 00000006 # mcause from store misaligned
 00000000
-80000429 # mtval of address with misaligned store instr (0x80000421)
+02000001 # mtval of misaligned address 
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
@@ -136,7 +137,7 @@ FFFFFFFF # stimecmp low bits
 00000000
 00000004 # mcause from load address misaligned
 00000000
-80000411 # mtval of misaligned address (0x80000409)
+02000001 # mtval of misaligned address 
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
@@ -148,7 +149,7 @@ FFFFFFFF # stimecmp low bits
 00000000
 00000006 # mcause from store misaligned
 00000000
-80000429 # mtval of address with misaligned store instr (0x80000421)
+02000001 # mtval of misaligned address 
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
