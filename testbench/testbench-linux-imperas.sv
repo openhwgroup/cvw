@@ -226,21 +226,6 @@ module testbench;
 
 
 
-  ///////////////////////////////////////////////////////////////////////////////
-  /////////////////////////////// Cache Issue ///////////////////////////////////
-  ///////////////////////////////////////////////////////////////////////////////
- 
-   // Duplicate copy of pipeline registers that are optimized out of some configurations
-  logic [31:0] NextInstrE, InstrM;
-  mux2    #(32)     FlushInstrMMux(dut.core.ifu.InstrE, dut.core.ifu.nop, dut.core.ifu.FlushM, NextInstrE);
-  flopenr #(32)     InstrMReg(clk, reset, ~dut.core.ifu.StallM, NextInstrE, InstrM);
-
-  logic       probe;
-  if (NO_SPOOFING)
-    assign probe = testbench.dut.core.PCM == 64'hffffffff80200c8c
-                   & InstrM != 32'h14021273
-                   & testbench.dut.core.InstrValidM;
-
 
 
 
@@ -261,19 +246,20 @@ module testbench;
   logic             HREADYEXT, HRESPEXT;
   logic             HCLK, HRESETn;
   logic             HREADY;
-  logic 	    HSELEXT;
+  logic             HSELEXT;
+  logic             HSELEXTSDC;
   logic [P.PA_BITS-1:0] HADDR;
-  logic [P.AHBW-1:0] HWDATA;
-  logic [P.XLEN/8-1:0] HWSTRB;
-  logic             HWRITE;
-  logic [2:0]       HSIZE;
-  logic [2:0]       HBURST;
-  logic [3:0]       HPROT;
-  logic [1:0]       HTRANS;
-  logic             HMASTLOCK;
-  logic [31:0]      GPIOIN;
-  logic [31:0]      GPIOOUT, GPIOEN;
-  logic             UARTSin, UARTSout;
+  logic [P.AHBW-1:0]    HWDATA;
+  logic [P.XLEN/8-1:0]  HWSTRB;
+  logic                 HWRITE;
+  logic [2:0]           HSIZE;
+  logic [2:0]           HBURST;
+  logic [3:0]           HPROT;
+  logic [1:0]           HTRANS;
+  logic                 HMASTLOCK;
+  logic [31:0]          GPIOIN;
+  logic [31:0]          GPIOOUT, GPIOEN;
+  logic                 UARTSin, UARTSout;
 
   // FPGA-specific Stuff
   logic SDCCLK;
@@ -292,6 +278,21 @@ module testbench;
   assign SDCIntr = 0;
 
   
+  ///////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////// Cache Issue ///////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
+ 
+   // Duplicate copy of pipeline registers that are optimized out of some configurations
+  logic [31:0] NextInstrE, InstrM;
+  mux2    #(32)     FlushInstrMMux(dut.core.ifu.InstrE, dut.core.ifu.nop, dut.core.ifu.FlushM, NextInstrE);
+  flopenr #(32)     InstrMReg(clk, reset, ~dut.core.ifu.StallM, NextInstrE, InstrM);
+
+  logic       probe;
+  if (NO_SPOOFING)
+    assign probe = testbench.dut.core.PCM == 64'hffffffff80200c8c
+                   & InstrM != 32'h14021273
+                   & testbench.dut.core.InstrValidM;
+
   
   `ifdef USE_IMPERAS_DV
 
@@ -442,10 +443,10 @@ module testbench;
   
 
   // Wally
-  wallypipelinedsoc #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
-                        .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
-                        .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
-                        .UARTSin, .UARTSout, .SDCIntr, .SPICS, .SPIOut, .SPIIn); 
+  wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
+    .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
+    .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
+    .UARTSin, .UARTSout, .SDCIntr, .SPIIn, .SPIOut, .SPICS); 
 
   // W-stage hardware not needed by Wally itself 
   parameter nop = 'h13;
