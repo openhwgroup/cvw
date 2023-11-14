@@ -172,3 +172,6 @@ tests/fp/combined_IF_vectors/IF_vectors/*.tv
 /sim/obj_dir/Vtestbench_tlbram__Pz1_T20__DepSet_hab70f5b0__0.cpp
 /sim/obj_dir/Vtestbench_tlbram__Pz1_T20__DepSet_hab70f5b0__0__Slow.cpp
 /sim/obj_dir/Vtestbench_tlbram__Pz1_T20__Slow.cpp
+sim/bp-results/*.log
+sim/branch*.log
+/tests/custom/fpga-test-sdc/bin/fpga-test-sdc

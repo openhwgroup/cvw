@@ -884,7 +884,9 @@ string imperas32f[] = '{
     "rv64i_m/privilege/src/misalign-blt-01.S",
     "rv64i_m/privilege/src/misalign-bltu-01.S",
     "rv64i_m/privilege/src/misalign-bne-01.S",
-    "rv64i_m/privilege/src/misalign-jal-01.S",
+    "rv64i_m/privilege/src/misalign-jal-01.S"
+                          // removed because rv64gc supports Zicclsm
+/* -----\/----- EXCLUDED -----\/-----
     "rv64i_m/privilege/src/misalign-ld-01.S",
     "rv64i_m/privilege/src/misalign-lh-01.S",
     "rv64i_m/privilege/src/misalign-lhu-01.S",
@@ -893,6 +895,7 @@ string imperas32f[] = '{
     "rv64i_m/privilege/src/misalign-sd-01.S",
     "rv64i_m/privilege/src/misalign-sh-01.S",
     "rv64i_m/privilege/src/misalign-sw-01.S"
+ -----/\----- EXCLUDED -----/\----- */
     };
 
   string arch64zi[] = '{
@@ -1971,6 +1974,7 @@ string arch64zbs[] = '{
  string wally64priv[] = '{
     `WALLYTEST,
     "rv64i_m/privilege/src/WALLY-minfo-01.S",
+    "rv64i_m/privilege/src/WALLY-misaligned-access-01.S",
     "rv64i_m/privilege/src/WALLY-csr-permission-s-01.S",
     "rv64i_m/privilege/src/WALLY-cboz-01.S",
     "rv64i_m/privilege/src/WALLY-cbom-01.S",
