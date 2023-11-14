@@ -82,11 +82,9 @@ def synthsintocsv():
         delay = 1000 / int(freq) - metrics[0]
         area = metrics[1]
         lpower = metrics[4]
-        # switching, internal power in mW and leakage in nW
-        tpower = metrics[2] + metrics[3] + metrics[4]*0.000001
-        # EDP (fJ/GHz)
+        tpower = (metrics[2] + metrics[3] + metrics[4]*.000001)
         denergy = (
-            (metrics[2] + metrics[3] + metrics[4]*0.000001) / int(freq)
+            (tpower) / int(freq) * 1000
         )  # (switching + internal powers)*delay, more practical units for regression coefs
 
         if "flop" in module:  # since two flops in each module
@@ -304,7 +302,6 @@ def oneMetricPlot(
             allMetrics += metric
 
         # print(f"Widths passed into regress : {allWidths}")
-        # Not sure why this works (jes) - if allWidths doesn't have data widths does
         if len(allWidths) > 0:
             xp, pred, coefs, r2 = regress(allWidths, allMetrics, fits)
             ax.plot(xp, pred, color="orange", linestyle=ls)
@@ -322,7 +319,7 @@ def oneMetricPlot(
     else:
         ylabeldic = {
             "lpower": "Leakage Power (nW)",
-            "denergy": "EDP (fJ/GHz)",
+            "denergy": "Dynamic Energy (nJ)",
             "area": "Area (sq microns)",
             "delay": "Delay (ns)",
         }
@@ -355,9 +352,9 @@ def regress(widths, var, fits="clsgn", ale=False):
     returns lists of x and y values to plot that curve and coefs for the eq with r2
     """
     if len(var) != len(widths):
-        print(
-            f"There are not enough variables to match widths. Widths : {widths} Variables Found : {var}, padding to match may affect correctness (doing it anyways)\n"
-        )
+        # print(
+        #    f"There are not enough variables to match widths. Widths : {widths} Variables Found : {var}, padding to match may affect correctness (doing it anyways)\n"
+        # )
         if len(widths) > len(var):
             while len(widths) > len(var):
                 var.append(0.0)
@@ -792,8 +789,8 @@ def muxPlot(fits="clsgn", norm=True):
                 allMetrics += metric
 
         xp, pred, coefs, r2 = regress(allInputs, allMetrics, fits)
-        ax.plot(xp, pred, color="orange", linestyle=ls)
-        fullLeg += [lines.Line2D([0], [0], color="orange", label=crit, linestyle=ls)]
+        ax.plot(xp, pred, color="red", linestyle=ls)
+        fullLeg += [lines.Line2D([0], [0], color="red", label=crit, linestyle=ls)]
 
     ax.set_ylabel("Delay (FO4)")
     ax.set_xticks(inputs)
@@ -885,7 +882,7 @@ if __name__ == "__main__":
     ##############################
     # set up stuff, global variables
     widths = [8, 16, 32, 64, 128]
-    modules = ["adder", "comparator"]
+    modules = ["adder"]
 
     normAddWidth = 32  # divisor to use with N since normalizing to add_32
 
@@ -903,14 +900,14 @@ if __name__ == "__main__":
     TechSpec = namedtuple("TechSpec", "tech color shape delay area lpower denergy")
     # FO4 delay information information
     techSpecs = [
-        # ["sky90", "green", "o", 43.2e-3, 1440.600027, 714.057, 0.658022690438],
+        #["sky90", "green", "o", 43.2e-3, 1440.600027, 714.057, 0.658022690438],
         # Area/Lpower/Denergy needs to be corrected here (jes)
         ["sky130", "orange", "o", 99.5e-3, 1440.600027, 714.057, 0.658022690438],
         # ["tsmc28", "blue", "^", 12.2e-3, 209.286002, 1060.0, 0.08153281695882594],
         # ["tsmc28psyn", "blue", "^", 12.2e-3, 209.286002, 1060.0, 0.08153281695882594],
     ]
     techSpecs = [TechSpec(*t) for t in techSpecs]
-    combined = TechSpec("combined fit", "orange", "_", 0, 0, 0, 0)
+    combined = TechSpec("combined fit", "red", "_", 0, 0, 0, 0)
     ##############################
 
     # cleanup() # run to remove garbage synth runs
@@ -928,10 +925,10 @@ if __name__ == "__main__":
 
     for mod in modules:
         for w in widths:
-            # freqPlot('sky90', mod, w)
-            # freqPlot("sky130", mod, w)
+            #freqPlot('sky90', mod, w)
+            freqPlot("sky130", mod, w)
             # freqPlot('tsmc28', mod, w)
             # freqPlot('tsmc28psyn', mod, w)
             plotPPA(mod, norm=False)
-            # plotPPA(mod, aleOpt=True)
+            plotPPA(mod, aleOpt=True)
             plt.close("all")
