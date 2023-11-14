@@ -55,11 +55,13 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
       +incdir+$env(IMPERAS_HOME)/ImpProprietary/include/host \
       $env(IMPERAS_HOME)/ImpPublic/source/host/rvvi/rvviApiPkg.sv    \
       $env(IMPERAS_HOME)/ImpPublic/source/host/rvvi/rvviTrace.sv      \
+      $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/idvApiPkg.sv  \
       $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/idvPkg.sv   \
       $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/idvApiPkg.sv \
       $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2api.sv  \
       $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2log.sv  \
       $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2cov.sv  \
+      $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2bin.sv  \
       ../src/cvw.sv \
        ../testbench/testbench-linux-imperas.sv \
        ../testbench/common/*.sv ../src/*/*.sv \
