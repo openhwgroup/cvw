@@ -51,7 +51,7 @@ PreProcessFiles:
 	rm -rf ../src/CopiedFiles_do_not_add_to_repo/
 	cp -r ../../src/ ../src/CopiedFiles_do_not_add_to_repo/
 	mkdir ../src/CopiedFiles_do_not_add_to_repo/config/
-	cp ../../config/fpga/config.vh ../src/CopiedFiles_do_not_add_to_repo/config/
+	cp ../../config/rv64gc/config.vh ../src/CopiedFiles_do_not_add_to_repo/config/
 	./insert_debug_comment.sh
 	# modify config  *** RT: eventually setup for variably defined sized memory
 	sed -i "s/ZICCLSM_SUPPORTED.*/ZICCLSM_SUPPORTED = 0;/g" ../src/CopiedFiles_do_not_add_to_repo/config/config.vh
