@@ -237,7 +237,7 @@ module testbench;
     assign HRDATAEXT = 0;
   end
 
-  if(P.FPGA) begin : sdcard
+  if(P.SDC_SUPPORTED) begin : sdcard
     // *** fix later
 /* -----\/----- EXCLUDED -----\/-----
     sdModel sdcard
