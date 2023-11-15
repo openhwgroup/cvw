@@ -1,10 +1,6 @@
 [submodule "sky130/sky130_osu_sc_t12"]
 	path = sky130/sky130_osu_sc_t12
 	url = https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12/
-[submodule "addins/riscv-arch-test"]
-	path = addins/riscv-arch-test
-	url = https://github.com/riscv-non-isa/riscv-arch-test
-	ignore = dirty
 [submodule "addins/imperas-riscv-tests"]
 	path = addins/imperas-riscv-tests
 	url = https://github.com/riscv-ovpsim/imperas-riscv-tests
