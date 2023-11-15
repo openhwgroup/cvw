@@ -45,7 +45,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
   // performance counter logging 
   logic        BeginSample;
   logic StartSample, EndSample;
-  if(PrintHPMCounters & P.ZICNTR_SUPPORTED) begin : HPMCSample
+  if((PrintHPMCounters | BPRED_LOGGER) & P.ZICNTR_SUPPORTED) begin : HPMCSample
     integer           HPMCindex;
     logic             StartSampleFirst;
     logic             StartSampleDelayed, BeginDelayed;
