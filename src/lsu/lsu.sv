@@ -92,7 +92,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   input var logic [7:0]           PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0], // PMP configuration from privileged unit
   input var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0] // PMP address from privileged unit
 );
-  localparam MISALIGN_SUPPORT = P.ZICCLSM_SUPPORTED & P.DCACHE_SUPPORTED;
+  localparam logic MISALIGN_SUPPORT = P.ZICCLSM_SUPPORTED & P.DCACHE_SUPPORTED;
+  localparam MLEN = MISALIGN_SUPPROT ? 2*P.LLEN : P.LLEN; // widen buffer for misaligned accessess
 
   logic [P.XLEN+1:0]     IEUAdrExtM;                             // Memory stage address zero-extended to PA_BITS or XLEN whichever is longer
   logic [P.XLEN+1:0]     IEUAdrExtE;                             // Execution stage address zero-extended to PA_BITS or XLEN whichever is longer
@@ -118,9 +119,9 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
 
   logic [P.LLEN-1:0]     DTIMReadDataWordM;                      // DTIM read data
   /* verilator lint_off WIDTHEXPAND */  
-  logic [(MISALIGN_SUPPORT+1)*P.LLEN-1:0]     DCacheReadDataWordM;                    // D$ read data
-  logic [(MISALIGN_SUPPORT+1)*P.LLEN-1:0]   LSUWriteDataSpillM;                     // Final write data
-  logic [((MISALIGN_SUPPORT+1)*P.LLEN-1)/8:0] ByteMaskSpillM;                       // Selects which bytes within a word to write
+  logic [MLEN-1:0]       DCacheReadDataWordM;                    // D$ read data
+  logic [MLEN-1:0]       LSUWriteDataSpillM;                     // Final write data
+  logic [MLEN/8-1:0]     ByteMaskSpillM;                         // Selects which bytes within a word to write
   /* verilator lint_on WIDTHEXPAND */
   logic [P.LLEN-1:0]     DCacheReadDataWordSpillM;               // D$ read data
   logic [P.LLEN-1:0]     ReadDataWordMuxM;                       // DTIM or D$ read data
