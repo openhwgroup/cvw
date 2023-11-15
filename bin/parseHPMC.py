@@ -32,10 +32,12 @@ import math
 import numpy as np
 import argparse
 
-RefData = [('twobitCModel6', 'twobitCModel', 64, 9.65280765420711), ('twobitCModel8', 'twobitCModel', 256, 8.75120245829945), ('twobitCModel10', 'twobitCModel', 1024, 8.1318382397263),
+RefDataBP = [('twobitCModel6', 'twobitCModel', 64, 9.65280765420711), ('twobitCModel8', 'twobitCModel', 256, 8.75120245829945), ('twobitCModel10', 'twobitCModel', 1024, 8.1318382397263),
            ('twobitCModel12', 'twobitCModel', 4096, 7.53026646633342), ('twobitCModel14', 'twobitCModel', 16384, 6.07679338544009), ('twobitCModel16', 'twobitCModel', 65536, 6.07679338544009),
            ('gshareCModel6', 'gshareCModel', 64, 10.6602835418646), ('gshareCModel8', 'gshareCModel', 256, 8.38384710559667), ('gshareCModel10', 'gshareCModel', 1024, 6.36847432155534),
            ('gshareCModel12', 'gshareCModel', 4096, 3.91108491151983), ('gshareCModel14', 'gshareCModel', 16384, 2.83926519215395), ('gshareCModel16', 'gshareCModel', 65536, .60213659066941)]
+RefDataBTB = [('BTBCModel6', 'BTBCModel', 64, 0.00478249129947965), ('BTBCModel8', 'BTBCModel', 256, 0.000398977702713851), ('BTBCModel10', 'BTBCModel', 1024, 2.42019646857733e-05),
+              ('BTBCModel12', 'BTBCModel', 4096, 8.7805838949138e-06), ('BTBCModel14', 'BTBCModel', 16384, 5.61562278846231e-06), ('BTBCModel16', 'BTBCModel', 65536, 5.61562278846231e-06)]
 
 def ParseBranchListFile(path):
     '''Take the path to the list of Questa Sim log files containing the performance counters outputs.  File
@@ -436,7 +438,8 @@ performanceCounterList = BuildDataBase(predictorLogs)         # builds a databas
 benchmarkFirstList = ReorderDataBase(performanceCounterList)  # reorder first by benchmark then trace
 benchmarkDict = ExtractSelectedData(benchmarkFirstList)       # filters to just the desired performance counter metric
 
-if(args.reference): benchmarkDict['Mean'].extend(RefData)
+if(args.reference and args.direction): benchmarkDict['Mean'].extend(RefDataBP)
+if(args.reference and args.target): benchmarkDict['Mean'].extend(RefDataBTB)
 #print(benchmarkDict['Mean'])
 #print(benchmarkDict['aha-mont64Speed'])
 #print(benchmarkDict)
