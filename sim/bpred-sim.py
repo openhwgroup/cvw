@@ -114,7 +114,20 @@ def main():
                     grepstr="")
                 configs.append(tc)
 
-    if(args.target or args.iclass):
+    if(args.target):
+        # BTB and class size sweep
+        bpdSize = [6, 8, 10, 12, 14, 16]
+        for CurrBPSize in bpdSize:
+            name = 'BTB'+str(CurrBPSize)
+            configOptions = "+define+INSTR_CLASS_PRED=0 +define+BPRED_OVERRIDE +define+BPRED_TYPE=\`BP_GSHARE" + "+define+BPRED_SIZE=16" + "+define+RAS_SIZE=16+define+BTB_SIZE=" + str(CurrBPSize) + "+define+BTB_OVERRIDE" 
+            tc = TestCase(
+                name=name,
+                variant="rv32gc",
+                cmd="vsim > {} -c <<!\ndo wally-batch.do  rv32gc configOptions " + name + " embench " + configOptions,
+                grepstr="")
+            configs.append(tc)
+
+    if(args.iclass):
         # BTB and class size sweep
         bpdSize = [6, 8, 10, 12, 14, 16]
         for CurrBPSize in bpdSize:
