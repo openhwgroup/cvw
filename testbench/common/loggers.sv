@@ -213,26 +213,41 @@ module loggers import cvw::*; #(parameter cvw_t P,
   if (P.BPRED_SUPPORTED) begin : BranchLogger
     if (BPRED_LOGGER) begin
       string direction;
-      int    file;
+      int    file, CFIfile;
       logic  PCSrcM;
-      string LogFile;
+      string LogFile, CFILogFile;
       logic  resetD, resetEdge;
       flopenrc #(1) PCSrcMReg(clk, reset, dut.core.FlushM, ~dut.core.StallM, dut.core.ifu.PCSrcE, PCSrcM);
       flop #(1) ResetDReg(clk, reset, resetD);
       assign resetEdge = ~reset & resetD;
       initial begin
         LogFile = "branch.log"; // will break some of Ross's research analysis scripts
+        CFILogFile = "cfi.log"; // will break some of Ross's research analysis scripts
         //LogFile = $psprintf("branch_%s%0d.log", P.BPRED_TYPE, P.BPRED_SIZE);
         file = $fopen(LogFile, "w");
+        CFIfile = $fopen(CFILogFile, "w");
       end
       always @(posedge clk) begin
-        if(resetEdge) $fwrite(file, "TRAIN\n");
-        if(StartSample) $fwrite(file, "BEGIN %s\n", memfilename);
+        if(resetEdge) begin 
+          $fwrite(file, "TRAIN\n");
+          $fwrite(CFIfile, "TRAIN\n");
+        end
+        if(StartSample) begin
+          $fwrite(file, "BEGIN %s\n", memfilename);
+          $fwrite(CFIfile, "BEGIN %s\n", memfilename);
+        end
         if(dut.core.ifu.InstrClassM[0] & ~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM) begin
           direction = PCSrcM ? "t" : "n";
           $fwrite(file, "%h %s\n", dut.core.PCM, direction);
         end
-        if(EndSample) $fwrite(file, "END %s\n", memfilename);
+        if((|dut.core.ifu.InstrClassM) & ~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM) begin
+          direction = PCSrcM ? "t" : "n";
+          $fwrite(CFIfile, "%h %s\n", dut.core.PCM, direction);
+        end
+        if(EndSample) begin
+          $fwrite(file, "END %s\n", memfilename);
+          $fwrite(CFIfile, "END %s\n", memfilename);
+        end
       end
     end
   end
