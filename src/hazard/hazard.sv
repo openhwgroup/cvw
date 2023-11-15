@@ -26,8 +26,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module hazard import cvw::*;  #(parameter cvw_t P) (
-  // Detect hazards
+module hazard import cvw::*;  #(parameter cvw_t P) ( 
   input  logic  BPWrongE, CSRWriteFenceM, RetM, TrapM,   
   input  logic  LoadStallD, StoreStallD, MDUStallD, CSRRdStallD,
   input  logic  LSUStallM, IFUStallF,
@@ -46,28 +45,9 @@ module hazard import cvw::*;  #(parameter cvw_t P) (
 
   logic WFIStallM, WFIInterruptedM;
 
-  logic ValidWfiM, ValidTrapM, ValidRetM, ValidCSRWriteFenceM, ValidCSRRdStallD;
-  logic ValidFPUStallD, ValidFCvtIntStallD, ValidFDivBusyE, ValidMDUStallD, ValidDivBusyE;
-
-  // Gate Stall/Flush sources with supported features 
-  // This is not logically necessary because the original signals are already 0 when the feature is unsupported
-  // However, synthesis does not propagate the constant 0 across modules
-  // By gating these signals, synthesis eliminates unnecessary stall/flush logic, saving about 10% cycle time for rv32e
-  // These lines of code gating with a compile-time constant generate no hardware.
-  assign ValidWfiM = wfiM & P.ZICSR_SUPPORTED;
-  assign ValidTrapM = TrapM & P.ZICSR_SUPPORTED;
-  assign ValidRetM = RetM & P.ZICSR_SUPPORTED;
-  assign ValidCSRWriteFenceM = CSRWriteFenceM & P.ZICSR_SUPPORTED;
-  assign ValidCSRRdStallD = CSRRdStallD & P.ZICSR_SUPPORTED;
-  assign ValidFPUStallD = RetM & P.F_SUPPORTED;
-  assign ValidFCvtIntStallD = RetM & P.F_SUPPORTED;
-  assign ValidFDivBusyE = FDivBusyE & P.F_SUPPORTED;
-  assign ValidMDUStallD = MDUStallD & P.M_SUPPORTED;
-  assign ValidDivBusyE = DivBusyE & P.M_SUPPORTED;  
-
   // WFI logic
-  assign WFIStallM = ValidWfiM & ~IntPendingM;         // WFI waiting for an interrupt or timeout
-  assign WFIInterruptedM = ValidWfiM & IntPendingM;    // WFI detects a pending interrupt.  Retire WFI; trap if interrupt is enabled.
+  assign WFIStallM = wfiM & ~IntPendingM;         // WFI waiting for an interrupt or timeout
+  assign WFIInterruptedM = wfiM & IntPendingM;    // WFI detects a pending interrupt.  Retire WFI; trap if interrupt is enabled.
   
   // stalls and flushes
   // loads: stall for one cycle if the subsequent instruction depends on the load
@@ -89,10 +69,10 @@ module hazard import cvw::*;  #(parameter cvw_t P) (
   // Branch misprediction is found in the Execute stage and must flush the next two instructions.
   //   However, an active division operation resides in the Execute stage, and when the BP incorrectly mispredicts the divide as a taken branch, the divde must still complete
   // When a WFI is interrupted and causes a trap, it flushes the rest of the pipeline but not the W stage, because the WFI needs to commit
-  assign FlushDCause = ValidTrapM | ValidRetM | ValidCSRWriteFenceM | BPWrongE;
-  assign FlushECause = ValidTrapM | ValidRetM | ValidCSRWriteFenceM |(BPWrongE & ~(ValidDivBusyE | ValidFDivBusyE));
-  assign FlushMCause = ValidTrapM | ValidRetM | ValidCSRWriteFenceM;
-  assign FlushWCause = ValidTrapM & ~WFIInterruptedM;
+  assign FlushDCause = TrapM | RetM | CSRWriteFenceM | BPWrongE;
+  assign FlushECause = TrapM | RetM | CSRWriteFenceM |(BPWrongE & ~(DivBusyE | FDivBusyE));
+  assign FlushMCause = TrapM | RetM | CSRWriteFenceM;
+  assign FlushWCause = TrapM & ~WFIInterruptedM;
 
   // Stall causes
   //  Most data depenency stalls are identified in the decode stage
@@ -103,8 +83,8 @@ module hazard import cvw::*;  #(parameter cvw_t P) (
   //    The IFU stalls the entire pipeline rather than just Fetch to avoid complications with instructions later in the pipeline causing Exceptions
   //    A trap could be asserted at the start of a IFU/LSU stall, and should flush the memory operation
   assign StallFCause = '0;
-  assign StallDCause = (LoadStallD | StoreStallD | ValidMDUStallD | ValidCSRRdStallD | ValidFCvtIntStallD | ValidFPUStallD) & ~FlushDCause;
-  assign StallECause = (ValidDivBusyE | ValidFDivBusyE) & ~FlushECause; 
+  assign StallDCause = (LoadStallD | StoreStallD | MDUStallD | CSRRdStallD | FCvtIntStallD | FPUStallD) & ~FlushDCause;
+  assign StallECause = (DivBusyE | FDivBusyE) & ~FlushECause; 
   assign StallMCause = WFIStallM & ~FlushMCause;
   // Need to gate IFUStallF when the equivalent FlushFCause = FlushDCause = 1.
   // assign StallWCause = ((IFUStallF & ~FlushDCause) | LSUStallM) & ~FlushWCause;
