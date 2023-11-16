@@ -43,7 +43,8 @@ TrainLineNumberArray=($TrainLineNumbers)
 BeginLineNumberArray=($BeginLineNumbers)
 EndLineNumberArray=($EndLineNumbers)
 
-mkdir -p branch
+OutputPath=${File%%.*}
+mkdir -p $OutputPath
 Length=${#EndLineNumberArray[@]}
 for i in $(seq 0 1 $((Length-1)))
 do
@@ -51,5 +52,5 @@ do
     CurrTrain=$((${TrainLineNumberArray[$i]}+1))
     CurrEnd=$((${EndLineNumberArray[$i]}-1))
     echo $CurrName, $CurrTrain, $CurrEnd
-    sed -n "${CurrTrain},${CurrEnd}p" $File > branch/${CurrName}_branch.log
+    sed -n "${CurrTrain},${CurrEnd}p" $File > $OutputPath/${CurrName}_${File}
 done
