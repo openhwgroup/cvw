@@ -389,6 +389,7 @@ module testbench;
 
     assign SDCCmd = SDCCmdOE ? SDCCmdOut : 1'bz;
     assign SDCCmdIn = SDCCmd;
+    assign SDCDat = sd_dat_reg_t ? sd_dat_reg_o : sd_dat_i;
     assign SDCDatIn = SDCDat;
  -----/\----- EXCLUDED -----/\----- */
     assign SDCIntr = '0;
