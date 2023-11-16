@@ -31,6 +31,7 @@
 			status = "okay";
 			compatible = "riscv";
 			riscv,isa = "rv64imafdcsu";
+                        riscv,isa-extensions = "svadu";
 			mmu-type = "riscv,sv48";
 
 			interrupt-controller {
