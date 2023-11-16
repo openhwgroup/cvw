@@ -180,9 +180,11 @@ def ExtractSelectedData(benchmarkFirstList):
     benchmarkDict = { }
     for benchmark in benchmarkFirstList:
         (name, opt, config, prefixName, entries, dataDict) = benchmark
-        if opt == 'bd_speedopt_speed': NewName = name+'Sp'
-        elif opt == 'bd_sizeopt_speed': NewName = name+'Sz'
-        else: NewName = name
+        # use this code to distinguish speed opt and size opt.
+        #if opt == 'bd_speedopt_speed': NewName = name+'Sp'
+        #elif opt == 'bd_sizeopt_speed': NewName = name+'Sz'
+        #else: NewName = name
+        NewName = name
         #print(NewName)
         #NewName = name+'_'+opt
         if NewName in benchmarkDict:
