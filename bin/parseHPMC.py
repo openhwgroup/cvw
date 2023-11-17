@@ -244,7 +244,7 @@ def ReportAsText(benchmarkDict):
 def Inversion(lst):
     return [x if not args.invert else 100 - x for x in lst]
 
-def BarGraph(seriesDict, xlabelList, BenchPerRow, FileName):
+def BarGraph(seriesDict, xlabelList, BenchPerRow, FileName, IncludeLegend):
     index = 0
     NumberInGroup = len(seriesDict)
     # Figure out width of bars.  NumberInGroup bars + want 2 bar space
@@ -262,8 +262,8 @@ def BarGraph(seriesDict, xlabelList, BenchPerRow, FileName):
     plt.xticks([r + barWidth*(NumberInGroup/2-0.5) for r in range(0, BenchPerRow)], xlabelList)
     plt.xlabel('Benchmark')
     if(not args.invert): plt.ylabel('Misprediction Rate (%)')
-    else:  plt.ylabel('Prediction Accuracy (%)') 
-    plt.legend(loc='upper left', ncol=2)
+    else:  plt.ylabel('Prediction Accuracy (%)')
+    if(IncludeLegend): plt.legend(loc='upper right', ncol=2)
     plt.savefig(FileName)
 
 def SelectPartition(xlabelListBig, seriesDictBig, group, BenchPerRow):
@@ -352,13 +352,13 @@ def ReportAsGraph(benchmarkDict, bar):
     #         index += 1
 
     if(not args.summary):
-        size = len(benchmarkDict)
-        sizeSqrt = math.sqrt(size)
-        isSquare = math.isclose(sizeSqrt, round(sizeSqrt))
-        numCol = math.floor(sizeSqrt)
+        NumBenchmarks = len(benchmarkDict)
+        NumBenchmarksSqrt = math.sqrt(NumBenchmarks)
+        isSquare = math.isclose(NumBenchmarksSqrt, round(NumBenchmarksSqrt))
+        numCol = math.floor(NumBenchmarksSqrt)
         numRow = numCol + (0 if isSquare else 1)
         index = 1
-        BenchPerRow = 7
+        BenchPerRow = 5
 
         xlabelList = []
         seriesDict = {}
@@ -387,11 +387,11 @@ def ReportAsGraph(benchmarkDict, bar):
 
         #The next step will be to split the benchmarkDict into length BenchPerRow pieces then repeat the following code
         # on each piece.
-        for row in range(0, math.ceil(39 / BenchPerRow)):
+        for row in range(0, math.ceil(NumBenchmarks / BenchPerRow)):
             (xlabelListTrunk, seriesDictTrunk) = SelectPartition(xlabelListBig, seriesDictBig, row, BenchPerRow)
             FileName = 'barSegment%d.png' % row
             groupLen = len(xlabelListTrunk)
-            BarGraph(seriesDictTrunk, xlabelListTrunk, groupLen, FileName)
+            BarGraph(seriesDictTrunk, xlabelListTrunk, groupLen, FileName, (row == 0))
 
 
 # main
