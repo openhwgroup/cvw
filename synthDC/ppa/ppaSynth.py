@@ -11,7 +11,7 @@ from multiprocessing import Pool
 from ppaAnalyze import synthsfromcsv
 
 def runCommand(module, width, tech, freq):
-    command = "make synth DESIGN={} WIDTH={} TECH={} DRIVE=INV FREQ={} MAXOPT=1 MAXCORES=1 WRAPPER=0".format(module, width, tech, freq)
+    command = "make synth DESIGN={} WIDTH={} TECH={} DRIVE=INV FREQ={} MAXOPT=1 MAXCORES=1".format(module, width, tech, freq)
     subprocess.call(command, shell=True)
 
 def deleteRedundant(synthsToRun):

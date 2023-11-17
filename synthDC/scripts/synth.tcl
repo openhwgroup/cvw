@@ -1,27 +1,7 @@
-#####################
-# synth.tcl
 #
-# Written: james.stine@okstate.edu 15 November 2023
+# Synthesis Synopsys Flow
+# james.stine@okstate.edu 27 Sep 2015
 #
-# Purpose: Baseline DC Tcl file
-#
-# A component of the Wally configurable RISC-V project.
-#
-# Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
-#
-# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
-#
-# Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-# except in compliance with the License, or, at your option, the Apache License version 2.0. You 
-# may obtain a copy of the License at
-#
-# https:#solderpad.org/licenses/SHL-2.1/
-#
-# Unless required by applicable law or agreed to in writing, any work distributed under the 
-# License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-# either express or implied. See the License for the specific language governing permissions 
-# and limitations under the License.
-################################################
 
 # start run clock
 set t1 [clock seconds]
@@ -46,7 +26,6 @@ set saifpower $::env(SAIFPOWER)
 set maxopt $::env(MAXOPT)
 set drive $::env(DRIVE)
 set width $::env(WIDTH)
-set wrapper $::env(WRAPPER)
 
 eval file copy -force [glob ${cfg}/*.vh] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/cvw.sv] {$outputDir/hdl/}
@@ -54,6 +33,7 @@ eval file copy -force [glob ${hdl_src}/*/*.sv] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/*/*.sv] {$outputDir/hdl/}
 
 # Check if a wrapper is needed and create it (to pass parameters when cvw_t parameters are used)
+set wrapper 0
 if {[catch {eval exec grep "cvw_t" $outputDir/hdl/$::env(DESIGN).sv}] == 0} {
     echo "Creating wrapper"
     set wrapper 1
@@ -460,7 +440,7 @@ set filename [format "%s%s" $outputDir  "/reports/cell.rep"]
 #redirect $filename { report_cell [get_cells -hier *] }  # not too useful
 
 set filename [format "%s%s" $outputDir  "/reports/power.rep"]
-redirect $filename { report_power -analysis_effort high -hierarchy -levels 1 }
+redirect $filename { report_power -hierarchy -levels 1 }
 
 set filename [format "%s%s" $outputDir  "/reports/constraint.rep"]
 redirect $filename { report_constraint }
