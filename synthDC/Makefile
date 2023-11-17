@@ -1,28 +1,7 @@
-#####################
-# Makefile
-#
-# Written: ssanghai@hmc.edu, mmasserfrye@hmc.edu, james.stine@okstate.edu 15 November 2023
-#
-# Purpose: Makefile to be used for synthesis using DC
-#
-# A component of the Wally configurable RISC-V project.
-#
-# Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
-#
-# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
-#
-# Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-# except in compliance with the License, or, at your option, the Apache License version 2.0. You 
-# may obtain a copy of the License at
-#
-# https:#solderpad.org/licenses/SHL-2.1/
-#
-# Unless required by applicable law or agreed to in writing, any work distributed under the 
-# License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-# either express or implied. See the License for the specific language governing permissions 
-# and limitations under the License.
-################################################
-
+#  
+# Makefile for synthesis
+# Shreya Sanghai (ssanghai@hmc.edu) 2/28/2022
+# Madeleine Masser-Frye (mmasserfrye@hmc.edu) 1/27/2023
 NAME := synth
 # defaults
 export DESIGN ?= wallypipelinedcore
@@ -42,18 +21,11 @@ export MAXOPT ?= 0
 export DRIVE ?= FLOP
 export USESRAM ?= 0
 export WIDTH ?= 32
-export WRAPPER ?= 1
-export SAIFPOWER ?= 0
 
 time := $(shell date +%F-%H-%M)
 hash := $(shell git rev-parse --short HEAD)
-# This is done to create different naming conventions to help the PPA python 
-# TODO: cleanup later to utilize better parsing/lexing
-ifeq ($(WRAPPER), 0)
-	export OUTPUTDIR := runs/$(DESIGN)_$(WIDTH)_$(CONFIG)_$(TECH)_$(FREQ)_MHz_$(time)_$(TITLE)_$(hash)
-else
-	export OUTPUTDIR := runs/$(DESIGN)_$(CONFIG)_$(MOD)_$(TECH)_$(FREQ)_MHz_$(time)_$(TITLE)_$(hash)
-endif
+export OUTPUTDIR := runs/$(DESIGN)_$(CONFIG)_$(TECH)_$(FREQ)_MHz_$(time)_$(TITLE)_$(hash)
+export SAIFPOWER ?= 0
 
 OLDCONFIGDIR ?= ${WALLY}/config
 export CONFIGDIR ?= $(OUTPUTDIR)/config
