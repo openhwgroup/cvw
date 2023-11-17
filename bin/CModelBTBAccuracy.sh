@@ -52,6 +52,6 @@ do
     # with such long precision bc outputs onto multiple lines
     # must remove \n and \ from string
     Product=`echo "$Product" | tr -d '\n' | tr -d '\\\'`
-    GeoMean=`perl -E "say $Product**(1/$Count)"`
+    GeoMean=`perl -E "say $Product**(1/$Count) * 100"`
     echo "$Pred$Size $GeoMean"
 done
