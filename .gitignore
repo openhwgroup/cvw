@@ -10,7 +10,7 @@ __pycache__/
 addins/riscv-arch-test/Makefile.include
 addins/riscv-tests/target
 addins/TestFloat-3e/build/Linux-x86_64-GCC/*
-benchmarks/embench/wally*.json
+
 
 #vsim work files to ignore
 transcript
@@ -175,3 +175,6 @@ tests/fp/combined_IF_vectors/IF_vectors/*.tv
 sim/bp-results/*.log
 sim/branch*.log
 /tests/custom/fpga-test-sdc/bin/fpga-test-sdc
+benchmarks/embench/wally*.json
+benchmarks/embench/run*
+sim/cfi.log
