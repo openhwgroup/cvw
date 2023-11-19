@@ -85,7 +85,8 @@ if __name__ == '__main__':
 
     ##### Run a sweep for multiple modules/widths based on best delay found in existing syntheses
 	modules = ['adder']
-	widths = [8, 16, 32, 64, 128]
+#	widths = [8, 16, 32, 64, 128]
+	widths = [32]
 	tech = 'sky130'
 	synthsToRun = freqModuleSweep(widths, modules, tech)	
         

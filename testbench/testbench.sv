@@ -37,7 +37,7 @@ module testbench;
   parameter DEBUG=0;
   parameter TEST="none";
   parameter PrintHPMCounters=0;
-  parameter BPRED_LOGGER=0;
+  parameter BPRED_LOGGER=1;
   parameter I_CACHE_ADDR_LOGGER=0;
   parameter D_CACHE_ADDR_LOGGER=0;
  
@@ -435,7 +435,7 @@ module testbench;
   loggers (clk, reset, DCacheFlushStart, DCacheFlushDone, memfilename);
 
   // track the current function or global label
-  if (DEBUG == 1 | (PrintHPMCounters & P.ZICNTR_SUPPORTED)) begin : FunctionName
+  if (DEBUG == 1 | ((PrintHPMCounters | BPRED_LOGGER) & P.ZICNTR_SUPPORTED)) begin : FunctionName
     FunctionName #(P) FunctionName(.reset(reset_ext | TestBenchReset),
 			      .clk(clk), .ProgramAddrMapFile(ProgramAddrMapFile), .ProgramLabelMapFile(ProgramLabelMapFile));
   end
