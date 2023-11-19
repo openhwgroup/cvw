@@ -158,7 +158,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     logic [P.XLEN-1:0] IEUAdrSpillE, IEUAdrSpillM;
     align #(P) align(.clk, .reset, .StallM, .FlushM, .IEUAdrE, .IEUAdrM, .Funct3M,
                      .MemRWM, .CacheableM,
-                     .DCacheReadDataWordM, .CacheBusHPWTStall, .DTLBMissM, .DataUpdateDAM,
+                     .DCacheReadDataWordM, .CacheBusHPWTStall, .DTLBMissM, .DataUpdateDAM, .SelHPTW,
                      .ByteMaskM, .ByteMaskExtendedM, .LSUWriteDataM, .ByteMaskSpillM, .LSUWriteDataSpillM,
                      .IEUAdrSpillE, .IEUAdrSpillM, .SelSpillE, .MemRWSpillM, .DCacheReadDataWordSpillM, .SpillStallM,
                      .SelStoreDelay);
