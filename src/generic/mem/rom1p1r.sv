@@ -33,7 +33,7 @@ module rom1p1r #(parameter ADDR_WIDTH = 8, DATA_WIDTH = 32, PRELOAD_ENABLED = 0)
 );
 
    // Core Memory
-   logic [DATA_WIDTH-1:0]    ROM [(2**ADDR_WIDTH)-1:0];
+   (*rom_style="block" *) logic [DATA_WIDTH-1:0]    ROM [(2**ADDR_WIDTH)-1:0];
    
    // dh 10/30/23 ROM macros are presently commented out
    // because they don't point to a generated ROM
@@ -41,15 +41,23 @@ module rom1p1r #(parameter ADDR_WIDTH = 8, DATA_WIDTH = 32, PRELOAD_ENABLED = 0)
       rom1p1r_128x64 rom1 (.CLK(clk), .CEB(~ce), .A(addr[6:0]), .Q(dout));
 
    end if ((`USE_SRAM == 1) & (ADDR_WDITH == 7) & (DATA_WIDTH == 32)) begin
-      rom1p1r_128x32 rom1 (.CLK(clk), .CEB(~ce), .A(addr[6:0]), .Q(dout));      
+ rom1p1r_128x32 rom1 (.CLK(clk), .CEB(~ce), .A(addr[6:0]), .Q(dout));
 
-   end else begin */
-   always @ (posedge clk) 
-      if(ce) dout <= ROM[addr];    
+  end else begin */
+
+  initial begin
+    if (PRELOAD_ENABLED) begin
+      $readmemh("../../../fpga/src/boot.mem", ROM, 0);
+    end
+  end
+  
+  always @ (posedge clk) begin
+    if(ce) dout <= ROM[addr];
+  end
    
    
    // for FPGA, initialize with zero-stage bootloader
-   if(PRELOAD_ENABLED) begin
+   /*if(PRELOAD_ENABLED) begin
       initial begin
         ROM[0]=64'h8001819300002197;
         ROM[1]=64'h4281420141014081;
@@ -195,6 +203,6 @@ module rom1p1r #(parameter ADDR_WIDTH = 8, DATA_WIDTH = 32, PRELOAD_ENABLED = 0)
         ROM[141]=64'h0000808241010113;
         
       end // if (PRELOAD_ENABLED)  
-   end 
+   end*/
 
 endmodule 
