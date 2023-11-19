@@ -30,33 +30,34 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module align import cvw::*;  #(parameter cvw_t P) (
-  input logic               clk,               
-  input logic               reset,
-  input logic               StallM, FlushM,
-  input logic [P.XLEN-1:0]  IEUAdrM,               // 2 byte aligned PC in Fetch stage
-  input logic [P.XLEN-1:0]  IEUAdrE,           // The next IEUAdrM
-  input logic [2:0]         Funct3M,           // Size of memory operation
-  input logic [1:0]         MemRWM, 
-  input logic               CacheableM,
-  input logic [P.LLEN*2-1:0]DCacheReadDataWordM,  // Instruction from the IROM, I$, or bus. Used to check if the instruction if compressed
-  input logic               CacheBusHPWTStall,         // I$ or bus are stalled. Transition to second fetch of spill after the first is fetched
-  input logic               DTLBMissM,         // ITLB miss, ignore memory request
-  input logic               DataUpdateDAM,     // ITLB miss, ignore memory request
+  input logic                     clk, 
+  input logic                     reset,
+  input logic                     StallM, FlushM,
+  input logic [P.XLEN-1:0]        IEUAdrM, // 2 byte aligned PC in Fetch stage
+  input logic [P.XLEN-1:0]        IEUAdrE, // The next IEUAdrM
+  input logic [2:0]               Funct3M, // Size of memory operation
+  input logic [1:0]               MemRWM, 
+  input logic                     CacheableM,
+  input logic [P.LLEN*2-1:0]      DCacheReadDataWordM, // Instruction from the IROM, I$, or bus. Used to check if the instruction if compressed
+  input logic                     CacheBusHPWTStall, // I$ or bus are stalled. Transition to second fetch of spill after the first is fetched
+  input logic                     DTLBMissM, // ITLB miss, ignore memory request
+  input logic                     DataUpdateDAM, // ITLB miss, ignore memory request
+  input logic                     SelHPTW,
 
-  input logic [(P.LLEN-1)/8:0] ByteMaskM,
-  input logic [(P.LLEN-1)/8:0] ByteMaskExtendedM,
-  input logic [P.LLEN-1:0] LSUWriteDataM, 
+  input logic [(P.LLEN-1)/8:0]    ByteMaskM,
+  input logic [(P.LLEN-1)/8:0]    ByteMaskExtendedM,
+  input logic [P.LLEN-1:0]        LSUWriteDataM, 
 
   output logic [(P.LLEN*2-1)/8:0] ByteMaskSpillM,
-  output logic [P.LLEN*2-1:0] LSUWriteDataSpillM, 
+  output logic [P.LLEN*2-1:0]     LSUWriteDataSpillM, 
 
-  output logic [P.XLEN-1:0] IEUAdrSpillE,      // The next PCF for one of the two memory addresses of the spill
-  output logic [P.XLEN-1:0] IEUAdrSpillM,      // IEUAdrM for one of the two memory addresses of the spill
-  output logic              SelSpillE,     // During the transition between the two spill operations, the IFU should stall the pipeline
-  output logic [1:0]        MemRWSpillM, 
-  output logic              SelStoreDelay, //*** this is bad.  really don't like moving this outside
-  output logic [P.LLEN-1:0] DCacheReadDataWordSpillM, // The final 32 bit instruction after merging the two spilled fetches into 1 instruction
-  output logic SpillStallM);
+  output logic [P.XLEN-1:0]       IEUAdrSpillE, // The next PCF for one of the two memory addresses of the spill
+  output logic [P.XLEN-1:0]       IEUAdrSpillM, // IEUAdrM for one of the two memory addresses of the spill
+  output logic                    SelSpillE, // During the transition between the two spill operations, the IFU should stall the pipeline
+  output logic [1:0]              MemRWSpillM, 
+  output logic                    SelStoreDelay, //*** this is bad.  really don't like moving this outside
+  output logic [P.LLEN-1:0]       DCacheReadDataWordSpillM, // The final 32 bit instruction after merging the two spilled fetches into 1 instruction
+  output logic                    SpillStallM);
 
   localparam LLENINBYTES = P.LLEN/8;
   localparam OFFSET_BIT_POS =  $clog2(P.DCACHE_LINELENINBITS/8);
@@ -83,6 +84,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   logic [$clog2(LLENINBYTES)-1:0]                 ByteOffsetM;
   logic                                HalfSpillM, WordSpillM;
   logic [$clog2(LLENINBYTES)-1:0]      AccessByteOffsetM;
+  logic                                ValidAccess;
 
   /* verilator lint_off WIDTHEXPAND */
   assign IEUAdrIncrementM = IEUAdrM + LLENINBYTES;
@@ -116,17 +118,18 @@ module align import cvw::*;  #(parameter cvw_t P) (
   assign WordMisalignedM = (ByteOffsetM[1:0] != '0) & Funct3M[1:0] == 2'b10;
   assign HalfSpillM = (IEUAdrM[OFFSET_BIT_POS-1:1] == '1) & HalfMisalignedM;
   assign WordSpillM = (IEUAdrM[OFFSET_BIT_POS-1:2] == '1) & WordMisalignedM;
+  assign ValidAccess = (|MemRWM) & ~SelHPTW;
 
   if(P.LLEN == 64) begin
     logic DoubleSpillM;
     logic DoubleMisalignedM;
     assign DoubleMisalignedM = (ByteOffsetM[2:0] != '0) & Funct3M[1:0] == 2'b11;
     assign DoubleSpillM = (IEUAdrM[OFFSET_BIT_POS-1:3] == '1) & DoubleMisalignedM;
-    assign MisalignedM = HalfMisalignedM | WordMisalignedM | DoubleMisalignedM;
-    assign SpillM = (|MemRWM) & CacheableM & (HalfSpillM | WordSpillM | DoubleSpillM);
+    assign MisalignedM = ValidAccess & (HalfMisalignedM | WordMisalignedM | DoubleMisalignedM);
+    assign SpillM = ValidAccess & CacheableM & (HalfSpillM | WordSpillM | DoubleSpillM);
   end else begin
-    assign SpillM = (|MemRWM) & CacheableM & (HalfSpillM | WordSpillM);
-    assign MisalignedM = HalfMisalignedM | WordMisalignedM;
+    assign SpillM = ValidAccess & CacheableM & (HalfSpillM | WordSpillM);
+    assign MisalignedM = ValidAccess & (HalfMisalignedM | WordMisalignedM);
   end
       
   // align by shifting
