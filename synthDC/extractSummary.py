@@ -252,7 +252,7 @@ if __name__ == '__main__':
 
     TechSpec = namedtuple("TechSpec", "color shape targfreq fo4 add32area add32lpower add32denergy")
     techdict = {}
-    techdict['sky130'] = TechSpec('green', 'o', args.sky130freq, 99.5e-3, 1440.600027, 714.057, 0.658023)
+    techdict['sky130'] = TechSpec('green', 'o', args.sky130freq, 99.5e-3, 2581, 18, 0.685)
     techdict['sky90'] = TechSpec('gray', 'o', args.sky90freq, 43.2e-3, 1440.600027, 714.057, 0.658023)
     techdict['tsmc28psyn'] = TechSpec('blue', 's', args.tsmcfreq, 12.2e-3, 209.286002, 1060.0, .081533)
 
