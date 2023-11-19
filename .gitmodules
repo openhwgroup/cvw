@@ -23,9 +23,9 @@
 [submodule "addins/vivado-boards"]
 	path = addins/vivado-boards
 	url = https://github.com/Digilent/vivado-boards/
-[submodule "addins/vivado-risc-v"]
-	path = addins/vivado-risc-v
-	url = https://github.com/eugene-tarassov/vivado-risc-v.git
+[submodule "addins/ahbsdc"]
+	path = addins/ahbsdc
+	url = git@github.com:jacobpease/ahbsdc.git
 [submodule "addins/riscv-arch-test"]
 	path = addins/riscv-arch-test
 	url = https://github.com/riscv-non-isa/riscv-arch-test
