@@ -18,12 +18,13 @@
 # More extensions
 --override cpu/Zcb=T
 
---override cpu/unaligned=T
-
 # Cache block operations
 --override cpu/Zicbom=T
 --override cpu/Zicbop=T
 --override cpu/Zicboz=T
+--override cmomp_bytes=64  # Zic64b
+--override cmoz_bytes=64   # Zic64b
+--override lr_sc_grain=64  # Za64rs
 
 # 64 KiB continuous huge pages supported
 --override cpu/Svpbmt=T
@@ -42,6 +43,7 @@
 
 --override cpu/reset_address=0x80000000
 
+--override cpu/unaligned=T  # Zicclsm (should be true)
 --override cpu/ignore_non_leaf_DAU=1
 --override cpu/wfi_is_nop=T
 --override cpu/misa_Extensions_mask=0x0

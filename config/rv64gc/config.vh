@@ -150,7 +150,7 @@ localparam PLIC_SDC_ID = 32'd9;
 localparam BPRED_SUPPORTED = 1;
 localparam BPRED_TYPE = `BP_GSHARE; // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BASIC, BP_TWOBIT
 localparam BPRED_NUM_LHR = 32'd6;
-localparam BPRED_SIZE = 32'd6;
+localparam BPRED_SIZE = 32'd10;
 localparam BTB_SIZE = 32'd10;
 localparam RAS_SIZE = 32'd16;
 

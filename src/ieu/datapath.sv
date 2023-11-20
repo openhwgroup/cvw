@@ -131,7 +131,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   if (P.F_SUPPORTED) begin:fpmux
     mux2  #(P.XLEN)  resultmuxM(IEUResultM, FIntResM, FWriteIntM, IFResultM);
     mux2  #(P.XLEN)  cvtresultmuxW(IFResultW, FCvtIntResW, FCvtIntW, IFCvtResultW);
-    if (P.IDIV_ON_FPU) begin
+    if (P.IDIV_ON_FPU & P.F_SUPPORTED) begin
       mux2  #(P.XLEN)  divresultmuxW(MDUResultW, FIntDivResultW, IntDivW, MulDivResultW);
     end else begin 
       assign MulDivResultW = MDUResultW;
