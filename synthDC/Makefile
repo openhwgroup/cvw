@@ -11,7 +11,7 @@ export MOD ?= orig
 # title to add a note in the synth's directory name
 TITLE = 
 # tsmc28, sky130, and sky90 presently supported
-export TECH ?= sky90
+export TECH ?= sky130
 # MAXCORES allows parallel compilation, which is faster but less CPU-efficient
 # Avoid when doing sweeps of many optimization points in parallel
 export MAXCORES ?= 1
@@ -20,7 +20,7 @@ export MAXCORES ?= 1
 export MAXOPT ?= 0
 export DRIVE ?= FLOP
 export USESRAM ?= 0
-
+export WIDTH ?= 32
 
 time := $(shell date +%F-%H-%M)
 hash := $(shell git rev-parse --short HEAD)
@@ -94,10 +94,10 @@ endif
 
 ifneq ($(MOD), orig)
 	# PMP 0
-	sed -i 's/PMP_ENTRIES \(64\|16\|0\)/PMP_ENTRIES = 0;/' $(CONFIGDIR)/config.vh
+	sed -i 's/PMP_ENTRIES.*\(64\|16\)/PMP_ENTRIES = 0;/' $(CONFIGDIR)/config.vh
 ifneq ($(MOD), PMP0)
 	# no priv
-	sed -i 's/ZICSR_SUPPORTED *1/ZICSR_SUPPORTED = 0;/' $(CONFIGDIR)/config.vh
+	sed -i 's/ZICSR_SUPPORTED.*1/ZICSR_SUPPORTED = 0;/' $(CONFIGDIR)/config.vh
 ifneq ($(MOD), noPriv)
 	# turn off FPU 
 	sed -i 's/1 *<< *3/0 << 3/' $(CONFIGDIR)/config.vh

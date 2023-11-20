@@ -179,13 +179,10 @@ localparam cvw_t P = '{
   NORMSHIFTSZ : NORMSHIFTSZ,
   LOGNORMSHIFTSZ : LOGNORMSHIFTSZ,
   CORRSHIFTSZ : CORRSHIFTSZ,
-  DIVN        : DIVN,
   LOGR        : LOGR,
   RK          : RK,
-  LOGRK       : LOGRK,
   FPDUR       : FPDUR,
   DURLEN      : DURLEN,
   DIVb        : DIVb,
-  DIVBLEN     : DIVBLEN,
-  DIVa        : DIVa
+  DIVBLEN     : DIVBLEN
 };

@@ -31,31 +31,31 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
   input  logic              IFDivStartE, 
   input  logic              FDivBusyE, 
   input  logic              SqrtE,
-  input  logic [P.DIVb+3:0] X, D,
-  output logic [P.DIVb:0]   FirstU, FirstUM,
-  output logic [P.DIVb+1:0] FirstC,
+  input  logic [P.DIVb+3:0] X, D,                  // Q4.DIVb
+  output logic [P.DIVb:0]   FirstU, FirstUM,       // U1.DIVb
+  output logic [P.DIVb+1:0] FirstC,                // Q2.DIVb
   output logic              Firstun,
-  output logic [P.DIVb+3:0] FirstWS, FirstWC
+  output logic [P.DIVb+3:0] FirstWS, FirstWC       // Q4.DIVb
 );
 
   /* verilator lint_off UNOPTFLAT */
-  logic [P.DIVb+3:0]      WSNext[P.DIVCOPIES-1:0]; // Q4.b
-  logic [P.DIVb+3:0]      WCNext[P.DIVCOPIES-1:0]; // Q4.b
-  logic [P.DIVb+3:0]      WS[P.DIVCOPIES:0];       // Q4.b
-  logic [P.DIVb+3:0]      WC[P.DIVCOPIES:0];       // Q4.b
-  logic [P.DIVb:0]        U[P.DIVCOPIES:0];        // U1.b
-  logic [P.DIVb:0]        UM[P.DIVCOPIES:0];       // U1.b
-  logic [P.DIVb:0]        UNext[P.DIVCOPIES-1:0];  // U1.b
-  logic [P.DIVb:0]        UMNext[P.DIVCOPIES-1:0]; // U1.b
-  logic [P.DIVb+1:0]      C[P.DIVCOPIES:0];        // Q2.b
-  logic [P.DIVb+1:0]      initC;                   // Q2.b
+  logic [P.DIVb+3:0]      WSNext[P.DIVCOPIES-1:0]; // Q4.DIVb
+  logic [P.DIVb+3:0]      WCNext[P.DIVCOPIES-1:0]; // Q4.DIVb
+  logic [P.DIVb+3:0]      WS[P.DIVCOPIES:0];       // Q4.DIVb
+  logic [P.DIVb+3:0]      WC[P.DIVCOPIES:0];       // Q4.DIVb
+  logic [P.DIVb:0]        U[P.DIVCOPIES:0];        // U1.DIVb
+  logic [P.DIVb:0]        UM[P.DIVCOPIES:0];       // U1.DIVb
+  logic [P.DIVb:0]        UNext[P.DIVCOPIES-1:0];  // U1.DIVb
+  logic [P.DIVb:0]        UMNext[P.DIVCOPIES-1:0]; // U1.DIVb
+  logic [P.DIVb+1:0]      C[P.DIVCOPIES:0];        // Q2.DIVb
+  logic [P.DIVb+1:0]      initC;                   // Q2.DIVb
   logic [P.DIVCOPIES-1:0] un; 
 
-  logic [P.DIVb+3:0]      WSN, WCN;                // Q4.b
-  logic [P.DIVb+3:0]      DBar, D2, DBar2;         // Q4.b
-  logic [P.DIVb+1:0]      NextC;
-  logic [P.DIVb:0]        UMux, UMMux;
-  logic [P.DIVb:0]        initU, initUM;
+  logic [P.DIVb+3:0]      WSN, WCN;                // Q4.DIVb
+  logic [P.DIVb+3:0]      DBar, D2, DBar2;         // Q4.DIVb
+  logic [P.DIVb+1:0]      NextC;                   // Q2.DIVb
+  logic [P.DIVb:0]        UMux, UMMux;             // U1.DIVb
+  logic [P.DIVb:0]        initU, initUM;           // U1.DIVb
   /* verilator lint_on UNOPTFLAT */
 
   // Top Muxes and Registers
@@ -104,14 +104,14 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
     for(i=0; $unsigned(i)<P.DIVCOPIES; i++) begin : iterations
       if (P.RADIX == 2) begin: stage
         fdivsqrtstage2 #(P) fdivsqrtstage(.D, .DBar, .SqrtE,
-        .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]),
-        .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
+          .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]),
+          .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
       end else begin: stage
         logic j1;
         assign j1 = (i == 0 & ~C[0][P.DIVb-1]);
         fdivsqrtstage4 #(P) fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtE, .j1,
-        .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]), 
-        .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
+          .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]), 
+          .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
       end
       assign WS[i+1] = WSNext[i];
       assign WC[i+1] = WCNext[i];

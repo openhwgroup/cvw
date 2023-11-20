@@ -22,6 +22,9 @@
 --override cpu/Zicbom=T
 --override cpu/Zicbop=T
 --override cpu/Zicboz=T
+--override cmomp_bytes=64  # Zic64b
+--override cmoz_bytes=64   # Zic64b
+--override lr_sc_grain=64  # Za64rs
 
 # 64 KiB continuous huge pages supported
 --override cpu/Svpbmt=T
@@ -40,7 +43,7 @@
 
 --override cpu/reset_address=0x80000000
 
---override cpu/unaligned=F
+--override cpu/unaligned=T  # Zicclsm (should be true)
 --override cpu/ignore_non_leaf_DAU=1
 --override cpu/wfi_is_nop=T
 --override cpu/misa_Extensions_mask=0x0
@@ -88,7 +91,7 @@
 
 # Add Imperas simulator application instruction tracing
 --verbose
---trace --tracechange --traceshowicount --tracemode -tracemem ASX --monitornetschange --traceafter 0
+#--trace --tracechange --traceshowicount --tracemode -tracemem ASX --monitornetschange --traceafter 300000000
 --override cpu/debugflags=6 --override cpu/verbose=1
 --override cpu/show_c_prefix=T
 
