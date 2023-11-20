@@ -65,6 +65,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   output logic       SelCMOWriteback,   // Overrides cached tag check to select a specific way and set for writeback for both data and tag
   output logic       LRUWriteEn,        // Update the LRU state
   output logic       SelFlush,          // [0] Use SelAdr, [1] SRAM reads/writes from FlushAdr
+  output logic       SelWay,            // Controls which way to select a way data and tag, 00 = hitway, 10 = victimway, 11 = flushway
   output logic       FlushAdrCntEn,     // Enable the counter for Flush Adr
   output logic       FlushWayCntEn,     // Enable the way counter during a flush
   output logic       FlushCntRst,       // Reset both flush counters
@@ -166,7 +167,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   // write enables internal to cache
   assign CMOZeroHit = CurrState == STATE_READY & CMOp[3] & CacheHit ;
   assign SetValid = CurrState == STATE_WRITE_LINE | 
-                    (CurrState == STATE_READY & CMOZeroNoEviction) |
+                    (P.ZICBOZ_SUPPORTED & CurrState == STATE_READY & CMOZeroNoEviction) |
                     (P.ZICBOZ_SUPPORTED & CurrState == STATE_WRITEBACK & CacheBusAck & CMOp[3]); 
   assign ClearValid = P.ZICBOM_SUPPORTED & ((CurrState == STATE_READY & CMOp[0] & CacheHit) |
                       (CurrState == STATE_CMO_WRITEBACK & CMOp[2] & CacheBusAck));
@@ -182,6 +183,11 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
                       (CurrState == STATE_FLUSH & LineDirty) | // This is wrong in a multicore snoop cache protocal.  Dirty must be cleared concurrently and atomically with writeback.  For single core cannot clear after writeback on bus ack and change flushadr.  Clears the wrong set.
   // Flush and eviction controls
                       (P.ZICBOM_SUPPORTED & CurrState == STATE_CMO_WRITEBACK & (CMOp[1] | CMOp[2]) & CacheBusAck);
+  assign SelWay = SelWriteback | (CurrState == STATE_WRITE_LINE) |
+                  // This is almost the same as setvalid, but on cachehit we don't want to select
+                  // the nonhit way, but instead want to force this to zero
+                  (P.ZICBOZ_SUPPORTED & CurrState == STATE_READY & CMOZeroNoEviction & ~CacheHit) |
+                  (P.ZICBOZ_SUPPORTED & CurrState == STATE_WRITEBACK & CacheBusAck & CMOp[3]);
   assign ZeroCacheLine = P.ZICBOZ_SUPPORTED & ((CurrState == STATE_READY & CMOZeroNoEviction) | 
                                                (CurrState == STATE_WRITEBACK & (CMOp[3] & CacheBusAck)));  
   assign SelWriteback = (CurrState == STATE_WRITEBACK & ~CacheBusAck) |
