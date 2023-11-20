@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// fdivsqrtqsel4cmp.sv
+// fdivsqrtuslc4cmp.sv
 //
 // Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu 
 // Modified:13 January 2022
 //
-// Purpose: Comparator-based Radix 4 Quotient Digit Selection
+// Purpose: Comparator-based Radix 4 Unified Quotient/Square Root Digit Selection 
 // 
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
@@ -26,12 +26,12 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module fdivsqrtqsel4cmp (
-  input  logic [2:0] Dmsbs,
-  input  logic [4:0] Smsbs,
-  input  logic [7:0] WSmsbs, WCmsbs,
+module fdivsqrtuslc4cmp (
+  input  logic [2:0] Dmsbs,             // U0.3 fractional bits after implicit leading 1
+  input  logic [4:0] Smsbs,             // U1.4 leading bits of square root approximation
+  input  logic [7:0] WSmsbs, WCmsbs,    // Q4.4 residual most significant bits
   input  logic       SqrtE, j1,
-  output logic [3:0] udigit
+  output logic [3:0] udigit             // {2, 1, -1, -2} digit is 0 if none are hot
 );
   logic [6:0] Wmsbs;
   logic [7:0] PreWmsbs;

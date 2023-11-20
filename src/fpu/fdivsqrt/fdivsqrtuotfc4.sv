@@ -28,15 +28,15 @@
 
 module fdivsqrtuotfc4 import cvw::*;  #(parameter cvw_t P) (
   input  logic [3:0]     udigit,
-  input  logic [P.DIVb:0] U, UM,
-  input  logic [P.DIVb:0] C,
-  output logic [P.DIVb:0] UNext, UMNext
+  input  logic [P.DIVb:0] U, UM,          // U1.DIVb
+  input  logic [P.DIVb:0] C,              // Q1.DIVb
+  output logic [P.DIVb:0] UNext, UMNext   // U1.DIVb
 );
   //  The on-the-fly converter transfers the square root 
   //  bits to the quotient as they come.
   //  Use this otfc for division and square root.
 
-  logic [P.DIVb:0] K1, K2, K3;       
+  logic [P.DIVb:0] K1, K2, K3;            // U1.DIVb
   assign K1 = (C&~(C << 1));        // K
   assign K2 = ((C << 1)&~(C << 2)); // 2K
   assign K3 = (C & ~(C << 2));      // 3K

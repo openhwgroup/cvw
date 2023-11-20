@@ -28,12 +28,12 @@
 
 module fdivsqrtfgen2 import cvw::*;  #(parameter cvw_t P) (
   input  logic              up, uz,
-  input  logic [P.DIVb+3:0] C, U, UM,
-  output logic [P.DIVb+3:0] F
+  input  logic [P.DIVb+3:0] C, U, UM,   // Q4.DIVb (extended from shorter forms)
+  output logic [P.DIVb+3:0] F           // Q4.DIVb
 );
-  logic [P.DIVb+3:0]        FP, FN, FZ;
+  logic [P.DIVb+3:0]        FP, FN, FZ;  // Q4.DIVb
 
-  // Generate for both positive and negative bits
+  // Generate for both positive and negative quotient digits
   assign FP = ~(U << 1) & C;
   assign FN = (UM << 1) | (C & ~(C << 2));
   assign FZ = '0;

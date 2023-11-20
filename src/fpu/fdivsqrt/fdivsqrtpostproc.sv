@@ -27,25 +27,25 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
-  input  logic               clk, reset,
-  input  logic               StallM,
-  input  logic [P.DIVb+3:0]  WS, WC,
-  input  logic [P.DIVb+3:0]  D, 
-  input  logic [P.DIVb:0]    FirstU, FirstUM, 
-  input  logic [P.DIVb+1:0]  FirstC,
-  input  logic               SqrtE,
-  input  logic               Firstun, SqrtM, SpecialCaseM, 
-  input  logic [P.XLEN-1:0]  AM,
-  input  logic               RemOpM, ALTBM, BZeroM, AsM, BsM, W64M,
-  input  logic [P.DIVBLEN:0] nM, mM,
-  output logic [P.DIVb:0]    QmM, 
-  output logic               WZeroE,
-  output logic               DivStickyM,
-  output logic [P.XLEN-1:0]  FIntDivResultM
+  input  logic                 clk, reset,
+  input  logic                 StallM,
+  input  logic [P.DIVb+3:0]    WS, WC,            // Q4.DIVb
+  input  logic [P.DIVb+3:0]    D,                 // Q4.DIVb
+  input  logic [P.DIVb:0]      FirstU, FirstUM,   // U1.DIVb
+  input  logic [P.DIVb+1:0]    FirstC,            // Q2.DIVb
+  input  logic                 SqrtE,
+  input  logic                 Firstun, SqrtM, SpecialCaseM, 
+  input  logic [P.XLEN-1:0]    AM,                // U/Q(XLEN.0)
+  input  logic                 RemOpM, ALTBM, BZeroM, AsM, BsM, W64M,
+  input  logic [P.DIVBLEN-1:0] IntNormShiftM,     
+  output logic [P.DIVb:0]      UmM,               // U1.DIVb result significand
+  output logic                 WZeroE,
+  output logic                 DivStickyM,
+  output logic [P.XLEN-1:0]    FIntDivResultM     // U/Q(XLEN.0)
 );
   
   logic [P.DIVb+3:0]         W, Sum;
-  logic [P.DIVb:0]           PreQmM;
+  logic [P.DIVb:0]           PreUmM;
   logic                      NegStickyM;
   logic                      weq0E, WZeroM;
   logic [P.XLEN-1:0]         IntDivResultM;
@@ -86,22 +86,21 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
   //////////////////////////
 
   //  If the result is not exact, the sticky should be set
-  assign DivStickyM = ~WZeroM & ~(SpecialCaseM & SqrtM); // ***unsure why SpecialCaseM has to be gated by SqrtM, but otherwise fails regression on divide
+  assign DivStickyM = ~WZeroM & ~SpecialCaseM; 
 
-  // Determine if sticky bit is negative  // *** look for ways to optimize this.  Shift shouldn't be needed.
+  // Determine if sticky bit is negative 
   assign Sum = WC + WS;
   assign NegStickyM = Sum[P.DIVb+3];
-  mux2 #(P.DIVb+1) preqmmux(FirstU, FirstUM, NegStickyM, PreQmM); // Select U or U-1 depending on negative sticky bit
-  mux2 #(P.DIVb+1)    qmmux(PreQmM, (PreQmM << 1), SqrtM, QmM);
+  mux2 #(P.DIVb+1) preummux(FirstU, FirstUM, NegStickyM, PreUmM); // Select U or U-1 depending on negative sticky bit
+  mux2 #(P.DIVb+1)    ummux(PreUmM, (PreUmM << 1), SqrtM, UmM);
 
-  // Integer quotient or remainder correctoin, normalization, and special cases
+  // Integer quotient or remainder correction, normalization, and special cases
   if (P.IDIV_ON_FPU) begin:intpostproc // Int supported
-    logic [P.DIVBLEN:0] NormShiftM;
     logic [P.DIVb+3:0] UnsignedQuotM, NormRemM, NormRemDM, NormQuotM;
     logic signed [P.DIVb+3:0] PreResultM, PreIntResultM;
 
     assign W = $signed(Sum) >>> P.LOGR;
-    assign UnsignedQuotM = {3'b000, PreQmM};
+    assign UnsignedQuotM = {3'b000, PreUmM};
 
     // Integer remainder: sticky and sign correction muxes
     assign NegQuotM = AsM ^ BsM; // Integer Quotient is negative
@@ -110,9 +109,8 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
     mux2 #(P.DIVb+4) quotresmux(UnsignedQuotM, -UnsignedQuotM, NegQuotM, NormQuotM);
 
     // Select quotient or remainder and do normalization shift
-    mux2 #(P.DIVBLEN+1) normshiftmux(((P.DIVBLEN+1)'(P.DIVb) - (nM * (P.DIVBLEN+1)'(P.LOGR))), (mM + (P.DIVBLEN+1)'(P.DIVa)), RemOpM, NormShiftM);
     mux2 #(P.DIVb+4)    presresultmux(NormQuotM, NormRemM, RemOpM, PreResultM);
-    assign PreIntResultM = $signed(PreResultM >>> NormShiftM); 
+    assign PreIntResultM = $signed(PreResultM >>> IntNormShiftM); 
 
     // special case logic
     // terminates immediately when B is Zero (div 0) or |A| has more leading 0s than |B|
@@ -120,7 +118,7 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
       if (BZeroM) begin         // Divide by zero
         if (RemOpM) IntDivResultM = AM;  
         else        IntDivResultM = {(P.XLEN){1'b1}};
-     end else if (ALTBM) begin // Numerator is zero
+     end else if (ALTBM) begin // Numerator is small
         if (RemOpM) IntDivResultM = AM;
         else        IntDivResultM = '0;
      end else       IntDivResultM = PreIntResultM[P.XLEN-1:0];
