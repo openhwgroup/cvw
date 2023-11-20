@@ -18,6 +18,8 @@
 # More extensions
 --override cpu/Zcb=T
 
+--override cpu/unaligned=T
+
 # Cache block operations
 --override cpu/Zicbom=T
 --override cpu/Zicbop=T
@@ -40,7 +42,6 @@
 
 --override cpu/reset_address=0x80000000
 
---override cpu/unaligned=F
 --override cpu/ignore_non_leaf_DAU=1
 --override cpu/wfi_is_nop=T
 --override cpu/misa_Extensions_mask=0x0
@@ -88,7 +89,7 @@
 
 # Add Imperas simulator application instruction tracing
 --verbose
---trace --tracechange --traceshowicount --tracemode -tracemem ASX --monitornetschange --traceafter 0
+#--trace --tracechange --traceshowicount --tracemode -tracemem ASX --monitornetschange --traceafter 300000000
 --override cpu/debugflags=6 --override cpu/verbose=1
 --override cpu/show_c_prefix=T
 
