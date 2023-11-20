@@ -1,7 +1,8 @@
 # Run all Wally synthesis experiments from chapter 8
-./wallySynth.py --freqsweep 330 --tech sky130 
-./wallySynth.py --freqsweep 870 --tech sky90 
-./wallySynth.py --freqsweep 2800 --tech tsmc28psyn --usesram
+# However, trying to run the freqsweeps at the same time maxes out licenses and some runs fail
+#./wallySynth.py --freqsweep 330 --tech sky130 
+#./wallySynth.py --freqsweep 870 --tech sky90 
+#./wallySynth.py --freqsweep 2800 --tech tsmc28psyn --usesram
 ./wallySynth.py --configsweep --tech sky130 --targetfreq 330
 ./wallySynth.py --configsweep --tech sky90 --targetfreq 870
 ./wallySynth.py --configsweep --tech tsmc28psyn --targetfreq 2800 --usesram
