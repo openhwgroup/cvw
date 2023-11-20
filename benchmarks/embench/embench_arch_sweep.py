@@ -10,7 +10,8 @@ from datetime import datetime
 import re
 import collections
 
-archs = ["rv32i_zicsr", "rv32im_zicsr", "rv32imc_zicsr", "rv32imc_zba_zbb_zbc_zbs_zicsr", "rv32imafdc_zba_zbb_zbc_zbs_zicsr"]
+#archs = ["rv32i_zicsr", "rv32im_zicsr", "rv32imc_zicsr", "rv32imc_zba_zbb_zbc_zbs_zicsr", "rv32imafdc_zba_zbb_zbc_zbs_zicsr"]
+archs = ["rv32imafdc_zba_zbb_zbc_zbs_zicsr", "rv32i_zicsr", "rv32im_zicsr", "rv32imc_zicsr", "rv32imc_zba_zbb_zbc_zbs_zicsr"]
 
 def calcgeomean(d, arch):
     progs = ["aha-mont64", "crc32", "cubic", "edn", "huffbench", "matmult-int", "minver", "nbody", "nettle-aes", "nettle-sha256", "nsichneu", "picojpeg", "qrduino", "sglib-combined", "slre", "st", "statemate", "ud", "wikisort"]
@@ -81,6 +82,6 @@ def run_arch_sweep():
             os.system("mv -f wally"+res+".json "+dir+"/wally"+res+"_"+arch+".json")
     return dir
 
-#directory = run_arch_sweep()
-directory = "run_20231116_071322"
+directory = run_arch_sweep()
+#directory = "run_20231117_082325"
 tabulate_arch_sweep(directory)
