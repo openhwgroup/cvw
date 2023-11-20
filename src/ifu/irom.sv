@@ -39,7 +39,9 @@ module irom import cvw::*;  #(parameter cvw_t P) (
   logic [31:0]       RawIROMInstrF;
   logic [2:1]        AdrD;
 
-  rom1p1r #(ADDR_WDITH, P.XLEN) rom(.clk, .ce, .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(IROMInstrFFull));
+  // preload IROM with the FPGA bootloader by default so that it syntehsizes to something, avoiding having the IEU optimized away because instructions are all 0
+  // the testbench replaces these dummy contents with the actual program of interest during simulation
+  rom1p1r #(ADDR_WDITH, P.XLEN, 1) rom(.clk, .ce, .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(IROMInstrFFull));
   if (P.XLEN == 32) assign RawIROMInstrF = IROMInstrFFull;
   else              begin
   // IROM is aligned to XLEN words, but instructions are 32 bits.  Select between the two

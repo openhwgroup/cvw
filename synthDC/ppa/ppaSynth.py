@@ -12,13 +12,11 @@ from ppaAnalyze import synthsfromcsv
 
 def runCommand(module, width, tech, freq):
     command = "make synth DESIGN={} WIDTH={} TECH={} DRIVE=INV FREQ={} MAXOPT=1 MAXCORES=1".format(module, width, tech, freq)
-    print('here we go')
-
-    subprocess.Popen(command, shell=True)
+    subprocess.call(command, shell=True)
 
 def deleteRedundant(synthsToRun):
     '''removes any previous runs for the current synthesis specifications'''
-    synthStr = "rm -rf runs/ppa_{}_{}_rv32e_{}nm_{}_*"
+    synthStr = "rm -rf runs/{}_{}_rv32e_{}_{}_*"
     for synth in synthsToRun:   
         bashCommand = synthStr.format(*synth)
         outputCPL = subprocess.check_output(['bash','-c', bashCommand])
@@ -34,8 +32,21 @@ def freqSweep(module, width, tech):
                 synthsToRun += [[synth.module, str(synth.width), synth.tech, str(freq)]]
     return synthsToRun
 
+def freqModuleSweep(widths, modules, tech):
+    synthsToRun = []
+    arr = [-8, -6, -4, -2, 0, 2, 4, 6, 8]
+    allSynths = synthsfromcsv('ppa/bestSynths.csv')
+    for w in widths:
+        for module in modules:
+            for synth in allSynths:
+                if (synth.module == str(module)) & (synth.tech == tech) & (synth.width == w):
+                    f = 1000/synth.delay
+                    for freq in [round(f+f*x/100) for x in arr]:
+                        synthsToRun += [[synth.module, str(synth.width), synth.tech, str(freq)]]
+    return synthsToRun
+
 def filterRedundant(synthsToRun):
-    bashCommand = "find . -path '*runs/ppa*rv32e*' -prune"
+    bashCommand = "find . -path '*runs/*' -prune"
     output = subprocess.check_output(['bash','-c', bashCommand])
     specReg = re.compile('[a-zA-Z0-9]+')
     allSynths = output.decode("utf-8").split('\n')[:-1]
@@ -59,21 +70,30 @@ def allCombos(widths, modules, techs, freqs):
 
 if __name__ == '__main__':
     
-    ##### Run specific syntheses
+    ##### Run specific syntheses for a specific frequency
 	widths = [8, 16, 32, 64, 128] 
-	modules = ['mult', 'add', 'shiftleft', 'flop', 'comparator', 'priorityencoder', 'add', 'csa', 'mux2', 'mux4', 'mux8']
-	techs = ['sky90', 'tsmc28']
+	modules = ['mul', 'adder', 'shifter', 'flop', 'comparator', 'binencoder', 'csa', 'mux2', 'mux4', 'mux8']
+	techs = ['sky90', 'sky130', 'tsmc28', 'tsmc28psyn']
 	freqs = [5000]
 	synthsToRun = allCombos(widths, modules, techs, freqs)
     
     ##### Run a sweep based on best delay found in existing syntheses
-	module = 'add'
+	module = 'adder'
 	width = 32
-	tech = 'sky90'
+	tech = 'tsmc28psyn'
 	synthsToRun = freqSweep(module, width, tech)
+
+    ##### Run a sweep for multiple modules/widths based on best delay found in existing syntheses
+	modules = ['adder']
+#	widths = [8, 16, 32, 64, 128]
+	widths = [32]
+	tech = 'sky130'
+	synthsToRun = freqModuleSweep(widths, modules, tech)	
         
     ##### Only do syntheses for which a run doesn't already exist
-	synthsToRun = filterRedundant(synthsToRun)
-	
+	synthsToRun = filterRedundant(synthsToRun)	
 	pool = Pool(processes=25)
-	pool.starmap(runCommand, synthsToRun)
+
+pool.starmap(runCommand, synthsToRun)
+pool.close()
+pool.join()

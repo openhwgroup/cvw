@@ -271,15 +271,12 @@ typedef struct packed {
   int CORRSHIFTSZ;
 
 // division constants
-  int DIVN       ;
   int LOGR       ;
   int RK         ;
-  int LOGRK      ;
   int FPDUR      ;
   int DURLEN     ;
   int DIVb       ;
   int DIVBLEN    ;
-  int DIVa       ;
 
 } cvw_t;
 

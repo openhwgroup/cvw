@@ -264,7 +264,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   end
 
   // global stall and flush control  
-  hazard  hzu(
+  hazard #(P) hzu(
     .BPWrongE, .CSRWriteFenceM, .RetM, .TrapM,
     .LoadStallD, .StoreStallD, .MDUStallD, .CSRRdStallD,
     .LSUStallM, .IFUStallF,

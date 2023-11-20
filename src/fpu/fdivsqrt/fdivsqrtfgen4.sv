@@ -27,14 +27,14 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fdivsqrtfgen4 import cvw::*;  #(parameter cvw_t P) (
-  input  logic [3:0]        udigit,
-  input  logic [P.DIVb+3:0] C, U, UM,
-  output logic [P.DIVb+3:0] F
+  input  logic [3:0]        udigit,           // {2, 1, -1, -2}; all cold for zero
+  input  logic [P.DIVb+3:0] C, U, UM,         // Q4.DIVb (extended from shorter forms)
+  output logic [P.DIVb+3:0] F                 // Q4.DIVb
 );
-  logic [P.DIVb+3:0]        F2, F1, F0, FN1, FN2;
+  logic [P.DIVb+3:0]        F2, F1, F0, FN1, FN2; // Q4.DIVb
   
-  // Generate for both positive and negative bits
-  assign F2  = (~U << 2) & (C << 2);
+  // Generate for both positive and negative digits
+  assign F2  = (~U << 2) & (C << 2);              // 
   assign F1  = ~(U << 1) & C;
   assign F0  = '0;
   assign FN1 = (UM << 1) | (C & ~(C << 3));

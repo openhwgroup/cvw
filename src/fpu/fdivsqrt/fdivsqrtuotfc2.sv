@@ -31,15 +31,15 @@
 ///////////////////////////////
 module fdivsqrtuotfc2 import cvw::*;  #(parameter cvw_t P) (
   input  logic             up, un,
-  input  logic [P.DIVb+1:0] C,
-  input  logic [P.DIVb:0]   U, UM,
-  output logic [P.DIVb:0]   UNext, UMNext
+  input  logic [P.DIVb+1:0] C,                // Q2.DIVb
+  input  logic [P.DIVb:0]   U, UM,            // U1.DIVb
+  output logic [P.DIVb:0]   UNext, UMNext     // U1.DIVb
 );
   //  The on-the-fly converter transfers the divsqrt
   //  bits to the quotient as they come.
-  logic [P.DIVb:0] K;
+  logic [P.DIVb:0] K;                         // U1.DIVb one-hot 
 
-  assign K = (C[P.DIVb:0] & ~(C[P.DIVb:0] << 1)); // Thermometer to one hot encoding
+  assign K = (C[P.DIVb:0] & ~(C[P.DIVb:0] << 1)); // Thermometer to one hot encoding  
 
   always_comb begin
     if (up) begin
