@@ -2,6 +2,7 @@
 imageDir=$RISCV/buildroot/output/images
 tvDir=$RISCV/linux-testvectors
 recordFile="$tvDir/all.qemu"
+DEVICE_TREE=../devicetree/wally-virt.dtb
 
 read -p "Warning: running this script will overwrite $recordFile
 Would you like to proceed? (y/n) " -n 1 -r
@@ -24,7 +25,7 @@ then
 
     echo "Launching QEMU in record mode!"
     qemu-system-riscv64 \
-    -M virt -dtb $imageDir/wally-virt.dtb \
+    -M virt -m 256M -dtb $DEVICE_TREE \
     -nographic \
     -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio \
     -singlestep -rtc clock=vm -icount shift=0,align=off,sleep=on,rr=record,rrfile=$recordFile

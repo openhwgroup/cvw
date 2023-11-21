@@ -8,6 +8,8 @@
 --override cpu/user_version=20191213
 # arch
 --override cpu/mimpid=0x100
+--override cpu/mvendorid=0x602
+--override cpu/marchid=0x24
 --override refRoot/cpu/tvec_align=64
 
 # bit manipulation
