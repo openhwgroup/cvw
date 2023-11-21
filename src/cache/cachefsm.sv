@@ -61,7 +61,6 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   output logic       ClearDirty,        // Clear the dirty bit in the selected way and set
   output logic       ZeroCacheLine,     // Write zeros to all bytes of cacheline
   output logic       SelWriteback,      // Overrides cached tag check to select a specific way and set for writeback
-  output logic       SelCMOWriteback,   // Overrides cached tag check to select a specific way and set for writeback for both data and tag
   output logic       LRUWriteEn,        // Update the LRU state
   output logic       SelFlush,          // [0] Use SelAdr, [1] SRAM reads/writes from FlushAdr
   output logic       SelWay,            // Controls which way to select a way data and tag, 00 = hitway, 10 = victimway, 11 = flushway
