@@ -42,7 +42,6 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   input  logic                        ClearValid,     // Clear the valid bit in the selected way and set
   input  logic                        SetDirty,       // Set the dirty bit in the selected way and set
   input  logic                        SelWay,         // Controls which way to select a way data and tag, 00 = hitway, 10 = victimway, 11 = flushway
-  input  logic                        CMOZeroHit,     // Write zeros to all bytes of a cache line
   input  logic                        ClearDirty,     // Clear the dirty bit in the selected way and set
   input  logic                        SelWriteback,   // Overrides cached tag check to select a specific way and set for writeback
   input  logic                        SelCMOWriteback,// Overrides cached tag check to select a specific way and set for writeback for both data and tag
