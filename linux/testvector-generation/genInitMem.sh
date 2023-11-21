@@ -1,13 +1,14 @@
 #!/bin/bash
 tcpPort=1235
-imageDir=/home/jpease/repos/buildroot3/output/images
-tvDir=linux-testvectors
+imageDir=$RISCV/buildroot/output/images
+tvDir=$RISCV/linux-testvectors
 rawRamFile="$tvDir/ramGDB.bin"
 ramFile="$tvDir/ram.bin"
 rawBootmemFile="$tvDir/bootmemGDB.bin"
 bootmemFile="$tvDir/bootmem.bin"
 rawUntrimmedBootmemFile="$tvDir/untrimmedBootmemFileGDB.bin"
 untrimmedBootmemFile="$tvDir/untrimmedBootmemFile.bin"
+DEVICE_TREE=../devicetree/wally-virt.dtb
 
 read -p "Warning: running this script will overwrite the contents of:
   * $rawRamFile
@@ -36,7 +37,7 @@ then
 
     echo "Launching QEMU in replay mode!"
     (qemu-system-riscv64 \
-    -M virt -dtb /home/jpease/repos/buildroot3/output/images/wally-artya7.dtb \
+    -M virt -m 256M -dtb $DEVICE_TREE \
     -nographic \
     -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio \
     -gdb tcp::$tcpPort -S) \
@@ -53,7 +54,7 @@ then
     -ex "printf \"Warning - please verify that the second half of $rawUntrimmedBootmemFile is all 0s\n\"" \
     -ex "dump binary memory $rawUntrimmedBootmemFile 0x1000 0x2fff" \
     -ex "printf \"Creating $rawRamFile\n\"" \
-    -ex "dump binary memory $rawRamFile 0x80000000 0x87ffffff" \
+    -ex "dump binary memory $rawRamFile 0x80000000 0x8fffffff" \
     -ex "kill" \
     -ex "q"
 
