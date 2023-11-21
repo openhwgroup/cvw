@@ -102,7 +102,6 @@ module cache import cvw::*; #(parameter cvw_t P,
   logic [LINELEN/8-1:0]          LineByteMask;
   logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0] WordOffsetAddr;
   logic                                                   ZeroCacheLine;
-  logic                                                   CMOZeroHit;
   logic [LINELEN-1:0]                                     PreLineWriteData;
   genvar                         index;
   
@@ -121,7 +120,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(P, PA_BITS, XLEN, NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, READ_ONLY_CACHE) CacheWays[NUMWAYS-1:0](
     .clk, .reset, .CacheEn, .CMOp, .CacheSet, .PAdr, .LineWriteData, .LineByteMask, .SelWay,
-    .SetValid, .ClearValid, .SetDirty, .ClearDirty, .CMOZeroHit, .SelWriteback, .SelCMOWriteback, .VictimWay,
+    .SetValid, .ClearValid, .SetDirty, .ClearDirty, .SelWriteback, .SelCMOWriteback, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .TagWay, .FlushStage, .InvalidateCache);
 
   // Select victim way for associative caches
@@ -233,7 +232,7 @@ module cache import cvw::*; #(parameter cvw_t P,
     .FlushStage, .CacheRW, .CacheAtomic, .Stall,
     .CacheHit, .LineDirty, .CacheStall, .CacheCommitted, 
     .CacheMiss, .CacheAccess, .SelAdr, .SelWay,
-    .ClearDirty, .SetDirty, .SetValid, .ClearValid, .ZeroCacheLine, .CMOZeroHit, .SelWriteback, .SelCMOWriteback, .SelFlush,
+    .ClearDirty, .SetDirty, .SetValid, .ClearValid, .ZeroCacheLine, .SelWriteback, .SelCMOWriteback, .SelFlush,
     .FlushAdrCntEn, .FlushWayCntEn, .FlushCntRst,
     .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
     .InvalidateCache, .CMOp, .CacheEn, .LRUWriteEn);
