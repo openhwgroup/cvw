@@ -33,7 +33,6 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   input  logic                        clk,
   input  logic                        reset,
   input  logic                        FlushStage,     // Pipeline flush of second stage (prevent writes and bus operations)
-  input  logic [3:0]                  CMOp,           // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
   input  logic                        CacheEn,        // Enable the cache memory arrays.  Disable hold read data constant
   input  logic [$clog2(NUMLINES)-1:0] CacheSet,       // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
   input  logic [PA_BITS-1:0]          PAdr,           // Physical address 
@@ -42,10 +41,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   input  logic                        ClearValid,     // Clear the valid bit in the selected way and set
   input  logic                        SetDirty,       // Set the dirty bit in the selected way and set
   input  logic                        SelWay,         // Controls which way to select a way data and tag, 00 = hitway, 10 = victimway, 11 = flushway
-  input  logic                        CMOZeroHit,     // Write zeros to all bytes of a cache line
   input  logic                        ClearDirty,     // Clear the dirty bit in the selected way and set
-  input  logic                        SelWriteback,   // Overrides cached tag check to select a specific way and set for writeback
-  input  logic                        SelCMOWriteback,// Overrides cached tag check to select a specific way and set for writeback for both data and tag
   input  logic                        SelFlush,       // [0] Use SelAdr, [1] SRAM reads/writes from FlushAdr
   input  logic                        VictimWay,      // LRU selected this way as victim to evict
   input  logic                        FlushWay,       // This way is selected for flush and possible writeback if dirty
@@ -79,7 +75,6 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   logic                               ClearDirtyWay;
   logic                               SelNonHit;
   logic                               SelData;
-  logic                               SelNotHit2;
   
   if (!READ_ONLY_CACHE) begin:flushlogic
     logic                               FlushWayEn;

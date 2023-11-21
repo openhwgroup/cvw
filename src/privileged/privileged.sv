@@ -93,7 +93,6 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic              InvalidateICacheM,                              // fence instruction
   output logic              BigEndianM,                                     // Use big endian in current privilege mode
   // Fault outputs                                                         
-  output logic              BreakpointFaultM, EcallFaultM,                  // breakpoint and Ecall traps should retire
   output logic              wfiM, IntPendingM                               // Stall in Memory stage for WFI until interrupt pending or timeout
 );                                                                         
                                                                            
@@ -114,6 +113,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   logic                     InterruptM;                                     // interrupt occuring
   logic                     ExceptionM;                                     // Memory stage instruction caused a fault
   logic                     HPTWInstrAccessFaultM;                          // Hardware page table access fault while fetching instruction PTE
+  logic                     BreakpointFaultM, EcallFaultM;                  // breakpoint and Ecall traps should retire
   
   logic                     wfiW;
   
@@ -122,7 +122,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .STATUS_MPP, .STATUS_SPP, .NextPrivilegeModeM, .PrivilegeModeW);
 
   // decode privileged instructions
-  privdec #(P) pmd(.clk, .reset, .StallM, .StallW, .FlushW, .InstrM(InstrM[31:15]), 
+  privdec #(P) pmd(.clk, .reset, .StallW, .FlushW, .InstrM(InstrM[31:15]), 
     .PrivilegedM, .IllegalIEUFPUInstrM, .IllegalCSRAccessM, 
     .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .IllegalInstrFaultM, 
     .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .wfiM, .wfiW, .sfencevmaM);
@@ -130,7 +130,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   // Control and Status Registers
   csr #(P) csr(.clk, .reset, .FlushM, .FlushW, .StallE, .StallM, .StallW,
     .InstrM, .InstrOrigM, .PCM, .SrcAM, .IEUAdrM, .PC2NextF,
-    .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .wfiM, .IntPendingM, .InterruptM,
+    .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
     .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
     .BPDirPredWrongM, .BTAWrongM, .RASPredPCWrongM, .BPWrongM,
