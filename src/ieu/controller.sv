@@ -103,7 +103,6 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        BaseRegWriteD;                  // Indicates if Base instruction register write instruction
   logic        BaseSubArithD;                  // Indicates if Base instruction subtracts, sra, slt, sltu
   logic        BaseALUSrcBD;                   // Base instruction ALU B source select signal
-  logic [2:0]  ALUControlD;                    // Determines ALU operation
   logic        ALUSrcAD, ALUSrcBD;             // ALU inputs
   logic        ALUResultSrcD, W64D, MDUD;      // ALU result, is RV64 W-type, is multiply/divide instruction
   logic        CSRZeroSrcD;                    // Ignore setting and clearing zeros to CSR
@@ -118,7 +117,6 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic [`CTRLW-1:0] ControlsD;                // Main Instruction Decoder control signals
   logic        SubArithD;                      // TRUE for R-type subtracts and sra, slt, sltu or B-type ext clr, andn, orn, xnor
   logic        subD, sraD, sltD, sltuD;        // Indicates if is one of these instructions
-  logic        ALUOpE;                         // 0 for address generationm 1 for ALU operations
   logic        BranchTakenE;                   // Branch is taken
   logic        eqE, ltE;                       // Comparator outputs
   logic        unused; 

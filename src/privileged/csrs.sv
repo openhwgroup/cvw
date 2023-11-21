@@ -35,7 +35,6 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] NextEPCM, NextMtvalM, SSTATUS_REGW, 
   input  logic [4:0]        NextCauseM,
   input  logic              STATUS_TVM,
-  input  logic              MCOUNTEREN_TM, // TM bit (1) of MCOUNTEREN; cause illegal instruction when trying to access STIMECMP if clear
   input  logic [P.XLEN-1:0] CSRWriteValM,
   input  logic [1:0]        PrivilegeModeW,
   output logic [P.XLEN-1:0] CSRSReadValM, STVEC_REGW,
