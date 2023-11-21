@@ -88,7 +88,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   logic                          FlushAdrFlag, FlushWayFlag;
   logic [NUMWAYS-1:0]            FlushWay, NextFlushWay;
   logic                          FlushWayCntEn;
-  logic                          SelBothWriteback;
+  logic                          SelWriteback;
   logic                          LRUWriteEn;
   logic                          SelFlush;
   logic                          ResetOrFlushCntRst;
@@ -156,7 +156,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   mux3 #(PA_BITS) CacheBusAdrMux(.d0({PAdr[PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
     .d1({Tag, PAdr[SETTOP-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
     .d2({Tag, FlushAdr, {OFFSETLEN{1'b0}}}),
-    .s({SelFlush, SelBothWriteback}), .y(CacheBusAdr));
+    .s({SelFlush, SelWriteback}), .y(CacheBusAdr));
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path
@@ -227,7 +227,7 @@ module cache import cvw::*; #(parameter cvw_t P,
     .FlushStage, .CacheRW, .Stall,
     .CacheHit, .LineDirty, .CacheStall, .CacheCommitted, 
     .CacheMiss, .CacheAccess, .SelAdr, .SelWay,
-    .ClearDirty, .SetDirty, .SetValid, .ClearValid, .ZeroCacheLine, .SelBothWriteback, .SelFlush,
+    .ClearDirty, .SetDirty, .SetValid, .ClearValid, .ZeroCacheLine, .SelWriteback, .SelFlush,
     .FlushAdrCntEn, .FlushWayCntEn, .FlushCntRst,
     .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
     .InvalidateCache, .CMOp, .CacheEn, .LRUWriteEn);
