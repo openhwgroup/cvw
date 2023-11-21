@@ -246,7 +246,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
              .ByteMask('0), .BeatCount('0), .SelBusBeat('0),
              .CacheWriteData('0),
              .CacheRW(CacheRWF), 
-             .CacheAtomic('0), .FlushCache('0),
+             .FlushCache('0),
              .NextSet(PCSpillNextF[11:0]),
              .PAdr(PCPF),
              .CacheCommitted(CacheCommittedF), .InvalidateCache(InvalidateICacheM), .CMOp('0)); 

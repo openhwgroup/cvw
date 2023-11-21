@@ -291,7 +291,6 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       logic [1:0]              BusRW;                                            // Uncached bus memory access
       logic                    CacheableOrFlushCacheM;                           // Memory address is cacheable or operation is a cache flush
       logic [1:0]              CacheRWM;                                         // Cache read (10), write (01), AMO (11)
-      logic [1:0]              CacheAtomicM;                                     // Cache AMO
       logic                    FlushDCache;                                      // Suppress d cache flush if there is an ITLB miss.
       logic                    CacheStall;
       logic [1:0]              CacheBusRWTemp;
@@ -299,12 +298,11 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       assign BusRW = ~CacheableM & ~SelDTIM ? LSURWM : '0;
       assign CacheableOrFlushCacheM = CacheableM | FlushDCacheM;
       assign CacheRWM = CacheableM & ~SelDTIM ? LSURWM : '0;
-      assign CacheAtomicM = CacheableM & ~SelDTIM ? LSUAtomicM : '0;
       assign FlushDCache = FlushDCacheM & ~(SelHPTW);
       
       cache #(.P(P), .PA_BITS(P.PA_BITS), .XLEN(P.XLEN), .LINELEN(P.DCACHE_LINELENINBITS), .NUMLINES(P.DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(P.DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(CACHEWORDLEN), .MUXINTERVAL(P.LLEN), .READ_ONLY_CACHE(0)) dcache(
-        .clk, .reset, .Stall(GatedStallW & ~SelSpillE), .SelBusBeat, .FlushStage(FlushW | IgnoreRequestTLB), .CacheRW(SelStoreDelay ? 2'b00 : CacheRWM), .CacheAtomic(CacheAtomicM),
+        .clk, .reset, .Stall(GatedStallW & ~SelSpillE), .SelBusBeat, .FlushStage(FlushW | IgnoreRequestTLB), .CacheRW(SelStoreDelay ? 2'b00 : CacheRWM), 
         .FlushCache(FlushDCache), .NextSet(IEUAdrExtE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskSpillM), .BeatCount(BeatCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
         .CacheWriteData(LSUWriteDataSpillM), .SelHPTW,

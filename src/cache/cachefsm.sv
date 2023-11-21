@@ -38,7 +38,6 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   output logic       CacheStall,        // Cache stalls pipeline during multicycle operation
   // inputs from IEU
   input  logic [1:0] CacheRW,           // [1] Read, [0] Write 
-  input  logic [1:0] CacheAtomic,       // Atomic operation
   input  logic       FlushCache,        // Flush all dirty lines back to memory
   input  logic       InvalidateCache,   // Clear all valid bits
   input  logic [3:0] CMOp,              // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
@@ -60,9 +59,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   output logic       SetDirty,          // Set the dirty bit in the selected way and set
   output logic       ClearDirty,        // Clear the dirty bit in the selected way and set
   output logic       ZeroCacheLine,     // Write zeros to all bytes of cacheline
-  output logic       CMOZeroHit,        // CMOZ hit
-  output logic       SelWriteback,      // Overrides cached tag check to select a specific way and set for writeback
-  output logic       SelCMOWriteback,   // Overrides cached tag check to select a specific way and set for writeback for both data and tag
+  output logic       SelBothWriteback,  // Overrides cached tag check to select a specific way and set for writeback
   output logic       LRUWriteEn,        // Update the LRU state
   output logic       SelFlush,          // [0] Use SelAdr, [1] SRAM reads/writes from FlushAdr
   output logic       SelWay,            // Controls which way to select a way data and tag, 00 = hitway, 10 = victimway, 11 = flushway
@@ -80,6 +77,8 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   logic              CMOWritebackHit;
   logic              CMOZeroNoEviction;
   logic              CMOZeroEviction;
+  logic              SelWriteback;      // Overrides cached tag check to select a specific way and set for writeback
+  logic              SelCMOWriteback;   // Overrides cached tag check to select a specific way and set for writeback for both data and tag
 
   typedef enum logic [3:0]{STATE_READY, // hit states
                            // miss states
@@ -165,7 +164,6 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
                       (CurrState == STATE_FLUSH_WRITEBACK) |
                       (CurrState == STATE_CMO_WRITEBACK);
   // write enables internal to cache
-  assign CMOZeroHit = CurrState == STATE_READY & CMOp[3] & CacheHit ;
   assign SetValid = CurrState == STATE_WRITE_LINE | 
                     (P.ZICBOZ_SUPPORTED & CurrState == STATE_READY & CMOZeroNoEviction) |
                     (P.ZICBOZ_SUPPORTED & CurrState == STATE_WRITEBACK & CacheBusAck & CMOp[3]); 
@@ -193,6 +191,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   assign SelWriteback = (CurrState == STATE_WRITEBACK & ~CacheBusAck) |
                     (CurrState == STATE_READY & AnyMiss & LineDirty);
   assign SelCMOWriteback = CurrState == STATE_CMO_WRITEBACK;
+  assign SelBothWriteback = SelWriteback | SelCMOWriteback;
 
   assign SelFlush = (CurrState == STATE_READY & FlushCache) |
           (CurrState == STATE_FLUSH) | 
