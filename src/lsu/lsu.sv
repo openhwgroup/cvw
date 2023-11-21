@@ -40,7 +40,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   input  logic [1:0]              AtomicM,                              // Atomic memory operation
   input  logic                    FlushDCacheM,                         // Flush D cache to next level of memory
   input  logic [3:0]              CMOpM,                                // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
-  input  logic                    LSUPrefetchM,                         // Prefetch
+  input  logic                    LSUPrefetchM,                         // Prefetch; presently unused
   output logic                    CommittedM,                           // Delay interrupts while memory operation in flight
   output logic                    SquashSCW,                            // Store conditional failed disable write to GPR
   output logic                    DCacheMiss,                           // D cache miss for performance counters

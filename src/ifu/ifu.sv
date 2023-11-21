@@ -33,7 +33,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   // Command from CPU
   input  logic                 InvalidateICacheM,                        // Clears all instruction cache valid bits
   input  logic                 CSRWriteFenceM,                           // CSR write or fence instruction, PCNextF = the next valid PC (typically PCE)
-  input  logic                 InstrValidD, InstrValidE, InstrValidM,
+  input  logic                 InstrValidD, InstrValidE, 
   input  logic                 BranchD, BranchE,
   input  logic                 JumpD, JumpE,
   // Bus interface
@@ -103,7 +103,6 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   logic                        BranchMisalignedFaultE;                   // Branch target not aligned to 4 bytes if no compressed allowed (2 bytes if allowed)
   logic [P.XLEN-1:0]           PCPlus2or4F;                              // PCF + 2 (CompressedF) or PCF + 4 (Non-compressed)
   logic [P.XLEN-1:0]           PCSpillNextF;                             // Next PCF after possible + 2 to handle spill
-  logic [P.XLEN-1:0]           PCLinkD;                                  // PCF2or4F delayed 1 cycle.  This is next PC after a control flow instruction (br or j)
   logic [P.XLEN-1:2]           PCPlus4F;                                 // PCPlus4F is always PCF + 4.  Fancy way to compute PCPlus2or4F
   logic [P.XLEN-1:0]           PCD;                                      // Decode stage instruction address
   logic [P.XLEN-1:0]           NextValidPCE;                             // The PC of the next valid instruction in the pipeline after  csr write or fence
@@ -228,7 +227,6 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       logic [P.PA_BITS-1:0] ICacheBusAdr;
       logic                 ICacheBusAck;
       logic [1:0]           CacheBusRW, BusRW, CacheRWF;
-      logic [1:0]           CacheBusRWTemp;
       
       assign BusRW = ~ITLBMissF & ~CacheableF & ~SelIROM ? IFURWF : '0;
       assign CacheRWF = ~ITLBMissF & CacheableF & ~SelIROM ? IFURWF : '0;

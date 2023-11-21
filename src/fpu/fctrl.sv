@@ -41,7 +41,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   input  logic [6:0]           Funct7D,                            // bits 31:25 of instruction - may contain percision
   input  logic [6:0]           OpD,                                // bits 6:0 of instruction
   input  logic [4:0]           Rs2D,                               // bits 24:20 of instruction
-  input  logic [2:0]           Funct3D, Funct3E,                   // bits 14:12 of instruction - may contain rounding mode
+  input  logic [2:0]           Funct3D,                            // bits 14:12 of instruction - may contain rounding mode
   // input mux selections                                         
   output logic                 XEnD, YEnD, ZEnD,                   // enable inputs
   output logic                 XEnE, YEnE, ZEnE,                   // enable inputs
