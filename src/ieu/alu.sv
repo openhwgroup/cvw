@@ -45,7 +45,6 @@ module alu import cvw::*; #(parameter cvw_t P, parameter WIDTH) (
   logic [WIDTH-1:0] CondMaskInvB, Shift, FullResult, PreALUResult;                // Intermediate Signals 
   logic [WIDTH-1:0] CondMaskB;                                                    // Result of B mask select mux
   logic [WIDTH-1:0] CondShiftA;                                                   // Result of A shifted select mux
-  logic [WIDTH-1:0] CondExtA;                                                     // Result of Zero Extend A select mux
   logic             Carry, Neg;                                                   // Flags: carry out, negative
   logic             LT, LTU;                                                      // Less than, Less than unsigned
   logic             Asign, Bsign;                                                 // Sign bits of A, B

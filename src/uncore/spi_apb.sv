@@ -68,11 +68,10 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     // Watermark signals - TransmitReadMark = ip[0], ReceiveWriteMark = ip[1]
     logic TransmitWriteMark, TransmitReadMark, RecieveWriteMark, RecieveReadMark; 
     logic TransmitFIFOWriteFull, TransmitFIFOReadEmpty;
-    logic TransmitFIFOReadIncrement;
     logic TransmitFIFOWriteIncrement;
     logic ReceiveFIFOReadIncrement;
     logic ReceiveFIFOWriteFull, ReceiveFIFOReadEmpty;
-    logic [7:0] TransmitFIFOReadData, ReceiveFIFOWriteData;
+    logic [7:0] TransmitFIFOReadData;
     logic [2:0] TransmitWriteWatermarkLevel, ReceiveReadWatermarkLevel;
     logic [7:0] ReceiveShiftRegEndian;              // Reverses ReceiveShiftReg if Format[2] set (little endian transmission)
 
@@ -92,7 +91,6 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
 
     // Frame counting signals
     logic [3:0] FrameCount;                         // Counter for number of frames in transmission
-    logic [3:0] ReceivePenultimateFrameCount;       // Counter
     logic ReceivePenultimateFrame;                  // High when penultimate frame in transmission has been reached
 
     // State fsm signals

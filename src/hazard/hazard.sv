@@ -32,7 +32,6 @@ module hazard import cvw::*;  #(parameter cvw_t P) (
   input  logic  LSUStallM, IFUStallF,
   input  logic  FCvtIntStallD, FPUStallD,
   input  logic  DivBusyE, FDivBusyE,
-  input  logic  EcallFaultM, BreakpointFaultM,
   input  logic  wfiM, IntPendingM,
   // Stall & flush outputs
   output logic StallF, StallD, StallE, StallM, StallW,
