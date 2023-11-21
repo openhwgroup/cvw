@@ -29,7 +29,7 @@
 
 module privdec import cvw::*;  #(parameter cvw_t P) (
   input  logic         clk, reset,
-  input  logic         StallM, StallW, FlushW, 
+  input  logic         StallW, FlushW, 
   input  logic [31:15] InstrM,                              // privileged instruction function field
   input  logic         PrivilegedM,                         // is this a privileged instruction (from IEU controller)
   input  logic         IllegalIEUFPUInstrM,                 // Not a legal IEU instruction

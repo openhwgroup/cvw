@@ -158,7 +158,6 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          DCacheAccess;
   logic                          ICacheMiss;
   logic                          ICacheAccess;
-  logic                          BreakpointFaultM, EcallFaultM;
   logic                          InstrUpdateDAF;
   logic                          BigEndianM;
   logic                          FCvtIntE;
@@ -170,7 +169,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu #(P) ifu(.clk, .reset,
     .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
-    .InstrValidM, .InstrValidE, .InstrValidD,
+    .InstrValidE, .InstrValidD,
     .BranchD, .BranchE, .JumpD, .JumpE, .ICacheStallF,
     // Fetch
     .HRDATA, .PCSpillF, .IFUHADDR, .PC2NextF,
@@ -270,7 +269,6 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .LSUStallM, .IFUStallF,
     .FCvtIntStallD, .FPUStallD,
     .DivBusyE, .FDivBusyE,
-    .EcallFaultM, .BreakpointFaultM,
     .wfiM, .IntPendingM,
     // Stall & flush outputs
     .StallF, .StallD, .StallE, .StallM, .StallW,
@@ -298,7 +296,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .PrivilegeModeW, .SATP_REGW,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS, 
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
-      .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_HADE, .BreakpointFaultM, .EcallFaultM, .wfiM, .IntPendingM, .BigEndianM);
+      .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_HADE, .wfiM, .IntPendingM, .BigEndianM);
   end else begin
     assign CSRReadValW      = 0;
     assign UnalignedPCNextF = PC2NextF;

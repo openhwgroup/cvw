@@ -23,6 +23,7 @@
 `define NUM_REGS 32
 `define NUM_CSRS 4096
 
+`define STD_LOG 1
 `define PRINT_PC_INSTR 0
 `define PRINT_MOST 0
 `define PRINT_ALL 0
@@ -495,8 +496,38 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
 
   integer index2;
 
+  string  instrWName;
+  int     file;
+  string  LogFile;
+  if(`STD_LOG) begin
+    instrNameDecTB NameDecoder(rvvi.insn[0][0], instrWName);
+    initial begin
+      LogFile = "InstrTrace.log";
+      file = $fopen(LogFile, "w");
+    end
+  end
+  
   always_ff @(posedge clk) begin
 	if(rvvi.valid[0][0]) begin
+      if(`STD_LOG) begin
+        $fwrite(file, "%016x, %08x, %s\t\t", rvvi.pc_rdata[0][0], rvvi.insn[0][0], instrWName);
+        for(index2 = 0; index2 < `NUM_REGS; index2 += 1) begin
+          if(rvvi.x_wb[0][0][index2]) begin
+            $fwrite(file, "rf[%02d] = %016x ", index2, rvvi.x_wdata[0][0][index2]);
+          end
+        end
+        for(index2 = 0; index2 < `NUM_REGS; index2 += 1) begin
+          if(rvvi.f_wb[0][0][index2]) begin
+            $fwrite(file, "frf[%02d] = %016x ", index2, rvvi.f_wdata[0][0][index2]);
+          end
+        end
+        for(index2 = 0; index2 < `NUM_CSRS; index2 += 1) begin
+          if(rvvi.csr_wb[0][0][index2]) begin
+            $fwrite(file, "csr[%03x] = %016x ", index2, rvvi.csr[0][0][index2]);
+          end
+        end
+        $fwrite(file, "\n");
+      end
 	  if(`PRINT_PC_INSTR & !(`PRINT_ALL | `PRINT_MOST))
 		$display("order = %08d, PC = %08x, insn = %08x", rvvi.order[0][0], rvvi.pc_rdata[0][0], rvvi.insn[0][0]);
 	  else if(`PRINT_MOST & !`PRINT_ALL)
