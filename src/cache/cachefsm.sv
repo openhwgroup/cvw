@@ -76,6 +76,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   logic              AnyMiss;
   logic              FlushFlag;
   logic              CMOWritebackHit;
+  logic              CMOWriteback;
   logic              CMOZeroNoEviction;
   logic              CMOZeroEviction;
 
@@ -98,6 +99,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   assign CMOWritebackHit = (CMOp[1] | CMOp[2]) & CacheHit;
   assign CMOZeroNoEviction = CMOp[3] & ~LineDirty;   // (hit or miss) with no writeback store zeros now
   assign CMOZeroEviction = CMOp[3] & LineDirty;   // (hit or miss) with writeback dirty line
+  assign CMOWriteback = CMOWritebackHit | CMOZeroEviction;
   
   assign FlushFlag = FlushAdrFlag & FlushWayFlag;
 
@@ -120,7 +122,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
       STATE_READY:           if(InvalidateCache)                               NextState = STATE_READY;     // exclusion-tag: dcache InvalidateCheck
                              else if(FlushCache & ~READ_ONLY_CACHE)            NextState = STATE_FLUSH;
                              else if(AnyMiss & (READ_ONLY_CACHE | ~LineDirty)) NextState = STATE_FETCH;     // exclusion-tag: icache FETCHStatement
-                             else if(AnyMiss | CMOZeroEviction | CMOWritebackHit)                NextState = STATE_WRITEBACK; // exclusion-tag: icache WRITEBACKStatement
+                             else if(AnyMiss | CMOWriteback)                   NextState = STATE_WRITEBACK; // exclusion-tag: icache WRITEBACKStatement
                              else                                              NextState = STATE_READY;
       STATE_FETCH:           if(CacheBusAck)                                   NextState = STATE_WRITE_LINE;
                              else if(CacheBusAck)                              NextState = STATE_READY;
@@ -147,7 +149,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
 
   // com back to CPU
   assign CacheCommitted = (CurrState != STATE_READY) & ~(READ_ONLY_CACHE & (CurrState == STATE_READ_HOLD));
-  assign CacheStall = (CurrState == STATE_READY & (FlushCache | AnyMiss | CMOWritebackHit | CMOZeroEviction)) | // exclusion-tag: icache StallStates
+  assign CacheStall = (CurrState == STATE_READY & (FlushCache | AnyMiss | CMOWriteback)) | // exclusion-tag: icache StallStates
                       (CurrState == STATE_FETCH) |
                       (CurrState == STATE_WRITEBACK) |
                       (CurrState == STATE_WRITE_LINE) |  // this cycle writes the sram, must keep stalling so the next cycle can read the next hit/miss unless its a write.
