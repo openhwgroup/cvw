@@ -67,6 +67,7 @@ def synthsintocsv():
 
     for oneSynth in allSynths:
         module, width, risc, tech, freq = specReg.findall(oneSynth)[1:6]
+        tech = tech[:-2]  
         metrics = []
         for phrase in [["Path Slack", "qor"], ["Design Area", "qor"], ["100", "power"]]:
             bashCommand = 'grep "{}" ' + oneSynth[2:] + "/reports/*{}*"

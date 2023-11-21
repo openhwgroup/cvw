@@ -6,6 +6,7 @@ recordFile="$tvDir/all.qemu"
 traceFile="$tvDir/all.txt"
 trapsFile="$tvDir/traps.txt"
 interruptsFile="$tvDir/interrupts.txt"
+DEVICE_TREE=../devicetree/wally-virt.dtb
 
 read -p "Warning: running this script will overwrite the contents of:
   * $traceFile
@@ -36,7 +37,7 @@ then
     # QEMU Simulation
     echo "Launching QEMU in replay mode!"
     (qemu-system-riscv64 \
-    -M virt -dtb $imageDir/wally-virt.dtb \
+    -M virt -m 256M -dtb $DEVICE_TREE \
     -nographic \
     -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio \
     -singlestep -rtc clock=vm -icount shift=0,align=off,sleep=on,rr=replay,rrfile=$recordFile \
