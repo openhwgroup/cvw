@@ -43,8 +43,6 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   input  logic                        SetDirty,       // Set the dirty bit in the selected way and set
   input  logic                        SelWay,         // Controls which way to select a way data and tag, 00 = hitway, 10 = victimway, 11 = flushway
   input  logic                        ClearDirty,     // Clear the dirty bit in the selected way and set
-  input  logic                        SelWriteback,   // Overrides cached tag check to select a specific way and set for writeback
-  input  logic                        SelCMOWriteback,// Overrides cached tag check to select a specific way and set for writeback for both data and tag
   input  logic                        SelFlush,       // [0] Use SelAdr, [1] SRAM reads/writes from FlushAdr
   input  logic                        VictimWay,      // LRU selected this way as victim to evict
   input  logic                        FlushWay,       // This way is selected for flush and possible writeback if dirty
