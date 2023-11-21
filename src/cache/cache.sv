@@ -35,7 +35,6 @@ module cache import cvw::*; #(parameter cvw_t P,
   input  logic                   FlushStage,        // Pipeline flush of second stage (prevent writes and bus operations)
   // cpu side
   input  logic [1:0]             CacheRW,           // [1] Read, [0] Write 
-  input  logic [1:0]             CacheAtomic,       // Atomic operation
   input  logic                   FlushCache,        // Flush all dirty lines back to memory
   input  logic                   InvalidateCache,   // Clear all valid bits
   input  logic [3:0]             CMOp,              // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
@@ -117,7 +116,7 @@ module cache import cvw::*; #(parameter cvw_t P,
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(P, PA_BITS, XLEN, NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, READ_ONLY_CACHE) CacheWays[NUMWAYS-1:0](
-    .clk, .reset, .CacheEn, .CMOp, .CacheSet, .PAdr, .LineWriteData, .LineByteMask, .SelWay,
+    .clk, .reset, .CacheEn, .CacheSet, .PAdr, .LineWriteData, .LineByteMask, .SelWay,
     .SetValid, .ClearValid, .SetDirty, .ClearDirty, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .TagWay, .FlushStage, .InvalidateCache);
 
@@ -125,7 +124,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   if(NUMWAYS > 1) begin:vict
     cacheLRU #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cacheLRU(
       .clk, .reset, .FlushStage, .CacheEn, .HitWay, .ValidWay, .VictimWay, .CacheSet, .LRUWriteEn,
-      .SetValid, .ClearValid, .PAdr(PAdr[SETTOP-1:OFFSETLEN]), .InvalidateCache, .FlushCache);
+      .SetValid, .ClearValid, .PAdr(PAdr[SETTOP-1:OFFSETLEN]), .InvalidateCache);
   end else 
     assign VictimWay = 1'b1; // one hot.
 
@@ -168,7 +167,6 @@ module cache import cvw::*; #(parameter cvw_t P,
     assign PreLineWriteData = FetchBuffer;
   end
   if(!READ_ONLY_CACHE) begin:WriteSelLogic
-    logic [CACHEWORDSPERLINE-1:0]  MemPAdrDecoded;
     logic [LINELEN/8-1:0]          DemuxedByteMask, FetchBufferByteSel;
 
     // Adjust byte mask from word to cache line
@@ -226,7 +224,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   /////////////////////////////////////////////////////////////////////////////////////////////
   
   cachefsm #(P, READ_ONLY_CACHE) cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
-    .FlushStage, .CacheRW, .CacheAtomic, .Stall,
+    .FlushStage, .CacheRW, .Stall,
     .CacheHit, .LineDirty, .CacheStall, .CacheCommitted, 
     .CacheMiss, .CacheAccess, .SelAdr, .SelWay,
     .ClearDirty, .SetDirty, .SetValid, .ClearValid, .ZeroCacheLine, .SelWriteback, .SelFlush,

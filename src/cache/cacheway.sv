@@ -33,7 +33,6 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   input  logic                        clk,
   input  logic                        reset,
   input  logic                        FlushStage,     // Pipeline flush of second stage (prevent writes and bus operations)
-  input  logic [3:0]                  CMOp,           // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
   input  logic                        CacheEn,        // Enable the cache memory arrays.  Disable hold read data constant
   input  logic [$clog2(NUMLINES)-1:0] CacheSet,       // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
   input  logic [PA_BITS-1:0]          PAdr,           // Physical address 
@@ -76,7 +75,6 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   logic                               ClearDirtyWay;
   logic                               SelNonHit;
   logic                               SelData;
-  logic                               SelNotHit2;
   
   if (!READ_ONLY_CACHE) begin:flushlogic
     logic                               FlushWayEn;

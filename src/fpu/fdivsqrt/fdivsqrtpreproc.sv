@@ -210,7 +210,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   flopen #(P.DIVb+4) dreg(clk, IFDivStartE, {3'b000, Dnorm}, D);
  
   // Floating-point exponent
-  fdivsqrtexpcalc #(P) expcalc(.Fmt(FmtE), .Xe, .Ye, .Sqrt(SqrtE), .XZero(XZeroE), .ell, .m(mE), .Ue(UeE));
+  fdivsqrtexpcalc #(P) expcalc(.Fmt(FmtE), .Xe, .Ye, .Sqrt(SqrtE), .ell, .m(mE), .Ue(UeE));
   flopen #(P.NE+2) expreg(clk, IFDivStartE, UeE, UeM);
 
   // Number of FSM cycles (to FSM)
