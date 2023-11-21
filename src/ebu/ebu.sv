@@ -52,7 +52,7 @@ module ebu #(parameter XLEN, PA_BITS, AHBW)(
   // AHB-Lite external signals
   output logic                HCLK, HRESETn, 
   input  logic                HREADY,    // AHB peripheral ready
-  input  logic                HRESP,     // AHB peripheral response. 0: OK 1: Error
+  input  logic                HRESP,     // AHB peripheral response. 0: OK 1: Error.  Presently ignored.
   output logic [PA_BITS-1:0]  HADDR,     // AHB address to peripheral after arbitration
   output logic [AHBW-1:0]     HWDATA,    // AHB Write data after arbitration
   output logic [XLEN/8-1:0]   HWSTRB,    // AHB byte write enables after arbitration

@@ -38,8 +38,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0]        SrcAM, IEUAdrM,            // SrcA and memory address from IEU
   input  logic                     CSRReadM, CSRWriteM,       // read or write CSR
   input  logic                     TrapM,                     // trap is occurring
-  input  logic                     mretM, sretM, wfiM,        // return or WFI instruction
-  input  logic                     IntPendingM,               // at least one interrupt is pending and could occur if enabled
+  input  logic                     mretM, sretM,              // return instruction
   input  logic                     InterruptM,                // interrupt is occurring
   input  logic                     ExceptionM,                // interrupt is occurring
   input  logic                     MTimerInt,                 // timer interrupt
@@ -248,7 +247,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     csrs #(P) csrs(.clk, .reset,
       .CSRSWriteM, .STrapM, .CSRAdrM,
       .NextEPCM, .NextCauseM, .NextMtvalM, .SSTATUS_REGW, 
-      .STATUS_TVM, .MCOUNTEREN_TM(MCOUNTEREN_REGW[1]),
+      .STATUS_TVM, 
       .CSRWriteValM, .PrivilegeModeW,
       .CSRSReadValM, .STVEC_REGW, .SEPC_REGW,      
       .SCOUNTEREN_REGW,

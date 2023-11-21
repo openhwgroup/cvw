@@ -41,7 +41,6 @@ module cacheLRU
   input  logic                SetValid,        // Set the dirty bit in the selected way and set
   input  logic                ClearValid,      // Clear the dirty bit in the selected way and set
   input  logic                InvalidateCache, // Clear all valid bits
-  input  logic                FlushCache,      // Flush all dirty lines back to memory
   output logic [NUMWAYS-1:0]  VictimWay        // LRU selects a victim to evict
 );
 
