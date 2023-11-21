@@ -172,17 +172,17 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
                       (CurrState == STATE_FLUSH & LineDirty) | // This is wrong in a multicore snoop cache protocal.  Dirty must be cleared concurrently and atomically with writeback.  For single core cannot clear after writeback on bus ack and change flushadr.  Clears the wrong set.
   // Flush and eviction controls
                       (P.ZICBOM_SUPPORTED & CurrState == STATE_WRITEBACK & (CMOp[1] | CMOp[2]) & CacheBusAck);
-  assign SelWay = SelWriteback | (CurrState == STATE_WRITE_LINE) |
+  assign SelWay = (CurrState == STATE_WRITEBACK & ~CacheBusAck & ~(CMOp[1] | CMOp[2])) |
+                  (CurrState == STATE_READY & AnyMiss & LineDirty) | 
+                  (CurrState == STATE_WRITE_LINE) |
                   // This is almost the same as setvalid, but on cachehit we don't want to select
                   // the nonhit way, but instead want to force this to zero
                   (P.ZICBOZ_SUPPORTED & CurrState == STATE_READY & CMOZeroNoEviction & ~CacheHit) |
                   (P.ZICBOZ_SUPPORTED & CurrState == STATE_WRITEBACK & CacheBusAck & CMOp[3]);
   assign ZeroCacheLine = P.ZICBOZ_SUPPORTED & ((CurrState == STATE_READY & CMOZeroNoEviction) | 
                                                (CurrState == STATE_WRITEBACK & (CMOp[3] & CacheBusAck)));  
-  assign SelWriteback = (CurrState == STATE_WRITEBACK & ~CacheBusAck & ~(CMOp[1] | CMOp[2])) |
-                    (CurrState == STATE_READY & AnyMiss & LineDirty);
-  assign SelCMOWriteback = CurrState == STATE_WRITEBACK & (CMOp[1] | CMOp[2]);
-
+  assign SelWriteback = (CurrState == STATE_WRITEBACK & (CMOp[1] | CMOp[2] | ~CacheBusAck)) |
+                        (CurrState == STATE_READY & AnyMiss & LineDirty);
   assign SelFlush = (CurrState == STATE_READY & FlushCache) |
           (CurrState == STATE_FLUSH) | 
           (CurrState == STATE_FLUSH_WRITEBACK);

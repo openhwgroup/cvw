@@ -120,7 +120,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(P, PA_BITS, XLEN, NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, READ_ONLY_CACHE) CacheWays[NUMWAYS-1:0](
     .clk, .reset, .CacheEn, .CMOp, .CacheSet, .PAdr, .LineWriteData, .LineByteMask, .SelWay,
-    .SetValid, .ClearValid, .SetDirty, .ClearDirty, .SelWriteback, .SelCMOWriteback, .VictimWay,
+    .SetValid, .ClearValid, .SetDirty, .ClearDirty, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .TagWay, .FlushStage, .InvalidateCache);
 
   // Select victim way for associative caches
@@ -156,11 +156,10 @@ module cache import cvw::*; #(parameter cvw_t P,
     .PAdr(WordOffsetAddr), .ReadDataLine, .ReadDataWord);
   
   // Bus address for fetch, writeback, or flush writeback
-  assign SelBothWriteback = SelWriteback | SelCMOWriteback;
   mux3 #(PA_BITS) CacheBusAdrMux(.d0({PAdr[PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
     .d1({Tag, PAdr[SETTOP-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
     .d2({Tag, FlushAdr, {OFFSETLEN{1'b0}}}),
-    .s({SelFlush, SelBothWriteback}), .y(CacheBusAdr));
+    .s({SelFlush, SelWriteback}), .y(CacheBusAdr));
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path
