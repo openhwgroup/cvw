@@ -60,7 +60,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
 
   // Machine CSRs
   localparam MVENDORID     = 12'hF11;
-  localparam MARCHID       = 12'hF12;
+  localparam MARCHID       = 12'hF12; // github.com/riscv/riscv-isa-manual/blob/main/marchid.md
   localparam MIMPID        = 12'hF13;
   localparam MHARTID       = 12'hF14;
   localparam MCONFIGPTR    = 12'hF15;
@@ -216,8 +216,8 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
     end
     else case (CSRAdrM) 
       MISA_ADR:      CSRMReadValM = MISA_REGW;
-      MVENDORID:     CSRMReadValM = 0;
-      MARCHID:       CSRMReadValM = 0;
+      MVENDORID:     CSRMReadValM = {{(P.XLEN-32){1'b0}}, 32'h0000_0602}; // OpenHW JEDEC
+      MARCHID:       CSRMReadValM = {{(P.XLEN-32){1'b0}}, 32'h24}; // 36 for CV-Wally 
       MIMPID:        CSRMReadValM = {{P.XLEN-12{1'b0}}, 12'h100}; // pipelined implementation
       MHARTID:       CSRMReadValM = MHARTID_REGW; // hardwired to 0 
       MCONFIGPTR:    CSRMReadValM = 0; // hardwired to 0
