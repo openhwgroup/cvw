@@ -19,7 +19,7 @@ DRIVER := ${PACKAGE_SOURCE}/fpga-axi-sdc.c
 PATCHFILE := $(BRPACKAGES)/package-2023.05.1.patch
 
 # Device tree files 
-DTS ?= $(shell find -type f -regex ".*\.dts" | sort)
+DTS ?= $(shell find devicetree -type f -regex ".*\.dts" | sort)
 DTB := $(DTS:%.dts=%.dtb)
 DTB := $(foreach name, $(DTB), $(IMAGES)/$(shell basename $(name)))
 
