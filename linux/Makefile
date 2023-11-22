@@ -55,9 +55,22 @@ $(RISCV):
 
 # Disassembly rules ---------------------------------------------------
 
+vmlinux:
+	sed 's/BR2_LINUX_KERNEL_IMAGE=y/\# BR2_LINUX_KERNEL_IMAGE is not set/g' ${BR2023}/main.config > ${BR2023}/main-vmlinux.config
+	sed -i 's/\# BR2_LINUX_KERNEL_VMLINUX is not set/BR2_LINUX_KERNEL_VMLINUX=y/g' ${BR2023}/main-vmlinux.config
+	sed -i 's/\# BR2_TARGET_OPENSBI_LINUX_PAYLOAD is not set//g' ${BR2023}/main-vmlinux.config
+	cp $(BR2023)/main-vmlinux.config $(WALLYBOARD)/main.config
+	cp $(BR2023)/main-vmlinux.config $(BUILDROOT)/.config
+	make -C $(BUILDROOT) --jobs
+
 disassemble:
 	mkdir -p $(DIS)
 	make -j $(OBJDUMPS)
+
+Image:
+	cp $(BR2023)/main.config $(WALLYBOARD)/main.config
+	cp $(BR2023)/main.config $(BUILDROOT)/.config
+	make -C $(BUILDROOT) --jobs
 
 $(DIS)/%.objdump: $(IMAGES)/%.elf
 	riscv64-unknown-elf-objdump -DS $< >> $@
