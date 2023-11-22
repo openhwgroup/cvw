@@ -4,13 +4,8 @@ quietly WaveActivateNextPane {} 0
 add wave -noupdate /testbench/clk
 add wave -noupdate /testbench/reset
 add wave -noupdate /testbench/reset_ext
-add wave -noupdate /testbench/memfilename
 add wave -noupdate /testbench/dut/core/SATP_REGW
 add wave -noupdate /testbench/dut/core/InstrValidM
-add wave -noupdate /testbench/FunctionName/FunctionName/FunctionAddr
-add wave -noupdate /testbench/FunctionName/FunctionName/ProgramAddrIndex
-add wave -noupdate /testbench/FunctionName/FunctionName/FunctionName
-add wave -noupdate /testbench/FunctionName/FunctionName/ProgramAddrMapLineCount
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/RetM
 add wave -noupdate -group HDU -expand -group hazards -color Pink /testbench/dut/core/hzu/TrapM
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/LoadStallD
@@ -74,7 +69,6 @@ add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/dp/SrcAE
 add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/dp/SrcBE
 add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/dp/ALUResultE
 add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/dp/ResultW
-add wave -noupdate -expand -group {Memory Stage} /testbench/FunctionName/FunctionName/FunctionName
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/InstrValidM
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/PCM
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/InstrM
@@ -353,42 +347,43 @@ add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCNextF
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/bpred/bpred/NextValidPCE
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCF
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCPlus2or4F
-add wave -noupdate -expand -group RegFile -expand /testbench/dut/core/ieu/dp/regf/rf
-add wave -noupdate -expand -group RegFile /testbench/dut/core/ieu/dp/regf/a1
-add wave -noupdate -expand -group RegFile /testbench/dut/core/ieu/dp/regf/a2
-add wave -noupdate -expand -group RegFile /testbench/dut/core/ieu/dp/regf/a3
-add wave -noupdate -expand -group RegFile /testbench/dut/core/ieu/dp/regf/rd1
-add wave -noupdate -expand -group RegFile /testbench/dut/core/ieu/dp/regf/rd2
-add wave -noupdate -expand -group RegFile /testbench/dut/core/ieu/dp/regf/we3
-add wave -noupdate -expand -group RegFile /testbench/dut/core/ieu/dp/regf/wd3
-add wave -noupdate -expand -group RegFile -group {write regfile mux} /testbench/dut/core/ieu/dp/ReadDataW
-add wave -noupdate -expand -group RegFile -group {write regfile mux} /testbench/dut/core/ieu/dp/CSRReadValW
-add wave -noupdate -expand -group RegFile -group {write regfile mux} /testbench/dut/core/ieu/dp/ResultSrcW
-add wave -noupdate -expand -group RegFile -group {write regfile mux} /testbench/dut/core/ieu/dp/ResultW
-add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/csrm/MISA_REGW
-add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/csrm/MCAUSE_REGW
-add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/MCOUNTEREN_REGW
-add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/MCOUNTINHIBIT_REGW
-add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/MEDELEG_REGW
-add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/MEPC_REGW
-add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/MIDELEG_REGW
-add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/MIE_REGW
-add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/MIP_REGW
-add wave -noupdate -group CSRs {/testbench/dut/core/priv/priv/csr/MSTATUS_REGW[21]}
-add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/MSTATUS_REGW
-add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/MTVEC_REGW
-add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/csrm/MENVCFG_REGW
-add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/PMPADDR_ARRAY_REGW
-add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/PMPCFG_ARRAY_REGW
-add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/SATP_REGW
-add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/SCOUNTEREN_REGW
-add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/SEPC_REGW
-add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/SSTATUS_REGW
-add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/STVEC_REGW
-add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/SENVCFG_REGW
-add wave -noupdate -group CSRs -group {user mode} /testbench/dut/core/priv/priv/csr/csru/csru/FRM_REGW
-add wave -noupdate -group CSRs -group {user mode} /testbench/dut/core/priv/priv/csr/csru/csru/FFLAGS_REGW
-add wave -noupdate -group CSRs -group {user mode} /testbench/dut/core/priv/priv/csr/csru/csru/STATUS_FS
+add wave -noupdate -group RegFile -expand /testbench/dut/core/ieu/dp/regf/rf
+add wave -noupdate -group RegFile /testbench/dut/core/ieu/dp/regf/a1
+add wave -noupdate -group RegFile /testbench/dut/core/ieu/dp/regf/a2
+add wave -noupdate -group RegFile /testbench/dut/core/ieu/dp/regf/a3
+add wave -noupdate -group RegFile /testbench/dut/core/ieu/dp/regf/rd1
+add wave -noupdate -group RegFile /testbench/dut/core/ieu/dp/regf/rd2
+add wave -noupdate -group RegFile /testbench/dut/core/ieu/dp/regf/we3
+add wave -noupdate -group RegFile /testbench/dut/core/ieu/dp/regf/wd3
+add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/core/ieu/dp/ReadDataW
+add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/core/ieu/dp/CSRReadValW
+add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/core/ieu/dp/ResultSrcW
+add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/core/ieu/dp/ResultW
+add wave -noupdate -expand -group CSRs /testbench/dut/core/priv/priv/csr/csrm/MISA_REGW
+add wave -noupdate -expand -group CSRs /testbench/dut/core/priv/priv/csr/csrm/MCAUSE_REGW
+add wave -noupdate -expand -group CSRs /testbench/dut/core/priv/priv/csr/MCOUNTEREN_REGW
+add wave -noupdate -expand -group CSRs /testbench/dut/core/priv/priv/csr/MCOUNTINHIBIT_REGW
+add wave -noupdate -expand -group CSRs /testbench/dut/core/priv/priv/csr/MEDELEG_REGW
+add wave -noupdate -expand -group CSRs /testbench/dut/core/priv/priv/csr/MEPC_REGW
+add wave -noupdate -expand -group CSRs /testbench/dut/core/priv/priv/csr/MIDELEG_REGW
+add wave -noupdate -expand -group CSRs /testbench/dut/core/priv/priv/csr/MIE_REGW
+add wave -noupdate -expand -group CSRs /testbench/dut/core/priv/priv/csr/MIP_REGW
+add wave -noupdate -expand -group CSRs {/testbench/dut/core/priv/priv/csr/MSTATUS_REGW[21]}
+add wave -noupdate -expand -group CSRs /testbench/dut/core/priv/priv/csr/MSTATUS_REGW
+add wave -noupdate -expand -group CSRs /testbench/dut/core/priv/priv/csr/MTVEC_REGW
+add wave -noupdate -expand -group CSRs /testbench/dut/core/priv/priv/csr/csrm/MENVCFG_REGW
+add wave -noupdate -expand -group CSRs /testbench/dut/core/priv/priv/csr/PMPADDR_ARRAY_REGW
+add wave -noupdate -expand -group CSRs /testbench/dut/core/priv/priv/csr/PMPCFG_ARRAY_REGW
+add wave -noupdate -expand -group CSRs /testbench/dut/core/priv/priv/csr/SATP_REGW
+add wave -noupdate -expand -group CSRs /testbench/dut/core/priv/priv/csr/SCOUNTEREN_REGW
+add wave -noupdate -expand -group CSRs /testbench/dut/core/priv/priv/csr/SEPC_REGW
+add wave -noupdate -expand -group CSRs /testbench/dut/core/priv/priv/csr/SSTATUS_REGW
+add wave -noupdate -expand -group CSRs /testbench/dut/core/priv/priv/csr/STVEC_REGW
+add wave -noupdate -expand -group CSRs /testbench/dut/core/priv/priv/csr/SENVCFG_REGW
+add wave -noupdate -expand -group CSRs /testbench/dut/core/priv/priv/csr/csrs/csrs/STIMECMP_REGW
+add wave -noupdate -expand -group CSRs -group {user mode} /testbench/dut/core/priv/priv/csr/csru/csru/FRM_REGW
+add wave -noupdate -expand -group CSRs -group {user mode} /testbench/dut/core/priv/priv/csr/csru/csru/FFLAGS_REGW
+add wave -noupdate -expand -group CSRs -group {user mode} /testbench/dut/core/priv/priv/csr/csru/csru/STATUS_FS
 add wave -noupdate -group alu /testbench/dut/core/ieu/dp/alu/A
 add wave -noupdate -group alu /testbench/dut/core/ieu/dp/alu/B
 add wave -noupdate -group alu /testbench/dut/core/ieu/dp/alu/ALUResult
@@ -705,9 +700,13 @@ add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/STATUS_TW
 add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/PrivilegeModeW
 add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/wfi/WFICount
 add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/WFITimeoutM
+add wave -noupdate /testbench/dut/core/lsu/bus/dcache/dcache/Tag
+add wave -noupdate /testbench/dut/core/lsu/bus/dcache/dcache/TagWay
+add wave -noupdate {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/SelData}
+add wave -noupdate {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/SelWay}
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 4} {39144 ns} 1} {{Cursor 4} {33684 ns} 1} {{Cursor 3} {39145 ns} 0}
-quietly wave cursor active 3
+WaveRestoreCursors {{Cursor 4} {39144 ns} 1} {{Cursor 4} {9705411 ns} 0} {{Cursor 3} {403021 ns} 1}
+quietly wave cursor active 2
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 194
 configure wave -justifyvalue left
@@ -722,4 +721,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {39053 ns} {39217 ns}
+WaveRestoreZoom {9705100 ns} {9705722 ns}
