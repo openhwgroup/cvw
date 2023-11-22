@@ -8,7 +8,7 @@ Wally is described in an upcoming textbook, *RISC-V System-on-Chip Design*, by H
 
 # Verification
 
-Wally is presently at Technology Readiness Level 4, passing the RISC-V compatibility test suite and custom tests, and booting Linux in simulation and on an FPGA.  See the [Test Plan](docs/testplan.md) for details.
+Wally is presently at Technology Readiness Level 4, passing the RISC-V compatibility test suite and custom tests, and booting Linux in simulation and on an FPGA.  See the [Test Plan](docs/testplans/testplan.md) for details.
 
 # New User Setup
 
