@@ -23,7 +23,7 @@
 `define NUM_REGS 32
 `define NUM_CSRS 4096
 
-`define STD_LOG 1
+`define STD_LOG 0
 `define PRINT_PC_INSTR 0
 `define PRINT_MOST 0
 `define PRINT_ALL 0
@@ -502,7 +502,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   if(`STD_LOG) begin
     instrNameDecTB NameDecoder(rvvi.insn[0][0], instrWName);
     initial begin
-      LogFile = "InstrTrace.log";
+      LogFile = "logs/InstrTrace.log";
       file = $fopen(LogFile, "w");
     end
   end
