@@ -50,6 +50,7 @@
 --override cpu/wfi_is_nop=T
 --override cpu/misa_Extensions_mask=0x0
 --override cpu/Sstc=T
+--override cpu/Sv_modes=768
 
 # Enable SVADU hardware update of A/D bits when menvcfg.HADE=1
 --override cpu/Svadu=T

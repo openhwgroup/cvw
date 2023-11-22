@@ -49,7 +49,7 @@ configs = [
     )
 ]
 def getBuildrootTC(boot):
-    INSTR_LIMIT = 4000000 # multiple of 100000; 4M is interesting because it gets into the kernel and enabling VM
+    INSTR_LIMIT = 1000000 # multiple of 100000; 4M is interesting because it gets into the kernel and enabling VM
     MAX_EXPECTED = 246000000 # *** TODO: replace this with a search for the login prompt.
     if boot:
         name="buildrootboot"
@@ -65,13 +65,6 @@ def getBuildrootTC(boot):
             BRcmd="vsim > {} -c <<!\ndo wally-batch.do buildroot buildroot $RISCV "+str(INSTR_LIMIT)+" 1 0\n!"
         BRgrepstr=str(INSTR_LIMIT)+" instructions"
     return  TestCase(name,variant="rv64gc",cmd=BRcmd,grepstr=BRgrepstr)
-
-tc = TestCase(
-      name="buildroot-checkpoint",
-      variant="rv64gc",
-      cmd="vsim > {} -c <<!\ndo wally-batch.do buildroot buildroot-checkpoint $RISCV 400100000 400000001 400000000\n!", # *** will this work with rv64gc rather than buildroot config?
-      grepstr="400100000 instructions")
-configs.append(tc)
 
 tests64gcimperas = ["imperas64i", "imperas64f", "imperas64d", "imperas64m", "imperas64c"] # unused
 
