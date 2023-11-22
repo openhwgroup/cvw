@@ -1,5 +1,6 @@
 RISCV := /opt/riscv
-BUILDROOT := ${RISCV}/buildroot
+#BUILDROOT := ${RISCV}/buildroot-test
+BUILDROOT := buildroot
 IMAGES := ${BUILDROOT}/output/images
 WALLY := $(shell dirname $(shell pwd))
 WALLYLINUX := $(shell pwd)
@@ -18,7 +19,7 @@ DRIVER := ${PACKAGE_SOURCE}/fpga-axi-sdc.c
 PATCHFILE := $(BRPACKAGES)/package-2023.05.1.patch
 
 # Device tree files 
-DTS ?= $(shell find -type f -regex ".*\.dts" | sort)
+DTS ?= $(shell find devicetree -type f -regex ".*\.dts" | sort)
 DTB := $(DTS:%.dts=%.dtb)
 DTB := $(foreach name, $(DTB), $(IMAGES)/$(shell basename $(name)))
 
@@ -29,12 +30,16 @@ OBJDUMPS := $(foreach name, $(OBJDUMPS), $(DIS)/$(name).objdump)
 
 .PHONY: all generate disassemble install clean cleanDTB cleanDriver test
 
-all:
-	$(MAKE) install
+all: download Image disassemble install
+
+Image:
 	make -C $(BUILDROOT) --jobs
 	$(MAKE) generate
 	# TODO: Need to find a way to set the PATH for child processes.
 	# source ../setup.sh; $(MAKE) disassemble
+
+install:
+	sudo mv $(BUILDROOT) $(RISCV)/$(BUILDROOT)
 
 # Temp rule for debugging
 test:
@@ -55,15 +60,20 @@ $(RISCV):
 
 # Disassembly rules ---------------------------------------------------
 
+
 disassemble:
+	find  $(BUILDROOT)/output/build/linux-* -maxdepth 1 -name "vmlinux" | xargs  cp -t $(BUILDROOT)/output/images/
 	mkdir -p $(DIS)
 	make -j $(OBJDUMPS)
+	make -j $(OBJDUMPS).addr
 
 $(DIS)/%.objdump: $(IMAGES)/%.elf
 	riscv64-unknown-elf-objdump -DS $< >> $@
+	extractFunctionRadix.sh $@
 
 $(DIS)/%.objdump: $(IMAGES)/%
 	riscv64-unknown-elf-objdump -S $< >> $@
+	extractFunctionRadix.sh $@
 
 $(IMAGES)/vmlinux:
 	linuxDir=$$(find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/linux-[0-9]+\.[0-9]+\.[0-9]+$$") ;\
@@ -76,7 +86,7 @@ $(IMAGES)/busybox:
 # Generating new Buildroot directories --------------------------------
 
 # This directive should be run as: make install BUILDROOT=path/to/buildroot
-install: $(BUILDROOT)/package/fpga-axi-sdc $(WALLYBOARD)
+download: $(BUILDROOT)/package/fpga-axi-sdc $(WALLYBOARD)
 	cp $(WALLYBOARD)/main.config $(BUILDROOT)/.config
 
 # CONFIG DEPENDENCIES 2023.05.1 ---------------------------------------
