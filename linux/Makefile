@@ -1,5 +1,6 @@
 RISCV := /opt/riscv
-BUILDROOT := ${RISCV}/buildroot
+#BUILDROOT := ${RISCV}/buildroot-test
+BUILDROOT := buildroot
 IMAGES := ${BUILDROOT}/output/images
 WALLY := $(shell dirname $(shell pwd))
 WALLYLINUX := $(shell pwd)
@@ -29,12 +30,16 @@ OBJDUMPS := $(foreach name, $(OBJDUMPS), $(DIS)/$(name).objdump)
 
 .PHONY: all generate disassemble install clean cleanDTB cleanDriver test
 
-all:
-	$(MAKE) install
+all: download Image disassemble install
+
+Image:
 	make -C $(BUILDROOT) --jobs
 	$(MAKE) generate
 	# TODO: Need to find a way to set the PATH for child processes.
 	# source ../setup.sh; $(MAKE) disassemble
+
+install:
+	sudo cp -r $(BUILDROOT) $(RISCV)/$(BUILDROOT)
 
 # Temp rule for debugging
 test:
@@ -55,22 +60,11 @@ $(RISCV):
 
 # Disassembly rules ---------------------------------------------------
 
-vmlinux:
-	sed 's/BR2_LINUX_KERNEL_IMAGE=y/\# BR2_LINUX_KERNEL_IMAGE is not set/g' ${BR2023}/main.config > ${BR2023}/main-vmlinux.config
-	sed -i 's/\# BR2_LINUX_KERNEL_VMLINUX is not set/BR2_LINUX_KERNEL_VMLINUX=y/g' ${BR2023}/main-vmlinux.config
-	sed -i 's/\# BR2_TARGET_OPENSBI_LINUX_PAYLOAD is not set//g' ${BR2023}/main-vmlinux.config
-	cp $(BR2023)/main-vmlinux.config $(WALLYBOARD)/main.config
-	cp $(BR2023)/main-vmlinux.config $(BUILDROOT)/.config
-	make -C $(BUILDROOT) --jobs
 
 disassemble:
+	find  $(BUILDROOT)/output/build/linux-* -maxdepth 1 -name "vmlinux" | xargs  cp -t $(BUILDROOT)/output/images/
 	mkdir -p $(DIS)
 	make -j $(OBJDUMPS)
-
-Image:
-	cp $(BR2023)/main.config $(WALLYBOARD)/main.config
-	cp $(BR2023)/main.config $(BUILDROOT)/.config
-	make -C $(BUILDROOT) --jobs
 
 $(DIS)/%.objdump: $(IMAGES)/%.elf
 	riscv64-unknown-elf-objdump -DS $< >> $@
@@ -89,7 +83,7 @@ $(IMAGES)/busybox:
 # Generating new Buildroot directories --------------------------------
 
 # This directive should be run as: make install BUILDROOT=path/to/buildroot
-install: $(BUILDROOT)/package/fpga-axi-sdc $(WALLYBOARD)
+download: $(BUILDROOT)/package/fpga-axi-sdc $(WALLYBOARD)
 	cp $(WALLYBOARD)/main.config $(BUILDROOT)/.config
 
 # CONFIG DEPENDENCIES 2023.05.1 ---------------------------------------
