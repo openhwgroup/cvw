@@ -8,7 +8,7 @@ rawBootmemFile="$tvDir/bootmemGDB.bin"
 bootmemFile="$tvDir/bootmem.bin"
 rawUntrimmedBootmemFile="$tvDir/untrimmedBootmemFileGDB.bin"
 untrimmedBootmemFile="$tvDir/untrimmedBootmemFile.bin"
-DEVICE_TREE=../devicetree/wally-virt.dtb
+DEVICE_TREE=${imageDir}/wally-virt.dtb
 
 read -p "Warning: running this script will overwrite the contents of:
   * $rawRamFile

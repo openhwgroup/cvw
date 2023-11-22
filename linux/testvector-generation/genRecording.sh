@@ -2,7 +2,7 @@
 imageDir=$RISCV/buildroot/output/images
 tvDir=$RISCV/linux-testvectors
 recordFile="$tvDir/all.qemu"
-DEVICE_TREE=../devicetree/wally-virt.dtb
+DEVICE_TREE=${imageDir}/wally-virt.dtb
 
 read -p "Warning: running this script will overwrite $recordFile
 Would you like to proceed? (y/n) " -n 1 -r
