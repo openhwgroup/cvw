@@ -39,7 +39,7 @@ Image:
 	# source ../setup.sh; $(MAKE) disassemble
 
 install:
-	sudo cp -r $(BUILDROOT) $(RISCV)/$(BUILDROOT)
+	sudo mv -r $(BUILDROOT) $(RISCV)/$(BUILDROOT)
 
 # Temp rule for debugging
 test:

@@ -14,9 +14,6 @@
 [submodule "addins/coremark"]
 	path = addins/coremark
 	url = https://github.com/eembc/coremark
-[submodule "addins/branch-predictor-simulator"]
-	path = addins/branch-predictor-simulator
-	url = https://github.com/synxlin/branch-predictor-simulator.git
 [submodule "addins/FreeRTOS-Kernel"]
 	path = addins/FreeRTOS-Kernel
 	url = https://github.com/FreeRTOS/FreeRTOS-Kernel.git
@@ -29,3 +26,6 @@
 [submodule "addins/riscv-arch-test"]
 	path = addins/riscv-arch-test
 	url = https://github.com/riscv-non-isa/riscv-arch-test
+[submodule "addins/branch-predictor-simulator"]
+	path = addins/branch-predictor-simulator
+	url = https://github.com/ross144/branch-predictor-simulator
