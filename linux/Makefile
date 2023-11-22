@@ -39,7 +39,7 @@ Image:
 	# source ../setup.sh; $(MAKE) disassemble
 
 install:
-	sudo mv -r $(BUILDROOT) $(RISCV)/$(BUILDROOT)
+	sudo mv $(BUILDROOT) $(RISCV)/$(BUILDROOT)
 
 # Temp rule for debugging
 test:
@@ -65,12 +65,15 @@ disassemble:
 	find  $(BUILDROOT)/output/build/linux-* -maxdepth 1 -name "vmlinux" | xargs  cp -t $(BUILDROOT)/output/images/
 	mkdir -p $(DIS)
 	make -j $(OBJDUMPS)
+	make -j $(OBJDUMPS).addr
 
 $(DIS)/%.objdump: $(IMAGES)/%.elf
 	riscv64-unknown-elf-objdump -DS $< >> $@
+	extractFunctionRadix.sh $@
 
 $(DIS)/%.objdump: $(IMAGES)/%
 	riscv64-unknown-elf-objdump -S $< >> $@
+	extractFunctionRadix.sh $@
 
 $(IMAGES)/vmlinux:
 	linuxDir=$$(find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/linux-[0-9]+\.[0-9]+\.[0-9]+$$") ;\

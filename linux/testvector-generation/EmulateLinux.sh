@@ -11,7 +11,7 @@ help() {
 
 # defaults
 imageDir=$RISCV/buildroot/output/images
-DEVICE_TREE=../devicetree/wally-virt.dtb
+DEVICE_TREE=${imageDir}/wally-virt.dtb
 
 # Process options and arguments. The following code grabs the single
 # sdcard device argument no matter where it is in the positional
@@ -36,8 +36,6 @@ done
 # File location variables
 imageDir=$BUILDROOT/output/images
 
-#imageDir=$RISCV/buildroot/output/images
-imageDir=~/repos/buildroot-sept2023/output/images
 tvDir=$RISCV/linux-testvectors
 tcpPort=1239
 
