@@ -6,7 +6,7 @@ recordFile="$tvDir/all.qemu"
 traceFile="$tvDir/all.txt"
 trapsFile="$tvDir/traps.txt"
 interruptsFile="$tvDir/interrupts.txt"
-DEVICE_TREE=../devicetree/wally-virt.dtb
+DEVICE_TREE=${imageDir}/wally-virt.dtb
 
 read -p "Warning: running this script will overwrite the contents of:
   * $traceFile
