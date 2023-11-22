@@ -1,5 +1,5 @@
-RISCV := /home/rose/repos/
-BUILDROOT := ${RISCV}/buildroot-test
+RISCV := /opt/riscv
+BUILDROOT := ${RISCV}/buildroot
 IMAGES := ${BUILDROOT}/output/images
 WALLY := $(shell dirname $(shell pwd))
 WALLYLINUX := $(shell pwd)
