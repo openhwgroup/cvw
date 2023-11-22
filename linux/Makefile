@@ -62,7 +62,7 @@ $(RISCV):
 
 
 disassemble:
-	cp $(BUILDROOT)/output/build/linux*/vmlinux $(BUILDROOT)/output/images/vmlinux
+	find  $(BUILDROOT)/output/build/linux-* -maxdepth 1 -name "vmlinux" | xargs  cp -t $(BUILDROOT)/output/images/
 	mkdir -p $(DIS)
 	make -j $(OBJDUMPS)
 
