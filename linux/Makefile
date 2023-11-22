@@ -39,6 +39,7 @@ Image:
 	# source ../setup.sh; $(MAKE) disassemble
 
 install:
+	sudo rm -rf $(RISCV)/$(BUILDROOT)
 	sudo mv $(BUILDROOT) $(RISCV)/$(BUILDROOT)
 
 # Temp rule for debugging
@@ -62,10 +63,10 @@ $(RISCV):
 
 
 disassemble:
+	rm -rf $(BUILDROOT)/output/images/disassembly
 	find  $(BUILDROOT)/output/build/linux-* -maxdepth 1 -name "vmlinux" | xargs  cp -t $(BUILDROOT)/output/images/
 	mkdir -p $(DIS)
 	make -j $(OBJDUMPS)
-	make -j $(OBJDUMPS).addr
 
 $(DIS)/%.objdump: $(IMAGES)/%.elf
 	riscv64-unknown-elf-objdump -DS $< >> $@
