@@ -47,7 +47,7 @@ sudo apt update -y
 sudo apt upgrade -y
 sudo apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev libglib2.0-dev python3-pip pkg-config opam z3 zlib1g-dev automake autotools-dev libmpc-dev libmpfr-dev  gperf libtool patchutils bc 
 # Other python libraries used through the book.
-sudo pip3 install matplotlib scipy scikit-learn adjustText lief
+sudo pip3 install sphinx sphinx_rtd_theme matplotlib scipy scikit-learn adjustText lief
 
 # needed for Ubuntu 22.04, gcc cross compiler expects python not python2 or python3.
 if ! command -v python &> /dev/null
