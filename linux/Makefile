@@ -67,6 +67,10 @@ disassemble:
 	find  $(BUILDROOT)/output/build/linux-* -maxdepth 1 -name "vmlinux" | xargs  cp -t $(BUILDROOT)/output/images/
 	mkdir -p $(DIS)
 	make -j $(OBJDUMPS)
+	# extract rootfs
+	mkdir -p $(BUILDROOT)/output/images/disassembly/rootfs
+	echo "Ignore error about dev/console when extracting rootfs from rootfs.cpio"
+	-cpio -i -D $(BUILDROOT)/output/images/disassembly/rootfs < $(BUILDROOT)/output/images/rootfs.cpio
 
 $(DIS)/%.objdump: $(IMAGES)/%.elf
 	riscv64-unknown-elf-objdump -DS $< >> $@
