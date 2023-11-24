@@ -196,8 +196,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign PreLSURWM = MemRWM; 
     assign IHAdrM = IEUAdrExtM;
     assign LSUFunct3M = Funct3M;
-  assign LSUFunct7M = Funct7M; 
-  assign LSUAtomicM = AtomicM;
+    assign LSUFunct7M = Funct7M; 
+    assign LSUAtomicM = AtomicM;
     assign IHWriteDataM = WriteDataM;
     assign LoadAccessFaultM = LSULoadAccessFaultM;
     assign StoreAmoAccessFaultM = LSUStoreAmoAccessFaultM;   
