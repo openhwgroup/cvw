@@ -28,7 +28,7 @@ vlib work
 vlog +incdir+../config/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench-fp.sv ../src/fpu/*.sv ../src/fpu/*/*.sv ../src/generic/*.sv  ../src/generic/flop/*.sv -suppress 2583,7063,8607,2697 
 
 # Change TEST_SIZE to only test certain FP width
-# values are QP, DP, SP, HP
+# values are QP, DP, SP, HP or all for all tests
 vsim -voptargs=+acc work.testbenchfp -GTEST=$2 -GTEST_SIZE="all" 
 
 # Set WAV variable to avoid having any output to wave (to limit disk space)
