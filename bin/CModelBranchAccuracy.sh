@@ -46,7 +46,7 @@ do
 	do
 	    #echo "sim_bp $Pred $Size $Size 18 1 $File | tail -1 | awk '{print $4}'"
 	    #echo "sim_bp $Pred $SizeString $File | tail -1 | awk '{print $4}'"
-	    BMDR=`sim_bp $Pred $SizeString $File | tail -1 | awk '{print $4}'`
+	    BMDR=`sim_bp -c $Pred $SizeString $File | tail -1 | awk '{print $4}'`
 	    Product=`echo "$Product * $BMDR" | bc`
 	    Count=$((Count+1))
 	done

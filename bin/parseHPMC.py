@@ -32,12 +32,13 @@ import math
 import numpy as np
 import argparse
 
-RefDataBP = [('twobitCModel6', 'twobitCModel', 64, 9.65280765420711), ('twobitCModel8', 'twobitCModel', 256, 8.75120245829945), ('twobitCModel10', 'twobitCModel', 1024, 8.1318382397263),
-           ('twobitCModel12', 'twobitCModel', 4096, 7.53026646633342), ('twobitCModel14', 'twobitCModel', 16384, 6.07679338544009), ('twobitCModel16', 'twobitCModel', 65536, 6.07679338544009),
-           ('gshareCModel6', 'gshareCModel', 64, 10.6602835418646), ('gshareCModel8', 'gshareCModel', 256, 8.38384710559667), ('gshareCModel10', 'gshareCModel', 1024, 6.36847432155534),
-           ('gshareCModel12', 'gshareCModel', 4096, 3.91108491151983), ('gshareCModel14', 'gshareCModel', 16384, 2.83926519215395), ('gshareCModel16', 'gshareCModel', 65536, .60213659066941)]
-RefDataBTB = [('BTBCModel6', 'BTBCModel', 64, 1.11806778745097), ('BTBCModel8', 'BTBCModel', 256, 0.183833943219956), ('BTBCModel10', 'BTBCModel', 1024, 0.0109271020749376),
-              ('BTBCModel12', 'BTBCModel', 4096, 0.00437600802791213), ('BTBCModel14', 'BTBCModel', 16384, 0.00188756234204305), ('BTBCModel16', 'BTBCModel', 65536, 0.00188756234204305)]
+
+RefDataBP = [('twobitCModel6', 'twobitCModel', 64, 10.0060297551637), ('twobitCModel8', 'twobitCModel', 256, 8.4320392215602), ('twobitCModel10', 'twobitCModel', 1024, 7.29493318805151),
+           ('twobitCModel12', 'twobitCModel', 4096, 6.84739616147794), ('twobitCModel14', 'twobitCModel', 16384, 5.68432926870082), ('twobitCModel16', 'twobitCModel', 65536, 5.68432926870082),
+           ('gshareCModel6', 'gshareCModel', 64, 11.4737703417701), ('gshareCModel8', 'gshareCModel', 256, 8.52341470761974), ('gshareCModel10', 'gshareCModel', 1024, 6.32975690693015),
+           ('gshareCModel12', 'gshareCModel', 4096, 4.55424632377659), ('gshareCModel14', 'gshareCModel', 16384, 3.54251547725509), ('gshareCModel16', 'gshareCModel', 65536, 1.90424999467293)]
+RefDataBTB = [('BTBCModel6', 'BTBCModel', 64, 1.51480272475844), ('BTBCModel8', 'BTBCModel', 256, 0.209057900418965), ('BTBCModel10', 'BTBCModel', 1024, 0.0117345454469572),
+              ('BTBCModel12', 'BTBCModel', 4096, 0.00125540990359826), ('BTBCModel14', 'BTBCModel', 16384, 0.000732471628510962), ('BTBCModel16', 'BTBCModel', 65536, 0.000732471628510962)]
 
 def ParseBranchListFile(path):
     '''Take the path to the list of Questa Sim log files containing the performance counters outputs.  File
