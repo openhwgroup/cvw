@@ -148,7 +148,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic                  IgnoreRequestTLB;                       // On either ITLB or DTLB miss, ignore miss so HPTW can handle
   logic                  IgnoreRequest;                          // On FlushM or TLB miss ignore memory operation
   logic                  SelDTIM;                                // Select DTIM rather than bus or D$
-
+  logic [P.XLEN-1:0]     WriteDataZM;
+  
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Pipeline for IEUAdr E to M
   // Zero-extend address to 34 bits for XLEN=32
@@ -176,6 +177,12 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign {SpillStallM, SelStoreDelay} = '0;
   end
 
+    if(P.ZICBOZ_SUPPORTED) begin : cboz
+      mux2 #(P.XLEN) writedatacbozmux(WriteDataM, '0, CMOpM[3], WriteDataZM);
+    end else begin : cboz
+      assign WriteDataZM = WriteDataM;
+    end
+
   /////////////////////////////////////////////////////////////////////////////////////////////
   // HPTW (only needed if VM supported)
   // MMU include PMP and is needed if any privileged supported
@@ -187,7 +194,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       .FlushW, .DCacheStallM, .SATP_REGW, .PCSpillF,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_HADE, .PrivilegeModeW,
       .ReadDataM(ReadDataM[P.XLEN-1:0]), // ReadDataM is LLEN, but HPTW only needs XLEN
-      .WriteDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
+      .WriteDataM(WriteDataZM), .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
       .IEUAdrExtM, .PTE, .IHWriteDataM, .PageType, .PreLSURWM, .LSUAtomicM,
       .IHAdrM, .HPTWStall, .SelHPTW,
       .IgnoreRequestTLB, .LSULoadAccessFaultM, .LSUStoreAmoAccessFaultM, 
@@ -198,7 +205,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign LSUFunct3M = Funct3M;
     assign LSUFunct7M = Funct7M; 
     assign LSUAtomicM = AtomicM;
-    assign IHWriteDataM = WriteDataM;
+    assign IHWriteDataM = WriteDataZM;
     assign LoadAccessFaultM = LSULoadAccessFaultM;
     assign StoreAmoAccessFaultM = LSUStoreAmoAccessFaultM;   
     assign {HPTWStall, SelHPTW, PTE, PageType, DTLBWriteM, ITLBWriteF, IgnoreRequestTLB} = '0;
