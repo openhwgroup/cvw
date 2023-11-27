@@ -255,9 +255,9 @@ def BarGraph(seriesDict, xlabelList, BenchPerRow, FileName, IncludeLegend):
     fig = plt.subplots(figsize = (EffectiveNumInGroup*BenchPerRow/8, 4))
     colors = ['blue', 'blue', 'blue', 'blue', 'blue', 'blue', 'black', 'black', 'black', 'black', 'black', 'black']
     for name in seriesDict:
-        xpos = np.arange(BenchPerRow)
-        xpos = [x + index*barWidth for x in xpos]
         values = seriesDict[name]
+        xpos = np.arange(len(values))
+        xpos = [x + index*barWidth for x in xpos]
         plt.bar(xpos, Inversion(values), width=barWidth, edgecolor='grey', label=name, color=colors[index%len(colors)])
         index += 1
     plt.xticks([r + barWidth*(NumberInGroup/2-0.5) for r in range(0, BenchPerRow)], xlabelList)
