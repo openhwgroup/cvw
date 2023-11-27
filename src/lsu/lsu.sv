@@ -228,7 +228,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     logic DisableTranslation;                             // During HPTW walk or D$ flush disable virtual memory address translation
     logic WriteAccessM;
     assign DisableTranslation = SelHPTW | FlushDCacheM;
-    assign WriteAccessM = PreLSURWM[0] | (|CMOpM);
+    assign WriteAccessM = PreLSURWM[0];
     mmu #(.P(P), .TLB_ENTRIES(P.DTLB_ENTRIES), .IMMU(0))
     dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_HADE,
       .PrivilegeModeW, .DisableTranslation, .VAdr(IHAdrM), .Size(LSUFunct3M[1:0]),
@@ -238,7 +238,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       .StoreAmoAccessFaultM(LSUStoreAmoAccessFaultM), .InstrPageFaultF(), .LoadPageFaultM, 
     .StoreAmoPageFaultM,
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,   // *** these faults need to be supressed during hptw.
-      .UpdateDA(DataUpdateDAM),
+      .UpdateDA(DataUpdateDAM), .CMOp(CMOpM),
       .AtomicAccessM(|LSUAtomicM), .ExecuteAccessF(1'b0), 
       .WriteAccessM, .ReadAccessM(PreLSURWM[1]),
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
@@ -301,8 +301,12 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       logic                    FlushDCache;                                      // Suppress d cache flush if there is an ITLB miss.
       logic                    CacheStall;
       logic [1:0]              CacheBusRWTemp;
-      
-      assign BusRW = ~CacheableM & ~SelDTIM ? LSURWM : '0;
+
+      if(P.ZICBOZ_SUPPORTED) begin 
+        assign BusRW = ~CacheableM & ~SelDTIM ? CMOpM[3] ? 2'b01 : LSURWM : '0;
+      end else begin
+        assign BusRW = ~CacheableM & ~SelDTIM ? LSURWM : '0;
+      end
       assign CacheableOrFlushCacheM = CacheableM | FlushDCacheM;
       assign CacheRWM = CacheableM & ~SelDTIM ? LSURWM : '0;
       assign FlushDCache = FlushDCacheM & ~(SelHPTW);
