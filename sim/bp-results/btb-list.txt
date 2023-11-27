@@ -1,6 +1,6 @@
-btb6.log btb 6
-btb8.log btb 8
-btb10.log btb 10
-btb12.log btb 12
-btb14.log btb 14
-btb16.log btb 16
+../logs/rv32gc_BTB6.log btb 6
+../logs/rv32gc_BTB8.log btb 8
+../logs/rv32gc_BTB10.log btb 10
+../logs/rv32gc_BTB12.log btb 12
+../logs/rv32gc_BTB14.log btb 14
+../logs/rv32gc_BTB16.log btb 16
