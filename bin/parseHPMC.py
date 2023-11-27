@@ -276,7 +276,7 @@ def SelectPartition(xlabelListBig, seriesDictBig, group, BenchPerRow):
     return(xlabelListTrunk, seriesDictTrunk)
 
 
-def ReportAsGraph(benchmarkDict, bar):
+def ReportAsGraph(benchmarkDict, bar, FileName):
     def FormatToPlot(currBenchmark):
         names = []
         sizes = []
@@ -330,8 +330,8 @@ def ReportAsGraph(benchmarkDict, bar):
         axes.set_xticks(xdata)
         axes.set_xticklabels(xdata)
         axes.grid(color='b', alpha=0.5, linestyle='dashed', linewidth=0.5)
-        plt.show()
-        
+        if(FileName == None): plt.show()
+        else: plt.savefig(FileName)        
 
     # if(not args.summary):
     #     size = len(benchmarkDict)
@@ -390,7 +390,7 @@ def ReportAsGraph(benchmarkDict, bar):
         # on each piece.
         for row in range(0, math.ceil(NumBenchmarks / BenchPerRow)):
             (xlabelListTrunk, seriesDictTrunk) = SelectPartition(xlabelListBig, seriesDictBig, row, BenchPerRow)
-            FileName = 'barSegment%d.png' % row
+            FileName = 'barSegment%d.svg' % row
             groupLen = len(xlabelListTrunk)
             BarGraph(seriesDictTrunk, xlabelListTrunk, groupLen, FileName, (row == 0))
 
@@ -415,7 +415,8 @@ displayMode.add_argument('--text', action='store_const', help='Display in text f
 displayMode.add_argument('--table', action='store_const', help='Display in text format only.', default=False, const=True)
 displayMode.add_argument('--gui', action='store_const', help='Display in text format only.', default=False, const=True)
 displayMode.add_argument('--debug', action='store_const', help='Display in text format only.', default=False, const=True)
-parser.add_argument('sources', nargs=1)
+parser.add_argument('sources', nargs=1, help='File lists the input Questa transcripts to process.')
+parser.add_argument('FileName', metavar='FileName', type=str, nargs='?', help='output graph to file <name>.png If not included outputs to screen.', default=None)
 
 args = parser.parse_args()
 
@@ -455,7 +456,7 @@ if(ReportMode == 'text'):
     ReportAsText(benchmarkDict)
 
 if(ReportMode == 'gui'):
-    ReportAsGraph(benchmarkDict, args.bar)
+    ReportAsGraph(benchmarkDict, args.bar, args.FileName)
             
 # *** this is only needed of -b (no -s)
 
