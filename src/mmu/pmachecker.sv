@@ -44,20 +44,20 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
 );
 
   logic                        PMAAccessFault;
-  logic                        AccessRW, AccessRWXZ, AccessRX, AccessRWZ, AccessRXZ;
+  logic                        AccessRW, AccessRWXZ, AccessRX, AccessRWC, AccessRXC;
   logic [11:0]                 SelRegions;
   logic                        AtomicAllowed;
   logic                        CacheableRegion, IdempotentRegion;
 
   // Determine what type of access is being made
   assign AccessRW  = ReadAccessM | WriteAccessM;
-  assign AccessRWZ  = AccessRW | (P.ZICBOM_SUPPORTED & (|CMOp[2:0]));
+  assign AccessRWC  = AccessRW | (P.ZICBOM_SUPPORTED & (|CMOp[2:0]));
   assign AccessRWXZ = ReadAccessM | WriteAccessM | ExecuteAccessF | (P.ZICBOM_SUPPORTED & (|CMOp[2:0])) | (P.ZICBOZ_SUPPORTED & (CMOp[3]));
   assign AccessRX  = ReadAccessM | ExecuteAccessF;
-  assign AccessRXZ  = AccessRX | (P.ZICBOM_SUPPORTED & (|CMOp[2:0]));
+  assign AccessRXC  = AccessRX | (P.ZICBOM_SUPPORTED & (|CMOp[2:0]));
 
   // Determine which region of physical memory (if any) is being accessed
-  adrdecs #(P) adrdecs(PhysicalAddress, AccessRW, AccessRX, AccessRWXZ, AccessRWZ, AccessRXZ, Size, SelRegions);
+  adrdecs #(P) adrdecs(PhysicalAddress, AccessRW, AccessRX, AccessRWXZ, AccessRWC, AccessRXC, Size, SelRegions);
 
   // Only non-core RAM/ROM memory regions are cacheable. PBMT can override cachable; NC and IO are uncachable
   assign CacheableRegion = SelRegions[9] | SelRegions[8] | SelRegions[7];  // exclusion-tag: unused-cachable
