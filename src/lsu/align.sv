@@ -39,8 +39,6 @@ module align import cvw::*;  #(parameter cvw_t P) (
   input logic [1:0]               MemRWM, 
   input logic [P.LLEN*2-1:0]      DCacheReadDataWordM, // Instruction from the IROM, I$, or bus. Used to check if the instruction if compressed
   input logic                     CacheBusHPWTStall, // I$ or bus are stalled. Transition to second fetch of spill after the first is fetched
-  input logic                     DTLBMissM, // ITLB miss, ignore memory request
-  input logic                     DataUpdateDAM, // ITLB miss, ignore memory request
   input logic                     SelHPTW,
 
   input logic [(P.LLEN-1)/8:0]    ByteMaskM,
