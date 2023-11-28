@@ -426,5 +426,8 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   // atomic operations are also detected as MemRWD[1]
   //assign StoreStallD = MemRWE[0] & ((MemRWD[1] | (MemRWD[0] & P.DCACHE_SUPPORTED)));
   // *** RT: Modify for ZICBOZ
-  assign StoreStallD = (MemRWE[0] | (|CMOpE & P.ZICBOM_SUPPORTED)) & ((MemRWD[1] | (MemRWD[0] & P.DCACHE_SUPPORTED) | (|CMOpD & P.ZICBOM_SUPPORTED)));
+  logic cboD, cboE;
+  assign cboE = (|CMOpE[2:0] & P.ZICBOM_SUPPORTED) | (CMOpE[3] & P.ZICBOZ_SUPPORTED);
+  assign cboD = (|CMOpD[2:0] & P.ZICBOM_SUPPORTED) | (CMOpD[3] & P.ZICBOZ_SUPPORTED);
+  assign StoreStallD = (MemRWE[0] | cboE) & ((MemRWD[1] | (MemRWD[0] & P.DCACHE_SUPPORTED) | cboD));
 endmodule
