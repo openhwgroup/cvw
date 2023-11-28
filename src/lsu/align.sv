@@ -37,7 +37,6 @@ module align import cvw::*;  #(parameter cvw_t P) (
   input logic [P.XLEN-1:0]        IEUAdrE, // The next IEUAdrM
   input logic [2:0]               Funct3M, // Size of memory operation
   input logic [1:0]               MemRWM, 
-  input logic                     CacheableM,
   input logic [P.LLEN*2-1:0]      DCacheReadDataWordM, // Instruction from the IROM, I$, or bus. Used to check if the instruction if compressed
   input logic                     CacheBusHPWTStall, // I$ or bus are stalled. Transition to second fetch of spill after the first is fetched
   input logic                     DTLBMissM, // ITLB miss, ignore memory request
@@ -54,7 +53,6 @@ module align import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0]       IEUAdrSpillE, // The next PCF for one of the two memory addresses of the spill
   output logic [P.XLEN-1:0]       IEUAdrSpillM, // IEUAdrM for one of the two memory addresses of the spill
   output logic                    SelSpillE, // During the transition between the two spill operations, the IFU should stall the pipeline
-  output logic [1:0]              MemRWSpillM, 
   output logic                    SelStoreDelay, //*** this is bad.  really don't like moving this outside
   output logic [P.LLEN-1:0]       DCacheReadDataWordSpillM, // The final 32 bit instruction after merging the two spilled fetches into 1 instruction
   output logic                    SpillStallM);
@@ -157,7 +155,6 @@ module align import cvw::*;  #(parameter cvw_t P) (
   assign SpillSaveM = (CurrState == STATE_READY) & ValidSpillM & ~FlushM;
   assign SelStoreDelay = (CurrState == STATE_STORE_DELAY);  // *** Can this be merged into the PreLSURWM logic?
   assign SpillStallM = SelSpillE | CurrState == STATE_STORE_DELAY;
-  mux2 #(2) memrwmux(MemRWM, 2'b00, SelStoreDelay, MemRWSpillM);
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // Merge spilled data

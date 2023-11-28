@@ -159,10 +159,10 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   if(MISALIGN_SUPPORT) begin : ziccslm_align
     logic [P.XLEN-1:0] IEUAdrSpillE, IEUAdrSpillM;
     align #(P) align(.clk, .reset, .StallM, .FlushM, .IEUAdrE, .IEUAdrM, .Funct3M,
-                     .MemRWM, .CacheableM,
+                     .MemRWM,
                      .DCacheReadDataWordM, .CacheBusHPWTStall, .DTLBMissM, .DataUpdateDAM, .SelHPTW,
                      .ByteMaskM, .ByteMaskExtendedM, .LSUWriteDataM, .ByteMaskSpillM, .LSUWriteDataSpillM,
-                     .IEUAdrSpillE, .IEUAdrSpillM, .SelSpillE, .MemRWSpillM, .DCacheReadDataWordSpillM, .SpillStallM,
+                     .IEUAdrSpillE, .IEUAdrSpillM, .SelSpillE, .DCacheReadDataWordSpillM, .SpillStallM,
                      .SelStoreDelay);
     assign IEUAdrExtM = {2'b00, IEUAdrSpillM}; 
     assign IEUAdrExtE = {2'b00, IEUAdrSpillE};
