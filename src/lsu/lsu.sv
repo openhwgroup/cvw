@@ -148,7 +148,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic                  IgnoreRequestTLB;                       // On either ITLB or DTLB miss, ignore miss so HPTW can handle
   logic                  IgnoreRequest;                          // On FlushM or TLB miss ignore memory operation
   logic                  SelDTIM;                                // Select DTIM rather than bus or D$
-
+  logic [P.XLEN-1:0]     WriteDataZM;
+  
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Pipeline for IEUAdr E to M
   // Zero-extend address to 34 bits for XLEN=32
@@ -176,6 +177,12 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign {SpillStallM, SelStoreDelay} = '0;
   end
 
+    if(P.ZICBOZ_SUPPORTED) begin : cboz
+      mux2 #(P.XLEN) writedatacbozmux(WriteDataM, '0, CMOpM[3], WriteDataZM);
+    end else begin : cboz
+      assign WriteDataZM = WriteDataM;
+    end
+
   /////////////////////////////////////////////////////////////////////////////////////////////
   // HPTW (only needed if VM supported)
   // MMU include PMP and is needed if any privileged supported
@@ -187,7 +194,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       .FlushW, .DCacheStallM, .SATP_REGW, .PCSpillF,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_HADE, .PrivilegeModeW,
       .ReadDataM(ReadDataM[P.XLEN-1:0]), // ReadDataM is LLEN, but HPTW only needs XLEN
-      .WriteDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
+      .WriteDataM(WriteDataZM), .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
       .IEUAdrExtM, .PTE, .IHWriteDataM, .PageType, .PreLSURWM, .LSUAtomicM,
       .IHAdrM, .HPTWStall, .SelHPTW,
       .IgnoreRequestTLB, .LSULoadAccessFaultM, .LSUStoreAmoAccessFaultM, 
@@ -198,7 +205,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign LSUFunct3M = Funct3M;
     assign LSUFunct7M = Funct7M; 
     assign LSUAtomicM = AtomicM;
-    assign IHWriteDataM = WriteDataM;
+    assign IHWriteDataM = WriteDataZM;
     assign LoadAccessFaultM = LSULoadAccessFaultM;
     assign StoreAmoAccessFaultM = LSUStoreAmoAccessFaultM;   
     assign {HPTWStall, SelHPTW, PTE, PageType, DTLBWriteM, ITLBWriteF, IgnoreRequestTLB} = '0;
@@ -221,7 +228,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     logic DisableTranslation;                             // During HPTW walk or D$ flush disable virtual memory address translation
     logic WriteAccessM;
     assign DisableTranslation = SelHPTW | FlushDCacheM;
-    assign WriteAccessM = PreLSURWM[0] | (|CMOpM);
+    assign WriteAccessM = PreLSURWM[0];
     mmu #(.P(P), .TLB_ENTRIES(P.DTLB_ENTRIES), .IMMU(0))
     dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_HADE,
       .PrivilegeModeW, .DisableTranslation, .VAdr(IHAdrM), .Size(LSUFunct3M[1:0]),
@@ -231,7 +238,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       .StoreAmoAccessFaultM(LSUStoreAmoAccessFaultM), .InstrPageFaultF(), .LoadPageFaultM, 
     .StoreAmoPageFaultM,
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,   // *** these faults need to be supressed during hptw.
-      .UpdateDA(DataUpdateDAM),
+      .UpdateDA(DataUpdateDAM), .CMOp(CMOpM),
       .AtomicAccessM(|LSUAtomicM), .ExecuteAccessF(1'b0), 
       .WriteAccessM, .ReadAccessM(PreLSURWM[1]),
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
@@ -294,8 +301,12 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       logic                    FlushDCache;                                      // Suppress d cache flush if there is an ITLB miss.
       logic                    CacheStall;
       logic [1:0]              CacheBusRWTemp;
-      
-      assign BusRW = ~CacheableM & ~SelDTIM ? LSURWM : '0;
+
+      if(P.ZICBOZ_SUPPORTED) begin 
+        assign BusRW = ~CacheableM & ~SelDTIM ? CMOpM[3] ? 2'b01 : LSURWM : '0;
+      end else begin
+        assign BusRW = ~CacheableM & ~SelDTIM ? LSURWM : '0;
+      end
       assign CacheableOrFlushCacheM = CacheableM | FlushDCacheM;
       assign CacheRWM = CacheableM & ~SelDTIM ? LSURWM : '0;
       assign FlushDCache = FlushDCacheM & ~(SelHPTW);

@@ -31,6 +31,7 @@
 module pmachecker import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.PA_BITS-1:0] PhysicalAddress,
   input  logic [1:0]           Size,
+  input  logic [3:0]           CMOp,
   input  logic                 AtomicAccessM,  // Atomic access
   input  logic                 ExecuteAccessF, // Execute access 
   input  logic                 WriteAccessM,   // Write access 
@@ -43,18 +44,20 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
 );
 
   logic                        PMAAccessFault;
-  logic                        AccessRW, AccessRWX, AccessRX;
+  logic                        AccessRW, AccessRWXZ, AccessRX, AccessRWZ, AccessRXZ;
   logic [11:0]                 SelRegions;
   logic                        AtomicAllowed;
   logic                        CacheableRegion, IdempotentRegion;
 
   // Determine what type of access is being made
   assign AccessRW  = ReadAccessM | WriteAccessM;
-  assign AccessRWX = ReadAccessM | WriteAccessM | ExecuteAccessF;
+  assign AccessRWZ  = AccessRW | (P.ZICBOM_SUPPORTED & (|CMOp[2:0]));
+  assign AccessRWXZ = ReadAccessM | WriteAccessM | ExecuteAccessF | (P.ZICBOM_SUPPORTED & (|CMOp[2:0])) | (P.ZICBOZ_SUPPORTED & (CMOp[3]));
   assign AccessRX  = ReadAccessM | ExecuteAccessF;
+  assign AccessRXZ  = AccessRX | (P.ZICBOM_SUPPORTED & (|CMOp[2:0]));
 
   // Determine which region of physical memory (if any) is being accessed
-  adrdecs #(P) adrdecs(PhysicalAddress, AccessRW, AccessRX, AccessRWX, Size, SelRegions);
+  adrdecs #(P) adrdecs(PhysicalAddress, AccessRW, AccessRX, AccessRWXZ, AccessRWZ, AccessRXZ, Size, SelRegions);
 
   // Only non-core RAM/ROM memory regions are cacheable. PBMT can override cachable; NC and IO are uncachable
   assign CacheableRegion = SelRegions[9] | SelRegions[8] | SelRegions[7];  // exclusion-tag: unused-cachable
@@ -71,7 +74,7 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
   assign SelTIM = SelRegions[11] | SelRegions[10]; // exclusion-tag: unused-idempotent
 
   // Detect access faults
-  assign PMAAccessFault          = (SelRegions[0]) & AccessRWX | AtomicAccessM & ~AtomicAllowed;  
+  assign PMAAccessFault          = (SelRegions[0]) & AccessRWXZ | AtomicAccessM & ~AtomicAllowed;  
   assign PMAInstrAccessFaultF    = ExecuteAccessF & PMAAccessFault;
   assign PMALoadAccessFaultM     = ReadAccessM    & PMAAccessFault;
   assign PMAStoreAmoAccessFaultM = WriteAccessM   & PMAAccessFault;

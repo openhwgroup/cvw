@@ -98,8 +98,6 @@ module cache import cvw::*; #(parameter cvw_t P,
   logic                          SelWay;
   logic [LINELEN/8-1:0]          LineByteMask;
   logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0] WordOffsetAddr;
-  logic                                                   ZeroCacheLine;
-  logic [LINELEN-1:0]                                     PreLineWriteData;
   genvar                         index;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -161,11 +159,6 @@ module cache import cvw::*; #(parameter cvw_t P,
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path
   /////////////////////////////////////////////////////////////////////////////////////////////
-  if(P.ZICBOZ_SUPPORTED) begin : cboz_supported
-    mux2 #(LINELEN) WriteDataMux(FetchBuffer, '0, ZeroCacheLine, PreLineWriteData);
-  end else begin
-    assign PreLineWriteData = FetchBuffer;
-  end
   if(!READ_ONLY_CACHE) begin:WriteSelLogic
     logic [LINELEN/8-1:0]          DemuxedByteMask, FetchBufferByteSel;
 
@@ -185,14 +178,14 @@ module cache import cvw::*; #(parameter cvw_t P,
     // Merge write data into fetched cache line for store miss
     for(index = 0; index < LINELEN/8; index++) begin
       mux2 #(8) WriteDataMux(.d0(CacheWriteData[(8*index)%WORDLEN+7:(8*index)%WORDLEN]),
-        .d1(PreLineWriteData[8*index+7:8*index]), .s(FetchBufferByteSel[index] | ZeroCacheLine), .y(LineWriteData[8*index+7:8*index]));
+        .d1(FetchBuffer[8*index+7:8*index]), .s(FetchBufferByteSel[index] & ~CMOp[3]), .y(LineWriteData[8*index+7:8*index]));
     end
     assign LineByteMask = SetValid ? '1 : SetDirty ? DemuxedByteMask : '0;
   end
   else
     begin:WriteSelLogic
       // No need for this mux if the cache does not handle writes.
-      assign LineWriteData = PreLineWriteData;
+      assign LineWriteData = FetchBuffer;
       assign LineByteMask = '1;
     end
   
@@ -227,7 +220,7 @@ module cache import cvw::*; #(parameter cvw_t P,
     .FlushStage, .CacheRW, .Stall,
     .CacheHit, .LineDirty, .CacheStall, .CacheCommitted, 
     .CacheMiss, .CacheAccess, .SelAdr, .SelWay,
-    .ClearDirty, .SetDirty, .SetValid, .ClearValid, .ZeroCacheLine, .SelWriteback, .SelFlush,
+    .ClearDirty, .SetDirty, .SetValid, .ClearValid, .SelWriteback, .SelFlush,
     .FlushAdrCntEn, .FlushWayCntEn, .FlushCntRst,
     .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
     .InvalidateCache, .CMOp, .CacheEn, .LRUWriteEn);

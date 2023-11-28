@@ -58,7 +58,6 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   output logic       ClearValid,        // Clear the valid bit in the selected way and set
   output logic       SetDirty,          // Set the dirty bit in the selected way and set
   output logic       ClearDirty,        // Clear the dirty bit in the selected way and set
-  output logic       ZeroCacheLine,     // Write zeros to all bytes of cacheline
   output logic       SelWriteback,      // Overrides cached tag check to select a specific way and set for writeback
   output logic       LRUWriteEn,        // Update the LRU state
   output logic       SelFlush,          // [0] Use SelAdr, [1] SRAM reads/writes from FlushAdr
@@ -130,8 +129,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
       STATE_READ_HOLD:       if(Stall)                                         NextState = STATE_READ_HOLD;
                              else                                              NextState = STATE_READY;
       // exclusion-tag-start: icache case
-      STATE_WRITEBACK:       if (CacheBusAck & (CMOp[1] | CMOp[2]))            NextState = STATE_READ_HOLD;
-                             else if(CacheBusAck & ~CMOp[3])                   NextState = STATE_FETCH;
+      STATE_WRITEBACK:       if(CacheBusAck & ~CMOp[3])                        NextState = STATE_FETCH;
                              else if(CacheBusAck)                              NextState = STATE_READ_HOLD;
                              else                                              NextState = STATE_WRITEBACK;
       // eviction needs a delay as the bus fsm does not correctly handle sending the write command at the same time as getting back the bus ack.
@@ -175,8 +173,6 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   assign SelWay = (CurrState == STATE_WRITEBACK & ((~CacheBusAck & ~(CMOp[1] | CMOp[2])) | (P.ZICBOZ_SUPPORTED & CacheBusAck & CMOp[3]))) |
                   (CurrState == STATE_READY & ((AnyMiss & LineDirty) | (P.ZICBOZ_SUPPORTED & CMOZeroNoEviction & ~CacheHit))) | 
                   (CurrState == STATE_WRITE_LINE);
-  assign ZeroCacheLine = P.ZICBOZ_SUPPORTED & ((CurrState == STATE_READY & CMOZeroNoEviction) | 
-                                               (CurrState == STATE_WRITEBACK & (CMOp[3] & CacheBusAck)));  
   assign SelWriteback = (CurrState == STATE_WRITEBACK & (CMOp[1] | CMOp[2] | ~CacheBusAck)) |
                         (CurrState == STATE_READY & AnyMiss & LineDirty);
   assign SelFlush = (CurrState == STATE_READY & FlushCache) |
