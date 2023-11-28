@@ -65,12 +65,12 @@ module align import cvw::*;  #(parameter cvw_t P) (
   typedef enum logic [1:0]  {STATE_READY, STATE_SPILL, STATE_STORE_DELAY} statetype;
 
   statetype          CurrState, NextState;
-  logic              TakeSpillM;
+  logic              ValidSpillM;
   logic              SpillM;
   logic              SelSpillM;
   logic              SpillSaveM;
   logic [P.LLEN-1:0]   ReadDataWordFirstHalfM;
-  logic              MisalignedM;
+  logic              ValidMisalignedM, MisalignedM;
   logic [P.LLEN*2-1:0] ReadDataWordSpillAllM;
   logic [P.LLEN*2-1:0] ReadDataWordSpillShiftedM;
 
@@ -78,7 +78,6 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   logic [(P.LLEN-1)*2/8:0] ByteMaskSaveM;
   logic [(P.LLEN-1)*2/8:0] ByteMaskMuxM;
-  logic                    SaveByteMask;
   logic HalfMisalignedM, WordMisalignedM;
   logic [OFFSET_BIT_POS-1:$clog2(LLENINBYTES)] WordOffsetM;
   logic [$clog2(LLENINBYTES)-1:0]                 ByteOffsetM;
@@ -118,7 +117,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   assign WordMisalignedM = (ByteOffsetM[1:0] != '0) & Funct3M[1:0] == 2'b10;
   assign HalfSpillM = (IEUAdrM[OFFSET_BIT_POS-1:1] == '1) & HalfMisalignedM;
   assign WordSpillM = (IEUAdrM[OFFSET_BIT_POS-1:2] == '1) & WordMisalignedM;
-  assign ValidAccess = (|MemRWM) & ~SelHPTW;
+  assign ValidAccess = (|MemRWM);
 
   if(P.LLEN == 64) begin
     logic DoubleSpillM;
@@ -126,15 +125,16 @@ module align import cvw::*;  #(parameter cvw_t P) (
     assign DoubleMisalignedM = (ByteOffsetM[2:0] != '0) & Funct3M[1:0] == 2'b11;
     assign DoubleSpillM = (IEUAdrM[OFFSET_BIT_POS-1:3] == '1) & DoubleMisalignedM;
     assign MisalignedM = ValidAccess & (HalfMisalignedM | WordMisalignedM | DoubleMisalignedM);
-    assign SpillM = ValidAccess & CacheableM & (HalfSpillM | WordSpillM | DoubleSpillM);
+    assign SpillM = ValidAccess & (HalfSpillM | WordSpillM | DoubleSpillM);
   end else begin
-    assign SpillM = ValidAccess & CacheableM & (HalfSpillM | WordSpillM);
+    assign SpillM = ValidAccess & (HalfSpillM | WordSpillM);
     assign MisalignedM = ValidAccess & (HalfMisalignedM | WordMisalignedM);
   end
       
   // align by shifting
   // Don't take the spill if there is a stall, TLB miss, or hardware update to the D/A bits
-  assign TakeSpillM = SpillM & ~CacheBusHPWTStall & ~(DTLBMissM | (P.SVADU_SUPPORTED & DataUpdateDAM));
+  assign ValidSpillM = SpillM & ~CacheBusHPWTStall;
+  assign ValidMisalignedM = MisalignedM & ~SelHPTW;
   
   always_ff @(posedge clk)
     if (reset | FlushM)    CurrState <= #1 STATE_READY;
@@ -142,8 +142,8 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   always_comb begin
     case (CurrState)
-      STATE_READY: if (TakeSpillM & ~MemRWM[0])   NextState = STATE_SPILL;
-                   else if(TakeSpillM & MemRWM[0])NextState = STATE_STORE_DELAY;
+      STATE_READY: if (ValidSpillM & ~MemRWM[0])   NextState = STATE_SPILL;
+                   else if(ValidSpillM & MemRWM[0])NextState = STATE_STORE_DELAY;
                    else                           NextState = STATE_READY;
       STATE_SPILL: if(StallM)                     NextState = STATE_SPILL;
                    else                           NextState = STATE_READY;
@@ -153,9 +153,8 @@ module align import cvw::*;  #(parameter cvw_t P) (
   end
 
   assign SelSpillM = (CurrState == STATE_SPILL | CurrState == STATE_STORE_DELAY);
-  assign SelSpillE = (CurrState == STATE_READY & TakeSpillM) | (CurrState == STATE_SPILL & CacheBusHPWTStall) | (CurrState == STATE_STORE_DELAY);
-  assign SaveByteMask = (CurrState == STATE_READY & TakeSpillM);
-  assign SpillSaveM = (CurrState == STATE_READY) & TakeSpillM & ~FlushM;
+  assign SelSpillE = (CurrState == STATE_READY & ValidSpillM) | (CurrState == STATE_SPILL & CacheBusHPWTStall) | (CurrState == STATE_STORE_DELAY);
+  assign SpillSaveM = (CurrState == STATE_READY) & ValidSpillM & ~FlushM;
   assign SelStoreDelay = (CurrState == STATE_STORE_DELAY);  // *** Can this be merged into the PreLSURWM logic?
   assign SpillStallM = SelSpillE | CurrState == STATE_STORE_DELAY;
   mux2 #(2) memrwmux(MemRWM, 2'b00, SelStoreDelay, MemRWSpillM);
@@ -173,14 +172,14 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   // shifter (4:1 mux for 32 bit, 8:1 mux for 64 bit)
   // 8 * is for shifting by bytes not bits
-  assign ReadDataWordSpillShiftedM = ReadDataWordSpillAllM >> (MisalignedM ? 8 * AccessByteOffsetM : '0);
+  assign ReadDataWordSpillShiftedM = ReadDataWordSpillAllM >> (ValidMisalignedM ? 8 * AccessByteOffsetM : '0);
   assign DCacheReadDataWordSpillM = ReadDataWordSpillShiftedM[P.LLEN-1:0];
 
   // write path. Also has the 8:1 shifter muxing for the byteoffset
   // then it also has the mux to select when a spill occurs
   logic [P.LLEN*3-1:0] LSUWriteDataShiftedExtM;  // *** RT: Find a better way.  I've extending in both directions so we don't shift in zeros.  The cache expects the writedata to not have any zero data, but instead replicated data.
 
-  assign LSUWriteDataShiftedExtM = {LSUWriteDataM, LSUWriteDataM, LSUWriteDataM} << (MisalignedM ? 8 * AccessByteOffsetM : '0);
+  assign LSUWriteDataShiftedExtM = {LSUWriteDataM, LSUWriteDataM, LSUWriteDataM} << (ValidMisalignedM ? 8 * AccessByteOffsetM : '0);
   assign LSUWriteDataSpillM = LSUWriteDataShiftedExtM[P.LLEN*3-1:P.LLEN];
 
   mux3 #(2*P.LLEN/8) bytemaskspillmux(ByteMaskMuxM, // no spill
@@ -188,6 +187,6 @@ module align import cvw::*;  #(parameter cvw_t P) (
                                       {{{P.LLEN/8}{1'b0}}, ByteMaskMuxM[P.LLEN*2/8-1:P.LLEN/8]}, // spill, second half
                                       {SelSpillM, SelSpillE}, ByteMaskSpillM);
 
-  flopenr #(P.LLEN*2/8) bytemaskreg(clk, reset, SaveByteMask, {ByteMaskExtendedM, ByteMaskM}, ByteMaskSaveM);
+  flopenr #(P.LLEN*2/8) bytemaskreg(clk, reset, SpillSaveM, {ByteMaskExtendedM, ByteMaskM}, ByteMaskSaveM);
   mux2 #(P.LLEN*2/8) bytemasksavemux({ByteMaskExtendedM, ByteMaskM}, ByteMaskSaveM, SelSpillM, ByteMaskMuxM);
 endmodule
