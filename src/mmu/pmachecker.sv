@@ -77,5 +77,5 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
   assign PMAAccessFault          = (SelRegions[0]) & AccessRWXZ | AtomicAccessM & ~AtomicAllowed;  
   assign PMAInstrAccessFaultF    = ExecuteAccessF & PMAAccessFault;
   assign PMALoadAccessFaultM     = ReadAccessM    & PMAAccessFault;
-  assign PMAStoreAmoAccessFaultM = WriteAccessM   & PMAAccessFault;
+  assign PMAStoreAmoAccessFaultM = (WriteAccessM | (P.ZICBOM_SUPPORTED & (|CMOp[2:0])) | (P.ZICBOZ_SUPPORTED & CMOp[3]))   & PMAAccessFault;
 endmodule
