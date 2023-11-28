@@ -301,12 +301,14 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       logic                    FlushDCache;                                      // Suppress d cache flush if there is an ITLB miss.
       logic                    CacheStall;
       logic [1:0]              CacheBusRWTemp;
+      logic                    BusCMOZero;
 
       if(P.ZICBOZ_SUPPORTED) begin 
-        assign BusRW = ~CacheableM & ~SelDTIM ? CMOpM[3] ? 2'b01 : LSURWM : '0;
+        assign BusCMOZero = CMOpM[3] & ~CacheableM;
       end else begin
-        assign BusRW = ~CacheableM & ~SelDTIM ? LSURWM : '0;
+        assign BusCMOZero = '0;
       end
+      assign BusRW = ~CacheableM & ~SelDTIM ? LSURWM : '0;
       assign CacheableOrFlushCacheM = CacheableM | FlushDCacheM;
       assign CacheRWM = CacheableM & ~SelDTIM ? LSURWM : '0;
       assign FlushDCache = FlushDCacheM & ~(SelHPTW);
@@ -332,7 +334,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
         .HRDATA, .HWDATA(LSUHWDATA), .HWSTRB(LSUHWSTRB),
         .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HREADY(LSUHREADY),
         .BeatCount, .SelBusBeat, .CacheReadDataWordM(DCacheReadDataWordM[P.LLEN-1:0]), .WriteDataM(LSUWriteDataM),
-        .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheBusRW, .CacheableOrFlushCacheM,
+        .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheBusRW, .BusCMOZero, .CacheableOrFlushCacheM,
         .CacheBusAck(DCacheBusAck), .FetchBuffer, .PAdr(PAdrM),
         .Cacheable(CacheableOrFlushCacheM), .BusRW, .Stall(GatedStallW),
         .BusStall, .BusCommitted(BusCommittedM));
