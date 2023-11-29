@@ -79,6 +79,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   logic [$clog2(LLENINBYTES)-1:0]                 ByteOffsetM;
   logic                                HalfSpillM, WordSpillM;
   logic [$clog2(LLENINBYTES)-1:0]      AccessByteOffsetM;
+  logic [$clog2(LLENINBYTES)+2:0]      ShiftAmount;
   logic                                ValidAccess;
 
   /* verilator lint_off WIDTHEXPAND */
@@ -167,14 +168,15 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   // shifter (4:1 mux for 32 bit, 8:1 mux for 64 bit)
   // 8 * is for shifting by bytes not bits
-  assign ReadDataWordSpillShiftedM = ReadDataWordSpillAllM >> (ValidMisalignedM ? 8 * AccessByteOffsetM : '0);
+  assign ShiftAmount = ValidMisalignedM ? 8 * AccessByteOffsetM : '0;
+  assign ReadDataWordSpillShiftedM = ReadDataWordSpillAllM >> ShiftAmount;
   assign DCacheReadDataWordSpillM = ReadDataWordSpillShiftedM[P.LLEN-1:0];
 
   // write path. Also has the 8:1 shifter muxing for the byteoffset
   // then it also has the mux to select when a spill occurs
   logic [P.LLEN*3-1:0] LSUWriteDataShiftedExtM;  // *** RT: Find a better way.  I've extending in both directions so we don't shift in zeros.  The cache expects the writedata to not have any zero data, but instead replicated data.
 
-  assign LSUWriteDataShiftedExtM = {LSUWriteDataM, LSUWriteDataM, LSUWriteDataM} << (ValidMisalignedM ? 8 * AccessByteOffsetM : '0);
+  assign LSUWriteDataShiftedExtM = {LSUWriteDataM, LSUWriteDataM, LSUWriteDataM} << ShiftAmount;
   assign LSUWriteDataSpillM = LSUWriteDataShiftedExtM[P.LLEN*3-1:P.LLEN];
 
   mux3 #(2*P.LLEN/8) bytemaskspillmux(ByteMaskMuxM, // no spill
