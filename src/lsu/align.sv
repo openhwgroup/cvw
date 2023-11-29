@@ -66,7 +66,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   logic              SelSpillM;
   logic              SpillSaveM;
   logic [P.LLEN-1:0] ReadDataWordFirstHalfM;
-  logic              ValidMisalignedM, MisalignedM;
+  logic              MisalignedM;
   logic [P.LLEN*2-1:0] ReadDataWordSpillAllM;
   logic [P.LLEN*2-1:0] ReadDataWordSpillShiftedM;
 
@@ -92,6 +92,9 @@ module align import cvw::*;  #(parameter cvw_t P) (
   // 2) offset
   // 3) access location within the cacheline
   
+  assign ValidAccess = (|MemRWM);
+
+  // compute misalignement
   always_comb begin
     case (Funct3M[1:0]) 
       2'b00: AccessByteOffsetM = '0; // byte access
@@ -110,14 +113,8 @@ module align import cvw::*;  #(parameter cvw_t P) (
   end
   assign MisalignedM = ValidAccess & (AccessByteOffsetM != '0);
   assign SpillM = MisalignedM & PotentialSpillM;
-
-  // compute misalignement
-  assign ValidAccess = (|MemRWM);
       
-  // align by shifting
-  // Don't take the spill if there is a stall, TLB miss, or hardware update to the D/A bits
-  assign ValidSpillM = SpillM & ~CacheBusHPWTStall;
-  assign ValidMisalignedM = MisalignedM & ~SelHPTW;
+  assign ValidSpillM = SpillM & ~CacheBusHPWTStall;   // Don't take the spill if there is a stall
   
   always_ff @(posedge clk)
     if (reset | FlushM)    CurrState <= #1 STATE_READY;
@@ -154,7 +151,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   // shifter (4:1 mux for 32 bit, 8:1 mux for 64 bit)
   // 8 * is for shifting by bytes not bits
-  assign ShiftAmount = ValidMisalignedM ? 8 * AccessByteOffsetM : '0;
+  assign ShiftAmount = MisalignedM & ~SelHPTW ? {AccessByteOffsetM, 3'b0} : '0; // AND gate
   assign ReadDataWordSpillShiftedM = ReadDataWordSpillAllM >> ShiftAmount;
   assign DCacheReadDataWordSpillM = ReadDataWordSpillShiftedM[P.LLEN-1:0];
 
