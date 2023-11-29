@@ -72,13 +72,10 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   logic [P.XLEN-1:0]   IEUAdrIncrementM;
 
-  logic                HalfMisalignedM, WordMisalignedM;
-  logic [OFFSET_BIT_POS-1:$clog2(LLENINBYTES)] WordOffsetM;
-  logic [$clog2(LLENINBYTES)-1:0]              ByteOffsetM;
-  logic                                        HalfSpillM, WordSpillM;
   logic [$clog2(LLENINBYTES)-1:0]              AccessByteOffsetM;
   logic [$clog2(LLENINBYTES)+2:0]              ShiftAmount;
   logic                                        ValidAccess;
+  logic                                        PotentialSpillM;
 
   /* verilator lint_off WIDTHEXPAND */
   assign IEUAdrIncrementM = IEUAdrM + LLENINBYTES;
@@ -95,36 +92,27 @@ module align import cvw::*;  #(parameter cvw_t P) (
   // 2) offset
   // 3) access location within the cacheline
   
-  assign {WordOffsetM, ByteOffsetM} = IEUAdrM[OFFSET_BIT_POS-1:0];
-
   always_comb begin
     case (Funct3M[1:0]) 
       2'b00: AccessByteOffsetM = '0; // byte access
-      2'b01: AccessByteOffsetM = {2'b00, ByteOffsetM[0]}; // half access
-      2'b10: AccessByteOffsetM = {1'b0, ByteOffsetM[1:0]}; // word access
-      2'b11: AccessByteOffsetM = ByteOffsetM; // double access
-      default: AccessByteOffsetM = ByteOffsetM;
+      2'b01: AccessByteOffsetM = {2'b00, IEUAdrM[0]}; // half access
+      2'b10: AccessByteOffsetM = {1'b0, IEUAdrM[1:0]}; // word access
+      2'b11: AccessByteOffsetM = IEUAdrM[2:0]; // double access
+      default: AccessByteOffsetM = IEUAdrM[2:0];
+    endcase
+    case (Funct3M[1:0]) 
+      2'b00: PotentialSpillM = '0; // byte access
+      2'b01: PotentialSpillM = IEUAdrM[OFFSET_BIT_POS-1:1] == '1; // half access
+      2'b10: PotentialSpillM = IEUAdrM[OFFSET_BIT_POS-1:2] == '1; // word access
+      2'b11: PotentialSpillM = IEUAdrM[OFFSET_BIT_POS-1:3] == '1; // double access
+      default: PotentialSpillM = '0;
     endcase
   end
+  assign MisalignedM = ValidAccess & (AccessByteOffsetM != '0);
+  assign SpillM = MisalignedM & PotentialSpillM;
 
   // compute misalignement
-  assign HalfMisalignedM = (ByteOffsetM[0] != '0) & Funct3M[1:0] == 2'b01;
-  assign WordMisalignedM = (ByteOffsetM[1:0] != '0) & Funct3M[1:0] == 2'b10;
-  assign HalfSpillM = (IEUAdrM[OFFSET_BIT_POS-1:1] == '1) & HalfMisalignedM;
-  assign WordSpillM = (IEUAdrM[OFFSET_BIT_POS-1:2] == '1) & WordMisalignedM;
   assign ValidAccess = (|MemRWM);
-
-  if(P.LLEN == 64) begin
-    logic DoubleSpillM;
-    logic DoubleMisalignedM;
-    assign DoubleMisalignedM = (ByteOffsetM[2:0] != '0) & Funct3M[1:0] == 2'b11;
-    assign DoubleSpillM = (IEUAdrM[OFFSET_BIT_POS-1:3] == '1) & DoubleMisalignedM;
-    assign MisalignedM = ValidAccess & (HalfMisalignedM | WordMisalignedM | DoubleMisalignedM);
-    assign SpillM = ValidAccess & (HalfSpillM | WordSpillM | DoubleSpillM);
-  end else begin
-    assign SpillM = ValidAccess & (HalfSpillM | WordSpillM);
-    assign MisalignedM = ValidAccess & (HalfMisalignedM | WordMisalignedM);
-  end
       
   // align by shifting
   // Don't take the spill if there is a stall, TLB miss, or hardware update to the D/A bits
