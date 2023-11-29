@@ -51,6 +51,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   // cache internals
   input  logic       CacheHit,          // Exactly 1 way hits
   input  logic       LineDirty,         // The selected line and way is dirty
+  input  logic       HitWayLineDirty,   // The cache hit way is dirty
   input  logic       FlushAdrFlag,      // On last set of a cache flush
   input  logic       FlushWayFlag,      // On the last way for any set of a cache flush
   output logic       SelAdr,            // [0] SRAM reads from NextAdr, [1] SRAM reads from PAdr
@@ -94,7 +95,8 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   assign AnyMiss = (CacheRW[0] | CacheRW[1]) & ~CacheHit & ~InvalidateCache; // exclusion-tag: cache AnyMiss
   assign AnyUpdateHit = (CacheRW[0]) & CacheHit;                            // exclusion-tag: icache storeAMO1
   assign AnyHit = AnyUpdateHit | (CacheRW[1] & CacheHit);                  // exclusion-tag: icache AnyUpdateHit
-  assign CMOWritebackHit = (CMOp[1] | CMOp[2]) & CacheHit; // *** why does this not include dirty?
+  assign CMOWritebackHit = (CMOp[1] | CMOp[2]) & CacheHit & HitWayLineDirty;
+  //assign CMOWritebackHit = (CMOp[1] | CMOp[2]) & CacheHit; // *** why does this not include dirty?  FIXME
   assign CMOZeroNoEviction = CMOp[3] & ~LineDirty;   // (hit or miss) with no writeback store zeros now
   assign CMOZeroEviction = CMOp[3] & LineDirty;   // (hit or miss) with writeback dirty line
   assign CMOWriteback = CMOWritebackHit | CMOZeroEviction;
@@ -130,7 +132,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
                              else                                              NextState = STATE_READY;
       // exclusion-tag-start: icache case
       STATE_WRITEBACK:       if(CacheBusAck & ~(|CMOp[3:1]))                   NextState = STATE_FETCH;
-                             else if(CacheBusAck)                              NextState = STATE_READ_HOLD; // *** why not Ready?
+                             else if(CacheBusAck)                              NextState = STATE_READ_HOLD; // Read_hold lowers CacheStall
                              else                                              NextState = STATE_WRITEBACK;
       // eviction needs a delay as the bus fsm does not correctly handle sending the write command at the same time as getting back the bus ack.
       STATE_FLUSH:           if(LineDirty)                                     NextState = STATE_FLUSH_WRITEBACK;
