@@ -65,22 +65,20 @@ module align import cvw::*;  #(parameter cvw_t P) (
   logic              SpillM;
   logic              SelSpillM;
   logic              SpillSaveM;
-  logic [P.LLEN-1:0]   ReadDataWordFirstHalfM;
+  logic [P.LLEN-1:0] ReadDataWordFirstHalfM;
   logic              ValidMisalignedM, MisalignedM;
   logic [P.LLEN*2-1:0] ReadDataWordSpillAllM;
   logic [P.LLEN*2-1:0] ReadDataWordSpillShiftedM;
 
-  logic [P.XLEN-1:0]     IEUAdrIncrementM;
+  logic [P.XLEN-1:0]   IEUAdrIncrementM;
 
-  logic [(P.LLEN-1)*2/8:0] ByteMaskSaveM;
-  logic [(P.LLEN-1)*2/8:0] ByteMaskMuxM;
-  logic HalfMisalignedM, WordMisalignedM;
+  logic                HalfMisalignedM, WordMisalignedM;
   logic [OFFSET_BIT_POS-1:$clog2(LLENINBYTES)] WordOffsetM;
-  logic [$clog2(LLENINBYTES)-1:0]                 ByteOffsetM;
-  logic                                HalfSpillM, WordSpillM;
-  logic [$clog2(LLENINBYTES)-1:0]      AccessByteOffsetM;
-  logic [$clog2(LLENINBYTES)+2:0]      ShiftAmount;
-  logic                                ValidAccess;
+  logic [$clog2(LLENINBYTES)-1:0]              ByteOffsetM;
+  logic                                        HalfSpillM, WordSpillM;
+  logic [$clog2(LLENINBYTES)-1:0]              AccessByteOffsetM;
+  logic [$clog2(LLENINBYTES)+2:0]              ShiftAmount;
+  logic                                        ValidAccess;
 
   /* verilator lint_off WIDTHEXPAND */
   assign IEUAdrIncrementM = IEUAdrM + LLENINBYTES;
@@ -179,11 +177,9 @@ module align import cvw::*;  #(parameter cvw_t P) (
   assign LSUWriteDataShiftedExtM = {LSUWriteDataM, LSUWriteDataM, LSUWriteDataM} << ShiftAmount;
   assign LSUWriteDataSpillM = LSUWriteDataShiftedExtM[P.LLEN*3-1:P.LLEN];
 
-  mux3 #(2*P.LLEN/8) bytemaskspillmux(ByteMaskMuxM, // no spill
+  mux3 #(2*P.LLEN/8) bytemaskspillmux({ByteMaskExtendedM, ByteMaskM}, // no spill
                                       {{{P.LLEN/8}{1'b0}}, ByteMaskM}, // spill, first half
-                                      {{{P.LLEN/8}{1'b0}}, ByteMaskMuxM[P.LLEN*2/8-1:P.LLEN/8]}, // spill, second half
+                                      {{{P.LLEN/8}{1'b0}}, ByteMaskExtendedM}, // spill, second half
                                       {SelSpillM, SelSpillE}, ByteMaskSpillM);
 
-  flopenr #(P.LLEN*2/8) bytemaskreg(clk, reset, SpillSaveM, {ByteMaskExtendedM, ByteMaskM}, ByteMaskSaveM);
-  mux2 #(P.LLEN*2/8) bytemasksavemux({ByteMaskExtendedM, ByteMaskM}, ByteMaskSaveM, SelSpillM, ByteMaskMuxM);
 endmodule
