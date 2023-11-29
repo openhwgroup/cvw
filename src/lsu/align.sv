@@ -62,7 +62,6 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   statetype          CurrState, NextState;
   logic              ValidSpillM;
-  logic              SpillM;
   logic              SelSpillM;
   logic              SpillSaveM;
   logic [P.LLEN-1:0] ReadDataWordFirstHalfM;
@@ -74,7 +73,6 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   logic [$clog2(LLENINBYTES)-1:0]              AccessByteOffsetM;
   logic [$clog2(LLENINBYTES)+2:0]              ShiftAmount;
-  logic                                        ValidAccess;
   logic                                        PotentialSpillM;
 
   /* verilator lint_off WIDTHEXPAND */
@@ -92,8 +90,6 @@ module align import cvw::*;  #(parameter cvw_t P) (
   // 2) offset
   // 3) access location within the cacheline
   
-  assign ValidAccess = (|MemRWM);
-
   // compute misalignement
   always_comb begin
     case (Funct3M[1:0]) 
@@ -111,10 +107,9 @@ module align import cvw::*;  #(parameter cvw_t P) (
       default: PotentialSpillM = '0;
     endcase
   end
-  assign MisalignedM = ValidAccess & (AccessByteOffsetM != '0);
-  assign SpillM = MisalignedM & PotentialSpillM;
+  assign MisalignedM = (|MemRWM) & (AccessByteOffsetM != '0);
       
-  assign ValidSpillM = SpillM & ~CacheBusHPWTStall;   // Don't take the spill if there is a stall
+  assign ValidSpillM = MisalignedM & PotentialSpillM & ~CacheBusHPWTStall;   // Don't take the spill if there is a stall
   
   always_ff @(posedge clk)
     if (reset | FlushM)    CurrState <= #1 STATE_READY;
