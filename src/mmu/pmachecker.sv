@@ -51,7 +51,7 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
 
   // Determine what type of access is being made
   assign AccessRW  = ReadAccessM | WriteAccessM;
-  assign AccessRWXC = ReadAccessM | WriteAccessM | ExecuteAccessF | (P.ZICBOM_SUPPORTED & (|CMOp[2:0])) | (P.ZICBOZ_SUPPORTED & (CMOp[3]));
+  assign AccessRWXC = ReadAccessM | WriteAccessM | ExecuteAccessF | (|CMOp);
   assign AccessRX  = ReadAccessM | ExecuteAccessF;
 
   // Determine which region of physical memory (if any) is being accessed
@@ -75,5 +75,5 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
   assign PMAAccessFault          = (SelRegions[0]) & AccessRWXC | AtomicAccessM & ~AtomicAllowed;  
   assign PMAInstrAccessFaultF    = ExecuteAccessF & PMAAccessFault;
   assign PMALoadAccessFaultM     = ReadAccessM    & PMAAccessFault;
-  assign PMAStoreAmoAccessFaultM = (WriteAccessM | (P.ZICBOM_SUPPORTED & (|CMOp[2:0])) | (P.ZICBOZ_SUPPORTED & CMOp[3]))   & PMAAccessFault;
+  assign PMAStoreAmoAccessFaultM = (WriteAccessM | (|CMOp))   & PMAAccessFault;
 endmodule
