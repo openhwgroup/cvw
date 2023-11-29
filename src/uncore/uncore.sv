@@ -88,7 +88,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   // Determine which region of physical memory (if any) is being accessed
   // Use a trimmed down portion of the PMA checker - only the address decoders
   // Set access types to all 1 as don't cares because the MMU has already done access checking
-  adrdecs #(P) adrdecs(HADDR, 1'b1, 1'b1, 1'b1, 1'b1, 1'b1, HSIZE[1:0], HSELRegions);
+  adrdecs #(P) adrdecs(HADDR, 1'b1, 1'b1, 1'b1, HSIZE[1:0], HSELRegions);
 
   // unswizzle HSEL signals
   assign {HSELDTIM, HSELIROM, HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELEXTSDC, HSELSPI} = HSELRegions[11:1];
