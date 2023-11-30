@@ -51,7 +51,8 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   output logic [LINELEN-1:0]          ReadDataLineWay,// This way's read data if valid
   output logic                        HitWay,         // This way hits
   output logic                        ValidWay,       // This way is valid
-  output logic                        DirtyWay,       // This way is dirty
+  output logic                        HitWayDirtyWay, // The hit way is dirty
+  output logic                        DirtyWay   ,    // The selected way is dirty
   output logic [TAGLEN-1:0]           TagWay);        // This way's tag if valid
 
   localparam                          WORDSPERLINE = LINELEN/XLEN;
@@ -117,7 +118,8 @@ module cacheway import cvw::*; #(parameter cvw_t P,
 
   // AND portion of distributed tag multiplexer
   assign TagWay = SelData ? ReadTag : '0; // AND part of AOMux
-  assign DirtyWay = SelDirty & Dirty & ValidWay;
+  assign HitWayDirtyWay = Dirty & ValidWay;
+  assign DirtyWay = SelDirty & HitWayDirtyWay;
   assign HitWay = ValidWay & (ReadTag == PAdr[PA_BITS-1:OFFSETLEN+INDEXLEN]);
 
   /////////////////////////////////////////////////////////////////////////////////////////////
