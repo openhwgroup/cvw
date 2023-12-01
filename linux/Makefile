@@ -30,13 +30,11 @@ OBJDUMPS := $(foreach name, $(OBJDUMPS), $(DIS)/$(name).objdump)
 
 .PHONY: all generate disassemble install clean cleanDTB cleanDriver test
 
-all: download Image install # disassemble install
+all: download Image disassemble install
 
 Image:
-	make -C $(BUILDROOT) --jobs
+	bash -c "unset LD_LIBRARY_PATH; make -C $(BUILDROOT) --jobs;"
 	$(MAKE) generate
-	# TODO: Need to find a way to set the PATH for child processes.
-	bash -c "source ../setup.sh; $(MAKE) disassemble"
 
 install:
 	sudo rm -rf $(RISCV)/$(BUILDROOT)
