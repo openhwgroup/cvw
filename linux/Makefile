@@ -30,13 +30,13 @@ OBJDUMPS := $(foreach name, $(OBJDUMPS), $(DIS)/$(name).objdump)
 
 .PHONY: all generate disassemble install clean cleanDTB cleanDriver test
 
-all: download Image disassemble install
+all: download Image install # disassemble install
 
 Image:
 	make -C $(BUILDROOT) --jobs
 	$(MAKE) generate
 	# TODO: Need to find a way to set the PATH for child processes.
-	# source ../setup.sh; $(MAKE) disassemble
+	bash -c "source ../setup.sh; $(MAKE) disassemble"
 
 install:
 	sudo rm -rf $(RISCV)/$(BUILDROOT)
