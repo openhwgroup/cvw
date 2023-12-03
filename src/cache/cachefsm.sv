@@ -51,7 +51,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   // cache internals
   input  logic       CacheHit,          // Exactly 1 way hits
   input  logic       LineDirty,         // The selected line and way is dirty
-  input  logic       HitWayLineDirty,   // The cache hit way is dirty
+  input  logic       HitLineDirty,   // The cache hit way is dirty
   input  logic       FlushAdrFlag,      // On last set of a cache flush
   input  logic       FlushWayFlag,      // On the last way for any set of a cache flush
   output logic       SelAdr,            // [0] SRAM reads from NextAdr, [1] SRAM reads from PAdr
@@ -95,7 +95,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   assign AnyMiss = (CacheRW[0] | CacheRW[1]) & ~CacheHit & ~InvalidateCache; // exclusion-tag: cache AnyMiss
   assign AnyUpdateHit = (CacheRW[0]) & CacheHit;                            // exclusion-tag: icache storeAMO1
   assign AnyHit = AnyUpdateHit | (CacheRW[1] & CacheHit);                  // exclusion-tag: icache AnyUpdateHit
-  assign CMOWritebackHit = (CMOp[1] | CMOp[2]) & CacheHit & HitWayLineDirty;
+  assign CMOWritebackHit = (CMOp[1] | CMOp[2]) & CacheHit & HitLineDirty;
   assign CMOZeroNoEviction = CMOp[3] & ~LineDirty;   // (hit or miss) with no writeback store zeros now
   assign CMOZeroEviction = CMOp[3] & LineDirty;   // (hit or miss) with writeback dirty line
   assign CMOWriteback = CMOWritebackHit | CMOZeroEviction;
