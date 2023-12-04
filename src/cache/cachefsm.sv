@@ -74,10 +74,8 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   logic              AnyUpdateHit, AnyHit;
   logic              AnyMiss;
   logic              FlushFlag;
-  logic              CMOWritebackHit;
   logic              CMOWriteback;
   logic              CMOZeroNoEviction;
-  logic              CMOZeroEviction;
 
   typedef enum logic [3:0]{STATE_READY, // hit states
                            // miss states
@@ -95,10 +93,8 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   assign AnyMiss = (CacheRW[0] | CacheRW[1]) & ~CacheHit & ~InvalidateCache; // exclusion-tag: cache AnyMiss
   assign AnyUpdateHit = (CacheRW[0]) & CacheHit;                            // exclusion-tag: icache storeAMO1
   assign AnyHit = AnyUpdateHit | (CacheRW[1] & CacheHit);                  // exclusion-tag: icache AnyUpdateHit
-  assign CMOWritebackHit = (CMOp[1] | CMOp[2]) & CacheHit & HitLineDirty;
   assign CMOZeroNoEviction = CMOp[3] & ~LineDirty;   // (hit or miss) with no writeback store zeros now
-  assign CMOZeroEviction = CMOp[3] & LineDirty;   // (hit or miss) with writeback dirty line
-  assign CMOWriteback = CMOWritebackHit | CMOZeroEviction;
+  assign CMOWriteback = ((CMOp[1] | CMOp[2]) & CacheHit & HitLineDirty) | CMOp[3] & LineDirty;
   
   assign FlushFlag = FlushAdrFlag & FlushWayFlag;
 
