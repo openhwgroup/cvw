@@ -42,6 +42,8 @@ tests/linux-testgen/buildroot-image-output
 tests/linux-testgen/buildroot-config-src/main.config.old
 tests/linux-testgen/buildroot-config-src/linux.config.old
 tests/linux-testgen/buildroot-config-src/busybox.config.old
+linux/testvector-generation/boottrace.S
+linux/testvector-generation/boottrace_disasm.log
 sim/slack-notifier/slack-webhook-url.txt
 sim/logs
 fpga/generator/IP
@@ -178,3 +180,5 @@ sim/branch*.log
 benchmarks/embench/wally*.json
 benchmarks/embench/run*
 sim/cfi.log
+sim/cfi/*
+sim/branch/*

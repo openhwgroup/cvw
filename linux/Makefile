@@ -33,12 +33,11 @@ OBJDUMPS := $(foreach name, $(OBJDUMPS), $(DIS)/$(name).objdump)
 all: download Image disassemble install
 
 Image:
-	make -C $(BUILDROOT) --jobs
+	bash -c "unset LD_LIBRARY_PATH; make -C $(BUILDROOT) --jobs;"
 	$(MAKE) generate
-	# TODO: Need to find a way to set the PATH for child processes.
-	# source ../setup.sh; $(MAKE) disassemble
 
 install:
+	sudo rm -rf $(RISCV)/$(BUILDROOT)
 	sudo mv $(BUILDROOT) $(RISCV)/$(BUILDROOT)
 
 # Temp rule for debugging
@@ -62,10 +61,14 @@ $(RISCV):
 
 
 disassemble:
+	rm -rf $(BUILDROOT)/output/images/disassembly
 	find  $(BUILDROOT)/output/build/linux-* -maxdepth 1 -name "vmlinux" | xargs  cp -t $(BUILDROOT)/output/images/
 	mkdir -p $(DIS)
 	make -j $(OBJDUMPS)
-	make -j $(OBJDUMPS).addr
+	# extract rootfs
+	mkdir -p $(BUILDROOT)/output/images/disassembly/rootfs
+	echo "Ignore error about dev/console when extracting rootfs from rootfs.cpio"
+	-cpio -i -D $(BUILDROOT)/output/images/disassembly/rootfs < $(BUILDROOT)/output/images/rootfs.cpio
 
 $(DIS)/%.objdump: $(IMAGES)/%.elf
 	riscv64-unknown-elf-objdump -DS $< >> $@

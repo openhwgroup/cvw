@@ -182,7 +182,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
          .InstrAccessFaultF, .LoadAccessFaultM(), .StoreAmoAccessFaultM(),
          .InstrPageFaultF, .LoadPageFaultM(), .StoreAmoPageFaultM(),
          .LoadMisalignedFaultM(), .StoreAmoMisalignedFaultM(),
-         .UpdateDA(InstrUpdateDAF),
+         .UpdateDA(InstrUpdateDAF), .CMOp(4'b0),
          .AtomicAccessM(1'b0),.ExecuteAccessF(1'b1), .WriteAccessM(1'b0), .ReadAccessM(1'b0),
          .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
 
@@ -252,7 +252,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       ahbcacheinterface #(P.AHBW, P.LLEN, P.PA_BITS, WORDSPERLINE, LOGBWPL, LINELEN, LLENPOVERAHBW, 1) 
       ahbcacheinterface(.HCLK(clk), .HRESETn(~reset),
             .HRDATA,
-            .Flush(FlushD), .CacheBusRW, .HSIZE(IFUHSIZE), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS), .HWSTRB(),
+            .Flush(FlushD), .CacheBusRW, .BusCMOZero(1'b0), .HSIZE(IFUHSIZE), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS), .HWSTRB(),
             .Funct3(3'b010), .HADDR(IFUHADDR), .HREADY(IFUHREADY), .HWRITE(IFUHWRITE), .CacheBusAdr(ICacheBusAdr),
             .BeatCount(), .Cacheable(CacheableF), .SelBusBeat(), .WriteDataM('0),
             .CacheBusAck(ICacheBusAck), .HWDATA(), .CacheableOrFlushCacheM(1'b0), .CacheReadDataWordM('0),

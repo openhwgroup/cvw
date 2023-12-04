@@ -66,6 +66,7 @@ module ahbcacheinterface #(
   input logic [LLEN-1:0]      WriteDataM,              // IEU write data for uncached store
   input logic [1:0]           BusRW,                   // Uncached memory operation read/write control: 10: read, 01: write
   input logic [2:0]           Funct3,                  // Size of uncached memory operation
+  input logic                 BusCMOZero,               // Uncached cbo.zero must write zero to full sized cacheline without going through the cache
 
   // lsu/ifu interface
   input logic                 Stall,                   // Core pipeline is stalled
@@ -80,6 +81,7 @@ module ahbcacheinterface #(
   logic                       CaptureEn;                              // Enable updating the Fetch buffer with valid data from HRDATA
   logic [AHBW/8-1:0]          BusByteMaskM;                           // Byte enables within a word. For cache request all 1s
   logic [AHBW-1:0]            PreHWDATA;                              // AHB Address phase write data
+  logic [PA_BITS-1:0]         PAdrZero;
 
   genvar                      index;
 
@@ -91,10 +93,11 @@ module ahbcacheinterface #(
       .q(FetchBuffer[(index+1)*AHBW-1:index*AHBW]));
   end
 
-  mux2 #(PA_BITS) localadrmux(PAdr, CacheBusAdr, Cacheable, LocalHADDR);
+  assign PAdrZero = BusCMOZero ? {PAdr[PA_BITS-1:$clog2(LINELEN/8)], {$clog2(LINELEN/8){1'b0}}} : PAdr;
+  mux2 #(PA_BITS) localadrmux(PAdrZero, CacheBusAdr, Cacheable, LocalHADDR);
   assign HADDR = ({{PA_BITS-AHBWLOGBWPL{1'b0}}, BeatCount} << $clog2(AHBW/8)) + LocalHADDR;
 
-  mux2 #(3) sizemux(.d0(Funct3), .d1(AHBW == 32 ? 3'b010 : 3'b011), .s(Cacheable), .y(HSIZE));
+  mux2 #(3) sizemux(.d0(Funct3), .d1(AHBW == 32 ? 3'b010 : 3'b011), .s(Cacheable | BusCMOZero), .y(HSIZE));
 
   // When AHBW is less than LLEN need extra muxes to select the subword from cache's read data.
   logic [AHBW-1:0]          CacheReadDataWordAHB;
@@ -119,6 +122,6 @@ module ahbcacheinterface #(
   
   buscachefsm #(BeatCountThreshold, AHBWLOGBWPL, READ_ONLY_CACHE) AHBBuscachefsm(
     .HCLK, .HRESETn, .Flush, .BusRW, .Stall, .BusCommitted, .BusStall, .CaptureEn, .SelBusBeat,
-    .CacheBusRW, .CacheBusAck, .BeatCount, .BeatCountDelayed,
+    .CacheBusRW, .BusCMOZero, .CacheBusAck, .BeatCount, .BeatCountDelayed,
     .HREADY, .HTRANS, .HWRITE, .HBURST);
 endmodule
