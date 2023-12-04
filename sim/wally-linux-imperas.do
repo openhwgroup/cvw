@@ -88,10 +88,10 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     #run 100 ns
     #force -deposit testbench/dut/core/priv/priv/csr/csri/IE_REGW 16'h2aa
     #force -deposit testbench/dut/uncore/uncore/clint/clint/MTIMECMP 64'h1000
-    run 7000 ms
+    run 9800 ms
     add log -recursive /testbench/dut/*
     do wave.do
-    run 14000 ms
+    run 200 ms
     #run -all
 
     exec ./slack-notifier/slack-notifier.py
