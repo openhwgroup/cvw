@@ -79,8 +79,8 @@ module cache import cvw::*; #(parameter cvw_t P,
   logic [LINELEN-1:0]            ReadDataLineWay [NUMWAYS-1:0];
   logic [NUMWAYS-1:0]            HitWay, ValidWay;
   logic                          CacheHit;
-  logic [NUMWAYS-1:0]            VictimWay, DirtyWay, HitWayDirtyWay;
-  logic                          LineDirty, HitWayLineDirty;
+  logic [NUMWAYS-1:0]            VictimWay, DirtyWay, HitDirtyWay;
+  logic                          LineDirty, HitLineDirty;
   logic [TAGLEN-1:0]             TagWay [NUMWAYS-1:0];
   logic [TAGLEN-1:0]             Tag;
   logic [SETLEN-1:0]             FlushAdr, NextFlushAdr, FlushAdrP1;
@@ -116,7 +116,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   cacheway #(P, PA_BITS, XLEN, NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, READ_ONLY_CACHE) CacheWays[NUMWAYS-1:0](
     .clk, .reset, .CacheEn, .CacheSet, .PAdr, .LineWriteData, .LineByteMask, .SelWay,
     .SetValid, .ClearValid, .SetDirty, .ClearDirty, .VictimWay,
-    .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .HitWayDirtyWay, .TagWay, .FlushStage, .InvalidateCache);
+    .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .HitDirtyWay, .TagWay, .FlushStage, .InvalidateCache);
 
   // Select victim way for associative caches
   if(NUMWAYS > 1) begin:vict
@@ -128,7 +128,7 @@ module cache import cvw::*; #(parameter cvw_t P,
 
   assign CacheHit = |HitWay;
   assign LineDirty = |DirtyWay;
-  assign HitWayLineDirty = |HitWayDirtyWay;
+  assign HitLineDirty = |HitDirtyWay;
 
   // ReadDataLineWay is a 2d array of cache line len by number of ways.
   // Need to OR together each way in a bitwise manner.
@@ -219,7 +219,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   
   cachefsm #(P, READ_ONLY_CACHE) cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
     .FlushStage, .CacheRW, .Stall,
-    .CacheHit, .LineDirty, .HitWayLineDirty, .CacheStall, .CacheCommitted, 
+    .CacheHit, .LineDirty, .HitLineDirty, .CacheStall, .CacheCommitted, 
     .CacheMiss, .CacheAccess, .SelAdr, .SelWay,
     .ClearDirty, .SetDirty, .SetValid, .ClearValid, .SelWriteback, .SelFlush,
     .FlushAdrCntEn, .FlushWayCntEn, .FlushCntRst,
