@@ -32,6 +32,9 @@
 --override cpu/Svpbmt=T
 --override cpu/Svnapot_page_mask=65536
 
+# SV39 and SV48 supported
+--override cpu/Sv_modes=768
+
 
 #  clarify
 #--override refRoot/cpu/mtvec_sext=F
@@ -50,7 +53,6 @@
 --override cpu/wfi_is_nop=T
 --override cpu/misa_Extensions_mask=0x0
 --override cpu/Sstc=T
---override cpu/Sv_modes=768
 
 # Enable SVADU hardware update of A/D bits when menvcfg.HADE=1
 --override cpu/Svadu=T

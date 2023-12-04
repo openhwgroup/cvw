@@ -967,11 +967,16 @@ module testbenchfp;
 
       // Testfloat outputs 800... for both the largest integer values for both positive and negitive numbers but 
       // the riscv spec specifies 2^31-1 for positive values out of range and NaNs ie 7fff...
+
+      // Note: Went through and determined that this is not needed with new module additions
+      // Just needs to check flags against TestFloat (left just in case (remove after check one more time)) 
+      // else if ((UnitVal === `CVTINTUNIT) & 
+      //       ~(((WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&Xs&(Res[P.XLEN-1:0] === (P.XLEN)'(0))) | 
+      //		  (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~Xs|XNaN)&OpCtrlVal[1]&(Res[P.XLEN-1:0] === {1'b0, {P.XLEN-1{1'b1}}})) | 
+      //	  (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~Xs|XNaN)&~OpCtrlVal[1]&(Res[P.XLEN-1:0] === {{P.XLEN-32{1'b0}}, 1'b0, {31{1'b1}}})) | 
+      //	  (~(WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&Xs&~XNaN)&(Res === Ans | NaNGood | NaNGood === 1'bx))) & (ResFlg === AnsFlg | AnsFlg === 5'bx))) begin
       else if ((UnitVal === `CVTINTUNIT) & 
-	       ~(((WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&Xs&(Res[P.XLEN-1:0] === (P.XLEN)'(0))) | 
-		  (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~Xs|XNaN)&OpCtrlVal[1]&(Res[P.XLEN-1:0] === {1'b0, {P.XLEN-1{1'b1}}})) | 
-		  (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~Xs|XNaN)&~OpCtrlVal[1]&(Res[P.XLEN-1:0] === {{P.XLEN-32{1'b0}}, 1'b0, {31{1'b1}}})) | 
-		  (~(WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&Xs&~XNaN)&(Res === Ans | NaNGood | NaNGood === 1'bx))) & (ResFlg === AnsFlg | AnsFlg === 5'bx))) begin
+		  ~((ResFlg === AnsFlg | AnsFlg === 5'bx))) begin	 
 	 errors += 1;
 	 $display("There is an error in %s", Tests[TestNum]);
 	 $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);

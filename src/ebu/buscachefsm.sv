@@ -42,6 +42,7 @@ module buscachefsm #(
   input  logic                   Stall,              // Core pipeline is stalled
   input  logic                   Flush,              // Pipeline stage flush. Prevents bus transaction from starting
   input  logic [1:0]             BusRW,              // Uncached memory operation read/write control: 10: read, 01: write
+  input  logic                   BusCMOZero,         // Uncached cbo.zero must write zero to full sized cacheline without going through the cache
   output logic                   BusStall,           // Bus is busy with an in flight memory operation
   output logic                   BusCommitted,       // Bus is busy with an in flight memory operation and it is not safe to take an interrupt
                             
@@ -75,6 +76,9 @@ module buscachefsm #(
   logic                   BeatCntEn;
   logic                   BeatCntReset;
   logic                   CacheAccess;
+  logic                   BusWrite;
+
+  assign BusWrite = CacheBusRW[0] | BusCMOZero;
   
   always_ff @(posedge HCLK)
     if (~HRESETn | Flush) CurrState <= #1 ADR_PHASE;
@@ -83,18 +87,18 @@ module buscachefsm #(
   always_comb begin
       case(CurrState)
         ADR_PHASE: if (HREADY & |BusRW)                             NextState = DATA_PHASE;
-                   else if (HREADY & CacheBusRW[0])                 NextState = CACHE_WRITEBACK;
+                   else if (HREADY & BusWrite)                 NextState = CACHE_WRITEBACK;
                    else if (HREADY & CacheBusRW[1])                 NextState = CACHE_FETCH;
                    else                                             NextState = ADR_PHASE;
       DATA_PHASE:  if(HREADY)                                       NextState = MEM3;
                    else                                             NextState = DATA_PHASE;
       MEM3:        if(Stall)                                        NextState = MEM3;
                    else                                             NextState = ADR_PHASE;
-      CACHE_FETCH: if(HREADY & FinalBeatCount & CacheBusRW[0])      NextState = CACHE_WRITEBACK;
+      CACHE_FETCH: if(HREADY & FinalBeatCount & BusWrite)      NextState = CACHE_WRITEBACK;
                    else if(HREADY & FinalBeatCount & CacheBusRW[1]) NextState = CACHE_FETCH;
                    else if(HREADY & FinalBeatCount & ~|CacheBusRW)  NextState = ADR_PHASE;
                    else                                             NextState = CACHE_FETCH;
-      CACHE_WRITEBACK: if(HREADY & FinalBeatCount & CacheBusRW[0])  NextState = CACHE_WRITEBACK;
+      CACHE_WRITEBACK: if(HREADY & FinalBeatCount & BusWrite)  NextState = CACHE_WRITEBACK;
                    else if(HREADY & FinalBeatCount & CacheBusRW[1]) NextState = CACHE_FETCH;
                    else if(HREADY & FinalBeatCount & ~|CacheBusRW)  NextState = ADR_PHASE;
                    else                                             NextState = CACHE_WRITEBACK;
@@ -128,7 +132,7 @@ module buscachefsm #(
                   (CacheAccess & FinalBeatCount & |CacheBusRW & HREADY & ~Flush) ? AHB_NONSEQ : // if we have a pipelined request
                   (CacheAccess & |BeatCount) ? (`BURST_EN ? AHB_SEQ : AHB_NONSEQ) : AHB_IDLE;
 
-  assign HWRITE = (BusRW[0] | CacheBusRW[0] & ~Flush) | (CurrState == CACHE_WRITEBACK & |BeatCount);
+  assign HWRITE = (BusRW[0] | BusWrite & ~Flush) | (CurrState == CACHE_WRITEBACK & |BeatCount);
   assign HBURST = `BURST_EN & ((|CacheBusRW & ~Flush) | (CacheAccess & |BeatCount)) ? LocalBurstType : 3'b0;  
   
   always_comb begin
@@ -142,8 +146,8 @@ module buscachefsm #(
   end
 
   // communication to cache
-  assign CacheBusAck = (CacheAccess & HREADY & FinalBeatCount);
-  assign SelBusBeat = (CurrState == ADR_PHASE & (BusRW[0] | CacheBusRW[0])) |
+  assign CacheBusAck = (CacheAccess & HREADY & FinalBeatCount & ~BusCMOZero);
+  assign SelBusBeat = (CurrState == ADR_PHASE & (BusRW[0] | BusWrite)) |
                       (CurrState == DATA_PHASE & BusRW[0]) |
                       (CurrState == CACHE_WRITEBACK) |
                       (CurrState == CACHE_FETCH);

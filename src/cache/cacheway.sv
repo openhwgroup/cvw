@@ -51,7 +51,8 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   output logic [LINELEN-1:0]          ReadDataLineWay,// This way's read data if valid
   output logic                        HitWay,         // This way hits
   output logic                        ValidWay,       // This way is valid
-  output logic                        DirtyWay,       // This way is dirty
+  output logic                        HitDirtyWay, // The hit way is dirty
+  output logic                        DirtyWay   ,    // The selected way is dirty
   output logic [TAGLEN-1:0]           TagWay);        // This way's tag if valid
 
   localparam                          WORDSPERLINE = LINELEN/XLEN;
@@ -65,10 +66,10 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   logic [LINELEN-1:0]                 ReadDataLine;
   logic [TAGLEN-1:0]                  ReadTag;
   logic                               Dirty;
-  logic                               SelTag;
+  logic                               SelDirty;
   logic                               SelectedWriteWordEn;
   logic [LINELEN/8-1:0]               FinalByteMask;
-  logic                               SetValidEN;
+  logic                               SetValidEN, ClearValidEN;
   logic                               SetValidWay;
   logic                               ClearValidWay;
   logic                               SetDirtyWay;
@@ -78,7 +79,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   
   if (!READ_ONLY_CACHE) begin:flushlogic
     logic                               FlushWayEn;
-    mux2 #(1) seltagmux(VictimWay, FlushWay, SelFlush, SelTag);
+    mux2 #(1) seltagmux(VictimWay, FlushWay, SelFlush, SelDirty);
 
     // FlushWay is part of a one hot way selection. Must clear it if FlushWay not selected.
     // coverage off -item e 1 -fecexprrow 3
@@ -86,11 +87,11 @@ module cacheway import cvw::*; #(parameter cvw_t P,
     assign FlushWayEn = FlushWay & SelFlush;
     assign SelNonHit = FlushWayEn | SelWay; 
   end else begin:flushlogic // no flush operation for read-only caches.
-    assign SelTag = VictimWay;
+    assign SelDirty = VictimWay;
     assign SelNonHit = SelWay;
   end
 
-  mux2 #(1) selectedwaymux(HitWay, SelTag, SelNonHit , SelData);
+  mux2 #(1) selectedwaymux(HitWay, SelDirty, SelNonHit , SelData);
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Enable demux
@@ -102,6 +103,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   assign ClearDirtyWay = ClearDirty & SelData;
   assign SelectedWriteWordEn = (SetValidWay | SetDirtyWay) & ~FlushStage;  // exclusion-tag: icache SelectedWiteWordEn
   assign SetValidEN = SetValidWay & ~FlushStage;                           // exclusion-tag: cache SetValidEN
+  assign ClearValidEN = ClearValidWay & ~FlushStage;                           // exclusion-tag: cache SetValidEN
 
   // If writing the whole line set all write enables to 1, else only set the correct word.
   assign FinalByteMask = SetValidWay ? '1 : LineByteMask; // OR
@@ -116,7 +118,8 @@ module cacheway import cvw::*; #(parameter cvw_t P,
 
   // AND portion of distributed tag multiplexer
   assign TagWay = SelData ? ReadTag : '0; // AND part of AOMux
-  assign DirtyWay = SelTag & Dirty & ValidWay;
+  assign HitDirtyWay = Dirty & ValidWay;
+  assign DirtyWay = SelDirty & HitDirtyWay;
   assign HitWay = ValidWay & (ReadTag == PAdr[PA_BITS-1:OFFSETLEN+INDEXLEN]);
 
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -156,7 +159,8 @@ module cacheway import cvw::*; #(parameter cvw_t P,
     if(CacheEn) begin 
       ValidWay <= #1 ValidBits[CacheSet];
       if(InvalidateCache)                    ValidBits <= #1 '0; // exclusion-tag: dcache invalidateway
-      else if (SetValidEN | (ClearValidWay & ~FlushStage)) ValidBits[CacheSet] <= #1 SetValidWay;
+      else if (SetValidEN) ValidBits[CacheSet] <= #1 SetValidWay;
+      else if (ClearValidEN) ValidBits[CacheSet] <= #1 '0;
     end
   end
 

@@ -357,8 +357,10 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   // Cache Management instructions
   always_comb begin
     CMOpD = 4'b0000; // default: not a cbo instruction
-    if ((P.ZICBOM_SUPPORTED | P.ZICBOZ_SUPPORTED) & CMOD) begin
+    if ((P.ZICBOZ_SUPPORTED) & CMOD) begin
       CMOpD[3] = (InstrD[31:20] == 12'd4); // cbo.zero
+    end
+    if ((P.ZICBOM_SUPPORTED) & CMOD) begin
       CMOpD[2] = (InstrD[31:20] == 12'd2); // cbo.clean
       CMOpD[1] = (InstrD[31:20] == 12'd1) | ((InstrD[31:20] == 12'd0) & (ENVCFG_CBE[1:0] == 2'b01)); // cbo.flush 
       CMOpD[0] = (InstrD[31:20] == 12'd0) & (ENVCFG_CBE[1:0] == 2'b11); // cbo.inval
@@ -425,6 +427,5 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   // a cache cannot read or write immediately after a write
   // atomic operations are also detected as MemRWD[1]
   //assign StoreStallD = MemRWE[0] & ((MemRWD[1] | (MemRWD[0] & P.DCACHE_SUPPORTED)));
-  // *** RT: Modify for ZICBOZ
-  assign StoreStallD = (MemRWE[0] | (|CMOpE & P.ZICBOM_SUPPORTED)) & ((MemRWD[1] | (MemRWD[0] & P.DCACHE_SUPPORTED) | (|CMOpD & P.ZICBOM_SUPPORTED)));
+  assign StoreStallD = (MemRWE[0] | (|CMOpE)) & ((MemRWD[1] | (MemRWD[0] & P.DCACHE_SUPPORTED) | (|CMOpD)));
 endmodule

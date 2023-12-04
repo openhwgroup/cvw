@@ -42,6 +42,7 @@ module pmpchecker import cvw::*;  #(parameter cvw_t P) (
   input  var logic [7:0]           PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0],
   input  var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW [P.PMP_ENTRIES-1:0],
   input  logic                     ExecuteAccessF, WriteAccessM, ReadAccessM,
+  input  logic [3:0]               CMOp,
   output logic                     PMPInstrAccessFaultF,
   output logic                     PMPLoadAccessFaultM,
   output logic                     PMPStoreAmoAccessFaultM
@@ -53,6 +54,8 @@ module pmpchecker import cvw::*;  #(parameter cvw_t P) (
   logic [P.PMP_ENTRIES-1:0]        FirstMatch; // onehot encoding for the first pmpaddr to match the current address.
   logic [P.PMP_ENTRIES-1:0]        L, X, W, R; // PMP matches and has flag set
   logic [P.PMP_ENTRIES-1:0]        PAgePMPAdr; // for TOR PMP matching, PhysicalAddress > PMPAdr[i]
+  logic                            PMPCMOAccessFault, PMPCBOMAccessFault, PMPCBOZAccessFault;
+  
 
   if (P.PMP_ENTRIES > 0) begin: pmp // prevent complaints about array of no elements when PMP_ENTRIES = 0
     pmpadrdec #(P) pmpadrdecs[P.PMP_ENTRIES-1:0](
@@ -69,7 +72,11 @@ module pmpchecker import cvw::*;  #(parameter cvw_t P) (
   // Only enforce PMP checking for S and U modes or in Machine mode when L bit is set in selected region
   assign EnforcePMP = (PrivilegeModeW != P.M_MODE) | (|(L & FirstMatch)); // *** switch to this logic when PMP is initialized for non-machine mode
 
+  assign PMPCBOMAccessFault     = EnforcePMP & (|CMOp[2:0]) & ~|((R|W) & FirstMatch) ;
+  assign PMPCBOZAccessFault     = EnforcePMP & CMOp[3] & ~|(W & FirstMatch) ;
+  assign PMPCMOAccessFault      = PMPCBOZAccessFault | PMPCBOMAccessFault;
+  
   assign PMPInstrAccessFaultF     = EnforcePMP & ExecuteAccessF & ~|(X & FirstMatch) ;
-  assign PMPStoreAmoAccessFaultM  = EnforcePMP & WriteAccessM   & ~|(W & FirstMatch) ;
+  assign PMPStoreAmoAccessFaultM  = (EnforcePMP & WriteAccessM   & ~|(W & FirstMatch))  | PMPCMOAccessFault;
   assign PMPLoadAccessFaultM      = EnforcePMP & ReadAccessM    & ~|(R & FirstMatch) ;
  endmodule

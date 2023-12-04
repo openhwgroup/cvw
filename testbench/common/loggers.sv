@@ -182,7 +182,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
                       (!dut.core.lsu.bus.dcache.dcache.vict.cacheLRU.AllValid) ? "M" :
                       dut.core.lsu.bus.dcache.dcache.LineDirty ? "D" : "E";
       AccessTypeString = dut.core.lsu.bus.dcache.FlushDCache ? "F" :
-                         dut.core.lsu.bus.dcache.CacheAtomicM[1] ? "A" :
+                         dut.core.lsu.LSUAtomicM[1] ? "A" :
                          dut.core.lsu.bus.dcache.CacheRWM == 2'b10 ? "R" : 
                          dut.core.lsu.bus.dcache.CacheRWM == 2'b01 ? "W" :
                          "NULL";
