@@ -71,6 +71,8 @@ PreProcessFiles:
 	sed -i "s/PLIC_SDC_ID.*/PLIC_SDC_ID = 32'd20;/g" ../src/CopiedFiles_do_not_add_to_repo/config/config.vh
 	sed -i "s/BPRED_SIZE.*/BPRED_SIZE = 32'd12;/g" ../src/CopiedFiles_do_not_add_to_repo/config/config.vh
 	sed -i "s/$\$readmemh.*/$\$readmemh(\"..\/..\/..\/fpga\/src\/boot.mem\", ROM, 0);/g" ../src/CopiedFiles_do_not_add_to_repo/generic/mem/rom1p1r.sv
+	# This line allows the Bootloader to be loaded in a Block RAM on the FPGA
+	sed -i "s/logic \[DATA_WIDTH-1:0\].*ROM.*/(\* rom_style=\"block\" \*) &/g" ../src/CopiedFiles_do_not_add_to_repo/generic/mem/rom1p1r.sv
 
 $(dst)/%.log: %.tcl
 	mkdir -p IP
