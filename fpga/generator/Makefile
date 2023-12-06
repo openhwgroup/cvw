@@ -6,17 +6,17 @@ dst := IP
 #export board := vcu118
 
 # vcu108
-#export XILINX_PART := xcvu095-ffva2104-2-e
-#export XILINX_BOARD := xilinx.com:vcu108:part0:1.2
-#export board := vcu108
+export XILINX_PART := xcvu095-ffva2104-2-e
+export XILINX_BOARD := xilinx.com:vcu108:part0:1.2
+export board := vcu108
 
 # Arty A7
-export XILINX_PART := xc7a100tcsg324-1
-export XILINX_BOARD := digilentinc.com:arty-a7-100:part0:1.1
-export board := ArtyA7
+# export XILINX_PART := xc7a100tcsg324-1
+# export XILINX_BOARD := digilentinc.com:arty-a7-100:part0:1.1
+# export board := ArtyA7
 
 # for Arty A7 and S7 boards
-all: FPGA_Arty
+all: FPGA_VCU
 
 # VCU 108 and VCU 118 boards
 #all: FPGA_VCU
@@ -70,6 +70,9 @@ PreProcessFiles:
 	sed -i "s/PLIC_NUM_SRC = .*/PLIC_NUM_SRC = 32'd53;/g" ../src/CopiedFiles_do_not_add_to_repo/config/config.vh
 	sed -i "s/PLIC_SDC_ID.*/PLIC_SDC_ID = 32'd20;/g" ../src/CopiedFiles_do_not_add_to_repo/config/config.vh
 	sed -i "s/BPRED_SIZE.*/BPRED_SIZE = 32'd12;/g" ../src/CopiedFiles_do_not_add_to_repo/config/config.vh
+	sed -i "s/$\$readmemh.*/$\$readmemh(\"..\/..\/..\/fpga\/src\/boot.mem\", ROM, 0);/g" ../src/CopiedFiles_do_not_add_to_repo/generic/mem/rom1p1r.sv
+	# This line allows the Bootloader to be loaded in a Block RAM on the FPGA
+	sed -i "s/logic \[DATA_WIDTH-1:0\].*ROM.*/(\* rom_style=\"block\" \*) &/g" ../src/CopiedFiles_do_not_add_to_repo/generic/mem/rom1p1r.sv
 
 $(dst)/%.log: %.tcl
 	mkdir -p IP

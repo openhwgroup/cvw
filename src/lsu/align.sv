@@ -37,11 +37,8 @@ module align import cvw::*;  #(parameter cvw_t P) (
   input logic [P.XLEN-1:0]        IEUAdrE, // The next IEUAdrM
   input logic [2:0]               Funct3M, // Size of memory operation
   input logic [1:0]               MemRWM, 
-  input logic                     CacheableM,
   input logic [P.LLEN*2-1:0]      DCacheReadDataWordM, // Instruction from the IROM, I$, or bus. Used to check if the instruction if compressed
   input logic                     CacheBusHPWTStall, // I$ or bus are stalled. Transition to second fetch of spill after the first is fetched
-  input logic                     DTLBMissM, // ITLB miss, ignore memory request
-  input logic                     DataUpdateDAM, // ITLB miss, ignore memory request
   input logic                     SelHPTW,
 
   input logic [(P.LLEN-1)/8:0]    ByteMaskM,
@@ -54,7 +51,6 @@ module align import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0]       IEUAdrSpillE, // The next PCF for one of the two memory addresses of the spill
   output logic [P.XLEN-1:0]       IEUAdrSpillM, // IEUAdrM for one of the two memory addresses of the spill
   output logic                    SelSpillE, // During the transition between the two spill operations, the IFU should stall the pipeline
-  output logic [1:0]              MemRWSpillM, 
   output logic                    SelStoreDelay, //*** this is bad.  really don't like moving this outside
   output logic [P.LLEN-1:0]       DCacheReadDataWordSpillM, // The final 32 bit instruction after merging the two spilled fetches into 1 instruction
   output logic                    SpillStallM);
@@ -65,26 +61,19 @@ module align import cvw::*;  #(parameter cvw_t P) (
   typedef enum logic [1:0]  {STATE_READY, STATE_SPILL, STATE_STORE_DELAY} statetype;
 
   statetype          CurrState, NextState;
-  logic              TakeSpillM;
-  logic              SpillM;
+  logic              ValidSpillM;
   logic              SelSpillM;
   logic              SpillSaveM;
-  logic [P.LLEN-1:0]   ReadDataWordFirstHalfM;
+  logic [P.LLEN-1:0] ReadDataWordFirstHalfM;
   logic              MisalignedM;
   logic [P.LLEN*2-1:0] ReadDataWordSpillAllM;
   logic [P.LLEN*2-1:0] ReadDataWordSpillShiftedM;
 
-  logic [P.XLEN-1:0]     IEUAdrIncrementM;
+  logic [P.XLEN-1:0]   IEUAdrIncrementM;
 
-  logic [(P.LLEN-1)*2/8:0] ByteMaskSaveM;
-  logic [(P.LLEN-1)*2/8:0] ByteMaskMuxM;
-  logic                    SaveByteMask;
-  logic HalfMisalignedM, WordMisalignedM;
-  logic [OFFSET_BIT_POS-1:$clog2(LLENINBYTES)] WordOffsetM;
-  logic [$clog2(LLENINBYTES)-1:0]                 ByteOffsetM;
-  logic                                HalfSpillM, WordSpillM;
-  logic [$clog2(LLENINBYTES)-1:0]      AccessByteOffsetM;
-  logic                                ValidAccess;
+  logic [$clog2(LLENINBYTES)-1:0]              AccessByteOffsetM;
+  logic [$clog2(LLENINBYTES)+2:0]              ShiftAmount;
+  logic                                        PotentialSpillM;
 
   /* verilator lint_off WIDTHEXPAND */
   assign IEUAdrIncrementM = IEUAdrM + LLENINBYTES;
@@ -101,40 +90,26 @@ module align import cvw::*;  #(parameter cvw_t P) (
   // 2) offset
   // 3) access location within the cacheline
   
-  assign {WordOffsetM, ByteOffsetM} = IEUAdrM[OFFSET_BIT_POS-1:0];
-
+  // compute misalignement
   always_comb begin
     case (Funct3M[1:0]) 
       2'b00: AccessByteOffsetM = '0; // byte access
-      2'b01: AccessByteOffsetM = {2'b00, ByteOffsetM[0]}; // half access
-      2'b10: AccessByteOffsetM = {1'b0, ByteOffsetM[1:0]}; // word access
-      2'b11: AccessByteOffsetM = ByteOffsetM; // double access
-      default: AccessByteOffsetM = ByteOffsetM;
+      2'b01: AccessByteOffsetM = {2'b00, IEUAdrM[0]}; // half access
+      2'b10: AccessByteOffsetM = {1'b0, IEUAdrM[1:0]}; // word access
+      2'b11: AccessByteOffsetM = IEUAdrM[2:0]; // double access
+      default: AccessByteOffsetM = IEUAdrM[2:0];
+    endcase
+    case (Funct3M[1:0]) 
+      2'b00: PotentialSpillM = '0; // byte access
+      2'b01: PotentialSpillM = IEUAdrM[OFFSET_BIT_POS-1:1] == '1; // half access
+      2'b10: PotentialSpillM = IEUAdrM[OFFSET_BIT_POS-1:2] == '1; // word access
+      2'b11: PotentialSpillM = IEUAdrM[OFFSET_BIT_POS-1:3] == '1; // double access
+      default: PotentialSpillM = '0;
     endcase
   end
-
-  // compute misalignement
-  assign HalfMisalignedM = (ByteOffsetM[0] != '0) & Funct3M[1:0] == 2'b01;
-  assign WordMisalignedM = (ByteOffsetM[1:0] != '0) & Funct3M[1:0] == 2'b10;
-  assign HalfSpillM = (IEUAdrM[OFFSET_BIT_POS-1:1] == '1) & HalfMisalignedM;
-  assign WordSpillM = (IEUAdrM[OFFSET_BIT_POS-1:2] == '1) & WordMisalignedM;
-  assign ValidAccess = (|MemRWM) & ~SelHPTW;
-
-  if(P.LLEN == 64) begin
-    logic DoubleSpillM;
-    logic DoubleMisalignedM;
-    assign DoubleMisalignedM = (ByteOffsetM[2:0] != '0) & Funct3M[1:0] == 2'b11;
-    assign DoubleSpillM = (IEUAdrM[OFFSET_BIT_POS-1:3] == '1) & DoubleMisalignedM;
-    assign MisalignedM = ValidAccess & (HalfMisalignedM | WordMisalignedM | DoubleMisalignedM);
-    assign SpillM = ValidAccess & CacheableM & (HalfSpillM | WordSpillM | DoubleSpillM);
-  end else begin
-    assign SpillM = ValidAccess & CacheableM & (HalfSpillM | WordSpillM);
-    assign MisalignedM = ValidAccess & (HalfMisalignedM | WordMisalignedM);
-  end
+  assign MisalignedM = (|MemRWM) & (AccessByteOffsetM != '0);
       
-  // align by shifting
-  // Don't take the spill if there is a stall, TLB miss, or hardware update to the D/A bits
-  assign TakeSpillM = SpillM & ~CacheBusHPWTStall & ~(DTLBMissM | (P.SVADU_SUPPORTED & DataUpdateDAM));
+  assign ValidSpillM = MisalignedM & PotentialSpillM & ~CacheBusHPWTStall;   // Don't take the spill if there is a stall
   
   always_ff @(posedge clk)
     if (reset | FlushM)    CurrState <= #1 STATE_READY;
@@ -142,8 +117,8 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   always_comb begin
     case (CurrState)
-      STATE_READY: if (TakeSpillM & ~MemRWM[0])   NextState = STATE_SPILL;
-                   else if(TakeSpillM & MemRWM[0])NextState = STATE_STORE_DELAY;
+      STATE_READY: if (ValidSpillM & ~MemRWM[0])   NextState = STATE_SPILL;
+                   else if(ValidSpillM & MemRWM[0])NextState = STATE_STORE_DELAY;
                    else                           NextState = STATE_READY;
       STATE_SPILL: if(StallM)                     NextState = STATE_SPILL;
                    else                           NextState = STATE_READY;
@@ -153,12 +128,10 @@ module align import cvw::*;  #(parameter cvw_t P) (
   end
 
   assign SelSpillM = (CurrState == STATE_SPILL | CurrState == STATE_STORE_DELAY);
-  assign SelSpillE = (CurrState == STATE_READY & TakeSpillM) | (CurrState == STATE_SPILL & CacheBusHPWTStall) | (CurrState == STATE_STORE_DELAY);
-  assign SaveByteMask = (CurrState == STATE_READY & TakeSpillM);
-  assign SpillSaveM = (CurrState == STATE_READY) & TakeSpillM & ~FlushM;
+  assign SelSpillE = (CurrState == STATE_READY & ValidSpillM) | (CurrState == STATE_SPILL & CacheBusHPWTStall) | (CurrState == STATE_STORE_DELAY);
+  assign SpillSaveM = (CurrState == STATE_READY) & ValidSpillM & ~FlushM;
   assign SelStoreDelay = (CurrState == STATE_STORE_DELAY);  // *** Can this be merged into the PreLSURWM logic?
   assign SpillStallM = SelSpillE | CurrState == STATE_STORE_DELAY;
-  mux2 #(2) memrwmux(MemRWM, 2'b00, SelStoreDelay, MemRWSpillM);
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // Merge spilled data
@@ -173,21 +146,20 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   // shifter (4:1 mux for 32 bit, 8:1 mux for 64 bit)
   // 8 * is for shifting by bytes not bits
-  assign ReadDataWordSpillShiftedM = ReadDataWordSpillAllM >> (MisalignedM ? 8 * AccessByteOffsetM : '0);
+  assign ShiftAmount = SelHPTW ? '0 : {AccessByteOffsetM, 3'b0}; // AND gate
+  assign ReadDataWordSpillShiftedM = ReadDataWordSpillAllM >> ShiftAmount;
   assign DCacheReadDataWordSpillM = ReadDataWordSpillShiftedM[P.LLEN-1:0];
 
   // write path. Also has the 8:1 shifter muxing for the byteoffset
   // then it also has the mux to select when a spill occurs
   logic [P.LLEN*3-1:0] LSUWriteDataShiftedExtM;  // *** RT: Find a better way.  I've extending in both directions so we don't shift in zeros.  The cache expects the writedata to not have any zero data, but instead replicated data.
 
-  assign LSUWriteDataShiftedExtM = {LSUWriteDataM, LSUWriteDataM, LSUWriteDataM} << (MisalignedM ? 8 * AccessByteOffsetM : '0);
+  assign LSUWriteDataShiftedExtM = {LSUWriteDataM, LSUWriteDataM, LSUWriteDataM} << ShiftAmount;
   assign LSUWriteDataSpillM = LSUWriteDataShiftedExtM[P.LLEN*3-1:P.LLEN];
 
-  mux3 #(2*P.LLEN/8) bytemaskspillmux(ByteMaskMuxM, // no spill
+  mux3 #(2*P.LLEN/8) bytemaskspillmux({ByteMaskExtendedM, ByteMaskM}, // no spill
                                       {{{P.LLEN/8}{1'b0}}, ByteMaskM}, // spill, first half
-                                      {{{P.LLEN/8}{1'b0}}, ByteMaskMuxM[P.LLEN*2/8-1:P.LLEN/8]}, // spill, second half
+                                      {{{P.LLEN/8}{1'b0}}, ByteMaskExtendedM}, // spill, second half
                                       {SelSpillM, SelSpillE}, ByteMaskSpillM);
 
-  flopenr #(P.LLEN*2/8) bytemaskreg(clk, reset, SaveByteMask, {ByteMaskExtendedM, ByteMaskM}, ByteMaskSaveM);
-  mux2 #(P.LLEN*2/8) bytemasksavemux({ByteMaskExtendedM, ByteMaskM}, ByteMaskSaveM, SelSpillM, ByteMaskMuxM);
 endmodule

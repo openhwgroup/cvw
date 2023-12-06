@@ -40,18 +40,18 @@ do
 	lines=`sim_bp gshare 16 16 $Size 1  $File | tail -5`
         Total=`echo "$lines" | head -1 | awk '{print $5}'`
         Miss=`echo "$lines" | tail -2 | head -1 | awk '{print $8}'`
-        BMDR=`echo "$Miss / $Total" | bc -l`
+        BMDR=`echo "100.0 * $Miss / $Total" | bc -l`
         BMDRArray+=("$BMDR")
         if [ $Miss -eq 0 ]; then
-	    Product=`echo "scale=200; $Product / $Total" | bc -l`
+	    Product=`echo "scale=200; $Product * 100 / $Total" | bc -l`
         else
-            Product=`echo "scale=200; $Product * $Miss / $Total" | bc -l`
+            Product=`echo "scale=200; $Product * $BMDR" | bc -l`
         fi
 	Count=$((Count+1))
     done
     # with such long precision bc outputs onto multiple lines
     # must remove \n and \ from string
     Product=`echo "$Product" | tr -d '\n' | tr -d '\\\'`
-    GeoMean=`perl -E "say $Product**(1/$Count) * 100"`
+    GeoMean=`perl -E "say $Product**(1/$Count)"`
     echo "$Pred$Size $GeoMean"
 done

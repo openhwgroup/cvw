@@ -55,6 +55,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   output logic                 UpdateDA,                                                  // page fault due to setting dirty or access bit
   output logic                 LoadMisalignedFaultM, StoreAmoMisalignedFaultM,            // misaligned fault sources
   // PMA checker signals
+  input  logic [3:0]           CMOp,                                                      // Cache management instructions
   input  logic                 AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,  // access type
   input var logic [7:0]        PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0],                      // PMP configuration
   input var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0]                   // PMP addresses
@@ -84,7 +85,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
           .SATP_MODE(SATP_REGW[P.XLEN-1:P.XLEN-P.SVMODE_BITS]),
           .SATP_ASID(SATP_REGW[P.ASID_BASE+P.ASID_BITS-1:P.ASID_BASE]),
           .VAdr(VAdr[P.XLEN-1:0]), .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_HADE,
-          .PrivilegeModeW, .ReadAccess, .WriteAccess,
+          .PrivilegeModeW, .ReadAccess, .WriteAccess, .CMOp,
           .DisableTranslation, .PTE, .PageTypeWriteVal,
           .TLBWrite, .TLBFlush, .TLBPAdr, .TLBMiss, .TLBHit, 
           .Translate, .TLBPageFault, .UpdateDA, .PBMemoryType);
@@ -106,7 +107,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   // Check physical memory accesses
   ///////////////////////////////////////////
 
-  pmachecker #(P) pmachecker(.PhysicalAddress, .Size,
+  pmachecker #(P) pmachecker(.PhysicalAddress, .Size, .CMOp, 
     .AtomicAccessM, .ExecuteAccessF, .WriteAccessM, .ReadAccessM, .PBMemoryType,
     .Cacheable, .Idempotent, .SelTIM, 
     .PMAInstrAccessFaultF, .PMALoadAccessFaultM, .PMAStoreAmoAccessFaultM);
@@ -114,7 +115,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   if (P.PMP_ENTRIES > 0) begin : pmp
     pmpchecker #(P) pmpchecker(.PhysicalAddress, .PrivilegeModeW,
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
-      .ExecuteAccessF, .WriteAccessM, .ReadAccessM,
+      .ExecuteAccessF, .WriteAccessM, .ReadAccessM, .CMOp, 
       .PMPInstrAccessFaultF, .PMPLoadAccessFaultM, .PMPStoreAmoAccessFaultM);
   end else begin
     assign PMPInstrAccessFaultF     = 0;
