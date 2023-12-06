@@ -1,6 +1,6 @@
-class6.log class 6
-class8.log class 8
-class10.log class 10
-class12.log class 12
-class14.log class 14
-class16.log class 16
+../logs/rv32gc_class6.log class 6
+../logs/rv32gc_class8.log class 8
+../logs/rv32gc_class10.log class 10
+../logs/rv32gc_class12.log class 12
+../logs/rv32gc_class14.log class 14
+../logs/rv32gc_class16.log class 16

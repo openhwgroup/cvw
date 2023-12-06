@@ -43,6 +43,7 @@ sim: modelsim_build_memfile modelsim_run speed
 
 # launches modelsim to simulate tests on wally
 modelsim_run:
+	mkdir -p ../../sim/wkdir
 	(cd ../../sim/ && vsim -c -do "do wally-batch.do rv32gc embench")
 	cd ../../benchmarks/embench/
 

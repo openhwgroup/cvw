@@ -180,3 +180,5 @@ sim/branch*.log
 benchmarks/embench/wally*.json
 benchmarks/embench/run*
 sim/cfi.log
+sim/cfi/*
+sim/branch/*

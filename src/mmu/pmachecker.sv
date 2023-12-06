@@ -31,6 +31,7 @@
 module pmachecker import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.PA_BITS-1:0] PhysicalAddress,
   input  logic [1:0]           Size,
+  input  logic [3:0]           CMOp,
   input  logic                 AtomicAccessM,  // Atomic access
   input  logic                 ExecuteAccessF, // Execute access 
   input  logic                 WriteAccessM,   // Write access 
@@ -43,18 +44,18 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
 );
 
   logic                        PMAAccessFault;
-  logic                        AccessRW, AccessRWX, AccessRX;
+  logic                        AccessRW, AccessRWXC, AccessRX;
   logic [11:0]                 SelRegions;
   logic                        AtomicAllowed;
   logic                        CacheableRegion, IdempotentRegion;
 
   // Determine what type of access is being made
   assign AccessRW  = ReadAccessM | WriteAccessM;
-  assign AccessRWX = ReadAccessM | WriteAccessM | ExecuteAccessF;
+  assign AccessRWXC = ReadAccessM | WriteAccessM | ExecuteAccessF | (|CMOp);
   assign AccessRX  = ReadAccessM | ExecuteAccessF;
 
   // Determine which region of physical memory (if any) is being accessed
-  adrdecs #(P) adrdecs(PhysicalAddress, AccessRW, AccessRX, AccessRWX, Size, SelRegions);
+  adrdecs #(P) adrdecs(PhysicalAddress, AccessRW, AccessRX, AccessRWXC, Size, SelRegions);
 
   // Only non-core RAM/ROM memory regions are cacheable. PBMT can override cachable; NC and IO are uncachable
   assign CacheableRegion = SelRegions[9] | SelRegions[8] | SelRegions[7];  // exclusion-tag: unused-cachable
@@ -71,8 +72,8 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
   assign SelTIM = SelRegions[11] | SelRegions[10]; // exclusion-tag: unused-idempotent
 
   // Detect access faults
-  assign PMAAccessFault          = (SelRegions[0]) & AccessRWX | AtomicAccessM & ~AtomicAllowed;  
+  assign PMAAccessFault          = (SelRegions[0]) & AccessRWXC | AtomicAccessM & ~AtomicAllowed;  
   assign PMAInstrAccessFaultF    = ExecuteAccessF & PMAAccessFault;
   assign PMALoadAccessFaultM     = ReadAccessM    & PMAAccessFault;
-  assign PMAStoreAmoAccessFaultM = WriteAccessM   & PMAAccessFault;
+  assign PMAStoreAmoAccessFaultM = (WriteAccessM | (|CMOp))   & PMAAccessFault;
 endmodule
