@@ -1580,9 +1580,104 @@ string arch64zbs[] = '{
     // "rv32i_m/F/src/fnmsub_b15-01.S"
   };
 
-  string arch32f[] = '{
+  string arch32fdiv[] = '{
     `RISCVARCHTEST,
     "rv32i_m/F/src/fdiv_b20-01.S",
+    "rv32i_m/F/src/fdiv_b1-01.S",
+    "rv32i_m/F/src/fdiv_b2-01.S",
+    "rv32i_m/F/src/fdiv_b21-01.S",
+    "rv32i_m/F/src/fdiv_b3-01.S",
+    "rv32i_m/F/src/fdiv_b4-01.S",
+    "rv32i_m/F/src/fdiv_b5-01.S",
+    "rv32i_m/F/src/fdiv_b6-01.S",
+    "rv32i_m/F/src/fdiv_b7-01.S",
+    "rv32i_m/F/src/fdiv_b8-01.S",
+    "rv32i_m/F/src/fdiv_b9-01.S",
+    "rv32i_m/F/src/fsqrt_b1-01.S",
+    "rv32i_m/F/src/fsqrt_b20-01.S",
+    "rv32i_m/F/src/fsqrt_b2-01.S",
+    "rv32i_m/F/src/fsqrt_b3-01.S",
+    "rv32i_m/F/src/fsqrt_b4-01.S",
+    "rv32i_m/F/src/fsqrt_b5-01.S",
+    "rv32i_m/F/src/fsqrt_b7-01.S",
+    "rv32i_m/F/src/fsqrt_b8-01.S",
+    "rv32i_m/F/src/fsqrt_b9-01.S"
+  };
+
+  string arch32ddiv[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/D/src/fdiv.d_b20-01.S",
+    "rv32i_m/D/src/fdiv.d_b1-01.S",
+    "rv32i_m/D/src/fdiv.d_b2-01.S",
+    "rv32i_m/D/src/fdiv.d_b21-01.S",
+    "rv32i_m/D/src/fdiv.d_b3-01.S",
+    "rv32i_m/D/src/fdiv.d_b4-01.S",
+    "rv32i_m/D/src/fdiv.d_b5-01.S",
+    "rv32i_m/D/src/fdiv.d_b6-01.S",
+    "rv32i_m/D/src/fdiv.d_b7-01.S",
+    "rv32i_m/D/src/fdiv.d_b8-01.S",
+    "rv32i_m/D/src/fdiv.d_b9-01.S",
+    "rv32i_m/D/src/fsqrt.d_b1-01.S",
+    "rv32i_m/D/src/fsqrt.d_b20-01.S",
+    "rv32i_m/D/src/fsqrt.d_b2-01.S",
+    "rv32i_m/D/src/fsqrt.d_b3-01.S",
+    "rv32i_m/D/src/fsqrt.d_b4-01.S",
+    "rv32i_m/D/src/fsqrt.d_b5-01.S",
+    "rv32i_m/D/src/fsqrt.d_b7-01.S",
+    "rv32i_m/D/src/fsqrt.d_b8-01.S",
+    "rv32i_m/D/src/fsqrt.d_b9-01.S"
+  };
+
+  string arch64fdiv[] = '{
+    `RISCVARCHTEST,
+    "rv64i_m/F/src/fdiv_b20-01.S",
+    "rv64i_m/F/src/fdiv_b1-01.S",
+    "rv64i_m/F/src/fdiv_b2-01.S",
+    "rv64i_m/F/src/fdiv_b21-01.S",
+    "rv64i_m/F/src/fdiv_b3-01.S",
+    "rv64i_m/F/src/fdiv_b4-01.S",
+    "rv64i_m/F/src/fdiv_b5-01.S",
+    "rv64i_m/F/src/fdiv_b6-01.S",
+    "rv64i_m/F/src/fdiv_b7-01.S",
+    "rv64i_m/F/src/fdiv_b8-01.S",
+    "rv64i_m/F/src/fdiv_b9-01.S",
+    "rv64i_m/F/src/fsqrt_b1-01.S",
+    "rv64i_m/F/src/fsqrt_b20-01.S",
+    "rv64i_m/F/src/fsqrt_b2-01.S",
+    "rv64i_m/F/src/fsqrt_b3-01.S",
+    "rv64i_m/F/src/fsqrt_b4-01.S",
+    "rv64i_m/F/src/fsqrt_b5-01.S",
+    "rv64i_m/F/src/fsqrt_b7-01.S",
+    "rv64i_m/F/src/fsqrt_b8-01.S",
+    "rv64i_m/F/src/fsqrt_b9-01.S"
+  };
+
+  string arch64ddiv[] = '{
+    `RISCVARCHTEST,
+    "rv64i_m/D/src/fdiv.d_b20-01.S",
+    "rv64i_m/D/src/fdiv.d_b1-01.S",
+    "rv64i_m/D/src/fdiv.d_b2-01.S",
+    "rv64i_m/D/src/fdiv.d_b21-01.S",
+    "rv64i_m/D/src/fdiv.d_b3-01.S",
+    "rv64i_m/D/src/fdiv.d_b4-01.S",
+    "rv64i_m/D/src/fdiv.d_b5-01.S",
+    "rv64i_m/D/src/fdiv.d_b6-01.S",
+    "rv64i_m/D/src/fdiv.d_b7-01.S",
+    "rv64i_m/D/src/fdiv.d_b8-01.S",
+    "rv64i_m/D/src/fdiv.d_b9-01.S",
+    "rv64i_m/D/src/fsqrt.d_b1-01.S",
+    "rv64i_m/D/src/fsqrt.d_b20-01.S",
+    "rv64i_m/D/src/fsqrt.d_b2-01.S",
+    "rv64i_m/D/src/fsqrt.d_b3-01.S",
+    "rv64i_m/D/src/fsqrt.d_b4-01.S",
+    "rv64i_m/D/src/fsqrt.d_b5-01.S",
+    "rv64i_m/D/src/fsqrt.d_b7-01.S",
+    "rv64i_m/D/src/fsqrt.d_b8-01.S",
+    "rv64i_m/D/src/fsqrt.d_b9-01.S"
+  };
+
+  string arch32f[] = '{
+    `RISCVARCHTEST,
     "rv32i_m/F/src/fadd_b10-01.S",
     "rv32i_m/F/src/fadd_b1-01.S",
     "rv32i_m/F/src/fadd_b11-01.S",
@@ -1737,6 +1832,7 @@ string arch64zbs[] = '{
 
   string arch32d[] = '{
     `RISCVARCHTEST,
+    "rv32i_m/D/src/fsqrt.d_b1-01.S",
     "rv32i_m/D/src/fadd.d_b10-01.S",
     "rv32i_m/D/src/fadd.d_b1-01.S",
     "rv32i_m/D/src/fadd.d_b11-01.S",

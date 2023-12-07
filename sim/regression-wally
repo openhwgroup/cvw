@@ -66,6 +66,121 @@ def getBuildrootTC(boot):
         BRgrepstr=str(INSTR_LIMIT)+" instructions"
     return  TestCase(name,variant="rv64gc",cmd=BRcmd,grepstr=BRgrepstr)
 
+tests32gc_2_1 = ["arch32fdiv", "arch32ddiv"]  
+for test in tests32gc_2_1:
+  tc = TestCase(
+        name=test,
+        variant="rv32gc_2_1",
+        cmd="vsim > {} -c <<!\ndo wally-batch.do rv32gc_2_1 "+test+"\n!",
+        grepstr="All tests ran without failures")
+  configs.append(tc)
+
+  tests32gc_2_4 = ["arch32fdiv", "arch32ddiv"]  
+for test in tests32gc_2_4:
+  tc = TestCase(
+        name=test,
+        variant="rv32gc_2_4",
+        cmd="vsim > {} -c <<!\ndo wally-batch.do rv32gc_2_4 "+test+"\n!",
+        grepstr="All tests ran without failures")
+  configs.append(tc)
+
+
+tests32gc_4_1 = ["arch32fdiv", "arch32ddiv"]  
+for test in tests32gc_4_1:
+  tc = TestCase(
+        name=test,
+        variant="rv32gc_4_1",
+        cmd="vsim > {} -c <<!\ndo wally-batch.do rv32gc_4_1 "+test+"\n!",
+        grepstr="All tests ran without failures")
+  configs.append(tc)
+
+  tests64gc_2_1 = ["arch64fdiv", "arch64ddiv"]  
+for test in tests64gc_2_1:
+  tc = TestCase(
+        name=test,
+        variant="rv64gc_2_1",
+        cmd="vsim > {} -c <<!\ndo wally-batch.do rv64gc_2_1 "+test+"\n!",
+        grepstr="All tests ran without failures")
+  configs.append(tc)
+
+  tests64gc_2_4 = ["arch64fdiv", "arch64ddiv"]  
+for test in tests64gc_2_4:
+  tc = TestCase(
+        name=test,
+        variant="rv64gc_2_4",
+        cmd="vsim > {} -c <<!\ndo wally-batch.do rv64gc_2_4 "+test+"\n!",
+        grepstr="All tests ran without failures")
+  configs.append(tc)
+
+
+tests64gc_4_1 = ["arch64fdiv", "arch64ddiv"]  
+for test in tests64gc_4_1:
+  tc = TestCase(
+        name=test,
+        variant="rv64gc_4_1",
+        cmd="vsim > {} -c <<!\ndo wally-batch.do rv64gc_4_1 "+test+"\n!",
+        grepstr="All tests ran without failures")
+  configs.append(tc)
+
+
+tests32gc_2_1 = ["arch32fdiv", "arch32ddiv"]  
+for test in tests32gc_2_1:
+  tc = TestCase(
+        name=test,
+        variant="rv32gc_2_1i",
+        cmd="vsim > {} -c <<!\ndo wally-batch.do rv32gc_2_1i "+test+"\n!",
+        grepstr="All tests ran without failures")
+  configs.append(tc)
+
+  tests32gc_2_4 = ["arch32fdiv", "arch32ddiv"]  
+for test in tests32gc_2_4:
+  tc = TestCase(
+        name=test,
+        variant="rv32gc_2_4i",
+        cmd="vsim > {} -c <<!\ndo wally-batch.do rv32gc_2_4i "+test+"\n!",
+        grepstr="All tests ran without failures")
+  configs.append(tc)
+
+
+tests32gc_4_1 = ["arch32fdiv", "arch32ddiv"]  
+for test in tests32gc_4_1:
+  tc = TestCase(
+        name=test,
+        variant="rv32gc_4_1i",
+        cmd="vsim > {} -c <<!\ndo wally-batch.do rv32gc_4_1i "+test+"\n!",
+        grepstr="All tests ran without failures")
+  configs.append(tc)
+
+  tests64gc_2_1 = ["arch64fdiv", "arch64ddiv"]  
+for test in tests64gc_2_1:
+  tc = TestCase(
+        name=test,
+        variant="rv64gc_2_1i",
+        cmd="vsim > {} -c <<!\ndo wally-batch.do rv64gc_2_1i "+test+"\n!",
+        grepstr="All tests ran without failures")
+  configs.append(tc)
+
+  tests64gc_2_4 = ["arch64fdiv", "arch64ddiv"]  
+for test in tests64gc_2_4:
+  tc = TestCase(
+        name=test,
+        variant="rv64gc_2_4i",
+        cmd="vsim > {} -c <<!\ndo wally-batch.do rv64gc_2_4i "+test+"\n!",
+        grepstr="All tests ran without failures")
+  configs.append(tc)
+
+
+tests64gc_4_1 = ["arch64fdiv", "arch64ddiv"]  
+for test in tests64gc_4_1:
+  tc = TestCase(
+        name=test,
+        variant="rv64gc_4_1i",
+        cmd="vsim > {} -c <<!\ndo wally-batch.do rv64gc_4_1i "+test+"\n!",
+        grepstr="All tests ran without failures")
+  configs.append(tc)
+
+
+
 tests64gcimperas = ["imperas64i", "imperas64f", "imperas64d", "imperas64m", "imperas64c"] # unused
 
 tests64i = ["arch64i"] 

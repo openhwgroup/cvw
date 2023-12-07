@@ -38,8 +38,8 @@ module testbench;
   parameter TEST="none";
   parameter PrintHPMCounters=0;
   parameter BPRED_LOGGER=1;
-  parameter I_CACHE_ADDR_LOGGER=0;
-  parameter D_CACHE_ADDR_LOGGER=0;
+  parameter I_CACHE_ADDR_LOGGER=1;
+  parameter D_CACHE_ADDR_LOGGER=1;
  
 `include "parameter-defs.vh"
 
@@ -124,6 +124,8 @@ module testbench;
         "arch64zbb":     if (P.ZBB_SUPPORTED)     tests = arch64zbb;
         "arch64zbc":     if (P.ZBC_SUPPORTED)     tests = arch64zbc;
         "arch64zbs":     if (P.ZBS_SUPPORTED)     tests = arch64zbs;
+        "arch64fdiv":    if (P.F_SUPPORTED)       tests = arch64fdiv;
+        "arch64ddiv":    if (P.D_SUPPORTED)       tests = arch64ddiv;
       endcase 
     end else begin // RV32
       case (TEST)
@@ -155,6 +157,9 @@ module testbench;
         "arch32zbb":     if (P.ZBB_SUPPORTED)     tests = arch32zbb;
         "arch32zbc":     if (P.ZBC_SUPPORTED)     tests = arch32zbc;
         "arch32zbs":     if (P.ZBS_SUPPORTED)     tests = arch32zbs;
+        // for floating-point divide testing
+        "arch32fdiv":    if (P.F_SUPPORTED)       tests = arch32fdiv;
+        "arch32ddiv":    if (P.D_SUPPORTED)       tests = arch32ddiv;
       endcase
     end
     if (tests.size() == 0) begin
@@ -320,6 +325,10 @@ module testbench;
   ////////////////////////////////////////////////////////////////////////////////
   // Some memories are not reset, but should be zeros or set to some initial value for simulation
   ////////////////////////////////////////////////////////////////////////////////
+
+  // hack to avoid accessing hierarchical path that is not instantiated when a feature is unsupported
+  `define BPRED_SUPPORTED_FLAG P.BPRED_SUPPORTED
+
   integer adrindex;
   always @(posedge clk) begin
     if (ResetMem)  // program memory is sometimes reset
@@ -327,15 +336,17 @@ module testbench;
         for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
           dut.uncore.uncore.ram.ram.memory.RAM[adrindex] = '0;
     if(reset) begin  // branch predictor must always be reset
-      if (P.BPRED_SUPPORTED) begin
-        // local history only
-        if (P.BPRED_TYPE == `BP_LOCAL_AHEAD | P.BPRED_TYPE == `BP_LOCAL_REPAIR)
-          for(adrindex = 0; adrindex < 2**P.BPRED_NUM_LHR; adrindex++)
-            dut.core.ifu.bpred.bpred.Predictor.DirPredictor.BHT.mem[adrindex] = 0;
-        for(adrindex = 0; adrindex < 2**P.BTB_SIZE; adrindex++)
-          dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
-        for(adrindex = 0; adrindex < 2**P.BPRED_SIZE; adrindex++)
-          dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
+      if (`BPRED_SUPPORTED_FLAG == 1) begin // hack to avoid listing hierarchical path when not instantiated
+        if (P.BPRED_SUPPORTED) begin
+          // local history only
+          if (P.BPRED_TYPE == `BP_LOCAL_AHEAD | P.BPRED_TYPE == `BP_LOCAL_REPAIR)
+            for(adrindex = 0; adrindex < 2**P.BPRED_NUM_LHR; adrindex++)
+              dut.core.ifu.bpred.bpred.Predictor.DirPredictor.BHT.mem[adrindex] = 0;
+          for(adrindex = 0; adrindex < 2**P.BTB_SIZE; adrindex++)
+            dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
+          for(adrindex = 0; adrindex < 2**P.BPRED_SIZE; adrindex++)
+            dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
+        end
       end
     end
   end
