@@ -189,6 +189,9 @@ module testbench;
       end
       if (P.SDC_SUPPORTED) begin
           void'(rvviRefMemorySetVolatile(P.SDC_BASE, (P.SDC_BASE + P.SDC_RANGE)));
+      end      
+      if (P.SPI_SUPPORTED) begin
+          void'(rvviRefMemorySetVolatile(P.SPI_BASE, (P.SPI_BASE + P.SPI_RANGE)));
       end
 
       if(P.XLEN==32) begin
