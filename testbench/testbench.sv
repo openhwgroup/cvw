@@ -86,6 +86,24 @@ module testbench;
   logic Validate;
   logic SelectTest;
 
+  // Nasty hack to get around Verilog simulators being picky about conditionally instantiated signals
+  initial begin
+    if (P.DTIM_SUPPORTED) begin
+//      `define P_DTIM_SUPPORTED=1;
+    end
+    if (P.IROM_SUPPORTED) begin
+      `define P_IROM_SUPPORTED=1;
+    end
+    if (P.BUS_SUPPORTED) begin
+      `define P_BUS_SUPPORTED=1;
+    end
+    if (P.SDC_SUPPORTED) begin
+      `define P_SDC_SUPPORTED=1;
+    end
+    if (P.UNCORE_RAM_SUPPORTED) begin
+      `define P_UNCORE_RAM_SUPPORTED=1;
+    end
+  end
 
   // pick tests based on modes supported
   initial begin
@@ -335,7 +353,7 @@ module testbench;
       if (P.UNCORE_RAM_SUPPORTED)
         for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
           dut.uncore.uncore.ram.ram.memory.RAM[adrindex] = '0;
-    if(reset) begin  // branch predictor must always be reset
+/*    if(reset) begin  // branch predictor must always be reset
       if (`BPRED_SUPPORTED_FLAG == 1) begin // hack to avoid listing hierarchical path when not instantiated
         if (P.BPRED_SUPPORTED) begin
           // local history only
@@ -348,7 +366,7 @@ module testbench;
             dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
         end
       end
-    end
+    end */
   end
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -356,7 +374,7 @@ module testbench;
   ////////////////////////////////////////////////////////////////////////////////
   always @(posedge clk) begin
     if (LoadMem) begin
-      if (P.SDC_SUPPORTED) begin
+      `ifdef P_SDC_SUPPORTED
         string romfilename, sdcfilename;
         romfilename = {"../tests/custom/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
         sdcfilename = {"../testbench/sdc/ramdisk2.hex"};   
@@ -364,11 +382,13 @@ module testbench;
         //$readmemh(sdcfilename, sdcard.sdcard.FLASHmem);
         // shorten sdc timers for simulation
         //dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
-      end 
-      else if (P.IROM_SUPPORTED)     $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
-      else if (P.BUS_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-      if (P.DTIM_SUPPORTED)     $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
-      $display("Read memfile %s", memfilename);
+      `elsif P_IROM_SUPPORTED     $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
+      `elsif P_BUS_SUPPORTED $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
+      `endif
+      `ifdef P_DTIM_SUPPORTED
+           $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
+      `endif
+      //$display("Read memfile %s", memfilename);
     end
   end  
  
@@ -521,8 +541,11 @@ module testbench;
     /* verilator lint_off INFINITELOOP */
     while (signature[i] !== 'bx) begin
       logic [P.XLEN-1:0] sig;
-      if (P.DTIM_SUPPORTED) sig = testbench.dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
-      else if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
+      `ifdef P_DTIM_SUPPORTED 
+        sig = testbench.dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
+      `elsif P_UNCORE_RAM_SUPPORTED
+         sig = testbench.dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
+      `endif
       //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
       if (signature[i] !== sig & (signature[i] !== testbench.DCacheFlushFSM.ShadowRAM[testadr+i])) begin  
         errors = errors+1;
