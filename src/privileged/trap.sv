@@ -93,7 +93,6 @@ module trap import cvw::*;  #(parameter cvw_t P) (
 
   ///////////////////////////////////////////
   // Cause priority defined in table 3.7 of 20190608 privileged spec
-  // Exceptions are of lower priority than all interrupts (3.1.9)
   ///////////////////////////////////////////
 
   always_comb
