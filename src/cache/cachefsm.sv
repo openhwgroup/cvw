@@ -38,6 +38,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   output logic       CacheStall,        // Cache stalls pipeline during multicycle operation
   // inputs from IEU
   input  logic [1:0] CacheRW,           // [1] Read, [0] Write 
+  input  logic [1:0] CacheRWNext,           // [1] Read, [0] Write 
   input  logic       FlushCache,        // Flush all dirty lines back to memory
   input  logic       InvalidateCache,   // Clear all valid bits
   input  logic [3:0] CMOp,              // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
@@ -77,6 +78,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   logic              FlushFlag;
   logic              CMOWriteback;
   logic              CMOZeroNoEviction;
+  logic              StallConditions;
 
   typedef enum logic [3:0]{STATE_READY, // hit states
                            // miss states
@@ -119,6 +121,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
                              else if(FlushCache & ~READ_ONLY_CACHE)            NextState = STATE_FLUSH;
                              else if(AnyMiss & (READ_ONLY_CACHE | ~LineDirty)) NextState = STATE_FETCH;     // exclusion-tag: icache FETCHStatement
                              else if(AnyMiss | CMOWriteback)                   NextState = STATE_WRITEBACK; // exclusion-tag: icache WRITEBACKStatement
+                             else if(CacheRWNext[1] & CacheRW[0])              NextState = STATE_READ_HOLD;
                              else                                              NextState = STATE_READY;
       STATE_FETCH:           if(CacheBusAck)                                   NextState = STATE_WRITE_LINE;
                              else if(CacheBusAck)                              NextState = STATE_READY;
@@ -144,7 +147,8 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
 
   // com back to CPU
   assign CacheCommitted = (CurrState != STATE_READY) & ~(READ_ONLY_CACHE & (CurrState == STATE_READ_HOLD));
-  assign CacheStall = (CurrState == STATE_READY & (FlushCache | AnyMiss | CMOWriteback)) | // exclusion-tag: icache StallStates
+  assign StallConditions =  FlushCache | AnyMiss | CMOWriteback | (CacheRWNext[1] & CacheRW[0]);
+  assign CacheStall = (CurrState == STATE_READY & StallConditions) | // exclusion-tag: icache StallStates
                       (CurrState == STATE_FETCH) |
                       (CurrState == STATE_WRITEBACK) |
                       (CurrState == STATE_WRITE_LINE) |  // this cycle writes the sram, must keep stalling so the next cycle can read the next hit/miss unless its a write.
@@ -208,6 +212,6 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
                   (CurrState == STATE_WRITE_LINE) |
                   resetDelay;
   assign SelFetchBuffer = CurrState == STATE_WRITE_LINE | CurrState == STATE_READ_HOLD;
-  assign CacheEn = (~Stall | FlushCache | AnyMiss) | (CurrState != STATE_READY) | reset | InvalidateCache; // exclusion-tag: dcache CacheEn
+  assign CacheEn = (~Stall | StallConditions) | (CurrState != STATE_READY) | reset | InvalidateCache; // exclusion-tag: dcache CacheEn
                        
 endmodule // cachefsm

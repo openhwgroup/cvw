@@ -225,7 +225,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   /////////////////////////////////////////////////////////////////////////////////////////////
   
   cachefsm #(P, READ_ONLY_CACHE) cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
-    .FlushStage, .CacheRW, .Stall,
+    .FlushStage, .CacheRW, .CacheRWNext, .Stall,
     .CacheHit, .LineDirty, .HitLineDirty, .CacheStall, .CacheCommitted, 
     .CacheMiss, .CacheAccess, .SelAdrData, .SelAdrTag, .SelWay,
     .ClearDirty, .SetDirty, .SetValid, .ClearValid, .SelWriteback, .SelFlush,
