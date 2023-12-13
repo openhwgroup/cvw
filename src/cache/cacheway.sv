@@ -158,7 +158,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   always_ff @(posedge clk) begin // Valid bit array, 
     if (reset) ValidBits        <= #1 '0;
     if(CacheEn) begin 
-      ValidWay <= #1 ValidBits[CacheSetData];
+      ValidWay <= #1 ValidBits[CacheSetTag];
       if(InvalidateCache)                    ValidBits <= #1 '0; // exclusion-tag: dcache invalidateway
       else if (SetValidEN) ValidBits[CacheSetData] <= #1 SetValidWay;
       else if (ClearValidEN) ValidBits[CacheSetData] <= #1 '0;
@@ -175,7 +175,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
       // reset is optional.  Consider merging with TAG array in the future.
       //if (reset) DirtyBits <= #1 {NUMLINES{1'b0}}; 
       if(CacheEn) begin
-        Dirty <= #1 DirtyBits[CacheSetData];
+        Dirty <= #1 DirtyBits[CacheSetTag];
         if((SetDirtyWay | ClearDirtyWay) & ~FlushStage) DirtyBits[CacheSetData] <= #1 SetDirtyWay;
       end
     end
