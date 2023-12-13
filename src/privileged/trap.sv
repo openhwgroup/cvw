@@ -92,8 +92,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   assign RetM  = mretM | sretM;
 
   ///////////////////////////////////////////
-  // Cause priority defined in table 3.7 of 20190608 privileged spec
-  // Exceptions are of lower priority than all interrupts (3.1.9)
+  // Cause priority defined in privileged spec
   ///////////////////////////////////////////
 
   always_comb
