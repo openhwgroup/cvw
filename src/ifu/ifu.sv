@@ -305,15 +305,10 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32
-  // *** consider using PCPlus2or4F = PCF + CompressedF ? 2 : 4;
   assign PCPlus4F = PCF[P.XLEN-1:2] + 1; // add 4 to PC
   // choose PC+2 or PC+4 based on CompressedF, which arrives later. 
   // Speeds up critical path as compared to selecting adder input based on CompressedF
-  // *** consider gating PCPlus4F to provide the reset.
 
-  // *** There is actually a bug in the regression test.  We fetched an address which returns data with
-  // an X.  This version of the code does not die because if CompressedF is an X it just defaults to the last
-  // option.  The above code would work, but propagates the x.
   always_comb
     if (CompressedF) // add 2
       if (PCF[1]) PCPlus2or4F = {PCPlus4F, 2'b00}; 
