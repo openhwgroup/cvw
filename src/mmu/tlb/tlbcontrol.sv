@@ -32,7 +32,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   input  logic                     STATUS_MXR, STATUS_SUM, STATUS_MPRV,
   input  logic [1:0]               STATUS_MPP,
   input  logic                     ENVCFG_PBMTE,       // Page-based memory types enabled
-  input  logic                     ENVCFG_HADE,        // HPTW A/D Update enable
+  input  logic                     ENVCFG_ADUE,        // HPTW A/D Update enable
   input  logic [1:0]               PrivilegeModeW,     // Current privilege level of the processeor
   input  logic                     ReadAccess, WriteAccess,
   input  logic [3:0]               CMOp,
@@ -119,10 +119,10 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   end
 
   // Determine wheter to update DA bits.  With SVADU, it is done in hardware
-  assign UpdateDA = P.SVADU_SUPPORTED & PreUpdateDA & Translate & TLBHit & ~TLBPageFault & ENVCFG_HADE;
+  assign UpdateDA = P.SVADU_SUPPORTED & PreUpdateDA & Translate & TLBHit & ~TLBPageFault & ENVCFG_ADUE;
 
   // Determine whether page fault occurs
-  assign PrePageFault = UpperBitsUnequal | Misaligned | ~PTE_V | ImproperPrivilege | (P.XLEN == 64 & (BadPBMT | BadNAPOT | BadReserved)) | (PreUpdateDA & (~P.SVADU_SUPPORTED | ~ENVCFG_HADE));
+  assign PrePageFault = UpperBitsUnequal | Misaligned | ~PTE_V | ImproperPrivilege | (P.XLEN == 64 & (BadPBMT | BadNAPOT | BadReserved)) | (PreUpdateDA & (~P.SVADU_SUPPORTED | ~ENVCFG_ADUE));
   assign TLBPageFault = Translate & TLBHit & (PrePageFault | InvalidAccess);
 
   assign TLBHit = CAMHit & TLBAccess;
