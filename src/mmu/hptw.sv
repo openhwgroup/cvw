@@ -198,7 +198,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   end
 
   // Enable and select signals based on states
-  assign StartWalk  = (WalkerState == IDLE) & TLBMiss;
+  assign StartWalk  = (WalkerState == IDLE) & TLBMiss; 
   assign HPTWRW[1]  = (WalkerState == L3_RD) | (WalkerState == L2_RD) | (WalkerState == L1_RD) | (WalkerState == L0_RD);
   assign DTLBWriteM = (WalkerState == LEAF & ~HPTWUpdateDA) & DTLBWalk;
   assign ITLBWriteF = (WalkerState == LEAF & ~HPTWUpdateDA) & ~DTLBWalk;
