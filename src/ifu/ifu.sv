@@ -243,7 +243,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
              .CacheMiss(ICacheMiss), .CacheAccess(ICacheAccess),
              .ByteMask('0), .BeatCount('0), .SelBusBeat('0),
              .CacheWriteData('0),
-             .CacheRW(CacheRWF), 
+             .CacheRW(CacheRWF),  .CacheRWNext('0),  // CacheRWNext is only used to detect hazards.  Not possible with icache
              .FlushCache('0),
              .NextSet(PCSpillNextF[11:0]),
              .PAdr(PCPF),

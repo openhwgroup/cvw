@@ -54,7 +54,8 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   input  logic       HitLineDirty,   // The cache hit way is dirty
   input  logic       FlushAdrFlag,      // On last set of a cache flush
   input  logic       FlushWayFlag,      // On the last way for any set of a cache flush
-  output logic       SelAdr,            // [0] SRAM reads from NextAdr, [1] SRAM reads from PAdr
+  output logic       SelAdrData,            // [0] SRAM reads from NextAdr, [1] SRAM reads from PAdr
+  output logic       SelAdrTag,            // [0] SRAM reads from NextAdr, [1] SRAM reads from PAdr
   output logic       SetValid,          // Set the valid bit in the selected way and set
   output logic       ClearValid,        // Clear the valid bit in the selected way and set
   output logic       SetDirty,          // Set the dirty bit in the selected way and set
@@ -172,9 +173,12 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
                   (CurrState == STATE_WRITE_LINE);
   assign SelWriteback = (CurrState == STATE_WRITEBACK & (CMOp[1] | CMOp[2] | ~CacheBusAck)) |
                         (CurrState == STATE_READY & AnyMiss & LineDirty);
+/* -----\/----- EXCLUDED -----\/-----
   assign SelFlush = (CurrState == STATE_READY & FlushCache) |
           (CurrState == STATE_FLUSH) | 
           (CurrState == STATE_FLUSH_WRITEBACK);
+ -----/\----- EXCLUDED -----/\----- */
+ assign SelFlush = FlushCache;
   // coverage off -item e 1 -fecexprrow 1
   // (state is always FLUSH_WRITEBACK when FlushWayFlag & CacheBusAck)
   assign FlushAdrCntEn = (CurrState == STATE_FLUSH_WRITEBACK & FlushWayFlag & CacheBusAck) |
@@ -193,7 +197,12 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
                          (CurrState == STATE_FLUSH_WRITEBACK & ~CacheBusAck) |
                          (CurrState == STATE_WRITEBACK & (CMOp[1] | CMOp[2]) & ~CacheBusAck);
 
-  assign SelAdr = (CurrState == STATE_READY & (CacheRW[0] | AnyMiss | (|CMOp))) | // exclusion-tag: icache SelAdrCauses // changes if store delay hazard removed
+  assign SelAdrData = (CurrState == STATE_READY & (CacheRW[0] | AnyMiss | (|CMOp))) | // exclusion-tag: icache SelAdrCauses // changes if store delay hazard removed
+                  (CurrState == STATE_FETCH) |
+                  (CurrState == STATE_WRITEBACK) |
+                  (CurrState == STATE_WRITE_LINE) |
+                  resetDelay;
+  assign SelAdrTag = (CurrState == STATE_READY & (AnyMiss | (|CMOp))) | // exclusion-tag: icache SelAdrCauses // changes if store delay hazard removed
                   (CurrState == STATE_FETCH) |
                   (CurrState == STATE_WRITEBACK) |
                   (CurrState == STATE_WRITE_LINE) |

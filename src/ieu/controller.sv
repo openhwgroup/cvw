@@ -68,6 +68,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
 
   // Memory stage control signals
   input  logic        StallM, FlushM,          // Stall, flush Memory stage
+  output logic [1:0]  MemRWE,                  // Mem read/write: MemRWM[1] = 1 for read, MemRWM[0] = 1 for write 
   output logic [1:0]  MemRWM,                  // Mem read/write: MemRWM[1] = 1 for read, MemRWM[0] = 1 for write 
   output logic        CSRReadM, CSRWriteM, PrivilegedM, // CSR read, write, or privileged instruction
   output logic [1:0]  AtomicM,                 // Atomic (AMO) instruction
@@ -97,7 +98,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        RegWriteD, RegWriteE;           // RegWrite (register will be written)
   logic [2:0]  ResultSrcD, ResultSrcE, ResultSrcM; // Select which result to write back to register file
   logic [2:0]  PreImmSrcD;                     // Immediate source format (before amending for prefetches)
-  logic [1:0]  MemRWD, MemRWE;                 // Store (write to memory)
+  logic [1:0]  MemRWD;                         // Store (write to memory)
   logic        ALUOpD;                         // 0 for address generation, 1 for all other operations (must use Funct3)
   logic        BaseW64D;                       // W64 for Base instructions specifically
   logic        BaseRegWriteD;                  // Indicates if Base instruction register write instruction

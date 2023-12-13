@@ -34,6 +34,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   input  logic                    StallM, FlushM, StallW, FlushW,
   output logic                    LSUStallM,                            // LSU stalls pipeline during a multicycle operation
   // connected to cpu (controls)
+  input  logic [1:0]              MemRWE,                               // Read/Write control
   input  logic [1:0]              MemRWM,                               // Read/Write control
   input  logic [2:0]              Funct3M,                              // Size of memory operation
   input  logic [6:0]              Funct7M,                              // Atomic memory operation function
@@ -315,7 +316,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       
       cache #(.P(P), .PA_BITS(P.PA_BITS), .XLEN(P.XLEN), .LINELEN(P.DCACHE_LINELENINBITS), .NUMLINES(P.DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(P.DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(CACHEWORDLEN), .MUXINTERVAL(P.LLEN), .READ_ONLY_CACHE(0)) dcache(
-        .clk, .reset, .Stall(GatedStallW & ~SelSpillE), .SelBusBeat, .FlushStage(FlushW | IgnoreRequestTLB), .CacheRW(SelStoreDelay ? 2'b00 : CacheRWM), 
+        .clk, .reset, .Stall(GatedStallW & ~SelSpillE), .SelBusBeat, .FlushStage(FlushW | IgnoreRequestTLB), .CacheRWNext(MemRWE),  // *** change to LSURWE after updating hptw and atomic
+        .CacheRW(SelStoreDelay ? 2'b00 : CacheRWM), 
         .FlushCache(FlushDCache), .NextSet(IEUAdrExtE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskSpillM), .BeatCount(BeatCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
         .CacheWriteData(LSUWriteDataSpillM), .SelHPTW,
