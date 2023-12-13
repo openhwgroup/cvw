@@ -300,23 +300,17 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     mux2 #(P.XLEN) pcmux2(.d0(PC1NextF), .d1(NextValidPCE), .s(CSRWriteFenceM),.y(PC2NextF));
   else assign PC2NextF = PC1NextF;
 
-  assign  PCNextF = {UnalignedPCNextF[P.XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
-  flopenl #(P.XLEN) pcreg(clk, reset, ~StallF, PCNextF, P.RESET_VECTOR[P.XLEN-1:0], PCF);
+  mux2 #(P.XLEN) pcresetmux({UnalignedPCNextF[P.XLEN-1:1], 1'b0}, P.RESET_VECTOR[P.XLEN-1:0], reset, PCNextF);
+  flopen #(P.XLEN) pcreg(clk, ~StallF | reset, PCNextF, PCF);
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32
-  // *** consider using PCPlus2or4F = PCF + CompressedF ? 2 : 4;
   assign PCPlus4F = PCF[P.XLEN-1:2] + 1; // add 4 to PC
   // choose PC+2 or PC+4 based on CompressedF, which arrives later. 
   // Speeds up critical path as compared to selecting adder input based on CompressedF
-  // *** consider gating PCPlus4F to provide the reset.
 
-  // *** There is actually a bug in the regression test.  We fetched an address which returns data with
-  // an X.  This version of the code does not die because if CompressedF is an X it just defaults to the last
-  // option.  The above code would work, but propagates the x.
   always_comb
-    if(reset) PCPlus2or4F = '0;
-    else if (CompressedF) // add 2
+    if (CompressedF) // add 2
       if (PCF[1]) PCPlus2or4F = {PCPlus4F, 2'b00}; 
       else        PCPlus2or4F = {PCF[P.XLEN-1:2], 2'b10};
     else          PCPlus2or4F = {PCPlus4F, PCF[1:0]}; // add 4
