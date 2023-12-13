@@ -157,7 +157,7 @@ test_cases:
 .4byte 0xBFFDE0, 0xbad, executable_test             # instr page fault when X=0 
 
 # In the following two tests, SVADU is supported, so the hardware handles the A/D bits
-# Initially test with HADE = 0, so needing to set A/D bits triggers page fault
+# Initially test with ADUE = 0, so needing to set A/D bits triggers page fault
 
 # test 11.3.1.3.6(a) Accessed flag == 0
 .4byte 0x3020, 0xBEEF0770, write32_test     # store page fault when A=0
@@ -167,9 +167,9 @@ test_cases:
 .4byte 0x4658, 0xBEEF0AA0, write32_test # store page fault when D=0
 .4byte 0x4658, 0xDEADBEEF, read32_test  # read success when D=0; default DEADBEEF value wasn't changed
 
-# Now set HADE bit
+# Now set ADUE bit
 .4byte 0x0, 0x0, goto_m_mode # change to M mode, 0x9 written to output
-.4byte 0x0, 0x20000000, write_menvcfgh  # set menvcfg.HADE = 1
+.4byte 0x0, 0x20000000, write_menvcfgh  # set menvcfg.ADUE = 1
 .4byte 0x0, 0x0, goto_s_mode # change to S mode, 0xb written to output
 
 # Since SVADU is 1, there are no faults when A/D=0

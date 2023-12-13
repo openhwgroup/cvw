@@ -58,7 +58,7 @@ module tlb import cvw::*;  #(parameter cvw_t P,
   input  logic                     STATUS_MXR, STATUS_SUM, STATUS_MPRV,
   input  logic [1:0]               STATUS_MPP,
   input  logic                     ENVCFG_PBMTE,     // Page-based memory types enabled
-  input  logic                     ENVCFG_HADE,      // HPTW A/D Update enable
+  input  logic                     ENVCFG_ADUE,      // HPTW A/D Update enable
   input  logic [1:0]               PrivilegeModeW,   // Current privilege level of the processeor
   input  logic                     ReadAccess, 
   input  logic                     WriteAccess,
@@ -106,7 +106,7 @@ module tlb import cvw::*;  #(parameter cvw_t P,
 
   assign VPN = VAdr[P.VPN_BITS+11:12];
 
-  tlbcontrol #(P, ITLB) tlbcontrol(.SATP_MODE, .VAdr, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_HADE,
+  tlbcontrol #(P, ITLB) tlbcontrol(.SATP_MODE, .VAdr, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE,
     .PrivilegeModeW, .ReadAccess, .WriteAccess, .CMOp, .DisableTranslation, .TLBFlush,
     .PTEAccessBits, .CAMHit, .Misaligned, 
     .TLBMiss, .TLBHit, .TLBPageFault, 

@@ -78,7 +78,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          LoadStallD, StoreStallD, MDUStallD, CSRRdStallD;
   logic                          SquashSCW;
   logic                          MDUActiveE;                      // Mul/Div instruction being executed
-  logic                          ENVCFG_HADE;                     // HPTW A/D Update enable
+  logic                          ENVCFG_ADUE;                     // HPTW A/D Update enable
   logic                          ENVCFG_PBMTE;                    // Page-based memory type enable
   logic [3:0]                    ENVCFG_CBE;                      // Cache Block operation enables
   logic [3:0]                    CMOpM;                           // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
@@ -185,7 +185,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .IllegalBaseInstrD, .IllegalFPUInstrD, .InstrPageFaultF, .IllegalIEUFPUInstrD, .InstrMisalignedFaultM,
     // mmu management
     .PrivilegeModeW, .PTE, .PageType, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV,
-    .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_HADE, .ITLBWriteF, .sfencevmaM, .ITLBMissF,
+    .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE, .ITLBWriteF, .sfencevmaM, .ITLBMissF,
     // pmp/pma (inside mmu) signals. 
     .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW, .InstrAccessFaultF, .InstrUpdateDAF); 
     
@@ -234,7 +234,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .STATUS_MPRV,                 // from csr            
     .STATUS_MPP,                  // from csr     
     .ENVCFG_PBMTE,                // from csr
-    .ENVCFG_HADE,                 // from csr
+    .ENVCFG_ADUE,                 // from csr
     .sfencevmaM,                  // connects to privilege
     .DCacheStallM,                // connects to privilege
     .LoadPageFaultM,              // connects to privilege
@@ -296,7 +296,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .PrivilegeModeW, .SATP_REGW,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS, 
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
-      .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_HADE, .wfiM, .IntPendingM, .BigEndianM);
+      .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM);
   end else begin
     assign CSRReadValW      = 0;
     assign UnalignedPCNextF = PC2NextF;

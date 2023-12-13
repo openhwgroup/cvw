@@ -86,7 +86,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   input  logic                 STATUS_MPRV,                              // Status CSR: modify machine privilege
   input  logic [1:0]           STATUS_MPP,                               // Status CSR: previous machine privilege level
   input  logic                 ENVCFG_PBMTE,                             // Page-based memory types enabled
-  input  logic                 ENVCFG_HADE,                              // HPTW A/D Update enable
+  input  logic                 ENVCFG_ADUE,                              // HPTW A/D Update enable
   input  logic                 sfencevmaM,                               // Virtual memory address fence, invalidate TLB entries
   output logic                 ITLBMissF,                                // ITLB miss causes HPTW (hardware pagetable walker) walk
   output logic                 InstrUpdateDAF,                           // ITLB hit needs to update dirty or access bits
@@ -168,7 +168,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     assign TLBFlush = sfencevmaM & ~StallMQ;
 
     mmu #(.P(P), .TLB_ENTRIES(P.ITLB_ENTRIES), .IMMU(1))
-    immu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_HADE,
+    immu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE,
          .PrivilegeModeW, .DisableTranslation(1'b0),
          .VAdr(PCFExt),
          .Size(2'b10),
