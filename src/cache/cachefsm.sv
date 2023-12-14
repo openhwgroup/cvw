@@ -196,7 +196,13 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   assign CacheBusRW[1] = (CurrState == STATE_READY & AnyMiss & ~LineDirty) | // exclusion-tag: icache CacheBusRCauses
                          (CurrState == STATE_FETCH & ~CacheBusAck) | 
                          (CurrState == STATE_WRITEBACK & CacheBusAck & ~(|CMOp));
-  assign CacheBusRW[0] = (CurrState == STATE_READY & AnyMiss & LineDirty) | // exclusion-tag: icache CacheBusW
+
+  logic LoadMiss;
+  
+  //assign StoreMiss = (CacheRW[0]) & ~CacheHit & ~InvalidateCache; // exclusion-tag: cache AnyMiss
+  assign LoadMiss = (CacheRW[1]) & ~CacheHit & ~InvalidateCache; // exclusion-tag: cache AnyMiss
+
+  assign CacheBusRW[0] = (CurrState == STATE_READY & LoadMiss & LineDirty) | // exclusion-tag: icache CacheBusW
                          (CurrState == STATE_WRITEBACK & ~CacheBusAck) |
                          (CurrState == STATE_FLUSH_WRITEBACK & ~CacheBusAck) |
                          (CurrState == STATE_WRITEBACK & (CMOp[1] | CMOp[2]) & ~CacheBusAck);
