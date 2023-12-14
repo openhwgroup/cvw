@@ -99,19 +99,11 @@ add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu
 add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/dcache/CacheBusAdr
 add wave -noupdate -expand -group lsu -group alignment -color Gold /testbench/dut/core/lsu/ziccslm_align/align/CurrState
 add wave -noupdate -expand -group lsu -group alignment /testbench/dut/core/lsu/ziccslm_align/align/MemRWM
-add wave -noupdate -expand -group lsu -group alignment /testbench/dut/core/lsu/ziccslm_align/align/DTLBMissM
-add wave -noupdate -expand -group lsu -group alignment /testbench/dut/core/lsu/ziccslm_align/align/CacheableM
-add wave -noupdate -expand -group lsu -group alignment /testbench/dut/core/lsu/ziccslm_align/align/HalfSpillM
-add wave -noupdate -expand -group lsu -group alignment /testbench/dut/core/lsu/ziccslm_align/align/WordSpillM
-add wave -noupdate -expand -group lsu -group alignment -color Orange /testbench/dut/core/lsu/ziccslm_align/align/SpillM
 add wave -noupdate -expand -group lsu -group alignment /testbench/dut/core/lsu/ziccslm_align/align/IEUAdrSpillM
-add wave -noupdate -expand -group lsu -group alignment /testbench/dut/core/lsu/ziccslm_align/align/SaveByteMask
-add wave -noupdate -expand -group lsu -group alignment /testbench/dut/core/lsu/ziccslm_align/align/ByteMaskSaveM
 add wave -noupdate -expand -group lsu -group alignment /testbench/dut/core/lsu/ByteMaskM
 add wave -noupdate -expand -group lsu -group alignment /testbench/dut/core/lsu/ByteMaskExtendedM
 add wave -noupdate -expand -group lsu -group alignment /testbench/dut/core/lsu/ziccslm_align/align/SelSpillE
 add wave -noupdate -expand -group lsu -group alignment /testbench/dut/core/lsu/ziccslm_align/align/SelSpillM
-add wave -noupdate -expand -group lsu -group alignment /testbench/dut/core/lsu/ziccslm_align/align/ByteMaskMuxM
 add wave -noupdate -expand -group lsu -group alignment /testbench/dut/core/lsu/ByteMaskSpillM
 add wave -noupdate -expand -group lsu -group alignment /testbench/dut/core/lsu/LSUWriteDataM
 add wave -noupdate -expand -group lsu -group alignment /testbench/dut/core/lsu/LSUWriteDataSpillM
