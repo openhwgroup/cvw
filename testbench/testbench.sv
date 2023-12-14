@@ -86,24 +86,6 @@ module testbench;
   logic Validate;
   logic SelectTest;
 
-  // Nasty hack to get around Verilog simulators being picky about conditionally instantiated signals
-  initial begin
-    if (P.DTIM_SUPPORTED) begin
-//      `define P_DTIM_SUPPORTED=1;
-    end
-    if (P.IROM_SUPPORTED) begin
-      `define P_IROM_SUPPORTED=1;
-    end
-    if (P.BUS_SUPPORTED) begin
-      `define P_BUS_SUPPORTED=1;
-    end
-    if (P.SDC_SUPPORTED) begin
-      `define P_SDC_SUPPORTED=1;
-    end
-    if (P.UNCORE_RAM_SUPPORTED) begin
-      `define P_UNCORE_RAM_SUPPORTED=1;
-    end
-  end
 
   // pick tests based on modes supported
   initial begin
@@ -289,7 +271,7 @@ module testbench;
   ////////////////////////////////////////////////////////////////////////////////
     if(TestBenchReset) test = 1;
     if (TEST == "coremark")
-      if (dut.core.priv.priv.EcallFaultM) begin
+      if (dut.core.EcallFaultM) begin
         $display("Benchmark: coremark is done.");
         $stop;
       end
@@ -344,7 +326,7 @@ module testbench;
       if (P.UNCORE_RAM_SUPPORTED)
         for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
           dut.uncore.uncore.ram.ram.memory.RAM[adrindex] = '0;
-/*    if(reset) begin  // branch predictor must always be reset
+    if(reset) begin  // branch predictor must always be reset
       if (P.BPRED_SUPPORTED) begin
         // local history only
         if (P.BPRED_TYPE == `BP_LOCAL_AHEAD | P.BPRED_TYPE == `BP_LOCAL_REPAIR)
@@ -355,7 +337,7 @@ module testbench;
         for(adrindex = 0; adrindex < 2**P.BPRED_SIZE; adrindex++)
           dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
       end
-    end */
+    end
   end
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -363,22 +345,18 @@ module testbench;
   ////////////////////////////////////////////////////////////////////////////////
   always @(posedge clk) begin
     if (LoadMem) begin
-      `ifdef P_SDC_SUPPORTED 
+      if (P.SDC_SUPPORTED) begin
         string romfilename, sdcfilename;
         romfilename = {"../tests/custom/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
         sdcfilename = {"../testbench/sdc/ramdisk2.hex"};   
         //$readmemh(romfilename, dut.uncore.uncore.bootrom.bootrom.memory.ROM);
         //$readmemh(sdcfilename, sdcard.sdcard.FLASHmem);
         // shorten sdc timers for simulation
-        //dut.uncore.uncore.sdc.SDC.LimitTimers = 1; 
-      `elsif P_IROM_SUPPORTED   
-        $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
-      `else if P_BUS_SUPPORTED 
-        $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-      `endif
-      `ifdef P_DTIM_SUPPORTED
-        $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
-      `endif
+        //dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
+      end 
+      else if (P.IROM_SUPPORTED)     $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
+      else if (P.BUS_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
+      if (P.DTIM_SUPPORTED)     $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
       $display("Read memfile %s", memfilename);
     end
   end  
