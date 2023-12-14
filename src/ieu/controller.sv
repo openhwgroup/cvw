@@ -429,5 +429,8 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   // atomic operations are also detected as MemRWD[1]
   // *** RT: Remove this after updating the cache.
   // *** RT: Check that atomic after atomic works correctly.
-  assign StoreStallD = ((|CMOpE)) & ((|CMOpD));
+  //assign StoreStallD = ((|CMOpE)) & ((|CMOpD));
+  logic AMOHazard;
+  assign AMOHazard = &MemRWM & MemRWE[1];
+  assign StoreStallD = ((|CMOpE) & (|CMOpD)) | AMOHazard;
 endmodule
