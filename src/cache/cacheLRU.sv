@@ -35,7 +35,8 @@ module cacheLRU
   input  logic                CacheEn,         // Enable the cache memory arrays.  Disable hold read data constant
   input  logic [NUMWAYS-1:0]  HitWay,          // Which way is valid and matches PAdr's tag
   input  logic [NUMWAYS-1:0]  ValidWay,        // Which ways for a particular set are valid, ignores tag
-  input  logic [SETLEN-1:0]   CacheSet,        // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
+  input  logic [SETLEN-1:0]   CacheSetData,        // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
+  input  logic [SETLEN-1:0]   CacheSetTag,        // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
   input  logic [SETLEN-1:0]   PAdr,            // Physical address 
   input  logic                LRUWriteEn,      // Update the LRU state
   input  logic                SetValid,        // Set the dirty bit in the selected way and set
@@ -139,7 +140,7 @@ module cacheLRU
 
   // LRU storage must be reset for modelsim to run. However the reset value does not actually matter in practice.
   // This is a two port memory.
-  // Every cycle must read from CacheSet and each load/store must write the new LRU.
+  // Every cycle must read from CacheSetData and each load/store must write the new LRU.
   always_ff @(posedge clk) begin
     if (reset | (InvalidateCache & ~FlushStage)) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
     if(CacheEn) begin
@@ -147,10 +148,10 @@ module cacheLRU
         LRUMemory[PAdr] <= '0;
       else if(LRUWriteEn)
         LRUMemory[PAdr] <= NextLRU;
-      if(LRUWriteEn & (PAdr == CacheSet))
+      if(LRUWriteEn & (PAdr == CacheSetTag))
         CurrLRU <= #1 NextLRU;
       else 
-        CurrLRU <= #1 LRUMemory[CacheSet];
+        CurrLRU <= #1 LRUMemory[CacheSetTag];
     end
   end
 

@@ -50,6 +50,7 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   output logic              LSUPrefetchM,                    // datata prefetch
   // Memory stage signals
   input  logic              SquashSCW,                       // Squash store conditional, from LSU
+  output logic [1:0]        MemRWE,                          // Read/write control goes to LSU
   output logic [1:0]        MemRWM,                          // Read/write control goes to LSU
   output logic [1:0]        AtomicM,                         // Atomic control goes to LSU
   output logic [P.XLEN-1:0] WriteDataM,                      // Write data to LSU
@@ -107,7 +108,7 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
     .PCSrcE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .MemReadE, .CSRReadE, 
     .Funct3E, .IntDivE, .MDUE, .W64E, .SubArithE, .BranchD, .BranchE, .JumpD, .JumpE, .SCE, 
     .BranchSignedE, .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE, .MDUActiveE, .CMOpM, .IFUPrefetchE, .LSUPrefetchM,
-    .StallM, .FlushM, .MemRWM, .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
+    .StallM, .FlushM, .MemRWE, .MemRWM, .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
     .RegWriteM, .FlushDCacheM, .InstrValidM, .InstrValidE, .InstrValidD, .FWriteIntM,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .ResultSrcW, .CSRWriteFenceM, .InvalidateICacheM, .StoreStallD);
 

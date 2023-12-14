@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // cacheway
 //
-// Written: Ross Thompson ross1728@gmail.com 
+// Written: Rose Thompson ross1728@gmail.com 
 // Created: 7 July 2021
 // Modified: 20 January 2023
 //
@@ -34,7 +34,8 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   input  logic                        reset,
   input  logic                        FlushStage,     // Pipeline flush of second stage (prevent writes and bus operations)
   input  logic                        CacheEn,        // Enable the cache memory arrays.  Disable hold read data constant
-  input  logic [$clog2(NUMLINES)-1:0] CacheSet,       // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
+  input  logic [$clog2(NUMLINES)-1:0] CacheSetData,       // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
+  input  logic [$clog2(NUMLINES)-1:0] CacheSetTag,       // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
   input  logic [PA_BITS-1:0]          PAdr,           // Physical address 
   input  logic [LINELEN-1:0]          LineWriteData,  // Final data written to cache (D$ only)
   input  logic                        SetValid,       // Set the valid bit in the selected way and set
@@ -113,7 +114,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   ram1p1rwe #(.USE_SRAM(P.USE_SRAM), .DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk, .ce(CacheEn),
-    .addr(CacheSet), .dout(ReadTag),
+    .addr(CacheSetTag), .dout(ReadTag),
     .din(PAdr[PA_BITS-1:OFFSETLEN+INDEXLEN]), .we(SetValidEN));
 
   // AND portion of distributed tag multiplexer
@@ -135,12 +136,12 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   
   for(words = 0; words < NUMSRAM; words++) begin: word
     if (!READ_ONLY_CACHE) begin:wordram
-      ram1p1rwbe #(.USE_SRAM(P.USE_SRAM), .DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSet),
+      ram1p1rwbe #(.USE_SRAM(P.USE_SRAM), .DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSetData),
       .dout(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .din(LineWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .we(SelectedWriteWordEn), .bwe(FinalByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
     end else begin:wordram // no byte-enable needed for i$.
-      ram1p1rwe #(.USE_SRAM(P.USE_SRAM), .DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSet),
+      ram1p1rwe #(.USE_SRAM(P.USE_SRAM), .DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSetData),
       .dout(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .din(LineWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .we(SelectedWriteWordEn));
@@ -157,10 +158,10 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   always_ff @(posedge clk) begin // Valid bit array, 
     if (reset) ValidBits        <= #1 '0;
     if(CacheEn) begin 
-      ValidWay <= #1 ValidBits[CacheSet];
+      ValidWay <= #1 ValidBits[CacheSetTag];
       if(InvalidateCache)                    ValidBits <= #1 '0; // exclusion-tag: dcache invalidateway
-      else if (SetValidEN) ValidBits[CacheSet] <= #1 SetValidWay;
-      else if (ClearValidEN) ValidBits[CacheSet] <= #1 '0;
+      else if (SetValidEN) ValidBits[CacheSetData] <= #1 SetValidWay;
+      else if (ClearValidEN) ValidBits[CacheSetData] <= #1 '0;
     end
   end
 
@@ -174,8 +175,8 @@ module cacheway import cvw::*; #(parameter cvw_t P,
       // reset is optional.  Consider merging with TAG array in the future.
       //if (reset) DirtyBits <= #1 {NUMLINES{1'b0}}; 
       if(CacheEn) begin
-        Dirty <= #1 DirtyBits[CacheSet];
-        if((SetDirtyWay | ClearDirtyWay) & ~FlushStage) DirtyBits[CacheSet] <= #1 SetDirtyWay;
+        Dirty <= #1 DirtyBits[CacheSetTag];
+        if((SetDirtyWay | ClearDirtyWay) & ~FlushStage) DirtyBits[CacheSetData] <= #1 SetDirtyWay;
       end
     end
   end else assign Dirty = 1'b0;

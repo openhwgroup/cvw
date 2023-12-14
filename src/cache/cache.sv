@@ -34,6 +34,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   input  logic                   Stall,             // Stall the cache, preventing new accesses. In-flight access finished but does not return to READY
   input  logic                   FlushStage,        // Pipeline flush of second stage (prevent writes and bus operations)
   // cpu side
+  input  logic [1:0]             CacheRWNext,       // [1] Read, [0] Write 
   input  logic [1:0]             CacheRW,           // [1] Read, [0] Write 
   input  logic                   FlushCache,        // Flush all dirty lines back to memory
   input  logic                   InvalidateCache,   // Clear all valid bits
@@ -71,9 +72,12 @@ module cache import cvw::*; #(parameter cvw_t P,
   localparam                     LOGLLENBYTES = $clog2(WORDLEN/8);   // Number of bits to address a word
 
 
-  logic                          SelAdr;
-  logic [1:0]                    AdrSelMuxSel;
-  logic [SETLEN-1:0]             CacheSet;
+  logic                          SelAdrData;
+  logic                          SelAdrTag;
+  logic [1:0]                    AdrSelMuxSelData;
+  logic [1:0]                    AdrSelMuxSelTag;
+  logic [SETLEN-1:0]             CacheSetData;
+  logic [SETLEN-1:0]             CacheSetTag;
   logic [LINELEN-1:0]            LineWriteData;
   logic                          ClearDirty, SetDirty, SetValid, ClearValid;
   logic [LINELEN-1:0]            ReadDataLineWay [NUMWAYS-1:0];
@@ -108,20 +112,23 @@ module cache import cvw::*; #(parameter cvw_t P,
   // and FlushAdr when handling D$ flushes
   // The icache must update to the newest PCNextF on flush as it is probably a trap.  Trap
   // sets PCNextF to XTVEC and the icache must start reading the instruction.
-  assign AdrSelMuxSel = {SelFlush, ((SelAdr | SelHPTW) & ~((READ_ONLY_CACHE == 1) & FlushStage))};
-  mux3 #(SETLEN) AdrSelMux(NextSet[SETTOP-1:OFFSETLEN], PAdr[SETTOP-1:OFFSETLEN], FlushAdr,
-    AdrSelMuxSel, CacheSet);
+  assign AdrSelMuxSelData = {SelFlush, ((SelAdrData | SelHPTW) & ~((READ_ONLY_CACHE == 1) & FlushStage))};
+  mux3 #(SETLEN) AdrSelMuxData(NextSet[SETTOP-1:OFFSETLEN], PAdr[SETTOP-1:OFFSETLEN], FlushAdr,
+    AdrSelMuxSelData, CacheSetData);
+  assign AdrSelMuxSelTag = {SelFlush, ((SelAdrTag | SelHPTW) & ~((READ_ONLY_CACHE == 1) & FlushStage))};
+  mux3 #(SETLEN) AdrSelMuxTag(NextSet[SETTOP-1:OFFSETLEN], PAdr[SETTOP-1:OFFSETLEN], FlushAdr,
+    AdrSelMuxSelTag, CacheSetTag);
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(P, PA_BITS, XLEN, NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, READ_ONLY_CACHE) CacheWays[NUMWAYS-1:0](
-    .clk, .reset, .CacheEn, .CacheSet, .PAdr, .LineWriteData, .LineByteMask, .SelWay,
+    .clk, .reset, .CacheEn, .CacheSetData, .CacheSetTag, .PAdr, .LineWriteData, .LineByteMask, .SelWay,
     .SetValid, .ClearValid, .SetDirty, .ClearDirty, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .HitDirtyWay, .TagWay, .FlushStage, .InvalidateCache);
 
   // Select victim way for associative caches
   if(NUMWAYS > 1) begin:vict
     cacheLRU #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cacheLRU(
-      .clk, .reset, .FlushStage, .CacheEn, .HitWay, .ValidWay, .VictimWay, .CacheSet, .LRUWriteEn,
+      .clk, .reset, .FlushStage, .CacheEn, .HitWay, .ValidWay, .VictimWay, .CacheSetData, .CacheSetTag, .LRUWriteEn,
       .SetValid, .ClearValid, .PAdr(PAdr[SETTOP-1:OFFSETLEN]), .InvalidateCache);
   end else 
     assign VictimWay = 1'b1; // one hot.
@@ -218,9 +225,9 @@ module cache import cvw::*; #(parameter cvw_t P,
   /////////////////////////////////////////////////////////////////////////////////////////////
   
   cachefsm #(P, READ_ONLY_CACHE) cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
-    .FlushStage, .CacheRW, .Stall,
+    .FlushStage, .CacheRW, .CacheRWNext, .Stall,
     .CacheHit, .LineDirty, .HitLineDirty, .CacheStall, .CacheCommitted, 
-    .CacheMiss, .CacheAccess, .SelAdr, .SelWay,
+    .CacheMiss, .CacheAccess, .SelAdrData, .SelAdrTag, .SelWay,
     .ClearDirty, .SetDirty, .SetValid, .ClearValid, .SelWriteback, .SelFlush,
     .FlushAdrCntEn, .FlushWayCntEn, .FlushCntRst,
     .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
