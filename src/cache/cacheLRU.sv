@@ -36,6 +36,7 @@ module cacheLRU
   input  logic [NUMWAYS-1:0]  HitWay,          // Which way is valid and matches PAdr's tag
   input  logic [NUMWAYS-1:0]  ValidWay,        // Which ways for a particular set are valid, ignores tag
   input  logic [SETLEN-1:0]   CacheSetData,        // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
+  input  logic [SETLEN-1:0]   CacheSetTag,        // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
   input  logic [SETLEN-1:0]   PAdr,            // Physical address 
   input  logic                LRUWriteEn,      // Update the LRU state
   input  logic                SetValid,        // Set the dirty bit in the selected way and set
@@ -147,10 +148,10 @@ module cacheLRU
         LRUMemory[PAdr] <= '0;
       else if(LRUWriteEn)
         LRUMemory[PAdr] <= NextLRU;
-      if(LRUWriteEn & (PAdr == CacheSetData))
+      if(LRUWriteEn & (PAdr == CacheSetTag))
         CurrLRU <= #1 NextLRU;
       else 
-        CurrLRU <= #1 LRUMemory[CacheSetData];
+        CurrLRU <= #1 LRUMemory[CacheSetTag];
     end
   end
 
