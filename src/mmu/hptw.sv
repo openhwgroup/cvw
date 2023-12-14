@@ -38,7 +38,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   // system status
   input  logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
   input  logic [1:0]        STATUS_MPP,
-  input  logic              ENVCFG_HADE,            // HPTW A/D Update enable
+  input  logic              ENVCFG_ADUE,            // HPTW A/D Update enable
   input  logic [1:0]        PrivilegeModeW,
   input  logic [P.XLEN-1:0] ReadDataM,              // page table entry from LSU 
   input  logic [P.XLEN-1:0] WriteDataM,
@@ -154,7 +154,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
     logic [P.XLEN-1:0]    AccessedPTE;
 
     assign AccessedPTE = {PTE[P.XLEN-1:8], (SetDirty | PTE[7]), 1'b1, PTE[5:0]}; // set accessed bit, conditionally set dirty bit
-    mux2 #(P.XLEN) NextPTEMux(ReadDataM, AccessedPTE, UpdatePTE, NextPTE); // NextPTE = ReadDataM when HADE = 0 because UpdatePTE = 0
+    mux2 #(P.XLEN) NextPTEMux(ReadDataM, AccessedPTE, UpdatePTE, NextPTE); // NextPTE = ReadDataM when ADUE = 0 because UpdatePTE = 0
     flopenr #(P.PA_BITS) HPTWAdrWriteReg(clk, reset, SaveHPTWAdr, HPTWReadAdr, HPTWWriteAdr);
     
     assign SaveHPTWAdr = WalkerState == L0_ADR;
@@ -183,11 +183,11 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
     // hptw needs to know if there is a Dirty or Access fault occuring on this
     // memory access.  If there is the PTE needs to be updated seting Access
     // and possibly also Dirty.  Dirty is set if the operation is a store/amo.
-    // However any other fault should not cause the update, and updates are in software when ENVCFG_HADE = 0
-    assign HPTWUpdateDA = ValidLeafPTE & (~Accessed | SetDirty) & ENVCFG_HADE & ~OtherPageFault;  
+    // However any other fault should not cause the update, and updates are in software when ENVCFG_ADUE = 0
+    assign HPTWUpdateDA = ValidLeafPTE & (~Accessed | SetDirty) & ENVCFG_ADUE & ~OtherPageFault;  
 
-    assign HPTWRW[0] = (WalkerState == UPDATE_PTE);           // HPTWRW[0] will always be 0 if HADE = 0 because HPTWUpdateDA will be 0 so WalkerState never is UPDATE_PTE
-    assign UpdatePTE = (WalkerState == LEAF) & HPTWUpdateDA;  // UpdatePTE will always be 0 if HADE = 0 because HPTWUpdateDA will be 0
+    assign HPTWRW[0] = (WalkerState == UPDATE_PTE);           // HPTWRW[0] will always be 0 if ADUE = 0 because HPTWUpdateDA will be 0 so WalkerState never is UPDATE_PTE
+    assign UpdatePTE = (WalkerState == LEAF) & HPTWUpdateDA;  // UpdatePTE will always be 0 if ADUE = 0 because HPTWUpdateDA will be 0
 
   end else begin // block: hptwwrites
     assign NextPTE = ReadDataM;

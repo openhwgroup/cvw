@@ -50,7 +50,6 @@ module btb import cvw::*;  #(parameter cvw_t P,
 );
 
   logic [Depth-1:0]        PCNextFIndex, PCFIndex, PCDIndex, PCEIndex, PCMIndex, PCWIndex;
-  logic [P.XLEN-1:0]        ResetPC;
   logic                    MatchD, MatchE, MatchM, MatchW, MatchX;
   logic [P.XLEN+3:0]        ForwardBTBPrediction, ForwardBTBPredictionF;
   logic [P.XLEN+3:0]        TableBTBPredF;
@@ -70,12 +69,7 @@ module btb import cvw::*;  #(parameter cvw_t P,
   assign PCMIndex = {PCM[Depth+1] ^ PCM[1], PCM[Depth:2]};
   assign PCWIndex = {PCW[Depth+1] ^ PCW[1], PCW[Depth:2]};
 
-  // must output a valid PC and valid bit during reset.  Because only PCF, not PCNextF is reset, PCNextF is invalid
-  // during reset.  The BTB must produce a non X PC1NextF to allow the simulation to run.
-  // While the mux could be included in IFU it is not necessary for the IROM/I$/bus.
-  // For now it is optimal to leave it here.
-  assign ResetPC = P.RESET_VECTOR[P.XLEN-1:0];
-  assign PCNextFIndex = reset ? ResetPC[Depth+1:2] : {PCNextF[Depth+1] ^ PCNextF[1], PCNextF[Depth:2]}; 
+  assign PCNextFIndex = {PCNextF[Depth+1] ^ PCNextF[1], PCNextF[Depth:2]}; 
 
   assign MatchD = PCFIndex == PCDIndex;
   assign MatchE = PCFIndex == PCEIndex;

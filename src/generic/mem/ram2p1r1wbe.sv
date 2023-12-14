@@ -110,14 +110,16 @@ module ram2p1r1wbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=1024, WIDTH=68) 
     // ***************************************************************************
     integer i;
     
+    initial begin // initialize memory for simulation only
+      integer j;
+      for (j=0; j < DEPTH; j++) 
+        mem[j] = '0;
+    end
+    
     // Read
     logic [$clog2(DEPTH)-1:0] ra1d;
     flopen #($clog2(DEPTH)) adrreg(clk, ce1, ra1, ra1d);
     assign rd1 = mem[ra1d];
-
-    /*      // Read
-     always_ff @(posedge clk) 
-     if(ce1) rd1 <= #1 mem[ra1]; */
     
     // Write divided into part for bytes and part for extra msbs
     // coverage off     

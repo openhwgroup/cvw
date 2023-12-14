@@ -35,7 +35,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   input  logic                 STATUS_MPRV,        // Status CSR: modify machine privilege
   input  logic [1:0]           STATUS_MPP,         // Status CSR: previous machine privilege level
   input  logic                 ENVCFG_PBMTE,       // Page-based memory types enabled
-  input  logic                 ENVCFG_HADE,        // HPTW A/D Update enable
+  input  logic                 ENVCFG_ADUE,        // HPTW A/D Update enable
   input  logic [1:0]           PrivilegeModeW,     // Current privilege level of the processeor
   input  logic                 DisableTranslation, // virtual address translation disabled during D$ flush and HPTW walk that use physical addresses
   input  logic [P.XLEN+1:0]    VAdr,               // virtual/physical address from IEU or physical address from HPTW
@@ -84,7 +84,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
           .clk, .reset,
           .SATP_MODE(SATP_REGW[P.XLEN-1:P.XLEN-P.SVMODE_BITS]),
           .SATP_ASID(SATP_REGW[P.ASID_BASE+P.ASID_BITS-1:P.ASID_BASE]),
-          .VAdr(VAdr[P.XLEN-1:0]), .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_HADE,
+          .VAdr(VAdr[P.XLEN-1:0]), .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE,
           .PrivilegeModeW, .ReadAccess, .WriteAccess, .CMOp,
           .DisableTranslation, .PTE, .PageTypeWriteVal,
           .TLBWrite, .TLBFlush, .TLBPAdr, .TLBMiss, .TLBHit, 

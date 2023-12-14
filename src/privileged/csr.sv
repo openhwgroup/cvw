@@ -85,7 +85,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   output logic [2:0]               FRM_REGW, 
   output logic [3:0]               ENVCFG_CBE,
   output logic                     ENVCFG_PBMTE,              // Page-based memory type enable
-  output logic                     ENVCFG_HADE,               // HPTW A/D Update enable
+  output logic                     ENVCFG_ADUE,               // HPTW A/D Update enable
   //
   output logic [P.XLEN-1:0]        CSRReadValW,               // value read from CSR
   output logic [P.XLEN-1:0]        UnalignedPCNextF,          // Next PC, accounting for traps and returns
@@ -292,7 +292,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
    // Broadcast appropriate environment configuration based on privilege mode
   assign ENVCFG_STCE =  MENVCFG_REGW[63]; // supervisor timer counter enable
   assign ENVCFG_PBMTE = MENVCFG_REGW[62]; // page-based memory types enable
-  assign ENVCFG_HADE  = MENVCFG_REGW[61]; // Hardware A/D Update enable
+  assign ENVCFG_ADUE  = MENVCFG_REGW[61]; // Hardware A/D Update enable
   assign ENVCFG_CBE =   (PrivilegeModeW == P.M_MODE) ? 4'b1111 : 
                         (PrivilegeModeW == P.S_MODE | !P.S_SUPPORTED) ? MENVCFG_REGW[7:4] : 
                                                                        (MENVCFG_REGW[7:4] & SENVCFG_REGW[7:4]);

@@ -54,7 +54,7 @@
 --override cpu/misa_Extensions_mask=0x0
 --override cpu/Sstc=T
 
-# Enable SVADU hardware update of A/D bits when menvcfg.HADE=1
+# Enable SVADU hardware update of A/D bits when menvcfg.ADUE=1
 --override cpu/Svadu=T
 --override cpu/updatePTEA=F
 --override cpu/updatePTED=F

@@ -27,7 +27,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module loggers import cvw::*; #(parameter cvw_t P,
-                                parameter TEST,
+                                parameter string TEST,
                                 parameter PrintHPMCounters,
                                 parameter I_CACHE_ADDR_LOGGER,
                                 parameter D_CACHE_ADDR_LOGGER,
