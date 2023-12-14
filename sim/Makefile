@@ -15,6 +15,8 @@ all: riscoftests memfiles coveragetests
 	# Link Linux test vectors 
 	#cd ../tests/linux-testgen/linux-testvectors/;./tvLinker.sh
 
+wally-riscv-arch-test: wallyriscoftests memfiles
+
 coverage:
 	#make -C ../tests/coverage --jobs
 	#iter-elf.bash --cover --search ../tests/coverage
@@ -49,6 +51,10 @@ clean:
 riscoftests: 
 # 	Builds riscv-arch-test 64 and 32-bit versions and builds wally-riscv-arch-test 64 and 32-bit versions
 	make -C ../tests/riscof/ 
+
+wallyriscoftests: 
+# 	Builds riscv-arch-test 64 and 32-bit versions and builds wally-riscv-arch-test 64 and 32-bit versions
+	make -C ../tests/riscof/ wally-riscv-arch-test
 	
 memfiles:
 	make -f makefile-memfile wally-sim-files --jobs
