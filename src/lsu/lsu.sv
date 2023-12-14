@@ -150,6 +150,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic                  IgnoreRequest;                          // On FlushM or TLB miss ignore memory operation
   logic                  SelDTIM;                                // Select DTIM rather than bus or D$
   logic [P.XLEN-1:0]     WriteDataZM;
+  logic                  DTIMStall;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Pipeline for IEUAdr E to M
@@ -219,7 +220,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   // the trap module.
   assign CommittedM = SelHPTW | DCacheCommittedM | BusCommittedM;
   assign GatedStallW = StallW & ~SelHPTW;
-  assign CacheBusHPWTStall = DCacheStallM | HPTWStall | BusStall;
+  assign CacheBusHPWTStall = DCacheStallM | HPTWStall | BusStall | DTIMStall;
   assign LSUStallM = CacheBusHPWTStall | SpillStallM;
 
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -268,17 +269,20 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   if (P.DTIM_SUPPORTED) begin : dtim
     logic [P.PA_BITS-1:0] DTIMAdr;
     logic [1:0]           DTIMMemRWM;
+    logic                 DTIMSelWrite;
     
     // The DTIM uses untranslated addresses, so it is not compatible with virtual memory.
-    mux2 #(P.PA_BITS) DTIMAdrMux(IEUAdrExtE[P.PA_BITS-1:0], IEUAdrExtM[P.PA_BITS-1:0], MemRWM[0], DTIMAdr);
+    mux2 #(P.PA_BITS) DTIMAdrMux(IEUAdrExtE[P.PA_BITS-1:0], IEUAdrExtM[P.PA_BITS-1:0], DTIMSelWrite, DTIMAdr);
     assign DTIMMemRWM = SelDTIM & ~IgnoreRequestTLB ? LSURWM : '0;
     // **** fix ReadDataWordM to be LLEN. ByteMask is wrong length.
     // **** create config to support DTIM with floating point.
     // Add support for cboz
-    dtim #(P) dtim(.clk, .ce(~GatedStallW), .MemRWM(DTIMMemRWM),
+    dtim #(P) dtim(.clk, .reset, .ce(~GatedStallW), .MemRWE(MemRWE), // *** update when you update the cache RWE
+              .MemRWM(DTIMMemRWM),
               .DTIMAdr, .FlushW, .WriteDataM(LSUWriteDataM), 
-              .ReadDataWordM(DTIMReadDataWordM[P.LLEN-1:0]), .ByteMaskM(ByteMaskM));
+              .ReadDataWordM(DTIMReadDataWordM[P.LLEN-1:0]), .ByteMaskM(ByteMaskM), .DTIMStall, .DTIMSelWrite);
   end else begin
+    assign DTIMStall = '0;
   end
   if (P.BUS_SUPPORTED) begin : bus              
     if(P.DCACHE_SUPPORTED) begin : dcache
