@@ -6,17 +6,17 @@ dst := IP
 #export board := vcu118
 
 # vcu108
-export XILINX_PART := xcvu095-ffva2104-2-e
-export XILINX_BOARD := xilinx.com:vcu108:part0:1.2
-export board := vcu108
+#export XILINX_PART := xcvu095-ffva2104-2-e
+#export XILINX_BOARD := xilinx.com:vcu108:part0:1.2
+#export board := vcu108
 
 # Arty A7
-# export XILINX_PART := xc7a100tcsg324-1
-# export XILINX_BOARD := digilentinc.com:arty-a7-100:part0:1.1
-# export board := ArtyA7
+export XILINX_PART := xc7a100tcsg324-1
+export XILINX_BOARD := digilentinc.com:arty-a7-100:part0:1.1
+export board := ArtyA7
 
 # for Arty A7 and S7 boards
-all: FPGA_VCU
+all: FPGA_Arty
 
 # VCU 108 and VCU 118 boards
 #all: FPGA_VCU
@@ -54,7 +54,7 @@ PreProcessFiles:
 	cp ../../config/rv64gc/config.vh ../src/CopiedFiles_do_not_add_to_repo/config/
 	./insert_debug_comment.sh
 	# modify config  *** RT: eventually setup for variably defined sized memory
-	sed -i "s/ZICCLSM_SUPPORTED.*/ZICCLSM_SUPPORTED = 0;/g" ../src/CopiedFiles_do_not_add_to_repo/config/config.vh
+	sed -i "s/ZICCLSM_SUPPORTED.*/ZICCLSM_SUPPORTED = 1;/g" ../src/CopiedFiles_do_not_add_to_repo/config/config.vh
 	sed -i "s/RESET_VECTOR.*/RESET_VECTOR = 64'h0000000000001000;/g" ../src/CopiedFiles_do_not_add_to_repo/config/config.vh
 	sed -i "s/BOOTROM_PRELOAD.*/BOOTROM_PRELOAD = 1'b1;/g" ../src/CopiedFiles_do_not_add_to_repo/config/config.vh
 	sed -i "s/UNCORE_RAM_BASE.*/UNCORE_RAM_BASE = 64'h00002000;/g" ../src/CopiedFiles_do_not_add_to_repo/config/config.vh
