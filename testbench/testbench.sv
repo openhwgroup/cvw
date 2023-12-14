@@ -271,7 +271,7 @@ module testbench;
   ////////////////////////////////////////////////////////////////////////////////
     if(TestBenchReset) test = 1;
     if (TEST == "coremark")
-      if (dut.core.EcallFaultM) begin
+      if (dut.core.priv.priv.EcallFaultM) begin
         $display("Benchmark: coremark is done.");
         $stop;
       end
