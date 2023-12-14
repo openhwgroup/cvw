@@ -79,6 +79,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   logic              CMOWriteback;
   logic              CMOZeroNoEviction;
   logic              StallConditions;
+  logic              StoreHazard;
 
   typedef enum logic [3:0]{STATE_READY, // hit states
                            // miss states

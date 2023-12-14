@@ -48,7 +48,7 @@ RVMODEL_BOOT
 
  # Testcase 1:  Do an unsuccessful load-reserved / store conditional word operation
 	addi x6, x6, 24
-    addi x30, x31, 4
+    addi x30, x31, 8    # 8 bytes later (reservation set size is 8 bytes)
     li x11, 43
     lr.w x10, (x30)
     sc.w x12, x11, (x31)  # should fail because not reserved
@@ -59,7 +59,7 @@ RVMODEL_BOOT
 
     # Testcase 2:  Do a successful load-reserved / store conditional doubleword operation
  	addi x6, x6, 24
-    addi x31, x30, 4
+    addi x31, x30, 8
     li x11, 44
     lr.d x10, (x31)
     sc.d x12, x11, (x31)
