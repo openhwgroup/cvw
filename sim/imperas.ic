@@ -56,8 +56,8 @@
 
 # Enable SVADU hardware update of A/D bits when menvcfg.ADUE=1
 --override cpu/Svadu=T
---override cpu/updatePTEA=F
---override cpu/updatePTED=F
+#--override cpu/updatePTEA=F
+#--override cpu/updatePTED=F
 
 
 # THIS NEEDS FIXING to 16

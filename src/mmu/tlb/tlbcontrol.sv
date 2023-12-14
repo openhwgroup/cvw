@@ -41,6 +41,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   input  logic [11:0]              PTEAccessBits,
   input  logic                     CAMHit,
   input  logic                     Misaligned,
+  input  logic                     NAPOT4,             // pte.ppn[3:0] = 1000, indicating 64 KiB continuous NAPOT region
   output logic                     TLBMiss,
   output logic                     TLBHit,
   output logic                     TLBPageFault,
@@ -85,9 +86,9 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
  
   // check if reserved, N, or PBMT bits are malformed w in RV64
   assign BadPBMT = PTE_PBMT != 0 & (~(P.SVPBMT_SUPPORTED & ENVCFG_PBMTE) | 
-                   {PTE_X, PTE_W, PTE_R} == 3'b000) | PTE_PBMT == 3;                                  // PBMT must be zero if not supported or for non-leaf PTEs;
-  assign BadNAPOT = PTE_N & ~P.SVNAPOT_SUPPORTED;                                        // N must be be 0 if CVNAPOT is not supported
-  assign BadReserved = PTE_RESERVED;                                                     // Reserved bits must be zero
+                   {PTE_X, PTE_W, PTE_R} == 3'b000) | PTE_PBMT == 3;       // PBMT must be zero if not supported or for non-leaf PTEs;
+  assign BadNAPOT = PTE_N & (~P.SVNAPOT_SUPPORTED | ~NAPOT4);              // N must be be 0 if CVNAPOT is not supported or not 64 KiB contiguous region
+  assign BadReserved = PTE_RESERVED;                                       // Reserved bits must be zero
  
   // Check whether the access is allowed, page faulting if not.
   if (ITLB == 1) begin:itlb // Instruction TLB fault checking
