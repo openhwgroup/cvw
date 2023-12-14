@@ -64,6 +64,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic [P.XLEN-1:0]             PCM;
   logic [P.XLEN-1:0]             CSRReadValW, MDUResultW;
   logic [P.XLEN-1:0]             UnalignedPCNextF, PC2NextF;
+  logic [1:0]                    MemRWE;
   logic [1:0]                    MemRWM;
   logic                          InstrValidD, InstrValidE, InstrValidM;
   logic                          InstrMisalignedFaultM;
@@ -198,6 +199,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
      .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, .MDUActiveE, .CMOpM, .IFUPrefetchE, .LSUPrefetchM,
      // Memory stage interface
      .SquashSCW,  // from LSU
+     .MemRWE,     // read/write control goes to LSU
      .MemRWM,     // read/write control goes to LSU
      .AtomicM,    // atomic control goes to LSU
      .WriteDataM, // Write data to LSU
@@ -216,7 +218,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   lsu #(P) lsu(
     .clk, .reset, .StallM, .FlushM, .StallW, .FlushW,
     // CPU interface
-    .MemRWM, .Funct3M, .Funct7M(InstrM[31:25]), .AtomicM,
+    .MemRWE, .MemRWM, .Funct3M, .Funct7M(InstrM[31:25]), .AtomicM,
     .CommittedM, .DCacheMiss, .DCacheAccess, .SquashSCW,            
     .FpLoadStoreM, .FWriteDataM, .IEUAdrE, .IEUAdrM, .WriteDataM,
     .ReadDataW, .FlushDCacheM, .CMOpM, .LSUPrefetchM,
