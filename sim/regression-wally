@@ -107,7 +107,7 @@ for test in tests32i:
   configs.append(tc)
 
 
-tests32e = ["wally32e"] 
+tests32e = ["arch32e"] 
 for test in tests32e:
   tc = TestCase(
         name=test,

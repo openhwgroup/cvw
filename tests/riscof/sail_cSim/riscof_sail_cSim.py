@@ -55,6 +55,8 @@ class sail_cSim(pluginTemplate):
         self.compile_cmd = self.compile_cmd+' -mabi='+('lp64 ' if 64 in ispec['supported_xlen'] else ('ilp32e ' if "E" in ispec["ISA"] else 'ilp32 '))
         if "I" in ispec["ISA"]:
             self.isa += 'i'
+        if "E" in ispec["ISA"]:
+            self.isa += 'e'
         if "M" in ispec["ISA"]:
             self.isa += 'm'
         if "A" in ispec["ISA"]:

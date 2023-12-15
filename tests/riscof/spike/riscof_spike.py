@@ -97,6 +97,8 @@ class spike(pluginTemplate):
       self.isa = 'rv' + self.xlen
       if "I" in ispec["ISA"]:
           self.isa += 'i'
+      if "E" in ispec["ISA"]:
+          self.isa += 'e'
       if "M" in ispec["ISA"]:
           self.isa += 'm'
       if "A" in ispec["ISA"]:
