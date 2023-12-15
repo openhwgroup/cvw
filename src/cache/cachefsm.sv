@@ -105,6 +105,8 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   assign CacheAccess = (|CacheRW) & ((CurrState == STATE_READY & ~Stall & ~FlushStage) | (CurrState == STATE_READ_HOLD & ~Stall & ~FlushStage)); // exclusion-tag: icache CacheW
   assign CacheMiss = CacheAccess & ~CacheHit;
 
+  assign StoreHazard = CacheRWNext[1] & CacheRW[0] & ~CacheRW[1];
+
   // special case on reset. When the fsm first exists reset the
   // PCNextF will no longer be pointing to the correct address.
   // But PCF will be the reset vector.
@@ -121,7 +123,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
                              else if(FlushCache & ~READ_ONLY_CACHE)            NextState = STATE_FLUSH;
                              else if(AnyMiss & (READ_ONLY_CACHE | ~LineDirty)) NextState = STATE_FETCH;     // exclusion-tag: icache FETCHStatement
                              else if(AnyMiss | CMOWriteback)                   NextState = STATE_WRITEBACK; // exclusion-tag: icache WRITEBACKStatement
-                             else if(CacheRWNext[1] & CacheRW[0])              NextState = STATE_READ_HOLD;
+                             else if(StoreHazard)                              NextState = STATE_READ_HOLD;
                              else                                              NextState = STATE_READY;
       STATE_FETCH:           if(CacheBusAck)                                   NextState = STATE_WRITE_LINE;
                              else if(CacheBusAck)                              NextState = STATE_READY;
@@ -147,7 +149,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
 
   // com back to CPU
   assign CacheCommitted = (CurrState != STATE_READY) & ~(READ_ONLY_CACHE & (CurrState == STATE_READ_HOLD));
-  assign StallConditions =  FlushCache | AnyMiss | CMOWriteback | (CacheRWNext[1] & CacheRW[0]);
+  assign StallConditions =  FlushCache | AnyMiss | CMOWriteback | (StoreHazard);
   assign CacheStall = (CurrState == STATE_READY & StallConditions) | // exclusion-tag: icache StallStates
                       (CurrState == STATE_FETCH) |
                       (CurrState == STATE_WRITEBACK) |
