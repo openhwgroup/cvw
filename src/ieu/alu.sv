@@ -69,7 +69,7 @@ module alu import cvw::*; #(parameter cvw_t P, parameter WIDTH) (
   assign LTU = ~Carry;
  
   // Select appropriate ALU Result
-  always_comb begin
+  always_comb 
     case (ALUSelect)                                
       3'b000: FullResult = Sum;                           // add or sub (including address generation)
       3'b001: FullResult = Shift;                         // sll, sra, or srl
@@ -80,7 +80,6 @@ module alu import cvw::*; #(parameter cvw_t P, parameter WIDTH) (
       3'b110: FullResult = A | CondMaskInvB;              // or, orn, bset
       3'b111: FullResult = A & CondMaskInvB;              // and, bclr
     endcase
-  end
 
   // Support RV64I W-type addw/subw/addiw/shifts that discard upper 32 bits and sign-extend 32-bit result to 64 bits
   if (WIDTH == 64)  assign PreALUResult = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
