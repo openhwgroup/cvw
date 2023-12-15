@@ -431,6 +431,6 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   // *** RT: Check that atomic after atomic works correctly.
   //assign StoreStallD = ((|CMOpE)) & ((|CMOpD));
   logic AMOHazard;
-  assign AMOHazard = &MemRWM & MemRWE[1];
+  assign AMOHazard = &MemRWE & MemRWD[1];
   assign StoreStallD = ((|CMOpE) & (|CMOpD)) | AMOHazard;
 endmodule
