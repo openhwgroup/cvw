@@ -8,7 +8,7 @@ wally_workdir = $(work)/wally-riscv-arch-test
 current_dir = $(shell pwd)
 #XLEN    ?= 64
 
-all: root arch32 wally32 arch32e arch64 wally64
+all: root arch32e arch32 wally32 arch64 wally64
 wally-riscv-arch-test: root wally32 wally64
 
 root:
@@ -22,8 +22,7 @@ root:
 
 arch32e:
 	riscof run --work-dir=$(work_dir) --config=config32e.ini --suite=$(arch_dir)/riscv-test-suite/ --env=$(arch_dir)/riscv-test-suite/env --no-browser
-	rsync -a $(work_dir)/rv32i_m/ $(arch_workdir)/rv32i_m/ || echo "error suppressed"
-	rsync -a $(work_dir)/rv32e_unratified/ $(arch_workdir)/rv32e_unratified/ || echo "error suppressed"
+	rsync -a $(work_dir)/rv32e_m/ $(arch_workdir)/rv32e_m/ || echo "error suppressed"
 
 arch32:
 	riscof run --work-dir=$(work_dir) --config=config32.ini --suite=$(arch_dir)/riscv-test-suite/ --env=$(arch_dir)/riscv-test-suite/env --no-browser
@@ -44,10 +43,10 @@ wally64:
 	riscof run --work-dir=$(work_dir) --config=config64.ini --suite=$(wally_dir)/riscv-test-suite/ --env=$(wally_dir)/riscv-test-suite/env --no-browser --no-dut-run
 	rsync -a $(work_dir)/rv64i_m/ $(wally_workdir)/rv64i_m/ || echo "error suppressed"
 
-wally32e:
-	riscof run --work-dir=$(work_dir) --config=config32e.ini --suite=$(wally_dir)/riscv-test-suite/ --env=$(wally_dir)/riscv-test-suite/env --no-browser --no-dut-run
-	rsync -a $(work_dir)/rv32i_m/ $(wally_workdir)/rv32i_m/ || echo "error suppressed"
-	rsync -a $(work_dir)/rv32e_unratified/ $(wally_workdir)/rv32e_unratified/ || echo "error suppressed"
+#wally32e:
+#	riscof run --work-dir=$(work_dir) --config=config32e.ini --suite=$(wally_dir)/riscv-test-suite/ --env=$(wally_dir)/riscv-test-suite/env --no-browser --no-dut-run
+#	rsync -a $(work_dir)/rv32i_m/ $(wally_workdir)/rv32i_m/ || echo "error suppressed"
+#	rsync -a $(work_dir)/rv32e_unratified/ $(wally_workdir)/rv32e_unratified/ || echo "error suppressed"
 
 
 memfile: 
