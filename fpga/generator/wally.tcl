@@ -14,10 +14,10 @@ if {$boardName!="ArtyA7"} {
 
 # read package first
 read_verilog -sv  ../src/CopiedFiles_do_not_add_to_repo/cvw.sv
-read_verilog -sv  ../src/wallypipelinedsocwrapper.sv
+#read_verilog -sv  ../src/wallypipelinedsocwrapper.sv
 # then read top level
 if {$board=="ArtyA7"} {
-    read_verilog  {../src/fpgaTopArtyA7.v}
+    read_verilog  {../src/fpgaTopArtyA7.sv}
 } else {
     read_verilog  {../src/fpgaTop.v}
 }
