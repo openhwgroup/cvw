@@ -297,7 +297,7 @@ set filename [format "%s%s%s%s" $outputDir "/mapped/" $my_design ".sdf"]
 write_sdf $filename
 
 # Write SPEF file in case need more precision power exploration for TSMC28psyn
-if {$tech != "tsmc28psyn"} {
+if {$tech == "tsmc28psyn"} {
     set filename [format "%s%s%s%s" $outputDir "/mapped/" $my_toplevel ".spef"]
     redirect $filename { write_parasitics }
 }
