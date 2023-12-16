@@ -145,11 +145,9 @@ module testbenchfp;
    
    initial begin
       // Information displayed for user on what is simulating
-      //$display("\nThe start of simulation...");      
-      //$display("This simulation for TEST is %s", TEST);
-      //$display("This simulation for TEST is of the operand size of %s", TEST_SIZE);      
-
-      // $display("FPDUR %d %d DIVN %d LOGR %d RK %d RADIX %d DURLEN %d", FPDUR, DIVN, LOGR, RK, RADIX, DURLEN);
+      // $display("\nThe start of simulation...");      
+      // $display("This simulation for TEST is %s", TEST);
+      // $display("This simulation for TEST is of the operand size of %s", TEST_SIZE);      
 
       if (P.Q_SUPPORTED & (TEST_SIZE == "QP" | TEST_SIZE == "all")) begin // if Quad percision is supported
 	 if (TEST === "cvtint" | TEST === "all") begin  // if testing integer conversion
@@ -967,14 +965,6 @@ module testbenchfp;
 
       // Testfloat outputs 800... for both the largest integer values for both positive and negitive numbers but 
       // the riscv spec specifies 2^31-1 for positive values out of range and NaNs ie 7fff...
-
-      // Note: Went through and determined that this is not needed with new module additions
-      // Just needs to check flags against TestFloat (left just in case (remove after check one more time)) 
-      // else if ((UnitVal === `CVTINTUNIT) & 
-      //       ~(((WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&Xs&(Res[P.XLEN-1:0] === (P.XLEN)'(0))) | 
-      //		  (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~Xs|XNaN)&OpCtrlVal[1]&(Res[P.XLEN-1:0] === {1'b0, {P.XLEN-1{1'b1}}})) | 
-      //	  (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~Xs|XNaN)&~OpCtrlVal[1]&(Res[P.XLEN-1:0] === {{P.XLEN-32{1'b0}}, 1'b0, {31{1'b1}}})) | 
-      //	  (~(WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&Xs&~XNaN)&(Res === Ans | NaNGood | NaNGood === 1'bx))) & (ResFlg === AnsFlg | AnsFlg === 5'bx))) begin
       else if ((UnitVal === `CVTINTUNIT) & 
 		  ~((ResFlg === AnsFlg | AnsFlg === 5'bx))) begin	 
 	 errors += 1;
@@ -1034,7 +1024,6 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		    );
 
    localparam Q_LEN = 32'd128;
-  //`include "parameter-defs.vh"   
    
    logic 					XEn;
    logic 					YEn;
@@ -1113,7 +1102,6 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
           if (OpCtrl[0])
             case (Fmt)
               2'b11: begin // quad
-		 #20;		 
 		 X = TestVector[8+2*(P.Q_LEN)-1:8+(P.Q_LEN)];
 		 Ans = TestVector[8+(P.Q_LEN-1):8];
 		 if (~clk) #5;
@@ -1121,7 +1109,6 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		   DivStart = 1'b0;
               end
               2'b01: if (P.D_SUPPORTED) begin // double
-		 #20;		 
 		 X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]};
 		 Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
 		 if (~clk) #5;
@@ -1129,7 +1116,6 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		   DivStart = 1'b0;
               end
               2'b00: if (P.S_SUPPORTED) begin // single
-		 #20;		 
 		 X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+1*(P.S_LEN)]};
 		 Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
 		 if (~clk) #5;
@@ -1137,7 +1123,6 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		   DivStart = 1'b0;
               end
               2'b10: begin // half
-		 #20;		 
 		 X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+(P.H_LEN)]};
 		 Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
 		 if (~clk) #5;
@@ -1148,7 +1133,6 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
           else
             case (Fmt)
               2'b11: begin // quad
-		 #20;		 
 		 X = TestVector[8+3*(P.Q_LEN)-1:8+2*(P.Q_LEN)];
 		 Y = TestVector[8+2*(P.Q_LEN)-1:8+(P.Q_LEN)];
 		 Ans = TestVector[8+(P.Q_LEN-1):8];
@@ -1157,7 +1141,6 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		   DivStart = 1'b0;
               end
               2'b01: if (P.D_SUPPORTED) begin // double
-		 #20;		 
 		 X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+3*(P.D_LEN)-1:8+2*(P.D_LEN)]};
 		 Y = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]};
 		 Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
@@ -1166,7 +1149,6 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		   DivStart = 1'b0;
               end
               2'b00: if (P.S_SUPPORTED) begin // single
-		 #20;		 
 		 X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+3*(P.S_LEN)-1:8+2*(P.S_LEN)]};
 		 Y = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+1*(P.S_LEN)]};
 		 Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
@@ -1175,7 +1157,6 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		   DivStart = 1'b0;
               end
               2'b10: begin // half
-		 #20;		 
 		 X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+3*(P.H_LEN)-1:8+2*(P.H_LEN)]};
 		 Y = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+(P.H_LEN)]};
 		 Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
@@ -1403,11 +1384,11 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
    assign XEn = ~((Unit == `CVTINTUNIT)&OpCtrl[2]);
    assign YEn = ~((Unit == `CVTINTUNIT)|(Unit == `CVTFPUNIT)|((Unit == `DIVUNIT)&OpCtrl[0]));
    assign ZEn = (Unit == `FMAUNIT);
-   // Will fix with better activation - for now, this works (jes)
    assign FPUActive = 1'b1;
    
    unpack #(P) unpack(.X, .Y, .Z, .Fmt(ModFmt), .FPUActive, .Xs, .Ys, .Zs, .Xe, .Ye, .Ze,
                       .Xm, .Ym, .Zm, .XNaN, .YNaN, .ZNaN, .XSNaN, .YSNaN, .ZSNaN,
                       .XSubnorm, .XZero, .YZero, .ZZero, .XInf, .YInf, .ZInf,
                       .XEn, .YEn, .ZEn, .XExpMax, .XPostBox);
+
 endmodule
