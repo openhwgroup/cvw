@@ -7,6 +7,3 @@ lsu/lsu.sv: logic        PAdrM
 lsu/lsu.sv: logic        ReadDataM
 lsu/lsu.sv: logic        WriteDataM
 lsu/lsu.sv: logic       MemRWM
-mmu/hptw.sv: logic	   SATP_REGW
-privileged/csr.sv: logic       MENVCFG_REGW
-privileged/csr.sv: logic       SENVCFG_REGW
