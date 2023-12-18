@@ -271,7 +271,7 @@ module testbench;
   ////////////////////////////////////////////////////////////////////////////////
     if(TestBenchReset) test = 1;
     if (TEST == "coremark")
-      if (dut.core.EcallFaultM) begin
+      if (dut.core.priv.priv.EcallFaultM) begin
         $display("Benchmark: coremark is done.");
         $stop;
       end
@@ -320,6 +320,7 @@ module testbench;
   ////////////////////////////////////////////////////////////////////////////////
   // Some memories are not reset, but should be zeros or set to some initial value for simulation
   ////////////////////////////////////////////////////////////////////////////////
+/* -----\/----- EXCLUDED -----\/-----
   integer adrindex;
   always @(posedge clk) begin
     if (ResetMem)  // program memory is sometimes reset
@@ -339,13 +340,49 @@ module testbench;
       end
     end
   end
+ -----/\----- EXCLUDED -----/\----- */
 
+  // still not working in this format
+/* -----\/----- EXCLUDED -----\/-----
+  integer adrindex;
+  if (P.UNCORE_RAM_SUPPORTED) begin
+    always @(posedge clk) begin
+      if (ResetMem)  // program memory is sometimes reset
+        for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
+          dut.uncore.uncore.ram.ram.memory.RAM[adrindex] = '0;
+    end
+  end
+  
+  genvar adrindex2;
+  
+  if (P.BPRED_SUPPORTED & (P.BPRED_TYPE == `BP_LOCAL_AHEAD | P.BPRED_TYPE == `BP_LOCAL_REPAIR)) begin
+    for(adrindex2 = 0; adrindex2 < 2**P.BPRED_NUM_LHR; adrindex2++)
+      always @(posedge clk) begin
+        dut.core.ifu.bpred.bpred.Predictor.DirPredictor.BHT.mem[adrindex2] = 0;
+    end
+  end        
+
+  if (P.BPRED_SUPPORTED) begin
+    always @(posedge clk) 
+      dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[0] = 0;    
+    for(adrindex2 = 0; adrindex2 < 2**P.BTB_SIZE; adrindex2++)
+      always @(posedge clk) begin
+        dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex2] = 0;
+      end
+    for(adrindex2 = 0; adrindex2 < 2**P.BPRED_SIZE; adrindex2++)
+      always @(posedge clk) begin
+        dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex2] = 0;
+      end
+  end
+ -----/\----- EXCLUDED -----/\----- */
+  
   ////////////////////////////////////////////////////////////////////////////////
   // load memories with program image
   ////////////////////////////////////////////////////////////////////////////////
-  always @(posedge clk) begin
-    if (LoadMem) begin
-      if (P.SDC_SUPPORTED) begin
+
+  if (P.SDC_SUPPORTED) begin
+    always @(posedge clk) begin
+      if (LoadMem) begin
         string romfilename, sdcfilename;
         romfilename = {"../tests/custom/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
         sdcfilename = {"../testbench/sdc/ramdisk2.hex"};   
@@ -353,13 +390,29 @@ module testbench;
         //$readmemh(sdcfilename, sdcard.sdcard.FLASHmem);
         // shorten sdc timers for simulation
         //dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
-      end 
-      else if (P.IROM_SUPPORTED)     $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
-      else if (P.BUS_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-      if (P.DTIM_SUPPORTED)     $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
-      $display("Read memfile %s", memfilename);
+      end
     end
-  end  
+  end else if (P.IROM_SUPPORTED) begin
+    always @(posedge clk) begin
+      if (LoadMem) begin
+        $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
+      end
+    end
+  end else if (P.BUS_SUPPORTED) begin
+    always @(posedge clk) begin
+      if (LoadMem) begin
+        $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
+      end
+    end
+  end 
+  if (P.DTIM_SUPPORTED) begin
+    always @(posedge clk) begin
+      if (LoadMem) begin
+        $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
+        $display("Read memfile %s", memfilename);
+      end
+    end
+  end
  
   ////////////////////////////////////////////////////////////////////////////////
   // Actual hardware

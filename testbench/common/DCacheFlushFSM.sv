@@ -43,8 +43,8 @@ module DCacheFlushFSM import cvw::*; #(parameter cvw_t P)
     localparam numways        = P.DCACHE_NUMWAYS;
     localparam linelen        = P.DCACHE_LINELENINBITS;
     localparam linebytelen    = linelen/8;
-    localparam sramlen        = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].SRAMLEN;            
-    localparam cachesramwords = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].NUMSRAM;
+    localparam sramlen        = P.CACHE_SRAMLEN;
+    localparam cachesramwords = linelen/sramlen;
     localparam numwords       = sramlen/P.XLEN;
     localparam lognumlines    = $clog2(numlines);
     localparam loglinebytelen = $clog2(linebytelen);
