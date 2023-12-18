@@ -561,7 +561,9 @@ module testbench;
     testadr = ($unsigned(begin_signature_addr))/(P.XLEN/8);
     testadrNoBase = (begin_signature_addr - P.UNCORE_RAM_BASE)/(P.XLEN/8);
     /* verilator lint_off INFINITELOOP */
+    /* verilator lint_off WIDTHXZEXPAND */
     while (signature[i] !== 'bx) begin
+      /* verilator lint_on WIDTHXZEXPAND */
       logic [P.XLEN-1:0] sig;
       // **************************************
       // ***** BUG BUG BUG make sure RT undoes this.
