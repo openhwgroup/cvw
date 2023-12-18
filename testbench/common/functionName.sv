@@ -30,8 +30,8 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
   input string ProgramLabelMapFile
   );
   
-  logic [P.XLEN-1:0] ProgramAddrMapMemory [longint];
-  string 	    ProgramLabelMapMemory [longint];
+  logic [P.XLEN-1:0] ProgramAddrMapMemory [logic [P.XLEN-1:0]];
+  string 	    ProgramLabelMapMemory [logic [P.XLEN-1:0]];
   string 	    FunctionName;
   
 
@@ -62,7 +62,7 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
   task automatic bin_search_min;
     input logic [P.XLEN-1:0] pc;
     input logic [P.XLEN-1:0] length;
-    ref logic [P.XLEN-1:0]   array [longint];
+    ref logic [P.XLEN-1:0]   array [logic [P.XLEN-1:0]];
     output logic [P.XLEN-1:0] minval;
     output     logic [P.XLEN-1:0] mid;
 
@@ -109,9 +109,9 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
   endtask // bin_search_min
 
   integer ProgramAddrMapFP, ProgramLabelMapFP;
-  longint ProgramAddrMapLineCount;
-  longint ProgramLabelMapLineCount;
-  longint ProgramAddrMapLine;
+  logic [P.XLEN-1:0] ProgramAddrMapLineCount;
+  logic [P.XLEN-1:0] ProgramLabelMapLineCount;
+  logic [P.XLEN-1:0] ProgramAddrMapLine;
   string  ProgramLabelMapLine;
   integer status;
   
