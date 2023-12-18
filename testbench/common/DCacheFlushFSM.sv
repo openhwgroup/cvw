@@ -125,22 +125,25 @@ module copyShadow import cvw::*; #(parameter cvw_t P,
    output logic                       CacheValid,
    output logic                       CacheDirty);
 
-  logic [P.XLEN-1:0]               TagExtend;
-  logic [P.XLEN-1:0]               IndexExtend;
-  logic [P.XLEN-1:0]               CacheWordExtend;
+  logic [P.XLEN+1:0]               TagExtend;
+  logic [P.XLEN+1:0]               IndexExtend;
+  logic [P.XLEN+1:0]               CacheWordExtend;
+  logic [P.XLEN+1:0]               CacheAdrExtend;
   
-  assign TagExtend = {{{P.XLEN-(P.PA_BITS-tagstart)}{1'b0}}, tag};
-  assign IndexExtend = {{{P.XLEN-32}{1'b0}}, index};
-  assign CacheWordExtend = {{{P.XLEN-32}{1'b0}}, cacheWord};
+  assign TagExtend = {{{P.XLEN-(P.PA_BITS-tagstart)+2}{1'b0}}, tag};
+  assign IndexExtend = {{{P.XLEN-32+2}{1'b0}}, index};
+  assign CacheWordExtend = {{{P.XLEN-32+2}{1'b0}}, cacheWord};
 
   always_ff @(posedge clk) begin
     if(start) begin
-      CacheTag = TagExtend;
+      CacheTag = TagExtend[P.XLEN-1:0];
       CacheValid = valid;
       CacheDirty = dirty;
       CacheData = data;
-      CacheAdr = (TagExtend << tagstart) + (IndexExtend << loglinebytelen) + (CacheWordExtend << $clog2(sramlen/8));
+      CacheAdrExtend = (TagExtend << tagstart) + (IndexExtend << loglinebytelen) + (CacheWordExtend << $clog2(sramlen/8));
     end
   end
+
+  assign CacheAdr = CacheAdrExtend[P.PA_BITS-1:0];
   
 endmodule
