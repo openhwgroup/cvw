@@ -124,15 +124,22 @@ module copyShadow import cvw::*; #(parameter cvw_t P,
    output logic [P.XLEN-1:0]           CacheTag,
    output logic                       CacheValid,
    output logic                       CacheDirty);
+
+  logic [P.XLEN-1:0]               TagExtend;
+  logic [P.XLEN-1:0]               IndexExtend;
+  logic [P.XLEN-1:0]               CacheWordExtend;
   
+  assign TagExtend = {{{P.XLEN-(P.PA_BITS-tagstart)}{1'b0}}, tag};
+  assign IndexExtend = {{{P.XLEN-32}{1'b0}}, index};
+  assign CacheWordExtend = {{{P.XLEN-32}{1'b0}}, cacheWord};
 
   always_ff @(posedge clk) begin
     if(start) begin
-      CacheTag = tag;
+      CacheTag = TagExtend;
       CacheValid = valid;
       CacheDirty = dirty;
       CacheData = data;
-      CacheAdr = (tag << tagstart) + (index << loglinebytelen) + (cacheWord << $clog2(sramlen/8));
+      CacheAdr = (TagExtend << tagstart) + (IndexExtend << loglinebytelen) + (CacheWordExtend << $clog2(sramlen/8));
     end
   end
   
