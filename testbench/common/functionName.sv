@@ -31,14 +31,14 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
   );
   
   logic [P.XLEN-1:0] ProgramAddrMapMemory [longint];
-  string 	    ProgramLabelMapMemory [integer];
+  string 	    ProgramLabelMapMemory [longint];
   string 	    FunctionName;
   
 
   logic [P.XLEN-1:0] PCF, PCD, PCE, PCM, FunctionAddr, PCM_temp, PCMOld;
   logic 	    StallD, StallE, StallM, FlushD, FlushE, FlushM;
   logic 		InstrValidM;
-  integer 	    ProgramAddrIndex, ProgramAddrIndexQ;
+  logic [P.XLEN-1:0] 	    ProgramAddrIndex, ProgramAddrIndexQ;
 
   assign PCF = testbench.dut.core.ifu.PCF;
   assign StallD = testbench.dut.core.StallD;
@@ -110,7 +110,7 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
 
   integer ProgramAddrMapFP, ProgramLabelMapFP;
   longint ProgramAddrMapLineCount;
-  integer ProgramLabelMapLineCount;
+  longint ProgramLabelMapLineCount;
   longint ProgramAddrMapLine;
   string  ProgramLabelMapLine;
   integer status;
@@ -136,7 +136,7 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
     ProgramAddrMapFP = $fopen(ProgramAddrMapFile, "r");
 
     // read line by line to count lines
-    if (ProgramAddrMapFP) begin
+    if (ProgramAddrMapFP != '0) begin
       while (! $feof(ProgramAddrMapFP)) begin
 	    status = $fscanf(ProgramAddrMapFP, "%h\n", ProgramAddrMapLine);
         ProgramAddrMapMemory[ProgramAddrMapLineCount] = ProgramAddrMapLine;
@@ -154,7 +154,7 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
     ProgramLabelMapLineCount = 0;
     ProgramLabelMapFP = $fopen(ProgramLabelMapFile, "r");
     
-    if (ProgramLabelMapFP) begin
+    if (ProgramLabelMapFP != '0) begin
       while (! $feof(ProgramLabelMapFP)) begin
 	status = $fscanf(ProgramLabelMapFP, "%s\n", ProgramLabelMapLine);
 	ProgramLabelMapMemory[ProgramLabelMapLineCount] = ProgramLabelMapLine;
