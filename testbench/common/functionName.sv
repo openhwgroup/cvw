@@ -30,7 +30,7 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
   input string ProgramLabelMapFile
   );
   
-  logic [P.XLEN-1:0] ProgramAddrMapMemory [];
+  logic [P.XLEN-1:0] ProgramAddrMapMemory [longint];
   string 	    ProgramLabelMapMemory [integer];
   string 	    FunctionName;
   
@@ -62,7 +62,7 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
   task automatic bin_search_min;
     input logic [P.XLEN-1:0] pc;
     input logic [P.XLEN-1:0] length;
-    ref logic [P.XLEN-1:0]   array [];
+    ref logic [P.XLEN-1:0]   array [longint];
     output logic [P.XLEN-1:0] minval;
     output     logic [P.XLEN-1:0] mid;
 
@@ -109,7 +109,8 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
   endtask // bin_search_min
 
   integer ProgramAddrMapFP, ProgramLabelMapFP;
-  integer ProgramAddrMapLineCount, ProgramLabelMapLineCount;
+  longint ProgramAddrMapLineCount;
+  integer ProgramLabelMapLineCount;
   longint ProgramAddrMapLine;
   string  ProgramLabelMapLine;
   integer status;
@@ -118,11 +119,17 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
   // preload
 //  initial begin
   always @ (negedge reset) begin
+
+    // cannot readmemh directoy to a dynmaic array. Sad times :(
+    // Let's initialize a static array with FFFF_FFFF for all addresses.
+    // Then we can readmemh and finally copy to the dynamic array.
+    
 	// clear out the old mapping between programs.
     ProgramAddrMapMemory.delete();
     ProgramLabelMapMemory.delete();
 
-    $readmemh(ProgramAddrMapFile, ProgramAddrMapMemory);
+    // Unfortunately verilator version 5.011 readmemh does not support dynamic arrays
+    //$readmemh(ProgramAddrMapFile, ProgramAddrMapMemory);
     // we need to count the number of lines in the file so we can set FunctionRadixLineCount.
 
     ProgramAddrMapLineCount = 0;
@@ -131,9 +138,9 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
     // read line by line to count lines
     if (ProgramAddrMapFP) begin
       while (! $feof(ProgramAddrMapFP)) begin
-	status = $fscanf(ProgramAddrMapFP, "%h\n", ProgramAddrMapLine);
-	
-	ProgramAddrMapLineCount = ProgramAddrMapLineCount + 1;
+	    status = $fscanf(ProgramAddrMapFP, "%h\n", ProgramAddrMapLine);
+        ProgramAddrMapMemory[ProgramAddrMapLineCount] = ProgramAddrMapLine;
+	    ProgramAddrMapLineCount = ProgramAddrMapLineCount + 1;
       end
     end else begin
       $display("Cannot open file %s for reading.", ProgramAddrMapFile);
