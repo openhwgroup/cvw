@@ -624,7 +624,7 @@ Destination2:
 Destination3:
         .fill 128, 4, 0xdeadbeef
 signature:
-        .fill 40, 4, 0x0bad0bad
+        .fill 44, 4, 0x0bad0bad
 	
 RVMODEL_DATA_END
 
