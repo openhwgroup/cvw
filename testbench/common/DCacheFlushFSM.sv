@@ -43,8 +43,8 @@ module DCacheFlushFSM import cvw::*; #(parameter cvw_t P)
     localparam numways        = P.DCACHE_NUMWAYS;
     localparam linelen        = P.DCACHE_LINELENINBITS;
     localparam linebytelen    = linelen/8;
-    localparam sramlen        = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].SRAMLEN;            
-    localparam cachesramwords = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].NUMSRAM;
+    localparam sramlen        = P.CACHE_SRAMLEN;
+    localparam cachesramwords = linelen/sramlen;
     localparam numwords       = sramlen/P.XLEN;
     localparam lognumlines    = $clog2(numlines);
     localparam loglinebytelen = $clog2(linebytelen);
@@ -97,7 +97,10 @@ module DCacheFlushFSM import cvw::*; #(parameter cvw_t P)
                   // # ** Error: ../testbench/testbench.sv(483): Range must be bounded by constant expressions.
                   // see https://verificationacademy.com/forums/systemverilog/range-must-be-bounded-constant-expressions
                   //ShadowRAM[CacheAdr[j][i][k] >> $clog2(P.XLEN/8)] = cacheline[P.XLEN*(k+1)-1:P.XLEN*k];
-                  ShadowRAM[(CacheAdr[j][i][l] >> $clog2(P.XLEN/8)) + k] = CacheData[j][i][l][P.XLEN*k +: P.XLEN];
+                  /* verilator lint_off WIDTHTRUNC */
+                  // *** lint error: address trunc warning for shadowram index
+                  ShadowRAM[(CacheAdr[j][i][l] >> $clog2(P.XLEN/8)) + {{{P.PA_BITS-32}{1'b0}}, k}] = CacheData[j][i][l][P.XLEN*k +: P.XLEN];
+                  /* verilator lint_on WIDTHTRUNC */
                 end
               end
             end
@@ -124,16 +127,26 @@ module copyShadow import cvw::*; #(parameter cvw_t P,
    output logic [P.XLEN-1:0]           CacheTag,
    output logic                       CacheValid,
    output logic                       CacheDirty);
+
+  logic [P.XLEN+1:0]               TagExtend;
+  logic [P.XLEN+1:0]               IndexExtend;
+  logic [P.XLEN+1:0]               CacheWordExtend;
+  logic [P.XLEN+1:0]               CacheAdrExtend;
   
+  assign TagExtend = {{{P.XLEN-(P.PA_BITS-tagstart)+2}{1'b0}}, tag};
+  assign IndexExtend = {{{P.XLEN-32+2}{1'b0}}, index};
+  assign CacheWordExtend = {{{P.XLEN-32+2}{1'b0}}, cacheWord};
 
   always_ff @(posedge clk) begin
     if(start) begin
-      CacheTag = tag;
+      CacheTag = TagExtend[P.XLEN-1:0];
       CacheValid = valid;
       CacheDirty = dirty;
       CacheData = data;
-      CacheAdr = (tag << tagstart) + (index << loglinebytelen) + (cacheWord << $clog2(sramlen/8));
+      CacheAdrExtend = (TagExtend << tagstart) + (IndexExtend << loglinebytelen) + (CacheWordExtend << $clog2(sramlen/8));
     end
   end
+
+  assign CacheAdr = CacheAdrExtend[P.PA_BITS-1:0];
   
 endmodule
