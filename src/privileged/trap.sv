@@ -112,11 +112,13 @@ module trap import cvw::*;  #(parameter cvw_t P) (
     // coverage on
     else if (BreakpointFaultM)         CauseM = 3;
     else if (EcallFaultM)              CauseM = {2'b10, PrivilegeModeW};
-    else if (LoadMisalignedFaultM)     CauseM = 4;
-    else if (StoreAmoMisalignedFaultM) CauseM = 6;
-    else if (LoadPageFaultM)           CauseM = 13;
+    else if (StoreAmoMisalignedFaultM & ~P.ZICCLSM_SUPPORTED) CauseM = 6;  // misaligned faults are higher priority if they always are taken
+    else if (LoadMisalignedFaultM & ~P.ZICCLSM_SUPPORTED)     CauseM = 4;
     else if (StoreAmoPageFaultM)       CauseM = 15;
-    else if (LoadAccessFaultM)         CauseM = 5;
+    else if (LoadPageFaultM)           CauseM = 13;
     else if (StoreAmoAccessFaultM)     CauseM = 7;
+    else if (LoadAccessFaultM)         CauseM = 5;
+    else if (StoreAmoMisalignedFaultM & P.ZICCLSM_SUPPORTED) CauseM = 6; // See priority in Privileged Spec 3.1.15
+    else if (LoadMisalignedFaultM & P.ZICCLSM_SUPPORTED)     CauseM = 4;
     else                               CauseM = 0;
 endmodule
