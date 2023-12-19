@@ -88,7 +88,6 @@ module testbenchfp;
    logic 			OldFDivBusyE;
    logic                        reset = 1'b0;
    logic [$clog2(P.NF+2)-1:0] 	XZeroCnt, YZeroCnt;
-   logic [P.DURLEN-1:0] 	Dur;
 
    // in-between FMA signals
    logic                        Mult;
@@ -145,11 +144,9 @@ module testbenchfp;
    
    initial begin
       // Information displayed for user on what is simulating
-      //$display("\nThe start of simulation...");      
-      //$display("This simulation for TEST is %s", TEST);
-      //$display("This simulation for TEST is of the operand size of %s", TEST_SIZE);      
-
-      // $display("FPDUR %d %d DIVN %d LOGR %d RK %d RADIX %d DURLEN %d", FPDUR, DIVN, LOGR, RK, RADIX, DURLEN);
+      // $display("\nThe start of simulation...");      
+      // $display("This simulation for TEST is %s", TEST);
+      // $display("This simulation for TEST is of the operand size of %s", TEST_SIZE);      
 
       if (P.Q_SUPPORTED & (TEST_SIZE == "QP" | TEST_SIZE == "all")) begin // if Quad percision is supported
 	 if (TEST === "cvtint" | TEST === "all") begin  // if testing integer conversion
@@ -781,19 +778,19 @@ module testbenchfp;
       end
       else if (UnitVal === `CVTFPUNIT) begin
 	 case (OpCtrlVal[1:0])
-           4'b11: begin // quad             
+           2'b11: begin // quad             
               AnsNaN = &Ans[P.Q_LEN-2:P.NF]&(|Ans[P.Q_NF-1:0]);
               ResNaN = &Res[P.Q_LEN-2:P.NF]&(|Res[P.Q_NF-1:0]);
            end
-           4'b01: begin // double                 
+           2'b01: begin // double                 
               AnsNaN = &Ans[P.D_LEN-2:P.D_NF]&(|Ans[P.D_NF-1:0]);
               ResNaN = &Res[P.D_LEN-2:P.D_NF]&(|Res[P.D_NF-1:0]);
            end
-           4'b00: begin // single
+           2'b00: begin // single
               AnsNaN = &Ans[P.S_LEN-2:P.S_NF]&(|Ans[P.S_NF-1:0]);
               ResNaN = &Res[P.S_LEN-2:P.S_NF]&(|Res[P.S_NF-1:0]);
            end
-           4'b10: begin // half
+           2'b10: begin // half
               AnsNaN = &Ans[P.H_LEN-2:P.H_NF]&(|Ans[P.H_NF-1:0]);
               ResNaN = &Res[P.H_LEN-2:P.H_NF]&(|Res[P.H_NF-1:0]);
            end
@@ -801,19 +798,19 @@ module testbenchfp;
       end
       else begin
 	 case (FmtVal)
-           4'b11: begin // quad             
+           2'b11: begin // quad             
               AnsNaN = &Ans[P.Q_LEN-2:P.Q_NF]&(|Ans[P.Q_NF-1:0]);
               ResNaN = &Res[P.Q_LEN-2:P.Q_NF]&(|Res[P.Q_NF-1:0]);
            end
-           4'b01: begin // double                 
+           2'b01: begin // double                 
               AnsNaN = &Ans[P.D_LEN-2:P.D_NF]&(|Ans[P.D_NF-1:0]);
               ResNaN = &Res[P.D_LEN-2:P.D_NF]&(|Res[P.D_NF-1:0]);
            end
-           4'b00: begin // single
+           2'b00: begin // single
               AnsNaN = &Ans[P.S_LEN-2:P.S_NF]&(|Ans[P.S_NF-1:0]);
               ResNaN = &Res[P.S_LEN-2:P.S_NF]&(|Res[P.S_NF-1:0]);
            end
-           4'b10: begin // half
+           2'b10: begin // half
               AnsNaN = &Ans[P.H_LEN-2:P.H_NF]&(|Ans[P.H_NF-1:0]);
               ResNaN = &Res[P.H_LEN-2:P.H_NF]&(|Res[P.H_NF-1:0]);
            end
@@ -854,22 +851,22 @@ module testbenchfp;
 	 // arbitrary value and can be changed, if needed.
 	 case (FmtVal)
 	   // QP
-	   4'b11: begin
+	   2'b11: begin
 	      repeat (20)
 		@(posedge clk);
 	   end
 	   // HP
-	   4'b10: begin
+	   2'b10: begin
 	      repeat (14)
 		@(posedge clk);
 	   end
 	   // DP
-	   4'b01: begin
+	   2'b01: begin
 	      repeat (18)
 		@(posedge clk);
 	   end
 	   // SP
-	   4'b00: begin
+	   2'b00: begin
 	      repeat (16)
 		@(posedge clk);
 	   end
@@ -886,22 +883,22 @@ module testbenchfp;
       //    - when 2 or more NaNs are inputed the NaN that is propigated doesn't matter
       if (UnitVal !== `CVTFPUNIT & UnitVal !== `CVTINTUNIT)
 	case (FmtVal)
-          4'b11: NaNGood =  (((P.IEEE754==0)&AnsNaN&(Res === {1'b0, {P.Q_NE+1{1'b1}}, {P.Q_NF-1{1'b0}}})) |
+          2'b11: NaNGood =  (((P.IEEE754==0)&AnsNaN&(Res === {1'b0, {P.Q_NE+1{1'b1}}, {P.Q_NF-1{1'b0}}})) |
                              (AnsFlg[4]&(Res[P.Q_LEN-2:0] === {{P.Q_NE+1{1'b1}}, {P.Q_NF-1{1'b0}}})) |
                              (XNaN&(Res[P.Q_LEN-2:0] === {X[P.Q_LEN-2:P.Q_NF],1'b1,X[P.Q_NF-2:0]})) | 
                              (YNaN&(Res[P.Q_LEN-2:0] === {Y[P.Q_LEN-2:P.Q_NF],1'b1,Y[P.Q_NF-2:0]})) |
                              (ZNaN&(Res[P.Q_LEN-2:0] === {Z[P.Q_LEN-2:P.Q_NF],1'b1,Z[P.Q_NF-2:0]})));
-          4'b01: NaNGood =  (((P.IEEE754==0)&AnsNaN&(Res[P.D_LEN-1:0] === {1'b0, {P.D_NE+1{1'b1}}, {P.D_NF-1{1'b0}}})) |
+          2'b01: NaNGood =  (((P.IEEE754==0)&AnsNaN&(Res[P.D_LEN-1:0] === {1'b0, {P.D_NE+1{1'b1}}, {P.D_NF-1{1'b0}}})) |
                              (AnsFlg[4]&(Res[P.D_LEN-2:0] === {{P.D_NE+1{1'b1}}, {P.D_NF-1{1'b0}}})) |
                              (XNaN&(Res[P.D_LEN-2:0] === {X[P.D_LEN-2:P.D_NF],1'b1,X[P.D_NF-2:0]})) | 
                              (YNaN&(Res[P.D_LEN-2:0] === {Y[P.D_LEN-2:P.D_NF],1'b1,Y[P.D_NF-2:0]})) |
                              (ZNaN&(Res[P.D_LEN-2:0] === {Z[P.D_LEN-2:P.D_NF],1'b1,Z[P.D_NF-2:0]})));
-          4'b00: NaNGood =  (((P.IEEE754==0)&AnsNaN&(Res[P.S_LEN-1:0] === {1'b0, {P.S_NE+1{1'b1}}, {P.S_NF-1{1'b0}}})) |
+          2'b00: NaNGood =  (((P.IEEE754==0)&AnsNaN&(Res[P.S_LEN-1:0] === {1'b0, {P.S_NE+1{1'b1}}, {P.S_NF-1{1'b0}}})) |
                              (AnsFlg[4]&(Res[P.S_LEN-2:0] === {{P.S_NE+1{1'b1}}, {P.S_NF-1{1'b0}}})) |
                              (XNaN&(Res[P.S_LEN-2:0] === {X[P.S_LEN-2:P.S_NF],1'b1,X[P.S_NF-2:0]})) | 
                              (YNaN&(Res[P.S_LEN-2:0] === {Y[P.S_LEN-2:P.S_NF],1'b1,Y[P.S_NF-2:0]})) |
                              (ZNaN&(Res[P.S_LEN-2:0] === {Z[P.S_LEN-2:P.S_NF],1'b1,Z[P.S_NF-2:0]})));
-          4'b10: NaNGood =  (((P.IEEE754==0)&AnsNaN&(Res[P.H_LEN-1:0] === {1'b0, {P.H_NE+1{1'b1}}, {P.H_NF-1{1'b0}}})) |
+          2'b10: NaNGood =  (((P.IEEE754==0)&AnsNaN&(Res[P.H_LEN-1:0] === {1'b0, {P.H_NE+1{1'b1}}, {P.H_NF-1{1'b0}}})) |
                              (AnsFlg[4]&(Res[P.H_LEN-2:0] === {{P.H_NE+1{1'b1}}, {P.H_NF-1{1'b0}}})) |
                              (XNaN&(Res[P.H_LEN-2:0] === {X[P.H_LEN-2:P.H_NF],1'b1,X[P.H_NF-2:0]})) | 
                              (YNaN&(Res[P.H_LEN-2:0] === {Y[P.H_LEN-2:P.H_NF],1'b1,Y[P.H_NF-2:0]})) |
@@ -967,14 +964,6 @@ module testbenchfp;
 
       // Testfloat outputs 800... for both the largest integer values for both positive and negitive numbers but 
       // the riscv spec specifies 2^31-1 for positive values out of range and NaNs ie 7fff...
-
-      // Note: Went through and determined that this is not needed with new module additions
-      // Just needs to check flags against TestFloat (left just in case (remove after check one more time)) 
-      // else if ((UnitVal === `CVTINTUNIT) & 
-      //       ~(((WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&Xs&(Res[P.XLEN-1:0] === (P.XLEN)'(0))) | 
-      //		  (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~Xs|XNaN)&OpCtrlVal[1]&(Res[P.XLEN-1:0] === {1'b0, {P.XLEN-1{1'b1}}})) | 
-      //	  (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~Xs|XNaN)&~OpCtrlVal[1]&(Res[P.XLEN-1:0] === {{P.XLEN-32{1'b0}}, 1'b0, {31{1'b1}}})) | 
-      //	  (~(WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&Xs&~XNaN)&(Res === Ans | NaNGood | NaNGood === 1'bx))) & (ResFlg === AnsFlg | AnsFlg === 5'bx))) begin
       else if ((UnitVal === `CVTINTUNIT) & 
 		  ~((ResFlg === AnsFlg | AnsFlg === 5'bx))) begin	 
 	 errors += 1;
@@ -995,8 +984,14 @@ module testbenchfp;
 	 // incemet the operation if all the rounding modes have been tested
 	 if (FrmNum === 4) OpCtrlNum += 1;
 	 // increment the rounding mode or loop back to rne 
-	 if (FrmNum < 4) FrmNum += 1;
-	 else FrmNum = 0; 
+	 if (FrmNum < 4) 
+	   FrmNum += 1;
+	 else begin
+	   FrmNum = 0;
+	    // Add some time as a buffer between tests at the end of each test
+	    repeat (10)
+	      @(posedge clk);
+	 end	 
 	 // if no more Tests - finish
 	 if (Tests[TestNum] === "") begin
             $display("\nAll Tests completed with %d errors\n", errors);
@@ -1034,7 +1029,6 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		    );
 
    localparam Q_LEN = 32'd128;
-  //`include "parameter-defs.vh"   
    
    logic 					XEn;
    logic 					YEn;
@@ -1113,7 +1107,6 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
           if (OpCtrl[0])
             case (Fmt)
               2'b11: begin // quad
-		 #20;		 
 		 X = TestVector[8+2*(P.Q_LEN)-1:8+(P.Q_LEN)];
 		 Ans = TestVector[8+(P.Q_LEN-1):8];
 		 if (~clk) #5;
@@ -1121,7 +1114,6 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		   DivStart = 1'b0;
               end
               2'b01: if (P.D_SUPPORTED) begin // double
-		 #20;		 
 		 X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]};
 		 Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
 		 if (~clk) #5;
@@ -1129,7 +1121,6 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		   DivStart = 1'b0;
               end
               2'b00: if (P.S_SUPPORTED) begin // single
-		 #20;		 
 		 X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+1*(P.S_LEN)]};
 		 Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
 		 if (~clk) #5;
@@ -1137,7 +1128,6 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		   DivStart = 1'b0;
               end
               2'b10: begin // half
-		 #20;		 
 		 X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+(P.H_LEN)]};
 		 Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
 		 if (~clk) #5;
@@ -1148,7 +1138,6 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
           else
             case (Fmt)
               2'b11: begin // quad
-		 #20;		 
 		 X = TestVector[8+3*(P.Q_LEN)-1:8+2*(P.Q_LEN)];
 		 Y = TestVector[8+2*(P.Q_LEN)-1:8+(P.Q_LEN)];
 		 Ans = TestVector[8+(P.Q_LEN-1):8];
@@ -1157,7 +1146,6 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		   DivStart = 1'b0;
               end
               2'b01: if (P.D_SUPPORTED) begin // double
-		 #20;		 
 		 X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+3*(P.D_LEN)-1:8+2*(P.D_LEN)]};
 		 Y = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]};
 		 Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
@@ -1166,7 +1154,6 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		   DivStart = 1'b0;
               end
               2'b00: if (P.S_SUPPORTED) begin // single
-		 #20;		 
 		 X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+3*(P.S_LEN)-1:8+2*(P.S_LEN)]};
 		 Y = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+1*(P.S_LEN)]};
 		 Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
@@ -1175,7 +1162,6 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		   DivStart = 1'b0;
               end
               2'b10: begin // half
-		 #20;		 
 		 X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+3*(P.H_LEN)-1:8+2*(P.H_LEN)]};
 		 Y = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+(P.H_LEN)]};
 		 Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
@@ -1403,11 +1389,11 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
    assign XEn = ~((Unit == `CVTINTUNIT)&OpCtrl[2]);
    assign YEn = ~((Unit == `CVTINTUNIT)|(Unit == `CVTFPUNIT)|((Unit == `DIVUNIT)&OpCtrl[0]));
    assign ZEn = (Unit == `FMAUNIT);
-   // Will fix with better activation - for now, this works (jes)
    assign FPUActive = 1'b1;
    
    unpack #(P) unpack(.X, .Y, .Z, .Fmt(ModFmt), .FPUActive, .Xs, .Ys, .Zs, .Xe, .Ye, .Ze,
                       .Xm, .Ym, .Zm, .XNaN, .YNaN, .ZNaN, .XSNaN, .YSNaN, .ZSNaN,
                       .XSubnorm, .XZero, .YZero, .ZZero, .XInf, .YInf, .ZInf,
                       .XEn, .YEn, .ZEn, .XExpMax, .XPostBox);
+
 endmodule

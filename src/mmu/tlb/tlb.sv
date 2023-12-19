@@ -90,6 +90,7 @@ module tlb import cvw::*;  #(parameter cvw_t P,
   logic                           Misaligned;
   logic                           MegapageMisaligned;
   logic                           PTE_N;         // NAPOT page table entry
+  logic                           NAPOT4;        // pte.ppn[3:0] = 1000, indicating 64 KiB continuous NAPOT region
 
   if(P.XLEN == 32) begin
     assign MegapageMisaligned = |(PPN[9:0]); // must have zero PPN0
@@ -105,10 +106,11 @@ module tlb import cvw::*;  #(parameter cvw_t P,
   end
 
   assign VPN = VAdr[P.VPN_BITS+11:12];
+  assign NAPOT4 = (PPN[3:0] == 4'b1000); // 64 KiB contiguous region with pte.napot_bits = 4
 
   tlbcontrol #(P, ITLB) tlbcontrol(.SATP_MODE, .VAdr, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE,
     .PrivilegeModeW, .ReadAccess, .WriteAccess, .CMOp, .DisableTranslation, .TLBFlush,
-    .PTEAccessBits, .CAMHit, .Misaligned, 
+    .PTEAccessBits, .CAMHit, .Misaligned, .NAPOT4, 
     .TLBMiss, .TLBHit, .TLBPageFault, 
     .UpdateDA, .SV39Mode, .Translate, .PTE_N, .PBMemoryType);
 

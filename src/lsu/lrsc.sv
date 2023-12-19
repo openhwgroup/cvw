@@ -40,16 +40,20 @@ module lrsc import cvw::*;  #(parameter cvw_t P) (
   output logic                 SquashSCW   // Squash the store conditional by not allowing rf write
 );
 
+  // reservation set size is XLEN for Wally
+  localparam RESERVATION_SET_SIZE_IN_BYTES = P.XLEN/8;
+  localparam RESERVATION_SET_ADDRESS_BITS = $clog2(RESERVATION_SET_SIZE_IN_BYTES); // 2 for rv32, 3 for rv64
+
   // possible bug: *** double check if PreLSURWM needs to be flushed by ignorerequest.
   // Handle atomic load reserved / store conditional
-  logic [P.PA_BITS-1:2]        ReservationPAdrW;
+  logic [P.PA_BITS-1:RESERVATION_SET_ADDRESS_BITS]        ReservationPAdrW;
   logic                        ReservationValidM, ReservationValidW; 
   logic                        lrM, scM, WriteAdrMatchM;
   logic                        SquashSCM;
 
   assign lrM = MemReadM & LSUAtomicM[0];
   assign scM = PreLSURWM[0] & LSUAtomicM[0]; 
-  assign WriteAdrMatchM = PreLSURWM[0] & (PAdrM[P.PA_BITS-1:2] == ReservationPAdrW) & ReservationValidW;
+  assign WriteAdrMatchM = PreLSURWM[0] & (PAdrM[P.PA_BITS-1:RESERVATION_SET_ADDRESS_BITS] == ReservationPAdrW) & ReservationValidW;
   assign SquashSCM = scM & ~WriteAdrMatchM;
   assign LSURWM = SquashSCM ? 2'b00 : PreLSURWM;
   always_comb begin // ReservationValidM (next value of valid reservation)
@@ -59,7 +63,7 @@ module lrsc import cvw::*;  #(parameter cvw_t P) (
     else ReservationValidM = ReservationValidW; // otherwise don't change valid
   end
   
-  flopenr #(P.PA_BITS-2) resadrreg(clk, reset, lrM & ~StallW, PAdrM[P.PA_BITS-1:2], ReservationPAdrW); // could drop clear on this one but not valid
+  flopenr #(P.PA_BITS-RESERVATION_SET_ADDRESS_BITS) resadrreg(clk, reset, lrM & ~StallW, PAdrM[P.PA_BITS-1:RESERVATION_SET_ADDRESS_BITS], ReservationPAdrW); // could drop clear on this one but not valid
   flopenr #(1) resvldreg(clk, reset, ~StallW, ReservationValidM, ReservationValidW);
   flopenr #(1) squashreg(clk, reset, ~StallW, SquashSCM, SquashSCW);
 endmodule
