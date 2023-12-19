@@ -85,7 +85,7 @@ module testbench;
   logic riscofTest; 
   logic Validate;
   logic SelectTest;
-
+  logic TestComplete;
 
   // pick tests based on modes supported
   initial begin
@@ -176,6 +176,7 @@ module testbench;
                            STATE_LOAD_MEMORIES,
                            STATE_RESET_TEST,
                            STATE_RUN_TEST,
+                           STATE_COPY_RAM,
                            STATE_CHECK_TEST,
                            STATE_CHECK_TEST_WAIT,
                            STATE_VALIDATE,
@@ -218,8 +219,9 @@ module testbench;
       STATE_LOAD_MEMORIES:                        NextState = STATE_RESET_TEST;
       STATE_RESET_TEST:      if(ResetCount < ResetThreshold) NextState = STATE_RESET_TEST;
                              else                 NextState = STATE_RUN_TEST;
-      STATE_RUN_TEST:        if(DCacheFlushStart) NextState = STATE_CHECK_TEST;
+      STATE_RUN_TEST:        if(TestComplete)     NextState = STATE_COPY_RAM;
                              else                 NextState = STATE_RUN_TEST;
+      STATE_COPY_RAM:                             NextState = STATE_CHECK_TEST;
       STATE_CHECK_TEST:      if (DCacheFlushDone) NextState = STATE_VALIDATE;
                              else                 NextState = STATE_CHECK_TEST_WAIT;
       STATE_CHECK_TEST_WAIT: if(DCacheFlushDone)  NextState = STATE_VALIDATE;
@@ -240,6 +242,8 @@ module testbench;
   assign ResetCntEn = CurrState == STATE_RESET_TEST;
   assign Validate = CurrState == STATE_VALIDATE;
   assign SelectTest = CurrState == STATE_INIT_TEST;
+  assign CopyRAM = TestComplete & CurrState == STATE_COPY_RAM;
+  assign DCacheFlushStart = CurrState == STATE_COPY_RAM;
 
   // fsm reset counter
   counter #(3) RstCounter(clk, ResetCntRst, ResetCntEn, ResetCount);
@@ -380,6 +384,8 @@ module testbench;
   // load memories with program image
   ////////////////////////////////////////////////////////////////////////////////
 
+  integer IndexTemp;
+  logic [P.XLEN-0] value;
   if (P.SDC_SUPPORTED) begin
     always @(posedge clk) begin
       if (LoadMem) begin
@@ -403,6 +409,14 @@ module testbench;
       if (LoadMem) begin
         $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
       end
+      if (CopyRAM) begin
+        for(IndexTemp = 0; IndexTemp < (P.UNCORE_RAM_RANGE)>>1+(P.XLEN/32); IndexTemp++) begin
+          //if(dut.uncore.uncore.ram.ram.memory.RAM[IndexTemp] === 'bx) break; // end copy early if at the end of the sig *** double check this will be valid for all tests.
+          //value = dut.uncore.uncore.ram.ram.memory.RAM[IndexTemp];
+          testbench.DCacheFlushFSM.ShadowRAM[((P.UNCORE_RAM_BASE)>>1+(P.XLEN/32)) + IndexTemp] = dut.uncore.uncore.ram.ram.memory.RAM[IndexTemp];
+          //$display("Index = %x, Value = %x, Dest Index = %x", IndexTemp, value, ((P.UNCORE_RAM_BASE)>>1+(P.XLEN/32)) + IndexTemp);
+        end
+      end
     end
   end 
   if (P.DTIM_SUPPORTED) begin
@@ -410,6 +424,12 @@ module testbench;
       if (LoadMem) begin
         $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
         $display("Read memfile %s", memfilename);
+      end
+      if (CopyRAM) begin
+        for(IndexTemp = 0; IndexTemp < (P.DTIM_RANGE)>>1+(P.XLEN/32); IndexTemp++) begin
+          //if(dut.core.lsu.dtim.dtim.ram.RAM[IndexTemp] === 'bx) break; // end copy early if at the end of the sig *** double check this will be valid for all tests.
+          testbench.DCacheFlushFSM.ShadowRAM[((P.DTIM_BASE)>>1+(P.XLEN/32)) + IndexTemp] = dut.core.lsu.dtim.dtim.ram.RAM[IndexTemp];
+        end
       end
     end
   end
@@ -502,14 +522,15 @@ module testbench;
   logic ecf; // remove this once we don't rely on old Imperas tests with Ecalls
   if (P.ZICSR_SUPPORTED) assign ecf = dut.core.priv.priv.EcallFaultM;
   else                  assign ecf = 0;
-  assign DCacheFlushStart = ecf & 
+  assign TestComplete = ecf & 
 			    (dut.core.ieu.dp.regf.rf[3] == 1 | 
 			     (dut.core.ieu.dp.regf.we3 & 
 			      dut.core.ieu.dp.regf.a3 == 3 & 
 			      dut.core.ieu.dp.regf.wd3 == 1)) |
            ((InstrM == 32'h6f | InstrM == 32'hfc32a423 | InstrM == 32'hfc32a823) & dut.core.ieu.c.InstrValidM ) |
-           ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"]) & InstrMName == "SW" ); 
-
+           ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"]) & InstrMName == "SW" );
+  //assign DCacheFlushStart =  TestComplete;
+  
   DCacheFlushFSM #(P) DCacheFlushFSM(.clk(clk), .reset(reset), .start(DCacheFlushStart), .done(DCacheFlushDone));
 
   task automatic CheckSignature;
@@ -567,11 +588,13 @@ module testbench;
       logic [P.XLEN-1:0] sig;
       // **************************************
       // ***** BUG BUG BUG make sure RT undoes this.
-      if (P.DTIM_SUPPORTED) sig = testbench.dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
-      else if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
+      //if (P.DTIM_SUPPORTED) sig = testbench.dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
+      //else if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
       //if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
+      if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
       //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
-      if (signature[i] !== sig & (signature[i] !== testbench.DCacheFlushFSM.ShadowRAM[testadr+i])) begin  
+      //if (signature[i] !== sig & (signature[i] !== testbench.DCacheFlushFSM.ShadowRAM[testadr+i])) begin
+      if (signature[i] !== testbench.DCacheFlushFSM.ShadowRAM[testadr+i]) begin  
         errors = errors+1;
         $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
 			     TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
