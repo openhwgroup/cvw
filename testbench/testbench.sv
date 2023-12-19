@@ -242,7 +242,7 @@ module testbench;
   assign ResetCntEn = CurrState == STATE_RESET_TEST;
   assign Validate = CurrState == STATE_VALIDATE;
   assign SelectTest = CurrState == STATE_INIT_TEST;
-  assign CopyRAM = TestComplete & CurrState == STATE_COPY_RAM;
+  assign CopyRAM = TestComplete & CurrState == STATE_RUN_TEST;
   assign DCacheFlushStart = CurrState == STATE_COPY_RAM;
 
   // fsm reset counter
@@ -385,7 +385,6 @@ module testbench;
   ////////////////////////////////////////////////////////////////////////////////
 
   integer IndexTemp;
-  logic [P.XLEN-0] value;
   if (P.SDC_SUPPORTED) begin
     always @(posedge clk) begin
       if (LoadMem) begin
@@ -412,9 +411,7 @@ module testbench;
       if (CopyRAM) begin
         for(IndexTemp = 0; IndexTemp < (P.UNCORE_RAM_RANGE)>>1+(P.XLEN/32); IndexTemp++) begin
           //if(dut.uncore.uncore.ram.ram.memory.RAM[IndexTemp] === 'bx) break; // end copy early if at the end of the sig *** double check this will be valid for all tests.
-          //value = dut.uncore.uncore.ram.ram.memory.RAM[IndexTemp];
           testbench.DCacheFlushFSM.ShadowRAM[((P.UNCORE_RAM_BASE)>>1+(P.XLEN/32)) + IndexTemp] = dut.uncore.uncore.ram.ram.memory.RAM[IndexTemp];
-          //$display("Index = %x, Value = %x, Dest Index = %x", IndexTemp, value, ((P.UNCORE_RAM_BASE)>>1+(P.XLEN/32)) + IndexTemp);
         end
       end
     end
@@ -590,14 +587,16 @@ module testbench;
       // ***** BUG BUG BUG make sure RT undoes this.
       //if (P.DTIM_SUPPORTED) sig = testbench.dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
       //else if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
-      //if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
       if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
+      //if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
       //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
       //if (signature[i] !== sig & (signature[i] !== testbench.DCacheFlushFSM.ShadowRAM[testadr+i])) begin
       if (signature[i] !== testbench.DCacheFlushFSM.ShadowRAM[testadr+i]) begin  
         errors = errors+1;
         $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
 			     TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
+        //$display("  Error on test %s result %d: adr = %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
+		//	     TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], signature[i]);        
         $stop; //***debug
       end
       i = i + 1;
