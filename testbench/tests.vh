@@ -44,9 +44,9 @@ string tvpaths[] = '{
 
   string coverage64gc[] = '{
     `COVERAGE,
-    "tlbNAPOT",
-    "priv",
     "ieu",
+//    "tlbNAPOT",
+    "priv",
     "ebu",
     "csrwrites",
     "ifu",
@@ -898,7 +898,7 @@ string imperas32f[] = '{
  -----/\----- EXCLUDED -----/\----- */
     };
 
-  string arch64zi[] = '{
+  string arch64zifencei[] = '{
     `RISCVARCHTEST,
     "rv64i_m/Zifencei/src/Fencei.S"
     };
@@ -917,7 +917,7 @@ string imperas32f[] = '{
     };
 
 
-  string arch32zi[] = '{
+  string arch32zifencei[] = '{
     `RISCVARCHTEST,
     "rv32i_m/Zifencei/src/Fencei.S"
     };
@@ -1480,6 +1480,49 @@ string imperas32f[] = '{
     "rv64i_m/D/src/fssub.d_b7-01.S",
     "rv64i_m/D/src/fssub.d_b8-01.S"
 };
+
+string arch64zicboz[] = '{ // as of 12/17/23 presently cbo.zero is the only CMO insturction with riscv-arch-test support
+      `RISCVARCHTEST,
+      "rv64i_m/CMO/src/cbo.zero-01.S"
+  };
+
+string arch32zicboz[] = '{ // as of 12/17/23 presently cbo.zero is the only CMO insturction with riscv-arch-test support
+      `RISCVARCHTEST,
+      "rv32i_m/CMO/src/cbo.zero-01.S"
+  };
+
+string arch64zcb[] = '{
+      `RISCVARCHTEST,
+      "rv64i_m/C/src/clbu-01.S",
+      "rv64i_m/C/src/clh-01.S",
+      "rv64i_m/C/src/clhu-01.S",
+      "rv64i_m/C/src/clbu-01.S",
+      "rv64i_m/C/src/csb-01.S",
+      "rv64i_m/C/src/csh-01.S",
+      "rv64i_m/C/src/csext.b-01.S",
+      "rv64i_m/C/src/csext.h-01.S",
+      "rv64i_m/C/src/czext.b-01.S",
+      "rv64i_m/C/src/czext.h-01.S",
+      "rv64i_m/C/src/cmul-01.S",
+      "rv64i_m/C/src/cnot-01.S",
+      "rv64i_m/C/src/czext.w-01.S"
+  };
+
+string arch32zcb[] = '{
+      `RISCVARCHTEST,
+      "rv32i_m/C/src/clbu-01.S",
+      "rv32i_m/C/src/clh-01.S",
+      "rv32i_m/C/src/clhu-01.S",
+      "rv32i_m/C/src/clbu-01.S",
+      "rv32i_m/C/src/csb-01.S",
+      "rv32i_m/C/src/csh-01.S",
+      "rv32i_m/C/src/csext.b-01.S",
+      "rv32i_m/C/src/csext.h-01.S",
+      "rv32i_m/C/src/czext.b-01.S",
+      "rv32i_m/C/src/czext.h-01.S",
+      "rv32i_m/C/src/cmul-01.S",
+      "rv32i_m/C/src/cnot-01.S"
+  };
 
 string arch64zba[] = '{
       `RISCVARCHTEST,

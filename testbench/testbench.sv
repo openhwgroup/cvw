@@ -102,9 +102,9 @@ module testbench;
         "arch64a":      if (P.A_SUPPORTED)        tests = arch64a;
         "arch64f":      if (P.F_SUPPORTED)        tests = arch64f;
         "arch64d":      if (P.D_SUPPORTED)        tests = arch64d;  
-        "arch64f_fma":      if (P.F_SUPPORTED)    tests = arch64f_fma;
-        "arch64d_fma":      if (P.D_SUPPORTED)    tests = arch64d_fma;  
-        "arch64zi":     if (P.ZIFENCEI_SUPPORTED) tests = arch64zi;
+        "arch64f_fma":  if (P.F_SUPPORTED)        tests = arch64f_fma;
+        "arch64d_fma":  if (P.D_SUPPORTED)        tests = arch64d_fma;  
+        "arch64zifencei":  if (P.ZIFENCEI_SUPPORTED) tests = arch64zifencei;
         "imperas64i":                             tests = imperas64i;
         "imperas64f":   if (P.F_SUPPORTED)        tests = imperas64f;
         "imperas64d":   if (P.D_SUPPORTED)        tests = imperas64d;
@@ -124,6 +124,8 @@ module testbench;
         "arch64zbb":     if (P.ZBB_SUPPORTED)     tests = arch64zbb;
         "arch64zbc":     if (P.ZBC_SUPPORTED)     tests = arch64zbc;
         "arch64zbs":     if (P.ZBS_SUPPORTED)     tests = arch64zbs;
+        "arch64zicboz":  if (P.ZICBOZ_SUPPORTED)  tests = arch64zicboz;
+        "arch64zcb":     if (P.ZCB_SUPPORTED)     tests = arch64zcb;
       endcase 
     end else begin // RV32
       case (TEST)
@@ -137,9 +139,9 @@ module testbench;
         "arch32a":      if (P.A_SUPPORTED)        tests = arch32a;
         "arch32f":      if (P.F_SUPPORTED)        tests = arch32f;
         "arch32d":      if (P.D_SUPPORTED)        tests = arch32d;
-        "arch32f_fma":      if (P.F_SUPPORTED)    tests = arch32f_fma;
-        "arch32d_fma":      if (P.D_SUPPORTED)    tests = arch32d_fma;
-        "arch32zi":     if (P.ZIFENCEI_SUPPORTED) tests = arch32zi;
+        "arch32f_fma":  if (P.F_SUPPORTED)        tests = arch32f_fma;
+        "arch32d_fma":  if (P.D_SUPPORTED)        tests = arch32d_fma;
+        "arch32zifencei":     if (P.ZIFENCEI_SUPPORTED) tests = arch32zifencei;
         "imperas32i":                             tests = imperas32i;
         "imperas32f":   if (P.F_SUPPORTED)        tests = imperas32f;
         "imperas32m":   if (P.M_SUPPORTED)        tests = imperas32m;
@@ -155,6 +157,8 @@ module testbench;
         "arch32zbb":     if (P.ZBB_SUPPORTED)     tests = arch32zbb;
         "arch32zbc":     if (P.ZBC_SUPPORTED)     tests = arch32zbc;
         "arch32zbs":     if (P.ZBS_SUPPORTED)     tests = arch32zbs;
+        "arch32zicboz":  if (P.ZICBOZ_SUPPORTED)  tests = arch32zicboz;
+        "arch32zcb":     if (P.ZCB_SUPPORTED)     tests = arch32zcb;
       endcase
     end
     if (tests.size() == 0) begin
