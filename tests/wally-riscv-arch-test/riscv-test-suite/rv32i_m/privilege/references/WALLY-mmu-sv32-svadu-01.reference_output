@@ -39,7 +39,7 @@ beef0110
 0000000d # Test 11.3.1.3.6(a) page fault on read when A = 0
 00000bad
 0000000f # Test 11.3.1.3.7(a) page fault on write when D = 0
-deadbeef # Test 11.3.1.3.7(a) successful read when D = 0
+12345678 # Test 11.3.1.3.7(a) successful read when D = 0
 00000009 # call from going to m mode from s mode
 0000000b # ecall from going to S mode from m mode
 beef0770 # Test 11.3.1.3.6: check successful read/write when A=0 and MENVCFG.ADUE=1

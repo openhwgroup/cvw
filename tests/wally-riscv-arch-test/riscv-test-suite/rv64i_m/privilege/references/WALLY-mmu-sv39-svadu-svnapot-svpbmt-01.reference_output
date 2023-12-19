@@ -92,8 +92,8 @@ beef0110 # Test 11.3.1.3.4: read test success
 00000000
 0000000f # Test 11.3.1.3.7(a): write test with page fault
 00000000
-deadbeef # read test success but nothing was written so read back default
-deadbeef
+beef0991 # read test success but nothing was written so read back default
+0880dead
 00000009 # ecall from going to M mode from S mode
 00000000
 0000000B # ecall from going to S mode from M mode
