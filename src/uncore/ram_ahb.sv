@@ -78,8 +78,8 @@ module ram_ahb import cvw::*;  #(parameter cvw_t P,
   //assign HREADRam = HRDATA2 === 'bx ? 64'hdeadbeefdeadbeef : HRDATA2;
   // **** RT: MAJOR BUG can't leave in for anything.  Will cause synthesis issues.
   // PRIV sv48-svadu test not working without it.
-  assign HREADRam = HRDATA2 === 'bx ? 64'h0 : HRDATA2;
-  //assign HREADRam = HRDATA2;
+  //assign HREADRam = HRDATA2 === 'bx ? 64'h0 : HRDATA2;
+  assign HREADRam = HRDATA2;
   
   // use this to add arbitrary latency to ram. Helps test AHB controller correctness
   if(`RAM_LATENCY > 0) begin
