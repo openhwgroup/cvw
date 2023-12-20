@@ -372,6 +372,9 @@ Destination2:
         .fill 16, 4, 0xdeadbeef
 signature:
         .fill 32, 4, 0x0bad0bad
+sig_end_canary:
+.int 0x0
+rvtest_sig_end:
 	
 RVMODEL_DATA_END
 

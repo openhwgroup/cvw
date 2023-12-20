@@ -88,6 +88,7 @@ test_cases:
 .4byte 0x80805EA0, 0xBEEF0440, write32_test # 11.3.1.3.3
 .4byte 0x8000FFA0, 0x11100393, write32_test # write executable code for "li x7, 0x111; ret" to executable region.
 .4byte 0x8000FFA4, 0x00008067, write32_test # Used for 11.3.1.3.1, 11.3.1.3.2
+.4byte 0x80803658, 0x12345678, write32_test # initialize memory for 11.3.1.3.7(a)
 
 # test 11.3.1.1.3 read values back from Paddrs without translation (this also verifies the previous test)
 .4byte 0x0, 0x0, goto_baremetal # satp.MODE = baremetal / no translation.

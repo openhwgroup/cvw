@@ -113,4 +113,7 @@ RVMODEL_DATA_BEGIN
 # signature output
 wally_signature:
 .fill 6, 4, -1
+sig_end_canary:
+.int 0x0
+rvtest_sig_end:
 RVMODEL_DATA_END

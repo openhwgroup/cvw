@@ -76,6 +76,10 @@ gpr_save:
 
 #endif
 
+sig_end_canary:
+.int 0x0
+rvtest_sig_end:
+
 RVMODEL_DATA_END
 // ../../wally-riscv-arch-test/riscv-test-suite/rv32i_m/D/src/WALLY-fld.S
 // David_Harris@hmc.edu & Katherine Parry

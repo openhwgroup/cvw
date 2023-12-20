@@ -133,6 +133,9 @@ gpr_save:
     .fill 32*(XLEN/32),4,0xdeadbeef
 
 #endif
+sig_end_canary:
+.int 0x0
+rvtest_sig_end:
 
 RVMODEL_DATA_END
 // ../wally-riscv-arch-test/riscv-test-suite/rv32i_m/I/src/WALLY-SLT.S

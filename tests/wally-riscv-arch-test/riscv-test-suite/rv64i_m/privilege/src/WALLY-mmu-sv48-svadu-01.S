@@ -114,7 +114,10 @@ test_cases:
 .8byte 0x80200130, 0x0110DEADBEEF0077, write64_test # 11.3.1.3.2
 .8byte 0x85212348, 0x0330DEADBEEF0440, write64_test # 11.3.1.3.3
 .8byte 0x88888000, 0x0000806711100393, write64_test # 11.3.1.3.5 write same executable code
-
+.8byte 0x80203658, 0xDEADBEEFDEADBEEF, write64_test # 11.3.1.3.7(a) 
+	
+#.8byte 0x85bc0ab0, 0x0123456789abcdf0, write64_test # 11.3.1.1.4
+        
 # test 11.3.1.1.3 read values back from Paddrs without translation (this also verifies the previous test)
 .8byte 0x0, 0x0, goto_baremetal # satp.MODE = baremetal / no translation.
 .8byte 0x0, 0x0, goto_s_mode # change to S mode, 0xb written to output
