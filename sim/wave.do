@@ -662,8 +662,11 @@ add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/STATUS_TW
 add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/PrivilegeModeW
 add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/wfi/WFICount
 add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/WFITimeoutM
+add wave -noupdate -expand -group testbench /testbench/DCacheFlushStart
+add wave -noupdate -expand -group testbench /testbench/TestComplete
+add wave -noupdate -expand -group testbench /testbench/CurrState
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 4} {6586 ns} 1} {{Cursor 4} {372450 ns} 0} {{Cursor 3} {403021 ns} 1}
+WaveRestoreCursors {{Cursor 4} {6586 ns} 1} {{Cursor 4} {1405857 ns} 0} {{Cursor 3} {403021 ns} 1}
 quietly wave cursor active 2
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 194
@@ -679,4 +682,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {372177 ns} {372771 ns}
+WaveRestoreZoom {0 ns} {16302587 ns}

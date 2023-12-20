@@ -69,6 +69,7 @@ localparam DCACHE_LINELENINBITS = 32'd512;
 localparam ICACHE_NUMWAYS = 32'd4;
 localparam ICACHE_WAYSIZEINBYTES = 32'd4096;
 localparam ICACHE_LINELENINBITS = 32'd512;
+localparam CACHE_SRAMLEN = 32'd128;
 
 // Integer Divider Configuration
 // IDIV_BITSPERCYCLE must be 1, 2, or 4

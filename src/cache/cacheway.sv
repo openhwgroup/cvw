@@ -129,21 +129,20 @@ module cacheway import cvw::*; #(parameter cvw_t P,
 
   genvar               words;
 
-  localparam           SRAMLEN = 128;             // *** make this a global parameter
-  localparam           NUMSRAM = LINELEN/SRAMLEN;
-  localparam           SRAMLENINBYTES = SRAMLEN/8;
+  localparam           NUMSRAM = LINELEN/P.CACHE_SRAMLEN;
+  localparam           SRAMLENINBYTES = P.CACHE_SRAMLEN/8;
   localparam           LOGNUMSRAM = $clog2(NUMSRAM);
   
   for(words = 0; words < NUMSRAM; words++) begin: word
     if (!READ_ONLY_CACHE) begin:wordram
-      ram1p1rwbe #(.USE_SRAM(P.USE_SRAM), .DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSetData),
-      .dout(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
-      .din(LineWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
+      ram1p1rwbe #(.USE_SRAM(P.USE_SRAM), .DEPTH(NUMLINES), .WIDTH(P.CACHE_SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSetData),
+      .dout(ReadDataLine[P.CACHE_SRAMLEN*(words+1)-1:P.CACHE_SRAMLEN*words]),
+      .din(LineWriteData[P.CACHE_SRAMLEN*(words+1)-1:P.CACHE_SRAMLEN*words]),
       .we(SelectedWriteWordEn), .bwe(FinalByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
     end else begin:wordram // no byte-enable needed for i$.
-      ram1p1rwe #(.USE_SRAM(P.USE_SRAM), .DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSetData),
-      .dout(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
-      .din(LineWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
+      ram1p1rwe #(.USE_SRAM(P.USE_SRAM), .DEPTH(NUMLINES), .WIDTH(P.CACHE_SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSetData),
+      .dout(ReadDataLine[P.CACHE_SRAMLEN*(words+1)-1:P.CACHE_SRAMLEN*words]),
+      .din(LineWriteData[P.CACHE_SRAMLEN*(words+1)-1:P.CACHE_SRAMLEN*words]),
       .we(SelectedWriteWordEn));
     end
   end

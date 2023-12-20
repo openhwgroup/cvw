@@ -747,6 +747,9 @@ Double7DstData:
 signature:
         .fill 225, 1, 0x00
 	
+sig_end_canary:
+.int 0x0
+rvtest_sig_end:
 RVMODEL_DATA_END
 // ../wally-riscv-arch-test/riscv-test-suite/rv64i_m/I/src/WALLY-SLT.S
 // David_Harris@hmc.edu & Katherine Parry

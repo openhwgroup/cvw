@@ -110,11 +110,11 @@ module ram2p1r1wbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=1024, WIDTH=68) 
     // ***************************************************************************
     integer i;
     
-  /*  initial begin // initialize memory for simulation only; not needed because done in the testbench now
+    initial begin // initialize memory for simulation only; not needed because done in the testbench now
       integer j;
       for (j=0; j < DEPTH; j++) 
         mem[j] = '0;
-    end */
+    end 
     
     // Read
     logic [$clog2(DEPTH)-1:0] ra1d;

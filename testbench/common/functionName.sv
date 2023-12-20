@@ -30,15 +30,15 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
   input string ProgramLabelMapFile
   );
   
-  logic [P.XLEN-1:0] ProgramAddrMapMemory [];
-  string 	    ProgramLabelMapMemory [integer];
+  logic [P.XLEN-1:0] ProgramAddrMapMemory [logic [P.XLEN-1:0]];
+  string 	    ProgramLabelMapMemory [logic [P.XLEN-1:0]];
   string 	    FunctionName;
   
 
   logic [P.XLEN-1:0] PCF, PCD, PCE, PCM, FunctionAddr, PCM_temp, PCMOld;
   logic 	    StallD, StallE, StallM, FlushD, FlushE, FlushM;
   logic 		InstrValidM;
-  integer 	    ProgramAddrIndex, ProgramAddrIndexQ;
+  logic [P.XLEN-1:0] 	    ProgramAddrIndex, ProgramAddrIndexQ;
 
   assign PCF = testbench.dut.core.ifu.PCF;
   assign StallD = testbench.dut.core.StallD;
@@ -62,7 +62,7 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
   task automatic bin_search_min;
     input logic [P.XLEN-1:0] pc;
     input logic [P.XLEN-1:0] length;
-    ref logic [P.XLEN-1:0]   array [];
+    ref logic [P.XLEN-1:0]   array [logic [P.XLEN-1:0]];
     output logic [P.XLEN-1:0] minval;
     output     logic [P.XLEN-1:0] mid;
 
@@ -109,8 +109,9 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
   endtask // bin_search_min
 
   integer ProgramAddrMapFP, ProgramLabelMapFP;
-  integer ProgramAddrMapLineCount, ProgramLabelMapLineCount;
-  longint ProgramAddrMapLine;
+  logic [P.XLEN-1:0] ProgramAddrMapLineCount;
+  logic [P.XLEN-1:0] ProgramLabelMapLineCount;
+  logic [P.XLEN-1:0] ProgramAddrMapLine;
   string  ProgramLabelMapLine;
   integer status;
   
@@ -118,22 +119,28 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
   // preload
 //  initial begin
   always @ (negedge reset) begin
+
+    // cannot readmemh directoy to a dynmaic array. Sad times :(
+    // Let's initialize a static array with FFFF_FFFF for all addresses.
+    // Then we can readmemh and finally copy to the dynamic array.
+    
 	// clear out the old mapping between programs.
     ProgramAddrMapMemory.delete();
     ProgramLabelMapMemory.delete();
 
-    $readmemh(ProgramAddrMapFile, ProgramAddrMapMemory);
+    // Unfortunately verilator version 5.011 readmemh does not support dynamic arrays
+    //$readmemh(ProgramAddrMapFile, ProgramAddrMapMemory);
     // we need to count the number of lines in the file so we can set FunctionRadixLineCount.
 
     ProgramAddrMapLineCount = 0;
     ProgramAddrMapFP = $fopen(ProgramAddrMapFile, "r");
 
     // read line by line to count lines
-    if (ProgramAddrMapFP) begin
+    if (ProgramAddrMapFP != '0) begin
       while (! $feof(ProgramAddrMapFP)) begin
-	status = $fscanf(ProgramAddrMapFP, "%h\n", ProgramAddrMapLine);
-	
-	ProgramAddrMapLineCount = ProgramAddrMapLineCount + 1;
+	    status = $fscanf(ProgramAddrMapFP, "%h\n", ProgramAddrMapLine);
+        ProgramAddrMapMemory[ProgramAddrMapLineCount] = ProgramAddrMapLine;
+	    ProgramAddrMapLineCount = ProgramAddrMapLineCount + 1;
       end
     end else begin
       $display("Cannot open file %s for reading.", ProgramAddrMapFile);
@@ -147,7 +154,7 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
     ProgramLabelMapLineCount = 0;
     ProgramLabelMapFP = $fopen(ProgramLabelMapFile, "r");
     
-    if (ProgramLabelMapFP) begin
+    if (ProgramLabelMapFP != '0) begin
       while (! $feof(ProgramLabelMapFP)) begin
 	status = $fscanf(ProgramLabelMapFP, "%s\n", ProgramLabelMapLine);
 	ProgramLabelMapMemory[ProgramLabelMapLineCount] = ProgramLabelMapLine;

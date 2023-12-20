@@ -42,7 +42,7 @@ module riscvassertions import cvw::*; #(parameter cvw_t P);
     assert (2**$clog2(P.ICACHE_WAYSIZEINBYTES) == P.ICACHE_WAYSIZEINBYTES || (!P.ICACHE_SUPPORTED)) else $error("ICACHE_WAYSIZEINBYTES must be a power of 2");
     assert (2**$clog2(P.ITLB_ENTRIES) == P.ITLB_ENTRIES || P.VIRTMEM_SUPPORTED==0) else $error("ITLB_ENTRIES must be a power of 2");
     assert (2**$clog2(P.DTLB_ENTRIES) == P.DTLB_ENTRIES || P.VIRTMEM_SUPPORTED==0) else $error("DTLB_ENTRIES must be a power of 2");
-    assert (P.UNCORE_RAM_RANGE >= 56'h07FFFFFF) else $warning("Some regression tests will fail if UNCORE_RAM_RANGE is less than 56'h07FFFFFF");
+    assert (P.UNCORE_RAM_RANGE >= 64'h07FFFFFF) else $warning("Some regression tests will fail if UNCORE_RAM_RANGE is less than 64'h07FFFFFF");
 	  assert (P.ZICSR_SUPPORTED == 1 || (P.PMP_ENTRIES == 0 && P.VIRTMEM_SUPPORTED == 0)) else $error("PMP_ENTRIES and VIRTMEM_SUPPORTED must be zero if ZICSR not supported.");
     assert (P.ZICSR_SUPPORTED == 1 || (P.S_SUPPORTED == 0 && P.U_SUPPORTED == 0)) else $error("S and U modes not supported if ZICSR not supported");
     assert (P.U_SUPPORTED || (P.S_SUPPORTED == 0)) else $error ("S mode only supported if U also is supported");
