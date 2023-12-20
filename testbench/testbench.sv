@@ -187,7 +187,7 @@ module testbench;
   logic        LoadMem;
   logic        ResetCntEn;
   logic        ResetCntRst;
-  
+  logic        CopyRAM;
 
   string  signame, memfilename, pathname;
   integer begin_signature_addr;

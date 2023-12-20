@@ -155,7 +155,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
     logic [P.XLEN-1:0]    AccessedPTE;
 
     assign AccessedPTE = {PTE[P.XLEN-1:8], (SetDirty | PTE[7]), 1'b1, PTE[5:0]}; // set accessed bit, conditionally set dirty bit
-    assign ReadDataNoXM = (ReadDataM === 'x) ? '0 : ReadDataM; // Hack to ensure the TLBs are never written with x's because they will propagate and hang the simulation.
+    assign ReadDataNoXM = (ReadDataM[0] === 'x) ? '0 : ReadDataM; // If the PTE.V bit is x because it was read from uninitialized memory set to 0 to avoid x propagation and hanging the simulation.
     mux2 #(P.XLEN) NextPTEMux(ReadDataNoXM, AccessedPTE, UpdatePTE, NextPTE); // NextPTE = ReadDataNoXM when ADUE = 0 because UpdatePTE = 0
     flopenr #(P.PA_BITS) HPTWAdrWriteReg(clk, reset, SaveHPTWAdr, HPTWReadAdr, HPTWWriteAdr);
     
