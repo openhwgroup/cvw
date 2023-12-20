@@ -360,8 +360,6 @@ module testbench;
         StartIndex = begin_signature_addr >> LogXLEN;
         EndIndex = (end_signature_addr >> LogXLEN) + 8;
         BaseIndex = P.UNCORE_RAM_BASE >> LogXLEN;
-        $display("Copying from uncore RAM to shadow RAM. begin_signature_addr = %x, end_signature_addr = %x, StartIndex = %x, EndIndex = %x, BaseIndex = %x, LogXLEN = %x",
-                 begin_signature_addr, end_signature_addr, StartIndex, EndIndex, BaseIndex, LogXLEN);
         for(ShadowIndex = StartIndex; ShadowIndex <= EndIndex; ShadowIndex++) begin
           testbench.DCacheFlushFSM.ShadowRAM[ShadowIndex] = dut.uncore.uncore.ram.ram.memory.RAM[ShadowIndex - BaseIndex];
         end
@@ -379,8 +377,6 @@ module testbench;
         StartIndex = begin_signature_addr >> LogXLEN;
         EndIndex = (end_signature_addr >> LogXLEN) + 8;
         BaseIndex = P.UNCORE_RAM_BASE >> LogXLEN;
-        $display("Copying from uncore RAM to shadow RAM. begin_signature_addr = %x, end_signature_addr = %x, StartIndex = %x, EndIndex = %x, BaseIndex = %x, LogXLEN = %x",
-                 begin_signature_addr, end_signature_addr, StartIndex, EndIndex, BaseIndex, LogXLEN);
         for(ShadowIndex = StartIndex; ShadowIndex <= EndIndex; ShadowIndex++) begin
           testbench.DCacheFlushFSM.ShadowRAM[ShadowIndex] = dut.core.lsu.dtim.dtim.ram.RAM[ShadowIndex - BaseIndex];
         end
