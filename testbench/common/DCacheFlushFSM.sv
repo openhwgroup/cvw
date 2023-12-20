@@ -35,7 +35,7 @@ module DCacheFlushFSM import cvw::*; #(parameter cvw_t P)
 
   genvar adr;
 
-  logic [P.XLEN-1:0] ShadowRAM[P.UNCORE_RAM_BASE>>(1+P.XLEN/32):(P.UNCORE_RAM_RANGE+P.UNCORE_RAM_BASE)>>1+(P.XLEN/32)];
+  bit [P.XLEN-1:0] ShadowRAM[P.UNCORE_RAM_BASE>>(1+P.XLEN/32):(P.UNCORE_RAM_RANGE+P.UNCORE_RAM_BASE)>>1+(P.XLEN/32)];
   logic         startD;
   
   if(P.DCACHE_SUPPORTED) begin
