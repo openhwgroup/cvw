@@ -51,7 +51,6 @@ module ram_ahb import cvw::*;  #(parameter cvw_t P,
   logic                        memwrite, memwriteD, memread;
   logic                        nextHREADYRam;
   logic                        DelayReady;
-  logic [P.XLEN-1:0]             HRDATA2;
 
   // a new AHB transactions starts when HTRANS requests a transaction, 
   // the peripheral is selected, and the previous transaction is completing
@@ -73,13 +72,7 @@ module ram_ahb import cvw::*;  #(parameter cvw_t P,
 
   // single-ported RAM
   ram1p1rwbe #(P.USE_SRAM, RANGE/8, P.XLEN, PRELOAD) memory(.clk(HCLK), .ce(1'b1), 
-    .addr(RamAddr[ADDR_WIDTH+OFFSET-1:OFFSET]), .we(memwriteD), .din(HWDATA), .bwe(HWSTRB), .dout(HRDATA2));
-
-  //assign HREADRam = HRDATA2 === 'bx ? 64'hdeadbeefdeadbeef : HRDATA2;
-  // **** RT: MAJOR BUG can't leave in for anything.  Will cause synthesis issues.
-  // PRIV sv48-svadu test not working without it.
-  //assign HREADRam = HRDATA2 === 'bx ? 64'h0 : HRDATA2;
-  assign HREADRam = HRDATA2;
+    .addr(RamAddr[ADDR_WIDTH+OFFSET-1:OFFSET]), .we(memwriteD), .din(HWDATA), .bwe(HWSTRB), .dout(HREADRam));
   
   // use this to add arbitrary latency to ram. Helps test AHB controller correctness
   if(`RAM_LATENCY > 0) begin
