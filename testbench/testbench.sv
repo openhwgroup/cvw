@@ -37,7 +37,7 @@ module testbench;
   parameter DEBUG=0;
   parameter TEST="none";
   parameter PrintHPMCounters=0;
-  parameter BPRED_LOGGER=1;
+  parameter BPRED_LOGGER=0;
   parameter I_CACHE_ADDR_LOGGER=0;
   parameter D_CACHE_ADDR_LOGGER=0;
  
@@ -190,7 +190,7 @@ module testbench;
   logic        CopyRAM;
 
   string  signame, memfilename, pathname;
-  integer begin_signature_addr;
+  integer begin_signature_addr, end_signature_addr, signature_size;
 
   assign ResetThreshold = 3'd5;
 
@@ -253,6 +253,8 @@ module testbench;
   ////////////////////////////////////////////////////////////////////////////////
   logic [P.XLEN-1:0] testadr;
   assign begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
+  assign end_signature_addr = ProgramAddrLabelArray["sig_end_canary"];
+  assign signature_size = end_signature_addr - begin_signature_addr;
   always @(posedge clk) begin
     if(SelectTest) begin
       if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
@@ -322,69 +324,14 @@ module testbench;
 
 
   ////////////////////////////////////////////////////////////////////////////////
-  // Some memories are not reset, but should be zeros or set to some initial value for simulation
-  ////////////////////////////////////////////////////////////////////////////////
-/* -----\/----- EXCLUDED -----\/-----
-  integer adrindex;
-  always @(posedge clk) begin
-    if (ResetMem)  // program memory is sometimes reset
-      if (P.UNCORE_RAM_SUPPORTED)
-        for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
-          dut.uncore.uncore.ram.ram.memory.RAM[adrindex] = '0;
-    if(reset) begin  // branch predictor must always be reset
-      if (P.BPRED_SUPPORTED) begin
-        // local history only
-        if (P.BPRED_TYPE == `BP_LOCAL_AHEAD | P.BPRED_TYPE == `BP_LOCAL_REPAIR)
-          for(adrindex = 0; adrindex < 2**P.BPRED_NUM_LHR; adrindex++)
-            dut.core.ifu.bpred.bpred.Predictor.DirPredictor.BHT.mem[adrindex] = 0;
-        for(adrindex = 0; adrindex < 2**P.BTB_SIZE; adrindex++)
-          dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
-        for(adrindex = 0; adrindex < 2**P.BPRED_SIZE; adrindex++)
-          dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
-      end
-    end
-  end
- -----/\----- EXCLUDED -----/\----- */
-
-  // still not working in this format
-/* -----\/----- EXCLUDED -----\/-----
-  integer adrindex;
-  if (P.UNCORE_RAM_SUPPORTED) begin
-    always @(posedge clk) begin
-      if (ResetMem)  // program memory is sometimes reset
-        for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
-          dut.uncore.uncore.ram.ram.memory.RAM[adrindex] = '0;
-    end
-  end
-  
-  genvar adrindex2;
-  
-  if (P.BPRED_SUPPORTED & (P.BPRED_TYPE == `BP_LOCAL_AHEAD | P.BPRED_TYPE == `BP_LOCAL_REPAIR)) begin
-    for(adrindex2 = 0; adrindex2 < 2**P.BPRED_NUM_LHR; adrindex2++)
-      always @(posedge clk) begin
-        dut.core.ifu.bpred.bpred.Predictor.DirPredictor.BHT.mem[adrindex2] = 0;
-    end
-  end        
-
-  if (P.BPRED_SUPPORTED) begin
-    always @(posedge clk) 
-      dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[0] = 0;    
-    for(adrindex2 = 0; adrindex2 < 2**P.BTB_SIZE; adrindex2++)
-      always @(posedge clk) begin
-        dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex2] = 0;
-      end
-    for(adrindex2 = 0; adrindex2 < 2**P.BPRED_SIZE; adrindex2++)
-      always @(posedge clk) begin
-        dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex2] = 0;
-      end
-  end
- -----/\----- EXCLUDED -----/\----- */
-  
-  ////////////////////////////////////////////////////////////////////////////////
   // load memories with program image
   ////////////////////////////////////////////////////////////////////////////////
 
-  integer IndexTemp;
+  integer ShadowIndex;
+  integer LogXLEN;
+  integer StartIndex;
+  integer EndIndex;
+  integer BaseIndex;
   if (P.SDC_SUPPORTED) begin
     always @(posedge clk) begin
       if (LoadMem) begin
@@ -403,15 +350,20 @@ module testbench;
         $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
       end
     end
-  end else if (P.BUS_SUPPORTED) begin
+  end else if (P.BUS_SUPPORTED) begin : bus_supported
     always @(posedge clk) begin
       if (LoadMem) begin
         $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
       end
       if (CopyRAM) begin
-        for(IndexTemp = 0; IndexTemp < (P.UNCORE_RAM_RANGE)>>1+(P.XLEN/32); IndexTemp++) begin
-          //if(dut.uncore.uncore.ram.ram.memory.RAM[IndexTemp] === 'bx) break; // end copy early if at the end of the sig *** double check this will be valid for all tests.
-          testbench.DCacheFlushFSM.ShadowRAM[((P.UNCORE_RAM_BASE)>>1+(P.XLEN/32)) + IndexTemp] = dut.uncore.uncore.ram.ram.memory.RAM[IndexTemp];
+        LogXLEN = (1 + P.XLEN/32); // 2 for rv32 and 3 for rv64
+        StartIndex = begin_signature_addr >> LogXLEN;
+        EndIndex = (end_signature_addr >> LogXLEN) + 8;
+        BaseIndex = P.UNCORE_RAM_BASE >> LogXLEN;
+        $display("Copying from uncore RAM to shadow RAM. begin_signature_addr = %x, end_signature_addr = %x, StartIndex = %x, EndIndex = %x, BaseIndex = %x, LogXLEN = %x",
+                 begin_signature_addr, end_signature_addr, StartIndex, EndIndex, BaseIndex, LogXLEN);
+        for(ShadowIndex = StartIndex; ShadowIndex <= EndIndex; ShadowIndex++) begin
+          testbench.DCacheFlushFSM.ShadowRAM[ShadowIndex] = dut.uncore.uncore.ram.ram.memory.RAM[ShadowIndex - BaseIndex];
         end
       end
     end
@@ -423,9 +375,14 @@ module testbench;
         $display("Read memfile %s", memfilename);
       end
       if (CopyRAM) begin
-        for(IndexTemp = 0; IndexTemp < (P.DTIM_RANGE)>>1+(P.XLEN/32); IndexTemp++) begin
-          //if(dut.core.lsu.dtim.dtim.ram.RAM[IndexTemp] === 'bx) break; // end copy early if at the end of the sig *** double check this will be valid for all tests.
-          testbench.DCacheFlushFSM.ShadowRAM[((P.DTIM_BASE)>>1+(P.XLEN/32)) + IndexTemp] = dut.core.lsu.dtim.dtim.ram.RAM[IndexTemp];
+        LogXLEN = (1 + P.XLEN/32); // 2 for rv32 and 3 for rv64
+        StartIndex = begin_signature_addr >> LogXLEN;
+        EndIndex = (end_signature_addr >> LogXLEN) + 8;
+        BaseIndex = P.UNCORE_RAM_BASE >> LogXLEN;
+        $display("Copying from uncore RAM to shadow RAM. begin_signature_addr = %x, end_signature_addr = %x, StartIndex = %x, EndIndex = %x, BaseIndex = %x, LogXLEN = %x",
+                 begin_signature_addr, end_signature_addr, StartIndex, EndIndex, BaseIndex, LogXLEN);
+        for(ShadowIndex = StartIndex; ShadowIndex <= EndIndex; ShadowIndex++) begin
+          testbench.DCacheFlushFSM.ShadowRAM[ShadowIndex] = dut.core.lsu.dtim.dtim.ram.RAM[ShadowIndex - BaseIndex];
         end
       end
     end
@@ -626,14 +583,15 @@ task automatic updateProgramAddrLabelArray;
   inout  integer ProgramAddrLabelArray [string];
   // Gets the memory location of begin_signature
   integer ProgramLabelMapFP, ProgramAddrMapFP;
+
   ProgramLabelMapFP = $fopen(ProgramLabelMapFile, "r");
   ProgramAddrMapFP = $fopen(ProgramAddrMapFile, "r");
-
 
   if (ProgramLabelMapFP & ProgramAddrMapFP) begin // check we found both files
     // *** RT: I'm a bit confused by the required initialization here.
     ProgramAddrLabelArray["begin_signature"] = 0;
     ProgramAddrLabelArray["tohost"] = 0;
+    ProgramAddrLabelArray["sig_end_canary"] = 0;
     while (!$feof(ProgramLabelMapFP)) begin
       string label, adrstr;
       integer returncode;
@@ -642,6 +600,10 @@ task automatic updateProgramAddrLabelArray;
       if (ProgramAddrLabelArray.exists(label)) ProgramAddrLabelArray[label] = adrstr.atohex();
     end
   end
+
+  if(ProgramAddrLabelArray["begin"] == 0) $display("Couldn't find begin_signature in %s", ProgramLabelMapFile);
+  if(ProgramAddrLabelArray["sig_end_canary"] == 0) $display("Couldn't find sig_end_canary in %s", ProgramLabelMapFile);
+
   $fclose(ProgramLabelMapFP);
   $fclose(ProgramAddrMapFP);
   /* verilator lint_on WIDTHTRUNC */

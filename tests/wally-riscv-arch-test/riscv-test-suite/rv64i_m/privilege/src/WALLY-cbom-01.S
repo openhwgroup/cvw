@@ -625,6 +625,9 @@ Destination3:
         .fill 128, 4, 0xdeadbeef
 signature:
         .fill 44, 4, 0x0bad0bad
+sig_end_canary:
+.int 0x0
+rvtest_sig_end:
 	
 RVMODEL_DATA_END
 

@@ -135,4 +135,7 @@ RVMODEL_DATA_BEGIN
 wally_signature:
 .fill 12, 8, -1
 
+sig_end_canary:
+.int 0x0
+rvtest_sig_end:
 RVMODEL_DATA_END

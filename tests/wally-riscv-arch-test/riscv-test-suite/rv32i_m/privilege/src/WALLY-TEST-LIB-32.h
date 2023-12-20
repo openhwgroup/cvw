@@ -1428,6 +1428,9 @@ RVMODEL_DATA_BEGIN
 test_1_res:
     .fill 1024, 4, 0xdeadbeef
 
+sig_end_canary:
+.int 0x0
+rvtest_sig_end:
 RVMODEL_DATA_END
 
 #ifdef rvtest_mtrap_routine
