@@ -102,7 +102,8 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   logic                     HPTWLoadAccessFaultDelay, HPTWStoreAmoAccessFaultDelay, HPTWInstrAccessFaultDelay;
   logic                     HPTWAccessFaultDelay;
   logic                     TakeHPTWFault, TakeHPTWFaultDelay;
-
+  logic [P.XLEN-1:0]        ReadDataNoXM;
+  
   // map hptw access faults onto either the original LSU load/store fault or instruction access fault
   assign LSUAccessFaultM         = LSULoadAccessFaultM | LSUStoreAmoAccessFaultM;
   assign HPTWLoadAccessFault     = LSUAccessFaultM & DTLBWalk & MemRWM[1] & ~MemRWM[0];
@@ -154,7 +155,8 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
     logic [P.XLEN-1:0]    AccessedPTE;
 
     assign AccessedPTE = {PTE[P.XLEN-1:8], (SetDirty | PTE[7]), 1'b1, PTE[5:0]}; // set accessed bit, conditionally set dirty bit
-    mux2 #(P.XLEN) NextPTEMux(ReadDataM, AccessedPTE, UpdatePTE, NextPTE); // NextPTE = ReadDataM when ADUE = 0 because UpdatePTE = 0
+    assign ReadDataNoXM = (ReadDataM === 'x) ? '0 : ReadDataM; // Hack to ensure the TLBs are never written with x's because they will propagate and hang the simulation.
+    mux2 #(P.XLEN) NextPTEMux(ReadDataNoXM, AccessedPTE, UpdatePTE, NextPTE); // NextPTE = ReadDataNoXM when ADUE = 0 because UpdatePTE = 0
     flopenr #(P.PA_BITS) HPTWAdrWriteReg(clk, reset, SaveHPTWAdr, HPTWReadAdr, HPTWWriteAdr);
     
     assign SaveHPTWAdr = WalkerState == L0_ADR;
@@ -190,7 +192,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
     assign UpdatePTE = (WalkerState == LEAF) & HPTWUpdateDA;  // UpdatePTE will always be 0 if ADUE = 0 because HPTWUpdateDA will be 0
 
   end else begin // block: hptwwrites
-    assign NextPTE = ReadDataM;
+    assign NextPTE = ReadDataNoXM;
     assign HPTWAdr = HPTWReadAdr;
     assign HPTWUpdateDA = '0;
     assign UpdatePTE = '0;
