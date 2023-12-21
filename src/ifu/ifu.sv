@@ -311,7 +311,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32
   assign PCPlus4F = PCF[P.XLEN-1:2] + 1; // add 4 to PC
 
-  if (P.COMPRESSED_SUPPORTED)
+  if (P.COMPRESSED_SUPPORTED) begin: pcadd
     // choose PC+2 or PC+4 based on CompressedF, which arrives later. 
     // Speeds up critical path as compared to selecting adder input based on CompressedF
     always_comb
@@ -319,7 +319,9 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
         if (PCF[1]) PCPlus2or4F = {PCPlus4F, 2'b00}; 
         else        PCPlus2or4F = {PCF[P.XLEN-1:2], 2'b10};
       else          PCPlus2or4F = {PCPlus4F, PCF[1:0]}; // add 4
-  else              PCPlus2or4F = {PCPlus4F, PCF[1:0]}; // always add 4 if compressed instructions are not supported
+  end else begin: pcadd
+    assign PCPlus2or4F = {PCPlus4F, PCF[1:0]}; // always add 4 if compressed instructions are not supported
+  end
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Branch and Jump Predictor
