@@ -54,6 +54,8 @@ main:
 #    li t4, 0x1000     # address step size
 #    li a2, 0x80216000 # Test NAPOT pages
 #    jal a1, looptest
+    li a0, 3 # switch back to machine mode because code at 0x80000000 may not have clean page table entry
+    ecall
     j done
 
 looptest:
@@ -62,15 +64,16 @@ looptest:
     li t3, 35     # Max amount of Loops = 34
     li t5, 0x8082 # return instruction opcode
 
-loop: bge t2, t3, looptesti   # exit loop if i >= loops
+loop: bge t2, t3, finished   # exit loop if i >= loops
     sw t5, 0(t0)   # store a return at this address to exercise DTLB
     lw t1, 0(t0)   # read it back
     fence.i    # synchronize with I$
-    jalr ra, t0 # jump to the return statement to exercise the ITLB
+#    jalr ra, t0 # jump to the return statement to exercise the ITLB
     add t0, t0, t4
     addi t2, t2, 1
     j loop
 
+/*
 looptesti:
     mv t0, a2       # base address
     li t2, 0             # i = 0
@@ -82,6 +85,7 @@ loopi: bge t2, t3, finished   # exit loop if i >= loops
     add t0, t0, t4
     addi t2, t2, 1
     j loopi
+*/
 
 finished:
     jr a1
