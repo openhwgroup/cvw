@@ -51,8 +51,12 @@
 --override cpu/unaligned=T  # Zicclsm (should be true)
 --override cpu/ignore_non_leaf_DAU=1
 --override cpu/wfi_is_nop=T
---override cpu/misa_Extensions_mask=0x0
+--override cpu/misa_Extensions_mask=0x0 # MISA not writable
 --override cpu/Sstc=T
+
+# unsuccessfully attempt to add B extension (DH 12/21/23)
+#--override cpu/add_Extensions="B"
+#--override cpu/misa_Extensions=0x0014112F
 
 # Enable SVADU hardware update of A/D bits when menvcfg.ADUE=1
 --override cpu/Svadu=T

@@ -91,7 +91,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   adrdecs #(P) adrdecs(HADDR, 1'b1, 1'b1, 1'b1, HSIZE[1:0], HSELRegions);
 
   // unswizzle HSEL signals
-  assign {HSELDTIM, HSELIROM, HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELEXTSDC, HSELSPI} = HSELRegions[11:1];
+  assign {HSELSPI, HSELEXTSDC, HSELPLIC, HSELUART, HSELGPIO, HSELCLINT, HSELRam, HSELBootRom, HSELEXT, HSELIROM, HSELDTIM} = HSELRegions[11:1];
 
   // AHB -> APB bridge
   ahbapbbridge #(P, 5) ahbapbbridge (
@@ -180,7 +180,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   // device is ready.  Hense this register must be selectively enabled by HREADY.
   // However on reset None must be seleted.
   flopenl #(12) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions, 12'b1, 
-    {HSELDTIMD, HSELIROMD, HSELEXTD, HSELBootRomD, HSELRamD, 
-    HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELEXTSDCD, HSELSPID, HSELNoneD});
+    {HSELSPID, HSELEXTSDCD, HSELPLICD, HSELUARTD, HSELGPIOD, HSELCLINTD,
+      HSELRamD, HSELBootRomD, HSELEXTD, HSELIROMD, HSELDTIMD, HSELNoneD});
   flopenr #(1) hselbridgedelayreg(HCLK, ~HRESETn, HREADY, HSELBRIDGE, HSELBRIDGED);
 endmodule
