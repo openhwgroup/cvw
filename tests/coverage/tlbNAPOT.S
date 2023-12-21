@@ -51,9 +51,9 @@ main:
     jal a1, looptest
     li a2, 0x40215240  # Test properly formed pages with 1 in PPN[3] that are not NAPOT
     jal a1, looptest
-#    li t4, 0x1000     # address step size
-#    li a2, 0x80216000 # Test NAPOT pages
-#    jal a1, looptest
+    li t4, 0x1000     # address step size
+    li a2, 0x80216000 # Test NAPOT pages
+    jal a1, looptest
     li a0, 3 # switch back to machine mode because code at 0x80000000 may not have clean page table entry
     ecall
     j done
@@ -68,27 +68,59 @@ loop: bge t2, t3, finished   # exit loop if i >= loops
     sw t5, 0(t0)   # store a return at this address to exercise DTLB
     lw t1, 0(t0)   # read it back
     fence.i    # synchronize with I$
-#    jalr ra, t0 # jump to the return statement to exercise the ITLB
+    jal changetoipfhandler  # set up trap handler to return from instruction page fault if necessary
+    jalr ra, t0 # jump to the return statement to exercise the ITLB
+    jal changetodefaulthandler
     add t0, t0, t4
     addi t2, t2, 1
     j loop
 
-/*
-looptesti:
-    mv t0, a2       # base address
-    li t2, 0             # i = 0
-    fence.i    # synchronize with I$
- 
-# Exercise itlb by jumping to each of the return statements
-loopi: bge t2, t3, finished   # exit loop if i >= loops
-    jalr ra, t0 # jump to the return statement to exercise the ITLB
-    add t0, t0, t4
-    addi t2, t2, 1
-    j loopi
-*/
-
 finished:
     jr a1
+
+changetoipfhandler:
+    li a0, 3    
+    ecall       # switch to machine mode
+    la a0, ipf_handler
+    csrw mtvec, a0 # point to new handler
+    li a0, 1
+    ecall       # switch back to supervisor mode
+    ret
+
+changetodefaulthandler:
+    li a0, 3    
+    ecall       # switch to machine mode
+    la a0, trap_handler
+    csrw mtvec, a0 # point to new handler
+    li a0, 1
+    ecall       # switch back to supervisor mode
+    ret
+
+instructionpagefaulthandler:
+    csrw mepc, ra # go back to calling function
+    mret
+
+.align 4                # trap handlers must be aligned to multiple of 4
+ipf_handler:
+    # Load trap handler stack pointer tp
+    csrrw tp, mscratch, tp  # swap MSCRATCH and tp
+    sd t0, 0(tp)        # Save t0 and t1 on the stack
+    sd t1, -8(tp)
+    csrr t0, mcause     # Check the cause
+    li t1, 8            # is it an ecall trap?
+    andi t0, t0, 0xFC   # if CAUSE = 8, 9, or 11
+    beq t0, t1, ecall   # yes, take ecall
+    csrr t0, mcause
+    li t1, 12           # is it an instruction page fault
+    beq t0, t1, ipf     # yes, return to calling function
+    j trap_return
+
+ipf:
+    csrw mepc, ra       # return to calling function
+    ld t1, -8(tp)       # restore t1 and t0
+    ld t0, 0(tp)
+    csrrw tp, mscratch, tp  # restore tp
+    mret                # return from trap
 
 .data
 
