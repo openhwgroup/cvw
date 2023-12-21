@@ -44,9 +44,9 @@ string tvpaths[] = '{
 
   string coverage64gc[] = '{
     `COVERAGE,
-    "tlbNAPOT",
-    "priv",
     "ieu",
+//    "tlbNAPOT",
+    "priv",
     "ebu",
     "csrwrites",
     "ifu",
@@ -898,7 +898,7 @@ string imperas32f[] = '{
  -----/\----- EXCLUDED -----/\----- */
     };
 
-  string arch64zi[] = '{
+  string arch64zifencei[] = '{
     `RISCVARCHTEST,
     "rv64i_m/Zifencei/src/Fencei.S"
     };
@@ -917,7 +917,7 @@ string imperas32f[] = '{
     };
 
 
-  string arch32zi[] = '{
+  string arch32zifencei[] = '{
     `RISCVARCHTEST,
     "rv32i_m/Zifencei/src/Fencei.S"
     };
@@ -1481,6 +1481,49 @@ string imperas32f[] = '{
     "rv64i_m/D/src/fssub.d_b8-01.S"
 };
 
+string arch64zicboz[] = '{ // as of 12/17/23 presently cbo.zero is the only CMO insturction with riscv-arch-test support
+      `RISCVARCHTEST,
+      "rv64i_m/CMO/src/cbo.zero-01.S"
+  };
+
+string arch32zicboz[] = '{ // as of 12/17/23 presently cbo.zero is the only CMO insturction with riscv-arch-test support
+      `RISCVARCHTEST,
+      "rv32i_m/CMO/src/cbo.zero-01.S"
+  };
+
+string arch64zcb[] = '{
+      `RISCVARCHTEST,
+      "rv64i_m/C/src/clbu-01.S",
+      "rv64i_m/C/src/clh-01.S",
+      "rv64i_m/C/src/clhu-01.S",
+      "rv64i_m/C/src/clbu-01.S",
+      "rv64i_m/C/src/csb-01.S",
+      "rv64i_m/C/src/csh-01.S",
+      "rv64i_m/C/src/csext.b-01.S",
+      "rv64i_m/C/src/csext.h-01.S",
+      "rv64i_m/C/src/czext.b-01.S",
+      "rv64i_m/C/src/czext.h-01.S",
+      "rv64i_m/C/src/cmul-01.S",
+      "rv64i_m/C/src/cnot-01.S",
+      "rv64i_m/C/src/czext.w-01.S"
+  };
+
+string arch32zcb[] = '{
+      `RISCVARCHTEST,
+      "rv32i_m/C/src/clbu-01.S",
+      "rv32i_m/C/src/clh-01.S",
+      "rv32i_m/C/src/clhu-01.S",
+      "rv32i_m/C/src/clbu-01.S",
+      "rv32i_m/C/src/csb-01.S",
+      "rv32i_m/C/src/csh-01.S",
+      "rv32i_m/C/src/csext.b-01.S",
+      "rv32i_m/C/src/csext.h-01.S",
+      "rv32i_m/C/src/czext.b-01.S",
+      "rv32i_m/C/src/czext.h-01.S",
+      "rv32i_m/C/src/cmul-01.S",
+      "rv32i_m/C/src/cnot-01.S"
+  };
+
 string arch64zba[] = '{
       `RISCVARCHTEST,
       "rv64i_m/B/src/slli.uw-01.S",
@@ -1961,6 +2004,46 @@ string arch64zbs[] = '{
     "rv32i_m/I/src/xori-01.S"
   };
 
+  string arch32e[] = '{
+    `RISCVARCHTEST,
+    "rv32e_m/E/src/add-01.S",
+    "rv32e_m/E/src/addi-01.S",
+    "rv32e_m/E/src/and-01.S",
+    "rv32e_m/E/src/andi-01.S",
+    "rv32e_m/E/src/auipc-01.S",
+    "rv32e_m/E/src/bge-01.S",
+    "rv32e_m/E/src/bgeu-01.S",
+    "rv32e_m/E/src/blt-01.S",
+    "rv32e_m/E/src/bltu-01.S",
+    "rv32e_m/E/src/bne-01.S",
+    "rv32e_m/E/src/jal-01.S",
+    "rv32e_m/E/src/jalr-01.S",
+    "rv32e_m/E/src/lb-align-01.S",
+    "rv32e_m/E/src/lbu-align-01.S",
+    "rv32e_m/E/src/lh-align-01.S",
+    "rv32e_m/E/src/lhu-align-01.S",
+    "rv32e_m/E/src/lui-01.S",
+    "rv32e_m/E/src/lw-align-01.S",
+    "rv32e_m/E/src/or-01.S",
+    "rv32e_m/E/src/ori-01.S",
+    "rv32e_m/E/src/sb-align-01.S",
+    "rv32e_m/E/src/sh-align-01.S",
+    "rv32e_m/E/src/sll-01.S",
+    "rv32e_m/E/src/slli-01.S",
+    "rv32e_m/E/src/slt-01.S",
+    "rv32e_m/E/src/slti-01.S",
+    "rv32e_m/E/src/sltiu-01.S",
+    "rv32e_m/E/src/sltu-01.S",
+    "rv32e_m/E/src/sra-01.S",
+    "rv32e_m/E/src/srai-01.S",
+    "rv32e_m/E/src/srl-01.S",
+    "rv32e_m/E/src/srli-01.S",
+    "rv32e_m/E/src/sub-01.S",
+    "rv32e_m/E/src/sw-align-01.S",
+    "rv32e_m/E/src/xor-01.S",
+    "rv32e_m/E/src/xori-01.S"
+ };
+
  string wally64i[] = '{
     `WALLYTEST,
     "rv64i_m/I/src/WALLY-ADD.S",
@@ -2017,46 +2100,6 @@ string arch64zbs[] = '{
     "rv64i_m/privilege/src/WALLY-spi-01.S"
  };
 
- string wally32e[] = '{
-    `WALLYTEST,
-    "rv32i_m/I/src/E-add-01.S",
-    "rv32i_m/I/src/E-addi-01.S",
-    "rv32i_m/I/src/E-and-01.S",
-    "rv32i_m/I/src/E-andi-01.S",
-    "rv32i_m/I/src/E-auipc-01.S",
-    "rv32i_m/I/src/E-bge-01.S",
-    "rv32i_m/I/src/E-bgeu-01.S",
-    "rv32i_m/I/src/E-blt-01.S",
-    "rv32i_m/I/src/E-bltu-01.S",
-    "rv32i_m/I/src/E-bne-01.S",
-    "rv32i_m/I/src/E-jal-01.S",
-    "rv32i_m/I/src/E-jalr-01.S",
-    "rv32i_m/I/src/E-lb-align-01.S",
-    "rv32i_m/I/src/E-lbu-align-01.S",
-    "rv32i_m/I/src/E-lh-align-01.S",
-    "rv32i_m/I/src/E-lhu-align-01.S",
-    "rv32i_m/I/src/E-lui-01.S",
-    "rv32i_m/I/src/E-lw-align-01.S",
-    "rv32i_m/I/src/E-or-01.S",
-    "rv32i_m/I/src/E-ori-01.S",
-    "rv32i_m/I/src/E-sb-align-01.S",
-    "rv32i_m/I/src/E-sh-align-01.S",
-    "rv32i_m/I/src/E-sll-01.S",
-    "rv32i_m/I/src/E-slli-01.S",
-    "rv32i_m/I/src/E-slt-01.S",
-    "rv32i_m/I/src/E-slti-01.S",
-    "rv32i_m/I/src/E-sltiu-01.S",
-    "rv32i_m/I/src/E-sltu-01.S",
-    "rv32i_m/I/src/E-sra-01.S",
-    "rv32i_m/I/src/E-srai-01.S",
-    "rv32i_m/I/src/E-srl-01.S",
-    "rv32i_m/I/src/E-srli-01.S",
-    "rv32i_m/I/src/E-sub-01.S",
-    "rv32i_m/I/src/E-sw-align-01.S",
-    "rv32i_m/I/src/E-xor-01.S",
-    "rv32i_m/I/src/E-xori-01.S"
- };
-
  string wally32i[] = '{
     `WALLYTEST,
     "rv32i_m/I/src/WALLY-ADD.S",
@@ -2102,7 +2145,6 @@ string arch64zbs[] = '{
     "rv32i_m/privilege/src/WALLY-plic-01.S",
     "rv32i_m/privilege/src/WALLY-plic-s-01.S",
     "rv32i_m/privilege/src/WALLY-spi-01.S"
-
  };
 
  string wally32periph[] = '{

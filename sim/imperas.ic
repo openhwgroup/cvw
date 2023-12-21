@@ -79,7 +79,7 @@
 #
 # SVxx Memory 0x0000000000 0x7FFFFFFFFF
 #
---callcommand refRoot/cpu/setPMA -lo 0x0000000000 -hi 0x7FFFFFFFFF -attributes " ------ ---- " # INITIAL
+--callcommand refRoot/cpu/setPMA -lo 0x0000000000 -hi 0x7FFFFFFFFF -attributes " ---a-- ---- " # INITIAL
 --callcommand refRoot/cpu/setPMA -lo 0x0000001000 -hi 0x0000001FFF -attributes " r-x-A- 1248 " # BOOTROM
 --callcommand refRoot/cpu/setPMA -lo 0x0000012100 -hi 0x000001211F -attributes " rw-aA- --48 " # SDC
 --callcommand refRoot/cpu/setPMA -lo 0x0002000000 -hi 0x000200FFFF -attributes " rw-aA- 1248 " # CLINT

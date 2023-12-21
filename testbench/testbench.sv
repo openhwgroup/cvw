@@ -93,68 +93,72 @@ module testbench;
     //tests = '{};
     if (P.XLEN == 64) begin // RV64
       case (TEST)
-        "arch64i":                               tests = arch64i;
-        "arch64priv":                            tests = arch64priv;
+        "arch64i":                                tests = arch64i;
+        "arch64priv":                             tests = arch64priv;
         "arch64c":      if (P.C_SUPPORTED) 
                           if (P.ZICSR_SUPPORTED)  tests = {arch64c, arch64cpriv};
-                          else                   tests = {arch64c};
+                          else                    tests = {arch64c};
         "arch64m":      if (P.M_SUPPORTED)        tests = arch64m;
         "arch64a":      if (P.A_SUPPORTED)        tests = arch64a;
         "arch64f":      if (P.F_SUPPORTED)        tests = arch64f;
         "arch64d":      if (P.D_SUPPORTED)        tests = arch64d;  
-        "arch64f_fma":      if (P.F_SUPPORTED)        tests = arch64f_fma;
-        "arch64d_fma":      if (P.D_SUPPORTED)        tests = arch64d_fma;  
-        "arch64zi":     if (P.ZIFENCEI_SUPPORTED) tests = arch64zi;
-        "imperas64i":                            tests = imperas64i;
+        "arch64f_fma":  if (P.F_SUPPORTED)        tests = arch64f_fma;
+        "arch64d_fma":  if (P.D_SUPPORTED)        tests = arch64d_fma;  
+        "arch64zifencei":  if (P.ZIFENCEI_SUPPORTED) tests = arch64zifencei;
+        "imperas64i":                             tests = imperas64i;
         "imperas64f":   if (P.F_SUPPORTED)        tests = imperas64f;
         "imperas64d":   if (P.D_SUPPORTED)        tests = imperas64d;
         "imperas64m":   if (P.M_SUPPORTED)        tests = imperas64m;
         "wally64a":     if (P.A_SUPPORTED)        tests = wally64a;
         "imperas64c":   if (P.C_SUPPORTED)        tests = imperas64c;
-                        else                     tests = imperas64iNOc;
-        "custom":                                tests = custom;
-        "wally64i":                              tests = wally64i; 
-        "wally64priv":                           tests = wally64priv;
-        "wally64periph":                         tests = wally64periph;
-        "coremark":                              tests = coremark;
-        "fpga":                                  tests = fpga;
-        "ahb" :                                  tests = ahb;
-        "coverage64gc" :                         tests = coverage64gc;
+                        else                      tests = imperas64iNOc;
+        "custom":                                 tests = custom;
+        "wally64i":                               tests = wally64i; 
+        "wally64priv":                            tests = wally64priv;
+        "wally64periph":                          tests = wally64periph;
+        "coremark":                               tests = coremark;
+        "fpga":                                   tests = fpga;
+        "ahb" :                                   tests = ahb;
+        "coverage64gc" :                          tests = coverage64gc;
         "arch64zba":     if (P.ZBA_SUPPORTED)     tests = arch64zba;
         "arch64zbb":     if (P.ZBB_SUPPORTED)     tests = arch64zbb;
         "arch64zbc":     if (P.ZBC_SUPPORTED)     tests = arch64zbc;
         "arch64zbs":     if (P.ZBS_SUPPORTED)     tests = arch64zbs;
+        "arch64zicboz":  if (P.ZICBOZ_SUPPORTED)  tests = arch64zicboz;
+        "arch64zcb":     if (P.ZCB_SUPPORTED)     tests = arch64zcb;
       endcase 
     end else begin // RV32
       case (TEST)
-        "arch32i":                               tests = arch32i;
-        "arch32priv":                            tests = arch32priv;
+        "arch32e":                                tests = arch32e; 
+        "arch32i":                                tests = arch32i;
+        "arch32priv":                             tests = arch32priv;
         "arch32c":      if (P.C_SUPPORTED) 
                           if (P.ZICSR_SUPPORTED)  tests = {arch32c, arch32cpriv};
-                          else                   tests = {arch32c};
+                          else                    tests = {arch32c};
         "arch32m":      if (P.M_SUPPORTED)        tests = arch32m;
         "arch32a":      if (P.A_SUPPORTED)        tests = arch32a;
         "arch32f":      if (P.F_SUPPORTED)        tests = arch32f;
         "arch32d":      if (P.D_SUPPORTED)        tests = arch32d;
-        "arch32f_fma":      if (P.F_SUPPORTED)        tests = arch32f_fma;
-        "arch32d_fma":      if (P.D_SUPPORTED)        tests = arch32d_fma;
-        "arch32zi":     if (P.ZIFENCEI_SUPPORTED) tests = arch32zi;
-        "imperas32i":                            tests = imperas32i;
+        "arch32f_fma":  if (P.F_SUPPORTED)        tests = arch32f_fma;
+        "arch32d_fma":  if (P.D_SUPPORTED)        tests = arch32d_fma;
+        "arch32zifencei":     if (P.ZIFENCEI_SUPPORTED) tests = arch32zifencei;
+        "imperas32i":                             tests = imperas32i;
         "imperas32f":   if (P.F_SUPPORTED)        tests = imperas32f;
         "imperas32m":   if (P.M_SUPPORTED)        tests = imperas32m;
         "wally32a":     if (P.A_SUPPORTED)        tests = wally32a;
         "imperas32c":   if (P.C_SUPPORTED)        tests = imperas32c;
-                        else                     tests = imperas32iNOc;
-        "wally32i":                              tests = wally32i; 
-        "wally32e":                              tests = wally32e; 
-        "wally32priv":                           tests = wally32priv;
-        "wally32periph":                         tests = wally32periph;
-        "embench":                               tests = embench;
-        "coremark":                              tests = coremark;
+                        else                      tests = imperas32iNOc;
+        "wally32i":                               tests = wally32i; 
+        "wally32priv":                            tests = wally32priv;
+        "wally32periph":                          tests = wally32periph;
+        "embench":                                tests = embench;
+        "coremark":                               tests = coremark;
         "arch32zba":     if (P.ZBA_SUPPORTED)     tests = arch32zba;
         "arch32zbb":     if (P.ZBB_SUPPORTED)     tests = arch32zbb;
         "arch32zbc":     if (P.ZBC_SUPPORTED)     tests = arch32zbc;
         "arch32zbs":     if (P.ZBS_SUPPORTED)     tests = arch32zbs;
+        "arch32zicboz":  if (P.ZICBOZ_SUPPORTED)  tests = arch32zicboz;
+        "arch32zcb":     if (P.ZCB_SUPPORTED)     tests = arch32zcb;
       endcase
     end
     if (tests.size() == 0) begin

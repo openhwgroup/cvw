@@ -32,7 +32,6 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   input  logic                 BreakpointFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM,
   input  logic                 LoadAccessFaultM, StoreAmoAccessFaultM, EcallFaultM, InstrPageFaultM,
   input  logic                 LoadPageFaultM, StoreAmoPageFaultM,              // various trap sources
-  input  logic                 mretM, sretM,                                    // return instructions
   input  logic                 wfiM, wfiW,                                      // wait for interrupt instruction
   input  logic [1:0]           PrivilegeModeW,                                  // current privilege mode
   input  logic [11:0]          MIP_REGW, MIE_REGW, MIDELEG_REGW,                // interrupt pending, enabled, and delegate CSRs
@@ -41,7 +40,6 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   input  logic                 InstrValidM,                                     // current instruction is valid, not flushed
   input  logic                 CommittedM, CommittedF,                          // LSU/IFU has committed to a bus operation that can't be interrupted
   output logic                 TrapM,                                           // Trap is occurring
-  output logic                 RetM,                                            // Return instruction being executed
   output logic                 InterruptM,                                      // Interrupt is occurring
   output logic                 ExceptionM,                                      // exception is occurring
   output logic                 IntPendingM,                                     // Interrupt is pending, might occur if enabled
@@ -74,7 +72,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
                      (PrivilegeModeW == P.U_MODE | PrivilegeModeW == P.S_MODE);
 
   ///////////////////////////////////////////
-  // Trigger Traps and RET
+  // Trigger Traps 
   // According to RISC-V Spec Section 1.6, exceptions are caused by instructions.  Interrupts are external asynchronous.
   // Traps are the union of exceptions and interrupts.
   ///////////////////////////////////////////
@@ -89,7 +87,6 @@ module trap import cvw::*;  #(parameter cvw_t P) (
                       LoadAccessFaultM | StoreAmoAccessFaultM;
   // coverage on
   assign TrapM = (ExceptionM & ~CommittedF) | InterruptM; // *** RT: review this additional ~CommittedF with DH and update priv chapter.
-  assign RetM  = mretM | sretM;
 
   ///////////////////////////////////////////
   // Cause priority defined in privileged spec
@@ -112,11 +109,13 @@ module trap import cvw::*;  #(parameter cvw_t P) (
     // coverage on
     else if (BreakpointFaultM)         CauseM = 3;
     else if (EcallFaultM)              CauseM = {2'b10, PrivilegeModeW};
-    else if (LoadMisalignedFaultM)     CauseM = 4;
-    else if (StoreAmoMisalignedFaultM) CauseM = 6;
-    else if (LoadPageFaultM)           CauseM = 13;
+    else if (StoreAmoMisalignedFaultM & ~P.ZICCLSM_SUPPORTED) CauseM = 6;  // misaligned faults are higher priority if they always are taken
+    else if (LoadMisalignedFaultM & ~P.ZICCLSM_SUPPORTED)     CauseM = 4;
     else if (StoreAmoPageFaultM)       CauseM = 15;
-    else if (LoadAccessFaultM)         CauseM = 5;
+    else if (LoadPageFaultM)           CauseM = 13;
     else if (StoreAmoAccessFaultM)     CauseM = 7;
+    else if (LoadAccessFaultM)         CauseM = 5;
+    else if (StoreAmoMisalignedFaultM & P.ZICCLSM_SUPPORTED) CauseM = 6; // See priority in Privileged Spec 3.1.15
+    else if (LoadMisalignedFaultM & P.ZICCLSM_SUPPORTED)     CauseM = 4;
     else                               CauseM = 0;
 endmodule

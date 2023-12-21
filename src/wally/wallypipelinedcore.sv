@@ -48,8 +48,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
 
   logic                          StallF, StallD, StallE, StallM, StallW;
   logic                          FlushD, FlushE, FlushM, FlushW;
-  logic                          RetM;
-  logic TrapM;
+  logic                          TrapM, RetM;
 
   //  signals that must connect through DP
   logic                          IntDivE, W64E;
@@ -63,7 +62,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic [P.XLEN-1:0]             PCSpillF, PCE, PCLinkE;
   logic [P.XLEN-1:0]             PCM;
   logic [P.XLEN-1:0]             CSRReadValW, MDUResultW;
-  logic [P.XLEN-1:0]             UnalignedPCNextF, PC2NextF;
+  logic [P.XLEN-1:0]             EPCM, TrapVectorM;
   logic [1:0]                    MemRWE;
   logic [1:0]                    MemRWM;
   logic                          InstrValidD, InstrValidE, InstrValidM;
@@ -173,13 +172,13 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .InstrValidE, .InstrValidD,
     .BranchD, .BranchE, .JumpD, .JumpE, .ICacheStallF,
     // Fetch
-    .HRDATA, .PCSpillF, .IFUHADDR, .PC2NextF,
+    .HRDATA, .PCSpillF, .IFUHADDR, 
     .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUHSIZE, .IFUHREADY, .IFUHWRITE,
     .ICacheAccess, .ICacheMiss,
     // Execute
     .PCLinkE, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCE, .BPWrongE,  .BPWrongM, 
     // Mem
-    .CommittedF, .UnalignedPCNextF, .InvalidateICacheM, .CSRWriteFenceM,
+    .CommittedF, .EPCM, .TrapVectorM, .RetM, .TrapM, .InvalidateICacheM, .CSRWriteFenceM,
     .InstrD, .InstrM, .InstrOrigM, .PCM, .InstrClassM, .BPDirPredWrongM,
     .BTAWrongM, .RASPredPCWrongM, .IClassWrongM,
     // Faults out
@@ -281,8 +280,8 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     privileged #(P) priv(
       .clk, .reset,
       .FlushD, .FlushE, .FlushM, .FlushW, .StallD, .StallE, .StallM, .StallW,
-      .CSRReadM, .CSRWriteM, .SrcAM, .PCM, .PC2NextF,
-      .InstrM, .InstrOrigM, .CSRReadValW, .UnalignedPCNextF,
+      .CSRReadM, .CSRWriteM, .SrcAM, .PCM, 
+      .InstrM, .InstrOrigM, .CSRReadValW, .EPCM, .TrapVectorM,
       .RetM, .TrapM, .sfencevmaM, .InvalidateICacheM, .DCacheStallM, .ICacheStallF,
       .InstrValidM, .CommittedM, .CommittedF,
       .FRegWriteM, .LoadStallD, .StoreStallD,
@@ -301,7 +300,8 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM);
   end else begin
     assign CSRReadValW      = 0;
-    assign UnalignedPCNextF = PC2NextF;
+    assign EPCM             = 0;
+    assign TrapVectorM      = 0;
     assign RetM             = 0;
     assign TrapM            = 0;
     assign wfiM             = 0;

@@ -97,6 +97,8 @@ class spike(pluginTemplate):
       self.isa = 'rv' + self.xlen
       if "I" in ispec["ISA"]:
           self.isa += 'i'
+      if "E" in ispec["ISA"]:
+          self.isa += 'e'
       if "M" in ispec["ISA"]:
           self.isa += 'm'
       if "A" in ispec["ISA"]:
@@ -107,6 +109,14 @@ class spike(pluginTemplate):
           self.isa += 'd'
       if "C" in ispec["ISA"]:
           self.isa += 'c'
+      if "Zicsr" in ispec["ISA"]:
+          self.isa += '_Zicsr'
+      if "Zicboz" in ispec["ISA"]:
+          self.isa += '_Zicboz'
+      if "Zca" in ispec["ISA"]:
+          self.isa += '_Zca'
+      if "Zcb" in ispec["ISA"]:
+          self.isa += '_Zcb'
       if "Zba" in ispec["ISA"]:
           self.isa += '_Zba'
       if "Zbb" in ispec["ISA"]:

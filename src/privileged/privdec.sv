@@ -38,7 +38,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   input  logic         STATUS_TSR, STATUS_TVM, STATUS_TW,   // status bits
   output logic         IllegalInstrFaultM,                  // Illegal instruction
   output logic         EcallFaultM, BreakpointFaultM,       // Ecall or breakpoint; must retire, so don't flush it when the trap occurs
-  output logic         sretM, mretM,                        // return instructions
+  output logic         sretM, mretM, RetM,                  // return instructions
   output logic         wfiM, wfiW, sfencevmaM               // wfi / sfence.vma / sinval.vma instructions
 );
 
@@ -66,6 +66,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   assign sretM =      PrivilegedM & (InstrM[31:20] == 12'b000100000010) & rs1zeroM & P.S_SUPPORTED & 
                       (PrivilegeModeW == P.M_MODE | PrivilegeModeW == P.S_MODE & ~STATUS_TSR); 
   assign mretM =      PrivilegedM & (InstrM[31:20] == 12'b001100000010) & rs1zeroM & (PrivilegeModeW == P.M_MODE);
+  assign RetM =       sretM | mretM;
   assign ecallM =     PrivilegedM & (InstrM[31:20] == 12'b000000000000) & rs1zeroM;
   assign ebreakM =    PrivilegedM & (InstrM[31:20] == 12'b000000000001) & rs1zeroM;
   assign wfiM =       PrivilegedM & (InstrM[31:20] == 12'b000100000101) & rs1zeroM;
