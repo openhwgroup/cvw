@@ -205,12 +205,23 @@ module testbench;
       
     end
 
-    always @(dut.core.MTimerInt)   void'(rvvi.net_push("MTimerInterrupt",    dut.core.MTimerInt));
-    always @(dut.core.MExtInt)     void'(rvvi.net_push("MExternalInterrupt", dut.core.MExtInt));
-    always @(dut.core.SExtInt)     void'(rvvi.net_push("SExternalInterrupt", dut.core.SExtInt));
-    always @(dut.core.MSwInt)      void'(rvvi.net_push("MSWInterrupt",       dut.core.MSwInt));
-    always @(dut.core.priv.priv.csr.csrs.csrs.STimerInt) void'(rvvi.net_push("STimerInterrupt", dut.core.priv.priv.csr.csrs.csrs.STimerInt));
+//    always @(dut.core.MTimerInt)   void'(rvvi.net_push("MTimerInterrupt",    dut.core.MTimerInt));
+//    always @(dut.core.MExtInt)     void'(rvvi.net_push("MExternalInterrupt", dut.core.MExtInt));
+//    always @(dut.core.SExtInt)     void'(rvvi.net_push("SExternalInterrupt", dut.core.SExtInt));
+//    always @(dut.core.MSwInt)      void'(rvvi.net_push("MSWInterrupt",       dut.core.MSwInt));
+//    always @(dut.core.priv.priv.csr.csrs.csrs.STimerInt) void'(rvvi.net_push("STimerInterrupt", dut.core.priv.priv.csr.csrs.csrs.STimerInt));
+    always @(dut.core.priv.priv.csr.csri.MIP_REGW[7])   void'(rvvi.net_push("MTimerInterrupt",    dut.core.priv.priv.csr.csri.MIP_REGW[7]));
+    always @(dut.core.priv.priv.csr.csri.MIP_REGW[11])     void'(rvvi.net_push("MExternalInterrupt", dut.core.priv.priv.csr.csri.MIP_REGW[11]));
+    always @(dut.core.priv.priv.csr.csri.MIP_REGW[9])     void'(rvvi.net_push("SExternalInterrupt", dut.core.priv.priv.csr.csri.MIP_REGW[9]));
+    always @(dut.core.priv.priv.csr.csri.MIP_REGW[3])      void'(rvvi.net_push("MSWInterrupt",       dut.core.priv.priv.csr.csri.MIP_REGW[3]));
+    always @(dut.core.priv.priv.csr.csri.MIP_REGW[1])      void'(rvvi.net_push("SSWInterrupt",       dut.core.priv.priv.csr.csri.MIP_REGW[1]));
+    always @(dut.core.priv.priv.csr.csri.MIP_REGW[5]) void'(rvvi.net_push("STimerInterrupt", dut.core.priv.priv.csr.csri.MIP_REGW[5]));
 
+/*
+ assign MIP_REGW = {MExtInt,   1'b0, SExtInt|MIP_REGW_writeable[9],  1'b0,
+                     MTimerInt, 1'b0, STIP,                           1'b0,
+                     MSwInt,    1'b0, MIP_REGW_writeable[1],          1'b0};
+*/
 
     final begin
       void'(rvviRefShutdown());
