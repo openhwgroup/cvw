@@ -37,7 +37,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic [31:0]       InstrM,                                         // Instruction
   input  logic [31:0]       InstrOrigM,                                     // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction MTVAL
   input  logic [P.XLEN-1:0] IEUAdrM,                                        // address from IEU
-  input  logic [P.XLEN-1:0] PCM, PC2NextF,                                  // program counter, next PC going to trap/return PC logic
+  input  logic [P.XLEN-1:0] PCM,                                            // program counter
   // control signals                                                       
   input  logic              InstrValidM,                                    // Current instruction is valid (not flushed)
   input  logic              CommittedM, CommittedF,                         // current instruction is using bus; don't interrupt
@@ -85,8 +85,9 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   output logic [3:0]        ENVCFG_CBE,                                     // Cache block operation enables
   output logic              ENVCFG_PBMTE,                                   // Page-based memory type enable
   output logic              ENVCFG_ADUE,                                    // HPTW A/D Update enable
-  // PC logic output in privileged unit                                    
-  output logic [P.XLEN-1:0] UnalignedPCNextF,                               // Next PC from trap/return PC logic
+  // PC logic output from privileged unit to IFU                                  
+  output logic [P.XLEN-1:0] EPCM,                                           // Exception Program counter to IFU PC logic
+  output logic [P.XLEN-1:0] TrapVectorM,                                    // Trap vector, to IFU PC logic
   // control outputs                                                       
   output logic              RetM, TrapM,                                    // return instruction, or trap
   output logic              sfencevmaM,                                     // sfence.vma instruction
@@ -125,11 +126,11 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   privdec #(P) pmd(.clk, .reset, .StallW, .FlushW, .InstrM(InstrM[31:15]), 
     .PrivilegedM, .IllegalIEUFPUInstrM, .IllegalCSRAccessM, 
     .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .IllegalInstrFaultM, 
-    .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .wfiM, .wfiW, .sfencevmaM);
+    .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .RetM, .wfiM, .wfiW, .sfencevmaM);
 
   // Control and Status Registers
   csr #(P) csr(.clk, .reset, .FlushM, .FlushW, .StallE, .StallM, .StallW,
-    .InstrM, .InstrOrigM, .PCM, .SrcAM, .IEUAdrM, .PC2NextF,
+    .InstrM, .InstrOrigM, .PCM, .SrcAM, .IEUAdrM, 
     .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
     .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
@@ -142,7 +143,8 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .MEDELEG_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
     .SATP_REGW, .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
     .SetFflagsM, .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE,
-    .CSRReadValW,.UnalignedPCNextF, .IllegalCSRAccessM, .BigEndianM);
+    .EPCM, .TrapVectorM,
+    .CSRReadValW, .IllegalCSRAccessM, .BigEndianM);
 
   // pipeline early-arriving trap sources
   privpiperegs ppr(.clk, .reset, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
@@ -154,9 +156,8 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .InstrMisalignedFaultM, .InstrAccessFaultM, .HPTWInstrAccessFaultM, .IllegalInstrFaultM,
     .BreakpointFaultM, .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
     .LoadAccessFaultM, .StoreAmoAccessFaultM, .EcallFaultM, .InstrPageFaultM,
-    .LoadPageFaultM, .StoreAmoPageFaultM,
-    .mretM, .sretM, .PrivilegeModeW, 
+    .LoadPageFaultM, .StoreAmoPageFaultM, .PrivilegeModeW, 
     .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .STATUS_MIE, .STATUS_SIE,
     .InstrValidM, .CommittedM, .CommittedF,
-    .TrapM, .RetM, .wfiM, .wfiW, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM);
+    .TrapM, .wfiM, .wfiW, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM);
 endmodule

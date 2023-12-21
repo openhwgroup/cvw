@@ -56,8 +56,9 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   output logic                 BPWrongM,                                 // Prediction is wrong
   // Mem
   output logic                 CommittedF,                               // I$ or bus memory operation started, delay interrupts
-  input  logic [P.XLEN-1:0]    UnalignedPCNextF,                         // The next PCF, but not aligned to 2 bytes. 
-  output logic [P.XLEN-1:0]    PC2NextF,                                 // Selected PC between branch prediction and next valid PC if CSRWriteFence
+  input  logic [P.XLEN-1:0]    EPCM,                                     // Exception Program counter from privileged unit
+  input  logic [P.XLEN-1:0]    TrapVectorM,                              // Trap vector, from privileged unit
+  input  logic                 RetM, TrapM,                              // return instruction, or trap
   output logic [31:0]          InstrD,                                   // The decoded instruction in Decode stage
   output logic [31:0]          InstrM,                                   // The decoded instruction in Memory stage
   output logic [31:0]          InstrOrigM,                               // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction MTVAL
@@ -100,6 +101,9 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   localparam [31:0]            nop = 32'h00000013;                       // instruction for NOP
 
   logic [P.XLEN-1:0]           PCNextF;                                  // Next PCF, selected from Branch predictor, Privilege, or PC+2/4
+  logic [P.XLEN-1:0]           PC1NextF;                                 // Branch predictor next PCF
+  logic [P.XLEN-1:0]           PC2NextF;                                 // Selected PC between branch prediction and next valid PC if CSRWriteFence
+  logic [P.XLEN-1:0]           UnalignedPCNextF;                         // The next PCF, but not aligned to 2 bytes. 
   logic                        BranchMisalignedFaultE;                   // Branch target not aligned to 4 bytes if no compressed allowed (2 bytes if allowed)
   logic [P.XLEN-1:0]           PCPlus2or4F;                              // PCF + 2 (CompressedF) or PCF + 4 (Non-compressed)
   logic [P.XLEN-1:0]           PCSpillNextF;                             // Next PCF after possible + 2 to handle spill
@@ -128,7 +132,6 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   logic                        IFUCacheBusStallF;                        // EIther I$ or bus busy with multicycle operation
   logic                        GatedStallD;                              // StallD gated by selected next spill
   // branch predictor signal
-  logic [P.XLEN-1:0]           PC1NextF;                                 // Branch predictor next PCF
   logic                        BusCommittedF;                            // Bus memory operation in flight, delay interrupts
   logic                        CacheCommittedF;                          // I$ memory operation started, delay interrupts
   logic                        SelIROM;                                  // PMA indicates instruction address is in the IROM
@@ -300,20 +303,23 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     mux2 #(P.XLEN) pcmux2(.d0(PC1NextF), .d1(NextValidPCE), .s(CSRWriteFenceM),.y(PC2NextF));
   else assign PC2NextF = PC1NextF;
 
+  mux3 #(P.XLEN) pcmux3(PC2NextF, EPCM, TrapVectorM, {TrapM, RetM}, UnalignedPCNextF);
   mux2 #(P.XLEN) pcresetmux({UnalignedPCNextF[P.XLEN-1:1], 1'b0}, P.RESET_VECTOR[P.XLEN-1:0], reset, PCNextF);
   flopen #(P.XLEN) pcreg(clk, ~StallF | reset, PCNextF, PCF);
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32
   assign PCPlus4F = PCF[P.XLEN-1:2] + 1; // add 4 to PC
-  // choose PC+2 or PC+4 based on CompressedF, which arrives later. 
-  // Speeds up critical path as compared to selecting adder input based on CompressedF
 
-  always_comb
-    if (CompressedF) // add 2
-      if (PCF[1]) PCPlus2or4F = {PCPlus4F, 2'b00}; 
-      else        PCPlus2or4F = {PCF[P.XLEN-1:2], 2'b10};
-    else          PCPlus2or4F = {PCPlus4F, PCF[1:0]}; // add 4
+  if (P.COMPRESSED_SUPPORTED)
+    // choose PC+2 or PC+4 based on CompressedF, which arrives later. 
+    // Speeds up critical path as compared to selecting adder input based on CompressedF
+    always_comb
+      if (CompressedF) // add 2
+        if (PCF[1]) PCPlus2or4F = {PCPlus4F, 2'b00}; 
+        else        PCPlus2or4F = {PCF[P.XLEN-1:2], 2'b10};
+      else          PCPlus2or4F = {PCPlus4F, PCF[1:0]}; // add 4
+  else              PCPlus2or4F = {PCPlus4F, PCF[1:0]}; // always add 4 if compressed instructions are not supported
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Branch and Jump Predictor

@@ -34,7 +34,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic                     StallE, StallM, StallW,
   input  logic [31:0]              InstrM,                    // current instruction
   input  logic [31:0]              InstrOrigM,                // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction MTVAL
-  input  logic [P.XLEN-1:0]        PCM, PC2NextF,             // program counter, next PC going to trap/return logic
+  input  logic [P.XLEN-1:0]        PCM,                       // program counter, next PC going to trap/return logic
   input  logic [P.XLEN-1:0]        SrcAM, IEUAdrM,            // SrcA and memory address from IEU
   input  logic                     CSRReadM, CSRWriteM,       // read or write CSR
   input  logic                     TrapM,                     // trap is occurring
@@ -86,9 +86,11 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   output logic [3:0]               ENVCFG_CBE,
   output logic                     ENVCFG_PBMTE,              // Page-based memory type enable
   output logic                     ENVCFG_ADUE,               // HPTW A/D Update enable
+  // PC logic output from privileged unit to IFU                                  
+  output logic [P.XLEN-1:0]        EPCM,                      // Exception Program counter to IFU PC logic
+  output logic [P.XLEN-1:0]        TrapVectorM,               // Trap vector, to IFU PC logic
   //
   output logic [P.XLEN-1:0]        CSRReadValW,               // value read from CSR
-  output logic [P.XLEN-1:0]        UnalignedPCNextF,          // Next PC, accounting for traps and returns
   output logic                     IllegalCSRAccessM,         // Illegal CSR access: CSR doesn't exist or is inaccessible at this privilege level
   output logic                     BigEndianM                 // memory access is big-endian based on privilege mode and STATUS register endian fields
 );
@@ -117,10 +119,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic                    IllegalCSRMWriteReadonlyM;
   logic [P.XLEN-1:0]       CSRReadVal2M;
   logic [11:0]             MIP_REGW_writeable;
-  logic [P.XLEN-1:0]       TVecM, TrapVectorM, NextFaultMtvalM;
+  logic [P.XLEN-1:0]       TVecM,NextFaultMtvalM;
   logic                    MTrapM, STrapM;
-  logic [P.XLEN-1:0]       EPC;
-  logic                    RetM;
   logic                    SelMtvecM;
   logic [P.XLEN-1:0]       TVecAlignedM;
   logic                    InstrValidNotFlushedM;
@@ -168,9 +168,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   // Trap Returns
   // A trap sets the PC to TrapVector
   // A return sets the PC to MEPC or SEPC
-  assign RetM = mretM | sretM;
-  mux2 #(P.XLEN) epcmux(SEPC_REGW, MEPC_REGW, mretM, EPC);
-  mux3 #(P.XLEN) pcmux3(PC2NextF, EPC, TrapVectorM, {TrapM, RetM}, UnalignedPCNextF);
+  mux2 #(P.XLEN) epcmux(SEPC_REGW, MEPC_REGW, mretM, EPCM);
 
   ///////////////////////////////////////////
   // CSRWriteValM
