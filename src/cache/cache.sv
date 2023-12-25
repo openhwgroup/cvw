@@ -38,7 +38,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   input  logic [1:0]             CacheRW,           // [1] Read, [0] Write 
   input  logic                   FlushCache,        // Flush all dirty lines back to memory
   input  logic                   InvalidateCache,   // Clear all valid bits
-  input  logic [3:0]             CMOp,              // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
+  input  logic [3:0]             CMOpM,              // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
   input  logic [11:0]            NextSet,           // Virtual address, but we only use the lower 12 bits.
   input  logic [PA_BITS-1:0]     PAdr,              // Physical address
   input  logic [(WORDLEN-1)/8:0] ByteMask,          // Which bytes to write (D$ only)
@@ -186,7 +186,7 @@ module cache import cvw::*; #(parameter cvw_t P,
     // Merge write data into fetched cache line for store miss
     for(index = 0; index < LINELEN/8; index++) begin
       mux2 #(8) WriteDataMux(.d0(CacheWriteData[(8*index)%WORDLEN+7:(8*index)%WORDLEN]),
-        .d1(FetchBuffer[8*index+7:8*index]), .s(FetchBufferByteSel[index] & ~CMOp[3]), .y(LineWriteData[8*index+7:8*index]));
+        .d1(FetchBuffer[8*index+7:8*index]), .s(FetchBufferByteSel[index] & ~CMOpM[3]), .y(LineWriteData[8*index+7:8*index]));
     end
     assign LineByteMask = SetValid ? '1 : SetDirty ? DemuxedByteMask : '0;
   end
@@ -231,5 +231,5 @@ module cache import cvw::*; #(parameter cvw_t P,
     .ClearDirty, .SetDirty, .SetValid, .ClearValid, .SelWriteback, .SelFlush,
     .FlushAdrCntEn, .FlushWayCntEn, .FlushCntRst,
     .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
-    .InvalidateCache, .CMOp, .CacheEn, .LRUWriteEn);
+    .InvalidateCache, .CMOpM, .CacheEn, .LRUWriteEn);
 endmodule 

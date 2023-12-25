@@ -41,7 +41,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   input  logic [1:0] CacheRWNext,           // [1] Read, [0] Write 
   input  logic       FlushCache,        // Flush all dirty lines back to memory
   input  logic       InvalidateCache,   // Clear all valid bits
-  input  logic [3:0] CMOp,              // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
+  input  logic [3:0] CMOpM,             // 0001: cbo.inval; 0010: cbo.flush; 0100: cbo.clean; 1000: cbo.zero
   // Bus controls
   input  logic       CacheBusAck,       // Bus operation completed
   output logic [1:0] CacheBusRW,        // [1] Read (cache line fetch) or [0] write bus (cache line writeback)
@@ -97,8 +97,8 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   assign AnyMiss = (CacheRW[0] | CacheRW[1]) & ~CacheHit & ~InvalidateCache; // exclusion-tag: cache AnyMiss
   assign AnyUpdateHit = (CacheRW[0]) & CacheHit;                            // exclusion-tag: icache storeAMO1
   assign AnyHit = AnyUpdateHit | (CacheRW[1] & CacheHit);                  // exclusion-tag: icache AnyUpdateHit
-  assign CMOZeroNoEviction = CMOp[3] & ~LineDirty;   // (hit or miss) with no writeback store zeros now
-  assign CMOWriteback = ((CMOp[1] | CMOp[2]) & CacheHit & HitLineDirty) | CMOp[3] & LineDirty;
+  assign CMOZeroNoEviction = CMOpM[3] & ~LineDirty;   // (hit or miss) with no writeback store zeros now
+  assign CMOWriteback = ((CMOpM[1] | CMOpM[2]) & CacheHit & HitLineDirty) | CMOpM[3] & LineDirty;
   
   assign FlushFlag = FlushAdrFlag & FlushWayFlag;
 
@@ -133,7 +133,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
       STATE_READ_HOLD:       if(Stall)                                         NextState = STATE_READ_HOLD;
                              else                                              NextState = STATE_READY;
       // exclusion-tag-start: icache case
-      STATE_WRITEBACK:       if(CacheBusAck & ~(|CMOp[3:1]))                   NextState = STATE_FETCH;
+      STATE_WRITEBACK:       if(CacheBusAck & ~(|CMOpM[3:1]))                  NextState = STATE_FETCH;
                              else if(CacheBusAck)                              NextState = STATE_READ_HOLD; // Read_hold lowers CacheStall
                              else                                              NextState = STATE_WRITEBACK;
       // eviction needs a delay as the bus fsm does not correctly handle sending the write command at the same time as getting back the bus ack.
@@ -160,25 +160,25 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   // write enables internal to cache
   assign SetValid = CurrState == STATE_WRITE_LINE | 
                     (CurrState == STATE_READY & CMOZeroNoEviction) |
-                    (CurrState == STATE_WRITEBACK & CacheBusAck & CMOp[3]); 
-  assign ClearValid = (CurrState == STATE_READY & CMOp[0]) |
-                      (CurrState == STATE_WRITEBACK & CMOp[2] & CacheBusAck);
+                    (CurrState == STATE_WRITEBACK & CacheBusAck & CMOpM[3]); 
+  assign ClearValid = (CurrState == STATE_READY & CMOpM[0]) |
+                      (CurrState == STATE_WRITEBACK & CMOpM[2] & CacheBusAck);
   // coverage off -item e 1 -fecexprrow 8
   assign LRUWriteEn = (((CurrState == STATE_READY & (AnyHit | CMOZeroNoEviction)) |
                        (CurrState == STATE_WRITE_LINE)) & ~FlushStage) |
-                      (CurrState == STATE_WRITEBACK & CMOp[3] & CacheBusAck);
+                      (CurrState == STATE_WRITEBACK & CMOpM[3] & CacheBusAck);
   // exclusion-tag-start: icache flushdirtycontrols
   assign SetDirty = (CurrState == STATE_READY & (AnyUpdateHit | CMOZeroNoEviction)) |         // exclusion-tag: icache SetDirty  
                     (CurrState == STATE_WRITE_LINE & (CacheRW[0])) |
-                    (CurrState == STATE_WRITEBACK & (CMOp[3] & CacheBusAck));                    
+                    (CurrState == STATE_WRITEBACK & (CMOpM[3] & CacheBusAck));                    
   assign ClearDirty = (CurrState == STATE_WRITE_LINE & ~(CacheRW[0])) |   // exclusion-tag: icache ClearDirty
                       (CurrState == STATE_FLUSH & LineDirty) | // This is wrong in a multicore snoop cache protocal.  Dirty must be cleared concurrently and atomically with writeback.  For single core cannot clear after writeback on bus ack and change flushadr.  Clears the wrong set.
   // Flush and eviction controls
-                      CurrState == STATE_WRITEBACK & (CMOp[1] | CMOp[2]) & CacheBusAck;
-  assign SelWay = (CurrState == STATE_WRITEBACK & ((~CacheBusAck & ~(CMOp[1] | CMOp[2])) | (CacheBusAck & CMOp[3]))) |
+                      CurrState == STATE_WRITEBACK & (CMOpM[1] | CMOpM[2]) & CacheBusAck;
+  assign SelWay = (CurrState == STATE_WRITEBACK & ((~CacheBusAck & ~(CMOpM[1] | CMOpM[2])) | (CacheBusAck & CMOpM[3]))) |
                   (CurrState == STATE_READY & ((AnyMiss & LineDirty) | (CMOZeroNoEviction & ~CacheHit))) | 
                   (CurrState == STATE_WRITE_LINE);
-  assign SelWriteback = (CurrState == STATE_WRITEBACK & (CMOp[1] | CMOp[2] | ~CacheBusAck)) |
+  assign SelWriteback = (CurrState == STATE_WRITEBACK & (CMOpM[1] | CMOpM[2] | ~CacheBusAck)) |
                         (CurrState == STATE_READY & AnyMiss & LineDirty);
 /* -----\/----- EXCLUDED -----\/-----
   assign SelFlush = (CurrState == STATE_READY & FlushCache) |
@@ -198,7 +198,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   // Bus interface controls
   assign CacheBusRW[1] = (CurrState == STATE_READY & AnyMiss & ~LineDirty) | // exclusion-tag: icache CacheBusRCauses
                          (CurrState == STATE_FETCH & ~CacheBusAck) | 
-                         (CurrState == STATE_WRITEBACK & CacheBusAck & ~(|CMOp));
+                         (CurrState == STATE_WRITEBACK & CacheBusAck & ~(|CMOpM));
 
   logic LoadMiss;
   
@@ -208,14 +208,14 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   assign CacheBusRW[0] = (CurrState == STATE_READY & LoadMiss & LineDirty) | // exclusion-tag: icache CacheBusW
                          (CurrState == STATE_WRITEBACK & ~CacheBusAck) |
                          (CurrState == STATE_FLUSH_WRITEBACK & ~CacheBusAck) |
-                         (CurrState == STATE_WRITEBACK & (CMOp[1] | CMOp[2]) & ~CacheBusAck);
+                         (CurrState == STATE_WRITEBACK & (CMOpM[1] | CMOpM[2]) & ~CacheBusAck);
 
-  assign SelAdrData = (CurrState == STATE_READY & (CacheRW[0] | AnyMiss | (|CMOp))) | // exclusion-tag: icache SelAdrCauses // changes if store delay hazard removed
+  assign SelAdrData = (CurrState == STATE_READY & (CacheRW[0] | AnyMiss | (|CMOpM))) | // exclusion-tag: icache SelAdrCauses // changes if store delay hazard removed
                   (CurrState == STATE_FETCH) |
                   (CurrState == STATE_WRITEBACK) |
                   (CurrState == STATE_WRITE_LINE) |
                   resetDelay;
-  assign SelAdrTag = (CurrState == STATE_READY & (AnyMiss | (|CMOp))) | // exclusion-tag: icache SelAdrCauses // changes if store delay hazard removed
+  assign SelAdrTag = (CurrState == STATE_READY & (AnyMiss | (|CMOpM))) | // exclusion-tag: icache SelAdrCauses // changes if store delay hazard removed
                   (CurrState == STATE_FETCH) |
                   (CurrState == STATE_WRITEBACK) |
                   (CurrState == STATE_WRITE_LINE) |
