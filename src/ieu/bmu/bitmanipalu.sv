@@ -27,9 +27,8 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module bitmanipalu import cvw::*; #(parameter cvw_t P, 
-                     parameter WIDTH=32) (
-  input  logic [WIDTH-1:0] A, B,                    // Operands
+module bitmanipalu import cvw::*; #(parameter cvw_t P) (
+  input  logic [P.XLEN-1:0] A, B,                    // Operands
   input  logic             W64,                     // W64-type instruction
   input  logic [1:0]       BSelect,                 // Binary encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
   input  logic [2:0]       ZBBSelect,               // ZBB mux select signal
@@ -38,37 +37,37 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P,
   input  logic             LTU,                     // less than unsigned flag
   input  logic [2:0]       BALUControl,             // ALU Control signals for B instructions in Execute Stage
   input  logic             BMUActiveE,              // Bit manipulation instruction being executed
-  input  logic [WIDTH-1:0] PreALUResult, FullResult,// PreALUResult, FullResult signals
-  output logic [WIDTH-1:0] CondMaskB,               // B is conditionally masked for ZBS instructions
-  output logic [WIDTH-1:0] CondShiftA,              // A is conditionally shifted for ShAdd instructions
-  output logic [WIDTH-1:0] ALUResult);              // Result
+  input  logic [P.XLEN-1:0] PreALUResult, FullResult,// PreALUResult, FullResult signals
+  output logic [P.XLEN-1:0] CondMaskB,               // B is conditionally masked for ZBS instructions
+  output logic [P.XLEN-1:0] CondShiftA,              // A is conditionally shifted for ShAdd instructions
+  output logic [P.XLEN-1:0] ALUResult);              // Result
 
-  logic [WIDTH-1:0] ZBBResult, ZBCResult;           // ZBB, ZBC Result
-  logic [WIDTH-1:0] MaskB;                          // BitMask of B
-  logic [WIDTH-1:0] RevA;                           // Bit-reversed A
+  logic [P.XLEN-1:0] ZBBResult, ZBCResult;           // ZBB, ZBC Result
+  logic [P.XLEN-1:0] MaskB;                          // BitMask of B
+  logic [P.XLEN-1:0] RevA;                           // Bit-reversed A
   logic             Rotate;                         // Indicates if it is Rotate instruction
   logic             Mask;                           // Indicates if it is ZBS instruction
   logic             PreShift;                       // Inidicates if it is sh1add, sh2add, sh3add instruction
   logic [1:0]       PreShiftAmt;                    // Amount to Pre-Shift A 
-  logic [WIDTH-1:0] CondZextA;                      // A Conditional Extend Intermediary Signal
-  logic [WIDTH-1:0] ABMU, BBMU;                     // Gated data inputs to reduce BMU activity
+  logic [P.XLEN-1:0] CondZextA;                      // A Conditional Extend Intermediary Signal
+  logic [P.XLEN-1:0] ABMU, BBMU;                     // Gated data inputs to reduce BMU activity
 
   // gate data inputs to BMU to only operate when BMU is active
-  assign ABMU = A & {WIDTH{BMUActiveE}};
-  assign BBMU = B & {WIDTH{BMUActiveE}};
+  assign ABMU = A & {P.XLEN{BMUActiveE}};
+  assign BBMU = B & {P.XLEN{BMUActiveE}};
 
   // Extract control signals from bitmanip ALUControl.
   assign {Mask, PreShift} = BALUControl[1:0];
 
   // Mask Generation Mux
   if (P.ZBS_SUPPORTED) begin: zbsdec
-    decoder #($clog2(WIDTH)) maskgen(BBMU[$clog2(WIDTH)-1:0], MaskB);
-    mux2 #(WIDTH) maskmux(B, MaskB, Mask, CondMaskB);
+    decoder #($clog2(P.XLEN)) maskgen(BBMU[$clog2(P.XLEN)-1:0], MaskB);
+    mux2 #(P.XLEN) maskmux(B, MaskB, Mask, CondMaskB);
   end else assign CondMaskB = B;
  
   // 0-3 bit Pre-Shift Mux
   if (P.ZBA_SUPPORTED) begin: zbapreshift
-    if (WIDTH == 64) begin
+    if (P.XLEN == 64) begin
       mux2 #(64) zextmux(A, {{32{1'b0}}, A[31:0]}, W64, CondZextA); 
     end else assign CondZextA = A;
     assign PreShiftAmt = Funct3[2:1] & {2{PreShift}};
@@ -80,17 +79,17 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P,
 
   // Bit reverse needed for some ZBB, ZBC instructions
   if (P.ZBC_SUPPORTED | P.ZBB_SUPPORTED) begin: bitreverse
-    bitreverse #(WIDTH) brA(.A(ABMU), .RevA);
+    bitreverse #(P.XLEN) brA(.A(ABMU), .RevA);
   end
 
   // ZBC Unit
   if (P.ZBC_SUPPORTED) begin: zbc
-    zbc #(WIDTH) ZBC(.A(ABMU), .RevA, .B(BBMU), .Funct3, .ZBCResult);
+    zbc #(P.XLEN) ZBC(.A(ABMU), .RevA, .B(BBMU), .Funct3, .ZBCResult);
   end else assign ZBCResult = 0;
 
   // ZBB Unit
   if (P.ZBB_SUPPORTED) begin: zbb
-    zbb #(WIDTH) ZBB(.A(ABMU), .RevA, .B(BBMU), .W64, .LT, .LTU, .BUnsigned(Funct3[0]), .ZBBSelect, .ZBBResult);
+    zbb #(P.XLEN) ZBB(.A(ABMU), .RevA, .B(BBMU), .W64, .LT, .LTU, .BUnsigned(Funct3[0]), .ZBBSelect, .ZBBResult);
   end else assign ZBBResult = 0;
 
   // Result Select Mux

@@ -32,7 +32,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   input  logic              clk, reset,
   input  logic              StallE, StallM, 
   input  logic              FlushM, 
-  input  logic              InstrValidNotFlushedM, LoadStallD, StoreStallD, 
+  input  logic              InstrValidNotFlushedM, LoadStallD, 
   input  logic              CSRMWriteM, CSRWriteM,
   input  logic              BPDirPredWrongM,
   input  logic              BTAWrongM,
@@ -75,7 +75,6 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]       HPMCOUNTER_REGW[P.COUNTERS-1:0];
   logic [P.XLEN-1:0]       HPMCOUNTERH_REGW[P.COUNTERS-1:0];
   logic                    LoadStallE, LoadStallM;
-  logic                    StoreStallE, StoreStallM;
   logic [P.COUNTERS-1:0]   WriteHPMCOUNTERM;
   logic [P.COUNTERS-1:0]   CounterEvent;
   logic [63:0]             HPMCOUNTERPlusM[P.COUNTERS-1:0];
@@ -83,8 +82,8 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   genvar                   i;
 
   // Interface signals
-  flopenrc #(2) LoadStallEReg(.clk, .reset, .clear(1'b0), .en(~StallE), .d({StoreStallD, LoadStallD}), .q({StoreStallE, LoadStallE}));  // don't flush the load stall during a load stall.
-  flopenrc #(2) LoadStallMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d({StoreStallE, LoadStallE}), .q({StoreStallM, LoadStallM}));  
+  flopenrc #(1) LoadStallEReg(.clk, .reset, .clear(1'b0), .en(~StallE), .d(LoadStallD), .q(LoadStallE));  // don't flush the load stall during a load stall.
+  flopenrc #(1) LoadStallMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d(LoadStallE), .q(LoadStallM));  
   
   // Determine when to increment each counter
   assign CounterEvent[0]    = 1'b1;                                                      // MCYCLE always increments
@@ -100,7 +99,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
     assign CounterEvent[9]  = RASPredPCWrongM & InstrValidNotFlushedM;                   // return address stack wrong address
     assign CounterEvent[10] = IClassWrongM & InstrValidNotFlushedM;                      // instruction class predictor wrong
     assign CounterEvent[11] = LoadStallM;                                                // Load Stalls. don't want to suppress on flush as this only happens if flushed.
-    assign CounterEvent[12] = StoreStallM;                                               //  Store Stall
+    assign CounterEvent[12] = 0;                                                         // depricated Store Stall
     assign CounterEvent[13] = DCacheAccess;                                              // data cache access
     assign CounterEvent[14] = DCacheMiss;                                                // data cache miss. Miss asserted 1 cycle at start of cache miss
     assign CounterEvent[15] = DCacheStallM;                                              // d cache miss cycles

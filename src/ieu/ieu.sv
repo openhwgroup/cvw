@@ -73,8 +73,8 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   // Hazard unit signals
   input  logic              StallD, StallE, StallM, StallW,  // Stall signals from hazard unit
   input  logic              FlushD, FlushE, FlushM, FlushW,  // Flush signals
-  output logic              FCvtIntStallD, LoadStallD,       // Stall causes from IEU to hazard unit
-  output logic              MDUStallD, CSRRdStallD, StoreStallD,
+  output logic              StructuralStallD,                // IEU detects structural hazard in Decode stage
+  output logic              LoadStallD,                      // Structural stalls for load, sent to performance counters
   output logic              CSRReadM, CSRWriteM, PrivilegedM,// CSR read, CSR write, is privileged instruction
   output logic              CSRWriteFenceM                   // CSR write or fence instruction needs to flush subsequent instructions
 );
@@ -94,7 +94,7 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   logic       SubArithE;                                     // Subtraction or arithmetic shift
 
   // Forwarding signals
-  logic [4:0] Rs1D, Rs2D, Rs1E, Rs2E;                        // Source and destination registers
+  logic [4:0] Rs1D, Rs2D;                                    // Source registers
   logic [1:0] ForwardAE, ForwardBE;                          // Select signals for forwarding multiplexers
   logic       RegWriteM, RegWriteW;                          // Register will be written in Memory, Writeback stages
   logic       MemReadE, CSRReadE;                            // Load, CSRRead instruction
@@ -104,25 +104,23 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
            
   controller #(P) c(
     .clk, .reset, .StallD, .FlushD, .InstrD, .STATUS_FS, .ENVCFG_CBE, .ImmSrcD,
-    .IllegalIEUFPUInstrD, .IllegalBaseInstrD, .StallE, .FlushE, .FlagsE, .FWriteIntE,
+    .IllegalIEUFPUInstrD, .IllegalBaseInstrD, 
+    .StructuralStallD, .LoadStallD, .Rs1D, .Rs2D, 
+    .StallE, .FlushE, .FlagsE, .FWriteIntE,
     .PCSrcE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .MemReadE, .CSRReadE, 
     .Funct3E, .IntDivE, .MDUE, .W64E, .SubArithE, .BranchD, .BranchE, .JumpD, .JumpE, .SCE, 
-    .BranchSignedE, .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE, .MDUActiveE, .CMOpM, .IFUPrefetchE, .LSUPrefetchM,
+    .BranchSignedE, .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE, .MDUActiveE, 
+    .FCvtIntE, .ForwardAE, .ForwardBE, .CMOpM, .IFUPrefetchE, .LSUPrefetchM,
     .StallM, .FlushM, .MemRWE, .MemRWM, .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
     .RegWriteM, .FlushDCacheM, .InstrValidM, .InstrValidE, .InstrValidD, .FWriteIntM,
-    .StallW, .FlushW, .RegWriteW, .IntDivW, .ResultSrcW, .CSRWriteFenceM, .InvalidateICacheM, .StoreStallD);
+    .StallW, .FlushW, .RegWriteW, .IntDivW, .ResultSrcW, .CSRWriteFenceM, .InvalidateICacheM,
+    .RdW, .RdE, .RdM);
 
   datapath #(P) dp(
-    .clk, .reset, .ImmSrcD, .InstrD, .StallE, .FlushE, .ForwardAE, .ForwardBE, .W64E, .SubArithE,
+    .clk, .reset, .ImmSrcD, .InstrD, .Rs1D, .Rs2D, .StallE, .FlushE, .ForwardAE, .ForwardBE, .W64E, .SubArithE,
     .Funct3E, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .JumpE, .BranchSignedE, 
     .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE, .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE,
     .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataM, .FCvtIntW,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .SquashSCW, .ResultSrcW, .ReadDataW, .FCvtIntResW,
-    .CSRReadValW, .MDUResultW, .FIntDivResultW, .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW);             
-  
-  forward    fw(
-    .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW,
-    .MemReadE, .MDUE, .CSRReadE, .RegWriteM, .RegWriteW,
-    .FCvtIntE, .SCE, .ForwardAE, .ForwardBE,
-    .FCvtIntStallD, .LoadStallD, .MDUStallD, .CSRRdStallD);
+    .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW);             
 endmodule
