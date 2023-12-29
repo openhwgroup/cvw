@@ -65,6 +65,7 @@ module ahbcacheinterface #(
   input logic [PA_BITS-1:0]   PAdr,                    // Physical address of uncached memory operation
   input logic [LLEN-1:0]      WriteDataM,              // IEU write data for uncached store
   input logic [1:0]           BusRW,                   // Uncached memory operation read/write control: 10: read, 01: write
+  input logic                 BusAtomic,          // Uncache atomic memory operation
   input logic [2:0]           Funct3,                  // Size of uncached memory operation
   input logic                 BusCMOZero,               // Uncached cbo.zero must write zero to full sized cacheline without going through the cache
 
@@ -121,7 +122,7 @@ module ahbcacheinterface #(
   flopen #(AHBW/8) HWSTRBReg(HCLK, HREADY, BusByteMaskM[AHBW/8-1:0], HWSTRB);
   
   buscachefsm #(BeatCountThreshold, AHBWLOGBWPL, READ_ONLY_CACHE) AHBBuscachefsm(
-    .HCLK, .HRESETn, .Flush, .BusRW, .Stall, .BusCommitted, .BusStall, .CaptureEn, .SelBusBeat,
+    .HCLK, .HRESETn, .Flush, .BusRW, .BusAtomic, .Stall, .BusCommitted, .BusStall, .CaptureEn, .SelBusBeat,
     .CacheBusRW, .BusCMOZero, .CacheBusAck, .BeatCount, .BeatCountDelayed,
     .HREADY, .HTRANS, .HWRITE, .HBURST);
 endmodule

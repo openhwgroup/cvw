@@ -43,7 +43,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   input  logic                        SetDirty,       // Set the dirty bit in the selected way and set
   input  logic                        SelWay,         // Controls which way to select a way data and tag, 00 = hitway, 10 = victimway, 11 = flushway
   input  logic                        ClearDirty,     // Clear the dirty bit in the selected way and set
-  input  logic                        SelFlush,       // [0] Use SelAdr, [1] SRAM reads/writes from FlushAdr
+  input  logic                        FlushCache,       // [0] Use SelAdr, [1] SRAM reads/writes from FlushAdr
   input  logic                        VictimWay,      // LRU selected this way as victim to evict
   input  logic                        FlushWay,       // This way is selected for flush and possible writeback if dirty
   input  logic                        InvalidateCache,// Clear all valid bits
@@ -80,12 +80,12 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   
   if (!READ_ONLY_CACHE) begin:flushlogic
     logic                               FlushWayEn;
-    mux2 #(1) seltagmux(VictimWay, FlushWay, SelFlush, SelDirty);
+    mux2 #(1) seltagmux(VictimWay, FlushWay, FlushCache, SelDirty);
 
     // FlushWay is part of a one hot way selection. Must clear it if FlushWay not selected.
     // coverage off -item e 1 -fecexprrow 3
-    // nonzero ways will never see SelFlush=0 while FlushWay=1 since FlushWay only advances on a subset of SelFlush assertion cases.
-    assign FlushWayEn = FlushWay & SelFlush;
+    // nonzero ways will never see FlushCache=0 while FlushWay=1 since FlushWay only advances on a subset of FlushCache assertion cases.
+    assign FlushWayEn = FlushWay & FlushCache;
     assign SelNonHit = FlushWayEn | SelWay; 
   end else begin:flushlogic // no flush operation for read-only caches.
     assign SelDirty = VictimWay;
