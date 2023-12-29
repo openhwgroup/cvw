@@ -35,7 +35,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   input  logic                     ENVCFG_ADUE,        // HPTW A/D Update enable
   input  logic [1:0]               PrivilegeModeW,     // Current privilege level of the processeor
   input  logic                     ReadAccess, WriteAccess,
-  input  logic [3:0]               CMOp,
+  input  logic [3:0]               CMOpM,
   input  logic                     DisableTranslation,
   input  logic                     TLBFlush,           // Invalidate all TLB entries
   input  logic [11:0]              PTEAccessBits,
@@ -69,7 +69,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   assign Translate = (SATP_MODE != P.NO_TRANSLATE[P.SVMODE_BITS-1:0]) & (EffectivePrivilegeMode != P.M_MODE) & ~DisableTranslation; 
 
   // Determine whether TLB is being used
-  assign TLBAccess = ReadAccess | WriteAccess | (|CMOp);
+  assign TLBAccess = ReadAccess | WriteAccess | (|CMOpM);
 
   // Check that upper bits are legal (all 0s or all 1s)
   vm64check #(P) vm64check(.SATP_MODE, .VAdr, .SV39Mode, .UpperBitsUnequal);
@@ -113,8 +113,8 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
     // Check for write error. Writes are invalid when the page's write bit is
     // low.
     assign InvalidWrite = WriteAccess & ~PTE_W;
-    assign InvalidCBOM = (|CMOp[2:0]) & (~PTE_W | (~PTE_R & (~STATUS_MXR | ~PTE_X)));
-    assign InvalidCBOZ = CMOp[3] & ~PTE_W;
+    assign InvalidCBOM = (|CMOpM[2:0]) & (~PTE_W | (~PTE_R & (~STATUS_MXR | ~PTE_X)));
+    assign InvalidCBOZ = CMOpM[3] & ~PTE_W;
     assign InvalidAccess = InvalidRead | InvalidWrite | InvalidCBOM | InvalidCBOZ;
     assign PreUpdateDA = ~PTE_A | WriteAccess & ~PTE_D;
   end

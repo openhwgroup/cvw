@@ -75,7 +75,8 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          PCSrcE;
   logic                          CSRWriteFenceM;
   logic                          DivBusyE;
-  logic                          LoadStallD, StoreStallD, MDUStallD, CSRRdStallD;
+  logic                          StructuralStallD;
+  logic                          LoadStallD;
   logic                          SquashSCW;
   logic                          MDUActiveE;                      // Mul/Div instruction being executed
   logic                          ENVCFG_ADUE;                     // HPTW A/D Update enable
@@ -95,7 +96,6 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          FCvtIntW; 
   logic                          FDivBusyE;
   logic                          FRegWriteM;
-  logic                          FCvtIntStallD;
   logic                          FpLoadStoreM;
   logic [4:0]                    SetFflagsM;
   logic [P.XLEN-1:0]             FIntDivResultW;
@@ -211,8 +211,8 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
      .InstrValidM, .InstrValidE, .InstrValidD, .FCvtIntResW, .FCvtIntW,
      // hazards
      .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
-     .FCvtIntStallD, .LoadStallD, .MDUStallD, .CSRRdStallD, .PCSrcE,
-     .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .InvalidateICacheM, .StoreStallD); 
+     .StructuralStallD, .LoadStallD, .PCSrcE,
+     .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .InvalidateICacheM); 
 
   lsu #(P) lsu(
     .clk, .reset, .StallM, .FlushM, .StallW, .FlushW,
@@ -266,9 +266,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   // global stall and flush control  
   hazard #(P) hzu(
     .BPWrongE, .CSRWriteFenceM, .RetM, .TrapM,
-    .LoadStallD, .StoreStallD, .MDUStallD, .CSRRdStallD,
+    .StructuralStallD,
     .LSUStallM, .IFUStallF,
-    .FCvtIntStallD, .FPUStallD,
+    .FPUStallD,
     .DivBusyE, .FDivBusyE,
     .wfiM, .IntPendingM,
     // Stall & flush outputs
@@ -284,7 +284,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .InstrM, .InstrOrigM, .CSRReadValW, .EPCM, .TrapVectorM,
       .RetM, .TrapM, .sfencevmaM, .InvalidateICacheM, .DCacheStallM, .ICacheStallF,
       .InstrValidM, .CommittedM, .CommittedF,
-      .FRegWriteM, .LoadStallD, .StoreStallD,
+      .FRegWriteM, .LoadStallD,
       .BPDirPredWrongM, .BTAWrongM, .BPWrongM,
       .RASPredPCWrongM, .IClassWrongM, .DivBusyE, .FDivBusyE,
       .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
