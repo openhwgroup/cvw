@@ -152,9 +152,11 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic [3:0]  CMOpD, CMOpE;                   // which CMO instruction 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
   logic        IFUPrefetchD;                   // instruction prefetch
   logic        LSUPrefetchD, LSUPrefetchE;     // data prefetch
-  logic        AMOStallD, CMOStallD;           // Structural hazards from atomic and cache management ops
+  logic        CMOStallD;                      // Structural hazards from cache management ops
   logic        MatchDE;                        // Match between a source register in Decode stage and destination register in Execute stage
   logic        FCvtIntStallD, MDUStallD, CSRRdStallD; // Stall due to conversion, load, multiply/divide, CSR read 
+  logic        StoreStallD;                    // load after store hazard
+  
 
   // Extract fields
   assign OpD     = InstrD[6:0];
@@ -452,21 +454,12 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   end
 
   // Stall on dependent operations that finish in Mem Stage and can't bypass in time
-  assign MatchDE = ((Rs1D == RdE) | (Rs2D == RdE)) & (RdE != 5'b0); // Decode-stage instruction source depends on result from execute stage instruction
-  assign FCvtIntStallD = FCvtIntE & MatchDE; // FPU to Integer transfers have single-cycle latency except fcvt
-  assign LoadStallD = (MemReadE|SCE) & MatchDE;  
-  assign MDUStallD = MDUE & MatchDE; // Int mult/div is at least two cycle latency, even when coming from the FDIV
-  assign CSRRdStallD = CSRReadE & MatchDE;
-
-  logic StoreStallD;
-  
-  // atomic operations are also detected as MemRWE[1] & MemRWE[0]
-  assign AMOStallD = &MemRWE & MemRWD[1]; // Read after atomic operation causes structural hazard
-  assign CMOStallD = (|CMOpE) & (|CMOpD); // *** CMO op after CMO op causes structural hazard.
-  assign StoreStallD = MemRWD[1] & MemRWE[0];
-  // CMO.inval, CMO.flush, and CMO.clean only update valid and dirty cache bits and never the tag or data arrays.  There is no structual hazard.
-  // CMO.zero always updates the tag and data arrays, but the cachefsm inserts the wait state if the next instruction reads the tag or data arrays.
-
   // Structural hazard causes stall if any of these events occur
-  assign StructuralStallD = LoadStallD | StoreStallD | MDUStallD | CSRRdStallD | FCvtIntStallD | AMOStallD | CMOStallD;
+  assign MatchDE = ((Rs1D == RdE) | (Rs2D == RdE)) & (RdE != 5'b0); // Decode-stage instruction source depends on result from execute stage instruction
+  assign LoadStallD = (MemReadE|SCE) & MatchDE;  
+  assign StoreStallD = MemRWD[1] & MemRWE[0];   // Store or AMO followed by load or AMO
+  assign CSRRdStallD = CSRReadE & MatchDE;
+  assign MDUStallD = MDUE & MatchDE; // Int mult/div is at least two cycle latency, even when coming from the FDIV
+  assign FCvtIntStallD = FCvtIntE & MatchDE; // FPU to Integer transfers have single-cycle latency except fcvt
+  assign StructuralStallD = LoadStallD | StoreStallD | CSRRdStallD | MDUStallD | FCvtIntStallD;
 endmodule
