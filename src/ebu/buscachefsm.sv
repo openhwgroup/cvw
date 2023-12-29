@@ -94,12 +94,13 @@ module buscachefsm #(
                    else                                             NextState = DATA_PHASE;
       MEM3:        if(Stall)                                        NextState = MEM3;
                    else                                             NextState = ADR_PHASE;
-      CACHE_FETCH: if(HREADY & FinalBeatCount & BusWrite)      NextState = CACHE_WRITEBACK;
+      CACHE_FETCH: if(HREADY & FinalBeatCount & CacheBusRW[0])      NextState = CACHE_WRITEBACK;
                    else if(HREADY & FinalBeatCount & CacheBusRW[1]) NextState = CACHE_FETCH;
                    else if(HREADY & FinalBeatCount & ~|CacheBusRW)  NextState = ADR_PHASE;
                    else                                             NextState = CACHE_FETCH;
-      CACHE_WRITEBACK: if(HREADY & FinalBeatCount & BusWrite)  NextState = CACHE_WRITEBACK;
+      CACHE_WRITEBACK: if(HREADY & FinalBeatCount & CacheBusRW[0])  NextState = CACHE_WRITEBACK;
                    else if(HREADY & FinalBeatCount & CacheBusRW[1]) NextState = CACHE_FETCH;
+                   else if(HREADY & FinalBeatCount & BusCMOZero)    NextState = MEM3;
                    else if(HREADY & FinalBeatCount & ~|CacheBusRW)  NextState = ADR_PHASE;
                    else                                             NextState = CACHE_WRITEBACK;
         default:                                                    NextState = ADR_PHASE;
@@ -120,15 +121,16 @@ module buscachefsm #(
   assign CaptureEn = (CurrState == DATA_PHASE & BusRW[1] & ~Flush) | (CurrState == CACHE_FETCH & HREADY);
   assign CacheAccess = CurrState == CACHE_FETCH | CurrState == CACHE_WRITEBACK;
 
-  assign BusStall = (CurrState == ADR_PHASE & ((|BusRW) | (|CacheBusRW))) |
+  assign BusStall = (CurrState == ADR_PHASE & ((|BusRW) | (|CacheBusRW) | BusCMOZero)) |
                     //(CurrState == DATA_PHASE & ~BusRW[0]) |  // *** replace the next line with this.  Fails uart test but i think it's a test problem not a hardware problem.
                     (CurrState == DATA_PHASE) | 
-          (CurrState == CACHE_FETCH & ~HREADY) |
-          (CurrState == CACHE_WRITEBACK & ~HREADY);
+          (CurrState == CACHE_FETCH & ~FinalBeatCount) |
+          (CurrState == CACHE_WRITEBACK & ~FinalBeatCount);
+  
   assign BusCommitted = (CurrState != ADR_PHASE) & ~(READ_ONLY_CACHE & CurrState == MEM3);
 
   // AHB bus interface
-  assign HTRANS = (CurrState == ADR_PHASE & HREADY & ((|BusRW) | (|CacheBusRW)) & ~Flush) |
+  assign HTRANS = (CurrState == ADR_PHASE & HREADY & ((|BusRW) | (|CacheBusRW) | BusCMOZero) & ~Flush) |
                   (CacheAccess & FinalBeatCount & |CacheBusRW & HREADY & ~Flush) ? AHB_NONSEQ : // if we have a pipelined request
                   (CacheAccess & |BeatCount) ? (`BURST_EN ? AHB_SEQ : AHB_NONSEQ) : AHB_IDLE;
 
