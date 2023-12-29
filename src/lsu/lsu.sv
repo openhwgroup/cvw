@@ -307,11 +307,14 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       logic                    CacheStall;
       logic [1:0]              CacheBusRWTemp;
       logic                    BusCMOZero;
+      logic [3:0]              CacheCMOpM;
 
       if(P.ZICBOZ_SUPPORTED) begin 
         assign BusCMOZero = CMOpM[3] & ~CacheableM;
+        assign CacheCMOpM = CacheableM ? CMOpM : '0;        
       end else begin
         assign BusCMOZero = '0;
+        assign CacheCMOpM = '0;        
       end
       assign BusRW = ~CacheableM & ~SelDTIM ? LSURWM : '0;
       assign CacheableOrFlushCacheM = CacheableM | FlushDCacheM;
@@ -329,7 +332,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
         .CacheCommitted(DCacheCommittedM), 
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(DCacheReadDataWordM), 
         .FetchBuffer, .CacheBusRW(CacheBusRWTemp), 
-        .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0), .CMOp(CMOpM));
+        .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0), .CMOp(CacheCMOpM));
       
       assign DCacheStallM = CacheStall & ~IgnoreRequestTLB;
       assign CacheBusRW = CacheBusRWTemp;
