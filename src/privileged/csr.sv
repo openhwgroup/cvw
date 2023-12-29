@@ -54,7 +54,6 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic                     SelHPTW,                   // hardware page table walker active, so base endianness on supervisor mode
   // inputs for performance counters
   input  logic                     LoadStallD,
-  input  logic                     StoreStallD,
   input  logic                     ICacheStallF,
   input  logic                     DCacheStallM,
   input  logic                     BPDirPredWrongM,
@@ -275,7 +274,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   
   if (P.ZICNTR_SUPPORTED) begin:counters
     csrc #(P) counters(.clk, .reset, .StallE, .StallM, .FlushM,
-      .InstrValidNotFlushedM, .LoadStallD, .StoreStallD, .CSRWriteM, .CSRMWriteM,
+      .InstrValidNotFlushedM, .LoadStallD, .CSRWriteM, .CSRMWriteM,
       .BPDirPredWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM, .BPWrongM,
       .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .sfencevmaM,
       .InterruptM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,

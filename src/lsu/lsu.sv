@@ -240,7 +240,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       .StoreAmoAccessFaultM(LSUStoreAmoAccessFaultM), .InstrPageFaultF(), .LoadPageFaultM, 
     .StoreAmoPageFaultM,
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,   // *** these faults need to be supressed during hptw.
-      .UpdateDA(DataUpdateDAM), .CMOp(CMOpM),
+      .UpdateDA(DataUpdateDAM), .CMOpM(CMOpM),
       .AtomicAccessM(|LSUAtomicM), .ExecuteAccessF(1'b0), 
       .WriteAccessM, .ReadAccessM(PreLSURWM[1]),
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
@@ -329,7 +329,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
         .CacheCommitted(DCacheCommittedM), 
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(DCacheReadDataWordM), 
         .FetchBuffer, .CacheBusRW(CacheBusRWTemp), 
-        .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0), .CMOp(CMOpM));
+        .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0), .CMOpM(CMOpM));
       
       assign DCacheStallM = CacheStall & ~IgnoreRequestTLB;
       assign CacheBusRW = CacheBusRWTemp;
