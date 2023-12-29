@@ -308,13 +308,16 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       logic [1:0]              CacheBusRWTemp;
       logic                    BusCMOZero;
       logic [3:0]              CacheCMOpM;
+      logic                    BusAtomic;
 
       if(P.ZICBOZ_SUPPORTED) begin 
         assign BusCMOZero = CMOpM[3] & ~CacheableM;
-        assign CacheCMOpM = CacheableM ? CMOpM : '0;        
+        assign CacheCMOpM = CacheableM ? CMOpM : '0;
+        assign BusAtomic = AtomicM[1] & ~CacheableM;
       end else begin
         assign BusCMOZero = '0;
-        assign CacheCMOpM = '0;        
+        assign CacheCMOpM = '0;
+        assign BusAtomic = '0;
       end
       assign BusRW = ~CacheableM & ~SelDTIM ? LSURWM : '0;
       assign CacheableOrFlushCacheM = CacheableM | FlushDCacheM;
@@ -343,7 +346,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
         .HRDATA, .HWDATA(LSUHWDATA), .HWSTRB(LSUHWSTRB),
         .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HREADY(LSUHREADY),
         .BeatCount, .SelBusBeat, .CacheReadDataWordM(DCacheReadDataWordM[P.LLEN-1:0]), .WriteDataM(LSUWriteDataM),
-        .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheBusRW, .BusCMOZero, .CacheableOrFlushCacheM,
+        .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheBusRW, .BusAtomic, .BusCMOZero, .CacheableOrFlushCacheM,
         .CacheBusAck(DCacheBusAck), .FetchBuffer, .PAdr(PAdrM),
         .Cacheable(CacheableOrFlushCacheM), .BusRW, .Stall(GatedStallW),
         .BusStall, .BusCommitted(BusCommittedM));

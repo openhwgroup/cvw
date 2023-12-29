@@ -42,6 +42,7 @@ module buscachefsm #(
   input  logic                   Stall,              // Core pipeline is stalled
   input  logic                   Flush,              // Pipeline stage flush. Prevents bus transaction from starting
   input  logic [1:0]             BusRW,              // Uncached memory operation read/write control: 10: read, 01: write
+  input  logic                   BusAtomic,          // Uncache atomic memory operation
   input  logic                   BusCMOZero,         // Uncached cbo.zero must write zero to full sized cacheline without going through the cache
   output logic                   BusStall,           // Bus is busy with an in flight memory operation
   output logic                   BusCommitted,       // Bus is busy with an in flight memory operation and it is not safe to take an interrupt
@@ -65,7 +66,7 @@ module buscachefsm #(
   output logic [2:0]             HBURST              // AHB burst length
 );
   
-  typedef enum logic [2:0] {ADR_PHASE, DATA_PHASE, MEM3, CACHE_FETCH, CACHE_WRITEBACK}               busstatetype;
+  typedef enum logic [2:0] {ADR_PHASE, DATA_PHASE, ATOMIC_PHASE, MEM3, CACHE_FETCH, CACHE_WRITEBACK} busstatetype;
   typedef enum logic [1:0] {AHB_IDLE = 2'b00, AHB_BUSY = 2'b01, AHB_NONSEQ = 2'b10, AHB_SEQ = 2'b11} ahbtranstype;
 
   busstatetype CurrState, NextState;
@@ -87,22 +88,25 @@ module buscachefsm #(
   always_comb begin
       case(CurrState)
         ADR_PHASE: if (HREADY & |BusRW)                             NextState = DATA_PHASE;
-                   else if (HREADY & BusWrite)                 NextState = CACHE_WRITEBACK;
+                   else if (HREADY & BusWrite)                      NextState = CACHE_WRITEBACK;
                    else if (HREADY & CacheBusRW[1])                 NextState = CACHE_FETCH;
                    else                                             NextState = ADR_PHASE;
-      DATA_PHASE:  if(HREADY)                                       NextState = MEM3;
-                   else                                             NextState = DATA_PHASE;
-      MEM3:        if(Stall)                                        NextState = MEM3;
-                   else                                             NextState = ADR_PHASE;
-      CACHE_FETCH: if(HREADY & FinalBeatCount & CacheBusRW[0])      NextState = CACHE_WRITEBACK;
-                   else if(HREADY & FinalBeatCount & CacheBusRW[1]) NextState = CACHE_FETCH;
-                   else if(HREADY & FinalBeatCount & ~|CacheBusRW)  NextState = ADR_PHASE;
-                   else                                             NextState = CACHE_FETCH;
-      CACHE_WRITEBACK: if(HREADY & FinalBeatCount & CacheBusRW[0])  NextState = CACHE_WRITEBACK;
-                   else if(HREADY & FinalBeatCount & CacheBusRW[1]) NextState = CACHE_FETCH;
-                   else if(HREADY & FinalBeatCount & BusCMOZero)    NextState = MEM3;
-                   else if(HREADY & FinalBeatCount & ~|CacheBusRW)  NextState = ADR_PHASE;
-                   else                                             NextState = CACHE_WRITEBACK;
+        DATA_PHASE:  if(HREADY & BusAtomic)                           NextState = ATOMIC_PHASE;
+                     else if(HREADY & ~BusAtomic)                      NextState = MEM3;
+                     else                                             NextState = DATA_PHASE;
+        ATOMIC_PHASE: if(HREADY)                                      NextState = MEM3;
+                      else                                            NextState = ATOMIC_PHASE;
+        MEM3:        if(Stall)                                        NextState = MEM3;
+                     else                                             NextState = ADR_PHASE;
+        CACHE_FETCH: if(HREADY & FinalBeatCount & CacheBusRW[0])      NextState = CACHE_WRITEBACK;
+                     else if(HREADY & FinalBeatCount & CacheBusRW[1]) NextState = CACHE_FETCH;
+                     else if(HREADY & FinalBeatCount & ~|CacheBusRW)  NextState = ADR_PHASE;
+                     else                                             NextState = CACHE_FETCH;
+        CACHE_WRITEBACK: if(HREADY & FinalBeatCount & CacheBusRW[0])  NextState = CACHE_WRITEBACK;
+                     else if(HREADY & FinalBeatCount & CacheBusRW[1]) NextState = CACHE_FETCH;
+                     else if(HREADY & FinalBeatCount & BusCMOZero)    NextState = MEM3;
+                     else if(HREADY & FinalBeatCount & ~|CacheBusRW)  NextState = ADR_PHASE;
+                     else                                             NextState = CACHE_WRITEBACK;
         default:                                                    NextState = ADR_PHASE;
       endcase
   end
@@ -124,17 +128,20 @@ module buscachefsm #(
   assign BusStall = (CurrState == ADR_PHASE & ((|BusRW) | (|CacheBusRW) | BusCMOZero)) |
                     //(CurrState == DATA_PHASE & ~BusRW[0]) |  // *** replace the next line with this.  Fails uart test but i think it's a test problem not a hardware problem.
                     (CurrState == DATA_PHASE) | 
-          (CurrState == CACHE_FETCH & ~FinalBeatCount) |
-          (CurrState == CACHE_WRITEBACK & ~FinalBeatCount);
+                    (CurrState == ATOMIC_PHASE) |
+                    (CurrState == CACHE_FETCH & ~FinalBeatCount) |
+                    (CurrState == CACHE_WRITEBACK & ~FinalBeatCount);
   
   assign BusCommitted = (CurrState != ADR_PHASE) & ~(READ_ONLY_CACHE & CurrState == MEM3);
 
   // AHB bus interface
   assign HTRANS = (CurrState == ADR_PHASE & HREADY & ((|BusRW) | (|CacheBusRW) | BusCMOZero) & ~Flush) |
+                  (CurrState == DATA_PHASE & BusAtomic) | 
                   (CacheAccess & FinalBeatCount & |CacheBusRW & HREADY & ~Flush) ? AHB_NONSEQ : // if we have a pipelined request
                   (CacheAccess & |BeatCount) ? (`BURST_EN ? AHB_SEQ : AHB_NONSEQ) : AHB_IDLE;
 
-  assign HWRITE = (BusRW[0] | BusWrite & ~Flush) | (CurrState == CACHE_WRITEBACK & |BeatCount);
+  assign HWRITE = ((BusRW[0] & ~BusAtomic) | BusWrite & ~Flush) | (CurrState == DATA_PHASE & BusAtomic) | 
+                  (CurrState == CACHE_WRITEBACK & |BeatCount);
   assign HBURST = `BURST_EN & ((|CacheBusRW & ~Flush) | (CacheAccess & |BeatCount)) ? LocalBurstType : 3'b0;  
   
   always_comb begin
@@ -151,6 +158,7 @@ module buscachefsm #(
   assign CacheBusAck = (CacheAccess & HREADY & FinalBeatCount & ~BusCMOZero);
   assign SelBusBeat = (CurrState == ADR_PHASE & (BusRW[0] | BusWrite)) |
                       (CurrState == DATA_PHASE & BusRW[0]) |
+                      (CurrState == ATOMIC_PHASE & BusRW[0]) |
                       (CurrState == CACHE_WRITEBACK) |
                       (CurrState == CACHE_FETCH);
 
