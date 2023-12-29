@@ -38,7 +38,6 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   output logic       CacheStall,        // Cache stalls pipeline during multicycle operation
   // inputs from IEU
   input  logic [1:0] CacheRW,           // [1] Read, [0] Write 
-  input  logic [1:0] CacheRWNext,           // [1] Read, [0] Write 
   input  logic       FlushCache,        // Flush all dirty lines back to memory
   input  logic       InvalidateCache,   // Clear all valid bits
   input  logic [3:0] CMOpM,             // 0001: cbo.inval; 0010: cbo.flush; 0100: cbo.clean; 1000: cbo.zero
@@ -79,7 +78,6 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   logic              CMOWriteback;
   logic              CMOZeroNoEviction;
   logic              StallConditions;
-  logic              StoreHazard;
 
   typedef enum logic [3:0]{STATE_READY, // hit states
                            // miss states
@@ -106,8 +104,6 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   assign CacheAccess = (|CacheRW) & ((CurrState == STATE_READY & ~Stall & ~FlushStage) | (CurrState == STATE_READ_HOLD & ~Stall & ~FlushStage)); // exclusion-tag: icache CacheW
   assign CacheMiss = CacheAccess & ~CacheHit;
 
-  assign StoreHazard = CacheRWNext[1] & CacheRW[0] & ~CacheRW[1];
-
   // special case on reset. When the fsm first exists reset the
   // PCNextF will no longer be pointing to the correct address.
   // But PCF will be the reset vector.
@@ -124,7 +120,6 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
                              else if(FlushCache & ~READ_ONLY_CACHE)            NextState = STATE_FLUSH;
                              else if(AnyMiss & (READ_ONLY_CACHE | ~LineDirty)) NextState = STATE_FETCH;     // exclusion-tag: icache FETCHStatement
                              else if(AnyMiss | CMOWriteback)                   NextState = STATE_WRITEBACK; // exclusion-tag: icache WRITEBACKStatement
-                             else if(StoreHazard)                              NextState = STATE_READ_HOLD;
                              else                                              NextState = STATE_READY;
       STATE_FETCH:           if(CacheBusAck)                                   NextState = STATE_WRITE_LINE;
                              else if(CacheBusAck)                              NextState = STATE_READY;
@@ -150,7 +145,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
 
   // com back to CPU
   assign CacheCommitted = (CurrState != STATE_READY) & ~(READ_ONLY_CACHE & (CurrState == STATE_READ_HOLD));
-  assign StallConditions =  FlushCache | AnyMiss | CMOWriteback | (StoreHazard);
+  assign StallConditions =  FlushCache | AnyMiss | CMOWriteback;
   assign CacheStall = (CurrState == STATE_READY & StallConditions) | // exclusion-tag: icache StallStates
                       (CurrState == STATE_FETCH) |
                       (CurrState == STATE_WRITEBACK) |
