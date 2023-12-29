@@ -36,7 +36,7 @@ module dtim import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.PA_BITS-1:0] DTIMAdr,       // No stall: Execution stage memory address. Stall: Memory stage memory address
   input  logic [P.LLEN-1:0]    WriteDataM,    // Write data from IEU
   input  logic [P.LLEN/8-1:0]  ByteMaskM,     // Selects which bytes within a word to write
-  output logic [P.LLEN-1:0]   ReadDataWordM // Read data before subword selection
+  output logic [P.LLEN-1:0]    ReadDataWordM  // Read data before subword selection
   );
 
   logic                       we;

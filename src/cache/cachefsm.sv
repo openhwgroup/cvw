@@ -62,7 +62,6 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   output logic       ClearDirty,        // Clear the dirty bit in the selected way and set
   output logic       SelWriteback,      // Overrides cached tag check to select a specific way and set for writeback
   output logic       LRUWriteEn,        // Update the LRU state
-  output logic       SelFlush,          // [0] Use SelAdr, [1] SRAM reads/writes from FlushAdr
   output logic       SelWay,            // Controls which way to select a way data and tag, 00 = hitway, 10 = victimway, 11 = flushway
   output logic       FlushAdrCntEn,     // Enable the counter for Flush Adr
   output logic       FlushWayCntEn,     // Enable the way counter during a flush
@@ -175,12 +174,6 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
                   (CurrState == STATE_WRITE_LINE);
   assign SelWriteback = (CurrState == STATE_WRITEBACK & (CMOpM[1] | CMOpM[2] | ~CacheBusAck)) |
                         (CurrState == STATE_READY & AnyMiss & LineDirty);
-/* -----\/----- EXCLUDED -----\/-----
-  assign SelFlush = (CurrState == STATE_READY & FlushCache) |
-          (CurrState == STATE_FLUSH) | 
-          (CurrState == STATE_FLUSH_WRITEBACK);
- -----/\----- EXCLUDED -----/\----- */
- assign SelFlush = FlushCache;
   // coverage off -item e 1 -fecexprrow 1
   // (state is always FLUSH_WRITEBACK when FlushWayFlag & CacheBusAck)
   assign FlushAdrCntEn = (CurrState == STATE_FLUSH_WRITEBACK & FlushWayFlag & CacheBusAck) |

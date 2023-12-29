@@ -93,7 +93,6 @@ module cache import cvw::*; #(parameter cvw_t P,
   logic                          FlushWayCntEn;
   logic                          SelWriteback;
   logic                          LRUWriteEn;
-  logic                          SelFlush;
   logic                          ResetOrFlushCntRst;
   logic [LINELEN-1:0]            ReadDataLine, ReadDataLineCache;
   logic                          SelFetchBuffer;
@@ -111,10 +110,10 @@ module cache import cvw::*; #(parameter cvw_t P,
   // and FlushAdr when handling D$ flushes
   // The icache must update to the newest PCNextF on flush as it is probably a trap.  Trap
   // sets PCNextF to XTVEC and the icache must start reading the instruction.
-  assign AdrSelMuxSelData = {SelFlush, ((SelAdrData | SelHPTW) & ~((READ_ONLY_CACHE == 1) & FlushStage))};
+  assign AdrSelMuxSelData = {FlushCache, ((SelAdrData | SelHPTW) & ~((READ_ONLY_CACHE == 1) & FlushStage))};
   mux3 #(SETLEN) AdrSelMuxData(NextSet[SETTOP-1:OFFSETLEN], PAdr[SETTOP-1:OFFSETLEN], FlushAdr,
     AdrSelMuxSelData, CacheSetData);
-  assign AdrSelMuxSelTag = {SelFlush, ((SelAdrTag | SelHPTW) & ~((READ_ONLY_CACHE == 1) & FlushStage))};
+  assign AdrSelMuxSelTag = {FlushCache, ((SelAdrTag | SelHPTW) & ~((READ_ONLY_CACHE == 1) & FlushStage))};
   mux3 #(SETLEN) AdrSelMuxTag(NextSet[SETTOP-1:OFFSETLEN], PAdr[SETTOP-1:OFFSETLEN], FlushAdr,
     AdrSelMuxSelTag, CacheSetTag);
 
@@ -122,7 +121,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   cacheway #(P, PA_BITS, XLEN, NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, READ_ONLY_CACHE) CacheWays[NUMWAYS-1:0](
     .clk, .reset, .CacheEn, .CacheSetData, .CacheSetTag, .PAdr, .LineWriteData, .LineByteMask, .SelWay,
     .SetValid, .ClearValid, .SetDirty, .ClearDirty, .VictimWay,
-    .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .HitDirtyWay, .TagWay, .FlushStage, .InvalidateCache);
+    .FlushWay, .FlushCache, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .HitDirtyWay, .TagWay, .FlushStage, .InvalidateCache);
 
   // Select victim way for associative caches
   if(NUMWAYS > 1) begin:vict
@@ -161,7 +160,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   mux3 #(PA_BITS) CacheBusAdrMux(.d0({PAdr[PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
     .d1({Tag, PAdr[SETTOP-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
     .d2({Tag, FlushAdr, {OFFSETLEN{1'b0}}}),
-    .s({SelFlush, SelWriteback}), .y(CacheBusAdr));
+    .s({FlushCache, SelWriteback}), .y(CacheBusAdr));
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path
@@ -227,7 +226,7 @@ module cache import cvw::*; #(parameter cvw_t P,
     .FlushStage, .CacheRW, .Stall,
     .CacheHit, .LineDirty, .HitLineDirty, .CacheStall, .CacheCommitted, 
     .CacheMiss, .CacheAccess, .SelAdrData, .SelAdrTag, .SelWay,
-    .ClearDirty, .SetDirty, .SetValid, .ClearValid, .SelWriteback, .SelFlush,
+    .ClearDirty, .SetDirty, .SetValid, .ClearValid, .SelWriteback,
     .FlushAdrCntEn, .FlushWayCntEn, .FlushCntRst,
     .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
     .InvalidateCache, .CMOpM, .CacheEn, .LRUWriteEn);
