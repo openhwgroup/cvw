@@ -458,13 +458,11 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   assign MDUStallD = MDUE & MatchDE; // Int mult/div is at least two cycle latency, even when coming from the FDIV
   assign CSRRdStallD = CSRReadE & MatchDE;
 
-  // the synchronous DTIM cannot read immediately after write
-  // a cache cannot read or write immediately after a write
-  // atomic operations are also detected as MemRWD[1] ***check; seems like & MemRWE
-  // *** RT: Remove this after updating the cache.
-  // *** RT: Check that atomic after atomic works correctly.
+  // atomic operations are also detected as MemRWE[1] & MemRWE[0]
   assign AMOStallD = &MemRWE & MemRWD[1]; // Read after atomic operation causes structural hazard
-  assign CMOStallD = (|CMOpE) & (|CMOpD); // CMO op after CMO op causes structural hazard ***explain, why doesn't interact with read/write
+  assign CMOStallD = (|CMOpE) & (|CMOpD); // *** CMO op after CMO op causes structural hazard.
+  // CMO.inval, CMO.flush, and CMO.clean only update valid and dirty cache bits and never the tag or data arrays.  There is no structual hazard.
+  // CMO.zero always updates the tag and data arrays, but the cachefsm inserts the wait state if the next instruction reads the tag or data arrays.
 
   // Structural hazard causes stall if any of these events occur
   assign StructuralStallD = LoadStallD | MDUStallD | CSRRdStallD | FCvtIntStallD | AMOStallD | CMOStallD;
