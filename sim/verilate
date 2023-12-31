@@ -8,9 +8,11 @@ basepath=$(dirname $0)/..
 #for config in rv32e rv64gc rv32gc rv32imc rv32i rv64i rv64fpquad; do
 for config in  rv64gc; do
     echo "$config simulating..."
-    if !($verilator --timescale "1ns/1ns" --timing --exe --cc "$@" --top-module testbench "-I$basepath/config/shared" "-I$basepath/config/$config" $basepath/src/cvw.sv $basepath/testbench/testbench.sv $basepath/testbench/common/*.sv   $basepath/src/*/*.sv $basepath/src/*/*/*.sv --relative-includes ); then
+    # not working: -GTEST="arch64i"
+    if !($verilator --timescale "1ns/1ns" --timing --binary "$@" --top-module testbench "-I$basepath/config/shared" "-I$basepath/config/$config" $basepath/src/cvw.sv $basepath/testbench/testbench.sv $basepath/testbench/common/*.sv   $basepath/src/*/*.sv $basepath/src/*/*/*.sv --relative-includes ); then
         echo "Exiting after $config lint due to errors or warnings"
         exit 1
     fi
+    ./obj_dir/Vtestbench 
 done
 echo "Verilation complete"
