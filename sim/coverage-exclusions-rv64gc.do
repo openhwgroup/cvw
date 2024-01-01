@@ -234,6 +234,12 @@ coverage exclude -scope /dut/core/ifu -linerange $line-$line -item c 1 -feccondr
 set line [GetLineNum ../src/generic/flop/floprc.sv "reset \\| clear"]
 coverage exclude -scope /dut/core/priv/priv/pmd/wfi/wficountreg -linerange $line-$line -item c 1 -feccondrow 2
 
+# Exclude system reset case in ebu
+set line [GetLineNum ../src/ebu/ebufsmarb.sv "BeatCounter\\("]
+coverage exclude -scope /dut/core/ebu/ebu/ebufsmarb -linerange $line-$line -item e 1 -fecexprrow 1
+set line [GetLineNum ../src/ebu/ebufsmarb.sv "FinalBeatReg\\("]
+coverage exclude -scope /dut/core/ebu/ebu/ebufsmarb -linerange $line-$line -item e 1 -fecexprrow 1
+
 # TLB not recently used never has all RU bits = 1 because it will then clear all to 0
 # This is a blunt instrument; perhaps there is a more graceful exclusion
 coverage exclude -srcfile priorityonehot.sv 

@@ -131,7 +131,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   assign SelSpillE = (CurrState == STATE_READY & ValidSpillM) | (CurrState == STATE_SPILL & CacheBusHPWTStall) | (CurrState == STATE_STORE_DELAY);
   assign SpillSaveM = (CurrState == STATE_READY) & ValidSpillM & ~FlushM;
   assign SelStoreDelay = (CurrState == STATE_STORE_DELAY);  // *** Can this be merged into the PreLSURWM logic?
-  assign SpillStallM = SelSpillE | CurrState == STATE_STORE_DELAY;
+  assign SpillStallM = SelSpillE;
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // Merge spilled data
