@@ -186,7 +186,7 @@ set line [GetLineNum ../src/mmu/pmachecker.sv "ReadAccessM    & PMAAccessFault"]
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2-4
 set line [GetLineNum ../src/mmu/pmachecker.sv "PMAStoreAmoAccessFaultM ="] 
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line
-set line [GetLineNum ../src/mmu/pmachecker.sv "AccessRWX \\| AtomicAccessM"] 
+set line [GetLineNum ../src/mmu/pmachecker.sv "AccessRWXC \\| AtomicAccessM"] 
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 3
 set line [GetLineNum ../src/mmu/mmu.sv "ExecuteAccessF \\| ReadAccessM"] 
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 1,3,4

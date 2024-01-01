@@ -72,7 +72,7 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
   assign SelTIM = SelRegions[1] | SelRegions[2]; // exclusion-tag: unused-tim
 
   // Detect access faults
-  assign PMAAccessFault          = (SelRegions[0]) & AccessRWXC | AtomicAccessM & ~AtomicAllowed;  
+  assign PMAAccessFault          = SelRegions[0] & AccessRWXC | AtomicAccessM & ~AtomicAllowed;  
   assign PMAInstrAccessFaultF    = ExecuteAccessF & PMAAccessFault;
   assign PMALoadAccessFaultM     = ReadAccessM    & PMAAccessFault;
   assign PMAStoreAmoAccessFaultM = (WriteAccessM | (|CMOpM))   & PMAAccessFault;
