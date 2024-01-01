@@ -117,9 +117,9 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   always_comb begin
     case (CurrState)
-      STATE_READY: if (ValidSpillM & ~MemRWM[0])   NextState = STATE_SPILL;
-                   else if(ValidSpillM & MemRWM[0])NextState = STATE_STORE_DELAY;
-                   else                           NextState = STATE_READY;
+      STATE_READY: if (ValidSpillM & ~MemRWM[0])  NextState = STATE_SPILL;       // load spill
+                   else if(ValidSpillM)           NextState = STATE_STORE_DELAY; // store spill
+                   else                           NextState = STATE_READY;       // no spill
       STATE_SPILL: if(StallM)                     NextState = STATE_SPILL;
                    else                           NextState = STATE_READY;
       STATE_STORE_DELAY: NextState = STATE_SPILL;
