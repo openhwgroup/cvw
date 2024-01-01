@@ -150,7 +150,6 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic                  IgnoreRequest;                          // On FlushM or TLB miss ignore memory operation
   logic                  SelDTIM;                                // Select DTIM rather than bus or D$
   logic [P.XLEN-1:0]     WriteDataZM;
-  logic                  DTIMStall;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Pipeline for IEUAdr E to M
@@ -220,7 +219,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   // the trap module.
   assign CommittedM = SelHPTW | DCacheCommittedM | BusCommittedM;
   assign GatedStallW = StallW & ~SelHPTW;
-  assign CacheBusHPWTStall = DCacheStallM | HPTWStall | BusStall | DTIMStall;
+  assign CacheBusHPWTStall = DCacheStallM | HPTWStall | BusStall;
   assign LSUStallM = CacheBusHPWTStall | SpillStallM;
 
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -269,10 +268,9 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   if (P.DTIM_SUPPORTED) begin : dtim
     logic [P.PA_BITS-1:0] DTIMAdr;
     logic [1:0]           DTIMMemRWM;
-    logic                 DTIMSelWrite;
     
     // The DTIM uses untranslated addresses, so it is not compatible with virtual memory.
-    mux2 #(P.PA_BITS) DTIMAdrMux(IEUAdrExtE[P.PA_BITS-1:0], IEUAdrExtM[P.PA_BITS-1:0], DTIMSelWrite, DTIMAdr);
+    mux2 #(P.PA_BITS) DTIMAdrMux(IEUAdrExtE[P.PA_BITS-1:0], IEUAdrExtM[P.PA_BITS-1:0], MemRWM[0], DTIMAdr);
     assign DTIMMemRWM = SelDTIM & ~IgnoreRequestTLB ? LSURWM : '0;
     // **** fix ReadDataWordM to be LLEN. ByteMask is wrong length.
     // **** create config to support DTIM with floating point.
@@ -280,9 +278,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     dtim #(P) dtim(.clk, .reset, .ce(~GatedStallW), .MemRWE(MemRWE), // *** update when you update the cache RWE
               .MemRWM(DTIMMemRWM),
               .DTIMAdr, .FlushW, .WriteDataM(LSUWriteDataM), 
-              .ReadDataWordM(DTIMReadDataWordM[P.LLEN-1:0]), .ByteMaskM(ByteMaskM), .DTIMStall, .DTIMSelWrite);
-  end else begin
-    assign DTIMStall = '0;
+              .ReadDataWordM(DTIMReadDataWordM[P.LLEN-1:0]), .ByteMaskM(ByteMaskM));
   end
   if (P.BUS_SUPPORTED) begin : bus              
     if(P.DCACHE_SUPPORTED) begin : dcache
@@ -307,11 +303,17 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       logic                    CacheStall;
       logic [1:0]              CacheBusRWTemp;
       logic                    BusCMOZero;
+      logic [3:0]              CacheCMOpM;
+      logic                    BusAtomic;
 
       if(P.ZICBOZ_SUPPORTED) begin 
         assign BusCMOZero = CMOpM[3] & ~CacheableM;
+        assign CacheCMOpM = CacheableM ? CMOpM : '0;
+        assign BusAtomic = AtomicM[1] & ~CacheableM;
       end else begin
         assign BusCMOZero = '0;
+        assign CacheCMOpM = '0;
+        assign BusAtomic = '0;
       end
       assign BusRW = ~CacheableM & ~SelDTIM ? LSURWM : '0;
       assign CacheableOrFlushCacheM = CacheableM | FlushDCacheM;
@@ -320,7 +322,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       
       cache #(.P(P), .PA_BITS(P.PA_BITS), .XLEN(P.XLEN), .LINELEN(P.DCACHE_LINELENINBITS), .NUMLINES(P.DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(P.DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(CACHEWORDLEN), .MUXINTERVAL(P.LLEN), .READ_ONLY_CACHE(0)) dcache(
-        .clk, .reset, .Stall(GatedStallW & ~SelSpillE), .SelBusBeat, .FlushStage(FlushW | IgnoreRequestTLB), .CacheRWNext(MemRWE),  // *** change to LSURWE after updating hptw and atomic
+        .clk, .reset, .Stall(GatedStallW & ~SelSpillE), .SelBusBeat, .FlushStage(FlushW | IgnoreRequestTLB),
         .CacheRW(SelStoreDelay ? 2'b00 : CacheRWM), 
         .FlushCache(FlushDCache), .NextSet(IEUAdrExtE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskSpillM), .BeatCount(BeatCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
@@ -329,8 +331,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
         .CacheCommitted(DCacheCommittedM), 
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(DCacheReadDataWordM), 
         .FetchBuffer, .CacheBusRW(CacheBusRWTemp), 
-        .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0), .CMOpM(CMOpM));
-      
+        .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0), .CMOpM(CacheCMOpM));
+
       assign DCacheStallM = CacheStall & ~IgnoreRequestTLB;
       assign CacheBusRW = CacheBusRWTemp;
 
@@ -340,7 +342,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
         .HRDATA, .HWDATA(LSUHWDATA), .HWSTRB(LSUHWSTRB),
         .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HREADY(LSUHREADY),
         .BeatCount, .SelBusBeat, .CacheReadDataWordM(DCacheReadDataWordM[P.LLEN-1:0]), .WriteDataM(LSUWriteDataM),
-        .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheBusRW, .BusCMOZero, .CacheableOrFlushCacheM,
+        .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheBusRW, .BusAtomic, .BusCMOZero, .CacheableOrFlushCacheM,
         .CacheBusAck(DCacheBusAck), .FetchBuffer, .PAdr(PAdrM),
         .Cacheable(CacheableOrFlushCacheM), .BusRW, .Stall(GatedStallW),
         .BusStall, .BusCommitted(BusCommittedM));
