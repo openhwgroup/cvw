@@ -67,9 +67,9 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
   assign Idempotent = (PBMemoryType == 2'b00) ? IdempotentRegion : (PBMemoryType == 2'b01);  
  
   // Atomic operations are only allowed on RAM
-  assign AtomicAllowed = SelRegions[1] | SelRegions[3] | SelRegions[5]; // exclusion-tag: unused-idempotent
+  assign AtomicAllowed = SelRegions[1] | SelRegions[3] | SelRegions[5]; // exclusion-tag: unused-atomic
   // Check if tightly integrated memories are selected
-  assign SelTIM = SelRegions[1] | SelRegions[2]; // exclusion-tag: unused-idempotent
+  assign SelTIM = SelRegions[1] | SelRegions[2]; // exclusion-tag: unused-tim
 
   // Detect access faults
   assign PMAAccessFault          = (SelRegions[0]) & AccessRWXC | AtomicAccessM & ~AtomicAllowed;  
