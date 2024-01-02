@@ -186,7 +186,7 @@ set line [GetLineNum ../src/mmu/pmachecker.sv "ReadAccessM    & PMAAccessFault"]
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2-4
 set line [GetLineNum ../src/mmu/pmachecker.sv "PMAStoreAmoAccessFaultM ="] 
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line
-set line [GetLineNum ../src/mmu/pmachecker.sv "AccessRWX \\| AtomicAccessM"] 
+set line [GetLineNum ../src/mmu/pmachecker.sv "AccessRWXC \\| AtomicAccessM"] 
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 3
 set line [GetLineNum ../src/mmu/mmu.sv "ExecuteAccessF \\| ReadAccessM"] 
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 1,3,4
@@ -233,6 +233,12 @@ coverage exclude -scope /dut/core/ifu -linerange $line-$line -item c 1 -feccondr
 # Excluding reset and clear for impossible case in the wficountreg in privdec
 set line [GetLineNum ../src/generic/flop/floprc.sv "reset \\| clear"]
 coverage exclude -scope /dut/core/priv/priv/pmd/wfi/wficountreg -linerange $line-$line -item c 1 -feccondrow 2
+
+# Exclude system reset case in ebu
+set line [GetLineNum ../src/ebu/ebufsmarb.sv "BeatCounter\\("]
+coverage exclude -scope /dut/core/ebu/ebu/ebufsmarb -linerange $line-$line -item e 1 -fecexprrow 1
+set line [GetLineNum ../src/ebu/ebufsmarb.sv "FinalBeatReg\\("]
+coverage exclude -scope /dut/core/ebu/ebu/ebufsmarb -linerange $line-$line -item e 1 -fecexprrow 1
 
 # TLB not recently used never has all RU bits = 1 because it will then clear all to 0
 # This is a blunt instrument; perhaps there is a more graceful exclusion

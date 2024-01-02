@@ -182,3 +182,5 @@ benchmarks/embench/run*
 sim/cfi.log
 sim/cfi/*
 sim/branch/*
+sim/obj_dir
+examples/verilog/fulladder/obj_dir

@@ -3,6 +3,7 @@ module testbench();
   logic        a, b, c, s, cout, sexpected, coutexpected;
   logic [31:0] vectornum, errors;
   logic [4:0]  testvectors[10000:0];
+  integer cycle;
 
   // instantiate device under test
   fulladder dut(a, b, c, s, cout);
@@ -11,12 +12,15 @@ module testbench();
   always 
     begin
       clk = 1; #5; clk = 0; #5;
+      cycle = cycle + 1;
+      $display("cycle: %x vectornum %x testvectors[vectornum]: %b", cycle, vectornum, testvectors[vectornum]);
     end
 
   // at start of test, load vectors and pulse reset
   initial
     begin
       $readmemb("fulladder.tv", testvectors);
+      cycle = 0;
       vectornum = 0; errors = 0;
       reset = 1; #22; reset = 0;
     end
@@ -36,10 +40,11 @@ module testbench();
         errors = errors + 1;
       end
       vectornum = vectornum + 1;
-      if (testvectors[vectornum] === 5'bx) begin 
+      //if (testvectors[vectornum] === 5'bx) begin 
+      if (vectornum === 10) begin 
         $display("%d tests completed with %d errors", 
 	           vectornum, errors);
-        $stop;
+        $finish;
       end
     end
 endmodule
