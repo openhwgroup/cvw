@@ -308,7 +308,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
 
       if(P.ZICBOZ_SUPPORTED) begin 
         assign BusCMOZero = CMOpM[3] & ~CacheableM;
-        assign CacheCMOpM = CacheableM ? CMOpM : '0;
+        assign CacheCMOpM = (CacheableM & ~SelHPTW) ? CMOpM : '0;
         assign BusAtomic = AtomicM[1] & ~CacheableM;
       end else begin
         assign BusCMOZero = '0;

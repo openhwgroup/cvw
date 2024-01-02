@@ -59,6 +59,12 @@ main:
     li t0, 0x80200000
     jalr ra, t0 # jump to misaligned megapage
 
+    # exercise ebufsmarb
+    li t0, 0x80000000
+    lw t1, 0(t0)        # fetch from an address to warm up tlb entries
+    li t0, 0x80A00000
+    lw t1, 0(t0)        # trigger TLB miss on a non-first entry
+    jal backandforth
 
     # exercise malformed PBMT pages
 
@@ -91,6 +97,9 @@ main:
     li t0, 0x80803000
     cbo.zero (t0)
     cbo.clean (t0)
+    li t0, 0x80804000
+    cbo.zero (t0)
+    cbo.clean (t0)
 
     # set mstatus.MXR
     li a0, 3
@@ -114,6 +123,9 @@ main:
     li t0, 0x80803000
     cbo.zero (t0)
     cbo.clean (t0)
+    li t0, 0x80804000
+    cbo.zero (t0)
+    cbo.clean (t0)
 
     # clear mstatus.MXR
     li a0, 3
@@ -130,6 +142,8 @@ main:
     ecall
     j done
 
+backandforth:
+    ret
 
 changetoipfhandler:
     li a0, 3    
@@ -197,7 +211,7 @@ pagetable:
     .8byte 0x00000000200050C1  # for VA starting at 80400000 (bad PBMT pages)
     .8byte 0x4000000020004CC1  # for VA starting at 80600000 (bad entry: nonleaf PTE can't have PBMT != 0)
     .8byte 0x00000000200054C1  # for VA starting at 80800000 (testing rwx permissiosn with cbom/cboz)
-    .8byte 0x0000000020004CC1
+    .8byte 0x0000000020004CC1  # for VA starting at 80A00000 (pointer to NAPOT 64 KiB pages like at 80000000)
     .8byte 0x0000000020004CC1
     .8byte 0x0000000020004CC1
     .8byte 0x0000000020004CC1
@@ -311,8 +325,9 @@ pagetable:
 .align 12
     #80800000
     .8byte 0x00000000200000CF   # valid rwx for VA 80800000
-    .8byte 0x00000000200000CF   # valid r x for VA 80801000
-    .8byte 0x00000000200000CF   # valid r   for VA 80802000
-    .8byte 0x00000000200000CF   # valid   x for CA 80003000
+    .8byte 0x00000000200000CB   # valid r x for VA 80801000
+    .8byte 0x00000000200000C3   # valid r   for VA 80802000
+    .8byte 0x00000000200000C5   # valid   x for VA 80803000
+    .8byte 0x00000000200000CD   # valid  wx for VA 80804000 (illegal combination, but used to test tlbcontrol)
 
 
