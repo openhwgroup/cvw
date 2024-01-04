@@ -8,11 +8,11 @@ add wave -noupdate /testbench/dut/core/SATP_REGW
 add wave -noupdate /testbench/dut/core/InstrValidM
 add wave -noupdate -expand -group HDU -group hazards /testbench/dut/core/hzu/RetM
 add wave -noupdate -expand -group HDU -group hazards -color Pink /testbench/dut/core/hzu/TrapM
-add wave -noupdate -expand -group HDU -group hazards /testbench/dut/core/hzu/LoadStallD
+add wave -noupdate -expand -group HDU -group hazards /testbench/dut/core/ieu/c/LoadStallD
 add wave -noupdate -expand -group HDU -group hazards /testbench/dut/core/ifu/IFUStallF
 add wave -noupdate -expand -group HDU -group hazards /testbench/dut/core/hzu/BPWrongE
 add wave -noupdate -expand -group HDU -group hazards /testbench/dut/core/hzu/LSUStallM
-add wave -noupdate -expand -group HDU -group hazards /testbench/dut/core/MDUStallD
+add wave -noupdate -expand -group HDU -group hazards /testbench/dut/core/ieu/c/MDUStallD
 add wave -noupdate -expand -group HDU -group hazards /testbench/dut/core/hzu/DivBusyE
 add wave -noupdate -expand -group HDU -group hazards /testbench/dut/core/hzu/FDivBusyE
 add wave -noupdate -expand -group HDU -group traps /testbench/dut/core/priv/priv/trap/InstrMisalignedFaultM
@@ -59,14 +59,13 @@ add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCSrcE
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PC1NextF
 add wave -noupdate -group {PCNext Generation} -label {NextValidPCE (from bpred)} /testbench/dut/core/ifu/NextValidPCE
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/CSRWriteFenceM
-add wave -noupdate -group {PCNext Generation} -expand -group pcmux3 /testbench/dut/core/priv/priv/csr/PC2NextF
 add wave -noupdate -group {PCNext Generation} -expand -group pcmux3 -group xepc /testbench/dut/core/priv/priv/csr/MEPC_REGW
 add wave -noupdate -group {PCNext Generation} -expand -group pcmux3 -group xepc /testbench/dut/core/priv/priv/csr/SEPC_REGW
 add wave -noupdate -group {PCNext Generation} -expand -group pcmux3 -group xepc /testbench/dut/core/priv/priv/csr/mretM
-add wave -noupdate -group {PCNext Generation} -expand -group pcmux3 -group xepc /testbench/dut/core/priv/priv/csr/EPC
+add wave -noupdate -group {PCNext Generation} -expand -group pcmux3 -group xepc /testbench/dut/core/priv/priv/EPCM
 add wave -noupdate -group {PCNext Generation} -expand -group pcmux3 /testbench/dut/core/priv/priv/csr/TrapVectorM
 add wave -noupdate -group {PCNext Generation} -expand -group pcmux3 /testbench/dut/core/priv/priv/csr/TrapM
-add wave -noupdate -group {PCNext Generation} -expand -group pcmux3 /testbench/dut/core/priv/priv/csr/RetM
+add wave -noupdate -group {PCNext Generation} -expand -group pcmux3 /testbench/dut/core/priv/priv/RetM
 add wave -noupdate -group {PCNext Generation} -expand -group pcmux3 /testbench/dut/core/ifu/UnalignedPCNextF
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCNextF
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCF
@@ -195,9 +194,9 @@ add wave -noupdate -group {Decode Stage} /testbench/dut/core/ifu/InstrD
 add wave -noupdate -group {Decode Stage} /testbench/InstrDName
 add wave -noupdate -group {Decode Stage} /testbench/dut/core/ieu/c/InstrValidD
 add wave -noupdate -group {Decode Stage} /testbench/dut/core/ieu/c/RegWriteD
-add wave -noupdate -group {Decode Stage} /testbench/dut/core/ieu/dp/RdD
-add wave -noupdate -group {Decode Stage} /testbench/dut/core/ieu/dp/Rs1D
-add wave -noupdate -group {Decode Stage} /testbench/dut/core/ieu/dp/Rs2D
+add wave -noupdate -group {Decode Stage} /testbench/dut/core/ieu/c/RdD
+add wave -noupdate -group {Decode Stage} /testbench/dut/core/ieu/c/Rs1D
+add wave -noupdate -group {Decode Stage} /testbench/dut/core/ieu/c/Rs2D
 add wave -noupdate -group {Execution Stage} /testbench/dut/core/ifu/PCE
 add wave -noupdate -group {Execution Stage} /testbench/dut/core/ifu/InstrE
 add wave -noupdate -group {Execution Stage} /testbench/InstrEName
@@ -251,13 +250,12 @@ add wave -noupdate -group lsu /testbench/dut/core/lsu/IEUAdrExtE
 add wave -noupdate -group lsu /testbench/dut/core/lsu/IEUAdrExtM
 add wave -noupdate -group lsu /testbench/dut/core/lsu/bus/dcache/dcache/NextSet
 add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/CacheRW
-add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/CMOp
+add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/CMOpM
 add wave -noupdate -group lsu -expand -group dcache -color Gold /testbench/dut/core/lsu/bus/dcache/dcache/cachefsm/CurrState
 add wave -noupdate -group lsu -expand -group dcache -group SRAM-update-control /testbench/dut/core/lsu/bus/dcache/dcache/SetValid
 add wave -noupdate -group lsu -expand -group dcache -group SRAM-update-control /testbench/dut/core/lsu/bus/dcache/dcache/ClearValid
 add wave -noupdate -group lsu -expand -group dcache -group SRAM-update-control /testbench/dut/core/lsu/bus/dcache/dcache/SetDirty
 add wave -noupdate -group lsu -expand -group dcache -group SRAM-update-control /testbench/dut/core/lsu/bus/dcache/dcache/ClearDirty
-add wave -noupdate -group lsu -expand -group dcache -group SRAM-update-control /testbench/dut/core/lsu/bus/dcache/dcache/SelFlush
 add wave -noupdate -group lsu -expand -group dcache -group SRAM-update-control /testbench/dut/core/lsu/bus/dcache/dcache/SelWay
 add wave -noupdate -group lsu -expand -group dcache -group {requesting address} /testbench/dut/core/lsu/IEUAdrE
 add wave -noupdate -group lsu -expand -group dcache -group {requesting address} /testbench/dut/core/lsu/bus/dcache/dcache/PAdr
@@ -291,7 +289,6 @@ add wave -noupdate -group lsu -expand -group dcache -group flush /testbench/dut/
 add wave -noupdate -group lsu -expand -group dcache -group flush /testbench/dut/core/lsu/bus/dcache/dcache/FlushWayCntEn
 add wave -noupdate -group lsu -expand -group dcache -group flush /testbench/dut/core/lsu/bus/dcache/dcache/cachefsm/FlushAdrCntEn
 add wave -noupdate -group lsu -expand -group dcache -group flush /testbench/dut/core/lsu/bus/dcache/dcache/FlushAdrFlag
-add wave -noupdate -group lsu -expand -group dcache -group flush /testbench/dut/core/lsu/bus/dcache/dcache/cachefsm/SelFlush
 add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM writes} /testbench/dut/core/lsu/bus/dcache/dcache/SetValid
 add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM writes} /testbench/dut/core/lsu/bus/dcache/dcache/ClearValid
 add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM writes} /testbench/dut/core/lsu/bus/dcache/dcache/SetDirty
@@ -626,24 +623,24 @@ add wave -noupdate -group alu /testbench/dut/core/ieu/dp/alu/B
 add wave -noupdate -group alu /testbench/dut/core/ieu/dp/alu/ALUResult
 add wave -noupdate -group alu /testbench/dut/core/ieu/dp/alu/BALUControl
 add wave -noupdate -group alu -divider internals
-add wave -noupdate -group Forward /testbench/dut/core/ieu/fw/Rs1D
-add wave -noupdate -group Forward /testbench/dut/core/ieu/fw/Rs2D
-add wave -noupdate -group Forward /testbench/dut/core/ieu/fw/Rs1E
-add wave -noupdate -group Forward /testbench/dut/core/ieu/fw/Rs2E
-add wave -noupdate -group Forward /testbench/dut/core/ieu/fw/RdE
-add wave -noupdate -group Forward /testbench/dut/core/ieu/fw/RdM
-add wave -noupdate -group Forward /testbench/dut/core/ieu/fw/RdW
-add wave -noupdate -group Forward /testbench/dut/core/ieu/fw/MemReadE
-add wave -noupdate -group Forward /testbench/dut/core/ieu/fw/RegWriteM
-add wave -noupdate -group Forward /testbench/dut/core/ieu/fw/RegWriteW
-add wave -noupdate -group Forward -color Thistle /testbench/dut/core/ieu/fw/ForwardAE
-add wave -noupdate -group Forward -color Thistle /testbench/dut/core/ieu/fw/ForwardBE
-add wave -noupdate -group Forward -color Thistle /testbench/dut/core/ieu/fw/LoadStallD
+add wave -noupdate -group Forward /testbench/dut/core/ieu/c/Rs1D
+add wave -noupdate -group Forward /testbench/dut/core/ieu/c/Rs2D
+add wave -noupdate -group Forward /testbench/dut/core/ieu/c/Rs1E
+add wave -noupdate -group Forward /testbench/dut/core/ieu/c/Rs2E
+add wave -noupdate -group Forward /testbench/dut/core/ieu/c/RdE
+add wave -noupdate -group Forward /testbench/dut/core/ieu/c/RdM
+add wave -noupdate -group Forward /testbench/dut/core/ieu/c/RdW
+add wave -noupdate -group Forward /testbench/dut/core/ieu/c/MemReadE
+add wave -noupdate -group Forward /testbench/dut/core/ieu/c/RegWriteM
+add wave -noupdate -group Forward /testbench/dut/core/ieu/c/RegWriteW
+add wave -noupdate -group Forward -color Thistle /testbench/dut/core/ieu/c/ForwardAE
+add wave -noupdate -group Forward -color Thistle /testbench/dut/core/ieu/c/ForwardBE
+add wave -noupdate -group Forward -color Thistle /testbench/dut/core/ieu/c/LoadStallD
 add wave -noupdate -group Forward /testbench/dut/core/ieu/dp/IFResultM
-add wave -noupdate -group Forward /testbench/dut/core/ieu/fw/ForwardAE
-add wave -noupdate -group Forward /testbench/dut/core/ieu/fw/Rs1E
-add wave -noupdate -group Forward /testbench/dut/core/ieu/fw/RdM
-add wave -noupdate -group Forward /testbench/dut/core/ieu/fw/RdW
+add wave -noupdate -group Forward /testbench/dut/core/ieu/c/ForwardAE
+add wave -noupdate -group Forward /testbench/dut/core/ieu/c/Rs1E
+add wave -noupdate -group Forward /testbench/dut/core/ieu/c/RdM
+add wave -noupdate -group Forward /testbench/dut/core/ieu/c/RdW
 add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/ALUResultE
 add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/SrcAE
 add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/SrcBE

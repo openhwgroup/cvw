@@ -139,7 +139,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   assign LeafPTE = Executable | Writable | Readable; 
   assign ValidPTE = Valid & ~(Writable & ~Readable);
   assign ValidLeafPTE = ValidPTE & LeafPTE;
-  assign ValidNonLeafPTE = ValidPTE & ~LeafPTE;
+  assign ValidNonLeafPTE = Valid & ~LeafPTE;
 
   if(P.SVADU_SUPPORTED) begin : hptwwrites
     logic                 ReadAccess, WriteAccess;
@@ -255,13 +255,14 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   end
 
   // Page Table Walker FSM
-  // there is a bug here.  Each memory access needs to be potentially flushed if the PMA/P checkers
+  // *** there is a bug here (RT).  Each memory access needs to be potentially flushed if the PMA/P checkers
   // generate an access fault.  Specially the store on UDPATE_PTE needs to check for access violation.
   // I think the solution is to do 1 of the following
   // 1. Allow the HPTW to generate exceptions and stop walking immediately.
   // 2. If the store would generate an exception don't store to dcache but still write the TLB.  When we go back
   // to LEAF then the PMA/P.  Wait this does not work.  The PMA/P won't be looking a the address in the table, but
   // rather than physical address of the translated instruction/data.  So we must generate the exception.
+  // *** DH 1/1/24 another bug: when the NAPOT bits (PTE[62:61]) are nonzero on a nonleaf PTE, the walker should make a page fault (Issue 546)
   flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset | FlushW, 1'b1, NextWalkerState, IDLE, WalkerState); 
   always_comb 
     case (WalkerState)
