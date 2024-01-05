@@ -62,7 +62,7 @@ module tlb import cvw::*;  #(parameter cvw_t P,
   input  logic [1:0]               PrivilegeModeW,   // Current privilege level of the processeor
   input  logic                     ReadAccess, 
   input  logic                     WriteAccess,
-  input  logic [3:0]               CMOp,
+  input  logic [3:0]               CMOpM,
   input  logic                     DisableTranslation,
   input  logic [P.XLEN-1:0]        VAdr,             // address input before translation (could be physical or virtual)
   input  logic [P.XLEN-1:0]        PTE,              // page table entry to write
@@ -109,7 +109,7 @@ module tlb import cvw::*;  #(parameter cvw_t P,
   assign NAPOT4 = (PPN[3:0] == 4'b1000); // 64 KiB contiguous region with pte.napot_bits = 4
 
   tlbcontrol #(P, ITLB) tlbcontrol(.SATP_MODE, .VAdr, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE,
-    .PrivilegeModeW, .ReadAccess, .WriteAccess, .CMOp, .DisableTranslation, .TLBFlush,
+    .PrivilegeModeW, .ReadAccess, .WriteAccess, .CMOpM, .DisableTranslation, .TLBFlush,
     .PTEAccessBits, .CAMHit, .Misaligned, .NAPOT4, 
     .TLBMiss, .TLBHit, .TLBPageFault, 
     .UpdateDA, .SV39Mode, .Translate, .PTE_N, .PBMemoryType);

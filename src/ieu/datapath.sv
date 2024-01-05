@@ -32,6 +32,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   // Decode stage signals
   input  logic [2:0]        ImmSrcD,                 // Selects type of immediate extension
   input  logic [31:0]       InstrD,                  // Instruction in Decode stage
+  input  logic [4:0]        Rs1D, Rs2D,              // Source registers
   // Execute stage signals
   input  logic [P.XLEN-1:0] PCE,                     // PC in Execute stage  
   input  logic [P.XLEN-1:0] PCLinkE,                 // PC + 4 (of instruction in Execute stage)
@@ -68,9 +69,8 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] CSRReadValW,             // CSR read result
   input  logic [P.XLEN-1:0] MDUResultW,              // MDU (Multiply/divide unit) result
   input  logic [P.XLEN-1:0] FIntDivResultW,          // FPU's integer divide result
+  input  logic [4:0]        RdW                      // Destination register
    // Hazard Unit signals 
-  output logic [4:0]        Rs1D, Rs2D, Rs1E, Rs2E,  // Register sources to read in Decode or Execute stage
-  output logic [4:0]        RdE, RdM, RdW            // Register destinations in Execute, Memory, or Writeback stage
 );
 
   // Fetch stage signals
@@ -94,9 +94,6 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0] MulDivResultW;                  // Multiply always comes from MDU.  Divide could come from MDU or FPU (when using fdivsqrt for integer division)
 
   // Decode stage
-  assign Rs1D      = InstrD[19:15];
-  assign Rs2D      = InstrD[24:20];
-  assign RdD       = InstrD[11:7];
   regfile #(P.XLEN, P.E_SUPPORTED) regf(clk, reset, RegWriteW, Rs1D, Rs2D, RdW, ResultW, R1D, R2D);
   extend #(P)        ext(.InstrD(InstrD[31:7]), .ImmSrcD, .ImmExtD);
  
@@ -104,28 +101,23 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(P.XLEN) RD1EReg(clk, reset, FlushE, ~StallE, R1D, R1E);
   flopenrc #(P.XLEN) RD2EReg(clk, reset, FlushE, ~StallE, R2D, R2E);
   flopenrc #(P.XLEN) ImmExtEReg(clk, reset, FlushE, ~StallE, ImmExtD, ImmExtE);
-  flopenrc #(5)      Rs1EReg(clk, reset, FlushE, ~StallE, Rs1D, Rs1E);
-  flopenrc #(5)      Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
-  flopenrc #(5)      RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
   
   mux3  #(P.XLEN)  faemux(R1E, ResultW, IFResultM, ForwardAE, ForwardedSrcAE);
   mux3  #(P.XLEN)  fbemux(R2E, ResultW, IFResultM, ForwardBE, ForwardedSrcBE);
   comparator #(P.XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, BranchSignedE, FlagsE);
   mux2  #(P.XLEN)  srcamux(ForwardedSrcAE, PCE, ALUSrcAE, SrcAE);
   mux2  #(P.XLEN)  srcbmux(ForwardedSrcBE, ImmExtE, ALUSrcBE, SrcBE);
-  alu   #(P, P.XLEN)  alu(SrcAE, SrcBE, W64E, SubArithE, ALUSelectE, BSelectE, ZBBSelectE, Funct3E, BALUControlE, BMUActiveE, ALUResultE, IEUAdrE);
+  alu   #(P)       alu(SrcAE, SrcBE, W64E, SubArithE, ALUSelectE, BSelectE, ZBBSelectE, Funct3E, BALUControlE, BMUActiveE, ALUResultE, IEUAdrE);
   mux2  #(P.XLEN)  altresultmux(ImmExtE, PCLinkE, JumpE, AltResultE);
   mux2  #(P.XLEN)  ieuresultmux(ALUResultE, AltResultE, ALUResultSrcE, IEUResultE);
 
   // Memory stage pipeline register
   flopenrc #(P.XLEN) SrcAMReg(clk, reset, FlushM, ~StallM, SrcAE, SrcAM);
   flopenrc #(P.XLEN) IEUResultMReg(clk, reset, FlushM, ~StallM, IEUResultE, IEUResultM);
-  flopenrc #(5)      RdMReg(clk, reset, FlushM, ~StallM, RdE, RdM);  
   flopenrc #(P.XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, ForwardedSrcBE, WriteDataM); 
   
   // Writeback stage pipeline register and logic
   flopenrc #(P.XLEN) IFResultWReg(clk, reset, FlushW, ~StallW, IFResultM, IFResultW);
-  flopenrc #(5)      RdWReg(clk, reset, FlushW, ~StallW, RdM, RdW);
 
   // floating point inputs: FIntResM comes from fclass, fcmp, fmv; FCvtIntResW comes from fcvt
   if (P.F_SUPPORTED) begin:fpmux

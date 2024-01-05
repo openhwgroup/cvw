@@ -42,7 +42,7 @@ module pmpchecker import cvw::*;  #(parameter cvw_t P) (
   input  var logic [7:0]           PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0],
   input  var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW [P.PMP_ENTRIES-1:0],
   input  logic                     ExecuteAccessF, WriteAccessM, ReadAccessM,
-  input  logic [3:0]               CMOp,
+  input  logic [3:0]               CMOpM,
   output logic                     PMPInstrAccessFaultF,
   output logic                     PMPLoadAccessFaultM,
   output logic                     PMPStoreAmoAccessFaultM
@@ -72,8 +72,8 @@ module pmpchecker import cvw::*;  #(parameter cvw_t P) (
   // Only enforce PMP checking for S and U modes or in Machine mode when L bit is set in selected region
   assign EnforcePMP = (PrivilegeModeW != P.M_MODE) | (|(L & FirstMatch)); // *** switch to this logic when PMP is initialized for non-machine mode
 
-  assign PMPCBOMAccessFault     = EnforcePMP & (|CMOp[2:0]) & ~|((R|W) & FirstMatch) ;
-  assign PMPCBOZAccessFault     = EnforcePMP & CMOp[3] & ~|(W & FirstMatch) ;
+  assign PMPCBOMAccessFault     = EnforcePMP & (|CMOpM[2:0]) & ~|((R|W) & FirstMatch) ;
+  assign PMPCBOZAccessFault     = EnforcePMP & CMOpM[3] & ~|(W & FirstMatch) ;
   assign PMPCMOAccessFault      = PMPCBOZAccessFault | PMPCBOMAccessFault;
   
   assign PMPInstrAccessFaultF     = EnforcePMP & ExecuteAccessF & ~|(X & FirstMatch) ;

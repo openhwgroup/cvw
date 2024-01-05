@@ -185,7 +185,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
          .InstrAccessFaultF, .LoadAccessFaultM(), .StoreAmoAccessFaultM(),
          .InstrPageFaultF, .LoadPageFaultM(), .StoreAmoPageFaultM(),
          .LoadMisalignedFaultM(), .StoreAmoMisalignedFaultM(),
-         .UpdateDA(InstrUpdateDAF), .CMOp(4'b0),
+         .UpdateDA(InstrUpdateDAF), .CMOpM(4'b0),
          .AtomicAccessM(1'b0),.ExecuteAccessF(1'b1), .WriteAccessM(1'b0), .ReadAccessM(1'b0),
          .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
 
@@ -223,6 +223,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     // **** must fix words per line vs beats per line as in lsu.
     localparam   WORDSPERLINE = P.ICACHE_SUPPORTED ? P.ICACHE_LINELENINBITS/P.XLEN : 1;
     localparam   LOGBWPL = P.ICACHE_SUPPORTED ? $clog2(WORDSPERLINE) : 1;
+    
     if(P.ICACHE_SUPPORTED) begin : icache
       localparam            LINELEN = P.ICACHE_SUPPORTED ? P.ICACHE_LINELENINBITS : P.XLEN;
       localparam            LLENPOVERAHBW = P.LLEN / P.AHBW; // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
@@ -233,7 +234,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       
       assign BusRW = ~ITLBMissF & ~CacheableF & ~SelIROM ? IFURWF : '0;
       assign CacheRWF = ~ITLBMissF & CacheableF & ~SelIROM ? IFURWF : '0;
-      // *** RT: Fix CMOp. Should be CMOpM. Also PAdr and NextSet are replaced with mux between PCPF/IEUAdrM and PCSpillNextF/IEUAdrE.
+      // *** RT: PAdr and NextSet are replaced with mux between PCPF/IEUAdrM and PCSpillNextF/IEUAdrE.
       cache #(.P(P), .PA_BITS(P.PA_BITS), .XLEN(P.XLEN), .LINELEN(P.ICACHE_LINELENINBITS),
               .NUMLINES(P.ICACHE_WAYSIZEINBYTES*8/P.ICACHE_LINELENINBITS),
               .NUMWAYS(P.ICACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .READ_ONLY_CACHE(1))
@@ -246,24 +247,29 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
              .CacheMiss(ICacheMiss), .CacheAccess(ICacheAccess),
              .ByteMask('0), .BeatCount('0), .SelBusBeat('0),
              .CacheWriteData('0),
-             .CacheRW(CacheRWF),  .CacheRWNext('0),  // CacheRWNext is only used to detect hazards.  Not possible with icache
+             .CacheRW(CacheRWF),
              .FlushCache('0),
              .NextSet(PCSpillNextF[11:0]),
              .PAdr(PCPF),
-             .CacheCommitted(CacheCommittedF), .InvalidateCache(InvalidateICacheM), .CMOp('0)); 
+             .CacheCommitted(CacheCommittedF), .InvalidateCache(InvalidateICacheM), .CMOpM('0)); 
 
       ahbcacheinterface #(P.AHBW, P.LLEN, P.PA_BITS, WORDSPERLINE, LOGBWPL, LINELEN, LLENPOVERAHBW, 1) 
       ahbcacheinterface(.HCLK(clk), .HRESETn(~reset),
             .HRDATA,
             .Flush(FlushD), .CacheBusRW, .BusCMOZero(1'b0), .HSIZE(IFUHSIZE), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS), .HWSTRB(),
             .Funct3(3'b010), .HADDR(IFUHADDR), .HREADY(IFUHREADY), .HWRITE(IFUHWRITE), .CacheBusAdr(ICacheBusAdr),
-            .BeatCount(), .Cacheable(CacheableF), .SelBusBeat(), .WriteDataM('0),
+            .BeatCount(), .Cacheable(CacheableF), .SelBusBeat(), .WriteDataM('0), .BusAtomic('0),
             .CacheBusAck(ICacheBusAck), .HWDATA(), .CacheableOrFlushCacheM(1'b0), .CacheReadDataWordM('0),
             .FetchBuffer, .PAdr(PCPF),
             .BusRW, .Stall(GatedStallD),
             .BusStall, .BusCommitted(BusCommittedF));
 
-      mux3 #(32) UnCachedDataMux(.d0(ICacheInstrF), .d1(FetchBuffer[32-1:0]), .d2(IROMInstrF),
+    logic [31:0]          ShiftUncachedInstr;
+
+    if(P.XLEN == 64) mux4 #(32) UncachedShiftInstrMux(FetchBuffer[32-1:0], FetchBuffer[48-1:16], FetchBuffer[64-1:32], {16'b0, FetchBuffer[64-1:48]},
+                                                      PCSpillF[2:1], ShiftUncachedInstr);
+    else mux2 #(32) UncachedShiftInstrMux(FetchBuffer[32-1:0], {16'b0, FetchBuffer[32-1:16]}, PCSpillF[1], ShiftUncachedInstr);
+      mux3 #(32) UnCachedDataMux(.d0(ICacheInstrF), .d1(ShiftUncachedInstr), .d2(IROMInstrF),
                                  .s({SelIROM, ~CacheableF}), .y(InstrRawF[31:0]));
     end else begin : passthrough
       assign IFUHADDR = PCPF;
@@ -363,11 +369,11 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(P.XLEN) PCDReg(clk, reset, FlushD, ~StallD, PCF, PCD);
    
   // expand 16-bit compressed instructions to 32 bits
-  if (P.COMPRESSED_SUPPORTED) begin
+  if (P.COMPRESSED_SUPPORTED) begin: decomp
     logic IllegalCompInstrD;
     decompress #(P) decomp(.InstrRawD, .InstrD, .IllegalCompInstrD); 
     assign IllegalIEUInstrD = IllegalBaseInstrD | IllegalCompInstrD; // illegal if bad 32 or 16-bit instr
-  end else begin  
+  end else begin: decomp
     assign InstrD = InstrRawD;
     assign IllegalIEUInstrD = IllegalBaseInstrD;
   end

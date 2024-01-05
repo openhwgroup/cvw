@@ -35,7 +35,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   input  logic                     ENVCFG_ADUE,        // HPTW A/D Update enable
   input  logic [1:0]               PrivilegeModeW,     // Current privilege level of the processeor
   input  logic                     ReadAccess, WriteAccess,
-  input  logic [3:0]               CMOp,
+  input  logic [3:0]               CMOpM,
   input  logic                     DisableTranslation,
   input  logic                     TLBFlush,           // Invalidate all TLB entries
   input  logic [11:0]              PTEAccessBits,
@@ -69,7 +69,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   assign Translate = (SATP_MODE != P.NO_TRANSLATE[P.SVMODE_BITS-1:0]) & (EffectivePrivilegeMode != P.M_MODE) & ~DisableTranslation; 
 
   // Determine whether TLB is being used
-  assign TLBAccess = ReadAccess | WriteAccess | (|CMOp);
+  assign TLBAccess = ReadAccess | WriteAccess | (|CMOpM);
 
   // Check that upper bits are legal (all 0s or all 1s)
   vm64check #(P) vm64check(.SATP_MODE, .VAdr, .SV39Mode, .UpperBitsUnequal);
@@ -85,8 +85,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   assign PBMemoryType = PTE_PBMT & {2{Translate & TLBHit & P.SVPBMT_SUPPORTED}};
  
   // check if reserved, N, or PBMT bits are malformed w in RV64
-  assign BadPBMT = PTE_PBMT != 0 & (~(P.SVPBMT_SUPPORTED & ENVCFG_PBMTE) | 
-                   {PTE_X, PTE_W, PTE_R} == 3'b000) | PTE_PBMT == 3;       // PBMT must be zero if not supported or for non-leaf PTEs;
+  assign BadPBMT = ((PTE_PBMT != 0) & ~(P.SVPBMT_SUPPORTED & ENVCFG_PBMTE)) | PTE_PBMT == 3; // PBMT must be zero if not supported; value of 3 is reserved
   assign BadNAPOT = PTE_N & (~P.SVNAPOT_SUPPORTED | ~NAPOT4);              // N must be be 0 if CVNAPOT is not supported or not 64 KiB contiguous region
   assign BadReserved = PTE_RESERVED;                                       // Reserved bits must be zero
  
@@ -94,8 +93,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   if (ITLB == 1) begin:itlb // Instruction TLB fault checking
     // User mode may only execute user mode pages, and supervisor mode may
     // only execute non-user mode pages.
-    assign ImproperPrivilege = ((EffectivePrivilegeMode == P.U_MODE) & ~PTE_U) |
-      ((EffectivePrivilegeMode == P.S_MODE) & PTE_U);
+    assign ImproperPrivilege = ((PrivilegeModeW == P.U_MODE) & ~PTE_U) | ((PrivilegeModeW == P.S_MODE) & PTE_U);
     assign PreUpdateDA = ~PTE_A;
     assign InvalidAccess = ~PTE_X;
  end else begin:dtlb // Data TLB fault checking
@@ -113,8 +111,8 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
     // Check for write error. Writes are invalid when the page's write bit is
     // low.
     assign InvalidWrite = WriteAccess & ~PTE_W;
-    assign InvalidCBOM = (|CMOp[2:0]) & (~PTE_W | (~PTE_R & (~STATUS_MXR | ~PTE_X)));
-    assign InvalidCBOZ = CMOp[3] & ~PTE_W;
+    assign InvalidCBOM = (|CMOpM[2:0]) & (~PTE_W | (~PTE_R & (~STATUS_MXR | ~PTE_X)));
+    assign InvalidCBOZ = CMOpM[3] & ~PTE_W;
     assign InvalidAccess = InvalidRead | InvalidWrite | InvalidCBOM | InvalidCBOZ;
     assign PreUpdateDA = ~PTE_A | WriteAccess & ~PTE_D;
   end

@@ -68,8 +68,9 @@ coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange $sta
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: icache CacheBusW"]
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: icache SelAdrCauses"] -item e 1 -fecexprrow 4 10
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: icache CacheBusRCauses"] -item e 1 -fecexprrow 1-2 12
-# cache.sv AdrSelMux and CacheBusAdrMux, excluding unhit Flush branch
-coverage exclude -scope /dut/core/ifu/bus/icache/icache/AdrSelMux -linerange [GetLineNum ../src/generic/mux.sv "exclusion-tag: mux3"] -item b 1
+# cache.sv AdrSelMuxData and AdrSelMuxTag and CacheBusAdrMux, excluding unhit Flush branch
+coverage exclude -scope /dut/core/ifu/bus/icache/icache/AdrSelMuxData -linerange [GetLineNum ../src/generic/mux.sv "exclusion-tag: mux3"] -item b 1
+coverage exclude -scope /dut/core/ifu/bus/icache/icache/AdrSelMuxTag -linerange [GetLineNum ../src/generic/mux.sv "exclusion-tag: mux3"] -item b 1
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/CacheBusAdrMux -linerange [GetLineNum ../src/generic/mux.sv "exclusion-tag: mux3"] -item b 1 3
 # CacheWay Dirty logic. -scope does not accept wildcards.
 set numcacheways 4
@@ -106,6 +107,10 @@ coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/clintdec
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/gpiodec
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/uartdec
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/plicdec
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/dtimdec
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/iromdec
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/ddr4dec
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/sdcdec
 
 # PMA Regions 8, 9, and 10 (dtim, irom, ddr4) are never used in the rv64gc configuration, so exclude coverage
 set line [GetLineNum ../src/mmu/pmachecker.sv "exclusion-tag: unused-cachable"]
@@ -114,19 +119,13 @@ coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$lin
 set line [GetLineNum ../src/mmu/pmachecker.sv "exclusion-tag: unused-idempotent"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4,6
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4,6,8
-set line [GetLineNum ../src/mmu/pmachecker.sv "exclusion-tag: unused-atomic"]
-coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4
-coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4
-set line [GetLineNum ../src/mmu/pmachecker.sv "exclusion-tag: unused-tim"]
-coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4
-coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4
 
 # Excluding so far un-used instruction sources for the ifu
-coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/bootromdec
-coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/uncoreramdec
+# coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/bootromdec
+# coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/uncoreramdec
 
 #Excluding the bootrom, uncoreran, and clint as sources for the lsu
-coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/bootromdec
+# coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/bootromdec
 
 #Excluding signals in lsu: clintdec and uncoreram accept all sizes so 'SizeValid' will never be 0
 set line [GetLineNum ../src/mmu/adrdec.sv "& SizeValid"]
@@ -134,25 +133,29 @@ coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/clintdec -lin
 set line [GetLineNum ../src/mmu/adrdec.sv "& SizeValid"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/uncoreramdec -linerange $line-$line -item e 1 -fecexprrow 5
 
-set line [GetLineNum ../src/mmu/adrdec.sv "& Supported"]
-coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/dtimdec -linerange $line-$line -item e 1 -fecexprrow 3
-coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/iromdec -linerange $line-$line -item e 1 -fecexprrow 3
-coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/ddr4dec -linerange $line-$line -item e 1 -fecexprrow 3
-coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/gpiodec -linerange $line-$line -item e 1 -fecexprrow 3
-coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/uartdec -linerange $line-$line -item e 1 -fecexprrow 3
-coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/plicdec -linerange $line-$line -item e 1 -fecexprrow 3
-coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/sdcdec -linerange $line-$line -item e 1 -fecexprrow 3
-coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/dtimdec -linerange $line-$line -item e 1 -fecexprrow 3
-coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/iromdec -linerange $line-$line -item e 1 -fecexprrow 3
-coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/ddr4dec -linerange $line-$line -item e 1 -fecexprrow 3
-coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/sdcdec -linerange $line-$line -item e 1 -fecexprrow 3
+# set line [GetLineNum ../src/mmu/adrdec.sv "& Supported"]
+# coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/dtimdec -linerange $line-$line -item e 1 -fecexprrow 3
+# coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/iromdec -linerange $line-$line -item e 1 -fecexprrow 3
+# coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/ddr4dec -linerange $line-$line -item e 1 -fecexprrow 3
+# coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/gpiodec -linerange $line-$line -item e 1 -fecexprrow 3
+# coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/uartdec -linerange $line-$line -item e 1 -fecexprrow 3
+# coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/plicdec -linerange $line-$line -item e 1 -fecexprrow 3
+# coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/sdcdec -linerange $line-$line -item e 1 -fecexprrow 3
+# coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/dtimdec -linerange $line-$line -item e 1 -fecexprrow 3
+# coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/iromdec -linerange $line-$line -item e 1 -fecexprrow 3
+# coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/ddr4dec -linerange $line-$line -item e 1 -fecexprrow 3
+# coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/sdcdec -linerange $line-$line -item e 1 -fecexprrow 3
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/dtimdec
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/iromdec
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/ddr4dec
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/sdcdec
 
 ####################
 # Unused access types due to sharing IFU and LSU logic
 ####################
 
 ## The lsu never executes instructions so 'ExecuteAccessF' will never be 1
-set line [GetLineNum ../src/mmu/pmachecker.sv "AccessRWX ="]
+set line [GetLineNum ../src/mmu/pmachecker.sv "AccessRWXC ="]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 6
 set line [GetLineNum ../src/mmu/pmachecker.sv "ReadAccessM \\| ExecuteAccessF"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 4
@@ -181,9 +184,9 @@ set line [GetLineNum ../src/mmu/pmachecker.sv "ExecuteAccessF & PMAAccessFault"]
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 1
 set line [GetLineNum ../src/mmu/pmachecker.sv "ReadAccessM    & PMAAccessFault"]
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2-4
-set line [GetLineNum ../src/mmu/pmachecker.sv "WriteAccessM   & PMAAccessFault"] 
-coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2-4
-set line [GetLineNum ../src/mmu/pmachecker.sv "AccessRWX \\| AtomicAccessM"] 
+set line [GetLineNum ../src/mmu/pmachecker.sv "PMAStoreAmoAccessFaultM ="] 
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line
+set line [GetLineNum ../src/mmu/pmachecker.sv "AccessRWXC \\| AtomicAccessM"] 
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 3
 set line [GetLineNum ../src/mmu/mmu.sv "ExecuteAccessF \\| ReadAccessM"] 
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 1,3,4
@@ -230,6 +233,12 @@ coverage exclude -scope /dut/core/ifu -linerange $line-$line -item c 1 -feccondr
 # Excluding reset and clear for impossible case in the wficountreg in privdec
 set line [GetLineNum ../src/generic/flop/floprc.sv "reset \\| clear"]
 coverage exclude -scope /dut/core/priv/priv/pmd/wfi/wficountreg -linerange $line-$line -item c 1 -feccondrow 2
+
+# Exclude system reset case in ebu
+set line [GetLineNum ../src/ebu/ebufsmarb.sv "BeatCounter\\("]
+coverage exclude -scope /dut/core/ebu/ebu/ebufsmarb -linerange $line-$line -item e 1 -fecexprrow 1
+set line [GetLineNum ../src/ebu/ebufsmarb.sv "FinalBeatReg\\("]
+coverage exclude -scope /dut/core/ebu/ebu/ebufsmarb -linerange $line-$line -item e 1 -fecexprrow 1
 
 # TLB not recently used never has all RU bits = 1 because it will then clear all to 0
 # This is a blunt instrument; perhaps there is a more graceful exclusion

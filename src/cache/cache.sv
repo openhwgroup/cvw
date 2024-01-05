@@ -34,11 +34,10 @@ module cache import cvw::*; #(parameter cvw_t P,
   input  logic                   Stall,             // Stall the cache, preventing new accesses. In-flight access finished but does not return to READY
   input  logic                   FlushStage,        // Pipeline flush of second stage (prevent writes and bus operations)
   // cpu side
-  input  logic [1:0]             CacheRWNext,       // [1] Read, [0] Write 
   input  logic [1:0]             CacheRW,           // [1] Read, [0] Write 
   input  logic                   FlushCache,        // Flush all dirty lines back to memory
   input  logic                   InvalidateCache,   // Clear all valid bits
-  input  logic [3:0]             CMOp,              // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
+  input  logic [3:0]             CMOpM,              // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
   input  logic [11:0]            NextSet,           // Virtual address, but we only use the lower 12 bits.
   input  logic [PA_BITS-1:0]     PAdr,              // Physical address
   input  logic [(WORDLEN-1)/8:0] ByteMask,          // Which bytes to write (D$ only)
@@ -94,7 +93,6 @@ module cache import cvw::*; #(parameter cvw_t P,
   logic                          FlushWayCntEn;
   logic                          SelWriteback;
   logic                          LRUWriteEn;
-  logic                          SelFlush;
   logic                          ResetOrFlushCntRst;
   logic [LINELEN-1:0]            ReadDataLine, ReadDataLineCache;
   logic                          SelFetchBuffer;
@@ -112,10 +110,10 @@ module cache import cvw::*; #(parameter cvw_t P,
   // and FlushAdr when handling D$ flushes
   // The icache must update to the newest PCNextF on flush as it is probably a trap.  Trap
   // sets PCNextF to XTVEC and the icache must start reading the instruction.
-  assign AdrSelMuxSelData = {SelFlush, ((SelAdrData | SelHPTW) & ~((READ_ONLY_CACHE == 1) & FlushStage))};
+  assign AdrSelMuxSelData = {FlushCache, ((SelAdrData | SelHPTW) & ~((READ_ONLY_CACHE == 1) & FlushStage))};
   mux3 #(SETLEN) AdrSelMuxData(NextSet[SETTOP-1:OFFSETLEN], PAdr[SETTOP-1:OFFSETLEN], FlushAdr,
     AdrSelMuxSelData, CacheSetData);
-  assign AdrSelMuxSelTag = {SelFlush, ((SelAdrTag | SelHPTW) & ~((READ_ONLY_CACHE == 1) & FlushStage))};
+  assign AdrSelMuxSelTag = {FlushCache, ((SelAdrTag | SelHPTW) & ~((READ_ONLY_CACHE == 1) & FlushStage))};
   mux3 #(SETLEN) AdrSelMuxTag(NextSet[SETTOP-1:OFFSETLEN], PAdr[SETTOP-1:OFFSETLEN], FlushAdr,
     AdrSelMuxSelTag, CacheSetTag);
 
@@ -123,7 +121,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   cacheway #(P, PA_BITS, XLEN, NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, READ_ONLY_CACHE) CacheWays[NUMWAYS-1:0](
     .clk, .reset, .CacheEn, .CacheSetData, .CacheSetTag, .PAdr, .LineWriteData, .LineByteMask, .SelWay,
     .SetValid, .ClearValid, .SetDirty, .ClearDirty, .VictimWay,
-    .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .HitDirtyWay, .TagWay, .FlushStage, .InvalidateCache);
+    .FlushWay, .FlushCache, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .HitDirtyWay, .TagWay, .FlushStage, .InvalidateCache);
 
   // Select victim way for associative caches
   if(NUMWAYS > 1) begin:vict
@@ -162,7 +160,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   mux3 #(PA_BITS) CacheBusAdrMux(.d0({PAdr[PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
     .d1({Tag, PAdr[SETTOP-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
     .d2({Tag, FlushAdr, {OFFSETLEN{1'b0}}}),
-    .s({SelFlush, SelWriteback}), .y(CacheBusAdr));
+    .s({FlushCache, SelWriteback}), .y(CacheBusAdr));
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path
@@ -186,7 +184,7 @@ module cache import cvw::*; #(parameter cvw_t P,
     // Merge write data into fetched cache line for store miss
     for(index = 0; index < LINELEN/8; index++) begin
       mux2 #(8) WriteDataMux(.d0(CacheWriteData[(8*index)%WORDLEN+7:(8*index)%WORDLEN]),
-        .d1(FetchBuffer[8*index+7:8*index]), .s(FetchBufferByteSel[index] & ~CMOp[3]), .y(LineWriteData[8*index+7:8*index]));
+        .d1(FetchBuffer[8*index+7:8*index]), .s(FetchBufferByteSel[index] & ~CMOpM[3]), .y(LineWriteData[8*index+7:8*index]));
     end
     assign LineByteMask = SetValid ? '1 : SetDirty ? DemuxedByteMask : '0;
   end
@@ -225,11 +223,11 @@ module cache import cvw::*; #(parameter cvw_t P,
   /////////////////////////////////////////////////////////////////////////////////////////////
   
   cachefsm #(P, READ_ONLY_CACHE) cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
-    .FlushStage, .CacheRW, .CacheRWNext, .Stall,
+    .FlushStage, .CacheRW, .Stall,
     .CacheHit, .LineDirty, .HitLineDirty, .CacheStall, .CacheCommitted, 
     .CacheMiss, .CacheAccess, .SelAdrData, .SelAdrTag, .SelWay,
-    .ClearDirty, .SetDirty, .SetValid, .ClearValid, .SelWriteback, .SelFlush,
+    .ClearDirty, .SetDirty, .SetValid, .ClearValid, .SelWriteback,
     .FlushAdrCntEn, .FlushWayCntEn, .FlushCntRst,
     .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
-    .InvalidateCache, .CMOp, .CacheEn, .LRUWriteEn);
+    .InvalidateCache, .CMOpM, .CacheEn, .LRUWriteEn);
 endmodule 

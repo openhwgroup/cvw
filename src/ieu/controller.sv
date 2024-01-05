@@ -39,10 +39,14 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic        IllegalBaseInstrD,       // Illegal I-type instruction, or illegal RV32 access to upper 16 registers
   output logic        JumpD,                   // Jump instruction
   output logic        BranchD,                 // Branch instruction
-   // Execute stage control signals             
+  output logic        StructuralStallD,        // Structural stalls detected by controller
+  output logic        LoadStallD,              // Structural stalls for load, sent to performance counters
+  output logic [4:0]  Rs1D, Rs2D,              // Register sources to read in Decode or Execute stage
+  // Execute stage control signals             
   input  logic        StallE, FlushE,          // Stall, flush Execute stage
   input  logic [1:0]  FlagsE,                  // Comparison flags ({eq, lt})
   input  logic        FWriteIntE,              // Write integer register, coming from FPU controller
+  input  logic        FCvtIntE,                              // FPU convert float to int
   output logic        PCSrcE,                  // Select signal to choose next PC (for datapath and Hazard unit)
   output logic        ALUSrcAE, ALUSrcBE,      // ALU operands
   output logic        ALUResultSrcE,           // Selects result to pass on to Memory stage
@@ -65,7 +69,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic [3:0]  CMOpM,                   // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
   output logic        IFUPrefetchE,            // instruction prefetch
   output logic        LSUPrefetchM,            // data prefetch
-
+  output logic [1:0]  ForwardAE, ForwardBE,    // Select signals for forwarding multiplexers
   // Memory stage control signals
   input  logic        StallM, FlushM,          // Stall, flush Memory stage
   output logic [1:0]  MemRWE,                  // Mem read/write: MemRWM[1] = 1 for read, MemRWM[0] = 1 for write 
@@ -83,14 +87,16 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic [2:0]  ResultSrcW,              // Select source of result to write back to register file
   // Stall during CSRs
   output logic        CSRWriteFenceM,          // CSR write or fence instruction; needs to flush the following instructions
-  output logic        StoreStallD              // Store (memory write) causes stall
+  output logic [4:0]  RdE, RdM,                // Pipelined destination registers
+  // Forwarding controls
+  output logic [4:0]  RdW                      // Register destinations in Execute, Memory, or Writeback stage
 );
 
-
+  logic [4:0] Rs1E, Rs2E;                      // pipelined register sources
   logic [6:0] OpD;                             // Opcode in Decode stage
   logic [2:0] Funct3D;                         // Funct3 field in Decode stage
   logic [6:0] Funct7D;                         // Funct7 field in Decode stage
-  logic [4:0] Rs1D, Rs2D, RdD;                 // Rs1/2 source register / dest reg in Decode stage
+  logic [4:0] RdD;                             // Rs1/2 source register / dest reg in Decode stage
 
   `define CTRLW 24
 
@@ -146,6 +152,11 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic [3:0]  CMOpD, CMOpE;                   // which CMO instruction 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
   logic        IFUPrefetchD;                   // instruction prefetch
   logic        LSUPrefetchD, LSUPrefetchE;     // data prefetch
+  logic        CMOStallD;                      // Structural hazards from cache management ops
+  logic        MatchDE;                        // Match between a source register in Decode stage and destination register in Execute stage
+  logic        FCvtIntStallD, MDUStallD, CSRRdStallD; // Stall due to conversion, load, multiply/divide, CSR read 
+  logic        StoreStallD;                    // load after store hazard
+  
 
   // Extract fields
   assign OpD     = InstrD[6:0];
@@ -394,6 +405,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(35) controlregE(clk, reset, FlushE, ~StallE,
                            {ALUSelectD, RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, W64D, SubArithD, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, CMOpD, IFUPrefetchD, LSUPrefetchD, InstrValidD},
                            {ALUSelectE, IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, SubArithE, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, CMOpE, IFUPrefetchE, LSUPrefetchE, InstrValidE});
+  flopenrc #(5)      Rs1EReg(clk, reset, FlushE, ~StallE, Rs1D, Rs1E);
+  flopenrc #(5)      Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
+  flopenrc #(5)      RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
 
   // Branch Logic
   //  The comparator handles both signed and unsigned branches using BranchSignedE
@@ -415,22 +429,37 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(25) controlregM(clk, reset, FlushM, ~StallM,
                          {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE, IntDivE, CMOpE, LSUPrefetchE},
                          {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, InstrValidM, IntDivM, CMOpM, LSUPrefetchM});
-  
+  flopenrc #(5)      RdMReg(clk, reset, FlushM, ~StallM, RdE, RdM);  
+
   // Writeback stage pipeline control register
   flopenrc #(5) controlregW(clk, reset, FlushW, ~StallW,
                          {RegWriteM, ResultSrcM, IntDivM},
                          {RegWriteW, ResultSrcW, IntDivW});  
+  flopenrc #(5)      RdWReg(clk, reset, FlushW, ~StallW, RdM, RdW);
 
   // Flush F, D, and E stages on a CSR write or Fence.I or SFence.VMA
   assign CSRWriteFenceM = CSRWriteM | FenceM;
 
-  // the synchronous DTIM cannot read immediately after write
-  // a cache cannot read or write immediately after a write
-  // atomic operations are also detected as MemRWD[1]
-  // *** RT: Remove this after updating the cache.
-  // *** RT: Check that atomic after atomic works correctly.
-  //assign StoreStallD = ((|CMOpE)) & ((|CMOpD));
-  logic AMOHazard;
-  assign AMOHazard = &MemRWE & MemRWD[1];
-  assign StoreStallD = ((|CMOpE) & (|CMOpD)) | AMOHazard;
+  // Forwarding logic
+  always_comb begin
+    ForwardAE = 2'b00;
+    ForwardBE = 2'b00;
+    if (Rs1E != 5'b0)
+      if      ((Rs1E == RdM) & RegWriteM) ForwardAE = 2'b10;
+      else if ((Rs1E == RdW) & RegWriteW) ForwardAE = 2'b01;
+ 
+    if (Rs2E != 5'b0)
+      if      ((Rs2E == RdM) & RegWriteM) ForwardBE = 2'b10;
+      else if ((Rs2E == RdW) & RegWriteW) ForwardBE = 2'b01;
+  end
+
+  // Stall on dependent operations that finish in Mem Stage and can't bypass in time
+  // Structural hazard causes stall if any of these events occur
+  assign MatchDE = ((Rs1D == RdE) | (Rs2D == RdE)) & (RdE != 5'b0); // Decode-stage instruction source depends on result from execute stage instruction
+  assign LoadStallD = (MemReadE|SCE) & MatchDE;  
+  assign StoreStallD = MemRWD[1] & MemRWE[0];   // Store or AMO followed by load or AMO
+  assign CSRRdStallD = CSRReadE & MatchDE;
+  assign MDUStallD = MDUE & MatchDE; // Int mult/div is at least two cycle latency, even when coming from the FDIV
+  assign FCvtIntStallD = FCvtIntE & MatchDE; // FPU to Integer transfers have single-cycle latency except fcvt
+  assign StructuralStallD = LoadStallD | StoreStallD | CSRRdStallD | MDUStallD | FCvtIntStallD;
 endmodule

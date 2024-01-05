@@ -17,8 +17,7 @@ all: riscoftests memfiles coveragetests
 
 wally-riscv-arch-test: wallyriscoftests memfiles
 
-coverage:
-	#make -C ../tests/coverage --jobs
+coverage: cov/rv64gc_arch64i.ucdb 
 	#iter-elf.bash --cover --search ../tests/coverage
 	vcover merge -out cov/cov.ucdb cov/rv64gc_arch64i.ucdb cov/rv64gc*.ucdb -logfile cov/log
 #	vcover merge -out cov/cov.ucdb cov/rv64gc_arch64i.ucdb cov/rv64gc*.ucdb cov/buildroot_buildroot.ucdb riscv.ucdb -logfile cov/log
@@ -60,4 +59,4 @@ memfiles:
 	make -f makefile-memfile wally-sim-files --jobs
 
 coveragetests:
-	make -C ../tests/coverage/
+	make -C ../tests/coverage/ --jobs

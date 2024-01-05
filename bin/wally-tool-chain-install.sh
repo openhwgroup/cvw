@@ -167,7 +167,7 @@ sudo ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV32 /usr/bin/riscv_sim_RV32
 
 # riscof
 sudo pip3 install -U testresources riscv_config
-pip3 install git+https://github.com/riscv/riscof.git
+sudo pip3 install git+https://github.com/riscv/riscof.git
 
 # Download OSU Skywater 130 cell library
 sudo mkdir -p $RISCV/cad/lib

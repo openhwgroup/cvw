@@ -117,9 +117,9 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   always_comb begin
     case (CurrState)
-      STATE_READY: if (ValidSpillM & ~MemRWM[0])   NextState = STATE_SPILL;
-                   else if(ValidSpillM & MemRWM[0])NextState = STATE_STORE_DELAY;
-                   else                           NextState = STATE_READY;
+      STATE_READY: if (ValidSpillM & ~MemRWM[0])  NextState = STATE_SPILL;       // load spill
+                   else if(ValidSpillM)           NextState = STATE_STORE_DELAY; // store spill
+                   else                           NextState = STATE_READY;       // no spill
       STATE_SPILL: if(StallM)                     NextState = STATE_SPILL;
                    else                           NextState = STATE_READY;
       STATE_STORE_DELAY: NextState = STATE_SPILL;
@@ -131,7 +131,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   assign SelSpillE = (CurrState == STATE_READY & ValidSpillM) | (CurrState == STATE_SPILL & CacheBusHPWTStall) | (CurrState == STATE_STORE_DELAY);
   assign SpillSaveM = (CurrState == STATE_READY) & ValidSpillM & ~FlushM;
   assign SelStoreDelay = (CurrState == STATE_STORE_DELAY);  // *** Can this be merged into the PreLSURWM logic?
-  assign SpillStallM = SelSpillE | CurrState == STATE_STORE_DELAY;
+  assign SpillStallM = SelSpillE;
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // Merge spilled data
