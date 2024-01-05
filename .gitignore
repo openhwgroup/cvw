@@ -1,6 +1,14 @@
 **/work*
 **/wally_*.log
 
+# files for my own repo
+setup_host.sh
+tests/riscof/Makefile
+bin/wally-tool-chain-install.sh
+sim/coverage_output.txt
+sim/regression_output.txt
+
+
 .nfs*
 
 __pycache__/
