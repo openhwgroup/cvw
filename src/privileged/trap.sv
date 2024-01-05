@@ -28,7 +28,7 @@
 
 module trap import cvw::*;  #(parameter cvw_t P) (
   input  logic                 reset, 
-  input  logic                 InstrMisalignedFaultM, InstrAccessFaultM, HPTWInstrAccessFaultM, IllegalInstrFaultM,
+  input  logic                 InstrMisalignedFaultM, InstrAccessFaultM, HPTWInstrAccessFaultM, HPTWInstrPageFaultM, IllegalInstrFaultM,
   input  logic                 BreakpointFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM,
   input  logic                 LoadAccessFaultM, StoreAmoAccessFaultM, EcallFaultM, InstrPageFaultM,
   input  logic                 LoadPageFaultM, StoreAmoPageFaultM,              // various trap sources
@@ -49,7 +49,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
 
   logic                        MIntGlobalEnM, SIntGlobalEnM;                    // Global interupt enables
   logic                        Committed;                                       // LSU or IFU has committed to a bus operation that can't be interrupted
-  logic                        BothInstrAccessFaultM;                           // instruction or HPTW ITLB fill caused an Instruction Access Fault
+  logic                        BothInstrAccessFaultM, BothInstrPageFaultM;      // instruction or HPTW ITLB fill caused an Instruction Access Fault
   logic [11:0]                 PendingIntsM, ValidIntsM, EnabledIntsM;          // interrupts are pending, valid, or enabled
 
   ///////////////////////////////////////////
@@ -78,11 +78,12 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////
   
   assign BothInstrAccessFaultM = InstrAccessFaultM | HPTWInstrAccessFaultM;
+  assign BothInstrPageFaultM = InstrPageFaultM | HPTWInstrPageFaultM;
   // coverage off -item e 1 -fecexprrow 2
   // excludes InstrMisalignedFaultM from coverage of this line, since misaligned instructions cannot occur in rv64gc.
   assign ExceptionM = InstrMisalignedFaultM | BothInstrAccessFaultM | IllegalInstrFaultM |
                       LoadMisalignedFaultM | StoreAmoMisalignedFaultM |
-                      InstrPageFaultM | LoadPageFaultM | StoreAmoPageFaultM |
+                      BothInstrPageFaultM | LoadPageFaultM | StoreAmoPageFaultM |
                       BreakpointFaultM | EcallFaultM |
                       LoadAccessFaultM | StoreAmoAccessFaultM;
   // coverage on
@@ -100,7 +101,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
     else if (ValidIntsM[9])            CauseM = 9;  // Supervisor External Int 
     else if (ValidIntsM[1])            CauseM = 1;  // Supervisor Sw Int       
     else if (ValidIntsM[5])            CauseM = 5;  // Supervisor Timer Int    
-    else if (InstrPageFaultM)          CauseM = 12;
+    else if (BothInstrPageFaultM)      CauseM = 12;
     else if (BothInstrAccessFaultM)    CauseM = 1;
     else if (IllegalInstrFaultM)       CauseM = 2;
     // coverage off
