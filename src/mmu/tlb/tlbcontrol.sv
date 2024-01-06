@@ -97,7 +97,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
     assign PreUpdateDA = ~PTE_A;
     assign InvalidAccess = ~PTE_X;
  end else begin:dtlb // Data TLB fault checking
-    logic InvalidRead, InvalidWrite, ReservtedEncoding;
+    logic InvalidRead, InvalidWrite, ReservedEncoding;
     logic InvalidCBOM, InvalidCBOZ;
 
     // User mode may only load/store from user mode pages, and supervisor mode

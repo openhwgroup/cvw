@@ -54,5 +54,7 @@ if [ -e "$IDV" ]; then
     export PATH=$IDV/scripts/cvw:$PATH
 fi
 
+# Verilator needs a larger stack to simulate CORE-V Wally
+ulimit -s 100000
 
 echo "setup done"
