@@ -198,17 +198,17 @@ set line [GetLineNum ../src/mmu/mmu.sv "TLBPageFault & ExecuteAccessF"]
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 3
 set line [GetLineNum ../src/mmu/mmu.sv "TLBPageFault & ReadNoAmoAccessM"] 
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 1,2,4
-#set line [GetLineNum ../src/mmu/mmu.sv "TLBPageFault & WriteAccessM"] 
-#coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 1,2,4
+set line [GetLineNum ../src/mmu/mmu.sv "StoreAmoPageFaultM \="] 
+coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 1,2,4
 set line [GetLineNum ../src/mmu/mmu.sv "DataMisalignedM & ReadNoAmoAccessM"] 
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 1,2,4
 set line [GetLineNum ../src/mmu/pmpchecker.sv "EnforcePMP & WriteAccessM"] 
 coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange $line-$line -item e 1 -fecexprrow 1,2,4,5,6
 set line [GetLineNum ../src/mmu/pmpchecker.sv "EnforcePMP & ReadAccessM"] 
 coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange $line-$line -item e 1 -fecexprrow 1,2,4,5,6
-set line [GetLineNum ../src/mmu/mmu.sv "PMALoadAccessFaultM     \\| PMPLoadAccessFaultM"] 
+set line [GetLineNum ../src/mmu/mmu.sv "LoadAccessFaultM     \="] 
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 2,4,5,6
-set line [GetLineNum ../src/mmu/mmu.sv "PMAStoreAmoAccessFaultM \\| PMPStoreAmoAccessFaultM"] 
+set line [GetLineNum ../src/mmu/mmu.sv "StoreAmoAccessFaultM \="] 
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 2,4,5,6
 set line [GetLineNum ../src/mmu/tlb/tlbcontrol.sv "ReadAccess \\| WriteAccess"] 
 coverage exclude -scope /dut/core/ifu/immu/immu/tlb/tlb/tlbcontrol -linerange $line-$line -item e 1 -fecexprrow 1,3,4
