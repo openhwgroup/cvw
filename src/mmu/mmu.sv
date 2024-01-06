@@ -145,5 +145,5 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   // Specify which type of page fault is occurring
   assign InstrPageFaultF    = TLBPageFault & ExecuteAccessF;
   assign LoadPageFaultM     = TLBPageFault & ReadNoAmoAccessM; 
-  assign StoreAmoPageFaultM = TLBPageFault & WriteAccessM;
+  assign StoreAmoPageFaultM = TLBPageFault & (WriteAccessM | (|CMOpM));
 endmodule
