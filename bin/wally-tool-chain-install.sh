@@ -113,7 +113,7 @@ cd ../arch_test_target/spike/device
 sed -i 's/--isa=rv32ic/--isa=rv32iac/' rv32i_m/privilege/Makefile.include
 sed -i 's/--isa=rv64ic/--isa=rv64iac/' rv64i_m/privilege/Makefile.include
 
-# Wally needs Verilator 5.0 or later.
+# Wally needs Verilator 5.021 or later.
 # Verilator needs to be built from scratch to get the latest version
 # apt-get install verilator installs version 4.028 as of 6/8/23
 sudo apt-get install -y perl g++ ccache help2man libgoogle-perftools-dev numactl perl-doc zlib1g 
