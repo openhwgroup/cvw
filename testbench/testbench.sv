@@ -588,7 +588,6 @@ task automatic updateProgramAddrLabelArray;
   ProgramAddrMapFP = $fopen(ProgramAddrMapFile, "r");
 
   if (ProgramLabelMapFP & ProgramAddrMapFP) begin // check we found both files
-    // *** RT: I'm a bit confused by the required initialization here.
     ProgramAddrLabelArray["begin_signature"] = 0;
     ProgramAddrLabelArray["tohost"] = 0;
     ProgramAddrLabelArray["sig_end_canary"] = 0;
@@ -601,7 +600,7 @@ task automatic updateProgramAddrLabelArray;
     end
   end
 
-  if(ProgramAddrLabelArray["begin"] == 0) $display("Couldn't find begin_signature in %s", ProgramLabelMapFile);
+  if(ProgramAddrLabelArray["begin_signature"] == 0) $display("Couldn't find begin_signature in %s", ProgramLabelMapFile);
   if(ProgramAddrLabelArray["sig_end_canary"] == 0) $display("Couldn't find sig_end_canary in %s", ProgramLabelMapFile);
 
   $fclose(ProgramLabelMapFP);
