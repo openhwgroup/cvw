@@ -64,6 +64,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   output logic                    LoadMisalignedFaultM,                 // Load address misaligned fault
   output logic                    LoadAccessFaultM,                     // Load access fault (PMA)
   output logic                    HPTWInstrAccessFaultF,                // HPTW generated access fault during instruction fetch
+  output logic                    HPTWInstrPageFaultF,                  // HPTW generated access fault during instruction fetch
   // cpu hazard unit (trap)
   output logic                    StoreAmoMisalignedFaultM,             // Store or AMO address misaligned fault
   output logic                    StoreAmoAccessFaultM,                 // Store or AMO access fault
@@ -150,6 +151,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic                  IgnoreRequest;                          // On FlushM or TLB miss ignore memory operation
   logic                  SelDTIM;                                // Select DTIM rather than bus or D$
   logic [P.XLEN-1:0]     WriteDataZM;
+  logic                  LSULoadPageFaultM, LSUStoreAmoPageFaultM;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Pipeline for IEUAdr E to M
@@ -199,7 +201,9 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       .IEUAdrExtM, .PTE, .IHWriteDataM, .PageType, .PreLSURWM, .LSUAtomicM,
       .IHAdrM, .HPTWStall, .SelHPTW,
       .IgnoreRequestTLB, .LSULoadAccessFaultM, .LSUStoreAmoAccessFaultM, 
-      .LoadAccessFaultM, .StoreAmoAccessFaultM, .HPTWInstrAccessFaultF);
+      .LoadAccessFaultM, .StoreAmoAccessFaultM, .HPTWInstrAccessFaultF,
+      .LoadPageFaultM, .StoreAmoPageFaultM, .LSULoadPageFaultM, .LSUStoreAmoPageFaultM, .HPTWInstrPageFaultF
+);
   end else begin // No HPTW, so signals are not multiplexed
     assign PreLSURWM = MemRWM; 
     assign IHAdrM = IEUAdrExtM;
@@ -208,9 +212,11 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign LSUAtomicM = AtomicM;
     assign IHWriteDataM = WriteDataZM;
     assign LoadAccessFaultM = LSULoadAccessFaultM;
-    assign StoreAmoAccessFaultM = LSUStoreAmoAccessFaultM;   
+    assign StoreAmoAccessFaultM = LSUStoreAmoAccessFaultM;
+    assign LoadPageFaultM = LSULoadPageFaultM;
+    assign StoreAmoPageFaultM = LSUStoreAmoPageFaultM;
     assign {HPTWStall, SelHPTW, PTE, PageType, DTLBWriteM, ITLBWriteF, IgnoreRequestTLB} = '0;
-    assign HPTWInstrAccessFaultF = '0;
+    assign {HPTWInstrAccessFaultF, HPTWInstrPageFaultF} = '0;
    end
 
   // CommittedM indicates the cache, bus, or HPTW are busy with a multiple cycle operation.
@@ -236,8 +242,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       .PTE, .PageTypeWriteVal(PageType), .TLBWrite(DTLBWriteM), .TLBFlush(sfencevmaM),
       .PhysicalAddress(PAdrM), .TLBMiss(DTLBMissM), .Cacheable(CacheableM), .Idempotent(), .SelTIM(SelDTIM), 
       .InstrAccessFaultF(), .LoadAccessFaultM(LSULoadAccessFaultM), 
-      .StoreAmoAccessFaultM(LSUStoreAmoAccessFaultM), .InstrPageFaultF(), .LoadPageFaultM, 
-    .StoreAmoPageFaultM,
+      .StoreAmoAccessFaultM(LSUStoreAmoAccessFaultM), .InstrPageFaultF(), .LoadPageFaultM(LSULoadPageFaultM), 
+    .StoreAmoPageFaultM(LSUStoreAmoPageFaultM),
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,   // *** these faults need to be supressed during hptw.
       .UpdateDA(DataUpdateDAM), .CMOpM(CMOpM),
       .AtomicAccessM(|LSUAtomicM), .ExecuteAccessF(1'b0), 
@@ -246,7 +252,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
 
   end else begin  // No MMU, so no PMA/page faults and no address translation
     assign {DTLBMissM, LSULoadAccessFaultM, LSUStoreAmoAccessFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM} = '0;
-    assign {LoadPageFaultM, StoreAmoPageFaultM} = '0;
+    assign {LSULoadPageFaultM, LSUStoreAmoPageFaultM} = '0;
     assign PAdrM = IHAdrM[P.PA_BITS-1:0];
     assign CacheableM = 1'b1;
     assign SelDTIM = P.DTIM_SUPPORTED & ~P.BUS_SUPPORTED; // if no PMA then select dtim if there is a DTIM.  If there is 
