@@ -97,7 +97,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
     assign PreUpdateDA = ~PTE_A;
     assign InvalidAccess = ~PTE_X;
  end else begin:dtlb // Data TLB fault checking
-    logic InvalidRead, InvalidWrite;
+    logic InvalidRead, InvalidWrite, ReservtedEncoding;
     logic InvalidCBOM, InvalidCBOZ;
 
     // User mode may only load/store from user mode pages, and supervisor mode
@@ -108,12 +108,12 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
     // (and executable pages are not readable) or when the page is neither
     // readable nor executable (and executable pages are readable).
     assign InvalidRead = ReadAccess & ~PTE_R & (~STATUS_MXR | ~PTE_X);
-    // Check for write error. Writes are invalid when the page's write bit is
-    // low.
+    // Check for write error. Writes are invalid when the page's write bit is 0.
     assign InvalidWrite = WriteAccess & ~PTE_W;
-    assign InvalidCBOM = (|CMOpM[2:0]) & (~PTE_W & (~PTE_R & (~STATUS_MXR | ~PTE_X)));
+    assign InvalidCBOM = (|CMOpM[2:0]) & (~PTE_R & (~STATUS_MXR | ~PTE_X));
     assign InvalidCBOZ = CMOpM[3] & ~PTE_W;
-    assign InvalidAccess = InvalidRead | InvalidWrite | InvalidCBOM | InvalidCBOZ;
+    assign ReservedEncoding = PTE_W & ~PTE_R; // fault on reserved encoding with R=0, W=1 to match ImperasDV behavior
+    assign InvalidAccess = InvalidRead | InvalidWrite | InvalidCBOM | InvalidCBOZ | ReservedEncoding;
     assign PreUpdateDA = ~PTE_A | WriteAccess & ~PTE_D;
   end
 
