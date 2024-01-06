@@ -387,7 +387,15 @@ module testbench;
       end
     end
   end
- 
+
+  // *** 06 January 2024 RT: may have to uncomment this block for vcs/verilator
+  integer adrindex;
+  if (P.UNCORE_RAM_SUPPORTED)
+    always @(posedge clk) 
+      if (ResetMem)  // program memory is sometimes reset
+        for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
+          dut.uncore.uncore.ram.ram.memory.RAM[adrindex] = '0;
+
   ////////////////////////////////////////////////////////////////////////////////
   // Actual hardware
   ////////////////////////////////////////////////////////////////////////////////
