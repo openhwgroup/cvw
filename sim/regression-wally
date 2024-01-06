@@ -133,7 +133,7 @@ tests64gc = ["arch64f", "arch64d", "arch64f_fma", "arch64d_fma", "arch64i", "arc
 if (coverage):  # delete all but 64gc tests when running coverage
     configs = []
     tests64gc = ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m", 
-                 "arch64zifencei", "wally64a", "wally64periph", "wally64priv", 
+                 "arch64zifencei", "arch64a", "wally64a", "wally64periph", "wally64priv", 
                  "arch64zba",  "arch64zbb",  "arch64zbc",  "arch64zbs"] # add when working: "arch64zicboz", "arch64zcb", 
     if (fp):
        tests64gc.append("arch64f")

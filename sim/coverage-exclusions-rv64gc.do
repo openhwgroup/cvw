@@ -198,8 +198,8 @@ set line [GetLineNum ../src/mmu/mmu.sv "TLBPageFault & ExecuteAccessF"]
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 3
 set line [GetLineNum ../src/mmu/mmu.sv "TLBPageFault & ReadNoAmoAccessM"] 
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 1,2,4
-set line [GetLineNum ../src/mmu/mmu.sv "TLBPageFault & WriteAccessM"] 
-coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 1,2,4
+#set line [GetLineNum ../src/mmu/mmu.sv "TLBPageFault & WriteAccessM"] 
+#coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 1,2,4
 set line [GetLineNum ../src/mmu/mmu.sv "DataMisalignedM & ReadNoAmoAccessM"] 
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 1,2,4
 set line [GetLineNum ../src/mmu/pmpchecker.sv "EnforcePMP & WriteAccessM"] 
@@ -229,6 +229,12 @@ set line [GetLineNum ../src/ifu/ifu.sv "~ITLBMissF & ~CacheableF & ~SelIROM"]
 coverage exclude -scope /dut/core/ifu -linerange $line-$line -item c 1 -feccondrow 6
 set line [GetLineNum ../src/ifu/ifu.sv "~ITLBMissF & CacheableF & ~SelIROM"] 
 coverage exclude -scope /dut/core/ifu -linerange $line-$line -item c 1 -feccondrow 4
+
+# no DTIM 
+set line [GetLineNum ../src/lsu/lsu.sv "assign BusRW"] 
+coverage exclude -scope /dut/core/lsu -linerange $line-$line -item c 1 -feccondrow 4
+set line [GetLineNum ../src/lsu/lsu.sv "assign CacheRWM"] 
+coverage exclude -scope /dut/core/lsu -linerange $line-$line -item c 1 -feccondrow 4
 
 # Excluding reset and clear for impossible case in the wficountreg in privdec
 set line [GetLineNum ../src/generic/flop/floprc.sv "reset \\| clear"]
