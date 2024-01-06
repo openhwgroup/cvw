@@ -111,7 +111,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
     // Check for write error. Writes are invalid when the page's write bit is
     // low.
     assign InvalidWrite = WriteAccess & ~PTE_W;
-    assign InvalidCBOM = (|CMOpM[2:0]) & (~PTE_W | (~PTE_R & (~STATUS_MXR | ~PTE_X)));
+    assign InvalidCBOM = (|CMOpM[2:0]) & (~PTE_W & (~PTE_R & (~STATUS_MXR | ~PTE_X)));
     assign InvalidCBOZ = CMOpM[3] & ~PTE_W;
     assign InvalidAccess = InvalidRead | InvalidWrite | InvalidCBOM | InvalidCBOZ;
     assign PreUpdateDA = ~PTE_A | WriteAccess & ~PTE_D;
