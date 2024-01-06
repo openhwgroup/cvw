@@ -134,6 +134,8 @@ _start:
   add sp, sp, tp
 
   j _init
+sig_end_canary:       
+  nop
 
   .align 2
 trap_entry:
