@@ -13,7 +13,7 @@
 00000001    # delay 1
 
 00080000    # fmt
-    
+
 00000000    # tx_data
 
 00000000    # tx_mark
@@ -23,7 +23,7 @@
 00000000    # ie reset
 
 00000000    # ip reset
- 
+
 00000000    # fifo watermark and edge case tests
 
 00000001
@@ -249,7 +249,7 @@
 00000000 #read mip
 
 00000000 #read tx ip
- 
+
 00000022 #clear 1 frame from rx fifo
 
 00000000 # read recieve ip

@@ -388,11 +388,10 @@ module testbench;
     end
   end
 
-  // *** 06 January 2024 RT: may have to uncomment this block for vcs/verilator
   integer adrindex;
   if (P.UNCORE_RAM_SUPPORTED)
     always @(posedge clk) 
-      if (ResetMem)  // program memory is sometimes reset
+      if (ResetMem)  // program memory is sometimes reset (e.g. for CoreMark, which needs zeroed memory)
         for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
           dut.uncore.uncore.ram.ram.memory.RAM[adrindex] = '0;
 
@@ -441,6 +440,15 @@ module testbench;
   always begin
     clk = 1; # 5; clk = 0; # 5;
   end
+
+  /*
+  // Print key info  each cycle for debugging
+  always @(posedge clk) begin 
+    #2;
+    $display("PCM: %x  InstrM: %x (%5s) WriteDataM: %x  IEUResultM: %x",
+         dut.core.PCM, dut.core.InstrM, InstrMName, dut.core.WriteDataM, dut.core.ieu.dp.IEUResultM);
+  end
+  */
 
   ////////////////////////////////////////////////////////////////////////////////
   // Support logic
@@ -504,6 +512,9 @@ module testbench;
     input logic   riscofTest;
     input integer begin_signature_addr;
     output integer errors;
+    int fd, code;
+    string line;
+    int siglines, sigentries;
 
     localparam SIGNATURESIZE = 5000000;
     integer        i;
@@ -512,41 +523,48 @@ module testbench;
     string            signame;
     logic [P.XLEN-1:0] testadr, testadrNoBase;
     
-    // for tests with no self checking mechanism, read .signature.output file and compare to check for errors
-    // clear signature to prevent contamination from previous tests
-    for(i=0; i<SIGNATURESIZE; i=i+1) begin
-      sig32[i] = 'bx;
-    end
+    // read .signature.output file and compare to check for errors
     if (riscofTest) signame = {pathname, TestName, "/ref/Reference-sail_c_simulator.signature"};
     else signame = {pathname, TestName, ".signature.output"};
-    // read signature, reformat in 64 bits if necessary
-    $readmemh(signame, sig32);
-    i = 0;
-    while (i < SIGNATURESIZE) begin
-      if (P.XLEN == 32) begin
-        signature[i] = sig32[i];
-        i = i+1;
-      end else begin
-        signature[i/2] = {sig32[i+1], sig32[i]};
-        i = i + 2;
+
+    // read signature file from memory and count lines.  Can't use readmemh because we need the line count
+    // $readmemh(signame, sig32);
+    fd = $fopen(signame, "r");
+    siglines = 0;
+    if (fd == 0) $display("Unable to read %s", signame);
+    else begin
+      while (!$feof(fd)) begin
+        code = $fgets(line, fd);
+        if (!code) begin
+          int errno;
+          string errstr;
+          errno = $ferror(fd, errstr);
+          if (errno) $display("Error %d (code %d) reading line %d of %s: %s", errno, code, siglines, signame, errstr);
+        end else if (line.len() > 1) begin // skip blank lines
+          if ($sscanf(line, "%x", sig32[siglines])) siglines = siglines + 1; // increment if line is not blank
+        end
       end
-      if (i >= 4 & sig32[i-4] === 'bx) begin
-        if (i == 4) begin
-          i = SIGNATURESIZE+1; // flag empty file
-          $display("  Error: empty test file");
-        end else i = SIGNATURESIZE; // skip over the rest of the x's for efficiency
-      end
+      $fclose(fd);
     end
 
+    // Check valid number of lines were read
+    if (siglines == 0) begin  
+      errors = 1; 
+      $display("Error: empty test file %s", signame);
+    end else if (P.XLEN == 64 & (siglines % 2)) begin
+      errors = 1;
+      $display("Error: RV64 signature has odd number of lines %s", signame);
+    end else errors = 0;
+
+    // copy lines into signature, converting to XLEN if necessary
+    sigentries = (P.XLEN == 32) ? siglines : siglines/2; // number of signature entries
+    for (i=0; i<sigentries; i++) 
+      signature[i] = (P.XLEN == 32) ? sig32[i] : {sig32[i*2+1], sig32[i*2]};
+
     // Check errors
-    errors = (i == SIGNATURESIZE+1); // error if file is empty
-    i = 0;
     testadr = ($unsigned(begin_signature_addr))/(P.XLEN/8);
     testadrNoBase = (begin_signature_addr - P.UNCORE_RAM_BASE)/(P.XLEN/8);
-    /* verilator lint_off INFINITELOOP */
-    /* verilator lint_off WIDTHXZEXPAND */
-    while (signature[i] !== 'bx) begin
-      /* verilator lint_on WIDTHXZEXPAND */
+    for (i=0; i<sigentries; i++) begin
       logic [P.XLEN-1:0] sig;
       // **************************************
       // ***** BUG BUG BUG make sure RT undoes this.
@@ -560,21 +578,12 @@ module testbench;
         errors = errors+1;
         $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
 			     TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
-        //$display("  Error on test %s result %d: adr = %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
-		//	     TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], signature[i]);        
-        $stop; //***debug
+        $stop;
       end
-      i = i + 1;
     end
-    /* verilator lint_on INFINITELOOP */
-    if (errors == 0) begin
-      $display("%s succeeded.  Brilliant!!!", TestName);
-    end else begin
-      $display("%s failed with %d errors. :(", TestName, errors);
-      //totalerrors = totalerrors+1;
-    end
-
-  endtask //
+    if (errors) $display("%s failed with %d errors. :(", TestName, errors);
+    else $display("%s succeeded.  Brilliant!!!", TestName);
+  endtask
   
   /* verilator lint_on WIDTHTRUNC */
   /* verilator lint_on WIDTHEXPAND */
