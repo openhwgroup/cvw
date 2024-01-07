@@ -519,6 +519,7 @@ module testbench;
     localparam SIGNATURESIZE = 5000000;
     integer        i;
     logic [31:0]   sig32[0:SIGNATURESIZE];
+    logic [31:0]   parsed;
     logic [P.XLEN-1:0] signature[0:SIGNATURESIZE];
     string            signame;
     logic [P.XLEN-1:0] testadr, testadrNoBase;
@@ -535,17 +536,25 @@ module testbench;
     else begin
       while (!$feof(fd)) begin
         code = $fgets(line, fd);
-        if (!code) begin
+        if (code != 0) begin
           int errno;
           string errstr;
           errno = $ferror(fd, errstr);
-          if (errno) $display("Error %d (code %d) reading line %d of %s: %s", errno, code, siglines, signame, errstr);
-        end else if (line.len() > 1) begin // skip blank lines
-          if ($sscanf(line, "%x", sig32[siglines])) siglines = siglines + 1; // increment if line is not blank
+          if (errno != 0) $display("Error %d (code %d) reading line %d of %s: %s", errno, code, siglines, signame, errstr);
+          if (line.len() > 1) begin // skip blank lines
+//          if ($sscanf(line, "%x", sig32[siglines])) siglines = siglines + 1; // increment if line is not blank
+            if ($sscanf(line, "%x", parsed) != 0) begin
+              sig32[siglines] = parsed;
+//            $display("line = %s len = %d sig32[%d] = %x", line, line.len(), siglines, sig32[siglines]);
+              siglines = siglines + 1; // increment if line is not blank
+            end
+          end
         end
       end
       $fclose(fd);
     end
+//    for(i=0; i<siglines; i++) 
+//      $display("sig32[%d] = %x", i, sig32[i]);
 
     // Check valid number of lines were read
     if (siglines == 0) begin  
@@ -558,8 +567,10 @@ module testbench;
 
     // copy lines into signature, converting to XLEN if necessary
     sigentries = (P.XLEN == 32) ? siglines : siglines/2; // number of signature entries
-    for (i=0; i<sigentries; i++) 
+    for (i=0; i<sigentries; i++) begin
       signature[i] = (P.XLEN == 32) ? sig32[i] : {sig32[i*2+1], sig32[i*2]};
+      //$display("XLEN = %d signature[%d] = %x", P.XLEN, i, signature[i]);
+    end
 
     // Check errors
     testadr = ($unsigned(begin_signature_addr))/(P.XLEN/8);
