@@ -542,10 +542,8 @@ module testbench;
           errno = $ferror(fd, errstr);
           if (errno != 0) $display("Error %d (code %d) reading line %d of %s: %s", errno, code, siglines, signame, errstr);
           if (line.len() > 1) begin // skip blank lines
-//          if ($sscanf(line, "%x", sig32[siglines])) siglines = siglines + 1; // increment if line is not blank
             if ($sscanf(line, "%x", parsed) != 0) begin
               sig32[siglines] = parsed;
-//            $display("line = %s len = %d sig32[%d] = %x", line, line.len(), siglines, sig32[siglines]);
               siglines = siglines + 1; // increment if line is not blank
             end
           end
@@ -553,8 +551,6 @@ module testbench;
       end
       $fclose(fd);
     end
-//    for(i=0; i<siglines; i++) 
-//      $display("sig32[%d] = %x", i, sig32[i]);
 
     // Check valid number of lines were read
     if (siglines == 0) begin  
