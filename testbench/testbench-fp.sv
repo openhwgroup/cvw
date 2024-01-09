@@ -964,12 +964,17 @@ module testbenchfp;
 
       // Testfloat outputs 800... for both the largest integer values for both positive and negitive numbers but 
       // the riscv spec specifies 2^31-1 for positive values out of range and NaNs ie 7fff...
-      else if ((UnitVal === `CVTINTUNIT) & 
-		  ~((ResFlg === AnsFlg | AnsFlg === 5'bx))) begin	 
-	 errors += 1;
-	 $display("There is an error in %s", Tests[TestNum]);
-	 $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
-	 $stop;
+      else if ( ((UnitVal === `CVTINTUNIT) | (UnitVal === `CMPUNIT)) & 
+		  ~((ResFlg === AnsFlg | AnsFlg === 5'bx)) ) begin
+	 // ResMatch checks the result as well.  It is checked within the
+	 // test to avoid issues related when the values change tests (e.g., f16_eq_rne -> f16_eq_rz)
+	 if (~(ResMatch)) begin
+	    errors += 1;
+	    $display("\nError in %s", Tests[TestNum]);
+	    $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);	 	 
+	    $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
+	    $stop;
+	 end
       end
 
       if (TestVectors[VectorNum][0] === 1'bx & Tests[TestNum] !== "") begin // if reached the eof
