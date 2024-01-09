@@ -968,7 +968,7 @@ module testbenchfp;
 		  ~((ResFlg === AnsFlg | AnsFlg === 5'bx)) ) begin
 	 // ResMatch checks the result as well.  It is checked within the
 	 // test to avoid issues related when the values change tests (e.g., f16_eq_rne -> f16_eq_rz)
-	 if (~(ResMatch)) begin
+	 if (~(ResMatch & FlagMatch)) begin
 	    errors += 1;
 	    $display("\nError in %s", Tests[TestNum]);
 	    $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);	 	 
