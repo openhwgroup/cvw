@@ -964,7 +964,7 @@ module testbenchfp;
 
       // Testfloat outputs 800... for both the largest integer values for both positive and negitive numbers but 
       // the riscv spec specifies 2^31-1 for positive values out of range and NaNs ie 7fff...
-      else if ( ((UnitVal === `CVTINTUNIT) | (UnitVal !== `CMPUNIT)) & 
+      else if ( ((UnitVal === `CVTINTUNIT) | (UnitVal === `CMPUNIT)) & 
 		  ~((ResFlg === AnsFlg | AnsFlg === 5'bx)) ) begin
 	 // ResMatch checks the result as well.  It is checked within the
 	 // test to avoid issues related when the values change tests (e.g., f16_eq_rne -> f16_eq_rz)
