@@ -40,7 +40,11 @@ main:
     .hword 0x2002      // c.fldsp fs0, 0
     .hword 0xA002      // c.fsdsp fs0, 0
     .hword 0x9C41      // line 134 Illegal compressed instruction
-
+    # could restore assembly language versions when GCC supports Zcb
+#    c.lbu s1, 0(s0)    // exercise c.lbu
+    mv s0, sp
+    .hword 0x8004      // c.lbu s1, 0(s0)
+    
     //.hword 0x9C01     //# Illegal compressed instruction with op = 01, instr[15:10] = 100111, and 0's everywhere else
 
 
