@@ -99,6 +99,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
 );
 
   localparam [31:0]            nop = 32'h00000013;                       // instruction for NOP
+  localparam            LINELEN = P.ICACHE_SUPPORTED ? P.ICACHE_LINELENINBITS : P.XLEN;
 
   logic [P.XLEN-1:0]           PCNextF;                                  // Next PCF, selected from Branch predictor, Privilege, or PC+2/4
   logic [P.XLEN-1:0]           PC1NextF;                                 // Branch predictor next PCF
@@ -136,6 +137,8 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   logic                        CacheCommittedF;                          // I$ memory operation started, delay interrupts
   logic                        SelIROM;                                  // PMA indicates instruction address is in the IROM
   logic [15:0]                 InstrRawE, InstrRawM;
+  logic [LINELEN-1:0]          FetchBuffer;
+  logic [31:0]                 ShiftUncachedInstr;
   
   assign PCFExt = {2'b00, PCSpillF};
 
@@ -225,9 +228,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     localparam   LOGBWPL = P.ICACHE_SUPPORTED ? $clog2(WORDSPERLINE) : 1;
     
     if(P.ICACHE_SUPPORTED) begin : icache
-      localparam            LINELEN = P.ICACHE_SUPPORTED ? P.ICACHE_LINELENINBITS : P.XLEN;
       localparam            LLENPOVERAHBW = P.LLEN / P.AHBW; // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
-      logic [LINELEN-1:0]   FetchBuffer;
       logic [P.PA_BITS-1:0] ICacheBusAdr;
       logic                 ICacheBusAck;
       logic [1:0]           CacheBusRW, BusRW, CacheRWF;
@@ -264,16 +265,10 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
             .BusRW, .Stall(GatedStallD),
             .BusStall, .BusCommitted(BusCommittedF));
 
-    logic [31:0]          ShiftUncachedInstr;
-
-    if(P.XLEN == 64) mux4 #(32) UncachedShiftInstrMux(FetchBuffer[32-1:0], FetchBuffer[48-1:16], FetchBuffer[64-1:32], {16'b0, FetchBuffer[64-1:48]},
-                                                      PCSpillF[2:1], ShiftUncachedInstr);
-    else mux2 #(32) UncachedShiftInstrMux(FetchBuffer[32-1:0], {16'b0, FetchBuffer[32-1:16]}, PCSpillF[1], ShiftUncachedInstr);
       mux3 #(32) UnCachedDataMux(.d0(ICacheInstrF), .d1(ShiftUncachedInstr), .d2(IROMInstrF),
                                  .s({SelIROM, ~CacheableF}), .y(InstrRawF[31:0]));
     end else begin : passthrough
       assign IFUHADDR = PCPF;
-      logic [31:0]  FetchBuffer;
       logic [1:0] BusRW;
       assign BusRW = ~ITLBMissF & ~SelIROM ? IFURWF : '0;
       assign IFUHSIZE = 3'b010;
@@ -284,8 +279,8 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
         .Stall(GatedStallD), .BusStall, .BusCommitted(BusCommittedF), .FetchBuffer(FetchBuffer));
 
       assign CacheCommittedF = '0;
-      if(P.IROM_SUPPORTED) mux2 #(32) UnCachedDataMux2(FetchBuffer, IROMInstrF, SelIROM, InstrRawF);
-      else assign InstrRawF = FetchBuffer;
+      if(P.IROM_SUPPORTED) mux2 #(32) UnCachedDataMux2(ShiftUncachedInstr, IROMInstrF, SelIROM, InstrRawF);
+      else assign InstrRawF = ShiftUncachedInstr;
       assign IFUHBURST = 3'b0;
       assign {ICacheMiss, ICacheAccess, ICacheStallF} = '0;
     end
@@ -294,6 +289,11 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     assign {ICacheStallF, ICacheMiss, ICacheAccess} = '0;
     assign InstrRawF = IROMInstrF;
   end
+
+  // mux between the alignments of uncached reads.
+  if(P.XLEN == 64) mux4 #(32) UncachedShiftInstrMux(FetchBuffer[32-1:0], FetchBuffer[48-1:16], FetchBuffer[64-1:32], {16'b0, FetchBuffer[64-1:48]},
+                                                    PCSpillF[2:1], ShiftUncachedInstr);
+  else mux2 #(32) UncachedShiftInstrMux(FetchBuffer[32-1:0], {16'b0, FetchBuffer[32-1:16]}, PCSpillF[1], ShiftUncachedInstr);
   
   assign IFUCacheBusStallF = ICacheStallF | BusStall;
   assign IFUStallF = IFUCacheBusStallF | SelSpillNextF;

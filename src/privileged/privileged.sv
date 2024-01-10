@@ -63,6 +63,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic              InstrAccessFaultF,                              // instruction access fault
   input  logic              LoadAccessFaultM, StoreAmoAccessFaultM,         // load or store access fault
   input  logic              HPTWInstrAccessFaultF,                          // hardware page table access fault while fetching instruction PTE
+  input  logic              HPTWInstrPageFaultF,                            // hardware page table page fault while fetching instruction PTE
   input  logic              InstrPageFaultF,                                // page faults
   input  logic              LoadPageFaultM, StoreAmoPageFaultM,             // page faults
   input  logic              InstrMisalignedFaultM,                          // misaligned instruction fault
@@ -113,6 +114,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   logic                     InterruptM;                                     // interrupt occuring
   logic                     ExceptionM;                                     // Memory stage instruction caused a fault
   logic                     HPTWInstrAccessFaultM;                          // Hardware page table access fault while fetching instruction PTE
+  logic                     HPTWInstrPageFaultM;                            // Hardware page table page fault while fetching instruction PTE
   logic                     BreakpointFaultM, EcallFaultM;                  // breakpoint and Ecall traps should retire
   
   logic                     wfiW;
@@ -147,12 +149,12 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
 
   // pipeline early-arriving trap sources
   privpiperegs ppr(.clk, .reset, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
-    .InstrPageFaultF, .InstrAccessFaultF, .HPTWInstrAccessFaultF, .IllegalIEUFPUInstrD, 
-    .InstrPageFaultM, .InstrAccessFaultM, .HPTWInstrAccessFaultM, .IllegalIEUFPUInstrM);
+    .InstrPageFaultF, .InstrAccessFaultF, .HPTWInstrAccessFaultF, .HPTWInstrPageFaultF, .IllegalIEUFPUInstrD, 
+    .InstrPageFaultM, .InstrAccessFaultM, .HPTWInstrAccessFaultM, .HPTWInstrPageFaultM, .IllegalIEUFPUInstrM);
 
   // trap logic
   trap #(P) trap(.reset,
-    .InstrMisalignedFaultM, .InstrAccessFaultM, .HPTWInstrAccessFaultM, .IllegalInstrFaultM,
+    .InstrMisalignedFaultM, .InstrAccessFaultM, .HPTWInstrAccessFaultM, .HPTWInstrPageFaultM, .IllegalInstrFaultM,
     .BreakpointFaultM, .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
     .LoadAccessFaultM, .StoreAmoAccessFaultM, .EcallFaultM, .InstrPageFaultM,
     .LoadPageFaultM, .StoreAmoPageFaultM, .PrivilegeModeW, 

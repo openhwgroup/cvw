@@ -48,13 +48,12 @@ module ahbinterface #(
   input  logic [XLEN-1:0]               WriteData,    // IEU write data for a store
   output logic                          BusStall,     // Bus is busy with an in flight memory operation
   output logic                          BusCommitted, // Bus is busy with an in flight memory operation and it is not safe to take an interrupt
-  output logic [(LSU ? XLEN : 32)-1:0]  FetchBuffer   // Register to hold HRDATA after arriving from the bus
+  output logic [XLEN-1:0]  FetchBuffer   // Register to hold HRDATA after arriving from the bus
 );
   
   logic                                 CaptureEn;
-  localparam                            LEN = (LSU ? XLEN : 32);   // 32 bits for IFU, XLEN for LSU
-  
-  flopen #(LEN) fb(.clk(HCLK), .en(CaptureEn), .d(HRDATA[LEN-1:0]), .q(FetchBuffer));
+
+  flopen #(XLEN) fb(.clk(HCLK), .en(CaptureEn), .d(HRDATA), .q(FetchBuffer));
 
   if(LSU) begin
     // delay HWDATA by 1 cycle per spec; assumes AHBW = XLEN    
