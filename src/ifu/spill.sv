@@ -57,6 +57,7 @@ module spill import cvw::*;  #(parameter cvw_t P) (
   logic              SelSpillF;
   logic              SpillSaveF;
   logic [15:0]       InstrFirstHalfF;
+  logic              EarlyCompressedF;
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // PC logic 
@@ -77,14 +78,14 @@ module spill import cvw::*;  #(parameter cvw_t P) (
   ////////////////////////////////////////////////////////////////////////////////////////////////////
 
   if (P.ICACHE_SUPPORTED) begin
-    logic  SpillCachedF, SpillUncachedF;
+    logic SpillCachedF, SpillUncachedF;
     assign SpillCachedF = &PCF[$clog2(P.ICACHE_LINELENINBITS/32)+1:1];
-    assign SpillUncachedF = PCF[1]; // *** try to optimize this based on whether the next instruction is 16 bits and by fetching 64 bits in RV64
-    assign SpillF = CacheableF ? SpillCachedF : SpillUncachedF;
+    assign SpillUncachedF = PCF[1]; 
+    assign SpillF = (CacheableF ? SpillCachedF : SpillUncachedF);
   end else
-    assign SpillF = PCF[1]; // *** might relax - only spill if next instruction is uncompressed
+    assign SpillF = PCF[1];
   // Don't take the spill if there is a stall, TLB miss, or hardware update to the D/A bits
-  assign TakeSpillF = SpillF & ~IFUCacheBusStallF & ~(ITLBMissF | (P.SVADU_SUPPORTED & InstrUpdateDAF));
+  assign TakeSpillF = SpillF & ~EarlyCompressedF & ~IFUCacheBusStallF & ~(ITLBMissF | (P.SVADU_SUPPORTED & InstrUpdateDAF));
   
   always_ff @(posedge clk)
     if (reset | FlushD)    CurrState <= #1 STATE_READY;
@@ -112,11 +113,12 @@ module spill import cvw::*;  #(parameter cvw_t P) (
   flopenr #(16) SpillInstrReg(clk, reset, SpillSaveF, InstrRawF[15:0], InstrFirstHalfF);
 
   // merge together
-  mux2 #(32) postspillmux(InstrRawF, {InstrRawF[15:0], InstrFirstHalfF}, SpillF, PostSpillInstrRawF);
+  mux2 #(32) postspillmux(InstrRawF, {InstrRawF[15:0], InstrFirstHalfF}, SelSpillF, PostSpillInstrRawF);
 
   // Need to use always comb to avoid pessimistic x propagation if PostSpillInstrRawF is x
   always_comb
   if (PostSpillInstrRawF[1:0] != 2'b11) CompressedF = 1'b1;
   else CompressedF = 1'b0;
+  assign EarlyCompressedF = ~(&InstrRawF[1:0]);
 
 endmodule
