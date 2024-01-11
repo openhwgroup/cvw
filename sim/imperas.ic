@@ -19,6 +19,7 @@
 
 # More extensions
 --override cpu/Zcb=T
+--override cpu/Zicond=T
 
 # Cache block operations
 --override cpu/Zicbom=T

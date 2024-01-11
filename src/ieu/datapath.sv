@@ -50,6 +50,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   input  logic [2:0]        ZBBSelectE,              // ZBB mux select signal
   input  logic [2:0]        BALUControlE,            // ALU Control signals for B instructions in Execute Stage
   input  logic              BMUActiveE,              // Bit manipulation instruction being executed
+  input  logic [1:0]        CZeroE,                  // {czero.nez, czero.eqz} instructions active
   output logic [1:0]        FlagsE,                  // Comparison flags ({eq, lt})
   output logic [P.XLEN-1:0] IEUAdrE,                 // Address computed by ALU
   output logic [P.XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // ALU sources before the mux chooses between them and PCE to put in srcA/B
@@ -107,7 +108,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   comparator #(P.XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, BranchSignedE, FlagsE);
   mux2  #(P.XLEN)  srcamux(ForwardedSrcAE, PCE, ALUSrcAE, SrcAE);
   mux2  #(P.XLEN)  srcbmux(ForwardedSrcBE, ImmExtE, ALUSrcBE, SrcBE);
-  alu   #(P)       alu(SrcAE, SrcBE, W64E, SubArithE, ALUSelectE, BSelectE, ZBBSelectE, Funct3E, BALUControlE, BMUActiveE, ALUResultE, IEUAdrE);
+  alu   #(P)       alu(SrcAE, SrcBE, W64E, SubArithE, ALUSelectE, BSelectE, ZBBSelectE, Funct3E, BALUControlE, BMUActiveE, CZeroE, ALUResultE, IEUAdrE);
   mux2  #(P.XLEN)  altresultmux(ImmExtE, PCLinkE, JumpE, AltResultE);
   mux2  #(P.XLEN)  ieuresultmux(ALUResultE, AltResultE, ALUResultSrcE, IEUResultE);
 

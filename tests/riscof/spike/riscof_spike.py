@@ -111,6 +111,8 @@ class spike(pluginTemplate):
           self.isa += 'c'
       if "Zicsr" in ispec["ISA"]:
           self.isa += '_Zicsr'
+      if "Zicond" in ispec["ISA"]:
+          self.isa += '_Zicond'
       if "Zicboz" in ispec["ISA"]:
           self.isa += '_Zicboz'
       if "Zca" in ispec["ISA"]:
