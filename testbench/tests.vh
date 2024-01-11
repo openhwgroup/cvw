@@ -904,6 +904,12 @@ string imperas32f[] = '{
     "rv64i_m/Zifencei/src/Fencei.S"
     };
 
+  string arch64zicond[] = '{
+    `RISCVARCHTEST,
+    "rv64i_m/Zicond/src/czero.eqz-01.S",
+    "rv64i_m/Zicond/src/czero.nez-01.S"
+    };
+
   string arch32a[] = '{
     `RISCVARCHTEST,
     "rv32i_m/A/src/amoadd.w-01.S",
@@ -921,6 +927,12 @@ string imperas32f[] = '{
   string arch32zifencei[] = '{
     `RISCVARCHTEST,
     "rv32i_m/Zifencei/src/Fencei.S"
+    };
+
+  string arch32zicond[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/Zicond/src/czero.eqz-01.S",
+    "rv32i_m/Zicond/src/czero.nez-01.S"
     };
 
   string arch32zba[] = '{

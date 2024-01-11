@@ -45,6 +45,7 @@ localparam ZICBOM_SUPPORTED = 0;
 localparam ZICBOZ_SUPPORTED = 0;
 localparam ZICBOP_SUPPORTED = 0;
 localparam ZICCLSM_SUPPORTED = 0;
+localparam ZICOND_SUPPORTED = 0;
 localparam SVPBMT_SUPPORTED = 0;
 localparam SVNAPOT_SUPPORTED = 0;
 localparam SVINVAL_SUPPORTED = 0;
