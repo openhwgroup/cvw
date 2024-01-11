@@ -161,6 +161,7 @@ module instrNameDecTB(
                        else if (funct7 == 7'b0000101) name = "MINU";
                        else if (funct7 == 7'b0110000) name = "ROR";
                        else if (funct7 == 7'b0100100) name = "BEXT";
+                       else if (funct7 == 7'b0000111) name = "CZERO.EQZ";
                        else                           name = "ILLEGAL";
       10'b0110011_110: if      (funct7 == 7'b0000000) name = "OR";
                        else if (funct7 == 7'b0000001) name = "REM";
@@ -172,6 +173,7 @@ module instrNameDecTB(
                        else if (funct7 == 7'b0000001) name = "REMU";
                        else if (funct7 == 7'b0000101) name = "MAXU";
                        else if (funct7 == 7'b0100000) name = "ANDN";
+                       else if (funct7 == 7'b0000111) name = "CZERO.NEZ";
                        else                           name = "ILLEGAL";
       10'b0110111_???: name = "LUI";
       10'b1100011_000: name = "BEQ";

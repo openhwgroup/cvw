@@ -59,6 +59,7 @@ typedef struct packed {
   logic         ZICBOZ_SUPPORTED;
   logic         ZICBOP_SUPPORTED;
   logic         ZICCLSM_SUPPORTED;
+  logic         ZICOND_SUPPORTED;
   logic         SVPBMT_SUPPORTED;
   logic         SVNAPOT_SUPPORTED;
   logic         SVINVAL_SUPPORTED;

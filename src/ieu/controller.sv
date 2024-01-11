@@ -65,6 +65,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic [2:0]  ZBBSelectE,              // ZBB mux select signal in Execute stage
   output logic [2:0]  BALUControlE,            // ALU Control signals for B instructions in Execute Stage
   output logic        BMUActiveE,              // Bit manipulation instruction being executed
+  output logic [1:0]  CZeroE,                  // {czero.nez, czero.eqz} instructions active
   output logic        MDUActiveE,              // Mul/Div instruction being executed
   output logic [3:0]  CMOpM,                   // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
   output logic        IFUPrefetchE,            // instruction prefetch
@@ -137,6 +138,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        IntDivM;                        // Integer divide instruction
   logic [1:0]  BSelectD;                       // One-Hot encoding if it's ZBA_ZBB_ZBC_ZBS instruction in decode stage
   logic [2:0]  ZBBSelectD;                     // ZBB Mux Select Signal
+  logic [1:0]  CZeroD;
   logic        IFunctD, RFunctD, MFunctD;      // Detect I, R, and M-type RV32IM/Rv64IM instructions
   logic        LFunctD, SFunctD, BFunctD;      // Detect load, store, branch instructions
   logic        FLSFunctD;                      // Detect floating-point loads and stores
@@ -147,6 +149,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        RWFunctD, MWFunctD;             // detect RW/MW instructions
   logic        PFunctD, CSRFunctD;             // detect privileged / CSR instruction
   logic        FenceM;                         // Fence.I or sfence.VMA instruction in memory stage
+  logic [2:0]  PreALUSelectD;                  // ALU Output selection mux control (before possible Zicond logic)
   logic [2:0]  ALUSelectD;                     // ALU Output selection mux control
   logic        IWValidFunct3D;                 // Detects if Funct3 is valid for IW instructions
   logic [3:0]  CMOpD, CMOpE;                   // which CMO instruction 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
@@ -156,8 +159,8 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        MatchDE;                        // Match between a source register in Decode stage and destination register in Execute stage
   logic        FCvtIntStallD, MDUStallD, CSRRdStallD; // Stall due to conversion, load, multiply/divide, CSR read 
   logic        StoreStallD;                    // load after store hazard
+  logic        FunctCZeroD;                    // Funct7 and Funct3 indicate czero.* (not including Op check)
   
-
   // Extract fields
   assign OpD     = InstrD[6:0];
   assign Funct3D = InstrD[14:12];
@@ -167,21 +170,22 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   assign RdD     = InstrD[11:7];
 
   // Funct 7 checking
-  // Be rigorous about detecting illegal instructions if CSRs or bit manipulation is supported
+  // Be rigorous about detecting illegal instructions if CSRs or bit manipulation or conditional ops are supported
   // otherwise be cheap
 
-  if (P.ZICSR_SUPPORTED | P.ZBA_SUPPORTED | P.ZBB_SUPPORTED | P.ZBC_SUPPORTED | P.ZBS_SUPPORTED) begin:legalcheck // Exact integer decoding
+  if (P.ZICSR_SUPPORTED | P.ZBA_SUPPORTED | P.ZBB_SUPPORTED | P.ZBC_SUPPORTED | P.ZBS_SUPPORTED | P.ZICOND_SUPPORTED) begin:legalcheck // Exact integer decoding
     logic Funct7ZeroD, Funct7b5D, IShiftD, INoShiftD;
     logic Funct7ShiftZeroD, Funct7Shiftb5D;
 
     assign Funct7ZeroD      = (Funct7D == 7'b0000000); // most R-type instructions
     assign Funct7b5D        = (Funct7D == 7'b0100000); // srai, sub
+    assign FunctCZeroD      = (Funct3D == 3'b101 | Funct3D == 3'b111) & (Funct7D == 7'b0000111) & P.ZICOND_SUPPORTED; // czero.eqz or czero.nez
     assign Funct7ShiftZeroD = (P.XLEN==64) ? (Funct7D[6:1] == 6'b000000) : Funct7ZeroD;
     assign Funct7Shiftb5D   = (P.XLEN==64) ? (Funct7D[6:1] == 6'b010000) : Funct7b5D;
     assign IShiftD          = (Funct3D == 3'b001 & Funct7ShiftZeroD) | (Funct3D == 3'b101 & (Funct7ShiftZeroD | Funct7Shiftb5D)); // slli, srli, srai, or w forms
     assign INoShiftD        = ((Funct3D != 3'b001) & (Funct3D != 3'b101));
     assign IFunctD          = IShiftD | INoShiftD;
-    assign RFunctD          = ((Funct3D == 3'b000 | Funct3D == 3'b101) & Funct7b5D) | Funct7ZeroD;
+    assign RFunctD          = ((Funct3D == 3'b000 | Funct3D == 3'b101) & Funct7b5D) | FunctCZeroD | Funct7ZeroD;
     assign MFunctD          = (Funct7D == 7'b0000001) & (P.M_SUPPORTED | (P.ZMMUL_SUPPORTED & ~Funct3D[2])); // muldiv
     assign LFunctD          = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b010 | Funct3D == 3'b100 | Funct3D == 3'b101 | 
                               ((P.XLEN == 64) & (Funct3D == 3'b011 | Funct3D == 3'b110));
@@ -321,7 +325,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
 
     bmuctrl #(P) bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUOpD, .BSelectD, .ZBBSelectD, 
       .BRegWriteD, .BALUSrcBD, .BW64D, .BSubArithD, .IllegalBitmanipInstrD, .StallE, .FlushE, 
-      .ALUSelectD, .BSelectE, .ZBBSelectE, .BRegWriteE, .BALUControlE, .BMUActiveE);
+      .ALUSelectD(PreALUSelectD), .BSelectE, .ZBBSelectE, .BRegWriteE, .BALUControlE, .BMUActiveE);
     if (P.ZBA_SUPPORTED) begin
       // ALU Decoding is more comprehensive when ZBA is supported. slt and slti conflicts with sh1add, sh1add.uw
       assign sltD = (Funct3D == 3'b010 & (~(Funct7D[4]) | ~OpD[5])) ;
@@ -337,7 +341,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign SubArithD = BaseSubArithD | BSubArithD; // TRUE If BMU or R-type instruction involves inverted operand
 
   end else begin: bitmanipi
-    assign ALUSelectD = ALUOpD ? Funct3D : 3'b000; // add for address generation when not doing ALU operation
+    assign PreALUSelectD = ALUOpD ? Funct3D : 3'b000; // add for address generation when not doing ALU operation
     assign sltD = (Funct3D == 3'b010);
     assign IllegalBaseInstrD = ControlsD[0] | IllegalERegAdrD ;
     assign RegWriteD = BaseRegWriteD; 
@@ -351,6 +355,16 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign ZBBSelectE = 3'b000;
     assign BALUControlE = 3'b0;
     assign BMUActiveE = 1'b0;
+  end
+
+  if (P.ZICOND_SUPPORTED) begin: Zicond
+    logic  SomeCZeroD; // instruction is czero.*
+    assign SomeCZeroD = FunctCZeroD & (OpD == 7'b0110011);
+    assign CZeroD = {SomeCZeroD & (Funct3D == 3'b111), SomeCZeroD & (Funct3D == 3'b101)}; // {czero.nez, czero.eqz}
+    assign ALUSelectD = SomeCZeroD ? 3'b111 : PreALUSelectD; // perform AND operation for czero.* instructions
+  end else begin
+    assign CZeroD = 2'b00; // Zicond not supported
+    assign ALUSelectD = PreALUSelectD;
   end
 
   // Fences
@@ -402,12 +416,12 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(1)  controlregD(clk, reset, FlushD, ~StallD, 1'b1, InstrValidD);
 
   // Execute stage pipeline control register and logic
-  flopenrc #(35) controlregE(clk, reset, FlushE, ~StallE,
-                           {ALUSelectD, RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, W64D, SubArithD, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, CMOpD, IFUPrefetchD, LSUPrefetchD, InstrValidD},
-                           {ALUSelectE, IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, SubArithE, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, CMOpE, IFUPrefetchE, LSUPrefetchE, InstrValidE});
-  flopenrc #(5)      Rs1EReg(clk, reset, FlushE, ~StallE, Rs1D, Rs1E);
-  flopenrc #(5)      Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
-  flopenrc #(5)      RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
+  flopenrc #(37) controlregE(clk, reset, FlushE, ~StallE,
+                           {ALUSelectD, RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, W64D, SubArithD, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, CMOpD, IFUPrefetchD, LSUPrefetchD, CZeroD, InstrValidD},
+                           {ALUSelectE, IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, SubArithE, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, CMOpE, IFUPrefetchE, LSUPrefetchE, CZeroE, InstrValidE});
+  flopenrc #(5)  Rs1EReg(clk, reset, FlushE, ~StallE, Rs1D, Rs1E);
+  flopenrc #(5)  Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
+  flopenrc #(5)  RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
 
   // Branch Logic
   //  The comparator handles both signed and unsigned branches using BranchSignedE
@@ -429,13 +443,13 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(25) controlregM(clk, reset, FlushM, ~StallM,
                          {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE, IntDivE, CMOpE, LSUPrefetchE},
                          {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, InstrValidM, IntDivM, CMOpM, LSUPrefetchM});
-  flopenrc #(5)      RdMReg(clk, reset, FlushM, ~StallM, RdE, RdM);  
+  flopenrc #(5)  RdMReg(clk, reset, FlushM, ~StallM, RdE, RdM);  
 
   // Writeback stage pipeline control register
   flopenrc #(5) controlregW(clk, reset, FlushW, ~StallW,
                          {RegWriteM, ResultSrcM, IntDivM},
                          {RegWriteW, ResultSrcW, IntDivW});  
-  flopenrc #(5)      RdWReg(clk, reset, FlushW, ~StallW, RdM, RdW);
+  flopenrc #(5) RdWReg(clk, reset, FlushW, ~StallW, RdM, RdW);
 
   // Flush F, D, and E stages on a CSR write or Fence.I or SFence.VMA
   assign CSRWriteFenceM = CSRWriteM | FenceM;

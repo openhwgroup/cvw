@@ -29,14 +29,14 @@
 
 module bitmanipalu import cvw::*; #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] A, B,                    // Operands
-  input  logic             W64,                     // W64-type instruction
-  input  logic [1:0]       BSelect,                 // Binary encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
-  input  logic [2:0]       ZBBSelect,               // ZBB mux select signal
-  input  logic [2:0]       Funct3,                  // Funct3 field of opcode indicates operation to perform
-  input  logic             LT,                      // less than flag
-  input  logic             LTU,                     // less than unsigned flag
-  input  logic [2:0]       BALUControl,             // ALU Control signals for B instructions in Execute Stage
-  input  logic             BMUActiveE,              // Bit manipulation instruction being executed
+  input  logic             W64,                      // W64-type instruction
+  input  logic [1:0]       BSelect,                  // Binary encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
+  input  logic [2:0]       ZBBSelect,                // ZBB mux select signal
+  input  logic [2:0]       Funct3,                   // Funct3 field of opcode indicates operation to perform
+  input  logic             LT,                       // less than flag
+  input  logic             LTU,                      // less than unsigned flag
+  input  logic [2:0]       BALUControl,              // ALU Control signals for B instructions in Execute Stage
+  input  logic             BMUActive,                // Bit manipulation instruction being executed
   input  logic [P.XLEN-1:0] PreALUResult, FullResult,// PreALUResult, FullResult signals
   output logic [P.XLEN-1:0] CondMaskB,               // B is conditionally masked for ZBS instructions
   output logic [P.XLEN-1:0] CondShiftA,              // A is conditionally shifted for ShAdd instructions
@@ -45,16 +45,16 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
   logic [P.XLEN-1:0] ZBBResult, ZBCResult;           // ZBB, ZBC Result
   logic [P.XLEN-1:0] MaskB;                          // BitMask of B
   logic [P.XLEN-1:0] RevA;                           // Bit-reversed A
-  logic             Rotate;                         // Indicates if it is Rotate instruction
-  logic             Mask;                           // Indicates if it is ZBS instruction
-  logic             PreShift;                       // Inidicates if it is sh1add, sh2add, sh3add instruction
-  logic [1:0]       PreShiftAmt;                    // Amount to Pre-Shift A 
+  logic             Rotate;                          // Indicates if it is Rotate instruction
+  logic             Mask;                            // Indicates if it is ZBS instruction
+  logic             PreShift;                        // Inidicates if it is sh1add, sh2add, sh3add instruction
+  logic [1:0]       PreShiftAmt;                     // Amount to Pre-Shift A 
   logic [P.XLEN-1:0] CondZextA;                      // A Conditional Extend Intermediary Signal
   logic [P.XLEN-1:0] ABMU, BBMU;                     // Gated data inputs to reduce BMU activity
 
   // gate data inputs to BMU to only operate when BMU is active
-  assign ABMU = A & {P.XLEN{BMUActiveE}};
-  assign BBMU = B & {P.XLEN{BMUActiveE}};
+  assign ABMU = A & {P.XLEN{BMUActive}};
+  assign BBMU = B & {P.XLEN{BMUActive}};
 
   // Extract control signals from bitmanip ALUControl.
   assign {Mask, PreShift} = BALUControl[1:0];
