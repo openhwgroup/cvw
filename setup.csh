@@ -46,7 +46,4 @@ extend PATH /usr/local/bin/verilator # Change this for your path to Verilator
 #set path = ($RISCV/imperas-riscv-tests/riscv-ovpsim-plus/bin/Linux64 $path)
 #setenv LD_LIBRARY_PATH $RISCV/imperas_riscv_tests/riscv-ovpsim-plus/bin/Linux64:$LD_LIBRARY_PATH # remove if no imperas
 
-# Verilator needs a larger stack to simulate CORE-V Wally
-limit stacksize unlimited
-
 echo "setup done"
