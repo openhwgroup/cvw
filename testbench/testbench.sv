@@ -285,7 +285,7 @@ module testbench;
     if (TEST == "coremark")
       if (dut.core.priv.priv.EcallFaultM) begin
         $display("Benchmark: coremark is done.");
-        $stop;
+        $finish;
       end
     if(Validate) begin
       if (TEST == "embench") begin
@@ -321,9 +321,14 @@ module testbench;
       if(errors > 0) totalerrors = totalerrors + 1;
       test = test + 1; // *** this probably needs to be moved.
       if (test == tests.size()) begin
-        if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
-        else $display("FAIL: %d test programs had errors", totalerrors);
-        $stop;
+        if (totalerrors == 0) begin
+          $display("SUCCESS! All tests ran without failures.");
+          $finish;
+	end
+        else begin
+          $display("FAIL: %d test programs had errors", totalerrors);
+          $stop;
+	end
       end
     end
   end
