@@ -957,23 +957,15 @@ module testbenchfp;
 	 $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Expected: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
 	 $stop;
       end
-      
-      // TestFloat sets the result to all 1's when there is an invalid result, however in 
-      // http://www.jhauser.us/arithmetic/TestFloat-3/doc/TestFloat-general.html it says
-      // for an unsigned integer result 0 is also okay
 
-      // TestFloat outputs 800... for both the largest integer values for both positive and negitive numbers but 
-      // the riscv spec specifies 2^31-1 for positive values out of range and NaNs ie 7fff...
-      else if ( ((UnitVal === `CVTINTUNIT) | (UnitVal === `CMPUNIT)) & ~FlagMatch ) begin
-	 // ResMatch & FlagMatch checks the result again.  It is checked within the
-	 // test again to avoid issues related when the values change tests (e.g., f16_eq_rne -> f16_eq_rz)
-	 if (~(ResMatch & FlagMatch)) begin
-	    errors += 1;
-	    $display("\nError in %s", Tests[TestNum]);
-	    $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);	 	 
-	    $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
-	    $stop;
-	 end
+      // Check for conversion and comparisons
+      else if (((UnitVal === `CVTINTUNIT) | (UnitVal === `CMPUNIT)) & 
+	       ~(ResMatch & FlagMatch) & (Ans[0] !== 1'bx)) begin      
+	 errors += 1;
+	 $display("\nError in %s", Tests[TestNum]);
+	 $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);	 	 
+	 $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
+	 $stop;
       end
 
       if (TestVectors[VectorNum][0] === 1'bx & Tests[TestNum] !== "") begin // if reached the eof
