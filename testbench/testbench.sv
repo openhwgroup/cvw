@@ -35,7 +35,7 @@ module testbench;
   /* verilator lint_off WIDTHTRUNC */
   /* verilator lint_off WIDTHEXPAND */
   parameter DEBUG=0;
-  parameter string TEST="arch64i";
+  parameter string TEST="arch64m";
   parameter PrintHPMCounters=0;
   parameter BPRED_LOGGER=0;
   parameter I_CACHE_ADDR_LOGGER=0;
