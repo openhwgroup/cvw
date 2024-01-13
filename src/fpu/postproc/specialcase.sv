@@ -266,34 +266,28 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
   // integer result selection        
   ///////////////////////////////////////////////////////////////////////////////////////        
 
- // Causes undefined behavior for invalid:
-  // unsigned: if invalid (e.g., negative fp to unsigned int, result should overflow and
-  //           overflows to the maximum value 
-  // signed: if invalid, result should overflow to maximum negative value 
-  //         but is undefined and used for information only   
-
   // select the overflow integer res
   //      - negitive infinity and out of range negitive input
-  //                 |  int   |  long  |
-  //          signed | -2^31  | -2^63  |
-  //        unsigned | 2^32-1 | 2^64-1 |
+  //                 |  int  |  long  |
+  //          signed | -2^31 | -2^63  |
+  //        unsigned |   0   |    0   |
   //
   //      - positive infinity and out of range positive input and NaNs
   //                 |   int  |  long  |
-  //          signed | -2^31  |-2^63   |
+  //          signed | 2^31-1 | 2^63-1 |
   //        unsigned | 2^32-1 | 2^64-1 |
   //
-  //      other: 32 bit unsigned res should be sign extended as if it were a signed number
+  //      other: 32 bit unsinged res should be sign extended as if it were a signed number
   always_comb
     if(Signed)
       if(Xs&~NaNIn) // signed negitive
         if(Int64)   OfIntRes = {1'b1, {P.XLEN-1{1'b0}}};
         else        OfIntRes = {{P.XLEN-32{1'b1}}, 1'b1, {31{1'b0}}};
       else          // signed positive
-        if(Int64)   OfIntRes = {1'b1, {P.XLEN-1{1'b0}}}; 
-        else        OfIntRes = {{P.XLEN-32{1'b1}}, 1'b1, {31{1'b0}}}; 
+        if(Int64)   OfIntRes = {1'b0, {P.XLEN-1{1'b1}}};
+        else        OfIntRes = {{P.XLEN-32{1'b0}}, 1'b0, {31{1'b1}}};
     else
-      if(Xs&~NaNIn) OfIntRes = {P.XLEN{1'b1}}; // unsigned negitive 
+      if(Xs&~NaNIn) OfIntRes = {P.XLEN{1'b0}}; // unsigned negitive
       else          OfIntRes = {P.XLEN{1'b1}}; // unsigned positive
 
   // select the integer output
