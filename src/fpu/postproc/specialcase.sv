@@ -266,12 +266,36 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
   // integer result selection        
   ///////////////////////////////////////////////////////////////////////////////////////        
 
- // Causes undefined behavior for invalid:
+  // Causes undefined behavior for invalid:
+
+  // Invalid cases are different for IEEE 754 vs. RISC-V.  For RISC-V, typical results are used
   // unsigned: if invalid (e.g., negative fp to unsigned int, result should overflow and
   //           overflows to the maximum value 
   // signed: if invalid, result should overflow to maximum negative value 
-  //         but is undefined and used for information only   
+  //         but is undefined and used for information only
+  // The IEEE 754 result comes from values in TestFloat for x86_64
+   
+  // Nothing from the C standard will justify the choices made by one ISA or 
+  // another regarding the behavior for out-of-range values of the floating-point-to-integer
+  // conversion, because the C standard leaves what happens then “Undefined Behavior” 
+  // (with the caveat that it's only UB if the result is out of range, 
+  // so converting -0.9999f to an unsigned integer must produce 0u).
 
+  // “Undefined Behavior” means that the execution can continue with an 
+  // arbitrary value when this kind of conversion happens, or the program may crash, 
+  // or any other thing. The phrase “nasal demons” has been used for decades to 
+  // emphasize that the C standard does not place any requirement on what happens 
+  // when a C program runs into UB.
+
+  // Other programming languages are less flippant in their use of Undefined Behavior, 
+  // for instance Java. Since the goal of the people defining a new ISA is to make all 
+  // programs as fast as possible regardless of the programming language they are developed in, 
+  // the people designing RISC-V may have made the choices they made in order to ensure that the 
+  // conversion from floating-point to integer in Java, or a selection of other popular 
+  // programming languages, could be translated to the shortest, fastest possible sequence of 
+  // instructions in RISC-V.
+   
+  // IEEE 754
   // select the overflow integer res
   //      - negitive infinity and out of range negitive input
   //                 |  int   |  long  |
@@ -284,17 +308,48 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
   //        unsigned | 2^32-1 | 2^64-1 |
   //
   //      other: 32 bit unsigned res should be sign extended as if it were a signed number
-  always_comb
-    if(Signed)
-      if(Xs&~NaNIn) // signed negitive
-        if(Int64)   OfIntRes = {1'b1, {P.XLEN-1{1'b0}}};
-        else        OfIntRes = {{P.XLEN-32{1'b1}}, 1'b1, {31{1'b0}}};
-      else          // signed positive
-        if(Int64)   OfIntRes = {1'b1, {P.XLEN-1{1'b0}}}; 
-        else        OfIntRes = {{P.XLEN-32{1'b1}}, 1'b1, {31{1'b0}}}; 
-    else
-      if(Xs&~NaNIn) OfIntRes = {P.XLEN{1'b1}}; // unsigned negitive 
-      else          OfIntRes = {P.XLEN{1'b1}}; // unsigned positive
+
+  // RISC-V
+  // select the overflow integer res
+  //      - negitive infinity and out of range negitive input
+  //                 |  int  |  long  |
+  //          signed | -2^31 | -2^63  |
+  //        unsigned |   0   |    0   |
+  //
+  //      - positive infinity and out of range positive input and NaNs
+  //                 |   int  |  long  |
+  //          signed | 2^31-1 | 2^63-1 |
+  //        unsigned | 2^32-1 | 2^64-1 |
+  //
+  //      other: 32 bit unsinged res should be sign extended as if it were a signed number
+
+   if(P.IEEE754) begin   
+      always_comb
+	if(Signed)
+	  if(Xs&~NaNIn) // signed negitive
+            if(Int64)   OfIntRes = {1'b1, {P.XLEN-1{1'b0}}};
+            else        OfIntRes = {{P.XLEN-32{1'b1}}, 1'b1, {31{1'b0}}};
+	  else          // signed positive
+            if(Int64)   OfIntRes = {1'b1, {P.XLEN-1{1'b0}}}; 
+            else        OfIntRes = {{P.XLEN-32{1'b1}}, 1'b1, {31{1'b0}}}; 
+	else
+	  if(Xs&~NaNIn) OfIntRes = {P.XLEN{1'b1}}; // unsigned negitive 
+	  else          OfIntRes = {P.XLEN{1'b1}}; // unsigned positive
+       end // if (P.IEEE754)
+   else begin
+      always_comb
+	if(Signed)
+	  if(Xs&~NaNIn) // signed negitive
+            if(Int64)   OfIntRes = {1'b1, {P.XLEN-1{1'b0}}};
+            else        OfIntRes = {{P.XLEN-32{1'b1}}, 1'b1, {31{1'b0}}};
+	  else          // signed positive
+            if(Int64)   OfIntRes = {1'b0, {P.XLEN-1{1'b1}}};
+            else        OfIntRes = {{P.XLEN-32{1'b0}}, 1'b0, {31{1'b1}}};
+	else
+	  if(Xs&~NaNIn) OfIntRes = {P.XLEN{1'b0}}; // unsigned negitive
+	  else          OfIntRes = {P.XLEN{1'b1}}; // unsigned positive
+       end // else: !if(P.IEEE754)  
+   
 
   // select the integer output
   //      - if the input is invalid (out of bounds NaN or Inf) then output overflow res
