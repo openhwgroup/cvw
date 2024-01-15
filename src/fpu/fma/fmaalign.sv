@@ -45,7 +45,7 @@ module fmaalign import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////////////////////////////////////////
 
   // determine the shift count for alignment
-  //      - negitive means Z is larger, so shift Z left
+  //      - negative means Z is larger, so shift Z left
   //      - positive means the product is larger, so shift Z right
   // This could have been done using Pe, but ACnt is on the critical path so we replicate logic for speed
   assign ACnt = {2'b0, Xe} + {2'b0, Ye} - {2'b0, (P.NE)'(P.BIAS)} + (P.NE+2)'(P.NF+2) - {2'b0, Ze};
