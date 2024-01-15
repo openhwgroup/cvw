@@ -277,7 +277,7 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
    
   // IEEE 754
   // select the overflow integer res
-  //      - negitive infinity and out of range negitive input
+  //      - negative infinity and out of range negative input
   //                 |  int   |  long  |
   //          signed | -2^31  | -2^63  |
   //        unsigned | 2^32-1 | 2^64-1 |
@@ -291,7 +291,7 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
 
   // RISC-V
   // select the overflow integer res
-  //      - negitive infinity and out of range negitive input
+  //      - negative infinity and out of range negative input
   //                 |  int  |  long  |
   //          signed | -2^31 | -2^63  |
   //        unsigned |   0   |    0   |
@@ -303,38 +303,37 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
   //
   //      other: 32 bit unsinged res should be sign extended as if it were a signed number
 
-   if(P.IEEE754) begin   
+    if(P.IEEE754) begin   
       always_comb
-	if(Signed)
-	  if(Xs&~NaNIn) // signed negitive
-            if(Int64)   OfIntRes = {1'b1, {P.XLEN-1{1'b0}}};
-            else        OfIntRes = {{P.XLEN-32{1'b1}}, 1'b1, {31{1'b0}}};
-	  else          // signed positive
-            if(Int64)   OfIntRes = {1'b1, {P.XLEN-1{1'b0}}}; 
-            else        OfIntRes = {{P.XLEN-32{1'b1}}, 1'b1, {31{1'b0}}}; 
-	else
-	  if(Xs&~NaNIn) OfIntRes = {P.XLEN{1'b1}}; // unsigned negitive 
-	  else          OfIntRes = {P.XLEN{1'b1}}; // unsigned positive
-       end // if (P.IEEE754)
-   else begin
+        if(Signed)
+            if(Xs&~NaNIn) // signed negative
+                    if(Int64)   OfIntRes = {1'b1, {P.XLEN-1{1'b0}}};
+                    else        OfIntRes = {{P.XLEN-32{1'b1}}, 1'b1, {31{1'b0}}};
+            else          // signed positive
+                    if(Int64)   OfIntRes = {1'b1, {P.XLEN-1{1'b0}}}; 
+                    else        OfIntRes = {{P.XLEN-32{1'b1}}, 1'b1, {31{1'b0}}}; 
+        else
+            if(Xs&~NaNIn) OfIntRes = {P.XLEN{1'b1}}; // unsigned negative 
+            else          OfIntRes = {P.XLEN{1'b1}}; // unsigned positive
+    end else begin
       always_comb
-	if(Signed)
-	  if(Xs&~NaNIn) // signed negitive
-            if(Int64)   OfIntRes = {1'b1, {P.XLEN-1{1'b0}}};
-            else        OfIntRes = {{P.XLEN-32{1'b1}}, 1'b1, {31{1'b0}}};
-	  else          // signed positive
-            if(Int64)   OfIntRes = {1'b0, {P.XLEN-1{1'b1}}};
-            else        OfIntRes = {{P.XLEN-32{1'b0}}, 1'b0, {31{1'b1}}};
-	else
-	  if(Xs&~NaNIn) OfIntRes = {P.XLEN{1'b0}}; // unsigned negitive
-	  else          OfIntRes = {P.XLEN{1'b1}}; // unsigned positive
-       end // else: !if(P.IEEE754)  
+        if(Signed)
+            if(Xs&~NaNIn) // signed negative
+                    if(Int64)   OfIntRes = {1'b1, {P.XLEN-1{1'b0}}};
+                    else        OfIntRes = {{P.XLEN-32{1'b1}}, 1'b1, {31{1'b0}}};
+            else          // signed positive
+                    if(Int64)   OfIntRes = {1'b0, {P.XLEN-1{1'b1}}};
+                    else        OfIntRes = {{P.XLEN-32{1'b0}}, 1'b0, {31{1'b1}}};
+        else
+            if(Xs&~NaNIn) OfIntRes = {P.XLEN{1'b0}}; // unsigned negative
+            else          OfIntRes = {P.XLEN{1'b1}}; // unsigned positive
+    end  
    
 
   // select the integer output
   //      - if the input is invalid (out of bounds NaN or Inf) then output overflow res
   //      - if the input underflows
-  //          - if rounding and signed opperation and negitive input, output -1
+  //          - if rounding and signed opperation and negative input, output -1
   //          - otherwise output a rounded 0
   //      - otherwise output the normal res (trmined and sign extended if nessisary)
   always_comb

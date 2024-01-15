@@ -882,98 +882,88 @@ module testbenchfp;
       //    - the sign of the NaN does not matter for the opperations being tested
       //    - when 2 or more NaNs are inputed the NaN that is propigated doesn't matter
       if (UnitVal !== `CVTFPUNIT & UnitVal !== `CVTINTUNIT)
-	case (FmtVal)
-          2'b11: NaNGood =  (((P.IEEE754==0)&AnsNaN&(Res === {1'b0, {P.Q_NE+1{1'b1}}, {P.Q_NF-1{1'b0}}})) |
-                             (AnsFlg[4]&(Res[P.Q_LEN-2:0] === {{P.Q_NE+1{1'b1}}, {P.Q_NF-1{1'b0}}})) |
-                             (XNaN&(Res[P.Q_LEN-2:0] === {X[P.Q_LEN-2:P.Q_NF],1'b1,X[P.Q_NF-2:0]})) | 
-                             (YNaN&(Res[P.Q_LEN-2:0] === {Y[P.Q_LEN-2:P.Q_NF],1'b1,Y[P.Q_NF-2:0]})) |
-                             (ZNaN&(Res[P.Q_LEN-2:0] === {Z[P.Q_LEN-2:P.Q_NF],1'b1,Z[P.Q_NF-2:0]})));
-          2'b01: NaNGood =  (((P.IEEE754==0)&AnsNaN&(Res[P.D_LEN-1:0] === {1'b0, {P.D_NE+1{1'b1}}, {P.D_NF-1{1'b0}}})) |
-                             (AnsFlg[4]&(Res[P.D_LEN-2:0] === {{P.D_NE+1{1'b1}}, {P.D_NF-1{1'b0}}})) |
-                             (XNaN&(Res[P.D_LEN-2:0] === {X[P.D_LEN-2:P.D_NF],1'b1,X[P.D_NF-2:0]})) | 
-                             (YNaN&(Res[P.D_LEN-2:0] === {Y[P.D_LEN-2:P.D_NF],1'b1,Y[P.D_NF-2:0]})) |
-                             (ZNaN&(Res[P.D_LEN-2:0] === {Z[P.D_LEN-2:P.D_NF],1'b1,Z[P.D_NF-2:0]})));
-          2'b00: NaNGood =  (((P.IEEE754==0)&AnsNaN&(Res[P.S_LEN-1:0] === {1'b0, {P.S_NE+1{1'b1}}, {P.S_NF-1{1'b0}}})) |
-                             (AnsFlg[4]&(Res[P.S_LEN-2:0] === {{P.S_NE+1{1'b1}}, {P.S_NF-1{1'b0}}})) |
-                             (XNaN&(Res[P.S_LEN-2:0] === {X[P.S_LEN-2:P.S_NF],1'b1,X[P.S_NF-2:0]})) | 
-                             (YNaN&(Res[P.S_LEN-2:0] === {Y[P.S_LEN-2:P.S_NF],1'b1,Y[P.S_NF-2:0]})) |
-                             (ZNaN&(Res[P.S_LEN-2:0] === {Z[P.S_LEN-2:P.S_NF],1'b1,Z[P.S_NF-2:0]})));
-          2'b10: NaNGood =  (((P.IEEE754==0)&AnsNaN&(Res[P.H_LEN-1:0] === {1'b0, {P.H_NE+1{1'b1}}, {P.H_NF-1{1'b0}}})) |
-                             (AnsFlg[4]&(Res[P.H_LEN-2:0] === {{P.H_NE+1{1'b1}}, {P.H_NF-1{1'b0}}})) |
-                             (XNaN&(Res[P.H_LEN-2:0] === {X[P.H_LEN-2:P.H_NF],1'b1,X[P.H_NF-2:0]})) | 
-                             (YNaN&(Res[P.H_LEN-2:0] === {Y[P.H_LEN-2:P.H_NF],1'b1,Y[P.H_NF-2:0]})) |
-                             (ZNaN&(Res[P.H_LEN-2:0] === {Z[P.H_LEN-2:P.H_NF],1'b1,Z[P.H_NF-2:0]})));
-	endcase
-      else if (UnitVal === `CVTFPUNIT) // if converting from floating point to floating point OpCtrl contains the final FP format
-	case (OpCtrlVal[1:0]) 
-          2'b11: NaNGood = (((P.IEEE754==0)&AnsNaN&(Res === {1'b0, {P.Q_NE+1{1'b1}}, {P.Q_NF-1{1'b0}}})) |
-                            (AnsFlg[4]&(Res[P.Q_LEN-2:0] === {{P.Q_NE+1{1'b1}}, {P.Q_NF-1{1'b0}}})) |
-                            (AnsNaN&(Res[P.Q_LEN-2:0] === Ans[P.Q_LEN-2:0])) | 
-                            (XNaN&(Res[P.Q_LEN-2:0] === {X[P.Q_LEN-2:P.Q_NF],1'b1,X[P.Q_NF-2:0]})) | 
-                            (YNaN&(Res[P.Q_LEN-2:0] === {Y[P.Q_LEN-2:P.Q_NF],1'b1,Y[P.Q_NF-2:0]})));
-          2'b01: NaNGood = (((P.IEEE754==0)&AnsNaN&(Res[P.D_LEN-1:0] === {1'b0, {P.D_NE+1{1'b1}}, {P.D_NF-1{1'b0}}})) |
-                            (AnsFlg[4]&(Res[P.D_LEN-2:0] === {{P.D_NE+1{1'b1}}, {P.D_NF-1{1'b0}}})) |
-                            (AnsNaN&(Res[P.D_LEN-2:0] === Ans[P.D_LEN-2:0])) | 
-                            (XNaN&(Res[P.D_LEN-2:0] === {X[P.D_LEN-2:P.D_NF],1'b1,X[P.D_NF-2:0]})) | 
-                            (YNaN&(Res[P.D_LEN-2:0] === {Y[P.D_LEN-2:P.D_NF],1'b1,Y[P.D_NF-2:0]})));
-          2'b00: NaNGood = (((P.IEEE754==0)&AnsNaN&(Res[P.S_LEN-1:0] === {1'b0, {P.S_NE+1{1'b1}}, {P.S_NF-1{1'b0}}})) |
-                            (AnsFlg[4]&(Res[P.S_LEN-2:0] === {{P.S_NE+1{1'b1}}, {P.S_NF-1{1'b0}}})) |
-                            (AnsNaN&(Res[P.S_LEN-2:0] === Ans[P.S_LEN-2:0])) | 
-                            (XNaN&(Res[P.S_LEN-2:0] === {X[P.S_LEN-2:P.S_NF],1'b1,X[P.S_NF-2:0]})) | 
-                            (YNaN&(Res[P.S_LEN-2:0] === {Y[P.S_LEN-2:P.S_NF],1'b1,Y[P.S_NF-2:0]})));
-          2'b10: NaNGood = (((P.IEEE754==0)&AnsNaN&(Res[P.H_LEN-1:0] === {1'b0, {P.H_NE+1{1'b1}}, {P.H_NF-1{1'b0}}})) |
-                            (AnsFlg[4]&(Res[P.H_LEN-2:0] === {{P.H_NE+1{1'b1}}, {P.H_NF-1{1'b0}}})) |
-                            (AnsNaN&(Res[P.H_LEN-2:0] === Ans[P.H_LEN-2:0])) | 
-                            (XNaN&(Res[P.H_LEN-2:0] === {X[P.H_LEN-2:P.H_NF],1'b1,X[P.H_NF-2:0]})) | 
-                            (YNaN&(Res[P.H_LEN-2:0] === {Y[P.H_LEN-2:P.H_NF],1'b1,Y[P.H_NF-2:0]})));
-	endcase
-      else NaNGood = 1'b0; // integers can't be NaNs
+      case (FmtVal)
+            2'b11: NaNGood =  (((P.IEEE754==0)&AnsNaN&(Res === {1'b0, {P.Q_NE+1{1'b1}}, {P.Q_NF-1{1'b0}}})) |
+                              (AnsFlg[4]&(Res[P.Q_LEN-2:0] === {{P.Q_NE+1{1'b1}}, {P.Q_NF-1{1'b0}}})) |
+                              (XNaN&(Res[P.Q_LEN-2:0] === {X[P.Q_LEN-2:P.Q_NF],1'b1,X[P.Q_NF-2:0]})) | 
+                              (YNaN&(Res[P.Q_LEN-2:0] === {Y[P.Q_LEN-2:P.Q_NF],1'b1,Y[P.Q_NF-2:0]})) |
+                              (ZNaN&(Res[P.Q_LEN-2:0] === {Z[P.Q_LEN-2:P.Q_NF],1'b1,Z[P.Q_NF-2:0]})));
+            2'b01: NaNGood =  (((P.IEEE754==0)&AnsNaN&(Res[P.D_LEN-1:0] === {1'b0, {P.D_NE+1{1'b1}}, {P.D_NF-1{1'b0}}})) |
+                              (AnsFlg[4]&(Res[P.D_LEN-2:0] === {{P.D_NE+1{1'b1}}, {P.D_NF-1{1'b0}}})) |
+                              (XNaN&(Res[P.D_LEN-2:0] === {X[P.D_LEN-2:P.D_NF],1'b1,X[P.D_NF-2:0]})) | 
+                              (YNaN&(Res[P.D_LEN-2:0] === {Y[P.D_LEN-2:P.D_NF],1'b1,Y[P.D_NF-2:0]})) |
+                              (ZNaN&(Res[P.D_LEN-2:0] === {Z[P.D_LEN-2:P.D_NF],1'b1,Z[P.D_NF-2:0]})));
+            2'b00: NaNGood =  (((P.IEEE754==0)&AnsNaN&(Res[P.S_LEN-1:0] === {1'b0, {P.S_NE+1{1'b1}}, {P.S_NF-1{1'b0}}})) |
+                              (AnsFlg[4]&(Res[P.S_LEN-2:0] === {{P.S_NE+1{1'b1}}, {P.S_NF-1{1'b0}}})) |
+                              (XNaN&(Res[P.S_LEN-2:0] === {X[P.S_LEN-2:P.S_NF],1'b1,X[P.S_NF-2:0]})) | 
+                              (YNaN&(Res[P.S_LEN-2:0] === {Y[P.S_LEN-2:P.S_NF],1'b1,Y[P.S_NF-2:0]})) |
+                              (ZNaN&(Res[P.S_LEN-2:0] === {Z[P.S_LEN-2:P.S_NF],1'b1,Z[P.S_NF-2:0]})));
+            2'b10: NaNGood =  (((P.IEEE754==0)&AnsNaN&(Res[P.H_LEN-1:0] === {1'b0, {P.H_NE+1{1'b1}}, {P.H_NF-1{1'b0}}})) |
+                              (AnsFlg[4]&(Res[P.H_LEN-2:0] === {{P.H_NE+1{1'b1}}, {P.H_NF-1{1'b0}}})) |
+                              (XNaN&(Res[P.H_LEN-2:0] === {X[P.H_LEN-2:P.H_NF],1'b1,X[P.H_NF-2:0]})) | 
+                              (YNaN&(Res[P.H_LEN-2:0] === {Y[P.H_LEN-2:P.H_NF],1'b1,Y[P.H_NF-2:0]})) |
+                              (ZNaN&(Res[P.H_LEN-2:0] === {Z[P.H_LEN-2:P.H_NF],1'b1,Z[P.H_NF-2:0]})));
+      endcase
+         else if (UnitVal === `CVTFPUNIT) // if converting from floating point to floating point OpCtrl contains the final FP format
+      case (OpCtrlVal[1:0]) 
+            2'b11: NaNGood = (((P.IEEE754==0)&AnsNaN&(Res === {1'b0, {P.Q_NE+1{1'b1}}, {P.Q_NF-1{1'b0}}})) |
+                              (AnsFlg[4]&(Res[P.Q_LEN-2:0] === {{P.Q_NE+1{1'b1}}, {P.Q_NF-1{1'b0}}})) |
+                              (AnsNaN&(Res[P.Q_LEN-2:0] === Ans[P.Q_LEN-2:0])) | 
+                              (XNaN&(Res[P.Q_LEN-2:0] === {X[P.Q_LEN-2:P.Q_NF],1'b1,X[P.Q_NF-2:0]})) | 
+                              (YNaN&(Res[P.Q_LEN-2:0] === {Y[P.Q_LEN-2:P.Q_NF],1'b1,Y[P.Q_NF-2:0]})));
+            2'b01: NaNGood = (((P.IEEE754==0)&AnsNaN&(Res[P.D_LEN-1:0] === {1'b0, {P.D_NE+1{1'b1}}, {P.D_NF-1{1'b0}}})) |
+                              (AnsFlg[4]&(Res[P.D_LEN-2:0] === {{P.D_NE+1{1'b1}}, {P.D_NF-1{1'b0}}})) |
+                              (AnsNaN&(Res[P.D_LEN-2:0] === Ans[P.D_LEN-2:0])) | 
+                              (XNaN&(Res[P.D_LEN-2:0] === {X[P.D_LEN-2:P.D_NF],1'b1,X[P.D_NF-2:0]})) | 
+                              (YNaN&(Res[P.D_LEN-2:0] === {Y[P.D_LEN-2:P.D_NF],1'b1,Y[P.D_NF-2:0]})));
+            2'b00: NaNGood = (((P.IEEE754==0)&AnsNaN&(Res[P.S_LEN-1:0] === {1'b0, {P.S_NE+1{1'b1}}, {P.S_NF-1{1'b0}}})) |
+                              (AnsFlg[4]&(Res[P.S_LEN-2:0] === {{P.S_NE+1{1'b1}}, {P.S_NF-1{1'b0}}})) |
+                              (AnsNaN&(Res[P.S_LEN-2:0] === Ans[P.S_LEN-2:0])) | 
+                              (XNaN&(Res[P.S_LEN-2:0] === {X[P.S_LEN-2:P.S_NF],1'b1,X[P.S_NF-2:0]})) | 
+                              (YNaN&(Res[P.S_LEN-2:0] === {Y[P.S_LEN-2:P.S_NF],1'b1,Y[P.S_NF-2:0]})));
+            2'b10: NaNGood = (((P.IEEE754==0)&AnsNaN&(Res[P.H_LEN-1:0] === {1'b0, {P.H_NE+1{1'b1}}, {P.H_NF-1{1'b0}}})) |
+                              (AnsFlg[4]&(Res[P.H_LEN-2:0] === {{P.H_NE+1{1'b1}}, {P.H_NF-1{1'b0}}})) |
+                              (AnsNaN&(Res[P.H_LEN-2:0] === Ans[P.H_LEN-2:0])) | 
+                              (XNaN&(Res[P.H_LEN-2:0] === {X[P.H_LEN-2:P.H_NF],1'b1,X[P.H_NF-2:0]})) | 
+                              (YNaN&(Res[P.H_LEN-2:0] === {Y[P.H_LEN-2:P.H_NF],1'b1,Y[P.H_NF-2:0]})));
+      endcase
+         else NaNGood = 1'b0; // integers can't be NaNs
 
-      
-      ///////////////////////////////////////////////////////////////////////////////////////////////
+         
+         ///////////////////////////////////////////////////////////////////////////////////////////////
 
-      //     ||||||| |||    ||| ||||||| ||||||| |||   |||
-      //     |||     |||    ||| |||     |||     |||  |||
-      //     |||     |||||||||| ||||||| |||     ||||||
-      //     |||     |||    ||| |||     |||     |||  |||
-      //     ||||||| |||    ||| ||||||| ||||||| |||    |||
+         //     ||||||| |||    ||| ||||||| ||||||| |||   |||
+         //     |||     |||    ||| |||     |||     |||  |||
+         //     |||     |||||||||| ||||||| |||     ||||||
+         //     |||     |||    ||| |||     |||     |||  |||
+         //     ||||||| |||    ||| ||||||| ||||||| |||    |||
 
-      ///////////////////////////////////////////////////////////////////////////////////////////////
+         ///////////////////////////////////////////////////////////////////////////////////////////////
 
-      // check if result is correct
-      //  wait till the division result is done or one extra cylcle for early termination (to simulate the EM pipline stage)
-      assign ResMatch = ((Res === Ans) | NaNGood | (NaNGood === 1'bx));
-      assign FlagMatch = ((ResFlg === AnsFlg) | (AnsFlg === 5'bx));
-      assign divsqrtop = (OpCtrlVal == `SQRT_OPCTRL) | (OpCtrlVal == `DIV_OPCTRL);
-      assign FMAop = (OpCtrlVal == `FMAUNIT);  
-      assign DivDone = OldFDivBusyE & ~FDivBusyE;
+         // check if result is correct
+         //  wait till the division result is done or one extra cylcle for early termination (to simulate the EM pipline stage)
+         assign ResMatch = ((Res === Ans) | NaNGood | (NaNGood === 1'bx));
+         assign FlagMatch = ((ResFlg === AnsFlg) | (AnsFlg === 5'bx));
+         assign divsqrtop = (OpCtrlVal == `SQRT_OPCTRL) | (OpCtrlVal == `DIV_OPCTRL);
+         assign FMAop = (OpCtrlVal == `FMAUNIT);  
+         assign DivDone = OldFDivBusyE & ~FDivBusyE;
 
-      // Maybe change OpCtrl but for now just look at TEST for fma test
-      assign CheckNow = ((DivDone | ~divsqrtop) | (TEST == "add" | TEST == "fma" | TEST == "sub")) & (UnitVal !== `CVTINTUNIT) & (UnitVal !== `CMPUNIT);
-      if (~(ResMatch & FlagMatch) & CheckNow) begin
-	 errors += 1;
-	 $display("\nError in %s", Tests[TestNum]);
-	 $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);	 
-	 $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Expected: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
-	 $stop;
-      end
-      
-      // TestFloat sets the result to all 1's when there is an invalid result, however in 
-      // http://www.jhauser.us/arithmetic/TestFloat-3/doc/TestFloat-general.html it says
-      // for an unsigned integer result 0 is also okay
-
-      // TestFloat outputs 800... for both the largest integer values for both positive and negitive numbers but 
-      // the riscv spec specifies 2^31-1 for positive values out of range and NaNs ie 7fff...
-      else if ( ((UnitVal === `CVTINTUNIT) | (UnitVal === `CMPUNIT)) & ~FlagMatch ) begin
-	 // ResMatch & FlagMatch checks the result again.  It is checked within the
-	 // test again to avoid issues related when the values change tests (e.g., f16_eq_rne -> f16_eq_rz)
-	 if (~(ResMatch & FlagMatch)) begin
-	    errors += 1;
-	    $display("\nError in %s", Tests[TestNum]);
-	    $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);	 	 
-	    $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
-	    $stop;
-	 end
+         // Maybe change OpCtrl but for now just look at TEST for fma test
+         assign CheckNow = ((DivDone | ~divsqrtop) | (TEST == "add" | TEST == "fma" | TEST == "sub")) & (UnitVal !== `CVTINTUNIT) & (UnitVal !== `CMPUNIT);
+         if (~(ResMatch & FlagMatch) & CheckNow) begin
+            errors += 1;
+            $display("\nError in %s", Tests[TestNum]);
+            $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);	 
+            $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Expected: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
+            $stop;
+         end else if (((UnitVal === `CVTINTUNIT) | (UnitVal === `CMPUNIT)) & 
+            ~(ResMatch & FlagMatch) & (Ans[0] !== 1'bx)) begin // Check for conversion and comparisons  
+               errors += 1;
+               $display("\nError in %s", Tests[TestNum]);
+               $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);	 	 
+               $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
+               $stop;
+         end
       end
 
       if (TestVectors[VectorNum][0] === 1'bx & Tests[TestNum] !== "") begin // if reached the eof

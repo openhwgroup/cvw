@@ -42,8 +42,8 @@ module fmaadd import cvw::*;  #(parameter cvw_t P) (
   output logic [3*P.NF+3:0]    Sm          // the positive sum
 );
 
-  logic [3*P.NF+3:0]    PreSum, NegPreSum; // possibly negitive sum
-  logic                 NegSum;            // was the sum negitive
+  logic [3*P.NF+3:0]    PreSum, NegPreSum; // possibly negative sum
+  logic                 NegSum;            // was the sum negative
 
   ///////////////////////////////////////////////////////////////////////////////
   // Addition
@@ -54,8 +54,8 @@ module fmaadd import cvw::*;  #(parameter cvw_t P) (
   // Kill the product if the product is too small to effect the addition (determined in fma1.sv)
   assign PmKilled = {2*P.NF+2{~KillProd}}&Pm;
   // Do the addition
-  //      - calculate a positive and negitive sum in parallel
-  // if there was a small negitive number killed in the alignment stage one needs to be subtracted from the sum
+  //      - calculate a positive and negative sum in parallel
+  // if there was a small negative number killed in the alignment stage one needs to be subtracted from the sum
   //      prod - addend where some of the addend is put into the sticky bit then don't add +1 from negation 
   //          ie ~(InvA&ASticky&~KillProd)&InvA = (~ASticky|KillProd)&InvA
   //      addend - prod where product is killed (and not exactly zero) then don't add +1 from negation 
@@ -66,10 +66,10 @@ module fmaadd import cvw::*;  #(parameter cvw_t P) (
     
   // Choose the positive sum and accompanying LZA result.
   assign Sm = NegSum ? NegPreSum : PreSum;
-  // is the result negitive
-  //  if p - z is the Sum negitive
+  // is the result negative
+  //  if p - z is the Sum negative
   //  if -p + z is the Sum positive
-  //  if -p - z then the Sum is negitive
+  //  if -p - z then the Sum is negative
   assign Ss = NegSum^Ps; 
   assign Se = KillProd ? {2'b0, Ze} : Pe;
 endmodule

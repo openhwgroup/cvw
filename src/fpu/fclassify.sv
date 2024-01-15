@@ -37,7 +37,7 @@ module fclassify import cvw::*;  #(parameter cvw_t P) (
 );
 
   logic PInf, PZero, PNorm, PSubnorm;     // is the input a positive infinity/zero/normal/subnormal
-  logic NInf, NZero, NNorm, NSubnorm;     // is the input a negitive infinity/zero/normal/subnormal
+  logic NInf, NZero, NNorm, NSubnorm;     // is the input a negative infinity/zero/normal/subnormal
   logic XNorm;                            // is the input normal
   
   // determine the sub categories

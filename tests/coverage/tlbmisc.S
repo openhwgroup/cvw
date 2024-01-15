@@ -40,6 +40,10 @@ main:
     sw t5, 0(t0)    
     fence.i
 
+    # Test not being able to write illegal SATP mode 
+    li t5, 0xA000000000080010  
+    csrw satp, t5
+
     # Page table root address at 0x80010000; SV48
     li t5, 0x9000000000080010  
     csrw satp, t5
