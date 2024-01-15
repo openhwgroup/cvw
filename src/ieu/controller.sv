@@ -370,7 +370,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   // Fences
   // Ordinary fence is presently a nop
   // fence.i flushes the D$ and invalidates the I$ if Zifencei is supported and I$ is implemented
-  if (P.ZIFENCEI_SUPPORTED & P.ICACHE_SUPPORTED) begin:fencei
+  if (P.ZIFENCEI_SUPPORTED & (P.ICACHE_SUPPORTED | P.DCACHE_SUPPORTED)) begin:fencei
     logic FenceID;
     assign FenceID = FenceXD & (Funct3D == 3'b001); // is it a FENCE.I instruction?
     assign InvalidateICacheD = FenceID;
