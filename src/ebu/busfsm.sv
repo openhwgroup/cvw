@@ -38,6 +38,7 @@ module busfsm #(
   input  logic       Stall,        // Core pipeline is stalled
   input  logic       Flush,        // Pipeline stage flush. Prevents bus transaction from starting
   input  logic [1:0] BusRW,        // Memory operation read/write control: 10: read, 01: write
+  input  logic       BusAtomic,    // Uncache atomic memory operation
   output logic       CaptureEn,    // Enable updating the Fetch buffer with valid data from HRDATA
   output logic       BusStall,     // Bus is busy with an in flight memory operation
   output logic       BusCommitted, // Bus is busy with an in flight memory operation and it is not safe to take an interrupt
@@ -47,7 +48,7 @@ module busfsm #(
   output logic       HWRITE        // AHB 0: Read operation 1: Write operation 
 );
   
-  typedef enum logic [2:0] {ADR_PHASE, DATA_PHASE, MEM3}                                             busstatetype;
+  typedef enum logic [2:0] {ADR_PHASE, DATA_PHASE, MEM3, ATOMIC_PHASE} busstatetype;
   typedef enum logic [1:0] {AHB_IDLE = 2'b00, AHB_BUSY = 2'b01, AHB_NONSEQ = 2'b10, AHB_SEQ = 2'b11} ahbtranstype;
 
   busstatetype CurrState, NextState;
@@ -58,13 +59,16 @@ module busfsm #(
   
   always_comb begin
       case(CurrState)
-        ADR_PHASE:  if(HREADY & |BusRW) NextState = DATA_PHASE;
-                    else                NextState = ADR_PHASE;
-        DATA_PHASE: if(HREADY)          NextState = MEM3;
-                    else                NextState = DATA_PHASE;
-        MEM3:       if(Stall)           NextState = MEM3;
-                    else                NextState = ADR_PHASE;
-        default:                        NextState = ADR_PHASE;
+        ADR_PHASE:  if(HREADY & |BusRW)          NextState = DATA_PHASE;
+                    else                         NextState = ADR_PHASE;
+        DATA_PHASE: if(HREADY & BusAtomic)       NextState = ATOMIC_PHASE;
+                    else if(HREADY & ~BusAtomic) NextState = MEM3;
+                    else                         NextState = DATA_PHASE;
+        ATOMIC_PHASE: if(HREADY)                 NextState = MEM3;
+                      else                       NextState = ATOMIC_PHASE;
+        MEM3:       if(Stall)                    NextState = MEM3;
+                    else                         NextState = ADR_PHASE;
+        default:                                 NextState = ADR_PHASE;
       endcase
   end
 
@@ -74,8 +78,10 @@ module busfsm #(
   
   assign BusCommitted = (CurrState != ADR_PHASE) & ~(READ_ONLY & CurrState == MEM3);
 
-  assign HTRANS = (CurrState == ADR_PHASE & HREADY & |BusRW & ~Flush) ? AHB_NONSEQ : AHB_IDLE;
-  assign HWRITE = BusRW[0];
+  assign HTRANS = (CurrState == ADR_PHASE & HREADY & |BusRW & ~Flush) | 
+                  (CurrState == DATA_PHASE & BusAtomic) ? AHB_NONSEQ : AHB_IDLE;
+  assign HWRITE = (BusRW[0] & ~BusAtomic) | (CurrState == DATA_PHASE & BusAtomic);
+
   assign CaptureEn = CurrState == DATA_PHASE;
   
 endmodule
