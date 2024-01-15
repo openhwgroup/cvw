@@ -303,32 +303,31 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
   //
   //      other: 32 bit unsinged res should be sign extended as if it were a signed number
 
-   if(P.IEEE754) begin   
+    if(P.IEEE754) begin   
       always_comb
-	if(Signed)
-	  if(Xs&~NaNIn) // signed negative
-            if(Int64)   OfIntRes = {1'b1, {P.XLEN-1{1'b0}}};
-            else        OfIntRes = {{P.XLEN-32{1'b1}}, 1'b1, {31{1'b0}}};
-	  else          // signed positive
-            if(Int64)   OfIntRes = {1'b1, {P.XLEN-1{1'b0}}}; 
-            else        OfIntRes = {{P.XLEN-32{1'b1}}, 1'b1, {31{1'b0}}}; 
-	else
-	  if(Xs&~NaNIn) OfIntRes = {P.XLEN{1'b1}}; // unsigned negative 
-	  else          OfIntRes = {P.XLEN{1'b1}}; // unsigned positive
-       end // if (P.IEEE754)
-   else begin
+        if(Signed)
+            if(Xs&~NaNIn) // signed negative
+                    if(Int64)   OfIntRes = {1'b1, {P.XLEN-1{1'b0}}};
+                    else        OfIntRes = {{P.XLEN-32{1'b1}}, 1'b1, {31{1'b0}}};
+            else          // signed positive
+                    if(Int64)   OfIntRes = {1'b1, {P.XLEN-1{1'b0}}}; 
+                    else        OfIntRes = {{P.XLEN-32{1'b1}}, 1'b1, {31{1'b0}}}; 
+        else
+            if(Xs&~NaNIn) OfIntRes = {P.XLEN{1'b1}}; // unsigned negative 
+            else          OfIntRes = {P.XLEN{1'b1}}; // unsigned positive
+    end else begin
       always_comb
-	if(Signed)
-	  if(Xs&~NaNIn) // signed negative
-            if(Int64)   OfIntRes = {1'b1, {P.XLEN-1{1'b0}}};
-            else        OfIntRes = {{P.XLEN-32{1'b1}}, 1'b1, {31{1'b0}}};
-	  else          // signed positive
-            if(Int64)   OfIntRes = {1'b0, {P.XLEN-1{1'b1}}};
-            else        OfIntRes = {{P.XLEN-32{1'b0}}, 1'b0, {31{1'b1}}};
-	else
-	  if(Xs&~NaNIn) OfIntRes = {P.XLEN{1'b0}}; // unsigned negative
-	  else          OfIntRes = {P.XLEN{1'b1}}; // unsigned positive
-       end // else: !if(P.IEEE754)  
+        if(Signed)
+            if(Xs&~NaNIn) // signed negative
+                    if(Int64)   OfIntRes = {1'b1, {P.XLEN-1{1'b0}}};
+                    else        OfIntRes = {{P.XLEN-32{1'b1}}, 1'b1, {31{1'b0}}};
+            else          // signed positive
+                    if(Int64)   OfIntRes = {1'b0, {P.XLEN-1{1'b1}}};
+                    else        OfIntRes = {{P.XLEN-32{1'b0}}, 1'b0, {31{1'b1}}};
+        else
+            if(Xs&~NaNIn) OfIntRes = {P.XLEN{1'b0}}; // unsigned negative
+            else          OfIntRes = {P.XLEN{1'b1}}; // unsigned positive
+    end  
    
 
   // select the integer output
