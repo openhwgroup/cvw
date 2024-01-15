@@ -38,16 +38,19 @@ void printF64 (char *msg, float64_t d) {
   int i, j;
   conv.v = d.v; // use union to convert between hexadecimal and floating-point views
   printf("%s: ", msg);  // print out nicely
-  printf("0x%08x_%08x = %g\n", (conv.v >> 32),(conv.v & 0xFFFFFFFF), conv.d);
+  printf("0x%08lx_%08lx = %g\n", (conv.v >> 32),(conv.v & 0xFFFFFFFF), conv.d);
 }
 
 void printF128 (char *msg, float128_t q) {
   qp conv;
   int i, j;
+  char buf[64];
   conv.v[0] = q.v[0]; // use union to convert between hexadecimal and floating-point views
   conv.v[1] = q.v[1]; // use union to convert between hexadecimal and floating-point views  
   printf("%s: ", msg);  // print out nicely
-  printf("0x%016" PRIx64 "_%016" PRIx64 " = %1.15Qe\n", q.v[1], q.v[0], conv.q);
+  //printf("0x%016" PRIx64 "_%016" PRIx64 " = %1.15Qe\n", q.v[1], q.v[0], conv.q);
+  quadmath_snprintf (buf, sizeof buf, "%1.15Qe", conv.q);
+  printf("0x%016" PRIx64 "_%016" PRIx64 " = %s\n", q.v[1], q.v[0], buf);    
 }
 
 void printFlags(void) {
