@@ -273,27 +273,7 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
   //           overflows to the maximum value 
   // signed: if invalid, result should overflow to maximum negative value 
   //         but is undefined and used for information only
-  // The IEEE 754 result comes from values in TestFloat for x86_64
-   
-  // Nothing from the C standard will justify the choices made by one ISA or 
-  // another regarding the behavior for out-of-range values of the floating-point-to-integer
-  // conversion, because the C standard leaves what happens then “Undefined Behavior” 
-  // (with the caveat that it's only UB if the result is out of range, 
-  // so converting -0.9999f to an unsigned integer must produce 0u).
-
-  // “Undefined Behavior” means that the execution can continue with an 
-  // arbitrary value when this kind of conversion happens, or the program may crash, 
-  // or any other thing. The phrase “nasal demons” has been used for decades to 
-  // emphasize that the C standard does not place any requirement on what happens 
-  // when a C program runs into UB.
-
-  // Other programming languages are less flippant in their use of Undefined Behavior, 
-  // for instance Java. Since the goal of the people defining a new ISA is to make all 
-  // programs as fast as possible regardless of the programming language they are developed in, 
-  // the people designing RISC-V may have made the choices they made in order to ensure that the 
-  // conversion from floating-point to integer in Java, or a selection of other popular 
-  // programming languages, could be translated to the shortest, fastest possible sequence of 
-  // instructions in RISC-V.
+  // Note: The IEEE 754 result comes from values in TestFloat for x86_64
    
   // IEEE 754
   // select the overflow integer res
