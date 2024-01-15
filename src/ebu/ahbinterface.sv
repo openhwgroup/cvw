@@ -64,7 +64,7 @@ module ahbinterface #(
     assign HWSTRB = '0;
   end    
 
-  busfsm busfsm(.HCLK, .HRESETn, .Flush, .BusRW,
+  busfsm #(~LSU) busfsm(.HCLK, .HRESETn, .Flush, .BusRW,
     .BusCommitted, .Stall, .BusStall, .CaptureEn, .HREADY,
     .HTRANS, .HWRITE);
 

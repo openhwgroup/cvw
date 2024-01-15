@@ -28,7 +28,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 // HCLK and clk must be the same clock!
-module busfsm (
+module busfsm #(
+  parameter READ_ONLY
+)(
   input  logic       HCLK,
   input  logic       HRESETn,
 
@@ -70,7 +72,7 @@ module busfsm (
 //                  (CurrState == DATA_PHASE & ~BusRW[0]); // possible optimization here.  fails uart test, but i'm not sure the failure is valid.
                     (CurrState == DATA_PHASE); 
   
-  assign BusCommitted = CurrState != ADR_PHASE;
+  assign BusCommitted = CurrState != ADR_PHASE & ~(READ_ONLY & CurrState == MEM3);
 
   assign HTRANS = (CurrState == ADR_PHASE & HREADY & |BusRW & ~Flush) ? AHB_NONSEQ : AHB_IDLE;
   assign HWRITE = BusRW[0];
