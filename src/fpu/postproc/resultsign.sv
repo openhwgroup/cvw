@@ -47,7 +47,7 @@ module resultsign(
 
   // determine the sign for a result of 0
   //  The IEEE754-2019 standard specifies: 
-  //      - the sign of an exact zero sum (with operands of diffrent signs) should be positive unless rounding toward negitive infinity
+  //      - the sign of an exact zero sum (with operands of diffrent signs) should be positive unless rounding toward negative infinity
   //      - when the exact result of an FMA opperation is non-zero, but is zero due to rounding, use the sign of the exact result
   //      - if x = +0 or -0 then x+x=x and x-(-x)=x 
   //      - the sign of a product is the exclisive or or the opperand's signs
@@ -63,10 +63,10 @@ module resultsign(
   assign Zeros = (FmaPs^FmaAs)&~(Round|Guard|Sticky)&~Mult ? Frm[1:0] == 2'b10 : FmaPs;
 
   // determine the sign of an infinity result
-  //  is the result negitive
-  //      if p - z is the Sum negitive
+  //  is the result negative
+  //      if p - z is the Sum negative
   //      if -p + z is the Sum positive
-  //      if -p - z then the Sum is negitive
+  //      if -p - z then the Sum is negative
   assign Infs = ZInf ? FmaAs : FmaPs;
 
   // select the result sign

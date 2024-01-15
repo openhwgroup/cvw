@@ -101,11 +101,16 @@ module alu import cvw::*; #(parameter cvw_t P) (
 
   // Zicond block
   if (P.ZICOND_SUPPORTED) begin: zicond
-    logic  BZero, KillB;
+    logic  BZero;
+    
     assign BZero = (B == 0); // check if rs2 = 0
     // Create a signal that is 0 when czero.* instruction should clear result
     // If B = 0 for czero.eqz or if B != 0 for czero.nez
-    assign KillB = BZero & CZero[0] | ~BZero & CZero[1];
-    assign ZeroCondMaskInvB = |CZero ? {P.XLEN{~KillB}} : CondMaskInvB; // extend to full width
+    always_comb 
+     case (CZero)
+        2'b01:   ZeroCondMaskInvB = {P.XLEN{~BZero}}; // czero.eqz: kill if B = 0
+        2'b10:   ZeroCondMaskInvB = {P.XLEN{BZero}};  // czero.nez: kill if B != 0
+        default: ZeroCondMaskInvB = CondMaskInvB;     // otherwise normal behavior
+      endcase
   end else assign ZeroCondMaskInvB = CondMaskInvB; // no masking if Zicond is not supported
 endmodule

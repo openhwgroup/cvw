@@ -30,7 +30,7 @@ FROM debian
 RUN apt update
 
 # INSTALL
-RUN apt install -y git gawk make texinfo bison flex build-essential python libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev build-essential ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev python3-pip pkg-config libglib2.0-dev opam  build-essential z3 pkg-config zlib1g-dev verilator cpio bc vim emacs gedit nano
+RUN apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev build-essential ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev python3-pip pkg-config libglib2.0-dev opam  build-essential z3 pkg-config zlib1g-dev verilator cpio bc vim emacs gedit nano
 
 RUN pip3 install chardet==3.0.4
 RUN pip3 install urllib3==1.22
