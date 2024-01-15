@@ -29,7 +29,7 @@
 
 module ahbinterface #(
   parameter XLEN,
-  parameter LSU = 0                                   // 1: LSU bus width is `XLEN, 0: IFU bus width is 32 bits
+  parameter logic LSU = 1'b0                                   // 1: LSU bus width is `XLEN, 0: IFU bus width is 32 bits
 )( 
   input  logic                          HCLK, HRESETn,
   // bus interface
