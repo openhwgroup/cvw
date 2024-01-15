@@ -882,7 +882,7 @@ module testbenchfp;
       //    - the sign of the NaN does not matter for the opperations being tested
       //    - when 2 or more NaNs are inputed the NaN that is propigated doesn't matter
       if (UnitVal !== `CVTFPUNIT & UnitVal !== `CVTINTUNIT)
-      case (FmtVal)
+         case (FmtVal)
             2'b11: NaNGood =  (((P.IEEE754==0)&AnsNaN&(Res === {1'b0, {P.Q_NE+1{1'b1}}, {P.Q_NF-1{1'b0}}})) |
                               (AnsFlg[4]&(Res[P.Q_LEN-2:0] === {{P.Q_NE+1{1'b1}}, {P.Q_NF-1{1'b0}}})) |
                               (XNaN&(Res[P.Q_LEN-2:0] === {X[P.Q_LEN-2:P.Q_NF],1'b1,X[P.Q_NF-2:0]})) | 
@@ -903,9 +903,9 @@ module testbenchfp;
                               (XNaN&(Res[P.H_LEN-2:0] === {X[P.H_LEN-2:P.H_NF],1'b1,X[P.H_NF-2:0]})) | 
                               (YNaN&(Res[P.H_LEN-2:0] === {Y[P.H_LEN-2:P.H_NF],1'b1,Y[P.H_NF-2:0]})) |
                               (ZNaN&(Res[P.H_LEN-2:0] === {Z[P.H_LEN-2:P.H_NF],1'b1,Z[P.H_NF-2:0]})));
-      endcase
-         else if (UnitVal === `CVTFPUNIT) // if converting from floating point to floating point OpCtrl contains the final FP format
-      case (OpCtrlVal[1:0]) 
+         endcase
+      else if (UnitVal === `CVTFPUNIT) // if converting from floating point to floating point OpCtrl contains the final FP format
+         case (OpCtrlVal[1:0]) 
             2'b11: NaNGood = (((P.IEEE754==0)&AnsNaN&(Res === {1'b0, {P.Q_NE+1{1'b1}}, {P.Q_NF-1{1'b0}}})) |
                               (AnsFlg[4]&(Res[P.Q_LEN-2:0] === {{P.Q_NE+1{1'b1}}, {P.Q_NF-1{1'b0}}})) |
                               (AnsNaN&(Res[P.Q_LEN-2:0] === Ans[P.Q_LEN-2:0])) | 
@@ -926,72 +926,70 @@ module testbenchfp;
                               (AnsNaN&(Res[P.H_LEN-2:0] === Ans[P.H_LEN-2:0])) | 
                               (XNaN&(Res[P.H_LEN-2:0] === {X[P.H_LEN-2:P.H_NF],1'b1,X[P.H_NF-2:0]})) | 
                               (YNaN&(Res[P.H_LEN-2:0] === {Y[P.H_LEN-2:P.H_NF],1'b1,Y[P.H_NF-2:0]})));
-      endcase
-         else NaNGood = 1'b0; // integers can't be NaNs
+         endcase
+      else NaNGood = 1'b0; // integers can't be NaNs
 
          
-         ///////////////////////////////////////////////////////////////////////////////////////////////
+      ///////////////////////////////////////////////////////////////////////////////////////////////
 
-         //     ||||||| |||    ||| ||||||| ||||||| |||   |||
-         //     |||     |||    ||| |||     |||     |||  |||
-         //     |||     |||||||||| ||||||| |||     ||||||
-         //     |||     |||    ||| |||     |||     |||  |||
-         //     ||||||| |||    ||| ||||||| ||||||| |||    |||
+      //     ||||||| |||    ||| ||||||| ||||||| |||   |||
+      //     |||     |||    ||| |||     |||     |||  |||
+      //     |||     |||||||||| ||||||| |||     ||||||
+      //     |||     |||    ||| |||     |||     |||  |||
+      //     ||||||| |||    ||| ||||||| ||||||| |||    |||
 
-         ///////////////////////////////////////////////////////////////////////////////////////////////
+      ///////////////////////////////////////////////////////////////////////////////////////////////
 
-         // check if result is correct
-         //  wait till the division result is done or one extra cylcle for early termination (to simulate the EM pipline stage)
-         assign ResMatch = ((Res === Ans) | NaNGood | (NaNGood === 1'bx));
-         assign FlagMatch = ((ResFlg === AnsFlg) | (AnsFlg === 5'bx));
-         assign divsqrtop = (OpCtrlVal == `SQRT_OPCTRL) | (OpCtrlVal == `DIV_OPCTRL);
-         assign FMAop = (OpCtrlVal == `FMAUNIT);  
-         assign DivDone = OldFDivBusyE & ~FDivBusyE;
+      // check if result is correct
+      //  wait till the division result is done or one extra cylcle for early termination (to simulate the EM pipline stage)
+      assign ResMatch = ((Res === Ans) | NaNGood | (NaNGood === 1'bx));
+      assign FlagMatch = ((ResFlg === AnsFlg) | (AnsFlg === 5'bx));
+      assign divsqrtop = (OpCtrlVal == `SQRT_OPCTRL) | (OpCtrlVal == `DIV_OPCTRL);
+      assign FMAop = (OpCtrlVal == `FMAUNIT);  
+      assign DivDone = OldFDivBusyE & ~FDivBusyE;
 
-         // Maybe change OpCtrl but for now just look at TEST for fma test
-         assign CheckNow = ((DivDone | ~divsqrtop) | (TEST == "add" | TEST == "fma" | TEST == "sub")) & (UnitVal !== `CVTINTUNIT) & (UnitVal !== `CMPUNIT);
-         if (~(ResMatch & FlagMatch) & CheckNow) begin
+      // Maybe change OpCtrl but for now just look at TEST for fma test
+      assign CheckNow = ((DivDone | ~divsqrtop) | (TEST == "add" | TEST == "fma" | TEST == "sub")) & (UnitVal !== `CVTINTUNIT) & (UnitVal !== `CMPUNIT);
+      if (~(ResMatch & FlagMatch) & CheckNow) begin
+         errors += 1;
+         $display("\nError in %s", Tests[TestNum]);
+         $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);	 
+         $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Expected: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
+         $stop;
+      end else if (((UnitVal === `CVTINTUNIT) | (UnitVal === `CMPUNIT)) & 
+         ~(ResMatch & FlagMatch) & (Ans[0] !== 1'bx)) begin // Check for conversion and comparisons  
             errors += 1;
             $display("\nError in %s", Tests[TestNum]);
-            $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);	 
-            $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Expected: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
+            $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);	 	 
+            $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
             $stop;
-         end else if (((UnitVal === `CVTINTUNIT) | (UnitVal === `CMPUNIT)) & 
-            ~(ResMatch & FlagMatch) & (Ans[0] !== 1'bx)) begin // Check for conversion and comparisons  
-               errors += 1;
-               $display("\nError in %s", Tests[TestNum]);
-               $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);	 	 
-               $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
-               $stop;
-         end
       end
 
       if (TestVectors[VectorNum][0] === 1'bx & Tests[TestNum] !== "") begin // if reached the eof
-	 // increment the test
-	 TestNum += 1;
-	 // clear the vectors
-	 for(int i=0; i<6133248; i++) TestVectors[i] = {P.FLEN*4+8{1'bx}};
-	 // read next files
-	 $readmemh({`PATH, Tests[TestNum]}, TestVectors);
-	 // set the vector index back to 0
-	 VectorNum = 0;
-	 // incemet the operation if all the rounding modes have been tested
-	 if (FrmNum === 4) OpCtrlNum += 1;
-	 // increment the rounding mode or loop back to rne 
-	 if (FrmNum < 4) 
-	   FrmNum += 1;
-	 else begin
-	   FrmNum = 0;
-	    // Add some time as a buffer between tests at the end of each test
-	    repeat (10)
-	      @(posedge clk);
-	 end	 
-	 // if no more Tests - finish
-	 if (Tests[TestNum] === "") begin
-            $display("\nAll Tests completed with %d errors\n", errors);
-            $stop;
-	 end 
-	 $display("Running %s vectors", Tests[TestNum]);
+         // increment the test
+         TestNum += 1;
+         // clear the vectors
+         for(int i=0; i<6133248; i++) TestVectors[i] = {P.FLEN*4+8{1'bx}};
+         // read next files
+         $readmemh({`PATH, Tests[TestNum]}, TestVectors);
+         // set the vector index back to 0
+         VectorNum = 0;
+         // incemet the operation if all the rounding modes have been tested
+         if (FrmNum === 4) OpCtrlNum += 1;
+         // increment the rounding mode or loop back to rne 
+         if (FrmNum < 4) FrmNum += 1;
+         else begin
+            FrmNum = 0;
+            // Add some time as a buffer between tests at the end of each test
+            repeat (10)
+               @(posedge clk);
+         end	 
+         // if no more Tests - finish
+         if (Tests[TestNum] === "") begin
+                  $display("\nAll Tests completed with %d errors\n", errors);
+                  $stop;
+         end 
+         $display("Running %s vectors", Tests[TestNum]);
       end
    end
 endmodule
