@@ -263,15 +263,17 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
     .ToInt(FWriteIntE), .XZero(XZeroE), .Fmt(FmtE), .Ce(CeE), .ShiftAmt(CvtShiftAmtE), 
     .ResSubnormUf(CvtResSubnormUfE), .Cs(CsE), .IntZero(IntZeroE), .LzcIn(CvtLzcInE));
 
-  // NaN Box SrcA to convert integer to requested FP size
+  // NaN Box SrcA to convert integer to requested FP size for fmv int->fp
   if(P.FPSIZES == 1) assign AlignedSrcAE = {{P.FLEN-P.XLEN{1'b1}}, ForwardedSrcAE};
   else if(P.FPSIZES == 2) 
     mux2 #(P.FLEN) SrcAMux ({{P.FLEN-P.LEN1{1'b1}}, ForwardedSrcAE[P.LEN1-1:0]}, {{P.FLEN-P.XLEN{1'b1}}, ForwardedSrcAE}, FmtE, AlignedSrcAE);
-  else if(P.FPSIZES == 3 | P.FPSIZES == 4)
+  else if(P.FPSIZES == 3 | P.FPSIZES == 4) begin
+    localparam XD_LEN = P.D_LEN < P.XLEN ? P.D_LEN : P.XLEN; // shorter of D_LEN and XLEN
     mux4 #(P.FLEN) SrcAMux ({{P.FLEN-P.S_LEN{1'b1}}, ForwardedSrcAE[P.S_LEN-1:0]}, 
-                            {{P.FLEN-P.D_LEN{1'b1}}, ForwardedSrcAE[P.D_LEN-1:0]}, 
+                            {{P.FLEN-XD_LEN{1'b1}}, ForwardedSrcAE[XD_LEN-1:0]}, 
                             {{P.FLEN-P.H_LEN{1'b1}}, ForwardedSrcAE[P.H_LEN-1:0]}, 
                             {{P.FLEN-P.XLEN{1'b1}}, ForwardedSrcAE}, FmtE, AlignedSrcAE); // NaN boxing zeroes
+  end
 
   // select a result that may be written to the FP register
   mux3  #(P.FLEN) FResMux(SgnResE, AlignedSrcAE, CmpFpResE, {OpCtrlE[2], &OpCtrlE[1:0]}, PreFpResE);
@@ -282,20 +284,20 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
     assign mvsgn = XE[P.FLEN-1];
     assign SgnExtXE = XE;
   end else if(P.FPSIZES == 2) begin
-    mux2 #(1)     sgnmux (XE[P.LEN1-1], XE[P.FLEN-1],FmtE, mvsgn);
+    mux2 #(1)      sgnmux (XE[P.LEN1-1], XE[P.FLEN-1],FmtE, mvsgn);
     mux2 #(P.FLEN) sgnextmux ({{P.FLEN-P.LEN1{mvsgn}}, XE[P.LEN1-1:0]}, XE, FmtE, SgnExtXE);
   end else if(P.FPSIZES == 3 | P.FPSIZES == 4) begin
-    mux4 #(1)     sgnmux (XE[P.H_LEN-1], XE[P.S_LEN-1], XE[P.D_LEN-1], XE[P.LLEN-1], FmtE, mvsgn);
-    mux4 #(P.FLEN) fmulzeromux ({{P.FLEN-P.H_LEN{mvsgn}}, XE[P.H_LEN-1:0]}, 
-                                {{P.FLEN-P.S_LEN{mvsgn}}, XE[P.S_LEN-1:0]}, 
-                                {{P.FLEN-P.D_LEN{mvsgn}}, XE[P.D_LEN-1:0]}, 
+    mux4 #(1)      sgnmux (XE[P.S_LEN-1], XE[P.D_LEN-1], XE[P.H_LEN-1], XE[P.LLEN-1], FmtE, mvsgn);
+    mux4 #(P.FLEN) sgnextmux ({{P.FLEN-P.S_LEN{mvsgn}}, XE[P.S_LEN-1:0]}, 
+                              {{P.FLEN-P.D_LEN{mvsgn}}, XE[P.D_LEN-1:0]}, 
+                              {{P.FLEN-P.H_LEN{mvsgn}}, XE[P.H_LEN-1:0]}, 
                                 XE, FmtE, SgnExtXE); 
   end
 
   if (P.FLEN>P.XLEN)
     assign IntSrcXE = SgnExtXE[P.XLEN-1:0];
   else 
-    assign IntSrcXE = {{P.XLEN-P.FLEN{mvsgn}}, SgnExtXE};
+    assign IntSrcXE = {{P.XLEN-P.FLEN{mvsgn}}, SgnExtXE}; 
   mux3 #(P.XLEN) IntResMux (ClassResE, IntSrcXE, CmpIntResE, {~FResSelE[1], FResSelE[0]}, FIntResE);
 
   // E/M pipe registers
