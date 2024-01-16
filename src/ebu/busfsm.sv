@@ -48,7 +48,7 @@ module busfsm #(
   output logic       HWRITE        // AHB 0: Read operation 1: Write operation 
 );
   
-  typedef enum logic [2:0] {ADR_PHASE, DATA_PHASE, MEM3, ATOMIC_PHASE} busstatetype;
+  typedef enum logic [2:0] {ADR_PHASE, DATA_PHASE, MEM3, ATOMIC_READ_DATA_PHASE, ATOMIC_PHASE} busstatetype;
   typedef enum logic [1:0] {AHB_IDLE = 2'b00, AHB_BUSY = 2'b01, AHB_NONSEQ = 2'b10, AHB_SEQ = 2'b11} ahbtranstype;
 
   busstatetype CurrState, NextState;
@@ -61,9 +61,11 @@ module busfsm #(
       case(CurrState)
         ADR_PHASE:  if(HREADY & |BusRW)          NextState = DATA_PHASE;
                     else                         NextState = ADR_PHASE;
-        DATA_PHASE: if(HREADY & BusAtomic)       NextState = ATOMIC_PHASE;
+        DATA_PHASE: if(HREADY & BusAtomic)       NextState = ATOMIC_READ_DATA_PHASE;
                     else if(HREADY & ~BusAtomic) NextState = MEM3;
                     else                         NextState = DATA_PHASE;
+        ATOMIC_READ_DATA_PHASE: if(HREADY)       NextState = ATOMIC_PHASE;
+                    else                         NextState = ATOMIC_READ_DATA_PHASE;
         ATOMIC_PHASE: if(HREADY)                 NextState = MEM3;
                       else                       NextState = ATOMIC_PHASE;
         MEM3:       if(Stall)                    NextState = MEM3;
@@ -74,13 +76,15 @@ module busfsm #(
 
   assign BusStall = (CurrState == ADR_PHASE & |BusRW) |
 //                  (CurrState == DATA_PHASE & ~BusRW[0]); // possible optimization here.  fails uart test, but i'm not sure the failure is valid.
+                    (CurrState == ATOMIC_PHASE) |
+                    (CurrState == ATOMIC_READ_DATA_PHASE) |
                     (CurrState == DATA_PHASE); 
   
   assign BusCommitted = (CurrState != ADR_PHASE) & ~(READ_ONLY & CurrState == MEM3);
 
   assign HTRANS = (CurrState == ADR_PHASE & HREADY & |BusRW & ~Flush) | 
-                  (CurrState == DATA_PHASE & BusAtomic) ? AHB_NONSEQ : AHB_IDLE;
-  assign HWRITE = (BusRW[0] & ~BusAtomic) | (CurrState == DATA_PHASE & BusAtomic);
+                  (CurrState == ATOMIC_READ_DATA_PHASE & BusAtomic) ? AHB_NONSEQ : AHB_IDLE;
+  assign HWRITE = (BusRW[0] & ~BusAtomic) | (CurrState == ATOMIC_READ_DATA_PHASE & BusAtomic);
 
   assign CaptureEn = CurrState == DATA_PHASE;
   
