@@ -127,7 +127,7 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   assign InfIn = XInf|YInf|ZInf;
   assign NaNIn = XNaN|YNaN|ZNaN;
 
-  // choose the ouptut format depending on the opperation
+  // choose the output format depending on the opperation
   //      - fp -> fp: OpCtrl contains the precision of the output
   //      - otherwise: Fmt contains the precision of the output
   if (P.FPSIZES == 2) 
