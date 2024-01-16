@@ -108,8 +108,8 @@ test_cases:
 .8byte 0x0000000080016FF8, 0x00000000200804CF, write64_test# Vaddr 0xFFFFFFFFFFFFF000, Paddr 0x80201000 aligned kilopage
 
 # second page table to check context switches with satp
-.8byte 0x8FFFF000, 0x200000CF, write64_test# Vaddr 0x0, Paddr 0x80000000 aligned gigapage
-.8byte 0x8FFFF010, 0x200000CF, write64_test# Vaddr 0x8000_0000, Paddr 0x80000000: aligned gigapage (program and data memory so we can execute without jumping around)
+.8byte 0x87FFF000, 0x200000CF, write64_test# Vaddr 0x0, Paddr 0x80000000 aligned gigapage
+.8byte 0x87FFF010, 0x200000CF, write64_test# Vaddr 0x8000_0000, Paddr 0x80000000: aligned gigapage (program and data memory so we can execute without jumping around)
 
 # test 11.3.1.1.2 write values to Paddrs in each page
 # each of these values is used for 11.3.1.1.3 and some other tests, specified in the comments.
@@ -249,7 +249,7 @@ test_cases:
 
 # test 11.3.1.4.1 SATP ASID and PPN fields (test having two page tables with different ASID)
 // *** .8byte 0xFFFFFFFFFFFFF888, 0x0220DEADBEEF0099, write64_test # write identical value to global PTE to make sure it's still in the TLB
-.8byte 0x8FFFF, 0x11, goto_sv39 # go to SV39 on a second, very minimal page table
+.8byte 0x87FFF, 0x11, goto_sv39 # go to SV39 on a second, very minimal page table
 .8byte 0x200AB0, 0x0000DEADBEEF0000, read64_test # Read success of old written value from a new page table mapping 
 
 # test 11.3.1.4.2 Test Global mapping

@@ -47,7 +47,7 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   input  logic                 Int64,                  // convert to 64 bit integer
   input  logic                 Signed,                 // convert to a signed integer
   input  logic [P.NE:0]        CvtCe,                  // the calculated expoent - Cvt
-  input  logic [1:0]           CvtNegResMsbs,          // the negitive integer result's most significant bits
+  input  logic [1:0]           CvtNegResMsbs,          // the negative integer result's most significant bits
   // divsqrt
   input  logic                 DivOp,                  // conversion opperation?
   input  logic                 Sqrt,                   // Sqrt?
@@ -122,7 +122,7 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   
   // calulate overflow flag:
   //                 if the result is greater than or equal to the max exponent(not taking into account sign)
-  //                 |           and the exponent isn't negitive
+  //                 |           and the exponent isn't negative
   //                 |           |                   if the input isnt infinity or NaN
   //                 |           |                   |            
   assign Overflow = ResExpGteMax & ~FullRe[P.NE+1]&~(InfIn|NaNIn|DivByZero);
@@ -132,7 +132,7 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////////////////////////////////////////
 
   // calculate underflow flag: detecting tininess after rounding
-  //                  the exponent is negitive
+  //                  the exponent is negative
   //                  |                    the result is subnormal
   //                  |                    |                    the result is normal and rounded from a Subnorm
   //                  |                    |                    |                                      and if given an unbounded exponent the result does not round
@@ -170,7 +170,7 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   // invalid flag for integer result
   //                  if the input is NaN or infinity
   //                  |           if the integer res overflows (out of range) 
-  //                  |           |                                  if the input was negitive but ouputing to a unsigned number
+  //                  |           |                                  if the input was negative but ouputing to a unsigned number
   //                  |           |                                  |                    the res doesn't round to zero
   //                  |           |                                  |                    |               or the res rounds up out of bounds
   //                  |           |                                  |                    |                       and the res didn't underflow

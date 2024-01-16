@@ -80,7 +80,7 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////////////////////////////////////
   // negation
   ///////////////////////////////////////////////////////////////////////////
-  // 1) negate the input if the input is a negitive singed integer
+  // 1) negate the input if the input is a negative singed integer
   // 2) trim the input to the proper size (kill the 32 most significant zeroes if needed)
 
   assign PosInt = Cs ? -Int : Int;
@@ -182,7 +182,7 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
   assign Ce = {1'b0, OldExp} - (P.NE+1)'(P.BIAS) - {{P.NE-P.LOGCVTLEN+1{1'b0}}, (LeadingZeros)} + {2'b0, NewBias};
 
   // find if the result is dnormal or underflows
-  //      - if Calculated expoenent is 0 or negitive (and the input/result is not exactaly 0)
+  //      - if Calculated expoenent is 0 or negative (and the input/result is not exactaly 0)
   //      - can't underflow an integer to Fp conversion
   assign ResSubnormUf = (~|Ce | Ce[P.NE])&~XZero&~IntToFp;
 
@@ -190,7 +190,7 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
   // shifter
   ///////////////////////////////////////////////////////////////////////////
 
-  // kill the shift if it's negitive
+  // kill the shift if it's negative
   // select the amount to shift by
   //      fp -> int: 
   //          - shift left by CalcExp - essentially shifting until the unbiased exponent = 0

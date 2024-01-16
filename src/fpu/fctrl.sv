@@ -215,7 +215,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   // rounding modes:
   //    000 - round to nearest, ties to even
   //    001 - round twords 0 - round to min magnitude
-  //    010 - round down - round twords negitive infinity
+  //    010 - round down - round twords negative infinity
   //    011 - round up - round twords positive infinity
   //    100 - round to nearest, ties to max magnitude - round to nearest, ties away from zero
   //    111 - dynamic - choose FRM_REGW as rounding mode

@@ -113,7 +113,7 @@ test_cases:
 .8byte 0x80200AC0, 0x0990DEADBEEF0033, write64_test # 11.3.1.3.2 
 .8byte 0x80200130, 0x0110DEADBEEF0077, write64_test # 11.3.1.3.2
 .8byte 0x85212348, 0x0330DEADBEEF0440, write64_test # 11.3.1.3.3
-.8byte 0x88888000, 0x0000806711100393, write64_test # 11.3.1.3.5 write same executable code
+.8byte 0x87888000, 0x0000806711100393, write64_test # 11.3.1.3.5 write same executable code
 .8byte 0x80203658, 0xDEADBEEFDEADBEEF, write64_test # 11.3.1.3.7(a) 
 	
 #.8byte 0x85bc0ab0, 0x0123456789abcdf0, write64_test # 11.3.1.1.4
@@ -188,7 +188,7 @@ test_cases:
 
 # test 11.3.1.3.5 eXecute flag
 # executes on pages with X = 1 already tested in 11.3.1.3.1
-.8byte 0x010088888000, 0x2, executable_test               # execute fault when X=0 
+.8byte 0x010087888000, 0x2, executable_test               # execute fault when X=0 
 
 
 # In the following two tests, SVADU is supported, so the hardware handles the A/D bits
