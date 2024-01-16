@@ -1,4 +1,4 @@
-///////////////////////////////////////////
+//////////////////////////////////////////
 // tests0fo.vh
 //
 // Written: Katherine Parry 2022
@@ -42,6 +42,14 @@
 `define FROM_I_OPCTRL  3'b101
 `define FROM_UL_OPCTRL 3'b110
 `define FROM_L_OPCTRL  3'b111
+`define INTREMU_OPCTRL 3'b001
+`define INTREM_OPCTRL  3'b010
+`define INTDIV_OPCTRL  3'b011
+`define INTDIVW_OPCTRL 3'b100
+`define INTDIVU_OPCTRL 3'b101
+`define INTREMW_OPCTRL 3'b110
+`define INTREMUW_OPCTRL 3'b111
+`define INTDIVUW_OPCTRL 3'b000
 `define RNE            3'b000
 `define RZ             3'b001
 `define RU             3'b011
@@ -52,6 +60,8 @@
 `define CVTINTUNIT     0
 `define CVTFPUNIT      4
 `define CMPUNIT        3
+`define DIVREMSQRTUNIT 5
+`define INTDIVUNIT     6
 
 string f16rv32cvtint[] = '{
 	"ui32_to_f16_rne.tv",
@@ -580,5 +590,34 @@ string f128fma[] = '{
 	"f128_mulAdd_rnm.tv"
 };
 
+string intrem[] = '{
+	"cvw_64_rem-01.tv"
+};
 
+string intdiv[] = '{
+	"cvw_64_div-01.tv"
+};
 
+string intremu[] = '{
+	"cvw_64_remu-01.tv"
+};
+
+string intdivu[] = '{
+	"cvw_64_divu-01.tv"
+};
+
+string intremw[] = '{
+	"cvw_64_remw-01.tv"
+};
+
+string intremuw[] = '{
+	"cvw_64_remuw-01.tv"
+};
+
+string intdivuw[] = '{
+	"cvw_64_divuw-01.tv"
+};
+
+string intdivw[] = '{
+	"cvw_64_divw-01.tv"
+};

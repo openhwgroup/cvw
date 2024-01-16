@@ -16,15 +16,7 @@ add wave -noupdate /testbenchfp/ResMatch
 add wave -noupdate /testbenchfp/FlagMatch
 add wave -noupdate /testbenchfp/CheckNow
 add wave -noupdate /testbenchfp/NaNGood
-add wave -group {PostProc} -noupdate /testbenchfp/postprocess/*
-add wave -group {PostProc} -noupdate /testbenchfp/postprocess/specialcase/*
-add wave -group {PostProc} -noupdate /testbenchfp/postprocess/flags/*
-add wave -group {PostProc} -noupdate /testbenchfp/postprocess/normshift/*
-add wave -group {PostProc} -noupdate /testbenchfp/postprocess/shiftcorrection/*
-add wave -group {PostProc} -noupdate /testbenchfp/postprocess/resultsign/*
-add wave -group {PostProc} -noupdate /testbenchfp/postprocess/round/*
-add wave -group {PostProc} -noupdate /testbenchfp/postprocess/fmashiftcalc/*
-add wave -group {PostProc} -noupdate /testbenchfp/postprocess/divshiftcalc/*
-add wave -group {PostProc} -noupdate /testbenchfp/postprocess/cvtshiftcalc/*
+
 add wave -group {Testbench} -noupdate /testbenchfp/*
 add wave -group {Testbench} -noupdate /testbenchfp/readvectors/*
+add wave -group {Testbench} -noupdate /testbenchfp/divremsqrt/divremsqrtshiftcorrection/*
