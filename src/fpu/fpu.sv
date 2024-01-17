@@ -155,7 +155,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   logic [P.FLEN-1:0]           FResultW;                           // final FP result being written to the FP register   
 
   // other signals
-  logic [P.FLEN-1:0]           AlignedSrcAE;                       // align SrcA from IEU to the floating point format for fmv
+  logic [P.FLEN-1:0]           PreIntSrcE, IntSrcE;                // align SrcA from IEU to the floating point format for fmv / fmvp
   logic [P.FLEN-1:0]           BoxedZeroE;                         // Zero value for Z for multiplication, with NaN boxing if needed
   logic [P.FLEN-1:0]           BoxedOneE;                          // One value for Z for multiplication, with NaN boxing if needed
   logic                        StallUnpackedM;                     // Stall unpacker outputs during multicycle fdivsqrt
@@ -273,23 +273,27 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
     fli #(P) fli(.Rs1(Rs1E), .Fmt(FmtE), .Imm(FliResE)); 
   end else assign FliResE = '0;
 
-  // NaN Box SrcA to convert integer to requested FP size for fmv.*.x
-  if(P.FPSIZES == 1) assign AlignedSrcAE = {{P.FLEN-P.XLEN{1'b1}}, ForwardedSrcAE};
+  // fmv.*.x: NaN Box SrcA to extend integer to requested FP size 
+  if(P.FPSIZES == 1) assign PreIntSrcE = {{P.FLEN-P.XLEN{1'b1}}, ForwardedSrcAE};
   else if(P.FPSIZES == 2) 
-    mux2 #(P.FLEN) SrcAMux ({{P.FLEN-P.LEN1{1'b1}}, ForwardedSrcAE[P.LEN1-1:0]}, {{P.FLEN-P.XLEN{1'b1}}, ForwardedSrcAE}, FmtE, AlignedSrcAE);
+    mux2 #(P.FLEN) SrcAMux ({{P.FLEN-P.LEN1{1'b1}}, ForwardedSrcAE[P.LEN1-1:0]}, {{P.FLEN-P.XLEN{1'b1}}, ForwardedSrcAE}, FmtE, PreIntSrcE);
   else if(P.FPSIZES == 3 | P.FPSIZES == 4) begin
     localparam XD_LEN = P.D_LEN < P.XLEN ? P.D_LEN : P.XLEN; // shorter of D_LEN and XLEN
     mux3 #(P.FLEN) SrcAMux ({{P.FLEN-P.S_LEN{1'b1}}, ForwardedSrcAE[P.S_LEN-1:0]}, 
                             {{P.FLEN-XD_LEN{1'b1}}, ForwardedSrcAE[XD_LEN-1:0]}, 
                             {{P.FLEN-P.H_LEN{1'b1}}, ForwardedSrcAE[P.H_LEN-1:0]}, 
-                            FmtE, AlignedSrcAE); // NaN boxing zeroes
+                            FmtE, PreIntSrcE); // NaN boxing zeroes
   end
+  // fmvp.*.x: Select pair of registers
+  if (P.ZFA_SUPPORTED & (P.XLEN==32 & P.D_SUPPORTED) | (P.XLEN==64 & P.Q_SUPPORTED))
+       assign IntSrcE = ZfaE ? {ForwardedSrcBE, ForwardedSrcAE} : PreIntSrcE; // choose pair of integer registers for fmvp.d.x / fmvp.q.x
+  else assign IntSrcE = PreIntSrcE;
 
   // select a result that may be written to the FP register
-  mux4  #(P.FLEN) FResMux(SgnResE, AlignedSrcAE, CmpFpResE, FliResE, {OpCtrlE[2], &OpCtrlE[1:0]}, PreFpResE);
+  mux4  #(P.FLEN) FResMux(SgnResE, IntSrcE, CmpFpResE, FliResE, {OpCtrlE[2], &OpCtrlE[1:0]}, PreFpResE);
   assign PreNVE = CmpNVE&(OpCtrlE[2]|FWriteIntE);
 
-  // select the result that may be written to the integer register with fmv.x.*
+  // fmv.x.*: select the result that may be written to the integer register
   if(P.FPSIZES == 1) begin
     assign mvsgn = XE[P.FLEN-1];
     assign SgnExtXE = XE;
