@@ -69,9 +69,9 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
   assign Int64 =   OpCtrl[1];
   assign IntToFp = OpCtrl[2];
 
-  // choose the ouptut format depending on the opperation
-  //      - fp -> fp: OpCtrl contains the percision of the output
-  //      - int -> fp: Fmt contains the percision of the output
+  // choose the output format depending on the opperation
+  //      - fp -> fp: OpCtrl contains the precision of the output
+  //      - int -> fp: Fmt contains the precision of the output
   if (P.FPSIZES == 2) 
       assign OutFmt = IntToFp ? Fmt : (OpCtrl[1:0] == P.FMT); 
   else if (P.FPSIZES == 3 | P.FPSIZES == 4) 

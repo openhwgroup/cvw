@@ -273,9 +273,9 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       assign BusRW = ~ITLBMissF & ~SelIROM ? IFURWF : '0;
       assign IFUHSIZE = 3'b010;
 
-      ahbinterface #(P.XLEN, 0) ahbinterface(.HCLK(clk), .Flush(FlushD), .HRESETn(~reset), .HREADY(IFUHREADY), 
+      ahbinterface #(P.XLEN, 1'b0) ahbinterface(.HCLK(clk), .Flush(FlushD), .HRESETn(~reset), .HREADY(IFUHREADY), 
         .HRDATA(HRDATA), .HTRANS(IFUHTRANS), .HWRITE(IFUHWRITE), .HWDATA(),
-        .HWSTRB(), .BusRW, .ByteMask(), .WriteData('0),
+        .HWSTRB(), .BusRW, .BusAtomic('0), .ByteMask(), .WriteData('0),
         .Stall(GatedStallD), .BusStall, .BusCommitted(BusCommittedF), .FetchBuffer(FetchBuffer));
 
       assign CacheCommittedF = '0;

@@ -41,6 +41,7 @@ localparam ZICNTR_SUPPORTED = 1;
 localparam ZIHPM_SUPPORTED = 1;
 localparam COUNTERS = 12'd32;
 localparam ZFH_SUPPORTED = 0;
+localparam ZFA_SUPPORTED = 0;
 localparam SSTC_SUPPORTED = 1;
 localparam ZICBOM_SUPPORTED = 1;
 localparam ZICBOZ_SUPPORTED = 1;
