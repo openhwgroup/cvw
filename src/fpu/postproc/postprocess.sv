@@ -56,6 +56,7 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   input logic                              CvtResSubnormUf,     // the convert result is subnormal or underflows
   input logic  [P.LOGCVTLEN-1:0]           CvtShiftAmt,         // how much to shift by
   input logic                              ToInt,               // is fp->int (since it's writting to the integer register)
+  input logic                              Zfa,                 // Zfa operation (fcvtmod.w.d)
   input logic  [P.CVTLEN-1:0]              CvtLzcIn,            // input to the Leading Zero Counter (without msb)
   input logic                              IntZero,             // is the integer input zero
   // final results
@@ -216,9 +217,9 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
 
   negateintres #(P) negateintres(.Xs, .Shifted, .Signed, .Int64, .Plus1, .CvtNegResMsbs, .CvtNegRes);
 
-  specialcase #(P) specialcase(.Xs, .Xm, .Ym, .Zm, .XZero, .IntInvalid,
+  specialcase #(P) specialcase(.Xs, .Xm, .Ym, .Zm, .XZero, .IntInvalid, 
       .IntZero, .Frm, .OutFmt, .XNaN, .YNaN, .ZNaN, .CvtResUf, 
-      .NaNIn, .IntToFp, .Int64, .Signed, .CvtOp, .FmaOp, .Plus1, .Invalid, .Overflow, .InfIn, .CvtNegRes,
+      .NaNIn, .IntToFp, .Int64, .Signed, .Zfa, .CvtOp, .FmaOp, .Plus1, .Invalid, .Overflow, .InfIn, .CvtNegRes,
       .XInf, .YInf, .DivOp, .DivByZero, .FullRe, .CvtCe, .Rs, .Re, .Rf, .PostProcRes, .FCvtIntRes);
 
 endmodule

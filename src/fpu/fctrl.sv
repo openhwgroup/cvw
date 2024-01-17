@@ -54,7 +54,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   output logic [1:0]           PostProcSelE, PostProcSelM,         // select result in the post processing unit
   output logic [1:0]           FResSelE, FResSelM, FResSelW,       // Select one of the results that finish in the memory stage
   output logic                 FPUActiveE,                         // FP instruction being executed
-  output logic                 ZfaE,                               // Zfa variants of instructions (fli, fminm, fmaxm, fround, froundnx, fleq, fltq, fmvh, fmvp, fcvtmod)
+  output logic                 ZfaE, ZfaM,                         // Zfa variants of instructions (fli, fminm, fmaxm, fround, froundnx, fleq, fltq, fmvh, fmvp, fcvtmod)
   // register control signals
   output logic                 FRegWriteE, FRegWriteM, FRegWriteW, // FP register write enable
   output logic                 FWriteIntE, FWriteIntM,             // Write to integer register
@@ -149,7 +149,8 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
                                                 ControlsD = `FCTRLW'b0_1_11_00_000_0_0_0_0; // fmv.x.w/d/h/q  fp to int register
                                   else if (P.ZFA_SUPPORTED & P.XLEN == 32 & P.D_SUPPORTED & Funct7D[1:0] == 2'b01 & Funct3D == 3'b000 & Rs2D == 5'b00001) 
                                                   ControlsD = `FCTRLW'b0_1_11_00_000_0_0_0_1; // fmvh.x.d  (Zfa) 
-                                  // coverage off    Q not supported in RV64GC
+                                  //  Q not supported in RV64GC
+                                  // coverage off   
                                   else if (P.ZFA_SUPPORTED & P.XLEN == 64 & P.Q_SUPPORTED & Funct7D[1:0] == 2'b11 & Funct3D == 3'b000 & Rs2D == 5'b00001) 
                                                   ControlsD = `FCTRLW'b0_1_11_00_000_0_0_0_1; // fmvh.x.q  (Zfa)
                                   // coverage on
@@ -238,11 +239,11 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
                                   endcase
                       // coverage on
                       7'b1011001: if (P.ZFA_SUPPORTED & P.XLEN == 32 & P.D_SUPPORTED & Funct3D == 3'b000) 
-                                                  ControlsD = '0; // fmvp.d.x  (Zfa)
+                                                  ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0_0; // fmvp.d.x  (Zfa) *** untested, controls could be wrong
                       // Not covered in testing because rv64gc does not support quad precision
                       // coverage off
                       7'b1011011: if (P.ZFA_SUPPORTED & P.XLEN == 64 & P.Q_SUPPORTED & Funct3D == 3'b000) 
-                                                  ControlsD = '0; // fmvp.q.x  (Zfa)
+                                                  ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0_0; // fmvp.q.x  (Zfa)
                       // coverage on
                    endcase
       endcase
@@ -362,9 +363,9 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   else                               assign IDivStartE = 0; 
 
   // E/M pipleine register
-  flopenrc #(13+int'(P.FMTBITS)) EMCtrlReg (clk, reset, FlushM, ~StallM,
-              {FRegWriteE, FResSelE, PostProcSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, FCvtIntE},
-              {FRegWriteM, FResSelM, PostProcSelM, FrmM, FmtM, OpCtrlM, FWriteIntM, FCvtIntM});
+  flopenrc #(14+int'(P.FMTBITS)) EMCtrlReg (clk, reset, FlushM, ~StallM,
+              {FRegWriteE, FResSelE, PostProcSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, FCvtIntE, ZfaE},
+              {FRegWriteM, FResSelM, PostProcSelM, FrmM, FmtM, OpCtrlM, FWriteIntM, FCvtIntM, ZfaM});
   
   // renameing for readability
   assign FpLoadStoreM = FResSelM[1];

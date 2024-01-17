@@ -83,7 +83,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   logic                        XEnE, YEnE, ZEnE;                   // X, Y, Z inputs used for current operation
   logic                        FRegWriteE;                         // Write floating-point register
   logic                        FPUActiveE;                         // FP instruction being executed
-  logic                        ZfaE;                               // Zfa variants of instructions (fli, fminm, fmaxm, fround, froundnx, fleq, fltq, fmvh, fmvp, fcvtmod.w.d)
+  logic                        ZfaE, ZfaM;                         // Zfa variants of instructions (fli, fminm, fmaxm, fround, froundnx, fleq, fltq, fmvh, fmvp, fcvtmod.w.d)
 
   // regfile signals
   logic [P.FLEN-1:0]           FRD1D, FRD2D, FRD3D;                // Read Data from FP register - decode stage
@@ -171,7 +171,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   fctrl #(P) fctrl (.Funct7D(InstrD[31:25]), .OpD(InstrD[6:0]), .Rs2D(InstrD[24:20]), .Funct3D(InstrD[14:12]), 
               .IntDivE, .InstrD,
               .StallE, .StallM, .StallW, .FlushE, .FlushM, .FlushW, .FRM_REGW, .STATUS_FS, .FDivBusyE,
-              .reset, .clk, .FRegWriteE, .FRegWriteM, .FRegWriteW, .ZfaE, .FrmM, .FmtE, .FmtM,
+              .reset, .clk, .FRegWriteE, .FRegWriteM, .FRegWriteW, .ZfaE, .ZfaM, .FrmM, .FmtE, .FmtM,
               .FDivStartE, .IDivStartE, .FWriteIntE, .FCvtIntE, .FWriteIntM, .OpCtrlE, .OpCtrlM, .FpLoadStoreM,
               .IllegalFPUInstrD, .XEnD, .YEnD, .ZEnD, .XEnE, .YEnE, .ZEnE,
               .FResSelE, .FResSelM, .FResSelW, .FPUActiveE, .PostProcSelE, .PostProcSelM, .FCvtIntW, 
@@ -348,7 +348,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
     .ZInf(ZInfM), .XNaN(XNaNM), .YNaN(YNaNM), .ZNaN(ZNaNM), .XSNaN(XSNaNM), .YSNaN(YSNaNM), .ZSNaN(ZSNaNM), 
     .FmaSm(SmM), .DivUe(UeM), .FmaAs(AsM), .FmaPs(PsM), .OpCtrl(OpCtrlM), .FmaSCnt(SCntM), .FmaSe(SeM),
     .CvtCe(CeM), .CvtResSubnormUf(CvtResSubnormUfM),.CvtShiftAmt(CvtShiftAmtM), .CvtCs(CsM), 
-    .ToInt(FWriteIntM), .DivSticky(DivStickyM), .CvtLzcIn(CvtLzcInM), .IntZero(IntZeroM), 
+    .ToInt(FWriteIntM), .Zfa(ZfaM), .DivSticky(DivStickyM), .CvtLzcIn(CvtLzcInM), .IntZero(IntZeroM), 
     .PostProcSel(PostProcSelM), .PostProcRes(PostProcResM), .PostProcFlg(PostProcFlgM), .FCvtIntRes(FCvtIntResM));
 
   // FPU flag selection - to privileged
