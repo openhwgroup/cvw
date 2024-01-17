@@ -77,6 +77,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   logic                               ClearDirtyWay;
   logic                               SelNonHit;
   logic                               SelData;
+  logic                               InvalidateCacheDelay;
   
   if (!READ_ONLY_CACHE) begin:flushlogic
     logic                               FlushWayEn;
@@ -121,7 +122,9 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   assign TagWay = SelData ? ReadTag : '0; // AND part of AOMux
   assign HitDirtyWay = Dirty & ValidWay;
   assign DirtyWay = SelDirty & HitDirtyWay;
-  assign HitWay = ValidWay & (ReadTag == PAdr[PA_BITS-1:OFFSETLEN+INDEXLEN]);
+  assign HitWay = ValidWay & (ReadTag == PAdr[PA_BITS-1:OFFSETLEN+INDEXLEN]) & ~InvalidateCacheDelay;
+
+  flop #(1) InvalidateCacheReg(clk, InvalidateCache, InvalidateCacheDelay);
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Data Array
