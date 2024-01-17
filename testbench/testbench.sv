@@ -128,7 +128,8 @@ module testbench;
         "arch64zicboz":  if (P.ZICBOZ_SUPPORTED)  tests = arch64zicboz;
         "arch64zcb":     if (P.ZCB_SUPPORTED)     tests = arch64zcb;
         "arch64zfh":     if (P.ZFH_SUPPORTED)     tests = arch64zfh;
-//        "arch64zfa":     if (P.ZFA_SUPPORTED)     tests = arch64zfa;
+        "arch64zfaf":    if (P.ZFA_SUPPORTED)     tests = arch64zfaf;
+        "arch64zfad":    if (P.ZFA_SUPPORTED & P.D_SUPPORTED)  tests = arch64zfad;
       endcase 
     end else begin // RV32
       case (TEST)
@@ -165,6 +166,7 @@ module testbench;
         "arch32zcb":     if (P.ZCB_SUPPORTED)     tests = arch32zcb;
         "arch32zfh":     if (P.ZFH_SUPPORTED)     tests = arch32zfh;
         "arch32zfaf":    if (P.ZFA_SUPPORTED)     tests = arch32zfaf;
+        "arch32zfad":    if (P.ZFA_SUPPORTED & P.D_SUPPORTED)  tests = arch32zfad;
       endcase
     end
     if (tests.size() == 0) begin

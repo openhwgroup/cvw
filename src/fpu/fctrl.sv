@@ -143,14 +143,16 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
                                                 ControlsD = `FCTRLW'b0_1_11_00_000_0_0_0; // fmv.x.w/d/h/q  fp to int register
                       7'b11110??: if (Funct3D == 3'b000 & Rs2D == 5'b00000) 
                                                 ControlsD = `FCTRLW'b1_0_00_00_011_0_0_0; // fmv.w/d/h/q.x  int to fp reg
+                                  else if (P.ZFA_SUPPORTED & Funct3D == 3'b000 & Rs2D == 5'b00001) 
+                                                ControlsD = `FCTRLW'b1_0_00_00_111_0_0_0; // fli
                       7'b0100000: if (Rs2D[4:2] == 3'b000 & SupportedFmt2 & Rs2D[1:0] != 2'b00)
                                                 ControlsD = `FCTRLW'b1_0_01_00_000_0_0_0; // fcvt.s.(d/q/h)
                       7'b0100001: if (Rs2D[4:2] == 3'b000  & SupportedFmt2 & Rs2D[1:0] != 2'b01)
                                                 ControlsD = `FCTRLW'b1_0_01_00_001_0_0_0; // fcvt.d.(s/h/q)
                       // coverage off
-                      // Not covered in testing because rv64gc does not support half or quad precision
                       7'b0100010: if (Rs2D[4:2] == 3'b000 & SupportedFmt2 & Rs2D[1:0] != 2'b10)
                                                 ControlsD = `FCTRLW'b1_0_01_00_010_0_0_0; // fcvt.h.(s/d/q)
+                      // Not covered in testing because rv64gc does not support quad precision
                       7'b0100011: if (Rs2D[4:2] == 3'b000  & SupportedFmt2 & Rs2D[1:0] != 2'b11)
                                                 ControlsD = `FCTRLW'b1_0_01_00_011_0_0_0; // fcvt.q.(s/h/d)
                       // coverage on
@@ -179,7 +181,6 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
                                     5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1; // fcvt.lu.d  d->lu
                                   endcase
                       // coverage off
-                      // Not covered in testing because rv64gc does not support half or quad precision
                       7'b1101010: case(Rs2D)
                                     5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0; // fcvt.h.w   w->h
                                     5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0; // fcvt.h.wu wu->h
@@ -192,6 +193,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
                                     5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1; // fcvt.l.h   h->l
                                     5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1; // fcvt.lu.h  h->lu
                                   endcase
+                      // Not covered in testing because rv64gc does not support quad precision
                       7'b1101011: case(Rs2D)
                                     5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0; // fcvt.q.w   w->q
                                     5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0; // fcvt.q.wu wu->q
@@ -274,6 +276,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   //        011 - mv to fp        01
   //        110 - min             10
   //        101 - max             10
+  //        111 - fli             11
 
   //  OpCtrl:
   //    Fma: {not multiply-add?, negate prod?, negate Z?}

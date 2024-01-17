@@ -160,6 +160,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   logic                        StallUnpackedM;                     // Stall unpacker outputs during multicycle fdivsqrt
   logic [P.FLEN-1:0]           SgnExtXE;                           // Sign-extended X input for move to integer
   logic                        mvsgn;                              // sign bit for extending move
+  logic [P.FLEN-1:0]           FliResE;                            // Floating-point load immediate value
 
   //////////////////////////////////////////////////////////////////////////////////////////
   // Decode Stage: fctrl decoder, read register file
@@ -263,6 +264,14 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
     .ToInt(FWriteIntE), .XZero(XZeroE), .Fmt(FmtE), .Ce(CeE), .ShiftAmt(CvtShiftAmtE), 
     .ResSubnormUf(CvtResSubnormUfE), .Cs(CsE), .IntZero(IntZeroE), .LzcIn(CvtLzcInE));
 
+  // floating-point load immediate: fli
+  if (P.ZFA_SUPPORTED) begin
+    logic [4:0] Rs1E;
+    
+    flopenrc #(5) Rs1EReg(clk, reset, FlushE, ~StallE, InstrD[19:15], Rs1E);
+    fli #(P) fli(.Rs1(Rs1E), .Fmt(FmtE), .Imm(FliResE)); 
+  end else assign FliResE = '0;
+
   // NaN Box SrcA to convert integer to requested FP size for fmv.*.x
   if(P.FPSIZES == 1) assign AlignedSrcAE = {{P.FLEN-P.XLEN{1'b1}}, ForwardedSrcAE};
   else if(P.FPSIZES == 2) 
@@ -276,7 +285,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   end
 
   // select a result that may be written to the FP register
-  mux3  #(P.FLEN) FResMux(SgnResE, AlignedSrcAE, CmpFpResE, {OpCtrlE[2], &OpCtrlE[1:0]}, PreFpResE);
+  mux4  #(P.FLEN) FResMux(SgnResE, AlignedSrcAE, CmpFpResE, FliResE, {OpCtrlE[2], &OpCtrlE[1:0]}, PreFpResE);
   assign PreNVE = CmpNVE&(OpCtrlE[2]|FWriteIntE);
 
   // select the result that may be written to the integer register with fmv.x.*
