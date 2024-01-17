@@ -160,8 +160,10 @@ localparam SVADU_SUPPORTED = 1;
 localparam ZMMUL_SUPPORTED = 0;
 
 // FPU division architecture
-localparam RADIX = 32'h4;
-localparam DIVCOPIES = 32'h4;
+//localparam RADIX = 32'h4;
+localparam RADIX = 32'h2;
+//localparam DIVCOPIES = 32'h4;
+localparam DIVCOPIES = 32'h1;
 
 // bit manipulation
 localparam ZBA_SUPPORTED = 1;
