@@ -148,10 +148,10 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
                                   else if (Funct3D == 3'b000 & Rs2D == 5'b00000) 
                                                 ControlsD = `FCTRLW'b0_1_11_00_000_0_0_0_0; // fmv.x.w/d/h/q  fp to int register
                                   else if (P.ZFA_SUPPORTED & P.XLEN == 32 & P.D_SUPPORTED & Funct7D[1:0] == 2'b01 & Funct3D == 3'b000 & Rs2D == 5'b00001) 
-                                                  ControlsD = '0; // fmvh.x.d  (Zfa) *** needs values for all moves
+                                                  ControlsD = `FCTRLW'b0_1_11_00_000_0_0_0_1; // fmvh.x.d  (Zfa) 
                                   // coverage off    Q not supported in RV64GC
                                   else if (P.ZFA_SUPPORTED & P.XLEN == 64 & P.Q_SUPPORTED & Funct7D[1:0] == 2'b11 & Funct3D == 3'b000 & Rs2D == 5'b00001) 
-                                                  ControlsD = '0; // fmvh.x.q  (Zfa)
+                                                  ControlsD = `FCTRLW'b0_1_11_00_000_0_0_0_1; // fmvh.x.q  (Zfa)
                                   // coverage on
                       7'b11110??: if (Funct3D == 3'b000 & Rs2D == 5'b00000) 
                                                 ControlsD = `FCTRLW'b1_0_00_00_011_0_0_0_0; // fmv.w/d/h/q.x  int to fp reg

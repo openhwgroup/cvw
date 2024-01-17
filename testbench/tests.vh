@@ -2031,7 +2031,14 @@ string arch64zbs[] = '{
     "rv32i_m/D_Zfa/src/fmaxm_b1-01.S",
     "rv32i_m/D_Zfa/src/fmaxm_b19-01.S",
     "rv32i_m/D_Zfa/src/fmaxm.d_b1-01.S",
-    "rv32i_m/D_Zfa/src/fmaxm.d_b19-01.S"
+    "rv32i_m/D_Zfa/src/fmaxm.d_b19-01.S",
+    "rv32i_m/D_Zfa/src/fmvh.x.d_b1-01.S",
+    "rv32i_m/D_Zfa/src/fmvh.x.d_b22-01.S",
+    "rv32i_m/D_Zfa/src/fmvh.x.d_b23-01.S",
+    "rv32i_m/D_Zfa/src/fmvh.x.d_b24-01.S",
+    "rv32i_m/D_Zfa/src/fmvh.x.d_b27-01.S",
+    "rv32i_m/D_Zfa/src/fmvh.x.d_b28-01.S",
+    "rv32i_m/D_Zfa/src/fmvh.x.d_b29-01.S"
 /*    "rv32i_m/D_Zfa/src/fround_b1-01.S" */
   };
 

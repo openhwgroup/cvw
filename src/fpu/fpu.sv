@@ -310,7 +310,8 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
 
   // sign extend to XLEN if necessary
   if (P.FLEN>P.XLEN)
-    assign IntSrcXE = SgnExtXE[P.XLEN-1:0];
+    if (P.ZFA_SUPPORTED) assign IntSrcXE = ZfaE ? XE[P.FLEN-1:P.FLEN/2] : SgnExtXE[P.XLEN-1:0]; // either fmvh.x.* or fmv.x.*
+    else                 assign IntSrcXE = SgnExtXE[P.XLEN-1:0];
   else 
     assign IntSrcXE = {{P.XLEN-P.FLEN{mvsgn}}, SgnExtXE};
   mux3 #(P.XLEN) IntResMux (ClassResE, IntSrcXE, CmpIntResE, {~FResSelE[1], FResSelE[0]}, FIntResE);
