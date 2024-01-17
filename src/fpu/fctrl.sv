@@ -54,6 +54,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   output logic [1:0]           PostProcSelE, PostProcSelM,         // select result in the post processing unit
   output logic [1:0]           FResSelE, FResSelM, FResSelW,       // Select one of the results that finish in the memory stage
   output logic                 FPUActiveE,                         // FP instruction being executed
+  output logic                 ZfaE,                               // Zfa variants of instructions (fli, fminm, fmaxm, fround, froundnx, fleq, fltq, fmvh, fmvp, fcvtmod)
   // register control signals
   output logic                 FRegWriteE, FRegWriteM, FRegWriteW, // FP register write enable
   output logic                 FWriteIntE, FWriteIntM,             // Write to integer register
@@ -64,7 +65,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   output logic                 FDivStartE, IDivStartE              // Start division or squareroot
   );
 
-  `define FCTRLW 12
+  `define FCTRLW 13
 
   logic [`FCTRLW-1:0]          ControlsD;                          // control signals
   logic                        FRegWriteD;                         // FP register write enable
@@ -79,6 +80,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   logic                        SupportedFmt;                       // is the format supported
   logic                        SupportedFmt2;                      // is the source format supported for fp -> fp
   logic                        FCvtIntD, FCvtIntM;                 // convert to integer opperation
+  logic                        ZfaD;                               // Zfa variants of instructions
 
   // FPU Instruction Decoder
   assign Fmt = Funct7D[1:0];
@@ -91,129 +93,164 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
                          (Fmt2 == 2'b10 & P.ZFH_SUPPORTED) | (Fmt2 == 2'b11 & P.Q_SUPPORTED));
 
   // decode the instruction                       
-  // FRegWrite_FWriteInt_FResSel_PostProcSel_FOpCtrl_FDivStart_IllegalFPUInstr_FCvtInt
+  // FRegWrite_FWriteInt_FResSel_PostProcSel_FOpCtrl_FDivStart_IllegalFPUInstr_FCvtInt_Zfa
   always_comb
     if (STATUS_FS == 2'b00) // FPU instructions are illegal when FPU is disabled
-      ControlsD = `FCTRLW'b0_0_00_00_000_0_1_0;
+      ControlsD = `FCTRLW'b0_0_00_00_000_0_1_0_0;
     else if (OpD != 7'b0000111 & OpD != 7'b0100111 & ~SupportedFmt) 
-      ControlsD = `FCTRLW'b0_0_00_00_000_0_1_0; // for anything other than loads and stores, check for supported format
+      ControlsD = `FCTRLW'b0_0_00_00_000_0_1_0_0; // for anything other than loads and stores, check for supported format
     else begin 
-      ControlsD = `FCTRLW'b0_0_00_00_000_0_1_0; // default: non-implemented instruction
+      ControlsD = `FCTRLW'b0_0_00_00_000_0_1_0_0; // default: non-implemented instruction
       /* verilator lint_off CASEINCOMPLETE */   // default value above has priority so no other default needed
       case(OpD)
         7'b0000111: case(Funct3D)
-                      3'b010:                       ControlsD = `FCTRLW'b1_0_10_00_0xx_0_0_0; // flw
-                      3'b011:  if (P.D_SUPPORTED)   ControlsD = `FCTRLW'b1_0_10_00_0xx_0_0_0; // fld
-                      3'b100:  if (P.Q_SUPPORTED)   ControlsD = `FCTRLW'b1_0_10_00_0xx_0_0_0; // flq
-                      3'b001:  if (P.ZFH_SUPPORTED) ControlsD = `FCTRLW'b1_0_10_00_0xx_0_0_0; // flh
+                      3'b010:                       ControlsD = `FCTRLW'b1_0_10_00_0xx_0_0_0_0; // flw
+                      3'b011:  if (P.D_SUPPORTED)   ControlsD = `FCTRLW'b1_0_10_00_0xx_0_0_0_0; // fld
+                      3'b100:  if (P.Q_SUPPORTED)   ControlsD = `FCTRLW'b1_0_10_00_0xx_0_0_0_0; // flq
+                      3'b001:  if (P.ZFH_SUPPORTED) ControlsD = `FCTRLW'b1_0_10_00_0xx_0_0_0_0; // flh
                     endcase
         7'b0100111: case(Funct3D)
-                      3'b010:                       ControlsD = `FCTRLW'b0_0_10_00_0xx_0_0_0; // fsw
-                      3'b011:  if (P.D_SUPPORTED)   ControlsD = `FCTRLW'b0_0_10_00_0xx_0_0_0; // fsd
-                      3'b100:  if (P.Q_SUPPORTED)   ControlsD = `FCTRLW'b0_0_10_00_0xx_0_0_0; // fsq
-                      3'b001:  if (P.ZFH_SUPPORTED) ControlsD = `FCTRLW'b0_0_10_00_0xx_0_0_0; // fsh
+                      3'b010:                       ControlsD = `FCTRLW'b0_0_10_00_0xx_0_0_0_0; // fsw
+                      3'b011:  if (P.D_SUPPORTED)   ControlsD = `FCTRLW'b0_0_10_00_0xx_0_0_0_0; // fsd
+                      3'b100:  if (P.Q_SUPPORTED)   ControlsD = `FCTRLW'b0_0_10_00_0xx_0_0_0_0; // fsq
+                      3'b001:  if (P.ZFH_SUPPORTED) ControlsD = `FCTRLW'b0_0_10_00_0xx_0_0_0_0; // fsh
                     endcase
-        7'b1000011:   ControlsD = `FCTRLW'b1_0_01_10_000_0_0_0; // fmadd
-        7'b1000111:   ControlsD = `FCTRLW'b1_0_01_10_001_0_0_0; // fmsub
-        7'b1001011:   ControlsD = `FCTRLW'b1_0_01_10_010_0_0_0; // fnmsub
-        7'b1001111:   ControlsD = `FCTRLW'b1_0_01_10_011_0_0_0; // fnmadd
+        7'b1000011:   ControlsD = `FCTRLW'b1_0_01_10_000_0_0_0_0; // fmadd
+        7'b1000111:   ControlsD = `FCTRLW'b1_0_01_10_001_0_0_0_0; // fmsub
+        7'b1001011:   ControlsD = `FCTRLW'b1_0_01_10_010_0_0_0_0; // fnmsub
+        7'b1001111:   ControlsD = `FCTRLW'b1_0_01_10_011_0_0_0_0; // fnmadd
         7'b1010011: casez(Funct7D)
-                      7'b00000??: ControlsD = `FCTRLW'b1_0_01_10_110_0_0_0; // fadd
-                      7'b00001??: ControlsD = `FCTRLW'b1_0_01_10_111_0_0_0; // fsub
-                      7'b00010??: ControlsD = `FCTRLW'b1_0_01_10_100_0_0_0; // fmul
-                      7'b00011??: ControlsD = `FCTRLW'b1_0_01_01_xx0_1_0_0; // fdiv
-                      7'b01011??: if (Rs2D == 5'b0000) ControlsD = `FCTRLW'b1_0_01_01_xx1_1_0_0; // fsqrt
+                      7'b00000??: ControlsD = `FCTRLW'b1_0_01_10_110_0_0_0_0; // fadd
+                      7'b00001??: ControlsD = `FCTRLW'b1_0_01_10_111_0_0_0_0; // fsub
+                      7'b00010??: ControlsD = `FCTRLW'b1_0_01_10_100_0_0_0_0; // fmul
+                      7'b00011??: ControlsD = `FCTRLW'b1_0_01_01_xx0_1_0_0_0; // fdiv
+                      7'b01011??: if (Rs2D == 5'b0000) ControlsD = `FCTRLW'b1_0_01_01_xx1_1_0_0_0; // fsqrt
                       7'b00100??: case(Funct3D)
-                                    3'b000:  ControlsD = `FCTRLW'b1_0_00_00_000_0_0_0; // fsgnj
-                                    3'b001:  ControlsD = `FCTRLW'b1_0_00_00_001_0_0_0; // fsgnjn
-                                    3'b010:  ControlsD = `FCTRLW'b1_0_00_00_010_0_0_0; // fsgnjx
+                                    3'b000:  ControlsD = `FCTRLW'b1_0_00_00_000_0_0_0_0; // fsgnj
+                                    3'b001:  ControlsD = `FCTRLW'b1_0_00_00_001_0_0_0_0; // fsgnjn
+                                    3'b010:  ControlsD = `FCTRLW'b1_0_00_00_010_0_0_0_0; // fsgnjx
                                   endcase
                       7'b00101??: case(Funct3D)
-                                    3'b000:  ControlsD = `FCTRLW'b1_0_00_00_110_0_0_0; // fmin
-                                    3'b001:  ControlsD = `FCTRLW'b1_0_00_00_101_0_0_0; // fmax
+                                    3'b000:  ControlsD = `FCTRLW'b1_0_00_00_110_0_0_0_0; // fmin
+                                    3'b001:  ControlsD = `FCTRLW'b1_0_00_00_101_0_0_0_0; // fmax
+                                    3'b010:  if (P.ZFA_SUPPORTED) ControlsD = `FCTRLW'b1_0_00_00_110_0_0_0_1; // fminm  (Zfa)
+                                    3'b011:  if (P.ZFA_SUPPORTED) ControlsD = `FCTRLW'b1_0_00_00_101_0_0_0_1; // fmaxm  (Zfa)
                                   endcase
                       7'b10100??: case(Funct3D)
-                                    3'b010:  ControlsD = `FCTRLW'b0_1_00_00_010_0_0_0; // feq
-                                    3'b001:  ControlsD = `FCTRLW'b0_1_00_00_001_0_0_0; // flt
-                                    3'b000:  ControlsD = `FCTRLW'b0_1_00_00_011_0_0_0; // fle
+                                    3'b000:  ControlsD = `FCTRLW'b0_1_00_00_011_0_0_0_0; // fle
+                                    3'b001:  ControlsD = `FCTRLW'b0_1_00_00_001_0_0_0_0; // flt
+                                    3'b010:  ControlsD = `FCTRLW'b0_1_00_00_010_0_0_0_0; // feq
+                                    3'b100:  if (P.ZFA_SUPPORTED) ControlsD = `FCTRLW'b0_1_00_00_011_0_0_0_1; // fleq  (Zfa)
+                                    3'b101:  if (P.ZFA_SUPPORTED) ControlsD = `FCTRLW'b0_1_00_00_001_0_0_0_1; // fltq  (Zfa)
                                   endcase
                       7'b11100??: if (Funct3D == 3'b001 & Rs2D == 5'b00000)          
-                                                ControlsD = `FCTRLW'b0_1_10_00_000_0_0_0; // fclass
+                                                ControlsD = `FCTRLW'b0_1_10_00_000_0_0_0_0; // fclass
                                   else if (Funct3D == 3'b000 & Rs2D == 5'b00000) 
-                                                ControlsD = `FCTRLW'b0_1_11_00_000_0_0_0; // fmv.x.w/d/h/q  fp to int register
+                                                ControlsD = `FCTRLW'b0_1_11_00_000_0_0_0_0; // fmv.x.w/d/h/q  fp to int register
+                                  else if (P.ZFA_SUPPORTED & P.XLEN == 32 & P.D_SUPPORTED & Funct7D[1:0] == 2'b01 & Funct3D == 3'b000 & Rs2D == 5'b00001) 
+                                                  ControlsD = '0; // fmvh.x.d  (Zfa) *** needs values for all moves
+                                  // coverage off    Q not supported in RV64GC
+                                  else if (P.ZFA_SUPPORTED & P.XLEN == 64 & P.Q_SUPPORTED & Funct7D[1:0] == 2'b11 & Funct3D == 3'b000 & Rs2D == 5'b00001) 
+                                                  ControlsD = '0; // fmvh.x.q  (Zfa)
+                                  // coverage on
                       7'b11110??: if (Funct3D == 3'b000 & Rs2D == 5'b00000) 
-                                                ControlsD = `FCTRLW'b1_0_00_00_011_0_0_0; // fmv.w/d/h/q.x  int to fp reg
+                                                ControlsD = `FCTRLW'b1_0_00_00_011_0_0_0_0; // fmv.w/d/h/q.x  int to fp reg
                                   else if (P.ZFA_SUPPORTED & Funct3D == 3'b000 & Rs2D == 5'b00001) 
-                                                ControlsD = `FCTRLW'b1_0_00_00_111_0_0_0; // fli
+                                                ControlsD = `FCTRLW'b1_0_00_00_111_0_0_0_1; // fli  (Zfa)
                       7'b0100000: if (Rs2D[4:2] == 3'b000 & SupportedFmt2 & Rs2D[1:0] != 2'b00)
-                                                ControlsD = `FCTRLW'b1_0_01_00_000_0_0_0; // fcvt.s.(d/q/h)
+                                                ControlsD = `FCTRLW'b1_0_01_00_000_0_0_0_0; // fcvt.s.(d/q/h)
+                                  else if (Rs2D == 5'b00100 & P.ZFA_SUPPORTED)
+                                                ControlsD = `FCTRLW'b1_0_01_00_000_0_0_0_1; // fround.s  (Zfa) *** needs ctrl for all rounds
+                                  else if (Rs2D == 5'b00101 & P.ZFA_SUPPORTED)
+                                                ControlsD = `FCTRLW'b1_0_01_00_000_0_0_0_1; // froundnx.s  (Zfa) *** needs ctrl for all rounds
                       7'b0100001: if (Rs2D[4:2] == 3'b000  & SupportedFmt2 & Rs2D[1:0] != 2'b01)
-                                                ControlsD = `FCTRLW'b1_0_01_00_001_0_0_0; // fcvt.d.(s/h/q)
-                      // coverage off
+                                                ControlsD = `FCTRLW'b1_0_01_00_001_0_0_0_0; // fcvt.d.(s/h/q)
+                                  else if (Rs2D == 5'b00100 & P.ZFA_SUPPORTED)
+                                                ControlsD = `FCTRLW'b1_0_01_00_000_0_0_0_1; // fround.d  (Zfa)
+                                  else if (Rs2D == 5'b00101 & P.ZFA_SUPPORTED)
+                                                ControlsD = `FCTRLW'b1_0_01_00_000_0_0_0_1; // froundnx.d  (Zfa)
                       7'b0100010: if (Rs2D[4:2] == 3'b000 & SupportedFmt2 & Rs2D[1:0] != 2'b10)
-                                                ControlsD = `FCTRLW'b1_0_01_00_010_0_0_0; // fcvt.h.(s/d/q)
+                                                ControlsD = `FCTRLW'b1_0_01_00_010_0_0_0_0; // fcvt.h.(s/d/q)
+                                  else if (Rs2D == 5'b00100 & P.ZFA_SUPPORTED)
+                                                ControlsD = `FCTRLW'b1_0_01_00_000_0_0_0_1; // fround.h  (Zfa)
+                                  else if (Rs2D == 5'b00101 & P.ZFA_SUPPORTED)
+                                                ControlsD = `FCTRLW'b1_0_01_00_000_0_0_0_1; // froundnx.h  (Zfa)
+                      // coverage off
                       // Not covered in testing because rv64gc does not support quad precision
                       7'b0100011: if (Rs2D[4:2] == 3'b000  & SupportedFmt2 & Rs2D[1:0] != 2'b11)
-                                                ControlsD = `FCTRLW'b1_0_01_00_011_0_0_0; // fcvt.q.(s/h/d)
+                                                ControlsD = `FCTRLW'b1_0_01_00_011_0_0_0_0; // fcvt.q.(s/h/d)
+                                  else if (Rs2D == 5'b00100 & P.ZFA_SUPPORTED)
+                                                ControlsD = `FCTRLW'b1_0_01_00_000_0_0_0_1; // fround.q  (Zfa)
+                                  else if (Rs2D == 5'b00101 & P.ZFA_SUPPORTED)
+                                                ControlsD = `FCTRLW'b1_0_01_00_000_0_0_0_1; // froundnx.q  (Zfa)
                       // coverage on
                       7'b1101000: case(Rs2D)
-                                    5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0; // fcvt.s.w   w->s
-                                    5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0; // fcvt.s.wu wu->s
-                                    5'b00010:    ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0; // fcvt.s.l   l->s
-                                    5'b00011:    ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0; // fcvt.s.lu lu->s
+                                    5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0_0; // fcvt.s.w   w->s
+                                    5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0_0; // fcvt.s.wu wu->s
+                                    5'b00010:    ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0_0; // fcvt.s.l   l->s
+                                    5'b00011:    ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0_0; // fcvt.s.lu lu->s
                                   endcase
                       7'b1100000: case(Rs2D)
-                                    5'b00000:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1; // fcvt.w.s   s->w
-                                    5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1; // fcvt.wu.s  s->wu
-                                    5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1; // fcvt.l.s   s->l
-                                    5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1; // fcvt.lu.s  s->lu
+                                    5'b00000:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1_0; // fcvt.w.s   s->w
+                                    5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1_0; // fcvt.wu.s  s->wu
+                                    5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1_0; // fcvt.l.s   s->l
+                                    5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1_0; // fcvt.lu.s  s->lu
                                   endcase
                       7'b1101001: case(Rs2D)
-                                    5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0; // fcvt.d.w   w->d
-                                    5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0; // fcvt.d.wu wu->d
-                                    5'b00010:    ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0; // fcvt.d.l   l->d
-                                    5'b00011:    ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0; // fcvt.d.lu lu->d
+                                    5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0_0; // fcvt.d.w   w->d
+                                    5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0_0; // fcvt.d.wu wu->d
+                                    5'b00010:    ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0_0; // fcvt.d.l   l->d
+                                    5'b00011:    ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0_0; // fcvt.d.lu lu->d
                                   endcase
                       7'b1100001: case(Rs2D)
-                                    5'b00000:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1; // fcvt.w.d   d->w
-                                    5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1; // fcvt.wu.d  d->wu
-                                    5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1; // fcvt.l.d   d->l
-                                    5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1; // fcvt.lu.d  d->lu
+                                    5'b00000:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1_0; // fcvt.w.d   d->w
+                                    5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1_0; // fcvt.wu.d  d->wu
+                                    5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1_0; // fcvt.l.d   d->l
+                                    5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1_0; // fcvt.lu.d  d->lu
+                                    5'b01000: if (P.ZFA_SUPPORTED & P.D_SUPPORTED & Funct3D == 3'b001) 
+                                                 ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1_1; // fcvtmod.w.d (Zfa)
                                   endcase
-                      // coverage off
                       7'b1101010: case(Rs2D)
-                                    5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0; // fcvt.h.w   w->h
-                                    5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0; // fcvt.h.wu wu->h
-                                    5'b00010:    ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0; // fcvt.h.l   l->h
-                                    5'b00011:    ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0; // fcvt.h.lu lu->h
+                                    5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0_0; // fcvt.h.w   w->h
+                                    5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0_0; // fcvt.h.wu wu->h
+                                    5'b00010:    ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0_0; // fcvt.h.l   l->h
+                                    5'b00011:    ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0_0; // fcvt.h.lu lu->h
                                   endcase
                       7'b1100010: case(Rs2D)
-                                    5'b00000:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1; // fcvt.w.h   h->w
-                                    5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1; // fcvt.wu.h  h->wu
-                                    5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1; // fcvt.l.h   h->l
-                                    5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1; // fcvt.lu.h  h->lu
+                                    5'b00000:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1_0; // fcvt.w.h   h->w
+                                    5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1_0; // fcvt.wu.h  h->wu
+                                    5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1_0; // fcvt.l.h   h->l
+                                    5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1_0; // fcvt.lu.h  h->lu
                                   endcase
                       // Not covered in testing because rv64gc does not support quad precision
+                      // coverage off
                       7'b1101011: case(Rs2D)
-                                    5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0; // fcvt.q.w   w->q
-                                    5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0; // fcvt.q.wu wu->q
-                                    5'b00010:    ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0; // fcvt.q.l   l->q
-                                    5'b00011:    ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0; // fcvt.q.lu lu->q
+                                    5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0_0; // fcvt.q.w   w->q
+                                    5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0_0; // fcvt.q.wu wu->q
+                                    5'b00010:    ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0_0; // fcvt.q.l   l->q
+                                    5'b00011:    ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0_0; // fcvt.q.lu lu->q
                                   endcase
                       7'b1100011: case(Rs2D)
-                                    5'b00000:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1; // fcvt.w.q   q->w
-                                    5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1; // fcvt.wu.q  q->wu
-                                    5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1; // fcvt.l.q   q->l
-                                    5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1; // fcvt.lu.q  q->lu
+                                    5'b00000:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1_0; // fcvt.w.q   q->w
+                                    5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1_0; // fcvt.wu.q  q->wu
+                                    5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1_0; // fcvt.l.q   q->l
+                                    5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1_0; // fcvt.lu.q  q->lu
                                   endcase
                       // coverage on
-                    endcase
+                      7'b1011001: if (P.ZFA_SUPPORTED & P.XLEN == 32 & P.D_SUPPORTED & Funct3D == 3'b000) 
+                                                  ControlsD = '0; // fmvp.d.x  (Zfa)
+                      // Not covered in testing because rv64gc does not support quad precision
+                      // coverage off
+                      7'b1011011: if (P.ZFA_SUPPORTED & P.XLEN == 64 & P.Q_SUPPORTED & Funct3D == 3'b000) 
+                                                  ControlsD = '0; // fmvp.q.x  (Zfa)
+                      // coverage on
+                   endcase
       endcase
     end
     /* verilator lint_on CASEINCOMPLETE */
 
   // unswizzle control bits
-  assign #1 {FRegWriteD, FWriteIntD, FResSelD, PostProcSelD, OpCtrlD, FDivStartD, IllegalFPUInstrD, FCvtIntD} = ControlsD;
+  assign #1 {FRegWriteD, FWriteIntD, FResSelD, PostProcSelD, OpCtrlD, FDivStartD, IllegalFPUInstrD, FCvtIntD, ZfaD} = ControlsD;
   
   // rounding modes:
   //    000 - round to nearest, ties to even
@@ -313,9 +350,9 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   assign Adr3D = InstrD[31:27];
  
   // D/E pipleine register
-  flopenrc #(14+P.FMTBITS) DECtrlReg3(clk, reset, FlushE, ~StallE, 
-              {FRegWriteD, PostProcSelD, FResSelD, FrmD, FmtD, OpCtrlD, FWriteIntD, FCvtIntD, ~IllegalFPUInstrD},
-              {FRegWriteE, PostProcSelE, FResSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, FCvtIntE, FPUActiveE});
+  flopenrc #(15+P.FMTBITS) DECtrlReg3(clk, reset, FlushE, ~StallE, 
+              {FRegWriteD, PostProcSelD, FResSelD, FrmD, FmtD, OpCtrlD, FWriteIntD, FCvtIntD, ZfaD, ~IllegalFPUInstrD},
+              {FRegWriteE, PostProcSelE, FResSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, FCvtIntE, ZfaE, FPUActiveE});
   flopenrc #(15) DEAdrReg(clk, reset, FlushE, ~StallE, {Adr1D, Adr2D, Adr3D}, {Adr1E, Adr2E, Adr3E});
   flopenrc #(1) DEFDivStartReg(clk, reset, FlushE, ~StallE|FDivBusyE, FDivStartD, FDivStartE);
   flopenrc #(3) DEEnReg(clk, reset, FlushE, ~StallE, {XEnD, YEnD, ZEnD}, {XEnE, YEnE, ZEnE});

@@ -1999,16 +1999,58 @@ string arch64zbs[] = '{
 
   string arch32zfaf[] = '{
     `RISCVARCHTEST,
-    "rv32i_m/F_Zfa/src/fle_b1-01.S",
-    "rv32i_m/F_Zfa/src/fle_b19-01.S",
-    "rv32i_m/F_Zfa/src/fli_b1-01.S",
+    "rv32i_m/F_Zfa/src/fleq_b1-01.S",
+    "rv32i_m/F_Zfa/src/fleq_b19-01.S", 
+    "rv32i_m/F_Zfa/src/fli.s-01.S",
     "rv32i_m/F_Zfa/src/fltq_b1-01.S",
     "rv32i_m/F_Zfa/src/fltq_b19-01.S",
-    "rv32i_m/F_Zfa/src/fmin_b1-01.S",
-    "rv32i_m/F_Zfa/src/fmin_b19-01.S",
-    "rv32i_m/F_Zfa/src/fmax_b1-01.S",
-    "rv32i_m/F_Zfa/src/fmax_b19-01.S",
-    "rv32i_m/F_Zfa/src/fround_b1-01.S"
+    "rv32i_m/F_Zfa/src/fminm_b1-01.S",
+    "rv32i_m/F_Zfa/src/fminm_b19-01.S",
+    "rv32i_m/F_Zfa/src/fmaxm_b1-01.S",
+    "rv32i_m/F_Zfa/src/fmaxm_b19-01.S"
+/*    "rv32i_m/F_Zfa/src/fround_b1-01.S" */
+  };
+
+  string arch32zfad[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/D_Zfa/src/fleq_b1-01.S",
+    "rv32i_m/D_Zfa/src/fleq_b19-01.S", 
+    "rv32i_m/D_Zfa/src/fli.d-01.S",
+    "rv32i_m/D_Zfa/src/fltq_b1-01.S",
+    "rv32i_m/D_Zfa/src/fltq_b19-01.S",
+    "rv32i_m/D_Zfa/src/fminm_b1-01.S",
+    "rv32i_m/D_Zfa/src/fminm_b19-01.S",
+    "rv32i_m/D_Zfa/src/fmaxm_b1-01.S",
+    "rv32i_m/D_Zfa/src/fmaxm_b19-01.S"
+/*    "rv32i_m/D_Zfa/src/fround_b1-01.S" */
+  };
+
+  string arch64zfaf[] = '{
+    `RISCVARCHTEST,
+    "rv64i_m/F_Zfa/src/fleq_b1-01.S",
+    "rv64i_m/F_Zfa/src/fleq_b19-01.S", 
+    "rv64i_m/F_Zfa/src/fli.s-01.S",
+    "rv64i_m/F_Zfa/src/fltq_b1-01.S",
+    "rv64i_m/F_Zfa/src/fltq_b19-01.S",
+    "rv64i_m/F_Zfa/src/fminm_b1-01.S",
+    "rv64i_m/F_Zfa/src/fminm_b19-01.S",
+    "rv64i_m/F_Zfa/src/fmaxm_b1-01.S",
+    "rv64i_m/F_Zfa/src/fmaxm_b19-01.S"
+/*    "rv64i_m/F_Zfa/src/fround_b1-01.S" */
+  };
+
+  string arch64zfad[] = '{
+    `RISCVARCHTEST,
+    "rv64i_m/D_Zfa/src/fleq_b1-01.S",
+    "rv64i_m/D_Zfa/src/fleq_b19-01.S", 
+    "rv64i_m/D_Zfa/src/fli.d-01.S",
+    "rv64i_m/D_Zfa/src/fltq_b1-01.S",
+    "rv64i_m/D_Zfa/src/fltq_b19-01.S",
+    "rv64i_m/D_Zfa/src/fminm_b1-01.S",
+    "rv64i_m/D_Zfa/src/fminm_b19-01.S",
+    "rv64i_m/D_Zfa/src/fmaxm_b1-01.S",
+    "rv64i_m/D_Zfa/src/fmaxm_b19-01.S"
+/*     "rv64i_m/D_Zfa/src/fround_b1-01.S" */
   };
 
   string arch32d_fma[] = '{

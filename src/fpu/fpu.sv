@@ -83,6 +83,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   logic                        XEnE, YEnE, ZEnE;                   // X, Y, Z inputs used for current operation
   logic                        FRegWriteE;                         // Write floating-point register
   logic                        FPUActiveE;                         // FP instruction being executed
+  logic                        ZfaE;                               // Zfa variants of instructions (fli, fminm, fmaxm, fround, froundnx, fleq, fltq, fmvh, fmvp, fcvtmod.w.d)
 
   // regfile signals
   logic [P.FLEN-1:0]           FRD1D, FRD2D, FRD3D;                // Read Data from FP register - decode stage
@@ -170,7 +171,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   fctrl #(P) fctrl (.Funct7D(InstrD[31:25]), .OpD(InstrD[6:0]), .Rs2D(InstrD[24:20]), .Funct3D(InstrD[14:12]), 
               .IntDivE, .InstrD,
               .StallE, .StallM, .StallW, .FlushE, .FlushM, .FlushW, .FRM_REGW, .STATUS_FS, .FDivBusyE,
-              .reset, .clk, .FRegWriteE, .FRegWriteM, .FRegWriteW, .FrmM, .FmtE, .FmtM,
+              .reset, .clk, .FRegWriteE, .FRegWriteM, .FRegWriteW, .ZfaE, .FrmM, .FmtE, .FmtM,
               .FDivStartE, .IDivStartE, .FWriteIntE, .FCvtIntE, .FWriteIntM, .OpCtrlE, .OpCtrlM, .FpLoadStoreM,
               .IllegalFPUInstrD, .XEnD, .YEnD, .ZEnD, .XEnE, .YEnE, .ZEnE,
               .FResSelE, .FResSelM, .FResSelW, .FPUActiveE, .PostProcSelE, .PostProcSelM, .FCvtIntW, 
@@ -247,7 +248,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
     .UmM, .FIntDivResultM);
 
   // compare: fmin/fmax, flt/fle/feq
-  fcmp #(P) fcmp (.Fmt(FmtE), .OpCtrl(OpCtrlE), .Xs(XsE), .Ys(YsE), .Xe(XeE), .Ye(YeE), 
+  fcmp #(P) fcmp (.Fmt(FmtE), .OpCtrl(OpCtrlE), .Zfa(ZfaE), .Xs(XsE), .Ys(YsE), .Xe(XeE), .Ye(YeE), 
     .Xm(XmE), .Ym(YmE), .XZero(XZeroE), .YZero(YZeroE), .XNaN(XNaNE), .YNaN(YNaNE), 
     .XSNaN(XSNaNE), .YSNaN(YSNaNE), .X(XE), .Y(YE), .CmpNV(CmpNVE), 
     .CmpFpRes(CmpFpResE), .CmpIntRes(CmpIntResE));
