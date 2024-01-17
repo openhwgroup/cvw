@@ -436,7 +436,7 @@ module testbenchfp;
                Fmt = {Fmt, 2'b01};
             end
    end
-   if (TEST === "fdivremsqrt") begin // if unified div sqrt is being tested
+   if (TEST === "afdivremsqrt") begin // if unified div sqrt is being tested
       Tests = {Tests, f64div, f64sqrt};
       OpCtrl = {OpCtrl, `DIV_OPCTRL, `SQRT_OPCTRL};
       WriteInt = {WriteInt, 1'b0, 1'b0};
@@ -527,7 +527,7 @@ module testbenchfp;
                Fmt = {Fmt, 2'b00};
             end
    end
-   if (TEST === "div" | TEST === "all") begin // if division is being tested
+   if (TEST === "div" | TEST === "all" | TEST === "fdivremsqrt") begin // if division is being tested
             // add the correct tests/op-ctrls/unit/fmt to their lists
             Tests = {Tests, f32div};
             OpCtrl = {OpCtrl, `DIV_OPCTRL};
@@ -951,7 +951,7 @@ module testbenchfp;
   `CMPUNIT: Res = CmpRes;
   `CVTINTUNIT: if (WriteIntVal) Res = IntRes; else Res = FpRes;
   `CVTFPUNIT: Res = FpRes;
-	`INTDIVUNIT: Res = IntRes;
+  `INTDIVUNIT: Res = IntRes;
       endcase
 
       // select the flag to check
@@ -1078,32 +1078,23 @@ module testbenchfp;
       // Maybe change OpCtrl but for now just look at TEST for fma test
       assign CheckNow = ((DivDone | ~divsqrtop) | (TEST == "add" | TEST == "fma" | TEST == "sub")) & (UnitVal !== `CVTINTUNIT) & (UnitVal !== `CMPUNIT);
       if (~(ResMatch & FlagMatch) & CheckNow) begin
-            integer fd;
+            /*integer fd;
             fd = $fopen("fperr.out","a");
             $fwrite(fd, "%h_%h_%h_%2h\n",X,Y,Ans,AnsFlg);
-            $fclose(fd);
+            $fclose(fd);*/
    errors += 1;
    $display("\nError in %s", Tests[TestNum]);
    $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);	 
    $display("inputs: %h %h %h\nSrcA: %h\n SrcB: %h\n Res: %h %h\n Expected: %h %h", X, Y, Z, SrcA, SrcB, Res, ResFlg, Ans, AnsFlg);
    $display("time: $t", $realtime);
-      end
-      
-      // TestFloat sets the result to all 1's when there is an invalid result, however in 
-      // http://www.jhauser.us/arithmetic/TestFloat-3/doc/TestFloat-general.html it says
-      // for an unsigned integer result 0 is also okay
-
-      // Testfloat outputs 800... for both the largest integer values for both positive and negitive numbers but 
-      // the riscv spec specifies 2^31-1 for positive values out of range and NaNs ie 7fff...
-      else if ((UnitVal === `CVTINTUNIT) & 
-         ~(((WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&Xs&(Res[P.XLEN-1:0] === (P.XLEN)'(0))) | 
-      (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~Xs|XNaN)&OpCtrlVal[1]&(Res[P.XLEN-1:0] === {1'b0, {P.XLEN-1{1'b1}}})) | 
-      (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~Xs|XNaN)&~OpCtrlVal[1]&(Res[P.XLEN-1:0] === {{P.XLEN-32{1'b0}}, 1'b0, {31{1'b1}}})) | 
-      (~(WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&Xs&~XNaN)&(Res === Ans | NaNGood | NaNGood === 1'bx))) & (ResFlg === AnsFlg | AnsFlg === 5'bx))) begin
-   errors += 1;
-   $display("There is an error in %s", Tests[TestNum]);
-   $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
    $stop;
+      end else if (((UnitVal === `CVTINTUNIT) | (UnitVal === `CMPUNIT)) & 
+         ~(ResMatch & FlagMatch) & (Ans[0] !== 1'bx)) begin // Check for conversion and comparisons  
+            errors += 1;
+            $display("\nError in %s", Tests[TestNum]);
+            $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);	 	 
+            $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
+            $stop;
       end
 
       if (TestVectors[VectorNum][0] === 1'bx & Tests[TestNum] !== "") begin // if reached the eof
@@ -1119,7 +1110,12 @@ module testbenchfp;
    if (FrmNum === 4 | TEST === "intdivrem") OpCtrlNum += 1;
    // increment the rounding mode or loop back to rne 
    if (FrmNum < 4) FrmNum += 1;
-   else FrmNum = 0; 
+   else begin
+            FrmNum = 0;
+            // Add some time as a buffer between tests at the end of each test
+            repeat (10)
+               @(posedge clk);
+         end	 
    // if no more Tests - finish
    if (Tests[TestNum] === "") begin
             $display("\nAll Tests completed with %d errors\n", errors);
@@ -1247,7 +1243,7 @@ module readvectors import cvw::*;  #(parameter cvw_t P) (
           if (OpCtrl === `SQRT_OPCTRL)
             case (Fmt)
               2'b11: begin // quad
-		 #20;		 
+		 //#20;		 
 		 X = TestVector[8+2*(P.Q_LEN)-1:8+(P.Q_LEN)];
 		 Ans = TestVector[8+(P.Q_LEN-1):8];
 		 if (~clk) #5;
@@ -1255,7 +1251,7 @@ module readvectors import cvw::*;  #(parameter cvw_t P) (
 		   DivStart = 1'b0;
               end
               2'b01: if (P.D_SUPPORTED) begin // double
-		 #20;		 
+		 //#20;		 
 		 X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]};
 		 Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
 		 if (~clk) #5;
@@ -1263,7 +1259,7 @@ module readvectors import cvw::*;  #(parameter cvw_t P) (
 		   DivStart = 1'b0;
               end
               2'b00: if (P.S_SUPPORTED) begin // single
-		 #20;		 
+		 //#20;		 
 		 X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+1*(P.S_LEN)]};
 		 Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
 		 if (~clk) #5;
@@ -1271,7 +1267,7 @@ module readvectors import cvw::*;  #(parameter cvw_t P) (
 		   DivStart = 1'b0;
               end
               2'b10: begin // half
-		 #20;		 
+		 //#20;		 
 		 X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+(P.H_LEN)]};
 		 Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
 		 if (~clk) #5;
@@ -1282,7 +1278,7 @@ module readvectors import cvw::*;  #(parameter cvw_t P) (
           else
             case (Fmt)
               2'b11: begin // quad
-		 #20;		 
+		 //#20;		 
 		 X = TestVector[8+3*(P.Q_LEN)-1:8+2*(P.Q_LEN)];
 		 Y = TestVector[8+2*(P.Q_LEN)-1:8+(P.Q_LEN)];
 		 Ans = TestVector[8+(P.Q_LEN-1):8];
@@ -1291,7 +1287,7 @@ module readvectors import cvw::*;  #(parameter cvw_t P) (
 		   DivStart = 1'b0;
               end
               2'b01: if (P.D_SUPPORTED) begin // double
-		 #20;		 
+		 //#20;		 
 		 X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+3*(P.D_LEN)-1:8+2*(P.D_LEN)]};
 		 Y = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]};
 		 Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
@@ -1300,7 +1296,7 @@ module readvectors import cvw::*;  #(parameter cvw_t P) (
 		   DivStart = 1'b0;
               end
               2'b00: if (P.S_SUPPORTED) begin // single
-		 #20;		 
+		 //#20;		 
 		 X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+3*(P.S_LEN)-1:8+2*(P.S_LEN)]};
 		 Y = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+1*(P.S_LEN)]};
 		 Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
@@ -1309,7 +1305,7 @@ module readvectors import cvw::*;  #(parameter cvw_t P) (
 		   DivStart = 1'b0;
               end
               2'b10: begin // half
-		 #20;		 
+		 //#20;		 
 		 X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+3*(P.H_LEN)-1:8+2*(P.H_LEN)]};
 		 Y = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+(P.H_LEN)]};
 		 Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
