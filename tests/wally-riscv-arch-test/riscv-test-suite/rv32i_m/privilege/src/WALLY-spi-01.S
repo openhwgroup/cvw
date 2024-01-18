@@ -607,6 +607,7 @@ SETUP_PLIC
 .4byte delay1, 0x0000001, write32_test      # reset delay1 register
 .4byte cs_mode, 0x00000000, write32_test    # reset cs_mode
 .4byte tx_mark, 0x00000001, write32_test    # set transmit watermark to 1 (any entry turns mark off)
+.4byte sck_div, 0x00000100, write32_test    # lower SPI clock rate so read32_tests trigger at correct times
 #.4byte ie, 0x00000000, write32_test         # enable transmit interrupt
 .4byte ip, 0x00000001, read32_test          # tx watermark interupt should be pending
 .4byte 0x0, 0x00000000, readmip_test
