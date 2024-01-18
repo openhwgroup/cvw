@@ -112,6 +112,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   
   logic                  BusStall;                               // Bus interface busy with multicycle operation
   logic                  HPTWStall;                              // HPTW busy with multicycle operation
+  logic                  DCacheBusStallM;                        // Cache or bus stall
   logic                  CacheBusHPWTStall;                      // Cache, bus, or hptw is requesting a stall
   logic                  SelSpillE;                              // Align logic detected a spill and needs to stall
 
@@ -194,7 +195,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   if(P.VIRTMEM_SUPPORTED) begin : hptw
     hptw #(P) hptw(.clk, .reset, .MemRWM, .AtomicM, .ITLBMissF, .ITLBWriteF,
       .DTLBMissM, .DTLBWriteM, .InstrUpdateDAF, .DataUpdateDAM,
-      .FlushW, .DCacheStallM, .SATP_REGW, .PCSpillF,
+      .FlushW, .DCacheBusStallM, .SATP_REGW, .PCSpillF,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_ADUE, .PrivilegeModeW,
       .ReadDataM(ReadDataM[P.XLEN-1:0]), // ReadDataM is LLEN, but HPTW only needs XLEN
       .WriteDataM(WriteDataZM), .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
@@ -225,7 +226,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   // the trap module.
   assign CommittedM = SelHPTW | DCacheCommittedM | BusCommittedM;
   assign GatedStallW = StallW & ~SelHPTW;
-  assign CacheBusHPWTStall = DCacheStallM | HPTWStall | BusStall;
+  assign DCacheBusStallM = DCacheStallM | BusStall;
+  assign CacheBusHPWTStall = DCacheBusStallM | HPTWStall;
   assign LSUStallM = CacheBusHPWTStall | SpillStallM;
 
   /////////////////////////////////////////////////////////////////////////////////////////////
