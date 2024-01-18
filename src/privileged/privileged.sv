@@ -45,6 +45,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   // processor events for performance counter logging                      
   input  logic              FRegWriteM,                                     // instruction will write floating-point registers
   input  logic              LoadStallD,                                     // load instruction is stalling
+  input  logic              StoreStallD,                                    // store instruction is stalling
   input  logic              ICacheStallF,                                   // I cache stalled
   input  logic              DCacheStallM,                                   // D cache stalled
   input  logic              BPDirPredWrongM,                                // branch predictor guessed wrong direction
@@ -134,7 +135,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .InstrM, .InstrOrigM, .PCM, .SrcAM, .IEUAdrM, 
     .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
-    .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, 
+    .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
     .BPDirPredWrongM, .BTAWrongM, .RASPredPCWrongM, .BPWrongM,
     .sfencevmaM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
     .IClassWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
