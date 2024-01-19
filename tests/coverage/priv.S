@@ -297,6 +297,16 @@ sretdone:
 
     wfi
 
+
+
+    # Test uncovered privdec instructions
+    # exercise sfence.inval.ir instruction
+    .word 0x18100073
+
+    # exercise sret with rs1 not 0
+    .word 0x102F8073
+
+
     j done
 
 
