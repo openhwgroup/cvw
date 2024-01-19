@@ -89,7 +89,7 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   logic [P.NE+1:0]             NormSumExp;           // exponent of the normalized sum not taking into account Subnormal or zero results
   logic                        FmaPreResultSubnorm;  // is the result subnormal - calculated before LZA corection
   logic [$clog2(3*P.NF+5)-1:0] FmaShiftAmt;          // normalization shift amount for fma
-  // division singals
+  // division signals
   logic [P.LOGNORMSHIFTSZ-1:0] DivShiftAmt;          // divsqrt shif amount
   logic [P.NORMSHIFTSZ-1:0]    DivShiftIn;           // divsqrt shift input
   logic [P.NE+1:0]             Ue;                   // divsqrt corrected exponent after corretion shift
