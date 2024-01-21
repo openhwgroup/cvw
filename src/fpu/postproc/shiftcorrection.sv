@@ -44,7 +44,7 @@ module shiftcorrection import cvw::*;  #(parameter cvw_t P) (
   output logic [P.NE+1:0]          Ue                      // corrected exponent for divider
 );
 
-  logic [3*P.NF+3:0]               CorrSumShifted;         // the shifted sum after LZA correction
+  logic [P.CORRSHIFTSZ-1:0]        CorrSumShifted;         // the shifted sum after LZA correction
   logic [P.CORRSHIFTSZ-1:0]        CorrQm0, CorrQm1;       // portions of Shifted to select for CorrQmShifted
   logic [P.CORRSHIFTSZ-1:0]        CorrQmShifted;          // the shifted divsqrt result after one bit shift
   logic                            ResSubnorm;             // is the result Subnormal
@@ -68,7 +68,7 @@ module shiftcorrection import cvw::*;  #(parameter cvw_t P) (
   
   // if the result of the divider was calculated to be subnormal, then the result was correctly normalized, so select the top shifted bits
   always_comb
-    if(FmaOp)                       Mf = {CorrSumShifted, {P.CORRSHIFTSZ-(3*P.NF+4){1'b0}}};
+    if(FmaOp)                       Mf = {CorrSumShifted};
     else if (DivOp&~DivResSubnorm)  Mf = CorrQmShifted;
     else                            Mf = Shifted[P.NORMSHIFTSZ-1:P.NORMSHIFTSZ-P.CORRSHIFTSZ];
     
