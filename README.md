@@ -72,9 +72,139 @@ unless you have a compelling need for RedHat.
 Ubuntu users can install the tools by running
 
 	$ sudo $WALLY/bin/wally-tool-chain-install.sh
+Refer to `wally-tool-chain-install.sh` for a detailed description of each component or follow the steps below to issue the commands one at a time for installation on the command line
+### Step 1: Set Environment Variables and System Configuration
 
-See wally-tool-chain-install.sh for a detailed description of each component,
-or to issue the commands one at a time to install on the command line.
+```
+# Use /opt/riscv for installation - may require running script with sudo
+export RISCV="${1:-/opt/riscv}"
+export PATH=$PATH:$RISCV/bin:/usr/bin
+
+set -e # break on error
+
+# Modify accordingly for your machine
+# Increasing NUM_THREADS will speed up parallel compilation of the tools
+NUM_THREADS=8  # for >= 32GiB
+
+sudo mkdir -p $RISCV
+# *** need to update permissions to local user
+
+# Update and Upgrade tools
+sudo apt update -y
+sudo apt upgrade -y
+sudo apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev libglib2.0-dev python3-pip pkg-config opam z3 zlib1g-dev automake autotools-dev libmpc-dev libmpfr-dev  gperf libtool patchutils bc 
+# Other python libraries used through the book.
+sudo pip3 install sphinx sphinx_rtd_theme matplotlib scipy scikit-learn adjustText lief
+
+```
+
+### Step 2: GCC Cross-Compiler Installation
+
+```
+# gcc cross-compiler (https://github.com/riscv-collab/riscv-gnu-toolchain)
+# To install GCC from source can take hours to compile. 
+# This configuration enables multilib to target many flavors of RISC-V.
+cd $RISCV
+git clone https://github.com/riscv/riscv-gnu-toolchain
+cd riscv-gnu-toolchain
+./configure --prefix=${RISCV} --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
+make -j ${NUM_THREADS}
+
+```
+
+### Step 3: elf2hex Installation
+
+```
+# elf2hex (https://github.com/sifive/elf2hex)
+cd $RISCV
+export PATH=$RISCV/bin:$PATH
+git clone https://github.com/sifive/elf2hex.git
+cd elf2hex
+autoreconf -i
+./configure --target=riscv64-unknown-elf --prefix=$RISCV
+make
+make install
+
+```
+
+### Step 4: QEMU Installation
+
+```
+# QEMU (https://www.qemu.org/docs/master/system/target-riscv.html)
+cd $RISCV
+git clone --recurse-submodules https://github.com/qemu/qemu
+cd qemu
+./configure --target-list=riscv64-softmmu --prefix=$RISCV 
+make -j ${NUM_THREADS}
+make install
+
+```
+### Step 5: Spike Installation
+```
+# Spike (https://github.com/riscv-software-src/riscv-isa-sim)
+cd $RISCV
+git clone https://github.com/riscv-software-src/riscv-isa-sim
+mkdir -p riscv-isa-sim/build
+cd riscv-isa-sim/build
+../configure --prefix=$RISCV 
+make -j ${NUM_THREADS}
+make install 
+cd ../arch_test_target/spike/device
+sed -i 's/--isa=rv32ic/--isa=rv32iac/' rv32i_m/privilege/Makefile.include
+sed -i 's/--isa=rv64ic/--isa=rv64iac/' rv64i_m/privilege/Makefile.include
+
+```
+
+### Step 6: Verilator, Sail, and riscof Installation
+
+```
+# Wally needs Verilator 5.021 or later.
+# Verilator needs to be built from scratch to get the latest version
+cd $RISCV
+sudo apt-get install -y perl g++ ccache help2man libgoogle-perftools-dev numactl perl-doc zlib1g 
+sudo apt-get install -y libfl2  libfl-dev  # Ubuntu only (ignore if gives error)
+git clone https://github.com/verilator/verilator
+cd verilator
+git pull
+git checkout master
+autoconf
+./configure
+make -j ${NUM_THREADS}
+sudo make install
+```
+```
+
+# Sail (https://github.com/riscv/sail-riscv)
+cd $RISCV
+opam init -y --disable-sandboxing
+opam switch create 5.1.0
+opam install sail -y 
+eval $(opam config env)
+git clone https://github.com/riscv/sail-riscv.git
+cd sail-riscv
+make -j ${NUM_THREADS}
+ARCH=RV32 make -j ${NUM_THREADS}
+sudo ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV64 /usr/bin/riscv_sim_RV64
+sudo ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV32 /usr/bin/riscv_sim_RV32
+
+```
+```
+# riscof
+sudo pip3 install -U testresources riscv_config
+sudo pip3 install git+https://github.com/riscv/riscof.git
+
+```
+```
+# Download OSU Skywater 130 cell library
+sudo mkdir -p $RISCV/cad/lib
+cd $RISCV/cad/lib
+sudo git clone https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12
+
+```
+
+
+
+
 ## Installing EDA Tools
 
 Electronic Design Automation (EDA) tools are vital to implementations of System on Chip architectures as well as validating different designs.   Open-source and commercial tools exist for multiple strategies and although the one can spend a lifetime using combinations of different tools, only a small subset of tools is utilized for this text.  The tools are chosen because of their ease in access as well as their repeatability for accomplishing many of the tasks utilized to design Wally.  It is anticipated that additional tools may be documented later after this is text is published to improve use and access.
