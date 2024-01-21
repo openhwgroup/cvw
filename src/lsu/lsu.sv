@@ -111,7 +111,9 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic                  GatedStallW;                            // Hazard unit StallW gated when SelHPTW = 1
   
   logic                  BusStall;                               // Bus interface busy with multicycle operation
+  logic                  LSUBusStallM;                           // Bus interface busy with multicycle operation masked by IgnoreRequestTLB
   logic                  HPTWStall;                              // HPTW busy with multicycle operation
+  logic                  DCacheBusStallM;                        // Cache or bus stall
   logic                  CacheBusHPWTStall;                      // Cache, bus, or hptw is requesting a stall
   logic                  SelSpillE;                              // Align logic detected a spill and needs to stall
 
@@ -194,7 +196,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   if(P.VIRTMEM_SUPPORTED) begin : hptw
     hptw #(P) hptw(.clk, .reset, .MemRWM, .AtomicM, .ITLBMissF, .ITLBWriteF,
       .DTLBMissM, .DTLBWriteM, .InstrUpdateDAF, .DataUpdateDAM,
-      .FlushW, .DCacheStallM, .SATP_REGW, .PCSpillF,
+      .FlushW, .DCacheBusStallM, .SATP_REGW, .PCSpillF,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_ADUE, .PrivilegeModeW,
       .ReadDataM(ReadDataM[P.XLEN-1:0]), // ReadDataM is LLEN, but HPTW only needs XLEN
       .WriteDataM(WriteDataZM), .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
@@ -225,7 +227,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   // the trap module.
   assign CommittedM = SelHPTW | DCacheCommittedM | BusCommittedM;
   assign GatedStallW = StallW & ~SelHPTW;
-  assign CacheBusHPWTStall = DCacheStallM | HPTWStall | BusStall;
+  assign DCacheBusStallM = DCacheStallM | LSUBusStallM;
+  assign CacheBusHPWTStall = DCacheBusStallM | HPTWStall;
   assign LSUStallM = CacheBusHPWTStall | SpillStallM;
 
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -352,6 +355,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
         .Cacheable(CacheableOrFlushCacheM), .BusRW, .Stall(GatedStallW),
         .BusStall, .BusCommitted(BusCommittedM));
 
+
     // Mux between the 3 sources of read data, 0: cache, 1: Bus, 2: DTIM
     // Uncache bus access may be smaller width than LLEN.  Duplicate LLENPOVERAHBW times.
       // *** DTIMReadDataWordM should be increased to LLEN.
@@ -386,6 +390,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign {DCacheStallM, DCacheCommittedM} = '0;
   end
 
+  assign LSUBusStallM = BusStall & ~IgnoreRequestTLB;
+  
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Atomic operations
   /////////////////////////////////////////////////////////////////////////////////////////////

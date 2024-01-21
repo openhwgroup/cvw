@@ -608,6 +608,7 @@ SETUP_PLIC
 
 .8byte delay1, 0x0000001, write32_test      # reset delay1 register
 .8byte cs_mode, 0x00000000, write32_test    # reset cs_mode
+.8byte sck_div, 0x00000100, write32_test    # lower SPI clock rate so reads are done at correct time when ICACHE not supported
 .8byte tx_mark, 0x00000001, write32_test    # set transmit watermark to 1 (any entry turns mark off)
 #.8byte ie, 0x00000000, write32_test         # enable transmit interrupt
 .8byte ip, 0x00000001, read32_test          # tx watermark interupt should be pending
