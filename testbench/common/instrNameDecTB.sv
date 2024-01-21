@@ -298,6 +298,18 @@ module instrNameDecTB(
                        else if (funct7[6:2] == 5'b11100 & funct3 == 3'b001) name = "FCLASS";
                        else if (funct7[6:2] == 5'b00100 & funct3 == 3'b010) name = "FSGNJX";
                        else if (funct7[6:2] == 5'b10100 & funct3 == 3'b010) name = "FEQ";
+                       else if (funct7[6:2] == 5'b11110 & funct3 == 3'b000 & rs2 == 5'b00001) name = "FLI";
+                       else if (funct7[6:2] == 5'b00101 & funct3 == 3'b010) name = "FMINM";
+                       else if (funct7[6:2] == 5'b00101 & funct3 == 3'b011) name = "FMAXM";
+                       else if (funct7[6:2] == 5'b01000 & rs2 == 5'b00100) name = "FROUND";
+                       else if (funct7[6:2] == 5'b01000 & rs2 == 5'b00101) name = "FROUNDNX";
+                       else if (funct7[6:2] == 5'b10100 & funct3 == 3'b100) name = "FLEQ";
+                       else if (funct7[6:2] == 5'b10100 & funct3 == 3'b101) name = "FLTQ";
+                       else if (funct7 == 7'b1110001 & funct3 == 3'b000 & rs2 == 5'b00001) name = "FMVH.X.D";
+                       else if (funct7 == 7'b1110011 & funct3 == 3'b000 & rs2 == 5'b00001) name = "FMVH.X.Q";
+                       else if (funct7 == 7'b1011001 & funct3 == 3'b000) name = "FMVP.D.X";
+                       else if (funct7 == 7'b1011011 & funct3 == 3'b000) name = "FMVP.Q.X";
+                       else if (funct7 == 7'b1100001 & funct3 == 3'b001 & rs2 == 5'b01000) name = "FCVTMOD.W.D";
                        else                              name = "ILLEGAL";
       10'b0000111_010: name = "FLW";
       10'b0100111_010: name = "FSW";

@@ -177,6 +177,7 @@ void _init(int cid, int nc)
   counters[17] = read_csr(mhpmcounter17) - counters[17];
 
   ee_printf("Load Stalls %d\n", counters[11]);
+  ee_printf("Store Stalls %d\n", counters[12]);
   ee_printf("D-Cache Accesses %d\n", counters[13]);
   ee_printf("D-Cache Misses %d\n", counters[14]); 
   ee_printf("I-Cache Accesses %d\n", counters[16]);

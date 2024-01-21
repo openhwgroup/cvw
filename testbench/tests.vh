@@ -1999,16 +1999,82 @@ string arch64zbs[] = '{
 
   string arch32zfaf[] = '{
     `RISCVARCHTEST,
-    "rv32i_m/F_Zfa/src/fle_b1-01.S",
-    "rv32i_m/F_Zfa/src/fle_b19-01.S",
-    "rv32i_m/F_Zfa/src/fli_b1-01.S",
+    "rv32i_m/F_Zfa/src/fleq_b1-01.S",
+    "rv32i_m/F_Zfa/src/fleq_b19-01.S", 
+    "rv32i_m/F_Zfa/src/fli.s-01.S",
     "rv32i_m/F_Zfa/src/fltq_b1-01.S",
     "rv32i_m/F_Zfa/src/fltq_b19-01.S",
-    "rv32i_m/F_Zfa/src/fmin_b1-01.S",
-    "rv32i_m/F_Zfa/src/fmin_b19-01.S",
-    "rv32i_m/F_Zfa/src/fmax_b1-01.S",
-    "rv32i_m/F_Zfa/src/fmax_b19-01.S",
-    "rv32i_m/F_Zfa/src/fround_b1-01.S"
+    "rv32i_m/D_Zfa/src/fltq_b1-01.S", // these D tests are more comprehensive and seem they should replace the F tests.  Applies to all F tests duplicated in D
+    "rv32i_m/D_Zfa/src/fltq_b19-01.S",
+    "rv32i_m/F_Zfa/src/fminm_b1-01.S",
+    "rv32i_m/F_Zfa/src/fminm_b19-01.S",
+    "rv32i_m/F_Zfa/src/fmaxm_b1-01.S",
+    "rv32i_m/F_Zfa/src/fmaxm_b19-01.S"
+/*    "rv32i_m/F_Zfa/src/fround_b1-01.S" */
+  };
+
+  string arch32zfad[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/D_Zfa/src/fcvtmod.w.d_b1-01.S",
+    "rv32i_m/D_Zfa/src/fcvtmod.w.d_b22-01.S",
+    "rv32i_m/D_Zfa/src/fcvtmod.w.d_b23-01.S",
+    "rv32i_m/D_Zfa/src/fcvtmod.w.d_b24-01.S",
+    "rv32i_m/D_Zfa/src/fcvtmod.w.d_b27-01.S",
+    "rv32i_m/D_Zfa/src/fcvtmod.w.d_b28-01.S",
+    "rv32i_m/D_Zfa/src/fcvtmod.w.d_b29-01.S",
+    "rv32i_m/D_Zfa/src/fleq_b1-01.S",
+    "rv32i_m/D_Zfa/src/fleq_b19-01.S", 
+    "rv32i_m/D_Zfa/src/fleq.d_b1-01.S",
+    "rv32i_m/D_Zfa/src/fleq.d_b19-01.S", 
+    "rv32i_m/D_Zfa/src/fli.d-01.S",
+    "rv32i_m/D_Zfa/src/fltq_b1-01.S",
+    "rv32i_m/D_Zfa/src/fltq_b19-01.S",
+    "rv32i_m/D_Zfa/src/fltq.d_b1-01.S",
+    "rv32i_m/D_Zfa/src/fltq.d_b19-01.S",
+    "rv32i_m/D_Zfa/src/fminm_b1-01.S",
+    "rv32i_m/D_Zfa/src/fminm_b19-01.S",
+    "rv32i_m/D_Zfa/src/fminm.d_b1-01.S",
+    "rv32i_m/D_Zfa/src/fminm.d_b19-01.S",
+    "rv32i_m/D_Zfa/src/fmaxm_b1-01.S",
+    "rv32i_m/D_Zfa/src/fmaxm_b19-01.S",
+    "rv32i_m/D_Zfa/src/fmaxm.d_b1-01.S",
+    "rv32i_m/D_Zfa/src/fmaxm.d_b19-01.S",
+    "rv32i_m/D_Zfa/src/fmvh.x.d_b1-01.S",
+    "rv32i_m/D_Zfa/src/fmvh.x.d_b22-01.S",
+    "rv32i_m/D_Zfa/src/fmvh.x.d_b23-01.S",
+    "rv32i_m/D_Zfa/src/fmvh.x.d_b24-01.S",
+    "rv32i_m/D_Zfa/src/fmvh.x.d_b27-01.S",
+    "rv32i_m/D_Zfa/src/fmvh.x.d_b28-01.S",
+    "rv32i_m/D_Zfa/src/fmvh.x.d_b29-01.S"
+/*    "rv32i_m/D_Zfa/src/fround_b1-01.S" */
+  };
+
+  string arch64zfaf[] = '{
+    `RISCVARCHTEST,
+    "rv64i_m/F_Zfa/src/fleq_b1-01.S",
+    "rv64i_m/F_Zfa/src/fleq_b19-01.S", 
+    "rv64i_m/F_Zfa/src/fli.s-01.S",
+    "rv64i_m/F_Zfa/src/fltq_b1-01.S",
+    "rv64i_m/F_Zfa/src/fltq_b19-01.S",
+    "rv64i_m/F_Zfa/src/fminm_b1-01.S",
+    "rv64i_m/F_Zfa/src/fminm_b19-01.S",
+    "rv64i_m/F_Zfa/src/fmaxm_b1-01.S",
+    "rv64i_m/F_Zfa/src/fmaxm_b19-01.S"
+/*    "rv64i_m/F_Zfa/src/fround_b1-01.S" */
+  };
+
+  string arch64zfad[] = '{
+    `RISCVARCHTEST,
+    "rv64i_m/D_Zfa/src/fleq_b1-01.S",
+    "rv64i_m/D_Zfa/src/fleq_b19-01.S", 
+    "rv64i_m/D_Zfa/src/fli.d-01.S",
+    "rv64i_m/D_Zfa/src/fltq_b1-01.S",
+    "rv64i_m/D_Zfa/src/fltq_b19-01.S",
+    "rv64i_m/D_Zfa/src/fminm_b1-01.S",
+    "rv64i_m/D_Zfa/src/fminm_b19-01.S",
+    "rv64i_m/D_Zfa/src/fmaxm_b1-01.S",
+    "rv64i_m/D_Zfa/src/fmaxm_b19-01.S"
+/*     "rv64i_m/D_Zfa/src/fround_b1-01.S" */
   };
 
   string arch32d_fma[] = '{
