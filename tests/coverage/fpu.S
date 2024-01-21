@@ -155,6 +155,9 @@ main:
     .word 0xF0007053 // illegal fmv (bad Funct3)
     .word 0x43007053 // illegal fcvt.d.* (bad Rs2D)
     .word 0x42207053 // illegal fcvt.d.* (bad Rs2D[1])
+    .word 0xD5F00053 // illegal fcvt.h.* (bad Rs2D)
+    .word 0xC5F00053 // illegal fcvt.*.h (bad Rs2D)
+    .word 0x04000043 // illegal fmadd.h (h not supported)
 
     // Test divide by zero with rounding mode toward zero
     li t0, 1

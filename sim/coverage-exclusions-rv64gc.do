@@ -237,6 +237,12 @@ coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line2 -item e 
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line2 -item b 1
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line2 -item s 1
 
+# IMMU PMP does not support CBO instructions
+coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLineNum ../src/mmu/pmpchecker.sv "exclusion-tag: immu-pmpcbom"] 
+coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLineNum ../src/mmu/pmpchecker.sv "exclusion-tag: immu-pmpcboz"] 
+coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLineNum ../src/mmu/pmpchecker.sv "exclusion-tag: immu-pmpcboaccess"] 
+#coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLineNum ../src/mmu/pmpchecker.sv "exclusion-tag: immu-pmpstoreamoaccessfault"] 
+
 # No irom
 set line [GetLineNum ../src/ifu/ifu.sv "~ITLBMissF & ~CacheableF & ~SelIROM"] 
 coverage exclude -scope /dut/core/ifu -linerange $line-$line -item c 1 -feccondrow 6
