@@ -111,7 +111,7 @@ localparam LLEN = (($unsigned(FLEN)<$unsigned(XLEN)) ? ($unsigned(XLEN)) : ($uns
 localparam LOGCVTLEN = $unsigned($clog2(CVTLEN+1));
 localparam NORMSHIFTSZ = (((CVTLEN+NF+1)>(DIVb + 1 +NF+1) & (CVTLEN+NF+1)>(3*NF+6)) ? (CVTLEN+NF+1) : ((DIVb + 1 +NF+1) > (3*NF+6) ? (DIVb + 1 +NF+1) : (3*NF+6)));
 localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));
-localparam CORRSHIFTSZ = (((CVTLEN+NF+1)>(DIVb + 1 +NF+1) & (CVTLEN+NF+1)>(3*NF+6)) ? (CVTLEN+NF+1) : ((DIVMINb+1+NF) > (3*NF+4) ? (DIVMINb+1+NF) : (3*NF+4)));
+localparam CORRSHIFTSZ = (((DIVMINb+1+NF) > (3*NF+4) ? (DIVMINb+1+NF) : (3*NF+4))); // max(DIVMINb+NF+1, 3*NF+4)
 
 
 // Disable spurious Verilator warnings
