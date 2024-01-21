@@ -63,14 +63,7 @@ main:
     li t0, 0x80200000
     jalr ra, t0 # jump to misaligned megapage
 
-    # exercise ebufsmarb (not yet providing coverage 1/1/24 DH & RT)
-    li t0, 0x80000000
-    lw t1, 0(t0)        # fetch from an address to warm up tlb entries
-    li t0, 0x80A00000
-    lw t1, 0(t0)        # trigger TLB miss on a non-first entry
-    jal backandforth
-
-    # exercise malformed PBMT pages
+     # exercise malformed PBMT pages
 
     # page has PBMT = 3 (reserved)
     li t0, 0x80400000

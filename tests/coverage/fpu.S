@@ -156,6 +156,14 @@ main:
     .word 0x43007053 // illegal fcvt.d.* (bad Rs2D)
     .word 0x42207053 // illegal fcvt.d.* (bad Rs2D[1])
 
+    // Test divide by zero with rounding mode toward zero
+    li t0, 1
+    csrw frm, t0    // set rounding mode = 1
+    li t0, 0x3f800000
+    fcvt.s.w ft1, t0
+    fcvt.s.w ft2, zero
+    fdiv.s ft3, ft1, ft2
+
     # Test floating point convert to integer and using result
     fcvt.w.s t0, f0
     add t1, t0, t0

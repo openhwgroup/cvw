@@ -258,5 +258,9 @@ coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmp/pmpchecker/pmp/pmpadrdecs[0]
 # EBU
 ####################
 
-# Exclude EBU Beat Counter because it is only idle when bus has multicycle latency, but rv64gc has single cycle latency
-coverage exclude -scope /core/ebu/ebu/ebufsmarb/BeatCounter
+# Exclude EBU Beat Counter flop because it is only idle when bus has multicycle latency, but rv64gc has single cycle latency
+coverage exclude -scope /dut/core/ebu/ebu/ebufsmarb/BeatCounter/cntrflop
+
+
+
+
