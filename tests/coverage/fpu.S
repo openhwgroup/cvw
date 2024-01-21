@@ -164,6 +164,28 @@ main:
     fcvt.s.w ft2, zero
     fdiv.s ft3, ft1, ft2
 
+/*  These didn't make a difference 
+
+    // Test subtraction of identical denormalized numbers with to exercise FmaPreResultSubnorm logic with FmaSZero
+    li t0, 0xFFFFFFFF00000001
+    fmv.w.x ft1, t0        // smallest denorm
+    fsub.s ft1, ft1, ft1    // difference = 0
+
+    li t0, 0x0000000000000001
+    fmv.d.x ft1, t0        // smallest denorm
+    fsub.d ft1, ft1, ft1    // difference = 0
+
+ // Test subtraction of identical denormalized numbers with to exercise FmaPreResultSubnorm logic with FmaSZero
+    li t0, 0xFFFFFFFF00100001
+    fmv.w.x ft1, t0        // almost largest denorm
+    fsub.s ft1, ft1, ft1    // difference = 0
+
+    li t0, 0x0001000000000001
+    fmv.d.x ft1, t0        // smallest denorm
+    fsub.d ft1, ft1, ft1    // difference = 0
+
+*/
+
     # Test floating point convert to integer and using result
     fcvt.w.s t0, f0
     add t1, t0, t0
