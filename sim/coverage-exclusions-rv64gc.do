@@ -34,11 +34,24 @@ do GetLineNum.do
 # DH 4/22/23: Exclude all LZAs
 coverage exclude -srcfile lzc.sv 
 
+#################
+# FPU Exclusions
+#################
 # DH 4/22/23: FDIVSQRT can't go directly from done to busy again
 coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtfsm -ftrans state DONE->BUSY
 # DH 4/22/23: The busy->idle transition only occurs if a FlushE occurs while the divider is busy.  The flush is caused by a trap or return,
 # which won't happen while the divider is busy. 
 coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtfsm -ftrans state BUSY->IDLE
+# All Memory-stage stalls have resolved by time fdivsqrt finishes regular operation in this configuration, so can't test StallM
+coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtfsm -linerange [GetLineNum ../src/fpu/fdivsqrt/fdivsqrtfsm.sv "exclusion-tag: fdivsqrtfsm stallm"] -item b 1
+coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtfsm -linerange [GetLineNum ../src/fpu/fdivsqrt/fdivsqrtfsm.sv "exclusion-tag: fdivsqrtfsm stallm"] -item s 1
+# Division by zero never sets sticky/guard/overflow/round to cause inexact or underflow result, but check out of paranoia
+coverage exclude -scope /dut/core/fpu/fpu/postprocess/flags -linerange [GetLineNum ../src/fpu/postproc/flags.sv "assign FpInexact"] -item e 1 -fecexprrow 15 
+coverage exclude -scope /dut/core/fpu/fpu/postprocess/flags -linerange [GetLineNum ../src/fpu/postproc/flags.sv "assign Underflow"] -item e 1 -fecexprrow 22
+
+##################
+# Cache Exclusions
+##################
 
 ### Exclude D$ states and logic for the I$ instance
 # This is cleaner than trying to set an I$-specific pragma in cachefsm.sv (which would exclude it for the D$ instance too)

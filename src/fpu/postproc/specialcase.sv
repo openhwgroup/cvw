@@ -342,7 +342,7 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
         else     OfIntRes2 = OfIntRes;
         if (Zfa) Int64Res = {{(P.XLEN-32){CvtNegRes[P.XLEN-1]}}, CvtNegRes[31:0]};
         else     Int64Res = CvtNegRes[P.XLEN-1:0];
-        if (Zfa) SelCvtOfRes = InfIn | NaNIn; // fcvtmod.w.d only overflows to 0 on NaN or Infinity
+        if (Zfa) SelCvtOfRes = InfIn | NaNIn  | (CvtCe > 32 + 52); // fcvtmod.w.d only overflows to 0 on NaN or Infinity, or if the shift is so large that only zeros are left
         else     SelCvtOfRes = IntInvalid;    // regular fcvt gives an overflow if out of range
     end
   else 
