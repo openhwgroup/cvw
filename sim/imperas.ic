@@ -37,6 +37,8 @@
 # SV39 and SV48 supported
 --override cpu/Sv_modes=768
 
+--override cpu/Svinval=T
+
 
 #  clarify
 #--override refRoot/cpu/mtvec_sext=F
