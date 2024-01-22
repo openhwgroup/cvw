@@ -300,6 +300,8 @@ sretdone:
 
 
     # Test uncovered privdec instructions
+    li a0, 3
+    ecall
     # exercise sfence.inval.ir instruction
     .word 0x18100073
 
