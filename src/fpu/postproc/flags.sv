@@ -70,7 +70,7 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   logic                        DivInvalid;             // integer invalid flag
   logic                        Underflow;              // Underflow flag
   logic                        ResExpGteMax;           // is the result greater than or equal to the maximum floating point expoent
-  logic                        ShiftGtIntSz;           // is the shift greater than the the integer size (use Re to account for possible roundning "shift")
+  logic                        ShiftGtIntSz;           // is the shift greater than the the integer size (use Re to account for possible rounding "shift")
 
   ///////////////////////////////////////////////////////////////////////////////
   // Overflow

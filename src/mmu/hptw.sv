@@ -42,7 +42,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   input  logic [1:0]        PrivilegeModeW,
   input  logic [P.XLEN-1:0] ReadDataM,              // page table entry from LSU 
   input  logic [P.XLEN-1:0] WriteDataM,
-  input  logic              DCacheStallM,           // stall from LSU
+  input  logic              DCacheBusStallM,           // stall from LSU
   input  logic [2:0]        Funct3M,
   input  logic [6:0]        Funct7M,
   input  logic              ITLBMissF,
@@ -145,7 +145,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
 
   // State flops
   flopenr #(1) TLBMissMReg(clk, reset, StartWalk, DTLBMissOrUpdateDAM, DTLBWalk); // when walk begins, record whether it was for DTLB (or record 0 for ITLB)
-  assign PRegEn = HPTWRW[1] & ~DCacheStallM | UpdatePTE;
+  assign PRegEn = HPTWRW[1] & ~DCacheBusStallM | UpdatePTE;
   flopenr #(P.XLEN) PTEReg(clk, reset, PRegEn, NextPTE, PTE); // Capture page table entry from data cache
 
   // Assign PTE descriptors common across all XLEN values
@@ -283,30 +283,30 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset | FlushW, 1'b1, NextWalkerState, IDLE, WalkerState); 
   always_comb 
     case (WalkerState)
-      IDLE:       if (TLBMiss & ~DCacheStallM)                        NextWalkerState = InitialWalkerState;
+      IDLE:       if (TLBMiss & ~DCacheBusStallM)                     NextWalkerState = InitialWalkerState;
                   else                                                NextWalkerState = IDLE;
       L3_ADR:                                                         NextWalkerState = L3_RD; // first access in SV48
-      L3_RD:      if (DCacheStallM)                                   NextWalkerState = L3_RD;
+      L3_RD:      if (DCacheBusStallM)                                NextWalkerState = L3_RD;
                   else if(HPTWFaultM)                                 NextWalkerState = FAULT;
                   else                                                NextWalkerState = L2_ADR;
       L2_ADR:     if (InitialWalkerState == L2_ADR | ValidNonLeafPTE) NextWalkerState = L2_RD; // first access in SV39
                   else                                                NextWalkerState = LEAF;
-      L2_RD:      if (DCacheStallM)                                   NextWalkerState = L2_RD;
+      L2_RD:      if (DCacheBusStallM)                                NextWalkerState = L2_RD;
                   else if(HPTWFaultM)                                 NextWalkerState = FAULT;
                   else                                                NextWalkerState = L1_ADR;
       L1_ADR:     if (InitialWalkerState == L1_ADR | ValidNonLeafPTE) NextWalkerState = L1_RD; // first access in SV32
                   else                                                NextWalkerState = LEAF;  
-      L1_RD:      if (DCacheStallM)                                   NextWalkerState = L1_RD;
+      L1_RD:      if (DCacheBusStallM)                                NextWalkerState = L1_RD;
                   else if(HPTWFaultM)                                 NextWalkerState = FAULT;
                   else                                                NextWalkerState = L0_ADR;
       L0_ADR:     if (ValidNonLeafPTE)                                NextWalkerState = L0_RD;
                   else                                                NextWalkerState = LEAF;
-      L0_RD:      if (DCacheStallM)                                   NextWalkerState = L0_RD;
+      L0_RD:      if (DCacheBusStallM)                                NextWalkerState = L0_RD;
                   else if(HPTWFaultM)                                 NextWalkerState = FAULT;
                   else                                                NextWalkerState = LEAF;
       LEAF:       if (P.SVADU_SUPPORTED & HPTWUpdateDA)               NextWalkerState = UPDATE_PTE;
                   else                                                NextWalkerState = IDLE;
-      UPDATE_PTE: if(DCacheStallM)                                    NextWalkerState = UPDATE_PTE;
+      UPDATE_PTE: if(DCacheBusStallM)                                 NextWalkerState = UPDATE_PTE;
                   else                                                NextWalkerState = LEAF;
       FAULT:                                                          NextWalkerState = IDLE;
       default:                                                        NextWalkerState = IDLE; // should never be reached

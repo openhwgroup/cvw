@@ -145,18 +145,18 @@ module round import cvw::*;  #(parameter cvw_t P) (
 
   end else if (P.FPSIZES == 3) begin
       // 1: XLEN > NF   > NF1
-      if (XLENPOS == 1) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF2-2:P.CORRSHIFTSZ-P.NF1-1]&FpRes&(OutFmt==P.FMT1)) |
+      if (XLENPOS == 1) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF2-2:P.CORRSHIFTSZ-P.NF1-1]&FpRes&(OutFmt==P.FMT2)) |
                                                 (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.NF-1]&FpRes&~(OutFmt==P.FMT)) |
                                                 (|Mf[P.CORRSHIFTSZ-P.NF-2:P.CORRSHIFTSZ-P.XLEN-1]&FpRes) |
                                                 (|Mf[P.CORRSHIFTSZ-P.XLEN-2:0]);
       // 2: NF   > XLEN > NF1
-      if (XLENPOS == 2) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF2-2:P.CORRSHIFTSZ-P.NF1-1]&FpRes&(OutFmt==P.FMT1)) |
+      if (XLENPOS == 2) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF2-2:P.CORRSHIFTSZ-P.NF1-1]&FpRes&(OutFmt==P.FMT2)) |
                                                 (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.XLEN-1]&FpRes&~(OutFmt==P.FMT)) | 
                                                 (|Mf[P.CORRSHIFTSZ-P.XLEN-2:P.CORRSHIFTSZ-P.NF-1]&(IntRes|~(OutFmt==P.FMT))) |
                                                 (|Mf[P.CORRSHIFTSZ-P.NF-2:0]);
       // 3: NF   > NF1  > XLEN
-      if (XLENPOS == 3) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF2-2:P.CORRSHIFTSZ-P.XLEN-1]&FpRes&(OutFmt==P.FMT1)) |
-                                                (|Mf[P.CORRSHIFTSZ-P.XLEN-2:P.CORRSHIFTSZ-P.NF1-1]&((OutFmt==P.FMT1)|IntRes)) |
+      if (XLENPOS == 3) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF2-2:P.CORRSHIFTSZ-P.XLEN-1]&FpRes&(OutFmt==P.FMT2)) |
+                                                (|Mf[P.CORRSHIFTSZ-P.XLEN-2:P.CORRSHIFTSZ-P.NF1-1]&((OutFmt==P.FMT2)|IntRes)) |
                                                 (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.NF-1]&(~(OutFmt==P.FMT)|IntRes)) |
                                                 (|Mf[P.CORRSHIFTSZ-P.NF-2:0]);
 

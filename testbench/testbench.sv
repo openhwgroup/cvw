@@ -127,6 +127,9 @@ module testbench;
         "arch64zbs":     if (P.ZBS_SUPPORTED)     tests = arch64zbs;
         "arch64zicboz":  if (P.ZICBOZ_SUPPORTED)  tests = arch64zicboz;
         "arch64zcb":     if (P.ZCB_SUPPORTED)     tests = arch64zcb;
+        "arch64zfh":     if (P.ZFH_SUPPORTED)     tests = arch64zfh;
+        "arch64zfaf":    if (P.ZFA_SUPPORTED)     tests = arch64zfaf;
+        "arch64zfad":    if (P.ZFA_SUPPORTED & P.D_SUPPORTED)  tests = arch64zfad;
       endcase 
     end else begin // RV32
       case (TEST)
@@ -161,6 +164,9 @@ module testbench;
         "arch32zbs":     if (P.ZBS_SUPPORTED)     tests = arch32zbs;
         "arch32zicboz":  if (P.ZICBOZ_SUPPORTED)  tests = arch32zicboz;
         "arch32zcb":     if (P.ZCB_SUPPORTED)     tests = arch32zcb;
+        "arch32zfh":     if (P.ZFH_SUPPORTED)     tests = arch32zfh;
+        "arch32zfaf":    if (P.ZFA_SUPPORTED)     tests = arch32zfaf;
+        "arch32zfad":    if (P.ZFA_SUPPORTED & P.D_SUPPORTED)  tests = arch32zfad;
       endcase
     end
     if (tests.size() == 0) begin
@@ -626,8 +632,8 @@ task automatic updateProgramAddrLabelArray;
     end
   end
 
-  if(ProgramAddrLabelArray["begin_signature"] == 0) $display("Couldn't find begin_signature in %s", ProgramLabelMapFile);
-  if(ProgramAddrLabelArray["sig_end_canary"] == 0) $display("Couldn't find sig_end_canary in %s", ProgramLabelMapFile);
+//  if(ProgramAddrLabelArray["begin_signature"] == 0) $display("Couldn't find begin_signature in %s", ProgramLabelMapFile);
+//  if(ProgramAddrLabelArray["sig_end_canary"] == 0) $display("Couldn't find sig_end_canary in %s", ProgramLabelMapFile);
 
   $fclose(ProgramLabelMapFP);
   $fclose(ProgramAddrMapFP);

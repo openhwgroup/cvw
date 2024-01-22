@@ -50,7 +50,7 @@ module fmashiftcalc import cvw::*;  #(parameter cvw_t P) (
   // calculate the sum's exponent
   assign PreNormSumExp = FmaSe + {{P.NE+2-$unsigned($clog2(3*P.NF+5)){1'b1}}, ~FmaSCnt} + (P.NE+2)'(P.NF+3);
 
-  //convert the sum's exponent into the proper percision
+  //convert the sum's exponent into the proper precision
   if (P.FPSIZES == 1) begin
     assign NormSumExp = PreNormSumExp;
   end else if (P.FPSIZES == 2) begin
