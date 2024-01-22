@@ -92,6 +92,7 @@ for {set i 0} {$i < $numcacheways} {incr i} {
     coverage exclude -scope /dut/core/ifu/bus/icache/icache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: icache SelectedWiteWordEn"] -item e 1 -fecexprrow 4 6
     # below: flushD can't go high during an icache write b/c of pipeline stall
     coverage exclude -scope /dut/core/ifu/bus/icache/icache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: cache SetValidEN"] -item e 1 -fecexprrow 4
+    coverage exclude -scope /dut/core/ifu/bus/icache/icache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: cache ClearValidEN"] -item e 1 -fecexprrow 4
 }
 
 ## D$ Exclusions.
@@ -107,6 +108,8 @@ for {set i 0} {$i < $numcacheways} {incr i} {
     # FlushStage=1 will never happen when SetValidWay=1 since a pipeline stall is asserted by the cache in the fetch stage, which happens before
     # going into the WRITE_LINE state (and asserting SetValidWay). No TrapM can fire and since StallW is high, a stallM caused by WFIStallM would not cause a flushW.
     coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: cache SetValidEN"] -item e 1 -fecexprrow 4
+    coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: cache ClearValidEN"] -item e 1 -fecexprrow 4
+# Not right; other ways can get flushed and dirtied simultaneously    coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: cache UpdateDirty"] -item c 1 -fecexprrow 6
 }
 # D$ writeback, flush, write_line, or flush_writeback states can't be cancelled by a flush
 coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -ftrans CurrState STATE_WRITEBACK->STATE_READY STATE_FLUSH->STATE_READY STATE_WRITE_LINE->STATE_READY STATE_FLUSH_WRITEBACK->STATE_READY
@@ -237,11 +240,16 @@ coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line2 -item e 
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line2 -item b 1
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line2 -item s 1
 
+# IMMU never disables translations
+coverage exclude -scope /dut/core/ifu/ifu/immu/immu/tlb/tlb/tlbcontrol -linerange [GetLineNum ../src/mmu/tlb/tlbcontrol.sv "assign Translate"] -item e 1 -fecexprrow 2
+coverage exclude -scope /dut/core/ifu/ifu/immu/immu/tlb/tlb/tlbcontrol -linerange [GetLineNum ../src/mmu/tlb/tlbcontrol.sv "assign UpdateDA"] -item e 1 -fecexprrow 5
+# never reaches this when ENVCFG_ADUE_1 because HPTW updates A bit first
+coverage exclude -scope /dut/core/ifu/ifu/immu/immu/tlb/tlb/tlbcontrol -linerange [GetLineNum ../src/mmu/tlb/tlbcontrol.sv "assign PrePageFault"] -item e 1 -fecexprrow 18 
+
 # IMMU PMP does not support CBO instructions
 coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLineNum ../src/mmu/pmpchecker.sv "exclusion-tag: immu-pmpcbom"] 
 coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLineNum ../src/mmu/pmpchecker.sv "exclusion-tag: immu-pmpcboz"] 
 coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLineNum ../src/mmu/pmpchecker.sv "exclusion-tag: immu-pmpcboaccess"] 
-#coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLineNum ../src/mmu/pmpchecker.sv "exclusion-tag: immu-pmpstoreamoaccessfault"] 
 
 # No irom
 set line [GetLineNum ../src/ifu/ifu.sv "~ITLBMissF & ~CacheableF & ~SelIROM"] 

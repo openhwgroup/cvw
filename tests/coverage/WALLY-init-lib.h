@@ -36,6 +36,9 @@ rvtest_entry_point:
     csrw mtvec, t0      # Initialize MTVEC to trap_handler
     csrw mideleg, zero  # Don't delegate interrupts
     csrw medeleg, zero  # Don't delegate exceptions
+    li t0, -1           # set mtimecmp to biggest number so it doesnt interrupt again
+    li t1, 0x02004000   # MTIMECMP in CLINT
+    sd t0, 0(t1)      
     li t0, 0x80         
     csrw mie, t0        # Enable machine timer interrupt
     la t0, topoftrapstack 

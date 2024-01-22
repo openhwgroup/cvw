@@ -62,6 +62,30 @@ main:
     jalr ra, t0 # jump to misaligned gigapage
     li t0, 0x80200000
     jalr ra, t0 # jump to misaligned megapage
+    li t0, 0x7FFFFFFF80000000
+
+    
+    jalr ra, t0 # jump to page with UpperBitsUnequal
+    li t0, 0x0000000080C00000
+    jalr ra, t0 # jump to page with bad reserved bits 60:54 in PTE
+    
+    # test with ENVCFG_ADUE = 1: switch to machine mode, set ADUE, access page with A=0, clear ADUE, 
+    li a0, 3
+    ecall       # switch to machine mode
+    li t0, 1
+    slli t0, t0, 61 
+    csrs menvcfg, t0 # set menvcfg.ADUE
+    li a0, 1    
+    ecall       # switch back to supervisor mode
+    li t0, 0x0000000080E00000
+    jalr ra, t0 # jump to page without accessed bit yet set
+    li a0, 3
+    ecall       # switch to machine mode
+    li t0, 1
+    slli t0, t0, 61 
+    csrc menvcfg, t0 # clear menvcfg.ADUE
+    li a0, 1    
+    ecall       # switch back to supervisor mode
 
      # exercise malformed PBMT pages
 
@@ -147,6 +171,8 @@ main:
     li a0, 1
     ecall
 
+
+
     # wrap up
     li a0, 3 # switch back to machine mode because code at 0x80000000 may not have clean page table entry
     ecall
@@ -222,8 +248,8 @@ pagetable:
     .8byte 0x4000000020004CC1  # for VA starting at 80600000 (bad entry: nonleaf PTE can't have PBMT != 0)
     .8byte 0x00000000200054C1  # for VA starting at 80800000 (testing rwx permissiosn with cbom/cboz)
     .8byte 0x0000000020004CC1  # for VA starting at 80A00000 (pointer to NAPOT 64 KiB pages like at 80000000)
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
+    .8byte 0x0F00000020004CCF  # for VA starting at 80C00000 (bad reserved field in bits 60:54)
+    .8byte 0x000000002000000F  # for VA starting at 80E00000 (not dirty or accessed)
     .8byte 0x0000000020004CC1
     .8byte 0x0000000020004CC1
     .8byte 0x0000000020004CC1
