@@ -155,6 +155,39 @@ main:
     .word 0xF0007053 // illegal fmv (bad Funct3)
     .word 0x43007053 // illegal fcvt.d.* (bad Rs2D)
     .word 0x42207053 // illegal fcvt.d.* (bad Rs2D[1])
+    .word 0xD5F00053 // illegal fcvt.h.* (bad Rs2D)
+    .word 0xC5F00053 // illegal fcvt.*.h (bad Rs2D)
+    .word 0x04000043 // illegal fmadd.h (h not supported)
+
+    // Test divide by zero with rounding mode toward zero
+    li t0, 1
+    csrw frm, t0    // set rounding mode = 1
+    li t0, 0x3f800000
+    fcvt.s.w ft1, t0
+    fcvt.s.w ft2, zero
+    fdiv.s ft3, ft1, ft2
+
+/*  These didn't make a difference 
+
+    // Test subtraction of identical denormalized numbers with to exercise FmaPreResultSubnorm logic with FmaSZero
+    li t0, 0xFFFFFFFF00000001
+    fmv.w.x ft1, t0        // smallest denorm
+    fsub.s ft1, ft1, ft1    // difference = 0
+
+    li t0, 0x0000000000000001
+    fmv.d.x ft1, t0        // smallest denorm
+    fsub.d ft1, ft1, ft1    // difference = 0
+
+ // Test subtraction of identical denormalized numbers with to exercise FmaPreResultSubnorm logic with FmaSZero
+    li t0, 0xFFFFFFFF00100001
+    fmv.w.x ft1, t0        // almost largest denorm
+    fsub.s ft1, ft1, ft1    // difference = 0
+
+    li t0, 0x0001000000000001
+    fmv.d.x ft1, t0        // smallest denorm
+    fsub.d ft1, ft1, ft1    // difference = 0
+
+*/
 
     # Test floating point convert to integer and using result
     fcvt.w.s t0, f0

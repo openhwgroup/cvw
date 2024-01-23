@@ -67,6 +67,7 @@ string tvpaths[] = '{
     "pmpcfg1",
     "pmpcfg2",
     "pmppriority",
+    "pmpcbo",
     "pmpadrdecs"
   };
 

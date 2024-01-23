@@ -34,11 +34,24 @@ do GetLineNum.do
 # DH 4/22/23: Exclude all LZAs
 coverage exclude -srcfile lzc.sv 
 
+#################
+# FPU Exclusions
+#################
 # DH 4/22/23: FDIVSQRT can't go directly from done to busy again
 coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtfsm -ftrans state DONE->BUSY
 # DH 4/22/23: The busy->idle transition only occurs if a FlushE occurs while the divider is busy.  The flush is caused by a trap or return,
 # which won't happen while the divider is busy. 
 coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtfsm -ftrans state BUSY->IDLE
+# All Memory-stage stalls have resolved by time fdivsqrt finishes regular operation in this configuration, so can't test StallM
+coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtfsm -linerange [GetLineNum ../src/fpu/fdivsqrt/fdivsqrtfsm.sv "exclusion-tag: fdivsqrtfsm stallm"] -item b 1
+coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtfsm -linerange [GetLineNum ../src/fpu/fdivsqrt/fdivsqrtfsm.sv "exclusion-tag: fdivsqrtfsm stallm"] -item s 1
+# Division by zero never sets sticky/guard/overflow/round to cause inexact or underflow result, but check out of paranoia
+coverage exclude -scope /dut/core/fpu/fpu/postprocess/flags -linerange [GetLineNum ../src/fpu/postproc/flags.sv "assign FpInexact"] -item e 1 -fecexprrow 15 
+coverage exclude -scope /dut/core/fpu/fpu/postprocess/flags -linerange [GetLineNum ../src/fpu/postproc/flags.sv "assign Underflow"] -item e 1 -fecexprrow 22
+
+##################
+# Cache Exclusions
+##################
 
 ### Exclude D$ states and logic for the I$ instance
 # This is cleaner than trying to set an I$-specific pragma in cachefsm.sv (which would exclude it for the D$ instance too)
@@ -79,6 +92,7 @@ for {set i 0} {$i < $numcacheways} {incr i} {
     coverage exclude -scope /dut/core/ifu/bus/icache/icache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: icache SelectedWiteWordEn"] -item e 1 -fecexprrow 4 6
     # below: flushD can't go high during an icache write b/c of pipeline stall
     coverage exclude -scope /dut/core/ifu/bus/icache/icache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: cache SetValidEN"] -item e 1 -fecexprrow 4
+    coverage exclude -scope /dut/core/ifu/bus/icache/icache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: cache ClearValidEN"] -item e 1 -fecexprrow 4
 }
 
 ## D$ Exclusions.
@@ -94,6 +108,8 @@ for {set i 0} {$i < $numcacheways} {incr i} {
     # FlushStage=1 will never happen when SetValidWay=1 since a pipeline stall is asserted by the cache in the fetch stage, which happens before
     # going into the WRITE_LINE state (and asserting SetValidWay). No TrapM can fire and since StallW is high, a stallM caused by WFIStallM would not cause a flushW.
     coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: cache SetValidEN"] -item e 1 -fecexprrow 4
+    coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: cache ClearValidEN"] -item e 1 -fecexprrow 4
+# Not right; other ways can get flushed and dirtied simultaneously    coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: cache UpdateDirty"] -item c 1 -fecexprrow 6
 }
 # D$ writeback, flush, write_line, or flush_writeback states can't be cancelled by a flush
 coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -ftrans CurrState STATE_WRITEBACK->STATE_READY STATE_FLUSH->STATE_READY STATE_WRITE_LINE->STATE_READY STATE_FLUSH_WRITEBACK->STATE_READY
@@ -224,6 +240,17 @@ coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line2 -item e 
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line2 -item b 1
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line2 -item s 1
 
+# IMMU never disables translations
+coverage exclude -scope /dut/core/ifu/ifu/immu/immu/tlb/tlb/tlbcontrol -linerange [GetLineNum ../src/mmu/tlb/tlbcontrol.sv "assign Translate"] -item e 1 -fecexprrow 2
+coverage exclude -scope /dut/core/ifu/ifu/immu/immu/tlb/tlb/tlbcontrol -linerange [GetLineNum ../src/mmu/tlb/tlbcontrol.sv "assign UpdateDA"] -item e 1 -fecexprrow 5
+# never reaches this when ENVCFG_ADUE_1 because HPTW updates A bit first
+coverage exclude -scope /dut/core/ifu/ifu/immu/immu/tlb/tlb/tlbcontrol -linerange [GetLineNum ../src/mmu/tlb/tlbcontrol.sv "assign PrePageFault"] -item e 1 -fecexprrow 18 
+
+# IMMU PMP does not support CBO instructions
+coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLineNum ../src/mmu/pmpchecker.sv "exclusion-tag: immu-pmpcbom"] 
+coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLineNum ../src/mmu/pmpchecker.sv "exclusion-tag: immu-pmpcboz"] 
+coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLineNum ../src/mmu/pmpchecker.sv "exclusion-tag: immu-pmpcboaccess"] 
+
 # No irom
 set line [GetLineNum ../src/ifu/ifu.sv "~ITLBMissF & ~CacheableF & ~SelIROM"] 
 coverage exclude -scope /dut/core/ifu -linerange $line-$line -item c 1 -feccondrow 6
@@ -258,5 +285,9 @@ coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmp/pmpchecker/pmp/pmpadrdecs[0]
 # EBU
 ####################
 
-# Exclude EBU Beat Counter because it is only idle when bus has multicycle latency, but rv64gc has single cycle latency
-coverage exclude -scope /core/ebu/ebu/ebufsmarb/BeatCounter
+# Exclude EBU Beat Counter flop because it is only idle when bus has multicycle latency, but rv64gc has single cycle latency
+coverage exclude -scope /dut/core/ebu/ebu/ebufsmarb/BeatCounter/cntrflop
+
+
+
+

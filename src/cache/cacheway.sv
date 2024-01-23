@@ -105,7 +105,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   assign ClearDirtyWay = ClearDirty & SelData;
   assign SelectedWriteWordEn = (SetValidWay | SetDirtyWay) & ~FlushStage;  // exclusion-tag: icache SelectedWiteWordEn
   assign SetValidEN = SetValidWay & ~FlushStage;                           // exclusion-tag: cache SetValidEN
-  assign ClearValidEN = ClearValidWay & ~FlushStage;                           // exclusion-tag: cache SetValidEN
+  assign ClearValidEN = ClearValidWay & ~FlushStage;                       // exclusion-tag: cache ClearValidEN
 
   // If writing the whole line set all write enables to 1, else only set the correct word.
   assign FinalByteMask = SetValidWay ? '1 : LineByteMask; // OR
@@ -178,7 +178,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
       //if (reset) DirtyBits <= #1 {NUMLINES{1'b0}}; 
       if(CacheEn) begin
         Dirty <= #1 DirtyBits[CacheSetTag];
-        if((SetDirtyWay | ClearDirtyWay) & ~FlushStage) DirtyBits[CacheSetData] <= #1 SetDirtyWay;
+        if((SetDirtyWay | ClearDirtyWay) & ~FlushStage) DirtyBits[CacheSetData] <= #1 SetDirtyWay; // exclusion-tag: cache UpdateDirty
       end
     end
   end else assign Dirty = 1'b0;
