@@ -20,6 +20,7 @@
 # More extensions
 --override cpu/Zcb=T
 --override cpu/Zicond=T
+--override cpu/Zfh=T
 
 # Cache block operations
 --override cpu/Zicbom=T
@@ -35,6 +36,8 @@
 
 # SV39 and SV48 supported
 --override cpu/Sv_modes=768
+
+--override cpu/Svinval=T
 
 
 #  clarify

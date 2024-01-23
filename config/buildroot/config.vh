@@ -40,7 +40,7 @@ localparam ZIFENCEI_SUPPORTED = 1;
 localparam ZICNTR_SUPPORTED = 1;
 localparam ZIHPM_SUPPORTED = 1;
 localparam COUNTERS = 12'd32;
-localparam ZFH_SUPPORTED = 0;
+localparam ZFH_SUPPORTED = 1;
 localparam ZFA_SUPPORTED = 0;
 localparam SSTC_SUPPORTED = 1;
 localparam ZICBOM_SUPPORTED = 1;
@@ -57,7 +57,7 @@ localparam BUS_SUPPORTED = 1;
 localparam DCACHE_SUPPORTED = 1;
 localparam ICACHE_SUPPORTED = 1;
 localparam VIRTMEM_SUPPORTED = 1;
-localparam VECTORED_INTERRUPTS_SUPPORTED = 1 ;
+localparam VECTORED_INTERRUPTS_SUPPORTED = 1;
 localparam BIGENDIAN_SUPPORTED = 1;
 
 // TLB configuration.  Entries should be a power of 2
@@ -163,10 +163,10 @@ localparam RADIX = 32'h4;
 localparam DIVCOPIES = 32'h4;
 
 // bit manipulation
-localparam ZBA_SUPPORTED = 0;
-localparam ZBB_SUPPORTED = 0;
-localparam ZBC_SUPPORTED = 0;
-localparam ZBS_SUPPORTED = 0;
+localparam ZBA_SUPPORTED = 1;
+localparam ZBB_SUPPORTED = 1;
+localparam ZBC_SUPPORTED = 1;
+localparam ZBS_SUPPORTED = 1;
 
 // New compressed instructions
 localparam ZCB_SUPPORTED = 1;
