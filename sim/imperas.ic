@@ -21,6 +21,7 @@
 --override cpu/Zcb=T
 --override cpu/Zicond=T
 --override cpu/Zfh=T
+--override cpu/Zfa=T
 
 # Cache block operations
 --override cpu/Zicbom=T

@@ -24,6 +24,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 // load code to initalize stack, handle interrupts, terminate
+// The PMP tests are sensitive to the exact addresses in this code, so unfortunately
+// modifying anything breaks those tests.
 
 .section .text.init
 .global rvtest_entry_point
@@ -36,10 +38,11 @@ rvtest_entry_point:
     csrw mtvec, t0      # Initialize MTVEC to trap_handler
     csrw mideleg, zero  # Don't delegate interrupts
     csrw medeleg, zero  # Don't delegate exceptions
-    li t0, -1           # set mtimecmp to biggest number so it doesnt interrupt again
-    li t1, 0x02004000   # MTIMECMP in CLINT
-    sd t0, 0(t1)      
+#    li t0, -1           # set mtimecmp to biggest number so it doesnt interrupt again
+#    li t1, 0x02004000   # MTIMECMP in CLINT
+#    sd t0, 0(t1)      
     li t0, 0x80         
+#    li t0, 0x00         
     csrw mie, t0        # Enable machine timer interrupt
     la t0, topoftrapstack 
     csrw mscratch, t0   # MSCRATCH holds trap stack pointer
