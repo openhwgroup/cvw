@@ -139,7 +139,7 @@ main:
     .word 0xc5000007    // Attempting to toggle (Op7 != 7) to 0 on line 97 in fctrl, not sure what instruction this works out to
     .word 0xe0101053    // toggling (Rs2D == 0) to 0 on line 139 in fctrl. Illegal Intsr (like fclass but incorrect rs2)
     .word 0xe0100053    // toggling (Rs2D == 0) to 0 on line 141 in fctrl. Illegal Intsr (like fmv but incorrect rs2)
-    .word 0x40500053    // toggling (Rs2D[4:2] == 0) to 0 on line 145 in fctrl. 
+    .word 0x40D00053    // toggling (Rs2D[4:2] == 0) to 0 on line 145 in fctrl. 
     .word 0x40300053    // toggling SupportFmt2 to 0 on line 145 in fctrl.
     .word 0x42100053    // toggling (Rs2D[1:0] != 1) to 0 on line 147 in fctrl. Illegal Instr
     .word 0xf0100053    // toggling (Rs2D == 0) to 0 on line 143 in fctrl. Illegal Instr
