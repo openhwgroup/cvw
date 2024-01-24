@@ -114,7 +114,7 @@ main:
     li t0, 1
     ecall   # switch back to supervisor mode
     li t0, 0x80806000
-    jalr ra, t0      # jump to page to exercise ITLB with PBMT !=0 when ENVCFG_BPMTE=0
+    jalr ra, t0      # jump to page to exercise ITLB with PBMT !=0 when ENVCFG_PMTE=0
 
     # change back to default trap handler after checking everything that might cause an instruction page fault
     jal changetodefaulthandler
