@@ -28,14 +28,16 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module rvvisynth import cvw::*; #(parameter cvw_t P,
-                                  parameter integer MAX_CSR)(
+                                  parameter integer MAX_CSRS)(
   input logic clk, reset,
   output logic valid,
   output logic [163+P.XLEN-1:0] Requied,
   output logic [12+2*P.XLEN-1:0] Registers,
-  output logic [12+MAX_CSR*(P.XLEN+12)-1:0] CSRs
+  output logic [12+MAX_CSRS*(P.XLEN+12)-1:0] CSRs
   );
 
+  localparam TOTAL_CSRS = 36;
+  
   // pipeline controlls
   logic                                     StallW, FlushW;
   // required
@@ -50,7 +52,12 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
   logic [4:0]                               GPRAddr, FPRAddr;
   logic [P.XLEN-1:0]                        GPRValue, FPRValue;
   logic [P.XLEN-1:0]                        XLENZeros;
-   
+  logic [P.XLEN-1:0]                        CSRArray [TOTAL_CSRS-1:0];
+  logic [TOTAL_CSRS-1:0]                    CSRArrayWen;
+  logic [MAX_CSRS-1:0]                      CSRValue [P.XLEN-1:0];
+  logic [MAX_CSRS-1:0]                      CSRWen [TOTAL_CSRS-1:0];
+  logic [MAX_CSRS-1:0]                      CSRAddr [11:0];
+     
   // get signals from the core.
   assign StallW         = testbench.dut.core.StallW;
   assign FlushW         = testbench.dut.core.FlushW;
@@ -68,6 +75,44 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
   assign FPRWen         = testbench.dut.core.fpu.fpu.fregfile.we4;
   assign FPRValue       = testbench.dut.core.fpu.fpu.fregfile.wd4;
 
+  assign CSRArray[0] = testbench.dut.core.priv.priv.csr.csrm.MSTATUS_REGW; // 12'h300
+  assign CSRArray[1] = testbench.dut.core.priv.priv.csr.csrm.MSTATUSH_REGW; // 12'h310
+  assign CSRArray[2] = testbench.dut.core.priv.priv.csr.csrm.MTVEC_REGW; // 12'h305
+  assign CSRArray[3] = testbench.dut.core.priv.priv.csr.csrm.MEPC_REGW; // 12'h341
+  assign CSRArray[4] = testbench.dut.core.priv.priv.csr.csrm.MCOUNTEREN_REGW; // 12'h306
+  assign CSRArray[5] = testbench.dut.core.priv.priv.csr.csrm.MCOUNTINHIBIT_REGW; // 12'h320
+  assign CSRArray[6] = testbench.dut.core.priv.priv.csr.csrm.MEDELEG_REGW; // 12'h302
+  assign CSRArray[7] = testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW; // 12'h303
+  assign CSRArray[8] = testbench.dut.core.priv.priv.csr.csrm.MIP_REGW; // 12'h344
+  assign CSRArray[9] = testbench.dut.core.priv.priv.csr.csrm.MIE_REGW; // 12'h304
+  assign CSRArray[10] = testbench.dut.core.priv.priv.csr.csrm.MISA_REGW; // 12'h301
+  assign CSRArray[11] = testbench.dut.core.priv.priv.csr.csrm.MENVCFG_REGW; // 12'h30A
+  assign CSRArray[12] = testbench.dut.core.priv.priv.csr.csrm.MHARTID_REGW; // 12'hF14
+  assign CSRArray[13] = testbench.dut.core.priv.priv.csr.csrm.MSCRATCH_REGW; // 12'h340
+  assign CSRArray[14] = testbench.dut.core.priv.priv.csr.csrm.MCAUSE_REGW; // 12'h342
+  assign CSRArray[15] = testbench.dut.core.priv.priv.csr.csrm.MTVAL_REGW; // 12'h343
+  assign CSRArray[16] = 0; // 12'hF11
+  assign CSRArray[17] = 0; // 12'hF12
+  assign CSRArray[18] = {{P.XLEN-12{1'b0}}, 12'h100}; //P.XLEN'h100; // 12'hF13
+  assign CSRArray[19] = 0; // 12'hF15
+  assign CSRArray[20] = 0; // 12'h34A
+	  // supervisor CSRs
+  assign CSRArray[21] = testbench.dut.core.priv.priv.csr.csrs.csrs.SSTATUS_REGW; // 12'h100
+  assign CSRArray[22] = testbench.dut.core.priv.priv.csr.csrm.MIE_REGW & 12'h222; // 12'h104
+  assign CSRArray[23] = testbench.dut.core.priv.priv.csr.csrs.csrs.STVEC_REGW; // 12'h105
+  assign CSRArray[24] = testbench.dut.core.priv.priv.csr.csrs.csrs.SEPC_REGW; // 12'h141
+  assign CSRArray[25] = testbench.dut.core.priv.priv.csr.csrs.csrs.SCOUNTEREN_REGW; // 12'h106
+  assign CSRArray[26] = testbench.dut.core.priv.priv.csr.csrs.csrs.SENVCFG_REGW; // 12'h10A
+  assign CSRArray[27] = testbench.dut.core.priv.priv.csr.csrs.csrs.SATP_REGW; // 12'h180
+  assign CSRArray[28] = testbench.dut.core.priv.priv.csr.csrs.csrs.SSCRATCH_REGW; // 12'h140
+  assign CSRArray[29] = testbench.dut.core.priv.priv.csr.csrs.csrs.STVAL_REGW; // 12'h143
+  assign CSRArray[30] = testbench.dut.core.priv.priv.csr.csrs.csrs.SCAUSE_REGW; // 12'h142
+  assign CSRArray[31] = testbench.dut.core.priv.priv.csr.csrm.MIP_REGW & 12'h222 & testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW; // 12'h144
+  assign CSRArray[32] = testbench.dut.core.priv.priv.csr.csrs.csrs.STIMECMP_REGW; // 12'h14D
+	  // user CSRs
+  assign CSRArray[33] = testbench.dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW; // 12'h001
+  assign CSRArray[34] = testbench.dut.core.priv.priv.csr.csru.csru.FRM_REGW; // 12'h002
+  assign CSRArray[35] = {testbench.dut.core.priv.priv.csr.csru.csru.FRM_REGW, testbench.dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW}; // 12'h003
 
   //
   assign XLENZeros = '0;
@@ -88,6 +133,28 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
                      {FPRWen, GPRWen} == 2'b01 ? {XLENZeros, 5'b0, GPRValue, GPRAddr, FPRWen, GPRWen} :
                      {FPRWen, GPRWen} == 2'b10 ? {FPRValue, FPRAddr, XLENZeros, 5'b0, FPRWen, GPRWen} :
                      {XLENZeros, 5'b0, XLENZeros, 5'b0, FPRWen, GPRWen};
+
+  // the CSRs are complex
+  // 1. we need to get the CSR values
+  // 2. we check if the CSR value changes by registering the value then XORing with the old value.
+  // 3. Then use priorityaomux to collect CSR values and addresses for compating into the compressed rvvi format
+
+  // step 2
+  genvar                                    index;
+  for (index = 0; index < TOTAL_CSRS; index = index + 1) begin
+    regchangedetect #(P.XLEN) changedetect(clk, reset, CSRArray[index], CSRArrayWen[index]);
+  end
+
+  // step 3a
+  for(index = 0; index < MAX_CSRS; index = index + 1) begin
+    logic [NUM_CSRS-index-1:0] CSRWenShort;
+    priorityaomux #(NUM_CSRS-index, P.XLEN) priorityaomux(CSRArrayWen[MAX_CSRS-1:index], CSRArray[MAX_CSRS-1:index], CSRValue[index], CSRWenShort);
+    assign CSRWen[index] = {{{index}{1'b0}}, CSRWenShort};
+    // step 3b
+    csrindextoaddr #(NUM_CSRS) csrindextoaddr(CSRWen, CSRAddr);
+    assign CSRs[(index+1) * P.XLEN - 1 + 12 + 12: index * P.XLEN + 12] = {CSRValue[index], CSRAddr[index]};
+  end
+
 
 endmodule
                                                                  
