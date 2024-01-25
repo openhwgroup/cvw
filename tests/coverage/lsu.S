@@ -30,4 +30,7 @@ main:
 
     sfence.vma x0, x0 // sfence.vma to assert TLBFlush
 
+    li a0, 0x80000001   # misaligned address
+    amoadd.w t0, a0, (a0) # amo access to misaligned address
+
     j done

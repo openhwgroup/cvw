@@ -68,6 +68,7 @@ module round import cvw::*;  #(parameter cvw_t P) (
   logic                            CalcPlus1;          // calculated plus1
   logic                            FpPlus1;            // do you add one to the fp result 
   logic [P.FLEN:0]                 RoundAdd;           // how much to add to the result
+  logic                            CvtToInt;           // Convert to integer operation
 
 // what position is XLEN in?
 //  options: 
@@ -111,6 +112,7 @@ module round import cvw::*;  #(parameter cvw_t P) (
   // determine what format the final result is in: int or fp
   assign IntRes = ToInt;
   assign FpRes  = ~IntRes;
+  assign CvtToInt = ToInt; // under current encodings, CvtOp always is 1 when ToInt is selected, so leave it out
 
   // sticky bit calculation
   if (P.FPSIZES == 1) begin
@@ -244,9 +246,9 @@ module round import cvw::*;  #(parameter cvw_t P) (
           endcase
   end
 
-  assign Guard  = ToInt&CvtOp ? Mf[P.CORRSHIFTSZ-P.XLEN-1] : FpGuard;
-  assign LsbRes = ToInt&CvtOp ? Mf[P.CORRSHIFTSZ-P.XLEN] : FpLsbRes;
-  assign Round  = ToInt&CvtOp ? Mf[P.CORRSHIFTSZ-P.XLEN-2] : FpRound;
+  assign Guard  = CvtToInt ? Mf[P.CORRSHIFTSZ-P.XLEN-1] : FpGuard;
+  assign LsbRes = CvtToInt ? Mf[P.CORRSHIFTSZ-P.XLEN] : FpLsbRes;
+  assign Round  = CvtToInt ? Mf[P.CORRSHIFTSZ-P.XLEN-2] : FpRound;
 
   always_comb begin
       // Determine if you add 1
@@ -272,7 +274,7 @@ module round import cvw::*;  #(parameter cvw_t P) (
 
   // If an answer is exact don't round
   assign Plus1   = CalcPlus1 & (Sticky|Round|Guard);
-  assign FpPlus1 = Plus1&~(ToInt&CvtOp);
+  assign FpPlus1 = Plus1&~(CvtToInt);
   assign UfPlus1 = UfCalcPlus1 & (Sticky|Round);
 
   // place Plus1 into the proper position for the format
