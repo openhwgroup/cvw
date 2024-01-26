@@ -123,6 +123,27 @@ main:
     li t0, 0x80806000
     jalr ra, t0      # jump to page to exercise ITLB with PBMT !=0 when ENVCFG_PMTE=0
 
+    # Load and AMO operation on page table entry that causes access fault
+    li t0, 0x81000000 
+    lw t1, 0(t0)
+    sfence.vma
+    amoadd.w t0, t0, 0(t0)
+
+    # Access fault on top level PTE
+    li t0, 0x1000000000
+    lw t1, 0(t0)
+
+    # Access fault on megapage
+    li t0, 0x81400000
+    lw t1, 0(t0)
+
+    # AMO operation on page table entry that causes page fault due to malformed PBMT
+    li t0, 0x81200000 
+    jalr t0          # Attempt to fetch instruction from address causing faulty page walk
+    lw t1, 0(t0)
+    sfence.vma
+    amoadd.w t0, t0, 0(t0)
+
     # change back to default trap handler after checking everything that might cause an instruction page fault
     jal changetodefaulthandler
 
@@ -177,8 +198,6 @@ main:
     csrc mstatus, t0 # mstatus.mxr = 1
     li a0, 1
     ecall
-
-
 
     # wrap up
     li a0, 3 # switch back to machine mode because code at 0x80000000 may not have clean page table entry
@@ -237,32 +256,30 @@ ipf:
 .align 16
 # root Page table situated at 0x80010000
 pagetable: 
-    .8byte 0x200044C1  # 0x00000000-0x80_00000000: PTE at 0x80011000 C1 dirty, accessed, valid
+    .8byte 0x200044C1  # 0x00000000-0x7F_FFFFFFFF: PTE at 0x80011000 C1 dirty, accessed, valid
     .8byte 0x00000000000010CF # misaligned terapage at 0x80_00000000
+    .8byte 0x00000000000000CF # access fault terapage at 0x100_00000000
 
 # next page table at 0x80011000
 .align 12
     .8byte 0x00000000000010CF # misaligned gigapage at 0x00000000
-    .8byte 0x00000000200058C1 # PTE for pages at 0x40000000
+    .8byte 0x00000000200058C1 # PTE for pages at 0x40000000 pointing to 0x80150000
     .8byte 0x00000000200048C1 # gigapage at 0x80000000 pointing to 0x80120000
  
 
 # Next page table at 0x80012000 for gigapage at 0x80000000
 .align 12
-    .8byte 0x0000000020004CC1  # for VA starting at 80000000 (pointer to NAPOT 64 KiB pages)
+    .8byte 0x0000000020004CC1  # for VA starting at 80000000 (pointer to NAPOT 64 KiB pages Page table at 80013000)
     .8byte 0x0000000020014CCF  # for VA starting at 80200000 (misaligned megapage)
-    .8byte 0x00000000200050C1  # for VA starting at 80400000 (bad PBMT pages)
+    .8byte 0x00000000200050C1  # for VA starting at 80400000 (bad PBMT pages page table at 0x80014000)
     .8byte 0x4000000020004CC1  # for VA starting at 80600000 (bad entry: nonleaf PTE can't have PBMT != 0)
-    .8byte 0x00000000200054C1  # for VA starting at 80800000 (testing rwx permissiosn with cbom/cboz)
-    .8byte 0x0000000020004CC1  # for VA starting at 80A00000 (pointer to NAPOT 64 KiB pages like at 80000000)
+    .8byte 0x00000000200054C1  # for VA starting at 80800000 (testing rwx permissiosn with cbom/cboz . page table at 0x80015000)
+    .8byte 0x0000000020004CC1  # for VA starting at 80A00000 (pointer to NAPOT 64 KiB pages like at 80000000.  page table at 0x80013000)
     .8byte 0x0F00000020004CCF  # for VA starting at 80C00000 (bad reserved field in bits 60:54)
-    .8byte 0x000000002000000F  # for VA starting at 80E00000 (not dirty or accessed)
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
+    .8byte 0x000000002000000F  # for VA starting at 80E00000 (megapage not dirty or accessed)
+    .8byte 0x0000000000004CC1  # for VA starting at 81000000 (nonleaf pointing to unimplemented memory causes access fault)
+    .8byte 0x4000000020004CC1  # for VA starting at 81200000 (nonleaf with PBMT nonzero causes page fault)
+    .8byte 0x00000000000000CF  # for VA starting at 81400000 (megapage with access fault)
     .8byte 0x0000000020004CC1
     .8byte 0x0000000020004CC1
     .8byte 0x0000000020004CC1
@@ -288,7 +305,7 @@ pagetable:
     .8byte 0x0000000020004CC1
     .8byte 0x0000000020004CC1
 
-# Leaf page table at 0x80013000 with NAPOT pages
+# Leaf page table at 0x80013000 with 64 KiB NAPOT pages
 .align 12
     #80000000
     .8byte 0xA0000000200020CF
