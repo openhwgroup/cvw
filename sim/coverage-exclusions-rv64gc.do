@@ -246,6 +246,30 @@ coverage exclude -scope /dut/core/ifu/ifu/immu/immu/tlb/tlb/tlbcontrol -linerang
 # never reaches this when ENVCFG_ADUE_1 because HPTW updates A bit first
 coverage exclude -scope /dut/core/ifu/ifu/immu/immu/tlb/tlb/tlbcontrol -linerange [GetLineNum ../src/mmu/tlb/tlbcontrol.sv "assign PrePageFault"] -item e 1 -fecexprrow 18 
 
+###############
+# HPTW exclusions
+###############
+
+# RV64GC HPTW never starts at L1_ADR
+set line [GetLineNum ../src/mmu/hptw.sv "InitialWalkerState == L1_ADR"] 
+coverage exclude -scope /dut/core/lsu/lsu/hptw/hptw -linerange $line-$line -item c 1 -feccondrow 2
+
+# Never possible to get a page fault when neither reading nor writing
+set line [GetLineNum ../src/mmu/hptw.sv "assign HPTWLoadPageFault"] 
+coverage exclude -scope /dut/core/lsu/lsu/hptw/hptw -linerange $line-$line -item e 1 -fecexprrow 7
+ 
+# Never possible to get a store page fault from an ITLB walk
+set line [GetLineNum ../src/mmu/hptw.sv "assign HPTWStoreAmoPageFault"] 
+coverage exclude -scope /dut/core/lsu/lsu/hptw/hptw -linerange $line-$line -item e 1 -fecexprrow 3
+ 
+# Never possible to get Access = 0 on a nonleaf PTE with no OtherPageFault (because InvalidRead/Write will be 1 on the nonleaf)
+set line [GetLineNum ../src/mmu/hptw.sv "assign HPTWUpdateDA"] 
+coverage exclude -scope /dut/core/lsu/lsu/hptw/hptw -linerange $line-$line -item e 1 -fecexprrow 3
+ 
+###############
+# Other exclusions
+###############
+
 # IMMU PMP does not support CBO instructions
 coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLineNum ../src/mmu/pmpchecker.sv "exclusion-tag: immu-pmpcbom"] 
 coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLineNum ../src/mmu/pmpchecker.sv "exclusion-tag: immu-pmpcboz"] 
