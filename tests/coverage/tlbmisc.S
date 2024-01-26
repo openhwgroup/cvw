@@ -95,7 +95,7 @@ main:
     sw t1, 0(t0)    # write to page
     jalr ra, t0     # jump to page
 
-    # Nonleaf PTE has PBMT != 0     # this should cause a page fault during page walking.  However, as of issue 546 1/1/24, both ImperasDV and Wally don't detect this
+    # Nonleaf PTE has PBMT != 0     causes a page fault during page walking.  H
     li t0, 0x80600000
     lw t1, 0(t0)    # read from page
     sw t1, 0(t0)    # write to page
@@ -107,6 +107,10 @@ main:
     li t0, 0x80807000 # again, triggering setting access bit
     jalr ra, t0         
 
+    # atomic access to uncachable memory
+    #li t0, 0x80806000
+    #sd zero, 0(t0)
+    #amoadd.w t1, t0, (t0)
 
     # Good PBMT with menvcfg.PBMTE = 0
     li a0, 3
