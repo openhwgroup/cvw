@@ -93,7 +93,6 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   logic [P.PA_BITS-1:0]     HPTWReadAdr;
   logic                     SelHPTWAdr;
   logic [P.XLEN+1:0]        HPTWAdrExt;
-  logic                     ITLBMissOrUpdateDAF;
   logic                     DTLBMissOrUpdateDAM;
   logic                     LSUAccessFaultM;
   logic [P.PA_BITS-1:0]     HPTWAdr;
@@ -113,12 +112,12 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   // map hptw access faults onto either the original LSU load/store fault or instruction access fault
   assign LSUAccessFaultM         = LSULoadAccessFaultM | LSUStoreAmoAccessFaultM;
   assign HPTWFaultM              = LSUAccessFaultM | PBMTFaultM;
-  assign HPTWLoadAccessFault     = LSUAccessFaultM & DTLBWalk & MemRWM[1] & ~MemRWM[0];
+  assign HPTWLoadAccessFault     = LSUAccessFaultM & DTLBWalk & MemRWM[1] & ~MemRWM[0];  
   assign HPTWStoreAmoAccessFault = LSUAccessFaultM & DTLBWalk & MemRWM[0];
   assign HPTWInstrAccessFault    = LSUAccessFaultM & ~DTLBWalk;
-  assign HPTWLoadPageFault     = PBMTFaultM & DTLBWalk & MemRWM[1] & ~MemRWM[0];
-  assign HPTWStoreAmoPageFault = PBMTFaultM & DTLBWalk & MemRWM[0];
-  assign HPTWInstrPageFault    = PBMTFaultM & ~DTLBWalk;
+  assign HPTWLoadPageFault       = PBMTFaultM & DTLBWalk & MemRWM[1] & ~MemRWM[0];
+  assign HPTWStoreAmoPageFault   = PBMTFaultM & DTLBWalk & MemRWM[0];   
+  assign HPTWInstrPageFault      = PBMTFaultM & ~DTLBWalk;
 
   flopr #(7) HPTWAccesFaultReg(clk, reset, {TakeHPTWFault, HPTWLoadAccessFault, HPTWStoreAmoAccessFault, HPTWInstrAccessFault, 
                                             HPTWLoadPageFault, HPTWStoreAmoPageFault, HPTWInstrPageFault},
@@ -127,17 +126,18 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
 
   assign TakeHPTWFault = WalkerState != IDLE;
   
-  assign LoadAccessFaultM      = TakeHPTWFault ? HPTWLoadAccessFaultDelay : LSULoadAccessFaultM;
+  // Improve timing by taking HPTW faults off critical path because these are multicycle operations anyway
+  assign LoadAccessFaultM      = TakeHPTWFault ? HPTWLoadAccessFaultDelay : LSULoadAccessFaultM;                     
   assign StoreAmoAccessFaultM  = TakeHPTWFault ? HPTWStoreAmoAccessFaultDelay : LSUStoreAmoAccessFaultM;
   assign HPTWInstrAccessFaultF = TakeHPTWFault ? HPTWInstrAccessFaultDelay : 1'b0;
-  assign LoadPageFaultM      = TakeHPTWFault ? HPTWLoadPageFaultDelay : LSULoadPageFaultM;
-  assign StoreAmoPageFaultM  = TakeHPTWFault ? HPTWStoreAmoPageFaultDelay : LSUStoreAmoPageFaultM;
-  assign HPTWInstrPageFaultF = TakeHPTWFault ? HPTWInstrPageFaultDelay : 1'b0;
+  assign LoadPageFaultM        = TakeHPTWFault ? HPTWLoadPageFaultDelay : LSULoadPageFaultM;
+  assign StoreAmoPageFaultM    = TakeHPTWFault ? HPTWStoreAmoPageFaultDelay : LSUStoreAmoPageFaultM;
+  assign HPTWInstrPageFaultF   = TakeHPTWFault ? HPTWInstrPageFaultDelay : 1'b0;
   
   // Extract bits from CSRs and inputs
   assign SvMode = SATP_REGW[P.XLEN-1:P.XLEN-P.SVMODE_BITS];
   assign BasePageTablePPN = SATP_REGW[P.PPN_BITS-1:0];
-  assign TLBMiss = (DTLBMissOrUpdateDAM | ITLBMissOrUpdateDAF);
+  assign TLBMiss = (DTLBMissOrUpdateDAM | ITLBMissF);
 
   // Determine which address to translate
   mux2 #(P.XLEN) vadrmux(PCSpillF, IEUAdrExtM[P.XLEN-1:0], DTLBWalk, TranslationVAdr);
@@ -203,7 +203,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
     // memory access.  If there is the PTE needs to be updated seting Access
     // and possibly also Dirty.  Dirty is set if the operation is a store/amo.
     // However any other fault should not cause the update, and updates are in software when ENVCFG_ADUE = 0
-    assign HPTWUpdateDA = ValidLeafPTE & (~Accessed | SetDirty) & ENVCFG_ADUE & ~OtherPageFault;  
+    assign HPTWUpdateDA = ValidLeafPTE & (~Accessed | SetDirty) & ENVCFG_ADUE & ~OtherPageFault;   
 
     assign HPTWRW[0] = (WalkerState == UPDATE_PTE);           // HPTWRW[0] will always be 0 if ADUE = 0 because HPTWUpdateDA will be 0 so WalkerState never is UPDATE_PTE
     assign UpdatePTE = (WalkerState == LEAF) & HPTWUpdateDA;  // UpdatePTE will always be 0 if ADUE = 0 because HPTWUpdateDA will be 0
@@ -283,7 +283,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset | FlushW, 1'b1, NextWalkerState, IDLE, WalkerState); 
   always_comb 
     case (WalkerState)
-      IDLE:       if (TLBMiss & ~DCacheBusStallM)                     NextWalkerState = InitialWalkerState;
+      IDLE:       if (TLBMiss)                                        NextWalkerState = InitialWalkerState;                      
                   else                                                NextWalkerState = IDLE;
       L3_ADR:                                                         NextWalkerState = L3_RD; // first access in SV48
       L3_RD:      if (DCacheBusStallM)                                NextWalkerState = L3_RD;
@@ -294,7 +294,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
       L2_RD:      if (DCacheBusStallM)                                NextWalkerState = L2_RD;
                   else if(HPTWFaultM)                                 NextWalkerState = FAULT;
                   else                                                NextWalkerState = L1_ADR;
-      L1_ADR:     if (InitialWalkerState == L1_ADR | ValidNonLeafPTE) NextWalkerState = L1_RD; // first access in SV32
+      L1_ADR:     if (InitialWalkerState == L1_ADR | ValidNonLeafPTE) NextWalkerState = L1_RD; // first access in SV32                 
                   else                                                NextWalkerState = LEAF;  
       L1_RD:      if (DCacheBusStallM)                                NextWalkerState = L1_RD;
                   else if(HPTWFaultM)                                 NextWalkerState = FAULT;
@@ -320,9 +320,8 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   // The FSM directly transistions to IDLE to ready for the next operation when the delayed version will not be high.
 
   assign HPTWAccessFaultDelay = HPTWLoadAccessFaultDelay | HPTWStoreAmoAccessFaultDelay | HPTWInstrAccessFaultDelay;
-  assign HPTWStall = (WalkerState != IDLE & WalkerState != FAULT) | (WalkerState == IDLE & TLBMiss);
+  assign HPTWStall = (WalkerState != IDLE & WalkerState != FAULT) | (WalkerState == IDLE & TLBMiss); 
 
-  assign ITLBMissOrUpdateDAF = ITLBMissF | (P.SVADU_SUPPORTED & InstrUpdateDAF);
   assign DTLBMissOrUpdateDAM = DTLBMissM | (P.SVADU_SUPPORTED & DataUpdateDAM);  
 
   // HTPW address/data/control muxing
