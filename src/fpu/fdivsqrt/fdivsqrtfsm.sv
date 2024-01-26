@@ -70,8 +70,8 @@ module fdivsqrtfsm import cvw::*;  #(parameter cvw_t P) (
       end else if (state == BUSY) begin 
           if (step == 1 | WZeroE) state <= #1 DONE; // finished steps or terminate early on zero residual
           step <= step - 1;
-      end else if (state == DONE) begin
-        if (StallM) state <= #1 DONE;
+      end else if (state == DONE) begin // Can't still be stalled in configs tested, but keep this check for paranoia
+        if (StallM) state <= #1 DONE; // exclusion-tag: fdivsqrtfsm stallm
         else        state <= #1 IDLE;
       end 
   end

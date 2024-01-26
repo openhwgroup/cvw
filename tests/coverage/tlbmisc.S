@@ -62,15 +62,32 @@ main:
     jalr ra, t0 # jump to misaligned gigapage
     li t0, 0x80200000
     jalr ra, t0 # jump to misaligned megapage
+    li t0, 0x7FFFFFFF80000000
 
-    # exercise ebufsmarb (not yet providing coverage 1/1/24 DH & RT)
-    li t0, 0x80000000
-    lw t1, 0(t0)        # fetch from an address to warm up tlb entries
-    li t0, 0x80A00000
-    lw t1, 0(t0)        # trigger TLB miss on a non-first entry
-    jal backandforth
+    
+    jalr ra, t0 # jump to page with UpperBitsUnequal
+    li t0, 0x0000000080C00000
+    jalr ra, t0 # jump to page with bad reserved bits 60:54 in PTE
+    
+    # test with ENVCFG_ADUE = 1: switch to machine mode, set ADUE, access page with A=0, clear ADUE, 
+    li a0, 3
+    ecall       # switch to machine mode
+    li t0, 1
+    slli t0, t0, 61 
+    csrs menvcfg, t0 # set menvcfg.ADUE
+    li a0, 1    
+    ecall       # switch back to supervisor mode
+    li t0, 0x0000000080E00000
+    jalr ra, t0 # jump to page without accessed bit yet set
+    li a0, 3
+    ecall       # switch to machine mode
+    li t0, 1
+    slli t0, t0, 61 
+    csrc menvcfg, t0 # clear menvcfg.ADUE
+    li a0, 1    
+    ecall       # switch back to supervisor mode
 
-    # exercise malformed PBMT pages
+     # exercise malformed PBMT pages
 
     # page has PBMT = 3 (reserved)
     li t0, 0x80400000
@@ -78,7 +95,7 @@ main:
     sw t1, 0(t0)    # write to page
     jalr ra, t0     # jump to page
 
-    # Nonleaf PTE has PBMT != 0     # this should cause a page fault during page walking.  However, as of issue 546 1/1/24, both ImperasDV and Wally don't detect this
+    # Nonleaf PTE has PBMT != 0     causes a page fault during page walking.  H
     li t0, 0x80600000
     lw t1, 0(t0)    # read from page
     sw t1, 0(t0)    # write to page
@@ -87,17 +104,24 @@ main:
     # jump to address for TLB miss to trigger HPTW to make access with DisableTranslation = 1, Translate = 0
     li t0, 0x80805000
     jalr ra, t0         
+    li t0, 0x80807000 # again, triggering setting access bit
+    jalr ra, t0         
+
+    # atomic access to uncachable memory
+    #li t0, 0x80806000
+    #sd zero, 0(t0)
+    #amoadd.w t1, t0, (t0)
 
     # Good PBMT with menvcfg.PBMTE = 0
-    li t0, 3
+    li a0, 3
     ecall   # switch to machine mode
     li t5, 0x1
     slli t5, t5, 62
     csrc menvcfg, t5  # menvcfg.PBMTE = 0
-    li t0, 1
+    li a0, 1
     ecall   # switch back to supervisor mode
     li t0, 0x80806000
-    jalr ra, t0      # jump to page to exercise ITLB with PBMT !=0 when ENVCFG_BPMTE=0
+    jalr ra, t0      # jump to page to exercise ITLB with PBMT !=0 when ENVCFG_PMTE=0
 
     # change back to default trap handler after checking everything that might cause an instruction page fault
     jal changetodefaulthandler
@@ -153,6 +177,8 @@ main:
     csrc mstatus, t0 # mstatus.mxr = 1
     li a0, 1
     ecall
+
+
 
     # wrap up
     li a0, 3 # switch back to machine mode because code at 0x80000000 may not have clean page table entry
@@ -229,8 +255,8 @@ pagetable:
     .8byte 0x4000000020004CC1  # for VA starting at 80600000 (bad entry: nonleaf PTE can't have PBMT != 0)
     .8byte 0x00000000200054C1  # for VA starting at 80800000 (testing rwx permissiosn with cbom/cboz)
     .8byte 0x0000000020004CC1  # for VA starting at 80A00000 (pointer to NAPOT 64 KiB pages like at 80000000)
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
+    .8byte 0x0F00000020004CCF  # for VA starting at 80C00000 (bad reserved field in bits 60:54)
+    .8byte 0x000000002000000F  # for VA starting at 80E00000 (not dirty or accessed)
     .8byte 0x0000000020004CC1
     .8byte 0x0000000020004CC1
     .8byte 0x0000000020004CC1
@@ -346,6 +372,7 @@ pagetable:
     .8byte 0x00000000200000C3   # valid r   for VA 80802000
     .8byte 0x00000000200000C9   # valid   x for VA 80803000
     .8byte 0x00000000200000CD   # valid  wx for VA 80804000 (illegal combination, but used to test tlbcontrol)
-    .8byte 0x000000002000000F   # valid rwx for VA 80805000  for covering ITLB translate and UpdateDA
+    .8byte 0x00000000200000CF   # valid rwx for VA 80805000  for covering ITLB translate
     .8byte 0x20000000200000CF   # PBMT=1    for VA 80806000  for covering ITLB BadPBMT
+    .8byte 0x000000002000000F   # valid rwx for VA 80807000  for covering UpdateDA
 

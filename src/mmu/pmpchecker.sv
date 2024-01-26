@@ -70,13 +70,13 @@ module pmpchecker import cvw::*;  #(parameter cvw_t P) (
   priorityonehot #(P.PMP_ENTRIES) pmppriority(.a(Match), .y(FirstMatch)); // combine the match signal from all the adress decoders to find the first one that matches.
 
   // Only enforce PMP checking for S and U modes or in Machine mode when L bit is set in selected region
-  assign EnforcePMP = (PrivilegeModeW != P.M_MODE) | (|(L & FirstMatch)); // *** switch to this logic when PMP is initialized for non-machine mode
+  assign EnforcePMP = (PrivilegeModeW != P.M_MODE) | (|(L & FirstMatch));
 
-  assign PMPCBOMAccessFault     = EnforcePMP & (|CMOpM[2:0]) & ~|((R|W) & FirstMatch) ;
-  assign PMPCBOZAccessFault     = EnforcePMP & CMOpM[3] & ~|(W & FirstMatch) ;
-  assign PMPCMOAccessFault      = PMPCBOZAccessFault | PMPCBOMAccessFault;
+  assign PMPCBOMAccessFault     = EnforcePMP & (|CMOpM[2:0]) & ~|((R|W) & FirstMatch) ; // exclusion-tag: immu-pmpcbom
+  assign PMPCBOZAccessFault     = EnforcePMP & CMOpM[3] & ~|(W & FirstMatch) ;          // exclusion-tag: immu-pmpcboz
+  assign PMPCMOAccessFault      = PMPCBOZAccessFault | PMPCBOMAccessFault;              // exclusion-tag: immu-pmpcboaccess
   
   assign PMPInstrAccessFaultF     = EnforcePMP & ExecuteAccessF & ~|(X & FirstMatch) ;
-  assign PMPStoreAmoAccessFaultM  = (EnforcePMP & WriteAccessM   & ~|(W & FirstMatch))  | PMPCMOAccessFault;
+  assign PMPStoreAmoAccessFaultM  = (EnforcePMP & WriteAccessM   & ~|(W & FirstMatch))  | PMPCMOAccessFault; // exclusion-tag: immu-pmpstoreamoaccessfault
   assign PMPLoadAccessFaultM      = EnforcePMP & ReadAccessM    & ~|(R & FirstMatch) ;
  endmodule

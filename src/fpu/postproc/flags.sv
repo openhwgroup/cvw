@@ -148,8 +148,7 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   // Set Inexact flag if the result is diffrent from what would be outputed given infinite precision
   //      - Don't set the underflow flag if an underflowed res isn't outputed
   assign FpInexact = (Sticky|Guard|Overflow|Round)&~(InfIn|NaNIn|DivByZero|Invalid);
-  //assign FpInexact = (Sticky|Guard|Overflow|Round)&~(InfIn|NaNIn|DivByZero|Invalid|XZero);
-
+  
   //                  if the res is too small to be represented and not 0
   //                  |                                     and if the res is not invalid (outside the integer bounds)
   //                  |                                     |
