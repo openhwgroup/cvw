@@ -95,7 +95,7 @@ main:
     sw t1, 0(t0)    # write to page
     jalr ra, t0     # jump to page
 
-    # Nonleaf PTE has PBMT != 0     # this should cause a page fault during page walking.  However, as of issue 546 1/1/24, both ImperasDV and Wally don't detect this
+    # Nonleaf PTE has PBMT != 0     causes a page fault during page walking.  H
     li t0, 0x80600000
     lw t1, 0(t0)    # read from page
     sw t1, 0(t0)    # write to page
@@ -104,14 +104,21 @@ main:
     # jump to address for TLB miss to trigger HPTW to make access with DisableTranslation = 1, Translate = 0
     li t0, 0x80805000
     jalr ra, t0         
+    li t0, 0x80807000 # again, triggering setting access bit
+    jalr ra, t0         
+
+    # atomic access to uncachable memory
+    #li t0, 0x80806000
+    #sd zero, 0(t0)
+    #amoadd.w t1, t0, (t0)
 
     # Good PBMT with menvcfg.PBMTE = 0
-    li t0, 3
+    li a0, 3
     ecall   # switch to machine mode
     li t5, 0x1
     slli t5, t5, 62
     csrc menvcfg, t5  # menvcfg.PBMTE = 0
-    li t0, 1
+    li a0, 1
     ecall   # switch back to supervisor mode
     li t0, 0x80806000
     jalr ra, t0      # jump to page to exercise ITLB with PBMT !=0 when ENVCFG_PMTE=0
@@ -365,6 +372,7 @@ pagetable:
     .8byte 0x00000000200000C3   # valid r   for VA 80802000
     .8byte 0x00000000200000C9   # valid   x for VA 80803000
     .8byte 0x00000000200000CD   # valid  wx for VA 80804000 (illegal combination, but used to test tlbcontrol)
-    .8byte 0x000000002000000F   # valid rwx for VA 80805000  for covering ITLB translate and UpdateDA
+    .8byte 0x00000000200000CF   # valid rwx for VA 80805000  for covering ITLB translate
     .8byte 0x20000000200000CF   # PBMT=1    for VA 80806000  for covering ITLB BadPBMT
+    .8byte 0x000000002000000F   # valid rwx for VA 80807000  for covering UpdateDA
 

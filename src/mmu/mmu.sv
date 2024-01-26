@@ -74,6 +74,8 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   logic                        TLBPageFault;             // Page fault from TLB
   logic                        ReadNoAmoAccessM;         // Read that is not part of atomic operation causes Load faults.  Otherwise StoreAmo faults
   logic [1:0]                  PBMemoryType;             // PBMT field of PTE during TLB hit, or 00 otherwise
+  logic                        AmoMisalignedCausesAccessFaultM; // Misaligned AMO is not handled by hardware even with ZICCLSM, so it throws an access fault instead of misaligned with ZICCLSM
+  logic                        AmoAccessM;               // AMO access detected when ReadAccessM and WriteAccessM are simultaneously asserted
   
   // only instantiate TLB if Virtual Memory is supported
   if (P.VIRTMEM_SUPPORTED) begin:tlb
@@ -123,24 +125,30 @@ module mmu import cvw::*;  #(parameter cvw_t P,
     assign PMPLoadAccessFaultM      = 0;
   end
 
-  assign ReadNoAmoAccessM = ReadAccessM & ~WriteAccessM;// AMO causes StoreAmo rather than Load fault
-
-  // Access faults
-  // If TLB miss and translating we want to not have faults from the PMA and PMP checkers.
-  assign InstrAccessFaultF    = (PMAInstrAccessFaultF    | PMPInstrAccessFaultF)    & ~TLBMiss;
-  assign LoadAccessFaultM     = (PMALoadAccessFaultM     | PMPLoadAccessFaultM)     & ~TLBMiss;
-  assign StoreAmoAccessFaultM = (PMAStoreAmoAccessFaultM | PMPStoreAmoAccessFaultM) & ~TLBMiss;
+  assign ReadNoAmoAccessM  = ReadAccessM & ~WriteAccessM;// AMO causes StoreAmo rather than Load fault
+  assign AmoAccessM        = ReadAccessM & WriteAccessM;
 
   // Misaligned faults
-   always_comb // exclusion-tag: immu-wordaccess
+  always_comb // exclusion-tag: immu-wordaccess
     case(Size[1:0]) 
       2'b00:  DataMisalignedM = 0;                 // lb, sb, lbu
       2'b01:  DataMisalignedM = VAdr[0];           // lh, sh, lhu
       2'b10:  DataMisalignedM = VAdr[1] | VAdr[0]; // lw, sw, flw, fsw, lwu
       2'b11:  DataMisalignedM = |VAdr[2:0];        // ld, sd, fld, fsd
     endcase 
+  // When ZiCCLSM_SUPPORTED, misalgined cachable loads and stores are handled in hardware so they do not throw a misaligned fault
   assign LoadMisalignedFaultM     = DataMisalignedM & ReadNoAmoAccessM & ~(P.ZICCLSM_SUPPORTED & Cacheable); 
-  assign StoreAmoMisalignedFaultM = DataMisalignedM & WriteAccessM & (~(P.ZICCLSM_SUPPORTED & Cacheable) | ReadAccessM); // Misaligned AMO faults even if ZICCLSM supported
+  assign StoreAmoMisalignedFaultM = DataMisalignedM & WriteAccessM & ~(P.ZICCLSM_SUPPORTED & Cacheable); // Store and AMO both assert WriteAccess
+
+  // Access faults
+  // If TLB miss and translating we want to not have faults from the PMA and PMP checkers.
+  assign InstrAccessFaultF    = (PMAInstrAccessFaultF    | PMPInstrAccessFaultF)    & ~TLBMiss;
+  assign LoadAccessFaultM     = (PMALoadAccessFaultM     | PMPLoadAccessFaultM)     & ~TLBMiss;
+  // a misaligned AMO causes an access fault rather than a misaligned fault if a misaligned load/store is handled in hardware
+  // this is subtle - see privileged spec 3.6.3.3
+  // AMO is detected as ReadAccess & WriteAccess
+  assign AmoMisalignedCausesAccessFaultM = DataMisalignedM & AmoAccessM & (P.ZICCLSM_SUPPORTED & Cacheable);
+  assign StoreAmoAccessFaultM = (PMAStoreAmoAccessFaultM | PMPStoreAmoAccessFaultM | AmoMisalignedCausesAccessFaultM) & ~TLBMiss;
 
   // Specify which type of page fault is occurring
   assign InstrPageFaultF    = TLBPageFault & ExecuteAccessF;
