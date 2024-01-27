@@ -122,7 +122,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   assign TagWay = SelData ? ReadTag : '0; // AND part of AOMux
   assign HitDirtyWay = Dirty & ValidWay;
   assign DirtyWay = SelDirty & HitDirtyWay;                               // exclusion-tag: icache DirtyWay
-  assign HitWay = ValidWay & (ReadTag == PAdr[PA_BITS-1:OFFSETLEN+INDEXLEN]) & ~InvalidateCacheDelay;
+  assign HitWay = ValidWay & (ReadTag == PAdr[PA_BITS-1:OFFSETLEN+INDEXLEN]) & ~InvalidateCacheDelay; // exclusion-tag: dcache HitWay
 
   flop #(1) InvalidateCacheReg(clk, InvalidateCache, InvalidateCacheDelay);
 
