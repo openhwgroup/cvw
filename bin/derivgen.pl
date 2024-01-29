@@ -1,17 +1,17 @@
-#!/bin/bash
+#!/bin/perl -W
 
 ###########################################
-## testcount.pl
+## derivgen.pl
 ##
 ## Written: David_Harris@hmc.edu 
-## Created: 25 December 2022
-## Modified: Read the riscv-test-suite directories from riscv-arch-test
-## and count how many tests are in each
+## Created: 29 January 2024
+## Modified: 
 ##
-## Purpose: Read the riscv-test-suite directories from riscv-arch-test
-##          and count how many tests are in each
+## Purpose: Read config/derivlist.txt and generate config/deriv/*/config.vh
+##          derivative configurations from the base configurations
 ##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
+## https://github.com/openhwgroup/cvw
 ## https://github.com/openhwgroup/cvw
 ##
 ## Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -30,16 +30,29 @@
 ## and limitations under the License.
 ################################################################################################
 
-for dir in `ls ${WALLY}/addins/riscv-arch-test/riscv-test-suite/rv*/*`
-do
-    dir=$(echo $dir | cut -d':' -f1)
-    echo $dir
-    for fn in `ls $dir/src/*.S`
-    do
-        result=`grep 'inst_' $fn | tail -n 1`
-        num=$(echo $result| cut -d'_' -f 2 | cut -d':' -f 1)
-        ((num++))
-        fnbase=`basename $fn`
-        echo "$fnbase: $num"
-    done
-done
+
+use strict;
+use warnings;
+import os;
+
+if ($#ARGV != 0) {
+    die("Usage: $0 workpath [e.g. $0 \$WALLY/addins/riscv-arch-test/work")
+}
+my $mypath = $ARGV[0];
+my @dirs = glob($mypath.'/*/*');
+foreach my $dir (@dirs) {
+    $dir =~ /.*\/(.*)\/(.*)/;
+    my $arch = $1;
+    my $ext = $2;
+    my $contents = `grep --with-filename "<begin_signature>:" $dir/*.objdump`;
+    my @lines = split('\n', $contents);
+    print "$arch/$ext";
+    foreach my $line (@lines) {
+        $line =~ /.*\/(.*)\.elf.objdump:(\S*)/;
+        my $fname = $1;
+        my $adr = $2;
+        my $partialaddress = substr($adr, -6);
+        print ",\n\t\t\"$arch/$ext/$fname\", \"$partialaddress\"";
+    }
+    print("\n\n");
+}
