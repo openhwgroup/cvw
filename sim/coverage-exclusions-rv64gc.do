@@ -93,6 +93,11 @@ for {set i 0} {$i < $numcacheways} {incr i} {
     # below: flushD can't go high during an icache write b/c of pipeline stall
     coverage exclude -scope /dut/core/ifu/bus/icache/icache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: cache SetValidEN"] -item e 1 -fecexprrow 4
     coverage exclude -scope /dut/core/ifu/bus/icache/icache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: cache ClearValidEN"] -item e 1 -fecexprrow 4
+    # No CMO to clear valid bits of I$
+    coverage exclude -scope /dut/core/ifu/bus/icache/icache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "// exclusion-tag: icache ClearValidBits"] 
+    coverage exclude -scope /dut/core/ifu/bus/icache/icache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "// exclusion-tag: icache ClearValidWay"] -item e 1
+    # No dirty ways in read-only I$
+    coverage exclude -scope /dut/core/ifu/bus/icache/icache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "// exclusion-tag: icache DirtyWay"] -item e 1
 }
 
 ## D$ Exclusions.
@@ -104,6 +109,8 @@ coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [Get
 set numcacheways 4
 for {set i 0} {$i < $numcacheways} {incr i} {
     coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: dcache invalidateway"] -item bes 1 -fecexprrow 4
+    # InvalidateCacheDelay is always 0 for D$ because it is flushed, not invalidated
+    coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: dcache HitWay"] -item 3 1 -fecexprrow 2
 
     # FlushStage=1 will never happen when SetValidWay=1 since a pipeline stall is asserted by the cache in the fetch stage, which happens before
     # going into the WRITE_LINE state (and asserting SetValidWay). No TrapM can fire and since StallW is high, a stallM caused by WFIStallM would not cause a flushW.
@@ -245,6 +252,9 @@ coverage exclude -scope /dut/core/ifu/ifu/immu/immu/tlb/tlb/tlbcontrol -linerang
 coverage exclude -scope /dut/core/ifu/ifu/immu/immu/tlb/tlb/tlbcontrol -linerange [GetLineNum ../src/mmu/tlb/tlbcontrol.sv "assign UpdateDA"] -item e 1 -fecexprrow 5
 # never reaches this when ENVCFG_ADUE_1 because HPTW updates A bit first
 coverage exclude -scope /dut/core/ifu/ifu/immu/immu/tlb/tlb/tlbcontrol -linerange [GetLineNum ../src/mmu/tlb/tlbcontrol.sv "assign PrePageFault"] -item e 1 -fecexprrow 18 
+
+
+
 
 ###############
 # HPTW exclusions

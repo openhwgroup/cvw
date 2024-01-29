@@ -199,7 +199,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   // Flush logic
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  if (!READ_ONLY_CACHE) begin:flushlogic
+  if (!READ_ONLY_CACHE) begin:flushlogic // D$ can be flushed
     // Flush address (line number)
     assign ResetOrFlushCntRst = reset | FlushCntRst;
     flopenr #(SETLEN) FlushAdrReg(clk, ResetOrFlushCntRst, FlushAdrCntEn, FlushAdrP1, NextFlushAdr);
@@ -213,7 +213,8 @@ module cache import cvw::*; #(parameter cvw_t P,
     else            assign NextFlushWay = FlushWay[NUMWAYS-1];
     assign FlushWayFlag = FlushWay[NUMWAYS-1];
   end // block: flushlogic
-  else begin:flushlogic
+  else begin:flushlogic // I$ is never flushed because it is never dirty
+    assign FlushWay = 0;
     assign FlushWayFlag = 0;
     assign FlushAdrFlag = 0;
   end
