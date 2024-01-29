@@ -133,8 +133,16 @@ main:
     li t0, 0x1000000000
     lw t1, 0(t0)
 
+    # Bad PBMT on top level PTE
+    li t0, 0x1800000000
+    lw t1, 0(t0)
+
     # Access fault on megapage
     li t0, 0x81400000
+    lw t1, 0(t0)
+
+    # Access fault walking page tables at megapage level
+    li t0, 0xC0000000
     lw t1, 0(t0)
 
     # AMO operation on page table entry that causes page fault due to malformed PBMT
@@ -143,6 +151,13 @@ main:
     lw t1, 0(t0)
     sfence.vma
     amoadd.w t0, t0, 0(t0)
+
+    # point top-level page table to an illegal address and verify it faults
+    li t0, 0x9000000000070000 # trap handler at non-existing memory location
+    csrw satp, t0 # should cause trap 
+    sfence.vma
+    nop
+ 
 
     # change back to default trap handler after checking everything that might cause an instruction page fault
     jal changetodefaulthandler
@@ -199,6 +214,9 @@ main:
     li a0, 1
     ecall
 
+
+   
+
     # wrap up
     li a0, 3 # switch back to machine mode because code at 0x80000000 may not have clean page table entry
     ecall
@@ -229,12 +247,14 @@ instructionpagefaulthandler:
     csrw mepc, ra # go back to calling function
     mret
 
-.align 4                # trap handlers must be aligned to multiple of 4
+.align 4                # trap handlers must be aligned to multiple of 16
 ipf_handler:
     # Load trap handler stack pointer tp
     csrrw tp, mscratch, tp  # swap MSCRATCH and tp
     sd t0, 0(tp)        # Save t0 and t1 on the stack
     sd t1, -8(tp)
+    li t5, 0x9000000000080010  
+    csrw satp, t5       # make sure we are pointing to the root page table 
     csrr t0, mcause     # Check the cause
     li t1, 8            # is it an ecall trap?
     andi t0, t0, 0xFC   # if CAUSE = 8, 9, or 11
@@ -251,20 +271,28 @@ ipf:
     csrrw tp, mscratch, tp  # restore tp
     mret                # return from trap
 
+.align 4                # trap handlers must be aligned to multiple of 16
+fixsatptraphandler:
+    li t5, 0x9000000000080010   # fix satp entry to normal page table root
+    csrw satp, t5
+    mret
+
 .data
 
 .align 16
 # root Page table situated at 0x80010000
 pagetable: 
-    .8byte 0x200044C1  # 0x00000000-0x7F_FFFFFFFF: PTE at 0x80011000 C1 dirty, accessed, valid
+    .8byte 0x200044C1  # VA 0x00000000-0x7F_FFFFFFFF: PTE at 0x80011000 C1 dirty, accessed, valid
     .8byte 0x00000000000010CF # misaligned terapage at 0x80_00000000
     .8byte 0x00000000000000CF # access fault terapage at 0x100_00000000
+    .8byte 0x40000000200044C1 # Bad PBMT at VA 0x180_0000000
 
 # next page table at 0x80011000
 .align 12
     .8byte 0x00000000000010CF # misaligned gigapage at 0x00000000
     .8byte 0x00000000200058C1 # PTE for pages at 0x40000000 pointing to 0x80150000
     .8byte 0x00000000200048C1 # gigapage at 0x80000000 pointing to 0x80120000
+    .8byte 0x00000000000000C1 # gigapage at VA 0xC0000000 causes access fault
  
 
 # Next page table at 0x80012000 for gigapage at 0x80000000

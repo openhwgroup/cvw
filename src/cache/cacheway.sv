@@ -100,7 +100,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   assign SetValidWay = SetValid & SelData;
-  assign ClearValidWay = ClearValid & SelData;
+  assign ClearValidWay = ClearValid & SelData;                             // exclusion-tag: icache ClearValidWay
   assign SetDirtyWay = SetDirty & SelData;                                 // exclusion-tag: icache SetDirtyWay
   assign ClearDirtyWay = ClearDirty & SelData;
   assign SelectedWriteWordEn = (SetValidWay | SetDirtyWay) & ~FlushStage;  // exclusion-tag: icache SelectedWiteWordEn
@@ -121,8 +121,8 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   // AND portion of distributed tag multiplexer
   assign TagWay = SelData ? ReadTag : '0; // AND part of AOMux
   assign HitDirtyWay = Dirty & ValidWay;
-  assign DirtyWay = SelDirty & HitDirtyWay;
-  assign HitWay = ValidWay & (ReadTag == PAdr[PA_BITS-1:OFFSETLEN+INDEXLEN]) & ~InvalidateCacheDelay;
+  assign DirtyWay = SelDirty & HitDirtyWay;                               // exclusion-tag: icache DirtyWay
+  assign HitWay = ValidWay & (ReadTag == PAdr[PA_BITS-1:OFFSETLEN+INDEXLEN]) & ~InvalidateCacheDelay; // exclusion-tag: dcache HitWay
 
   flop #(1) InvalidateCacheReg(clk, InvalidateCache, InvalidateCacheDelay);
 
@@ -163,7 +163,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
       ValidWay <= #1 ValidBits[CacheSetTag];
       if(InvalidateCache)                    ValidBits <= #1 '0; // exclusion-tag: dcache invalidateway
       else if (SetValidEN) ValidBits[CacheSetData] <= #1 SetValidWay;
-      else if (ClearValidEN) ValidBits[CacheSetData] <= #1 '0;
+      else if (ClearValidEN) ValidBits[CacheSetData] <= #1 '0; // exclusion-tag: icache ClearValidBits
     end
   end
 
