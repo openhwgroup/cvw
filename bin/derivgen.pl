@@ -34,6 +34,7 @@
 use strict;
 use warnings;
 import os;
+use Data::Dumper;
 
 my $curderiv = "";
 my @derivlist = ();
@@ -61,7 +62,8 @@ foreach my $line (<$fh>) {
             @derivlist = @{$inherits};
         }
     } else {   # add to the current derivative
-        my @entry = ($tokens[0], $tokens[1]);
+        $line =~ /\s*(\S+)\s*(.*)/;
+        my @entry = ($1, $2);
         push(@derivlist, \@entry);
     }
 }
@@ -79,21 +81,30 @@ foreach my $key (keys %derivs) {
     open(my $fh, '>>', $config) or die "Could not open file '$config' $!";
 
     my $datestring = localtime();
+    my %hit = ();
     print $fh "// Config $key automatically derived from $basederiv{$key} on $datestring usubg derivgen.pl\n";
     foreach my $line (<$unmod>) {
         foreach my $entry (@{$derivs{$key}}) {    
             my @ent = @{$entry};
             my $param = $ent[0];
             my $value = $ent[1]; 
-            if ($line =~ s/$param\s*=\s*.*;/$param = $value;/g) {
-                print("Hit: new line in $config is $line");
-                #print $fh $line;
+            if ($line =~ s/$param\s*=\s*.*;/$param = $value;/) {
+                $hit{$param} = 1;
+#               print("Hit: new line in $config for $param is $line");
             }
         }
         print $fh $line;
     }
     close($fh);
     close($unmod);
+    foreach my $entry (@{$derivs{$key}}) {
+        my @ent = @{$entry};
+        my $param = $ent[0];
+        if (!exists($hit{$param})) {
+            print("Unable to find $param in $key\n");
+        }
+    }
+    system("rm -f $dir/config_unmod.vh");
 }
 
 sub terminateDeriv {
