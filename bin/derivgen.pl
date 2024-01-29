@@ -35,24 +35,99 @@ use strict;
 use warnings;
 import os;
 
-if ($#ARGV != 0) {
-    die("Usage: $0 workpath [e.g. $0 \$WALLY/addins/riscv-arch-test/work")
+my $curderiv = "";
+my @derivlist = ();
+my %derivs;
+my %basederiv;
+
+if ($#ARGV != -1) {
+    die("Usage: $0")
 }
-my $mypath = $ARGV[0];
-my @dirs = glob($mypath.'/*/*');
-foreach my $dir (@dirs) {
-    $dir =~ /.*\/(.*)\/(.*)/;
-    my $arch = $1;
-    my $ext = $2;
-    my $contents = `grep --with-filename "<begin_signature>:" $dir/*.objdump`;
-    my @lines = split('\n', $contents);
-    print "$arch/$ext";
-    foreach my $line (@lines) {
-        $line =~ /.*\/(.*)\.elf.objdump:(\S*)/;
-        my $fname = $1;
-        my $adr = $2;
-        my $partialaddress = substr($adr, -6);
-        print ",\n\t\t\"$arch/$ext/$fname\", \"$partialaddress\"";
+my $derivlist = "$ENV{WALLY}/config/derivlist.txt";
+open(my $fh, $derivlist) or die "Could not open file '$derivlist' $!";
+foreach my $line (<$fh>) {
+    chomp $line;
+    my @tokens = split('\s+', $line);
+    if ($#tokens < 0 || $tokens[0] =~ /^#/) {   # skip blank lines and comments
+        next;
     }
-    print("\n\n");
+    if ($tokens[0] =~ /deriv/) {   # start of a new derivative
+        &terminateDeriv();
+        $curderiv = $tokens[1];
+        $basederiv{$curderiv} = $tokens[2];
+#        print("Found deriv $curderiv based on $basederiv{$curderiv}\n");
+        @derivlist = ();
+        if ($#tokens > 2) {
+#            print("  with $tokens[3]\n");
+            my $inherits = $derivs{$tokens[3]};
+#            &printref($inherits);
+            @derivlist = @{$inherits};
+#            foreach my $entry (@derivlist) {
+#                print("  Entry: @$entry\n");
+#            }
+#            print ("  dt3 = $inherits as array @derivlist\n");
+#            print("  derivlist = @derivlist\n"); */
+        }
+    } else {   # add to the current derivative
+        my @entry = ($tokens[0], $tokens[1]);
+#        print("  Read Entry: @entry\n");
+        push(@derivlist, \@entry);
+    }
+}
+&terminateDeriv();
+close($fh);
+#system("mkdir $ENV{WALLY}/config/deriv");
+foreach my $key (keys %derivs) {
+    my $dir = "$ENV{WALLY}/config/deriv/$key";
+    system("mkdir -p $dir");
+    my $configunmod = "$dir/config_unmod.vh";
+    my $config = "$dir/config.vh";
+    my $base = "$ENV{WALLY}/config/$basederiv{$key}/config.vh";
+    system("cp $base $configunmod");
+    open(my $unmod, $configunmod) or die "Could not open file '$configunmod' $!";
+    open(my $fh, '>>', $config) or die "Could not open file '$config' $!";
+
+    my $datestring = localtime();
+    print $fh "// Config $key automatically derived from $basederiv{$key} on $datestring usubg derivgen.pl\n";
+    foreach my $line (<$unmod>) {
+        foreach my $entry (@{$derivs{$key}}) {    
+            my @ent = @{$entry};
+            my $param = @ent[0];
+            my $value = @ent[1];
+            print(" In $config replace $param with $value\n");
+#            $line =~ s/^\s*`define\s+$param\s+.*$/`define $param $value/;
+            $line =~ s/$param\s*=\s*.*;/$param = $value;/;
+        }
+        print $fh $line;
+    }
+    close($fh);
+    close($unmod);
+
+
+
+}
+
+#print("#######################\nKeys: ", join(' ', keys %derivs), "\n");
+#foreach my $key (keys %derivs) {
+#    print("  $key: $basederiv{$key} = ");
+#    &printref($derivs{$key});
+#}
+
+sub terminateDeriv {
+    if ($curderiv ne "") { # close out the previous derivative
+        my @dl = @derivlist;
+        $derivs{$curderiv} = \@dl;
+#        print("Finished: $curderiv = $derivs{$curderiv} ");
+#        &printref($derivs{$curderiv});
+    }
+};
+
+sub printref {
+    my $ref = shift;
+    my @array = @{$ref};
+#    print("  ## Printing ref $ref\n ");
+    foreach my $entry (@array) {
+        print join('_', @{$entry}), ', ';
+    }
+    print("\n");
 }
