@@ -35,6 +35,7 @@
 # If <inherited config name> is not empty, all the list of parameter changes in the inherited 
 # configuration are also applied to this configuration
 
+# buildroot is used for the Linux boot
 deriv   buildroot   rv64gc
 RESET_VECTOR    64'h1000
 UNCORE_RAM_RANGE    64'h0FFFFFFF
@@ -44,6 +45,7 @@ SPI_LOOBACK_TEST    0
 UART_PRESCALE       0
 PLIC_NUM_SRC        32'd53
 
+# fpga is used for FPGA hardware.  It adds the SDC and DDR (EXT_MEM)
 deriv fpga  rv64gc buildroot
 BOOTROM_PRELOAD     1
 UNCORE_RAM_BASE     64'h2000
@@ -55,6 +57,7 @@ SDC_SUPPORTED       1
 PLIC_SDC_ID         32'd20
 BPRED_SIZE          32'd12
 
+# The syn configurations are trimmed down for faster synthesis.  
 deriv   syn_rv32e   rv32e
 DTIM_RANGE          32'h1FF
 IROM_RANGE          32'h1FF
@@ -66,8 +69,10 @@ NUMWAYS             32'd1
 BPRED_SIZE          32'd5
 BTB_SIZE            32'd5 
 
+# The other syn configurations have the same trimming
 deriv syn_rv32i rv32i syn_rv32e
 deriv syn_rv32imc rv32imc syn_rv32e
 deriv syn_rv32gc rv32gc syn_rv32e
 deriv syn_rv64i rv64i syn_rv32e
 deriv syn_rv64gc rv64gc syn_rv32e
+
