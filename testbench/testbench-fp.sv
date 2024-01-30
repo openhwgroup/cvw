@@ -848,7 +848,7 @@ module testbenchfp;
 	end
 	S2: begin
 	   DivStart = 1'b0;	  
-	   if ((FDivBusyE)|(~DivDone))
+	   if ((FDivBusyE|~DivDone)&(UnitVal == `DIVUNIT))
 	     nextstate = S2;
 	   else
 	     nextstate = Done;
@@ -960,16 +960,16 @@ module testbenchfp;
       assign FMAop = (OpCtrlVal == `FMAUNIT);  
       assign DivDone = OldFDivBusyE & ~FDivBusyE;
       assign CheckNow = ((DivDone | ~divsqrtop) | 
-			 (TEST == "all" | TEST == "add" | TEST == "fma" | TEST == "sub")) 
-	& (UnitVal !== `CVTINTUNIT) & (UnitVal !== `CMPUNIT);
-      
+			 (TEST == "add" | TEST == "fma" | TEST == "sub") |
+			 ((TEST == "all") & (DivDone | ~divsqrtop)));
+            
       if (~(ResMatch & FlagMatch) & CheckNow & (Ans[0] !== 1'bx)) begin
          errors += 1;
          $display("\nError in %s", Tests[TestNum]);
          $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);	 
          $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Expected: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
          $stop;
-      end            
+      end
 
       if (TestVectors[VectorNum][0] === 1'bx & Tests[TestNum] !== "") begin // if reached the eof
          // increment the test
