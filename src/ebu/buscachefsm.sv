@@ -28,13 +28,12 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`define BURST_EN 1         // Enables burst mode.  Disable to show the lost performance.
-
 // HCLK and clk must be the same clock!
 module buscachefsm #(
   parameter BeatCountThreshold,                      // Largest beat index
   parameter AHBWLOGBWPL,                             // Log2 of BEATSPERLINE
-  parameter READ_ONLY_CACHE
+  parameter READ_ONLY_CACHE,                         // 1 for read-only instruction cache
+  parameter BURST_EN                                 // burst mode supported
 )(
   input  logic                   HCLK,
   input  logic                   HRESETn,
@@ -142,11 +141,11 @@ module buscachefsm #(
   assign HTRANS = (CurrState == ADR_PHASE & HREADY & ((|BusRW) | (|CacheBusRW) | BusCMOZero) & ~Flush) |
                   (CurrState == ATOMIC_READ_DATA_PHASE & BusAtomic) | 
                   (CacheAccess & FinalBeatCount & |CacheBusRW & HREADY & ~Flush) ? AHB_NONSEQ : // if we have a pipelined request
-                  (CacheAccess & |BeatCount) ? (`BURST_EN ? AHB_SEQ : AHB_NONSEQ) : AHB_IDLE;
+                  (CacheAccess & |BeatCount) ? (BURST_EN ? AHB_SEQ : AHB_NONSEQ) : AHB_IDLE;
 
   assign HWRITE = ((BusRW[0] & ~BusAtomic) | BusWrite & ~Flush) | (CurrState == ATOMIC_READ_DATA_PHASE & BusAtomic) | 
                   (CurrState == CACHE_WRITEBACK & |BeatCount);
-  assign HBURST = `BURST_EN & ((|CacheBusRW & ~Flush) | (CacheAccess & |BeatCount)) ? LocalBurstType : 3'b0;  
+  assign HBURST = BURST_EN & ((|CacheBusRW & ~Flush) | (CacheAccess & |BeatCount)) ? LocalBurstType : 3'b0;  
   
   always_comb begin
     case(BeatCountThreshold)

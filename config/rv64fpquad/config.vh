@@ -135,7 +135,7 @@ localparam logic [63:0] SPI_RANGE = 64'h00000FFF;
 // Test modes
 
 // AHB 
-localparam RAM_LATENCY = 0;
+localparam RAM_LATENCY = 32'b0;
 localparam BURST_EN    = 1;
 
 // Tie GPIO outputs back to inputs

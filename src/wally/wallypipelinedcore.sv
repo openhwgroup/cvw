@@ -252,7 +252,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .LSUStallM);                    
 
   if(P.BUS_SUPPORTED) begin : ebu
-    ebu #(P.XLEN, P.PA_BITS, P.AHBW) ebu(// IFU connections
+    ebu #(P) ebu(// IFU connections
       .clk, .reset,
       // IFU interface
       .IFUHADDR, .IFUHBURST, .IFUHTRANS, .IFUHREADY, .IFUHSIZE,

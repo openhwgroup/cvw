@@ -28,10 +28,8 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module ahbcacheinterface #(
-  parameter AHBW,
-  parameter LLEN,
-  parameter PA_BITS,
+module ahbcacheinterface import cvw::*; #(
+  parameter cvw_t P,
   parameter BEATSPERLINE,  // Number of AHBW words (beats) in cacheline
   parameter AHBWLOGBWPL,   // Log2 of ^
   parameter LINELEN,       // Number of bits in cacheline
@@ -46,14 +44,14 @@ module ahbcacheinterface #(
   output logic [2:0]          HSIZE,                   // AHB transaction width
   output logic [2:0]          HBURST,                  // AHB burst length
   // bus interface buses
-  input  logic [AHBW-1:0]     HRDATA,                  // AHB read data
-  output logic [PA_BITS-1:0]  HADDR,                   // AHB address
-  output logic [AHBW-1:0]     HWDATA,                  // AHB write data
-  output logic [AHBW/8-1:0]   HWSTRB,                  // AHB byte mask
+  input  logic [P.AHBW-1:0]     HRDATA,                  // AHB read data
+  output logic [P.PA_BITS-1:0]  HADDR,                   // AHB address
+  output logic [P.AHBW-1:0]     HWDATA,                  // AHB write data
+  output logic [P.AHBW/8-1:0]   HWSTRB,                  // AHB byte mask
   
   // cache interface
-  input  logic [PA_BITS-1:0]  CacheBusAdr,            // Address of cache line
-  input  logic [LLEN-1:0]     CacheReadDataWordM,     // One word of cache line during a writeback
+  input  logic [P.PA_BITS-1:0]  CacheBusAdr,            // Address of cache line
+  input  logic [P.LLEN-1:0]     CacheReadDataWordM,     // One word of cache line during a writeback
   input  logic                CacheableOrFlushCacheM, // Memory operation is cacheable or flushing D$
   input  logic                Cacheable,              // Memory operation is cachable
   input  logic [1:0]          CacheBusRW,             // Cache bus operation, 01: writeback, 10: fetch
@@ -63,8 +61,8 @@ module ahbcacheinterface #(
   output logic                SelBusBeat,             // Tells the cache to select the word from ReadData or WriteData from BeatCount rather than PAdr
 
   // uncached interface 
-  input logic [PA_BITS-1:0]   PAdr,                    // Physical address of uncached memory operation
-  input logic [LLEN-1:0]      WriteDataM,              // IEU write data for uncached store
+  input logic [P.PA_BITS-1:0]   PAdr,                    // Physical address of uncached memory operation
+  input logic [P.LLEN-1:0]      WriteDataM,              // IEU write data for uncached store
   input logic [1:0]           BusRW,                   // Uncached memory operation read/write control: 10: read, 01: write
   input logic                 BusAtomic,          // Uncache atomic memory operation
   input logic [2:0]           Funct3,                  // Size of uncached memory operation
@@ -78,12 +76,12 @@ module ahbcacheinterface #(
   
 
   localparam                  BeatCountThreshold = BEATSPERLINE - 1;  // Largest beat index
-  logic [PA_BITS-1:0]         LocalHADDR;                             // Address after selecting between cached and uncached operation
+  logic [P.PA_BITS-1:0]         LocalHADDR;                             // Address after selecting between cached and uncached operation
   logic [AHBWLOGBWPL-1:0]     BeatCountDelayed;                       // Beat within the cache line in the second (Data) cache stage
   logic                       CaptureEn;                              // Enable updating the Fetch buffer with valid data from HRDATA
-  logic [AHBW/8-1:0]          BusByteMaskM;                           // Byte enables within a word. For cache request all 1s
-  logic [AHBW-1:0]            PreHWDATA;                              // AHB Address phase write data
-  logic [PA_BITS-1:0]         PAdrZero;
+  logic [P.AHBW/8-1:0]          BusByteMaskM;                           // Byte enables within a word. For cache request all 1s
+  logic [P.AHBW-1:0]            PreHWDATA;                              // AHB Address phase write data
+  logic [P.PA_BITS-1:0]         PAdrZero;
 
   genvar                      index;
 
@@ -91,38 +89,38 @@ module ahbcacheinterface #(
   for (index = 0; index < BEATSPERLINE; index++) begin:fetchbuffer
     logic [BEATSPERLINE-1:0] CaptureBeat;
     assign CaptureBeat[index] = CaptureEn & (index == BeatCountDelayed);
-    flopen #(AHBW) fb(.clk(HCLK), .en(CaptureBeat[index]), .d(HRDATA),
-      .q(FetchBuffer[(index+1)*AHBW-1:index*AHBW]));
+    flopen #(P.AHBW) fb(.clk(HCLK), .en(CaptureBeat[index]), .d(HRDATA),
+      .q(FetchBuffer[(index+1)*P.AHBW-1:index*P.AHBW]));
   end
 
-  assign PAdrZero = BusCMOZero ? {PAdr[PA_BITS-1:$clog2(LINELEN/8)], {$clog2(LINELEN/8){1'b0}}} : PAdr;
-  mux2 #(PA_BITS) localadrmux(PAdrZero, CacheBusAdr, Cacheable, LocalHADDR);
-  assign HADDR = ({{PA_BITS-AHBWLOGBWPL{1'b0}}, BeatCount} << $clog2(AHBW/8)) + LocalHADDR;
+  assign PAdrZero = BusCMOZero ? {PAdr[P.PA_BITS-1:$clog2(LINELEN/8)], {$clog2(LINELEN/8){1'b0}}} : PAdr;
+  mux2 #(P.PA_BITS) localadrmux(PAdrZero, CacheBusAdr, Cacheable, LocalHADDR);
+  assign HADDR = ({{P.PA_BITS-AHBWLOGBWPL{1'b0}}, BeatCount} << $clog2(P.AHBW/8)) + LocalHADDR;
 
-  mux2 #(3) sizemux(.d0(Funct3), .d1(AHBW == 32 ? 3'b010 : 3'b011), .s(Cacheable | BusCMOZero), .y(HSIZE));
+  mux2 #(3) sizemux(.d0(Funct3), .d1(P.AHBW == 32 ? 3'b010 : 3'b011), .s(Cacheable | BusCMOZero), .y(HSIZE));
 
   // When AHBW is less than LLEN need extra muxes to select the subword from cache's read data.
-  logic [AHBW-1:0]          CacheReadDataWordAHB;
+  logic [P.AHBW-1:0]          CacheReadDataWordAHB;
   if(LLENPOVERAHBW > 1) begin
-    logic [AHBW-1:0]          AHBWordSets [(LLENPOVERAHBW)-1:0];
+    logic [P.AHBW-1:0]          AHBWordSets [(LLENPOVERAHBW)-1:0];
     genvar                     index;
     for (index = 0; index < LLENPOVERAHBW; index++) begin:readdatalinesetsmux
-        assign AHBWordSets[index] = CacheReadDataWordM[(index*AHBW)+AHBW-1: (index*AHBW)];
+        assign AHBWordSets[index] = CacheReadDataWordM[(index*P.AHBW)+P.AHBW-1: (index*P.AHBW)];
     end
     assign CacheReadDataWordAHB = AHBWordSets[BeatCount[$clog2(LLENPOVERAHBW)-1:0]];
-  end else assign CacheReadDataWordAHB = CacheReadDataWordM[AHBW-1:0];      
+  end else assign CacheReadDataWordAHB = CacheReadDataWordM[P.AHBW-1:0];      
   
-  mux2 #(AHBW) HWDATAMux(.d0(CacheReadDataWordAHB), .d1(WriteDataM[AHBW-1:0]),
+  mux2 #(P.AHBW) HWDATAMux(.d0(CacheReadDataWordAHB), .d1(WriteDataM[P.AHBW-1:0]),
     .s(~(CacheableOrFlushCacheM)), .y(PreHWDATA));
-  flopen #(AHBW) wdreg(HCLK, HREADY, PreHWDATA, HWDATA); // delay HWDATA by 1 cycle per spec
+  flopen #(P.AHBW) wdreg(HCLK, HREADY, PreHWDATA, HWDATA); // delay HWDATA by 1 cycle per spec
 
   // *** bummer need a second byte mask for bus as it is AHBW rather than LLEN.
   // probably can merge by muxing PAdrM's LLEN/8-1 index bit based on HTRANS being != 0.
-  swbytemask #(AHBW) busswbytemask(.Size(HSIZE), .Adr(HADDR[$clog2(AHBW/8)-1:0]), .ByteMask(BusByteMaskM), .ByteMaskExtended());
+  swbytemask #(P.AHBW) busswbytemask(.Size(HSIZE), .Adr(HADDR[$clog2(P.AHBW/8)-1:0]), .ByteMask(BusByteMaskM), .ByteMaskExtended());
   
-  flopen #(AHBW/8) HWSTRBReg(HCLK, HREADY, BusByteMaskM[AHBW/8-1:0], HWSTRB);
+  flopen #(P.AHBW/8) HWSTRBReg(HCLK, HREADY, BusByteMaskM[P.AHBW/8-1:0], HWSTRB);
   
-  buscachefsm #(BeatCountThreshold, AHBWLOGBWPL, READ_ONLY_CACHE) AHBBuscachefsm(
+  buscachefsm #(BeatCountThreshold, AHBWLOGBWPL, READ_ONLY_CACHE, P.BURST_EN) AHBBuscachefsm(
     .HCLK, .HRESETn, .Flush, .BusRW, .BusAtomic, .Stall, .BusCommitted, .BusStall, .CaptureEn, .SelBusBeat,
     .CacheBusRW, .BusCMOZero, .CacheBusAck, .BeatCount, .BeatCountDelayed,
     .HREADY, .HTRANS, .HWRITE, .HBURST);

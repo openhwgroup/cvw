@@ -132,7 +132,7 @@ localparam AHBW = 32'd32;
 // Test modes
 
 // AHB 
-localparam RAM_LATENCY = 0;
+localparam RAM_LATENCY = 32'b0;
 localparam BURST_EN    = 1;
 
 // Tie GPIO outputs back to inputs
