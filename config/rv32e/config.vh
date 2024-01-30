@@ -158,7 +158,7 @@ localparam BPRED_SIZE = 32'd10;
 localparam BPRED_NUM_LHR = 32'd6;
 localparam BTB_SIZE = 32'd10;
 localparam RAS_SIZE = 32'd16;
-localparam ICLASSPRED = 0;
+localparam INSTR_CLASS_PRED = 0;
 
 localparam SVADU_SUPPORTED = 0;
 localparam ZMMUL_SUPPORTED = 0;

@@ -170,7 +170,7 @@ localparam RAS_SIZE = `RAS_SIZE;
 localparam BTB_SIZE = 32'd10;
 localparam RAS_SIZE = 32'd16;
 `endif
-localparam ICLASSPRED = 1;
+localparam INSTR_CLASS_PRED = 1;
 
 localparam SVADU_SUPPORTED = 1;
 localparam ZMMUL_SUPPORTED = 0;
