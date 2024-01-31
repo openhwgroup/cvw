@@ -143,7 +143,7 @@ module cacheLRU
   // This is a two port memory.
   // Every cycle must read from CacheSetData and each load/store must write the new LRU.
   always_ff @(posedge clk) begin
-    if (reset | (InvalidateCache & ~FlushStage)) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
+    if (reset | (InvalidateCache & ~FlushStage)) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] = '0;
     if(CacheEn) begin
       if(ClearValid & ~FlushStage)
         LRUMemory[PAdr] <= '0;

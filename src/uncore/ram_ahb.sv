@@ -99,7 +99,7 @@ module ram_ahb import cvw::*;  #(parameter cvw_t P,
     endcase
     end
 
-    assign CycleFlag = Cycle == P.RAM_LATENCY;
+    assign CycleFlag = Cycle == P.RAM_LATENCY[7:0];
     assign CntEn = NextState == DELAY;
     assign DelayReady = NextState == DELAY;
     assign CntRst = NextState == READY;

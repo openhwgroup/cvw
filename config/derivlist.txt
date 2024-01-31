@@ -59,10 +59,10 @@ BPRED_SIZE          32'd12
 
 # The syn configurations are trimmed down for faster synthesis.  
 deriv   syn_rv32e   rv32e
-DTIM_RANGE          32'h1FF
-IROM_RANGE          32'h1FF
-BOOTROM_RANGE       32'h1FF
-UNCORE_RAM_RANGE    32'h1FF
+DTIM_RANGE          64'h1FF
+IROM_RANGE          64'h1FF
+BOOTROM_RANGE       64'h1FF
+UNCORE_RAM_RANGE    64'h1FF
 WAYSIZEINBYTES      32'd512
 NUMWAYS             32'd1
 BPRED_SIZE          32'd5
@@ -77,8 +77,8 @@ deriv syn_rv64gc rv64gc syn_rv32e
 
 # The syn_sram configurations use SRAM macros
 deriv   syn_sram_rv32e   rv32e
-DTIM_RANGE          32'h1FF
-IROM_RANGE          32'h1FF
+DTIM_RANGE          64'h1FF
+IROM_RANGE          64'h1FF
 USE_SRAM            1
 
 # The other syn configurations have the same trimming
@@ -90,9 +90,9 @@ deriv syn_sram_rv64gc rv64gc syn_sram_rv32e
 
 # The following syn configurations gradually turn off features
 deriv syn_pmp0_rv64gc rv64gc syn_rv64gc
-PMP_ENTRIES         0
+PMP_ENTRIES         32'd0
 deriv syn_sram_pmp0_rv64gc rv64gc syn_sram_rv64gc
-PMP_ENTRIES         0
+PMP_ENTRIES         32'd0
 
 deriv syn_noPriv_rv64gc rv64gc syn_pmp0_rv64gc
 ZICSR_SUPPORTED     0
@@ -203,95 +203,95 @@ IDIV_ON_FPU         1
 # RAM latency and Burst mode for bus stress testing
 
 deriv ram_0_0_rv64gc rv64gc
-RAM_LATENCY         0
+RAM_LATENCY         32'd0
 BURST_EN            0
 
 deriv ram_1_0_rv64gc rv64gc
-RAM_LATENCY         1
+RAM_LATENCY         32'd1
 BURST_EN            0
 
 deriv ram_2_0_rv64gc rv64gc
-RAM_LATENCY         2
+RAM_LATENCY         32'd2
 BURST_EN            0
 
 deriv ram_1_1_rv64gc rv64gc
-RAM_LATENCY         1
+RAM_LATENCY         32'd1
 BURST_EN            1
 
 deriv ram_2_1_rv64gc rv64gc
-RAM_LATENCY         2
+RAM_LATENCY         32'd2
 BURST_EN            1
 
 # Branch predictor simulations
 
 deriv bpred_GSHARE_6_16_10_1_rv32gc rv32gc 
-BPRED_SIZE          6
+BPRED_SIZE          32'd6
 
 deriv bpred_GSHARE_8_16_10_1_rv32gc rv32gc
-BPRED_SIZE          8
+BPRED_SIZE          32'd8
 
 deriv bpred_GSHARE_10_16_10_1_rv32gc rv32gc
-BPRED_SIZE          10
+BPRED_SIZE          32'd10
 
 deriv bpred_GSHARE_12_16_10_1_rv32gc rv32gc
-BPRED_SIZE          12
+BPRED_SIZE          32'd12
 
 deriv bpred_GSHARE_14_16_10_1_rv32gc rv32gc
-BPRED_SIZE          14
+BPRED_SIZE          32'd14
 
 deriv bpred_GSHARE_16_16_10_1_rv32gc rv32gc
-BPRED_SIZE          16
+BPRED_SIZE          32'd16
 
 deriv bpred_TWOBIT_6_16_10_1_rv32gc rv32gc bpred_GSHARE_6_16_10_1_rv32gc
-BPRED_TYPE          BP_TWOBIT
+BPRED_TYPE          `BP_TWOBIT
 
 deriv bpred_TWOBIT_8_16_10_1_rv32gc rv32gc bpred_GSHARE_8_16_10_1_rv32gc
-BPRED_TYPE          BP_TWOBIT
+BPRED_TYPE          `BP_TWOBIT
 
 deriv bpred_TWOBIT_10_16_10_1_rv32gc rv32gc bpred_GSHARE_10_16_10_1_rv32gc
-BPRED_TYPE          BP_TWOBIT
+BPRED_TYPE          `BP_TWOBIT
 
 deriv bpred_TWOBIT_12_16_10_1_rv32gc rv32gc bpred_GSHARE_12_16_10_1_rv32gc
-BPRED_TYPE          BP_TWOBIT
+BPRED_TYPE          `BP_TWOBIT
 
 deriv bpred_TWOBIT_14_16_10_1_rv32gc rv32gc bpred_GSHARE_14_16_10_1_rv32gc
-BPRED_TYPE          BP_TWOBIT
+BPRED_TYPE          `BP_TWOBIT
 
 deriv bpred_TWOBIT_16_16_10_1_rv32gc rv32gc bpred_GSHARE_16_16_10_1_rv32gc
-BPRED_TYPE          BP_TWOBIT
+BPRED_TYPE          `BP_TWOBIT
 
 deriv bpred_GSHARE_10_2_10_1_rv32gc rv32gc
-RAS_SIZE         2
+RAS_SIZE         32'd2
 
 deriv bpred_GSHARE_10_3_10_1_rv32gc rv32gc
-RAS_SIZE          3
+RAS_SIZE          32'd3
 
 deriv bpred_GSHARE_10_4_10_1_rv32gc rv32gc
-RAS_SIZE          4
+RAS_SIZE          32'd4
 
 deriv bpred_GSHARE_10_6_10_1_rv32gc rv32gc
-RAS_SIZE          6
+RAS_SIZE          32'd6
 
 deriv bpred_GSHARE_10_2_10_1_rv32gc rv32gc
-RAS_SIZE          10
+RAS_SIZE          32'd10
 
 deriv bpred_GSHARE_10_16_10_1_rv32gc rv32gc
-RAS_SIZE          16
+RAS_SIZE          32'd16
 
 deriv bpred_GSHARE_10_2_6_1_rv32gc rv32gc
-BTB_SIZE          6
+BTB_SIZE          32'd6
 
 deriv bpred_GSHARE_10_2_8_1_rv32gc rv32gc
-BTB_SIZE          8
+BTB_SIZE          32'd8
 
 deriv bpred_GSHARE_10_2_12_1_rv32gc rv32gc
-BTB_SIZE          12
+BTB_SIZE          32'd12
 
 deriv bpred_GSHARE_10_2_14_1_rv32gc rv32gc
-BTB_SIZE          14
+BTB_SIZE          32'd14
 
 deriv bpred_GSHARE_10_2_16_1_rv32gc rv32gc
-BTB_SIZE          16
+BTB_SIZE          32'd16
 
 deriv bpred_GSHARE_6_16_10_0_rv32gc rv32gc bpred_GSHARE_6_16_10_1_rv32gc 
 INSTR_CLASS_PRED  0
@@ -375,36 +375,36 @@ ICACHE_SUPPORTED    0
 DCACHE_SUPPORTED    0
 
 deriv way_1_4096_512_rv32gc rv32gc
-DCACHE_NUMWAYS      1
-DCACHE_WAYSIZEINBYTES 4096
-DCACHE_LINELENINBITS 512
-ICACHE_NUMWAYS      1
-ICACHE_WAYSIZEINBYTES 4096
-ICACHE_LINELENINBITS 512
+DCACHE_NUMWAYS      32'd1
+DCACHE_WAYSIZEINBYTES 32'd4096
+DCACHE_LINELENINBITS 32'd512
+ICACHE_NUMWAYS      32'd1
+ICACHE_WAYSIZEINBYTES 32'd4096
+ICACHE_LINELENINBITS 32'd512
 
 deriv way_2_4096_512_rv32gc rv32gc way_1_4096_512_rv32gc
-DCACHE_NUMWAYS      1
-ICACHE_NUMWAYS      1
+DCACHE_NUMWAYS      32'd1
+ICACHE_NUMWAYS      32'd1
 
 deriv way_4_4096_512_rv32gc rv32gc way_1_4096_512_rv32gc
-DCACHE_NUMWAYS      4
-ICACHE_NUMWAYS      4
+DCACHE_NUMWAYS      32'd4
+ICACHE_NUMWAYS      32'd4
 
 deriv way_8_4096_512_rv32gc rv32gc way_1_4096_512_rv32gc
-DCACHE_NUMWAYS      8
-ICACHE_NUMWAYS      8
+DCACHE_NUMWAYS      32'd8
+ICACHE_NUMWAYS      32'd8
 
 deriv way_4_2048_512_rv32gc rv32gc way_4_4096_512_rv32gc
-DCACHE_WAYSIZEINBYTES 2048
-ICACHE_WAYSIZEINBYTES 2048
+DCACHE_WAYSIZEINBYTES 32'd2048
+ICACHE_WAYSIZEINBYTES 32'd2048
 
 deriv way_4_4096_256_rv32gc rv32gc way_4_4096_512_rv32gc
-DCACHE_LINELENINBITS 256
-ICACHE_LINELENINBITS 256
+DCACHE_LINELENINBITS 32'd256
+ICACHE_LINELENINBITS 32'd256
 
 deriv way_4_4096_1024_rv32gc rv32gc way_4_4096_512_rv32gc
-DCACHE_LINELENINBITS 1024
-ICACHE_LINELENINBITS 1024
+DCACHE_LINELENINBITS 32'd1024
+ICACHE_LINELENINBITS 32'd1024
 
 deriv noicache_rv64gc rv64gc
 ICACHE_SUPPORTED    0
@@ -417,50 +417,50 @@ ICACHE_SUPPORTED    0
 DCACHE_SUPPORTED    0
 
 deriv way_1_4096_512_rv64gc rv64gc
-DCACHE_NUMWAYS      1
-DCACHE_WAYSIZEINBYTES 4096
-DCACHE_LINELENINBITS 512
-ICACHE_NUMWAYS      1
-ICACHE_WAYSIZEINBYTES 4096
-ICACHE_LINELENINBITS 512
+DCACHE_NUMWAYS      32'd1
+DCACHE_WAYSIZEINBYTES 32'd4096
+DCACHE_LINELENINBITS 32'd512
+ICACHE_NUMWAYS      32'd1
+ICACHE_WAYSIZEINBYTES 32'd4096
+ICACHE_LINELENINBITS 32'd512
 
 deriv way_2_4096_512_rv64gc rv64gc way_1_4096_512_rv64gc
-DCACHE_NUMWAYS      1
-ICACHE_NUMWAYS      1
+DCACHE_NUMWAYS      32'd1
+ICACHE_NUMWAYS      32'd1
 
 deriv way_4_4096_512_rv64gc rv64gc way_1_4096_512_rv64gc
-DCACHE_NUMWAYS      4
-ICACHE_NUMWAYS      4
+DCACHE_NUMWAYS      32'd4
+ICACHE_NUMWAYS      32'd4
 
 deriv way_4_2048_512_rv64gc rv64gc way_4_4096_512_rv64gc
-DCACHE_WAYSIZEINBYTES 2048
-ICACHE_WAYSIZEINBYTES 2048
+DCACHE_WAYSIZEINBYTES 32'd2048
+ICACHE_WAYSIZEINBYTES 32'd2048
 
 deriv way_4_4096_256_rv64gc rv64gc way_4_4096_512_rv64gc
-DCACHE_LINELENINBITS 256
-ICACHE_LINELENINBITS 256
+DCACHE_LINELENINBITS 32'd256
+ICACHE_LINELENINBITS 32'd256
 
 deriv way_4_4096_1024_rv64gc rv64gc way_4_4096_512_rv64gc
-DCACHE_LINELENINBITS 1024
-ICACHE_LINELENINBITS 1024
+DCACHE_LINELENINBITS 32'd1024
+ICACHE_LINELENINBITS 32'd1024
 
 # TLB Size variants
 
 deriv tlb2_rv32gc rv32gc
-ITLB_ENTRIES 2
-DTLB_ENTRIES 2
+ITLB_ENTRIES 32'd2
+DTLB_ENTRIES 32'd2
 
 deriv tlb16_rv32gc rv32gc
-ITLB_ENTRIES 16
-DTLB_ENTRIES 16
+ITLB_ENTRIES 32'd16
+DTLB_ENTRIES 32'd16
 
 deriv tlb2_rv64gc rv64gc
-ITLB_ENTRIES 2
-DTLB_ENTRIES 2
+ITLB_ENTRIES 32'd2
+DTLB_ENTRIES 32'd2
 
 deriv tlb16_rv64gc rv64gc
-ITLB_ENTRIES 16
-DTLB_ENTRIES 16
+ITLB_ENTRIES 32'd16
+DTLB_ENTRIES 32'd16
 
 # Feature variants
 

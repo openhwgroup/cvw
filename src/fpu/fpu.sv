@@ -270,9 +270,11 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   // floating-point load immediate: fli
   if (P.ZFA_SUPPORTED) begin
     logic [4:0] Rs1E;
+    logic [1:0] Fmt2E; // Two-bit format field from instruction
     
     flopenrc #(5) Rs1EReg(clk, reset, FlushE, ~StallE, InstrD[19:15], Rs1E);
-    fli #(P) fli(.Rs1(Rs1E), .Fmt(FmtE), .Imm(FliResE)); 
+    flopenrc #(2) Fmt2EReg(clk, reset, FlushE, ~StallE, InstrD[26:25], Fmt2E);
+    fli #(P) fli(.Rs1(Rs1E), .Fmt(Fmt2E), .Imm(FliResE)); 
   end else assign FliResE = '0;
 
   // fmv.*.x: NaN Box SrcA to extend integer to requested FP size 
@@ -287,7 +289,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
                             FmtE, PreIntSrcE); // NaN boxing zeroes
   end
   // fmvp.*.x: Select pair of registers
-  if (P.ZFA_SUPPORTED & (P.XLEN==32 & P.D_SUPPORTED) | (P.XLEN==64 & P.Q_SUPPORTED))
+  if (P.ZFA_SUPPORTED & (P.FLEN == 2*P.XLEN))
        assign IntSrcE = ZfaE ? {ForwardedSrcBE, ForwardedSrcAE} : PreIntSrcE; // choose pair of integer registers for fmvp.d.x / fmvp.q.x
   else assign IntSrcE = PreIntSrcE;
 
@@ -311,11 +313,11 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   end
 
   // sign extend to XLEN if necessary
-  if (P.FLEN>P.XLEN)
-    if (P.ZFA_SUPPORTED) assign IntSrcXE = ZfaE ? XE[P.FLEN-1:P.FLEN/2] : SgnExtXE[P.XLEN-1:0]; // either fmvh.x.* or fmv.x.*
-    else                 assign IntSrcXE = SgnExtXE[P.XLEN-1:0];
+  if (P.FLEN >= 2*P.XLEN)
+    if (P.ZFA_SUPPORTED & P.FLEN == 2*P.XLEN) assign IntSrcXE = ZfaE ? XE[P.FLEN-1:P.FLEN/2] : SgnExtXE[P.XLEN-1:0]; // either fmvh.x.* or fmv.x.*
+    else                                      assign IntSrcXE = SgnExtXE[P.XLEN-1:0];
   else 
-    assign IntSrcXE = {{P.XLEN-P.FLEN{mvsgn}}, SgnExtXE};
+    assign IntSrcXE = {{(P.XLEN-P.FLEN){mvsgn}}, SgnExtXE};
   mux3 #(P.XLEN) IntResMux (ClassResE, IntSrcXE, CmpIntResE, {~FResSelE[1], FResSelE[0]}, FIntResE);
 
   // E/M pipe registers
