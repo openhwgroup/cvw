@@ -134,7 +134,7 @@ localparam AHBW = 32'd32;
 // Test modes
 
 // AHB 
-localparam RAM_LATENCY = 0;
+localparam RAM_LATENCY = 32'b0;
 localparam BURST_EN    = 1;
 
 // Tie GPIO outputs back to inputs
@@ -170,7 +170,7 @@ localparam RAS_SIZE = `RAS_SIZE;
 localparam BTB_SIZE = 32'd10;
 localparam RAS_SIZE = 32'd16;
 `endif
-localparam ICLASSPRED = 1;
+localparam INSTR_CLASS_PRED = 1;
 
 localparam SVADU_SUPPORTED = 1;
 localparam ZMMUL_SUPPORTED = 0;

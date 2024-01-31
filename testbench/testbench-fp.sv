@@ -35,6 +35,8 @@ module testbenchfp;
 
   `include "parameter-defs.vh"   
 
+   parameter MAXVECTORS = 8388610;
+
    // FIXME: needs cleaning of unused variables (jes)
    string                       Tests[];                    // list of tests to be run
    logic [2:0] 			OpCtrl[];                   // list of op controls
@@ -49,7 +51,7 @@ module testbenchfp;
    logic [31:0] 		errors=0;                   // how many errors
    logic [31:0] 		VectorNum=0;                // index for test vector
    logic [31:0] 		FrmNum=0;                   // index for rounding mode
-   logic [P.FLEN*4+7:0] 	TestVectors[8388609:0];     // list of test vectors
+   logic [P.FLEN*4+7:0] 	TestVectors[MAXVECTORS-1:0];     // list of test vectors
 
    logic [1:0] 			FmtVal;                     // value of the current Fmt
    logic [2:0] 			UnitVal, OpCtrlVal, FrmVal; // value of the currnet Unit/OpCtrl/FrmVal
@@ -975,7 +977,7 @@ module testbenchfp;
          // increment the test
          TestNum += 1;
          // clear the vectors
-         for(int i=0; i<6133248; i++) TestVectors[i] = {P.FLEN*4+8{1'bx}};
+         for(int i=0; i<MAXVECTORS; i++) TestVectors[i] = {P.FLEN*4+8{1'bx}};
          // read next files
          $readmemh({`PATH, Tests[TestNum]}, TestVectors);
          // set the vector index back to 0

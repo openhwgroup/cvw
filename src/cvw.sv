@@ -41,6 +41,8 @@ typedef struct packed {
   logic         IEEE754;  // IEEE754 NaN handling (0 = use RISC-V NaN propagation instead)
   int           MISA;     // Machine Instruction Set Architecture
   int           AHBW;     // AHB bus width (usually = XLEN)
+  int           RAM_LATENCY; // Latency to stress AHB 
+  logic         BURST_EN; // Support AHB Burst Mode
 
   // RISC-V Features
   logic         ZICSR_SUPPORTED;

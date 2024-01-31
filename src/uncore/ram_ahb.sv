@@ -27,8 +27,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`define RAM_LATENCY 0
-
 module ram_ahb import cvw::*;  #(parameter cvw_t P, 
                                  parameter BASE=0, RANGE = 65535, PRELOAD = 0) (
   input  logic                 HCLK, HRESETn, 
@@ -76,7 +74,7 @@ module ram_ahb import cvw::*;  #(parameter cvw_t P,
     .addr(RamAddr[ADDR_WIDTH+OFFSET-1:OFFSET]), .we(memwriteD), .din(HWDATA), .bwe(HWSTRB), .dout(HREADRam));
   
   // use this to add arbitrary latency to ram. Helps test AHB controller correctness
-  if(`RAM_LATENCY > 0) begin
+  if(P.RAM_LATENCY > 0) begin
     logic [7:0]       NextCycle, Cycle;
     logic             CntEn, CntRst;
     logic             CycleFlag;
@@ -101,7 +99,7 @@ module ram_ahb import cvw::*;  #(parameter cvw_t P,
     endcase
     end
 
-    assign CycleFlag = Cycle == `RAM_LATENCY;
+    assign CycleFlag = Cycle == P.RAM_LATENCY;
     assign CntEn = NextState == DELAY;
     assign DelayReady = NextState == DELAY;
     assign CntRst = NextState == READY;

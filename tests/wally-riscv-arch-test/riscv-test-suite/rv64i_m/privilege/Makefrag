@@ -39,12 +39,16 @@ rv64i_sc_tests = \
     WALLY-status-mie-01 \
     WALLY-status-sie-01 \
     WALLY-status-tw-01 \
+    WALLY-status-fp-enabled-01 \
+    WALLY-misaligned-access-01 \
+    WALLY-minfo-01 \
+    WALLY-cboz-01 \
+    WALLY-cbom-01 \
 
 
 # Don't simulate these because they rely on SoC features that Spike does not offer.
 target_tests_nosim = \
     WALLY-pma-01 \
-    WALLY-minfo-01 \
     WALLY-periph-01 \
     WALLY-mtvec-01 \
     WALLY-stvec-01 \
@@ -53,14 +57,10 @@ target_tests_nosim = \
     WALLY-trap-01 \
     WALLY-trap-s-01 \
     WALLY-trap-u-01 \
-    WALLY-status-fp-enabled-01 \
     WALLY-spi-01 \
     WALLY-gpio-01 \
     WALLY-uart-01 \
     WALLY-wfi-01 \
-    WALLY-cbom-01 \
-    WALLY-cboz-01 \
-    WALLY-misaligned-access-01 \
 
 
 # unclear why status-fp-enabled and wfi aren't simulating ok
