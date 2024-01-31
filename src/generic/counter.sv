@@ -7,6 +7,7 @@
 // Purpose: Counter with reset and enable
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //

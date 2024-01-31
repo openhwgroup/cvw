@@ -8,6 +8,8 @@ localparam cvw_t P = '{
   IEEE754 :              IEEE754, 
   MISA :                 MISA, 
   AHBW :                 AHBW, 
+  RAM_LATENCY :          RAM_LATENCY,
+  BURST_EN :             BURST_EN,
   ZICSR_SUPPORTED :      ZICSR_SUPPORTED,
   ZIFENCEI_SUPPORTED :   ZIFENCEI_SUPPORTED,
   COUNTERS :             COUNTERS,

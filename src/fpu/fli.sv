@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 16
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -174,7 +175,7 @@ module fli import cvw::*;  #(parameter cvw_t P) (
   ////////////////////////////
   
   if (P.Q_SUPPORTED) begin
-    logic [63:0] QImm;
+    logic [127:0] QImm;
     always_comb begin
         case(Rs1) 
             0:  QImm = 128'hBFFF0000000000000000000000000000;

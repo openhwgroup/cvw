@@ -12,6 +12,7 @@
 ##          separated by benchmark application.  Example names are aha-mot64bd_sizeopt_speed_branch.log
 ##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
+## https://github.com/openhwgroup/cvw
 ##
 ## Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 ##
