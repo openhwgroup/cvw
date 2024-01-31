@@ -162,6 +162,7 @@ typedef struct packed {
   int                  BPRED_SIZE;
   int                  BTB_SIZE;
   int                  RAS_SIZE;
+  logic                INSTR_CLASS_PRED; // is class predictor enabled
 
 // FPU division architecture
   int           RADIX;

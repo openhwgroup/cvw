@@ -29,6 +29,7 @@ os.chdir(regressionDir)
 
 coverage = '-coverage' in sys.argv
 fp = '-fp' in sys.argv
+nightly = '-nightly' in sys.argv
 
 TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr'])
 # name:     the name of this test configuration (used in printing human-readable
@@ -40,14 +41,20 @@ TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr'])
 #           be any pattern grep accepts, see `man 1 grep` for more info).
 
 # edit this list to add more test cases
-configs = [
-    TestCase(
-        name="lints",
-        variant="all",
-        cmd="./lint-wally | tee {}",
-        grepstr="All lints run with no errors or warnings"
-    )
-]
+if (nightly):
+    nightMode = "-nightly";
+    configs = []
+else:
+    nightMode = "";
+    configs = [
+        TestCase(
+            name="lints",
+            variant="all",
+            cmd="./lint-wally " + nightMode + " | tee {}",
+            grepstr="All lints run with no errors or warnings"
+        )
+    ]
+
 def getBuildrootTC(boot):
     INSTR_LIMIT = 1000000 # multiple of 100000; 4M is interesting because it gets into the kernel and enabling VM
     MAX_EXPECTED = 246000000 # *** TODO: replace this with a search for the login prompt.
@@ -78,7 +85,7 @@ for test in tests64i:
   configs.append(tc)
 
 tests32gcimperas = ["imperas32i", "imperas32f", "imperas32m", "imperas32c"] # unused
-tests32gc = ["arch32f", "arch32d", "arch32f_fma", "arch32d_fma", "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32a", "arch32zifencei", "arch32zicond", "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "wally32a",  "wally32priv", "wally32periph"]  
+tests32gc = ["arch32f", "arch32d", "arch32f_fma", "arch32d_fma", "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32a", "arch32zifencei", "arch32zicond", "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "arch32zfh", "arch32zfaf", "wally32a", "wally32priv", "wally32periph"]  # "arch32zfad",
 #tests32gc = ["arch32f", "arch32d", "arch32f_fma", "arch32d_fma", "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32a", "arch32zifencei", "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "arch32zicboz", "arch32zcb", "wally32a",  "wally32priv", "wally32periph"]  
 for test in tests32gc:
   tc = TestCase(
@@ -126,15 +133,15 @@ for test in ahbTests:
         grepstr="All tests ran without failures")
   configs.append(tc)
 
-tests64gc = ["arch64f", "arch64d", "arch64f_fma", "arch64d_fma", "arch64i", "arch64zba", "arch64zbb", "arch64zbc", "arch64zbs", 
+tests64gc = ["arch64f", "arch64d", "arch64f_fma", "arch64d_fma", "arch64i", "arch64zba", "arch64zbb", "arch64zbc", "arch64zbs",  "arch64zfh", "arch64zfaf", "arch64zfad",
              "arch64priv", "arch64c",  "arch64m", "arch64a", "arch64zifencei", "arch64zicond", "wally64a", "wally64periph", "wally64priv"] 
 #tests64gc = ["arch64f", "arch64d", "arch64f_fma", "arch64d_fma", "arch64i", "arch64zba", "arch64zbb", "arch64zbc", "arch64zbs", 
 #             "arch64priv", "arch64c",  "arch64m", "arch64a", "arch64zifencei", "wally64a", "wally64periph", "wally64priv", "arch64zicboz", "arch64zcb"] 
 if (coverage):  # delete all but 64gc tests when running coverage
     configs = []
-    tests64gc = ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m", 
+    tests64gc = ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m",
                  "arch64zifencei", "arch64zicond", "arch64a", "wally64a", "wally64periph", "wally64priv", 
-                 "arch64zba",  "arch64zbb",  "arch64zbc",  "arch64zbs"] # add when working: "arch64zicboz", "arch64zcb", 
+                 "arch64zba",  "arch64zbb",  "arch64zbc",  "arch64zbs", "arch64zfh", "arch64zfaf", "arch64zfad"] # add when working: "arch64zcb", "arch64zicboz"
     if (fp):
        tests64gc.append("arch64f")
        tests64gc.append("arch64d")
@@ -150,7 +157,40 @@ for test in tests64gc:
         cmd="vsim > {} -c <<!\ndo wally-batch.do rv64gc "+test+" " + coverStr + "\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
-  
+
+# run derivative configurations if requested  
+if (nightly):
+    derivconfigtests = [
+        ["tlb2_rv32gc", ["wally32priv"]],
+        ["tlb16_rv32gc", ["wally32priv"]],
+        ["tlb2_rv64gc", ["wally64priv"]],
+        ["tlb16_rv64gc", ["wally64priv"]],
+        ["way_1_4096_512_rv64gc", ["arch64i", "arch64a"]],
+        ["way_2_4096_512_rv64gc", ["arch64i"]],
+        ["way_8_4096_512_rv64gc", ["arch64i"]]
+    ]
+    for test in derivconfigtests:
+        config = test[0];
+        tests = test[1];
+        for t in tests:
+            tc = TestCase(
+                    name=t,
+                    variant=config,
+                    cmd="vsim > {} -c <<!\ndo wally-batch.do "+config+" "+t+"\n!",
+                    grepstr="All tests ran without failures")
+            configs.append(tc)
+
+
+tests32e = ["arch32e"] 
+for test in tests32e:
+  tc = TestCase(
+        name=test,
+        variant="rv32e",
+        cmd="vsim > {} -c <<!\ndo wally-batch.do rv32e "+test+"\n!",
+        grepstr="All tests ran without failures")
+  configs.append(tc)
+
+    
 
 import os
 from multiprocessing import Pool, TimeoutError
