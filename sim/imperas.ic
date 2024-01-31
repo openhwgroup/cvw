@@ -11,7 +11,7 @@
 --override cpu/mvendorid=0x602
 --override cpu/marchid=0x24
 --override refRoot/cpu/tvec_align=64
---override refRoot/cpu/envcfg_mask=1 
+--override refRoot/cpu/envcfg_mask=1   # dh 1/26/24 this should be deleted when ImperasDV is updated to allow envcfg.FIOM to be written
 
 # bit manipulation
 --override cpu/add_Extensions=B 

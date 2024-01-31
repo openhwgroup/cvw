@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -211,7 +212,8 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
                               {{P.FLEN-P.D_LEN{1'b1}}, 2'b0, {P.D_NE-1{1'b1}}, (P.D_NF)'(0)}, 
                               {{P.FLEN-P.H_LEN{1'b1}}, 2'b0, {P.H_NE-1{1'b1}}, (P.H_NF)'(0)}, 
                               {2'b0, {P.NE-1{1'b1}}, (P.NF)'(0)}, FmtE, BoxedOneE); // NaN boxing zeroes
-  assign FmaAddSubE = OpCtrlE[2]&OpCtrlE[1]&(FResSelE==2'b01)&(PostProcSelE==2'b10);
+  assign FmaAddSubE = OpCtrlE[2]&OpCtrlE[1]&(PostProcSelE==2'b10);
+  // ***simplified from appearently redundant assign FmaAddSubE = OpCtrlE[2]&OpCtrlE[1]&(FResSelE==2'b01)&(PostProcSelE==2'b10);
   mux2  #(P.FLEN)  fyaddmux (PreYE, BoxedOneE, FmaAddSubE, YE); // Force Y to be 1 for add/subtract
   
   // Select NAN-boxed value of Z = 0.0 in proper format for FMA for multiply X*Y+Z
@@ -268,9 +270,11 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   // floating-point load immediate: fli
   if (P.ZFA_SUPPORTED) begin
     logic [4:0] Rs1E;
+    logic [1:0] Fmt2E; // Two-bit format field from instruction
     
     flopenrc #(5) Rs1EReg(clk, reset, FlushE, ~StallE, InstrD[19:15], Rs1E);
-    fli #(P) fli(.Rs1(Rs1E), .Fmt(FmtE), .Imm(FliResE)); 
+    flopenrc #(2) Fmt2EReg(clk, reset, FlushE, ~StallE, InstrD[26:25], Fmt2E);
+    fli #(P) fli(.Rs1(Rs1E), .Fmt(Fmt2E), .Imm(FliResE)); 
   end else assign FliResE = '0;
 
   // fmv.*.x: NaN Box SrcA to extend integer to requested FP size 
@@ -285,7 +289,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
                             FmtE, PreIntSrcE); // NaN boxing zeroes
   end
   // fmvp.*.x: Select pair of registers
-  if (P.ZFA_SUPPORTED & (P.XLEN==32 & P.D_SUPPORTED) | (P.XLEN==64 & P.Q_SUPPORTED))
+  if (P.ZFA_SUPPORTED & (P.FLEN == 2*P.XLEN))
        assign IntSrcE = ZfaE ? {ForwardedSrcBE, ForwardedSrcAE} : PreIntSrcE; // choose pair of integer registers for fmvp.d.x / fmvp.q.x
   else assign IntSrcE = PreIntSrcE;
 
@@ -309,11 +313,11 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   end
 
   // sign extend to XLEN if necessary
-  if (P.FLEN>P.XLEN)
-    if (P.ZFA_SUPPORTED) assign IntSrcXE = ZfaE ? XE[P.FLEN-1:P.FLEN/2] : SgnExtXE[P.XLEN-1:0]; // either fmvh.x.* or fmv.x.*
-    else                 assign IntSrcXE = SgnExtXE[P.XLEN-1:0];
+  if (P.FLEN >= 2*P.XLEN)
+    if (P.ZFA_SUPPORTED & P.FLEN == 2*P.XLEN) assign IntSrcXE = ZfaE ? XE[P.FLEN-1:P.FLEN/2] : SgnExtXE[P.XLEN-1:0]; // either fmvh.x.* or fmv.x.*
+    else                                      assign IntSrcXE = SgnExtXE[P.XLEN-1:0];
   else 
-    assign IntSrcXE = {{P.XLEN-P.FLEN{mvsgn}}, SgnExtXE};
+    assign IntSrcXE = {{(P.XLEN-P.FLEN){mvsgn}}, SgnExtXE};
   mux3 #(P.XLEN) IntResMux (ClassResE, IntSrcXE, CmpIntResE, {~FResSelE[1], FResSelE[0]}, FIntResE);
 
   // E/M pipe registers
@@ -352,7 +356,8 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
     .PostProcSel(PostProcSelM), .PostProcRes(PostProcResM), .PostProcFlg(PostProcFlgM), .FCvtIntRes(FCvtIntResM));
 
   // FPU flag selection - to privileged
-  mux2  #(5)       FPUFlgMux({PreNVM&~FResSelM[1], 4'b0}, PostProcFlgM, ~FResSelM[1]&FResSelM[0], SetFflagsM);
+  //mux2  #(5)       FPUFlgMux({PreNVM&~FResSelM[1], 4'b0}, PostProcFlgM, ~FResSelM[1]&FResSelM[0], SetFflagsM);
+  mux2  #(5)       FPUFlgMux({PreNVM, 4'b0}, PostProcFlgM, (FResSelM == 2'b01), SetFflagsM);
   mux2  #(P.FLEN)  FPUResMux(PreFpResM, PostProcResM, FResSelM[0], FpResM);
 
   // M/W pipe registers

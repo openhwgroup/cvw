@@ -10,6 +10,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 7 (Figures 7.8 and 7.15 to 7.18)
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 //
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -142,7 +143,7 @@ module cacheLRU
   // This is a two port memory.
   // Every cycle must read from CacheSetData and each load/store must write the new LRU.
   always_ff @(posedge clk) begin
-    if (reset | (InvalidateCache & ~FlushStage)) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
+    if (reset | (InvalidateCache & ~FlushStage)) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] = '0;
     if(CacheEn) begin
       if(ClearValid & ~FlushStage)
         LRUMemory[PAdr] <= '0;

@@ -11,6 +11,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 6 (Figures 6.25 and 6.26)
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //

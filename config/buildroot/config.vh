@@ -130,6 +130,10 @@ localparam logic [63:0] SPI_RANGE = 64'h00000FFF;
 // Bus Interface width
 localparam AHBW = 32'd64;
 
+// AHB 
+localparam RAM_LATENCY = 32'b0;
+localparam BURST_EN    = 1;
+
 // Test modes
 
 // Tie GPIO outputs back to inputs
@@ -153,7 +157,7 @@ localparam BPRED_SIZE = 32'd10;
 localparam BPRED_NUM_LHR = 32'd6;
 localparam BTB_SIZE = 32'd10;
 localparam RAS_SIZE = 32'd16;
-
+localparam INSTR_CLASS_PRED = 1;
 
 localparam SVADU_SUPPORTED = 1;
 localparam ZMMUL_SUPPORTED = 0;
