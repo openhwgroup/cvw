@@ -101,6 +101,10 @@ main:
     li t1, 10
     amoadd.w t1, t1, (t0)
 
+    # write a cacheline length (512 bits) to memory in uncached region
+    li t0, 0x80401000
+    cbo.zero (t0)
+
     # Nonleaf PTE has PBMT != 0     causes a page fault during page walking.  H
     li t0, 0x80600000
     lw t1, 0(t0)    # read from page

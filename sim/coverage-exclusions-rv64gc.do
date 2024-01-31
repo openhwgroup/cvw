@@ -308,6 +308,21 @@ coverage exclude -scope /dut/core/ebu/ebu/ebufsmarb -linerange $line-$line -item
 set line [GetLineNum ../src/ebu/ebufsmarb.sv "FinalBeatReg\\("]
 coverage exclude -scope /dut/core/ebu/ebu/ebufsmarb -linerange $line-$line -item e 1 -fecexprrow 1
 
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm Atomic"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line  -item bc 1
+
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm AtomicWait"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bc 1
+
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm WritebackWriteback"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bc 2
+
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWriteback"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bc 2
+
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWait"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bc 1
+
 # TLB not recently used never has all RU bits = 1 because it will then clear all to 0
 # This is a blunt instrument; perhaps there is a more graceful exclusion
 coverage exclude -srcfile priorityonehot.sv 
