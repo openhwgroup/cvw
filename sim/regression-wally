@@ -133,20 +133,26 @@ for test in ahbTests:
         grepstr="All tests ran without failures")
   configs.append(tc)
 
-tests64gc = ["arch64f", "arch64d", "arch64f_fma", "arch64d_fma", "arch64i", "arch64zba", "arch64zbb", "arch64zbc", "arch64zbs",  "arch64zfh", "arch64zfaf", "arch64zfad",
-             "arch64priv", "arch64c",  "arch64m", "arch64a", "arch64zifencei", "arch64zicond", "wally64a", "wally64periph", "wally64priv"] 
+tests64gc = ["arch64f", "arch64d", "arch64f_fma", "arch64d_fma", "arch64f_divsqrt", "arch64d_divsqrt", "arch64i", "arch64zba", "arch64zbb", "arch64zbc", "arch64zbs",  "arch64zfh", "arch64zfh_divsqrt", "arch64zfaf", "arch64zfad",
+             "arch64priv", "arch64c",  "arch64m", "arch64a", "arch64zifencei", "arch64zicond", "wally64a", "wally64periph", "wally64priv"] # add arch64zfh_fma when available; arch64zicobz, arch64zcb when working
 #tests64gc = ["arch64f", "arch64d", "arch64f_fma", "arch64d_fma", "arch64i", "arch64zba", "arch64zbb", "arch64zbc", "arch64zbs", 
 #             "arch64priv", "arch64c",  "arch64m", "arch64a", "arch64zifencei", "wally64a", "wally64periph", "wally64priv", "arch64zicboz", "arch64zcb"] 
 if (coverage):  # delete all but 64gc tests when running coverage
     configs = []
     tests64gc = ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m",
                  "arch64zifencei", "arch64zicond", "arch64a", "wally64a", "wally64periph", "wally64priv", 
-                 "arch64zba",  "arch64zbb",  "arch64zbc",  "arch64zbs", "arch64zfh", "arch64zfaf", "arch64zfad"] # add when working: "arch64zcb", "arch64zicboz"
+                 "arch64zba",  "arch64zbb",  "arch64zbc",  "arch64zbs"] # add when working: "arch64zcb", "arch64zicboz"
     if (fp):
        tests64gc.append("arch64f")
        tests64gc.append("arch64d")
+       tests64gc.append("arch64zfh")
        tests64gc.append("arch64f_fma")
-       tests64gc.append("arch64d_fma")
+       tests64gc.append("arch64d_fma") # *** add arch64zfh_fma when available(see riscv-arch-test pr 367)
+       tests64gc.append("arch64f_divsqrt")
+       tests64gc.append("arch64d_divsqrt")
+       tests64gc.append("arch64zfh_divsqrt")
+       tests64gc.append("arch64zfaf")
+       tests64gc.append("arch64zfad")
     coverStr = '-coverage'
 else:
    coverStr = ''
@@ -167,7 +173,9 @@ if (nightly):
         ["tlb16_rv64gc", ["wally64priv"]],
         ["way_1_4096_512_rv64gc", ["arch64i", "arch64a"]],
         ["way_2_4096_512_rv64gc", ["arch64i"]],
-        ["way_8_4096_512_rv64gc", ["arch64i"]]
+        ["way_8_4096_512_rv64gc", ["arch64i"]],
+        ["div_2_1_rv32gc", ["arch32f_divsqrt", "arch32d_divsqrt", "arch32m"]],
+
     ]
     for test in derivconfigtests:
         config = test[0];
