@@ -125,8 +125,7 @@ git clone https://github.com/verilator/verilator   # Only first time
 unset VERILATOR_ROOT     # For bash
 cd verilator
 git pull         # Make sure git repository is up-to-date
-git checkout v5.016      # Use development branch (e.g. recent bug fixes)
-#git checkout master      # Use development branch (e.g. recent bug fixes)
+git checkout master      # Use development branch (e.g. recent bug fixes)
 autoconf         # Create ./configure script
 ./configure      # Configure and create Makefile
 make -j ${NUM_THREADS}  # Build Verilator itself (if error, try just 'make')
