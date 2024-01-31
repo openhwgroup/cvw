@@ -96,6 +96,11 @@ main:
     sw t1, 0(t0)    # write to page
     jalr ra, t0     # jump to page
 
+    # AMO at page has PBMT = 2 or 1 (uncached)
+    li t0, 0x80401000
+    li t1, 10
+    amoadd.w t1, t1, (t0)
+
     # Nonleaf PTE has PBMT != 0     causes a page fault during page walking.  H
     li t0, 0x80600000
     lw t1, 0(t0)    # read from page
@@ -409,6 +414,7 @@ pagetable:
 .align 12
     #80400000
     .8byte 0x60000000200020CF   # reserved entry
+    .8byte 0x40000000201000CF   # non-cache non-idempotent
 
 # Leaf page table at 0x80015000 with various permissions for testing CBOM and CBOZ
 .align 12
