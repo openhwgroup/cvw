@@ -432,7 +432,7 @@ deriv way_4_4096_512_rv64gc rv64gc way_1_4096_512_rv64gc
 DCACHE_NUMWAYS      32'd4
 ICACHE_NUMWAYS      32'd4
 
-deriv way_8_4096_512_rv64gc rv32gc way_1_4096_512_rv64gc
+deriv way_8_4096_512_rv64gc rv64gc way_1_4096_512_rv64gc
 DCACHE_NUMWAYS      32'd8
 ICACHE_NUMWAYS      32'd8
 
