@@ -323,6 +323,29 @@ coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefs
 set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWait"]
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bc 1
 
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY0"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
+
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY1"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
+
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY2"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
+
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY3"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 4
+
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY4"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 3
+
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY5"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
+
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY6"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 5
+
 # TLB not recently used never has all RU bits = 1 because it will then clear all to 0
 # This is a blunt instrument; perhaps there is a more graceful exclusion
 coverage exclude -srcfile priorityonehot.sv 
