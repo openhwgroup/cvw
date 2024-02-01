@@ -308,6 +308,48 @@ coverage exclude -scope /dut/core/ebu/ebu/ebufsmarb -linerange $line-$line -item
 set line [GetLineNum ../src/ebu/ebufsmarb.sv "FinalBeatReg\\("]
 coverage exclude -scope /dut/core/ebu/ebu/ebufsmarb -linerange $line-$line -item e 1 -fecexprrow 1
 
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm Atomic"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line  -item bc 1
+
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm AtomicWait"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bc 1
+
+# The WritebackWriteback and FetchWriteback support back to back pipelined cache writebacks and fetch then
+# writebacks.  The cache never issues these type of requests.
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm WritebackWriteback"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bc 2
+
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWriteback"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bc 2
+
+# FetchWait never occurs because HREADY is never 0.
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWait"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bc 1
+
+# all of these HEADY exclusions occur because HREADY is always 1.  The ram_ahb module never stalls.
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY0"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
+
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY1"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
+
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY2"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
+
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY3"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 4
+
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY4"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 3
+
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY5"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
+
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY6"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 5
+
 # TLB not recently used never has all RU bits = 1 because it will then clear all to 0
 # This is a blunt instrument; perhaps there is a more graceful exclusion
 coverage exclude -srcfile priorityonehot.sv 
