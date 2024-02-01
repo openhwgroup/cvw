@@ -103,7 +103,7 @@ localparam RESBITS     = DIVMINb + LOGR; // number of bits in a result: r intege
 localparam FPDUR       = (RESBITS-1)/RK + 1 ;                       // ceiling((r+b)/rk)
 localparam DIVb        = FPDUR*RK - LOGR;                           // divsqrt fractional bits, so total number of bits is a multiple of rk after r integer bits
 localparam DURLEN      = $clog2(FPDUR);                             // enough bits to count the duration
-localparam DIVBLEN     = $clog2(DIVb);                              // enough bits to count number of fractional bits
+localparam DIVBLEN     = $clog2(DIVb+1);                            // enough bits to count number of fractional bits + 1 integer bit
 
 // largest length in IEU/FPU
 localparam CVTLEN = ((NF<XLEN) ? (XLEN) : (NF));  // max(XLEN, NF)

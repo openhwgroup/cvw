@@ -41,8 +41,8 @@ RESET_VECTOR    64'h1000
 UNCORE_RAM_RANGE    64'h0FFFFFFF
 UNCORE_RAM_PRELOAD  1
 GPIO_LOOPBACK_TEST  0
-SPI_LOOPBACK_TEST    0   
-UART_PRESCALE       0
+SPI_LOOPBACK_TEST   0   
+UART_PRESCALE       32'd0
 PLIC_NUM_SRC        32'd53
 
 # fpga is used for FPGA hardware.  It adds the SDC and DDR (EXT_MEM)
@@ -119,26 +119,33 @@ MISA                (32'h00000104 | 1 << 18 | 1 << 20)
 deriv div_2_1_rv32gc    rv32gc
 RADIX               32'd2
 DIVCOPIES           32'd1
+IDIV_ON_FPU         0
 
 deriv div_2_2_rv32gc    rv32gc
 RADIX               32'd2
 DIVCOPIES           32'd2
+IDIV_ON_FPU         0
 
 deriv div_2_4_rv32gc    rv32gc
 RADIX               32'd2
 DIVCOPIES           32'd4
+IDIV_ON_FPU         0
 
 deriv div_4_1_rv32gc    rv32gc
 RADIX               32'd4
 DIVCOPIES           32'd1
+IDIV_ON_FPU         0
 
 deriv div_4_2_rv32gc    rv32gc
 RADIX               32'd4
+IDIV_ON_FPU         0
 DIVCOPIES           32'd2
+IDIV_ON_FPU         0
 
 deriv div_4_4_rv32gc    rv32gc
 RADIX               32'd4
 DIVCOPIES           32'd4
+IDIV_ON_FPU         0
 
 deriv div_2_1i_rv32gc rv32gc div_2_1_rv32gc
 IDIV_ON_FPU         1
@@ -161,26 +168,32 @@ IDIV_ON_FPU         1
 deriv div_2_1_rv64gc    rv64gc
 RADIX               32'd2
 DIVCOPIES           32'd1
+IDIV_ON_FPU         0
 
 deriv div_2_2_rv64gc    rv64gc
 RADIX               32'd2
 DIVCOPIES           32'd2
+IDIV_ON_FPU         0
 
 deriv div_2_4_rv64gc    rv64gc
 RADIX               32'd2
 DIVCOPIES           32'd4
+IDIV_ON_FPU         0
 
 deriv div_4_1_rv64gc    rv64gc
 RADIX               32'd4
 DIVCOPIES           32'd1
+IDIV_ON_FPU         0
 
 deriv div_4_2_rv64gc    rv64gc
 RADIX               32'd4
 DIVCOPIES           32'd2
+IDIV_ON_FPU         0
 
 deriv div_4_4_rv64gc    rv64gc
 RADIX               32'd4
 DIVCOPIES           32'd4
+IDIV_ON_FPU         0
 
 deriv div_2_1i_rv64gc rv64gc div_2_1_rv64gc
 IDIV_ON_FPU         1
