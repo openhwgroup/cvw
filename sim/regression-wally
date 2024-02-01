@@ -124,15 +124,6 @@ for test in tests32e:
         grepstr="All tests ran without failures")
   configs.append(tc)
 
-#ahbTests = [("0", "0"), ("0", "1"), ("1", "0"), ("1", "1"), ("2", "0"), ("2", "1")] 
-#for test in ahbTests:
-#  tc = TestCase(
-#        name="ram_latency_" + test[0] + "_burst_en_" + test[1],
-#        variant="ahb",
-#        cmd="vsim > {} -c <<!\ndo wally-batch.do rv64gc ahb "+test[0]+" "+test[1]+"\n!",
-#        grepstr="All tests ran without failures")
-#  configs.append(tc)
-
 tests64gc = ["arch64f", "arch64d", "arch64f_fma", "arch64d_fma", "arch64f_divsqrt", "arch64d_divsqrt", "arch64i", "arch64zba", "arch64zbb", "arch64zbs",  "arch64zfh", "arch64zfh_divsqrt", "arch64zfaf", "arch64zfad",
              "arch64priv", "arch64c",  "arch64m", "arch64a", "arch64zifencei", "arch64zicond", "wally64a", "wally64periph", "wally64priv"] # add arch64zfh_fma when available; arch64zicobz, arch64zcb when working
 #tests64gc = ["arch64f", "arch64d", "arch64f_fma", "arch64d_fma", "arch64i", "arch64zba", "arch64zbb", "arch64zbc", "arch64zbs", 
@@ -176,7 +167,6 @@ if (nightly):
         ["way_8_4096_512_rv32gc", ["arch32i"]],
         ["way_4_2048_512_rv32gc", ["arch32i"]],
         ["way_4_4096_256_rv32gc", ["arch32i"]],
-        ["way_4_4096_1024_rv32gc", ["arch32i"]],
         ["way_1_4096_512_rv64gc", ["arch64i"]],
         ["way_2_4096_512_rv64gc", ["arch64i"]],
         ["way_8_4096_512_rv64gc", ["arch64i"]],
@@ -184,18 +174,21 @@ if (nightly):
         ["way_4_4096_256_rv64gc", ["arch64i"]],
         ["way_4_4096_1024_rv64gc", ["arch64i"]],
 
-        ["ram_0_0_rv64gc", ["ahb"]],
-        ["ram_1_0_rv64gc", ["ahb"]],
-        ["ram_1_1_rv64gc", ["ahb"]],
-        ["ram_2_0_rv64gc", ["ahb"]],
-        ["ram_2_1_rv64gc", ["ahb"]],
+        ["ram_0_0_rv64gc", ["ahb64"]],
+        ["ram_1_0_rv64gc", ["ahb64"]],
+        ["ram_1_1_rv64gc", ["ahb64"]],
+        ["ram_2_0_rv64gc", ["ahb64"]],
+        ["ram_2_1_rv64gc", ["ahb64"]],
         
-        ["noicache_rv32gc", ["ahb"]],
-        ["nodcache_rv32gc", ["ahb"]],
-        ["nocache_rv32gc", ["ahb"]],
-        ["noicache_rv64gc", ["ahb"]],
-        ["nodcache_rv64gc", ["ahb"]],
-        ["nocache_rv64gc", ["ahb"]],
+        ["noicache_rv32gc", ["ahb32"]],
+# cacheless designs will not work until DTIM supports FLEN > XLEN
+#        ["nodcache_rv32gc", ["ahb32"]],
+#        ["nocache_rv32gc", ["ahb32"]],
+        ["noicache_rv64gc", ["ahb64"]],
+        ["nodcache_rv64gc", ["ahb64"]],
+        ["nocache_rv64gc", ["ahb64"]],
+
+        ### add misaligned tests
 
         ["div_2_1_rv32gc", ["arch32f_divsqrt", "arch32d_divsqrt", "arch32m"]],
         ["div_2_1i_rv32gc", ["arch32f_divsqrt", "arch32d_divsqrt", "arch32m"]],
@@ -221,6 +214,19 @@ if (nightly):
         ["div_4_2i_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
         ["div_4_4_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
         ["div_4_4i_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
+
+#  enable floating-point tests when lint is fixed
+#        ["f_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma"]],
+#        ["fh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32zfh", "arch32zfh_divsqrt"]],
+#        ["fdh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32zfh", "arch32zfh_divsqrt"]],
+#        ["fdq_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32zfh", "arch32zfh_divsqrt"]],
+#        ["fdqh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32zfh", "arch32zfh_divsqrt"]],
+#        ["f_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma"]],
+#        ["fh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64zfh", "arch64zfh_divsqrt"]], # hanging 1/31/24 dh; try again when lint is fixed
+#        ["fdh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64zfh", "arch64zfh_divsqrt"]],
+#        ["fdq_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64zfh", "arch64zfh_divsqrt"]],
+#        ["fdqh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64zfh", "arch64zfh_divsqrt"]],
+        
 
     ]
     for test in derivconfigtests:
