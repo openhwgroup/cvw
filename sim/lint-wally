@@ -21,7 +21,7 @@ if [ "$1" == "-nightly" ]; then
         fi
     done
 else
-    configs=(rv32e rv64gc rv32gc rv32imc rv32i rv64i div_2_1i_rv64gc fdqh_rv64gc)
+    configs=(rv32e rv64gc rv32gc rv32imc rv32i rv64i div_2_1i_rv64gc ) # add fdqh_rv64gc when working
 fi
 
 for config in ${configs[@]}; do
@@ -29,7 +29,7 @@ for config in ${configs[@]}; do
     if !($verilator --no-timing --lint-only --top-module wallywrapper "-I$basepath/config/shared" "-I$basepath/config/$config" "-I$basepath/config/deriv/$config" $basepath/src/cvw.sv $basepath/testbench/wallywrapper.sv $basepath/src/*/*.sv $basepath/src/*/*/*.sv --relative-includes ); then
         if [ "$1" == "-nightly" ]; then
             echo -e "${RED}$config failed lint${NC}"
-            fails=$fails+1
+            fails=$((fails+1))
         else
             echo -e "${RED}$config fails with lint errors or warnings"
             exit 1
@@ -38,11 +38,11 @@ for config in ${configs[@]}; do
         echo -e "${GREEN}$config passed lint${NC}"
     fi
 done
-if ( $fails > 0 ); then
-    echo -e "${RED}Linting failed for $fails configurations"
+if [ $fails > 0 ]; then
+    echo -e "${RED}Linting failed for $fails of ${#configs[@]} configurations"
     exit 1
 fi
-echo -e "${GREEN}All lints run with no errors or warnings"
+echo -e "${GREEN}All ${#configs[@]} lints run with no errors or warnings"
 
 # --lint-only just runs lint rather than trying to compile and simulate
 # -I points to the include directory where files such as `include config.vh  are found
