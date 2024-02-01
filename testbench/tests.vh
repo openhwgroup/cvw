@@ -1126,10 +1126,10 @@ string imperas32f[] = '{
     // "rv64i_m/F/src/fnmsub_b15-01.S"
   };
 
-  string arch64f[] = '{
+  string arch64f_divsqrt[] = '{
     `RISCVARCHTEST,
-    "rv64i_m/F/src/fdiv_b1-01.S",
     "rv64i_m/F/src/fdiv_b20-01.S",
+    "rv64i_m/F/src/fdiv_b1-01.S",
     "rv64i_m/F/src/fdiv_b2-01.S",
     "rv64i_m/F/src/fdiv_b21-01.S",
     "rv64i_m/F/src/fdiv_b3-01.S",
@@ -1147,7 +1147,11 @@ string imperas32f[] = '{
     "rv64i_m/F/src/fsqrt_b5-01.S",
     "rv64i_m/F/src/fsqrt_b7-01.S",
     "rv64i_m/F/src/fsqrt_b8-01.S",
-    "rv64i_m/F/src/fsqrt_b9-01.S",
+    "rv64i_m/F/src/fsqrt_b9-01.S"
+  };
+
+  string arch64f[] = '{
+    `RISCVARCHTEST,
     "rv64i_m/F/src/fadd_b10-01.S",
     "rv64i_m/F/src/fadd_b1-01.S",
     "rv64i_m/F/src/fadd_b11-01.S",
@@ -1178,17 +1182,6 @@ string imperas32f[] = '{
     "rv64i_m/F/src/fcvt.wu.s_b27-01.S",
     "rv64i_m/F/src/fcvt.wu.s_b28-01.S",
     "rv64i_m/F/src/fcvt.wu.s_b29-01.S",
-    "rv64i_m/F/src/fdiv_b1-01.S",
-    "rv64i_m/F/src/fdiv_b20-01.S",
-    "rv64i_m/F/src/fdiv_b2-01.S",
-    "rv64i_m/F/src/fdiv_b21-01.S",
-    "rv64i_m/F/src/fdiv_b3-01.S",
-    "rv64i_m/F/src/fdiv_b4-01.S",
-    "rv64i_m/F/src/fdiv_b5-01.S",
-    "rv64i_m/F/src/fdiv_b6-01.S",
-    "rv64i_m/F/src/fdiv_b7-01.S",
-    "rv64i_m/F/src/fdiv_b8-01.S",
-    "rv64i_m/F/src/fdiv_b9-01.S",
     "rv64i_m/F/src/feq_b1-01.S",
     "rv64i_m/F/src/feq_b19-01.S",
     "rv64i_m/F/src/fle_b1-01.S",
@@ -1269,15 +1262,6 @@ string imperas32f[] = '{
     "rv64i_m/F/src/fsgnj_b1-01.S",
     "rv64i_m/F/src/fsgnjn_b1-01.S",
     "rv64i_m/F/src/fsgnjx_b1-01.S",
-    "rv64i_m/F/src/fsqrt_b1-01.S",
-    "rv64i_m/F/src/fsqrt_b20-01.S",
-    "rv64i_m/F/src/fsqrt_b2-01.S",
-    "rv64i_m/F/src/fsqrt_b3-01.S",
-    "rv64i_m/F/src/fsqrt_b4-01.S",
-    "rv64i_m/F/src/fsqrt_b5-01.S",
-    "rv64i_m/F/src/fsqrt_b7-01.S",
-    "rv64i_m/F/src/fsqrt_b8-01.S",
-    "rv64i_m/F/src/fsqrt_b9-01.S",
     "rv64i_m/F/src/fsub_b10-01.S",
     "rv64i_m/F/src/fsub_b1-01.S",
     "rv64i_m/F/src/fsub_b11-01.S",
@@ -1291,6 +1275,30 @@ string imperas32f[] = '{
     "rv64i_m/F/src/fsub_b8-01.S",
     "rv64i_m/F/src/fsw-align-01.S"
     };
+
+  string arch64zfh_divsqrt[] = '{
+    `RISCVARCHTEST,
+    "rv64i_m/Zfh/src/fdiv_b20-01.S",
+    "rv64i_m/Zfh/src/fdiv_b1-01.S",
+    "rv64i_m/Zfh/src/fdiv_b2-01.S",
+    "rv64i_m/Zfh/src/fdiv_b21-01.S",
+    "rv64i_m/Zfh/src/fdiv_b3-01.S",
+    "rv64i_m/Zfh/src/fdiv_b4-01.S",
+    "rv64i_m/Zfh/src/fdiv_b5-01.S",
+    "rv64i_m/Zfh/src/fdiv_b6-01.S",
+    "rv64i_m/Zfh/src/fdiv_b7-01.S",
+    "rv64i_m/Zfh/src/fdiv_b8-01.S",
+    "rv64i_m/Zfh/src/fdiv_b9-01.S",
+    "rv64i_m/Zfh/src/fsqrt_b1-01.S",
+    "rv64i_m/Zfh/src/fsqrt_b20-01.S",
+    "rv64i_m/Zfh/src/fsqrt_b2-01.S",
+    "rv64i_m/Zfh/src/fsqrt_b3-01.S",
+    "rv64i_m/Zfh/src/fsqrt_b4-01.S",
+    "rv64i_m/Zfh/src/fsqrt_b5-01.S",
+    "rv64i_m/Zfh/src/fsqrt_b7-01.S",
+    "rv64i_m/Zfh/src/fsqrt_b8-01.S",
+    "rv64i_m/Zfh/src/fsqrt_b9-01.S"
+  };
 
   string arch64zfh[] = '{
     `RISCVARCHTEST,
@@ -1342,17 +1350,6 @@ string imperas32f[] = '{
     "rv64i_m/Zfh/src/fcvt.lu.h_b27-01.S",
     "rv64i_m/Zfh/src/fcvt.lu.h_b28-01.S",
     "rv64i_m/Zfh/src/fcvt.lu.h_b29-01.S",
-    "rv64i_m/Zfh/src/fdiv_b20-01.S",
-    "rv64i_m/Zfh/src/fdiv_b1-01.S",
-    "rv64i_m/Zfh/src/fdiv_b2-01.S",
-    "rv64i_m/Zfh/src/fdiv_b21-01.S",
-    "rv64i_m/Zfh/src/fdiv_b3-01.S",
-    "rv64i_m/Zfh/src/fdiv_b4-01.S",
-    "rv64i_m/Zfh/src/fdiv_b5-01.S",
-    "rv64i_m/Zfh/src/fdiv_b6-01.S",
-    "rv64i_m/Zfh/src/fdiv_b7-01.S",
-    "rv64i_m/Zfh/src/fdiv_b8-01.S",
-    "rv64i_m/Zfh/src/fdiv_b9-01.S",
     "rv64i_m/Zfh/src/feq_b1-01.S",
     "rv64i_m/Zfh/src/feq_b19-01.S",
     "rv64i_m/Zfh/src/fle_b1-01.S",
@@ -1385,15 +1382,6 @@ string imperas32f[] = '{
     "rv64i_m/Zfh/src/fsgnj_b1-01.S",
     "rv64i_m/Zfh/src/fsgnjn_b1-01.S",
     "rv64i_m/Zfh/src/fsgnjx_b1-01.S",
-    "rv64i_m/Zfh/src/fsqrt_b1-01.S",
-    "rv64i_m/Zfh/src/fsqrt_b20-01.S",
-    "rv64i_m/Zfh/src/fsqrt_b2-01.S",
-    "rv64i_m/Zfh/src/fsqrt_b3-01.S",
-    "rv64i_m/Zfh/src/fsqrt_b4-01.S",
-    "rv64i_m/Zfh/src/fsqrt_b5-01.S",
-    "rv64i_m/Zfh/src/fsqrt_b7-01.S",
-    "rv64i_m/Zfh/src/fsqrt_b8-01.S",
-    "rv64i_m/Zfh/src/fsqrt_b9-01.S",
     "rv64i_m/Zfh/src/fsub_b10-01.S",
     "rv64i_m/Zfh/src/fsub_b1-01.S",
     "rv64i_m/Zfh/src/fsub_b11-01.S",
@@ -1417,9 +1405,8 @@ string imperas32f[] = '{
     // "rv64i_m/D/src/fnmsub.d_b15-01.S"
   };
 
-  string arch64d[] = '{
+  string arch64d_divsqrt[] = '{
     `RISCVARCHTEST,
-    // for speed
     "rv64i_m/D/src/fdiv.d_b1-01.S",
     "rv64i_m/D/src/fdiv.d_b20-01.S",
     "rv64i_m/D/src/fdiv.d_b2-01.S",
@@ -1439,8 +1426,13 @@ string imperas32f[] = '{
     "rv64i_m/D/src/fsqrt.d_b5-01.S",
     "rv64i_m/D/src/fsqrt.d_b7-01.S",
     "rv64i_m/D/src/fsqrt.d_b8-01.S",
-    "rv64i_m/D/src/fsqrt.d_b9-01.S",
-    "rv64i_m/D/src/fadd.d_b10-01.S",
+    "rv64i_m/D/src/fsqrt.d_b9-01.S"
+  };
+
+  string arch64d[] = '{
+    `RISCVARCHTEST,
+    // for speed
+   "rv64i_m/D/src/fadd.d_b10-01.S",
     "rv64i_m/D/src/fadd.d_b1-01.S",
     "rv64i_m/D/src/fadd.d_b11-01.S",
     "rv64i_m/D/src/fadd.d_b12-01.S",
@@ -1502,17 +1494,6 @@ string imperas32f[] = '{
     "rv64i_m/D/src/fcvt.wu.d_b27-01.S",
     "rv64i_m/D/src/fcvt.wu.d_b28-01.S",
     "rv64i_m/D/src/fcvt.wu.d_b29-01.S",
-    "rv64i_m/D/src/fdiv.d_b1-01.S",
-    "rv64i_m/D/src/fdiv.d_b20-01.S",
-    "rv64i_m/D/src/fdiv.d_b2-01.S",
-    "rv64i_m/D/src/fdiv.d_b21-01.S",
-    "rv64i_m/D/src/fdiv.d_b3-01.S",
-    "rv64i_m/D/src/fdiv.d_b4-01.S",
-    "rv64i_m/D/src/fdiv.d_b5-01.S",
-    "rv64i_m/D/src/fdiv.d_b6-01.S",
-    "rv64i_m/D/src/fdiv.d_b7-01.S",
-    "rv64i_m/D/src/fdiv.d_b8-01.S",
-    "rv64i_m/D/src/fdiv.d_b9-01.S",
     "rv64i_m/D/src/feq.d_b1-01.S",
     "rv64i_m/D/src/feq.d_b19-01.S",
     "rv64i_m/D/src/fle.d_b1-01.S",
@@ -1590,15 +1571,6 @@ string imperas32f[] = '{
     "rv64i_m/D/src/fsgnj.d_b1-01.S",
     "rv64i_m/D/src/fsgnjn.d_b1-01.S",
     "rv64i_m/D/src/fsgnjx.d_b1-01.S",
-    "rv64i_m/D/src/fsqrt.d_b1-01.S",
-    "rv64i_m/D/src/fsqrt.d_b20-01.S",
-    "rv64i_m/D/src/fsqrt.d_b2-01.S",
-    "rv64i_m/D/src/fsqrt.d_b3-01.S",
-    "rv64i_m/D/src/fsqrt.d_b4-01.S",
-    "rv64i_m/D/src/fsqrt.d_b5-01.S",
-    "rv64i_m/D/src/fsqrt.d_b7-01.S",
-    "rv64i_m/D/src/fsqrt.d_b8-01.S",
-    "rv64i_m/D/src/fsqrt.d_b9-01.S",
     "rv64i_m/D/src/fssub.d_b10-01.S",
     "rv64i_m/D/src/fssub.d_b1-01.S",
     "rv64i_m/D/src/fssub.d_b11-01.S",
@@ -1754,6 +1726,30 @@ string arch64zbs[] = '{
     // "rv32i_m/F/src/fnmsub_b15-01.S"
   };
 
+  string arch32f_divsqrt[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/F/src/fdiv_b20-01.S",
+    "rv32i_m/F/src/fdiv_b1-01.S",
+    "rv32i_m/F/src/fdiv_b2-01.S",
+    "rv32i_m/F/src/fdiv_b21-01.S",
+    "rv32i_m/F/src/fdiv_b3-01.S",
+    "rv32i_m/F/src/fdiv_b4-01.S",
+    "rv32i_m/F/src/fdiv_b5-01.S",
+    "rv32i_m/F/src/fdiv_b6-01.S",
+    "rv32i_m/F/src/fdiv_b7-01.S",
+    "rv32i_m/F/src/fdiv_b8-01.S",
+    "rv32i_m/F/src/fdiv_b9-01.S",
+    "rv32i_m/F/src/fsqrt_b1-01.S",
+    "rv32i_m/F/src/fsqrt_b20-01.S",
+    "rv32i_m/F/src/fsqrt_b2-01.S",
+    "rv32i_m/F/src/fsqrt_b3-01.S",
+    "rv32i_m/F/src/fsqrt_b4-01.S",
+    "rv32i_m/F/src/fsqrt_b5-01.S",
+    "rv32i_m/F/src/fsqrt_b7-01.S",
+    "rv32i_m/F/src/fsqrt_b8-01.S",
+    "rv32i_m/F/src/fsqrt_b9-01.S"
+  };
+
   string arch32f[] = '{
     `RISCVARCHTEST,
     "rv32i_m/F/src/fadd_b10-01.S",
@@ -1786,17 +1782,6 @@ string arch64zbs[] = '{
     "rv32i_m/F/src/fcvt.wu.s_b27-01.S",
     "rv32i_m/F/src/fcvt.wu.s_b28-01.S",
     "rv32i_m/F/src/fcvt.wu.s_b29-01.S",
-    "rv32i_m/F/src/fdiv_b20-01.S",
-    "rv32i_m/F/src/fdiv_b1-01.S",
-    "rv32i_m/F/src/fdiv_b2-01.S",
-    "rv32i_m/F/src/fdiv_b21-01.S",
-    "rv32i_m/F/src/fdiv_b3-01.S",
-    "rv32i_m/F/src/fdiv_b4-01.S",
-    "rv32i_m/F/src/fdiv_b5-01.S",
-    "rv32i_m/F/src/fdiv_b6-01.S",
-    "rv32i_m/F/src/fdiv_b7-01.S",
-    "rv32i_m/F/src/fdiv_b8-01.S",
-    "rv32i_m/F/src/fdiv_b9-01.S",
     "rv32i_m/F/src/feq_b1-01.S",
     "rv32i_m/F/src/feq_b19-01.S",
     "rv32i_m/F/src/fle_b1-01.S",
@@ -1877,15 +1862,6 @@ string arch64zbs[] = '{
     "rv32i_m/F/src/fsgnj_b1-01.S",
     "rv32i_m/F/src/fsgnjn_b1-01.S",
     "rv32i_m/F/src/fsgnjx_b1-01.S",
-    "rv32i_m/F/src/fsqrt_b1-01.S",
-    "rv32i_m/F/src/fsqrt_b20-01.S",
-    "rv32i_m/F/src/fsqrt_b2-01.S",
-    "rv32i_m/F/src/fsqrt_b3-01.S",
-    "rv32i_m/F/src/fsqrt_b4-01.S",
-    "rv32i_m/F/src/fsqrt_b5-01.S",
-    "rv32i_m/F/src/fsqrt_b7-01.S",
-    "rv32i_m/F/src/fsqrt_b8-01.S",
-    "rv32i_m/F/src/fsqrt_b9-01.S",
     "rv32i_m/F/src/fsub_b10-01.S",
     "rv32i_m/F/src/fsub_b1-01.S",
     "rv32i_m/F/src/fsub_b11-01.S",
@@ -1899,6 +1875,30 @@ string arch64zbs[] = '{
     "rv32i_m/F/src/fsub_b8-01.S",
     "rv32i_m/F/src/fsw-align-01.S"
     };
+
+  string arch32zfh_divsqrt[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/Zfh/src/fdiv_b20-01.S",
+    "rv32i_m/Zfh/src/fdiv_b1-01.S",
+    "rv32i_m/Zfh/src/fdiv_b2-01.S",
+    "rv32i_m/Zfh/src/fdiv_b21-01.S",
+    "rv32i_m/Zfh/src/fdiv_b3-01.S",
+    "rv32i_m/Zfh/src/fdiv_b4-01.S",
+    "rv32i_m/Zfh/src/fdiv_b5-01.S",
+    "rv32i_m/Zfh/src/fdiv_b6-01.S",
+    "rv32i_m/Zfh/src/fdiv_b7-01.S",
+    "rv32i_m/Zfh/src/fdiv_b8-01.S",
+    "rv32i_m/Zfh/src/fdiv_b9-01.S",
+    "rv32i_m/Zfh/src/fsqrt_b1-01.S",
+    "rv32i_m/Zfh/src/fsqrt_b20-01.S",
+    "rv32i_m/Zfh/src/fsqrt_b2-01.S",
+    "rv32i_m/Zfh/src/fsqrt_b3-01.S",
+    "rv32i_m/Zfh/src/fsqrt_b4-01.S",
+    "rv32i_m/Zfh/src/fsqrt_b5-01.S",
+    "rv32i_m/Zfh/src/fsqrt_b7-01.S",
+    "rv32i_m/Zfh/src/fsqrt_b8-01.S",
+    "rv32i_m/Zfh/src/fsqrt_b9-01.S"
+  };
 
   string arch32zfh[] = '{
     `RISCVARCHTEST,
@@ -1932,17 +1932,6 @@ string arch64zbs[] = '{
     "rv32i_m/Zfh/src/fcvt.wu.h_b27-01.S",
     "rv32i_m/Zfh/src/fcvt.wu.h_b28-01.S",
     "rv32i_m/Zfh/src/fcvt.wu.h_b29-01.S",
-    "rv32i_m/Zfh/src/fdiv_b20-01.S",
-    "rv32i_m/Zfh/src/fdiv_b1-01.S",
-    "rv32i_m/Zfh/src/fdiv_b2-01.S",
-    "rv32i_m/Zfh/src/fdiv_b21-01.S",
-    "rv32i_m/Zfh/src/fdiv_b3-01.S",
-    "rv32i_m/Zfh/src/fdiv_b4-01.S",
-    "rv32i_m/Zfh/src/fdiv_b5-01.S",
-    "rv32i_m/Zfh/src/fdiv_b6-01.S",
-    "rv32i_m/Zfh/src/fdiv_b7-01.S",
-    "rv32i_m/Zfh/src/fdiv_b8-01.S",
-    "rv32i_m/Zfh/src/fdiv_b9-01.S",
     "rv32i_m/Zfh/src/feq_b1-01.S",
     "rv32i_m/Zfh/src/feq_b19-01.S",
     "rv32i_m/Zfh/src/fle_b1-01.S",
@@ -1975,15 +1964,6 @@ string arch64zbs[] = '{
     "rv32i_m/Zfh/src/fsgnj_b1-01.S",
     "rv32i_m/Zfh/src/fsgnjn_b1-01.S",
     "rv32i_m/Zfh/src/fsgnjx_b1-01.S",
-    "rv32i_m/Zfh/src/fsqrt_b1-01.S",
-    "rv32i_m/Zfh/src/fsqrt_b20-01.S",
-    "rv32i_m/Zfh/src/fsqrt_b2-01.S",
-    "rv32i_m/Zfh/src/fsqrt_b3-01.S",
-    "rv32i_m/Zfh/src/fsqrt_b4-01.S",
-    "rv32i_m/Zfh/src/fsqrt_b5-01.S",
-    "rv32i_m/Zfh/src/fsqrt_b7-01.S",
-    "rv32i_m/Zfh/src/fsqrt_b8-01.S",
-    "rv32i_m/Zfh/src/fsqrt_b9-01.S",
     "rv32i_m/Zfh/src/fsub_b10-01.S",
     "rv32i_m/Zfh/src/fsub_b1-01.S",
     "rv32i_m/Zfh/src/fsub_b11-01.S",
@@ -2086,6 +2066,30 @@ string arch64zbs[] = '{
     "rv32i_m/D/src/fnmsub.d_b15-01.S"
   };
 
+  string arch32d_divsqrt[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/D/src/fdiv.d_b1-01.S",
+    "rv32i_m/D/src/fdiv.d_b20-01.S",
+    "rv32i_m/D/src/fdiv.d_b2-01.S",
+    "rv32i_m/D/src/fdiv.d_b21-01.S",
+    "rv32i_m/D/src/fdiv.d_b3-01.S",
+    "rv32i_m/D/src/fdiv.d_b4-01.S",
+    "rv32i_m/D/src/fdiv.d_b5-01.S",
+    "rv32i_m/D/src/fdiv.d_b6-01.S",
+    "rv32i_m/D/src/fdiv.d_b7-01.S",
+    "rv32i_m/D/src/fdiv.d_b8-01.S",
+    "rv32i_m/D/src/fdiv.d_b9-01.S",
+    "rv32i_m/D/src/fsqrt.d_b1-01.S",
+    "rv32i_m/D/src/fsqrt.d_b20-01.S",
+    "rv32i_m/D/src/fsqrt.d_b2-01.S",
+    "rv32i_m/D/src/fsqrt.d_b3-01.S",
+    "rv32i_m/D/src/fsqrt.d_b4-01.S",
+    "rv32i_m/D/src/fsqrt.d_b5-01.S",
+    "rv32i_m/D/src/fsqrt.d_b7-01.S",
+    "rv32i_m/D/src/fsqrt.d_b8-01.S",
+    "rv32i_m/D/src/fsqrt.d_b9-01.S"
+  };
+
   string arch32d[] = '{
     `RISCVARCHTEST,
     "rv32i_m/D/src/fadd.d_b10-01.S",
@@ -2132,17 +2136,6 @@ string arch64zbs[] = '{
     "rv32i_m/D/src/fcvt.wu.d_b27-01.S",
     "rv32i_m/D/src/fcvt.wu.d_b28-01.S",
     "rv32i_m/D/src/fcvt.wu.d_b29-01.S",
-    "rv32i_m/D/src/fdiv.d_b1-01.S",
-    "rv32i_m/D/src/fdiv.d_b20-01.S",
-    "rv32i_m/D/src/fdiv.d_b2-01.S",
-    "rv32i_m/D/src/fdiv.d_b21-01.S",
-    "rv32i_m/D/src/fdiv.d_b3-01.S",
-    "rv32i_m/D/src/fdiv.d_b4-01.S",
-    "rv32i_m/D/src/fdiv.d_b5-01.S",
-    "rv32i_m/D/src/fdiv.d_b6-01.S",
-    "rv32i_m/D/src/fdiv.d_b7-01.S",
-    "rv32i_m/D/src/fdiv.d_b8-01.S",
-    "rv32i_m/D/src/fdiv.d_b9-01.S",
     "rv32i_m/D/src/feq.d_b1-01.S",
     "rv32i_m/D/src/feq.d_b19-01.S",
     "rv32i_m/D/src/fle.d_b1-01.S",
@@ -2211,15 +2204,6 @@ string arch64zbs[] = '{
     "rv32i_m/D/src/fsgnj.d_b1-01.S",
     "rv32i_m/D/src/fsgnjn.d_b1-01.S",
     "rv32i_m/D/src/fsgnjx.d_b1-01.S",
-    "rv32i_m/D/src/fsqrt.d_b1-01.S",
-    "rv32i_m/D/src/fsqrt.d_b20-01.S",
-    "rv32i_m/D/src/fsqrt.d_b2-01.S",
-    "rv32i_m/D/src/fsqrt.d_b3-01.S",
-    "rv32i_m/D/src/fsqrt.d_b4-01.S",
-    "rv32i_m/D/src/fsqrt.d_b5-01.S",
-    "rv32i_m/D/src/fsqrt.d_b7-01.S",
-    "rv32i_m/D/src/fsqrt.d_b8-01.S",
-    "rv32i_m/D/src/fsqrt.d_b9-01.S",
     "rv32i_m/D/src/fssub.d_b10-01.S",
     "rv32i_m/D/src/fssub.d_b1-01.S",
     "rv32i_m/D/src/fssub.d_b11-01.S",
@@ -2488,7 +2472,12 @@ string arch64zbs[] = '{
   };
 
 
- string ahb[] = '{
+ string ahb64[] = '{
     `RISCVARCHTEST,
     "rv64i_m/F/src/fadd_b11-01.S"
+ };
+
+ string ahb32[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/F/src/fadd_b11-01.S"
  };

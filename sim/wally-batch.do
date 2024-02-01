@@ -21,14 +21,7 @@
 onbreak {resume}
 
 # create library
-if {$2 eq "ahb"} {
-    if [file exists wkdir/work_${1}_${2}_${3}_${4}] {
-        vdel -lib wkdir/work_${1}_${2}_${3}_${4} -all
-    }
-    vlib wkdir/work_${1}_${2}_${3}_${4}
-
-
-} elseif {$2 eq "configOptions"} {
+if {$2 eq "configOptions"} {
     if [file exists wkdir/work_${1}_${3}_${4}] {
         vdel -lib wkdir/work_${1}_${3}_${4} -all
     }
@@ -59,7 +52,7 @@ if {$argc >= 3} {
 # default to config/rv64ic, but allow this to be overridden at the command line.  For example:
 # do wally-pipelined-batch.do ../config/rv32imc rv32imc
 if {$2 eq "buildroot"} {
-    vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
+    vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/deriv/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
     # start and run simulation
     if { $coverage } {
         echo "wally-batch buildroot coverage"
@@ -74,7 +67,7 @@ if {$2 eq "buildroot"} {
     run -all
     exec ./slack-notifier/slack-notifier.py
 } elseif {$2 eq "buildroot-no-trace"} {
-    vlog -lint -work work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
+    vlog -lint -work work_${1}_${2} +incdir+../config/$1 +incdir+../config/deriv/$1 +incdir+../config/shared ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
     # start and run simulation
     vopt +acc work_${1}_${2}.testbench -work work_${1}_${2} -G RISCV_DIR=$3 -G INSTR_LIMIT=$4 -G INSTR_WAVEON=$5 -G NO_SPOOFING=1 -o testbenchopt 
     vsim -lib work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3829,13286  -fatal 7
@@ -86,22 +79,6 @@ if {$2 eq "buildroot"} {
     run -all
     run -all
     exec ./slack-notifier/slack-notifier.py
-
-} elseif {$2 eq "ahb"} {
-    vlog -lint -work wkdir/work_${1}_${2}_${3}_${4} +incdir+../config/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286  +define+RAM_LATENCY=$3 +define+BURST_EN=$4
-    # start and run simulation
-    # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-    vopt wkdir/work_${1}_${2}_${3}_${4}.testbench -work wkdir/work_${1}_${2}_${3}_${4} -G TEST=$2 -o testbenchopt
-    vsim -lib wkdir/work_${1}_${2}_${3}_${4} testbenchopt  -fatal 7
-    # Adding coverage increases runtime from 2:00 to 4:29.  Can't run it all the time
-    #vopt work_$2.testbench -work work_$2 -o workopt_$2 +cover=sbectf
-    #vsim -coverage -lib work_$2 workopt_$2
-
-    # power add generates the logging necessary for said generation.
-    # power add -r /dut/core/*
-    run -all
-    # power off -r /dut/core/*
-
 } elseif {$2 eq "configOptions"} {
     # set arguments " "
     # for {set i 5} {$i <= $argc} {incr i} {
@@ -112,7 +89,7 @@ if {$2 eq "buildroot"} {
     # **** fix this so we can pass any number of +defines.
     # only allows 3 right now
 
-    vlog -lint -work wkdir/work_${1}_${3}_${4} +incdir+../config/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286 $5 $6 $7
+    vlog -lint -work wkdir/work_${1}_${3}_${4} +incdir+../config/$1 +incdir+../config/deriv/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286 $5 $6 $7
     # start and run simulation
     # remove +acc flag for faster sim during regressions if there is no need to access internal signals
     vopt wkdir/work_${1}_${3}_${4}.testbench -work wkdir/work_${1}_${3}_${4} -G TEST=$4 -o testbenchopt
@@ -126,7 +103,7 @@ if {$2 eq "buildroot"} {
     # power off -r /dut/core/*
 
 } else {
-    vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
+    vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/deriv/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
     # start and run simulation
     # remove +acc flag for faster sim during regressions if there is no need to access internal signals
     if {$coverage} {
