@@ -326,14 +326,13 @@ module testbench;
       end else begin 
         // for tests with no self checking mechanism, read .signature.output file and compare to check for errors
         // clear signature to prevent contamination from previous tests
+        if (!begin_signature_addr)
+          $display("begin_signature addr not found in %s", ProgramLabelMapFile);
+        else if (TEST != "embench") begin   // *** quick hack for embench.  need a better long term solution
+          CheckSignature(pathname, tests[test], riscofTest, begin_signature_addr, errors);
+          if(errors > 0) totalerrors = totalerrors + 1;
+        end
       end
-
-      if (!begin_signature_addr)
-        $display("begin_signature addr not found in %s", ProgramLabelMapFile);
-      else if (TEST != "embench") begin   // *** quick hack for embench.  need a better long term solution
-        CheckSignature(pathname, tests[test], riscofTest, begin_signature_addr, errors);
-      end
-      if(errors > 0) totalerrors = totalerrors + 1;
       test = test + 1; // *** this probably needs to be moved.
       if (test == tests.size()) begin
         if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
