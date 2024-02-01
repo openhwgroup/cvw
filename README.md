@@ -24,18 +24,18 @@ New users may wish to do the following setup to access the server via a GUI and 
 		Terminal on Mac, cmd on Windows, xterm on Linux
 		See A.1 about ssh -Y login from a terminal
 
-Then clone the repo, source setup,  make the tests and run regression
+Then fork and clone the repo, source setup, make the tests and run regression
 
 	If you don't already have a Github account, create one
 	In a web browser, visit https://github.com/openhwgroup/cvw
 	In the upper right part of the screen, click on Fork
-	Create a fork, choosing the owner as your github account and the repository as cvw.
+	Create a fork, choosing the owner as your github account 
+	and the repository as cvw.
 	
 	On the Linux computer where you will be working, log in
 
 Clone your fork of the repo and run the setup script. Change <yourgithubid> to your github id. 
 
-	$ cd
 	$ git clone --recurse-submodules https://github.com/<yourgithubid>/cvw
 	$ cd cvw
 	$ git remote add upstream https://github.com/openhwgroup/cvw
