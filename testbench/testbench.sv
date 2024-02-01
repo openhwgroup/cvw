@@ -104,6 +104,8 @@ module testbench;
         "arch64d":      if (P.D_SUPPORTED)        tests = arch64d;  
         "arch64f_fma":  if (P.F_SUPPORTED)        tests = arch64f_fma;
         "arch64d_fma":  if (P.D_SUPPORTED)        tests = arch64d_fma;  
+        "arch64f_divsqrt":  if (P.F_SUPPORTED)        tests = arch64f_divsqrt;
+        "arch64d_divsqrt":  if (P.D_SUPPORTED)        tests = arch64d_divsqrt;  
         "arch64zifencei":  if (P.ZIFENCEI_SUPPORTED) tests = arch64zifencei;
         "arch64zicond":  if (P.ZICOND_SUPPORTED)  tests = arch64zicond;
         "imperas64i":                             tests = imperas64i;
@@ -128,6 +130,8 @@ module testbench;
         "arch64zicboz":  if (P.ZICBOZ_SUPPORTED)  tests = arch64zicboz;
         "arch64zcb":     if (P.ZCB_SUPPORTED)     tests = arch64zcb;
         "arch64zfh":     if (P.ZFH_SUPPORTED)     tests = arch64zfh;
+//        "arch64zfh_fma": if (P.ZFH_SUPPORTED)     tests = arch64zfh_fma; *** not yet in riscv-arch-tst PR367
+        "arch64zfh_divsqrt":     if (P.ZFH_SUPPORTED)     tests = arch64zfh_divsqrt;
         "arch64zfaf":    if (P.ZFA_SUPPORTED)     tests = arch64zfaf;
         "arch64zfad":    if (P.ZFA_SUPPORTED & P.D_SUPPORTED)  tests = arch64zfad;
       endcase 
@@ -145,6 +149,8 @@ module testbench;
         "arch32d":      if (P.D_SUPPORTED)        tests = arch32d;
         "arch32f_fma":  if (P.F_SUPPORTED)        tests = arch32f_fma;
         "arch32d_fma":  if (P.D_SUPPORTED)        tests = arch32d_fma;
+        "arch32f_divsqrt":  if (P.F_SUPPORTED)        tests = arch32f_divsqrt;
+        "arch32d_divsqrt":  if (P.D_SUPPORTED)        tests = arch32d_divsqrt;  
         "arch32zifencei":     if (P.ZIFENCEI_SUPPORTED) tests = arch32zifencei;
         "arch32zicond":  if (P.ZICOND_SUPPORTED)  tests = arch32zicond;
         "imperas32i":                             tests = imperas32i;
@@ -165,6 +171,8 @@ module testbench;
         "arch32zicboz":  if (P.ZICBOZ_SUPPORTED)  tests = arch32zicboz;
         "arch32zcb":     if (P.ZCB_SUPPORTED)     tests = arch32zcb;
         "arch32zfh":     if (P.ZFH_SUPPORTED)     tests = arch32zfh;
+ //       "arch32zfh_fma": if (P.ZFH_SUPPORTED)     tests = arch32zfh_fma; *** not yet in riscv-arch-tst PR367
+        "arch32zfh_divsqrt":     if (P.ZFH_SUPPORTED)     tests = arch32zfh_divsqrt;
         "arch32zfaf":    if (P.ZFA_SUPPORTED)     tests = arch32zfaf;
         "arch32zfad":    if (P.ZFA_SUPPORTED & P.D_SUPPORTED)  tests = arch32zfad;
       endcase
