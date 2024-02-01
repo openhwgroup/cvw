@@ -314,15 +314,19 @@ coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefs
 set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm AtomicWait"]
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bc 1
 
+# The WritebackWriteback and FetchWriteback support back to back pipelined cache writebacks and fetch then
+# writebacks.  The cache never issues these type of requests.
 set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm WritebackWriteback"]
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bc 2
 
 set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWriteback"]
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bc 2
 
+# FetchWait never occurs because HREADY is never 0.
 set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWait"]
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bc 1
 
+# all of these HEADY exclusions occur because HREADY is always 1.  The ram_ahb module never stalls.
 set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY0"]
 coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
 
