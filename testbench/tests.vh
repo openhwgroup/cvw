@@ -2472,7 +2472,12 @@ string arch64zbs[] = '{
   };
 
 
- string ahb[] = '{
+ string ahb64[] = '{
     `RISCVARCHTEST,
     "rv64i_m/F/src/fadd_b11-01.S"
+ };
+
+ string ahb32[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/F/src/fadd_b11-01.S"
  };
