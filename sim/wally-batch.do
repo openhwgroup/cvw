@@ -21,14 +21,7 @@
 onbreak {resume}
 
 # create library
-if {$2 eq "ahb"} {
-    if [file exists wkdir/work_${1}_${2}_${3}_${4}] {
-        vdel -lib wkdir/work_${1}_${2}_${3}_${4} -all
-    }
-    vlib wkdir/work_${1}_${2}_${3}_${4}
-
-
-} elseif {$2 eq "configOptions"} {
+if {$2 eq "configOptions"} {
     if [file exists wkdir/work_${1}_${3}_${4}] {
         vdel -lib wkdir/work_${1}_${3}_${4} -all
     }
@@ -86,22 +79,6 @@ if {$2 eq "buildroot"} {
     run -all
     run -all
     exec ./slack-notifier/slack-notifier.py
-
-} elseif {$2 eq "ahb"} {
-    vlog -lint -work wkdir/work_${1}_${2}_${3}_${4} +incdir+../config/$1 +incdir+../config/deriv/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286  +define+RAM_LATENCY=$3 +define+BURST_EN=$4
-    # start and run simulation
-    # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-    vopt wkdir/work_${1}_${2}_${3}_${4}.testbench -work wkdir/work_${1}_${2}_${3}_${4} -G TEST=$2 -o testbenchopt
-    vsim -lib wkdir/work_${1}_${2}_${3}_${4} testbenchopt  -fatal 7
-    # Adding coverage increases runtime from 2:00 to 4:29.  Can't run it all the time
-    #vopt work_$2.testbench -work work_$2 -o workopt_$2 +cover=sbectf
-    #vsim -coverage -lib work_$2 workopt_$2
-
-    # power add generates the logging necessary for said generation.
-    # power add -r /dut/core/*
-    run -all
-    # power off -r /dut/core/*
-
 } elseif {$2 eq "configOptions"} {
     # set arguments " "
     # for {set i 5} {$i <= $argc} {incr i} {
