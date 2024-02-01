@@ -354,6 +354,9 @@ def main():
     #   Also it is slow to run.   
     #    configs.append(getBuildrootTC(boot=False))
         os.system('rm -f cov/*.ucdb')
+    elif '-nightly' in sys.argv:
+        TIMEOUT_DUR = 60*1440 # 1 day
+        configs.append(getBuildrootTC(boot=False))
     else:
         TIMEOUT_DUR = 10*60 # seconds
         configs.append(getBuildrootTC(boot=False))
