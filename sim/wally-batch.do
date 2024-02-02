@@ -89,7 +89,7 @@ if {$2 eq "buildroot"} {
     # **** fix this so we can pass any number of +defines.
     # only allows 3 right now
 
-    vlog -lint -work wkdir/work_${1}_${3}_${4} +incdir+../config/$1 +incdir+../config/deriv/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286 $5 $6 $7
+    vlog -lint -work wkdir/work_${1}_${3}_${4} +incdir+../config/$1 +incdir+../config/deriv/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
     # start and run simulation
     # remove +acc flag for faster sim during regressions if there is no need to access internal signals
     vopt wkdir/work_${1}_${3}_${4}.testbench -work wkdir/work_${1}_${3}_${4} -G TEST=$4 -o testbenchopt
