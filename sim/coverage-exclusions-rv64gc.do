@@ -136,7 +136,13 @@ coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/iromdec
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/ddr4dec
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/sdcdec
 
-# PMA Regions 8, 9, and 10 (dtim, irom, ddr4) are never used in the rv64gc configuration, so exclude coverage
+# PMA Regions 1, 2, and 3 (dtim, irom, ddr4) are never used in the rv64gc configuration, so exclude coverage
+set line [GetLineNum ../src/mmu/pmachecker.sv "exclusion-tag: unused-atomic"]
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4
+set line [GetLineNum ../src/mmu/pmachecker.sv "exclusion-tag: unused-tim"]
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4
 set line [GetLineNum ../src/mmu/pmachecker.sv "exclusion-tag: unused-cachable"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2
@@ -145,11 +151,17 @@ coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$lin
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4,6,8
 
 # Excluding so far un-used instruction sources for the ifu
-# coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/bootromdec
-# coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/uncoreramdec
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/bootromdec
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/uncoreramdec
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/spidec
 
-#Excluding the bootrom, uncoreran, and clint as sources for the lsu
-# coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/bootromdec
+# The following peripherals are always supported
+set line [GetLineNum ../src/mmu/adrdec.sv "exclusion-tag: adrdecSel"]
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/bootromdec -linerange $line-$line -item e 1 -fecexprrow 3,7
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/gpiodec -linerange $line-$line -item e 1 -fecexprrow 3
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/uartdec -linerange $line-$line -item e 1 -fecexprrow 3
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/plicdec -linerange $line-$line -item e 1 -fecexprrow 3
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/spidec -linerange $line-$line -item e 1 -fecexprrow 3
 
 #Excluding signals in lsu: clintdec and uncoreram accept all sizes so 'SizeValid' will never be 0
 set line [GetLineNum ../src/mmu/adrdec.sv "& SizeValid"]
