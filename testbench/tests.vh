@@ -55,7 +55,6 @@ string tvpaths[] = '{
     "lsu",
     "vm64check",
     "tlbASID",
-    "tlbASID2",
     "tlbGLB",
     "tlbMP",
     "tlbGP",
