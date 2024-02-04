@@ -49,5 +49,5 @@ module adrdec #(parameter PA_BITS) (
   assign SizeValid = SizeMask[Size]; 
   
   // Select this peripheral if the address matches, the peripheral is supported, and the type and size of access is ok
-  assign Sel = Match & Supported & AccessValid & SizeValid;
+  assign Sel = Match & Supported & AccessValid & SizeValid; // exclusion-tag: adrdecSel
 endmodule
