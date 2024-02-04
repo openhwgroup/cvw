@@ -51,6 +51,7 @@ main:
     li t3, 32           # Max amount of Loops = 32
 
 loop: bge t2, t3, finished   # exit loop if i >= loops
+    sfence.vma
     li t1, 0x00008067 #load in jalr
     sw t1, 0(t0)
     fence.I
