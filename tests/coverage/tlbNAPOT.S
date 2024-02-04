@@ -55,14 +55,24 @@ main:
     li t4, 0x1000     # address step size
     li a2, 0x80216000 # Test NAPOT pages
     jal a1, looptest
+
+    sfence.vma
+    li t4, 0x200000   # address step size
+    li a2, 0x80215240 # Test NAPOT pages
+    jal a1, looptest
+    li a2, 0xC0215240  # Test ill-formed NAPOT pages
+    jal a1, looptest
+    li a2, 0x40215240  # Test properly formed pages with 1 in PPN[3] that are not NAPOT
+    jal a1, looptest
+
     li a0, 3 # switch back to machine mode because code at 0x80000000 may not have clean page table entry
     ecall
     j done
 
 looptest:
     mv t0, a2       # base address
-    li t2, 0             # i = 0
-    li t3, 35     # Max amount of Loops = 34
+    li t2, 0        # i = 0
+    li t3, 32     # Max amount of Loops = 32
     li t5, 0x8082 # return instruction opcode
 
 loop: bge t2, t3, finished   # exit loop if i >= loops
