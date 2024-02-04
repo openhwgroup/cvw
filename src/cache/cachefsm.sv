@@ -117,12 +117,11 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
     NextState = STATE_READY;
     case (CurrState)                                                                                        // exclusion-tag: icache state-case
       STATE_READY:           if(InvalidateCache)                               NextState = STATE_READY;     // exclusion-tag: dcache InvalidateCheck
-                             else if(FlushCache & ~READ_ONLY_CACHE)            NextState = STATE_FLUSH;
+                             else if(FlushCache & ~READ_ONLY_CACHE)            NextState = STATE_FLUSH;     // exclusion-tag: icache FLUSHStatement
                              else if(AnyMiss & (READ_ONLY_CACHE | ~LineDirty)) NextState = STATE_FETCH;     // exclusion-tag: icache FETCHStatement
                              else if(AnyMiss | CMOWriteback)                   NextState = STATE_WRITEBACK; // exclusion-tag: icache WRITEBACKStatement
                              else                                              NextState = STATE_READY;
       STATE_FETCH:           if(CacheBusAck)                                   NextState = STATE_WRITE_LINE;
-                             else if(CacheBusAck)                              NextState = STATE_READY;
                              else                                              NextState = STATE_FETCH;
       STATE_WRITE_LINE:                                                        NextState = STATE_READ_HOLD;
       STATE_READ_HOLD:       if(Stall)                                         NextState = STATE_READ_HOLD;
@@ -204,7 +203,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
                   (CurrState == STATE_WRITEBACK) |
                   (CurrState == STATE_WRITE_LINE) |
                   resetDelay;
-  assign SelAdrTag = (CurrState == STATE_READY & (AnyMiss | (|CMOpM))) | // exclusion-tag: icache SelAdrCauses // changes if store delay hazard removed
+  assign SelAdrTag = (CurrState == STATE_READY & (AnyMiss | (|CMOpM))) | // exclusion-tag: icache SelAdrTag // changes if store delay hazard removed
                   (CurrState == STATE_FETCH) |
                   (CurrState == STATE_WRITEBACK) |
                   (CurrState == STATE_WRITE_LINE) |
