@@ -1,6 +1,6 @@
-../logs/rv32gc_class6.log class 6
-../logs/rv32gc_class8.log class 8
-../logs/rv32gc_class10.log class 10
-../logs/rv32gc_class12.log class 12
-../logs/rv32gc_class14.log class 14
-../logs/rv32gc_class16.log class 16
+../logs/bpred_GSHARE_16_16_6_1_rv32gc_embench.log btb 6
+../logs/bpred_GSHARE_16_16_8_1_rv32gc_embench.log btb 8
+../logs/bpred_GSHARE_16_16_10_1_rv32gc_embench.log btb 10
+../logs/bpred_GSHARE_16_16_12_1_rv32gc_embench.log btb 12
+../logs/bpred_GSHARE_16_16_14_1_rv32gc_embench.log btb 14
+../logs/bpred_GSHARE_16_16_16_1_rv32gc_embench.log btb 16
