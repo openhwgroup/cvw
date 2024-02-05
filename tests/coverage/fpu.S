@@ -109,6 +109,12 @@ main:
     # fcvt.w.q a0, ft0
     # fcvt.q.d ft3, ft0
 
+    # half-precision NaN boxing
+    la t0, TestData3
+    fld ft2, 0(t0)          // bad NaN-boxed number
+    fmadd.h ft1, ft2, ft2, ft2 // Test NaN boxing
+    fmadd.s ft1, ft2, ft2, ft2 // Test NaN boxing
+
     // fdivsqrt: test busy->idle transition caused by a FlushE while divider is busy (when interrupt arrives)
     // This code doesn't actually trigger a busy->idle transition because the pending timer interrupt doesn't occur until the division finishes.
     li t0, 0x3F812345 # random value slightly bigger than 1
@@ -206,4 +212,6 @@ TestData2:
 .int 0xbf800000 #FP -1.0
 .int 0x7fa00000 #SNaN
 .int 0x3fffffff #OverFlow Test
+TestData3:
+.dword 0xABCD543212345678 # NaN box test
 DivTestData:

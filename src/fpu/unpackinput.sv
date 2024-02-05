@@ -142,7 +142,7 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
       always_comb
         if (BadNaNBox & Fmt == P.FMT1)
             PostBox = {{(P.FLEN-P.LEN1){1'b1}}, 1'b1, {(P.NE1+1){1'b1}}, {(P.LEN1-P.NE1-2){1'b0}}};
-        else if (BadNaNBox & Fmt == P.FMT2)
+        else if (BadNaNBox) // Fmt == P.FMT2
             PostBox = {{(P.FLEN-P.LEN2){1'b1}}, 1'b1, {(P.NE2+1){1'b1}}, {(P.LEN2-P.NE2-2){1'b0}}};
         else
             PostBox = In;

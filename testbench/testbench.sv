@@ -180,7 +180,7 @@ module testbench;
     end
     if (tests.size() == 0) begin
       $display("TEST %s not supported in this configuration", TEST);
-      $stop;
+      $finish;
     end
   end // initial begin
 
@@ -300,7 +300,7 @@ module testbench;
     if (TEST == "coremark")
       if (dut.core.priv.priv.EcallFaultM) begin
         $display("Benchmark: coremark is done.");
-        $stop;
+        $finish;
       end
     if(Validate) begin
       if (TEST == "embench") begin
@@ -337,7 +337,7 @@ module testbench;
       if (test == tests.size()) begin
         if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
         else $display("FAIL: %d test programs had errors", totalerrors);
-        $stop;
+        $finish;
       end
     end
   end
@@ -601,7 +601,7 @@ module testbench;
         errors = errors+1;
         $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
 			     TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
-        $stop;
+        $finish;
       end
     end
     if (errors) $display("%s failed with %d errors. :(", TestName, errors);

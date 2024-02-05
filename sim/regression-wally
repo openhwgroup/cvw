@@ -127,7 +127,7 @@ for test in tests32e:
         grepstr="All tests ran without failures")
   configs.append(tc)
 
-tests64gc = ["arch64f", "arch64d", "arch64f_fma", "arch64d_fma", "arch64f_divsqrt", "arch64d_divsqrt", "arch64i", "arch64zba", "arch64zbb", "arch64zbs",  "arch64zfh", "arch64zfh_divsqrt", "arch64zfaf", "arch64zfad",
+tests64gc = ["arch64f", "arch64d", "arch64f_fma", "arch64d_fma", "arch64f_divsqrt", "arch64d_divsqrt", "arch64i", "arch64zba", "arch64zbb", "arch64zbc", "arch64zbs",  "arch64zfh", "arch64zfh_divsqrt", "arch64zfaf", "arch64zfad",
              "arch64priv", "arch64c",  "arch64m", "arch64a", "arch64zifencei", "arch64zicond", "wally64a", "wally64periph", "wally64priv"] # add arch64zfh_fma when available; arch64zicobz, arch64zcb when working
 #tests64gc = ["arch64f", "arch64d", "arch64f_fma", "arch64d_fma", "arch64i", "arch64zba", "arch64zbb", "arch64zbc", "arch64zbs", 
 #             "arch64priv", "arch64c",  "arch64m", "arch64a", "arch64zifencei", "wally64a", "wally64periph", "wally64priv", "arch64zicboz", "arch64zcb"] 
@@ -135,7 +135,7 @@ if (coverage):  # delete all but 64gc tests when running coverage
     configs = []
     tests64gc = ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m",
                  "arch64zifencei", "arch64zicond", "arch64a", "wally64a", "wally64periph", "wally64priv", 
-                 "arch64zba",  "arch64zbb",  "arch64zbs"] # add when working: "arch64zcb", "arch64zicboz"
+                 "arch64zba",  "arch64zbb",  "arch64zbc", "arch64zbs"] # add when working: "arch64zcb", "arch64zicboz"
     if (fp):
        tests64gc.append("arch64f")
        tests64gc.append("arch64d")
