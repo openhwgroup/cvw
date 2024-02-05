@@ -51,35 +51,7 @@ if {$argc >= 3} {
 
 # default to config/rv64ic, but allow this to be overridden at the command line.  For example:
 # do wally-pipelined-batch.do ../config/rv32imc rv32imc
-if {$2 eq "buildroot"} {
-    vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/deriv/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
-    # start and run simulation
-    if { $coverage } {
-        echo "wally-batch buildroot coverage"
-        vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G RISCV_DIR=$3 -G INSTR_LIMIT=$4 -G INSTR_WAVEON=$5 -o testbenchopt +cover=sbecf
-        vsim -lib wkdir/work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3691,13286  -fatal 7 -cover
-     } else {
-        vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G RISCV_DIR=$3 -G INSTR_LIMIT=$4 -G INSTR_WAVEON=$5 -o testbenchopt 
-        vsim -lib wkdir/work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3691,13286  -fatal 7
-    }
-
-    run -all
-    run -all
-    exec ./slack-notifier/slack-notifier.py
-} elseif {$2 eq "buildroot-no-trace"} {
-    vlog -lint -work work_${1}_${2} +incdir+../config/$1 +incdir+../config/deriv/$1 +incdir+../config/shared ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
-    # start and run simulation
-    vopt +acc work_${1}_${2}.testbench -work work_${1}_${2} -G RISCV_DIR=$3 -G INSTR_LIMIT=$4 -G INSTR_WAVEON=$5 -G NO_SPOOFING=1 -o testbenchopt 
-    vsim -lib work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3829,13286  -fatal 7
-
-    #-- Run the Simulation
-    echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-    echo "Don't forget to change DEBUG_LEVEL = 0."
-    echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-    run -all
-    run -all
-    exec ./slack-notifier/slack-notifier.py
-} elseif {$2 eq "configOptions"} {
+if {$2 eq "configOptions"} {
     # set arguments " "
     # for {set i 5} {$i <= $argc} {incr i} {
     # 	append arguments "\$$i "
@@ -111,12 +83,13 @@ if {$2 eq "buildroot"} {
         vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt +cover=sbecf
         vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829 -coverage
     } else {
-        vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt
+        vopt +acc wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt
         vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
     }
 #    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
     # power add generates the logging necessary for said generation.
     # power add -r /dut/core/*
+    do wave.do
     run -all
     # power off -r /dut/core/*
 } 

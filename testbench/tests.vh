@@ -31,6 +31,7 @@
 `define EMBENCH "4"
 `define CUSTOM "5"
 `define COVERAGE "6"
+`define BUILDROOT "7"
 
 string tvpaths[] = '{
     "$RISCV/imperas-riscv-tests/work/",
@@ -69,6 +70,11 @@ string tvpaths[] = '{
     "pmppriority",
     "pmpcbo",
     "pmpadrdecs"
+  };
+
+  string buildroot[] = '{
+    `BUILDROOT,
+    "buildroot"
   };
 
   string coremark[] = '{
