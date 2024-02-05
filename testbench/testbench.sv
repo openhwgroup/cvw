@@ -290,6 +290,9 @@ module testbench;
       if (riscofTest) begin
         ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
         ProgramLabelMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.lab"};
+      end else if (TEST == "buildroot") begin
+        ProgramAddrMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.addr"};
+        ProgramLabelMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.lab"};
       end else begin
         ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
         ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
