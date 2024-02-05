@@ -58,8 +58,8 @@ if {$2 eq "configOptions"} {
     # }
     # puts $arguments
     # set options eval $arguments
-    # **** fix this so we can pass any number of +defines.
-    # only allows 3 right now
+    # **** fix this so we can pass any number of +defines or top level params.
+    # only allows 1 right now
 
     vlog -lint -work wkdir/work_${1}_${3}_${4} +incdir+../config/$1 +incdir+../config/deriv/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286 
     # start and run simulation
