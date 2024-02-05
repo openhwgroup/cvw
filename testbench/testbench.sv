@@ -286,7 +286,6 @@ module testbench;
         bootmemfilename = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
       end
       else            memfilename = {pathname, tests[test], ".elf.memfile"};
-      $display("!!!!!!!!!!!!!!!!!!!!!memfilename is %s \n", memfilename);
       if (riscofTest) begin
         ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
         ProgramLabelMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.lab"};
@@ -539,6 +538,12 @@ module testbench;
   //assign DCacheFlushStart =  TestComplete;
   
   DCacheFlushFSM #(P) DCacheFlushFSM(.clk(clk), .reset(reset), .start(DCacheFlushStart), .done(DCacheFlushDone));
+
+  logic [P.XLEN-1:0] Minstret;
+  assign Minstret = testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2];  
+  always @(negedge clk) begin
+    if((Minstret != 0) && (Minstret % 'd100000 == 0)) $display("Reached %d instructions", Minstret);
+  end
 
   task automatic CheckSignature;
     // This task must be declared inside this module as it needs access to parameter P.  There is
