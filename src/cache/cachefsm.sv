@@ -119,7 +119,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
       STATE_READY:           if(InvalidateCache)                               NextState = STATE_READY;     // exclusion-tag: dcache InvalidateCheck
                              else if(FlushCache & ~READ_ONLY_CACHE)            NextState = STATE_FLUSH;     // exclusion-tag: icache FLUSHStatement
                              else if(AnyMiss & (READ_ONLY_CACHE | ~LineDirty)) NextState = STATE_FETCH;     // exclusion-tag: icache FETCHStatement
-                             else if(AnyMiss | CMOWriteback)                   NextState = STATE_WRITEBACK; // exclusion-tag: icache WRITEBACKStatement
+                             else if((AnyMiss | CMOWriteback) & ~READ_ONLY_CACHE) NextState = STATE_WRITEBACK; // exclusion-tag: icache WRITEBACKStatement
                              else                                              NextState = STATE_READY;
       STATE_FETCH:           if(CacheBusAck)                                   NextState = STATE_WRITE_LINE;
                              else                                              NextState = STATE_FETCH;
@@ -157,7 +157,6 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
                     (CurrState == STATE_WRITEBACK & CacheBusAck & CMOpM[3]); 
   assign ClearValid = (CurrState == STATE_READY & CMOpM[0]) |
                       (CurrState == STATE_WRITEBACK & CMOpM[2] & CacheBusAck);
-  // coverage off -item e 1 -fecexprrow 8
   assign LRUWriteEn = (((CurrState == STATE_READY & (AnyHit | CMOZeroNoEviction)) |
                        (CurrState == STATE_WRITE_LINE)) & ~FlushStage) |
                       (CurrState == STATE_WRITEBACK & CMOpM[3] & CacheBusAck);
@@ -189,8 +188,6 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
                          (CurrState == STATE_WRITEBACK & CacheBusAck & ~(|CMOpM));
 
   logic LoadMiss;
-  
-  //assign StoreMiss = (CacheRW[0]) & ~CacheHit & ~InvalidateCache; // exclusion-tag: cache AnyMiss
   assign LoadMiss = (CacheRW[1]) & ~CacheHit & ~InvalidateCache; // exclusion-tag: cache AnyMiss
 
   assign CacheBusRW[0] = (CurrState == STATE_READY & LoadMiss & LineDirty) | // exclusion-tag: icache CacheBusW

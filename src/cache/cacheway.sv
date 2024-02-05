@@ -53,7 +53,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   output logic [LINELEN-1:0]          ReadDataLineWay,// This way's read data if valid
   output logic                        HitWay,         // This way hits
   output logic                        ValidWay,       // This way is valid
-  output logic                        HitDirtyWay, // The hit way is dirty
+  output logic                        HitDirtyWay,    // The hit way is dirty
   output logic                        DirtyWay   ,    // The selected way is dirty
   output logic [TAGLEN-1:0]           TagWay);        // This way's tag if valid
 
