@@ -83,13 +83,12 @@ if {$2 eq "configOptions"} {
         vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt +cover=sbecf
         vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829 -coverage
     } else {
-        vopt +acc wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt
+        vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt
         vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
     }
 #    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
     # power add generates the logging necessary for said generation.
     # power add -r /dut/core/*
-    do wave.do
     run -all
     # power off -r /dut/core/*
 } 

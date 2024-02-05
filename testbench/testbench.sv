@@ -384,10 +384,10 @@ module testbench;
       if (LoadMem) begin
         if (TEST == "buildroot") begin
           memFile = $fopen(bootmemfilename, "rb");
-          readResult = $fread(dut.uncore.uncore.ram.ram.memory.RAM, memFile);
+          readResult = $fread(dut.uncore.uncore.bootrom.bootrom.memory.ROM, memFile);
           $fclose(memFile);
           memFile = $fopen(memfilename, "rb");
-          readResult = $fread(dut.uncore.uncore.bootrom.bootrom.memory.ROM, memFile);
+          readResult = $fread(dut.uncore.uncore.ram.ram.memory.RAM, memFile);
           $fclose(memFile);
         end else 
           $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
