@@ -539,10 +539,12 @@ module testbench;
   
   DCacheFlushFSM #(P) DCacheFlushFSM(.clk(clk), .reset(reset), .start(DCacheFlushStart), .done(DCacheFlushDone));
 
-  logic [P.XLEN-1:0] Minstret;
-  assign Minstret = testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2];  
-  always @(negedge clk) begin
-    if((Minstret != 0) && (Minstret % 'd100000 == 0)) $display("Reached %d instructions", Minstret);
+  if(P.ZICSR_SUPPORTED) begin
+    logic [P.XLEN-1:0] Minstret;
+    assign Minstret = testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2];  
+    always @(negedge clk) begin
+      if((Minstret != 0) && (Minstret % 'd100000 == 0)) $display("Reached %d instructions", Minstret);
+    end
   end
 
   task automatic CheckSignature;
