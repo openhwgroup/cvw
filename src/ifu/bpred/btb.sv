@@ -39,6 +39,7 @@ module btb import cvw::*;  #(parameter cvw_t P,
   output logic [P.XLEN-1:0] BPBTAD,
   output logic [P.XLEN-1:0] BPBTAE,
   output logic [3:0]       BTBIClassF,                  // BTB's guess at instruction class
+  output logic BPBTAWrongM,
   // update
   input  logic             IClassWrongM,                // BTB's instruction class guess was wrong
   input  logic             IClassWrongE,
@@ -57,7 +58,7 @@ module btb import cvw::*;  #(parameter cvw_t P,
   logic [P.XLEN-1:0]        IEUAdrW;
   logic [P.XLEN-1:0]        PCW;
   logic                    BTBWrongE, BPBTAWrongE;
-  logic                    BTBWrongM, BPBTAWrongM;
+  logic                    BTBWrongM;
   
   
   // hashing function for indexing the PC
