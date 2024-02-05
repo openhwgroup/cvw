@@ -68,4 +68,5 @@ benchmarks:
 	$(MAKE) -C ../benchmarks/embench build
 	$(MAKE) -C ../benchmarks/embench size
 	$(MAKE) -C ../benchmarks/embench modelsim_build_memfile
+	$(MAKE) -C ../benchmarks/coremark 
 
