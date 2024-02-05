@@ -1,5 +1,5 @@
 
-all: riscoftests memfiles coveragetests deriv
+all: riscoftests memfiles coveragetests deriv benchmarks
 	# *** Build old tests/imperas-riscv-tests for now;
 	# Delete this part when the privileged tests transition over to tests/wally-riscv-arch-test
 	# DH: 2/27/22 temporarily commented out imperas-riscv-tests because license expired
@@ -54,7 +54,7 @@ riscoftests:
 wallyriscoftests: 
 # 	Builds riscv-arch-test 64 and 32-bit versions and builds wally-riscv-arch-test 64 and 32-bit versions
 	make -C ../tests/riscof/ wally-riscv-arch-test
-	
+
 memfiles:
 	make -f makefile-memfile wally-sim-files --jobs
 
@@ -63,4 +63,9 @@ coveragetests:
 
 deriv:
 	derivgen.pl
-	
+
+benchmarks:
+	$(MAKE) -C ../benchmarks/embench build
+	$(MAKE) -C ../benchmarks/embench size
+	$(MAKE) -C ../benchmarks/embench modelsim_build_memfile
+
