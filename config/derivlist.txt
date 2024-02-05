@@ -46,7 +46,7 @@ UART_PRESCALE       32'd0
 PLIC_NUM_SRC        32'd53
 
 # fpga is used for FPGA hardware.  It adds the SDC and DDR (EXT_MEM)
-deriv fpga  rv64gc buildroot
+deriv fpga  buildroot 
 BOOTROM_PRELOAD     1
 UNCORE_RAM_BASE     64'h2000
 UNCORE_RAM_RANGE    64'hFFF
@@ -71,7 +71,7 @@ BTB_SIZE            32'd5
 # The other syn configurations have the same trimming
 deriv syn_rv32i rv32i syn_rv32e
 deriv syn_rv32imc rv32imc syn_rv32e
-deriv syn_rv32gc rv32gc syn_rv32e
+deriv syn_rv32gc syn_rv32e
 deriv syn_rv64i rv64i syn_rv32e
 deriv syn_rv64gc rv64gc syn_rv32e
 
@@ -84,34 +84,34 @@ USE_SRAM            1
 # The other syn configurations have the same trimming
 deriv syn_sram_rv32i rv32i syn_sram_rv32e
 deriv syn_sram_rv32imc rv32imc syn_sram_rv32e
-deriv syn_sram_rv32gc rv32gc syn_sram_rv32e
+deriv syn_sram_rv32gc syn_sram_rv32e
 deriv syn_sram_rv64i rv64i syn_sram_rv32e
 deriv syn_sram_rv64gc rv64gc syn_sram_rv32e
 
 # The following syn configurations gradually turn off features
-deriv syn_pmp0_rv64gc rv64gc syn_rv64gc
+deriv syn_pmp0_rv64gc syn_rv64gc
 PMP_ENTRIES         32'd0
-deriv syn_sram_pmp0_rv64gc rv64gc syn_sram_rv64gc
+deriv syn_sram_pmp0_rv64gc syn_sram_rv64gc
 PMP_ENTRIES         32'd0
 
-deriv syn_noPriv_rv64gc rv64gc syn_pmp0_rv64gc
+deriv syn_noPriv_rv64gc syn_pmp0_rv64gc
 ZICSR_SUPPORTED     0
-deriv syn_sram_noPriv_rv64gc rv64gc syn_sram_pmp0_rv64gc
+deriv syn_sram_noPriv_rv64gc syn_sram_pmp0_rv64gc
 ZICSR_SUPPORTED     0
 
-deriv syn_noFPU_rv64gc rv64gc syn_noPriv_rv64gc
+deriv syn_noFPU_rv64gc syn_noPriv_rv64gc
 MISA                (32'h00000104 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0)
-deriv syn_sram_noFPU_rv64gc rv64gc syn_sram_noPriv_rv64gc
+deriv syn_sram_noFPU_rv64gc syn_sram_noPriv_rv64gc
 MISA                (32'h00000104 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0)
 
-deriv syn_noMulDiv_rv64gc rv64gc syn_noFPU_rv64gc
+deriv syn_noMulDiv_rv64gc syn_noFPU_rv64gc
 MISA                (32'h00000104 | 1 << 18 | 1 << 20 | 1 << 0)
-deriv syn_sram_noMulDiv_rv64gc rv64gc syn_sram_noFPU_rv64gc
+deriv syn_sram_noMulDiv_rv64gc syn_sram_noFPU_rv64gc
 MISA                (32'h00000104 | 1 << 18 | 1 << 20 | 1 << 0)
 
-deriv syn_noAtomic_rv64gc rv64gc syn_noMulDiv_rv64gc
+deriv syn_noAtomic_rv64gc syn_noMulDiv_rv64gc
 MISA                (32'h00000104 | 1 << 18 | 1 << 20)
-deriv syn_sram_noAtomic_rv64gc rv64gc syn_sram_noMulDiv_rv64gc
+deriv syn_sram_noAtomic_rv64gc syn_sram_noMulDiv_rv64gc
 MISA                (32'h00000104 | 1 << 18 | 1 << 20)
 
 # Divider variants to check logical correctness
@@ -147,22 +147,22 @@ RADIX               32'd4
 DIVCOPIES           32'd4
 IDIV_ON_FPU         0
 
-deriv div_2_1i_rv32gc rv32gc div_2_1_rv32gc
+deriv div_2_1i_rv32gc div_2_1_rv32gc
 IDIV_ON_FPU         1
 
-deriv div_2_2i_rv32gc rv32gc div_2_2_rv32gc
+deriv div_2_2i_rv32gc div_2_2_rv32gc
 IDIV_ON_FPU         1
 
-deriv div_2_4i_rv32gc rv32gc div_2_4_rv32gc
+deriv div_2_4i_rv32gc div_2_4_rv32gc
 IDIV_ON_FPU         1
 
-deriv div_4_1i_rv32gc rv32gc div_4_1_rv32gc
+deriv div_4_1i_rv32gc div_4_1_rv32gc
 IDIV_ON_FPU         1
 
-deriv div_4_2i_rv32gc rv32gc div_4_2_rv32gc
+deriv div_4_2i_rv32gc div_4_2_rv32gc
 IDIV_ON_FPU         1
 
-deriv div_4_4i_rv32gc rv32gc div_4_4_rv32gc
+deriv div_4_4i_rv32gc div_4_4_rv32gc
 IDIV_ON_FPU         1
 
 deriv div_2_1_rv64gc    rv64gc
@@ -195,22 +195,22 @@ RADIX               32'd4
 DIVCOPIES           32'd4
 IDIV_ON_FPU         0
 
-deriv div_2_1i_rv64gc rv64gc div_2_1_rv64gc
+deriv div_2_1i_rv64gc div_2_1_rv64gc
 IDIV_ON_FPU         1
 
-deriv div_2_2i_rv64gc rv64gc div_2_2_rv64gc
+deriv div_2_2i_rv64gc div_2_2_rv64gc
 IDIV_ON_FPU         1
 
-deriv div_2_4i_rv64gc rv64gc div_2_4_rv64gc
+deriv div_2_4i_rv64gc div_2_4_rv64gc
 IDIV_ON_FPU         1
 
-deriv div_4_1i_rv64gc rv64gc div_4_1_rv64gc
+deriv div_4_1i_rv64gc div_4_1_rv64gc
 IDIV_ON_FPU         1
 
-deriv div_4_2i_rv64gc rv64gc div_4_2_rv64gc
+deriv div_4_2i_rv64gc div_4_2_rv64gc
 IDIV_ON_FPU         1
 
-deriv div_4_4i_rv64gc rv64gc div_4_4_rv64gc
+deriv div_4_4i_rv64gc div_4_4_rv64gc
 IDIV_ON_FPU         1
 
 # RAM latency and Burst mode for bus stress testing
@@ -255,22 +255,22 @@ BPRED_SIZE          32'd14
 deriv bpred_GSHARE_16_16_10_1_rv32gc rv32gc
 BPRED_SIZE          32'd16
 
-deriv bpred_TWOBIT_6_16_10_1_rv32gc rv32gc bpred_GSHARE_6_16_10_1_rv32gc
+deriv bpred_TWOBIT_6_16_10_1_rv32gc bpred_GSHARE_6_16_10_1_rv32gc
 BPRED_TYPE          `BP_TWOBIT
 
-deriv bpred_TWOBIT_8_16_10_1_rv32gc rv32gc bpred_GSHARE_8_16_10_1_rv32gc
+deriv bpred_TWOBIT_8_16_10_1_rv32gc bpred_GSHARE_8_16_10_1_rv32gc
 BPRED_TYPE          `BP_TWOBIT
 
-deriv bpred_TWOBIT_10_16_10_1_rv32gc rv32gc bpred_GSHARE_10_16_10_1_rv32gc
+deriv bpred_TWOBIT_10_16_10_1_rv32gc bpred_GSHARE_10_16_10_1_rv32gc
 BPRED_TYPE          `BP_TWOBIT
 
-deriv bpred_TWOBIT_12_16_10_1_rv32gc rv32gc bpred_GSHARE_12_16_10_1_rv32gc
+deriv bpred_TWOBIT_12_16_10_1_rv32gc bpred_GSHARE_12_16_10_1_rv32gc
 BPRED_TYPE          `BP_TWOBIT
 
-deriv bpred_TWOBIT_14_16_10_1_rv32gc rv32gc bpred_GSHARE_14_16_10_1_rv32gc
+deriv bpred_TWOBIT_14_16_10_1_rv32gc bpred_GSHARE_14_16_10_1_rv32gc
 BPRED_TYPE          `BP_TWOBIT
 
-deriv bpred_TWOBIT_16_16_10_1_rv32gc rv32gc bpred_GSHARE_16_16_10_1_rv32gc
+deriv bpred_TWOBIT_16_16_10_1_rv32gc bpred_GSHARE_16_16_10_1_rv32gc
 BPRED_TYPE          `BP_TWOBIT
 
 deriv bpred_GSHARE_10_2_10_1_rv32gc rv32gc
@@ -309,73 +309,73 @@ BTB_SIZE          32'd16
 
 
 
-deriv bpred_GSHARE_6_16_10_0_rv32gc rv32gc bpred_GSHARE_6_16_10_1_rv32gc 
+deriv bpred_GSHARE_6_16_10_0_rv32gc bpred_GSHARE_6_16_10_1_rv32gc 
 INSTR_CLASS_PRED  0
 
-deriv bpred_GSHARE_8_16_10_0_rv32gc rv32gc bpred_GSHARE_8_16_10_1_rv32gc
+deriv bpred_GSHARE_8_16_10_0_rv32gc bpred_GSHARE_8_16_10_1_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_GSHARE_10_16_10_0_rv32gc rv32gc bpred_GSHARE_10_16_10_1_rv32gc
+deriv bpred_GSHARE_10_16_10_0_rv32gc bpred_GSHARE_10_16_10_1_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_GSHARE_12_16_10_0_rv32gc rv32gc bpred_GSHARE_12_16_10_1_rv32gc
+deriv bpred_GSHARE_12_16_10_0_rv32gc bpred_GSHARE_12_16_10_1_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_GSHARE_14_16_10_0_rv32gc rv32gc bpred_GSHARE_14_16_10_1_rv32gc
+deriv bpred_GSHARE_14_16_10_0_rv32gc bpred_GSHARE_14_16_10_1_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_GSHARE_16_16_10_0_rv32gc rv32gc bpred_GSHARE_16_16_10_1_rv32gc
+deriv bpred_GSHARE_16_16_10_0_rv32gc bpred_GSHARE_16_16_10_1_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_TWOBIT_6_16_10_0_rv32gc rv32gc bpred_GSHARE_6_16_10_0_rv32gc
+deriv bpred_TWOBIT_6_16_10_0_rv32gc bpred_GSHARE_6_16_10_0_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_TWOBIT_8_16_10_0_rv32gc rv32gc bpred_GSHARE_8_16_10_0_rv32gc
+deriv bpred_TWOBIT_8_16_10_0_rv32gc bpred_GSHARE_8_16_10_0_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_TWOBIT_10_16_10_0_rv32gc rv32gc bpred_GSHARE_10_16_10_0_rv32gc
+deriv bpred_TWOBIT_10_16_10_0_rv32gc bpred_GSHARE_10_16_10_0_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_TWOBIT_12_16_10_0_rv32gc rv32gc bpred_GSHARE_12_16_10_0_rv32gc
+deriv bpred_TWOBIT_12_16_10_0_rv32gc bpred_GSHARE_12_16_10_0_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_TWOBIT_14_16_10_0_rv32gc rv32gc bpred_GSHARE_14_16_10_0_rv32gc
+deriv bpred_TWOBIT_14_16_10_0_rv32gc bpred_GSHARE_14_16_10_0_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_TWOBIT_16_16_10_0_rv32gc rv32gc bpred_GSHARE_16_16_10_0_rv32gc
+deriv bpred_TWOBIT_16_16_10_0_rv32gc bpred_GSHARE_16_16_10_0_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_GSHARE_10_2_10_0_rv32gc rv32gc bpred_GSHARE_10_2_10_1_rv32gc
+deriv bpred_GSHARE_10_2_10_0_rv32gc bpred_GSHARE_10_2_10_1_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_GSHARE_10_3_10_0_rv32gc rv32gc bpred_GSHARE_10_3_10_1_rv32gc
+deriv bpred_GSHARE_10_3_10_0_rv32gc bpred_GSHARE_10_3_10_1_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_GSHARE_10_4_10_0_rv32gc rv32gc bpred_GSHARE_10_4_10_1_rv32gc
+deriv bpred_GSHARE_10_4_10_0_rv32gc bpred_GSHARE_10_4_10_1_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_GSHARE_10_6_10_0_rv32gc rv32gc bpred_GSHARE_10_6_10_1_rv32gc
+deriv bpred_GSHARE_10_6_10_0_rv32gc bpred_GSHARE_10_6_10_1_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_GSHARE_10_10_10_0_rv32gc rv32gc bpred_GSHARE_10_10_10_1_rv32gc
+deriv bpred_GSHARE_10_10_10_0_rv32gc bpred_GSHARE_10_10_10_1_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_GSHARE_10_16_10_0_rv32gc rv32gc bpred_GSHARE_10_16_10_1_rv32gc
+deriv bpred_GSHARE_10_16_10_0_rv32gc bpred_GSHARE_10_16_10_1_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_GSHARE_10_16_6_0_rv32gc rv32gc bpred_GSHARE_10_16_6_1_rv32gc
+deriv bpred_GSHARE_10_16_6_0_rv32gc bpred_GSHARE_10_16_6_1_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_GSHARE_10_16_8_0_rv32gc rv32gc bpred_GSHARE_10_16_8_1_rv32gc
+deriv bpred_GSHARE_10_16_8_0_rv32gc bpred_GSHARE_10_16_8_1_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_GSHARE_10_16_12_0_rv32gc rv32gc bpred_GSHARE_10_16_12_1_rv32gc
+deriv bpred_GSHARE_10_16_12_0_rv32gc bpred_GSHARE_10_16_12_1_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_GSHARE_10_16_14_0_rv32gc rv32gc bpred_GSHARE_10_16_14_1_rv32gc
+deriv bpred_GSHARE_10_16_14_0_rv32gc bpred_GSHARE_10_16_14_1_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_GSHARE_10_16_16_0_rv32gc rv32gc bpred_GSHARE_10_16_16_1_rv32gc
+deriv bpred_GSHARE_10_16_16_0_rv32gc bpred_GSHARE_10_16_16_1_rv32gc
 INSTR_CLASS_PRED          0
 
 # Cache configurations
@@ -424,23 +424,23 @@ ICACHE_NUMWAYS      32'd1
 ICACHE_WAYSIZEINBYTES 32'd4096
 ICACHE_LINELENINBITS 32'd512
 
-deriv way_2_4096_512_rv32gc rv32gc way_1_4096_512_rv32gc
+deriv way_2_4096_512_rv32gc way_1_4096_512_rv32gc
 DCACHE_NUMWAYS      32'd1
 ICACHE_NUMWAYS      32'd1
 
-deriv way_4_4096_512_rv32gc rv32gc way_1_4096_512_rv32gc
+deriv way_4_4096_512_rv32gc way_1_4096_512_rv32gc
 DCACHE_NUMWAYS      32'd4
 ICACHE_NUMWAYS      32'd4
 
-deriv way_8_4096_512_rv32gc rv32gc way_1_4096_512_rv32gc
+deriv way_8_4096_512_rv32gc way_1_4096_512_rv32gc
 DCACHE_NUMWAYS      32'd8
 ICACHE_NUMWAYS      32'd8
 
-deriv way_4_2048_512_rv32gc rv32gc way_4_4096_512_rv32gc
+deriv way_4_2048_512_rv32gc way_4_4096_512_rv32gc
 DCACHE_WAYSIZEINBYTES 32'd2048
 ICACHE_WAYSIZEINBYTES 32'd2048
 
-deriv way_4_4096_256_rv32gc rv32gc way_4_4096_512_rv32gc
+deriv way_4_4096_256_rv32gc way_4_4096_512_rv32gc
 DCACHE_LINELENINBITS 32'd256
 ICACHE_LINELENINBITS 32'd256
 
@@ -452,27 +452,27 @@ ICACHE_NUMWAYS      32'd1
 ICACHE_WAYSIZEINBYTES 32'd4096
 ICACHE_LINELENINBITS 32'd512
 
-deriv way_2_4096_512_rv64gc rv64gc way_1_4096_512_rv64gc
+deriv way_2_4096_512_rv64gc way_1_4096_512_rv64gc
 DCACHE_NUMWAYS      32'd1
 ICACHE_NUMWAYS      32'd1
 
-deriv way_4_4096_512_rv64gc rv64gc way_1_4096_512_rv64gc
+deriv way_4_4096_512_rv64gc way_1_4096_512_rv64gc
 DCACHE_NUMWAYS      32'd4
 ICACHE_NUMWAYS      32'd4
 
-deriv way_8_4096_512_rv64gc rv64gc way_1_4096_512_rv64gc
+deriv way_8_4096_512_rv64gc way_1_4096_512_rv64gc
 DCACHE_NUMWAYS      32'd8
 ICACHE_NUMWAYS      32'd8
 
-deriv way_4_2048_512_rv64gc rv64gc way_4_4096_512_rv64gc
+deriv way_4_2048_512_rv64gc way_4_4096_512_rv64gc
 DCACHE_WAYSIZEINBYTES 32'd2048
 ICACHE_WAYSIZEINBYTES 32'd2048
 
-deriv way_4_4096_256_rv64gc rv64gc way_4_4096_512_rv64gc
+deriv way_4_4096_256_rv64gc way_4_4096_512_rv64gc
 DCACHE_LINELENINBITS 32'd256
 ICACHE_LINELENINBITS 32'd256
 
-deriv way_4_4096_1024_rv64gc rv64gc way_4_4096_512_rv64gc
+deriv way_4_4096_1024_rv64gc way_4_4096_512_rv64gc
 DCACHE_LINELENINBITS 32'd1024
 ICACHE_LINELENINBITS 32'd1024
 
@@ -552,32 +552,32 @@ ZFH_SUPPORTED   1
 
 # IEEE compatible variants for TestFloat
 
-deriv f_ieee_rv32gc rv32gc f_rv32gc
+deriv f_ieee_rv32gc f_rv32gc
 IEEE754     1
 
-deriv fh_ieee_v32gc rv32gc fh_rv32gc
+deriv fh_ieee_v32gc fh_rv32gc
 IEEE754     1
 
-deriv fdh_ieee_rv32gc rv32gc fdh_rv32gc
+deriv fdh_ieee_rv32gc fdh_rv32gc
 IEEE754     1
 
-deriv fdq_ieee_rv32gc rv32gc fdq_rv32gc
+deriv fdq_ieee_rv32gc fdq_rv32gc
 IEEE754     1
 
-deriv fdqh_ieee_rv32gc rv32gc fdqh_rv32gc
+deriv fdqh_ieee_rv32gc fdqh_rv32gc
 IEEE754     1
 
-deriv f_ieee_rv64gc rv64gc f_rv64gc
+deriv f_ieee_rv64gc f_rv64gc
 IEEE754     1
 
-deriv fh_ieee_rv64gc rv64gc fh_rv64gc
+deriv fh_ieee_rv64gc fh_rv64gc
 IEEE754     1
 
-deriv fd_ieee_rv64gc rv64gc fd_rv64gc
+deriv fd_ieee_rv64gc fd_rv64gc
 IEEE754     1
 
-deriv fdq_ieee_rv64gc rv64gc fdq_rv64gc
+deriv fdq_ieee_rv64gc fdq_rv64gc
 IEEE754     1
 
-deriv fdqh_ieee_rv64gc rv64gc fdqh_rv64gc
+deriv fdqh_ieee_rv64gc fdqh_rv64gc
 IEEE754     1

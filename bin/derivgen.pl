@@ -76,6 +76,12 @@ foreach my $key (keys %derivs) {
     my $configunmod = "$dir/config_unmod.vh";
     my $config = "$dir/config.vh";
     my $base = "$ENV{WALLY}/config/$basederiv{$key}/config.vh";
+    if (! -e $base) {
+        $base = "$ENV{WALLY}/config/deriv/$basederiv{$key}/config.vh";
+        if (! -e $base) {
+            die("Unable to find base config $base for $key\n");
+        }
+    }
     system("cp $base $configunmod");
     open(my $unmod, $configunmod) or die "Could not open file '$configunmod' $!";
     open(my $fh, '>>', $config) or die "Could not open file '$config' $!";
