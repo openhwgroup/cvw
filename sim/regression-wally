@@ -88,7 +88,7 @@ for test in tests64i:
   configs.append(tc)
 
 tests32gcimperas = ["imperas32i", "imperas32f", "imperas32m", "imperas32c"] # unused
-tests32gc = ["arch32f", "arch32d", "arch32f_fma", "arch32d_fma", "arch32f_fdivsqrt", "arch32d_fdivsqrt", "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32a", "arch32zifencei", "arch32zicond", "arch32zba", "arch32zbb", "arch32zbs", "arch32zfh", "arch32zfh_fma", "arch32zfh_fdivsqrt", "arch32zfaf", "wally32a", "wally32priv", "wally32periph"]  # "arch32zbc", "arch32zfad",
+tests32gc = ["arch32f", "arch32d", "arch32f_fma", "arch32d_fma", "arch32f_divsqrt", "arch32d_divsqrt", "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32a", "arch32zifencei", "arch32zicond", "arch32zba", "arch32zbb", "arch32zbs", "arch32zfh", "arch32zfh_fma", "arch32zfh_divsqrt", "arch32zfaf", "wally32a", "wally32priv", "wally32periph"]  # "arch32zbc", "arch32zfad",
 #tests32gc = ["arch32f", "arch32d", "arch32f_fma", "arch32d_fma", "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32a", "arch32zifencei", "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "arch32zicboz", "arch32zcb", "wally32a",  "wally32priv", "wally32periph"]  
 for test in tests32gc:
   tc = TestCase(
