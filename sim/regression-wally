@@ -72,7 +72,7 @@ def getBuildrootTC(boot):
             BRcmd="vsim > {} -c <<!\ndo wally-batch.do buildroot buildroot $RISCV "+str(INSTR_LIMIT)+" 1 0 -coverage\n!"
         else:
             print( "buildroot no coverage")
-            BRcmd="vsim > {} -c <<!\ndo wally-batch.do buildroot buildroot -GINSTR_LIMIT=" +str(INSTR_LIMIT) + " \n!"
+            BRcmd="vsim > {} -c <<!\ndo wally-batch.do buildroot configOptions buildroot -GINSTR_LIMIT=" +str(INSTR_LIMIT) + " \n!"
         BRgrepstr=str(INSTR_LIMIT)+" instructions"
     return  TestCase(name,variant="rv64gc",cmd=BRcmd,grepstr=BRgrepstr)
 
