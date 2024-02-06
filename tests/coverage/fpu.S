@@ -37,6 +37,16 @@ main:
     flw ft0, 0(t0)
     fclass.s t1, ft0
 
+    # zfa instructions (because Zfa tests aren't running yet)
+    fli.d fs0, 16
+    fcvtmod.w.d t0, fs0, rtz
+    fminm.d fs1, fs0, fs0
+    fmaxm.d fs1, fs0, fs0
+    fround.d fs1, fs0
+    froundnx.d fs1, fs0
+    fltq.d t0, fs1, ft0
+    fleq.d t0, fs1, ft0
+
     #Result Sign Test Coverage
     la t0, TestData2
     flw ft0, 0(t0)

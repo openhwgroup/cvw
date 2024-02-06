@@ -130,7 +130,7 @@ module testbench;
         "arch64zicboz":  if (P.ZICBOZ_SUPPORTED)  tests = arch64zicboz;
         "arch64zcb":     if (P.ZCB_SUPPORTED)     tests = arch64zcb;
         "arch64zfh":     if (P.ZFH_SUPPORTED)     tests = arch64zfh;
-//        "arch64zfh_fma": if (P.ZFH_SUPPORTED)     tests = arch64zfh_fma; *** not yet in riscv-arch-tst PR367
+        "arch64zfh_fma": if (P.ZFH_SUPPORTED)     tests = arch64zfh_fma; 
         "arch64zfh_divsqrt":     if (P.ZFH_SUPPORTED)     tests = arch64zfh_divsqrt;
         "arch64zfaf":    if (P.ZFA_SUPPORTED)     tests = arch64zfaf;
         "arch64zfad":    if (P.ZFA_SUPPORTED & P.D_SUPPORTED)  tests = arch64zfad;
@@ -172,7 +172,7 @@ module testbench;
         "arch32zicboz":  if (P.ZICBOZ_SUPPORTED)  tests = arch32zicboz;
         "arch32zcb":     if (P.ZCB_SUPPORTED)     tests = arch32zcb;
         "arch32zfh":     if (P.ZFH_SUPPORTED)     tests = arch32zfh;
- //       "arch32zfh_fma": if (P.ZFH_SUPPORTED)     tests = arch32zfh_fma; *** not yet in riscv-arch-tst PR367
+        "arch32zfh_fma": if (P.ZFH_SUPPORTED)     tests = arch32zfh_fma; 
         "arch32zfh_divsqrt":     if (P.ZFH_SUPPORTED)     tests = arch32zfh_divsqrt;
         "arch32zfaf":    if (P.ZFA_SUPPORTED)     tests = arch32zfaf;
         "arch32zfad":    if (P.ZFA_SUPPORTED & P.D_SUPPORTED)  tests = arch32zfad;

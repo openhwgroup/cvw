@@ -1126,6 +1126,14 @@ string imperas32f[] = '{
     // "rv64i_m/F/src/fnmsub_b15-01.S"
   };
 
+    string arch64zfh_fma[] = '{
+    `RISCVARCHTEST,
+    //"rv64i_m/F/src/fmadd_b15-01.S",
+    "rv64i_m/Zfh/src/fmsub_b15-01.S"
+    // "rv64i_m/F/src/fnmadd_b15-01.S",
+    // "rv64i_m/F/src/fnmsub_b15-01.S"
+  };
+
   string arch64f_divsqrt[] = '{
     `RISCVARCHTEST,
     "rv64i_m/F/src/fdiv_b20-01.S",
@@ -1393,7 +1401,55 @@ string imperas32f[] = '{
     "rv64i_m/Zfh/src/fsub_b5-01.S",
     "rv64i_m/Zfh/src/fsub_b7-01.S",
     "rv64i_m/Zfh/src/fsub_b8-01.S",
-    "rv64i_m/Zfh/src/fsh-align-01.S"
+    "rv64i_m/Zfh/src/fsh-align-01.S",
+    "rv64i_m/Zfh/src/fmadd_b1-01.S",
+    "rv64i_m/Zfh/src/fmadd_b14-01.S",
+    "rv64i_m/Zfh/src/fmadd_b16-01.S",
+    "rv64i_m/Zfh/src/fmadd_b17-01.S",
+    "rv64i_m/Zfh/src/fmadd_b18-01.S",
+    "rv64i_m/Zfh/src/fmadd_b2-01.S",
+    "rv64i_m/Zfh/src/fmadd_b3-01.S",
+    "rv64i_m/Zfh/src/fmadd_b4-01.S",
+    "rv64i_m/Zfh/src/fmadd_b5-01.S",
+    "rv64i_m/Zfh/src/fmadd_b6-01.S",
+    "rv64i_m/Zfh/src/fmadd_b7-01.S",
+    "rv64i_m/Zfh/src/fmadd_b8-01.S",
+    "rv64i_m/Zfh/src/fmsub_b1-01.S",
+    "rv64i_m/Zfh/src/fmsub_b14-01.S",
+    "rv64i_m/Zfh/src/fmsub_b16-01.S",
+    "rv64i_m/Zfh/src/fmsub_b17-01.S",
+    "rv64i_m/Zfh/src/fmsub_b18-01.S",
+    "rv64i_m/Zfh/src/fmsub_b2-01.S",
+    "rv64i_m/Zfh/src/fmsub_b3-01.S",
+    "rv64i_m/Zfh/src/fmsub_b4-01.S",
+    "rv64i_m/Zfh/src/fmsub_b5-01.S",
+    "rv64i_m/Zfh/src/fmsub_b6-01.S",
+    "rv64i_m/Zfh/src/fmsub_b7-01.S",
+    "rv64i_m/Zfh/src/fmsub_b8-01.S",
+    "rv64i_m/Zfh/src/fnmadd_b1-01.S",
+    "rv64i_m/Zfh/src/fnmadd_b14-01.S",
+    "rv64i_m/Zfh/src/fnmadd_b16-01.S",
+    "rv64i_m/Zfh/src/fnmadd_b17-01.S",
+    "rv64i_m/Zfh/src/fnmadd_b18-01.S",
+    "rv64i_m/Zfh/src/fnmadd_b2-01.S",
+    "rv64i_m/Zfh/src/fnmadd_b3-01.S",
+    "rv64i_m/Zfh/src/fnmadd_b4-01.S",
+    "rv64i_m/Zfh/src/fnmadd_b5-01.S",
+    "rv64i_m/Zfh/src/fnmadd_b6-01.S",
+    "rv64i_m/Zfh/src/fnmadd_b7-01.S",
+    "rv64i_m/Zfh/src/fnmadd_b8-01.S",
+    "rv64i_m/Zfh/src/fnmsub_b1-01.S",
+    "rv64i_m/Zfh/src/fnmsub_b14-01.S",
+    "rv64i_m/Zfh/src/fnmsub_b16-01.S",
+    "rv64i_m/Zfh/src/fnmsub_b17-01.S",
+    "rv64i_m/Zfh/src/fnmsub_b18-01.S",
+    "rv64i_m/Zfh/src/fnmsub_b2-01.S",
+    "rv64i_m/Zfh/src/fnmsub_b3-01.S",
+    "rv64i_m/Zfh/src/fnmsub_b4-01.S",
+    "rv64i_m/Zfh/src/fnmsub_b5-01.S",
+    "rv64i_m/Zfh/src/fnmsub_b6-01.S",
+    "rv64i_m/Zfh/src/fnmsub_b7-01.S",
+    "rv64i_m/Zfh/src/fnmsub_b8-01.S"
     };
 
 
@@ -1975,7 +2031,55 @@ string arch64zbs[] = '{
     "rv32i_m/Zfh/src/fsub_b5-01.S",
     "rv32i_m/Zfh/src/fsub_b7-01.S",
     "rv32i_m/Zfh/src/fsub_b8-01.S",
-    "rv32i_m/Zfh/src/fsh-align-01.S"
+    "rv32i_m/Zfh/src/fsh-align-01.S",
+    "rv32i_m/Zfh/src/fmadd_b1-01.S",
+    "rv32i_m/Zfh/src/fmadd_b14-01.S",
+    "rv32i_m/Zfh/src/fmadd_b16-01.S",
+    "rv32i_m/Zfh/src/fmadd_b17-01.S",
+    "rv32i_m/Zfh/src/fmadd_b18-01.S",
+    "rv32i_m/Zfh/src/fmadd_b2-01.S",
+    "rv32i_m/Zfh/src/fmadd_b3-01.S",
+    "rv32i_m/Zfh/src/fmadd_b4-01.S",
+    "rv32i_m/Zfh/src/fmadd_b5-01.S",
+    "rv32i_m/Zfh/src/fmadd_b6-01.S",
+    "rv32i_m/Zfh/src/fmadd_b7-01.S",
+    "rv32i_m/Zfh/src/fmadd_b8-01.S",
+    "rv32i_m/Zfh/src/fmsub_b1-01.S",
+    "rv32i_m/Zfh/src/fmsub_b14-01.S",
+    "rv32i_m/Zfh/src/fmsub_b16-01.S",
+    "rv32i_m/Zfh/src/fmsub_b17-01.S",
+    "rv32i_m/Zfh/src/fmsub_b18-01.S",
+    "rv32i_m/Zfh/src/fmsub_b2-01.S",
+    "rv32i_m/Zfh/src/fmsub_b3-01.S",
+    "rv32i_m/Zfh/src/fmsub_b4-01.S",
+    "rv32i_m/Zfh/src/fmsub_b5-01.S",
+    "rv32i_m/Zfh/src/fmsub_b6-01.S",
+    "rv32i_m/Zfh/src/fmsub_b7-01.S",
+    "rv32i_m/Zfh/src/fmsub_b8-01.S",
+    "rv32i_m/Zfh/src/fnmadd_b1-01.S",
+    "rv32i_m/Zfh/src/fnmadd_b14-01.S",
+    "rv32i_m/Zfh/src/fnmadd_b16-01.S",
+    "rv32i_m/Zfh/src/fnmadd_b17-01.S",
+    "rv32i_m/Zfh/src/fnmadd_b18-01.S",
+    "rv32i_m/Zfh/src/fnmadd_b2-01.S",
+    "rv32i_m/Zfh/src/fnmadd_b3-01.S",
+    "rv32i_m/Zfh/src/fnmadd_b4-01.S",
+    "rv32i_m/Zfh/src/fnmadd_b5-01.S",
+    "rv32i_m/Zfh/src/fnmadd_b6-01.S",
+    "rv32i_m/Zfh/src/fnmadd_b7-01.S",
+    "rv32i_m/Zfh/src/fnmadd_b8-01.S",
+    "rv32i_m/Zfh/src/fnmsub_b1-01.S",
+    "rv32i_m/Zfh/src/fnmsub_b14-01.S",
+    "rv32i_m/Zfh/src/fnmsub_b16-01.S",
+    "rv32i_m/Zfh/src/fnmsub_b17-01.S",
+    "rv32i_m/Zfh/src/fnmsub_b18-01.S",
+    "rv32i_m/Zfh/src/fnmsub_b2-01.S",
+    "rv32i_m/Zfh/src/fnmsub_b3-01.S",
+    "rv32i_m/Zfh/src/fnmsub_b4-01.S",
+    "rv32i_m/Zfh/src/fnmsub_b5-01.S",
+    "rv32i_m/Zfh/src/fnmsub_b6-01.S",
+    "rv32i_m/Zfh/src/fnmsub_b7-01.S",
+    "rv32i_m/Zfh/src/fnmsub_b8-01.S"
     };
 
   string arch32zfaf[] = '{
@@ -2064,6 +2168,14 @@ string arch64zbs[] = '{
     //"rv32i_m/D/src/fmsub.d_b15-01.S",
     // "rv32i_m/D/src/fnmadd.d_b15-01.S",
     "rv32i_m/D/src/fnmsub.d_b15-01.S"
+  };
+
+string arch32zfh_fma[] = '{
+    `RISCVARCHTEST,
+    //"rv32i_m/D/src/fmadd.d_b15-01.S",
+    //"rv32i_m/D/src/fmsub.d_b15-01.S",
+    // "rv32i_m/D/src/fnmadd.d_b15-01.S",
+    "rv32i_m/Zfh/src/fnmsub.d_b15-01.S"
   };
 
   string arch32d_divsqrt[] = '{
