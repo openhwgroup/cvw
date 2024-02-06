@@ -38,7 +38,7 @@ for config in ${configs[@]}; do
         echo -e "${GREEN}$config passed lint${NC}"
     fi
 done
-if [ $fails > 0 ]; then
+if [ $fails -gt 0 ]; then
     echo -e "${RED}Linting failed for $fails of ${#configs[@]} configurations"
     exit 1
 fi
