@@ -40,12 +40,24 @@ main:
     # zfa instructions (because Zfa tests aren't running yet)
     fli.d fs0, 16
     fcvtmod.w.d t0, fs0, rtz
-    fminm.d fs1, fs0, fs0
-    fmaxm.d fs1, fs0, fs0
-    fround.d fs1, fs0
+#    fminm.d fs1, fs0, fs0
+#    fmaxm.d fs1, fs0, fs0
+#    fltq.d t0, fs1, ft0
+#    fleq.d t0, fs1, ft0
+    fcvt.d.q fs1, fs0
+    fcvt.h.q fs1, fs0
+    fcvt.s.q fs1, fs0
+    # round for now because these tests are excluded from Zfa until rounding is implemented
+    fround.s fs1, fs0       
+    froundnx.s fs1, fs0
+    fround.d fs1, fs0       
     froundnx.d fs1, fs0
-    fltq.d t0, fs1, ft0
-    fleq.d t0, fs1, ft0
+    fround.h fs1, fs0
+    froundnx.h fs1, fs0
+    fround.s fs1, fs0
+    froundnx.s fs1, fs0
+    fmvp.d.x
+
 
     #Result Sign Test Coverage
     la t0, TestData2
