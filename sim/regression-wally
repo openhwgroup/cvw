@@ -295,7 +295,7 @@ if (nightly):
             tc = TestCase(
                     name=t,
                     variant=config,
-                    cmd=cmdPrefix+" "+t+" configOption "+configOptions+"\n!",
+                    cmd=cmdPrefix+" "+t+" configOptions "+configOptions+"\n!",
                     grepstr="All tests ran without failures")
             configs.append(tc)
 

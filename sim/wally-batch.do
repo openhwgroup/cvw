@@ -21,18 +21,10 @@
 onbreak {resume}
 
 # create library
-if {$2 eq "configOptions"} {
-    if [file exists wkdir/work_${1}_${3}_${4}] {
-        vdel -lib wkdir/work_${1}_${3}_${4} -all
-    }
-    vlib wkdir/work_${1}_${3}_${4}
-
-} else {
-    if [file exists wkdir/work_${1}_${2}] {
-        vdel -lib wkdir/work_${1}_${2} -all
-    }
-    vlib wkdir/work_${1}_${2}
+if [file exists wkdir/work_${1}_${2}] {
+    vdel -lib wkdir/work_${1}_${2} -all
 }
+vlib wkdir/work_${1}_${2}
 # Create directory for coverage data
 mkdir -p cov
 
@@ -51,6 +43,7 @@ for {set i 0} true {incr i} {
     set arg [expr "$$x"]
     lappend lst $arg
 }
+
 if {$argc >= 3} {
     if {$3 eq "-coverage" || ($argc >= 7 && $7 eq "-coverage")} {
         set coverage 1
@@ -58,7 +51,6 @@ if {$argc >= 3} {
         set configOptions $lst
         puts $configOptions
     }
-    
 }
 
 # compile source files
