@@ -33,6 +33,9 @@ mkdir -p cov
 # if the do file isd called from questa sim directly.  This chunk of code uses the $4 through $n
 # variables and compacts into a single list for passing to vopt.
 set coverage 0
+set CoverageVoptArg ""
+set CoverageVsimArg ""
+
 set configOptions ""
 set from 4
 set step 1
@@ -47,6 +50,8 @@ for {set i 0} true {incr i} {
 if {$argc >= 3} {
     if {$3 eq "-coverage" || ($argc >= 7 && $7 eq "-coverage")} {
         set coverage 1
+        set CoverageVoptArg "+cover=sbecf"
+        set CoverageVsimArg "-coverage"
     } elseif {$3 eq "configOptions"} {
         set configOptions $lst
         puts $configOptions
@@ -66,8 +71,9 @@ vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/der
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 if {$coverage} {
     #        vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt +cover=sbectf
-    vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt +cover=sbecf
-    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829 -coverage
+    puts "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt ${CoverageVoptArg}
+    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829 ${CoverageVsimArg}
 } else {
     vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 ${configOptions} -o testbenchopt
     vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
@@ -80,6 +86,7 @@ run -all
 
 
 if {$coverage} {
+    puts "???????????????????????????"
     echo "Saving coverage to ${1}_${2}.ucdb"
     do coverage-exclusions-rv64gc.do  # beware: this assumes testing the rv64gc configuration
     coverage save -instance /testbench/dut/core cov/${1}_${2}.ucdb

@@ -32,25 +32,10 @@ vlib work
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
-    vlog -lint -work work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
-    # start and run simulation
-    vopt work_${1}_${2}.testbench -work work_${1}_${2} -G RISCV_DIR=$3 -G INSTR_LIMIT=$4 -G INSTR_WAVEON=$5 -G CHECKPOINT=$6 -G NO_SPOOFING=0 -o testbenchopt 
-    vsim -lib work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3829,13286  -fatal 7
-
-    #-- Run the Simulation
-    #run -all
-    run 7000 ms
-    add log -recursive /*
-    do linux-wave.do
-    run -all
-
-    exec ./slack-notifier/slack-notifier.py
-    
-} elseif {$2 eq "buildroot-no-trace"} {
+if {$2 eq "buildroot"} {
     vlog -lint -work work_${1}_${2} \
       +define+USE_IMPERAS_DV \
-      +incdir+../config/$1 \
+      +incdir+../config/deriv/$1 \
       +incdir+../config/shared \
       +incdir+$env(IMPERAS_HOME)/ImpPublic/include/host \
       +incdir+$env(IMPERAS_HOME)/ImpProprietary/include/host \
@@ -64,7 +49,7 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
       $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2cov.sv  \
       $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2bin.sv  \
       ../src/cvw.sv \
-       ../testbench/testbench-linux-imperas.sv \
+       ../testbench/testbench.sv \
        ../testbench/common/*.sv ../src/*/*.sv \
        ../src/*/*/*.sv -suppress 2583
 
@@ -75,8 +60,8 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     # vsim -fprofile+perf
     # visualizer -fprofile+perf+dir=fprofile
     #
-    eval vopt +acc work_${1}_${2}.testbench -work work_${1}_${2} -G RISCV_DIR=$3 \
-        -G INSTR_LIMIT=0 -G INSTR_WAVEON=0 -G CHECKPOINT=0 -G NO_SPOOFING=1 -o testbenchopt 
+    eval vopt work_${1}_${2}.testbench -work work_${1}_${2} -G RISCV_DIR=$3 \
+        -G INSTR_LIMIT=1000000 -G TEST=$2 -G INSTR_WAVEON=0 -G CHECKPOINT=0 -G NO_SPOOFING=1 -o testbenchopt 
     eval vsim -lib work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3829,13286  -fatal 7 \
         -sv_lib $env(IMPERAS_HOME)/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model \
         $env(OTHERFLAGS)
@@ -88,68 +73,12 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     #run 100 ns
     #force -deposit testbench/dut/core/priv/priv/csr/csri/IE_REGW 16'h2aa
     #force -deposit testbench/dut/uncore/uncore/clint/clint/MTIMECMP 64'h1000
-    run 9800 ms
     add log -recursive /testbench/dut/*
     do wave.do
+    run 9800 ms
     run 200 ms
     #run -all
 
     exec ./slack-notifier/slack-notifier.py
 
-} elseif {$2 eq "fpga"} {
-    echo "hello"
-    vlog  -work work +incdir+../config/fpga +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/sdc/*.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv  ../../fpga/sim/*.sv -suppress 8852,12070,3084,3829,2583,7063,13286
-    vopt +acc work.testbench -G TEST=$2 -G DEBUG=0 -o workopt     
-    vsim workopt +nowarn3829  -fatal 7
-    
-    do fpga-wave.do
-    add log -r /*
-    run 20 ms
-
-} else {
-    if {$2 eq "ahb"} {
-        vlog +incdir+../config/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583,13286 -suppress 7063 +define+RAM_LATENCY=$3 +define+BURST_EN=$4
-    } else {
-        # *** modelsim won't take `PA_BITS, but will take other defines for the lengths of DTIM_RANGE and IROM_LEN.  For now just live with the warnings.
-        vlog +incdir+../config/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583,13286 -suppress 7063 
-    }
-    vopt +acc work.testbench -G TEST=$2 -G DEBUG=1 -o workopt 
-
-    vsim workopt +nowarn3829  -fatal 7
-
-    view wave
-    #-- display input and output signals as hexidecimal values
-    #do ./wave-dos/peripheral-waves.do
-    add log -recursive /*
-    do wave.do
-    #do wave-bus.do
-
-    # power add generates the logging necessary for saif generation.
-    #power add -r /dut/core/*
-    #-- Run the Simulation 
-
-    run -all
-    #power off -r /dut/core/*
-    #power report -all -bsaif power.saif
-    noview ../testbench/testbench.sv
-    view wave
 }
-
-
-
-#elseif {$2 eq "buildroot-no-trace""} {
-#    vlog -lint -work work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
-    # start and run simulation
-#    vopt +acc work_${1}_${2}.testbench -work work_${1}_${2} -G RISCV_DIR=$3 -G INSTR_LIMIT=470350800 -G INSTR_WAVEON=470350800 -G CHECKPOINT=470350800 -G DEBUG_TRACE=0 -o testbenchopt 
-#    vsim -lib work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3829
-
-    #-- Run the Simulation
-#    run 100 ns
-#    force -deposit testbench/dut/core/priv/priv/csr/csri/IE_REGW 16'h2aa
-#    force -deposit testbench/dut/uncore/uncore/clint/clint/MTIMECMP 64'h1000
-#    add log -recursive /*
-#    do linux-wave.do
-#    run -all
-
-#    exec ./slack-notifier/slack-notifier.py
-#} 
