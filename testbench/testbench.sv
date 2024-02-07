@@ -40,7 +40,9 @@ module testbench;
   parameter BPRED_LOGGER=0;
   parameter I_CACHE_ADDR_LOGGER=0;
   parameter D_CACHE_ADDR_LOGGER=0;
- 
+  parameter RISCV_DIR = "/opt/riscv";
+  parameter INSTR_LIMIT = 0;
+  
 `include "parameter-defs.vh"
 
   logic        clk;
@@ -134,6 +136,7 @@ module testbench;
         "arch64zfh_divsqrt":     if (P.ZFH_SUPPORTED)     tests = arch64zfh_divsqrt;
         "arch64zfaf":    if (P.ZFA_SUPPORTED)     tests = arch64zfaf;
         "arch64zfad":    if (P.ZFA_SUPPORTED & P.D_SUPPORTED)  tests = arch64zfad;
+        "buildroot":                              tests = buildroot;
       endcase 
     end else begin // RV32
       case (TEST)
@@ -210,7 +213,7 @@ module testbench;
   logic        ResetCntRst;
   logic        CopyRAM;
 
-  string  signame, memfilename, pathname;
+  string  signame, memfilename, bootmemfilename, pathname;
   integer begin_signature_addr, end_signature_addr, signature_size;
 
   assign ResetThreshold = 3'd5;
@@ -279,10 +282,17 @@ module testbench;
   always @(posedge clk) begin
     if(SelectTest) begin
       if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
+      else if(TEST == "buildroot") begin 
+        memfilename = {RISCV_DIR, "/linux-testvectors/ram.bin"};
+        bootmemfilename = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
+      end
       else            memfilename = {pathname, tests[test], ".elf.memfile"};
       if (riscofTest) begin
         ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
         ProgramLabelMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.lab"};
+      end else if (TEST == "buildroot") begin
+        ProgramAddrMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.addr"};
+        ProgramLabelMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.lab"};
       end else begin
         ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
         ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
@@ -352,6 +362,8 @@ module testbench;
   integer StartIndex;
   integer EndIndex;
   integer BaseIndex;
+  integer memFile;
+  integer readResult;
   if (P.SDC_SUPPORTED) begin
     always @(posedge clk) begin
       if (LoadMem) begin
@@ -373,7 +385,16 @@ module testbench;
   end else if (P.BUS_SUPPORTED) begin : bus_supported
     always @(posedge clk) begin
       if (LoadMem) begin
-        $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
+        if (TEST == "buildroot") begin
+          memFile = $fopen(bootmemfilename, "rb");
+          readResult = $fread(dut.uncore.uncore.bootrom.bootrom.memory.ROM, memFile);
+          $fclose(memFile);
+          memFile = $fopen(memfilename, "rb");
+          readResult = $fread(dut.uncore.uncore.ram.ram.memory.RAM, memFile);
+          $fclose(memFile);
+        end else 
+          $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
+        if (TEST == "embench") $display("Read memfile %s", memfilename);
       end
       if (CopyRAM) begin
         LogXLEN = (1 + P.XLEN/32); // 2 for rv32 and 3 for rv64
@@ -518,6 +539,15 @@ module testbench;
   //assign DCacheFlushStart =  TestComplete;
   
   DCacheFlushFSM #(P) DCacheFlushFSM(.clk(clk), .reset(reset), .start(DCacheFlushStart), .done(DCacheFlushDone));
+
+  if(P.ZICSR_SUPPORTED) begin
+    logic [P.XLEN-1:0] Minstret;
+    assign Minstret = testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2];  
+    always @(negedge clk) begin
+      if((Minstret != 0) && (Minstret % 'd100000 == 0)) $display("Reached %d instructions, %d", Minstret, INSTR_LIMIT);
+      if((Minstret == INSTR_LIMIT) & (INSTR_LIMIT!=0)) begin $stop; $stop; end
+    end
+  end
 
   task automatic CheckSignature;
     // This task must be declared inside this module as it needs access to parameter P.  There is
