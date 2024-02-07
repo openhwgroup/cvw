@@ -37,11 +37,24 @@ if {$2 eq "configOptions"} {
 mkdir -p cov
 
 # Check if measuring coverage
- set coverage 0
+set coverage 0
+set configOptions ""
+puts "ARGUMENTS START"
+puts $argc
+puts $argv
+puts "ARGUMENTS END"
 if {$argc >= 3} {
     if {$3 eq "-coverage" || ($argc >= 7 && $7 eq "-coverage")} {
         set coverage 1
+    } elseif {$3 eq "configOptions"} {
+        set Arguments [lrange $argv 2 2]
+        set ArgumentsTrim [string range $Arguments 1 end-1]
+        set tokens [regexp -all -inline {\S+} $ArgumentsTrim]
+        set params [lrange $tokens 5 end]
+        set configOptions $params
+        puts $params
     }
+    
 }
 
 # compile source files
@@ -51,47 +64,24 @@ if {$argc >= 3} {
 
 # default to config/rv64ic, but allow this to be overridden at the command line.  For example:
 # do wally-pipelined-batch.do ../config/rv32imc rv32imc
-if {$2 eq "configOptions"} {
-    # set arguments " "
-    # for {set i 5} {$i <= $argc} {incr i} {
-    # 	append arguments "\$$i "
-    # }
-    # puts $arguments
-    # set options eval $arguments
-    # **** fix this so we can pass any number of +defines or top level params.
-    # only allows 1 right now
 
-    vlog -lint -work wkdir/work_${1}_${3}_${4} +incdir+../config/$1 +incdir+../config/deriv/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286 
-    # start and run simulation
-    # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-    vopt wkdir/work_${1}_${3}_${4}.testbench -work wkdir/work_${1}_${3}_${4} -G TEST=$3 ${4} -o testbenchopt 
-    vsim -lib wkdir/work_${1}_${3}_${4} testbenchopt  -fatal 7 -suppress 3829
-    # Adding coverage increases runtime from 2:00 to 4:29.  Can't run it all the time
-    #vopt work_$2.testbench -work work_$2 -o workopt_$2 +cover=sbectf
-    #vsim -coverage -lib work_$2 workopt_$2
-    # power add generates the logging necessary for said generation.
-    # power add -r /dut/core/*
-    run -all
-    # power off -r /dut/core/*
-
+vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/deriv/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
+# start and run simulation
+# remove +acc flag for faster sim during regressions if there is no need to access internal signals
+if {$coverage} {
+    #        vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt +cover=sbectf
+    vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt +cover=sbecf
+    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829 -coverage
 } else {
-    vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/deriv/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
-    # start and run simulation
-    # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-    if {$coverage} {
-#        vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt +cover=sbectf
-        vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt +cover=sbecf
-        vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829 -coverage
-    } else {
-        vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt
-        vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
-    }
+    vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 ${configOptions} -o testbenchopt
+    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
+}
 #    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
-    # power add generates the logging necessary for said generation.
-    # power add -r /dut/core/*
-    run -all
-    # power off -r /dut/core/*
-} 
+# power add generates the logging necessary for said generation.
+# power add -r /dut/core/*
+run -all
+# power off -r /dut/core/*
+
 
 if {$coverage} {
     echo "Saving coverage to ${1}_${2}.ucdb"
