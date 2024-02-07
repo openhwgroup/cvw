@@ -327,22 +327,22 @@ INSTR_CLASS_PRED          0
 deriv bpred_GSHARE_16_16_10_0_rv32gc bpred_GSHARE_16_16_10_1_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_TWOBIT_6_16_10_0_rv32gc bpred_GSHARE_6_16_10_0_rv32gc
+deriv bpred_TWOBIT_6_16_10_0_rv32gc bpred_TWOBIT_6_16_10_1_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_TWOBIT_8_16_10_0_rv32gc bpred_GSHARE_8_16_10_0_rv32gc
+deriv bpred_TWOBIT_8_16_10_0_rv32gc bpred_TWOBIT_8_16_10_1_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_TWOBIT_10_16_10_0_rv32gc bpred_GSHARE_10_16_10_0_rv32gc
+deriv bpred_TWOBIT_10_16_10_0_rv32gc bpred_TWOBIT_10_16_10_1_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_TWOBIT_12_16_10_0_rv32gc bpred_GSHARE_12_16_10_0_rv32gc
+deriv bpred_TWOBIT_12_16_10_0_rv32gc bpred_TWOBIT_12_16_10_1_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_TWOBIT_14_16_10_0_rv32gc bpred_GSHARE_14_16_10_0_rv32gc
+deriv bpred_TWOBIT_14_16_10_0_rv32gc bpred_TWOBIT_14_16_10_1_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_TWOBIT_16_16_10_0_rv32gc bpred_GSHARE_16_16_10_0_rv32gc
+deriv bpred_TWOBIT_16_16_10_0_rv32gc bpred_TWOBIT_16_16_10_1_rv32gc
 INSTR_CLASS_PRED          0
 
 deriv bpred_GSHARE_10_2_10_0_rv32gc bpred_GSHARE_10_2_10_1_rv32gc
