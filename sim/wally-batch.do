@@ -28,14 +28,14 @@ vlib wkdir/work_${1}_${2}
 # Create directory for coverage data
 mkdir -p cov
 
-# Need to be able to pass arguments to vopt.  Unforunately argv does not work because
-# it takes on different values if vsim and the do file are called from the command line or
-# if the do file isd called from questa sim directly.  This chunk of code uses the $4 through $n
-# variables and compacts into a single list for passing to vopt.
 set coverage 0
 set CoverageVoptArg ""
 set CoverageVsimArg ""
 
+# Need to be able to pass arguments to vopt.  Unforunately argv does not work because
+# it takes on different values if vsim and the do file are called from the command line or
+# if the do file isd called from questa sim directly.  This chunk of code uses the $4 through $n
+# variables and compacts into a single list for passing to vopt.
 set configOptions ""
 set from 4
 set step 1
@@ -67,17 +67,12 @@ if {$argc >= 3} {
 # do wally-pipelined-batch.do ../config/rv32imc rv32imc
 
 vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/deriv/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
+
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-if {$coverage} {
-    #        vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt +cover=sbectf
-    puts "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-    vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt ${CoverageVoptArg}
-    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829 ${CoverageVsimArg}
-} else {
-    vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 ${configOptions} -o testbenchopt
-    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
-}
+vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 ${configOptions} -o testbenchopt ${CoverageVoptArg}
+vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829 ${CoverageVsimArg}
+
 #    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
 # power add generates the logging necessary for said generation.
 # power add -r /dut/core/*
@@ -86,7 +81,6 @@ run -all
 
 
 if {$coverage} {
-    puts "???????????????????????????"
     echo "Saving coverage to ${1}_${2}.ucdb"
     do coverage-exclusions-rv64gc.do  # beware: this assumes testing the rv64gc configuration
     coverage save -instance /testbench/dut/core cov/${1}_${2}.ucdb

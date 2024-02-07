@@ -320,7 +320,7 @@ module testbench;
     if (TEST == "coremark")
       if (dut.core.priv.priv.EcallFaultM) begin
         $display("Benchmark: coremark is done.");
-        $finish;
+        $stop;
       end
     if(Validate) begin
       if (TEST == "embench") begin
@@ -357,7 +357,7 @@ module testbench;
       if (test == tests.size()) begin
         if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
         else $display("FAIL: %d test programs had errors", totalerrors);
-        $finish;
+        $stop; // if this is changed to $finish, wally-batch.do does not go to the next step to run coverage
       end
     end
   end
@@ -798,7 +798,7 @@ end
         errors = errors+1;
         $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
 			     TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
-        $finish;
+        $stop; // if this is changed to $finish, wally-batch.do does not get to the next step to run coverage
       end
     end
     if (errors) $display("%s failed with %d errors. :(", TestName, errors);
