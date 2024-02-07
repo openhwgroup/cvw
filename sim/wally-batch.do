@@ -36,23 +36,27 @@ if {$2 eq "configOptions"} {
 # Create directory for coverage data
 mkdir -p cov
 
-# Check if measuring coverage
+# Need to be able to pass arguments to vopt.  Unforunately argv does not work because
+# it takes on different values if vsim and the do file are called from the command line or
+# if the do file isd called from questa sim directly.  This chunk of code uses the $4 through $n
+# variables and compacts into a single list for passing to vopt.
 set coverage 0
 set configOptions ""
-puts "ARGUMENTS START"
-puts $argc
-puts $argv
-puts "ARGUMENTS END"
+set from 4
+set step 1
+set lst {}
+for {set i 0} true {incr i} {
+    set x [expr {$i*$step + $from}]
+    if {$x > $argc} break
+    set arg [expr "$$x"]
+    lappend lst $arg
+}
 if {$argc >= 3} {
     if {$3 eq "-coverage" || ($argc >= 7 && $7 eq "-coverage")} {
         set coverage 1
     } elseif {$3 eq "configOptions"} {
-        set Arguments [lrange $argv 2 2]
-        set ArgumentsTrim [string range $Arguments 1 end-1]
-        set tokens [regexp -all -inline {\S+} $ArgumentsTrim]
-        set params [lrange $tokens 5 end]
-        set configOptions $params
-        puts $params
+        set configOptions $lst
+        puts $configOptions
     }
     
 }

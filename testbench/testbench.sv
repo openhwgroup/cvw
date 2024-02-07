@@ -540,11 +540,11 @@ module testbench;
   
   DCacheFlushFSM #(P) DCacheFlushFSM(.clk(clk), .reset(reset), .start(DCacheFlushStart), .done(DCacheFlushDone));
 
-  if(P.ZICSR_SUPPORTED) begin
+  if(P.ZICSR_SUPPORTED & INSTR_LIMIT != 0) begin
     logic [P.XLEN-1:0] Minstret;
     assign Minstret = testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2];  
     always @(negedge clk) begin
-      if((Minstret != 0) && (Minstret % 'd100000 == 0)) $display("Reached %d", Minstret);
+      if((Minstret != 0) && (Minstret % 'd100000 == 0)) $display("Reached %d instructions", Minstret);
       if((Minstret == INSTR_LIMIT) & (INSTR_LIMIT!=0)) begin $stop; $stop; end
     end
   end
