@@ -206,6 +206,10 @@ ConcurrentICacheMissDTLBMiss:
     # change back to default trap handler after checking everything that might cause an instruction page fault
     jal changetodefaulthandler
 
+    # uncachable AMO access
+    li t0, 0x80401000  # PBMT sets as uncachable
+    amoadd.w t0, t0, 0(t0)
+
     # exercise CBOM instructions with various permissions
     li t0, 0x80800000
     cbo.zero (t0)
@@ -457,8 +461,8 @@ SpecialPage:
 # Leaf page table at 0x80014000 with PBMT pages
 .align 12
     #80400000
-    .8byte 0x60000000200020CF   # reserved entry
-    .8byte 0x40000000201000CF   # non-cache non-idempotent
+    .8byte 0x60000000200020CF   # reserved entry             VA 80400000
+    .8byte 0x40000000201000CF   # non-cache non-idempotent   VA 80401000
 
 # Leaf page table at 0x80015000 with various permissions for testing CBOM and CBOZ
 .align 12
