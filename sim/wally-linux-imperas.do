@@ -60,8 +60,8 @@ if {$2 eq "buildroot"} {
     # vsim -fprofile+perf
     # visualizer -fprofile+perf+dir=fprofile
     #
-    eval vopt work_${1}_${2}.testbench -work work_${1}_${2} -G RISCV_DIR=$3 \
-        -G INSTR_LIMIT=1000000 -G TEST=$2 -G INSTR_WAVEON=0 -G CHECKPOINT=0 -G NO_SPOOFING=1 -o testbenchopt 
+    eval vopt +acc work_${1}_${2}.testbench -work work_${1}_${2} -G RISCV_DIR=$3 \
+         -G TEST=$2 -o testbenchopt 
     eval vsim -lib work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3829,13286  -fatal 7 \
         -sv_lib $env(IMPERAS_HOME)/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model \
         $env(OTHERFLAGS)
@@ -73,9 +73,9 @@ if {$2 eq "buildroot"} {
     #run 100 ns
     #force -deposit testbench/dut/core/priv/priv/csr/csri/IE_REGW 16'h2aa
     #force -deposit testbench/dut/uncore/uncore/clint/clint/MTIMECMP 64'h1000
+    run 9800 ms
     add log -recursive /testbench/dut/*
     do wave.do
-    run 9800 ms
     run 200 ms
     #run -all
 

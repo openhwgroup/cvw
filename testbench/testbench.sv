@@ -655,6 +655,9 @@ end
     void'(rvviRefCsrSetVolatile(0, 32'h104));   // SIE - Temporary!!!!
     
     // Load memory
+    // *** RT: This section can probably be moved into the same chunk of code which
+    // loads the memories.  However I'm not sure that ImperasDV supports reloading
+    // the memories without relaunching the simulator.
     begin
       longint x64;
       int     x32[2];
@@ -696,7 +699,7 @@ end
       
       $display("RVVI Loading Complete");
       
-      void'(rvviRefPcSet(0, 'h1000)); // set BOOTROM address
+      void'(rvviRefPcSet(0, P.RESET_VECTOR)); // set BOOTROM address
     end
   end
 
