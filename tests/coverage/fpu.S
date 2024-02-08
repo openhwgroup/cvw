@@ -56,8 +56,6 @@ main:
     froundnx.h fs1, fs0
     fround.s fs1, fs0
     froundnx.s fs1, fs0
-    fmvp.d.x
-
 
     #Result Sign Test Coverage
     la t0, TestData2
@@ -187,6 +185,10 @@ main:
     .word 0xD5F00053 // illegal fcvt.h.* (bad Rs2D)
     .word 0xC5F00053 // illegal fcvt.*.h (bad Rs2D)
     .word 0x04000043 // illegal fmadd.h (h not supported)
+    .word 0xC2800053 // illegal fcvtmod.w.d with rm rne
+    .word 0xF0101053 // illegal fli with Funct3D not 0
+    .word 0xF0400053 // illegal fli with Rs2D not 1
+    .word 0x44200053 // illegal instruction for f.cvt.h.h
 
     // Test divide by zero with rounding mode toward zero
     li t0, 1
