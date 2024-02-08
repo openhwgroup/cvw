@@ -29,6 +29,10 @@
 `include "tests.vh"
 `include "BranchPredictorType.vh"
 
+`ifdef USE_IMPERAS_DV
+    `include "idv/idv.svh"
+`endif
+
 import cvw::*;
 
 module testbench;
@@ -43,6 +47,12 @@ module testbench;
   parameter RISCV_DIR = "/opt/riscv";
   parameter INSTR_LIMIT = 0;
   
+  `ifdef USE_IMPERAS_DV
+    import idvPkg::*;
+    import rvviApiPkg::*;
+    import idvApiPkg::*;
+  `endif
+
 `include "parameter-defs.vh"
 
   logic        clk;
@@ -540,14 +550,174 @@ module testbench;
   
   DCacheFlushFSM #(P) DCacheFlushFSM(.clk(clk), .reset(reset), .start(DCacheFlushStart), .done(DCacheFlushDone));
 
-  if(P.ZICSR_SUPPORTED) begin
+  if(P.ZICSR_SUPPORTED & INSTR_LIMIT != 0) begin
     logic [P.XLEN-1:0] Minstret;
     assign Minstret = testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2];  
     always @(negedge clk) begin
-      if((Minstret != 0) && (Minstret % 'd100000 == 0)) $display("Reached %d instructions, %d", Minstret, INSTR_LIMIT);
+      if((Minstret != 0) && (Minstret % 'd100000 == 0)) $display("Reached %d instructions", Minstret);
       if((Minstret == INSTR_LIMIT) & (INSTR_LIMIT!=0)) begin $stop; $stop; end
     end
+end
+
+  ////////////////////////////////////////////////////////////////////////////////
+  // ImperasDV Co-simulator hooks
+  ////////////////////////////////////////////////////////////////////////////////
+`ifdef USE_IMPERAS_DV
+
+  rvviTrace #(.XLEN(P.XLEN), .FLEN(P.FLEN)) rvvi();
+  wallyTracer #(P) wallyTracer(rvvi);
+
+  trace2log idv_trace2log(rvvi);
+  //      trace2cov idv_trace2cov(rvvi);
+
+  // enabling of comparison types
+  trace2api #(.CMP_PC      (1),
+              .CMP_INS     (1),
+              .CMP_GPR     (1),
+              .CMP_FPR     (1),
+              .CMP_VR      (0),
+              .CMP_CSR     (1)
+              ) idv_trace2api(rvvi);
+
+  initial begin
+    int iter;
+    #1;
+    IDV_MAX_ERRORS = 3;
+
+    // Initialize REF (do this before initializing the DUT)
+    if (!rvviVersionCheck(RVVI_API_VERSION)) begin
+      $display($sformatf("%m @ t=%0t: Expecting RVVI API version %0d.", $time, RVVI_API_VERSION));
+      $fatal;
+    end
+    
+    void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,            "riscv.ovpworld.org"));
+    void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME,              "riscv"));
+    void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT,           "RV64GC"));
+    void'(rvviRefConfigSetInt(IDV_CONFIG_MODEL_ADDRESS_BUS_WIDTH,     56));
+    void'(rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 6));
+
+    if (!rvviRefInit("")) begin
+      $display($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
+      $fatal;
+    end
+
+    // Volatile CSRs
+    void'(rvviRefCsrSetVolatile(0, 32'hC00));   // CYCLE
+    void'(rvviRefCsrSetVolatile(0, 32'hB00));   // MCYCLE
+    void'(rvviRefCsrSetVolatile(0, 32'hC02));   // INSTRET
+    void'(rvviRefCsrSetVolatile(0, 32'hB02));   // MINSTRET
+    void'(rvviRefCsrSetVolatile(0, 32'hC01));   // TIME
+    
+    // User HPMCOUNTER3 - HPMCOUNTER31
+    for (iter='hC03; iter<='hC1F; iter++) begin
+      void'(rvviRefCsrSetVolatile(0, iter));   // HPMCOUNTERx
+    end       
+    
+    // Machine MHPMCOUNTER3 - MHPMCOUNTER31
+    for (iter='hB03; iter<='hB1F; iter++) begin
+      void'(rvviRefCsrSetVolatile(0, iter));   // MHPMCOUNTERx
+    end       
+    
+    // cannot predict this register due to latency between
+    // pending and taken
+    void'(rvviRefCsrSetVolatile(0, 32'h344));   // MIP
+    void'(rvviRefCsrSetVolatile(0, 32'h144));   // SIP
+
+    // Privileges for PMA are set in the imperas.ic
+    // volatile (IO) regions are defined here
+    // only real ROM/RAM areas are BOOTROM and UNCORE_RAM
+    if (P.CLINT_SUPPORTED) begin
+      void'(rvviRefMemorySetVolatile(P.CLINT_BASE, (P.CLINT_BASE + P.CLINT_RANGE)));
+    end
+    if (P.GPIO_SUPPORTED) begin
+      void'(rvviRefMemorySetVolatile(P.GPIO_BASE, (P.GPIO_BASE + P.GPIO_RANGE)));
+    end
+    if (P.UART_SUPPORTED) begin
+      void'(rvviRefMemorySetVolatile(P.UART_BASE, (P.UART_BASE + P.UART_RANGE)));
+    end
+    if (P.PLIC_SUPPORTED) begin
+      void'(rvviRefMemorySetVolatile(P.PLIC_BASE, (P.PLIC_BASE + P.PLIC_RANGE)));
+    end
+    if (P.SDC_SUPPORTED) begin
+      void'(rvviRefMemorySetVolatile(P.SDC_BASE, (P.SDC_BASE + P.SDC_RANGE)));
+    end
+    if (P.SPI_SUPPORTED) begin
+      void'(rvviRefMemorySetVolatile(P.SPI_BASE, (P.SPI_BASE + P.SPI_RANGE)));
+    end
+
+    if(P.XLEN==32) begin
+      void'(rvviRefCsrSetVolatile(0, 32'hC80));   // CYCLEH
+      void'(rvviRefCsrSetVolatile(0, 32'hB80));   // MCYCLEH
+      void'(rvviRefCsrSetVolatile(0, 32'hC82));   // INSTRETH
+      void'(rvviRefCsrSetVolatile(0, 32'hB82));   // MINSTRETH
+    end
+
+    void'(rvviRefCsrSetVolatile(0, 32'h104));   // SIE - Temporary!!!!
+    
+    // Load memory
+    // *** RT: This section can probably be moved into the same chunk of code which
+    // loads the memories.  However I'm not sure that ImperasDV supports reloading
+    // the memories without relaunching the simulator.
+    begin
+      longint x64;
+      int     x32[2];
+      longint index;
+      string  memfilenameImperasDV, bootmemfilenameImperasDV;
+      
+      memfilenameImperasDV = {RISCV_DIR, "/linux-testvectors/ram.bin"};
+      bootmemfilenameImperasDV = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
+
+      $display("RVVI Loading bootmem.bin");
+      memFile = $fopen(bootmemfilenameImperasDV, "rb");
+      index = 'h1000 - 8;
+      while(!$feof(memFile)) begin
+        index+=8;
+        readResult = $fread(x64, memFile);
+        if (x64 == 0) continue;
+        x32[0] = x64 & 'hffffffff;
+        x32[1] = x64 >> 32;
+        rvviRefMemoryWrite(0, index+0, x32[0], 4);
+        rvviRefMemoryWrite(0, index+4, x32[1], 4);
+        //$display("boot %08X x32[0]=%08X x32[1]=%08X", index, x32[0], x32[1]);
+      end
+      $fclose(memFile);
+            
+      $display("RVVI Loading ram.bin");
+      memFile = $fopen(memfilenameImperasDV, "rb");
+      index = 'h80000000 - 8;
+      while(!$feof(memFile)) begin
+        index+=8;
+        readResult = $fread(x64, memFile);
+        if (x64 == 0) continue;
+        x32[0] = x64 & 'hffffffff;
+        x32[1] = x64 >> 32;
+        rvviRefMemoryWrite(0, index+0, x32[0], 4);
+        rvviRefMemoryWrite(0, index+4, x32[1], 4);
+        //$display("ram  %08X x32[0]=%08X x32[1]=%08X", index, x32[0], x32[1]);
+      end
+      $fclose(memFile);
+      
+      $display("RVVI Loading Complete");
+      
+      void'(rvviRefPcSet(0, P.RESET_VECTOR)); // set BOOTROM address
+    end
   end
+
+  always @(dut.core.priv.priv.csr.csri.MIP_REGW[7])   void'(rvvi.net_push("MTimerInterrupt",    dut.core.priv.priv.csr.csri.MIP_REGW[7]));
+  always @(dut.core.priv.priv.csr.csri.MIP_REGW[11])  void'(rvvi.net_push("MExternalInterrupt", dut.core.priv.priv.csr.csri.MIP_REGW[11]));
+  always @(dut.core.priv.priv.csr.csri.MIP_REGW[9])   void'(rvvi.net_push("SExternalInterrupt", dut.core.priv.priv.csr.csri.MIP_REGW[9]));
+  always @(dut.core.priv.priv.csr.csri.MIP_REGW[3])   void'(rvvi.net_push("MSWInterrupt",       dut.core.priv.priv.csr.csri.MIP_REGW[3]));
+  always @(dut.core.priv.priv.csr.csri.MIP_REGW[1])   void'(rvvi.net_push("SSWInterrupt",       dut.core.priv.priv.csr.csri.MIP_REGW[1]));
+  always @(dut.core.priv.priv.csr.csri.MIP_REGW[5])   void'(rvvi.net_push("STimerInterrupt",    dut.core.priv.priv.csr.csri.MIP_REGW[5]));
+
+  final begin
+    void'(rvviRefShutdown());
+  end
+
+`endif
+  ////////////////////////////////////////////////////////////////////////////////
+  // END of ImperasDV Co-simulator hooks
+  ////////////////////////////////////////////////////////////////////////////////
 
   task automatic CheckSignature;
     // This task must be declared inside this module as it needs access to parameter P.  There is
