@@ -56,8 +56,6 @@ main:
     froundnx.h fs1, fs0
     fround.s fs1, fs0
     froundnx.s fs1, fs0
-    fmvp.d.x
-
 
     #Result Sign Test Coverage
     la t0, TestData2
@@ -187,6 +185,71 @@ main:
     .word 0xD5F00053 // illegal fcvt.h.* (bad Rs2D)
     .word 0xC5F00053 // illegal fcvt.*.h (bad Rs2D)
     .word 0x04000043 // illegal fmadd.h (h not supported)
+    .word 0xC2800053 // illegal fcvtmod.w.d with rm rne
+    .word 0xF0101053 // illegal fli with Funct3D not 0
+    .word 0xF0400053 // illegal fli with Rs2D not 1
+    .word 0x44200053 // illegal instruction for f.cvt.h.h
+
+//funct7 31:25, rs2 24:20, rs1 19:15, funct3 14:12, rd 11:7, op 6:0
+// 1100001 01000 00000 000 00000 1010011
+// 1100 0010 1000 0000 0000 0000 0101 0011
+
+  /*  7'b1100001: case(Rs2D)
+                                    5'b00000:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1_0; // fcvt.w.d   d->w
+                                    5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1_0; // fcvt.wu.d  d->wu
+                                    5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1_0; // fcvt.l.d   d->l
+                                    5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1_0; // fcvt.lu.d  d->lu
+                                    5'b01000: if (P.ZFA_SUPPORTED & P.D_SUPPORTED & Funct3D == 3'b001) 
+                                                 ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1_1; // fcvtmod.w.d (Zfa)
+*/   
+// 1111000 00001 00000 001 00000 1010011
+// 1111000 00100 00000 000 00000 1010011
+
+// 1111 0000 0001 0000 0001 0000 0101 0011
+// F0101053
+// 1111 0000 0100 0000 0000 0000 0101 0011
+//F0400053
+
+     Rows:       Hits  FEC Target            Non-masking condition(s)      
+ ---------  ---------  --------------------  -------------------------     
+  Row   1:          1  (Funct3D == 0)_0      (Rs2D == 1)                   
+  Row   2:          1  (Funct3D == 0)_1      (Rs2D == 1)                   
+  Row   3:    ***0***  (Rs2D == 1)_0         (Funct3D == 0)                
+  Row   4:          1  (Rs2D == 1)_1         (Funct3D == 0)    
+
+   7'b11110??: if (Funct3D == 3'b000 & Rs2D == 5'b00000) 
+                                                ControlsD = `FCTRLW'b1_0_00_00_011_0_0_0_0; // fmv.w/d/h/q.x  int to fp reg
+                                  else if (P.ZFA_SUPPORTED & Funct3D == 3'b000 & Rs2D == 5'b00001) 
+                                                ControlsD = `FCTRLW'b1_0_00_00_111_0_0_0_1; // fli  (Zfa)
+*/                  
+
+ /*        Input Term   Covered  Reason for no coverage   Hint
+           -----------  --------  -----------------------  --------------
+  (InstrD[24:22] == 0)         Y
+         SupportedFmt2         Y
+  (InstrD[21:20] != 2)         N  '_0' not hit             Hit '_0'
+
+     Rows:       Hits  FEC Target              Non-masking condition(s)      
+ ---------  ---------  --------------------    -------------------------     
+  Row   1:          1  (InstrD[24:22] == 0)_0  ((InstrD[21:20] != 2) && SupportedFmt2)
+  Row   2:          1  (InstrD[24:22] == 0)_1  ((InstrD[21:20] != 2) && SupportedFmt2)
+  Row   3:          1  SupportedFmt2_0         ((InstrD[21:20] != 2) && (InstrD[24:22] == 0))
+  Row   4:          1  SupportedFmt2_1         ((InstrD[21:20] != 2) && (InstrD[24:22] == 0))
+  Row   5:    ***0***  (InstrD[21:20] != 2)_0  ((InstrD[24:22] == 0) & SupportedFmt2)
+  Row   6:          1  (InstrD[21:20] != 2)_1  ((InstrD[24:22] == 0) & SupportedFmt2)
+
+7'b0100010: if (Rs2D[4:2] == 3'b000 & SupportedFmt2 & Rs2D[1:0] != 2'b10)
+                                                ControlsD = `FCTRLW'b1_0_01_00_010_0_0_0_0; // fcvt.h.(s/d/q)
+                                  else if (Rs2D == 5'b00100 & P.ZFA_SUPPORTED)
+                                                ControlsD = `FCTRLW'b1_0_01_00_000_0_0_0_1; // fround.h  (Zfa)
+                                  else if (Rs2D == 5'b00101 & P.ZFA_SUPPORTED)
+                                                ControlsD = `FCTRLW'b1_0_01_00_000_0_0_0_1; // froundnx.h  (Zfa)
+*/
+
+//funct7 31:25, rs2 24:20, rs1 19:15, funct3 14:12, rd 11:7, op 6:0   
+// 0100010 00010 00000 000 00000 1010011
+//0100 0100 0010 0000 0000 0000 0101 0011
+
 
     // Test divide by zero with rounding mode toward zero
     li t0, 1
