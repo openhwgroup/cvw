@@ -72,6 +72,13 @@ if [ ! -e "$SDCARD" ] ; then
     exit 1
 fi
 
+# Prefix partition with "p" for non-SCSI disks (mmcblk, nvme)
+if [[ $SDCARD == "/dev/sd"* ]]; then
+    $PART_PREFIX=""
+else
+    $PART_PREFIX="p"
+fi
+
 # If no images directory, images have not been built
 if [ ! -d $IMAGES ] ; then
     echo -e "$ERRORTEXT Buildroot images directory does not exist"
@@ -103,6 +110,8 @@ KERNEL_SIZE=$(ls -la --block-size=512 $LINUX_KERNEL | cut -d' ' -f 5 )
 
 # Start sectors of OpenSBI and Kernel Partitions
 FW_JUMP_START=$(( 34 + $DST_SIZE ))
+
+
 KERNEL_START=$(( $FW_JUMP_START + $FW_JUMP_SIZE ))
 FS_START=$(( $KERNEL_START + $KERNEL_SIZE ))
 
@@ -155,18 +164,18 @@ if [[ $REPLY =~ ^[Yy]$ ]] ; then
     DD_FLAGS="bs=4k iflag=fullblock oflag=direct conv=fsync status=progress"
 
     echo -e "$NAME Copying device tree"
-    sudo dd if=$DEVICE_TREE of="$SDCARD"1 $DD_FLAGS
+    sudo dd if=$DEVICE_TREE of="$SDCARD""$PART_PREFIX"1 $DD_FLAGS
 
     echo -e "$NAME Copying OpenSBI"
-    sudo dd if=$FW_JUMP of="$SDCARD"2 $DD_FLAGS
+    sudo dd if=$FW_JUMP of="$SDCARD""$PART_PREFIX"2 $DD_FLAGS
 
     echo -e "$NAME Copying Kernel"
-    sudo dd if=$LINUX_KERNEL of="$SDCARD"3 $DD_FLAGS
+    sudo dd if=$LINUX_KERNEL of="$SDCARD""$PART_PREFIX"3 $DD_FLAGS
 
-    sudo mkfs.ext4 "$SDCARD"4
+    sudo mkfs.ext4 "$SDCARD""$PART_PREFIX"4
     sudo mkdir /mnt/$MNT_DIR
 
-    sudo mount -v "$SDCARD"4 /mnt/$MNT_DIR 
+    sudo mount -v "$SDCARD""$PART_PREFIX"4 /mnt/$MNT_DIR 
 
     sudo umount -v /mnt/$MNT_DIR
 
