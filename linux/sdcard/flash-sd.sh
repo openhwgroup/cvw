@@ -110,8 +110,6 @@ KERNEL_SIZE=$(ls -la --block-size=512 $LINUX_KERNEL | cut -d' ' -f 5 )
 
 # Start sectors of OpenSBI and Kernel Partitions
 FW_JUMP_START=$(( 34 + $DST_SIZE ))
-
-
 KERNEL_START=$(( $FW_JUMP_START + $FW_JUMP_SIZE ))
 FS_START=$(( $KERNEL_START + $KERNEL_SIZE ))
 
