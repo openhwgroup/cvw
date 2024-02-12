@@ -58,11 +58,12 @@ coverage exclude -scope /dut/core/fpu/fpu/postprocess/flags -linerange [GetLineN
 # This is cleaner than trying to set an I$-specific pragma in cachefsm.sv (which would exclude it for the D$ instance too)
 # Also exclude the write line to ready transition for the I$ since we can't get a flush during this operation.
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -fstate CurrState STATE_FLUSH STATE_FLUSH_WRITEBACK STATE_FLUSH_WRITEBACK STATE_WRITEBACK
-coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -ftrans CurrState STATE_WRITE_LINE->STATE_READY
+coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -ftrans CurrState STATE_WRITE_LINE->STATE_READY STATE_FETCH->STATE_READY
 # exclude unused transitions from case statement. Unfortunately the whole branch needs to be excluded I think. Expression coverage should still work.
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: icache state-case"] -item b 1
 # exclude branch/condition coverage: LineDirty if statement
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: icache FETCHStatement"] -item bc 1
+coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: icache FLUSHStatement"] -item bs 1
 # exclude the unreachable logic
 set start [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag-start: icache case"]
 set end [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag-end: icache case"]
@@ -81,7 +82,9 @@ set end [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag-end: icache flushdir
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange $start-$end
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: icache CacheBusW"]
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: icache SelAdrCauses"] -item e 1 -fecexprrow 4 10
+coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: icache SelAdrTag"] -item e 1 -fecexprrow 8 
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: icache CacheBusRCauses"] -item e 1 -fecexprrow 1-2 12
+
 # cache.sv AdrSelMuxData and AdrSelMuxTag and CacheBusAdrMux, excluding unhit Flush branch
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/AdrSelMuxData -linerange [GetLineNum ../src/generic/mux.sv "exclusion-tag: mux3"] -item b 1
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/AdrSelMuxTag -linerange [GetLineNum ../src/generic/mux.sv "exclusion-tag: mux3"] -item b 1
@@ -100,6 +103,26 @@ for {set i 0} {$i < $numcacheways} {incr i} {
     # No dirty ways in read-only I$
     coverage exclude -scope /dut/core/ifu/bus/icache/icache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "// exclusion-tag: icache DirtyWay"] -item e 1
 }
+# I$ buscachefsm does not perform atomics or write/writeback; HREADY is always 1
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm AtomicReadData"]
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm AtomicElse"] -item s 1
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm AtomicPhase"]
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm AtomicWait"] -item bs 1
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWriteback"] -item b 2
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWriteback"] -item s 1
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm WritebackWriteback"] 
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm WritebackWriteback2"] -item bs 1
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY4"] -item bs 1
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY6"] -item bs 1
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADYread"] -item c 1 -feccondrow 1
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWriteback"] -item c 1 -feccondrow 1,2,3,4,6
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY4"] -item c 1
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY6"] -item c 1
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ../src/ebu/buscachefsm.sv "assign HTRANS"] -item c 1 -feccondrow 5
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ../src/ebu/buscachefsm.sv "assign BeatCntEn"] -item e 1 -fecexprrow 4
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ../src/ebu/buscachefsm.sv "assign CacheAccess"] -item e 1 -fecexprrow 4
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ../src/ebu/buscachefsm.sv "assign BusStall"] -item e 1 -fecexprrow 10,12,18
+coverage exclude -scope /dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ../src/ebu/buscachefsm.sv "assign CacheBusAck"] -item e 1 -fecexprrow 3
 
 ## D$ Exclusions.
 # InvalidateCache is I$ only:
@@ -117,10 +140,10 @@ for {set i 0} {$i < $numcacheways} {incr i} {
     # going into the WRITE_LINE state (and asserting SetValidWay). No TrapM can fire and since StallW is high, a stallM caused by WFIStallM would not cause a flushW.
     coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: cache SetValidEN"] -item e 1 -fecexprrow 4
     coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: cache ClearValidEN"] -item e 1 -fecexprrow 4
-# Not right; other ways can get flushed and dirtied simultaneously    coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: cache UpdateDirty"] -item c 1 -fecexprrow 6
+# Not right; other ways can get flushed and dirtied simultaneously    coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: cache UpdateDirty"] -item c 1 -feccondrow 6
 }
 # D$ writeback, flush, write_line, or flush_writeback states can't be cancelled by a flush
-coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -ftrans CurrState STATE_WRITEBACK->STATE_READY STATE_FLUSH->STATE_READY STATE_WRITE_LINE->STATE_READY STATE_FLUSH_WRITEBACK->STATE_READY
+coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -ftrans CurrState STATE_WRITEBACK->STATE_READY STATE_FLUSH->STATE_READY STATE_WRITE_LINE->STATE_READY STATE_FLUSH_WRITEBACK->STATE_READY 
 
 ####################
 # Unused / illegal peripheral accesses
@@ -136,7 +159,13 @@ coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/iromdec
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/ddr4dec
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/sdcdec
 
-# PMA Regions 8, 9, and 10 (dtim, irom, ddr4) are never used in the rv64gc configuration, so exclude coverage
+# PMA Regions 1, 2, and 3 (dtim, irom, ddr4) are never used in the rv64gc configuration, so exclude coverage
+set line [GetLineNum ../src/mmu/pmachecker.sv "exclusion-tag: unused-atomic"]
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4
+set line [GetLineNum ../src/mmu/pmachecker.sv "exclusion-tag: unused-tim"]
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4
 set line [GetLineNum ../src/mmu/pmachecker.sv "exclusion-tag: unused-cachable"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2
@@ -145,11 +174,17 @@ coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$lin
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4,6,8
 
 # Excluding so far un-used instruction sources for the ifu
-# coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/bootromdec
-# coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/uncoreramdec
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/bootromdec
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/uncoreramdec
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/spidec
 
-#Excluding the bootrom, uncoreran, and clint as sources for the lsu
-# coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/bootromdec
+# The following peripherals are always supported
+set line [GetLineNum ../src/mmu/adrdec.sv "exclusion-tag: adrdecSel"]
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/bootromdec -linerange $line-$line -item e 1 -fecexprrow 3,7
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/gpiodec -linerange $line-$line -item e 1 -fecexprrow 3
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/uartdec -linerange $line-$line -item e 1 -fecexprrow 3
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/plicdec -linerange $line-$line -item e 1 -fecexprrow 3
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/spidec -linerange $line-$line -item e 1 -fecexprrow 3
 
 #Excluding signals in lsu: clintdec and uncoreram accept all sizes so 'SizeValid' will never be 0
 set line [GetLineNum ../src/mmu/adrdec.sv "& SizeValid"]
@@ -158,21 +193,14 @@ set line [GetLineNum ../src/mmu/adrdec.sv "& SizeValid"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/uncoreramdec -linerange $line-$line -item e 1 -fecexprrow 5
 
 # set line [GetLineNum ../src/mmu/adrdec.sv "& Supported"]
-# coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/dtimdec -linerange $line-$line -item e 1 -fecexprrow 3
-# coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/iromdec -linerange $line-$line -item e 1 -fecexprrow 3
-# coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/ddr4dec -linerange $line-$line -item e 1 -fecexprrow 3
-# coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/gpiodec -linerange $line-$line -item e 1 -fecexprrow 3
-# coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/uartdec -linerange $line-$line -item e 1 -fecexprrow 3
-# coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/plicdec -linerange $line-$line -item e 1 -fecexprrow 3
-# coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/sdcdec -linerange $line-$line -item e 1 -fecexprrow 3
-# coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/dtimdec -linerange $line-$line -item e 1 -fecexprrow 3
-# coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/iromdec -linerange $line-$line -item e 1 -fecexprrow 3
-# coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/ddr4dec -linerange $line-$line -item e 1 -fecexprrow 3
-# coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/sdcdec -linerange $line-$line -item e 1 -fecexprrow 3
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/dtimdec
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/iromdec
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/ddr4dec
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/sdcdec
+
+# No DTIM or IROM
+coverage exclude -scope /dut/core/ifu/bus/icache/UnCachedDataMux -linerange [GetLineNum ../src/generic/mux.sv "exclusion-tag: mux3"] -item b 1
+coverage exclude -scope /dut/core/lsu/bus/dcache/UnCachedDataMux -linerange [GetLineNum ../src/generic/mux.sv "exclusion-tag: mux3"] -item b 1
 
 ####################
 # Unused access types due to sharing IFU and LSU logic
@@ -216,6 +244,10 @@ set line [GetLineNum ../src/mmu/mmu.sv "ExecuteAccessF \\| ReadAccessM"]
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 1,3,4
 set line [GetLineNum ../src/mmu/mmu.sv "ReadAccessM & ~WriteAccessM"] 
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 2-4
+set line [GetLineNum ../src/mmu/mmu.sv "assign AmoAccessM"] 
+coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1
+set line [GetLineNum ../src/mmu/mmu.sv "assign AmoMisalignedCausesAccessFaultM"] 
+coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1
 set line [GetLineNum ../src/mmu/mmu.sv "DataMisalignedM & WriteAccessM"] 
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 1,2,4
 set line [GetLineNum ../src/mmu/mmu.sv "TLBPageFault & ExecuteAccessF"] 
@@ -308,6 +340,56 @@ coverage exclude -scope /dut/core/ebu/ebu/ebufsmarb -linerange $line-$line -item
 set line [GetLineNum ../src/ebu/ebufsmarb.sv "FinalBeatReg\\("]
 coverage exclude -scope /dut/core/ebu/ebu/ebufsmarb -linerange $line-$line -item e 1 -fecexprrow 1
 
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm AtomicElse"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line  -item bc 1
+
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm AtomicWait"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bc 1
+
+# The WritebackWriteback and FetchWriteback support back to back pipelined cache writebacks and fetch then
+# writebacks.  The cache never issues these type of requests.
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm WritebackWriteback"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bc 2
+
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWriteback"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bc 2
+
+# FetchWait never occurs because HREADY is never 0.
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm FetchWait"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item bc 1
+
+# all of these HREADY exclusions occur because HREADY is always 1.  The ram_ahb module never stalls.
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY0"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
+
+#set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY1"]
+#coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
+
+#set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY2"]
+#coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
+
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY3"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 4
+
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY4"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 3
+
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY5"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
+
+set line [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm HREADY6"]
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 1
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange $line-$line -item c 1 -feccondrow 5
+
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ../src/ebu/buscachefsm.sv "assign CacheBusAck"] -item e 1 -fecexprrow 5
+
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm AtomicElse"] -item s 1
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -linerange [GetLineNum ../src/ebu/buscachefsm.sv "exclusion-tag: buscachefsm AtomicWait"] -item s 1
+
+# these transitions will not happen
+coverage exclude -scope /dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm -ftrans CurrState DATA_PHASE->ADR_PHASE ATOMIC_READ_DATA_PHASE->ADR_PHASE ATOMIC_PHASE->ADR_PHASE
+
 # TLB not recently used never has all RU bits = 1 because it will then clear all to 0
 # This is a blunt instrument; perhaps there is a more graceful exclusion
 coverage exclude -srcfile priorityonehot.sv 
@@ -315,6 +397,13 @@ coverage exclude -srcfile priorityonehot.sv
 # Excluding pmpadrdecs[0] coverage case for PAgePMPAdrIn being hardwired to 1
 coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker/pmp/pmpadrdecs[0] -linerange [GetLineNum ../src/mmu/pmpadrdec.sv "exclusion-tag: PAgePMPAdrIn"] -item e 1 -fecexprrow 1
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmp/pmpchecker/pmp/pmpadrdecs[0] -linerange [GetLineNum ../src/mmu/pmpadrdec.sv "exclusion-tag: PAgePMPAdrIn"] -item e 1 -fecexprrow 1
+
+####################
+# Privileged
+####################
+
+# Instruction Misaligned never asserted because compresssed instructions are accepted
+coverage exclude -scope /dut/core/priv/priv/trap -linerange [GetLineNum ../src/privileged/trap.sv "assign ExceptionM"] -item e 1 -fecexprrow 2
 
 ####################
 # EBU

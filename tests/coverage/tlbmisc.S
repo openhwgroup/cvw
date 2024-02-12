@@ -96,6 +96,49 @@ main:
     sw t1, 0(t0)    # write to page
     jalr ra, t0     # jump to page
 
+    # AMO at page has PBMT = 2 or 1 (uncached)
+    li t0, 0x80401000
+    li t1, 10
+    amoadd.w t1, t1, (t0)
+
+    la t2, SpecialPage
+    li t0, 0x200000000  # an address to a specific 1 GiB page
+    j ConcurrentICacheMissDTLBMiss
+
+.align 6
+ConcurrentICacheMissDTLBMiss:
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+        nop
+    lw t1, 0(t0)
+
+    # write a cacheline length (512 bits) to memory in uncached region
+    li t0, 0x80401000
+    cbo.zero (t0)
+
     # Nonleaf PTE has PBMT != 0     causes a page fault during page walking.  H
     li t0, 0x80600000
     lw t1, 0(t0)    # read from page
@@ -162,6 +205,10 @@ main:
 
     # change back to default trap handler after checking everything that might cause an instruction page fault
     jal changetodefaulthandler
+
+    # uncachable AMO access
+    li t0, 0x80401000  # PBMT sets as uncachable
+    amoadd.w t0, t0, 0(t0)
 
     # exercise CBOM instructions with various permissions
     li t0, 0x80800000
@@ -294,6 +341,12 @@ pagetable:
     .8byte 0x00000000200058C1 # PTE for pages at 0x40000000 pointing to 0x80150000
     .8byte 0x00000000200048C1 # gigapage at 0x80000000 pointing to 0x80120000
     .8byte 0x00000000000000C1 # gigapage at VA 0xC0000000 causes access fault
+    .8byte 0x0
+    .8byte 0x0
+    .8byte 0x0
+    .8byte 0x0
+SpecialPage:    
+    .8byte 0x00000000200000CF   # 0x2_0000_0000 1GiB page1
  
 
 # Next page table at 0x80012000 for gigapage at 0x80000000
@@ -408,7 +461,8 @@ pagetable:
 # Leaf page table at 0x80014000 with PBMT pages
 .align 12
     #80400000
-    .8byte 0x60000000200020CF   # reserved entry
+    .8byte 0x60000000200020CF   # reserved entry             VA 80400000
+    .8byte 0x40000000201000CF   # non-cache non-idempotent   VA 80401000
 
 # Leaf page table at 0x80015000 with various permissions for testing CBOM and CBOZ
 .align 12

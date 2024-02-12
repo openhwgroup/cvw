@@ -78,6 +78,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          DivBusyE;
   logic                          StructuralStallD;
   logic                          LoadStallD;
+  logic                          StoreStallD;
   logic                          SquashSCW;
   logic                          MDUActiveE;                      // Mul/Div instruction being executed
   logic                          ENVCFG_ADUE;                     // HPTW A/D Update enable
@@ -212,7 +213,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
      .InstrValidM, .InstrValidE, .InstrValidD, .FCvtIntResW, .FCvtIntW,
      // hazards
      .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
-     .StructuralStallD, .LoadStallD, .PCSrcE,
+     .StructuralStallD, .LoadStallD, .StoreStallD, .PCSrcE,
      .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .InvalidateICacheM); 
 
   lsu #(P) lsu(
@@ -286,7 +287,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .InstrM, .InstrOrigM, .CSRReadValW, .EPCM, .TrapVectorM,
       .RetM, .TrapM, .sfencevmaM, .InvalidateICacheM, .DCacheStallM, .ICacheStallF,
       .InstrValidM, .CommittedM, .CommittedF,
-      .FRegWriteM, .LoadStallD,
+      .FRegWriteM, .LoadStallD, .StoreStallD,
       .BPDirPredWrongM, .BTAWrongM, .BPWrongM,
       .RASPredPCWrongM, .IClassWrongM, .DivBusyE, .FDivBusyE,
       .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,

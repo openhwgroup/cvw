@@ -33,13 +33,14 @@
 
 use strict;
 use warnings;
-import os;
+import os; 
 use Data::Dumper;
 
 my $curderiv = "";
 my @derivlist = ();
 my %derivs;
 my %basederiv;
+my @derivnames = ();
 
 if ($#ARGV != -1) {
     die("Usage: $0")
@@ -69,13 +70,20 @@ foreach my $line (<$fh>) {
 }
 &terminateDeriv();
 close($fh);
-foreach my $key (keys %derivs) {
+#foreach my $key (keys %derivs) {
+foreach my $key (@derivnames) {
     my $dir = "$ENV{WALLY}/config/deriv/$key";
     system("rm -rf $dir");
     system("mkdir -p $dir");
     my $configunmod = "$dir/config_unmod.vh";
     my $config = "$dir/config.vh";
     my $base = "$ENV{WALLY}/config/$basederiv{$key}/config.vh";
+    if (! -e $base) {
+        $base = "$ENV{WALLY}/config/deriv/$basederiv{$key}/config.vh";
+        #if (! -e $base) {
+        #    die("Unable to find base config $base for $key\n");
+        #}
+    }
     system("cp $base $configunmod");
     open(my $unmod, $configunmod) or die "Could not open file '$configunmod' $!";
     open(my $fh, '>>', $config) or die "Could not open file '$config' $!";
@@ -111,6 +119,7 @@ sub terminateDeriv {
     if ($curderiv ne "") { # close out the previous derivative
         my @dl = @derivlist;
         $derivs{$curderiv} = \@dl;
+        push(@derivnames, $curderiv);
     }
 };
 
