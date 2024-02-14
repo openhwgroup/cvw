@@ -128,9 +128,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic [MLEN-1:0]       LSUWriteDataSpillM;                     // Final write data
   logic [MLEN/8-1:0]     ByteMaskSpillM;                         // Selects which bytes within a word to write
   /* verilator lint_on WIDTHEXPAND */
-  logic [P.LLEN-1:0]     DCacheReadDataWordSpillM;               // D$ read data
-  logic [P.LLEN-1:0]     ReadDataWordMuxM;                       // DTIM or D$ read data
-  logic [P.LLEN-1:0]     LittleEndianReadDataWordM;              // Endian-swapped read data
+  logic [MLEN-1:0]       ReadDataWordMuxM;                       // DTIM or D$ read data
+  logic [MLEN-1:0]       LittleEndianReadDataWordM;              // Endian-swapped read data
   logic [P.LLEN-1:0]     ReadDataWordM;                          // Read data before subword selection
   logic [P.LLEN-1:0]     ReadDataM;                              // Final read data
 
@@ -155,6 +154,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic                  SelDTIM;                                // Select DTIM rather than bus or D$
   logic [P.XLEN-1:0]     WriteDataZM;
   logic                  LSULoadPageFaultM, LSUStoreAmoPageFaultM;
+  logic [MLEN-1:0]       ReadDataWordSpillAllM;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Pipeline for IEUAdr E to M
@@ -168,7 +168,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
                      .MemRWM,
                      .DCacheReadDataWordM, .CacheBusHPWTStall, .SelHPTW,
                      .ByteMaskM, .ByteMaskExtendedM, .LSUWriteDataM, .ByteMaskSpillM, .LSUWriteDataSpillM,
-                     .IEUAdrSpillE, .IEUAdrSpillM, .SelSpillE, .DCacheReadDataWordSpillM, .SpillStallM,
+                     .IEUAdrSpillE, .IEUAdrSpillM, .SelSpillE, .ReadDataWordSpillAllM, .SpillStallM,
                      .SelStoreDelay);
     assign IEUAdrExtM = {2'b00, IEUAdrSpillM}; 
     assign IEUAdrExtE = {2'b00, IEUAdrSpillE};
@@ -176,7 +176,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign IEUAdrExtM = {2'b00, IEUAdrM}; 
     assign IEUAdrExtE = {2'b00, IEUAdrE};
     assign SelSpillE = '0;
-    assign DCacheReadDataWordSpillM = DCacheReadDataWordM;
+    assign ReadDataWordSpillAllM = DCacheReadDataWordM;
     assign ByteMaskSpillM = ByteMaskM;
     assign LSUWriteDataSpillM = LSUWriteDataM;
     assign MemRWSpillM = MemRWM;
@@ -298,6 +298,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       localparam   AHBWLOGBWPL = $clog2(BEATSPERLINE);                           // Log2 of ^
       localparam   LINELEN = P.DCACHE_LINELENINBITS;                             // Number of bits in cacheline
       localparam   LLENPOVERAHBW = P.LLEN / P.AHBW;                              // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
+      localparam   MLENPOVERAHBW = MLEN / P.AHBW;                              // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
       localparam   CACHEWORDLEN = P.ZICCLSM_SUPPORTED ? 2*P.LLEN : P.LLEN;       // Width of the cache's input and output data buses.  Misaligned doubles width for fast access
 
       logic [LINELEN-1:0]      FetchBuffer;                                      // Temporary buffer to hold partially fetched cacheline
@@ -361,8 +362,13 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     // Uncache bus access may be smaller width than LLEN.  Duplicate LLENPOVERAHBW times.
       // *** DTIMReadDataWordM should be increased to LLEN.
       // pma should generate exception for LLEN read to periph.
+/* -----\/----- EXCLUDED -----\/-----
       mux3 #(P.LLEN) UnCachedDataMux(.d0(DCacheReadDataWordSpillM), .d1({LLENPOVERAHBW{FetchBuffer[P.XLEN-1:0]}}),
                                     .d2({{P.LLEN-P.XLEN{1'b0}}, DTIMReadDataWordM[P.XLEN-1:0]}),
+                                    .s({SelDTIM, ~(CacheableOrFlushCacheM)}), .y(ReadDataWordMuxM));
+ -----/\----- EXCLUDED -----/\----- */
+      mux3 #(MLEN) UnCachedDataMux(.d0(ReadDataWordSpillAllM), .d1({MLENPOVERAHBW{FetchBuffer[P.XLEN-1:0]}}),
+                                    .d2({{(MLEN-P.XLEN){1'b0}}, DTIMReadDataWordM[P.XLEN-1:0]}),
                                     .s({SelDTIM, ~(CacheableOrFlushCacheM)}), .y(ReadDataWordMuxM));
     end else begin : passthrough // No Cache, use simple ahbinterface instad of ahbcacheinterface
       logic [1:0] BusRW;                    // Non-DTIM memory access, ignore cacheableM
@@ -416,9 +422,14 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Subword Accesses
   /////////////////////////////////////////////////////////////////////////////////////////////
-  
-  subwordread #(P.LLEN) subwordread(.ReadDataWordMuxM(LittleEndianReadDataWordM), .PAdrM(PAdrM[2:0]), .BigEndianM,
-    .FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
+
+  if(MISALIGN_SUPPORT) begin
+    subwordreaddouble #(P.LLEN) subwordread(.ReadDataWordMuxM(LittleEndianReadDataWordM), .PAdrM(PAdrM[2:0]), .BigEndianM,
+      .FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
+  end else begin
+    subwordread #(P.LLEN) subwordread(.ReadDataWordMuxM(LittleEndianReadDataWordM), .PAdrM(PAdrM[2:0]), .BigEndianM,
+      .FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
+  end
   subwordwrite #(P.LLEN) subwordwrite(.LSUFunct3M, .IMAFWriteDataM, .LittleEndianWriteDataM);
 
   // Compute byte masks
@@ -438,7 +449,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
 
   if (P.BIGENDIAN_SUPPORTED) begin:endian
     endianswap #(P.LLEN) storeswap(.BigEndianM, .a(LittleEndianWriteDataM), .y(LSUWriteDataM));
-    endianswap #(P.LLEN) loadswap(.BigEndianM, .a(ReadDataWordMuxM), .y(LittleEndianReadDataWordM));
+    endianswapdouble #(MLEN) loadswap(.BigEndianM, .a(ReadDataWordMuxM), .y(LittleEndianReadDataWordM));
   end else begin
     assign LSUWriteDataM = LittleEndianWriteDataM;
     assign LittleEndianReadDataWordM = ReadDataWordMuxM;

@@ -53,7 +53,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0]       IEUAdrSpillM, // IEUAdrM for one of the two memory addresses of the spill
   output logic                    SelSpillE, // During the transition between the two spill operations, the IFU should stall the pipeline
   output logic                    SelStoreDelay, //*** this is bad.  really don't like moving this outside
-  output logic [P.LLEN-1:0]       DCacheReadDataWordSpillM, // The final 32 bit instruction after merging the two spilled fetches into 1 instruction
+  output logic [P.LLEN*2-1:0]     ReadDataWordSpillAllM,
   output logic                    SpillStallM);
 
   localparam LLENINBYTES = P.LLEN/8;
@@ -67,8 +67,6 @@ module align import cvw::*;  #(parameter cvw_t P) (
   logic              SpillSaveM;
   logic [P.LLEN-1:0] ReadDataWordFirstHalfM;
   logic              MisalignedM;
-  logic [P.LLEN*2-1:0] ReadDataWordSpillAllM;
-  logic [P.LLEN*2-1:0] ReadDataWordSpillShiftedM;
 
   logic [P.XLEN-1:0]   IEUAdrIncrementM;
 
@@ -148,8 +146,6 @@ module align import cvw::*;  #(parameter cvw_t P) (
   // shifter (4:1 mux for 32 bit, 8:1 mux for 64 bit)
   // 8 * is for shifting by bytes not bits
   assign ShiftAmount = SelHPTW ? '0 : {AccessByteOffsetM, 3'b0}; // AND gate
-  assign ReadDataWordSpillShiftedM = ReadDataWordSpillAllM >> ShiftAmount;
-  assign DCacheReadDataWordSpillM = ReadDataWordSpillShiftedM[P.LLEN-1:0];
 
   // write path. Also has the 8:1 shifter muxing for the byteoffset
   // then it also has the mux to select when a spill occurs
