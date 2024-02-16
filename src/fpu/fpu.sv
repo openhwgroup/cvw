@@ -75,7 +75,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   logic                        FDivStartE, IDivStartE;             // Start division or squareroot
   logic                        FWriteIntM;                         // Write to integer register
   logic [1:0]                  ForwardXE, ForwardYE, ForwardZE;    // forwarding mux control signals
-  logic [2:0]                  OpCtrlE, OpCtrlM;                   // Select which opperation to do in each component
+  logic [2:0]                  OpCtrlE, OpCtrlM;                   // Select which operation to do in each component
   logic [1:0]                  FResSelE, FResSelM, FResSelW;       // Select one of the results that finish in the memory stage
   logic [1:0]                  PostProcSelE, PostProcSelM;         // select result in the post processing unit
   logic [4:0]                  Adr1D, Adr2D, Adr3D;                // register adresses of each input

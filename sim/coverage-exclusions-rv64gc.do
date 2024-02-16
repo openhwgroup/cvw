@@ -49,6 +49,8 @@ coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtfsm -linerange [GetLi
 # Division by zero never sets sticky/guard/overflow/round to cause inexact or underflow result, but check out of paranoia
 coverage exclude -scope /dut/core/fpu/fpu/postprocess/flags -linerange [GetLineNum ../src/fpu/postproc/flags.sv "assign FpInexact"] -item e 1 -fecexprrow 15 
 coverage exclude -scope /dut/core/fpu/fpu/postprocess/flags -linerange [GetLineNum ../src/fpu/postproc/flags.sv "assign Underflow"] -item e 1 -fecexprrow 22
+# Convert int to fp will never underflow
+coverage exclude -scope /dut/core/fpu/fpu/postprocess/cvtshiftcalc -linerange [GetLineNum ../src/fpu/postproc/cvtshiftcalc.sv "assign CvtResUf"] -item e 1 -fecexprrow 4
 
 ##################
 # Cache Exclusions
@@ -61,6 +63,8 @@ coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -fstate CurrSta
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -ftrans CurrState STATE_WRITE_LINE->STATE_READY STATE_FETCH->STATE_READY
 # exclude unused transitions from case statement. Unfortunately the whole branch needs to be excluded I think. Expression coverage should still work.
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: icache state-case"] -item b 1
+# I$ does not flush
+coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: icache FlushCache"] -item e 1 -fecexprrow 2
 # exclude branch/condition coverage: LineDirty if statement
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: icache FETCHStatement"] -item bc 1
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: icache FLUSHStatement"] -item bs 1

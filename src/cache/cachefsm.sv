@@ -144,7 +144,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
 
   // com back to CPU
   assign CacheCommitted = (CurrState != STATE_READY) & ~(READ_ONLY_CACHE & (CurrState == STATE_READ_HOLD));
-  assign StallConditions =  FlushCache | AnyMiss | CMOWriteback;
+  assign StallConditions =  FlushCache | AnyMiss | CMOWriteback;     // exclusion-tag: icache FlushCache
   assign CacheStall = (CurrState == STATE_READY & StallConditions) | // exclusion-tag: icache StallStates
                       (CurrState == STATE_FETCH) |
                       (CurrState == STATE_WRITEBACK) |
