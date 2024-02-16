@@ -99,6 +99,6 @@ module cvtshiftcalc import cvw::*;  #(parameter cvw_t P) (
   // determine if the result underflows ??? -> fp
   //      - if the first 1 is shifted out of the result then the result underflows
   //      - can't underflow an integer to fp conversions
-  assign CvtResUf = ($signed(CvtCe) < $signed({{P.NE-$clog2(P.NF){1'b1}}, ResNegNF}))&~XZero&~IntToFp; 
+  assign CvtResUf = ($signed(CvtCe) < $signed({{P.NE-$clog2(P.NF){1'b1}}, ResNegNF}))&~XZero; // dh 2/15/24 removed &~IntToFp, which is never limiting because int to fp will not underflow
   
 endmodule
