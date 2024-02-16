@@ -25,7 +25,7 @@
 #include "WALLY-TEST-LIB-64.h"
 
 RVTEST_ISA("RV64I_Zicsr")
-RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;", status-tvm)
+RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;def NO_SAIL=True;", status-tvm)
 
 INIT_TESTS
 

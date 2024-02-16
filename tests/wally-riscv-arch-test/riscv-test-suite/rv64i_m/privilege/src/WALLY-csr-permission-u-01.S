@@ -24,7 +24,7 @@
 #include "WALLY-TEST-LIB-64.h" 
 
 RVTEST_ISA("RV64I_Zicsr")
-RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;",csr-permission-u)
+RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;def NO_SAIL=True;",csr-permission-u)
 
 INIT_TESTS
 
