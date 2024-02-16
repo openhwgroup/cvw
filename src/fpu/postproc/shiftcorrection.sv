@@ -30,12 +30,12 @@
 module shiftcorrection import cvw::*;  #(parameter cvw_t P) (
   input logic  [P.NORMSHIFTSZ-1:0] Shifted,                // the shifted sum before LZA correction
   // divsqrt
-  input logic                      DivOp,                  // is it a divsqrt opperation
+  input logic                      DivOp,                  // is it a divsqrt operation
   input logic                      DivResSubnorm,          // is the divsqrt result subnormal
   input logic  [P.NE+1:0]          DivUe,                  // the divsqrt result's exponent
   input logic                      DivSubnormShiftPos,     // is the subnorm divider shift amount positive (ie not underflowed)
   //fma
-  input logic                      FmaOp,                  // is it an fma opperation
+  input logic                      FmaOp,                  // is it an fma operation
   input logic  [P.NE+1:0]          NormSumExp,             // exponent of the normalized sum not taking into account Subnormal or zero results
   input logic                      FmaPreResultSubnorm,    // is the result subnormal - calculated before LZA corection
   input logic                      FmaSZero,

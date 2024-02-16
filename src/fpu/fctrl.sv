@@ -46,11 +46,11 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   // input mux selections                                         
   output logic                 XEnD, YEnD, ZEnD,                   // enable inputs
   output logic                 XEnE, YEnE, ZEnE,                   // enable inputs
-  // opperation mux selections                                    
-  output logic                 FCvtIntE, FCvtIntW,                 // convert to integer opperation
+  // operation mux selections                                    
+  output logic                 FCvtIntE, FCvtIntW,                 // convert to integer operation
   output logic [2:0]           FrmM,                               // FP rounding mode
   output logic [P.FMTBITS-1:0] FmtE, FmtM,                         // FP format
-  output logic [2:0]           OpCtrlE, OpCtrlM,                   // Select which opperation to do in each component
+  output logic [2:0]           OpCtrlE, OpCtrlM,                   // Select which operation to do in each component
   output logic                 FpLoadStoreM,                       // FP load or store instruction
   output logic [1:0]           PostProcSelE, PostProcSelM,         // select result in the post processing unit
   output logic [1:0]           FResSelE, FResSelM, FResSelW,       // Select one of the results that finish in the memory stage
@@ -72,7 +72,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   logic                        FRegWriteD;                         // FP register write enable
   logic                        FDivStartD;                         // start division/sqrt
   logic                        FWriteIntD;                         // integer register write enable
-  logic [2:0]                  OpCtrlD;                            // Select which opperation to do in each component
+  logic [2:0]                  OpCtrlD;                            // Select which operation to do in each component
   logic [1:0]                  PostProcSelD;                       // select result in the post processing unit
   logic [1:0]                  FResSelD;                           // Select one of the results that finish in the memory stage
   logic [2:0]                  FrmD, FrmE;                         // FP rounding mode
@@ -80,7 +80,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   logic [1:0]                  Fmt, Fmt2;                          // format - before possible reduction
   logic                        SupportedFmt;                       // is the format supported
   logic                        SupportedFmt2;                      // is the source format supported for fp -> fp
-  logic                        FCvtIntD, FCvtIntM;                 // convert to integer opperation
+  logic                        FCvtIntD, FCvtIntM;                 // convert to integer operation
   logic                        ZfaD;                               // Zfa variants of instructions
 
   // FPU Instruction Decoder

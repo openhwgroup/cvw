@@ -30,7 +30,7 @@
 module fmaadd import cvw::*;  #(parameter cvw_t P) (
   input  logic [3*P.NF+3:0]    Am,         // aligned addend's mantissa for addition in U(NF+5.2NF+1)
   input  logic [P.NE-1:0]      Ze,         // exponent of Z
-  input  logic                 Ps,         // the product sign and the alligend addeded's sign (Modified Z sign for other opperations)
+  input  logic                 Ps,         // the product sign and the alligend addeded's sign (Modified Z sign for other operations)
   input  logic [P.NE+1:0]      Pe,         // product's exponet
   input  logic [2*P.NF+1:0]    Pm,         // the product's mantissa
   input  logic                 InvA,       // invert the aligned addend

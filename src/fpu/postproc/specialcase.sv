@@ -44,14 +44,14 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.NE+1:0]      FullRe,            // Result full exponent
   input  logic [P.NF-1:0]      Rf,                // Result fraction
   // fma
-  input  logic                 FmaOp,             // is it a fma opperation
+  input  logic                 FmaOp,             // is it a fma operation
   // divsqrt
-  input  logic                 DivOp,             // is it a divsqrt opperation
+  input  logic                 DivOp,             // is it a divsqrt operation
   input  logic                 DivByZero,         // divide by zero flag
   // cvt
-  input  logic                 CvtOp,             // is it a conversion opperation
+  input  logic                 CvtOp,             // is it a conversion operation
   input  logic                 IntZero,           // is the integer input zero
-  input  logic                 IntToFp,           // is cvt int -> fp opperation
+  input  logic                 IntToFp,           // is cvt int -> fp operation
   input  logic                 Int64,             // is the integer 64 bits
   input  logic                 Signed,            // is the integer signed
   input  logic                 Zfa,               // Zfa conversion operation: fcvtmod.w.d
@@ -356,7 +356,7 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
   // select the integer output
   //      - if the input is invalid (out of bounds NaN or Inf) then output overflow res
   //      - if the input underflows
-  //          - if rounding and signed opperation and negative input, output -1
+  //          - if rounding and signed operation and negative input, output -1
   //          - otherwise output a rounded 0
   //      - otherwise output the normal res (trmined and sign extended if nessisary)
   always_comb

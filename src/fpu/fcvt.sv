@@ -31,7 +31,7 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.NE-1:0]         Xe,           // input's exponent
   input  logic [P.NF:0]           Xm,           // input's fraction
   input  logic [P.XLEN-1:0]       Int,          // integer input - from IEU
-  input  logic [2:0]              OpCtrl,       // choose which opperation (look below for values)
+  input  logic [2:0]              OpCtrl,       // choose which operation (look below for values)
   input  logic                    ToInt,        // is fp->int (since it's writting to the integer register)
   input  logic                    XZero,        // is the input zero
   input  logic [P.FMTBITS-1:0]    Fmt,          // the input's precision (11=quad 01=double 00=single 10=half)
@@ -58,9 +58,9 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]              TrimInt;      // integer trimmed to the correct size
   logic [P.NE-2:0]                NewBias;      // the bias of the final result
   logic [P.NE-1:0]                OldExp;       // the old exponent
-  logic                           Signed;       // is the opperation with a signed integer?
+  logic                           Signed;       // is the operation with a signed integer?
   logic                           Int64;        // is the integer 64 bits?
-  logic                           IntToFp;      // is the opperation an int->fp conversion?
+  logic                           IntToFp;      // is the operation an int->fp conversion?
   logic [P.CVTLEN:0]              LzcInFull;    // input to the Leading Zero Counter (priority encoder)
   logic [P.LOGCVTLEN-1:0]         LeadingZeros; // output from the LZC
 
@@ -69,7 +69,7 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
   assign Int64 =   OpCtrl[1];
   assign IntToFp = OpCtrl[2];
 
-  // choose the output format depending on the opperation
+  // choose the output format depending on the operation
   //      - fp -> fp: OpCtrl contains the precision of the output
   //      - int -> fp: Fmt contains the precision of the output
   if (P.FPSIZES == 2) 
