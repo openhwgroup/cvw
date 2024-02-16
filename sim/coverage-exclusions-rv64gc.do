@@ -49,6 +49,8 @@ coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtfsm -linerange [GetLi
 # Division by zero never sets sticky/guard/overflow/round to cause inexact or underflow result, but check out of paranoia
 coverage exclude -scope /dut/core/fpu/fpu/postprocess/flags -linerange [GetLineNum ../src/fpu/postproc/flags.sv "assign FpInexact"] -item e 1 -fecexprrow 15 
 coverage exclude -scope /dut/core/fpu/fpu/postprocess/flags -linerange [GetLineNum ../src/fpu/postproc/flags.sv "assign Underflow"] -item e 1 -fecexprrow 22
+# Convert int to fp will never underflow
+coverage exclude -scope /dut/core/fpu/fpu/postprocess/cvtshiftcalc -linerange [GetLineNum ../src/fpu/postproc/cvtshiftcalc.sv "assign CvtResUf"] -item e 1 -fecexprrow 4
 
 ##################
 # Cache Exclusions
