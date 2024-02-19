@@ -327,23 +327,23 @@ INSTR_CLASS_PRED          0
 deriv bpred_GSHARE_16_16_10_0_rv32gc bpred_GSHARE_16_16_10_1_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_TWOBIT_6_16_10_0_rv32gc bpred_TWOBIT_6_16_10_1_rv32gc
-INSTR_CLASS_PRED          0
+deriv bpred_TWOBIT_6_16_10_0_rv32gc bpred_GSHARE_6_16_10_0_rv32gc
+BPRED_TYPE          `BP_TWOBIT
 
-deriv bpred_TWOBIT_8_16_10_0_rv32gc bpred_TWOBIT_8_16_10_1_rv32gc
-INSTR_CLASS_PRED          0
+deriv bpred_TWOBIT_8_16_10_0_rv32gc bpred_GSHARE_8_16_10_0_rv32gc
+BPRED_TYPE          `BP_TWOBIT
 
-deriv bpred_TWOBIT_10_16_10_0_rv32gc bpred_TWOBIT_10_16_10_1_rv32gc
-INSTR_CLASS_PRED          0
+deriv bpred_TWOBIT_10_16_10_0_rv32gc bpred_GSHARE_10_16_10_0_rv32gc
+BPRED_TYPE          `BP_TWOBIT
 
-deriv bpred_TWOBIT_12_16_10_0_rv32gc bpred_TWOBIT_12_16_10_1_rv32gc
-INSTR_CLASS_PRED          0
+deriv bpred_TWOBIT_12_16_10_0_rv32gc bpred_GSHARE_12_16_10_0_rv32gc
+BPRED_TYPE          `BP_TWOBIT
 
-deriv bpred_TWOBIT_14_16_10_0_rv32gc bpred_TWOBIT_14_16_10_1_rv32gc
-INSTR_CLASS_PRED          0
+deriv bpred_TWOBIT_14_16_10_0_rv32gc bpred_GSHARE_14_16_10_0_rv32gc
+BPRED_TYPE          `BP_TWOBIT
 
-deriv bpred_TWOBIT_16_16_10_0_rv32gc bpred_TWOBIT_16_16_10_1_rv32gc
-INSTR_CLASS_PRED          0
+deriv bpred_TWOBIT_16_16_10_0_rv32gc bpred_GSHARE_16_16_10_0_rv32gc
+BPRED_TYPE          `BP_TWOBIT
 
 deriv bpred_GSHARE_10_2_10_0_rv32gc bpred_GSHARE_10_2_10_1_rv32gc
 INSTR_CLASS_PRED          0
@@ -588,3 +588,490 @@ IEEE754     1
 
 deriv fdqh_ieee_rv64gc fdqh_rv64gc
 IEEE754     1
+
+#### MORE DIVIDER variants
+
+#### F_only, RK variable
+deriv f_div_2_1_rv32gc    div_2_1_rv32gc    
+MISA (32'h00000104 | 1<< 5 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv f_div_2_2_rv32gc    div_2_2_rv32gc    
+MISA (32'h00000104 | 1<< 5 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv f_div_2_4_rv32gc    div_2_4_rv32gc
+MISA (32'h00000104 | 1<< 5 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv f_div_4_1_rv32gc    div_4_1_rv32gc    
+MISA (32'h00000104 | 1<< 5 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv f_div_4_2_rv32gc    div_4_2_rv32gc    
+MISA (32'h00000104 | 1<< 5 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv f_div_2_1_rv64gc    div_2_1_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv f_div_2_2_rv64gc    div_2_2_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv f_div_2_4_rv64gc    div_2_4_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv f_div_4_1_rv64gc    div_4_1_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv f_div_4_2_rv64gc    div_4_2_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv f_div_4_4_rv64gc    div_4_4_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+
+#### FH_only, RK variable
+deriv fh_div_2_1_rv32gc    div_2_1_rv32gc    
+MISA (32'h00000104 | 1<< 5 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fh_div_2_2_rv32gc    div_2_2_rv32gc    
+MISA (32'h00000104 | 1<< 5 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fh_div_2_4_rv32gc    div_2_4_rv32gc
+MISA (32'h00000104 | 1<< 5 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fh_div_4_1_rv32gc    div_4_1_rv32gc    
+MISA (32'h00000104 | 1<< 5 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fh_div_4_2_rv32gc    div_4_2_rv32gc    
+MISA (32'h00000104 | 1<< 5 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fh_div_2_1_rv64gc    div_2_1_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fh_div_2_2_rv64gc    div_2_2_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fh_div_2_4_rv64gc    div_2_4_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fh_div_4_1_rv64gc    div_4_1_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fh_div_4_2_rv64gc    div_4_2_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fh_div_4_4_rv64gc    div_4_4_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+# FD only , rk variable
+
+deriv fd_div_2_1_rv32gc    div_2_1_rv32gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv fd_div_2_2_rv32gc    div_2_2_rv32gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv fd_div_2_4_rv32gc    div_2_4_rv32gc
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv fd_div_4_1_rv32gc    div_4_1_rv32gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv fd_div_4_2_rv32gc    div_4_2_rv32gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv fd_div_2_1_rv64gc    div_2_1_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv fd_div_2_2_rv64gc    div_2_2_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv fd_div_2_4_rv64gc    div_2_4_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv fd_div_4_1_rv64gc    div_4_1_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv fd_div_4_2_rv64gc    div_4_2_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv fd_div_4_4_rv64gc    div_4_4_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+
+# FDH only , rk variable
+
+deriv fdh_div_2_1_rv32gc    div_2_1_rv32gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fdh_div_2_2_rv32gc    div_2_2_rv32gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fdh_div_2_4_rv32gc    div_2_4_rv32gc
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fdh_div_4_1_rv32gc    div_4_1_rv32gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fdh_div_4_2_rv32gc    div_4_2_rv32gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fdh_div_2_1_rv64gc    div_2_1_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fdh_div_2_2_rv64gc    div_2_2_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fdh_div_2_4_rv64gc    div_2_4_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fdh_div_4_1_rv64gc    div_4_1_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fdh_div_4_2_rv64gc    div_4_2_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fdh_div_4_4_rv64gc    div_4_4_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+# FDQ only , rk variable
+
+deriv fdq_div_2_1_rv32gc    div_2_1_rv32gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1 << 16 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv fdq_div_2_2_rv32gc    div_2_2_rv32gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1 << 16 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv fdq_div_2_4_rv32gc    div_2_4_rv32gc
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1 << 16 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv fdq_div_4_1_rv32gc    div_4_1_rv32gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1 << 16 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv fdq_div_4_2_rv32gc    div_4_2_rv32gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1 << 16 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv fdq_div_2_1_rv64gc    div_2_1_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1 << 16 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv fdq_div_2_2_rv64gc    div_2_2_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1 << 16 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv fdq_div_2_4_rv64gc    div_2_4_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1 << 16 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv fdq_div_4_1_rv64gc    div_4_1_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1 << 16 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv fdq_div_4_2_rv64gc    div_4_2_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1 << 16 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+deriv fdq_div_4_4_rv64gc    div_4_4_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1 << 16 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   0
+
+# FDQH only , rk variable
+
+deriv fdqh_div_2_1_rv32gc    div_2_1_rv32gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1 << 16 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fdqh_div_2_2_rv32gc    div_2_2_rv32gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1 << 16 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fdqh_div_2_4_rv32gc    div_2_4_rv32gc
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1 << 16 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fdqh_div_4_1_rv32gc    div_4_1_rv32gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1 << 16 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fdqh_div_4_2_rv32gc    div_4_2_rv32gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1 << 16 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fdqh_div_2_1_rv64gc    div_2_1_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1 << 16 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fdqh_div_2_2_rv64gc    div_2_2_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1 << 16 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fdqh_div_2_4_rv64gc    div_2_4_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1 << 16 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fdqh_div_4_1_rv64gc    div_4_1_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1 << 16 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fdqh_div_4_2_rv64gc    div_4_2_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1 << 16 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+deriv fdqh_div_4_4_rv64gc    div_4_4_rv64gc    
+MISA (32'h00000104 | 1<< 5 | 1 << 3 | 1 << 16 | 1<< 18 | 1 << 20 | 1 << 12 | 1 << 0)
+ZFH_SUPPORTED   1
+
+#### DIVIDER VARIANTS WITH IEEE
+
+deriv f_ieee_div_2_1_rv32gc    f_div_2_1_rv32gc    
+IEEE754         1
+
+deriv f_ieee_div_2_2_rv32gc    f_div_2_2_rv32gc    
+IEEE754         1
+
+deriv f_ieee_div_2_4_rv32gc    f_div_2_4_rv32gc    
+IEEE754         1
+
+deriv f_ieee_div_4_1_rv32gc    f_div_4_1_rv32gc    
+IEEE754         1
+
+deriv f_ieee_div_4_2_rv32gc    f_div_4_2_rv32gc    
+IEEE754         1
+
+deriv f_ieee_div_2_1_rv64gc    f_div_2_1_rv64gc    
+IEEE754         1
+
+deriv f_ieee_div_2_2_rv64gc    f_div_2_2_rv64gc    
+IEEE754         1
+
+deriv f_ieee_div_2_4_rv64gc    f_div_2_4_rv64gc    
+IEEE754         1
+
+deriv f_ieee_div_4_1_rv64gc    f_div_4_1_rv64gc    
+IEEE754         1
+
+deriv f_ieee_div_4_2_rv64gc    f_div_4_2_rv64gc    
+IEEE754         1
+
+deriv f_ieee_div_4_4_rv64gc    f_div_4_4_rv64gc    
+IEEE754         1
+
+#### FH_only, RK variable
+deriv fh_ieee_div_2_1_rv32gc    fh_div_2_1_rv32gc    
+IEEE754         1
+
+deriv fh_ieee_div_2_2_rv32gc    fh_div_2_2_rv32gc    
+IEEE754         1
+
+deriv fh_ieee_div_2_4_rv32gc    fh_div_2_4_rv32gc    
+IEEE754         1
+
+deriv fh_ieee_div_4_1_rv32gc    fh_div_4_1_rv32gc    
+IEEE754         1
+
+deriv fh_ieee_div_4_2_rv32gc    fh_div_4_2_rv32gc    
+IEEE754         1
+
+deriv fh_ieee_div_2_1_rv64gc    fh_div_2_1_rv64gc    
+IEEE754         1
+
+deriv fh_ieee_div_2_2_rv64gc    fh_div_2_2_rv64gc    
+IEEE754         1
+
+deriv fh_ieee_div_2_4_rv64gc    fh_div_2_4_rv64gc    
+IEEE754         1
+
+deriv fh_ieee_div_4_1_rv64gc    fh_div_4_1_rv64gc    
+IEEE754         1
+
+deriv fh_ieee_div_4_2_rv64gc    fh_div_4_2_rv64gc    
+IEEE754         1
+
+deriv fh_ieee_div_4_4_rv64gc    fh_div_4_4_rv64gc    
+IEEE754         1
+# FD only , rk variable
+
+deriv fd_ieee_div_2_1_rv32gc    fd_div_2_1_rv32gc    
+IEEE754         1
+
+deriv fd_ieee_div_2_2_rv32gc    fd_div_2_2_rv32gc    
+IEEE754         1
+
+deriv fd_ieee_div_2_4_rv32gc    fd_div_2_4_rv32gc    
+IEEE754         1
+
+deriv fd_ieee_div_4_1_rv32gc    fd_div_4_1_rv32gc    
+IEEE754         1
+
+deriv fd_ieee_div_4_2_rv32gc    fd_div_4_2_rv32gc    
+IEEE754         1
+
+deriv fd_ieee_div_2_1_rv64gc    fd_div_2_1_rv64gc    
+IEEE754         1
+
+deriv fd_ieee_div_2_2_rv64gc    fd_div_2_2_rv64gc    
+IEEE754         1
+
+deriv fd_ieee_div_2_4_rv64gc    fd_div_2_4_rv64gc    
+IEEE754         1
+
+deriv fd_ieee_div_4_1_rv64gc    fd_div_4_1_rv64gc    
+IEEE754         1
+
+deriv fd_ieee_div_4_2_rv64gc    fd_div_4_2_rv64gc    
+IEEE754         1
+
+deriv fd_ieee_div_4_4_rv64gc    fd_div_4_4_rv64gc    
+IEEE754         1
+
+# FDH only , rk variable
+
+deriv fdh_ieee_div_2_1_rv32gc    fdh_div_2_1_rv32gc    
+IEEE754         1
+
+deriv fdh_ieee_div_2_2_rv32gc    fdh_div_2_2_rv32gc    
+IEEE754         1
+
+deriv fdh_ieee_div_2_4_rv32gc    fdh_div_2_4_rv32gc    
+IEEE754         1
+
+deriv fdh_ieee_div_4_1_rv32gc    fdh_div_4_1_rv32gc    
+IEEE754         1
+
+deriv fdh_ieee_div_4_2_rv32gc    fdh_div_4_2_rv32gc    
+IEEE754         1
+
+deriv fdh_ieee_div_2_1_rv64gc    fdh_div_2_1_rv64gc    
+IEEE754         1
+
+deriv fdh_ieee_div_2_2_rv64gc    fdh_div_2_2_rv64gc    
+IEEE754         1
+
+deriv fdh_ieee_div_2_4_rv64gc    fdh_div_2_4_rv64gc    
+IEEE754         1
+
+deriv fdh_ieee_div_4_1_rv64gc    fdh_div_4_1_rv64gc    
+IEEE754         1
+
+deriv fdh_ieee_div_4_2_rv64gc    fdh_div_4_2_rv64gc    
+IEEE754         1
+
+deriv fdh_ieee_div_4_4_rv64gc    fdh_div_4_4_rv64gc    
+IEEE754         1
+# FDQ only , rk variable
+
+deriv fdq_ieee_div_2_1_rv32gc    fdq_div_2_1_rv32gc    
+IEEE754         1
+
+deriv fdq_ieee_div_2_2_rv32gc    fdq_div_2_2_rv32gc    
+IEEE754         1
+
+deriv fdq_ieee_div_2_4_rv32gc    fdq_div_2_4_rv32gc    
+IEEE754         1
+
+deriv fdq_ieee_div_4_1_rv32gc    fdq_div_4_1_rv32gc    
+IEEE754         1
+
+deriv fdq_ieee_div_4_2_rv32gc    fdq_div_4_2_rv32gc    
+IEEE754         1
+
+deriv fdq_ieee_div_2_1_rv64gc    fdq_div_2_1_rv64gc    
+IEEE754         1
+
+deriv fdq_ieee_div_2_2_rv64gc    fdq_div_2_2_rv64gc    
+IEEE754         1
+
+deriv fdq_ieee_div_2_4_rv64gc    fdq_div_2_4_rv64gc    
+IEEE754         1
+
+deriv fdq_ieee_div_4_1_rv64gc    fdq_div_4_1_rv64gc    
+IEEE754         1
+
+deriv fdq_ieee_div_4_2_rv64gc    fdq_div_4_2_rv64gc    
+IEEE754         1
+
+deriv fdq_ieee_div_4_4_rv64gc    fdq_div_4_4_rv64gc    
+IEEE754         1
+
+# FDQH only , rk variable
+
+deriv fdqh_ieee_div_2_1_rv32gc    fdqh_div_2_1_rv32gc    
+IEEE754         1
+
+deriv fdqh_ieee_div_2_2_rv32gc    fdqh_div_2_2_rv32gc    
+IEEE754         1
+
+deriv fdqh_ieee_div_2_4_rv32gc    fdqh_div_2_4_rv32gc    
+IEEE754         1
+
+deriv fdqh_ieee_div_4_1_rv32gc    fdqh_div_4_1_rv32gc    
+IEEE754         1
+
+deriv fdqh_ieee_div_4_2_rv32gc    fdqh_div_4_2_rv32gc    
+IEEE754         1
+
+deriv fdqh_ieee_div_2_1_rv64gc    fdqh_div_2_1_rv64gc    
+IEEE754         1
+
+deriv fdqh_ieee_div_2_2_rv64gc    fdqh_div_2_2_rv64gc    
+IEEE754         1
+
+deriv fdqh_ieee_div_2_4_rv64gc    fdqh_div_2_4_rv64gc    
+IEEE754         1
+
+deriv fdqh_ieee_div_4_1_rv64gc    fdqh_div_4_1_rv64gc    
+IEEE754         1
+
+deriv fdqh_ieee_div_4_2_rv64gc    fdqh_div_4_2_rv64gc    
+IEEE754         1
+
+deriv fdqh_ieee_div_4_4_rv64gc    fdqh_div_4_4_rv64gc    
+IEEE754         1
+
+
