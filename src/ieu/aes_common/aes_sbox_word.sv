@@ -4,14 +4,12 @@
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
 //
-// Purpose: RISC-V 4 sets of Rijndael S-BOX so whole word can be looked up simultaneously.
+// Purpose: 4 sets of Rijndael S-BOX so whole word can be looked up simultaneously.
 //
-// Documentation: RISC-V System on Chip Design Chapter 4 (Figure 4.4)
-// 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
 // 
-// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //

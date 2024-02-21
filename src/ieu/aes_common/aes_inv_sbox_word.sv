@@ -4,14 +4,12 @@
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
 //
-// Purpose: RISC-V Rinjdael Inverted S-BOX
+// Purpose: 4 sets of Rinjdael Inverse S-BOX for whole word look up
 //
-// Documentation: RISC-V System on Chip Design Chapter 4 (Figure 4.4)
-// 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
 // 
-// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
@@ -30,13 +28,13 @@
 module aes_inv_sbox_word(input logic [31:0] in,
 			 output logic [31:0] out);
    
-   //Declare the SBOX for (least significant) byte 0 of the input
+   // Declare the SBOX for (least significant) byte 0 of the input
    aes_inv_sbox sbox_b0(.in(in[7:0]), .out(out[7:0]));
-   //Declare the SBOX for byte 1 of the input
+   // Declare the SBOX for byte 1 of the input
    aes_inv_sbox sbox_b1(.in(in[15:8]), .out(out[15:8]));
-   //Declare the SBOX for byte 2 of the input
+   // Declare the SBOX for byte 2 of the input
    aes_inv_sbox sbox_b2(.in(in[23:16]), .out(out[23:16]));	
-   //Declare the SBOX for byte 3 of the input	
+   // Declare the SBOX for byte 3 of the input	
    aes_inv_sbox sbox_b3(.in(in[31:24]), .out(out[31:24]));
    
 endmodule

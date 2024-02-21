@@ -4,14 +4,12 @@
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
 //
-// Purpose: RISC-V 128-bit Inverse Substitution box
+// Purpose: 128-bit Inverse Substitution box comprised of 4x32-bit inverse s-boxes
 //
-// Documentation: RISC-V System on Chip Design Chapter 4 (Figure 4.4)
-// 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
 // 
-// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
@@ -30,13 +28,13 @@
 module aes_inv_sbox_128(input logic [127:0] in,
 			output logic [127:0] out);
 
-   //Declare the SBOX for (least significant) word 0 of the input
+   // Declare the SBOX for (least significant) word 0 of the input
    aes_inv_sbox_word sbox_w0(.in(in[31:0]), .out(out[31:0]));
-   //Declare the SBOX for word 1 of the input
+   // Declare the SBOX for word 1 of the input
    aes_inv_sbox_word sbox_w1(.in(in[63:32]), .out(out[63:32]));
-   //Declare the SBOX for word 2 of the input
+   // Declare the SBOX for word 2 of the input
    aes_inv_sbox_word sbox_w2(.in(in[95:64]), .out(out[95:64]));	
-   //Declare the SBOX for word 3 of the input	
+   // Declare the SBOX for word 3 of the input	
    aes_inv_sbox_word sbox_w3(.in(in[127:96]), .out(out[127:96]));
 				 
 endmodule
