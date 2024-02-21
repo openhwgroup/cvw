@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// aes_inv_sbox.sv
+// aes_inv_sbox_word.sv
 //
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024

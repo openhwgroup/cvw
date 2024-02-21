@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// galois_func.sv
+// Galois_func.sv
 //
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
@@ -35,7 +35,7 @@ module gm2 (gm2_in, gm2_out);
    // Set output to Galois Mult 2
    assign gm2_out = {gm2_in[6:0], 1'b0} ^ (8'h1b & {8{gm2_in[7]}});
    
-endmodule // gm2
+endmodule 
 
 module gm3 (gm3_in, gm3_out);
    
@@ -63,10 +63,8 @@ module gm4 (gm4_in, gm4_out);
    logic [7:0] 	      gm2_1_out;
 
    // Sub-Modules for multiple gm2 multiplications
-   gm2 gm2_0 (.gm2_in(gm4_in),
-	      .gm2_out(gm2_0_out));
-   gm2 gm2_1 (.gm2_in(gm2_0_out),
-	      .gm2_out(gm2_1_out));
+   gm2 gm2_0 (.gm2_in(gm4_in), .gm2_out(gm2_0_out));
+   gm2 gm2_1 (.gm2_in(gm2_0_out), .gm2_out(gm2_1_out));
 
    // Assign output to second gm2 output
    assign gm4_out = gm2_1_out;
@@ -82,16 +80,14 @@ module gm8 (gm8_in, gm8_out);
    logic [7:0] 	      gm2_0_out;
    logic [7:0] 	      gm4_0_out;
 
-   // Sub-Modules for sub-galois operations
-   gm4 gm4_0 (.gm4_in(gm8_in),
-	      .gm4_out(gm4_0_out));
-   gm2 gm2_0 (.gm2_in(gm4_0_out),
-	      .gm2_out(gm2_0_out));
+   // Sub-Modules for sub-Galois operations
+   gm4 gm4_0 (.gm4_in(gm8_in), .gm4_out(gm4_0_out));
+   gm2 gm2_0 (.gm2_in(gm4_0_out), .gm2_out(gm2_0_out));
 
    // Assign output to gm2 output
    assign gm8_out = gm2_0_out;
 
-endmodule // gm8
+endmodule 
 
 module gm9 (gm9_in, gm9_out);
    
@@ -101,7 +97,7 @@ module gm9 (gm9_in, gm9_out);
    // Internal Logic
    logic [7:0] 	      gm8_0_out;
 
-   // Sub-Modules for sub-galois operations
+   // Sub-Modules for sub-Galois operations
    gm8 gm8_0 (.gm8_in(gm9_in), .gm8_out(gm8_0_out));
 
    // Set output to gm8(in) ^ in
@@ -118,14 +114,14 @@ module gm11 (gm11_in, gm11_out);
    logic [7:0] 	      gm8_0_out;
    logic [7:0] 	      gm2_0_out;
 
-   // Sub-Modules for sub-galois operations
+   // Sub-Modules for sub-Galois operations
    gm8 gm8_0 (.gm8_in(gm11_in), .gm8_out(gm8_0_out));
    gm2 gm2_0 (.gm2_in(gm11_in), .gm2_out(gm2_0_out));
 
    // Set output to gm8(in) ^ gm2(in) ^ in
    assign gm11_out = gm8_0_out ^ gm2_0_out ^ gm11_in;
 
-endmodule // gm11
+endmodule 
 
 module gm13 (gm13_in, gm13_out);
 
@@ -136,14 +132,14 @@ module gm13 (gm13_in, gm13_out);
    logic [7:0] 	      gm8_0_out;
    logic [7:0] 	      gm4_0_out;
 
-   // Sub-Modules for sub-galois operations
+   // Sub-Modules for sub-Galois operations
    gm8 gm8_0 (.gm8_in(gm13_in), .gm8_out(gm8_0_out));
    gm4 gm4_0 (.gm4_in(gm13_in), .gm4_out(gm4_0_out));
 
    // Set output to gm8(in) ^ gm4(in) ^ in
    assign gm13_out = gm8_0_out ^ gm4_0_out ^ gm13_in;
 
-endmodule // gm13
+endmodule 
 
 module gm14 (gm14_in, gm14_out);
 
@@ -155,7 +151,7 @@ module gm14 (gm14_in, gm14_out);
    logic [7:0] 	      gm4_0_out;
    logic [7:0] 	      gm2_0_out;
 
-   // Sub-Modules for sub-galois operations
+   // Sub-Modules for sub-Galois operations
    gm8 gm8_0 (.gm8_in(gm14_in), .gm8_out(gm8_0_out));
    gm4 gm4_0 (.gm4_in(gm14_in), .gm4_out(gm4_0_out));
    gm2 gm2_0 (.gm2_in(gm14_in), .gm2_out(gm2_0_out));
@@ -163,5 +159,5 @@ module gm14 (gm14_in, gm14_out);
    //Assign output to gm8(in) ^ gm4(in) ^ gm2(in)
    assign gm14_out = gm8_0_out ^ gm4_0_out ^ gm2_0_out;
 
-endmodule // gm14
+endmodule 
 

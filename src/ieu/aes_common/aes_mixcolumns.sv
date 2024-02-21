@@ -67,7 +67,7 @@ module aes_mixcolumns(data, mixedcols);
    
 endmodule // mixcolumns
 
-//This applies the Galois field operations to an individual 32 bit word.
+// This applies the Galois field operations to an individual 32 bit word.
 module mixword (word, mixed_word);
    
    // Declare Inputs/Outputs
@@ -97,28 +97,20 @@ module mixword (word, mixed_word);
    assign b3 = word[7:0];
 
    // mb0 Galois components
-   gm2 gm2_0(.gm2_in(b0),
-	     .gm2_out(gm2_0_out));
-   gm3 gm3_0(.gm3_in(b3),
-	     .gm3_out(gm3_0_out));
+   gm2 gm2_0(.gm2_in(b0), .gm2_out(gm2_0_out));
+   gm3 gm3_0(.gm3_in(b3), .gm3_out(gm3_0_out));
 
    // mb1 Galois components
-   gm2 gm2_1(.gm2_in(b1),
-	     .gm2_out(gm2_1_out));
-   gm3 gm3_1(.gm3_in(b0),
-	     .gm3_out(gm3_1_out));
+   gm2 gm2_1(.gm2_in(b1), .gm2_out(gm2_1_out));
+   gm3 gm3_1(.gm3_in(b0), .gm3_out(gm3_1_out));
 
    // mb2 Galois components
-   gm2 gm2_2(.gm2_in(b2),
-	     .gm2_out(gm2_2_out));
-   gm3 gm3_2(.gm3_in(b1),
-	     .gm3_out(gm3_2_out));
+   gm2 gm2_2(.gm2_in(b2), .gm2_out(gm2_2_out));
+   gm3 gm3_2(.gm3_in(b1), .gm3_out(gm3_2_out));
 
    // mb3 Galois components
-   gm2 gm2_3(.gm2_in(b3),
-	     .gm2_out(gm2_3_out));
-   gm3 gm3_3(.gm3_in(b2),
-	     .gm3_out(gm3_3_out));
+   gm2 gm2_3(.gm2_in(b3), .gm2_out(gm2_3_out));
+   gm3 gm3_3(.gm3_in(b2), .gm3_out(gm3_3_out));
 
    // Combine Componenets into mixed word
    assign mb0 = gm2_0_out ^ gm3_0_out ^ b1 ^ b2;
