@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// aes64esm.sv
+// rcon_lut_128.sv
 //
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
 //
-// Purpose: aes64esm instruction
+// Purpose: aes64ks1i instruction
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,23 +25,25 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aes64esm(input logic [63:0]  rs1,
-                input logic [63:0]  rs2,
-                output logic [63:0] data_out);
-   
-    // Intermediary Signals
-    logic [127:0] shiftRow_out;
-    logic [63:0] sbox_out;
-                
-    // AES shiftrow unit
-    aes_shiftrow srow(.dataIn({rs2,rs1}),.dataOut(shiftRow_out));
-   
-    // Apply substitution box to 2 lower words
-    aes_sbox_word sbox_0(.in(shiftRow_out[31:0]),.out(sbox_out[31:0]));
-    aes_sbox_word sbox_1(.in(shiftRow_out[63:32]),.out(sbox_out[63:32]));
-   
-    // Apply mix columns operations
-    mixword mw0(.word(sbox_out[31:0]),.mixed_word(data_out[31:0]));
-    mixword mw1(.word(sbox_out[63:32]),.mixed_word(data_out[63:32]));
-    
+module rcon_lut_128(input logic [3:0] RD,
+		    output logic [7:0] rcon_out);
+	
+   always_comb
+     begin
+	case(RD)
+	  4'h0 : rcon_out = 8'h01;
+	  4'h1 : rcon_out = 8'h02;
+	  4'h2 : rcon_out = 8'h04;
+	  4'h3 : rcon_out = 8'h08;
+	  4'h4 : rcon_out = 8'h10;
+	  4'h5 : rcon_out = 8'h20;
+	  4'h6 : rcon_out = 8'h40;
+	  4'h7 : rcon_out = 8'h80;
+	  4'h8 : rcon_out = 8'h1b;
+	  4'h9 : rcon_out = 8'h36;
+	  4'hA : rcon_out = 8'h00;
+	  default : rcon_out = 8'h00;
+	endcase	
+     end        
+
 endmodule
