@@ -74,28 +74,3 @@ module inv_mixword (input logic [31:0] word, output logic [31:0] mixed_word);
    assign mixed_word = {mb0, mb1, mb2, mb3};  
 
 endmodule // inv_mixword
-
-module aes_inv_mixcols (input  logic [127:0] data, output logic [127:0] mixed_col);
-
-   // Declare Internal logic
-   logic [31:0] 	w0, w1, w2, w3;
-   logic [31:0] 	ws0, ws1, ws2, ws3;
-   
-   // Break up input data into word components
-   assign w0 = data[127:96];
-   assign w1 = data[95:64];
-   assign w2 = data[63:32];
-   assign w3 = data[31:0];
-
-   // Declare mixword components
-   inv_mixword mw_0(.word(w0), .mixed_word(ws0));
-   inv_mixword mw_1(.word(w1), .mixed_word(ws1));
-   inv_mixword mw_2(.word(w2), .mixed_word(ws2));
-   inv_mixword mw_3(.word(w3), .mixed_word(ws3));
-
-   // Assign output to mixed word
-   assign mixed_col = {ws0, ws1, ws2, ws3};
-
-endmodule // inv_mixcols
-
-
