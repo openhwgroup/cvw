@@ -200,7 +200,6 @@ if (nightly):
         ["fdq_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64d", "arch64d_divsqrt"]],
         ["fdqh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64d", "arch64d_divsqrt"]],
     ]
-    """
     derivconfigtests = [
         ["tlb2_rv32gc", ["wally32priv"]],
         ["tlb16_rv32gc", ["wally32priv"]],
