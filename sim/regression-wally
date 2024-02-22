@@ -321,6 +321,32 @@ if (softfloat):
     'div_2_1_rv64gc', 'div_2_2_rv64gc', 'div_2_4_rv64gc', \
     'div_4_1_rv64gc', 'div_4_2_rv64gc', 'div_4_4_rv64gc', \
     'fd_ieee_rv64gc', 'fh_ieee_rv64gc', 'f_ieee_rv32gc']
+    softfloatconfigs = ['fdh_ieee_div_2_1_rv32gc', 'fdh_ieee_div_2_1_rv64gc', \
+    'fdh_ieee_div_2_2_rv32gc', 'fdh_ieee_div_2_2_rv64gc', 'fdh_ieee_div_2_4_rv32gc', \
+    'fdh_ieee_div_2_4_rv64gc', 'fdh_ieee_div_4_1_rv32gc', 'fdh_ieee_div_4_1_rv64gc', \
+    'fdh_ieee_div_4_2_rv32gc', 'fdh_ieee_div_4_2_rv64gc', 'fdh_ieee_div_4_4_rv64gc', \
+    'fdh_ieee_rv32gc', 'fd_ieee_div_2_1_rv32gc', 'fd_ieee_div_2_1_rv64gc', \
+    'fd_ieee_div_2_2_rv32gc', 'fd_ieee_div_2_2_rv64gc', 'fd_ieee_div_2_4_rv32gc', \
+    'fd_ieee_div_2_4_rv64gc', 'fd_ieee_div_4_1_rv32gc', 'fd_ieee_div_4_1_rv64gc', \
+    'fd_ieee_div_4_2_rv32gc', 'fd_ieee_div_4_2_rv64gc', 'fd_ieee_div_4_4_rv64gc', \
+    'fd_ieee_rv32gc', 'fd_ieee_rv64gc', 'fdqh_ieee_div_2_1_rv32gc', \
+    'fdqh_ieee_div_2_1_rv64gc', 'fdqh_ieee_div_2_2_rv32gc', 'fdqh_ieee_div_2_2_rv64gc', \
+    'fdqh_ieee_div_2_4_rv32gc', 'fdqh_ieee_div_2_4_rv64gc', 'fdqh_ieee_div_4_1_rv32gc', \
+    'fdqh_ieee_div_4_1_rv64gc', 'fdqh_ieee_div_4_2_rv32gc', 'fdqh_ieee_div_4_2_rv64gc',\
+    'fdqh_ieee_div_4_4_rv64gc', 'fdqh_ieee_rv32gc', 'fdqh_ieee_rv64gc', \
+    'fdq_ieee_div_2_1_rv32gc', 'fdq_ieee_div_2_1_rv64gc', 'fdq_ieee_div_2_2_rv32gc',\
+    'fdq_ieee_div_2_2_rv64gc', 'fdq_ieee_div_2_4_rv32gc', 'fdq_ieee_div_2_4_rv64gc', \
+    'fdq_ieee_div_4_1_rv32gc', 'fdq_ieee_div_4_1_rv64gc', 'fdq_ieee_div_4_2_rv32gc', \
+    'fdq_ieee_div_4_2_rv64gc', 'fdq_ieee_div_4_4_rv64gc', 'fdq_ieee_rv32gc', \
+    'fdq_ieee_rv64gc', 'fh_ieee_div_2_1_rv32gc', 'fh_ieee_div_2_1_rv64gc', \
+    'fh_ieee_div_2_2_rv32gc', 'fh_ieee_div_2_2_rv64gc', 'fh_ieee_div_2_4_rv32gc',\
+    'fh_ieee_div_2_4_rv64gc', 'fh_ieee_div_4_1_rv32gc', 'fh_ieee_div_4_1_rv64gc',\
+    'fh_ieee_div_4_2_rv32gc', 'fh_ieee_div_4_2_rv64gc', 'fh_ieee_div_4_4_rv64gc', \
+    'fh_ieee_rv32gc', 'fh_ieee_rv64gc', 'fh_ieee_v32gc', 'f_ieee_div_2_1_rv32gc', \
+    'f_ieee_div_2_1_rv64gc', 'f_ieee_div_2_2_rv32gc', 'f_ieee_div_2_2_rv64gc', \
+    'f_ieee_div_2_4_rv32gc', 'f_ieee_div_2_4_rv64gc', 'f_ieee_div_4_1_rv32gc', \
+    'f_ieee_div_4_1_rv64gc', 'f_ieee_div_4_2_rv32gc', 'f_ieee_div_4_2_rv64gc', \
+    'f_ieee_div_4_4_rv64gc', 'f_ieee_rv32gc', 'f_ieee_rv64gc']
     for config in softfloatconfigs:
         # div test case
         divtest = TestCase(
@@ -329,7 +355,7 @@ if (softfloat):
             cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " div \n!",
             grepstr="All Tests completed with          0 errors"
         )
-        configs.append(divtest)
+        configs.insert(0,divtest)
 
         # sqrt test case
         sqrttest = TestCase(
@@ -354,7 +380,7 @@ if (softfloat):
             configs.append(cvtinttest)
 
             # cvtfp test case
-            # WILL fail on F_only (cvtfp converts from one fpsize to another. refer to spec)
+            # WILL fail on F_only (refer to spec)
             cvtfptest = TestCase(
                 name="cvtfp",
                 variant=config,
