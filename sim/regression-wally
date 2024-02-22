@@ -33,6 +33,7 @@ os.chdir(regressionDir)
 coverage = '-coverage' in sys.argv
 fp = '-fp' in sys.argv
 nightly = '-nightly' in sys.argv
+softfloat = '-softfloat' in sys.argv
 
 TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr'])
 # name:     the name of this test configuration (used in printing human-readable
@@ -267,18 +268,17 @@ if (nightly):
         ["bpred_GSHARE_10_10_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
         ["bpred_GSHARE_10_10_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
 
-
 #  enable floating-point tests when lint is fixed
-#        ["f_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma"]],
-#        ["fh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32zfh", "arch32zfh_divsqrt"]],
-#        ["fdh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32zfh", "arch32zfh_divsqrt"]],
-#        ["fdq_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32zfh", "arch32zfh_divsqrt"]],
-#        ["fdqh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32zfh", "arch32zfh_divsqrt"]],
-#        ["f_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma"]],
-#        ["fh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64zfh", "arch64zfh_divsqrt"]], # hanging 1/31/24 dh; try again when lint is fixed
-#        ["fdh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64zfh", "arch64zfh_divsqrt"]],
-#        ["fdq_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64zfh", "arch64zfh_divsqrt"]],
-#        ["fdqh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64zfh", "arch64zfh_divsqrt"]],
+        ["f_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma"]],
+        ["fh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32zfh", "arch32zfh_divsqrt"]],
+        ["fdh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32zfh", "arch32zfh_divsqrt"]],
+        ["fdq_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32zfh", "arch32zfh_divsqrt"]],
+        ["fdqh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32zfh", "arch32zfh_divsqrt"]],
+        ["f_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma"]],
+        ["fh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64zfh", "arch64zfh_divsqrt"]], # hanging 1/31/24 dh; try again when lint is fixed
+        ["fdh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64zfh", "arch64zfh_divsqrt"]],
+        ["fdq_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64zfh", "arch64zfh_divsqrt"]],
+        ["fdqh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64zfh", "arch64zfh_divsqrt"]],
         
 
     ]
@@ -308,6 +308,61 @@ for test in tests32e:
         cmd="vsim > {} -c <<!\ndo wally-batch.do rv32e "+test+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
+
+
+# softfloat tests
+if (softfloat):
+    configs = []
+    softfloatconfigs = ['fdh_ieee_rv32gc', 'fdqh_ieee_rv32gc', 'fdq_ieee_rv32gc', \
+    'fh_ieee_v32gc', 'f_ieee_rv64gc', 'fdqh_ieee_rv64gc', \
+    'fdq_ieee_rv64gc', 'div_2_1_rv32gc', 'div_2_2_rv32gc', \
+    'div_2_4_rv32gc', 'div_4_1_rv32gc', 'div_4_2_rv32gc', \
+    'div_4_4_rv32gc', 'fd_ieee_rv32gc', 'fh_ieee_rv32gc', \
+    'div_2_1_rv64gc', 'div_2_2_rv64gc', 'div_2_4_rv64gc', \
+    'div_4_1_rv64gc', 'div_4_2_rv64gc', 'div_4_4_rv64gc', \
+    'fd_ieee_rv64gc', 'fh_ieee_rv64gc', 'f_ieee_rv32gc']
+    for config in softfloatconfigs:
+        # div test case
+        divtest = TestCase(
+            name="div",
+            variant=config,
+            cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " div \n!",
+            grepstr="All Tests completed with          0 errors"
+        )
+        configs.append(divtest)
+
+        # sqrt test case
+        sqrttest = TestCase(
+            name="sqrt",
+            variant=config,
+            cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " sqrt \n!",
+            grepstr="All Tests completed with          0 errors"
+        )
+        #configs.append(sqrttest)
+        configs.insert(0,sqrttest)
+
+
+        # skip if divider variant config
+        if ("ieee" in config):
+            # cvtint test case
+            cvtinttest = TestCase(
+                name="cvtint",
+                variant=config,
+                cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " cvtint \n!",
+                grepstr="All Tests completed with          0 errors"
+                )
+            configs.append(cvtinttest)
+
+            # cvtfp test case
+            # WILL fail on F_only (cvtfp converts from one fpsize to another. refer to spec)
+            cvtfptest = TestCase(
+                name="cvtfp",
+                variant=config,
+                cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " cvtfp \n!",
+                grepstr="All Tests completed with          0 errors"
+            )
+            configs.append(cvtfptest)    
+      
 
     
 
@@ -368,6 +423,8 @@ def main():
     elif '-nightly' in sys.argv:
         TIMEOUT_DUR = 60*1440 # 1 day
         configs.append(getBuildrootTC(boot=False))
+    elif '-softfloat' in sys.argv:
+        TIMEOUT_DUR = 60*60 # seconds
     else:
         TIMEOUT_DUR = 10*60 # seconds
         configs.append(getBuildrootTC(boot=False))
