@@ -40,10 +40,11 @@ module subwordreadmisaligned #(parameter LLEN)
 
   logic [7:0]               ByteM; 
   logic [15:0]              HalfwordM;
+  logic [31:0]              WordM;
   logic [4:0]               PAdrSwap;
   logic [4:0]               BigEndianPAdr;
   logic [4:0]               LengthM;
-  
+
   // Funct3M[2] is the unsigned bit. mask upper bits.
   // Funct3M[1:0] is the size of the memory access.
   assign PAdrSwap = BigEndianM ? BigEndianPAdr : {2'b0, PAdrM};
@@ -66,14 +67,14 @@ module subwordreadmisaligned #(parameter LLEN)
   logic [LLEN*2-1:0]        ReadDataAlignedM;
   assign ReadDataAlignedM = ReadDataWordMuxM >> (PAdrSwap[$clog2(LLEN/4)-1:0] * 8);
   
+  assign ByteM = ReadDataAlignedM[7:0];
+  assign HalfwordM = ReadDataAlignedM[15:0];
+  assign WordM = ReadDataAlignedM[31:0];
+
   if (LLEN == 128) begin:swrmux
-    logic [31:0] WordM;
     logic [63:0] DblWordM;
     logic [127:0] QdWordM;
     
-    assign ByteM = ReadDataAlignedM[7:0];
-    assign HalfwordM = ReadDataAlignedM[15:0];
-    assign WordM = ReadDataAlignedM[31:0];
     assign DblWordM = ReadDataAlignedM[63:0];
     assign QdWordM =ReadDataAlignedM[127:0];
 
@@ -92,12 +93,8 @@ module subwordreadmisaligned #(parameter LLEN)
     endcase
 
   end else if (LLEN == 64) begin:swrmux
-    logic [31:0] WordM;
     logic [63:0] DblWordM;
 
-    assign ByteM = ReadDataAlignedM[7:0];
-    assign HalfwordM = ReadDataAlignedM[15:0];
-    assign WordM = ReadDataAlignedM[31:0];
     assign DblWordM = ReadDataAlignedM[63:0];
 
     // sign extension/ NaN boxing
@@ -115,12 +112,6 @@ module subwordreadmisaligned #(parameter LLEN)
     endcase
 
   end else begin:swrmux // 32-bit
-
-    logic [31:0] WordM;
-
-    assign ByteM = ReadDataAlignedM[7:0];
-    assign HalfwordM = ReadDataAlignedM[15:0];
-    assign WordM = ReadDataAlignedM[31:0];
 
     // sign extension
     always_comb
