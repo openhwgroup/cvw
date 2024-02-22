@@ -326,7 +326,7 @@ if (softfloat):
         divtest = TestCase(
             name="div",
             variant=config,
-            cmd="vsim > {} -c  <<!\ndo testfloat.do " + config + " div \n!",
+            cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " div \n!",
             grepstr="All Tests completed with          0 errors"
         )
         configs.append(divtest)
@@ -335,27 +335,30 @@ if (softfloat):
         sqrttest = TestCase(
             name="sqrt",
             variant=config,
-            cmd="vsim > {} -c  <<!\ndo testfloat.do " + config + " sqrt \n!",
+            cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " sqrt \n!",
             grepstr="All Tests completed with          0 errors"
         )
-        configs.append(sqrttest)
+        #configs.append(sqrttest)
+        configs.insert(0,sqrttest)
+
 
         # skip if divider variant config
-        if ("ieee" in config[0]):
+        if ("ieee" in config):
             # cvtint test case
             cvtinttest = TestCase(
                 name="cvtint",
                 variant=config,
-                cmd="vsim > {} -c  <<!\ndo testfloat.do " + config + " cvtint \n!",
+                cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " cvtint \n!",
                 grepstr="All Tests completed with          0 errors"
                 )
             configs.append(cvtinttest)
 
             # cvtfp test case
+            # WILL fail on F_only (cvtfp converts from one fpsize to another. refer to spec)
             cvtfptest = TestCase(
                 name="cvtfp",
                 variant=config,
-                cmd="vsim > {} -c  <<!\ndo testfloat.do " + config + " cvtfp \n!",
+                cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " cvtfp \n!",
                 grepstr="All Tests completed with          0 errors"
             )
             configs.append(cvtfptest)    
