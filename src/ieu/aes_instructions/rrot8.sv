@@ -60,5 +60,4 @@ module rrot8(input logic[31:0] x,
    assign result[29] = x[5];
    assign result[30] = x[6];
    assign result[31] = x[7];
-
 endmodule

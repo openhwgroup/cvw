@@ -44,6 +44,5 @@ module rcon_lut_128(input logic [3:0] RD,
 	  4'hA : rcon_out = 8'h00;
 	  default : rcon_out = 8'h00;
 	endcase	
-     end        
-
+     end
 endmodule
