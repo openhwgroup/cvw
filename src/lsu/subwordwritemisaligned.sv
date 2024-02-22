@@ -72,53 +72,7 @@ module subwordwritemisaligned #(parameter LLEN) (
   logic [LLEN*2-1:0]        IMAFWriteData2M;
   assign IMAFWriteData2M = {IMAFWriteDataM, IMAFWriteDataM};
   localparam OffsetIndex = $clog2(LLEN/8);
-  logic [LLEN*2-1:0]        LittleEndianWriteDataMTemp;
-  // *** RT: Switch to something like this.
-  assign LittleEndianWriteDataMTemp = (IMAFWriteData2M << PAdrSwap[OffsetIndex-1:0]) | (IMAFWriteData2M >> ~PAdrSwap[OffsetIndex-1:0]);
-  
 
-  // Replicate data for subword writes
-  if (LLEN == 128) begin:sww
-    always_comb 
-      case(PAdrSwap[3:0])
-        4'b0000:  LittleEndianWriteDataM = {128'b0, IMAFWriteDataM       };
-        4'b0001:  LittleEndianWriteDataM = {120'b0, IMAFWriteDataM, 8'b0 };
-        4'b0010:  LittleEndianWriteDataM = {112'b0, IMAFWriteDataM, 16'b0};
-        4'b0011:  LittleEndianWriteDataM = {104'b0, IMAFWriteDataM, 24'b0};
-        4'b0100:  LittleEndianWriteDataM = {96'b0,  IMAFWriteDataM, 32'b0};
-        4'b0101:  LittleEndianWriteDataM = {88'b0,  IMAFWriteDataM, 40'b0};
-        4'b0110:  LittleEndianWriteDataM = {80'b0,  IMAFWriteDataM, 48'b0};
-        4'b0111:  LittleEndianWriteDataM = {72'b0,  IMAFWriteDataM, 56'b0};
-        4'b1000:  LittleEndianWriteDataM = {64'b0,  IMAFWriteDataM, 64'b0};
-        4'b1001:  LittleEndianWriteDataM = {56'b0,  IMAFWriteDataM, 72'b0 };
-        4'b1010:  LittleEndianWriteDataM = {48'b0,  IMAFWriteDataM, 80'b0};
-        4'b1011:  LittleEndianWriteDataM = {40'b0,  IMAFWriteDataM, 88'b0};
-        4'b1100:  LittleEndianWriteDataM = {32'b0,  IMAFWriteDataM, 96'b0};
-        4'b1101:  LittleEndianWriteDataM = {24'b0,  IMAFWriteDataM, 104'b0};
-        4'b1110:  LittleEndianWriteDataM = {16'b0,  IMAFWriteDataM, 112'b0};
-        4'b1111:  LittleEndianWriteDataM = {8'b0,   IMAFWriteDataM, 120'b0};
-        default: LittleEndianWriteDataM = IMAFWriteDataM;            // sq
-      endcase
-  end else if (LLEN == 64) begin:sww
-    always_comb 
-      case(PAdrSwap[2:0])
-        3'b000:  LittleEndianWriteDataM = {IMAFWriteDataM,       IMAFWriteDataM};
-        3'b001:  LittleEndianWriteDataM = {IMAFWriteDataM[55:0], IMAFWriteDataM, IMAFWriteDataM[63:56]};
-        3'b010:  LittleEndianWriteDataM = {IMAFWriteDataM[47:0], IMAFWriteDataM, IMAFWriteDataM[63:48]};
-        3'b011:  LittleEndianWriteDataM = {IMAFWriteDataM[39:0], IMAFWriteDataM, IMAFWriteDataM[63:40]};
-        3'b100:  LittleEndianWriteDataM = {IMAFWriteDataM[31:0], IMAFWriteDataM, IMAFWriteDataM[63:32]};
-        3'b101:  LittleEndianWriteDataM = {IMAFWriteDataM[23:0], IMAFWriteDataM, IMAFWriteDataM[63:24]};
-        3'b110:  LittleEndianWriteDataM = {IMAFWriteDataM[15:0], IMAFWriteDataM, IMAFWriteDataM[63:16]};
-        3'b111:  LittleEndianWriteDataM = {IMAFWriteDataM[7:0],  IMAFWriteDataM, IMAFWriteDataM[63:8] };
-      endcase
-  end else begin:sww // 32-bit
-    always_comb 
-      case(PAdrSwap[1:0])
-        2'b00:  LittleEndianWriteDataM = {32'b0, IMAFWriteDataM       };
-        2'b01:  LittleEndianWriteDataM = {24'b0, IMAFWriteDataM, 8'b0 };
-        2'b10:  LittleEndianWriteDataM = {16'b0, IMAFWriteDataM, 16'b0};
-        2'b11:  LittleEndianWriteDataM = {8'b0,  IMAFWriteDataM, 24'b0};
-        default: LittleEndianWriteDataM = IMAFWriteDataM;            // shouldn't happen
-      endcase
-  end
+  assign LittleEndianWriteDataM = (IMAFWriteData2M << (PAdrSwap[OffsetIndex-1:0] * 8)) | (IMAFWriteData2M >> (LLEN - (PAdrSwap[OffsetIndex-1:0] * 8)));
+  
 endmodule
