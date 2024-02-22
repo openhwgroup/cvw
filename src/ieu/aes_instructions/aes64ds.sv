@@ -35,13 +35,12 @@ module aes64ds(input logic [63:0] rs1,
    logic [31:0] 		   sbox_out_1;    
    
    // Apply inverse shiftrows to rs2 and rs1
-   aes_inv_shiftrow srow(.dataIn({rs2,rs1}),.dataOut(shiftRow_out));
+   aes_inv_shiftrow srow(.dataIn({rs2,rs1}), .dataOut(shiftRow_out));
    
    // Apply full word inverse substitution to lower 2 words of shiftrow out
-   aes_inv_sbox_word inv_sbox_0(.in(shiftRow_out[31:0]),.out(sbox_out_0));
-   aes_inv_sbox_word inv_sbox_1(.in(shiftRow_out[63:32]),.out(sbox_out_1));
+   aes_inv_sbox_word inv_sbox_0(.in(shiftRow_out[31:0]), .out(sbox_out_0));
+   aes_inv_sbox_word inv_sbox_1(.in(shiftRow_out[63:32]), .out(sbox_out_1));
    
    // Concatenate the two substitution outputs to get result
-   assign data_out = {sbox_out_1, sbox_out_0};
-   
+   assign data_out = {sbox_out_1, sbox_out_0};   
 endmodule

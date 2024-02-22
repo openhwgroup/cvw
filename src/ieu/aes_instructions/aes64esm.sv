@@ -34,14 +34,13 @@ module aes64esm(input logic [63:0]  rs1,
     logic [63:0] sbox_out;
                 
     // AES shiftrow unit
-    aes_shiftrow srow(.dataIn({rs2,rs1}),.dataOut(shiftRow_out));
+    aes_shiftrow srow(.dataIn({rs2,rs1}), .dataOut(shiftRow_out));
    
     // Apply substitution box to 2 lower words
-    aes_sbox_word sbox_0(.in(shiftRow_out[31:0]),.out(sbox_out[31:0]));
-    aes_sbox_word sbox_1(.in(shiftRow_out[63:32]),.out(sbox_out[63:32]));
+    aes_sbox_word sbox_0(.in(shiftRow_out[31:0]), .out(sbox_out[31:0]));
+    aes_sbox_word sbox_1(.in(shiftRow_out[63:32]), .out(sbox_out[63:32]));
    
     // Apply mix columns operations
-    mixword mw0(.word(sbox_out[31:0]),.mixed_word(data_out[31:0]));
-    mixword mw1(.word(sbox_out[63:32]),.mixed_word(data_out[63:32]));
-    
+    mixword mw0(.word(sbox_out[31:0]), .mixed_word(data_out[31:0]));
+    mixword mw1(.word(sbox_out[63:32]), .mixed_word(data_out[63:32]));    
 endmodule

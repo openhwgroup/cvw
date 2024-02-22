@@ -33,10 +33,9 @@ module aes64es(input logic [63:0]  rs1,
    logic [127:0] 		   shiftRow_out;
    
    // AES shiftrow unit
-   aes_shiftrow srow(.dataIn({rs2,rs1}),.dataOut(shiftRow_out));
+   aes_shiftrow srow(.dataIn({rs2,rs1}), .dataOut(shiftRow_out));
    
    // Apply substitution box to 2 lower words
-   aes_sbox_word sbox_0(.in(shiftRow_out[31:0]),.out(data_out[31:0]));
-   aes_sbox_word sbox_1(.in(shiftRow_out[63:32]),.out(data_out[63:32]));   
-    
+   aes_sbox_word sbox_0(.in(shiftRow_out[31:0]), .out(data_out[31:0]));
+   aes_sbox_word sbox_1(.in(shiftRow_out[63:32]), .out(data_out[63:32]));       
 endmodule

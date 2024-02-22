@@ -35,6 +35,5 @@ module aes64ks2(input logic [63:0] rs2,
    
    assign w0 = rs1[63:32] ^ rs2[31:0];
    assign w1 = rs1[63:32] ^ rs2[31:0] ^ rs2[63:32];   
-   assign rd = {w1, w0};
-   
+   assign rd = {w1, w0};   
 endmodule
