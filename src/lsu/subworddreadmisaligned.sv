@@ -71,69 +71,17 @@ module subwordreadmisaligned #(parameter LLEN)
   assign HalfwordM = ReadDataAlignedM[15:0];
   assign WordM = ReadDataAlignedM[31:0];
 
-  logic [LLEN-1:0]          lb, lh_flh, lw_flw, ld_fld, lbu, lbu_flq, lhu, lwu;
-
-  assign lb      = {{LLEN-8{ByteM[7]}}, ByteM};
-  assign lh_flh  = {{LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]};;
-  assign lw_flw  = {{LLEN-32{WordM[31]|FpLoadStoreM}}, WordM[31:0]};
-  //assign ld_fld  = {{LLEN-64{DblWordM[63]|FpLoadStoreM}}, DblWordM[63:0]};
-  
-
-  if (LLEN == 128) begin:swrmux
-    logic [63:0] DblWordM;
-    logic [127:0] QdWordM;
-    
-    assign DblWordM = ReadDataAlignedM[63:0];
-    assign QdWordM =ReadDataAlignedM[127:0];
-
-    // sign extension/ NaN boxing
-    always_comb
+  always_comb
     case(Funct3M)
-      3'b000:  ReadDataM = {{LLEN-8{ByteM[7]}}, ByteM};                              // lb
-      3'b001:  ReadDataM = {{LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]}; // lh/flh
-      3'b010:  ReadDataM = {{LLEN-32{WordM[31]|FpLoadStoreM}}, WordM[31:0]};         // lw/flw
-      3'b011:  ReadDataM = {{LLEN-64{DblWordM[63]|FpLoadStoreM}}, DblWordM[63:0]};   // ld/fld
-      3'b100:  ReadDataM = {{LLEN-8{1'b0}}, ByteM[7:0]};                             // lbu
-      3'b100:  ReadDataM = FpLoadStoreM ? QdWordM : {{LLEN-8{1'b0}}, ByteM[7:0]};    // lbu/flq   - only needed when LLEN=128
-      3'b101:  ReadDataM = {{LLEN-16{1'b0}}, HalfwordM[15:0]};                       // lhu
-      3'b110:  ReadDataM = {{LLEN-32{1'b0}}, WordM[31:0]};                           // lwu
-      default: ReadDataM = {{LLEN-8{ByteM[7]}}, ByteM};                              // Shouldn't happen
+      3'b000:  ReadDataM = {{LLEN-8{ByteM[7]}}, ByteM};                                                                           // lb
+      3'b001:  ReadDataM = {{LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]};                                              // lh/flh
+      3'b010:  ReadDataM = {{LLEN-32{WordM[31]|FpLoadStoreM}}, WordM[31:0]};                                                      // lw/flw
+      3'b011:  if(LLEN == 128 || LLEN == 64 ) ReadDataM = {{LLEN-64{ReadDataAlignedM[63]|FpLoadStoreM}}, ReadDataAlignedM[63:0]}; // ld/fld
+      3'b100:  if(LLEN == 128) ReadDataM = FpLoadStoreM ? ReadDataAlignedM[LLEN-1:0] : {{LLEN-8{1'b0}}, ByteM[7:0]};              // lbu/flq   - only needed when LLEN=128
+          else if(LLEN == 64) ReadDataM = FpLoadStoreM ? ReadDataAlignedM[LLEN-1:0] : {{LLEN-8{1'b0}}, ByteM[7:0]};
+      3'b101:  ReadDataM = {{LLEN-16{1'b0}}, HalfwordM[15:0]};                                                                    // lhu
+      3'b110:  ReadDataM = {{LLEN-32{1'b0}}, WordM[31:0]};                                                                        // lwu
+      default: ReadDataM = {{LLEN-8{ByteM[7]}}, ByteM};                                                                           // Shouldn't happen
     endcase
 
-  end else if (LLEN == 64) begin:swrmux
-    logic [63:0] DblWordM;
-
-    assign DblWordM = ReadDataAlignedM[63:0];
-
-    // sign extension/ NaN boxing
-    always_comb
-    case(Funct3M)
-      3'b000:  ReadDataM = {{LLEN-8{ByteM[7]}}, ByteM};                              // lb
-      3'b001:  ReadDataM = {{LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]}; // lh/flh
-      3'b010:  ReadDataM = {{LLEN-32{WordM[31]|FpLoadStoreM}}, WordM[31:0]};         // lw/flw
-      3'b011:  ReadDataM = {{LLEN-64{DblWordM[63]|FpLoadStoreM}}, DblWordM[63:0]};   // ld/fld
-      3'b100:  ReadDataM = {{LLEN-8{1'b0}}, ByteM[7:0]};                             // lbu
-    //3'b100:  ReadDataM = FpLoadStoreM ? ReadDataWordMuxM : {{LLEN-8{1'b0}}, ByteM[7:0]}; // lbu/flq   - only needed when LLEN=128
-      3'b101:  ReadDataM = {{LLEN-16{1'b0}}, HalfwordM[15:0]};                       // lhu
-      3'b110:  ReadDataM = {{LLEN-32{1'b0}}, WordM[31:0]};                           // lwu
-      default: ReadDataM = {{LLEN-8{ByteM[7]}}, ByteM};                              // Shouldn't happen
-    endcase
-
-  end else begin:swrmux // 32-bit
-
-    // sign extension
-    always_comb
-    case(Funct3M)
-      3'b000:  ReadDataM = {{LLEN-8{ByteM[7]}}, ByteM};                                            // lb
-      3'b001:  ReadDataM = {{LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]};               // lh/flh
-      3'b010:  ReadDataM = {{LLEN-32{WordM[31]|FpLoadStoreM}}, WordM[31:0]};                       // lw/flw
-
-      //3'b011:  ReadDataM = WordM[LLEN-1:0];                                                        // fld
-
-      3'b100:  ReadDataM = {{LLEN-8{1'b0}}, ByteM[7:0]};                                           // lbu
-      3'b101:  ReadDataM = {{LLEN-16{1'b0}}, HalfwordM[15:0]};                                     // lhu
-
-      default: ReadDataM = {{LLEN-8{ByteM[7]}}, ByteM};                                            // Shouldn't happen
-    endcase
-  end
 endmodule
