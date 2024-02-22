@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// subwordwrite.sv
+// subwordwritemisaligned.sv
 //
 // Written: David_Harris@hmc.edu
 // Created: 9 January 2021
@@ -28,7 +28,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module subwordwritedouble #(parameter LLEN) (
+module subwordwritemisaligned #(parameter LLEN) (
   input logic [2:0]         LSUFunct3M,
   input logic [2:0]         PAdrM,
   input logic               FpLoadStoreM, 
@@ -38,7 +38,7 @@ module subwordwritedouble #(parameter LLEN) (
   output logic [LLEN*2-1:0] LittleEndianWriteDataM
 );
 
-  // *** RT: This is logic is duplicated in subwordreaddouble. Merge the two.
+  // *** RT: This is logic is duplicated in subwordreadmisaligned. Merge the two.
   logic [4:0]               PAdrSwap;
   logic [4:0]               BigEndianPAdr;
   logic [4:0]               LengthM;
