@@ -1,3 +1,3 @@
 0000000b # Test *** Number: Ecall from going from M mode to S mode
-00000002 # illegal instruction from truining on virtual memory with invalid satp address
+00000001 # Instruction access fault (was illegal instruction) from turning on virtual memory with invalid satp address
 00000009 # ecall from ending tests in S mode.
