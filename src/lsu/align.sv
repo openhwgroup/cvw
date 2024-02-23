@@ -37,6 +37,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   input logic [P.XLEN-1:0]        IEUAdrM, // 2 byte aligned PC in Fetch stage
   input logic [P.XLEN-1:0]        IEUAdrE, // The next IEUAdrM
   input logic [2:0]               Funct3M, // Size of memory operation
+  input logic                     FpLoadStoreM, // Floating point Load or Store 
   input logic [1:0]               MemRWM, 
   input logic [P.LLEN*2-1:0]      DCacheReadDataWordM, // Instruction from the IROM, I$, or bus. Used to check if the instruction if compressed
   input logic                     CacheBusHPWTStall, // I$ or bus are stalled. Transition to second fetch of spill after the first is fetched
@@ -69,8 +70,9 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   logic [P.XLEN-1:0]   IEUAdrIncrementM;
 
-  logic [$clog2(LLENINBYTES)-1:0]              AccessByteOffsetM;
-  logic                                        PotentialSpillM;
+  localparam OFFSET_LEN = $clog2(LLENINBYTES);
+  logic [OFFSET_LEN-1:0] AccessByteOffsetM;
+  logic                  PotentialSpillM;
 
   /* verilator lint_off WIDTHEXPAND */
   assign IEUAdrIncrementM = IEUAdrM + LLENINBYTES;
@@ -89,12 +91,14 @@ module align import cvw::*;  #(parameter cvw_t P) (
   
   // compute misalignement
   always_comb begin
-    case (Funct3M[1:0]) 
-      2'b00: AccessByteOffsetM = '0; // byte access
-      2'b01: AccessByteOffsetM = {2'b00, IEUAdrM[0]}; // half access
-      2'b10: AccessByteOffsetM = {1'b0, IEUAdrM[1:0]}; // word access
-      2'b11: AccessByteOffsetM = IEUAdrM[2:0]; // double access
-      default: AccessByteOffsetM = IEUAdrM[2:0];
+    case (Funct3M & {FpLoadStoreM, 2'b11}) 
+      3'b000: AccessByteOffsetM = '0; // byte access
+      3'b001: AccessByteOffsetM = {{OFFSET_LEN-1{1'b0}}, IEUAdrM[0]}; // half access
+      3'b010: AccessByteOffsetM = {{OFFSET_LEN-2{1'b0}}, IEUAdrM[1:0]}; // word access
+      3'b011: AccessByteOffsetM = {{OFFSET_LEN-3{1'b0}}, IEUAdrM[2:0]}; // double access
+      3'b100: if(P.LLEN == 128) AccessByteOffsetM = IEUAdrM[OFFSET_LEN-1:0]; // quad access
+              else            AccessByteOffsetM = '0; // invalid
+      default: AccessByteOffsetM = IEUAdrM[OFFSET_LEN-1:0];
     endcase
     case (Funct3M[1:0]) 
       2'b00: PotentialSpillM = '0; // byte access
