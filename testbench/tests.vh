@@ -45,8 +45,6 @@ string tvpaths[] = '{
 
   string coverage64gc[] = '{
     `COVERAGE,
-    "tlbmisc",
-    "tlbNAPOT",
     "ieu",
     "priv",
     "ebu",
@@ -55,6 +53,8 @@ string tvpaths[] = '{
     "fpu",
     "lsu",
     "vm64check",
+    "tlbmisc",
+    "tlbNAPOT",
     "tlbASID",
     "tlbGLB",
     "tlbMP",
@@ -2156,6 +2156,13 @@ string arch64zbs[] = '{
 
   string arch64zfad[] = '{
     `RISCVARCHTEST,
+    "rv64i_m/D_Zfa/src/fcvtmod.w.d_b1-01.S",
+    "rv64i_m/D_Zfa/src/fcvtmod.w.d_b22-01.S",
+    "rv64i_m/D_Zfa/src/fcvtmod.w.d_b23-01.S",
+    "rv64i_m/D_Zfa/src/fcvtmod.w.d_b24-01.S",
+    "rv64i_m/D_Zfa/src/fcvtmod.w.d_b27-01.S",
+    "rv64i_m/D_Zfa/src/fcvtmod.w.d_b28-01.S",
+    "rv64i_m/D_Zfa/src/fcvtmod.w.d_b29-01.S",
     "rv64i_m/D_Zfa/src/fleq_b1-01.S",
     "rv64i_m/D_Zfa/src/fleq_b19-01.S", 
     "rv64i_m/D_Zfa/src/fli.d-01.S",
