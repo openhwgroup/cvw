@@ -77,7 +77,7 @@ module subwordreadmisaligned #(parameter LLEN)
       3'b001:  ReadDataM = {{LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]};                                              // lh/flh
       3'b010:  ReadDataM = {{LLEN-32{WordM[31]|FpLoadStoreM}}, WordM[31:0]};                                                      // lw/flw
       3'b011:  if(LLEN == 128 || LLEN == 64 ) ReadDataM = {{LLEN-64{ReadDataAlignedM[63]|FpLoadStoreM}}, ReadDataAlignedM[63:0]}; // ld/fld
-      3'b100:  if(LLEN == 128) ReadDataM = FpLoadStoreM ? ReadDataAlignedM[LLEN-1:0] : {{LLEN-8{1'b0}}, ByteM[7:0]};              // lbu/flq   - only needed when LLEN=128
+      3'b100:  if(LLEN == 128) ReadDataM = FpLoadStoreM ? ReadDataAlignedM[LLEN-1:0] : {{LLEN-8{1'b0}}, ByteM[7:0]};              // lbu/flq
           else if(LLEN == 64) ReadDataM = FpLoadStoreM ? ReadDataAlignedM[LLEN-1:0] : {{LLEN-8{1'b0}}, ByteM[7:0]};
       3'b101:  ReadDataM = {{LLEN-16{1'b0}}, HalfwordM[15:0]};                                                                    // lhu
       3'b110:  ReadDataM = {{LLEN-32{1'b0}}, WordM[31:0]};                                                                        // lwu
