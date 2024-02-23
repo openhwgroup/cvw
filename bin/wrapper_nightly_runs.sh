@@ -20,7 +20,6 @@ pwd
 
 echo "Sourcing setup_host"
 source ./setup_host.sh >> $LOG 2>&1
-echo "Sourcing setup_tools"
 
 cd $PYTHON_SCRIPT
 pwd

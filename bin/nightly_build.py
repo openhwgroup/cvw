@@ -615,8 +615,8 @@ test_runner.set_env_var("nightly_runs/repos/") # ensures that the new WALLY envi
 #############################################
 
 
-# target = "wally-riscv-arch-test"
-target = "all"
+target = "wally-riscv-arch-test"
+# target = "all"
 if test_runner.execute_makefile(target = target):
    print(f"The {target} tests were made successfully")
 
@@ -640,8 +640,8 @@ for test_type, test_name, test_exctention in test_list:
     print(f"Test extenction: {test_exctention}")
 
     check, output_location = test_runner.run_tests(test_type=test_type, test_name=test_name, test_exctention=test_exctention)
-    print(check)
-    print(output_location)
+    print(f"Did the tests run?: {check}")
+    print(f"The tests log files are saved to: {output_location}")
     if check: # this checks if the test actually ran successfully
         output_log_list.append(output_location)
         
@@ -689,5 +689,8 @@ test_runner.convert_to_html()
 #############################################
 
 sender_email = 'james.stine@okstate.edu'
-receiver_emails = ['thomas.kidd@okstate.edu', 'james.stine@okstate.edu', 'harris@g.hmc.edu', 'rose.thompson10@okstate.edu']
+# sender_email = 'thomas.kidd@okstate.edu'
+
+# receiver_emails = ['thomas.kidd@okstate.edu', 'james.stine@okstate.edu', 'harris@g.hmc.edu', 'rose.thompson10@okstate.edu']
+receiver_emails = ['thomas.kidd@okstate.edu']
 test_runner.send_email(sender_email=sender_email, receiver_emails=receiver_emails)
