@@ -180,6 +180,16 @@ typedef struct packed {
   logic         ZCD_SUPPORTED;
   logic         ZCF_SUPPORTED;
 
+// Cryptography
+  logic         ZBKB_SUPPORTED;
+  logic         ZBKC_SUPPORTED;
+  logic         ZBKX_SUPPORTED;
+  logic         ZKND_SUPPORTED;
+  logic         ZKNE_SUPPORTED;
+  logic         ZKNH_SUPPORTED;
+  logic         ZKSED_SUPPORTED;
+  logic         ZKSH_SUPPORTED;
+
 // Memory synthesis configuration
   logic         USE_SRAM;
 
