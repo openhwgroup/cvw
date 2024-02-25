@@ -31,9 +31,11 @@
 module bitmanipalu import cvw::*; #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] A, B,                    // Operands
   input  logic             W64,                      // W64-type instruction
-  input  logic [1:0]       BSelect,                  // Binary encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
-  input  logic [2:0]       ZBBSelect,                // ZBB mux select signal
+  input  logic [3:0]       BSelect,                  // Binary encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
+  input  logic [3:0]       ZBBSelect,                // ZBB mux select signal
   input  logic [2:0]       Funct3,                   // Funct3 field of opcode indicates operation to perform
+  input  logic [6:0]       Funct7,                   // Funct7 field for ZKND and ZKNE operations
+  input  logic [4:0]       Rs2E,                     // Register source2 for RNUM of ZKNE/ZKND
   input  logic             LT,                       // less than flag
   input  logic             LTU,                      // less than unsigned flag
   input  logic [2:0]       BALUControl,              // ALU Control signals for B instructions in Execute Stage
@@ -43,7 +45,10 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
   output logic [P.XLEN-1:0] CondShiftA,              // A is conditionally shifted for ShAdd instructions
   output logic [P.XLEN-1:0] ALUResult);              // Result
 
-  logic [P.XLEN-1:0] ZBBResult, ZBCResult;           // ZBB, ZBC Result
+  logic [P.XLEN-1:0] ZBBResult, ZBCResult;                       // ZBB, ZBC Result
+  logic [P.XLEN-1:0] ZBKBResult, ZBKCResult, ZBKXResult;         // ZBKB, ZBKC Result
+  logic [P.XLEN-1:0] ZKNDResult, ZKNEResult;                     // ZKND, ZKNE Result
+  logic [P.XLEN-1:0] ZKNHResult;                                 // ZKNH Result
   logic [P.XLEN-1:0] MaskB;                          // BitMask of B
   logic [P.XLEN-1:0] RevA;                           // Bit-reversed A
   logic             Rotate;                          // Indicates if it is Rotate instruction
@@ -90,16 +95,69 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
 
   // ZBB Unit
   if (P.ZBB_SUPPORTED) begin: zbb
-    zbb #(P.XLEN) ZBB(.A(ABMU), .RevA, .B(BBMU), .W64, .LT, .LTU, .BUnsigned(Funct3[0]), .ZBBSelect, .ZBBResult);
+    zbb #(P.XLEN) ZBB(.A(ABMU), .RevA, .B(BBMU), .W64, .LT, .LTU, .BUnsigned(Funct3[0]), .ZBBSelect(ZBBSelect[2:0]), .ZBBResult);
   end else assign ZBBResult = 0;
+
+  // ZBKB Unit
+  if (P.ZBKB_SUPPORTED) begin: zbkb
+    zbkb #(P.XLEN) ZBKB(.A(ABMU), .B(BBMU), .RevA, .W64, .Funct3, .ZBKBSelect(ZBBSelect[2:0]), .ZBKBResult);
+  end else assign ZBKBResult = 0;
+  
+  // ZBKC Unit
+  if (P.ZBKC_SUPPORTED) begin: zbkc
+    zbkc #(P.XLEN) ZBKC(.A(ABMU), .B(BBMU), .ZBKCSelect(ZBBSelect[0]), .ZBKCResult);
+  end else assign ZBKCResult = 0;
+
+  // ZBKX Unit
+  if (P.ZBKX_SUPPORTED) begin: zbkx
+    zbkx #(P.XLEN) ZBKX(.A(ABMU), .B(BBMU), .ZBKXSelect(ZBBSelect[2:0]), .ZBKXResult);
+  end else assign ZBKXResult = 0;
+
+  // ZKND Unit
+  if (P.ZKND_SUPPORTED) begin: zknd
+    if (P.XLEN == 32) begin
+      zknd_32 #(P.XLEN) ZKND32(.A(ABMU), .B(BBMU), .Funct7, .ZKNDSelect(ZBBSelect[2:0]), .ZKNDResult);
+    end
+    else begin
+      zknd_64 #(P.XLEN) ZKND64(.A(ABMU), .B(BBMU), .Funct7, .RNUM(Rs2E[3:0]), .ZKNDSelect(ZBBSelect[2:0]), .ZKNDResult);
+    end
+  end else assign ZKNDResult = 0;
+
+  // ZKNE Unit
+  if (P.ZKNE_SUPPORTED) begin: zkne
+    if (P.XLEN == 32) begin
+      zkne_32 #(P.XLEN) ZKNE32(.A(ABMU), .B(BBMU), .Funct7, .ZKNESelect(ZBBSelect[2:0]), .ZKNEResult);
+    end
+    else begin
+      zkne_64 #(P.XLEN) ZKNE64(.A(ABMU), .B(BBMU), .Funct7, .RNUM(Rs2E[3:0]), .ZKNESelect(ZBBSelect[2:0]), .ZKNEResult);
+    end
+  end else assign ZKNEResult = 0;
+
+  // ZKNH Unit
+  if (P.ZKNH_SUPPORTED) begin: zknh
+    if (P.XLEN == 32) begin
+      zknh_32 ZKNH_32(.A(ABMU), .B(BBMU), .ZKNHSelect(ZBBSelect), .ZKNHResult(ZKNHResult));
+    end
+    else begin
+      zknh_64 ZKNH_64(.A(ABMU), .B(BBMU), .ZKNHSelect(ZBBSelect), .ZKNHResult(ZKNHResult));
+    end
+  end else assign ZKNHResult = 0;
 
   // Result Select Mux
   always_comb
     case (BSelect)
-      // 00: ALU, 01: ZBA/ZBS, 10: ZBB, 11: ZBC
-      2'b00: ALUResult = PreALUResult; 
-      2'b01: ALUResult = FullResult;         // NOTE: We don't use ALUResult because ZBA/ZBS instructions don't sign extend the MSB of the right-hand word.
-      2'b10: ALUResult = ZBBResult; 
-      2'b11: ALUResult = ZBCResult;
+      // 0000: ALU, 0001: ZBA/ZBS, 0010: ZBB, 0011: ZBC, 0100: ZBKB, 0101: ZBKC, 0110: ZBKX
+      // 0111: ZKND, 1000: ZKNE, 1001: ZKNH, 1010: ZKSED, 1011: ZKSH...
+      4'b0000: ALUResult = PreALUResult; 
+      4'b0001: ALUResult = FullResult;         // NOTE: We don't use ALUResult because ZBA/ZBS instructions don't sign extend the MSB of the right-hand word.
+      4'b0010: ALUResult = ZBBResult; 
+      4'b0011: ALUResult = ZBCResult;
+      4'b0100: ALUResult = ZBKBResult;
+      4'b0101: ALUResult = ZBKCResult;
+      4'b0110: ALUResult = ZBKXResult;
+      4'b0111: ALUResult = ZKNDResult; 
+      4'b1000: ALUResult = ZKNEResult;
+      4'b1001: ALUResult = ZKNHResult;
+      default: ALUResult = PreALUResult;
     endcase
 endmodule
