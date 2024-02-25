@@ -25,18 +25,18 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module gm9 (gm9_in, gm9_out);
+module gm9 (gm9_In, gm9_Out);
    
-   input  logic [7:0] gm9_in;
-   output logic [7:0] gm9_out;
+   input  logic [7:0] gm9_In;
+   output logic [7:0] gm9_Out;
 
    // Internal Logic
-   logic [7:0] 	      gm8_0_out;
+   logic [7:0] 	      gm8_0_Out;
 
    // Sub-Modules for sub-Galois operations
-   gm8 gm8_0 (.gm8_in(gm9_in), .gm8_out(gm8_0_out));
+   gm8 gm8_0 (.gm8_In(gm9_In), .gm8_Out(gm8_0_Out));
 
    // Set output to gm8(in) ^ in
-   assign gm9_out = gm8_0_out ^ gm9_in;
+   assign gm9_Out = gm8_0_Out ^ gm9_In;
 
 endmodule

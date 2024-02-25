@@ -34,14 +34,14 @@ module mixword (word, mixed_word);
    // Declare Internal Signals
    logic [7:0] 	       b0, b1, b2, b3;
    logic [7:0] 	       mb0, mb1, mb2, mb3;   
-   logic [7:0] 	       gm2_0_out;
-   logic [7:0] 	       gm3_0_out;   
-   logic [7:0] 	       gm2_1_out;
-   logic [7:0] 	       gm3_1_out;   
-   logic [7:0] 	       gm2_2_out;
-   logic [7:0] 	       gm3_2_out;   
-   logic [7:0] 	       gm2_3_out;
-   logic [7:0] 	       gm3_3_out;   
+   logic [7:0] 	       gm2_0_Out;
+   logic [7:0] 	       gm3_0_Out;   
+   logic [7:0] 	       gm2_1_Out;
+   logic [7:0] 	       gm3_1_Out;   
+   logic [7:0] 	       gm2_2_Out;
+   logic [7:0] 	       gm3_2_Out;   
+   logic [7:0] 	       gm2_3_Out;
+   logic [7:0] 	       gm3_3_Out;   
    
    // Break word into bytes
    assign b0 = word[31:24];
@@ -50,23 +50,23 @@ module mixword (word, mixed_word);
    assign b3 = word[7:0];
 
    // mb0 Galois components
-   gm2 gm2_0(.gm2_in(b0), .gm2_out(gm2_0_out));
-   gm3 gm3_0(.gm3_in(b3), .gm3_out(gm3_0_out));
+   gm2 gm2_0(.gm2_In(b0), .gm2_Out(gm2_0_Out));
+   gm3 gm3_0(.gm3_In(b3), .gm3_Out(gm3_0_Out));
    // mb1 Galois components
-   gm2 gm2_1(.gm2_in(b1), .gm2_out(gm2_1_out));
-   gm3 gm3_1(.gm3_in(b0), .gm3_out(gm3_1_out));
+   gm2 gm2_1(.gm2_In(b1), .gm2_Out(gm2_1_Out));
+   gm3 gm3_1(.gm3_In(b0), .gm3_Out(gm3_1_Out));
    // mb2 Galois components
-   gm2 gm2_2(.gm2_in(b2), .gm2_out(gm2_2_out));
-   gm3 gm3_2(.gm3_in(b1), .gm3_out(gm3_2_out));
+   gm2 gm2_2(.gm2_In(b2), .gm2_Out(gm2_2_Out));
+   gm3 gm3_2(.gm3_In(b1), .gm3_Out(gm3_2_Out));
    // mb3 Galois components
-   gm2 gm2_3(.gm2_in(b3), .gm2_out(gm2_3_out));
-   gm3 gm3_3(.gm3_in(b2), .gm3_out(gm3_3_out));
+   gm2 gm2_3(.gm2_In(b3), .gm2_Out(gm2_3_Out));
+   gm3 gm3_3(.gm3_In(b2), .gm3_Out(gm3_3_Out));
 
    // Combine Componenets into mixed word
-   assign mb0 = gm2_0_out ^ gm3_0_out ^ b1 ^ b2;
-   assign mb1 = gm2_1_out ^ gm3_1_out ^ b2 ^ b3;
-   assign mb2 = gm2_2_out ^ gm3_2_out ^ b0 ^ b3;
-   assign mb3 = gm2_3_out ^ gm3_3_out ^ b0 ^ b1;
+   assign mb0 = gm2_0_Out ^ gm3_0_Out ^ b1 ^ b2;
+   assign mb1 = gm2_1_Out ^ gm3_1_Out ^ b2 ^ b3;
+   assign mb2 = gm2_2_Out ^ gm3_2_Out ^ b0 ^ b3;
+   assign mb3 = gm2_3_Out ^ gm3_3_Out ^ b0 ^ b1;
    assign mixed_word = {mb0, mb1, mb2, mb3};
    
 endmodule

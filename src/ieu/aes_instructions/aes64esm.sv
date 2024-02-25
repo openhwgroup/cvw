@@ -27,20 +27,20 @@
 
 module aes64esm(input logic [63:0]  rs1,
                 input logic [63:0]  rs2,
-                output logic [63:0] data_out);
+                output logic [63:0] Data_Out);
    
     // Intermediary Signals
-    logic [127:0] shiftRow_out;
-    logic [63:0] sbox_out;
+    logic [127:0] ShiftRow_Out;
+    logic [63:0] Sbox_Out;
                 
     // AES shiftrow unit
-    aes_shiftrow srow(.dataIn({rs2,rs1}), .dataOut(shiftRow_out));
+    aes_shiftrow srow(.dataIn({rs2,rs1}), .dataOut(ShiftRow_Out));
    
     // Apply substitution box to 2 lower words
-    aes_sbox_word sbox_0(.in(shiftRow_out[31:0]), .out(sbox_out[31:0]));
-    aes_sbox_word sbox_1(.in(shiftRow_out[63:32]), .out(sbox_out[63:32]));
+    aes_sbox_word sbox_0(.in(ShiftRow_Out[31:0]), .out(Sbox_Out[31:0]));
+    aes_sbox_word sbox_1(.in(ShiftRow_Out[63:32]), .out(Sbox_Out[63:32]));
    
     // Apply mix columns operations
-    mixword mw0(.word(sbox_out[31:0]), .mixed_word(data_out[31:0]));
-    mixword mw1(.word(sbox_out[63:32]), .mixed_word(data_out[63:32]));    
+    mixword mw0(.word(Sbox_Out[31:0]), .mixed_word(Data_Out[31:0]));
+    mixword mw1(.word(Sbox_Out[63:32]), .mixed_word(Data_Out[63:32]));    
 endmodule

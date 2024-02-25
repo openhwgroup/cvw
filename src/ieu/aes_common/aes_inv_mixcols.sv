@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// aes_inv_mixcols.sv
+// aes_Inv_mixcols.sv
 //
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
@@ -25,17 +25,17 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aes_inv_mixcols (input  logic [127:0] data, output logic [127:0] mixed_col);
+module aes_Inv_mixcols (input  logic [127:0] Data, output logic [127:0] Mixed_Col);
 
    // Declare Internal logic
    logic [31:0] 	w0, w1, w2, w3;
    logic [31:0] 	ws0, ws1, ws2, ws3;
    
-   // Break up input data into word components
-   assign w0 = data[127:96];
-   assign w1 = data[95:64];
-   assign w2 = data[63:32];
-   assign w3 = data[31:0];
+   // Break up input Data into word components
+   assign w0 = Data[127:96];
+   assign w1 = Data[95:64];
+   assign w2 = Data[63:32];
+   assign w3 = Data[31:0];
 
    // Declare mixword components
    inv_mixword mw_0(.word(w0), .mixed_word(ws0));
@@ -44,7 +44,7 @@ module aes_inv_mixcols (input  logic [127:0] data, output logic [127:0] mixed_co
    inv_mixword mw_3(.word(w3), .mixed_word(ws3));
 
    // Assign output to mixed word
-   assign mixed_col = {ws0, ws1, ws2, ws3};
+   assign Mixed_Col = {ws0, ws1, ws2, ws3};
 
 endmodule // inv_mixcols
 

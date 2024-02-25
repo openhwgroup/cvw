@@ -38,21 +38,21 @@
  * Reference: secworks repo
  */
 
-module aes_mixcolumns(data, mixedcols);
+module aes_mixcolumns(Data, mixedcols);
 
    // Declare Inputs/Outputs
-   input  logic [127:0] data;
+   input  logic [127:0] Data;
    output logic [127:0] mixedcols;
    
    // Declare internal Logic
    logic [31:0] 	w0, w1, w2, w3;
    logic [31:0] 	ws0, ws1, ws2, ws3;
    
-   // Break up data into individual words
-   assign w0 = data[127:96];
-   assign w1 = data[95:64];
-   assign w2 = data[63:32];
-   assign w3 = data[31:0];
+   // Break up Data into individual words
+   assign w0 = Data[127:96];
+   assign w1 = Data[95:64];
+   assign w2 = Data[63:32];
+   assign w3 = Data[31:0];
    
    // Instantiate The mix words components for the words
    mixword mw0(.word(w0), .mixed_word(ws0));

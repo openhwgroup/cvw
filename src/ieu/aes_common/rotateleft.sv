@@ -25,10 +25,10 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module rotate_left(input logic [31:0] input_data,
+module rotate_left(input logic [31:0] Input_Data,
 		   input logic [4:0]   shamt, 
-		   output logic [31:0] rot_data);  
+		   output logic [31:0] Rot_Data);  
    
-   assign rot_data = (input_data << shamt) | (input_data >> (32 - shamt)); 
+   assign Rot_Data = (Input_Data << shamt) | (Input_Data >> (32 - shamt)); 
    
 endmodule

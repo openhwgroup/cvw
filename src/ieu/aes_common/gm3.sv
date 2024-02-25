@@ -25,18 +25,18 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module gm3 (gm3_in, gm3_out);
+module gm3 (gm3_In, gm3_Out);
    
-   input logic [7:0] gm3_in;
-   output logic [7:0] gm3_out;
+   input logic [7:0] gm3_In;
+   output logic [7:0] gm3_Out;
    
    // Internal Logic
-   logic [7:0] 	      gm2_0_out;
+   logic [7:0] 	      gm2_0_Out;
    
    // Sub-Modules for gm2 multiplication
-   gm2 gm2_0 (.gm2_in(gm3_in), .gm2_out(gm2_0_out));
+   gm2 gm2_0 (.gm2_In(gm3_In), .gm2_Out(gm2_0_Out));
    
    // Assign Output
-   assign gm3_out = gm2_0_out ^ gm3_in;
+   assign gm3_Out = gm2_0_Out ^ gm3_In;
    
 endmodule 

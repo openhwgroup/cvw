@@ -25,12 +25,12 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module gm2 (gm2_in, gm2_out); 
+module gm2 (gm2_In, gm2_Out); 
    
-   input logic [7:0]  gm2_in;
-   output logic [7:0] gm2_out;
+   input logic [7:0]  gm2_In;
+   output logic [7:0] gm2_Out;
    
    // Set output to Galois Mult 2
-   assign gm2_out = {gm2_in[6:0], 1'b0} ^ (8'h1b & {8{gm2_in[7]}});
+   assign gm2_Out = {gm2_In[6:0], 1'b0} ^ (8'h1b & {8{gm2_In[7]}});
    
 endmodule 

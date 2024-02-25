@@ -35,7 +35,7 @@ module aes64ks1i(input logic [3:0] roundnum,
    logic 			     lastRoundFlag;
    logic [31:0] 		     rs1_rotate;
    logic [31:0] 		     tmp2;
-   logic [31:0] 		     sbox_out;
+   logic [31:0] 		     Sbox_Out;
    
    // Get rcon value from table
    rcon_lut_128 rc(.RD(roundnum), .rcon_out(rcon_preshift));    
@@ -48,9 +48,9 @@ module aes64ks1i(input logic [3:0] roundnum,
    // Assign tmp2 to a mux based on lastRoundFlag
    assign tmp2 = lastRoundFlag ? rs1[63:32] : rs1_rotate;    
    // Substitute bytes of value obtained for tmp2 using Rijndael sbox
-   aes_sbox_word sbox(.in(tmp2),.out(sbox_out));    
-   assign rd[31:0] = sbox_out ^ rcon;
-   assign rd[63:32] = sbox_out ^ rcon;
+   aes_sbox_word sbox(.in(tmp2),.out(Sbox_Out));    
+   assign rd[31:0] = Sbox_Out ^ rcon;
+   assign rd[63:32] = Sbox_Out ^ rcon;
    
    // There may be some errors with this instruction.
    // Regression tests are passed successfully, but

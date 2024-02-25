@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// aes_inv_mixcolumns.sv
+// aes_Inv_mixcolumns.sv
 //
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
@@ -43,28 +43,28 @@ module inv_mixword (input logic [31:0] word, output logic [31:0] mixed_word);
    assign b3 = word[7:0];
    
    // mb0 Galois components
-   gm9 gm9_0(.gm9_in(b1), .gm9_out(gm9_mb0));
-   gm11 gm11_0(.gm11_in(b3), .gm11_out(gm11_mb0));
-   gm13 gm13_0(.gm13_in(b2), .gm13_out(gm13_mb0));
-   gm14 gm14_0(.gm14_in(b0), .gm14_out(gm14_mb0));
+   gm9 gm9_0(.gm9_In(b1), .gm9_Out(gm9_mb0));
+   gm11 gm11_0(.gm11_In(b3), .gm11_Out(gm11_mb0));
+   gm13 gm13_0(.gm13_In(b2), .gm13_Out(gm13_mb0));
+   gm14 gm14_0(.gm14_In(b0), .gm14_Out(gm14_mb0));
 
    // mb1 Galois components                	
-   gm9 gm9_1(.gm9_in(b2), .gm9_out(gm9_mb1));  
-   gm11 gm11_1(.gm11_in(b0), .gm11_out(gm11_mb1));
-   gm13 gm13_1(.gm13_in(b3), .gm13_out(gm13_mb1));
-   gm14 gm14_1(.gm14_in(b1), .gm14_out(gm14_mb1));
+   gm9 gm9_1(.gm9_In(b2), .gm9_Out(gm9_mb1));  
+   gm11 gm11_1(.gm11_In(b0), .gm11_Out(gm11_mb1));
+   gm13 gm13_1(.gm13_In(b3), .gm13_Out(gm13_mb1));
+   gm14 gm14_1(.gm14_In(b1), .gm14_Out(gm14_mb1));
    
    // mb2 Galois components
-   gm9 gm9_2(.gm9_in(b3), .gm9_out(gm9_mb2));
-   gm11 gm11_2(.gm11_in(b1), .gm11_out(gm11_mb2));
-   gm13 gm13_2(.gm13_in(b0), .gm13_out(gm13_mb2));
-   gm14 gm14_2(.gm14_in(b2), .gm14_out(gm14_mb2));   
+   gm9 gm9_2(.gm9_In(b3), .gm9_Out(gm9_mb2));
+   gm11 gm11_2(.gm11_In(b1), .gm11_Out(gm11_mb2));
+   gm13 gm13_2(.gm13_In(b0), .gm13_Out(gm13_mb2));
+   gm14 gm14_2(.gm14_In(b2), .gm14_Out(gm14_mb2));   
                                            
    // mb3 Galois components
-   gm9 gm9_3(.gm9_in(b0), .gm9_out(gm9_mb3));
-   gm11 gm11_3(.gm11_in(b2), .gm11_out(gm11_mb3));
-   gm13 gm13_3(.gm13_in(b1), .gm13_out(gm13_mb3));
-   gm14 gm14_3(.gm14_in(b3), .gm14_out(gm14_mb3));
+   gm9 gm9_3(.gm9_In(b0), .gm9_Out(gm9_mb3));
+   gm11 gm11_3(.gm11_In(b2), .gm11_Out(gm11_mb3));
+   gm13 gm13_3(.gm13_In(b1), .gm13_Out(gm13_mb3));
+   gm14 gm14_3(.gm14_In(b3), .gm14_Out(gm14_mb3));
 
    // XOR Galois components and assign output
    assign mb0 = gm9_mb0 ^ gm11_mb0 ^ gm13_mb0 ^ gm14_mb0;

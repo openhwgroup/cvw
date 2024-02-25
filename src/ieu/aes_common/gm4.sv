@@ -25,20 +25,20 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module gm4 (gm4_in, gm4_out); 
+module gm4 (gm4_In, gm4_Out); 
 
-   input logic [7:0] gm4_in;
-   output logic [7:0] gm4_out;
+   input logic [7:0] gm4_In;
+   output logic [7:0] gm4_Out;
 
    // Internal Logic
-   logic [7:0] 	      gm2_0_out;
-   logic [7:0] 	      gm2_1_out;
+   logic [7:0] 	      gm2_0_Out;
+   logic [7:0] 	      gm2_1_Out;
 
    // Sub-Modules for multiple gm2 multiplications
-   gm2 gm2_0 (.gm2_in(gm4_in), .gm2_out(gm2_0_out));
-   gm2 gm2_1 (.gm2_in(gm2_0_out), .gm2_out(gm2_1_out));
+   gm2 gm2_0 (.gm2_In(gm4_In), .gm2_Out(gm2_0_Out));
+   gm2 gm2_1 (.gm2_In(gm2_0_Out), .gm2_Out(gm2_1_Out));
 
    // Assign output to second gm2 output
-   assign gm4_out = gm2_1_out;
+   assign gm4_Out = gm2_1_Out;
 
 endmodule

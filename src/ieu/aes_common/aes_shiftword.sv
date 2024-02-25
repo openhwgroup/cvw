@@ -33,26 +33,26 @@
  input selection.
  */
 
-module aes_shiftword(input logic[1:0] shiftAmt, input logic [31:0]  dataIn,
-		     output logic [31:0] dataOut);
+module aes_shiftword(input logic[1:0] shiftAmt, input logic [31:0]  DataIn,
+		     output logic [31:0] DataOut);
    
    
-   logic [7:0] 				 b0 = dataIn[7:0];
-   logic [7:0] 				 b1 = dataIn[15:8];
-   logic [7:0] 				 b2 = dataIn[23:16];
-   logic [7:0] 				 b3 = dataIn[31:24];
+   logic [7:0] 				 b0 = DataIn[7:0];
+   logic [7:0] 				 b1 = DataIn[15:8];
+   logic [7:0] 				 b2 = DataIn[23:16];
+   logic [7:0] 				 b3 = DataIn[31:24];
    
    always_comb
      begin
 	case(shiftAmt)	  
 	  // 00 : Barrel Shift no bytes
-	  2'b00 : dataOut = {b3, b2, b1, b0};
+	  2'b00 : DataOut = {b3, b2, b1, b0};
 	  // 01 : Barrel Shift one byte
-	  2'b01 : dataOut = {b0, b3, b2, b1};
+	  2'b01 : DataOut = {b0, b3, b2, b1};
 	  // 10 : Barrel Shift two bytes
-	  2'b10 : dataOut = {b1, b0, b3, b2};
+	  2'b10 : DataOut = {b1, b0, b3, b2};
 	  // 11 : Barrel Shift three bytes
-	  default : dataOut = {b2, b1, b0, b3};
+	  default : DataOut = {b2, b1, b0, b3};
 	endcase
      end 
    

@@ -28,13 +28,13 @@
 module aes32esmi(input logic [1:0]   bs,
                  input logic [31:0]  rs1,
                  input logic [31:0]  rs2,
-                 output logic [31:0] data_out);                
+                 output logic [31:0] Data_Out);                
                 
    // Declare Intermediary logic
    logic [4:0] 			     shamt;
-   logic [31:0] 		     sbox_in_32;
-   logic [7:0] 			     sbox_in;
-   logic [7:0] 			     sbox_out;
+   logic [31:0] 		     Sbox_In_32;
+   logic [7:0] 			     Sbox_In;
+   logic [7:0] 			     Sbox_Out;
    logic [31:0] 		     so;
    logic [31:0] 		     mixed;
    logic [31:0] 		     mixed_rotate;  
@@ -43,16 +43,16 @@ module aes32esmi(input logic [1:0]   bs,
    assign shamt = {bs, 3'b0};
    
    // Shift rs2 right by shamt to get sbox input
-   assign sbox_in_32 = (rs2 >> shamt);
+   assign Sbox_In_32 = (rs2 >> shamt);
    
    // Take the bottom byte as an input to the substitution box
-   assign sbox_in = sbox_in_32[7:0];
+   assign Sbox_In = Sbox_In_32[7:0];
    
    // Substitute
-   aes_sbox sbox(.in(sbox_in), .out(sbox_out));
+   aes_sbox sbox(.in(Sbox_In), .out(Sbox_Out));
    
    // Pad sbox output
-   assign so = {24'h0, sbox_out};
+   assign so = {24'h0, Sbox_Out};
    
    // Mix Word using aes_mixword component
    mixword mwd(.word(so), .mixed_word(mixed));
@@ -61,5 +61,5 @@ module aes32esmi(input logic [1:0]   bs,
    rotate_left rol32(.input_data(mixed), .shamt(shamt), .rot_data(mixed_rotate));
    
    // Set result X(rs1)[31..0] ^ rol32(mixed, unsigned(shamt));
-   assign data_out = rs1 ^ mixed_rotate;   
+   assign Data_Out = rs1 ^ mixed_rotate;   
 endmodule

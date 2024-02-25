@@ -27,26 +27,26 @@
 
 module aes64dsm(input logic [63:0] rs1,
                 input logic [63:0]  rs2,
-                output logic [63:0] data_out);
+                output logic [63:0] Data_Out);
    
    // Intermediary Logic
-   logic [127:0] 		    shiftRow_out;
-   logic [31:0] 		    sbox_out_0;
-   logic [31:0] 		    sbox_out_1;
-   logic [31:0] 		    mixcol_out_0;
-   logic [31:0] 		    mixcol_out_1;    
+   logic [127:0] 		    ShiftRow_Out;
+   logic [31:0] 		    Sbox_Out_0;
+   logic [31:0] 		    Sbox_Out_1;
+   logic [31:0] 		    Mixcol_Out_0;
+   logic [31:0] 		    Mixcol_Out_1;    
    
    // Apply inverse shiftrows to rs2 and rs1
-   aes_inv_shiftrow srow(.dataIn({rs2,rs1}), .dataOut(shiftRow_out));
+   aes_inv_shiftrow srow(.dataIn({rs2, rs1}), .dataOut(ShiftRow_Out));
    
    // Apply full word inverse substitution to lower 2 words of shiftrow out
-   aes_inv_sbox_word inv_sbox_0(.in(shiftRow_out[31:0]), .out(sbox_out_0));
-   aes_inv_sbox_word inv_sbox_1(.in(shiftRow_out[63:32]), .out(sbox_out_1));
+   aes_inv_sbox_word inv_sbox_0(.in(ShiftRow_Out[31:0]), .out(Sbox_Out_0));
+   aes_inv_sbox_word inv_sbox_1(.in(ShiftRow_Out[63:32]), .out(Sbox_Out_1));
    
    // Apply inverse mixword to sbox outputs
-   inv_mixword inv_mw_0(.word(sbox_out_0), .mixed_word(mixcol_out_0));
-   inv_mixword inv_mw_1(.word(sbox_out_1), .mixed_word(mixcol_out_1));
+   inv_mixword inv_mw_0(.word(Sbox_Out_0), .mixed_word(Mixcol_Out_0));
+   inv_mixword inv_mw_1(.word(Sbox_Out_1), .mixed_word(Mixcol_Out_1));
    
    // Concatenate mixed words for output
-   assign data_out = {mixcol_out_1, mixcol_out_0};
+   assign Data_Out = {Mixcol_Out_1, Mixcol_Out_0};
 endmodule
