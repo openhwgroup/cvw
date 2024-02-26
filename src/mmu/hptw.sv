@@ -148,6 +148,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   flopenr #(1) TLBMissMReg(clk, reset, StartWalk, DTLBMissOrUpdateDAM, DTLBWalk); // when walk begins, record whether it was for DTLB (or record 0 for ITLB)
   assign PRegEn = HPTWRW[1] & ~DCacheBusStallM | UpdatePTE;
   flopenr #(P.XLEN) PTEReg(clk, reset, PRegEn, NextPTE, PTE); // Capture page table entry from data cache
+  assert property(@(posedge clk) ~PRegEn | reset | NextPTE[0] !== 1'bx); // report writing an x PTE from an uninitialized page table
 
   // Assign PTE descriptors common across all XLEN values
   // For non-leaf PTEs, D, A, U bits are reserved and ignored.  They do not cause faults while walking the page table
@@ -173,7 +174,8 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
     logic [P.XLEN-1:0]    AccessedPTE;
 
     assign AccessedPTE = {PTE[P.XLEN-1:8], (SetDirty | PTE[7]), 1'b1, PTE[5:0]}; // set accessed bit, conditionally set dirty bit
-    assign ReadDataNoXM = (ReadDataM[0] === 'x) ? '0 : ReadDataM; // If the PTE.V bit is x because it was read from uninitialized memory set to 0 to avoid x propagation and hanging the simulation.
+    //assign ReadDataNoXM = (ReadDataM[0] === 'x) ? '0 : ReadDataM; // If the PTE.V bit is x because it was read from uninitialized memory set to 0 to avoid x propagation and hanging the simulation.
+    assign ReadDataNoXM = ReadDataM; // *** temporary fix for synthesis; === and x in line above are not synthesizable.
     mux2 #(P.XLEN) NextPTEMux(ReadDataNoXM, AccessedPTE, UpdatePTE, NextPTE); // NextPTE = ReadDataNoXM when ADUE = 0 because UpdatePTE = 0
     flopenr #(P.PA_BITS) HPTWAdrWriteReg(clk, reset, SaveHPTWAdr, HPTWReadAdr, HPTWWriteAdr);
     
