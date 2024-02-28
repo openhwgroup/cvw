@@ -36,8 +36,8 @@ module zknd_32 #(parameter WIDTH=32)
    logic [31:0] 	     aes32dsmiRes;
    
    // RV32
-   aes32dsi aes32dsi (.bs(Funct7[6:5]), .rs1(A), .rs2(B), .data_out(aes32dsiRes));
-   aes32dsmi aes32dsmi (.bs(Funct7[6:5]), .rs1(A), .rs2(B), .data_out(aes32dsmiRes));
+   aes32dsi aes32dsi (.bs(Funct7[6:5]), .rs1(A), .rs2(B), .Data_Out(aes32dsiRes));
+   aes32dsmi aes32dsmi (.bs(Funct7[6:5]), .rs1(A), .rs2(B), .Data_Out(aes32dsmiRes));
    
    mux2 #(WIDTH) zkndmux (aes32dsiRes, aes32dsmiRes, ZKNDSelect[0], ZKNDResult);
 

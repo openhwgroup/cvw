@@ -33,7 +33,7 @@ module aes64es(input logic [63:0]  rs1,
    logic [127:0] 		   ShiftRow_Out;
    
    // AES shiftrow unit
-   aes_shiftrow srow(.dataIn({rs2,rs1}), .dataOut(ShiftRow_Out));
+   aes_shiftrow srow(.DataIn({rs2,rs1}), .DataOut(ShiftRow_Out));
    
    // Apply substitution box to 2 lower words
    aes_sbox_word sbox_0(.in(ShiftRow_Out[31:0]), .out(Data_Out[31:0]));

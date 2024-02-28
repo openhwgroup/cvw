@@ -187,8 +187,7 @@ typedef struct packed {
   logic         ZKND_SUPPORTED;
   logic         ZKNE_SUPPORTED;
   logic         ZKNH_SUPPORTED;
-  logic         ZKSED_SUPPORTED;
-  logic         ZKSH_SUPPORTED;
+  logic         ZK_SUPPORTED;
 
 // Memory synthesis configuration
   logic         USE_SRAM;
@@ -224,6 +223,7 @@ typedef struct packed {
   logic E_SUPPORTED;
   logic F_SUPPORTED;
   logic I_SUPPORTED;
+  logic K_SUPPORTED;
   logic M_SUPPORTED;
   logic Q_SUPPORTED;
   logic S_SUPPORTED;

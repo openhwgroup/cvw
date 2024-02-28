@@ -46,13 +46,14 @@ module aes32dsi(input logic [1:0] bs,
    assign Sbox_In = Sbox_In_32[7:0];
    
    // Apply inverse sbox to si
-   aes_inv_sbox inv_sbox(.in(Sbox_In), .out(Sbox_Out));
+   aes_Inv_sbox inv_sbox(.in(Sbox_In), .out(Sbox_Out));
    
    // Pad output of inverse substitution box
    assign so = {24'h0, Sbox_Out};
    
    // Rotate the substitution box output left by shamt (bs * 8)
-   rotate_left rol32(.input_data(so), .shamt(shamt), .rot_data(so_rotate));
+   // rotate_left rol32(.input_data(so), .shamt(shamt), .rot_data(so_rotate));
+   assign so_rotate = (so << shamt) | (so >> (32 - shamt)); 
    
    // Set result to "X(rs1)[31..0] ^ rol32(so, unsigned(shamt));"
    assign Data_Out = rs1 ^ so_rotate;

@@ -40,9 +40,9 @@ module zknd_64 #(parameter WIDTH=32)
    logic [63:0] 	     aes64ks2Res;
    
    // RV64
-   aes64ds aes64ds (.rs1(A), .rs2(B), .data_out(aes64dsRes));
-   aes64dsm aes64dsm (.rs1(A), .rs2(B), .data_out(aes64dsmRes));
-   aes64im aes64im (.rs1(A), .data_out(aes64imRes));
+   aes64ds aes64ds (.rs1(A), .rs2(B), .Data_Out(aes64dsRes));
+   aes64dsm aes64dsm (.rs1(A), .rs2(B), .Data_Out(aes64dsmRes));
+   aes64im aes64im (.rs1(A), .Data_Out(aes64imRes));
    aes64ks1i aes64ks1i (.roundnum(RNUM), .rs1(A), .rd(aes64ks1iRes));
    aes64ks2 aes64ks2 (.rs2(B), .rs1(A), .rd(aes64ks2Res));
    

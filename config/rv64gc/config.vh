@@ -182,13 +182,13 @@ localparam ZCF_SUPPORTED = 0;
 localparam ZCD_SUPPORTED = 0;
 
 // K extension instructions                                                                
-localparam ZBKB_SUPPORTED = 0;
-localparam ZBKC_SUPPORTED = 0;
-localparam ZBKX_SUPPORTED = 0;
-localparam ZKNE_SUPPORTED = 0;
-localparam ZKND_SUPPORTED = 0;
-localparam ZK_SUPPORTED = 0;
-localparam ZKNH_SUPPORTED = 0;
+localparam ZBKB_SUPPORTED = 1;
+localparam ZBKC_SUPPORTED = 1;
+localparam ZBKX_SUPPORTED = 1;
+localparam ZKND_SUPPORTED = 1;
+localparam ZKNE_SUPPORTED = 1;
+localparam ZKNH_SUPPORTED = 1;
+localparam ZK_SUPPORTED = 1;
 
 // Memory synthesis configuration
 localparam USE_SRAM = 0;

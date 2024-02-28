@@ -30,38 +30,30 @@ module packer #(parameter WIDTH=32) (
   input logic [2:0] 	   PackSelect, 
   output logic [WIDTH-1:0] PackResult);
    
-   logic [WIDTH/2-1:0] 	   low_half, high_half;
-   logic [7:0] 		   low_halfh, high_halfh;
-   logic [15:0] 	   low_halfw, high_halfw;
+  logic [WIDTH/2-1:0] 	   low_half, high_half;
+  logic [7:0] 		   low_halfh, high_halfh;
+  logic [15:0] 	   low_halfw, high_halfw;
+  
+  logic [WIDTH-1:0] 	   Pack;
+  logic [WIDTH-1:0] 	   PackH;
+  logic [WIDTH-1:0] 	   PackW;
    
-   logic [WIDTH-1:0] 	   Pack;
-   logic [WIDTH-1:0] 	   PackH;
-   logic [WIDTH-1:0] 	   PackW;
-   logic [1:0] 		   MuxSelect;
-   
-   assign low_half = A[WIDTH/2-1:0];
-   assign high_half = B[WIDTH/2-1:0];
-   assign low_halfh = A[7:0];
-   assign high_halfh = B[7:0];
-   assign low_halfw = A[15:0];
-   assign high_halfw = B[15:0];   
-   
-   assign Pack = {high_half, low_half}; 
-   assign PackH = {{(WIDTH-16){1'b0}}, high_halfh, low_halfh}; 
-   assign PackW = {{(WIDTH-32){high_halfw[15]}}, high_halfw, low_halfw}; 
-   
-   // TODO: FIX THIS ... this is completely incorrect way to use if statements
-   // Solution for now:
-   always_comb 
-     begin
-	if (PackSelect[1:0] == 2'b11) 
-	  MuxSelect = 2'b01;
-	else if (PackSelect[2] == 1'b0) 
-	  MuxSelect = 2'b00;
-	else 
-	  MuxSelect = 2'b10;
-     end
-   
-  mux3 #(WIDTH) PackMux(Pack, PackH, PackW, MuxSelect, PackResult);
+  assign low_half = A[WIDTH/2-1:0];
+  assign high_half = B[WIDTH/2-1:0];
+  assign low_halfh = A[7:0];
+  assign high_halfh = B[7:0];
+  assign low_halfw = A[15:0];
+  assign high_halfw = B[15:0];   
+  
+  assign Pack = {high_half, low_half}; 
+  assign PackH = {{(WIDTH-16){1'b0}}, high_halfh, low_halfh}; 
+  assign PackW = {{(WIDTH-32){high_halfw[15]}}, high_halfw, low_halfw}; 
+
+  always_comb 
+  begin
+	  if (PackSelect[1:0] == 2'b11)   PackResult = PackH;
+	  else if (PackSelect[2] == 1'b0) PackResult = Pack;
+	  else                            PackResult = PackW;
+  end
 
 endmodule

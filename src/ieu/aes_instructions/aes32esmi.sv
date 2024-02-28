@@ -58,7 +58,8 @@ module aes32esmi(input logic [1:0]   bs,
    mixword mwd(.word(so), .mixed_word(mixed));
    
    // Rotate so left by shamt
-   rotate_left rol32(.input_data(mixed), .shamt(shamt), .rot_data(mixed_rotate));
+   // rotate_left rol32(.input_data(mixed), .shamt(shamt), .rot_data(mixed_rotate));
+   assign mixed_rotate = (mixed << shamt) | (mixed >> (32 - shamt)); 
    
    // Set result X(rs1)[31..0] ^ rol32(mixed, unsigned(shamt));
    assign Data_Out = rs1 ^ mixed_rotate;   

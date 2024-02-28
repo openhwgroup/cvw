@@ -54,7 +54,8 @@ module aes32esi(input logic [1:0] bs,
    assign so = {24'h0, Sbox_Out};
    
    // Rotate so left by shamt
-   rotate_left rol32(.input_data(so), .shamt(shamt), .rot_data(so_rotate));
+   // rotate_left rol32(.input_data(so), .shamt(shamt), .rot_data(so_rotate));
+   assign so_rotate = (so << shamt) | (so >> (32 - shamt)); 
    
    // Set result X(rs1)[31..0] ^ rol32(so, unsigned(shamt));
    assign Data_Out = rs1 ^ so_rotate;   
