@@ -63,15 +63,17 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   
   logic [P.XLEN-1:0]           HREADRam, HREADSDC;
 
-  logic [11:0]                 HSELRegions;
+  logic [12:0]                 HSELRegions;
   logic                        HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSPI;
   logic                        HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD, HSELSPID;
   logic                        HRESPRam,  HRESPSDC;
   logic                        HREADYRam, HRESPSDCD;
-  logic [P.XLEN-1:0]           HREADBootRom; 
+  logic [P.XLEN-1:0]           HREADBootRom;
   logic                        HSELBootRom, HSELBootRomD, HRESPBootRom, HREADYBootRom, HREADYSDC;
+  logic [P.XLEN-1:0]           HREADBsgDmc;
+  logic                        HSELBsgDmc, HSELBsgDmcD, HRESPBsgDmc, HREADYBsgDmc;
   logic                        HSELNoneD;
-  logic                        UARTIntr,GPIOIntr, SPIIntr;
+  logic                        UARTIntr, GPIOIntr, SPIIntr;
   logic                        SDCIntM;
   
   logic                        PCLK, PRESETn, PWRITE, PENABLE;
@@ -92,7 +94,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   adrdecs #(P) adrdecs(HADDR, 1'b1, 1'b1, 1'b1, HSIZE[1:0], HSELRegions);
 
   // unswizzle HSEL signals
-  assign {HSELSPI, HSELEXTSDC, HSELPLIC, HSELUART, HSELGPIO, HSELCLINT, HSELRam, HSELBootRom, HSELEXT, HSELIROM, HSELDTIM} = HSELRegions[11:1];
+  assign {HSELBsgDmc, HSELSPI, HSELEXTSDC, HSELPLIC, HSELUART, HSELGPIO, HSELCLINT, HSELRam, HSELBootRom, HSELEXT, HSELIROM, HSELDTIM} = HSELRegions[12:1];
 
   // AHB -> APB bridge
   ahbapbbridge #(P, 5) ahbapbbridge (
@@ -158,30 +160,38 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
     assign SPIOut = 0; assign SPICS = 0; assign SPIIntr = 0;
   end
 
+  // FIXME: Do we need to block this off in an if (like SPI above)?
+  bsg_dmc_ahb #(P.PA_BITS, P.XLEN) external_ram (
+    .HCLK, .HRESETn, .HSEL(HSELBsgDmc), .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HTRANS, .HREADY,
+    .HRDATA(HREADBsgDmc), .HRESP(HRESPBsgDmc), .HREADYOUT(HREADYBsgDmc));
+
   // AHB Read Multiplexer
   assign HRDATA = ({P.XLEN{HSELRamD}} & HREADRam) |
-                  ({P.XLEN{HSELEXTD | HSELEXTSDCD}} & HRDATAEXT) |   
+                  ({P.XLEN{HSELEXTD | HSELEXTSDCD}} & HRDATAEXT) |
                   ({P.XLEN{HSELBRIDGED}} & HREADBRIDGE) |
-                  ({P.XLEN{HSELBootRomD}} & HREADBootRom);
+                  ({P.XLEN{HSELBootRomD}} & HREADBootRom) |
+                  ({P.XLEN{HSELBsgDmcD}} & HREADBsgDmc);
 
   assign HRESP = HSELRamD & HRESPRam |
                  (HSELEXTD | HSELEXTSDCD) & HRESPEXT |
                  HSELBRIDGE & HRESPBRIDGE |
-                 HSELBootRomD & HRESPBootRom;
+                 HSELBootRomD & HRESPBootRom |
+                 HSELBsgDmcD & HRESPBsgDmc;
   
   assign HREADY = HSELRamD & HREADYRam |
-		          (HSELEXTD | HSELEXTSDCD) & HREADYEXT |		  
+                  (HSELEXTD | HSELEXTSDCD) & HREADYEXT |
                   HSELBRIDGED & HREADYBRIDGE |
                   HSELBootRomD & HREADYBootRom |
+                  HSELBsgDmcD & HREADYBsgDmc |
                   HSELNoneD; // don't lock up the bus if no region is being accessed
 
   // Address Decoder Delay (figure 4-2 in spec)
   // The select for HREADY needs to be based on the address phase address.  If the device 
   // takes more than 1 cycle to repsond it needs to hold on to the old select until the
-  // device is ready.  Hense this register must be selectively enabled by HREADY.
-  // However on reset None must be seleted.
-  flopenl #(12) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions, 12'b1, 
-    {HSELSPID, HSELEXTSDCD, HSELPLICD, HSELUARTD, HSELGPIOD, HSELCLINTD,
-      HSELRamD, HSELBootRomD, HSELEXTD, HSELIROMD, HSELDTIMD, HSELNoneD});
+  // device is ready.  Hence this register must be selectively enabled by HREADY.
+  // However on reset None must be selected.
+  flopenl #(13) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions, 13'b1,
+    {HSELBsgDmcD, HSELSPID, HSELEXTSDCD, HSELPLICD, HSELUARTD, HSELGPIOD,
+      HSELCLINTD, HSELRamD, HSELBootRomD, HSELEXTD, HSELIROMD, HSELDTIMD, HSELNoneD});
   flopenr #(1) hselbridgedelayreg(HCLK, ~HRESETn, HREADY, HSELBRIDGE, HSELBRIDGED);
 endmodule
