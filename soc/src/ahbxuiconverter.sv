@@ -2,7 +2,10 @@
 // ahbxuiconverter.sv
 //
 // Written: infinitymdm@gmail.com 29 February 2024
+<<<<<<< HEAD
 // Modified: infinitymdm@gmail.com 02 April 2024
+=======
+>>>>>>> 62804195f (soc: organize SoC sources)
 //
 // Purpose: AHB to Xilinx UI converter
 // 
