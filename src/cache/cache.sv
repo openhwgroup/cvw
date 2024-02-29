@@ -180,14 +180,14 @@ module cache import cvw::*; #(parameter cvw_t P,
 
     assign DemuxedByteMask = BlankByteMask << ((MUXINTERVAL/8) * WordOffsetAddr);
 
-    assign FetchBufferByteSel = SetValid & ~SetDirty ? '1 : ~DemuxedByteMask;  // If load miss set all muxes to 1.
+    assign FetchBufferByteSel = SetDirty ? ~DemuxedByteMask : '1;  // If load miss set all muxes to 1.
 
     // Merge write data into fetched cache line for store miss
     for(index = 0; index < LINELEN/8; index++) begin
       mux2 #(8) WriteDataMux(.d0(CacheWriteData[(8*index)%WORDLEN+7:(8*index)%WORDLEN]),
         .d1(FetchBuffer[8*index+7:8*index]), .s(FetchBufferByteSel[index] & ~CMOpM[3]), .y(LineWriteData[8*index+7:8*index]));
     end
-    assign LineByteMask = SetValid ? '1 : SetDirty ? DemuxedByteMask : '0;
+    assign LineByteMask = SetDirty ? DemuxedByteMask : '1;
   end
   else
     begin:WriteSelLogic
