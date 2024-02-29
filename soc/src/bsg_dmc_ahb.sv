@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // bsg_dmc_ahb.sv
 //
-// Written: infinitymdm@gmail.com
+// Written: infinitymdm@gmail.com 29 February 2024
 //
 // Purpose: BSG controller and LPDDRDRAM presenting an AHB interface
 // 
