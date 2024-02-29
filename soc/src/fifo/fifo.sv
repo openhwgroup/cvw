@@ -2,7 +2,7 @@
 // fifo.sv
 //
 // Written: Clifford E Cummings 16 June 2005
-// Modified: james.stine@okstate.edu 19 February 2024
+// Modified: infinitymdm@gmail.com 29 February 2024
 //
 // Purpose: Asynchronous FIFO
 // 
@@ -47,9 +47,9 @@ module fifo #(parameter DSIZE = 8,
    logic [ASIZE-1:0] 	    waddr, raddr;
    logic [ASIZE:0] 	    wptr, rptr, wq2_rptr, rq2_wptr;
    
-   sync_r2w      sync_r2w  (.wq2_rptr(wq2_rptr), .rptr(rptr),
+   sync_r2w #(ASIZE)  sync_r2w  (.wq2_rptr(wq2_rptr), .rptr(rptr),
 			    .wclk(wclk), .wrst_n(wrst_n));
-   sync_w2r      sync_w2r  (.rq2_wptr(rq2_wptr), .wptr(wptr),
+   sync_w2r #(ASIZE)  sync_w2r  (.rq2_wptr(rq2_wptr), .wptr(wptr),
 			    .rclk(rclk), .rrst_n(rrst_n));
    
    fifomem #(DSIZE, ASIZE) fifomem (.rdata(rdata), .wdata(wdata),
