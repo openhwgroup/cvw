@@ -31,8 +31,6 @@ module zbkx #(parameter WIDTH=32)
     output logic [WIDTH-1:0] ZBKXResult);
    
    logic [WIDTH-1:0] 	     xperm_lookup;
-   logic [WIDTH-1:0] 	     XPERM8_Result;
-   logic [WIDTH-1:0] 	     XPERM4_Result;
    integer i;
    
    always_comb begin
