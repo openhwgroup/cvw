@@ -88,8 +88,8 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
     bitreverse #(P.XLEN) brA(.A(ABMU), .RevA);
   end
 
-  // ZBC Unit
-  if (P.ZBC_SUPPORTED) begin: zbc
+  // ZBC and ZBKCUnit
+  if (P.ZBC_SUPPORTED | P.ZBKC_SUPPORTED) begin: zbc
     zbc #(P.XLEN) ZBC(.A(ABMU), .RevA, .B(BBMU), .Funct3, .ZBCResult);
   end else assign ZBCResult = 0;
 
@@ -102,11 +102,6 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
   if (P.ZBKB_SUPPORTED) begin: zbkb
     zbkb #(P.XLEN) ZBKB(.A(ABMU), .B(BBMU), .RevA, .W64, .Funct3, .ZBKBSelect(ZBBSelect[2:0]), .ZBKBResult);
   end else assign ZBKBResult = 0;
-  
-  // ZBKC Unit
-  if (P.ZBKC_SUPPORTED) begin: zbkc
-    zbkc #(P.XLEN) ZBKC(.A(ABMU), .B(BBMU), .ZBKCSelect(ZBBSelect[0]), .ZBKCResult);
-  end else assign ZBKCResult = 0;
 
   // ZBKX Unit
   if (P.ZBKX_SUPPORTED) begin: zbkx
@@ -146,14 +141,13 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
   // Result Select Mux
   always_comb
     case (BSelect)
-      // 0000: ALU, 0001: ZBA/ZBS, 0010: ZBB, 0011: ZBC, 0100: ZBKB, 0101: ZBKC, 0110: ZBKX
+      // 0000: ALU, 0001: ZBA/ZBS, 0010: ZBB, 0011: ZBC/ZBKC, 0100: ZBKB, 0110: ZBKX
       // 0111: ZKND, 1000: ZKNE, 1001: ZKNH, 1010: ZKSED, 1011: ZKSH...
       4'b0000: ALUResult = PreALUResult; 
       4'b0001: ALUResult = FullResult;         // NOTE: We don't use ALUResult because ZBA/ZBS instructions don't sign extend the MSB of the right-hand word.
       4'b0010: ALUResult = ZBBResult; 
       4'b0011: ALUResult = ZBCResult;
       4'b0100: ALUResult = ZBKBResult;
-      4'b0101: ALUResult = ZBKCResult;
       4'b0110: ALUResult = ZBKXResult;
       4'b0111: ALUResult = ZKNDResult; 
       4'b1000: ALUResult = ZKNEResult;

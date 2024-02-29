@@ -91,6 +91,7 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
           17'b0011011_000010?_001: BMUControlsD = `BMUCTRLW'b001_0001_0000_1_1_1_1_0_0_0_0_0;  // slli.uw
         endcase
     end
+
     if (P.ZBB_SUPPORTED) begin
       casez({OpD, Funct7D, Funct3D})
         17'b0010011_0110000_001: if ((Rs2D[4:1] == 4'b0010))
@@ -119,10 +120,19 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
                                     BMUControlsD = `BMUCTRLW'b000_0010_0000_1_1_1_1_0_0_0_0_0;  // count word instruction
         endcase
     end
+
     if (P.ZBC_SUPPORTED)
       casez({OpD, Funct7D, Funct3D})
+        17'b0110011_0000101_010: BMUControlsD = `BMUCTRLW'b000_0011_0001_1_0_0_1_0_0_0_0_0;  // clmulr
         17'b0110011_0000101_0??: BMUControlsD = `BMUCTRLW'b000_0011_0000_1_0_0_1_0_0_0_0_0;  // ZBC instruction
       endcase
+    if (P.ZBKC_SUPPORTED | P.ZBC_SUPPORTED) begin   // ZBKC
+      casez({OpD, Funct7D, Funct3D})
+        17'b0110011_0000101_001: BMUControlsD = `BMUCTRLW'b000_0011_0000_1_0_0_1_0_0_0_0_0;  // clmul
+        17'b0110011_0000101_011: BMUControlsD = `BMUCTRLW'b000_0011_0001_1_0_0_1_0_0_0_0_0;  // clmulh
+      endcase
+    end
+
     if (P.ZBS_SUPPORTED) begin // ZBS
       casez({OpD, Funct7D, Funct3D})
         17'b0110011_0100100_001: BMUControlsD = `BMUCTRLW'b111_0001_0000_1_0_0_1_1_0_1_0_0;  // bclr
@@ -172,7 +182,6 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
           17'b0111011_0000100_100: BMUControlsD = `BMUCTRLW'b000_0100_0101_1_0_1_1_0_0_0_0_0; //packw
         endcase
     end
-
     if (P.ZBB_SUPPORTED | P.ZBKB_SUPPORTED) begin  // ZBB and ZBKB shared instructions
       casez({OpD, Funct7D, Funct3D})
         17'b0110011_0110000_001: BMUControlsD = `BMUCTRLW'b001_0001_0111_1_0_0_1_0_1_0_0_0;  // rol
@@ -194,13 +203,6 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
           17'b0010011_011000?_101: BMUControlsD = `BMUCTRLW'b001_0000_0111_1_1_0_1_0_1_0_0_0;  // rori (rv64)
           17'b0011011_0110000_101: BMUControlsD = `BMUCTRLW'b001_0000_0111_1_1_1_1_0_1_0_0_0;  // roriw 
         endcase
-    end
-
-    if (P.ZBKC_SUPPORTED) begin   // ZBKC
-      casez({OpD, Funct7D, Funct3D})
-        17'b0110011_0000101_001: BMUControlsD = `BMUCTRLW'b000_0101_0000_1_0_0_1_0_0_0_0_0;  // clmul
-        17'b0110011_0000101_011: BMUControlsD = `BMUCTRLW'b000_0101_0001_1_0_0_1_0_0_0_0_0;  // clmulh
-      endcase
     end
 
     if (P.ZBKX_SUPPORTED) begin  //ZBKX
