@@ -32,15 +32,15 @@ module zbkb #(parameter WIDTH=32)
     input logic [2:0] 	     ZBKBSelect,
     output logic [WIDTH-1:0] ZBKBResult);
    
-   logic [WIDTH-1:0] 	     RevResult;    // rev8, brev8
+   logic [WIDTH-1:0] 	     ByteResult;    // rev8, brev8
    logic [WIDTH-1:0] 	     PackResult;   // pack, packh, packw (RB64 only)
    logic [WIDTH-1:0] 	     ZipResult;    // zip, unzip
    
-   revop #(WIDTH) rev(.A, .RevA, .revType(B[0]), .RevResult);
+   byteop #(WIDTH) rev(.A, .RevA, .ByteSelect({B[10], B[0]}), .ByteResult);
    packer #(WIDTH) pack(.A, .B, .PackSelect({ZBKBSelect[2], Funct3[1:0]}), .PackResult);
    zipper #(WIDTH) zip(.A, .ZipSelect(Funct3[2]), .ZipResult);
    
    // ZBKB Result Select Mux
-   mux3 #(WIDTH) zbkbresultmux(RevResult, PackResult, ZipResult, ZBKBSelect[1:0], ZBKBResult);
+   mux3 #(WIDTH) zbkbresultmux(ByteResult, PackResult, ZipResult, ZBKBSelect[1:0], ZBKBResult);
    
 endmodule
