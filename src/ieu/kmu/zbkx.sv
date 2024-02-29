@@ -30,21 +30,24 @@ module zbkx #(parameter WIDTH=32)
     input logic [2:0] 	     ZBKXSelect,
     output logic [WIDTH-1:0] ZBKXResult);
    
-   logic [WIDTH-1:0] 	     xperm_lookup[0:WIDTH];
+   logic [WIDTH-1:0] 	     xperm_lookup;
    logic [WIDTH-1:0] 	     XPERM8_Result;
    logic [WIDTH-1:0] 	     XPERM4_Result;
-   genvar 		     i;
+   integer i;
    
-   for(i=0; i<WIDTH; i=i+8) begin: xperm8
-      assign xperm_lookup[i] = A >> {B[i+7:i], 3'b0};
-      assign XPERM8_Result[i+7:i] = xperm_lookup[i][7:0];
+   always_comb begin
+      if (ZBKXSelect[0] == 1'b0) begin
+         for(i=0; i<WIDTH; i=i+8) begin: xperm8
+            xperm_lookup = A >> {B[i+:8], 3'b0};
+            ZBKXResult[i+:8] = xperm_lookup[7:0];
+         end
+      end
+      else begin
+         for(i=0; i<WIDTH; i=i+4) begin: xperm4
+            xperm_lookup = A >> {B[i+:4], 2'b0};
+            ZBKXResult[i+:4] = xperm_lookup[3:0];
+         end
+      end
    end
-   
-   for(i=0; i<WIDTH; i=i+4) begin: xperm4
-      assign xperm_lookup[i+1] = A >> {B[i+3:i], 2'b0};
-      assign XPERM4_Result[i+3:i] = xperm_lookup[i+1][3:0];
-   end
-   
-   mux2 #(WIDTH) ZbkxMux (XPERM8_Result, XPERM4_Result, ZBKXSelect[0], ZBKXResult);
    
 endmodule
