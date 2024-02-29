@@ -91,33 +91,33 @@ module bsg_dmc_ahb
 
   // Use a /6 clock divider until PLL is integrated. TODO: Replace
   logic ui_clk;
-  integer clk_counter = 0;
+  integer clk_counter;
   always @(posedge HCLK) begin
-    counter <= counter + 1;
-    if (counter >= 6) counter <= 0;
-    ui_clk <= (counter >= 3);
+    clk_counter <= clk_counter + 1;
+    if (clk_counter >= 6) clk_counter <= 0;
+    ui_clk <= (clk_counter >= 3);
   end
 
   // TODO: Figure out how to initialize dmc_config correctly
   always_comb begin: bsg_dmc_config
-    dmc_p.trefi = 1023;
-    dmc_p.tmrd = 1;
-    dmc_p.trfc = 15;
-    dmc_p.trc = 10;
-    dmc_p.trp = 2;
-    dmc_p.tras = 7;
-    dmc_p.trrd = 1;
-    dmc_p.trcd = 2;
-    dmc_p.twr = 10;
-    dmc_p.twtr = 7;
-    dmc_p.trtp = 10;
-    dmc_p.tcas = 3;
-    dmc_p.col_width = 11;
-    dmc_p.row_width = 14;
-    dmc_p.bank_width = 2;
-    dmc_p.dqs_sel_cal = 3;
-    dmc_p.init_cycles = 40010;
-    dmc_p.bank_pos = 25;
+    dmc_config.trefi = 1023;
+    dmc_config.tmrd = 1;
+    dmc_config.trfc = 15;
+    dmc_config.trc = 10;
+    dmc_config.trp = 2;
+    dmc_config.tras = 7;
+    dmc_config.trrd = 1;
+    dmc_config.trcd = 2;
+    dmc_config.twr = 10;
+    dmc_config.twtr = 7;
+    dmc_config.trtp = 10;
+    dmc_config.tcas = 3;
+    dmc_config.col_width = 11;
+    dmc_config.row_width = 14;
+    dmc_config.bank_width = 2;
+    dmc_config.dqs_sel_cal = 3;
+    dmc_config.init_cycles = 40010;
+    dmc_config.bank_pos = 25;
   end
 
   ahbxuiconverter #(ADDR_SIZE, DATA_SIZE) bsg_dmc_ahb_ui_converter (
@@ -134,7 +134,7 @@ module bsg_dmc_ahb
     .ui_addr_width_p(ADDR_SIZE),
     .ui_data_width_p(DATA_SIZE),
     .burst_data_width_p(BURST_DATA_SIZE),
-    .dq_data_width_p(DQ_DATA_SIZE),
+    .dq_data_width_p(DATA_SIZE/2),
     .cmd_afifo_depth(FIFO_DEPTH),
     .cmd_sfifo_depth(FIFO_DEPTH)
   ) dmc (
