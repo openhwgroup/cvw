@@ -135,8 +135,8 @@ module bsg_dmc_ahb
     .ui_data_width_p(DATA_SIZE),
     .burst_data_width_p(BURST_DATA_SIZE),
     .dq_data_width_p(DATA_SIZE/2),
-    .cmd_afifo_depth(FIFO_DEPTH),
-    .cmd_sfifo_depth(FIFO_DEPTH)
+    .cmd_afifo_depth_p(FIFO_DEPTH),
+    .cmd_sfifo_depth_p(FIFO_DEPTH)
   ) dmc (
     .async_reset_tag_i(dmc_rst_tag),
     .bsg_dly_tag_i(dmc_dly_tag), .bsg_dly_trigger_tag_i(dmc_dly_trigger_tag), .bsg_ds_tag_i(dmc_ds_tag),
