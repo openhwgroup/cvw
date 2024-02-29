@@ -30,5 +30,5 @@
 	path = addins/ahbsdc
 	url = http://github.com/JacobPease/ahbsdc.git
 [submodule "src/uncore/basejump_stl"]
-	path = src/uncore/basejump_stl
+	path = soc/basejump_stl
 	url = https://github.com/bespoke-silicon-group/basejump_stl
