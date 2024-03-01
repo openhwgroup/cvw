@@ -50,7 +50,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   output logic       CacheAccess,       // Cache access
 
   // cache internals
-  input  logic       CacheHit,          // Exactly 1 way hits
+  input  logic       Hit,          // Exactly 1 way hits
   input  logic       LineDirty,         // The selected line and way is dirty
   input  logic       HitLineDirty,   // The cache hit way is dirty
   input  logic       FlushAdrFlag,      // On last set of a cache flush
@@ -92,17 +92,17 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
 
   statetype CurrState, NextState;
 
-  assign AnyMiss = (CacheRW[0] | CacheRW[1]) & ~CacheHit & ~InvalidateCache; // exclusion-tag: cache AnyMiss
-  assign AnyUpdateHit = (CacheRW[0]) & CacheHit;                            // exclusion-tag: icache storeAMO1
-  assign AnyHit = AnyUpdateHit | (CacheRW[1] & CacheHit);                  // exclusion-tag: icache AnyUpdateHit
+  assign AnyMiss = (CacheRW[0] | CacheRW[1]) & ~Hit & ~InvalidateCache; // exclusion-tag: cache AnyMiss
+  assign AnyUpdateHit = (CacheRW[0]) & Hit;                            // exclusion-tag: icache storeAMO1
+  assign AnyHit = AnyUpdateHit | (CacheRW[1] & Hit);                  // exclusion-tag: icache AnyUpdateHit
   assign CMOZeroNoEviction = CMOpM[3] & ~LineDirty;   // (hit or miss) with no writeback store zeros now
-  assign CMOWriteback = ((CMOpM[1] | CMOpM[2]) & CacheHit & HitLineDirty) | CMOpM[3] & LineDirty;
+  assign CMOWriteback = ((CMOpM[1] | CMOpM[2]) & Hit & HitLineDirty) | CMOpM[3] & LineDirty;
   
   assign FlushFlag = FlushAdrFlag & FlushWayFlag;
 
   // outputs for the performance counters.
   assign CacheAccess = (|CacheRW) & ((CurrState == STATE_ACCESS & ~Stall & ~FlushStage) | (CurrState == STATE_ADDRESS_SETUP & ~Stall & ~FlushStage)); // exclusion-tag: icache CacheW
-  assign CacheMiss = CacheAccess & ~CacheHit;
+  assign CacheMiss = CacheAccess & ~Hit;
 
   // special case on reset. When the fsm first exists reset twayhe
   // PCNextF will no longer be pointing to the correct address.
@@ -169,7 +169,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   // Flush and eviction controls
                       CurrState == STATE_WRITEBACK & (CMOpM[1] | CMOpM[2]) & CacheBusAck;
   assign SelVictim = (CurrState == STATE_WRITEBACK & ((~CacheBusAck & ~(CMOpM[1] | CMOpM[2])) | (CacheBusAck & CMOpM[3]))) |
-                  (CurrState == STATE_ACCESS & ((AnyMiss & LineDirty) | (CMOZeroNoEviction & ~CacheHit))) | 
+                  (CurrState == STATE_ACCESS & ((AnyMiss & LineDirty) | (CMOZeroNoEviction & ~Hit))) | 
                   (CurrState == STATE_WRITE_LINE);
   assign SelWriteback = (CurrState == STATE_WRITEBACK & (CMOpM[1] | CMOpM[2] | ~CacheBusAck)) |
                         (CurrState == STATE_ACCESS & AnyMiss & LineDirty);
@@ -188,7 +188,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
                          (CurrState == STATE_WRITEBACK & CacheBusAck & ~(|CMOpM));
 
   logic LoadMiss;
-  assign LoadMiss = (CacheRW[1]) & ~CacheHit & ~InvalidateCache; // exclusion-tag: cache AnyMiss
+  assign LoadMiss = (CacheRW[1]) & ~Hit & ~InvalidateCache; // exclusion-tag: cache AnyMiss
 
   assign CacheBusRW[0] = (CurrState == STATE_ACCESS & LoadMiss & LineDirty) | // exclusion-tag: icache CacheBusW
                          (CurrState == STATE_WRITEBACK & ~CacheBusAck) |

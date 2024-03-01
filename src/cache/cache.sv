@@ -82,7 +82,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   logic                          ClearDirty, SetDirty, SetValid, ClearValid;
   logic [LINELEN-1:0]            ReadDataLineWay [NUMWAYS-1:0];
   logic [NUMWAYS-1:0]            HitWay, ValidWay;
-  logic                          CacheHit;
+  logic                          Hit;
   logic [NUMWAYS-1:0]            VictimWay, DirtyWay, HitDirtyWay;
   logic                          LineDirty, HitLineDirty;
   logic [TAGLEN-1:0]             TagWay [NUMWAYS-1:0];
@@ -132,7 +132,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   end else 
     assign VictimWay = 1'b1; // one hot.
 
-  assign CacheHit = |HitWay;
+  assign Hit = |HitWay;
   assign LineDirty = |DirtyWay;
   assign HitLineDirty = |HitDirtyWay;
 
@@ -226,7 +226,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   
   cachefsm #(P, READ_ONLY_CACHE) cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
     .FlushStage, .CacheRW, .Stall,
-    .CacheHit, .LineDirty, .HitLineDirty, .CacheStall, .CacheCommitted, 
+    .Hit, .LineDirty, .HitLineDirty, .CacheStall, .CacheCommitted, 
     .CacheMiss, .CacheAccess, .SelAdrData, .SelAdrTag, .SelVictim,
     .ClearDirty, .SetDirty, .SetValid, .ClearValid, .SelWriteback,
     .FlushAdrCntEn, .FlushWayCntEn, .FlushCntRst,
