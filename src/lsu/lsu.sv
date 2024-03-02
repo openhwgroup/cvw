@@ -142,7 +142,6 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic [(P.LLEN-1)/8:0] ByteMaskExtendedM;                      // Selects which bytes within a word to write
   logic [1:0]            MemRWSpillM;
   logic                  SpillStallM;
-  logic                  SelStoreDelay;
   
   logic                  DTLBMissM;                              // DTLB miss causes HPTW walk
   logic                  DTLBWriteM;                             // Writes PTE and PageType to DTLB
@@ -168,8 +167,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
                      .MemRWM,
                      .DCacheReadDataWordM, .CacheBusHPWTStall, .SelHPTW,
                      .ByteMaskM, .ByteMaskExtendedM, .LSUWriteDataM(LSUWriteDataM[P.LLEN-1:0]), .ByteMaskSpillM,
-                     .IEUAdrSpillE, .IEUAdrSpillM, .SelSpillE, .ReadDataWordSpillAllM, .SpillStallM,
-                     .SelStoreDelay);
+                     .IEUAdrSpillE, .IEUAdrSpillM, .SelSpillE, .ReadDataWordSpillAllM, .SpillStallM);
     assign IEUAdrExtM = {2'b00, IEUAdrSpillM}; 
     assign IEUAdrExtE = {2'b00, IEUAdrSpillE};
   end else begin : no_ziccslm_align
@@ -179,7 +177,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign ReadDataWordSpillAllM = DCacheReadDataWordM;
     assign ByteMaskSpillM = ByteMaskM;
     assign MemRWSpillM = MemRWM;
-    assign {SpillStallM, SelStoreDelay} = '0;
+    assign {SpillStallM} = '0;
   end
 
     if(P.ZICBOZ_SUPPORTED) begin : cboz
@@ -333,7 +331,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       cache #(.P(P), .PA_BITS(P.PA_BITS), .XLEN(P.XLEN), .LINELEN(P.DCACHE_LINELENINBITS), .NUMLINES(P.DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(P.DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(CACHEWORDLEN), .MUXINTERVAL(P.LLEN), .READ_ONLY_CACHE(0)) dcache(
         .clk, .reset, .Stall(GatedStallW & ~SelSpillE), .SelBusBeat, .FlushStage(FlushW | IgnoreRequestTLB),
-        .CacheRW(SelStoreDelay ? 2'b00 : CacheRWM), 
+        .CacheRW(CacheRWM), 
         .FlushCache(FlushDCache), .NextSet(IEUAdrExtE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskSpillM), .BeatCount(BeatCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
         .CacheWriteData(LSUWriteDataM), .SelHPTW,

@@ -52,7 +52,6 @@ module align import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0]       IEUAdrSpillE, // The next PCF for one of the two memory addresses of the spill
   output logic [P.XLEN-1:0]       IEUAdrSpillM, // IEUAdrM for one of the two memory addresses of the spill
   output logic                    SelSpillE, // During the transition between the two spill operations, the IFU should stall the pipeline
-  output logic                    SelStoreDelay, //*** this is bad.  really don't like moving this outside
   output logic [P.LLEN*2-1:0]     ReadDataWordSpillAllM,
   output logic                    SpillStallM);
 
@@ -118,20 +117,17 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   always_comb begin
     case (CurrState)
-      STATE_READY: if (ValidSpillM & ~MemRWM[0])  NextState = STATE_SPILL;       // load spill
-                   else if(ValidSpillM)           NextState = STATE_STORE_DELAY; // store spill
+      STATE_READY: if (ValidSpillM)  NextState = STATE_SPILL;       // load spill
                    else                           NextState = STATE_READY;       // no spill
       STATE_SPILL: if(StallM)                     NextState = STATE_SPILL;
                    else                           NextState = STATE_READY;
-      STATE_STORE_DELAY: NextState = STATE_SPILL;
       default:                                    NextState = STATE_READY;
     endcase
   end
 
-  assign SelSpillM = (CurrState == STATE_SPILL | CurrState == STATE_STORE_DELAY);
-  assign SelSpillE = (CurrState == STATE_READY & ValidSpillM) | (CurrState == STATE_SPILL & CacheBusHPWTStall) | (CurrState == STATE_STORE_DELAY);
+  assign SelSpillM = CurrState == STATE_SPILL;
+  assign SelSpillE = (CurrState == STATE_READY & ValidSpillM) | (CurrState == STATE_SPILL & CacheBusHPWTStall);
   assign SpillSaveM = (CurrState == STATE_READY) & ValidSpillM & ~FlushM;
-  assign SelStoreDelay = (CurrState == STATE_STORE_DELAY);  // *** Can this be merged into the PreLSURWM logic?
   assign SpillStallM = SelSpillE;
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
