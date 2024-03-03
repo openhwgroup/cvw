@@ -80,12 +80,11 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
   flopen #(P.DIVb+1) UMReg(clk, FDivBusyE, UMMux, UM[0]);
 
   // C register/initialization mux
-  // Initialize C to -1 for sqrt and -R for division
   logic [1:0] initCUpper;
   if(P.RADIX == 4) begin
-    mux2 #(2) cuppermux4(2'b00, 2'b00, SqrtE, initCUpper); // *** Remove this soon
+    assign initCUpper = 2'b00;
   end else begin
-    mux2 #(2) cuppermux2(2'b10, 2'b10, SqrtE, initCUpper);
+    assign initCUpper = 2'b10;
   end
   
   assign initC = {initCUpper, {P.DIVb{1'b0}}};
