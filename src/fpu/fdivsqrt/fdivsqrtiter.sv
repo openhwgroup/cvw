@@ -83,7 +83,7 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
   // Initialize C to -1 for sqrt and -R for division
   logic [1:0] initCUpper;
   if(P.RADIX == 4) begin
-    mux2 #(2) cuppermux4(2'b00, 2'b11, SqrtE, initCUpper);
+    mux2 #(2) cuppermux4(2'b00, 2'b00, SqrtE, initCUpper); // *** Remove this soon
   end else begin
     mux2 #(2) cuppermux2(2'b10, 2'b11, SqrtE, initCUpper);
   end
@@ -108,9 +108,10 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
           .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]),
           .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
       end else begin: stage
-        logic j1;
-        assign j1 = (i == 0 & ~C[0][P.DIVb-1]);
-        fdivsqrtstage4 #(P) fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtE, .j1,
+        logic j1,j0;
+        assign j0 = (i == 0 & ~C[0][P.DIVb+1]);
+        assign j1 = (i == 1 & ~C[0][P.DIVb+1]);
+        fdivsqrtstage4 #(P) fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtE, .j1, .j0,
           .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]), 
           .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
       end
