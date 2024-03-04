@@ -144,9 +144,7 @@ module cacheLRU
   always_ff @(posedge clk) begin
     if (reset) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] = '0; // exclusion-tag: initialize
     if(CacheEn) begin
-      if(ClearValid & ~FlushStage)
-        LRUMemory[PAdr] <= '0;
-      else if(LRUWriteEn)
+      if(LRUWriteEn)
         LRUMemory[PAdr] <= NextLRU;
       if(LRUWriteEn & (PAdr == CacheSetTag))
         CurrLRU <= #1 NextLRU;
