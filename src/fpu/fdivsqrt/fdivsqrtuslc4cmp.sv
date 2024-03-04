@@ -77,7 +77,8 @@ module fdivsqrtuslc4cmp (
  always_comb
     if (SqrtE) begin 
       //if (j1) A = 3'b101;
-      if (Smsbs == 5'b10000) A = 3'b111; // *** can we get rid of SMSBs case?
+      //if (Smsbs == 5'b10000) A = 3'b111; // *** can we get rid of SMSBs case?
+      if (Smsbs[4]) A = 3'b111; // *** can we get rid of SMSBs case?
       else A = Smsbs[2:0];
     end else A = Dmsbs;
 
