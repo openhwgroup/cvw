@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// aes_Inv_sbox_128.sv
+// galoismult_forward.sv
 //
-// Written: ryan.swann@okstate.edu, james.stine@okstate.edu
+// Written: ryan.swann@okstate.edu, james.stine@okstate.edu, David_Harris@hmc.edu
 // Created: 20 February 2024
 //
-// Purpose: 128-bit Inverse Substitution box comprised of 4x32-bit inverse s-boxes
+// Purpose: Galois field operations for mix columns operation
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,16 +25,23 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aes_Inv_sbox_128(input logic [127:0] in,
-			output logic [127:0] out);
+module galoismult_forward (
+   input  logic [7:0] in,
+   output logic [7:0] out);
 
-   // Declare the SBOX for (least significant) word 0 of the input
-   aes_Inv_sbox_word sbox_w0(.in(in[31:0]), .out(out[31:0]));
-   // Declare the SBOX for word 1 of the input
-   aes_Inv_sbox_word sbox_w1(.in(in[63:32]), .out(out[63:32]));
-   // Declare the SBOX for word 2 of the input
-   aes_Inv_sbox_word sbox_w2(.in(in[95:64]), .out(out[95:64]));	
-   // Declare the SBOX for word 3 of the input	
-   aes_Inv_sbox_word sbox_w3(.in(in[127:96]), .out(out[127:96]));
-				 
+   logic [7:0] leftshift;
+
+   assign leftshift = {in[6:0], 1'b0};
+   assign out = in[7] ? (leftshift ^ 8'b00011011) : leftshift;
+
 endmodule
+
+module gm2 (gm2_In, gm2_Out); 
+   
+   input logic [7:0]  gm2_In;
+   output logic [7:0] gm2_Out;
+   
+   // Set output to Galois Mult 2
+   assign gm2_Out = {gm2_In[6:0], 1'b0} ^ (8'h1b & {8{gm2_In[7]}});
+   
+endmodule 

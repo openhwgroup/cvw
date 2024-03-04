@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// aes_Inv_mixcolumns.sv
+// aes_inv_mixcolumns.sv
 //
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
@@ -25,7 +25,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module inv_mixword (input logic [31:0] word, output logic [31:0] mixed_word);
+module aes_Inv_Mixcolumns (input logic [31:0] word, output logic [31:0] mixed_word);
 
    // Instantiate Internal Logic
    logic [7:0] 	       b0, b1, b2, b3;

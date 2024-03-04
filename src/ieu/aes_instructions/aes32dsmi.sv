@@ -47,16 +47,15 @@ module aes32dsmi(input logic [1:0] bs,
    assign Sbox_In = Sbox_In_32[7:0];
    
    // Apply inverse sbox to si
-   aes_Inv_sbox inv_sbox(.in(Sbox_In), .out(Sbox_Out));
+   aes_Inv_Sbox inv_sbox(.in(Sbox_In), .out(Sbox_Out));
    
    // Pad output of inverse substitution box
    assign so = {24'h0, Sbox_Out};
    
    // Run so through the mixword AES function
-   inv_mixword mix(.word(so), .mixed_word(mixed));
+   aes_Inv_Mixcolumns mix(.word(so), .mixed_word(mixed));
    
    // Rotate the substitution box output left by shamt (bs * 8)
-   // rotate_left rol32(.input_data(mixed), .shamt(shamt), .rot_data(mixed_rotate));
    assign mixed_rotate = (mixed << shamt) | (mixed >> (32 - shamt)); 
    
    // Set result to "X(rs1)[31..0] ^ rol32(so, unsigned(shamt));"

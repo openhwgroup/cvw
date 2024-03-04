@@ -28,6 +28,6 @@
 module aes64im(input logic [63:0] rs1,
                output logic [63:0] Data_Out);
 
-   inv_mixword inv_mw_0(.word(rs1[31:0]), .mixed_word(Data_Out[31:0]));
-   inv_mixword inv_mw_1(.word(rs1[63:32]), .mixed_word(Data_Out[63:32]));
+   aes_Inv_Mixcolumns inv_mw_0(.word(rs1[31:0]), .mixed_word(Data_Out[31:0]));
+   aes_Inv_Mixcolumns inv_mw_1(.word(rs1[63:32]), .mixed_word(Data_Out[63:32]));
 endmodule

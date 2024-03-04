@@ -25,7 +25,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module rcon_lut_128(input logic [3:0] RD,
+module rcon_Lut_128(input logic [3:0] RD,
 		    output logic [7:0] rcon_out);
 	
    always_comb

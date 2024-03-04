@@ -35,11 +35,11 @@ module aes64ds(input logic [63:0] rs1,
    logic [31:0] 		   Sbox_Out_1;    
    
    // Apply inverse shiftrows to rs2 and rs1
-   aes_Inv_shiftrow srow(.DataIn({rs2,rs1}), .DataOut(ShiftRow_Out));
+   aes_Inv_Shiftrow srow(.DataIn({rs2,rs1}), .DataOut(ShiftRow_Out));
    
    // Apply full word inverse substitution to lower 2 words of shiftrow out
-   aes_Inv_sbox_word inv_sbox_0(.in(ShiftRow_Out[31:0]), .out(Sbox_Out_0));
-   aes_Inv_sbox_word inv_sbox_1(.in(ShiftRow_Out[63:32]), .out(Sbox_Out_1));
+   aes_Inv_Sbox_Word inv_sbox_0(.in(ShiftRow_Out[31:0]), .out(Sbox_Out_0));
+   aes_Inv_Sbox_Word inv_sbox_1(.in(ShiftRow_Out[63:32]), .out(Sbox_Out_1));
    
    // Concatenate the two substitution outputs to get result
    assign Data_Out = {Sbox_Out_1, Sbox_Out_0};   

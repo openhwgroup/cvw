@@ -48,13 +48,12 @@ module aes32esi(input logic [1:0] bs,
    assign Sbox_In = Sbox_In_32[7:0];
    
    // Substitute
-   aes_sbox subbox(.in(Sbox_In), .out(Sbox_Out));
+   aes_Sbox subbox(.in(Sbox_In), .out(Sbox_Out));
    
    // Pad sbox output
    assign so = {24'h0, Sbox_Out};
    
    // Rotate so left by shamt
-   // rotate_left rol32(.input_data(so), .shamt(shamt), .rot_data(so_rotate));
    assign so_rotate = (so << shamt) | (so >> (32 - shamt)); 
    
    // Set result X(rs1)[31..0] ^ rol32(so, unsigned(shamt));

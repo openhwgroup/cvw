@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
 // aes_mixcolumns.sv
 //
-// Written: ryan.swann@okstate.edu, james.stine@okstate.edu
+// Written: ryan.swann@okstate.edu, james.stine@okstate.edu, David_Harris@hmc.edu
 // Created: 20 February 2024
 //
-// Purpose: AES "Mix Columns" Operation
+// Purpose: Galois field operation to an individual 32-bit word
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,42 +25,27 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-/*
- * Purpose : The "mix columns" operation is essentially composed of a
- *	    nice little Galois field multiplication (of 1, 2 or 3) in the field
- *	    x^8 + x^4 + x^3 + x + 1.
- *	    The actual matrix you multiply by is
- *	    [2 3 1 1][a_0,j]
- *	    [1 2 3 1][a_1,j]
- *	    [1 1 2 3][a_2,j]
- *          [3 1 1 2][a_3,j]
- * 
- * Reference: secworks repo
- */
 
-module aes_mixcolumns(Data, mixedcols);
+module aes_Mixcolumns (
+   input  logic [31:0] in,
+   output logic [31:0] out);
 
-   // Declare Inputs/Outputs
-   input  logic [127:0] Data;
-   output logic [127:0] mixedcols;
+   logic [7:0] in0, in1, in2, in3, out0, out1, out2, out3, t0, t1, t2, t3, temp;
+   logic [15:0] rrot8_1, rrot8_2;
+
+   assign {in0, in1, in2, in3} = in;
+   assign temp = in0 ^ in1 ^ in2 ^ in3;
+
+   galoismult_forward gm0 (in0^in1, t0);
+   galoismult_forward gm1 (in1^in2, t1);
+   galoismult_forward gm2 (in2^in3, t2);
+   galoismult_forward gm3 (in3^in0, t3);
+
+   assign out0 = in0 ^ temp ^ t3;
+   assign out1 = in1 ^ temp ^ t0;
+   assign out2 = in2 ^ temp ^ t1;
+   assign out3 = in3 ^ temp ^ t2;
    
-   // Declare internal Logic
-   logic [31:0] 	w0, w1, w2, w3;
-   logic [31:0] 	ws0, ws1, ws2, ws3;
-   
-   // Break up Data into individual words
-   assign w0 = Data[127:96];
-   assign w1 = Data[95:64];
-   assign w2 = Data[63:32];
-   assign w3 = Data[31:0];
-   
-   // Instantiate The mix words components for the words
-   mixword mw0(.word(w0), .mixed_word(ws0));
-   mixword mw1(.word(w1), .mixed_word(ws1));
-   mixword mw2(.word(w2), .mixed_word(ws2));
-   mixword mw3(.word(w3), .mixed_word(ws3));   
-   
-   // Assign Output
-   assign mixedcols = {ws0, ws1, ws2, ws3};
-   
-endmodule // mixcolumns
+   assign out = {out0, out1, out2, out3};
+
+endmodule
