@@ -32,7 +32,7 @@ module fdivsqrtstage4 import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.DIVb:0]   U,UM,               // U1.DIVb
   input  logic [P.DIVb+3:0] WS, WC,             // Q4.DIVb
   input  logic [P.DIVb+1:0] C,                  // Q2.DIVb
-  input  logic              SqrtE, j1,j0,
+  input  logic              SqrtE, 
   output logic [P.DIVb+1:0] CNext,              // Q2.DIVb
   output logic              un,
   output logic [P.DIVb:0]   UNext, UMNext,      // U1.DIVb
@@ -48,8 +48,11 @@ module fdivsqrtstage4 import cvw::*;  #(parameter cvw_t P) (
   logic [7:0]               WCmsbs, WSmsbs;     // U4.4
   logic                     CarryIn;
   logic [P.DIVb+3:0]        WSA, WCA;           // Q4.DIVb
+  logic j0,j1;
 
   // Digit Selection logic
+  assign j0     = ~C[P.DIVb+1];             // first step of R digit selection: C = 00...0
+  assign j1     = C[P.DIVb] ^ C[P.DIVb-1];  // second step of R digit selection: C = 1100...0
   assign Smsbs  = U[P.DIVb:P.DIVb-4];       // U1.4 most significant bits of square root
   assign Dmsbs  = D[P.DIVb-1:P.DIVb-3];     // U0.3 most significant fractional bits of divisor after leading 1
   assign WCmsbs = WC[P.DIVb+3:P.DIVb-4];    // Q4.4 most significant bits of residual
