@@ -31,7 +31,8 @@ module fdivsqrtuslc4cmp (
   input  logic [2:0] Dmsbs,             // U0.3 fractional bits after implicit leading 1
   input  logic [4:0] Smsbs,             // U1.4 leading bits of square root approximation
   input  logic [7:0] WSmsbs, WCmsbs,    // Q4.4 residual most significant bits
-  input  logic       SqrtE, j0, j1,
+  input  logic       SqrtE, 
+  input  logic       j0,j1,             // are we on first (j0) or second step (j1) of digit selection
   output logic [3:0] udigit             // {2, 1, -1, -2} digit is 0 if none are hot
 );
   logic [6:0] Wmsbs;
@@ -73,11 +74,9 @@ module fdivsqrtuslc4cmp (
   assign mkj1 = j1 ? 8 : 0; // when j = 1 use mk1[101] = 8 and when j = 0 use 0 so we choose u_0 = 1
   assign sqrtspecial = SqrtE & (j1 | j0);
 
-  // Choose A for current operation *** Come back to this
+  // Choose A for current operation 
  always_comb
     if (SqrtE) begin 
-      //if (j1) A = 3'b101;
-      //if (Smsbs == 5'b10000) A = 3'b111; // *** can we get rid of SMSBs case?
       if (Smsbs[4]) A = 3'b111; // *** can we get rid of SMSBs case?
       else A = Smsbs[2:0];
     end else A = Dmsbs;
