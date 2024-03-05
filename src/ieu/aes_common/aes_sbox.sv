@@ -25,8 +25,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aes_sbox(input logic [7:0] in,
-		output logic [7:0] out);
+module aes_sbox(input logic [7:0] in, output logic [7:0] out);
 
    // case statement to lookup the value in the rijndael table
    always_comb 

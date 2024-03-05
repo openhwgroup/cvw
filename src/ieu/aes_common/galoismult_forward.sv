@@ -25,9 +25,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module galoismult_forward (
-   input  logic [7:0] in,
-   output logic [7:0] out);
+module galoismult_forward(input  logic [7:0] in, output logic [7:0] out);
 
    logic [7:0] leftshift;
 

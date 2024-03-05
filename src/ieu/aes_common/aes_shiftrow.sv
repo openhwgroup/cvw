@@ -25,9 +25,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aes_shiftrow 
-  (input  logic [127:0] DataIn,
-   output logic [127:0] DataOut);
+module aes_shiftrow(input  logic [127:0] DataIn, output logic [127:0] DataOut);
 		    
    assign DataOut = {DataIn[95:88], DataIn[55:48], DataIn[15:8], DataIn[103:96],
                      DataIn[63:56], DataIn[23:16], DataIn[111:104], DataIn[71:64],

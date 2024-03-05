@@ -25,8 +25,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aes_inv_sbox_word(input logic [31:0] in,
-			 output logic [31:0] out);
+module aes_inv_sbox_word(input logic [31:0] in, output logic [31:0] out);
    
    // Declare the SBOX for (least significant) byte 0 of the input
    aes_inv_sbox sbox_b0(.in(in[7:0]), .out(out[7:0]));
