@@ -38,7 +38,7 @@ module aes64ks1i(input logic [3:0] roundnum,
    logic [31:0] 		     Sbox_Out;
    
    // Get rcon value from table
-   rcon_Lut_128 rc(.RD(roundnum), .rcon_out(rcon_preshift)); 
+   rcon_lut_128 rc(.RD(roundnum), .rcon_out(rcon_preshift)); 
 
    // Shift RCON value
    assign rcon = {24'b0, rcon_preshift};    
