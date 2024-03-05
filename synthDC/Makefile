@@ -51,7 +51,8 @@ configs: $(CONFIG)
 $(CONFIG):
 	@echo $(CONFIG)
 	cp -r $(OLDCONFIGDIR)/shared/*.vh $(CONFIGDIR)
-	cp -r $(OLDCONFIGDIR)/$(CONFIG)/* $(CONFIGDIR)
+#   cp -r $(OLDCONFIGDIR)/$(CONFIG)/* $(CONFIGDIR)
+	cp -r $(OLDCONFIGDIR)/deriv/$(CONFIG)/* $(CONFIGDIR)
 
 # adjust DTIM and IROM to reasonable values depending on config	
 ifneq ($(filter $(CONFIG), $(DIRS32)),)
@@ -61,8 +62,8 @@ else ifneq ($(filter $(CONFIG), $(DIRS64)),)
 	sed -i "s/DTIM_RANGE.*/DTIM_RANGE	= 56\'h01FF;/g" $(CONFIGDIR)/config.vh
 	sed -i "s/IROM_RANGE.*/IROM_RANGE	= 56\'h01FF;/g" $(CONFIGDIR)/config.vh
 else 
-    $(info $(CONFIG) does not exist in $(DIRS32) or $(DIRS64))
-    @echo "Config not in list, RAM_RANGE will be unmodified"
+	$(info $(CONFIG) does not exist in $(DIRS32) or $(DIRS64))
+	@echo "Config not in list, RAM_RANGE will be unmodified"
 endif
 
 # if USESRAM = 1, set that in the config file, otherwise reduce sizes

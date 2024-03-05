@@ -40,7 +40,7 @@ module ram1p1rwe import cvw::* ; #(parameter USE_SRAM=0, DEPTH=64, WIDTH=44) (
   output logic [WIDTH-1:0]        dout
 );
 
-  logic [WIDTH-1:0]               RAM[DEPTH-1:0];
+  bit [WIDTH-1:0]               RAM[DEPTH-1:0];
 
   // ***************************************************************************
   // TRUE SRAM macro
