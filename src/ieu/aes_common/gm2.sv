@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// galoismult_forward.sv
+// gm2.sv
 //
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu, David_Harris@hmc.edu
 // Created: 20 February 2024
@@ -25,11 +25,12 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module galoismult_forward(input  logic [7:0] in, output logic [7:0] out);
-
-   logic [7:0] leftshift;
-
-   assign leftshift = {in[6:0], 1'b0};
-   assign out = in[7] ? (leftshift ^ 8'b00011011) : leftshift;
-
-endmodule
+module gm2 (gm2_In, gm2_Out); 
+   
+   input logic [7:0]  gm2_In;
+   output logic [7:0] gm2_Out;
+   
+   // Set output to Galois Mult 2
+   assign gm2_Out = {gm2_In[6:0], 1'b0} ^ (8'h1b & {8{gm2_In[7]}});
+   
+endmodule 
