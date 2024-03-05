@@ -228,7 +228,29 @@ class TestRunner:
         # print(f"The new WALLY vairable is: {os.environ.get('WALLY')}")
         # print(f"The Base Directory is now : {self.base_dir}")
         # print(f"The Base Parent Directory is now : {self.base_parent_dir}")
-       
+
+    def change_time_dur(self, time_duriation=1):
+        
+        # Prepare the command to execute the Makefile
+        make_file_path = os.path.join(self.base_dir, "sim")
+        os.chdir(make_file_path)
+        file_path = "regression-wally"
+        line_number = 450 # TIMEOUT_DUR = 1 day at this line in regression-wally 
+        new_line = f"        TIMEOUT_DUR = {60*time_duriation}"
+
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+
+        if line_number < 1 or line_number > len(lines):
+            print("Error: Line number out of range.")
+            return False
+
+        lines[line_number - 1] = new_line + '\n'
+
+        with open(file_path, 'w') as file:
+            file.writelines(lines)
+            return True
+
     def execute_makefile(self, target=None):
         """
         Execute a Makefile with optional target.
@@ -611,12 +633,23 @@ test_runner.set_env_var("nightly_runs/repos/") # ensures that the new WALLY envi
 
 
 #############################################
+#             TMP SETUP                     #
+#############################################
+
+"""
+The goal of this section is to replace the TIMEOUT_DUR for regression tests.
+
+"""
+if test_runner.change_time_dur():
+    print("The regression-wally file was successfully changed")
+
+#############################################
 #              MAKE TESTS                   #
 #############################################
 
 
-target = "wally-riscv-arch-test"
-# target = "all"
+# target = "wally-riscv-arch-test"
+target = "all"
 if test_runner.execute_makefile(target = target):
    print(f"The {target} tests were made successfully")
 
@@ -691,6 +724,6 @@ test_runner.convert_to_html()
 sender_email = 'james.stine@okstate.edu'
 # sender_email = 'thomas.kidd@okstate.edu'
 
-# receiver_emails = ['thomas.kidd@okstate.edu', 'james.stine@okstate.edu', 'harris@g.hmc.edu', 'rose.thompson10@okstate.edu']
-receiver_emails = ['thomas.kidd@okstate.edu']
+receiver_emails = ['thomas.kidd@okstate.edu', 'james.stine@okstate.edu', 'harris@g.hmc.edu', 'rose.thompson10@okstate.edu', "sarah.harris@unlv.edu"]
+# receiver_emails = ['thomas.kidd@okstate.edu']
 test_runner.send_email(sender_email=sender_email, receiver_emails=receiver_emails)
