@@ -25,7 +25,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aes_Inv_Sbox(input logic [7:0] in,
+module aes_inv_sbox(input logic [7:0] in,
 		    output logic [7:0] out);
 
    always_comb
