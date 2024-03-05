@@ -44,7 +44,7 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
   logic [P.DIVb+3:0]      WCNext[P.DIVCOPIES-1:0]; // Q4.DIVb
   logic [P.DIVb+3:0]      WS[P.DIVCOPIES:0];       // Q4.DIVb
   logic [P.DIVb+3:0]      WC[P.DIVCOPIES:0];       // Q4.DIVb
-  logic [P.DIVb:0]        U[P.DIVCOPIES:0];        // U1.DIVb
+  logic [P.DIVb:0]        U[P.DIVCOPIES:0];        // U1.DIVb // *** probably Q not U.  See Table 16.26 notes
   logic [P.DIVb:0]        UM[P.DIVCOPIES:0];       // U1.DIVb
   logic [P.DIVb:0]        UNext[P.DIVCOPIES-1:0];  // U1.DIVb
   logic [P.DIVb:0]        UMNext[P.DIVCOPIES-1:0]; // U1.DIVb
@@ -71,7 +71,7 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
   flopen #(P.DIVb+4) wcreg(clk, FDivBusyE, WCN, WC[0]);
 
   // UOTFC Result U and UM registers/initialization mux
-  // Initialize U to 1.0 and UM to 0 for square root; U to 0 and UM to -1 otherwise
+  // Initialize U to 0 = 0.0000... and UM to -1 = 1.00000... (in Q1.Divb)
   assign initU  ={(P.DIVb+1){1'b0}};
   assign initUM = {{1'b1}, {(P.DIVb){1'b0}}};
   mux2   #(P.DIVb+1)  Umux(UNext[P.DIVCOPIES-1],  initU,  IFDivStartE, UMux);
@@ -79,15 +79,10 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
   flopen #(P.DIVb+1)  UReg(clk, FDivBusyE, UMux,  U[0]);
   flopen #(P.DIVb+1) UMReg(clk, FDivBusyE, UMMux, UM[0]);
 
-  // C register/initialization mux
-  logic [1:0] initCUpper;
-  if(P.RADIX == 4) begin
-    assign initCUpper = 2'b00;
-  end else begin
-    assign initCUpper = 2'b10;
-  end
-  
-  assign initC = {initCUpper, {P.DIVb{1'b0}}};
+  // C register/initialization mux: C = -R:
+  // C = -4 = 00.000000... (in Q2.DIVb) for radix 4, C = -2 = 10.000000... for radix2
+  if(P.RADIX == 4) assign initC = '0;
+  else             assign initC = {2'b10, {{P.DIVb{1'b0}}}};
   mux2   #(P.DIVb+2) cmux(C[P.DIVCOPIES], initC, IFDivStartE, NextC); 
   flopen #(P.DIVb+2) creg(clk, FDivBusyE, NextC, C[0]);
 
