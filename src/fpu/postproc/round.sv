@@ -34,15 +34,15 @@ module round import cvw::*;  #(parameter cvw_t P) (
   input  logic                     Ms,                 // normalized sign
   input  logic [P.CORRSHIFTSZ-1:0] Mf,                 // normalized fraction
   // fma
-  input  logic                     FmaOp,              // is an fma opperation being done?
+  input  logic                     FmaOp,              // is an fma operation being done?
   input  logic [P.NE+1:0]          FmaMe,              // exponent of the normalized sum for fma
   input  logic                     FmaASticky,         // addend's sticky bit
   // divsqrt
-  input  logic                     DivOp,              // is a division opperation being done
+  input  logic                     DivOp,              // is a division operation being done
   input  logic                     DivSticky,          // divsqrt sticky bit
   input  logic [P.NE+1:0]          Ue,                 // the divsqrt calculated expoent
   // cvt
-  input  logic                     CvtOp,              // is a convert opperation being done
+  input  logic                     CvtOp,              // is a convert operation being done
   input  logic                     ToInt,              // is the cvt op a cvt to integer
   input  logic                     CvtResSubnormUf,    // is the cvt result subnormal or underflow
   input  logic                     CvtResUf,           // does the cvt result underflow
@@ -181,7 +181,7 @@ module round import cvw::*;  #(parameter cvw_t P) (
 
   end
 
-  // only add the Addend sticky if doing an FMA opperation
+  // only add the Addend sticky if doing an FMA operation
   //      - the shifter shifts too far left when there's an underflow (shifting out all possible sticky bits)
   assign Sticky = FmaASticky&FmaOp | NormSticky | CvtResUf&CvtOp | FmaMe[P.NE+1]&FmaOp | DivSticky&DivOp;
   

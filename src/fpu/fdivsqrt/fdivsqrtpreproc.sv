@@ -174,9 +174,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
 
   logic [P.DIVb:0] PreSqrtX;
   assign EvenExp = Xe[0] ^ ell[0]; // effective unbiased exponent after normalization is even
-  mux2 #(P.DIVb+1) sqrtxmux(Xnorm, {1'b0, Xnorm[P.DIVb:1]}, EvenExp, PreSqrtX); // X if exponent odd, X/2 if exponent even
-  if (P.RADIX == 2) assign SqrtX = {3'b111, PreSqrtX};                          // PreSqrtX - 2 = 2(PreSqrtX/2 - 1)
-  else              assign SqrtX = {2'b11, PreSqrtX, 1'b0};                     // 2PreSqrtX - 4 = 4(PreSqrtX/2 - 1) 
+  mux2 #(P.DIVb+4) sqrtxmux({4'b0,Xnorm[P.DIVb:1]}, {5'b00, Xnorm[P.DIVb:2]}, EvenExp, SqrtX); // X/2 if exponent odd, X/4 if exponent even
 
 /*  
   // Attempt to optimize radix 4 to use a left shift by 1 or zero initially, followed by no more left shift
