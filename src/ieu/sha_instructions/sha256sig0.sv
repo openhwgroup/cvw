@@ -25,9 +25,9 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module sha256sig0 #(parameter WIDTH=32) (
-  input  logic [WIDTH-1:0] rs1,
-  output logic [WIDTH-1:0] result);
+module sha256sig0 #(parameter WIDTH=32) 
+   (input  logic [WIDTH-1:0] rs1,
+    output logic [WIDTH-1:0] result);
 
    logic [31:0] 	   ror7;
    logic [31:0] 	   ror18;

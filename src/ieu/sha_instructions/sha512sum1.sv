@@ -25,7 +25,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module sha512sum1 (input  logic [63:0] rs1, output logic [63:0] result);
+module sha512sum1(input  logic [63:0] rs1, output logic [63:0] result);
 
    logic [63:0] ror14;
    logic [63:0] ror18;

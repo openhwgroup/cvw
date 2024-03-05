@@ -25,7 +25,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module sha512sig1 (input  logic [63:0] rs1, output logic [63:0] result);
+module sha512sig1(input  logic [63:0] rs1, output logic [63:0] result);
 
    logic [63:0] ror19;
    logic [63:0] ror61;
