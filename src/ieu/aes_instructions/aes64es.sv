@@ -33,9 +33,9 @@ module aes64es(input logic [63:0]  rs1,
    logic [127:0] 		   ShiftRow_Out;
    
    // AES shiftrow unit
-   aes_Shiftrow srow(.DataIn({rs2,rs1}), .DataOut(ShiftRow_Out));
+   aes_shiftrow srow(.DataIn({rs2,rs1}), .DataOut(ShiftRow_Out));
    
    // Apply substitution box to 2 lower words
-   aes_Sbox_Word sbox_0(.in(ShiftRow_Out[31:0]), .out(Data_Out[31:0]));
-   aes_Sbox_Word sbox_1(.in(ShiftRow_Out[63:32]), .out(Data_Out[63:32]));       
+   aes_sbox_word sbox_0(.in(ShiftRow_Out[31:0]), .out(Data_Out[31:0]));
+   aes_sbox_word sbox_1(.in(ShiftRow_Out[63:32]), .out(Data_Out[63:32]));       
 endmodule

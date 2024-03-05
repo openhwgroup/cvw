@@ -46,7 +46,7 @@ module aes32dsi(input logic [1:0] bs,
    assign Sbox_In = Sbox_In_32[7:0];
    
    // Apply inverse sbox to si
-   aes_Inv_Sbox inv_sbox(.in(Sbox_In), .out(Sbox_Out));
+   aes_inv_sbox inv_sbox(.in(Sbox_In), .out(Sbox_Out));
    
    // Pad output of inverse substitution box
    assign so = {24'h0, Sbox_Out};

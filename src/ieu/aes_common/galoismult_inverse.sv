@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
-// gm3.sv
+// galoismult_inverse.sv
 //
-// Written: ryan.swann@okstate.edu, james.stine@okstate.edu
+// Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
 //
 // Purpose: Galois field operations for mix columns operation
@@ -25,18 +25,12 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module gm3(gm3_In, gm3_Out);
-   
-   input logic [7:0] gm3_In;
-   output logic [7:0] gm3_Out;
-   
-   // Internal Logic
-   logic [7:0] 	      gm2_0_Out;
-   
-   // Sub-Modules for gm2 multiplication
-   gm2 gm2_0 (.gm2_In(gm3_In), .gm2_Out(gm2_0_Out));
-   
-   // Assign Output
-   assign gm3_Out = gm2_0_Out ^ gm3_In;
-   
-endmodule 
+module galoismult_inverse(input logic [10:0] in, output logic [7:0] out);
+
+   logic [7:0] temp0, temp1;
+
+   assign temp0 = in[8] ? (in[7:0] ^ 8'b00011011) : in[7:0];
+   assign temp1 = in[9] ? (temp0 ^ 8'b00110110) : temp0;
+   assign out = in[10] ? (temp1 ^ 8'b01101100) : temp1;
+
+endmodule

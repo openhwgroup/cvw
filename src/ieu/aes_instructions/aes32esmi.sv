@@ -49,13 +49,13 @@ module aes32esmi(input logic [1:0]   bs,
    assign Sbox_In = Sbox_In_32[7:0];
    
    // Substitute
-   aes_Sbox sbox(.in(Sbox_In), .out(Sbox_Out));
+   aes_sbox sbox(.in(Sbox_In), .out(Sbox_Out));
    
    // Pad sbox output
    assign so = {24'h0, Sbox_Out};
    
    // Mix Word using aes_mixword component
-   aes_Mixcolumns mwd(.in(so), .out(mixed));
+   aes_mixcolumns mwd(.in(so), .out(mixed));
    
    // Rotate so left by shamt
    assign mixed_rotate = (mixed << shamt) | (mixed >> (32 - shamt)); 

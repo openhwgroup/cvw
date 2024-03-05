@@ -53,7 +53,7 @@ module aes64ks1i(input logic [3:0] roundnum,
    assign tmp2 = lastRoundFlag ? rs1[63:32] : rs1_rotate;    
 
    // Substitute bytes of value obtained for tmp2 using Rijndael sbox
-   aes_Sbox_Word sbox(.in(tmp2),.out(Sbox_Out));    
+   aes_sbox_word sbox(.in(tmp2),.out(Sbox_Out));    
    assign rd[31:0] = Sbox_Out ^ rcon;
    assign rd[63:32] = Sbox_Out ^ rcon;
    

@@ -48,7 +48,7 @@ module aes32esi(input logic [1:0] bs,
    assign Sbox_In = Sbox_In_32[7:0];
    
    // Substitute
-   aes_Sbox subbox(.in(Sbox_In), .out(Sbox_Out));
+   aes_sbox subbox(.in(Sbox_In), .out(Sbox_Out));
    
    // Pad sbox output
    assign so = {24'h0, Sbox_Out};
