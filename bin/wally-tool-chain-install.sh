@@ -69,9 +69,6 @@ fi
 cd $RISCV
 git clone https://github.com/riscv/riscv-gnu-toolchain
 cd riscv-gnu-toolchain
-# Temporarily use the following commands until gcc-13 is part of riscv-gnu-toolchain (issue #1249)
-#git clone https://github.com/gcc-mirror/gcc -b releases/gcc-13 gcc-13
-#./configure --prefix=/opt/riscv --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;" --with-gcc-src=`pwd`/gcc-13
 ./configure --prefix=${RISCV} --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
 make -j ${NUM_THREADS}
 
@@ -111,14 +108,15 @@ cd riscv-isa-sim/build
 make -j ${NUM_THREADS}
 make install 
 cd ../arch_test_target/spike/device
-sed -i 's/--isa=rv32ic/--isa=rv32iac/' rv32i_m/privilege/Makefile.include
-sed -i 's/--isa=rv64ic/--isa=rv64iac/' rv64i_m/privilege/Makefile.include
+# dh 2/5/24: these should be obsolete
+#sed -i 's/--isa=rv32ic/--isa=rv32iac/' rv32i_m/privilege/Makefile.include
+#sed -i 's/--isa=rv64ic/--isa=rv64iac/' rv64i_m/privilege/Makefile.include
 
 # Wally needs Verilator 5.021 or later.
 # Verilator needs to be built from scratch to get the latest version
 # apt-get install verilator installs version 4.028 as of 6/8/23
 sudo apt-get install -y perl g++ ccache help2man libgoogle-perftools-dev numactl perl-doc zlib1g 
-sudo apt-get install -y libfl2  libfl-dev  # Ubuntu only (ignore if gives error)
+sudo apt-get install -y perl g++ ccache help2man libgoogle-perftools-dev numactl perl-doc zlib1g 
 cd $RISCV
 git clone https://github.com/verilator/verilator   # Only first time
 # unsetenv VERILATOR_ROOT  # For csh; ignore error if on bash
@@ -173,6 +171,8 @@ sudo make install
 
 cd $RISCV
 opam init -y --disable-sandboxing
+opam update
+opam upgrade
 opam switch create 5.1.0
 opam install sail -y 
 
