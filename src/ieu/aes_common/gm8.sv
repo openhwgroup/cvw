@@ -25,7 +25,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module gm8 (gm8_In, gm8_Out);
+module gm8(gm8_In, gm8_Out);
    
    input  logic [7:0] gm8_In;
    output logic [7:0] gm8_Out;

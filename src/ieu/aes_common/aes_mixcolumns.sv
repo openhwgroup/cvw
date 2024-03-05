@@ -26,8 +26,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-module aes_mixcolumns (input  logic [31:0] in,
-		       output logic [31:0] out);
+module aes_mixcolumns(input  logic [31:0] in,
+		      output logic [31:0] out);
 
    logic [7:0] in0, in1, in2, in3, out0, out1, out2, out3, t0, t1, t2, t3, temp;
    logic [15:0] rrot8_1, rrot8_2;

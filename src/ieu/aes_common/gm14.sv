@@ -25,7 +25,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module gm14 (gm14_In, gm14_Out);
+module gm14(gm14_In, gm14_Out);
 
    input  logic [7:0] gm14_In;
    output logic [7:0] gm14_Out;

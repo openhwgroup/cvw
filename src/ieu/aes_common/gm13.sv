@@ -25,7 +25,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module gm13 (gm13_In, gm13_Out);
+module gm13(gm13_In, gm13_Out);
 
    input logic [7:0] gm13_In;
    output logic [7:0] gm13_Out;

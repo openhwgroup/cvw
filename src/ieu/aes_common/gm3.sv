@@ -25,7 +25,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module gm3 (gm3_In, gm3_Out);
+module gm3(gm3_In, gm3_Out);
    
    input logic [7:0] gm3_In;
    output logic [7:0] gm3_Out;

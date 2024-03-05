@@ -25,7 +25,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module gm11 (gm11_In, gm11_Out);
+module gm11(gm11_In, gm11_Out);
    
    input  logic [7:0] gm11_In;
    output logic [7:0] gm11_Out;

@@ -25,7 +25,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aes_inv_mixcolumns (input logic [31:0] word, output logic [31:0] mixed_word);
+module aes_inv_mixcolumns(input logic [31:0] word, output logic [31:0] mixed_word);
 
    // Instantiate Internal Logic
    logic [7:0] 	       b0, b1, b2, b3;

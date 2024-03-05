@@ -25,7 +25,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module gm9 (gm9_In, gm9_Out);
+module gm9(gm9_In, gm9_Out);
    
    input  logic [7:0] gm9_In;
    output logic [7:0] gm9_Out;
