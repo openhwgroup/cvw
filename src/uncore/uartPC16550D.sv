@@ -520,7 +520,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
       intrpending = 0;
     end
   end
-  always @(posedge PCLK) INTR <= #1 intrpending; // prevent glitches on interrupt pin
+  always_ff @(posedge PCLK) INTR <= #1 intrpending; // prevent glitches on interrupt pin
 
   // Side effect of reading LSR is lowering overrun, parity, framing, break intr's
   assign setSquashRXerrIP = ~MEMRb & (A==3'b101);
