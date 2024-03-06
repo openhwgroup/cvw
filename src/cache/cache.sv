@@ -176,7 +176,7 @@ module cache import cvw::*; #(parameter cvw_t P,
     
     logic [LINELEN/8-1:0]          BlankByteMask;
     assign BlankByteMask[WORDLEN/8-1:0] = ByteMask;
-    assign BlankByteMask[LINELEN/8-1:WORDLEN/8] = '0;
+    assign BlankByteMask[LINELEN/8-1:WORDLEN/8] = 0;
 
     assign DemuxedByteMask = BlankByteMask << ((MUXINTERVAL/8) * WordOffsetAddr);
 

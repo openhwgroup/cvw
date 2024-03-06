@@ -48,11 +48,12 @@ module align import cvw::*;  #(parameter cvw_t P) (
   input logic [P.LLEN-1:0]        LSUWriteDataM, 
 
   output logic [(P.LLEN*2-1)/8:0] ByteMaskSpillM,
+  output logic [P.LLEN*2-1:0]     LSUWriteDataSpillM, 
 
   output logic [P.XLEN-1:0]       IEUAdrSpillE, // The next PCF for one of the two memory addresses of the spill
   output logic [P.XLEN-1:0]       IEUAdrSpillM, // IEUAdrM for one of the two memory addresses of the spill
   output logic                    SelSpillE, // During the transition between the two spill operations, the IFU should stall the pipeline
-  output logic [P.LLEN*2-1:0]     ReadDataWordSpillAllM,
+  output logic [P.LLEN-1:0]       DCacheReadDataWordSpillM, // The final 32 bit instruction after merging the two spilled fetches into 1 instruction
   output logic                    SpillStallM);
 
   localparam LLENINBYTES = P.LLEN/8;
@@ -66,12 +67,15 @@ module align import cvw::*;  #(parameter cvw_t P) (
   logic              SpillSaveM;
   logic [P.LLEN-1:0] ReadDataWordFirstHalfM;
   logic              MisalignedM;
+  logic [P.LLEN*2-1:0] ReadDataWordSpillAllM;
+  logic [P.LLEN*2-1:0] ReadDataWordSpillShiftedM;
 
   logic [P.XLEN-1:0]   IEUAdrIncrementM;
 
   localparam OFFSET_LEN = $clog2(LLENINBYTES);
-  logic [OFFSET_LEN-1:0] AccessByteOffsetM;
-  logic                  PotentialSpillM;
+  logic [$clog2(LLENINBYTES)-1:0]              AccessByteOffsetM;
+  logic [$clog2(LLENINBYTES)+2:0]              ShiftAmount;
+  logic                                        PotentialSpillM;
 
   /* verilator lint_off WIDTHEXPAND */
   assign IEUAdrIncrementM = IEUAdrM + LLENINBYTES;
@@ -91,23 +95,24 @@ module align import cvw::*;  #(parameter cvw_t P) (
   // compute misalignement
   always_comb begin
     case (Funct3M & {FpLoadStoreM, 2'b11}) 
-      3'b000: AccessByteOffsetM = '0; // byte access
+      3'b000: AccessByteOffsetM = 0; // byte access
       3'b001: AccessByteOffsetM = {{OFFSET_LEN-1{1'b0}}, IEUAdrM[0]}; // half access
       3'b010: AccessByteOffsetM = {{OFFSET_LEN-2{1'b0}}, IEUAdrM[1:0]}; // word access
-      3'b011: AccessByteOffsetM = {{OFFSET_LEN-3{1'b0}}, IEUAdrM[2:0]}; // double access
+      3'b011: if(P.LLEN >= 64) AccessByteOffsetM = {{OFFSET_LEN-3{1'b0}}, IEUAdrM[2:0]}; // double access
+              else             AccessByteOffsetM = 0;                                    // shouldn't happen
       3'b100: if(P.LLEN == 128) AccessByteOffsetM = IEUAdrM[OFFSET_LEN-1:0]; // quad access
-              else            AccessByteOffsetM = '0; // invalid
-      default: AccessByteOffsetM = IEUAdrM[OFFSET_LEN-1:0];
+              else              AccessByteOffsetM = IEUAdrM[OFFSET_LEN-1:0];
+      default: AccessByteOffsetM = 0;                                        // shouldn't happen
     endcase
     case (Funct3M[1:0]) 
-      2'b00: PotentialSpillM = '0; // byte access
+      2'b00: PotentialSpillM = 0; // byte access
       2'b01: PotentialSpillM = IEUAdrM[OFFSET_BIT_POS-1:1] == '1; // half access
       2'b10: PotentialSpillM = IEUAdrM[OFFSET_BIT_POS-1:2] == '1; // word access
       2'b11: PotentialSpillM = IEUAdrM[OFFSET_BIT_POS-1:3] == '1; // double access
-      default: PotentialSpillM = '0;
+      default: PotentialSpillM = 0;
     endcase
   end
-  assign MisalignedM = (|MemRWM) & (AccessByteOffsetM != '0);
+  assign MisalignedM = (|MemRWM) & (AccessByteOffsetM != 0);
       
   assign ValidSpillM = MisalignedM & PotentialSpillM & ~CacheBusHPWTStall;   // Don't take the spill if there is a stall
   
@@ -139,6 +144,20 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   // merge together
   mux2 #(2*P.LLEN) postspillmux(DCacheReadDataWordM, {DCacheReadDataWordM[P.LLEN-1:0], ReadDataWordFirstHalfM}, SelSpillM, ReadDataWordSpillAllM);
+
+
+  // shifter (4:1 mux for 32 bit, 8:1 mux for 64 bit)
+  // 8 * is for shifting by bytes not bits
+  assign ShiftAmount = SelHPTW ? 0 : {AccessByteOffsetM, 3'b0}; // AND gate
+  assign ReadDataWordSpillShiftedM = ReadDataWordSpillAllM >> ShiftAmount;
+  assign DCacheReadDataWordSpillM = ReadDataWordSpillShiftedM[P.LLEN-1:0];
+
+  // write path. Also has the 8:1 shifter muxing for the byteoffset
+  // then it also has the mux to select when a spill occurs
+  logic [P.LLEN*3-1:0] LSUWriteDataShiftedExtM;  // *** RT: Find a better way.  I've extending in both directions so we don't shift in zeros.  The cache expects the writedata to not have any zero data, but instead replicated data.
+
+  assign LSUWriteDataShiftedExtM = {LSUWriteDataM, LSUWriteDataM, LSUWriteDataM} << ShiftAmount;
+  assign LSUWriteDataSpillM = LSUWriteDataShiftedExtM[P.LLEN*3-1:P.LLEN];
 
   mux3 #(2*P.LLEN/8) bytemaskspillmux({ByteMaskExtendedM, ByteMaskM}, // no spill
                                       {{{P.LLEN/8}{1'b0}}, ByteMaskM}, // spill, first half

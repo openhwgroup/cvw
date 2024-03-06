@@ -34,7 +34,7 @@ module rom1p1r #(parameter ADDR_WIDTH = 8, DATA_WIDTH = 32, PRELOAD_ENABLED = 0)
 );
 
    // Core Memory
-   logic [DATA_WIDTH-1:0]    ROM [(2**ADDR_WIDTH)-1:0];
+   bit [DATA_WIDTH-1:0]    ROM [(2**ADDR_WIDTH)-1:0];
    
    // dh 10/30/23 ROM macros are presently commented out
    // because they don't point to a generated ROM
@@ -52,7 +52,7 @@ module rom1p1r #(parameter ADDR_WIDTH = 8, DATA_WIDTH = 32, PRELOAD_ENABLED = 0)
     end
   end
   
-  always @ (posedge clk) begin
+  always_ff @ (posedge clk) begin
     if(ce) dout <= ROM[addr];
   end
    
