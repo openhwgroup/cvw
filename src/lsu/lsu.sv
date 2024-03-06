@@ -421,8 +421,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   if(MISALIGN_SUPPORT) begin
-    //subwordreadmisaligned #(P.LLEN) subwordread(.ReadDataWordMuxM(LittleEndianReadDataWordM), .PAdrM(PAdrM[2:0]), .BigEndianM,
-    subwordreaddouble #(P.LLEN) subwordread(.ReadDataWordMuxM(LittleEndianReadDataWordM), .PAdrM(PAdrM[2:0]), .BigEndianM,
+    subwordreadmisaligned #(P.LLEN) subwordread(.ReadDataWordMuxM(LittleEndianReadDataWordM), .PAdrM(PAdrM[2:0]), .BigEndianM,
       .FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
     subwordwritemisaligned #(P.LLEN) subwordwrite(.LSUFunct3M, .PAdrM(PAdrM[2:0]), .FpLoadStoreM, .BigEndianM, .AllowShiftM, .IMAFWriteDataM, .LittleEndianWriteDataM);
   end else begin
