@@ -28,7 +28,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module subwordreadmisaligned #(parameter LLEN) 
+module subwordreaddouble #(parameter LLEN) 
   (
    input logic [LLEN*2-1:0] ReadDataWordMuxM,
    input logic [2:0]        PAdrM,
@@ -63,19 +63,50 @@ module subwordreadmisaligned #(parameter LLEN)
       default: LengthM = 5'd8;
     endcase
 
-  logic [LLEN*2-1:0]        ReadDataAlignedM;
-  assign ReadDataAlignedM = ReadDataWordMuxM >> (PAdrSwap[$clog2(LLEN/4)-1:0] * 8);
-  
   if (LLEN == 128) begin:swrmux
     logic [31:0] WordM;
     logic [63:0] DblWordM;
-    logic [127:0] QdWordM;
-    
-    assign ByteM = ReadDataAlignedM[7:0];
-    assign HalfwordM = ReadDataAlignedM[15:0];
-    assign WordM = ReadDataAlignedM[31:0];
-    assign DblWordM = ReadDataAlignedM[63:0];
-    assign QdWordM =ReadDataAlignedM[127:0];
+    logic [63:0] QdWordM;
+    always_comb
+      case(PAdrSwap)
+        5'b00000: QdWordM = ReadDataWordMuxM[127:0];
+        5'b00001: QdWordM = ReadDataWordMuxM[135:8];
+        5'b00010: QdWordM = ReadDataWordMuxM[143:16];
+        5'b00011: QdWordM = ReadDataWordMuxM[151:24];
+        5'b00100: QdWordM = ReadDataWordMuxM[159:32];
+        5'b00101: QdWordM = ReadDataWordMuxM[167:40];
+        5'b00110: QdWordM = ReadDataWordMuxM[175:48];
+        5'b00111: QdWordM = ReadDataWordMuxM[183:56];
+        5'b01000: QdWordM = ReadDataWordMuxM[191:64];
+        5'b01001: QdWordM = ReadDataWordMuxM[199:72];
+        5'b01010: QdWordM = ReadDataWordMuxM[207:80];
+        5'b01011: QdWordM = ReadDataWordMuxM[215:88];
+        5'b01100: QdWordM = ReadDataWordMuxM[223:96];
+        5'b01101: QdWordM = ReadDataWordMuxM[231:104];
+        5'b01110: QdWordM = ReadDataWordMuxM[239:112];
+        5'b01111: QdWordM = ReadDataWordMuxM[247:120];
+        5'b10000: QdWordM = ReadDataWordMuxM[255:128];
+        5'b10001: QdWordM = {8'b0, ReadDataWordMuxM[255:136]};
+        5'b10010: QdWordM = {16'b0, ReadDataWordMuxM[255:144]};        
+        5'b10011: QdWordM = {24'b0, ReadDataWordMuxM[255:152]};        
+        5'b10100: QdWordM = {32'b0, ReadDataWordMuxM[255:160]};        
+        5'b10101: QdWordM = {40'b0, ReadDataWordMuxM[255:168]};        
+        5'b10110: QdWordM = {48'b0, ReadDataWordMuxM[255:176]};        
+        5'b10111: QdWordM = {56'b0, ReadDataWordMuxM[255:184]};        
+        5'b11000: QdWordM = {64'b0, ReadDataWordMuxM[255:192]};        
+        5'b11001: QdWordM = {72'b0, ReadDataWordMuxM[255:200]};        
+        5'b11010: QdWordM = {80'b0, ReadDataWordMuxM[255:208]};        
+        5'b11011: QdWordM = {88'b0, ReadDataWordMuxM[255:216]};        
+        5'b11100: QdWordM = {96'b0, ReadDataWordMuxM[255:224]};        
+        5'b11101: QdWordM = {104'b0, ReadDataWordMuxM[255:232]};        
+        5'b11110: QdWordM = {112'b0, ReadDataWordMuxM[255:240]};        
+        5'b11111: QdWordM = {120'b0, ReadDataWordMuxM[255:248]};
+      endcase
+
+  assign ByteM = QdWordM[7:0];
+  assign HalfwordM = QdWordM[15:0];
+  assign WordM = QdWordM[31:0];
+  assign DblWordM = QdWordM[63:0];
 
     // sign extension/ NaN boxing
     always_comb
@@ -85,7 +116,7 @@ module subwordreadmisaligned #(parameter LLEN)
       3'b010:  ReadDataM = {{LLEN-32{WordM[31]|FpLoadStoreM}}, WordM[31:0]};         // lw/flw
       3'b011:  ReadDataM = {{LLEN-64{DblWordM[63]|FpLoadStoreM}}, DblWordM[63:0]};   // ld/fld
       3'b100:  ReadDataM = {{LLEN-8{1'b0}}, ByteM[7:0]};                             // lbu
-      3'b100:  ReadDataM = FpLoadStoreM ? QdWordM : {{LLEN-8{1'b0}}, ByteM[7:0]};    // lbu/flq   - only needed when LLEN=128
+    //3'b100:  ReadDataM = FpLoadStoreM ? ReadDataWordMuxM : {{LLEN-8{1'b0}}, ByteM[7:0]}; // lbu/flq   - only needed when LLEN=128
       3'b101:  ReadDataM = {{LLEN-16{1'b0}}, HalfwordM[15:0]};                       // lhu
       3'b110:  ReadDataM = {{LLEN-32{1'b0}}, WordM[31:0]};                           // lwu
       default: ReadDataM = {{LLEN-8{ByteM[7]}}, ByteM};                              // Shouldn't happen
@@ -94,11 +125,29 @@ module subwordreadmisaligned #(parameter LLEN)
   end else if (LLEN == 64) begin:swrmux
     logic [31:0] WordM;
     logic [63:0] DblWordM;
+    always_comb
+      case(PAdrSwap[3:0])
+        4'b0000: DblWordM = ReadDataWordMuxM[63:0];
+        4'b0001: DblWordM = ReadDataWordMuxM[71:8];
+        4'b0010: DblWordM = ReadDataWordMuxM[79:16];
+        4'b0011: DblWordM = ReadDataWordMuxM[87:24];
+        4'b0100: DblWordM = ReadDataWordMuxM[95:32];
+        4'b0101: DblWordM = ReadDataWordMuxM[103:40];
+        4'b0110: DblWordM = ReadDataWordMuxM[111:48];
+        4'b0111: DblWordM = ReadDataWordMuxM[119:56];
+        4'b1000: DblWordM = ReadDataWordMuxM[127:64];
+        4'b1001: DblWordM = {8'b0, ReadDataWordMuxM[127:72]};
+        4'b1010: DblWordM = {16'b0, ReadDataWordMuxM[127:80]};
+        4'b1011: DblWordM = {24'b0, ReadDataWordMuxM[127:88]};
+        4'b1100: DblWordM = {32'b0, ReadDataWordMuxM[127:96]};
+        4'b1101: DblWordM = {40'b0, ReadDataWordMuxM[127:104]};
+        4'b1110: DblWordM = {48'b0, ReadDataWordMuxM[127:112]};
+        4'b1111: DblWordM = {56'b0, ReadDataWordMuxM[127:120]};
+      endcase
 
-    assign ByteM = ReadDataAlignedM[7:0];
-    assign HalfwordM = ReadDataAlignedM[15:0];
-    assign WordM = ReadDataAlignedM[31:0];
-    assign DblWordM = ReadDataAlignedM[63:0];
+  assign ByteM = DblWordM[7:0];
+  assign HalfwordM = DblWordM[15:0];
+  assign WordM = DblWordM[31:0];
 
     // sign extension/ NaN boxing
     always_comb
@@ -116,25 +165,32 @@ module subwordreadmisaligned #(parameter LLEN)
 
   end else begin:swrmux // 32-bit
 
-    logic [31:0] WordM;
+  logic [31:0] WordM;
+  always_comb
+    case(PAdrSwap[2:0])
+      3'b000: WordM = ReadDataWordMuxM[31:0];
+      3'b001: WordM = ReadDataWordMuxM[39:8];
+      3'b010: WordM = ReadDataWordMuxM[47:16];
+      3'b011: WordM = ReadDataWordMuxM[55:24];
+      3'b100: WordM = ReadDataWordMuxM[63:32];
+      3'b101: WordM = {8'b0, ReadDataWordMuxM[63:40]};
+      3'b110: WordM = {16'b0, ReadDataWordMuxM[63:48]};
+      3'b111: WordM = {24'b0, ReadDataWordMuxM[63:56]};
+    endcase
 
-    assign ByteM = ReadDataAlignedM[7:0];
-    assign HalfwordM = ReadDataAlignedM[15:0];
-    assign WordM = ReadDataAlignedM[31:0];
+  assign ByteM = WordM[7:0];
+  assign HalfwordM = WordM[15:0];
 
     // sign extension
     always_comb
     case(Funct3M)
       3'b000:  ReadDataM = {{LLEN-8{ByteM[7]}}, ByteM};                                            // lb
       3'b001:  ReadDataM = {{LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]};               // lh/flh
-      3'b010:  ReadDataM = {{LLEN-32{WordM[31]|FpLoadStoreM}}, WordM[31:0]};                       // lw/flw
-
-      3'b011:  ReadDataM = WordM[LLEN-1:0];                                                        // fld
-
+      3'b010:  ReadDataM = {{LLEN-32{ReadDataWordMuxM[31]|FpLoadStoreM}}, ReadDataWordMuxM[31:0]}; // lw/flw
+      3'b011:  ReadDataM = ReadDataWordMuxM[LLEN-1:0];                                             // fld
       3'b100:  ReadDataM = {{LLEN-8{1'b0}}, ByteM[7:0]};                                           // lbu
       3'b101:  ReadDataM = {{LLEN-16{1'b0}}, HalfwordM[15:0]};                                     // lhu
-
-      default: ReadDataM = {{LLEN-8{ByteM[7]}}, ByteM};                                            // Shouldn't happen
+      default: ReadDataM = ReadDataWordMuxM[LLEN-1:0];                                             // Shouldn't happen
     endcase
   end
 endmodule
