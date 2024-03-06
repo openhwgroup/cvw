@@ -173,7 +173,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
     logic [P.XLEN-1:0]    AccessedPTE;
 
     assign AccessedPTE = {PTE[P.XLEN-1:8], (SetDirty | PTE[7]), 1'b1, PTE[5:0]}; // set accessed bit, conditionally set dirty bit
-    //assign ReadDataNoXM = (ReadDataM[0] === 'x) ? '0 : ReadDataM; // If the PTE.V bit is x because it was read from uninitialized memory set to 0 to avoid x propagation and hanging the simulation.
+    //assign ReadDataNoXM = (ReadDataM[0] === 'x) ? 0 : ReadDataM; // If the PTE.V bit is x because it was read from uninitialized memory set to 0 to avoid x propagation and hanging the simulation.
     assign ReadDataNoXM = ReadDataM; // *** temporary fix for synthesis; === and x in line above are not synthesizable.
     mux2 #(P.XLEN) NextPTEMux(ReadDataNoXM, AccessedPTE, UpdatePTE, NextPTE); // NextPTE = ReadDataNoXM when ADUE = 0 because UpdatePTE = 0
     flopenr #(P.PA_BITS) HPTWAdrWriteReg(clk, reset, SaveHPTWAdr, HPTWReadAdr, HPTWWriteAdr);
@@ -213,9 +213,9 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   end else begin // block: hptwwrites
     assign NextPTE = ReadDataNoXM;
     assign HPTWAdr = HPTWReadAdr;
-    assign HPTWUpdateDA = '0;
-    assign UpdatePTE = '0;
-    assign HPTWRW[0] = '0;
+    assign HPTWUpdateDA = 0;
+    assign UpdatePTE = 0;
+    assign HPTWRW[0] = 0;
   end
 
   // Enable and select signals based on states
