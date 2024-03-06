@@ -33,7 +33,7 @@ module subwordwritedouble #(parameter LLEN) (
   input logic [2:0]         PAdrM,
   input logic               FpLoadStoreM, 
   input logic               BigEndianM, 
-  input logic               AllowShiftM,
+  input logic               CacheableM,
   input logic [LLEN-1:0]    IMAFWriteDataM,
   output logic [LLEN*2-1:0] LittleEndianWriteDataM
 );
@@ -48,8 +48,8 @@ module subwordwritedouble #(parameter LLEN) (
   // 10: PAdrM[2:0]
   // 11: BigEndianPAdr
   // 00: 00000
-  // 01: 11111
-  mux4 #(5) OffsetMux(5'b0, 5'b11111, {2'b0, PAdrM}, BigEndianPAdr, {AllowShiftM, BigEndianM}, PAdrSwap);
+  // 01: 00111
+  mux4 #(5) OffsetMux(5'b0, 5'b11111, {2'b0, PAdrM}, BigEndianPAdr, {CacheableM, BigEndianM}, PAdrSwap);
   //assign PAdrSwap = BigEndianM ? BigEndianPAdr : {2'b0, PAdrM};
   /* verilator lint_off WIDTHEXPAND */
   /* verilator lint_off WIDTHTRUNC */

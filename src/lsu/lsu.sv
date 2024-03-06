@@ -119,7 +119,6 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic                  SelSpillE;                              // Align logic detected a spill and needs to stall
 
   logic                  CacheableM;                             // PMA indicates memory address is cacheable
-  logic                  AllowShiftM;                            // PMA: indicates if WriteData should be byte shifted before going to cache or bus by offset.
   logic                  BusCommittedM;                          // Bus memory operation in flight, delay interrupts
   logic                  DCacheCommittedM;                       // D$ memory operation started, delay interrupts
 
@@ -243,7 +242,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE,
       .PrivilegeModeW, .DisableTranslation, .VAdr(IHAdrM), .Size(LSUFunct3M[1:0]),
       .PTE, .PageTypeWriteVal(PageType), .TLBWrite(DTLBWriteM), .TLBFlush(sfencevmaM),
-      .PhysicalAddress(PAdrM), .TLBMiss(DTLBMissM), .Cacheable(CacheableM), .Idempotent(), .AllowShift(AllowShiftM), .SelTIM(SelDTIM), 
+      .PhysicalAddress(PAdrM), .TLBMiss(DTLBMissM), .Cacheable(CacheableM), .Idempotent(), .SelTIM(SelDTIM), 
       .InstrAccessFaultF(), .LoadAccessFaultM(LSULoadAccessFaultM), 
       .StoreAmoAccessFaultM(LSUStoreAmoAccessFaultM), .InstrPageFaultF(), .LoadPageFaultM(LSULoadPageFaultM), 
     .StoreAmoPageFaultM(LSUStoreAmoPageFaultM),
@@ -425,7 +424,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   if(MISALIGN_SUPPORT) begin
     subwordreaddouble #(P.LLEN) subwordread(.ReadDataWordMuxM(LittleEndianReadDataWordM), .PAdrM(PAdrM[2:0]), .BigEndianM,
       .FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
-    subwordwritedouble #(P.LLEN) subwordwrite(.LSUFunct3M, .PAdrM(PAdrM[2:0]), .FpLoadStoreM, .BigEndianM, .AllowShiftM, .IMAFWriteDataM, .LittleEndianWriteDataM);
+    subwordwritedouble #(P.LLEN) subwordwrite(.LSUFunct3M, .PAdrM(PAdrM[2:0]), .FpLoadStoreM, .BigEndianM, .CacheableM, .IMAFWriteDataM, .LittleEndianWriteDataM);
   end else begin
     subwordread #(P.LLEN) subwordread(.ReadDataWordMuxM(LittleEndianReadDataWordM), .PAdrM(PAdrM[2:0]), .BigEndianM,
       .FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
