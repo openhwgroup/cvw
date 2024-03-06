@@ -41,14 +41,14 @@ module fdivsqrt import cvw::*;  #(parameter cvw_t P) (
   input  logic                 StallM,
   input  logic                 FlushE,
   input  logic                 SqrtE, SqrtM,
-  input  logic [P.XLEN-1:0]    ForwardedSrcAE, ForwardedSrcBE, // these are the src outputs before the mux choosing between them and PCE to put in srcA/B
+  input  logic [P.XLEN-1:0]    ForwardedSrcAE, ForwardedSrcBE, // these are the src A/B outputs before the mux choosing between them and PCE to put in srcA/B
   input  logic [2:0]           Funct3E, Funct3M,
   input  logic                 IntDivE, W64E,
   output logic                 DivStickyM,
   output logic                 FDivBusyE, IFDivStartE, FDivDoneE,
   output logic [P.NE+1:0]      UeM,                         // Exponent result 
   output logic [P.DIVb:0]      UmM,                         // Significand result
-  output logic [P.XLEN-1:0]    FIntDivResultM
+  output logic [P.XLEN-1:0]    FIntDivResultM               // Integer division result (IntDivResult in figure)
 );
 
   // Floating-point division and square root module, with optional integer division and remainder
