@@ -52,7 +52,7 @@ module rom1p1r #(parameter ADDR_WIDTH = 8, DATA_WIDTH = 32, PRELOAD_ENABLED = 0)
     end
   end
   
-  always @ (posedge clk) begin
+  always_ff @ (posedge clk) begin
     if(ce) dout <= ROM[addr];
   end
    

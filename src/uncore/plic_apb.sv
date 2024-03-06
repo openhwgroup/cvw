@@ -104,7 +104,7 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
   // ==================
   localparam PLIC_NUM_SRC_MIN_32 = P.PLIC_NUM_SRC < 32 ? P.PLIC_NUM_SRC : 31;
     
-  always @(posedge PCLK) begin
+  always_ff @(posedge PCLK) begin
     // resetting
     if (~PRESETn) begin
       intPriority   <= #1 0;
