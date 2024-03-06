@@ -440,7 +440,7 @@ module testbench;
     always @(posedge clk) 
       if (ResetMem)  // program memory is sometimes reset (e.g. for CoreMark, which needs zeroed memory)
         for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
-          dut.uncore.uncore.ram.ram.memory.RAM[adrindex] = '0;
+          dut.uncore.uncore.ram.ram.memory.RAM[adrindex] = 0;
 
   ////////////////////////////////////////////////////////////////////////////////
   // Actual hardware
@@ -457,7 +457,7 @@ module testbench;
       .HREADRam(HRDATAEXT), .HREADYRam(HREADYEXT), .HRESPRam(HRESPEXT), .HREADY, .HWSTRB);
   end else begin 
     assign HREADYEXT = 1;
-    assign {HRESPEXT, HRDATAEXT} = '0;
+    assign {HRESPEXT, HRDATAEXT} = 0;
   end
 
   if(P.SDC_SUPPORTED) begin : sdcard
@@ -473,9 +473,9 @@ module testbench;
     assign SDCDat = sd_dat_reg_t ? sd_dat_reg_o : sd_dat_i;
     assign SDCDatIn = SDCDat;
  -----/\----- EXCLUDED -----/\----- */
-    assign SDCIntr = '0;
+    assign SDCIntr = 0;
   end else begin
-    assign SDCIntr = '0;
+    assign SDCIntr = 0;
   end
 
   wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,

@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // cacheLRU.sv
 //
-// Written: Ross Thompson ross1728@gmail.com
+// Written: Rose Thompson ross1728@gmail.com
 // Created: 20 July 2021
 // Modified: 20 January 2023
 //
@@ -36,8 +36,8 @@ module cacheLRU
   input  logic                CacheEn,         // Enable the cache memory arrays.  Disable hold read data constant
   input  logic [NUMWAYS-1:0]  HitWay,          // Which way is valid and matches PAdr's tag
   input  logic [NUMWAYS-1:0]  ValidWay,        // Which ways for a particular set are valid, ignores tag
-  input  logic [SETLEN-1:0]   CacheSetData,        // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
-  input  logic [SETLEN-1:0]   CacheSetTag,        // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
+  input  logic [SETLEN-1:0]   CacheSetData,    // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
+  input  logic [SETLEN-1:0]   CacheSetTag,     // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
   input  logic [SETLEN-1:0]   PAdr,            // Physical address 
   input  logic                LRUWriteEn,      // Update the LRU state
   input  logic                SetValid,        // Set the dirty bit in the selected way and set
@@ -51,23 +51,27 @@ module cacheLRU
   logic [NUMWAYS-2:0]                  LRUMemory [NUMLINES-1:0];
   logic [NUMWAYS-2:0]                  CurrLRU;
   logic [NUMWAYS-2:0]                  NextLRU;
-  logic [NUMWAYS-1:0]                  Way;
-  logic [LOGNUMWAYS-1:0]               WayEncoded;
+  logic [LOGNUMWAYS-1:0]               HitWayEncoded, Way;
   logic [NUMWAYS-2:0]                  WayExpanded;
   logic                                AllValid;
   
   genvar                               row;
 
   /* verilator lint_off UNOPTFLAT */
-  // Ross: For some reason verilator does not like this.  I checked and it is not a circular path.
+  // Rose: For some reason verilator does not like this.  I checked and it is not a circular path.
   logic [NUMWAYS-2:0]                  LRUUpdate;
   logic [LOGNUMWAYS-1:0] Intermediate [NUMWAYS-2:0];
   /* verilator lint_on UNOPTFLAT */
 
+  logic [NUMWAYS-1:0] FirstZero;
+  logic [LOGNUMWAYS-1:0] FirstZeroWay;
+  logic [LOGNUMWAYS-1:0] VictimWayEnc;
+
+  binencoder #(NUMWAYS) hitwayencoder(HitWay, HitWayEncoded);
+
   assign AllValid = &ValidWay;
 
   ///// Update replacement bits.
-
   // coverage off
   // Excluded from coverage b/c it is untestable without varying NUMWAYS.
   function integer log2 (integer value);
@@ -80,8 +84,7 @@ module cacheLRU
   // coverage on
 
   // On a miss we need to ignore HitWay and derive the new replacement bits with the VictimWay.
-  mux2 #(NUMWAYS) WayMux(HitWay, VictimWay, SetValid, Way);
-  binencoder #(NUMWAYS) encoder(Way, WayEncoded);
+  mux2 #(LOGNUMWAYS) WayMuxEnc(HitWayEncoded, VictimWayEnc, SetValid, Way);
 
   // bit duplication
   // expand HitWay as HitWay[3], {{2}{HitWay[2]}}, {{4}{HitWay[1]}, {{8{HitWay[0]}}, ...
@@ -89,7 +92,7 @@ module cacheLRU
     localparam integer DuplicationFactor = 2**(LOGNUMWAYS-row-1);
     localparam StartIndex = NUMWAYS-2 - DuplicationFactor + 1;
     localparam EndIndex = NUMWAYS-2 - 2 * DuplicationFactor + 2;
-    assign WayExpanded[StartIndex : EndIndex] = {{DuplicationFactor}{WayEncoded[row]}};
+    assign WayExpanded[StartIndex : EndIndex] = {{DuplicationFactor}{Way[row]}};
   end
 
   genvar               node;
@@ -102,14 +105,14 @@ module cacheLRU
     localparam r = LOGNUMWAYS - ctr_depth;
 
     // the child node will be updated if its parent was updated and
-    // the WayEncoded bit was the correct value.
+    // the Way bit was the correct value.
     // The if statement is only there for coverage since LRUUpdate[root] is always 1.
     if (node == NUMWAYS-2) begin
-      assign LRUUpdate[lchild] = ~WayEncoded[r];
-      assign LRUUpdate[rchild] = WayEncoded[r];
+      assign LRUUpdate[lchild] = ~Way[r];
+      assign LRUUpdate[rchild] = Way[r];
     end else begin
-      assign LRUUpdate[lchild] = LRUUpdate[node] & ~WayEncoded[r];
-      assign LRUUpdate[rchild] = LRUUpdate[node] & WayEncoded[r];
+      assign LRUUpdate[lchild] = LRUUpdate[node] & ~Way[r];
+      assign LRUUpdate[rchild] = LRUUpdate[node] & Way[r];
     end
   end
 
@@ -129,28 +132,25 @@ module cacheLRU
     assign Intermediate[node] = CurrLRU[node] ? int1[LOGNUMWAYS-1:0] : int0[LOGNUMWAYS-1:0];
   end
 
-  logic [NUMWAYS-1:0] FirstZero;
-  logic [LOGNUMWAYS-1:0] FirstZeroWay;
-  logic [LOGNUMWAYS-1:0] VictimWayEnc;
   
   priorityonehot #(NUMWAYS) FirstZeroEncoder(~ValidWay, FirstZero);
   binencoder #(NUMWAYS) FirstZeroWayEncoder(FirstZero, FirstZeroWay);
   mux2 #(LOGNUMWAYS) VictimMux(FirstZeroWay, Intermediate[NUMWAYS-2], AllValid, VictimWayEnc);
-  //decoder #(LOGNUMWAYS) decoder (Intermediate[NUMWAYS-2], VictimWay);
   decoder #(LOGNUMWAYS) decoder (VictimWayEnc, VictimWay);
 
   // LRU storage must be reset for modelsim to run. However the reset value does not actually matter in practice.
   // This is a two port memory.
   // Every cycle must read from CacheSetData and each load/store must write the new LRU.
   always_ff @(posedge clk) begin
-    if (reset | (InvalidateCache & ~FlushStage)) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
+    if (reset | (InvalidateCache & ~FlushStage)) 
+      for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= 0; // exclusion-tag: initialize
     if(CacheEn) begin
       if(LRUWriteEn)
         LRUMemory[PAdr] <= NextLRU;
       if(LRUWriteEn & (PAdr == CacheSetTag))
-        CurrLRU <= NextLRU;
+        CurrLRU <= #1 NextLRU;
       else 
-        CurrLRU <= LRUMemory[CacheSetTag];
+        CurrLRU <= #1 LRUMemory[CacheSetTag];
     end
   end
 
