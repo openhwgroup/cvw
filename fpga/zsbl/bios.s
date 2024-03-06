@@ -94,5 +94,5 @@ end_of_bios:
 .globl _dtb
 .align 4, 0
 _dtb:
-.incbin "wally-vcu118.dtb"
+#.incbin "wally-vcu118.dtb"
 
