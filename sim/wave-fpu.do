@@ -19,4 +19,3 @@ add wave -noupdate /testbenchfp/NaNGood
 
 add wave -group {Testbench} -noupdate /testbenchfp/*
 add wave -group {Testbench} -noupdate /testbenchfp/readvectors/*
-add wave -group {Testbench} -noupdate /testbenchfp/divremsqrt/divremsqrtshiftcorrection/*

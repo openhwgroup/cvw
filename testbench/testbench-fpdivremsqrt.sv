@@ -667,56 +667,56 @@ module testbenchfp;
             Fmt = {Fmt, 2'b10};
         end
       end
-      if (TEST === "intrem" | TEST === "intdivrem" ) begin // if integer remainder is being tested
+      if (TEST === "intrem" | TEST === "intdivrem" | TEST === "fdivremsqrt") begin // if integer remainder is being tested
         Tests = {Tests, intrem};
         OpCtrl = {OpCtrl, `INTREM_OPCTRL};
         WriteInt = {WriteInt, 1'b0};
         Unit = {Unit, `INTDIVUNIT};
         Fmt = {Fmt, 2'b10};
       end
-      if (TEST === "intdiv" | TEST ==="intdivrem") begin // if integer division is being tested
+      if (TEST === "intdiv" | TEST ==="intdivrem" | TEST === "fdivremsqrt") begin // if integer division is being tested
         Tests = {Tests, intdiv};
         OpCtrl = {OpCtrl, `INTDIV_OPCTRL};
         WriteInt = {WriteInt, 1'b0};
         Unit = {Unit, `INTDIVUNIT};
         Fmt = {Fmt, 2'b10};
       end
-      if (TEST === "intremu"| TEST ==="intdivrem") begin // if unsigned integer remainder is being tested
+      if (TEST === "intremu"| TEST ==="intdivrem" | TEST === "fdivremsqrt") begin // if unsigned integer remainder is being tested
         Tests = {Tests, intremu};
         OpCtrl = {OpCtrl, `INTREMU_OPCTRL};
         WriteInt = {WriteInt, 1'b0};
         Unit = {Unit, `INTDIVUNIT};
         Fmt = {Fmt, 2'b10};
       end
-      if (TEST === "intdivu"| TEST ==="intdivrem") begin // if unsigned integer division is being tested
+      if (TEST === "intdivu"| TEST ==="intdivrem" | TEST === "fdivremsqrt") begin // if unsigned integer division is being tested
         Tests = {Tests, intdivu};
         OpCtrl = {OpCtrl, `INTDIVU_OPCTRL};
         WriteInt = {WriteInt, 1'b0};
         Unit = {Unit, `INTDIVUNIT};
         Fmt = {Fmt, 2'b10};
       end
-      if (TEST === "intremw"| TEST ==="intdivrem") begin // if w-type integer remainder is being tested
+      if (TEST === "intremw"| TEST ==="intdivrem" | TEST === "fdivremsqrt") begin // if w-type integer remainder is being tested
         Tests = {Tests, intremw};
         OpCtrl = {OpCtrl, `INTREMW_OPCTRL};
         WriteInt = {WriteInt, 1'b0};
         Unit = {Unit, `INTDIVUNIT};
         Fmt = {Fmt, 2'b10};
       end
-      if (TEST === "intremuw"| TEST ==="intdivrem") begin // if unsigned w-type integer remainder is being tested
+      if (TEST === "intremuw"| TEST ==="intdivrem" | TEST === "fdivremsqrt") begin // if unsigned w-type integer remainder is being tested
         Tests = {Tests, intremuw};
         OpCtrl = {OpCtrl, `INTREMUW_OPCTRL};
         WriteInt = {WriteInt, 1'b0};
         Unit = {Unit, `INTDIVUNIT};
         Fmt = {Fmt, 2'b10};
       end
-      if (TEST === "intdivw"| TEST ==="intdivrem") begin // if w-type integer division is being tested
+      if (TEST === "intdivw"| TEST ==="intdivrem" | TEST === "fdivremsqrt") begin // if w-type integer division is being tested
         Tests = {Tests, intdivw};
         OpCtrl = {OpCtrl, `INTDIVW_OPCTRL};
         WriteInt = {WriteInt, 1'b0};
         Unit = {Unit, `INTDIVUNIT};
         Fmt = {Fmt, 2'b10};
       end
-      if (TEST === "intdivuw"| TEST ==="intdivrem") begin // if unsigned w-type integer divison is being tested
+      if (TEST === "intdivuw"| TEST ==="intdivrem" | TEST === "fdivremsqrt") begin // if unsigned w-type integer divison is being tested
         Tests = {Tests, intdivuw};
         OpCtrl = {OpCtrl, `INTDIVUW_OPCTRL};
         WriteInt = {WriteInt, 1'b0};
