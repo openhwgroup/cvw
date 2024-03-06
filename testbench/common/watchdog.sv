@@ -40,7 +40,7 @@ module watchdog #(parameter XLEN, WatchDogTimerThreshold)
   always_ff @(posedge clk) begin
     OldPCW <= PCW;
     if(OldPCW == PCW) WatchDogTimerCount = WatchDogTimerCount + 1'b1;
-    else WatchDogTimerCount = '0;
+    else WatchDogTimerCount = 0;
   end
 
   always_comb begin

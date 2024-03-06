@@ -98,6 +98,6 @@ module tlbmixer import cvw::*;  #(parameter cvw_t P) (
 
   // Output the hit physical address if translation is currently on.
   // Provide physical address of zero if not TLBHits, to cause segmentation error if miss somehow percolated through signal
-  mux2 #(P.PA_BITS) hitmux('0, {PPNMixed2, Offset}, TLBHit, TLBPAdr); // set PA to 0 if TLB misses, to cause segementation error if this miss somehow passes through system
+  assign TLBPAdr = TLBHit ? {PPNMixed2, Offset} : 0;
 
 endmodule

@@ -65,7 +65,7 @@ module icpred import cvw::*;  #(parameter cvw_t P,
       assign CJumpF = cjal | cj | cjr | cjalr;
       assign CBranchF = CompressedOpcF[4:1] == 4'h7;
     end else begin
-      assign {cjal, cj, cjr, cjalr, CJumpF, CBranchF} = '0;
+      assign {cjal, cj, cjr, cjalr, CJumpF, CBranchF} = 0;
     end
 
     assign NCJumpF = PostSpillInstrRawF[6:0] == 7'h67 | PostSpillInstrRawF[6:0] == 7'h6F;

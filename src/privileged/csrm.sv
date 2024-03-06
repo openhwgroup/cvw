@@ -163,7 +163,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   flopenr #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0], MCOUNTINHIBIT_REGW);
   if (P.U_SUPPORTED) begin: mcounteren // MCOUNTEREN only exists when user mode is supported
     flopenr #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], MCOUNTEREN_REGW);
-  end else assign MCOUNTEREN_REGW = '0;
+  end else assign MCOUNTEREN_REGW = 0;
 
   // MENVCFG register
   if (P.U_SUPPORTED) begin // menvcfg only exists if there is a lower privilege to control
@@ -199,7 +199,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   // verilator lint_off WIDTH
   logic [5:0] entry;
   always_comb begin
-    entry = '0;
+    entry = 0;
     CSRMReadValM = 0;
     IllegalCSRMAccessM = !(P.S_SUPPORTED) & (CSRAdrM == MEDELEG | CSRAdrM == MIDELEG); // trap on DELEG register access when no S or N-mode
     if (CSRAdrM >= PMPADDR0 & CSRAdrM < PMPADDR0 + P.PMP_ENTRIES) // reading a PMP entry

@@ -231,7 +231,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   end
 
   genvar index;
-  assign rf[0] = '0;
+  assign rf[0] = 0;
   for(index = 1; index < NUMREGS; index += 1) 
 	assign rf[index] = testbench.dut.core.ieu.dp.regf.rf[index];
 
@@ -239,7 +239,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   assign rf_we3 = testbench.dut.core.ieu.dp.regf.we3;
   
   always_comb begin
-	rf_wb <= '0;
+	rf_wb <= 0;
 	if(rf_we3)
 	  rf_wb[rf_a3] <= 1'b1;
   end
@@ -251,7 +251,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   assign frf_we4 = testbench.dut.core.fpu.fpu.fregfile.we4;
   
   always_comb begin
-	frf_wb <= '0;
+	frf_wb <= 0;
 	if(frf_we4)
 	  frf_wb[frf_a4] <= 1'b1;
   end
@@ -492,7 +492,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   end
    
   // *** implementation only cancel? so sc does not clear?
-  assign rvvi.lrsc_cancel[0][0] = '0;
+  assign rvvi.lrsc_cancel[0][0] = 0;
 
   integer index2;
 
