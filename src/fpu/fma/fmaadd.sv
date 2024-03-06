@@ -51,9 +51,9 @@ module fmaadd import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////////////////////////////////////////
   
   // Choose an inverted or non-inverted addend.  Put carry into adder/LZA for addition
-  assign AmInv = {3*P.NF+4{InvA}}^Am;
+  assign AmInv = InvA ? ~Am : Am;
   // Kill the product if the product is too small to effect the addition (determined in fma1.sv)
-  assign PmKilled = {2*P.NF+2{~KillProd}}&Pm;
+  assign PmKilled = KillProd ? '0 : Pm;
   // Do the addition
   //      - calculate a positive and negative sum in parallel
   // if there was a small negative number killed in the alignment stage one needs to be subtracted from the sum
