@@ -38,7 +38,6 @@ module subwordreadmisaligned #(parameter LLEN)
    output logic [LLEN-1:0]  ReadDataM
 );
 
-  logic [LLEN*2-1:0]        ReadDataAlignedM;
   logic [7:0]               ByteM; 
   logic [15:0]              HalfwordM;
   logic [31:0]              WordM;
@@ -65,19 +64,12 @@ module subwordreadmisaligned #(parameter LLEN)
       default: LengthM = 5'd8;
     endcase
 
+  logic [LLEN*2-1:0]        ReadDataAlignedM;
   assign ReadDataAlignedM = ReadDataWordMuxM >> (PAdrSwap[$clog2(LLEN/4)-1:0] * 8);
   
   assign ByteM = ReadDataAlignedM[7:0];
   assign HalfwordM = ReadDataAlignedM[15:0];
   assign WordM = ReadDataAlignedM[31:0];
-
-  logic [LLEN-1:0]          lb, lh_flh, lw_flw, ld_fld, lbu, lbu_flq, lhu, lwu;
-
-  assign lb      = {{LLEN-8{ByteM[7]}}, ByteM};
-  assign lh_flh  = {{LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]};;
-  assign lw_flw  = {{LLEN-32{WordM[31]|FpLoadStoreM}}, WordM[31:0]};
-  //assign ld_fld  = {{LLEN-64{DblWordM[63]|FpLoadStoreM}}, DblWordM[63:0]};
-  
 
   if (LLEN == 128) begin:swrmux
     logic [63:0] DblWordM;
@@ -128,7 +120,7 @@ module subwordreadmisaligned #(parameter LLEN)
       3'b001:  ReadDataM = {{LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]};               // lh/flh
       3'b010:  ReadDataM = {{LLEN-32{WordM[31]|FpLoadStoreM}}, WordM[31:0]};                       // lw/flw
 
-      //3'b011:  ReadDataM = WordM[LLEN-1:0];                                                        // fld
+      3'b011:  ReadDataM = WordM[LLEN-1:0];                                                        // fld
 
       3'b100:  ReadDataM = {{LLEN-8{1'b0}}, ByteM[7:0]};                                           // lbu
       3'b101:  ReadDataM = {{LLEN-16{1'b0}}, HalfwordM[15:0]};                                     // lhu
