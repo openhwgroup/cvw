@@ -136,8 +136,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]     IHWriteDataM;                           // IEU or HPTW write data
   logic [P.XLEN-1:0]     IMAWriteDataM;                          // IEU, HPTW, or AMO write data
   logic [P.LLEN-1:0]     IMAFWriteDataM;                         // IEU, HPTW, AMO, or FPU write data
-  logic [MLEN-1:0]       LittleEndianWriteDataM;                 // Ending-swapped write data 
-  logic [MLEN-1:0]       LSUWriteDataM;                          // Final write data
+  logic [P.LLEN-1:0]     LittleEndianWriteDataM;                 // Ending-swapped write data 
+  logic [P.LLEN-1:0]     LSUWriteDataM;                          // Final write data
   logic [(P.LLEN-1)/8:0] ByteMaskM;                              // Selects which bytes within a word to write
   logic [(P.LLEN-1)/8:0] ByteMaskExtendedM;                      // Selects which bytes within a word to write
   logic [1:0]            MemRWSpillM;
@@ -166,7 +166,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     align #(P) align(.clk, .reset, .StallM, .FlushM, .IEUAdrE, .IEUAdrM, .Funct3M, .FpLoadStoreM, 
                      .MemRWM,
                      .DCacheReadDataWordM, .CacheBusHPWTStall, .SelHPTW,
-                     .ByteMaskM, .ByteMaskExtendedM, .LSUWriteDataM(LSUWriteDataM[P.LLEN-1:0]), .ByteMaskSpillM, .LSUWriteDataSpillM,
+                     .ByteMaskM, .ByteMaskExtendedM, .LSUWriteDataM, .ByteMaskSpillM, .LSUWriteDataSpillM,
                      .IEUAdrSpillE, .IEUAdrSpillM, .SelSpillE, .ReadDataWordSpillAllM, .SpillStallM);
     assign IEUAdrExtM = {2'b00, IEUAdrSpillM}; 
     assign IEUAdrExtE = {2'b00, IEUAdrSpillE};
@@ -335,7 +335,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
         .CacheRW(CacheRWM), 
         .FlushCache(FlushDCache), .NextSet(IEUAdrExtE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskSpillM), .BeatCount(BeatCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
-        .CacheWriteData(LSUWriteDataM), .SelHPTW,
+        .CacheWriteData(LSUWriteDataSpillM), .SelHPTW,
         .CacheStall, .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .CacheCommitted(DCacheCommittedM), 
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(DCacheReadDataWordM), 
@@ -349,7 +349,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
         .HCLK(clk), .HRESETn(~reset), .Flush(FlushW | IgnoreRequestTLB),
         .HRDATA, .HWDATA(LSUHWDATA), .HWSTRB(LSUHWSTRB),
         .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HREADY(LSUHREADY),
-        .BeatCount, .SelBusBeat, .CacheReadDataWordM(DCacheReadDataWordM[P.LLEN-1:0]), .WriteDataM(LSUWriteDataM[P.LLEN-1:0]),
+        .BeatCount, .SelBusBeat, .CacheReadDataWordM(DCacheReadDataWordM[P.LLEN-1:0]), .WriteDataM(LSUWriteDataM),
         .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheBusRW, .BusAtomic, .BusCMOZero, .CacheableOrFlushCacheM,
         .CacheBusAck(DCacheBusAck), .FetchBuffer, .PAdr(PAdrM),
         .Cacheable(CacheableOrFlushCacheM), .BusRW, .Stall(GatedStallW),
@@ -424,12 +424,11 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   if(MISALIGN_SUPPORT) begin
     subwordreaddouble #(P.LLEN) subwordread(.ReadDataWordMuxM(LittleEndianReadDataWordM), .PAdrM(PAdrM[2:0]), .BigEndianM,
       .FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
-    subwordwritedouble #(P.LLEN) subwordwrite(.LSUFunct3M, .PAdrM(PAdrM[2:0]), .FpLoadStoreM, .BigEndianM, .IMAFWriteDataM, .LittleEndianWriteDataM);
   end else begin
     subwordread #(P.LLEN) subwordread(.ReadDataWordMuxM(LittleEndianReadDataWordM), .PAdrM(PAdrM[2:0]), .BigEndianM,
       .FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
-    subwordwrite #(P.LLEN) subwordwrite(.LSUFunct3M, .IMAFWriteDataM, .LittleEndianWriteDataM);
   end
+  subwordwrite #(P.LLEN) subwordwrite(.LSUFunct3M, .IMAFWriteDataM, .LittleEndianWriteDataM);
 
   // Compute byte masks
   swbytemask #(P.LLEN, P.ZICCLSM_SUPPORTED) swbytemask(.Size(LSUFunct3M), .Adr(PAdrM[$clog2(P.LLEN/8)-1:0]), .ByteMask(ByteMaskM), .ByteMaskExtended(ByteMaskExtendedM));
@@ -447,7 +446,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   if (P.BIGENDIAN_SUPPORTED) begin:endian
-    endianswapdouble #(MLEN) storeswap(.BigEndianM, .a(LittleEndianWriteDataM), .y(LSUWriteDataM));
+    endianswap #(P.LLEN) storeswap(.BigEndianM, .a(LittleEndianWriteDataM), .y(LSUWriteDataM));
     endianswapdouble #(MLEN) loadswap(.BigEndianM, .a(ReadDataWordMuxM), .y(LittleEndianReadDataWordM));
   end else begin
     assign LSUWriteDataM = LittleEndianWriteDataM;
