@@ -2,7 +2,7 @@
 // wptr_full.sv
 //
 // Written: Clifford E Cummings 16 June 2005
-// Modified: james.stine@okstate.edu 19 February 2024
+// Modified: infinitymdm@gmail.com 5 March 2024
 //
 // Purpose: FIFO write pointer and full generation logic
 // 
@@ -27,45 +27,45 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 module wptr_full  #(parameter ADDRSIZE = 4)
-   (wfull, waddr, wptr, wq2_rptr, winc, wclk, wrst_n);
+  (wfull, waddr, wptr, wq2_rptr, winc, wclk, wrst_n);
 
-   input logic     [ADDRSIZE  :0] wq2_rptr;
-   input logic			  winc;
-   input logic 			  wclk;
-   input logic 			  wrst_n;   
-   
-   output logic 		  wfull;
-   output logic [ADDRSIZE-1:0] 	  waddr;
-   output logic [ADDRSIZE:0] 	  wptr;
-   
-   logic [ADDRSIZE:0] 		  wbin;
-   logic [ADDRSIZE:0] 		  wgraynext;
-   logic [ADDRSIZE:0] 		  wbinnext;   
+  input  logic [ADDRSIZE:0]    wq2_rptr;
+  input  logic                 winc;
+  input  logic                 wclk;
+  input  logic                 wrst_n;
+  output logic                 wfull;
+  output logic [ADDRSIZE-1:0]  waddr;
+  output logic [ADDRSIZE:0]    wptr;
 
-   // GRAYSTYLE2 pointer
-   always @(posedge wclk or negedge wrst_n)
-     if (!wrst_n) {wbin, wptr} <= 0;   
-     else         {wbin, wptr} <= {wbinnext, wgraynext};
+  logic               wfull_val;
+  logic [ADDRSIZE:0]  wbin;
+  logic [ADDRSIZE:0]  wgraynext;
+  logic [ADDRSIZE:0]  wbinnext;
 
-   // Memory write-address pointer (okay to use binary to address memory)
-   assign waddr = wbin[ADDRSIZE-1:0];
-   assign wbinnext  = wbin + (winc & ~wfull);
-   assign wgraynext = (wbinnext>>1) ^ wbinnext;
+  // GRAYSTYLE2 pointer
+  always @(posedge wclk or negedge wrst_n)
+    if (!wrst_n) {wbin, wptr} <= 0;   
+    else         {wbin, wptr} <= {wbinnext, wgraynext};
 
-   //------------------------------------------------------------------ 
-   // Simplified version of the three necessary full-tests:
-   // assign wfull_val=((wgnext[ADDRSIZE] !=wq2_rptr[ADDRSIZE] ) &&
-   //                   (wgnext[ADDRSIZE-1]  !=wq2_rptr[ADDRSIZE-1]) &&
-   //                   (wgnext[ADDRSIZE-2:0]==wq2_rptr[ADDRSIZE-2:0])); 
-   //------------------------------------------------------------------ 
-   assign wfull_val = (wgraynext=={~wq2_rptr[ADDRSIZE:ADDRSIZE-1],
-				   wq2_rptr[ADDRSIZE-2:0]});
-   
-   always @(posedge wclk or negedge wrst_n)
-     if (!wrst_n) 
-       wfull  <= 1'b0;
-     else 
-       wfull <= wfull_val;
+  // Memory write-address pointer (okay to use binary to address memory)
+  assign waddr = wbin[ADDRSIZE-1:0];
+  assign wbinnext  = wbin + (winc & ~wfull);
+  assign wgraynext = (wbinnext>>1) ^ wbinnext;
+
+  //------------------------------------------------------------------ 
+  // Simplified version of the three necessary full-tests:
+  // assign wfull_val=((wgnext[ADDRSIZE] !=wq2_rptr[ADDRSIZE] ) &&
+  //                   (wgnext[ADDRSIZE-1]  !=wq2_rptr[ADDRSIZE-1]) &&
+  //                   (wgnext[ADDRSIZE-2:0]==wq2_rptr[ADDRSIZE-2:0])); 
+  //------------------------------------------------------------------ 
+  assign wfull_val = (wgraynext=={~wq2_rptr[ADDRSIZE:ADDRSIZE-1],
+    wq2_rptr[ADDRSIZE-2:0]});
+
+  always @(posedge wclk or negedge wrst_n)
+    if (!wrst_n)
+      wfull  <= 1'b0;
+    else
+      wfull <= wfull_val;
    
 endmodule // wptr_full
 

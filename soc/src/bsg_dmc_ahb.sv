@@ -32,40 +32,38 @@ module bsg_dmc_ahb
   import bsg_tag_pkg::*;
   import bsg_dmc_pkg::*;
 #(
-  parameter ADDR_SIZE    = 28,
-  parameter DATA_SIZE    = 64,
-  parameter BURST_LENGTH = 8,
-  parameter FIFO_DEPTH   = 4,
+  parameter AHB_ADDR_SIZE = 28,
+  parameter AHB_DATA_SIZE = 64,
+  parameter DDR_DATA_SIZE = 32,
+  parameter BURST_LENGTH  = 8,
+  parameter FIFO_DEPTH    = 4
 ) (
-  input  logic                    HCLK, HRESETn,
-  input  logic                    HSEL,
-  input  logic [ADDR_SIZE-1:0]    HADDR,
-  input  logic [DATA_SIZE-1:0]    HWDATA,
-  input  logic [DATA_SIZE/8-1:0]  HWSTRB,
-  input  logic                    HWRITE,
-  input  logic [1:0]              HTRANS,
-  input  logic                    HREADY,
-  output logic [DATA_SIZE-1:0]    HRDATA,
-  output logic                    HRESP, HREADYOUT,
-  //input  logic                    ui_clk // Add this once PLL is integrated
-  output logic                    ddr_ck_p, ddr_ck_n, ddr_cke,
-  output logic [2:0]              ddr_ba,
-  output logic [15:0]             ddr_addr,
-  output logic                    ddr_cs, ddr_ras, ddr_cas,
-  output logic                    ddr_we, ddr_reset, ddr_odt,
-  output logic [DATA_SIZE/16-1:0] ddr_dm_oen, ddr_dm,
-  output logic [DATA_SIZE/16-1:0] ddr_dqs_p_oen, ddr_dqs_p_ien, ddr_dqs_p_out,
-  input  logic [DATA_SIZE/16-1:0] ddr_dqs_p_in,
-  output logic [DATA_SIZE/16-1:0] ddr_dqs_n_oen, ddr_dqs_n_ien, ddr_dqs_n_out,
-  input  logic [DATA_SIZE/16-1:0] ddr_dqs_n_in,
-  output logic [DATA_SIZE/2-1:0]  ddr_dq_oen, ddr_dq_out,
-  input  logic [DATA_SIZE/2-1:0]  ddr_dq_in,
-  input  logic                    dfi_clk_2x,
-  output logic                    dfi_clk_1x
+  input  logic                       HCLK, HRESETn,
+  input  logic                       HSEL,
+  input  logic [AHB_ADDR_SIZE-1:0]   HADDR,
+  input  logic [AHB_DATA_SIZE-1:0]   HWDATA,
+  input  logic [AHB_DATA_SIZE/8-1:0] HWSTRB,
+  input  logic                       HWRITE,
+  input  logic [1:0]                 HTRANS,
+  input  logic                       HREADY,
+  output logic [AHB_DATA_SIZE-1:0]   HRDATA,
+  output logic                       HRESP, HREADYOUT,
+  //input  logic                       ui_clk, // Add this once PLL is integrated
+  output logic                       ddr_ck_p, ddr_ck_n, ddr_cke,
+  output logic [2:0]                 ddr_ba,
+  output logic [13:0]                ddr_addr,
+  output logic                       ddr_cs, ddr_ras, ddr_cas,
+  output logic                       ddr_we, ddr_reset, ddr_odt,
+  output logic [DDR_DATA_SIZE/8-1:0] ddr_dm_oen, ddr_dm,
+  output logic [DDR_DATA_SIZE/8-1:0] ddr_dqs_p_oen, ddr_dqs_p_ien, ddr_dqs_p_out,
+  input  logic [DDR_DATA_SIZE/8-1:0] ddr_dqs_p_in,
+  output logic [DDR_DATA_SIZE/8-1:0] ddr_dqs_n_oen, ddr_dqs_n_ien, ddr_dqs_n_out,
+  input  logic [DDR_DATA_SIZE/8-1:0] ddr_dqs_n_in,
+  output logic [DDR_DATA_SIZE-1:0]   ddr_dq_oen, ddr_dq_out,
+  input  logic [DDR_DATA_SIZE-1:0]   ddr_dq_in,
+  input  logic                       dfi_clk_2x,
+  output logic                       dfi_clk_1x
 );
-
-  localparam BURST_DATA_SIZE = DATA_SIZE * BURST_LENGTH;
-  // localparam DQ_DATA_SIZE = DATA_SIZE >> 1;
 
   // Global async reset
   logic sys_reset;
@@ -76,18 +74,18 @@ module bsg_dmc_ahb
   bsg_dmc_s       dmc_config;
 
   // UI signals
-  logic                   ui_clk_sync_rst;
-  logic [ADDR_SIZE-1:0]   app_addr;
-  logic [2:0]             app_cmd;
-  logic                   app_en, app_rdy, app_wdf_wren;
-  logic [DATA_SIZE-1:0]   app_wdf_data;
-  logic [DATA_SIZE/8-1:0] app_wdf_mask;
-  logic                   app_wdf_end, app_wdf_rdy;
-  logic [DATA_SIZE-1:0]   app_rd_data;
-  logic                   app_rd_data_end, app_rd_data_valid;
-  logic                   app_ref_ack, app_zq_ack, app_sr_active; // Sink unused UI signals
-  logic                   init_calib_complete;
-  logic [11:0]            device_temp; // Reserved
+  logic                       ui_clk_sync_rst;
+  logic [AHB_ADDR_SIZE-1:0]   app_addr;
+  logic [2:0]                 app_cmd;
+  logic                       app_en, app_rdy, app_wdf_wren;
+  logic [AHB_DATA_SIZE-1:0]   app_wdf_data;
+  logic [AHB_DATA_SIZE/8-1:0] app_wdf_mask;
+  logic                       app_wdf_end, app_wdf_rdy;
+  logic [AHB_DATA_SIZE-1:0]   app_rd_data;
+  logic                       app_rd_data_end, app_rd_data_valid;
+  logic                       app_ref_ack, app_zq_ack, app_sr_active; // Sink unused UI signals
+  logic                       init_calib_complete;
+  logic [11:0]                device_temp; // Reserved
 
   // Use a /6 clock divider until PLL is integrated. TODO: Replace
   logic ui_clk;
@@ -120,7 +118,7 @@ module bsg_dmc_ahb
     dmc_config.bank_pos = 25;
   end
 
-  ahbxuiconverter #(ADDR_SIZE, DATA_SIZE) bsg_dmc_ahb_ui_converter (
+  ahbxuiconverter #(AHB_ADDR_SIZE, AHB_DATA_SIZE) bsg_dmc_ahb_ui_converter (
     .HCLK, .HRESETn, .HSEL, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HTRANS, .HREADY, .HRDATA, .HRESP, .HREADYOUT,
     .sys_reset, .ui_clk, .ui_clk_sync_rst,
     .app_addr, .app_cmd, .app_en, .app_rdy,
@@ -131,10 +129,10 @@ module bsg_dmc_ahb
 
   bsg_dmc #(
     .num_adgs_p(1),
-    .ui_addr_width_p(ADDR_SIZE),
-    .ui_data_width_p(DATA_SIZE),
-    .burst_data_width_p(BURST_DATA_SIZE),
-    .dq_data_width_p(DATA_SIZE/2),
+    .ui_addr_width_p(AHB_ADDR_SIZE),
+    .ui_data_width_p(AHB_DATA_SIZE),
+    .burst_data_width_p(AHB_DATA_SIZE * BURST_LENGTH),
+    .dq_data_width_p(DDR_DATA_SIZE),
     .cmd_afifo_depth_p(FIFO_DEPTH),
     .cmd_sfifo_depth_p(FIFO_DEPTH)
   ) dmc (
