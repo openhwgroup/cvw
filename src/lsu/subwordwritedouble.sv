@@ -33,7 +33,6 @@ module subwordwritedouble #(parameter LLEN) (
   input logic [2:0]         PAdrM,
   input logic               FpLoadStoreM, 
   input logic               BigEndianM, 
-  input logic               CacheableM,
   input logic [LLEN-1:0]    IMAFWriteDataM,
   output logic [LLEN*2-1:0] LittleEndianWriteDataM
 );
@@ -44,13 +43,7 @@ module subwordwritedouble #(parameter LLEN) (
   logic [4:0]               LengthM;
   // Funct3M[2] is the unsigned bit. mask upper bits.
   // Funct3M[1:0] is the size of the memory access.
-  // cacheable, BigEndian
-  // 10: PAdrM[2:0]
-  // 11: BigEndianPAdr
-  // 00: 00000
-  // 01: 00111
-  mux4 #(5) OffsetMux(5'b0, 5'b11111, {2'b0, PAdrM}, BigEndianPAdr, {CacheableM, BigEndianM}, PAdrSwap);
-  //assign PAdrSwap = BigEndianM ? BigEndianPAdr : {2'b0, PAdrM};
+  assign PAdrSwap = BigEndianM ? BigEndianPAdr : {2'b0, PAdrM};
   /* verilator lint_off WIDTHEXPAND */
   /* verilator lint_off WIDTHTRUNC */
   assign BigEndianPAdr = (LLEN/4) - PAdrM - LengthM;
