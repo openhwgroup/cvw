@@ -48,6 +48,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   input logic [P.LLEN-1:0]        LSUWriteDataM, 
 
   output logic [(P.LLEN*2-1)/8:0] ByteMaskSpillM,
+  output logic [P.LLEN*2-1:0]     LSUWriteDataSpillM, 
 
   output logic [P.XLEN-1:0]       IEUAdrSpillE, // The next PCF for one of the two memory addresses of the spill
   output logic [P.XLEN-1:0]       IEUAdrSpillM, // IEUAdrM for one of the two memory addresses of the spill
@@ -70,8 +71,9 @@ module align import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]   IEUAdrIncrementM;
 
   localparam OFFSET_LEN = $clog2(LLENINBYTES);
-  logic [OFFSET_LEN-1:0] AccessByteOffsetM;
-  logic                  PotentialSpillM;
+  logic [$clog2(LLENINBYTES)-1:0]              AccessByteOffsetM;
+  logic [$clog2(LLENINBYTES)+2:0]              ShiftAmount;
+  logic                                        PotentialSpillM;
 
   /* verilator lint_off WIDTHEXPAND */
   assign IEUAdrIncrementM = IEUAdrM + LLENINBYTES;
@@ -139,6 +141,18 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   // merge together
   mux2 #(2*P.LLEN) postspillmux(DCacheReadDataWordM, {DCacheReadDataWordM[P.LLEN-1:0], ReadDataWordFirstHalfM}, SelSpillM, ReadDataWordSpillAllM);
+
+
+  // shifter (4:1 mux for 32 bit, 8:1 mux for 64 bit)
+  // 8 * is for shifting by bytes not bits
+  assign ShiftAmount = SelHPTW ? '0 : {AccessByteOffsetM, 3'b0}; // AND gate
+
+  // write path. Also has the 8:1 shifter muxing for the byteoffset
+  // then it also has the mux to select when a spill occurs
+  logic [P.LLEN*3-1:0] LSUWriteDataShiftedExtM;  // *** RT: Find a better way.  I've extending in both directions so we don't shift in zeros.  The cache expects the writedata to not have any zero data, but instead replicated data.
+
+  assign LSUWriteDataShiftedExtM = {LSUWriteDataM, LSUWriteDataM, LSUWriteDataM} << ShiftAmount;
+  assign LSUWriteDataSpillM = LSUWriteDataShiftedExtM[P.LLEN*3-1:P.LLEN];
 
   mux3 #(2*P.LLEN/8) bytemaskspillmux({ByteMaskExtendedM, ByteMaskM}, // no spill
                                       {{{P.LLEN/8}{1'b0}}, ByteMaskM}, // spill, first half
