@@ -10,6 +10,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 4 (Section 4.1.4, Figure 4.8, Table 4.5)
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -41,6 +42,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic        BranchD,                 // Branch instruction
   output logic        StructuralStallD,        // Structural stalls detected by controller
   output logic        LoadStallD,              // Structural stalls for load, sent to performance counters
+  output logic        StoreStallD,             // load after store hazard
   output logic [4:0]  Rs1D, Rs2D,              // Register sources to read in Decode or Execute stage
   // Execute stage control signals             
   input  logic        StallE, FlushE,          // Stall, flush Execute stage
@@ -158,7 +160,6 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        CMOStallD;                      // Structural hazards from cache management ops
   logic        MatchDE;                        // Match between a source register in Decode stage and destination register in Execute stage
   logic        FCvtIntStallD, MDUStallD, CSRRdStallD; // Stall due to conversion, load, multiply/divide, CSR read 
-  logic        StoreStallD;                    // load after store hazard
   logic        FunctCZeroD;                    // Funct7 and Funct3 indicate czero.* (not including Op check)
   
   // Extract fields

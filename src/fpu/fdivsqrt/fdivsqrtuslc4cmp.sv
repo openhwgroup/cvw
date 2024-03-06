@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -30,7 +31,8 @@ module fdivsqrtuslc4cmp (
   input  logic [2:0] Dmsbs,             // U0.3 fractional bits after implicit leading 1
   input  logic [4:0] Smsbs,             // U1.4 leading bits of square root approximation
   input  logic [7:0] WSmsbs, WCmsbs,    // Q4.4 residual most significant bits
-  input  logic       SqrtE, j1,
+  input  logic       SqrtE, 
+  input  logic       j0, j1,            // are we on first (j0) or second step (j1) of digit selection
   output logic [3:0] udigit             // {2, 1, -1, -2} digit is 0 if none are hot
 );
   logic [6:0] Wmsbs;
@@ -45,7 +47,9 @@ module fdivsqrtuslc4cmp (
   // Wmsbs = |        |
 
   logic [6:0] mk2, mk1, mk0, mkm1;
+  logic [6:0] mkj2, mkj1, mkj0, mkjm1;
   logic [6:0] mks2[7:0], mks1[7:0]; 
+  logic sqrtspecial;
 
   // Prepopulate table of mks0
   assign mks2[0] = 12;
@@ -64,20 +68,25 @@ module fdivsqrtuslc4cmp (
   assign mks1[5] = 8; // is the logic any cheaper if this is a 6?
   assign mks1[6] = 8;
   assign mks1[7] = 8;
+  
+  // handles special case when j = 0 or j = 1 for sqrt
+  assign mkj2 = 20; // when j = 1 use mk2[101] when j = 0 use anything bigger than 7.
+  assign mkj1 = j0 ? 0 : 8; // when j = 1 use mk1[101] = 8 and when j = 0 use 0 so we choose u_0 = 1
+  assign sqrtspecial = SqrtE & (j1 | j0);
 
-  // Choose A for current operation
+  // Choose A for current operation 
  always_comb
     if (SqrtE) begin 
-      if (j1) A = 3'b101;
-      else if (Smsbs == 5'b10000) A = 3'b111;
+      if (Smsbs[4]) A = 3'b111; // for S = 1.0000  *** can we optimize away this case?
       else A = Smsbs[2:0];
     end else A = Dmsbs;
-
+    
   // Choose selection constants based on a
-  assign mk2 = mks2[A];
-  assign mk1 = mks1[A];
-  assign mk0 = -mks1[A];
-  assign mkm1 = (A == 3'b000) ? -13 : -mks2[A]; // asymmetry in table
+  
+  assign mk2 = sqrtspecial ? mkj2 : mks2[A];
+  assign mk1 = sqrtspecial ? mkj1 : mks1[A];
+  assign mk0 = -mk1;
+  assign mkm1 = (A == 3'b000) ? -13 : -mk2; // asymmetry in table *** can we hide from critical path
  
   // Compare residual W to selection constants to choose digit
   always_comb 

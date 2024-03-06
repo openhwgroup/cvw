@@ -10,6 +10,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 7 (Figure 7.11)
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -52,7 +53,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   output logic [LINELEN-1:0]          ReadDataLineWay,// This way's read data if valid
   output logic                        HitWay,         // This way hits
   output logic                        ValidWay,       // This way is valid
-  output logic                        HitDirtyWay, // The hit way is dirty
+  output logic                        HitDirtyWay,    // The hit way is dirty
   output logic                        DirtyWay   ,    // The selected way is dirty
   output logic [TAGLEN-1:0]           TagWay);        // This way's tag if valid
 
@@ -100,12 +101,12 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   assign SetValidWay = SetValid & SelData;
-  assign ClearValidWay = ClearValid & SelData;
+  assign ClearValidWay = ClearValid & SelData;                             // exclusion-tag: icache ClearValidWay
   assign SetDirtyWay = SetDirty & SelData;                                 // exclusion-tag: icache SetDirtyWay
   assign ClearDirtyWay = ClearDirty & SelData;
   assign SelectedWriteWordEn = (SetValidWay | SetDirtyWay) & ~FlushStage;  // exclusion-tag: icache SelectedWiteWordEn
   assign SetValidEN = SetValidWay & ~FlushStage;                           // exclusion-tag: cache SetValidEN
-  assign ClearValidEN = ClearValidWay & ~FlushStage;                           // exclusion-tag: cache SetValidEN
+  assign ClearValidEN = ClearValidWay & ~FlushStage;                       // exclusion-tag: cache ClearValidEN
 
   // If writing the whole line set all write enables to 1, else only set the correct word.
   assign FinalByteMask = SetValidWay ? '1 : LineByteMask; // OR
@@ -121,8 +122,8 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   // AND portion of distributed tag multiplexer
   assign TagWay = SelData ? ReadTag : '0; // AND part of AOMux
   assign HitDirtyWay = Dirty & ValidWay;
-  assign DirtyWay = SelDirty & HitDirtyWay;
-  assign HitWay = ValidWay & (ReadTag == PAdr[PA_BITS-1:OFFSETLEN+INDEXLEN]) & ~InvalidateCacheDelay;
+  assign DirtyWay = SelDirty & HitDirtyWay;                               // exclusion-tag: icache DirtyWay
+  assign HitWay = ValidWay & (ReadTag == PAdr[PA_BITS-1:OFFSETLEN+INDEXLEN]) & ~InvalidateCacheDelay; // exclusion-tag: dcache HitWay
 
   flop #(1) InvalidateCacheReg(clk, InvalidateCache, InvalidateCacheDelay);
 
@@ -163,7 +164,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
       ValidWay <= #1 ValidBits[CacheSetTag];
       if(InvalidateCache)                    ValidBits <= #1 '0; // exclusion-tag: dcache invalidateway
       else if (SetValidEN) ValidBits[CacheSetData] <= #1 SetValidWay;
-      else if (ClearValidEN) ValidBits[CacheSetData] <= #1 '0;
+      else if (ClearValidEN) ValidBits[CacheSetData] <= #1 '0; // exclusion-tag: icache ClearValidBits
     end
   end
 
@@ -178,7 +179,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
       //if (reset) DirtyBits <= #1 {NUMLINES{1'b0}}; 
       if(CacheEn) begin
         Dirty <= #1 DirtyBits[CacheSetTag];
-        if((SetDirtyWay | ClearDirtyWay) & ~FlushStage) DirtyBits[CacheSetData] <= #1 SetDirtyWay;
+        if((SetDirtyWay | ClearDirtyWay) & ~FlushStage) DirtyBits[CacheSetData] <= #1 SetDirtyWay; // exclusion-tag: cache UpdateDirty
       end
     end
   end else assign Dirty = 1'b0;

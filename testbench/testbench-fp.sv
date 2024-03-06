@@ -36,6 +36,8 @@ module testbenchfp;
 
   `include "parameter-defs.vh"   
 
+   parameter MAXVECTORS = 8388610;
+
    // FIXME: needs cleaning of unused variables (jes)
    string                       Tests[];                    // list of tests to be run
    logic [2:0] 			OpCtrl[];                   // list of op controls
@@ -50,7 +52,7 @@ module testbenchfp;
    logic [31:0] 		errors=0;                   // how many errors
    logic [31:0] 		VectorNum=0;                // index for test vector
    logic [31:0] 		FrmNum=0;                   // index for rounding mode
-   logic [P.FLEN*4+7:0] 	TestVectors[8388609:0];     // list of test vectors
+   logic [P.FLEN*4+7:0] 	TestVectors[MAXVECTORS-1:0];     // list of test vectors
 
    logic [1:0] 			FmtVal;                     // value of the current Fmt
    logic [2:0] 			UnitVal, OpCtrlVal, FrmVal; // value of the currnet Unit/OpCtrl/FrmVal
@@ -84,7 +86,7 @@ module testbenchfp;
    logic [P.LOGCVTLEN-1:0] 	CvtShiftAmtE;               // how much to shift by
    logic [P.DIVb:0] 		Quot;
    logic                        CvtResSubnormUfE;
-   logic                        DivStart;
+   logic                        DivStart=0;
    logic 			FDivBusyE;
    logic 			OldFDivBusyE;
    logic                        reset = 1'b0;
@@ -121,7 +123,11 @@ module testbenchfp;
    logic 			ResMatch;                   // Check if result match
    logic 			FlagMatch;                  // Check if IEEE flags match
    logic 			CheckNow;                   // Final check
-   logic 			FMAop;                      // Is this a FMA operation?   
+   logic 			FMAop;                      // Is this a FMA operation?
+
+   // FSM for testing each item per clock
+   typedef enum logic [2:0] {S0, Start, S2, Done} statetype;
+   statetype state, nextstate;   
    
    ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -677,7 +683,7 @@ module testbenchfp;
                                  .VectorNum, .Ans(Ans), .AnsFlg(AnsFlg), .SrcA, 
                                  .Xs, .Ys, .Zs, .Unit(UnitVal),
                                  .Xe, .Ye, .Ze, .TestNum, .OpCtrl(OpCtrlVal),
-                                 .Xm, .Ym, .Zm, .DivStart,
+                                 .Xm, .Ym, .Zm, 
                                  .XNaN, .YNaN, .ZNaN,
                                  .XSNaN, .YSNaN, .ZSNaN, 
                                  .XSubnorm, .ZSubnorm, 
@@ -749,16 +755,6 @@ module testbenchfp;
       clk = 1; #5; clk = 0; #5;
    end
 
-   // Provide reset for divsqrt to reset state to IDLE
-   // Previous version did not initiate a divide due to missing state
-   // information.  This starts the FSM by putting the fdivsqrt into
-   // the IDLE state.
-   initial
-     begin
-	#0 reset = 1'b1;
-	#25 reset = 1'b0;     
-     end  
-   
    ///////////////////////////////////////////////////////////////////////////////////////////////
 
    //          |||||      |||  ||||||||||  |||||      |||
@@ -836,45 +832,64 @@ module testbenchfp;
 	`CMPUNIT: ResFlg = CmpFlg;
 	`CVTINTUNIT: ResFlg = Flg;
 	`CVTFPUNIT: ResFlg = Flg;
-      endcase
-   end
+      endcase 
 
+      // Use four state test sequence to handle div properly.
+      // Four states should allow other operations to finish
+      // properly and within time.
+      case (state)
+	S0: begin
+	   DivStart = 1'b0;
+	   nextstate = Start;
+	end
+	Start: begin
+	   if (UnitVal == `DIVUNIT)	  
+	     DivStart = 1'b1;
+	   else
+	     DivStart = 1'b0;	  
+	   nextstate = S2;
+	end
+	S2: begin
+	   DivStart = 1'b0;	  
+	   if ((FDivBusyE|~DivDone)&(UnitVal == `DIVUNIT))
+	     nextstate = S2;
+	   else
+	     nextstate = Done;
+	end
+	Done: begin
+	   DivStart = 1'b0;
+	   nextstate = S0;
+	end	
+      endcase // case (state)
+      
+   end 
+
+   // Provide reset for divsqrt to reset state
+   initial
+     begin
+	#0  reset = 1'b1;
+	#25 reset = 1'b0;     
+     end   
+
+   // Left-over from before - will remove soon
    always @(posedge clk) 
      OldFDivBusyE = FDivDoneE;
 
-   // For FP division this adds extra clock cycles to make sure the
-   // computation completes.  
+   // state machine to handle timing for testing due
+   // various cycle counts for different fp/int operations
+   // Adds vector at start of clock
    always @(posedge clk) begin
-      // Add extra clock cycles in beginning for fdivsqrt to adequate reset state
-      if (~(FDivBusyE|DivStart)|(UnitVal != `DIVUNIT)) begin
-	 // This allows specific number of clocks to allow each vector
-	 // to complete for division or square root.  It is an
-	 // arbitrary value and can be changed, if needed.
-	 case (FmtVal)
-	   // QP
-	   2'b11: begin
-	      repeat (20)
-		@(posedge clk);
-	   end
-	   // HP
-	   2'b10: begin
-	      repeat (14)
-		@(posedge clk);
-	   end
-	   // DP
-	   2'b01: begin
-	      repeat (18)
-		@(posedge clk);
-	   end
-	   // SP
-	   2'b00: begin
-	      repeat (16)
-		@(posedge clk);
-	   end
-	 endcase // case (FmtVal)	 
-	 if (reset != 1'b1)
-	   VectorNum += 1; // increment the vector
-      end
+
+      // state machine element for testing
+      if (reset)
+        state <= S0;
+      else
+	state <= nextstate;      
+
+      // Increment the vector when Done with each test
+      if (state == Done)
+	VectorNum += 1; // increment the vector
+      
    end
 
    // check results on falling edge of clk
@@ -905,7 +920,7 @@ module testbenchfp;
                               (YNaN&(Res[P.H_LEN-2:0] === {Y[P.H_LEN-2:P.H_NF],1'b1,Y[P.H_NF-2:0]})) |
                               (ZNaN&(Res[P.H_LEN-2:0] === {Z[P.H_LEN-2:P.H_NF],1'b1,Z[P.H_NF-2:0]})));
          endcase
-      else if (UnitVal === `CVTFPUNIT) // if converting from floating point to floating point OpCtrl contains the final FP format
+      else if (UnitVal === `CVTFPUNIT) // if converting from FP to FP OpCtrl contains the final FP format
          case (OpCtrlVal[1:0]) 
             2'b11: NaNGood = (((P.IEEE754==0)&AnsNaN&(Res === {1'b0, {P.Q_NE+1{1'b1}}, {P.Q_NF-1{1'b0}}})) |
                               (AnsFlg[4]&(Res[P.Q_LEN-2:0] === {{P.Q_NE+1{1'b1}}, {P.Q_NF-1{1'b0}}})) |
@@ -942,35 +957,28 @@ module testbenchfp;
       ///////////////////////////////////////////////////////////////////////////////////////////////
 
       // check if result is correct
-      //  wait till the division result is done or one extra cylcle for early termination (to simulate the EM pipline stage)
       assign ResMatch = ((Res === Ans) | NaNGood | (NaNGood === 1'bx));
       assign FlagMatch = ((ResFlg === AnsFlg) | (AnsFlg === 5'bx));
       assign divsqrtop = (OpCtrlVal == `SQRT_OPCTRL) | (OpCtrlVal == `DIV_OPCTRL);
       assign FMAop = (OpCtrlVal == `FMAUNIT);  
       assign DivDone = OldFDivBusyE & ~FDivBusyE;
-
-      // Maybe change OpCtrl but for now just look at TEST for fma test
-      assign CheckNow = ((DivDone | ~divsqrtop) | (TEST == "add" | TEST == "fma" | TEST == "sub")) & (UnitVal !== `CVTINTUNIT) & (UnitVal !== `CMPUNIT);
-      if (~(ResMatch & FlagMatch) & CheckNow) begin
+      assign CheckNow = ((DivDone | ~divsqrtop) | 
+			 (TEST == "add" | TEST == "fma" | TEST == "sub") |
+			 ((TEST == "all") & (DivDone | ~divsqrtop)));
+            
+      if (~(ResMatch & FlagMatch) & CheckNow & (Ans[0] !== 1'bx)) begin
          errors += 1;
          $display("\nError in %s", Tests[TestNum]);
          $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);	 
          $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Expected: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
          $stop;
-      end else if (((UnitVal === `CVTINTUNIT) | (UnitVal === `CMPUNIT)) & 
-         ~(ResMatch & FlagMatch) & (Ans[0] !== 1'bx)) begin // Check for conversion and comparisons  
-            errors += 1;
-            $display("\nError in %s", Tests[TestNum]);
-            $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);	 	 
-            $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
-            $stop;
       end
 
       if (TestVectors[VectorNum][0] === 1'bx & Tests[TestNum] !== "") begin // if reached the eof
          // increment the test
          TestNum += 1;
          // clear the vectors
-         for(int i=0; i<6133248; i++) TestVectors[i] = {P.FLEN*4+8{1'bx}};
+         for(int i=0; i<MAXVECTORS; i++) TestVectors[i] = {P.FLEN*4+8{1'bx}};
          // read next files
          $readmemh({`PATH, Tests[TestNum]}, TestVectors);
          // set the vector index back to 0
@@ -980,11 +988,12 @@ module testbenchfp;
          // increment the rounding mode or loop back to rne 
          if (FrmNum < 4) FrmNum += 1;
          else begin
-            FrmNum = 0;
+	    FrmNum = 0;
             // Add some time as a buffer between tests at the end of each test
-            repeat (10)
-               @(posedge clk);
-         end	 
+	    // (to be removed)
+	    repeat (10)
+              @(posedge clk);
+	 end
          // if no more Tests - finish
          if (Tests[TestNum] === "") begin
                   $display("\nAll Tests completed with %d errors\n", errors);
@@ -997,28 +1006,27 @@ endmodule
 
 
 module readvectors import cvw::*; #(parameter cvw_t P) (
-		    input logic 	        clk,
-		    input logic [P.FLEN*4+7:0]  TestVector,
+		    input logic 		clk,
+		    input logic [P.FLEN*4+7:0] 	TestVector,
 		    input logic [P.FMTBITS-1:0] ModFmt,
-		    input logic [1:0] 	        Fmt,
-		    input logic [2:0] 	        Unit,
-		    input logic [31:0] 	        VectorNum,
-		    input logic [31:0] 	        TestNum,
-		    input logic [2:0] 	        OpCtrl,
-		    output logic [P.FLEN-1:0]   Ans,
-		    output logic [P.XLEN-1:0]   SrcA,
-		    output logic [4:0] 	        AnsFlg,
-		    output logic 	        Xs, Ys, Zs, // sign bits of XYZ
-		    output logic [P.NE-1:0]     Xe, Ye, Ze, // exponents of XYZ (converted to largest supported precision)
-		    output logic [P.NF:0]       Xm, Ym, Zm, // mantissas of XYZ (converted to largest supported precision)
-		    output logic 	        XNaN, YNaN, ZNaN, // is XYZ a NaN
-		    output logic 	        XSNaN, YSNaN, ZSNaN, // is XYZ a signaling NaN
-		    output logic 	        XSubnorm, ZSubnorm, // is XYZ denormalized
-		    output logic 	        XZero, YZero, ZZero, // is XYZ zero
-		    output logic 	        XInf, YInf, ZInf, // is XYZ infinity
-		    output logic 	        XExpMax,
-		    output logic 	        DivStart,
-		    output logic [P.FLEN-1:0]   X, Y, Z, XPostBox
+		    input logic [1:0] 		Fmt,
+		    input logic [2:0] 		Unit,
+		    input logic [31:0] 		VectorNum,
+		    input logic [31:0] 		TestNum,
+		    input logic [2:0] 		OpCtrl,
+		    output logic [P.FLEN-1:0] 	Ans,
+		    output logic [P.XLEN-1:0] 	SrcA,
+		    output logic [4:0] 		AnsFlg,
+		    output logic 		Xs, Ys, Zs, // sign bits of XYZ
+		    output logic [P.NE-1:0] 	Xe, Ye, Ze, // exponents of XYZ (converted to largest supported precision)
+		    output logic [P.NF:0] 	Xm, Ym, Zm, // mantissas of XYZ (converted to largest supported precision)
+		    output logic 		XNaN, YNaN, ZNaN, // is XYZ a NaN
+		    output logic 		XSNaN, YSNaN, ZSNaN, // is XYZ a signaling NaN
+		    output logic 		XSubnorm, ZSubnorm, // is XYZ denormalized
+		    output logic 		XZero, YZero, ZZero, // is XYZ zero
+		    output logic 		XInf, YInf, ZInf, // is XYZ infinity
+		    output logic 		XExpMax,
+		    output logic [P.FLEN-1:0] 	X, Y, Z, XPostBox
 		    );
 
    localparam Q_LEN = 32'd128;
@@ -1031,8 +1039,6 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
    // apply test vectors on rising edge of clk
    // Format of vectors Inputs(1/2/3)_AnsFlg
    always @(VectorNum) begin
-      DivStart = 1'b0;      
-      #1;
       AnsFlg = TestVector[4:0];
       case (Unit)
 	`FMAUNIT:
@@ -1102,30 +1108,18 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
               2'b11: begin // quad
 		 X = TestVector[8+2*(P.Q_LEN)-1:8+(P.Q_LEN)];
 		 Ans = TestVector[8+(P.Q_LEN-1):8];
-		 if (~clk) #5;
-		 DivStart = 1'b1; #10 // one clk cycle
-		   DivStart = 1'b0;
               end
               2'b01: if (P.D_SUPPORTED) begin // double
 		 X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]};
 		 Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
-		 if (~clk) #5;
-		 DivStart = 1'b1; #10
-		   DivStart = 1'b0;
               end
               2'b00: if (P.S_SUPPORTED) begin // single
 		 X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+1*(P.S_LEN)]};
 		 Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
-		 if (~clk) #5;
-		 DivStart = 1'b1; #10
-		   DivStart = 1'b0;
               end
               2'b10: begin // half
 		 X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+(P.H_LEN)]};
 		 Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
-		 if (~clk) #5;
-		 DivStart = 1'b1; #10
-		   DivStart = 1'b0;
               end
             endcase
           else
@@ -1134,33 +1128,21 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		 X = TestVector[8+3*(P.Q_LEN)-1:8+2*(P.Q_LEN)];
 		 Y = TestVector[8+2*(P.Q_LEN)-1:8+(P.Q_LEN)];
 		 Ans = TestVector[8+(P.Q_LEN-1):8];
-		 if (~clk) #5;
-		 DivStart = 1'b1; #10 // one clk cycle
-		   DivStart = 1'b0;
               end
               2'b01: if (P.D_SUPPORTED) begin // double
 		 X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+3*(P.D_LEN)-1:8+2*(P.D_LEN)]};
 		 Y = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]};
 		 Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
-		 if (~clk) #5;
-		 DivStart = 1'b1; #10
-		   DivStart = 1'b0;
               end
               2'b00: if (P.S_SUPPORTED) begin // single
 		 X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+3*(P.S_LEN)-1:8+2*(P.S_LEN)]};
 		 Y = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+1*(P.S_LEN)]};
 		 Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
-		 if (~clk) #5;
-		 DivStart = 1'b1; #10
-		   DivStart = 1'b0;
               end
               2'b10: begin // half
 		 X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+3*(P.H_LEN)-1:8+2*(P.H_LEN)]};
 		 Y = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+(P.H_LEN)]};
 		 Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
-		 if (~clk) #5;
-		 DivStart = 1'b1; #10
-		   DivStart = 1'b0;
               end
             endcase
 	`CMPUNIT:

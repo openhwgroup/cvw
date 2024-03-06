@@ -16,8 +16,7 @@ echo \$WALLY set to ${WALLY}
 # Must edit these based on your local environment.  Ask your sysadmin.
 export MGLS_LICENSE_FILE=27002@zircon.eng.hmc.edu                   # Change this to your Siemens license server
 export SNPSLMD_LICENSE_FILE=27020@zircon.eng.hmc.edu                # Change this to your Synopsys license server
-export QUESTA_HOME=/cad/mentor/questa_sim-2022.4_2/questasim        # Change this for your path to Questa, excluding bin
-#export QUESTA_HOME=/cad/mentor/questa_sim-2022.4_3/questasim        # Change this for your path to Questa, excluding bin
+export QUESTA_HOME=/cad/mentor/questa_sim-2023.4/questasim        # Change this for your path to Questa, excluding bin
 export SNPS_HOME=/cad/synopsys/SYN                                  # Change this for your path to Design Compiler, excluding bin
 
 # Path to RISC-V Tools

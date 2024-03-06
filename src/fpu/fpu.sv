@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -74,7 +75,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   logic                        FDivStartE, IDivStartE;             // Start division or squareroot
   logic                        FWriteIntM;                         // Write to integer register
   logic [1:0]                  ForwardXE, ForwardYE, ForwardZE;    // forwarding mux control signals
-  logic [2:0]                  OpCtrlE, OpCtrlM;                   // Select which opperation to do in each component
+  logic [2:0]                  OpCtrlE, OpCtrlM;                   // Select which operation to do in each component
   logic [1:0]                  FResSelE, FResSelM, FResSelW;       // Select one of the results that finish in the memory stage
   logic [1:0]                  PostProcSelE, PostProcSelM;         // select result in the post processing unit
   logic [4:0]                  Adr1D, Adr2D, Adr3D;                // register adresses of each input
@@ -83,6 +84,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   logic                        XEnE, YEnE, ZEnE;                   // X, Y, Z inputs used for current operation
   logic                        FRegWriteE;                         // Write floating-point register
   logic                        FPUActiveE;                         // FP instruction being executed
+  logic                        ZfaE, ZfaM;                         // Zfa variants of instructions (fli, fminm, fmaxm, fround, froundnx, fleq, fltq, fmvh, fmvp, fcvtmod.w.d)
 
   // regfile signals
   logic [P.FLEN-1:0]           FRD1D, FRD2D, FRD3D;                // Read Data from FP register - decode stage
@@ -154,12 +156,13 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   logic [P.FLEN-1:0]           FResultW;                           // final FP result being written to the FP register   
 
   // other signals
-  logic [P.FLEN-1:0]           AlignedSrcAE;                       // align SrcA from IEU to the floating point format for fmv
+  logic [P.FLEN-1:0]           PreIntSrcE, IntSrcE;                // align SrcA from IEU to the floating point format for fmv / fmvp
   logic [P.FLEN-1:0]           BoxedZeroE;                         // Zero value for Z for multiplication, with NaN boxing if needed
   logic [P.FLEN-1:0]           BoxedOneE;                          // One value for Z for multiplication, with NaN boxing if needed
   logic                        StallUnpackedM;                     // Stall unpacker outputs during multicycle fdivsqrt
   logic [P.FLEN-1:0]           SgnExtXE;                           // Sign-extended X input for move to integer
   logic                        mvsgn;                              // sign bit for extending move
+  logic [P.FLEN-1:0]           FliResE;                            // Floating-point load immediate value
 
   //////////////////////////////////////////////////////////////////////////////////////////
   // Decode Stage: fctrl decoder, read register file
@@ -169,7 +172,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   fctrl #(P) fctrl (.Funct7D(InstrD[31:25]), .OpD(InstrD[6:0]), .Rs2D(InstrD[24:20]), .Funct3D(InstrD[14:12]), 
               .IntDivE, .InstrD,
               .StallE, .StallM, .StallW, .FlushE, .FlushM, .FlushW, .FRM_REGW, .STATUS_FS, .FDivBusyE,
-              .reset, .clk, .FRegWriteE, .FRegWriteM, .FRegWriteW, .FrmM, .FmtE, .FmtM,
+              .reset, .clk, .FRegWriteE, .FRegWriteM, .FRegWriteW, .ZfaE, .ZfaM, .FrmM, .FmtE, .FmtM,
               .FDivStartE, .IDivStartE, .FWriteIntE, .FCvtIntE, .FWriteIntM, .OpCtrlE, .OpCtrlM, .FpLoadStoreM,
               .IllegalFPUInstrD, .XEnD, .YEnD, .ZEnD, .XEnE, .YEnE, .ZEnE,
               .FResSelE, .FResSelM, .FResSelW, .FPUActiveE, .PostProcSelE, .PostProcSelM, .FCvtIntW, 
@@ -209,7 +212,8 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
                               {{P.FLEN-P.D_LEN{1'b1}}, 2'b0, {P.D_NE-1{1'b1}}, (P.D_NF)'(0)}, 
                               {{P.FLEN-P.H_LEN{1'b1}}, 2'b0, {P.H_NE-1{1'b1}}, (P.H_NF)'(0)}, 
                               {2'b0, {P.NE-1{1'b1}}, (P.NF)'(0)}, FmtE, BoxedOneE); // NaN boxing zeroes
-  assign FmaAddSubE = OpCtrlE[2]&OpCtrlE[1]&(FResSelE==2'b01)&(PostProcSelE==2'b10);
+  assign FmaAddSubE = OpCtrlE[2]&OpCtrlE[1]&(PostProcSelE==2'b10);
+  // ***simplified from appearently redundant assign FmaAddSubE = OpCtrlE[2]&OpCtrlE[1]&(FResSelE==2'b01)&(PostProcSelE==2'b10);
   mux2  #(P.FLEN)  fyaddmux (PreYE, BoxedOneE, FmaAddSubE, YE); // Force Y to be 1 for add/subtract
   
   // Select NAN-boxed value of Z = 0.0 in proper format for FMA for multiply X*Y+Z
@@ -246,7 +250,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
     .UmM, .FIntDivResultM);
 
   // compare: fmin/fmax, flt/fle/feq
-  fcmp #(P) fcmp (.Fmt(FmtE), .OpCtrl(OpCtrlE), .Xs(XsE), .Ys(YsE), .Xe(XeE), .Ye(YeE), 
+  fcmp #(P) fcmp (.Fmt(FmtE), .OpCtrl(OpCtrlE), .Zfa(ZfaE), .Xs(XsE), .Ys(YsE), .Xe(XeE), .Ye(YeE), 
     .Xm(XmE), .Ym(YmE), .XZero(XZeroE), .YZero(YZeroE), .XNaN(XNaNE), .YNaN(YNaNE), 
     .XSNaN(XSNaNE), .YSNaN(YSNaNE), .X(XE), .Y(YE), .CmpNV(CmpNVE), 
     .CmpFpRes(CmpFpResE), .CmpIntRes(CmpIntResE));
@@ -263,23 +267,42 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
     .ToInt(FWriteIntE), .XZero(XZeroE), .Fmt(FmtE), .Ce(CeE), .ShiftAmt(CvtShiftAmtE), 
     .ResSubnormUf(CvtResSubnormUfE), .Cs(CsE), .IntZero(IntZeroE), .LzcIn(CvtLzcInE));
 
-  // NaN Box SrcA to convert integer to requested FP size for fmv.*.x
-  if(P.FPSIZES == 1) assign AlignedSrcAE = {{P.FLEN-P.XLEN{1'b1}}, ForwardedSrcAE};
+  // floating-point load immediate: fli
+  if (P.ZFA_SUPPORTED) begin
+    logic [4:0] Rs1E;
+    logic [1:0] Fmt2E; // Two-bit format field from instruction
+    
+    flopenrc #(5) Rs1EReg(clk, reset, FlushE, ~StallE, InstrD[19:15], Rs1E);
+    flopenrc #(2) Fmt2EReg(clk, reset, FlushE, ~StallE, InstrD[26:25], Fmt2E);
+    fli #(P) fli(.Rs1(Rs1E), .Fmt(Fmt2E), .Imm(FliResE)); 
+  end else assign FliResE = '0;
+
+  // fmv.*.x: NaN Box SrcA to extend integer to requested FP size 
+  if(P.FPSIZES == 1) 
+    if (P.FLEN >= P.XLEN) assign PreIntSrcE = {{P.FLEN-P.XLEN{1'b1}}, ForwardedSrcAE};
+    else                  assign PreIntSrcE = ForwardedSrcAE[P.FLEN-1:0];
   else if(P.FPSIZES == 2) 
-    mux2 #(P.FLEN) SrcAMux ({{P.FLEN-P.LEN1{1'b1}}, ForwardedSrcAE[P.LEN1-1:0]}, {{P.FLEN-P.XLEN{1'b1}}, ForwardedSrcAE}, FmtE, AlignedSrcAE);
+    if (P.FLEN >= P.XLEN)
+      mux2 #(P.FLEN) SrcAMux ({{P.FLEN-P.LEN1{1'b1}}, ForwardedSrcAE[P.LEN1-1:0]}, {{P.FLEN-P.XLEN{1'b1}}, ForwardedSrcAE}, FmtE, PreIntSrcE);
+    else
+      mux2 #(P.FLEN) SrcAMux ({{P.FLEN-P.LEN1{1'b1}}, ForwardedSrcAE[P.LEN1-1:0]}, ForwardedSrcAE[P.FLEN-1:0], FmtE, PreIntSrcE);
   else if(P.FPSIZES == 3 | P.FPSIZES == 4) begin
     localparam XD_LEN = P.D_LEN < P.XLEN ? P.D_LEN : P.XLEN; // shorter of D_LEN and XLEN
     mux3 #(P.FLEN) SrcAMux ({{P.FLEN-P.S_LEN{1'b1}}, ForwardedSrcAE[P.S_LEN-1:0]}, 
                             {{P.FLEN-XD_LEN{1'b1}}, ForwardedSrcAE[XD_LEN-1:0]}, 
                             {{P.FLEN-P.H_LEN{1'b1}}, ForwardedSrcAE[P.H_LEN-1:0]}, 
-                            FmtE, AlignedSrcAE); // NaN boxing zeroes
+                            FmtE, PreIntSrcE); // NaN boxing zeroes
   end
+  // fmvp.*.x: Select pair of registers
+  if (P.ZFA_SUPPORTED & (P.FLEN == 2*P.XLEN))
+       assign IntSrcE = ZfaE ? {ForwardedSrcBE, ForwardedSrcAE} : PreIntSrcE; // choose pair of integer registers for fmvp.d.x / fmvp.q.x
+  else assign IntSrcE = PreIntSrcE;
 
   // select a result that may be written to the FP register
-  mux3  #(P.FLEN) FResMux(SgnResE, AlignedSrcAE, CmpFpResE, {OpCtrlE[2], &OpCtrlE[1:0]}, PreFpResE);
+  mux4  #(P.FLEN) FResMux(SgnResE, IntSrcE, CmpFpResE, FliResE, {OpCtrlE[2], &OpCtrlE[1:0]}, PreFpResE);
   assign PreNVE = CmpNVE&(OpCtrlE[2]|FWriteIntE);
 
-  // select the result that may be written to the integer register with fmv.x.*
+  // fmv.x.*: select the result that may be written to the integer register
   if(P.FPSIZES == 1) begin
     assign mvsgn = XE[P.FLEN-1];
     assign SgnExtXE = XE;
@@ -295,10 +318,11 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   end
 
   // sign extend to XLEN if necessary
-  if (P.FLEN>P.XLEN)
-    assign IntSrcXE = SgnExtXE[P.XLEN-1:0];
+  if (P.FLEN >= 2*P.XLEN)
+    if (P.ZFA_SUPPORTED & P.FLEN == 2*P.XLEN) assign IntSrcXE = ZfaE ? XE[P.FLEN-1:P.FLEN/2] : SgnExtXE[P.XLEN-1:0]; // either fmvh.x.* or fmv.x.*
+    else                                      assign IntSrcXE = SgnExtXE[P.XLEN-1:0];
   else 
-    assign IntSrcXE = {{P.XLEN-P.FLEN{mvsgn}}, SgnExtXE};
+    assign IntSrcXE = {{(P.XLEN-P.FLEN){mvsgn}}, SgnExtXE};
   mux3 #(P.XLEN) IntResMux (ClassResE, IntSrcXE, CmpIntResE, {~FResSelE[1], FResSelE[0]}, FIntResE);
 
   // E/M pipe registers
@@ -333,11 +357,12 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
     .ZInf(ZInfM), .XNaN(XNaNM), .YNaN(YNaNM), .ZNaN(ZNaNM), .XSNaN(XSNaNM), .YSNaN(YSNaNM), .ZSNaN(ZSNaNM), 
     .FmaSm(SmM), .DivUe(UeM), .FmaAs(AsM), .FmaPs(PsM), .OpCtrl(OpCtrlM), .FmaSCnt(SCntM), .FmaSe(SeM),
     .CvtCe(CeM), .CvtResSubnormUf(CvtResSubnormUfM),.CvtShiftAmt(CvtShiftAmtM), .CvtCs(CsM), 
-    .ToInt(FWriteIntM), .DivSticky(DivStickyM), .CvtLzcIn(CvtLzcInM), .IntZero(IntZeroM), 
+    .ToInt(FWriteIntM), .Zfa(ZfaM), .DivSticky(DivStickyM), .CvtLzcIn(CvtLzcInM), .IntZero(IntZeroM), 
     .PostProcSel(PostProcSelM), .PostProcRes(PostProcResM), .PostProcFlg(PostProcFlgM), .FCvtIntRes(FCvtIntResM));
 
   // FPU flag selection - to privileged
-  mux2  #(5)       FPUFlgMux({PreNVM&~FResSelM[1], 4'b0}, PostProcFlgM, ~FResSelM[1]&FResSelM[0], SetFflagsM);
+  //mux2  #(5)       FPUFlgMux({PreNVM&~FResSelM[1], 4'b0}, PostProcFlgM, ~FResSelM[1]&FResSelM[0], SetFflagsM);
+  mux2  #(5)       FPUFlgMux({PreNVM, 4'b0}, PostProcFlgM, (FResSelM == 2'b01), SetFflagsM);
   mux2  #(P.FLEN)  FPUResMux(PreFpResM, PostProcResM, FResSelM[0], FpResM);
 
   // M/W pipe registers

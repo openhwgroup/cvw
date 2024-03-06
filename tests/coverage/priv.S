@@ -6,6 +6,7 @@
 // Purpose: Test coverage for EBU
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -300,6 +301,8 @@ sretdone:
 
 
     # Test uncovered privdec instructions
+    li a0, 3
+    ecall
     # exercise sfence.inval.ir instruction
     .word 0x18100073
 
@@ -307,7 +310,20 @@ sretdone:
     .word 0x102F8073
 
 
-    j done
+    # cover mret when mpp = 3 and mprv = 1
+    li a0, 3
+    ecall               # enter machine mode
+    bseti t0, zero, 17
+    csrs mstatus, t0    # set MPRV
+    li t1, 0x00001800   
+    csrs mstatus, t1    # set MPP=3
+    la t1, finished
+    csrr t0, mepc       
+    csrw mepc, t1       # set mepc for mret to jump to
+    mret
+
+
+finished: j done
 
 
 

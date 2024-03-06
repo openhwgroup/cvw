@@ -77,12 +77,7 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     run 20 ms
 
 } else {
-    if {$2 eq "ahb"} {
-        vlog +incdir+../config/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583,13286 -suppress 7063 +define+RAM_LATENCY=$3 +define+BURST_EN=$4
-    } else {
-        # *** modelsim won't take `PA_BITS, but will take other defines for the lengths of DTIM_RANGE and IROM_LEN.  For now just live with the warnings.
-        vlog +incdir+../config/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583,13286 -suppress 7063 
-    }
+    vlog +incdir+../config/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583,13286 -suppress 7063 
     vopt +acc work.testbench -G TEST=$2 -G DEBUG=1 -o workopt 
 
     vsim workopt +nowarn3829  -fatal 7

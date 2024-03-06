@@ -11,6 +11,7 @@
 ##          and generate a list of tests and signature addresses for tests.vh
 ##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
+## https://github.com/openhwgroup/cvw
 ##
 ## Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 ##

@@ -10,6 +10,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 7 (Figure 7.14 and Table 7.1)
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 //
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -116,12 +117,11 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
     NextState = STATE_READY;
     case (CurrState)                                                                                        // exclusion-tag: icache state-case
       STATE_READY:           if(InvalidateCache)                               NextState = STATE_READY;     // exclusion-tag: dcache InvalidateCheck
-                             else if(FlushCache & ~READ_ONLY_CACHE)            NextState = STATE_FLUSH;
+                             else if(FlushCache & ~READ_ONLY_CACHE)            NextState = STATE_FLUSH;     // exclusion-tag: icache FLUSHStatement
                              else if(AnyMiss & (READ_ONLY_CACHE | ~LineDirty)) NextState = STATE_FETCH;     // exclusion-tag: icache FETCHStatement
-                             else if(AnyMiss | CMOWriteback)                   NextState = STATE_WRITEBACK; // exclusion-tag: icache WRITEBACKStatement
+                             else if((AnyMiss | CMOWriteback) & ~READ_ONLY_CACHE) NextState = STATE_WRITEBACK; // exclusion-tag: icache WRITEBACKStatement
                              else                                              NextState = STATE_READY;
       STATE_FETCH:           if(CacheBusAck)                                   NextState = STATE_WRITE_LINE;
-                             else if(CacheBusAck)                              NextState = STATE_READY;
                              else                                              NextState = STATE_FETCH;
       STATE_WRITE_LINE:                                                        NextState = STATE_READ_HOLD;
       STATE_READ_HOLD:       if(Stall)                                         NextState = STATE_READ_HOLD;
@@ -144,7 +144,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
 
   // com back to CPU
   assign CacheCommitted = (CurrState != STATE_READY) & ~(READ_ONLY_CACHE & (CurrState == STATE_READ_HOLD));
-  assign StallConditions =  FlushCache | AnyMiss | CMOWriteback;
+  assign StallConditions =  FlushCache | AnyMiss | CMOWriteback;     // exclusion-tag: icache FlushCache
   assign CacheStall = (CurrState == STATE_READY & StallConditions) | // exclusion-tag: icache StallStates
                       (CurrState == STATE_FETCH) |
                       (CurrState == STATE_WRITEBACK) |
@@ -157,7 +157,6 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
                     (CurrState == STATE_WRITEBACK & CacheBusAck & CMOpM[3]); 
   assign ClearValid = (CurrState == STATE_READY & CMOpM[0]) |
                       (CurrState == STATE_WRITEBACK & CMOpM[2] & CacheBusAck);
-  // coverage off -item e 1 -fecexprrow 8
   assign LRUWriteEn = (((CurrState == STATE_READY & (AnyHit | CMOZeroNoEviction)) |
                        (CurrState == STATE_WRITE_LINE)) & ~FlushStage) |
                       (CurrState == STATE_WRITEBACK & CMOpM[3] & CacheBusAck);
@@ -189,8 +188,6 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
                          (CurrState == STATE_WRITEBACK & CacheBusAck & ~(|CMOpM));
 
   logic LoadMiss;
-  
-  //assign StoreMiss = (CacheRW[0]) & ~CacheHit & ~InvalidateCache; // exclusion-tag: cache AnyMiss
   assign LoadMiss = (CacheRW[1]) & ~CacheHit & ~InvalidateCache; // exclusion-tag: cache AnyMiss
 
   assign CacheBusRW[0] = (CurrState == STATE_READY & LoadMiss & LineDirty) | // exclusion-tag: icache CacheBusW
@@ -203,7 +200,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
                   (CurrState == STATE_WRITEBACK) |
                   (CurrState == STATE_WRITE_LINE) |
                   resetDelay;
-  assign SelAdrTag = (CurrState == STATE_READY & (AnyMiss | (|CMOpM))) | // exclusion-tag: icache SelAdrCauses // changes if store delay hazard removed
+  assign SelAdrTag = (CurrState == STATE_READY & (AnyMiss | (|CMOpM))) | // exclusion-tag: icache SelAdrTag // changes if store delay hazard removed
                   (CurrState == STATE_FETCH) |
                   (CurrState == STATE_WRITEBACK) |
                   (CurrState == STATE_WRITE_LINE) |

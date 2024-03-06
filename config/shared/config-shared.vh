@@ -96,7 +96,7 @@ localparam LOGR        = $clog2(RADIX);                             // r = log(R
 localparam RK          = LOGR*DIVCOPIES;                            // r*k bits per cycle generated
 
 // intermediate division parameters not directly used in fdivsqrt hardware
-localparam FPDIVMINb   = NF + 3; // minimum length of fractional part: Nf result bits + guard and round bits + 1 extra bit to allow sqrt being shifted right
+localparam FPDIVMINb   = NF + 2; // minimum length of fractional part: Nf result bits + guard and round bits + 1 extra bit to allow sqrt being shifted right
 //localparam FPDIVMINb   = NF + 2 + (RADIX == 2); // minimum length of fractional part: Nf result bits + guard and round bits + 1 extra bit for preshifting radix2 square root right, if radix4 doesn't use a right shift.  This version saves one cycle on double-precision with R=4,k=4.  However, it doesn't work yet because C is too short, so k is incorrectly calculated as a 1 in the lsb after the last step.
 localparam DIVMINb     = ((FPDIVMINb<XLEN) & IDIV_ON_FPU) ? XLEN : FPDIVMINb; // minimum fractional bits b = max(XLEN, FPDIVMINb)
 localparam RESBITS     = DIVMINb + LOGR; // number of bits in a result: r integer + b fractional
@@ -105,15 +105,15 @@ localparam RESBITS     = DIVMINb + LOGR; // number of bits in a result: r intege
 localparam FPDUR       = (RESBITS-1)/RK + 1 ;                       // ceiling((r+b)/rk)
 localparam DIVb        = FPDUR*RK - LOGR;                           // divsqrt fractional bits, so total number of bits is a multiple of rk after r integer bits
 localparam DURLEN      = $clog2(FPDUR);                             // enough bits to count the duration
-localparam DIVBLEN     = $clog2(DIVb);                              // enough bits to count number of fractional bits
+localparam DIVBLEN     = $clog2(DIVb+1);                            // enough bits to count number of fractional bits + 1 integer bit
 
 // largest length in IEU/FPU
 localparam CVTLEN = ((NF<XLEN) ? (XLEN) : (NF));  // max(XLEN, NF)
 localparam LLEN = (($unsigned(FLEN)<$unsigned(XLEN)) ? ($unsigned(XLEN)) : ($unsigned(FLEN)));
 localparam LOGCVTLEN = $unsigned($clog2(CVTLEN+1));
-localparam NORMSHIFTSZ = (((CVTLEN+NF+1)>(DIVb + 1 +NF+1) & (CVTLEN+NF+1)>(3*NF+6)) ? (CVTLEN+NF+1) : ((DIVb + 1 +NF+1) > (3*NF+6) ? (DIVb + 1 +NF+1) : (3*NF+6)));
+localparam NORMSHIFTSZ = (((CVTLEN+NF+1)>(DIVb + 1 +NF+1) & (CVTLEN+NF+1)>(3*NF+6)) ? (CVTLEN+NF+1) : ((DIVb + 1 +NF+1) > (3*NF+6) ? (DIVb + 1 +NF+1) : (3*NF+6))); // max(CVTLEN+NF+1, DIVb + 1 + NF + 1, 3*NF+6)
 localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));
-localparam CORRSHIFTSZ = (((CVTLEN+NF+1)>(DIVb + 1 +NF+1) & (CVTLEN+NF+1)>(3*NF+6)) ? (CVTLEN+NF+1) : ((DIVMINb+1+NF) > (3*NF+4) ? (DIVMINb+1+NF) : (3*NF+4)));
+localparam CORRSHIFTSZ = (NORMSHIFTSZ-2 > (DIVMINb + 1 + NF)) ? NORMSHIFTSZ-2 : (DIVMINb+1+NF);  // max(NORMSHIFTSZ-2, DIVMINb + 1 + NF)
 
 
 // Disable spurious Verilator warnings

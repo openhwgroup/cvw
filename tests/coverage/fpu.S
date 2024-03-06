@@ -6,6 +6,7 @@
 // Purpose: Test coverage for FPU
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -35,6 +36,26 @@ main:
     la t0, TestData1
     flw ft0, 0(t0)
     fclass.s t1, ft0
+
+    # zfa instructions (because Zfa tests aren't running yet)
+    fli.d fs0, 16
+    fcvtmod.w.d t0, fs0, rtz
+#    fminm.d fs1, fs0, fs0
+#    fmaxm.d fs1, fs0, fs0
+#    fltq.d t0, fs1, ft0
+#    fleq.d t0, fs1, ft0
+    fcvt.d.q fs1, fs0
+    fcvt.h.q fs1, fs0
+    fcvt.s.q fs1, fs0
+    # round for now because these tests are excluded from Zfa until rounding is implemented
+    fround.s fs1, fs0       
+    froundnx.s fs1, fs0
+    fround.d fs1, fs0       
+    froundnx.d fs1, fs0
+    fround.h fs1, fs0
+    froundnx.h fs1, fs0
+    fround.s fs1, fs0
+    froundnx.s fs1, fs0
 
     #Result Sign Test Coverage
     la t0, TestData2
@@ -108,6 +129,12 @@ main:
     # fcvt.w.q a0, ft0
     # fcvt.q.d ft3, ft0
 
+    # half-precision NaN boxing
+    la t0, TestData3
+    fld ft2, 0(t0)          // bad NaN-boxed number
+    fmadd.h ft1, ft2, ft2, ft2 // Test NaN boxing
+    fmadd.s ft1, ft2, ft2, ft2 // Test NaN boxing
+
     // fdivsqrt: test busy->idle transition caused by a FlushE while divider is busy (when interrupt arrives)
     // This code doesn't actually trigger a busy->idle transition because the pending timer interrupt doesn't occur until the division finishes.
     li t0, 0x3F812345 # random value slightly bigger than 1
@@ -139,7 +166,7 @@ main:
     .word 0xc5000007    // Attempting to toggle (Op7 != 7) to 0 on line 97 in fctrl, not sure what instruction this works out to
     .word 0xe0101053    // toggling (Rs2D == 0) to 0 on line 139 in fctrl. Illegal Intsr (like fclass but incorrect rs2)
     .word 0xe0100053    // toggling (Rs2D == 0) to 0 on line 141 in fctrl. Illegal Intsr (like fmv but incorrect rs2)
-    .word 0x40500053    // toggling (Rs2D[4:2] == 0) to 0 on line 145 in fctrl. 
+    .word 0x40D00053    // toggling (Rs2D[4:2] == 0) to 0 on line 145 in fctrl. 
     .word 0x40300053    // toggling SupportFmt2 to 0 on line 145 in fctrl.
     .word 0x42100053    // toggling (Rs2D[1:0] != 1) to 0 on line 147 in fctrl. Illegal Instr
     .word 0xf0100053    // toggling (Rs2D == 0) to 0 on line 143 in fctrl. Illegal Instr
@@ -155,6 +182,21 @@ main:
     .word 0xF0007053 // illegal fmv (bad Funct3)
     .word 0x43007053 // illegal fcvt.d.* (bad Rs2D)
     .word 0x42207053 // illegal fcvt.d.* (bad Rs2D[1])
+    .word 0xD5F00053 // illegal fcvt.h.* (bad Rs2D)
+    .word 0xC5F00053 // illegal fcvt.*.h (bad Rs2D)
+    .word 0x04000043 // illegal fmadd.h (h not supported)
+    .word 0xC2800053 // illegal fcvtmod.w.d with rm rne
+    .word 0xF0101053 // illegal fli with Funct3D not 0
+    .word 0xF0400053 // illegal fli with Rs2D not 1
+    .word 0x44200053 // illegal instruction for f.cvt.h.h
+
+    // Test divide by zero with rounding mode toward zero
+    li t0, 1
+    csrw frm, t0    // set rounding mode = 1
+    li t0, 0x3f800000
+    fcvt.s.w ft1, t0
+    fcvt.s.w ft2, zero
+    fdiv.s ft3, ft1, ft2
 
     # Test floating point convert to integer and using result
     fcvt.w.s t0, f0
@@ -172,4 +214,6 @@ TestData2:
 .int 0xbf800000 #FP -1.0
 .int 0x7fa00000 #SNaN
 .int 0x3fffffff #OverFlow Test
+TestData3:
+.dword 0xABCD543212345678 # NaN box test
 DivTestData:

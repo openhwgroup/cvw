@@ -41,7 +41,7 @@ localparam COUNTERS = 12'd32;
 localparam ZICNTR_SUPPORTED = 1;
 localparam ZIHPM_SUPPORTED = 1;
 localparam ZFH_SUPPORTED = 1;
-localparam ZFA_SUPPORTED = 0;
+localparam ZFA_SUPPORTED = 1;
 localparam SSTC_SUPPORTED = 1;
 localparam ZICBOM_SUPPORTED = 1;
 localparam ZICBOZ_SUPPORTED = 1;
@@ -134,6 +134,10 @@ localparam logic [63:0] SPI_RANGE = 64'h00000FFF;
 
 // Test modes
 
+// AHB 
+localparam RAM_LATENCY = 32'b0;
+localparam BURST_EN    = 1;
+
 // Tie GPIO outputs back to inputs
 localparam GPIO_LOOPBACK_TEST = 1;
 localparam SPI_LOOPBACK_TEST = 1;
@@ -156,6 +160,7 @@ localparam BPRED_NUM_LHR = 32'd6;
 localparam BPRED_SIZE = 32'd10;
 localparam BTB_SIZE = 32'd10;
 localparam RAS_SIZE = 32'd16;
+localparam INSTR_CLASS_PRED = 1;
 
 localparam SVADU_SUPPORTED = 1;
 localparam ZMMUL_SUPPORTED = 0;
@@ -182,3 +187,4 @@ localparam ZCD_SUPPORTED = 0;
 localparam USE_SRAM = 0;
 
 `include "config-shared.vh"
+

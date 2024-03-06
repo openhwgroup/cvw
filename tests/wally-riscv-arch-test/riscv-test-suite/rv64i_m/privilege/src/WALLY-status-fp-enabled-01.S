@@ -23,7 +23,7 @@
 
 #include "WALLY-TEST-LIB-64.h"
 RVTEST_ISA("RV64IAF_Zicsr")
-RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*A.*F.*);def TEST_CASE_1=True;",status-fp-enabled)
+RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*A.*F.*);def TEST_CASE_1=True;def NO_SAIL=True;",status-fp-enabled)
 
 INIT_TESTS
 

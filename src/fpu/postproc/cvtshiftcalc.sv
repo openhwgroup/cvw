@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -98,6 +99,6 @@ module cvtshiftcalc import cvw::*;  #(parameter cvw_t P) (
   // determine if the result underflows ??? -> fp
   //      - if the first 1 is shifted out of the result then the result underflows
   //      - can't underflow an integer to fp conversions
-  assign CvtResUf = ($signed(CvtCe) < $signed({{P.NE-$clog2(P.NF){1'b1}}, ResNegNF}))&~XZero&~IntToFp;
+  assign CvtResUf = ($signed(CvtCe) < $signed({{P.NE-$clog2(P.NF){1'b1}}, ResNegNF}))&~XZero&~IntToFp; 
   
 endmodule

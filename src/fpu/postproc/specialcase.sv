@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -43,16 +44,17 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.NE+1:0]      FullRe,            // Result full exponent
   input  logic [P.NF-1:0]      Rf,                // Result fraction
   // fma
-  input  logic                 FmaOp,             // is it a fma opperation
+  input  logic                 FmaOp,             // is it a fma operation
   // divsqrt
-  input  logic                 DivOp,             // is it a divsqrt opperation
+  input  logic                 DivOp,             // is it a divsqrt operation
   input  logic                 DivByZero,         // divide by zero flag
   // cvt
-  input  logic                 CvtOp,             // is it a conversion opperation
+  input  logic                 CvtOp,             // is it a conversion operation
   input  logic                 IntZero,           // is the integer input zero
-  input  logic                 IntToFp,           // is cvt int -> fp opperation
+  input  logic                 IntToFp,           // is cvt int -> fp operation
   input  logic                 Int64,             // is the integer 64 bits
   input  logic                 Signed,            // is the integer signed
+  input  logic                 Zfa,               // Zfa conversion operation: fcvtmod.w.d
   input  logic [P.NE:0]        CvtCe,             // the calculated expoent for cvt
   input  logic                 IntInvalid,        // integer invalid flag to choose the result
   input  logic                 CvtResUf,          // does the convert result underflow
@@ -70,10 +72,12 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
   logic [P.FLEN-1:0]   OfRes;      // overflowed result result
   logic [P.FLEN-1:0]   NormRes;    // normal result
   logic [P.XLEN-1:0]   OfIntRes;   // the overflow result for integer output
+  logic [P.XLEN-1:0]   OfIntRes2;  // the overflow result for integer output after accounting for fcvtmod.w.d
+  logic [P.XLEN-1:0]   Int64Res;   // Result for conversion to 64-bit int after accounting for fcvtmod.w.d
   logic                OfResMax;   // does the of result output maximum norm fp number
   logic                KillRes;    // kill the result for underflow
-  logic                SelOfRes;   // should the overflow result be selected
-
+  logic                SelOfRes;   // should the overflow result be selected (excluding convert)
+  logic                SelCvtOfRes; // select overflow result for convert instruction
 
   // does the overflow result output the maximum normalized floating point number
   //                output infinity if the input is infinity
@@ -329,18 +333,37 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
             else          OfIntRes = {P.XLEN{1'b1}}; // unsigned positive
     end  
    
+  // fcvtmod.w.d logic
+  // fcvtmod.w.d is like fcvt.w.d excep thtat it takes bits [31:0] and sign extends the rest,
+  // and converts +/-inf and NaN to zero.
+
+  if (P.ZFA_SUPPORTED & P.D_SUPPORTED) // fcvtmod.w.d support
+    always_comb begin
+        if (Zfa) OfIntRes2 = '0;                // fcvtmod.w.d produces 0 on overflow
+        else     OfIntRes2 = OfIntRes;
+        if (Zfa) Int64Res = {{(P.XLEN-32){CvtNegRes[P.XLEN-1]}}, CvtNegRes[31:0]};
+        else     Int64Res = CvtNegRes[P.XLEN-1:0];
+        if (Zfa) SelCvtOfRes = InfIn | NaNIn  | (CvtCe > 32 + 52); // fcvtmod.w.d only overflows to 0 on NaN or Infinity, or if the shift is so large that only zeros are left
+        else     SelCvtOfRes = IntInvalid;    // regular fcvt gives an overflow if out of range
+    end
+  else 
+    always_comb begin // no fcvtmod.w.d support
+        OfIntRes2 = OfIntRes;
+        Int64Res = CvtNegRes[P.XLEN-1:0];
+        SelCvtOfRes = IntInvalid;
+    end
 
   // select the integer output
   //      - if the input is invalid (out of bounds NaN or Inf) then output overflow res
   //      - if the input underflows
-  //          - if rounding and signed opperation and negative input, output -1
+  //          - if rounding and signed operation and negative input, output -1
   //          - otherwise output a rounded 0
   //      - otherwise output the normal res (trmined and sign extended if nessisary)
   always_comb
-    if(IntInvalid)          FCvtIntRes = OfIntRes;
+    if(SelCvtOfRes)         FCvtIntRes = OfIntRes2; 
     else if(CvtCe[P.NE]) 
       if(Xs&Signed&Plus1)   FCvtIntRes = {{P.XLEN{1'b1}}};
       else                  FCvtIntRes = {{P.XLEN-1{1'b0}}, Plus1};
-    else if(Int64)          FCvtIntRes = CvtNegRes[P.XLEN-1:0];
+    else if(Int64)          FCvtIntRes = Int64Res;
     else                    FCvtIntRes = {{P.XLEN-32{CvtNegRes[31]}}, CvtNegRes[31:0]};
 endmodule

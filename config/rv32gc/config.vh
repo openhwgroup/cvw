@@ -41,8 +41,8 @@ localparam ZIFENCEI_SUPPORTED = 1;
 localparam COUNTERS = 12'd32;
 localparam ZICNTR_SUPPORTED = 1;
 localparam ZIHPM_SUPPORTED = 1;
-localparam ZFH_SUPPORTED = 0;
-localparam ZFA_SUPPORTED = 0;
+localparam ZFH_SUPPORTED = 1;
+localparam ZFA_SUPPORTED = 1;
 localparam SSTC_SUPPORTED = 1;
 localparam ZICBOM_SUPPORTED = 1;
 localparam ZICBOZ_SUPPORTED = 1;
@@ -133,6 +133,10 @@ localparam AHBW = 32'd32;
 
 // Test modes
 
+// AHB 
+localparam RAM_LATENCY = 32'b0;
+localparam BURST_EN    = 1;
+
 // Tie GPIO outputs back to inputs
 localparam GPIO_LOOPBACK_TEST = 1;
 localparam SPI_LOOPBACK_TEST = 1;
@@ -150,22 +154,12 @@ localparam PLIC_SPI_ID = 32'd6;
 localparam PLIC_SDC_ID = 32'd9;
 
 localparam BPRED_SUPPORTED = 1;
-// this is an annoying hack for the branch predictor parameterization override.
-`ifdef BPRED_OVERRIDE
-localparam BPRED_TYPE = `BPRED_TYPE;
-localparam BPRED_SIZE = `BPRED_SIZE;
-`else
 localparam BPRED_TYPE = `BP_GSHARE; // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BASIC, BP_TWOBIT
 localparam BPRED_SIZE = 32'd10;
-`endif
 localparam BPRED_NUM_LHR = 32'd6;
-`ifdef BTB_OVERRIDE
-localparam BTB_SIZE = `BTB_SIZE;
-localparam RAS_SIZE = `RAS_SIZE;
-`else
 localparam BTB_SIZE = 32'd10;
 localparam RAS_SIZE = 32'd16;
-`endif
+localparam INSTR_CLASS_PRED = 1;
 
 localparam SVADU_SUPPORTED = 1;
 localparam ZMMUL_SUPPORTED = 0;
