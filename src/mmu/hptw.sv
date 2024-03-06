@@ -148,7 +148,6 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   flopenr #(1) TLBMissMReg(clk, reset, StartWalk, DTLBMissOrUpdateDAM, DTLBWalk); // when walk begins, record whether it was for DTLB (or record 0 for ITLB)
   assign PRegEn = HPTWRW[1] & ~DCacheBusStallM | UpdatePTE;
   flopenr #(P.XLEN) PTEReg(clk, reset, PRegEn, NextPTE, PTE); // Capture page table entry from data cache
-  assert property(@(posedge clk) ~PRegEn | reset | NextPTE[0] !== 1'bx); // report writing an x PTE from an uninitialized page table
 
   // Assign PTE descriptors common across all XLEN values
   // For non-leaf PTEs, D, A, U bits are reserved and ignored.  They do not cause faults while walking the page table

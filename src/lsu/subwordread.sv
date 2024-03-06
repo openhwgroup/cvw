@@ -29,39 +29,42 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module subwordread import cvw::*;  #(parameter cvw_t P) (
-   input logic [P.LLEN-1:0]   ReadDataWordMuxM,
-   input logic [3:0]        PAdrM,
-   input logic [2:0]        Funct3M,
-   input logic              FpLoadStoreM, 
-   input logic              BigEndianM, 
-   output logic [P.LLEN-1:0]  ReadDataM
+   input logic [P.LLEN-1:0]  ReadDataWordMuxM,
+   input logic [3:0]         PAdrM,
+   input logic [2:0]         Funct3M,
+   input logic               FpLoadStoreM, 
+   input logic               BigEndianM, 
+   output logic [P.LLEN-1:0] ReadDataM
 );
+
   localparam ADRBITS = $clog2(P.LLEN)-3;
 
+  logic [ADRBITS-1:0]       PAdrSwapM;
   logic [7:0]               ByteM; 
   logic [15:0]              HalfwordM;
   logic [31:0]              WordM;
   logic [63:0]              DblWordM;
-  logic [ADRBITS-1:0]       PAdrSwap;
-  // Funct3M[2] is the unsigned bit. mask upper bits.
-  // Funct3M[1:0] is the size of the memory access.
-  if (P.BIGENDIAN_SUPPORTED) assign PAdrSwap = PAdrM[ADRBITS-1:0] ^ {ADRBITS{BigEndianM}};
-  else assign PAdrSwap = PAdrM[ADRBITS-1:0];
-  assign ByteM = ReadDataWordMuxM[PAdrSwap*8 +: 8];
-  assign HalfwordM = ReadDataWordMuxM[PAdrSwap[ADRBITS-1:1]*16 +: 16];
-  if (P.LLEN >= 64) assign WordM = ReadDataWordMuxM[PAdrSwap[ADRBITS-1:2] * 32 +: 32];
-  else              assign WordM = ReadDataWordMuxM;
 
-  if (P.LLEN >= 64) assign DblWordM = ReadDataWordMuxM[PAdrSwap[ADRBITS-1] * 64 +: 64];
+  // invert lsbs of address to select appropriate subword for big endian
+  if (P.BIGENDIAN_SUPPORTED) assign PAdrSwapM = PAdrM[ADRBITS-1:0] ^ {ADRBITS{BigEndianM}};
+  else                       assign PAdrSwapM = PAdrM[ADRBITS-1:0];
+
+  // Use indexed part select to imply muxes to select each size of subword
+  if (P.LLEN == 128) mux2 #(64) dblmux(ReadDataWordMuxM[63:0], ReadDataWordMuxM[127:64], PAdrSwapM[3], DblWordM);
+  else if (P.LLEN == 64) assign DblWordM = ReadDataWordMuxM;
+  if (P.LLEN >= 64) mux2 #(32) wordmux(DblWordM[31:0], DblWordM[63:32], PAdrSwapM[2], WordM);
+  else assign WordM = ReadDataWordMuxM;
+  mux2 #(16) halfwordmux(WordM[15:0], WordM[31:16], PAdrSwapM[1], HalfwordM);
+  mux2 #(8)  bytemux(HalfwordM[7:0], HalfwordM[15:8], PAdrSwapM[0], ByteM);
 
   // sign extension/ NaN boxing
   always_comb
     case(Funct3M)
-      3'b000:  ReadDataM = {{(P.LLEN-8){ByteM[7]}}, ByteM};                                                   // lb
-      3'b001:  ReadDataM = {{P.LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]};                        // lh/flh
-      3'b010:  ReadDataM = {{P.LLEN-32{WordM[31]|FpLoadStoreM}}, WordM[31:0]};                                // lw/flw
-      3'b011:  if (P.LLEN >= 64) ReadDataM = {{P.LLEN-64{DblWordM[63]|FpLoadStoreM}}, DblWordM[63:0]};        // ld/fld
-               else ReadDataM = ReadDataWordMuxM;
+      3'b000:  ReadDataM = {{(P.LLEN-8){ByteM[7]}}, ByteM};                                                     // lb
+      3'b001:  ReadDataM = {{P.LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]};                          // lh/flh
+      3'b010:  ReadDataM = {{P.LLEN-32{WordM[31]|FpLoadStoreM}}, WordM[31:0]};                                  // lw/flw
+      3'b011:  if (P.LLEN >= 64) ReadDataM = {{P.LLEN-64{DblWordM[63]|FpLoadStoreM}}, DblWordM[63:0]};          // ld/fld
+               else ReadDataM = ReadDataWordMuxM;                                                               // shouldn't happen
       3'b100:  if (P.LLEN == 128) ReadDataM = FpLoadStoreM ? ReadDataWordMuxM : {{P.LLEN-8{1'b0}}, ByteM[7:0]}; // lbu/flq   
                else ReadDataM = {{P.LLEN-8{1'b0}}, ByteM[7:0]};                                                 // lbu
       3'b101:  ReadDataM = {{P.LLEN-16{1'b0}}, HalfwordM[15:0]};                                                // lhu
