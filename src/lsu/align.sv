@@ -94,21 +94,21 @@ module align import cvw::*;  #(parameter cvw_t P) (
   // compute misalignement
   always_comb begin
     case (Funct3M[1:0]) 
-      2'b00: AccessByteOffsetM = '0; // byte access
+      2'b00: AccessByteOffsetM = 0; // byte access
       2'b01: AccessByteOffsetM = {2'b00, IEUAdrM[0]}; // half access
       2'b10: AccessByteOffsetM = {1'b0, IEUAdrM[1:0]}; // word access
       2'b11: AccessByteOffsetM = IEUAdrM[2:0]; // double access
       default: AccessByteOffsetM = IEUAdrM[2:0];
     endcase
     case (Funct3M[1:0]) 
-      2'b00: PotentialSpillM = '0; // byte access
+      2'b00: PotentialSpillM = 0; // byte access
       2'b01: PotentialSpillM = IEUAdrM[OFFSET_BIT_POS-1:1] == '1; // half access
       2'b10: PotentialSpillM = IEUAdrM[OFFSET_BIT_POS-1:2] == '1; // word access
       2'b11: PotentialSpillM = IEUAdrM[OFFSET_BIT_POS-1:3] == '1; // double access
-      default: PotentialSpillM = '0;
+      default: PotentialSpillM = 0;
     endcase
   end
-  assign MisalignedM = (|MemRWM) & (AccessByteOffsetM != '0);
+  assign MisalignedM = (|MemRWM) & (AccessByteOffsetM != 0);
       
   assign ValidSpillM = MisalignedM & PotentialSpillM & ~CacheBusHPWTStall;   // Don't take the spill if there is a stall
   
@@ -147,7 +147,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   // shifter (4:1 mux for 32 bit, 8:1 mux for 64 bit)
   // 8 * is for shifting by bytes not bits
-  assign ShiftAmount = SelHPTW ? '0 : {AccessByteOffsetM, 3'b0}; // AND gate
+  assign ShiftAmount = SelHPTW ? 0 : {AccessByteOffsetM, 3'b0}; // AND gate
   assign ReadDataWordSpillShiftedM = ReadDataWordSpillAllM >> ShiftAmount;
   assign DCacheReadDataWordSpillM = ReadDataWordSpillShiftedM[P.LLEN-1:0];
 

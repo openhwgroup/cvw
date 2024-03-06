@@ -111,11 +111,11 @@ module ebu import cvw::*;  #(parameter cvw_t P) (
     .HTRANSOut(LSUHTRANSOut), .HADDROut(LSUHADDROut), .HREADYIn(HREADY));
 
   // output mux //*** switch to structural implementation
-  assign HADDR = LSUSelect ? LSUHADDROut : IFUSelect ? IFUHADDROut : '0;
-  assign HSIZE = LSUSelect ? LSUHSIZEOut : IFUSelect ? IFUHSIZEOut: '0; 
-  assign HBURST = LSUSelect ? LSUHBURSTOut : IFUSelect ? IFUHBURSTOut : '0; // If doing memory accesses, use LSUburst, else use Instruction burst.
-  assign HTRANS = LSUSelect ? LSUHTRANSOut : IFUSelect ? IFUHTRANSOut: '0; // SEQ if not first read or write, NONSEQ if first read or write, IDLE otherwise
-  assign HWRITE = LSUSelect ? LSUHWRITEOut : IFUSelect ? 1'b0 : '0;
+  assign HADDR = LSUSelect ? LSUHADDROut : IFUSelect ? IFUHADDROut : 0;
+  assign HSIZE = LSUSelect ? LSUHSIZEOut : IFUSelect ? IFUHSIZEOut: 0; 
+  assign HBURST = LSUSelect ? LSUHBURSTOut : IFUSelect ? IFUHBURSTOut : 0; // If doing memory accesses, use LSUburst, else use Instruction burst.
+  assign HTRANS = LSUSelect ? LSUHTRANSOut : IFUSelect ? IFUHTRANSOut: 0; // SEQ if not first read or write, NONSEQ if first read or write, IDLE otherwise
+  assign HWRITE = LSUSelect ? LSUHWRITEOut : 0;
   assign HPROT = 4'b0011; // not used; see Section 3.7
   assign HMASTLOCK = 0; // no locking supported
 

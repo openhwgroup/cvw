@@ -176,7 +176,7 @@ module cache import cvw::*; #(parameter cvw_t P,
     
     logic [LINELEN/8-1:0]          BlankByteMask;
     assign BlankByteMask[WORDLEN/8-1:0] = ByteMask;
-    assign BlankByteMask[LINELEN/8-1:WORDLEN/8] = '0;
+    assign BlankByteMask[LINELEN/8-1:WORDLEN/8] = 0;
 
     assign DemuxedByteMask = BlankByteMask << ((MUXINTERVAL/8) * WordOffsetAddr);
 
@@ -187,7 +187,7 @@ module cache import cvw::*; #(parameter cvw_t P,
       mux2 #(8) WriteDataMux(.d0(CacheWriteData[(8*index)%WORDLEN+7:(8*index)%WORDLEN]),
         .d1(FetchBuffer[8*index+7:8*index]), .s(FetchBufferByteSel[index] & ~CMOpM[3]), .y(LineWriteData[8*index+7:8*index]));
     end
-    assign LineByteMask = SetValid ? '1 : SetDirty ? DemuxedByteMask : '0;
+    assign LineByteMask = SetValid ? '1 : SetDirty ? DemuxedByteMask : 0;
   end
   else
     begin:WriteSelLogic
