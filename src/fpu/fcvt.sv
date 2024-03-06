@@ -31,7 +31,7 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.NE-1:0]         Xe,           // input's exponent
   input  logic [P.NF:0]           Xm,           // input's fraction
   input  logic [P.XLEN-1:0]       Int,          // integer input - from IEU
-  input  logic [2:0]              OpCtrl,       // choose which opperation (look below for values)
+  input  logic [2:0]              OpCtrl,       // choose which operation (look below for values)
   input  logic                    ToInt,        // is fp->int (since it's writting to the integer register)
   input  logic                    XZero,        // is the input zero
   input  logic [P.FMTBITS-1:0]    Fmt,          // the input's precision (11=quad 01=double 00=single 10=half)
@@ -58,9 +58,9 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]              TrimInt;      // integer trimmed to the correct size
   logic [P.NE-2:0]                NewBias;      // the bias of the final result
   logic [P.NE-1:0]                OldExp;       // the old exponent
-  logic                           Signed;       // is the opperation with a signed integer?
+  logic                           Signed;       // is the operation with a signed integer?
   logic                           Int64;        // is the integer 64 bits?
-  logic                           IntToFp;      // is the opperation an int->fp conversion?
+  logic                           IntToFp;      // is the operation an int->fp conversion?
   logic [P.CVTLEN:0]              LzcInFull;    // input to the Leading Zero Counter (priority encoder)
   logic [P.LOGCVTLEN-1:0]         LeadingZeros; // output from the LZC
 
@@ -69,9 +69,9 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
   assign Int64 =   OpCtrl[1];
   assign IntToFp = OpCtrl[2];
 
-  // choose the ouptut format depending on the opperation
-  //      - fp -> fp: OpCtrl contains the percision of the output
-  //      - int -> fp: Fmt contains the percision of the output
+  // choose the output format depending on the operation
+  //      - fp -> fp: OpCtrl contains the precision of the output
+  //      - int -> fp: Fmt contains the precision of the output
   if (P.FPSIZES == 2) 
       assign OutFmt = IntToFp ? Fmt : (OpCtrl[1:0] == P.FMT); 
   else if (P.FPSIZES == 3 | P.FPSIZES == 4) 
@@ -80,7 +80,7 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////////////////////////////////////
   // negation
   ///////////////////////////////////////////////////////////////////////////
-  // 1) negate the input if the input is a negitive singed integer
+  // 1) negate the input if the input is a negative singed integer
   // 2) trim the input to the proper size (kill the 32 most significant zeroes if needed)
 
   assign PosInt = Cs ? -Int : Int;
@@ -182,7 +182,7 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
   assign Ce = {1'b0, OldExp} - (P.NE+1)'(P.BIAS) - {{P.NE-P.LOGCVTLEN+1{1'b0}}, (LeadingZeros)} + {2'b0, NewBias};
 
   // find if the result is dnormal or underflows
-  //      - if Calculated expoenent is 0 or negitive (and the input/result is not exactaly 0)
+  //      - if Calculated expoenent is 0 or negative (and the input/result is not exactaly 0)
   //      - can't underflow an integer to Fp conversion
   assign ResSubnormUf = (~|Ce | Ce[P.NE])&~XZero&~IntToFp;
 
@@ -190,7 +190,7 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
   // shifter
   ///////////////////////////////////////////////////////////////////////////
 
-  // kill the shift if it's negitive
+  // kill the shift if it's negative
   // select the amount to shift by
   //      fp -> int: 
   //          - shift left by CalcExp - essentially shifting until the unbiased exponent = 0

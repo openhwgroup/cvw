@@ -6,6 +6,7 @@
 // Purpose: Test writes to CSRs
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -36,5 +37,32 @@ main:
     li t0, -2
     csrrw t1, menvcfg, t0
     csrrw t2, senvcfg, t0
+
+    # testing FIOM with different privelege modes
+    # setting environment config (to both 1 and 0) in each privelege mode
+    csrsi menvcfg, 1
+    li a0, 1
+    ecall               # enter supervisor mode
+
+    li a0, 0            
+    ecall               # enter user mode
+
+    li a0, 1
+    ecall               # enter supervisor mode
+
+    csrsi senvcfg, 1
+    li a0, 0
+    ecall               # enter user mode
+
+    li a0, 3
+    ecall               # enter machine mode
+    csrci menvcfg, 1
+
+    li a0, 1
+    ecall               # enter supervisor mode
+
+    li a0, 0
+    ecall               # enter user mode
+
 
     j done

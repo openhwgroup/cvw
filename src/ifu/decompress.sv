@@ -12,6 +12,7 @@
 // *** probably need more documentation in this file since the book is very light on decompression.
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -165,14 +166,14 @@ module decompress import cvw::*;  #(parameter cvw_t P) (
                       InstrD = {7'b0000000, rs2p, rds1p, 3'b110, rds1p, 7'b0110011}; // c.or
                     else // if (instr16[6:5] == 2'b11) 
                       InstrD = {7'b0000000, rs2p, rds1p, 3'b111, rds1p, 7'b0110011}; // c.and
-                  else if (instr16[12:10] == 3'b111) begin
+                  else begin // (instr16[12:10] == 3'b111)
                     if (instr16[6:5] == 2'b00 & P.XLEN > 32)
                       InstrD = {7'b0100000, rs2p, rds1p, 3'b000, rds1p, 7'b0111011}; // c.subw
                     else if (instr16[6:5] == 2'b01 & P.XLEN > 32)
                       InstrD = {7'b0000000, rs2p, rds1p, 3'b000, rds1p, 7'b0111011}; // c.addw
                     else if (instr16[6:2] == 5'b11000 & P.ZCB_SUPPORTED) 
                       InstrD = {12'b000011111111, rds1p, 3'b111, rds1p, 7'b0010011}; // c.zext.b = andi rd, rs1, 255
-                    else if (instr16[6:2] == 5'b10101 & P.ZCB_SUPPORTED) 
+                    else if (instr16[6:2] == 5'b11001 & P.ZCB_SUPPORTED) 
                       InstrD = {12'b011000000100, rds1p, 3'b001, rds1p, 7'b0010011}; // c.sext.b
                     else if (instr16[6:2] == 5'b11010 & P.ZCB_SUPPORTED) 
                       InstrD = {7'b0000100, 5'b00000, rds1p, 3'b100, rds1p, 3'b011, P.XLEN > 32, 3'b011};  // c.zext.h
@@ -188,9 +189,9 @@ module decompress import cvw::*;  #(parameter cvw_t P) (
                       IllegalCompInstrD = 1;
                       InstrD = {16'b0, instr16}; // preserve instruction for mtval on trap
                     end
-                  end else begin // illegal instruction
+                  /** end else begin // illegal instruction
                     IllegalCompInstrD = 1;
-                    InstrD = {16'b0, instr16}; // preserve instruction for mtval on trap
+                    InstrD = {16'b0, instr16}; // preserve instruction for mtval on trap **/
                   end
         5'b01101: InstrD = {immCJ, 5'b00000, 7'b1101111}; // c.j
         5'b01110: InstrD = {immCB[11:5], 5'b00000, rs1p, 3'b000, immCB[4:0], 7'b1100011}; // c.beqz

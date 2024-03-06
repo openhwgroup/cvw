@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 8
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -48,5 +49,5 @@ module adrdec #(parameter PA_BITS) (
   assign SizeValid = SizeMask[Size]; 
   
   // Select this peripheral if the address matches, the peripheral is supported, and the type and size of access is ok
-  assign Sel = Match & Supported & AccessValid & SizeValid;
+  assign Sel = Match & Supported & AccessValid & SizeValid; // exclusion-tag: adrdecSel
 endmodule

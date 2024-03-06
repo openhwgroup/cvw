@@ -40,6 +40,7 @@ localparam COUNTERS = 12'd32;
 localparam ZICNTR_SUPPORTED = 1;
 localparam ZIHPM_SUPPORTED = 1;
 localparam ZFH_SUPPORTED = 0;
+localparam ZFA_SUPPORTED = 0;
 localparam SSTC_SUPPORTED = 0;
 localparam ZICBOM_SUPPORTED = 0;
 localparam ZICBOZ_SUPPORTED = 0;
@@ -130,6 +131,10 @@ localparam AHBW = 32'd32;
 
 // Test modes
 
+// AHB 
+localparam RAM_LATENCY = 32'b0;
+localparam BURST_EN    = 1;
+
 // Tie GPIO outputs back to inputs
 localparam GPIO_LOOPBACK_TEST = 1;
 localparam SPI_LOOPBACK_TEST = 1;
@@ -152,6 +157,7 @@ localparam BPRED_SIZE = 32'd10;
 localparam BPRED_NUM_LHR = 32'd6;
 localparam BTB_SIZE = 32'd10;
 localparam RAS_SIZE = 32'd16;
+localparam INSTR_CLASS_PRED = 0;
 
 localparam SVADU_SUPPORTED = 0;
 localparam ZMMUL_SUPPORTED = 0;

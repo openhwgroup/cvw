@@ -65,33 +65,29 @@ localparam H_NF = 32'd10;
 localparam H_BIAS = 32'd15;
 localparam H_FMT = 2'd2;
 
-// Floating point length FLEN and number of exponent (NE) and fraction (NF) bits
-localparam FLEN = (Q_SUPPORTED ? Q_LEN  : D_SUPPORTED ? D_LEN  : S_LEN);
-localparam NE   = (Q_SUPPORTED ? Q_NE   : D_SUPPORTED ? D_NE   : S_NE);
-localparam NF   = (Q_SUPPORTED ? Q_NF   : D_SUPPORTED ? D_NF   : S_NF);
-localparam FMT  = (Q_SUPPORTED ? 2'd3    : D_SUPPORTED ? 2'd1    : 2'd0);
-localparam BIAS = (Q_SUPPORTED ? Q_BIAS : D_SUPPORTED ? D_BIAS : S_BIAS);
-/* Delete once tested dh 10/10/22
-
-localparam FLEN = (Q_SUPPORTED ? Q_LEN  : D_SUPPORTED ? D_LEN  : F_SUPPORTED ? S_LEN  : H_LEN);
-localparam NE   = (Q_SUPPORTED ? Q_NE   : D_SUPPORTED ? D_NE   : F_SUPPORTED ? S_NE   : H_NE);
-localparam NF   = (Q_SUPPORTED ? Q_NF   : D_SUPPORTED ? D_NF   : F_SUPPORTED ? S_NF   : H_NF); 
-localparam FMT  = (Q_SUPPORTED ? 2'd3       : D_SUPPORTED ? 2'd1       : F_SUPPORTED ? 2'd0       : 2'd2);
-localparam BIAS = (Q_SUPPORTED ? Q_BIAS : D_SUPPORTED ? D_BIAS : F_SUPPORTED ? S_BIAS : H_BIAS);*/
+// Floating point length FLEN and number of exponent (NE) and fraction (NF) bits (for longest format supported)
+localparam FLEN = Q_SUPPORTED ? Q_LEN  : D_SUPPORTED ? D_LEN  : S_LEN;
+localparam NE   = Q_SUPPORTED ? Q_NE   : D_SUPPORTED ? D_NE   : S_NE;
+localparam NF   = Q_SUPPORTED ? Q_NF   : D_SUPPORTED ? D_NF   : S_NF;
+localparam FMT  = Q_SUPPORTED ? 2'd3   : D_SUPPORTED ? 2'd1   : 2'd0;
+localparam BIAS = Q_SUPPORTED ? Q_BIAS : D_SUPPORTED ? D_BIAS : S_BIAS;
 
 // Floating point constants needed for FPU paramerterization
-localparam FPSIZES = ((32)'(Q_SUPPORTED)+(32)'(D_SUPPORTED)+(32)'(F_SUPPORTED)+(32)'(ZFH_SUPPORTED));
-localparam FMTBITS = ((32)'(FPSIZES>=3)+1);
-localparam LEN1  = ((D_SUPPORTED & (FLEN != D_LEN)) ? D_LEN  : (F_SUPPORTED & (FLEN != S_LEN)) ? S_LEN  : H_LEN);
-localparam NE1   = ((D_SUPPORTED & (FLEN != D_LEN)) ? D_NE   : (F_SUPPORTED & (FLEN != S_LEN)) ? S_NE   : H_NE);
-localparam NF1   = ((D_SUPPORTED & (FLEN != D_LEN)) ? D_NF   : (F_SUPPORTED & (FLEN != S_LEN)) ? S_NF   : H_NF);
-localparam FMT1  = ((D_SUPPORTED & (FLEN != D_LEN)) ? 2'd1    : (F_SUPPORTED & (FLEN != S_LEN)) ? 2'd0    : 2'd2);
-localparam BIAS1 = ((D_SUPPORTED & (FLEN != D_LEN)) ? D_BIAS : (F_SUPPORTED & (FLEN != S_LEN)) ? S_BIAS : H_BIAS);
-localparam LEN2  = ((F_SUPPORTED & (LEN1 != S_LEN)) ? S_LEN  : H_LEN);
-localparam NE2   = ((F_SUPPORTED & (LEN1 != S_LEN)) ? S_NE   : H_NE);
-localparam NF2   = ((F_SUPPORTED & (LEN1 != S_LEN)) ? S_NF   : H_NF);
-localparam FMT2  = ((F_SUPPORTED & (LEN1 != S_LEN)) ? 2'd0    : 2'd2);
-localparam BIAS2 = ((F_SUPPORTED & (LEN1 != S_LEN)) ? S_BIAS : H_BIAS);
+// LEN1/NE1/NF1/FNT1 is the size of the second longest supported format
+localparam FPSIZES = (32)'(Q_SUPPORTED)+(32)'(D_SUPPORTED)+(32)'(F_SUPPORTED)+(32)'(ZFH_SUPPORTED);
+localparam FMTBITS = (32)'(FPSIZES>=3)+1;
+localparam LEN1  = (FLEN > D_LEN) ? D_LEN  : (FLEN > S_LEN) ? S_LEN  : H_LEN;
+localparam NE1   = (FLEN > D_LEN) ? D_NE   : (FLEN > S_LEN) ? S_NE   : H_NE;
+localparam NF1   = (FLEN > D_LEN) ? D_NF   : (FLEN > S_LEN) ? S_NF   : H_NF;
+localparam FMT1  = (FLEN > D_LEN) ? 2'd1   : (FLEN > S_LEN) ? 2'd0   : 2'd2;
+localparam BIAS1 = (FLEN > D_LEN) ? D_BIAS : (FLEN > S_LEN) ? S_BIAS : H_BIAS;
+
+// LEN2 etc is the size of the third longest supported format
+localparam LEN2  = (LEN1 > S_LEN) ? S_LEN  : H_LEN;
+localparam NE2   = (LEN1 > S_LEN) ? S_NE   : H_NE;
+localparam NF2   = (LEN1 > S_LEN) ? S_NF   : H_NF;
+localparam FMT2  = (LEN1 > S_LEN) ? 2'd0   : 2'd2;
+localparam BIAS2 = (LEN1 > S_LEN) ? S_BIAS : H_BIAS;
 
 // divider r and rk (bits per digit, bits per cycle)
 localparam LOGR        = $clog2(RADIX);                             // r = log(R) bits per digit
@@ -107,15 +103,15 @@ localparam RESBITS     = DIVMINb + LOGR; // number of bits in a result: r intege
 localparam FPDUR       = (RESBITS-1)/RK + 1 ;                       // ceiling((r+b)/rk)
 localparam DIVb        = FPDUR*RK - LOGR;                           // divsqrt fractional bits, so total number of bits is a multiple of rk after r integer bits
 localparam DURLEN      = $clog2(FPDUR);                             // enough bits to count the duration
-localparam DIVBLEN     = $clog2(DIVb);                              // enough bits to count number of fractional bits
+localparam DIVBLEN     = $clog2(DIVb+1);                            // enough bits to count number of fractional bits + 1 integer bit
 
 // largest length in IEU/FPU
 localparam CVTLEN = ((NF<XLEN) ? (XLEN) : (NF));  // max(XLEN, NF)
 localparam LLEN = (($unsigned(FLEN)<$unsigned(XLEN)) ? ($unsigned(XLEN)) : ($unsigned(FLEN)));
 localparam LOGCVTLEN = $unsigned($clog2(CVTLEN+1));
-localparam NORMSHIFTSZ = (((CVTLEN+NF+1)>(DIVb + 1 +NF+1) & (CVTLEN+NF+1)>(3*NF+6)) ? (CVTLEN+NF+1) : ((DIVb + 1 +NF+1) > (3*NF+6) ? (DIVb + 1 +NF+1) : (3*NF+6)));
+localparam NORMSHIFTSZ = (((CVTLEN+NF+1)>(DIVb + 1 +NF+1) & (CVTLEN+NF+1)>(3*NF+6)) ? (CVTLEN+NF+1) : ((DIVb + 1 +NF+1) > (3*NF+6) ? (DIVb + 1 +NF+1) : (3*NF+6))); // max(CVTLEN+NF+1, DIVb + 1 + NF + 1, 3*NF+6)
 localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));
-localparam CORRSHIFTSZ = (((CVTLEN+NF+1)>(DIVb + 1 +NF+1) & (CVTLEN+NF+1)>(3*NF+6)) ? (CVTLEN+NF+1) : ((DIVMINb+1+NF) > (3*NF+4) ? (DIVMINb+1+NF) : (3*NF+4)));
+localparam CORRSHIFTSZ = (NORMSHIFTSZ-2 > (DIVMINb + 1 + NF)) ? NORMSHIFTSZ-2 : (DIVMINb+1+NF);  // max(NORMSHIFTSZ-2, DIVMINb + 1 + NF)
 
 
 // Disable spurious Verilator warnings

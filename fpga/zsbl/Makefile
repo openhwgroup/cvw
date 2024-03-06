@@ -21,7 +21,7 @@ ROOT		:= ..
 LIBRARY_DIRS	:= 
 LIBRARY_FILES	:=
 
-MARCH           :=-march=rv64imfdc
+MARCH           :=-march=rv64imfdc_zifencei
 MABI            :=-mabi=lp64d
 LINK_FLAGS      :=$(MARCH) $(MABI) -nostartfiles
 LINKER		:=linker.x

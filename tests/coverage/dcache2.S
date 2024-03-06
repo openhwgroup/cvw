@@ -7,6 +7,7 @@
 //          (for all 4 cache ways, trigger a FlushStage while SetDirtyWay=1)        
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //

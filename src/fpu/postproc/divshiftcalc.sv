@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -36,7 +37,7 @@ module divshiftcalc import cvw::*;  #(parameter cvw_t P) (
 );
 
   logic [P.LOGNORMSHIFTSZ-1:0]         NormShift;          // normalized result shift amount
-  logic [P.LOGNORMSHIFTSZ-1:0]         DivSubnormShiftAmt; // subnormal result shift amount (killed if negitive)
+  logic [P.LOGNORMSHIFTSZ-1:0]         DivSubnormShiftAmt; // subnormal result shift amount (killed if negative)
   logic [P.NE+1:0]                     DivSubnormShift;    // subnormal result shift amount
 
   // is the result subnormal
@@ -62,7 +63,7 @@ module divshiftcalc import cvw::*;  #(parameter cvw_t P) (
   // shift one more if the it's a minimally redundent radix 4 - one entire cycle needed for integer bit
   assign NormShift = (P.LOGNORMSHIFTSZ)'(P.NF);
 
-  // if the shift amount is negitive then don't shift (keep sticky bit)
+  // if the shift amount is negative then don't shift (keep sticky bit)
   // need to multiply the early termination shift by LOGR*DIVCOPIES =  left shift of log2(LOGR*DIVCOPIES)
   assign DivSubnormShiftAmt = DivSubnormShiftPos ? DivSubnormShift[P.LOGNORMSHIFTSZ-1:0] : '0;
   assign DivShiftAmt        = DivResSubnorm ? DivSubnormShiftAmt : NormShift;

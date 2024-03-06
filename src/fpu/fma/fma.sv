@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13 (Figure 13.7, 9)
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -35,7 +36,7 @@ module fma import cvw::*;  #(parameter cvw_t P) (
   output logic                         ASticky,                // sticky bit that is calculated during alignment
   output logic [3*P.NF+3:0]            Sm,                     // the positive sum's significand
   output logic                         InvA,                   // Was A inverted for effective subtraction (P-A or -P+A)
-  output logic                         As,                     // the aligned addend's sign (modified Z sign for other opperations)
+  output logic                         As,                     // the aligned addend's sign (modified Z sign for other operations)
   output logic                         Ps,                     // the product's sign
   output logic                         Ss,                     // the sum's sign
   output logic [P.NE+1:0]              Se,                     // the sum's exponent
@@ -73,7 +74,7 @@ module fma import cvw::*;  #(parameter cvw_t P) (
   // multiplication of the mantissa's
   fmamult #(P) mult(.Xm, .Ym, .Pm);
   
-  // calculate the signs and take the opperation into account
+  // calculate the signs and take the operation into account
   fmasign sign(.OpCtrl, .Xs, .Ys, .Zs, .Ps, .As, .InvA);
 
   ///////////////////////////////////////////////////////////////////////////////

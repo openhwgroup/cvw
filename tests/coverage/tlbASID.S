@@ -4,9 +4,11 @@
 // Written: mmendozamanriquez@hmc.edu 4 April 2023
 //          nlimpert@hmc.edu
 //
-// Purpose: Test coverage for LSU
+// Purpose: Test coverage for IFU TLB camlines with mismatched ASID values. This file tests odd
+// numbered camlines. tlbASID2.S covers even numbered tlb camlines. These two files are identical.
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -23,6 +25,8 @@
 // either express or implied. See the License for the specific language governing permissions 
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 
 // load code to initalize stack, handle interrupts, terminate
 
@@ -42,11 +46,12 @@ main:
 
     li t0, 0xC0000000
 
-    li t2, 0             # i = 0
+    li t2, 0            # i = 0
     li t5, 0            # j = 0 // now use as a counter for new asid loop 
-    li t3, 32     # Max amount of Loops = 32
+    li t3, 32           # Max amount of Loops = 32
 
 loop: bge t2, t3, finished   # exit loop if i >= loops
+    sfence.vma
     li t1, 0x00008067 #load in jalr
     sw t1, 0(t0)
     fence.I
@@ -54,7 +59,7 @@ loop: bge t2, t3, finished   # exit loop if i >= loops
     li t5, 0x9001000000080080 // try making asid = 1 
     csrw satp, t5
     jalr t0
-     li t5, 0x9000000000080080 // try making asid = 0
+    li t5, 0x9000000000080080 // try making asid = 0
     csrw satp, t5
     li t4, 0x1000
     add t0, t0, t4
@@ -70,7 +75,7 @@ finished:
 pagetable: 
     .8byte 0x200204C1
     
-.align 12 // level 2 page table, contains direction to a gigapageg
+.align 12 // level 2 page table, contains direction to a gigapage
     .8byte 0x0
     .8byte 0x0
     .8byte 0x200000CF // gigapage that starts at 8000 0000 goes to C000 0000

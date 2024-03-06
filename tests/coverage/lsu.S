@@ -6,6 +6,7 @@
 // Purpose: Test coverage for lsu
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -29,5 +30,8 @@
 main:
 
     sfence.vma x0, x0 // sfence.vma to assert TLBFlush
+
+    li a0, 0x80000001   # misaligned address
+    amoadd.w t0, a0, (a0) # amo access to misaligned address
 
     j done

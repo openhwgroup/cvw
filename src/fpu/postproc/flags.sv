@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -41,18 +42,18 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   input  logic                 Round, Guard, Sticky,   // bits used to determine rounding
   input  logic                 UfPlus1,                // do you add one for rounding for the unbounded exponent result
   // convert
-  input  logic                 CvtOp,                  // conversion opperation?
+  input  logic                 CvtOp,                  // conversion operation?
   input  logic                 ToInt,                  // convert to integer
   input  logic                 IntToFp,                // convert integer to floating point
   input  logic                 Int64,                  // convert to 64 bit integer
   input  logic                 Signed,                 // convert to a signed integer
   input  logic [P.NE:0]        CvtCe,                  // the calculated expoent - Cvt
-  input  logic [1:0]           CvtNegResMsbs,          // the negitive integer result's most significant bits
+  input  logic [1:0]           CvtNegResMsbs,          // the negative integer result's most significant bits
   // divsqrt
-  input  logic                 DivOp,                  // conversion opperation?
+  input  logic                 DivOp,                  // conversion operation?
   input  logic                 Sqrt,                   // Sqrt?
   // fma
-  input  logic                 FmaOp,                  // Fma opperation?
+  input  logic                 FmaOp,                  // Fma operation?
   input  logic                 FmaAs, FmaPs,           // the product and modified Z signs
   // flags
   output logic                 DivByZero,              // divide by zero flag
@@ -70,7 +71,7 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   logic                        DivInvalid;             // integer invalid flag
   logic                        Underflow;              // Underflow flag
   logic                        ResExpGteMax;           // is the result greater than or equal to the maximum floating point expoent
-  logic                        ShiftGtIntSz;           // is the shift greater than the the integer size (use Re to account for possible roundning "shift")
+  logic                        ShiftGtIntSz;           // is the shift greater than the the integer size (use Re to account for possible rounding "shift")
 
   ///////////////////////////////////////////////////////////////////////////////
   // Overflow
@@ -122,7 +123,7 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   
   // calulate overflow flag:
   //                 if the result is greater than or equal to the max exponent(not taking into account sign)
-  //                 |           and the exponent isn't negitive
+  //                 |           and the exponent isn't negative
   //                 |           |                   if the input isnt infinity or NaN
   //                 |           |                   |            
   assign Overflow = ResExpGteMax & ~FullRe[P.NE+1]&~(InfIn|NaNIn|DivByZero);
@@ -132,7 +133,7 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////////////////////////////////////////
 
   // calculate underflow flag: detecting tininess after rounding
-  //                  the exponent is negitive
+  //                  the exponent is negative
   //                  |                    the result is subnormal
   //                  |                    |                    the result is normal and rounded from a Subnorm
   //                  |                    |                    |                                      and if given an unbounded exponent the result does not round
@@ -148,8 +149,7 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   // Set Inexact flag if the result is diffrent from what would be outputed given infinite precision
   //      - Don't set the underflow flag if an underflowed res isn't outputed
   assign FpInexact = (Sticky|Guard|Overflow|Round)&~(InfIn|NaNIn|DivByZero|Invalid);
-  //assign FpInexact = (Sticky|Guard|Overflow|Round)&~(InfIn|NaNIn|DivByZero|Invalid|XZero);
-
+  
   //                  if the res is too small to be represented and not 0
   //                  |                                     and if the res is not invalid (outside the integer bounds)
   //                  |                                     |
@@ -170,7 +170,7 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   // invalid flag for integer result
   //                  if the input is NaN or infinity
   //                  |           if the integer res overflows (out of range) 
-  //                  |           |                                  if the input was negitive but ouputing to a unsigned number
+  //                  |           |                                  if the input was negative but ouputing to a unsigned number
   //                  |           |                                  |                    the res doesn't round to zero
   //                  |           |                                  |                    |               or the res rounds up out of bounds
   //                  |           |                                  |                    |                       and the res didn't underflow

@@ -11,6 +11,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 5
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -160,9 +161,9 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
                    CSRSReadValM = 0;
                    IllegalCSRSAccessM = 1;
                  end
-      STIMECMPH: if (STCE) 
+      STIMECMPH: if (STCE & P.XLEN == 32) // not supported for RV64
                    CSRSReadValM = {{(P.XLEN-32){1'b0}}, STIMECMP_REGW[63:32]};
-                 else begin // not supported for RV64
+                 else begin 
                    CSRSReadValM = 0;
                    IllegalCSRSAccessM = 1;
                  end

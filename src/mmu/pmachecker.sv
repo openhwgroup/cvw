@@ -1,4 +1,4 @@
-///////////////////////////////////////////
+//////////////////////////////////////////
 // pmachecker.sv
 //
 // Written: tfleming@hmc.edu & jtorrey@hmc.edu 20 April 2021
@@ -11,6 +11,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 8
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -37,7 +38,7 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
   input  logic                 WriteAccessM,   // Write access 
   input  logic                 ReadAccessM,    // Read access
   input  logic [1:0]           PBMemoryType,     // PBMT field of PTE during TLB hit, or 00 otherwise
-  output logic                 Cacheable, Idempotent, SelTIM,
+  output logic                 Cacheable, Idempotent, AllowShift, SelTIM,
   output logic                 PMAInstrAccessFaultF,
   output logic                 PMALoadAccessFaultM,
   output logic                 PMAStoreAmoAccessFaultM
@@ -59,7 +60,8 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
 
   // Only non-core RAM/ROM memory regions are cacheable. PBMT can override cachable; NC and IO are uncachable
   assign CacheableRegion = SelRegions[3] | SelRegions[4] | SelRegions[5];  // exclusion-tag: unused-cachable
-  assign Cacheable = (PBMemoryType == 2'b00) ? CacheableRegion : 0;  
+  assign Cacheable = (PBMemoryType == 2'b00) ? CacheableRegion : 0; 
+  assign AllowShift = SelRegions[1] | SelRegions[2] | SelRegions[3]  | SelRegions[5] | SelRegions[6] | SelRegions[10];
 
   // Nonidemdempotent means access could have side effect and must not be done speculatively or redundantly
   // I/O is nonidempotent.  PBMT can override PMA; NC is idempotent and IO is non-idempotent

@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -139,15 +140,12 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
           endcase
 
       always_comb
-        if (BadNaNBox) begin
-          case (Fmt)
-            P.FMT: PostBox = In;
-            P.FMT1: PostBox = {{(P.FLEN-P.LEN1){1'b1}}, 1'b1, {(P.NE1+1){1'b1}}, {(P.LEN1-P.NE1-2){1'b0}}};
-            P.FMT2: PostBox = {{(P.FLEN-P.LEN2){1'b1}}, 1'b1, {(P.NE2+1){1'b1}}, {(P.LEN2-P.NE2-2){1'b0}}};
-            default: PostBox = 'x;
-          endcase
-        end else 
-          PostBox = In;
+        if (BadNaNBox & Fmt == P.FMT1)
+            PostBox = {{(P.FLEN-P.LEN1){1'b1}}, 1'b1, {(P.NE1+1){1'b1}}, {(P.LEN1-P.NE1-2){1'b0}}};
+        else if (BadNaNBox) // Fmt == P.FMT2
+            PostBox = {{(P.FLEN-P.LEN2){1'b1}}, 1'b1, {(P.NE2+1){1'b1}}, {(P.LEN2-P.NE2-2){1'b0}}};
+        else
+            PostBox = In;
 
       // extract the sign bit
       always_comb

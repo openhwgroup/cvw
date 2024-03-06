@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 4 (Figure 4.12)
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -75,6 +76,7 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   input  logic              FlushD, FlushE, FlushM, FlushW,  // Flush signals
   output logic              StructuralStallD,                // IEU detects structural hazard in Decode stage
   output logic              LoadStallD,                      // Structural stalls for load, sent to performance counters
+  output logic              StoreStallD,                     // load after store hazard
   output logic              CSRReadM, CSRWriteM, PrivilegedM,// CSR read, CSR write, is privileged instruction
   output logic              CSRWriteFenceM                   // CSR write or fence instruction needs to flush subsequent instructions
 );
@@ -106,7 +108,7 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   controller #(P) c(
     .clk, .reset, .StallD, .FlushD, .InstrD, .STATUS_FS, .ENVCFG_CBE, .ImmSrcD,
     .IllegalIEUFPUInstrD, .IllegalBaseInstrD, 
-    .StructuralStallD, .LoadStallD, .Rs1D, .Rs2D, 
+    .StructuralStallD, .LoadStallD, .StoreStallD, .Rs1D, .Rs2D, 
     .StallE, .FlushE, .FlagsE, .FWriteIntE,
     .PCSrcE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .MemReadE, .CSRReadE, 
     .Funct3E, .IntDivE, .MDUE, .W64E, .SubArithE, .BranchD, .BranchE, .JumpD, .JumpE, .SCE, 

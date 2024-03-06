@@ -10,6 +10,7 @@
 ## Purpose: Open source tool chain installation script
 ##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
+## https://github.com/openhwgroup/cvw
 ##
 ## Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 ##
@@ -137,6 +138,27 @@ sudo make install
 # package manager. Sail has so many dependencies that it can be difficult to install.
 # This script works for Ubuntu.
 
+# Alex Solomatnikov found these commands worked to build Sail for Centos 8 on 1/12/24
+#sudo su -
+#dnf install ocaml.x86_64
+#pip3 install z3-solver
+#wget https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh
+#sh install.sh
+#opam init
+#exit
+#ocaml -version
+#opam switch create 5.1.0
+#eval $(opam config env)
+#git clone --recurse-submodules git@github.com:riscv/sail-riscv.git
+#cd sail-riscv
+#make
+#ARCH=RV32 make
+#ARCH=RV64 make
+#git log -1
+#cp -p c_emulator/riscv_sim_RV* /tools/sail-riscv/d7a3d8012fd579f40e53a29569141d72dd5e0c32/bin/.
+
+
+# This was an earlier attemp to prepare to install Sail on RedHat 8
 # Do these commands only for RedHat / Rocky 8 to build from source.
 #cd $RISCV
 #git clone https://github.com/Z3Prover/z3.git

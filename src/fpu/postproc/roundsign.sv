@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -32,9 +33,9 @@ module roundsign(
   input logic         CvtCs,  // convert result sign
   input logic         FmaSs,  // fma sum sign
   input logic         Sqrt,   // sqrt oppertion? (when using divsqrt unit)
-  input logic         FmaOp,  // is fma opperation
-  input logic         DivOp,  // is divsqrt opperation
-  input logic         CvtOp,  // is cvt opperation
+  input logic         FmaOp,  // is fma operation
+  input logic         DivOp,  // is divsqrt operation
+  input logic         CvtOp,  // is cvt operation
   output logic        Ms      // normalized result sign
 );
 

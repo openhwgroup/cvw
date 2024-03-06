@@ -10,6 +10,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 7 (Figures 7.9, 7.10, and 7.19)
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 //
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -81,7 +82,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   logic                          ClearDirty, SetDirty, SetValid, ClearValid;
   logic [LINELEN-1:0]            ReadDataLineWay [NUMWAYS-1:0];
   logic [NUMWAYS-1:0]            HitWay, ValidWay;
-  logic                          CacheHit;
+  logic                          Hit;
   logic [NUMWAYS-1:0]            VictimWay, DirtyWay, HitDirtyWay;
   logic                          LineDirty, HitLineDirty;
   logic [TAGLEN-1:0]             TagWay [NUMWAYS-1:0];
@@ -97,7 +98,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   logic [LINELEN-1:0]            ReadDataLine, ReadDataLineCache;
   logic                          SelFetchBuffer;
   logic                          CacheEn;
-  logic                          SelWay;
+  logic                          SelVictim;
   logic [LINELEN/8-1:0]          LineByteMask;
   logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0] WordOffsetAddr;
   genvar                         index;
@@ -119,7 +120,7 @@ module cache import cvw::*; #(parameter cvw_t P,
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(P, PA_BITS, XLEN, NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, READ_ONLY_CACHE) CacheWays[NUMWAYS-1:0](
-    .clk, .reset, .CacheEn, .CacheSetData, .CacheSetTag, .PAdr, .LineWriteData, .LineByteMask, .SelWay,
+    .clk, .reset, .CacheEn, .CacheSetData, .CacheSetTag, .PAdr, .LineWriteData, .LineByteMask, .SelVictim,
     .SetValid, .ClearValid, .SetDirty, .ClearDirty, .VictimWay,
     .FlushWay, .FlushCache, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .HitDirtyWay, .TagWay, .FlushStage, .InvalidateCache);
 
@@ -131,7 +132,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   end else 
     assign VictimWay = 1'b1; // one hot.
 
-  assign CacheHit = |HitWay;
+  assign Hit = |HitWay;
   assign LineDirty = |DirtyWay;
   assign HitLineDirty = |HitDirtyWay;
 
@@ -179,14 +180,14 @@ module cache import cvw::*; #(parameter cvw_t P,
 
     assign DemuxedByteMask = BlankByteMask << ((MUXINTERVAL/8) * WordOffsetAddr);
 
-    assign FetchBufferByteSel = SetValid & ~SetDirty ? '1 : ~DemuxedByteMask;  // If load miss set all muxes to 1.
+    assign FetchBufferByteSel = SetDirty ? ~DemuxedByteMask : '1;  // If load miss set all muxes to 1.
 
     // Merge write data into fetched cache line for store miss
     for(index = 0; index < LINELEN/8; index++) begin
       mux2 #(8) WriteDataMux(.d0(CacheWriteData[(8*index)%WORDLEN+7:(8*index)%WORDLEN]),
         .d1(FetchBuffer[8*index+7:8*index]), .s(FetchBufferByteSel[index] & ~CMOpM[3]), .y(LineWriteData[8*index+7:8*index]));
     end
-    assign LineByteMask = SetValid ? '1 : SetDirty ? DemuxedByteMask : '0;
+    assign LineByteMask = SetDirty ? DemuxedByteMask : '1;
   end
   else
     begin:WriteSelLogic
@@ -199,7 +200,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   // Flush logic
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  if (!READ_ONLY_CACHE) begin:flushlogic
+  if (!READ_ONLY_CACHE) begin:flushlogic // D$ can be flushed
     // Flush address (line number)
     assign ResetOrFlushCntRst = reset | FlushCntRst;
     flopenr #(SETLEN) FlushAdrReg(clk, ResetOrFlushCntRst, FlushAdrCntEn, FlushAdrP1, NextFlushAdr);
@@ -213,7 +214,8 @@ module cache import cvw::*; #(parameter cvw_t P,
     else            assign NextFlushWay = FlushWay[NUMWAYS-1];
     assign FlushWayFlag = FlushWay[NUMWAYS-1];
   end // block: flushlogic
-  else begin:flushlogic
+  else begin:flushlogic // I$ is never flushed because it is never dirty
+    assign FlushWay = 0;
     assign FlushWayFlag = 0;
     assign FlushAdrFlag = 0;
   end
@@ -224,8 +226,8 @@ module cache import cvw::*; #(parameter cvw_t P,
   
   cachefsm #(P, READ_ONLY_CACHE) cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
     .FlushStage, .CacheRW, .Stall,
-    .CacheHit, .LineDirty, .HitLineDirty, .CacheStall, .CacheCommitted, 
-    .CacheMiss, .CacheAccess, .SelAdrData, .SelAdrTag, .SelWay,
+    .Hit, .LineDirty, .HitLineDirty, .CacheStall, .CacheCommitted, 
+    .CacheMiss, .CacheAccess, .SelAdrData, .SelAdrTag, .SelVictim,
     .ClearDirty, .SetDirty, .SetValid, .ClearValid, .SelWriteback,
     .FlushAdrCntEn, .FlushWayCntEn, .FlushCntRst,
     .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
