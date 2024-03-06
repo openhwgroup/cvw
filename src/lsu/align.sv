@@ -98,10 +98,11 @@ module align import cvw::*;  #(parameter cvw_t P) (
       3'b000: AccessByteOffsetM = 0; // byte access
       3'b001: AccessByteOffsetM = {{OFFSET_LEN-1{1'b0}}, IEUAdrM[0]}; // half access
       3'b010: AccessByteOffsetM = {{OFFSET_LEN-2{1'b0}}, IEUAdrM[1:0]}; // word access
-      3'b011: AccessByteOffsetM = {{OFFSET_LEN-3{1'b0}}, IEUAdrM[2:0]}; // double access
+      3'b011: if(P.LLEN >= 64) AccessByteOffsetM = {{OFFSET_LEN-3{1'b0}}, IEUAdrM[2:0]}; // double access
+              else             AccessByteOffsetM = 0;                                    // shouldn't happen
       3'b100: if(P.LLEN == 128) AccessByteOffsetM = IEUAdrM[OFFSET_LEN-1:0]; // quad access
-              else            AccessByteOffsetM = 0; // invalid
-      default: AccessByteOffsetM = IEUAdrM[OFFSET_LEN-1:0];
+              else              AccessByteOffsetM = IEUAdrM[OFFSET_LEN-1:0];
+      default: AccessByteOffsetM = 0;                                        // shouldn't happen
     endcase
     case (Funct3M[1:0]) 
       2'b00: PotentialSpillM = 0; // byte access
