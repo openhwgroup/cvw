@@ -150,6 +150,8 @@ module clint_apb import cvw::*;  #(parameter cvw_t P) (
 
 endmodule
 
+/*
+ // exclused for vcs
 module timeregsync  import cvw::*;  #(parameter cvw_t P) (
   input  logic              clk, resetn, 
   input  logic              we0, we1,
@@ -245,3 +247,4 @@ module graytobinary #(parameter N) (
       assign b[i] = g[i] ^ b[i+1];
     end
 endmodule
+*/
