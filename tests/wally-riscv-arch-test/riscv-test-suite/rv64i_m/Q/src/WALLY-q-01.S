@@ -19,7 +19,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 #include "model_test.h"
 #include "arch_test.h"
-RVTEST_ISA("RV64IFDQ_Zicsr")
+RVTEST_ISA("RV64IFDQZfh_Zicsr")
 
 .section .text.init
 .globl rvtest_entry_point
@@ -37,17 +37,17 @@ RVTEST_SIGBASE(x1,signature_x1_1)
 
 #endif
 
-        # turn on the floating point unit
-        li x7, 1
-        slli x7, x7, 13
-        csrw mstatus, x7
+# turn on the floating point unit
+li x7, 1
+slli x7, x7, 13
+csrw mstatus, x7
 
 li x4, 1        # 3fff 0000 0000 0000 0000 0000 0000 0000
 li x2, 2        # 4000 0000 0000 0000 0000 0000 0000 0000
 fcvt.q.w f2, x2
 fcvt.q.w f4, x4
 
-fcvt.h.w f5, x2
+fcvt.h.w f5, x2  # 4000
 
 # test quad load/store
 fsq f4, 0(x3)
@@ -59,33 +59,33 @@ fsh f5, 16(x3)
 flh f6, 16(x3)
 fsh f6, 16(x1)
 	
-# 1 + 2 = 3           # 4000 1000 0000 0000 0000 0000 0000 0000
+# 1 + 2 = 3           # 4000 8000 0000 0000 0000 0000 0000 0000
 fadd.q f8, f2, f4
-fsq f8, 32(x3)
+fsq f8, 32(x1)
 	
 # 1 - 2 = -1
-fsub.q f9, f2, f4     # bfff 0000000000000000000000000000
-fsq f9, 48(x3)
+fsub.q f9, f4, f2     # bfff 0000000000000000000000000000
+fsq f9, 48(x1)
 	
 # 2 * 3 = 6
-fsub.q f10, f4, f8     # 4001 1000000000000000000000000000
-fsq f10, 64(x3)
+fmul.q f10, f2, f8     # 4001 8000000000000000000000000000
+fsq f10, 64(x1)
 
 # 6 * (-1) + 2 = -4
-fmadd.q f11, f10, f9, f4     # C001 0000000000000000000000000000
-fsq f11, 80(x3)
+fmadd.q f11, f10, f9, f2     # C001 0000000000000000000000000000
+fsq f11, 80(x1)
 
 # -4 / 2 = -2
-fdiv.q f12, f11, f4     # C000 0000000000000000000000000000
-fsq f12, 96(x3)
+fdiv.q f12, f11, f2     # C000 0000000000000000000000000000
+fsq f12, 96(x1)
 
 # sign injection -4  = 4
 fsgnj.q f13, f12, f4    # 4001 0000000000000000000000000000
-fsq f13, 112(x3)
+fsq f13, 112(x1)
 
 # sqrt(4)  = 2
 fsqrt.q f14, f13    # 4000 0000000000000000000000000000
-fsq f14, 128(x3)
+fsq f14, 128(x1)
         
 
 RVTEST_CODE_END
@@ -94,12 +94,43 @@ RVMODEL_HALT
 RVTEST_DATA_BEGIN
 .align 4
 rvtest_data:
+test_dataset_0:
 .word 0xbabecafe
 .word 0xabecafeb
 .word 0xbecafeba
 .word 0xecafebab
+.word 0xbabecafe
+.word 0xabecafeb
+.word 0xbecafeba
 .word 0xecafebab
-test_dataset_0:
+.word 0xbabecafe
+.word 0xabecafeb
+.word 0xbecafeba
+.word 0xecafebab
+.word 0xbabecafe
+.word 0xabecafeb
+.word 0xbecafeba
+.word 0xecafebab
+.word 0xbabecafe
+.word 0xabecafeb
+.word 0xbecafeba
+.word 0xecafebab
+.word 0xbabecafe
+.word 0xabecafeb
+.word 0xbecafeba
+.word 0xecafebab
+.word 0xbabecafe
+.word 0xabecafeb
+.word 0xbecafeba
+.word 0xecafebab
+.word 0xbabecafe
+.word 0xabecafeb
+.word 0xbecafeba
+.word 0xecafebab
+.word 0xbabecafe
+.word 0xabecafeb
+.word 0xbecafeba
+.word 0xecafebab
 test_dataset_1:
 RVTEST_DATA_END
 
@@ -110,8 +141,14 @@ rvtest_sig_begin:
 
 
 signature_x1_1:
-    .fill 8,8,0xdeadbeefdeadbeef
-    .fill 8,8,0xdeadbeefdeadbeef
-
+    .int 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef
+    .int 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef
+    .int 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef
+    .int 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef
+    .int 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef
+    .int 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef
+    .int 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef
+    .int 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef
+    .int 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef
 rvtest_sig_end:
 RVMODEL_DATA_END
