@@ -124,6 +124,7 @@ module testbench;
         "imperas64f":   if (P.F_SUPPORTED)        tests = imperas64f;
         "imperas64d":   if (P.D_SUPPORTED)        tests = imperas64d;
         "imperas64m":   if (P.M_SUPPORTED)        tests = imperas64m;
+        "wally64q":     if (P.Q_SUPPORTED)        tests = wally64q;
         "wally64a":     if (P.A_SUPPORTED)        tests = wally64a;
         "imperas64c":   if (P.C_SUPPORTED)        tests = imperas64c;
                         else                      tests = imperas64iNOc;
