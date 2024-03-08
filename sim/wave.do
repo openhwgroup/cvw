@@ -1,48 +1,68 @@
 onerror {resume}
 quietly virtual signal -install /testbench/dut/core/ifu/bpred/bpred { /testbench/dut/core/ifu/bpred/bpred/PostSpillInstrRawF[11:7]} rd
+quietly virtual function -install /testbench/dut/rvvisynth -env /testbench/genblk3/#ALWAYS#441,293,397 { &{/testbench/dut/rvvisynth/CSRs[11], /testbench/dut/rvvisynth/CSRs[10], /testbench/dut/rvvisynth/CSRs[9], /testbench/dut/rvvisynth/CSRs[8], /testbench/dut/rvvisynth/CSRs[7], /testbench/dut/rvvisynth/CSRs[6], /testbench/dut/rvvisynth/CSRs[5], /testbench/dut/rvvisynth/CSRs[4], /testbench/dut/rvvisynth/CSRs[3], /testbench/dut/rvvisynth/CSRs[2], /testbench/dut/rvvisynth/CSRs[1], /testbench/dut/rvvisynth/CSRs[0] }} NumCSRs
+quietly virtual function -install /testbench/dut/rvvisynth -env /testbench/genblk3/#ALWAYS#441,293,397 { &{/testbench/dut/rvvisynth/CSRs[23], /testbench/dut/rvvisynth/CSRs[22], /testbench/dut/rvvisynth/CSRs[21], /testbench/dut/rvvisynth/CSRs[20], /testbench/dut/rvvisynth/CSRs[19], /testbench/dut/rvvisynth/CSRs[18], /testbench/dut/rvvisynth/CSRs[17], /testbench/dut/rvvisynth/CSRs[16], /testbench/dut/rvvisynth/CSRs[15], /testbench/dut/rvvisynth/CSRs[14], /testbench/dut/rvvisynth/CSRs[13], /testbench/dut/rvvisynth/CSRs[12] }} CSRAdr0
+quietly virtual function -install /testbench/dut/rvvisynth -env /testbench/genblk3/#ALWAYS#441,293,397 { &{/testbench/dut/rvvisynth/CSRs[87], /testbench/dut/rvvisynth/CSRs[86], /testbench/dut/rvvisynth/CSRs[85], /testbench/dut/rvvisynth/CSRs[84], /testbench/dut/rvvisynth/CSRs[83], /testbench/dut/rvvisynth/CSRs[82], /testbench/dut/rvvisynth/CSRs[81], /testbench/dut/rvvisynth/CSRs[80], /testbench/dut/rvvisynth/CSRs[79], /testbench/dut/rvvisynth/CSRs[78], /testbench/dut/rvvisynth/CSRs[77], /testbench/dut/rvvisynth/CSRs[76], /testbench/dut/rvvisynth/CSRs[75], /testbench/dut/rvvisynth/CSRs[74], /testbench/dut/rvvisynth/CSRs[73], /testbench/dut/rvvisynth/CSRs[72], /testbench/dut/rvvisynth/CSRs[71], /testbench/dut/rvvisynth/CSRs[70], /testbench/dut/rvvisynth/CSRs[69], /testbench/dut/rvvisynth/CSRs[68], /testbench/dut/rvvisynth/CSRs[67], /testbench/dut/rvvisynth/CSRs[66], /testbench/dut/rvvisynth/CSRs[65], /testbench/dut/rvvisynth/CSRs[64], /testbench/dut/rvvisynth/CSRs[63], /testbench/dut/rvvisynth/CSRs[62], /testbench/dut/rvvisynth/CSRs[61], /testbench/dut/rvvisynth/CSRs[60], /testbench/dut/rvvisynth/CSRs[59], /testbench/dut/rvvisynth/CSRs[58], /testbench/dut/rvvisynth/CSRs[57], /testbench/dut/rvvisynth/CSRs[56], /testbench/dut/rvvisynth/CSRs[55], /testbench/dut/rvvisynth/CSRs[54], /testbench/dut/rvvisynth/CSRs[53], /testbench/dut/rvvisynth/CSRs[52], /testbench/dut/rvvisynth/CSRs[51], /testbench/dut/rvvisynth/CSRs[50], /testbench/dut/rvvisynth/CSRs[49], /testbench/dut/rvvisynth/CSRs[48], /testbench/dut/rvvisynth/CSRs[47], /testbench/dut/rvvisynth/CSRs[46], /testbench/dut/rvvisynth/CSRs[45], /testbench/dut/rvvisynth/CSRs[44], /testbench/dut/rvvisynth/CSRs[43], /testbench/dut/rvvisynth/CSRs[42], /testbench/dut/rvvisynth/CSRs[41], /testbench/dut/rvvisynth/CSRs[40], /testbench/dut/rvvisynth/CSRs[39], /testbench/dut/rvvisynth/CSRs[38], /testbench/dut/rvvisynth/CSRs[37], /testbench/dut/rvvisynth/CSRs[36], /testbench/dut/rvvisynth/CSRs[35], /testbench/dut/rvvisynth/CSRs[34], /testbench/dut/rvvisynth/CSRs[33], /testbench/dut/rvvisynth/CSRs[32], /testbench/dut/rvvisynth/CSRs[31], /testbench/dut/rvvisynth/CSRs[30], /testbench/dut/rvvisynth/CSRs[29], /testbench/dut/rvvisynth/CSRs[28], /testbench/dut/rvvisynth/CSRs[27], /testbench/dut/rvvisynth/CSRs[26], /testbench/dut/rvvisynth/CSRs[25], /testbench/dut/rvvisynth/CSRs[24] }} CSRData0
+quietly virtual function -install /testbench/dut/rvvisynth -env /testbench/genblk3/#ALWAYS#441,293,397 { &{/testbench/dut/rvvisynth/CSRs[163], /testbench/dut/rvvisynth/CSRs[162], /testbench/dut/rvvisynth/CSRs[161], /testbench/dut/rvvisynth/CSRs[160], /testbench/dut/rvvisynth/CSRs[159], /testbench/dut/rvvisynth/CSRs[158], /testbench/dut/rvvisynth/CSRs[157], /testbench/dut/rvvisynth/CSRs[156], /testbench/dut/rvvisynth/CSRs[155], /testbench/dut/rvvisynth/CSRs[154], /testbench/dut/rvvisynth/CSRs[153], /testbench/dut/rvvisynth/CSRs[152], /testbench/dut/rvvisynth/CSRs[151], /testbench/dut/rvvisynth/CSRs[150], /testbench/dut/rvvisynth/CSRs[149], /testbench/dut/rvvisynth/CSRs[148], /testbench/dut/rvvisynth/CSRs[147], /testbench/dut/rvvisynth/CSRs[146], /testbench/dut/rvvisynth/CSRs[145], /testbench/dut/rvvisynth/CSRs[144], /testbench/dut/rvvisynth/CSRs[143], /testbench/dut/rvvisynth/CSRs[142], /testbench/dut/rvvisynth/CSRs[141], /testbench/dut/rvvisynth/CSRs[140], /testbench/dut/rvvisynth/CSRs[139], /testbench/dut/rvvisynth/CSRs[138], /testbench/dut/rvvisynth/CSRs[137], /testbench/dut/rvvisynth/CSRs[136], /testbench/dut/rvvisynth/CSRs[135], /testbench/dut/rvvisynth/CSRs[134], /testbench/dut/rvvisynth/CSRs[133], /testbench/dut/rvvisynth/CSRs[132], /testbench/dut/rvvisynth/CSRs[131], /testbench/dut/rvvisynth/CSRs[130], /testbench/dut/rvvisynth/CSRs[129], /testbench/dut/rvvisynth/CSRs[128], /testbench/dut/rvvisynth/CSRs[127], /testbench/dut/rvvisynth/CSRs[126], /testbench/dut/rvvisynth/CSRs[125], /testbench/dut/rvvisynth/CSRs[124], /testbench/dut/rvvisynth/CSRs[123], /testbench/dut/rvvisynth/CSRs[122], /testbench/dut/rvvisynth/CSRs[121], /testbench/dut/rvvisynth/CSRs[120], /testbench/dut/rvvisynth/CSRs[119], /testbench/dut/rvvisynth/CSRs[118], /testbench/dut/rvvisynth/CSRs[117], /testbench/dut/rvvisynth/CSRs[116], /testbench/dut/rvvisynth/CSRs[115], /testbench/dut/rvvisynth/CSRs[114], /testbench/dut/rvvisynth/CSRs[113], /testbench/dut/rvvisynth/CSRs[112], /testbench/dut/rvvisynth/CSRs[111], /testbench/dut/rvvisynth/CSRs[110], /testbench/dut/rvvisynth/CSRs[109], /testbench/dut/rvvisynth/CSRs[108], /testbench/dut/rvvisynth/CSRs[107], /testbench/dut/rvvisynth/CSRs[106], /testbench/dut/rvvisynth/CSRs[105], /testbench/dut/rvvisynth/CSRs[104], /testbench/dut/rvvisynth/CSRs[103], /testbench/dut/rvvisynth/CSRs[102], /testbench/dut/rvvisynth/CSRs[101], /testbench/dut/rvvisynth/CSRs[100] }} CSRData1
+quietly virtual function -install /testbench/dut/rvvisynth -env /testbench/genblk3/#ALWAYS#441,293,397 { &{/testbench/dut/rvvisynth/CSRs[175], /testbench/dut/rvvisynth/CSRs[174], /testbench/dut/rvvisynth/CSRs[173], /testbench/dut/rvvisynth/CSRs[172], /testbench/dut/rvvisynth/CSRs[171], /testbench/dut/rvvisynth/CSRs[170], /testbench/dut/rvvisynth/CSRs[169], /testbench/dut/rvvisynth/CSRs[168], /testbench/dut/rvvisynth/CSRs[167], /testbench/dut/rvvisynth/CSRs[166], /testbench/dut/rvvisynth/CSRs[165], /testbench/dut/rvvisynth/CSRs[164] }} CSRAdr2
+quietly virtual function -install /testbench/dut/rvvisynth -env /testbench/genblk3/#ALWAYS#441,293,397 { &{/testbench/dut/rvvisynth/CSRs[239], /testbench/dut/rvvisynth/CSRs[238], /testbench/dut/rvvisynth/CSRs[237], /testbench/dut/rvvisynth/CSRs[236], /testbench/dut/rvvisynth/CSRs[235], /testbench/dut/rvvisynth/CSRs[234], /testbench/dut/rvvisynth/CSRs[233], /testbench/dut/rvvisynth/CSRs[232], /testbench/dut/rvvisynth/CSRs[231], /testbench/dut/rvvisynth/CSRs[230], /testbench/dut/rvvisynth/CSRs[229], /testbench/dut/rvvisynth/CSRs[228], /testbench/dut/rvvisynth/CSRs[227], /testbench/dut/rvvisynth/CSRs[226], /testbench/dut/rvvisynth/CSRs[225], /testbench/dut/rvvisynth/CSRs[224], /testbench/dut/rvvisynth/CSRs[223], /testbench/dut/rvvisynth/CSRs[222], /testbench/dut/rvvisynth/CSRs[221], /testbench/dut/rvvisynth/CSRs[220], /testbench/dut/rvvisynth/CSRs[219], /testbench/dut/rvvisynth/CSRs[218], /testbench/dut/rvvisynth/CSRs[217], /testbench/dut/rvvisynth/CSRs[216], /testbench/dut/rvvisynth/CSRs[215], /testbench/dut/rvvisynth/CSRs[214], /testbench/dut/rvvisynth/CSRs[213], /testbench/dut/rvvisynth/CSRs[212], /testbench/dut/rvvisynth/CSRs[211], /testbench/dut/rvvisynth/CSRs[210], /testbench/dut/rvvisynth/CSRs[209], /testbench/dut/rvvisynth/CSRs[208], /testbench/dut/rvvisynth/CSRs[207], /testbench/dut/rvvisynth/CSRs[206], /testbench/dut/rvvisynth/CSRs[205], /testbench/dut/rvvisynth/CSRs[204], /testbench/dut/rvvisynth/CSRs[203], /testbench/dut/rvvisynth/CSRs[202], /testbench/dut/rvvisynth/CSRs[201], /testbench/dut/rvvisynth/CSRs[200], /testbench/dut/rvvisynth/CSRs[199], /testbench/dut/rvvisynth/CSRs[198], /testbench/dut/rvvisynth/CSRs[197], /testbench/dut/rvvisynth/CSRs[196], /testbench/dut/rvvisynth/CSRs[195], /testbench/dut/rvvisynth/CSRs[194], /testbench/dut/rvvisynth/CSRs[193], /testbench/dut/rvvisynth/CSRs[192], /testbench/dut/rvvisynth/CSRs[191], /testbench/dut/rvvisynth/CSRs[190], /testbench/dut/rvvisynth/CSRs[189], /testbench/dut/rvvisynth/CSRs[188], /testbench/dut/rvvisynth/CSRs[187], /testbench/dut/rvvisynth/CSRs[186], /testbench/dut/rvvisynth/CSRs[185], /testbench/dut/rvvisynth/CSRs[184], /testbench/dut/rvvisynth/CSRs[183], /testbench/dut/rvvisynth/CSRs[182], /testbench/dut/rvvisynth/CSRs[181], /testbench/dut/rvvisynth/CSRs[180], /testbench/dut/rvvisynth/CSRs[179], /testbench/dut/rvvisynth/CSRs[178], /testbench/dut/rvvisynth/CSRs[177], /testbench/dut/rvvisynth/CSRs[176] }} CSRData2
+quietly virtual function -install /testbench/dut -env /testbench/genblk3/#ALWAYS#441,293,397 { &{/testbench/dut/Required[63], /testbench/dut/Required[62], /testbench/dut/Required[61], /testbench/dut/Required[60], /testbench/dut/Required[59], /testbench/dut/Required[58], /testbench/dut/Required[57], /testbench/dut/Required[56], /testbench/dut/Required[55], /testbench/dut/Required[54], /testbench/dut/Required[53], /testbench/dut/Required[52], /testbench/dut/Required[51], /testbench/dut/Required[50], /testbench/dut/Required[49], /testbench/dut/Required[48], /testbench/dut/Required[47], /testbench/dut/Required[46], /testbench/dut/Required[45], /testbench/dut/Required[44], /testbench/dut/Required[43], /testbench/dut/Required[42], /testbench/dut/Required[41], /testbench/dut/Required[40], /testbench/dut/Required[39], /testbench/dut/Required[38], /testbench/dut/Required[37], /testbench/dut/Required[36], /testbench/dut/Required[35], /testbench/dut/Required[34], /testbench/dut/Required[33], /testbench/dut/Required[32], /testbench/dut/Required[31], /testbench/dut/Required[30], /testbench/dut/Required[29], /testbench/dut/Required[28], /testbench/dut/Required[27], /testbench/dut/Required[26], /testbench/dut/Required[25], /testbench/dut/Required[24], /testbench/dut/Required[23], /testbench/dut/Required[22], /testbench/dut/Required[21], /testbench/dut/Required[20], /testbench/dut/Required[19], /testbench/dut/Required[18], /testbench/dut/Required[17], /testbench/dut/Required[16], /testbench/dut/Required[15], /testbench/dut/Required[14], /testbench/dut/Required[13], /testbench/dut/Required[12], /testbench/dut/Required[11], /testbench/dut/Required[10], /testbench/dut/Required[9], /testbench/dut/Required[8], /testbench/dut/Required[7], /testbench/dut/Required[6], /testbench/dut/Required[5], /testbench/dut/Required[4], /testbench/dut/Required[3], /testbench/dut/Required[2], /testbench/dut/Required[1], /testbench/dut/Required[0] }} PCW
+quietly virtual function -install /testbench/dut -env /testbench/genblk3/#ALWAYS#441,293,397 { &{/testbench/dut/Required[95], /testbench/dut/Required[94], /testbench/dut/Required[93], /testbench/dut/Required[92], /testbench/dut/Required[91], /testbench/dut/Required[90], /testbench/dut/Required[89], /testbench/dut/Required[88], /testbench/dut/Required[87], /testbench/dut/Required[86], /testbench/dut/Required[85], /testbench/dut/Required[84], /testbench/dut/Required[83], /testbench/dut/Required[82], /testbench/dut/Required[81], /testbench/dut/Required[80], /testbench/dut/Required[79], /testbench/dut/Required[78], /testbench/dut/Required[77], /testbench/dut/Required[76], /testbench/dut/Required[75], /testbench/dut/Required[74], /testbench/dut/Required[73], /testbench/dut/Required[72], /testbench/dut/Required[71], /testbench/dut/Required[70], /testbench/dut/Required[69], /testbench/dut/Required[68], /testbench/dut/Required[67], /testbench/dut/Required[66], /testbench/dut/Required[65], /testbench/dut/Required[64] }} InstrW
+quietly virtual function -install /testbench/dut -env /testbench/genblk3/#ALWAYS#441,293,397 { &{/testbench/dut/Required[159], /testbench/dut/Required[158], /testbench/dut/Required[157], /testbench/dut/Required[156], /testbench/dut/Required[155], /testbench/dut/Required[154], /testbench/dut/Required[153], /testbench/dut/Required[152], /testbench/dut/Required[151], /testbench/dut/Required[150], /testbench/dut/Required[149], /testbench/dut/Required[148], /testbench/dut/Required[147], /testbench/dut/Required[146], /testbench/dut/Required[145], /testbench/dut/Required[144], /testbench/dut/Required[143], /testbench/dut/Required[142], /testbench/dut/Required[141], /testbench/dut/Required[140], /testbench/dut/Required[139], /testbench/dut/Required[138], /testbench/dut/Required[137], /testbench/dut/Required[136], /testbench/dut/Required[135], /testbench/dut/Required[134], /testbench/dut/Required[133], /testbench/dut/Required[132], /testbench/dut/Required[131], /testbench/dut/Required[130], /testbench/dut/Required[129], /testbench/dut/Required[128], /testbench/dut/Required[127], /testbench/dut/Required[126], /testbench/dut/Required[125], /testbench/dut/Required[124], /testbench/dut/Required[123], /testbench/dut/Required[122], /testbench/dut/Required[121], /testbench/dut/Required[120], /testbench/dut/Required[119], /testbench/dut/Required[118], /testbench/dut/Required[117], /testbench/dut/Required[116], /testbench/dut/Required[115], /testbench/dut/Required[114], /testbench/dut/Required[113], /testbench/dut/Required[112], /testbench/dut/Required[111], /testbench/dut/Required[110], /testbench/dut/Required[109], /testbench/dut/Required[108], /testbench/dut/Required[107], /testbench/dut/Required[106], /testbench/dut/Required[105], /testbench/dut/Required[104], /testbench/dut/Required[103], /testbench/dut/Required[102], /testbench/dut/Required[101], /testbench/dut/Required[100], /testbench/dut/Required[99], /testbench/dut/Required[98], /testbench/dut/Required[97], /testbench/dut/Required[96] }} Mcycle
+quietly virtual function -install /testbench/dut -env /testbench/genblk3/#ALWAYS#441,293,397 { &{/testbench/dut/Required[223], /testbench/dut/Required[222], /testbench/dut/Required[221], /testbench/dut/Required[220], /testbench/dut/Required[219], /testbench/dut/Required[218], /testbench/dut/Required[217], /testbench/dut/Required[216], /testbench/dut/Required[215], /testbench/dut/Required[214], /testbench/dut/Required[213], /testbench/dut/Required[212], /testbench/dut/Required[211], /testbench/dut/Required[210], /testbench/dut/Required[209], /testbench/dut/Required[208], /testbench/dut/Required[207], /testbench/dut/Required[206], /testbench/dut/Required[205], /testbench/dut/Required[204], /testbench/dut/Required[203], /testbench/dut/Required[202], /testbench/dut/Required[201], /testbench/dut/Required[200], /testbench/dut/Required[199], /testbench/dut/Required[198], /testbench/dut/Required[197], /testbench/dut/Required[196], /testbench/dut/Required[195], /testbench/dut/Required[194], /testbench/dut/Required[193], /testbench/dut/Required[192], /testbench/dut/Required[191], /testbench/dut/Required[190], /testbench/dut/Required[189], /testbench/dut/Required[188], /testbench/dut/Required[187], /testbench/dut/Required[186], /testbench/dut/Required[185], /testbench/dut/Required[184], /testbench/dut/Required[183], /testbench/dut/Required[182], /testbench/dut/Required[181], /testbench/dut/Required[180], /testbench/dut/Required[179], /testbench/dut/Required[178], /testbench/dut/Required[177], /testbench/dut/Required[176], /testbench/dut/Required[175], /testbench/dut/Required[174], /testbench/dut/Required[173], /testbench/dut/Required[172], /testbench/dut/Required[171], /testbench/dut/Required[170], /testbench/dut/Required[169], /testbench/dut/Required[168], /testbench/dut/Required[167], /testbench/dut/Required[166], /testbench/dut/Required[165], /testbench/dut/Required[164], /testbench/dut/Required[163], /testbench/dut/Required[162], /testbench/dut/Required[161], /testbench/dut/Required[160] }} Minstret
+quietly virtual signal -install /testbench/dut {/testbench/dut/Required[224]  } TrapW
+quietly virtual function -install /testbench/dut -env /testbench/genblk3/#ALWAYS#441,293,397 { &{/testbench/dut/Required[226], /testbench/dut/Required[225] }} PrivilegeModeW
+quietly virtual signal -install /testbench/dut {/testbench/dut/Registers[0]  } GPRWen
+quietly virtual signal -install /testbench/dut {/testbench/dut/Registers[1]  } FPRWen
+quietly virtual function -install /testbench/dut -env /testbench/genblk3/#ALWAYS#441,293,397 { &{/testbench/dut/Registers[6], /testbench/dut/Registers[5], /testbench/dut/Registers[4], /testbench/dut/Registers[3], /testbench/dut/Registers[2] }} GPRAdr
+quietly virtual function -install /testbench/dut -env /testbench/genblk3/#ALWAYS#441,293,397 { &{/testbench/dut/Registers[71], /testbench/dut/Registers[70], /testbench/dut/Registers[69], /testbench/dut/Registers[68], /testbench/dut/Registers[67], /testbench/dut/Registers[66], /testbench/dut/Registers[65], /testbench/dut/Registers[64], /testbench/dut/Registers[63], /testbench/dut/Registers[62], /testbench/dut/Registers[61], /testbench/dut/Registers[60], /testbench/dut/Registers[59], /testbench/dut/Registers[58], /testbench/dut/Registers[57], /testbench/dut/Registers[56], /testbench/dut/Registers[55], /testbench/dut/Registers[54], /testbench/dut/Registers[53], /testbench/dut/Registers[52], /testbench/dut/Registers[51], /testbench/dut/Registers[50], /testbench/dut/Registers[49], /testbench/dut/Registers[48], /testbench/dut/Registers[47], /testbench/dut/Registers[46], /testbench/dut/Registers[45], /testbench/dut/Registers[44], /testbench/dut/Registers[43], /testbench/dut/Registers[42], /testbench/dut/Registers[41], /testbench/dut/Registers[40], /testbench/dut/Registers[39], /testbench/dut/Registers[38], /testbench/dut/Registers[37], /testbench/dut/Registers[36], /testbench/dut/Registers[35], /testbench/dut/Registers[34], /testbench/dut/Registers[33], /testbench/dut/Registers[32], /testbench/dut/Registers[31], /testbench/dut/Registers[30], /testbench/dut/Registers[29], /testbench/dut/Registers[28], /testbench/dut/Registers[27], /testbench/dut/Registers[26], /testbench/dut/Registers[25], /testbench/dut/Registers[24], /testbench/dut/Registers[23], /testbench/dut/Registers[22], /testbench/dut/Registers[21], /testbench/dut/Registers[20], /testbench/dut/Registers[19], /testbench/dut/Registers[18], /testbench/dut/Registers[17], /testbench/dut/Registers[16], /testbench/dut/Registers[15], /testbench/dut/Registers[14], /testbench/dut/Registers[13], /testbench/dut/Registers[12], /testbench/dut/Registers[11], /testbench/dut/Registers[10], /testbench/dut/Registers[9], /testbench/dut/Registers[8], /testbench/dut/Registers[7] }} GPRValue
+quietly virtual function -install /testbench/dut -env /testbench/genblk3/#ALWAYS#441,293,397 { &{/testbench/dut/Registers[76], /testbench/dut/Registers[75], /testbench/dut/Registers[74], /testbench/dut/Registers[73], /testbench/dut/Registers[72], /testbench/dut/Registers[71] }} GPRAdr001
+quietly virtual function -install /testbench/dut -env /testbench/genblk3/#ALWAYS#441,293,397 { &{/testbench/dut/Registers[139], /testbench/dut/Registers[138], /testbench/dut/Registers[137], /testbench/dut/Registers[136], /testbench/dut/Registers[135], /testbench/dut/Registers[134], /testbench/dut/Registers[133], /testbench/dut/Registers[132], /testbench/dut/Registers[131], /testbench/dut/Registers[130], /testbench/dut/Registers[129], /testbench/dut/Registers[128], /testbench/dut/Registers[127], /testbench/dut/Registers[126], /testbench/dut/Registers[125], /testbench/dut/Registers[124], /testbench/dut/Registers[123], /testbench/dut/Registers[122], /testbench/dut/Registers[121], /testbench/dut/Registers[120], /testbench/dut/Registers[119], /testbench/dut/Registers[118], /testbench/dut/Registers[117], /testbench/dut/Registers[116], /testbench/dut/Registers[115], /testbench/dut/Registers[114], /testbench/dut/Registers[113], /testbench/dut/Registers[112], /testbench/dut/Registers[111], /testbench/dut/Registers[110], /testbench/dut/Registers[109], /testbench/dut/Registers[108], /testbench/dut/Registers[107], /testbench/dut/Registers[106], /testbench/dut/Registers[105], /testbench/dut/Registers[104], /testbench/dut/Registers[103], /testbench/dut/Registers[102], /testbench/dut/Registers[101], /testbench/dut/Registers[100], /testbench/dut/Registers[99], /testbench/dut/Registers[98], /testbench/dut/Registers[97], /testbench/dut/Registers[96], /testbench/dut/Registers[95], /testbench/dut/Registers[94], /testbench/dut/Registers[93], /testbench/dut/Registers[92], /testbench/dut/Registers[91], /testbench/dut/Registers[90], /testbench/dut/Registers[89], /testbench/dut/Registers[88], /testbench/dut/Registers[87], /testbench/dut/Registers[86], /testbench/dut/Registers[85], /testbench/dut/Registers[84], /testbench/dut/Registers[83], /testbench/dut/Registers[82], /testbench/dut/Registers[81], /testbench/dut/Registers[80], /testbench/dut/Registers[79], /testbench/dut/Registers[78], /testbench/dut/Registers[77], /testbench/dut/Registers[76] }} FPRValue
+quietly virtual function -install /testbench/dut -env /testbench/genblk3/#ALWAYS#441,293,397 { &{/testbench/dut/Registers[70], /testbench/dut/Registers[69], /testbench/dut/Registers[68], /testbench/dut/Registers[67], /testbench/dut/Registers[66], /testbench/dut/Registers[65], /testbench/dut/Registers[64], /testbench/dut/Registers[63], /testbench/dut/Registers[62], /testbench/dut/Registers[61], /testbench/dut/Registers[60], /testbench/dut/Registers[59], /testbench/dut/Registers[58], /testbench/dut/Registers[57], /testbench/dut/Registers[56], /testbench/dut/Registers[55], /testbench/dut/Registers[54], /testbench/dut/Registers[53], /testbench/dut/Registers[52], /testbench/dut/Registers[51], /testbench/dut/Registers[50], /testbench/dut/Registers[49], /testbench/dut/Registers[48], /testbench/dut/Registers[47], /testbench/dut/Registers[46], /testbench/dut/Registers[45], /testbench/dut/Registers[44], /testbench/dut/Registers[43], /testbench/dut/Registers[42], /testbench/dut/Registers[41], /testbench/dut/Registers[40], /testbench/dut/Registers[39], /testbench/dut/Registers[38], /testbench/dut/Registers[37], /testbench/dut/Registers[36], /testbench/dut/Registers[35], /testbench/dut/Registers[34], /testbench/dut/Registers[33], /testbench/dut/Registers[32], /testbench/dut/Registers[31], /testbench/dut/Registers[30], /testbench/dut/Registers[29], /testbench/dut/Registers[28], /testbench/dut/Registers[27], /testbench/dut/Registers[26], /testbench/dut/Registers[25], /testbench/dut/Registers[24], /testbench/dut/Registers[23], /testbench/dut/Registers[22], /testbench/dut/Registers[21], /testbench/dut/Registers[20], /testbench/dut/Registers[19], /testbench/dut/Registers[18], /testbench/dut/Registers[17], /testbench/dut/Registers[16], /testbench/dut/Registers[15], /testbench/dut/Registers[14], /testbench/dut/Registers[13], /testbench/dut/Registers[12], /testbench/dut/Registers[11], /testbench/dut/Registers[10], /testbench/dut/Registers[9], /testbench/dut/Registers[8], /testbench/dut/Registers[7] }} GPRValue001
+quietly virtual function -install /testbench/dut -env /testbench/genblk3/#ALWAYS#441,293,397 { &{/testbench/dut/Registers[75], /testbench/dut/Registers[74], /testbench/dut/Registers[73], /testbench/dut/Registers[72], /testbench/dut/Registers[71] }} FPRAdr
 quietly WaveActivateNextPane {} 0
 add wave -noupdate /testbench/clk
 add wave -noupdate /testbench/reset
 add wave -noupdate /testbench/memfilename
 add wave -noupdate /testbench/dut/core/SATP_REGW
 add wave -noupdate /testbench/dut/core/InstrValidM
-add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/core/hzu/RetM
-add wave -noupdate -expand -group HDU -expand -group hazards -color Pink /testbench/dut/core/hzu/TrapM
-add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/core/ieu/c/LoadStallD
-add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/core/ifu/IFUStallF
-add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/core/hzu/BPWrongE
-add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/core/hzu/LSUStallM
-add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/core/ieu/c/MDUStallD
-add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/core/hzu/DivBusyE
-add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/core/hzu/FDivBusyE
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InstrMisalignedFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InstrAccessFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/IllegalInstrFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/BreakpointFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/LoadMisalignedFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/StoreAmoMisalignedFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/LoadAccessFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/StoreAmoAccessFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/EcallFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InstrPageFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/LoadPageFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/StoreAmoPageFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InterruptM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/HPTWInstrAccessFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/pmd/WFITimeoutM
-add wave -noupdate -expand -group HDU -group Flush -color Yellow /testbench/dut/core/FlushD
-add wave -noupdate -expand -group HDU -group Flush -color Yellow /testbench/dut/core/FlushE
-add wave -noupdate -expand -group HDU -group Flush -color Yellow /testbench/dut/core/FlushM
-add wave -noupdate -expand -group HDU -group Flush -color Yellow /testbench/dut/core/FlushW
-add wave -noupdate -expand -group HDU -group Stall -color Orange /testbench/dut/core/StallF
-add wave -noupdate -expand -group HDU -group Stall -color Orange /testbench/dut/core/StallD
-add wave -noupdate -expand -group HDU -group Stall -color Orange /testbench/dut/core/StallE
-add wave -noupdate -expand -group HDU -group Stall -color Orange /testbench/dut/core/StallM
-add wave -noupdate -expand -group HDU -group Stall -color Orange /testbench/dut/core/StallW
-add wave -noupdate -expand -group HDU -group interrupts /testbench/dut/core/priv/priv/trap/PendingIntsM
-add wave -noupdate -expand -group HDU -group interrupts /testbench/dut/core/priv/priv/trap/InstrValidM
-add wave -noupdate -expand -group HDU -group interrupts /testbench/dut/core/priv/priv/trap/ValidIntsM
-add wave -noupdate -expand -group HDU -group interrupts /testbench/dut/core/hzu/WFIInterruptedM
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/RetM
+add wave -noupdate -group HDU -expand -group hazards -color Pink /testbench/dut/core/hzu/TrapM
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/ieu/c/LoadStallD
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/ifu/IFUStallF
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/BPWrongE
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/LSUStallM
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/ieu/c/MDUStallD
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/DivBusyE
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/FDivBusyE
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InstrMisalignedFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InstrAccessFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/IllegalInstrFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/BreakpointFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/LoadMisalignedFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/StoreAmoMisalignedFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/LoadAccessFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/StoreAmoAccessFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/EcallFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InstrPageFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/LoadPageFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/StoreAmoPageFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InterruptM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/HPTWInstrAccessFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/pmd/WFITimeoutM
+add wave -noupdate -group HDU -group Flush -color Yellow /testbench/dut/core/FlushD
+add wave -noupdate -group HDU -group Flush -color Yellow /testbench/dut/core/FlushE
+add wave -noupdate -group HDU -group Flush -color Yellow /testbench/dut/core/FlushM
+add wave -noupdate -group HDU -group Flush -color Yellow /testbench/dut/core/FlushW
+add wave -noupdate -group HDU -group Stall -color Orange /testbench/dut/core/StallF
+add wave -noupdate -group HDU -group Stall -color Orange /testbench/dut/core/StallD
+add wave -noupdate -group HDU -group Stall -color Orange /testbench/dut/core/StallE
+add wave -noupdate -group HDU -group Stall -color Orange /testbench/dut/core/StallM
+add wave -noupdate -group HDU -group Stall -color Orange /testbench/dut/core/StallW
+add wave -noupdate -group HDU -group interrupts /testbench/dut/core/priv/priv/trap/PendingIntsM
+add wave -noupdate -group HDU -group interrupts /testbench/dut/core/priv/priv/trap/InstrValidM
+add wave -noupdate -group HDU -group interrupts /testbench/dut/core/priv/priv/trap/ValidIntsM
+add wave -noupdate -group HDU -group interrupts /testbench/dut/core/hzu/WFIInterruptedM
 add wave -noupdate -group {instruction pipeline} /testbench/InstrFName
 add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/PostSpillInstrRawF
 add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/InstrD
@@ -239,7 +259,6 @@ add wave -noupdate -expand -group lsu -group alignment /testbench/dut/core/lsu/z
 add wave -noupdate -expand -group lsu -group alignment /testbench/dut/core/lsu/ziccslm_align/align/SelSpillM
 add wave -noupdate -expand -group lsu -group alignment /testbench/dut/core/lsu/ByteMaskSpillM
 add wave -noupdate -expand -group lsu -group alignment /testbench/dut/core/lsu/LSUWriteDataM
-add wave -noupdate -expand -group lsu -group alignment /testbench/dut/core/lsu/LSUWriteDataSpillM
 add wave -noupdate -expand -group lsu -group alignment /testbench/dut/core/lsu/bus/dcache/dcache/CacheWriteData
 add wave -noupdate -expand -group lsu -group alignment /testbench/dut/core/lsu/bus/dcache/dcache/ByteMask
 add wave -noupdate -expand -group lsu -group alignment /testbench/dut/core/lsu/bus/dcache/dcache/WriteSelLogic/BlankByteMask
@@ -252,20 +271,18 @@ add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/bus/dcache/dcache/
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/CacheRW
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/CMOpM
 add wave -noupdate -expand -group lsu -expand -group dcache -color Gold /testbench/dut/core/lsu/bus/dcache/dcache/cachefsm/CurrState
-add wave -noupdate -expand -group lsu -expand -group dcache -group SRAM-update-control /testbench/dut/core/lsu/bus/dcache/dcache/SetValid
-add wave -noupdate -expand -group lsu -expand -group dcache -group SRAM-update-control /testbench/dut/core/lsu/bus/dcache/dcache/ClearValid
-add wave -noupdate -expand -group lsu -expand -group dcache -group SRAM-update-control /testbench/dut/core/lsu/bus/dcache/dcache/SetDirty
-add wave -noupdate -expand -group lsu -expand -group dcache -group SRAM-update-control /testbench/dut/core/lsu/bus/dcache/dcache/ClearDirty
-add wave -noupdate -expand -group lsu -expand -group dcache -group SRAM-update-control /testbench/dut/core/lsu/bus/dcache/dcache/SelWay
-add wave -noupdate -expand -group lsu -expand -group dcache -group {requesting address} /testbench/dut/core/lsu/IEUAdrE
-add wave -noupdate -expand -group lsu -expand -group dcache -group {requesting address} /testbench/dut/core/lsu/bus/dcache/dcache/PAdr
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group SRAM-update-control /testbench/dut/core/lsu/bus/dcache/dcache/SetValid
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group SRAM-update-control /testbench/dut/core/lsu/bus/dcache/dcache/ClearValid
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group SRAM-update-control /testbench/dut/core/lsu/bus/dcache/dcache/SetDirty
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group SRAM-update-control /testbench/dut/core/lsu/bus/dcache/dcache/ClearDirty
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {requesting address} /testbench/dut/core/lsu/IEUAdrE
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {requesting address} /testbench/dut/core/lsu/bus/dcache/dcache/PAdr
 add wave -noupdate -expand -group lsu -expand -group dcache -group SRAM-outputs /testbench/dut/core/lsu/bus/dcache/dcache/ReadDataLineWay
 add wave -noupdate -expand -group lsu -expand -group dcache -group SRAM-outputs /testbench/dut/core/lsu/bus/dcache/dcache/ReadDataLineCache
 add wave -noupdate -expand -group lsu -expand -group dcache -group SRAM-outputs /testbench/dut/core/lsu/bus/dcache/dcache/TagWay
 add wave -noupdate -expand -group lsu -expand -group dcache -group SRAM-outputs /testbench/dut/core/lsu/bus/dcache/dcache/Tag
 add wave -noupdate -expand -group lsu -expand -group dcache -group SRAM-outputs /testbench/dut/core/lsu/bus/dcache/dcache/ValidWay
 add wave -noupdate -expand -group lsu -expand -group dcache -group SRAM-outputs /testbench/dut/core/lsu/bus/dcache/dcache/HitWay
-add wave -noupdate -expand -group lsu -expand -group dcache -group SRAM-outputs -color {Blue Violet} /testbench/dut/core/lsu/bus/dcache/dcache/CacheHit
 add wave -noupdate -expand -group lsu -expand -group dcache -group SRAM-outputs /testbench/dut/core/lsu/bus/dcache/dcache/DirtyWay
 add wave -noupdate -expand -group lsu -expand -group dcache -group SRAM-outputs {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/Dirty}
 add wave -noupdate -expand -group lsu -expand -group dcache -group SRAM-outputs /testbench/dut/core/lsu/bus/dcache/dcache/HitDirtyWay
@@ -294,7 +311,6 @@ add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM w
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} /testbench/dut/core/lsu/bus/dcache/dcache/SetDirty
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} /testbench/dut/core/lsu/bus/dcache/dcache/ClearDirty
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} /testbench/dut/core/lsu/bus/dcache/dcache/LineByteMask
-add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/SelData}
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/SelectedWriteWordEn}
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/SetValidWay}
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/ClearValidWay}
@@ -316,7 +332,6 @@ add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM w
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 -expand -group Way0Word3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/word[3]/wordram/CacheDataMem/bwe}
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 -expand -group Way0Word3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/word[3]/wordram/CacheDataMem/RAM}
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -group way1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/SelNonHit}
-add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -group way1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/SelData}
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -group way1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/SelectedWriteWordEn}
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -group way1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/SetValidWay}
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -group way1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/ClearValidWay}
@@ -410,30 +425,29 @@ add wave -noupdate -expand -group lsu -group pma /testbench/dut/core/lsu/dmmu/dm
 add wave -noupdate -expand -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/PMPInstrAccessFaultF
 add wave -noupdate -expand -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/PMPLoadAccessFaultM
 add wave -noupdate -expand -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/PMPStoreAmoAccessFaultM
-add wave -noupdate -expand -group lsu -expand -group ptwalker /testbench/dut/core/lsu/hptw/hptw/SelHPTW
-add wave -noupdate -expand -group lsu -expand -group ptwalker /testbench/dut/core/lsu/hptw/hptw/HPTWStall
-add wave -noupdate -expand -group lsu -expand -group ptwalker /testbench/dut/core/lsu/hptw/hptw/DTLBWalk
-add wave -noupdate -expand -group lsu -expand -group ptwalker -color Gold /testbench/dut/core/lsu/hptw/hptw/WalkerState
-add wave -noupdate -expand -group lsu -expand -group ptwalker /testbench/dut/core/lsu/hptw/hptw/NextWalkerState
-add wave -noupdate -expand -group lsu -expand -group ptwalker /testbench/dut/core/lsu/hptw/hptw/HPTWAdr
-add wave -noupdate -expand -group lsu -expand -group ptwalker /testbench/dut/core/lsu/hptw/hptw/PTE
-add wave -noupdate -expand -group lsu -expand -group ptwalker /testbench/dut/core/lsu/hptw/hptw/NextPageType
-add wave -noupdate -expand -group lsu -expand -group ptwalker /testbench/dut/core/lsu/hptw/hptw/PageType
-add wave -noupdate -expand -group lsu -expand -group ptwalker /testbench/dut/core/lsu/hptw/hptw/ValidNonLeafPTE
-add wave -noupdate -expand -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/ITLBMissF
-add wave -noupdate -expand -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/DTLBMissM
-add wave -noupdate -expand -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/hptw/hptw/ITLBWriteF
-add wave -noupdate -expand -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/hptw/hptw/DTLBWriteM
-add wave -noupdate -expand -group lsu -expand -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/HPTWFaultM
-add wave -noupdate -expand -group lsu -expand -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/LSUAccessFaultM
-add wave -noupdate -expand -group lsu -expand -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/DCacheStallM
-add wave -noupdate -expand -group lsu -expand -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/HPTWInstrAccessFaultF
-add wave -noupdate -expand -group lsu -expand -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/LSULoadAccessFaultM
-add wave -noupdate -expand -group lsu -expand -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/LSUStoreAmoAccessFaultM
-add wave -noupdate -expand -group lsu -expand -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/LoadAccessFaultM
-add wave -noupdate -expand -group lsu -expand -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/StoreAmoAccessFaultM
-add wave -noupdate -expand -group lsu -expand -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/HPTWInstrAccessFault
-add wave -noupdate -expand -group lsu -expand -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/PBMTFaultM
+add wave -noupdate -expand -group lsu -group ptwalker /testbench/dut/core/lsu/hptw/hptw/SelHPTW
+add wave -noupdate -expand -group lsu -group ptwalker /testbench/dut/core/lsu/hptw/hptw/HPTWStall
+add wave -noupdate -expand -group lsu -group ptwalker /testbench/dut/core/lsu/hptw/hptw/DTLBWalk
+add wave -noupdate -expand -group lsu -group ptwalker -color Gold /testbench/dut/core/lsu/hptw/hptw/WalkerState
+add wave -noupdate -expand -group lsu -group ptwalker /testbench/dut/core/lsu/hptw/hptw/NextWalkerState
+add wave -noupdate -expand -group lsu -group ptwalker /testbench/dut/core/lsu/hptw/hptw/HPTWAdr
+add wave -noupdate -expand -group lsu -group ptwalker /testbench/dut/core/lsu/hptw/hptw/PTE
+add wave -noupdate -expand -group lsu -group ptwalker /testbench/dut/core/lsu/hptw/hptw/NextPageType
+add wave -noupdate -expand -group lsu -group ptwalker /testbench/dut/core/lsu/hptw/hptw/PageType
+add wave -noupdate -expand -group lsu -group ptwalker /testbench/dut/core/lsu/hptw/hptw/ValidNonLeafPTE
+add wave -noupdate -expand -group lsu -group ptwalker -expand -group types /testbench/dut/core/lsu/ITLBMissF
+add wave -noupdate -expand -group lsu -group ptwalker -expand -group types /testbench/dut/core/lsu/DTLBMissM
+add wave -noupdate -expand -group lsu -group ptwalker -expand -group types /testbench/dut/core/lsu/hptw/hptw/ITLBWriteF
+add wave -noupdate -expand -group lsu -group ptwalker -expand -group types /testbench/dut/core/lsu/hptw/hptw/DTLBWriteM
+add wave -noupdate -expand -group lsu -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/HPTWFaultM
+add wave -noupdate -expand -group lsu -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/LSUAccessFaultM
+add wave -noupdate -expand -group lsu -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/HPTWInstrAccessFaultF
+add wave -noupdate -expand -group lsu -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/LSULoadAccessFaultM
+add wave -noupdate -expand -group lsu -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/LSUStoreAmoAccessFaultM
+add wave -noupdate -expand -group lsu -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/LoadAccessFaultM
+add wave -noupdate -expand -group lsu -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/StoreAmoAccessFaultM
+add wave -noupdate -expand -group lsu -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/HPTWInstrAccessFault
+add wave -noupdate -expand -group lsu -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/PBMTFaultM
 add wave -noupdate -group {WriteBack stage} /testbench/InstrW
 add wave -noupdate -group {WriteBack stage} /testbench/InstrWName
 add wave -noupdate -group {WriteBack stage} /testbench/dut/core/priv/priv/pmd/wfiW
@@ -665,9 +679,31 @@ add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/WFITimeoutM
 add wave -noupdate -expand -group testbench /testbench/DCacheFlushStart
 add wave -noupdate /testbench/dut/core/lsu/hptw/hptw/HPTWLoadPageFault
 add wave -noupdate /testbench/dut/core/lsu/hptw/hptw/HPTWLoadPageFaultDelay
+add wave -noupdate /testbench/dut/GPRWen
+add wave -noupdate /testbench/dut/FPRWen
+add wave -noupdate /testbench/dut/GPRAdr
+add wave -noupdate /testbench/dut/FPRValue
+add wave -noupdate /testbench/dut/GPRValue001
+add wave -noupdate /testbench/dut/FPRAdr
+add wave -noupdate /testbench/dut/Registers
+add wave -noupdate /testbench/dut/PCW
+add wave -noupdate /testbench/dut/InstrW
+add wave -noupdate /testbench/dut/Mcycle
+add wave -noupdate /testbench/dut/Minstret
+add wave -noupdate /testbench/dut/TrapW
+add wave -noupdate /testbench/dut/PrivilegeModeW
+add wave -noupdate /testbench/dut/Required
+add wave -noupdate /testbench/dut/rvvisynth/NumCSRs
+add wave -noupdate /testbench/dut/rvvisynth/CSRAdr0
+add wave -noupdate /testbench/dut/rvvisynth/CSRData0
+add wave -noupdate /testbench/dut/rvvisynth/CSRData1
+add wave -noupdate /testbench/dut/rvvisynth/CSRAdr2
+add wave -noupdate /testbench/dut/rvvisynth/CSRData2
+add wave -noupdate /testbench/dut/rvvisynth/CSRs
+add wave -noupdate /testbench/dut/rvvisynth/valid
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 4} {6586 ns} 1} {{Cursor 4} {11656 ns} 0} {{Cursor 3} {403021 ns} 1}
-quietly wave cursor active 2
+WaveRestoreCursors {{Cursor 4} {2298495 ns} 0} {{Cursor 4} {69146 ns} 1} {{Cursor 3} {403021 ns} 1}
+quietly wave cursor active 1
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 194
 configure wave -justifyvalue left
@@ -682,4 +718,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {11566 ns} {11760 ns}
+WaveRestoreZoom {2298408 ns} {2298612 ns}

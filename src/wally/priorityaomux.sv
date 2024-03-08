@@ -33,7 +33,6 @@ module priorityaomux #(parameter ROWS = 8, COLS = 64) (
   output logic [COLS-1:0] Y,
   output logic [ROWS-1:0] SelPriority);
 
-  logic [ROWS-1:0]           SelPriority;
   logic [COLS-1:0]           AMasked [ROWS-1:0];
   genvar                     index;
   

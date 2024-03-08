@@ -31,7 +31,7 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
                                   parameter integer MAX_CSRS)(
   input logic clk, reset,
   output logic valid,
-  output logic [163+P.XLEN-1:0] Requied,
+  output logic [163+P.XLEN-1:0] Required,
   output logic [12+2*P.XLEN-1:0] Registers,
   output logic [12+MAX_CSRS*(P.XLEN+12)-1:0] CSRs
   );
@@ -54,9 +54,10 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
   logic [P.XLEN-1:0]                        XLENZeros;
   logic [P.XLEN-1:0]                        CSRArray [TOTAL_CSRS-1:0];
   logic [TOTAL_CSRS-1:0]                    CSRArrayWen;
-  logic [MAX_CSRS-1:0]                      CSRValue [P.XLEN-1:0];
-  logic [MAX_CSRS-1:0]                      CSRWen [TOTAL_CSRS-1:0];
-  logic [MAX_CSRS-1:0]                      CSRAddr [11:0];
+  logic [P.XLEN-1:0]                        CSRValue [MAX_CSRS-1:0];
+  logic [TOTAL_CSRS-1:0]                    CSRWen [MAX_CSRS-1:0];
+  logic [11:0]                              CSRAddr [MAX_CSRS-1:0];
+  logic [MAX_CSRS-1:0]                      EnabledCSRs;
      
   // get signals from the core.
   assign StallW         = testbench.dut.core.StallW;
@@ -147,14 +148,14 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
 
   // step 3a
   for(index = 0; index < MAX_CSRS; index = index + 1) begin
-    logic [NUM_CSRS-index-1:0] CSRWenShort;
-    priorityaomux #(NUM_CSRS-index, P.XLEN) priorityaomux(CSRArrayWen[MAX_CSRS-1:index], CSRArray[MAX_CSRS-1:index], CSRValue[index], CSRWenShort);
+    logic [MAX_CSRS-index-1:0] CSRWenShort;
+    priorityaomux #(MAX_CSRS-index, P.XLEN) priorityaomux(CSRArrayWen[MAX_CSRS-1:index], CSRArray[MAX_CSRS-1:index], CSRValue[index], CSRWenShort);
     assign CSRWen[index] = {{{index}{1'b0}}, CSRWenShort};
     // step 3b
-    csrindextoaddr #(NUM_CSRS) csrindextoaddr(CSRWen, CSRAddr);
-    assign CSRs[(index+1) * P.XLEN - 1 + 12 + 12: index * P.XLEN + 12] = {CSRValue[index], CSRAddr[index]};
+    csrindextoaddr #(TOTAL_CSRS) csrindextoaddr(CSRWen[index], CSRAddr[index]);
+    assign CSRs[(index+1) * (P.XLEN + 12) + 12 - 1: index * (P.XLEN + 12) + 12] = {CSRValue[index], CSRAddr[index]};
+    assign EnabledCSRs[index] = |CSRWenShort;
   end
-
-
+  assign CSRs[11:0] = +EnabledCSRs;
 endmodule
                                                                  

@@ -27,12 +27,12 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module csrindextoaddr #(parameter NUM_CSRS = 36) (
-  input logic [ROWS-1:0]  CSRWen,
+module csrindextoaddr #(parameter TOTAL_CSRS = 36) (
+  input logic [TOTAL_CSRS-1:0]  CSRWen,
   output logic [11:0] CSRAddr);
 
   always_comb begin
-    case(CSRWen) begin
+    case(CSRWen) 
       36'h0_0000_0000: CSRAddr = 13'h000;
       36'h0_0000_0001: CSRAddr = 13'h300;
       36'h0_0000_0002: CSRAddr = 13'h310;
@@ -71,7 +71,7 @@ module csrindextoaddr #(parameter NUM_CSRS = 36) (
       36'h4_0000_0000: CSRAddr = 13'h002;
       36'h8_0000_0000: CSRAddr = 13'h003;
       default        : CSRAddr = 13'h000;
-    end
+    endcase
   end
 endmodule
   
