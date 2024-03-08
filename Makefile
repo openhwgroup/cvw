@@ -40,7 +40,7 @@ imperasdv:
 	iter-elf.bash --search ${WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m
 
 coverage:
-	cd ${WALLY}/sim; ./regresssion-wally -coverage -fp
+	cd ${WALLY}/sim; ./regression-wally -coverage -fp
 
 benchmarks:
 	make coremark
