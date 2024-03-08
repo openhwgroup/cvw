@@ -89,8 +89,8 @@ module spill import cvw::*;  #(parameter cvw_t P) (
   assign TakeSpillF = SpillF & ~EarlyCompressedF & ~IFUCacheBusStallF & ~(ITLBMissF | (P.SVADU_SUPPORTED & InstrUpdateDAF));
   
   always_ff @(posedge clk)
-    if (reset | FlushD)    CurrState <= #1 STATE_READY;
-    else CurrState <= #1 NextState;
+    if (reset | FlushD)    CurrState <= STATE_READY;
+    else CurrState <= NextState;
 
   always_comb begin
     case (CurrState)

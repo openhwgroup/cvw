@@ -250,7 +250,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
     /* verilator lint_on CASEINCOMPLETE */
 
   // unswizzle control bits
-  assign #1 {FRegWriteD, FWriteIntD, FResSelD, PostProcSelD, OpCtrlD, FDivStartD, IllegalFPUInstrD, FCvtIntD, ZfaD} = ControlsD;
+  assign  {FRegWriteD, FWriteIntD, FResSelD, PostProcSelD, OpCtrlD, FDivStartD, IllegalFPUInstrD, FCvtIntD, ZfaD} = ControlsD;
   
   // rounding modes:
   //    000 - round to nearest, ties to even

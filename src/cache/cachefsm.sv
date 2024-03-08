@@ -110,8 +110,8 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   flop #(1) resetDelayReg(.clk, .d(reset), .q(resetDelay));
 
   always_ff @(posedge clk)
-    if (reset | FlushStage)    CurrState <= #1 STATE_READY;
-    else CurrState <= #1 NextState;  
+    if (reset | FlushStage)    CurrState <=  STATE_READY;
+    else CurrState <=  NextState;  
   
   always_comb begin
     NextState = STATE_READY;

@@ -159,12 +159,12 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   /////////////////////////////////////////////////////////////////////////////////////////////
   
   always_ff @(posedge clk) begin // Valid bit array, 
-    if (reset) ValidBits        <= #1 '0;
+    if (reset) ValidBits        <=  '0;
     if(CacheEn) begin 
-      ValidWay <= #1 ValidBits[CacheSetTag];
-      if(InvalidateCache)                    ValidBits <= #1 '0; // exclusion-tag: dcache invalidateway
-      else if (SetValidEN) ValidBits[CacheSetData] <= #1 SetValidWay;
-      else if (ClearValidEN) ValidBits[CacheSetData] <= #1 '0; // exclusion-tag: icache ClearValidBits
+      ValidWay <=  ValidBits[CacheSetTag];
+      if(InvalidateCache)                    ValidBits <=  '0; // exclusion-tag: dcache invalidateway
+      else if (SetValidEN) ValidBits[CacheSetData] <=  SetValidWay;
+      else if (ClearValidEN) ValidBits[CacheSetData] <=  '0; // exclusion-tag: icache ClearValidBits
     end
   end
 
@@ -176,10 +176,10 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   if (!READ_ONLY_CACHE) begin:dirty
     always_ff @(posedge clk) begin
       // reset is optional.  Consider merging with TAG array in the future.
-      //if (reset) DirtyBits <= #1 {NUMLINES{1'b0}}; 
+      //if (reset) DirtyBits <= {NUMLINES{1'b0}}; 
       if(CacheEn) begin
-        Dirty <= #1 DirtyBits[CacheSetTag];
-        if((SetDirtyWay | ClearDirtyWay) & ~FlushStage) DirtyBits[CacheSetData] <= #1 SetDirtyWay; // exclusion-tag: cache UpdateDirty
+        Dirty <= DirtyBits[CacheSetTag];
+        if((SetDirtyWay | ClearDirtyWay) & ~FlushStage) DirtyBits[CacheSetData] <= SetDirtyWay; // exclusion-tag: cache UpdateDirty
       end
     end
   end else assign Dirty = 1'b0;

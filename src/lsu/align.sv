@@ -113,8 +113,8 @@ module align import cvw::*;  #(parameter cvw_t P) (
   assign ValidSpillM = MisalignedM & PotentialSpillM & ~CacheBusHPWTStall;   // Don't take the spill if there is a stall
   
   always_ff @(posedge clk)
-    if (reset | FlushM)    CurrState <= #1 STATE_READY;
-    else CurrState <= #1 NextState;
+    if (reset | FlushM)    CurrState <= STATE_READY;
+    else CurrState <= NextState;
 
   always_comb begin
     case (CurrState)
