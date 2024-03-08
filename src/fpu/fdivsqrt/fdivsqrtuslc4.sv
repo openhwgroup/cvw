@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -30,7 +31,7 @@ module fdivsqrtuslc4 (
   input  logic [2:0] Dmsbs,             // U0.3 fractional bits after implicit leading 1
   input  logic [4:0] Smsbs,             // U1.4 leading bits of square root approximation
   input  logic [7:0] WSmsbs, WCmsbs,    // Q4.4 redundant residual most significant bits
-  input  logic       Sqrt, j1,
+  input  logic       Sqrt, j0, j1,
   output logic [3:0] udigit             // {2, 1, -1, -2} digit is 0 if none are hot
 );
   logic [7:0] PreWmsbs;                 // Q4.4 nonredundant residual msbs
@@ -101,11 +102,12 @@ module fdivsqrtuslc4 (
   // Select A
   always_comb
     if (Sqrt) begin 
-      if (j1) A = 3'b101;                       // on first sqrt iteration        A = .101
-      else if (Smsbs == 5'b10000) A = 3'b111;   // if S = 1.0, use                A = .111
-      else A = Smsbs[2:0];                      // otherwise use                  A = 2S (in U0.3 format)
-    end else A = Dmsbs;                         // division Unless                A = D (IN U0.3 format, dropping leading 1)
+      if (j1)                 A = 3'b101;     // on first sqrt iteration        A = .101
+      else if (Smsbs[4] == 1) A = 3'b111;     // if S = 1.0000, use             A = .111
+      else                    A = Smsbs[2:0]; // otherwise use                  A = 2S (in U0.3 format)
+    end else                  A = Dmsbs;      // division                       A = D (IN U0.3 format, dropping leading 1)
 
   // Select quotient digit from lookup table based on A and W
-  assign udigit = USel4[{A,Wmsbs}];
+  // On step j = 0 for square root, always select u_0 = 1
+  assign udigit = (Sqrt & j0) ? 4'b0100 : USel4[{A,Wmsbs}];
 endmodule

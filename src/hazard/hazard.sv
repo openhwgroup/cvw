@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 4, Figure 13.54
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -81,7 +82,7 @@ module hazard import cvw::*;  #(parameter cvw_t P) (
   //  The IFU and LSU stall the entire pipeline on a cache miss, bus access, or other long operation.  
   //    The IFU stalls the entire pipeline rather than just Fetch to avoid complications with instructions later in the pipeline causing Exceptions
   //    A trap could be asserted at the start of a IFU/LSU stall, and should flush the memory operation
-  assign StallFCause = '0;
+  assign StallFCause = 0;
   assign StallDCause = (StructuralStallD | FPUStallD) & ~FlushDCause;
   assign StallECause = (DivBusyE | FDivBusyE) & ~FlushECause; 
   assign StallMCause = WFIStallM & ~FlushMCause;

@@ -11,6 +11,9 @@
 #
 ##################################
 import sys,os,shutil
+import multiprocessing
+
+
 
 class bcolors:
     HEADER = '\033[95m'
@@ -29,6 +32,8 @@ os.chdir(regressionDir)
 
 coverage = '-coverage' in sys.argv
 fp = '-fp' in sys.argv
+nightly = '-nightly' in sys.argv
+softfloat = '-softfloat' in sys.argv
 
 TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr'])
 # name:     the name of this test configuration (used in printing human-readable
@@ -40,14 +45,20 @@ TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr'])
 #           be any pattern grep accepts, see `man 1 grep` for more info).
 
 # edit this list to add more test cases
-configs = [
-    TestCase(
-        name="lints",
-        variant="all",
-        cmd="./lint-wally | tee {}",
-        grepstr="All lints run with no errors or warnings"
-    )
-]
+if (nightly):
+    nightMode = "-nightly";
+    configs = []
+else:
+    nightMode = "";
+    configs = [
+        TestCase(
+            name="lints",
+            variant="all",
+            cmd="./lint-wally " + nightMode + " | tee {}",
+            grepstr="lints run with no errors or warnings"
+        )
+    ]
+
 def getBuildrootTC(boot):
     INSTR_LIMIT = 1000000 # multiple of 100000; 4M is interesting because it gets into the kernel and enabling VM
     MAX_EXPECTED = 246000000 # *** TODO: replace this with a search for the login prompt.
@@ -62,7 +73,7 @@ def getBuildrootTC(boot):
             BRcmd="vsim > {} -c <<!\ndo wally-batch.do buildroot buildroot $RISCV "+str(INSTR_LIMIT)+" 1 0 -coverage\n!"
         else:
             print( "buildroot no coverage")
-            BRcmd="vsim > {} -c <<!\ndo wally-batch.do buildroot buildroot $RISCV "+str(INSTR_LIMIT)+" 1 0\n!"
+            BRcmd="vsim > {} -c <<!\ndo wally-batch.do buildroot buildroot configOptions -GINSTR_LIMIT=" +str(INSTR_LIMIT) + " \n!"
         BRgrepstr=str(INSTR_LIMIT)+" instructions"
     return  TestCase(name,variant="rv64gc",cmd=BRcmd,grepstr=BRgrepstr)
 
@@ -78,7 +89,7 @@ for test in tests64i:
   configs.append(tc)
 
 tests32gcimperas = ["imperas32i", "imperas32f", "imperas32m", "imperas32c"] # unused
-tests32gc = ["arch32f", "arch32d", "arch32f_fma", "arch32d_fma", "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32a", "arch32zifencei", "arch32zicond", "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "wally32a",  "wally32priv", "wally32periph"]  
+tests32gc = ["arch32f", "arch32d", "arch32f_fma", "arch32d_fma", "arch32f_divsqrt", "arch32d_divsqrt", "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32a", "arch32zifencei", "arch32zicond", "arch32zba", "arch32zbb", "arch32zbs", "arch32zfh", "arch32zfh_fma", "arch32zfh_divsqrt", "arch32zfaf", "wally32a", "wally32priv", "wally32periph"]  # "arch32zbc", "arch32zfad",
 #tests32gc = ["arch32f", "arch32d", "arch32f_fma", "arch32d_fma", "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32a", "arch32zifencei", "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "arch32zicboz", "arch32zcb", "wally32a",  "wally32priv", "wally32periph"]  
 for test in tests32gc:
   tc = TestCase(
@@ -117,29 +128,27 @@ for test in tests32e:
         grepstr="All tests ran without failures")
   configs.append(tc)
 
-ahbTests = [("0", "0"), ("0", "1"), ("1", "0"), ("1", "1"), ("2", "0"), ("2", "1")] 
-for test in ahbTests:
-  tc = TestCase(
-        name="ram_latency_" + test[0] + "_burst_en_" + test[1],
-        variant="ahb",
-        cmd="vsim > {} -c <<!\ndo wally-batch.do rv64gc ahb "+test[0]+" "+test[1]+"\n!",
-        grepstr="All tests ran without failures")
-  configs.append(tc)
-
-tests64gc = ["arch64f", "arch64d", "arch64f_fma", "arch64d_fma", "arch64i", "arch64zba", "arch64zbb", "arch64zbc", "arch64zbs", 
-             "arch64priv", "arch64c",  "arch64m", "arch64a", "arch64zifencei", "arch64zicond", "wally64a", "wally64periph", "wally64priv"] 
+tests64gc = ["arch64f", "arch64d", "arch64f_fma", "arch64d_fma", "arch64f_divsqrt", "arch64d_divsqrt", "arch64i", "arch64zba", "arch64zbb", "arch64zbc", "arch64zbs",  "arch64zfh", "arch64zfh_divsqrt", "arch64zfh_fma", "arch64zfaf", "arch64zfad",
+             "arch64priv", "arch64c",  "arch64m", "arch64a", "arch64zifencei", "arch64zicond", "wally64a", "wally64periph", "wally64priv"] # add arch64zfh_fma when available; arch64zicobz, arch64zcb when working
 #tests64gc = ["arch64f", "arch64d", "arch64f_fma", "arch64d_fma", "arch64i", "arch64zba", "arch64zbb", "arch64zbc", "arch64zbs", 
 #             "arch64priv", "arch64c",  "arch64m", "arch64a", "arch64zifencei", "wally64a", "wally64periph", "wally64priv", "arch64zicboz", "arch64zcb"] 
 if (coverage):  # delete all but 64gc tests when running coverage
     configs = []
-    tests64gc = ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m", 
+    tests64gc = ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m",
                  "arch64zifencei", "arch64zicond", "arch64a", "wally64a", "wally64periph", "wally64priv", 
-                 "arch64zba",  "arch64zbb",  "arch64zbc",  "arch64zbs"] # add when working: "arch64zicboz", "arch64zcb", 
+                 "arch64zba",  "arch64zbb",  "arch64zbc", "arch64zbs"] # add when working: "arch64zcb", "arch64zicboz"
     if (fp):
        tests64gc.append("arch64f")
        tests64gc.append("arch64d")
+       tests64gc.append("arch64zfh")
        tests64gc.append("arch64f_fma")
-       tests64gc.append("arch64d_fma")
+       tests64gc.append("arch64d_fma") 
+       tests64gc.append("arch64zfh_fma")
+       tests64gc.append("arch64f_divsqrt")
+       tests64gc.append("arch64d_divsqrt")
+       tests64gc.append("arch64zfh_divsqrt")
+       tests64gc.append("arch64zfaf")
+       tests64gc.append("arch64zfad")
     coverStr = '-coverage'
 else:
    coverStr = ''
@@ -150,7 +159,238 @@ for test in tests64gc:
         cmd="vsim > {} -c <<!\ndo wally-batch.do rv64gc "+test+" " + coverStr + "\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
-  
+
+# run derivative configurations if requested  
+if (nightly):
+    derivconfigtests = [
+        ["tlb2_rv32gc", ["wally32priv"]],
+        ["tlb16_rv32gc", ["wally32priv"]],
+        ["tlb2_rv64gc", ["wally64priv"]],
+        ["tlb16_rv64gc", ["wally64priv"]],
+        ["way_1_4096_512_rv32gc", ["arch32i"]],
+        ["way_2_4096_512_rv32gc", ["arch32i"]],
+        ["way_8_4096_512_rv32gc", ["arch32i"]],
+        ["way_4_2048_512_rv32gc", ["arch32i"]],
+        ["way_4_4096_256_rv32gc", ["arch32i"]],
+        ["way_1_4096_512_rv64gc", ["arch64i"]],
+        ["way_2_4096_512_rv64gc", ["arch64i"]],
+        ["way_8_4096_512_rv64gc", ["arch64i"]],
+        ["way_4_2048_512_rv64gc", ["arch64i"]],
+        ["way_4_4096_256_rv64gc", ["arch64i"]],
+        ["way_4_4096_1024_rv64gc", ["arch64i"]],
+
+        ["ram_0_0_rv64gc", ["ahb64"]],
+        ["ram_1_0_rv64gc", ["ahb64"]],
+        ["ram_1_1_rv64gc", ["ahb64"]],
+        ["ram_2_0_rv64gc", ["ahb64"]],
+        ["ram_2_1_rv64gc", ["ahb64"]],
+        
+        ["noicache_rv32gc", ["ahb32"]],
+# cacheless designs will not work until DTIM supports FLEN > XLEN
+#        ["nodcache_rv32gc", ["ahb32"]],
+#        ["nocache_rv32gc", ["ahb32"]],
+        ["noicache_rv64gc", ["ahb64"]],
+        ["nodcache_rv64gc", ["ahb64"]],
+        ["nocache_rv64gc", ["ahb64"]],
+
+        ### add misaligned tests
+
+        ["div_2_1_rv32gc", ["arch32f_divsqrt", "arch32d_divsqrt", "arch32m"]],
+        ["div_2_1i_rv32gc", ["arch32f_divsqrt", "arch32d_divsqrt", "arch32m"]],
+        ["div_2_2_rv32gc", ["arch32f_divsqrt", "arch32d_divsqrt", "arch32m"]],
+        ["div_2_2i_rv32gc", ["arch32f_divsqrt", "arch32d_divsqrt", "arch32m"]],
+        ["div_2_4_rv32gc", ["arch32f_divsqrt", "arch32d_divsqrt", "arch32m"]],
+        ["div_2_4i_rv32gc", ["arch32f_divsqrt", "arch32d_divsqrt", "arch32m"]],
+        ["div_4_1_rv32gc", ["arch32f_divsqrt", "arch32d_divsqrt", "arch32m"]],
+        ["div_4_1i_rv32gc", ["arch32f_divsqrt", "arch32d_divsqrt", "arch32m"]],
+        ["div_4_2_rv32gc", ["arch32f_divsqrt", "arch32d_divsqrt", "arch32m"]],
+        ["div_4_2i_rv32gc", ["arch32f_divsqrt", "arch32d_divsqrt", "arch32m"]],
+        ["div_4_4_rv32gc", ["arch32f_divsqrt", "arch32d_divsqrt", "arch32m"]],
+        ["div_4_4i_rv32gc", ["arch32f_divsqrt", "arch32d_divsqrt", "arch32m"]],
+        ["div_2_1_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
+        ["div_2_1i_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
+        ["div_2_2_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
+        ["div_2_2i_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
+        ["div_2_4_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
+        ["div_2_4i_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
+        ["div_4_1_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
+        ["div_4_1i_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
+        ["div_4_2_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
+        ["div_4_2i_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
+        ["div_4_4_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
+        ["div_4_4i_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
+
+        ### branch predictor simulation
+
+        # ["bpred_TWOBIT_6_16_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_TWOBIT_8_16_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_TWOBIT_10_16_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],        
+        # ["bpred_TWOBIT_12_16_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_TWOBIT_14_16_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],        
+        # ["bpred_TWOBIT_16_16_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_TWOBIT_6_16_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_TWOBIT_8_16_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_TWOBIT_10_16_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],        
+        # ["bpred_TWOBIT_12_16_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_TWOBIT_14_16_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],        
+        # ["bpred_TWOBIT_16_16_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+
+        # ["bpred_GSHARE_6_16_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_6_16_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_8_16_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_8_16_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_10_16_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_10_16_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_12_16_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_12_16_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_14_16_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_14_16_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_16_16_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_16_16_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+
+        # # btb
+        # ["bpred_GSHARE_10_16_6_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_10_16_6_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_10_16_8_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_10_16_8_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_10_16_12_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_10_16_12_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+
+        # # ras
+        # ["bpred_GSHARE_10_2_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_10_2_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_10_3_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_10_3_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_10_4_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_10_4_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_10_6_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_10_6_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_10_10_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        # ["bpred_GSHARE_10_10_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+
+#  enable floating-point tests when lint is fixed
+        ["f_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma"]],
+        ["fh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32zfh", "arch32zfh_divsqrt"]],
+        ["fdh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32zfh", "arch32zfh_divsqrt"]],
+        ["fdq_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma"]],
+        ["fdqh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32zfh", "arch32zfh_divsqrt"]],
+        ["f_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma"]],
+        ["fh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64zfh", "arch64zfh_divsqrt"]], # hanging 1/31/24 dh; try again when lint is fixed
+        ["fdh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64zfh", "arch64zfh_divsqrt"]],
+        ["fdq_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma"]],
+        ["fdqh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64zfh", "arch64zfh_divsqrt", "wally64q"]],
+        
+
+    ]
+    for test in derivconfigtests:
+        config = test[0];
+        tests = test[1];
+        if(len(test) >= 4 and test[2] == "configOptions"):
+            configOptions = test[3]
+            cmdPrefix = "vsim > {} -c <<!\ndo wally-batch.do "+config
+        else:
+            configOptions = ""
+            cmdPrefix = "vsim > {} -c <<!\ndo wally-batch.do "+config
+        for t in tests:
+            tc = TestCase(
+                    name=t,
+                    variant=config,
+                    cmd=cmdPrefix+" "+t+" configOptions "+configOptions+"\n!",
+                    grepstr="All tests ran without failures")
+            configs.append(tc)
+
+
+tests32e = ["arch32e"] 
+for test in tests32e:
+  tc = TestCase(
+        name=test,
+        variant="rv32e",
+        cmd="vsim > {} -c <<!\ndo wally-batch.do rv32e "+test+"\n!",
+        grepstr="All tests ran without failures")
+  configs.append(tc)
+
+
+# softfloat tests
+if (softfloat):
+    configs = []
+    softfloatconfigs = ['fdh_ieee_rv32gc', 'fdqh_ieee_rv32gc', 'fdq_ieee_rv32gc', \
+    'fh_ieee_v32gc', 'f_ieee_rv64gc', 'fdqh_ieee_rv64gc', \
+    'fdq_ieee_rv64gc', 'div_2_1_rv32gc', 'div_2_2_rv32gc', \
+    'div_2_4_rv32gc', 'div_4_1_rv32gc', 'div_4_2_rv32gc', \
+    'div_4_4_rv32gc', 'fd_ieee_rv32gc', 'fh_ieee_rv32gc', \
+    'div_2_1_rv64gc', 'div_2_2_rv64gc', 'div_2_4_rv64gc', \
+    'div_4_1_rv64gc', 'div_4_2_rv64gc', 'div_4_4_rv64gc', \
+    'fd_ieee_rv64gc', 'fh_ieee_rv64gc', 'f_ieee_rv32gc']
+    softfloatconfigs = ['fdh_ieee_div_2_1_rv32gc', 'fdh_ieee_div_2_1_rv64gc', \
+    'fdh_ieee_div_2_2_rv32gc', 'fdh_ieee_div_2_2_rv64gc', 'fdh_ieee_div_2_4_rv32gc', \
+    'fdh_ieee_div_2_4_rv64gc', 'fdh_ieee_div_4_1_rv32gc', 'fdh_ieee_div_4_1_rv64gc', \
+    'fdh_ieee_div_4_2_rv32gc', 'fdh_ieee_div_4_2_rv64gc', 'fdh_ieee_div_4_4_rv64gc', \
+    'fdh_ieee_rv32gc', 'fd_ieee_div_2_1_rv32gc', 'fd_ieee_div_2_1_rv64gc', \
+    'fd_ieee_div_2_2_rv32gc', 'fd_ieee_div_2_2_rv64gc', 'fd_ieee_div_2_4_rv32gc', \
+    'fd_ieee_div_2_4_rv64gc', 'fd_ieee_div_4_1_rv32gc', 'fd_ieee_div_4_1_rv64gc', \
+    'fd_ieee_div_4_2_rv32gc', 'fd_ieee_div_4_2_rv64gc', 'fd_ieee_div_4_4_rv64gc', \
+    'fd_ieee_rv32gc', 'fd_ieee_rv64gc', 'fdqh_ieee_div_2_1_rv32gc', \
+    'fdqh_ieee_div_2_1_rv64gc', 'fdqh_ieee_div_2_2_rv32gc', 'fdqh_ieee_div_2_2_rv64gc', \
+    'fdqh_ieee_div_2_4_rv32gc', 'fdqh_ieee_div_2_4_rv64gc', 'fdqh_ieee_div_4_1_rv32gc', \
+    'fdqh_ieee_div_4_1_rv64gc', 'fdqh_ieee_div_4_2_rv32gc', 'fdqh_ieee_div_4_2_rv64gc',\
+    'fdqh_ieee_div_4_4_rv64gc', 'fdqh_ieee_rv32gc', 'fdqh_ieee_rv64gc', \
+    'fdq_ieee_div_2_1_rv32gc', 'fdq_ieee_div_2_1_rv64gc', 'fdq_ieee_div_2_2_rv32gc',\
+    'fdq_ieee_div_2_2_rv64gc', 'fdq_ieee_div_2_4_rv32gc', 'fdq_ieee_div_2_4_rv64gc', \
+    'fdq_ieee_div_4_1_rv32gc', 'fdq_ieee_div_4_1_rv64gc', 'fdq_ieee_div_4_2_rv32gc', \
+    'fdq_ieee_div_4_2_rv64gc', 'fdq_ieee_div_4_4_rv64gc', 'fdq_ieee_rv32gc', \
+    'fdq_ieee_rv64gc', 'fh_ieee_div_2_1_rv32gc', 'fh_ieee_div_2_1_rv64gc', \
+    'fh_ieee_div_2_2_rv32gc', 'fh_ieee_div_2_2_rv64gc', 'fh_ieee_div_2_4_rv32gc',\
+    'fh_ieee_div_2_4_rv64gc', 'fh_ieee_div_4_1_rv32gc', 'fh_ieee_div_4_1_rv64gc',\
+    'fh_ieee_div_4_2_rv32gc', 'fh_ieee_div_4_2_rv64gc', 'fh_ieee_div_4_4_rv64gc', \
+    'fh_ieee_rv32gc', 'fh_ieee_rv64gc', 'fh_ieee_v32gc', 'f_ieee_div_2_1_rv32gc', \
+    'f_ieee_div_2_1_rv64gc', 'f_ieee_div_2_2_rv32gc', 'f_ieee_div_2_2_rv64gc', \
+    'f_ieee_div_2_4_rv32gc', 'f_ieee_div_2_4_rv64gc', 'f_ieee_div_4_1_rv32gc', \
+    'f_ieee_div_4_1_rv64gc', 'f_ieee_div_4_2_rv32gc', 'f_ieee_div_4_2_rv64gc', \
+    'f_ieee_div_4_4_rv64gc', 'f_ieee_rv32gc', 'f_ieee_rv64gc']
+    for config in softfloatconfigs:
+        # div test case
+        divtest = TestCase(
+            name="div",
+            variant=config,
+            cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " div \n!",
+            grepstr="All Tests completed with          0 errors"
+        )
+        configs.insert(0,divtest)
+
+        # sqrt test case
+        sqrttest = TestCase(
+            name="sqrt",
+            variant=config,
+            cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " sqrt \n!",
+            grepstr="All Tests completed with          0 errors"
+        )
+        #configs.append(sqrttest)
+        configs.insert(0,sqrttest)
+
+
+        # skip if divider variant config
+        if ("ieee" in config):
+            # cvtint test case
+            cvtinttest = TestCase(
+                name="cvtint",
+                variant=config,
+                cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " cvtint \n!",
+                grepstr="All Tests completed with          0 errors"
+                )
+            configs.append(cvtinttest)
+
+            # cvtfp test case
+            # WILL fail on F_only (refer to spec)
+            cvtfptest = TestCase(
+                name="cvtfp",
+                variant=config,
+                cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " cvtfp \n!",
+                grepstr="All Tests completed with          0 errors"
+            )
+            configs.append(cvtfptest)    
+      
+
+    
 
 import os
 from multiprocessing import Pool, TimeoutError
@@ -206,13 +446,18 @@ def main():
     #   Also it is slow to run.   
     #    configs.append(getBuildrootTC(boot=False))
         os.system('rm -f cov/*.ucdb')
+    elif '-nightly' in sys.argv:
+        TIMEOUT_DUR = 60*1440 # 1 day
+        configs.append(getBuildrootTC(boot=False))
+    elif '-softfloat' in sys.argv:
+        TIMEOUT_DUR = 60*60 # seconds
     else:
         TIMEOUT_DUR = 10*60 # seconds
         configs.append(getBuildrootTC(boot=False))
 
     # Scale the number of concurrent processes to the number of test cases, but
     # max out at a limited number of concurrent processes to not overwhelm the system
-    with Pool(processes=min(len(configs),40)) as pool:
+    with Pool(processes=min(len(configs),multiprocessing.cpu_count())) as pool:
        num_fail = 0
        results = {}
        for config in configs:

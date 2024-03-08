@@ -10,6 +10,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 4 (Figure 4.9)
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -54,9 +55,9 @@ module subwordwrite #(parameter LLEN) (
   end else begin:sww // 32-bit
     always_comb 
       case(LSUFunct3M[1:0])
-        2'b00:  LittleEndianWriteDataM = {4{IMAFWriteDataM[7:0]}};   // sb
-        2'b01:  LittleEndianWriteDataM = {2{IMAFWriteDataM[15:0]}};  // sh
-        2'b10:  LittleEndianWriteDataM = IMAFWriteDataM;             // sw
+        2'b00:   LittleEndianWriteDataM = {4{IMAFWriteDataM[7:0]}};  // sb
+        2'b01:   LittleEndianWriteDataM = {2{IMAFWriteDataM[15:0]}}; // sh
+        2'b10:   LittleEndianWriteDataM = IMAFWriteDataM;            // sw
         default: LittleEndianWriteDataM = IMAFWriteDataM;            // shouldn't happen
       endcase
   end

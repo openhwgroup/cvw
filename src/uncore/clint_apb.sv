@@ -10,6 +10,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 15
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -62,7 +63,7 @@ module clint_apb import cvw::*;  #(parameter cvw_t P) (
 
   // register access
   if (P.XLEN==64) begin:clint // 64-bit
-    always @(posedge PCLK) begin
+    always_ff @(posedge PCLK) begin
       case(entry)
         16'h0000: PRDATA <= {63'b0, MSIP};
         16'h4000: PRDATA <= MTIMECMP;
@@ -96,7 +97,7 @@ module clint_apb import cvw::*;  #(parameter cvw_t P) (
             MTIME[j*8 +: 8] <= PWDATA[j*8 +: 8];
       end else MTIME <= MTIME + 1; 
   end else begin:clint // 32-bit
-    always @(posedge PCLK) begin
+    always_ff @(posedge PCLK) begin
       case(entry)
         16'h0000: PRDATA <= {31'b0, MSIP};
         16'h4000: PRDATA <= MTIMECMP[31:0];

@@ -63,7 +63,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   logic 						 CSRWriteM, CSRWriteW;
   logic [11:0] 					 CSRAdrM, CSRAdrW;
   logic                          wfiM;
-  logic                          InterruptM;
+  logic                          InterruptM, InterruptW;
     
   assign clk = testbench.dut.clk;
   //  assign InstrValidF = testbench.dut.core.ieu.InstrValidF;  // not needed yet
@@ -231,7 +231,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   end
 
   genvar index;
-  assign rf[0] = '0;
+  assign rf[0] = 0;
   for(index = 1; index < NUMREGS; index += 1) 
 	assign rf[index] = testbench.dut.core.ieu.dp.regf.rf[index];
 
@@ -239,7 +239,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   assign rf_we3 = testbench.dut.core.ieu.dp.regf.we3;
   
   always_comb begin
-	rf_wb <= '0;
+	rf_wb <= 0;
 	if(rf_we3)
 	  rf_wb[rf_a3] <= 1'b1;
   end
@@ -251,7 +251,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   assign frf_we4 = testbench.dut.core.fpu.fpu.fregfile.we4;
   
   always_comb begin
-	frf_wb <= '0;
+	frf_wb <= 0;
 	if(frf_we4)
 	  frf_wb[frf_a4] <= 1'b1;
   end
@@ -266,6 +266,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   flopenrc #(P.XLEN)PCWReg       (clk, reset, FlushW, ~StallW, PCM, PCW);
   flopenrc #(1)     InstrValidMReg (clk, reset, FlushW, ~StallW, InstrValidM, InstrValidW);
   flopenrc #(1)     TrapWReg (clk, reset, 1'b0, ~StallW, TrapM, TrapW);
+  flopenrc #(1)     InterruptWReg (clk, reset, 1'b0, ~StallW, InterruptM, InterruptW);
   flopenrc #(1)     HaltWReg (clk, reset, 1'b0, ~StallW, HaltM, HaltW);
 
   // **** remove?  are these used?
@@ -287,9 +288,9 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   assign rvvi.order[0][0]    = CSRArray[12'hB02];  // TODO: IMPERAS Should be event order
   assign rvvi.insn[0][0]     = InstrRawW;
   assign rvvi.pc_rdata[0][0] = PCW;
-  assign rvvi.trap[0][0]     = 0;
+  assign rvvi.trap[0][0]     = TrapW;
   assign rvvi.halt[0][0]     = HaltW;
-  assign rvvi.intr[0][0]     = 0;
+  assign rvvi.intr[0][0]     = InterruptW;
   assign rvvi.mode[0][0]     = PrivilegeModeW;
   assign rvvi.ixl[0][0]      = PrivilegeModeW == 2'b11 ? 2'b10 :
 					           PrivilegeModeW == 2'b01 ? STATUS_SXL : STATUS_UXL;
@@ -492,7 +493,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   end
    
   // *** implementation only cancel? so sc does not clear?
-  assign rvvi.lrsc_cancel[0][0] = '0;
+  assign rvvi.lrsc_cancel[0][0] = 0;
 
   integer index2;
 

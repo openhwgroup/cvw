@@ -10,6 +10,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 4 (Figure 4.9)
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -41,7 +42,7 @@ module swbytemask #(parameter WORDLEN, EXTEND = 0)(
     assign ByteMaskExtended = ExtendedByteMask[WORDLEN*2/8-1:WORDLEN/8];
   end else begin    
     assign ByteMask = (('d2**('d2**Size))-'d1) << Adr;
-    assign ByteMaskExtended = '0;
+    assign ByteMaskExtended = 0;
   end
 
 /* Equivalent to the following

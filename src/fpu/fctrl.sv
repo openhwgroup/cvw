@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -45,11 +46,11 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   // input mux selections                                         
   output logic                 XEnD, YEnD, ZEnD,                   // enable inputs
   output logic                 XEnE, YEnE, ZEnE,                   // enable inputs
-  // opperation mux selections                                    
-  output logic                 FCvtIntE, FCvtIntW,                 // convert to integer opperation
+  // operation mux selections                                    
+  output logic                 FCvtIntE, FCvtIntW,                 // convert to integer operation
   output logic [2:0]           FrmM,                               // FP rounding mode
   output logic [P.FMTBITS-1:0] FmtE, FmtM,                         // FP format
-  output logic [2:0]           OpCtrlE, OpCtrlM,                   // Select which opperation to do in each component
+  output logic [2:0]           OpCtrlE, OpCtrlM,                   // Select which operation to do in each component
   output logic                 FpLoadStoreM,                       // FP load or store instruction
   output logic [1:0]           PostProcSelE, PostProcSelM,         // select result in the post processing unit
   output logic [1:0]           FResSelE, FResSelM, FResSelW,       // Select one of the results that finish in the memory stage
@@ -71,7 +72,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   logic                        FRegWriteD;                         // FP register write enable
   logic                        FDivStartD;                         // start division/sqrt
   logic                        FWriteIntD;                         // integer register write enable
-  logic [2:0]                  OpCtrlD;                            // Select which opperation to do in each component
+  logic [2:0]                  OpCtrlD;                            // Select which operation to do in each component
   logic [1:0]                  PostProcSelD;                       // select result in the post processing unit
   logic [1:0]                  FResSelD;                           // Select one of the results that finish in the memory stage
   logic [2:0]                  FrmD, FrmE;                         // FP rounding mode
@@ -79,16 +80,15 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   logic [1:0]                  Fmt, Fmt2;                          // format - before possible reduction
   logic                        SupportedFmt;                       // is the format supported
   logic                        SupportedFmt2;                      // is the source format supported for fp -> fp
-  logic                        FCvtIntD, FCvtIntM;                 // convert to integer opperation
+  logic                        FCvtIntD, FCvtIntM;                 // convert to integer operation
   logic                        ZfaD;                               // Zfa variants of instructions
 
   // FPU Instruction Decoder
   assign Fmt = Funct7D[1:0];
   assign Fmt2 = Rs2D[1:0]; // source format for fcvt fp->fp
 
-  assign SupportedFmt =  (Fmt == 2'b00 | (Fmt == 2'b01 & P.D_SUPPORTED) |
-                         (Fmt == 2'b10 & P.ZFH_SUPPORTED & {OpD[6:4], OpD[1:0]} != 5'b10011) | // fma not supported for Zfh
-                         (Fmt == 2'b11 & P.Q_SUPPORTED));
+  assign SupportedFmt =  (Fmt == 2'b00  | (Fmt == 2'b01 & P.D_SUPPORTED) |
+                         (Fmt == 2'b10 & P.ZFH_SUPPORTED)  | (Fmt == 2'b11 & P.Q_SUPPORTED));
   assign SupportedFmt2 = (Fmt2 == 2'b00 | (Fmt2 == 2'b01 & P.D_SUPPORTED) |
                          (Fmt2 == 2'b10 & P.ZFH_SUPPORTED) | (Fmt2 == 2'b11 & P.Q_SUPPORTED));
 
@@ -237,11 +237,10 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
                                     5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1_0; // fcvt.l.q   q->l
                                     5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1_0; // fcvt.lu.q  q->lu
                                   endcase
-                      // coverage on
+                      // coverage off
+                      // Not covered in testing because rv64gc is not RV64Q or RV32D
                       7'b1011001: if (P.ZFA_SUPPORTED & P.XLEN == 32 & P.D_SUPPORTED & Funct3D == 3'b000) 
                                                   ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0_0; // fmvp.d.x  (Zfa) *** untested, controls could be wrong
-                      // Not covered in testing because rv64gc does not support quad precision
-                      // coverage off
                       7'b1011011: if (P.ZFA_SUPPORTED & P.XLEN == 64 & P.Q_SUPPORTED & Funct3D == 3'b000) 
                                                   ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0_0; // fmvp.q.x  (Zfa)
                       // coverage on

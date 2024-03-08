@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -67,12 +68,13 @@ module fcmp import cvw::*;  #(parameter cvw_t P) (
   //    LT/LE - signaling - sets invalid if NaN input
   //    EQ - quiet - sets invalid if signaling NaN input
   always_comb begin
-    case (OpCtrl[2:0])
+    casez (OpCtrl[2:0])
         3'b110: CmpNV = EitherSNaN; //min 
         3'b101: CmpNV = EitherSNaN; //max
         3'b010: CmpNV = EitherSNaN; //equal
-        3'b001: CmpNV = Zfa ? EitherSNaN : EitherNaN;  // fltq / flt perform CompareQuietLess / CompareSignalingLess differing on when to set invalid
-        3'b011: CmpNV = Zfa ? EitherSNaN : EitherNaN;  // fleq / fle differ on when to set invalid
+        3'b0?1: if (P.ZFA_SUPPORTED) 
+                  CmpNV = Zfa ? EitherSNaN : EitherNaN; // fltq,fleq / flt,fle perform CompareQuietLess / CompareSignalingLess differing on when to set invalid
+                else CmpNV = EitherNaN;                 // flt, fle
         default: CmpNV = 1'bx;
     endcase
   end 

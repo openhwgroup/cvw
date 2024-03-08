@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -59,7 +60,7 @@ module fmashiftcalc import cvw::*;  #(parameter cvw_t P) (
   end else if (P.FPSIZES == 3) begin
     always_comb begin
         case (Fmt)
-            P.FMT:   BiasCorr =  '0;
+            P.FMT:   BiasCorr =  0;
             P.FMT1:  BiasCorr = (P.NE+2)'(P.BIAS1-P.BIAS);
             P.FMT2:  BiasCorr = (P.NE+2)'(P.BIAS2-P.BIAS);
             default: BiasCorr = 'x;
@@ -69,7 +70,7 @@ module fmashiftcalc import cvw::*;  #(parameter cvw_t P) (
   end else if (P.FPSIZES == 4) begin
     always_comb begin
         case (Fmt)
-            2'h3: BiasCorr = '0;
+            2'h3: BiasCorr = 0;
             2'h1: BiasCorr = (P.NE+2)'(P.D_BIAS-P.Q_BIAS);
             2'h0: BiasCorr = (P.NE+2)'(P.S_BIAS-P.Q_BIAS);
             2'h2: BiasCorr = (P.NE+2)'(P.H_BIAS-P.Q_BIAS);
@@ -101,9 +102,9 @@ module fmashiftcalc import cvw::*;  #(parameter cvw_t P) (
     assign Sum2GEFL = $signed(PreNormSumExp) >= $signed((P.NE+2)'(-P.NF2-2+P.BIAS-P.BIAS2)) | ~|PreNormSumExp;
     always_comb begin
       case (Fmt)
-        P.FMT: FmaPreResultSubnorm   = Sum0LEZ & Sum0GEFL & ~FmaSZero;
-        P.FMT1: FmaPreResultSubnorm  = Sum1LEZ & Sum1GEFL & ~FmaSZero;
-        P.FMT2: FmaPreResultSubnorm  = Sum2LEZ & Sum2GEFL & ~FmaSZero;
+        P.FMT: FmaPreResultSubnorm   = Sum0LEZ & Sum0GEFL; // & ~FmaSZero; // checking sum is not zero is harmless but turns out to be unnecessary
+        P.FMT1: FmaPreResultSubnorm  = Sum1LEZ & Sum1GEFL; // & ~FmaSZero;
+        P.FMT2: FmaPreResultSubnorm  = Sum2LEZ & Sum2GEFL; // & ~FmaSZero; 
         default: FmaPreResultSubnorm = 1'bx;
       endcase
     end

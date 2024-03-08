@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -31,7 +32,7 @@ module fdivsqrtstage4 import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.DIVb:0]   U,UM,               // U1.DIVb
   input  logic [P.DIVb+3:0] WS, WC,             // Q4.DIVb
   input  logic [P.DIVb+1:0] C,                  // Q2.DIVb
-  input  logic              SqrtE, j1,
+  input  logic              SqrtE, 
   output logic [P.DIVb+1:0] CNext,              // Q2.DIVb
   output logic              un,
   output logic [P.DIVb:0]   UNext, UMNext,      // U1.DIVb
@@ -47,13 +48,16 @@ module fdivsqrtstage4 import cvw::*;  #(parameter cvw_t P) (
   logic [7:0]               WCmsbs, WSmsbs;     // U4.4
   logic                     CarryIn;
   logic [P.DIVb+3:0]        WSA, WCA;           // Q4.DIVb
+  logic j0, j1;                                 // step j = 0 or step j = 1
 
   // Digit Selection logic
+  assign j0     = ~C[P.DIVb+1];             // first step of R digit selection: C = 00...0
+  assign j1     = C[P.DIVb] & ~C[P.DIVb-1]; // second step of R digit selection: C = 1100...0; *** could simplify to ~C[P.DIVb-1] because j=0 case takes priority
   assign Smsbs  = U[P.DIVb:P.DIVb-4];       // U1.4 most significant bits of square root
   assign Dmsbs  = D[P.DIVb-1:P.DIVb-3];     // U0.3 most significant fractional bits of divisor after leading 1
   assign WCmsbs = WC[P.DIVb+3:P.DIVb-4];    // Q4.4 most significant bits of residual
   assign WSmsbs = WS[P.DIVb+3:P.DIVb-4];    // Q4.4 most significant bits of residual
-  fdivsqrtuslc4cmp uslc4(.Dmsbs, .Smsbs, .WSmsbs, .WCmsbs, .SqrtE, .j1, .udigit);
+  fdivsqrtuslc4cmp uslc4(.Dmsbs, .Smsbs, .WSmsbs, .WCmsbs, .SqrtE, .j0, .j1, .udigit);
   assign un = 1'b0; // unused for radix 4
 
   // F generation logic
@@ -64,7 +68,7 @@ module fdivsqrtstage4 import cvw::*;  #(parameter cvw_t P) (
     case (udigit)
       4'b1000: Dsel = DBar2;
       4'b0100: Dsel = DBar;
-      4'b0000: Dsel = '0;
+      4'b0000: Dsel = 0;
       4'b0010: Dsel = D;
       4'b0001: Dsel = D2;
       default: Dsel = 'x;

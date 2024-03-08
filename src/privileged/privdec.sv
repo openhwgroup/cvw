@@ -10,6 +10,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 5
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -79,8 +80,8 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
 
   if (P.U_SUPPORTED) begin:wfi
     logic [P.WFI_TIMEOUT_BIT:0] WFICount, WFICountPlus1;
-    assign WFICountPlus1 = WFICount + 1;
-    floprc #(P.WFI_TIMEOUT_BIT+1) wficountreg(clk, reset, ~wfiM, WFICountPlus1, WFICount);  // count while in WFI
+    assign WFICountPlus1 = wfiM ? WFICount + 1 : '0; // restart counting on WFI
+    flopr #(P.WFI_TIMEOUT_BIT+1) wficountreg(clk, reset, WFICountPlus1, WFICount);  // count while in WFI
   // coverage off -item e 1 -fecexprrow 1
   // WFI Timout trap will not occur when STATUS_TW is low while in supervisor mode, so the system gets stuck waiting for an interrupt and triggers a watchdog timeout.
     assign WFITimeoutM = ((STATUS_TW & PrivilegeModeW != P.M_MODE) | (P.S_SUPPORTED & PrivilegeModeW == P.U_MODE)) & WFICount[P.WFI_TIMEOUT_BIT]; 

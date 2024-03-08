@@ -8,6 +8,7 @@
 //           PC, branch prediction, instruction cache
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -193,10 +194,10 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
          .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
 
   end else begin
-    assign {ITLBMissF, InstrAccessFaultF, InstrPageFaultF, InstrUpdateDAF} = '0;
+    assign {ITLBMissF, InstrAccessFaultF, InstrPageFaultF, InstrUpdateDAF} = 0;
     assign PCPF = PCFExt[P.PA_BITS-1:0];
-    assign CacheableF = '1;
-    assign SelIROM = '0;
+    assign CacheableF = 1;
+    assign SelIROM = 0;
   end
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -233,8 +234,8 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       logic                 ICacheBusAck;
       logic [1:0]           CacheBusRW, BusRW, CacheRWF;
       
-      assign BusRW = ~ITLBMissF & ~CacheableF & ~SelIROM ? IFURWF : '0;
-      assign CacheRWF = ~ITLBMissF & CacheableF & ~SelIROM ? IFURWF : '0;
+      assign BusRW = ~ITLBMissF & ~CacheableF & ~SelIROM ? IFURWF : 0;
+      assign CacheRWF = ~ITLBMissF & CacheableF & ~SelIROM ? IFURWF : 0;
       // *** RT: PAdr and NextSet are replaced with mux between PCPF/IEUAdrM and PCSpillNextF/IEUAdrE.
       cache #(.P(P), .PA_BITS(P.PA_BITS), .XLEN(P.XLEN), .LINELEN(P.ICACHE_LINELENINBITS),
               .NUMLINES(P.ICACHE_WAYSIZEINBYTES*8/P.ICACHE_LINELENINBITS),
@@ -254,7 +255,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
              .PAdr(PCPF),
              .CacheCommitted(CacheCommittedF), .InvalidateCache(InvalidateICacheM), .CMOpM('0)); 
 
-      ahbcacheinterface #(P.AHBW, P.LLEN, P.PA_BITS, WORDSPERLINE, LOGBWPL, LINELEN, LLENPOVERAHBW, 1) 
+      ahbcacheinterface #(P, WORDSPERLINE, LOGBWPL, LINELEN, LLENPOVERAHBW, 1) 
       ahbcacheinterface(.HCLK(clk), .HRESETn(~reset),
             .HRDATA,
             .Flush(FlushD), .CacheBusRW, .BusCMOZero(1'b0), .HSIZE(IFUHSIZE), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS), .HWSTRB(),
@@ -270,7 +271,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     end else begin : passthrough
       assign IFUHADDR = PCPF;
       logic [1:0] BusRW;
-      assign BusRW = ~ITLBMissF & ~SelIROM ? IFURWF : '0;
+      assign BusRW = ~ITLBMissF & ~SelIROM ? IFURWF : 0;
       assign IFUHSIZE = 3'b010;
 
       ahbinterface #(P.XLEN, 1'b0) ahbinterface(.HCLK(clk), .Flush(FlushD), .HRESETn(~reset), .HREADY(IFUHREADY), 
@@ -278,15 +279,15 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
         .HWSTRB(), .BusRW, .BusAtomic('0), .ByteMask(), .WriteData('0),
         .Stall(GatedStallD), .BusStall, .BusCommitted(BusCommittedF), .FetchBuffer(FetchBuffer));
 
-      assign CacheCommittedF = '0;
+      assign CacheCommittedF = 0;
       if(P.IROM_SUPPORTED) mux2 #(32) UnCachedDataMux2(ShiftUncachedInstr, IROMInstrF, SelIROM, InstrRawF);
       else assign InstrRawF = ShiftUncachedInstr;
       assign IFUHBURST = 3'b0;
-      assign {ICacheMiss, ICacheAccess, ICacheStallF} = '0;
+      assign {ICacheMiss, ICacheAccess, ICacheStallF} = 0;
     end
   end else begin : nobus // block: bus
-    assign {BusStall, CacheCommittedF} = '0;   
-    assign {ICacheStallF, ICacheMiss, ICacheAccess} = '0;
+    assign {BusStall, CacheCommittedF} = 0;   
+    assign {ICacheStallF, ICacheMiss, ICacheAccess} = 0;
     assign InstrRawF = IROMInstrF;
   end
 
@@ -354,7 +355,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       .BTBBranchF(1'b0), .BPCallF(), .BPReturnF(), .BPJumpF(), .BPBranchF(), .IClassWrongM,
       .IClassWrongE(), .BPReturnWrongD());
     flopenrc #(1) PCSrcMReg(clk, reset, FlushM, ~StallM, PCSrcE, BPWrongM);
-    assign RASPredPCWrongM = '0;
+    assign RASPredPCWrongM = 0;
     assign BPDirPredWrongM = BPWrongM;
     assign BTAWrongM = BPWrongM;
     assign InstrClassM = {CallM, ReturnM, JumpM, BranchM};

@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -70,8 +71,7 @@ module fdivsqrtcycles import cvw::*;  #(parameter cvw_t P) (
   // The datapath produces rk bits per cycle, so Cycles = ceil (ResultBitsE / rk)
 
   always_comb begin 
-    if (SqrtE) FPResultBitsE = Nf + 2 + 0; // Nf + two fractional bits for round/guard; integer bit implicit because starting at n=1
-    else       FPResultBitsE = Nf + 2 + P.LOGR; // Nf + two fractional bits for round/guard + integer bits 
+    FPResultBitsE = Nf + 2 + P.LOGR; // Nf + two fractional bits for round/guard; integer bit implicit because starting at n=1
 
     if (P.IDIV_ON_FPU) ResultBitsE = IntDivE ? IntResultBitsE : FPResultBitsE;
     else               ResultBitsE = FPResultBitsE;

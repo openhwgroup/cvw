@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -64,7 +65,7 @@ module divshiftcalc import cvw::*;  #(parameter cvw_t P) (
 
   // if the shift amount is negative then don't shift (keep sticky bit)
   // need to multiply the early termination shift by LOGR*DIVCOPIES =  left shift of log2(LOGR*DIVCOPIES)
-  assign DivSubnormShiftAmt = DivSubnormShiftPos ? DivSubnormShift[P.LOGNORMSHIFTSZ-1:0] : '0;
+  assign DivSubnormShiftAmt = DivSubnormShiftPos ? DivSubnormShift[P.LOGNORMSHIFTSZ-1:0] : 0;
   assign DivShiftAmt        = DivResSubnorm ? DivSubnormShiftAmt : NormShift;
 
   // pre-shift the divider result for normalization

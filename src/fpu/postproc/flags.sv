@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -41,7 +42,7 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   input  logic                 Round, Guard, Sticky,   // bits used to determine rounding
   input  logic                 UfPlus1,                // do you add one for rounding for the unbounded exponent result
   // convert
-  input  logic                 CvtOp,                  // conversion opperation?
+  input  logic                 CvtOp,                  // conversion operation?
   input  logic                 ToInt,                  // convert to integer
   input  logic                 IntToFp,                // convert integer to floating point
   input  logic                 Int64,                  // convert to 64 bit integer
@@ -49,10 +50,10 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.NE:0]        CvtCe,                  // the calculated expoent - Cvt
   input  logic [1:0]           CvtNegResMsbs,          // the negative integer result's most significant bits
   // divsqrt
-  input  logic                 DivOp,                  // conversion opperation?
+  input  logic                 DivOp,                  // conversion operation?
   input  logic                 Sqrt,                   // Sqrt?
   // fma
-  input  logic                 FmaOp,                  // Fma opperation?
+  input  logic                 FmaOp,                  // Fma operation?
   input  logic                 FmaAs, FmaPs,           // the product and modified Z signs
   // flags
   output logic                 DivByZero,              // divide by zero flag
@@ -148,8 +149,7 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   // Set Inexact flag if the result is diffrent from what would be outputed given infinite precision
   //      - Don't set the underflow flag if an underflowed res isn't outputed
   assign FpInexact = (Sticky|Guard|Overflow|Round)&~(InfIn|NaNIn|DivByZero|Invalid);
-  //assign FpInexact = (Sticky|Guard|Overflow|Round)&~(InfIn|NaNIn|DivByZero|Invalid|XZero);
-
+  
   //                  if the res is too small to be represented and not 0
   //                  |                                     and if the res is not invalid (outside the integer bounds)
   //                  |                                     |

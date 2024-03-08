@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -32,7 +33,7 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   input logic  [P.NF:0]                    Xm, Ym, Zm,          // input mantissas
   input logic  [2:0]                       Frm,                 // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
   input logic  [P.FMTBITS-1:0]             Fmt,                 // precision 1 = double 0 = single
-  input logic  [2:0]                       OpCtrl,              // choose which opperation (look below for values)
+  input logic  [2:0]                       OpCtrl,              // choose which operation (look below for values)
   input logic                              XZero, YZero,        // inputs are zero
   input logic                              XInf, YInf, ZInf,    // inputs are infinity
   input logic                              XNaN, YNaN, ZNaN,    // inputs are NaN
@@ -103,14 +104,14 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   logic                        CvtResUf;             // did the convert result underflow
   logic                        IntInvalid;           // invalid integer flag
   // readability signals
-  logic                        Mult;                 // multiply opperation
-  logic                        Sqrt;                 // is the divsqrt opperation sqrt
+  logic                        Mult;                 // multiply operation
+  logic                        Sqrt;                 // is the divsqrt operation sqrt
   logic                        Int64;                // is the integer 64 bits?
-  logic                        Signed;               // is the opperation with a signed integer?
-  logic                        IntToFp;              // is the opperation an int->fp conversion?
-  logic                        CvtOp;                // convertion opperation
-  logic                        FmaOp;                // fma opperation
-  logic                        DivOp;                // divider opperation
+  logic                        Signed;               // is the operation with a signed integer?
+  logic                        IntToFp;              // is the operation an int->fp conversion?
+  logic                        CvtOp;                // convertion operation
+  logic                        FmaOp;                // fma operation
+  logic                        DivOp;                // divider operation
   logic                        InfIn;                // are any of the inputs infinity
   logic                        NaNIn;                // are any of the inputs NaN
 
@@ -128,7 +129,7 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   assign InfIn = XInf|YInf|ZInf;
   assign NaNIn = XNaN|YNaN|ZNaN;
 
-  // choose the output format depending on the opperation
+  // choose the output format depending on the operation
   //      - fp -> fp: OpCtrl contains the precision of the output
   //      - otherwise: Fmt contains the precision of the output
   if (P.FPSIZES == 2) 

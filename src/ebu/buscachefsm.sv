@@ -10,6 +10,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 9 (Figure 9.9)
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -27,13 +28,12 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`define BURST_EN 1         // Enables burst mode.  Disable to show the lost performance.
-
 // HCLK and clk must be the same clock!
 module buscachefsm #(
   parameter BeatCountThreshold,                      // Largest beat index
   parameter AHBWLOGBWPL,                             // Log2 of BEATSPERLINE
-  parameter READ_ONLY_CACHE
+  parameter READ_ONLY_CACHE,                         // 1 for read-only instruction cache
+  parameter BURST_EN                                 // burst mode supported
 )(
   input  logic                   HCLK,
   input  logic                   HRESETn,
@@ -79,7 +79,7 @@ module buscachefsm #(
   logic                   CacheAccess;
   logic                   BusWrite;
 
-  assign BusWrite = CacheBusRW[0] | BusCMOZero;
+  assign BusWrite = (CacheBusRW[0] | BusCMOZero) & ~READ_ONLY_CACHE;
   
   always_ff @(posedge HCLK)
     if (~HRESETn | Flush) CurrState <= #1 ADR_PHASE;
@@ -87,28 +87,28 @@ module buscachefsm #(
   
   always_comb begin
       case(CurrState)
-        ADR_PHASE: if (HREADY & |BusRW)                               NextState = DATA_PHASE;
-                   else if (HREADY & BusWrite)                        NextState = CACHE_WRITEBACK;
-                   else if (HREADY & CacheBusRW[1])                   NextState = CACHE_FETCH;
+        ADR_PHASE: if (HREADY & |BusRW)                               NextState = DATA_PHASE;             // exclusion-tag: buscachefsm HREADY0
+                   else if (HREADY & BusWrite & ~READ_ONLY_CACHE)     NextState = CACHE_WRITEBACK;        // exclusion-tag: buscachefsm HREADY1
+                   else if (HREADY & CacheBusRW[1])                   NextState = CACHE_FETCH;            // exclusion-tag: buscachefsm HREADYread
                    else                                               NextState = ADR_PHASE;
-        DATA_PHASE:  if(HREADY & BusAtomic)                           NextState = ATOMIC_READ_DATA_PHASE;
-                     else if(HREADY & ~BusAtomic)                     NextState = MEM3;
+        DATA_PHASE:  if(HREADY & BusAtomic & ~READ_ONLY_CACHE)        NextState = ATOMIC_READ_DATA_PHASE; // exclusion-tag: buscachefsm HREADY2
+                     else if(HREADY & ~BusAtomic)                     NextState = MEM3; // exclusion-tag: buscachefsm HREADY3
                      else                                             NextState = DATA_PHASE;
-        ATOMIC_READ_DATA_PHASE: if(HREADY)                            NextState = ATOMIC_PHASE;
-                    else                                              NextState = ATOMIC_READ_DATA_PHASE;
-        ATOMIC_PHASE: if(HREADY)                                      NextState = MEM3;
-                      else                                            NextState = ATOMIC_PHASE;
+        ATOMIC_READ_DATA_PHASE: if(HREADY)                            NextState = ATOMIC_PHASE;           // exclusion-tag: buscachefsm AtomicReadData
+                    else                                              NextState = ATOMIC_READ_DATA_PHASE; // exclusion-tag: buscachefsm AtomicElse
+        ATOMIC_PHASE: if(HREADY)                                      NextState = MEM3;                   // exclusion-tag: buscachefsm AtomicPhase
+                      else                                            NextState = ATOMIC_PHASE;           // exclusion-tag: buscachefsm AtomicWait
         MEM3:        if(Stall)                                        NextState = MEM3;
                      else                                             NextState = ADR_PHASE;
-        CACHE_FETCH: if(HREADY & FinalBeatCount & CacheBusRW[0])      NextState = CACHE_WRITEBACK;
-                     else if(HREADY & FinalBeatCount & CacheBusRW[1]) NextState = CACHE_FETCH;
+        CACHE_FETCH: if(HREADY & FinalBeatCount & CacheBusRW[0])      NextState = CACHE_WRITEBACK;  // exclusion-tag: buscachefsm FetchWriteback
+                     else if(HREADY & FinalBeatCount & CacheBusRW[1]) NextState = CACHE_FETCH;      // exclusion-tag: buscachefsm FetchWait
                      else if(HREADY & FinalBeatCount & ~|CacheBusRW)  NextState = ADR_PHASE;
                      else                                             NextState = CACHE_FETCH;
-        CACHE_WRITEBACK: if(HREADY & FinalBeatCount & CacheBusRW[0])  NextState = CACHE_WRITEBACK;
-                     else if(HREADY & FinalBeatCount & CacheBusRW[1]) NextState = CACHE_FETCH;
-                     else if(HREADY & FinalBeatCount & BusCMOZero)    NextState = MEM3;
-                     else if(HREADY & FinalBeatCount & ~|CacheBusRW)  NextState = ADR_PHASE;
-                     else                                             NextState = CACHE_WRITEBACK;
+        CACHE_WRITEBACK:  if(HREADY & FinalBeatCount & CacheBusRW[0]) NextState = CACHE_WRITEBACK; // exclusion-tag: buscachefsm WritebackWriteback
+                     else if(HREADY & FinalBeatCount & CacheBusRW[1]) NextState = CACHE_FETCH;     // exclusion-tag: buscachefsm HREADY4
+                     else if(HREADY & FinalBeatCount & BusCMOZero)    NextState = MEM3;            // exclusion-tag: buscachefsm HREADY5
+                     else if(HREADY & FinalBeatCount & ~|CacheBusRW)  NextState = ADR_PHASE;       // exclusion-tag: buscachefsm HREADY6
+                     else                                             NextState = CACHE_WRITEBACK; // exclusion-tag: buscachefsm WritebackWriteback2
         default:                                                      NextState = ADR_PHASE;
       endcase
   end
@@ -139,13 +139,13 @@ module buscachefsm #(
 
   // AHB bus interface
   assign HTRANS = (CurrState == ADR_PHASE & HREADY & ((|BusRW) | (|CacheBusRW) | BusCMOZero) & ~Flush) |
-                  (CurrState == ATOMIC_READ_DATA_PHASE & BusAtomic) | 
+                  (CurrState == ATOMIC_READ_DATA_PHASE) | 
                   (CacheAccess & FinalBeatCount & |CacheBusRW & HREADY & ~Flush) ? AHB_NONSEQ : // if we have a pipelined request
-                  (CacheAccess & |BeatCount) ? (`BURST_EN ? AHB_SEQ : AHB_NONSEQ) : AHB_IDLE;
+                  (CacheAccess & |BeatCount) ? (BURST_EN ? AHB_SEQ : AHB_NONSEQ) : AHB_IDLE;
 
-  assign HWRITE = ((BusRW[0] & ~BusAtomic) | BusWrite & ~Flush) | (CurrState == ATOMIC_READ_DATA_PHASE & BusAtomic) | 
-                  (CurrState == CACHE_WRITEBACK & |BeatCount);
-  assign HBURST = `BURST_EN & ((|CacheBusRW & ~Flush) | (CacheAccess & |BeatCount)) ? LocalBurstType : 3'b0;  
+  assign HWRITE = (((BusRW[0] & ~BusAtomic) | BusWrite & ~Flush) | (CurrState == ATOMIC_READ_DATA_PHASE & BusAtomic) | 
+                  (CurrState == CACHE_WRITEBACK & |BeatCount)) & ~READ_ONLY_CACHE;
+  assign HBURST = BURST_EN & ((|CacheBusRW & ~Flush) | (CacheAccess & |BeatCount)) ? LocalBurstType : 3'b0;  
   
   always_comb begin
     case(BeatCountThreshold)

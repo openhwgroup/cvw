@@ -16,6 +16,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 15
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -519,7 +520,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
       intrpending = 0;
     end
   end
-  always @(posedge PCLK) INTR <= #1 intrpending; // prevent glitches on interrupt pin
+  always_ff @(posedge PCLK) INTR <= #1 intrpending; // prevent glitches on interrupt pin
 
   // Side effect of reading LSR is lowering overrun, parity, framing, break intr's
   assign setSquashRXerrIP = ~MEMRb & (A==3'b101);

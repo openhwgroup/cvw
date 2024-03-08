@@ -12,6 +12,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 9 (Figure 9.2)
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -142,7 +143,6 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic [(P.LLEN-1)/8:0] ByteMaskExtendedM;                      // Selects which bytes within a word to write
   logic [1:0]            MemRWSpillM;
   logic                  SpillStallM;
-  logic                  SelStoreDelay;
   
   logic                  DTLBMissM;                              // DTLB miss causes HPTW walk
   logic                  DTLBWriteM;                             // Writes PTE and PageType to DTLB
@@ -163,28 +163,27 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(P.XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
   if(MISALIGN_SUPPORT) begin : ziccslm_align
     logic [P.XLEN-1:0] IEUAdrSpillE, IEUAdrSpillM;
-    align #(P) align(.clk, .reset, .StallM, .FlushM, .IEUAdrE, .IEUAdrM, .Funct3M,
+    align #(P) align(.clk, .reset, .StallM, .FlushM, .IEUAdrE, .IEUAdrM, .Funct3M, .FpLoadStoreM, 
                      .MemRWM,
                      .DCacheReadDataWordM, .CacheBusHPWTStall, .SelHPTW,
                      .ByteMaskM, .ByteMaskExtendedM, .LSUWriteDataM, .ByteMaskSpillM, .LSUWriteDataSpillM,
-                     .IEUAdrSpillE, .IEUAdrSpillM, .SelSpillE, .DCacheReadDataWordSpillM, .SpillStallM,
-                     .SelStoreDelay);
+                     .IEUAdrSpillE, .IEUAdrSpillM, .SelSpillE, .DCacheReadDataWordSpillM, .SpillStallM);
     assign IEUAdrExtM = {2'b00, IEUAdrSpillM}; 
     assign IEUAdrExtE = {2'b00, IEUAdrSpillE};
   end else begin : no_ziccslm_align
     assign IEUAdrExtM = {2'b00, IEUAdrM}; 
     assign IEUAdrExtE = {2'b00, IEUAdrE};
-    assign SelSpillE = '0;
+    assign SelSpillE = 0;
     assign DCacheReadDataWordSpillM = DCacheReadDataWordM;
     assign ByteMaskSpillM = ByteMaskM;
     assign LSUWriteDataSpillM = LSUWriteDataM;
     assign MemRWSpillM = MemRWM;
-    assign {SpillStallM, SelStoreDelay} = '0;
+    assign {SpillStallM} = 0;
   end
 
     if(P.ZICBOZ_SUPPORTED) begin : cboz
-      mux2 #(P.XLEN) writedatacbozmux(WriteDataM, '0, CMOpM[3], WriteDataZM);
-    end else begin : cboz
+      assign WriteDataZM = CMOpM[3] ? 0 : WriteDataM;
+   end else begin : cboz
       assign WriteDataZM = WriteDataM;
     end
 
@@ -217,8 +216,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign StoreAmoAccessFaultM = LSUStoreAmoAccessFaultM;
     assign LoadPageFaultM = LSULoadPageFaultM;
     assign StoreAmoPageFaultM = LSUStoreAmoPageFaultM;
-    assign {HPTWStall, SelHPTW, PTE, PageType, DTLBWriteM, ITLBWriteF, IgnoreRequestTLB} = '0;
-    assign {HPTWInstrAccessFaultF, HPTWInstrPageFaultF} = '0;
+    assign {HPTWStall, SelHPTW, PTE, PageType, DTLBWriteM, ITLBWriteF, IgnoreRequestTLB} = 0;
+    assign {HPTWInstrAccessFaultF, HPTWInstrPageFaultF} = 0;
    end
 
   // CommittedM indicates the cache, bus, or HPTW are busy with a multiple cycle operation.
@@ -254,8 +253,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
 
   end else begin  // No MMU, so no PMA/page faults and no address translation
-    assign {DTLBMissM, LSULoadAccessFaultM, LSUStoreAmoAccessFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM} = '0;
-    assign {LSULoadPageFaultM, LSUStoreAmoPageFaultM} = '0;
+    assign {DTLBMissM, LSULoadAccessFaultM, LSUStoreAmoAccessFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM} = 0;
+    assign {LSULoadPageFaultM, LSUStoreAmoPageFaultM} = 0;
     assign PAdrM = IHAdrM[P.PA_BITS-1:0];
     assign CacheableM = 1'b1;
     assign SelDTIM = P.DTIM_SUPPORTED & ~P.BUS_SUPPORTED; // if no PMA then select dtim if there is a DTIM.  If there is 
@@ -280,7 +279,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     
     // The DTIM uses untranslated addresses, so it is not compatible with virtual memory.
     mux2 #(P.PA_BITS) DTIMAdrMux(IEUAdrExtE[P.PA_BITS-1:0], IEUAdrExtM[P.PA_BITS-1:0], MemRWM[0], DTIMAdr);
-    assign DTIMMemRWM = SelDTIM & ~IgnoreRequestTLB ? LSURWM : '0;
+    assign DTIMMemRWM = SelDTIM & ~IgnoreRequestTLB ? LSURWM : 0;
     // **** fix ReadDataWordM to be LLEN. ByteMask is wrong length.
     // **** create config to support DTIM with floating point.
     // Add support for cboz
@@ -317,22 +316,22 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
 
       if(P.ZICBOZ_SUPPORTED) begin 
         assign BusCMOZero = CMOpM[3] & ~CacheableM;
-        assign CacheCMOpM = (CacheableM & ~SelHPTW) ? CMOpM : '0;
+        assign CacheCMOpM = (CacheableM & ~SelHPTW) ? CMOpM : 0;
         assign BusAtomic = AtomicM[1] & ~CacheableM;
       end else begin
-        assign BusCMOZero = '0;
-        assign CacheCMOpM = '0;
-        assign BusAtomic = '0;
+        assign BusCMOZero = 0;
+        assign CacheCMOpM = 0;
+        assign BusAtomic = 0;
       end
-      assign BusRW = ~CacheableM & ~SelDTIM ? LSURWM : '0;
+      assign BusRW = (~CacheableM & ~SelDTIM )? LSURWM : 0;
       assign CacheableOrFlushCacheM = CacheableM | FlushDCacheM;
-      assign CacheRWM = CacheableM & ~SelDTIM ? LSURWM : '0;
+      assign CacheRWM = (CacheableM & ~SelDTIM) ? LSURWM : 0;
       assign FlushDCache = FlushDCacheM & ~(SelHPTW);
       
       cache #(.P(P), .PA_BITS(P.PA_BITS), .XLEN(P.XLEN), .LINELEN(P.DCACHE_LINELENINBITS), .NUMLINES(P.DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(P.DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(CACHEWORDLEN), .MUXINTERVAL(P.LLEN), .READ_ONLY_CACHE(0)) dcache(
         .clk, .reset, .Stall(GatedStallW & ~SelSpillE), .SelBusBeat, .FlushStage(FlushW | IgnoreRequestTLB),
-        .CacheRW(SelStoreDelay ? 2'b00 : CacheRWM), 
+        .CacheRW(CacheRWM), 
         .FlushCache(FlushDCache), .NextSet(IEUAdrExtE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskSpillM), .BeatCount(BeatCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
         .CacheWriteData(LSUWriteDataSpillM), .SelHPTW,
@@ -345,7 +344,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       assign DCacheStallM = CacheStall & ~IgnoreRequestTLB;
       assign CacheBusRW = CacheBusRWTemp;
 
-      ahbcacheinterface #(.AHBW(P.AHBW), .LLEN(P.LLEN), .PA_BITS(P.PA_BITS), .BEATSPERLINE(BEATSPERLINE), .AHBWLOGBWPL(AHBWLOGBWPL), .LINELEN(LINELEN),  .LLENPOVERAHBW(LLENPOVERAHBW), .READ_ONLY_CACHE(0)) ahbcacheinterface(
+      ahbcacheinterface #(.P(P), .BEATSPERLINE(BEATSPERLINE), .AHBWLOGBWPL(AHBWLOGBWPL), .LINELEN(LINELEN),  .LLENPOVERAHBW(LLENPOVERAHBW), .READ_ONLY_CACHE(0)) ahbcacheinterface(
         .HCLK(clk), .HRESETn(~reset), .Flush(FlushW | IgnoreRequestTLB),
         .HRDATA, .HWDATA(LSUHWDATA), .HWSTRB(LSUHWSTRB),
         .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HREADY(LSUHREADY),
@@ -366,7 +365,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     end else begin : passthrough // No Cache, use simple ahbinterface instad of ahbcacheinterface
       logic [1:0] BusRW;                    // Non-DTIM memory access, ignore cacheableM
       logic [P.XLEN-1:0] FetchBuffer;
-      assign BusRW = ~IgnoreRequestTLB & ~SelDTIM ? LSURWM : '0;
+      assign BusRW = (~IgnoreRequestTLB & ~SelDTIM) ? LSURWM : 0;
       
       assign LSUHADDR = PAdrM;
       assign LSUHSIZE = LSUFunct3M;
@@ -380,14 +379,14 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       if(P.DTIM_SUPPORTED) mux2 #(P.XLEN) ReadDataMux2(FetchBuffer, DTIMReadDataWordM[P.XLEN-1:0], SelDTIM, ReadDataWordMuxM[P.XLEN-1:0]);
       else assign ReadDataWordMuxM[P.XLEN-1:0] = FetchBuffer[P.XLEN-1:0]; // *** bus only does not support double wide floats.
       assign LSUHBURST = 3'b0;
-      assign {DCacheStallM, DCacheCommittedM, DCacheMiss, DCacheAccess} = '0;
+      assign {DCacheStallM, DCacheCommittedM, DCacheMiss, DCacheAccess} = 0;
  end
   end else begin: nobus // block: bus, only DTIM
-    assign LSUHWDATA = '0; 
+    assign LSUHWDATA = 0; 
     assign ReadDataWordMuxM = DTIMReadDataWordM;
-    assign {BusStall, BusCommittedM} = '0;   
-    assign {DCacheMiss, DCacheAccess} = '0;
-    assign {DCacheStallM, DCacheCommittedM} = '0;
+    assign {BusStall, BusCommittedM} = 0;   
+    assign {DCacheMiss, DCacheAccess} = 0;
+    assign {DCacheStallM, DCacheCommittedM} = 0;
   end
 
   assign LSUBusStallM = BusStall & ~IgnoreRequestTLB;
@@ -405,14 +404,18 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   end
 
   if (P.F_SUPPORTED) 
-    mux2 #(P.LLEN) datamux({{{P.LLEN-P.XLEN}{1'b0}}, IMAWriteDataM}, FWriteDataM, FpLoadStoreM, IMAFWriteDataM);
+    if (P.FLEN >= P.XLEN)
+      mux2 #(P.LLEN) datamux({{{P.LLEN-P.XLEN}{1'b0}}, IMAWriteDataM}, FWriteDataM, FpLoadStoreM, IMAFWriteDataM);
+    else
+      mux2 #(P.LLEN) datamux(IMAWriteDataM, {{{P.XLEN-P.FLEN}{1'b0}}, FWriteDataM}, FpLoadStoreM, IMAFWriteDataM);
+
   else assign IMAFWriteDataM = IMAWriteDataM;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Subword Accesses
   /////////////////////////////////////////////////////////////////////////////////////////////
   
-  subwordread #(P.LLEN) subwordread(.ReadDataWordMuxM(LittleEndianReadDataWordM), .PAdrM(PAdrM[2:0]), .BigEndianM,
+  subwordread #(P) subwordread(.ReadDataWordMuxM(LittleEndianReadDataWordM), .PAdrM(PAdrM[3:0]), .BigEndianM,
     .FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
   subwordwrite #(P.LLEN) subwordwrite(.LSUFunct3M, .IMAFWriteDataM, .LittleEndianWriteDataM);
 

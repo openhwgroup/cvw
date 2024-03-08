@@ -9,6 +9,7 @@
 //          Prediction made during the fetch stage and corrected in the execution stage.
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -87,15 +88,17 @@ module bpred import cvw::*;  #(parameter cvw_t P) (
 
   logic [P.XLEN-1:0]        BPBTAD;
 
-  logic                    BTBCallF, BTBReturnF, BTBJumpF, BTBBranchF;
-  logic                    BPBranchF, BPJumpF, BPReturnF, BPCallF;
-  logic                    BPBranchD, BPJumpD, BPReturnD, BPCallD;
-  logic                    ReturnD, CallD;
-  logic                    ReturnE, CallE;
-  logic                    BranchM, JumpM, ReturnM, CallM;
-  logic                    BranchW, JumpW, ReturnW, CallW;
-  logic                    BPReturnWrongD;
+  logic                     BTBCallF, BTBReturnF, BTBJumpF, BTBBranchF;
+  logic                     BPBranchF, BPJumpF, BPReturnF, BPCallF;
+  logic                     BPBranchD, BPJumpD, BPReturnD, BPCallD;
+  logic                     ReturnD, CallD;
+  logic                     ReturnE, CallE;
+  logic                     BranchM, JumpM, ReturnM, CallM;
+  logic                     BranchW, JumpW, ReturnW, CallW;
+  logic                     BPReturnWrongD;
   logic [P.XLEN-1:0]        BPBTAE;
+  logic                     BPBTAWrongM;
+  logic                     PCSrcM;
   
   // Part 1 branch direction prediction
   if (P.BPRED_TYPE == `BP_TWOBIT) begin:Predictor
@@ -143,6 +146,8 @@ module bpred import cvw::*;  #(parameter cvw_t P) (
       .BranchD, .BranchE, .BranchM, .PCSrcE);
   end 
 
+  flopenrc #(1) PCSrcMReg(clk, reset, FlushM, ~StallM, PCSrcE, PCSrcM);
+  
   // Part 2 Branch target address prediction
   // BTB contains target address for all CFI
 
@@ -151,6 +156,7 @@ module bpred import cvw::*;  #(parameter cvw_t P) (
       .PCNextF, .PCF, .PCD, .PCE, .PCM,
       .BPBTAF, .BPBTAD, .BPBTAE,
       .BTBIClassF({BTBCallF, BTBReturnF, BTBJumpF, BTBBranchF}),
+      .BPBTAWrongM,
       .IClassWrongM, .IClassWrongE,
       .IEUAdrE, .IEUAdrM,
       .InstrClassD({CallD, ReturnD, JumpD, BranchD}), 
@@ -195,7 +201,7 @@ module bpred import cvw::*;  #(parameter cvw_t P) (
 
   if(P.ZIHPM_SUPPORTED) begin
     logic [P.XLEN-1:0]       RASPCD, RASPCE;
-    logic                   BTAWrongE, RASPredPCWrongE;  
+    logic                    RASPredPCWrongE;  
     // performance counters
     // 1. class         (class wrong / minstret) (IClassWrongM / csr)                    // Correct now
     // 2. target btb    (btb target wrong / class[0,1,3])  (btb target wrong / (br + j + jal)
@@ -207,17 +213,18 @@ module bpred import cvw::*;  #(parameter cvw_t P) (
     // By pipeline the BTB's PC and RAS address through the pipeline we can measure the accuracy of
     // both without the above inaccuracies.
     // **** use BPBTAWrongM from BTB.
-    assign BTAWrongE = (BPBTAE != IEUAdrE) & (BranchE | JumpE & ~ReturnE) & PCSrcE;
     assign RASPredPCWrongE = (RASPCE != IEUAdrE) & ReturnE & PCSrcE;
 
     flopenrc #(P.XLEN) RASTargetDReg(clk, reset, FlushD, ~StallD, RASPCF, RASPCD);
     flopenrc #(P.XLEN) RASTargetEReg(clk, reset, FlushE, ~StallE, RASPCD, RASPCE);
-    flopenrc #(3) BPPredWrongRegM(clk, reset, FlushM, ~StallM, 
-      {BPDirPredWrongE, BTAWrongE, RASPredPCWrongE},
-      {BPDirPredWrongM, BTAWrongM, RASPredPCWrongM});
+    flopenrc #(2) BPPredWrongRegM(clk, reset, FlushM, ~StallM, 
+      {BPDirPredWrongE, RASPredPCWrongE},
+      {BPDirPredWrongM, RASPredPCWrongM});
+
+    assign BTAWrongM = BPBTAWrongM & PCSrcM;
     
   end else begin
-    assign {BTAWrongM, RASPredPCWrongM} = '0;
+    assign {BTAWrongM, RASPredPCWrongM} = 0;
   end
 
   // **** Fix me

@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -29,12 +30,12 @@
 module shiftcorrection import cvw::*;  #(parameter cvw_t P) (
   input logic  [P.NORMSHIFTSZ-1:0] Shifted,                // the shifted sum before LZA correction
   // divsqrt
-  input logic                      DivOp,                  // is it a divsqrt opperation
+  input logic                      DivOp,                  // is it a divsqrt operation
   input logic                      DivResSubnorm,          // is the divsqrt result subnormal
   input logic  [P.NE+1:0]          DivUe,                  // the divsqrt result's exponent
   input logic                      DivSubnormShiftPos,     // is the subnorm divider shift amount positive (ie not underflowed)
   //fma
-  input logic                      FmaOp,                  // is it an fma opperation
+  input logic                      FmaOp,                  // is it an fma operation
   input logic  [P.NE+1:0]          NormSumExp,             // exponent of the normalized sum not taking into account Subnormal or zero results
   input logic                      FmaPreResultSubnorm,    // is the result subnormal - calculated before LZA corection
   input logic                      FmaSZero,
@@ -87,5 +88,5 @@ module shiftcorrection import cvw::*;  #(parameter cvw_t P) (
 
   // the quotent is in the range [.5,2) if there is no early termination
   // if the quotent < 1 and not Subnormal then subtract 1 to account for the normalization shift
-  assign Ue = (DivResSubnorm & DivSubnormShiftPos) ? '0 : DivUe - {(P.NE+1)'(0), ~LZAPlus1};
+  assign Ue = (DivResSubnorm & DivSubnormShiftPos) ? 0 : DivUe - {(P.NE+1)'(0), ~LZAPlus1};
 endmodule

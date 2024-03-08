@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -36,7 +37,7 @@ module fdivsqrtfgen4 import cvw::*;  #(parameter cvw_t P) (
   // Generate for both positive and negative digits
   assign F2  = (~U << 2) & (C << 2);              // 
   assign F1  = ~(U << 1) & C;
-  assign F0  = '0;
+  assign F0  = 0;
   assign FN1 = (UM << 1) | (C & ~(C << 3));
   assign FN2 = (UM << 2) | ((C << 2) & ~(C << 4));
 

@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13 (Table 13.8)
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -27,10 +28,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fmasign(    
-  input  logic [2:0]  OpCtrl,     // opperation contol
+  input  logic [2:0]  OpCtrl,     // operation contol
   input  logic        Xs, Ys, Zs, // sign of the inputs
-  output logic        Ps,         // the product's sign - takes opperation into account
-  output logic        As,         // aligned addend sign used in fma - takes opperation into account
+  output logic        Ps,         // the product's sign - takes operation into account
+  output logic        As,         // aligned addend sign used in fma - takes operation into account
   output logic        InvA        // Effective subtraction: invert addend
 );
 

@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -57,7 +58,7 @@ module fdivsqrtstage2 import cvw::*;  #(parameter cvw_t P) (
   // Divisor multiple
   always_comb
     if      (up) Dsel = DBar;
-    else if (uz) Dsel = '0;
+    else if (uz) Dsel = 0;
     else         Dsel = D; // un
 
   // Residual Update

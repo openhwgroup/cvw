@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 5 (Figure 5.9)
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -64,8 +65,8 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   assign PendingIntsM  = MIP_REGW & MIE_REGW;
   assign IntPendingM   = |PendingIntsM;
   assign Committed     = CommittedM | CommittedF;
-  assign EnabledIntsM  = ({12{MIntGlobalEnM}} & PendingIntsM & ~MIDELEG_REGW | {12{SIntGlobalEnM}} & PendingIntsM & MIDELEG_REGW);
-  assign ValidIntsM    = {12{~Committed}} & EnabledIntsM;
+  assign EnabledIntsM  = (MIntGlobalEnM ? PendingIntsM & ~MIDELEG_REGW : 0) | (SIntGlobalEnM ? PendingIntsM & MIDELEG_REGW : 0);
+  assign ValidIntsM    = Committed ? 0 : EnabledIntsM;
   assign InterruptM    = (|ValidIntsM) & InstrValidM & (~wfiM | wfiW); // suppress interrupt if the memory system has partially processed a request. Delay interrupt until wfi is in the W stage. 
   // wfiW is to support possible but unlikely back to back wfi instructions. wfiM would be high in the M stage, while also in the W stage.
   assign DelegateM     = P.S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM] : MEDELEG_REGW[CauseM]) & 

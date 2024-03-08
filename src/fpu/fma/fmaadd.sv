@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13 (Figure 13.11)
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -29,7 +30,7 @@
 module fmaadd import cvw::*;  #(parameter cvw_t P) (
   input  logic [3*P.NF+3:0]    Am,         // aligned addend's mantissa for addition in U(NF+5.2NF+1)
   input  logic [P.NE-1:0]      Ze,         // exponent of Z
-  input  logic                 Ps,         // the product sign and the alligend addeded's sign (Modified Z sign for other opperations)
+  input  logic                 Ps,         // the product sign and the alligend addeded's sign (Modified Z sign for other operations)
   input  logic [P.NE+1:0]      Pe,         // product's exponet
   input  logic [2*P.NF+1:0]    Pm,         // the product's mantissa
   input  logic                 InvA,       // invert the aligned addend
@@ -50,9 +51,9 @@ module fmaadd import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////////////////////////////////////////
   
   // Choose an inverted or non-inverted addend.  Put carry into adder/LZA for addition
-  assign AmInv = {3*P.NF+4{InvA}}^Am;
+  assign AmInv = InvA ? ~Am : Am;
   // Kill the product if the product is too small to effect the addition (determined in fma1.sv)
-  assign PmKilled = {2*P.NF+2{~KillProd}}&Pm;
+  assign PmKilled = KillProd ? 0 : Pm;
   // Do the addition
   //      - calculate a positive and negative sum in parallel
   // if there was a small negative number killed in the alignment stage one needs to be subtracted from the sum

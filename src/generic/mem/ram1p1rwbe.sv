@@ -13,6 +13,7 @@
 // Documentation: 
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -42,7 +43,7 @@ module ram1p1rwbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=64, WIDTH=44, PRE
   output logic [WIDTH-1:0]        dout
 );
 
-  logic [WIDTH-1:0]               RAM[DEPTH-1:0];
+  bit [WIDTH-1:0]               RAM[DEPTH-1:0];
 
   // ***************************************************************************
   // TRUE SRAM macro

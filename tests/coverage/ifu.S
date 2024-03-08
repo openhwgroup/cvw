@@ -6,6 +6,7 @@
 // Purpose: Test coverage for IFU
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -74,8 +75,31 @@ main:
     
     .hword 0x9C7D      // Reserved instruction from line 187 with op = 01, Instr[15:10] = 100111, Instr[6:5] = 11, and 0's everywhere else
     
+    # exercise all the cache ways
+    j way0code
 
+# stress test cache ways by loading stuff from each one and then doing fence.i to invalidate
+.align 12
+way0code:
+    jal way1code
+    fence.i
+    j done
 
+.align 12
+way1code:
+    j way2code
+
+.align 12
+way2code:
+    j way3code
+
+.align 12
+way3code:
+    j way00code
+
+.align 12
+way00code:
+    ret
     
    
     j done

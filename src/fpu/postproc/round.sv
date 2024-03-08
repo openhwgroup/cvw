@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -33,15 +34,15 @@ module round import cvw::*;  #(parameter cvw_t P) (
   input  logic                     Ms,                 // normalized sign
   input  logic [P.CORRSHIFTSZ-1:0] Mf,                 // normalized fraction
   // fma
-  input  logic                     FmaOp,              // is an fma opperation being done?
+  input  logic                     FmaOp,              // is an fma operation being done?
   input  logic [P.NE+1:0]          FmaMe,              // exponent of the normalized sum for fma
   input  logic                     FmaASticky,         // addend's sticky bit
   // divsqrt
-  input  logic                     DivOp,              // is a division opperation being done
+  input  logic                     DivOp,              // is a division operation being done
   input  logic                     DivSticky,          // divsqrt sticky bit
   input  logic [P.NE+1:0]          Ue,                 // the divsqrt calculated expoent
   // cvt
-  input  logic                     CvtOp,              // is a convert opperation being done
+  input  logic                     CvtOp,              // is a convert operation being done
   input  logic                     ToInt,              // is the cvt op a cvt to integer
   input  logic                     CvtResSubnormUf,    // is the cvt result subnormal or underflow
   input  logic                     CvtResUf,           // does the cvt result underflow
@@ -68,6 +69,7 @@ module round import cvw::*;  #(parameter cvw_t P) (
   logic                            CalcPlus1;          // calculated plus1
   logic                            FpPlus1;            // do you add one to the fp result 
   logic [P.FLEN:0]                 RoundAdd;           // how much to add to the result
+  logic                            CvtToInt;           // Convert to integer operation
 
 // what position is XLEN in?
 //  options: 
@@ -111,6 +113,7 @@ module round import cvw::*;  #(parameter cvw_t P) (
   // determine what format the final result is in: int or fp
   assign IntRes = ToInt;
   assign FpRes  = ~IntRes;
+  assign CvtToInt = ToInt; // under current encodings, CvtOp always is 1 when ToInt is selected, so leave it out
 
   // sticky bit calculation
   if (P.FPSIZES == 1) begin
@@ -178,7 +181,7 @@ module round import cvw::*;  #(parameter cvw_t P) (
 
   end
 
-  // only add the Addend sticky if doing an FMA opperation
+  // only add the Addend sticky if doing an FMA operation
   //      - the shifter shifts too far left when there's an underflow (shifting out all possible sticky bits)
   assign Sticky = FmaASticky&FmaOp | NormSticky | CvtResUf&CvtOp | FmaMe[P.NE+1]&FmaOp | DivSticky&DivOp;
   
@@ -244,9 +247,9 @@ module round import cvw::*;  #(parameter cvw_t P) (
           endcase
   end
 
-  assign Guard  = ToInt&CvtOp ? Mf[P.CORRSHIFTSZ-P.XLEN-1] : FpGuard;
-  assign LsbRes = ToInt&CvtOp ? Mf[P.CORRSHIFTSZ-P.XLEN] : FpLsbRes;
-  assign Round  = ToInt&CvtOp ? Mf[P.CORRSHIFTSZ-P.XLEN-2] : FpRound;
+  assign Guard  = CvtToInt ? Mf[P.CORRSHIFTSZ-P.XLEN-1] : FpGuard;
+  assign LsbRes = CvtToInt ? Mf[P.CORRSHIFTSZ-P.XLEN] : FpLsbRes;
+  assign Round  = CvtToInt ? Mf[P.CORRSHIFTSZ-P.XLEN-2] : FpRound;
 
   always_comb begin
       // Determine if you add 1
@@ -272,7 +275,7 @@ module round import cvw::*;  #(parameter cvw_t P) (
 
   // If an answer is exact don't round
   assign Plus1   = CalcPlus1 & (Sticky|Round|Guard);
-  assign FpPlus1 = Plus1&~(ToInt&CvtOp);
+  assign FpPlus1 = Plus1&~(CvtToInt);
   assign UfPlus1 = UfCalcPlus1 & (Sticky|Round);
 
   // place Plus1 into the proper position for the format
@@ -300,9 +303,9 @@ module round import cvw::*;  #(parameter cvw_t P) (
       case(PostProcSel)
           2'b10:    Me = FmaMe; // fma
           2'b00:    Me = {CvtCe[P.NE], CvtCe}&{P.NE+2{~CvtResSubnormUf|CvtResUf}}; // cvt
-          // 2'b01: Me = DivDone ? Ue : '0; // divide
+          // 2'b01: Me = DivDone ? Ue : 0; // divide
           2'b01:    Me = Ue; // divide
-          default:  Me = '0; 
+          default:  Me = 0; 
       endcase
 
 

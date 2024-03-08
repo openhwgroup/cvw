@@ -9,6 +9,7 @@
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
@@ -36,7 +37,7 @@ module fdivsqrtfgen2 import cvw::*;  #(parameter cvw_t P) (
   // Generate for both positive and negative quotient digits
   assign FP = ~(U << 1) & C;
   assign FN = (UM << 1) | (C & ~(C << 2));
-  assign FZ = '0;
+  assign FZ = 0;
 
   always_comb     // Choose which adder input will be used
     if (up)       F = FP;
