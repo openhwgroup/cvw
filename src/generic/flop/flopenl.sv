@@ -32,7 +32,7 @@ module flopenl #(parameter WIDTH = 8, parameter type TYPE=logic [WIDTH-1:0]) (
   output TYPE q);
 
   always_ff @(posedge clk)
-    if (load)    q <= #1 val;
-    else if (en) q <= #1 d;
+    if (load)    q <= val;
+    else if (en) q <= d;
 endmodule
 

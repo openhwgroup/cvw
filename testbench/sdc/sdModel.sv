@@ -498,7 +498,7 @@ module    sdModel
 	   crcRst<=0;
 	   crcIn <= #`tIH qCmd; // tIH 0
 	   inCmd[47-cmdRead]  <= #`tIH qCmd;    // tIH 0
-	   cmdRead <= #1 cmdRead+1;
+	   cmdRead <=cmdRead+1;
 	   if (cmdRead >= 40) 
              crcEn<=0;
            
