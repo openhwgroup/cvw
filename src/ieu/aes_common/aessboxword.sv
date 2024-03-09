@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// aes_mixcolumns.sv
+// aessboxword.sv
 //
-// Written: ryan.swann@okstate.edu, james.stine@okstate.edu, David_Harris@hmc.edu
+// Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
 //
-// Purpose: Galois field operation to an individual 32-bit word
+// Purpose: 4 sets of Rijndael S-BOX so whole word can be looked up simultaneously.
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,24 +25,15 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-module aes_mixcolumns(input  logic [31:0] in, output logic [31:0] out);
-
-   logic [7:0] in0, in1, in2, in3, out0, out1, out2, out3, t0, t1, t2, t3, temp;
-
-   assign {in0, in1, in2, in3} = in;
-   assign temp = in0 ^ in1 ^ in2 ^ in3;
-
-   galoismult_forward gm0 (in0^in1, t0);
-   galoismult_forward gm1 (in1^in2, t1);
-   galoismult_forward gm2 (in2^in3, t2);
-   galoismult_forward gm3 (in3^in0, t3);
-
-   assign out0 = in0 ^ temp ^ t3;
-   assign out1 = in1 ^ temp ^ t0;
-   assign out2 = in2 ^ temp ^ t1;
-   assign out3 = in3 ^ temp ^ t2;
+module aessboxword(input logic [31:0] in, output logic [31:0] out);   
    
-   assign out = {out0, out1, out2, out3};
-
+   // Declare the SBOX for (least significant) byte 0 of the input
+   aessbox sbox_b0(.in(in[7:0]), .out(out[7:0]));
+   // Declare the SBOX for byte 1 of the input
+   aessbox sbox_b1(.in(in[15:8]), .out(out[15:8]));
+   // Declare the SBOX for byte 2 of the input
+   aessbox sbox_b2(.in(in[23:16]), .out(out[23:16]));	
+   // Declare the SBOX for byte 3 of the input	
+   aessbox sbox_b3(.in(in[31:24]), .out(out[31:24]));
+   
 endmodule

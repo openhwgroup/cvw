@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// galoismult_inverse.sv
+// aesinvsboxword.sv
 //
-// Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
+// Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
 //
-// Purpose: Galois field operations for mix columns operation
+// Purpose: 4 sets of Rinjdael Inverse S-BOX for whole word look up
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,12 +25,15 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module galoismult_inverse(input logic [10:0] in, output logic [7:0] out);
-
-   logic [7:0] temp0, temp1;
-
-   assign temp0 = in[8] ? (in[7:0] ^ 8'b00011011) : in[7:0];
-   assign temp1 = in[9] ? (temp0 ^ 8'b00110110) : temp0;
-   assign out = in[10] ? (temp1 ^ 8'b01101100) : temp1;
-
+module aesinvsboxword(input logic [31:0] in, output logic [31:0] out);
+   
+   // Declare the SBOX for (least significant) byte 0 of the input
+   aesinvsbox sbox_b0(.in(in[7:0]), .out(out[7:0]));
+   // Declare the SBOX for byte 1 of the input
+   aesinvsbox sbox_b1(.in(in[15:8]), .out(out[15:8]));
+   // Declare the SBOX for byte 2 of the input
+   aesinvsbox sbox_b2(.in(in[23:16]), .out(out[23:16]));	
+   // Declare the SBOX for byte 3 of the input	
+   aesinvsbox sbox_b3(.in(in[31:24]), .out(out[31:24]));
+   
 endmodule

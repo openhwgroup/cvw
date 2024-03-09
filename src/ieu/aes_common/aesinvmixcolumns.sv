@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// aes_inv_mixcolumns.sv
+// aesinvmixcolumns.sv
 //
 // Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
 // Created: 05 March 2024
@@ -25,7 +25,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aes_inv_mixcolumns(input logic [31:0] in, output logic [31:0] out);
+module aesinvmixcolumns(input logic [31:0] in, output logic [31:0] out);
 
    logic [7:0] in0, in1, in2, in3, temp;
    logic [10:0] xor0, xor1, xor2, xor3;
@@ -38,9 +38,9 @@ module aes_inv_mixcolumns(input logic [31:0] in, output logic [31:0] out);
    assign xor2 = {temp, 3'b0} ^ {1'b0, in1^in3, 2'b0} ^ {2'b0, in1^in0, 1'b0} ^ {3'b0, temp} ^ {3'b0, in1};
    assign xor3 = {temp, 3'b0} ^ {1'b0, in0^in2, 2'b0} ^ {2'b0, in0^in3, 1'b0} ^ {3'b0, temp} ^ {3'b0, in0};
 
-   galoismult_inverse gm0 (xor0, out[7:0]);
-   galoismult_inverse gm1 (xor1, out[15:8]);
-   galoismult_inverse gm2 (xor2, out[23:16]);
-   galoismult_inverse gm3 (xor3, out[31:24]);
+   galoismultinverse gm0 (xor0, out[7:0]);
+   galoismultinverse gm1 (xor1, out[15:8]);
+   galoismultinverse gm2 (xor2, out[23:16]);
+   galoismultinverse gm3 (xor3, out[31:24]);
 
 endmodule 

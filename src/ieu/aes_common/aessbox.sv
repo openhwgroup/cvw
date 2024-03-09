@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// aes_sbox.sv
+// aessbox.sv
 //
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
@@ -25,7 +25,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aes_sbox(input logic [7:0] in, output logic [7:0] out);
+module aessbox(input logic [7:0] in, output logic [7:0] out);
 
    // case statement to lookup the value in the rijndael table
    always_comb 

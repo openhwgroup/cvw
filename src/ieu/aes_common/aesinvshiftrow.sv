@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// aes_inv_shiftrow.sv
+// aesinvshiftrow.sv
 //
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
@@ -25,7 +25,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aes_inv_shiftrow(input logic [127:0]  DataIn, output logic [127:0] DataOut);
+module aesinvshiftrow(input logic [127:0]  DataIn, output logic [127:0] DataOut);
 
    assign DataOut = {DataIn[31:24], DataIn[55:48], DataIn[79:72], DataIn[103:96],
                      DataIn[127:120], DataIn[23:16], DataIn[47:40], DataIn[71:64],

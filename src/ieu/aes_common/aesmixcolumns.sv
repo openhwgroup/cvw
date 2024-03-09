@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// galoismult_forward.sv
+// aesmixcolumns.sv
 //
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu, David_Harris@hmc.edu
 // Created: 20 February 2024
 //
-// Purpose: Galois field operations for mix columns operation
+// Purpose: Galois field operation to an individual 32-bit word
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,11 +25,24 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module galoismult_forward(input logic [7:0] in, output logic [7:0] out);
 
-   logic [7:0] leftshift;
+module aesmixcolumns(input  logic [31:0] in, output logic [31:0] out);
 
-   assign leftshift = {in[6:0], 1'b0};
-   assign out = in[7] ? (leftshift ^ 8'b00011011) : leftshift;
+   logic [7:0] in0, in1, in2, in3, out0, out1, out2, out3, t0, t1, t2, t3, temp;
+
+   assign {in0, in1, in2, in3} = in;
+   assign temp = in0 ^ in1 ^ in2 ^ in3;
+
+   galoismultforward gm0 (in0^in1, t0);
+   galoismultforward gm1 (in1^in2, t1);
+   galoismultforward gm2 (in2^in3, t2);
+   galoismultforward gm3 (in3^in0, t3);
+
+   assign out0 = in0 ^ temp ^ t3;
+   assign out1 = in1 ^ temp ^ t0;
+   assign out2 = in2 ^ temp ^ t1;
+   assign out3 = in3 ^ temp ^ t2;
+   
+   assign out = {out0, out1, out2, out3};
 
 endmodule
