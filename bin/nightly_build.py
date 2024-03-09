@@ -37,6 +37,7 @@ Usage:
 
         Our cron job has the following syntax:
         0 3 * * * BASH_ENV=~/.bashrc bash -l -c "*WHERE YOUR CVW IS MUST PUT FULL PATH*/cvw/bin/wrapper_nightly-runs.sh > *WHERE YOU WANT TO STORE LOG FILES/cron.log 2>&1" 
+        0 3 * * * BASH_ENV=~/.bashrc bash -l -c "*WHERE YOUR CVW IS MUST PUT FULL PATH*/cvw/bin/wrapper_nightly-runs.sh > *WHERE YOU WANT TO STORE LOG FILES/cron.log 2>&1" 
 
         This cronjob sources the .bashrc file and executes the wrapper script as a user. 
 
@@ -99,6 +100,8 @@ class FolderManager:
         """
         Create preliminary folders if they do not exist. 
         These folders are:
+            nightly-runs/repos/
+            nightly-runs/results/ 
             nightly-runs/repos/
             nightly-runs/results/ 
 
@@ -174,6 +177,7 @@ class TestRunner:
         The setup script will be copied from the base directory to a specific folder structure inside the base directory.
 
         Args:
+            folder: the "nightly-runs/repos/"
             folder: the "nightly-runs/repos/"
 
         Returns:
