@@ -289,7 +289,7 @@ module testbench;
   assign begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
   assign end_signature_addr = ProgramAddrLabelArray["sig_end_canary"];
   assign signature_size = end_signature_addr - begin_signature_addr;
-  always @(posedge clk) begin
+  always @(posedge SelectTest) begin
     if(SelectTest) begin
       if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
       else if(TEST == "buildroot") begin 
@@ -313,15 +313,8 @@ module testbench;
       updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
     end
     
-  ////////////////////////////////////////////////////////////////////////////////
-  // Verify the test ran correctly by checking the memory against a known signature.
-  ////////////////////////////////////////////////////////////////////////////////
-    if(TestBenchReset) test = 1;
-    if (TEST == "coremark")
-      if (dut.core.priv.priv.EcallFaultM) begin
-        $display("Benchmark: coremark is done.");
-        $stop;
-      end
+  end
+  always @(posedge Validate) begin
     if(Validate) begin
       if (TEST == "embench") begin
         // Writes contents of begin_signature to .sim.output file
@@ -357,9 +350,24 @@ module testbench;
       if (test == tests.size()) begin
         if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
         else $display("FAIL: %d test programs had errors", totalerrors);
+`ifdef VERILATOR
+        $finish;
+`else
         $stop; // if this is changed to $finish, wally-batch.do does not go to the next step to run coverage
+`endif
       end
     end
+  end
+  always @(posedge clk) begin
+  ////////////////////////////////////////////////////////////////////////////////
+  // Verify the test ran correctly by checking the memory against a known signature.
+  ////////////////////////////////////////////////////////////////////////////////
+    if(TestBenchReset) test = 1;
+    if (TEST == "coremark")
+      if (dut.core.priv.priv.EcallFaultM) begin
+        $display("Benchmark: coremark is done.");
+        $stop;
+      end
   end
 
 
