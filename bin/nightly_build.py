@@ -54,6 +54,7 @@ Dependencies:
         - re
         - markdown
         - subprocess
+        - argparse
 
     Bash:
         - mutt (email sender)
@@ -69,6 +70,8 @@ from datetime import datetime
 import re
 import markdown
 import subprocess
+import argparse
+
 
 
 
@@ -83,7 +86,7 @@ class FolderManager:
             base_dir (str): The base directory where folders will be managed and repository will be cloned.
         """
         env_extract_var = 'WALLY'
-        print(f"The environemntal variable is {env_extract_var}")
+        # print(f"The environemntal variable is {env_extract_var}")
         self.base_dir = os.environ.get(env_extract_var)
         print(f"The base directory is: {self.base_dir}")
         self.base_parent_dir = os.path.dirname(self.base_dir)
@@ -611,120 +614,145 @@ class TestRunner:
                     print(f"Error sending email: {identifier}")
         except expression as identifier:
             print(f"Error sending email: {identifier}")
-#############################################
-#                 SETUP                     #
-#############################################
-folder_manager = FolderManager() # creates the object
-
-# setting the path on where to clone new repositories of cvw
-path = folder_manager.create_preliminary_folders(["nightly-runs/repos/", "nightly-runs/results/"])
-new_folder = folder_manager.create_new_folder(["nightly-runs/repos/", "nightly-runs/results/"])
-
-# clone the cvw repo
-folder_manager.clone_repository("nightly-runs/repos/", "https://github.com/openhwgroup/cvw.git")
 
 
-        
-#############################################
-#                 SETUP                     #
-#############################################
 
-test_runner = TestRunner() # creates the object
-test_runner.set_env_var("nightly-runs/repos/") # ensures that the new WALLY environmental variable is set correctly
+def main():
+    #############################################
+    #                 ARG PARSER                #
+    #############################################
 
+    parser = argparse.ArgumentParser(description='Nightly Verification Testing for WALLY.')
 
-#############################################
-#             TMP SETUP                     #
-#############################################
+    parser.add_argument('--path', help='specify the path for where the nightly repositories will be cloned ex: "nightly-runs')
+    parser.add_argument('--repository', help='specify which github repository you want to clone')
+    parser.add_argument('--target', help='types of tests you can make are: all, wally-riscv-arch-test')
+    parser.add_argument('--send_email', help='do you want to send emails: "yes" or "y"')
+    
+    args = parser.parse_args()
 
-"""
-The goal of this section is to replace the TIMEOUT_DUR for regression tests.
+    # file paths for where the results and repos will be saved: repos and results can be changed to whatever
+    repos_path = f"{args.path}/repos/"
+    results_path = f"{args.path}/results/"
+    #############################################
+    #                 SETUP                     #
+    #############################################
+    folder_manager = FolderManager() # creates the object
 
-"""
-if test_runner.change_time_dur():
-    print("The regression-wally file was successfully changed")
+    # setting the path on where to clone new repositories of cvw
+    folder_manager.create_preliminary_folders([repos_path, results_path])
+    new_folder = folder_manager.create_new_folder([repos_path, results_path])
 
-#############################################
-#              MAKE TESTS                   #
-#############################################
+    # clone the cvw repo
+    folder_manager.clone_repository(repos_path, args.repository)
+            
+    #############################################
+    #                 SETUP                     #
+    #############################################
 
-
-# target = "wally-riscv-arch-test"
-target = "all"
-# if test_runner.execute_makefile(target = target):
-#    print(f"The {target} tests were made successfully")
-
-#############################################
-#               RUN TESTS                   #
-#############################################
-
-
-test_list = [["python", "regression-wally", "-nightly"], ["bash", "lint-wally", "-nightly"], ["bash", "coverage", "--search"]]
-output_log_list = [] # a list where the output markdown file lcoations will be saved to
-total_number_failures = 0  # an integer where the total number failures from all of the tests will be collected
-total_number_success = 0    # an integer where the total number of sucess will be collected
-
-total_failures = []
-total_success = []
-
-for test_type, test_name, test_exctention in test_list:
-    print("--------------------------------------------------------------")
-    print(f"Test type: {test_type}")
-    print(f"Test name: {test_name}")
-    print(f"Test extenction: {test_exctention}")
- 
-    check, output_location = test_runner.run_tests(test_type=test_type, test_name=test_name, test_exctention=test_exctention)
-    print(f"Did the tests run?: {check}")
-    print(f"The tests log files are saved to: {output_location}")
-    if check: # this checks if the test actually ran successfully
-        output_log_list.append(output_location)
-        
-        # format tests to markdown
-        try:
-            passed, failed = test_runner.clean_format_output(input_file = output_location)
-        except:
-            print("There was an error cleaning the data")
- 
-        print(f"The # of failures are for {test_name}: {len(failed)}")
-        total_number_failures+= len(failed)
-        total_failures.append(failed)
- 
-        print(f"The # of sucesses are for {test_name}: {len(passed)}")
-        total_number_success += len(passed)
-        total_success.append(passed)
-        test_runner.rewrite_to_markdown(test_name, passed, failed)
- 
-print(f"The total sucesses are: {total_number_success}")
-print(f"The total failures are: {total_number_failures}")
+    test_runner = TestRunner() # creates the object
+    test_runner.set_env_var(repos_path) # ensures that the new WALLY environmental variable is set correctly
 
 
+    #############################################
+    #             TMP SETUP                     #
+    #############################################
+
+    """
+    The goal of this section is to replace the TIMEOUT_DUR for regression tests.
+
+    """
+    if test_runner.change_time_dur(time_duriation=2):
+        pass
+    else:
+        print("Error occured changing the TIMEOUT duration in './regression-wally'")
+
+    #############################################
+    #              MAKE TESTS                   #
+    #############################################
 
 
     
+    # if test_runner.execute_makefile(target = args.target):
+    #    print(f"The {args.target} tests were made successfully")
 
-#############################################
-#               FORMAT TESTS                #
-#############################################
-
-# Combine multiple markdown files into one file
-
-test_runner.combine_markdown_files(passed_tests = total_success, failed_tests = total_failures, test_list = test_list, total_number_failures = total_number_failures, total_number_success = total_number_success, test_type=target, markdown_file=None)
+    #############################################
+    #               RUN TESTS                   #
+    #############################################
 
 
-#############################################
-#             WRITE MD TESTS                #
-#############################################
-test_runner.convert_to_html()
+    test_list = [["python", "regression-wally", "-nightly"], ["bash", "lint-wally", "-nightly"], ["bash", "coverage", "--search"]]
+    output_log_list = [] # a list where the output markdown file lcoations will be saved to
+    total_number_failures = 0  # an integer where the total number failures from all of the tests will be collected
+    total_number_success = 0    # an integer where the total number of sucess will be collected
+
+    total_failures = []
+    total_success = []
+
+    for test_type, test_name, test_exctention in test_list:
+        print("--------------------------------------------------------------")
+        print(f"Test type: {test_type}")
+        print(f"Test name: {test_name}")
+        print(f"Test extention: {test_exctention}")
+    
+        check, output_location = test_runner.run_tests(test_type=test_type, test_name=test_name, test_exctention=test_exctention)
+        print(f"Did the tests run?: {check}")
+        print(f"The tests log files are saved to: {output_location}")
+        if check: # this checks if the test actually ran successfully
+            output_log_list.append(output_location)
+            
+            # format tests to markdown
+            try:
+                passed, failed = test_runner.clean_format_output(input_file = output_location)
+            except:
+                print("There was an error cleaning the data")
+    
+            print(f"The # of failures are for {test_name}: {len(failed)}")
+            total_number_failures+= len(failed)
+            total_failures.append(failed)
+    
+            print(f"The # of sucesses are for {test_name}: {len(passed)}")
+            total_number_success += len(passed)
+            total_success.append(passed)
+            test_runner.rewrite_to_markdown(test_name, passed, failed)
+    
+    print(f"The total sucesses are: {total_number_success}")
+    print(f"The total failures are: {total_number_failures}")
 
 
 
-#############################################
-#                SEND EMAIL                 #
-#############################################
 
-sender_email = 'james.stine@okstate.edu'
-# sender_email = 'thomas.kidd@okstate.edu'
+        
 
-# receiver_emails = ['thomas.kidd@okstate.edu', 'james.stine@okstate.edu', 'harris@g.hmc.edu', 'rose.thompson10@okstate.edu', 'sarah.harris@unlv.edu', 'nlucio@hmc.edu']
-receiver_emails = ['thomas.kidd@okstate.edu']
-test_runner.send_email(sender_email=sender_email, receiver_emails=receiver_emails)
+    #############################################
+    #               FORMAT TESTS                #
+    #############################################
+
+    # Combine multiple markdown files into one file
+
+    test_runner.combine_markdown_files(passed_tests = total_success, failed_tests = total_failures, test_list = test_list, total_number_failures = total_number_failures, total_number_success = total_number_success, test_type=args.target, markdown_file=None)
+
+
+    #############################################
+    #             WRITE MD TESTS                #
+    #############################################
+    test_runner.convert_to_html()
+
+
+
+    #############################################
+    #                SEND EMAIL                 #
+    #############################################
+
+    sender_email = 'james.stine@okstate.edu'
+
+    receiver_emails = ['thomas.kidd@okstate.edu', 'james.stine@okstate.edu', 'harris@g.hmc.edu', 'rose.thompson10@okstate.edu', 'sarah.harris@unlv.edu', 'nlucio@hmc.edu']
+    testing_emails = ['thomas.kidd@okstate.edu']
+    
+    if (args.send_email == "yes" or args.send_email == "y"):
+        test_runner.send_email(sender_email=sender_email, receiver_emails=receiver_emails)
+    if (args.send_email == "test"):
+        test_runner.send_email(sender_email=sender_email, receiver_emails=testing_emails)
+
+if __name__ == "__main__":
+    main()
