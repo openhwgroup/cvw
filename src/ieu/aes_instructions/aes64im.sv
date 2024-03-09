@@ -26,8 +26,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module aes64im(input logic [63:0] rs1,
-               output logic [63:0] Data_Out);
+               output logic [63:0] DataOut);
 
-   aes_inv_mixcolumns inv_mw_0(.in(rs1[31:0]), .out(Data_Out[31:0]));
-   aes_inv_mixcolumns inv_mw_1(.in(rs1[63:32]), .out(Data_Out[63:32]));
+   aesinvmixcolumns inv_mw_0(.in(rs1[31:0]), .out(DataOut[31:0]));
+   aesinvmixcolumns inv_mw_1(.in(rs1[63:32]), .out(DataOut[63:32]));
 endmodule

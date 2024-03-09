@@ -30,33 +30,31 @@ module aes64ks1i(input logic [3:0] roundnum,
                  output logic [63:0] rd);                 
                  
    // Instantiate intermediary logic signals             
-   logic [7:0] 			     rcon_preshift;
+   logic [7:0] 			     rconPreShift;
    logic [31:0] 		     rcon;
    logic 			     lastRoundFlag;
-   logic [31:0] 		     rs1_rotate;
+   logic [31:0] 		     rs1Rotate;
    logic [31:0] 		     tmp2;
-   logic [31:0] 		     Sbox_Out;
+   logic [31:0] 		     SboxOut;
    
    // Get rcon value from table
-   rcon_lut_128 rc(.RD(roundnum), .rcon_out(rcon_preshift)); 
+   rconlut128 rc(.RD(roundnum), .rconOut(rconPreShift)); 
 
    // Shift RCON value
-   assign rcon = {24'b0, rcon_preshift};    
+   assign rcon = {24'b0, rconPreShift};    
 
    // Flag will be set if roundnum = 0xA = 0b1010
    assign lastRoundFlag = roundnum[3] & ~roundnum[2] & roundnum[1] & ~roundnum[0];    
 
    // Get rotated value fo ruse in tmp2
-   assign rs1_rotate = {rs1[39:32], rs1[63:40]};
+   assign rs1Rotate = {rs1[39:32], rs1[63:40]};
 
    // Assign tmp2 to a mux based on lastRoundFlag
-   assign tmp2 = lastRoundFlag ? rs1[63:32] : rs1_rotate;    
+   assign tmp2 = lastRoundFlag ? rs1[63:32] : rs1Rotate;    
 
    // Substitute bytes of value obtained for tmp2 using Rijndael sbox
-   aes_sbox_word sbox(.in(tmp2),.out(Sbox_Out));    
-   assign rd[31:0] = Sbox_Out ^ rcon;
-   assign rd[63:32] = Sbox_Out ^ rcon;
-   
-	
+   aessboxword sbox(.in(tmp2),.out(SboxOut));    
+   assign rd[31:0] = SboxOut ^ rcon;
+   assign rd[63:32] = SboxOut ^ rcon;	
 endmodule
 

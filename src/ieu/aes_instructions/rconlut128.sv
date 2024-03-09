@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// rcon_lut_128.sv
+// rconlut128.sv
 //
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
@@ -25,24 +25,24 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module rcon_lut_128(input logic [3:0] RD,
-		    output logic [7:0] rcon_out);
+module rconlut128(input logic [3:0] RD,
+		  output logic [7:0] rconOut);
 	
    always_comb
      begin
 	case(RD)
-	  4'h0 : rcon_out = 8'h01;
-	  4'h1 : rcon_out = 8'h02;
-	  4'h2 : rcon_out = 8'h04;
-	  4'h3 : rcon_out = 8'h08;
-	  4'h4 : rcon_out = 8'h10;
-	  4'h5 : rcon_out = 8'h20;
-	  4'h6 : rcon_out = 8'h40;
-	  4'h7 : rcon_out = 8'h80;
-	  4'h8 : rcon_out = 8'h1b;
-	  4'h9 : rcon_out = 8'h36;
-	  4'hA : rcon_out = 8'h00;
-	  default : rcon_out = 8'h00;
+	  4'h0 : rconOut = 8'h01;
+	  4'h1 : rconOut = 8'h02;
+	  4'h2 : rconOut = 8'h04;
+	  4'h3 : rconOut = 8'h08;
+	  4'h4 : rconOut = 8'h10;
+	  4'h5 : rconOut = 8'h20;
+	  4'h6 : rconOut = 8'h40;
+	  4'h7 : rconOut = 8'h80;
+	  4'h8 : rconOut = 8'h1b;
+	  4'h9 : rconOut = 8'h36;
+	  4'hA : rconOut = 8'h00;
+	  default : rconOut = 8'h00;
 	endcase	
      end
 endmodule

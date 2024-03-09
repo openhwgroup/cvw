@@ -27,26 +27,26 @@
 
 module aes64dsm(input logic [63:0] rs1,
                 input logic [63:0]  rs2,
-                output logic [63:0] Data_Out);
+                output logic [63:0] DataOut);
    
    // Intermediary Logic
-   logic [127:0] 		    ShiftRow_Out;
-   logic [31:0] 		    Sbox_Out_0;
-   logic [31:0] 		    Sbox_Out_1;
-   logic [31:0] 		    Mixcol_Out_0;
-   logic [31:0] 		    Mixcol_Out_1;    
+   logic [127:0] 		    ShiftRowOut;
+   logic [31:0] 		    SboxOut0;
+   logic [31:0] 		    SboxOut1;
+   logic [31:0] 		    MixcolOut0;
+   logic [31:0] 		    MixcolOut1;    
    
    // Apply inverse shiftrows to rs2 and rs1
-   aes_inv_shiftrow srow(.DataIn({rs2, rs1}), .DataOut(ShiftRow_Out));
+   aesinvshiftrow srow(.DataIn({rs2, rs1}), .DataOut(ShiftRowOut));
    
    // Apply full word inverse substitution to lower 2 words of shiftrow out
-   aes_inv_sbox_word inv_sbox_0(.in(ShiftRow_Out[31:0]), .out(Sbox_Out_0));
-   aes_inv_sbox_word inv_sbox_1(.in(ShiftRow_Out[63:32]), .out(Sbox_Out_1));
+   aesinvsboxword invsbox0(.in(ShiftRowOut[31:0]), .out(SboxOut0));
+   aesinvsboxword invsbox1(.in(ShiftRowOut[63:32]), .out(SboxOut1));
    
    // Apply inverse mixword to sbox outputs
-   aes_inv_mixcolumns inv_mw_0(.in(Sbox_Out_0), .out(Mixcol_Out_0));
-   aes_inv_mixcolumns inv_mw_1(.in(Sbox_Out_1), .out(Mixcol_Out_1));
+   aesinvmixcolumns invmw0(.in(SboxOut0), .out(MixcolOut0));
+   aesinvmixcolumns invmw1(.in(SboxOut1), .out(MixcolOut1));
    
    // Concatenate mixed words for output
-   assign Data_Out = {Mixcol_Out_1, Mixcol_Out_0};
+   assign DataOut = {MixcolOut1, MixcolOut0};
 endmodule

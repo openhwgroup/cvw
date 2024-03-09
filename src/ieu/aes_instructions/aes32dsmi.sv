@@ -28,36 +28,36 @@
 module aes32dsmi(input logic [1:0] bs,
                  input logic [31:0]  rs1,
                  input logic [31:0]  rs2,
-                 output logic [31:0] Data_Out);
+                 output logic [31:0] DataOut);
 
    // Declare Intermediary logic
    logic [4:0] 			     shamt;
-   logic [31:0] 		     Sbox_In_32;
-   logic [7:0] 			     Sbox_In;
-   logic [7:0] 			     Sbox_Out;
+   logic [31:0] 		     SboxIn32;
+   logic [7:0] 			     SboxIn;
+   logic [7:0] 			     SboxOut;
    logic [31:0] 		     so;
    logic [31:0] 		     mixed;
-   logic [31:0] 		     mixed_rotate;   
+   logic [31:0] 		     mixedrotate;   
    
    // shamt = bs * 8
    assign shamt = {bs, 3'b0};
    
    // Shift rs2 right by shamt and take the lower byte
-   assign Sbox_In_32 = (rs2 >> shamt);
-   assign Sbox_In = Sbox_In_32[7:0];
+   assign SboxIn32 = (rs2 >> shamt);
+   assign SboxIn = SboxIn32[7:0];
    
    // Apply inverse sbox to si
-   aes_inv_sbox inv_sbox(.in(Sbox_In), .out(Sbox_Out));
+   aesinvsbox inv_sbox(.in(SboxIn), .out(SboxOut));
    
    // Pad output of inverse substitution box
-   assign so = {24'h0, Sbox_Out};
+   assign so = {24'h0, SboxOut};
    
    // Run so through the mixword AES function
-   aes_inv_mixcolumns mix(.in(so), .out(mixed));
+   aesinvmixcolumns mix(.in(so), .out(mixed));
    
    // Rotate the substitution box output left by shamt (bs * 8)
-   assign mixed_rotate = (mixed << shamt) | (mixed >> (32 - shamt)); 
+   assign mixedrotate = (mixed << shamt) | (mixed >> (32 - shamt)); 
    
    // Set result to "X(rs1)[31..0] ^ rol32(so, unsigned(shamt));"
-   assign Data_Out = rs1 ^ mixed_rotate;
+   assign DataOut = rs1 ^ mixedrotate;
 endmodule

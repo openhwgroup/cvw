@@ -27,20 +27,20 @@
 
 module aes64ds(input logic [63:0] rs1,
                input logic [63:0]  rs2,
-               output logic [63:0] Data_Out);
+               output logic [63:0] DataOut);
    
    // Intermediary Logic
-   logic [127:0] 		   ShiftRow_Out;
-   logic [31:0] 		   Sbox_Out_0;
-   logic [31:0] 		   Sbox_Out_1;    
+   logic [127:0] 		   ShiftRowOut;
+   logic [31:0] 		   SboxOut0;
+   logic [31:0] 		   SboxOut1;    
    
    // Apply inverse shiftrows to rs2 and rs1
-   aes_inv_shiftrow srow(.DataIn({rs2,rs1}), .DataOut(ShiftRow_Out));
+   aesinvshiftrow srow(.DataIn({rs2,rs1}), .DataOut(ShiftRowOut));
    
    // Apply full word inverse substitution to lower 2 words of shiftrow out
-   aes_inv_sbox_word inv_sbox_0(.in(ShiftRow_Out[31:0]), .out(Sbox_Out_0));
-   aes_inv_sbox_word inv_sbox_1(.in(ShiftRow_Out[63:32]), .out(Sbox_Out_1));
+   aesinvsboxword inv_sbox_0(.in(ShiftRowOut[31:0]), .out(SboxOut0));
+   aesinvsboxword inv_sbox_1(.in(ShiftRowOut[63:32]), .out(SboxOut1));
    
    // Concatenate the two substitution outputs to get result
-   assign Data_Out = {Sbox_Out_1, Sbox_Out_0};   
+   assign DataOut = {SboxOut1, SboxOut0};   
 endmodule

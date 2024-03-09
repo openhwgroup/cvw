@@ -27,15 +27,15 @@
 
 module aes64es(input logic [63:0]  rs1,
                input logic [63:0]  rs2,
-               output logic [63:0] Data_Out);
+               output logic [63:0] DataOut);
                 
    // Intermediary Signals
-   logic [127:0] 		   ShiftRow_Out;
+   logic [127:0] 		   ShiftRowOut;
    
    // AES shiftrow unit
-   aes_shiftrow srow(.DataIn({rs2,rs1}), .DataOut(ShiftRow_Out));
+   aesshiftrow srow(.DataIn({rs2,rs1}), .DataOut(ShiftRowOut));
    
    // Apply substitution box to 2 lower words
-   aes_sbox_word sbox_0(.in(ShiftRow_Out[31:0]), .out(Data_Out[31:0]));
-   aes_sbox_word sbox_1(.in(ShiftRow_Out[63:32]), .out(Data_Out[63:32]));       
+   aessboxword sbox0(.in(ShiftRowOut[31:0]), .out(DataOut[31:0]));
+   aessboxword sbox1(.in(ShiftRowOut[63:32]), .out(DataOut[63:32]));       
 endmodule

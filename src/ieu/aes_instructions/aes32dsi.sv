@@ -28,32 +28,32 @@
 module aes32dsi(input logic [1:0] bs,
                 input logic [31:0]  rs1,
                 input logic [31:0]  rs2,
-                output logic [31:0] Data_Out);
+                output logic [31:0] DataOut);
 
    // Declare Intermediary logic
    logic [4:0] 			    shamt;
-   logic [31:0] 		    Sbox_In_32;
-   logic [7:0] 			    Sbox_In;
-   logic [7:0] 			    Sbox_Out;
+   logic [31:0] 		    SboxIn32;
+   logic [7:0] 			    SboxIn;
+   logic [7:0] 			    SboxOut;
    logic [31:0] 		    so;
-   logic [31:0] 		    so_rotate;   
+   logic [31:0] 		    sorotate;   
    
    // shamt = bs * 8
    assign shamt = {bs, 3'b0};
    
    // Shift rs2 right by shamt and take the lower byte
-   assign Sbox_In_32 = (rs2 >> shamt);
-   assign Sbox_In = Sbox_In_32[7:0];
+   assign SboxIn32 = (rs2 >> shamt);
+   assign SboxIn = SboxIn32[7:0];
    
    // Apply inverse sbox to si
-   aes_inv_sbox inv_sbox(.in(Sbox_In), .out(Sbox_Out));
+   aesinvsbox inv_sbox(.in(SboxIn), .out(SboxOut));
    
    // Pad output of inverse substitution box
-   assign so = {24'h0, Sbox_Out};
+   assign so = {24'h0, SboxOut};
    
    // Rotate the substitution box output left by shamt (bs * 8)
-   assign so_rotate = (so << shamt) | (so >> (32 - shamt)); 
+   assign sorotate = (so << shamt) | (so >> (32 - shamt)); 
    
    // Set result to "X(rs1)[31..0] ^ rol32(so, unsigned(shamt));"
-   assign Data_Out = rs1 ^ so_rotate;
+   assign DataOut = rs1 ^ sorotate;   
 endmodule
