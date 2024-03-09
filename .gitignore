@@ -46,6 +46,7 @@ linux/testvector-generation/boottrace.S
 linux/testvector-generation/boottrace_disasm.log
 sim/slack-notifier/slack-webhook-url.txt
 sim/logs
+sim/gmon.*
 fpga/generator/IP
 fpga/generator/vivado.*
 fpga/generator/.Xil/*
