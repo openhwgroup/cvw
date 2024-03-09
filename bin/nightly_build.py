@@ -36,7 +36,7 @@ Usage:
     4)  Syntax:
 
         Our cron job has the following syntax:
-        0 3 * * * BASH_ENV=~/.bashrc bash -l -c "*WHERE YOUR CVW IS MUST PUT FULL PATH*/cvw/bin/wrapper_nightly_runs.sh > *WHERE YOU WANT TO STORE LOG FILES/cron.log 2>&1" 
+        0 3 * * * BASH_ENV=~/.bashrc bash -l -c "*WHERE YOUR CVW IS MUST PUT FULL PATH*/cvw/bin/wrapper_nightly-runs.sh > *WHERE YOU WANT TO STORE LOG FILES/cron.log 2>&1" 
 
         This cronjob sources the .bashrc file and executes the wrapper script as a user. 
 
@@ -96,8 +96,8 @@ class FolderManager:
         """
         Create preliminary folders if they do not exist. 
         These folders are:
-            nightly_runs/repos/
-            nightly_runs/results/ 
+            nightly-runs/repos/
+            nightly-runs/results/ 
 
         Args:
             folders (list): A list of folder names to be created.
@@ -171,7 +171,7 @@ class TestRunner:
         The setup script will be copied from the base directory to a specific folder structure inside the base directory.
 
         Args:
-            folder: the "nightly_runs/repos/"
+            folder: the "nightly-runs/repos/"
 
         Returns:
             bool: True if the script is copied successfully, False otherwise.
@@ -592,35 +592,36 @@ class TestRunner:
 
     
         
-
-        for receiver_email in receiver_emails:
-            # Compose the mutt command for each receiver email
-            command = [
-                'mutt',
-                '-s', subject,
-                '-e', 'set content_type=text/html',
-                '-e', 'my_hdr From: James Stine <james.stine@okstate.edu>',
-                '--', receiver_email
-            ]
-            
-            # Open a subprocess to run the mutt command
-            process = subprocess.Popen(command, stdin=subprocess.PIPE)
-            
-            # Write the email body to the subprocess
-            process.communicate(body.encode('utf-8'))
-
-
+        try:
+            for receiver_email in receiver_emails:
+                # Compose the mutt command for each receiver email
+                command = [
+                    '/usr/bin/mutt',
+                    '-s', subject,
+                    '-e', 'set content_type=text/html',
+                    '-e', 'my_hdr From: James Stine <james.stine@okstate.edu>',
+                    '--', receiver_email
+                ]
+                try:
+                    # Open a subprocess to run the mutt command
+                    process = subprocess.Popen(command, stdin=subprocess.PIPE)
+                    # Write the email body to the subprocess
+                    process.communicate(body.encode('utf-8'))
+                except expression as identifier:
+                    print(f"Error sending email: {identifier}")
+        except expression as identifier:
+            print(f"Error sending email: {identifier}")
 #############################################
 #                 SETUP                     #
 #############################################
 folder_manager = FolderManager() # creates the object
 
 # setting the path on where to clone new repositories of cvw
-path = folder_manager.create_preliminary_folders(["nightly_runs/repos/", "nightly_runs/results/"])
-new_folder = folder_manager.create_new_folder(["nightly_runs/repos/", "nightly_runs/results/"])
+path = folder_manager.create_preliminary_folders(["nightly-runs/repos/", "nightly-runs/results/"])
+new_folder = folder_manager.create_new_folder(["nightly-runs/repos/", "nightly-runs/results/"])
 
 # clone the cvw repo
-folder_manager.clone_repository("nightly_runs/repos/", "https://github.com/openhwgroup/cvw.git")
+folder_manager.clone_repository("nightly-runs/repos/", "https://github.com/openhwgroup/cvw.git")
 
 
         
@@ -629,7 +630,7 @@ folder_manager.clone_repository("nightly_runs/repos/", "https://github.com/openh
 #############################################
 
 test_runner = TestRunner() # creates the object
-test_runner.set_env_var("nightly_runs/repos/") # ensures that the new WALLY environmental variable is set correctly
+test_runner.set_env_var("nightly-runs/repos/") # ensures that the new WALLY environmental variable is set correctly
 
 
 #############################################
@@ -650,8 +651,8 @@ if test_runner.change_time_dur():
 
 # target = "wally-riscv-arch-test"
 target = "all"
-if test_runner.execute_makefile(target = target):
-   print(f"The {target} tests were made successfully")
+# if test_runner.execute_makefile(target = target):
+#    print(f"The {target} tests were made successfully")
 
 #############################################
 #               RUN TESTS                   #
@@ -671,7 +672,7 @@ for test_type, test_name, test_exctention in test_list:
     print(f"Test type: {test_type}")
     print(f"Test name: {test_name}")
     print(f"Test extenction: {test_exctention}")
-
+ 
     check, output_location = test_runner.run_tests(test_type=test_type, test_name=test_name, test_exctention=test_exctention)
     print(f"Did the tests run?: {check}")
     print(f"The tests log files are saved to: {output_location}")
@@ -683,16 +684,16 @@ for test_type, test_name, test_exctention in test_list:
             passed, failed = test_runner.clean_format_output(input_file = output_location)
         except:
             print("There was an error cleaning the data")
-
+ 
         print(f"The # of failures are for {test_name}: {len(failed)}")
         total_number_failures+= len(failed)
         total_failures.append(failed)
-
+ 
         print(f"The # of sucesses are for {test_name}: {len(passed)}")
         total_number_success += len(passed)
         total_success.append(passed)
         test_runner.rewrite_to_markdown(test_name, passed, failed)
-
+ 
 print(f"The total sucesses are: {total_number_success}")
 print(f"The total failures are: {total_number_failures}")
 
@@ -724,6 +725,6 @@ test_runner.convert_to_html()
 sender_email = 'james.stine@okstate.edu'
 # sender_email = 'thomas.kidd@okstate.edu'
 
-receiver_emails = ['thomas.kidd@okstate.edu', 'james.stine@okstate.edu', 'harris@g.hmc.edu', 'rose.thompson10@okstate.edu', "sarah.harris@unlv.edu"]
-# receiver_emails = ['thomas.kidd@okstate.edu']
+# receiver_emails = ['thomas.kidd@okstate.edu', 'james.stine@okstate.edu', 'harris@g.hmc.edu', 'rose.thompson10@okstate.edu', 'sarah.harris@unlv.edu', 'nlucio@hmc.edu']
+receiver_emails = ['thomas.kidd@okstate.edu']
 test_runner.send_email(sender_email=sender_email, receiver_emails=receiver_emails)
