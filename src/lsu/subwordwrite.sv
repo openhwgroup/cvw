@@ -55,9 +55,9 @@ module subwordwrite #(parameter LLEN) (
   end else begin:sww // 32-bit
     always_comb 
       case(LSUFunct3M[1:0])
-        2'b00:  LittleEndianWriteDataM = {4{IMAFWriteDataM[7:0]}};   // sb
-        2'b01:  LittleEndianWriteDataM = {2{IMAFWriteDataM[15:0]}};  // sh
-        2'b10:  LittleEndianWriteDataM = IMAFWriteDataM;             // sw
+        2'b00:   LittleEndianWriteDataM = {4{IMAFWriteDataM[7:0]}};  // sb
+        2'b01:   LittleEndianWriteDataM = {2{IMAFWriteDataM[15:0]}}; // sh
+        2'b10:   LittleEndianWriteDataM = IMAFWriteDataM;            // sw
         default: LittleEndianWriteDataM = IMAFWriteDataM;            // shouldn't happen
       endcase
   end

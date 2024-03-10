@@ -869,6 +869,10 @@ string imperas32f[] = '{
     "rv32i_m/I/XORI-01"   
   };
 
+ string wally64q[] = '{
+    `WALLYTEST,
+    "rv64i_m/Q/src/WALLY-q-01.S"
+  };
 
  string wally64a[] = '{
     `WALLYTEST,
