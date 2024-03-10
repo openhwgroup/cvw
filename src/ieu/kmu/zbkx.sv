@@ -30,22 +30,21 @@ module zbkx #(parameter WIDTH=32)
     input logic [2:0] 	     ZBKXSelect,
     output logic [WIDTH-1:0] ZBKXResult);
    
-   logic [WIDTH-1:0] 	     xperm_lookup;
-   integer i;
+   logic [WIDTH-1:0] 	     xpermlookup;
+   integer 		     i;
    
    always_comb begin
       if (ZBKXSelect[0] == 1'b0) begin
          for(i=0; i<WIDTH; i=i+8) begin: xperm8
-            xperm_lookup = A >> {B[i+:8], 3'b0};
-            ZBKXResult[i+:8] = xperm_lookup[7:0];
+            xpermlookup = A >> {B[i+:8], 3'b0};
+            ZBKXResult[i+:8] = xpermlookup[7:0];
          end
       end
       else begin
          for(i=0; i<WIDTH; i=i+4) begin: xperm4
-            xperm_lookup = A >> {B[i+:4], 2'b0};
-            ZBKXResult[i+:4] = xperm_lookup[3:0];
+            xpermlookup = A >> {B[i+:4], 2'b0};
+            ZBKXResult[i+:4] = xpermlookup[3:0];
          end
       end
-   end
-   
+   end   
 endmodule

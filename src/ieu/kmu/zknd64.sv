@@ -1,11 +1,11 @@
 ///////////////////////////////////////////
-// zknd_32.sv
+// zknd64.sv
 //
 // Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
 // Created: 27 November 2023
 // Modified: 31 January 2024
 //
-// Purpose: RISC-V ZKND top level unit for 32-bit instructions
+// Purpose: RISC-V ZKND top level unit for 64-bit instructions
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -26,19 +26,25 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module zknd_32 #(parameter WIDTH=32) 
-   (input  logic [WIDTH-1:0] A, B,
+module zknd64 #(parameter WIDTH=32) 
+   (input logic [WIDTH-1:0]  A, B,
     input logic [6:0] 	     Funct7,
+    input logic [3:0] 	     RNUM,
     input logic [2:0] 	     ZKNDSelect,
     output logic [WIDTH-1:0] ZKNDResult);
    
-   logic [31:0] 	     aes32dsiRes;
-   logic [31:0] 	     aes32dsmiRes;
+   logic [63:0] 	     aes64dsRes;
+   logic [63:0] 	     aes64dsmRes;
+   logic [63:0] 	     aes64imRes;
+   logic [63:0] 	     aes64ks1iRes;
+   logic [63:0] 	     aes64ks2Res;
    
-   // RV32
-   aes32dsi aes32dsi (.bs(Funct7[6:5]), .rs1(A), .rs2(B), .Data_Out(aes32dsiRes));
-   aes32dsmi aes32dsmi (.bs(Funct7[6:5]), .rs1(A), .rs2(B), .Data_Out(aes32dsmiRes));
+   // RV64
+   aes64ds aes64ds (.rs1(A), .rs2(B), .DataOut(aes64dsRes));
+   aes64dsm aes64dsm (.rs1(A), .rs2(B), .DataOut(aes64dsmRes));
+   aes64im aes64im (.rs1(A), .DataOut(aes64imRes));
+   aes64ks1i aes64ks1i (.roundnum(RNUM), .rs1(A), .rd(aes64ks1iRes));
+   aes64ks2 aes64ks2 (.rs2(B), .rs1(A), .rd(aes64ks2Res));
    
-   mux2 #(WIDTH) zkndmux (aes32dsiRes, aes32dsmiRes, ZKNDSelect[0], ZKNDResult);
-
+   mux5 #(WIDTH) zkndmux (aes64dsRes, aes64dsmRes, aes64imRes, aes64ks1iRes, aes64ks2Res, ZKNDSelect, ZKNDResult);
 endmodule

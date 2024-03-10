@@ -1,11 +1,11 @@
 ///////////////////////////////////////////
-// zkne_64.sv
+// zknd32.sv
 //
 // Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
-// Created: 21 November 2023
+// Created: 27 November 2023
 // Modified: 31 January 2024
 //
-// Purpose: RISC-V ZKNE top level unit for 64-bit instructions
+// Purpose: RISC-V ZKND top level unit for 32-bit instructions
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -26,25 +26,18 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module zkne_64 #(parameter WIDTH=32) 
-   (input logic [WIDTH-1:0]  A, B,
+module zknd32 #(parameter WIDTH=32) 
+   (input  logic [WIDTH-1:0] A, B,
     input logic [6:0] 	     Funct7,
-    input logic [3:0] 	     RNUM,
-    input logic [2:0] 	     ZKNESelect,
-    output logic [WIDTH-1:0] ZKNEResult);
+    input logic [2:0] 	     ZKNDSelect,
+    output logic [WIDTH-1:0] ZKNDResult);
    
-   logic [63:0] 	     aes64esRes;
-   logic [63:0] 	     aes64esmRes;
-   logic [63:0] 	     aes64ks1iRes;
-   logic [63:0] 	     aes64ks2Res;
+   logic [31:0] 	     aes32dsiRes;
+   logic [31:0] 	     aes32dsmiRes;
    
-   // RV64
-   aes64es aes64es (.rs1(A), .rs2(B), .Data_Out(aes64esRes));
-   aes64esm aes64esm (.rs1(A), .rs2(B), .Data_Out(aes64esmRes));
-   aes64ks1i aes64ks1i (.roundnum(RNUM), .rs1(A), .rd(aes64ks1iRes));
-   aes64ks2 aes64ks2 (.rs2(B), .rs1(A), .rd(aes64ks2Res));
+   // RV32
+   aes32dsi aes32dsi (.bs(Funct7[6:5]), .rs1(A), .rs2(B), .DataOut(aes32dsiRes));
+   aes32dsmi aes32dsmi (.bs(Funct7[6:5]), .rs1(A), .rs2(B), .DataOut(aes32dsmiRes));
    
-   // 010 is a placeholder to match the select of ZKND's AES64KS1I since they share some instruction
-   mux5 #(WIDTH) zknemux (aes64esRes, aes64esmRes, 64'b0, aes64ks1iRes, aes64ks2Res, ZKNESelect, ZKNEResult);
-   
+   mux2 #(WIDTH) zkndmux (aes32dsiRes, aes32dsmiRes, ZKNDSelect[0], ZKNDResult);
 endmodule

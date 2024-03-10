@@ -41,6 +41,5 @@ module zbkb #(parameter WIDTH=32)
    zipper #(WIDTH) zip(.A, .ZipSelect(Funct3[2]), .ZipResult);
    
    // ZBKB Result Select Mux
-   mux3 #(WIDTH) zbkbresultmux(ByteResult, PackResult, ZipResult, ZBKBSelect[1:0], ZBKBResult);
-   
+   mux3 #(WIDTH) zbkbresultmux(ByteResult, PackResult, ZipResult, ZBKBSelect[1:0], ZBKBResult);   
 endmodule

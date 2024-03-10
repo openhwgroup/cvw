@@ -36,12 +36,10 @@ module zipper #(parameter WIDTH=64)
    
    for (i=0; i<WIDTH/2; i+=1) begin: loop
       assign zip[2*i] = A[i];
-      assign zip [2*i+1] = A[i + WIDTH/2];
-      
+      assign zip [2*i+1] = A[i + WIDTH/2];      
       assign unzip[i] = A[2*i];
       assign unzip[i+WIDTH/2] = A[2*i+1];
    end
    
-   mux2 #(WIDTH) ZipMux(zip, unzip, ZipSelect, ZipResult);
-   
+   mux2 #(WIDTH) ZipMux(zip, unzip, ZipSelect, ZipResult);   
 endmodule
