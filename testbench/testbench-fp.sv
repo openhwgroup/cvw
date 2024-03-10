@@ -58,7 +58,8 @@ module testbenchfp;
    logic                        WriteIntVal;                // value of the current WriteInt
    logic [P.FLEN-1:0] 		X, Y, Z;                    // inputs read from TestFloat
    logic [P.FLEN-1:0] 		XPostBox;                   // inputs read from TestFloat
-   logic [P.XLEN-1:0] 		SrcA;                       // integer input
+   logic [P.XLEN-1:0] 		SrcA, SrcB;                       // integer input
+   logic                  W64;                        // is W64 instruction
    logic [P.FLEN-1:0] 		Ans;                        // correct answer from TestFloat
    logic [P.FLEN-1:0] 		Res;                        // result from other units
    logic [4:0] 			AnsFlg;                     // correct flags read from testfloat
@@ -738,7 +739,7 @@ module testbenchfp;
 
    // extract the inputs (X, Y, Z, SrcA) and the output (Ans, AnsFlg) from the current test vector
    readvectors #(P) readvectors (.clk, .Fmt(FmtVal), .ModFmt, .TestVector(TestVectors[VectorNum]), 
-                                 .VectorNum, .Ans(Ans), .AnsFlg(AnsFlg), .SrcA, 
+                                 .VectorNum, .Ans(Ans), .AnsFlg(AnsFlg), .SrcA, .SrcB,
                                  .Xs, .Ys, .Zs, .Unit(UnitVal),
                                  .Xe, .Ye, .Ze, .TestNum, .OpCtrl(OpCtrlVal),
                                  .Xm, .Ym, .Zm, 
@@ -746,7 +747,7 @@ module testbenchfp;
                                  .XSNaN, .YSNaN, .ZSNaN, 
                                  .XSubnorm, .ZSubnorm, 
                                  .XZero, .YZero, .ZZero,
-                                 .XInf, .YInf, .ZInf, .XExpMax,
+                                 .XInf, .YInf, .ZInf, .XExpMax, .Funct3E, .W64,
                                  .X, .Y, .Z, .XPostBox);
 
    ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -1074,6 +1075,7 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
                     input logic [2:0] 		OpCtrl,
                     output logic [P.FLEN-1:0] 	Ans,
                     output logic [P.XLEN-1:0] 	SrcA,
+                    output logic [P.XLEN-1:0] 	SrcB,
                     output logic [4:0] 		AnsFlg,
                     output logic 		Xs, Ys, Zs, // sign bits of XYZ
                     output logic [P.NE-1:0] 	Xe, Ye, Ze, // exponents of XYZ (converted to largest supported precision)
@@ -1084,6 +1086,8 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
                     output logic 		XZero, YZero, ZZero, // is XYZ zero
                     output logic 		XInf, YInf, ZInf, // is XYZ infinity
                     output logic 		XExpMax,
+                    output logic [2:0]          Funct3E,
+                    output logic                W64,
                     output logic [P.FLEN-1:0] 	X, Y, Z, XPostBox
                     );
 
@@ -1121,7 +1125,6 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
                   Z = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+P.D_LEN]};
                end
                else begin
-                  X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+3*(P.D_LEN)-1:8+2*(P.D_LEN)]};
                   if (OpCtrl === `MUL_OPCTRL) Y = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]}; 
                   else Y = {{P.FLEN-P.D_LEN{1'b1}}, 2'b0, {P.D_NE-1{1'b1}}, (P.D_NF)'(0)};
                   if (OpCtrl === `MUL_OPCTRL) Z = {{P.FLEN-P.D_LEN{1'b1}}, {P.D_LEN{1'b0}}}; 
@@ -1203,6 +1206,51 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
                  Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
               end
             endcase
+         `INTDIVUNIT: begin
+            SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1:2*(P.Q_LEN)]; //***Replace with XLEN instead of DLEN for 32 bit test cases
+            SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1:P.Q_LEN];
+            Ans = TestVector[P.D_LEN-1:0];
+            AnsFlg = 5'bx;
+            IDivStart = 1'b1;
+            IntDivE = 1'b1;
+            case (OpCtrl)
+              `INTDIV_OPCTRL: begin
+                Funct3E = 3'b100;
+                W64 = 1'b0;
+              end
+              `INTREM_OPCTRL: begin
+                Funct3E = 3'b110;
+                W64 = 1'b0;
+              end
+              `INTREMU_OPCTRL: begin
+                Funct3E = 3'b111;
+                W64 = 1'b0;
+              end
+              `INTDIVU_OPCTRL: begin
+                Funct3E = 3'b101;
+                W64 = 1'b0;
+              end
+              `INTDIVW_OPCTRL: begin
+                Funct3E = 3'b100;
+                W64 = 1'b1;
+              end
+              `INTDIVUW_OPCTRL: begin
+                Funct3E = 3'b101;
+                W64 = 1'b1;
+              end
+              `INTREMW_OPCTRL: begin
+                  Funct3E = 3'b110;
+                  W64 = 1'b1;
+              end
+              `INTREMUW_OPCTRL: begin
+                Funct3E = 3'b111;
+                W64 = 1'b1;
+              end
+          endcase
+          IDivStart = 1'b0;
+          IntDivE = 1'b0;
+          W64 = 1'b0;
+          end
         `CMPUNIT:
           case (Fmt)        
             2'b11: begin // quad
