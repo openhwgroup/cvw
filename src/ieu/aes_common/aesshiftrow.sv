@@ -4,7 +4,7 @@
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
 //
-// Purpose: aes_shiftrow for taking in first Data line
+// Purpose: aesshiftrow for taking in first Data line
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -30,6 +30,5 @@ module aesshiftrow(input  logic [127:0] DataIn, output logic [127:0] DataOut);
    assign DataOut = {DataIn[95:88], DataIn[55:48], DataIn[15:8], DataIn[103:96],
                      DataIn[63:56], DataIn[23:16], DataIn[111:104], DataIn[71:64],
                      DataIn[31:24], DataIn[119:112], DataIn[79:72], DataIn[39:32],
-                     DataIn[127:120], DataIn[87:80], DataIn[47:40], DataIn[7:0]};
-   
+                     DataIn[127:120], DataIn[87:80], DataIn[47:40], DataIn[7:0]};   
 endmodule
