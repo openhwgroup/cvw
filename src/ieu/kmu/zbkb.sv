@@ -32,7 +32,7 @@ module zbkb #(parameter WIDTH=32)
     input logic [2:0] 	     ZBKBSelect,
     output logic [WIDTH-1:0] ZBKBResult);
    
-   logic [WIDTH-1:0] 	     ByteResult;    // rev8, brev8
+   logic [WIDTH-1:0] 	     ByteResult;   // rev8, brev8
    logic [WIDTH-1:0] 	     PackResult;   // pack, packh, packw (RB64 only)
    logic [WIDTH-1:0] 	     ZipResult;    // zip, unzip
    
