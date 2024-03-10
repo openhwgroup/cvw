@@ -1,18 +1,18 @@
 ///////////////////////////////////////////
 // bitmanipalu.sv
 //
-// Written: Kevin Kim <kekim@hmc.edu>
+// Written: Kevin Kim <kekim@hmc.edu>, kelvin.tran@okstate.edu
 // Created: 23 March 2023
-// Modified: 23 March 2023
+// Modified: 9 March 2024
 //
-// Purpose: RISC-V Arithmetic/Logic Unit Bit-Manipulation Extension
+// Purpose: RISC-V Arithmetic/Logic Unit Bit-Manipulation Extension and K extension
 //
 // Documentation: RISC-V System on Chip Design Chapter 15
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
 // 
-// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
@@ -29,34 +29,39 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module bitmanipalu import cvw::*; #(parameter cvw_t P) (
-  input  logic [P.XLEN-1:0] A, B,                    // Operands
-  input  logic             W64,                      // W64-type instruction
-  input  logic [3:0]       BSelect,                  // Binary encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
-  input  logic [3:0]       ZBBSelect,                // ZBB mux select signal
-  input  logic [2:0]       Funct3,                   // Funct3 field of opcode indicates operation to perform
-  input  logic [6:0]       Funct7,                   // Funct7 field for ZKND and ZKNE operations
-  input  logic [4:0]       Rs2E,                     // Register source2 for RNUM of ZKNE/ZKND
-  input  logic             LT,                       // less than flag
-  input  logic             LTU,                      // less than unsigned flag
-  input  logic [2:0]       BALUControl,              // ALU Control signals for B instructions in Execute Stage
-  input  logic             BMUActive,                // Bit manipulation instruction being executed
-  input  logic [P.XLEN-1:0] PreALUResult, FullResult,// PreALUResult, FullResult signals
+  input logic [P.XLEN-1:0]  A, B,                    // Operands
+  input logic 		    W64,                     // W64-type instruction
+  input logic [3:0] 	    BSelect,                 // Binary encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
+  input logic [3:0] 	    ZBBSelect,               // ZBB mux select signal
+  input logic [2:0] 	    Funct3,                  // Funct3 field of opcode indicates operation to perform
+  input logic [6:0] 	    Funct7,                  // Funct7 field for ZKND and ZKNE operations
+  input logic [4:0] 	    Rs2E,                    // Register source2 for RNUM of ZKNE/ZKND
+  input logic 		    LT,                      // less than flag
+  input logic 		    LTU,                     // less than unsigned flag
+  input logic [2:0] 	    BALUControl,             // ALU Control signals for B instructions in Execute Stage
+  input logic 		    BMUActive,               // Bit manipulation instruction being executed
+  input logic [P.XLEN-1:0]  PreALUResult,            // PreALUResult signals
+  input  logic [P.XLEN-1:0] FullResult,              // FullResult signals
   output logic [P.XLEN-1:0] CondMaskB,               // B is conditionally masked for ZBS instructions
   output logic [P.XLEN-1:0] CondShiftA,              // A is conditionally shifted for ShAdd instructions
   output logic [P.XLEN-1:0] ALUResult);              // Result
 
-  logic [P.XLEN-1:0] ZBBResult, ZBCResult;                       // ZBB, ZBC Result
-  logic [P.XLEN-1:0] ZBKBResult, ZBKCResult, ZBKXResult;         // ZBKB, ZBKC Result
-  logic [P.XLEN-1:0] ZKNDResult, ZKNEResult;                     // ZKND, ZKNE Result
-  logic [P.XLEN-1:0] ZKNHResult;                                 // ZKNH Result
-  logic [P.XLEN-1:0] MaskB;                          // BitMask of B
-  logic [P.XLEN-1:0] RevA;                           // Bit-reversed A
-  logic             Rotate;                          // Indicates if it is Rotate instruction
-  logic             Mask;                            // Indicates if it is ZBS instruction
-  logic             PreShift;                        // Inidicates if it is sh1add, sh2add, sh3add instruction
-  logic [1:0]       PreShiftAmt;                     // Amount to Pre-Shift A 
-  logic [P.XLEN-1:0] CondZextA;                      // A Conditional Extend Intermediary Signal
-  logic [P.XLEN-1:0] ABMU, BBMU;                     // Gated data inputs to reduce BMU activity
+  logic [P.XLEN-1:0]        ZBBResult;               // ZBB Result
+  logic [P.XLEN-1:0]        ZBCResult;               // ZBC Result   
+  logic [P.XLEN-1:0]        ZBKBResult               // ZBKB Result
+  logic [P.XLEN-1:0]        ZBKCResult;              // ZBKC Result
+  logic [P.XLEN-1:0]        ZBKXResult;              // ZBKX Result      
+  logic [P.XLEN-1:0]        ZKNDResult;              // ZKND Result
+  logic [P.XLEN-1:0]        ZKNEResult;              // ZKNE Result   
+  logic [P.XLEN-1:0]        ZKNHResult;              // ZKNH Result
+  logic [P.XLEN-1:0]        MaskB;                   // BitMask of B
+  logic [P.XLEN-1:0]        RevA;                    // Bit-reversed A
+  logic                     Rotate;                  // Indicates if it is Rotate instruction
+  logic                     Mask;                    // Indicates if it is ZBS instruction
+  logic                     PreShift;                // Inidicates if it is sh1add, sh2add, sh3add instruction
+  logic [1:0]               PreShiftAmt;             // Amount to Pre-Shift A 
+  logic [P.XLEN-1:0]        CondZextA;               // A Conditional Extend Intermediary Signal
+  logic [P.XLEN-1:0]        ABMU, BBMU;              // Gated data inputs to reduce BMU activity
 
   // gate data inputs to BMU to only operate when BMU is active
   assign ABMU = A & {P.XLEN{BMUActive}};
@@ -144,7 +149,7 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
       // 0000: ALU, 0001: ZBA/ZBS, 0010: ZBB, 0011: ZBC/ZBKC, 0100: ZBKB, 0110: ZBKX
       // 0111: ZKND, 1000: ZKNE, 1001: ZKNH, 1010: ZKSED, 1011: ZKSH...
       4'b0000: ALUResult = PreALUResult; 
-      4'b0001: ALUResult = FullResult;         // NOTE: We don't use ALUResult because ZBA/ZBS instructions don't sign extend the MSB of the right-hand word.
+      4'b0001: ALUResult = FullResult;  // NOTE: don't use ALUResult since ZBA/ZBS doesnt sext the MSB of RH word
       4'b0010: ALUResult = ZBBResult; 
       4'b0011: ALUResult = ZBCResult;
       4'b0100: ALUResult = ZBKBResult;
