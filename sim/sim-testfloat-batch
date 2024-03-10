@@ -10,4 +10,4 @@
 # sqrt   - test square root
 # all    - test everything
 
-vsim -c -do "do testfloat.do fdqh_ieee_rv64gc $1"
+vsim -c -do "do testfloat.do fdqh_ieee_div_4_4_rv64gc $1"
