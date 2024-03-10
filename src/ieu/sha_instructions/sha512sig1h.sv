@@ -26,7 +26,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module sha512sig1h(input logic [31:0] rs1, input logic [31:0]  rs2,
-                   output logic [31:0] data_out);
+                   output logic [31:0] DataOut);
    
    // rs1 shifts             
    logic [31:0] 		       shift3;
@@ -45,7 +45,7 @@ module sha512sig1h(input logic [31:0] rs1, input logic [31:0]  rs2,
    assign shift13 = rs2 << 13;
    
    // XOR Shifted registers for output
-   assign data_out = shift3 ^ shift6 ^ shift19 ^ shift29 ^ shift13;
+   assign DataOut = shift3 ^ shift6 ^ shift19 ^ shift29 ^ shift13;
     
 endmodule
     

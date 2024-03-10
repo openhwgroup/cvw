@@ -26,29 +26,29 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module sha512sum1r(input logic [31:0] rs1, input logic [31:0]  rs2,
-                   output logic [31:0] data_out);   
+                   output logic [31:0] DataOut);   
    
    // Declare logic for rs1 shifts
-   logic [31:0] 		       shift1_23;
-   logic [31:0] 		       shift1_14;
-   logic [31:0] 		       shift1_18;
+   logic [31:0] 		       shift1by23;
+   logic [31:0] 		       shift1by14;
+   logic [31:0] 		       shift1by18;
    
    // Declare logic for rs2 shifts
-   logic [31:0] 		       shift2_9;
-   logic [31:0] 		       shift2_18;
-   logic [31:0] 		       shift2_14;
+   logic [31:0] 		       shift2by9;
+   logic [31:0] 		       shift2by18;
+   logic [31:0] 		       shift2by14;
    
    // Shift RS1
-   assign shift1_23 = rs1 << 23;
-   assign shift1_14 = rs1 >> 14;
-   assign shift1_18 = rs1 >> 18;
+   assign shift1by23 = rs1 << 23;
+   assign shift1by14 = rs1 >> 14;
+   assign shift1by18 = rs1 >> 18;
    
    // Shift RS2
-   assign shift2_9 = rs2 >> 9;
-   assign shift2_18 = rs2 << 18;
-   assign shift2_14 = rs2 << 14;
+   assign shift2by9 = rs2 >> 9;
+   assign shift2by18 = rs2 << 18;
+   assign shift2by14 = rs2 << 14;
    
    // Assign output to xor of shifts
-   assign data_out = shift1_23 ^ shift1_14 ^ shift1_18 ^ shift2_9 ^ shift2_18 ^ shift2_14;
+   assign DataOut = shift1by23 ^ shift1by14 ^ shift1by18 ^ shift2by9 ^ shift2by18 ^ shift2by14;
     
 endmodule
