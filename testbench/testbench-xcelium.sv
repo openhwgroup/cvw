@@ -335,7 +335,7 @@ module testbench;
       if (P.UNCORE_RAM_SUPPORTED) begin
       `ifdef TB_UNCORE_RAM_SUPPORTED
         for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
-          dut.uncore.uncore.ram.ram.memory.RAM[adrindex] = '0;
+          dut.uncore.uncore.ram.ram.memory.RAM[adrindex] = 0;
       `endif
       end
     if(reset) begin  // branch predictor must always be reset
@@ -411,7 +411,7 @@ module testbench;
       .HREADRam(HRDATAEXT), .HREADYRam(HREADYEXT), .HRESPRam(HRESPEXT), .HREADY, .HWSTRB);
   end else begin 
     assign HREADYEXT = 1;
-    assign {HRESPEXT, HRDATAEXT} = '0;
+    assign {HRESPEXT, HRDATAEXT} = 0;
   end
 
   if(P.FPGA) begin : sdcard
@@ -424,8 +424,8 @@ module testbench;
     assign SDCCmdIn = SDCCmd;
     assign SDCDatIn = SDCDat;
   end else begin
-    assign SDCCmd = '0;
-    assign SDCDat = '0;
+    assign SDCCmd = 0;
+    assign SDCDat = 0;
   end
 
   wallypipelinedsoc #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,

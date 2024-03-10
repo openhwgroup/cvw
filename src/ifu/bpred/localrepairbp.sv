@@ -116,7 +116,7 @@ module localrepairbp import cvw::*; #(parameter cvw_t P,
     SpeculativeFlushedF <= #1 FlushedBits[IndexLHRNextF];
     if (reset | FlushD) FlushedBits        <= #1 '1;
     if(BranchD & ~StallE & ~FlushE) begin
-      FlushedBits[IndexLHRD] <= #1 '0;
+      FlushedBits[IndexLHRD] <= #1 0;
     end
   end
 
