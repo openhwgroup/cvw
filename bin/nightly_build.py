@@ -662,10 +662,10 @@ def main():
     The goal of this section is to replace the TIMEOUT_DUR for regression tests.
 
     """
-    if test_runner.change_time_dur(time_duriation=2):
-        pass
-    else:
-        print("Error occured changing the TIMEOUT duration in './regression-wally'")
+    # if test_runner.change_time_dur(time_duriation=2):
+    #     pass
+    # else:
+    #     print("Error occured changing the TIMEOUT duration in './regression-wally'")
 
     #############################################
     #              MAKE TESTS                   #
