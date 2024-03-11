@@ -1,5 +1,6 @@
 #! /bin/bash
 
+git submodule deinit -f basejump_stl
 git submodule update --init
 cd basejump_stl
 
