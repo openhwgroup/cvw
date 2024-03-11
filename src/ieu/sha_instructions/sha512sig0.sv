@@ -25,7 +25,10 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module sha512sig0(input  logic [63:0] rs1, output logic [63:0] result);
+module sha512sig0(
+   input  logic [63:0] rs1, 
+   output logic [63:0] result
+);
 
    logic [63:0] ror1;
    logic [63:0] ror8;
@@ -36,6 +39,5 @@ module sha512sig0(input  logic [63:0] rs1, output logic [63:0] result);
    assign sh7  = rs1 >> 7;
    
    // Assign output to xor of 3 rotates
-   assign result = ror1 ^ ror8 ^ sh7;
-   
+   assign result = ror1 ^ ror8 ^ sh7;  
 endmodule

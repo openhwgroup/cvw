@@ -25,14 +25,15 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aes64ks1i(input logic [3:0] roundnum,
-                 input logic [63:0]  rs1,
-                 output logic [63:0] rd);                 
+module aes64ks1i(
+   input  logic [3:0]  roundnum,
+   input  logic [63:0] rs1,
+   output logic [63:0] rd
+);                 
                  
-   // Instantiate intermediary logic signals             
-   logic [7:0] 			     rconPreShift;
+   logic [7:0] 			  rconPreShift;
    logic [31:0] 		     rcon;
-   logic 			     lastRoundFlag;
+   logic 			        lastRoundFlag;
    logic [31:0] 		     rs1Rotate;
    logic [31:0] 		     tmp2;
    logic [31:0] 		     SboxOut;

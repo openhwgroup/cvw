@@ -25,12 +25,14 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module galoismultinverse(input logic [10:0] in, output logic [7:0] out);
+module galoismultinverse(
+   input  logic [10:0] in, 
+   output logic [7:0]  out
+);
 
    logic [7:0] temp0, temp1;
 
-   assign temp0 = in[8] ? (in[7:0] ^ 8'b00011011) : in[7:0];
-   assign temp1 = in[9] ? (temp0 ^ 8'b00110110) : temp0;
-   assign out = in[10] ? (temp1 ^ 8'b01101100) : temp1;
-
+   assign temp0 = in[8]  ? (in[7:0] ^ 8'b00011011) : in[7:0];
+   assign temp1 = in[9]  ? (temp0 ^ 8'b00110110)   : temp0;
+   assign out   = in[10] ? (temp1 ^ 8'b01101100)   : temp1;
 endmodule

@@ -25,10 +25,12 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aesinvsbox(input logic [7:0] in, output logic [7:0] out);
+module aesinvsbox(
+	input  logic [7:0] in, 
+	output logic [7:0] out
+);
 
    always_comb
-     begin
 	case(in)
 	  8'h00 : out = 8'h52;
 	  8'h01 : out = 8'h09;
@@ -287,6 +289,4 @@ module aesinvsbox(input logic [7:0] in, output logic [7:0] out);
 	  8'hFE : out = 8'h0C;
 	  8'hFF : out = 8'h7D;
 	endcase
-     end
-
 endmodule

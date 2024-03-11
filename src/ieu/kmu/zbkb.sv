@@ -25,12 +25,13 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module zbkb #(parameter WIDTH=32) 
-   (input  logic [WIDTH-1:0] A, B, RevA,
-    input logic 	     W64,
-    input logic [2:0] 	     Funct3,
-    input logic [2:0] 	     ZBKBSelect,
-    output logic [WIDTH-1:0] ZBKBResult);
+module zbkb #(parameter WIDTH=32) (
+   input  logic [WIDTH-1:0] A, B, RevA,
+   input  logic 	          W64,
+   input  logic [2:0] 	    Funct3,
+   input  logic [2:0] 	    ZBKBSelect,
+   output logic [WIDTH-1:0] ZBKBResult
+);
    
    logic [WIDTH-1:0] 	     ByteResult;   // rev8, brev8
    logic [WIDTH-1:0] 	     PackResult;   // pack, packh, packw (RB64 only)

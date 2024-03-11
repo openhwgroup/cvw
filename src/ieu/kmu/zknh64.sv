@@ -25,18 +25,14 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module zknh64 (input  logic [63:0] A, B, input  logic [3:0]  ZKNHSelect,
-	       output logic [63:0] ZKNHResult);
+module zknh64 (
+   input  logic [63:0] A, B, 
+   input  logic [3:0]  ZKNHSelect,
+	output logic [63:0] ZKNHResult
+);
 
-   logic [63:0] 		   sha256sig0res;
-   logic [63:0] 		   sha256sig1res;
-   logic [63:0] 		   sha256sum0res;
-   logic [63:0] 		   sha256sum1res;
-   
-   logic [63:0] 		   sha512sig0res;
-   logic [63:0] 		   sha512sig1res;
-   logic [63:0] 		   sha512sum0res;
-   logic [63:0] 		   sha512sum1res;   
+   logic [63:0] 		   sha256sig0res, sha256sig1res, sha256sum0res, sha256sum1res;   
+   logic [63:0] 		   sha512sig0res, sha512sig1res, sha512sum0res, sha512sum1res;
    
    sha256sig0 #(64) sha256sig0(A, sha256sig0res);
    sha256sig1 #(64) sha256sig1(A, sha256sig1res);
@@ -48,17 +44,16 @@ module zknh64 (input  logic [63:0] A, B, input  logic [3:0]  ZKNHSelect,
    sha512sum1 sha512sum1(A, sha512sum1res);
    
    // Result Select Mux
-   always_comb begin
+   always_comb 
       casez(ZKNHSelect)
-	4'b0000: ZKNHResult = sha256sig0res;
-	4'b0001: ZKNHResult = sha256sig1res;
-	4'b0010: ZKNHResult = sha256sum0res;
-	4'b0011: ZKNHResult = sha256sum1res;
-	4'b1010: ZKNHResult = sha512sig0res;
-	4'b1011: ZKNHResult = sha512sig1res;
-	4'b1100: ZKNHResult = sha512sum0res;
-	4'b1101: ZKNHResult = sha512sum1res;
-	default ZKNHResult = 0;
+         4'b0000: ZKNHResult = sha256sig0res;
+         4'b0001: ZKNHResult = sha256sig1res;
+         4'b0010: ZKNHResult = sha256sum0res;
+         4'b0011: ZKNHResult = sha256sum1res;
+         4'b1010: ZKNHResult = sha512sig0res;
+         4'b1011: ZKNHResult = sha512sig1res;
+         4'b1100: ZKNHResult = sha512sum0res;
+         4'b1101: ZKNHResult = sha512sum1res;
+         default: ZKNHResult = 0;
       endcase
-   end
 endmodule

@@ -25,11 +25,13 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aessbox(input logic [7:0] in, output logic [7:0] out);
+module aessbox(
+	input  logic [7:0] in, 
+    output logic [7:0] out
+);
 
    // case statement to lookup the value in the rijndael table
    always_comb 
-     begin
 	case(in)
 	  8'h00 : out = 8'h63;
 	  8'h01 : out = 8'h7C;
@@ -288,6 +290,4 @@ module aessbox(input logic [7:0] in, output logic [7:0] out);
 	  8'hFE : out = 8'hBB;
 	  8'hFF : out = 8'h16;
 	endcase
-     end
-
 endmodule

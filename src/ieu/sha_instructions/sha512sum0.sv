@@ -25,7 +25,10 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module sha512sum0(input  logic [63:0] rs1, output logic [63:0] result);
+module sha512sum0(
+   input  logic [63:0] rs1, 
+   output logic [63:0] result
+);
 
    logic [63:0] ror28;
    logic [63:0] ror34;
@@ -37,5 +40,4 @@ module sha512sum0(input  logic [63:0] rs1, output logic [63:0] result);
    
    // Assign output to xor of 3 rotates
    assign result = ror28 ^ ror34 ^ ror39;
-   
 endmodule

@@ -25,7 +25,10 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aesinvmixcolumns(input logic [31:0] in, output logic [31:0] out);
+module aesinvmixcolumns(
+   input  logic [31:0] in, 
+   output logic [31:0] out
+);
 
    logic [7:0] in0, in1, in2, in3, temp;
    logic [10:0] xor0, xor1, xor2, xor3;
@@ -42,5 +45,4 @@ module aesinvmixcolumns(input logic [31:0] in, output logic [31:0] out);
    galoismultinverse gm1 (xor1, out[15:8]);
    galoismultinverse gm2 (xor2, out[23:16]);
    galoismultinverse gm3 (xor3, out[31:24]);
-
 endmodule 

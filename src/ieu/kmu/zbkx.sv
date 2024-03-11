@@ -25,10 +25,11 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module zbkx #(parameter WIDTH=32) 
-   (input  logic [WIDTH-1:0] A, B,
-    input logic [2:0] 	     ZBKXSelect,
-    output logic [WIDTH-1:0] ZBKXResult);
+module zbkx #(parameter WIDTH=32) (
+   input  logic [WIDTH-1:0] A, B,
+   input  logic [2:0] 	    ZBKXSelect,
+   output logic [WIDTH-1:0] ZBKXResult
+);
    
    logic [WIDTH-1:0] 	     xpermlookup;
    integer 		     i;

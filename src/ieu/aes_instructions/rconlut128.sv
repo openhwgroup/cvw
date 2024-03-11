@@ -25,11 +25,12 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module rconlut128(input logic [3:0] RD,
-		  output logic [7:0] rconOut);
+module rconlut128(
+	input  logic [3:0] RD,
+	output logic [7:0] rconOut
+);
 	
    always_comb
-     begin
 	case(RD)
 	  4'h0 : rconOut = 8'h01;
 	  4'h1 : rconOut = 8'h02;
@@ -44,5 +45,4 @@ module rconlut128(input logic [3:0] RD,
 	  4'hA : rconOut = 8'h00;
 	  default : rconOut = 8'h00;
 	endcase	
-     end
 endmodule

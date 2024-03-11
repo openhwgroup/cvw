@@ -25,9 +25,10 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module sha256sig1 #(parameter WIDTH=32) 
-   (input  logic [WIDTH-1:0] rs1,
-    output logic [WIDTH-1:0] result);
+module sha256sig1 #(parameter WIDTH=32) (
+  input  logic [WIDTH-1:0] rs1,
+  output logic [WIDTH-1:0] result
+);
    
    logic [31:0] 	     ror17;
    logic [31:0] 	     ror19;
@@ -40,9 +41,8 @@ module sha256sig1 #(parameter WIDTH=32)
    
    // Assign output to xor of 3 rotates
    assign exts = ror17 ^ ror19 ^ sh10;
-   if (WIDTH==32)
-     assign result = exts;
-   else 
-     assign result = {{32{exts[31]}}, exts};
-   
+
+   // Sign-extend for RV64
+   if (WIDTH==32) assign result = exts;
+   else           assign result = {{32{exts[31]}}, exts};
 endmodule

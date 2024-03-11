@@ -25,11 +25,13 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aesinvshiftrow(input logic [127:0]  DataIn, output logic [127:0] DataOut);
+module aesinvshiftrow(
+   input  logic [127:0] DataIn, 
+   output logic [127:0] DataOut
+);
 
    assign DataOut = {DataIn[31:24], DataIn[55:48], DataIn[79:72], DataIn[103:96],
                      DataIn[127:120], DataIn[23:16], DataIn[47:40], DataIn[71:64],
                      DataIn[95:88], DataIn[119:112], DataIn[15:8], DataIn[39:32],
                      DataIn[63:56], DataIn[87:80], DataIn[111:104], DataIn[7:0]};
-   
 endmodule

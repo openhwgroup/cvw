@@ -25,13 +25,13 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module zipper #(parameter WIDTH=64) 
-   (input  logic [WIDTH-1:0] A,
-    input logic 	     ZipSelect,
-    output logic [WIDTH-1:0] ZipResult);
+module zipper #(parameter WIDTH=64) (
+   input  logic [WIDTH-1:0] A,
+   input  logic 	          ZipSelect,
+   output logic [WIDTH-1:0] ZipResult
+);
    
-   logic [WIDTH-1:0] 	     zip;
-   logic [WIDTH-1:0] 	     unzip;
+   logic [WIDTH-1:0] 	     zip, unzip;
    genvar 		     i;
    
    for (i=0; i<WIDTH/2; i+=1) begin: loop

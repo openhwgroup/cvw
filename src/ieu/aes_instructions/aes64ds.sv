@@ -25,14 +25,14 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aes64ds(input logic [63:0] rs1,
-               input logic [63:0]  rs2,
-               output logic [63:0] DataOut);
+module aes64ds(
+   input  logic [63:0] rs1,
+   input  logic [63:0] rs2,
+   output logic [63:0] DataOut
+);
    
-   // Intermediary Logic
    logic [127:0] 		   ShiftRowOut;
-   logic [31:0] 		   SboxOut0;
-   logic [31:0] 		   SboxOut1;    
+   logic [31:0] 		   SboxOut0, SboxOut1;
    
    // Apply inverse shiftrows to rs2 and rs1
    aesinvshiftrow srow(.DataIn({rs2,rs1}), .DataOut(ShiftRowOut));

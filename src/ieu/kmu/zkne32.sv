@@ -26,14 +26,13 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module zkne32 #(parameter WIDTH=32) 
-   (input logic [WIDTH-1:0]  A, B,
-    input logic [6:0] 	     Funct7,
-    input logic [2:0] 	     ZKNESelect,
-    output logic [WIDTH-1:0] ZKNEResult);
+module zkne32 #(parameter WIDTH=32) (
+   input  logic [WIDTH-1:0] A, B,
+   input  logic [6:0] 	    Funct7,
+   input  logic [2:0] 	    ZKNESelect,
+   output logic [WIDTH-1:0] ZKNEResult);
    
-   logic [31:0] 	     aes32esiRes;
-   logic [31:0] 	     aes32esmiRes;
+   logic [31:0] 	     aes32esiRes, aes32esmiRes;
    
    // RV32
    aes32esi aes32esi (.bs(Funct7[6:5]), .rs1(A), .rs2(B), .DataOut(aes32esiRes));

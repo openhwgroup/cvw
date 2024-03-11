@@ -25,13 +25,13 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aes64ks2(input logic [63:0] rs2,
-                input logic [63:0]  rs1,
-                output logic [63:0] rd);
+module aes64ks2(
+   input  logic [63:0] rs2,
+   input  logic [63:0] rs1,
+   output logic [63:0] rd
+);
    
-   // Instantiate Intermediary logic
-   logic [31:0] 		    w0;
-   logic [31:0] 		    w1;
+   logic [31:0] 		    w0, w1;
    
    assign w0 = rs1[63:32] ^ rs2[31:0];
    assign w1 = rs1[63:32] ^ rs2[31:0] ^ rs2[63:32];   

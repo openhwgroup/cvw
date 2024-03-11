@@ -25,13 +25,14 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aes64esm(input logic [63:0]  rs1,
-                input logic [63:0]  rs2,
-                output logic [63:0] DataOut);
+module aes64esm(
+    input  logic [63:0] rs1,
+    input  logic [63:0] rs2,
+    output logic [63:0] DataOut
+);
    
-    // Intermediary Signals
     logic [127:0] ShiftRowOut;
-    logic [63:0] SboxOut;
+    logic [63:0]  SboxOut;
                 
     // AES shiftrow unit
     aesshiftrow srow(.DataIn({rs2,rs1}), .DataOut(ShiftRowOut));

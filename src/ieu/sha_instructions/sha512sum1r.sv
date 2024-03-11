@@ -25,8 +25,11 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module sha512sum1r(input logic [31:0] rs1, input logic [31:0]  rs2,
-                   output logic [31:0] DataOut);   
+module sha512sum1r(
+   input  logic [31:0] rs1, 
+   input  logic [31:0] rs2,
+   output logic [31:0] DataOut
+);   
    
    // Declare logic for rs1 shifts
    logic [31:0] 		       shift1by23;
@@ -50,5 +53,4 @@ module sha512sum1r(input logic [31:0] rs1, input logic [31:0]  rs2,
    
    // Assign output to xor of shifts
    assign DataOut = shift1by23 ^ shift1by14 ^ shift1by18 ^ shift2by9 ^ shift2by18 ^ shift2by14;
-    
 endmodule

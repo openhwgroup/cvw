@@ -25,8 +25,11 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module sha512sig0h(input logic [31:0] rs1, input logic [31:0]  rs2,
-                   output logic [31:0] DataOut);
+module sha512sig0h(
+   input  logic [31:0] rs1, 
+   input  logic [31:0] rs2,
+   output logic [31:0] DataOut
+);
    
    // RS1 Shifts
    logic [31:0] 		       shift1;
@@ -48,5 +51,4 @@ module sha512sig0h(input logic [31:0] rs1, input logic [31:0]  rs2,
    
    // XOR to get result
    assign DataOut = shift1 ^ shift7 ^ shift8 ^ shift31 ^ shift24;
-    
 endmodule

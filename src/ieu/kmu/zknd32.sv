@@ -26,15 +26,15 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module zknd32 #(parameter WIDTH=32) 
-   (input  logic [WIDTH-1:0] A, B,
-    input logic [6:0] 	     Funct7,
-    input logic [2:0] 	     ZKNDSelect,
-    output logic [WIDTH-1:0] ZKNDResult);
+module zknd32 #(parameter WIDTH=32) (
+   input  logic [WIDTH-1:0] A, B,
+   input  logic [6:0] 	    Funct7,
+   input  logic [2:0] 	    ZKNDSelect,
+   output logic [WIDTH-1:0] ZKNDResult
+);
    
-   logic [31:0] 	     aes32dsiRes;
-   logic [31:0] 	     aes32dsmiRes;
-   
+   logic [31:0] 	     aes32dsiRes, aes32dsmiRes;
+  
    // RV32
    aes32dsi aes32dsi (.bs(Funct7[6:5]), .rs1(A), .rs2(B), .DataOut(aes32dsiRes));
    aes32dsmi aes32dsmi (.bs(Funct7[6:5]), .rs1(A), .rs2(B), .DataOut(aes32dsmiRes));

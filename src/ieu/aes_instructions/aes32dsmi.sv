@@ -25,16 +25,17 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aes32dsmi(input logic [1:0] bs,
-                 input logic [31:0]  rs1,
-                 input logic [31:0]  rs2,
-                 output logic [31:0] DataOut);
+module aes32dsmi(
+   input  logic [1:0]  bs,
+   input  logic [31:0] rs1,
+   input  logic [31:0] rs2,
+   output logic [31:0] DataOut
+);
 
-   // Declare Intermediary logic
-   logic [4:0] 			     shamt;
+   logic [4:0] 			  shamt;
    logic [31:0] 		     SboxIn32;
-   logic [7:0] 			     SboxIn;
-   logic [7:0] 			     SboxOut;
+   logic [7:0] 			  SboxIn;
+   logic [7:0] 			  SboxOut;
    logic [31:0] 		     so;
    logic [31:0] 		     mixed;
    logic [31:0] 		     mixedrotate;   
