@@ -722,12 +722,12 @@ module testbenchfp;
       $display("\n\nRunning %s vectors ", Tests[TestNum]);
       $readmemh(testname, TestVectors);
 
-      $display("\n\n THERE ARE %d tests", $size(TestVectors));
-      $display("\n\n THERE ARE %h tests", TestVectors[0]);
-      $display("\n\n THERE ARE %h tests", TestVectors[1]);
-      $display("\n\n THERE ARE %h tests", TestVectors[2]);
-      $display("\n\n THERE ARE %h tests", TestVectors[3]);
-      $display("\n\n THERE ARE %h tests", TestVectors[4]);
+      //$display("\n\n THERE ARE %d tests", $size(TestVectors));
+      //$display("\n\n THERE ARE %h tests", TestVectors[0]);
+      //$display("\n\n THERE ARE %h tests", TestVectors[1]);
+      //$display("\n\n THERE ARE %h tests", TestVectors[2]);
+      //$display("\n\n THERE ARE %h tests", TestVectors[3]);
+      //$display("\n\n THERE ARE %h tests", TestVectors[4]);
       // set the test index to 0
       TestNum = 0;
    end
@@ -904,7 +904,7 @@ module testbenchfp;
         `CMPUNIT: Res = CmpRes;
         `CVTINTUNIT: if (WriteIntVal) Res = IntRes; else Res = FpRes;
         `CVTFPUNIT: Res = FpRes;
-        `INTDIVUNIT: if (IntDivE) Res = IntRes; else Res = FpRes;
+        `INTDIVUNIT: if (TEST === "afdivremsqrt") Res = IntRes; else Res = FpRes;
       endcase
 
       // select the flag to check
