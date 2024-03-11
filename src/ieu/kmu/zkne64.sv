@@ -38,8 +38,8 @@ module zkne64 #(parameter WIDTH=32) (
    
    // RV64
    aes64e    aes64e(.rs1(A), .rs2(B), .finalround(ZKNESelect[2]), .result(aes64eRes));
-   aes64ks1i aes64ks1i(.roundnum(RNUM), .rs1(A), .rd(aes64ks1iRes));
-   aes64ks2  aes64ks2(.rs2(B), .rs1(A), .rd(aes64ks2Res));
+   aes64ks1i aes64ks1i(.roundnum(RNUM), .rs1(A), .result(aes64ks1iRes));
+   aes64ks2  aes64ks2(.rs2(B), .rs1(A), .result(aes64ks2Res));
    
    // 010 is a placeholder to match the select of ZKND's AES64KS1I since they share some instruction
    mux3 #(WIDTH) zknemux(aes64eRes, aes64ks1iRes, aes64ks2Res, ZKNESelect[1:0], ZKNEResult);   

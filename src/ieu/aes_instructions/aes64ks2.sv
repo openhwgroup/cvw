@@ -28,12 +28,12 @@
 module aes64ks2(
    input  logic [63:0] rs2,
    input  logic [63:0] rs1,
-   output logic [63:0] rd
+   output logic [63:0] result
 );
    
    logic [31:0] 		    w0, w1;
    
    assign w0 = rs1[63:32] ^ rs2[31:0];
    assign w1 = w0 ^ rs2[63:32];   
-   assign rd = {w1, w0};   
+   assign result = {w1, w0};   
 endmodule

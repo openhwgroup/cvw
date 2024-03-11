@@ -39,8 +39,8 @@ module zknd64 #(parameter WIDTH=32) (
    // RV64
    aes64d    aes64d(.rs1(A), .rs2(B), .finalround(ZKNDSelect[2]), .result(aes64dRes)); // decode AES
    aes64im   aes64im(.rs1(A), .DataOut(aes64imRes));
-   aes64ks1i aes64ks1i(.roundnum(RNUM), .rs1(A), .rd(aes64ks1iRes));
-   aes64ks2  aes64ks2(.rs2(B), .rs1(A), .rd(aes64ks2Res));
+   aes64ks1i aes64ks1i(.roundnum(RNUM), .rs1(A), .result(aes64ks1iRes));
+   aes64ks2  aes64ks2(.rs2(B), .rs1(A), .result(aes64ks2Res));
    
    mux4 #(WIDTH) zkndmux(aes64dRes, aes64ks1iRes, aes64ks2Res, aes64imRes, ZKNDSelect[1:0], ZKNDResult);
 endmodule
