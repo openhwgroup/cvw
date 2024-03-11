@@ -26,23 +26,23 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module aesinvmixcolumns(
-   input  logic [31:0] in, 
-   output logic [31:0] out
+   input  logic [31:0] a, 
+   output logic [31:0] y
 );
 
-   logic [7:0] in0, in1, in2, in3, temp;
+   logic [7:0] a0, a1, a2, a3, temp;
    logic [10:0] xor0, xor1, xor2, xor3;
    
-   assign {in0, in1, in2, in3} = in;
-   assign temp = in0 ^ in1 ^ in2 ^ in3;
+   assign {a0, a1, a2, a3} = a;
+   assign temp = a0 ^ a1 ^ a2 ^ a3;
 
-   assign xor0 = {temp, 3'b0} ^ {1'b0, in3^in1, 2'b0} ^ {2'b0, in3^in2, 1'b0} ^ {3'b0, temp} ^ {3'b0, in3};
-   assign xor1 = {temp, 3'b0} ^ {1'b0, in2^in0, 2'b0} ^ {2'b0, in2^in1, 1'b0} ^ {3'b0, temp} ^ {3'b0, in2};
-   assign xor2 = {temp, 3'b0} ^ {1'b0, in1^in3, 2'b0} ^ {2'b0, in1^in0, 1'b0} ^ {3'b0, temp} ^ {3'b0, in1};
-   assign xor3 = {temp, 3'b0} ^ {1'b0, in0^in2, 2'b0} ^ {2'b0, in0^in3, 1'b0} ^ {3'b0, temp} ^ {3'b0, in0};
+   assign xor0 = {temp, 3'b0} ^ {1'b0, a3^a1, 2'b0} ^ {2'b0, a3^a2, 1'b0} ^ {3'b0, temp} ^ {3'b0, a3};
+   assign xor1 = {temp, 3'b0} ^ {1'b0, a2^a0, 2'b0} ^ {2'b0, a2^a1, 1'b0} ^ {3'b0, temp} ^ {3'b0, a2};
+   assign xor2 = {temp, 3'b0} ^ {1'b0, a1^a3, 2'b0} ^ {2'b0, a1^a0, 1'b0} ^ {3'b0, temp} ^ {3'b0, a1};
+   assign xor3 = {temp, 3'b0} ^ {1'b0, a0^a2, 2'b0} ^ {2'b0, a0^a3, 1'b0} ^ {3'b0, temp} ^ {3'b0, a0};
 
-   galoismultinverse gm0 (xor0, out[7:0]);
-   galoismultinverse gm1 (xor1, out[15:8]);
-   galoismultinverse gm2 (xor2, out[23:16]);
-   galoismultinverse gm3 (xor3, out[31:24]);
+   galoismultinverse gm0 (xor0, y[7:0]);
+   galoismultinverse gm1 (xor1, y[15:8]);
+   galoismultinverse gm2 (xor2, y[23:16]);
+   galoismultinverse gm3 (xor3, y[31:24]);
 endmodule 

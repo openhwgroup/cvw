@@ -26,12 +26,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module galoismultforward(
-   input  logic [7:0] in, 
-   output logic [7:0] out
+   input  logic [7:0] a, 
+   output logic [7:0] y
 );
 
    logic [7:0] leftshift;
 
-   assign leftshift = {in[6:0], 1'b0};
-   assign out = in[7] ? (leftshift ^ 8'b00011011) : leftshift;
+   assign leftshift = {a[6:0], 1'b0};
+   assign y = a[7] ? (leftshift ^ 8'b00011011) : leftshift;
 endmodule

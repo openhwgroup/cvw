@@ -36,15 +36,15 @@ module aes64dsm(
    logic [31:0] 		    MixcolOut0, MixcolOut1;
    
    // Apply inverse shiftrows to rs2 and rs1
-   aesinvshiftrow srow(.DataIn({rs2, rs1}), .DataOut(ShiftRowOut));
+   aesinvshiftrow srow({rs2, rs1}, ShiftRowOut);
    
    // Apply full word inverse substitution to lower 2 words of shiftrow out
-   aesinvsboxword invsbox0(.in(ShiftRowOut[31:0]), .out(SboxOut0));
-   aesinvsboxword invsbox1(.in(ShiftRowOut[63:32]), .out(SboxOut1));
+   aesinvsboxword invsbox0(ShiftRowOut[31:0],  SboxOut0);
+   aesinvsboxword invsbox1(ShiftRowOut[63:32], SboxOut1);
    
    // Apply inverse mixword to sbox outputs
-   aesinvmixcolumns invmw0(.in(SboxOut0), .out(MixcolOut0));
-   aesinvmixcolumns invmw1(.in(SboxOut1), .out(MixcolOut1));
+   aesinvmixcolumns invmw0(SboxOut0, MixcolOut0);
+   aesinvmixcolumns invmw1(SboxOut1, MixcolOut1);
    
    // Concatenate mixed words for output
    assign DataOut = {MixcolOut1, MixcolOut0};

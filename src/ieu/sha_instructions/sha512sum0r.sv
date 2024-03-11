@@ -4,7 +4,7 @@
 // Written: ryan.swann@okstate.edu, kelvin.tran@okstate.edu, james.stine@okstate.edu
 // Created: 6 February 2024
 //
-// Purpose: sha512sum0r instruction
+// Purpose: sha512sum0r instruction: RV32 SHA2-512 Sum0 instruction
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -32,7 +32,7 @@ module sha512sum0r(
 );
    
    logic [31:0] 		       shift25, shift30, shift28; // rs1 shifts
-   logic [31:0] 		       shift7, shift2, shift4;    // rs2 shifts
+   logic [31:0] 		       shift7,  shift2,  shift4;  // rs2 shifts
    
    // Shift rs1
    assign shift25 = rs1 << 25;

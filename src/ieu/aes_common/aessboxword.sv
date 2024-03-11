@@ -26,13 +26,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module aessboxword(
-   input  logic [31:0] in, 
-   output logic [31:0] out
+   input  logic [31:0] a, 
+   output logic [31:0] y
 );   
    
    // substitutions boxes for each byte of the word
-   aessbox sboxb0(.in(in[7:0]), .out(out[7:0]));
-   aessbox sboxb1(.in(in[15:8]), .out(out[15:8]));
-   aessbox sboxb2(.in(in[23:16]), .out(out[23:16]));	
-   aessbox sboxb3(.in(in[31:24]), .out(out[31:24]));   
+   aessbox sboxb0(a[7:0],   y[7:0]);
+   aessbox sboxb1(a[15:8],  y[15:8]);
+   aessbox sboxb2(a[23:16], y[23:16]);	
+   aessbox sboxb3(a[31:24], y[31:24]);   
 endmodule

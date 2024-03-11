@@ -4,7 +4,7 @@
 // Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
 //
-// Purpose: sha256sig1 instruction
+// Purpose: sha256sig1 instruction: SHA2-256 Sigma1
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

@@ -26,13 +26,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module aesinvsboxword(
-   input  logic [31:0] in, 
-   output logic [31:0] out
+   input  logic [31:0] a, 
+   output logic [31:0] y
 );
    
    // inverse substitutions boxes for each byte of the word
-   aesinvsbox sboxb0(.in(in[7:0]),   .out(out[7:0]));
-   aesinvsbox sboxb1(.in(in[15:8]),  .out(out[15:8]));
-   aesinvsbox sboxb2(.in(in[23:16]), .out(out[23:16]));	
-   aesinvsbox sboxb3(.in(in[31:24]), .out(out[31:24]));   
+   aesinvsbox sboxb0(a[7:0],   y[7:0]);
+   aesinvsbox sboxb1(a[15:8],  y[15:8]);
+   aesinvsbox sboxb2(a[23:16], y[23:16]);	
+   aesinvsbox sboxb3(a[31:24], y[31:24]);   
 endmodule

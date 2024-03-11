@@ -26,12 +26,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module aesshiftrow(
-   input  logic [127:0] DataIn, 
-   output logic [127:0] DataOut
+   input  logic [127:0] a, 
+   output logic [127:0] y
 );
 		    
-   assign DataOut = {DataIn[95:88], DataIn[55:48], DataIn[15:8], DataIn[103:96],
-                     DataIn[63:56], DataIn[23:16], DataIn[111:104], DataIn[71:64],
-                     DataIn[31:24], DataIn[119:112], DataIn[79:72], DataIn[39:32],
-                     DataIn[127:120], DataIn[87:80], DataIn[47:40], DataIn[7:0]};   
+   assign y = {a[95:88],   a[55:48],   a[15:8],    a[103:96],
+               a[63:56],   a[23:16],   a[111:104], a[71:64],
+               a[31:24],   a[119:112], a[79:72],   a[39:32],
+               a[127:120], a[87:80],   a[47:40],   a[7:0]};   
 endmodule

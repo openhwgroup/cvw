@@ -39,7 +39,7 @@ module aes64ks1i(
    logic [31:0] 		     SboxOut;
    
    // Get rcon value from table
-   rconlut128 rc(.rd(roundnum), .rconOut(rconPreShift)); 
+   rconlut128 rc(roundnum, rconPreShift); 
 
    // Shift RCON value
    assign rcon = {24'b0, rconPreShift};    
@@ -54,7 +54,7 @@ module aes64ks1i(
    assign tmp2 = lastRoundFlag ? rs1[63:32] : rs1Rotate;    
 
    // Substitute bytes of value obtained for tmp2 using Rijndael sbox
-   aessboxword sbox(.in(tmp2),.out(SboxOut));    
+   aessboxword sbox(tmp2, SboxOut);    
    assign rd[31:0] = SboxOut ^ rcon;
    assign rd[63:32] = SboxOut ^ rcon;	
 endmodule

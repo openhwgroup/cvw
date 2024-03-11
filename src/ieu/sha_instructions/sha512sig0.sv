@@ -4,7 +4,7 @@
 // Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
 //
-// Purpose: sha512sig0 instruction
+// Purpose: sha512sig0 instruction: RV64 SHA2-512 Sigma0 instruction
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

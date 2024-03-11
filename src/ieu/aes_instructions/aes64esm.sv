@@ -35,13 +35,13 @@ module aes64esm(
     logic [63:0]  SboxOut;
                 
     // AES shiftrow unit
-    aesshiftrow srow(.DataIn({rs2,rs1}), .DataOut(ShiftRowOut));
+    aesshiftrow srow({rs2,rs1}, ShiftRowOut);
    
     // Apply substitution box to 2 lower words
-    aessboxword sbox0(.in(ShiftRowOut[31:0]), .out(SboxOut[31:0]));
-    aessboxword sbox1(.in(ShiftRowOut[63:32]), .out(SboxOut[63:32]));
+    aessboxword sbox0(ShiftRowOut[31:0],  SboxOut[31:0]);
+    aessboxword sbox1(ShiftRowOut[63:32], SboxOut[63:32]);
    
     // Apply mix columns operations
-    aesmixcolumns mw0(.in(SboxOut[31:0]), .out(DataOut[31:0]));
-    aesmixcolumns mw1(.in(SboxOut[63:32]), .out(DataOut[63:32]));    
+    aesmixcolumns mw0(SboxOut[31:0], DataOut[31:0]);
+    aesmixcolumns mw1(SboxOut[63:32], DataOut[63:32]);    
 endmodule

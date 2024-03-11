@@ -49,7 +49,7 @@ module aes32esi(
    assign SboxIn = SboxIn32[7:0];
    
    // Substitute
-   aessbox subbox(.in(SboxIn), .out(SboxOut));
+   aessbox subbox(SboxIn, SboxOut);
    
    // Pad sbox output
    assign so = {24'h0, SboxOut};

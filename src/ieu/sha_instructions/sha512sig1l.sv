@@ -4,7 +4,7 @@
 // Written: ryan.swann@okstate.edu, kelvin.tran@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
 //
-// Purpose: sha512sig1l instruction
+// Purpose: sha512sig1l instruction: : RV32 SHA2-512 Sigma1 low instruction
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -31,8 +31,8 @@ module sha512sig1l(
    output logic [31:0] DataOut
 );
                   
-   logic [31:0] 		       shift3, shift6, shift19; // rs1 shifts
-   logic [31:0] 		       shift29, shift26, shift13;
+   logic [31:0] 		       shift3,  shift6,  shift19; // rs1 shifts
+   logic [31:0] 		       shift29, shift26, shift13; // rs2 shifts
    
    // Shift rs1
    assign shift3  = rs1 << 3;

@@ -27,24 +27,24 @@
 
 
 module aesmixcolumns(
-   input  logic [31:0] in, 
-   output logic [31:0] out
+   input  logic [31:0] a, 
+   output logic [31:0] y
 );
 
-   logic [7:0] in0, in1, in2, in3, out0, out1, out2, out3, t0, t1, t2, t3, temp;
+   logic [7:0] a0, a1, a2, a3, y0, y1, y2, y3, t0, t1, t2, t3, temp;
 
-   assign {in0, in1, in2, in3} = in;
-   assign temp = in0 ^ in1 ^ in2 ^ in3;
+   assign {a0, a1, a2, a3} = a;
+   assign temp = a0 ^ a1 ^ a2 ^ a3;
 
-   galoismultforward gm0 (in0^in1, t0);
-   galoismultforward gm1 (in1^in2, t1);
-   galoismultforward gm2 (in2^in3, t2);
-   galoismultforward gm3 (in3^in0, t3);
+   galoismultforward gm0 (a0^a1, t0);
+   galoismultforward gm1 (a1^a2, t1);
+   galoismultforward gm2 (a2^a3, t2);
+   galoismultforward gm3 (a3^a0, t3);
 
-   assign out0 = in0 ^ temp ^ t3;
-   assign out1 = in1 ^ temp ^ t0;
-   assign out2 = in2 ^ temp ^ t1;
-   assign out3 = in3 ^ temp ^ t2;
+   assign y0 = a0 ^ temp ^ t3;
+   assign y1 = a1 ^ temp ^ t0;
+   assign y2 = a2 ^ temp ^ t1;
+   assign y3 = a3 ^ temp ^ t2;
    
-   assign out = {out0, out1, out2, out3};
+   assign y = {y0, y1, y2, y3};
 endmodule
