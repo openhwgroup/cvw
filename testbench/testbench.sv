@@ -229,14 +229,15 @@ module testbench;
   assign ResetThreshold = 3'd5;
 
   initial begin
+    test = 1;
     TestBenchReset = 1;
     # 100;
     TestBenchReset = 0;
   end
 
   always_ff @(posedge clk)
-    if (TestBenchReset) CurrState <= #1 STATE_TESTBENCH_RESET;
-    else CurrState <= #1 NextState;  
+    if (TestBenchReset) CurrState <= STATE_TESTBENCH_RESET;
+    else CurrState <= NextState;  
 
   // fsm next state logic
   always_comb begin
@@ -290,84 +291,81 @@ module testbench;
   assign end_signature_addr = ProgramAddrLabelArray["sig_end_canary"];
   assign signature_size = end_signature_addr - begin_signature_addr;
   always @(posedge SelectTest) begin
-    if(SelectTest) begin
-      if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
-      else if(TEST == "buildroot") begin 
-        memfilename = {RISCV_DIR, "/linux-testvectors/ram.bin"};
-        bootmemfilename = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
-      end
-      else            memfilename = {pathname, tests[test], ".elf.memfile"};
-      if (riscofTest) begin
-        ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
-        ProgramLabelMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.lab"};
-      end else if (TEST == "buildroot") begin
-        ProgramAddrMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.addr"};
-        ProgramLabelMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.lab"};
-      end else begin
-        ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
-        ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
-      end
-      // declare memory labels that interest us, the updateProgramAddrLabelArray task will find 
-      // the addr of each label and fill the array. To expand, add more elements to this array 
-      // and initialize them to zero (also initilaize them to zero at the start of the next test)
-      updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
+    if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
+    else if(TEST == "buildroot") begin 
+      memfilename = {RISCV_DIR, "/linux-testvectors/ram.bin"};
+      bootmemfilename = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
     end
-    
+    else            memfilename = {pathname, tests[test], ".elf.memfile"};
+    if (riscofTest) begin
+      ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
+      ProgramLabelMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.lab"};
+    end else if (TEST == "buildroot") begin
+      ProgramAddrMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.addr"};
+      ProgramLabelMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.lab"};
+    end else begin
+      ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
+      ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
+    end
+    // declare memory labels that interest us, the updateProgramAddrLabelArray task will find 
+    // the addr of each label and fill the array. To expand, add more elements to this array 
+    // and initialize them to zero (also initilaize them to zero at the start of the next test)
+    updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
   end
+
   always @(posedge Validate) begin
-    if(Validate) begin
-      if (TEST == "embench") begin
-        // Writes contents of begin_signature to .sim.output file
-        // this contains instret and cycles for start and end of test run, used by embench 
-        // python speed script to calculate embench speed score. 
-        // also, begin_signature contains the results of the self checking mechanism, 
-        // which will be read by the python script for error checking
-        $display("Embench Benchmark: %s is done.", tests[test]);
-        if (riscofTest) outputfile = {pathname, tests[test], "/ref/ref.sim.output"};
-        else outputfile = {pathname, tests[test], ".sim.output"};
-        outputFilePointer = $fopen(outputfile, "w");
-        i = 0;
-        testadr = ($unsigned(begin_signature_addr))/(P.XLEN/8);
-        while ($unsigned(i) < $unsigned(5'd5)) begin
-          $fdisplayh(outputFilePointer, DCacheFlushFSM.ShadowRAM[testadr+i]);
-          i = i + 1;
-        end
-        $fclose(outputFilePointer);
-        $display("Embench Benchmark: created output file: %s", outputfile);
-      end else if (TEST == "coverage64gc") begin
-        $display("Coverage tests don't get checked");
-      end else begin 
-        // for tests with no self checking mechanism, read .signature.output file and compare to check for errors
-        // clear signature to prevent contamination from previous tests
-        if (!begin_signature_addr)
-          $display("begin_signature addr not found in %s", ProgramLabelMapFile);
-        else if (TEST != "embench") begin   // *** quick hack for embench.  need a better long term solution
-          CheckSignature(pathname, tests[test], riscofTest, begin_signature_addr, errors);
-          if(errors > 0) totalerrors = totalerrors + 1;
-        end
+    ////////////////////////////////////////////////////////////////////////////////
+    // Verify the test ran correctly by checking the memory against a known signature.
+    ////////////////////////////////////////////////////////////////////////////////
+    if (TEST == "embench") begin
+      // Writes contents of begin_signature to .sim.output file
+      // this contains instret and cycles for start and end of test run, used by embench 
+      // python speed script to calculate embench speed score. 
+      // also, begin_signature contains the results of the self checking mechanism, 
+      // which will be read by the python script for error checking
+      $display("Embench Benchmark: %s is done.", tests[test]);
+      if (riscofTest) outputfile = {pathname, tests[test], "/ref/ref.sim.output"};
+      else outputfile = {pathname, tests[test], ".sim.output"};
+      outputFilePointer = $fopen(outputfile, "w");
+      i = 0;
+      testadr = ($unsigned(begin_signature_addr))/(P.XLEN/8);
+      while ($unsigned(i) < $unsigned(5'd5)) begin
+        $fdisplayh(outputFilePointer, DCacheFlushFSM.ShadowRAM[testadr+i]);
+        i = i + 1;
       end
-      test = test + 1; // *** this probably needs to be moved.
-      if (test == tests.size()) begin
-        if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
-        else $display("FAIL: %d test programs had errors", totalerrors);
-`ifdef VERILATOR
-        $finish;
-`else
-        $stop; // if this is changed to $finish, wally-batch.do does not go to the next step to run coverage
-`endif
+      $fclose(outputFilePointer);
+      $display("Embench Benchmark: created output file: %s", outputfile);
+    end else if (TEST == "coverage64gc") begin
+      $display("Coverage tests don't get checked");
+    end else begin 
+      // for tests with no self checking mechanism, read .signature.output file and compare to check for errors
+      // clear signature to prevent contamination from previous tests
+      if (!begin_signature_addr)
+        $display("begin_signature addr not found in %s", ProgramLabelMapFile);
+      else if (TEST != "embench") begin   // *** quick hack for embench.  need a better long term solution
+        CheckSignature(pathname, tests[test], riscofTest, begin_signature_addr, errors);
+        if(errors > 0) totalerrors = totalerrors + 1;
       end
     end
-  end
-  always @(posedge clk) begin
-  ////////////////////////////////////////////////////////////////////////////////
-  // Verify the test ran correctly by checking the memory against a known signature.
-  ////////////////////////////////////////////////////////////////////////////////
-    if(TestBenchReset) test = 1;
     if (TEST == "coremark")
       if (dut.core.priv.priv.EcallFaultM) begin
         $display("Benchmark: coremark is done.");
         $stop;
       end
+    test = test + 1; // *** this probably needs to be moved.
+    if (test == tests.size()) begin
+      if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
+      else $display("FAIL: %d test programs had errors", totalerrors);
+`ifdef VERILATOR
+      $finish;
+`else
+      $stop; // if this is changed to $finish, wally-batch.do does not go to the next step to run coverage
+`endif
+    end
+  end
+
+  always @(posedge TestBenchReset) begin
+    test = 1;
   end
 
 
