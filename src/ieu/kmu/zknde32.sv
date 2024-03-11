@@ -34,16 +34,27 @@ module zknde32 import cvw::*; #(parameter cvw_t P) (
    output logic [31:0] ZKNDEResult
 );
 
-     logic [31:0]        ZKNEResult, ZKNDResult;             
+    logic [4:0] 	shamt;
+    logic [7:0]     SboxIn;
+    logic [31:0]    ZKNEResult, ZKNDResult, rotin, rotout;             
 
-    if (P.ZKND_SUPPORTED) aes32d aes32d(.bs(Funct7[6:5]), .rs1(A), .rs2(B), .finalround(ZKNSelect[2]), .result(ZKNDResult));
-    if (P.ZKNE_SUPPORTED) aes32e aes32e(.bs(Funct7[6:5]), .rs1(A), .rs2(B), .finalround(ZKNSelect[2]), .result(ZKNEResult));
+    // Initial shamt and Sbox input selection steps shared between encrypt and decrypt
+    assign shamt = {Funct7[6:5], 3'b0};                     // shamt = bs * 8 (convert bytes to bits)
+    assign SboxIn = B[shamt +: 8];               // select byte bs of rs2
+
+    // Handle logic specific to encrypt or decrypt
+    if (P.ZKND_SUPPORTED) aes32d aes32d(.SboxIn, .finalround(ZKNSelect[2]), .result(ZKNDResult));
+    if (P.ZKNE_SUPPORTED) aes32e aes32e(.SboxIn, .finalround(ZKNSelect[2]), .result(ZKNEResult));
 
     // Mux result if both decrypt and encrypt are supported; otherwise, choose the only result
     if (P.ZKND_SUPPORTED & P.ZKNE_SUPPORTED) 
-        mux2 #(32) zknmux(ZKNDResult, ZKNEResult, ZKNSelect[0], ZKNDEResult); 
+        mux2 #(32) zknmux(ZKNDResult, ZKNEResult, ZKNSelect[0], rotin); 
     else if (P.ZKND_SUPPORTED)
-        assign ZKNDEResult = ZKNDResult;
+        assign rotin = ZKNDResult;
     else 
-        assign ZKNDEResult = ZKNEResult;
+        assign rotin = ZKNEResult;
+
+    // final rotate and XOR steps shared between encrypt and decrypt
+    rotate #(32) mrot(rotin, shamt, rotout);       // Rotate the mixcolumns output left by shamt (bs * 8)
+    assign ZKNDEResult = A ^ rotout;               // xor with running value
 endmodule

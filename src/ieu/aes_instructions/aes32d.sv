@@ -26,23 +26,16 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module aes32d(
-   input  logic [1:0]  bs,
-   input  logic [31:0] rs1,
-   input  logic [31:0] rs2,
+   input  logic [7:0]  SboxIn,
    input  logic        finalround,
    output logic [31:0] result
 );
 
-   logic [4:0] 			  shamt;
-   logic [7:0] 			  SboxIn, SboxOut;
-   logic [31:0] 		     so, mixed, rotin, rotout;
+   logic [7:0] 			  SboxOut;
+   logic [31:0] 		     so, mixed;
    
-   assign shamt = {bs, 3'b0};                     // shamt = bs * 8 (convert bytes to bits)
-   assign SboxIn = rs2[shamt +: 8];               // select byte bs of rs2
    aesinvsbox inv_sbox(SboxIn, SboxOut);          // Apply inverse sbox to si
    assign so = {24'h0, SboxOut};                  // Pad output of inverse substitution box
    aesinvmixcolumns mix(so, mixed);               // Run so through the mixword AES function
-   mux2 #(32) rmux(mixed, so, finalround, rotin); // on final round, skip mixcolumns
-   rotate #(32) rot(rotin, shamt, rotout);        // Rotate left by shamt (bs * 8)
-   assign result = rs1 ^ rotout;                  // xor with running value
+   mux2 #(32) rmux(mixed, so, finalround, result); // on final round, skip mixcolumns
 endmodule
