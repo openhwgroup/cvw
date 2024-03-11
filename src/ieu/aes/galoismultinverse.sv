@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// zipper.sv
+// galoismultinverse.sv
 //
 // Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
-// Created: 9 October 2023
+// Created: 20 February 2024
 //
-// Purpose: RISCV kbitmanip zip operation unit
+// Purpose: Galois field operations for mix columns operation
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,21 +25,14 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module zipper #(parameter WIDTH=64) (
-   input  logic [WIDTH-1:0] A,
-   input  logic 	          ZipSelect,
-   output logic [WIDTH-1:0] ZipResult
+module galoismultinverse(
+   input  logic [10:0] a, 
+   output logic [7:0]  y
 );
-   
-   logic [WIDTH-1:0] 	     zip, unzip;
-   genvar 		     i;
-   
-   for (i=0; i<WIDTH/2; i+=1) begin: loop
-      assign zip[2*i]           = A[i];
-      assign zip[2*i + 1]       = A[i + WIDTH/2];      
-      assign unzip[i]           = A[2*i];
-      assign unzip[i + WIDTH/2] = A[2*i + 1];
-   end
-   
-   mux2 #(WIDTH) ZipMux(zip, unzip, ZipSelect, ZipResult);   
+
+   logic [7:0] temp0, temp1;
+
+   assign temp0 = a[8]  ? (a[7:0] ^ 8'b00011011) : a[7:0];
+   assign temp1 = a[9]  ? (temp0  ^ 8'b00110110) : temp0;
+   assign y     = a[10] ? (temp1  ^ 8'b01101100) : temp1;
 endmodule

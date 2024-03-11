@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// zipper.sv
+// aes64ks2.sv
 //
-// Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
-// Created: 9 October 2023
+// Written: ryan.swann@okstate.edu, james.stine@okstate.edu
+// Created: 20 February 2024
 //
-// Purpose: RISCV kbitmanip zip operation unit
+// Purpose: aes64ks2 instruction: part of AES keyschedule
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,21 +25,15 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module zipper #(parameter WIDTH=64) (
-   input  logic [WIDTH-1:0] A,
-   input  logic 	          ZipSelect,
-   output logic [WIDTH-1:0] ZipResult
+module aes64ks2(
+   input  logic [63:0] rs2,
+   input  logic [63:0] rs1,
+   output logic [63:0] result
 );
    
-   logic [WIDTH-1:0] 	     zip, unzip;
-   genvar 		     i;
+   logic [31:0] 		    w0, w1;
    
-   for (i=0; i<WIDTH/2; i+=1) begin: loop
-      assign zip[2*i]           = A[i];
-      assign zip[2*i + 1]       = A[i + WIDTH/2];      
-      assign unzip[i]           = A[2*i];
-      assign unzip[i + WIDTH/2] = A[2*i + 1];
-   end
-   
-   mux2 #(WIDTH) ZipMux(zip, unzip, ZipSelect, ZipResult);   
+   assign w0 = rs1[63:32] ^ rs2[31:0];
+   assign w1 = w0 ^ rs2[63:32];   
+   assign result = {w1, w0};   
 endmodule

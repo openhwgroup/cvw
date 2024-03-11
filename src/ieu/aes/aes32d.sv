@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// zipper.sv
+// aes32d.sv
 //
-// Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
-// Created: 9 October 2023
+// Written: ryan.swann@okstate.edu, james.stine@okstate.edu
+// Created: 20 February 2024
 //
-// Purpose: RISCV kbitmanip zip operation unit
+// Purpose: aes32dsmi and aes32dsi instruction: RV32 middle and final round AES decryption
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,21 +25,17 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module zipper #(parameter WIDTH=64) (
-   input  logic [WIDTH-1:0] A,
-   input  logic 	          ZipSelect,
-   output logic [WIDTH-1:0] ZipResult
+module aes32d(
+   input  logic [7:0]  SboxIn,
+   input  logic        finalround,
+   output logic [31:0] result
 );
+
+   logic [7:0] 			  SboxOut;
+   logic [31:0] 		     so, mixed;
    
-   logic [WIDTH-1:0] 	     zip, unzip;
-   genvar 		     i;
-   
-   for (i=0; i<WIDTH/2; i+=1) begin: loop
-      assign zip[2*i]           = A[i];
-      assign zip[2*i + 1]       = A[i + WIDTH/2];      
-      assign unzip[i]           = A[2*i];
-      assign unzip[i + WIDTH/2] = A[2*i + 1];
-   end
-   
-   mux2 #(WIDTH) ZipMux(zip, unzip, ZipSelect, ZipResult);   
+   aesinvsbox inv_sbox(SboxIn, SboxOut);          // Apply inverse sbox to si
+   assign so = {24'h0, SboxOut};                  // Pad output of inverse substitution box
+   aesinvmixcolumns mix(so, mixed);               // Run so through the mixword AES function
+   mux2 #(32) rmux(mixed, so, finalround, result); // on final round, skip mixcolumns
 endmodule

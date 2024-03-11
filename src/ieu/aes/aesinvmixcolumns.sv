@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// zipper.sv
+// aesinvmixcolumns.sv
 //
 // Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
-// Created: 9 October 2023
+// Created: 05 March 2024
 //
-// Purpose: RISCV kbitmanip zip operation unit
+// Purpose: AES Inverted Mix Column Function for use with AES
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,21 +25,24 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module zipper #(parameter WIDTH=64) (
-   input  logic [WIDTH-1:0] A,
-   input  logic 	          ZipSelect,
-   output logic [WIDTH-1:0] ZipResult
+module aesinvmixcolumns(
+   input  logic [31:0] a, 
+   output logic [31:0] y
 );
+
+   logic [7:0] a0, a1, a2, a3, temp;
+   logic [10:0] xor0, xor1, xor2, xor3;
    
-   logic [WIDTH-1:0] 	     zip, unzip;
-   genvar 		     i;
-   
-   for (i=0; i<WIDTH/2; i+=1) begin: loop
-      assign zip[2*i]           = A[i];
-      assign zip[2*i + 1]       = A[i + WIDTH/2];      
-      assign unzip[i]           = A[2*i];
-      assign unzip[i + WIDTH/2] = A[2*i + 1];
-   end
-   
-   mux2 #(WIDTH) ZipMux(zip, unzip, ZipSelect, ZipResult);   
-endmodule
+   assign {a0, a1, a2, a3} = a;
+   assign temp = a0 ^ a1 ^ a2 ^ a3;
+
+   assign xor0 = {temp, 3'b0} ^ {1'b0, a3^a1, 2'b0} ^ {2'b0, a3^a2, 1'b0} ^ {3'b0, temp} ^ {3'b0, a3};
+   assign xor1 = {temp, 3'b0} ^ {1'b0, a2^a0, 2'b0} ^ {2'b0, a2^a1, 1'b0} ^ {3'b0, temp} ^ {3'b0, a2};
+   assign xor2 = {temp, 3'b0} ^ {1'b0, a1^a3, 2'b0} ^ {2'b0, a1^a0, 1'b0} ^ {3'b0, temp} ^ {3'b0, a1};
+   assign xor3 = {temp, 3'b0} ^ {1'b0, a0^a2, 2'b0} ^ {2'b0, a0^a3, 1'b0} ^ {3'b0, temp} ^ {3'b0, a0};
+
+   galoismultinverse gm0 (xor0, y[7:0]);
+   galoismultinverse gm1 (xor1, y[15:8]);
+   galoismultinverse gm2 (xor2, y[23:16]);
+   galoismultinverse gm3 (xor3, y[31:24]);
+endmodule 

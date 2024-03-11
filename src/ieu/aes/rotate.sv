@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// zipper.sv
+// rotate.sv
 //
-// Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
-// Created: 9 October 2023
+// Written: ryan.swann@okstate.edu, james.stine@okstate.edu
+// Created: 20 February 2024
 //
-// Purpose: RISCV kbitmanip zip operation unit
+// Purpose: rotate a by shamt
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,21 +25,11 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module zipper #(parameter WIDTH=64) (
-   input  logic [WIDTH-1:0] A,
-   input  logic 	          ZipSelect,
-   output logic [WIDTH-1:0] ZipResult
-);
-   
-   logic [WIDTH-1:0] 	     zip, unzip;
-   genvar 		     i;
-   
-   for (i=0; i<WIDTH/2; i+=1) begin: loop
-      assign zip[2*i]           = A[i];
-      assign zip[2*i + 1]       = A[i + WIDTH/2];      
-      assign unzip[i]           = A[2*i];
-      assign unzip[i + WIDTH/2] = A[2*i + 1];
-   end
-   
-   mux2 #(WIDTH) ZipMux(zip, unzip, ZipSelect, ZipResult);   
+module rotate #(parameter WIDTH=32) (
+   input  logic [WIDTH-1:0]        a,
+   input  logic [$clog2(WIDTH)-1:0] shamt,
+   output logic [WIDTH-1:0]        y
+);                
+
+   assign y = (a << shamt) | (a >> (WIDTH-shamt)); 
 endmodule

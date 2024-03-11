@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// zipper.sv
+// aesmixcolumns.sv
 //
-// Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
-// Created: 9 October 2023
+// Written: ryan.swann@okstate.edu, james.stine@okstate.edu, David_Harris@hmc.edu
+// Created: 20 February 2024
 //
-// Purpose: RISCV kbitmanip zip operation unit
+// Purpose: Galois field operation to an individual 32-bit word
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,21 +25,26 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module zipper #(parameter WIDTH=64) (
-   input  logic [WIDTH-1:0] A,
-   input  logic 	          ZipSelect,
-   output logic [WIDTH-1:0] ZipResult
+
+module aesmixcolumns(
+   input  logic [31:0] a, 
+   output logic [31:0] y
 );
+
+   logic [7:0] a0, a1, a2, a3, y0, y1, y2, y3, t0, t1, t2, t3, temp;
+
+   assign {a0, a1, a2, a3} = a;
+   assign temp = a0 ^ a1 ^ a2 ^ a3;
+
+   galoismultforward gm0 (a0^a1, t0);
+   galoismultforward gm1 (a1^a2, t1);
+   galoismultforward gm2 (a2^a3, t2);
+   galoismultforward gm3 (a3^a0, t3);
+
+   assign y0 = a0 ^ temp ^ t3;
+   assign y1 = a1 ^ temp ^ t0;
+   assign y2 = a2 ^ temp ^ t1;
+   assign y3 = a3 ^ temp ^ t2;
    
-   logic [WIDTH-1:0] 	     zip, unzip;
-   genvar 		     i;
-   
-   for (i=0; i<WIDTH/2; i+=1) begin: loop
-      assign zip[2*i]           = A[i];
-      assign zip[2*i + 1]       = A[i + WIDTH/2];      
-      assign unzip[i]           = A[2*i];
-      assign unzip[i + WIDTH/2] = A[2*i + 1];
-   end
-   
-   mux2 #(WIDTH) ZipMux(zip, unzip, ZipSelect, ZipResult);   
+   assign y = {y0, y1, y2, y3};
 endmodule

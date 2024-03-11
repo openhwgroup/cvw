@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// zipper.sv
+// aessboxword.sv
 //
-// Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
-// Created: 9 October 2023
+// Written: ryan.swann@okstate.edu, james.stine@okstate.edu
+// Created: 20 February 2024
 //
-// Purpose: RISCV kbitmanip zip operation unit
+// Purpose: 4 sets of Rijndael S-BOX so whole word can be looked up simultaneously.
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,21 +25,14 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module zipper #(parameter WIDTH=64) (
-   input  logic [WIDTH-1:0] A,
-   input  logic 	          ZipSelect,
-   output logic [WIDTH-1:0] ZipResult
-);
+module aessboxword(
+   input  logic [31:0] a, 
+   output logic [31:0] y
+);   
    
-   logic [WIDTH-1:0] 	     zip, unzip;
-   genvar 		     i;
-   
-   for (i=0; i<WIDTH/2; i+=1) begin: loop
-      assign zip[2*i]           = A[i];
-      assign zip[2*i + 1]       = A[i + WIDTH/2];      
-      assign unzip[i]           = A[2*i];
-      assign unzip[i + WIDTH/2] = A[2*i + 1];
-   end
-   
-   mux2 #(WIDTH) ZipMux(zip, unzip, ZipSelect, ZipResult);   
+   // substitutions boxes for each byte of the word
+   aessbox sboxb0(a[7:0],   y[7:0]);
+   aessbox sboxb1(a[15:8],  y[15:8]);
+   aessbox sboxb2(a[23:16], y[23:16]);	
+   aessbox sboxb3(a[31:24], y[31:24]);   
 endmodule

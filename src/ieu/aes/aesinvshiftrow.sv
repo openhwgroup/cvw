@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// zipper.sv
+// aesinvshiftrow.sv
 //
-// Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
-// Created: 9 October 2023
+// Written: ryan.swann@okstate.edu, james.stine@okstate.edu
+// Created: 20 February 2024
 //
-// Purpose: RISCV kbitmanip zip operation unit
+// Purpose: AES Shiftrow
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,21 +25,13 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module zipper #(parameter WIDTH=64) (
-   input  logic [WIDTH-1:0] A,
-   input  logic 	          ZipSelect,
-   output logic [WIDTH-1:0] ZipResult
+module aesinvshiftrow(
+   input  logic [127:0] a, 
+   output logic [127:0] y
 );
-   
-   logic [WIDTH-1:0] 	     zip, unzip;
-   genvar 		     i;
-   
-   for (i=0; i<WIDTH/2; i+=1) begin: loop
-      assign zip[2*i]           = A[i];
-      assign zip[2*i + 1]       = A[i + WIDTH/2];      
-      assign unzip[i]           = A[2*i];
-      assign unzip[i + WIDTH/2] = A[2*i + 1];
-   end
-   
-   mux2 #(WIDTH) ZipMux(zip, unzip, ZipSelect, ZipResult);   
+
+   assign y = {a[31:24],   a[55:48],   a[79:72],   a[103:96],
+               a[127:120], a[23:16],   a[47:40],   a[71:64],
+               a[95:88],   a[119:112], a[15:8],    a[39:32],
+               a[63:56],   a[87:80],   a[111:104], a[7:0]};
 endmodule

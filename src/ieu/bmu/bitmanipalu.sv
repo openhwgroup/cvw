@@ -48,15 +48,13 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
 
   logic [P.XLEN-1:0]        ZBBResult;               // ZBB Result
   logic [P.XLEN-1:0]        ZBCResult;               // ZBC Result   
-  logic [P.XLEN-1:0] 	    ZBKBResult;              // ZBKB Result
+  logic [P.XLEN-1:0] 	      ZBKBResult;              // ZBKB Result
   logic [P.XLEN-1:0]        ZBKCResult;              // ZBKC Result
   logic [P.XLEN-1:0]        ZBKXResult;              // ZBKX Result      
-  logic [P.XLEN-1:0]        ZKNDResult;              // ZKND Result
-  logic [P.XLEN-1:0]        ZKNEResult;              // ZKNE Result   
   logic [P.XLEN-1:0]        ZKNHResult;              // ZKNH Result
+  logic [P.XLEN-1:0]        ZKNDEResult;             // ZKNE or ZKND Result   
   logic [P.XLEN-1:0]        MaskB;                   // BitMask of B
   logic [P.XLEN-1:0]        RevA;                    // Bit-reversed A
-  logic                     Rotate;                  // Indicates if it is Rotate instruction
   logic                     Mask;                    // Indicates if it is ZBS instruction
   logic                     PreShift;                // Inidicates if it is sh1add, sh2add, sh3add instruction
   logic [1:0]               PreShiftAmt;             // Amount to Pre-Shift A 
@@ -113,34 +111,15 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
     zbkx #(P.XLEN) ZBKX(.A(ABMU), .B(BBMU), .ZBKXSelect(ZBBSelect[2:0]), .ZBKXResult);
   end else assign ZBKXResult = 0;
 
-  // ZKND Unit
-  if (P.ZKND_SUPPORTED) begin: zknd
-    if (P.XLEN == 32) begin
-      zknd32 #(P.XLEN) ZKND32(.A(ABMU), .B(BBMU), .Funct7, .ZKNDSelect(ZBBSelect[2:0]), .ZKNDResult);
-    end
-    else begin
-      zknd64 #(P.XLEN) ZKND64(.A(ABMU), .B(BBMU), .Funct7, .RNUM(Rs2E[3:0]), .ZKNDSelect(ZBBSelect[2:0]), .ZKNDResult);
-    end
-  end else assign ZKNDResult = 0;
-
-  // ZKNE Unit
-  if (P.ZKNE_SUPPORTED) begin: zkne
-    if (P.XLEN == 32) begin
-      zkne32 #(P.XLEN) ZKNE32(.A(ABMU), .B(BBMU), .Funct7, .ZKNESelect(ZBBSelect[2:0]), .ZKNEResult);
-    end
-    else begin
-      zkne64 #(P.XLEN) ZKNE64(.A(ABMU), .B(BBMU), .Funct7, .RNUM(Rs2E[3:0]), .ZKNESelect(ZBBSelect[2:0]), .ZKNEResult);
-    end
-  end else assign ZKNEResult = 0;
-
+  // ZKND and ZKNE AES decryption and encryption
+  if (P.ZKND_SUPPORTED | P.ZKNE_SUPPORTED)
+    if (P.XLEN == 32) zknde32 #(P) ZKN32(.A(ABMU), .B(BBMU), .Funct7, .round(Rs2E[3:0]), .ZKNSelect(ZBBSelect[3:0]), .ZKNDEResult); 
+    else              zknde64 #(P) ZKN64(.A(ABMU), .B(BBMU), .Funct7, .round(Rs2E[3:0]), .ZKNSelect(ZBBSelect[3:0]), .ZKNDEResult); 
+ 
   // ZKNH Unit
   if (P.ZKNH_SUPPORTED) begin: zknh
-    if (P.XLEN == 32) begin
-      zknh32 ZKNH32(.A(ABMU), .B(BBMU), .ZKNHSelect(ZBBSelect), .ZKNHResult(ZKNHResult));
-    end
-    else begin
-      zknh64 ZKNH64(.A(ABMU), .B(BBMU), .ZKNHSelect(ZBBSelect), .ZKNHResult(ZKNHResult));
-    end
+    if (P.XLEN == 32) zknh32 ZKNH32(.A(ABMU), .B(BBMU), .ZKNHSelect(ZBBSelect), .ZKNHResult(ZKNHResult));
+    else              zknh64 ZKNH64(.A(ABMU), .B(BBMU), .ZKNHSelect(ZBBSelect), .ZKNHResult(ZKNHResult));
   end else assign ZKNHResult = 0;
 
   // Result Select Mux
@@ -154,9 +133,8 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
       4'b0011: ALUResult = ZBCResult;
       4'b0100: ALUResult = ZBKBResult;
       4'b0110: ALUResult = ZBKXResult;
-      4'b0111: ALUResult = ZKNDResult; 
-      4'b1000: ALUResult = ZKNEResult;
-      4'b1001: ALUResult = ZKNHResult;
+      4'b0111: ALUResult = ZKNDEResult; 
+      4'b1000: ALUResult = ZKNHResult;
       default: ALUResult = PreALUResult;
     endcase
 endmodule

@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// zipper.sv
+// sha512sum0r.sv
 //
-// Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
-// Created: 9 October 2023
+// Written: ryan.swann@okstate.edu, kelvin.tran@okstate.edu, james.stine@okstate.edu
+// Created: 6 February 2024
 //
-// Purpose: RISCV kbitmanip zip operation unit
+// Purpose: sha512sum0r instruction: RV32 SHA2-512 Sum0 instruction
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,21 +25,25 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module zipper #(parameter WIDTH=64) (
-   input  logic [WIDTH-1:0] A,
-   input  logic 	          ZipSelect,
-   output logic [WIDTH-1:0] ZipResult
+module sha512sum0r(
+   input  logic [31:0] rs1, 
+   input  logic [31:0]  rs2,
+   output logic [31:0] DataOut
 );
    
-   logic [WIDTH-1:0] 	     zip, unzip;
-   genvar 		     i;
+   logic [31:0] 		       shift25, shift30, shift28; // rs1 shifts
+   logic [31:0] 		       shift7,  shift2,  shift4;  // rs2 shifts
    
-   for (i=0; i<WIDTH/2; i+=1) begin: loop
-      assign zip[2*i]           = A[i];
-      assign zip[2*i + 1]       = A[i + WIDTH/2];      
-      assign unzip[i]           = A[2*i];
-      assign unzip[i + WIDTH/2] = A[2*i + 1];
-   end
+   // Shift rs1
+   assign shift25 = rs1 << 25;
+   assign shift30 = rs1 << 30;
+   assign shift28 = rs1 >> 28;
    
-   mux2 #(WIDTH) ZipMux(zip, unzip, ZipSelect, ZipResult);   
+   // Shift rs2
+   assign shift7 = rs2 >> 7;
+   assign shift2 = rs2 >> 2;
+   assign shift4 = rs2 << 4;
+   
+   // Set output to XOR of shifted values
+   assign DataOut = shift25 ^ shift30 ^ shift28 ^ shift7 ^ shift2 ^ shift4;
 endmodule

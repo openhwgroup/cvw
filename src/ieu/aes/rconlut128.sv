@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// zipper.sv
+// rconlut128.sv
 //
-// Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
-// Created: 9 October 2023
+// Written: ryan.swann@okstate.edu, james.stine@okstate.edu
+// Created: 20 February 2024
 //
-// Purpose: RISCV kbitmanip zip operation unit
+// Purpose: rcon lookup for aes64ks1i instruction
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,21 +25,24 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module zipper #(parameter WIDTH=64) (
-   input  logic [WIDTH-1:0] A,
-   input  logic 	          ZipSelect,
-   output logic [WIDTH-1:0] ZipResult
+module rconlut128(
+	input  logic [3:0] rd,
+	output logic [7:0] rconOut
 );
-   
-   logic [WIDTH-1:0] 	     zip, unzip;
-   genvar 		     i;
-   
-   for (i=0; i<WIDTH/2; i+=1) begin: loop
-      assign zip[2*i]           = A[i];
-      assign zip[2*i + 1]       = A[i + WIDTH/2];      
-      assign unzip[i]           = A[2*i];
-      assign unzip[i + WIDTH/2] = A[2*i + 1];
-   end
-   
-   mux2 #(WIDTH) ZipMux(zip, unzip, ZipSelect, ZipResult);   
+	
+   always_comb
+	case(rd)
+	  4'h0 : rconOut = 8'h01;
+	  4'h1 : rconOut = 8'h02;
+	  4'h2 : rconOut = 8'h04;
+	  4'h3 : rconOut = 8'h08;
+	  4'h4 : rconOut = 8'h10;
+	  4'h5 : rconOut = 8'h20;
+	  4'h6 : rconOut = 8'h40;
+	  4'h7 : rconOut = 8'h80;
+	  4'h8 : rconOut = 8'h1b;
+	  4'h9 : rconOut = 8'h36;
+	  4'hA : rconOut = 8'h00;
+	  default : rconOut = 8'h00;
+	endcase	
 endmodule

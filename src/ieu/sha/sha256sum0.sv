@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// zipper.sv
+// sha256sum0.sv
 //
 // Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
-// Created: 9 October 2023
+// Created: 20 February 2024
 //
-// Purpose: RISCV kbitmanip zip operation unit
+// Purpose: sha256sum0 instruction: : SHA2-256 Sum0
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,21 +25,21 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module zipper #(parameter WIDTH=64) (
-   input  logic [WIDTH-1:0] A,
-   input  logic 	          ZipSelect,
-   output logic [WIDTH-1:0] ZipResult
+module sha256sum0 #(parameter WIDTH=32) (
+   input  logic [WIDTH-1:0] rs1,
+   output logic [WIDTH-1:0] result
 );
    
-   logic [WIDTH-1:0] 	     zip, unzip;
-   genvar 		     i;
+   logic [31:0] 	     ror2, ror13, ror22, exts;
+  
+   assign ror2  = {rs1[1:0],  rs1[31:2]};
+   assign ror13 = {rs1[12:0], rs1[31:13]};
+   assign ror22 = {rs1[21:0], rs1[31:22]};
    
-   for (i=0; i<WIDTH/2; i+=1) begin: loop
-      assign zip[2*i]           = A[i];
-      assign zip[2*i + 1]       = A[i + WIDTH/2];      
-      assign unzip[i]           = A[2*i];
-      assign unzip[i + WIDTH/2] = A[2*i + 1];
-   end
-   
-   mux2 #(WIDTH) ZipMux(zip, unzip, ZipSelect, ZipResult);   
+   // Assign output to xor of 3 rotates
+   assign exts = ror2 ^ ror13 ^ ror22;
+
+   // Sign-extend for RV64
+   if (WIDTH==32) assign result = exts;
+   else           assign result = {{32{exts[31]}}, exts};
 endmodule

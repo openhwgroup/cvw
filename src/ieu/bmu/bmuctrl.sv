@@ -126,7 +126,7 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
         17'b0110011_0000101_010: BMUControlsD = `BMUCTRLW'b000_0011_0001_1_0_0_1_0_0_0_0_0;  // clmulr
         17'b0110011_0000101_0??: BMUControlsD = `BMUCTRLW'b000_0011_0000_1_0_0_1_0_0_0_0_0;  // ZBC instruction
       endcase
-    if (P.ZBKC_SUPPORTED | P.ZBC_SUPPORTED) begin   // ZBKC
+    if (P.ZBKC_SUPPORTED | P.ZBC_SUPPORTED) begin   
       casez({OpD, Funct7D, Funct3D})
         17'b0110011_0000101_001: BMUControlsD = `BMUCTRLW'b000_0011_0000_1_0_0_1_0_0_0_0_0;  // clmul
         17'b0110011_0000101_011: BMUControlsD = `BMUCTRLW'b000_0011_0001_1_0_0_1_0_0_0_0_0;  // clmulh
@@ -165,10 +165,10 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
     
     if (P.ZBKB_SUPPORTED) begin // ZBKB Bitmanip
       casez({OpD,Funct7D, Funct3D})
-        17'b0110011_0000100_100: BMUControlsD = `BMUCTRLW'b000_0100_0001_1_0_0_1_0_0_0_0_0; // pack
-        17'b0110011_0000100_111: BMUControlsD = `BMUCTRLW'b000_0100_0001_1_0_0_1_0_0_0_0_0;  //packh
+        17'b0110011_0000100_100: BMUControlsD = `BMUCTRLW'b000_0100_0001_1_0_0_1_0_0_0_0_0;  // pack
+        17'b0110011_0000100_111: BMUControlsD = `BMUCTRLW'b000_0100_0001_1_0_0_1_0_0_0_0_0;  // packh
         17'b0010011_0110100_101: if (Rs2D == 5'b00111)
-                                 BMUControlsD = `BMUCTRLW'b000_0100_0000_1_1_0_1_0_0_0_0_0;  //brev8
+                                 BMUControlsD = `BMUCTRLW'b000_0100_0000_1_1_0_1_0_0_0_0_0;  // brev8
       endcase
       if (P.XLEN==32)
         casez({OpD, Funct7D, Funct3D})
@@ -215,68 +215,65 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
     if (P.ZKND_SUPPORTED) begin //ZKND
       if (P.XLEN==32)
         casez({OpD, Funct7D, Funct3D})
-          17'b0110011_??10101_000: BMUControlsD = `BMUCTRLW'b000_0111_0000_1_0_0_1_0_0_0_0_0;  // aes32dsi - final round decrypt
-          17'b0110011_??10111_000: BMUControlsD = `BMUCTRLW'b000_0111_0001_1_0_0_1_0_0_0_0_0;  // aes32dsmi - mid round decrypt
+          17'b0110011_??10101_000: BMUControlsD = `BMUCTRLW'b000_0111_0100_1_0_0_1_0_0_0_0_0;  // aes32dsi - final round decrypt
+          17'b0110011_??10111_000: BMUControlsD = `BMUCTRLW'b000_0111_0000_1_0_0_1_0_0_0_0_0;  // aes32dsmi - mid round decrypt
         endcase
       else if (P.XLEN==64)
         casez({OpD, Funct7D, Funct3D})
-          17'b0110011_0011101_000: BMUControlsD = `BMUCTRLW'b000_0111_0000_1_0_0_1_0_0_0_0_0;  // aes64ds - decrypt final round
-          17'b0110011_0011111_000: BMUControlsD = `BMUCTRLW'b000_0111_0001_1_0_0_1_0_0_0_0_0;  // aes64dsm - decrypt mid round
+          17'b0110011_0011101_000: BMUControlsD = `BMUCTRLW'b000_0111_0100_1_0_0_1_0_0_0_0_0;  // aes64ds - decrypt final round
+          17'b0110011_0011111_000: BMUControlsD = `BMUCTRLW'b000_0111_0000_1_0_0_1_0_0_0_0_0;  // aes64dsm - decrypt mid round
           17'b0010011_0011000_001: if (Rs2D == 5'b00000)
-                                   BMUControlsD = `BMUCTRLW'b000_0111_0010_1_1_0_1_0_0_0_0_0;  // aes64im - decrypt keyschdule mixcolumns
+                                   BMUControlsD = `BMUCTRLW'b000_0111_1000_1_1_0_1_0_0_0_0_0;  // aes64im - decrypt keyschdule mixcolumns
         endcase
     end
 
     if (P.ZKNE_SUPPORTED) begin //ZKNE
       if (P.XLEN==32)
         casez({OpD, Funct7D, Funct3D})
-          17'b0110011_??10001_000: BMUControlsD = `BMUCTRLW'b000_1000_0000_1_0_0_1_0_0_0_0_0;  // aes32esi - final round encrypt
-          17'b0110011_??10011_000: BMUControlsD = `BMUCTRLW'b000_1000_0001_1_0_0_1_0_0_0_0_0;  // aes32esmi - mid round encrypt
+          17'b0110011_??10001_000: BMUControlsD = `BMUCTRLW'b000_0111_0101_1_0_0_1_0_0_0_0_0;  // aes32esi - final round encrypt
+          17'b0110011_??10011_000: BMUControlsD = `BMUCTRLW'b000_0111_0001_1_0_0_1_0_0_0_0_0;  // aes32esmi - mid round encrypt
         endcase
       else if (P.XLEN==64)
         casez({OpD, Funct7D, Funct3D})
-          17'b0110011_0011001_000: BMUControlsD = `BMUCTRLW'b000_1000_0000_1_0_0_1_0_0_0_0_0;  // aes64es - encrypt final round
-          17'b0110011_0011011_000: BMUControlsD = `BMUCTRLW'b000_1000_0001_1_0_0_1_0_0_0_0_0;  // aes64esm - encrypt mid round
+          17'b0110011_0011001_000: BMUControlsD = `BMUCTRLW'b000_0111_0101_1_0_0_1_0_0_0_0_0;  // aes64es - encrypt final round
+          17'b0110011_0011011_000: BMUControlsD = `BMUCTRLW'b000_0111_0001_1_0_0_1_0_0_0_0_0;  // aes64esm - encrypt mid round
         endcase
     end  
     
-    if (P.ZKND_SUPPORTED | P.ZKNE_SUPPORTED) begin // ZKND and ZKNE shared instructions
+    if ((P.ZKND_SUPPORTED | P.ZKNE_SUPPORTED) & P.XLEN == 64) begin // ZKND and ZKNE shared instructions
       casez({OpD, Funct7D, Funct3D})
         17'b0010011_0011000_001: if (Rs2D[4] == 1'b1)
-                                   BMUControlsD = `BMUCTRLW'b000_0111_0011_1_0_0_1_0_0_0_0_0;  // aes64ks1i - key schedule istr1 ... Don't know why this works here only ... P.XLEN is not 64 bits?
+                                   BMUControlsD = `BMUCTRLW'b000_0111_0010_1_0_0_1_0_0_0_0_0;  // aes64ks1i - key schedule istr1
+          17'b0110011_0111111_000: BMUControlsD = `BMUCTRLW'b000_0111_0011_1_0_0_1_0_0_0_0_0;  // aes64ks2 - key schedule istr2
       endcase
-      if (P.XLEN==64)
-        casez({OpD, Funct7D, Funct3D})
-          17'b0110011_0111111_000: BMUControlsD = `BMUCTRLW'b000_0111_0100_1_0_0_1_0_0_0_0_0;  // aes64ks2 - key schedule istr2
-        endcase
     end
 
     if (P.ZKNH_SUPPORTED) begin // ZKNH
       casez({OpD, Funct7D, Funct3D})
         17'b0010011_0001000_001: 
-          if      (Rs2D == 5'b00010)   BMUControlsD = `BMUCTRLW'b000_1001_0000_1_0_0_1_0_0_0_0_0;  // sha256sig0
-          else if (Rs2D == 5'b00011)   BMUControlsD = `BMUCTRLW'b000_1001_0001_1_0_0_1_0_0_0_0_0;  // sha256sig1
-          else if (Rs2D == 5'b00000)   BMUControlsD = `BMUCTRLW'b000_1001_0010_1_0_0_1_0_0_0_0_0;  // sha256sum0
-          else if (Rs2D == 5'b00001)   BMUControlsD = `BMUCTRLW'b000_1001_0011_1_0_0_1_0_0_0_0_0;  // sha256sum1
+          if      (Rs2D == 5'b00010)   BMUControlsD = `BMUCTRLW'b000_1000_0000_1_0_0_1_0_0_0_0_0;  // sha256sig0
+          else if (Rs2D == 5'b00011)   BMUControlsD = `BMUCTRLW'b000_1000_0001_1_0_0_1_0_0_0_0_0;  // sha256sig1
+          else if (Rs2D == 5'b00000)   BMUControlsD = `BMUCTRLW'b000_1000_0010_1_0_0_1_0_0_0_0_0;  // sha256sum0
+          else if (Rs2D == 5'b00001)   BMUControlsD = `BMUCTRLW'b000_1000_0011_1_0_0_1_0_0_0_0_0;  // sha256sum1
       endcase
 
       if (P.XLEN==32)
         casez({OpD, Funct7D, Funct3D})
-          17'b0110011_0101110_000:     BMUControlsD = `BMUCTRLW'b000_1001_0100_1_0_0_1_0_0_0_0_0;  // sha512sig0h
-          17'b0110011_0101010_000:     BMUControlsD = `BMUCTRLW'b000_1001_0101_1_0_0_1_0_0_0_0_0;  // sha512sig0l
-          17'b0110011_0101111_000:     BMUControlsD = `BMUCTRLW'b000_1001_0110_1_0_0_1_0_0_0_0_0;  // sha512sig1h
-          17'b0110011_0101011_000:     BMUControlsD = `BMUCTRLW'b000_1001_0111_1_0_0_1_0_0_0_0_0;  // sha512sig1l
-          17'b0110011_0101000_000:     BMUControlsD = `BMUCTRLW'b000_1001_1000_1_0_0_1_0_0_0_0_0;  // sha512sum0r
-          17'b0110011_0101001_000:     BMUControlsD = `BMUCTRLW'b000_1001_1001_1_0_0_1_0_0_0_0_0;  // sha512sum1r
+          17'b0110011_0101110_000:     BMUControlsD = `BMUCTRLW'b000_1000_0100_1_0_0_1_0_0_0_0_0;  // sha512sig0h
+          17'b0110011_0101010_000:     BMUControlsD = `BMUCTRLW'b000_1000_0101_1_0_0_1_0_0_0_0_0;  // sha512sig0l
+          17'b0110011_0101111_000:     BMUControlsD = `BMUCTRLW'b000_1000_0110_1_0_0_1_0_0_0_0_0;  // sha512sig1h
+          17'b0110011_0101011_000:     BMUControlsD = `BMUCTRLW'b000_1000_0111_1_0_0_1_0_0_0_0_0;  // sha512sig1l
+          17'b0110011_0101000_000:     BMUControlsD = `BMUCTRLW'b000_1000_1000_1_0_0_1_0_0_0_0_0;  // sha512sum0r
+          17'b0110011_0101001_000:     BMUControlsD = `BMUCTRLW'b000_1000_1001_1_0_0_1_0_0_0_0_0;  // sha512sum1r
         endcase
 
       else if (P.XLEN==64)
         casez({OpD, Funct7D, Funct3D})
           17'b0010011_0001000_001: 
-            if      (Rs2D == 5'b00110) BMUControlsD = `BMUCTRLW'b000_1001_1010_1_0_0_1_0_0_0_0_0;  // sha512sig0
-            else if (Rs2D == 5'b00111) BMUControlsD = `BMUCTRLW'b000_1001_1011_1_0_0_1_0_0_0_0_0;  // sha512sig1
-            else if (Rs2D == 5'b00100) BMUControlsD = `BMUCTRLW'b000_1001_1100_1_0_0_1_0_0_0_0_0;  // sha512sum0
-            else if (Rs2D == 5'b00101) BMUControlsD = `BMUCTRLW'b000_1001_1101_1_0_0_1_0_0_0_0_0;  // sha512sum1
+            if      (Rs2D == 5'b00110) BMUControlsD = `BMUCTRLW'b000_1000_0100_1_0_0_1_0_0_0_0_0;  // sha512sig0
+            else if (Rs2D == 5'b00111) BMUControlsD = `BMUCTRLW'b000_1000_0101_1_0_0_1_0_0_0_0_0;  // sha512sig1
+            else if (Rs2D == 5'b00100) BMUControlsD = `BMUCTRLW'b000_1000_0110_1_0_0_1_0_0_0_0_0;  // sha512sum0
+            else if (Rs2D == 5'b00101) BMUControlsD = `BMUCTRLW'b000_1000_0111_1_0_0_1_0_0_0_0_0;  // sha512sum1
         endcase
     end
   end

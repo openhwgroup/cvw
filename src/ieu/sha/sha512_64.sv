@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// zknh64.sv
+// sha512_64.sv
 //
 // Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
 // Created: 13 February 2024
 //
-// Purpose: RISC-V ZKNH 64-Bit top level unit: RV64 NIST Hash
+// Purpose: RISC-V ZKNH 512-bit SHA: select shifted inputs and XOR3
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,17 +25,42 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module zknh64 (
-   input  logic [63:0] A, B, 
-   input  logic [3:0]  ZKNHSelect,
-	output logic [63:0] ZKNHResult
+module sha512_64 (
+   input  logic [63:0] A,
+   input  logic [1:0]  ZKNHSelect,
+   output logic [63:0] result
 );
 
-   logic [31:0]         sha256_32;
-   logic [63:0] 		   sha256res, sha512res;   
+   logic [63:0] x[4][3];
+   logic [63:0] y[3];
    
-   sha256 sha256(A[31:0], ZKNHSelect[1:0], sha256_32);                    // 256-bit SHA support: sha256{sig0/sig1/sum0/sum1}
-   assign sha256res = {{32{sha256_32[31]}}, sha256_32};                   // sign-extend 256-bit result from 32 to 64 bits
-   sha512_64 sha512(A, ZKNHSelect[1:0], sha512res);                       // 512-bit SHA support: sha512{sig0/sig1/sum0/sum1}
-   mux2 #(64) resultmux(sha256res, sha512res, ZKNHSelect[2], ZKNHResult); // SHA256 vs. SHA512 result mux
+   // sha512{sig0/sig1/sum0/sum1} select shifted operands for 64-bit xor3
+
+   // sha512sig0
+   assign x[0][0] = {A[0],   A[63:1]};
+   assign x[0][1] = {A[7:0], A[63:8]};
+   assign x[0][2] = A >> 7;
+
+   // sha512sig1
+   assign x[1][0] = {A[18:0], A[63:19]};
+   assign x[1][1] = {A[60:0], A[63:61]};
+   assign x[1][2] = A >> 6;
+
+   // sha512sum0
+   assign x[2][0] = {A[27:0], A[63:28]};
+   assign x[2][1] = {A[33:0], A[63:34]};
+   assign x[2][2] = {A[38:0], A[63:39]};
+
+   // sha512sum1
+   assign x[3][0] = {A[13:0], A[63:14]};
+   assign x[3][1] = {A[17:0], A[63:18]};
+   assign x[3][2] = {A[40:0], A[63:41]};
+
+   // 64-bit muxes to select inputs to xor3 for sha256 
+   assign y[0] = x[ZKNHSelect[1:0]][0]; 
+   assign y[1] = x[ZKNHSelect[1:0]][1]; 
+   assign y[2] = x[ZKNHSelect[1:0]][2]; 
+
+   // sha512 64-bit xor3
+   assign result = y[0] ^ y[1] ^ y[2];
 endmodule

@@ -4,7 +4,7 @@
 // Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
 // Created: 4 October 2023
 //
-// Purpose: RISC-V ZBKB top level unit
+// Purpose: RISC-V ZBKB top level unit: bit manipulation instructions for crypto
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,12 +25,13 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module zbkb #(parameter WIDTH=32) 
-   (input  logic [WIDTH-1:0] A, B, RevA,
-    input logic 	     W64,
-    input logic [2:0] 	     Funct3,
-    input logic [2:0] 	     ZBKBSelect,
-    output logic [WIDTH-1:0] ZBKBResult);
+module zbkb #(parameter WIDTH=32) (
+   input  logic [WIDTH-1:0] A, B, RevA,
+   input  logic 	          W64,
+   input  logic [2:0] 	    Funct3,
+   input  logic [2:0] 	    ZBKBSelect,
+   output logic [WIDTH-1:0] ZBKBResult
+);
    
    logic [WIDTH-1:0] 	     ByteResult;   // rev8, brev8
    logic [WIDTH-1:0] 	     PackResult;   // pack, packh, packw (RB64 only)
