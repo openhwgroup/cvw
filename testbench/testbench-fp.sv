@@ -116,7 +116,7 @@ module testbenchfp;
    logic [2:0] 			Funct3M;
    logic 			FlushE;
    logic 			IFDivStartE;
-   logic      IDivStartE;
+   logic      IDivStart;
    logic 			FDivDoneE;
    logic [P.NE+1:0] 		UeM;
    logic [P.DIVb:0] 		UmM;
@@ -635,7 +635,7 @@ module testbenchfp;
          end
       end
       if (P.XLEN == 64 & P.IDIV_ON_FPU) begin
-        if (TEST === "intrem" | TEST === "intdivrem" | TEST === "fdivremsqrt") begin // if integer remainder is being tested
+        if (TEST === "intrem" | TEST === "intdivrem" | TEST === "afdivremsqrt") begin // if integer remainder is being tested
           Tests = {Tests, intrem};
           OpCtrl = {OpCtrl, `INTREM_OPCTRL};
           WriteInt = {WriteInt, 1'b0};
@@ -797,7 +797,7 @@ module testbenchfp;
                              .Funct3E(Funct3E), .IntDivE(1'b0), .FIntDivResultM(FIntDivResultM),
                              .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE));
    end
-   if (TEST === "fdivremsqrt" | TEST === "intdiv" | TEST === "intrem" | TEST === "intdivu" | TEST ==="intremu" | TEST ==="intremw" | TEST ==="intremuw" | TEST ==="intdivw" | TEST ==="intdivuw" | TEST ==="intdivrem") begin: divremsqrt
+   if (TEST === "afdivremsqrt" | TEST === "intdiv" | TEST === "intrem" | TEST === "intdivu" | TEST ==="intremu" | TEST ==="intremw" | TEST ==="intremuw" | TEST ==="intdivw" | TEST ==="intdivuw" | TEST ==="intdivrem") begin: divremsqrt
     drsu #(P) drsu(.clk, .reset, .XsE(Xs), .YsE(Ys), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
       .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal===`SQRT_OPCTRL&UnitVal===`DIVUNIT), .SqrtM(OpCtrlVal===`SQRT_OPCTRL&UnitVal===`DIVUNIT),
       .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), .PostProcSel(UnitVal[1:0]),
@@ -920,9 +920,10 @@ module testbenchfp;
         Start: begin
            if (UnitVal == `DIVUNIT)	  
              DivStart = 1'b1;
-           else if (UnitVal == `INTDIVUNIT)
+           else if (UnitVal == `INTDIVUNIT) begin
              IDivStart = 1'b1;
              IntDivE = 1'b1;
+           end
            else
              DivStart = 1'b0;	  
            nextstate = S2;
@@ -930,7 +931,7 @@ module testbenchfp;
         S2: begin
            DivStart = 1'b0;	  
            IDivStart = 1'b0;
-           if ((FDivBusyE|~DivDone)&(UnitVal == `DIVUNIT | UnitVal == 'INTDIVUNIT))
+           if ((FDivBusyE|~DivDone)&(UnitVal == `DIVUNIT | UnitVal == `INTDIVUNIT))
              nextstate = S2;
            else
              nextstate = Done;
@@ -939,7 +940,6 @@ module testbenchfp;
            DivStart = 1'b0;
            IDivStart = 1'b0;
            IntDivE = 1'b0;
-           W64 = 1'b0;
            nextstate = S0;
         end	
       endcase // case (state)
