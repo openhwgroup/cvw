@@ -35,8 +35,8 @@ module zkne32 #(parameter WIDTH=32) (
    logic [31:0] 	     aes32esiRes, aes32esmiRes;
    
    // RV32
-   aes32esi aes32esi (.bs(Funct7[6:5]), .rs1(A), .rs2(B), .DataOut(aes32esiRes));
-   aes32esmi aes32esmi (.bs(Funct7[6:5]), .rs1(A), .rs2(B), .DataOut(aes32esmiRes));
+   aes32esi  aes32esi(.bs(Funct7[6:5]), .rs1(A), .rs2(B), .DataOut(aes32esiRes));
+   aes32esmi aes32esmi(.bs(Funct7[6:5]), .rs1(A), .rs2(B), .DataOut(aes32esmiRes));
    
-   mux2 #(WIDTH) zknemux (aes32esiRes, aes32esmiRes, ZKNESelect[0], ZKNEResult);
+   mux2 #(WIDTH) zknemux(aes32esiRes, aes32esmiRes, ZKNESelect[0], ZKNEResult);
 endmodule

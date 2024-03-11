@@ -341,10 +341,14 @@ module instrNameDecTB(
                        else if (funct7 == 7'b1011011 & funct3 == 3'b000) name = "FMVP.Q.X";
                        else if (funct7 == 7'b1100001 & funct3 == 3'b001 & rs2 == 5'b01000) name = "FCVTMOD.W.D";
                        else                              name = "ILLEGAL";
+      10'b0000111_001: name = "FLH";
       10'b0000111_010: name = "FLW";
-      10'b0100111_010: name = "FSW";
       10'b0000111_011: name = "FLD";
+      10'b0000111_100: name = "FLQ";
+      10'b0100111_001: name = "FSH";
+      10'b0100111_010: name = "FSW";
       10'b0100111_011: name = "FSD";
+      10'b0100111_100: name = "FSQ";
       default:         name = "ILLEGAL";
     endcase
 endmodule

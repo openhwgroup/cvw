@@ -126,7 +126,7 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
         17'b0110011_0000101_010: BMUControlsD = `BMUCTRLW'b000_0011_0001_1_0_0_1_0_0_0_0_0;  // clmulr
         17'b0110011_0000101_0??: BMUControlsD = `BMUCTRLW'b000_0011_0000_1_0_0_1_0_0_0_0_0;  // ZBC instruction
       endcase
-    if (P.ZBKC_SUPPORTED | P.ZBC_SUPPORTED) begin   // ZBKC
+    if (P.ZBKC_SUPPORTED | P.ZBC_SUPPORTED) begin   
       casez({OpD, Funct7D, Funct3D})
         17'b0110011_0000101_001: BMUControlsD = `BMUCTRLW'b000_0011_0000_1_0_0_1_0_0_0_0_0;  // clmul
         17'b0110011_0000101_011: BMUControlsD = `BMUCTRLW'b000_0011_0001_1_0_0_1_0_0_0_0_0;  // clmulh
@@ -165,10 +165,10 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
     
     if (P.ZBKB_SUPPORTED) begin // ZBKB Bitmanip
       casez({OpD,Funct7D, Funct3D})
-        17'b0110011_0000100_100: BMUControlsD = `BMUCTRLW'b000_0100_0001_1_0_0_1_0_0_0_0_0; // pack
-        17'b0110011_0000100_111: BMUControlsD = `BMUCTRLW'b000_0100_0001_1_0_0_1_0_0_0_0_0;  //packh
+        17'b0110011_0000100_100: BMUControlsD = `BMUCTRLW'b000_0100_0001_1_0_0_1_0_0_0_0_0;  // pack
+        17'b0110011_0000100_111: BMUControlsD = `BMUCTRLW'b000_0100_0001_1_0_0_1_0_0_0_0_0;  // packh
         17'b0010011_0110100_101: if (Rs2D == 5'b00111)
-                                 BMUControlsD = `BMUCTRLW'b000_0100_0000_1_1_0_1_0_0_0_0_0;  //brev8
+                                 BMUControlsD = `BMUCTRLW'b000_0100_0000_1_1_0_1_0_0_0_0_0;  // brev8
       endcase
       if (P.XLEN==32)
         casez({OpD, Funct7D, Funct3D})
@@ -240,15 +240,12 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
         endcase
     end  
     
-    if (P.ZKND_SUPPORTED | P.ZKNE_SUPPORTED) begin // ZKND and ZKNE shared instructions
+    if ((P.ZKND_SUPPORTED | P.ZKNE_SUPPORTED) & P.XLEN == 64) begin // ZKND and ZKNE shared instructions
       casez({OpD, Funct7D, Funct3D})
         17'b0010011_0011000_001: if (Rs2D[4] == 1'b1)
                                    BMUControlsD = `BMUCTRLW'b000_0111_0011_1_0_0_1_0_0_0_0_0;  // aes64ks1i - key schedule istr1 ... Don't know why this works here only ... P.XLEN is not 64 bits?
-      endcase
-      if (P.XLEN==64)
-        casez({OpD, Funct7D, Funct3D})
           17'b0110011_0111111_000: BMUControlsD = `BMUCTRLW'b000_0111_0100_1_0_0_1_0_0_0_0_0;  // aes64ks2 - key schedule istr2
-        endcase
+      endcase
     end
 
     if (P.ZKNH_SUPPORTED) begin // ZKNH
