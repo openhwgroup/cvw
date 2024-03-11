@@ -904,19 +904,26 @@ module testbenchfp;
         Start: begin
            if (UnitVal == `DIVUNIT)	  
              DivStart = 1'b1;
+           else (UnitVal == `INTDIVUNIT)
+             IDivStart = 1'b1;
+             IntDivE = 1'b1;
            else
              DivStart = 1'b0;	  
            nextstate = S2;
         end
         S2: begin
            DivStart = 1'b0;	  
-           if ((FDivBusyE|~DivDone)&(UnitVal == `DIVUNIT))
+           IDivStart = 1'b0;
+           if ((FDivBusyE|~DivDone)&(UnitVal == `DIVUNIT | UnitVal == 'INTDIVUNIT))
              nextstate = S2;
            else
              nextstate = Done;
         end
         Done: begin
            DivStart = 1'b0;
+           IDivStart = 1'b0;
+           IntDivE = 1'b0;
+           W64 = 1'b0;
            nextstate = S0;
         end	
       endcase // case (state)
@@ -1210,9 +1217,8 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
             SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1:2*(P.Q_LEN)]; //***Replace with XLEN instead of DLEN for 32 bit test cases
             SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1:P.Q_LEN];
             Ans = TestVector[P.D_LEN-1:0];
+            // no flag checking for intdiv test cases
             AnsFlg = 5'bx;
-            IDivStart = 1'b1;
-            IntDivE = 1'b1;
             case (OpCtrl)
               `INTDIV_OPCTRL: begin
                 Funct3E = 3'b100;
@@ -1247,10 +1253,7 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
                 W64 = 1'b1;
               end
           endcase
-          IDivStart = 1'b0;
-          IntDivE = 1'b0;
-          W64 = 1'b0;
-          end
+         end
         `CMPUNIT:
           case (Fmt)        
             2'b11: begin // quad
