@@ -116,6 +116,7 @@ module testbenchfp;
    logic [2:0] 			Funct3M;
    logic 			FlushE;
    logic 			IFDivStartE;
+   logic      IDivStartE;
    logic 			FDivDoneE;
    logic [P.NE+1:0] 		UeM;
    logic [P.DIVb:0] 		UmM;
@@ -124,6 +125,7 @@ module testbenchfp;
    logic 			FlagMatch;                  // Check if IEEE flags match
    logic 			CheckNow;                   // Final check
    logic 			FMAop;                      // Is this a FMA operation?
+   logic      IntDivE;                    // Is Integer operation on FPU?
 
    // FSM for testing each item per clock
    typedef enum logic [2:0] {S0, Start, S2, Done} statetype;
@@ -894,6 +896,7 @@ module testbenchfp;
         `CMPUNIT: Res = CmpRes;
         `CVTINTUNIT: if (WriteIntVal) Res = IntRes; else Res = FpRes;
         `CVTFPUNIT: Res = FpRes;
+        `INTDIVUNIT: if (IntDivE) Res = IntRes; else Res = FpRes;
       endcase
 
       // select the flag to check
@@ -903,6 +906,7 @@ module testbenchfp;
         `CMPUNIT: ResFlg = CmpFlg;
         `CVTINTUNIT: ResFlg = Flg;
         `CVTFPUNIT: ResFlg = Flg;
+        `INTDIVUNIT: ResFlg = Flg;
       endcase 
 
       // Use four state test sequence to handle div properly.
@@ -916,7 +920,7 @@ module testbenchfp;
         Start: begin
            if (UnitVal == `DIVUNIT)	  
              DivStart = 1'b1;
-           else (UnitVal == `INTDIVUNIT)
+           else if (UnitVal == `INTDIVUNIT)
              IDivStart = 1'b1;
              IntDivE = 1'b1;
            else
