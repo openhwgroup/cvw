@@ -770,17 +770,6 @@ module testbenchfp;
                    .ASticky); 
    end
    
-   postprocess #(P) postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
-                                .OpCtrl(OpCtrlVal), .DivUm(Quot), .DivUe(DivCalcExp),
-                                .Xm(Xm), .Ym(Ym), .Zm(Zm), .CvtCe(CvtCalcExpE), .DivSticky(DivSticky), .FmaSs(Ss),
-                                .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResSubnormUf(CvtResSubnormUfE),
-                                .XZero(XZero), .YZero(YZero), .CvtShiftAmt(CvtShiftAmtE),
-                                .XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
-                                .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
-                                .FmaASticky(ASticky), .FmaSe(Se),
-                                .FmaSm(Sm), .FmaSCnt(SCnt), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
-                                .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
-   
    if (TEST === "cvtfp" | TEST === "cvtint" | TEST === "all") begin : fcvt
       fcvt #(P) fcvt (.Xs(Xs), .Xe(Xe), .Xm(Xm), .Int(SrcA), .ToInt(WriteIntVal), 
                       .XZero(XZero), .OpCtrl(OpCtrlVal), .IntZero,
@@ -806,6 +795,29 @@ module testbenchfp;
                              .Funct3E(Funct3E), .IntDivE(1'b0), .FIntDivResultM(FIntDivResultM),
                              .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE));
    end
+   if (TEST === "fdivremsqrt" | TEST === "intdiv" | TEST === "intrem" | TEST === "intdivu" | TEST ==="intremu" | TEST ==="intremw" | TEST ==="intremuw" | TEST ==="intdivw" | TEST ==="intdivuw" | TEST ==="intdivrem") begin: divremsqrt
+    drsu #(P) drsu(.clk, .reset, .XsE(Xs), .YsE(Ys), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
+      .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal===`SQRT_OPCTRL&UnitVal===`DIVUNIT), .SqrtM(OpCtrlVal===`SQRT_OPCTRL&UnitVal===`DIVUNIT),
+      .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), .PostProcSel(UnitVal[1:0]),
+      .XNaNE(XNaN), .YNaNE(YNaN), .OpCtrl(OpCtrlVal), .XSNaNE(XSNaN), .YSNaNE(YSNaN), .Frm(FrmVal), 
+      .FDivStartE(DivStart), .IDivStartE(IDivStart), .W64E(W64),
+      .StallM(1'b0), .FDivBusyE,
+      .FlushE(1'b0), .ForwardedSrcAE(SrcA), .ForwardedSrcBE(SrcB), .Funct3M(Funct3M),
+      .Funct3E(Funct3E), .IntDivE(IntDivE), 
+      .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE), .FResM(FpRes), .FIntDivResultM(IntRes), .FlgM(Flg));
+  end
+  else begin: postprocess
+    postprocess #(P) postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
+                .OpCtrl(OpCtrlVal), .DivQm(Quot), .DivQe(DivCalcExp),
+                .Xm(Xm), .Ym(Ym), .Zm(Zm), .CvtCe(CvtCalcExpE), .DivSticky(DivSticky), .FmaSs(Ss),
+                .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResSubnormUf(CvtResSubnormUfE),
+                .XZero(XZero), .YZero(YZero), .CvtShiftAmt(CvtShiftAmtE),
+                .XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
+                .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
+                .FmaASticky(ASticky), .FmaSe(Se),
+                .FmaSm(Sm), .FmaSCnt(SCnt), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
+                .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
+  end
 
    assign CmpFlg[3:0] = 0;
 

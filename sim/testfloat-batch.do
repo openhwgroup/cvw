@@ -29,7 +29,7 @@ vlib wkdir/work_${1}_${2}
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 # $num = the added words after the call
 
-vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/deriv/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench-fpdivremsqrt.sv ../src/fpu/*.sv ../src/fpu/*/*.sv ../src/generic/*.sv  ../src/generic/flop/*.sv -suppress 2583,7063,8607,2697,7033 
+vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/deriv/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench-fp.sv ../src/fpu/*.sv ../src/fpu/*/*.sv ../src/generic/*.sv  ../src/generic/flop/*.sv -suppress 2583,7063,8607,2697,7033 
 
 
 # Set WAV variable to avoid having any output to wave (to limit disk space)

@@ -25,7 +25,7 @@ vlib work
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 # $num = the added words after the call
-vlog +incdir+../config/deriv/$1 +incdir+../config/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench-fpdivremsqrt.sv ../src/fpu/*.sv ../src/fpu/*/*.sv ../src/generic/*.sv  ../src/generic/flop/*.sv -suppress 2583,7063,8607,2697 
+vlog +incdir+../config/deriv/$1 +incdir+../config/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench-fp.sv ../src/fpu/*.sv ../src/fpu/*/*.sv ../src/generic/*.sv  ../src/generic/flop/*.sv -suppress 2583,7063,8607,2697 
 
 # Change TEST_SIZE to only test certain FP width
 # values are QP, DP, SP, HP or all for all tests
@@ -47,6 +47,6 @@ if {$WAV eq 0} {
 
 #-- Run the Simulation 
 run -all
-noview testbench-fpdivremsqrt.sv
+noview testbench-fp.sv
 view wave
 
