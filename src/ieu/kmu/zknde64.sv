@@ -1,11 +1,11 @@
 ///////////////////////////////////////////
-// zkn64.sv
+// zknde64.sv
 //
 // Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
 // Created: 27 November 2023
 // Modified: 31 January 2024
 //
-// Purpose: NIST AES64 encryption and decryption
+// Purpose: NIST AES64 decryption and encryption 
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -26,7 +26,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module zkn64 import cvw::*; #(parameter cvw_t P) (
+module zknde64 import cvw::*; #(parameter cvw_t P) (
    input  logic [63:0] A, B,
    input  logic [6:0]  Funct7,
    input  logic [3:0]  round,

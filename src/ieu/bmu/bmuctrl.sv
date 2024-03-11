@@ -230,8 +230,8 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
     if (P.ZKNE_SUPPORTED) begin //ZKNE
       if (P.XLEN==32)
         casez({OpD, Funct7D, Funct3D})
-          17'b0110011_??10001_000: BMUControlsD = `BMUCTRLW'b000_1000_0100_1_0_0_1_0_0_0_0_0;  // aes32esi - final round encrypt
-          17'b0110011_??10011_000: BMUControlsD = `BMUCTRLW'b000_1000_0000_1_0_0_1_0_0_0_0_0;  // aes32esmi - mid round encrypt
+          17'b0110011_??10001_000: BMUControlsD = `BMUCTRLW'b000_1000_0101_1_0_0_1_0_0_0_0_0;  // aes32esi - final round encrypt
+          17'b0110011_??10011_000: BMUControlsD = `BMUCTRLW'b000_1000_0001_1_0_0_1_0_0_0_0_0;  // aes32esmi - mid round encrypt
         endcase
       else if (P.XLEN==64)
         casez({OpD, Funct7D, Funct3D})
