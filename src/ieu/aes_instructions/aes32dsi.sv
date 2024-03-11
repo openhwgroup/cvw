@@ -33,28 +33,13 @@ module aes32dsi(
 );
 
    logic [4:0] 			 shamt;
-   logic [31:0] 		    SboxIn32;
-   logic [7:0] 			 SboxIn;
-   logic [7:0] 			 SboxOut;
-   logic [31:0] 		    so;
-   logic [31:0] 		    sorotate;   
-   
-   // shamt = bs * 8
-   assign shamt = {bs, 3'b0};
-   
-   // Shift rs2 right by shamt and take the lower byte
-   assign SboxIn32 = (rs2 >> shamt);
-   assign SboxIn = SboxIn32[7:0];
-   
-   // Apply inverse sbox to si
-   aesinvsbox inv_sbox(SboxIn, SboxOut);
-   
-   // Pad output of inverse substitution box
-   assign so = {24'h0, SboxOut};
-   
-   // Rotate the substitution box output left by shamt (bs * 8)
-   assign sorotate = (so << shamt) | (so >> (32 - shamt)); 
-   
-   // Set result to "X(rs1)[31..0] ^ rol32(so, unsigned(shamt));"
-   assign DataOut = rs1 ^ sorotate;   
+   logic [7:0] 			 SboxIn, SboxOut;
+   logic [31:0] 		    so, sorotate;
+  
+   assign shamt = {bs, 3'b0};                               // shamt = bs * 8 (convert bytes to bits)
+   assign SboxIn = rs2[shamt +: 8];                         // Shift rs2 right by shamt and take the lower byte
+   aesinvsbox inv_sbox(SboxIn, SboxOut);                    // Apply inverse sbox 
+   assign so = {24'h0, SboxOut};                            // Pad output of inverse substitution box
+   assign sorotate = (so << shamt) | (so >> (32 - shamt));  // Rotate the substitution box output left by shamt (bs * 8)
+   assign DataOut = rs1 ^ sorotate;                         // Set result to "X(rs1)[31..0] ^ rol32(so, unsigned(shamt));"
 endmodule

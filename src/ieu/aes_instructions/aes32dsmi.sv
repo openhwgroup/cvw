@@ -33,7 +33,6 @@ module aes32dsmi(
 );
 
    logic [4:0] 			  shamt;
-   logic [31:0] 		     SboxIn32;
    logic [7:0] 			  SboxIn;
    logic [7:0] 			  SboxOut;
    logic [31:0] 		     so;
@@ -44,8 +43,7 @@ module aes32dsmi(
    assign shamt = {bs, 3'b0};
    
    // Shift rs2 right by shamt and take the lower byte
-   assign SboxIn32 = (rs2 >> shamt);
-   assign SboxIn = SboxIn32[7:0];
+   assign SboxIn = rs2[shamt +: 8];                         // Shift rs2 right by shamt and take the lower byte
    
    // Apply inverse sbox to si
    aesinvsbox inv_sbox(SboxIn, SboxOut);
