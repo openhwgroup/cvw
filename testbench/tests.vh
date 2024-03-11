@@ -994,15 +994,6 @@ string imperas32f[] = '{
     "rv32i_m/B/src/bseti-01.S"
   };
 
-  string arch32zbkb[] = '{
-    `RISCVARCHTEST,
-    "rv32i_m/K/src/brev8_32-01.S",  
-    "rv32i_m/K/src/pack-01.S",      
-    "rv32i_m/K/src/packh-01.S",     
-    "rv32i_m/K/src/unzip-01.S",      			  
-    "rv32i_m/K/src/zip-01.S"        
-  };
-
   string arch32zbkc[] = '{
     `RISCVARCHTEST,
     "rv32i_m/B/src/clmul-01.S",
@@ -1040,6 +1031,40 @@ string imperas32f[] = '{
     "rv32i_m/K/src/sha512sum0r-01.S",
     "rv32i_m/K/src/sha512sum1r-01.S"       
   };
+
+  string arch32zbkb[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/B/src/ror-01.S",  
+    "rv32i_m/B/src/rol-01.S",  
+    "rv32i_m/B/src/rori-01.S",  
+    "rv32i_m/B/src/andn-01.S",  
+    "rv32i_m/B/src/orn-01.S",  
+    "rv32i_m/B/src/xnor-01.S",  
+    "rv32i_m/B/src/rev8_32-01.S",  
+    "rv32i_m/K/src/pack-01.S",  
+    "rv32i_m/K/src/packh-01.S",  
+    "rv32i_m/K/src/brev8_32-01.S",  
+    "rv32i_m/K/src/zip-01.S",  
+    "rv32i_m/K/src/unzip-01.S"
+ };
+
+   string arch64zbkb[] = '{
+    `RISCVARCHTEST,
+    "rv64i_m/B/src/ror-01.S",  
+    "rv64i_m/B/src/rol-01.S",  
+    "rv64i_m/B/src/rori-01.S",  
+    "rv64i_m/B/src/rorw-01.S",  
+    "rv64i_m/B/src/rolw-01.S",  
+    "rv64i_m/B/src/roriw-01.S",  
+    "rv64i_m/B/src/andn-01.S",  
+    "rv64i_m/B/src/orn-01.S",  
+    "rv64i_m/B/src/xnor-01.S",  
+    "rv64i_m/B/src/rev8-01.S",  
+    "rv64i_m/K/src/pack-01.S",  
+    "rv64i_m/K/src/packh-01.S",  
+    "rv64i_m/K/src/packw-01.S",  
+    "rv64i_m/K/src/brev8-01.S"
+ };
 
   string arch64m[] = '{
     `RISCVARCHTEST,
@@ -1797,14 +1822,6 @@ string arch64zbs[] = '{
     "rv64i_m/B/src/binvi-01.S",
     "rv64i_m/B/src/bset-01.S",
     "rv64i_m/B/src/bseti-01.S"
-};
-
-string arch64zbkb[] = '{
-  `RISCVARCHTEST,
-  "rv64i_m/K/src/brev8-01.S",  
-  "rv64i_m/K/src/pack-01.S",      
-  "rv64i_m/K/src/packh-01.S",
-  "rv64i_m/K/src/packw-01.S"
 };
 
 string arch64zbkc[] = '{
