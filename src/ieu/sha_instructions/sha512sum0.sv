@@ -30,9 +30,7 @@ module sha512sum0(
    output logic [63:0] result
 );
 
-   logic [63:0] ror28;
-   logic [63:0] ror34;
-   logic [63:0] ror39;
+   logic [63:0] ror28, ror34, ror39;
    
    assign ror28 = {rs1[27:0], rs1[63:28]};
    assign ror34 = {rs1[33:0], rs1[63:34]};

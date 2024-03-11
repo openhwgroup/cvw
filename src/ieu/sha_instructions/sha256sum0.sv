@@ -30,12 +30,9 @@ module sha256sum0 #(parameter WIDTH=32) (
    output logic [WIDTH-1:0] result
 );
    
-   logic [31:0] 	     ror2;
-   logic [31:0] 	     ror13;
-   logic [31:0] 	     ror22;
-   logic [31:0] 	     exts;
-   
-   assign ror2 = {rs1[1:0], rs1[31:2]};
+   logic [31:0] 	     ror2, ror13, ror22, exts;
+  
+   assign ror2  = {rs1[1:0],  rs1[31:2]};
    assign ror13 = {rs1[12:0], rs1[31:13]};
    assign ror22 = {rs1[21:0], rs1[31:22]};
    

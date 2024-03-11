@@ -30,11 +30,8 @@ module sha256sig0 #(parameter WIDTH=32) (
   output logic [WIDTH-1:0] result
 );
 
-   logic [31:0] 	   ror7;
-   logic [31:0] 	   ror18;
-   logic [31:0] 	   sh3;
-   logic [31:0] 	   exts;
-   
+   logic [31:0] 	   ror7, ror18, sh3, exts;
+  
    assign ror7  = {rs1[6:0], rs1[31:7]};
    assign ror18 = {rs1[17:0], rs1[31:18]};
    assign sh3   = {3'b0, rs1[31:3]};

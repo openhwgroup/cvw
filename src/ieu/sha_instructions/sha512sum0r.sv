@@ -31,15 +31,8 @@ module sha512sum0r(
    output logic [31:0] DataOut
 );
    
-   // RS1 shifts
-   logic [31:0] 		       shift25;
-   logic [31:0] 		       shift30;
-   logic [31:0] 		       shift28;
-   
-   // RS2 shifts
-   logic [31:0] 		       shift7;
-   logic [31:0] 		       shift2;
-   logic [31:0] 		       shift4;
+   logic [31:0] 		       shift25, shift30, shift28; // rs1 shifts
+   logic [31:0] 		       shift7, shift2, shift4;    // rs2 shifts
    
    // Shift rs1
    assign shift25 = rs1 << 25;

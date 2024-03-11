@@ -31,19 +31,12 @@ module sha512sig1l(
    output logic [31:0] DataOut
 );
                   
-   // rs1 shift logic
-   logic [31:0] 		       shift3;
-   logic [31:0] 		       shift6;
-   logic [31:0] 		       shift19;
-   
-   // rs2 shift logics         
-   logic [31:0] 		       shift29;
-   logic [31:0] 		       shift26;
-   logic [31:0] 		       shift13;    
+   logic [31:0] 		       shift3, shift6, shift19; // rs1 shifts
+   logic [31:0] 		       shift29, shift26, shift13;
    
    // Shift rs1
-   assign shift3 = rs1 << 3;
-   assign shift6 = rs1 >> 6;
+   assign shift3  = rs1 << 3;
+   assign shift6  = rs1 >> 6;
    assign shift19 = rs1 >> 19;
    
    // Shift rs2

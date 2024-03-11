@@ -30,14 +30,11 @@ module sha256sig1 #(parameter WIDTH=32) (
   output logic [WIDTH-1:0] result
 );
    
-   logic [31:0] 	     ror17;
-   logic [31:0] 	     ror19;
-   logic [31:0] 	     sh10;
-   logic [31:0] 	     exts;
+   logic [31:0] 	     ror17, ror19, sh10, exts;
    
    assign ror17 = {rs1[16:0], rs1[31:17]};
    assign ror19 = {rs1[18:0], rs1[31:19]};
-   assign sh10 = {10'b0, rs1[31:10]};
+   assign sh10  = {10'b0, rs1[31:10]};
    
    // Assign output to xor of 3 rotates
    assign exts = ror17 ^ ror19 ^ sh10;

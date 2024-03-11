@@ -30,9 +30,7 @@ module sha512sig1(
    output logic [63:0] result
 );
 
-   logic [63:0] ror19;
-   logic [63:0] ror61;
-   logic [63:0] sh6;
+   logic [63:0] ror19, ror61, sh6;
    
    assign ror19 = {rs1[18:0], rs1[63:19]};
    assign ror61 = {rs1[60:0], rs1[63:61]};
