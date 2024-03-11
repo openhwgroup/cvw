@@ -31,30 +31,17 @@ module aes64ks1i(
    output logic [63:0] rd
 );                 
                  
-   logic [7:0] 			  rconPreShift;
-   logic [31:0] 		     rcon;
    logic 			        lastRoundFlag;
-   logic [31:0] 		     rs1Rotate;
-   logic [31:0] 		     tmp2;
-   logic [31:0] 		     SboxOut;
+   logic [7:0] 			  rcon8;
+   logic [31:0] 		     rcon, rs1Rotate, tmp2, SboxOut;
    
-   // Get rcon value from table
-   rconlut128 rc(roundnum, rconPreShift); 
-
-   // Shift RCON value
-   assign rcon = {24'b0, rconPreShift};    
-
-   // Flag will be set if roundnum = 0xA = 0b1010
-   assign lastRoundFlag = roundnum[3] & ~roundnum[2] & roundnum[1] & ~roundnum[0];    
-
-   // Get rotated value fo ruse in tmp2
-   assign rs1Rotate = {rs1[39:32], rs1[63:40]};
-
-   // Assign tmp2 to a mux based on lastRoundFlag
-   assign tmp2 = lastRoundFlag ? rs1[63:32] : rs1Rotate;    
-
-   // Substitute bytes of value obtained for tmp2 using Rijndael sbox
-   aessboxword sbox(tmp2, SboxOut);    
+  
+   rconlut128 rc(roundnum, rcon8);                        // Get rcon value from lookup table
+   assign rcon = {24'b0, rcon8};                          // Zero-pad RCON 
+   assign rs1Rotate = {rs1[39:32], rs1[63:40]};           // Get rotated value fo ruse in tmp2
+   assign lastRoundFlag = (roundnum == 4'b1010);          // round 10 is the last one 
+   assign tmp2 = lastRoundFlag ? rs1[63:32] : rs1Rotate;  // Don't rotate on the last round
+   aessboxword sbox(tmp2, SboxOut);                       // Substitute bytes of value obtained for tmp2 using Rijndael sbox
    assign rd[31:0] = SboxOut ^ rcon;
    assign rd[63:32] = SboxOut ^ rcon;	
 endmodule

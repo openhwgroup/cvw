@@ -33,25 +33,13 @@ module aes32esi(
 );                
                 
    logic [4:0] 			 shamt;
-   logic [7:0] 			 SboxIn;
-   logic [7:0] 			 SboxOut;
-   logic [31:0] 		    so;
-   logic [31:0] 		    sorotate;   
+   logic [7:0] 			 SboxIn, SboxOut;
+   logic [31:0] 		    so, sorotate;
     
-   // Shift bs by 3 to get shamt
-   assign shamt = {bs, 3'b0};
-   
-   assign SboxIn = rs2[shamt +: 8];                         // Shift rs2 right by shamt and take the lower byte
-   
-   // Substitute
-   aessbox subbox(SboxIn, SboxOut);
-   
-   // Pad sbox output
-   assign so = {24'h0, SboxOut};
-   
-   // Rotate so left by shamt
-   assign sorotate = (so << shamt) | (so >> (32 - shamt)); 
-   
-   // Set result X(rs1)[31..0] ^ rol32(so, unsigned(shamt));
-   assign DataOut = rs1 ^ sorotate;   
+   assign shamt = {bs, 3'b0};             // shamt = bs * 8 (convert bytes to bits)
+   assign SboxIn = rs2[shamt +: 8];       // select byte bs of rs2
+   aessbox subbox(SboxIn, SboxOut);       // Substitute
+   assign so = {24'h0, SboxOut};          // Pad sbox output
+   rotate sorot(so, shamt, sorotate);     // Rotate the substitution box output left by shamt (bs * 8)
+   assign DataOut = rs1 ^ sorotate;       // xor with running value
 endmodule

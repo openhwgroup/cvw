@@ -56,7 +56,6 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
   logic [P.XLEN-1:0]        ZKNHResult;              // ZKNH Result
   logic [P.XLEN-1:0]        MaskB;                   // BitMask of B
   logic [P.XLEN-1:0]        RevA;                    // Bit-reversed A
-  logic                     Rotate;                  // Indicates if it is Rotate instruction
   logic                     Mask;                    // Indicates if it is ZBS instruction
   logic                     PreShift;                // Inidicates if it is sh1add, sh2add, sh3add instruction
   logic [1:0]               PreShiftAmt;             // Amount to Pre-Shift A 

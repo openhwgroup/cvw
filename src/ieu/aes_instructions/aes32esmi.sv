@@ -33,29 +33,14 @@ module aes32esmi(
 );                
                 
    logic [4:0] 			  shamt;
-   logic [7:0] 			  SboxIn;
-   logic [7:0] 			  SboxOut;
-   logic [31:0] 		     so;
-   logic [31:0] 		     mixed;
-   logic [31:0] 		     mixedrotate;  
+   logic [7:0] 			  SboxIn, SboxOut;
+   logic [31:0] 		     so, mixed, mixedrotate;
    
-   // Shift bs by 3 to get shamt
-   assign shamt = {bs, 3'b0};
-   
-   assign SboxIn = rs2[shamt +: 8];                         // Shift rs2 right by shamt and take the lower byte
-  
-   // Substitute
-   aessbox sbox(SboxIn, SboxOut);
-   
-   // Pad sbox output
-   assign so = {24'h0, SboxOut};
-   
-   // Mix Word using aesmixword component
-   aesmixcolumns mwd(so, mixed);
-   
-   // Rotate so left by shamt
-   assign mixedrotate = (mixed << shamt) | (mixed >> (32 - shamt)); 
-   
-   // Set result X(rs1)[31..0] ^ rol32(mixed, unsigned(shamt));
-   assign DataOut = rs1 ^ mixedrotate;   
+   assign shamt = {bs, 3'b0};               // shamt = bs * 8 (convert bytes to bits)
+   assign SboxIn = rs2[shamt +: 8];         // select byte bs of rs2
+   aessbox sbox(SboxIn, SboxOut);           // Substitute
+   assign so = {24'h0, SboxOut};            // Pad sbox output
+   aesmixcolumns mwd(so, mixed);            // Mix Word using aesmixword component
+   rotate mrot(mixed, shamt, mixedrotate);  // Rotate the mixcolumns output left by shamt (bs * 8)
+   assign DataOut = rs1 ^ mixedrotate;      // xor with running value
 endmodule

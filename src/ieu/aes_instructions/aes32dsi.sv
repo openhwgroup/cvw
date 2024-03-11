@@ -36,10 +36,10 @@ module aes32dsi(
    logic [7:0] 			 SboxIn, SboxOut;
    logic [31:0] 		    so, sorotate;
   
-   assign shamt = {bs, 3'b0};                               // shamt = bs * 8 (convert bytes to bits)
-   assign SboxIn = rs2[shamt +: 8];                         // Shift rs2 right by shamt and take the lower byte
-   aesinvsbox inv_sbox(SboxIn, SboxOut);                    // Apply inverse sbox 
-   assign so = {24'h0, SboxOut};                            // Pad output of inverse substitution box
-   assign sorotate = (so << shamt) | (so >> (32 - shamt));  // Rotate the substitution box output left by shamt (bs * 8)
-   assign DataOut = rs1 ^ sorotate;                         // Set result to "X(rs1)[31..0] ^ rol32(so, unsigned(shamt));"
+   assign shamt = {bs, 3'b0};                // shamt = bs * 8 (convert bytes to bits)
+   assign SboxIn = rs2[shamt +: 8];          // select byte bs of rs2
+   aesinvsbox inv_sbox(SboxIn, SboxOut);     // Apply inverse sbox 
+   assign so = {24'h0, SboxOut};             // Pad output of inverse substitution box
+   rotate sorot(so, shamt, sorotate);        // Rotate the substitution box output left by shamt (bs * 8)
+   assign DataOut = rs1 ^ sorotate;          // xor with running value
 endmodule

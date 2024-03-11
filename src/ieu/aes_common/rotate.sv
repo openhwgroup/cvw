@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// aes32dsmi.sv
+// rotate.sv
 //
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
 //
-// Purpose: aes32dsmi instruction: RV32 middle round AES decryption
+// Purpose: rotate a by shamt
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,22 +25,11 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aes32dsmi(
-   input  logic [1:0]  bs,
-   input  logic [31:0] rs1,
-   input  logic [31:0] rs2,
-   output logic [31:0] DataOut
-);
+module rotate #(parameter WIDTH=32) (
+   input  logic [WIDTH-1:0]        a,
+   input  logic [$clog2(WIDTH)-1:0] shamt,
+   output logic [WIDTH-1:0]        y
+);                
 
-   logic [4:0] 			  shamt;
-   logic [7:0] 			  SboxIn, SboxOut;
-   logic [31:0] 		     so, mixed, mixedrotate;
-   
-   assign shamt = {bs, 3'b0};                     // shamt = bs * 8 (convert bytes to bits)
-   assign SboxIn = rs2[shamt +: 8];               // select byte bs of rs2
-   aesinvsbox inv_sbox(SboxIn, SboxOut);          // Apply inverse sbox to si
-   assign so = {24'h0, SboxOut};                  // Pad output of inverse substitution box
-   aesinvmixcolumns mix(so, mixed);               // Run so through the mixword AES function
-   rotate mrot(mixed, shamt, mixedrotate);        // Rotate the mixcolumns output left by shamt (bs * 8)
-   assign DataOut = rs1 ^ mixedrotate;            // xor with running value
+   assign y = (a << shamt) | (a >> (WIDTH-shamt)); 
 endmodule
