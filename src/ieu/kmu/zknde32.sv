@@ -39,7 +39,7 @@ module zknde32 import cvw::*; #(parameter cvw_t P) (
     logic [31:0]    ZKNEResult, ZKNDResult, rotin, rotout;             
 
     // Initial shamt and Sbox input selection steps shared between encrypt and decrypt
-    assign shamt = {Funct7[6:5], 3'b0};                     // shamt = bs * 8 (convert bytes to bits)
+    assign shamt = {Funct7[6:5], 3'b0};          // shamt = bs * 8 (convert bytes to bits)
     assign SboxIn = B[shamt +: 8];               // select byte bs of rs2
 
     // Handle logic specific to encrypt or decrypt
@@ -56,5 +56,5 @@ module zknde32 import cvw::*; #(parameter cvw_t P) (
 
     // final rotate and XOR steps shared between encrypt and decrypt
     rotate #(32) mrot(rotin, shamt, rotout);       // Rotate the mixcolumns output left by shamt (bs * 8)
-    assign ZKNDEResult = A ^ rotout;               // xor with running value
+    assign ZKNDEResult = A ^ rotout;               // xor with running value (A = rs1)
 endmodule
