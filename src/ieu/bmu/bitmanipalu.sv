@@ -52,7 +52,7 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
   logic [P.XLEN-1:0]        ZBKCResult;              // ZBKC Result
   logic [P.XLEN-1:0]        ZBKXResult;              // ZBKX Result      
   logic [P.XLEN-1:0]        ZKNHResult;              // ZKNH Result
-  logic [P.XLEN-1:0]        ZKNResult;               // ZKNE or ZKND Result   
+  logic [P.XLEN-1:0]        ZKNDEResult;             // ZKNE or ZKND Result   
   logic [P.XLEN-1:0]        MaskB;                   // BitMask of B
   logic [P.XLEN-1:0]        RevA;                    // Bit-reversed A
   logic                     Mask;                    // Indicates if it is ZBS instruction
@@ -120,14 +120,14 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
     if (P.ZKNE_SUPPORTED) aes32e aes32e(.bs(Funct7[6:5]), .rs1(ABMU), .rs2(BBMU), .finalround(ZBBSelect[2]), .result(ZKNEResult));
     // Select result if both decrypt and encrypt are supported
     if (P.ZKND_SUPPORTED & P.ZKNE_SUPPORTED) 
-      mux2 #(32) zknmux(ZKNDResult, ZKNEResult, ZBBSelect[0], ZKNResult); 
+      mux2 #(32) zknmux(ZKNDResult, ZKNEResult, ZBBSelect[0], ZKNDEResult); 
     else if (P.ZKND_SUPPORTED)
-      assign ZKNResult = ZKNDResult;
+      assign ZKNDEResult = ZKNDResult;
     else 
-      assign ZKNResult = ZKNEResult;
+      assign ZKNDEResult = ZKNEResult;
   end else 
     if (P.ZKND_SUPPORTED | P.ZKNE_SUPPORTED) begin
-      zknde64 #(P) ZKN64(.A(ABMU), .B(BBMU), .Funct7, .round(Rs2E[3:0]), .ZKNSelect(ZBBSelect[3:0]), .ZKNResult); 
+      zknde64 #(P) ZKN64(.A(ABMU), .B(BBMU), .Funct7, .round(Rs2E[3:0]), .ZKNSelect(ZBBSelect[3:0]), .ZKNDEResult); 
     end
 
   // ZKNH Unit
@@ -147,8 +147,8 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
       4'b0011: ALUResult = ZBCResult;
       4'b0100: ALUResult = ZBKBResult;
       4'b0110: ALUResult = ZBKXResult;
-      4'b0111: ALUResult = ZKNResult; 
-      4'b1000: ALUResult = ZKNResult;
+      4'b0111: ALUResult = ZKNDEResult; 
+      4'b1000: ALUResult = ZKNDEResult;
       4'b1001: ALUResult = ZKNHResult;
       default: ALUResult = PreALUResult;
     endcase

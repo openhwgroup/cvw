@@ -42,7 +42,7 @@ module aes64d(
    aesinvsboxword invsbox0(ShiftRowOut[31:0],  SboxOut[31:0]);
    aesinvsboxword invsbox1(ShiftRowOut[63:32], SboxOut[63:32]);
    
-    mux2 #(64) mixcolmux(SboxOut, rs1, aes64im, MixcolIn);
+   mux2 #(64) mixcolmux(SboxOut, rs1, aes64im, MixcolIn);
    
    // Apply inverse mixword to sbox outputs
    aesinvmixcolumns invmw0(MixcolIn[31:0], MixcolOut[31:0]);
