@@ -42,7 +42,7 @@ module aes32d(
    aesinvsbox inv_sbox(SboxIn, SboxOut);          // Apply inverse sbox to si
    assign so = {24'h0, SboxOut};                  // Pad output of inverse substitution box
    aesinvmixcolumns mix(so, mixed);               // Run so through the mixword AES function
-   mux2 #(32) rmux(mixed, so, finalround, rotin); // on final round, rotate so rather than mixed
+   mux2 #(32) rmux(mixed, so, finalround, rotin); // on final round, skip mixcolumns
    rotate #(32) rot(rotin, shamt, rotout);        // Rotate left by shamt (bs * 8)
-   assign result = rs1 ^ rotout;                 // xor with running value
+   assign result = rs1 ^ rotout;                  // xor with running value
 endmodule

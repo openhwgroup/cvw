@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// aes64es.sv
+// aes64e.sv
 //
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
 //
-// Purpose: aes64es instruction: RV64 final round encryption 
+// Purpose: aes64esm and aes64es instruction: RV64 middle and final round AES encryption 
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,18 +25,27 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aes64es(
-   input  logic [63:0] rs1,
-   input  logic [63:0] rs2,
-   output logic [63:0] DataOut
+module aes64e(
+    input  logic [63:0] rs1,
+    input  logic [63:0] rs2,
+    input  logic        finalround,
+    output logic [63:0] result
 );
+   
+    logic [127:0] ShiftRowOut;
+    logic [63:0]  SboxOut, MixcolOut;
                 
-   logic [127:0] 		   ShiftRowOut;
+    // AES shiftrow unit
+    aesshiftrow srow({rs2,rs1}, ShiftRowOut);
    
-   // AES shiftrow unit
-   aesshiftrow srow({rs2,rs1}, ShiftRowOut);
+    // Apply substitution box to 2 lower words
+    aessboxword sbox0(ShiftRowOut[31:0],  SboxOut[31:0]);
+    aessboxword sbox1(ShiftRowOut[63:32], SboxOut[63:32]);
    
-   // Apply substitution box to 2 lower words
-   aessboxword sbox0(ShiftRowOut[31:0],  DataOut[31:0]);
-   aessboxword sbox1(ShiftRowOut[63:32], DataOut[63:32]);       
+    // Apply mix columns operations
+    aesmixcolumns mw0(SboxOut[31:0], MixcolOut[31:0]);
+    aesmixcolumns mw1(SboxOut[63:32], MixcolOut[63:32]);    
+
+    // Skip mixcolumns on last round
+    mux2 #(64) resultmux(MixcolOut, SboxOut, finalround, result);
 endmodule

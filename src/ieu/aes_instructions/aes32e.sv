@@ -42,7 +42,7 @@ module aes32e(
    aessbox sbox(SboxIn, SboxOut);                 // Substitute
    assign so = {24'h0, SboxOut};                  // Pad sbox output
    aesmixcolumns mwd(so, mixed);                  // Mix Word using aesmixword component
-   mux2 #(32) rmux(mixed, so, finalround, rotin); // on final round, rotate so rather than mixed
+   mux2 #(32) rmux(mixed, so, finalround, rotin); // on final round, skip mixcolumns
    rotate #(32) mrot(rotin, shamt, rotout);       // Rotate the mixcolumns output left by shamt (bs * 8)
-   assign result = rs1 ^ rotout;                 // xor with running value
+   assign result = rs1 ^ rotout;                  // xor with running value
 endmodule
