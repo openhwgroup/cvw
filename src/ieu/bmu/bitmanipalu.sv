@@ -112,24 +112,10 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
   end else assign ZBKXResult = 0;
 
   // ZKND and ZKNE AES decryption and encryption
-  if (P.XLEN == 32) begin: zknde
-    logic [P.XLEN-1:0]        ZKNEResult;              // ZKNE Result   
-    logic [P.XLEN-1:0]        ZKNDResult;              // ZKND Result
-
-    if (P.ZKND_SUPPORTED) aes32d aes32d(.bs(Funct7[6:5]), .rs1(ABMU), .rs2(BBMU), .finalround(ZBBSelect[2]), .result(ZKNDResult));
-    if (P.ZKNE_SUPPORTED) aes32e aes32e(.bs(Funct7[6:5]), .rs1(ABMU), .rs2(BBMU), .finalround(ZBBSelect[2]), .result(ZKNEResult));
-    // Select result if both decrypt and encrypt are supported
-    if (P.ZKND_SUPPORTED & P.ZKNE_SUPPORTED) 
-      mux2 #(32) zknmux(ZKNDResult, ZKNEResult, ZBBSelect[0], ZKNDEResult); 
-    else if (P.ZKND_SUPPORTED)
-      assign ZKNDEResult = ZKNDResult;
-    else 
-      assign ZKNDEResult = ZKNEResult;
-  end else 
-    if (P.ZKND_SUPPORTED | P.ZKNE_SUPPORTED) begin
-      zknde64 #(P) ZKN64(.A(ABMU), .B(BBMU), .Funct7, .round(Rs2E[3:0]), .ZKNSelect(ZBBSelect[3:0]), .ZKNDEResult); 
-    end
-
+  if (P.ZKND_SUPPORTED | P.ZKNE_SUPPORTED)
+    if (P.XLEN == 32) zknde32 #(P) ZKN32(.A(ABMU), .B(BBMU), .Funct7, .round(Rs2E[3:0]), .ZKNSelect(ZBBSelect[3:0]), .ZKNDEResult); 
+    else              zknde64 #(P) ZKN64(.A(ABMU), .B(BBMU), .Funct7, .round(Rs2E[3:0]), .ZKNSelect(ZBBSelect[3:0]), .ZKNDEResult); 
+ 
   // ZKNH Unit
   if (P.ZKNH_SUPPORTED) begin: zknh
     if (P.XLEN == 32) zknh32 ZKNH32(.A(ABMU), .B(BBMU), .ZKNHSelect(ZBBSelect), .ZKNHResult(ZKNHResult));
