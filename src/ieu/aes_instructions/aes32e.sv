@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// aes32esi.sv
+// aes32e.sv
 //
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
 //
-// Purpose: aes32esi instruction: : RV32 final round AES encryption
+// Purpose: aes32esmi and aes32esi instruction: RV32 middle and final round AES encryption
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,21 +25,24 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aes32esi(
+module aes32e(
    input  logic [1:0]  bs,
    input  logic [31:0] rs1,
    input  logic [31:0] rs2,
-   output logic [31:0] DataOut
+   input  logic        finalround,
+   output logic [31:0] result
 );                
                 
-   logic [4:0] 			 shamt;
-   logic [7:0] 			 SboxIn, SboxOut;
-   logic [31:0] 		    so, sorotate;
-    
-   assign shamt = {bs, 3'b0};             // shamt = bs * 8 (convert bytes to bits)
-   assign SboxIn = rs2[shamt +: 8];       // select byte bs of rs2
-   aessbox subbox(SboxIn, SboxOut);       // Substitute
-   assign so = {24'h0, SboxOut};          // Pad sbox output
-   rotate sorot(so, shamt, sorotate);     // Rotate the substitution box output left by shamt (bs * 8)
-   assign DataOut = rs1 ^ sorotate;       // xor with running value
+   logic [4:0] 			  shamt;
+   logic [7:0] 			  SboxIn, SboxOut;
+   logic [31:0] 		     so, mixed, rotin, rotout;
+   
+   assign shamt = {bs, 3'b0};                     // shamt = bs * 8 (convert bytes to bits)
+   assign SboxIn = rs2[shamt +: 8];               // select byte bs of rs2
+   aessbox sbox(SboxIn, SboxOut);                 // Substitute
+   assign so = {24'h0, SboxOut};                  // Pad sbox output
+   aesmixcolumns mwd(so, mixed);                  // Mix Word using aesmixword component
+   mux2 #(32) rmux(mixed, so, finalround, rotin); // on final round, rotate so rather than mixed
+   rotate #(32) mrot(rotin, shamt, rotout);       // Rotate the mixcolumns output left by shamt (bs * 8)
+   assign result = rs1 ^ rotout;                 // xor with running value
 endmodule
