@@ -156,7 +156,6 @@ module testbenchfp;
       // Information displayed for user on what is simulating
       // $display("\nThe start of simulation...");      
       // $display("This simulation for TEST is %s", TEST);
-      // $display("This simulation for TEST is of the operand size of %s", TEST_SIZE);      
 
       if (P.Q_SUPPORTED & (TEST_SIZE == "QP" | TEST_SIZE == "all")) begin // if Quad percision is supported
          if (TEST === "cvtint" | TEST === "all") begin  // if testing integer conversion
@@ -693,6 +692,8 @@ module testbenchfp;
         end
       end
       // check if nothing is being tested
+
+      $display("This simulation for TEST contains %d vectors", Tests.size);      
       if (Tests.size() == 0) begin
          $display("TEST %s not supported in this configuration", TEST);
          $stop;
@@ -720,6 +721,13 @@ module testbenchfp;
       //$display("Here you are %s", testname);     
       $display("\n\nRunning %s vectors ", Tests[TestNum]);
       $readmemh(testname, TestVectors);
+
+      $display("\n\n THERE ARE %d tests", $size(TestVectors));
+      $display("\n\n THERE ARE %h tests", TestVectors[0]);
+      $display("\n\n THERE ARE %h tests", TestVectors[1]);
+      $display("\n\n THERE ARE %h tests", TestVectors[2]);
+      $display("\n\n THERE ARE %h tests", TestVectors[3]);
+      $display("\n\n THERE ARE %h tests", TestVectors[4]);
       // set the test index to 0
       TestNum = 0;
    end
