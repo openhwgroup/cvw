@@ -31,29 +31,11 @@ module zknh64 (
 	output logic [63:0] ZKNHResult
 );
 
-   logic [63:0] 		   sha256sig0res, sha256sig1res, sha256sum0res, sha256sum1res;   
-   logic [63:0] 		   sha512sig0res, sha512sig1res, sha512sum0res, sha512sum1res;
+   logic [31:0]         sha256_32;
+   logic [63:0] 		   sha256res, sha512res;   
    
-   sha256sig0 #(64) sha256sig0(A, sha256sig0res);
-   sha256sig1 #(64) sha256sig1(A, sha256sig1res);
-   sha256sum0 #(64) sha256sum0(A, sha256sum0res);
-   sha256sum1 #(64) sha256sum1(A, sha256sum1res);
-   sha512sig0 sha512sig0(A, sha512sig0res);
-   sha512sig1 sha512sig1(A, sha512sig1res);
-   sha512sum0 sha512sum0(A, sha512sum0res);
-   sha512sum1 sha512sum1(A, sha512sum1res);
-   
-   // Result Select Mux
-   always_comb 
-      casez(ZKNHSelect)
-         4'b0000: ZKNHResult = sha256sig0res;
-         4'b0001: ZKNHResult = sha256sig1res;
-         4'b0010: ZKNHResult = sha256sum0res;
-         4'b0011: ZKNHResult = sha256sum1res;
-         4'b1010: ZKNHResult = sha512sig0res;
-         4'b1011: ZKNHResult = sha512sig1res;
-         4'b1100: ZKNHResult = sha512sum0res;
-         4'b1101: ZKNHResult = sha512sum1res;
-         default: ZKNHResult = 0;
-      endcase
+   sha256 sha256(A[31:0], ZKNHSelect[1:0], sha256_32);                    // 256-bit SHA support: sha256{sig0/sig1/sum0/sum1}
+   assign sha256res = {{32{sha256_32[31]}}, sha256_32};                   // sign-extend 256-bit result from 32 to 64 bits
+   sha512_64 sha512(A, ZKNHSelect[1:0], sha512res);                       // 512-bit SHA support: sha512{sig0/sig1/sum0/sum1}
+   mux2 #(64) resultmux(sha256res, sha512res, ZKNHSelect[2], ZKNHResult); // SHA256 vs. SHA512 result mux
 endmodule
