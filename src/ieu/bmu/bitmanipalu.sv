@@ -148,8 +148,7 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
       4'b0100: ALUResult = ZBKBResult;
       4'b0110: ALUResult = ZBKXResult;
       4'b0111: ALUResult = ZKNDEResult; 
-      4'b1000: ALUResult = ZKNDEResult;
-      4'b1001: ALUResult = ZKNHResult;
+      4'b1000: ALUResult = ZKNHResult;
       default: ALUResult = PreALUResult;
     endcase
 endmodule
