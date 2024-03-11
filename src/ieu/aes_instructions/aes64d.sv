@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// aes64dsm.sv
+// aes64d.sv
 //
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
 //
-// Purpose: aes64dsm instruction: RV64 middle round decryption 
+// Purpose: aes64dsm and aes64ds instruction: RV64 middle and final round AES decryption 
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,10 +25,11 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aes64dsm(
+module aes64d(
    input  logic [63:0] rs1,
    input  logic [63:0] rs2,
-   output logic [63:0] DataOut
+   input  logic        finalround,
+   output logic [63:0] result
 );
    
    logic [127:0] 		    ShiftRowOut;
@@ -47,5 +48,5 @@ module aes64dsm(
    aesinvmixcolumns invmw1(SboxOut1, MixcolOut1);
    
    // Concatenate mixed words for output
-   assign DataOut = {MixcolOut1, MixcolOut0};
+   mux2 #(64) resultmux({SboxOut1, SboxOut0}, {MixcolOut1, MixcolOut0}, finalround, result);
 endmodule
