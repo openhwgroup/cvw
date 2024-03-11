@@ -117,7 +117,8 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
     if (P.ZKND_SUPPORTED) aes32d aes32d(.bs(Funct7[6:5]), .rs1(ABMU), .rs2(BBMU), .finalround(ZBBSelect[2]), .result(ZKNDResult));
     if (P.ZKNE_SUPPORTED) aes32e aes32e(.bs(Funct7[6:5]), .rs1(ABMU), .rs2(BBMU), .finalround(ZBBSelect[2]), .result(ZKNEResult));
   end else 
-    if (P.ZKND_SUPPORTED | P.ZKNE_SUPPORTED) zkn64 ZKND64(.A(ABMU), .B(BBMU), .Funct7, .round(Rs2E[3:0]), .ZKNSelect(ZBBSelect[3:0]), .ZKNDResult, .ZKNEResult); // *** simplify to only one output
+    if (P.ZKND_SUPPORTED | P.ZKNE_SUPPORTED) 
+      zkn64 #(P) ZKND64(.A(ABMU), .B(BBMU), .Funct7, .round(Rs2E[3:0]), .ZKNSelect(ZBBSelect[3:0]), .ZKNDResult, .ZKNEResult); // *** simplify to only one output
 
 /*
   // ZKND Unit
