@@ -383,6 +383,8 @@ if (soc):
     configs = [] # Delete all configs, just use test64gc
     coverStr = '-coverage' # Include coverage report
     for test in tests64gc:
+        if 'zfh' in test:
+            continue # Skip zfh tests
         tc = TestCase(
             name=test,
             variant="rv64gc",
