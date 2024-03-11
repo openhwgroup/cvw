@@ -215,36 +215,36 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
     if (P.ZKND_SUPPORTED) begin //ZKND
       if (P.XLEN==32)
         casez({OpD, Funct7D, Funct3D})
-          17'b0110011_??10101_000: BMUControlsD = `BMUCTRLW'b000_0111_0000_1_0_0_1_0_0_0_0_0;  // aes32dsi - final round decrypt
-          17'b0110011_??10111_000: BMUControlsD = `BMUCTRLW'b000_0111_0001_1_0_0_1_0_0_0_0_0;  // aes32dsmi - mid round decrypt
+          17'b0110011_??10101_000: BMUControlsD = `BMUCTRLW'b000_0111_0100_1_0_0_1_0_0_0_0_0;  // aes32dsi - final round decrypt
+          17'b0110011_??10111_000: BMUControlsD = `BMUCTRLW'b000_0111_0000_1_0_0_1_0_0_0_0_0;  // aes32dsmi - mid round decrypt
         endcase
       else if (P.XLEN==64)
         casez({OpD, Funct7D, Funct3D})
-          17'b0110011_0011101_000: BMUControlsD = `BMUCTRLW'b000_0111_0000_1_0_0_1_0_0_0_0_0;  // aes64ds - decrypt final round
-          17'b0110011_0011111_000: BMUControlsD = `BMUCTRLW'b000_0111_0001_1_0_0_1_0_0_0_0_0;  // aes64dsm - decrypt mid round
+          17'b0110011_0011101_000: BMUControlsD = `BMUCTRLW'b000_0111_0100_1_0_0_1_0_0_0_0_0;  // aes64ds - decrypt final round
+          17'b0110011_0011111_000: BMUControlsD = `BMUCTRLW'b000_0111_0000_1_0_0_1_0_0_0_0_0;  // aes64dsm - decrypt mid round
           17'b0010011_0011000_001: if (Rs2D == 5'b00000)
-                                   BMUControlsD = `BMUCTRLW'b000_0111_0010_1_1_0_1_0_0_0_0_0;  // aes64im - decrypt keyschdule mixcolumns
+                                   BMUControlsD = `BMUCTRLW'b000_0111_0011_1_1_0_1_0_0_0_0_0;  // aes64im - decrypt keyschdule mixcolumns
         endcase
     end
 
     if (P.ZKNE_SUPPORTED) begin //ZKNE
       if (P.XLEN==32)
         casez({OpD, Funct7D, Funct3D})
-          17'b0110011_??10001_000: BMUControlsD = `BMUCTRLW'b000_1000_0000_1_0_0_1_0_0_0_0_0;  // aes32esi - final round encrypt
-          17'b0110011_??10011_000: BMUControlsD = `BMUCTRLW'b000_1000_0001_1_0_0_1_0_0_0_0_0;  // aes32esmi - mid round encrypt
+          17'b0110011_??10001_000: BMUControlsD = `BMUCTRLW'b000_1000_0100_1_0_0_1_0_0_0_0_0;  // aes32esi - final round encrypt
+          17'b0110011_??10011_000: BMUControlsD = `BMUCTRLW'b000_1000_0000_1_0_0_1_0_0_0_0_0;  // aes32esmi - mid round encrypt
         endcase
       else if (P.XLEN==64)
         casez({OpD, Funct7D, Funct3D})
-          17'b0110011_0011001_000: BMUControlsD = `BMUCTRLW'b000_1000_0000_1_0_0_1_0_0_0_0_0;  // aes64es - encrypt final round
-          17'b0110011_0011011_000: BMUControlsD = `BMUCTRLW'b000_1000_0001_1_0_0_1_0_0_0_0_0;  // aes64esm - encrypt mid round
+          17'b0110011_0011001_000: BMUControlsD = `BMUCTRLW'b000_1000_0100_1_0_0_1_0_0_0_0_0;  // aes64es - encrypt final round
+          17'b0110011_0011011_000: BMUControlsD = `BMUCTRLW'b000_1000_0000_1_0_0_1_0_0_0_0_0;  // aes64esm - encrypt mid round
         endcase
     end  
     
     if ((P.ZKND_SUPPORTED | P.ZKNE_SUPPORTED) & P.XLEN == 64) begin // ZKND and ZKNE shared instructions
       casez({OpD, Funct7D, Funct3D})
         17'b0010011_0011000_001: if (Rs2D[4] == 1'b1)
-                                   BMUControlsD = `BMUCTRLW'b000_0111_0011_1_0_0_1_0_0_0_0_0;  // aes64ks1i - key schedule istr1 ... Don't know why this works here only ... P.XLEN is not 64 bits?
-          17'b0110011_0111111_000: BMUControlsD = `BMUCTRLW'b000_0111_0100_1_0_0_1_0_0_0_0_0;  // aes64ks2 - key schedule istr2
+                                   BMUControlsD = `BMUCTRLW'b000_0111_0001_1_0_0_1_0_0_0_0_0;  // aes64ks1i - key schedule istr1 ... Don't know why this works here only ... P.XLEN is not 64 bits?
+          17'b0110011_0111111_000: BMUControlsD = `BMUCTRLW'b000_0111_0010_1_0_0_1_0_0_0_0_0;  // aes64ks2 - key schedule istr2
       endcase
     end
 
