@@ -28,7 +28,7 @@
 module aes64e(
     input  logic [63:0] rs1,
     input  logic [63:0] rs2,
-    input  logic        finalround,
+    input  logic        finalround, 
     output logic [63:0] result
 );
    
@@ -41,9 +41,9 @@ module aes64e(
     // Apply substitution box to 2 lower words
     aessboxword sbox0(ShiftRowOut[31:0],  SboxOut[31:0]);
     aessboxword sbox1(ShiftRowOut[63:32], SboxOut[63:32]);
-   
+
     // Apply mix columns operations
-    aesmixcolumns mw0(SboxOut[31:0], MixcolOut[31:0]);
+    aesmixcolumns mw0(SboxOut[31:0],  MixcolOut[31:0]);
     aesmixcolumns mw1(SboxOut[63:32], MixcolOut[63:32]);    
 
     // Skip mixcolumns on last round

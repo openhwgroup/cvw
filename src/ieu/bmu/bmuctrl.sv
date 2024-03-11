@@ -223,7 +223,7 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
           17'b0110011_0011101_000: BMUControlsD = `BMUCTRLW'b000_0111_0100_1_0_0_1_0_0_0_0_0;  // aes64ds - decrypt final round
           17'b0110011_0011111_000: BMUControlsD = `BMUCTRLW'b000_0111_0000_1_0_0_1_0_0_0_0_0;  // aes64dsm - decrypt mid round
           17'b0010011_0011000_001: if (Rs2D == 5'b00000)
-                                   BMUControlsD = `BMUCTRLW'b000_0111_0011_1_1_0_1_0_0_0_0_0;  // aes64im - decrypt keyschdule mixcolumns
+                                   BMUControlsD = `BMUCTRLW'b000_0111_1000_1_1_0_1_0_0_0_0_0;  // aes64im - decrypt keyschdule mixcolumns
         endcase
     end
 

@@ -26,7 +26,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module aes64ks1i(
-   input  logic [3:0]  roundnum,
+   input  logic [3:0]  round,
    input  logic [63:0] rs1,
    output logic [63:0] result
 );                 
@@ -35,11 +35,10 @@ module aes64ks1i(
    logic [7:0] 			  rcon8;
    logic [31:0] 		     rcon, rs1Rotate, tmp2, SboxOut;
    
-  
-   rconlut128 rc(roundnum, rcon8);                        // Get rcon value from lookup table
+   rconlut128 rc(round, rcon8);                           // Get rcon value from lookup table
    assign rcon = {24'b0, rcon8};                          // Zero-pad RCON 
    assign rs1Rotate = {rs1[39:32], rs1[63:40]};           // Get rotated value fo ruse in tmp2
-   assign finalround = (roundnum == 4'b1010);             // round 10 is the last one 
+   assign finalround = (round == 4'b1010);                // round 10 is the last one 
    assign tmp2 = finalround ? rs1[63:32] : rs1Rotate;     // Don't rotate on the last round
    aessboxword sbox(tmp2, SboxOut);                       // Substitute bytes of value obtained for tmp2 using Rijndael sbox
    assign result[31:0] = SboxOut ^ rcon;

@@ -29,18 +29,17 @@
 module zknd64 #(parameter WIDTH=32) (
    input  logic [WIDTH-1:0] A, B,
    input  logic [6:0] 	    Funct7,
-   input  logic [3:0] 	    RNUM,
-   input  logic [2:0] 	    ZKNDSelect,
+   input  logic [3:0] 	    round,
+   input  logic [3:0] 	    ZKNDSelect,
    output logic [WIDTH-1:0] ZKNDResult
 );
    
    logic [63:0] 	     aes64dRes, aes64imRes, aes64ks1iRes, aes64ks2Res;
    
    // RV64
-   aes64d    aes64d(.rs1(A), .rs2(B), .finalround(ZKNDSelect[2]), .result(aes64dRes)); // decode AES
-   aes64im   aes64im(.rs1(A), .DataOut(aes64imRes));
-   aes64ks1i aes64ks1i(.roundnum(RNUM), .rs1(A), .result(aes64ks1iRes));
+   aes64d    aes64d(.rs1(A), .rs2(B), .finalround(ZKNDSelect[2]), .aes64im(ZKNDSelect[3]), .result(aes64dRes)); // decode AES
+   aes64ks1i aes64ks1i(.round, .rs1(A), .result(aes64ks1iRes));
    aes64ks2  aes64ks2(.rs2(B), .rs1(A), .result(aes64ks2Res));
    
-   mux4 #(WIDTH) zkndmux(aes64dRes, aes64ks1iRes, aes64ks2Res, aes64imRes, ZKNDSelect[1:0], ZKNDResult);
+   mux3 #(WIDTH) zkndmux(aes64dRes, aes64ks1iRes, aes64ks2Res, ZKNDSelect[1:0], ZKNDResult);
 endmodule

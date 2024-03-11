@@ -115,13 +115,13 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
   // ZKND Unit
   if (P.ZKND_SUPPORTED) begin: zknd
     if (P.XLEN == 32) aes32d aes32d(.bs(Funct7[6:5]), .rs1(ABMU), .rs2(BBMU), .finalround(ZBBSelect[2]), .result(ZKNDResult));
-    else              zknd64 #(P.XLEN) ZKND64(.A(ABMU), .B(BBMU), .Funct7, .RNUM(Rs2E[3:0]), .ZKNDSelect(ZBBSelect[2:0]), .ZKNDResult);
+    else              zknd64 #(P.XLEN) ZKND64(.A(ABMU), .B(BBMU), .Funct7, .round(Rs2E[3:0]), .ZKNDSelect(ZBBSelect[3:0]), .ZKNDResult);
   end else assign ZKNDResult = 0;
 
   // ZKNE Unit
   if (P.ZKNE_SUPPORTED) begin: zkne
     if (P.XLEN == 32) aes32e aes32e(.bs(Funct7[6:5]), .rs1(ABMU), .rs2(BBMU), .finalround(ZBBSelect[2]), .result(ZKNEResult));
-    else              zkne64 #(P.XLEN) ZKNE64(.A(ABMU), .B(BBMU), .Funct7, .RNUM(Rs2E[3:0]), .ZKNESelect(ZBBSelect[2:0]), .ZKNEResult);
+    else              zkne64 #(P.XLEN) ZKNE64(.A(ABMU), .B(BBMU), .Funct7, .round(Rs2E[3:0]), .ZKNESelect(ZBBSelect[2:0]), .ZKNEResult);
   end else assign ZKNEResult = 0;
 
   // ZKNH Unit
