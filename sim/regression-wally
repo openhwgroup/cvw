@@ -395,8 +395,8 @@ if (soc):
     configs = [] # Delete all configs, just use test64gc
     coverStr = '-coverage' # Include coverage report
     for test in tests64gc:
-        if any(s in test for s in ['zfa', 'zfh']):
-            continue # Skip zfa and zfh tests
+        if any(s in test for s in ['zfa', 'zfh', 'zbk', 'zkn']):
+            continue # Skip tests for extensions that aren't in riscv-arch-tests yet
         tc = TestCase(
             name=test,
             variant="rv64gc",
