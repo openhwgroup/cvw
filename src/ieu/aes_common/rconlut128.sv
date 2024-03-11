@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// aes64ks2.sv
+// rconlut128.sv
 //
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
 //
-// Purpose: aes64ks2 instruction: part of AES keyschedule
+// Purpose: rcon lookup for aes64ks1i instruction
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,15 +25,24 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aes64ks2(
-   input  logic [63:0] rs2,
-   input  logic [63:0] rs1,
-   output logic [63:0] rd
+module rconlut128(
+	input  logic [3:0] rd,
+	output logic [7:0] rconOut
 );
-   
-   logic [31:0] 		    w0, w1;
-   
-   assign w0 = rs1[63:32] ^ rs2[31:0];
-   assign w1 = rs1[63:32] ^ rs2[31:0] ^ rs2[63:32];   
-   assign rd = {w1, w0};   
+	
+   always_comb
+	case(rd)
+	  4'h0 : rconOut = 8'h01;
+	  4'h1 : rconOut = 8'h02;
+	  4'h2 : rconOut = 8'h04;
+	  4'h3 : rconOut = 8'h08;
+	  4'h4 : rconOut = 8'h10;
+	  4'h5 : rconOut = 8'h20;
+	  4'h6 : rconOut = 8'h40;
+	  4'h7 : rconOut = 8'h80;
+	  4'h8 : rconOut = 8'h1b;
+	  4'h9 : rconOut = 8'h36;
+	  4'hA : rconOut = 8'h00;
+	  default : rconOut = 8'h00;
+	endcase	
 endmodule

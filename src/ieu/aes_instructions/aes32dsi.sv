@@ -4,7 +4,7 @@
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
 //
-// Purpose: aes32dsi instruction
+// Purpose: aes32dsi instruction: RV32 final round AES decryption
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

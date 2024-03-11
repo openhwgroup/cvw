@@ -4,7 +4,7 @@
 // Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
 // Created: 1 February 2024
 //
-// Purpose: RISC-V ZBKX top level unit
+// Purpose: RISC-V ZBKX top level unit: crossbar permutation instructions for crypto
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

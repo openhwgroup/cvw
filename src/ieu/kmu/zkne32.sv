@@ -5,7 +5,7 @@
 // Created: 21 November 2023
 // Modified: 31 January 2024
 //
-// Purpose: RISC-V ZKNE top level unit for 32-bit instructions
+// Purpose: RISC-V ZKNE top level unit for 32-bit instructions: RV32 NIST AES Encryption
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

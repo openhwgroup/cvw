@@ -4,7 +4,7 @@
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
 //
-// Purpose: aes64im instruction
+// Purpose: aes64im instruction: RV64 accelerator mixcolumns and create decryption keyschedule
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

@@ -4,7 +4,7 @@
 // Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
 // Created: 4 October 2023
 //
-// Purpose: RISC-V ZBKB top level unit
+// Purpose: RISC-V ZBKB top level unit: bit manipulation instructions for crypto
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

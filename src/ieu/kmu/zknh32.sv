@@ -4,7 +4,7 @@
 // Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
 // Created: 13 February 2024
 //
-// Purpose: RISC-V ZKNH 32-Bit top level unit
+// Purpose: RISC-V ZKNH 32-Bit top level unit: RV32 NIST Hash
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

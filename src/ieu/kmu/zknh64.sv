@@ -4,7 +4,7 @@
 // Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
 // Created: 13 February 2024
 //
-// Purpose: RISC-V ZKNH 64-Bit top level unit
+// Purpose: RISC-V ZKNH 64-Bit top level unit: RV64 NIST Hash
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

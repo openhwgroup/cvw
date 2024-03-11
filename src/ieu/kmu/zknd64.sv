@@ -5,7 +5,7 @@
 // Created: 27 November 2023
 // Modified: 31 January 2024
 //
-// Purpose: RISC-V ZKND top level unit for 64-bit instructions
+// Purpose: RISC-V ZKND top level unit for 64-bit instructions: RV64 NIST AES Decryption
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

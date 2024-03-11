@@ -4,7 +4,7 @@
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
 //
-// Purpose: aes64ks1i instruction
+// Purpose: aes64ks1i instruction: part of AES keyschedule with involving sbox
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -39,7 +39,7 @@ module aes64ks1i(
    logic [31:0] 		     SboxOut;
    
    // Get rcon value from table
-   rconlut128 rc(.RD(roundnum), .rconOut(rconPreShift)); 
+   rconlut128 rc(.rd(roundnum), .rconOut(rconPreShift)); 
 
    // Shift RCON value
    assign rcon = {24'b0, rconPreShift};    
