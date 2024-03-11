@@ -28,17 +28,13 @@
 
 module zkn64 import cvw::*; #(parameter cvw_t P) (
    input  logic [63:0] A, B,
-   input  logic [6:0] 	    Funct7,
-   input  logic [3:0] 	    round,
-   input  logic [3:0] 	    ZKNSelect,
-   output logic [63:0] ZKNDResult, ZKNEResult
+   input  logic [6:0]  Funct7,
+   input  logic [3:0]  round,
+   input  logic [3:0]  ZKNSelect,
+   output logic [63:0] ZKNResult
 );
    
-//    zknd64 #(64) ZKND64(.A, .B, .Funct7, .round, .ZKNDSelect(ZKNSelect[3:0]), .ZKNDResult); // *** strip out parameter unneded
-//    zkne64 #(64) ZKNE64(.A, .B, .Funct7, .round, .ZKNESelect(ZKNSelect[2:0]), .ZKNEResult);
-
-
-    logic [63:0] 	     aes64dRes, aes64eRes, aes64imRes, aes64ks1iRes, aes64ks2Res;
+    logic [63:0] 	     aes64dRes, aes64eRes, aes64ks1iRes, aes64ks2Res;
    
     if (P.ZKND_SUPPORTED) // ZKND supports aes64ds, aes64dsm, aes64im
         aes64d    aes64d(.rs1(A), .rs2(B), .finalround(ZKNSelect[2]), .aes64im(ZKNSelect[3]), .result(aes64dRes)); // decode AES
@@ -49,18 +45,6 @@ module zkn64 import cvw::*; #(parameter cvw_t P) (
     aes64ks1i aes64ks1i(.round, .rs1(A), .result(aes64ks1iRes));
     aes64ks2  aes64ks2(.rs2(B), .rs1(A), .result(aes64ks2Res));
    
-    mux3 #(64) zkndmux(aes64dRes, aes64ks1iRes, aes64ks2Res, ZKNSelect[1:0], ZKNDResult);
-    mux3 #(64) zknemux(aes64eRes, aes64ks1iRes, aes64ks2Res, ZKNSelect[1:0], ZKNEResult);
-
-/*
-     logic [63:0] 	     aes64eRes, aes64ks1iRes, aes64ks2Res;
-   
-   // RV64
-   aes64ks1i aes64ks1i(.round, .rs1(A), .result(aes64ks1iRes));
-   aes64ks2  aes64ks2(.rs2(B), .rs1(A), .result(aes64ks2Res)); 
-   
-   // 010 is a placeholder to match the select of ZKND's AES64KS1I since they share some instruction
-   mux4 #(WIDTH) zknemux(aes64eRes, aes64dRes, aes64ks1iRes, aes64ks2Res, ZKNESelect[1:0], ZKNEResult);   
-*/
-
+    // Choose among decrypt, encrypt, key schedule 1, key schedule 2 results
+    mux4 #(64) zkndmux(aes64dRes, aes64eRes, aes64ks1iRes, aes64ks2Res, ZKNSelect[1:0], ZKNResult);
 endmodule
