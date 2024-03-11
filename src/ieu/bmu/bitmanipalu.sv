@@ -115,32 +115,20 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
 
   // ZKND Unit
   if (P.ZKND_SUPPORTED) begin: zknd
-    if (P.XLEN == 32) begin
-      zknd32 #(P.XLEN) ZKND32(.A(ABMU), .B(BBMU), .Funct7, .ZKNDSelect(ZBBSelect[2:0]), .ZKNDResult);
-    end
-    else begin
-      zknd64 #(P.XLEN) ZKND64(.A(ABMU), .B(BBMU), .Funct7, .RNUM(Rs2E[3:0]), .ZKNDSelect(ZBBSelect[2:0]), .ZKNDResult);
-    end
+    if (P.XLEN == 32) zknd32 #(P.XLEN) ZKND32(.A(ABMU), .B(BBMU), .Funct7, .ZKNDSelect(ZBBSelect[2:0]), .ZKNDResult);
+    else              zknd64 #(P.XLEN) ZKND64(.A(ABMU), .B(BBMU), .Funct7, .RNUM(Rs2E[3:0]), .ZKNDSelect(ZBBSelect[2:0]), .ZKNDResult);
   end else assign ZKNDResult = 0;
 
   // ZKNE Unit
   if (P.ZKNE_SUPPORTED) begin: zkne
-    if (P.XLEN == 32) begin
-      zkne32 #(P.XLEN) ZKNE32(.A(ABMU), .B(BBMU), .Funct7, .ZKNESelect(ZBBSelect[2:0]), .ZKNEResult);
-    end
-    else begin
-      zkne64 #(P.XLEN) ZKNE64(.A(ABMU), .B(BBMU), .Funct7, .RNUM(Rs2E[3:0]), .ZKNESelect(ZBBSelect[2:0]), .ZKNEResult);
-    end
+    if (P.XLEN == 32) zkne32 #(P.XLEN) ZKNE32(.A(ABMU), .B(BBMU), .Funct7, .ZKNESelect(ZBBSelect[2:0]), .ZKNEResult);
+    else              zkne64 #(P.XLEN) ZKNE64(.A(ABMU), .B(BBMU), .Funct7, .RNUM(Rs2E[3:0]), .ZKNESelect(ZBBSelect[2:0]), .ZKNEResult);
   end else assign ZKNEResult = 0;
 
   // ZKNH Unit
   if (P.ZKNH_SUPPORTED) begin: zknh
-    if (P.XLEN == 32) begin
-      zknh32 ZKNH32(.A(ABMU), .B(BBMU), .ZKNHSelect(ZBBSelect), .ZKNHResult(ZKNHResult));
-    end
-    else begin
-      zknh64 ZKNH64(.A(ABMU), .B(BBMU), .ZKNHSelect(ZBBSelect), .ZKNHResult(ZKNHResult));
-    end
+    if (P.XLEN == 32) zknh32 ZKNH32(.A(ABMU), .B(BBMU), .ZKNHSelect(ZBBSelect), .ZKNHResult(ZKNHResult));
+    else              zknh64 ZKNH64(.A(ABMU), .B(BBMU), .ZKNHSelect(ZBBSelect), .ZKNHResult(ZKNHResult));
   end else assign ZKNHResult = 0;
 
   // Result Select Mux

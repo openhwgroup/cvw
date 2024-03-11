@@ -37,11 +37,11 @@ module packer #(parameter WIDTH=32) (
    
    logic [WIDTH-1:0] 	   Pack, PackH, PackW;
    
-   assign lowhalf = A[WIDTH/2-1:0];
-   assign highhalf = B[WIDTH/2-1:0];
-   assign lowhalfh = A[7:0];
+   assign lowhalf   = A[WIDTH/2-1:0];
+   assign highhalf  = B[WIDTH/2-1:0];
+   assign lowhalfh  = A[7:0];
    assign highhalfh = B[7:0];
-   assign lowhalfw = A[15:0];
+   assign lowhalfw  = A[15:0];
    assign highhalfw = B[15:0];   
    
    assign Pack = {highhalf, lowhalf}; 
