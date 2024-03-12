@@ -32,10 +32,10 @@ module zknh64 (
 );
 
    logic [31:0]         sha256_32;
-   logic [63:0] 		   sha256res, sha512res;   
+   logic [63:0] 	sha256res, sha512res;   
    
    sha256 sha256(A[31:0], ZKNHSelect[1:0], sha256_32);                    // 256-bit SHA support: sha256{sig0/sig1/sum0/sum1}
    assign sha256res = {{32{sha256_32[31]}}, sha256_32};                   // sign-extend 256-bit result from 32 to 64 bits
    sha512_64 sha512(A, ZKNHSelect[1:0], sha512res);                       // 512-bit SHA support: sha512{sig0/sig1/sum0/sum1}
-   mux2 #(64) resultmux(sha256res, sha512res, ZKNHSelect[2], ZKNHResult); // SHA256 vs. SHA512 result mux
+   mux2 #(64) resultmux(sha256res, sha512res, ZKNHSelect[3], ZKNHResult); // SHA256 vs. SHA512 result mux
 endmodule

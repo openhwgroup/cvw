@@ -3,6 +3,7 @@
 //
 // Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
 // Created: 13 February 2024
+// Modified: 12 March 2024
 //
 // Purpose: RISC-V ZKNH 32-Bit top level unit: RV32 NIST Hash
 //
@@ -26,14 +27,18 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module zknh32 (
-   input  logic [31:0] A, B,
-	input  logic [3:0]  ZKNHSelect,
-	output logic [31:0] ZKNHResult
+  input  logic [31:0] A, B,  
+  input  logic [3:0]  ZKNHSelect,
+  output logic [31:0] ZKNHResult
 );
    
-   logic [31:0] 		   sha256sig0res, sha256sig1res, sha256sum0res, sha256sum1res;
-   logic [31:0] 		   sha512sig0hres, sha512sig0lres, sha512sig1hres, sha512sig1lres, sha512sum0rres, sha512sum1rres;
-   
+   logic [31:0]	      sha256res, sha512res;
+
+  sha256 sha256(A, ZKNHSelect[1:0], sha256res);                          // 256-bit SHA support: sha256{sig0/sig1/sum0/sum1}
+  sha512_32 sha512(A, B, ZKNHSelect[2:0], sha512res);                    // 512-bit SHA support: sha512{sig0h/sig0l/sig1h/sig1l/sum0r/sum1r}
+  mux2 #(32) resultmux(sha256res, sha512res, ZKNHSelect[3], ZKNHResult); // SHA256 vs. SHA512 result mux
+
+/*   
    sha256sig0 #(32) sha256sig0(A, sha256sig0res);
    sha256sig1 #(32) sha256sig1(A, sha256sig1res);
    sha256sum0 #(32) sha256sum0(A, sha256sum0res);
@@ -59,5 +64,5 @@ module zknh32 (
          4'b1000: ZKNHResult = sha512sum0rres;
          4'b1001: ZKNHResult = sha512sum1rres;
          default: ZKNHResult = 0;
-      endcase
+      endcase */
 endmodule

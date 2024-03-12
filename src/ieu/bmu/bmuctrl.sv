@@ -259,21 +259,21 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
 
       if (P.XLEN==32)
         casez({OpD, Funct7D, Funct3D})
-          17'b0110011_0101110_000:     BMUControlsD = `BMUCTRLW'b000_1000_0100_1_0_0_1_0_0_0_0_0;  // sha512sig0h
-          17'b0110011_0101010_000:     BMUControlsD = `BMUCTRLW'b000_1000_0101_1_0_0_1_0_0_0_0_0;  // sha512sig0l
-          17'b0110011_0101111_000:     BMUControlsD = `BMUCTRLW'b000_1000_0110_1_0_0_1_0_0_0_0_0;  // sha512sig1h
-          17'b0110011_0101011_000:     BMUControlsD = `BMUCTRLW'b000_1000_0111_1_0_0_1_0_0_0_0_0;  // sha512sig1l
-          17'b0110011_0101000_000:     BMUControlsD = `BMUCTRLW'b000_1000_1000_1_0_0_1_0_0_0_0_0;  // sha512sum0r
-          17'b0110011_0101001_000:     BMUControlsD = `BMUCTRLW'b000_1000_1001_1_0_0_1_0_0_0_0_0;  // sha512sum1r
+          17'b0110011_0101110_000:     BMUControlsD = `BMUCTRLW'b000_1000_1000_1_0_0_1_0_0_0_0_0;  // sha512sig0h
+          17'b0110011_0101010_000:     BMUControlsD = `BMUCTRLW'b000_1000_1001_1_0_0_1_0_0_0_0_0;  // sha512sig0l
+          17'b0110011_0101111_000:     BMUControlsD = `BMUCTRLW'b000_1000_1010_1_0_0_1_0_0_0_0_0;  // sha512sig1h
+          17'b0110011_0101011_000:     BMUControlsD = `BMUCTRLW'b000_1000_1011_1_0_0_1_0_0_0_0_0;  // sha512sig1l
+          17'b0110011_0101000_000:     BMUControlsD = `BMUCTRLW'b000_1000_1100_1_0_0_1_0_0_0_0_0;  // sha512sum0r
+          17'b0110011_0101001_000:     BMUControlsD = `BMUCTRLW'b000_1000_1101_1_0_0_1_0_0_0_0_0;  // sha512sum1r
         endcase
 
       else if (P.XLEN==64)
         casez({OpD, Funct7D, Funct3D})
           17'b0010011_0001000_001: 
-            if      (Rs2D == 5'b00110) BMUControlsD = `BMUCTRLW'b000_1000_0100_1_0_0_1_0_0_0_0_0;  // sha512sig0
-            else if (Rs2D == 5'b00111) BMUControlsD = `BMUCTRLW'b000_1000_0101_1_0_0_1_0_0_0_0_0;  // sha512sig1
-            else if (Rs2D == 5'b00100) BMUControlsD = `BMUCTRLW'b000_1000_0110_1_0_0_1_0_0_0_0_0;  // sha512sum0
-            else if (Rs2D == 5'b00101) BMUControlsD = `BMUCTRLW'b000_1000_0111_1_0_0_1_0_0_0_0_0;  // sha512sum1
+            if      (Rs2D == 5'b00110) BMUControlsD = `BMUCTRLW'b000_1000_1000_1_0_0_1_0_0_0_0_0;  // sha512sig0
+            else if (Rs2D == 5'b00111) BMUControlsD = `BMUCTRLW'b000_1000_1001_1_0_0_1_0_0_0_0_0;  // sha512sig1
+            else if (Rs2D == 5'b00100) BMUControlsD = `BMUCTRLW'b000_1000_1010_1_0_0_1_0_0_0_0_0;  // sha512sum0
+            else if (Rs2D == 5'b00101) BMUControlsD = `BMUCTRLW'b000_1000_1011_1_0_0_1_0_0_0_0_0;  // sha512sum1
         endcase
     end
   end
