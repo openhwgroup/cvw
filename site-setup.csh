@@ -38,8 +38,8 @@ if ($?IDV) then
 #    echo "Imperas exists"
     setenv IMPERAS_HOME $IDV/Imperas
     setenv IMPERAS_PERSONALITY CPUMAN_DV_ASYNC
-    setenv ROOTDIR=~/
-    setenv ${IMPERAS_HOME}/bin/setup.sh
+    setenv ROOTDIR ~/
+    source ${IMPERAS_HOME}/bin/setup.sh
     setupImperas ${IMPERAS_HOME}
     extend PATH $IDV/scripts/cvw
 endfi
