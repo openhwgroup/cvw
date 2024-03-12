@@ -43,7 +43,7 @@ module ram2p1r1wbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=1024, WIDTH=68) 
   output logic [WIDTH-1:0]         rd1
 );
 
-  logic [WIDTH-1:0]                mem[DEPTH-1:0];
+  bit [WIDTH-1:0]                 mem[DEPTH-1:0];
   localparam                      SRAMWIDTH = 32;
   localparam                      SRAMNUMSETS = SRAMWIDTH/WIDTH;      
 
@@ -55,11 +55,11 @@ module ram2p1r1wbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=1024, WIDTH=68) 
     
     ram2p1r1wbe_1024x68 memory1(.CLKA(clk), .CLKB(clk), 
       .CEBA(~ce1), .CEBB(~ce2),
-      .WEBA('0), .WEBB(~we2),            
+      .WEBA(0), .WEBB(~we2),            
       .AA(ra1), .AB(wa2),
-      .DA('0),
+      .DA(0),
       .DB(wd2),
-      .BWEBA('0), .BWEBB('1),
+      .BWEBA(0), .BWEBB('1),
       .QA(rd1),
       .QB());
 
@@ -67,11 +67,11 @@ module ram2p1r1wbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=1024, WIDTH=68) 
     
     ram2p1r1wbe_1024x36 memory1(.CLKA(clk), .CLKB(clk), 
       .CEBA(~ce1), .CEBB(~ce2),
-      .WEBA('0), .WEBB(~we2),            
+      .WEBA(0), .WEBB(~we2),            
       .AA(ra1), .AB(wa2),
-      .DA('0),
+      .DA(0),
       .DB(wd2),
-      .BWEBA('0), .BWEBB('1),
+      .BWEBA(0), .BWEBB('1),
       .QA(rd1),
       .QB());      
 
@@ -95,12 +95,12 @@ module ram2p1r1wbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=1024, WIDTH=68) 
     assign rd1 = RD1Sets[RA1Q[$clog2(SRAMWIDTH)-1:0]];      
     ram2p1r1wbe_64x32 memory2(.CLKA(clk), .CLKB(clk), 
       .CEBA(~ce1), .CEBB(~ce2),
-      .WEBA('0), .WEBB(~we2),            
+      .WEBA(0), .WEBB(~we2),            
       .AA(ra1[$clog2(DEPTH)-1:$clog2(SRAMNUMSETS)]), 
       .AB(wa2[$clog2(DEPTH)-1:$clog2(SRAMNUMSETS)]),
-      .DA('0),
+      .DA(0),
       .DB(SRAMWriteData),
-      .BWEBA('0), .BWEBB(SRAMBitMask),
+      .BWEBA(0), .BWEBB(SRAMBitMask),
       .QA(SRAMReadData),
       .QB());
 
@@ -110,13 +110,14 @@ module ram2p1r1wbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=1024, WIDTH=68) 
     // READ first SRAM model
     // ***************************************************************************
     integer i;
-    
+/*    
     initial begin // initialize memory for simulation only; not needed because done in the testbench now
       integer j;
       for (j=0; j < DEPTH; j++) 
-        mem[j] = '0;
+        mem[j] = 0;
     end 
-    
+*/
+
     // Read
     logic [$clog2(DEPTH)-1:0] ra1d;
     flopen #($clog2(DEPTH)) adrreg(clk, ce1, ra1, ra1d);

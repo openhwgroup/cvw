@@ -42,7 +42,7 @@ module swbytemask #(parameter WORDLEN, EXTEND = 0)(
     assign ByteMaskExtended = ExtendedByteMask[WORDLEN*2/8-1:WORDLEN/8];
   end else begin    
     assign ByteMask = (('d2**('d2**Size))-'d1) << Adr;
-    assign ByteMaskExtended = '0;
+    assign ByteMaskExtended = 0;
   end
 
 /* Equivalent to the following

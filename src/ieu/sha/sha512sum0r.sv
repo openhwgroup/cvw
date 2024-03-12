@@ -1,15 +1,15 @@
 ///////////////////////////////////////////
-// floprc.sv
+// sha512sum0r.sv
 //
-// Written: David_Harris@hmc.edu 9 January 2021
-// Modified: 
+// Written: ryan.swann@okstate.edu, kelvin.tran@okstate.edu, james.stine@okstate.edu
+// Created: 6 February 2024
 //
-// Purpose: D flip-flop with synchronous reset and clear
+// Purpose: sha512sum0r instruction: RV32 SHA2-512 Sum0 instruction
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
 // 
-// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
@@ -25,14 +25,25 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module floprc #(parameter WIDTH = 8) (
-  input  logic clk,
-  input  logic reset,
-  input  logic clear,
-  input  logic [WIDTH-1:0] d, 
-  output logic [WIDTH-1:0] q);
-
-  always_ff @(posedge clk)
-    if (reset | clear ) q <= #1 0;
-    else                q <= #1 d;
+module sha512sum0r(
+   input  logic [31:0] rs1, 
+   input  logic [31:0]  rs2,
+   output logic [31:0] DataOut
+);
+   
+   logic [31:0] 		       shift25, shift30, shift28; // rs1 shifts
+   logic [31:0] 		       shift7,  shift2,  shift4;  // rs2 shifts
+   
+   // Shift rs1
+   assign shift25 = rs1 << 25;
+   assign shift30 = rs1 << 30;
+   assign shift28 = rs1 >> 28;
+   
+   // Shift rs2
+   assign shift7 = rs2 >> 7;
+   assign shift2 = rs2 >> 2;
+   assign shift4 = rs2 << 4;
+   
+   // Set output to XOR of shifted values
+   assign DataOut = shift25 ^ shift30 ^ shift28 ^ shift7 ^ shift2 ^ shift4;
 endmodule

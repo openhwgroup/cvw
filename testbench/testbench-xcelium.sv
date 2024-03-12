@@ -129,6 +129,12 @@ module testbench;
         "arch64zbb":     if (P.ZBB_SUPPORTED)     tests = arch64zbb;
         "arch64zbc":     if (P.ZBC_SUPPORTED)     tests = arch64zbc;
         "arch64zbs":     if (P.ZBS_SUPPORTED)     tests = arch64zbs;
+        "arch64zbkb":    if (P.ZBKB_SUPPORTED)    tests = arch64zbkb;
+        "arch64zbkc":    if (P.ZBKC_SUPPORTED)    tests = arch64zbkc;
+        "arch64zbkx":    if (P.ZBKX_SUPPORTED)    tests = arch64zbkx;
+        "arch64zknd":    if (P.ZKND_SUPPORTED)    tests = arch64zknd;
+        "arch64zkne":    if (P.ZKNE_SUPPORTED)    tests = arch64zkne;
+        "arch64zknh":    if (P.ZKNH_SUPPORTED)    tests = arch64zknh;
       endcase 
     end else begin // RV32
       case (TEST)
@@ -159,6 +165,12 @@ module testbench;
         "arch32zbb":     if (P.ZBB_SUPPORTED)     tests = arch32zbb;
         "arch32zbc":     if (P.ZBC_SUPPORTED)     tests = arch32zbc;
         "arch32zbs":     if (P.ZBS_SUPPORTED)     tests = arch32zbs;
+        "arch32zbkb":    if (P.ZBKB_SUPPORTED)    tests = arch32zbkb;
+        "arch32zbkc":    if (P.ZBKC_SUPPORTED)    tests = arch32zbkc;
+        "arch32zbkx":    if (P.ZBKX_SUPPORTED)    tests = arch32zbkx;
+        "arch32zknd":    if (P.ZKND_SUPPORTED)    tests = arch32zknd;
+        "arch32zkne":    if (P.ZKNE_SUPPORTED)    tests = arch32zkne;
+        "arch32zknh":    if (P.ZKNH_SUPPORTED)    tests = arch32zknh;
       endcase
     end
     if (tests.size() == 0) begin
@@ -335,7 +347,7 @@ module testbench;
       if (P.UNCORE_RAM_SUPPORTED) begin
       `ifdef TB_UNCORE_RAM_SUPPORTED
         for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
-          dut.uncore.uncore.ram.ram.memory.RAM[adrindex] = '0;
+          dut.uncore.uncore.ram.ram.memory.RAM[adrindex] = 0;
       `endif
       end
     if(reset) begin  // branch predictor must always be reset
@@ -411,7 +423,7 @@ module testbench;
       .HREADRam(HRDATAEXT), .HREADYRam(HREADYEXT), .HRESPRam(HRESPEXT), .HREADY, .HWSTRB);
   end else begin 
     assign HREADYEXT = 1;
-    assign {HRESPEXT, HRDATAEXT} = '0;
+    assign {HRESPEXT, HRDATAEXT} = 0;
   end
 
   if(P.FPGA) begin : sdcard
@@ -424,8 +436,8 @@ module testbench;
     assign SDCCmdIn = SDCCmd;
     assign SDCDatIn = SDCDat;
   end else begin
-    assign SDCCmd = '0;
-    assign SDCDat = '0;
+    assign SDCCmd = 0;
+    assign SDCDat = 0;
   end
 
   wallypipelinedsoc #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,

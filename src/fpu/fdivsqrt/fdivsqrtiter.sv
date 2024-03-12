@@ -44,7 +44,7 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
   logic [P.DIVb+3:0]      WCNext[P.DIVCOPIES-1:0]; // Q4.DIVb
   logic [P.DIVb+3:0]      WS[P.DIVCOPIES:0];       // Q4.DIVb
   logic [P.DIVb+3:0]      WC[P.DIVCOPIES:0];       // Q4.DIVb
-  logic [P.DIVb:0]        U[P.DIVCOPIES:0];        // U1.DIVb
+  logic [P.DIVb:0]        U[P.DIVCOPIES:0];        // U1.DIVb // *** probably Q not U.  See Table 16.26 notes
   logic [P.DIVb:0]        UM[P.DIVCOPIES:0];       // U1.DIVb
   logic [P.DIVb:0]        UNext[P.DIVCOPIES-1:0];  // U1.DIVb
   logic [P.DIVb:0]        UMNext[P.DIVCOPIES-1:0]; // U1.DIVb
@@ -71,24 +71,18 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
   flopen #(P.DIVb+4) wcreg(clk, FDivBusyE, WCN, WC[0]);
 
   // UOTFC Result U and UM registers/initialization mux
-  // Initialize U to 1.0 and UM to 0 for square root; U to 0 and UM to -1 otherwise
-  assign initU  = {SqrtE, {(P.DIVb){1'b0}}};
-  assign initUM = {~SqrtE, {(P.DIVb){1'b0}}};
+  // Initialize U to 0 = 0.0000... and UM to -1 = 1.00000... (in Q1.Divb)
+  assign initU  ={(P.DIVb+1){1'b0}};
+  assign initUM = {{1'b1}, {(P.DIVb){1'b0}}};
   mux2   #(P.DIVb+1)  Umux(UNext[P.DIVCOPIES-1],  initU,  IFDivStartE, UMux);
   mux2   #(P.DIVb+1) UMmux(UMNext[P.DIVCOPIES-1], initUM, IFDivStartE, UMMux);
   flopen #(P.DIVb+1)  UReg(clk, FDivBusyE, UMux,  U[0]);
   flopen #(P.DIVb+1) UMReg(clk, FDivBusyE, UMMux, UM[0]);
 
-  // C register/initialization mux
-  // Initialize C to -1 for sqrt and -R for division
-  logic [1:0] initCUpper;
-  if(P.RADIX == 4) begin
-    mux2 #(2) cuppermux4(2'b00, 2'b11, SqrtE, initCUpper);
-  end else begin
-    mux2 #(2) cuppermux2(2'b10, 2'b11, SqrtE, initCUpper);
-  end
-  
-  assign initC = {initCUpper, {P.DIVb{1'b0}}};
+  // C register/initialization mux: C = -R:
+  // C = -4 = 00.000000... (in Q2.DIVb) for radix 4, C = -2 = 10.000000... for radix2
+  if(P.RADIX == 4) assign initC = 0;
+  else             assign initC = {2'b10, {{P.DIVb{1'b0}}}};
   mux2   #(P.DIVb+2) cmux(C[P.DIVCOPIES], initC, IFDivStartE, NextC); 
   flopen #(P.DIVb+2) creg(clk, FDivBusyE, NextC, C[0]);
 
@@ -108,9 +102,7 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
           .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]),
           .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
       end else begin: stage
-        logic j1;
-        assign j1 = (i == 0 & ~C[0][P.DIVb-1]);
-        fdivsqrtstage4 #(P) fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtE, .j1,
+        fdivsqrtstage4 #(P) fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtE, 
           .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]), 
           .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
       end

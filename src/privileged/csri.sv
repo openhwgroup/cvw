@@ -74,11 +74,11 @@ module csri import cvw::*;  #(parameter cvw_t P) (
     assign SIP_WRITE_MASK = 12'h000;
     assign MIE_WRITE_MASK = 12'h888;
   end
-  always @(posedge clk)
+  always_ff @(posedge clk)
     if (reset)          MIP_REGW_writeable <= 12'b0;
     else if (WriteMIPM) MIP_REGW_writeable <= (CSRWriteValM[11:0] & MIP_WRITE_MASK);
     else if (WriteSIPM) MIP_REGW_writeable <= (CSRWriteValM[11:0] & SIP_WRITE_MASK) | (MIP_REGW_writeable & ~SIP_WRITE_MASK);
-  always @(posedge clk)
+  always_ff @(posedge clk)
     if (reset)          MIE_REGW <= 12'b0;
     else if (WriteMIEM) MIE_REGW <= (CSRWriteValM[11:0] & MIE_WRITE_MASK); // MIE controls M and S fields
     else if (WriteSIEM) MIE_REGW <= (CSRWriteValM[11:0] & 12'h222 & MIDELEG_REGW) | (MIE_REGW & 12'h888); // only S fields

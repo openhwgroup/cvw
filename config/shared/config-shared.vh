@@ -29,6 +29,7 @@ localparam D_SUPPORTED = ((MISA >> 3) % 2 == 1);
 localparam E_SUPPORTED = ((MISA >> 4) % 2 == 1);
 localparam F_SUPPORTED = ((MISA >> 5) % 2 == 1);
 localparam I_SUPPORTED = ((MISA >> 8) % 2 == 1);
+localparam K_SUPPORTED = ((ZBKB_SUPPORTED | ZBKC_SUPPORTED | ZBKX_SUPPORTED | ZKND_SUPPORTED | ZKNE_SUPPORTED | ZKNH_SUPPORTED));
 localparam M_SUPPORTED = ((MISA >> 12) % 2 == 1);
 localparam Q_SUPPORTED = ((MISA >> 16) % 2 == 1);
 localparam S_SUPPORTED = ((MISA >> 18) % 2 == 1);
@@ -94,7 +95,7 @@ localparam LOGR        = $clog2(RADIX);                             // r = log(R
 localparam RK          = LOGR*DIVCOPIES;                            // r*k bits per cycle generated
 
 // intermediate division parameters not directly used in fdivsqrt hardware
-localparam FPDIVMINb   = NF + 3; // minimum length of fractional part: Nf result bits + guard and round bits + 1 extra bit to allow sqrt being shifted right
+localparam FPDIVMINb   = NF + 2; // minimum length of fractional part: Nf result bits + guard and round bits + 1 extra bit to allow sqrt being shifted right
 //localparam FPDIVMINb   = NF + 2 + (RADIX == 2); // minimum length of fractional part: Nf result bits + guard and round bits + 1 extra bit for preshifting radix2 square root right, if radix4 doesn't use a right shift.  This version saves one cycle on double-precision with R=4,k=4.  However, it doesn't work yet because C is too short, so k is incorrectly calculated as a 1 in the lsb after the last step.
 localparam DIVMINb     = ((FPDIVMINb<XLEN) & IDIV_ON_FPU) ? XLEN : FPDIVMINb; // minimum fractional bits b = max(XLEN, FPDIVMINb)
 localparam RESBITS     = DIVMINb + LOGR; // number of bits in a result: r integer + b fractional

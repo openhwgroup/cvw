@@ -91,7 +91,7 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
   assign memread  = ~PWRITE & PSEL;           // read at start of access phase.  PENABLE hasn't set up before this
   assign PREADY   = 1'b1;                     // PLIC never takes >1 cycle to respond
   assign entry    = {PADDR[23:2],2'b0};
-  assign One[P.PLIC_NUM_SRC-1:1] = '0; assign One[0] = 1'b1; // Vivado does not like this as a single assignment.
+  assign One[P.PLIC_NUM_SRC-1:1] = 0; assign One[0] = 1'b1; // Vivado does not like this as a single assignment.
 
   // account for subword read/write circuitry
   // -- Note PLIC registers are 32 bits no matter what; access them with LW SW.
@@ -104,13 +104,13 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
   // ==================
   localparam PLIC_NUM_SRC_MIN_32 = P.PLIC_NUM_SRC < 32 ? P.PLIC_NUM_SRC : 31;
     
-  always @(posedge PCLK) begin
+  always_ff @(posedge PCLK) begin
     // resetting
     if (~PRESETn) begin
-      intPriority   <= #1 '0;
-      intEn         <= #1 '0;
-      intThreshold  <= #1 '0;
-      intInProgress <= #1 '0;
+      intPriority   <= #1 0;
+      intEn         <= #1 0;
+      intThreshold  <= #1 0;
+      intInProgress <= #1 0;
     // writing
     end else begin
       if (memwrite)        
