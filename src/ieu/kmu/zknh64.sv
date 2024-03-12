@@ -28,7 +28,7 @@
 module zknh64 (
    input  logic [63:0] A, B, 
    input  logic [3:0]  ZKNHSelect,
-	output logic [63:0] ZKNHResult
+   output logic [63:0] ZKNHResult
 );
 
    logic [31:0]         sha256_32;
