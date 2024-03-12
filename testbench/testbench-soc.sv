@@ -452,6 +452,7 @@ module testbench;
   assign SPIIn = 0;
 
   // Use bsg_dmc memory controller and LPDDR model
+  `include "bsg_dmc.svh"
   
   logic                 ddr_ck_p;
   logic                 ddr_ck_n;
@@ -484,11 +485,45 @@ module testbench;
   logic                 dfi_clk_2x_i;
   logic                 dfi_clk_1x_o;
 
+  // Use a /6 clock divider for slower UI interface
+  logic ui_clk;
+  integer ui_clk_counter;
+  always @(posedge HCLK) begin
+    ui_clk_counter <= ui_clk_counter + 1;
+    if (ui_clk_counter >= 6) ui_clk_counter <= 0;
+    ui_clk <= (ui_clk_counter >= 3);
+  end
+  
+  // TODO: Figure out how to initialize dmc_config from registers
+  bsg_dmc_s dmc_config;
+  always_comb begin: bsg_dmc_config
+    dmc_config.trefi = 1023;
+    dmc_config.tmrd = 1;
+    dmc_config.trfc = 15;
+    dmc_config.trc = 10;
+    dmc_config.trp = 2;
+    dmc_config.tras = 7;
+    dmc_config.trrd = 1;
+    dmc_config.trcd = 2;
+    dmc_config.twr = 10;
+    dmc_config.twtr = 7;
+    dmc_config.trtp = 10;
+    dmc_config.tcas = 3;
+    dmc_config.col_width = 11;
+    dmc_config.row_width = 14;
+    dmc_config.bank_width = 2;
+    dmc_config.dqs_sel_cal = 3;
+    dmc_config.init_cycles = 40010;
+    dmc_config.bank_pos = 25;
+  end
+
   bsg_dmc_ahb #(28, P.XLEN, 32) bsg_mem_controller (
     .HCLK, .HRESETn, .HSEL(HSELEXT),
     .HADDR(HADDR[27:0]), .HWDATA, .HWSTRB, // FIXME: Double check that these are the right address bits
     .HWRITE, .HTRANS, .HREADY(HREADYEXT),
     .HRDATA(HRDATAEXT), .HRESP(HRESPEXT), .HREADYOUT(HREADYEXT),
+    .dmc_config,
+    .ui_clk,
     .ddr_ck_p, .ddr_ck_n, .ddr_cke, .ddr_ba, .ddr_addr,
     .ddr_cs, .ddr_ras, .ddr_cas, .ddr_we, .ddr_reset, .ddr_odt,
     .ddr_dm_oen(ddr_dm_oen_o), .ddr_dm(ddr_dm_o),
