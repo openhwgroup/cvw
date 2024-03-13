@@ -34,6 +34,7 @@ coverage = '-coverage' in sys.argv
 fp = '-fp' in sys.argv
 nightly = '-nightly' in sys.argv
 softfloat = '-softfloat' in sys.argv
+soc = '-soc' in sys.argv
 
 TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr'])
 # name:     the name of this test configuration (used in printing human-readable
@@ -387,10 +388,22 @@ if (softfloat):
                 cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " cvtfp \n!",
                 grepstr="All Tests completed with          0 errors"
             )
-            configs.append(cvtfptest)    
-      
+            configs.append(cvtfptest)
 
-    
+if (soc):
+    print('Running soc coverage')
+    configs = [] # Delete all configs, just use test64gc
+    coverStr = '-coverage' # Include coverage report
+    for test in tests64gc:
+        if any(s in test for s in ['zfa', 'zfh', 'zbk', 'zkn']):
+            continue # Skip tests for extensions that aren't in riscv-arch-tests yet
+        tc = TestCase(
+            name=test,
+            variant="rv64gc",
+            cmd="vsim > {} -c <<!\ndo wally-soc.do rv64gc "+test+" " + coverStr + "\n!",
+            grepstr="All tests ran without failures")
+        configs.append(tc)
+
 
 import os
 from multiprocessing import Pool, TimeoutError
@@ -451,6 +464,9 @@ def main():
         configs.append(getBuildrootTC(boot=False))
     elif '-softfloat' in sys.argv:
         TIMEOUT_DUR = 60*60 # seconds
+    elif '-soc' in sys.argv:
+        TIMEOUT_DUR = 20*60 # seconds
+        # FIXME: Do we need to run buildroot?
     else:
         TIMEOUT_DUR = 10*60 # seconds
         configs.append(getBuildrootTC(boot=False))
@@ -470,7 +486,7 @@ def main():
              print(f"{bcolors.FAIL}%s_%s: Timeout - runtime exceeded %d seconds{bcolors.ENDC}" % (config.variant, config.name, TIMEOUT_DUR))
 
     # Coverage report
-    if coverage:
+    if coverage or soc:
        os.system('make coverage')
     # Count the number of failures
     if num_fail:

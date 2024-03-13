@@ -29,3 +29,7 @@
 [submodule "addins/ahbsdc"]
 	path = addins/ahbsdc
 	url = http://github.com/JacobPease/ahbsdc.git
+[submodule "soc/src/basejump_stl"]
+	path = soc/src/basejump_stl
+	url = https://github.com/bespoke-silicon-group/basejump_stl
+  shallow = true
