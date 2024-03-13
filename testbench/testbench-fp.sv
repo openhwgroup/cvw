@@ -51,7 +51,7 @@ module testbenchfp;
    logic [31:0] 		errors=0;                   // how many errors
    logic [31:0] 		VectorNum=0;                // index for test vector
    logic [31:0] 		FrmNum=0;                   // index for rounding mode
-   logic [P.FLEN*4+7:0] 	TestVectors[MAXVECTORS-1:0];     // list of test vectors
+   logic [P.FLEN*4+7:0] 	TestVectors[100:0];     // list of test vectors
 
    logic [1:0] 			FmtVal;                     // value of the current Fmt
    logic [2:0] 			UnitVal, OpCtrlVal, FrmVal; // value of the currnet Unit/OpCtrl/FrmVal
@@ -156,7 +156,6 @@ module testbenchfp;
       // Information displayed for user on what is simulating
       // $display("\nThe start of simulation...");      
       // $display("This simulation for TEST is %s", TEST);
-
       if (P.Q_SUPPORTED & (TEST_SIZE == "QP" | TEST_SIZE == "all")) begin // if Quad percision is supported
          if (TEST === "cvtint" | TEST === "all") begin  // if testing integer conversion
             // add the 128-bit cvtint tests to the to-be-tested list
@@ -722,12 +721,12 @@ module testbenchfp;
       $display("\n\nRunning %s vectors ", Tests[TestNum]);
       $readmemh(testname, TestVectors);
 
-      //$display("\n\n THERE ARE %d tests", $size(TestVectors));
-      //$display("\n\n THERE ARE %h tests", TestVectors[0]);
-      //$display("\n\n THERE ARE %h tests", TestVectors[1]);
-      //$display("\n\n THERE ARE %h tests", TestVectors[2]);
-      //$display("\n\n THERE ARE %h tests", TestVectors[3]);
-      //$display("\n\n THERE ARE %h tests", TestVectors[4]);
+      $display("\n\n THERE ARE %d tests", $size(TestVectors));
+      $display("\n\n THERE ARE %h tests", TestVectors[0]);
+      $display("\n\n THERE ARE %h tests", TestVectors[1]);
+      $display("\n\n THERE ARE %h tests", TestVectors[2]);
+      $display("\n\n THERE ARE %h tests", TestVectors[3]);
+      $display("\n\n THERE ARE %h tests", TestVectors[4]);
       // set the test index to 0
       TestNum = 0;
    end
@@ -1049,7 +1048,7 @@ module testbenchfp;
       // check if result is correct
       assign ResMatch = ((Res === Ans) | NaNGood | (NaNGood === 1'bx));
       assign FlagMatch = ((ResFlg === AnsFlg) | (AnsFlg === 5'bx));
-      assign divsqrtop = (OpCtrlVal == `SQRT_OPCTRL) | (OpCtrlVal == `DIV_OPCTRL);
+      assign divsqrtop = (OpCtrlVal == `SQRT_OPCTRL) | (OpCtrlVal == `DIV_OPCTRL) | (OpCtrlVal == `INTDIV_OPCTRL) | (OpCtrlVal ==`INTDIVU_OPCTRL) | (OpCtrlVal == `INTDIVUW_OPCTRL) | (OpctrlVal == `INTREM_OPCTRL) | (OpCtrlVal == `INTREMU_OPCTRL) | (OpCtrlVal ==`INTREMUW_OPCTRL) ; 
       assign FMAop = (OpCtrlVal == `FMAUNIT);  
       assign DivDone = OldFDivBusyE & ~FDivBusyE;
       assign CheckNow = ((DivDone | ~divsqrtop) | 
@@ -1064,7 +1063,8 @@ module testbenchfp;
          $stop;
       end
 
-      if (TestVectors[VectorNum][0] === 1'bx & Tests[TestNum] !== "") begin // if reached the eof
+      if (TestVectors[VectorNum][100:0] === 1'bx & Tests[TestNum] !== "" || VectorNum == 20) begin // if reached the eof
+         $display(":MY BROTHER IN CHRIST");
          // increment the test
          TestNum += 1;
          // clear the vectors
