@@ -994,6 +994,78 @@ string imperas32f[] = '{
     "rv32i_m/B/src/bseti-01.S"
   };
 
+  string arch32zbkc[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/B/src/clmul-01.S",
+    "rv32i_m/B/src/clmulh-01.S"
+  };
+
+  string arch32zbkx[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/K/src/xperm8-01.S",
+    "rv32i_m/K/src/xperm4-01.S"
+  };
+
+  string arch32zknd[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/K/src/aes32dsi-01.S",     
+    "rv32i_m/K/src/aes32dsmi-01.S"    	        
+  };
+
+  string arch32zkne[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/K/src/aes32esi-01.S",  
+    "rv32i_m/K/src/aes32esmi-01.S"  		        
+  };
+
+  string arch32zknh[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/K/src/sha256sig0-01.S",  
+    "rv32i_m/K/src/sha256sig1-01.S",
+    "rv32i_m/K/src/sha256sum0-01.S",  
+    "rv32i_m/K/src/sha256sum1-01.S",
+    "rv32i_m/K/src/sha512sig0h-01.S",  
+    "rv32i_m/K/src/sha512sig0l-01.S",  
+    "rv32i_m/K/src/sha512sig1h-01.S",
+    "rv32i_m/K/src/sha512sig1l-01.S",  
+    "rv32i_m/K/src/sha512sum0r-01.S",
+    "rv32i_m/K/src/sha512sum1r-01.S"       
+  };
+
+  string arch32zbkb[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/B/src/ror-01.S",  
+    "rv32i_m/B/src/rol-01.S",  
+    "rv32i_m/B/src/rori-01.S",  
+    "rv32i_m/B/src/andn-01.S",  
+    "rv32i_m/B/src/orn-01.S",  
+    "rv32i_m/B/src/xnor-01.S",  
+    "rv32i_m/B/src/rev8_32-01.S",  
+    "rv32i_m/K/src/pack-01.S",  
+    "rv32i_m/K/src/packh-01.S",  
+    "rv32i_m/K/src/brev8_32-01.S",  
+    "rv32i_m/K/src/zip-01.S",  
+    "rv32i_m/K/src/unzip-01.S"
+ };
+
+   string arch64zbkb[] = '{
+    `RISCVARCHTEST,
+    "rv64i_m/B/src/ror-01.S",  
+    "rv64i_m/B/src/rol-01.S",  
+    "rv64i_m/B/src/rori-01.S",  
+    "rv64i_m/B/src/rorw-01.S",  
+    "rv64i_m/B/src/rolw-01.S",  
+    "rv64i_m/B/src/roriw-01.S",  
+    "rv64i_m/B/src/andn-01.S",  
+    "rv64i_m/B/src/orn-01.S",  
+    "rv64i_m/B/src/xnor-01.S",  
+    "rv64i_m/B/src/rev8-01.S",  
+    "rv64i_m/K/src/pack-01.S",  
+    "rv64i_m/K/src/packh-01.S",  
+    "rv64i_m/K/src/packw-01.S",  
+    "rv64i_m/K/src/brev8-01.S"
+ };
+
   string arch64m[] = '{
     `RISCVARCHTEST,
     "rv64i_m/M/src/div-01.S",
@@ -1750,6 +1822,47 @@ string arch64zbs[] = '{
     "rv64i_m/B/src/binvi-01.S",
     "rv64i_m/B/src/bset-01.S",
     "rv64i_m/B/src/bseti-01.S"
+};
+
+string arch64zbkc[] = '{
+  `RISCVARCHTEST,
+  "rv64i_m/B/src/clmul-01.S",
+  "rv64i_m/B/src/clmulh-01.S"
+};
+
+string arch64zbkx[] = '{
+  `RISCVARCHTEST,
+  "rv64i_m/K/src/xperm8-01.S",
+  "rv64i_m/K/src/xperm4-01.S"
+};
+
+string arch64zknd[] = '{
+  `RISCVARCHTEST,
+  "rv64i_m/K/src/aes64ds-01.S",  
+  "rv64i_m/K/src/aes64dsm-01.S",      
+  "rv64i_m/K/src/aes64im-01.S",  
+  "rv64i_m/K/src/aes64ks1i-01.S",    
+  "rv64i_m/K/src/aes64ks2-01.S"
+};
+
+string arch64zkne[] = '{
+  `RISCVARCHTEST,
+  "rv64i_m/K/src/aes64es-01.S",   
+  "rv64i_m/K/src/aes64esm-01.S",
+  "rv64i_m/K/src/aes64ks1i-01.S",
+  "rv64i_m/K/src/aes64ks2-01.S"
+};
+
+string arch64zknh[] = '{
+  `RISCVARCHTEST,
+  "rv64i_m/K/src/sha256sig0-01.S",  
+  "rv64i_m/K/src/sha256sig1-01.S",
+  "rv64i_m/K/src/sha256sum0-01.S",  
+  "rv64i_m/K/src/sha256sum1-01.S",
+  "rv64i_m/K/src/sha512sig0-01.S",  
+  "rv64i_m/K/src/sha512sig1-01.S",  
+  "rv64i_m/K/src/sha512sum0-01.S",
+  "rv64i_m/K/src/sha512sum1-01.S"     
 };
 
     string arch32priv[] = '{

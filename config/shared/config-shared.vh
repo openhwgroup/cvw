@@ -29,6 +29,7 @@ localparam D_SUPPORTED = ((MISA >> 3) % 2 == 1);
 localparam E_SUPPORTED = ((MISA >> 4) % 2 == 1);
 localparam F_SUPPORTED = ((MISA >> 5) % 2 == 1);
 localparam I_SUPPORTED = ((MISA >> 8) % 2 == 1);
+localparam K_SUPPORTED = ((ZBKB_SUPPORTED | ZBKC_SUPPORTED | ZBKX_SUPPORTED | ZKND_SUPPORTED | ZKNE_SUPPORTED | ZKNH_SUPPORTED));
 localparam M_SUPPORTED = ((MISA >> 12) % 2 == 1);
 localparam Q_SUPPORTED = ((MISA >> 16) % 2 == 1);
 localparam S_SUPPORTED = ((MISA >> 18) % 2 == 1);
