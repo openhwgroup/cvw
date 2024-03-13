@@ -817,7 +817,7 @@ module testbenchfp;
   end
   else begin: postprocess
     postprocess #(P) postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
-                .OpCtrl(OpCtrlVal), .DivQm(Quot), .DivQe(DivCalcExp),
+                .OpCtrl(OpCtrlVal), .DivUm(Quot), .DivUe(DivCalcExp),
                 .Xm(Xm), .Ym(Ym), .Zm(Zm), .CvtCe(CvtCalcExpE), .DivSticky(DivSticky), .FmaSs(Ss),
                 .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResSubnormUf(CvtResSubnormUfE),
                 .XZero(XZero), .YZero(YZero), .CvtShiftAmt(CvtShiftAmtE),
