@@ -351,7 +351,7 @@ class TestRunner:
 
         if test_exctention:
             command = [test_type, test_name, test_exctention]
-            logger.info(f"Command used to run tests: {test_type} {test_name} -{test_exctention}")
+            logger.info(f"Command used to run tests: {test_type} {test_name} {test_exctention}")
         else:
             command = [test_type, test_name]
             logger.info(f"Command used to run tests: {test_type} {test_name}")
