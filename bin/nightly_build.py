@@ -358,12 +358,14 @@ class TestRunner:
 
 
         # Execute the command using subprocess and save the output into a file
-        with open(output_file, "w") as f:
-            formatted_datetime = self.current_datetime.strftime("%Y-%m-%d %H:%M:%S")
-            f.write(formatted_datetime)
-            f.write("\n\n")
-            result = subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, text=True)
-        
+        try:
+            with open(output_file, "w") as f:
+                formatted_datetime = self.current_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                f.write(formatted_datetime)
+                f.write("\n\n")
+                result = subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, text=True)
+        except Exception as e:
+            logger.error("There was an error in running the tests in the run_tests function: {e}")
         # Check if the command executed successfuly
         if result.returncode or result.returncode == 0:
             logger.info(f"Test ran successfuly. Test type: {test_type}, test name: {test_name}, test extention: {test_exctention}")
@@ -530,13 +532,10 @@ class TestRunner:
 
             # Failed Tests
             md_file.write(f"\n\n## Failed Tests")
-            md_file.write(f"\nTotal failed tests: {total_number_failures}")
+            md_file.write(f"\n**Total failed tests: {total_number_failures}**")
             for (test_item, item) in zip(test_list, failed_tests):
                 md_file.write(f"\n\n### {test_item[1]} test")
-                md_file.write(f"\n**General Information**\n")
-                md_file.write(f"\n* Test type: {test_item[0]}\n")
-                md_file.write(f"\n* Test name: {test_item[1]}\n")
-                md_file.write(f"\n* Test extension: {test_item[2]}\n\n")
+                md_file.write(f"\n**Command used:** {test_item[0]} {test_item[1]} {test_item[2]}\n\n")
                 md_file.write(f"**Failed Tests:**\n")
 
                 
@@ -559,10 +558,7 @@ class TestRunner:
             md_file.write(f"\n**Total successful tests: {total_number_success}**")
             for (test_item, item) in zip(test_list, passed_tests):
                 md_file.write(f"\n\n### {test_item[1]} test")
-                md_file.write(f"\n**General Information**\n")
-                md_file.write(f"\n* Test type: {test_item[0]}")
-                md_file.write(f"\n* Test name: {test_item[1]}")
-                md_file.write(f"\n* Test extension: {test_item[2]}\n\n")
+                md_file.write(f"\n**Command used:** {test_item[0]} {test_item[1]} {test_item[2]}\n\n")
                 md_file.write(f"\n**Successful Tests:**\n")
 
                 
@@ -707,7 +703,7 @@ def main():
     The goal of this section is to replace the TIMEOUT_DUR for regression tests.
 
     """
-    if test_runner.change_time_dur(time_duriation=2):
+    if test_runner.change_time_dur(time_duriation=1):
         pass
     else:
         logger.error("Error occured changing the TIMEOUT duration in './regression-wally'")
@@ -736,26 +732,29 @@ def main():
     for test_type, test_name, test_exctention in test_list:
         
         check, output_location = test_runner.run_tests(test_type=test_type, test_name=test_name, test_exctention=test_exctention)
+        try:
+            if check: # this checks if the test actually ran successfuly
+                output_log_list.append(output_location)
+                logger.info(f"{test_name} ran successfuly. Output location: {output_location}")
+                # format tests to markdown
+                try:
+                    passed, failed = test_runner.clean_format_output(input_file = output_location)
+                    logger.info(f"{test_name} has been formatted to markdown")
+                except:
+                    logger.ERROR(f"Error occured with formatting {test_name}")
 
-        if check: # this checks if the test actually ran successfuly
-            output_log_list.append(output_location)
-            logger.info(f"{test_name} ran successfuly. Output location: {output_location}")
-            # format tests to markdown
-            try:
-                passed, failed = test_runner.clean_format_output(input_file = output_location)
-                logger.info(f"{test_name} has been formatted to markdown")
-            except:
-                logger.ERROR(f"Error occured with formatting {test_name}")
+                logger.info(f"The # of failures are for {test_name}: {len(failed)}")
+                total_number_failures+= len(failed)
+                total_failures.append(failed)
+
+                logger.info(f"The # of sucesses are for {test_name}: {len(passed)}")
+                total_number_success += len(passed)
+                total_success.append(passed)
+                test_runner.rewrite_to_markdown(test_name, passed, failed)
     
-            logger.info(f"The # of failures are for {test_name}: {len(failed)}")
-            total_number_failures+= len(failed)
-            total_failures.append(failed)
-    
-            logger.info(f"The # of sucesses are for {test_name}: {len(passed)}")
-            total_number_success += len(passed)
-            total_success.append(passed)
-            test_runner.rewrite_to_markdown(test_name, passed, failed)
-    
+        except Exception as e:
+            logger.error("There was an error in running the tests: {e}")
+
     logger.info(f"The total sucesses for all tests ran are: {total_number_success}")
     logger.info(f"The total failures for all tests ran are: {total_number_failures}")
 
@@ -769,9 +768,10 @@ def main():
     #############################################
 
     # Combine multiple markdown files into one file
-
-    test_runner.combine_markdown_files(passed_tests = total_success, failed_tests = total_failures, test_list = test_list, total_number_failures = total_number_failures, total_number_success = total_number_success, test_type=args.target, markdown_file=None, args=args)
-
+    try:
+        test_runner.combine_markdown_files(passed_tests = total_success, failed_tests = total_failures, test_list = test_list, total_number_failures = total_number_failures, total_number_success = total_number_success, test_type=args.target, markdown_file=None, args=args)
+    except Exception as e:
+        logger.error(f"Error combining the markdown tests called from main: {e}")
 
     #############################################
     #             WRITE MD TESTS                #
