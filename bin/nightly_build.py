@@ -488,17 +488,17 @@ class TestRunner:
                         md_file.write("\n")
                         md_file.write(f"* <span class=\"failure\" style=\"color: red;\">{config}</span> ({log_file})\n")
                         md_file.write("\n")
-            # Successfull Tests
+            # successful Tests
 
-            md_file.write(f"\n\n## Successfull Tests")
-            md_file.write(f"\n**Total successfull tests: {total_number_success}**")
+            md_file.write(f"\n\n## successful Tests")
+            md_file.write(f"\n**Total successful tests: {total_number_success}**")
             for (test_item, item) in zip(test_list, passed_tests):
                 md_file.write(f"\n\n### {test_item[1]} test")
                 md_file.write(f"\n**General Information**\n")
                 md_file.write(f"\n* Test type: {test_item[0]}")
                 md_file.write(f"\n* Test name: {test_item[1]}")
                 md_file.write(f"\n* Test extension: {test_item[2]}\n\n")
-                md_file.write(f"\n**Successfull Tests:**\n")
+                md_file.write(f"\n**successful Tests:**\n")
 
                 
 
