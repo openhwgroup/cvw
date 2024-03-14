@@ -1,5 +1,5 @@
 
-all: riscoftests memfiles coveragetests deriv benchmarks
+all: riscoftests memfiles coveragetests deriv 
 	# *** Build old tests/imperas-riscv-tests for now;
 	# Delete this part when the privileged tests transition over to tests/wally-riscv-arch-test
 	# DH: 2/27/22 temporarily commented out imperas-riscv-tests because license expired
