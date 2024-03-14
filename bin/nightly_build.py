@@ -54,6 +54,8 @@ Dependencies:
         - re
         - markdown
         - subprocess
+        - argparse
+        - logging
 
     Bash:
         - mutt (email sender)
@@ -69,6 +71,31 @@ from datetime import datetime
 import re
 import markdown
 import subprocess
+import argparse
+import logging
+
+# Logger
+
+# Set up the logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+# Create a file handler
+file_handler = logging.FileHandler('../../logs/nightly_build.log')
+file_handler.setLevel(logging.DEBUG)
+
+# Create a console handler
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+
+# Create a formatter and add it to the handlers
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+console_handler.setFormatter(formatter)
+
+# Add the handlers to the logger
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
 
 
 
@@ -83,21 +110,21 @@ class FolderManager:
             base_dir (str): The base directory where folders will be managed and repository will be cloned.
         """
         env_extract_var = 'WALLY'
-        print(f"The environemntal variable is {env_extract_var}")
         self.base_dir = os.environ.get(env_extract_var)
-        print(f"The base directory is: {self.base_dir}")
         self.base_parent_dir = os.path.dirname(self.base_dir)
 
-        # print(f"The new WALLY vairable is: {os.environ.get('WALLY')}")
-        # print(f"The Base Directory is now : {self.base_dir}")
-        # print(f"The Base Parent Directory is now : {self.base_parent_dir}")
+        logger.info(f"Base directory: {self.base_dir}")
+        logger.info(f"Parent Base directory: {self.base_parent_dir}")
+
 
     def create_preliminary_folders(self, folders):
         """
         Create preliminary folders if they do not exist. 
         These folders are:
-            nightly_runs/repos/
-            nightly_runs/results/ 
+            nightly-runs/repos/
+            nightly-runs/results/ 
+            nightly-runs/repos/
+            nightly-runs/results/ 
 
         Args:
             folders (list): A list of folder names to be created.
@@ -110,6 +137,7 @@ class FolderManager:
             folder_path = os.path.join(self.base_parent_dir, folder)
             if not os.path.exists(folder_path):
                 os.makedirs(folder_path)
+        logger.info(f"Preliminary folders created: {folders}")
 
     def create_new_folder(self, folders):
         """
@@ -131,7 +159,7 @@ class FolderManager:
                 return_folder_path.append(folder_path)
             else:
                 return_folder_path.append(None) # Folder already exists
-        
+        logger.info(f"New folder created. Path: {folder_path}")
         return return_folder_path
 
     def clone_repository(self, folder, repo_url):
@@ -152,7 +180,8 @@ class FolderManager:
             os.makedirs(repo_folder)
             os.system(f"git clone --recurse-submodules {repo_url} {repo_folder}")
             os.makedirs(tmp_folder)
-    
+
+        logger.info(f"Repository cloned: {repo_url}")
 
 class TestRunner:
     """A class for making, running, and formatting test results."""
@@ -161,8 +190,9 @@ class TestRunner:
         self.base_dir = os.environ.get('WALLY')
         self.base_parent_dir = os.path.dirname(self.base_dir)
         self.current_datetime = datetime.now()
-        #self.temp_dir = self.base_parent_dir
-        #print(f"Base Directory: {self.base_parent_dir}")
+
+        logger.info("Test runner object is initialized")
+        
         
     def copy_setup_script(self, folder):
         """
@@ -171,10 +201,11 @@ class TestRunner:
         The setup script will be copied from the base directory to a specific folder structure inside the base directory.
 
         Args:
-            folder: the "nightly_runs/repos/"
+            folder: the "nightly-runs/repos/"
+            folder: the "nightly-runs/repos/"
 
         Returns:
-            bool: True if the script is copied successfully, False otherwise.
+            bool: True if the script is copied successfuly, False otherwise.
         """
         # Get today's date in YYYY-MM-DD format
         todays_date = datetime.now().strftime("%Y-%m-%d")
@@ -185,22 +216,22 @@ class TestRunner:
         
         # Check if the source script exists
         if not os.path.exists(source_script):
-            print(f"Error: Source script '{source_script}' not found.")
+            logger.error(f"Error: Source script '{source_script}' not found.")
             return False
 
 
         # Check if the destination folder exists, create it if necessary
         if not os.path.exists(destination_folder):
-            print(f"Error: Destination folder '{destination_folder}' not found.")
+            logger.error(f"Error: Destination folder '{destination_folder}' not found.")
             return False
 
         # Copy the script to the destination folder
         try:
             shutil.copy(source_script, destination_folder)
-            #print(f"Setup script copied to: {destination_folder}")
+            logger.info(f"Setup script copied to: {destination_folder}")
             return True
         except Exception as e:
-            print(f"Error copying setup script: {e}")
+            logger.error(f"Error copying setup script: {e}")
             return False
 
 
@@ -225,10 +256,37 @@ class TestRunner:
         self.base_parent_dir = os.path.dirname(self.base_dir)
         self.temp_dir = self.base_parent_dir
 
-        # print(f"The new WALLY vairable is: {os.environ.get('WALLY')}")
-        # print(f"The Base Directory is now : {self.base_dir}")
-        # print(f"The Base Parent Directory is now : {self.base_parent_dir}")
-       
+        logger.info(f"Tests are going to be ran from: {self.base_dir}")
+        logger.info(f"WALLY environmental variable is: {os.environ.get('WALLY')}")
+    
+
+    def change_time_dur(self, time_duriation=1):
+        
+        # Prepare the command to execute the Makefile
+        make_file_path = os.path.join(self.base_dir, "sim")
+        logger.info(f"Make file path is set to: {make_file_path}")
+        try:
+            os.chdir(make_file_path)
+        except Exception as e:
+            logger.error(f"Error nagivating to the make file path. Error: {e}")
+        file_path = "regression-wally"
+        line_number = 450 # TIMEOUT_DUR = 1 day at this line in regression-wally 
+        new_line = f"        TIMEOUT_DUR = {60*time_duriation}"
+
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+
+        if line_number < 1 or line_number > len(lines):
+            logger.error("Error: Line number out of range.")
+            return False
+
+        lines[line_number - 1] = new_line + '\n'
+
+        with open(file_path, 'w') as file:
+            file.writelines(lines)
+            logger.info(f"Timeduration in ./regression-wally has been changed to: {time_duriation*60} seconds")
+            return True
+
     def execute_makefile(self, target=None):
         """
         Execute a Makefile with optional target.
@@ -252,7 +310,9 @@ class TestRunner:
         # Add target to the command if specified
         if target:
             command.append(target)
-        #print(f"The command is: {command}")
+            logger.info(f"Command used: {command[0]} {command[1]}")
+        else:
+            logger.info(f"Command used: {command[0]}")
 
         # Execute the command using subprocess and save the output into a file
         with open(output_file, "w") as f:
@@ -266,10 +326,10 @@ class TestRunner:
 
         # Check the result
         if result.returncode == 0:
-            #print(f"Makefile executed successfully{' with target ' + target if target else ''}.")
+            logger.info(f"Tests have been made with tag target: {target}")
             return True
         else:
-            #print("Error executing Makefile.")
+            logger.error(f"Error making the tests. Target: {target}")
             return False
             
     def run_tests(self, test_type=None, test_name=None, test_exctention=None):
@@ -291,21 +351,27 @@ class TestRunner:
 
         if test_exctention:
             command = [test_type, test_name, test_exctention]
+            logger.info(f"Command used to run tests: {test_type} {test_name} {test_exctention}")
         else:
             command = [test_type, test_name]
+            logger.info(f"Command used to run tests: {test_type} {test_name}")
+
 
         # Execute the command using subprocess and save the output into a file
-        with open(output_file, "w") as f:
-            formatted_datetime = self.current_datetime.strftime("%Y-%m-%d %H:%M:%S")
-            f.write(formatted_datetime)
-            f.write("\n\n")
-            result = subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, text=True)
-        
-        # Check if the command executed successfully
+        try:
+            with open(output_file, "w") as f:
+                formatted_datetime = self.current_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                f.write(formatted_datetime)
+                f.write("\n\n")
+                result = subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, text=True)
+        except Exception as e:
+            logger.error("There was an error in running the tests in the run_tests function: {e}")
+        # Check if the command executed successfuly
         if result.returncode or result.returncode == 0:
+            logger.info(f"Test ran successfuly. Test type: {test_type}, test name: {test_name}, test extention: {test_exctention}")
             return True, output_file
         else:
-            print("Error:", result.returncode)
+            logger.error(f"Error making test. Test type: {test_type}, test name: {test_name}, test extention: {test_exctention}")
             return False, output_file
 
 
@@ -336,11 +402,10 @@ class TestRunner:
         while index < len(lines):
             # Remove ANSI escape codes
             line = re.sub(r'\x1b\[[0-9;]*[mGK]', '', lines[index])  
-            #print(line)
+            
             if "Success" in line:
                 passed_configs.append(line.split(':')[0].strip())
             elif "passed lint" in line:
-                #print(line)
                 passed_configs.append(line.split(' ')[0].strip())
                 #passed_configs.append(line) # potentially use a space
             elif "failed lint" in line:
@@ -351,7 +416,6 @@ class TestRunner:
                 try:
                     config_name = line.split(':')[0].strip()
                     log_file = os.path.abspath("logs/"+config_name+".log")
-                    #print(f"The log file saving to: {log_file} in the current working directory: {os.getcwd()}") 
                     failed_configs.append((config_name, log_file))
                 except:
                     failed_configs.append((config_name, "Log file not found"))
@@ -365,8 +429,7 @@ class TestRunner:
 
         if len(failed_configs) != 0:
             failed_configs.sort()
-        #print(f"The passed configs are: {passed_configs}")
-        #print(f"The failed configs are {failed_configs}")
+        logger.info(f"Cleaned test results. Passed configs {passed_configs}. Failed configs: {failed_configs}")
         return passed_configs, failed_configs
 
     def rewrite_to_markdown(self, test_name, passed_configs, failed_configs):
@@ -387,8 +450,7 @@ class TestRunner:
         os.chdir(output_directory)
         current_directory = os.getcwd()
         output_file = os.path.join(current_directory, f"{test_name}.md")
-        #print("Current directory:", current_directory)
-        #print("Output File:", output_file)
+        
 
         with open(output_file, 'w') as md_file:
        
@@ -412,7 +474,9 @@ class TestRunner:
             for config in passed_configs:
                 md_file.write(f"- <span class=\"success\" style=\"color: green;\">{config}</span>\n")
 
-    def combine_markdown_files(self, passed_tests, failed_tests, test_list, total_number_failures, total_number_success, test_type="default", markdown_file=None):
+        logger.info("writing test outputs to markdown")
+
+    def combine_markdown_files(self, passed_tests, failed_tests, test_list, total_number_failures, total_number_success, test_type="default", markdown_file=None, args=None):
         """
         First we want to display the server properties like:
             - Server full name
@@ -451,6 +515,9 @@ class TestRunner:
                 os_info = subprocess.check_output(['uname', '-a']).strip().decode('utf-8')
                 md_file.write(f"\n**Operating System Information:** {os_info}")
                 md_file.write("\n")
+
+                md_file.write(f"\n**Command used to execute test:** python nightly_build.py --path {args.path} --repository {args.repository} --target {args.target} --send_email {args.send_email}")
+                md_file.write("\n")
             except subprocess.CalledProcessError as e:
                 # Handle if the command fails
                 md_file.write(f"Failed to identify host and Operating System information: {str(e)}")
@@ -465,13 +532,10 @@ class TestRunner:
 
             # Failed Tests
             md_file.write(f"\n\n## Failed Tests")
-            md_file.write(f"\nTotal failed tests: {total_number_failures}")
+            md_file.write(f"\n**Total failed tests: {total_number_failures}**")
             for (test_item, item) in zip(test_list, failed_tests):
                 md_file.write(f"\n\n### {test_item[1]} test")
-                md_file.write(f"\n**General Information**\n")
-                md_file.write(f"\n* Test type: {test_item[0]}\n")
-                md_file.write(f"\n* Test name: {test_item[1]}\n")
-                md_file.write(f"\n* Test extension: {test_item[2]}\n\n")
+                md_file.write(f"\n**Command used:** {test_item[0]} {test_item[1]} {test_item[2]}\n\n")
                 md_file.write(f"**Failed Tests:**\n")
 
                 
@@ -488,17 +552,14 @@ class TestRunner:
                         md_file.write("\n")
                         md_file.write(f"* <span class=\"failure\" style=\"color: red;\">{config}</span> ({log_file})\n")
                         md_file.write("\n")
-            # Successfull Tests
+            # Successful Tests
 
-            md_file.write(f"\n\n## Successfull Tests")
-            md_file.write(f"\n**Total successfull tests: {total_number_success}**")
+            md_file.write(f"\n\n## Successful Tests")
+            md_file.write(f"\n**Total successful tests: {total_number_success}**")
             for (test_item, item) in zip(test_list, passed_tests):
                 md_file.write(f"\n\n### {test_item[1]} test")
-                md_file.write(f"\n**General Information**\n")
-                md_file.write(f"\n* Test type: {test_item[0]}")
-                md_file.write(f"\n* Test name: {test_item[1]}")
-                md_file.write(f"\n* Test extension: {test_item[2]}\n\n")
-                md_file.write(f"\n**Successfull Tests:**\n")
+                md_file.write(f"\n**Command used:** {test_item[0]} {test_item[1]} {test_item[2]}\n\n")
+                md_file.write(f"\n**Successful Tests:**\n")
 
                 
 
@@ -514,7 +575,8 @@ class TestRunner:
                         md_file.write(f"* <span class=\"success\" style=\"color: green;\">{config}</span>\n")
                         md_file.write("\n")
                     
-                    
+        logger.info("Combining markdown files")
+
 
     def convert_to_html(self, markdown_file="results.md", html_file="results.html"):
         """
@@ -539,7 +601,7 @@ class TestRunner:
         with open(html_file, 'w') as html_file:
             html_file.write(html_content)
         
-
+        logger.info("Converting markdown file to html file.")
  
     def send_email(self, sender_email=None, receiver_emails=None, subject="Nightly Regression Test"):
         """
@@ -557,7 +619,7 @@ class TestRunner:
 
         # check if there are any emails
         if not receiver_emails:
-            print("No receiver emails provided.")
+            logger.ERROR("No receiver emails provided.")
             return
         # grab thge html file
         todays_date = self.current_datetime.strftime("%Y-%m-%d")
@@ -570,124 +632,167 @@ class TestRunner:
 
     
         
-
-        for receiver_email in receiver_emails:
-            # Compose the mutt command for each receiver email
-            command = [
-                'mutt',
-                '-s', subject,
-                '-e', 'set content_type=text/html',
-                '-e', 'my_hdr From: James Stine <james.stine@okstate.edu>',
-                '--', receiver_email
-            ]
-            
-            # Open a subprocess to run the mutt command
-            process = subprocess.Popen(command, stdin=subprocess.PIPE)
-            
-            # Write the email body to the subprocess
-            process.communicate(body.encode('utf-8'))
-
-
-#############################################
-#                 SETUP                     #
-#############################################
-folder_manager = FolderManager() # creates the object
-
-# setting the path on where to clone new repositories of cvw
-path = folder_manager.create_preliminary_folders(["nightly_runs/repos/", "nightly_runs/results/"])
-new_folder = folder_manager.create_new_folder(["nightly_runs/repos/", "nightly_runs/results/"])
-
-# clone the cvw repo
-folder_manager.clone_repository("nightly_runs/repos/", "https://github.com/openhwgroup/cvw.git")
-
-
-        
-#############################################
-#                 SETUP                     #
-#############################################
-
-test_runner = TestRunner() # creates the object
-test_runner.set_env_var("nightly_runs/repos/") # ensures that the new WALLY environmental variable is set correctly
-
-
-#############################################
-#              MAKE TESTS                   #
-#############################################
-
-
-# target = "wally-riscv-arch-test"
-target = "all"
-if test_runner.execute_makefile(target = target):
-   print(f"The {target} tests were made successfully")
-
-#############################################
-#               RUN TESTS                   #
-#############################################
-
-
-test_list = [["python", "regression-wally", "-nightly"], ["bash", "lint-wally", "-nightly"], ["bash", "coverage", "--search"]]
-output_log_list = [] # a list where the output markdown file lcoations will be saved to
-total_number_failures = 0  # an integer where the total number failures from all of the tests will be collected
-total_number_success = 0    # an integer where the total number of sucess will be collected
-
-total_failures = []
-total_success = []
-
-for test_type, test_name, test_exctention in test_list:
-    print("--------------------------------------------------------------")
-    print(f"Test type: {test_type}")
-    print(f"Test name: {test_name}")
-    print(f"Test extenction: {test_exctention}")
-
-    check, output_location = test_runner.run_tests(test_type=test_type, test_name=test_name, test_exctention=test_exctention)
-    print(check)
-    print(output_location)
-    if check: # this checks if the test actually ran successfully
-        output_log_list.append(output_location)
-        
-        # format tests to markdown
         try:
-            passed, failed = test_runner.clean_format_output(input_file = output_location)
-        except:
-            print("There was an error cleaning the data")
+            for receiver_email in receiver_emails:
+                # Compose the mutt command for each receiver email
+                command = [
+                    '/usr/bin/mutt',
+                    '-s', subject,
+                    '-e', 'set content_type=text/html',
+                    '-e', 'my_hdr From: James Stine <james.stine@okstate.edu>',
+                    '--', receiver_email
+                ]
+                try:
+                    # Open a subprocess to run the mutt command
+                    process = subprocess.Popen(command, stdin=subprocess.PIPE)
+                    # Write the email body to the subprocess
+                    process.communicate(body.encode('utf-8'))
+                    logger.info("Sent email")
+                except expression as identifier:
+                    logger.error(f"Error sending email with error: {identifier}")
+        except expression as identifier:
+            logger.error(f"Error sending email with error: {identifier}")
 
-        print(f"The # of failures are for {test_name}: {len(failed)}")
-        total_number_failures+= len(failed)
-        total_failures.append(failed)
-
-        print(f"The # of sucesses are for {test_name}: {len(passed)}")
-        total_number_success += len(passed)
-        total_success.append(passed)
-        test_runner.rewrite_to_markdown(test_name, passed, failed)
-
-print(f"The total sucesses are: {total_number_success}")
-print(f"The total failures are: {total_number_failures}")
 
 
+def main():
+    #############################################
+    #                 ARG PARSER                #
+    #############################################
 
+    parser = argparse.ArgumentParser(description='Nightly Verification Testing for WALLY.')
 
+    parser.add_argument('--path', help='specify the path for where the nightly repositories will be cloned ex: "nightly-runs')
+    parser.add_argument('--repository', help='specify which github repository you want to clone')
+    parser.add_argument('--target', help='types of tests you can make are: all, wally-riscv-arch-test')
+    parser.add_argument('--send_email', help='do you want to send emails: "yes" or "y"')
     
+    args = parser.parse_args()
 
-#############################################
-#               FORMAT TESTS                #
-#############################################
+    logger.info(f"path: {args.path}")
+    logger.info(f"repository: {args.repository}")
+    logger.info(f"target: {args.target}")
+    logger.info(f"send_email: {args.send_email}")
 
-# Combine multiple markdown files into one file
+    # file paths for where the results and repos will be saved: repos and results can be changed to whatever
+    repos_path = f"{args.path}/repos/"
+    results_path = f"{args.path}/results/"
+    #############################################
+    #                 SETUP                     #
+    #############################################
+    folder_manager = FolderManager() # creates the object
 
-test_runner.combine_markdown_files(passed_tests = total_success, failed_tests = total_failures, test_list = test_list, total_number_failures = total_number_failures, total_number_success = total_number_success, test_type=target, markdown_file=None)
+    # setting the path on where to clone new repositories of cvw
+    folder_manager.create_preliminary_folders([repos_path, results_path])
+    new_folder = folder_manager.create_new_folder([repos_path, results_path])
+
+    # clone the cvw repo
+    folder_manager.clone_repository(repos_path, args.repository)
+            
 
 
-#############################################
-#             WRITE MD TESTS                #
-#############################################
-test_runner.convert_to_html()
+    test_runner = TestRunner() # creates the object
+    test_runner.set_env_var(repos_path) # ensures that the new WALLY environmental variable is set correctly
+
+
+    #############################################
+    #             TMP SETUP                     #
+    #############################################
+
+    """
+    The goal of this section is to replace the TIMEOUT_DUR for regression tests.
+
+    """
+    if test_runner.change_time_dur(time_duriation=1):
+        pass
+    else:
+        logger.error("Error occured changing the TIMEOUT duration in './regression-wally'")
+
+    #############################################
+    #              MAKE TESTS                   #
+    #############################################
+
+    if args.target != "no":
+        # test_runner.execute_makefile(target = "deriv")
+        test_runner.execute_makefile(target = args.target)
+
+    #############################################
+    #               RUN TESTS                   #
+    #############################################
+
+
+    test_list = [["python", "regression-wally", "-nightly"], ["bash", "lint-wally", "-nightly"], ["bash", "coverage", "--search"]]
+    output_log_list = [] # a list where the output markdown file lcoations will be saved to
+    total_number_failures = 0  # an integer where the total number failures from all of the tests will be collected
+    total_number_success = 0    # an integer where the total number of sucess will be collected
+
+    total_failures = []
+    total_success = []
+
+    for test_type, test_name, test_exctention in test_list:
+        
+        check, output_location = test_runner.run_tests(test_type=test_type, test_name=test_name, test_exctention=test_exctention)
+        try:
+            if check: # this checks if the test actually ran successfuly
+                output_log_list.append(output_location)
+                logger.info(f"{test_name} ran successfuly. Output location: {output_location}")
+                # format tests to markdown
+                try:
+                    passed, failed = test_runner.clean_format_output(input_file = output_location)
+                    logger.info(f"{test_name} has been formatted to markdown")
+                except:
+                    logger.ERROR(f"Error occured with formatting {test_name}")
+
+                logger.info(f"The # of failures are for {test_name}: {len(failed)}")
+                total_number_failures+= len(failed)
+                total_failures.append(failed)
+
+                logger.info(f"The # of sucesses are for {test_name}: {len(passed)}")
+                total_number_success += len(passed)
+                total_success.append(passed)
+                test_runner.rewrite_to_markdown(test_name, passed, failed)
+    
+        except Exception as e:
+            logger.error("There was an error in running the tests: {e}")
+
+    logger.info(f"The total sucesses for all tests ran are: {total_number_success}")
+    logger.info(f"The total failures for all tests ran are: {total_number_failures}")
 
 
 
-#############################################
-#                SEND EMAIL                 #
-#############################################
 
-sender_email = 'james.stine@okstate.edu'
-receiver_emails = ['thomas.kidd@okstate.edu', 'james.stine@okstate.edu', 'harris@g.hmc.edu', 'rose.thompson10@okstate.edu']
-test_runner.send_email(sender_email=sender_email, receiver_emails=receiver_emails)
+        
+
+    #############################################
+    #               FORMAT TESTS                #
+    #############################################
+
+    # Combine multiple markdown files into one file
+    try:
+        test_runner.combine_markdown_files(passed_tests = total_success, failed_tests = total_failures, test_list = test_list, total_number_failures = total_number_failures, total_number_success = total_number_success, test_type=args.target, markdown_file=None, args=args)
+    except Exception as e:
+        logger.error(f"Error combining the markdown tests called from main: {e}")
+
+    #############################################
+    #             WRITE MD TESTS                #
+    #############################################
+    test_runner.convert_to_html()
+
+
+
+    #############################################
+    #                SEND EMAIL                 #
+    #############################################
+
+    sender_email = 'james.stine@okstate.edu'
+
+    receiver_emails = ['thomas.kidd@okstate.edu', 'james.stine@okstate.edu', 'harris@g.hmc.edu', 'rose.thompson10@okstate.edu', 'sarah.harris@unlv.edu', 'nlucio@hmc.edu']
+    testing_emails = ['thomas.kidd@okstate.edu']
+    
+    if (args.send_email == "yes" or args.send_email == "y"):
+        test_runner.send_email(sender_email=sender_email, receiver_emails=receiver_emails)
+    if (args.send_email == "test"):
+        test_runner.send_email(sender_email=sender_email, receiver_emails=testing_emails)
+
+if __name__ == "__main__":
+    main()
