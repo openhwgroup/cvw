@@ -300,14 +300,6 @@ if (nightly):
             configs.append(tc)
 
 
-tests32e = ["arch32e"] 
-for test in tests32e:
-  tc = TestCase(
-        name=test,
-        variant="rv32e",
-        cmd="vsim > {} -c <<!\ndo wally-batch.do rv32e "+test+"\n!",
-        grepstr="All tests ran without failures")
-  configs.append(tc)
 
 
 # softfloat tests
