@@ -1209,7 +1209,8 @@ string imperas32f[] = '{
   };
 
     string arch64zfh_fma[] = '{
-    `RISCVARCHTEST,
+    //`RISCVARCHTEST,
+    `WALLYTEST,
     "rv64i_m/Zfh/src/fmadd_b15-01.S",
     "rv64i_m/Zfh/src/fmsub_b15-01.S",
     "rv64i_m/Zfh/src/fnmadd_b15-01.S",
@@ -1367,7 +1368,8 @@ string imperas32f[] = '{
     };
 
   string arch64zfh_divsqrt[] = '{
-    `RISCVARCHTEST,
+    //`RISCVARCHTEST,
+    `WALLYTEST,
     "rv64i_m/Zfh/src/fdiv_b20-01.S",
     "rv64i_m/Zfh/src/fdiv_b1-01.S",
     "rv64i_m/Zfh/src/fdiv_b2-01.S",
@@ -1391,7 +1393,8 @@ string imperas32f[] = '{
   };
 
   string arch64zfh[] = '{
-    `RISCVARCHTEST,
+    //`RISCVARCHTEST,
+    `WALLYTEST,
     "rv64i_m/Zfh/src/fadd_b10-01.S",
     "rv64i_m/Zfh/src/fadd_b1-01.S",
     "rv64i_m/Zfh/src/fadd_b11-01.S",
@@ -2056,7 +2059,8 @@ string arch64zknh[] = '{
     };
 
   string arch32zfh_divsqrt[] = '{
-    `RISCVARCHTEST,
+    //`RISCVARCHTEST,
+    `WALLYTEST,
     "rv32i_m/Zfh/src/fdiv_b20-01.S",
     "rv32i_m/Zfh/src/fdiv_b1-01.S",
     "rv32i_m/Zfh/src/fdiv_b2-01.S",
@@ -2080,7 +2084,8 @@ string arch64zknh[] = '{
   };
 
   string arch32zfh[] = '{
-    `RISCVARCHTEST,
+    //`RISCVARCHTEST,
+    `WALLYTEST,
     "rv32i_m/Zfh/src/fadd_b10-01.S",
     "rv32i_m/Zfh/src/fadd_b1-01.S",
     "rv32i_m/Zfh/src/fadd_b11-01.S",
@@ -2206,7 +2211,8 @@ string arch64zknh[] = '{
     };
 
   string arch32zfaf[] = '{
-    `RISCVARCHTEST,
+    //`RISCVARCHTEST,
+    `WALLYTEST,
     "rv32i_m/F_Zfa/src/fleq_b1-01.S",
     "rv32i_m/F_Zfa/src/fleq_b19-01.S", 
     "rv32i_m/F_Zfa/src/fli.s-01.S",
@@ -2222,7 +2228,8 @@ string arch64zknh[] = '{
   };
 
   string arch32zfad[] = '{
-    `RISCVARCHTEST,
+    //`RISCVARCHTEST,
+    `WALLYTEST,
     "rv32i_m/D_Zfa/src/fcvtmod.w.d_b1-01.S",
     "rv32i_m/D_Zfa/src/fcvtmod.w.d_b22-01.S",
     "rv32i_m/D_Zfa/src/fcvtmod.w.d_b23-01.S",
@@ -2258,7 +2265,8 @@ string arch64zknh[] = '{
   };
 
   string arch64zfaf[] = '{
-    `RISCVARCHTEST,
+    //`RISCVARCHTEST,
+    `WALLYTEST,
     "rv64i_m/F_Zfa/src/fleq_b1-01.S",
     "rv64i_m/F_Zfa/src/fleq_b19-01.S", 
     "rv64i_m/F_Zfa/src/fli.s-01.S",
@@ -2272,9 +2280,10 @@ string arch64zknh[] = '{
   };
 
   string arch64zfad[] = '{
-    `RISCVARCHTEST,
+    //`RISCVARCHTEST,
+    `WALLYTEST,
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b1-01.S",
-    "rv64i_m/D_Zfa/src/fcvtmod.w.d_b22-01.S",
+//    "rv64i_m/D_Zfa/src/fcvtmod.w.d_b22-01.S", // temporarily excluded because Sail produces wrong signature  https://github.com/riscv/sail-riscv/issues/388
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b23-01.S",
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b24-01.S",
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b27-01.S",
@@ -2301,7 +2310,8 @@ string arch64zknh[] = '{
   };
 
 string arch32zfh_fma[] = '{
-    `RISCVARCHTEST,
+    //`RISCVARCHTEST,
+    `WALLYTEST,
     "rv32i_m/Zfh/src/fmadd_b15-01.S",
     "rv32i_m/Zfh/src/fmsub_b15-01.S",
     "rv32i_m/Zfh/src/fnmadd_b15-01.S",
