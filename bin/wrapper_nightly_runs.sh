@@ -24,5 +24,5 @@ source ./setup_host.sh >> $LOG 2>&1
 cd $PYTHON_SCRIPT
 pwd
 echo "Running python file"
-python nightly_build.py --path "nightly-runs" --repository "https://github.com/openhwgroup/cvw" --target "all" --send_email "yes" >> $LOG 2>&1
+python nightly_build.py  >> $LOG 2>&1
 echo "Finished"

@@ -302,7 +302,7 @@ class TestRunner:
         # Prepare the command to execute the Makefile
         make_file_path = os.path.join(self.base_dir, "sim")
         os.chdir(make_file_path)
-
+        
         output_file = os.path.join(self.base_dir, "tmp", "make_output.log")
 
         command = ["make"]
@@ -662,10 +662,10 @@ def main():
 
     parser = argparse.ArgumentParser(description='Nightly Verification Testing for WALLY.')
 
-    parser.add_argument('--path', help='specify the path for where the nightly repositories will be cloned ex: "nightly-runs')
-    parser.add_argument('--repository', help='specify which github repository you want to clone')
-    parser.add_argument('--target', help='types of tests you can make are: all, wally-riscv-arch-test')
-    parser.add_argument('--send_email', help='do you want to send emails: "yes" or "y"')
+    parser.add_argument('--path',default = "nightly", help='specify the path for where the nightly repositories will be cloned ex: "nightly-runs')
+    parser.add_argument('--repository',default = "https://github.com/openhwgroup/cvw", help='specify which github repository you want to clone')
+    parser.add_argument('--target', default = "all", help='types of tests you can make are: all, wally-riscv-arch-test')
+    parser.add_argument('--send_email',default = "yes", help='do you want to send emails: "yes" or "y"')
     
     args = parser.parse_args()
 
@@ -673,6 +673,8 @@ def main():
     logger.info(f"repository: {args.repository}")
     logger.info(f"target: {args.target}")
     logger.info(f"send_email: {args.send_email}")
+    
+    
 
     # file paths for where the results and repos will be saved: repos and results can be changed to whatever
     repos_path = f"{args.path}/repos/"
