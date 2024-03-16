@@ -97,7 +97,7 @@ class FolderManager:
         # logger.info(f"Parent Base directory: {self.base_parent_dir}")
 
 
-    def create_preliminary_folders(self, folders):
+    def create_folders(self, folders):
         """
         Create preliminary folders if they do not exist. 
 
@@ -110,32 +110,10 @@ class FolderManager:
         
         for folder in folders:
             folder_path = os.path.join(self.base_parent_dir, folder)
-            if not os.path.exists(folder_path):
-                os.makedirs(folder_path)
-        # logger.info(f"Preliminary folders created: {folders}")
-
-    def create_new_folder(self, folders):
-        """
-        Create a new folder based on the current date if it does not already exist.
-
-        Args:
-            folder_name (str): The base name for the new folder.
-
-        Returns:
-            str: The path of the newly created folder if created, None otherwise.
-        """
-
-        todays_date = datetime.now().strftime("%Y-%m-%d")
-        return_folder_path = []
-        for folder in folders:
-            folder_path = os.path.join(self.base_parent_dir, folder, todays_date)
-            if not os.path.exists(folder_path):
-                os.makedirs(folder_path)
-                return_folder_path.append(folder_path)
-            else:
-                return_folder_path.append(None) # Folder already exists
-        # logger.info(f"New folder created. Path: {folder_path}")
-        return return_folder_path
+            # if not os.path.exists(folder_path):
+            #     os.makedirs(folder_path)
+            if not os.path.exists(folder):
+                os.makedirs(folder)
 
     def clone_repository(self, folder, repo_url):
         """
@@ -148,12 +126,10 @@ class FolderManager:
             None
         """
         todays_date = datetime.now().strftime("%Y-%m-%d")
-        repo_folder = os.path.join(self.base_parent_dir, folder, todays_date, 'cvw')
-        tmp_folder = os.path.join(repo_folder, "tmp") # temprorary files will be stored in here
-
-        if not os.path.exists(repo_folder):
-            os.makedirs(repo_folder)
-            os.system(f"git clone --recurse-submodules {repo_url} {repo_folder}")
+        cvw = folder.joinpath("cvw")
+        tmp_folder = os.path.join(cvw, "tmp") # temprorary files will be stored in here
+        if not cvw.exists():
+            os.system(f"git clone --recurse-submodules {repo_url} {cvw}")
             os.makedirs(tmp_folder)
 
         # logger.info(f"Repository cloned: {repo_url}")
@@ -162,10 +138,7 @@ class TestRunner:
     """A class for making, running, and formatting test results."""
 
     def __init__(self, logger): 
-        self.base_dir = os.environ.get('WALLY')
-        self.base_parent_dir = os.path.dirname(self.base_dir)
         self.current_datetime = datetime.now()
-
         self.logger = logger
         self.logger.info("Test runner object is initialized")
         
@@ -223,17 +196,17 @@ class TestRunner:
         """
         # find the new repository made
         todays_date = datetime.now().strftime("%Y-%m-%d")
-        wally_path = os.path.join(self.base_parent_dir, folder, todays_date, 'cvw')
+        cvw = folder.joinpath("cvw")
+        self.logger.info(f"cvw is: {cvw}")
 
         # set the WALLY environmental variable to the new repository
-        os.environ["WALLY"] = wally_path
+        os.environ["WALLY"] = str(cvw)
 
-        self.base_dir = os.environ.get('WALLY')
-        self.base_parent_dir = os.path.dirname(self.base_dir)
+        self.base_dir = cvw
+        self.base_parent_dir = folder
         self.temp_dir = self.base_parent_dir
 
         self.logger.info(f"Tests are going to be ran from: {self.base_dir}")
-        self.logger.info(f"WALLY environmental variable is: {os.environ.get('WALLY')}")
     
 
     def change_time_dur(self, time_duriation=1):
@@ -653,28 +626,23 @@ def main():
     #############################################
     # file paths for where the results and repos will be saved: repos and results can be changed to whatever
     today = datetime.now().strftime("%Y-%m-%d")
-    repos_path = f"{args.path}/repos/"
-    results_path = f"{args.path}/results/"
-    log_path = f"{args.path}/logs/{today}"
-
-    folder_manager = FolderManager() # creates the object
+    cvw_path = Path.home().joinpath(args.path, today)
+    results_path = Path.home().joinpath(args.path, today, "results")
+    log_path = Path.home().joinpath(args.path, today, "logs")
+    log_file_path = log_path.joinpath("nightly_build.log")
+    # creates the object
+    folder_manager = FolderManager() 
 
     # setting the path on where to clone new repositories of cvw
-    folder_manager.create_preliminary_folders([repos_path, results_path, log_path])
-    new_folder = folder_manager.create_new_folder([repos_path, results_path])
+    folder_manager.create_folders([cvw_path, results_path, log_path])
 
     # clone the cvw repo
-    folder_manager.clone_repository(repos_path, args.repository)
+    folder_manager.clone_repository(cvw_path, args.repository)
 
     #############################################
     #                 LOGGER                    #
     #############################################
-
-    # paths
-    cvw_path = os.environ.get('WALLY')
-    cvw_parent_path = os.path.dirname(cvw_path)
-    todays_date = datetime.now().strftime("%Y-%m-%d")
-    log_path = Path(cvw_parent_path).joinpath(args.path, "logs", todays_date, "nightly_build.log")
+    
 
     # Set up the logger
     logger = logging.getLogger(__name__)
@@ -682,7 +650,8 @@ def main():
 
     # Create a file handler
     #file_handler = logging.FileHandler('../../logs/nightly_build.log')
-    file_handler = logging.FileHandler(log_path)
+    
+    file_handler = logging.FileHandler(log_file_path)
     file_handler.setLevel(logging.DEBUG)
 
     # Create a console handler
@@ -698,19 +667,18 @@ def main():
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
 
-    logger.info(f"path: {args.path}")
-    logger.info(f"repository: {args.repository}")
-    logger.info(f"target: {args.target}")
-    logger.info(f"send_email: {args.send_email}")
+    logger.info(f"arg parser path: {args.path}")
+    logger.info(f"arg parser repository: {args.repository}")
+    logger.info(f"arg parser target: {args.target}")
+    logger.info(f"arg parser send_email: {args.send_email}")
+    logger.info(f"cvw path: {cvw_path}")
+    logger.info(f"results path: {results_path}")
+    logger.info(f"log folder path: {log_path}")
+    logger.info(f"log file path: {log_file_path}")
     
-    
-
-   
-            
-
 
     test_runner = TestRunner(logger) # creates the object
-    test_runner.set_env_var(repos_path) # ensures that the new WALLY environmental variable is set correctly
+    test_runner.set_env_var(cvw_path) # ensures that the new WALLY environmental variable is set correctly
 
 
     #############################################
