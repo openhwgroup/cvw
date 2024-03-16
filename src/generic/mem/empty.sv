@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// clockgater.sv
+// ram2p1rwbe_128x64.sv
 //
-// Written: Ross Thompson 9 January 2021
+// Written: Rose Thompon ross1728@gmail.com 06 March 2024
 // Modified: 
 //
-// Purpose: Clock gater model. Must use standard cell for synthesis.
+// Purpose: Empty wrapper for VCS to work.  Would really like to not have any of these.
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,26 +25,21 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module clockgater #(parameter FPGA) (
-  input  logic E,
-  input  logic SE,
-  input  logic CLK,
-  output logic ECLK
+module TSDN28HPCPA128X64M4FW( 
+  input  logic          CLKA, 
+  input  logic          CLKB, 
+  input  logic          CEBA, 
+  input  logic          CEBB, 
+  input  logic          WEBA,
+  input  logic          WEBB,
+  input  logic [6:0]    AA, 
+  input  logic [6:0]    AB, 
+  input  logic [63:0]   DA,
+  input  logic [63:0]   DB,
+  input  logic [63:0]   BWEBA, 
+  input  logic [63:0]   BWEBB, 
+  output logic [63:0]   QA,
+  output logic [63:0]   QB
 );
-
-  if (FPGA) BUFGCE bufgce_i0 (.I(CLK), .CE(E | SE), .O(ECLK));
-  else begin
-    // *** BUG 
-    // VERY IMPORTANT.
-    // This part functionally models a clock gater, but does not necessarily meet the timing constrains a real standard cell would.
-    // Do not use this in synthesis!
-    logic   enable_q;
-    always_latch begin
-      if(~CLK) begin
-        enable_q <= E | SE;
-      end
-    end
-    assign ECLK = enable_q & CLK;
-  end    
 
 endmodule
