@@ -52,7 +52,7 @@ module bsg_dmc_ahb
   input  logic                       ui_clk,
   output logic                       ddr_ck_p, ddr_ck_n, ddr_cke,
   output logic [2:0]                 ddr_ba,
-  output logic [13:0]                ddr_addr,
+  output logic [15:0]                ddr_addr,
   output logic                       ddr_cs, ddr_ras, ddr_cas,
   output logic                       ddr_we, ddr_reset, ddr_odt,
   output logic [DDR_DATA_SIZE/8-1:0] ddr_dm_oen, ddr_dm,
