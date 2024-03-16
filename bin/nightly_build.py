@@ -137,10 +137,12 @@ class FolderManager:
 class TestRunner:
     """A class for making, running, and formatting test results."""
 
-    def __init__(self, logger): 
+    def __init__(self, logger, log_dir): 
+        self.todays_date = datetime.now().strftime("%Y-%m-%d")
         self.current_datetime = datetime.now()
         self.logger = logger
         self.logger.info("Test runner object is initialized")
+        self.log_dir = log_dir
         
         
     def copy_setup_script(self, folder):
@@ -157,11 +159,11 @@ class TestRunner:
             bool: True if the script is copied successfuly, False otherwise.
         """
         # Get today's date in YYYY-MM-DD format
-        todays_date = datetime.now().strftime("%Y-%m-%d")
+        self.todays_date = datetime.now().strftime("%Y-%m-%d")
 
         # Define the source and destination paths
-        source_script = os.path.join(self.base_dir, "setup_host.sh")
-        destination_folder = os.path.join(self.base_parent_dir, folder, todays_date, 'cvw')
+        source_script = os.path.join(self.cvw, "setup_host.sh")
+        destination_folder = os.path.join(self.base_parent_dir, folder, self.todays_date, 'cvw')
         
         # Check if the source script exists
         if not os.path.exists(source_script):
@@ -195,27 +197,27 @@ class TestRunner:
             None
         """
         # find the new repository made
-        todays_date = datetime.now().strftime("%Y-%m-%d")
         cvw = folder.joinpath("cvw")
         self.logger.info(f"cvw is: {cvw}")
 
         # set the WALLY environmental variable to the new repository
         os.environ["WALLY"] = str(cvw)
 
-        self.base_dir = cvw
+        self.cvw = cvw
+        self.sim_dir = cvw.joinpath("sim")
         self.base_parent_dir = folder
-        self.temp_dir = self.base_parent_dir
+        self.results_dir = folder.joinpath("results")
 
-        self.logger.info(f"Tests are going to be ran from: {self.base_dir}")
+        self.logger.info(f"Tests are going to be ran from: {self.cvw}")
     
 
     def change_time_dur(self, time_duriation=1):
         
         # Prepare the command to execute the Makefile
-        make_file_path = os.path.join(self.base_dir, "sim")
-        self.logger.info(f"Make file path is set to: {make_file_path}")
+        regression_path = self.sim_dir.joinpath("regression-wally")
+        self.logger.info(f"Regression file path: {regression_path}")
         try:
-            os.chdir(make_file_path)
+            os.chdir(self.sim_dir)
         except Exception as e:
             self.logger.error(f"Error nagivating to the make file path. Error: {e}")
         file_path = "regression-wally"
@@ -249,10 +251,9 @@ class TestRunner:
             False if the tests didnt pass
         """
         # Prepare the command to execute the Makefile
-        make_file_path = os.path.join(self.base_dir, "sim")
-        os.chdir(make_file_path)
+        os.chdir(self.sim_dir)
         
-        output_file = os.path.join(self.base_dir, "tmp", "make_output.log")
+        output_file = self.log_dir.joinpath(f"make-{target}-output.log")
 
         command = ["make"]
 
@@ -275,7 +276,7 @@ class TestRunner:
 
         # Check the result
         if result.returncode == 0:
-            self.logger.info(f"Tests have been made with tag target: {target}")
+            self.logger.info(f"Tests have been made with target: {target}")
             return True
         else:
             self.logger.error(f"Error making the tests. Target: {target}")
@@ -293,10 +294,9 @@ class TestRunner:
         """
 
         # Prepare the function to execute the simulation
-        test_file_path = os.path.join(self.base_dir, "sim")
         
-        output_file = os.path.join(self.base_dir, "tmp", f"{test_name}-output.log")
-        os.chdir(test_file_path)
+        output_file = self.log_dir.joinpath(f"{test_name}-output.log")
+        os.chdir(self.sim_dir)
 
         if test_exctention:
             command = [test_type, test_name, test_exctention]
@@ -395,16 +395,16 @@ class TestRunner:
         # Implement markdown rewriting logic here
         timestamp = datetime.now().strftime("%Y-%m-%d")
 
-        output_directory = os.path.join(self.base_parent_dir, "../../results", timestamp)
-        os.chdir(output_directory)
-        current_directory = os.getcwd()
-        output_file = os.path.join(current_directory, f"{test_name}.md")
+        # output_directory = self.base_parent_dir.joinpath("results")
+        os.chdir(self.results_dir)
+        # current_directory = os.getcwd()
+        output_file = os.path.join(self.results_dir, f"{test_name}.md")
         
 
         with open(output_file, 'w') as md_file:
        
             # Title
-            md_file.write(f"\n\n# Regression Test Results - {timestamp}\n\n")
+            md_file.write(f"\n\n# Regression Test Results - {self.todays_date}\n\n")
             #md_file.write(f"\n\n<div class=\"regression\">\n# Regression Test Results - {timestamp}\n</div>\n\n")
 
             # File Path
@@ -443,17 +443,14 @@ class TestRunner:
         Returns:
             None
         """
-        timestamp = datetime.now().strftime("%Y-%m-%d")
 
-        output_directory = os.path.join(self.base_parent_dir, "../../results", timestamp)
-        os.chdir(output_directory)
-        current_directory = os.getcwd()
-        output_file = os.path.join(current_directory, "results.md")
+        os.chdir(self.results_dir)
+        output_file = self.results_dir.joinpath("results.md")
         
 
         with open(output_file, 'w') as md_file:
             # Title
-            md_file.write(f"\n\n# Nightly Test Results - {timestamp}\n\n")
+            md_file.write(f"\n\n# Nightly Test Results - {self.todays_date}\n\n")
             # Host information
             try:
                 # Run hostname command
@@ -539,9 +536,7 @@ class TestRunner:
             None
         """
         # Implement markdown to HTML conversion logic here
-        todays_date = self.current_datetime.strftime("%Y-%m-%d")
-        markdown_file_path = os.path.join(self.base_parent_dir, "../../results", todays_date) 
-        os.chdir(markdown_file_path)
+        os.chdir(self.results_dir)
 
         with open(markdown_file, 'r') as md_file:
             md_content = md_file.read()
@@ -570,17 +565,14 @@ class TestRunner:
         if not receiver_emails:
             self.logger.ERROR("No receiver emails provided.")
             return
-        # grab thge html file
-        todays_date = self.current_datetime.strftime("%Y-%m-%d")
-        html_file_path = os.path.join(self.base_parent_dir, "../../results", todays_date) 
-        os.chdir(html_file_path)
+
+        # grab the html file
+        os.chdir(self.results_dir)
         html_file = "results.html"
 
         with open(html_file, 'r') as html_file:
                 body = html_file.read()
 
-    
-        
         try:
             for receiver_email in receiver_emails:
                 # Compose the mutt command for each receiver email
@@ -677,7 +669,7 @@ def main():
     logger.info(f"log file path: {log_file_path}")
     
 
-    test_runner = TestRunner(logger) # creates the object
+    test_runner = TestRunner(logger, log_path) # creates the object
     test_runner.set_env_var(cvw_path) # ensures that the new WALLY environmental variable is set correctly
 
 
