@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// aesshiftrow.sv
+// aesmixcolumns32.sv
 //
-// Written: ryan.swann@okstate.edu, james.stine@okstate.edu
+// Written: ryan.swann@okstate.edu, james.stine@okstate.edu, David_Harris@hmc.edu
 // Created: 20 February 2024
 //
-// Purpose: aesshiftrow for taking in first Data line
+// Purpose: Galois field operation to an individual 32-bit word
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,13 +25,26 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aesshiftrow(
-   input  logic [127:0] a, 
-   output logic [127:0] y
+
+module aesmixcolumns32(
+   input  logic [31:0] a, 
+   output logic [31:0] y
 );
-		    
-   assign y = {a[95:88],   a[55:48],   a[15:8],    a[103:96],
-               a[63:56],   a[23:16],   a[111:104], a[71:64],
-               a[31:24],   a[119:112], a[79:72],   a[39:32],
-               a[127:120], a[87:80],   a[47:40],   a[7:0]};   
+
+   logic [7:0] a0, a1, a2, a3, y0, y1, y2, y3, t0, t1, t2, t3, temp;
+
+   assign {a0, a1, a2, a3} = a;
+   assign temp = a0 ^ a1 ^ a2 ^ a3;
+
+   galoismultforward8 gm0 (a0^a1, t0);
+   galoismultforward8 gm1 (a1^a2, t1);
+   galoismultforward8 gm2 (a2^a3, t2);
+   galoismultforward8 gm3 (a3^a0, t3);
+
+   assign y0 = a0 ^ temp ^ t3;
+   assign y1 = a1 ^ temp ^ t0;
+   assign y2 = a2 ^ temp ^ t1;
+   assign y3 = a3 ^ temp ^ t2;
+   
+   assign y = {y0, y1, y2, y3};
 endmodule

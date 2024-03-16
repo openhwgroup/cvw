@@ -31,8 +31,8 @@ module aessbox32(
 );   
    
    // substitutions boxes for each byte of the 32-bit word
-   aessbox sbox0(a[7:0],   y[7:0]);
-   aessbox sbox1(a[15:8],  y[15:8]);
-   aessbox sbox2(a[23:16], y[23:16]);	
-   aessbox sbox3(a[31:24], y[31:24]);   
+   aessbox8 sbox0(a[7:0],   y[7:0]);
+   aessbox8 sbox1(a[15:8],  y[15:8]);
+   aessbox8 sbox2(a[23:16], y[23:16]);	
+   aessbox8 sbox3(a[31:24], y[31:24]);   
 endmodule

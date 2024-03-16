@@ -34,11 +34,10 @@ module aes64e(
     output logic [63:0] result
 );
   
-    logic [127:0] ShiftRowOut;
-    logic [63:0]  SboxOut, MixcolOut;
+    logic [63:0]  ShiftRowOut, SboxOut, MixcolOut;
                 
     // AES shiftrow unit
-    aesshiftrow srow({rs2,rs1}, ShiftRowOut);
+    aesshiftrow64 srow({rs2,rs1}, ShiftRowOut);
    
     // Apply substitution box to 2 lower words
     // Use the shared sbox in zknde64.sv for the first sbox
@@ -48,8 +47,8 @@ module aes64e(
     aessbox32 sbox1(ShiftRowOut[63:32], SboxOut[63:32]); // instantiate second sbox
 
     // Apply mix columns operations
-    aesmixcolumns mw0(SboxOut[31:0],  MixcolOut[31:0]);
-    aesmixcolumns mw1(SboxOut[63:32], MixcolOut[63:32]);    
+    aesmixcolumns32 mw0(SboxOut[31:0],  MixcolOut[31:0]);
+    aesmixcolumns32 mw1(SboxOut[63:32], MixcolOut[63:32]);    
 
     // Skip mixcolumns on last round
     mux2 #(64) resultmux(MixcolOut, SboxOut, finalround, result);

@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// aesinvmixcolumns.sv
+// aesinvmixcolumns32.sv
 //
 // Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
 // Created: 05 March 2024
@@ -25,7 +25,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aesinvmixcolumns(
+module aesinvmixcolumns32(
    input  logic [31:0] a, 
    output logic [31:0] y
 );
@@ -41,8 +41,8 @@ module aesinvmixcolumns(
    assign xor2 = {temp, 3'b0} ^ {1'b0, a1^a3, 2'b0} ^ {2'b0, a1^a0, 1'b0} ^ {3'b0, temp} ^ {3'b0, a1};
    assign xor3 = {temp, 3'b0} ^ {1'b0, a0^a2, 2'b0} ^ {2'b0, a0^a3, 1'b0} ^ {3'b0, temp} ^ {3'b0, a0};
 
-   galoismultinverse gm0 (xor0, y[7:0]);
-   galoismultinverse gm1 (xor1, y[15:8]);
-   galoismultinverse gm2 (xor2, y[23:16]);
-   galoismultinverse gm3 (xor3, y[31:24]);
+   galoismultinverse8 gm0 (xor0, y[7:0]);
+   galoismultinverse8 gm1 (xor1, y[15:8]);
+   galoismultinverse8 gm2 (xor2, y[23:16]);
+   galoismultinverse8 gm3 (xor3, y[31:24]);
 endmodule 

@@ -31,12 +31,12 @@ module aesinvsbox64(
 );
    
    // inverse substitutions boxes for each byte of the 32-bit word
-   aesinvsbox sbox0(a[7:0],   y[7:0]);
-   aesinvsbox sbox1(a[15:8],  y[15:8]);
-   aesinvsbox sbox2(a[23:16], y[23:16]);	
-   aesinvsbox sbox3(a[31:24], y[31:24]);   
-   aesinvsbox sbox4(a[39:32], y[39:32]);   
-   aesinvsbox sbox5(a[47:40], y[47:40]);   
-   aesinvsbox sbox6(a[55:48], y[55:48]);   
-   aesinvsbox sbox7(a[63:56], y[63:56]);   
+   aesinvsbox8 sbox0(a[7:0],   y[7:0]);
+   aesinvsbox8 sbox1(a[15:8],  y[15:8]);
+   aesinvsbox8 sbox2(a[23:16], y[23:16]);	
+   aesinvsbox8 sbox3(a[31:24], y[31:24]);   
+   aesinvsbox8 sbox4(a[39:32], y[39:32]);   
+   aesinvsbox8 sbox5(a[47:40], y[47:40]);   
+   aesinvsbox8 sbox6(a[55:48], y[55:48]);   
+   aesinvsbox8 sbox7(a[63:56], y[63:56]);   
 endmodule

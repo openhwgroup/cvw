@@ -25,13 +25,11 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aesinvshiftrow(
+module aesinvshiftrow64(
    input  logic [127:0] a, 
-   output logic [127:0] y
+   output logic [63:0] y
 );
 
-   assign y = {a[31:24],   a[55:48],   a[79:72],   a[103:96],
-               a[127:120], a[23:16],   a[47:40],   a[71:64],
-               a[95:88],   a[119:112], a[15:8],    a[39:32],
+   assign y = {a[95:88],   a[119:112], a[15:8],    a[39:32],
                a[63:56],   a[87:80],   a[111:104], a[7:0]};
 endmodule

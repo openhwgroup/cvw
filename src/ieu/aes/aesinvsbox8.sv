@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// aesinvsbox.sv
+// aesinvsbox8.sv
 //
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
@@ -25,7 +25,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aesinvsbox(
+module aesinvsbox8(
 	input  logic [7:0] a, 
 	output logic [7:0] y
 );
