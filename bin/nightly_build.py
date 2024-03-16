@@ -73,29 +73,9 @@ import markdown
 import subprocess
 import argparse
 import logging
+from pathlib import Path
 
-# Logger
 
-# Set up the logger
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-# Create a file handler
-file_handler = logging.FileHandler('../../logs/nightly_build.log')
-file_handler.setLevel(logging.DEBUG)
-
-# Create a console handler
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)
-
-# Create a formatter and add it to the handlers
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-file_handler.setFormatter(formatter)
-console_handler.setFormatter(formatter)
-
-# Add the handlers to the logger
-logger.addHandler(file_handler)
-logger.addHandler(console_handler)
 
 
 
@@ -113,18 +93,13 @@ class FolderManager:
         self.base_dir = os.environ.get(env_extract_var)
         self.base_parent_dir = os.path.dirname(self.base_dir)
 
-        logger.info(f"Base directory: {self.base_dir}")
-        logger.info(f"Parent Base directory: {self.base_parent_dir}")
+        # logger.info(f"Base directory: {self.base_dir}")
+        # logger.info(f"Parent Base directory: {self.base_parent_dir}")
 
 
     def create_preliminary_folders(self, folders):
         """
         Create preliminary folders if they do not exist. 
-        These folders are:
-            nightly-runs/repos/
-            nightly-runs/results/ 
-            nightly-runs/repos/
-            nightly-runs/results/ 
 
         Args:
             folders (list): A list of folder names to be created.
@@ -137,7 +112,7 @@ class FolderManager:
             folder_path = os.path.join(self.base_parent_dir, folder)
             if not os.path.exists(folder_path):
                 os.makedirs(folder_path)
-        logger.info(f"Preliminary folders created: {folders}")
+        # logger.info(f"Preliminary folders created: {folders}")
 
     def create_new_folder(self, folders):
         """
@@ -159,7 +134,7 @@ class FolderManager:
                 return_folder_path.append(folder_path)
             else:
                 return_folder_path.append(None) # Folder already exists
-        logger.info(f"New folder created. Path: {folder_path}")
+        # logger.info(f"New folder created. Path: {folder_path}")
         return return_folder_path
 
     def clone_repository(self, folder, repo_url):
@@ -181,17 +156,18 @@ class FolderManager:
             os.system(f"git clone --recurse-submodules {repo_url} {repo_folder}")
             os.makedirs(tmp_folder)
 
-        logger.info(f"Repository cloned: {repo_url}")
+        # logger.info(f"Repository cloned: {repo_url}")
 
 class TestRunner:
     """A class for making, running, and formatting test results."""
 
-    def __init__(self): 
+    def __init__(self, logger): 
         self.base_dir = os.environ.get('WALLY')
         self.base_parent_dir = os.path.dirname(self.base_dir)
         self.current_datetime = datetime.now()
 
-        logger.info("Test runner object is initialized")
+        self.logger = logger
+        self.logger.info("Test runner object is initialized")
         
         
     def copy_setup_script(self, folder):
@@ -216,22 +192,22 @@ class TestRunner:
         
         # Check if the source script exists
         if not os.path.exists(source_script):
-            logger.error(f"Error: Source script '{source_script}' not found.")
+            self.logger.error(f"Error: Source script '{source_script}' not found.")
             return False
 
 
         # Check if the destination folder exists, create it if necessary
         if not os.path.exists(destination_folder):
-            logger.error(f"Error: Destination folder '{destination_folder}' not found.")
+            self.logger.error(f"Error: Destination folder '{destination_folder}' not found.")
             return False
 
         # Copy the script to the destination folder
         try:
             shutil.copy(source_script, destination_folder)
-            logger.info(f"Setup script copied to: {destination_folder}")
+            self.logger.info(f"Setup script copied to: {destination_folder}")
             return True
         except Exception as e:
-            logger.error(f"Error copying setup script: {e}")
+            self.logger.error(f"Error copying setup script: {e}")
             return False
 
 
@@ -256,19 +232,19 @@ class TestRunner:
         self.base_parent_dir = os.path.dirname(self.base_dir)
         self.temp_dir = self.base_parent_dir
 
-        logger.info(f"Tests are going to be ran from: {self.base_dir}")
-        logger.info(f"WALLY environmental variable is: {os.environ.get('WALLY')}")
+        self.logger.info(f"Tests are going to be ran from: {self.base_dir}")
+        self.logger.info(f"WALLY environmental variable is: {os.environ.get('WALLY')}")
     
 
     def change_time_dur(self, time_duriation=1):
         
         # Prepare the command to execute the Makefile
         make_file_path = os.path.join(self.base_dir, "sim")
-        logger.info(f"Make file path is set to: {make_file_path}")
+        self.logger.info(f"Make file path is set to: {make_file_path}")
         try:
             os.chdir(make_file_path)
         except Exception as e:
-            logger.error(f"Error nagivating to the make file path. Error: {e}")
+            self.logger.error(f"Error nagivating to the make file path. Error: {e}")
         file_path = "regression-wally"
         line_number = 450 # TIMEOUT_DUR = 1 day at this line in regression-wally 
         new_line = f"        TIMEOUT_DUR = {60*time_duriation}"
@@ -277,14 +253,14 @@ class TestRunner:
             lines = file.readlines()
 
         if line_number < 1 or line_number > len(lines):
-            logger.error("Error: Line number out of range.")
+            self.logger.error("Error: Line number out of range.")
             return False
 
         lines[line_number - 1] = new_line + '\n'
 
         with open(file_path, 'w') as file:
             file.writelines(lines)
-            logger.info(f"Timeduration in ./regression-wally has been changed to: {time_duriation*60} seconds")
+            self.logger.info(f"Timeduration in ./regression-wally has been changed to: {time_duriation*60} seconds")
             return True
 
     def execute_makefile(self, target=None):
@@ -310,9 +286,9 @@ class TestRunner:
         # Add target to the command if specified
         if target:
             command.append(target)
-            logger.info(f"Command used: {command[0]} {command[1]}")
+            self.logger.info(f"Command used: {command[0]} {command[1]}")
         else:
-            logger.info(f"Command used: {command[0]}")
+            self.logger.info(f"Command used: {command[0]}")
 
         # Execute the command using subprocess and save the output into a file
         with open(output_file, "w") as f:
@@ -326,10 +302,10 @@ class TestRunner:
 
         # Check the result
         if result.returncode == 0:
-            logger.info(f"Tests have been made with tag target: {target}")
+            self.logger.info(f"Tests have been made with tag target: {target}")
             return True
         else:
-            logger.error(f"Error making the tests. Target: {target}")
+            self.logger.error(f"Error making the tests. Target: {target}")
             return False
             
     def run_tests(self, test_type=None, test_name=None, test_exctention=None):
@@ -351,10 +327,10 @@ class TestRunner:
 
         if test_exctention:
             command = [test_type, test_name, test_exctention]
-            logger.info(f"Command used to run tests: {test_type} {test_name} {test_exctention}")
+            self.logger.info(f"Command used to run tests: {test_type} {test_name} {test_exctention}")
         else:
             command = [test_type, test_name]
-            logger.info(f"Command used to run tests: {test_type} {test_name}")
+            self.logger.info(f"Command used to run tests: {test_type} {test_name}")
 
 
         # Execute the command using subprocess and save the output into a file
@@ -365,13 +341,13 @@ class TestRunner:
                 f.write("\n\n")
                 result = subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, text=True)
         except Exception as e:
-            logger.error("There was an error in running the tests in the run_tests function: {e}")
+            self.logger.error("There was an error in running the tests in the run_tests function: {e}")
         # Check if the command executed successfuly
         if result.returncode or result.returncode == 0:
-            logger.info(f"Test ran successfuly. Test type: {test_type}, test name: {test_name}, test extention: {test_exctention}")
+            self.logger.info(f"Test ran successfuly. Test type: {test_type}, test name: {test_name}, test extention: {test_exctention}")
             return True, output_file
         else:
-            logger.error(f"Error making test. Test type: {test_type}, test name: {test_name}, test extention: {test_exctention}")
+            self.logger.error(f"Error making test. Test type: {test_type}, test name: {test_name}, test extention: {test_exctention}")
             return False, output_file
 
 
@@ -429,7 +405,7 @@ class TestRunner:
 
         if len(failed_configs) != 0:
             failed_configs.sort()
-        logger.info(f"Cleaned test results. Passed configs {passed_configs}. Failed configs: {failed_configs}")
+        self.logger.info(f"Cleaned test results. Passed configs {passed_configs}. Failed configs: {failed_configs}")
         return passed_configs, failed_configs
 
     def rewrite_to_markdown(self, test_name, passed_configs, failed_configs):
@@ -474,7 +450,7 @@ class TestRunner:
             for config in passed_configs:
                 md_file.write(f"- <span class=\"success\" style=\"color: green;\">{config}</span>\n")
 
-        logger.info("writing test outputs to markdown")
+        self.logger.info("writing test outputs to markdown")
 
     def combine_markdown_files(self, passed_tests, failed_tests, test_list, total_number_failures, total_number_success, test_type="default", markdown_file=None, args=None):
         """
@@ -575,7 +551,7 @@ class TestRunner:
                         md_file.write(f"* <span class=\"success\" style=\"color: green;\">{config}</span>\n")
                         md_file.write("\n")
                     
-        logger.info("Combining markdown files")
+        self.logger.info("Combining markdown files")
 
 
     def convert_to_html(self, markdown_file="results.md", html_file="results.html"):
@@ -601,7 +577,7 @@ class TestRunner:
         with open(html_file, 'w') as html_file:
             html_file.write(html_content)
         
-        logger.info("Converting markdown file to html file.")
+        self.logger.info("Converting markdown file to html file.")
  
     def send_email(self, sender_email=None, receiver_emails=None, subject="Nightly Regression Test"):
         """
@@ -619,7 +595,7 @@ class TestRunner:
 
         # check if there are any emails
         if not receiver_emails:
-            logger.ERROR("No receiver emails provided.")
+            self.logger.ERROR("No receiver emails provided.")
             return
         # grab thge html file
         todays_date = self.current_datetime.strftime("%Y-%m-%d")
@@ -647,11 +623,11 @@ class TestRunner:
                     process = subprocess.Popen(command, stdin=subprocess.PIPE)
                     # Write the email body to the subprocess
                     process.communicate(body.encode('utf-8'))
-                    logger.info("Sent email")
+                    self.logger.info("Sent email")
                 except expression as identifier:
-                    logger.error(f"Error sending email with error: {identifier}")
+                    self.logger.error(f"Error sending email with error: {identifier}")
         except expression as identifier:
-            logger.error(f"Error sending email with error: {identifier}")
+            self.logger.error(f"Error sending email with error: {identifier}")
 
 
 
@@ -666,8 +642,61 @@ def main():
     parser.add_argument('--repository',default = "https://github.com/openhwgroup/cvw", help='specify which github repository you want to clone')
     parser.add_argument('--target', default = "all", help='types of tests you can make are: all, wally-riscv-arch-test')
     parser.add_argument('--send_email',default = "yes", help='do you want to send emails: "yes" or "y"')
-    
+
     args = parser.parse_args()
+
+    
+
+    
+    #############################################
+    #                 SETUP                     #
+    #############################################
+    # file paths for where the results and repos will be saved: repos and results can be changed to whatever
+    today = datetime.now().strftime("%Y-%m-%d")
+    repos_path = f"{args.path}/repos/"
+    results_path = f"{args.path}/results/"
+    log_path = f"{args.path}/logs/{today}"
+
+    folder_manager = FolderManager() # creates the object
+
+    # setting the path on where to clone new repositories of cvw
+    folder_manager.create_preliminary_folders([repos_path, results_path, log_path])
+    new_folder = folder_manager.create_new_folder([repos_path, results_path])
+
+    # clone the cvw repo
+    folder_manager.clone_repository(repos_path, args.repository)
+
+    #############################################
+    #                 LOGGER                    #
+    #############################################
+
+    # paths
+    cvw_path = os.environ.get('WALLY')
+    cvw_parent_path = os.path.dirname(cvw_path)
+    todays_date = datetime.now().strftime("%Y-%m-%d")
+    log_path = Path(cvw_parent_path).joinpath(args.path, "logs", todays_date, "nightly_build.log")
+
+    # Set up the logger
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+
+    # Create a file handler
+    #file_handler = logging.FileHandler('../../logs/nightly_build.log')
+    file_handler = logging.FileHandler(log_path)
+    file_handler.setLevel(logging.DEBUG)
+
+    # Create a console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+
+    # Create a formatter and add it to the handlers
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+
+    # Add the handlers to the logger
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
 
     logger.info(f"path: {args.path}")
     logger.info(f"repository: {args.repository}")
@@ -676,24 +705,11 @@ def main():
     
     
 
-    # file paths for where the results and repos will be saved: repos and results can be changed to whatever
-    repos_path = f"{args.path}/repos/"
-    results_path = f"{args.path}/results/"
-    #############################################
-    #                 SETUP                     #
-    #############################################
-    folder_manager = FolderManager() # creates the object
-
-    # setting the path on where to clone new repositories of cvw
-    folder_manager.create_preliminary_folders([repos_path, results_path])
-    new_folder = folder_manager.create_new_folder([repos_path, results_path])
-
-    # clone the cvw repo
-    folder_manager.clone_repository(repos_path, args.repository)
+   
             
 
 
-    test_runner = TestRunner() # creates the object
+    test_runner = TestRunner(logger) # creates the object
     test_runner.set_env_var(repos_path) # ensures that the new WALLY environmental variable is set correctly
 
 
