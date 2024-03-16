@@ -45,7 +45,7 @@ module aes64e(
     assign SboxEIn = ShiftRowOut[31:0];
     assign SboxOut[31:0] = Sbox0Out;
 
-    aessboxword sbox1(ShiftRowOut[63:32], SboxOut[63:32]); // instantiate second sbox
+    aessbox32 sbox1(ShiftRowOut[63:32], SboxOut[63:32]); // instantiate second sbox
 
     // Apply mix columns operations
     aesmixcolumns mw0(SboxOut[31:0],  MixcolOut[31:0]);

@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// aessboxword.sv
+// aessbox32.sv
 //
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
@@ -25,14 +25,14 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aessboxword(
+module aessbox32(
    input  logic [31:0] a, 
    output logic [31:0] y
 );   
    
-   // substitutions boxes for each byte of the word
-   aessbox sboxb0(a[7:0],   y[7:0]);
-   aessbox sboxb1(a[15:8],  y[15:8]);
-   aessbox sboxb2(a[23:16], y[23:16]);	
-   aessbox sboxb3(a[31:24], y[31:24]);   
+   // substitutions boxes for each byte of the 32-bit word
+   aessbox sbox0(a[7:0],   y[7:0]);
+   aessbox sbox1(a[15:8],  y[15:8]);
+   aessbox sbox2(a[23:16], y[23:16]);	
+   aessbox sbox3(a[31:24], y[31:24]);   
 endmodule

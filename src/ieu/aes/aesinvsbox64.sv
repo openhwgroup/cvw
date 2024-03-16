@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// aesinvsboxword.sv
+// aesinvsbox64.sv
 //
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
@@ -25,14 +25,18 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aesinvsboxword(
-   input  logic [31:0] a, 
-   output logic [31:0] y
+module aesinvsbox64(
+   input  logic [63:0] a, 
+   output logic [63:0] y
 );
    
-   // inverse substitutions boxes for each byte of the word
-   aesinvsbox sboxb0(a[7:0],   y[7:0]);
-   aesinvsbox sboxb1(a[15:8],  y[15:8]);
-   aesinvsbox sboxb2(a[23:16], y[23:16]);	
-   aesinvsbox sboxb3(a[31:24], y[31:24]);   
+   // inverse substitutions boxes for each byte of the 32-bit word
+   aesinvsbox sbox0(a[7:0],   y[7:0]);
+   aesinvsbox sbox1(a[15:8],  y[15:8]);
+   aesinvsbox sbox2(a[23:16], y[23:16]);	
+   aesinvsbox sbox3(a[31:24], y[31:24]);   
+   aesinvsbox sbox4(a[39:32], y[39:32]);   
+   aesinvsbox sbox5(a[47:40], y[47:40]);   
+   aesinvsbox sbox6(a[55:48], y[55:48]);   
+   aesinvsbox sbox7(a[63:56], y[63:56]);   
 endmodule

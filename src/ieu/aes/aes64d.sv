@@ -38,9 +38,8 @@ module aes64d(
    // Apply inverse shiftrows to rs2 and rs1
    aesinvshiftrow srow({rs2, rs1}, ShiftRowOut);
    
-   // Apply full word inverse substitution to lower 2 words of shiftrow out
-   aesinvsboxword invsbox0(ShiftRowOut[31:0],  SboxOut[31:0]);
-   aesinvsboxword invsbox1(ShiftRowOut[63:32], SboxOut[63:32]);
+   // Apply full word inverse substitution to lower doubleord of shiftrow out
+   aesinvsbox64 invsbox(ShiftRowOut[63:0],  SboxOut);
    
    mux2 #(64) mixcolmux(SboxOut, rs1, aes64im, MixcolIn);
    
