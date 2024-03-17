@@ -141,16 +141,17 @@ module cacheLRU
   // LRU storage must be reset for modelsim to run. However the reset value does not actually matter in practice.
   // This is a two port memory.
   // Every cycle must read from CacheSetData and each load/store must write the new LRU.
+
+  // note: Verilator lint doesn't like <= for array initialization (https://verilator.org/warn/BLKLOOPINIT?v=5.021)
+  // Move to = to keep Verilator happy and simulator running fast
   always_ff @(posedge clk) begin
     if (reset | (InvalidateCache & ~FlushStage)) 
-      for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= 0; // exclusion-tag: initialize
-    if(CacheEn) begin
-      if(LRUWriteEn)
-        LRUMemory[PAdr] <= NextLRU;
-      if(LRUWriteEn & (PAdr == CacheSetTag))
-        CurrLRU <= #1 NextLRU;
-      else 
-        CurrLRU <= #1 LRUMemory[CacheSetTag];
+      for (int set = 0; set < NUMLINES; set++) LRUMemory[set] = 0; // exclusion-tag: initialize
+    else if(CacheEn) begin
+      // Because we are using blocking assignments, change to LRUMemory must occur after LRUMemory is used so we get the proper value
+      if(LRUWriteEn & (PAdr == CacheSetTag)) CurrLRU = #1 NextLRU;
+      else                                   CurrLRU = #1 LRUMemory[CacheSetTag];
+      if(LRUWriteEn)                         LRUMemory[PAdr] = NextLRU;
     end
   end
 

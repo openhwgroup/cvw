@@ -90,13 +90,16 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   logic       SCE;                                           // Store Conditional instruction
   logic       FWriteIntM;                                    // FPU writing to integer register file
   logic       IntDivW;                                       // Integer divide instruction
-  logic [1:0] BSelectE;                                      // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding
-  logic [2:0] ZBBSelectE;                                    // ZBB Result Select Signal in Execute Stage
+  logic [3:0] BSelectE;                                      // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding
+  logic [3:0] ZBBSelectE;                                    // ZBB Result Select Signal in Execute Stage
   logic [2:0] BALUControlE;                                  // ALU Control signals for B instructions in Execute Stage
   logic       SubArithE;                                     // Subtraction or arithmetic shift
 
+  logic [6:0] Funct7E;
+
   // Forwarding signals
-  logic [4:0] Rs1D, Rs2D;                                    // Source registers
+  logic [4:0] Rs1D, Rs2D;
+  logic [4:0] Rs2E;                                    // Source registers
   logic [1:0] ForwardAE, ForwardBE;                          // Select signals for forwarding multiplexers
   logic       RegWriteM, RegWriteW;                          // Register will be written in Memory, Writeback stages
   logic       MemReadE, CSRReadE;                            // Load, CSRRead instruction
@@ -108,10 +111,10 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   controller #(P) c(
     .clk, .reset, .StallD, .FlushD, .InstrD, .STATUS_FS, .ENVCFG_CBE, .ImmSrcD,
     .IllegalIEUFPUInstrD, .IllegalBaseInstrD, 
-    .StructuralStallD, .LoadStallD, .StoreStallD, .Rs1D, .Rs2D, 
+    .StructuralStallD, .LoadStallD, .StoreStallD, .Rs1D, .Rs2D,  .Rs2E,
     .StallE, .FlushE, .FlagsE, .FWriteIntE,
     .PCSrcE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .MemReadE, .CSRReadE, 
-    .Funct3E, .IntDivE, .MDUE, .W64E, .SubArithE, .BranchD, .BranchE, .JumpD, .JumpE, .SCE, 
+    .Funct3E, .Funct7E, .IntDivE, .MDUE, .W64E, .SubArithE, .BranchD, .BranchE, .JumpD, .JumpE, .SCE, 
     .BranchSignedE, .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE, .CZeroE, .MDUActiveE, 
     .FCvtIntE, .ForwardAE, .ForwardBE, .CMOpM, .IFUPrefetchE, .LSUPrefetchM,
     .StallM, .FlushM, .MemRWE, .MemRWM, .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
@@ -120,8 +123,8 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
     .RdW, .RdE, .RdM);
 
   datapath #(P) dp(
-    .clk, .reset, .ImmSrcD, .InstrD, .Rs1D, .Rs2D, .StallE, .FlushE, .ForwardAE, .ForwardBE, .W64E, .SubArithE,
-    .Funct3E, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .JumpE, .BranchSignedE, 
+    .clk, .reset, .ImmSrcD, .InstrD, .Rs1D, .Rs2D, .Rs2E, .StallE, .FlushE, .ForwardAE, .ForwardBE, .W64E, .SubArithE,
+    .Funct3E, .Funct7E, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .JumpE, .BranchSignedE, 
     .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE, .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE, .CZeroE,
     .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataM, .FCvtIntW,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .SquashSCW, .ResultSrcW, .ReadDataW, .FCvtIntResW,
