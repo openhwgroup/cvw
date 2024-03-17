@@ -46,7 +46,7 @@ module drsu import cvw::*;  #(parameter cvw_t P) (
   input  logic [2:0]          Funct3E, Funct3M,
   input  logic                IntDivE, W64E,
   input  logic [2:0]          Frm,
-  input  logic [2:0]          OpCtrl,
+  input  logic [3:0]          OpCtrl,
   input  logic [1:0]          PostProcSel,
   output logic                FDivBusyE, IFDivStartE, FDivDoneE,
   output logic [P.FLEN-1:0]    FResM,
