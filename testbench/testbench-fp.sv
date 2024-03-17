@@ -1049,7 +1049,7 @@ module testbenchfp;
       // check if result is correct
       assign ResMatch = ((Res === Ans) | NaNGood | (NaNGood === 1'bx));
       assign FlagMatch = ((ResFlg === AnsFlg) | (AnsFlg === 5'bx));
-      assign divsqrtop = (OpCtrlVal == `SQRT_OPCTRL) | (OpCtrlVal == `DIV_OPCTRL) | (OpCtrlVal == `INTDIV_OPCTRL) | (OpCtrlVal ==`INTDIVU_OPCTRL) | (OpCtrlVal == `INTDIVUW_OPCTRL) | (OpCtrlVal == `INTREM_OPCTRL) | (OpCtrlVal == `INTREMU_OPCTRL) | (OpCtrlVal ==`INTREMUW_OPCTRL) ; 
+      assign divsqrtop = (OpCtrlVal == `SQRT_OPCTRL) | (OpCtrlVal == `DIV_OPCTRL) | (OpCtrlVal == `INTDIV_OPCTRL) | (OpCtrlVal ==`INTDIVU_OPCTRL) | (OpCtrlVal == `INTDIVW_OPCTRL) | (OpCtrlVal == `INTDIVUW_OPCTRL) | (OpCtrlVal == `INTREM_OPCTRL) | (OpCtrlVal == `INTREMW_OPCTRL) | (OpCtrlVal == `INTREMU_OPCTRL) | (OpCtrlVal ==`INTREMUW_OPCTRL) ; 
       assign FMAop = (OpCtrlVal == `FMAUNIT);  
       assign DivDone = OldFDivBusyE & ~FDivBusyE;
       assign CheckNow = ((DivDone | ~divsqrtop) | 
