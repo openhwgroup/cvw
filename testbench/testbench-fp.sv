@@ -1075,7 +1075,7 @@ module testbenchfp;
          // set the vector index back to 0
          VectorNum = 0;
          // incemet the operation if all the rounding modes have been tested
-         if (FrmNum === 4 | TEST === "") OpCtrlNum += 1;
+         if (FrmNum === 4 | WriteIntVal == 1'b1) OpCtrlNum += 1;
          // increment the rounding mode or loop back to rne 
          if (FrmNum < 4) FrmNum += 1;
          else begin
@@ -1133,7 +1133,9 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 
    // apply test vectors on rising edge of clk
    // Format of vectors Inputs(1/2/3)_AnsFlg
-   always @(VectorNum) begin
+   always @(posedge clk) begin
+      $display("%d, %d, %d",OpCtrl, TestNum, VectorNum);
+      $display("%h",SrcA);
       AnsFlg = TestVector[4:0];
       case (Unit)
         `FMAUNIT:
@@ -1246,11 +1248,11 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
             // no flag checking for intdiv test cases
             AnsFlg = 5'bx;
             case (OpCtrl)
-              `INTDIV_OPCTRL: begin
+              3'b011: begin
                 Funct3E = 3'b100;
                 W64 = 1'b0;
               end
-              `INTREM_OPCTRL: begin
+              3'b010: begin
                 Funct3E = 3'b110;
                 W64 = 1'b0;
               end
@@ -1277,6 +1279,10 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
               `INTREMUW_OPCTRL: begin
                 Funct3E = 3'b111;
                 W64 = 1'b1;
+              end
+              default: begin
+               Funct3E = 3'b000;
+               W64 = 1'b0;
               end
           endcase
          end
