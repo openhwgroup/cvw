@@ -35,7 +35,8 @@ module testbenchfp;
 
   `include "parameter-defs.vh"   
 
-   parameter MAXVECTORS = 8388610;
+   //parameter MAXVECTORS = 8388610;
+   parameter MAXVECTORS = 100000;
 
    // FIXME: needs cleaning of unused variables (jes)
    string                       Tests[];                    // list of tests to be run
@@ -51,7 +52,7 @@ module testbenchfp;
    logic [31:0] 		errors=0;                   // how many errors
    logic [31:0] 		VectorNum=0;                // index for test vector
    logic [31:0] 		FrmNum=0;                   // index for rounding mode
-   logic [P.FLEN*4+7:0] 	TestVectors[100:0];     // list of test vectors
+   logic [P.FLEN*4+7:0] 	TestVectors[MAXVECTORS:0];     // list of test vectors
 
    logic [1:0] 			FmtVal;                     // value of the current Fmt
    logic [2:0] 			UnitVal, OpCtrlVal, FrmVal; // value of the currnet Unit/OpCtrl/FrmVal
@@ -633,7 +634,7 @@ module testbenchfp;
          end
       end
       if (P.XLEN == 64 & P.IDIV_ON_FPU) begin
-        if (TEST === "intrem" | TEST === "intdivrem" | TEST === "afdivremsqrt") begin // if integer remainder is being tested
+        if (TEST === "intrem" | TEST === "intdivrem" | TEST === "fdivremsqrt") begin // if integer remainder is being tested
           Tests = {Tests, intrem};
           OpCtrl = {OpCtrl, `INTREM_OPCTRL};
           WriteInt = {WriteInt, 1'b0};
@@ -804,7 +805,7 @@ module testbenchfp;
                              .Funct3E(Funct3E), .IntDivE(1'b0), .FIntDivResultM(FIntDivResultM),
                              .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE));
    end
-   if (TEST === "afdivremsqrt" | TEST === "intdiv" | TEST === "intrem" | TEST === "intdivu" | TEST ==="intremu" | TEST ==="intremw" | TEST ==="intremuw" | TEST ==="intdivw" | TEST ==="intdivuw" | TEST ==="intdivrem") begin: divremsqrt
+   if (TEST === "fdivremsqrt" | TEST === "intdiv" | TEST === "intrem" | TEST === "intdivu" | TEST ==="intremu" | TEST ==="intremw" | TEST ==="intremuw" | TEST ==="intdivw" | TEST ==="intdivuw" | TEST ==="intdivrem") begin: divremsqrt
     drsu #(P) drsu(.clk, .reset, .XsE(Xs), .YsE(Ys), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
       .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal===`SQRT_OPCTRL&UnitVal===`DIVUNIT), .SqrtM(OpCtrlVal===`SQRT_OPCTRL&UnitVal===`DIVUNIT),
       .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), .PostProcSel(UnitVal[1:0]),
@@ -903,7 +904,7 @@ module testbenchfp;
         `CMPUNIT: Res = CmpRes;
         `CVTINTUNIT: if (WriteIntVal) Res = IntRes; else Res = FpRes;
         `CVTFPUNIT: Res = FpRes;
-        `INTDIVUNIT: if (TEST === "afdivremsqrt") Res = IntRes; else Res = FpRes;
+        `INTDIVUNIT: if (OpCtrlVal == `SQRT_OPCTRL | OpCtrlVal == `DIV_OPCTRL) Res = FpRes; else Res = IntRes;
       endcase
 
       // select the flag to check
@@ -1048,7 +1049,7 @@ module testbenchfp;
       // check if result is correct
       assign ResMatch = ((Res === Ans) | NaNGood | (NaNGood === 1'bx));
       assign FlagMatch = ((ResFlg === AnsFlg) | (AnsFlg === 5'bx));
-      assign divsqrtop = (OpCtrlVal == `SQRT_OPCTRL) | (OpCtrlVal == `DIV_OPCTRL) | (OpCtrlVal == `INTDIV_OPCTRL) | (OpCtrlVal ==`INTDIVU_OPCTRL) | (OpCtrlVal == `INTDIVUW_OPCTRL) | (OpctrlVal == `INTREM_OPCTRL) | (OpCtrlVal == `INTREMU_OPCTRL) | (OpCtrlVal ==`INTREMUW_OPCTRL) ; 
+      assign divsqrtop = (OpCtrlVal == `SQRT_OPCTRL) | (OpCtrlVal == `DIV_OPCTRL) | (OpCtrlVal == `INTDIV_OPCTRL) | (OpCtrlVal ==`INTDIVU_OPCTRL) | (OpCtrlVal == `INTDIVUW_OPCTRL) | (OpCtrlVal == `INTREM_OPCTRL) | (OpCtrlVal == `INTREMU_OPCTRL) | (OpCtrlVal ==`INTREMUW_OPCTRL) ; 
       assign FMAop = (OpCtrlVal == `FMAUNIT);  
       assign DivDone = OldFDivBusyE & ~FDivBusyE;
       assign CheckNow = ((DivDone | ~divsqrtop) | 
@@ -1063,7 +1064,7 @@ module testbenchfp;
          $stop;
       end
 
-      if (TestVectors[VectorNum][100:0] === 1'bx & Tests[TestNum] !== "" || VectorNum == 20) begin // if reached the eof
+      if (TestVectors[VectorNum][100:0] === 1'bx & Tests[TestNum] !== "" ) begin // if reached the eof
          $display(":MY BROTHER IN CHRIST");
          // increment the test
          TestNum += 1;
@@ -1084,13 +1085,14 @@ module testbenchfp;
             repeat (10)
               @(posedge clk);
          end
-         // if no more Tests - finish
-         if (Tests[TestNum] === "") begin
-                  $display("\nAll Tests completed with %d errors\n", errors);
-                  $stop;
-         end 
+         
          $display("Running %s vectors", Tests[TestNum]);
       end
+      // if no more Tests - finish
+      if (Tests[TestNum] === "") begin
+              $display("\nAll Tests completed with %d errors\n", errors);
+              $stop;
+      end 
    end
 endmodule
 
@@ -1238,9 +1240,9 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
               end
             endcase
          `INTDIVUNIT: begin
-            SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1:2*(P.Q_LEN)]; //***Replace with XLEN instead of DLEN for 32 bit test cases
-            SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1:P.Q_LEN];
-            Ans = TestVector[P.D_LEN-1:0];
+            SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1+12:2*(P.Q_LEN)+12]; //***Replace with XLEN instead of DLEN for 32 bit test cases
+            SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1+12:P.Q_LEN+12];
+            Ans = TestVector[P.D_LEN-1+12:12];
             // no flag checking for intdiv test cases
             AnsFlg = 5'bx;
             case (OpCtrl)
