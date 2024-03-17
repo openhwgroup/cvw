@@ -19,10 +19,10 @@ echo "Current directory"
 pwd
 
 echo "Sourcing setup_host"
-source ./setup_host.sh >> $LOG 2>&1
+source ./setup.sh >> $LOG 2>&1
 
 cd $PYTHON_SCRIPT
 pwd
 echo "Running python file"
-python nightly_build.py  >> $LOG 2>&1
+python nightly_build.py >> $LOG 2>&1
 echo "Finished"
