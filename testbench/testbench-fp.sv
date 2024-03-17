@@ -634,6 +634,34 @@ module testbenchfp;
          end
       end
       if (P.XLEN == 64 & P.IDIV_ON_FPU) begin
+        if (P.Q_SUPPORTED) begin
+           if (TEST === "fdivremsqrt") begin // if division on drsu is being tested
+           // add the divide tests/op-ctrls/unit/fmt
+           Tests = {Tests, f128div};
+           OpCtrl = {OpCtrl, `DIV_OPCTRL};
+           WriteInt = {WriteInt, 1'b0};
+           for(int i = 0; i<5; i++) begin
+             Unit = {Unit, `INTDIVUNIT};
+             Fmt = {Fmt, 2'b11};
+           end
+         end
+         if (TEST === "fdivremsqrt") begin // if square-root on drsu is being tested
+            // add the square-root tests/op-ctrls/unit/fmt
+            Tests = {Tests, f128sqrt};
+            OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+            WriteInt = {WriteInt, 1'b0};
+            for(int i = 0; i<5; i++) begin
+               Unit = {Unit, `INTDIVUNIT};
+               Fmt = {Fmt, 2'b11};
+            end
+         end
+        end
+        if (P.D_SUPPORTED) begin
+        end
+        if (P.S_SUPPORTED) begin
+        end
+        if (P.ZFH_SUPPORTED) begin
+        end
         if (TEST === "intrem" | TEST === "intdivrem" | TEST === "fdivremsqrt") begin // if integer remainder is being tested
           Tests = {Tests, intrem};
           OpCtrl = {OpCtrl, `INTREM_OPCTRL};
@@ -926,7 +954,7 @@ module testbenchfp;
            nextstate = Start;
         end
         Start: begin
-           if (UnitVal == `DIVUNIT)	  
+           if (UnitVal == `DIVUNIT | (UnitVal == `INTDIVUNIT & (OpCtrlVal == `SQRT_OPCTRL | OpCtrlVal == `DIV_OPCTRL)))	  
              DivStart = 1'b1;
            else if (UnitVal == `INTDIVUNIT) begin
              IDivStart = 1'b1;
@@ -1242,49 +1270,96 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
               end
             endcase
          `INTDIVUNIT: begin
-            SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1+12:2*(P.Q_LEN)+12]; //***Replace with XLEN instead of DLEN for 32 bit test cases
-            SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1+12:P.Q_LEN+12];
-            Ans = TestVector[P.D_LEN-1+12:12];
-            // no flag checking for intdiv test cases
-            AnsFlg = 5'bx;
-            case (OpCtrl)
-              3'b011: begin
-                Funct3E = 3'b100;
-                W64 = 1'b0;
-              end
-              3'b010: begin
-                Funct3E = 3'b110;
-                W64 = 1'b0;
-              end
-              `INTREMU_OPCTRL: begin
-                Funct3E = 3'b111;
-                W64 = 1'b0;
-              end
-              `INTDIVU_OPCTRL: begin
-                Funct3E = 3'b101;
-                W64 = 1'b0;
-              end
-              `INTDIVW_OPCTRL: begin
-                Funct3E = 3'b100;
-                W64 = 1'b1;
-              end
-              `INTDIVUW_OPCTRL: begin
-                Funct3E = 3'b101;
-                W64 = 1'b1;
-              end
-              `INTREMW_OPCTRL: begin
+            if (!(OpCtrl === `DIV_OPCTRL | OpCtrl === `SQRT_OPCTRL)) begin
+               SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1+12:2*(P.Q_LEN)+12]; //***Replace with XLEN instead of DLEN for 32 bit test cases
+               SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1+12:P.Q_LEN+12];
+               Ans = TestVector[P.D_LEN-1+12:12];
+               // no flag checking for intdiv test cases
+               AnsFlg = 5'bx;
+               case (OpCtrl)
+               3'b011: begin
+                  Funct3E = 3'b100;
+                  W64 = 1'b0;
+               end
+               3'b010: begin
                   Funct3E = 3'b110;
+                  W64 = 1'b0;
+               end
+               `INTREMU_OPCTRL: begin
+                  Funct3E = 3'b111;
+                  W64 = 1'b0;
+               end
+               `INTDIVU_OPCTRL: begin
+                  Funct3E = 3'b101;
+                  W64 = 1'b0;
+               end
+               `INTDIVW_OPCTRL: begin
+                  Funct3E = 3'b100;
                   W64 = 1'b1;
-              end
-              `INTREMUW_OPCTRL: begin
-                Funct3E = 3'b111;
-                W64 = 1'b1;
-              end
-              default: begin
-               Funct3E = 3'b000;
-               W64 = 1'b0;
-              end
-          endcase
+               end
+               `INTDIVUW_OPCTRL: begin
+                  Funct3E = 3'b101;
+                  W64 = 1'b1;
+               end
+               `INTREMW_OPCTRL: begin
+                     Funct3E = 3'b110;
+                     W64 = 1'b1;
+               end
+               `INTREMUW_OPCTRL: begin
+                  Funct3E = 3'b111;
+                  W64 = 1'b1;
+               end
+               default: begin
+                  Funct3E = 3'b000;
+                  W64 = 1'b0;
+               end
+               endcase
+            end
+            // testing div/sqrt on drsu
+            else begin
+               if (OpCtrl[0])
+                  case (Fmt)
+                  2'b11: begin // quad
+                     X = TestVector[8+2*(P.Q_LEN)-1:8+(P.Q_LEN)];
+                     Ans = TestVector[8+(P.Q_LEN-1):8];
+                  end
+                  2'b01: if (P.D_SUPPORTED) begin // double
+                     X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]};
+                     Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
+                  end
+                  2'b00: if (P.S_SUPPORTED) begin // single
+                     X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+1*(P.S_LEN)]};
+                     Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
+                  end
+                  2'b10: begin // half
+                     X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+(P.H_LEN)]};
+                     Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
+                  end
+                  endcase
+               else
+                  case (Fmt)
+                  2'b11: begin // quad
+                     X = TestVector[8+3*(P.Q_LEN)-1:8+2*(P.Q_LEN)];
+                     Y = TestVector[8+2*(P.Q_LEN)-1:8+(P.Q_LEN)];
+                     Ans = TestVector[8+(P.Q_LEN-1):8];
+                  end
+                  2'b01: if (P.D_SUPPORTED) begin // double
+                     X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+3*(P.D_LEN)-1:8+2*(P.D_LEN)]};
+                     Y = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]};
+                     Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
+                  end
+                  2'b00: if (P.S_SUPPORTED) begin // single
+                     X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+3*(P.S_LEN)-1:8+2*(P.S_LEN)]};
+                     Y = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+1*(P.S_LEN)]};
+                     Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
+                  end
+                  2'b10: begin // half
+                     X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+3*(P.H_LEN)-1:8+2*(P.H_LEN)]};
+                     Y = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+(P.H_LEN)]};
+                     Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
+                  end
+                  endcase
+            end
          end
         `CMPUNIT:
           case (Fmt)        
