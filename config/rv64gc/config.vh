@@ -77,7 +77,7 @@ localparam CACHE_SRAMLEN = 32'd128;
 // Integer Divider Configuration
 // IDIV_BITSPERCYCLE must be 1, 2, or 4
 localparam IDIV_BITSPERCYCLE = 32'd4;
-localparam IDIV_ON_FPU = 0;
+localparam IDIV_ON_FPU = 1;
 
 // Legal number of PMP entries are 0, 16, or 64
 localparam PMP_ENTRIES = 32'd16;
@@ -166,10 +166,8 @@ localparam SVADU_SUPPORTED = 1;
 localparam ZMMUL_SUPPORTED = 0;
 
 // FPU division architecture
-//localparam RADIX = 32'h4;
-localparam RADIX = 32'h2;
-//localparam DIVCOPIES = 32'h4;
-localparam DIVCOPIES = 32'h1;
+localparam RADIX = 32'h4;
+localparam DIVCOPIES = 32'h4;
 
 // bit manipulation
 localparam ZBA_SUPPORTED = 1;
