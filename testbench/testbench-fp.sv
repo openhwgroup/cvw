@@ -637,56 +637,56 @@ module testbenchfp;
         if (TEST === "intrem" | TEST === "intdivrem" | TEST === "fdivremsqrt") begin // if integer remainder is being tested
           Tests = {Tests, intrem};
           OpCtrl = {OpCtrl, `INTREM_OPCTRL};
-          WriteInt = {WriteInt, 1'b0};
+          WriteInt = {WriteInt, 1'b1};
           Unit = {Unit, `INTDIVUNIT};
           Fmt = {Fmt, 2'b10};
         end
         if (TEST === "intdiv" | TEST ==="intdivrem" | TEST === "fdivremsqrt") begin // if integer division is being tested
           Tests = {Tests, intdiv};
           OpCtrl = {OpCtrl, `INTDIV_OPCTRL};
-          WriteInt = {WriteInt, 1'b0};
+          WriteInt = {WriteInt, 1'b1};
           Unit = {Unit, `INTDIVUNIT};
           Fmt = {Fmt, 2'b10};
         end
         if (TEST === "intremu"| TEST ==="intdivrem" | TEST === "fdivremsqrt") begin // if unsigned integer remainder is being tested
           Tests = {Tests, intremu};
           OpCtrl = {OpCtrl, `INTREMU_OPCTRL};
-          WriteInt = {WriteInt, 1'b0};
+          WriteInt = {WriteInt, 1'b1};
           Unit = {Unit, `INTDIVUNIT};
           Fmt = {Fmt, 2'b10};
         end
         if (TEST === "intdivu"| TEST ==="intdivrem" | TEST === "fdivremsqrt") begin // if unsigned integer division is being tested
           Tests = {Tests, intdivu};
           OpCtrl = {OpCtrl, `INTDIVU_OPCTRL};
-          WriteInt = {WriteInt, 1'b0};
+          WriteInt = {WriteInt, 1'b1};
           Unit = {Unit, `INTDIVUNIT};
           Fmt = {Fmt, 2'b10};
         end
         if (TEST === "intremw"| TEST ==="intdivrem" | TEST === "fdivremsqrt") begin // if w-type integer remainder is being tested
           Tests = {Tests, intremw};
           OpCtrl = {OpCtrl, `INTREMW_OPCTRL};
-          WriteInt = {WriteInt, 1'b0};
+          WriteInt = {WriteInt, 1'b1};
           Unit = {Unit, `INTDIVUNIT};
           Fmt = {Fmt, 2'b10};
         end
         if (TEST === "intremuw"| TEST ==="intdivrem" | TEST === "fdivremsqrt") begin // if unsigned w-type integer remainder is being tested
           Tests = {Tests, intremuw};
           OpCtrl = {OpCtrl, `INTREMUW_OPCTRL};
-          WriteInt = {WriteInt, 1'b0};
+          WriteInt = {WriteInt, 1'b1};
           Unit = {Unit, `INTDIVUNIT};
           Fmt = {Fmt, 2'b10};
         end
         if (TEST === "intdivw"| TEST ==="intdivrem" | TEST === "fdivremsqrt") begin // if w-type integer division is being tested
           Tests = {Tests, intdivw};
           OpCtrl = {OpCtrl, `INTDIVW_OPCTRL};
-          WriteInt = {WriteInt, 1'b0};
+          WriteInt = {WriteInt, 1'b1};
           Unit = {Unit, `INTDIVUNIT};
           Fmt = {Fmt, 2'b10};
         end
         if (TEST === "intdivuw"| TEST ==="intdivrem" | TEST === "fdivremsqrt") begin // if unsigned w-type integer divison is being tested
           Tests = {Tests, intdivuw};
           OpCtrl = {OpCtrl, `INTDIVUW_OPCTRL};
-          WriteInt = {WriteInt, 1'b0};
+          WriteInt = {WriteInt, 1'b1};
           Unit = {Unit, `INTDIVUNIT};
           Fmt = {Fmt, 2'b10};
         end
@@ -904,7 +904,7 @@ module testbenchfp;
         `CMPUNIT: Res = CmpRes;
         `CVTINTUNIT: if (WriteIntVal) Res = IntRes; else Res = FpRes;
         `CVTFPUNIT: Res = FpRes;
-        `INTDIVUNIT: if (OpCtrlVal == `SQRT_OPCTRL | OpCtrlVal == `DIV_OPCTRL) Res = FpRes; else Res = IntRes;
+        `INTDIVUNIT: if (WriteIntVal) Res = IntRes; else Res = FpRes;
       endcase
 
       // select the flag to check
@@ -1063,8 +1063,8 @@ module testbenchfp;
          $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Expected: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
          $stop;
       end
-
-      if (TestVectors[VectorNum][100:0] === 1'bx & Tests[TestNum] !== "" ) begin // if reached the eof
+      
+      if (TestVectors[VectorNum][100:0] === 101'bx & Tests[TestNum] !== "" ) begin // if reached the eof
          $display(":MY BROTHER IN CHRIST");
          // increment the test
          TestNum += 1;
@@ -1075,7 +1075,7 @@ module testbenchfp;
          // set the vector index back to 0
          VectorNum = 0;
          // incemet the operation if all the rounding modes have been tested
-         if (FrmNum === 4) OpCtrlNum += 1;
+         if (FrmNum === 4 | TEST === "") OpCtrlNum += 1;
          // increment the rounding mode or loop back to rne 
          if (FrmNum < 4) FrmNum += 1;
          else begin
