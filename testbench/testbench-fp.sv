@@ -40,7 +40,7 @@ module testbenchfp;
 
    // FIXME: needs cleaning of unused variables (jes)
    string                       Tests[];                    // list of tests to be run
-   logic [2:0] 			OpCtrl[];                   // list of op controls
+   logic [3:0] 			OpCtrl[];                   // list of op controls
    logic [2:0] 			Unit[];                     // list of units being tested
    logic                        WriteInt[];                 // Is being written to integer resgiter
    logic [2:0] 			Frm[4:0] = {3'b100, 3'b010, 3'b011, 3'b001, 3'b000}; // rounding modes: rne-000, rz-001, ru-011, rd-010, rnm-100
@@ -55,7 +55,8 @@ module testbenchfp;
    logic [P.FLEN*4+7:0] 	TestVectors[MAXVECTORS:0];     // list of test vectors
 
    logic [1:0] 			FmtVal;                     // value of the current Fmt
-   logic [2:0] 			UnitVal, OpCtrlVal, FrmVal; // value of the currnet Unit/OpCtrl/FrmVal
+   logic [2:0] 			UnitVal, FrmVal; // value of the currnet Unit/OpCtrl/FrmVal
+   logic [3:0]          OpCtrlVal;
    logic                        WriteIntVal;                // value of the current WriteInt
    logic [P.FLEN-1:0] 		X, Y, Z;                    // inputs read from TestFloat
    logic [P.FLEN-1:0] 		XPostBox;                   // inputs read from TestFloat
@@ -804,19 +805,19 @@ module testbenchfp;
                    .Xe(Xe), .Ye(Ye), .Ze(Ze), 
                    .Xm(Xm), .Ym(Ym), .Zm(Zm),
                    .XZero, .YZero, .ZZero, .Ss, .Se,
-                   .OpCtrl(OpCtrlVal), .Sm, .InvA, .SCnt, .As, .Ps,
+                   .OpCtrl(OpCtrlVal[2:0]), .Sm, .InvA, .SCnt, .As, .Ps,
                    .ASticky); 
    end
    
    if (TEST === "cvtfp" | TEST === "cvtint" | TEST === "all") begin : fcvt
       fcvt #(P) fcvt (.Xs(Xs), .Xe(Xe), .Xm(Xm), .Int(SrcA), .ToInt(WriteIntVal), 
-                      .XZero(XZero), .OpCtrl(OpCtrlVal), .IntZero,
+                      .XZero(XZero), .OpCtrl(OpCtrlVal[2:0]), .IntZero,
                       .Fmt(ModFmt), .Ce(CvtCalcExpE), .ShiftAmt(CvtShiftAmtE), 
                       .ResSubnormUf(CvtResSubnormUfE), .Cs(CvtResSgnE), .LzcIn(CvtLzcInE));
    end
 
    if (TEST === "cmp" | TEST === "all") begin: fcmp
-      fcmp #(P) fcmp (.Fmt(ModFmt), .OpCtrl(OpCtrlVal), .Xs, .Ys, .Xe, .Ye, 
+      fcmp #(P) fcmp (.Fmt(ModFmt), .OpCtrl(OpCtrlVal[2:0]), .Xs, .Ys, .Xe, .Ye, 
                    .Xm, .Ym, .XZero, .YZero, .CmpIntRes(CmpRes),
                    .XNaN, .YNaN, .XSNaN, .YSNaN, .X, .Y, .CmpNV(CmpFlg[4]), .CmpFpRes(FpCmpRes));
    end
@@ -835,7 +836,7 @@ module testbenchfp;
    end
    if (TEST === "fdivremsqrt" | TEST === "intdiv" | TEST === "intrem" | TEST === "intdivu" | TEST ==="intremu" | TEST ==="intremw" | TEST ==="intremuw" | TEST ==="intdivw" | TEST ==="intdivuw" | TEST ==="intdivrem") begin: divremsqrt
     drsu #(P) drsu(.clk, .reset, .XsE(Xs), .YsE(Ys), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
-      .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal===`SQRT_OPCTRL&UnitVal===`DIVUNIT), .SqrtM(OpCtrlVal===`SQRT_OPCTRL&UnitVal===`DIVUNIT),
+      .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal===`SQRT_OPCTRL), .SqrtM(OpCtrlVal===`SQRT_OPCTRL),
       .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), .PostProcSel(UnitVal[1:0]),
       .XNaNE(XNaN), .YNaNE(YNaN), .OpCtrl(OpCtrlVal), .XSNaNE(XSNaN), .YSNaNE(YSNaN), .Frm(FrmVal), 
       .FDivStartE(DivStart), .IDivStartE(IDivStart), .W64E(W64),
@@ -954,8 +955,10 @@ module testbenchfp;
            nextstate = Start;
         end
         Start: begin
-           if (UnitVal == `DIVUNIT | (UnitVal == `INTDIVUNIT & (OpCtrlVal == `SQRT_OPCTRL | OpCtrlVal == `DIV_OPCTRL)))	  
+           if (UnitVal == `DIVUNIT | (UnitVal == `INTDIVUNIT & (OpCtrlVal == `SQRT_OPCTRL | OpCtrlVal == `DIV_OPCTRL))) begin 
              DivStart = 1'b1;
+             IntDivE = 1'b0;
+           end
            else if (UnitVal == `INTDIVUNIT) begin
              IDivStart = 1'b1;
              IntDivE = 1'b1;
