@@ -77,7 +77,7 @@ localparam CACHE_SRAMLEN = 32'd128;
 // Integer Divider Configuration
 // IDIV_BITSPERCYCLE must be 1, 2, or 4
 localparam IDIV_BITSPERCYCLE = 32'd4;
-localparam IDIV_ON_FPU = 1;
+localparam IDIV_ON_FPU = 0;
 
 // Legal number of PMP entries are 0, 16, or 64
 localparam PMP_ENTRIES = 32'd16;
