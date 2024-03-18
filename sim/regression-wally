@@ -34,6 +34,7 @@ coverage = '-coverage' in sys.argv
 fp = '-fp' in sys.argv
 nightly = '-nightly' in sys.argv
 softfloat = '-softfloat' in sys.argv
+intdiv = '-intdiv' in sys.argv
 
 TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr'])
 # name:     the name of this test configuration (used in printing human-readable
@@ -314,7 +315,7 @@ for test in tests32e:
 if (softfloat):
     configs = []
     softfloatconfigs = ['fdh_ieee_rv32gc', 'fdqh_ieee_rv32gc', 'fdq_ieee_rv32gc', \
-    'fh_ieee_v32gc', 'f_ieee_rv64gc', 'fdqh_ieee_rv64gc', \
+    'fh_ieee_rv32gc', 'f_ieee_rv64gc', 'fdqh_ieee_rv64gc', \
     'fdq_ieee_rv64gc', 'div_2_1_rv32gc', 'div_2_2_rv32gc', \
     'div_2_4_rv32gc', 'div_4_1_rv32gc', 'div_4_2_rv32gc', \
     'div_4_4_rv32gc', 'fd_ieee_rv32gc', 'fh_ieee_rv32gc', \
@@ -342,7 +343,7 @@ if (softfloat):
     'fh_ieee_div_2_2_rv32gc', 'fh_ieee_div_2_2_rv64gc', 'fh_ieee_div_2_4_rv32gc',\
     'fh_ieee_div_2_4_rv64gc', 'fh_ieee_div_4_1_rv32gc', 'fh_ieee_div_4_1_rv64gc',\
     'fh_ieee_div_4_2_rv32gc', 'fh_ieee_div_4_2_rv64gc', 'fh_ieee_div_4_4_rv64gc', \
-    'fh_ieee_rv32gc', 'fh_ieee_rv64gc', 'fh_ieee_v32gc', 'f_ieee_div_2_1_rv32gc', \
+    'fh_ieee_rv32gc', 'fh_ieee_rv64gc', 'fh_ieee_rv32gc', 'f_ieee_div_2_1_rv32gc', \
     'f_ieee_div_2_1_rv64gc', 'f_ieee_div_2_2_rv32gc', 'f_ieee_div_2_2_rv64gc', \
     'f_ieee_div_2_4_rv32gc', 'f_ieee_div_2_4_rv64gc', 'f_ieee_div_4_1_rv32gc', \
     'f_ieee_div_4_1_rv64gc', 'f_ieee_div_4_2_rv32gc', 'f_ieee_div_4_2_rv64gc', \
@@ -389,8 +390,45 @@ if (softfloat):
             )
             configs.append(cvtfptest)    
       
-
-    
+# intdiv verification
+if (intdiv):
+    configs = []
+    # ***NOTE add to this
+    intdivconfigs = ['fdh_ieee_div_2_1_rv32gc', 'fdh_ieee_div_2_1_rv64gc', \ 
+    'fdh_ieee_div_2_2_rv32gc', 'fdh_ieee_div_2_2_rv64gc', 'fdh_ieee_div_2_4_rv32gc', \
+    'fdh_ieee_div_2_4_rv64gc', 'fdh_ieee_div_4_1_rv32gc', 'fdh_ieee_div_4_1_rv64gc', \
+    'fdh_ieee_div_4_2_rv32gc', 'fdh_ieee_div_4_2_rv64gc', 'fdh_ieee_div_4_4_rv64gc', \
+    'fdh_ieee_rv32gc', 'fd_ieee_div_2_1_rv32gc', 'fd_ieee_div_2_1_rv64gc', \
+    'fd_ieee_div_2_2_rv32gc', 'fd_ieee_div_2_2_rv64gc', 'fd_ieee_div_2_4_rv32gc', \
+    'fd_ieee_div_2_4_rv64gc', 'fd_ieee_div_4_1_rv32gc', 'fd_ieee_div_4_1_rv64gc', \
+    'fd_ieee_div_4_2_rv32gc', 'fd_ieee_div_4_2_rv64gc', 'fd_ieee_div_4_4_rv64gc', \
+    'fd_ieee_rv32gc', 'fd_ieee_rv64gc', 'fdqh_ieee_div_2_1_rv32gc', \
+    'fdqh_ieee_div_2_1_rv64gc', 'fdqh_ieee_div_2_2_rv32gc', 'fdqh_ieee_div_2_2_rv64gc', \
+    'fdqh_ieee_div_2_4_rv32gc', 'fdqh_ieee_div_2_4_rv64gc', 'fdqh_ieee_div_4_1_rv32gc', \
+    'fdqh_ieee_div_4_1_rv64gc', 'fdqh_ieee_div_4_2_rv32gc', 'fdqh_ieee_div_4_2_rv64gc',\
+    'fdqh_ieee_div_4_4_rv64gc', 'fdqh_ieee_rv32gc', 'fdqh_ieee_rv64gc', \
+    'fdq_ieee_div_2_1_rv32gc', 'fdq_ieee_div_2_1_rv64gc', 'fdq_ieee_div_2_2_rv32gc',\
+    'fdq_ieee_div_2_2_rv64gc', 'fdq_ieee_div_2_4_rv32gc', 'fdq_ieee_div_2_4_rv64gc', \
+    'fdq_ieee_div_4_1_rv32gc', 'fdq_ieee_div_4_1_rv64gc', 'fdq_ieee_div_4_2_rv32gc', \
+    'fdq_ieee_div_4_2_rv64gc', 'fdq_ieee_div_4_4_rv64gc', 'fdq_ieee_rv32gc', \
+    'fdq_ieee_rv64gc', 'fh_ieee_div_2_1_rv32gc', 'fh_ieee_div_2_1_rv64gc', \
+    'fh_ieee_div_2_2_rv32gc', 'fh_ieee_div_2_2_rv64gc', 'fh_ieee_div_2_4_rv32gc',\
+    'fh_ieee_div_2_4_rv64gc', 'fh_ieee_div_4_1_rv32gc', 'fh_ieee_div_4_1_rv64gc',\
+    'fh_ieee_div_4_2_rv32gc', 'fh_ieee_div_4_2_rv64gc', 'fh_ieee_div_4_4_rv64gc', \
+    'fh_ieee_rv32gc', 'fh_ieee_rv64gc', 'fh_ieee_rv32gc', 'f_ieee_div_2_1_rv32gc', \
+    'f_ieee_div_2_1_rv64gc', 'f_ieee_div_2_2_rv32gc', 'f_ieee_div_2_2_rv64gc', \
+    'f_ieee_div_2_4_rv32gc', 'f_ieee_div_2_4_rv64gc', 'f_ieee_div_4_1_rv32gc', \
+    'f_ieee_div_4_1_rv64gc', 'f_ieee_div_4_2_rv32gc', 'f_ieee_div_4_2_rv64gc', \
+    'f_ieee_div_4_4_rv64gc', 'f_ieee_rv32gc', 'f_ieee_rv64gc']
+    for config in intdivconfigs:
+        # fdivremsqrt test case
+        fdivremsqrttestcase = TestCase(
+            name="fdivremsqrt",
+            variant=config,
+            cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " fdivremsqrt \n!",
+            grepstr="All Tests completed with          0 errors"
+        )
+        configs.insert(0,fdivremsqrttestcase)
 
 import os
 from multiprocessing import Pool, TimeoutError
