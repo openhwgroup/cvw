@@ -751,12 +751,6 @@ module testbenchfp;
       $display("\n\nRunning %s vectors ", Tests[TestNum]);
       $readmemh(testname, TestVectors);
 
-      $display("\n\n THERE ARE %d tests", $size(TestVectors));
-      $display("\n\n THERE ARE %h tests", TestVectors[0]);
-      $display("\n\n THERE ARE %h tests", TestVectors[1]);
-      $display("\n\n THERE ARE %h tests", TestVectors[2]);
-      $display("\n\n THERE ARE %h tests", TestVectors[3]);
-      $display("\n\n THERE ARE %h tests", TestVectors[4]);
       // set the test index to 0
       TestNum = 0;
    end
@@ -1165,8 +1159,6 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
    // apply test vectors on rising edge of clk
    // Format of vectors Inputs(1/2/3)_AnsFlg
    always @(posedge clk) begin
-      $display("%d, %d, %d",OpCtrl, TestNum, VectorNum);
-      $display("%h",SrcA);
       AnsFlg = TestVector[4:0];
       case (Unit)
         `FMAUNIT:
