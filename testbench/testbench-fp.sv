@@ -636,7 +636,7 @@ module testbenchfp;
       end
       if (P.XLEN == 64 & P.IDIV_ON_FPU) begin
         if (P.Q_SUPPORTED) begin
-           if (TEST === "fdivremsqrt") begin // if division on drsu is being tested
+           if (TEST === "fdivremsqrt" | TEST === "div_drsu") begin // if division on drsu is being tested
            // add the divide tests/op-ctrls/unit/fmt
            Tests = {Tests, f128div};
            OpCtrl = {OpCtrl, `DIV_OPCTRL};
@@ -646,7 +646,7 @@ module testbenchfp;
              Fmt = {Fmt, 2'b11};
            end
          end
-         if (TEST === "fdivremsqrt") begin // if square-root on drsu is being tested
+         if (TEST === "fdivremsqrt" | TEST === "sqrt_drsu") begin // if square-root on drsu is being tested
             // add the square-root tests/op-ctrls/unit/fmt
             Tests = {Tests, f128sqrt};
             OpCtrl = {OpCtrl, `SQRT_OPCTRL};
@@ -828,7 +828,7 @@ module testbenchfp;
                              .Funct3E(Funct3E), .IntDivE(1'b0), .FIntDivResultM(FIntDivResultM),
                              .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE));
    end
-   if (TEST === "fdivremsqrt" | TEST === "intdiv" | TEST === "intrem" | TEST === "intdivu" | TEST ==="intremu" | TEST ==="intremw" | TEST ==="intremuw" | TEST ==="intdivw" | TEST ==="intdivuw" | TEST ==="intdivrem") begin: divremsqrt
+   if (TEST === "fdivremsqrt" | TEST === "div_drsu" | TEST === "sqrt_drsu" | TEST === "intdivrem" | TEST === "intdiv" | TEST === "intrem" | TEST === "intdivu" | TEST ==="intremu" | TEST ==="intremw" | TEST ==="intremuw" | TEST ==="intdivw" | TEST ==="intdivuw" ) begin: divremsqrt
     drsu #(P) drsu(.clk, .reset, .XsE(Xs), .YsE(Ys), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
       .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal===`SQRT_OPCTRL), .SqrtM(OpCtrlVal===`SQRT_OPCTRL),
       .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), .PostProcSel(UnitVal[1:0]),
@@ -841,7 +841,7 @@ module testbenchfp;
   end
   else begin: postprocess
     postprocess #(P) postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
-                .OpCtrl(OpCtrlVal), .DivUm(Quot), .DivUe(DivCalcExp),
+                .OpCtrl(OpCtrlVal[2:0]), .DivUm(Quot), .DivUe(DivCalcExp),
                 .Xm(Xm), .Ym(Ym), .Zm(Zm), .CvtCe(CvtCalcExpE), .DivSticky(DivSticky), .FmaSs(Ss),
                 .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResSubnormUf(CvtResSubnormUfE),
                 .XZero(XZero), .YZero(YZero), .CvtShiftAmt(CvtShiftAmtE),
@@ -1090,7 +1090,6 @@ module testbenchfp;
       end
       
       if (TestVectors[VectorNum][100:0] === 101'bx & Tests[TestNum] !== "" ) begin // if reached the eof
-         $display(":MY BROTHER IN CHRIST");
          // increment the test
          TestNum += 1;
          // clear the vectors
@@ -1130,7 +1129,7 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
                     input logic [2:0] 		Unit,
                     input logic [31:0] 		VectorNum,
                     input logic [31:0] 		TestNum,
-                    input logic [2:0] 		OpCtrl,
+                    input logic [3:0] 		OpCtrl,
                     output logic [P.FLEN-1:0] 	Ans,
                     output logic [P.XLEN-1:0] 	SrcA,
                     output logic [P.XLEN-1:0] 	SrcB,
