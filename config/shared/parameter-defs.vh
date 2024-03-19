@@ -121,8 +121,14 @@ localparam cvw_t P = '{
   ZKND_SUPPORTED:        ZKND_SUPPORTED,
   ZKNE_SUPPORTED:        ZKNE_SUPPORTED,
   ZKNH_SUPPORTED:        ZKNH_SUPPORTED,
+<<<<<<< HEAD
   ZKN_SUPPORTED :        ZKN_SUPPORTED,
   USE_SRAM :        USE_SRAM,
+=======
+  ZK_SUPPORTED  :        ZK_SUPPORTED,
+  USE_SRAM 		:	USE_SRAM,
+  USE_BSG_DMC	:	USE_BSG_DMC,
+>>>>>>> 483baeb8d (soc: Initial soc config)
   M_MODE  : M_MODE, 
   S_MODE  : S_MODE, 
   U_MODE  : U_MODE, 

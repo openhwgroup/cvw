@@ -193,6 +193,7 @@ typedef struct packed {
 
 // Memory synthesis configuration
   logic         USE_SRAM;
+  logic					USE_BSG_DMC;
 
 // constants defining different privilege modes
 // defined in Table 1.1 of the privileged spec
