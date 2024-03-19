@@ -14,7 +14,6 @@ import sys,os,shutil
 import multiprocessing
 
 
-
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -383,17 +382,14 @@ if (soc):
     configs = [] # Delete all configs, just use test64gc
     coverStr = '-coverage' # Include coverage report
     for test in tests64gc:
-        if any(s in test for s in ['zfa', 'zfh', 'zbk', 'zkn']):
-            continue # Skip tests for extensions that aren't in riscv-arch-tests yet
         tc = TestCase(
             name=test,
-            variant="rv64gc",
+            variant="soc",
             cmd="vsim > {} -c <<!\ndo wally-soc.do rv64gc "+test+" " + coverStr + "\n!",
             grepstr="All tests ran without failures")
         configs.append(tc)
 
 
-import os
 from multiprocessing import Pool, TimeoutError
 
 def search_log_for_text(text, logfile):
@@ -415,6 +411,7 @@ def run_test_case(config):
         print(f"{bcolors.FAIL}%s_%s: Failures detected in output{bcolors.ENDC}" % (config.variant, config.name))
         print("  Check %s" % logname)
         return 1
+
 
 def main():
     """Run the tests and count the failures"""
