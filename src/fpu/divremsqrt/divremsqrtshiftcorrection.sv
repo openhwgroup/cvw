@@ -45,7 +45,6 @@ module divremsqrtshiftcorrection import cvw::*;  #(parameter cvw_t P) (
   output logic [P.NE+1:0]          Ue                      // corrected exponent for divider
 );
 
-  logic [3*P.NF+3:0]           CorrSumShifted;             // the shifted sum after LZA correction
   logic [P.CORRSHIFTSZ-1:0]    CorrQm0, CorrQm1;           // portions of Shifted to select for CorrQmShifted
   logic [P.CORRSHIFTSZ-1:0]    CorrQmShifted;              // the shifted divsqrt result after one bit shift
   logic                       ResSubnorm;                 // is the result Subnormal
