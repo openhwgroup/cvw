@@ -1572,7 +1572,7 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
    end
 
    assign XEn = ~((Unit == `CVTINTUNIT)&OpCtrl[2]);
-   assign YEn = ~((Unit == `CVTINTUNIT)|(Unit == `CVTFPUNIT)|((Unit == `DIVUNIT)&OpCtrl[0]));
+   assign YEn = ~((Unit == `CVTINTUNIT)|(Unit == `CVTFPUNIT)|((Unit == `DIVUNIT)&OpCtrl[0]) | ((Unit == `INTDIVUNIT) & OpCtrl === `SQRT_OPCTRL));
    assign ZEn = (Unit == `FMAUNIT);
    assign FPUActive = 1'b1;
    
