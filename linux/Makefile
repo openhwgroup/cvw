@@ -1,4 +1,4 @@
-RISCV := /opt/riscv
+RISCV := $(WALLY)/linuximg # Changed to test linux build
 #BUILDROOT := ${RISCV}/buildroot-test
 BUILDROOT := buildroot
 IMAGES := ${BUILDROOT}/output/images
