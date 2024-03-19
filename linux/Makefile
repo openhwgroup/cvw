@@ -1,4 +1,4 @@
-RISCV := $(WALLY)/linuximg # Changed to test linux build
+RISCV := $(WALLY)# Changed to test linux build
 #BUILDROOT := ${RISCV}/buildroot-test
 BUILDROOT := buildroot
 IMAGES := ${BUILDROOT}/output/images
@@ -37,8 +37,8 @@ Image:
 	$(MAKE) generate
 
 install:
-	sudo rm -rf $(RISCV)/$(BUILDROOT)
-	sudo mv $(BUILDROOT) $(RISCV)/$(BUILDROOT)
+	rm -rf $(RISCV)/$(BUILDROOT)
+	mv $(BUILDROOT) $(RISCV)/$(BUILDROOT)
 
 # Temp rule for debugging
 test:
