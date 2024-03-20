@@ -314,40 +314,30 @@ for test in tests32e:
 # softfloat tests
 if (softfloat):
     configs = []
-    softfloatconfigs = ['fdh_ieee_rv32gc', 'fdqh_ieee_rv32gc', 'fdq_ieee_rv32gc', \
-    'fh_ieee_rv32gc', 'f_ieee_rv64gc', 'fdqh_ieee_rv64gc', \
-    'fdq_ieee_rv64gc', 'div_2_1_rv32gc', 'div_2_2_rv32gc', \
-    'div_2_4_rv32gc', 'div_4_1_rv32gc', 'div_4_2_rv32gc', \
-    'div_4_4_rv32gc', 'fd_ieee_rv32gc', 'fh_ieee_rv32gc', \
-    'div_2_1_rv64gc', 'div_2_2_rv64gc', 'div_2_4_rv64gc', \
-    'div_4_1_rv64gc', 'div_4_2_rv64gc', 'div_4_4_rv64gc', \
-    'fd_ieee_rv64gc', 'fh_ieee_rv64gc', 'f_ieee_rv32gc']
-    softfloatconfigs = ['fdh_ieee_div_2_1_rv32gc', 'fdh_ieee_div_2_1_rv64gc', \
-    'fdh_ieee_div_2_2_rv32gc', 'fdh_ieee_div_2_2_rv64gc', 'fdh_ieee_div_2_4_rv32gc', \
-    'fdh_ieee_div_2_4_rv64gc', 'fdh_ieee_div_4_1_rv32gc', 'fdh_ieee_div_4_1_rv64gc', \
-    'fdh_ieee_div_4_2_rv32gc', 'fdh_ieee_div_4_2_rv64gc', 'fdh_ieee_div_4_4_rv64gc', \
-    'fdh_ieee_rv32gc', 'fd_ieee_div_2_1_rv32gc', 'fd_ieee_div_2_1_rv64gc', \
-    'fd_ieee_div_2_2_rv32gc', 'fd_ieee_div_2_2_rv64gc', 'fd_ieee_div_2_4_rv32gc', \
-    'fd_ieee_div_2_4_rv64gc', 'fd_ieee_div_4_1_rv32gc', 'fd_ieee_div_4_1_rv64gc', \
-    'fd_ieee_div_4_2_rv32gc', 'fd_ieee_div_4_2_rv64gc', 'fd_ieee_div_4_4_rv64gc', \
-    'fd_ieee_rv32gc', 'fd_ieee_rv64gc', 'fdqh_ieee_div_2_1_rv32gc', \
-    'fdqh_ieee_div_2_1_rv64gc', 'fdqh_ieee_div_2_2_rv32gc', 'fdqh_ieee_div_2_2_rv64gc', \
-    'fdqh_ieee_div_2_4_rv32gc', 'fdqh_ieee_div_2_4_rv64gc', 'fdqh_ieee_div_4_1_rv32gc', \
-    'fdqh_ieee_div_4_1_rv64gc', 'fdqh_ieee_div_4_2_rv32gc', 'fdqh_ieee_div_4_2_rv64gc',\
-    'fdqh_ieee_div_4_4_rv64gc', 'fdqh_ieee_rv32gc', 'fdqh_ieee_rv64gc', \
-    'fdq_ieee_div_2_1_rv32gc', 'fdq_ieee_div_2_1_rv64gc', 'fdq_ieee_div_2_2_rv32gc',\
-    'fdq_ieee_div_2_2_rv64gc', 'fdq_ieee_div_2_4_rv32gc', 'fdq_ieee_div_2_4_rv64gc', \
-    'fdq_ieee_div_4_1_rv32gc', 'fdq_ieee_div_4_1_rv64gc', 'fdq_ieee_div_4_2_rv32gc', \
-    'fdq_ieee_div_4_2_rv64gc', 'fdq_ieee_div_4_4_rv64gc', 'fdq_ieee_rv32gc', \
-    'fdq_ieee_rv64gc', 'fh_ieee_div_2_1_rv32gc', 'fh_ieee_div_2_1_rv64gc', \
-    'fh_ieee_div_2_2_rv32gc', 'fh_ieee_div_2_2_rv64gc', 'fh_ieee_div_2_4_rv32gc',\
-    'fh_ieee_div_2_4_rv64gc', 'fh_ieee_div_4_1_rv32gc', 'fh_ieee_div_4_1_rv64gc',\
-    'fh_ieee_div_4_2_rv32gc', 'fh_ieee_div_4_2_rv64gc', 'fh_ieee_div_4_4_rv64gc', \
-    'fh_ieee_rv32gc', 'fh_ieee_rv64gc', 'fh_ieee_rv32gc', 'f_ieee_div_2_1_rv32gc', \
-    'f_ieee_div_2_1_rv64gc', 'f_ieee_div_2_2_rv32gc', 'f_ieee_div_2_2_rv64gc', \
-    'f_ieee_div_2_4_rv32gc', 'f_ieee_div_2_4_rv64gc', 'f_ieee_div_4_1_rv32gc', \
-    'f_ieee_div_4_1_rv64gc', 'f_ieee_div_4_2_rv32gc', 'f_ieee_div_4_2_rv64gc', \
-    'f_ieee_div_4_4_rv64gc', 'f_ieee_rv32gc', 'f_ieee_rv64gc']
+    softfloatconfigs = [
+    "fdh_ieee_div_2_1_rv32gc", "fdh_ieee_div_2_1_rv64gc", "fdh_ieee_div_2_2_rv32gc",
+    "fdh_ieee_div_2_2_rv64gc", "fdh_ieee_div_2_4_rv32gc", "fdh_ieee_div_2_4_rv64gc",
+    "fdh_ieee_div_4_1_rv32gc", "fdh_ieee_div_4_1_rv64gc", "fdh_ieee_div_4_2_rv32gc",
+    "fdh_ieee_div_4_2_rv64gc", "fdh_ieee_div_4_4_rv64gc", "fd_ieee_div_2_1_rv32gc",
+    "fd_ieee_div_2_1_rv64gc", "fd_ieee_div_2_2_rv32gc", "fd_ieee_div_2_2_rv64gc",
+    "fd_ieee_div_2_4_rv32gc", "fd_ieee_div_2_4_rv64gc", "fd_ieee_div_4_1_rv32gc",
+    "fd_ieee_div_4_1_rv64gc", "fd_ieee_div_4_2_rv32gc", "fd_ieee_div_4_2_rv64gc",
+    "fd_ieee_div_4_4_rv64gc", "fdqh_ieee_div_2_1_rv32gc", "fdqh_ieee_div_2_1_rv64gc",
+    "fdqh_ieee_div_2_2_rv32gc", "fdqh_ieee_div_2_2_rv64gc", "fdqh_ieee_div_2_4_rv32gc",
+    "fdqh_ieee_div_2_4_rv64gc", "fdqh_ieee_div_4_1_rv32gc", "fdqh_ieee_div_4_1_rv64gc",
+    "fdqh_ieee_div_4_2_rv32gc", "fdqh_ieee_div_4_2_rv64gc", "fdqh_ieee_div_4_4_rv64gc",
+    "fdq_ieee_div_2_1_rv32gc", "fdq_ieee_div_2_1_rv64gc", "fdq_ieee_div_2_2_rv32gc",
+    "fdq_ieee_div_2_2_rv64gc", "fdq_ieee_div_2_4_rv32gc", "fdq_ieee_div_2_4_rv64gc",
+    "fdq_ieee_div_4_1_rv32gc", "fdq_ieee_div_4_1_rv64gc", "fdq_ieee_div_4_2_rv32gc",
+    "fdq_ieee_div_4_2_rv64gc", "fdq_ieee_div_4_4_rv64gc", "fh_ieee_div_2_1_rv32gc",
+    "fh_ieee_div_2_1_rv64gc", "fh_ieee_div_2_2_rv32gc", "fh_ieee_div_2_2_rv64gc",
+    "fh_ieee_div_2_4_rv32gc", "fh_ieee_div_2_4_rv64gc", "fh_ieee_div_4_1_rv32gc",
+    "fh_ieee_div_4_1_rv64gc", "fh_ieee_div_4_2_rv32gc", "fh_ieee_div_4_2_rv64gc",
+    "fh_ieee_div_4_4_rv64gc", "f_ieee_div_2_1_rv32gc", "f_ieee_div_2_1_rv64gc",
+    "f_ieee_div_2_2_rv32gc", "f_ieee_div_2_2_rv64gc", "f_ieee_div_2_4_rv32gc",
+    "f_ieee_div_2_4_rv64gc", "f_ieee_div_4_1_rv32gc", "f_ieee_div_4_1_rv64gc",
+    "f_ieee_div_4_2_rv32gc", "f_ieee_div_4_2_rv64gc", "f_ieee_div_4_4_rv64gc"
+    ]
     for config in softfloatconfigs:
         # div test case
         divtest = TestCase(
@@ -394,32 +384,29 @@ if (softfloat):
 if (intdiv):
     configs = []
     # ***NOTE add to this
-    intdivconfigs = ['fdh_ieee_div_2_1_rv32gc', 'fdh_ieee_div_2_1_rv64gc', \ 
-    'fdh_ieee_div_2_2_rv32gc', 'fdh_ieee_div_2_2_rv64gc', 'fdh_ieee_div_2_4_rv32gc', \
-    'fdh_ieee_div_2_4_rv64gc', 'fdh_ieee_div_4_1_rv32gc', 'fdh_ieee_div_4_1_rv64gc', \
-    'fdh_ieee_div_4_2_rv32gc', 'fdh_ieee_div_4_2_rv64gc', 'fdh_ieee_div_4_4_rv64gc', \
-    'fdh_ieee_rv32gc', 'fd_ieee_div_2_1_rv32gc', 'fd_ieee_div_2_1_rv64gc', \
-    'fd_ieee_div_2_2_rv32gc', 'fd_ieee_div_2_2_rv64gc', 'fd_ieee_div_2_4_rv32gc', \
-    'fd_ieee_div_2_4_rv64gc', 'fd_ieee_div_4_1_rv32gc', 'fd_ieee_div_4_1_rv64gc', \
-    'fd_ieee_div_4_2_rv32gc', 'fd_ieee_div_4_2_rv64gc', 'fd_ieee_div_4_4_rv64gc', \
-    'fd_ieee_rv32gc', 'fd_ieee_rv64gc', 'fdqh_ieee_div_2_1_rv32gc', \
-    'fdqh_ieee_div_2_1_rv64gc', 'fdqh_ieee_div_2_2_rv32gc', 'fdqh_ieee_div_2_2_rv64gc', \
-    'fdqh_ieee_div_2_4_rv32gc', 'fdqh_ieee_div_2_4_rv64gc', 'fdqh_ieee_div_4_1_rv32gc', \
-    'fdqh_ieee_div_4_1_rv64gc', 'fdqh_ieee_div_4_2_rv32gc', 'fdqh_ieee_div_4_2_rv64gc',\
-    'fdqh_ieee_div_4_4_rv64gc', 'fdqh_ieee_rv32gc', 'fdqh_ieee_rv64gc', \
-    'fdq_ieee_div_2_1_rv32gc', 'fdq_ieee_div_2_1_rv64gc', 'fdq_ieee_div_2_2_rv32gc',\
-    'fdq_ieee_div_2_2_rv64gc', 'fdq_ieee_div_2_4_rv32gc', 'fdq_ieee_div_2_4_rv64gc', \
-    'fdq_ieee_div_4_1_rv32gc', 'fdq_ieee_div_4_1_rv64gc', 'fdq_ieee_div_4_2_rv32gc', \
-    'fdq_ieee_div_4_2_rv64gc', 'fdq_ieee_div_4_4_rv64gc', 'fdq_ieee_rv32gc', \
-    'fdq_ieee_rv64gc', 'fh_ieee_div_2_1_rv32gc', 'fh_ieee_div_2_1_rv64gc', \
-    'fh_ieee_div_2_2_rv32gc', 'fh_ieee_div_2_2_rv64gc', 'fh_ieee_div_2_4_rv32gc',\
-    'fh_ieee_div_2_4_rv64gc', 'fh_ieee_div_4_1_rv32gc', 'fh_ieee_div_4_1_rv64gc',\
-    'fh_ieee_div_4_2_rv32gc', 'fh_ieee_div_4_2_rv64gc', 'fh_ieee_div_4_4_rv64gc', \
-    'fh_ieee_rv32gc', 'fh_ieee_rv64gc', 'fh_ieee_rv32gc', 'f_ieee_div_2_1_rv32gc', \
-    'f_ieee_div_2_1_rv64gc', 'f_ieee_div_2_2_rv32gc', 'f_ieee_div_2_2_rv64gc', \
-    'f_ieee_div_2_4_rv32gc', 'f_ieee_div_2_4_rv64gc', 'f_ieee_div_4_1_rv32gc', \
-    'f_ieee_div_4_1_rv64gc', 'f_ieee_div_4_2_rv32gc', 'f_ieee_div_4_2_rv64gc', \
-    'f_ieee_div_4_4_rv64gc', 'f_ieee_rv32gc', 'f_ieee_rv64gc']
+    intdivconfigs = ["fdh_ieee_div_2_1i_rv32gc", "fdh_ieee_div_2_1i_rv64gc", "fdh_ieee_div_2_2i_rv32gc",
+    "fdh_ieee_div_2_2i_rv64gc", "fdh_ieee_div_2_4i_rv32gc", "fdh_ieee_div_2_4i_rv64gc",
+    "fdh_ieee_div_4_1i_rv32gc", "fdh_ieee_div_4_1i_rv64gc", "fdh_ieee_div_4_2i_rv32gc",
+    "fdh_ieee_div_4_2i_rv64gc", "fdh_ieee_div_4_4i_rv64gc", "fd_ieee_div_2_1i_rv32gc",
+    "fd_ieee_div_2_1i_rv64gc", "fd_ieee_div_2_2i_rv32gc", "fd_ieee_div_2_2i_rv64gc",
+    "fd_ieee_div_2_4i_rv32gc", "fd_ieee_div_2_4i_rv64gc", "fd_ieee_div_4_1i_rv32gc",
+    "fd_ieee_div_4_1i_rv64gc", "fd_ieee_div_4_2i_rv32gc", "fd_ieee_div_4_2i_rv64gc",
+    "fd_ieee_div_4_4i_rv64gc", "fdqh_ieee_div_2_1i_rv32gc", "fdqh_ieee_div_2_1i_rv64gc",
+    "fdqh_ieee_div_2_2i_rv32gc", "fdqh_ieee_div_2_2i_rv64gc", "fdqh_ieee_div_2_4i_rv32gc",
+    "fdqh_ieee_div_2_4i_rv64gc", "fdqh_ieee_div_4_1i_rv32gc", "fdqh_ieee_div_4_1i_rv64gc",
+    "fdqh_ieee_div_4_2i_rv32gc", "fdqh_ieee_div_4_2i_rv64gc", "fdqh_ieee_div_4_4i_rv64gc",
+    "fdq_ieee_div_2_1i_rv32gc", "fdq_ieee_div_2_1i_rv64gc", "fdq_ieee_div_2_2i_rv32gc",
+    "fdq_ieee_div_2_2i_rv64gc", "fdq_ieee_div_2_4i_rv32gc", "fdq_ieee_div_2_4i_rv64gc",
+    "fdq_ieee_div_4_1i_rv32gc", "fdq_ieee_div_4_1i_rv64gc", "fdq_ieee_div_4_2i_rv32gc",
+    "fdq_ieee_div_4_2i_rv64gc", "fdq_ieee_div_4_4i_rv64gc", "fh_ieee_div_2_1i_rv32gc",
+    "fh_ieee_div_2_1i_rv64gc", "fh_ieee_div_2_2i_rv32gc", "fh_ieee_div_2_2i_rv64gc",
+    "fh_ieee_div_2_4i_rv32gc", "fh_ieee_div_2_4i_rv64gc", "fh_ieee_div_4_1i_rv32gc",
+    "fh_ieee_div_4_1i_rv64gc", "fh_ieee_div_4_2i_rv32gc", "fh_ieee_div_4_2i_rv64gc",
+    "fh_ieee_div_4_4i_rv64gc", "f_ieee_div_2_1i_rv32gc", "f_ieee_div_2_1i_rv64gc",
+    "f_ieee_div_2_2i_rv32gc", "f_ieee_div_2_2i_rv64gc", "f_ieee_div_2_4i_rv32gc",
+    "f_ieee_div_2_4i_rv64gc", "f_ieee_div_4_1i_rv32gc", "f_ieee_div_4_1i_rv64gc",
+    "f_ieee_div_4_2i_rv32gc", "f_ieee_div_4_2i_rv64gc", "f_ieee_div_4_4i_rv64gc"]
+    
     for config in intdivconfigs:
         # fdivremsqrt test case
         fdivremsqrttestcase = TestCase(
