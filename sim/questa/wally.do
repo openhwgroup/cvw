@@ -1,4 +1,4 @@
-# wally-batch.do 
+# wally.do 
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 #
 # Modification by Oklahoma State University & Harvey Mudd College
@@ -8,14 +8,14 @@
 #
 # Takes 1:10 to run RV64IC tests using gui
 
-# Usage: do wally-batch.do <config> <testcases> <testbench> [-coverage] [+acc] [any number of +value] [any number of -G VAR=VAL]
-# Example: do wally-batch.do rv64gc arch64i testbench
+# Usage: do wally.do <config> <testcases> <testbench> [-coverage] [+acc] [any number of +value] [any number of -G VAR=VAL]
+# Example: do wally.do rv64gc arch64i testbench
 
-# Use this wally-batch.do file to run this example.
+# Use this wally.do file to run this example.
 # Either bring up ModelSim and type the following at the "ModelSim>" prompt:
-#     do wally-batch.do
+#     do wally.do
 # or, to run from a shell, type the following at the shell prompt:
-#     vsim -do wally-batch.do -c
+#     vsim -do wally.do -c
 # (omit the "-c" to see the GUI while running from the shell)
 
 set DEBUG 1
@@ -186,14 +186,15 @@ set temp1 [lindex $PlusArgs 1]
 set temp2 [lindex $PlusArgs 2]
 set temp3 [lindex $PlusArgs 3]
 
-#quit
-
 # compile source files
-# suppress spurious warnngs about 
-# "Extra checking for conflicts with always_comb done at vopt time"
-# because vsim will run vopt
-
-vlog -lint -work ${WKDIR}  +incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared ${lockstepvoptstring} ${FCdefineIDV_INCLUDE_TRACE2COV} ${FCdefineINCLUDE_TRACE2COV} ${ImperasPubInc} ${ImperasPrivInc} ${rvviFiles} ${idvFiles}  ${FCdefineCOVER_BASE_RV64I} ${FCdefineCOVER_LEVEL_DV_PR_EXT} ${FCdefineCOVER_RV64I} ${FCdefineCOVER_RV64M} ${FCdefineCOVER_RV64A} ${FCdefineCOVER_RV64F} ${FCdefineCOVER_RV64D} ${FCdefineCOVER_RV64ZICSR} ${FCdefineCOVER_RV64C}  ${riscvISACOVsrc} ${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv  ${SRC}/*/*.sv ${SRC}/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
+if {${CFG} eq "soc"} {
+    set BSG ${WALLY}/soc/src/basejump_stl
+    set BSG_INCDIRS ${BSG}/bsg_clk_gen+${BSG}/bsg_dmc+${BSG}/bsg_misc+${BSG}/bsg_noc+${BSG}/bsg_tag+${BSG}/testing/bsg_dmc/lpddr_verilog_model
+    vlog -lint -work ${WKDIR} +define+den2048Mb+sg5+x32+FULL_MEM +incdir+${BSG_INCDIRS} ${BSG}/bsg_misc/bsg_defines.sv ${BSG}/bsg_tag/bsg_tag_pkg.sv ${BSG}/bsg_dmc/bsg_dmc_pkg.sv ${BSG}/bsg_noc/bsg_noc_pkg.sv ${BSG}/bsg_noc/bsg_mesh_router_pkg.sv ${BSG}/bsg_noc/bsg_wormhole_router_pkg.sv ${BSG}/*/*.sv ${BSG}/testing/bsg_dmc/lpddr_verilog_model/*.sv -suppress 2583,2596,2605,2902,7063,8885,13286,13314,13388
+    vlog -lint -work ${WKDIR} +incdir+${CONFIG}/$1 +incdir+${CONFIG}/shared +incdir+${BSG_INCDIRS} ${lockstepvoptstring} ${FCdefineIDV_INCLUDE_TRACE2COV} ${FCdefineINCLUDE_TRACE2COV} ${ImperasPubInc} ${ImperasPrivInc} ${rvviFiles} ${idvFiles} ${FCdefineCOVER_BASE_RV64I} ${FCdefineCOVER_LEVEL_DV_PR_EXT} ${FCdefineCOVER_RV64I} ${FCdefineCOVER_RV64M} ${FCdefineCOVER_RV64A} ${FCdefineCOVER_RV64F} ${FCdefineCOVER_RV64D} ${FCdefineCOVER_RV64ZICSR} ${FCdefineCOVER_RV64C} ${riscvISACOVsrc} ${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv ${SRC}/*/*.sv ${SRC}/*/*/*.sv ${WALLY}/soc/src/fifo/*.sv ${WALLY}/soc/src/*.sv -suppress 2583,2596,2605,2902,7063,8885,13286,13314,13388
+} else {
+    vlog -lint -work ${WKDIR} +incdir+${CONFIG}/$1 +incdir+${CONFIG}/deriv/$1 +incdir+${CONFIG}/shared ${lockstepvoptstring} ${FCdefineIDV_INCLUDE_TRACE2COV} ${FCdefineINCLUDE_TRACE2COV} ${ImperasPubInc} ${ImperasPrivInc} ${rvviFiles} ${idvFiles} ${FCdefineCOVER_BASE_RV64I} ${FCdefineCOVER_LEVEL_DV_PR_EXT} ${FCdefineCOVER_RV64I} ${FCdefineCOVER_RV64M} ${FCdefineCOVER_RV64A} ${FCdefineCOVER_RV64F} ${FCdefineCOVER_RV64D} ${FCdefineCOVER_RV64ZICSR} ${FCdefineCOVER_RV64C} ${riscvISACOVsrc} ${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv  ${SRC}/*/*.sv ${SRC}/*/*/*.sv -suppress 2583,7063,2596,13286
+}
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
@@ -201,9 +202,8 @@ vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} ${ParamArgs}
 
 #vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${PlusArgs} -fatal 7 ${SVLib} ${SVLibPath} ${OtherFlags} +TRACE2COV_ENABLE=1 -suppress 3829 ${CoverageVsimArg}
 #vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${PlusArgs} -fatal 7 ${SVLib} ${SVLibPath} +IDV_TRACE2COV=1 +TRACE2COV_ENABLE=1 -suppress 3829 ${CoverageVsimArg}
-vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} $temp0 $temp1 $temp2 $temp3 -fatal 7 ${SVLib} ${SVLibPath} -suppress 3829 ${CoverageVsimArg}
+vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} $temp0 $temp1 $temp2 $temp3 -fatal 7 ${SVLib} ${SVLibPath} -suppress 3009,3829,3999,8885 ${CoverageVsimArg} 
 
-#    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
 # power add generates the logging necessary for said generation.
 # power add -r /dut/core/*
 if { ${GUI} } {
