@@ -487,6 +487,8 @@ def main():
         configs.append(getBuildrootTC(boot=False))
     elif '-softfloat' in sys.argv:
         TIMEOUT_DUR = 60*60 # seconds
+    elif '-intdiv' in sys.argv:
+        TIMEOUT_DUR = 60*60 # seconds
     else:
         TIMEOUT_DUR = 10*60 # seconds
         configs.append(getBuildrootTC(boot=False))
