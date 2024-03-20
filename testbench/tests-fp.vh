@@ -590,34 +590,50 @@ string f128fma[] = '{
 	"f128_mulAdd_rnm.tv"
 };
 
-string intrem[] = '{
+string int64rem[] = '{
 	"cvw_64_rem-01.tv"
 };
 
-string intdiv[] = '{
+string int64div[] = '{
 	"cvw_64_div-01.tv"
 };
 
-string intremu[] = '{
+string int64remu[] = '{
 	"cvw_64_remu-01.tv"
 };
 
-string intdivu[] = '{
+string int64divu[] = '{
 	"cvw_64_divu-01.tv"
 };
 
-string intremw[] = '{
+string int64remw[] = '{
 	"cvw_64_remw-01.tv"
 };
 
-string intremuw[] = '{
+string int64remuw[] = '{
 	"cvw_64_remuw-01.tv"
 };
 
-string intdivuw[] = '{
+string int64divuw[] = '{
 	"cvw_64_divuw-01.tv"
 };
 
-string intdivw[] = '{
+string int64divw[] = '{
 	"cvw_64_divw-01.tv"
+};
+
+string int32rem[] = '{
+	"cvw_32_rem-01.tv"
+};
+
+string int32div[] = '{
+	"cvw_32_div-01.tv"
+};
+
+string int32remu[] = '{
+	"cvw_32_remu-01.tv"
+};
+
+string int32divu[] = '{
+	"cvw_32_divu-01.tv"
 };
