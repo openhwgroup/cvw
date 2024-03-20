@@ -30,9 +30,10 @@ vlog +incdir+../config/$1 \
      +incdir+$env(IMPERAS_HOME)/ImpPublic/include/host \
      +incdir+$env(IMPERAS_HOME)/ImpProprietary/include/host \
      $env(IMPERAS_HOME)/ImpPublic/source/host/rvvi/rvviApiPkg.sv    \
+     $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/idvApiPkg.sv \
      $env(IMPERAS_HOME)/ImpPublic/source/host/rvvi/rvviTrace.sv      \
      $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/idvPkg.sv   \
-     $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/idvApiPkg.sv \
+     $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2bin.sv \
      $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2api.sv  \
      $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2log.sv  \
      \
@@ -44,7 +45,7 @@ vlog +incdir+../config/$1 \
      $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2cov.sv  \
     \
     ../src/cvw.sv \
-     ../testbench/testbench_imperas.sv \
+     ../testbench/testbench-imperas.sv \
      ../testbench/common/*.sv   \
      ../src/*/*.sv \
      ../src/*/*/*.sv \
@@ -56,6 +57,7 @@ eval vsim workopt +nowarn3829  -fatal 7 \
      -sv_lib $env(IMPERAS_HOME)/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model \
      +testDir=$env(TESTDIR) $env(OTHERFLAGS) +TRACE2COV_ENABLE=1 \
      -do "coverage save -onexit ./riscv.ucdb"
+#     -do "coverage save -onexit ./riscv.ucdb"
 
 view wave
 #-- display input and output signals as hexidecimal values
@@ -64,7 +66,7 @@ view wave
 
 run -all
 
-noview ../testbench/testbench_imperas.sv
+noview ../testbench/testbench-imperas.sv
 view wave
 
 quit -f
