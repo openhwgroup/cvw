@@ -32,21 +32,19 @@ module aes64d(
    output logic [63:0] result
 );
    
-   logic [127:0] 		    ShiftRowOut;
-   logic [63:0] 		    SboxOut, MixcolIn, MixcolOut;
+   logic [63:0] 		    ShiftRowOut, SboxOut, MixcolIn, MixcolOut;
    
    // Apply inverse shiftrows to rs2 and rs1
-   aesinvshiftrow srow({rs2, rs1}, ShiftRowOut);
+   aesinvshiftrow64 srow({rs2, rs1}, ShiftRowOut);
    
-   // Apply full word inverse substitution to lower 2 words of shiftrow out
-   aesinvsboxword invsbox0(ShiftRowOut[31:0],  SboxOut[31:0]);
-   aesinvsboxword invsbox1(ShiftRowOut[63:32], SboxOut[63:32]);
+   // Apply full word inverse substitution to lower doubleord of shiftrow out
+   aesinvsbox64 invsbox(ShiftRowOut,  SboxOut);
    
    mux2 #(64) mixcolmux(SboxOut, rs1, aes64im, MixcolIn);
    
    // Apply inverse mixword to sbox outputs
-   aesinvmixcolumns invmw0(MixcolIn[31:0], MixcolOut[31:0]);
-   aesinvmixcolumns invmw1(MixcolIn[63:32], MixcolOut[63:32]);
+   aesinvmixcolumns32 invmw0(MixcolIn[31:0], MixcolOut[31:0]);
+   aesinvmixcolumns32 invmw1(MixcolIn[63:32], MixcolOut[63:32]);
    
    // Final round skips mixcolumns.
    mux2 #(64) resultmux(MixcolOut, SboxOut, finalround, result);
