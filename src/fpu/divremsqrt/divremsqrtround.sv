@@ -128,20 +128,21 @@ module divremsqrtround import cvw::*;  #(parameter cvw_t P)  (
       if (XLENPOS == 3) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.NF-1]&(~OutFmt)) |
                                                 (|Mf[P.CORRSHIFTSZ-P.NF-2:0]);
 
+
   end else if (P.FPSIZES == 3) begin
       // 1: XLEN > NF   > NF1
-      if (XLENPOS == 1) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF2-2:P.CORRSHIFTSZ-P.NF1-1]&(OutFmt==P.FMT1)) |
+      if (XLENPOS == 1) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF2-2:P.CORRSHIFTSZ-P.NF1-1]&(OutFmt==P.FMT2)) |
                                                 (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.NF-1]&~(OutFmt==P.FMT)) |
                                                 (|Mf[P.CORRSHIFTSZ-P.NF-2:P.CORRSHIFTSZ-P.XLEN-1]) |
                                                 (|Mf[P.CORRSHIFTSZ-P.XLEN-2:0]);
       // 2: NF   > XLEN > NF1
-      if (XLENPOS == 2) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF2-2:P.CORRSHIFTSZ-P.NF1-1]&(OutFmt==P.FMT1)) |
+      if (XLENPOS == 2) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF2-2:P.CORRSHIFTSZ-P.NF1-1]&(OutFmt==P.FMT2)) |
                                                 (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.XLEN-1]&~(OutFmt==P.FMT)) | 
                                                 (|Mf[P.CORRSHIFTSZ-P.XLEN-2:P.CORRSHIFTSZ-P.NF-1]&(~(OutFmt==P.FMT))) |
                                                 (|Mf[P.CORRSHIFTSZ-P.NF-2:0]);
       // 3: NF   > NF1  > XLEN
-      if (XLENPOS == 3) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF2-2:P.CORRSHIFTSZ-P.XLEN-1]&(OutFmt==P.FMT1)) |
-                                                (|Mf[P.CORRSHIFTSZ-P.XLEN-2:P.CORRSHIFTSZ-P.NF1-1]&((OutFmt==P.FMT1))) |
+      if (XLENPOS == 3) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF2-2:P.CORRSHIFTSZ-P.XLEN-1]&(OutFmt==P.FMT2)) |
+                                                (|Mf[P.CORRSHIFTSZ-P.XLEN-2:P.CORRSHIFTSZ-P.NF1-1]&((OutFmt==P.FMT2))) |
                                                 (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.NF-1]&(~(OutFmt==P.FMT))) |
                                                 (|Mf[P.CORRSHIFTSZ-P.NF-2:0]);
 
