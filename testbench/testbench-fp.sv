@@ -35,8 +35,8 @@ module testbenchfp;
 
   `include "parameter-defs.vh"   
 
-   //parameter MAXVECTORS = 8388610;
-   parameter MAXVECTORS = 100000;
+   parameter MAXVECTORS = 8388610;
+   //parameter MAXVECTORS = 100000;
 
    // FIXME: needs cleaning of unused variables (jes)
    string                       Tests[];                    // list of tests to be run
@@ -658,10 +658,71 @@ module testbenchfp;
          end
         end
         if (P.D_SUPPORTED) begin
+          if (TEST === "fdivremsqrt" | TEST === "div_drsu") begin // if division on drsu is being tested
+           // add the divide tests/op-ctrls/unit/fmt
+           Tests = {Tests, f64div};
+           OpCtrl = {OpCtrl, `DIV_OPCTRL};
+           WriteInt = {WriteInt, 1'b0};
+           for(int i = 0; i<5; i++) begin
+             Unit = {Unit, `INTDIVUNIT};
+             Fmt = {Fmt, 2'b01};
+           end
+          end
+          if (TEST === "fdivremsqrt" | TEST === "sqrt_drsu") begin // if square-root on drsu is being tested
+            // add the square-root tests/op-ctrls/unit/fmt
+            Tests = {Tests, f64sqrt};
+            OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+            WriteInt = {WriteInt, 1'b0};
+            for(int i = 0; i<5; i++) begin
+               Unit = {Unit, `INTDIVUNIT};
+               Fmt = {Fmt, 2'b01};
+            end
+         end
         end
         if (P.S_SUPPORTED) begin
+          if (TEST === "fdivremsqrt" | TEST === "div_drsu") begin // if division on drsu is being tested
+           // add the divide tests/op-ctrls/unit/fmt
+           Tests = {Tests, f32div};
+           OpCtrl = {OpCtrl, `DIV_OPCTRL};
+           WriteInt = {WriteInt, 1'b0};
+           for(int i = 0; i<5; i++) begin
+             Unit = {Unit, `INTDIVUNIT};
+             Fmt = {Fmt, 2'b00};
+           end
+          end
+          if (TEST === "fdivremsqrt" | TEST === "sqrt_drsu") begin // if square-root on drsu is being tested
+            // add the square-root tests/op-ctrls/unit/fmt
+            Tests = {Tests, f32sqrt};
+            OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+            WriteInt = {WriteInt, 1'b0};
+            for(int i = 0; i<5; i++) begin
+               Unit = {Unit, `INTDIVUNIT};
+               Fmt = {Fmt, 2'b00};
+            end
+         end
+
         end
         if (P.ZFH_SUPPORTED) begin
+          if (TEST === "fdivremsqrt" | TEST === "div_drsu") begin // if division on drsu is being tested
+           // add the divide tests/op-ctrls/unit/fmt
+           Tests = {Tests, f16div};
+           OpCtrl = {OpCtrl, `DIV_OPCTRL};
+           WriteInt = {WriteInt, 1'b0};
+           for(int i = 0; i<5; i++) begin
+             Unit = {Unit, `INTDIVUNIT};
+             Fmt = {Fmt, 2'b10};
+           end
+          end
+          if (TEST === "fdivremsqrt" | TEST === "sqrt_drsu") begin // if square-root on drsu is being tested
+            // add the square-root tests/op-ctrls/unit/fmt
+            Tests = {Tests, f16sqrt};
+            OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+            WriteInt = {WriteInt, 1'b0};
+            for(int i = 0; i<5; i++) begin
+               Unit = {Unit, `INTDIVUNIT};
+               Fmt = {Fmt, 2'b10};
+            end
+         end
         end
         if (TEST === "intrem" | TEST === "intdivrem" | TEST === "fdivremsqrt") begin // if integer remainder is being tested
           Tests = {Tests, intrem};
