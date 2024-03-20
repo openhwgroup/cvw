@@ -19,7 +19,7 @@ FFFFFFFF # stimecmp low bits
 00000000
 00000003 # mcause from Breakpoint
 00000000
-80000408 # mtval of breakpoint instruction adress (0x80000400)
+80000458 # mtval of breakpoint instruction adress (0x80000458)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
@@ -131,7 +131,7 @@ FFFFFFFF # stimecmp low bits
 00000000
 00000003 # mcause from Breakpoint
 00000000
-80000408 # mtval of breakpoint instruction adress (0x80000400)
+80000458 # mtval of breakpoint instruction adress (0x80000458)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
