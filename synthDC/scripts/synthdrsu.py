@@ -40,7 +40,6 @@ def run_synth_job(config):
     logname = "logs/"+config.variant+"_"+config.name+".log"
     cmd = config.cmd
 #    print(cmd)
-    os.chdir(regressionDir)
     os.system(cmd)
     if search_log_for_text(config.grepstr, logname):
         print(f"{bcolors.OKGREEN}%s_%s: Success{bcolors.ENDC}" % (config.variant, config.name))
@@ -60,16 +59,15 @@ def main():
         pass
 
     for config in configs:
-        
         synthjob_5000 = Job(
             name=config,
-            cmd=f"make -C $WALLY/synthDC synth DESIGN=drsu TECH=tsmc28 CONFIG={config} FREQ=5000" 
+            cmd=f"make -C $WALLY/synthDC synth DESIGN=drsu TECH=tsmc28 CONFIG={config} FREQ=5000 > /dev/null" 
             grepstr="All Tests completed with          0 errors" # change this
         )
 
         synthjob_100 = Job(
             name=config,
-            cmd=f"make -C $WALLY/synthDC synth DESIGN=drsu TECH=tsmc28 CONFIG={config} FREQ=5000" 
+            cmd=f"make -C $WALLY/synthDC synth DESIGN=drsu TECH=tsmc28 CONFIG={config} FREQ=100 > /dev/null" 
             grepstr="All Tests completed with          0 errors" # change this
         )
         configs.append(synthjob_5000)
