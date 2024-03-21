@@ -335,6 +335,10 @@ module testbench;
         $display("Benchmark: coremark is done.");
         $stop;
       end
+    if (P.ZICSR_SUPPORTED & dut.core.ifu.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.ieu.InstrValidM) begin 
+      $display("Program fetched illegal instruction 0x00000000 from address 0x00000000.  Might be fault with no fault handler.");
+      //$stop; // presently wally32/64priv tests trigger this for reasons not yet understood.
+    end
     if(Validate) begin
       if (TEST == "embench") begin
         // Writes contents of begin_signature to .sim.output file

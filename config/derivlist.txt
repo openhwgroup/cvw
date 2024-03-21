@@ -1078,4 +1078,213 @@ IEEE754         1
 deriv fdqh_ieee_div_4_4_rv64gc    fdqh_div_4_4_rv64gc    
 IEEE754         1
 
+#### DIVIDER VARIANTS WITH IDIV ON FPU
+
+deriv f_ieee_div_2_1i_rv32gc f_ieee_div_2_1_rv32gc        
+IDIV_ON_FPU     1
+
+deriv f_ieee_div_2_2i_rv32gc f_ieee_div_2_2_rv32gc        
+IDIV_ON_FPU     1
+
+deriv f_ieee_div_2_4i_rv32gc f_ieee_div_2_4_rv32gc        
+IDIV_ON_FPU     1
+
+deriv f_ieee_div_4_1i_rv32gc f_ieee_div_4_1_rv32gc        
+IDIV_ON_FPU     1
+
+deriv f_ieee_div_4_2i_rv32gc f_ieee_div_4_2_rv32gc        
+IDIV_ON_FPU     1
+
+deriv f_ieee_div_2_1i_rv64gc f_ieee_div_2_1_rv64gc        
+IDIV_ON_FPU     1
+
+deriv f_ieee_div_2_2i_rv64gc f_ieee_div_2_2_rv64gc        
+IDIV_ON_FPU     1
+
+deriv f_ieee_div_2_4i_rv64gc f_ieee_div_2_4_rv64gc        
+IDIV_ON_FPU     1
+
+deriv f_ieee_div_4_1i_rv64gc f_ieee_div_4_1_rv64gc        
+IDIV_ON_FPU     1
+
+deriv f_ieee_div_4_2i_rv64gc f_ieee_div_4_2_rv64gc        
+IDIV_ON_FPU     1
+
+deriv f_ieee_div_4_4i_rv64gc f_ieee_div_4_4_rv64gc        
+IDIV_ON_FPU     1
+
+#### FH_only, RK variable
+deriv fh_ieee_div_2_1i_rv32gc fh_ieee_div_2_1_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fh_ieee_div_2_2i_rv32gc fh_ieee_div_2_2_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fh_ieee_div_2_4i_rv32gc fh_ieee_div_2_4_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fh_ieee_div_4_1i_rv32gc fh_ieee_div_4_1_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fh_ieee_div_4_2i_rv32gc fh_ieee_div_4_2_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fh_ieee_div_2_1i_rv64gc fh_ieee_div_2_1_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fh_ieee_div_2_2i_rv64gc fh_ieee_div_2_2_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fh_ieee_div_2_4i_rv64gc fh_ieee_div_2_4_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fh_ieee_div_4_1i_rv64gc fh_ieee_div_4_1_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fh_ieee_div_4_2i_rv64gc fh_ieee_div_4_2_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fh_ieee_div_4_4i_rv64gc fh_ieee_div_4_4_rv64gc        
+IDIV_ON_FPU     1
+
+# FD only , rk variable
+
+deriv fd_ieee_div_2_1i_rv32gc fd_ieee_div_2_1_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fd_ieee_div_2_2i_rv32gc fd_ieee_div_2_2_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fd_ieee_div_2_4i_rv32gc fd_ieee_div_2_4_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fd_ieee_div_4_1i_rv32gc fd_ieee_div_4_1_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fd_ieee_div_4_2i_rv32gc fd_ieee_div_4_2_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fd_ieee_div_2_1i_rv64gc fd_ieee_div_2_1_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fd_ieee_div_2_2i_rv64gc fd_ieee_div_2_2_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fd_ieee_div_2_4i_rv64gc fd_ieee_div_2_4_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fd_ieee_div_4_1i_rv64gc fd_ieee_div_4_1_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fd_ieee_div_4_2i_rv64gc fd_ieee_div_4_2_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fd_ieee_div_4_4i_rv64gc fd_ieee_div_4_4_rv64gc        
+IDIV_ON_FPU     1
+
+# FDH only , rk variable
+
+deriv fdh_ieee_div_2_1i_rv32gc fdh_ieee_div_2_1_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fdh_ieee_div_2_2i_rv32gc fdh_ieee_div_2_2_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fdh_ieee_div_2_4i_rv32gc fdh_ieee_div_2_4_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fdh_ieee_div_4_1i_rv32gc fdh_ieee_div_4_1_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fdh_ieee_div_4_2i_rv32gc fdh_ieee_div_4_2_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fdh_ieee_div_2_1i_rv64gc fdh_ieee_div_2_1_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fdh_ieee_div_2_2i_rv64gc fdh_ieee_div_2_2_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fdh_ieee_div_2_4i_rv64gc fdh_ieee_div_2_4_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fdh_ieee_div_4_1i_rv64gc fdh_ieee_div_4_1_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fdh_ieee_div_4_2i_rv64gc fdh_ieee_div_4_2_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fdh_ieee_div_4_4i_rv64gc fdh_ieee_div_4_4_rv64gc        
+IDIV_ON_FPU     1
+
+# FDQ only , rk variable
+
+deriv fdq_ieee_div_2_1i_rv32gc fdq_ieee_div_2_1_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fdq_ieee_div_2_2i_rv32gc fdq_ieee_div_2_2_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fdq_ieee_div_2_4i_rv32gc fdq_ieee_div_2_4_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fdq_ieee_div_4_1i_rv32gc fdq_ieee_div_4_1_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fdq_ieee_div_4_2i_rv32gc fdq_ieee_div_4_2_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fdq_ieee_div_2_1i_rv64gc fdq_ieee_div_2_1_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fdq_ieee_div_2_2i_rv64gc fdq_ieee_div_2_2_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fdq_ieee_div_2_4i_rv64gc fdq_ieee_div_2_4_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fdq_ieee_div_4_1i_rv64gc fdq_ieee_div_4_1_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fdq_ieee_div_4_2i_rv64gc fdq_ieee_div_4_2_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fdq_ieee_div_4_4i_rv64gc fdq_ieee_div_4_4_rv64gc        
+IDIV_ON_FPU     1
+
+# FDQH only , rk variable
+
+deriv fdqh_ieee_div_2_1i_rv32gc fdqh_ieee_div_2_1_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fdqh_ieee_div_2_2i_rv32gc fdqh_ieee_div_2_2_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fdqh_ieee_div_2_4i_rv32gc fdqh_ieee_div_2_4_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fdqh_ieee_div_4_1i_rv32gc fdqh_ieee_div_4_1_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fdqh_ieee_div_4_2i_rv32gc fdqh_ieee_div_4_2_rv32gc        
+IDIV_ON_FPU     1
+
+deriv fdqh_ieee_div_2_1i_rv64gc fdqh_ieee_div_2_1_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fdqh_ieee_div_2_2i_rv64gc fdqh_ieee_div_2_2_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fdqh_ieee_div_2_4i_rv64gc fdqh_ieee_div_2_4_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fdqh_ieee_div_4_1i_rv64gc fdqh_ieee_div_4_1_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fdqh_ieee_div_4_2i_rv64gc fdqh_ieee_div_4_2_rv64gc        
+IDIV_ON_FPU     1
+
+deriv fdqh_ieee_div_4_4i_rv64gc fdqh_ieee_div_4_4_rv64gc        
+IDIV_ON_FPU     1
+
 
