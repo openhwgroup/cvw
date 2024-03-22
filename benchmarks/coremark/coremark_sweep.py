@@ -29,7 +29,6 @@
 
 
 import os
-import re
 # list of architectures to run. 
 arch32_list = [
     "rv32gc_zba_zbb_zbc",
