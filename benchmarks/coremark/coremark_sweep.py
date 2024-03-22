@@ -3,8 +3,8 @@
 
 ## Written: Shreesh Kulkarni, kshreesh5@gmail.com
 ## Created: 20 March 2024
-## Modified: 20 March 2024
-## Purpose: Wally 32-bit Coremark sweep Script 
+## Modified: 22 March 2024
+## Purpose: Wally  Coremark sweep Script for both 32 and 64 bit configs. 
  
 ## Documentation: 
 
@@ -29,10 +29,9 @@
 
 
 import os
-import subprocess # normal os.system() doesn't seem to work. Tried subprocess and it works.
-
-# list of architectures to run. I have included only 32-bit for now as I'm still testing this script and modifying it to make it more efficient
-arch_list = [
+import re
+# list of architectures to run. 
+arch32_list = [
     "rv32gc_zba_zbb_zbc",
     "rv32im_zicsr_zba_zbb_zbc",
     "rv32gc",
@@ -40,22 +39,32 @@ arch_list = [
     "rv32im_zicsr",
     "rv32i_zicsr"
 ]
+arch64_list = [
+    "rv64gc_zba_zbb_zbc",
+    "rv64im_zicsr_zba_zbb_zbc",
+    "rv64gc",
+    "rv64imc_zicsr",
+    "rv64im_zicsr",
+    "rv64i_zicsr"
+]
+xlen_values = ['32','64']
+for xlen_value in xlen_values:
+    if(xlen_value=='32'):
+        for arch in arch32_list:
+            os.system("make clean")
+            make_all = f"make all XLEN={xlen_value} ARCH={arch}"
+            os.system(make_all)
+            make_run = f"make run XLEN={xlen_value} ARCH={arch}"
+            os.system(make_run)
+    else:
+        for arch in arch64_list:
+            os.system("make clean")
+            make_all = f"make all XLEN={xlen_value} ARCH={arch}"
+            os.system(make_all)
+            make_run = f"make run XLEN={xlen_value} ARCH={arch}"
+            os.system(make_run)
 
-# make command. If we wish to run the remaining commands like make clean, need to maintain a separate list.
-make_cmd = ["make", "run"]
 
-# Iterate over the architectures
-for arch in arch_list:
-    # Setting the arch variable
-    env = os.environ.copy()
-    env["ARCH"] = arch
 
-    # used subprocess to run coremark for each architecture
-    print(f"Running for architecture: {arch}")
-    result = subprocess.run(make_cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
-    # diplay the output on console. If we wish to store the results in a file,need to write some file handling code. Review needed
-    print(result.stdout)
-    print(result.stderr)
-    print("\n" *5)
-    
+
