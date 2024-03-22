@@ -1365,11 +1365,11 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
                // no flag checking for intdiv test cases
                AnsFlg = 5'bx;
                case (OpCtrl)
-               3'b011: begin
+               `INTDIV_OPCTRL: begin
                   Funct3E = 3'b100;
                   W64 = 1'b0;
                end
-               3'b010: begin
+               `INTREM_OPCTRL: begin
                   Funct3E = 3'b110;
                   W64 = 1'b0;
                end
