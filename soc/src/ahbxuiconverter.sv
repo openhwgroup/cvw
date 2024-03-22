@@ -67,8 +67,8 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
   // a) selected, AND
   // b) a transfer is started, AND
   // c) the bus is ready
-  logic ahbEnable;
-  assign ahbEnable = HSEL & HTRANS[1] & HREADY;
+  logic initTrans;
+  assign initTrans = HSEL & HTRANS[1] & HREADY;
 
   // UI is ready for a command when initialized and ready to read and write
   logic uiReady;
@@ -78,37 +78,49 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
   logic [ADDR_SIZE-1:0]   addr;
   logic [DATA_SIZE-1:0]   data;
   logic [DATA_SIZE/8-1:0] mask;
-  logic                   cmdEnable, cmdWrite;
-  logic                   cmdwfull, cmdrempty;
+  logic                   cmdInit, cmdWrite;
+  logic                   cmdwfull, cmdrvalid;
+  logic enqueueCmd, dequeueCmd;
+  assign enqueueCmd = initTrans & ~cmdwfull;
+  assign dequeueCmd = uiReady & cmdrvalid;
   // FIFO needs addr + (data + mask) + (enable + write)
-  fifo #(ADDR_SIZE + 9*DATA_SIZE/8 + 2, 32) cmdfifo (
-    .wdata({HADDR, HWDATA, HWSTRB, ahbEnable, HWRITE}),
-    .winc(ahbEnable), .wclk(HCLK), .wrst_n(HRESETn),
-    .rinc(uiReady), .rclk(ui_clk), .rrst_n(~ui_clk_sync_rst),
-    .rdata({addr, data, mask, cmdEnable, cmdWrite}),
-    .wfull(cmdwfull), .rempty(cmdrempty)
+  bsg_async_fifo #(
+    .width_p(ADDR_SIZE + 9*DATA_SIZE/8 + 2),
+    .lg_size_p(32)
+  ) cmdfifo (
+    .w_data_i({HADDR, HWDATA, HWSTRB, initTrans, HWRITE}),
+    .w_enq_i(enqueueCmd), .w_clk_i(HCLK), .w_reset_i(~HRESETn),
+    .r_deq_i(dequeueCmd), .r_clk_i(ui_clk), .r_reset_i(ui_clk_sync_rst),
+    .r_data_o({addr, data, mask, cmdInit, cmdWrite}),
+    .w_full_o(cmdwfull), .r_valid_o(cmdrvalid)
   );
 
-  // Delay transactions 1 clk so we can set wren on the cycle after write commands
+  // Delay transactions 1 clk so we can set wren on the cycle after write commands (when data arrives)
   flopen  #(ADDR_SIZE)   addrreg  (ui_clk, uiReady, addr, app_addr);
   flopenr #(3)           cmdreg   (ui_clk, ui_clk_sync_rst, uiReady, {2'b0, ~cmdWrite}, app_cmd);
-  flopenr #(1)           cmdenreg (ui_clk, ui_clk_sync_rst, uiReady, cmdEnable, app_en);
+  flopenr #(1)           cmdenreg (ui_clk, ui_clk_sync_rst, uiReady, cmdInit, app_en);
   flopenr #(1)           wrenreg  (ui_clk, ui_clk_sync_rst, uiReady, ~app_cmd[0], app_wdf_wren);
   flopenr #(DATA_SIZE)   datareg  (ui_clk, ui_clk_sync_rst, uiReady, data, app_wdf_data);
   flopenr #(DATA_SIZE/8) maskreg  (ui_clk, ui_clk_sync_rst, uiReady, mask, app_wdf_mask);
   assign app_wdf_end = app_wdf_wren; // Since AHB will always put data on the bus after a write cmd, this is always valid
   
-  // Return read data at HCLK speed TODO: Double check that rinc is correct
-  logic respwfull, resprempty;
-  fifo #(DATA_SIZE, 16) respfifo (
-    .wdata(app_rd_data),
-    .winc(app_rd_data_valid), .wclk(ui_clk), .wrst_n(~ui_clk_sync_rst),
-    .rinc(ahbEnable), .rclk(HCLK), .rrst_n(HRESETn),
-    .rdata(HRDATA),
-    .wfull(respwfull), .rempty(resprempty)
+  // Return read data at HCLK speed
+  logic respwfull, resprvalid;
+  logic enqueueResp, dequeueResp;
+  assign enqueueResp = app_rd_data_valid & ~respwfull;
+  assign dequeueResp = HSEL & resprvalid;
+  bsg_async_fifo #(
+    .width_p(DATA_SIZE),
+    .lg_size_p(16)
+  ) respfifo (
+    .w_data_i(app_rd_data),
+    .w_enq_i(enqueueResp), .w_clk_i(ui_clk), .w_reset_i(ui_clk_sync_rst),
+    .r_deq_i(dequeueResp), .r_clk_i(HCLK), .r_reset_i(~HRESETn),
+    .r_data_o(HRDATA),
+    .w_full_o(respwfull), .r_valid_o(resprvalid)
   );
   
   assign HRESP = 0; // do not indicate errors
-  assign HREADYOUT = uiReady & ~cmdwfull; // TODO: Double check
+  assign HREADYOUT = uiReady & ~cmdwfull;
 
 endmodule
