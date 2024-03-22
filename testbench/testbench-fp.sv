@@ -52,7 +52,7 @@ module testbenchfp;
    logic [31:0] 		errors=0;                   // how many errors
    logic [31:0] 		VectorNum=0;                // index for test vector
    logic [31:0] 		FrmNum=0;                   // index for rounding mode
-   logic [P.FLEN*4+7:0] 	TestVectors[MAXVECTORS:0];     // list of test vectors
+   logic [P.Q_LEN*4+7:0] 	TestVectors[MAXVECTORS:0];     // list of test vectors
 
    logic [1:0] 			FmtVal;                     // value of the current Fmt
    logic [2:0] 			UnitVal, FrmVal; // value of the currnet Unit/OpCtrl/FrmVal
@@ -1217,7 +1217,7 @@ endmodule
 
 module readvectors import cvw::*; #(parameter cvw_t P) (
                     input logic 		clk,
-                    input logic [P.FLEN*4+7:0] 	TestVector,
+                    input logic [P.Q_LEN*4+7:0] 	TestVector,
                     input logic [P.FMTBITS-1:0] ModFmt,
                     input logic [1:0] 		Fmt,
                     input logic [2:0] 		Unit,
@@ -1359,9 +1359,9 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
             endcase
          `INTDIVUNIT: begin
             if (!(OpCtrl === `DIV_OPCTRL | OpCtrl === `SQRT_OPCTRL)) begin
-               SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1+12:2*(P.Q_LEN)+12]; //***Replace with XLEN instead of DLEN for 32 bit test cases
-               SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1+12:P.Q_LEN+12];
-               Ans = TestVector[P.D_LEN-1+12:12];
+               SrcA = TestVector[2*(P.Q_LEN)+P.XLEN-1+12:2*(P.Q_LEN)+12]; 
+               SrcB = TestVector[(P.Q_LEN)+P.XLEN-1+12:P.Q_LEN+12];
+               Ans = TestVector[P.XLEN-1+12:12];
                // no flag checking for intdiv test cases
                AnsFlg = 5'bx;
                case (OpCtrl)
