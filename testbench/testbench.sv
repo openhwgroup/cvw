@@ -556,6 +556,9 @@ module testbench;
 	  	if (P.USE_BSG_DMC) begin
 	  		`include "bsg_dmc.svh"
 	  		import bsg_dmc_pkg::bsg_dmc_s;
+	  		localparam dq_width = P.XLEN;
+	  		localparam dq_group = dq_width/8;
+	  		logic                 ui_clk;
 	  		logic                 ddr_ck_p;
   		  logic                 ddr_ck_n;
   		  logic                 ddr_cke;
@@ -567,36 +570,30 @@ module testbench;
   		  logic                 ddr_we;
   		  logic                 ddr_reset;
   		  logic                 ddr_odt;
-  		  logic [P.XLEN/16-1:0] ddr_dm_oen_o;
-  		  logic [P.XLEN/16-1:0] ddr_dm;
-  		  logic [P.XLEN/16-1:0] ddr_dm_o;
-  		  logic [P.XLEN/16-1:0] ddr_dqs_p_oen_o;
-  		  logic [P.XLEN/16-1:0] ddr_dqs_p_ien_o;
-  		  logic [P.XLEN/16-1:0] ddr_dqs_p;
-  		  logic [P.XLEN/16-1:0] ddr_dqs_p_o;
-  		  logic [P.XLEN/16-1:0] ddr_dqs_p_i;
-  		  logic [P.XLEN/16-1:0] ddr_dqs_n_oen_o;
-  		  logic [P.XLEN/16-1:0] ddr_dqs_n_ien_o;
-  		  logic [P.XLEN/16-1:0] ddr_dqs_n;
-  		  logic [P.XLEN/16-1:0] ddr_dqs_n_o;
-  		  logic [P.XLEN/16-1:0] ddr_dqs_n_i;
-  		  logic [P.XLEN/2-1:0]  ddr_dq_oen_o;
-  		  logic [P.XLEN/2-1:0]  ddr_dq;
-  		  logic [P.XLEN/2-1:0]  ddr_dq_o;
-  		  logic [P.XLEN/2-1:0]  ddr_dq_i;
+  		  logic [dq_group-1:0]  ddr_dm_oen_o;
+  		  logic [dq_group-1:0]  ddr_dm;
+  		  logic [dq_group-1:0]  ddr_dm_o;
+  		  logic [dq_group-1:0]  ddr_dqs_p_oen_o;
+  		  logic [dq_group-1:0]  ddr_dqs_p_ien_o;
+  		  logic [dq_group-1:0]  ddr_dqs_p;
+  		  logic [dq_group-1:0]  ddr_dqs_p_o;
+  		  logic [dq_group-1:0]  ddr_dqs_p_i;
+  		  logic [dq_group-1:0]  ddr_dqs_n_oen_o;
+  		  logic [dq_group-1:0]  ddr_dqs_n_ien_o;
+  		  logic [dq_group-1:0]  ddr_dqs_n;
+  		  logic [dq_group-1:0]  ddr_dqs_n_o;
+  		  logic [dq_group-1:0]  ddr_dqs_n_i;
+  		  logic [dq_width-1:0]  ddr_dq_oen_o;
+  		  logic [dq_width-1:0]  ddr_dq;
+  		  logic [dq_width-1:0]  ddr_dq_o;
+  		  logic [dq_width-1:0]  ddr_dq_i;
   		  logic                 dfi_clk_2x_i;
   		  logic                 dfi_clk_1x_o;
-	  		// Use a /6 clock divider for slower UI interface
-  		  logic ui_clk;
-  		  integer ui_clk_counter;
-  		  always @(posedge HCLK) begin
-  		    ui_clk_counter <= ui_clk_counter + 1;
-  		    if (ui_clk_counter >= 6) ui_clk_counter <= 0;
-  		    ui_clk <= (ui_clk_counter >= 3);
-  		  end
+  		  always #2.5ns ui_clk = ~ui_clk; // ui_clk must be <= 208 MHz
+  		  always #1.25ns dfi_clk_2x_i = ~dfi_clk_2x_i; // dfi_clk_2x must be 2x ui_clk
   		  // Initialize bsg_dmc
 			  bsg_dmc_s dmc_config;
-			  always_comb begin: bsg_dmc_config
+			  initial begin: bsg_dmc_config
 			    dmc_config.trefi = 1023;
 			    dmc_config.tmrd = 1;
 			    dmc_config.trfc = 15;
@@ -615,14 +612,24 @@ module testbench;
 			    dmc_config.dqs_sel_cal = 3;
 			    dmc_config.init_cycles = 40010;
 			    dmc_config.bank_pos = 25;
+			    force ram.dmc.dmc_clk_rst_gen.btc_async_reset.tag_data_reg.data_r = 0;
+			    force ram.dmc.dmc_clk_rst_gen.dly_lines[0].dly_line_inst.ctrl_rrr = 31;
+			    force ram.dmc.dmc_clk_rst_gen.dly_lines[1].dly_line_inst.ctrl_rrr = 31;
+			    force ram.dmc.dmc_clk_rst_gen.dly_lines[2].dly_line_inst.ctrl_rrr = 31;
+			    force ram.dmc.dmc_clk_rst_gen.dly_lines[3].dly_line_inst.ctrl_rrr = 31;
+			    force ram.dmc.dmc_clk_rst_gen.clk_gen_ds_inst.reset_i = 1'b1;
+			    force ram.dmc.dmc_clk_rst_gen.clk_gen_ds_inst.strobe_r = 1'b0;
+			    #100ns
+			    force ram.dmc.dmc_clk_rst_gen.clk_gen_ds_inst.reset_i = 1'b0;
+			    force ram.dmc.dmc_clk_rst_gen.clk_gen_ds_inst.strobe_r = 1'b1;
 			  end
-			  bsg_dmc_ahb #(28, P.XLEN, 32) ram (
+			  bsg_dmc_ahb #(28, P.XLEN, P.XLEN) ram (
 		      .dmc_config,
 		      .HCLK, .HRESETn, .HSEL(HSELEXT),
 		      .HADDR(HADDR[27:0]), .HWDATA, .HWSTRB,
-		      .HWRITE, .HTRANS, .HREADY(HREADYEXT),
+		      .HWRITE, .HTRANS, .HREADY,
 		      .HRDATA(HRDATAEXT), .HRESP(HRESPEXT), .HREADYOUT(HREADYEXT),
-		      .ui_clk,
+		      .ui_clk(HCLK), // FIXME: We're just running these at the same speed as a test
 		      .ddr_ck_p, .ddr_ck_n, .ddr_cke, .ddr_ba, .ddr_addr,
 		      .ddr_cs, .ddr_ras, .ddr_cas, .ddr_we, .ddr_reset, .ddr_odt,
 		      .ddr_dm_oen(ddr_dm_oen_o), .ddr_dm(ddr_dm_o),
@@ -632,25 +639,32 @@ module testbench;
 		      .ddr_dqs_n_out(ddr_dqs_n_o), .ddr_dqs_n_in(ddr_dqs_n_i),
 		      .ddr_dq_oen(ddr_dq_oen_o), .ddr_dq_out(ddr_dq_o), .ddr_dq_in(ddr_dq_i),
 		      .dfi_clk_2x(dfi_clk_2x_i), .dfi_clk_1x(dfi_clk_1x_o));
-  		  for(ddr_i = 0; ddr_i < (P.XLEN/16); ddr_i++) begin: dm_io
+  		  for(ddr_i = 0; ddr_i < dq_group; ddr_i++) begin: dm_io
 	        assign ddr_dm[ddr_i] = !ddr_dm_oen_o[ddr_i]? ddr_dm_o[ddr_i]: 1'bz;
 	      end
-	      for(ddr_i = 0; ddr_i < (P.XLEN/16); ddr_i++) begin: dqs_io
+	      for(ddr_i = 0; ddr_i < dq_group; ddr_i++) begin: dqs_io
 	        assign ddr_dqs_p[ddr_i]   = !ddr_dqs_p_oen_o[ddr_i]? ddr_dqs_p_o[ddr_i]: 1'bz;
 	        assign ddr_dqs_p_i[ddr_i] = !ddr_dqs_p_ien_o[ddr_i]? ddr_dqs_p[ddr_i]: 1'b0;
 	        assign ddr_dqs_n[ddr_i]   = !ddr_dqs_n_oen_o[ddr_i]? ddr_dqs_n_o[ddr_i]: 1'bz;
 	        assign ddr_dqs_n_i[ddr_i] = !ddr_dqs_n_ien_o[ddr_i]? ddr_dqs_n[ddr_i]: 1'b1;
 	      end
-	      for(ddr_i = 0; ddr_i < (P.XLEN/2); ddr_i++) begin: dq_io
+	      for(ddr_i = 0; ddr_i < dq_width; ddr_i++) begin: dq_io
 	        assign ddr_dq[ddr_i]    = !ddr_dq_oen_o[ddr_i]? ddr_dq_o[ddr_i]: 1'bz;
 	        assign ddr_dq_i[ddr_i]  = ddr_dq[ddr_i];
 	      end
-	      for(ddr_i = 0; ddr_i < 1; ddr_i++) begin: lpddr
+	      for(ddr_i = 0; ddr_i < 2; ddr_i++) begin: lpddr
 	        mobile_ddr mobile_ddr_inst (
-	        	.Dq(ddr_dq[32*ddr_i+31:32*ddr_i]), .Dqs(ddr_dqs_p[4*ddr_i+3:4*ddr_i]),
+	        	.Dq(ddr_dq[dq_width/2*(ddr_i+1)-1:dq_width/2*ddr_i]),
+	        	.Dqs(ddr_dqs_p[dq_group/2*(ddr_i+1)-1:dq_group/2*ddr_i]),
 	          .Addr(ddr_addr[13:0]), .Ba(ddr_ba[1:0]), .Clk(ddr_ck_p), .Clk_n(ddr_ck_n),
 	          .Cke(ddr_cke), .Cs_n(ddr_cs), .Ras_n(ddr_ras), .Cas_n(ddr_cas), .We_n(ddr_we),
-	          .Dm(ddr_dm[4*ddr_i+3:4*ddr_i]));
+	          .Dm(ddr_dm[dq_group/2*(ddr_i+1)-1:dq_group/2*ddr_i]));
+	      end
+	      initial begin: dmc_reset
+	        force ram.sys_reset = 1'b1;
+			    ui_clk = 1'b0;
+			    dfi_clk_2x_i = 1'b0;
+			    #1000ns force ram.sys_reset = 0;
 	      end
 	  	end else begin
         ram_ahb #(.P(P), .BASE(P.EXT_MEM_BASE), .RANGE(P.EXT_MEM_RANGE)) 
@@ -688,7 +702,11 @@ module testbench;
 
   // generate clock to sequence tests
   always begin
+<<<<<<< HEAD
     clk = 1'b1; # 5; clk = 1'b0; # 5;
+=======
+    clk = 1; # 5ns; clk = 0; # 5ns;
+>>>>>>> 315d59ccc (soc: Fix various bugs in BSG implementation (WIP))
   end
 
   /*
