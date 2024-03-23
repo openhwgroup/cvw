@@ -130,13 +130,13 @@ module ram2p1r1wbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=1024, WIDTH=68) 
       always @(posedge clk) 
         if (ce2 & we2) 
           for(i = 0; i < WIDTH/8; i++) 
-            if(bwe2[i]) mem[wa2][i*8 +: 8] <= #1 wd2[i*8 +: 8];
+            if(bwe2[i]) mem[wa2][i*8 +: 8] <= wd2[i*8 +: 8];
     // coverage on
   
     if (WIDTH%8 != 0) // handle msbs if width not a multiple of 8
       always @(posedge clk) 
         if (ce2 & we2 & bwe2[WIDTH/8])
-          mem[wa2][WIDTH-1:WIDTH-WIDTH%8] <= #1 wd2[WIDTH-1:WIDTH-WIDTH%8];
+          mem[wa2][WIDTH-1:WIDTH-WIDTH%8] <= wd2[WIDTH-1:WIDTH-WIDTH%8];
   end
   
 endmodule
