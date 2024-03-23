@@ -124,6 +124,7 @@ module testbench;
         "imperas64f":   if (P.F_SUPPORTED)        tests = imperas64f;
         "imperas64d":   if (P.D_SUPPORTED)        tests = imperas64d;
         "imperas64m":   if (P.M_SUPPORTED)        tests = imperas64m;
+        "wally64q":     if (P.Q_SUPPORTED)        tests = wally64q;
         "wally64a":     if (P.A_SUPPORTED)        tests = wally64a;
         "imperas64c":   if (P.C_SUPPORTED)        tests = imperas64c;
                         else                      tests = imperas64iNOc;
@@ -147,6 +148,12 @@ module testbench;
         "arch64zfaf":    if (P.ZFA_SUPPORTED)     tests = arch64zfaf;
         "arch64zfad":    if (P.ZFA_SUPPORTED & P.D_SUPPORTED)  tests = arch64zfad;
         "buildroot":                              tests = buildroot;
+        "arch64zbkb":    if (P.ZBKB_SUPPORTED)    tests = arch64zbkb;
+        "arch64zbkc":    if (P.ZBKC_SUPPORTED)    tests = arch64zbkc;
+        "arch64zbkx":    if (P.ZBKX_SUPPORTED)    tests = arch64zbkx;
+        "arch64zknd":    if (P.ZKND_SUPPORTED)    tests = arch64zknd;
+        "arch64zkne":    if (P.ZKNE_SUPPORTED)    tests = arch64zkne;
+        "arch64zknh":    if (P.ZKNH_SUPPORTED)    tests = arch64zknh;
       endcase 
     end else begin // RV32
       case (TEST)
@@ -189,6 +196,12 @@ module testbench;
         "arch32zfh_divsqrt":     if (P.ZFH_SUPPORTED)     tests = arch32zfh_divsqrt;
         "arch32zfaf":    if (P.ZFA_SUPPORTED)     tests = arch32zfaf;
         "arch32zfad":    if (P.ZFA_SUPPORTED & P.D_SUPPORTED)  tests = arch32zfad;
+        "arch32zbkb":    if (P.ZBKB_SUPPORTED)    tests = arch32zbkb;
+        "arch32zbkc":    if (P.ZBKC_SUPPORTED)    tests = arch32zbkc;
+        "arch32zbkx":    if (P.ZBKX_SUPPORTED)    tests = arch32zbkx;
+        "arch32zknd":    if (P.ZKND_SUPPORTED)    tests = arch32zknd;
+        "arch32zkne":    if (P.ZKNE_SUPPORTED)    tests = arch32zkne;
+        "arch32zknh":    if (P.ZKNH_SUPPORTED)    tests = arch32zknh;
       endcase
     end
     if (tests.size() == 0) begin

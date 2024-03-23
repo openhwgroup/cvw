@@ -1,72 +1,60 @@
+# Common Variables
+ifndef IMPERAS_HOME
+$(error IMPERAS_HOME is not set)
+endif
 
-all: riscoftests memfiles coveragetests deriv benchmarks
-	# *** Build old tests/imperas-riscv-tests for now;
-	# Delete this part when the privileged tests transition over to tests/wally-riscv-arch-test
-	# DH: 2/27/22 temporarily commented out imperas-riscv-tests because license expired
-	#make -C ../tests/imperas-riscv-tests --jobs
-	#make -C ../tests/imperas-riscv-tests XLEN=64 --jobs
-	# Only compile Imperas tests if they are installed locally.  
-	# They are usually a symlink to $RISCV/imperas-riscv-tests and only 
-	# get compiled there manually during installation
-	#make -C ../addins/imperas-riscv-tests
-	#make -C ../addins/imperas-riscv-tests XLEN=64
-	#cd ../addins/imperas-riscv-tests; elf2hex.sh
-	#cd ../addins/imperas-riscv-tests; extractFunctionRadix.sh work/*/*/*.elf.objdump
-	# Link Linux test vectors 
-	#cd ../tests/linux-testgen/linux-testvectors/;./tvLinker.sh
+IMPERAS_HOME := $(IMPERAS_HOME)
+LIB =
+CONFIG_VARIANT ?= rv64i
+SOURCE_PATH =+incdir+../config/$(CONFIG_VARIANT) +incdir+../config/deriv/$(CONFIG_VARIANT) +incdir+../config/shared +incdir+../testbench +incdir+/$(IMPERAS_HOME)/ImpProprietary/include/host +incdir+/$(IMPERAS_HOME)/ImpPublic/source/host/rvvi +incdir+$(IMPERAS_HOME)/ImpPublic/include/host +incdir+$(IMPERAS_HOME)/ImpProprietary/include/host
+SIMFILES := $(IMPERAS_HOME)/ImpPublic/source/host/rvvi/rvviApiPkg.sv \
+	    $(IMPERAS_HOME)/ImpPublic/source/host/rvvi/rvviTrace.sv \
+	    $(IMPERAS_HOME)/ImpProprietary/source/host/idv/idvApiPkg.sv \
+	    $(IMPERAS_HOME)/ImpProprietary/source/host/idv/idvPkg.sv \
+	    $(IMPERAS_HOME)/ImpProprietary/source/host/idv/idvApiPkg.sv \
+	    $(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2api.sv \
+	    $(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2log.sv \
+	    $(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2bin.sv \
+		../src/cvw.sv ../testbench/testbench.sv ../src/*/*.sv ../src/*/*/*.sv ../testbench/common/*.sv
+OUTPUT = sim_out
 
-wally-riscv-arch-test: wallyriscoftests memfiles
+# VCS specific
+#VCS = vcs +v2k +lint=all,noGCWM -simprofile -sverilog +vc -Mupdate -line -full64 -kdb -lca -debug_access+all+reverse +define+FPGA=$(FPGA) +define+P=$(P) +define+USE_IMPERAS_DV=$(USE_IMPERAS_DV) +define+RVVI_API_VERSION=$(RVVI_API_VERSION) +define+IDV_MAX_ERRORS=$(RVVI_API_VERSION) 
+VCS = vcs +v2k +lint=all,noGCWM -simprofile -sverilog +vc -Mupdate -line -full64 -kdb -lca -debug_access+all+reverse  +define+USE_IMPERAS_DV -v2k_generate +define+P.ZICSR_SUPPORTED=1 
 
-coverage: cov/rv64gc_arch64i.ucdb 
-	#iter-elf.bash --cover --search ../tests/coverage
-	vcover merge -out cov/cov.ucdb cov/rv64gc_arch64i.ucdb cov/rv64gc*.ucdb -logfile cov/log
-#	vcover merge -out cov/cov.ucdb cov/rv64gc_arch64i.ucdb cov/rv64gc*.ucdb cov/buildroot_buildroot.ucdb riscv.ucdb -logfile cov/log
-	vcover report -details cov/cov.ucdb > cov/rv64gc_coverage_details.rpt
-	vcover report cov/cov.ucdb -details -instance=/core/ebu. > cov/rv64gc_coverage_ebu.rpt
-	vcover report cov/cov.ucdb -details -instance=/core/priv. > cov/rv64gc_coverage_priv.rpt
-	vcover report cov/cov.ucdb -details -instance=/core/ifu. > cov/rv64gc_coverage_ifu.rpt
-	vcover report cov/cov.ucdb -details -instance=/core/lsu. > cov/rv64gc_coverage_lsu.rpt
-	vcover report cov/cov.ucdb -details -instance=/core/fpu. > cov/rv64gc_coverage_fpu.rpt
-	vcover report cov/cov.ucdb -details -instance=/core/ieu. > cov/rv64gc_coverage_ieu.rpt
-	vcover report cov/cov.ucdb -below 100 -details -instance=/core/ebu. > cov/rv64gc_uncovered_ebu.rpt
-	vcover report cov/cov.ucdb -below 100 -details -instance=/core/priv. > cov/rv64gc_uncovered_priv.rpt
-	vcover report cov/cov.ucdb -below 100 -details -instance=/core/ifu. > cov/rv64gc_uncovered_ifu.rpt
-	vcover report cov/cov.ucdb -below 100 -details -instance=/core/lsu. > cov/rv64gc_uncovered_lsu.rpt
-	vcover report cov/cov.ucdb -below 100 -details -instance=/core/fpu. > cov/rv64gc_uncovered_fpu.rpt
-	vcover report cov/cov.ucdb -below 100 -details -instance=/core/ieu. > cov/rv64gc_uncovered_ieu.rpt
-	vcover report -hierarchical cov/cov.ucdb > cov/rv64gc_coverage_hierarchical.rpt
-	vcover report -below 100 -hierarchical cov/cov.ucdb > cov/rv64gc_uncovered_hierarchical.rpt
-#	vcover report -below 100 cov/cov.ucdb > cov/rv64gc_coverage.rpt
-#	vcover report -recursive cov/cov.ucdb > cov/rv64gc_recursive.rpt
-	vcover report -details -threshH 100 -html cov/cov.ucdb
+# Cadence Xcelium (xrun) specific
+XRUN = xrun -sv -uvm -access +rwc -timescale 1ns/1ns
 
-allclean: clean all
+# QuestaSim specific
+QUESTASIM = vsim -c -do "run -all; quit" -voptargs+acc
 
+# Verilator specific
+VERILATOR = verilator -Wall --cc --trace --build -Wno-ASSIGNDLY -Wno-WIDTHTRUNC -Wno-WIDTHEXPAND -Wno-ENUMVALUE
+
+# Target for compiling and running with VCS
+vcs: clean
+	$(VCS) $(SOURCE_PATH) $(SIMFILES) -o $(OUTPUT)
+	./$(OUTPUT) | tee program.out
+
+# Target for compiling and running with Xcelium (xrun)
+xrun: clean
+	$(XRUN) $(SOURCE_PATH) $(SIMFILES) -R | tee program.out
+
+# Target for compiling and running with QuestaSim
+questasim: clean
+	vlib work
+	vlog $(SOURCE_PATH) $(SIMFILES)
+	$(QUESTASIM) work.$(TOP_MODULE)
+
+# Target for compiling and running with Verilator for rv32i
+verilate: clean
+	$(VERILATOR) $(SIMFILES) --exe --top-module testbench -CFLAGS "-DTEST_CONFIG=\\\"$(CONFIG_VARIANT)\\\"" -I../config/shared -I../config/$(CONFIG_VARIANT) ../testbench/common/*.sv --relative-includes ../testbench/testbench.sv
+	./obj_dir/Vtop
+
+# Clean up generated files
 clean:
-	make clean -C ../tests/riscof
-#   make clean -C ../../tests/wally-riscv-arch-test
-#	make allclean -C ../../tests/imperas-riscv-tests
+	rm -rf obj_dir work transcript vsim.wlf $(OUTPUT) *.vcd csrc ucli.key vc_hdrs.h program.out
+	rm -rf simv* *.daidir dve *.vpd *.dump DVEfiles/ verdi* novas* *fsdb* *.vg *.rep *.db *.chk *.log *.out profileReport* simprofile_dir*
 
-riscoftests: 
-# 	Builds riscv-arch-test 64 and 32-bit versions and builds wally-riscv-arch-test 64 and 32-bit versions
-	make -C ../tests/riscof/ 
-
-wallyriscoftests: 
-# 	Builds riscv-arch-test 64 and 32-bit versions and builds wally-riscv-arch-test 64 and 32-bit versions
-	make -C ../tests/riscof/ wally-riscv-arch-test
-
-memfiles:
-	make -f makefile-memfile wally-sim-files --jobs
-
-coveragetests:
-	make -C ../tests/coverage/ --jobs
-
-deriv:
-	derivgen.pl
-
-benchmarks:
-	$(MAKE) -C ../benchmarks/embench build
-	$(MAKE) -C ../benchmarks/embench size
-	$(MAKE) -C ../benchmarks/embench modelsim_build_memfile
-	$(MAKE) -C ../benchmarks/coremark 
+.PHONY: vcs xrun questasim verilate clean
 

@@ -43,7 +43,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic        StructuralStallD,        // Structural stalls detected by controller
   output logic        LoadStallD,              // Structural stalls for load, sent to performance counters
   output logic        StoreStallD,             // load after store hazard
-  output logic [4:0]  Rs1D, Rs2D,              // Register sources to read in Decode or Execute stage
+  output logic [4:0]  Rs1D, Rs2D, Rs2E,        // Register sources to read in Decode or Execute stage
   // Execute stage control signals             
   input  logic        StallE, FlushE,          // Stall, flush Execute stage
   input  logic [1:0]  FlagsE,                  // Comparison flags ({eq, lt})
@@ -55,6 +55,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic [2:0]  ALUSelectE,              // ALU mux select signal
   output logic        MemReadE, CSRReadE,      // Instruction reads memory, reads a CSR (needed for Hazard unit)
   output logic [2:0]  Funct3E,                 // Instruction's funct3 field
+  output logic [6:0]  Funct7E,                 // Instruction's funct7 field
   output logic        IntDivE,                 // Integer divide
   output logic        MDUE,                    // MDU (multiply/divide) operatio
   output logic        W64E,                    // RV64 W-type operation
@@ -63,8 +64,8 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic        BranchE,                 // Branch instruction
   output logic        SCE,                     // Store Conditional instruction
   output logic        BranchSignedE,           // Branch comparison operands are signed (if it's a branch)
-  output logic [1:0]  BSelectE,                // One-Hot encoding of if it's ZBA_ZBB_ZBC_ZBS instruction
-  output logic [2:0]  ZBBSelectE,              // ZBB mux select signal in Execute stage
+  output logic [3:0]  BSelectE,                // One-Hot encoding of if it's ZBA_ZBB_ZBC_ZBS instruction
+  output logic [3:0]  ZBBSelectE,              // ZBB mux select signal in Execute stage
   output logic [2:0]  BALUControlE,            // ALU Control signals for B instructions in Execute Stage
   output logic        BMUActiveE,              // Bit manipulation instruction being executed
   output logic [1:0]  CZeroE,                  // {czero.nez, czero.eqz} instructions active
@@ -95,7 +96,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic [4:0]  RdW                      // Register destinations in Execute, Memory, or Writeback stage
 );
 
-  logic [4:0] Rs1E, Rs2E;                      // pipelined register sources
+  logic [4:0] Rs1E;                      // pipelined register sources
   logic [6:0] OpD;                             // Opcode in Decode stage
   logic [2:0] Funct3D;                         // Funct3 field in Decode stage
   logic [6:0] Funct7D;                         // Funct7 field in Decode stage
@@ -138,8 +139,8 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        FenceD, FenceE;                 // Fence instruction
   logic        SFenceVmaD;                     // sfence.vma instruction
   logic        IntDivM;                        // Integer divide instruction
-  logic [1:0]  BSelectD;                       // One-Hot encoding if it's ZBA_ZBB_ZBC_ZBS instruction in decode stage
-  logic [2:0]  ZBBSelectD;                     // ZBB Mux Select Signal
+  logic [3:0]  BSelectD;                       // One-Hot encoding if it's ZBA_ZBB_ZBC_ZBS instruction in decode stage
+  logic [3:0]  ZBBSelectD;                     // ZBB Mux Select Signal
   logic [1:0]  CZeroD;
   logic        IFunctD, RFunctD, MFunctD;      // Detect I, R, and M-type RV32IM/Rv64IM instructions
   logic        LFunctD, SFunctD, BFunctD;      // Detect load, store, branch instructions
@@ -351,9 +352,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign SubArithD = BaseSubArithD; // TRUE If B-type or R-type instruction involves inverted operand
 
     // tie off unused bit manipulation signals
-    assign BSelectE = 2'b00;
-    assign BSelectD = 2'b00;
-    assign ZBBSelectE = 3'b000;
+    assign BSelectE = 4'b0000;
+    assign BSelectD = 4'b0000;
+    assign ZBBSelectE = 4'b0000;
     assign BALUControlE = 3'b0;
     assign BMUActiveE = 1'b0;
   end
@@ -417,9 +418,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(1)  controlregD(clk, reset, FlushD, ~StallD, 1'b1, InstrValidD);
 
   // Execute stage pipeline control register and logic
-  flopenrc #(37) controlregE(clk, reset, FlushE, ~StallE,
-                           {ALUSelectD, RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, W64D, SubArithD, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, CMOpD, IFUPrefetchD, LSUPrefetchD, CZeroD, InstrValidD},
-                           {ALUSelectE, IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, SubArithE, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, CMOpE, IFUPrefetchE, LSUPrefetchE, CZeroE, InstrValidE});
+  flopenrc #(44) controlregE(clk, reset, FlushE, ~StallE,
+                           {ALUSelectD, RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, Funct7D, W64D, SubArithD, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, CMOpD, IFUPrefetchD, LSUPrefetchD, CZeroD, InstrValidD},
+                           {ALUSelectE, IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, Funct7E, W64E, SubArithE, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, CMOpE, IFUPrefetchE, LSUPrefetchE, CZeroE, InstrValidE});
   flopenrc #(5)  Rs1EReg(clk, reset, FlushE, ~StallE, Rs1D, Rs1E);
   flopenrc #(5)  Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
   flopenrc #(5)  RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);

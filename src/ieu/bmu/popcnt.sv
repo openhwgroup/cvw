@@ -1,4 +1,3 @@
-
 ///////////////////////////////////////////
 // popccnt.sv
 // Written: Kevin Kim <kekim@hmc.edu>

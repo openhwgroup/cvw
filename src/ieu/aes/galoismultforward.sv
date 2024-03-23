@@ -1,15 +1,15 @@
 ///////////////////////////////////////////
-// ram2p1rwbe_128x64.sv
+// galoismultforward.sv
 //
-// Written: Rose Thompon ross1728@gmail.com 06 March 2024
-// Modified: 
+// Written: ryan.swann@okstate.edu, james.stine@okstate.edu, David_Harris@hmc.edu
+// Created: 20 February 2024
 //
-// Purpose: Empty wrapper for VCS to work.  Would really like to not have any of these.
-// 
+// Purpose: Galois field operations for mix columns operation
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
 // 
-// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
@@ -25,21 +25,13 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module TSDN28HPCPA128X64M4FW( 
-  input  logic          CLKA, 
-  input  logic          CLKB, 
-  input  logic          CEBA, 
-  input  logic          CEBB, 
-  input  logic          WEBA,
-  input  logic          WEBB,
-  input  logic [6:0]    AA, 
-  input  logic [6:0]    AB, 
-  input  logic [63:0]   DA,
-  input  logic [63:0]   DB,
-  input  logic [63:0]   BWEBA, 
-  input  logic [63:0]   BWEBB, 
-  output logic [63:0]   QA,
-  output logic [63:0]   QB
+module galoismultforward(
+   input  logic [7:0] a, 
+   output logic [7:0] y
 );
 
+   logic [7:0] leftshift;
+
+   assign leftshift = {a[6:0], 1'b0};
+   assign y = a[7] ? (leftshift ^ 8'b00011011) : leftshift;
 endmodule

@@ -178,6 +178,15 @@ localparam ZCA_SUPPORTED = 0;
 localparam ZCF_SUPPORTED = 0;
 localparam ZCD_SUPPORTED = 0;
 
+// K extension instructions                                                                
+localparam ZBKB_SUPPORTED = 0;
+localparam ZBKC_SUPPORTED = 0;
+localparam ZBKX_SUPPORTED = 0;
+localparam ZKNE_SUPPORTED = 0;
+localparam ZKND_SUPPORTED = 0;
+localparam ZK_SUPPORTED = 0;
+localparam ZKNH_SUPPORTED = 0;
+
 // Memory synthesis configuration
 localparam USE_SRAM = 0;
 
