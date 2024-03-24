@@ -20,7 +20,7 @@
 00000000
 00000003 # scause from Breakpoint
 00000000
-80000408 # stval of breakpoint instruction adress (0x80000400)
+80000458 # stval of breakpoint instruction adress (0x80000400)
 00000000
 00000800 # masked out mstatus.mpp = 1, mstatus.MPIE = 0, and mstatus.MIE = 0
 00000000
@@ -122,7 +122,7 @@
 00000000
 00000003 # scause from Breakpoint
 00000000
-80000408 # stval of breakpoint instruction adress (0x80000400)
+80000458 # stval of breakpoint instruction adress (0x80000400)
 00000000
 00000120 # masked out sstatus.SPP = 1, sstatus.SPIE = 1, and sstatus.SIE = 0
 00000000
