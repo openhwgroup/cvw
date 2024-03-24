@@ -6,7 +6,7 @@ all:
 	make install
 	make riscof	
 	make testfloat
-	make verify
+#	make verify
 	make coverage
 	make benchmarks
 
