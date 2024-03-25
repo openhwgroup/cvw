@@ -216,8 +216,8 @@ module testbench;
   end
 
   always_ff @(posedge clk)
-    if (TestBenchReset) CurrState <= #1 STATE_TESTBENCH_RESET;
-    else CurrState <= #1 NextState;  
+    if (TestBenchReset) CurrState <= STATE_TESTBENCH_RESET;
+    else CurrState <= NextState;  
 
   // fsm next state logic
   always_comb begin
