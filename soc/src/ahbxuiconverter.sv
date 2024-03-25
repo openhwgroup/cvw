@@ -70,6 +70,8 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
   logic initTrans;
   assign initTrans = HSEL & HTRANS[1] & HREADY;
 
+  // FIXME: Double check burst transactions. I think we don't handle HREADYOUT for those correctly
+
   // UI is ready for a command when initialized and ready to read and write
   logic uiReady;
   assign uiReady = app_rdy & app_wdf_rdy & init_calib_complete;
@@ -86,7 +88,7 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
   // FIFO needs addr + (data + mask) + (enable + write)
   bsg_async_fifo #(
     .width_p(ADDR_SIZE + 9*DATA_SIZE/8 + 2),
-    .lg_size_p(32)
+    .lg_size_p(16)
   ) cmdfifo (
     .w_data_i({HADDR, HWDATA, HWSTRB, initTrans, HWRITE}),
     .w_enq_i(enqueueCmd), .w_clk_i(HCLK), .w_reset_i(~HRESETn),
@@ -111,7 +113,7 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
   assign dequeueResp = HSEL & resprvalid;
   bsg_async_fifo #(
     .width_p(DATA_SIZE),
-    .lg_size_p(16)
+    .lg_size_p(8)
   ) respfifo (
     .w_data_i(app_rd_data),
     .w_enq_i(enqueueResp), .w_clk_i(ui_clk), .w_reset_i(ui_clk_sync_rst),
