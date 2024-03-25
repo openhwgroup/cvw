@@ -419,8 +419,10 @@ module testbench;
           memFile = $fopen(memfilename, "rb");
           readResult = $fread(dut.uncore.uncore.ram.ram.memory.RAM, memFile);
           $fclose(memFile);
-        end else 
-          $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
+        end else
+          if (~P.USE_BSG_DMC) begin
+            $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
+          end
         if (TEST == "embench") $display("Read memfile %s", memfilename);
       end
       if (CopyRAM) begin
@@ -472,8 +474,8 @@ module testbench;
 	generate
 	  if(P.EXT_MEM_SUPPORTED) begin
 	  	if (P.USE_BSG_DMC) begin
-	  		`include "bsg_dmc.svh"
-	  		import bsg_dmc_pkg::bsg_dmc_s;
+	  		`include "bsg_dmc.svh" // FIXME: This should be behind a preprocessor ifdef
+	  		import bsg_dmc_pkg::bsg_dmc_s; // FIXME: This should be behind a preprocessor ifdef
 	  		localparam dq_width = P.XLEN;
 	  		localparam dq_group = dq_width/8;
 	  		logic                 ui_clk;
@@ -541,13 +543,13 @@ module testbench;
 			    force ram.dmc.dmc_clk_rst_gen.clk_gen_ds_inst.reset_i = 1'b0;
 			    force ram.dmc.dmc_clk_rst_gen.clk_gen_ds_inst.strobe_r = 1'b1;
 			  end
-			  bsg_dmc_ahb #(28, P.XLEN, P.XLEN) ram (
+			  bsg_dmc_ahb #(28, P.XLEN, 64) ram (
 		      .dmc_config,
 		      .HCLK, .HRESETn, .HSEL(HSELEXT),
 		      .HADDR(HADDR[27:0]), .HWDATA, .HWSTRB,
 		      .HWRITE, .HTRANS, .HREADY,
 		      .HRDATA(HRDATAEXT), .HRESP(HRESPEXT), .HREADYOUT(HREADYEXT),
-		      .ui_clk(HCLK), // FIXME: We're just running these at the same speed as a test
+		      .ui_clk,
 		      .ddr_ck_p, .ddr_ck_n, .ddr_cke, .ddr_ba, .ddr_addr,
 		      .ddr_cs, .ddr_ras, .ddr_cas, .ddr_we, .ddr_reset, .ddr_odt,
 		      .ddr_dm_oen(ddr_dm_oen_o), .ddr_dm(ddr_dm_o),

@@ -70,8 +70,8 @@ module bsg_dmc_ahb
   logic sys_reset;
 
   // Memory controller config
-  bsg_tag_s       dmc_rst_tag, dmc_ds_tag;
-  bsg_tag_s [3:0] dmc_dly_tag, dmc_dly_trigger_tag;
+  bsg_tag_s                    dmc_rst_tag, dmc_ds_tag;
+  bsg_tag_s [DQ_DATA_SIZE/8-1:0] dmc_dly_tag, dmc_dly_trigger_tag;
 
   // UI signals
   logic                       ui_clk_sync_rst;
