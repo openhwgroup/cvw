@@ -4,6 +4,8 @@ FROM wallysoc/ubuntu_wally
 # assume 4 threads are available to speed up
 ARG NUM_THREADS=4
 ENV RISCV=/opt/riscv
+ENV PATH="$PATH:${RISCV}/bin"
+ENV MANPATH="$MANPATH:${RISCV}/share/man"
 
 WORKDIR /opt/riscv
 
@@ -63,9 +65,11 @@ RUN opam init -y --disable-sandboxing && \
     cd sail-riscv && \
     ARCH=RV32 make c_emulator/riscv_sim_RV32 && \
     ARCH=RV64 make c_emulator/riscv_sim_RV64 && \
-    ln -s ${RISCV}/sail-riscv/c_emulator/riscv_sim_RV64 ${RISCV}/bin/riscv_sim_RV64 && \
-    ln -s ${RISCV}/sail-riscv/c_emulator/riscv_sim_RV32 ${RISCV}/bin/riscv_sim_RV32 && \
+    cp ${RISCV}/sail-riscv/c_emulator/riscv_sim_RV64 ${RISCV}/bin/riscv_sim_RV64 && \
+    cp ${RISCV}/sail-riscv/c_emulator/riscv_sim_RV32 ${RISCV}/bin/riscv_sim_RV32 && \
     rm -rf ${RISCV}/sail-riscv
+
+COPY ./wally /opt/riscv/wally_buildroot
 
 # Buildroot
 RUN git clone https://github.com/buildroot/buildroot.git && \
@@ -73,7 +77,9 @@ RUN git clone https://github.com/buildroot/buildroot.git && \
     git checkout 2021.05 && \
     # cp -r /opt/riscv/riscv-wally/linux/buildroot-config-src/wally ./board && \
     # cp ./board/wally/main.config .config && \
-    wget https://raw.githubusercontent.com/openhwgroup/cvw/main/linux/buildroot-config-src/wally/main.config -o .config && \
+    cp -r /opt/riscv/wally_buildroot ./board/wally && \
+    cp ./board/wally/main.config .config && \
+    # wget https://raw.githubusercontent.com/openhwgroup/cvw/main/linux/buildroot-config-src/wally/main.config -O .config && \
     make --jobs ${NUM_THREADS}
 
 RUN pip3 install --no-cache-dir \
