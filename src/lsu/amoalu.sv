@@ -37,22 +37,38 @@ module amoalu import cvw::*;  #(parameter cvw_t P) (
 );
 
   logic [P.XLEN-1:0] a, b, y;
+  logic              sngd, eq, lt, eq32, lt32, w64;
 
-  // *** see how synthesis generates this and optimize more structurally if necessary to share hardware
-  // a single carry chain should be shared for + and the four min/max
+  // Share hardware among the four amomin/amomax comparators
+  assign sngd = ~LSUFunct7M[5]; // Funct7[5] = 0 for signed amomin/max
+  assign w64 = (LSUFunct3M[1:0] == 2'b10); // operate on bottom 32 bits
+  assign sngd32 = sngd & (P.XLEN == 32 | w64);
+
+  comparator #(32) cmp32(a[31:0], b[31:0], sngd32, {eq32, lt32});
+  if (P.XLEN == 32) begin
+    assign lt = lt32;
+  end else begin
+    logic equpper, ltupper, lt64;
+
+    comparator #(32) cmpupper(a[63:32], b[63:32], sngd, {equpper, ltupper});
+    
+    assign lt64 = ltupper | equpper & lt32;
+    assign lt = w64 ? lt32 : lt64;
+  end
+
   // and the same mux can be used to select b for swap.
   always_comb 
     case (LSUFunct7M[6:2])
-      5'b00001: y = b;                                      // amoswap
-      5'b00000: y = a + b;                                  // amoadd
-      5'b00100: y = a ^ b;                                  // amoxor
-      5'b01100: y = a & b;                                  // amoand
-      5'b01000: y = a | b;                                  // amoor
-      5'b10000: y = ($signed(a) < $signed(b)) ? a : b;      // amomin
-      5'b10100: y = ($signed(a) >= $signed(b)) ? a : b;     // amomax
-      5'b11000: y = ($unsigned(a) < $unsigned(b)) ? a : b;  // amominu
-      5'b11100: y = ($unsigned(a) >= $unsigned(b)) ? a : b; // amomaxu
-      default:  y = 'x;                                     // undefined; *** could change to b for efficiency
+      5'b00001: y = b;           // amoswap
+      5'b00000: y = a + b;       // amoadd
+      5'b00100: y = a ^ b;       // amoxor
+      5'b01100: y = a & b;       // amoand
+      5'b01000: y = a | b;       // amoor
+      5'b10000: y = lt ? a : b;  // amomin
+      5'b10100: y = lt ? b : a;  // amomax
+      5'b11000: y = lt ? a : b;  // amominu
+      5'b11100: y = lt ? b : a;  // amomaxu
+      default:  y = 'x;          // undefined; *** could change to b for efficiency
     endcase
 
   // sign extend if necessary
