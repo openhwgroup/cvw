@@ -1,5 +1,8 @@
-UBUNTU_WALLY_HASH=$(docker images --quiet wallysoc/ubuntu_wally)
-TOOLCHAINS_HASH=$(docker images --quiet wallysoc/toolchains_wally)
+DOCKER_EXEC=${DOCKER_EXEC-$(which podman)}
+CVW_MOUNT=${CVW_MOUNT:$(pwd)/../../}
+
+UBUNTU_WALLY_HASH=$(${DOCKER_EXEC} images --quiet wallysoc/ubuntu_wally)
+TOOLCHAINS_HASH=$(${DOCKER_EXEC} images --quiet wallysoc/toolchains_wally)
 TOOLCHAINS_MOUNT=${TOOLCHAINS_MOUNT}
 
 if [ -z $UBUNTU_WALLY_HASH ]; then
@@ -10,13 +13,13 @@ else
 fi
 
 if [ ! -z $TOOLCHAINS_MOUNT ]; then
-    docker run -it --rm -v ${TOOLCHAINS_MOUNT}:/opt/riscv wallysoc/ubuntu_wally
+    ${DOCKER_EXEC} run -it --rm -v ${TOOLCHAINS_MOUNT}:/opt/riscv -v ${CVW_MOUNT}:/home/${USERNAME}/cvw wallysoc/ubuntu_wally
 elif [ -z $TOOLCHAINS_HASH ]; then
     echo "CANNOT FIND wallysoc/toolchains_wally, please get the image first with \`get_image.sh\`";
     exit 1
 else
     echo "Get ${TOOLCHAINS_HASH} for toolchains_wally"
-    docker run -it --rm wallysoc/toolchains_wally
+    ${DOCKER_EXEC} run -it --rm -v ${CVW_MOUNT}:/home/${USERNAME}/cvw wallysoc/toolchains_wally
 fi
 
 echo "Successfully reach the end"

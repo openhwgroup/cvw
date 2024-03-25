@@ -7,6 +7,8 @@ ENV RISCV=/opt/riscv
 ENV PATH="$PATH:${RISCV}/bin"
 ENV MANPATH="$MANPATH:${RISCV}/share/man"
 
+# this is required by podman
+USER root
 WORKDIR /opt/riscv
 
 # TOOLCHAIN
@@ -90,3 +92,4 @@ RUN git clone https://github.com/verilator/verilator && \
     cd ${RISCV} && rm -rf ${RISCV}/verilator
 
 USER ${USERNAME}
+WORKDIR /home/${USERNAME}/cvw
