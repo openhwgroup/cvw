@@ -19,17 +19,6 @@ RUN git clone https://github.com/riscv/riscv-gnu-toolchain && \
     make install && cd ${RISCV} && \
     rm -rf ${RISCV}/riscv-gnu-toolchain
 
-# # TOOLCHAIN
-# RUN git clone https://github.com/riscv/riscv-gnu-toolchain && \
-#     cd riscv-gnu-toolchain && \
-#     sed -i 's/https/git/' .gitmodules && git submodule sync && \
-#     ./configure --prefix=${RISCV} --enable-multilib \
-#         --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
-
-# RUN cd riscv-gnu-toolchain && make --jobs ${NUM_THREADS}
-# RUN cd riscv-gnu-toolchain && make install && cd ${RISCV}
-# RUN cd riscv-gnu-toolchain && rm -rf ${RISCV}/riscv-gnu-toolchain
-
 # elf2hex
 RUN git clone https://github.com/sifive/elf2hex.git && \
     cd elf2hex && \
@@ -75,15 +64,29 @@ COPY ./wally /opt/riscv/wally_buildroot
 RUN git clone https://github.com/buildroot/buildroot.git && \
     cd buildroot && \
     git checkout 2021.05 && \
-    # cp -r /opt/riscv/riscv-wally/linux/buildroot-config-src/wally ./board && \
-    # cp ./board/wally/main.config .config && \
     cp -r /opt/riscv/wally_buildroot ./board/wally && \
     cp ./board/wally/main.config .config && \
-    # wget https://raw.githubusercontent.com/openhwgroup/cvw/main/linux/buildroot-config-src/wally/main.config -O .config && \
     make --jobs ${NUM_THREADS}
 
 RUN pip3 install --no-cache-dir \
     testresources riscv_config \
     git+https://github.com/riscv/riscof.git
+
+# Wally needs Verilator 5.021 or later.
+# Verilator needs to be built from scratch to get the latest version
+# apt-get install verilator installs version 4.028 as of 6/8/23
+RUN apt-get install -y \
+    perl g++ ccache help2man libgoogle-perftools-dev numactl perl-doc zlib1g \
+    libfl2  libfl-dev && \
+    apt-get clean
+RUN git clone https://github.com/verilator/verilator && \
+    cd verilator && \
+    git pull && \
+    git checkout master       && \
+    autoconf && \
+    ./configure --prefix=${RISCV} && \
+    make -j ${NUM_THREADS} && \
+    make install && \
+    cd ${RISCV} && rm -rf ${RISCV}/verilator
 
 USER ${USERNAME}

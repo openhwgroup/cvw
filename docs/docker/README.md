@@ -118,6 +118,7 @@ There are stages in the old Dockerfile:
     - spike
     - sail
     - buildroot
+    - verilator
 
 ## References
 
