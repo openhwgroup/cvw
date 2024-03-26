@@ -27,6 +27,7 @@ vlib work
 vlog +incdir+../config/$1 \
      +incdir+../config/shared \
      +define+USE_IMPERAS_DV \
+     +define+IDV_INCLUDE_TRACE2COV \
      +incdir+$env(IMPERAS_HOME)/ImpPublic/include/host \
      +incdir+$env(IMPERAS_HOME)/ImpProprietary/include/host \
      $env(IMPERAS_HOME)/ImpPublic/source/host/rvvi/rvviApiPkg.sv    \
@@ -55,9 +56,10 @@ vlog +incdir+../config/$1 \
 vopt +acc work.testbench -G DEBUG=1 -o workopt 
 eval vsim workopt +nowarn3829  -fatal 7 \
      -sv_lib $env(IMPERAS_HOME)/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model \
-     +testDir=$env(TESTDIR) $env(OTHERFLAGS) +TRACE2COV_ENABLE=1 \
-     -do "coverage save -onexit ./riscv.ucdb"
-#     -do "coverage save -onexit ./riscv.ucdb"
+     +testDir=$env(TESTDIR) $env(OTHERFLAGS) +TRACE2COV_ENABLE=1
+
+coverage save -onexit ./riscv.ucdb
+
 
 view wave
 #-- display input and output signals as hexidecimal values
