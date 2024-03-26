@@ -52,8 +52,8 @@ module clint_apb import cvw::*;  #(parameter cvw_t P) (
   assign PREADY   = 1'b1;                     // CLINT never takes >1 cycle to respond
 
   // word aligned reads
-  if (P.XLEN==64) assign #2 entry = {PADDR[15:3], 3'b000};
-  else            assign #2 entry = {PADDR[15:2], 2'b00}; 
+  if (P.XLEN==64) assign entry = {PADDR[15:3], 3'b000};
+  else            assign entry = {PADDR[15:2], 2'b00}; 
   
   // DH 2/20/21: Eventually allow MTIME to run off a separate clock
   // This will require synchronizing MTIME to the system clock
