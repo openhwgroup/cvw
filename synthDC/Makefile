@@ -150,3 +150,8 @@ clean:
 	rm -f Synopsys_stack_trace_*.txt
 	rm -f crte_*.txt
 	
+csv:
+	@source scripts/fp-synth.sh
+	@writeCSV
+	@python3 scripts/parseCSV.py
+
