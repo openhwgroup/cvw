@@ -70,33 +70,33 @@ module gpio_apb import cvw::*;  #(parameter cvw_t P) (
       input_en  <= 0;
       output_en <= 0;
       // *** synch reset not yet implemented [DH: can we delete this comment?  Check if a sync reset is required]
-      output_val <= #1 0;
-      rise_ie    <= #1 0;
-      rise_ip    <= #1 0;
-      fall_ie    <= #1 0;
-      fall_ip    <= #1 0;
-      high_ie    <= #1 0;
-      high_ip    <= #1 0;
-      low_ie     <= #1 0;
-      low_ip     <= #1 0;
-      iof_en     <= #1 0;
-      iof_sel    <= #1 0;
-      out_xor    <= #1 0;
+      output_val <= 0;
+      rise_ie    <= 0;
+      rise_ip    <= 0;
+      fall_ie    <= 0;
+      fall_ip    <= 0;
+      high_ie    <= 0;
+      high_ip    <= 0;
+      low_ie     <= 0;
+      low_ip     <= 0;
+      iof_en     <= 0;
+      iof_sel    <= 0;
+      out_xor    <= 0;
     end else begin     // writes
         // According to FE310 spec: Once the interrupt is pending, it will remain set until a 1 is written to the *_ip register at that bit.
         /* verilator lint_off CASEINCOMPLETE */
       if (memwrite) 
         case(entry)
-          8'h04: input_en   <= #1 Din;
-          8'h08: output_en  <= #1 Din;
-          8'h0C: output_val <= #1 Din;
-          8'h18: rise_ie    <= #1 Din;
-          8'h20: fall_ie    <= #1 Din;
-          8'h28: high_ie    <= #1 Din;
-          8'h30: low_ie     <= #1 Din;
-          8'h38: iof_en     <= #1 Din;
-          8'h3C: iof_sel    <= #1 Din;
-          8'h40: out_xor    <= #1 Din;
+          8'h04: input_en   <= Din;
+          8'h08: output_en  <= Din;
+          8'h0C: output_val <= Din;
+          8'h18: rise_ie    <= Din;
+          8'h20: fall_ie    <= Din;
+          8'h28: high_ie    <= Din;
+          8'h30: low_ie     <= Din;
+          8'h38: iof_en     <= Din;
+          8'h3C: iof_sel    <= Din;
+          8'h40: out_xor    <= Din;
         endcase
         /* verilator lint_on CASEINCOMPLETE */
 
@@ -111,22 +111,22 @@ module gpio_apb import cvw::*;  #(parameter cvw_t P) (
       else                             low_ip  <= low_ip  | ~input3d;
 
       case(entry) // flop to sample inputs
-        8'h00: Dout   <= #1 input_val;
-        8'h04: Dout   <= #1 input_en;
-        8'h08: Dout   <= #1 output_en;
-        8'h0C: Dout   <= #1 output_val;
-        8'h18: Dout   <= #1 rise_ie;
-        8'h1C: Dout   <= #1 rise_ip;
-        8'h20: Dout   <= #1 fall_ie;
-        8'h24: Dout   <= #1 fall_ip;
-        8'h28: Dout   <= #1 high_ie;
-        8'h2C: Dout   <= #1 high_ip;
-        8'h30: Dout   <= #1 low_ie;
-        8'h34: Dout   <= #1 low_ip;
-        8'h38: Dout   <= #1 iof_en;
-        8'h3C: Dout   <= #1 iof_sel;
-        8'h40: Dout   <= #1 out_xor; 
-        default: Dout <= #1 0;
+        8'h00: Dout   <= input_val;
+        8'h04: Dout   <= input_en;
+        8'h08: Dout   <= output_en;
+        8'h0C: Dout   <= output_val;
+        8'h18: Dout   <= rise_ie;
+        8'h1C: Dout   <= rise_ip;
+        8'h20: Dout   <= fall_ie;
+        8'h24: Dout   <= fall_ip;
+        8'h28: Dout   <= high_ie;
+        8'h2C: Dout   <= high_ip;
+        8'h30: Dout   <= low_ie;
+        8'h34: Dout   <= low_ip;
+        8'h38: Dout   <= iof_en;
+        8'h3C: Dout   <= iof_sel;
+        8'h40: Dout   <= out_xor; 
+        default: Dout <= 0;
       endcase
     end
 
