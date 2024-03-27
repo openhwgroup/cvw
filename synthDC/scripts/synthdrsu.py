@@ -14,7 +14,7 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 regressionDir = os.path.dirname(os.path.join(os.path.abspath(__file__),os.pardir))
-Job = namedtuple("Job", ['name', 'frequency', 'cmd', 'grepstr'])
+Job = namedtuple("Job", ['name', 'frequency', 'cmd', 'grepstr', 'design'])
 derivedconfigs = [
     "fd_ieee_div_2_1i_rv32gc", "fd_ieee_div_2_1i_rv64gc", "fd_ieee_div_2_1_rv32gc",
     "fd_ieee_div_2_1_rv64gc", "fd_ieee_div_2_2i_rv32gc", "fd_ieee_div_2_2i_rv64gc",
@@ -63,8 +63,7 @@ def search_log_for_text(text, logfile):
 
 def run_synth_job(config):
     """Run the given test case, and return 0 if the test suceeds and 1 if it fails"""
-    logname = "runs/"+config.name+".log"
-    logname = f"runs/drsu_{config.name}_orig_tsmc28nm_{config.frequency}_MHz/synth.out"
+    logname = f"runs/{config.design}_{config.name}_orig_tsmc28nm_{config.frequency}_MHz/synth.out"
     cmd = config.cmd
 #    print(cmd)
     os.system(cmd)
@@ -91,6 +90,7 @@ def main():
     for config in derivedconfigs:
       drsu_5000 = Job(
           name=config,
+          design="drsu",
           cmd=f"make -C $WALLY/synthDC synth DESIGN=drsu TECH=tsmc28 CONFIG={config} FREQ=5000 > /dev/null", 
           grepstr="Optimization",
           frequency=5000
@@ -98,6 +98,7 @@ def main():
 
       drsu_100 = Job(
           name=config,
+          design="drsu",
           cmd=f"make -C $WALLY/synthDC synth DESIGN=drsu TECH=tsmc28 CONFIG={config} FREQ=100 > /dev/null", 
           grepstr="Optimization", 
           frequency=100
@@ -108,6 +109,7 @@ def main():
     for config in derivedconfigsmdu:
       mdu_5000 = Job(
           name=config,
+          design="mdudiv",
           cmd=f"make -C $WALLY/synthDC synth DESIGN=mdudiv TECH=tsmc28 CONFIG={config} FREQ=5000 > /dev/null", 
           grepstr="Optimization",
           frequency=5000
@@ -115,6 +117,7 @@ def main():
 
       mdu_100 = Job(
           name=config,
+          design="mdudiv",
           cmd=f"make -C $WALLY/synthDC synth DESIGN=mdudiv TECH=tsmc28 CONFIG={config} FREQ=100 > /dev/null", 
           grepstr="Optimization", 
           frequency=100
