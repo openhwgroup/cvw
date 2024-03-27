@@ -80,7 +80,7 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     if {$1 eq "soc"} {
         set bsg_dir ../soc/src/basejump_stl
         vlog -lint +define+den2048Mb+sg5+x32+FULL_MEM +incdir+$bsg_dir/bsg_clk_gen+$bsg_dir/bsg_dmc+$bsg_dir/bsg_misc+$bsg_dir/bsg_noc+$bsg_dir/bsg_tag+$bsg_dir/testing/bsg_dmc/lpddr_verilog_model $bsg_dir/bsg_dmc/bsg_dmc_pkg.sv $bsg_dir/bsg_noc/bsg_noc_pkg.sv $bsg_dir/bsg_noc/bsg_mesh_router_pkg.sv $bsg_dir/bsg_noc/bsg_wormhole_router_pkg.sv $bsg_dir/bsg_tag/bsg_tag_pkg.sv $bsg_dir/*/*.sv $bsg_dir/testing/bsg_dmc/lpddr_verilog_model/*.sv -suppress 2583,2596,2605,2902,7063,8885,13286,13314,13388
-        vlog -lint +incdir+../config/$1+../config/deriv/$1+../config/shared+$bsg_dir/bsg_clk_gen+$bsg_dir/bsg_dmc+$bsg_dir/bsg_misc+$bsg_dir/bsg_tag+$bsg_dir/testing/bsg_dmc/lpddr_verilog_model ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv ../soc/src/*.sv -suppress 2583,2596,2605,2902,7063,8885,13286,13314,13388
+        vlog -lint +define+USE_BSG +incdir+../config/$1+../config/deriv/$1+../config/shared+$bsg_dir/bsg_clk_gen+$bsg_dir/bsg_dmc+$bsg_dir/bsg_misc+$bsg_dir/bsg_tag+$bsg_dir/testing/bsg_dmc/lpddr_verilog_model ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv ../soc/src/*.sv -suppress 2583,2596,2605,2902,7063,8885,13286,13314,13388
     } else {
         vlog +incdir+../config/$1+../config/deriv/$1+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583,7063,13286
     }
