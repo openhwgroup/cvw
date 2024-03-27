@@ -619,7 +619,9 @@ module testbench;
 			    force ram.dmc.dmc_clk_rst_gen.dly_lines[3].dly_line_inst.ctrl_rrr = 31;
 			    force ram.dmc.dmc_clk_rst_gen.clk_gen_ds_inst.reset_i = 1'b1;
 			    force ram.dmc.dmc_clk_rst_gen.clk_gen_ds_inst.strobe_r = 1'b0;
-			    #100ns
+			    ui_clk = 1'b0;
+			    dfi_clk_2x_i = 1'b0;
+			    #100ns;
 			    force ram.dmc.dmc_clk_rst_gen.clk_gen_ds_inst.reset_i = 1'b0;
 			    force ram.dmc.dmc_clk_rst_gen.clk_gen_ds_inst.strobe_r = 1'b1;
 			  end
@@ -659,12 +661,6 @@ module testbench;
 	          .Addr(ddr_addr[13:0]), .Ba(ddr_ba[1:0]), .Clk(ddr_ck_p), .Clk_n(ddr_ck_n),
 	          .Cke(ddr_cke), .Cs_n(ddr_cs), .Ras_n(ddr_ras), .Cas_n(ddr_cas), .We_n(ddr_we),
 	          .Dm(ddr_dm[dq_group/2*(ddr_i+1)-1:dq_group/2*ddr_i]));
-	      end
-	      initial begin: dmc_reset
-	        force ram.sys_reset = 1'b1;
-			    ui_clk = 1'b0;
-			    dfi_clk_2x_i = 1'b0;
-			    #1000ns force ram.sys_reset = 0;
 	      end
 	  	end else begin
         ram_ahb #(.P(P), .BASE(P.EXT_MEM_BASE), .RANGE(P.EXT_MEM_RANGE)) 
