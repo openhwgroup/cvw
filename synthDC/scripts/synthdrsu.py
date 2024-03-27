@@ -103,9 +103,9 @@ def main():
           grepstr="Optimization", 
           frequency=100
       )
-        
       configs.append(drsu_5000)
       configs.append(drsu_100)
+
     for config in derivedconfigsmdu:
       mdu_5000 = Job(
           name=config,
