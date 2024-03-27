@@ -452,7 +452,7 @@ def main():
         TIMEOUT_DUR = 20*60 # seconds
         # FIXME: Do we need to run buildroot?
     else:
-        TIMEOUT_DUR = 10*60 # seconds
+        TIMEOUT_DUR = 60 # seconds
         configs.append(getBuildrootTC(boot=False))
 
     # Scale the number of concurrent processes to the number of test cases, but

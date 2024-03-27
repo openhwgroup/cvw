@@ -243,7 +243,7 @@ module testbench;
 
   initial begin
     TestBenchReset = 1;
-    # 100ns;
+    # 1000ns;
     TestBenchReset = 0;
   end
 
@@ -420,9 +420,7 @@ module testbench;
           readResult = $fread(dut.uncore.uncore.ram.ram.memory.RAM, memFile);
           $fclose(memFile);
         end else
-          if (~P.USE_BSG_DMC) begin
-            $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-          end
+          $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
         if (TEST == "embench") $display("Read memfile %s", memfilename);
       end
       if (CopyRAM) begin
@@ -539,7 +537,9 @@ module testbench;
 			    force ram.dmc.dmc_clk_rst_gen.dly_lines[3].dly_line_inst.ctrl_rrr = 31;
 			    force ram.dmc.dmc_clk_rst_gen.clk_gen_ds_inst.reset_i = 1'b1;
 			    force ram.dmc.dmc_clk_rst_gen.clk_gen_ds_inst.strobe_r = 1'b0;
-			    #100ns
+			    ui_clk = 1'b0;
+			    dfi_clk_2x_i = 1'b0;
+			    #100ns;
 			    force ram.dmc.dmc_clk_rst_gen.clk_gen_ds_inst.reset_i = 1'b0;
 			    force ram.dmc.dmc_clk_rst_gen.clk_gen_ds_inst.strobe_r = 1'b1;
 			  end
@@ -580,15 +580,9 @@ module testbench;
 	          .Cke(ddr_cke), .Cs_n(ddr_cs), .Ras_n(ddr_ras), .Cas_n(ddr_cas), .We_n(ddr_we),
 	          .Dm(ddr_dm[dq_group/2*(ddr_i+1)-1:dq_group/2*ddr_i]));
 	      end
-	      initial begin: dmc_reset
-	        force ram.sys_reset = 1'b1;
-			    ui_clk = 1'b0;
-			    dfi_clk_2x_i = 1'b0;
-			    #1000ns force ram.sys_reset = 0;
-	      end
-	  	end else begin
-		    ram_ahb #(.BASE(P.EXT_MEM_BASE), .RANGE(P.EXT_MEM_RANGE)) 
-		    ram (.HCLK, .HRESETn, .HADDR, .HWRITE, .HTRANS, .HWDATA, .HSELRam(HSELEXT), 
+	    end else begin
+        ram_ahb #(.BASE(P.EXT_MEM_BASE), .RANGE(P.EXT_MEM_RANGE)) 
+        ram (.HCLK, .HRESETn, .HADDR, .HWRITE, .HTRANS, .HWDATA, .HSELRam(HSELEXT), 
 	           .HREADRam(HRDATAEXT), .HREADYRam(HREADYEXT), .HRESPRam(HRESPEXT), .HREADY, .HWSTRB);
 	    end
 	  end else begin 
