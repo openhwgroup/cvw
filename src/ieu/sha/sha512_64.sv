@@ -4,7 +4,7 @@
 // Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
 // Created: 13 February 2024
 //
-// Purpose: RISC-V ZKNH 512-bit SHA: select shifted inputs and XOR3
+// Purpose: RISC-V (RV64) ZKNH 512-bit SHA: select shifted inputs and XOR3
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -56,7 +56,7 @@ module sha512_64 (
    assign x[3][1] = {A[17:0], A[63:18]};
    assign x[3][2] = {A[40:0], A[63:41]};
 
-   // 64-bit muxes to select inputs to xor3 for sha256 
+   // 64-bit muxes to select inputs to xor3 for sha512
    assign y[0] = x[ZKNHSelect[1:0]][0]; 
    assign y[1] = x[ZKNHSelect[1:0]][1]; 
    assign y[2] = x[ZKNHSelect[1:0]][2]; 

@@ -78,7 +78,7 @@ module ram1p1rwe import cvw::* ; #(parameter USE_SRAM=0, DEPTH=64, WIDTH=44) (
 
     /*      // Alternate read logic reads the old contents of mem[addr].  Increases setup time and adds dout reg, but reduces clk to q
      always_ff @(posedge clk) 
-     if(ce) dout <= #1 mem[addr]; */
+     if(ce) dout <= mem[addr]; */
 
     // Write divided into part for bytes and part for extra msbs
     // Questa sim version 2022.3_2 does not allow multiple drivers for RAM when using always_ff.
@@ -90,6 +90,6 @@ module ram1p1rwe import cvw::* ; #(parameter USE_SRAM=0, DEPTH=64, WIDTH=44) (
       // so we can never get we=1, ce=0 for I$.
       if (ce & we)
         // coverage on
-        RAM[addr] <= #1 din;
+        RAM[addr] <= din;
   end
 endmodule

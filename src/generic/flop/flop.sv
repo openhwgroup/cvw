@@ -31,6 +31,6 @@ module flop #(parameter WIDTH = 8) (
   output logic [WIDTH-1:0] q);
 
   always_ff @(posedge clk)
-    q <= #1 d;
+    q <= d;
 endmodule
 

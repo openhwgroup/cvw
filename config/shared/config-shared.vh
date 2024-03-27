@@ -1,3 +1,6 @@
+//max function
+`define max(a,b) (((a) > (b)) ? (a) : (b))
+
 // constants defining different privilege modes
 // defined in Table 1.1 of the privileged spec
 localparam M_MODE  = (2'b11);
@@ -107,12 +110,13 @@ localparam DURLEN      = $clog2(FPDUR);                             // enough bi
 localparam DIVBLEN     = $clog2(DIVb+1);                            // enough bits to count number of fractional bits + 1 integer bit
 
 // largest length in IEU/FPU
-localparam CVTLEN = ((NF<XLEN) ? (XLEN) : (NF));  // max(XLEN, NF)
-localparam LLEN = (($unsigned(FLEN)<$unsigned(XLEN)) ? ($unsigned(XLEN)) : ($unsigned(FLEN)));
+localparam BASECVTLEN = `max(XLEN, NF); // convert length excluding Zfa fcvtmod.w.d
+localparam CVTLEN = ZFA_SUPPORTED ? `max(BASECVTLEN, 32'd84) : BASECVTLEN; // fcvtmod.w.d needs at least 32+52 because a double with 52 fractional bits might be into upper bits of 32 bit word
+localparam LLEN = `max($unsigned(FLEN), $unsigned(XLEN));
 localparam LOGCVTLEN = $unsigned($clog2(CVTLEN+1));
-localparam NORMSHIFTSZ = (((CVTLEN+NF+1)>(DIVb + 1 +NF+1) & (CVTLEN+NF+1)>(3*NF+6)) ? (CVTLEN+NF+1) : ((DIVb + 1 +NF+1) > (3*NF+6) ? (DIVb + 1 +NF+1) : (3*NF+6))); // max(CVTLEN+NF+1, DIVb + 1 + NF + 1, 3*NF+6)
+localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1), (DIVb + 1 + NF + 1)), (3*NF+6));
 localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));
-localparam CORRSHIFTSZ = (NORMSHIFTSZ-2 > (DIVMINb + 1 + NF)) ? NORMSHIFTSZ-2 : (DIVMINb+1+NF);  // max(NORMSHIFTSZ-2, DIVMINb + 1 + NF)
+localparam CORRSHIFTSZ = `max((NORMSHIFTSZ-2), (DIVMINb + 1 + NF));
 
 
 // Disable spurious Verilator warnings

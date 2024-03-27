@@ -34,7 +34,7 @@ module bsg_dmc_ahb
 #(
   parameter AHB_ADDR_SIZE = 28,
   parameter AHB_DATA_SIZE = 64,
-  parameter DDR_DATA_SIZE = 32,
+  parameter DQ_DATA_SIZE  = 64,
   parameter BURST_LENGTH  = 8,
   parameter FIFO_DEPTH    = 4
 ) (
@@ -55,13 +55,13 @@ module bsg_dmc_ahb
   output logic [15:0]                ddr_addr,
   output logic                       ddr_cs, ddr_ras, ddr_cas,
   output logic                       ddr_we, ddr_reset, ddr_odt,
-  output logic [DDR_DATA_SIZE/8-1:0] ddr_dm_oen, ddr_dm,
-  output logic [DDR_DATA_SIZE/8-1:0] ddr_dqs_p_oen, ddr_dqs_p_ien, ddr_dqs_p_out,
-  input  logic [DDR_DATA_SIZE/8-1:0] ddr_dqs_p_in,
-  output logic [DDR_DATA_SIZE/8-1:0] ddr_dqs_n_oen, ddr_dqs_n_ien, ddr_dqs_n_out,
-  input  logic [DDR_DATA_SIZE/8-1:0] ddr_dqs_n_in,
-  output logic [DDR_DATA_SIZE-1:0]   ddr_dq_oen, ddr_dq_out,
-  input  logic [DDR_DATA_SIZE-1:0]   ddr_dq_in,
+  output logic [DQ_DATA_SIZE/8-1:0]  ddr_dm_oen, ddr_dm,
+  output logic [DQ_DATA_SIZE/8-1:0]  ddr_dqs_p_oen, ddr_dqs_p_ien, ddr_dqs_p_out,
+  input  logic [DQ_DATA_SIZE/8-1:0]  ddr_dqs_p_in,
+  output logic [DQ_DATA_SIZE/8-1:0]  ddr_dqs_n_oen, ddr_dqs_n_ien, ddr_dqs_n_out,
+  input  logic [DQ_DATA_SIZE/8-1:0]  ddr_dqs_n_in,
+  output logic [DQ_DATA_SIZE-1:0]    ddr_dq_oen, ddr_dq_out,
+  input  logic [DQ_DATA_SIZE-1:0]    ddr_dq_in,
   input  logic                       dfi_clk_2x,
   output logic                       dfi_clk_1x
 );
@@ -70,8 +70,8 @@ module bsg_dmc_ahb
   logic sys_reset;
 
   // Memory controller config
-  bsg_tag_s       dmc_rst_tag, dmc_ds_tag;
-  bsg_tag_s [3:0] dmc_dly_tag, dmc_dly_trigger_tag;
+  bsg_tag_s                    dmc_rst_tag, dmc_ds_tag;
+  bsg_tag_s [DQ_DATA_SIZE/8-1:0] dmc_dly_tag, dmc_dly_trigger_tag;
 
   // UI signals
   logic                       ui_clk_sync_rst;
@@ -101,7 +101,7 @@ module bsg_dmc_ahb
     .ui_addr_width_p(AHB_ADDR_SIZE),
     .ui_data_width_p(AHB_DATA_SIZE),
     .burst_data_width_p(AHB_DATA_SIZE * BURST_LENGTH),
-    .dq_data_width_p(DDR_DATA_SIZE),
+    .dq_data_width_p(DQ_DATA_SIZE),
     .cmd_afifo_depth_p(FIFO_DEPTH),
     .cmd_sfifo_depth_p(FIFO_DEPTH)
   ) dmc (

@@ -44,7 +44,7 @@ module zknde64 import cvw::*; #(parameter cvw_t P) (
 
     // One S Box is always needed for aes64ks1i and is also needed for aes64e if that is supported.  Put it at the top level to allow sharing
     mux2 #(32) sboxmux(SboxEIn, SboxKIn, ZKNSelect[1], Sbox0In);
-    aessboxword sbox(Sbox0In, Sbox0Out);                       // Substitute bytes of value obtained for tmp2 using Rijndael sbox
+    aessbox32 sbox(Sbox0In, Sbox0Out);                       // Substitute bytes of value obtained for tmp2 using Rijndael sbox
 
     // Both ZKND and ZKNE support aes64ks1i and aes64ks2 instructions
     aes64ks1i aes64ks1i(.round, .rs1(A), .Sbox0Out, .SboxKIn, .result(aes64ks1iRes));

@@ -33,7 +33,7 @@ vlib work
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
-    vlog -lint -work work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
+    vlog -lint -work work_${1}_${2} +incdir+../config/$1 +incdir+../config/deriv/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
     # start and run simulation
     vopt +acc work_${1}_${2}.testbench -work work_${1}_${2} -G RISCV_DIR=$3 -G INSTR_LIMIT=$4 -G INSTR_WAVEON=$5 -G CHECKPOINT=$6 -G NO_SPOOFING=0 -o testbenchopt 
     vsim -lib work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3829,13286  -fatal 7
@@ -47,7 +47,7 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     exec ./slack-notifier/slack-notifier.py
     
 } elseif {$2 eq "buildroot-no-trace"} {
-    vlog -lint -work work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
+    vlog -lint -work work_${1}_${2} +incdir+../config/deriv/$1 +incdir+../config/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
     # start and run simulation
     vopt +acc work_${1}_${2}.testbench -work work_${1}_${2} -G RISCV_DIR=$3 -G INSTR_LIMIT=0 -G INSTR_WAVEON=0 -G CHECKPOINT=0 -G NO_SPOOFING=1 -o testbenchopt 
     vsim -lib work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3829,13286  -fatal 7
@@ -68,7 +68,7 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
 
 } elseif {$2 eq "fpga"} {
     echo "hello"
-    vlog  -work work +incdir+../config/fpga +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/sdc/*.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv  ../../fpga/sim/*.sv -suppress 8852,12070,3084,3829,2583,7063,13286
+    vlog  -work work +incdir+../config/fpga +incdir+../config/deriv/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/sdc/*.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv  ../../fpga/sim/*.sv -suppress 8852,12070,3084,3829,2583,7063,13286
     vopt +acc work.testbench -G TEST=$2 -G DEBUG=0 -o workopt     
     vsim workopt +nowarn3829  -fatal 7
     
@@ -77,10 +77,16 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     run 20 ms
 
 } else {
-    vlog +incdir+../config/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583,13286 -suppress 7063 
+    if {$1 eq "soc"} {
+        set bsg_dir ../soc/src/basejump_stl
+        vlog -lint +define+den2048Mb+sg5+x32+FULL_MEM +incdir+$bsg_dir/bsg_clk_gen+$bsg_dir/bsg_dmc+$bsg_dir/bsg_misc+$bsg_dir/bsg_noc+$bsg_dir/bsg_tag+$bsg_dir/testing/bsg_dmc/lpddr_verilog_model $bsg_dir/bsg_dmc/bsg_dmc_pkg.sv $bsg_dir/bsg_noc/bsg_noc_pkg.sv $bsg_dir/bsg_noc/bsg_mesh_router_pkg.sv $bsg_dir/bsg_noc/bsg_wormhole_router_pkg.sv $bsg_dir/bsg_tag/bsg_tag_pkg.sv $bsg_dir/*/*.sv $bsg_dir/testing/bsg_dmc/lpddr_verilog_model/*.sv -suppress 2583,2596,2605,2902,7063,8885,13286,13314,13388
+        vlog -lint +incdir+../config/$1+../config/deriv/$1+../config/shared+$bsg_dir/bsg_clk_gen+$bsg_dir/bsg_dmc+$bsg_dir/bsg_misc+$bsg_dir/bsg_tag+$bsg_dir/testing/bsg_dmc/lpddr_verilog_model ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv ../soc/src/*.sv -suppress 2583,2596,2605,2902,7063,8885,13286,13314,13388
+    } else {
+        vlog +incdir+../config/$1+../config/deriv/$1+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583,7063,13286
+    }
     vopt +acc work.testbench -G TEST=$2 -G DEBUG=1 -o workopt 
 
-    vsim workopt +nowarn3829  -fatal 7
+    vsim workopt +nowarn3829 -fatal 7 -suppress 3009,3999,8885
 
     view wave
     #-- display input and output signals as hexidecimal values
@@ -103,7 +109,7 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
 
 
 #elseif {$2 eq "buildroot-no-trace""} {
-#    vlog -lint -work work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
+#    vlog -lint -work work_${1}_${2} +incdir+../config/deriv/$1 +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
     # start and run simulation
 #    vopt +acc work_${1}_${2}.testbench -work work_${1}_${2} -G RISCV_DIR=$3 -G INSTR_LIMIT=470350800 -G INSTR_WAVEON=470350800 -G CHECKPOINT=470350800 -G DEBUG_TRACE=0 -o testbenchopt 
 #    vsim -lib work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3829
