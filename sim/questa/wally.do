@@ -202,7 +202,7 @@ vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} ${ParamArgs}
 
 #vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${PlusArgs} -fatal 7 ${SVLib} ${SVLibPath} ${OtherFlags} +TRACE2COV_ENABLE=1 -suppress 3829 ${CoverageVsimArg}
 #vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${PlusArgs} -fatal 7 ${SVLib} ${SVLibPath} +IDV_TRACE2COV=1 +TRACE2COV_ENABLE=1 -suppress 3829 ${CoverageVsimArg}
-vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} $temp0 $temp1 $temp2 $temp3 -fatal 7 ${SVLib} ${SVLibPath} -suppress 3009,3829,3999,8885 ${CoverageVsimArg} 
+vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} $temp0 $temp1 $temp2 $temp3 -fatal 7 ${SVLib} ${SVLibPath} -suppress 3009,3829,3999,8885 ${CoverageVsimArg}
 
 # power add generates the logging necessary for said generation.
 # power add -r /dut/core/*
