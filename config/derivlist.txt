@@ -1347,4 +1347,35 @@ IDIV_ON_FPU     1
 deriv fdqh_ieee_div_4_4i_rv64gc fdqh_ieee_div_4_4_rv64gc        
 IDIV_ON_FPU     1
 
+# divider variants for various idiv_bitspercycle
+
+deriv idiv_bitspercycle_1_rv64gc rv64gc
+IDIV_BITSPERCYCLE 1
+
+deriv idiv_bitspercycle_2_rv64gc rv64gc
+IDIV_BITSPERCYCLE 2
+
+deriv idiv_bitspercycle_4_rv64gc rv64gc
+IDIV_BITSPERCYCLE 4
+
+deriv idiv_bitspercycle_8_rv64gc rv64gc
+IDIV_BITSPERCYCLE 8
+
+deriv idiv_bitspercycle_16_rv64gc rv64gc
+IDIV_BITSPERCYCLE 16
+
+deriv idiv_bitspercycle_1_rv32gc rv32gc
+IDIV_BITSPERCYCLE 1
+
+deriv idiv_bitspercycle_2_rv32gc rv32gc
+IDIV_BITSPERCYCLE 2
+
+deriv idiv_bitspercycle_4_rv32gc rv32gc
+IDIV_BITSPERCYCLE 4
+
+deriv idiv_bitspercycle_8_rv32gc rv32gc
+IDIV_BITSPERCYCLE 8
+
+deriv idiv_bitspercycle_16_rv32gc rv32gc
+IDIV_BITSPERCYCLE 16
 
