@@ -27,8 +27,11 @@ def parse_xlen(rows,freq):
         if "rv64gc" in row[0]:
             rows64.append(row)
     rowout = []
-    rowout.extend(parse_fpmode(rows32,freq))
-    rowout.extend(parse_fpmode(rows64,freq))
+    if ("drsu" in row[0]):
+      rowout.extend(parse_fpmode(rows32,freq))
+      rowout.extend(parse_fpmode(rows64,freq))
+    else if ("mdudiv" in row[0]):
+      rowout.extend(parse_idiv=)
     return rowout
      
     
@@ -103,17 +106,91 @@ def parse_r_k(rows,freq):
     rowout.insert(0, titleClean(rows[0][0]))
     return rowout
 
+# *** NOTE CHANGE THIS STUFF
+def parse_idivbits(rows,freq):
+    rowout = []
+    for row in rows:
+        design = row[0]
+        r = int(design.split("_")[4])
+        k = int(design.split("_")[5][0])
+        area = row[1]
+        delay = row[2]
+        power = float(row[3])/freq
+        if r==2 and k==1 and len(rowout)/3 == 0:
+            rowout.append(area)
+            rowout.append(delay)
+            rowout.append(power)
+    for row in rows:
+        design = row[0]
+        r = int(design.split("_")[4])
+        k = int(design.split("_")[5][0])
+        area = row[1]
+        delay = row[2]
+        power = float(row[3])/freq
+        if r==2 and k==2 and len(rowout)/3 == 1:
+            rowout.append(area)
+            rowout.append(delay)
+            rowout.append(power)
+    for row in rows:
+        design = row[0]
+        r = int(design.split("_")[4])
+        k = int(design.split("_")[5][0])
+        area = row[1]
+        delay = row[2]
+        power = float(row[3])/freq
+        if r==2 and k==4  and len(rowout)/3==2:
+            rowout.append(area)
+            rowout.append(delay)
+            rowout.append(power)
+    for row in rows:
+        design = row[0]
+        r = int(design.split("_")[4])
+        k = int(design.split("_")[5][0])
+        area = row[1]
+        delay = row[2]
+        power = float(row[3])/freq
+        if r==4 and k== 1 and len(rowout)/3 ==3:
+            rowout.append(area)
+            rowout.append(delay)
+            rowout.append(power)
+    for row in rows:
+        design = row[0]
+        r = int(design.split("_")[4])
+        k = int(design.split("_")[5][0])
+        area = row[1]
+        delay = row[2]
+        power = float(row[3])/freq
+        if r==4 and k==2 and len(rowout)/3 ==4:
+            rowout.append(area)
+            rowout.append(delay)
+            rowout.append(power)
+    for row in rows:
+        design = row[0]
+        r = int(design.split("_")[4])
+        k = int(design.split("_")[5][0])
+        area = row[1]
+        delay = row[2]
+        power = float(row[3])/freq
+        if r==4 and k==4 and len(rowout)/3 ==5:
+            rowout.append(area)
+            rowout.append(delay)
+            rowout.append(power)
+    rowout.insert(0, titleClean(rows[0][0]))
+    return rowout
 def titleClean(title):
   
-  tokens = title.split("_")
-  tokens.pop(3)
-  tokens.pop(3)
-  tokens.pop(3)
-  tokens.pop(4)
-  if "i_" in title:
-    title = "_".join(tokens) + "_IDIV"
-  else:
-    title = "_".join(tokens)
+  if ("drsu" in title):
+    tokens = title.split("_")
+    tokens.pop(3)
+    tokens.pop(3)
+    tokens.pop(3)
+    tokens.pop(4)
+    if "i_" in title:
+      title = "_".join(tokens) + "_IDIV"
+    else:
+      title = "_".join(tokens)
+  else if ("mdudiv" in title):
+    #*** DO STUFF HERE
 
   """
 
@@ -168,6 +245,24 @@ with open(f"{os.environ['WALLY']}/synthDC/fp-synth.csv", 'r') as csv_file:
         allrows.append(row)
     rowout.extend(parse_freq(allrows))
     print(rowout)
+
+# add mdu divider results, and combine with fdivsqrt only results
+# format should be drsu_idiv, drsu_noidiv + intdiv, drsu_noidiv, intdiv
+# insert drsu_noidiv+intdiv at index 7
+with open(f"{os.environ['WALLY']}/synthDC/fp-synth-intdiv.csv", 'r') as csv_file:
+    reader = csv.reader(csv_file)
+    allrows = []
+    for row in reader:
+        allrows.append(row)
+    rowout.extend(parse_freq(allrows))
+    drsu100i_rows = rowout[1:7]
+    drsu100_rows = rowout[7:13]
+    drsu5000i_rows = rowout[13:19]
+    drsu5000_rows = rowout[19:25]
+    print(rowout)
+
+
+
 
 with open(f"{os.environ['WALLY']}/synthDC/fp-synthresults.csv", 'w') as csv_out:
     csvwriter=csv.writer(csv_out)

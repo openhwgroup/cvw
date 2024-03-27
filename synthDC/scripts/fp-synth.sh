@@ -188,7 +188,7 @@ echo $title
 writeCSV () {
     echo "design,area,timing,power" > $WALLY/synthDC/fp-synth.csv
     # iterate over all files in runs/
-    for FILE in $WALLY/synthDC/runs/*;
+    for FILE in $WALLY/synthDC/runs/drsu*;
     do
         design="${FILE##*/}"
 
@@ -212,9 +212,9 @@ writeCSV () {
 
 # writes area delay of runs to csv
 writeCSVdiv () {
-    echo "design,area,timing,power" > $WALLY/synthDC/fp-synthdiv.csv
+    echo "design,area,timing,power" > $WALLY/synthDC/fp-synth_intdiv.csv
     # iterate over all files in runs/
-    for FILE in $WALLY/synthDC/runs/ppa_div*;
+    for FILE in $WALLY/synthDC/runs/mdudiv*;
     do
         design="${FILE##*/}"
 

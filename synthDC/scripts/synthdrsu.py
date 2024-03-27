@@ -42,6 +42,19 @@ derivedconfigs = [
     "f_ieee_div_4_4i_rv64gc", "f_ieee_div_4_4_rv32gc", "f_ieee_div_4_4_rv64gc"
 ]
 
+derivedconfigsmdu = [
+    "idiv_bitspercycle_16_rv32gc",
+    "idiv_bitspercycle_16_rv64gc",
+    "idiv_bitspercycle_1_rv32gc",
+    "idiv_bitspercycle_1_rv64gc",
+    "idiv_bitspercycle_2_rv32gc",
+    "idiv_bitspercycle_2_rv64gc",
+    "idiv_bitspercycle_4_rv32gc",
+    "idiv_bitspercycle_4_rv64gc",
+    "idiv_bitspercycle_8_rv32gc",
+    "idiv_bitspercycle_8_rv64gc"
+]
+
 def search_log_for_text(text, logfile):
     """Search through the given log file for text, returning True if it is found or False if it is not"""
     print(os.getcwd())
@@ -76,21 +89,38 @@ def main():
         pass
 
     for config in derivedconfigs:
-        synthjob_5000 = Job(
-            name=config,
-            cmd=f"make -C $WALLY/synthDC synth DESIGN=drsu TECH=tsmc28 CONFIG={config} FREQ=5000 > /dev/null", 
-            grepstr="Optimization",
-            frequency=5000
-        )
+      drsu_5000 = Job(
+          name=config,
+          cmd=f"make -C $WALLY/synthDC synth DESIGN=drsu TECH=tsmc28 CONFIG={config} FREQ=5000 > /dev/null", 
+          grepstr="Optimization",
+          frequency=5000
+      )
 
-        synthjob_100 = Job(
-            name=config,
-            cmd=f"make -C $WALLY/synthDC synth DESIGN=drsu TECH=tsmc28 CONFIG={config} FREQ=100 > /dev/null", 
-            grepstr="Optimization", 
-            frequency=100
-        )
-        configs.append(synthjob_5000)
-        configs.append(synthjob_100)
+      drsu_100 = Job(
+          name=config,
+          cmd=f"make -C $WALLY/synthDC synth DESIGN=drsu TECH=tsmc28 CONFIG={config} FREQ=100 > /dev/null", 
+          grepstr="Optimization", 
+          frequency=100
+      )
+        
+      configs.append(drsu_5000)
+      configs.append(drsu_100)
+    for config in derivedconfigsmdu:
+      mdu_5000 = Job(
+          name=config,
+          cmd=f"make -C $WALLY/synthDC synth DESIGN=mdudiv TECH=tsmc28 CONFIG={config} FREQ=5000 > /dev/null", 
+          grepstr="Optimization",
+          frequency=5000
+      )
+
+      mdu_100 = Job(
+          name=config,
+          cmd=f"make -C $WALLY/synthDC synth DESIGN=mdudiv TECH=tsmc28 CONFIG={config} FREQ=100 > /dev/null", 
+          grepstr="Optimization", 
+          frequency=100
+      )
+      configs.append(mdu_5000)
+      configs.append(mdu_100)
 
 
     # Scale the number of concurrent processes to the number of test cases, but
