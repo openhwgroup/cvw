@@ -23,7 +23,7 @@ module riscvassertions import cvw::*; #(parameter cvw_t P);
   initial begin
     assert (P.PMP_ENTRIES == 0 || P.PMP_ENTRIES==16 || P.PMP_ENTRIES==64) else $fatal(1, "Illegal number of PMP entries: PMP_ENTRIES must be 0, 16, or 64");
     assert (P.S_SUPPORTED || P.VIRTMEM_SUPPORTED == 0) else $fatal(1, "Virtual memory requires S mode support");
-    assert (P.IDIV_BITSPERCYCLE == 1 || P.IDIV_BITSPERCYCLE==2 || P.IDIV_BITSPERCYCLE==4) else $fatal(1, "Illegal number of divider bits/cycle: IDIV_BITSPERCYCLE must be 1, 2, or 4");
+    assert (P.IDIV_BITSPERCYCLE == 1 || P.IDIV_BITSPERCYCLE==2 || P.IDIV_BITSPERCYCLE==4 || P.IDIV_BITSPERCYCLE==8 || P.IDIV_BITSPERCYCLE==16) else $fatal(1, "Illegal number of divider bits/cycle: IDIV_BITSPERCYCLE must be 1, 2, or 4");
     assert (P.F_SUPPORTED || ~P.D_SUPPORTED) else $fatal(1, "Can't support double fp (D) without supporting float (F)");
     assert (P.D_SUPPORTED || ~P.Q_SUPPORTED) else $fatal(1, "Can't support quad fp (Q) without supporting double (D)");
     assert (P.F_SUPPORTED || ~P.ZFH_SUPPORTED) else $fatal(1, "Can't support half-precision fp (ZFH) without supporting float (F)");
