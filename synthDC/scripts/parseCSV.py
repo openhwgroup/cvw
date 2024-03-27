@@ -111,67 +111,61 @@ def parse_idivbits(rows,freq):
     rowout = []
     for row in rows:
         design = row[0]
-        r = int(design.split("_")[4])
-        k = int(design.split("_")[5][0])
+        bits = int(design.split("_")[3])
         area = row[1]
         delay = row[2]
         power = float(row[3])/freq
-        if r==2 and k==1 and len(rowout)/3 == 0:
+        if bits == 1 and len(rowout)/3 == 0:
             rowout.append(area)
             rowout.append(delay)
             rowout.append(power)
     for row in rows:
         design = row[0]
-        r = int(design.split("_")[4])
-        k = int(design.split("_")[5][0])
+        bits = int(design.split("_")[3])
         area = row[1]
         delay = row[2]
         power = float(row[3])/freq
-        if r==2 and k==2 and len(rowout)/3 == 1:
+        if bits == 2 and len(rowout)/3 == 1:
             rowout.append(area)
             rowout.append(delay)
             rowout.append(power)
     for row in rows:
         design = row[0]
-        r = int(design.split("_")[4])
-        k = int(design.split("_")[5][0])
+        bits = int(design.split("_")[3])
         area = row[1]
         delay = row[2]
         power = float(row[3])/freq
-        if r==2 and k==4  and len(rowout)/3==2:
+        if bits == 4 and len(rowout)/3==2:
             rowout.append(area)
             rowout.append(delay)
             rowout.append(power)
     for row in rows:
         design = row[0]
-        r = int(design.split("_")[4])
-        k = int(design.split("_")[5][0])
+        bits = int(design.split("_")[3])
         area = row[1]
         delay = row[2]
         power = float(row[3])/freq
-        if r==4 and k== 1 and len(rowout)/3 ==3:
+        if bits == 2 and len(rowout)/3 ==3:
             rowout.append(area)
             rowout.append(delay)
             rowout.append(power)
     for row in rows:
         design = row[0]
-        r = int(design.split("_")[4])
-        k = int(design.split("_")[5][0])
+        bits = int(design.split("_")[3])
         area = row[1]
         delay = row[2]
         power = float(row[3])/freq
-        if r==4 and k==2 and len(rowout)/3 ==4:
+        if bits == 4 and len(rowout)/3 ==4:
             rowout.append(area)
             rowout.append(delay)
             rowout.append(power)
     for row in rows:
         design = row[0]
-        r = int(design.split("_")[4])
-        k = int(design.split("_")[5][0])
+        bits = int(design.split("_")[3])
         area = row[1]
         delay = row[2]
         power = float(row[3])/freq
-        if r==4 and k==4 and len(rowout)/3 ==5:
+        if bits == 8 and len(rowout)/3 ==5:
             rowout.append(area)
             rowout.append(delay)
             rowout.append(power)
@@ -190,6 +184,9 @@ def titleClean(title):
     else:
       title = "_".join(tokens)
   else if ("mdudiv" in title):
+    tokens = title.split("_")
+    tokens.pop(5)
+    title = "_".join(tokens)
     #*** DO STUFF HERE
 
   """
