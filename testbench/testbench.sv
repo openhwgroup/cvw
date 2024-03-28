@@ -554,10 +554,10 @@ module testbench;
 	generate
 	  if(P.EXT_MEM_SUPPORTED) begin
 	  	if (P.USE_BSG_DMC) begin
-	  		`ifdef USE_BSG
+	  	  `ifdef USE_BSG
           `include "bsg_dmc.svh"
           import bsg_dmc_pkg::bsg_dmc_s;
-          localparam dq_width = P.XLEN;
+          localparam dq_width = 32;
           localparam dq_group = dq_width/8;
           logic                 ui_clk;
           logic                 ddr_ck_p;
@@ -626,7 +626,7 @@ module testbench;
             force ram.dmc.dmc_clk_rst_gen.clk_gen_ds_inst.reset_i = 1'b0;
             force ram.dmc.dmc_clk_rst_gen.clk_gen_ds_inst.strobe_r = 1'b1;
           end
-          bsg_dmc_ahb #(28, P.XLEN, 64) ram (
+          bsg_dmc_ahb #(28, P.XLEN, dq_width) ram (
             .dmc_config,
             .HCLK, .HRESETn, .HSEL(HSELEXT),
             .HADDR(HADDR[27:0]), .HWDATA, .HWSTRB,
