@@ -658,13 +658,13 @@ add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/STATUS_TW
 add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/PrivilegeModeW
 add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/wfi/WFICount
 add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/WFITimeoutM
-add wave -noupdate -expand -group testbench /testbench/DCacheFlushStart
+add wave -noupdate -group testbench /testbench/DCacheFlushStart
 add wave -noupdate /testbench/dut/core/lsu/hptw/hptw/HPTWLoadPageFault
 add wave -noupdate /testbench/dut/core/lsu/hptw/hptw/HPTWLoadPageFaultDelay
 TreeUpdate [SetDefaultTree]
 WaveRestoreCursors {{Cursor 4} {6586 ns} 1} {{Cursor 4} {2112952 ns} 0} {{Cursor 3} {403021 ns} 1}
 quietly wave cursor active 2
-configure wave -namecolwidth 250
+configure wave -namecolwidth 197
 configure wave -valuecolwidth 194
 configure wave -justifyvalue left
 configure wave -signalnamewidth 1
