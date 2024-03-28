@@ -1209,8 +1209,7 @@ string imperas32f[] = '{
   };
 
     string arch64zfh_fma[] = '{
-    //`RISCVARCHTEST,
-    `WALLYTEST,
+    `RISCVARCHTEST,
     "rv64i_m/Zfh/src/fmadd_b15-01.S",
     "rv64i_m/Zfh/src/fmsub_b15-01.S",
     "rv64i_m/Zfh/src/fnmadd_b15-01.S",
@@ -1368,8 +1367,7 @@ string imperas32f[] = '{
     };
 
   string arch64zfh_divsqrt[] = '{
-    //`RISCVARCHTEST,
-    `WALLYTEST,
+    `RISCVARCHTEST,
     "rv64i_m/Zfh/src/fdiv_b20-01.S",
     "rv64i_m/Zfh/src/fdiv_b1-01.S",
     "rv64i_m/Zfh/src/fdiv_b2-01.S",
@@ -1393,8 +1391,7 @@ string imperas32f[] = '{
   };
 
   string arch64zfh[] = '{
-    //`RISCVARCHTEST,
-    `WALLYTEST,
+    `RISCVARCHTEST,
     "rv64i_m/Zfh/src/fadd_b10-01.S",
     "rv64i_m/Zfh/src/fadd_b1-01.S",
     "rv64i_m/Zfh/src/fadd_b11-01.S",
@@ -1425,10 +1422,10 @@ string imperas32f[] = '{
     "rv64i_m/Zfh/src/fcvt.wu.h_b27-01.S",
     "rv64i_m/Zfh/src/fcvt.wu.h_b28-01.S",
     "rv64i_m/Zfh/src/fcvt.wu.h_b29-01.S",
-//    "rv64i_m/Zfh/src/fcvt.h.l_b25-01.S", // tests commented out because they involve a fsd that hangs on vsim -c -do "do wally-batch.do fh_rv64gc arch64zfh" which lacks fsd support
-//    "rv64i_m/Zfh/src/fcvt.h.l_b26-01.S",
-//    "rv64i_m/Zfh/src/fcvt.h.lu_b25-01.S",
-//    "rv64i_m/Zfh/src/fcvt.h.lu_b26-01.S",
+    "rv64i_m/Zfh/src/fcvt.h.l_b25-01.S", 
+    "rv64i_m/Zfh/src/fcvt.h.l_b26-01.S",
+    "rv64i_m/Zfh/src/fcvt.h.lu_b25-01.S",
+    "rv64i_m/Zfh/src/fcvt.h.lu_b26-01.S",
     "rv64i_m/Zfh/src/fcvt.l.h_b1-01.S",
     "rv64i_m/Zfh/src/fcvt.l.h_b22-01.S",
     "rv64i_m/Zfh/src/fcvt.l.h_b23-01.S",
@@ -2059,8 +2056,7 @@ string arch64zknh[] = '{
     };
 
   string arch32zfh_divsqrt[] = '{
-    //`RISCVARCHTEST,
-    `WALLYTEST,
+    `RISCVARCHTEST,
     "rv32i_m/Zfh/src/fdiv_b20-01.S",
     "rv32i_m/Zfh/src/fdiv_b1-01.S",
     "rv32i_m/Zfh/src/fdiv_b2-01.S",
@@ -2084,8 +2080,7 @@ string arch64zknh[] = '{
   };
 
   string arch32zfh[] = '{
-    //`RISCVARCHTEST,
-    `WALLYTEST,
+    `RISCVARCHTEST,
     "rv32i_m/Zfh/src/fadd_b10-01.S",
     "rv32i_m/Zfh/src/fadd_b1-01.S",
     "rv32i_m/Zfh/src/fadd_b11-01.S",
@@ -2310,8 +2305,7 @@ string arch64zknh[] = '{
   };
 
 string arch32zfh_fma[] = '{
-    //`RISCVARCHTEST,
-    `WALLYTEST,
+    `RISCVARCHTEST,
     "rv32i_m/Zfh/src/fmadd_b15-01.S",
     "rv32i_m/Zfh/src/fmsub_b15-01.S",
     "rv32i_m/Zfh/src/fnmadd_b15-01.S",
