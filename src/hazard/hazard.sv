@@ -93,12 +93,12 @@ module hazard import cvw::*;  #(parameter cvw_t P) (
 
   // Stall each stage for cause or if the next stage is stalled
   // coverage off: StallFCause is always 0
-  assign #1 StallF = StallFCause | StallD;
+  assign StallF = StallFCause | StallD;
   // coverage on
-  assign #1 StallD = StallDCause | StallE;
-  assign #1 StallE = StallECause | StallM;
-  assign #1 StallM = StallMCause | StallW;
-  assign #1 StallW = StallWCause;
+  assign StallD = StallDCause | StallE;
+  assign StallE = StallECause | StallM;
+  assign StallM = StallMCause | StallW;
+  assign StallW = StallWCause;
 
   // detect the first stage that is not stalled
   assign LatestUnstalledD = ~StallD & StallF;
@@ -107,8 +107,8 @@ module hazard import cvw::*;  #(parameter cvw_t P) (
   assign LatestUnstalledW = ~StallW & StallM;
   
   // Each stage flushes if the previous stage is the last one stalled (for cause) or the system has reason to flush
-  assign #1 FlushD = LatestUnstalledD | FlushDCause; 
-  assign #1 FlushE = LatestUnstalledE | FlushECause;
-  assign #1 FlushM = LatestUnstalledM | FlushMCause;
-  assign #1 FlushW = LatestUnstalledW | FlushWCause;
+  assign FlushD = LatestUnstalledD | FlushDCause; 
+  assign FlushE = LatestUnstalledE | FlushECause;
+  assign FlushM = LatestUnstalledM | FlushMCause;
+  assign FlushW = LatestUnstalledW | FlushWCause;
 endmodule

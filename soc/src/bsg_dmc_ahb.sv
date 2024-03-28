@@ -34,10 +34,11 @@ module bsg_dmc_ahb
 #(
   parameter AHB_ADDR_SIZE = 28,
   parameter AHB_DATA_SIZE = 64,
-  parameter DDR_DATA_SIZE = 32,
+  parameter DQ_DATA_SIZE  = 64,
   parameter BURST_LENGTH  = 8,
   parameter FIFO_DEPTH    = 4
 ) (
+  input  bsg_dmc_s                   dmc_config,
   input  logic                       HCLK, HRESETn,
   input  logic                       HSEL,
   input  logic [AHB_ADDR_SIZE-1:0]   HADDR,
@@ -48,19 +49,19 @@ module bsg_dmc_ahb
   input  logic                       HREADY,
   output logic [AHB_DATA_SIZE-1:0]   HRDATA,
   output logic                       HRESP, HREADYOUT,
-  //input  logic                       ui_clk, // Add this once PLL is integrated
+  input  logic                       ui_clk,
   output logic                       ddr_ck_p, ddr_ck_n, ddr_cke,
   output logic [2:0]                 ddr_ba,
-  output logic [13:0]                ddr_addr,
+  output logic [15:0]                ddr_addr,
   output logic                       ddr_cs, ddr_ras, ddr_cas,
   output logic                       ddr_we, ddr_reset, ddr_odt,
-  output logic [DDR_DATA_SIZE/8-1:0] ddr_dm_oen, ddr_dm,
-  output logic [DDR_DATA_SIZE/8-1:0] ddr_dqs_p_oen, ddr_dqs_p_ien, ddr_dqs_p_out,
-  input  logic [DDR_DATA_SIZE/8-1:0] ddr_dqs_p_in,
-  output logic [DDR_DATA_SIZE/8-1:0] ddr_dqs_n_oen, ddr_dqs_n_ien, ddr_dqs_n_out,
-  input  logic [DDR_DATA_SIZE/8-1:0] ddr_dqs_n_in,
-  output logic [DDR_DATA_SIZE-1:0]   ddr_dq_oen, ddr_dq_out,
-  input  logic [DDR_DATA_SIZE-1:0]   ddr_dq_in,
+  output logic [DQ_DATA_SIZE/8-1:0]  ddr_dm_oen, ddr_dm,
+  output logic [DQ_DATA_SIZE/8-1:0]  ddr_dqs_p_oen, ddr_dqs_p_ien, ddr_dqs_p_out,
+  input  logic [DQ_DATA_SIZE/8-1:0]  ddr_dqs_p_in,
+  output logic [DQ_DATA_SIZE/8-1:0]  ddr_dqs_n_oen, ddr_dqs_n_ien, ddr_dqs_n_out,
+  input  logic [DQ_DATA_SIZE/8-1:0]  ddr_dqs_n_in,
+  output logic [DQ_DATA_SIZE-1:0]    ddr_dq_oen, ddr_dq_out,
+  input  logic [DQ_DATA_SIZE-1:0]    ddr_dq_in,
   input  logic                       dfi_clk_2x,
   output logic                       dfi_clk_1x
 );
@@ -69,9 +70,8 @@ module bsg_dmc_ahb
   logic sys_reset;
 
   // Memory controller config
-  bsg_tag_s       dmc_rst_tag, dmc_ds_tag;
-  bsg_tag_s [3:0] dmc_dly_tag, dmc_dly_trigger_tag;
-  bsg_dmc_s       dmc_config;
+  bsg_tag_s                    dmc_rst_tag, dmc_ds_tag;
+  bsg_tag_s [DQ_DATA_SIZE/8-1:0] dmc_dly_tag, dmc_dly_trigger_tag;
 
   // UI signals
   logic                       ui_clk_sync_rst;
@@ -87,37 +87,6 @@ module bsg_dmc_ahb
   logic                       init_calib_complete;
   logic [11:0]                device_temp; // Reserved
 
-  // Use a /6 clock divider until PLL is integrated. TODO: Replace
-  logic ui_clk;
-  integer clk_counter;
-  always @(posedge HCLK) begin
-    clk_counter <= clk_counter + 1;
-    if (clk_counter >= 6) clk_counter <= 0;
-    ui_clk <= (clk_counter >= 3);
-  end
-
-  // TODO: Figure out how to initialize dmc_config correctly
-  always_comb begin: bsg_dmc_config
-    dmc_config.trefi = 1023;
-    dmc_config.tmrd = 1;
-    dmc_config.trfc = 15;
-    dmc_config.trc = 10;
-    dmc_config.trp = 2;
-    dmc_config.tras = 7;
-    dmc_config.trrd = 1;
-    dmc_config.trcd = 2;
-    dmc_config.twr = 10;
-    dmc_config.twtr = 7;
-    dmc_config.trtp = 10;
-    dmc_config.tcas = 3;
-    dmc_config.col_width = 11;
-    dmc_config.row_width = 14;
-    dmc_config.bank_width = 2;
-    dmc_config.dqs_sel_cal = 3;
-    dmc_config.init_cycles = 40010;
-    dmc_config.bank_pos = 25;
-  end
-
   ahbxuiconverter #(AHB_ADDR_SIZE, AHB_DATA_SIZE) bsg_dmc_ahb_ui_converter (
     .HCLK, .HRESETn, .HSEL, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HTRANS, .HREADY, .HRDATA, .HRESP, .HREADYOUT,
     .sys_reset, .ui_clk, .ui_clk_sync_rst,
@@ -132,7 +101,7 @@ module bsg_dmc_ahb
     .ui_addr_width_p(AHB_ADDR_SIZE),
     .ui_data_width_p(AHB_DATA_SIZE),
     .burst_data_width_p(AHB_DATA_SIZE * BURST_LENGTH),
-    .dq_data_width_p(DDR_DATA_SIZE),
+    .dq_data_width_p(DQ_DATA_SIZE),
     .cmd_afifo_depth_p(FIFO_DEPTH),
     .cmd_sfifo_depth_p(FIFO_DEPTH)
   ) dmc (

@@ -719,7 +719,7 @@ module testbenchfp;
 				.XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
 				.FmaASticky(ASticky), .FmaSe(Se),
 				.FmaSm(Sm), .FmaSCnt(SCnt), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
-				.PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
+				.PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes), .Zfa(1'b0));
    
    if (TEST === "cvtfp" | TEST === "cvtint" | TEST === "all") begin : fcvt
       fcvt #(P) fcvt (.Xs(Xs), .Xe(Xe), .Xm(Xm), .Int(SrcA), .ToInt(WriteIntVal), 
@@ -729,7 +729,7 @@ module testbenchfp;
    end
 
    if (TEST === "cmp" | TEST === "all") begin: fcmp
-      fcmp #(P) fcmp (.Fmt(ModFmt), .OpCtrl(OpCtrlVal), .Xs, .Ys, .Xe, .Ye, 
+      fcmp #(P) fcmp (.Fmt(ModFmt), .OpCtrl(OpCtrlVal), .Zfa(1'b0), .Xs, .Ys, .Xe, .Ye, 
                    .Xm, .Ym, .XZero, .YZero, .CmpIntRes(CmpRes),
                    .XNaN, .YNaN, .XSNaN, .YSNaN, .X, .Y, .CmpNV(CmpFlg[4]), .CmpFpRes(FpCmpRes));
    end

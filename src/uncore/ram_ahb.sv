@@ -86,8 +86,8 @@ module ram_ahb import cvw::*;  #(parameter cvw_t P,
     statetype CurrState, NextState;
     
     always_ff @(posedge HCLK)
-      if (~HRESETn)    CurrState <= #1 READY;
-      else             CurrState <= #1 NextState;  
+      if (~HRESETn)    CurrState <= READY;
+      else             CurrState <= NextState;  
 
     always_comb begin
     case(CurrState)

@@ -192,6 +192,7 @@ localparam ZK_SUPPORTED = 1;
 
 // Memory synthesis configuration
 localparam USE_SRAM = 0;
+localparam USE_BSG_DMC = 0;
 
 `include "config-shared.vh"
 

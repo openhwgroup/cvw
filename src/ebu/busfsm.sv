@@ -55,8 +55,8 @@ module busfsm #(
   busstatetype CurrState, NextState;
 
   always_ff @(posedge HCLK)
-    if (~HRESETn | Flush) CurrState <= #1 ADR_PHASE;
-    else                  CurrState <= #1 NextState;  
+    if (~HRESETn | Flush) CurrState <= ADR_PHASE;
+    else                  CurrState <= NextState;  
   
   always_comb begin
       case(CurrState)

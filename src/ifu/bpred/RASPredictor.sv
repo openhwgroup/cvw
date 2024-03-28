@@ -92,7 +92,7 @@ module RASPredictor import cvw::*;  #(parameter cvw_t P)(
       for(index=0; index<P.RAS_SIZE; index++)
     memory[index] <= {P.XLEN{1'b0}};
     end else if(PushE) begin
-      memory[NextPtr] <= #1 PCLinkE;
+      memory[NextPtr] <= PCLinkE;
     end
   end
 

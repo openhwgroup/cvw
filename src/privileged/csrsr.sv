@@ -140,22 +140,22 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
   // complex register with reset, write enable, and the ability to update other bits in certain cases
   always_ff @(posedge clk) //, posedge reset)
     if (reset) begin
-      STATUS_TSR_INT  <= #1 0;
-      STATUS_TW_INT   <= #1 0;
-      STATUS_TVM_INT  <= #1 0;
-      STATUS_MXR_INT  <= #1 0;
-      STATUS_SUM_INT  <= #1 0;
-      STATUS_MPRV_INT <= #1 0; // Per Priv 3.3
-      STATUS_FS_INT   <= #1 P.F_SUPPORTED ? 2'b00 : 2'b00; // leave floating-point off until activated, even if F_SUPPORTED
-      STATUS_MPP      <= #1 0; 
-      STATUS_SPP      <= #1 0; 
-      STATUS_MPIE     <= #1 0; 
-      STATUS_SPIE     <= #1 0; 
-      STATUS_MIE      <= #1 0; 
-      STATUS_SIE      <= #1 0; 
-      STATUS_MBE      <= #1 0;
-      STATUS_SBE      <= #1 0;
-      STATUS_UBE      <= #1 0;
+      STATUS_TSR_INT  <= 0;
+      STATUS_TW_INT   <= 0;
+      STATUS_TVM_INT  <= 0;
+      STATUS_MXR_INT  <= 0;
+      STATUS_SUM_INT  <= 0;
+      STATUS_MPRV_INT <= 0; // Per Priv 3.3
+      STATUS_FS_INT   <= P.F_SUPPORTED ? 2'b00 : 2'b00; // leave floating-point off until activated, even if F_SUPPORTED
+      STATUS_MPP      <= 0; 
+      STATUS_SPP      <= 0; 
+      STATUS_MPIE     <= 0; 
+      STATUS_SPIE     <= 0; 
+      STATUS_MIE      <= 0; 
+      STATUS_SIE      <= 0; 
+      STATUS_MBE      <= 0;
+      STATUS_SBE      <= 0;
+      STATUS_UBE      <= 0;
     end else if (~StallW) begin
       if (TrapM) begin
         // Update interrupt enables per Privileged Spec p. 21
@@ -163,55 +163,55 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
         // x = NextPrivilegeModeM
         // Modes: 11 = Machine, 01 = Supervisor, 00 = User
         if (NextPrivilegeModeM == P.M_MODE) begin
-          STATUS_MPIE <= #1 STATUS_MIE;
-          STATUS_MIE  <= #1 0;
-          STATUS_MPP  <= #1 PrivilegeModeW;
+          STATUS_MPIE <= STATUS_MIE;
+          STATUS_MIE  <= 0;
+          STATUS_MPP  <= PrivilegeModeW;
         end else begin // supervisor mode
-          STATUS_SPIE <= #1 STATUS_SIE;
-          STATUS_SIE  <= #1 0;
-          STATUS_SPP  <= #1 PrivilegeModeW[0];
+          STATUS_SPIE <= STATUS_SIE;
+          STATUS_SIE  <= 0;
+          STATUS_SPP  <= PrivilegeModeW[0];
        end
       end else if (mretM) begin // Privileged 3.1.6.1
-        STATUS_MIE      <= #1 STATUS_MPIE; // restore global interrupt enable
-        STATUS_MPIE     <= #1 1; // 
-        STATUS_MPP      <= #1 P.U_SUPPORTED ? P.U_MODE : P.M_MODE; // set MPP to lowest supported privilege level
-        STATUS_MPRV_INT <= #1 STATUS_MPRV_INT & (STATUS_MPP == P.M_MODE); // page 21 of privileged spec.
+        STATUS_MIE      <= STATUS_MPIE; // restore global interrupt enable
+        STATUS_MPIE     <= 1; // 
+        STATUS_MPP      <= P.U_SUPPORTED ? P.U_MODE : P.M_MODE; // set MPP to lowest supported privilege level
+        STATUS_MPRV_INT <= STATUS_MPRV_INT & (STATUS_MPP == P.M_MODE); // page 21 of privileged spec.
       end else if (sretM) begin
-        STATUS_SIE      <= #1 STATUS_SPIE; // restore global interrupt enable
-        STATUS_SPIE     <= #1 P.S_SUPPORTED; 
-        STATUS_SPP      <= #1 0; // set SPP to lowest supported privilege level to catch bugs
-        STATUS_MPRV_INT <= #1 0; // always clear MPRV
+        STATUS_SIE      <= STATUS_SPIE; // restore global interrupt enable
+        STATUS_SPIE     <= P.S_SUPPORTED; 
+        STATUS_SPP      <= 0; // set SPP to lowest supported privilege level to catch bugs
+        STATUS_MPRV_INT <= 0; // always clear MPRV
       end else if (WriteMSTATUSM) begin
-        STATUS_TSR_INT  <= #1 CSRWriteValM[22];
-        STATUS_TW_INT   <= #1 CSRWriteValM[21];
-        STATUS_TVM_INT  <= #1 CSRWriteValM[20];
-        STATUS_MXR_INT  <= #1 CSRWriteValM[19];
-        STATUS_SUM_INT  <= #1 CSRWriteValM[18];
-        STATUS_MPRV_INT <= #1 CSRWriteValM[17];
-        STATUS_FS_INT   <= #1 CSRWriteValM[14:13];
-        STATUS_MPP      <= #1 STATUS_MPP_NEXT;
-        STATUS_SPP      <= #1 P.S_SUPPORTED & CSRWriteValM[8];
-        STATUS_MPIE     <= #1 CSRWriteValM[7];
-        STATUS_SPIE     <= #1 P.S_SUPPORTED & CSRWriteValM[5];
-        STATUS_MIE      <= #1 CSRWriteValM[3];
-        STATUS_SIE      <= #1 P.S_SUPPORTED & CSRWriteValM[1];
-        STATUS_UBE      <= #1 CSRWriteValM[6]  & P.U_SUPPORTED & P.BIGENDIAN_SUPPORTED;
-        STATUS_MBE      <= #1 nextMBE;
-        STATUS_SBE      <= #1 nextSBE;
+        STATUS_TSR_INT  <= CSRWriteValM[22];
+        STATUS_TW_INT   <= CSRWriteValM[21];
+        STATUS_TVM_INT  <= CSRWriteValM[20];
+        STATUS_MXR_INT  <= CSRWriteValM[19];
+        STATUS_SUM_INT  <= CSRWriteValM[18];
+        STATUS_MPRV_INT <= CSRWriteValM[17];
+        STATUS_FS_INT   <= CSRWriteValM[14:13];
+        STATUS_MPP      <= STATUS_MPP_NEXT;
+        STATUS_SPP      <= P.S_SUPPORTED & CSRWriteValM[8];
+        STATUS_MPIE     <= CSRWriteValM[7];
+        STATUS_SPIE     <= P.S_SUPPORTED & CSRWriteValM[5];
+        STATUS_MIE      <= CSRWriteValM[3];
+        STATUS_SIE      <= P.S_SUPPORTED & CSRWriteValM[1];
+        STATUS_UBE      <= CSRWriteValM[6]  & P.U_SUPPORTED & P.BIGENDIAN_SUPPORTED;
+        STATUS_MBE      <= nextMBE;
+        STATUS_SBE      <= nextSBE;
       // coverage off
       // MSTATUSH only exists in 32-bit configurations, will not be hit on rv64gc
       end else if (WriteMSTATUSHM) begin
-        STATUS_MBE      <= #1 CSRWriteValM[5] & P.BIGENDIAN_SUPPORTED;
-        STATUS_SBE      <= #1 CSRWriteValM[4] & P.S_SUPPORTED & P.BIGENDIAN_SUPPORTED;
+        STATUS_MBE      <= CSRWriteValM[5] & P.BIGENDIAN_SUPPORTED;
+        STATUS_SBE      <= CSRWriteValM[4] & P.S_SUPPORTED & P.BIGENDIAN_SUPPORTED;
       // coverage on
       end else if (WriteSSTATUSM) begin // write a subset of the STATUS bits
-        STATUS_MXR_INT  <= #1 CSRWriteValM[19];
-        STATUS_SUM_INT  <= #1 CSRWriteValM[18];
-        STATUS_FS_INT   <= #1 CSRWriteValM[14:13];
-        STATUS_SPP      <= #1 P.S_SUPPORTED & CSRWriteValM[8];
-        STATUS_SPIE     <= #1 P.S_SUPPORTED & CSRWriteValM[5];
-        STATUS_SIE      <= #1 P.S_SUPPORTED & CSRWriteValM[1];
-        STATUS_UBE      <= #1 CSRWriteValM[6] & P.U_SUPPORTED & P.BIGENDIAN_SUPPORTED;
-      end else if (FRegWriteM | WriteFRMM | WriteFFLAGSM) STATUS_FS_INT <= #1 2'b11; 
+        STATUS_MXR_INT  <= CSRWriteValM[19];
+        STATUS_SUM_INT  <= CSRWriteValM[18];
+        STATUS_FS_INT   <= CSRWriteValM[14:13];
+        STATUS_SPP      <= P.S_SUPPORTED & CSRWriteValM[8];
+        STATUS_SPIE     <= P.S_SUPPORTED & CSRWriteValM[5];
+        STATUS_SIE      <= P.S_SUPPORTED & CSRWriteValM[1];
+        STATUS_UBE      <= CSRWriteValM[6] & P.U_SUPPORTED & P.BIGENDIAN_SUPPORTED;
+      end else if (FRegWriteM | WriteFRMM | WriteFFLAGSM) STATUS_FS_INT <= 2'b11; 
     end
 endmodule

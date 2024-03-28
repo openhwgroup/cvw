@@ -31,6 +31,6 @@ module flopen #(parameter WIDTH = 8) (
   output logic [WIDTH-1:0] q);
 
   always_ff @(posedge clk)
-    if (en) q <= #1 d;
+    if (en) q <= d;
 endmodule
 

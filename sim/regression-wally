@@ -14,7 +14,6 @@ import sys,os,shutil
 import multiprocessing
 
 
-
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -90,7 +89,11 @@ for test in tests64i:
   configs.append(tc)
 
 tests32gcimperas = ["imperas32i", "imperas32f", "imperas32m", "imperas32c"] # unused
-tests32gc = ["arch32f", "arch32d", "arch32f_fma", "arch32d_fma", "arch32f_divsqrt", "arch32d_divsqrt", "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32a", "arch32zifencei", "arch32zicond", "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "arch32zfh", "arch32zfh_fma", "arch32zfh_divsqrt", "arch32zfaf", "wally32a", "wally32priv", "wally32periph", "arch32zbkb", "arch32zbkc", "arch32zbkx", "arch32zknd", "arch32zkne", "arch32zknh"]  # "arch32zbc", "arch32zfad",
+tests32gc = ["arch32f", "arch32d", "arch32f_fma", "arch32d_fma", "arch32f_divsqrt", "arch32d_divsqrt", 
+             "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32a", "arch32zifencei", "arch32zicond", 
+             "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "arch32zfh", "arch32zfh_fma", 
+             "arch32zfh_divsqrt", "arch32zfaf", "wally32a", "wally32priv", "wally32periph", 
+             "arch32zbkb", "arch32zbkc", "arch32zbkx", "arch32zknd", "arch32zkne", "arch32zknh"]  # "arch32zbc", "arch32zfad",
 #tests32gc = ["arch32f", "arch32d", "arch32f_fma", "arch32d_fma", "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32a", "arch32zifencei", "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "arch32zicboz", "arch32zcb", "wally32a",  "wally32priv", "wally32periph"]  
 for test in tests32gc:
   tc = TestCase(
@@ -301,53 +304,37 @@ if (nightly):
             configs.append(tc)
 
 
-tests32e = ["arch32e"] 
-for test in tests32e:
-  tc = TestCase(
-        name=test,
-        variant="rv32e",
-        cmd="vsim > {} -c <<!\ndo wally-batch.do rv32e "+test+"\n!",
-        grepstr="All tests ran without failures")
-  configs.append(tc)
 
 
 # softfloat tests
 if (softfloat):
     configs = []
-    softfloatconfigs = ['fdh_ieee_rv32gc', 'fdqh_ieee_rv32gc', 'fdq_ieee_rv32gc', \
-    'fh_ieee_v32gc', 'f_ieee_rv64gc', 'fdqh_ieee_rv64gc', \
-    'fdq_ieee_rv64gc', 'div_2_1_rv32gc', 'div_2_2_rv32gc', \
-    'div_2_4_rv32gc', 'div_4_1_rv32gc', 'div_4_2_rv32gc', \
-    'div_4_4_rv32gc', 'fd_ieee_rv32gc', 'fh_ieee_rv32gc', \
-    'div_2_1_rv64gc', 'div_2_2_rv64gc', 'div_2_4_rv64gc', \
-    'div_4_1_rv64gc', 'div_4_2_rv64gc', 'div_4_4_rv64gc', \
-    'fd_ieee_rv64gc', 'fh_ieee_rv64gc', 'f_ieee_rv32gc']
-    softfloatconfigs = ['fdh_ieee_div_2_1_rv32gc', 'fdh_ieee_div_2_1_rv64gc', \
-    'fdh_ieee_div_2_2_rv32gc', 'fdh_ieee_div_2_2_rv64gc', 'fdh_ieee_div_2_4_rv32gc', \
-    'fdh_ieee_div_2_4_rv64gc', 'fdh_ieee_div_4_1_rv32gc', 'fdh_ieee_div_4_1_rv64gc', \
-    'fdh_ieee_div_4_2_rv32gc', 'fdh_ieee_div_4_2_rv64gc', 'fdh_ieee_div_4_4_rv64gc', \
-    'fdh_ieee_rv32gc', 'fd_ieee_div_2_1_rv32gc', 'fd_ieee_div_2_1_rv64gc', \
-    'fd_ieee_div_2_2_rv32gc', 'fd_ieee_div_2_2_rv64gc', 'fd_ieee_div_2_4_rv32gc', \
-    'fd_ieee_div_2_4_rv64gc', 'fd_ieee_div_4_1_rv32gc', 'fd_ieee_div_4_1_rv64gc', \
-    'fd_ieee_div_4_2_rv32gc', 'fd_ieee_div_4_2_rv64gc', 'fd_ieee_div_4_4_rv64gc', \
-    'fd_ieee_rv32gc', 'fd_ieee_rv64gc', 'fdqh_ieee_div_2_1_rv32gc', \
-    'fdqh_ieee_div_2_1_rv64gc', 'fdqh_ieee_div_2_2_rv32gc', 'fdqh_ieee_div_2_2_rv64gc', \
-    'fdqh_ieee_div_2_4_rv32gc', 'fdqh_ieee_div_2_4_rv64gc', 'fdqh_ieee_div_4_1_rv32gc', \
-    'fdqh_ieee_div_4_1_rv64gc', 'fdqh_ieee_div_4_2_rv32gc', 'fdqh_ieee_div_4_2_rv64gc',\
-    'fdqh_ieee_div_4_4_rv64gc', 'fdqh_ieee_rv32gc', 'fdqh_ieee_rv64gc', \
-    'fdq_ieee_div_2_1_rv32gc', 'fdq_ieee_div_2_1_rv64gc', 'fdq_ieee_div_2_2_rv32gc',\
-    'fdq_ieee_div_2_2_rv64gc', 'fdq_ieee_div_2_4_rv32gc', 'fdq_ieee_div_2_4_rv64gc', \
-    'fdq_ieee_div_4_1_rv32gc', 'fdq_ieee_div_4_1_rv64gc', 'fdq_ieee_div_4_2_rv32gc', \
-    'fdq_ieee_div_4_2_rv64gc', 'fdq_ieee_div_4_4_rv64gc', 'fdq_ieee_rv32gc', \
-    'fdq_ieee_rv64gc', 'fh_ieee_div_2_1_rv32gc', 'fh_ieee_div_2_1_rv64gc', \
-    'fh_ieee_div_2_2_rv32gc', 'fh_ieee_div_2_2_rv64gc', 'fh_ieee_div_2_4_rv32gc',\
-    'fh_ieee_div_2_4_rv64gc', 'fh_ieee_div_4_1_rv32gc', 'fh_ieee_div_4_1_rv64gc',\
-    'fh_ieee_div_4_2_rv32gc', 'fh_ieee_div_4_2_rv64gc', 'fh_ieee_div_4_4_rv64gc', \
-    'fh_ieee_rv32gc', 'fh_ieee_rv64gc', 'fh_ieee_v32gc', 'f_ieee_div_2_1_rv32gc', \
-    'f_ieee_div_2_1_rv64gc', 'f_ieee_div_2_2_rv32gc', 'f_ieee_div_2_2_rv64gc', \
-    'f_ieee_div_2_4_rv32gc', 'f_ieee_div_2_4_rv64gc', 'f_ieee_div_4_1_rv32gc', \
-    'f_ieee_div_4_1_rv64gc', 'f_ieee_div_4_2_rv32gc', 'f_ieee_div_4_2_rv64gc', \
-    'f_ieee_div_4_4_rv64gc', 'f_ieee_rv32gc', 'f_ieee_rv64gc']
+    softfloatconfigs = [
+    "fdh_ieee_div_2_1_rv32gc", "fdh_ieee_div_2_1_rv64gc", "fdh_ieee_div_2_2_rv32gc",
+    "fdh_ieee_div_2_2_rv64gc", "fdh_ieee_div_2_4_rv32gc", "fdh_ieee_div_2_4_rv64gc",
+    "fdh_ieee_div_4_1_rv32gc", "fdh_ieee_div_4_1_rv64gc", "fdh_ieee_div_4_2_rv32gc",
+    "fdh_ieee_div_4_2_rv64gc", "fdh_ieee_div_4_4_rv32gc", "fdh_ieee_div_4_4_rv64gc",
+    "fd_ieee_div_2_1_rv32gc", "fd_ieee_div_2_1_rv64gc", "fd_ieee_div_2_2_rv32gc",
+    "fd_ieee_div_2_2_rv64gc", "fd_ieee_div_2_4_rv32gc", "fd_ieee_div_2_4_rv64gc",
+    "fd_ieee_div_4_1_rv32gc", "fd_ieee_div_4_1_rv64gc", "fd_ieee_div_4_2_rv32gc",
+    "fd_ieee_div_4_2_rv64gc", "fd_ieee_div_4_4_rv32gc", "fd_ieee_div_4_4_rv64gc",
+    "fdqh_ieee_div_2_1_rv32gc", "fdqh_ieee_div_2_1_rv64gc", "fdqh_ieee_div_2_2_rv32gc",
+    "fdqh_ieee_div_2_2_rv64gc", "fdqh_ieee_div_2_4_rv32gc", "fdqh_ieee_div_2_4_rv64gc",
+    "fdqh_ieee_div_4_1_rv32gc", "fdqh_ieee_div_4_1_rv64gc", "fdqh_ieee_div_4_2_rv32gc",
+    "fdqh_ieee_div_4_2_rv64gc", "fdqh_ieee_div_4_4_rv32gc", "fdqh_ieee_div_4_4_rv64gc",
+    "fdq_ieee_div_2_1_rv32gc", "fdq_ieee_div_2_1_rv64gc", "fdq_ieee_div_2_2_rv32gc",
+    "fdq_ieee_div_2_2_rv64gc", "fdq_ieee_div_2_4_rv32gc", "fdq_ieee_div_2_4_rv64gc",
+    "fdq_ieee_div_4_1_rv32gc", "fdq_ieee_div_4_1_rv64gc", "fdq_ieee_div_4_2_rv32gc",
+    "fdq_ieee_div_4_2_rv64gc", "fdq_ieee_div_4_4_rv32gc", "fdq_ieee_div_4_4_rv64gc",
+    "fh_ieee_div_2_1_rv32gc", "fh_ieee_div_2_1_rv64gc", "fh_ieee_div_2_2_rv32gc",
+    "fh_ieee_div_2_2_rv64gc", "fh_ieee_div_2_4_rv32gc", "fh_ieee_div_2_4_rv64gc",
+    "fh_ieee_div_4_1_rv32gc", "fh_ieee_div_4_1_rv64gc", "fh_ieee_div_4_2_rv32gc",
+    "fh_ieee_div_4_2_rv64gc", "fh_ieee_div_4_4_rv32gc", "fh_ieee_div_4_4_rv64gc",
+    "f_ieee_div_2_1_rv32gc", "f_ieee_div_2_1_rv64gc", "f_ieee_div_2_2_rv32gc",
+    "f_ieee_div_2_2_rv64gc", "f_ieee_div_2_4_rv32gc", "f_ieee_div_2_4_rv64gc",
+    "f_ieee_div_4_1_rv32gc", "f_ieee_div_4_1_rv64gc", "f_ieee_div_4_2_rv32gc",
+    "f_ieee_div_4_2_rv64gc", "f_ieee_div_4_4_rv32gc", "f_ieee_div_4_4_rv64gc"
+    ]
     for config in softfloatconfigs:
         # div test case
         divtest = TestCase(
@@ -391,21 +378,17 @@ if (softfloat):
             configs.append(cvtfptest)
 
 if (soc):
-    print('Running soc coverage')
     configs = [] # Delete all configs, just use test64gc
-    coverStr = '-coverage' # Include coverage report
+    coverStr = '-coverage' if coverage else ''
     for test in tests64gc:
-        if any(s in test for s in ['zfa', 'zfh', 'zbk', 'zkn']):
-            continue # Skip tests for extensions that aren't in riscv-arch-tests yet
         tc = TestCase(
             name=test,
-            variant="rv64gc",
-            cmd="vsim > {} -c <<!\ndo wally-soc.do rv64gc "+test+" " + coverStr + "\n!",
+            variant="soc",
+            cmd="vsim > {} -c <<!\ndo wally-batch.do soc "+test+" " + coverStr + "\n!",
             grepstr="All tests ran without failures")
         configs.append(tc)
 
 
-import os
 from multiprocessing import Pool, TimeoutError
 
 def search_log_for_text(text, logfile):
@@ -417,7 +400,7 @@ def run_test_case(config):
     """Run the given test case, and return 0 if the test suceeds and 1 if it fails"""
     logname = "logs/"+config.variant+"_"+config.name+".log"
     cmd = config.cmd.format(logname)
-#    print(cmd)
+    # print(cmd)
     os.chdir(regressionDir)
     os.system(cmd)
     if search_log_for_text(config.grepstr, logname):
@@ -427,6 +410,7 @@ def run_test_case(config):
         print(f"{bcolors.FAIL}%s_%s: Failures detected in output{bcolors.ENDC}" % (config.variant, config.name))
         print("  Check %s" % logname)
         return 1
+
 
 def main():
     """Run the tests and count the failures"""
@@ -465,8 +449,8 @@ def main():
     elif '-softfloat' in sys.argv:
         TIMEOUT_DUR = 60*60 # seconds
     elif '-soc' in sys.argv:
-        TIMEOUT_DUR = 20*60 # seconds
-        # FIXME: Do we need to run buildroot?
+        TIMEOUT_DUR = 10*60 # seconds
+        # Don't run buildroot since soc is based on rv64gc
     else:
         TIMEOUT_DUR = 10*60 # seconds
         configs.append(getBuildrootTC(boot=False))
@@ -486,7 +470,7 @@ def main():
              print(f"{bcolors.FAIL}%s_%s: Timeout - runtime exceeded %d seconds{bcolors.ENDC}" % (config.variant, config.name, TIMEOUT_DUR))
 
     # Coverage report
-    if coverage or soc:
+    if coverage:
        os.system('make coverage')
     # Count the number of failures
     if num_fail:
