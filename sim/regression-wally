@@ -448,6 +448,9 @@ def main():
         configs.append(getBuildrootTC(boot=False))
     elif '-softfloat' in sys.argv:
         TIMEOUT_DUR = 60*60 # seconds
+    elif '-soc' in sys.argv:
+        TIMEOUT_DUR = 10*60 # seconds
+        # Don't run buildroot since soc is based on rv64gc
     else:
         TIMEOUT_DUR = 10*60 # seconds
         configs.append(getBuildrootTC(boot=False))
@@ -467,7 +470,7 @@ def main():
              print(f"{bcolors.FAIL}%s_%s: Timeout - runtime exceeded %d seconds{bcolors.ENDC}" % (config.variant, config.name, TIMEOUT_DUR))
 
     # Coverage report
-    if coverage or soc:
+    if coverage:
        os.system('make coverage')
     # Count the number of failures
     if num_fail:
