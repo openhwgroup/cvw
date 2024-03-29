@@ -34,12 +34,12 @@ import numpy as np
 import argparse
 
 
-RefDataBP = [('twobitCModel6', 'twobitCModel', 64, 10.0060297551637), ('twobitCModel8', 'twobitCModel', 256, 8.4320392215602), ('twobitCModel10', 'twobitCModel', 1024, 7.29493318805151),
-           ('twobitCModel12', 'twobitCModel', 4096, 6.84739616147794), ('twobitCModel14', 'twobitCModel', 16384, 5.68432926870082), ('twobitCModel16', 'twobitCModel', 65536, 5.68432926870082),
-           ('gshareCModel6', 'gshareCModel', 64, 11.4737703417701), ('gshareCModel8', 'gshareCModel', 256, 8.52341470761974), ('gshareCModel10', 'gshareCModel', 1024, 6.32975690693015),
-           ('gshareCModel12', 'gshareCModel', 4096, 4.55424632377659), ('gshareCModel14', 'gshareCModel', 16384, 3.54251547725509), ('gshareCModel16', 'gshareCModel', 65536, 1.90424999467293)]
-RefDataBTB = [('BTBCModel6', 'BTBCModel', 64, 1.51480272475844), ('BTBCModel8', 'BTBCModel', 256, 0.209057900418965), ('BTBCModel10', 'BTBCModel', 1024, 0.0117345454469572),
-              ('BTBCModel12', 'BTBCModel', 4096, 0.00125540990359826), ('BTBCModel14', 'BTBCModel', 16384, 0.000732471628510962), ('BTBCModel16', 'BTBCModel', 65536, 0.000732471628510962)]
+RefDataBP = [('twobitCModel6', 'twobitCModel', 64, 128, 10.0060297551637), ('twobitCModel8', 'twobitCModel', 256, 512, 8.4320392215602), ('twobitCModel10', 'twobitCModel', 1024, 2048, 7.29493318805151),
+           ('twobitCModel12', 'twobitCModel', 4096, 8192, 6.84739616147794), ('twobitCModel14', 'twobitCModel', 16384, 32768, 5.68432926870082), ('twobitCModel16', 'twobitCModel', 65536, 131072, 5.68432926870082),
+           ('gshareCModel6', 'gshareCModel', 64, 128, 11.4737703417701), ('gshareCModel8', 'gshareCModel', 256, 512, 8.52341470761974), ('gshareCModel10', 'gshareCModel', 1024, 2048, 6.32975690693015),
+           ('gshareCModel12', 'gshareCModel', 4096, 8192, 4.55424632377659), ('gshareCModel14', 'gshareCModel', 16384, 32768, 3.54251547725509), ('gshareCModel16', 'gshareCModel', 65536, 131072, 1.90424999467293)]
+RefDataBTB = [('BTBCModel6', 'BTBCModel', 64, 128, 1.51480272475844), ('BTBCModel8', 'BTBCModel', 256, 512, 0.209057900418965), ('BTBCModel10', 'BTBCModel', 1024, 2048, 0.0117345454469572),
+              ('BTBCModel12', 'BTBCModel', 4096, 8192, 0.00125540990359826), ('BTBCModel14', 'BTBCModel', 16384, 32768, 0.000732471628510962), ('BTBCModel16', 'BTBCModel', 65536, 131072, 0.000732471628510962)]
 
 def ParseBranchListFile(path):
     '''Take the path to the list of Questa Sim log files containing the performance counters outputs.  File
@@ -120,25 +120,45 @@ def ComputeGeometricAverage(benchmarks):
     benchmarks.append(('Mean', '', AllAve))
 
 def GenerateName(predictorType, predictorParams):
-    if(predictorType == 'gshare' or  predictorType == 'twobit' or predictorType == 'btb' or predictorType == 'class' or predictorType == 'ras'):
+    if(predictorType == 'gshare' or  predictorType == 'twobit' or predictorType == 'btb' or predictorType == 'class' or predictorType == 'ras' or predictorType == 'global'):
         return predictorType + predictorParams[0]
-    elif(predictorParams == 'local'):
+    elif(predictorType == 'local'):
         return predictorType + predictorParams[0] + '_' + predictorParams[1]
     else:
         print(f'Error unsupported predictor type {predictorType}')
         sys.exit(-1)
 
+def GenerateDisplayName(predictorType, predictorParams):
+    if(predictorType == 'gshare' or  predictorType == 'twobit' or predictorType == 'btb' or predictorType == 'class' or predictorType == 'ras' or predictorType == 'global'):
+        return predictorType
+    elif(predictorType == 'local'):
+        return predictorType + predictorParams[0]
+    else:
+        print(f'Error unsupported predictor type {predictorType}')
+        sys.exit(-1)
+
 def ComputePredNumEntries(predictorType, predictorParams):
-    if(predictorType == 'gshare' or  predictorType == 'twobit' or predictorType == 'btb' or predictorType == 'class'):
+    if(predictorType == 'gshare' or  predictorType == 'twobit' or predictorType == 'btb' or predictorType == 'class' or predictorType == 'global'):
         return 2**int(predictorParams[0])
     elif(predictorType == 'ras'):
         return int(predictorParams[0])
-    elif(predictorParams == 'local'):
+    elif(predictorType == 'local'):
         return 2**int(predictorParams[0]) * int(predictorParams[1]) + 2**int(predictorParams[1])
     else:
         print(f'Error unsupported predictor type {predictorType}')
         sys.exit(-1)
 
+def ComputePredSize(predictorType, predictorParams):
+    if(predictorType == 'gshare' or  predictorType == 'twobit' or predictorType == 'btb' or predictorType == 'class' or predictorType == 'global'):
+        return 2*2**int(predictorParams[0])
+    elif(predictorType == 'ras'):
+        return int(predictorParams[0])
+    elif(predictorType == 'local'):
+        return 2**int(predictorParams[0]) * int(predictorParams[1]) + 2*2**int(predictorParams[1])
+    else:
+        print(f'Error unsupported predictor type {predictorType}')
+        sys.exit(-1)
+        
 def BuildDataBase(predictorLogs):
     # Once done with the following loop, performanceCounterList will contain the predictor type and size along with the
     # raw performance counter data and the processed data on a per benchmark basis.  It also includes the geometric mean.
@@ -164,16 +184,16 @@ def BuildDataBase(predictorLogs):
         ComputeStats(performanceCounters)
         ComputeGeometricAverage(performanceCounters)
         #print(performanceCounters)
-        performanceCounterList.append([GenerateName(predictorType, predictorParams), predictorType, performanceCounters, ComputePredNumEntries(predictorType, predictorParams)])
+        performanceCounterList.append([GenerateName(predictorType, predictorParams), GenerateDisplayName(predictorType, predictorParams), performanceCounters, ComputePredNumEntries(predictorType, predictorParams), ComputePredSize(predictorType, predictorParams)])
     return performanceCounterList
 
 def ReorderDataBase(performanceCounterList):
     # Reorder the data so the benchmark name comes first, then the branch predictor configuration
     benchmarkFirstList = []
-    for (predictorName, predictorPrefixName, benchmarks, entries) in performanceCounterList:
+    for (predictorName, predictorPrefixName, benchmarks, entries, size) in performanceCounterList:
         for benchmark in benchmarks:
             (nameString, opt, dataDict) = benchmark
-            benchmarkFirstList.append((nameString, opt, predictorName, predictorPrefixName, entries, dataDict))
+            benchmarkFirstList.append((nameString, opt, predictorName, predictorPrefixName, entries, size, dataDict))
     return benchmarkFirstList
 
 def ExtractSelectedData(benchmarkFirstList):
@@ -181,7 +201,8 @@ def ExtractSelectedData(benchmarkFirstList):
     # namestring + opt, config
     benchmarkDict = { }
     for benchmark in benchmarkFirstList:
-        (name, opt, config, prefixName, entries, dataDict) = benchmark
+        (name, opt, config, prefixName, entries, size, dataDict) = benchmark
+        #print(f'config = {config}, prefixName = {prefixName} entries = {entries}')
         # use this code to distinguish speed opt and size opt.
         #if opt == 'bd_speedopt_speed': NewName = name+'Sp'
         #elif opt == 'bd_sizeopt_speed': NewName = name+'Sz'
@@ -190,18 +211,19 @@ def ExtractSelectedData(benchmarkFirstList):
         #print(NewName)
         #NewName = name+'_'+opt
         if NewName in benchmarkDict:
-            benchmarkDict[NewName].append((config, prefixName, entries, dataDict[ReportPredictorType]))
+            benchmarkDict[NewName].append((config, prefixName, entries, size, dataDict[ReportPredictorType]))
         else:
-            benchmarkDict[NewName] = [(config, prefixName, entries, dataDict[ReportPredictorType])]
+            benchmarkDict[NewName] = [(config, prefixName, entries, size, dataDict[ReportPredictorType])]
     return benchmarkDict
 
 def ReportAsTable(benchmarkDict):
     refLine = benchmarkDict['Mean']
     FirstLine = []
     SecondLine = []
-    for (name, typ, size, val) in refLine:
+    for Elements in refLine:
+        (name, typ, size, entries, val) = Elements
         FirstLine.append(name)
-        SecondLine.append(size)
+        SecondLine.append(entries if not args.size else size)
 
     sys.stdout.write('benchmark\t\t')
     for name in FirstLine:
@@ -216,7 +238,7 @@ def ReportAsTable(benchmarkDict):
 
     if(args.summary):
         sys.stdout.write('Mean\t\t\t')
-        for (name, typ, size, val) in refLine:
+        for (name, typ, size, entries, val) in refLine:
             sys.stdout.write('%0.2f\t\t' % (val if not args.invert else 100 - val))
         sys.stdout.write('\n')
 
@@ -226,7 +248,7 @@ def ReportAsTable(benchmarkDict):
             if(length < 8): sys.stdout.write('%s\t\t\t' % benchmark)
             elif(length < 16): sys.stdout.write('%s\t\t' % benchmark)
             else: sys.stdout.write('%s\t' % benchmark)
-            for (name, typ, size, val) in benchmarkDict[benchmark]:
+            for (name, typ, entries, size, val) in benchmarkDict[benchmark]:
                 sys.stdout.write('%0.2f\t\t' % (val if not args.invert else 100 -val))
             sys.stdout.write('\n')
 
@@ -234,14 +256,14 @@ def ReportAsText(benchmarkDict):
     if(args.summary):
         mean = benchmarkDict['Mean']
         print('Mean')
-        for (name, typ, size, val) in mean:
-            sys.stdout.write('%s %s %0.2f\n' % (name, size, val if not args.invert else 100 - val))
+        for (name, typ, entries. size, val) in mean:
+            sys.stdout.write('%s %s %0.2f\n' % (name, entries if not args.size else size, val if not args.invert else 100 - val))
         
     if(not args.summary):
         for benchmark in benchmarkDict:
             print(benchmark)
-            for (name, type, size, val) in benchmarkDict[benchmark]:
-                sys.stdout.write('%s %s %0.2f\n' % (name, size, val if not args.invert else 100 - val))
+            for (name, type, entries, size, val) in benchmarkDict[benchmark]:
+                sys.stdout.write('%s %s %0.2f\n' % (name, entries if not args.size else size, val if not args.invert else 100 - val))
 
 def Inversion(lst):
     return [x if not args.invert else 100 - x for x in lst]
@@ -306,11 +328,11 @@ def ReportAsGraph(benchmarkDict, bar, FileName):
         # branch predictors with various parameterizations
         # group the parameterizations by the common typ.
         sequencies = {}
-        for (name, typ, size, value) in benchmarkDict['Mean']:
+        for (name, typ, entries, size, value) in benchmarkDict['Mean']:
             if not typ in sequencies:
-                sequencies[typ] = [(size, value)]
+                sequencies[typ] = [(entries if not args.size else size, value)]
             else:
-                sequencies[typ].append((size,value))
+                sequencies[typ].append((entries if not args.size else size,value))
         # then graph the common typ as a single line+scatter plot
         # finally repeat for all typs of branch predictors and overlay
         fig, axes = plt.subplots()
@@ -327,7 +349,8 @@ def ReportAsGraph(benchmarkDict, bar, FileName):
         axes.legend(loc='upper left')
         axes.set_xscale("log")
         axes.set_ylabel('Prediction Accuracy')
-        axes.set_xlabel('Entries')
+        Xlabel = 'Entries' if not args.size else 'Size (bits)'
+        axes.set_xlabel(Xlabel)
         axes.set_xticks(xdata)
         axes.set_xticklabels(xdata)
         axes.grid(color='b', alpha=0.5, linestyle='dashed', linewidth=0.5)
@@ -368,7 +391,7 @@ def ReportAsGraph(benchmarkDict, bar, FileName):
         for benchmarkName in benchmarkDict:
             currBenchmark = benchmarkDict[benchmarkName]
             xlabelList.append(benchmarkName)
-            for (name, typ, size, value) in currBenchmark:
+            for (name, typ, entries, size, value) in currBenchmark:
                 if(name not in seriesDict):
                     seriesDict[name] = [value]
                 else:
@@ -381,7 +404,7 @@ def ReportAsGraph(benchmarkDict, bar, FileName):
         for benchmarkName in benchmarkDict:
             currBenchmark = benchmarkDict[benchmarkName]
             xlabelListBig.append(benchmarkName)
-            for (name, typ, size, value) in currBenchmark:
+            for (name, typ, entries, size, value) in currBenchmark:
                 if(name not in seriesDictBig):
                     seriesDictBig[name] = [value]
                 else:
@@ -410,6 +433,7 @@ parser.add_argument('-s', '--summary', action='store_const', help='Show only the
 parser.add_argument('-b', '--bar', action='store_const', help='Plot graphs.', default=False, const=True)
 parser.add_argument('-g', '--reference', action='store_const', help='Include the golden reference model from branch-predictor-simulator. Data stored statically at the top of %(prog)s.  If you need to regenreate use CModelBranchAcurracy.sh', default=False, const=True)
 parser.add_argument('-i', '--invert', action='store_const', help='Invert metric. Example Branch miss prediction becomes prediction accuracy. 100 - miss rate', default=False, const=True)
+parser.add_argument('--size', action='store_const', help='Display x-axis as size in bits rather than number of table entries', default=False, const=True)
 
 displayMode = parser.add_mutually_exclusive_group()
 displayMode.add_argument('--text', action='store_const', help='Display in text format only.', default=False, const=True)
