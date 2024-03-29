@@ -23,15 +23,20 @@ def parse_xlen(rows,freq):
     for row in rows:
         if "rv32gc" in row[0]:
             rows32.append(row)
+            print(row, "in the 32`")
         
         if "rv64gc" in row[0]:
             rows64.append(row)
     rowout = []
-    if ("drsu" in row[0]):
-      rowout.extend(parse_fpmode(rows32,freq))
+    print(rows32, "BEFORE")
+    if ("drsu" in rows[0][0]):
+      print("monkeyQ")
+      rowout.extend(parse_fpmode(rows32,freq)) 
       rowout.extend(parse_fpmode(rows64,freq))
-    else if ("mdudiv" in row[0]):
-      rowout.extend(parse_idiv=)
+    elif ("mdudiv" in rows[0][0]):
+      rowout.append(parse_idivbits(rows32,freq))
+      rowout.append(parse_idivbits(rows64,freq))
+    print(rowout,"JAME")
     return rowout
      
     
@@ -112,6 +117,7 @@ def parse_idivbits(rows,freq):
     for row in rows:
         design = row[0]
         bits = int(design.split("_")[3])
+        print(bits, "DABITS")
         area = row[1]
         delay = row[2]
         power = float(row[3])/freq
@@ -170,9 +176,11 @@ def parse_idivbits(rows,freq):
             rowout.append(delay)
             rowout.append(power)
     rowout.insert(0, titleClean(rows[0][0]))
+    print("***")
+    print(rowout,"OUCH")
     return rowout
 def titleClean(title):
-  
+  newtitle = ""
   if ("drsu" in title):
     tokens = title.split("_")
     tokens.pop(3)
@@ -180,13 +188,14 @@ def titleClean(title):
     tokens.pop(3)
     tokens.pop(4)
     if "i_" in title:
-      title = "_".join(tokens) + "_IDIV"
+      newtitle = "_".join(tokens) + "_IDIV"
     else:
-      title = "_".join(tokens)
-  else if ("mdudiv" in title):
+      newtitle = "_".join(tokens)
+  elif ("mdudiv" in title):
     tokens = title.split("_")
     tokens.pop(5)
-    title = "_".join(tokens)
+    tokens.pop(3)
+    newtitle = "_".join(tokens)
     #*** DO STUFF HERE
 
   """
@@ -196,7 +205,7 @@ def titleClean(title):
   i = title.index("IDIVBITS")
   title=title[:i] + title[i+11:]
   """
-  return title
+  return newtitle
 def parse_fpmode(rows,freq):
     rowf = []
     rowd = []
@@ -222,18 +231,17 @@ def parse_idiv(rows,freq):
     noidivrows = []
     rowout = []
     for row in rows:
-      print(row)
       idiv = len((row[0].split("_"))[5]) == 2
-      print(idiv)
       if idiv:
           idivrows.append(row)
       else:
           noidivrows.append(row)
-    rowout.extend(parse_xlen(idivrows,freq))
+    
+    if len(idivrows)>0: rowout.extend(parse_xlen(idivrows,freq))
     rowout.extend(parse_xlen(noidivrows,freq))
     return rowout
 
-    
+"""
 with open(f"{os.environ['WALLY']}/synthDC/fp-synth.csv", 'r') as csv_file:
     reader = csv.reader(csv_file)
     allrows = []
@@ -242,20 +250,23 @@ with open(f"{os.environ['WALLY']}/synthDC/fp-synth.csv", 'r') as csv_file:
         allrows.append(row)
     rowout.extend(parse_freq(allrows))
     print(rowout)
+"""
 
+rowout = [["design","RADIX_2_K_1", "RADIX_2_K_1", "RADIX_2_K_1", "RADIX_2_K_2", "RADIX_2_K_2", "RADIX_2_K_2", "RADIX_2_K_4", "RADIX_2_K_4", "RADIX_2_K_4", "RADIX_4_K_1", "RADIX_4_K_1", "RADIX_4_K_1", "RADIX_4_K_2", "RADIX_4_K_2", "RADIX_4_K_2", "RADIX_4_K_4", "RADIX_4_K_4", "RADIX_4_K_4"]]
 # add mdu divider results, and combine with fdivsqrt only results
 # format should be drsu_idiv, drsu_noidiv + intdiv, drsu_noidiv, intdiv
 # insert drsu_noidiv+intdiv at index 7
-with open(f"{os.environ['WALLY']}/synthDC/fp-synth-intdiv.csv", 'r') as csv_file:
+with open(f"{os.environ['WALLY']}/synthDC/fp-synth_intdiv.csv", 'r') as csv_file:
     reader = csv.reader(csv_file)
     allrows = []
     for row in reader:
         allrows.append(row)
     rowout.extend(parse_freq(allrows))
-    drsu100i_rows = rowout[1:7]
+    """drsu100i_rows = rowout[1:7]
     drsu100_rows = rowout[7:13]
     drsu5000i_rows = rowout[13:19]
     drsu5000_rows = rowout[19:25]
+    """
     print(rowout)
 
 
