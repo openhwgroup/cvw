@@ -330,9 +330,9 @@ def ReportAsGraph(benchmarkDict, bar, FileName):
         sequencies = {}
         for (name, typ, entries, size, value) in benchmarkDict['Mean']:
             if not typ in sequencies:
-                sequencies[typ] = [(entries if not args.size else size, value)]
+                sequencies[typ] = [(entries if not args.size else int(size/8), value)]
             else:
-                sequencies[typ].append((entries if not args.size else size,value))
+                sequencies[typ].append((entries if not args.size else int(size/8) ,value))
         # then graph the common typ as a single line+scatter plot
         # finally repeat for all typs of branch predictors and overlay
         fig, axes = plt.subplots()
@@ -349,7 +349,7 @@ def ReportAsGraph(benchmarkDict, bar, FileName):
         axes.legend(loc='upper left')
         axes.set_xscale("log")
         axes.set_ylabel('Prediction Accuracy')
-        Xlabel = 'Entries' if not args.size else 'Size (bits)'
+        Xlabel = 'Entries' if not args.size else 'Size (bytes)'
         axes.set_xlabel(Xlabel)
         axes.set_xticks(xdata)
         axes.set_xticklabels(xdata)
