@@ -153,7 +153,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
     end
     string AccessTypeString, HitMissString;
     always @(*) begin
-      HitMissString = dut.core.ifu.bus.icache.icache.CacheHit ? "H" :
+      HitMissString = dut.core.ifu.bus.icache.icache.Hit ? "H" :
                       dut.core.ifu.bus.icache.icache.vict.cacheLRU.AllValid ? "E" : "M";
     end
     always @(posedge clk) begin
@@ -178,7 +178,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
     flop #(1) ResetDReg(clk, reset, resetD);
     assign resetEdge = ~reset & resetD;
     always @(*) begin
-      HitMissString = dut.core.lsu.bus.dcache.dcache.CacheHit ? "H" :
+      HitMissString = dut.core.lsu.bus.dcache.dcache.Hit ? "H" :
                       (!dut.core.lsu.bus.dcache.dcache.vict.cacheLRU.AllValid) ? "M" :
                       dut.core.lsu.bus.dcache.dcache.LineDirty ? "D" : "E";
       AccessTypeString = dut.core.lsu.bus.dcache.FlushDCache ? "F" :
