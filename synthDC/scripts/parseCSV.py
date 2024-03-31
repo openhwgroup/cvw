@@ -1,6 +1,8 @@
 import csv
 import os
 
+from iteration_utilities import grouper
+
 #order:
 """ sort by noidiv, then idiv, 32, 64, f, d,q, and r/k """
 
@@ -241,18 +243,46 @@ def parse_idiv(rows,freq):
     rowout.extend(parse_xlen(noidivrows,freq))
     return rowout
 
-"""
+def mergerows(drsu,mdu):
+  drsumdurow = []
+  for i in range(len(drsu)):
+    drsurow = drsu[i]
+    mdurow=mdu[i//3]
+    drsumdurow.append(combinerow(drsurow, mdurow))
+  return drsumdurow
+def combinerow(drsu, mdu):
+  drsu_mdu = ["MDU_"+drsu[0]]
+  # group into 3's 
+  drsu_group = list(grouper(drsu[1:],3))
+  mdu_group = list(grouper(mdu[1:],3))
+  for i in range(len(drsu_group)):
+    area_1 = drsu_group[i][0]
+    area_2 = mdu_group[i][0]
+
+    timing_1 = drsu_group[i][1]
+    timing_2 = mdu_group[i][1]
+
+    energy_1 = drsu_group[i][2]
+    energy_2 = mdu_group[i][2]
+
+    area_comb = float(area_1) + float(area_2)
+    timing_comb = max(float(timing_1), float(timing_2))
+    energy_comb = float(energy_1) + float(energy_2)
+    drsu_mdu.append(area_comb)
+    drsu_mdu.append(timing_comb)
+    drsu_mdu.append(energy_comb)
+  return drsu_mdu
+
+
+rowout = [["design","RADIX_2_K_1", "RADIX_2_K_1", "RADIX_2_K_1", "RADIX_2_K_2", "RADIX_2_K_2", "RADIX_2_K_2", "RADIX_2_K_4", "RADIX_2_K_4", "RADIX_2_K_4", "RADIX_4_K_1", "RADIX_4_K_1", "RADIX_4_K_1", "RADIX_4_K_2", "RADIX_4_K_2", "RADIX_4_K_2", "RADIX_4_K_4", "RADIX_4_K_4", "RADIX_4_K_4"]]
+
 with open(f"{os.environ['WALLY']}/synthDC/fp-synth.csv", 'r') as csv_file:
     reader = csv.reader(csv_file)
     allrows = []
-    rowout = [["design","RADIX_2_K_1", "RADIX_2_K_1", "RADIX_2_K_1", "RADIX_2_K_2", "RADIX_2_K_2", "RADIX_2_K_2", "RADIX_2_K_4", "RADIX_2_K_4", "RADIX_2_K_4", "RADIX_4_K_1", "RADIX_4_K_1", "RADIX_4_K_1", "RADIX_4_K_2", "RADIX_4_K_2", "RADIX_4_K_2", "RADIX_4_K_4", "RADIX_4_K_4", "RADIX_4_K_4"]]
     for row in reader:
         allrows.append(row)
     rowout.extend(parse_freq(allrows))
     print(rowout)
-"""
-
-rowout = [["design","RADIX_2_K_1", "RADIX_2_K_1", "RADIX_2_K_1", "RADIX_2_K_2", "RADIX_2_K_2", "RADIX_2_K_2", "RADIX_2_K_4", "RADIX_2_K_4", "RADIX_2_K_4", "RADIX_4_K_1", "RADIX_4_K_1", "RADIX_4_K_1", "RADIX_4_K_2", "RADIX_4_K_2", "RADIX_4_K_2", "RADIX_4_K_4", "RADIX_4_K_4", "RADIX_4_K_4"]]
 # add mdu divider results, and combine with fdivsqrt only results
 # format should be drsu_idiv, drsu_noidiv + intdiv, drsu_noidiv, intdiv
 # insert drsu_noidiv+intdiv at index 7
@@ -262,12 +292,42 @@ with open(f"{os.environ['WALLY']}/synthDC/fp-synth_intdiv.csv", 'r') as csv_file
     for row in reader:
         allrows.append(row)
     rowout.extend(parse_freq(allrows))
-    """drsu100i_rows = rowout[1:7]
+    drsu100i_rows = rowout[1:7]
     drsu100_rows = rowout[7:13]
     drsu5000i_rows = rowout[13:19]
     drsu5000_rows = rowout[19:25]
-    """
-    print(rowout)
+    mdu100_rows = rowout[25:27]
+    mdu5000_rows = rowout[27:29]
+    drsumdu_100_rows = mergerows(drsu100_rows,mdu100_rows)
+    drsumdu_5000_rows = mergerows(drsu5000_rows,mdu5000_rows)
+    rowout = [["design","RADIX_2_K_1", "RADIX_2_K_1", "RADIX_2_K_1", "RADIX_2_K_2", "RADIX_2_K_2", "RADIX_2_K_2", "RADIX_2_K_4", "RADIX_2_K_4", "RADIX_2_K_4", "RADIX_4_K_1", "RADIX_4_K_1", "RADIX_4_K_1", "RADIX_4_K_2", "RADIX_4_K_2", "RADIX_4_K_2", "RADIX_4_K_4", "RADIX_4_K_4", "RADIX_4_K_4"]]
+    rowout.extend(drsu100i_rows[0:3])
+    rowout.extend(drsumdu_100_rows[0:3])
+    rowout.extend(drsu100_rows[0:3])
+    rowout.extend([mdu100_rows[0]])
+
+    rowout.extend(drsu100i_rows[3:6])
+    rowout.extend(drsumdu_100_rows[3:6])
+    rowout.extend(drsu100_rows[3:6])
+    rowout.extend([mdu100_rows[1]])
+
+
+    rowout.extend(drsu5000i_rows[0:3])
+    rowout.extend(drsumdu_5000_rows[0:3])
+    rowout.extend(drsu5000_rows[0:3])
+    rowout.extend([mdu5000_rows[0]])
+
+    rowout.extend(drsu5000i_rows[3:6])
+    rowout.extend(drsumdu_5000_rows[3:6])
+    rowout.extend(drsu5000_rows[3:6])
+    rowout.extend([mdu5000_rows[1]])
+
+
+
+
+
+
+
 
 
 
