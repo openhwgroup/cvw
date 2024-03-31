@@ -252,9 +252,9 @@ module testbench;
     assign SDCCmdIn = SDCCmd;
     assign SDCDatIn = SDCDat;
  -----/\----- EXCLUDED -----/\----- */
-    assign SDCIntr = '0;
+    assign SDCIntr = 0;
   end else begin
-    assign SDCIntr = '0;
+    assign SDCIntr = 0;
   end
 
   wallypipelinedsoc #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,

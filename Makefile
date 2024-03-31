@@ -6,7 +6,7 @@ all:
 	make install
 	make riscof	
 	make testfloat
-	make verify
+#	make verify
 	make coverage
 	make benchmarks
 
@@ -38,6 +38,21 @@ verify:
 imperasdv:
 	iter-elf.bash --search ${WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m
 	iter-elf.bash --search ${WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m
+
+imperasdv_cov:
+	touch ${WALLY}/sim/seed0.txt
+	echo "0" > ${WALLY}/sim/seed0.txt
+#	/opt/riscv/ImperasDV-OpenHW/scripts/cvw/run-elf-cov.bash --verbose --seed 0 --search ${WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m
+#	/opt/riscv/ImperasDV-OpenHW/scripts/cvw/run-elf-cov.bash --elf ${WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/dut/my.elf --seed ${WALLY}/sim/seed0.txt --coverdb ${WALLY}/sim/cov/rv64gc_arch64i.ucdb --verbose
+	/opt/riscv/ImperasDV-OpenHW/scripts/cvw/run-elf-cov.bash --elf ${WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/dut/my.elf --seed ${WALLY}/sim/seed0.txt --coverdb riscv.ucdb --verbose
+	vcover report -details -html sim/riscv.ucdb
+
+funcovreg:
+	iter-elf.bash --search ${WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m --cover
+	#iter-elf.bash --search ${WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m/I --cover
+	#iter-elf.bash --search ${WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m/privilege --cover
+	#iter-elf.bash --search ${WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m/Q --cover
+	vcover report -details -html sim/riscv.ucdb
 
 coverage:
 	cd ${WALLY}/sim; ./regression-wally -coverage -fp

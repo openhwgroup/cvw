@@ -136,7 +136,7 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
     ProgramAddrMapFP = $fopen(ProgramAddrMapFile, "r");
 
     // read line by line to count lines
-    if (ProgramAddrMapFP != '0) begin
+    if (ProgramAddrMapFP != 0) begin
       while (! $feof(ProgramAddrMapFP)) begin
 	    status = $fscanf(ProgramAddrMapFP, "%h\n", ProgramAddrMapLine);
         ProgramAddrMapMemory[ProgramAddrMapLineCount] = ProgramAddrMapLine;
@@ -154,7 +154,7 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
     ProgramLabelMapLineCount = 0;
     ProgramLabelMapFP = $fopen(ProgramLabelMapFile, "r");
     
-    if (ProgramLabelMapFP != '0) begin
+    if (ProgramLabelMapFP != 0) begin
       while (! $feof(ProgramLabelMapFP)) begin
 	status = $fscanf(ProgramLabelMapFP, "%s\n", ProgramLabelMapLine);
 	ProgramLabelMapMemory[ProgramLabelMapLineCount] = ProgramLabelMapLine;
@@ -174,7 +174,7 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
   logic OrReducedAdr, AnyUnknown;
   assign OrReducedAdr = |ProgramAddrIndex;
   assign AnyUnknown = (OrReducedAdr === 1'bx) ? 1'b1 : 1'b0;
-  initial ProgramAddrIndex = '0;
+  initial ProgramAddrIndex = 0;
 
   always @(*) FunctionName = AnyUnknown ? "Unknown!" : ProgramLabelMapMemory[ProgramAddrIndex];
 

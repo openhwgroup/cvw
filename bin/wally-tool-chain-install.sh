@@ -46,9 +46,9 @@ sudo mkdir -p $RISCV
 # Update and Upgrade tools (see https://itsfoss.com/apt-update-vs-upgrade/)
 sudo apt update -y
 sudo apt upgrade -y
-sudo apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev libglib2.0-dev python3-pip pkg-config opam z3 zlib1g-dev automake autotools-dev libmpc-dev libmpfr-dev  gperf libtool patchutils bc 
+sudo apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev libglib2.0-dev python3-pip pkg-config opam z3 zlib1g-dev automake autotools-dev libmpc-dev libmpfr-dev  gperf libtool patchutils bc mutt
 # Other python libraries used through the book.
-sudo pip3 install sphinx sphinx_rtd_theme matplotlib scipy scikit-learn adjustText lief
+sudo pip3 install sphinx sphinx_rtd_theme matplotlib scipy scikit-learn adjustText lief markdown 
 
 # needed for Ubuntu 22.04, gcc cross compiler expects python not python2 or python3.
 if ! command -v python &> /dev/null
@@ -60,16 +60,13 @@ fi
 # gcc cross-compiler (https://github.com/riscv-collab/riscv-gnu-toolchain)
 # To install GCC from source can take hours to compile. 
 # This configuration enables multilib to target many flavors of RISC-V.   
-# This book is tested with GCC 12.2 (tagged 2023.01.31), but will likely work with newer versions as well. 
-# Note that GCC12.2 has binutils 2.39, which has a known performance bug that causes
-# objdump to run 100x slower than in previous versions, causing riscof to make versy slowly.
-# However GCC12.x is needed for bit manipulation instructions.  There is an open issue to fix this:
-# https://github.com/riscv-collab/riscv-gnu-toolchain/issues/1188
-
+# This book is tested with GCC 13.2.0
+# Versions newer than 2023-12-20 fail to compile the RISC-V arch test with an error:
+# cvw/addins/riscv-arch-test/riscv-test-suite/rv32i_m/I/src/jalr-01.S:72: Error: illegal operands `la x0,5b'
+# PR *** submitted to fix riscv-arch-test to be compatible with latest GCC by modifying test_macros.h for TEST_JALR_OP
 cd $RISCV
 git clone https://github.com/riscv/riscv-gnu-toolchain
 cd riscv-gnu-toolchain
-git checkout 8c969a9efe68a811cf524174d25255632029f3d3 # tag 2023.12.20
 ./configure --prefix=${RISCV} --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
 make -j ${NUM_THREADS}
 
@@ -100,7 +97,7 @@ make install
 
 # Spike (https://github.com/riscv-software-src/riscv-isa-sim)
 # Spike also takes a while to install and compile, but this can be done concurrently 
-#with the GCC installation. After the build, we need to change two Makefiles to support atomic instructions.
+# with the GCC installation. 
 cd $RISCV
 git clone https://github.com/riscv-software-src/riscv-isa-sim
 mkdir -p riscv-isa-sim/build
@@ -108,15 +105,13 @@ cd riscv-isa-sim/build
 ../configure --prefix=$RISCV 
 make -j ${NUM_THREADS}
 make install 
-cd ../arch_test_target/spike/device
-sed -i 's/--isa=rv32ic/--isa=rv32iac/' rv32i_m/privilege/Makefile.include
-sed -i 's/--isa=rv64ic/--isa=rv64iac/' rv64i_m/privilege/Makefile.include
+
 
 # Wally needs Verilator 5.021 or later.
 # Verilator needs to be built from scratch to get the latest version
 # apt-get install verilator installs version 4.028 as of 6/8/23
 sudo apt-get install -y perl g++ ccache help2man libgoogle-perftools-dev numactl perl-doc zlib1g 
-sudo apt-get install -y libfl2  libfl-dev  # Ubuntu only (ignore if gives error)
+sudo apt-get install -y perl g++ ccache help2man libgoogle-perftools-dev numactl perl-doc zlib1g 
 cd $RISCV
 git clone https://github.com/verilator/verilator   # Only first time
 # unsetenv VERILATOR_ROOT  # For csh; ignore error if on bash
@@ -171,6 +166,8 @@ sudo make install
 
 cd $RISCV
 opam init -y --disable-sandboxing
+opam update
+opam upgrade
 opam switch create 5.1.0
 opam install sail -y 
 

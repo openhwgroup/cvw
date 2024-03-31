@@ -33,8 +33,8 @@ module synchronizer (
   logic mid;
 
   always_ff @(posedge clk) begin
-    mid <= #1 d;
-    q <= #1 mid;
+    mid <= d;
+    q <= mid;
   end
 endmodule
 

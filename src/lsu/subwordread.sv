@@ -28,98 +28,47 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module subwordread #(parameter LLEN) 
-  (
-   input logic [LLEN-1:0]   ReadDataWordMuxM,
-   input logic [2:0]        PAdrM,
-   input logic [2:0]        Funct3M,
-   input logic              FpLoadStoreM, 
-   input logic              BigEndianM, 
-   output logic [LLEN-1:0]  ReadDataM
+module subwordread import cvw::*;  #(parameter cvw_t P) (
+   input logic [P.LLEN-1:0]  ReadDataWordMuxM,
+   input logic [3:0]         PAdrM,
+   input logic [2:0]         Funct3M,
+   input logic               FpLoadStoreM, 
+   input logic               BigEndianM, 
+   output logic [P.LLEN-1:0] ReadDataM
 );
 
+  localparam ADRBITS = $clog2(P.LLEN)-3;
+
+  logic [ADRBITS-1:0]       PAdrSwapM;
   logic [7:0]               ByteM; 
   logic [15:0]              HalfwordM;
-  logic [2:0]               PAdrSwap;
-  // Funct3M[2] is the unsigned bit. mask upper bits.
-  // Funct3M[1:0] is the size of the memory access.
-  assign PAdrSwap = PAdrM ^ {3{BigEndianM}};
+  logic [31:0]              WordM;
+  logic [63:0]              DblWordM;
 
-  if (LLEN == 64) begin:swrmux
-    // ByteMe mux
-    always_comb
-    case(PAdrSwap[2:0])
-      3'b000: ByteM = ReadDataWordMuxM[7:0];
-      3'b001: ByteM = ReadDataWordMuxM[15:8];
-      3'b010: ByteM = ReadDataWordMuxM[23:16];
-      3'b011: ByteM = ReadDataWordMuxM[31:24];
-      3'b100: ByteM = ReadDataWordMuxM[39:32];
-      3'b101: ByteM = ReadDataWordMuxM[47:40];
-      3'b110: ByteM = ReadDataWordMuxM[55:48];
-      3'b111: ByteM = ReadDataWordMuxM[63:56];
-    endcase
-  
-    // halfword mux
-    always_comb
-    case(PAdrSwap[2:1])
-      2'b00: HalfwordM = ReadDataWordMuxM[15:0];
-      2'b01: HalfwordM = ReadDataWordMuxM[31:16];
-      2'b10: HalfwordM = ReadDataWordMuxM[47:32];
-      2'b11: HalfwordM = ReadDataWordMuxM[63:48];
-    endcase
-    
-    logic [31:0] WordM;
-    
-    always_comb
-      case(PAdrSwap[2])
-        1'b0: WordM = ReadDataWordMuxM[31:0];
-        1'b1: WordM = ReadDataWordMuxM[63:32];
-      endcase
+  // invert lsbs of address to select appropriate subword for big endian
+  if (P.BIGENDIAN_SUPPORTED) assign PAdrSwapM = PAdrM[ADRBITS-1:0] ^ {ADRBITS{BigEndianM}};
+  else                       assign PAdrSwapM = PAdrM[ADRBITS-1:0];
 
-    logic [63:0] DblWordM;
-    assign DblWordM = ReadDataWordMuxM[63:0];
+  // Use indexed part select to imply muxes to select each size of subword
+  if (P.LLEN == 128) mux2 #(64) dblmux(ReadDataWordMuxM[63:0], ReadDataWordMuxM[127:64], PAdrSwapM[3], DblWordM);
+  else if (P.LLEN == 64) assign DblWordM = ReadDataWordMuxM;
+  if (P.LLEN >= 64) mux2 #(32) wordmux(DblWordM[31:0], DblWordM[63:32], PAdrSwapM[2], WordM);
+  else assign WordM = ReadDataWordMuxM;
+  mux2 #(16) halfwordmux(WordM[15:0], WordM[31:16], PAdrSwapM[1], HalfwordM);
+  mux2 #(8)  bytemux(HalfwordM[7:0], HalfwordM[15:8], PAdrSwapM[0], ByteM);
 
-    // sign extension/ NaN boxing
-    always_comb
+  // sign extension/ NaN boxing
+  always_comb
     case(Funct3M)
-      3'b000:  ReadDataM = {{LLEN-8{ByteM[7]}}, ByteM};                              // lb
-      3'b001:  ReadDataM = {{LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]}; // lh/flh
-      3'b010:  ReadDataM = {{LLEN-32{WordM[31]|FpLoadStoreM}}, WordM[31:0]};         // lw/flw
-      3'b011:  ReadDataM = {{LLEN-64{DblWordM[63]|FpLoadStoreM}}, DblWordM[63:0]};   // ld/fld
-      3'b100:  ReadDataM = {{LLEN-8{1'b0}}, ByteM[7:0]};                             // lbu
-    //3'b100:  ReadDataM = FpLoadStoreM ? ReadDataWordMuxM : {{LLEN-8{1'b0}}, ByteM[7:0]}; // lbu/flq   - only needed when LLEN=128
-      3'b101:  ReadDataM = {{LLEN-16{1'b0}}, HalfwordM[15:0]};                       // lhu
-      3'b110:  ReadDataM = {{LLEN-32{1'b0}}, WordM[31:0]};                           // lwu
-      default: ReadDataM = ReadDataWordMuxM;                                         // Shouldn't happen
+      3'b000:  ReadDataM = {{(P.LLEN-8){ByteM[7]}}, ByteM};                                                     // lb
+      3'b001:  ReadDataM = {{P.LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]};                          // lh/flh
+      3'b010:  ReadDataM = {{P.LLEN-32{WordM[31]|FpLoadStoreM}}, WordM[31:0]};                                  // lw/flw
+      3'b011:  if (P.LLEN >= 64) ReadDataM = {{P.LLEN-64{DblWordM[63]|FpLoadStoreM}}, DblWordM[63:0]};          // ld/fld
+               else ReadDataM = ReadDataWordMuxM;                                                               // shouldn't happen
+      3'b100:  if (P.LLEN == 128) ReadDataM = FpLoadStoreM ? ReadDataWordMuxM : {{P.LLEN-8{1'b0}}, ByteM[7:0]}; // lbu/flq   
+               else ReadDataM = {{P.LLEN-8{1'b0}}, ByteM[7:0]};                                                 // lbu
+      3'b101:  ReadDataM = {{P.LLEN-16{1'b0}}, HalfwordM[15:0]};                                                // lhu
+      3'b110:  ReadDataM = {{P.LLEN-32{1'b0}}, WordM[31:0]};                                                    // lwu
+      default: ReadDataM = ReadDataWordMuxM;                                                                    // Shouldn't happen
     endcase
-
-  end else begin:swrmux // 32-bit
-    // byte mux
-    always_comb
-    case(PAdrSwap[1:0])
-      2'b00: ByteM = ReadDataWordMuxM[7:0];
-      2'b01: ByteM = ReadDataWordMuxM[15:8];
-      2'b10: ByteM = ReadDataWordMuxM[23:16];
-      2'b11: ByteM = ReadDataWordMuxM[31:24];
-    endcase
-  
-    // halfword mux
-    always_comb
-    case(PAdrSwap[1])
-      1'b0: HalfwordM = ReadDataWordMuxM[15:0];
-      1'b1: HalfwordM = ReadDataWordMuxM[31:16];
-    endcase
-
-    // sign extension
-    always_comb
-    case(Funct3M)
-      3'b000:  ReadDataM = {{LLEN-8{ByteM[7]}}, ByteM};                                            // lb
-      3'b001:  ReadDataM = {{LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]};               // lh/flh
-      3'b010:  ReadDataM = {{LLEN-32{ReadDataWordMuxM[31]|FpLoadStoreM}}, ReadDataWordMuxM[31:0]}; // lw/flw
-      3'b011:  ReadDataM = ReadDataWordMuxM;                                                        // fld
-      3'b100:  ReadDataM = {{LLEN-8{1'b0}}, ByteM[7:0]};                                           // lbu
-      3'b101:  ReadDataM = {{LLEN-16{1'b0}}, HalfwordM[15:0]};                                     // lhu
-      default: ReadDataM = ReadDataWordMuxM;                                                        // Shouldn't happen
-    endcase
-  end
 endmodule

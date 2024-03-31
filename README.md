@@ -128,4 +128,12 @@ If you want to implement your own version of the chip, your tool and license com
 Startups can expect to spend more than $1 million on CAD tools to get a chip to market. Commercial CAD tools are not realistically available to individuals without a university or company connection.
 
 
+## Adding Cron Job for nightly builds
+
+If you want to add a cronjob you can do the following:
+1) `crontab -e`
+2) add this code:
+```
+0 3 * * * BASH_ENV=~/.bashrc bash -l -c "PATH_TO_CVW/cvw/bin/wrapper_nightly_runs.sh > PATH_TO_LOG_FOLDER/cron.log"
+```
 

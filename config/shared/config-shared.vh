@@ -1,3 +1,6 @@
+//max function
+`define max(a,b) (((a) > (b)) ? (a) : (b))
+
 // constants defining different privilege modes
 // defined in Table 1.1 of the privileged spec
 localparam M_MODE  = (2'b11);
@@ -29,6 +32,7 @@ localparam D_SUPPORTED = ((MISA >> 3) % 2 == 1);
 localparam E_SUPPORTED = ((MISA >> 4) % 2 == 1);
 localparam F_SUPPORTED = ((MISA >> 5) % 2 == 1);
 localparam I_SUPPORTED = ((MISA >> 8) % 2 == 1);
+localparam K_SUPPORTED = ((ZBKB_SUPPORTED | ZBKC_SUPPORTED | ZBKX_SUPPORTED | ZKND_SUPPORTED | ZKNE_SUPPORTED | ZKNH_SUPPORTED));
 localparam M_SUPPORTED = ((MISA >> 12) % 2 == 1);
 localparam Q_SUPPORTED = ((MISA >> 16) % 2 == 1);
 localparam S_SUPPORTED = ((MISA >> 18) % 2 == 1);
@@ -94,7 +98,7 @@ localparam LOGR        = $clog2(RADIX);                             // r = log(R
 localparam RK          = LOGR*DIVCOPIES;                            // r*k bits per cycle generated
 
 // intermediate division parameters not directly used in fdivsqrt hardware
-localparam FPDIVMINb   = NF + 3; // minimum length of fractional part: Nf result bits + guard and round bits + 1 extra bit to allow sqrt being shifted right
+localparam FPDIVMINb   = NF + 2; // minimum length of fractional part: Nf result bits + guard and round bits + 1 extra bit to allow sqrt being shifted right
 //localparam FPDIVMINb   = NF + 2 + (RADIX == 2); // minimum length of fractional part: Nf result bits + guard and round bits + 1 extra bit for preshifting radix2 square root right, if radix4 doesn't use a right shift.  This version saves one cycle on double-precision with R=4,k=4.  However, it doesn't work yet because C is too short, so k is incorrectly calculated as a 1 in the lsb after the last step.
 localparam DIVMINb     = ((FPDIVMINb<XLEN) & IDIV_ON_FPU) ? XLEN : FPDIVMINb; // minimum fractional bits b = max(XLEN, FPDIVMINb)
 localparam RESBITS     = DIVMINb + LOGR; // number of bits in a result: r integer + b fractional
@@ -106,12 +110,13 @@ localparam DURLEN      = $clog2(FPDUR);                             // enough bi
 localparam DIVBLEN     = $clog2(DIVb+1);                            // enough bits to count number of fractional bits + 1 integer bit
 
 // largest length in IEU/FPU
-localparam CVTLEN = ((NF<XLEN) ? (XLEN) : (NF));  // max(XLEN, NF)
-localparam LLEN = (($unsigned(FLEN)<$unsigned(XLEN)) ? ($unsigned(XLEN)) : ($unsigned(FLEN)));
+localparam BASECVTLEN = `max(XLEN, NF); // convert length excluding Zfa fcvtmod.w.d
+localparam CVTLEN = ZFA_SUPPORTED ? `max(BASECVTLEN, 32'd84) : BASECVTLEN; // fcvtmod.w.d needs at least 32+52 because a double with 52 fractional bits might be into upper bits of 32 bit word
+localparam LLEN = `max($unsigned(FLEN), $unsigned(XLEN));
 localparam LOGCVTLEN = $unsigned($clog2(CVTLEN+1));
-localparam NORMSHIFTSZ = (((CVTLEN+NF+1)>(DIVb + 1 +NF+1) & (CVTLEN+NF+1)>(3*NF+6)) ? (CVTLEN+NF+1) : ((DIVb + 1 +NF+1) > (3*NF+6) ? (DIVb + 1 +NF+1) : (3*NF+6))); // max(CVTLEN+NF+1, DIVb + 1 + NF + 1, 3*NF+6)
+localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1), (DIVb + 1 + NF + 1)), (3*NF+6));
 localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));
-localparam CORRSHIFTSZ = (NORMSHIFTSZ-2 > (DIVMINb + 1 + NF)) ? NORMSHIFTSZ-2 : (DIVMINb+1+NF);  // max(NORMSHIFTSZ-2, DIVMINb + 1 + NF)
+localparam CORRSHIFTSZ = `max((NORMSHIFTSZ-2), (DIVMINb + 1 + NF));
 
 
 // Disable spurious Verilator warnings

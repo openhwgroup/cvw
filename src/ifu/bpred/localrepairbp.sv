@@ -113,10 +113,10 @@ module localrepairbp import cvw::*; #(parameter cvw_t P,
   // **** replace with small CAM
   logic [2**m-1:0]        FlushedBits;
   always_ff @(posedge clk) begin // Valid bit array,
-    SpeculativeFlushedF <= #1 FlushedBits[IndexLHRNextF];
-    if (reset | FlushD) FlushedBits        <= #1 '1;
+    SpeculativeFlushedF <= FlushedBits[IndexLHRNextF];
+    if (reset | FlushD) FlushedBits        <= '1;
     if(BranchD & ~StallE & ~FlushE) begin
-      FlushedBits[IndexLHRD] <= #1 '0;
+      FlushedBits[IndexLHRD] <= 0;
     end
   end
 

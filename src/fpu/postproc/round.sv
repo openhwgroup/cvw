@@ -303,9 +303,9 @@ module round import cvw::*;  #(parameter cvw_t P) (
       case(PostProcSel)
           2'b10:    Me = FmaMe; // fma
           2'b00:    Me = {CvtCe[P.NE], CvtCe}&{P.NE+2{~CvtResSubnormUf|CvtResUf}}; // cvt
-          // 2'b01: Me = DivDone ? Ue : '0; // divide
+          // 2'b01: Me = DivDone ? Ue : 0; // divide
           2'b01:    Me = Ue; // divide
-          default:  Me = '0; 
+          default:  Me = 0; 
       endcase
 
 
