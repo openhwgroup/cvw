@@ -2,22 +2,34 @@
 # of course, you can run it in the current environment as soon as
 #   - RISCV is defined
 #   - QUESTA is defined
+QUESTA="/cad/mentor/questa_sim-xxxx.x_x"
+
+# now only main branch is supported
+if [ -z "${CVW_GIT+x}" ]; then
+    echo "No CVW_GIT is provided"
+    CVW_GIT="https://github.com/openhwgroup/cvw"
+fi
 
 export PATH="${RISCV}/bin:${PATH}"
 git config --global http.version HTTP/1.1
 
-if [ ! -f "/home/${USERNAME}/cvw/setup.sh" ] || [ -n "${CLEAN_CVW+x}" ]; then
-    cd /home/${USERNAME} && rm -rf /home/${USERNAME}/cvw/*
-    git clone --recurse-submodules  https://github.com/openhwgroup/cvw /home/${USERNAME}/cvw
+# if cvw is not available or new cvw is required
+if [ ! -f "/home/${USERNAME}/cvw/setup.sh" ] || [ -z "${CLEAN_CVW+x}" ]; then
+    cd /home/${USERNAME} && rm -rf /home/${USERNAME}/cvw
+    git clone --recurse-submodules  ${CVW_GIT} /home/${USERNAME}/cvw
     # if failed to clone submodules for some reason, please run `git submodule update`
 fi
 
 cd /home/${USERNAME}/cvw && chmod +x ./setup.sh && ./setup.sh
 make install && make riscof && make testfloat
 
-if [ "${RUN_QUESTA}" != "false" ] && [ -f "${QUESTA}/questasim/bin/vsim" ]; then
-    export PATH="${QUESTA}/questasim/bin:${PATH}"
-	cd sim && ./regression-wally 2>&1 > ./regression_questa.out && cd ..
+if [ -z "${RUN_QUESTA+x}" ] ; then
+    if [ ! -f "${QUESTA}/questasim/bin/vsim" ]; then
+        echo "Cannot find vsim with ${QUESTA}/questasim/bin/vsim"
+    else
+        export PATH="${QUESTA}/questasim/bin:${PATH}"
+        cd sim && ./regression-wally 2>&1 > ./regression_questa.out && cd ..
+    fi
 fi
 
 cd sim && verilator -GTEST="\"arch64i\"" -DVERILATOR=1 \

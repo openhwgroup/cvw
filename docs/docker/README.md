@@ -7,24 +7,19 @@
 - [ ] Pinning the tools version
     - As for the consistent tool build, should we use specific versions of tools in order to avoid bugs at the master branch?
     - And we will upgrade the versions of tool after a certain period of time to get the latest features and patches while verifying it won’t cause any problem.
-- [ ] Mount the EDA Tools and Path
+- [x] Mount the ~~EDA Tools~~QuestaSIM and Path
+    - USE_QUESTA and QUESTA for path
 - [x] Enable X11 forwarding for docker
     - `--network=host` for docker run
     - `xhost +localhost:${USER}` for host
 - [ ] Regression Script
 
-## Conventions
-
-- In the container
-    - default user is `cad`
-    - RISCV is defined as `/opt/riscv`
-    - QUESTA is defined as `/cad/mentor/questa_sim-xxxx.x_x`
-        - bin location is in `$QUESTA/questasim/bin`
-    - cvw folder should be mounted on `/home/${USERNAME}/cvw`
-        - as for `cad`, it is `/home/cad/cvw`
-- In the current shell environment: checkout the constants in the following script section
-
 ## TL;DR
+
+Steps:
+
+1. Install either Docker Engine or Podman for container support
+2. Run start-up script `docs/docker/start.sh` to start a stateless container to run the toolchains and EDA tool
 
 ### Docker Engine or Podman
 
@@ -60,9 +55,11 @@ docker run hello-world
 
 Files at this folder can help you to build/fetch environment you need to run wally with the help of Docker.
 
-Here are some common use cases, read the following text for other configuration:
+Here are some common use cases, it will provides you an environment with RISC-V toolchains that required by this project:
 
 ```shell
+# By default, we assume that you have cloned the cvw respository and running the script at relative path `docs/docker`
+
 # For HMC students, /opt/riscv is available and nothing needs to be built
 TOOLCHAINS_MOUNT=/opt/riscv QUESTA=/cad/mentor/questa_sim-2023.4 ./start.sh
 
@@ -70,19 +67,31 @@ TOOLCHAINS_MOUNT=/opt/riscv QUESTA=/cad/mentor/questa_sim-2023.4 ./start.sh
 TOOLCHAINS_MOUNT=<path-to-toolchains> ./start.sh
 
 # For those have nothing, fetching the builds are easiest thing
-./start.sh
+CVW_MOUNT=<path-to-cvw> ./start.sh
 # if you want to use Podman instead of Docker Engine
 USE_PODMAN=1 ./start.sh
 
 # For other cases, checkout start-up script for building option
 ```
+For further usage, please consult the following configuration.
+
+## Conventions
+
+- In the container
+    - default user is `cad`
+    - RISCV is defined as `/opt/riscv`
+    - QUESTA is defined as `/cad/mentor/questa_sim-xxxx.x_x`
+        - bin location is in `$QUESTA/questasim/bin`
+    - cvw folder should be mounted on `/home/${USERNAME}/cvw`
+        - as for `cad`, it is `/home/cad/cvw`
+- In the current shell environment: checkout the constants in the following script section
 
 ## New Dockerfile Design
 
 There are two parts of the new docker-related design:
 
 - build proper image(s)
-- set up start-up script
+- scripts for different purposes
 
 ### Problem Statement
 
@@ -111,19 +120,30 @@ Because we are going to use the whole environment of ubuntu to get both executab
 
 ### Scripts
 
-There are two scripts:
+There are four scripts:
 
+- `start.sh` (most often used): start running the container
+    - if you don't care about toolchains and running regression automatically, this script is only thing you need to know
 - `get_images.sh`: get docker image `wallysoc/ubuntu_wally` or `wallysoc/toolchains_wally`
-- `start.sh`: start running the container
+- `run_regression.sh`: run regressions with Verilator (and QuestaSIM) on specific CVW
+- `test.sh`: a test script to facilitate the above three
 
-#### Image Building Script
+All the following options in the corresponding scripts should be set by either:
 
-Options (if you want to build the images):
+- define it right before the command: `USE_PODMAN=1 ./start.sh` with USE_PODMAN on start-up script
+    - the variable is only effective for the current command, not the following environment
+- declare it globally and use it any time afterwards:
 
-- UBUNTU_BUILD: value other than 0
-- TOOLCHAINS_BUILD: value other than 0
+```shell
+# declare it globally in the environment
+export DOCKER_EXEC=$(which docker)
+export UBUNTU_BUILD=1
 
-#### Start-up Script
+# run the script with all the above variables
+./get_images.sh
+```
+
+#### Start-up Script: start.sh
 
 There are two settings:
 
@@ -132,14 +152,27 @@ There are two settings:
 
 Options:
 
-- use podman instead of docker: USE_PODMAN=1
-- ubuntu_wally: fetch by default
-    - build: UBUNTU_BUILD=1
-- toolchains: fetch by default
-    - build: TOOLCHAINS_BUILD=1
-    - use local toolchain: TOOLCHAINS_MOUNT
+- USE_PODMAN:
+    - by default, docker is used
+    - set USE_PODMAN=1 otherwise
+- UBUNTU_BUILD:
+    - fetch by default
+    - set UBUNTU_BUILD=1 if you want to build with Dockerfile.ubuntu
+- TOOLCHAINS_BUILD:
+    - fetch by default
+    - set TOOLCHAINS_BUILD=1 if you want to build with Dockerfile.build
 
-#### Regression Script
+#### Image Building Script: get_images.sh
+
+Options (if you want to build the images):
+
+- DOCKER_EXEC:
+    - docker by default
+    - if you want to use podman, then set it to $(which podman)
+- UBUNTU_BUILD: value other than 0 if you want to build it instead of fetching it
+- TOOLCHAINS_BUILD: value other than 0 if you want to build it instead of fetching it
+
+#### Regression Script: run_regression.sh
 
 There are two parts for regression:
 
@@ -173,15 +206,23 @@ There are stages in the old Dockerfile:
     - python3 package
 - user and its group configuration
 - clone and build toolchain with prefix=$RISCV
-    - riscv-gnu-toolchain
-    - elf2hex
-    - qemu
-    - spike
-    - sail
-    - buildroot
-    - verilator
+    - riscv-gnu-toolchain: https://github.com/riscv-collab/riscv-gnu-toolchain
+    - elf2hex: https://github.com/sifive/elf2hex
+    - qemu: https://github.com/qemu/qemu
+    - spike: https://github.com/riscv-software-src/riscv-isa-sim
+    - sail: https://github.com/riscv/sail-riscv/commits/master/
+    - buildroot: https://github.com/buildroot/buildroot
+    - verilator: https://github.com/verilator/verilator
 
 ### Tool Versions till 20240331
+
+- riscv-gnu-toolchain: `2024.03.01`
+- elf2hex: `f28a3103c06131ed3895052b1341daf4ca0b1c9c`
+- qemu: not tested
+- spike: `3427b459f88d2334368a1abbdf5a3000957f08e8`
+- sail: `f601c866153c79a7ae8404f939dc2d66aa2e41f9`
+- buildroot: `2021.05`
+- verilator: `v5.022`
 
 ## References
 

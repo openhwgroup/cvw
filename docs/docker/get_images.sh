@@ -1,6 +1,11 @@
 UBUNTU_BUILD=${UBUNTU_BUILD:-0}
 TOOLCHAINS_BUILD=${TOOLCHAINS_BUILD:-0}
-DOCKER_EXEC=${DOCKER_EXEC-$(which podman)}
+
+if [ -n "$USE_PODMAN" ]; then
+    DOCKER_EXEC=$(which podman)
+else
+    DOCKER_EXEC=$(which docker)
+fi
 
 # if UBUNTU_BUILD is 0, then call function fetch_ubuntu_image
 # otherwise, call function build_ubuntu_image
@@ -14,8 +19,8 @@ fi
 # if TOOLCHAINS_BUILD is 0, then call function fetch_toolchains_image
 # otherwise, call function build_toolchains_image
 if [ $TOOLCHAINS_BUILD -eq 0 ]; then
-    ${DOCKER_EXEC} pull wallysoc/wally_toolchains
+    ${DOCKER_EXEC} pull wallysoc/toolchains_wally
 else
-    ${DOCKER_EXEC} build -t wally_toolchains -f Dockerfile.builds .
-    ${DOCKER_EXEC} tag wally_toolchains:latest wallysoc/wally_toolchains:latest
+    ${DOCKER_EXEC} build -t toolchains_wally -f Dockerfile.builds .
+    ${DOCKER_EXEC} tag toolchains_wally:latest wallysoc/toolchains_wally:latest
 fi
