@@ -11,21 +11,68 @@
 - [x] Enable X11 forwarding for docker
     - `--network=host` for docker run
     - `xhost +localhost:${USER}` for host
+- [ ] Regression Script
+
+## Conventions
+
+- In the container
+    - default user is `cad`
+    - RISCV is defined as `/opt/riscv`
+    - QUESTA is defined as `/cad/mentor/questa_sim-xxxx.x_x`
+        - bin location is in `$QUESTA/questasim/bin`
+    - cvw folder should be mounted on `/home/${USERNAME}/cvw`
+        - as for `cad`, it is `/home/cad/cvw`
+- In the current shell environment: checkout the constants in the following script section
 
 ## TL;DR
+
+### Docker Engine or Podman
+
+First and foremost, install either Docker Engine or Podman:
+
+- Docker Engine (More Popular, default): https://docs.docker.com/engine/install/
+- Podman: https://podman.io/docs/installation
+
+Here are some common installation commands (not guarantee to be up to date)
+
+```shell
+# For Ubuntu
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+# Installation
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+# Hello-World Example
+docker run hello-world
+```
+
+### Use of Start-up Script
 
 Files at this folder can help you to build/fetch environment you need to run wally with the help of Docker.
 
 Here are some common use cases, read the following text for other configuration:
 
 ```shell
-# For HMC students, /opt/riscv is available and nothing needs to be built, skip this file
+# For HMC students, /opt/riscv is available and nothing needs to be built
+TOOLCHAINS_MOUNT=/opt/riscv QUESTA=/cad/mentor/questa_sim-2023.4 ./start.sh
 
 # For those with all the toolchains installed, simply mount the toolchains
-TOOLCHAINS_MOUNT=<path-to-toolchains> ./start
+TOOLCHAINS_MOUNT=<path-to-toolchains> ./start.sh
 
 # For those have nothing, fetching the builds are easiest thing
-./start
+./start.sh
+# if you want to use Podman instead of Docker Engine
+USE_PODMAN=1 ./start.sh
 
 # For other cases, checkout start-up script for building option
 ```
@@ -85,11 +132,25 @@ There are two settings:
 
 Options:
 
+- use podman instead of docker: USE_PODMAN=1
 - ubuntu_wally: fetch by default
     - build: UBUNTU_BUILD=1
 - toolchains: fetch by default
     - build: TOOLCHAINS_BUILD=1
     - use local toolchain: TOOLCHAINS_MOUNT
+
+#### Regression Script
+
+There are two parts for regression:
+
+- Verilator: must be able to run as it is open-sourced
+- Questa: OPTIONAL as it is commercial EDA Tool
+
+Options:
+
+- RUN_QUESTA: false by default
+    - QUESTA: home folder for mounted QuestaSIM `/cad/mentor/questa_sim-xxxx.x_x` if enabled
+    - for example, if your vsim is in `/cad/mentor/questa_sim-2023.4/questasim/bin/vsim` then your local QuestaSIM folder is `/cad/mentor/questa_sim-2023.4`, so you have to add `-v /cad/mentor/questa_sim-2023.4:/cad/mentor/questa_sim-xxxx.x_x -e RUN_QUESTA=1`
 
 ### Commercial EDA Tools
 
@@ -119,6 +180,8 @@ There are stages in the old Dockerfile:
     - sail
     - buildroot
     - verilator
+
+### Tool Versions till 20240331
 
 ## References
 

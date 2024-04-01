@@ -1,0 +1,13 @@
+FROM wallysoc/toolchains_wally
+
+ENV QUESTA=/cad/mentor/questa_sim-xxxx.x_x
+ENV RUN_QUESTA=false
+ENV USERNAME=cad
+
+VOLUME [ "/home/${USERNAME}/cvw" ]
+
+COPY . /home/${USERNAME}
+USER ${USERNAME}
+WORKDIR /home/${USERNAME}/cvw
+
+CMD [ "/bin/sh", "-c", "/home/${USERNAME}/run_regression.sh" ]
