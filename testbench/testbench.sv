@@ -469,7 +469,7 @@ module testbench;
   assign SPIIn = 0;
 
   if(P.EXT_MEM_SUPPORTED) begin
-    ram_ahb #(.BASE(P.EXT_MEM_BASE), .RANGE(P.EXT_MEM_RANGE)) 
+    ram_ahb #(.P(P), .BASE(P.EXT_MEM_BASE), .RANGE(P.EXT_MEM_RANGE)) 
     ram (.HCLK, .HRESETn, .HADDR, .HWRITE, .HTRANS, .HWDATA, .HSELRam(HSELEXT), 
       .HREADRam(HRDATAEXT), .HREADYRam(HREADYEXT), .HRESPRam(HRESPEXT), .HREADY, .HWSTRB);
   end else begin 
