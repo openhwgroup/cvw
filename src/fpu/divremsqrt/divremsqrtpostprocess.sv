@@ -43,7 +43,7 @@ module divremsqrtpostprocess import cvw::*;  #(parameter cvw_t P)  (
   //divide signals
   input logic                             DivSticky,  // divider sticky bit
   input logic  [P.NE+1:0]                  DivUe,      // divsqrt exponent
-  input logic  [P.DIVb:0]                  DivUm,      // divsqrt significand
+  input logic  [P.NF+2:0]                  DivUm,      // divsqrt significand
   // final results
   output logic [P.FLEN-1:0]                PostProcRes,// postprocessor final result
   output logic [4:0]                      PostProcFlg // postprocesser flags
@@ -122,7 +122,7 @@ module divremsqrtpostprocess import cvw::*;  #(parameter cvw_t P)  (
   /*cvtshiftcalc cvtshiftcalc(.ToInt, .CvtCe, .CvtResSubnormUf, .Xm, .CvtLzcIn,  
       .XZero, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);*/
 
-  divshiftcalc #(P) divshiftcalc(.DivUe, .DivUm, .DivResSubnorm, .DivSubnormShiftPos, .DivShiftAmt, .DivShiftIn);
+  divremsqrtdivshiftcalc #(P) divremsqrtdivshiftcalc(.DivUe, .DivUm, .DivResSubnorm, .DivSubnormShiftPos, .DivShiftAmt, .DivShiftIn);
 
   assign ShiftAmt = DivShiftAmt;
   assign ShiftIn = DivShiftIn;

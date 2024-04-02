@@ -76,6 +76,7 @@ module drsu import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]           AM;                           // Original Numerator for postprocessor
   logic                       ISpecialCaseE;                // Integer div/remainder special cases
   logic [P.DIVb:0]             UmM;
+  logic [P.NF+2:0]             UmMexact; //U1.NF+2
   logic [P.NE+1:0]             UeM;
   logic                       DivStickyM;
 
@@ -89,8 +90,9 @@ module drsu import cvw::*;  #(parameter cvw_t P) (
                     .FlushE, .ForwardedSrcAE, .ForwardedSrcBE, .Funct3M,
                     .Funct3E, .IntDivE, .FIntDivResultM,
                     .FDivDoneE, .IFDivStartE);
+  assign UmMexact = UmM[P.DIVb:P.DIVb-(P.NF+3-1)]; // grabbing top 1+(NF+2) msbs
   divremsqrtpostprocess #(P) divremsqrtpostprocess(.Xs(XsE), .Ys(YsE), .Xm(XmE), .Ym(YmE), .Frm(Frm), .Fmt(FmtE), .OpCtrl,
     .XZero(XZeroE), .YZero(YZeroE), .XInf(XInfE), .YInf(YInfE), .XNaN(XNaNE), .YNaN(YNaNE), .XSNaN(XSNaNE), 
-    .YSNaN(YSNaNE), .PostProcSel,.DivSticky(DivStickyM), .DivUe(UeM), .DivUm(UmM), .PostProcRes(FResM), .PostProcFlg(FlgM));
+    .YSNaN(YSNaNE), .PostProcSel,.DivSticky(DivStickyM), .DivUe(UeM), .DivUm(UmMexact), .PostProcRes(FResM), .PostProcFlg(FlgM));
 endmodule
 
