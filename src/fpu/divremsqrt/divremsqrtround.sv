@@ -64,7 +64,6 @@ module divremsqrtround import cvw::*;  #(parameter cvw_t P)  (
 //     2: NF   > XLEN > NF1
 //     3: NF   > NF1  > XLEN
 //  single and double will always be smaller than XLEN
-  localparam XLENPOS = P.XLEN > P.NF ? 1 : P.XLEN > P.NF1 ? 2 : 3;
 
   ///////////////////////////////////////////////////////////////////////////////
   // Rounding
