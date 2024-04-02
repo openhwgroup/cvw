@@ -110,13 +110,13 @@ module divremsqrtround import cvw::*;  #(parameter cvw_t P)  (
 
   end else if (P.FPSIZES == 3) begin
 
-    assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF2-2:P.CORRSHIFTSZ-P.XLEN-1]&(OutFmt==P.FMT2)) |
+    assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF2-2:P.CORRSHIFTSZ-P.NF1-1]&(OutFmt==P.FMT2)) |
                                                 (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.NF-1]&(~(OutFmt==P.FMT))) |
                                                 (|Mf[P.CORRSHIFTSZ-P.NF-2:0]);
 
   end else if (P.FPSIZES == 4) begin
-    assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.H_NF-2:P.CORRSHIFTSZ-P.S_NF-1]&(OutFmt==P.H_FMT)) |
-                                                (|Mf[P.CORRSHIFTSZ-P.S_NF-2:P.CORRSHIFTSZ-P.D_NF-1]&((OutFmt==P.S_FMT))) | 
+    assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.H_NF-2:P.CORRSHIFTSZ-P.Q_NF-1]&(OutFmt==P.H_FMT)) |
+                                                (|Mf[P.CORRSHIFTSZ-P.S_NF-2:P.CORRSHIFTSZ-P.Q_NF-1]&((OutFmt==P.S_FMT))) | 
                                                 (|Mf[P.CORRSHIFTSZ-P.D_NF-2:P.CORRSHIFTSZ-P.Q_NF-1]&((OutFmt==P.D_FMT))) |
                                                 (|Mf[P.CORRSHIFTSZ-P.Q_NF-2:0]&(OutFmt==P.Q_FMT));
   end
@@ -125,6 +125,7 @@ module divremsqrtround import cvw::*;  #(parameter cvw_t P)  (
 
   // only add the Addend sticky if doing an FMA opperation
   //      - the shifter shifts too far left when there's an underflow (shifting out all possible sticky bits)
+  //assign Sticky = DivSticky&DivOp | NormSticky | StickySubnorm;
   assign Sticky = DivSticky&DivOp | NormSticky;
   //assign Sticky = DivSticky&DivOp;
   

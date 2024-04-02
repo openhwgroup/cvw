@@ -122,7 +122,8 @@ module divremsqrtflags import cvw::*;  #(parameter cvw_t P) (
   //                  |                    |                    |                                      |                     and if the result is not exact
   //                  |                    |                    |                                      |                     |               and if the input isnt infinity or NaN
   //                  |                    |                    |                                      |                     |               |
-  assign Underflow = ((FullRe[P.NE+1] | (FullRe == 0) | ((FullRe == 1) & (Me == 0) & ~(UfPlus1&Guard)))&(Round|Sticky|Guard))&~(InfIn|NaNIn|DivByZero|Invalid);
+  //assign Underflow = ((FullRe[P.NE+1] | (FullRe == 0) | ((FullRe == 1) & (Me == 0) & ~(UfPlus1&Guard)))&(Round|(Sticky&~XZero)|Guard))&~(InfIn|NaNIn|DivByZero|Invalid);
+  assign Underflow = ((FullRe[P.NE+1] | (FullRe == 0) | ((FullRe == 1) & (Me == 0) & ~(UfPlus1&Guard)))&(Round|(Sticky)|Guard))&~(InfIn|NaNIn|DivByZero|Invalid);
 
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -131,8 +132,8 @@ module divremsqrtflags import cvw::*;  #(parameter cvw_t P) (
 
   // Set Inexact flag if the result is diffrent from what would be outputed given infinite precision
   //      - Don't set the underflow flag if an underflowed res isn't outputed
-  assign FpInexact = (Sticky|Guard|Overflow|Round)&~(InfIn|NaNIn|DivByZero|Invalid);
-  //assign FpInexact = (Sticky|Guard|Overflow|Round)&~(InfIn|NaNIn|DivByZero|Invalid|XZero);
+  //assign FpInexact = ((Sticky&~XZero)|Guard|Overflow|Round)&~(InfIn|NaNIn|DivByZero|Invalid);
+  assign FpInexact = (Sticky|Guard|Overflow|Round)&~(InfIn|NaNIn|DivByZero|Invalid|XZero);
 
   //                  if the res is too small to be represented and not 0
   //                  |                                     and if the res is not invalid (outside the integer bounds)

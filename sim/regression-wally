@@ -384,10 +384,6 @@ if (intdiv):
     # ***NOTE add to this
     
     intdivconfigs = [
-    "div_2_1i_rv32gc", "div_2_1i_rv64gc", "div_2_2i_rv32gc",
-    "div_2_2i_rv64gc", "div_2_4i_rv32gc", "div_2_4i_rv64gc",
-    "div_4_1i_rv32gc", "div_4_1i_rv64gc", "div_4_2i_rv32gc",
-    "div_4_2i_rv64gc", "div_4_4i_rv32gc", "div_4_4i_rv64gc",
     "fdh_ieee_div_2_1i_rv32gc", "fdh_ieee_div_2_1i_rv64gc", "fdh_ieee_div_2_2i_rv32gc",
     "fdh_ieee_div_2_2i_rv64gc", "fdh_ieee_div_2_4i_rv32gc", "fdh_ieee_div_2_4i_rv64gc",
     "fdh_ieee_div_4_1i_rv32gc", "fdh_ieee_div_4_1i_rv64gc", "fdh_ieee_div_4_2i_rv32gc",
