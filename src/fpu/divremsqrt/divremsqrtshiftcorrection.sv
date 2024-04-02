@@ -63,8 +63,8 @@ module divremsqrtshiftcorrection import cvw::*;  #(parameter cvw_t P) (
   //    condition: if the msb is 1 or the exponent was one, but the shifted quotent was < 1 (Subnorm)
   assign LeftShiftQm = (LZAPlus1|(DivUe==1&~LZAPlus1));
   //assign LeftShiftQm = ((DivUe==1));
-  assign CorrQm0 = Shifted[P.NORMSHIFTSZ-3:P.NORMSHIFTSZ-P.CORRSHIFTSZ-2];
-  assign CorrQm1 = Shifted[P.NORMSHIFTSZ-2:P.NORMSHIFTSZ-P.CORRSHIFTSZ-1];
+  assign CorrQm0 = {Shifted[P.NORMSHIFTSZ-3:0],{2'b00}};
+  assign CorrQm1 = {Shifted[P.NORMSHIFTSZ-2:0],{1'b0}};
   mux2 #(P.CORRSHIFTSZ) divcorrmux(CorrQm0, CorrQm1, LeftShiftQm, CorrQmShifted);
   
   // if the result of the divider was calculated to be subnormal, then the result was correctly normalized, so select the top shifted bits
@@ -72,7 +72,7 @@ module divremsqrtshiftcorrection import cvw::*;  #(parameter cvw_t P) (
     //if(FmaOp)                       Mf = {CorrSumShifted, {P.CORRSHIFTSZ-(3*P.NF+4){1'b0}}};
     //if (DivOp&~DivResSubnorm)  Mf = CorrQmShifted;
     if (~DivResSubnorm)  Mf = CorrQmShifted;
-    else                       Mf = Shifted[P.NORMSHIFTSZ-1:P.NORMSHIFTSZ-P.CORRSHIFTSZ];
+    else                       Mf = Shifted[P.NORMSHIFTSZ-1:0];
     
   // Determine sum's exponent
   //  main exponent issues: 
