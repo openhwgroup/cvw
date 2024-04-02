@@ -115,9 +115,9 @@ module divremsqrtround import cvw::*;  #(parameter cvw_t P)  (
                                                 (|Mf[P.CORRSHIFTSZ-P.NF-2:0]);
 
   end else if (P.FPSIZES == 4) begin
-    assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.H_NF-2:P.CORRSHIFTSZ-2*(P.H_NF+2)-1]&(OutFmt==P.H_FMT)) |
-                                                (|Mf[P.CORRSHIFTSZ-P.S_NF-2:P.CORRSHIFTSZ-2*(P.S_NF+2)-1]&((OutFmt==P.S_FMT))) | 
-                                                (|Mf[P.CORRSHIFTSZ-P.D_NF-2:P.CORRSHIFTSZ-2*(P.D_NF+2)-1]&((OutFmt==P.D_FMT))) |
+    assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.H_NF-2:P.CORRSHIFTSZ-P.S_NF-1]&(OutFmt==P.H_FMT)) |
+                                                (|Mf[P.CORRSHIFTSZ-P.S_NF-2:P.CORRSHIFTSZ-P.D_NF-1]&((OutFmt==P.S_FMT))) | 
+                                                (|Mf[P.CORRSHIFTSZ-P.D_NF-2:P.CORRSHIFTSZ-P.Q_NF-1]&((OutFmt==P.D_FMT))) |
                                                 (|Mf[P.CORRSHIFTSZ-P.Q_NF-2:0]&(OutFmt==P.Q_FMT));
   end
   
