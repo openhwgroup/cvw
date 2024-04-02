@@ -2,6 +2,7 @@
 // ahbxuiconverter.sv
 //
 // Written: infinitymdm@gmail.com 29 February 2024
+// Modified: infinitymdm@gmail.com 02 April 2024
 //
 // Purpose: AHB to Xilinx UI converter
 // 
@@ -91,20 +92,31 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
     .lg_size_p(16),
     .and_data_with_valid_p(1)
   ) cmdfifo (
-    .w_data_i({HADDR, HWDATA, HWSTRB, initTrans, HWRITE}),
+    .w_data_i({HADDR, HWDATA, ~HWSTRB, initTrans, HWRITE}),
     .w_enq_i(enqueueCmd), .w_clk_i(HCLK), .w_reset_i(~HRESETn),
     .r_deq_i(dequeueCmd), .r_clk_i(ui_clk), .r_reset_i(ui_clk_sync_rst),
     .r_data_o({addr, data, mask, cmdInit, cmdWrite}),
     .w_full_o(cmdwfull), .r_valid_o(cmdrvalid)
   );
 
+  // MM: Write enable logic is a bit odd here. There isn't an immediately obvious way to set
+  // app_wdf_wren, so we delay all transactions by 1 clock cycle and check whether they were write
+  // transactions.
+  // This on its own would cause a glitch during the first cycle, since app_wdf_wren would register
+  // a random value depending on the initialization state of app_cmd. So we do not enable wrenreg
+  // until 1 valid transaction has come through after reset.
+  
+  // Wait until 1 valid transaction after reset to enable wrenreg
+  logic prevTransValid;
+  flopenr #(1) wrenenreg(ui_clk, ui_clk_sync_rst, uiReady, 1'b1, prevTransValid); // This seems a bit silly - look for a better method
+
   // Delay transactions 1 clk so we can set wren on the cycle after write commands (when data arrives)
   flopen  #(ADDR_SIZE)   addrreg  (ui_clk, uiReady, addr, app_addr);
-  flopenr #(3)           cmdreg   (ui_clk, ui_clk_sync_rst, uiReady, {2'b0, ~cmdWrite}, app_cmd);
-  flopenr #(1)           cmdenreg (ui_clk, ui_clk_sync_rst, uiReady, cmdInit, app_en);
-  flopenr #(1)           wrenreg  (ui_clk, ui_clk_sync_rst, uiReady, ~app_cmd[0], app_wdf_wren);
   flopenr #(DATA_SIZE)   datareg  (ui_clk, ui_clk_sync_rst, uiReady, data, app_wdf_data);
   flopenr #(DATA_SIZE/8) maskreg  (ui_clk, ui_clk_sync_rst, uiReady, mask, app_wdf_mask);
+  flopenr #(1)           cmdenreg (ui_clk, ui_clk_sync_rst, uiReady, cmdInit, app_en);
+  flopenr #(3)           cmdreg   (ui_clk, ui_clk_sync_rst, uiReady, {2'b0, ~cmdWrite}, app_cmd);
+  flopenr #(1)           wrenreg  (ui_clk, ui_clk_sync_rst, uiReady & prevTransValid, ~app_cmd[0], app_wdf_wren);
   assign app_wdf_end = app_wdf_wren; // Since AHB will always put data on the bus after a write cmd, this is always valid
   
   // Return read data at HCLK speed
