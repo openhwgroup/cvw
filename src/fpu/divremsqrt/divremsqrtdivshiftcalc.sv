@@ -30,14 +30,14 @@
 module divremsqrtdivshiftcalc import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.NF+2:0]              DivUm,              // divsqrt significand
   input  logic [P.NE+1:0]              DivUe,              // divsqrt exponent
-  output logic [P.LOGNORMSHIFTSZ-1:0]  DivShiftAmt,        // divsqrt shift amount
-  output logic [P.NORMSHIFTSZ-1:0]     DivShiftIn,         // divsqrt shift input
+  output logic [P.LOGNORMSHIFTSZDRSU-1:0]  DivShiftAmt,        // divsqrt shift amount
+  output logic [P.NORMSHIFTSZDRSU-1:0]     DivShiftIn,         // divsqrt shift input
   output logic                         DivResSubnorm,      // is the divsqrt result subnormal
   output logic                         DivSubnormShiftPos  // is the subnormal shift amount positive
 );
 
-  logic [P.LOGNORMSHIFTSZ-1:0]         NormShift;          // normalized result shift amount
-  logic [P.LOGNORMSHIFTSZ-1:0]         DivSubnormShiftAmt; // subnormal result shift amount (killed if negative)
+  logic [P.LOGNORMSHIFTSZDRSU-1:0]         NormShift;          // normalized result shift amount
+  logic [P.LOGNORMSHIFTSZDRSU-1:0]         DivSubnormShiftAmt; // subnormal result shift amount (killed if negative)
   logic [P.NE+1:0]                     DivSubnormShift;    // subnormal result shift amount
 
   // is the result subnormal
@@ -61,13 +61,13 @@ module divremsqrtdivshiftcalc import cvw::*;  #(parameter cvw_t P) (
   //  00000000xx.xxxxx... << 1?               Exp = DivUe-1 (determined after)
   // inital Left shift amount  = NF
   // shift one more if the it's a minimally redundent radix 4 - one entire cycle needed for integer bit
-  assign NormShift = (P.LOGNORMSHIFTSZ)'(P.NF);
+  assign NormShift = (P.LOGNORMSHIFTSZDRSU)'(P.NF);
 
   // if the shift amount is negative then don't shift (keep sticky bit)
   // need to multiply the early termination shift by LOGR*DIVCOPIES =  left shift of log2(LOGR*DIVCOPIES)
-  assign DivSubnormShiftAmt = DivSubnormShiftPos ? DivSubnormShift[P.LOGNORMSHIFTSZ-1:0] : 0;
+  assign DivSubnormShiftAmt = DivSubnormShiftPos ? DivSubnormShift[P.LOGNORMSHIFTSZDRSU-1:0] : 0;
   assign DivShiftAmt        = DivResSubnorm ? DivSubnormShiftAmt : NormShift;
 
   // pre-shift the divider result for normalization
-  assign DivShiftIn = {{P.NF{1'b0}}, DivUm, {P.NORMSHIFTSZ-(P.NF+2)-1-P.NF{1'b0}}};
+  assign DivShiftIn = {{P.NF{1'b0}}, DivUm, {P.NORMSHIFTSZDRSU-(P.NF+2)-1-P.NF{1'b0}}};
 endmodule

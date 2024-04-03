@@ -54,21 +54,21 @@ module divremsqrtpostprocess import cvw::*;  #(parameter cvw_t P)  (
   logic [P.NF-1:0]             Rf;         // Result fraction
   logic [P.NE-1:0]             Re;         // Result exponent
   logic                       Ms;         // norMalized sign
-  logic [P.CORRSHIFTSZ-1:0]    Mf;         // norMalized fraction
+  logic [P.NORMSHIFTSZDRSU-1:0]    Mf;         // norMalized fraction
   logic [P.NE+1:0]             Me;         // normalized exponent
   logic [P.NE+1:0]             FullRe;     // Re with bits to determine sign and overflow
   logic                       UfPlus1;    // do you add one (for determining underflow flag)
-  logic [P.LOGNORMSHIFTSZ-1:0] ShiftAmt;   // normalization shift amount
-  logic [P.NORMSHIFTSZ-1:0]    ShiftIn;    // input to normalization shift
-  logic [P.NORMSHIFTSZ-1:0]    Shifted;    // the ouput of the normalized shifter (before shift correction)
+  logic [P.LOGNORMSHIFTSZDRSU-1:0] ShiftAmt;   // normalization shift amount
+  logic [P.NORMSHIFTSZDRSU-1:0]    ShiftIn;    // input to normalization shift
+  logic [P.NORMSHIFTSZDRSU-1:0]    Shifted;    // the ouput of the normalized shifter (before shift correction)
   logic                       Plus1;      // add one to the final result?
   logic                       Overflow;   // overflow flag used to select results
   logic                       Invalid;    // invalid flag used to select results
   logic                       Guard, Round, Sticky; // bits needed to determine rounding
   logic [P.FMTBITS-1:0]        OutFmt;     // output format
   // division singals
-  logic [P.LOGNORMSHIFTSZ-1:0] DivShiftAmt;        // divsqrt shif amount
-  logic [P.NORMSHIFTSZ-1:0]    DivShiftIn;         // divsqrt shift input
+  logic [P.LOGNORMSHIFTSZDRSU-1:0] DivShiftAmt;        // divsqrt shif amount
+  logic [P.NORMSHIFTSZDRSU-1:0]    DivShiftIn;         // divsqrt shift input
   logic [P.NE+1:0]             Ue;                 // divsqrt corrected exponent after corretion shift
   logic                       DivByZero;          // divide by zero flag
   logic                       DivResSubnorm;      // is the divsqrt result subnormal
@@ -128,7 +128,7 @@ module divremsqrtpostprocess import cvw::*;  #(parameter cvw_t P)  (
   assign ShiftIn = DivShiftIn;
   
   // main normalization shift
-  normshift #(P) normshift (.ShiftIn, .ShiftAmt, .Shifted);
+  divremsqrtnormshift #(P) divremsqrtnormshift (.ShiftIn, .ShiftAmt, .Shifted);
 
   // correct for LZA/divsqrt error
   divremsqrtshiftcorrection #(P) shiftcorrection(.DivResSubnorm, .DivSubnormShiftPos, .DivOp(1'b1), .DivUe, .Ue, .Shifted, .Mf);

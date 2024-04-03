@@ -32,7 +32,7 @@ module divremsqrtround import cvw::*;  #(parameter cvw_t P)  (
   input  logic [P.FMTBITS-1:0]     OutFmt,             // output format
   input  logic [2:0]              Frm,                // rounding mode
   input  logic                    Ms,                 // normalized sign
-  input  logic [P.CORRSHIFTSZ-1:0] Mf,                 // normalized fraction
+  input  logic [P.NORMSHIFTSZDRSU-1:0] Mf,                 // normalized fraction
   // divsqrt
   input  logic                    DivOp,              // is a division opperation being done
   input  logic                    DivSticky,          // divsqrt sticky bit
@@ -100,24 +100,24 @@ module divremsqrtround import cvw::*;  #(parameter cvw_t P)  (
 
   // sticky bit calculation
   if (P.FPSIZES == 1) begin
-    assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF-2:0]);
+    assign NormSticky = (|Mf[P.NORMSHIFTSZDRSU-P.NF-2:0]);
 
   end else if (P.FPSIZES == 2) begin
-    assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.NF-1]&(~OutFmt)) |
-                                                (|Mf[P.CORRSHIFTSZ-P.NF-2:0]);
+    assign NormSticky = (|Mf[P.NORMSHIFTSZDRSU-P.NF1-2:P.NORMSHIFTSZDRSU-P.NF-1]&(~OutFmt)) |
+                                                (|Mf[P.NORMSHIFTSZDRSU-P.NF-2:0]);
 
 
   end else if (P.FPSIZES == 3) begin
 
-    assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF2-2:P.CORRSHIFTSZ-P.NF1-1]&(OutFmt==P.FMT2)) |
-                                                (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.NF-1]&(~(OutFmt==P.FMT))) |
-                                                (|Mf[P.CORRSHIFTSZ-P.NF-2:0]);
+    assign NormSticky = (|Mf[P.NORMSHIFTSZDRSU-P.NF2-2:P.NORMSHIFTSZDRSU-P.NF1-1]&(OutFmt==P.FMT2)) |
+                                                (|Mf[P.NORMSHIFTSZDRSU-P.NF1-2:P.NORMSHIFTSZDRSU-P.NF-1]&(~(OutFmt==P.FMT))) |
+                                                (|Mf[P.NORMSHIFTSZDRSU-P.NF-2:0]);
 
   end else if (P.FPSIZES == 4) begin
-    assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.H_NF-2:P.CORRSHIFTSZ-P.Q_NF-1]&(OutFmt==P.H_FMT)) |
-                                                (|Mf[P.CORRSHIFTSZ-P.S_NF-2:P.CORRSHIFTSZ-P.Q_NF-1]&((OutFmt==P.S_FMT))) | 
-                                                (|Mf[P.CORRSHIFTSZ-P.D_NF-2:P.CORRSHIFTSZ-P.Q_NF-1]&((OutFmt==P.D_FMT))) |
-                                                (|Mf[P.CORRSHIFTSZ-P.Q_NF-2:0]&(OutFmt==P.Q_FMT));
+    assign NormSticky = (|Mf[P.NORMSHIFTSZDRSU-P.H_NF-2:P.NORMSHIFTSZDRSU-P.Q_NF-1]&(OutFmt==P.H_FMT)) |
+                                                (|Mf[P.NORMSHIFTSZDRSU-P.S_NF-2:P.NORMSHIFTSZDRSU-P.Q_NF-1]&((OutFmt==P.S_FMT))) | 
+                                                (|Mf[P.NORMSHIFTSZDRSU-P.D_NF-2:P.NORMSHIFTSZDRSU-P.Q_NF-1]&((OutFmt==P.D_FMT))) |
+                                                (|Mf[P.NORMSHIFTSZDRSU-P.Q_NF-2:0]&(OutFmt==P.Q_FMT));
   end
   
 
@@ -134,32 +134,32 @@ module divremsqrtround import cvw::*;  #(parameter cvw_t P)  (
   // determine round and LSB of the rounded value
   //      - underflow round bit is used to determint the underflow flag
   if (P.FPSIZES == 1) begin
-      assign FpGuard = Mf[P.CORRSHIFTSZ-P.NF-1];
-      assign FpLsbRes = Mf[P.CORRSHIFTSZ-P.NF];
-      assign FpRound = Mf[P.CORRSHIFTSZ-P.NF-2];
+      assign FpGuard = Mf[P.NORMSHIFTSZDRSU-P.NF-1];
+      assign FpLsbRes = Mf[P.NORMSHIFTSZDRSU-P.NF];
+      assign FpRound = Mf[P.NORMSHIFTSZDRSU-P.NF-2];
 
   end else if (P.FPSIZES == 2) begin
-      assign FpGuard = OutFmt ? Mf[P.CORRSHIFTSZ-P.NF-1] : Mf[P.CORRSHIFTSZ-P.NF1-1];
-      assign FpLsbRes = OutFmt ? Mf[P.CORRSHIFTSZ-P.NF] : Mf[P.CORRSHIFTSZ-P.NF1];
-      assign FpRound = OutFmt ? Mf[P.CORRSHIFTSZ-P.NF-2] : Mf[P.CORRSHIFTSZ-P.NF1-2];
+      assign FpGuard = OutFmt ? Mf[P.NORMSHIFTSZDRSU-P.NF-1] : Mf[P.NORMSHIFTSZDRSU-P.NF1-1];
+      assign FpLsbRes = OutFmt ? Mf[P.NORMSHIFTSZDRSU-P.NF] : Mf[P.NORMSHIFTSZDRSU-P.NF1];
+      assign FpRound = OutFmt ? Mf[P.NORMSHIFTSZDRSU-P.NF-2] : Mf[P.NORMSHIFTSZDRSU-P.NF1-2];
 
   end else if (P.FPSIZES == 3) begin
       always_comb
           case (OutFmt)
               P.FMT: begin
-                  FpGuard = Mf[P.CORRSHIFTSZ-P.NF-1];
-                  FpLsbRes = Mf[P.CORRSHIFTSZ-P.NF];
-                  FpRound = Mf[P.CORRSHIFTSZ-P.NF-2];
+                  FpGuard = Mf[P.NORMSHIFTSZDRSU-P.NF-1];
+                  FpLsbRes = Mf[P.NORMSHIFTSZDRSU-P.NF];
+                  FpRound = Mf[P.NORMSHIFTSZDRSU-P.NF-2];
               end
               P.FMT1: begin
-                  FpGuard = Mf[P.CORRSHIFTSZ-P.NF1-1];
-                  FpLsbRes = Mf[P.CORRSHIFTSZ-P.NF1];
-                  FpRound = Mf[P.CORRSHIFTSZ-P.NF1-2];
+                  FpGuard = Mf[P.NORMSHIFTSZDRSU-P.NF1-1];
+                  FpLsbRes = Mf[P.NORMSHIFTSZDRSU-P.NF1];
+                  FpRound = Mf[P.NORMSHIFTSZDRSU-P.NF1-2];
               end
               P.FMT2: begin
-                  FpGuard = Mf[P.CORRSHIFTSZ-P.NF2-1];
-                  FpLsbRes = Mf[P.CORRSHIFTSZ-P.NF2];
-                  FpRound = Mf[P.CORRSHIFTSZ-P.NF2-2];
+                  FpGuard = Mf[P.NORMSHIFTSZDRSU-P.NF2-1];
+                  FpLsbRes = Mf[P.NORMSHIFTSZDRSU-P.NF2];
+                  FpRound = Mf[P.NORMSHIFTSZDRSU-P.NF2-2];
               end
               default: begin
                   FpGuard = 1'bx;
@@ -171,24 +171,24 @@ module divremsqrtround import cvw::*;  #(parameter cvw_t P)  (
       always_comb
           case (OutFmt)
               2'h3: begin
-                  FpGuard = Mf[P.CORRSHIFTSZ-P.Q_NF-1];
-                  FpLsbRes = Mf[P.CORRSHIFTSZ-P.Q_NF];
-                  FpRound = Mf[P.CORRSHIFTSZ-P.Q_NF-2];
+                  FpGuard = Mf[P.NORMSHIFTSZDRSU-P.Q_NF-1];
+                  FpLsbRes = Mf[P.NORMSHIFTSZDRSU-P.Q_NF];
+                  FpRound = Mf[P.NORMSHIFTSZDRSU-P.Q_NF-2];
               end
               2'h1: begin
-                  FpGuard = Mf[P.CORRSHIFTSZ-P.D_NF-1];
-                  FpLsbRes = Mf[P.CORRSHIFTSZ-P.D_NF];
-                  FpRound = Mf[P.CORRSHIFTSZ-P.D_NF-2];
+                  FpGuard = Mf[P.NORMSHIFTSZDRSU-P.D_NF-1];
+                  FpLsbRes = Mf[P.NORMSHIFTSZDRSU-P.D_NF];
+                  FpRound = Mf[P.NORMSHIFTSZDRSU-P.D_NF-2];
               end
               2'h0: begin
-                  FpGuard = Mf[P.CORRSHIFTSZ-P.S_NF-1];
-                  FpLsbRes = Mf[P.CORRSHIFTSZ-P.S_NF];
-                  FpRound = Mf[P.CORRSHIFTSZ-P.S_NF-2];
+                  FpGuard = Mf[P.NORMSHIFTSZDRSU-P.S_NF-1];
+                  FpLsbRes = Mf[P.NORMSHIFTSZDRSU-P.S_NF];
+                  FpRound = Mf[P.NORMSHIFTSZDRSU-P.S_NF-2];
               end
               2'h2: begin
-                  FpGuard = Mf[P.CORRSHIFTSZ-P.H_NF-1];
-                  FpLsbRes = Mf[P.CORRSHIFTSZ-P.H_NF];
-                  FpRound = Mf[P.CORRSHIFTSZ-P.H_NF-2];
+                  FpGuard = Mf[P.NORMSHIFTSZDRSU-P.H_NF-1];
+                  FpLsbRes = Mf[P.NORMSHIFTSZDRSU-P.H_NF];
+                  FpRound = Mf[P.NORMSHIFTSZDRSU-P.H_NF-2];
               end
           endcase
   end
@@ -249,7 +249,7 @@ module divremsqrtround import cvw::*;  #(parameter cvw_t P)  (
 
 
   // trim unneeded bits from fraction
-  assign RoundFrac = Mf[P.CORRSHIFTSZ-1:P.CORRSHIFTSZ-P.NF];
+  assign RoundFrac = Mf[P.NORMSHIFTSZDRSU-1:P.NORMSHIFTSZDRSU-P.NF];
   
 
 
