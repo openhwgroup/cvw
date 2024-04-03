@@ -319,8 +319,8 @@ module testbench;
 
   // modifications 4/3/24 kunlin & harris to speed up Verilator
   // For some reason, Verilator runs ~100x slower when these SelectTest and Validate codes are in the posedge clk block
-  end // added
-  always @(posedge SelectTest) // added
+  //end // added
+  //always @(posedge SelectTest) // added
     if(SelectTest) begin
       if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
       else if(TEST == "buildroot") begin 
@@ -343,8 +343,14 @@ module testbench;
       // and initialize them to zero (also initilaize them to zero at the start of the next test)
       updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
     end
-  
+`ifdef VERILATOR // this macro is defined when verilator is used
+  // Simulator Verilator has an issue that the validate logic below slows runtime 110x if it is 
+  // in the posedge clk block rather than a separate posedge Validate block.  
+  // Until it is fixed, provide a silly posedge Validate block to keep Verilator happy.
+  // https://github.com/verilator/verilator/issues/4967
+  end // restored
   always @(posedge Validate) // added
+`endif
     if(Validate) begin
       if (TEST == "embench") begin
         // Writes contents of begin_signature to .sim.output file
@@ -381,13 +387,16 @@ module testbench;
         if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
         else $display("FAIL: %d test programs had errors", totalerrors);
 `ifdef VERILATOR // this macro is defined when verilator is used
-        $finish; // V'lator needs $finish to terminate simulation.
+        $finish; // Simulator Verilator needs $finish to terminate simulation.
 `else
          $stop; // if this is changed to $finish for Questa, wally-batch.do does not go to the next step to run coverage, and wally.do terminates without allowing GUI debug
 `endif
       end
     end
-//  end // removed
+`ifndef VERILATOR
+  // Remove this when issue 4967 is resolved and the posedge Validate logic above is removed
+  end 
+`endif
 
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -766,6 +775,8 @@ end
     logic [P.XLEN-1:0] signature[0:SIGNATURESIZE];
     string            signame;
     logic [P.XLEN-1:0] testadr, testadrNoBase;
+
+    //$display("Invoking CheckSignature %s %s %0t", pathname, TestName, $time); 
     
     // read .signature.output file and compare to check for errors
     if (riscofTest) signame = {pathname, TestName, "/ref/Reference-sail_c_simulator.signature"};
