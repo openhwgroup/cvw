@@ -299,9 +299,11 @@ module testbench;
   // Find the test vector files and populate the PC to function label converter
   ////////////////////////////////////////////////////////////////////////////////
   logic [P.XLEN-1:0] testadr;
-  assign begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
-  assign end_signature_addr = ProgramAddrLabelArray["sig_end_canary"];
-  assign signature_size = end_signature_addr - begin_signature_addr;
+  always_comb begin
+  	begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
+ 	end_signature_addr = ProgramAddrLabelArray["sig_end_canary"];
+  	signature_size = end_signature_addr - begin_signature_addr;
+  end
   always @(posedge clk) begin
     if(SelectTest) begin
       if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
@@ -556,7 +558,8 @@ module testbench;
   logic ecf; // remove this once we don't rely on old Imperas tests with Ecalls
   if (P.ZICSR_SUPPORTED) assign ecf = dut.core.priv.priv.EcallFaultM;
   else                  assign ecf = 0;
-  assign TestComplete = ecf & 
+  always_comb begin
+  	TestComplete = ecf & 
 			    (dut.core.ieu.dp.regf.rf[3] == 1 | 
 			     (dut.core.ieu.dp.regf.we3 & 
 			      dut.core.ieu.dp.regf.a3 == 3 & 
@@ -564,6 +567,7 @@ module testbench;
            ((InstrM == 32'h6f | InstrM == 32'hfc32a423 | InstrM == 32'hfc32a823) & dut.core.ieu.c.InstrValidM ) |
            ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"]) & InstrMName == "SW" );
   //assign DCacheFlushStart =  TestComplete;
+  end
   
   DCacheFlushFSM #(P) DCacheFlushFSM(.clk(clk), .reset(reset), .start(DCacheFlushStart), .done(DCacheFlushDone));
 
