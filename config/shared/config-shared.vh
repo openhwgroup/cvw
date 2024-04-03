@@ -117,6 +117,8 @@ localparam LOGCVTLEN = $unsigned($clog2(CVTLEN+1));
 localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1), (DIVb + 1 + NF + 1)), (3*NF+6));
 localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));
 localparam CORRSHIFTSZ = `max((NORMSHIFTSZ-2), (DIVMINb + 1 + NF));
+localparam NORMSHIFTSZDRSU = DIVb+1+NF;
+localparam LOGNORMSHIFTSZDRSU = $clog2(NORMSHIFTSZDRSU);
 
 
 // Disable spurious Verilator warnings

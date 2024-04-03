@@ -285,6 +285,8 @@ typedef struct packed {
   int NORMSHIFTSZ;
   int LOGNORMSHIFTSZ;
   int CORRSHIFTSZ;
+  int NORMSHIFTSZDRSU;
+  int LOGNORMSHIFTSZDRSU;
 
 // division constants
   int LOGR       ;
