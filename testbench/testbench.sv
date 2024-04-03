@@ -303,6 +303,24 @@ module testbench;
   assign end_signature_addr = ProgramAddrLabelArray["sig_end_canary"];
   assign signature_size = end_signature_addr - begin_signature_addr;
   always @(posedge clk) begin
+    ////////////////////////////////////////////////////////////////////////////////
+    // Verify the test ran correctly by checking the memory against a known signature.
+    ////////////////////////////////////////////////////////////////////////////////
+    if(TestBenchReset) test = 1;
+    if (TEST == "coremark")
+      if (dut.core.priv.priv.EcallFaultM) begin
+        $display("Benchmark: coremark is done.");
+        $stop;
+      end
+    if (P.ZICSR_SUPPORTED & dut.core.ifu.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.ieu.InstrValidM) begin 
+      $display("Program fetched illegal instruction 0x00000000 from address 0x00000000.  Might be fault with no fault handler.");
+      //$stop; // presently wally32/64priv tests trigger this for reasons not yet understood.
+    end
+
+  // modifications 4/3/24 kunlin & harris to speed up Verilator
+  // For some reason, Verilator runs ~100x slower when these SelectTest and Validate codes are in the posedge clk block
+  end // added
+  always @(posedge SelectTest) // added
     if(SelectTest) begin
       if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
       else if(TEST == "buildroot") begin 
@@ -325,20 +343,8 @@ module testbench;
       // and initialize them to zero (also initilaize them to zero at the start of the next test)
       updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
     end
-    
-  ////////////////////////////////////////////////////////////////////////////////
-  // Verify the test ran correctly by checking the memory against a known signature.
-  ////////////////////////////////////////////////////////////////////////////////
-    if(TestBenchReset) test = 1;
-    if (TEST == "coremark")
-      if (dut.core.priv.priv.EcallFaultM) begin
-        $display("Benchmark: coremark is done.");
-        $stop;
-      end
-    if (P.ZICSR_SUPPORTED & dut.core.ifu.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.ieu.InstrValidM) begin 
-      $display("Program fetched illegal instruction 0x00000000 from address 0x00000000.  Might be fault with no fault handler.");
-      //$stop; // presently wally32/64priv tests trigger this for reasons not yet understood.
-    end
+  
+  always @(posedge Validate) // added
     if(Validate) begin
       if (TEST == "embench") begin
         // Writes contents of begin_signature to .sim.output file
@@ -374,10 +380,14 @@ module testbench;
       if (test == tests.size()) begin
         if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
         else $display("FAIL: %d test programs had errors", totalerrors);
-        $stop; // if this is changed to $finish, wally-batch.do does not go to the next step to run coverage
+`ifdef VERILATOR // this macro is defined when verilator is used
+        $finish; // V'lator needs $finish to terminate simulation.
+`else
+         $stop; // if this is changed to $finish for Questa, wally-batch.do does not go to the next step to run coverage, and wally.do terminates without allowing GUI debug
+`endif
       end
     end
-  end
+//  end // removed
 
 
   ////////////////////////////////////////////////////////////////////////////////
