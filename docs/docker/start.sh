@@ -4,6 +4,7 @@ else
     DOCKER_EXEC=$(which docker)
 fi
 CVW_MOUNT=${CVW_MOUNT:$(pwd)/../../}
+USERNAME="cad"
 
 UBUNTU_WALLY_HASH=$(${DOCKER_EXEC} images --quiet wallysoc/ubuntu_wally)
 TOOLCHAINS_HASH=$(${DOCKER_EXEC} images --quiet wallysoc/toolchains_wally)

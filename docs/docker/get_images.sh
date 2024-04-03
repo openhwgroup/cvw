@@ -10,7 +10,7 @@ fi
 # if UBUNTU_BUILD is 0, then call function fetch_ubuntu_image
 # otherwise, call function build_ubuntu_image
 if [ $UBUNTU_BUILD -eq 0 ]; then
-    ${DOCKER_EXEC} pull wallysoc/wally
+    ${DOCKER_EXEC} pull wallysoc/ubuntu_wally
 else
     ${DOCKER_EXEC} build -t ubuntu_wally -f Dockerfile.ubuntu .
     ${DOCKER_EXEC} tag ubuntu_wally:latest wallysoc/ubuntu_wally:latest

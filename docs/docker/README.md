@@ -13,6 +13,7 @@
     - `--network=host` for docker run
     - `xhost +localhost:${USER}` for host
 - [ ] Regression Script
+- [ ] Configure the license for Questa
 
 ## TL;DR
 
