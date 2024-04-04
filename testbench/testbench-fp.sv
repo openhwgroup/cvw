@@ -30,8 +30,8 @@ import cvw::*;
 module testbenchfp;
    // Two parameters TEST, TEST_SIZE used with testfloat.do in sim dir
    // to run specific precisions (e.g., quad or all)
-   parameter TEST="none";
-   parameter TEST_SIZE="none";
+   parameter string TEST="none";
+   parameter string TEST_SIZE="none";
 
   `include "parameter-defs.vh"   
 
@@ -85,7 +85,7 @@ module testbenchfp;
    logic [P.LOGCVTLEN-1:0] 	CvtShiftAmtE;               // how much to shift by
    logic [P.DIVb:0] 		Quot;
    logic                        CvtResSubnormUfE;
-   logic                        DivStart=0;
+   logic                        DivStart;
    logic 			FDivBusyE;
    logic 			OldFDivBusyE;
    logic                        reset = 1'b0;
@@ -653,7 +653,7 @@ module testbenchfp;
       static string pp = `PATH;
       string testname;
       string tt0;
-      tt0 = $psprintf("%s", Tests[TestNum]);
+      tt0 = $sformatf("%s", Tests[TestNum]);
       testname = {pp, tt0};
       //$display("Here you are %s", testname);     
       $display("\n\nRunning %s vectors ", Tests[TestNum]);
@@ -673,7 +673,7 @@ module testbenchfp;
    //    - 1 for the larger precision
    //    - 0 for the smaller precision
    always_comb begin
-      if (P.FMTBITS == 1) ModFmt = FmtVal == P.FMT;
+      if (P.FMTBITS == 1) ModFmt = {1'b0, FmtVal == P.FMT};
       else ModFmt = FmtVal;
    end
 
@@ -819,8 +819,8 @@ module testbenchfp;
       case (UnitVal)
 	`FMAUNIT: Res = FpRes;
 	`DIVUNIT: Res = FpRes;
-	`CMPUNIT: Res = CmpRes;
-	`CVTINTUNIT: if (WriteIntVal) Res = IntRes; else Res = FpRes;
+	`CMPUNIT: Res = {{(FLEN-XLEN){1'b0}}, CmpRes};
+	`CVTINTUNIT: if (WriteIntVal) Res = {{(FLEN-XLEN){1'b0}}, IntRes}; else Res = FpRes;
 	`CVTFPUNIT: Res = FpRes;
       endcase
 
@@ -859,6 +859,10 @@ module testbenchfp;
 	   DivStart = 1'b0;
 	   nextstate = S0;
 	end	
+   default: begin 
+      DivStart = 1'b0;
+      nextstate = S0;
+   end
       endcase // case (state)
       
    end 
@@ -1149,22 +1153,22 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
             2'b11: begin // quad
                X = TestVector[12+2*(P.Q_LEN)-1:12+(P.Q_LEN)];
                Y = TestVector[12+(P.Q_LEN)-1:12];
-               Ans = TestVector[8];
+               Ans = {{P.FLEN-1{1'b0}}, TestVector[8]};
             end
             2'b01: if (P.D_SUPPORTED) begin // double
                X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[12+2*(P.D_LEN)-1:12+(P.D_LEN)]};
                Y = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[12+(P.D_LEN)-1:12]};
-               Ans = TestVector[8];
+               Ans = {{P.FLEN-1{1'b0}}, TestVector[8]};
             end
             2'b00: if (P.S_SUPPORTED) begin // single
                X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[12+2*(P.S_LEN)-1:12+(P.S_LEN)]};
                Y = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[12+(P.S_LEN)-1:12]};
-               Ans = TestVector[8];
+               Ans = {{P.FLEN-1{1'b0}}, TestVector[8]};
             end
             2'b10: begin // half
                X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[12+2*(P.H_LEN)-1:12+(P.H_LEN)]};
                Y = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[12+(P.H_LEN)-1:12]};
-               Ans = TestVector[8];
+               Ans = {{P.FLEN-1{1'b0}}, TestVector[8]};
             end
           endcase
 	`CVTFPUNIT:
@@ -1254,7 +1258,7 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
           case (Fmt)
             2'b11: begin // quad
                // {is the integer a long, is the opperation to an integer}
-               casex ({OpCtrl[2:1]})
+               casez ({OpCtrl[2:1]})
 		 2'b11: begin // long -> quad
                     X = {P.FLEN{1'bx}};
                     SrcA = TestVector[8+P.Q_LEN+P.XLEN-1:8+(P.Q_LEN)];
@@ -1269,18 +1273,18 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		 2'b01:	begin // quad -> long
                     X = {TestVector[8+P.XLEN+P.Q_LEN-1:8+(P.XLEN)]};
                     SrcA = {P.XLEN{1'bx}};
-                    Ans = {TestVector[8+(P.XLEN-1):8]};
+                    Ans = {{(P.FLEN-64){1'b0}}, TestVector[8+(P.XLEN-1):8]};
 		 end
 		 2'b00:	begin // quad -> int
                     X = {TestVector[8+32+P.Q_LEN-1:8+(32)]};
                     SrcA = {P.XLEN{1'bx}};
-                    Ans = {{P.XLEN-32{TestVector[8+32-1]}},TestVector[8+(32-1):8]};
+                    Ans = {{P.FLEN-32{TestVector[8+32-1]}},TestVector[8+(32-1):8]};
 		 end
                endcase
             end
             2'b01: if (P.D_SUPPORTED) begin // double
                // {Int->Fp?, is the integer a long}
-               casex ({OpCtrl[2:1]})
+               casez ({OpCtrl[2:1]})
 		 2'b11: begin // long -> double
                     X = {P.FLEN{1'bx}};
                     SrcA = TestVector[8+P.D_LEN+P.XLEN-1:8+(P.D_LEN)];
@@ -1295,18 +1299,18 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		 2'b01:	begin // double -> long
                     X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+P.XLEN+P.D_LEN-1:8+(P.XLEN)]};
                     SrcA = {P.XLEN{1'bx}};
-                    Ans = {TestVector[8+(P.XLEN-1):8]};
+                    Ans = {{(P.FLEN-64){1'b0}}, TestVector[8+(P.XLEN-1):8]};
 		 end
 		 2'b00:	begin // double -> int
                     X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+32+P.D_LEN-1:8+(32)]};
                     SrcA = {P.XLEN{1'bx}};
-                    Ans = {{P.XLEN-32{TestVector[8+32-1]}},TestVector[8+(32-1):8]};
+                    Ans = {{P.FLEN-32{TestVector[8+32-1]}},TestVector[8+(32-1):8]};
 		 end
                endcase
             end
             2'b00: if (P.S_SUPPORTED) begin // single
                // {is the integer a long, is the opperation to an integer}
-               casex ({OpCtrl[2:1]})
+               casez ({OpCtrl[2:1]})
 		 2'b11: begin // long -> single
                     X = {P.FLEN{1'bx}};
                     SrcA = TestVector[8+P.S_LEN+P.XLEN-1:8+(P.S_LEN)];
@@ -1321,18 +1325,18 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		 2'b01:	begin // single -> long
                     X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+P.XLEN+P.S_LEN-1:8+(P.XLEN)]};
                     SrcA = {P.XLEN{1'bx}};
-                    Ans = {TestVector[8+(P.XLEN-1):8]};
+                    Ans = {{(P.FLEN-64){1'b0}}, TestVector[8+(P.XLEN-1):8]};
 		 end
 		 2'b00:	begin // single -> int
                     X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+32+P.S_LEN-1:8+(32)]};
                     SrcA = {P.XLEN{1'bx}};
-                    Ans = {{P.XLEN-32{TestVector[8+32-1]}},TestVector[8+(32-1):8]};
+                    Ans = {{P.FLEN-32{TestVector[8+32-1]}},TestVector[8+(32-1):8]};
 		 end
                endcase
             end
             2'b10: begin // half
                // {is the integer a long, is the opperation to an integer}
-               casex ({OpCtrl[2:1]})
+               casez ({OpCtrl[2:1]})
 		 2'b11: begin // long -> half
                     X = {P.FLEN{1'bx}};
                     SrcA = TestVector[8+P.H_LEN+P.XLEN-1:8+(P.H_LEN)];
@@ -1347,12 +1351,12 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		 2'b01:	begin // half -> long
                     X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+P.XLEN+P.H_LEN-1:8+(P.XLEN)]};
                     SrcA = {P.XLEN{1'bx}};
-                    Ans = {TestVector[8+(P.XLEN-1):8]};
+                    Ans = {{(P.FLEN-64){1'b0}}, TestVector[8+(P.XLEN-1):8]};
 		 end
 		 2'b00:	begin // half -> int
                     X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+32+P.H_LEN-1:8+(32)]};
                     SrcA = {P.XLEN{1'bx}};
-                    Ans = {{P.XLEN-32{TestVector[8+32-1]}}, TestVector[8+(32-1):8]};
+                    Ans = {{P.FLEN-32{TestVector[8+32-1]}}, TestVector[8+(32-1):8]};
 		 end
                endcase
             end
