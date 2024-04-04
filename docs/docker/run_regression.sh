@@ -3,6 +3,14 @@
 # of course, you can run it in the current environment as soon as
 #   - RISCV is defined
 #   - QUESTA is defined
+# declare with empty string: export ABC=
+
+# Options:
+# - CVW_GIT: git clone address, only main branch supported
+# - CLEAN_CVW: declared with empty string to clone
+# - BUILD_RISCOF: declared with empty string to rebuild RISCOF
+# - RUN_QUESTA: declared with empty string to run vsim to check
+
 # now only main branch is supported
 if [ -z "${CVW_GIT}" ]; then
     echo "No CVW_GIT is provided"
@@ -31,25 +39,28 @@ chmod +x ${CVW_HOME}/site-setup.sh && source ${CVW_HOME}/site-setup.sh
 # Overwriting
 export QUESTAPATH=/cad/mentor/questa_sim-xxxx.x_x/questasim/bin
 
-# if you are making it alone, it works
-make
+# # if you are making it alone, it works
+# make
 
+cd ${CVW_HOME}
 # build it only if BUILD_RISCOF is defined with empty string
-# if [[ -z "${BUILD_RISCOF-x}" ]]; then
-#     make install && make riscof && make testfloat
-# fi
+if [[ -z "${BUILD_RISCOF-x}" ]]; then
+    make install && make riscof && make testfloat
+fi
 
-# if [[ -z "${RUN_QUESTA-x}" ]] ; then
-#     if [ ! -f "${QUESTA}/questasim/bin/vsim" ]; then
-#         echo "Cannot find vsim with ${QUESTA}/questasim/bin/vsim"
-#     else
-#         # cd sim && ./regression-wally 2>&1 > ./regression_questa.out && cd ..
-#         make verify
-#     fi
-# fi
+if [[ -z "${RUN_QUESTA-x}" ]] ; then
+    if [ ! -f "${QUESTA}/questasim/bin/vsim" ]; then
+        echo "Cannot find vsim with ${QUESTA}/questasim/bin/vsim"
+    else
+        # cd sim && ./regression-wally 2>&1 > ./regression_questa.out && cd ..
+        make verify
+    fi
+fi
 
-# make coverage
-# make benchmarks
+make coverage
+make benchmarks
 
-cd ${CVW_HOME}/sim && verilator -GTEST="\"arch64i\"" -DVERILATOR=1 --timescale "1ns/1ns" --timing --binary --top-module testbench -I../config/shared -I../config/rv64gc ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv --relative-includes
-${CVW_HOME}/sim/obj_dir/Vtestbench > ${CVW_HOME}/sim/regression_verilator.out
+if [[ ! NO_VERILATOR -eq 1 ]]; then
+    cd ${CVW_HOME}/sim && verilator -GTEST="\"arch64i\"" -DVERILATOR=1 --timescale "1ns/1ns" --timing --binary --top-module testbench -I../config/shared -I../config/rv64gc ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv --relative-includes
+    ${CVW_HOME}/sim/obj_dir/Vtestbench > ${CVW_HOME}/sim/regression_verilator.out
+fi

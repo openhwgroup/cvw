@@ -2,6 +2,11 @@
 
 `Dockerfile.*` contains a ~~multi-stage~~ build for all the toolchains that are required for Wally's open-source features.
 
+Hazards:
+
+- If there is any change in `${CVW_HOME}/linux/buildroot-config-src` folder with main.config, you have to copy it to the current folder to `buildroot-config-src`
+- If there is any change in `${CVW_HOME}/linux/testvector-generation` folder with main.config, you have to copy it to the current folder to `testvector-generation`
+
 ## TODOs
 
 - [ ] Pinning the tools version
@@ -12,8 +17,10 @@
 - [x] Enable X11 forwarding for docker
     - `--network=host` for docker run
     - `xhost +localhost:${USER}` for host
-- [ ] Regression Script
-- [ ] Configure the license for Questa
+- [x] Regression Script
+- [x] Configure the license for Questa
+- [ ] Change the condition from empty string to 1
+- [ ] Add linux testvector-generation
 
 ## TL;DR
 
@@ -56,7 +63,7 @@ docker run hello-world
 
 Files at this folder can help you to build/fetch environment you need to run wally with the help of Docker.
 
-Here are some common use cases, it will provides you an environment with RISC-V toolchains that required by this project:
+Here are some common use cases, it will **provides you an environment with RISC-V toolchains** that required by this project:
 
 ```shell
 # By default, we assume that you have cloned the cvw respository and running the script at relative path `docs/docker`
@@ -75,6 +82,42 @@ USE_PODMAN=1 ./start.sh
 # For other cases, checkout start-up script for building option
 ```
 For further usage, please consult the following configuration.
+
+### Regression on Master Branch
+
+The regression script is used by image `wallysoc/regression_wally` to run regressions on the master branch of a specific repository.
+
+If you are using docker, then replace the following podman with docker.
+
+```shell
+# create volume for permanent storage
+podman volume create cvw_temp
+
+# run regression on the OpenHW/cvw
+podman run \
+    -e CLEAN_CVW= -e BUILD_RISCOF= -e RUN_QUESTA= \
+    -v cvw_temp:/home/cad/cvw \
+    -v /cad/mentor/questa_sim-2023.4:/cad/mentor/questa_sim-xxxx.x_x \
+    --privileged --network=host \
+    --rm wallysoc/regression_wally
+
+# run regression on the Karl-Han/cvw
+podman run \
+    -e CLEAN_CVW= -e BUILD_RISCOF= -e RUN_QUESTA= \
+    -e CVW_GIT=https://github.com/Karl-Han/cvw \
+    -v cvw_temp:/home/cad/cvw \
+    -v /cad/mentor/questa_sim-2023.4:/cad/mentor/questa_sim-xxxx.x_x \
+    --privileged --network=host \
+    --rm wallysoc/regression_wally
+
+# get into the container command line to debug or reading files
+podman run -it \
+    -e RUN_QUESTA= \
+    -v cvw_temp:/home/cad/cvw \
+    -v /cad/mentor/questa_sim-2023.4:/cad/mentor/questa_sim-xxxx.x_x \
+    --privileged --network=host \
+    wallysoc/regression_wally /bin/bash
+```
 
 ## Conventions
 
@@ -127,6 +170,8 @@ There are four scripts:
     - if you don't care about toolchains and running regression automatically, this script is only thing you need to know
 - `get_images.sh`: get docker image `wallysoc/ubuntu_wally` or `wallysoc/toolchains_wally`
 - `run_regression.sh`: run regressions with Verilator (and QuestaSIM) on specific CVW
+    - this script is not intended to be run directly, but inside the container
+    - However, it is a good resource to look into to know what is happening
 - `test.sh`: a test script to facilitate the above three
 
 All the following options in the corresponding scripts should be set by either:
@@ -170,8 +215,12 @@ Options (if you want to build the images):
 - DOCKER_EXEC:
     - docker by default
     - if you want to use podman, then set it to $(which podman)
-- UBUNTU_BUILD: value other than 0 if you want to build it instead of fetching it
-- TOOLCHAINS_BUILD: value other than 0 if you want to build it instead of fetching it
+- UBUNTU_BUILD:
+    - fetch by default
+    - set it to 1 if you want to build it instead of fetching it
+- TOOLCHAINS_BUILD:
+    - fetch by default
+    - set it to 1 if you want to build it instead of fetching it
 
 #### Regression Script: run_regression.sh
 
@@ -180,9 +229,19 @@ There are two parts for regression:
 - Verilator: must be able to run as it is open-sourced
 - Questa: OPTIONAL as it is commercial EDA Tool
 
+
+There are three main knobs:
+
+1. CLEAN_CVW: remove the `/home/${USERNAME}/cvw` inside the container (it can be a volume) and clone the `${CVW_GIT}`.
+2. BUILD_RISCOF: build RISCOF in the `/home/${USERNAME}/cvw`, sometimes you don't want to rebuild if there is no change in the test suite.
+3. RUN_QUESTA: enable the QuestaSIM in regression
+
 Options:
 
-- RUN_QUESTA: false by default
+- CVW_GIT: git clone address, only main branch supported
+- CLEAN_CVW: declared with empty string to clone
+- BUILD_RISCOF: declared with empty string to rebuild RISCOF
+- RUN_QUESTA: declared with empty string to run vsim to check
     - QUESTA: home folder for mounted QuestaSIM `/cad/mentor/questa_sim-xxxx.x_x` if enabled
     - for example, if your vsim is in `/cad/mentor/questa_sim-2023.4/questasim/bin/vsim` then your local QuestaSIM folder is `/cad/mentor/questa_sim-2023.4`, so you have to add `-v /cad/mentor/questa_sim-2023.4:/cad/mentor/questa_sim-xxxx.x_x -e RUN_QUESTA=1`
 
