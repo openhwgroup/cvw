@@ -19,6 +19,7 @@ clean() {
 
 # Clean and run simulation with VCS
 clean
-vcs +lint=all,noGCWM -simprofile -sverilog +vc -Mupdate -line -full64 -kdb -lca -debug_access+all+reverse -v2k_generate  ${SOURCE_PATH} +define+TEST=$TESTSUITE $SIMFILES -o $OUTPUT -error=NOODV
+#vcs +lint=all,noGCWM -simprofile -sverilog +vc -Mupdate -line -full64 -kdb -lca -debug_access+all+reverse -v2k_generate  ${SOURCE_PATH} +define+TEST=$TESTSUITE $SIMFILES -o $OUTPUT -error=NOODV
+vcs +lint=all,noGCWM -simprofile -sverilog +vc -Mupdate -line -full64 -kdb -lca -debug_access+all+reverse -v2k_generate  ${SOURCE_PATH} -pvalue+testbench.TEST=$TESTSUITE $SIMFILES -o $OUTPUT -error=NOODV
 ./$OUTPUT | tee program.out
 
