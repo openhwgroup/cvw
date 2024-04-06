@@ -30,6 +30,7 @@ tests = [
                     "arch32zfh_divsqrt", "arch32zfaf", "wally32a", "wally32priv", "wally32periph", 
                     "arch32zbkb", "arch32zbkc", "arch32zbkx", "arch32zknd", "arch32zkne", "arch32zknh"]], # "arch32zcb", "arch32zfad",
         ["rv64i", ["arch64i"]],
+        ["buildroot", ["buildroot"], "+INSTR_LIMIT=1000000"]
         ]
 
 # Separate out floating-point tests for RV64 to speed up coverage
@@ -119,51 +120,51 @@ derivconfigtests = [
     ]
 
 bpredtests = [
-        ["bpred_TWOBIT_6_16_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_TWOBIT_8_16_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_TWOBIT_10_16_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],        
-        ["bpred_TWOBIT_12_16_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_TWOBIT_14_16_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],        
-        ["bpred_TWOBIT_16_16_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_TWOBIT_6_16_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_TWOBIT_8_16_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_TWOBIT_10_16_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],        
-        ["bpred_TWOBIT_12_16_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_TWOBIT_14_16_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],        
-        ["bpred_TWOBIT_16_16_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        ["bpred_TWOBIT_6_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_TWOBIT_8_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_TWOBIT_10_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],        
+        ["bpred_TWOBIT_12_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_TWOBIT_14_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],        
+        ["bpred_TWOBIT_16_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_TWOBIT_6_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_TWOBIT_8_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_TWOBIT_10_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],        
+        ["bpred_TWOBIT_12_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_TWOBIT_14_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],        
+        ["bpred_TWOBIT_16_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
 
-        ["bpred_GSHARE_6_16_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_6_16_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_8_16_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_8_16_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_16_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_16_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_12_16_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_12_16_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_14_16_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_14_16_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_16_16_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_16_16_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_6_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_6_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_8_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_8_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_10_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_10_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_12_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_12_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_14_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_14_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_16_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_16_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
 
         # btb
-        ["bpred_GSHARE_10_16_6_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_16_6_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_16_8_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_16_8_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_16_12_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_16_12_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_10_16_6_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_10_16_6_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_10_16_8_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_10_16_8_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_10_16_12_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_10_16_12_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
 
         # ras
-        ["bpred_GSHARE_10_2_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_2_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_3_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_3_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_4_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_4_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_6_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_6_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_10_10_0_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_10_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"]
+        ["bpred_GSHARE_10_2_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_10_2_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_10_3_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_10_3_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_10_4_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_10_4_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_10_6_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_10_6_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_10_10_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_10_10_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"]
 ]
 
 ##################################
@@ -190,23 +191,28 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-def getBuildrootTC(boot):
-    INSTR_LIMIT = 1000000 # multiple of 100000; 4M is interesting because it gets into the kernel and enabling VM
-    MAX_EXPECTED = 246000000 # *** TODO: replace this with a search for the login prompt.
-    if boot:
-        name="buildrootboot"
-        BRcmd="vsim > {} -c <<!\ndo wally.do buildroot buildroot-no-trace $RISCV 0 1 0\n!"
-        BRgrepstr="WallyHostname login:"
-    else:
-        name="buildroot"
-        if (coverage):
-            print( "buildroot coverage")
-            BRcmd="vsim > {} -c <<!\ndo wally-batch.do buildroot buildroot $RISCV "+str(INSTR_LIMIT)+" 1 0 -coverage\n!"
-        else:
-            print( "buildroot no coverage")
-            BRcmd="vsim > {} -c <<!\ndo wally-batch.do buildroot buildroot configOptions -GINSTR_LIMIT=" +str(INSTR_LIMIT) + " \n!"
-        BRgrepstr=str(INSTR_LIMIT)+" instructions"
-    return  TestCase(name,variant="rv64gc",cmd=BRcmd,grepstr=BRgrepstr)
+#def getBuildrootTC(boot):
+#    INSTR_LIMIT = 1000000 # multiple of 100000; 4M is interesting because it gets into the kernel and enabling VM
+    
+
+#    BRcmd="vsim > {} -c <<!\ndo wally-batch.do buildroot buildroot configOptions -GINSTR_LIMIT=" +str(INSTR_LIMIT) + " \n!"
+#        BRgrepstr=str(INSTR_LIMIT)+" instructions"
+
+    # MAX_EXPECTED = 246000000 # *** TODO: replace this with a search for the login prompt.
+    # if boot:
+    #     name="buildrootboot"
+    #     BRcmd="vsim > {} -c <<!\ndo wally.do buildroot buildroot-no-trace $RISCV 0 1 0\n!"
+    #     BRgrepstr="WallyHostname login:"
+    # else:
+    #     name="buildroot"
+    #     if (coverage):
+    #         print( "buildroot coverage")
+    #         BRcmd="vsim > {} -c <<!\ndo wally-batch.do buildroot buildroot $RISCV "+str(INSTR_LIMIT)+" 1 0 -coverage\n!"
+    #     else:
+    #         print( "buildroot no coverage")
+    #         BRcmd="vsim > {} -c <<!\ndo wally-batch.do buildroot buildroot configOptions -GINSTR_LIMIT=" +str(INSTR_LIMIT) + " \n!"
+    #     BRgrepstr=str(INSTR_LIMIT)+" instructions" 
+#    return  TestCase(name,variant="rv64gc",cmd=BRcmd,grepstr=BRgrepstr)
 
 
 def addTests(tests, sim):
@@ -397,10 +403,10 @@ def main():
 
     if '-all' in sys.argv:
         TIMEOUT_DUR = 30*7200 # seconds
-        configs.append(getBuildrootTC(boot=True))
+        #configs.append(getBuildrootTC(boot=True))
     elif '-buildroot' in sys.argv:
         TIMEOUT_DUR = 30*7200 # seconds
-        configs=[getBuildrootTC(boot=True)]
+        #configs=[getBuildrootTC(boot=True)]
     elif '-coverage' in sys.argv:
         TIMEOUT_DUR = 20*60 # seconds    
     #   Presently don't run buildroot because it has a different config and can't be merged with the rv64gc coverage.
@@ -409,12 +415,12 @@ def main():
         os.system('rm -f cov/*.ucdb')
     elif '-nightly' in sys.argv:
         TIMEOUT_DUR = 60*1440 # 1 day
-        configs.append(getBuildrootTC(boot=False))
+        #configs.append(getBuildrootTC(boot=False))
     elif '-testfloat' in sys.argv:
         TIMEOUT_DUR = 60*60 # seconds
     else:
         TIMEOUT_DUR = 10*60 # seconds
-        configs.append(getBuildrootTC(boot=False))
+        #configs.append(getBuildrootTC(boot=False))
 
     # Scale the number of concurrent processes to the number of test cases, but
     # max out at a limited number of concurrent processes to not overwhelm the system

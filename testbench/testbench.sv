@@ -44,7 +44,7 @@ module testbench;
   parameter I_CACHE_ADDR_LOGGER=0;
   parameter D_CACHE_ADDR_LOGGER=0;
   parameter RISCV_DIR = "/opt/riscv";
-  parameter INSTR_LIMIT = 0;
+//  parameter INSTR_LIMIT = 0;
   
   `ifdef USE_IMPERAS_DV
     import idvPkg::*;
@@ -57,7 +57,10 @@ module testbench;
   logic        clk;
   logic        reset_ext, reset;
   logic        ResetMem;
+
+  // Variables that can be overwritten with $value$plusargs at start of simulation
   string       TEST;
+  integer      INSTR_LIMIT;
 
   // DUT signals
   logic [P.AHBW-1:0]    HRDATAEXT;
@@ -99,11 +102,15 @@ module testbench;
   logic SelectTest;
   logic TestComplete;
 
-  // pick tests based on modes supported
   initial begin
-    TEST = "none";
-    if ($value$plusargs("TEST=%s", TEST))
-      $display("TEST is %s", TEST);
+    // look for arguments passed to simulation, or use defaults
+    if (!$value$plusargs("TEST=%s", TEST))
+      TEST = "none";
+    if (!$value$plusargs("INSTR_LIMIT=%d", INSTR_LIMIT))
+      INSTR_LIMIT = 0;
+      
+    
+    // pick tests based on modes supported
     //tests = '{};
     if (P.XLEN == 64) begin // RV64
       case (TEST)
@@ -592,12 +599,14 @@ module testbench;
   
   DCacheFlushFSM #(P) DCacheFlushFSM(.clk(clk), .reset(reset), .start(DCacheFlushStart), .done(DCacheFlushDone));
 
-  if(P.ZICSR_SUPPORTED & INSTR_LIMIT != 0) begin
+  if(P.ZICSR_SUPPORTED) begin
     logic [P.XLEN-1:0] Minstret;
     assign Minstret = testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2];  
     always @(negedge clk) begin
-      if((Minstret != 0) && (Minstret % 'd100000 == 0)) $display("Reached %d instructions", Minstret);
-      if((Minstret == INSTR_LIMIT) & (INSTR_LIMIT!=0)) begin $stop; $stop; end
+      if (INSTR_LIMIT > 0) begin
+        if((Minstret != 0) && (Minstret % 'd100000 == 0)) $display("Reached %d instructions", Minstret);
+        if((Minstret == INSTR_LIMIT) & (INSTR_LIMIT!=0)) begin $stop; $stop; end
+      end
     end
 end
 
