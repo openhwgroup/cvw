@@ -37,6 +37,16 @@ if (args.coverage):
         print("Coverage option only available for Questa")
         exit(1)
 
+
+#  create the output sub-directories.
+WALLY = os.environ.get('WALLY')
+regressionDir = WALLY + '/sim/'
+for d in ["logs", "wkdir", "cov"]:
+    try:
+        os.mkdir(regressionDir+args.sim+"/"+d)
+    except:
+        pass
+        
 # Launch selected simulator
 cd = "cd $WALLY/sim/" +args.sim
 if (args.sim == "questa"):

@@ -108,8 +108,6 @@ module testbench;
       TEST = "none";
     if (!$value$plusargs("INSTR_LIMIT=%d", INSTR_LIMIT))
       INSTR_LIMIT = 0;
-    $display("INSTR_LIMIT = ", INSTR_LIMIT);
-      
     
     // pick tests based on modes supported
     //tests = '{};
@@ -246,7 +244,7 @@ module testbench;
   logic        ResetCntRst;
   logic        CopyRAM;
 
-  string  signame, memfilename, bootmemfilename, uartoutfilename, pathname;
+  string  signame, memfilename, bootmemfilename, uartoutfilename, pathname, rmCmd;
   integer begin_signature_addr, end_signature_addr, signature_size;
 
   assign ResetThreshold = 3'd5;
@@ -338,8 +336,9 @@ module testbench;
       else if(TEST == "buildroot") begin 
         memfilename = {RISCV_DIR, "/linux-testvectors/ram.bin"};
         bootmemfilename = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
-        uartoutfilename = {"logs/",TEST,"_uart.out"};
-        $system("rm ",uartoutfilename); // Delete existing UARToutfile
+        uartoutfilename = {"logs/", TEST, "_uart.out"};
+        rmCmd = {"rm ", uartoutfilename};
+        $system(rmCmd); // Delete existing UARToutfile
       end
       else            memfilename = {pathname, tests[test], ".elf.memfile"};
       if (riscofTest) begin
@@ -582,7 +581,7 @@ module testbench;
 
   // Append UART output to file for tests
   always @(posedge clk) begin
-    if (TEST == "buildroot") begin
+    if (P.UART_SUPPORTED & TEST == "buildroot") begin
       if (~dut.uncore.uncore.uart.uart.MEMWb & dut.uncore.uncore.uart.uart.u.A == 3'b000 & ~dut.uncore.uncore.uart.uart.u.DLAB) begin
         memFile = $fopen(uartoutfilename, "ab");
         $fwrite(memFile, "%c", dut.uncore.uncore.uart.uart.u.Din);
