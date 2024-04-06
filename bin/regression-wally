@@ -232,15 +232,20 @@ def addTests(tests, sim):
 def search_log_for_text(text, logfile):
     """Search through the given log file for text, returning True if it is found or False if it is not"""
     grepcmd = "grep -e '%s' '%s' > /dev/null" % (text, logfile)
+#    print("  search_log_for_text invoking %s" % grepcmd)
     return os.system(grepcmd) == 0
 
 def run_test_case(config):
     """Run the given test case, and return 0 if the test suceeds and 1 if it fails"""
-    logname = "$WALLY/sim/questa/logs/"+config.variant+"_"+config.name+".log"
-#    cmd = config.cmd.format(logname)
-    cmd = config.cmd + " > " + logname
+    logname = WALLY + "/sim/questa/logs/"+config.variant+"_"+config.name+".log"   ### *** fix hardwiring to questa log
+    #cmd = config.cmd + " > " + logname
+    if ("lint-wally" in config.cmd):
+        cmd = config.cmd + " | tee " + logname
+    else:
+        cmd = config.cmd + " > " + logname
     print(cmd)
     os.chdir(regressionDir)
+    #print("  run_test_case invoking %s" % cmd)
     os.system(cmd)
     if search_log_for_text(config.grepstr, logname):
         print(f"{bcolors.OKGREEN}%s_%s: Success{bcolors.ENDC}" % (config.variant, config.name))
@@ -256,6 +261,8 @@ def run_test_case(config):
 
 regressionDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(regressionDir)
+
+WALLY = os.environ.get('WALLY')
 
 coveragesim = "questa"  # Questa is required for code/functional coverage
 defaultsim = "questa"   # Default simulator for all other tests; change to Verilator when flow is ready
@@ -283,7 +290,7 @@ configs = [
     TestCase(
         name="lints",
         variant="all",
-        cmd="./lint-wally " + nightMode + " | tee {}",
+        cmd="lint-wally " + nightMode,
         grepstr="lints run with no errors or warnings"
     )
     ]
