@@ -1,4 +1,3 @@
-RISCV := $(RISCV)
 #BUILDROOT := ${RISCV}/buildroot-test
 BUILDROOT := buildroot
 IMAGES := ${BUILDROOT}/output/images
@@ -32,15 +31,25 @@ OBJDUMPS := $(foreach name, $(OBJDUMPS), $(DIS)/$(name).objdump)
 
 all: clean download Image disassemble install
 
+all_nosudo: clean download Image disassemble install_nosudo
+
 Image:
 	bash -c "unset LD_LIBRARY_PATH; make -C $(BUILDROOT) --jobs;"
 	$(MAKE) generate
 
 install:
+	sudo rm -rf $(RISCV)/$(BUILDROOT)
+	sudo mv $(BUILDROOT) $(RISCV)/$(BUILDROOT)
+
+install_nosudo:
 	rm -rf $(RISCV)/$(BUILDROOT)
 	mv $(BUILDROOT) $(RISCV)/$(BUILDROOT)
 
 dumptvs:
+	sudo mkdir -p $(RISCV)/linux-testvectors 
+	cd testvector-generation; sudo ./genInitMem.sh
+
+dumptvs_nosudo:
 	mkdir -p $(RISCV)/linux-testvectors 
 	cd testvector-generation; ./genInitMem.sh
 
