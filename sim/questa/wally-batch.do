@@ -20,11 +20,15 @@
 
 onbreak {resume}
 
+set CONFIG ${1}
+set TESTSUITE ${2}
+set WKDIR wkdir/work_${CONFIG}_${TESTSUITE}
+
 # create library
-if [file exists wkdir/work_${1}_${2}] {
-    vdel -lib wkdir/work_${1}_${2} -all
+if [file exists ${WKDIR}] {
+    vdel -lib ${WKDIR} -all
 }
-vlib wkdir/work_${1}_${2}
+vlib ${WKDIR}
 # Create directory for coverage data
 mkdir -p cov
 
@@ -63,10 +67,7 @@ if {$argc >= 3} {
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
 
-# default to config/rv64ic, but allow this to be overridden at the command line.  For example:
-# do wally-pipelined-batch.do ../config/rv32imc rv32imc
-
-vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/deriv/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
+vlog -lint -work ${WKDIR} +incdir+../config/$1 +incdir+../config/deriv/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
