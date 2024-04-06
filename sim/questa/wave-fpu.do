@@ -1,30 +1,30 @@
 
-add wave -noupdate /testbenchfp/clk
-add wave -noupdate -radix decimal /testbenchfp/VectorNum
-add wave -noupdate /testbenchfp/FrmNum
-add wave -noupdate /testbenchfp/X
-add wave -noupdate /testbenchfp/Y
-add wave -noupdate /testbenchfp/Z
-add wave -noupdate /testbenchfp/Res
-add wave -noupdate /testbenchfp/Ans
-add wave -noupdate /testbenchfp/reset
-add wave -noupdate /testbenchfp/DivStart
-add wave -noupdate /testbenchfp/FDivBusyE
-add wave -noupdate /testbenchfp/CheckNow
-add wave -noupdate /testbenchfp/DivDone
-add wave -noupdate /testbenchfp/ResMatch
-add wave -noupdate /testbenchfp/FlagMatch
-add wave -noupdate /testbenchfp/CheckNow
-add wave -noupdate /testbenchfp/NaNGood
-add wave -group {PostProc} -noupdate /testbenchfp/postprocess/*
-add wave -group {PostProc} -noupdate /testbenchfp/postprocess/specialcase/*
-add wave -group {PostProc} -noupdate /testbenchfp/postprocess/flags/*
-add wave -group {PostProc} -noupdate /testbenchfp/postprocess/normshift/*
-add wave -group {PostProc} -noupdate /testbenchfp/postprocess/shiftcorrection/*
-add wave -group {PostProc} -noupdate /testbenchfp/postprocess/resultsign/*
-add wave -group {PostProc} -noupdate /testbenchfp/postprocess/round/*
-add wave -group {PostProc} -noupdate /testbenchfp/postprocess/fmashiftcalc/*
-add wave -group {PostProc} -noupdate /testbenchfp/postprocess/divshiftcalc/*
-add wave -group {PostProc} -noupdate /testbenchfp/postprocess/cvtshiftcalc/*
-add wave -group {Testbench} -noupdate /testbenchfp/*
-add wave -group {Testbench} -noupdate /testbenchfp/readvectors/*
+add wave -noupdate /testbench_fp/clk
+add wave -noupdate -radix decimal /testbench_fp/VectorNum
+add wave -noupdate /testbench_fp/FrmNum
+add wave -noupdate /testbench_fp/X
+add wave -noupdate /testbench_fp/Y
+add wave -noupdate /testbench_fp/Z
+add wave -noupdate /testbench_fp/Res
+add wave -noupdate /testbench_fp/Ans
+add wave -noupdate /testbench_fp/reset
+add wave -noupdate /testbench_fp/DivStart
+add wave -noupdate /testbench_fp/FDivBusyE
+add wave -noupdate /testbench_fp/CheckNow
+add wave -noupdate /testbench_fp/DivDone
+add wave -noupdate /testbench_fp/ResMatch
+add wave -noupdate /testbench_fp/FlagMatch
+add wave -noupdate /testbench_fp/CheckNow
+add wave -noupdate /testbench_fp/NaNGood
+add wave -group {PostProc} -noupdate /testbench_fp/postprocess/*
+add wave -group {PostProc} -noupdate /testbench_fp/postprocess/specialcase/*
+add wave -group {PostProc} -noupdate /testbench_fp/postprocess/flags/*
+add wave -group {PostProc} -noupdate /testbench_fp/postprocess/normshift/*
+add wave -group {PostProc} -noupdate /testbench_fp/postprocess/shiftcorrection/*
+add wave -group {PostProc} -noupdate /testbench_fp/postprocess/resultsign/*
+add wave -group {PostProc} -noupdate /testbench_fp/postprocess/round/*
+add wave -group {PostProc} -noupdate /testbench_fp/postprocess/fmashiftcalc/*
+add wave -group {PostProc} -noupdate /testbench_fp/postprocess/divshiftcalc/*
+add wave -group {PostProc} -noupdate /testbench_fp/postprocess/cvtshiftcalc/*
+add wave -group {Testbench} -noupdate /testbench_fp/*
+add wave -group {Testbench} -noupdate /testbench_fp/readvectors/*

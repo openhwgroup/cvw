@@ -49,7 +49,7 @@ if {$WAV eq 0} {
 # Change TEST_SIZE to only test certain FP width
 # values are QP, DP, SP, HP or all for all tests
 
-vopt +acc wkdir/work_${1}_${2}.testbenchfp -work wkdir/work_${1}_${2} -G TEST=$2 -G TEST_SIZE="all" -o testbenchopt
+vopt +acc wkdir/work_${1}_${2}.testbench-fp -work wkdir/work_${1}_${2} -G TEST=$2 -G TEST_SIZE="all" -o testbenchopt
 vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
 #-- Run the Simulation 
 run -all

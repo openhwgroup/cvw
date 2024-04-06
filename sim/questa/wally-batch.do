@@ -8,8 +8,8 @@
 #
 # Takes 1:10 to run RV64IC tests using gui
 
-# Usage: do wally-batch.do <config> <testcases>
-# Example: do wally-batch.do rv32imc imperas-32i
+# Usage: do wally-batch.do <config> <testcases> <testbench>
+# Example: do wally-batch.do rv64gc arch64i testbench
 
 # Use this wally-batch.do file to run this example.
 # Either bring up ModelSim and type the following at the "ModelSim>" prompt:
@@ -22,8 +22,12 @@ onbreak {resume}
 
 set CFG ${1}
 set TESTSUITE ${2}
+set TESTBENCH ${3}
 set WKDIR wkdir/${CFG}_${TESTSUITE}
 set WALLY $::env(WALLY)
+set CONFIG ${WALLY}/config
+set SRC ${WALLY}/src
+set TB ${WALLY}/testbench
 
 # create library
 if [file exists ${WKDIR}] {
@@ -68,15 +72,11 @@ if {$argc >= 3} {
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
 
-set CONFIG ${WALLY}/config
-set SRC ${WALLY}/src
-set TB ${WALLY}/testbench
-
-vlog -lint -work ${WKDIR} +incdir+${CONFIG}/$1 +incdir+${CONFIG}/deriv/$1 +incdir+${CONFIG}/shared ${SRC}/cvw.sv ${TB}/testbench.sv ${TB}/common/*.sv  ${SRC}/*/*.sv ${SRC}/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
+vlog -lint -work ${WKDIR} +incdir+${CONFIG}/$1 +incdir+${CONFIG}/deriv/$1 +incdir+${CONFIG}/shared ${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv  ${SRC}/*/*.sv ${SRC}/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-vopt wkdir/${CFG}_${TESTSUITE}.testbench -work ${WKDIR} -G TEST=$2 ${configOptions} -o testbenchopt ${CoverageVoptArg}
+vopt wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} -G TEST=$2 ${configOptions} -o testbenchopt ${CoverageVoptArg}
 vsim -lib ${WKDIR} testbenchopt  -fatal 7 -suppress 3829 ${CoverageVsimArg}
 
 #    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829

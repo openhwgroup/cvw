@@ -168,6 +168,10 @@ bpredtests = [
         ["bpred_GSHARE_10_10_10_1_rv32gc", ["embench"], "configOptions", "-GPrintHPMCounters=1"]
 ]
 
+##################################
+# Data Types & Functions
+##################################
+
 TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr'])
 # name:     the name of this test configuration (used in printing human-readable
 #           output and picking logfile names)
@@ -247,6 +251,10 @@ def run_test_case(config):
         print(f"{bcolors.FAIL}%s_%s: Failures detected in output{bcolors.ENDC}" % (config.variant, config.name))
         print("  Check %s" % logname)
         return 1
+
+##################################
+# Main body
+##################################
 
 regressionDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(regressionDir)

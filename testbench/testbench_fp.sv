@@ -23,15 +23,17 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "config.vh"
-`include "tests-fp.vh"
+`include "tests_fp.vh"
 
 import cvw::*;
 
-module testbenchfp;
+module testbench_fp;
    // Two parameters TEST, TEST_SIZE used with testfloat.do in sim dir
    // to run specific precisions (e.g., quad or all)
-   parameter string TEST="none";
-   parameter string TEST_SIZE="none";
+//   parameter string TEST="none";
+//   parameter string TEST_SIZE="none";
+   parameter string TEST="add";
+   parameter string TEST_SIZE="all";
 
   `include "parameter-defs.vh"   
 
@@ -662,12 +664,14 @@ module testbenchfp;
       TestNum = 0;
    end
 
-   // set a the signals for all tests
-   always_comb UnitVal = Unit[TestNum];
-   always_comb FmtVal = Fmt[TestNum];
-   always_comb OpCtrlVal = OpCtrl[OpCtrlNum];
-   always_comb WriteIntVal = WriteInt[OpCtrlNum];
-   always_comb FrmVal = Frm[FrmNum];
+   // set the signals for all tests
+   always_ff @(posedge clk) begin
+      UnitVal = Unit[TestNum];
+      FmtVal = Fmt[TestNum];
+      OpCtrlVal = OpCtrl[OpCtrlNum];
+      WriteIntVal = WriteInt[OpCtrlNum];
+      FrmVal = Frm[FrmNum];
+   end
 
    // modify the format signal if only 2 percisions supported
    //    - 1 for the larger precision
