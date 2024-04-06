@@ -1,0 +1,33 @@
+#!/usr/bin/python3
+#
+# wsim
+# David_Harris@hmc.edu 5 April 2024
+# Invoke a Wally simulation for a desired configuration and test suite or ELF on the specified simulator
+# usage: wsim CONFIG TESTSUITE [-s/--sim SIMULATOR] [-g/--gui]
+# example: wsim rv64gc arch64i
+# example: wsim rv64gc tests/riscof/work/riscv-arch-test/rv64i_m/I/src/ref/ref.elf
+# example: wsim rv32i arch32i -s verilator
+#
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+import argparse
+
+# Read arguments
+parser = argparse.ArgumentParser()
+parser.add_argument("config", help="Configuration file")
+parser.add_argument("testsuite", help="Test suite or ELF file")
+parser.add_argument("--sim", "-s", help="Simulator", choices=["questa", "verilator", "vcs"], default="questa")
+parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true")
+args = parser.parse_args()
+print("Config: " + args.config + " tests " + args.testsuite + " sim " + args.sim + " gui " + str(args.gui))
+
+if (args.sim == "questa"):
+    cmd = "do wally-batch.do " + args.config + " " + args.testsuite
+    system("vsim -c -do \"" + cmd + "\"")
+elif (args.sim == "verilator"):
+    print("Running Verilator")
+elif (args.sim == "vcs"):
+    print("Running VCS")
+else:
+    print("Unknown simulator")
+    exit(1)
