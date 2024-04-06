@@ -150,6 +150,7 @@ module clint_apb import cvw::*;  #(parameter cvw_t P) (
 
 endmodule
 
+/*
 module timeregsync  import cvw::*;  #(parameter cvw_t P) (
   input  logic              clk, resetn, 
   input  logic              we0, we1,
@@ -168,6 +169,7 @@ module timeregsync  import cvw::*;  #(parameter cvw_t P) (
       else if (we1) q[63:32] <= wd;
       else          q <= q + 1;
 endmodule
+
 
 module timereg  import cvw::*;  #(parameter cvw_t P) (
   input  logic              PCLK, PRESETn, TIMECLK,
@@ -245,3 +247,4 @@ module graytobinary #(parameter N) (
       assign b[i] = g[i] ^ b[i+1];
     end
 endmodule
+*/

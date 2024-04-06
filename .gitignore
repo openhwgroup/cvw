@@ -46,7 +46,6 @@ linux/buildroot
 linux/testvector-generation/boottrace.S
 linux/testvector-generation/boottrace_disasm.log
 sim/slack-notifier/slack-webhook-url.txt
-sim/logs
 fpga/generator/IP
 fpga/generator/vivado.*
 fpga/generator/.Xil/*
@@ -89,7 +88,6 @@ synthDC/hdl
 sim/power.saif
 tests/fp/vectors/*.tv
 synthDC/Summary.csv
-sim/wkdir
 tests/custom/work
 tests/custom/*/*/*.list
 tests/custom/*/*/*.elf
@@ -112,8 +110,6 @@ tests/wally-riscv-arch-test/riscv-test-suite/rv*i_m/I/src/*.S
 tests/wally-riscv-arch-test/riscv-test-suite/rv*i_m/I/Makefrag
 sim/branch_BP_GSHARE10.log
 sim/branch_BP_GSHARE16.log
-sim/cov/
-sim/covhtmlreport/
 sim/imperas.log
 sim/results-error/
 sim/test1.rep
@@ -186,3 +182,11 @@ sim/branch/*
 sim/obj_dir
 examples/verilog/fulladder/obj_dir
 config/deriv
+sim/questa/cov
+sim/questa/covhtmlreport/
+sim/questa/logs
+sim/questa/wkdir
+sim/verilator/logs
+sim/verilator/wkdir
+sim/vcs/logs
+sim/vcs/wkdir

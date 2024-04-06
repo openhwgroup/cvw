@@ -34,18 +34,16 @@
 `endif
 
 import cvw::*;
+import "DPI-C" function string getenv(input string env_name);
 
 module testbench;
   /* verilator lint_off WIDTHTRUNC */
   /* verilator lint_off WIDTHEXPAND */
   parameter DEBUG=0;
-  parameter string TEST="arch64m";
   parameter PrintHPMCounters=0;
   parameter BPRED_LOGGER=0;
   parameter I_CACHE_ADDR_LOGGER=0;
   parameter D_CACHE_ADDR_LOGGER=0;
-  parameter RISCV_DIR = "/opt/riscv";
-  parameter INSTR_LIMIT = 0;
   
   `ifdef USE_IMPERAS_DV
     import idvPkg::*;
@@ -58,6 +56,11 @@ module testbench;
   logic        clk;
   logic        reset_ext, reset;
   logic        ResetMem;
+
+  // Variables that can be overwritten with $value$plusargs at start of simulation
+  string       TEST;
+  integer      INSTR_LIMIT;
+  string       RISCV_DIR = getenv("RISCV"); // "/opt/riscv";
 
   // DUT signals
   logic [P.AHBW-1:0]    HRDATAEXT;
@@ -99,9 +102,16 @@ module testbench;
   logic SelectTest;
   logic TestComplete;
 
-  // pick tests based on modes supported
   initial begin
-    $display("TEST is %s", TEST);
+    // look for arguments passed to simulation, or use defaults
+    if (!$value$plusargs("TEST=%s", TEST))
+      TEST = "none";
+    if (!$value$plusargs("INSTR_LIMIT=%d", INSTR_LIMIT))
+      INSTR_LIMIT = 0;
+    $display("INSTR_LIMIT = ", INSTR_LIMIT);
+      
+    
+    // pick tests based on modes supported
     //tests = '{};
     if (P.XLEN == 64) begin // RV64
       case (TEST)
@@ -236,7 +246,7 @@ module testbench;
   logic        ResetCntRst;
   logic        CopyRAM;
 
-  string  signame, memfilename, bootmemfilename, pathname;
+  string  signame, memfilename, bootmemfilename, uartoutfilename, pathname;
   integer begin_signature_addr, end_signature_addr, signature_size;
 
   assign ResetThreshold = 3'd5;
@@ -309,7 +319,7 @@ module testbench;
     // Verify the test ran correctly by checking the memory against a known signature.
     ////////////////////////////////////////////////////////////////////////////////
     if(TestBenchReset) test = 1;
-    if (TEST == "coremark")
+    if (P.ZICSR_SUPPORTED & TEST == "coremark")
       if (dut.core.priv.priv.EcallFaultM) begin
         $display("Benchmark: coremark is done.");
         $stop;
@@ -328,6 +338,8 @@ module testbench;
       else if(TEST == "buildroot") begin 
         memfilename = {RISCV_DIR, "/linux-testvectors/ram.bin"};
         bootmemfilename = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
+        uartoutfilename = {"logs/",TEST,"_uart.out"};
+        $system("rm ",uartoutfilename); // Delete existing UARToutfile
       end
       else            memfilename = {pathname, tests[test], ".elf.memfile"};
       if (riscofTest) begin
@@ -559,8 +571,8 @@ module testbench;
   ramxdetector #(P.XLEN, P.LLEN) ramxdetector(clk, dut.core.lsu.MemRWM[1], dut.core.lsu.LSULoadAccessFaultM, dut.core.lsu.ReadDataM, 
                                       dut.core.ifu.PCM, InstrM, dut.core.lsu.IEUAdrM, InstrMName);
   riscvassertions #(P) riscvassertions();  // check assertions for a legal configuration
-  loggers #(P, TEST, PrintHPMCounters, I_CACHE_ADDR_LOGGER, D_CACHE_ADDR_LOGGER, BPRED_LOGGER)
-  loggers (clk, reset, DCacheFlushStart, DCacheFlushDone, memfilename);
+  loggers #(P, PrintHPMCounters, I_CACHE_ADDR_LOGGER, D_CACHE_ADDR_LOGGER, BPRED_LOGGER)
+    loggers (clk, reset, DCacheFlushStart, DCacheFlushDone, memfilename, TEST);
 
   // track the current function or global label
   if (DEBUG == 1 | ((PrintHPMCounters | BPRED_LOGGER) & P.ZICNTR_SUPPORTED)) begin : FunctionName
@@ -568,6 +580,16 @@ module testbench;
 			      .clk(clk), .ProgramAddrMapFile(ProgramAddrMapFile), .ProgramLabelMapFile(ProgramLabelMapFile));
   end
 
+  // Append UART output to file for tests
+  always @(posedge clk) begin
+    if (TEST == "buildroot") begin
+      if (~dut.uncore.uncore.uart.uart.MEMWb & dut.uncore.uncore.uart.uart.u.A == 3'b000 & ~dut.uncore.uncore.uart.uart.u.DLAB) begin
+        memFile = $fopen(uartoutfilename, "ab");
+        $fwrite(memFile, "%c", dut.uncore.uncore.uart.uart.u.Din);
+        $fclose(memFile);
+      end
+    end
+  end
 
   // Termination condition
   // terminate on a specific ECALL after li x3,1 for old Imperas tests,  *** remove this when old imperas tests are removed
@@ -590,12 +612,14 @@ module testbench;
   
   DCacheFlushFSM #(P) DCacheFlushFSM(.clk(clk), .reset(reset), .start(DCacheFlushStart), .done(DCacheFlushDone));
 
-  if(P.ZICSR_SUPPORTED & INSTR_LIMIT != 0) begin
+  if(P.ZICSR_SUPPORTED) begin
     logic [P.XLEN-1:0] Minstret;
     assign Minstret = testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2];  
     always @(negedge clk) begin
-      if((Minstret != 0) && (Minstret % 'd100000 == 0)) $display("Reached %d instructions", Minstret);
-      if((Minstret == INSTR_LIMIT) & (INSTR_LIMIT!=0)) begin $stop; $stop; end
+      if (INSTR_LIMIT > 0) begin
+        if((Minstret != 0) && (Minstret % 'd100000 == 0)) $display("Reached %d instructions", Minstret);
+        if((Minstret == INSTR_LIMIT) & (INSTR_LIMIT!=0)) begin $stop; $stop; end
+      end
     end
 end
 

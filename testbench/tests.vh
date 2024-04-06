@@ -35,12 +35,12 @@
 
 string tvpaths[] = '{
     "$RISCV/imperas-riscv-tests/work/",
-    "../tests/riscof/work/riscv-arch-test/",
-    "../tests/riscof/work/wally-riscv-arch-test/",
-    "../benchmarks/coremark/work/",
-    "../addins/embench-iot/",
-    "../tests/custom/work/",
-    "../tests/coverage/"
+    "../../tests/riscof/work/riscv-arch-test/",
+    "../../tests/riscof/work/wally-riscv-arch-test/",
+    "../../benchmarks/coremark/work/",
+    "../../addins/embench-iot/",
+    "../../tests/custom/work/",
+    "../../tests/coverage/"
     };
 
   string coverage64gc[] = '{
