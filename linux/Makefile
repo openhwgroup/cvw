@@ -41,7 +41,6 @@ install:
 	mv $(BUILDROOT) $(RISCV)/$(BUILDROOT)
 
 dumptvs:
-	export RISCV=$(RISCV)
 	mkdir -p $(RISCV)/linux-testvectors 
 	cd testvector-generation; ./genInitMem.sh
 
