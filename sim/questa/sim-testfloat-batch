@@ -1,3 +1,4 @@
+# Run TestFloat simulation
 
 # cvtint - test integer conversion unit (fcvtint)
 # cvtfp  - test floating-point conversion unit (fcvtfp)
@@ -10,4 +11,7 @@
 # sqrt   - test square root
 # all    - test everything
 
-vsim -c -do "do testfloat.do fdqh_ieee_rv64gc $1"
+#vsim -c -do "do testfloat.do fdqh_ieee_rv64gc $1"
+wsim fdqh_ieee_rv64gc $1 --tb testbench_fp
+#wsim fdqh_ieee_rv64gc $1 --tb testbench_fp --gui
+

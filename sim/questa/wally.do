@@ -8,8 +8,8 @@
 #
 # Takes 1:10 to run RV64IC tests using gui
 
-# Usage: do wally-batch.do <config> <testcases>
-# Example: do wally-batch.do rv32imc imperas-32i
+# Usage: do wally-batch.do <config> <testcases> <testbench> [-coverage] [+acc] [any number of +value] [any number of -G VAR=VAL]
+# Example: do wally-batch.do rv64gc arch64i testbench
 
 # Use this wally-batch.do file to run this example.
 # Either bring up ModelSim and type the following at the "ModelSim>" prompt:
@@ -20,11 +20,20 @@
 
 onbreak {resume}
 
+set CFG ${1}
+set TESTSUITE ${2}
+set TESTBENCH ${3}
+set WKDIR wkdir/${CFG}_${TESTSUITE}
+set WALLY $::env(WALLY)
+set CONFIG ${WALLY}/config
+set SRC ${WALLY}/src
+set TB ${WALLY}/testbench
+
 # create library
-if [file exists wkdir/work_${1}_${2}] {
-    vdel -lib wkdir/work_${1}_${2} -all
+if [file exists ${WKDIR}] {
+    vdel -lib ${WKDIR} -all
 }
-vlib wkdir/work_${1}_${2}
+vlib ${WKDIR}
 # Create directory for coverage data
 mkdir -p cov
 
@@ -36,10 +45,11 @@ set CoverageVsimArg ""
 # it takes on different values if vsim and the do file are called from the command line or
 # if the do file isd called from questa sim directly.  This chunk of code uses the $4 through $n
 # variables and compacts into a single list for passing to vopt.
-set configOptions ""
+set tbArgs ""
 set from 4
 set step 1
 set lst {}
+set GUI 0
 for {set i 0} true {incr i} {
     set x [expr {$i*$step + $from}]
     if {$x > $argc} break
@@ -48,14 +58,21 @@ for {set i 0} true {incr i} {
 }
 
 if {$argc >= 3} {
-    if {$3 eq "-coverage" || ($argc >= 7 && $7 eq "-coverage")} {
-        set coverage 1
-        set CoverageVoptArg "+cover=sbecf"
-        set CoverageVsimArg "-coverage"
-    } elseif {$3 eq "configOptions"} {
-        set configOptions $lst
-        puts $configOptions
-    }
+    set tbArgs $lst
+    puts $tbArgs
+
+    if {[lindex $lst [expr { [llength $lst] -1 } ]] eq "+acc"} {
+        set GUI 1
+   }
+    
+    #if {$3 eq "-coverage" || ($argc >= 7 && $7 eq "-coverage")} {
+    #    set coverage 1
+    #    set CoverageVoptArg "+cover=sbecf"
+    #    set CoverageVsimArg "-coverage"
+    #} elseif {$3 eq "tbArgs"} {
+    #    set tbArgs $lst
+    #    puts $tbArgs
+    #}
 }
 
 # compile source files
@@ -63,30 +80,43 @@ if {$argc >= 3} {
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
 
-# default to config/rv64ic, but allow this to be overridden at the command line.  For example:
-# do wally-pipelined-batch.do ../config/rv32imc rv32imc
-
-vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/deriv/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
+vlog -lint -work ${WKDIR} +incdir+${CONFIG}/$1 +incdir+${CONFIG}/deriv/$1 +incdir+${CONFIG}/shared ${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv  ${SRC}/*/*.sv ${SRC}/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 ${configOptions} -o testbenchopt ${CoverageVoptArg}
-vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829 ${CoverageVsimArg}
+vopt wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} ${tbArgs} -o testbenchopt ${CoverageVoptArg}
+#  *** tbArgs producees a warning that TEST not found in design when running sim-testfloat-batch.  Need to separate -G and + arguments to pass separately to vopt and vsim
+vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${tbArgs} -fatal 7 -suppress 3829 ${CoverageVsimArg} 
 
 #    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
 # power add generates the logging necessary for said generation.
 # power add -r /dut/core/*
+if { ${GUI} } {
+    add log -recursive /*
+    if { ${TESTBENCH} eq "testbench_fp" } {
+        do wave-fpu.do
+    } else {
+        do wave.do
+    }
+}
+
 run -all
 # power off -r /dut/core/*
 
 
 if {$coverage} {
-    echo "Saving coverage to ${1}_${2}.ucdb"
+    set UCDB cov/${CFG}_${TESTSUITE}.ucdb
+    echo "Saving coverage to ${UCDB}"
     do coverage-exclusions-rv64gc.do  # beware: this assumes testing the rv64gc configuration
-    coverage save -instance /testbench/dut/core cov/${1}_${2}.ucdb
+    coverage save -instance /testbench/dut/core ${UCDB}
 }
 
 # These aren't doing anything helpful
 #profile report -calltree -file wally-calltree.rpt -cutoff 2
 #power report -all -bsaif power.saif
-quit
+
+# terminate simulation unless we need to keep the GUI running
+if { ${GUI} == 0} {
+    quit
+}
+
