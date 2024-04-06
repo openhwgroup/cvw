@@ -50,6 +50,9 @@ set from 4
 set step 1
 set lst {}
 set GUI 0
+set PlusArgs {}
+set ParamArgs {}
+set accFlag ""
 for {set i 0} true {incr i} {
     set x [expr {$i*$step + $from}]
     if {$x > $argc} break
@@ -58,13 +61,29 @@ for {set i 0} true {incr i} {
 }
 
 if {$argc >= 3} {
-    set tbArgs $lst
-    puts $tbArgs
-
     if {[lindex $lst [expr { [llength $lst] -1 } ]] eq "+acc"} {
         set GUI 1
-   }
-    
+        set accFlag "+acc"
+        set tbArgs [lrange $lst 0 end-1]
+    } else {
+        set tbArgs $lst
+    }
+    set tbArgsLst [split $lst " "]
+    # might be able to remove this, but I'm keeping the code for now in case we need to separate the two types of args.
+    foreach otherArg $tbArgsLst {
+        if {[string index $otherArg 0] eq "+"} {
+            lappend PlusArgs $otherArg
+        } else {
+            lappend ParamArgs $otherArg
+        }
+    }
+    #echo "PlusArgs"
+    #echo $PlusArgs
+    #echo "ParamArgs"
+    #echo $ParamArgs
+    #echo "accFlag"
+    #echo $accFlag
+
     #if {$3 eq "-coverage" || ($argc >= 7 && $7 eq "-coverage")} {
     #    set coverage 1
     #    set CoverageVoptArg "+cover=sbecf"
@@ -84,9 +103,9 @@ vlog -lint -work ${WKDIR} +incdir+${CONFIG}/$1 +incdir+${CONFIG}/deriv/$1 +incdi
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-vopt wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} ${tbArgs} -o testbenchopt ${CoverageVoptArg}
+vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} ${tbArgs} -o testbenchopt ${CoverageVoptArg}
 #  *** tbArgs producees a warning that TEST not found in design when running sim-testfloat-batch.  Need to separate -G and + arguments to pass separately to vopt and vsim
-vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${tbArgs} -fatal 7 -suppress 3829 ${CoverageVsimArg} 
+vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} -fatal 7 -suppress 3829 ${CoverageVsimArg} 
 
 #    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
 # power add generates the logging necessary for said generation.
