@@ -6,7 +6,6 @@
 __pycache__/
 .vscode/
 
-
 #External repos
 addins/riscv-arch-test/Makefile.include
 addins/riscv-tests/target
