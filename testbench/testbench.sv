@@ -299,7 +299,6 @@ module testbench;
   // Find the test vector files and populate the PC to function label converter
   ////////////////////////////////////////////////////////////////////////////////
   logic [P.XLEN-1:0] testadr;
-  integer memFile;
   always_comb begin
   	begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
  	end_signature_addr = ProgramAddrLabelArray["sig_end_canary"];
@@ -331,8 +330,7 @@ module testbench;
         bootmemfilename = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
         uartoutfilename = {"logs/",TEST,"_uart.out"};
         // Initialize uart output file
-        memFile = $fopen(uartoutfilename, "w"); // Clear existing values in uartFile
-        $fclose(memFile);
+        $system("rm ",uartoutfilename); // Clear existing values in uartFile
       end
       else            memfilename = {pathname, tests[test], ".elf.memfile"};
       if (riscofTest) begin
@@ -415,6 +413,7 @@ module testbench;
   integer StartIndex;
   integer EndIndex;
   integer BaseIndex;
+  integer memFile;
   integer readResult;
   if (P.SDC_SUPPORTED) begin
     always @(posedge clk) begin
