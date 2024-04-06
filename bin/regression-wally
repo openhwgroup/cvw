@@ -246,10 +246,10 @@ def run_test_case(config):
 # Main body
 ##################################
 
-regressionDir = os.path.dirname(os.path.abspath(__file__))
-os.chdir(regressionDir)
 
 WALLY = os.environ.get('WALLY')
+regressionDir = WALLY + '/sim'
+os.chdir(regressionDir)
 
 coveragesim = "questa"  # Questa is required for code/functional coverage
 defaultsim = "questa"   # Default simulator for all other tests; change to Verilator when flow is ready
@@ -347,6 +347,8 @@ def main():
         try:
             os.mkdir(d)
         except:
+            print(f'Failed to make logs and wkdir {d}')
+            print(f'regressionDir is {regressionDir}')
             pass
  
     if '-makeTests' in sys.argv:
