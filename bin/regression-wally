@@ -347,8 +347,6 @@ def main():
         try:
             os.mkdir(d)
         except:
-            print(f'Failed to make logs and wkdir {d}')
-            print(f'regressionDir is {regressionDir}')
             pass
  
     if '-makeTests' in sys.argv:

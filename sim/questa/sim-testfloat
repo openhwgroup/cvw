@@ -9,4 +9,6 @@
 # sqrt   - test square root
 # all    - test everything
 
-vsim -do "do testfloat.do fdqh_ieee_rv64gc $1"
+
+wsim fdqh_ieee_rv64gc $1 --tb testbench_fp --gui
+
