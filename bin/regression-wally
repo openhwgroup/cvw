@@ -20,6 +20,10 @@ from multiprocessing import Pool, TimeoutError
 # Define lists of configurations and tests to run on each configuration
 ##################################
 
+# The tests are a list with one element for each configuration
+# The element consists of the configuration name, a list of test suites to run, 
+# optionally a string to pass to the simulator, and optionally a nonstandard grep string to check for success
+
 INSTR_LIMIT = 1000000 # multiple of 100000; 4M is interesting because it gets into the kernel and enabling VM
 tests = [
         ["rv32e", ["arch32e"]],
@@ -192,43 +196,19 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-#def getBuildrootTC(boot):
-#    INSTR_LIMIT = 1000000 # multiple of 100000; 4M is interesting because it gets into the kernel and enabling VM
-    
-
-#    BRcmd="vsim > {} -c <<!\ndo wally-batch.do buildroot buildroot configOptions -GINSTR_LIMIT=" +str(INSTR_LIMIT) + " \n!"
-#        BRgrepstr=str(INSTR_LIMIT)+" instructions"
-
-    # MAX_EXPECTED = 246000000 # *** TODO: replace this with a search for the login prompt.
-    # if boot:
-    #     name="buildrootboot"
-    #     BRcmd="vsim > {} -c <<!\ndo wally.do buildroot buildroot-no-trace $RISCV 0 1 0\n!"
-    #     BRgrepstr="WallyHostname login:"
-    # else:
-    #     name="buildroot"
-    #     if (coverage):
-    #         print( "buildroot coverage")
-    #         BRcmd="vsim > {} -c <<!\ndo wally-batch.do buildroot buildroot $RISCV "+str(INSTR_LIMIT)+" 1 0 -coverage\n!"
-    #     else:
-    #         print( "buildroot no coverage")
-    #         BRcmd="vsim > {} -c <<!\ndo wally-batch.do buildroot buildroot configOptions -GINSTR_LIMIT=" +str(INSTR_LIMIT) + " \n!"
-    #     BRgrepstr=str(INSTR_LIMIT)+" instructions" 
-#    return  TestCase(name,variant="rv64gc",cmd=BRcmd,grepstr=BRgrepstr)
-
-
 def addTests(tests, sim):
     for test in tests:
         config = test[0];
         suites = test[1];
-        if (len(test) > 2):
+        if (len(test) >= 3):
             args = " --args " + " ".join(test[2])
         else:
             args = ""
-        if (len(test) > 3):
+        if (len(test) >= 4):
             gs = test[3]
         else:
             gs = "All tests ran without failures"
-        cmdPrefix="wsim -s " + sim + " " + config
+        cmdPrefix="wsim --sim " + sim + " " + config
         for t in suites:
             tc = TestCase(
                     name=t,
@@ -251,9 +231,8 @@ def run_test_case(config):
         cmd = config.cmd + " | tee " + logname
     else:
         cmd = config.cmd + " > " + logname
-    print(cmd)
     os.chdir(regressionDir)
-    #print("  run_test_case invoking %s" % cmd)
+#    print("  run_test_case invoking %s" % cmd)
     os.system(cmd)
     if search_log_for_text(config.grepstr, logname):
         print(f"{bcolors.OKGREEN}%s_%s: Success{bcolors.ENDC}" % (config.variant, config.name))
@@ -347,46 +326,17 @@ if (testfloat):
     ]
     for config in testfloatconfigs:
         # div test case
-        divtest = TestCase(
-            name="div",
-            variant=config,
-            cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " div \n!",
-            grepstr="All Tests completed with          0 errors"
-        )
-        configs.insert(0,divtest)
-
-        # sqrt test case
-        sqrttest = TestCase(
-            name="sqrt",
-            variant=config,
-            cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " sqrt \n!",
-            grepstr="All Tests completed with          0 errors"
-        )
-        #configs.append(sqrttest)
-        configs.insert(0,sqrttest)
-
-
-        # skip if divider variant config
+        tests = ["div", "sqrt"]
         if ("ieee" in config):
-            # cvtint test case
-            cvtinttest = TestCase(
-                name="cvtint",
-                variant=config,
-                cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " cvtint \n!",
-                grepstr="All Tests completed with          0 errors"
-                )
-            configs.append(cvtinttest)
-
-            # cvtfp test case
-            # WILL fail on F_only (refer to spec)
-            cvtfptest = TestCase(
-                name="cvtfp",
-                variant=config,
-                cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " cvtfp \n!",
-                grepstr="All Tests completed with          0 errors"
-            )
-            configs.append(cvtfptest)    
-      
+            tests.append("cvtint")
+            tests.append("cvtfp")
+        for test in tests:
+            tc = TestCase(
+                    name=test,
+                    variant=config,
+                    cmd="wsim --tb testbench_fp --sim questa " + config + " " + test,
+                    grepstr="All Tests completed with          0 errors")
+            configs.append(tc)
 
 
 def main():

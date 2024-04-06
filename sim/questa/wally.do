@@ -45,10 +45,11 @@ set CoverageVsimArg ""
 # it takes on different values if vsim and the do file are called from the command line or
 # if the do file isd called from questa sim directly.  This chunk of code uses the $4 through $n
 # variables and compacts into a single list for passing to vopt.
-set configOptions ""
+set tbArgs ""
 set from 4
 set step 1
 set lst {}
+set GUI 0
 for {set i 0} true {incr i} {
     set x [expr {$i*$step + $from}]
     if {$x > $argc} break
@@ -57,15 +58,20 @@ for {set i 0} true {incr i} {
 }
 
 if {$argc >= 3} {
-    set configOptions $lst
-    puts $configOptions
+    set tbArgs $lst
+    puts $tbArgs
+
+    if {[lindex $lst [expr { [llength $lst] -1 } ]] eq "+acc"} {
+        set GUI 1
+   }
+    
     #if {$3 eq "-coverage" || ($argc >= 7 && $7 eq "-coverage")} {
     #    set coverage 1
     #    set CoverageVoptArg "+cover=sbecf"
     #    set CoverageVsimArg "-coverage"
-    #} elseif {$3 eq "configOptions"} {
-    #    set configOptions $lst
-    #    puts $configOptions
+    #} elseif {$3 eq "tbArgs"} {
+    #    set tbArgs $lst
+    #    puts $tbArgs
     #}
 }
 
@@ -78,13 +84,22 @@ vlog -lint -work ${WKDIR} +incdir+${CONFIG}/$1 +incdir+${CONFIG}/deriv/$1 +incdi
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-#vopt wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} -G TEST=$2  ${configOptions} -o testbenchopt ${CoverageVoptArg}
-vopt wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} ${configOptions} -o testbenchopt ${CoverageVoptArg}
-vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${configOptions} -fatal 7 -suppress 3829 ${CoverageVsimArg} 
+vopt wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} ${tbArgs} -o testbenchopt ${CoverageVoptArg}
+#  *** tbArgs producees a warning that TEST not found in design when running sim-testfloat-batch.  Need to separate -G and + arguments to pass separately to vopt and vsim
+vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${tbArgs} -fatal 7 -suppress 3829 ${CoverageVsimArg} 
 
 #    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
 # power add generates the logging necessary for said generation.
 # power add -r /dut/core/*
+if { ${GUI} } {
+    add log -recursive /*
+    if { ${TESTBENCH} eq "testbench_fp" } {
+        do wave-fpu.do
+    } else {
+        do wave.do
+    }
+}
+
 run -all
 # power off -r /dut/core/*
 
@@ -99,4 +114,9 @@ if {$coverage} {
 # These aren't doing anything helpful
 #profile report -calltree -file wally-calltree.rpt -cutoff 2
 #power report -all -bsaif power.saif
-quit
+
+# terminate simulation unless we need to keep the GUI running
+if { ${GUI} == 0} {
+    quit
+}
+

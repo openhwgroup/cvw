@@ -34,6 +34,7 @@
 `endif
 
 import cvw::*;
+import "DPI-C" function string getenv(input string env_name);
 
 module testbench;
   /* verilator lint_off WIDTHTRUNC */
@@ -43,7 +44,6 @@ module testbench;
   parameter BPRED_LOGGER=0;
   parameter I_CACHE_ADDR_LOGGER=0;
   parameter D_CACHE_ADDR_LOGGER=0;
-  parameter RISCV_DIR = "/opt/riscv";
   
   `ifdef USE_IMPERAS_DV
     import idvPkg::*;
@@ -60,6 +60,7 @@ module testbench;
   // Variables that can be overwritten with $value$plusargs at start of simulation
   string       TEST;
   integer      INSTR_LIMIT;
+  string       RISCV_DIR = getenv("RISCV"); // "/opt/riscv";
 
   // DUT signals
   logic [P.AHBW-1:0]    HRDATAEXT;

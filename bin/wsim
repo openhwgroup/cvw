@@ -40,6 +40,11 @@ if (args.coverage):
 # Launch selected simulator
 cd = "cd $WALLY/sim/" +args.sim
 if (args.sim == "questa"):
+    if (args.tb == "testbench_fp"):
+         args.args = " -GTEST=" + args.testsuite + " " + args.args
+#         cmd = "do wally.do " + args.config + " " + args.testsuite + " " + args.tb + " " + " -GTEST=" + args.testsuite + " " + args.args
+#    else:
+#        cmd = "do wally.do " + args.config + " " + args.testsuite + " " + args.tb + " " + args.args
     cmd = "do wally.do " + args.config + " " + args.testsuite + " " + args.tb + " " + args.args
     if (args.coverage):
         cmd += " -coverage"
@@ -47,6 +52,7 @@ if (args.sim == "questa"):
          cmd = cd + "; vsim -do \"" + cmd + " +acc\""        
     else: # launch Questa in batch mode
         cmd = cd + "; vsim -c -do \"" + cmd + "\""
+    print("Running Questa with command: " + cmd)
     os.system(cmd)
 elif (args.sim == "verilator"):
     print("Running Verilator on %s %s", args.config, args.testsuite)

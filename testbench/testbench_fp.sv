@@ -30,8 +30,6 @@ import cvw::*;
 module testbench_fp;
    // Two parameters TEST, TEST_SIZE used with testfloat.do in sim dir
    // to run specific precisions (e.g., quad or all)
-//   parameter string TEST="none";
-//   parameter string TEST_SIZE="none";
    parameter string TEST="none";
    parameter string TEST_SIZE="all";
 
