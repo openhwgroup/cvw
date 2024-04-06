@@ -22,9 +22,9 @@ parser.add_argument("--sim", "-s", help="Simulator", choices=["questa", "verilat
 parser.add_argument("--tb", "-t", help="Testbench", choices=["testbench", "testbench_fp"], default="testbench")
 parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true")
 parser.add_argument("--coverage", "-c", help="Code & Functional Coverage", action="store_true")
-parser.add_argument("--arg", "-a", help="Optional arguments passed to simulator via $value$plusargs", default="")
+parser.add_argument("--args", "-a", help="Optional arguments passed to simulator via $value$plusargs", default="")
 args = parser.parse_args()
-print("Config=" + args.config + " tests=" + args.testsuite + " sim=" + args.sim + " gui=" + str(args.gui) + " arg='" + args.arg + "'")
+print("Config=" + args.config + " tests=" + args.testsuite + " sim=" + args.sim + " gui=" + str(args.gui) + " args='" + args.args + "'")
 
 # Validate arguments
 if (args.gui):
@@ -40,7 +40,7 @@ if (args.coverage):
 # Launch selected simulator
 cd = "cd $WALLY/sim/" +args.sim
 if (args.sim == "questa"):
-    cmd = "do wally.do " + args.config + " " + args.testsuite + " " + args.tb + " " + args.arg
+    cmd = "do wally.do " + args.config + " " + args.testsuite + " " + args.tb + " " + args.args
     if (args.coverage):
         cmd += " -coverage"
     if (args.gui):  # launch Questa with GUI; add +acc to keep variables accessible

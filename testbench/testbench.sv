@@ -44,7 +44,6 @@ module testbench;
   parameter I_CACHE_ADDR_LOGGER=0;
   parameter D_CACHE_ADDR_LOGGER=0;
   parameter RISCV_DIR = "/opt/riscv";
-//  parameter INSTR_LIMIT = 0;
   
   `ifdef USE_IMPERAS_DV
     import idvPkg::*;
@@ -108,6 +107,7 @@ module testbench;
       TEST = "none";
     if (!$value$plusargs("INSTR_LIMIT=%d", INSTR_LIMIT))
       INSTR_LIMIT = 0;
+    $display("INSTR_LIMIT = ", INSTR_LIMIT);
       
     
     // pick tests based on modes supported

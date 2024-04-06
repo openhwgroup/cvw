@@ -57,14 +57,16 @@ for {set i 0} true {incr i} {
 }
 
 if {$argc >= 3} {
-    if {$3 eq "-coverage" || ($argc >= 7 && $7 eq "-coverage")} {
-        set coverage 1
-        set CoverageVoptArg "+cover=sbecf"
-        set CoverageVsimArg "-coverage"
-    } elseif {$3 eq "configOptions"} {
-        set configOptions $lst
-        puts $configOptions
-    }
+    set configOptions $lst
+    puts $configOptions
+    #if {$3 eq "-coverage" || ($argc >= 7 && $7 eq "-coverage")} {
+    #    set coverage 1
+    #    set CoverageVoptArg "+cover=sbecf"
+    #    set CoverageVsimArg "-coverage"
+    #} elseif {$3 eq "configOptions"} {
+    #    set configOptions $lst
+    #    puts $configOptions
+    #}
 }
 
 # compile source files
@@ -78,7 +80,7 @@ vlog -lint -work ${WKDIR} +incdir+${CONFIG}/$1 +incdir+${CONFIG}/deriv/$1 +incdi
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 #vopt wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} -G TEST=$2  ${configOptions} -o testbenchopt ${CoverageVoptArg}
 vopt wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} ${configOptions} -o testbenchopt ${CoverageVoptArg}
-vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE}  -fatal 7 -suppress 3829 ${CoverageVsimArg} 
+vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${configOptions} -fatal 7 -suppress 3829 ${CoverageVsimArg} 
 
 #    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
 # power add generates the logging necessary for said generation.

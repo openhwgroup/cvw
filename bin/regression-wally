@@ -219,19 +219,27 @@ def addTests(tests, sim):
     for test in tests:
         config = test[0];
         suites = test[1];
-        if(len(test) >= 4 and test[2] == "configOptions"):
-            configOptions = test[3]
-            cmdPrefix = "vsim > {} -c <<!\ndo wally-batch.do "+config
+        if (len(test) > 2):
+            args = " ".join(test[2::])
+            #args = str(test[2])
+            print("args = ", args)
+            args = " --args " + args
+            #cmdPrefix = "wsim -s " + sim + " " + config + " --args " + args
+        #if(len(test) >= 4 and test[2] == "configOptions"):
+        #    configOptions = test[3]
+        #    cmdPrefix = "vsim > {} -c <<!\ndo wally-batch.do "+config
+
         else:
+            args = ""
             configOptions = ""
             #cmdPrefix = "vsim > {} -c <<!\ndo wally-batch.do "+config
-            cmdPrefix="wsim -s " + sim + " " + config
+        cmdPrefix="wsim -s " + sim + " " + config
         for t in suites:
             tc = TestCase(
                     name=t,
                     variant=config,
                     #cmd=cmdPrefix+" "+t+" configOptions "+configOptions+"\n!",
-                    cmd=cmdPrefix + " " + t,
+                    cmd=cmdPrefix + " " + t + args,
                     grepstr="All tests ran without failures")
             configs.append(tc)
 
