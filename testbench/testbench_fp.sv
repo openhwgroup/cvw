@@ -32,7 +32,7 @@ module testbench_fp;
    // to run specific precisions (e.g., quad or all)
 //   parameter string TEST="none";
 //   parameter string TEST_SIZE="none";
-   parameter string TEST="add";
+   parameter string TEST="none";
    parameter string TEST_SIZE="all";
 
   `include "parameter-defs.vh"   
@@ -156,7 +156,7 @@ module testbench_fp;
       // $display("This simulation for TEST is %s", TEST);
       // $display("This simulation for TEST is of the operand size of %s", TEST_SIZE);      
 
-      if (P.Q_SUPPORTED & (TEST_SIZE == "QP" | TEST_SIZE == "all")) begin // if Quad percision is supported
+   if (P.Q_SUPPORTED & (TEST_SIZE == "QP" | TEST_SIZE == "all")) begin // if Quad percision is supported
 	 if (TEST === "cvtint" | TEST === "all") begin  // if testing integer conversion
             // add the 128-bit cvtint tests to the to-be-tested list
             Tests = {Tests, f128rv32cvtint};

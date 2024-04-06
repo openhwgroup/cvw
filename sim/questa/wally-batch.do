@@ -77,7 +77,7 @@ vlog -lint -work ${WKDIR} +incdir+${CONFIG}/$1 +incdir+${CONFIG}/deriv/$1 +incdi
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 vopt wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} -G TEST=$2 ${configOptions} -o testbenchopt ${CoverageVoptArg}
-vsim -lib ${WKDIR} testbenchopt  -fatal 7 -suppress 3829 ${CoverageVsimArg}
+vsim -lib ${WKDIR} testbenchopt  -fatal 7 -suppress 3829 ${CoverageVsimArg} 
 
 #    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
 # power add generates the logging necessary for said generation.

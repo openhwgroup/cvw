@@ -22,8 +22,9 @@ parser.add_argument("--sim", "-s", help="Simulator", choices=["questa", "verilat
 parser.add_argument("--tb", "-t", help="Testbench", choices=["testbench", "testbench_fp"], default="testbench")
 parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true")
 parser.add_argument("--coverage", "-c", help="Code & Functional Coverage", action="store_true")
+parser.add_argument("--arg", "-a", help="Optional arguments passed to simulator via $value$plusargs", default="")
 args = parser.parse_args()
-print("Config: " + args.config + " tests " + args.testsuite + " sim " + args.sim + " gui " + str(args.gui))
+print("Config=" + args.config + " tests=" + args.testsuite + " sim=" + args.sim + " gui=" + str(args.gui) + " arg='" + args.arg + "'")
 
 # Validate arguments
 if (args.gui):
@@ -39,7 +40,7 @@ if (args.coverage):
 # Launch selected simulator
 cd = "cd $WALLY/sim/" +args.sim
 if (args.sim == "questa"):
-    cmd = "do wally-batch.do " + args.config + " " + args.testsuite + " " + args.tb
+    cmd = "do wally-batch.do " + args.config + " " + args.testsuite + " " + args.tb + " " + args.arg
     if (args.coverage):
         cmd += " -coverage"
     os.system(cd + "; vsim -c -do \"" + cmd + "\"")

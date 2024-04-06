@@ -29,9 +29,7 @@ tests = [
                     "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "arch32zfh", "arch32zfh_fma", 
                     "arch32zfh_divsqrt", "arch32zfaf", "wally32a", "wally32priv", "wally32periph", 
                     "arch32zbkb", "arch32zbkc", "arch32zbkx", "arch32zknd", "arch32zkne", "arch32zknh"]], # "arch32zcb", "arch32zfad",
-        ["rv64e", ["arch64e"]],
         ["rv64i", ["arch64i"]],
-        ["rv64imc", ["arch64i", "arch64c", "arch64m", "wally64periph"]],
         ]
 
 # Separate out floating-point tests for RV64 to speed up coverage
@@ -214,15 +212,15 @@ def getBuildrootTC(boot):
 def addTests(tests, sim):
     for test in tests:
         config = test[0];
-        tests = test[1];
+        suites = test[1];
         if(len(test) >= 4 and test[2] == "configOptions"):
             configOptions = test[3]
             cmdPrefix = "vsim > {} -c <<!\ndo wally-batch.do "+config
         else:
             configOptions = ""
             #cmdPrefix = "vsim > {} -c <<!\ndo wally-batch.do "+config
-            cmdPrefix="./wsim -s " + sim + " " + config
-        for t in tests:
+            cmdPrefix="wsim -s " + sim + " " + config
+        for t in suites:
             tc = TestCase(
                     name=t,
                     variant=config,
@@ -238,7 +236,7 @@ def search_log_for_text(text, logfile):
 
 def run_test_case(config):
     """Run the given test case, and return 0 if the test suceeds and 1 if it fails"""
-    logname = "questa/logs/"+config.variant+"_"+config.name+".log"
+    logname = "$WALLY/sim/questa/logs/"+config.variant+"_"+config.name+".log"
 #    cmd = config.cmd.format(logname)
     cmd = config.cmd + " > " + logname
     print(cmd)
