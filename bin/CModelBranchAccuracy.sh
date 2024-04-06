@@ -31,7 +31,7 @@
 Directory="$1"
 Files="$1/*.log"
 
-for Pred in "bimodal" "gshare"
+for Pred in "bimodal" "gshare" "local4" "local8" "local10"
 do
     for Size in $(seq 6 2 16)
     do
@@ -39,6 +39,15 @@ do
 	    SizeString="$Size $Size 18 1"
 	elif [ $Pred = "bimodal" ]; then
 	    SizeString="$Size 18 1"
+	elif [ $Pred = "local4" ]; then
+	    SizeString="$Size 4 18 1"
+	    Pred="yehpatt"
+	elif [ $Pred = "local8" ]; then
+	    SizeString="$Size 8 18 1"
+	    Pred="yehpatt"
+	elif [ $Pred = "local10" ]; then
+	    SizeString="$Size 10 18 1"
+	    Pred="yehpatt"
 	fi
 
 	Product=1.0
