@@ -39,7 +39,6 @@ module testbench;
   /* verilator lint_off WIDTHTRUNC */
   /* verilator lint_off WIDTHEXPAND */
   parameter DEBUG=0;
-  parameter string TEST="arch64m";
   parameter PrintHPMCounters=0;
   parameter BPRED_LOGGER=0;
   parameter I_CACHE_ADDR_LOGGER=0;
@@ -58,6 +57,7 @@ module testbench;
   logic        clk;
   logic        reset_ext, reset;
   logic        ResetMem;
+  string       TEST;
 
   // DUT signals
   logic [P.AHBW-1:0]    HRDATAEXT;
@@ -101,7 +101,9 @@ module testbench;
 
   // pick tests based on modes supported
   initial begin
-    $display("TEST is %s", TEST);
+    TEST = "none";
+    if ($value$plusargs("TEST=%s", TEST))
+      $display("TEST is %s", TEST);
     //tests = '{};
     if (P.XLEN == 64) begin // RV64
       case (TEST)
@@ -309,7 +311,7 @@ module testbench;
     // Verify the test ran correctly by checking the memory against a known signature.
     ////////////////////////////////////////////////////////////////////////////////
     if(TestBenchReset) test = 1;
-    if (TEST == "coremark")
+    if (P.ZICSR_SUPPORTED & TEST == "coremark")
       if (dut.core.priv.priv.EcallFaultM) begin
         $display("Benchmark: coremark is done.");
         $stop;
@@ -559,8 +561,8 @@ module testbench;
   ramxdetector #(P.XLEN, P.LLEN) ramxdetector(clk, dut.core.lsu.MemRWM[1], dut.core.lsu.LSULoadAccessFaultM, dut.core.lsu.ReadDataM, 
                                       dut.core.ifu.PCM, InstrM, dut.core.lsu.IEUAdrM, InstrMName);
   riscvassertions #(P) riscvassertions();  // check assertions for a legal configuration
-  loggers #(P, TEST, PrintHPMCounters, I_CACHE_ADDR_LOGGER, D_CACHE_ADDR_LOGGER, BPRED_LOGGER)
-  loggers (clk, reset, DCacheFlushStart, DCacheFlushDone, memfilename);
+  loggers #(P, PrintHPMCounters, I_CACHE_ADDR_LOGGER, D_CACHE_ADDR_LOGGER, BPRED_LOGGER)
+    loggers (clk, reset, DCacheFlushStart, DCacheFlushDone, memfilename, TEST);
 
   // track the current function or global label
   if (DEBUG == 1 | ((PrintHPMCounters | BPRED_LOGGER) & P.ZICNTR_SUPPORTED)) begin : FunctionName

@@ -40,10 +40,14 @@ if (args.coverage):
 # Launch selected simulator
 cd = "cd $WALLY/sim/" +args.sim
 if (args.sim == "questa"):
-    cmd = "do wally-batch.do " + args.config + " " + args.testsuite + " " + args.tb + " " + args.arg
+    cmd = "do wally.do " + args.config + " " + args.testsuite + " " + args.tb + " " + args.arg
     if (args.coverage):
         cmd += " -coverage"
-    os.system(cd + "; vsim -c -do \"" + cmd + "\"")
+    if (args.gui):  # launch Questa with GUI; add +acc to keep variables accessible
+         cmd = cd + "; vsim -do \"" + cmd + " +acc\""        
+    else: # launch Questa in batch mode
+        cmd = cd + "; vsim -c -do \"" + cmd + "\""
+    os.system(cmd)
 elif (args.sim == "verilator"):
     print("Running Verilator on %s %s", args.config, args.testsuite)
 elif (args.sim == "vcs"):

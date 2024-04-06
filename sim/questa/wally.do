@@ -1,4 +1,4 @@
-# wally.do 
+# wally-batch.do 
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 #
 # Modification by Oklahoma State University & Harvey Mudd College
@@ -8,113 +8,93 @@
 #
 # Takes 1:10 to run RV64IC tests using gui
 
-# run with vsim -do "do wally-pipelined.do rv64ic riscvarchtest-64m"
+# Usage: do wally-batch.do <config> <testcases> <testbench> [-coverage] [+acc] [any number of +value] [any number of -G VAR=VAL]
+# Example: do wally-batch.do rv64gc arch64i testbench
 
-# Use this wally-pipelined.do file to run this example.
+# Use this wally-batch.do file to run this example.
 # Either bring up ModelSim and type the following at the "ModelSim>" prompt:
-#     do wally.do
+#     do wally-batch.do
 # or, to run from a shell, type the following at the shell prompt:
-#     vsim -do wally.do -c
+#     vsim -do wally-batch.do -c
 # (omit the "-c" to see the GUI while running from the shell)
 
 onbreak {resume}
 
+set CFG ${1}
+set TESTSUITE ${2}
+set TESTBENCH ${3}
+set WKDIR wkdir/${CFG}_${TESTSUITE}
+set WALLY $::env(WALLY)
+set CONFIG ${WALLY}/config
+set SRC ${WALLY}/src
+set TB ${WALLY}/testbench
+
 # create library
-if [file exists work] {
-    vdel -all
+if [file exists ${WKDIR}] {
+    vdel -lib ${WKDIR} -all
 }
-vlib work
+vlib ${WKDIR}
+# Create directory for coverage data
+mkdir -p cov
+
+set coverage 0
+set CoverageVoptArg ""
+set CoverageVsimArg ""
+
+# Need to be able to pass arguments to vopt.  Unforunately argv does not work because
+# it takes on different values if vsim and the do file are called from the command line or
+# if the do file isd called from questa sim directly.  This chunk of code uses the $4 through $n
+# variables and compacts into a single list for passing to vopt.
+set configOptions ""
+set from 4
+set step 1
+set lst {}
+for {set i 0} true {incr i} {
+    set x [expr {$i*$step + $from}]
+    if {$x > $argc} break
+    set arg [expr "$$x"]
+    lappend lst $arg
+}
+
+if {$argc >= 3} {
+    if {$3 eq "-coverage" || ($argc >= 7 && $7 eq "-coverage")} {
+        set coverage 1
+        set CoverageVoptArg "+cover=sbecf"
+        set CoverageVsimArg "-coverage"
+    } elseif {$3 eq "configOptions"} {
+        set configOptions $lst
+        puts $configOptions
+    }
+}
 
 # compile source files
 # suppress spurious warnngs about 
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
 
+vlog -lint -work ${WKDIR} +incdir+${CONFIG}/$1 +incdir+${CONFIG}/deriv/$1 +incdir+${CONFIG}/shared ${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv  ${SRC}/*/*.sv ${SRC}/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
+
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
-    vlog -lint -work work_${1}_${2} +incdir+../config/$1 +incdir+../config/deriv/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
-    # start and run simulation
-    vopt +acc work_${1}_${2}.testbench -work work_${1}_${2} -G RISCV_DIR=$3 -G INSTR_LIMIT=$4 -G INSTR_WAVEON=$5 -G CHECKPOINT=$6 -G NO_SPOOFING=0 -o testbenchopt 
-    vsim -lib work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3829,13286  -fatal 7
+#vopt wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} -G TEST=$2  ${configOptions} -o testbenchopt ${CoverageVoptArg}
+vopt wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} ${configOptions} -o testbenchopt ${CoverageVoptArg}
+vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE}  -fatal 7 -suppress 3829 ${CoverageVsimArg} 
 
-    #-- Run the Simulation
-    #run -all
-    add log -recursive /*
-    do linux-wave.do
-    run -all
+#    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
+# power add generates the logging necessary for said generation.
+# power add -r /dut/core/*
+run -all
+# power off -r /dut/core/*
 
-    exec ./slack-notifier/slack-notifier.py
-    
-} elseif {$2 eq "buildroot-no-trace"} {
-    vlog -lint -work work_${1}_${2} +incdir+../config/deriv/$1 +incdir+../config/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
-    # start and run simulation
-    vopt +acc work_${1}_${2}.testbench -work work_${1}_${2} -G RISCV_DIR=$3 -G INSTR_LIMIT=0 -G INSTR_WAVEON=0 -G CHECKPOINT=0 -G NO_SPOOFING=1 -o testbenchopt 
-    vsim -lib work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3829,13286  -fatal 7
 
-    #-- Run the Simulation
-    echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-    echo "Don't forget to change DEBUG_LEVEL = 0."
-    echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-    #run 100 ns
-    #force -deposit testbench/dut/core/priv/priv/csr/csri/IE_REGW 16'h2aa
-    #force -deposit testbench/dut/uncore/uncore/clint/clint/MTIMECMP 64'h1000
-    run 14000 ms
-    #add log -recursive /*
-    #do linux-wave.do
-    #run -all
-
-    exec ./slack-notifier/slack-notifier.py
-
-} elseif {$2 eq "fpga"} {
-    echo "hello"
-    vlog  -work work +incdir+../config/fpga +incdir+../config/deriv/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/sdc/*.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv  ../../fpga/sim/*.sv -suppress 8852,12070,3084,3829,2583,7063,13286
-    vopt +acc work.testbench -G TEST=$2 -G DEBUG=0 -o workopt     
-    vsim workopt +nowarn3829  -fatal 7
-    
-    do fpga-wave.do
-    add log -r /*
-    run 20 ms
-
-} else {
-    vlog +incdir+../config/$1 +incdir+../config/deriv/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583,13286 -suppress 7063 
-    vopt +acc work.testbench -G TEST=$2 -G DEBUG=1 -o workopt 
-
-    vsim workopt +nowarn3829  -fatal 7
-
-    view wave
-    #-- display input and output signals as hexidecimal values
-    #do ./wave-dos/peripheral-waves.do
-    add log -recursive /*
-    do wave.do
-    #do wave-bus.do
-
-    # power add generates the logging necessary for saif generation.
-    #power add -r /dut/core/*
-    #-- Run the Simulation 
-
-    run -all
-    #power off -r /dut/core/*
-    #power report -all -bsaif power.saif
-    noview ../testbench/testbench.sv
-    view wave
+if {$coverage} {
+    set UCDB cov/${CFG}_${TESTSUITE}.ucdb
+    echo "Saving coverage to ${UCDB}"
+    do coverage-exclusions-rv64gc.do  # beware: this assumes testing the rv64gc configuration
+    coverage save -instance /testbench/dut/core ${UCDB}
 }
 
-
-
-#elseif {$2 eq "buildroot-no-trace""} {
-#    vlog -lint -work work_${1}_${2} +incdir+../config/deriv/$1 +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
-    # start and run simulation
-#    vopt +acc work_${1}_${2}.testbench -work work_${1}_${2} -G RISCV_DIR=$3 -G INSTR_LIMIT=470350800 -G INSTR_WAVEON=470350800 -G CHECKPOINT=470350800 -G DEBUG_TRACE=0 -o testbenchopt 
-#    vsim -lib work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3829
-
-    #-- Run the Simulation
-#    run 100 ns
-#    force -deposit testbench/dut/core/priv/priv/csr/csri/IE_REGW 16'h2aa
-#    force -deposit testbench/dut/uncore/uncore/clint/clint/MTIMECMP 64'h1000
-#    add log -recursive /*
-#    do linux-wave.do
-#    run -all
-
-#    exec ./slack-notifier/slack-notifier.py
-#} 
+# These aren't doing anything helpful
+#profile report -calltree -file wally-calltree.rpt -cutoff 2
+#power report -all -bsaif power.saif
+quit
