@@ -329,8 +329,7 @@ module testbench;
         memfilename = {RISCV_DIR, "/linux-testvectors/ram.bin"};
         bootmemfilename = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
         uartoutfilename = {"logs/",TEST,"_uart.out"};
-        // Initialize uart output file
-        $system("rm ",uartoutfilename); // Clear existing values in uartFile
+        $system("rm ",uartoutfilename); // Delete existing UARToutfile
       end
       else            memfilename = {pathname, tests[test], ".elf.memfile"};
       if (riscofTest) begin
@@ -571,7 +570,7 @@ module testbench;
 			      .clk(clk), .ProgramAddrMapFile(ProgramAddrMapFile), .ProgramLabelMapFile(ProgramLabelMapFile));
   end
 
-  // Write UART output to file for tests
+  // Append UART output to file for tests
   always @(posedge clk) begin
     if (TEST == "buildroot") begin
       if (~dut.uncore.uncore.uart.uart.MEMWb & dut.uncore.uncore.uart.uart.u.A == 3'b000 & ~dut.uncore.uncore.uart.uart.u.DLAB) begin
