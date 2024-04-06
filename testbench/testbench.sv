@@ -236,7 +236,7 @@ module testbench;
   logic        ResetCntRst;
   logic        CopyRAM;
 
-  string  signame, memfilename, bootmemfilename, pathname;
+  string  signame, memfilename, bootmemfilename, uartoutfilename, pathname;
   integer begin_signature_addr, end_signature_addr, signature_size;
 
   assign ResetThreshold = 3'd5;
@@ -299,6 +299,7 @@ module testbench;
   // Find the test vector files and populate the PC to function label converter
   ////////////////////////////////////////////////////////////////////////////////
   logic [P.XLEN-1:0] testadr;
+  integer memFile;
   assign begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
   assign end_signature_addr = ProgramAddrLabelArray["sig_end_canary"];
   assign signature_size = end_signature_addr - begin_signature_addr;
@@ -308,6 +309,10 @@ module testbench;
       else if(TEST == "buildroot") begin 
         memfilename = {RISCV_DIR, "/linux-testvectors/ram.bin"};
         bootmemfilename = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
+        uartoutfilename = {"logs/",TEST,"_uart.out"};
+        // Initialize uart output file
+        memFile = $fopen(uartoutfilename, "w"); // Clear existing values in uartFile
+        $fclose(memFile);
       end
       else            memfilename = {pathname, tests[test], ".elf.memfile"};
       if (riscofTest) begin
@@ -389,7 +394,6 @@ module testbench;
   integer StartIndex;
   integer EndIndex;
   integer BaseIndex;
-  integer memFile;
   integer readResult;
   if (P.SDC_SUPPORTED) begin
     always @(posedge clk) begin
@@ -547,6 +551,16 @@ module testbench;
 			      .clk(clk), .ProgramAddrMapFile(ProgramAddrMapFile), .ProgramLabelMapFile(ProgramLabelMapFile));
   end
 
+  // Write UART output to file for tests
+  always @(posedge clk) begin
+    if (TEST == "buildroot") begin
+      if (~dut.uncore.uncore.uart.uart.MEMWb & dut.uncore.uncore.uart.uart.u.A == 3'b000 & ~dut.uncore.uncore.uart.uart.u.DLAB) begin
+        memFile = $fopen(uartoutfilename, "ab");
+        $fwrite(memFile, "%c", dut.uncore.uncore.uart.uart.u.Din);
+        $fclose(memFile);
+      end
+    end
+  end
 
   // Termination condition
   // terminate on a specific ECALL after li x3,1 for old Imperas tests,  *** remove this when old imperas tests are removed
