@@ -60,15 +60,24 @@ RUN opam init -y --disable-sandboxing && \
     cp ${RISCV}/sail-riscv/c_emulator/riscv_sim_RV32 ${RISCV}/bin/riscv_sim_RV32 && \
     rm -rf ${RISCV}/sail-riscv
 
-COPY ./wally /opt/riscv/wally_buildroot
+COPY ./buildroot-config-src /opt/riscv/buildroot-config-src
+COPY ./testvector-generation /opt/riscv/testvector-generation
 
-# Buildroot
+# # Buildroot
 RUN git clone https://github.com/buildroot/buildroot.git && \
     cd buildroot && \
     git checkout 2021.05 && \
-    cp -r /opt/riscv/wally_buildroot ./board/wally && \
+    cp -r /opt/riscv/buildroot-config-src ./board/wally && \
     cp ./board/wally/main.config .config && \
-    make --jobs ${NUM_THREADS}
+    make --jobs ${NUM_THREADS} && \
+    # generate files for buildroot regression
+    mkdir -p ${RISCV}/linux-testvectors && \
+    cd /opt/riscv/testvector-generation && \
+    curl https://raw.githubusercontent.com/openhwgroup/cvw/main/linux/devicetree/wally-virt.dts --output ${RISCV}/buildroot/output/images/wally-virt.dts && \
+    dtc -I dts -O dtb ${RISCV}/buildroot/output/images/wally-virt.dts > ${RISCV}/buildroot/output/images/wally-virt.dtb && \
+    make && ./genInitMem.sh && \
+    chmod -R a+rw ${RISCV}/linux-testvectors && \
+    rm -rf ${RISCV}/buildroot
 
 RUN pip3 install --no-cache-dir \
     testresources riscv_config \

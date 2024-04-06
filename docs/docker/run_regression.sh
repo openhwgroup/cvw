@@ -14,7 +14,7 @@
 # now only main branch is supported
 if [ -z "${CVW_GIT}" ]; then
     echo "No CVW_GIT is provided"
-    CVW_GIT="https://github.com/openhwgroup/cvw"
+    export CVW_GIT="https://github.com/openhwgroup/cvw"
 fi
 
 git config --global http.version HTTP/1.1

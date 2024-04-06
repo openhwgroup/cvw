@@ -5,8 +5,11 @@ ENV RUN_QUESTA=false
 ENV USERNAME=cad
 
 VOLUME [ "/home/${USERNAME}/cvw" ]
+USER root
 
-COPY . /home/${USERNAME}
+COPY --chown=${USERNAME}:${USERNAME} . /home/${USERNAME}
+RUN chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
+
 USER ${USERNAME}
 WORKDIR /home/${USERNAME}/cvw
 

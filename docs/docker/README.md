@@ -7,6 +7,8 @@ Hazards:
 - If there is any change in `${CVW_HOME}/linux/buildroot-config-src` folder with main.config, you have to copy it to the current folder to `buildroot-config-src`
 - If there is any change in `${CVW_HOME}/linux/testvector-generation` folder with main.config, you have to copy it to the current folder to `testvector-generation`
 
+If you have any other questions, please read the [troubleshooting]() first.
+
 ## TODOs
 
 - [ ] Pinning the tools version
@@ -21,6 +23,7 @@ Hazards:
 - [x] Configure the license for Questa
 - [ ] Change the condition from empty string to 1
 - [ ] Add linux testvector-generation
+    - [ ] Estimate the useless building intermediate files
 
 ## TL;DR
 
@@ -283,6 +286,40 @@ There are stages in the old Dockerfile:
 - sail: `f601c866153c79a7ae8404f939dc2d66aa2e41f9`
 - buildroot: `2021.05`
 - verilator: `v5.022`
+
+## Troubleshooting
+
+### Permission Denied for .git
+
+Description: permission problem in `/home/$USERNAME/cvw`.
+
+```text
+$ podman run -v cvw_temp:/home/cad/cvw -e CLEAN_CVW= -e BUILD_RISCOF= -e RUN_QUESTA= -v /cad/mentor/que
+sta_sim-2023.4:/cad/mentor/questa_sim-xxxx.x_x --rm wallysoc/regression_wally                          
+No CVW_GIT is provided                                                                                 
+rm: cannot remove '/home/cad/cvw': Device or resource busy                                             
+Cloning into '/home/cad/cvw'...                                                                        
+/home/cad/cvw/.git: Permission denied                                                                  
+chmod: cannot access '/home/cad/cvw/setup.sh': No such file or directory                               
+chmod: cannot access '/home/cad/cvw/site-setup.sh': No such file or directory                          
+make: *** No rule to make target 'install'.  Stop.                                                     
+make: *** No rule to make target 'verify'.  Stop.                                                      
+make: *** No rule to make target 'coverage'.  Stop.                                                    
+make: *** No rule to make target 'benchmarks'.  Stop.                                                  
+/home/cad/run_regression.sh: line 64: cd: /home/cad/cvw/sim: No such file or directory                 
+/home/cad/run_regression.sh: line 65: /home/cad/cvw/sim/regression_verilator.out: No such file or direc
+tory       
+```
+
+It may be caused by podman and I am not sure why it happens.
+
+Solution: get into the container with interaction as root and change the permission of the folder/volume `/home/$USERNAME/cvw`
+
+```shell
+podman run -it --user root -v cvw_temp:/home/cad/cvw -e RUN_QUESTA= -v /cad/mentor/questa_sim-2023.4:/cad/mentor/questa_sim-xxxx.x_x --net=host --rm --privileged wallysoc/regression_wally /bin/bash
+
+chown -R $USERNAME:$USERNAME /home/$USERNAME
+```
 
 ## References
 
