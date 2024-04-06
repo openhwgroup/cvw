@@ -1,1 +1,1 @@
-vsim -c -do "do wally-batch.do rv64gc wally64periph"
+../wsim rv64gc arch64i

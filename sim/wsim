@@ -19,12 +19,15 @@ parser.add_argument("config", help="Configuration file")
 parser.add_argument("testsuite", help="Test suite or ELF file")
 parser.add_argument("--sim", "-s", help="Simulator", choices=["questa", "verilator", "vcs"], default="questa")
 parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true")
+parser.add_argument("--coverage", "-c", help="Code & Functional Coverage", action="store_true")
 args = parser.parse_args()
 print("Config: " + args.config + " tests " + args.testsuite + " sim " + args.sim + " gui " + str(args.gui))
 
 if (args.sim == "questa"):
     cmd = "do wally-batch.do " + args.config + " " + args.testsuite
-    os.system("cd questa; vsim -c -do \"" + cmd + "\"")
+    if (args.coverage):
+        cmd += " -coverage"
+    os.system("cd $WALLY/sim/questa; vsim -c -do \"" + cmd + "\"")
 elif (args.sim == "verilator"):
     print("Running Verilator")
 elif (args.sim == "vcs"):

@@ -87,7 +87,7 @@ run -all
 
 
 if {$coverage} {
-    set UCDB cov/${CONFIG}_${TESTSUITE}.ucdb
+    set UCDB cov/${CFG}_${TESTSUITE}.ucdb
     echo "Saving coverage to ${UCDB}"
     do coverage-exclusions-rv64gc.do  # beware: this assumes testing the rv64gc configuration
     coverage save -instance /testbench/dut/core ${UCDB}
