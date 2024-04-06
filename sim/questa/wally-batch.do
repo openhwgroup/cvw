@@ -20,9 +20,10 @@
 
 onbreak {resume}
 
-set CONFIG ${1}
+set CFG ${1}
 set TESTSUITE ${2}
-set WKDIR wkdir/work_${CONFIG}_${TESTSUITE}
+set WKDIR wkdir/${CFG}_${TESTSUITE}
+set WALLY $::env(WALLY)
 
 # create library
 if [file exists ${WKDIR}] {
@@ -67,12 +68,16 @@ if {$argc >= 3} {
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
 
-vlog -lint -work ${WKDIR} +incdir+../config/$1 +incdir+../config/deriv/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
+set CONFIG ${WALLY}/config
+set SRC ${WALLY}/src
+set TB ${WALLY}/testbench
+
+vlog -lint -work ${WKDIR} +incdir+${CONFIG}/$1 +incdir+${CONFIG}/deriv/$1 +incdir+${CONFIG}/shared ${SRC}/cvw.sv ${TB}/testbench.sv ${TB}/common/*.sv  ${SRC}/*/*.sv ${SRC}/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 ${configOptions} -o testbenchopt ${CoverageVoptArg}
-vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829 ${CoverageVsimArg}
+vopt wkdir/${CFG}_${TESTSUITE}.testbench -work ${WKDIR} -G TEST=$2 ${configOptions} -o testbenchopt ${CoverageVoptArg}
+vsim -lib ${WKDIR} testbenchopt  -fatal 7 -suppress 3829 ${CoverageVsimArg}
 
 #    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
 # power add generates the logging necessary for said generation.
@@ -82,9 +87,10 @@ run -all
 
 
 if {$coverage} {
-    echo "Saving coverage to ${1}_${2}.ucdb"
+    set UCDB cov/${CONFIG}_${TESTSUITE}.ucdb
+    echo "Saving coverage to ${UCDB}"
     do coverage-exclusions-rv64gc.do  # beware: this assumes testing the rv64gc configuration
-    coverage save -instance /testbench/dut/core cov/${1}_${2}.ucdb
+    coverage save -instance /testbench/dut/core ${UCDB}
 }
 
 # These aren't doing anything helpful

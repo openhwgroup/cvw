@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 import argparse
+import os
 
 # Read arguments
 parser = argparse.ArgumentParser()
@@ -23,7 +24,7 @@ print("Config: " + args.config + " tests " + args.testsuite + " sim " + args.sim
 
 if (args.sim == "questa"):
     cmd = "do wally-batch.do " + args.config + " " + args.testsuite
-    system("vsim -c -do \"" + cmd + "\"")
+    os.system("cd questa; vsim -c -do \"" + cmd + "\"")
 elif (args.sim == "verilator"):
     print("Running Verilator")
 elif (args.sim == "vcs"):
