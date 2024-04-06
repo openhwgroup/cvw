@@ -337,7 +337,7 @@ module testbench;
         memfilename = {RISCV_DIR, "/linux-testvectors/ram.bin"};
         bootmemfilename = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
         uartoutfilename = {"logs/", TEST, "_uart.out"};
-        rmCmd = {"rm ", uartoutfilename};
+        rmCmd = {"rm -f ", uartoutfilename};
         $system(rmCmd); // Delete existing UARToutfile
       end
       else            memfilename = {pathname, tests[test], ".elf.memfile"};
