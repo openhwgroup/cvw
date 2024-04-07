@@ -69,7 +69,7 @@ if {$argc >= 3} {
         set tbArgs $lst
     }
     set tbArgsLst [split $lst " "]
-    # might be able to remove this, but I'm keeping the code for now in case we need to separate the two types of args.
+    # separate the +args from the -G parameters
     foreach otherArg $tbArgsLst {
         if {[string index $otherArg 0] eq "+"} {
             lappend PlusArgs $otherArg
@@ -105,7 +105,7 @@ vlog -lint -work ${WKDIR} +incdir+${CONFIG}/$1 +incdir+${CONFIG}/deriv/$1 +incdi
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} ${tbArgs} -o testbenchopt ${CoverageVoptArg}
 #  *** tbArgs producees a warning that TEST not found in design when running sim-testfloat-batch.  Need to separate -G and + arguments to pass separately to vopt and vsim
-vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} -fatal 7 -suppress 3829 ${CoverageVsimArg} 
+vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${PlusArgs} -fatal 7 -suppress 3829 ${CoverageVsimArg} 
 
 #    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
 # power add generates the logging necessary for said generation.
