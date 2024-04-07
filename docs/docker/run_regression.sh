@@ -15,6 +15,8 @@
 if [ -z "${CVW_GIT}" ]; then
     echo "No CVW_GIT is provided"
     export CVW_GIT="https://github.com/openhwgroup/cvw"
+else
+    echo "Using customized CVW_GIT: ${CVW_GIT}"
 fi
 
 git config --global http.version HTTP/1.1
