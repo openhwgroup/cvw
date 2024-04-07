@@ -821,8 +821,8 @@ module testbench_fp;
       case (UnitVal)
 	`FMAUNIT: Res = FpRes;
 	`DIVUNIT: Res = FpRes;
-	`CMPUNIT: Res = {{(FLEN-XLEN){1'b0}}, CmpRes};
-	`CVTINTUNIT: if (WriteIntVal) Res = {{(FLEN-XLEN){1'b0}}, IntRes}; else Res = FpRes;
+	`CMPUNIT: Res = {{(FLEN > XLEN ? FLEN-XLEN : XLEN-FLEN){1'b0}}, CmpRes};
+	`CVTINTUNIT: if (WriteIntVal) Res = {{(FLEN > XLEN ? FLEN-XLEN : XLEN-FLEN){1'b0}}, IntRes}; else Res = FpRes;
 	`CVTFPUNIT: Res = FpRes;
       endcase
 
