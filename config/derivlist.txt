@@ -587,6 +587,9 @@ IEEE754     1
 deriv fd_ieee_rv64gc fd_rv64gc
 IEEE754     1
 
+deriv fdh_ieee_rv64gc fdh_rv64gc
+IEEE754     1
+
 deriv fdq_ieee_rv64gc fdq_rv64gc
 IEEE754     1
 
