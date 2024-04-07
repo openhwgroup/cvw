@@ -306,7 +306,7 @@ if (testfloat):
             tc = TestCase(
                     name=test,
                     variant=config,
-                    cmd="wsim --tb testbench_fp --sim questa " + config + " " + test,
+                    cmd="wsim --tb testbench_fp " + config + " " + test,
                     grepstr="All Tests completed with          0 errors")
             configs.append(tc)
 
