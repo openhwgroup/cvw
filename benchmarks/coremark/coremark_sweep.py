@@ -4,7 +4,7 @@
 
 ## Written: Shreesh Kulkarni, kshreesh5@gmail.com
 ## Created: 20 March 2024
-## Modified: 22 March 2024
+## Modified: 08 April 2024
 ## Purpose: Wally  Coremark sweep Script for both 32 and 64 bit configs with csv file extraction. 
  
 ## Documentation: 
@@ -33,26 +33,21 @@ import os
 import re
 import csv
 # list of architectures to run. 
-arch32_list = [
+arch_list = [
     "rv32gc_zba_zbb_zbc",
     "rv32im_zicsr_zba_zbb_zbc",
     "rv32gc",
     "rv32imc_zicsr",
     "rv32im_zicsr",
-    "rv32i_zicsr"
+    "rv32i_zicsr",
+    "rv64gc_zba_zbb_zbc",
+    "rv64im_zicsr_zba_zbb_zbc",
+    "rv64gc",
+    "rv64imc_zicsr",
+    "rv64im_zicsr",
+    "rv64i_zicsr"
 ]
-#uncomment this array for 64bit configurations
-#arch64_list = [                               
-#    "rv64gc_zba_zbb_zbc",
-#    "rv64im_zicsr_zba_zbb_zbc",
-#    "rv64gc",
-#    "rv64imc_zicsr",
-#    "rv64im_zicsr",
-#    "rv64i_zicsr"
-#]
-
-xlen_value = '32'
-#xlen_value = '64' #uncomment this for 64 bit. 
+str="32" 
 # Define regular expressions to match the desired fields
 mt_regex = r"Elapsed MTIME: (\d+).*?Elapsed MINSTRET: (\d+).*?COREMARK/MHz Score: [\d,]+ / [\d,]+ = (\d+\.\d+).*?CPI: \d+ / \d+ = (\d+\.\d+).*?Load Stalls (\d+).*?Store Stalls (\d+).*?D-Cache Accesses (\d+).*?D-Cache Misses (\d+).*?I-Cache Accesses (\d+).*?I-Cache Misses (\d+).*?Branches (\d+).*?Branches Miss Predictions (\d+).*?BTB Misses (\d+).*?Jump and JR (\d+).*?RAS Wrong (\d+).*?Returns (\d+).*?BP Class Wrong (\d+)"
 #cpi_regex = r"CPI: \d+ / \d+ = (\d+\.\d+)"
@@ -67,7 +62,11 @@ with open('coremark_results.csv', mode='w', newline='') as csvfile:
     writer.writeheader()
 
     # Loop through each architecture and run the make commands
-    for arch in arch32_list:
+    for arch in arch_list:
+        if(str in arch):
+            xlen_value='32'
+        else:
+            xlen_value='64'
         os.system("make clean")
         make_all = f"make all XLEN={xlen_value} ARCH={arch}"
         os.system(make_all)
