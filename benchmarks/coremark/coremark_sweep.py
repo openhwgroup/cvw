@@ -73,6 +73,7 @@ with open('coremark_results.csv', mode='w', newline='') as csvfile:
         os.system(make_all)
 
         make_run = f"make run XLEN={xlen_value} ARCH={arch}"
+        print("Running: " + make_run)
         output = os.popen(make_run).read()  # Capture the output of the command
 
         # Extract the Coremark values using regular expressions

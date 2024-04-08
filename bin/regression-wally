@@ -254,20 +254,20 @@ os.chdir(regressionDir)
 coveragesim = "questa"  # Questa is required for code/functional coverage
 defaultsim = "questa"   # Default simulator for all other tests; change to Verilator when flow is ready
 
-coverage = '-coverage' in sys.argv
-fp = '-fp' in sys.argv
-nightly = '-nightly' in sys.argv
-testfloat = '-testfloat' in sys.argv
+coverage = '--coverage' in sys.argv
+fp = '--fp' in sys.argv
+nightly = '--nightly' in sys.argv
+testfloat = '--testfloat' in sys.argv
 
 if (nightly):
-    nightMode = "-nightly";
+    nightMode = "--nightly";
     sims = ["questa", "verilator", "vcs"]
 else:
     nightMode = "";
     sims = [defaultsim]
 
 if (coverage):  # only run RV64GC tests in coverage mode
-    coverStr = '-coverage'
+    coverStr = '--coverage'
 else:
    coverStr = ''
 
@@ -298,7 +298,22 @@ else:
 # testfloat tests
 if (testfloat):
     configs = []
-    testfloatconfigs = [
+
+    testfloatconfigs = ["fdqh_ieee_rv64gc", "fdq_ieee_rv64gc", "fdh_ieee_rv64gc", "fd_ieee_rv64gc", "fh_ieee_rv64gc", "f_ieee_rv64gc", "fdqh_ieee_rv32gc", "f_ieee_rv32gc"]
+    for config in testfloatconfigs:
+        tests = ["div", "sqrt", "add", "sub", "mul", "cvtint", "cvtfp", "fma", "cmp"]
+        if ("f_" in config):
+            tests.remove("cvtfp")
+        for test in tests:
+            tc = TestCase(
+                    name=test,
+                    variant=config,
+                    cmd="wsim --tb testbench_fp " + config + " " + test,
+                    grepstr="All Tests completed with          0 errors")
+            configs.append(tc)
+
+
+    testfloatdivconfigs = [
     "fdh_ieee_div_2_1_rv32gc", "fdh_ieee_div_2_1_rv64gc", "fdh_ieee_div_2_2_rv32gc",
     "fdh_ieee_div_2_2_rv64gc", "fdh_ieee_div_2_4_rv32gc", "fdh_ieee_div_2_4_rv64gc",
     "fdh_ieee_div_4_1_rv32gc", "fdh_ieee_div_4_1_rv64gc", "fdh_ieee_div_4_2_rv32gc",
@@ -324,12 +339,14 @@ if (testfloat):
     "f_ieee_div_4_1_rv32gc", "f_ieee_div_4_1_rv64gc", "f_ieee_div_4_2_rv32gc",
     "f_ieee_div_4_2_rv64gc", "f_ieee_div_4_4_rv32gc", "f_ieee_div_4_4_rv64gc"
     ]
-    for config in testfloatconfigs:
+    for config in testfloatdivconfigs:
         # div test case
         tests = ["div", "sqrt"]
         if ("ieee" in config):
             tests.append("cvtint")
             tests.append("cvtfp")
+        if ("f_" in config):
+            tests.remove("cvtfp")
         for test in tests:
             tc = TestCase(
                     name=test,
@@ -349,26 +366,26 @@ def main():
         except:
             pass
  
-    if '-makeTests' in sys.argv:
+    if '--makeTests' in sys.argv:
         os.chdir(regressionDir)
         os.system('./make-tests.sh | tee ./logs/make-tests.log')
 
-    if '-all' in sys.argv:
+    if '--all' in sys.argv:
         TIMEOUT_DUR = 30*7200 # seconds
         #configs.append(getBuildrootTC(boot=True))
-    elif '-buildroot' in sys.argv:
+    elif '--buildroot' in sys.argv:
         TIMEOUT_DUR = 30*7200 # seconds
         #configs=[getBuildrootTC(boot=True)]
-    elif '-coverage' in sys.argv:
+    elif '--coverage' in sys.argv:
         TIMEOUT_DUR = 20*60 # seconds    
     #   Presently don't run buildroot because it has a different config and can't be merged with the rv64gc coverage.
     #   Also it is slow to run.   
     #    configs.append(getBuildrootTC(boot=False))
         os.system('rm -f cov/*.ucdb')
-    elif '-nightly' in sys.argv:
+    elif '--nightly' in sys.argv:
         TIMEOUT_DUR = 60*1440 # 1 day
         #configs.append(getBuildrootTC(boot=False))
-    elif '-testfloat' in sys.argv:
+    elif '--testfloat' in sys.argv:
         TIMEOUT_DUR = 60*60 # seconds
     else:
         TIMEOUT_DUR = 10*60 # seconds

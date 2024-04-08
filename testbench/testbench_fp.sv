@@ -821,8 +821,8 @@ module testbench_fp;
       case (UnitVal)
 	`FMAUNIT: Res = FpRes;
 	`DIVUNIT: Res = FpRes;
-	`CMPUNIT: Res = {{(FLEN-XLEN){1'b0}}, CmpRes};
-	`CVTINTUNIT: if (WriteIntVal) Res = {{(FLEN-XLEN){1'b0}}, IntRes}; else Res = FpRes;
+	`CMPUNIT: Res = {{(FLEN > XLEN ? FLEN-XLEN : XLEN-FLEN){1'b0}}, CmpRes};
+	`CVTINTUNIT: if (WriteIntVal) Res = {{(FLEN > XLEN ? FLEN-XLEN : XLEN-FLEN){1'b0}}, IntRes}; else Res = FpRes;
 	`CVTFPUNIT: Res = FpRes;
       endcase
 
@@ -1275,7 +1275,7 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		 2'b01:	begin // quad -> long
                     X = {TestVector[8+P.XLEN+P.Q_LEN-1:8+(P.XLEN)]};
                     SrcA = {P.XLEN{1'bx}};
-                    Ans = {{(P.FLEN-64){1'b0}}, TestVector[8+(P.XLEN-1):8]};
+                    Ans = {{(P.FLEN > 64 ? P.FLEN-64 : 0){1'b0}}, TestVector[8+(P.XLEN-1):8]};
 		 end
 		 2'b00:	begin // quad -> int
                     X = {TestVector[8+32+P.Q_LEN-1:8+(32)]};
@@ -1327,7 +1327,7 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		 2'b01:	begin // single -> long
                     X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+P.XLEN+P.S_LEN-1:8+(P.XLEN)]};
                     SrcA = {P.XLEN{1'bx}};
-                    Ans = {{(P.FLEN-64){1'b0}}, TestVector[8+(P.XLEN-1):8]};
+                    Ans = {{(P.FLEN > 64 ? P.FLEN-64 : 0){1'b0}}, TestVector[8+(P.XLEN-1):8]};
 		 end
 		 2'b00:	begin // single -> int
                     X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+32+P.S_LEN-1:8+(32)]};
@@ -1353,7 +1353,7 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		 2'b01:	begin // half -> long
                     X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+P.XLEN+P.H_LEN-1:8+(P.XLEN)]};
                     SrcA = {P.XLEN{1'bx}};
-                    Ans = {{(P.FLEN-64){1'b0}}, TestVector[8+(P.XLEN-1):8]};
+                    Ans = {{(P.FLEN > 64 ? P.FLEN-64 : 0){1'b0}}, TestVector[8+(P.XLEN-1):8]};
 		 end
 		 2'b00:	begin // half -> int
                     X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+32+P.H_LEN-1:8+(32)]};
