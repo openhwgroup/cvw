@@ -55,7 +55,8 @@ if [[ -z "${RUN_QUESTA-x}" ]] ; then
         echo "Cannot find vsim with ${QUESTA}/questasim/bin/vsim"
     else
         # cd sim && ./regression-wally 2>&1 > ./regression_questa.out && cd ..
-        make verify
+        # make verify
+        regression-wally
     fi
 fi
 
@@ -63,6 +64,6 @@ make coverage
 make benchmarks
 
 if [[ ! NO_VERILATOR -eq 1 ]]; then
-    cd ${CVW_HOME}/sim && verilator -GTEST="\"arch64i\"" -DVERILATOR=1 --timescale "1ns/1ns" --timing --binary --top-module testbench -I../config/shared -I../config/rv64gc ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv --relative-includes
-    ${CVW_HOME}/sim/obj_dir/Vtestbench > ${CVW_HOME}/sim/regression_verilator.out
+    cd ${CVW_HOME}/sim/verilator && verilator -GTEST="\"arch64i\"" -DVERILATOR=1 --timescale "1ns/1ns" --timing --binary --top-module testbench -I${CVW_HOME}/config/shared -I${CVW_HOME}/config/rv64gc ${CVW_HOME}/src/cvw.sv ${CVW_HOME}/testbench/testbench.sv ${CVW_HOME}/testbench/common/*.sv ${CVW_HOME}/src/*/*.sv ${CVW_HOME}/src/*/*/*.sv --relative-includes
+    ${CVW_HOME}/sim/verilator/obj_dir/Vtestbench
 fi
