@@ -176,8 +176,8 @@ git clone https://github.com/riscv/sail-riscv.git
 cd sail-riscv
 # For now, use checkout that is stable for Wally
 #git checkout 72b2516d10d472ac77482fd959a9401ce3487f60  # not new enough for Zicboz?
-make -j ${NUM_THREADS}
-ARCH=RV32 make -j ${NUM_THREADS}
+make -j ${NUM_THREADS} c_emulator/riscv_sim_RV64
+ARCH=RV32 make -j ${NUM_THREADS} c_emulator/riscv_sim_RV32
 sudo ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV64 /usr/bin/riscv_sim_RV64
 sudo ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV32 /usr/bin/riscv_sim_RV32
 
