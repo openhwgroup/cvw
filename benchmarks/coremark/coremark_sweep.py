@@ -4,7 +4,7 @@
 
 ## Written: Shreesh Kulkarni, kshreesh5@gmail.com
 ## Created: 20 March 2024
-## Modified: 22 March 2024
+## Modified: 08 April 2024
 ## Purpose: Wally  Coremark sweep Script for both 32 and 64 bit configs with csv file extraction. 
  
 ## Documentation: 
