@@ -44,6 +44,7 @@ module bsg_dmc_ahb
   input  logic [AHB_ADDR_SIZE-1:0]   HADDR,
   input  logic [AHB_DATA_SIZE-1:0]   HWDATA,
   input  logic [AHB_DATA_SIZE/8-1:0] HWSTRB,
+  input  logic [2:0]                 HBURST,
   input  logic                       HWRITE,
   input  logic [1:0]                 HTRANS,
   input  logic                       HREADY,
@@ -88,7 +89,7 @@ module bsg_dmc_ahb
   logic [11:0]                device_temp; // Reserved
 
   ahbxuiconverter #(AHB_ADDR_SIZE, AHB_DATA_SIZE) bsg_dmc_ahb_ui_converter (
-    .HCLK, .HRESETn, .HSEL, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HTRANS, .HREADY, .HRDATA, .HRESP, .HREADYOUT,
+    .HCLK, .HRESETn, .HSEL, .HADDR, .HWDATA, .HWSTRB, .HBURST, .HWRITE, .HTRANS, .HREADY, .HRDATA, .HRESP, .HREADYOUT,
     .sys_reset, .ui_clk, .ui_clk_sync_rst,
     .app_addr, .app_cmd, .app_en, .app_rdy,
     .app_wdf_wren, .app_wdf_data, .app_wdf_mask, .app_wdf_end, .app_wdf_rdy,

@@ -629,7 +629,7 @@ module testbench;
           bsg_dmc_ahb #(28, P.XLEN, dq_width) ram (
             .dmc_config,
             .HCLK, .HRESETn, .HSEL(HSELEXT),
-            .HADDR(HADDR[27:0]), .HWDATA, .HWSTRB,
+            .HADDR(HADDR[27:0]), .HWDATA, .HWSTRB, .HBURST,
             .HWRITE, .HTRANS, .HREADY,
             .HRDATA(HRDATAEXT), .HRESP(HRESPEXT), .HREADYOUT(HREADYEXT),
             .ui_clk,
