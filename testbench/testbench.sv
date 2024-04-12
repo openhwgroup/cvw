@@ -34,7 +34,11 @@
 `endif
 
 import cvw::*;
+`ifdef VERILATOR
+import "DPI-C" function string getenvval(input string env_name);
+`else
 import "DPI-C" function string getenv(input string env_name);
+`endif
 
 module testbench;
   /* verilator lint_off WIDTHTRUNC */
@@ -60,7 +64,12 @@ module testbench;
   // Variables that can be overwritten with $value$plusargs at start of simulation
   string       TEST;
   integer      INSTR_LIMIT;
+`ifdef VERILATOR
+  string       RISCV_DIR = getenvval("RISCV"); // "/opt/riscv";
+`else
   string       RISCV_DIR = getenv("RISCV"); // "/opt/riscv";
+`endif
+  // string       RISCV_DIR = "/opt/riscv";
 
   // DUT signals
   logic [P.AHBW-1:0]    HRDATAEXT;
