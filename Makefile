@@ -57,7 +57,7 @@ funcovreg:
 	vcover report -details -html sim/riscv.ucdb
 
 coverage:
-	cd ${WALLY}/sim; ./regression-wally -coverage -fp
+	regression-wally -coverage -fp
 
 benchmarks:
 	make coremark
