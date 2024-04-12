@@ -17,9 +17,14 @@ profile: obj_dir_profiling/Vtestbench_$(WALLYCONF)
 	mv gmon.out gmon_$(WALLYCONF).out
 	gprof $(WORKING_DIR)/obj_dir_profiling/Vtestbench_$(WALLYCONF) gmon_$(WALLYCONF).out > gmon_$(WALLYCONF).log
 	verilator_profcfunc gmon_$(WALLYCONF).log > gmon_$(WALLYCONF).log2
+	mkdir -p $(WORKING_DIR)/logs_profiling
+	mv gmon_$(WALLYCONF)* $(WORKING_DIR)/logs_profiling
+	echo "Please check $(WORKING_DIR)/logs_profiling/gmon_$(WALLYCONF)* for logs and output files."
 
 run: obj_dir_non_profiling/Vtestbench_$(WALLYCONF)
-	time $(WORKING_DIR)/obj_dir_non_profiling/Vtestbench_$(WALLYCONF) +TEST=$(TEST) 
+	mkdir -p $(WORKING_DIR)/logs
+	time $(WORKING_DIR)/obj_dir_non_profiling/Vtestbench_$(WALLYCONF) +TEST=$(TEST) 2>&1 > $(WORKING_DIR)/logs/$(WALLYCONF)_$(TEST).log
+	echo "Please check $(WORKING_DIR)/logs/$(WALLYCONF)_$(TEST).log for logs and output files."
 	
 obj_dir_non_profiling/Vtestbench_$(WALLYCONF): $(SOURCE)
 	mkdir -p obj_dir_non_profiling
@@ -42,4 +47,4 @@ questa:
 	time vsim -c -do "do ${WALLY}/sim/wally-batch.do $(WALLYCONF) $(TEST)"
 
 clean:
-	rm -rf $(WORKING_DIR)/obj_dir_non_profiling $(WORKING_DIR)/obj_dir_profiling
+	rm -rf $(WORKING_DIR)/obj_dir_non_profiling $(WORKING_DIR)/obj_dir_profiling $(WORKING_DIR)/logs $(WORKING_DIR)/logs_profiling
