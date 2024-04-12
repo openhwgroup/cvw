@@ -1,0 +1,45 @@
+.PHONY: profile run questa clean
+
+OPT=
+PARAMS?=-DVERILATOR=1 --no-trace-top
+NONPROF?=--stats
+WORKING_DIR=${WALLY}/sim/verilator
+TARGET=$(WORKING_DIR)/target
+SOURCE=${WALLY}/config/shared/*.vh ${WALLY}/config/${WALLYCONF} ${WALLY}/src/cvw.sv ${WALLY}/testbench/testbench.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
+
+WALLYCONF?=rv64gc
+TEST?=arch64i
+
+default: run
+
+profile: obj_dir_profiling/Vtestbench_$(WALLYCONF)
+	$(WORKING_DIR)/obj_dir_profiling/Vtestbench_$(WALLYCONF) +TEST=$(TEST) 
+	mv gmon.out gmon_$(WALLYCONF).out
+	gprof $(WORKING_DIR)/obj_dir_profiling/Vtestbench_$(WALLYCONF) gmon_$(WALLYCONF).out > gmon_$(WALLYCONF).log
+	verilator_profcfunc gmon_$(WALLYCONF).log > gmon_$(WALLYCONF).log2
+
+run: obj_dir_non_profiling/Vtestbench_$(WALLYCONF)
+	time $(WORKING_DIR)/obj_dir_non_profiling/Vtestbench_$(WALLYCONF) +TEST=$(TEST) 
+	
+obj_dir_non_profiling/Vtestbench_$(WALLYCONF): $(SOURCE)
+	mkdir -p obj_dir_non_profiling
+	time verilator \
+	--Mdir obj_dir_non_profiling -o Vtestbench_$(WALLYCONF) \
+	$(OPT) $(PARAMS) $(NONPROF) \
+	--timescale "1ns/1ns" --timing --binary --top-module testbench  --relative-includes \
+	"-I${WALLY}/config/shared" "-I${WALLY}/config/$(WALLYCONF)" \
+	${WALLY}/src/cvw.sv ${WALLY}/testbench/testbench.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
+	
+obj_dir_profiling/Vtestbench_$(WALLYCONF): $(SOURCE)
+	mkdir -p obj_dir_profiling
+	time verilator \
+	--Mdir obj_dir_profiling -o Vtestbench_$(WALLYCONF) \
+	--prof-cfuncs $(OPT) $(PARAMS) \
+	--timescale "1ns/1ns" --timing --binary --top-module testbench  --relative-includes \
+	"-I${WALLY}/config/shared" "-I${WALLY}/config/$(WALLYCONF)" ${WALLY}/src/cvw.sv ${WALLY}/testbench/testbench.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
+
+questa:
+	time vsim -c -do "do ${WALLY}/sim/wally-batch.do $(WALLYCONF) $(TEST)"
+
+clean:
+	rm -rf $(WORKING_DIR)/obj_dir_non_profiling $(WORKING_DIR)/obj_dir_profiling
