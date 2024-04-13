@@ -60,8 +60,13 @@ examples/asm/example/example
 examples/C/sum/sum
 examples/C/fir/fir
 examples/fp/softfloat_demo/softfloat_demo
+examples/fp/softfloat_demo/softfloat_demoDP
+examples/fp/softfloat_demo/softfloat_demoQP
+examples/fp/softfloat_demo/softfloat_demoSP
 examples/fp/fpcalc/fpcalc
+examples/fp/sqrttest/sqrttest
 examples/C/inline/inline
+examples/C/mcmodel/mcmodel
 examples/C/sum_mixed/sum_mixed
 examples/asm/trap/trap
 examples/asm/etc/pause
