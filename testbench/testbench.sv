@@ -580,12 +580,14 @@ module testbench;
   end
 
   // Append UART output to file for tests
-  always @(posedge clk) begin
-    if (P.UART_SUPPORTED & TEST == "buildroot") begin
-      if (~dut.uncore.uncore.uart.uart.MEMWb & dut.uncore.uncore.uart.uart.u.A == 3'b000 & ~dut.uncore.uncore.uart.uart.u.DLAB) begin
-        memFile = $fopen(uartoutfilename, "ab");
-        $fwrite(memFile, "%c", dut.uncore.uncore.uart.uart.u.Din);
-        $fclose(memFile);
+  if (P.UART_SUPPORTED) begin: uart_logger
+    always @(posedge clk) begin
+      if (TEST == "buildroot") begin
+        if (~dut.uncore.uncore.uart.uart.MEMWb & dut.uncore.uncore.uart.uart.u.A == 3'b000 & ~dut.uncore.uncore.uart.uart.u.DLAB) begin
+          memFile = $fopen(uartoutfilename, "ab");
+          $fwrite(memFile, "%c", dut.uncore.uncore.uart.uart.u.Din);
+          $fclose(memFile);
+        end
       end
     end
   end
