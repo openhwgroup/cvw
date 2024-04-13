@@ -79,7 +79,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
    );
 
   // instantiate uncore if a bus interface exists
-  if (P.BUS_SUPPORTED) begin : uncore
+  if (P.BUS_SUPPORTED) begin : uc
     uncore #(P) uncore(.HCLK, .HRESETn, .TIMECLK,
       .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
       .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT, .HSELEXTSDC,
