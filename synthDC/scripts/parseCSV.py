@@ -25,20 +25,16 @@ def parse_xlen(rows,freq):
     for row in rows:
         if "rv32gc" in row[0]:
             rows32.append(row)
-            print(row, "in the 32`")
         
         if "rv64gc" in row[0]:
             rows64.append(row)
     rowout = []
-    print(rows32, "BEFORE")
     if ("drsu" in rows[0][0]):
-      print("monkeyQ")
       rowout.extend(parse_fpmode(rows32,freq)) 
       rowout.extend(parse_fpmode(rows64,freq))
     elif ("mdudiv" in rows[0][0]):
       rowout.append(parse_idivbits(rows32,freq))
       rowout.append(parse_idivbits(rows64,freq))
-    print(rowout,"JAME")
     return rowout
      
     
@@ -84,7 +80,10 @@ def parse_r_k(rows,freq):
         area = row[1]
         delay = row[2]
         power = float(row[3])/freq
-        if r==4 and k== 1 and len(rowout)/3 ==3:
+        if r==2 and k==8  and len(rowout)/3==3:
+            print("WE ARE HERE")
+            print(row[0])
+            print(area)
             rowout.append(area)
             rowout.append(delay)
             rowout.append(power)
@@ -95,7 +94,7 @@ def parse_r_k(rows,freq):
         area = row[1]
         delay = row[2]
         power = float(row[3])/freq
-        if r==4 and k==2 and len(rowout)/3 ==4:
+        if r==4 and k== 1 and len(rowout)/3 ==4:
             rowout.append(area)
             rowout.append(delay)
             rowout.append(power)
@@ -106,7 +105,18 @@ def parse_r_k(rows,freq):
         area = row[1]
         delay = row[2]
         power = float(row[3])/freq
-        if r==4 and k==4 and len(rowout)/3 ==5:
+        if r==4 and k==2 and len(rowout)/3 ==5:
+            rowout.append(area)
+            rowout.append(delay)
+            rowout.append(power)
+    for row in rows:
+        design = row[0]
+        r = int(design.split("_")[4])
+        k = int(design.split("_")[5][0])
+        area = row[1]
+        delay = row[2]
+        power = float(row[3])/freq
+        if r==4 and k==4 and len(rowout)/3 ==6:
             rowout.append(area)
             rowout.append(delay)
             rowout.append(power)
@@ -119,7 +129,6 @@ def parse_idivbits(rows,freq):
     for row in rows:
         design = row[0]
         bits = int(design.split("_")[3])
-        print(bits, "DABITS")
         area = row[1]
         delay = row[2]
         power = float(row[3])/freq
@@ -153,7 +162,7 @@ def parse_idivbits(rows,freq):
         area = row[1]
         delay = row[2]
         power = float(row[3])/freq
-        if bits == 2 and len(rowout)/3 ==3:
+        if bits == 8 and (len(rowout)/3 ==3):
             rowout.append(area)
             rowout.append(delay)
             rowout.append(power)
@@ -163,7 +172,7 @@ def parse_idivbits(rows,freq):
         area = row[1]
         delay = row[2]
         power = float(row[3])/freq
-        if bits == 4 and len(rowout)/3 ==4:
+        if bits == 2 and len(rowout)/3 ==4:
             rowout.append(area)
             rowout.append(delay)
             rowout.append(power)
@@ -173,13 +182,21 @@ def parse_idivbits(rows,freq):
         area = row[1]
         delay = row[2]
         power = float(row[3])/freq
-        if bits == 8 and len(rowout)/3 ==5:
+        if bits == 4 and len(rowout)/3 ==5:
+            rowout.append(area)
+            rowout.append(delay)
+            rowout.append(power)
+    for row in rows:
+        design = row[0]
+        bits = int(design.split("_")[3])
+        area = row[1]
+        delay = row[2]
+        power = float(row[3])/freq
+        if bits == 8 and len(rowout)/3 ==6:
             rowout.append(area)
             rowout.append(delay)
             rowout.append(power)
     rowout.insert(0, titleClean(rows[0][0]))
-    print("***")
-    print(rowout,"OUCH")
     return rowout
 def titleClean(title):
   newtitle = ""
@@ -254,6 +271,7 @@ def combinerow(drsu, mdu):
   drsu_mdu = ["MDU_"+drsu[0]]
   # group into 3's 
   drsu_group = list(grouper(drsu[1:],3))
+  print(drsu_group)
   mdu_group = list(grouper(mdu[1:],3))
   for i in range(len(drsu_group)):
     area_1 = drsu_group[i][0]
@@ -274,7 +292,7 @@ def combinerow(drsu, mdu):
   return drsu_mdu
 
 
-rowout = [["design","RADIX_2_K_1", "RADIX_2_K_1", "RADIX_2_K_1", "RADIX_2_K_2", "RADIX_2_K_2", "RADIX_2_K_2", "RADIX_2_K_4", "RADIX_2_K_4", "RADIX_2_K_4", "RADIX_4_K_1", "RADIX_4_K_1", "RADIX_4_K_1", "RADIX_4_K_2", "RADIX_4_K_2", "RADIX_4_K_2", "RADIX_4_K_4", "RADIX_4_K_4", "RADIX_4_K_4"]]
+rowout = [["design","RADIX_2_K_1", "RADIX_2_K_1", "RADIX_2_K_1", "RADIX_2_K_2", "RADIX_2_K_2", "RADIX_2_K_2", "RADIX_2_K_4", "RADIX_2_K_4", "RADIX_2_K_4", "RADIX_2_K_8", "RADIX_2_K_8", "RADIX_2_K_8", "RADIX_4_K_1", "RADIX_4_K_1", "RADIX_4_K_1", "RADIX_4_K_2", "RADIX_4_K_2", "RADIX_4_K_2", "RADIX_4_K_4", "RADIX_4_K_4", "RADIX_4_K_4"]]
 
 with open(f"{os.environ['WALLY']}/synthDC/fp-synth.csv", 'r') as csv_file:
     reader = csv.reader(csv_file)
@@ -282,7 +300,6 @@ with open(f"{os.environ['WALLY']}/synthDC/fp-synth.csv", 'r') as csv_file:
     for row in reader:
         allrows.append(row)
     rowout.extend(parse_freq(allrows))
-    print(rowout)
 # add mdu divider results, and combine with fdivsqrt only results
 # format should be drsu_idiv, drsu_noidiv + intdiv, drsu_noidiv, intdiv
 # insert drsu_noidiv+intdiv at index 7
@@ -300,7 +317,7 @@ with open(f"{os.environ['WALLY']}/synthDC/fp-synth_intdiv.csv", 'r') as csv_file
     mdu5000_rows = rowout[27:29]
     drsumdu_100_rows = mergerows(drsu100_rows,mdu100_rows)
     drsumdu_5000_rows = mergerows(drsu5000_rows,mdu5000_rows)
-    rowout = [["design","RADIX_2_K_1", "RADIX_2_K_1", "RADIX_2_K_1", "RADIX_2_K_2", "RADIX_2_K_2", "RADIX_2_K_2", "RADIX_2_K_4", "RADIX_2_K_4", "RADIX_2_K_4", "RADIX_4_K_1", "RADIX_4_K_1", "RADIX_4_K_1", "RADIX_4_K_2", "RADIX_4_K_2", "RADIX_4_K_2", "RADIX_4_K_4", "RADIX_4_K_4", "RADIX_4_K_4"]]
+    rowout = [["design","RADIX_2_K_1", "RADIX_2_K_1", "RADIX_2_K_1", "RADIX_2_K_2", "RADIX_2_K_2", "RADIX_2_K_2", "RADIX_2_K_4", "RADIX_2_K_4", "RADIX_2_K_4", "RADIX_2_K_8", "RADIX_2_K_8", "RADIX_2_K_8","RADIX_4_K_1", "RADIX_4_K_1", "RADIX_4_K_1", "RADIX_4_K_2", "RADIX_4_K_2", "RADIX_4_K_2", "RADIX_4_K_4", "RADIX_4_K_4", "RADIX_4_K_4"]]
     rowout.extend(drsu100i_rows[0:3])
     rowout.extend(drsumdu_100_rows[0:3])
     rowout.extend(drsu100_rows[0:3])

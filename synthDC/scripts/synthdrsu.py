@@ -19,7 +19,7 @@ derivedconfigs = [
     "fd_ieee_div_2_1i_rv32gc", "fd_ieee_div_2_1i_rv64gc", "fd_ieee_div_2_1_rv32gc",
     "fd_ieee_div_2_1_rv64gc", "fd_ieee_div_2_2i_rv32gc", "fd_ieee_div_2_2i_rv64gc",
     "fd_ieee_div_2_2_rv32gc", "fd_ieee_div_2_2_rv64gc", "fd_ieee_div_2_4i_rv32gc",
-    "fd_ieee_div_2_4i_rv64gc", "fd_ieee_div_2_4_rv32gc", "fd_ieee_div_2_4_rv64gc",
+    "fd_ieee_div_2_4i_rv64gc", "fd_ieee_div_2_4_rv32gc", "fd_ieee_div_2_4_rv64gc", 
     "fd_ieee_div_4_1i_rv32gc", "fd_ieee_div_4_1i_rv64gc", "fd_ieee_div_4_1_rv32gc",
     "fd_ieee_div_4_1_rv64gc", "fd_ieee_div_4_2i_rv32gc", "fd_ieee_div_4_2i_rv64gc",
     "fd_ieee_div_4_2_rv32gc", "fd_ieee_div_4_2_rv64gc", "fd_ieee_div_4_4i_rv32gc",
@@ -39,7 +39,13 @@ derivedconfigs = [
     "f_ieee_div_4_1i_rv32gc", "f_ieee_div_4_1i_rv64gc", "f_ieee_div_4_1_rv32gc",
     "f_ieee_div_4_1_rv64gc", "f_ieee_div_4_2i_rv32gc", "f_ieee_div_4_2i_rv64gc",
     "f_ieee_div_4_2_rv32gc", "f_ieee_div_4_2_rv64gc", "f_ieee_div_4_4i_rv32gc",
-    "f_ieee_div_4_4i_rv64gc", "f_ieee_div_4_4_rv32gc", "f_ieee_div_4_4_rv64gc"
+    "f_ieee_div_4_4i_rv64gc", "f_ieee_div_4_4_rv32gc", "f_ieee_div_4_4_rv64gc",
+    "fd_ieee_div_2_8_rv64gc", "fd_ieee_div_2_8_rv32gc", "fd_ieee_div_2_8i_rv64gc",
+    "fd_ieee_div_2_8i_rv32gc",
+    "fdq_ieee_div_2_8_rv64gc", "fdq_ieee_div_2_8_rv32gc", "fdq_ieee_div_2_8i_rv64gc",
+    "fdq_ieee_div_2_8i_rv32gc",
+    "f_ieee_div_2_8_rv64gc", "f_ieee_div_2_8_rv32gc", "f_ieee_div_2_8i_rv64gc",
+    "f_ieee_div_2_8i_rv32gc"
 ]
 
 derivedconfigsmdu = [
