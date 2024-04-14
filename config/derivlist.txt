@@ -1119,6 +1119,9 @@ IEEE754         1
 deriv fdh_ieee_div_2_4_rv64gc    fdh_div_2_4_rv64gc    
 IEEE754         1
 
+deriv fdh_ieee_div_2_8_rv64gc    fdh_div_2_8_rv64gc    
+IEEE754         1
+
 deriv fdh_ieee_div_4_1_rv64gc    fdh_div_4_1_rv64gc    
 IEEE754         1
 
@@ -1203,6 +1206,9 @@ IEEE754         1
 deriv fdqh_ieee_div_2_4_rv64gc    fdqh_div_2_4_rv64gc    
 IEEE754         1
 
+deriv fdqh_ieee_div_2_8_rv64gc    fdqh_div_2_8_rv64gc    
+IEEE754         1
+
 deriv fdqh_ieee_div_4_1_rv64gc    fdqh_div_4_1_rv64gc    
 IEEE754         1
 
@@ -1242,6 +1248,9 @@ deriv f_ieee_div_2_2i_rv64gc f_ieee_div_2_2_rv64gc
 IDIV_ON_FPU     1
 
 deriv f_ieee_div_2_4i_rv64gc f_ieee_div_2_4_rv64gc        
+IDIV_ON_FPU     1
+
+deriv f_ieee_div_2_8i_rv64gc f_ieee_div_2_8_rv64gc        
 IDIV_ON_FPU     1
 
 deriv f_ieee_div_4_1i_rv64gc f_ieee_div_4_1_rv64gc        
