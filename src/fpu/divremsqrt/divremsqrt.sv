@@ -74,7 +74,7 @@
   logic [P.XLEN-1:0]           AM;                           // Original Numerator for postprocessor
   logic                       ISpecialCaseE;                // Integer div/remainder special cases
 
-  fdivsqrtpreproc #(P) fdivsqrtpreproc(                          // Preprocessor
+  divremsqrtfdivsqrtpreproc #(P) divremsqrtfdivsqrtpreproc(                          // Preprocessor
     .clk, .IFDivStartE, .Xm(XmE), .Ym(YmE), .Xe(XeE), .Ye(YeE),
     .FmtE, .SqrtE, .XZeroE, .Funct3E, .UeM, .X, .D, .CyclesE,
     // Int-specific 

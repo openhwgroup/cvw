@@ -27,7 +27,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
+module divremsqrtfdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   input  logic                 clk,
   input  logic                 IFDivStartE, 
   input  logic [P.NF:0]        Xm, Ym,      // Floating-point significands
