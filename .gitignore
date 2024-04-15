@@ -196,3 +196,6 @@ sim/verilator/wkdir
 sim/vcs/logs
 sim/vcs/wkdir
 benchmarks/coremark/coremark_results.csv
+fpga/zsbl/OBJ/*
+fpga/zsbl/bin/*
+sim/*.svg
