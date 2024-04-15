@@ -116,6 +116,11 @@ def create_vectors(my_config):
                         if "op1val" in line:
                             # print("det2")
                             # parse line
+
+                            # handle special case where destination register is hardwired to zero
+                            if "dest:x0" in line:
+                              answer = "x" * len(answer)
+
                             op1val = line.split("op1val")[1].split("x")[1].split(";")[0]
                             if my_config.op != "fsqrt": # sqrt doesn't have two input vals
                                 op2val = line.split("op2val")[1].split("x")[1].strip()
@@ -158,6 +163,9 @@ def create_vectors(my_config):
                         if "op1val" in line:
                             # print("det2")
                             # parse line
+                            # handle special case where destination register is hardwired to zero
+                            if "dest:x0" in line:
+                              answer = "x" * len(answer)
                             op1val = line.split("op1val")[1].split("x")[1].split(";")[0]
                             if "-" in line.split("op1val")[1].split("x")[0]: # neg sign handling
                                 op1val = twos_comp(my_config.bits, op1val)
@@ -201,7 +209,12 @@ def create_vectors(my_config):
                         if "op1val" in line:
                             # print("det2")
                             # parse line
+                            # handle special case where destination register is hardwired to zero
+                            if "dest:x0" in line: 
+                              answer = "x" * len(answer)
                             op1val = line.split("op1val")[1].split("x")[1].split(";")[0]
+                            if "-" in line.split("op1val")[1].split("x")[0]: # neg sign handling
+                              op1val = line.split("op1val")[1].split("x")[1].split(";")[0]
                             if "-" in line.split("op1val")[1].split("x")[0]: # neg sign handling
                                 op1val = twos_comp(my_config.bits, op1val)
                             if my_config.op != "fsqrt": # sqrt doesn't have two input vals, unnec here but keeping for later
@@ -243,6 +256,11 @@ def create_vectors(my_config):
                         if "op1val" in line:
                             # print("det2")
                             # parse line
+
+                            # handle special case where destination register is hardwired to zero
+                            if "dest:x0" in line: 
+                              answer = "x" * len(answer)
+
                             op1val = line.split("op1val")[1].split("x")[1].split(";")[0]
                             if "-" in line.split("op1val")[1].split("x")[0]: # neg sign handling
                                 op1val = twos_comp(my_config.bits, op1val)

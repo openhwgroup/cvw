@@ -35,12 +35,12 @@
 
 string tvpaths[] = '{
     "$RISCV/imperas-riscv-tests/work/",
-    "../tests/riscof/work/riscv-arch-test/",
-    "../tests/riscof/work/wally-riscv-arch-test/",
-    "../benchmarks/coremark/work/",
-    "../addins/embench-iot/",
-    "../tests/custom/work/",
-    "../tests/coverage/"
+    "../../tests/riscof/work/riscv-arch-test/",
+    "../../tests/riscof/work/wally-riscv-arch-test/",
+    "../../benchmarks/coremark/work/",
+    "../../addins/embench-iot/",
+    "../../tests/custom/work/",
+    "../../tests/coverage/"
     };
 
   string coverage64gc[] = '{
@@ -1422,7 +1422,7 @@ string imperas32f[] = '{
     "rv64i_m/Zfh/src/fcvt.wu.h_b27-01.S",
     "rv64i_m/Zfh/src/fcvt.wu.h_b28-01.S",
     "rv64i_m/Zfh/src/fcvt.wu.h_b29-01.S",
-    "rv64i_m/Zfh/src/fcvt.h.l_b25-01.S",
+    "rv64i_m/Zfh/src/fcvt.h.l_b25-01.S", 
     "rv64i_m/Zfh/src/fcvt.h.l_b26-01.S",
     "rv64i_m/Zfh/src/fcvt.h.lu_b25-01.S",
     "rv64i_m/Zfh/src/fcvt.h.lu_b26-01.S",
@@ -2206,7 +2206,8 @@ string arch64zknh[] = '{
     };
 
   string arch32zfaf[] = '{
-    `RISCVARCHTEST,
+    //`RISCVARCHTEST,
+    `WALLYTEST,
     "rv32i_m/F_Zfa/src/fleq_b1-01.S",
     "rv32i_m/F_Zfa/src/fleq_b19-01.S", 
     "rv32i_m/F_Zfa/src/fli.s-01.S",
@@ -2222,7 +2223,8 @@ string arch64zknh[] = '{
   };
 
   string arch32zfad[] = '{
-    `RISCVARCHTEST,
+    //`RISCVARCHTEST,
+    `WALLYTEST,
     "rv32i_m/D_Zfa/src/fcvtmod.w.d_b1-01.S",
     "rv32i_m/D_Zfa/src/fcvtmod.w.d_b22-01.S",
     "rv32i_m/D_Zfa/src/fcvtmod.w.d_b23-01.S",
@@ -2258,7 +2260,8 @@ string arch64zknh[] = '{
   };
 
   string arch64zfaf[] = '{
-    `RISCVARCHTEST,
+    //`RISCVARCHTEST,
+    `WALLYTEST,
     "rv64i_m/F_Zfa/src/fleq_b1-01.S",
     "rv64i_m/F_Zfa/src/fleq_b19-01.S", 
     "rv64i_m/F_Zfa/src/fli.s-01.S",
@@ -2272,9 +2275,10 @@ string arch64zknh[] = '{
   };
 
   string arch64zfad[] = '{
-    `RISCVARCHTEST,
+    //`RISCVARCHTEST,
+    `WALLYTEST,
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b1-01.S",
-    "rv64i_m/D_Zfa/src/fcvtmod.w.d_b22-01.S",
+//    "rv64i_m/D_Zfa/src/fcvtmod.w.d_b22-01.S", // temporarily excluded because Sail produces wrong signature  https://github.com/riscv/sail-riscv/issues/388
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b23-01.S",
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b24-01.S",
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b27-01.S",

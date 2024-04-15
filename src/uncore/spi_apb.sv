@@ -136,19 +136,19 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     // Register access  
     always_ff@(posedge PCLK, negedge PRESETn)
         if (~PRESETn) begin 
-            SckDiv <= #1 12'd3;
-            SckMode <= #1 2'b0;
-            ChipSelectID <= #1 2'b0;
-            ChipSelectDef <= #1 4'b1111;
-            ChipSelectMode <= #1 0;
-            Delay0 <= #1 {8'b1,8'b1};
-            Delay1 <= #1 {8'b0,8'b1};
-            Format <= #1 {5'b10000};
-            TransmitData <= #1 9'b0;
-            TransmitWatermark <= #1 3'b0;
-            ReceiveWatermark <= #1 3'b0;
-            InterruptEnable <= #1 2'b0;
-            InterruptPending <= #1 2'b0;
+            SckDiv <= 12'd3;
+            SckMode <= 2'b0;
+            ChipSelectID <= 2'b0;
+            ChipSelectDef <= 4'b1111;
+            ChipSelectMode <= 0;
+            Delay0 <= {8'b1,8'b1};
+            Delay1 <= {8'b0,8'b1};
+            Format <= {5'b10000};
+            TransmitData <= 9'b0;
+            TransmitWatermark <= 3'b0;
+            ReceiveWatermark <= 3'b0;
+            InterruptEnable <= 2'b0;
+            InterruptPending <= 2'b0;
         end else begin // writes
             
 
@@ -176,21 +176,21 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
             InterruptPending[1] <= RecieveWriteMark;  
 
             case(Entry) // Flop to sample inputs
-                8'h00: Dout <= #1 {20'b0, SckDiv};
-                8'h04: Dout <= #1 {30'b0, SckMode};
-                8'h10: Dout <= #1 {30'b0, ChipSelectID};
-                8'h14: Dout <= #1 {28'b0, ChipSelectDef};
-                8'h18: Dout <= #1 {30'b0, ChipSelectMode};
-                8'h28: Dout <= #1 {8'b0, Delay0[15:8], 8'b0, Delay0[7:0]};
-                8'h2C: Dout <= #1 {8'b0, Delay1[15:8], 8'b0, Delay1[7:0]};
-                8'h40: Dout <= #1 {12'b0, Format[4:1], 13'b0, Format[0], 2'b0};
-                8'h48: Dout <= #1 {23'b0, TransmitFIFOWriteFull, 8'b0};
-                8'h4C: Dout <= #1 {23'b0, ReceiveFIFOReadEmpty, ReceiveData[7:0]};
-                8'h50: Dout <= #1 {29'b0, TransmitWatermark};
-                8'h54: Dout <= #1 {29'b0, ReceiveWatermark};
-                8'h70: Dout <= #1 {30'b0, InterruptEnable};
-                8'h74: Dout <= #1 {30'b0, InterruptPending};
-                default: Dout <= #1 32'b0;
+                8'h00: Dout <= {20'b0, SckDiv};
+                8'h04: Dout <= {30'b0, SckMode};
+                8'h10: Dout <= {30'b0, ChipSelectID};
+                8'h14: Dout <= {28'b0, ChipSelectDef};
+                8'h18: Dout <= {30'b0, ChipSelectMode};
+                8'h28: Dout <= {8'b0, Delay0[15:8], 8'b0, Delay0[7:0]};
+                8'h2C: Dout <= {8'b0, Delay1[15:8], 8'b0, Delay1[7:0]};
+                8'h40: Dout <= {12'b0, Format[4:1], 13'b0, Format[0], 2'b0};
+                8'h48: Dout <= {23'b0, TransmitFIFOWriteFull, 8'b0};
+                8'h4C: Dout <= {23'b0, ReceiveFIFOReadEmpty, ReceiveData[7:0]};
+                8'h50: Dout <= {29'b0, TransmitWatermark};
+                8'h54: Dout <= {29'b0, ReceiveWatermark};
+                8'h70: Dout <= {30'b0, InterruptEnable};
+                8'h74: Dout <= {30'b0, InterruptPending};
+                default: Dout <= 32'b0;
             endcase
         end
 
@@ -200,7 +200,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     assign SCLKenable = (DivCounter == SckDiv);
     assign SCLKenableEarly = ((DivCounter + 12'b1) == SckDiv);
     always_ff @(posedge PCLK, negedge PRESETn)
-        if (~PRESETn) DivCounter <= #1 0;
+        if (~PRESETn) DivCounter <= 0;
         else if (SCLKenable) DivCounter <= 0;
         else DivCounter <= DivCounter + 12'b1;
 

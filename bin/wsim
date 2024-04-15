@@ -1,0 +1,70 @@
+#!/usr/bin/python3
+#
+# wsim
+# David_Harris@hmc.edu 5 April 2024
+# Invoke a Wally simulation for a desired configuration and test suite or ELF on the specified simulator
+# usage: wsim CONFIG TESTSUITE [-s/--sim SIMULATOR] [-g/--gui]
+# example: wsim rv64gc arch64i
+# example: wsim rv64gc tests/riscof/work/riscv-arch-test/rv64i_m/I/src/ref/ref.elf
+# example: wsim rv32i arch32i -s verilator
+# example: wsim fdqh_ieee_rv64gc add -t testbench_fp        # run TestFloat
+#
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+import argparse
+import os
+
+# Parse arguments
+parser = argparse.ArgumentParser()
+parser.add_argument("config", help="Configuration file")
+parser.add_argument("testsuite", help="Test suite or ELF file")
+parser.add_argument("--sim", "-s", help="Simulator", choices=["questa", "verilator", "vcs"], default="questa")
+parser.add_argument("--tb", "-t", help="Testbench", choices=["testbench", "testbench_fp"], default="testbench")
+parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true")
+parser.add_argument("--coverage", "-c", help="Code & Functional Coverage", action="store_true")
+parser.add_argument("--args", "-a", help="Optional arguments passed to simulator via $value$plusargs", default="")
+args = parser.parse_args()
+print("Config=" + args.config + " tests=" + args.testsuite + " sim=" + args.sim + " gui=" + str(args.gui) + " args='" + args.args + "'")
+
+# Validate arguments
+if (args.gui):
+    if (args.sim != "questa"):
+        print("GUI option only supported for Questa")
+        exit(1)
+
+if (args.coverage):
+    if (args.sim != "questa"):
+        print("Coverage option only available for Questa")
+        exit(1)
+
+
+#  create the output sub-directories.
+WALLY = os.environ.get('WALLY')
+regressionDir = WALLY + '/sim/'
+for d in ["logs", "wkdir", "cov"]:
+    try:
+        os.mkdir(regressionDir+args.sim+"/"+d)
+    except:
+        pass
+        
+# Launch selected simulator
+cd = "cd $WALLY/sim/" +args.sim
+if (args.sim == "questa"):
+    if (args.tb == "testbench_fp"):
+         args.args = " -GTEST=" + args.testsuite + " " + args.args
+#         cmd = "do wally.do " + args.config + " " + args.testsuite + " " + args.tb + " " + " -GTEST=" + args.testsuite + " " + args.args
+#    else:
+#        cmd = "do wally.do " + args.config + " " + args.testsuite + " " + args.tb + " " + args.args
+    cmd = "do wally.do " + args.config + " " + args.testsuite + " " + args.tb + " " + args.args
+    if (args.coverage):
+        cmd += " -coverage"
+    if (args.gui):  # launch Questa with GUI; add +acc to keep variables accessible
+         cmd = cd + "; vsim -do \"" + cmd + " +acc\""        
+    else: # launch Questa in batch mode
+        cmd = cd + "; vsim -c -do \"" + cmd + "\""
+    print("Running Questa with command: " + cmd)
+    os.system(cmd)
+elif (args.sim == "verilator"):
+    print("Running Verilator on %s %s", args.config, args.testsuite)
+elif (args.sim == "vcs"):
+    print("Running VCS on %s %s", args.config, args.testsuite)
