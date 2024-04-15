@@ -15,6 +15,7 @@ else
 fi
 
 if [ $TOOLCHAINS_BUILD -eq 1 ]; then
+    `which python` get_buildroot_testvector.py
     ${DOCKER_EXEC} build -t toolchains_wally -f Dockerfile.builds .
     ${DOCKER_EXEC} tag toolchains_wally:latest wallysoc/toolchains_wally:latest
 else
