@@ -1,2 +1,0 @@
-vsim -do "do wally.do rv64gc wally64periph"
-

@@ -74,9 +74,9 @@ fi
 
 # Prefix partition with "p" for non-SCSI disks (mmcblk, nvme)
 if [[ $SDCARD == "/dev/sd"* ]]; then
-    $PART_PREFIX=""
+    PART_PREFIX=""
 else
-    $PART_PREFIX="p"
+    PART_PREFIX="p"
 fi
 
 # If no images directory, images have not been built

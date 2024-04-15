@@ -27,7 +27,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module loggers import cvw::*; #(parameter cvw_t P,
-                                parameter string TEST,
+
                                 parameter PrintHPMCounters,
                                 parameter I_CACHE_ADDR_LOGGER,
                                 parameter D_CACHE_ADDR_LOGGER,
@@ -39,7 +39,8 @@ module loggers import cvw::*; #(parameter cvw_t P,
 //  input logic BeginSample,
 //  input logic StartSample,
 //  input logic EndSample,
-  input string memfilename
+  input string memfilename,
+  input string TEST
   );
   
   // performance counter logging 
@@ -79,40 +80,64 @@ module loggers import cvw::*; #(parameter cvw_t P,
                             "Divide Cycles"
                           };
 
+    always_comb
+      if (TEST == "embench") begin  
+        StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_trigger";
+        EndSampleFirst = FunctionName.FunctionName.FunctionName == "stop_trigger";
+      end else if (TEST == "coremark") begin
+        StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_time";
+        EndSampleFirst = FunctionName.FunctionName.FunctionName == "stop_time";
+      end else begin
+        StartSampleFirst = reset;
+        EndSample = DCacheFlushStart & ~DCacheFlushDone;
+      end
+
+  /*
     if(TEST == "embench") begin
       // embench runs warmup then runs start_trigger
       // embench end with stop_trigger.
-      assign StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_trigger";
-      flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
-      assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
+      //assign StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_trigger";
+      //flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
+      //assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
 
-      assign EndSampleFirst = FunctionName.FunctionName.FunctionName == "stop_trigger";
+      //assign EndSampleFirst = FunctionName.FunctionName.FunctionName == "stop_trigger";
       flopr #(1) EndSampleReg(clk, reset, EndSampleFirst, EndSampleDelayed);
       assign EndSample = EndSampleFirst & ~ EndSampleDelayed;
 
     end else if(TEST == "coremark") begin
       // embench runs warmup then runs start_trigger
 	    // embench end with stop_trigger.
-      assign StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_time";
-      flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
-      assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
+      //assign StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_time";
+      //flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
+      //assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
 
-      assign EndSampleFirst = FunctionName.FunctionName.FunctionName == "stop_time";
+      //assign EndSampleFirst = FunctionName.FunctionName.FunctionName == "stop_time";
       flopr #(1) EndSampleReg(clk, reset, EndSampleFirst, EndSampleDelayed);
       assign EndSample = EndSampleFirst & ~ EndSampleDelayed;
 
     end else begin
       // default start condiction is reset
       // default end condiction is end of test (DCacheFlushDone)
-      assign StartSampleFirst = reset;
-      flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
-      assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
-      assign EndSample = DCacheFlushStart & ~DCacheFlushDone;
+      //assign StartSampleFirst = reset;
+      //flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
+      //assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
+      //assign EndSample = DCacheFlushStart & ~DCacheFlushDone;
 
       flop #(1) BeginReg(clk, StartSampleFirst, BeginDelayed);
       assign BeginSample = StartSampleFirst & ~BeginDelayed;
 
     end
+
+  */
+
+    flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
+    assign StartSample = StartSampleFirst & ~StartSampleDelayed;
+    flopr #(1) EndSampleReg(clk, reset, EndSampleFirst, EndSampleDelayed);
+    assign EndSample = EndSampleFirst & ~ EndSampleDelayed;
+    flop #(1) BeginReg(clk, StartSampleFirst, BeginDelayed); // ** is this redundant with StartSampleReg?
+    assign BeginSample = StartSampleFirst & ~BeginDelayed;
+
+
     always @(negedge clk) begin
       if(StartSample) begin
         for(HPMCindex = 0; HPMCindex < 32; HPMCindex += 1) begin
@@ -153,7 +178,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
     end
     string AccessTypeString, HitMissString;
     always @(*) begin
-      HitMissString = dut.core.ifu.bus.icache.icache.CacheHit ? "H" :
+      HitMissString = dut.core.ifu.bus.icache.icache.Hit ? "H" :
                       dut.core.ifu.bus.icache.icache.vict.cacheLRU.AllValid ? "E" : "M";
     end
     always @(posedge clk) begin
@@ -178,7 +203,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
     flop #(1) ResetDReg(clk, reset, resetD);
     assign resetEdge = ~reset & resetD;
     always @(*) begin
-      HitMissString = dut.core.lsu.bus.dcache.dcache.CacheHit ? "H" :
+      HitMissString = dut.core.lsu.bus.dcache.dcache.Hit ? "H" :
                       (!dut.core.lsu.bus.dcache.dcache.vict.cacheLRU.AllValid) ? "M" :
                       dut.core.lsu.bus.dcache.dcache.LineDirty ? "D" : "E";
       AccessTypeString = dut.core.lsu.bus.dcache.FlushDCache ? "F" :
