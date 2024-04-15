@@ -429,10 +429,10 @@ module testbench;
         string romfilename, sdcfilename;
         romfilename = {"../tests/custom/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
         sdcfilename = {"../testbench/sdc/ramdisk2.hex"};   
-        //$readmemh(romfilename, dut.uc.uncore.bootrom.bootrom.memory.ROM);
+        //$readmemh(romfilename, dut.uncoregen.uncore.bootrom.bootrom.memory.ROM);
         //$readmemh(sdcfilename, sdcard.sdcard.FLASHmem);
         // shorten sdc timers for simulation
-        //dut.uc.uncore.sdc.SDC.LimitTimers = 1;
+        //dut.uncoregen.uncore.sdc.SDC.LimitTimers = 1;
       end
     end
   end else if (P.IROM_SUPPORTED) begin
@@ -446,13 +446,13 @@ module testbench;
       if (LoadMem) begin
         if (TEST == "buildroot") begin
           memFile = $fopen(bootmemfilename, "rb");
-          readResult = $fread(dut.uc.uncore.bootrom.bootrom.memory.ROM, memFile);
+          readResult = $fread(dut.uncoregen.uncore.bootrom.bootrom.memory.ROM, memFile);
           $fclose(memFile);
           memFile = $fopen(memfilename, "rb");
-          readResult = $fread(dut.uc.uncore.ram.ram.memory.RAM, memFile);
+          readResult = $fread(dut.uncoregen.uncore.ram.ram.memory.RAM, memFile);
           $fclose(memFile);
         end else 
-          $readmemh(memfilename, dut.uc.uncore.ram.ram.memory.RAM);
+          $readmemh(memfilename, dut.uncoregen.uncore.ram.ram.memory.RAM);
         if (TEST == "embench") $display("Read memfile %s", memfilename);
       end
       if (CopyRAM) begin
@@ -461,7 +461,7 @@ module testbench;
         EndIndex = (end_signature_addr >> LogXLEN) + 8;
         BaseIndex = P.UNCORE_RAM_BASE >> LogXLEN;
         for(ShadowIndex = StartIndex; ShadowIndex <= EndIndex; ShadowIndex++) begin
-          testbench.DCacheFlushFSM.ShadowRAM[ShadowIndex] = dut.uc.uncore.ram.ram.memory.RAM[ShadowIndex - BaseIndex];
+          testbench.DCacheFlushFSM.ShadowRAM[ShadowIndex] = dut.uncoregen.uncore.ram.ram.memory.RAM[ShadowIndex - BaseIndex];
         end
       end
     end
@@ -489,7 +489,7 @@ module testbench;
     always @(posedge clk) 
       if (ResetMem)  // program memory is sometimes reset (e.g. for CoreMark, which needs zeroed memory)
         for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
-          dut.uc.uncore.ram.ram.memory.RAM[adrindex] = 0;
+          dut.uncoregen.uncore.ram.ram.memory.RAM[adrindex] = 0;
 
   ////////////////////////////////////////////////////////////////////////////////
   // Actual hardware
@@ -583,9 +583,9 @@ module testbench;
   if (P.UART_SUPPORTED) begin: uart_logger
     always @(posedge clk) begin
       if (TEST == "buildroot") begin
-        if (~dut.uc.uncore.u.uart.MEMWb & dut.uc.uncore.u.uart.uartPC.A == 3'b000 & ~dut.uc.uncore.u.uart.uartPC.DLAB) begin
+        if (~dut.uncoregen.uncore.uartgen.uart.MEMWb & dut.uncoregen.uncore.uartgen.uart.uartPC.A == 3'b000 & ~dut.uncoregen.uncore.uartgen.uart.uartPC.DLAB) begin
           memFile = $fopen(uartoutfilename, "ab");
-          $fwrite(memFile, "%c", dut.uc.uncore.u.uart.uartPC.Din);
+          $fwrite(memFile, "%c", dut.uncoregen.uncore.uartgen.uart.uartPC.Din);
           $fclose(memFile);
         end
       end
@@ -859,9 +859,9 @@ end
       // **************************************
       // ***** BUG BUG BUG make sure RT undoes this.
       //if (P.DTIM_SUPPORTED) sig = testbench.dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
-      //else if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uc.uncore.ram.ram.memory.RAM[testadrNoBase+i];
-      if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uc.uncore.ram.ram.memory.RAM[testadrNoBase+i];
-      //if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uc.uncore.ram.ram.memory.RAM[testadrNoBase+i];
+      //else if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncoregen.uncore.ram.ram.memory.RAM[testadrNoBase+i];
+      if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncoregen.uncore.ram.ram.memory.RAM[testadrNoBase+i];
+      //if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncoregen.uncore.ram.ram.memory.RAM[testadrNoBase+i];
       //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
       //if (signature[i] !== sig & (signature[i] !== testbench.DCacheFlushFSM.ShadowRAM[testadr+i])) begin
       if (signature[i] !== testbench.DCacheFlushFSM.ShadowRAM[testadr+i]) begin  
