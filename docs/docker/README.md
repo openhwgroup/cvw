@@ -22,15 +22,17 @@ If you have any other questions, please read the [troubleshooting]() first.
 - [x] Regression Script
 - [x] Configure the license for Questa
 - [ ] Change the condition from empty string to 1
-- [ ] Add linux testvector-generation
-    - [ ] Estimate the useless building intermediate files
+- [x] Add linux testvector-generation
+    - [x] Estimate the useless building intermediate files
 
 ## TL;DR
 
 Steps:
 
 1. Install either Docker Engine or Podman for container support
-2. Run start-up script `docs/docker/start.sh` to start a stateless container to run the toolchains and EDA tool
+2. (If you want to build image your own) Run `get_buildroot_testvector.py` to get the buildroot and testvector configuration from relative path.
+    - `python get_buildroot_testvector.py` is the command to run.
+3. Run start-up script `docs/docker/start.sh` to start a stateless container to run the toolchains and EDA tool
 
 ### Docker Engine or Podman
 
@@ -169,6 +171,7 @@ Because we are going to use the whole environment of ubuntu to get both executab
 
 There are four scripts:
 
+- `get_buildroot_testvector.py`: copy buildroot and testvector configuration required by building
 - `start.sh` (most often used): start running the container
     - if you don't care about toolchains and running regression automatically, this script is only thing you need to know
 - `get_images.sh`: get docker image `wallysoc/ubuntu_wally` or `wallysoc/toolchains_wally`
