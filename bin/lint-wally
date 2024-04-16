@@ -21,7 +21,7 @@ if [ "$1" == "-nightly" ]; then
         fi
     done
 else
-    configs=(rv32e rv64gc rv32gc rv32imc rv32i rv64i div_2_1i_rv64gc ) # add fdqh_rv64gc when working
+    configs=(rv32e rv64gc rv32gc rv32imc rv32i rv64i ) # add fdqh_rv64gc when working
 fi
 
 for config in ${configs[@]}; do

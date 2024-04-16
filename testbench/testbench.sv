@@ -34,18 +34,20 @@
 `endif
 
 import cvw::*;
+`ifdef VERILATOR
+import "DPI-C" function string getenvval(input string env_name);
+`else
+import "DPI-C" function string getenv(input string env_name);
+`endif
 
 module testbench;
   /* verilator lint_off WIDTHTRUNC */
   /* verilator lint_off WIDTHEXPAND */
   parameter DEBUG=0;
-  parameter string TEST="arch64m";
   parameter PrintHPMCounters=0;
   parameter BPRED_LOGGER=0;
   parameter I_CACHE_ADDR_LOGGER=0;
   parameter D_CACHE_ADDR_LOGGER=0;
-  parameter RISCV_DIR = "/opt/riscv";
-  parameter INSTR_LIMIT = 0;
   
   `ifdef USE_IMPERAS_DV
     import idvPkg::*;
@@ -58,6 +60,16 @@ module testbench;
   logic        clk;
   logic        reset_ext, reset;
   logic        ResetMem;
+
+  // Variables that can be overwritten with $value$plusargs at start of simulation
+  string       TEST;
+  integer      INSTR_LIMIT;
+`ifdef VERILATOR
+  string       RISCV_DIR = getenvval("RISCV"); // "/opt/riscv";
+`else
+  string       RISCV_DIR = getenv("RISCV"); // "/opt/riscv";
+`endif
+  // string       RISCV_DIR = "/opt/riscv";
 
   // DUT signals
   logic [P.AHBW-1:0]    HRDATAEXT;
@@ -99,9 +111,14 @@ module testbench;
   logic SelectTest;
   logic TestComplete;
 
-  // pick tests based on modes supported
   initial begin
-    $display("TEST is %s", TEST);
+    // look for arguments passed to simulation, or use defaults
+    if (!$value$plusargs("TEST=%s", TEST))
+      TEST = "none";
+    if (!$value$plusargs("INSTR_LIMIT=%d", INSTR_LIMIT))
+      INSTR_LIMIT = 0;
+    
+    // pick tests based on modes supported
     //tests = '{};
     if (P.XLEN == 64) begin // RV64
       case (TEST)
@@ -236,7 +253,7 @@ module testbench;
   logic        ResetCntRst;
   logic        CopyRAM;
 
-  string  signame, memfilename, bootmemfilename, pathname;
+  string  signame, memfilename, bootmemfilename, uartoutfilename, pathname, rmCmd;
   integer begin_signature_addr, end_signature_addr, signature_size;
 
   assign ResetThreshold = 3'd5;
@@ -299,15 +316,43 @@ module testbench;
   // Find the test vector files and populate the PC to function label converter
   ////////////////////////////////////////////////////////////////////////////////
   logic [P.XLEN-1:0] testadr;
-  assign begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
-  assign end_signature_addr = ProgramAddrLabelArray["sig_end_canary"];
-  assign signature_size = end_signature_addr - begin_signature_addr;
+  always_comb begin
+  	begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
+ 	end_signature_addr = ProgramAddrLabelArray["sig_end_canary"];
+  	signature_size = end_signature_addr - begin_signature_addr;
+  end
+  logic EcallFaultM;
+  if (P.ZICSR_SUPPORTED)
+    assign EcallFaultM = dut.core.priv.priv.EcallFaultM;
+  else
+    assign EcallFaultM = 0;
   always @(posedge clk) begin
+    ////////////////////////////////////////////////////////////////////////////////
+    // Verify the test ran correctly by checking the memory against a known signature.
+    ////////////////////////////////////////////////////////////////////////////////
+    if(TestBenchReset) test = 1;
+    if (P.ZICSR_SUPPORTED & TEST == "coremark")
+      if (EcallFaultM) begin
+        $display("Benchmark: coremark is done.");
+        $stop;
+      end
+    if (P.ZICSR_SUPPORTED & dut.core.ifu.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.ieu.InstrValidM) begin 
+      $display("Program fetched illegal instruction 0x00000000 from address 0x00000000.  Might be fault with no fault handler.");
+      //$stop; // presently wally32/64priv tests trigger this for reasons not yet understood.
+    end
+
+  // modifications 4/3/24 kunlin & harris to speed up Verilator
+  // For some reason, Verilator runs ~100x slower when these SelectTest and Validate codes are in the posedge clk block
+  //end // added
+  //always @(posedge SelectTest) // added
     if(SelectTest) begin
       if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
       else if(TEST == "buildroot") begin 
         memfilename = {RISCV_DIR, "/linux-testvectors/ram.bin"};
         bootmemfilename = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
+        uartoutfilename = {"logs/", TEST, "_uart.out"};
+        rmCmd = {"rm -f ", uartoutfilename};
+        $system(rmCmd); // Delete existing UARToutfile
       end
       else            memfilename = {pathname, tests[test], ".elf.memfile"};
       if (riscofTest) begin
@@ -325,20 +370,14 @@ module testbench;
       // and initialize them to zero (also initilaize them to zero at the start of the next test)
       updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
     end
-    
-  ////////////////////////////////////////////////////////////////////////////////
-  // Verify the test ran correctly by checking the memory against a known signature.
-  ////////////////////////////////////////////////////////////////////////////////
-    if(TestBenchReset) test = 1;
-    if (TEST == "coremark")
-      if (dut.core.priv.priv.EcallFaultM) begin
-        $display("Benchmark: coremark is done.");
-        $stop;
-      end
-    if (P.ZICSR_SUPPORTED & dut.core.ifu.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.ieu.InstrValidM) begin 
-      $display("Program fetched illegal instruction 0x00000000 from address 0x00000000.  Might be fault with no fault handler.");
-      //$stop; // presently wally32/64priv tests trigger this for reasons not yet understood.
-    end
+`ifdef VERILATOR // this macro is defined when verilator is used
+  // Simulator Verilator has an issue that the validate logic below slows runtime 110x if it is 
+  // in the posedge clk block rather than a separate posedge Validate block.  
+  // Until it is fixed, provide a silly posedge Validate block to keep Verilator happy.
+  // https://github.com/verilator/verilator/issues/4967
+  end // restored
+  always @(posedge Validate) // added
+`endif
     if(Validate) begin
       if (TEST == "embench") begin
         // Writes contents of begin_signature to .sim.output file
@@ -374,10 +413,17 @@ module testbench;
       if (test == tests.size()) begin
         if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
         else $display("FAIL: %d test programs had errors", totalerrors);
-        $stop; // if this is changed to $finish, wally-batch.do does not go to the next step to run coverage
+`ifdef VERILATOR // this macro is defined when verilator is used
+        $finish; // Simulator Verilator needs $finish to terminate simulation.
+`else
+         $stop; // if this is changed to $finish for Questa, wally-batch.do does not go to the next step to run coverage, and wally.do terminates without allowing GUI debug
+`endif
       end
     end
-  end
+`ifndef VERILATOR
+  // Remove this when issue 4967 is resolved and the posedge Validate logic above is removed
+  end 
+`endif
 
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -397,10 +443,10 @@ module testbench;
         string romfilename, sdcfilename;
         romfilename = {"../tests/custom/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
         sdcfilename = {"../testbench/sdc/ramdisk2.hex"};   
-        //$readmemh(romfilename, dut.uncore.uncore.bootrom.bootrom.memory.ROM);
+        //$readmemh(romfilename, dut.uncoregen.uncore.bootrom.bootrom.memory.ROM);
         //$readmemh(sdcfilename, sdcard.sdcard.FLASHmem);
         // shorten sdc timers for simulation
-        //dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
+        //dut.uncoregen.uncore.sdc.SDC.LimitTimers = 1;
       end
     end
   end else if (P.IROM_SUPPORTED) begin
@@ -414,13 +460,13 @@ module testbench;
       if (LoadMem) begin
         if (TEST == "buildroot") begin
           memFile = $fopen(bootmemfilename, "rb");
-          readResult = $fread(dut.uncore.uncore.bootrom.bootrom.memory.ROM, memFile);
+          readResult = $fread(dut.uncoregen.uncore.bootrom.bootrom.memory.ROM, memFile);
           $fclose(memFile);
           memFile = $fopen(memfilename, "rb");
-          readResult = $fread(dut.uncore.uncore.ram.ram.memory.RAM, memFile);
+          readResult = $fread(dut.uncoregen.uncore.ram.ram.memory.RAM, memFile);
           $fclose(memFile);
         end else 
-          $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
+          $readmemh(memfilename, dut.uncoregen.uncore.ram.ram.memory.RAM);
         if (TEST == "embench") $display("Read memfile %s", memfilename);
       end
       if (CopyRAM) begin
@@ -429,7 +475,7 @@ module testbench;
         EndIndex = (end_signature_addr >> LogXLEN) + 8;
         BaseIndex = P.UNCORE_RAM_BASE >> LogXLEN;
         for(ShadowIndex = StartIndex; ShadowIndex <= EndIndex; ShadowIndex++) begin
-          testbench.DCacheFlushFSM.ShadowRAM[ShadowIndex] = dut.uncore.uncore.ram.ram.memory.RAM[ShadowIndex - BaseIndex];
+          testbench.DCacheFlushFSM.ShadowRAM[ShadowIndex] = dut.uncoregen.uncore.ram.ram.memory.RAM[ShadowIndex - BaseIndex];
         end
       end
     end
@@ -457,7 +503,7 @@ module testbench;
     always @(posedge clk) 
       if (ResetMem)  // program memory is sometimes reset (e.g. for CoreMark, which needs zeroed memory)
         for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
-          dut.uncore.uncore.ram.ram.memory.RAM[adrindex] = 0;
+          dut.uncoregen.uncore.ram.ram.memory.RAM[adrindex] = 0;
 
   ////////////////////////////////////////////////////////////////////////////////
   // Actual hardware
@@ -469,7 +515,7 @@ module testbench;
   assign SPIIn = 0;
 
   if(P.EXT_MEM_SUPPORTED) begin
-    ram_ahb #(.BASE(P.EXT_MEM_BASE), .RANGE(P.EXT_MEM_RANGE)) 
+    ram_ahb #(.P(P), .BASE(P.EXT_MEM_BASE), .RANGE(P.EXT_MEM_RANGE)) 
     ram (.HCLK, .HRESETn, .HADDR, .HWRITE, .HTRANS, .HWDATA, .HSELRam(HSELEXT), 
       .HREADRam(HRDATAEXT), .HREADYRam(HREADYEXT), .HRESPRam(HRESPEXT), .HREADY, .HWSTRB);
   end else begin 
@@ -538,8 +584,8 @@ module testbench;
   ramxdetector #(P.XLEN, P.LLEN) ramxdetector(clk, dut.core.lsu.MemRWM[1], dut.core.lsu.LSULoadAccessFaultM, dut.core.lsu.ReadDataM, 
                                       dut.core.ifu.PCM, InstrM, dut.core.lsu.IEUAdrM, InstrMName);
   riscvassertions #(P) riscvassertions();  // check assertions for a legal configuration
-  loggers #(P, TEST, PrintHPMCounters, I_CACHE_ADDR_LOGGER, D_CACHE_ADDR_LOGGER, BPRED_LOGGER)
-  loggers (clk, reset, DCacheFlushStart, DCacheFlushDone, memfilename);
+  loggers #(P, PrintHPMCounters, I_CACHE_ADDR_LOGGER, D_CACHE_ADDR_LOGGER, BPRED_LOGGER)
+    loggers (clk, reset, DCacheFlushStart, DCacheFlushDone, memfilename, TEST);
 
   // track the current function or global label
   if (DEBUG == 1 | ((PrintHPMCounters | BPRED_LOGGER) & P.ZICNTR_SUPPORTED)) begin : FunctionName
@@ -547,6 +593,18 @@ module testbench;
 			      .clk(clk), .ProgramAddrMapFile(ProgramAddrMapFile), .ProgramLabelMapFile(ProgramLabelMapFile));
   end
 
+  // Append UART output to file for tests
+  if (P.UART_SUPPORTED) begin: uart_logger
+    always @(posedge clk) begin
+      if (TEST == "buildroot") begin
+        if (~dut.uncoregen.uncore.uartgen.uart.MEMWb & dut.uncoregen.uncore.uartgen.uart.uartPC.A == 3'b000 & ~dut.uncoregen.uncore.uartgen.uart.uartPC.DLAB) begin
+          memFile = $fopen(uartoutfilename, "ab");
+          $fwrite(memFile, "%c", dut.uncoregen.uncore.uartgen.uart.uartPC.Din);
+          $fclose(memFile);
+        end
+      end
+    end
+  end
 
   // Termination condition
   // terminate on a specific ECALL after li x3,1 for old Imperas tests,  *** remove this when old imperas tests are removed
@@ -556,7 +614,8 @@ module testbench;
   logic ecf; // remove this once we don't rely on old Imperas tests with Ecalls
   if (P.ZICSR_SUPPORTED) assign ecf = dut.core.priv.priv.EcallFaultM;
   else                  assign ecf = 0;
-  assign TestComplete = ecf & 
+  always_comb begin
+  	TestComplete = ecf & 
 			    (dut.core.ieu.dp.regf.rf[3] == 1 | 
 			     (dut.core.ieu.dp.regf.we3 & 
 			      dut.core.ieu.dp.regf.a3 == 3 & 
@@ -564,15 +623,18 @@ module testbench;
            ((InstrM == 32'h6f | InstrM == 32'hfc32a423 | InstrM == 32'hfc32a823) & dut.core.ieu.c.InstrValidM ) |
            ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"]) & InstrMName == "SW" );
   //assign DCacheFlushStart =  TestComplete;
+  end
   
   DCacheFlushFSM #(P) DCacheFlushFSM(.clk(clk), .reset(reset), .start(DCacheFlushStart), .done(DCacheFlushDone));
 
-  if(P.ZICSR_SUPPORTED & INSTR_LIMIT != 0) begin
+  if(P.ZICSR_SUPPORTED) begin
     logic [P.XLEN-1:0] Minstret;
     assign Minstret = testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2];  
     always @(negedge clk) begin
-      if((Minstret != 0) && (Minstret % 'd100000 == 0)) $display("Reached %d instructions", Minstret);
-      if((Minstret == INSTR_LIMIT) & (INSTR_LIMIT!=0)) begin $stop; $stop; end
+      if (INSTR_LIMIT > 0) begin
+        if((Minstret != 0) && (Minstret % 'd100000 == 0)) $display("Reached %d instructions", Minstret);
+        if((Minstret == INSTR_LIMIT) & (INSTR_LIMIT!=0)) begin $stop; $stop; end
+      end
     end
 end
 
@@ -756,6 +818,8 @@ end
     logic [P.XLEN-1:0] signature[0:SIGNATURESIZE];
     string            signame;
     logic [P.XLEN-1:0] testadr, testadrNoBase;
+
+    //$display("Invoking CheckSignature %s %s %0t", pathname, TestName, $time); 
     
     // read .signature.output file and compare to check for errors
     if (riscofTest) signame = {pathname, TestName, "/ref/Reference-sail_c_simulator.signature"};
@@ -804,20 +868,27 @@ end
     // Check errors
     testadr = ($unsigned(begin_signature_addr))/(P.XLEN/8);
     testadrNoBase = (begin_signature_addr - P.UNCORE_RAM_BASE)/(P.XLEN/8);
+    // logic UNCORE_RAM_SUPPORTED;
+    // if(P.UNCORE_RAM_SUPPORTED)
+    //   assign UNCORE_RAM_SUPPORTED = P.UNCORE_RAM_SUPPORTED;
+    // else
+    //   assign UNCORE_RAM_SUPPORTED = 0;
     for (i=0; i<sigentries; i++) begin
-      logic [P.XLEN-1:0] sig;
       // **************************************
       // ***** BUG BUG BUG make sure RT undoes this.
       //if (P.DTIM_SUPPORTED) sig = testbench.dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
-      //else if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
-      if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
-      //if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
+
+      //else if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncoregen.uncore.ram.ram.memory.RAM[testadrNoBase+i];
+      if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncoregen.uncore.ram.ram.memory.RAM[testadrNoBase+i];
+      //if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncoregen.uncore.ram.ram.memory.RAM[testadrNoBase+i];
       //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
       //if (signature[i] !== sig & (signature[i] !== testbench.DCacheFlushFSM.ShadowRAM[testadr+i])) begin
       if (signature[i] !== testbench.DCacheFlushFSM.ShadowRAM[testadr+i]) begin  
         errors = errors+1;
-        $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
-			     TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
+        // $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
+			  //    TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
+        $display("  Error on test %s result %d: adr = %h sim (D$) %h signature = %h", 
+			     TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], signature[i]);
         $stop; // if this is changed to $finish, wally-batch.do does not get to the next step to run coverage
       end
     end

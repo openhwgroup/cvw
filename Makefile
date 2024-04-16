@@ -48,14 +48,16 @@ imperasdv_cov:
 	vcover report -details -html sim/riscv.ucdb
 
 funcovreg:
-	iter-elf.bash --search ${WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m --cover
+	#iter-elf.bash --search ${WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m --cover
 	#iter-elf.bash --search ${WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m/I --cover
 	#iter-elf.bash --search ${WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m/privilege --cover
 	#iter-elf.bash --search ${WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m/Q --cover
+	rm -f ${WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/*/src/*/dut/my.elf
+	iter-elf.bash --search ${WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/I --cover
 	vcover report -details -html sim/riscv.ucdb
 
 coverage:
-	cd ${WALLY}/sim; ./regression-wally -coverage -fp
+	regression-wally -coverage -fp
 
 benchmarks:
 	make coremark

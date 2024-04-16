@@ -139,7 +139,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   end else begin : gpio
     assign GPIOOUT = 0; assign GPIOEN = 0; assign GPIOIntr = 0;
   end
-  if (P.UART_SUPPORTED == 1) begin : uart
+  if (P.UART_SUPPORTED == 1) begin : uartgen // Hack to work around Verilator bug https://github.com/verilator/verilator/issues/4769
     uart_apb #(P) uart(
       .PCLK, .PRESETn, .PSEL(PSEL[3]), .PADDR(PADDR[2:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
       .PRDATA(PRDATA[3]), .PREADY(PREADY[3]), 

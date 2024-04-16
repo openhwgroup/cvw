@@ -1,5 +1,7 @@
 **/work*
 **/wally_*.log
+/**/obj_dir*
+/**/gmon*
 
 .nfs*
 
@@ -46,7 +48,6 @@ linux/buildroot
 linux/testvector-generation/boottrace.S
 linux/testvector-generation/boottrace_disasm.log
 sim/slack-notifier/slack-webhook-url.txt
-sim/logs
 fpga/generator/IP
 fpga/generator/vivado.*
 fpga/generator/.Xil/*
@@ -61,8 +62,13 @@ examples/asm/example/example
 examples/C/sum/sum
 examples/C/fir/fir
 examples/fp/softfloat_demo/softfloat_demo
+examples/fp/softfloat_demo/softfloat_demoDP
+examples/fp/softfloat_demo/softfloat_demoQP
+examples/fp/softfloat_demo/softfloat_demoSP
 examples/fp/fpcalc/fpcalc
+examples/fp/sqrttest/sqrttest
 examples/C/inline/inline
+examples/C/mcmodel/mcmodel
 examples/C/sum_mixed/sum_mixed
 examples/asm/trap/trap
 examples/asm/etc/pause
@@ -89,7 +95,6 @@ synthDC/hdl
 sim/power.saif
 tests/fp/vectors/*.tv
 synthDC/Summary.csv
-sim/wkdir
 tests/custom/work
 tests/custom/*/*/*.list
 tests/custom/*/*/*.elf
@@ -112,8 +117,6 @@ tests/wally-riscv-arch-test/riscv-test-suite/rv*i_m/I/src/*.S
 tests/wally-riscv-arch-test/riscv-test-suite/rv*i_m/I/Makefrag
 sim/branch_BP_GSHARE10.log
 sim/branch_BP_GSHARE16.log
-sim/cov/
-sim/covhtmlreport/
 sim/imperas.log
 sim/results-error/
 sim/test1.rep
@@ -186,7 +189,17 @@ sim/branch/*
 sim/obj_dir
 examples/verilog/fulladder/obj_dir
 config/deriv
-
-# docs/docker
 docs/docker/buildroot-config-src
 docs/docker/testvector-generation
+sim/questa/cov
+sim/questa/covhtmlreport/
+sim/questa/logs
+sim/questa/wkdir
+sim/verilator/logs
+sim/verilator/wkdir
+sim/vcs/logs
+sim/vcs/wkdir
+benchmarks/coremark/coremark_results.csv
+fpga/zsbl/OBJ/*
+fpga/zsbl/bin/*
+sim/*.svg

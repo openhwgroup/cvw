@@ -60,7 +60,7 @@ module uart_apb import cvw::*; #(parameter cvw_t P) (
   else              assign PRDATA = {Dout, Dout, Dout, Dout};   
   
   logic BAUDOUTb;  // loop tx clock BAUDOUTb back to rx clock RCLK
-  uartPC16550D #(P.UART_PRESCALE) u(  
+  uartPC16550D #(P.UART_PRESCALE) uartPC(  
     // Processor Interface
     .PCLK, .PRESETn,
     .A(entry), .Din, 
