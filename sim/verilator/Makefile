@@ -1,3 +1,4 @@
+SHELL := /bin/bash
 .PHONY: profile run questa clean
 
 OPT=
