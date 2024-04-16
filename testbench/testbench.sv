@@ -39,6 +39,7 @@ import "DPI-C" function string getenvval(input string env_name);
 `else
 import "DPI-C" function string getenv(input string env_name);
 `endif
+import "DPI-C" function int system(input string env_name);
 
 module testbench;
   /* verilator lint_off WIDTHTRUNC */
@@ -326,6 +327,9 @@ module testbench;
     assign EcallFaultM = dut.core.priv.priv.EcallFaultM;
   else
     assign EcallFaultM = 0;
+  
+  // this is an unused integer for the return value of `system`
+  int unused_int;
   always @(posedge clk) begin
     ////////////////////////////////////////////////////////////////////////////////
     // Verify the test ran correctly by checking the memory against a known signature.
@@ -352,7 +356,7 @@ module testbench;
         bootmemfilename = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
         uartoutfilename = {"logs/", TEST, "_uart.out"};
         rmCmd = {"rm -f ", uartoutfilename};
-        $system(rmCmd); // Delete existing UARToutfile
+        unused_int = system(rmCmd); // Delete existing UARToutfile
       end
       else            memfilename = {pathname, tests[test], ".elf.memfile"};
       if (riscofTest) begin
