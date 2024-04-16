@@ -21,7 +21,7 @@ If you have any other questions, please read the [troubleshooting]() first.
     - `xhost +localhost:${USER}` for host
 - [x] Regression Script
 - [x] Configure the license for Questa
-- [ ] Change the condition from empty string to 1
+- [x] Change the condition from empty string to 1
 - [x] Add linux testvector-generation
     - [x] Estimate the useless building intermediate files
 
@@ -98,7 +98,7 @@ podman volume create cvw_temp
 
 # run regression on the OpenHW/cvw
 podman run \
-    -e CLEAN_CVW= -e BUILD_RISCOF= -e RUN_QUESTA= \
+    -e CLEAN_CVW=1 -e BUILD_RISCOF=1 -e RUN_QUESTA=1 \
     -v cvw_temp:/home/cad/cvw \
     -v /cad/mentor/questa_sim-2023.4:/cad/mentor/questa_sim-xxxx.x_x \
     --privileged --network=host \
@@ -106,7 +106,7 @@ podman run \
 
 # run regression on the Karl-Han/cvw
 podman run \
-    -e CLEAN_CVW= -e BUILD_RISCOF= -e RUN_QUESTA= \
+    -e CLEAN_CVW=1 -e BUILD_RISCOF=1 -e RUN_QUESTA=1 \
     -e CVW_GIT=https://github.com/Karl-Han/cvw \
     -v cvw_temp:/home/cad/cvw \
     -v /cad/mentor/questa_sim-2023.4:/cad/mentor/questa_sim-xxxx.x_x \
@@ -115,7 +115,7 @@ podman run \
 
 # get into the container command line to debug or reading files
 podman run -it \
-    -e RUN_QUESTA= \
+    -e RUN_QUESTA=1 \
     -v cvw_temp:/home/cad/cvw \
     -v /cad/mentor/questa_sim-2023.4:/cad/mentor/questa_sim-xxxx.x_x \
     --privileged --network=host \
@@ -242,10 +242,10 @@ There are three main knobs:
 
 Options:
 
-- CVW_GIT: git clone address, only main branch supported
-- CLEAN_CVW: declared with empty string to clone
-- BUILD_RISCOF: declared with empty string to rebuild RISCOF
-- RUN_QUESTA: declared with empty string to run vsim to check
+- CVW_GIT: git clone address
+- CLEAN_CVW: clone CVW_GIT if enabled with `-e CLEAN_CVW=1`
+- BUILD_RISCOF: rebuild RISCOF if enabled with `-e BUILD_RISCOF=1`
+- RUN_QUESTA: run vsim to check if enabled with `-e RUN_QUESTA=1`
     - QUESTA: home folder for mounted QuestaSIM `/cad/mentor/questa_sim-xxxx.x_x` if enabled
     - for example, if your vsim is in `/cad/mentor/questa_sim-2023.4/questasim/bin/vsim` then your local QuestaSIM folder is `/cad/mentor/questa_sim-2023.4`, so you have to add `-v /cad/mentor/questa_sim-2023.4:/cad/mentor/questa_sim-xxxx.x_x -e RUN_QUESTA=1`
 
@@ -295,8 +295,7 @@ There are stages in the old Dockerfile:
 Description: permission problem in `/home/$USERNAME/cvw`.
 
 ```text
-$ podman run -v cvw_temp:/home/cad/cvw -e CLEAN_CVW= -e BUILD_RISCOF= -e RUN_QUESTA= -v /cad/mentor/que
-sta_sim-2023.4:/cad/mentor/questa_sim-xxxx.x_x --rm wallysoc/regression_wally                          
+$ podman run -v cvw_temp:/home/cad/cvw -e CLEAN_CVW=1 -e BUILD_RISCOF=1 -e RUN_QUESTA=1 -v /cad/mentor/questa_sim-2023.4:/cad/mentor/questa_sim-xxxx.x_x --rm wallysoc/regression_wally                          
 No CVW_GIT is provided                                                                                 
 rm: cannot remove '/home/cad/cvw': Device or resource busy                                             
 Cloning into '/home/cad/cvw'...                                                                        

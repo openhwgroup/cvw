@@ -9,6 +9,7 @@ USER root
 
 COPY --chown=${USERNAME}:${USERNAME} . /home/${USERNAME}
 RUN chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}
+RUN chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/cvw
 
 USER ${USERNAME}
 WORKDIR /home/${USERNAME}/cvw
