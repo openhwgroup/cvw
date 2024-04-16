@@ -69,6 +69,19 @@ if {$argc >= 3} {
         set tbArgs $lst
     }
     set tbArgsLst [split $lst " "]
+
+    set index [lsearch -exact $tbArgsLst "-coverage"]
+    if {$index >= 0} {
+        set coverage 1
+        set CoverageVoptArg "+cover=sbecf"
+        set CoverageVsimArg "-coverage"
+        echo $tbArgsLst
+        set tbArgsLst [lreplace $tbArgsLst $index $index ]
+        echo "help help help !!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        echo $tbArgsLst
+        echo "help help help !!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    }
+    
     # separate the +args from the -G parameters
     foreach otherArg $tbArgsLst {
         if {[string index $otherArg 0] eq "+"} {
@@ -77,21 +90,6 @@ if {$argc >= 3} {
             lappend ParamArgs $otherArg
         }
     }
-    #echo "PlusArgs"
-    #echo $PlusArgs
-    #echo "ParamArgs"
-    #echo $ParamArgs
-    #echo "accFlag"
-    #echo $accFlag
-
-    #if {$3 eq "-coverage" || ($argc >= 7 && $7 eq "-coverage")} {
-    #    set coverage 1
-    #    set CoverageVoptArg "+cover=sbecf"
-    #    set CoverageVsimArg "-coverage"
-    #} elseif {$3 eq "tbArgs"} {
-    #    set tbArgs $lst
-    #    puts $tbArgs
-    #}
 }
 
 # compile source files
@@ -99,11 +97,11 @@ if {$argc >= 3} {
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
 
-vlog -lint -work ${WKDIR} +incdir+${CONFIG}/$1 +incdir+${CONFIG}/deriv/$1 +incdir+${CONFIG}/shared ${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv  ${SRC}/*/*.sv ${SRC}/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
+vlog -lint -work ${WKDIR} +incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared ${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv  ${SRC}/*/*.sv ${SRC}/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} ${tbArgs} -o testbenchopt ${CoverageVoptArg}
+vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} ${tbArgsLst} -o testbenchopt ${CoverageVoptArg}
 #  *** tbArgs producees a warning that TEST not found in design when running sim-testfloat-batch.  Need to separate -G and + arguments to pass separately to vopt and vsim
 vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${PlusArgs} -fatal 7 -suppress 3829 ${CoverageVsimArg} 
 
