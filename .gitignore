@@ -189,6 +189,8 @@ sim/branch/*
 sim/obj_dir
 examples/verilog/fulladder/obj_dir
 config/deriv
+docs/docker/buildroot-config-src
+docs/docker/testvector-generation
 sim/questa/cov
 sim/questa/covhtmlreport/
 sim/questa/logs
