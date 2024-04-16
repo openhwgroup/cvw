@@ -24,7 +24,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$RISCV/riscv-gnu-toolchain/lib:$RISCV/ri
 
 # Spike
 export LD_LIBRARY_PATH=$RISCV/lib:$LD_LIBRARY_PATH
-export PATH=$RISCV/bin:$PATH
+export PATH=$PATH:$RISCV/bin
 
 # Verilator
 export PATH=/usr/local/bin/verilator:$PATH # Change this for your path to Verilator
