@@ -868,25 +868,9 @@ end
     // Check errors
     testadr = ($unsigned(begin_signature_addr))/(P.XLEN/8);
     testadrNoBase = (begin_signature_addr - P.UNCORE_RAM_BASE)/(P.XLEN/8);
-    // logic UNCORE_RAM_SUPPORTED;
-    // if(P.UNCORE_RAM_SUPPORTED)
-    //   assign UNCORE_RAM_SUPPORTED = P.UNCORE_RAM_SUPPORTED;
-    // else
-    //   assign UNCORE_RAM_SUPPORTED = 0;
     for (i=0; i<sigentries; i++) begin
-      // **************************************
-      // ***** BUG BUG BUG make sure RT undoes this.
-      //if (P.DTIM_SUPPORTED) sig = testbench.dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
-
-      //else if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncoregen.uncore.ram.ram.memory.RAM[testadrNoBase+i];
-      if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncoregen.uncore.ram.ram.memory.RAM[testadrNoBase+i];
-      //if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncoregen.uncore.ram.ram.memory.RAM[testadrNoBase+i];
-      //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
-      //if (signature[i] !== sig & (signature[i] !== testbench.DCacheFlushFSM.ShadowRAM[testadr+i])) begin
       if (signature[i] !== testbench.DCacheFlushFSM.ShadowRAM[testadr+i]) begin  
         errors = errors+1;
-        // $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
-			  //    TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
         $display("  Error on test %s result %d: adr = %h sim (D$) %h signature = %h", 
 			     TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], signature[i]);
         $stop; // if this is changed to $finish, wally-batch.do does not get to the next step to run coverage
