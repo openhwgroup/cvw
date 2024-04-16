@@ -36,7 +36,6 @@ obj_dir_non_profiling/Vtestbench_$(WALLYCONF): $(SOURCE)
 	"-I${WALLY}/config/shared" "-I${WALLY}/config/$(WALLYCONF)" \
 	wrapper.c \
 	${WALLY}/src/cvw.sv ${WALLY}/testbench/testbench.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
-
 	
 obj_dir_profiling/Vtestbench_$(WALLYCONF): $(SOURCE)
 	mkdir -p obj_dir_profiling

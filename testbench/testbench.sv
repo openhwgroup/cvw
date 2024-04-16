@@ -321,13 +321,18 @@ module testbench;
  	end_signature_addr = ProgramAddrLabelArray["sig_end_canary"];
   	signature_size = end_signature_addr - begin_signature_addr;
   end
+  logic EcallFaultM;
+  if (P.ZICSR_SUPPORTED)
+    assign EcallFaultM = dut.core.priv.priv.EcallFaultM;
+  else
+    assign EcallFaultM = 0;
   always @(posedge clk) begin
     ////////////////////////////////////////////////////////////////////////////////
     // Verify the test ran correctly by checking the memory against a known signature.
     ////////////////////////////////////////////////////////////////////////////////
     if(TestBenchReset) test = 1;
     if (P.ZICSR_SUPPORTED & TEST == "coremark")
-      if (dut.core.priv.priv.EcallFaultM) begin
+      if (EcallFaultM) begin
         $display("Benchmark: coremark is done.");
         $stop;
       end
@@ -863,11 +868,16 @@ end
     // Check errors
     testadr = ($unsigned(begin_signature_addr))/(P.XLEN/8);
     testadrNoBase = (begin_signature_addr - P.UNCORE_RAM_BASE)/(P.XLEN/8);
+    // logic UNCORE_RAM_SUPPORTED;
+    // if(P.UNCORE_RAM_SUPPORTED)
+    //   assign UNCORE_RAM_SUPPORTED = P.UNCORE_RAM_SUPPORTED;
+    // else
+    //   assign UNCORE_RAM_SUPPORTED = 0;
     for (i=0; i<sigentries; i++) begin
-      logic [P.XLEN-1:0] sig;
       // **************************************
       // ***** BUG BUG BUG make sure RT undoes this.
       //if (P.DTIM_SUPPORTED) sig = testbench.dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
+
       //else if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncoregen.uncore.ram.ram.memory.RAM[testadrNoBase+i];
       if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncoregen.uncore.ram.ram.memory.RAM[testadrNoBase+i];
       //if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncoregen.uncore.ram.ram.memory.RAM[testadrNoBase+i];
@@ -875,8 +885,10 @@ end
       //if (signature[i] !== sig & (signature[i] !== testbench.DCacheFlushFSM.ShadowRAM[testadr+i])) begin
       if (signature[i] !== testbench.DCacheFlushFSM.ShadowRAM[testadr+i]) begin  
         errors = errors+1;
-        $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
-			     TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
+        // $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
+			  //    TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
+        $display("  Error on test %s result %d: adr = %h sim (D$) %h signature = %h", 
+			     TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], signature[i]);
         $stop; // if this is changed to $finish, wally-batch.do does not get to the next step to run coverage
       end
     end

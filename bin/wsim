@@ -65,6 +65,8 @@ if (args.sim == "questa"):
     print("Running Questa with command: " + cmd)
     os.system(cmd)
 elif (args.sim == "verilator"):
-    print("Running Verilator on %s %s", args.config, args.testsuite)
+    # PWD=${WALLY}/sim CONFIG=rv64gc TESTSUITE=arch64i
+    print(f"Running Verilator on {args.config} {args.testsuite}")
+    os.system(f"/usr/bin/make -C {regressionDir}/verilator WALLYCONF={args.config} TEST={args.testsuite}")
 elif (args.sim == "vcs"):
     print("Running VCS on %s %s", args.config, args.testsuite)
