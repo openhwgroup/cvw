@@ -208,7 +208,7 @@ def addTests(tests, sim):
             gs = test[3]
         else:
             gs = "All tests ran without failures"
-        cmdPrefix="wsim --sim " + sim + " " + config
+        cmdPrefix="wsim --sim " + sim + " " + coverStr + " " + config
         for t in suites:
             tc = TestCase(
                     name=t,
