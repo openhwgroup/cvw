@@ -9,11 +9,15 @@ WALLYCONF?=rv64gc
 TEST?=arch64i
 
 # constants
+# assume WALLY variable is correctly configured in the shell environment
 WORKING_DIR=${WALLY}/sim/verilator
 TARGET=$(WORKING_DIR)/target
-DEPENDENCIES=${WALLY}/config/shared/*.vh ${WALLY}/src/cvw.sv ${WALLY}/testbench/testbench.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
+# INCLUDE_PATH are pathes that Verilator should search for files it needs
 INCLUDE_PATH="-I${WALLY}/config/shared" "-I${WALLY}/config/$(WALLYCONF)" "-I${WALLY}/config/deriv/$(WALLYCONF)"
-SOURCE_PATH=${WALLY}/src/cvw.sv ${WALLY}/testbench/testbench.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
+# SOURCES are source files
+SOURCES=${WALLY}/src/cvw.sv ${WALLY}/testbench/testbench.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
+# DEPENDENCIES are configuration files and source files, which leads to recompilation of executables
+DEPENDENCIES=${WALLY}/config/shared/*.vh $(SOURCES)
 
 default: run
 
@@ -40,7 +44,7 @@ obj_dir_non_profiling/Vtestbench_$(WALLYCONF): $(DEPENDENCIES)
 	--timescale "1ns/1ns" --timing --top-module testbench  --relative-includes \
 	$(INCLUDE_PATH) \
 	wrapper.c \
-	$(SOURCE_PATH)
+	$(SOURCES)
 	
 obj_dir_profiling/Vtestbench_$(WALLYCONF): $(DEPENDENCIES)
 	mkdir -p obj_dir_profiling
@@ -51,7 +55,7 @@ obj_dir_profiling/Vtestbench_$(WALLYCONF): $(DEPENDENCIES)
 	--timescale "1ns/1ns" --timing --top-module testbench  --relative-includes \
 	$(INCLUDE_PATH) \
 	wrapper.c \
-	$(SOURCE_PATH)
+	$(SOURCES)
 
 questa:
 	time vsim -c -do "do ${WALLY}/sim/wally-batch.do $(WALLYCONF) $(TEST)"
