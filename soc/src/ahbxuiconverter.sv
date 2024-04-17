@@ -166,7 +166,11 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
     .w_full_o(resp_w_full), .r_valid_o(resp_r_valid)
   );
   
+  // If there are only writes in the pipeline, accept commands until the buffer is full
+  // If there is a read in the pipeline, stall until we have a valid response
+  logic read_in_progress;
+  assign read_in_progress = ~(ahb_wren | ui_wren | app_wdf_wren);
+  assign HREADYOUT = read_in_progress ? resp_r_valid : ~cmd_w_full;
   assign HRESP = 0; // do not indicate errors
-  assign HREADYOUT = HWRITE ? ~cmd_w_full : resp_r_valid;
 
 endmodule
