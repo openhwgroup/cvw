@@ -176,6 +176,10 @@ git clone https://github.com/riscv/sail-riscv.git
 cd sail-riscv
 # For now, use checkout that is stable for Wally
 #git checkout 72b2516d10d472ac77482fd959a9401ce3487f60  # not new enough for Zicboz?
+export OPAMCLI=2.0  # Sail is not compatible with opam 2.1 as of 4/16/24
+# It is faster to just build c_emulator/riscv_sim_RV* than to build all of Sail
+#make -j ${NUM_THREADS}
+#ARCH=RV32 make -j ${NUM_THREADS}
 make -j ${NUM_THREADS} c_emulator/riscv_sim_RV64
 ARCH=RV32 make -j ${NUM_THREADS} c_emulator/riscv_sim_RV32
 sudo ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV64 /usr/bin/riscv_sim_RV64

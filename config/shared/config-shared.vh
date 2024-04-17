@@ -99,7 +99,6 @@ localparam RK          = LOGR*DIVCOPIES;                            // r*k bits 
 
 // intermediate division parameters not directly used in fdivsqrt hardware
 localparam FPDIVMINb   = NF + 2; // minimum length of fractional part: Nf result bits + guard and round bits + 1 extra bit to allow sqrt being shifted right
-//localparam FPDIVMINb   = NF + 2 + (RADIX == 2); // minimum length of fractional part: Nf result bits + guard and round bits + 1 extra bit for preshifting radix2 square root right, if radix4 doesn't use a right shift.  This version saves one cycle on double-precision with R=4,k=4.  However, it doesn't work yet because C is too short, so k is incorrectly calculated as a 1 in the lsb after the last step.
 localparam DIVMINb     = ((FPDIVMINb<XLEN) & IDIV_ON_FPU) ? XLEN : FPDIVMINb; // minimum fractional bits b = max(XLEN, FPDIVMINb)
 localparam RESBITS     = DIVMINb + LOGR; // number of bits in a result: r integer + b fractional
 
@@ -111,12 +110,18 @@ localparam DIVBLEN     = $clog2(DIVb+1);                            // enough bi
 
 // largest length in IEU/FPU
 localparam BASECVTLEN = `max(XLEN, NF); // convert length excluding Zfa fcvtmod.w.d
-localparam CVTLEN = ZFA_SUPPORTED ? `max(BASECVTLEN, 32'd84) : BASECVTLEN; // fcvtmod.w.d needs at least 32+52 because a double with 52 fractional bits might be into upper bits of 32 bit word
+localparam CVTLEN = (ZFA_SUPPORTED & D_SUPPORTED) ? `max(BASECVTLEN, 32'd84) : BASECVTLEN; // fcvtmod.w.d needs at least 32+52 because a double with 52 fractional bits might be into upper bits of 32 bit word
 localparam LLEN = `max($unsigned(FLEN), $unsigned(XLEN));
 localparam LOGCVTLEN = $unsigned($clog2(CVTLEN+1));
+
+// NORMSHIFTSIZE is the bits out of the normalization shifter
+// RV32F: max(32+23+1, 2(23)+4, 3(23)+6) = 3*23+6 = 75
+// RV64F: max(64+23+1, 64 + 23 + 2, 3*23+6) = 89
+// RV64D: max(84+52+1, 64+52+2, 3*52+6) = 162
 localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1), (DIVb + 1 + NF + 1)), (3*NF+6));
-localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));
-localparam CORRSHIFTSZ = `max((NORMSHIFTSZ-2), (DIVMINb + 1 + NF));
+
+localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));                  // log_2(NORMSHIFTSZ)
+localparam CORRSHIFTSZ = NORMSHIFTSZ-2;                             // Drop leading 2 integer bits
 
 
 // Disable spurious Verilator warnings
