@@ -17,12 +17,14 @@ if [ -z "${CVW_GIT}" ]; then
     export CVW_GIT="https://github.com/openhwgroup/cvw"
 else
     echo "Using customized CVW_GIT: ${CVW_GIT}"
+    # support specific branch now
+    export CVW_GIT=$(echo ${CVW_GIT} | sed -E "s/tree\// -b /g")
 fi
 
 git config --global http.version HTTP/1.1
 
 # if cvw is not available or CLEAN_CVW(empty string) is defined
-if [[ ! -f "/home/${USERNAME}/cvw/setup.sh" ]] || [[ -z "${CLEAN_CVW-x}" ]]; then
+if [[ ! -f "/home/${USERNAME}/cvw/setup.sh" ]] || [[ "${CLEAN_CVW}" -eq 1 ]]; then
     cd /home/${USERNAME} && rm -rf /home/${USERNAME}/cvw
     git clone --recurse-submodules  ${CVW_GIT} /home/${USERNAME}/cvw
     # if failed to clone submodules for some reason, please run `git submodule update`
@@ -46,11 +48,11 @@ export QUESTAPATH=/cad/mentor/questa_sim-xxxx.x_x/questasim/bin
 
 cd ${CVW_HOME}
 # build it only if BUILD_RISCOF is defined with empty string
-if [[ -z "${BUILD_RISCOF-x}" ]]; then
+if [[ "${BUILD_RISCOF}" -eq 1 ]]; then
     make install && make riscof && make testfloat
 fi
 
-if [[ -z "${RUN_QUESTA-x}" ]] ; then
+if [[ "${RUN_QUESTA}" -eq 1 ]] ; then
     if [ ! -f "${QUESTA}/questasim/bin/vsim" ]; then
         echo "Cannot find vsim with ${QUESTA}/questasim/bin/vsim"
     else
@@ -64,6 +66,7 @@ make coverage
 make benchmarks
 
 if [[ ! NO_VERILATOR -eq 1 ]]; then
-    cd ${CVW_HOME}/sim/verilator && verilator -GTEST="\"arch64i\"" -DVERILATOR=1 --timescale "1ns/1ns" --timing --binary --top-module testbench -I${CVW_HOME}/config/shared -I${CVW_HOME}/config/rv64gc ${CVW_HOME}/src/cvw.sv ${CVW_HOME}/testbench/testbench.sv ${CVW_HOME}/testbench/common/*.sv ${CVW_HOME}/src/*/*.sv ${CVW_HOME}/src/*/*/*.sv --relative-includes
-    ${CVW_HOME}/sim/verilator/obj_dir/Vtestbench
+    make -C sim/verilator run
+    # by default it runs the arch64i on rv64gc
+    cat ${CVW_HOME}/sim/verilator/logs/rv64gc_arch64i.log
 fi
