@@ -34,18 +34,18 @@ import re
 import csv
 # list of architectures to run. 
 arch_list = [
-    "rv32gc_zba_zbb_zbc",
+    "rv32i_zicsr",
+    "rv32im_zicsr",
+    "rv32imc_zicsr",
     "rv32im_zicsr_zba_zbb_zbc",
     "rv32gc",
-    "rv32imc_zicsr",
-    "rv32im_zicsr",
-    "rv32i_zicsr",
-    "rv64gc_zba_zbb_zbc",
+    "rv32gc_zba_zbb_zbc",
+    "rv64i_zicsr",
+    "rv64im_zicsr",
+    "rv64imc_zicsr",
     "rv64im_zicsr_zba_zbb_zbc",
     "rv64gc",
-    "rv64imc_zicsr",
-    "rv64im_zicsr",
-    "rv64i_zicsr"
+    "rv64gc_zba_zbb_zbc"
 ]
 str="32" 
 # Define regular expressions to match the desired fields
