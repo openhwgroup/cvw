@@ -104,13 +104,13 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
     assign CounterEvent[9]  = RASPredPCWrongM & InstrValidNotFlushedM;                   // return address stack wrong address
     assign CounterEvent[10] = IClassWrongM & InstrValidNotFlushedM;                      // instruction class predictor wrong
     assign CounterEvent[11] = LoadStallM;                                                // Load Stalls. don't want to suppress on flush as this only happens if flushed.
-    assign CounterEvent[12] = StoreStallM;                                               // depricated Store Stall
+    assign CounterEvent[12] = StoreStallM;                                               // Store Stall
     assign CounterEvent[13] = DCacheAccess;                                              // data cache access
     assign CounterEvent[14] = DCacheMiss;                                                // data cache miss. Miss asserted 1 cycle at start of cache miss
-    assign CounterEvent[15] = DCacheStallM;                                              // d cache miss cycles
+    assign CounterEvent[15] = DCacheStallM;                                              // D$ miss cycles
     assign CounterEvent[16] = ICacheAccess;                                              // instruction cache access
     assign CounterEvent[17] = ICacheMiss;                                                // instruction cache miss. Miss asserted 1 cycle at start of cache miss
-    assign CounterEvent[18] = ICacheStallF;                                              // i cache miss cycles
+    assign CounterEvent[18] = ICacheStallF;                                              // I$ miss cycles
     assign CounterEvent[19] = CSRWriteM & InstrValidNotFlushedM;                         // CSR writes
     assign CounterEvent[20] = InvalidateICacheM & InstrValidNotFlushedM;                 // fence.i
     assign CounterEvent[21] = sfencevmaM & InstrValidNotFlushedM;                        // sfence.vma
