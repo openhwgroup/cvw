@@ -5,7 +5,7 @@ PARAMS?=-DVERILATOR=1 --no-trace-top
 NONPROF?=--stats
 WORKING_DIR=${WALLY}/sim/verilator
 TARGET=$(WORKING_DIR)/target
-SOURCE=${WALLY}/config/shared/*.vh ${WALLY}/config/${WALLYCONF} ${WALLY}/src/cvw.sv ${WALLY}/testbench/testbench.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
+SOURCE=${WALLY}/config/shared/*.vh ${WALLY}/src/cvw.sv ${WALLY}/testbench/testbench.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
 
 WALLYCONF?=rv64gc
 TEST?=arch64i
@@ -33,7 +33,7 @@ obj_dir_non_profiling/Vtestbench_$(WALLYCONF): $(SOURCE)
 	-cc --binary \
 	$(OPT) $(PARAMS) $(NONPROF) \
 	--timescale "1ns/1ns" --timing --top-module testbench  --relative-includes \
-	"-I${WALLY}/config/shared" "-I${WALLY}/config/$(WALLYCONF)" \
+	"-I${WALLY}/config/shared" "-I${WALLY}/config/$(WALLYCONF)" "-I${WALLY}/config/deriv/$(WALLYCONF)" \
 	wrapper.c \
 	${WALLY}/src/cvw.sv ${WALLY}/testbench/testbench.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
 	
@@ -44,8 +44,9 @@ obj_dir_profiling/Vtestbench_$(WALLYCONF): $(SOURCE)
 	-cc --binary \
 	--prof-cfuncs $(OPT) $(PARAMS) \
 	--timescale "1ns/1ns" --timing --top-module testbench  --relative-includes \
+	"-I${WALLY}/config/shared" "-I${WALLY}/config/$(WALLYCONF)" "-I${WALLY}/config/deriv/$(WALLYCONF)" \
 	wrapper.c \
-	"-I${WALLY}/config/shared" "-I${WALLY}/config/$(WALLYCONF)" ${WALLY}/src/cvw.sv ${WALLY}/testbench/testbench.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
+	${WALLY}/src/cvw.sv ${WALLY}/testbench/testbench.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
 
 questa:
 	time vsim -c -do "do ${WALLY}/sim/wally-batch.do $(WALLYCONF) $(TEST)"
