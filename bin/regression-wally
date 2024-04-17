@@ -217,7 +217,7 @@ def addTests(tests, sim):
             gs = test[3]
         else:
             gs = "All tests ran without failures"
-        cmdPrefix="wsim --sim " + sim + " " + config 
+        cmdPrefix="wsim --sim " + sim + " " + coverStr + " " + config
         for t in suites:
             sim_log = sim_logdir + config + "_" + t + ".log"
             if (len(test) >= 5):
@@ -401,7 +401,7 @@ def main():
     #   Presently don't run buildroot because it has a different config and can't be merged with the rv64gc coverage.
     #   Also it is slow to run.   
     #    configs.append(getBuildrootTC(boot=False))
-        os.system('rm -f cov/*.ucdb')
+        os.system('rm -f questa/cov/*.ucdb')
     elif '--nightly' in sys.argv:
         TIMEOUT_DUR = 60*1440 # 1 day
         #configs.append(getBuildrootTC(boot=False))
@@ -427,7 +427,7 @@ def main():
 
     # Coverage report
     if coverage:
-       os.system('make coverage')
+       os.system('make QuestaCoverage')
     # Count the number of failures
     if num_fail:
         print(f"{bcolors.FAIL}Regression failed with %s failed configurations{bcolors.ENDC}" % num_fail)
