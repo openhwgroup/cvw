@@ -5,7 +5,7 @@
 PORT_DIR = $(CURDIR)/riscv64-baremetal
 cmbase= $(WALLY)/addins/coremark
 work_dir= $(WALLY)/benchmarks/coremark/work
-XLEN ?=64
+XLEN ?=32
 sources=$(cmbase)/core_main.c $(cmbase)/core_list_join.c $(cmbase)/coremark.h  \
 	$(cmbase)/core_matrix.c $(cmbase)/core_state.c $(cmbase)/core_util.c \
 	$(PORT_DIR)/core_portme.h $(PORT_DIR)/core_portme.c $(PORT_DIR)/core_portme.mak \
@@ -29,7 +29,6 @@ all: $(work_dir)/coremark.bare.riscv.elf.memfile
 
 run:
 	time wsim rv$(XLEN)gc coremark 2>&1 | tee $(work_dir)/coremark.sim.log
-	#(cd ../../sim && (time vsim -c -do "do wally-batch.do rv$(XLEN)gc coremark" 2>&1 | tee $(work_dir)/coremark.sim.log))
 
 $(work_dir)/coremark.bare.riscv.elf.memfile: $(work_dir)/coremark.bare.riscv
 	riscv64-unknown-elf-objdump -D $< > $<.elf.objdump
