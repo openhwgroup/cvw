@@ -550,11 +550,11 @@ module testbench;
   assign UARTSin = 1'b1;
   assign SPIIn = 1'b0;
 
-	genvar ddr_i;
-	generate
-	  if(P.EXT_MEM_SUPPORTED) begin
-	  	if (P.USE_BSG_DMC) begin
-	  	  `ifdef USE_BSG
+  genvar ddr_i;
+  generate
+    if(P.EXT_MEM_SUPPORTED) begin
+      if (P.USE_BSG_DMC) begin
+        `ifdef USE_BSG
           `include "bsg_dmc.svh"
           import bsg_dmc_pkg::bsg_dmc_s;
           localparam dq_width = 32;
@@ -664,16 +664,16 @@ module testbench;
               .Dm(ddr_dm[dq_group/2*(ddr_i+1)-1:dq_group/2*ddr_i]));
           end
         `endif
-	    end else begin
+      end else begin
         ram_ahb #(.P(P), .BASE(P.EXT_MEM_BASE), .RANGE(P.EXT_MEM_RANGE))
         ram (.HCLK, .HRESETn, .HADDR, .HWRITE, .HTRANS, .HWDATA, .HSELRam(HSELEXT), 
           .HREADRam(HRDATAEXT), .HREADYRam(HREADYEXT), .HRESPRam(HRESPEXT), .HREADY, .HWSTRB);
-	    end
-	  end else begin 
-	    assign HREADYEXT = 1;
-	    assign {HRESPEXT, HRDATAEXT} = 0;
-	  end
-	endgenerate
+      end
+    end else begin
+      assign HREADYEXT = 1;
+      assign {HRESPEXT, HRDATAEXT} = 0;
+    end
+  endgenerate
 
   if(P.SDC_SUPPORTED) begin : sdcard
     // *** fix later
