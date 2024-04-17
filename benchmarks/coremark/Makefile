@@ -11,7 +11,6 @@ sources=$(cmbase)/core_main.c $(cmbase)/core_list_join.c $(cmbase)/coremark.h  \
 	$(PORT_DIR)/core_portme.h $(PORT_DIR)/core_portme.c $(PORT_DIR)/core_portme.mak \
 	$(PORT_DIR)/crt.S $(PORT_DIR)/encoding.h $(PORT_DIR)/util.h $(PORT_DIR)/syscalls.c
 ABI := $(if $(findstring "64","$(XLEN)"),lp64,ilp32)
-#ARCH := rv$(XLEN)gc_zba_zbb_zbc
 ARCH := rv$(XLEN)im_zicsr_zba_zbb_zbs
 #ARCH := rv$(XLEN)gc
 #ARCH := rv$(XLEN)imc_zicsr
