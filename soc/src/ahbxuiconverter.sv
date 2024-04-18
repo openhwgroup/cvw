@@ -68,12 +68,12 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
 
   assign sys_reset = ~HRESETn;
 
-  // Enable this peripheral when:
+  // AHB wants to enable this peripheral when:
   // a) selected, AND
   // b) a transfer is started, AND
   // c) the bus is ready
-  logic ui_enable;
-  assign ui_enable = HSEL & HREADY & HTRANS[1];
+  logic ahb_enable;
+  assign ahb_enable = HSEL & HREADY & HTRANS[1];
 
   // UI is ready for a command when initialized and ready to read and write
   logic ui_ready;
@@ -84,7 +84,7 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
   logic [DATA_SIZE-1:0]   ahb_data;
   logic [DATA_SIZE/8-1:0] ahb_strb;
   logic                   ahb_wren;
-  logic [1:0]             ahb_burst;
+  logic [1:0]             ahb_burst; // 2^ahb_burst encodes the number of responses we want for a burst read
   flopen  #(ADDR_SIZE)   ahbaddrreg (HCLK, HREADY, HADDR, ahb_addr);
   flopenr #(DATA_SIZE)   ahbdatareg (HCLK, ~HRESETn, HREADY, HWDATA, ahb_data);
   flopenr #(DATA_SIZE/8) ahbstrbreg (HCLK, ~HRESETn, HREADY, HWSTRB, ahb_strb);
@@ -93,7 +93,7 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
 
   // Capture transactions during data phase, once we have the address and data aligned
   logic capture_trans;
-  flopr #(1) transreg (HCLK, ~HRESETn, ui_enable, capture_trans);
+  flopr #(1) transreg (HCLK, ~HRESETn, ahb_enable, capture_trans);
 
   // Buffer input down to ui_clk speed
   logic cmd_w_full, cmd_r_valid;
@@ -102,9 +102,10 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
   logic [2:0] cmd_count;
   counter #(3) cmd_beat_counter (HCLK, reset_cmd_count | ~HRESETn, inc_cmd_count, cmd_count);
   always_comb begin: cmd_burst_capture_logic
+    // UI treats all reads as burst reads with length 8, so 1 read gets us 8 responses
     // Enqueue all single commands and 1st mod 8 commands in a burst read
     inc_cmd_count = capture_trans & (|ahb_burst); // Increment each cycle during burst transactions
-    reset_cmd_count = ~|ahb_burst; // Reset  if transaction is not a burst
+    reset_cmd_count = ~|ahb_burst; // Reset counter if transaction is not a burst
     enqueue_cmd = capture_trans & ~cmd_w_full & (ahb_wren | (cmd_count == 3'b000)); // enqueue all writes and 1st mod 8 reads in a burst
     dequeue_cmd = ui_ready & cmd_r_valid;
   end
@@ -113,9 +114,8 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
   logic [DATA_SIZE/8-1:0] ui_mask;
   logic                   ui_wren;
   logic [1:0]             ui_burst; // respfifo should only enqueue 2^(ui_burst) beats of the response
-  // FIFO needs addr + (data + mask) + write + burst)
   bsg_async_fifo #(
-    .width_p(ADDR_SIZE + 9*DATA_SIZE/8 + 1 + 2),
+    .width_p(ADDR_SIZE + 9*DATA_SIZE/8 + 1 + 2), // FIFO needs addr + (data + mask) + write + burst)
     .lg_size_p(16), // TODO: Parameterize based on wally config
     .and_data_with_valid_p(1)
   ) cmdfifo (
@@ -150,8 +150,8 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
   always_comb begin: resp_burst_capture_logic
     // Enqueue only the correct number of beats for each response
     inc_resp_count = app_rd_data_valid; // Increment every time we get a beat of valid response data
-    reset_resp_count = app_en; // Reset when the UI gets a new transaction
-    enqueue_resp = app_rd_data_valid & ~resp_w_full & (|resp_burst ? (resp_count < (5'b10 << resp_burst)) : resp_count < 1); // Only enqueue 2^(resp_burst) beats of a burst read
+    reset_resp_count = app_en & app_wdf_wren; // Reset when the UI gets a write transaction
+    enqueue_resp = app_rd_data_valid & ~resp_w_full & (|resp_burst ? resp_count < (5'b10 << resp_burst) : resp_count < 1); // Only enqueue 2^(resp_burst) beats of a burst read
     dequeue_resp = HSEL & resp_r_valid;
   end
   bsg_async_fifo #(
@@ -168,9 +168,7 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
   
   // If there are only writes in the pipeline, accept commands until the buffer is full
   // If there is a read in the pipeline, stall until we have a valid response
-  logic read_in_progress;
-  assign read_in_progress = ~(ahb_wren | ui_wren | app_wdf_wren);
-  assign HREADYOUT = read_in_progress ? resp_r_valid : ~cmd_w_full;
+  assign HREADYOUT = ~ahb_wren ? resp_r_valid : ~cmd_w_full;
   assign HRESP = 0; // do not indicate errors
 
 endmodule

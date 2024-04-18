@@ -2,10 +2,9 @@
 .globl lpddr_test
 .type lpddr_test, @function
 lpddr_test:
-	li t1, 0x90000000
+        li t1, 0x90000000
         addi t5, t1, 0
-	li t2, 0xAABBCCDD00112233
-
+        li t2, 0xAABBCCDD00112233
         li t3, 10
         li t4, 0
 loop_write:     
@@ -15,15 +14,15 @@ loop_write:
         addi t4, t4, 1
         j loop_write
 done_write:   
-	
         li t4, 0
         addi t5, t1, 0
 loop_read:     
         beq t4, t3, done_read
+        cbo.clean 0(t5)
         ld t6, 0(t5)
         addi t5, t5, 8
         addi t4, t4, 1
+        # TODO: If t6 does not match t2, error
         j loop_read
 done_read:      
-	ret
-	
+        ret
