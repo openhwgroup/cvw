@@ -14,7 +14,7 @@ if [file exists work] {
 vlib work
 
 # compile source files
-vlog tb_clk_rst.sv dm.sv dmi.sv dtm.sv tap.sv ir.sv idreg.sv jtag.sv
+vlog tb_debug.sv dm.sv dtm.sv tap.sv ir.sv idreg.sv jtag.sv
 vlog dummy_reg.sv scan_reg.sv 
 vlog ../generic/flop/synchronizer.sv
 
@@ -61,17 +61,13 @@ add wave -hex /testbench/dm/Data3
 add wave -noupdate -divider -height 32 "DM"
 add wave -hex /testbench/dm/State
 add wave -hex /testbench/dm/*
-add wave -noupdate -divider -height 32 "DMI"
-add wave -hex /testbench/dm/dmi/State
-add wave -hex /testbench/dm/dmi/*
 add wave -noupdate -divider -height 32 "DTM"
 add wave -hex /testbench/dtm/*
 add wave -noupdate -divider -height 32 "JTAG"
+add wave -hex /testbench/dtm/jtag/tap/State
 add wave -hex /testbench/dtm/jtag/*
-#add wave -noupdate -divider -height 32 "DTM synchronizer"
-#add wave -hex /testbench/dtm/clksync/*
-add wave -noupdate -divider -height 32 "TAP"
-add wave -hex /testbench/dtm/jtag/tap/*
+#add wave -noupdate -divider -height 32 "TAP"
+#add wave -hex /testbench/dtm/jtag/tap/*
 #add wave -noupdate -divider -height 32 "ID Reg"
 #add wave -hex /testbench/dtm/jtag/id/*
 

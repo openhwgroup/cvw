@@ -62,6 +62,7 @@
 //`define CONFSTRPTR3  `ADDR_WIDTH'h1c
 `define NEXTDM       `ADDR_WIDTH'h1d
 //`define dmcs2        `ADDR_WIDTH'h32
+`define SBCS         `ADDR_WIDTH'h38
 
 
 //// Register field ranges
@@ -143,14 +144,13 @@
 `define AAR128 4
 
 
-//TODO
-//Debug Modules must implement this command and must support read and write access to all GPRs
-//when the selected hart is halted. Debug Modules may optionally support accessing other registers,
-//or accessing registers when the hart is running. It is recommended that if one register in a group
-//is accessible, then all registers in that group are accessible, but each individual register (aside from
-//GPRs) may be supported differently across read, write, and halt status.
 
-// Register Numbers (Table 3.3)
+// Register Numbers (regno) 
+// (Table 3.3)
+// 0x0000 – 0x0fff | CSRs. The “PC” can be accessed here through dpc.
+// 0x1000 – 0x101f | GPRs
+// 0x1020 – 0x103f | Floating point registers
+// 0xc000 – 0xffff | Reserved for non-standard extensions and internal use.
 // TODO: Determine the correct category for each register
 // Implementation dependent, 
 // these addresses will likely need to be added to an OpenOCD config for Wally
@@ -169,16 +169,102 @@
 `define WD          16'hD
 `define WE          16'hE
 
-// ACCESS_MEMORY Control ranges
-`define AAMVIRTUAL       23
-`define AAMSIZE          22:20
-`define AAMPOSTINCREMENT 19
-`define AAMWRITE         16
-`define TARGET_SPECIFIC  15:14
+//`define X0          16'h1000
+`define X1          16'h1001
+`define X2          16'h1002
+`define X3          16'h1003
+`define X4          16'h1004
+`define X5          16'h1005
+`define X6          16'h1006
+`define X7          16'h1007
+`define X8          16'h1008
+`define X9          16'h1009
+`define X10         16'h100A
+`define X11         16'h100B
+`define X12         16'h100C
+`define X13         16'h100D
+`define X14         16'h100E
+`define X15         16'h100F
+`define X16         16'h1010
+`define X17         16'h1011
+`define X18         16'h1012
+`define X19         16'h1013
+`define X20         16'h1014
+`define X21         16'h1015
+`define X22         16'h1016
+`define X23         16'h1017
+`define X24         16'h1018
+`define X25         16'h1019
+`define X26         16'h101A
+`define X27         16'h101B
+`define X28         16'h101C
+`define X29         16'h101D
+`define X30         16'h101E
+`define X31         16'h101F
+
+// Register scan change position
+// Used to translate register numbers (above) to position on register scan chain
+// Position number will be multiplied by XLEN to get true bit position for capture/update logic
+`define P_PCM         1
+`define P_TRAPM       2
+`define P_INSTRM      3
+`define P_INSTRVALIDM 4
+`define P_MEMRWM      5
+`define P_IEUADRM     6
+`define P_READDATAM   7
+`define P_WRITEDATAM  8
+`define P_RS1         9
+`define P_RS2         10
+`define P_RD2         11
+`define P_RD1         12
+`define P_WD          13
+`define P_WE          14
+
+`define P_X1          15
+`define P_X2          16
+`define P_X3          17
+`define P_X4          18
+`define P_X5          19
+`define P_X6          20
+`define P_X7          21
+`define P_X8          22
+`define P_X9          23
+`define P_X10         24
+`define P_X11         25
+`define P_X12         26
+`define P_X13         27
+`define P_X14         28
+`define P_X15         29
+`define P_X16         30
+`define P_X17         31
+`define P_X18         32
+`define P_X19         33
+`define P_X20         34
+`define P_X21         35
+`define P_X22         36
+`define P_X23         37
+`define P_X24         38
+`define P_X25         39
+`define P_X26         40
+`define P_X27         41
+`define P_X28         42
+`define P_X29         43
+`define P_X30         44
+`define P_X31         45
+
+
+
+
+// ACCESS_MEMORY Control ranges (Not implemented)
+//`define AAMVIRTUAL       23
+//`define AAMSIZE          22:20
+//`define AAMPOSTINCREMENT 19
+//`define AAMWRITE         16
+//`define TARGET_SPECIFIC  15:14
 
 // aamsize
-`define AAM8   0
-`define AAM16  1
-`define AAM32  2
-`define AAM64  3
-`define AAM128 4
+//`define AAM8   0
+//`define AAM16  1
+//`define AAM32  2
+//`define AAM64  3
+//`define AAM128 4

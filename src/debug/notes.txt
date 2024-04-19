@@ -1,0 +1,41 @@
+To debug Wally using OpenOCD:
+
+1. Select correct jtag adapter
+
+If using "SiPEED" adapters, openocd.cfg already contains the correct adapter ftdi
+with vid_pid 0x0403 0x6010
+
+If there are multiple ft2232 chips connected to the same system (ex: Arty-A7), 
+you will need to tell OpenOCD which one to use.
+
+On linux:
+list your USB devices usign the command: "lsusb -t"
+example output:
+/:  Bus 001.Port 001: Dev 001, Class=root_hub, Driver=xhci_hcd/10p, 480M
+    |__ Port 003: Dev 002, If 0, Class=Vendor Specific Class, Driver=usbfs, 480M
+    |__ Port 003: Dev 002, If 1, Class=Vendor Specific Class, Driver=ftdi_sio, 480M
+    |__ Port 004: Dev 004, If 0, Class=Vendor Specific Class, Driver=usbfs, 12M
+    |__ Port 004: Dev 004, If 1, Class=Vendor Specific Class, Driver=ftdi_sio, 12M   <- This is my JTAG adapter
+
+In the openOCD config, add the line: "adapter usb location 1-4"
+where the numbers 1-4 correspond to <bus_num>-<port_num>
+
+
+
+2. Run openocd 
+run openocd using the command "openocd -f openocd.cfg"
+where openocd.cfg is the path of the config file
+If everything is working corretly, OpenOCD should start without any errors and begin listening for telnet and gdb connections
+connect to openocd vis telnet (telnet 127.0.0.1 4444) to send commands via the command line
+
+3. read and write to the DMI bus
+the riscv debug module can be controlled by writing to various registers via the DMI.
+We can access these registers using the two commands:
+  riscv dmi_read <address>
+  riscv dmi_write <address> <value>
+
+4. Initialize the DM
+The debug module starts in an inactive state. In this state, it will not respond to any commands
+To activate it, write 0x1 to the DMCONTROL register (0x10):
+"riscv dmi_write 0x10 0x1"
+Now you should have full control over the debug module.

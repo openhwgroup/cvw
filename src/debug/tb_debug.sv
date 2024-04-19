@@ -51,7 +51,7 @@ initial begin
 end
 initial begin
   tck = 1;
-  forever #19 tck = ~tck;
+  forever #100 tck = ~tck;
 end
 
 // Initialize logic
@@ -101,6 +101,7 @@ initial begin
   $display("Reading Register 2 (send read command)");
   wave_marker = "Transfer R2 to Data1,0";
   data = 0; data[`CMDTYPE] = `ACCESS_REGISTER; data[`TRANSFER] = 1; data[`AARWRITE] = 0;
+  $display("data: %h", data);
   ScanDMI(tck, tms, tdi, tdo, .addr(`COMMAND), .op(`OP_WRITE), .data(data));
   
   // wait for shift to complete
@@ -128,6 +129,7 @@ initial begin
   ScanDMI(tck, tms, tdi, tdo, .addr(`DATA0), .op(`OP_READ));
   wave_marker = "Transfer Data1,0 to R1";
   data = 0; data[`CMDTYPE] = `ACCESS_REGISTER; data[`TRANSFER] = 1; data[`AARWRITE] = 1;
+  $display("Transfer Data1,0 to R1: %h", data);
   ScanDMI(tck, tms, tdi, tdo, .addr(`COMMAND), .op(`OP_WRITE), .data(data));
   $display("R1Q: %h", r1q);
   $display("R2Q: %h", r2q);
@@ -187,7 +189,7 @@ task automatic ScanDTMCS (
   logic [84:0] tms_vector;
   logic [31:0] read_buffer;
   tms_vector = {<<{14'b01100_00001_1100, 32'b1, 4'b1100, 32'b1, 3'b100}};
-  tdi_vector = {<<{14'b00000_00001_0000, {<<{14'b0, dtmhardreset, dmireset, 16'b0}}, 4'b0, 32'b0, 3'b0}}; // TODO: Source of Invalid DMI access???
+  tdi_vector = {<<{14'b00000_00001_0000, {<<{14'b0, dtmhardreset, dmireset, 16'b0}}, 4'b0, 32'b0, 3'b0}};
 
   $display("Scanning DTMCS (dtmhardreset: %b | dmireset: %b)", dtmhardreset, dmireset);
   for (i=0; i<85; i=i+1) begin

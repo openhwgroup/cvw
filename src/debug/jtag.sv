@@ -38,7 +38,6 @@ module jtag #(parameter ADDR_WIDTH, parameter DEVICE_ID) (
   output logic                     resetn,
 
   // DTM signals
-  output logic                     CaptureDtmcs,
   output logic                     UpdateDtmcs,
   output logic [31:0]              DtmcsIn,
   input  logic [31:0]              DtmcsOut,
@@ -61,7 +60,6 @@ module jtag #(parameter ADDR_WIDTH, parameter DEVICE_ID) (
 
   // TAP controller logic
   logic tdo_en;
-  logic shiftIR;
   logic captureIR;
   logic clockIR;
   logic updateIR;
@@ -81,16 +79,16 @@ module jtag #(parameter ADDR_WIDTH, parameter DEVICE_ID) (
   logic [34+ADDR_WIDTH:0] DmiShiftReg;
 
   assign UpdateDtmcs = updateDR && DtmcsIntrs;
-  assign CaptureDtmcs = captureDR && DtmcsIntrs;
 
-  assign UpdateDmi = updateDR && DmiInstr;
   assign CaptureDmi = captureDR && DmiInstr;
+  assign UpdateDmi = updateDR && DmiInstr;
 
-  tap tap (.tck, .trstn, .tms, .resetn, .tdo_en, .shiftIR, .captureIR,
+  tap tap (.tck, .trstn, .tms, .resetn, .tdo_en, .captureIR,
     .clockIR, .updateIR, .shiftDR, .captureDR, .clockDR, .updateDR, .select);
 
   // IR/DR input demux
-  assign {tdi_ir,tdi_dr} = select ? {tdi,1'bz} : {1'bz,tdi};
+  assign tdi_ir = select ? tdi : 1'bz;
+  assign tdi_dr = select ? 1'bz : tdi;
   // IR/DR output mux
   assign tdo = ~tdo_en ? 1'bz :
          select ? tdo_ir : tdo_dr;

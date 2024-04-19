@@ -25,6 +25,11 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Move CDC to DTM (here)
+// Most JTAG adapters stop tck when not actively scanning
+// DTM still needs to complete transactions with DM during these tck idle periods
+// Instead, Drive DTM via SysClk (and hope it continues to run during core halts)
+
 // TODO: recover from reset from either side (DTM or DM)
 // trstn at inopportune time likely causes dmi to lock up
 
@@ -55,48 +60,50 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
 );
   `include "debug.vh"
 
-  enum {
-    READY,
-    ACK,
-    IDLE
+  (* mark_debug = "true" *) enum bit [1:0] {
+    IDLE,
+    START,
+    WAIT,
+    COMPLETE
   } DMIState;
 
-  logic [ADDR_WIDTH-1:0] RspAddress;
+  (* mark_debug = "true" *) logic [31:0]              ValRspData;
+  (* mark_debug = "true" *) logic [1:0]               ValRspOP;
+  (* mark_debug = "true" *) logic                     Sticky;
 
-  logic                     tcks; // Synchronized JTAG clock
+  (* mark_debug = "true" *) logic                     tcks; // Synchronized JTAG clock
   logic                     resetn;
-  logic                     CaptureDtmcs;
   logic                     UpdateDtmcs;
   logic [31:0]              DtmcsIn;
   logic [31:0]              DtmcsOut;
-  logic                     CaptureDmi;
   logic                     UpdateDmi;
-  logic [34+ADDR_WIDTH-1:0] DmiIn;
+  logic                     CaptureDmi;
+  (* mark_debug = "true" *) logic [34+ADDR_WIDTH-1:0] DmiIn;
   logic [34+ADDR_WIDTH-1:0] DmiOut;
 
   // DTMCS Register
   logic [2:0]                 ErrInfo;
   logic                       DtmHardReset;
   logic                       DmiReset;
-  const logic [2:0]           Idle = 0; // TODO: increase this if DM ops incurr some latency (6.1.4)
+  const logic [2:0]           Idle = 0;
   logic [1:0]                 DmiStat;
   const logic [5:0]           ABits = ADDR_WIDTH;
   const logic [3:0]           Version = 1; // DTM spec version 1
 
-  assign RspAddress = ReqAddress;
-  assign DmiOut = {RspAddress, RspData, RspOP};
+  assign DmiOut = {ReqAddress, ValRspData, ValRspOP};
+  assign DmiStat = ValRspOP;
 
   // Synchronize the edges of tck to the system clock
-  // TODO use synchronizer in src/generic/flop
+  // TODO find the minimum sysclk:tck ratio that works
   synchronizer clksync (.clk(clk), .d(tck), .q(tcks));
 
   jtag #(.ADDR_WIDTH(ADDR_WIDTH), .DEVICE_ID(JTAG_DEVICE_ID)) jtag (.tck(tcks), .tdi, .tms, .trstn(trstn), .tdo,
-    .resetn, .CaptureDtmcs, .UpdateDtmcs, .DtmcsIn, .DtmcsOut, .CaptureDmi, .UpdateDmi, .DmiIn, .DmiOut);
+    .resetn, .UpdateDtmcs, .DtmcsIn, .DtmcsOut, .CaptureDmi, .UpdateDmi, .DmiIn, .DmiOut);
 
 
   // DTMCS
   assign DtmcsOut = {11'b0, ErrInfo, 3'b0, Idle, DmiStat, ABits, Version};
-  always_ff @(posedge tcks) begin
+  always_ff @(posedge clk) begin
     if (~resetn || DtmHardReset) begin
       DtmHardReset <= 0;
       DmiReset <= 0;
@@ -106,46 +113,60 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
     end else if (DmiReset) begin
       DmiReset <= 0;
     end
-
-    // sticky status logic
-    if (~resetn || DtmHardReset || DmiReset) begin
-      DmiStat <= 0;
-      ErrInfo <= 4;
-    end else begin
-      if (~(DmiStat == 2 || DmiStat == 3))
-        DmiStat <= RspOP;
-      if (RspOP == 2)
-        ErrInfo <= 3;
-    end
   end
 
   // DMI
-  always_ff @(posedge tcks) begin
-    if (~resetn || DtmHardReset)
-      DMIState <= READY;
-    else
+  always_ff @(posedge clk) begin
+    if (~resetn || DtmHardReset) begin
+      ValRspData <= 0;
+      ValRspOP <= `OP_SUCCESS;
+      ErrInfo <= 4;
+      Sticky <= 0;
+      DMIState <= IDLE;
+    end else if (DmiReset) begin
+      ValRspOP <= `OP_SUCCESS;
+      ErrInfo <= 4;
+      Sticky <= 0;
+    end else
       case (DMIState)
-        READY : begin
-          if (UpdateDmi) begin
-            ReqValid <= 1;
+        IDLE : begin
+          if (UpdateDmi && ~Sticky && DmiIn[1:0] != `OP_NOP) begin
             {ReqAddress, ReqData, ReqOP} <= DmiIn;
+            ReqValid <= 1;
+            DMIState <= START;
+            // DmiOut is captured immediately on CaptureDmi
+            // this preemptively sets BUSY for next capture unless overwritten
+            ValRspOP <= `OP_BUSY;
           end
-          if ((UpdateDmi || ReqValid) && ReqReady)
-            DMIState <= ACK;
+          ValRspOP <= `OP_SUCCESS;
         end
 
-        ACK : begin
-          if (~ReqReady) begin
+        START : begin // TODO: add a timeout if ReqReady never asserts?
+          if (ReqReady) begin
             ReqValid <= 0;
             RspReady <= 1;
-            DMIState <= IDLE;
+            DMIState <= WAIT;
           end
         end
 
-        IDLE : begin
-          if (RspValid && (RspOP == `OP_SUCCESS || RspOP == `OP_FAILED)) begin
+        WAIT : begin
+          if (RspValid) begin
+            ValRspData <= RspData;
+            if (~Sticky) // update OP if it isn't currently a sticky value
+              ValRspOP <= RspOP;
+            if (RspOP == `OP_FAILED || RspOP == `OP_BUSY)
+              Sticky <= 1;
+            if (RspOP == `OP_FAILED)
+              ErrInfo <= 3;
+            DMIState <= COMPLETE;
+          end else if (CaptureDmi)
+            Sticky <= 1;
+        end
+
+        COMPLETE : begin
+          if (CaptureDmi) begin
             RspReady <= 0;
-            DMIState <= READY;
+            DMIState <= IDLE;
           end
         end
       endcase
