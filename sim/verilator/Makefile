@@ -23,8 +23,9 @@ profile: obj_dir_profiling/Vtestbench_$(WALLYCONF)
 
 run: obj_dir_non_profiling/Vtestbench_$(WALLYCONF)
 	mkdir -p $(WORKING_DIR)/logs
-	time $(WORKING_DIR)/obj_dir_non_profiling/Vtestbench_$(WALLYCONF) +TEST=$(TEST) 2>&1 > $(WORKING_DIR)/logs/$(WALLYCONF)_$(TEST).log
-	echo "Please check $(WORKING_DIR)/logs/$(WALLYCONF)_$(TEST).log for logs and output files."
+#	time $(WORKING_DIR)/obj_dir_non_profiling/Vtestbench_$(WALLYCONF) +TEST=$(TEST) 2>&1 > $(WORKING_DIR)/logs/$(WALLYCONF)_$(TEST).log
+	time $(WORKING_DIR)/obj_dir_non_profiling/Vtestbench_$(WALLYCONF) +TEST=$(TEST)
+#	echo "Please check $(WORKING_DIR)/logs/$(WALLYCONF)_$(TEST).log for logs and output files."
 	
 obj_dir_non_profiling/Vtestbench_$(WALLYCONF): $(SOURCE)
 	mkdir -p obj_dir_non_profiling
