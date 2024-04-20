@@ -23,7 +23,6 @@ from multiprocessing import Pool, TimeoutError
 # The element consists of the configuration name, a list of test suites to run, 
 # optionally a string to pass to the simulator, and optionally a nonstandard grep string to check for success
 
-INSTR_LIMIT = 1300000 # multiple of 100000; Set to 0 to run simulation until timeout or Wally Hostname:
 tests = [
         ["rv32e", ["arch32e"]],
         ["rv32i", ["arch32i"]],
@@ -33,15 +32,19 @@ tests = [
                     "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "arch32zfh", "arch32zfh_fma", 
                     "arch32zfh_divsqrt", "arch32zfaf", "wally32a", "wally32priv", "wally32periph", 
                     "arch32zbkb", "arch32zbkc", "arch32zbkx", "arch32zknd", "arch32zkne", "arch32zknh"]], # "arch32zcb", "arch32zfad",
-        ["rv64i", ["arch64i"]],
-        ["buildroot", ["buildroot"], [f"+INSTR_LIMIT={INSTR_LIMIT}"], str(INSTR_LIMIT)+" instructions"]
+        ["rv64i", ["arch64i"]]
         ]
 
 
 # Separate test for full buildroot run
+tests_buildrootshort = [
+                    ["buildroot", ["buildroot"], [f"+INSTR_LIMIT=1400000"], # Instruction limit gets to first OpenSBI UART output  
+                        "OpenSBI v", "buildroot_uart.out"]
+    ]
+
 tests_buildrootboot = [
                     ["buildroot", ["buildroot"], [f"+INSTR_LIMIT=600000000"], 
-                        "WallyHostname login: ", os.environ.get('WALLY')+"/sim/questa/logs/buildroot_uart.out"]
+                        "WallyHostname login: ", "buildroot_uart.out"]
     ]
 
 
@@ -221,7 +224,7 @@ def addTests(tests, sim):
         for t in suites:
             sim_log = sim_logdir + config + "_" + t + ".log"
             if (len(test) >= 5):
-                grepfile = test[4]
+                grepfile = sim_logdir + test[4]
             else:
                 grepfile = sim_log
             tc = TestCase(
@@ -294,22 +297,22 @@ configs = [
         grepfile = WALLY + "/sim/questa/logs/all_lints.log")
     ]
 
-if (buildroot):
-    for sim in sims:
-        addTests(tests_buildrootboot, sim)
-
 if (coverage):  # only run RV64GC tests on Questa in coverage mode
     addTests(tests64gc_nofp, "questa")
     if (fp):
         addTests(tests64gc_fp, "questa")
-elif not buildroot:
+else:
     for sim in sims:
         addTests(tests, sim)
         addTests(tests64gc_nofp, sim)
         addTests(tests64gc_fp, sim)
+
     # run derivative configurations in nightly regression
-    if (nightly):
-        addTests(derivconfigtests, defaultsim)
+if (nightly):
+    addTests(derivconfigtests, defaultsim)
+    addTests(tests_buildrootboot, defaultsim)
+else:
+    addTests(tests_buildrootshort, defaultsim)
 
 # testfloat tests
 if (testfloat):
@@ -390,26 +393,17 @@ def main():
         os.chdir(regressionDir)
         os.system('./make-tests.sh | tee ./logs/make-tests.log')
 
-    if '--all' in sys.argv:
-        TIMEOUT_DUR = 30*7200 # seconds
-        #configs.append(getBuildrootTC(boot=True))
-    elif '--buildroot' in sys.argv:
+    if '--buildroot' in sys.argv:
         TIMEOUT_DUR = 60*7200 # 5 days to run
-        #configs=[getBuildrootTC(boot=True)]
     elif '--coverage' in sys.argv:
-        TIMEOUT_DUR = 20*60 # seconds    
-    #   Presently don't run buildroot because it has a different config and can't be merged with the rv64gc coverage.
-    #   Also it is slow to run.   
-    #    configs.append(getBuildrootTC(boot=False))
+        TIMEOUT_DUR = 20*60 # seconds
         os.system('rm -f questa/cov/*.ucdb')
     elif '--nightly' in sys.argv:
         TIMEOUT_DUR = 60*1440 # 1 day
-        #configs.append(getBuildrootTC(boot=False))
     elif '--testfloat' in sys.argv:
         TIMEOUT_DUR = 60*60 # seconds
     else:
         TIMEOUT_DUR = 10*60 # seconds
-        #configs.append(getBuildrootTC(boot=False))
 
     # Scale the number of concurrent processes to the number of test cases, but
     # max out at a limited number of concurrent processes to not overwhelm the system
