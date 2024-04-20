@@ -1,3 +1,7 @@
+# Verilator Makefile for WALLY
+# Kunlin Han, Rose Thompson, David Harris 2024
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
 SHELL := /bin/bash
 .PHONY: profile run questa clean
 

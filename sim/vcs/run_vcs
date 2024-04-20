@@ -1,15 +1,22 @@
 #!/bin/bash
+# VCS Compilation for WALLY
+# Divya Kohli, Rose Thompson, David Harris 2024
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
-
+CFG=${WALLY}/config
+SRC=${WALLY}/src 
+TB=${WALLY}/testbench
 # Set CONFIG_VARIANT from the first script argument
 #CONFIG_VARIANT=${1:-rv64i}
 CONFIG_VARIANT=${1}
 # Set TESTSUITE from the second script argument
 TESTSUITE=$2
-INCLUDE_DIRS=$(find ../src -type d | xargs -I {} echo -n "{} ")
-SOURCE_PATH="+incdir+../config/${CONFIG_VARIANT} +incdir+../config/deriv/${CONFIG_VARIANT} +incdir+../config/shared +define+ +define+P.XLEN=64  +define+FPGA=0 +incdir+../testbench ../src/cvw.sv +incdir+../src" 
 
-SIMFILES="$INCLUDE_DIRS $(find ../src -name "*.sv" ! -path "../src/generic/clockgater.sv" ! -path "../src/generic/mem/rom1p1r_128x64.sv" ! -path "../src/generic/mem/ram2p1r1wbe_128x64.sv" ! -path "../src/generic/mem/rom1p1r_128x32.sv" ! -path "../src/generic/mem/ram2p1r1wbe_512x64.sv")  ../testbench/testbench.sv $(find ../testbench/common -name "*.sv" ! -path "../testbench/common/wallyTracer.sv")" 
+
+INCLUDE_DIRS=$(find ${SRC} -type d | xargs -I {} echo -n "{} ")
+SOURCE_PATH="+incdir+${CFG}/${CONFIG_VARIANT} +incdir+${CFG}/deriv/${CONFIG_VARIANT} +incdir+${CFG}/shared +define+ +define+P.XLEN=64  +define+FPGA=0 +incdir+${TB} ${SRC}/cvw.sv +incdir+${SRC}" 
+
+SIMFILES="$INCLUDE_DIRS $(find ${SRC} -name "*.sv" ! -path "${SRC}/generic/clockgater.sv" ! -path "${SRC}/generic/mem/rom1p1r_128x64.sv" ! -path "${SRC}/generic/mem/ram2p1r1wbe_128x64.sv" ! -path "${SRC}/generic/mem/rom1p1r_128x32.sv" ! -path "${SRC}/generic/mem/ram2p1r1wbe_512x64.sv")  ${TB}/testbench.sv $(find ${TB}/common -name "*.sv" ! -path "${TB}/common/wallyTracer.sv")" 
 OUTPUT="sim_out"
 
 clean() {
