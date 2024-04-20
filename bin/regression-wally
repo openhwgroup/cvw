@@ -23,7 +23,7 @@ from multiprocessing import Pool, TimeoutError
 # The element consists of the configuration name, a list of test suites to run, 
 # optionally a string to pass to the simulator, and optionally a nonstandard grep string to check for success
 
-INSTR_LIMIT = 400000 # multiple of 100000; Set to 0 to run simulation until timeout or Wally Hostname:
+INSTR_LIMIT = 1300000 # multiple of 100000; Set to 0 to run simulation until timeout or Wally Hostname:
 tests = [
         ["rv32e", ["arch32e"]],
         ["rv32i", ["arch32i"]],
@@ -183,7 +183,7 @@ bpredtests = [
 # Data Types & Functions
 ##################################
 
-TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr', 'logfile'])
+TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr', 'grepfile'])
 # name:     the name of this test configuration (used in printing human-readable
 #           output and picking logfile names)
 # cmd:      the command to run to test (should include the logfile as '{}', and
@@ -191,7 +191,7 @@ TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr', 'logfile
 # grepstr:  the string to grep through the log file for. The test succeeds iff
 #           grep finds that string in the logfile (is used by grep, so it may
 #           be any pattern grep accepts, see `man 1 grep` for more info).
-# logfile:  a string containing the location of the logfile.
+# grepfile:  a string containing the location of the file to be searched for output
 
 class bcolors:
     HEADER = '\033[95m'
@@ -221,36 +221,36 @@ def addTests(tests, sim):
         for t in suites:
             sim_log = sim_logdir + config + "_" + t + ".log"
             if (len(test) >= 5):
-                logfile = test[4]
+                grepfile = test[4]
             else:
-                logfile = sim_log
+                grepfile = sim_log
             tc = TestCase(
                     name=t,
                     variant=config,
                     cmd=cmdPrefix + " " + t + args + " > " + sim_log,
                     grepstr=gs,
-                    logfile = logfile)
+                    grepfile = grepfile)
             configs.append(tc)
 
-def search_log_for_text(text, logfile):
+def search_log_for_text(text, grepfile):
     """Search through the given log file for text, returning True if it is found or False if it is not"""
-    grepcmd = "grep -e '%s' '%s' > /dev/null" % (text, logfile)
+    grepcmd = "grep -a -e '%s' '%s' > /dev/null" % (text, grepfile)
 #    print("  search_log_for_text invoking %s" % grepcmd)
     return os.system(grepcmd) == 0
 
 def run_test_case(config):
     """Run the given test case, and return 0 if the test suceeds and 1 if it fails"""
-    logname = config.logfile
+    grepfile = config.grepfile
     cmd = config.cmd
     os.chdir(regressionDir)
     # print("  run_test_case invoking %s" % cmd)
     os.system(cmd)
-    if search_log_for_text(config.grepstr, logname):
+    if search_log_for_text(config.grepstr, grepfile):
         print(f"{bcolors.OKGREEN}%s_%s: Success{bcolors.ENDC}" % (config.variant, config.name))
         return 0
     else:
         print(f"{bcolors.FAIL}%s_%s: Failures detected in output{bcolors.ENDC}" % (config.variant, config.name))
-        print("  Check %s" % logname)
+        print("  Check %s" % grepfile)
         return 1
 
 ##################################
@@ -275,7 +275,7 @@ if (nightly):
     nightMode = "--nightly";
     sims = ["questa", "verilator", "vcs"]
 else:
-    nightMode = "";
+    nightMode = ""
     sims = [defaultsim]
 
 if (coverage):  # only run RV64GC tests in coverage mode
@@ -291,7 +291,7 @@ configs = [
         variant="all",
         cmd="lint-wally " + nightMode + " | tee " + WALLY + "/sim/questa/logs/all_lints.log",
         grepstr="lints run with no errors or warnings",
-        logfile = WALLY + "/sim/questa/logs/all_lints.log")
+        grepfile = WALLY + "/sim/questa/logs/all_lints.log")
     ]
 
 if (buildroot):
@@ -321,13 +321,13 @@ if (testfloat):
         if ("f_" in config):
             tests.remove("cvtfp")
         for test in tests:
-            sim_log = WALLY + "/sim/questa/logs/"+config+"_"+test+".log"
+            sim_log = WALLY + "/sim/questa/logs/"+config+"_"+test+".log" # TODO: Change hardcoded questa log directory to simulator
             tc = TestCase(
                     name=test,
                     variant=config,
                     cmd="wsim --tb testbench_fp " + config + " " + test + " > " + sim_log,
                     grepstr="All Tests completed with          0 errors",
-                    logfile = sim_log)
+                    grepfile = sim_log)
             configs.append(tc)
 
 
@@ -372,7 +372,7 @@ if (testfloat):
                     variant=config,
                     cmd="wsim --tb testbench_fp --sim questa " + config + " " + test + " > " + sim_log,
                     grepstr="All Tests completed with          0 errors",
-                    logfile = WALLY + "/sim/questa/logs/"+config+"_"+test+".log")
+                    grepfile = WALLY + "/sim/questa/logs/"+config+"_"+test+".log")
             configs.append(tc)
 
 
