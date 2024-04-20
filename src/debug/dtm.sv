@@ -8,30 +8,24 @@
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Move CDC to DTM (here)
-// Most JTAG adapters stop tck when not actively scanning
-// DTM still needs to complete transactions with DM during these tck idle periods
-// Instead, Drive DTM via SysClk (and hope it continues to run during core halts)
-
-// TODO: recover from reset from either side (DTM or DM)
-// trstn at inopportune time likely causes dmi to lock up
+// TODO: test trst at various points in DMI communication
 
 // To recovert from a core reset, DTM will need to DtmHardReset (or trstn / tms zeroscan).
 //    This is mentioned in spec
@@ -41,10 +35,9 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
   // System clock
   input  logic                  clk,
   // External JTAG signals
-  input  logic                  tck, 
-  input  logic                  tdi, 
-  input  logic                  tms, 
-  input  logic                  trstn,
+  input  logic                  tck,
+  input  logic                  tdi,
+  input  logic                  tms,
   output logic                  tdo,
 
   // DMI signals
@@ -67,10 +60,7 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
     COMPLETE
   } DMIState;
 
-  (* mark_debug = "true" *) logic [31:0]              ValRspData;
-  (* mark_debug = "true" *) logic [1:0]               ValRspOP;
-  (* mark_debug = "true" *) logic                     Sticky;
-
+  // Clock Domain Crossing
   (* mark_debug = "true" *) logic                     tcks; // Synchronized JTAG clock
   logic                     resetn;
   logic                     UpdateDtmcs;
@@ -89,6 +79,10 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
   logic [1:0]                 DmiStat;
   const logic [5:0]           ABits = ADDR_WIDTH;
   const logic [3:0]           Version = 1; // DTM spec version 1
+
+  (* mark_debug = "true" *) logic [31:0]              ValRspData;
+  (* mark_debug = "true" *) logic [1:0]               ValRspOP;
+  (* mark_debug = "true" *) logic                     Sticky;
 
   assign DmiOut = {ReqAddress, ValRspData, ValRspOP};
   assign DmiStat = ValRspOP;
@@ -133,11 +127,12 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
           if (UpdateDmi && ~Sticky && DmiIn[1:0] != `OP_NOP) begin
             {ReqAddress, ReqData, ReqOP} <= DmiIn;
             ReqValid <= 1;
-            DMIState <= START;
             // DmiOut is captured immediately on CaptureDmi
             // this preemptively sets BUSY for next capture unless overwritten
             ValRspOP <= `OP_BUSY;
+            DMIState <= START;
           end
+          ReqValid <= 0;
           ValRspOP <= `OP_SUCCESS;
         end
 

@@ -151,9 +151,6 @@
 // 0x1000 – 0x101f | GPRs
 // 0x1020 – 0x103f | Floating point registers
 // 0xc000 – 0xffff | Reserved for non-standard extensions and internal use.
-// TODO: Determine the correct category for each register
-// Implementation dependent, 
-// these addresses will likely need to be added to an OpenOCD config for Wally
 `define PCM         16'h0
 `define TRAPM       16'h1
 `define INSTRM      16'h2

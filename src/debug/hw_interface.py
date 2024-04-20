@@ -1,5 +1,5 @@
 #########################################################################################
-# jtag.sv
+# hw_interface.py
 #
 # Written: matthew.n.otto@okstate.edu
 # Created: 19 April 2024

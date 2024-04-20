@@ -26,8 +26,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module tap (
-  input  logic tck, 
-  input  logic trstn, 
+  input  logic tck,
   input  logic tms,
   output logic resetn,
   output logic tdo_en,
@@ -60,47 +59,35 @@ module tap (
     TLReset     = 4'hF
   } State;
 
-  always @(posedge tck, negedge trstn) begin
-    if (~trstn) begin
-      State <= TLReset;
-    end else begin
-      case (State)
-        TLReset     : State <= tms ? TLReset : RunTestIdle;
-        RunTestIdle : State <= tms ? SelectDR : RunTestIdle;
-        SelectDR    : State <= tms ? SelectIR : CaptureDR;
-        CaptureDR   : State <= tms ? Exit1DR : ShiftDR;
-        ShiftDR     : State <= tms ? Exit1DR : ShiftDR;
-        Exit1DR     : State <= tms ? UpdateDR : PauseDR;
-        PauseDR     : State <= tms ? Exit2DR : PauseDR;
-        Exit2DR     : State <= tms ? UpdateDR : ShiftDR;
-        UpdateDR    : State <= tms ? SelectDR : RunTestIdle;
-        SelectIR    : State <= tms ? TLReset : CaptureIR;
-        CaptureIR   : State <= tms ? Exit1IR : ShiftIR;
-        ShiftIR     : State <= tms ? Exit1IR : ShiftIR;
-        Exit1IR     : State <= tms ? UpdateIR : PauseIR;
-        PauseIR     : State <= tms ? Exit2IR : PauseIR;
-        Exit2IR     : State <= tms ? UpdateIR : ShiftIR;
-        UpdateIR    : State <= tms ? SelectDR : RunTestIdle;
-      endcase
-    end
+  always @(posedge tck) begin
+    case (State)
+      TLReset     : State <= tms ? TLReset : RunTestIdle;
+      RunTestIdle : State <= tms ? SelectDR : RunTestIdle;
+      SelectDR    : State <= tms ? SelectIR : CaptureDR;
+      CaptureDR   : State <= tms ? Exit1DR : ShiftDR;
+      ShiftDR     : State <= tms ? Exit1DR : ShiftDR;
+      Exit1DR     : State <= tms ? UpdateDR : PauseDR;
+      PauseDR     : State <= tms ? Exit2DR : PauseDR;
+      Exit2DR     : State <= tms ? UpdateDR : ShiftDR;
+      UpdateDR    : State <= tms ? SelectDR : RunTestIdle;
+      SelectIR    : State <= tms ? TLReset : CaptureIR;
+      CaptureIR   : State <= tms ? Exit1IR : ShiftIR;
+      ShiftIR     : State <= tms ? Exit1IR : ShiftIR;
+      Exit1IR     : State <= tms ? UpdateIR : PauseIR;
+      PauseIR     : State <= tms ? Exit2IR : PauseIR;
+      Exit2IR     : State <= tms ? UpdateIR : ShiftIR;
+      UpdateIR    : State <= tms ? SelectDR : RunTestIdle;
+    endcase
   end
 
-  always @(negedge tck, negedge trstn) begin
-    if (~trstn) begin
-      resetn <= 1'b0;
-      tdo_en <= 1'b0;
-      captureIR <= 1'b0;
-      shiftDR <= 1'b0;
-      captureDR <= 1'b0;
-    end else begin
-      resetn <= ~(State == TLReset);
-      tdo_en <= State == ShiftIR || State == ShiftDR;
-      captureIR <= State == CaptureIR;
-      updateIR <= State == UpdateIR;
-      shiftDR <= State == ShiftDR;
-      captureDR <= State == CaptureDR;
-      updateDR <= State == UpdateDR;
-    end
+  always @(negedge tck) begin
+    resetn <= ~(State == TLReset);
+    tdo_en <= State == ShiftIR || State == ShiftDR;
+    captureIR <= State == CaptureIR;
+    updateIR <= State == UpdateIR;
+    shiftDR <= State == ShiftDR;
+    captureDR <= State == CaptureDR;
+    updateDR <= State == UpdateDR;
   end
 
   assign clockIR = tck || State[0] || ~State[1] || ~State[3];

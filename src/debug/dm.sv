@@ -258,14 +258,6 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
             `DATA1  : RspData <= Data1;
             `DATA2  : RspData <= Data2;
             `DATA3  : RspData <= Data3;
-            //`DATA4  : RspData <= Data4;
-            //`DATA5  : RspData <= Data5;
-            //`DATA6  : RspData <= Data6;
-            //`DATA7  : RspData <= Data7;
-            //`DATA8  : RspData <= Data8;
-            //`DATA9  : RspData <= Data9;
-            //`DATA10 : RspData <= Data10;
-            //`DATA11 : RspData <= Data11;
           endcase
           RspOP <= `OP_SUCCESS;
           State <= ACK;
