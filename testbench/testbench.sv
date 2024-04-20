@@ -254,7 +254,7 @@ module testbench;
   logic        ResetCntRst;
   logic        CopyRAM;
 
-  string  signame, memfilename, bootmemfilename, uartoutfilename, pathname, rmCmd;
+  string  signame, memfilename, bootmemfilename, uartoutfilename, pathname;
   integer begin_signature_addr, end_signature_addr, signature_size;
   integer uartoutfile;
 
