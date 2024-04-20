@@ -154,20 +154,20 @@
 // TODO: Determine the correct category for each register
 // Implementation dependent, 
 // these addresses will likely need to be added to an OpenOCD config for Wally
-`define PCM         16'h1
-`define TRAPM       16'h2
-`define INSTRM      16'h3
-`define INSTRVALIDM 16'h4
-`define MEMRWM      16'h5
-`define IEUADRM     16'h6
-`define READDATAM   16'h7
-`define WRITEDATAM  16'h8
-`define RS1         16'h9
-`define RS2         16'hA
-`define RD2         16'hB
-`define RD1         16'hC
-`define WD          16'hD
-`define WE          16'hE
+`define PCM         16'h0
+`define TRAPM       16'h1
+`define INSTRM      16'h2
+`define INSTRVALIDM 16'h3
+`define MEMRWM      16'h4
+`define IEUADRM     16'h5
+`define READDATAM   16'h6
+`define WRITEDATAM  16'h7
+`define RS1         16'h8
+`define RS2         16'h9
+`define RD2         16'hA
+`define RD1         16'hB
+`define WD          16'hC
+`define WE          16'hD
 
 //`define X0          16'h1000
 `define X1          16'h1001
