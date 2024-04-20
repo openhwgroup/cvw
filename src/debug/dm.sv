@@ -190,6 +190,13 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
   assign CoreResume = ResumeReq;
   assign CoreReset = HartReset;
 
+  assign AllRunning = ~CoreHaltConfirm;
+  assign AnyRunning = ~CoreHaltConfirm;
+  assign AllHalted = CoreHaltConfirm; // TODO: update this
+  assign AnyHalted = CoreHaltConfirm;
+  assign AllResumeAck = CoreResumeConfirm;
+  assign AnyResumeAck = CoreResumeConfirm;
+
   assign RspValid = (State == ACK);
   assign ReqReady = (State != ACK);
 
@@ -327,27 +334,31 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
           State <= ACK;
         end
 
-        ABST_COMMAND : begin
-          case (ReqData[`CMDTYPE])
-            `ACCESS_REGISTER : begin // TODO: check that hart is halted else cmderr <= `CMDERR_HALTRESUME
-              if (ReqData[`AARSIZE] > XLEN) begin // TODO: make sure smaller sizes are supported
-                CmdErr <= `CMDERR_EXCEPTION;
-              end else if (ReqData[`TRANSFER]) begin
-                //ShiftCount <= 64; // TODO: calcualte this based on regno ReqData[`REGNO]
-                // if REGNO does not exist, cmderr <= `CMDERR_EXCEPTION;
-                // InvalidRegNo
-                AcTransfer <= ReqData[`TRANSFER];
-                AcWrite <= ReqData[`AARWRITE];
-                NewAcState <= AC_SCAN;
-              end
-            end
-            //`QUICK_ACCESS : State <= QUICK_ACCESS;
-            //`ACCESS_MEMORY : State <= ACCESS_MEMORY;
-            default : CmdErr <= `CMDERR_NOT_SUPPORTED;
-          endcase
-
+        ABST_COMMAND : begin // Before starting an abstract command, a debugger must ensure that haltreq, resumereq, and ackhavereset are all 0.
           if (Busy)
             CmdErr <= ~|CmdErr ? `CMDERR_BUSY : CmdErr;
+          else if (~CoreHaltConfirm) // TODO: this check may be undesired
+            CmdErr <= `CMDERR_HALTRESUME;
+          else begin
+            case (ReqData[`CMDTYPE])
+              `ACCESS_REGISTER : begin
+                if (ReqData[`AARSIZE] > $clog2(XLEN/8)) begin // if AARSIZE (encoded) is greater than XLEN
+                  CmdErr <= `CMDERR_EXCEPTION;
+                end else if (ReqData[`TRANSFER]) begin
+                  if (InvalidRegNo)
+                    CmdErr <= `CMDERR_EXCEPTION;
+                  else begin
+                    AcTransfer <= ReqData[`TRANSFER];
+                    AcWrite <= ReqData[`AARWRITE];
+                    NewAcState <= AC_SCAN;
+                  end
+                end
+              end
+              //`QUICK_ACCESS : State <= QUICK_ACCESS;
+              //`ACCESS_MEMORY : State <= ACCESS_MEMORY;
+              default : CmdErr <= `CMDERR_NOT_SUPPORTED;
+            endcase
+          end
           RspOP <= `OP_SUCCESS;
           State <= ACK;
         end
@@ -456,6 +467,22 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
   always_comb begin
     InvalidRegNo = 0;
     case (ReqData[`REGNO])
+      `MISA        : ShiftCount = `P_MISA * XLEN;
+      `PCM         : ShiftCount = `P_PCM * XLEN;
+      `TRAPM       : ShiftCount = `P_TRAPM * XLEN;
+      `INSTRM      : ShiftCount = `P_INSTRM * XLEN;
+      `INSTRVALIDM : ShiftCount = `P_INSTRVALIDM * XLEN;
+      `MEMRWM      : ShiftCount = `P_MEMRWM * XLEN;
+      `IEUADRM     : ShiftCount = `P_IEUADRM * XLEN;
+      `READDATAM   : ShiftCount = `P_READDATAM * XLEN;
+      `WRITEDATAM  : ShiftCount = `P_WRITEDATAM * XLEN;
+      `RS1         : ShiftCount = `P_RS1 * XLEN;
+      `RS2         : ShiftCount = `P_RS2 * XLEN;
+      `RD2         : ShiftCount = `P_RD2 * XLEN;
+      `RD1         : ShiftCount = `P_RD1 * XLEN;
+      `WD          : ShiftCount = `P_WD * XLEN;
+      `WE          : ShiftCount = `P_WE * XLEN;
+
       `X1  : ShiftCount = `P_X1 * XLEN;
       `X2  : ShiftCount = `P_X2 * XLEN;
       `X3  : ShiftCount = `P_X3 * XLEN;

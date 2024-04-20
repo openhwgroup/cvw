@@ -151,20 +151,22 @@
 // 0x1000 – 0x101f | GPRs
 // 0x1020 – 0x103f | Floating point registers
 // 0xc000 – 0xffff | Reserved for non-standard extensions and internal use.
-`define PCM         16'h0
-`define TRAPM       16'h1
-`define INSTRM      16'h2
-`define INSTRVALIDM 16'h3
-`define MEMRWM      16'h4
-`define IEUADRM     16'h5
-`define READDATAM   16'h6
-`define WRITEDATAM  16'h7
-`define RS1         16'h8
-`define RS2         16'h9
-`define RD2         16'hA
-`define RD1         16'hB
-`define WD          16'hC
-`define WE          16'hD
+`define MISA        16'h301
+
+`define PCM         16'hC000
+`define TRAPM       16'hC001
+`define INSTRM      16'hC002
+`define INSTRVALIDM 16'hC003
+`define MEMRWM      16'hC004
+`define IEUADRM     16'hC005
+`define READDATAM   16'hC006
+`define WRITEDATAM  16'hC007
+`define RS1         16'hC008
+`define RS2         16'hC009
+`define RD2         16'hC00A
+`define RD1         16'hC00B
+`define WD          16'hC00C
+`define WE          16'hC00D
 
 //`define X0          16'h1000
 `define X1          16'h1001
@@ -202,54 +204,54 @@
 // Register scan change position
 // Used to translate register numbers (above) to position on register scan chain
 // Position number will be multiplied by XLEN to get true bit position for capture/update logic
-`define P_PCM         1
-`define P_TRAPM       2
-`define P_INSTRM      3
-`define P_INSTRVALIDM 4
-`define P_MEMRWM      5
-`define P_IEUADRM     6
-`define P_READDATAM   7
-`define P_WRITEDATAM  8
-`define P_RS1         9
-`define P_RS2         10
-`define P_RD2         11
-`define P_RD1         12
-`define P_WD          13
-`define P_WE          14
+`define P_MISA        1
 
-`define P_X1          15
-`define P_X2          16
-`define P_X3          17
-`define P_X4          18
-`define P_X5          19
-`define P_X6          20
-`define P_X7          21
-`define P_X8          22
-`define P_X9          23
-`define P_X10         24
-`define P_X11         25
-`define P_X12         26
-`define P_X13         27
-`define P_X14         28
-`define P_X15         29
-`define P_X16         30
-`define P_X17         31
-`define P_X18         32
-`define P_X19         33
-`define P_X20         34
-`define P_X21         35
-`define P_X22         36
-`define P_X23         37
-`define P_X24         38
-`define P_X25         39
-`define P_X26         40
-`define P_X27         41
-`define P_X28         42
-`define P_X29         43
-`define P_X30         44
-`define P_X31         45
+`define P_PCM         2
+`define P_TRAPM       3
+`define P_INSTRM      4
+`define P_INSTRVALIDM 5
+`define P_MEMRWM      6
+`define P_IEUADRM     7
+`define P_READDATAM   8
+`define P_WRITEDATAM  9
+`define P_RS1         10
+`define P_RS2         11
+`define P_RD2         12
+`define P_RD1         13
+`define P_WD          14
+`define P_WE          15
 
-
+`define P_X1          16
+`define P_X2          17
+`define P_X3          18
+`define P_X4          19
+`define P_X5          20
+`define P_X6          21
+`define P_X7          22
+`define P_X8          23
+`define P_X9          24
+`define P_X10         25
+`define P_X11         26
+`define P_X12         27
+`define P_X13         28
+`define P_X14         29
+`define P_X15         30
+`define P_X16         31
+`define P_X17         32
+`define P_X18         33
+`define P_X19         34
+`define P_X20         35
+`define P_X21         36
+`define P_X22         37
+`define P_X23         38
+`define P_X24         39
+`define P_X25         40
+`define P_X26         41
+`define P_X27         42
+`define P_X28         43
+`define P_X29         44
+`define P_X30         45
+`define P_X31         46
 
 
 // ACCESS_MEMORY Control ranges (Not implemented)

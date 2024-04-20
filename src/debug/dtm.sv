@@ -91,7 +91,7 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
   // TODO find the minimum sysclk:tck ratio that works
   synchronizer clksync (.clk(clk), .d(tck), .q(tcks));
 
-  jtag #(.ADDR_WIDTH(ADDR_WIDTH), .DEVICE_ID(JTAG_DEVICE_ID)) jtag (.tck(tcks), .tdi, .tms, .trstn(trstn), .tdo,
+  jtag #(.ADDR_WIDTH(ADDR_WIDTH), .DEVICE_ID(JTAG_DEVICE_ID)) jtag (.tck(tcks), .tdi, .tms, .tdo,
     .resetn, .UpdateDtmcs, .DtmcsIn, .DtmcsOut, .CaptureDmi, .UpdateDmi, .DmiIn, .DmiOut);
 
 
@@ -131,9 +131,10 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
             // this preemptively sets BUSY for next capture unless overwritten
             ValRspOP <= `OP_BUSY;
             DMIState <= START;
+          end else begin
+            ReqValid <= 0;
+            ValRspOP <= `OP_SUCCESS;
           end
-          ReqValid <= 0;
-          ValRspOP <= `OP_SUCCESS;
         end
 
         START : begin // TODO: add a timeout if ReqReady never asserts?

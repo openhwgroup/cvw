@@ -79,7 +79,9 @@ def read_data(register):
 
 
 def access_register(write, regno, addr_size):
-    """3.7.1.1"""
+    """3.7.1.1
+    Before starting an abstract command, a debugger must ensure that haltreq, resumereq, and
+    ackhavereset are all 0."""
     addr = "0x17"
     data = 2**17 # transfer bit always set
     match addr_size:
