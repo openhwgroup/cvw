@@ -27,6 +27,7 @@ PORT_CFLAGS = -g -mabi=$(ABI) -march=$(ARCH) -static -falign-functions=16 \
 all: $(work_dir)/coremark.bare.riscv.elf.memfile
 
 run:
+#	time wsim rv$(XLEN)gc coremark --sim verilator 2>&1 | tee $(work_dir)/coremark.sim.log
 	time wsim rv$(XLEN)gc coremark 2>&1 | tee $(work_dir)/coremark.sim.log
 
 $(work_dir)/coremark.bare.riscv.elf.memfile: $(work_dir)/coremark.bare.riscv
