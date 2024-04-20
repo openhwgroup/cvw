@@ -107,16 +107,16 @@ module decompress import cvw::*;  #(parameter cvw_t P) (
                     InstrD = {immCLD, rs1p, 3'b011, rdp, 7'b0000011}; // c.ld;
         5'b00100: if (P.ZCB_SUPPORTED) 
                     if (instr16[12:10] == 3'b000) 
-                      InstrD = {10'b0, instr16[6:5], rs1p, 3'b100, rdp, 7'b0000011}; // c.lbu
+                      InstrD = {10'b0, instr16[5], instr16[6], rs1p, 3'b100, rdp, 7'b0000011}; // c.lbu
                     else if (instr16[12:10] == 3'b001) begin
                       if (instr16[6]) 
                         InstrD = {10'b0, instr16[5], 1'b0, rs1p, 3'b001, rdp, 7'b0000011}; // c.lh
                       else
                         InstrD = {10'b0, instr16[5], 1'b0, rs1p, 3'b101, rdp, 7'b0000011}; // c.lhu
                     end else if (instr16[12:10] == 3'b010)
-                      InstrD = {7'b0, rs2p, rs1p, 3'b000, 3'b000, instr16[6:5], 7'b0000011}; // c.sb 
+                      InstrD = {7'b0, rs2p, rs1p, 3'b000, 3'b000, instr16[5], instr16[6], 7'b0100011}; // c.sb 
                     else if (instr16[12:10] == 3'b011 & instr16[6] == 1'b0)
-                      InstrD = {7'b0, rs2p, rs1p, 3'b001, 3'b000, instr16[5], 1'b0, 7'b0000011}; // c.sh
+                      InstrD = {7'b0, rs2p, rs1p, 3'b001, 3'b000, instr16[5], 1'b0, 7'b0100011}; // c.sh
                     else begin
                       IllegalCompInstrD = 1;
                       InstrD = {16'b0, instr16}; // preserve instruction for mtval on trap
