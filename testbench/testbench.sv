@@ -39,7 +39,6 @@ import "DPI-C" function string getenvval(input string env_name);
 `else
 import "DPI-C" function string getenv(input string env_name);
 `endif
-import "DPI-C" function int system(input string env_name);
 
 module testbench;
   /* verilator lint_off WIDTHTRUNC */
@@ -254,8 +253,9 @@ module testbench;
   logic        ResetCntRst;
   logic        CopyRAM;
 
-  string  signame, memfilename, bootmemfilename, uartoutfilename, pathname, rmCmd;
+  string  signame, memfilename, bootmemfilename, uartoutfilename, pathname;
   integer begin_signature_addr, end_signature_addr, signature_size;
+  integer uartoutfile;
 
   assign ResetThreshold = 3'd5;
 
@@ -328,8 +328,6 @@ module testbench;
   else
     assign EcallFaultM = 0;
   
-  // this is an unused integer for the return value of `system`
-  int unused_int;
   always @(posedge clk) begin
     ////////////////////////////////////////////////////////////////////////////////
     // Verify the test ran correctly by checking the memory against a known signature.
@@ -355,8 +353,7 @@ module testbench;
         memfilename = {RISCV_DIR, "/linux-testvectors/ram.bin"};
         bootmemfilename = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
         uartoutfilename = {"logs/", TEST, "_uart.out"};
-        rmCmd = {"rm -f ", uartoutfilename};
-        unused_int = system(rmCmd); // Delete existing UARToutfile
+        uartoutfile = $fopen(uartoutfilename, "wb");
       end
       else            memfilename = {pathname, tests[test], ".elf.memfile"};
       if (riscofTest) begin
@@ -383,6 +380,8 @@ module testbench;
   always @(posedge Validate) // added
 `endif
     if(Validate) begin
+      if (TEST == "buildroot")
+        $fclose(uartoutfile);
       if (TEST == "embench") begin
         // Writes contents of begin_signature to .sim.output file
         // this contains instret and cycles for start and end of test run, used by embench 
@@ -602,9 +601,7 @@ module testbench;
     always @(posedge clk) begin
       if (TEST == "buildroot") begin
         if (~dut.uncoregen.uncore.uartgen.uart.MEMWb & dut.uncoregen.uncore.uartgen.uart.uartPC.A == 3'b000 & ~dut.uncoregen.uncore.uartgen.uart.uartPC.DLAB) begin
-          memFile = $fopen(uartoutfilename, "ab");
-          $fwrite(memFile, "%c", dut.uncoregen.uncore.uartgen.uart.uartPC.Din);
-          $fclose(memFile);
+          $fwrite(uartoutfile, "%c", dut.uncoregen.uncore.uartgen.uart.uartPC.Din);
         end
       end
     end
