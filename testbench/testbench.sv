@@ -33,7 +33,9 @@
     `include "idv/idv.svh"
 `endif
 
-module testbench import cvw::*; ();
+import cvw::*;
+
+module testbench;
   /* verilator lint_off WIDTHTRUNC */
   /* verilator lint_off WIDTHEXPAND */
   parameter DEBUG=0;
