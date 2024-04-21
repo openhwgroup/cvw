@@ -26,19 +26,20 @@
 
 // This model actually works correctly with vivado.
 
-`ifdef VERILATOR
-    import "DPI-C" function string getenvval(input string env_name);
-    string       WALLY_DIR = getenvval("WALLY"); 
-`else
-    string       WALLY_DIR = "$WALLY";
-`endif
-
 module rom1p1r #(parameter ADDR_WIDTH = 8, DATA_WIDTH = 32, PRELOAD_ENABLED = 0)
   (input  logic                  clk,
    input  logic                  ce,
    input  logic [ADDR_WIDTH-1:0] addr,
    output logic [DATA_WIDTH-1:0] dout
 );
+
+`ifdef VERILATOR
+    import "DPI-C" function string getenvval(input string env_name);
+//    string       WALLY_DIR = getenvval("WALLY"); 
+    string       WALLY_DIR = "~/cvw";
+`else
+    string       WALLY_DIR = "$WALLY";
+`endif
 
    // Core Memory
    bit [DATA_WIDTH-1:0]    ROM [(2**ADDR_WIDTH)-1:0];

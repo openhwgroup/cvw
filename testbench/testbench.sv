@@ -33,12 +33,6 @@
     `include "idv/idv.svh"
 `endif
 
-`ifdef VERILATOR
-    import "DPI-C" function string getenvval(input string env_name);
-    string       RISCV_DIR = getenvval("RISCV"); // "/opt/riscv";
-`else
-    string       RISCV_DIR = "$RISCV"; // "/opt/riscv";
-`endif
 
 import cvw::*;
 
@@ -57,7 +51,14 @@ module testbench;
     import idvApiPkg::*;
   `endif
 
-`include "parameter-defs.vh"
+  `ifdef VERILATOR
+      import "DPI-C" function string getenvval(input string env_name);
+      string       RISCV_DIR = getenvval("RISCV"); // "/opt/riscv";
+  `else
+      string       RISCV_DIR = "$RISCV"; // "/opt/riscv";
+  `endif
+
+  `include "parameter-defs.vh"
 
   logic        clk;
   logic        reset_ext, reset;
