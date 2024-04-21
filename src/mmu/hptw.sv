@@ -213,9 +213,9 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   end else begin // block: hptwwrites
     assign NextPTE = ReadDataNoXM;
     assign HPTWAdr = HPTWReadAdr;
-    assign HPTWUpdateDA = 0;
-    assign UpdatePTE = 0;
-    assign HPTWRW[0] = 0;
+    assign HPTWUpdateDA = 1'b0;
+    assign UpdatePTE = 1'b0;
+    assign HPTWRW[0] = 1'b0;
   end
 
   // Enable and select signals based on states

@@ -80,7 +80,7 @@ module fli import cvw::*;  #(parameter cvw_t P) (
         endcase
     end
     assign HImmBox = {{(P.FLEN-16){1'b1}}, HImm}; // NaN-box HImm
-  end else assign HImmBox = 0;
+  end else assign HImmBox = '0;
 
   ////////////////////////////
   // single
@@ -168,7 +168,7 @@ module fli import cvw::*;  #(parameter cvw_t P) (
         endcase
     end
     assign DImmBox = {{(P.FLEN-64){1'b1}}, DImm}; // NaN-box DImm
-  end else assign DImmBox = 0;
+  end else assign DImmBox = '0;
   
     ////////////////////////////
   // double
@@ -213,7 +213,7 @@ module fli import cvw::*;  #(parameter cvw_t P) (
         endcase
     end
     assign QImmBox = QImm; // NaN-box QImm trivial because Q is longest format
-  end else assign QImmBox = 0;
+  end else assign QImmBox = '0;
 
   mux4 #(P.FLEN) flimux(SImmBox, DImmBox, HImmBox, QImmBox, Fmt, Imm); // select immediate based on format
 

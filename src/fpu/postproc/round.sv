@@ -255,7 +255,7 @@ module round import cvw::*;  #(parameter cvw_t P) (
       // Determine if you add 1
       case (Frm)
           3'b000: CalcPlus1  = Guard & (Round|Sticky|LsbRes);//round to nearest even
-          3'b001: CalcPlus1  = 0;//round to zero
+          3'b001: CalcPlus1  = 1'b0;//round to zero
           3'b010: CalcPlus1  = Ms;//round down
           3'b011: CalcPlus1  = ~Ms;//round up
           3'b100: CalcPlus1  = Guard;//round to nearest max magnitude
@@ -264,7 +264,7 @@ module round import cvw::*;  #(parameter cvw_t P) (
       // Determine if you add 1 (for underflow flag)
       case (Frm)
           3'b000: UfCalcPlus1  = Round & (Sticky|Guard);//round to nearest even
-          3'b001: UfCalcPlus1  = 0;//round to zero
+          3'b001: UfCalcPlus1  = 1'b0;//round to zero
           3'b010: UfCalcPlus1  = Ms;//round down
           3'b011: UfCalcPlus1  = ~Ms;//round up
           3'b100: UfCalcPlus1  = Round;//round to nearest max magnitude
@@ -305,7 +305,7 @@ module round import cvw::*;  #(parameter cvw_t P) (
           2'b00:    Me = {CvtCe[P.NE], CvtCe}&{P.NE+2{~CvtResSubnormUf|CvtResUf}}; // cvt
           // 2'b01: Me = DivDone ? Ue : 0; // divide
           2'b01:    Me = Ue; // divide
-          default:  Me = 0; 
+          default:  Me = '0; 
       endcase
 
 

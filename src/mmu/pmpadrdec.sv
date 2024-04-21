@@ -77,7 +77,7 @@ module pmpadrdec import cvw::*;  #(parameter cvw_t P) (
 
   assign Match = (AdrMode == TOR) ? TORMatch : 
                  (AdrMode == NA4 | AdrMode == NAPOT) ? NAMatch :
-                 0;
+                 1'b0;
 
   assign L = PMPCfg[7];
   assign X = PMPCfg[2];

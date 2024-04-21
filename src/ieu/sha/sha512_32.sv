@@ -42,7 +42,7 @@ module sha512_32 (
    assign x[0][2] = A >> 8;
    assign x[0][3] = B << 31;
    assign x[0][4] = B << 24;
-   assign x[0][5] = 0;   
+   assign x[0][5] = '0;   
 
    // sha512sig0l
    assign x[1][0] = A >> 1; 
@@ -58,7 +58,7 @@ module sha512_32 (
    assign x[2][2] = A >> 19;
    assign x[2][3] = B >> 29;
    assign x[2][4] = B << 13;
-   assign x[2][5] = 0;      
+   assign x[2][5] = '0;      
 
    // sha512sig1l
    assign x[3][0] = A << 3; 

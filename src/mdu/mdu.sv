@@ -59,9 +59,9 @@ module mdu import cvw::*;  #(parameter cvw_t P) (
   // When IDIV_ON_FPU is set, use the FPU divider instead
   // In ZMMUL, with M_SUPPORTED = 0, omit the divider
   if ((P.IDIV_ON_FPU & P.F_SUPPORTED) || (!P.M_SUPPORTED)) begin:nodiv  
-    assign QuotM = 0;
-    assign RemM = 0;
-    assign DivBusyE = 0;
+    assign QuotM = '0;
+    assign RemM = '0;
+    assign DivBusyE = 1'b0;
   end else begin:div
     div #(P) div(.clk, .reset, .StallM, .FlushE, .DivSignedE(~Funct3E[0]), .W64E, .IntDivE, 
         .ForwardedSrcAE, .ForwardedSrcBE, .DivBusyE, .QuotM, .RemM);

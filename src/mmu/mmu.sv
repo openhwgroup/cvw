@@ -93,10 +93,10 @@ module mmu import cvw::*;  #(parameter cvw_t P,
           .TLBWrite, .TLBFlush, .TLBPAdr, .TLBMiss, .TLBHit, 
           .Translate, .TLBPageFault, .UpdateDA, .PBMemoryType);
   end else begin:tlb // just pass address through as physical
-    assign Translate    = 0;
-    assign TLBMiss      = 0;
-    assign TLBHit       = 1; // *** is this necessary
-    assign TLBPageFault = 0;
+    assign Translate    = 1'b0;
+    assign TLBMiss      = 1'b0;
+    assign TLBHit       = 1'b1; // *** is this necessary
+    assign TLBPageFault = 1'b0;
     assign PBMemoryType = 2'b00;
   end
 
@@ -121,9 +121,9 @@ module mmu import cvw::*;  #(parameter cvw_t P,
       .ExecuteAccessF, .WriteAccessM, .ReadAccessM, .CMOpM, 
       .PMPInstrAccessFaultF, .PMPLoadAccessFaultM, .PMPStoreAmoAccessFaultM);
   end else begin
-    assign PMPInstrAccessFaultF     = 0;
-    assign PMPStoreAmoAccessFaultM  = 0;
-    assign PMPLoadAccessFaultM      = 0;
+    assign PMPInstrAccessFaultF     = 1'b0;
+    assign PMPStoreAmoAccessFaultM  = 1'b0;
+    assign PMPLoadAccessFaultM      = 1'b0;
   end
 
   assign ReadNoAmoAccessM  = ReadAccessM & ~WriteAccessM;// AMO causes StoreAmo rather than Load fault
@@ -132,7 +132,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   // Misaligned faults
   always_comb // exclusion-tag: immu-wordaccess
     case(Size[1:0]) 
-      2'b00:  DataMisalignedM = 0;                 // lb, sb, lbu
+      2'b00:  DataMisalignedM = 1'b0;              // lb, sb, lbu
       2'b01:  DataMisalignedM = VAdr[0];           // lh, sh, lhu
       2'b10:  DataMisalignedM = VAdr[1] | VAdr[0]; // lw, sw, flw, fsw, lwu
       2'b11:  DataMisalignedM = |VAdr[2:0];        // ld, sd, fld, fsd

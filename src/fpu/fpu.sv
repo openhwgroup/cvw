@@ -218,7 +218,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   
   // Select NAN-boxed value of Z = 0.0 in proper format for FMA for multiply X*Y+Z
   // For add and subtract, Z comes from second source operand
-  if(P.FPSIZES == 1) assign BoxedZeroE = 0;
+  if(P.FPSIZES == 1) assign BoxedZeroE = '0;
   else if(P.FPSIZES == 2) 
     mux2 #(P.FLEN) fmulzeromux ({{P.FLEN-P.LEN1{1'b1}}, {P.LEN1{1'b0}}}, (P.FLEN)'(0), FmtE, BoxedZeroE); // NaN boxing zeroes
   else if(P.FPSIZES == 3 | P.FPSIZES == 4)
@@ -275,7 +275,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
     flopenrc #(5) Rs1EReg(clk, reset, FlushE, ~StallE, InstrD[19:15], Rs1E);
     flopenrc #(2) Fmt2EReg(clk, reset, FlushE, ~StallE, InstrD[26:25], Fmt2E);
     fli #(P) fli(.Rs1(Rs1E), .Fmt(Fmt2E), .Imm(FliResE)); 
-  end else assign FliResE = 0;
+  end else assign FliResE = '0;
 
   // fmv.*.x: NaN Box SrcA to extend integer to requested FP size 
   if(P.FPSIZES == 1) 

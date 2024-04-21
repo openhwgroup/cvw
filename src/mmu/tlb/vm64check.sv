@@ -43,7 +43,7 @@ module vm64check import cvw::*;  #(parameter cvw_t P) (
     assign eq_63_47 = &(VAdr[63:47]) | ~|(VAdr[63:47]); 
     assign UpperBitsUnequal = SV39Mode ? ~(eq_63_47 & eq_46_38) : ~eq_63_47;
   end else begin
-    assign SV39Mode = 0;
-    assign UpperBitsUnequal = 0;
+    assign SV39Mode = 1'b0;
+    assign UpperBitsUnequal = 1'b0;
   end
 endmodule

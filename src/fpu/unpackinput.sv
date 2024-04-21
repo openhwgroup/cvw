@@ -54,7 +54,7 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
   assign In = A & {P.FLEN{FPUActive}};
 
   if (P.FPSIZES == 1) begin        // if there is only one floating point format supported
-      assign BadNaNBox = 0;
+      assign BadNaNBox = 1'b0;
       assign Sgn = In[P.FLEN-1];  // sign bit
       assign Frac = In[P.NF-1:0];  // fraction (no assumed 1)
       assign ExpNonZero = |In[P.FLEN-2:P.NF];  // is the exponent non-zero
@@ -133,7 +133,7 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
       // Check NaN boxing
       always_comb
           case (Fmt)
-              P.FMT:  BadNaNBox = 0;
+              P.FMT:  BadNaNBox = 1'b0;
               P.FMT1: BadNaNBox = ~&In[P.FLEN-1:P.LEN1];
               P.FMT2: BadNaNBox = ~&In[P.FLEN-1:P.LEN2];
               default: BadNaNBox = 1'bx;
@@ -149,30 +149,30 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
 
       // extract the sign bit
       always_comb
-        if (BadNaNBox) Sgn = 0; // improperly boxed NaNs are treated as positive
+        if (BadNaNBox) Sgn = 1'b0; // improperly boxed NaNs are treated as positive
         else
           case (Fmt)
-              P.FMT:  Sgn = In[P.FLEN-1];
-              P.FMT1: Sgn = In[P.LEN1-1];
-              P.FMT2: Sgn = In[P.LEN2-1];
+              P.FMT:   Sgn = In[P.FLEN-1];
+              P.FMT1:  Sgn = In[P.LEN1-1];
+              P.FMT2:  Sgn = In[P.LEN2-1];
               default: Sgn = 1'bx;
           endcase
 
        // extract the fraction
       always_comb
           case (Fmt)
-              P.FMT: Frac = In[P.NF-1:0];
-              P.FMT1: Frac = {In[P.NF1-1:0], (P.NF-P.NF1)'(0)};
-              P.FMT2: Frac = {In[P.NF2-1:0], (P.NF-P.NF2)'(0)};
+              P.FMT:   Frac = In[P.NF-1:0];
+              P.FMT1:  Frac = {In[P.NF1-1:0], (P.NF-P.NF1)'(0)};
+              P.FMT2:  Frac = {In[P.NF2-1:0], (P.NF-P.NF2)'(0)};
               default: Frac = {P.NF{1'bx}};
           endcase
 
       // is the exponent non-zero
       always_comb
           case (Fmt)
-              P.FMT:  ExpNonZero = |In[P.FLEN-2:P.NF];     // if input is largest precision (P.FLEN - ie quad or double)
-              P.FMT1: ExpNonZero = |In[P.LEN1-2:P.NF1];  // if input is larger precsion (P.LEN1 - double or single)
-              P.FMT2: ExpNonZero = |In[P.LEN2-2:P.NF2]; // if input is smallest precsion (P.LEN2 - single or half)
+              P.FMT:   ExpNonZero = |In[P.FLEN-2:P.NF];   // if input is largest precision (P.FLEN - ie quad or double)
+              P.FMT1:  ExpNonZero = |In[P.LEN1-2:P.NF1];  // if input is larger precsion (P.LEN1 - double or single)
+              P.FMT2:  ExpNonZero = |In[P.LEN2-2:P.NF2];  // if input is smallest precsion (P.LEN2 - single or half)
               default: ExpNonZero = 1'bx; 
           endcase
           
@@ -209,13 +209,13 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
       //   P.Q_LEN  |  P.D_LEN  |  P.S_LEN  |  P.H_LEN     length of floating point number
       //   P.Q_NE   |  P.D_NE   |  P.S_NE   |  P.H_NE      length of exponent
       //   P.Q_NF   |  P.D_NF   |  P.S_NF   |  P.H_NF      length of fraction
-      //   P.Q_BIAS |  P.D_BIAS |  P.S_BIAS |  P.H_BIAS    exponent's bias value
+      //   P.Q_BIAS |  P.D_= 1'b1; |  P.S_BIAS |  P.H_BIAS    exponent's bias value
       //   P.Q_FMT  |  P.D_FMT  |  P.S_FMT  |  P.H_FMT     precision's format value - Q=11 D=01 Sticky=00 H=10
 
       // Check NaN boxing
       always_comb
           case (Fmt)
-              2'b11: BadNaNBox = 0;
+              2'b11: BadNaNBox = 1'b0;
               2'b01: BadNaNBox = ~&In[P.Q_LEN-1:P.D_LEN];
               2'b00: BadNaNBox = ~&In[P.Q_LEN-1:P.S_LEN];
               2'b10: BadNaNBox = ~&In[P.Q_LEN-1:P.H_LEN];
@@ -234,7 +234,7 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
 
       // extract sign bit
       always_comb
-        if (BadNaNBox) Sgn = 0; // improperly boxed NaNs are treated as positive
+        if (BadNaNBox) Sgn = 1'b0; // improperly boxed NaNs are treated as positive
         else
           case (Fmt)
               2'b11: Sgn = In[P.Q_LEN-1];

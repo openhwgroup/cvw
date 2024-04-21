@@ -68,7 +68,7 @@ module fdivsqrtstage4 import cvw::*;  #(parameter cvw_t P) (
     case (udigit)
       4'b1000: Dsel = DBar2;
       4'b0100: Dsel = DBar;
-      4'b0000: Dsel = 0;
+      4'b0000: Dsel = '0;
       4'b0010: Dsel = D;
       4'b0001: Dsel = D2;
       default: Dsel = 'x;

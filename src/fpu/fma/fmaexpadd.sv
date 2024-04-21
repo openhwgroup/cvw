@@ -37,6 +37,6 @@ module fmaexpadd import cvw::*;  #(parameter cvw_t P) (
   
   // kill the exponent if the product is zero - either X or Y is 0
   assign PZero = XZero | YZero;
-  assign Pe    = PZero ? 0 : ({2'b0, Xe} + {2'b0, Ye} - {2'b0, (P.NE)'(P.BIAS)});
+  assign Pe    = PZero ? '0 : ({2'b0, Xe} + {2'b0, Ye} - {2'b0, (P.NE)'(P.BIAS)});
 
 endmodule

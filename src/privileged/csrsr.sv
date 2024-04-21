@@ -66,7 +66,7 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
                            STATUS_XS, STATUS_FS, /*STATUS_MPP, 2'b0*/ 4'b0,
                            STATUS_SPP, /*STATUS_MPIE*/ 1'b0, STATUS_UBE, STATUS_SPIE,
                           /*1'b0, STATUS_MIE, 1'b0*/ 3'b0, STATUS_SIE, 1'b0};
-    assign MSTATUSH_REGW = 0; // *** does not exist when XLEN=64, but don't want it to have an undefined value.  Spec is not clear what it should be.
+    assign MSTATUSH_REGW = '0; // *** does not exist when XLEN=64, but don't want it to have an undefined value.  Spec is not clear what it should be.
   end else begin: csrsr32 // RV32
     assign MSTATUS_REGW  = {STATUS_SD, 8'b0,
                            STATUS_TSR, STATUS_TW, STATUS_TVM, STATUS_MXR, STATUS_SUM, STATUS_MPRV,
@@ -89,14 +89,11 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
     assign nextSBE = STATUS_SBE;
   end
 
-  // harwired STATUS bits
+  // hardwired STATUS bits
   assign STATUS_TSR  = P.S_SUPPORTED & STATUS_TSR_INT; // override reigster with 0 if supervisor mode not supported
   assign STATUS_TW   = (P.S_SUPPORTED | P.U_SUPPORTED) & STATUS_TW_INT; // override register with 0 if only machine mode supported
   assign STATUS_TVM  = P.S_SUPPORTED & STATUS_TVM_INT; // override reigster with 0 if supervisor mode not supported
   assign STATUS_MXR  = P.S_SUPPORTED & STATUS_MXR_INT; // override reigster with 0 if supervisor mode not supported
-/* assign STATUS_UBE = 0; // little-endian
-  assign STATUS_SBE  = 0; // little-endian
-  assign STATUS_MBE  = 0; // little-endian */
   // SXL and UXL bits only matter for RV64.  Set to 10 for RV64 if mode is supported, or 0 if not
   assign STATUS_SXL  = P.S_SUPPORTED ? 2'b10 : 2'b00; // 10 if supervisor mode supported
   assign STATUS_UXL  = P.U_SUPPORTED ? 2'b10 : 2'b00; // 10 if user mode supported
@@ -133,29 +130,29 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
       endcase
     end
   end else begin: endianmux
-    assign BigEndianM = 0;
+    assign BigEndianM = 1'b0;
   end
 
   // registers for STATUS bits
   // complex register with reset, write enable, and the ability to update other bits in certain cases
   always_ff @(posedge clk) //, posedge reset)
     if (reset) begin
-      STATUS_TSR_INT  <= 0;
-      STATUS_TW_INT   <= 0;
-      STATUS_TVM_INT  <= 0;
-      STATUS_MXR_INT  <= 0;
-      STATUS_SUM_INT  <= 0;
-      STATUS_MPRV_INT <= 0; // Per Priv 3.3
-      STATUS_FS_INT   <= P.F_SUPPORTED ? 2'b00 : 2'b00; // leave floating-point off until activated, even if F_SUPPORTED
-      STATUS_MPP      <= 0; 
-      STATUS_SPP      <= 0; 
-      STATUS_MPIE     <= 0; 
-      STATUS_SPIE     <= 0; 
-      STATUS_MIE      <= 0; 
-      STATUS_SIE      <= 0; 
-      STATUS_MBE      <= 0;
-      STATUS_SBE      <= 0;
-      STATUS_UBE      <= 0;
+      STATUS_TSR_INT  <= 1'b0;
+      STATUS_TW_INT   <= 1'b0;
+      STATUS_TVM_INT  <= 1'b0;
+      STATUS_MXR_INT  <= 1'b0;
+      STATUS_SUM_INT  <= 1'b0;
+      STATUS_MPRV_INT <= 1'b0; // Per Priv 3.3
+      STATUS_FS_INT   <= 2'b00; // leave floating-point off until activated, even if F_SUPPORTED
+      STATUS_MPP      <= 2'b00; 
+      STATUS_SPP      <= 1'b0; 
+      STATUS_MPIE     <= 1'b0; 
+      STATUS_SPIE     <= 1'b0; 
+      STATUS_MIE      <= 1'b0; 
+      STATUS_SIE      <= 1'b0; 
+      STATUS_MBE      <=1'b 0;
+      STATUS_SBE      <= 1'b0;
+      STATUS_UBE      <= 1'b0;
     end else if (~StallW) begin
       if (TrapM) begin
         // Update interrupt enables per Privileged Spec p. 21
@@ -164,23 +161,23 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
         // Modes: 11 = Machine, 01 = Supervisor, 00 = User
         if (NextPrivilegeModeM == P.M_MODE) begin
           STATUS_MPIE <= STATUS_MIE;
-          STATUS_MIE  <= 0;
+          STATUS_MIE  <= 1'b0;
           STATUS_MPP  <= PrivilegeModeW;
         end else begin // supervisor mode
           STATUS_SPIE <= STATUS_SIE;
-          STATUS_SIE  <= 0;
+          STATUS_SIE  <= 1'b0;
           STATUS_SPP  <= PrivilegeModeW[0];
        end
       end else if (mretM) begin // Privileged 3.1.6.1
         STATUS_MIE      <= STATUS_MPIE; // restore global interrupt enable
-        STATUS_MPIE     <= 1; // 
+        STATUS_MPIE     <= 1'b1; // 
         STATUS_MPP      <= P.U_SUPPORTED ? P.U_MODE : P.M_MODE; // set MPP to lowest supported privilege level
         STATUS_MPRV_INT <= STATUS_MPRV_INT & (STATUS_MPP == P.M_MODE); // page 21 of privileged spec.
       end else if (sretM) begin
         STATUS_SIE      <= STATUS_SPIE; // restore global interrupt enable
         STATUS_SPIE     <= P.S_SUPPORTED; 
-        STATUS_SPP      <= 0; // set SPP to lowest supported privilege level to catch bugs
-        STATUS_MPRV_INT <= 0; // always clear MPRV
+        STATUS_SPP      <= 1'b0; // set SPP to lowest supported privilege level to catch bugs
+        STATUS_MPRV_INT <= 1'b0; // always clear MPRV
       end else if (WriteMSTATUSM) begin
         STATUS_TSR_INT  <= CSRWriteValM[22];
         STATUS_TW_INT   <= CSRWriteValM[21];

@@ -34,7 +34,7 @@ module popcnt #(parameter WIDTH = 32) (
   logic [$clog2(WIDTH):0] sum; 
   
   always_comb begin
-    sum = 0;
+    sum = '0;
     for (int i=0;i<WIDTH;i++) begin:loop
       sum = (num[i]) ? sum + 1 : sum;
     end

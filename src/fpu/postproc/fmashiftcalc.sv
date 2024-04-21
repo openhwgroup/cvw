@@ -60,7 +60,7 @@ module fmashiftcalc import cvw::*;  #(parameter cvw_t P) (
   end else if (P.FPSIZES == 3) begin
     always_comb begin
         case (Fmt)
-            P.FMT:   BiasCorr =  0;
+            P.FMT:   BiasCorr =  '0;
             P.FMT1:  BiasCorr = (P.NE+2)'(P.BIAS1-P.BIAS);
             P.FMT2:  BiasCorr = (P.NE+2)'(P.BIAS2-P.BIAS);
             default: BiasCorr = 'x;
@@ -70,7 +70,7 @@ module fmashiftcalc import cvw::*;  #(parameter cvw_t P) (
   end else if (P.FPSIZES == 4) begin
     always_comb begin
         case (Fmt)
-            2'h3: BiasCorr = 0;
+            2'h3: BiasCorr = '0;
             2'h1: BiasCorr = (P.NE+2)'(P.D_BIAS-P.Q_BIAS);
             2'h0: BiasCorr = (P.NE+2)'(P.S_BIAS-P.Q_BIAS);
             2'h2: BiasCorr = (P.NE+2)'(P.H_BIAS-P.Q_BIAS);

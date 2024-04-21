@@ -81,7 +81,7 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
 
   // C register/initialization mux: C = -R:
   // C = -4 = 00.000000... (in Q2.DIVb) for radix 4, C = -2 = 10.000000... for radix2
-  if(P.RADIX == 4) assign initC = 0;
+  if(P.RADIX == 4) assign initC = '0;
   else             assign initC = {2'b10, {{P.DIVb{1'b0}}}};
   mux2   #(P.DIVb+2) cmux(C[P.DIVCOPIES], initC, IFDivStartE, NextC); 
   flopen #(P.DIVb+2) creg(clk, FDivBusyE, NextC, C[0]);
