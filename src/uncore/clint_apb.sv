@@ -42,6 +42,11 @@ module clint_apb import cvw::*;  #(parameter cvw_t P) (
   output logic                MTimerInt, MSwInt
 );
 
+  // register map
+  localparam CLINT_MSIP     = 16'h0000;
+  localparam CLINT_MTIMECMP = 16'h4000;
+  localparam CLINT_MTIME    = 16'hBFF8;
+
   logic                       MSIP;
   logic [15:0]                entry;
   logic                       memwrite;
@@ -65,19 +70,19 @@ module clint_apb import cvw::*;  #(parameter cvw_t P) (
   if (P.XLEN==64) begin:clint // 64-bit
     always_ff @(posedge PCLK) begin
       case(entry)
-        16'h0000: PRDATA <= {63'b0, MSIP};
-        16'h4000: PRDATA <= MTIMECMP;
-        16'hBFF8: PRDATA <= MTIME;
-        default:  PRDATA <= 0;
+        CLINT_MSIP:     PRDATA <= {63'b0, MSIP};
+        CLINT_MTIMECMP: PRDATA <= MTIMECMP;
+        CLINT_MTIME:    PRDATA <= MTIME;
+        default:        PRDATA <= '0;
       endcase
     end 
     always_ff @(posedge PCLK or negedge PRESETn) 
       if (~PRESETn) begin
-        MSIP <= 0;
+        MSIP <= 1'b0;
         MTIMECMP <= 64'hFFFFFFFFFFFFFFFF; // Spec says MTIMECMP is not reset, but we reset to maximum value to prevent spurious timer interrupts
       end else if (memwrite) begin
-        if (entry == 16'h0000) MSIP <= PWDATA[0];
-        if (entry == 16'h4000) begin
+        if (entry == CLINT_MSIP) MSIP <= PWDATA[0];
+        if (entry == CLINT_MTIMECMP) begin
           for(i=0;i<P.XLEN/8;i++)
             if(PSTRB[i])
               MTIMECMP[i*8 +: 8] <= PWDATA[i*8 +: 8]; // ***dh: this notation isn't in book yet - maybe from Ross
@@ -89,7 +94,7 @@ module clint_apb import cvw::*;  #(parameter cvw_t P) (
 
     always_ff @(posedge PCLK or negedge PRESETn) 
       if (~PRESETn) begin
-        MTIME <= 0;
+        MTIME <= '0;
       end else if (memwrite & entry == 16'hBFF8) begin
         // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
         for(j=0;j<P.XLEN/8;j++)
@@ -104,13 +109,13 @@ module clint_apb import cvw::*;  #(parameter cvw_t P) (
         16'h4004: PRDATA <= MTIMECMP[63:32];
         16'hBFF8: PRDATA <= MTIME[31:0];
         16'hBFFC: PRDATA <= MTIME[63:32];
-        default:  PRDATA <= 0;
+        default:  PRDATA <= '0;
       endcase
     end 
     always_ff @(posedge PCLK or negedge PRESETn) 
       if (~PRESETn) begin
-        MSIP <= 0;
-        MTIMECMP <= 0;
+        MSIP <= 1'b0;
+        MTIMECMP <= '0;
         // MTIMECMP is not reset ***?
       end else if (memwrite) begin
         if (entry == 16'h0000) MSIP <= PWDATA[0];
@@ -129,7 +134,7 @@ module clint_apb import cvw::*;  #(parameter cvw_t P) (
 //     timereg tr(PCLK, PRESETn, TIMECLK, memwrite & (entry==16'hBFF8), memwrite & (entry == 16'hBFFC), PWDATA, MTIME, done);
     always_ff @(posedge PCLK or negedge PRESETn) 
       if (~PRESETn) begin
-        MTIME <= 0;
+        MTIME <= '0;
         // MTIMECMP is not reset
       end else if (memwrite & (entry == 16'hBFF8)) begin
         for(i=0;i<P.XLEN/8;i++)
@@ -159,12 +164,12 @@ module timeregsync  import cvw::*;  #(parameter cvw_t P) (
 
   if (P.XLEN==64) 
     always_ff @(posedge clk or negedge resetn) 
-      if (~resetn)  q <= 0;
+      if (~resetn)  q <= '0;
       else if (we0) q <= wd;
       else          q <= q + 1;
   else
     always_ff @(posedge clk or negedge resetn) 
-      if (~resetn)  q <= 0;
+      if (~resetn)  q <= '0;
       else if (we0) q[31:0] <= wd;
       else if (we1) q[63:32] <= wd;
       else          q <= q + 1;
