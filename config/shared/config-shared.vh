@@ -131,7 +131,12 @@ localparam CORRSHIFTSZ = NORMSHIFTSZ-2;                             // Drop lead
 /* verilator lint_off PINCONNECTEMPTY */
 
 `ifdef VERILATOR
-import "DPI-C" function string getenvval(input string env_name);
+    import "DPI-C" function string getenvval(input string env_name);
+    string       RISCV_DIR = getenvval("RISCV"); // "/opt/riscv";
+    string       WALLY_DIR = getenvval("WALLY"); 
 `else
-import "DPI-C" function string getenv(input string env_name);
+//    import "DPI-C" function string getenv(input string env_name);
+//    string       RISCV_DIR = getenv("RISCV"); // "/opt/riscv";
+    string       RISCV_DIR = "$RISCV"; // "/opt/riscv";
+    string       WALLY_DIR = "$WALLY";
 `endif

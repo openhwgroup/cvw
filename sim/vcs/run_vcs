@@ -1,6 +1,7 @@
 #!/bin/bash
 # VCS Compilation for WALLY
 # Divya Kohli, Rose Thompson, David Harris 2024
+# Note: VCS produces warning about unsupported Linux Version, but runs successfully
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 CFG=${WALLY}/config
@@ -27,7 +28,8 @@ clean() {
 # Clean and run simulation with VCS
 clean
 #vcs +lint=all,noGCWM -simprofile -sverilog +vc -Mupdate -line -full64 -kdb -lca -debug_access+all+reverse -v2k_generate  ${SOURCE_PATH} +define+TEST=$TESTSUITE $SIMFILES -o $OUTPUT -error=NOODV
-# lint ignores Unused Inputs (UI), Unnamed Assertipons (SVA-UA), Dynamic Type Sensitivty [IDTS]
-vcs +lint=all,noGCWM,noUI,noSVA-UA,noIDTS -simprofile -sverilog +vc -Mupdate -line -full64 -kdb -lca -debug_access+all+reverse -v2k_generate  ${SOURCE_PATH} -pvalue+testbench.TEST=$TESTSUITE $SIMFILES -o $OUTPUT -error=NOODV
+# lint ignores Unused Inputs (UI), Unnamed Assertipons (SVA-UA), Dynamic Type Sensitivty [IDTS], Null Statement [NS], Unequal Length in Comparison Operation [ULCO]
+# ,noOBSV2G
+vcs +lint=all,noGCWM,noUI,noSVA-UA,noIDTS,noNS,noULCO,noCAWM-L,noWMIA-L -simprofile -sverilog +vc -Mupdate -line -full64 -kdb -lca -debug_access+all+reverse  ${SOURCE_PATH} -pvalue+testbench.TEST=$TESTSUITE $SIMFILES -o $OUTPUT -error=NOODV
 ./$OUTPUT | tee program.out
 

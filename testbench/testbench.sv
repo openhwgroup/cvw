@@ -33,9 +33,7 @@
     `include "idv/idv.svh"
 `endif
 
-import cvw::*;
-
-module testbench;
+module testbench import cvw::*; ();
   /* verilator lint_off WIDTHTRUNC */
   /* verilator lint_off WIDTHEXPAND */
   parameter DEBUG=0;
@@ -59,12 +57,6 @@ module testbench;
   // Variables that can be overwritten with $value$plusargs at start of simulation
   string       TEST;
   integer      INSTR_LIMIT;
-`ifdef VERILATOR
-  string       RISCV_DIR = getenvval("RISCV"); // "/opt/riscv";
-`else
-  string       RISCV_DIR = getenv("RISCV"); // "/opt/riscv";
-`endif
-  // string       RISCV_DIR = "/opt/riscv";
 
   // DUT signals
   logic [P.AHBW-1:0]    HRDATAEXT;
@@ -255,9 +247,9 @@ module testbench;
   assign ResetThreshold = 3'd5;
 
   initial begin
-    TestBenchReset = 1;
+    TestBenchReset = 1'b1;
     # 100;
-    TestBenchReset = 0;
+    TestBenchReset = 1'b0;
   end
 
   always_ff @(posedge clk)
@@ -501,7 +493,7 @@ module testbench;
     always @(posedge clk) 
       if (ResetMem)  // program memory is sometimes reset (e.g. for CoreMark, which needs zeroed memory)
         for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
-          dut.uncoregen.uncore.ram.ram.memory.RAM[adrindex] = 0;
+          dut.uncoregen.uncore.ram.ram.memory.RAM[adrindex] = '0;
 
   ////////////////////////////////////////////////////////////////////////////////
   // Actual hardware
@@ -546,7 +538,7 @@ module testbench;
 
   // generate clock to sequence tests
   always begin
-    clk = 1; # 5; clk = 0; # 5;
+    clk = 1'b1; # 5; clk = 1'b0; # 5;
   end
 
   /*

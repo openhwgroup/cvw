@@ -46,20 +46,11 @@ module rom1p1r #(parameter ADDR_WIDTH = 8, DATA_WIDTH = 32, PRELOAD_ENABLED = 0)
 
   end else begin */
 
-  initial begin
-    if (PRELOAD_ENABLED) begin
-`ifdef VERILATOR
-      $readmemh({getenvval("WALLY"), "/fpga/src/boot.mem"}, ROM, 0);
-`else
-      $readmemh("$WALLY/fpga/src/boot.mem", ROM, 0);
-`endif
-    end
-  end
-  
-  always_ff @ (posedge clk) begin
+  initial 
+    if (PRELOAD_ENABLED) $readmemh({WALLY_DIR,"/fpga/src/boot.mem"}, ROM, 0);
+
+  always_ff @ (posedge clk) 
     if(ce) dout <= ROM[addr];
-  end
-   
    
    // for FPGA, initialize with zero-stage bootloader
    /*if(PRELOAD_ENABLED) begin
