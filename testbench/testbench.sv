@@ -508,17 +508,17 @@ module testbench;
   ////////////////////////////////////////////////////////////////////////////////
 
   // instantiate device to be tested
-  assign GPIOIN = 0;
-  assign UARTSin = 1;
-  assign SPIIn = 0;
+  assign GPIOIN = '0;
+  assign UARTSin = 1'b1;
+  assign SPIIn = 1'b0;
 
   if(P.EXT_MEM_SUPPORTED) begin
     ram_ahb #(.P(P), .BASE(P.EXT_MEM_BASE), .RANGE(P.EXT_MEM_RANGE)) 
     ram (.HCLK, .HRESETn, .HADDR, .HWRITE, .HTRANS, .HWDATA, .HSELRam(HSELEXT), 
       .HREADRam(HRDATAEXT), .HREADYRam(HREADYEXT), .HRESPRam(HRESPEXT), .HREADY, .HWSTRB);
   end else begin 
-    assign HREADYEXT = 1;
-    assign {HRESPEXT, HRDATAEXT} = 0;
+    assign HREADYEXT = 1'b1;
+    assign {HRESPEXT, HRDATAEXT} = '0;
   end
 
   if(P.SDC_SUPPORTED) begin : sdcard
@@ -534,9 +534,9 @@ module testbench;
     assign SDCDat = sd_dat_reg_t ? sd_dat_reg_o : sd_dat_i;
     assign SDCDatIn = SDCDat;
  -----/\----- EXCLUDED -----/\----- */
-    assign SDCIntr = 0;
+    assign SDCIntr = 1'b0;
   end else begin
-    assign SDCIntr = 0;
+    assign SDCIntr = 1'b0;
   end
 
   wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
@@ -621,7 +621,7 @@ module testbench;
   //assign DCacheFlushStart =  TestComplete;
   end
   
-  DCacheFlushFSM #(P) DCacheFlushFSM(.clk(clk), .reset(reset), .start(DCacheFlushStart), .done(DCacheFlushDone));
+  DCacheFlushFSM #(P) DCacheFlushFSM(.clk, .start(DCacheFlushStart), .done(DCacheFlushDone));
 
   if(P.ZICSR_SUPPORTED) begin
     logic [P.XLEN-1:0] Minstret;

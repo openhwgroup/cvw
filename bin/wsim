@@ -82,6 +82,6 @@ elif (args.sim == "vcs"):
     if (args.gui):
         print("GUI option not available for VCS")
         exit(1)
-    cmd = cd + "; ./run_vcs " + args.config + " " + args.testsuite
+    cmd = cd + "; ./run_vcs " + args.config + " " + "\""+args.testsuite+"\""
     print(cmd)
     os.system(cmd)
