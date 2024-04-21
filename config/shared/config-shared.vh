@@ -129,3 +129,9 @@ localparam CORRSHIFTSZ = NORMSHIFTSZ-2;                             // Drop lead
 /* verilator lint_off STMTDLY */
 /* verilator lint_off ASSIGNDLY */
 /* verilator lint_off PINCONNECTEMPTY */
+
+`ifdef VERILATOR
+import "DPI-C" function string getenvval(input string env_name);
+`else
+import "DPI-C" function string getenv(input string env_name);
+`endif

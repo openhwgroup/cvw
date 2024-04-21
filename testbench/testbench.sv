@@ -34,11 +34,6 @@
 `endif
 
 import cvw::*;
-`ifdef VERILATOR
-import "DPI-C" function string getenvval(input string env_name);
-`else
-import "DPI-C" function string getenv(input string env_name);
-`endif
 
 module testbench;
   /* verilator lint_off WIDTHTRUNC */

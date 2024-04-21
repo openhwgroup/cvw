@@ -26,12 +26,6 @@
 
 // This model actually works correctly with vivado.
 
-`ifdef VERILATOR
-import "DPI-C" function string getenvval(input string env_name);
-`else
-import "DPI-C" function string getenv(input string env_name);
-`endif
-
 module rom1p1r #(parameter ADDR_WIDTH = 8, DATA_WIDTH = 32, PRELOAD_ENABLED = 0)
   (input  logic                  clk,
    input  logic                  ce,
