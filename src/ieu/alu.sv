@@ -81,7 +81,7 @@ module alu import cvw::*; #(parameter cvw_t P) (
       3'b010: FullResult = {{(P.XLEN-1){1'b0}}, LT};       // slt
       3'b011: FullResult = {{(P.XLEN-1){1'b0}}, LTU};      // sltu
       3'b100: FullResult = A ^ CondMaskInvB;               // xor, xnor, binv
-      3'b101: FullResult = (P.ZBS_SUPPORTED | P.ZBB_SUPPORTED) ? {{(P.XLEN-1){1'b0}},{|(A & CondMaskB)}} : Shift; // bext (or IEU shift when BMU not supported)
+      3'b101: FullResult = (P.ZBS_SUPPORTED) ? {{(P.XLEN-1){1'b0}},{|(A & CondMaskB)}} : Shift; // bext (or IEU shift when BMU not supported)
       3'b110: FullResult = A | CondMaskInvB;               // or, orn, bset
       3'b111: FullResult = A & ZeroCondMaskInvB;           // and, bclr, czero.*
     endcase
