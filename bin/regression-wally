@@ -237,6 +237,10 @@ def addTests(tests, sim):
 
 def search_log_for_text(text, grepfile):
     """Search through the given log file for text, returning True if it is found or False if it is not"""
+    grepwarn = "grep -H Warning: " + grepfile
+    os.system(grepwarn)
+    greperr = "grep -H Error: " + grepfile
+    os.system(greperr)
     grepcmd = "grep -a -e '%s' '%s' > /dev/null" % (text, grepfile)
 #    print("  search_log_for_text invoking %s" % grepcmd)
     return os.system(grepcmd) == 0

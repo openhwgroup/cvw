@@ -26,6 +26,13 @@
 
 // This model actually works correctly with vivado.
 
+`ifdef VERILATOR
+    import "DPI-C" function string getenvval(input string env_name);
+    string       WALLY_DIR = getenvval("WALLY"); 
+`else
+    string       WALLY_DIR = "$WALLY";
+`endif
+
 module rom1p1r #(parameter ADDR_WIDTH = 8, DATA_WIDTH = 32, PRELOAD_ENABLED = 0)
   (input  logic                  clk,
    input  logic                  ce,
@@ -47,7 +54,12 @@ module rom1p1r #(parameter ADDR_WIDTH = 8, DATA_WIDTH = 32, PRELOAD_ENABLED = 0)
   end else begin */
 
   initial 
-    if (PRELOAD_ENABLED) $readmemh({WALLY_DIR,"/fpga/src/boot.mem"}, ROM, 0);
+    if (PRELOAD_ENABLED) begin
+      if (DATA_WIDTH == 64) $readmemh({WALLY_DIR,"/fpga/src/boot.mem"}, ROM, 0);  // load boot ROM for FPGA
+      else begin // put something in the ROM so it is not optimized away
+        ROM[0] = 'h00002197;
+      end
+    end
 
   always_ff @ (posedge clk) 
     if(ce) dout <= ROM[addr];
