@@ -31,7 +31,6 @@ import "DPI-C" function string getenvval(input string env_name);
 `else
 import "DPI-C" function string getenv(input string env_name);
 `endif
-import "DPI-C" function int system(input string env_name);
 
 module rom1p1r #(parameter ADDR_WIDTH = 8, DATA_WIDTH = 32, PRELOAD_ENABLED = 0)
   (input  logic                  clk,
