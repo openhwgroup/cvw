@@ -87,7 +87,7 @@ module alu import cvw::*; #(parameter cvw_t P) (
     endcase
 
   // Support RV64I W-type addw/subw/addiw/shifts that discard upper 32 bits and sign-extend 32-bit result to 64 bits
-  if (P.XLEN == 64)  assign PreALUResult = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
+  if (P.XLEN == 64) assign PreALUResult = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
   else              assign PreALUResult = FullResult;
 
   // Bit manipulation muxing
