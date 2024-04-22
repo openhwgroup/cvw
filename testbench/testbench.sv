@@ -350,8 +350,7 @@ module testbench;
         memfilename = {RISCV_DIR, "/linux-testvectors/ram.bin"};
         bootmemfilename = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
         uartoutfilename = {"logs/", TEST, "_uart.out"};
-        uartoutfile = $fopen(uartoutfilename, "wb"); // delete UART output file
-        $fclose(uartoutfilename);
+        uartoutfile = $fopen(uartoutfilename, "w"); // delete UART output file
       end
       else            memfilename = {pathname, tests[test], ".elf.memfile"};
       if (riscofTest) begin
@@ -599,9 +598,8 @@ module testbench;
     always @(posedge clk) begin
       if (TEST == "buildroot") begin
         if (~dut.uncoregen.uncore.uartgen.uart.MEMWb & dut.uncoregen.uncore.uartgen.uart.uartPC.A == 3'b000 & ~dut.uncoregen.uncore.uartgen.uart.uartPC.DLAB) begin
-          uartoutfile = $fopen(uartoutfilename, "a"); // append characters one at a time so we see a consistent log appearing during the run
-          $fwrite(uartoutfile, "%c", dut.uncoregen.uncore.uartgen.uart.uartPC.Din);
-          $fclose(uartoutfilename);
+          $fwrite(uartoutfile, "%c", dut.uncoregen.uncore.uartgen.uart.uartPC.Din); // append characters one at a time so we see a consistent log appearing during the run
+          $fflush(uartoutfile);
         end
       end
     end
