@@ -253,7 +253,8 @@ def run_test_case(config):
     # print("  run_test_case invoking %s" % cmd)
     os.system(cmd)
     if search_log_for_text(config.grepstr, grepfile):
-        print(f"{bcolors.OKGREEN}%s_%s: Success{bcolors.ENDC}" % (config.variant, config.name))
+#        print(f"{bcolors.OKGREEN}%s_%s: Success{bcolors.ENDC}" % (config.variant, config.name))
+        print(f"{bcolors.OKGREEN}%s: Success{bcolors.ENDC}" % (config.cmd))
         return 0
     else:
         print(f"{bcolors.FAIL}%s_%s: Failures detected in output{bcolors.ENDC}" % (config.variant, config.name))
@@ -280,8 +281,8 @@ buildroot = '--buildroot' in sys.argv
 
 if (nightly):
     nightMode = "--nightly";
-#    sims = ["questa", "verilator", "vcs"]
-    sims = ["verilator"] # *** uncomment to exercise all simulators
+    sims = [defaultsim] 
+#    sims = ["questa", "verilator", "vcs"] # *** uncomment to exercise all simulators
 else:
     nightMode = ""
     sims = [defaultsim]
@@ -314,8 +315,8 @@ else:
 
     # run derivative configurations in nightly regression
 if (nightly):
-    addTests(derivconfigtests, defaultsim)
     addTests(tests_buildrootboot, defaultsim)
+    addTests(derivconfigtests, defaultsim)
 else:
     addTests(tests_buildrootshort, defaultsim)
 
