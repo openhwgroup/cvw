@@ -225,6 +225,10 @@ module testbench;
       $display("TEST %s not supported in this configuration", TEST);
       $finish;
     end
+`ifdef MAKEVCD
+    $dumpfile("testbench.vcd");
+    $dumpvars;
+`endif
   end // initial begin
 
   // Model the testbench as an fsm.

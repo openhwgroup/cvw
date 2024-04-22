@@ -23,6 +23,7 @@ parser.add_argument("--tb", "-t", help="Testbench", choices=["testbench", "testb
 parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true")
 parser.add_argument("--coverage", "-c", help="Code & Functional Coverage", action="store_true")
 parser.add_argument("--args", "-a", help="Optional arguments passed to simulator via $value$plusargs", default="")
+parser.add_argument("--vcd", "-v", help="Generate testbench.vcd", action="store_true")
 args = parser.parse_args()
 print("Config=" + args.config + " tests=" + args.testsuite + " sim=" + args.sim + " gui=" + str(args.gui) + " args='" + args.args + "'")
 
@@ -37,6 +38,8 @@ if (args.coverage):
         print("Coverage option only available for Questa")
         exit(1)
 
+if (args.vcd):
+    args.args += " -DMAKEVCD=1"
 
 #  create the output sub-directories.
 WALLY = os.environ.get('WALLY')
@@ -67,6 +70,6 @@ if (args.sim == "questa"):
 elif (args.sim == "verilator"):
     # PWD=${WALLY}/sim CONFIG=rv64gc TESTSUITE=arch64i
     print(f"Running Verilator on {args.config} {args.testsuite}")
-    os.system(f"/usr/bin/make -C {regressionDir}/verilator WALLYCONF={args.config} TEST={args.testsuite}")
+    os.system(f"/usr/bin/make -C {regressionDir}/verilator WALLYCONF={args.config} TEST={args.testsuite} EXTRA_ARGS='{args.args}'")
 elif (args.sim == "vcs"):
     print("Running VCS on %s %s", args.config, args.testsuite)
