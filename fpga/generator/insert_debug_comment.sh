@@ -4,7 +4,7 @@
 ##
 ## Written: Rose Thompson ross1728@gmail.com
 ## Created: 20 January 2023
-## Modified: 16 April 2024
+## Modified: 22 April 2024
 ##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
 ## https://github.com/openhwgroup/cvw
@@ -29,21 +29,12 @@
 # Then it processes them to add mark_debug on signals needed by the FPGA's ILA.
 copiedDir="../src/CopiedFiles_do_not_add_to_repo"
 while read line; do
-    # older versions of bash are incompatible with readarray -d :(
-    #readarray -d ":" -t StrArray <<< "$line"
-    #file="${copiedDir}/${StrArray[0]}"
-    #signal=`echo "${StrArray[1]}" | awk '{$1=$1};1'`
-    fileName=`echo $line | cut -d  ":" -f 1`
-    file=${copiedDir}/$fileName
-    signal=`echo $line | cut -d  ":" -f 2`
-    echo $file
-    echo $signal
+    readarray -d ":" -t StrArray <<< "$line"
+    file="${copiedDir}/${StrArray[0]}"
+    signal=`echo "${StrArray[1]}" | awk '{$1=$1};1'`
     readarray -d " " -t SigArray <<< $signal
-    sigType=`echo $signal | cut -d " " -f 1`
-    sigType=`echo $sigType | awk '{$1=$1};1'`
-    sigName=`echo $signal | cut -d " " -f 2`
-    sigName=`echo $sigName | awk '{$1=$1};1'`
-    #sigType=`echo "${SigArray[0]}" | awk '{$1=$1};1'`
-    #sigName=`echo "${SigArray[1]}" | awk '{$1=$1};1'`
-    find $copiedDir -wholename $file | xargs sed -i "s/\(.*${sigType}.*${sigName}\)/(\* mark_debug = \"true\" \*)\1/g" 
+    sigType=`echo "${SigArray[0]}" | awk '{$1=$1};1'`
+    sigName=`echo "${SigArray[1]}" | awk '{$1=$1};1' | tr -d "\015"`
+    filepath=`find $copiedDir -wholename $file`
+    sed -i "s/\(.*${sigType}.*${sigName}.*\)/(\* mark_debug = \"true\" \*)\1/g" $filepath
 done < ../constraints/marked_debug.txt

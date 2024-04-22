@@ -12,7 +12,6 @@
 ##################################
 import sys,os,shutil
 import multiprocessing
-#import os
 from collections import namedtuple
 from multiprocessing import Pool, TimeoutError
 
@@ -24,7 +23,6 @@ from multiprocessing import Pool, TimeoutError
 # The element consists of the configuration name, a list of test suites to run, 
 # optionally a string to pass to the simulator, and optionally a nonstandard grep string to check for success
 
-INSTR_LIMIT = 1000000 # multiple of 100000; 4M is interesting because it gets into the kernel and enabling VM
 tests = [
         ["rv32e", ["arch32e"]],
         ["rv32i", ["arch32i"]],
@@ -34,9 +32,21 @@ tests = [
                     "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "arch32zfh", "arch32zfh_fma", 
                     "arch32zfh_divsqrt", "arch32zfaf", "wally32a", "wally32priv", "wally32periph", 
                     "arch32zbkb", "arch32zbkc", "arch32zbkx", "arch32zknd", "arch32zkne", "arch32zknh"]], # "arch32zcb", "arch32zfad",
-        ["rv64i", ["arch64i"]],
-        ["buildroot", ["buildroot"], [f"+INSTR_LIMIT={INSTR_LIMIT}"], str(INSTR_LIMIT)+" instructions"]
+        ["rv64i", ["arch64i"]]
         ]
+
+
+# Separate test for full buildroot run
+tests_buildrootshort = [
+                    ["buildroot", ["buildroot"], [f"+INSTR_LIMIT=1400000"], # Instruction limit gets to first OpenSBI UART output  
+                        "OpenSBI v", "buildroot_uart.out"]
+    ]
+
+tests_buildrootboot = [
+                    ["buildroot", ["buildroot"], [f"+INSTR_LIMIT=600000000"], 
+                        "WallyHostname login: ", "buildroot_uart.out"]
+    ]
+
 
 # Separate out floating-point tests for RV64 to speed up coverage
 tests64gc_nofp = [
@@ -176,7 +186,7 @@ bpredtests = [
 # Data Types & Functions
 ##################################
 
-TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr'])
+TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr', 'grepfile'])
 # name:     the name of this test configuration (used in printing human-readable
 #           output and picking logfile names)
 # cmd:      the command to run to test (should include the logfile as '{}', and
@@ -184,6 +194,7 @@ TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr'])
 # grepstr:  the string to grep through the log file for. The test succeeds iff
 #           grep finds that string in the logfile (is used by grep, so it may
 #           be any pattern grep accepts, see `man 1 grep` for more info).
+# grepfile:  a string containing the location of the file to be searched for output
 
 class bcolors:
     HEADER = '\033[95m'
@@ -197,6 +208,7 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 def addTests(tests, sim):
+    sim_logdir = WALLY+ "/sim/" + sim + "/logs/"
     for test in tests:
         config = test[0];
         suites = test[1];
@@ -210,36 +222,38 @@ def addTests(tests, sim):
             gs = "All tests ran without failures"
         cmdPrefix="wsim --sim " + sim + " " + coverStr + " " + config
         for t in suites:
+            sim_log = sim_logdir + config + "_" + t + ".log"
+            if (len(test) >= 5):
+                grepfile = sim_logdir + test[4]
+            else:
+                grepfile = sim_log
             tc = TestCase(
                     name=t,
                     variant=config,
-                    cmd=cmdPrefix + " " + t + args,
-                    grepstr=gs)
+                    cmd=cmdPrefix + " " + t + args + " > " + sim_log,
+                    grepstr=gs,
+                    grepfile = grepfile)
             configs.append(tc)
 
-def search_log_for_text(text, logfile):
+def search_log_for_text(text, grepfile):
     """Search through the given log file for text, returning True if it is found or False if it is not"""
-    grepcmd = "grep -e '%s' '%s' > /dev/null" % (text, logfile)
+    grepcmd = "grep -a -e '%s' '%s' > /dev/null" % (text, grepfile)
 #    print("  search_log_for_text invoking %s" % grepcmd)
     return os.system(grepcmd) == 0
 
 def run_test_case(config):
     """Run the given test case, and return 0 if the test suceeds and 1 if it fails"""
-    logname = WALLY + "/sim/questa/logs/"+config.variant+"_"+config.name+".log"   ### *** fix hardwiring to questa log
-    #cmd = config.cmd + " > " + logname
-    if ("lint-wally" in config.cmd):
-        cmd = config.cmd + " | tee " + logname
-    else:
-        cmd = config.cmd + " > " + logname
+    grepfile = config.grepfile
+    cmd = config.cmd
     os.chdir(regressionDir)
-#    print("  run_test_case invoking %s" % cmd)
+    # print("  run_test_case invoking %s" % cmd)
     os.system(cmd)
-    if search_log_for_text(config.grepstr, logname):
+    if search_log_for_text(config.grepstr, grepfile):
         print(f"{bcolors.OKGREEN}%s_%s: Success{bcolors.ENDC}" % (config.variant, config.name))
         return 0
     else:
         print(f"{bcolors.FAIL}%s_%s: Failures detected in output{bcolors.ENDC}" % (config.variant, config.name))
-        print("  Check %s" % logname)
+        print("  Check %s" % grepfile)
         return 1
 
 ##################################
@@ -258,12 +272,13 @@ coverage = '--coverage' in sys.argv
 fp = '--fp' in sys.argv
 nightly = '--nightly' in sys.argv
 testfloat = '--testfloat' in sys.argv
+buildroot = '--buildroot' in sys.argv
 
 if (nightly):
     nightMode = "--nightly";
     sims = ["questa", "verilator", "vcs"]
 else:
-    nightMode = "";
+    nightMode = ""
     sims = [defaultsim]
 
 if (coverage):  # only run RV64GC tests in coverage mode
@@ -277,9 +292,9 @@ configs = [
     TestCase(
         name="lints",
         variant="all",
-        cmd="lint-wally " + nightMode,
-        grepstr="lints run with no errors or warnings"
-    )
+        cmd="lint-wally " + nightMode + " | tee " + WALLY + "/sim/questa/logs/all_lints.log",
+        grepstr="lints run with no errors or warnings",
+        grepfile = WALLY + "/sim/questa/logs/all_lints.log")
     ]
 
 if (coverage):  # only run RV64GC tests on Questa in coverage mode
@@ -291,9 +306,13 @@ else:
         addTests(tests, sim)
         addTests(tests64gc_nofp, sim)
         addTests(tests64gc_fp, sim)
+
     # run derivative configurations in nightly regression
-    if (nightly):
-        addTests(derivconfigtests, defaultsim)
+if (nightly):
+    addTests(derivconfigtests, defaultsim)
+    addTests(tests_buildrootboot, defaultsim)
+else:
+    addTests(tests_buildrootshort, defaultsim)
 
 # testfloat tests
 if (testfloat):
@@ -305,11 +324,13 @@ if (testfloat):
         if ("f_" in config):
             tests.remove("cvtfp")
         for test in tests:
+            sim_log = WALLY + "/sim/questa/logs/"+config+"_"+test+".log" # TODO: Change hardcoded questa log directory to simulator
             tc = TestCase(
                     name=test,
                     variant=config,
-                    cmd="wsim --tb testbench_fp " + config + " " + test,
-                    grepstr="All Tests completed with          0 errors")
+                    cmd="wsim --tb testbench_fp " + config + " " + test + " > " + sim_log,
+                    grepstr="All Tests completed with          0 errors",
+                    grepfile = sim_log)
             configs.append(tc)
 
 
@@ -348,11 +369,13 @@ if (testfloat):
         if ("f_" in config):
             tests.remove("cvtfp")
         for test in tests:
+            sim_log = WALLY + "/sim/questa/logs/"+config+"_"+test+".log"
             tc = TestCase(
                     name=test,
                     variant=config,
-                    cmd="wsim --tb testbench_fp --sim questa " + config + " " + test,
-                    grepstr="All Tests completed with          0 errors")
+                    cmd="wsim --tb testbench_fp --sim questa " + config + " " + test + " > " + sim_log,
+                    grepstr="All Tests completed with          0 errors",
+                    grepfile = WALLY + "/sim/questa/logs/"+config+"_"+test+".log")
             configs.append(tc)
 
 
@@ -370,26 +393,17 @@ def main():
         os.chdir(regressionDir)
         os.system('./make-tests.sh | tee ./logs/make-tests.log')
 
-    if '--all' in sys.argv:
-        TIMEOUT_DUR = 30*7200 # seconds
-        #configs.append(getBuildrootTC(boot=True))
-    elif '--buildroot' in sys.argv:
-        TIMEOUT_DUR = 30*7200 # seconds
-        #configs=[getBuildrootTC(boot=True)]
+    if '--buildroot' in sys.argv:
+        TIMEOUT_DUR = 60*7200 # 5 days to run
     elif '--coverage' in sys.argv:
-        TIMEOUT_DUR = 20*60 # seconds    
-    #   Presently don't run buildroot because it has a different config and can't be merged with the rv64gc coverage.
-    #   Also it is slow to run.   
-    #    configs.append(getBuildrootTC(boot=False))
+        TIMEOUT_DUR = 20*60 # seconds
         os.system('rm -f questa/cov/*.ucdb')
     elif '--nightly' in sys.argv:
         TIMEOUT_DUR = 60*1440 # 1 day
-        #configs.append(getBuildrootTC(boot=False))
     elif '--testfloat' in sys.argv:
         TIMEOUT_DUR = 60*60 # seconds
     else:
         TIMEOUT_DUR = 10*60 # seconds
-        #configs.append(getBuildrootTC(boot=False))
 
     # Scale the number of concurrent processes to the number of test cases, but
     # max out at a limited number of concurrent processes to not overwhelm the system
