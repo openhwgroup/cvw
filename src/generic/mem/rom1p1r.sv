@@ -35,8 +35,7 @@ module rom1p1r #(parameter ADDR_WIDTH = 8, DATA_WIDTH = 32, PRELOAD_ENABLED = 0)
 
 `ifdef VERILATOR
     import "DPI-C" function string getenvval(input string env_name);
-//    string       WALLY_DIR = getenvval("WALLY"); 
-    string       WALLY_DIR = "~/cvw";
+    string       WALLY_DIR = getenvval("WALLY"); 
 `else
     string       WALLY_DIR = "$WALLY";
 `endif
