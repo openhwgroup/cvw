@@ -42,8 +42,6 @@ def main():
         print(f"PCM register contents: {d}")
         write_data("PCM", "0x000000001337BEEF")
 
-        
-
 
 
 def write_data(register, data):
@@ -84,15 +82,14 @@ def access_register(write, regno, addr_size):
     ackhavereset are all 0."""
     addr = "0x17"
     data = 2**17 # transfer bit always set
-    match addr_size:
-        case 32:
-            data += 2*2**20
-        case 64:
-            data += 3*2**20
-        case 128:
-            data += 4*2**20
-        case _:
-            raise Exception("must provide valid register access size (32, 64, 128). See: 3.7.1.1 aarsize")
+    if addr_size == 32:
+        data += 2*2**20
+    elif addr_size == 64:
+        data += 3*2**20
+    elif addr_size == 128:
+        data += 4*2**20
+    else:
+        raise Exception("must provide valid register access size (32, 64, 128). See: 3.7.1.1 aarsize")
     if write:
         data += 2**16
     data += regno
@@ -102,9 +99,20 @@ def access_register(write, regno, addr_size):
 
 def activate_dm():
     write_dmi("0x10", "0x1")
+    return int(read_dmi("0x10"), 16) % 2
 
 
 def status():
+    # check dmstatus
+    pass
+
+
+def check_errors():
+    # check dtmcs for errors
+    # TODO: read dtmcs manually via JTAG ops
+    # check dmstatus 0x10
+    # check abstractcs 0x16
+    abstractcs = int(read_dmi("0x16"), 16)
     pass # TODO: check dmstatus and dtmcs err
 
 

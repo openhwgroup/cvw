@@ -84,7 +84,6 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
 
   // AbsCmd internal state
   logic          AcWrite;
-  logic          AcTransfer;
   logic [XLEN:0] ScanReg;
   logic [$clog2(SCAN_CHAIN_LEN)-1:0] ShiftCount, Cycle;
   logic          InvalidRegNo;
@@ -322,7 +321,7 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
             CmdErr <= ~|CmdErr ? `CMDERR_BUSY : CmdErr;
           else begin
             RelaxedPriv <= ReqData[`RELAXEDPRIV];
-            CmdErr <= ReqData[`CMDERR] ? `CMDERR_NONE : CmdErr;
+            CmdErr <= ReqData[`CMDERR] ? `CMDERR_NONE : CmdErr; // clear CmdErr
           end
           RspOP <= `OP_SUCCESS;
           State <= ACK;
@@ -334,24 +333,23 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
           State <= ACK;
         end
 
-        ABST_COMMAND : begin // Before starting an abstract command, a debugger must ensure that haltreq, resumereq, and ackhavereset are all 0.
-          if (Busy)
-            CmdErr <= ~|CmdErr ? `CMDERR_BUSY : CmdErr;
+        ABST_COMMAND : begin // TODO: clean this up
+          if (CmdErr != `CMDERR_NONE) // If CmdErr, do nothing
+          else if (Busy)
+            CmdErr <= `CMDERR_BUSY; // If Busy, set CmdErr, do nothing
           else if (~CoreHaltConfirm) // TODO: this check may be undesired
-            CmdErr <= `CMDERR_HALTRESUME;
+            CmdErr <= `CMDERR_HALTRESUME; // If not halted, do nothing
           else begin
             case (ReqData[`CMDTYPE])
               `ACCESS_REGISTER : begin
-                if (ReqData[`AARSIZE] > $clog2(XLEN/8)) begin // if AARSIZE (encoded) is greater than XLEN
+                if (ReqData[`AARSIZE] > $clog2(XLEN/8)) // if AARSIZE (encoded) is greater than XLEN, set CmdErr, do nothing
                   CmdErr <= `CMDERR_EXCEPTION;
-                end else if (ReqData[`TRANSFER]) begin
-                  if (InvalidRegNo)
-                    CmdErr <= `CMDERR_EXCEPTION;
-                  else begin
-                    AcTransfer <= ReqData[`TRANSFER];
-                    AcWrite <= ReqData[`AARWRITE];
-                    NewAcState <= AC_SCAN;
-                  end
+                else if (~ReqData[`TRANSFER]) // If not TRANSFER, do nothing
+                else if (InvalidRegNo)
+                  CmdErr <= `CMDERR_EXCEPTION; // If InvalidRegNo, set CmdErr, do nothing
+                else begin
+                  AcWrite <= ReqData[`AARWRITE];
+                  NewAcState <= AC_SCAN;
                 end
               end
               //`QUICK_ACCESS : State <= QUICK_ACCESS;
@@ -435,7 +433,7 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
   // Message Registers
   always_ff @(posedge clk) begin
     if (AcState == AC_SCAN) begin
-      if (Cycle == ShiftCount && AcTransfer && ~AcWrite) // Read
+      if (Cycle == ShiftCount && ~AcWrite) // Read
         if (XLEN == 32)
           Data0 <= ScanReg;
         else if (XLEN == 64)
