@@ -107,6 +107,7 @@ with open(resultfile, mode='w', newline='') as csvfile:
                             'Load Stalls':lstalls,
                             'Store Stalls':swtalls,'D$ Accesses':dacc,'D$ Misses':dmiss,'I$ Accesses':iacc,'I$ Misses':imiss,
                             'Branches':br,'Branch Mispredicts':brm,'BTB Misses':btb,'Jump/JR':jmp,'RAS Wrong':ras,'Returns':ret,'BP Class Pred Wrong':bpc})
+        csvfile.flush()
     csvfile.close()
 
 

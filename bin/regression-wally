@@ -257,7 +257,7 @@ def run_test_case(config):
         print(f"{bcolors.OKGREEN}%s: Success{bcolors.ENDC}" % (config.cmd))
         return 0
     else:
-        print(f"{bcolors.FAIL}%s_%s: Failures detected in output{bcolors.ENDC}" % (config.variant, config.name))
+        print(f"{bcolors.FAIL}%s: Failures detected in output{bcolors.ENDC}" % (config.cmd))
         print("  Check %s" % grepfile)
         return 1
 
