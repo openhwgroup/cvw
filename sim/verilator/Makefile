@@ -6,7 +6,8 @@ OPT=
 PARAMS?=-DVERILATOR=1 --no-trace-top
 NONPROF?=--stats
 VERILATOR_DIR=${WALLY}/sim/verilator
-SOURCE=${WALLY}/config/shared/*.vh ${WALLY}/config/${WALLYCONF} ${WALLY}/src/cvw.sv ${WALLY}/testbench/testbench.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
+SOURCE=${WALLY}/config/shared/*.vh ${WALLY}/config/${WALLYCONF} ${WALLY}/src/cvw.sv ${WALLY}/testbench/*.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
+EXTRA_ARGS=
 
 
 WALLYCONF?=rv64gc
@@ -43,8 +44,9 @@ run: wkdir/$(WALLYCONF)_$(TEST)/Vtestbench
 wkdir/$(WALLYCONF)_$(TEST)/Vtestbench: $(SOURCE)
 	verilator \
 	--Mdir wkdir/$(WALLYCONF)_$(TEST) -o Vtestbench \
-	--binary \
+	--binary --trace \
 	$(OPT) $(PARAMS) $(NONPROF) \
+	$(EXTRA_ARGS) \
 	--timescale "1ns/1ns" --timing --top-module testbench  --relative-includes \
 	"-I${WALLY}/config/shared" "-I${WALLY}/config/$(WALLYCONF)" \
 	${WALLY}/sim/verilator/wrapper.c \
@@ -57,6 +59,7 @@ obj_dir_profiling/Vtestbench_$(WALLYCONF): $(DEPENDENCIES)
 	--Mdir obj_dir_profiling -o Vtestbench_$(WALLYCONF) \
 	--binary \
 	--prof-cfuncs $(OPT) $(PARAMS) \
+	$(EXTRA_ARGS) \
 	--timescale "1ns/1ns" --timing --top-module testbench  --relative-includes \
 	$(INCLUDE_PATH) \
 	wrapper.c \
