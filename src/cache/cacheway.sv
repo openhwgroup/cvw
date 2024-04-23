@@ -135,17 +135,17 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   localparam           LOGNUMSRAM = $clog2(NUMSRAM);
   
   for(words = 0; words < NUMSRAM; words++) begin: word
-    if (!READ_ONLY_CACHE) begin:wordram
-      ram1p1rwbe #(.USE_SRAM(P.USE_SRAM), .DEPTH(NUMLINES), .WIDTH(P.CACHE_SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSetData),
-      .dout(ReadDataLine[P.CACHE_SRAMLEN*(words+1)-1:P.CACHE_SRAMLEN*words]),
-      .din(LineWriteData[P.CACHE_SRAMLEN*(words+1)-1:P.CACHE_SRAMLEN*words]),
-      .we(SelectedWriteWordEn), .bwe(FinalByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
-    end else begin:wordram // no byte-enable needed for i$.
+    if (READ_ONLY_CACHE) begin:wordram // no byte-enable needed for i$.
       ram1p1rwe #(.USE_SRAM(P.USE_SRAM), .DEPTH(NUMLINES), .WIDTH(P.CACHE_SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSetData),
       .dout(ReadDataLine[P.CACHE_SRAMLEN*(words+1)-1:P.CACHE_SRAMLEN*words]),
       .din(LineWriteData[P.CACHE_SRAMLEN*(words+1)-1:P.CACHE_SRAMLEN*words]),
       .we(SelectedWriteWordEn));
-    end
+    end else begin:wordram // D$ needs byte enables
+     ram1p1rwbe #(.USE_SRAM(P.USE_SRAM), .DEPTH(NUMLINES), .WIDTH(P.CACHE_SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSetData),
+      .dout(ReadDataLine[P.CACHE_SRAMLEN*(words+1)-1:P.CACHE_SRAMLEN*words]),
+      .din(LineWriteData[P.CACHE_SRAMLEN*(words+1)-1:P.CACHE_SRAMLEN*words]),
+      .we(SelectedWriteWordEn), .bwe(FinalByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
+     end
   end
 
   // AND portion of distributed read multiplexers

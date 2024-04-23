@@ -625,7 +625,6 @@ module testbench;
 			      dut.core.ieu.dp.regf.wd3 == 1)) |
            ((InstrM == 32'h6f | InstrM == 32'hfc32a423 | InstrM == 32'hfc32a823) & dut.core.ieu.c.InstrValidM ) |
            ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"]) & InstrMName == "SW" );
-  //assign DCacheFlushStart =  TestComplete;
   end
   
   DCacheFlushFSM #(P) DCacheFlushFSM(.clk, .start(DCacheFlushStart), .done(DCacheFlushDone));
