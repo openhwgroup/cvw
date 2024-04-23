@@ -13,10 +13,10 @@ def parse_freq(rows):
     for row in rows:
         if "100_MHz" in row[0]:
             rows_slowclk.append(row)
-        if "5000_MHz" in row[0]:
+        if "6000_MHz" in row[0]:
             rows_fastclk.append(row)
     rowout.extend(parse_idiv(rows_slowclk,1E6*100))
-    rowout.extend(parse_idiv(rows_fastclk,1E6*5000))
+    rowout.extend(parse_idiv(rows_fastclk,1E6*6000))
     return rowout
 def parse_xlen(rows,freq):
     final = []
@@ -44,7 +44,7 @@ def parse_r_k(rows,freq):
         design = row[0]
         r = int(design.split("_")[4])
         k = int(design.split("_")[5][0])
-        area = row[1]
+        area = float(row[1])/1000
         delay = row[2]
         power = float(row[3])/freq
         if r==2 and k==1 and len(rowout)/3 == 0:
@@ -55,7 +55,7 @@ def parse_r_k(rows,freq):
         design = row[0]
         r = int(design.split("_")[4])
         k = int(design.split("_")[5][0])
-        area = row[1]
+        area = float(row[1])/1000
         delay = row[2]
         power = float(row[3])/freq
         if r==2 and k==2 and len(rowout)/3 == 1:
@@ -66,7 +66,7 @@ def parse_r_k(rows,freq):
         design = row[0]
         r = int(design.split("_")[4])
         k = int(design.split("_")[5][0])
-        area = row[1]
+        area = float(row[1])/1000
         delay = row[2]
         power = float(row[3])/freq
         if r==2 and k==4  and len(rowout)/3==2:
@@ -77,7 +77,7 @@ def parse_r_k(rows,freq):
         design = row[0]
         r = int(design.split("_")[4])
         k = int(design.split("_")[5][0])
-        area = row[1]
+        area = float(row[1])/1000
         delay = row[2]
         power = float(row[3])/freq
         if r==2 and k==8  and len(rowout)/3==3:
@@ -91,7 +91,7 @@ def parse_r_k(rows,freq):
         design = row[0]
         r = int(design.split("_")[4])
         k = int(design.split("_")[5][0])
-        area = row[1]
+        area = float(row[1])/1000
         delay = row[2]
         power = float(row[3])/freq
         if r==4 and k== 1 and len(rowout)/3 ==4:
@@ -102,7 +102,7 @@ def parse_r_k(rows,freq):
         design = row[0]
         r = int(design.split("_")[4])
         k = int(design.split("_")[5][0])
-        area = row[1]
+        area = float(row[1])/1000
         delay = row[2]
         power = float(row[3])/freq
         if r==4 and k==2 and len(rowout)/3 ==5:
@@ -113,7 +113,7 @@ def parse_r_k(rows,freq):
         design = row[0]
         r = int(design.split("_")[4])
         k = int(design.split("_")[5][0])
-        area = row[1]
+        area = float(row[1])/1000
         delay = row[2]
         power = float(row[3])/freq
         if r==4 and k==4 and len(rowout)/3 ==6:
@@ -129,7 +129,7 @@ def parse_idivbits(rows,freq):
     for row in rows:
         design = row[0]
         bits = int(design.split("_")[3])
-        area = row[1]
+        area = float(row[1])/1000
         delay = row[2]
         power = float(row[3])/freq
         if bits == 1 and len(rowout)/3 == 0:
@@ -139,7 +139,7 @@ def parse_idivbits(rows,freq):
     for row in rows:
         design = row[0]
         bits = int(design.split("_")[3])
-        area = row[1]
+        area = float(row[1])/1000
         delay = row[2]
         power = float(row[3])/freq
         if bits == 2 and len(rowout)/3 == 1:
@@ -149,7 +149,7 @@ def parse_idivbits(rows,freq):
     for row in rows:
         design = row[0]
         bits = int(design.split("_")[3])
-        area = row[1]
+        area = float(row[1])/1000
         delay = row[2]
         power = float(row[3])/freq
         if bits == 4 and len(rowout)/3==2:
@@ -159,7 +159,7 @@ def parse_idivbits(rows,freq):
     for row in rows:
         design = row[0]
         bits = int(design.split("_")[3])
-        area = row[1]
+        area = float(row[1])/1000
         delay = row[2]
         power = float(row[3])/freq
         if bits == 8 and (len(rowout)/3 ==3):
@@ -169,7 +169,7 @@ def parse_idivbits(rows,freq):
     for row in rows:
         design = row[0]
         bits = int(design.split("_")[3])
-        area = row[1]
+        area = float(row[1])/1000
         delay = row[2]
         power = float(row[3])/freq
         if bits == 2 and len(rowout)/3 ==4:
@@ -179,7 +179,7 @@ def parse_idivbits(rows,freq):
     for row in rows:
         design = row[0]
         bits = int(design.split("_")[3])
-        area = row[1]
+        area = float(row[1])/1000
         delay = row[2]
         power = float(row[3])/freq
         if bits == 4 and len(rowout)/3 ==5:
@@ -189,7 +189,7 @@ def parse_idivbits(rows,freq):
     for row in rows:
         design = row[0]
         bits = int(design.split("_")[3])
-        area = row[1]
+        area = float(row[1])/1000
         delay = row[2]
         power = float(row[3])/freq
         if bits == 8 and len(rowout)/3 ==6:
@@ -317,7 +317,9 @@ with open(f"{os.environ['WALLY']}/synthDC/fp-synth_intdiv.csv", 'r') as csv_file
     mdu5000_rows = rowout[27:29]
     drsumdu_100_rows = mergerows(drsu100_rows,mdu100_rows)
     drsumdu_5000_rows = mergerows(drsu5000_rows,mdu5000_rows)
-    rowout = [["design","RADIX_2_K_1", "RADIX_2_K_1", "RADIX_2_K_1", "RADIX_2_K_2", "RADIX_2_K_2", "RADIX_2_K_2", "RADIX_2_K_4", "RADIX_2_K_4", "RADIX_2_K_4", "RADIX_2_K_8", "RADIX_2_K_8", "RADIX_2_K_8","RADIX_4_K_1", "RADIX_4_K_1", "RADIX_4_K_1", "RADIX_4_K_2", "RADIX_4_K_2", "RADIX_4_K_2", "RADIX_4_K_4", "RADIX_4_K_4", "RADIX_4_K_4"]]
+    header = [str(x) for x in range(7*3+1)]
+    rowout = [header,
+      ["design","RADIX_2_K_1", "RADIX_2_K_1", "RADIX_2_K_1", "RADIX_2_K_2", "RADIX_2_K_2", "RADIX_2_K_2", "RADIX_2_K_4", "RADIX_2_K_4", "RADIX_2_K_4", "RADIX_2_K_8", "RADIX_2_K_8", "RADIX_2_K_8","RADIX_4_K_1", "RADIX_4_K_1", "RADIX_4_K_1", "RADIX_4_K_2", "RADIX_4_K_2", "RADIX_4_K_2", "RADIX_4_K_4", "RADIX_4_K_4", "RADIX_4_K_4"]]
     rowout.extend(drsu100i_rows[0:3])
     rowout.extend(drsumdu_100_rows[0:3])
     rowout.extend(drsu100_rows[0:3])
@@ -352,3 +354,24 @@ with open(f"{os.environ['WALLY']}/synthDC/fp-synth_intdiv.csv", 'r') as csv_file
 with open(f"{os.environ['WALLY']}/synthDC/fp-synthresults.csv", 'w') as csv_out:
     csvwriter=csv.writer(csv_out)
     csvwriter.writerows(rowout)
+
+with open(f"{os.environ['WALLY']}/synthDC/fp-synthresults.csv", "r") as csv_file, open(f"{os.environ['WALLY']}/synthDC/fp-synthresults_reordered.csv", "w") as csv_out:
+  newheader = ["0"]
+  for i in range(1, 7*3+1):
+    if i%3 == 1:
+      newheader.append(str(i))
+  for i in range(1, 7*3+1):
+    if i%3 == 2:
+      newheader.append(str(i))
+  for i in range(1, 7*3+1):
+    if i%3 == 0:
+      newheader.append(str(i))
+  rowout = [['design', 'area', 'area', 'area', 'area', 'area', 'area', 'area', 'delay', 'delay', 'delay', 'delay', 'delay', 'delay', 'delay', 'energy', 'energy', 'energy', 'energy', 'energy', 'energy', 'energy']]
+  
+  csvwriter=csv.writer(csv_out)
+  csvwriter.writerows(rowout)
+  writer = csv.DictWriter(csv_out, fieldnames=newheader)
+  for row in csv.DictReader(csv_file):
+    writer.writerow(row)
+  
+  

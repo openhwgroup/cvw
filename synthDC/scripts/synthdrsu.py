@@ -97,9 +97,9 @@ def main():
       drsu_5000 = Job(
           name=config,
           design="drsu",
-          cmd=f"make -C $WALLY/synthDC synth DESIGN=drsu TECH=tsmc28 CONFIG={config} FREQ=5000 > /dev/null", 
+          cmd=f"make -C $WALLY/synthDC synth DESIGN=drsu TECH=tsmc28 CONFIG={config} FREQ=6000 > /dev/null", 
           grepstr="Optimization",
-          frequency=5000
+          frequency=6000
       )
 
       drsu_100 = Job(
@@ -116,9 +116,9 @@ def main():
       mdu_5000 = Job(
           name=config,
           design="mdudiv",
-          cmd=f"make -C $WALLY/synthDC synth DESIGN=mdudiv TECH=tsmc28 CONFIG={config} FREQ=5000 > /dev/null", 
+          cmd=f"make -C $WALLY/synthDC synth DESIGN=mdudiv TECH=tsmc28 CONFIG={config} FREQ=6000 > /dev/null", 
           grepstr="Optimization",
-          frequency=5000
+          frequency=6000
       )
 
       mdu_100 = Job(
