@@ -53,7 +53,7 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
 );
   `include "debug.vh"
 
-  (* mark_debug = "true" *) enum bit [1:0] {
+  enum bit [1:0] {
     IDLE,
     START,
     WAIT,
@@ -61,14 +61,14 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
   } DMIState;
 
   // Clock Domain Crossing
-  (* mark_debug = "true" *) logic                     tcks; // Synchronized JTAG clock
+  logic                     tcks; // Synchronized JTAG clock
   logic                     resetn;
   logic                     UpdateDtmcs;
   logic [31:0]              DtmcsIn;
   logic [31:0]              DtmcsOut;
   logic                     UpdateDmi;
   logic                     CaptureDmi;
-  (* mark_debug = "true" *) logic [34+ADDR_WIDTH-1:0] DmiIn;
+  logic [34+ADDR_WIDTH-1:0] DmiIn;
   logic [34+ADDR_WIDTH-1:0] DmiOut;
 
   // DTMCS Register
@@ -80,9 +80,9 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
   const logic [5:0]           ABits = ADDR_WIDTH;
   const logic [3:0]           Version = 1; // DTM spec version 1
 
-  (* mark_debug = "true" *) logic [31:0]              ValRspData;
-  (* mark_debug = "true" *) logic [1:0]               ValRspOP;
-  (* mark_debug = "true" *) logic                     Sticky;
+  logic [31:0]              ValRspData;
+  logic [1:0]               ValRspOP;
+  logic                     Sticky;
 
   assign DmiOut = {ReqAddress, ValRspData, ValRspOP};
   assign DmiStat = ValRspOP;

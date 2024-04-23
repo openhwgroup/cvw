@@ -30,17 +30,23 @@
 
 from telnetlib import Telnet
 
-debug = True
+debug = False
 XLEN = 64
+
+tapname = "cvw.cpu" # this is set via the openocd config. It can be found by running `scan_chain`
 
 def main():
     global tn
     with Telnet("127.0.0.1", 4444) as tn:
         read() # clear welcome message from read buffer
-        activate_dm()
-        d = read_data("PCM")
-        print(f"PCM register contents: {d}")
-        write_data("PCM", "0x000000001337BEEF")
+        activate_dm() # necessary if openocd init is disabled
+        #activate_dm() # necessary if openocd init is disabled
+        dmi_reset()
+        check_errors()
+        #clear_abstrcmd_err()
+        #b = activate_dm()
+        #print(b)
+
 
 
 
@@ -97,23 +103,61 @@ def access_register(write, regno, addr_size):
     write_dmi(addr, data)
 
 
-def activate_dm():
-    write_dmi("0x10", "0x1")
-    return int(read_dmi("0x10"), 16) % 2
-
-
 def status():
     # check dmstatus
     pass
 
 
 def check_errors():
-    # check dtmcs for errors
-    # TODO: read dtmcs manually via JTAG ops
-    # check dmstatus 0x10
-    # check abstractcs 0x16
+    """Checks various status bits and reports any potential errors
+    Returns true if any errors are found"""
+    # check dtmcs
+    dtmcs = int(read_dtmcs(), 16) #TODO: debug this on hardware
+    errinfo = (dtmcs & 0x1C0000) >> 18
+    dmistat = (dtmcs & 0xC00) >> 10
+    if errinfo:
+        print(f"DTM Error: {errinfo_translations[errinfo]}")
+        return True
+    if dmistat:
+        print(f"DMI status error: {op_translations[dmistat]}")
+        return True
+    # check if DM is inactive
+    dm_active = int(read_dmi("0x10"), 16) & 0x1
+    if not dm_active:
+        print(f"DMControl Error: Debug module is not active")
+        #return True
+    # check abstract command error
     abstractcs = int(read_dmi("0x16"), 16)
-    pass # TODO: check dmstatus and dtmcs err
+    busy = (abstractcs & 0x1000) >> 12
+    cmderr = (abstractcs & 0x700) >> 8
+    if not busy and cmderr:
+        print(f"Abstract Command Error: {cmderr_translations[cmderr]}")
+        return True
+    
+
+def reset_dm():
+    deactivate_dm()
+    activate_dm()
+
+
+def clear_abstrcmd_err():
+    write_dmi("0x16", "0x700")
+
+
+def activate_dm():
+    write_dmi("0x10", "0x1")
+    return int(read_dmi("0x10"), 16) & 0x1
+
+
+def deactivate_dm():
+    write_dmi("0x10", "0x0")
+    return not int(read_dmi("0x10"), 16) & 0x1
+
+
+def dmi_reset():
+    """Reset sticky dmi error status in DTM"""
+    write_dtmcs(dmireset=True)
+    check_errors()
 
 
 def write_dmi(address, data):
@@ -124,6 +168,22 @@ def write_dmi(address, data):
 def read_dmi(address):
     cmd = f"riscv dmi_read {address}"
     return execute(cmd)
+
+
+def write_dtmcs(dtmhardreset=False, dmireset=False):
+    data = 0
+    if dtmhardreset:
+        data += 0x1<<17
+    if dmireset:
+        data += 0x1<<16
+    execute(f"irscan {tapname} 0x10") # dtmcs instruction
+    execute(f"drscan {tapname} 32 {hex(data)}")
+
+
+def read_dtmcs():
+    execute(f"irscan {tapname} 0x10") # dtmcs instruction
+    dtmcs = execute(f"drscan {tapname} 32 0x0")
+    return dtmcs
 
 
 def trst():
@@ -145,10 +205,42 @@ def write(cmd):
 def read():
     data = b""
     data = tn.read_until(b"> ").decode('ascii')
-    data = data[:-7]
+    data = data.replace("\r","").replace("\n","").replace("> ","")
     if debug:
         print(data)
     return data
+
+
+# 6.1.4 dtmcs errinfo translation table
+errinfo_translations = {
+    0 : "not implemented",
+    1 : "dmi error",
+    2 : "communication error",
+    3 : "device error",
+    4 : "unknown",
+}
+
+
+# 6.1.5 DMI op translation table
+op_translations = {
+    0 : "success",
+    1 : "reserved",
+    2 : "failed",
+    3 : "busy",
+}
+
+
+# 3.14.6 Abstract command CmdErr value translation table
+cmderr_translations = {
+    0 : "none",
+    1 : "busy",
+    2 : "not supported",
+    3 : "exception",
+    4 : "halt/resume",
+    5 : "bus",
+    6 : "reserved",
+    7 : "other",
+}
 
 
 # Register alias to regno translation table

@@ -33,12 +33,12 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
   // DMI Signals
   output logic                  ReqReady,
   input  logic                  ReqValid,
-  (* mark_debug = "true" *) input  logic [ADDR_WIDTH-1:0] ReqAddress,
-  (* mark_debug = "true" *) input  logic [31:0]           ReqData,
-  (* mark_debug = "true" *) input  logic [1:0]            ReqOP,
+  input  logic [ADDR_WIDTH-1:0] ReqAddress,
+  input  logic [31:0]           ReqData,
+  input  logic [1:0]            ReqOP,
   input  logic                  RspReady,
   output logic                  RspValid,
-  (* mark_debug = "true" *) output logic [31:0]           RspData,
+  output logic [31:0]           RspData,
   output logic [1:0]            RspOP,
 
   // TODO: stubs
@@ -60,7 +60,7 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
   localparam SCANNABLE_REG_COUNT = 2;
   localparam SCAN_CHAIN_LEN = (SCANNABLE_REG_COUNT+1)*XLEN-1;
 
-  (* mark_debug = "true" *) enum bit [3:0] {
+  enum bit [3:0] {
     INACTIVE, // 0
     IDLE, // 1
     ACK, // 2
@@ -100,7 +100,7 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
 
   // debug module registers
   logic [31:0] DMControl;  //0x10
-  (* mark_debug = "true" *) logic [31:0] DMStatus;   //0x11
+  logic [31:0] DMStatus;   //0x11
   //logic [31:0] hartinfo;   //0x12
   //logic [31:0] haltsum1;   //0x13
   //logic [31:0] hawindowsel;  // 0x14
@@ -207,19 +207,16 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
       case (State)
         INACTIVE : begin
           // Reset Values
+          RspData <= 0;
           HaltReq <= 0;
           HartReset <= 0;
           NdmReset <= 0;
-
           StickyUnavail <= 0;
           ImpEBreak <= 0;
           AuthBusy <= 0;
           ConfStrPtrValid <= 0;
-
-          //abstractcs
           RelaxedPriv <= 0; // TODO
           CmdErr <= 0;
-
           if (ReqValid) begin
             if (ReqAddress == `DMCONTROL && ReqOP == `OP_WRITE && ReqData[`DMACTIVE]) begin
               DmActive <= ReqData[`DMACTIVE];
@@ -281,8 +278,7 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
           AckUnavail <= ReqData[`ACKUNAVAIL];
           NdmReset <= ReqData[`NDMRESET];
           DmActive <= ReqData[`DMACTIVE]; // Writing 0 here resets the DM
-          RspOP <= `OP_SUCCESS;
-
+          
           // Can only write one of the following at a time
           case ({ReqData[`RESUMEREQ],ReqData[`HARTRESET],ReqData[`ACKHAVERESET],
             ReqData[`SETRESETHALTREQ],ReqData[`CLRRESETHALTREQ]})
@@ -300,7 +296,8 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
               RspOP <= `OP_FAILED;
             end
           endcase
-
+        
+          RspOP <= `OP_SUCCESS;
           State <= ACK;
         end
 
@@ -321,7 +318,7 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
             CmdErr <= ~|CmdErr ? `CMDERR_BUSY : CmdErr;
           else begin
             RelaxedPriv <= ReqData[`RELAXEDPRIV];
-            CmdErr <= ReqData[`CMDERR] ? `CMDERR_NONE : CmdErr; // clear CmdErr
+            CmdErr <= |ReqData[`CMDERR] ? `CMDERR_NONE : CmdErr; // clear CmdErr
           end
           RspOP <= `OP_SUCCESS;
           State <= ACK;
@@ -334,17 +331,17 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
         end
 
         ABST_COMMAND : begin // TODO: clean this up
-          if (CmdErr != `CMDERR_NONE) // If CmdErr, do nothing
+          if (CmdErr != `CMDERR_NONE); // If CmdErr, do nothing
           else if (Busy)
             CmdErr <= `CMDERR_BUSY; // If Busy, set CmdErr, do nothing
-          else if (~CoreHaltConfirm) // TODO: this check may be undesired
-            CmdErr <= `CMDERR_HALTRESUME; // If not halted, do nothing
+          //else if (~CoreHaltConfirm) // TODO: this check may be undesired
+          //  CmdErr <= `CMDERR_HALTRESUME; // If not halted, do nothing
           else begin
             case (ReqData[`CMDTYPE])
               `ACCESS_REGISTER : begin
                 if (ReqData[`AARSIZE] > $clog2(XLEN/8)) // if AARSIZE (encoded) is greater than XLEN, set CmdErr, do nothing
                   CmdErr <= `CMDERR_EXCEPTION;
-                else if (~ReqData[`TRANSFER]) // If not TRANSFER, do nothing
+                else if (~ReqData[`TRANSFER]); // If not TRANSFER, do nothing
                 else if (InvalidRegNo)
                   CmdErr <= `CMDERR_EXCEPTION; // If InvalidRegNo, set CmdErr, do nothing
                 else begin
