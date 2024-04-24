@@ -135,6 +135,8 @@ derivconfigtests = [
     ]
 
 bpredtests = [
+    
+        ["nobpred_rv32gc", ["rv32i"]],
         ["bpred_TWOBIT_6_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
         ["bpred_TWOBIT_8_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
         ["bpred_TWOBIT_10_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],        
