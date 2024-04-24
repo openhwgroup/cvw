@@ -58,12 +58,12 @@ funcovreg:
 	vcover report -details -html sim/riscv.ucdb
 
 # test_name=riscv_arithmetic_basic_test
-rvdv: sim/regression_logs sim/regression_ucdbs
+rvdv: 
 	python3 ${WALLY}/addins/riscv-dv/run.py --test ${test_name} --target rv64gc --output tests/output_folder  --iterations 1 -si questa --iss spike --verbose --cov --seed 0 --steps gen			>> sim/regression_logs/${test_name}.log 2>&1
 	python3 ${WALLY}/addins/riscv-dv/run.py --test ${test_name} --target rv64gc --output tests/output_folder  --iterations 1 -si questa --iss spike --verbose --cov --seed 0 --steps gcc_compile	>> sim/regression_logs/${test_name}.log 2>&1
 	python3 ${WALLY}/addins/riscv-dv/run.py --test ${test_name} --target rv64gc --output tests/output_folder  --iterations 1 -si questa --iss spike --verbose --cov --seed 0 --steps iss_sim		>> sim/regression_logs/${test_name}.log 2>&1
 #	run-elf.bash --seed ${WALLY}/sim/seed0.txt --verbose --elf ${WALLY}/tests/output_folder/asm_test/${test_name}_0.o													>> sim/regression_logs/${test_name}.log 2>&1
-	/home/qabid/scripts/run-elf-cov.bash --seed ${WALLY}/sim/seed0.txt --verbose --coverdb sim/riscv.ucdb --elf ${WALLY}/tests/output_folder/asm_test/${test_name}_0.o								>> sim/regression_logs/${test_name}.log 2>&1
+	run-elf-cov.bash --seed ${WALLY}/sim/seed0.txt --verbose --coverdb sim/riscv.ucdb --elf ${WALLY}/tests/output_folder/asm_test/${test_name}_0.o								>> sim/regression_logs/${test_name}.log 2>&1
 	cp sim/riscv.ucdb sim/regression_ucdbs/${test_name}.ucdb
 
 rvdv_regression:
