@@ -117,7 +117,7 @@ module fround import cvw::*;  #(parameter cvw_t P) (
   mux2 #(1) Rmux(Rnonneg, Eeqm1, Elt0, Rp);
   assign Tmaskneg = {~Eeqm1, {P.NF{1'b1}}}; // 1.11111 or 0.11111
   mux2 #(P.NF+1) Tmaskmux(Tmasknonneg, Tmaskneg, Elt0, Tmask);
-  assign T' = |(Xm & Tmask);
+  assign Tp = |(Xm & Tmask);
 
 
   ///////////////////////////
@@ -133,7 +133,7 @@ module fround import cvw::*;  #(parameter cvw_t P) (
   //              if (E < 0) 					// 0 <= X < 1 rounds to 0 or 1
   //                      if (RoundUp)     {Ws, We, Wf} = {Xs, bias, 0}	// +/- 1.0
   //                     else                    {Ws, We, Wf} = {Xs, 0, 0}	// +/- 0
-  //              else //						// X  1 rounds to an integer or overflows to infinity
+  //              else //						// X >= 1 rounds to an integer or overflows to infinity
   //                     if (RoundUp) Rm = RND else Rm = TRUNC	// Round up to RND or down to TRUNC
   //                     if (Rm = 2.0)					// rounding requires incrementing exponent
   //                             if (Xe = emax) {Ws, We, Wf} = {Xs, 111..11, 0} 	// overflow to W = Infinity with sign of Xs
@@ -148,12 +148,12 @@ module fround import cvw::*;  #(parameter cvw_t P) (
   // Rounding logic: determine whether to round up in magnitude
   always_comb
     case (Rm) // *** make sure this includes dynamic
-      3'b000: // RNE
-      3'b001: RoundUp = 0; // RZ
-      3'b010: // RN
-      3'b011: // RU 
-      3'b101: // RNTA
-      default: // 
+      3'b000:  RoundUp = Rp & (Lp | Tp);  // RNE
+      3'b001:  RoundUp = 0;               // RZ
+      3'b010:  RoundUp = Xs & (Rp | Tp);  // RN
+      3'b011:  RoundUp = ~Xs & (Rp | Tp); // RP
+      3'b101:  RoundUp = Rp;              // RNTA
+      default: RoundUp = 0;               // should never happen
     endcase
 
     // output logic
@@ -161,6 +161,8 @@ module fround import cvw::*;  #(parameter cvw_t P) (
     else if (Exact) W = X;
     else if (Elt0) 
       if (RoundUp) W = {Xs, bias, {P.NF}} // *** format conversions
+
+      *** may not need to round to infinity; update docs and pseudocode above
 
   always_comb
 
