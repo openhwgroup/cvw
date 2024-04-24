@@ -210,4 +210,4 @@ sim/vcs/sim_out*
 sim/vcs/simprofile_dir
 sim/vcs/ucli.key
 sim/vcs/verdi_config_file
-sim/verilator/testbench.vcd 
+sim/*/testbench.vcd 
