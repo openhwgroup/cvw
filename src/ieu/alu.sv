@@ -81,13 +81,13 @@ module alu import cvw::*; #(parameter cvw_t P) (
       3'b010: FullResult = {{(P.XLEN-1){1'b0}}, LT};       // slt
       3'b011: FullResult = {{(P.XLEN-1){1'b0}}, LTU};      // sltu
       3'b100: FullResult = A ^ CondMaskInvB;               // xor, xnor, binv
-      3'b101: FullResult = (P.ZBS_SUPPORTED | P.ZBB_SUPPORTED) ? {{(P.XLEN-1){1'b0}},{|(A & CondMaskB)}} : Shift; // bext (or IEU shift when BMU not supported)
+      3'b101: FullResult = (P.ZBS_SUPPORTED) ? {{(P.XLEN-1){1'b0}},{|(A & CondMaskB)}} : Shift; // bext (or IEU shift when BMU not supported)
       3'b110: FullResult = A | CondMaskInvB;               // or, orn, bset
       3'b111: FullResult = A & ZeroCondMaskInvB;           // and, bclr, czero.*
     endcase
 
   // Support RV64I W-type addw/subw/addiw/shifts that discard upper 32 bits and sign-extend 32-bit result to 64 bits
-  if (P.XLEN == 64)  assign PreALUResult = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
+  if (P.XLEN == 64) assign PreALUResult = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
   else              assign PreALUResult = FullResult;
 
   // Bit manipulation muxing

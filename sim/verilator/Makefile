@@ -1,3 +1,7 @@
+# Verilator Makefile for WALLY
+# Kunlin Han, Rose Thompson, David Harris 2024
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
 SHELL := /bin/bash
 .PHONY: profile run questa clean
 
@@ -6,7 +10,7 @@ OPT=
 PARAMS?=-DVERILATOR=1 --no-trace-top
 NONPROF?=--stats
 VERILATOR_DIR=${WALLY}/sim/verilator
-SOURCE=${WALLY}/config/shared/*.vh ${WALLY}/config/${WALLYCONF} ${WALLY}/src/cvw.sv ${WALLY}/testbench/*.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
+SOURCE=${WALLY}/config/shared/*.vh ${WALLY}/config/${WALLYCONF} ${WALLY}/config/deriv/${WALLYCONF} ${WALLY}/src/cvw.sv ${WALLY}/testbench/*.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
 EXTRA_ARGS=
 
 
@@ -37,22 +41,19 @@ profile: obj_dir_profiling/Vtestbench_$(WALLYCONF)
 
 run: wkdir/$(WALLYCONF)_$(TEST)/Vtestbench
 	mkdir -p $(VERILATOR_DIR)/logs
-	wkdir/$(WALLYCONF)_$(TEST)/Vtestbench +TEST=$(TEST) 2>&1 > $(VERILATOR_DIR)/logs/$(WALLYCONF)_$(TEST).log
-	echo "Please check $(VERILATOR_DIR)/logs/$(WALLYCONF)_$(TEST).log for logs and output files."
+	wkdir/$(WALLYCONF)_$(TEST)/Vtestbench +TEST=$(TEST)
 	
-
-wkdir/$(WALLYCONF)_$(TEST)/Vtestbench: $(SOURCE)
+wkdir/$(WALLYCONF)_$(TEST)/Vtestbench: $(DEPENDENCIES)
 	verilator \
 	--Mdir wkdir/$(WALLYCONF)_$(TEST) -o Vtestbench \
 	--binary --trace \
 	$(OPT) $(PARAMS) $(NONPROF) \
 	$(EXTRA_ARGS) \
 	--timescale "1ns/1ns" --timing --top-module testbench  --relative-includes \
-	"-I${WALLY}/config/shared" "-I${WALLY}/config/$(WALLYCONF)" \
+	$(INCLUDE_PATH) \
 	${WALLY}/sim/verilator/wrapper.c \
-	${WALLY}/src/cvw.sv ${WALLY}/testbench/testbench.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
+	$(SOURCES)
 
-	
 obj_dir_profiling/Vtestbench_$(WALLYCONF): $(DEPENDENCIES)
 	mkdir -p obj_dir_profiling
 	verilator \
@@ -62,7 +63,7 @@ obj_dir_profiling/Vtestbench_$(WALLYCONF): $(DEPENDENCIES)
 	$(EXTRA_ARGS) \
 	--timescale "1ns/1ns" --timing --top-module testbench  --relative-includes \
 	$(INCLUDE_PATH) \
-	wrapper.c \
+	${WALLY}/sim/verilator/wrapper.c \
 	$(SOURCES)
 
 questa:

@@ -45,6 +45,22 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     output logic                SPIIntr
 );
 
+    // register map
+    localparam SPI_SCKDIV =  8'h00;
+    localparam SPI_SCKMODE = 8'h04;
+    localparam SPI_CSID =    8'h10;
+    localparam SPI_CSDEF =   8'h14;
+    localparam SPI_CSMODE =  8'h18;
+    localparam SPI_DELAY0 =  8'h28;
+    localparam SPI_DELAY1 =  8'h2C;
+    localparam SPI_FMT =     8'h40;
+    localparam SPI_TXDATA =  8'h48;
+    localparam SPI_RXDATA =  8'h4C;
+    localparam SPI_TXMARK =  8'h50;
+    localparam SPI_RXMARK =  8'h54;
+    localparam SPI_IE =      8'h70;
+    localparam SPI_IP =      8'h74;
+
     // SPI control registers. Refer to SiFive FU540-C000 manual 
     logic [11:0] SckDiv;
     logic [1:0]  SckMode;
@@ -61,7 +77,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     // Bus interface signals
     logic [7:0] Entry;
     logic Memwrite;
-    logic [31:0] Din, Dout;
+    logic [31:0] Din,  Dout;
     logic TransmitInactive;                         // High when there is no transmission, used as hardware interlock signal
 
     // FIFO FSM signals
@@ -130,8 +146,8 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     // -- Note SPI registers are 32 bits no matter what; access them with LW SW.
    
     assign Din = PWDATA[31:0]; 
-    if (P.XLEN == 64) assign PRDATA = {Dout, Dout}; 
-    else              assign PRDATA = Dout;  
+    if (P.XLEN == 64) assign PRDATA = { Dout,  Dout}; 
+    else              assign PRDATA =  Dout;  
 
     // Register access  
     always_ff@(posedge PCLK, negedge PRESETn)
@@ -140,7 +156,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
             SckMode <= 2'b0;
             ChipSelectID <= 2'b0;
             ChipSelectDef <= 4'b1111;
-            ChipSelectMode <= 0;
+            ChipSelectMode <= 2'b0;
             Delay0 <= {8'b1,8'b1};
             Delay1 <= {8'b0,8'b1};
             Format <= {5'b10000};
@@ -155,18 +171,18 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
             /* verilator lint_off CASEINCOMPLETE */
             if (Memwrite & TransmitInactive)
                 case(Entry) // flop to sample inputs
-                    8'h00: SckDiv <= Din[11:0];
-                    8'h04: SckMode <= Din[1:0];
-                    8'h10: ChipSelectID <= Din[1:0];
-                    8'h14: ChipSelectDef <= Din[3:0];
-                    8'h18: ChipSelectMode <= Din[1:0];
-                    8'h28: Delay0 <= {Din[23:16], Din[7:0]};
-                    8'h2C: Delay1 <= {Din[23:16], Din[7:0]};
-                    8'h40: Format <= {Din[19:16], Din[2]};
-                    8'h48: if (~TransmitFIFOWriteFull) TransmitData[7:0] <= Din[7:0];
-                    8'h50: TransmitWatermark <= Din[2:0];
-                    8'h54: ReceiveWatermark <= Din[2:0];
-                    8'h70: InterruptEnable <= Din[1:0];
+                    SPI_SCKDIV:  SckDiv <= Din[11:0];
+                    SPI_SCKMODE: SckMode <= Din[1:0];
+                    SPI_CSID:    ChipSelectID <= Din[1:0];
+                    SPI_CSDEF:   ChipSelectDef <= Din[3:0];
+                    SPI_CSMODE:  ChipSelectMode <= Din[1:0];
+                    SPI_DELAY0:  Delay0 <= {Din[23:16], Din[7:0]};
+                    SPI_DELAY1:  Delay1 <= {Din[23:16], Din[7:0]};
+                    SPI_FMT:     Format <= {Din[19:16], Din[2]};
+                    SPI_TXDATA:  if (~TransmitFIFOWriteFull) TransmitData[7:0] <= Din[7:0];
+                    SPI_TXMARK:  TransmitWatermark <= Din[2:0];
+                    SPI_RXMARK:  ReceiveWatermark <= Din[2:0];
+                    SPI_IE:      InterruptEnable <= Din[1:0];
                 endcase
             /* verilator lint_off CASEINCOMPLETE */
 
@@ -176,21 +192,21 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
             InterruptPending[1] <= RecieveWriteMark;  
 
             case(Entry) // Flop to sample inputs
-                8'h00: Dout <= {20'b0, SckDiv};
-                8'h04: Dout <= {30'b0, SckMode};
-                8'h10: Dout <= {30'b0, ChipSelectID};
-                8'h14: Dout <= {28'b0, ChipSelectDef};
-                8'h18: Dout <= {30'b0, ChipSelectMode};
-                8'h28: Dout <= {8'b0, Delay0[15:8], 8'b0, Delay0[7:0]};
-                8'h2C: Dout <= {8'b0, Delay1[15:8], 8'b0, Delay1[7:0]};
-                8'h40: Dout <= {12'b0, Format[4:1], 13'b0, Format[0], 2'b0};
-                8'h48: Dout <= {23'b0, TransmitFIFOWriteFull, 8'b0};
-                8'h4C: Dout <= {23'b0, ReceiveFIFOReadEmpty, ReceiveData[7:0]};
-                8'h50: Dout <= {29'b0, TransmitWatermark};
-                8'h54: Dout <= {29'b0, ReceiveWatermark};
-                8'h70: Dout <= {30'b0, InterruptEnable};
-                8'h74: Dout <= {30'b0, InterruptPending};
-                default: Dout <= 32'b0;
+                SPI_SCKDIV:  Dout <= {20'b0, SckDiv};
+                SPI_SCKMODE: Dout <= {30'b0, SckMode};
+                SPI_CSID:    Dout <= {30'b0, ChipSelectID};
+                SPI_CSDEF:   Dout <= {28'b0, ChipSelectDef};
+                SPI_CSMODE:  Dout <= {30'b0, ChipSelectMode};
+                SPI_DELAY0:  Dout <= {8'b0, Delay0[15:8], 8'b0, Delay0[7:0]};
+                SPI_DELAY1:  Dout <= {8'b0, Delay1[15:8], 8'b0, Delay1[7:0]};
+                SPI_FMT:     Dout <= {12'b0, Format[4:1], 13'b0, Format[0], 2'b0};
+                SPI_TXDATA:  Dout <= {23'b0, TransmitFIFOWriteFull, 8'b0};
+                SPI_RXDATA:  Dout <= {23'b0, ReceiveFIFOReadEmpty, ReceiveData[7:0]};
+                SPI_TXMARK:  Dout <= {29'b0, TransmitWatermark};
+                SPI_RXMARK:  Dout <= {29'b0, ReceiveWatermark};
+                SPI_IE:      Dout <= {30'b0, InterruptEnable};
+                SPI_IP:      Dout <= {30'b0, InterruptPending};
+                default:     Dout <= 32'b0;
             endcase
         end
 
@@ -200,8 +216,8 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     assign SCLKenable = (DivCounter == SckDiv);
     assign SCLKenableEarly = ((DivCounter + 12'b1) == SckDiv);
     always_ff @(posedge PCLK, negedge PRESETn)
-        if (~PRESETn) DivCounter <= 0;
-        else if (SCLKenable) DivCounter <= 0;
+        if (~PRESETn) DivCounter <= '0;
+        else if (SCLKenable) DivCounter <= 12'b0;
         else DivCounter <= DivCounter + 12'b1;
 
     // Asserts when transmission is one frame before complete
@@ -219,11 +235,11 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     // Calculate tx/rx fifo write and recieve increment signals 
 
     always_ff @(posedge PCLK, negedge PRESETn)
-        if (~PRESETn) TransmitFIFOWriteIncrement <= 0;
+        if (~PRESETn) TransmitFIFOWriteIncrement <= 1'b0;
         else TransmitFIFOWriteIncrement <= (Memwrite & (Entry == 8'h48) & ~TransmitFIFOWriteFull & TransmitInactive);
 
     always_ff @(posedge PCLK, negedge PRESETn)
-        if (~PRESETn) ReceiveFIFOReadIncrement <= 0;
+        if (~PRESETn) ReceiveFIFOReadIncrement <= 1'b0;
         else ReceiveFIFOReadIncrement <= ((Entry == 8'h4C) & ~ReceiveFIFOReadEmpty & PSEL & ~ReceiveFIFOReadIncrement);
     
     // Tx/Rx FIFOs
@@ -233,14 +249,14 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
                             ReceiveData[7:0], ReceiveFIFOWriteFull, ReceiveFIFOReadEmpty, RecieveWriteMark, RecieveReadMark);
 
     always_ff @(posedge PCLK, negedge PRESETn)
-        if (~PRESETn) TransmitFIFOReadEmptyDelay <= 1;
+        if (~PRESETn) TransmitFIFOReadEmptyDelay <= 1'b1;
         else  if (SCLKenable) TransmitFIFOReadEmptyDelay <= TransmitFIFOReadEmpty;
 
     always_ff @(posedge PCLK, negedge PRESETn)
-        if (~PRESETn) ReceiveShiftFullDelay <= 0;
+        if (~PRESETn) ReceiveShiftFullDelay <= 1'b0;
         else if (SCLKenable) ReceiveShiftFullDelay <= ReceiveShiftFull;
     always_ff @(posedge PCLK, negedge PRESETn)
-        if (~PRESETn) ReceiveShiftFullDelayPCLK <= 0;
+        if (~PRESETn) ReceiveShiftFullDelayPCLK <= 1'b0;
         else if (SCLKenableEarly) ReceiveShiftFullDelayPCLK <= ReceiveShiftFull; 
 
     assign TransmitShiftRegLoad = ~TransmitShiftEmpty & ~Active | (((ChipSelectMode == 2'b10) & ~|(Delay1[15:8])) & ((ReceiveShiftFullDelay | ReceiveShiftFull) & ~SampleEdge & ~TransmitFIFOReadEmpty));
@@ -399,12 +415,11 @@ module SynchFIFO #(parameter M=3, N=8)(                 // 2^M entries of N bits
     // write and read are enabled 
     always_ff @(posedge PCLK, negedge PRESETn)
         if (~PRESETn) begin 
-            rptr <= 0;
-            wptr <= 0;
+            rptr <= '0;
+            wptr <= '0;
             wfull <= 1'b0;
             rempty <= 1'b1;
-        end
-        else begin 
+        end else begin 
             if (wen) begin
                 wfull <= ({~wptrnext[M], wptrnext[M-1:0]} == rptr);
                 wptr  <= wptrnext;
@@ -429,13 +444,13 @@ module TransmitShiftFSM(
     output logic TransmitShiftEmpty);
 
     always_ff @(posedge PCLK, negedge PRESETn)
-        if (~PRESETn) TransmitShiftEmpty <= 1;
+        if (~PRESETn) TransmitShiftEmpty <= 1'b1;
         else if (TransmitShiftEmpty) begin        
-            if (TransmitFIFOReadEmpty | (~TransmitFIFOReadEmpty & (ReceivePenultimateFrame & Active0))) TransmitShiftEmpty <= 1;
-            else if (~TransmitFIFOReadEmpty) TransmitShiftEmpty <= 0;
+            if (TransmitFIFOReadEmpty | (~TransmitFIFOReadEmpty & (ReceivePenultimateFrame & Active0))) TransmitShiftEmpty <= 1'b1;
+            else if (~TransmitFIFOReadEmpty) TransmitShiftEmpty <= 1'b0;
         end else begin
-            if (ReceivePenultimateFrame & Active0) TransmitShiftEmpty <= 1;
-            else TransmitShiftEmpty <= 0;
+            if (ReceivePenultimateFrame & Active0) TransmitShiftEmpty <= 1'b1;
+            else TransmitShiftEmpty <= 1'b0;
         end
 
 endmodule

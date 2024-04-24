@@ -26,7 +26,7 @@ fi
 
 for config in ${configs[@]}; do
 #    echo "$config linting..."
-    if !($verilator --no-timing --lint-only --top-module wallywrapper "-I$basepath/config/shared" "-I$basepath/config/$config" "-I$basepath/config/deriv/$config" $basepath/src/cvw.sv $basepath/testbench/wallywrapper.sv $basepath/src/*/*.sv $basepath/src/*/*/*.sv --relative-includes ); then
+    if !($verilator --no-timing --lint-only --quiet --top-module wallywrapper "-I$basepath/config/shared" "-I$basepath/config/$config" "-I$basepath/config/deriv/$config" $basepath/src/cvw.sv $basepath/testbench/wallywrapper.sv $basepath/src/*/*.sv $basepath/src/*/*/*.sv --relative-includes ); then
         if [ "$1" == "-nightly" ]; then
             echo -e "${RED}$config failed lint${NC}"
             fails=$((fails+1))

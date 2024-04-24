@@ -268,7 +268,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   //    11 - quad
   
     if (P.FPSIZES == 1)
-      assign FmtD = 0;
+      assign FmtD = 1'b0;
     else if (P.FPSIZES == 2)begin
       logic [1:0] FmtTmp;
       assign FmtTmp = ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : (~OpD[6]&(&OpD[2:0])) ? {~Funct3D[1], ~(Funct3D[1]^Funct3D[0])} : Funct7D[1:0];
@@ -359,7 +359,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
 
   // Integer division on FPU divider
   if (P.M_SUPPORTED & P.IDIV_ON_FPU) assign IDivStartE = IntDivE;
-  else                               assign IDivStartE = 0; 
+  else                               assign IDivStartE = 1'b0; 
 
   // E/M pipleine register
   flopenrc #(14+int'(P.FMTBITS)) EMCtrlReg (clk, reset, FlushM, ~StallM,

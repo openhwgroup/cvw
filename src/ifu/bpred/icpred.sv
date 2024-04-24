@@ -30,8 +30,8 @@
 module icpred import cvw::*;  #(parameter cvw_t P, 
                                 parameter INSTR_CLASS_PRED = 1)(
   input  logic             clk, reset,
-  input  logic             StallF, StallD, StallE, StallM, StallW,
-  input  logic             FlushD, FlushE, FlushM, FlushW,
+  input  logic             StallD, StallE, StallM, StallW,
+  input  logic             FlushD, FlushE, FlushM, 
   input  logic [31:0]      PostSpillInstrRawF, InstrD,        // Instruction
   input  logic             BranchD, BranchE,
   input  logic             JumpD, JumpE,
@@ -65,7 +65,7 @@ module icpred import cvw::*;  #(parameter cvw_t P,
       assign CJumpF = cjal | cj | cjr | cjalr;
       assign CBranchF = CompressedOpcF[4:1] == 4'h7;
     end else begin
-      assign {cjal, cj, cjr, cjalr, CJumpF, CBranchF} = 0;
+      assign {cjal, cj, cjr, cjalr, CJumpF, CBranchF} = '0;
     end
 
     assign NCJumpF = PostSpillInstrRawF[6:0] == 7'h67 | PostSpillInstrRawF[6:0] == 7'h6F;

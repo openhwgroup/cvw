@@ -140,5 +140,5 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
  
   // handle Store Conditional result if atomic extension supported
   if (P.A_SUPPORTED) assign SCResultW = {{(P.XLEN-1){1'b0}}, SquashSCW};
-  else               assign SCResultW = 0;
+  else               assign SCResultW = '0;
 endmodule

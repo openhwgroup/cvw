@@ -54,6 +54,19 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
   output logic                MExtInt, SExtInt
 );
 
+  // register map
+  localparam PLIC_INTPRIORITY0   = 24'h000000;
+  localparam PLIC_INTPENDING0    = 24'h001000;
+  localparam PLIC_INTPENDING1    = 24'h001004;
+  localparam PLIC_INTEN00        = 24'h002000;
+  localparam PLIC_INTEN01        = 24'h002004;
+  localparam PLIC_INTEN10        = 24'h002080;
+  localparam PLIC_INTEN11        = 24'h002084;
+  localparam PLIC_THRESHOLD0     = 24'h200000;
+  localparam PLIC_CLAIMCOMPLETE0 = 24'h200004;
+  localparam PLIC_THRESHOLD1     = 24'h201000;
+  localparam PLIC_CLAIMCOMPLETE1 = 24'h201004;
+
   logic                       memwrite, memread;
   logic [23:0]                entry;
   logic [31:0]                Din, Dout;
@@ -91,7 +104,7 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
   assign memread  = ~PWRITE & PSEL;           // read at start of access phase.  PENABLE hasn't set up before this
   assign PREADY   = 1'b1;                     // PLIC never takes >1 cycle to respond
   assign entry    = {PADDR[23:2],2'b0};
-  assign One[P.PLIC_NUM_SRC-1:1] = 0; assign One[0] = 1'b1; // Vivado does not like this as a single assignment.
+  assign One[P.PLIC_NUM_SRC-1:1] = '0; assign One[0] = 1'b1; // Vivado does not like this as a single assignment.
 
   // account for subword read/write circuitry
   // -- Note PLIC registers are 32 bits no matter what; access them with LW SW.
@@ -107,48 +120,49 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
   always_ff @(posedge PCLK) begin
     // resetting
     if (~PRESETn) begin
-      intPriority   <= 0;
-      intEn         <= 0;
-      intThreshold  <= 0;
-      intInProgress <= 0;
+      intPriority   <= '0;
+      intEn         <= '0;
+      intThreshold  <= '0;
+      intInProgress <= '0;
     // writing
     end else begin
       if (memwrite)        
         casez(entry)
-          24'h0000??: intPriority[entry[7:2]] <= Din[2:0];
-          24'h002000: intEn[0][PLIC_NUM_SRC_MIN_32:1] <= Din[PLIC_NUM_SRC_MIN_32:1];
-          24'h002080: intEn[1][PLIC_NUM_SRC_MIN_32:1] <= Din[PLIC_NUM_SRC_MIN_32:1];
-          24'h002004: if (P.PLIC_NUM_SRC >= 32) intEn[0][PLIC_SRC_TOP:PLIC_SRC_BOT]         <= Din[PLIC_SRC_DINTOP:0];
-          24'h002084: if (P.PLIC_NUM_SRC >= 32) intEn[1][PLIC_SRC_TOP:PLIC_SRC_BOT]         <= Din[PLIC_SRC_DINTOP:0];
-          24'h200000: intThreshold[0]         <= Din[2:0];
-          24'h200004: intInProgress           <= intInProgress & ~(One << (Din[5:0]-1)); // lower "InProgress" to signify completion 
-          24'h201000: intThreshold[1]         <= Din[2:0];
-          24'h201004: intInProgress           <= intInProgress & ~(One << (Din[5:0]-1)); // lower "InProgress" to signify completion 
+          24'h0000??:          intPriority[entry[7:2]] <= Din[2:0];
+          PLIC_INTEN00:        intEn[0][PLIC_NUM_SRC_MIN_32:1] <= Din[PLIC_NUM_SRC_MIN_32:1];
+          PLIC_INTEN10:        intEn[1][PLIC_NUM_SRC_MIN_32:1] <= Din[PLIC_NUM_SRC_MIN_32:1];
+          PLIC_INTEN01:        if (P.PLIC_NUM_SRC >= 32) intEn[0][PLIC_SRC_TOP:PLIC_SRC_BOT]         <= Din[PLIC_SRC_DINTOP:0];
+          PLIC_INTEN11:        if (P.PLIC_NUM_SRC >= 32) intEn[1][PLIC_SRC_TOP:PLIC_SRC_BOT]         <= Din[PLIC_SRC_DINTOP:0];
+          PLIC_THRESHOLD0:     intThreshold[0]         <= Din[2:0];
+          PLIC_CLAIMCOMPLETE0: intInProgress           <= intInProgress & ~(One << (Din[5:0]-1)); // lower "InProgress" to signify completion 
+          PLIC_THRESHOLD1:     intThreshold[1]         <= Din[2:0];
+          PLIC_CLAIMCOMPLETE1: intInProgress           <= intInProgress & ~(One << (Din[5:0]-1)); // lower "InProgress" to signify completion 
         endcase
+
       // Read synchronously because a read can have side effect of changing intInProgress
       if (memread) begin
         casez(entry)
-          24'h000000: Dout <= 32'b0;  // there is no intPriority[0]
-          24'h0000??: Dout <= {29'b0,intPriority[entry[7:2]]};      
-          24'h001000: Dout <= {{(31-PLIC_NUM_SRC_MIN_32){1'b0}},intPending[PLIC_NUM_SRC_MIN_32:1],1'b0};
-          24'h002000: Dout <= {{(31-PLIC_NUM_SRC_MIN_32){1'b0}},intEn[0][PLIC_NUM_SRC_MIN_32:1],1'b0};
-          24'h001004: if (P.PLIC_NUM_SRC >= 32) Dout <= {{(PLIC_SRC_EXT){1'b0}},intPending[PLIC_SRC_TOP:PLIC_SRC_BOT]};
-          24'h002004: if (P.PLIC_NUM_SRC >= 32) Dout <= {{(PLIC_SRC_EXT){1'b0}},intEn[0][PLIC_SRC_TOP:PLIC_SRC_BOT]};
-          24'h002080: Dout <= {{(31-PLIC_NUM_SRC_MIN_32){1'b0}},intEn[1][PLIC_NUM_SRC_MIN_32:1],1'b0};
-          24'h002084: if (P.PLIC_NUM_SRC >= 32) Dout <= {{(PLIC_SRC_EXT){1'b0}},intEn[1][PLIC_SRC_TOP:PLIC_SRC_BOT]};
-          24'h200000: Dout <= {29'b0,intThreshold[0]};
-          24'h200004: begin
+          PLIC_INTPRIORITY0: Dout <= 32'b0;  // there is no intPriority[0]
+          24'h0000??:        Dout <= {29'b0,intPriority[entry[7:2]]};      
+          PLIC_INTPENDING0:  Dout <= {{(31-PLIC_NUM_SRC_MIN_32){1'b0}},intPending[PLIC_NUM_SRC_MIN_32:1],1'b0};
+          PLIC_INTEN00:      Dout <= {{(31-PLIC_NUM_SRC_MIN_32){1'b0}},intEn[0][PLIC_NUM_SRC_MIN_32:1],1'b0};
+          PLIC_INTPENDING1:  if (P.PLIC_NUM_SRC >= 32) Dout <= {{(PLIC_SRC_EXT){1'b0}},intPending[PLIC_SRC_TOP:PLIC_SRC_BOT]};
+          PLIC_INTEN01:      if (P.PLIC_NUM_SRC >= 32) Dout <= {{(PLIC_SRC_EXT){1'b0}},intEn[0][PLIC_SRC_TOP:PLIC_SRC_BOT]};
+          PLIC_INTEN10:      Dout <= {{(31-PLIC_NUM_SRC_MIN_32){1'b0}},intEn[1][PLIC_NUM_SRC_MIN_32:1],1'b0};
+          PLIC_INTEN11:      if (P.PLIC_NUM_SRC >= 32) Dout <= {{(PLIC_SRC_EXT){1'b0}},intEn[1][PLIC_SRC_TOP:PLIC_SRC_BOT]};
+          PLIC_THRESHOLD0:   Dout <= {29'b0,intThreshold[0]};
+          PLIC_CLAIMCOMPLETE0: begin
             Dout <= {26'b0,intClaim[0]};
             intInProgress <= intInProgress | (One << (intClaim[0]-1)); // claimed requests are currently in progress of being serviced until they are completed
           end
-          24'h201000: Dout <= {29'b0,intThreshold[1]};
-          24'h201004: begin
+          PLIC_THRESHOLD1:   Dout <= {29'b0,intThreshold[1]};
+          PLIC_CLAIMCOMPLETE1: begin
             Dout <= {26'b0,intClaim[1]};
             intInProgress <= intInProgress | (One << (intClaim[1]-1)); // claimed requests are currently in progress of being serviced until they are completed
           end
-          default: Dout <= 32'h0; // invalid access
+          default:           Dout <= 32'h0; // invalid access
         endcase
-      end else Dout <= 32'h0;
+      end else               Dout <= 32'h0;
    end
   end
 

@@ -135,33 +135,33 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   localparam           LOGNUMSRAM = $clog2(NUMSRAM);
   
   for(words = 0; words < NUMSRAM; words++) begin: word
-    if (!READ_ONLY_CACHE) begin:wordram
-      ram1p1rwbe #(.USE_SRAM(P.USE_SRAM), .DEPTH(NUMLINES), .WIDTH(P.CACHE_SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSetData),
-      .dout(ReadDataLine[P.CACHE_SRAMLEN*(words+1)-1:P.CACHE_SRAMLEN*words]),
-      .din(LineWriteData[P.CACHE_SRAMLEN*(words+1)-1:P.CACHE_SRAMLEN*words]),
-      .we(SelectedWriteWordEn), .bwe(FinalByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
-    end else begin:wordram // no byte-enable needed for i$.
+    if (READ_ONLY_CACHE) begin:wordram // no byte-enable needed for i$.
       ram1p1rwe #(.USE_SRAM(P.USE_SRAM), .DEPTH(NUMLINES), .WIDTH(P.CACHE_SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSetData),
       .dout(ReadDataLine[P.CACHE_SRAMLEN*(words+1)-1:P.CACHE_SRAMLEN*words]),
       .din(LineWriteData[P.CACHE_SRAMLEN*(words+1)-1:P.CACHE_SRAMLEN*words]),
       .we(SelectedWriteWordEn));
-    end
+    end else begin:wordram // D$ needs byte enables
+     ram1p1rwbe #(.USE_SRAM(P.USE_SRAM), .DEPTH(NUMLINES), .WIDTH(P.CACHE_SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSetData),
+      .dout(ReadDataLine[P.CACHE_SRAMLEN*(words+1)-1:P.CACHE_SRAMLEN*words]),
+      .din(LineWriteData[P.CACHE_SRAMLEN*(words+1)-1:P.CACHE_SRAMLEN*words]),
+      .we(SelectedWriteWordEn), .bwe(FinalByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
+     end
   end
 
   // AND portion of distributed read multiplexers
-  assign ReadDataLineWay = SelectedWay ? ReadDataLine : 0;  // AND part of AO mux.
+  assign ReadDataLineWay = SelectedWay ? ReadDataLine : '0;  // AND part of AO mux.
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Valid Bits
   /////////////////////////////////////////////////////////////////////////////////////////////
   
   always_ff @(posedge clk) begin // Valid bit array, 
-    if (reset) ValidBits        <= 0;
+    if (reset) ValidBits        <= '0;
     if(CacheEn) begin 
       ValidWay <= ValidBits[CacheSetTag];
-      if(InvalidateCache)                    ValidBits <= 0; // exclusion-tag: dcache invalidateway
+      if(InvalidateCache)                    ValidBits <= '0; // exclusion-tag: dcache invalidateway
       else if (SetValidEN) ValidBits[CacheSetData] <= SetValidWay;
-      else if (ClearValidEN) ValidBits[CacheSetData] <= 0; // exclusion-tag: icache ClearValidBits
+      else if (ClearValidEN) ValidBits[CacheSetData] <= '0; // exclusion-tag: icache ClearValidBits
     end
   end
 

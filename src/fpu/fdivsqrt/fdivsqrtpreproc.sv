@@ -145,7 +145,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
       assign DivXShifted = DivX;
     end
   end else begin
-    assign ISpecialCaseE = 0;
+    assign ISpecialCaseE = 1'b0;
   end
 
   //////////////////////////////////////////////////////

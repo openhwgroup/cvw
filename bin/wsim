@@ -70,6 +70,21 @@ if (args.sim == "questa"):
 elif (args.sim == "verilator"):
     # PWD=${WALLY}/sim CONFIG=rv64gc TESTSUITE=arch64i
     print(f"Running Verilator on {args.config} {args.testsuite}")
+    if (args.coverage):
+        print("Coverage option not available for Verilator")
+        exit(1)
+    if (args.gui):
+        print("GUI option not available for Verilator")
+        exit(1)
     os.system(f"/usr/bin/make -C {regressionDir}/verilator WALLYCONF={args.config} TEST={args.testsuite} EXTRA_ARGS='{args.args}'")
 elif (args.sim == "vcs"):
-    print("Running VCS on %s %s", args.config, args.testsuite)
+    print(f"Running VCS on " + args.config + " " + args.testsuite)
+    if (args.coverage):
+        print("Coverage option not available for VCS")
+        exit(1)
+    if (args.gui):
+        print("GUI option not available for VCS")
+        exit(1)
+    cmd = cd + "; ./run_vcs " + args.config + " " + "\""+args.testsuite+"\""
+    print(cmd)
+    os.system(cmd)

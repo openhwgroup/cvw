@@ -339,7 +339,7 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
 
   if (P.ZFA_SUPPORTED & P.D_SUPPORTED) // fcvtmod.w.d support
     always_comb begin
-        if (Zfa) OfIntRes2 = 0;                // fcvtmod.w.d produces 0 on overflow
+        if (Zfa) OfIntRes2 = '0;                // fcvtmod.w.d produces 0 on overflow
         else     OfIntRes2 = OfIntRes;
         if (Zfa) Int64Res = {{(P.XLEN-32){CvtNegRes[P.XLEN-1]}}, CvtNegRes[31:0]};
         else     Int64Res = CvtNegRes[P.XLEN-1:0];

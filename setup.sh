@@ -24,7 +24,7 @@ echo \$WALLY set to ${WALLY}
 export PATH=$WALLY/bin:$PATH    
 
 # Verilator needs a larger stack to simulate CORE-V Wally
-ulimit -s 100000
+ulimit -c 234613
 
 # load site licenses and tool locations
 if [ -f ${RISCV}/site-setup.sh ]; then

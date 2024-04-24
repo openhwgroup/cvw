@@ -293,7 +293,6 @@ typedef struct packed {
   int DURLEN     ;
   int DIVb       ;
   int DIVBLEN    ;
-
 } cvw_t;
 
 endpackage

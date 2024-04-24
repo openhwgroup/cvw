@@ -35,6 +35,7 @@ module subwordwrite #(parameter LLEN) (
 );
 
   // Replicate data for subword writes
+
   if (LLEN == 128) begin:sww
     always_comb 
       case(LSUFunct3M[2:0])

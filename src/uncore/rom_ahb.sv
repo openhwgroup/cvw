@@ -43,7 +43,7 @@ module rom_ahb import cvw::*;  #(parameter cvw_t P,
  
   // Never stalls
   assign HREADYRom = 1'b1;
-  assign HRESPRom  = 0; // OK
+  assign HRESPRom  = 1'b0; // OK
 
   // single-ported ROM
   rom1p1r #(ADDR_WIDTH, P.XLEN, PRELOAD)

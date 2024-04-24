@@ -65,7 +65,7 @@ module divshiftcalc import cvw::*;  #(parameter cvw_t P) (
 
   // if the shift amount is negative then don't shift (keep sticky bit)
   // need to multiply the early termination shift by LOGR*DIVCOPIES =  left shift of log2(LOGR*DIVCOPIES)
-  assign DivSubnormShiftAmt = DivSubnormShiftPos ? DivSubnormShift[P.LOGNORMSHIFTSZ-1:0] : 0;
+  assign DivSubnormShiftAmt = DivSubnormShiftPos ? DivSubnormShift[P.LOGNORMSHIFTSZ-1:0] : '0;
   assign DivShiftAmt        = DivResSubnorm ? DivSubnormShiftAmt : NormShift;
 
   // pre-shift the divider result for normalization

@@ -120,9 +120,9 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
     // DivBusyE will never be assert high since this configuration uses the FPU to do integer division
     assign CounterEvent[24] = DivBusyE | FDivBusyE;                                      // division cycles *** RT: might need to be delay until the next cycle
     // coverage on
-    assign CounterEvent[P.COUNTERS-1:25] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
+    assign CounterEvent[P.COUNTERS-1:25] = '0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
   end else begin: cevent
-    assign CounterEvent[P.COUNTERS-1:3] = 0;
+    assign CounterEvent[P.COUNTERS-1:3] = '0;
   end
   
   // Counter update and write logic
@@ -130,7 +130,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
       assign WriteHPMCOUNTERM[i] = CSRMWriteM & (CSRAdrM == MHPMCOUNTERBASE + i);
       assign NextHPMCOUNTERM[i][P.XLEN-1:0] = WriteHPMCOUNTERM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][P.XLEN-1:0];
       always_ff @(posedge clk) //, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
-        if (reset) HPMCOUNTER_REGW[i][P.XLEN-1:0] <= 0;
+        if (reset) HPMCOUNTER_REGW[i][P.XLEN-1:0] <= '0;
         else       HPMCOUNTER_REGW[i][P.XLEN-1:0] <= NextHPMCOUNTERM[i];
 
       if (P.XLEN==32) begin // write high and low separately
@@ -140,10 +140,11 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
         assign WriteHPMCOUNTERHM[i] = CSRMWriteM & (CSRAdrM == MHPMCOUNTERHBASE + i);
         assign NextHPMCOUNTERHM[i] = WriteHPMCOUNTERHM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][63:32];
         always_ff @(posedge clk) //, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
-            if (reset) HPMCOUNTERH_REGW[i][P.XLEN-1:0] <= 0;
+            if (reset) HPMCOUNTERH_REGW[i][P.XLEN-1:0] <= '0;
             else       HPMCOUNTERH_REGW[i][P.XLEN-1:0] <= NextHPMCOUNTERHM[i];
       end else begin // XLEN=64; write entire register
           assign HPMCOUNTERPlusM[i] = HPMCOUNTER_REGW[i] + {63'b0, CounterEvent[i] & ~MCOUNTINHIBIT_REGW[i]};
+          assign HPMCOUNTERH_REGW[i] = '0; // disregard for RV64
       end
   end
 
@@ -152,7 +153,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   always_comb 
     if (PrivilegeModeW == P.M_MODE | 
         MCOUNTEREN_REGW[CounterNumM] & (!P.S_SUPPORTED | PrivilegeModeW == P.S_MODE | SCOUNTEREN_REGW[CounterNumM])) begin
-      IllegalCSRCAccessM = 0;
+      IllegalCSRCAccessM = 1'b0;
       if (P.XLEN==64) begin // 64-bit counter reads
         // Veri lator doesn't realize this only occurs for XLEN=64
         /* verilator lint_off WIDTH */  
@@ -163,8 +164,8 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
         else if (CSRAdrM >= HPMCOUNTERBASE  & CSRAdrM  < HPMCOUNTERBASE+P.COUNTERS)  
                  CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
         else begin
-            CSRCReadValM = 0;
-            IllegalCSRCAccessM = 1;  // requested CSR doesn't exist
+            CSRCReadValM = '0;
+            IllegalCSRCAccessM = 1'b1;  // requested CSR doesn't exist
         end
       end else begin // 32-bit counter reads
         // Veril ator doesn't realize this only occurs for XLEN=32
@@ -181,13 +182,13 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
         else if (CSRAdrM >= HPMCOUNTERHBASE  & CSRAdrM < HPMCOUNTERHBASE+P.COUNTERS)   
                  CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
         else begin
-          CSRCReadValM = 0;
-          IllegalCSRCAccessM = 1; // requested CSR doesn't exist
+          CSRCReadValM = '0;
+          IllegalCSRCAccessM = 1'b1; // requested CSR doesn't exist
         end            
       end
     end else begin 
-      CSRCReadValM = 0;
-      IllegalCSRCAccessM = 1; // no privileges for this csr
+      CSRCReadValM = '0;
+      IllegalCSRCAccessM = 1'b1; // no privileges for this csr
     end
 endmodule
 

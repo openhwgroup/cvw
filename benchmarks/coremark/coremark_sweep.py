@@ -37,24 +37,26 @@ arch_list = [
     "rv32i_zicsr",
     "rv32im_zicsr",
     "rv32imc_zicsr",
-    "rv32im_zicsr_zba_zbb_zbc",
+    "rv32im_zicsr_zba_zbb_zbs",
     "rv32gc",
-    "rv32gc_zba_zbb_zbc",
+    "rv32gc_zba_zbb_zbs",
     "rv64i_zicsr",
     "rv64im_zicsr",
     "rv64imc_zicsr",
-    "rv64im_zicsr_zba_zbb_zbc",
+    "rv64im_zicsr_zba_zbb_zbs",
     "rv64gc",
-    "rv64gc_zba_zbb_zbc"
+    "rv64gc_zba_zbb_zbs"
 ]
 str="32" 
+        
 # Define regular expressions to match the desired fields
 mt_regex = r"Elapsed MTIME: (\d+).*?Elapsed MINSTRET: (\d+).*?COREMARK/MHz Score: [\d,]+ / [\d,]+ = (\d+\.\d+).*?CPI: \d+ / \d+ = (\d+\.\d+).*?Load Stalls (\d+).*?Store Stalls (\d+).*?D-Cache Accesses (\d+).*?D-Cache Misses (\d+).*?I-Cache Accesses (\d+).*?I-Cache Misses (\d+).*?Branches (\d+).*?Branches Miss Predictions (\d+).*?BTB Misses (\d+).*?Jump and JR (\d+).*?RAS Wrong (\d+).*?Returns (\d+).*?BP Class Wrong (\d+)"
 #cpi_regex = r"CPI: \d+ / \d+ = (\d+\.\d+)"
 #cmhz_regex = r"COREMARK/MHz Score: [\d,]+ / [\d,]+ = (\d+\.\d+)"
 # Open a CSV file to write the results
-with open('coremark_results.csv', mode='w', newline='') as csvfile:
-    fieldnames = ['Architecture', 'MTIME','MINSTRET','CM / MHz','CPI','Load Stalls','Store Stalls','D$ Accesses',
+resultfile = 'coremark_results.csv'
+with open(resultfile, mode='w', newline='') as csvfile:
+    fieldnames = ['Architecture', 'CM / MHz','CPI','MTIME','MINSTRET','Load Stalls','Store Stalls','D$ Accesses',
                     'D$ Misses','I$ Accesses','I$ Misses','Branches','Branch Mispredicts','BTB Misses',
                     'Jump/JR','RAS Wrong','Returns','BP Class Pred Wrong']
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -101,7 +103,11 @@ with open('coremark_results.csv', mode='w', newline='') as csvfile:
         ret= mt_match.group(16)
         bpc= mt_match.group(17)
         #minstret = mt_instret_match.group(2)
-        writer.writerow({'Architecture': arch, 'MTIME': mtime,'MINSTRET':minstret,'CM / MHz':cmhz,'CPI':cpi,
+        writer.writerow({'Architecture': arch, 'CM / MHz':cmhz,'CPI':cpi, 'MTIME': mtime,'MINSTRET':minstret,
                             'Load Stalls':lstalls,
                             'Store Stalls':swtalls,'D$ Accesses':dacc,'D$ Misses':dmiss,'I$ Accesses':iacc,'I$ Misses':imiss,
                             'Branches':br,'Branch Mispredicts':brm,'BTB Misses':btb,'Jump/JR':jmp,'RAS Wrong':ras,'Returns':ret,'BP Class Pred Wrong':bpc})
+        csvfile.flush()
+    csvfile.close()
+
+

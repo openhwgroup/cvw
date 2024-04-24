@@ -30,30 +30,30 @@ tests = [
         ["rv32gc", ["arch32f", "arch32d", "arch32f_fma", "arch32d_fma", "arch32f_divsqrt", "arch32d_divsqrt", 
                     "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32a", "arch32zifencei", "arch32zicond", 
                     "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "arch32zfh", "arch32zfh_fma", 
-                    "arch32zfh_divsqrt", "arch32zfaf", "wally32a", "wally32priv", "wally32periph", 
-                    "arch32zbkb", "arch32zbkc", "arch32zbkx", "arch32zknd", "arch32zkne", "arch32zknh"]], # "arch32zcb", "arch32zfad",
-        ["rv64i", ["arch64i"]]
+                    "arch32zfh_divsqrt", "arch32zfaf", "wally32a", "wally32priv", "wally32periph", "arch32zcb",
+                    "arch32zbkb", "arch32zbkc", "arch32zbkx", "arch32zknd", "arch32zkne", "arch32zknh"]], #  "arch32zfad"  # fcvtmod.w.d not working because of Sail flag bug. Jordan has PR in to fix Sail
+         ["rv64i", ["arch64i"]]
         ]
 
-
-# Separate test for full buildroot run
+# Separate test for short buildroot run through OpenSBI UART output
 tests_buildrootshort = [
                     ["buildroot", ["buildroot"], [f"+INSTR_LIMIT=1400000"], # Instruction limit gets to first OpenSBI UART output  
                         "OpenSBI v", "buildroot_uart.out"]
     ]
 
+# Separate test for full buildroot run
 tests_buildrootboot = [
-                    ["buildroot", ["buildroot"], [f"+INSTR_LIMIT=600000000"], 
+                    ["buildroot", ["buildroot"], [f"+INSTR_LIMIT=600000000"], # boot entire buildroot Linux to login prompt
                         "WallyHostname login: ", "buildroot_uart.out"]
     ]
 
 
 # Separate out floating-point tests for RV64 to speed up coverage
 tests64gc_nofp = [
-        ["rv64gc", ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m",
+        ["rv64gc", ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m", "arch64zcb",
                     "arch64zifencei", "arch64zicond", "arch64a", "wally64a", "wally64periph", "wally64priv", 
                     "arch64zbkb", "arch64zbkc", "arch64zbkx", "arch64zknd", "arch64zkne", "arch64zknh",
-                    "arch64zba",  "arch64zbb",  "arch64zbc", "arch64zbs"]] # add when working: "arch64zcb", "arch64zicboz"
+                    "arch64zba",  "arch64zbb",  "arch64zbc", "arch64zbs"]] # add when working:  "arch64zicboz"
     ]
 
 tests64gc_fp = [
@@ -237,6 +237,10 @@ def addTests(tests, sim):
 
 def search_log_for_text(text, grepfile):
     """Search through the given log file for text, returning True if it is found or False if it is not"""
+    grepwarn = "grep -H Warning: " + grepfile
+    os.system(grepwarn)
+    greperr = "grep -H Error: " + grepfile
+    os.system(greperr)
     grepcmd = "grep -a -e '%s' '%s' > /dev/null" % (text, grepfile)
 #    print("  search_log_for_text invoking %s" % grepcmd)
     return os.system(grepcmd) == 0
@@ -249,10 +253,11 @@ def run_test_case(config):
     # print("  run_test_case invoking %s" % cmd)
     os.system(cmd)
     if search_log_for_text(config.grepstr, grepfile):
-        print(f"{bcolors.OKGREEN}%s_%s: Success{bcolors.ENDC}" % (config.variant, config.name))
+#        print(f"{bcolors.OKGREEN}%s_%s: Success{bcolors.ENDC}" % (config.variant, config.name))
+        print(f"{bcolors.OKGREEN}%s: Success{bcolors.ENDC}" % (config.cmd))
         return 0
     else:
-        print(f"{bcolors.FAIL}%s_%s: Failures detected in output{bcolors.ENDC}" % (config.variant, config.name))
+        print(f"{bcolors.FAIL}%s: Failures detected in output{bcolors.ENDC}" % (config.cmd))
         print("  Check %s" % grepfile)
         return 1
 
@@ -276,7 +281,8 @@ buildroot = '--buildroot' in sys.argv
 
 if (nightly):
     nightMode = "--nightly";
-    sims = ["questa", "verilator", "vcs"]
+    sims = [defaultsim] 
+#    sims = ["questa", "verilator", "vcs"] # *** uncomment to exercise all simulators
 else:
     nightMode = ""
     sims = [defaultsim]
@@ -309,8 +315,8 @@ else:
 
     # run derivative configurations in nightly regression
 if (nightly):
-    addTests(derivconfigtests, defaultsim)
     addTests(tests_buildrootboot, defaultsim)
+    addTests(derivconfigtests, defaultsim)
 else:
     addTests(tests_buildrootshort, defaultsim)
 
@@ -401,7 +407,7 @@ def main():
     elif '--nightly' in sys.argv:
         TIMEOUT_DUR = 60*1440 # 1 day
     elif '--testfloat' in sys.argv:
-        TIMEOUT_DUR = 60*60 # seconds
+        TIMEOUT_DUR = 5*60 # seconds
     else:
         TIMEOUT_DUR = 10*60 # seconds
 

@@ -302,15 +302,15 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
       .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM);
   end else begin
-    assign CSRReadValW      = 0;
-    assign EPCM             = 0;
-    assign TrapVectorM      = 0;
-    assign RetM             = 0;
-    assign TrapM            = 0;
-    assign wfiM             = 0;
-    assign IntPendingM      = 0;
-    assign sfencevmaM       = 0;
-    assign BigEndianM       = 0;
+    assign CSRReadValW      = '0;
+    assign EPCM             = '0;
+    assign TrapVectorM      = '0;
+    assign RetM             = 1'b0;
+    assign TrapM            = 1'b0;
+    assign wfiM             = 1'b0;
+    assign IntPendingM      = 1'b0;
+    assign sfencevmaM       = 1'b0;
+    assign BigEndianM       = 1'b0;
   end
 
   // multiply/divide unit
@@ -320,8 +320,8 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .Funct3E, .Funct3M, .IntDivE, .W64E, .MDUActiveE,
       .MDUResultW, .DivBusyE); 
   end else begin // no M instructions supported
-    assign MDUResultW = 0; 
-    assign DivBusyE   = 0;
+    assign MDUResultW = '0; 
+    assign DivBusyE   = 1'b0;
   end
 
   // floating point unit
@@ -351,15 +351,15 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .SetFflagsM,                         // FPU flags (to privileged unit)
       .FIntDivResultW); 
   end else begin                           // no F_SUPPORTED or D_SUPPORTED; tie outputs low
-    assign FPUStallD        = 0;
-    assign FWriteIntE       = 0; 
-    assign FCvtIntE         = 0;
-    assign FIntResM         = 0;
-    assign FCvtIntW         = 0;
-    assign FDivBusyE        = 0;
-    assign IllegalFPUInstrD = 1;
-    assign SetFflagsM       = 0;
-    assign FpLoadStoreM     = 0;
+    assign FPUStallD        = 1'b0;
+    assign FWriteIntE       = 1'b0; 
+    assign FCvtIntE         = 1'b0;
+    assign FIntResM         = '0;
+    assign FCvtIntW         = 1'b0;
+    assign FDivBusyE        = 1'b0;
+    assign IllegalFPUInstrD = 1'b1;
+    assign SetFflagsM       = '0;
+    assign FpLoadStoreM     = 1'b0;
   end
   
 endmodule

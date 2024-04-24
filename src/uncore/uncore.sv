@@ -119,16 +119,16 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
     clint_apb #(P) clint(.PCLK, .PRESETn, .PSEL(PSEL[1]), .PADDR(PADDR[15:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
       .PRDATA(PRDATA[1]), .PREADY(PREADY[1]), .MTIME(MTIME_CLINT), .MTimerInt, .MSwInt);
   end else begin : clint
-    assign MTIME_CLINT = 0;
-    assign MTimerInt = 0; assign MSwInt = 0;
+    assign MTIME_CLINT = '0;
+    assign MTimerInt = 1'b0; assign MSwInt = 1'b0;
   end
 
   if (P.PLIC_SUPPORTED == 1) begin : plic
     plic_apb #(P) plic(.PCLK, .PRESETn, .PSEL(PSEL[2]), .PADDR(PADDR[27:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
       .PRDATA(PRDATA[2]), .PREADY(PREADY[2]), .UARTIntr, .GPIOIntr, .SDCIntr, .SPIIntr, .MExtInt, .SExtInt);
   end else begin : plic
-    assign MExtInt = 0;
-    assign SExtInt = 0;
+    assign MExtInt = 1'b0;
+    assign SExtInt = 1'b0;
   end
 
   if (P.GPIO_SUPPORTED == 1) begin : gpio
@@ -137,7 +137,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
       .PRDATA(PRDATA[0]), .PREADY(PREADY[0]), 
       .iof0(), .iof1(), .GPIOIN, .GPIOOUT, .GPIOEN, .GPIOIntr);
   end else begin : gpio
-    assign GPIOOUT = 0; assign GPIOEN = 0; assign GPIOIntr = 0;
+    assign GPIOOUT = '0; assign GPIOEN = '0; assign GPIOIntr = 1'b0;
   end
   if (P.UART_SUPPORTED == 1) begin : uartgen // Hack to work around Verilator bug https://github.com/verilator/verilator/issues/4769
     uart_apb #(P) uart(
@@ -147,7 +147,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
       .SOUT(UARTSout), .RTSb(), .DTRb(),                                // to E1A driver to RS232 interface
       .OUT1b(), .OUT2b(), .INTR(UARTIntr), .TXRDYb(), .RXRDYb());       // to CPU
   end else begin : uart
-    assign UARTSout = 0; assign UARTIntr = 0; 
+    assign UARTSout = 1'b0; assign UARTIntr = 1'b0; 
   end
   if (P.SPI_SUPPORTED == 1) begin : spi
     spi_apb  #(P) spi (
@@ -155,7 +155,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
       .PREADY(PREADY[4]), .PRDATA(PRDATA[4]), 
       .SPIOut, .SPIIn, .SPICS, .SPIIntr);
   end else begin : spi
-    assign SPIOut = 0; assign SPICS = 0; assign SPIIntr = 0;
+    assign SPIOut = 1'b0; assign SPICS = '0; assign SPIIntr = 1'b0;
   end
 
   // AHB Read Multiplexer

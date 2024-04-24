@@ -132,7 +132,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   assign MISA_REGW = {(P.XLEN == 32 ? 2'b01 : 2'b10), {(P.XLEN-28){1'b0}}, MISA_26[25:0]};
 
   // MHARTID is hardwired. It only exists as a signal so that the testbench can easily see it.
-  assign MHARTID_REGW = 0;
+  assign MHARTID_REGW = '0;
 
   // Write machine Mode CSRs 
   assign WriteMSTATUSM       = CSRMWriteM & (CSRAdrM == MSTATUS);
@@ -154,7 +154,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   if (P.S_SUPPORTED) begin:deleg // DELEG registers should exist
     flopenr #(16) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM[15:0] & MEDELEG_MASK, MEDELEG_REGW);
     flopenr #(12) MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM[11:0] & MIDELEG_MASK, MIDELEG_REGW);
-  end else assign {MEDELEG_REGW, MIDELEG_REGW} = 0;
+  end else assign {MEDELEG_REGW, MIDELEG_REGW} = '0;
 
   flopenr #(P.XLEN) MSCRATCHreg(clk, reset, WriteMSCRATCHM, CSRWriteValM, MSCRATCH_REGW);
   flopenr #(P.XLEN) MEPCreg(clk, reset, WriteMEPCM, NextEPCM, MEPC_REGW); 
@@ -163,7 +163,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   flopenr #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0], MCOUNTINHIBIT_REGW);
   if (P.U_SUPPORTED) begin: mcounteren // MCOUNTEREN only exists when user mode is supported
     flopenr #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], MCOUNTEREN_REGW);
-  end else assign MCOUNTEREN_REGW = 0;
+  end else assign MCOUNTEREN_REGW = '0;
 
   // MENVCFG register
   if (P.U_SUPPORTED) begin // menvcfg only exists if there is a lower privilege to control
@@ -184,7 +184,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
     if (P.XLEN == 64) begin
       assign MENVCFG_PreWriteValM = CSRWriteValM;
       flopenr #(P.XLEN) MENVCFGreg(clk, reset, WriteMENVCFGM, MENVCFG_WriteValM, MENVCFG_REGW);
-      assign MENVCFGH_REGW = 0;
+      assign MENVCFGH_REGW = '0;
     end else begin // RV32 has high and low halves
       logic WriteMENVCFGHM;
       assign MENVCFG_PreWriteValM = {CSRWriteValM, CSRWriteValM};
@@ -199,8 +199,8 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   // verilator lint_off WIDTH
   logic [5:0] entry;
   always_comb begin
-    entry = 0;
-    CSRMReadValM = 0;
+    entry = '0;
+    CSRMReadValM = '0;
     IllegalCSRMAccessM = !(P.S_SUPPORTED) & (CSRAdrM == MEDELEG | CSRAdrM == MIDELEG); // trap on DELEG register access when no S or N-mode
     if (CSRAdrM >= PMPADDR0 & CSRAdrM < PMPADDR0 + P.PMP_ENTRIES) // reading a PMP entry
       CSRMReadValM = {{(P.XLEN-(P.PA_BITS-2)){1'b0}}, PMPADDR_ARRAY_REGW[CSRAdrM - PMPADDR0]};
@@ -221,10 +221,10 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
       MARCHID:       CSRMReadValM = {{(P.XLEN-32){1'b0}}, 32'h24}; // 36 for CV-Wally 
       MIMPID:        CSRMReadValM = {{P.XLEN-12{1'b0}}, 12'h100}; // pipelined implementation
       MHARTID:       CSRMReadValM = MHARTID_REGW; // hardwired to 0 
-      MCONFIGPTR:    CSRMReadValM = 0; // hardwired to 0
+      MCONFIGPTR:    CSRMReadValM = '0; // hardwired to 0
       MSTATUS:       CSRMReadValM = MSTATUS_REGW;
       MSTATUSH:      if (P.XLEN==32) CSRMReadValM = MSTATUSH_REGW; 
-                     else IllegalCSRMAccessM = 1;
+                     else IllegalCSRMAccessM = 1'b1;
       MTVEC:         CSRMReadValM = MTVEC_REGW;
       MEDELEG:       CSRMReadValM = {{(P.XLEN-16){1'b0}}, MEDELEG_REGW};
       MIDELEG:       CSRMReadValM = {{(P.XLEN-12){1'b0}}, MIDELEG_REGW};
@@ -236,11 +236,11 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
       MTVAL:         CSRMReadValM = MTVAL_REGW;
       MCOUNTEREN:    CSRMReadValM = {{(P.XLEN-32){1'b0}}, MCOUNTEREN_REGW};
       MENVCFG:       if (P.U_SUPPORTED) CSRMReadValM = MENVCFG_REGW[P.XLEN-1:0];
-                     else IllegalCSRMAccessM = 1;
+                     else IllegalCSRMAccessM = 1'b1;
       MENVCFGH:      if (P.U_SUPPORTED & P.XLEN==32) CSRMReadValM = MENVCFGH_REGW;
-                     else IllegalCSRMAccessM = 1;
+                     else IllegalCSRMAccessM = 1'b1;
       MCOUNTINHIBIT: CSRMReadValM = {{(P.XLEN-32){1'b0}}, MCOUNTINHIBIT_REGW};
-      default:       IllegalCSRMAccessM = 1;
+      default:       IllegalCSRMAccessM = 1'b1;
     endcase
   end
   // verilator lint_on WIDTH

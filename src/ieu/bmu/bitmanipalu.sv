@@ -94,22 +94,22 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
   // ZBC and ZBKCUnit
   if (P.ZBC_SUPPORTED | P.ZBKC_SUPPORTED) begin: zbc
     zbc #(P.XLEN) ZBC(.A(ABMU), .RevA, .B(BBMU), .Funct3, .ZBCResult);
-  end else assign ZBCResult = 0;
+  end else assign ZBCResult = '0;
 
   // ZBB Unit
   if (P.ZBB_SUPPORTED) begin: zbb
     zbb #(P.XLEN) ZBB(.A(ABMU), .RevA, .B(BBMU), .W64, .LT, .LTU, .BUnsigned(Funct3[0]), .ZBBSelect(ZBBSelect[2:0]), .ZBBResult);
-  end else assign ZBBResult = 0;
+  end else assign ZBBResult = '0;
 
   // ZBKB Unit
   if (P.ZBKB_SUPPORTED) begin: zbkb
     zbkb #(P.XLEN) ZBKB(.A(ABMU), .B(BBMU), .RevA, .W64, .Funct3, .ZBKBSelect(ZBBSelect[2:0]), .ZBKBResult);
-  end else assign ZBKBResult = 0;
+  end else assign ZBKBResult = '0;
 
   // ZBKX Unit
   if (P.ZBKX_SUPPORTED) begin: zbkx
     zbkx #(P.XLEN) ZBKX(.A(ABMU), .B(BBMU), .ZBKXSelect(ZBBSelect[2:0]), .ZBKXResult);
-  end else assign ZBKXResult = 0;
+  end else assign ZBKXResult = '0;
 
   // ZKND and ZKNE AES decryption and encryption
   if (P.ZKND_SUPPORTED | P.ZKNE_SUPPORTED)
@@ -120,7 +120,7 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
   if (P.ZKNH_SUPPORTED) begin: zknh
     if (P.XLEN == 32) zknh32 ZKNH32(.A(ABMU), .B(BBMU), .ZKNHSelect(ZBBSelect), .ZKNHResult(ZKNHResult));
     else              zknh64 ZKNH64(.A(ABMU), .B(BBMU), .ZKNHSelect(ZBBSelect), .ZKNHResult(ZKNHResult));
-  end else assign ZKNHResult = 0;
+  end else assign ZKNHResult = '0;
 
   // Result Select Mux
   always_comb
