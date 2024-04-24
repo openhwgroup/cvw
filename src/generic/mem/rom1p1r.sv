@@ -33,12 +33,6 @@ module rom1p1r #(parameter ADDR_WIDTH = 8, DATA_WIDTH = 32, PRELOAD_ENABLED = 0)
    output logic [DATA_WIDTH-1:0] dout
 );
 
-`ifdef VERILATOR
-    import "DPI-C" function string getenvval(input string env_name);
-    string       WALLY_DIR = getenvval("WALLY"); 
-`else
-    string       WALLY_DIR = "$WALLY";
-`endif
 
    // Core Memory
    bit [DATA_WIDTH-1:0]    ROM [(2**ADDR_WIDTH)-1:0];
@@ -53,10 +47,21 @@ module rom1p1r #(parameter ADDR_WIDTH = 8, DATA_WIDTH = 32, PRELOAD_ENABLED = 0)
 
   end else begin */
 
+  `ifdef VERILATOR
+    import "DPI-C" function string getenvval(input string env_name);
+  `endif
+  
   initial 
     if (PRELOAD_ENABLED) begin
-      if (DATA_WIDTH == 64) $readmemh({WALLY_DIR,"/fpga/src/boot.mem"}, ROM, 0);  // load boot ROM for FPGA
-      else begin // put something in the ROM so it is not optimized away
+      if (DATA_WIDTH == 64) begin
+        `ifdef VERILATOR
+            // because Verilator doesn't automatically accept $WALLY from shell
+            string       WALLY_DIR = getenvval("WALLY"); 
+            $readmemh({WALLY_DIR,"/fpga/src/boot.mem"}, ROM, 0);  // load boot ROM for FPGA
+        `else
+            $readmemh({"$WALLY/fpga/src/boot.mem"}, ROM, 0);  // load boot ROM for FPGA
+        `endif
+      end else begin // put something in the ROM so it is not optimized away
         ROM[0] = 'h00002197;
       end
     end

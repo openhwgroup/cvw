@@ -53,10 +53,6 @@ Edit setup.sh and change the following lines to point to the path and license se
 	export SNPSLMD_LICENSE_FILE=27020@zircon.eng.hmc.edu                	# Change this to your Synopsys license server
 	export QUESTAPATH=/cad/mentor/questa_sim-2021.2_1/questasim/bin     	# Change this for your path to Questa
 	export SNPSPATH=/cad/synopsys/SYN/bin                               	# Change this for your path to Design Compiler
-	export RISCV_TOOLCHAIN=/opt/riscv										# Change this for your path to RISCV GNU toolchain
-	export RISCV_GCC="$RISCV_TOOLCHAIN/bin/riscv64-unknown-elf-gcc"			# Copy this as it is
-	export RISCV_OBJCOPY="$RISCV_TOOLCHAIN/bin/riscv64-unknown-elf-objcopy"	# Copy this as it is
-	export SPIKE_PATH=/usr/bin												# Change this for your path to riscv-isa-sim (spike)
 
 If the tools are not yet installed on your server, follow the Toolchain Installation instructions in the section below.
 
