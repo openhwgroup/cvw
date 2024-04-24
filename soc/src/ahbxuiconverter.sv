@@ -68,32 +68,34 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
 
   assign sys_reset = ~HRESETn;
 
-  // UI is ready for a command when ready to read and write
-  logic ui_ready;
-  assign ui_ready = app_rdy & app_wdf_rdy;
-
   // Delay AHB address phase signals to align with data phase so we can capture the whole transaction
+  logic                 ahb_sel;
   logic [ADDR_SIZE-1:0] ahb_addr;
   logic                 ahb_wren;
-  logic                 ahb_sel;
   logic [1:0]           ahb_burst; // 2^ahb_burst encodes the number of responses we want for a burst read
+  logic                 ahb_ready;
+  flopenr #(1)         ahbselreg  (HCLK, ~HRESETn, HREADY, HSEL & HTRANS[1], ahb_sel);
   flopen  #(ADDR_SIZE) ahbaddrreg (HCLK, HREADY, HADDR, ahb_addr);
   flopenr #(1)         ahbwrenreg (HCLK, ~HRESETn, HREADY, HWRITE, ahb_wren);
-  flopenr #(1)         ahbselreg  (HCLK, ~HRESETn, HREADY, HSEL & HTRANS[1], ahb_sel);
   flopenr #(2)         ahbbrstreg (HCLK, ~HRESETn, HREADY, HBURST[2:1], ahb_burst);
+  flopr   #(1)         ahbrdyreg  (HCLK, ~HRESETn, HREADY, ahb_ready);
+
+  // UI is ready for a command when initialized and ready to read and write
+  logic ui_ready;
+  assign ui_ready = app_rdy & app_wdf_rdy & init_calib_complete;
 
   // Buffer input down to ui_clk speed
   logic cmd_w_full, cmd_r_valid;
   logic enqueue_cmd, dequeue_cmd;
   logic inc_cmd_count, reset_cmd_count;
   logic [2:0] cmd_count;
-  counter #(3) cmd_beat_counter (HCLK, reset_cmd_count | ~HRESETn, inc_cmd_count, cmd_count);
+  counter #(3) cmd_beat_counter (HCLK, reset_cmd_count, inc_cmd_count, cmd_count);
   always_comb begin: cmd_burst_capture_logic
     // UI treats all reads as burst reads with length 8, so 1 read gets us 8 responses
     // Enqueue all single commands and 1st mod 8 commands in a burst read
-    inc_cmd_count = ahb_sel & (|ahb_burst); // Increment each cycle during burst transactions
-    reset_cmd_count = ~|ahb_burst; // Reset counter if transaction is not a burst
-    enqueue_cmd = ahb_sel & ~cmd_w_full & (ahb_wren | (cmd_count == 3'b000)); // enqueue all writes and 1st mod 8 reads in a burst
+    inc_cmd_count = ahb_ready & ahb_sel & (|ahb_burst); // Increment each cycle during burst transactions
+    reset_cmd_count = ~|ahb_burst | ~HRESETn; // Reset counter if transaction is not a burst
+    enqueue_cmd = ahb_ready & ahb_sel & ~cmd_w_full & (ahb_wren | (cmd_count == 3'b000)); // enqueue all writes and 1st mod 8 reads in a burst
     dequeue_cmd = ui_ready & cmd_r_valid;
   end
   logic [ADDR_SIZE-1:0]   ui_addr;
@@ -132,11 +134,11 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
   logic enqueue_resp, dequeue_resp;
   logic inc_resp_count, reset_resp_count;
   logic [4:0] resp_count, expected_count;
-  counter #(5) resp_beat_counter (ui_clk, reset_resp_count | ui_clk_sync_rst, inc_resp_count, resp_count);
+  counter #(5) resp_beat_counter (ui_clk, reset_resp_count, inc_resp_count, resp_count);
   always_comb begin: resp_burst_capture_logic
     // Enqueue only the correct number of beats for each response
     inc_resp_count = app_rd_data_valid; // Increment every time we get a beat of valid response data
-    reset_resp_count = app_en; // Reset when the UI gets the next transaction (i.e. the response is done)
+    reset_resp_count = app_en | ui_clk_sync_rst; // Reset when the UI gets the next transaction (i.e. the response is done)
     expected_count = 5'b10 << resp_burst; // 2^(resp_burst)
     enqueue_resp = app_rd_data_valid & ~resp_w_full & (resp_count < (|resp_burst ? expected_count : 5'b1)); // Only enqueue the expected number of beats
     dequeue_resp = ahb_sel & resp_r_valid;
@@ -155,9 +157,7 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
   
   // If there are only writes in the pipeline, accept commands until the buffer is full
   // If there is a read in the pipeline, stall until we have a valid response
-  logic ahb_ready_next;
-  assign ahb_ready_next = HWRITE ? ~cmd_w_full : resp_r_valid;
-  flop #(1) ahbrdyreg (HCLK, ahb_ready_next, HREADYOUT);
+  assign HREADYOUT = ahb_wren ? ~cmd_w_full : resp_r_valid;
 
   // do not indicate errors
   assign HRESP = 0;
