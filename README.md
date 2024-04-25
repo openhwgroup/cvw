@@ -49,10 +49,10 @@ Add the following lines to your .bashrc or .bash_profile to run the setup script
 
 Edit setup.sh and change the following lines to point to the path and license server for your Siemens Questa and Synopsys Design Compiler installation and license server.  If you only have Questa, you can still simulate but cannot run logic synthesis.
 
-	export MGLS_LICENSE_FILE=1717@solidworks.eng.hmc.edu                # Change this to your Siemens license server
-	export SNPSLMD_LICENSE_FILE=27020@zircon.eng.hmc.edu                # Change this to your Synopsys license server
-	export QUESTAPATH=/cad/mentor/questa_sim-2021.2_1/questasim/bin     # Change this for your path to Questa
-	export SNPSPATH=/cad/synopsys/SYN/bin                               # Change this for your path to Design Compiler
+	export MGLS_LICENSE_FILE=1717@solidworks.eng.hmc.edu                	# Change this to your Siemens license server
+	export SNPSLMD_LICENSE_FILE=27020@zircon.eng.hmc.edu                	# Change this to your Synopsys license server
+	export QUESTAPATH=/cad/mentor/questa_sim-2021.2_1/questasim/bin     	# Change this for your path to Questa
+	export SNPSPATH=/cad/synopsys/SYN/bin                               	# Change this for your path to Design Compiler
 
 If the tools are not yet installed on your server, follow the Toolchain Installation instructions in the section below.
 

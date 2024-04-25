@@ -62,8 +62,8 @@ module ahbinterface #(
     flop #(XLEN)   wdreg(HCLK, WriteData, HWDATA); 
     flop #(XLEN/8) HWSTRBReg(HCLK, ByteMask, HWSTRB);
   end else begin
-    assign HWDATA = 0;
-    assign HWSTRB = 0;
+    assign HWDATA = '0;
+    assign HWSTRB = '0;
   end    
 
   busfsm #(~LSU) busfsm(.HCLK, .HRESETn, .Flush, .BusRW, .BusAtomic,

@@ -114,7 +114,7 @@ module ram2p1r1wbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=1024, WIDTH=68) 
     initial begin // initialize memory for simulation only; not needed because done in the testbench now
       integer j;
       for (j=0; j < DEPTH; j++) 
-        mem[j] = 0;
+        mem[j] = '0;
     end 
 */
 

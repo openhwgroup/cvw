@@ -65,8 +65,8 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   assign PendingIntsM  = MIP_REGW & MIE_REGW;
   assign IntPendingM   = |PendingIntsM;
   assign Committed     = CommittedM | CommittedF;
-  assign EnabledIntsM  = (MIntGlobalEnM ? PendingIntsM & ~MIDELEG_REGW : 0) | (SIntGlobalEnM ? PendingIntsM & MIDELEG_REGW : 0);
-  assign ValidIntsM    = Committed ? 0 : EnabledIntsM;
+  assign EnabledIntsM  = (MIntGlobalEnM ? PendingIntsM & ~MIDELEG_REGW : '0) | (SIntGlobalEnM ? PendingIntsM & MIDELEG_REGW : '0);
+  assign ValidIntsM    = Committed ? '0 : EnabledIntsM;
   assign InterruptM    = (|ValidIntsM) & InstrValidM & (~wfiM | wfiW); // suppress interrupt if the memory system has partially processed a request. Delay interrupt until wfi is in the W stage. 
   // wfiW is to support possible but unlikely back to back wfi instructions. wfiM would be high in the M stage, while also in the W stage.
   assign DelegateM     = P.S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM] : MEDELEG_REGW[CauseM]) & 
@@ -95,29 +95,29 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////
 
   always_comb
-    if      (reset)                    CauseM = 0; // hard reset 3.3
-    else if (ValidIntsM[11])           CauseM = 11; // Machine External Int
-    else if (ValidIntsM[3])            CauseM = 3;  // Machine Sw Int
-    else if (ValidIntsM[7])            CauseM = 7;  // Machine Timer Int
-    else if (ValidIntsM[9])            CauseM = 9;  // Supervisor External Int 
-    else if (ValidIntsM[1])            CauseM = 1;  // Supervisor Sw Int       
-    else if (ValidIntsM[5])            CauseM = 5;  // Supervisor Timer Int    
-    else if (BothInstrPageFaultM)      CauseM = 12;
-    else if (BothInstrAccessFaultM)    CauseM = 1;
-    else if (IllegalInstrFaultM)       CauseM = 2;
+    if      (reset)                    CauseM = 4'd0; // hard reset 3.3
+    else if (ValidIntsM[11])           CauseM = 4'd11; // Machine External Int
+    else if (ValidIntsM[3])            CauseM = 4'd3;  // Machine Sw Int
+    else if (ValidIntsM[7])            CauseM = 4'd7;  // Machine Timer Int
+    else if (ValidIntsM[9])            CauseM = 4'd9;  // Supervisor External Int 
+    else if (ValidIntsM[1])            CauseM = 4'd1;  // Supervisor Sw Int       
+    else if (ValidIntsM[5])            CauseM = 4'd5;  // Supervisor Timer Int    
+    else if (BothInstrPageFaultM)      CauseM = 4'd12;
+    else if (BothInstrAccessFaultM)    CauseM = 4'd1;
+    else if (IllegalInstrFaultM)       CauseM = 4'd2;
     // coverage off
     // Misaligned instructions cannot occur in rv64gc
-    else if (InstrMisalignedFaultM)    CauseM = 0;
+    else if (InstrMisalignedFaultM)    CauseM = 4'd0;
     // coverage on
-    else if (BreakpointFaultM)         CauseM = 3;
+    else if (BreakpointFaultM)         CauseM = 4'd3;
     else if (EcallFaultM)              CauseM = {2'b10, PrivilegeModeW};
-    else if (StoreAmoMisalignedFaultM & ~P.ZICCLSM_SUPPORTED) CauseM = 6;  // misaligned faults are higher priority if they always are taken
-    else if (LoadMisalignedFaultM & ~P.ZICCLSM_SUPPORTED)     CauseM = 4;
-    else if (StoreAmoPageFaultM)       CauseM = 15;
-    else if (LoadPageFaultM)           CauseM = 13;
-    else if (StoreAmoAccessFaultM)     CauseM = 7;
-    else if (LoadAccessFaultM)         CauseM = 5;
-    else if (StoreAmoMisalignedFaultM & P.ZICCLSM_SUPPORTED) CauseM = 6; // See priority in Privileged Spec 3.1.15
-    else if (LoadMisalignedFaultM & P.ZICCLSM_SUPPORTED)     CauseM = 4;
-    else                               CauseM = 0;
+    else if (StoreAmoMisalignedFaultM & ~P.ZICCLSM_SUPPORTED) CauseM = 4'd6;  // misaligned faults are higher priority if they always are taken
+    else if (LoadMisalignedFaultM & ~P.ZICCLSM_SUPPORTED)     CauseM = 4'd4;
+    else if (StoreAmoPageFaultM)       CauseM = 4'd15;
+    else if (LoadPageFaultM)           CauseM = 4'd13;
+    else if (StoreAmoAccessFaultM)     CauseM = 4'd7;
+    else if (LoadAccessFaultM)         CauseM = 4'd5;
+    else if (StoreAmoMisalignedFaultM & P.ZICCLSM_SUPPORTED) CauseM = 4'd6; // See priority in Privileged Spec 3.1.15
+    else if (LoadMisalignedFaultM & P.ZICCLSM_SUPPORTED)     CauseM = 4'd4;
+    else                               CauseM = 4'd0;
 endmodule

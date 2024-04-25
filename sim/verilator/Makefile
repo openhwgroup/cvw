@@ -1,54 +1,73 @@
+# Verilator Makefile for WALLY
+# Kunlin Han, Rose Thompson, David Harris 2024
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+SHELL := /bin/bash
 .PHONY: profile run questa clean
 
+# verilator configurations
 OPT=
 PARAMS?=-DVERILATOR=1 --no-trace-top
 NONPROF?=--stats
-WORKING_DIR=${WALLY}/sim/verilator
-TARGET=$(WORKING_DIR)/target
-SOURCE=${WALLY}/config/shared/*.vh ${WALLY}/config/${WALLYCONF} ${WALLY}/src/cvw.sv ${WALLY}/testbench/testbench.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
+VERILATOR_DIR=${WALLY}/sim/verilator
+SOURCE=${WALLY}/config/shared/*.vh ${WALLY}/config/${WALLYCONF} ${WALLY}/config/deriv/${WALLYCONF} ${WALLY}/src/cvw.sv ${WALLY}/testbench/*.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
+EXTRA_ARGS=
+
 
 WALLYCONF?=rv64gc
 TEST?=arch64i
 
+# constants
+# assume WALLY variable is correctly configured in the shell environment
+WORKING_DIR=${WALLY}/sim/verilator
+TARGET=$(WORKING_DIR)/target
+# INCLUDE_PATH are pathes that Verilator should search for files it needs
+INCLUDE_PATH="-I${WALLY}/config/shared" "-I${WALLY}/config/$(WALLYCONF)" "-I${WALLY}/config/deriv/$(WALLYCONF)"
+# SOURCES are source files
+SOURCES=${WALLY}/src/cvw.sv ${WALLY}/testbench/testbench.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
+# DEPENDENCIES are configuration files and source files, which leads to recompilation of executables
+DEPENDENCIES=${WALLY}/config/shared/*.vh $(SOURCES)
+
 default: run
 
 profile: obj_dir_profiling/Vtestbench_$(WALLYCONF)
-	$(WORKING_DIR)/obj_dir_profiling/Vtestbench_$(WALLYCONF) +TEST=$(TEST) 
+	$(VERILATOR_DIR)/obj_dir_profiling/Vtestbench_$(WALLYCONF) +TEST=$(TEST) 
 	mv gmon.out gmon_$(WALLYCONF).out
-	gprof $(WORKING_DIR)/obj_dir_profiling/Vtestbench_$(WALLYCONF) gmon_$(WALLYCONF).out > gmon_$(WALLYCONF).log
+	gprof $(VERILATOR_DIR)/obj_dir_profiling/Vtestbench_$(WALLYCONF) gmon_$(WALLYCONF).out > gmon_$(WALLYCONF).log
 	verilator_profcfunc gmon_$(WALLYCONF).log > gmon_$(WALLYCONF).log2
-	mkdir -p $(WORKING_DIR)/logs_profiling
-	mv gmon_$(WALLYCONF)* $(WORKING_DIR)/logs_profiling
-	echo "Please check $(WORKING_DIR)/logs_profiling/gmon_$(WALLYCONF)* for logs and output files."
+	mkdir -p $(VERILATOR_DIR)/logs_profiling
+	mv gmon_$(WALLYCONF)* $(VERILATOR_DIR)/logs_profiling
+	echo "Please check $(VERILATOR_DIR)/logs_profiling/gmon_$(WALLYCONF)* for logs and output files."
 
-run: obj_dir_non_profiling/Vtestbench_$(WALLYCONF)
-	mkdir -p $(WORKING_DIR)/logs
-	time $(WORKING_DIR)/obj_dir_non_profiling/Vtestbench_$(WALLYCONF) +TEST=$(TEST) 2>&1 > $(WORKING_DIR)/logs/$(WALLYCONF)_$(TEST).log
-	echo "Please check $(WORKING_DIR)/logs/$(WALLYCONF)_$(TEST).log for logs and output files."
+run: wkdir/$(WALLYCONF)_$(TEST)/Vtestbench
+	mkdir -p $(VERILATOR_DIR)/logs
+	wkdir/$(WALLYCONF)_$(TEST)/Vtestbench +TEST=$(TEST)
 	
-obj_dir_non_profiling/Vtestbench_$(WALLYCONF): $(SOURCE)
-	mkdir -p obj_dir_non_profiling
-	time verilator \
-	--Mdir obj_dir_non_profiling -o Vtestbench_$(WALLYCONF) \
-	-cc --binary \
+wkdir/$(WALLYCONF)_$(TEST)/Vtestbench: $(DEPENDENCIES)
+	verilator \
+	--Mdir wkdir/$(WALLYCONF)_$(TEST) -o Vtestbench \
+	--binary --trace \
 	$(OPT) $(PARAMS) $(NONPROF) \
+	$(EXTRA_ARGS) \
 	--timescale "1ns/1ns" --timing --top-module testbench  --relative-includes \
-	"-I${WALLY}/config/shared" "-I${WALLY}/config/$(WALLYCONF)" \
-	wrapper.c \
-	${WALLY}/src/cvw.sv ${WALLY}/testbench/testbench.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
-	
-obj_dir_profiling/Vtestbench_$(WALLYCONF): $(SOURCE)
+	$(INCLUDE_PATH) \
+	${WALLY}/sim/verilator/wrapper.c \
+	$(SOURCES)
+
+obj_dir_profiling/Vtestbench_$(WALLYCONF): $(DEPENDENCIES)
 	mkdir -p obj_dir_profiling
-	time verilator \
+	verilator \
 	--Mdir obj_dir_profiling -o Vtestbench_$(WALLYCONF) \
-	-cc --binary \
+	--binary \
 	--prof-cfuncs $(OPT) $(PARAMS) \
+	$(EXTRA_ARGS) \
 	--timescale "1ns/1ns" --timing --top-module testbench  --relative-includes \
-	wrapper.c \
-	"-I${WALLY}/config/shared" "-I${WALLY}/config/$(WALLYCONF)" ${WALLY}/src/cvw.sv ${WALLY}/testbench/testbench.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
+	$(INCLUDE_PATH) \
+	${WALLY}/sim/verilator/wrapper.c \
+	$(SOURCES)
 
 questa:
-	time vsim -c -do "do ${WALLY}/sim/wally-batch.do $(WALLYCONF) $(TEST)"
+	vsim -c -do "do ${WALLY}/sim/wally-batch.do $(WALLYCONF) $(TEST)"
 
 clean:
-	rm -rf $(WORKING_DIR)/obj_dir_non_profiling $(WORKING_DIR)/obj_dir_profiling $(WORKING_DIR)/logs $(WORKING_DIR)/logs_profiling
+	rm -rf $(VERILATOR_DIR)/wkdir $(VERILATOR_DIR)/obj_dir_profiling $(VERILATOR_DIR)/logs $(VERILATOR_DIR)/logs_profiling

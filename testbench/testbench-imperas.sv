@@ -324,7 +324,6 @@ module testbench;
            ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"]) & InstrMName == "SW" ); 
 
   DCacheFlushFSM #(P) DCacheFlushFSM(.clk(clk),
-    			.reset(reset),
 	    		.start(DCacheFlushStart),
 		    	.done(DCacheFlushDone));
 

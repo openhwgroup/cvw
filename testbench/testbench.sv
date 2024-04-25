@@ -33,13 +33,8 @@
     `include "idv/idv.svh"
 `endif
 
+
 import cvw::*;
-`ifdef VERILATOR
-import "DPI-C" function string getenvval(input string env_name);
-`else
-import "DPI-C" function string getenv(input string env_name);
-`endif
-import "DPI-C" function int system(input string env_name);
 
 module testbench;
   /* verilator lint_off WIDTHTRUNC */
@@ -56,7 +51,14 @@ module testbench;
     import idvApiPkg::*;
   `endif
 
-`include "parameter-defs.vh"
+  `ifdef VERILATOR
+      import "DPI-C" function string getenvval(input string env_name);
+      string       RISCV_DIR = getenvval("RISCV"); // "/opt/riscv";
+  `else
+      string       RISCV_DIR = "$RISCV"; // "/opt/riscv";
+  `endif
+
+  `include "parameter-defs.vh"
 
   logic        clk;
   logic        reset_ext, reset;
@@ -65,12 +67,6 @@ module testbench;
   // Variables that can be overwritten with $value$plusargs at start of simulation
   string       TEST;
   integer      INSTR_LIMIT;
-`ifdef VERILATOR
-  string       RISCV_DIR = getenvval("RISCV"); // "/opt/riscv";
-`else
-  string       RISCV_DIR = getenv("RISCV"); // "/opt/riscv";
-`endif
-  // string       RISCV_DIR = "/opt/riscv";
 
   // DUT signals
   logic [P.AHBW-1:0]    HRDATAEXT;
@@ -226,6 +222,10 @@ module testbench;
       $display("TEST %s not supported in this configuration", TEST);
       $finish;
     end
+`ifdef MAKEVCD
+    $dumpfile("testbench.vcd");
+    $dumpvars;
+`endif
   end // initial begin
 
   // Model the testbench as an fsm.
@@ -254,15 +254,16 @@ module testbench;
   logic        ResetCntRst;
   logic        CopyRAM;
 
-  string  signame, memfilename, bootmemfilename, uartoutfilename, pathname, rmCmd;
+  string  signame, memfilename, bootmemfilename, uartoutfilename, pathname;
   integer begin_signature_addr, end_signature_addr, signature_size;
+  integer uartoutfile;
 
   assign ResetThreshold = 3'd5;
 
   initial begin
-    TestBenchReset = 1;
+    TestBenchReset = 1'b1;
     # 100;
-    TestBenchReset = 0;
+    TestBenchReset = 1'b0;
   end
 
   always_ff @(posedge clk)
@@ -328,8 +329,6 @@ module testbench;
   else
     assign EcallFaultM = 0;
   
-  // this is an unused integer for the return value of `system`
-  int unused_int;
   always @(posedge clk) begin
     ////////////////////////////////////////////////////////////////////////////////
     // Verify the test ran correctly by checking the memory against a known signature.
@@ -355,8 +354,7 @@ module testbench;
         memfilename = {RISCV_DIR, "/linux-testvectors/ram.bin"};
         bootmemfilename = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
         uartoutfilename = {"logs/", TEST, "_uart.out"};
-        rmCmd = {"rm -f ", uartoutfilename};
-        unused_int = system(rmCmd); // Delete existing UARToutfile
+        uartoutfile = $fopen(uartoutfilename, "w"); // delete UART output file
       end
       else            memfilename = {pathname, tests[test], ".elf.memfile"};
       if (riscofTest) begin
@@ -383,6 +381,8 @@ module testbench;
   always @(posedge Validate) // added
 `endif
     if(Validate) begin
+      if (TEST == "buildroot")
+        $fclose(uartoutfile);
       if (TEST == "embench") begin
         // Writes contents of begin_signature to .sim.output file
         // this contains instret and cycles for start and end of test run, used by embench 
@@ -507,24 +507,24 @@ module testbench;
     always @(posedge clk) 
       if (ResetMem)  // program memory is sometimes reset (e.g. for CoreMark, which needs zeroed memory)
         for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
-          dut.uncoregen.uncore.ram.ram.memory.RAM[adrindex] = 0;
+          dut.uncoregen.uncore.ram.ram.memory.RAM[adrindex] = '0;
 
   ////////////////////////////////////////////////////////////////////////////////
   // Actual hardware
   ////////////////////////////////////////////////////////////////////////////////
 
   // instantiate device to be tested
-  assign GPIOIN = 0;
-  assign UARTSin = 1;
-  assign SPIIn = 0;
+  assign GPIOIN = '0;
+  assign UARTSin = 1'b1;
+  assign SPIIn = 1'b0;
 
   if(P.EXT_MEM_SUPPORTED) begin
     ram_ahb #(.P(P), .BASE(P.EXT_MEM_BASE), .RANGE(P.EXT_MEM_RANGE)) 
     ram (.HCLK, .HRESETn, .HADDR, .HWRITE, .HTRANS, .HWDATA, .HSELRam(HSELEXT), 
       .HREADRam(HRDATAEXT), .HREADYRam(HREADYEXT), .HRESPRam(HRESPEXT), .HREADY, .HWSTRB);
   end else begin 
-    assign HREADYEXT = 1;
-    assign {HRESPEXT, HRDATAEXT} = 0;
+    assign HREADYEXT = 1'b1;
+    assign {HRESPEXT, HRDATAEXT} = '0;
   end
 
   if(P.SDC_SUPPORTED) begin : sdcard
@@ -540,9 +540,9 @@ module testbench;
     assign SDCDat = sd_dat_reg_t ? sd_dat_reg_o : sd_dat_i;
     assign SDCDatIn = SDCDat;
  -----/\----- EXCLUDED -----/\----- */
-    assign SDCIntr = 0;
+    assign SDCIntr = 1'b0;
   end else begin
-    assign SDCIntr = 0;
+    assign SDCIntr = 1'b0;
   end
 
   wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
@@ -552,7 +552,7 @@ module testbench;
 
   // generate clock to sequence tests
   always begin
-    clk = 1; # 5; clk = 0; # 5;
+    clk = 1'b1; # 5; clk = 1'b0; # 5;
   end
 
   /*
@@ -602,9 +602,8 @@ module testbench;
     always @(posedge clk) begin
       if (TEST == "buildroot") begin
         if (~dut.uncoregen.uncore.uartgen.uart.MEMWb & dut.uncoregen.uncore.uartgen.uart.uartPC.A == 3'b000 & ~dut.uncoregen.uncore.uartgen.uart.uartPC.DLAB) begin
-          memFile = $fopen(uartoutfilename, "ab");
-          $fwrite(memFile, "%c", dut.uncoregen.uncore.uartgen.uart.uartPC.Din);
-          $fclose(memFile);
+          $fwrite(uartoutfile, "%c", dut.uncoregen.uncore.uartgen.uart.uartPC.Din); // append characters one at a time so we see a consistent log appearing during the run
+          $fflush(uartoutfile);
         end
       end
     end
@@ -626,10 +625,9 @@ module testbench;
 			      dut.core.ieu.dp.regf.wd3 == 1)) |
            ((InstrM == 32'h6f | InstrM == 32'hfc32a423 | InstrM == 32'hfc32a823) & dut.core.ieu.c.InstrValidM ) |
            ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"]) & InstrMName == "SW" );
-  //assign DCacheFlushStart =  TestComplete;
   end
   
-  DCacheFlushFSM #(P) DCacheFlushFSM(.clk(clk), .reset(reset), .start(DCacheFlushStart), .done(DCacheFlushDone));
+  DCacheFlushFSM #(P) DCacheFlushFSM(.clk, .start(DCacheFlushStart), .done(DCacheFlushDone));
 
   if(P.ZICSR_SUPPORTED) begin
     logic [P.XLEN-1:0] Minstret;

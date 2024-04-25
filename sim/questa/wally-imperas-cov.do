@@ -40,8 +40,12 @@ vlog +incdir+../config/$1 \
      \
      +define+INCLUDE_TRACE2COV +define+COVER_BASE_RV64I +define+COVER_LEVEL_DV_PR_EXT \
        +define+COVER_RV64I \
-       +define+COVER_RV64C \
        +define+COVER_RV64M \
+       +define+COVER_RV64A \
+       +define+COVER_RV64F \
+       +define+COVER_RV64D \
+       +define+COVER_RV64ZICSR \
+       +define+COVER_RV64C \
      +incdir+$env(IMPERAS_HOME)/ImpProprietary/source/host/riscvISACOV/source \
      $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2cov.sv  \
     \

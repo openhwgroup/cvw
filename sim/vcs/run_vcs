@@ -1,0 +1,34 @@
+#!/bin/bash
+# VCS Compilation for WALLY
+# Divya Kohli, Rose Thompson, David Harris 2024
+# Note: VCS produces warning about unsupported Linux Version, but runs successfully
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+CFG=${WALLY}/config
+SRC=${WALLY}/src 
+TB=${WALLY}/testbench
+# Set CONFIG_VARIANT from the first script argument
+#CONFIG_VARIANT=${1:-rv64i}
+CONFIG_VARIANT=${1}
+# Set TESTSUITE from the second script argument
+TESTSUITE=$2
+
+
+INCLUDE_DIRS=$(find ${SRC} -type d | xargs -I {} echo -n "{} ")
+SOURCE_PATH="+incdir+${CFG}/${CONFIG_VARIANT} +incdir+${CFG}/deriv/${CONFIG_VARIANT} +incdir+${CFG}/shared +define+ +define+P.XLEN=64  +define+FPGA=0 +incdir+${TB} ${SRC}/cvw.sv +incdir+${SRC}" 
+
+SIMFILES="$INCLUDE_DIRS $(find ${SRC} -name "*.sv" ! -path "${SRC}/generic/clockgater.sv" ! -path "${SRC}/generic/mem/rom1p1r_128x64.sv" ! -path "${SRC}/generic/mem/ram2p1r1wbe_128x64.sv" ! -path "${SRC}/generic/mem/rom1p1r_128x32.sv" ! -path "${SRC}/generic/mem/ram2p1r1wbe_512x64.sv")  ${TB}/testbench.sv $(find ${TB}/common -name "*.sv" ! -path "${TB}/common/wallyTracer.sv")" 
+OUTPUT="sim_out"
+
+clean() {
+    rm -rf obj_dir work transcript vsim.wlf $OUTPUT *.vcd csrc ucli.key vc_hdrs.h program.out
+    rm -rf simv* *.daidir dve *.vpd *.dump DVEfiles/ verdi* novas* *fsdb* *.vg *.rep *.db *.chk *.log *.out profileReport* simprofile_dir*
+}
+
+# Clean and run simulation with VCS
+clean
+#vcs +lint=all,noGCWM -simprofile -sverilog +vc -Mupdate -line -full64 -kdb -lca -debug_access+all+reverse -v2k_generate  ${SOURCE_PATH} +define+TEST=$TESTSUITE $SIMFILES -o $OUTPUT -error=NOODV
+# lint ignores Unused Inputs (UI), Unnamed Assertipons (SVA-UA), Dynamic Type Sensitivty [IDTS], Null Statement [NS], Unequal Length in Comparison Operation [ULCO]
+vcs +lint=all,noGCWM,noUI,noSVA-UA,noIDTS,noNS,noULCO,noCAWM-L,noWMIA-L,noSV-PIU -simprofile -sverilog +vc -Mupdate -line -full64 -kdb -lca -debug_access+all+reverse  ${SOURCE_PATH} -pvalue+testbench.TEST=$TESTSUITE $SIMFILES -o $OUTPUT -error=NOODV
+./$OUTPUT | tee program.out
+

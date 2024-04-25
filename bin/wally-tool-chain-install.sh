@@ -46,7 +46,7 @@ sudo mkdir -p $RISCV
 # Update and Upgrade tools (see https://itsfoss.com/apt-update-vs-upgrade/)
 sudo apt update -y
 sudo apt upgrade -y
-sudo apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev libglib2.0-dev python3-pip pkg-config opam z3 zlib1g-dev automake autotools-dev libmpc-dev libmpfr-dev  gperf libtool patchutils bc mutt
+sudo apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev libglib2.0-dev python3-pip pkg-config opam z3 zlib1g-dev automake autotools-dev libmpc-dev libmpfr-dev  gperf libtool patchutils bc mutt ssmtp
 # Other python libraries used through the book.
 sudo pip3 install sphinx sphinx_rtd_theme matplotlib scipy scikit-learn adjustText lief markdown 
 
@@ -68,7 +68,7 @@ cd $RISCV
 git clone https://github.com/riscv/riscv-gnu-toolchain
 cd riscv-gnu-toolchain
 ./configure --prefix=${RISCV} --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
-make -j ${NUM_THREADS}
+make -j 8
 
 # elf2hex (https://github.com/sifive/elf2hex)
 #The elf2hex utility to converts executable files into hexadecimal files for Verilog simulation. 
@@ -92,7 +92,7 @@ cd $RISCV
 git clone --recurse-submodules https://github.com/qemu/qemu
 cd qemu
 ./configure --target-list=riscv64-softmmu --prefix=$RISCV 
-make -j ${NUM_THREADS}
+make -j 8
 make install
 
 # Spike (https://github.com/riscv-software-src/riscv-isa-sim)
@@ -103,7 +103,7 @@ git clone https://github.com/riscv-software-src/riscv-isa-sim
 mkdir -p riscv-isa-sim/build
 cd riscv-isa-sim/build
 ../configure --prefix=$RISCV 
-make -j ${NUM_THREADS}
+make -j 8
 make install 
 
 
@@ -121,7 +121,7 @@ git pull         # Make sure git repository is up-to-date
 git checkout master      
 autoconf         # Create ./configure script
 ./configure      # Configure and create Makefile
-make -j ${NUM_THREADS}  # Build Verilator itself (if error, try just 'make')
+make -j 8  # Build Verilator itself (if error, try just 'make')
 sudo make install
 
 # Sail (https://github.com/riscv/sail-riscv)
@@ -158,7 +158,7 @@ sudo make install
 #cd z3
 #python scripts/mk_make.py
 #cd build
-#make  -j ${NUM_THREADS}
+#make  -j 8
 #make install
 #cd ../..
 #pip3 install chardet==3.0.4
@@ -177,11 +177,8 @@ cd sail-riscv
 # For now, use checkout that is stable for Wally
 #git checkout 72b2516d10d472ac77482fd959a9401ce3487f60  # not new enough for Zicboz?
 export OPAMCLI=2.0  # Sail is not compatible with opam 2.1 as of 4/16/24
-# It is faster to just build c_emulator/riscv_sim_RV* than to build all of Sail
-#make -j ${NUM_THREADS}
-#ARCH=RV32 make -j ${NUM_THREADS}
-make -j ${NUM_THREADS} c_emulator/riscv_sim_RV64
-ARCH=RV32 make -j ${NUM_THREADS} c_emulator/riscv_sim_RV32
+ARCH=RV64 make -j 8 c_emulator/riscv_sim_RV64
+ARCH=RV32 make -j 8 c_emulator/riscv_sim_RV32
 sudo ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV64 /usr/bin/riscv_sim_RV64
 sudo ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV32 /usr/bin/riscv_sim_RV32
 

@@ -237,6 +237,9 @@ BURST_EN            1
 
 # Branch predictor simulations
 
+deriv nobpred_rv32gc rv32gc 
+BPRED_SUPPORTED     0
+
 deriv bpred_GSHARE_6_16_10_1_rv32gc rv32gc 
 BPRED_SIZE          32'd6
 

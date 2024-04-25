@@ -37,7 +37,7 @@ module fdivsqrtfgen4 import cvw::*;  #(parameter cvw_t P) (
   // Generate for both positive and negative digits
   assign F2  = (~U << 2) & (C << 2);              // 
   assign F1  = ~(U << 1) & C;
-  assign F0  = 0;
+  assign F0  = '0;
   assign FN1 = (UM << 1) | (C & ~(C << 3));
   assign FN2 = (UM << 2) | ((C << 2) & ~(C << 4));
 

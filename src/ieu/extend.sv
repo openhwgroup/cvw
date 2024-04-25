@@ -48,7 +48,7 @@ module extend import cvw::*;  #(parameter cvw_t P) (
       // U-type (lui, auipc)
       3'b100:   ImmExtD = {{(P.XLEN-31){InstrD[31]}}, InstrD[30:12], 12'b0}; 
       // Store Conditional: zero offset
-      3'b101:  if (P.A_SUPPORTED | P.ZICBOM_SUPPORTED | P.ZICBOZ_SUPPORTED) ImmExtD = 0;
+      3'b101:  if (P.A_SUPPORTED | P.ZICBOM_SUPPORTED | P.ZICBOZ_SUPPORTED) ImmExtD = '0;
                else             ImmExtD = undefined;
       default: ImmExtD = undefined; // undefined
     endcase  

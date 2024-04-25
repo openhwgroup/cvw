@@ -74,7 +74,7 @@ module fmaalign import cvw::*;  #(parameter cvw_t P) (
     //  |   53'b0    |  106'b(product)  | 1'b0 |
     //  | addnend    |
     end else if (KillZ)  begin
-        ZmShifted = 0;
+        ZmShifted = '0;
         ASticky   = ~ZZero;
 
     // If the Addend is shifted right

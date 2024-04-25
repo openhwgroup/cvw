@@ -203,3 +203,11 @@ benchmarks/coremark/coremark_results.csv
 fpga/zsbl/OBJ/*
 fpga/zsbl/bin/*
 sim/*.svg
+sim/vcs/csrc
+sim/vcs/profileReport*
+sim/vcs/program.out
+sim/vcs/sim_out*
+sim/vcs/simprofile_dir
+sim/vcs/ucli.key
+sim/vcs/verdi_config_file
+sim/*/testbench.vcd 

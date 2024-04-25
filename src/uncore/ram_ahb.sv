@@ -64,7 +64,7 @@ module ram_ahb import cvw::*;  #(parameter cvw_t P,
   assign nextHREADYRam = (~(memwriteD & memread)) & ~DelayReady;
   flopr #(1) readyreg(HCLK, ~HRESETn, nextHREADYRam, HREADYRam);
 
-  assign HRESPRam = 0; // OK
+  assign HRESPRam = 1'b0; // OK
 
   // On writes or during a wait state, use address delayed by one cycle to sync RamAddr with HWDATA or hold stalled address
   mux2 #(P.PA_BITS) adrmux(HADDR, HADDRD, memwriteD | ~HREADY, RamAddr);
@@ -104,7 +104,7 @@ module ram_ahb import cvw::*;  #(parameter cvw_t P,
     assign DelayReady = NextState == DELAY;
     assign CntRst = NextState == READY;
   end else begin
-    assign DelayReady = 0;
+    assign DelayReady = 1'b0;
   end
 
 endmodule

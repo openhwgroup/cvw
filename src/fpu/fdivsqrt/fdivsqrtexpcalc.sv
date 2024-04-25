@@ -31,7 +31,7 @@ module fdivsqrtexpcalc import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.FMTBITS-1:0] Fmt,
   input  logic [P.NE-1:0]      Xe, Ye,    // input exponents
   input  logic                 Sqrt,
- input  logic [P.DIVBLEN-1:0] ell, m,    // number of leading 0s in Xe and Ye
+  input  logic [P.DIVBLEN-1:0] ell, m,    // number of leading 0s in Xe and Ye
   output logic [P.NE+1:0]      Ue         // result exponent
   );
   
