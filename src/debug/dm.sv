@@ -69,7 +69,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
     .RspValid, .RspData, .RspOP);
 
   localparam SCANNABLE_REG_COUNT = 2; // TODO: cleanup dummy reg logic
-  localparam SCAN_CHAIN_LEN = (SCANNABLE_REG_COUNT+1)*P.P.XLEN-1;
+  localparam SCAN_CHAIN_LEN = (SCANNABLE_REG_COUNT+1)*P.XLEN-1;
 
   enum bit [3:0] {
     INACTIVE, // 0
@@ -95,7 +95,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
 
   // AbsCmd internal state
   logic          AcWrite;
-  logic [P.P.XLEN:0] ScanReg;
+  logic [P.XLEN:0] ScanReg;
   logic [$clog2(SCAN_CHAIN_LEN)-1:0] ShiftCount, Cycle;
   logic          InvalidRegNo;
 
@@ -149,7 +149,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic Busy;
   logic RelaxedPriv; // TODO
   logic [2:0] CmdErr;
-  const logic [3:0] DataCount = (P.P.XLEN/32);
+  const logic [3:0] DataCount = (P.XLEN/32);
   //SysBusCS
   const logic [2:0] SBVersion = 1;
   const logic SBBusyError = 0;

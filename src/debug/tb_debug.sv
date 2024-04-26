@@ -28,8 +28,7 @@ logic c1;
 logic reg_init;
 
 
-dm #(P) dm (.clk, .rst, 
-  .tck, .tdi, .tms, .tdo, .ScanEn, .ScanIn, .ScanOut);
+dm #(P) dm (.clk, .rst, .tck, .tdi, .tms, .tdo, .ScanEn, .ScanIn, .ScanOut);
 
 dummy_reg #(.WIDTH(64),.CONST(64'hDEADBEEFBAADF00D)) r1 (.clk,.en(reg_init),.se(ScanEn),.scan_in(ScanOut),.scan_out(c1),.q(r1q));
 dummy_reg #(.WIDTH(64),.CONST(64'h0123456789ABCDEF)) r2 (.clk,.en(reg_init),.se(ScanEn),.scan_in(c1),.scan_out(ScanIn),.q(r2q));

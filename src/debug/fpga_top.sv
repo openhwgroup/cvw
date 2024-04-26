@@ -1,4 +1,5 @@
 
+
 module top (    
     // jtag logic
     (* mark_debug = "true" *) input tck,tdi,tms,
@@ -9,24 +10,13 @@ module top (
     (* mark_debug = "true" *) input sys_reset,
 
     output syncout,
-    output trig,
     output [3:0] led
 );
 
+`include "config.vh"
+import cvw::*;
+`include "parameter-defs.vh"
 `include "debug.vh"
-localparam JTAG_DEVICE_ID = 32'hDEADBEEF;
-
-
-// DMI
-logic ReqReady;
-logic ReqValid;
-logic [`ADDR_WIDTH-1:0] ReqAddress;
-logic [31:0] ReqData;
-logic [1:0] ReqOP;
-logic RspReady;
-logic RspValid;
-logic [31:0] RspData;
-logic [1:0] RspOP;
 
 logic CoreHalt;
 logic CoreHaltConfirm;
@@ -46,17 +36,12 @@ logic [statewidth-1:0] laststate;
 
 assign reg_init = ~sys_reset;
 
-assign syncout = dtm.tcks;
-assign led = dtm.jtag.tap.State;
+//assign syncout = dm.dtm.tcks;
+//assign led = dm.dtm.jtag.tap.State;
 
-assign trig = (state_history == 80'h0000_0000_0000_0000_0675) && (dtm.jtag.tap.State == 4'h6);
-
-dm #(.ADDR_WIDTH(`ADDR_WIDTH),.XLEN(64)) dm (.clk, .rst(~sys_reset), .ReqReady, .ReqValid, .ReqAddress, 
-    .ReqData, .ReqOP, .RspReady, .RspValid, .RspData, .RspOP,
+dm #(P) dm (.clk, .rst(~sys_reset), .tck, .tdi, .tms, .tdo,
     .CoreHalt, .CoreHaltConfirm, .CoreResume, .CoreResumeConfirm,
     .ScanEn, .ScanIn, .ScanOut);
-
-dtm #(`ADDR_WIDTH, JTAG_DEVICE_ID) dtm (.*);
 
 dummy_reg #(.WIDTH(64),.CONST(64'hDEADBEEF15a15a15)) r1 (.clk,.en(reg_init),.se(ScanEn),.scan_in(ScanOut),.scan_out(c1),.q(r1q));
 dummy_reg #(.WIDTH(64),.CONST(64'h0123456789ABCDEF)) r2 (.clk,.en(reg_init),.se(ScanEn),.scan_in(c1),.scan_out(ScanIn),.q(r2q));
