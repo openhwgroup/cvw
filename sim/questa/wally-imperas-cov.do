@@ -25,6 +25,7 @@ vlib work
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
         # *** modelsim won't take `PA_BITS, but will take other defines for the lengths of DTIM_RANGE and IROM_LEN.  For now just live with the warnings.
 vlog +incdir+$env(WALLY)/config/$1 \
+     +incdir+$env(WALLY)/config/deriv/$1 \
      +incdir+$env(WALLY)/config/shared \
      +define+USE_IMPERAS_DV \
      +define+IDV_INCLUDE_TRACE2COV \
@@ -62,7 +63,7 @@ eval vsim workopt +nowarn3829  -fatal 7 \
      -sv_lib $env(IMPERAS_HOME)/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model \
      +testDir=$env(TESTDIR) $env(OTHERFLAGS) +TRACE2COV_ENABLE=1
 
-coverage save -onexit ./riscv.ucdb
+coverage save -onexit $env(WALLY)/sim/questa/riscv.ucdb
 
 
 view wave
@@ -72,7 +73,7 @@ view wave
 
 run -all
 
-# noview ../testbench/testbench-imperas.sv
-# view wave
+noview $env(WALLY)/testbench/testbench-imperas.sv
+view wave
 
 quit -f

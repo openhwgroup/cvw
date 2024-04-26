@@ -117,10 +117,10 @@ tests/wally-riscv-arch-test/riscv-test-suite/rv*i_m/I/src/*.S
 tests/wally-riscv-arch-test/riscv-test-suite/rv*i_m/I/Makefrag
 sim/branch_BP_GSHARE10.log
 sim/branch_BP_GSHARE16.log
-sim/imperas.log
+sim/questa/imperas.log
 sim/results-error/
 sim/test1.rep
-sim/vsim.log
+sim/questa/vsim.log
 tests/coverage/*.elf
 *.elf.memfile
 sim/*Cache.log
@@ -211,3 +211,13 @@ sim/vcs/simprofile_dir
 sim/vcs/ucli.key
 sim/vcs/verdi_config_file
 sim/*/testbench.vcd 
+sim/questa/imperas.log
+sim/questa/regression.log
+sim/questa/regression_logs/*
+sim/questa/regression_ucdbs/*
+sim/questa/riscv.ucdb
+sim/questa/riscv.ucdb.log
+sim/questa/riscv.ucdb.summary.log
+sim/questa/riscv.ucdb.testdetails.log
+tests/riscvdv
+
