@@ -49,25 +49,25 @@ Add the following lines to your .bashrc or .bash_profile to run the setup script
 
 Edit setup.sh and change the following lines to point to the path and license server for your Siemens Questa and Synopsys Design Compiler installation and license server.  If you only have Questa, you can still simulate but cannot run logic synthesis.
 
-	export MGLS_LICENSE_FILE=1717@solidworks.eng.hmc.edu                	# Change this to your Siemens license server
-	export SNPSLMD_LICENSE_FILE=27020@zircon.eng.hmc.edu                	# Change this to your Synopsys license server
-	export QUESTAPATH=/cad/mentor/questa_sim-2021.2_1/questasim/bin     	# Change this for your path to Questa
-	export SNPSPATH=/cad/synopsys/SYN/bin                               	# Change this for your path to Design Compiler
+	export MGLS_LICENSE_FILE=..         # Change this to your Siemens license server
+	export SNPSLMD_LICENSE_FILE=..      # Change this to your Synopsys license server
+	export QUESTAPATH=..     			# Change this for your path to Questa
+	export SNPSPATH=..                  # Change this for your path to Design Compiler
 
 If the tools are not yet installed on your server, follow the Toolchain Installation instructions in the section below.
 
 Build the tests and run a regression simulation with Questa to prove everything is installed.  Building tests will take a while.
 
 	$ make
-	$ cd sim
-	$ ./regression-wally       (depends on having Questa installed)
+	$ regression-wally       (depends on having Questa installed)
 
 # Toolchain Installation (Sys Admin)
 
 This section describes the open source toolchain installation.  The
-current version of the toolchain has been tested on Ubuntu and Red
+current version of the toolchain has been tested on Ubuntu and partly on Red
 Hat/Rocky 8 Linux.  Ubuntu works more smoothly and is recommended
-unless you have a compelling need for RedHat.  
+unless you have a compelling need for RedHat.  However, Ubuntu 22.04LTS
+is incompatible with Synopsys Design Compiler.
 
 Ubuntu users can install the tools by running
 
