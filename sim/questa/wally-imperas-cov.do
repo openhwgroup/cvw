@@ -50,7 +50,7 @@ vlog +incdir+$env(WALLY)/config/$1 \
      +incdir+$env(IMPERAS_HOME)/ImpProprietary/source/host/riscvISACOV/source \
      $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2cov.sv  \
     \
-    $env(WALLY)/src/cvw.sv \
+     $env(WALLY)/src/cvw.sv \
      $env(WALLY)/testbench/testbench-imperas.sv \
      $env(WALLY)/testbench/common/*.sv   \
      $env(WALLY)/src/*/*.sv \
