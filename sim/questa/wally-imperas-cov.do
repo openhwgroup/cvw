@@ -24,8 +24,8 @@ vlib work
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
         # *** modelsim won't take `PA_BITS, but will take other defines for the lengths of DTIM_RANGE and IROM_LEN.  For now just live with the warnings.
-vlog +incdir+../config/$1 \
-     +incdir+../config/shared \
+vlog +incdir+$env(WALLY)/config/$1 \
+     +incdir+$env(WALLY)/config/shared \
      +define+USE_IMPERAS_DV \
      +define+IDV_INCLUDE_TRACE2COV \
      +incdir+$env(IMPERAS_HOME)/ImpPublic/include/host \
@@ -49,11 +49,11 @@ vlog +incdir+../config/$1 \
      +incdir+$env(IMPERAS_HOME)/ImpProprietary/source/host/riscvISACOV/source \
      $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2cov.sv  \
     \
-    ../src/cvw.sv \
-     ../testbench/testbench-imperas.sv \
-     ../testbench/common/*.sv   \
-     ../src/*/*.sv \
-     ../src/*/*/*.sv \
+     $env(WALLY)/src/cvw.sv \
+     $env(WALLY)/testbench/testbench-imperas.sv \
+     $env(WALLY)/testbench/common/*.sv   \
+     $env(WALLY)/src/*/*.sv \
+     $env(WALLY)/src/*/*/*.sv \
      -suppress 2583 \
      -suppress 7063  \
      +acc
@@ -72,7 +72,7 @@ view wave
 
 run -all
 
-noview ../testbench/testbench-imperas.sv
-view wave
+# noview ../testbench/testbench-imperas.sv
+# view wave
 
 quit -f
