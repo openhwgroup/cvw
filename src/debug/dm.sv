@@ -93,10 +93,6 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
   logic [31:0] Data1;  //0x05
   logic [31:0] Data2;  //0x06
   logic [31:0] Data3;  //0x07
-  if (XLEN == 64) begin // TODO: parameterize register based on XLEN
-  end
-  if (XLEN == 128) begin
-  end
 
   // debug module registers
   logic [31:0] DMControl;  //0x10
@@ -235,8 +231,12 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
         IDLE : begin
           if (ReqValid)
             case ({ReqOP, ReqAddress}) inside
-              [{`OP_WRITE,`DATA0}:{`OP_WRITE,`DATA11}] : State <= W_DATA;
-              [{`OP_READ,`DATA0}:{`OP_READ,`DATA11}]   : State <= R_DATA;
+              {`OP_WRITE,`DATA0}                       : State <= W_DATA;
+              {`OP_READ,`DATA0}                        : State <= R_DATA;
+              {`OP_WRITE,`DATA1}                       : State <= (XLEN >= 64) ? W_DATA : INVALID;
+              {`OP_READ,`DATA1}                        : State <= (XLEN >= 64) ? R_DATA : INVALID;
+              [{`OP_WRITE,`DATA2}:{`OP_WRITE,`DATA3}]  : State <= (XLEN >= 128) ? W_DATA : INVALID;
+              [{`OP_READ,`DATA2}:{`OP_READ,`DATA3}]    : State <= (XLEN >= 128) ? R_DATA : INVALID;
               {`OP_WRITE,`DMCONTROL}                   : State <= W_DMCONTROL;
               {`OP_READ,`DMCONTROL}                    : State <= R_DMCONTROL;
               {`OP_READ,`DMSTATUS}                     : State <= DMSTATUS;
@@ -426,7 +426,6 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
     end
   end
 
-
   // Message Registers
   always_ff @(posedge clk) begin
     if (AcState == AC_SCAN) begin
@@ -439,20 +438,22 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
           {Data3,Data2,Data1,Data0} <= ScanReg;
         
     end else if (State == W_DATA && ~Busy) begin // TODO: should these be zeroed if rst?
-      case (ReqAddress)
-        `DATA0  : Data0 <= ReqData;
-        `DATA1  : Data1 <= ReqData;
-        `DATA2  : Data2 <= ReqData;
-        `DATA3  : Data3 <= ReqData;
-        //`DATA4  : Data4 <= ReqData;
-        //`DATA5  : Data5 <= ReqData;
-        //`DATA6  : Data6 <= ReqData;
-        //`DATA7  : Data7 <= ReqData;
-        //`DATA8  : Data8 <= ReqData;
-        //`DATA9  : Data9 <= ReqData;
-        //`DATA10 : Data10 <= ReqData;
-        //`DATA11 : Data11 <= ReqData;
-      endcase
+      if (XLEN == 32)
+        case (ReqAddress)
+          `DATA0  : Data0 <= ReqData;
+        endcase
+      else if (XLEN == 64)
+        case (ReqAddress)
+          `DATA0  : Data0 <= ReqData;
+          `DATA1  : Data1 <= ReqData;
+        endcase
+      else if (XLEN == 128)
+        case (ReqAddress)
+          `DATA0  : Data0 <= ReqData;
+          `DATA1  : Data1 <= ReqData;
+          `DATA2  : Data2 <= ReqData;
+          `DATA3  : Data3 <= ReqData;
+        endcase
     end
   end
 

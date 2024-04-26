@@ -72,7 +72,7 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
   logic [34+ADDR_WIDTH-1:0] DmiOut;
 
   // DTMCS Register
-  logic [2:0]                 ErrInfo;
+  const logic [2:0]           ErrInfo = 0;
   logic                       DtmHardReset;
   logic                       DmiReset;
   const logic [2:0]           Idle = 0;
@@ -114,12 +114,12 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
     if (~resetn || DtmHardReset) begin
       ValRspData <= 0;
       ValRspOP <= `OP_SUCCESS;
-      ErrInfo <= 4;
+      //ErrInfo <= 4;
       Sticky <= 0;
       DMIState <= IDLE;
     end else if (DmiReset) begin
       ValRspOP <= `OP_SUCCESS;
-      ErrInfo <= 4;
+      //ErrInfo <= 4;
       Sticky <= 0;
     end else
       case (DMIState)
@@ -133,7 +133,8 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
             DMIState <= START;
           end else begin
             ReqValid <= 0;
-            ValRspOP <= `OP_SUCCESS;
+            if (~Sticky)
+              ValRspOP <= `OP_SUCCESS;
           end
         end
 
@@ -152,8 +153,8 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
               ValRspOP <= RspOP;
             if (RspOP == `OP_FAILED || RspOP == `OP_BUSY)
               Sticky <= 1;
-            if (RspOP == `OP_FAILED)
-              ErrInfo <= 3;
+            //if (RspOP == `OP_FAILED)
+            //  ErrInfo <= 3;
             DMIState <= COMPLETE;
           end else if (CaptureDmi)
             Sticky <= 1;

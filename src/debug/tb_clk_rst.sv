@@ -187,7 +187,7 @@ task automatic ScanDTMCS (
   logic [84:0] tms_vector;
   logic [31:0] read_buffer;
   tms_vector = {<<{14'b01100_00001_1100, 32'b1, 4'b1100, 32'b1, 3'b100}};
-  tdi_vector = {<<{14'b00000_00001_0000, {<<{14'b0, dtmhardreset, dmireset, 16'b0}}, 4'b0, 32'b0, 3'b0}}; // TODO: Source of Invalid DMI access???
+  tdi_vector = {<<{14'b00000_00001_0000, {<<{14'b0, dtmhardreset, dmireset, 16'b0}}, 4'b0, 32'b0, 3'b0}};
 
   $display("Scanning DTMCS (dtmhardreset: %b | dmireset: %b)", dtmhardreset, dmireset);
   for (i=0; i<85; i=i+1) begin

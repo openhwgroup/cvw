@@ -31,7 +31,7 @@
 from telnetlib import Telnet
 
 debug = False
-XLEN = 64
+XLEN = 128
 
 tapname = "cvw.cpu" # this is set via the openocd config. It can be found by running `scan_chain`
 
@@ -40,9 +40,15 @@ def main():
     with Telnet("127.0.0.1", 4444) as tn:
         read() # clear welcome message from read buffer
         activate_dm() # necessary if openocd init is disabled
+        write_dmi("0x07", "0x8888")
+        check_errors()
+        write_dmi("0x04", "0x8888")
+        check_errors()
+        write_dtmcs(dmireset=1)
+        write_dmi("0x04", "0x8888")
+        check_errors()
         #activate_dm() # necessary if openocd init is disabled
         dmi_reset()
-        check_errors()
         #clear_abstrcmd_err()
         #b = activate_dm()
         #print(b)
@@ -112,10 +118,10 @@ def check_errors():
     """Checks various status bits and reports any potential errors
     Returns true if any errors are found"""
     # check dtmcs
-    dtmcs = int(read_dtmcs(), 16) #TODO: debug this on hardware
+    dtmcs = int(read_dtmcs(), 16)
     errinfo = (dtmcs & 0x1C0000) >> 18
     dmistat = (dtmcs & 0xC00) >> 10
-    if errinfo:
+    if errinfo > 0 and errinfo < 4:
         print(f"DTM Error: {errinfo_translations[errinfo]}")
         return True
     if dmistat:
@@ -162,7 +168,9 @@ def dmi_reset():
 
 def write_dmi(address, data):
     cmd = f"riscv dmi_write {address} {data}"
-    write(cmd)
+    rsp = execute(cmd)
+    if "Failed" in rsp:
+        print(rsp)
 
 
 def read_dmi(address):
