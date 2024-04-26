@@ -25,21 +25,15 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module dm #(parameter ADDR_WIDTH, parameter XLEN) (
+module dm import cvw::*; #(parameter cvw_t P) (
   input  logic                  clk, 
   input  logic                  rst, // Full hardware reset signal (reset button) //TODO make rst functional
-  output logic                  NdmReset, // Debugger controlled hardware reset (resets everything except DM, DMI, DTM)
 
-  // DMI Signals
-  output logic                  ReqReady,
-  input  logic                  ReqValid,
-  input  logic [ADDR_WIDTH-1:0] ReqAddress,
-  input  logic [31:0]           ReqData,
-  input  logic [1:0]            ReqOP,
-  input  logic                  RspReady,
-  output logic                  RspValid,
-  output logic [31:0]           RspData,
-  output logic [1:0]            RspOP,
+  // External JTAG signals
+  input  logic                  tck,
+  input  logic                  tdi,
+  input  logic                  tms,
+  output logic                  tdo,
 
   // TODO: stubs
   output logic                  CoreHalt,
@@ -57,8 +51,25 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
 );
   `include "debug.vh"
 
-  localparam SCANNABLE_REG_COUNT = 2;
-  localparam SCAN_CHAIN_LEN = (SCANNABLE_REG_COUNT+1)*XLEN-1;
+  // DMI Signals
+  logic                   ReqReady;
+  logic                   ReqValid;
+  logic [`ADDR_WIDTH-1:0] ReqAddress;
+  logic [31:0]            ReqData;
+  logic [1:0]             ReqOP;
+  logic                   RspReady;
+  logic                   RspValid;
+  logic [31:0]            RspData;
+  logic [1:0]             RspOP;
+
+  localparam JTAG_DEVICE_ID = 32'hdeadbeef; // TODO: put JTAG device ID in parameter struct
+
+  dtm #(`ADDR_WIDTH, JTAG_DEVICE_ID) dtm (.clk, .tck, .tdi, .tms, .tdo,
+    .ReqReady, .ReqValid, .ReqAddress, .ReqData, .ReqOP, .RspReady,
+    .RspValid, .RspData, .RspOP);
+
+  localparam SCANNABLE_REG_COUNT = 2; // TODO: cleanup dummy reg logic
+  localparam SCAN_CHAIN_LEN = (SCANNABLE_REG_COUNT+1)*P.P.XLEN-1;
 
   enum bit [3:0] {
     INACTIVE, // 0
@@ -84,31 +95,21 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
 
   // AbsCmd internal state
   logic          AcWrite;
-  logic [XLEN:0] ScanReg;
+  logic [P.P.XLEN:0] ScanReg;
   logic [$clog2(SCAN_CHAIN_LEN)-1:0] ShiftCount, Cycle;
   logic          InvalidRegNo;
 
   // message registers
-  logic [31:0] Data0;  //0x04
-  logic [31:0] Data1;  //0x05
-  logic [31:0] Data2;  //0x06
-  logic [31:0] Data3;  //0x07
+  logic [31:0] Data0;  // 0x04
+  logic [31:0] Data1;  // 0x05
+  logic [31:0] Data2;  // 0x06
+  logic [31:0] Data3;  // 0x07
 
   // debug module registers
-  logic [31:0] DMControl;  //0x10
-  logic [31:0] DMStatus;   //0x11
-  //logic [31:0] hartinfo;   //0x12
-  //logic [31:0] haltsum1;   //0x13
-  //logic [31:0] hawindowsel;  // 0x14
-  //logic [31:0] hawindow;   // 0x15
-  logic [31:0] AbstractCS;   // 0x16
-  //logic [31:0] command;    // 0x17
-  //logic [31:0] abstractauto; // 0x18
-  //logic [31:0] confstrptr0;  // 0x19
-  //logic [31:0] confstrptr1;  // 0x1a
-  //logic [31:0] confstrptr2;  // 0x1b
-  //logic [31:0] confstrptr3;  // 0x1c
-  logic [31:0] SysBusCS;
+  logic [31:0] DMControl;  // 0x10
+  logic [31:0] DMStatus;   // 0x11
+  logic [31:0] AbstractCS; // 0x16
+  logic [31:0] SysBusCS;   // 0x38
 
   //// DM register fields
   //DMControl
@@ -120,6 +121,7 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
   const logic HaSel = 0;
   const logic [9:0] HartSelLo = 0;
   const logic [9:0] HartSelHi = 0;
+  logic NdmReset;
   logic DmActive; // This bit is used to (de)activate the DM. Toggling acts as reset
   //DMStatus
   logic NdmResetPending;
@@ -147,7 +149,7 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
   logic Busy;
   logic RelaxedPriv; // TODO
   logic [2:0] CmdErr;
-  const logic [3:0] DataCount = (XLEN/32);
+  const logic [3:0] DataCount = (P.P.XLEN/32);
   //SysBusCS
   const logic [2:0] SBVersion = 1;
   const logic SBBusyError = 0;
@@ -185,6 +187,7 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
   assign CoreResume = ResumeReq;
   assign CoreReset = HartReset;
 
+  // TODO: implement core state logic
   assign AllRunning = ~CoreHaltConfirm;
   assign AnyRunning = ~CoreHaltConfirm;
   assign AllHalted = CoreHaltConfirm; // TODO: update this
@@ -233,10 +236,10 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
             case ({ReqOP, ReqAddress}) inside
               {`OP_WRITE,`DATA0}                       : State <= W_DATA;
               {`OP_READ,`DATA0}                        : State <= R_DATA;
-              {`OP_WRITE,`DATA1}                       : State <= (XLEN >= 64) ? W_DATA : INVALID;
-              {`OP_READ,`DATA1}                        : State <= (XLEN >= 64) ? R_DATA : INVALID;
-              [{`OP_WRITE,`DATA2}:{`OP_WRITE,`DATA3}]  : State <= (XLEN >= 128) ? W_DATA : INVALID;
-              [{`OP_READ,`DATA2}:{`OP_READ,`DATA3}]    : State <= (XLEN >= 128) ? R_DATA : INVALID;
+              {`OP_WRITE,`DATA1}                       : State <= (P.XLEN >= 64) ? W_DATA : INVALID;
+              {`OP_READ,`DATA1}                        : State <= (P.XLEN >= 64) ? R_DATA : INVALID;
+              [{`OP_WRITE,`DATA2}:{`OP_WRITE,`DATA3}]  : State <= (P.XLEN >= 128) ? W_DATA : INVALID;
+              [{`OP_READ,`DATA2}:{`OP_READ,`DATA3}]    : State <= (P.XLEN >= 128) ? R_DATA : INVALID;
               {`OP_WRITE,`DMCONTROL}                   : State <= W_DMCONTROL;
               {`OP_READ,`DMCONTROL}                    : State <= R_DMCONTROL;
               {`OP_READ,`DMSTATUS}                     : State <= DMSTATUS;
@@ -339,7 +342,7 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
           else begin
             case (ReqData[`CMDTYPE])
               `ACCESS_REGISTER : begin
-                if (ReqData[`AARSIZE] > $clog2(XLEN/8)) // if AARSIZE (encoded) is greater than XLEN, set CmdErr, do nothing
+                if (ReqData[`AARSIZE] > $clog2(P.XLEN/8)) // if AARSIZE (encoded) is greater than P.XLEN, set CmdErr, do nothing
                   CmdErr <= `CMDERR_EXCEPTION;
                 else if (~ReqData[`TRANSFER]); // If not TRANSFER, do nothing
                 else if (InvalidRegNo)
@@ -408,18 +411,18 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
 
 
   // Scan Chain
-  assign ScanReg[XLEN] = ScanIn;
+  assign ScanReg[P.XLEN] = ScanIn;
   assign ScanOut = ScanReg[0];
   assign ScanEn = (AcState == AC_SCAN);
   genvar i;
-  for (i=0; i<XLEN; i=i+1) begin
+  for (i=0; i<P.XLEN; i=i+1) begin
     always_ff @(posedge clk) begin
       if (Cycle == ShiftCount-1 && AcWrite) begin
-        if (XLEN == 32)
+        if (P.XLEN == 32)
           ScanReg[i] <= Data0[i];
-        else if (XLEN == 64)
+        else if (P.XLEN == 64)
           ScanReg[i] <= {Data1,Data0}[i];
-        else if (XLEN == 128)
+        else if (P.XLEN == 128)
           ScanReg[i] <= {Data3,Data2,Data1,Data0}[i];
       end else if (ScanEn)
         ScanReg[i] <= ScanReg[i+1];
@@ -430,24 +433,24 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
   always_ff @(posedge clk) begin
     if (AcState == AC_SCAN) begin
       if (Cycle == ShiftCount && ~AcWrite) // Read
-        if (XLEN == 32)
+        if (P.XLEN == 32)
           Data0 <= ScanReg;
-        else if (XLEN == 64)
+        else if (P.XLEN == 64)
           {Data1,Data0} <= ScanReg;
-        else if (XLEN == 128)
+        else if (P.XLEN == 128)
           {Data3,Data2,Data1,Data0} <= ScanReg;
         
     end else if (State == W_DATA && ~Busy) begin // TODO: should these be zeroed if rst?
-      if (XLEN == 32)
+      if (P.XLEN == 32)
         case (ReqAddress)
           `DATA0  : Data0 <= ReqData;
         endcase
-      else if (XLEN == 64)
+      else if (P.XLEN == 64)
         case (ReqAddress)
           `DATA0  : Data0 <= ReqData;
           `DATA1  : Data1 <= ReqData;
         endcase
-      else if (XLEN == 128)
+      else if (P.XLEN == 128)
         case (ReqAddress)
           `DATA0  : Data0 <= ReqData;
           `DATA1  : Data1 <= ReqData;
@@ -463,53 +466,53 @@ module dm #(parameter ADDR_WIDTH, parameter XLEN) (
   always_comb begin
     InvalidRegNo = 0;
     case (ReqData[`REGNO])
-      `MISA        : ShiftCount = `P_MISA * XLEN;
-      `PCM         : ShiftCount = `P_PCM * XLEN;
-      `TRAPM       : ShiftCount = `P_TRAPM * XLEN;
-      `INSTRM      : ShiftCount = `P_INSTRM * XLEN;
-      `INSTRVALIDM : ShiftCount = `P_INSTRVALIDM * XLEN;
-      `MEMRWM      : ShiftCount = `P_MEMRWM * XLEN;
-      `IEUADRM     : ShiftCount = `P_IEUADRM * XLEN;
-      `READDATAM   : ShiftCount = `P_READDATAM * XLEN;
-      `WRITEDATAM  : ShiftCount = `P_WRITEDATAM * XLEN;
-      `RS1         : ShiftCount = `P_RS1 * XLEN;
-      `RS2         : ShiftCount = `P_RS2 * XLEN;
-      `RD2         : ShiftCount = `P_RD2 * XLEN;
-      `RD1         : ShiftCount = `P_RD1 * XLEN;
-      `WD          : ShiftCount = `P_WD * XLEN;
-      `WE          : ShiftCount = `P_WE * XLEN;
+      `MISA        : ShiftCount = `P_MISA * P.XLEN;
+      `PCM         : ShiftCount = `P_PCM * P.XLEN;
+      `TRAPM       : ShiftCount = `P_TRAPM * P.XLEN;
+      `INSTRM      : ShiftCount = `P_INSTRM * P.XLEN;
+      `INSTRVALIDM : ShiftCount = `P_INSTRVALIDM * P.XLEN;
+      `MEMRWM      : ShiftCount = `P_MEMRWM * P.XLEN;
+      `IEUADRM     : ShiftCount = `P_IEUADRM * P.XLEN;
+      `READDATAM   : ShiftCount = `P_READDATAM * P.XLEN;
+      `WRITEDATAM  : ShiftCount = `P_WRITEDATAM * P.XLEN;
+      `RS1         : ShiftCount = `P_RS1 * P.XLEN;
+      `RS2         : ShiftCount = `P_RS2 * P.XLEN;
+      `RD2         : ShiftCount = `P_RD2 * P.XLEN;
+      `RD1         : ShiftCount = `P_RD1 * P.XLEN;
+      `WD          : ShiftCount = `P_WD * P.XLEN;
+      `WE          : ShiftCount = `P_WE * P.XLEN;
 
-      `X1  : ShiftCount = `P_X1 * XLEN;
-      `X2  : ShiftCount = `P_X2 * XLEN;
-      `X3  : ShiftCount = `P_X3 * XLEN;
-      `X4  : ShiftCount = `P_X4 * XLEN;
-      `X5  : ShiftCount = `P_X5 * XLEN;
-      `X6  : ShiftCount = `P_X6 * XLEN;
-      `X7  : ShiftCount = `P_X7 * XLEN;
-      `X8  : ShiftCount = `P_X8 * XLEN;
-      `X9  : ShiftCount = `P_X9 * XLEN;
-      `X10 : ShiftCount = `P_X10 * XLEN;
-      `X11 : ShiftCount = `P_X11 * XLEN;
-      `X12 : ShiftCount = `P_X12 * XLEN;
-      `X13 : ShiftCount = `P_X13 * XLEN;
-      `X14 : ShiftCount = `P_X14 * XLEN;
-      `X15 : ShiftCount = `P_X15 * XLEN;
-      `X16 : ShiftCount = `P_X16 * XLEN;
-      `X17 : ShiftCount = `P_X17 * XLEN;
-      `X18 : ShiftCount = `P_X18 * XLEN;
-      `X19 : ShiftCount = `P_X19 * XLEN;
-      `X20 : ShiftCount = `P_X20 * XLEN;
-      `X21 : ShiftCount = `P_X21 * XLEN;
-      `X22 : ShiftCount = `P_X22 * XLEN;
-      `X23 : ShiftCount = `P_X23 * XLEN;
-      `X24 : ShiftCount = `P_X24 * XLEN;
-      `X25 : ShiftCount = `P_X25 * XLEN;
-      `X26 : ShiftCount = `P_X26 * XLEN;
-      `X27 : ShiftCount = `P_X27 * XLEN;
-      `X28 : ShiftCount = `P_X28 * XLEN;
-      `X29 : ShiftCount = `P_X29 * XLEN;
-      `X30 : ShiftCount = `P_X30 * XLEN;
-      `X31 : ShiftCount = `P_X31 * XLEN;
+      `X1  : ShiftCount = `P_X1 * P.XLEN;
+      `X2  : ShiftCount = `P_X2 * P.XLEN;
+      `X3  : ShiftCount = `P_X3 * P.XLEN;
+      `X4  : ShiftCount = `P_X4 * P.XLEN;
+      `X5  : ShiftCount = `P_X5 * P.XLEN;
+      `X6  : ShiftCount = `P_X6 * P.XLEN;
+      `X7  : ShiftCount = `P_X7 * P.XLEN;
+      `X8  : ShiftCount = `P_X8 * P.XLEN;
+      `X9  : ShiftCount = `P_X9 * P.XLEN;
+      `X10 : ShiftCount = `P_X10 * P.XLEN;
+      `X11 : ShiftCount = `P_X11 * P.XLEN;
+      `X12 : ShiftCount = `P_X12 * P.XLEN;
+      `X13 : ShiftCount = `P_X13 * P.XLEN;
+      `X14 : ShiftCount = `P_X14 * P.XLEN;
+      `X15 : ShiftCount = `P_X15 * P.XLEN;
+      `X16 : ShiftCount = `P_X16 * P.XLEN;
+      `X17 : ShiftCount = `P_X17 * P.XLEN;
+      `X18 : ShiftCount = `P_X18 * P.XLEN;
+      `X19 : ShiftCount = `P_X19 * P.XLEN;
+      `X20 : ShiftCount = `P_X20 * P.XLEN;
+      `X21 : ShiftCount = `P_X21 * P.XLEN;
+      `X22 : ShiftCount = `P_X22 * P.XLEN;
+      `X23 : ShiftCount = `P_X23 * P.XLEN;
+      `X24 : ShiftCount = `P_X24 * P.XLEN;
+      `X25 : ShiftCount = `P_X25 * P.XLEN;
+      `X26 : ShiftCount = `P_X26 * P.XLEN;
+      `X27 : ShiftCount = `P_X27 * P.XLEN;
+      `X28 : ShiftCount = `P_X28 * P.XLEN;
+      `X29 : ShiftCount = `P_X29 * P.XLEN;
+      `X30 : ShiftCount = `P_X30 * P.XLEN;
+      `X31 : ShiftCount = `P_X31 * P.XLEN;
       default : begin
         ShiftCount = 'x;
         InvalidRegNo = 1;

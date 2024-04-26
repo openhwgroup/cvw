@@ -1,7 +1,13 @@
 // This testbench tests the functionality of the DMI at various clock ratios
 // and resets during various stages of command transactions
 
+`include "config.vh"
+
+import cvw::*;
+
 module testbench ();
+
+`include "parameter-defs.vh"
 
 `include "debug.vh"
 localparam JTAG_DEVICE_ID = 32'hDEADBEEF;
@@ -14,17 +20,6 @@ logic rst; // core reset
 // JTAG interface
 logic tck, tdi, tms, trstn, tdo;
 
-// DMI
-logic ReqReady;
-logic ReqValid;
-logic [`ADDR_WIDTH-1:0] ReqAddress;
-logic [31:0] ReqData;
-logic [1:0] ReqOP;
-logic RspReady;
-logic RspValid;
-logic [31:0] RspData;
-logic [1:0] RspOP;
-
 logic ScanEn;
 logic ScanIn;
 logic ScanOut;
@@ -33,11 +28,8 @@ logic c1;
 logic reg_init;
 
 
-dm #(.ADDR_WIDTH(`ADDR_WIDTH),.XLEN(64)) dm (.clk, .rst, .ReqReady, .ReqValid, .ReqAddress, 
-    .ReqData, .ReqOP, .RspReady, .RspValid, .RspData, .RspOP,
-    .ScanEn, .ScanIn, .ScanOut);
-
-dtm #(`ADDR_WIDTH, JTAG_DEVICE_ID) dtm (.*);
+dm #(P) dm (.clk, .rst, 
+  .tck, .tdi, .tms, .tdo, .ScanEn, .ScanIn, .ScanOut);
 
 dummy_reg #(.WIDTH(64),.CONST(64'hDEADBEEFBAADF00D)) r1 (.clk,.en(reg_init),.se(ScanEn),.scan_in(ScanOut),.scan_out(c1),.q(r1q));
 dummy_reg #(.WIDTH(64),.CONST(64'h0123456789ABCDEF)) r2 (.clk,.en(reg_init),.se(ScanEn),.scan_in(c1),.scan_out(ScanIn),.q(r2q));

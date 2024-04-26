@@ -68,6 +68,18 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic [63:0]                MTIME_CLINT;      // from CLINT to CSRs
   logic                       MExtInt,SExtInt;  // from PLIC
 
+  // Debug Module signals
+  logic                       HaltReq;
+  logic                       ResumeReq;
+  logic                       ResetReq;
+  logic                       HaltConfirm;
+  logic                       ResumeConfirm;
+  logic                       ResetConfirm;
+  logic                       HaltOnReset;
+  logic                       ScanEn;
+  logic                       ScanIn;
+  logic                       ScanOut;
+
   // synchronize reset to SOC clock domain
   synchronizer resetsync(.clk, .d(reset_ext), .q(reset)); 
    
@@ -76,7 +88,9 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK
-   );
+    .HaltReq, .ResumeReq, .ResetReq, .HaltConfirm, .ResumeConfirm,
+    .ResetConfirm, .HaltOnReset, .ScanEn, .ScanIn, .ScanOut
+  );
 
   // instantiate uncore if a bus interface exists
   if (P.BUS_SUPPORTED) begin : uncoregen // Hack to work around Verilator bug https://github.com/verilator/verilator/issues/4769
@@ -86,5 +100,8 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
       .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOIN, .GPIOOUT, .GPIOEN, .UARTSin, 
       .UARTSout, .MTIME_CLINT, .SDCIntr, .SPIIn, .SPIOut, .SPICS);
   end
+
+  // instantiate debug module
+  
 
 endmodule
