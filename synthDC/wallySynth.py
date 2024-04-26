@@ -7,7 +7,14 @@ import argparse
 
 def runSynth(config, mod, tech, freq, maxopt, usesram):
     global pool
-    command = "make synth DESIGN=wallypipelinedcore CONFIG={} MOD={} TECH={} DRIVE=FLOP FREQ={} MAXOPT={} USESRAM={} MAXCORES=1".format(config, mod, tech, freq, maxopt, usesram)
+    if (usesram):
+            prefix = "syn_sram_"
+    else:
+            prefix = "syn_"
+    if (mod != "orig"):
+            prefix = prefix+mod+"_"
+    cfg = prefix + config
+    command = "make synth DESIGN=wallypipelinedcore CONFIG={} MOD={} TECH={} DRIVE=FLOP FREQ={} MAXOPT={} USESRAM={} MAXCORES=1".format(cfg, mod, tech, freq, maxopt, usesram)
     pool.map(mask, [command])
 
 def mask(command):
