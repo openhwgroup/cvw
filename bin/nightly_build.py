@@ -115,6 +115,23 @@ class FolderManager:
             if not os.path.exists(folder):
                 os.makedirs(folder)
 
+
+    def remove_folder(self, folders):
+        """
+        Delete a folder, including all of its contents
+
+        Args:
+            folder (list): A folder to be deleted
+        
+        Returns:
+            None
+        """
+
+        for folder in folders:
+            if os.path.exists(folder):
+                shutil.rmtree(folder)
+
+
     def clone_repository(self, folder, repo_url):
         """
         Clone a repository into the 'cvw' folder if it does not already exist.
@@ -185,8 +202,23 @@ class TestRunner:
             self.logger.error(f"Error copying setup script: {e}")
             return False
 
+    
+    def set_env_var(self, envar, value):
+        """
+        Set an environment variable to a value
 
-    def set_env_var(self, folder):
+        Args:
+            envar (str): Environment variable to set
+            value (str): New value for the environment variable
+
+        Returns:
+            None
+        """
+        self.logger.info(f"Setting {envar}={value}")
+        os.environ[envar] = value
+
+
+    def source_setup(self, folder):
         """
         Source a shell script.
 
@@ -204,46 +236,19 @@ class TestRunner:
         os.environ["WALLY"] = str(cvw)
 
         self.cvw = cvw
-        self.sim_dir = cvw.joinpath("sim")
+        self.sim_dir = cvw.joinpath("bin")
         self.base_parent_dir = folder
         self.results_dir = folder.joinpath("results")
 
         self.logger.info(f"Tests are going to be ran from: {self.cvw}")
-    
 
-    def change_time_dur(self, time_duriation=1):
-        
-        # Prepare the command to execute the Makefile
-        regression_path = self.sim_dir.joinpath("regression-wally")
-        self.logger.info(f"Regression file path: {regression_path}")
-        try:
-            os.chdir(self.sim_dir)
-        except Exception as e:
-            self.logger.error(f"Error nagivating to the make file path. Error: {e}")
-        file_path = "regression-wally"
-        line_number = 450 # TIMEOUT_DUR = 1 day at this line in regression-wally 
-        new_line = f"        TIMEOUT_DUR = {60*time_duriation}"
 
-        with open(file_path, 'r') as file:
-            lines = file.readlines()
-
-        if line_number < 1 or line_number > len(lines):
-            self.logger.error("Error: Line number out of range.")
-            return False
-
-        lines[line_number - 1] = new_line + '\n'
-
-        with open(file_path, 'w') as file:
-            file.writelines(lines)
-            self.logger.info(f"Timeduration in ./regression-wally has been changed to: {time_duriation*60} seconds")
-            return True
-
-    def execute_makefile(self, target=None):
+    def execute_makefile(self, makefile_path=None, target=None):
         """
         Execute a Makefile with optional target.
 
         Args:
-            makefile_path (str): Path to the Makefile.
+            makefile_path (str): Path to the Makefile within the test repository
             target (str, optional): Target to execute in the Makefile.
 
         Returns:
@@ -251,8 +256,9 @@ class TestRunner:
             False if the tests didnt pass
         """
         # Prepare the command to execute the Makefile
-        os.chdir(self.sim_dir)
-        
+        makefile_location = self.cvw.joinpath(makefile_path)
+        os.chdir(makefile_location)
+
         output_file = self.log_dir.joinpath(f"make-{target}-output.log")
 
         command = ["make"]
@@ -260,9 +266,9 @@ class TestRunner:
         # Add target to the command if specified
         if target:
             command.append(target)
-            self.logger.info(f"Command used: {command[0]} {command[1]}")
+            self.logger.info(f"Command used in directory {makefile_location}: {command[0]} {command[1]}")
         else:
-            self.logger.info(f"Command used: {command[0]}")
+            self.logger.info(f"Command used in directory {makefile_location}: {command[0]}")
 
         # Execute the command using subprocess and save the output into a file
         with open(output_file, "w") as f:
@@ -282,7 +288,7 @@ class TestRunner:
             self.logger.error(f"Error making the tests. Target: {target}")
             return False
             
-    def run_tests(self, test_type=None, test_name=None, test_exctention=None):
+    def run_tests(self, test_type=None, test_name=None, test_extension=None):
         """
         Run a script through the terminal and save the output to a file.
 
@@ -298,9 +304,9 @@ class TestRunner:
         output_file = self.log_dir.joinpath(f"{test_name}-output.log")
         os.chdir(self.sim_dir)
 
-        if test_exctention:
-            command = [test_type, test_name, test_exctention]
-            self.logger.info(f"Command used to run tests: {test_type} {test_name} {test_exctention}")
+        if test_extension:
+            command = [test_type, test_name, test_extension]
+            self.logger.info(f"Command used to run tests: {test_type} {test_name} {test_extension}")
         else:
             command = [test_type, test_name]
             self.logger.info(f"Command used to run tests: {test_type} {test_name}")
@@ -317,11 +323,34 @@ class TestRunner:
             self.logger.error("There was an error in running the tests in the run_tests function: {e}")
         # Check if the command executed successfuly
         if result.returncode or result.returncode == 0:
-            self.logger.info(f"Test ran successfuly. Test type: {test_type}, test name: {test_name}, test extention: {test_exctention}")
+            self.logger.info(f"Test ran successfuly. Test type: {test_type}, test name: {test_name}, test extention: {test_extension}")
             return True, output_file
         else:
-            self.logger.error(f"Error making test. Test type: {test_type}, test name: {test_name}, test extention: {test_exctention}")
+            self.logger.error(f"Error making test. Test type: {test_type}, test name: {test_name}, test extention: {test_extension}")
             return False, output_file
+
+
+    def copy_sim_logs(self, sim_log_folders):
+        """
+        Save script outputs from a directory back into the main log directory.
+
+        Args:
+            sim_log_folders (list): Locations to grab logs from. Will name new log folder the directory 
+            the log directory is in
+        Returns:
+            None
+        """
+
+        for sim_log_folder in sim_log_folders:
+            try:
+                log_folder_name = os.path.basename(sim_log_folder)
+                self.logger.info(f"{log_folder_name}")
+                sim_folder_name = os.path.basename(os.path.dirname(sim_log_folder))
+                new_log_folder = self.log_dir / sim_folder_name
+                self.logger.info(f"Copying {sim_log_folder} to {new_log_folder}")
+                shutil.copytree(sim_log_folder, new_log_folder)
+            except Exception as e:
+                self.logger.error(f"There was an error copying simulation logs from {sim_log_folder} to {new_log_folder}: {e}")
 
 
     def clean_format_output(self, input_file, output_file=None):
@@ -339,13 +368,13 @@ class TestRunner:
 
         # Open up the file with only read permissions
         with open(input_file, 'r') as input_file:
-            unlceaned_output = input_file.read()
+            uncleaned_output = input_file.read()
 
         # use something like this function to detect pass and fail
         passed_configs = []
         failed_configs = []
 
-        lines = unlceaned_output.split('\n')
+        lines = uncleaned_output.split('\n')
         index = 0
 
         while index < len(lines):
@@ -580,7 +609,7 @@ class TestRunner:
                     '/usr/bin/mutt',
                     '-s', subject,
                     '-e', 'set content_type=text/html',
-                    '-e', 'my_hdr From: James Stine <james.stine@okstate.edu>',
+                    '-e', f'my_hdr From: <{sender_email}>',
                     '--', receiver_email
                 ]
                 try:
@@ -588,10 +617,10 @@ class TestRunner:
                     process = subprocess.Popen(command, stdin=subprocess.PIPE)
                     # Write the email body to the subprocess
                     process.communicate(body.encode('utf-8'))
-                    self.logger.info("Sent email")
-                except expression as identifier:
+                    self.logger.info(f"Sent email to {receiver_email}")
+                except Exception as identifier:
                     self.logger.error(f"Error sending email with error: {identifier}")
-        except expression as identifier:
+        except Exception as identifier:
             self.logger.error(f"Error sending email with error: {identifier}")
 
 
@@ -606,6 +635,7 @@ def main():
     parser.add_argument('--path',default = "nightly", help='specify the path for where the nightly repositories will be cloned ex: "nightly-runs')
     parser.add_argument('--repository',default = "https://github.com/openhwgroup/cvw", help='specify which github repository you want to clone')
     parser.add_argument('--target', default = "all", help='types of tests you can make are: all, wally-riscv-arch-test')
+    parser.add_argument('--tests', default = "nightly", help='types of tests you can run are: test or nightly')
     parser.add_argument('--send_email',default = "yes", help='do you want to send emails: "yes" or "y"')
 
     args = parser.parse_args()
@@ -616,6 +646,12 @@ def main():
     #############################################
     #                 SETUP                     #
     #############################################
+
+    sender_email = 'kaitlin.verilog@gmail.com'
+
+    receiver_emails = ['thomas.kidd@okstate.edu', 'james.stine@okstate.edu', 'harris@g.hmc.edu', 'rose.thompson10@okstate.edu', 'sarah.harris@unlv.edu', 'nlucio@hmc.edu']
+    testing_emails = ['kaitlin.verilog@gmail.com']
+    
     # file paths for where the results and repos will be saved: repos and results can be changed to whatever
     today = datetime.now().strftime("%Y-%m-%d")
     cvw_path = Path.home().joinpath(args.path, today)
@@ -630,6 +666,23 @@ def main():
 
     # clone the cvw repo
     folder_manager.clone_repository(cvw_path, args.repository)
+
+    # Define tests that we can run
+    test_list = [["bash", "lint-wally", "-nightly"]]
+    test_test = [["python", "regression-wally", ""]]
+    test_nightly = [["python", "regression-wally", "--nightly"]]
+    test_coverage = [["python", "regression-wally", "--coverage"]]
+    if (args.tests == "all"):
+        test_list += test_nightly + test_coverage
+    elif (args.tests == "nightly"):
+        test_list += test_nightly
+    elif (args.tests == "test"):
+        test_list += test_test
+    elif (args.tests == "test_lint"):
+        pass
+    else:
+        print(f"Error: Invalid test '"+args.test+"' specified")
+        raise SystemExit
 
     #############################################
     #                 LOGGER                    #
@@ -670,46 +723,35 @@ def main():
     
 
     test_runner = TestRunner(logger, log_path) # creates the object
-    test_runner.set_env_var(cvw_path) # ensures that the new WALLY environmental variable is set correctly
-
-
-    #############################################
-    #             TMP SETUP                     #
-    #############################################
-
-    """
-    The goal of this section is to replace the TIMEOUT_DUR for regression tests.
-
-    """
-    if test_runner.change_time_dur(time_duriation=1):
-        pass
-    else:
-        logger.error("Error occured changing the TIMEOUT duration in './regression-wally'")
-
+    test_runner.source_setup(cvw_path) # ensures that the new WALLY environmental variable is set correctly
     #############################################
     #              MAKE TESTS                   #
     #############################################
 
     if args.target != "no":
-        # test_runner.execute_makefile(target = "deriv")
-        test_runner.execute_makefile(target = args.target)
+        test_runner.execute_makefile(target = args.target, makefile_path=test_runner.cvw)
+    if args.target == "all":
+        # Compile Linux for local testing
+        test_runner.set_env_var("RISCV",str(test_runner.cvw))
+        linux_path = test_runner.cvw / "linux"
+        test_runner.execute_makefile(target = "all_nosudo", makefile_path=linux_path)
+        test_runner.execute_makefile(target = "dumptvs_nosudo", makefile_path=linux_path)
 
     #############################################
     #               RUN TESTS                   #
     #############################################
 
 
-    test_list = [["python", "regression-wally", "-nightly"], ["bash", "lint-wally", "-nightly"], ["bash", "coverage", "--search"]]
-    output_log_list = [] # a list where the output markdown file lcoations will be saved to
+    output_log_list = [] # a list where the output markdown file locations will be saved to
     total_number_failures = 0  # an integer where the total number failures from all of the tests will be collected
     total_number_success = 0    # an integer where the total number of sucess will be collected
 
     total_failures = []
     total_success = []
 
-    for test_type, test_name, test_exctention in test_list:
+    for test_type, test_name, test_extension in test_list:
         
-        check, output_location = test_runner.run_tests(test_type=test_type, test_name=test_name, test_exctention=test_exctention)
+        check, output_location = test_runner.run_tests(test_type=test_type, test_name=test_name, test_extension=test_extension)
         try:
             if check: # this checks if the test actually ran successfuly
                 output_log_list.append(output_location)
@@ -736,10 +778,8 @@ def main():
     logger.info(f"The total sucesses for all tests ran are: {total_number_success}")
     logger.info(f"The total failures for all tests ran are: {total_number_failures}")
 
-
-
-
-        
+    # Copy actual test logs from sim/questa, sim/verilator
+    test_runner.copy_sim_logs([test_runner.cvw / "sim/questa/logs", test_runner.cvw / "sim/verilator/logs"])
 
     #############################################
     #               FORMAT TESTS                #
@@ -757,20 +797,20 @@ def main():
     test_runner.convert_to_html()
 
 
-
     #############################################
     #                SEND EMAIL                 #
     #############################################
 
-    sender_email = 'james.stine@okstate.edu'
-
-    receiver_emails = ['thomas.kidd@okstate.edu', 'james.stine@okstate.edu', 'harris@g.hmc.edu', 'rose.thompson10@okstate.edu', 'sarah.harris@unlv.edu', 'nlucio@hmc.edu']
-    testing_emails = ['thomas.kidd@okstate.edu']
-    
     if (args.send_email == "yes" or args.send_email == "y"):
         test_runner.send_email(sender_email=sender_email, receiver_emails=receiver_emails)
     if (args.send_email == "test"):
         test_runner.send_email(sender_email=sender_email, receiver_emails=testing_emails)
+
+
+    #############################################
+    #      DELETE REPOSITORY AFTER TESTING      #
+    #############################################
+    folder_manager.remove_folder([test_runner.cvw])
 
 if __name__ == "__main__":
     main()

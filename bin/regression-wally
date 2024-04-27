@@ -279,7 +279,6 @@ coverage = '--coverage' in sys.argv
 fp = '--fp' in sys.argv
 nightly = '--nightly' in sys.argv
 testfloat = '--testfloat' in sys.argv
-buildroot = '--buildroot' in sys.argv
 
 if (nightly):
     nightMode = "--nightly";
@@ -401,8 +400,6 @@ def main():
         os.chdir(regressionDir)
         os.system('./make-tests.sh | tee ./logs/make-tests.log')
 
-    if '--buildroot' in sys.argv:
-        TIMEOUT_DUR = 60*7200 # 5 days to run
     elif '--coverage' in sys.argv:
         TIMEOUT_DUR = 20*60 # seconds
         os.system('rm -f questa/cov/*.ucdb')
