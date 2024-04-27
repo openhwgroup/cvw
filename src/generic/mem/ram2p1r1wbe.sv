@@ -1,4 +1,5 @@
 ///////////////////////////////////////////
+// ram2p1r1wbe.sv
 // 2 port sram.
 //
 // Written: ross1728@gmail.com May 3, 2021
@@ -55,11 +56,11 @@ module ram2p1r1wbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=1024, WIDTH=68) 
     
     ram2p1r1wbe_1024x68 memory1(.CLKA(clk), .CLKB(clk), 
       .CEBA(~ce1), .CEBB(~ce2),
-      .WEBA(0), .WEBB(~we2),            
+      .WEBA(1'b0), .WEBB(~we2),            
       .AA(ra1), .AB(wa2),
-      .DA(0),
+      .DA('0),
       .DB(wd2),
-      .BWEBA(0), .BWEBB('1),
+      .BWEBA('0), .BWEBB('1),
       .QA(rd1),
       .QB());
 
@@ -67,11 +68,11 @@ module ram2p1r1wbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=1024, WIDTH=68) 
     
     ram2p1r1wbe_1024x36 memory1(.CLKA(clk), .CLKB(clk), 
       .CEBA(~ce1), .CEBB(~ce2),
-      .WEBA(0), .WEBB(~we2),            
+      .WEBA(1'b0), .WEBB(~we2),            
       .AA(ra1), .AB(wa2),
-      .DA(0),
+      .DA('0),
       .DB(wd2),
-      .BWEBA(0), .BWEBB('1),
+      .BWEBA('0), .BWEBB('1),
       .QA(rd1),
       .QB());      
 
@@ -95,12 +96,12 @@ module ram2p1r1wbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=1024, WIDTH=68) 
     assign rd1 = RD1Sets[RA1Q[$clog2(SRAMWIDTH)-1:0]];      
     ram2p1r1wbe_64x32 memory2(.CLKA(clk), .CLKB(clk), 
       .CEBA(~ce1), .CEBB(~ce2),
-      .WEBA(0), .WEBB(~we2),            
+      .WEBA(1'b0), .WEBB(~we2),            
       .AA(ra1[$clog2(DEPTH)-1:$clog2(SRAMNUMSETS)]), 
       .AB(wa2[$clog2(DEPTH)-1:$clog2(SRAMNUMSETS)]),
-      .DA(0),
+      .DA('0),
       .DB(SRAMWriteData),
-      .BWEBA(0), .BWEBB(SRAMBitMask),
+      .BWEBA('0), .BWEBB(SRAMBitMask),
       .QA(SRAMReadData),
       .QB());
 
