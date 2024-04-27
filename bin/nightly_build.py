@@ -810,7 +810,7 @@ def main():
     #############################################
     #      DELETE REPOSITORY AFTER TESTING      #
     #############################################
-    # folder_manager.remove_folder([test_runner.cvw])
+    folder_manager.remove_folder([test_runner.cvw])
 
 if __name__ == "__main__":
     main()
