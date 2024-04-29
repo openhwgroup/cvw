@@ -34,10 +34,11 @@ module fround import cvw::*;  #(parameter cvw_t P) (
   input  logic                    XNaN,         // X is NaN
   input  logic                    XSNaN,        // X is Signalling NaN
   input  logic                    XZero,        // X is Zero
-  input  logic [P.FMTBITS-1:0]    Fmt          // the input's precision (11=quad 01=double 00=single 10=half)
+  input  logic [P.FMTBITS-1:0]    Fmt,          // the input's precision (11=quad 01=double 00=single 10=half)
+  output logic [P.FLEN-1:0]       FRound,       // Rounded result
+  output logic [4:0]              FRoundFlags   // Rounder flags
 );
 
- 
   logic [P.NE-2:0] Bias;
   logic [P.NE-1:0] E;
   logic [P.NF:0] Imask, Tmasknonneg, Tmaskneg, Tmask, HotE, HotEP1, Trunc, Rnd;
@@ -170,5 +171,8 @@ module fround import cvw::*;  #(parameter cvw_t P) (
   assign Invalid = XSNaN;
   assign Inexact = FRoundNX & ~(XNaN | Exact) & (Rp | T'); 
  */
+
+  assign FRound = '0;
+  assign FRoundFlags = '0;
 
 endmodule
