@@ -286,16 +286,18 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       assign IFUHBURST = 3'b0;
       assign {ICacheMiss, ICacheAccess, ICacheStallF} = '0;
     end
+
+    // mux between the alignments of uncached reads.
+    if(P.XLEN == 64) mux4 #(32) UncachedShiftInstrMux(FetchBuffer[32-1:0], FetchBuffer[48-1:16], 
+                                                      FetchBuffer[64-1:32], {16'b0, FetchBuffer[64-1:48]},
+                                                      PCSpillF[2:1], ShiftUncachedInstr);
+    else mux2 #(32) UncachedShiftInstrMux(FetchBuffer[32-1:0], {16'b0, FetchBuffer[32-1:16]}, PCSpillF[1], ShiftUncachedInstr);
   end else begin : nobus // block: bus
-    assign {BusStall, CacheCommittedF} = '0;   
+    assign {IFUHADDR, IFUHWRITE, IFUHSIZE, IFUHBURST, IFUHTRANS, 
+            BusStall, CacheCommittedF, BusCommittedF, FetchBuffer} = '0;   
     assign {ICacheStallF, ICacheMiss, ICacheAccess} = '0;
     assign InstrRawF = IROMInstrF;
   end
-
-  // mux between the alignments of uncached reads.
-  if(P.XLEN == 64) mux4 #(32) UncachedShiftInstrMux(FetchBuffer[32-1:0], FetchBuffer[48-1:16], FetchBuffer[64-1:32], {16'b0, FetchBuffer[64-1:48]},
-                                                    PCSpillF[2:1], ShiftUncachedInstr);
-  else mux2 #(32) UncachedShiftInstrMux(FetchBuffer[32-1:0], {16'b0, FetchBuffer[32-1:16]}, PCSpillF[1], ShiftUncachedInstr);
   
   assign IFUCacheBusStallF = ICacheStallF | BusStall;
   assign IFUStallF = IFUCacheBusStallF | SelSpillNextF;

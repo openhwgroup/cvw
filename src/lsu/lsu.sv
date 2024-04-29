@@ -383,7 +383,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       assign {DCacheStallM, DCacheCommittedM, DCacheMiss, DCacheAccess} = '0;
     end
   end else begin: nobus // block: bus, only DTIM
-    assign LSUHWDATA = '0; 
+    assign {LSUHWDATA, LSUHADDR, LSUHWRITE, LSUHSIZE, LSUHBURST, LSUHTRANS, LSUHWSTRB} = '0; 
+    assign DCacheReadDataWordM = '0;
     assign ReadDataWordMuxM = DTIMReadDataWordM;
     assign {BusStall, BusCommittedM} = '0;   
     assign {DCacheMiss, DCacheAccess} = '0;

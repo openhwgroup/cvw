@@ -85,6 +85,9 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
       .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT, .HSELEXTSDC,
       .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOIN, .GPIOOUT, .GPIOEN, .UARTSin, 
       .UARTSout, .MTIME_CLINT, .SDCIntr, .SPIIn, .SPIOut, .SPICS);
+  end else begin
+    assign {HRDATA, HREADY, HRESP, HSELEXT, HSELEXTSDC, MTimerInt, MSwInt, MExtInt, SExtInt,
+            MTIME_CLINT, GPIOOUT, GPIOEN, UARTSout, SPIOut, SPICS} = '0; 
   end
 
 endmodule

@@ -30,6 +30,10 @@ DEPENDENCIES=${WALLY}/config/shared/*.vh $(SOURCES)
 
 default: run
 
+run: wkdir/$(WALLYCONF)_$(TEST)/Vtestbench
+	mkdir -p $(VERILATOR_DIR)/logs
+	wkdir/$(WALLYCONF)_$(TEST)/Vtestbench +TEST=$(TEST)
+	
 profile: obj_dir_profiling/Vtestbench_$(WALLYCONF)
 	$(VERILATOR_DIR)/obj_dir_profiling/Vtestbench_$(WALLYCONF) +TEST=$(TEST) 
 	mv gmon.out gmon_$(WALLYCONF).out
@@ -39,17 +43,13 @@ profile: obj_dir_profiling/Vtestbench_$(WALLYCONF)
 	mv gmon_$(WALLYCONF)* $(VERILATOR_DIR)/logs_profiling
 	echo "Please check $(VERILATOR_DIR)/logs_profiling/gmon_$(WALLYCONF)* for logs and output files."
 
-run: wkdir/$(WALLYCONF)_$(TEST)/Vtestbench
-	mkdir -p $(VERILATOR_DIR)/logs
-	wkdir/$(WALLYCONF)_$(TEST)/Vtestbench +TEST=$(TEST)
-	
 wkdir/$(WALLYCONF)_$(TEST)/Vtestbench: $(DEPENDENCIES)
 	verilator \
 	--Mdir wkdir/$(WALLYCONF)_$(TEST) -o Vtestbench \
 	--binary --trace \
 	$(OPT) $(PARAMS) $(NONPROF) \
 	$(EXTRA_ARGS) \
-	--timescale "1ns/1ns" --timing --top-module testbench  --relative-includes \
+	--top-module testbench  --relative-includes \
 	$(INCLUDE_PATH) \
 	${WALLY}/sim/verilator/wrapper.c \
 	$(SOURCES)
@@ -61,13 +61,10 @@ obj_dir_profiling/Vtestbench_$(WALLYCONF): $(DEPENDENCIES)
 	--binary \
 	--prof-cfuncs $(OPT) $(PARAMS) \
 	$(EXTRA_ARGS) \
-	--timescale "1ns/1ns" --timing --top-module testbench  --relative-includes \
+	--top-module testbench  --relative-includes \
 	$(INCLUDE_PATH) \
 	${WALLY}/sim/verilator/wrapper.c \
 	$(SOURCES)
-
-questa:
-	vsim -c -do "do ${WALLY}/sim/wally-batch.do $(WALLYCONF) $(TEST)"
 
 clean:
 	rm -rf $(VERILATOR_DIR)/wkdir $(VERILATOR_DIR)/obj_dir_profiling $(VERILATOR_DIR)/logs $(VERILATOR_DIR)/logs_profiling

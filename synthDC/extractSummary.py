@@ -33,9 +33,9 @@ def synthsintocsv():
 
     for oneSynth in allSynths:
         descrip = specReg.findall(oneSynth)
-        print("From " + oneSynth + " Find ")
-        for d in descrip:
-            print(d)
+#        print("From " + oneSynth + " Find ")
+#        for d in descrip:
+#            print(d)
         if (descrip[3] == "sram"):
             base = 4
         else:
@@ -54,7 +54,7 @@ def synthsintocsv():
         for phrase in ['Path Slack', 'Design Area']:
             bashCommand = 'grep "{}" '+ oneSynth[2:]+'/reports/*qor*'
             bashCommand = bashCommand.format(phrase)
-            print(bashCommand)
+#            print(bashCommand)
             try: 
                 output = subprocess.check_output(['bash','-c', bashCommand])
                 nums = metricReg.findall(str(output))

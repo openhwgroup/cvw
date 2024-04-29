@@ -274,6 +274,7 @@ os.chdir(regressionDir)
 
 coveragesim = "questa"  # Questa is required for code/functional coverage
 defaultsim = "questa"   # Default simulator for all other tests; change to Verilator when flow is ready
+#defaultsim = "verilator"   # Default simulator for all other tests
 
 coverage = '--coverage' in sys.argv
 fp = '--fp' in sys.argv
@@ -299,9 +300,9 @@ configs = [
     TestCase(
         name="lints",
         variant="all",
-        cmd="lint-wally " + nightMode + " | tee " + WALLY + "/sim/questa/logs/all_lints.log",
+        cmd="lint-wally " + nightMode + " | tee " + WALLY + "/sim/verilator/logs/all_lints.log",
         grepstr="lints run with no errors or warnings",
-        grepfile = WALLY + "/sim/questa/logs/all_lints.log")
+        grepfile = WALLY + "/sim/verilator/logs/all_lints.log")
     ]
 
 if (coverage):  # only run RV64GC tests on Questa in coverage mode

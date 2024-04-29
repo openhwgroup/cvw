@@ -188,6 +188,7 @@ sim/cfi/*
 sim/branch/*
 sim/obj_dir
 examples/verilog/fulladder/obj_dir
+examples/verilog/fulladder/fulladder.vcd
 config/deriv
 docs/docker/buildroot-config-src
 docs/docker/testvector-generation
