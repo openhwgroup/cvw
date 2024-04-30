@@ -61,9 +61,9 @@ funcovreg:
 
 # test_name=riscv_arithmetic_basic_test
 rvdv: 
-	python3 ${WALLY}/addins/riscv-dv/run.py --test ${test_name} --target rv64gc --output tests/riscvdv  --iterations 1 -si questa --iss spike --verbose --cov --seed 0 --steps gen			>> ${SIM}/questa/regression_logs/${test_name}.log 2>&1
-	python3 ${WALLY}/addins/riscv-dv/run.py --test ${test_name} --target rv64gc --output tests/riscvdv  --iterations 1 -si questa --iss spike --verbose --cov --seed 0 --steps gcc_compile	>> ${SIM}/questa/regression_logs/${test_name}.log 2>&1
-	python3 ${WALLY}/addins/riscv-dv/run.py --test ${test_name} --target rv64gc --output tests/riscvdv  --iterations 1 -si questa --iss spike --verbose --cov --seed 0 --steps iss_sim		>> ${SIM}/questa/regression_logs/${test_name}.log 2>&1
+	python3 ${WALLY}/addins/riscv-dv/run.py --test ${test_name} --target rv64gc --output tests/riscvdv  --iterations 1 -si questa --iss spike --verbose --cov --seed 0 --steps gen,gcc_compile			>> ${SIM}/questa/regression_logs/${test_name}.log 2>&1
+#	python3 ${WALLY}/addins/riscv-dv/run.py --test ${test_name} --target rv64gc --output tests/riscvdv  --iterations 1 -si questa --iss spike --verbose --cov --seed 0 --steps gcc_compile	>> ${SIM}/questa/regression_logs/${test_name}.log 2>&1
+#	python3 ${WALLY}/addins/riscv-dv/run.py --test ${test_name} --target rv64gc --output tests/riscvdv  --iterations 1 -si questa --iss spike --verbose --cov --seed 0 --steps iss_sim		>> ${SIM}/questa/regression_logs/${test_name}.log 2>&1
 #	run-elf.bash --seed ${SIM}/questa/seed0.txt --verbose --elf ${WALLY}/tests/riscvdv/asm_test/${test_name}_0.o													>> ${SIM}/questa/regression_logs/${test_name}.log 2>&1
 	run-elf-cov.bash --seed ${SIM}/questa/seed0.txt --verbose --coverdb ${SIM}/questa/riscv.ucdb --elf ${WALLY}/tests/riscvdv/asm_test/${test_name}_0.o								>> ${SIM}/questa/regression_logs/${test_name}.log 2>&1
 	cp ${SIM}/questa/riscv.ucdb ${SIM}/questa/regression_ucdbs/${test_name}.ucdb
