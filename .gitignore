@@ -221,4 +221,12 @@ sim/questa/riscv.ucdb.log
 sim/questa/riscv.ucdb.summary.log
 sim/questa/riscv.ucdb.testdetails.log
 tests/riscvdv
-
+examples/verilog/fulladder/csrc/
+examples/verilog/fulladder/profileReport.html
+examples/verilog/fulladder/profileReport.json
+examples/verilog/fulladder/profileReport.txt
+examples/verilog/fulladder/profileReport/
+examples/verilog/fulladder/simprofile_dir/
+examples/verilog/fulladder/simv.daidir/
+examples/verilog/fulladder/ucli.key
+examples/verilog/fulladder/verdi_config_file
