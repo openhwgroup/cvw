@@ -116,11 +116,13 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
   );
 
   // Delay transactions 1 ui_clk so we can detect the end of a write and set app_wdf_end
+  logic cmd_ready;
   logic [1:0] app_burst;
+  assign app_en = cmd_ready & app_wdf_rdy; // Deassert app_en if not ready for write data so we don't accidentally repeat commands
   assign app_cmd = {2'b00, ~app_wdf_wren};
   assign app_wdf_end = app_wdf_wren & ~({ui_addr, ui_wren} == {app_addr, app_wdf_wren});
   flopen  #(ADDR_SIZE)   appaddrreg (ui_clk, ui_ready, ui_addr, app_addr);
-  flopenr #(1)           appenreg   (ui_clk, ui_clk_sync_rst, ui_ready, dequeue_cmd, app_en);
+  flopenr #(1)           appenreg   (ui_clk, ui_clk_sync_rst, ui_ready, dequeue_cmd, cmd_ready);
   flopenr #(DATA_SIZE)   appdatareg (ui_clk, ui_clk_sync_rst, ui_ready, ui_data, app_wdf_data);
   flopenr #(DATA_SIZE/8) appmaskreg (ui_clk, ui_clk_sync_rst, ui_ready, ui_mask, app_wdf_mask);
   flopenr #(1)           appwrenreg (ui_clk, ui_clk_sync_rst, ui_ready, ui_wren, app_wdf_wren);
@@ -155,9 +157,14 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
     .w_full_o(resp_w_full), .r_valid_o(resp_r_valid)
   );
   
-  // If there are only writes in the pipeline, accept commands until the buffer is full
-  // If there is a read in the pipeline, stall until we have a valid response
-  assign HREADYOUT = ahb_wren ? ~cmd_w_full : resp_r_valid;
+  // If we're neither selected nor working on a read, accept commands as long as the buffer isn't full
+  // If we're working on a read, stall until valid response data is available
+  always_comb begin: ready_logic
+    if (~ahb_sel | ahb_wren)
+      HREADYOUT = ~cmd_w_full;
+    else
+      HREADYOUT = resp_r_valid;
+  end
 
   // do not indicate errors
   assign HRESP = 0;
