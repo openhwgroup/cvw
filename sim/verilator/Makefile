@@ -44,6 +44,7 @@ profile: obj_dir_profiling/Vtestbench_$(WALLYCONF)
 	echo "Please check $(VERILATOR_DIR)/logs_profiling/gmon_$(WALLYCONF)* for logs and output files."
 
 wkdir/$(WALLYCONF)_$(TEST)/Vtestbench: $(DEPENDENCIES)
+	mkdir -p wkdir/$(WALLYCONF)_$(TEST)
 	verilator \
 	--Mdir wkdir/$(WALLYCONF)_$(TEST) -o Vtestbench \
 	--binary --trace \
