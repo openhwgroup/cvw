@@ -30,8 +30,8 @@ tests = [
         ["rv32gc", ["arch32f", "arch32d", "arch32f_fma", "arch32d_fma", "arch32f_divsqrt", "arch32d_divsqrt", 
                     "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32a", "arch32zifencei", "arch32zicond", 
                     "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "arch32zfh", "arch32zfh_fma", 
-                    "arch32zfh_divsqrt", "arch32zfaf", "wally32a", "wally32priv", "wally32periph", "arch32zcb",
-                    "arch32zbkb", "arch32zbkc", "arch32zbkx", "arch32zknd", "arch32zkne", "arch32zknh"]], #  "arch32zfad"  # fcvtmod.w.d not working because of Sail flag bug. Jordan has PR in to fix Sail
+                    "arch32zfh_divsqrt", "arch32zfaf", "arch32zfad", "wally32a", "wally32priv", "wally32periph", "arch32zcb",
+                    "arch32zbkb", "arch32zbkc", "arch32zbkx", "arch32zknd", "arch32zkne", "arch32zknh"]], 
          ["rv64i", ["arch64i"]]
         ]
 
