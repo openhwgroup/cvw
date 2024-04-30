@@ -1929,6 +1929,7 @@ string arch64zknh[] = '{
 
   string arch32f[] = '{
     `RISCVARCHTEST,
+    "rv32i_m/F/src/fadd_b11-01.S",
     "rv32i_m/F/src/fadd_b10-01.S",
     "rv32i_m/F/src/fadd_b1-01.S",
     "rv32i_m/F/src/fadd_b11-01.S",
@@ -2276,7 +2277,7 @@ string arch64zknh[] = '{
     //`RISCVARCHTEST,
     `WALLYTEST,
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b1-01.S",
-//    "rv64i_m/D_Zfa/src/fcvtmod.w.d_b22-01.S", // temporarily excluded because Sail produces wrong signature  https://github.com/riscv/sail-riscv/issues/388
+    "rv64i_m/D_Zfa/src/fcvtmod.w.d_b22-01.S", 
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b23-01.S",
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b24-01.S",
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b27-01.S",
