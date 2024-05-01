@@ -93,7 +93,7 @@
     .clk, .IFDivStartE, .FDivBusyE, .SqrtE, .X, .D, 
     .FirstU, .FirstUM, .FirstC, .Firstun, .FirstWS(WS), .FirstWC(WC));
 
-  fdivsqrtpostproc #(P) fdivsqrtpostproc(                        // Postprocessor
+  divremsqrtfdivsqrtpostproc #(P) fdivsqrtpostproc(                        // Postprocessor
     .clk, .reset, .StallM, .WS, .WC, .D, .FirstU, .FirstUM, .FirstC, 
     .SqrtE, .Firstun, .SqrtM, .SpecialCaseM, 
     .UmM, .WZeroE, .DivStickyM, 

@@ -13,10 +13,10 @@ def parse_freq(rows):
     for row in rows:
         if "100_MHz" in row[0]:
             rows_slowclk.append(row)
-        if "6000_MHz" in row[0]:
+        if "5000_MHz" in row[0]:
             rows_fastclk.append(row)
     rowout.extend(parse_idiv(rows_slowclk,1E6*100))
-    rowout.extend(parse_idiv(rows_fastclk,1E6*6000))
+    rowout.extend(parse_idiv(rows_fastclk,1E6*5000))
     return rowout
 def parse_xlen(rows,freq):
     final = []

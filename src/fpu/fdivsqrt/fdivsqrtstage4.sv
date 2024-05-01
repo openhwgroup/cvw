@@ -57,7 +57,7 @@ module fdivsqrtstage4 import cvw::*;  #(parameter cvw_t P) (
   assign Dmsbs  = D[P.DIVb-1:P.DIVb-3];     // U0.3 most significant fractional bits of divisor after leading 1
   assign WCmsbs = WC[P.DIVb+3:P.DIVb-4];    // Q4.4 most significant bits of residual
   assign WSmsbs = WS[P.DIVb+3:P.DIVb-4];    // Q4.4 most significant bits of residual
-  fdivsqrtuslc4cmp uslc4(.Dmsbs, .Smsbs, .WSmsbs, .WCmsbs, .SqrtE, .j0, .j1, .udigit);
+  fdivsqrtuslc4 uslc4(.Dmsbs, .Smsbs, .WSmsbs, .WCmsbs, .SqrtE, .j0, .j1, .udigit);
   assign un = 1'b0; // unused for radix 4
 
   // F generation logic
