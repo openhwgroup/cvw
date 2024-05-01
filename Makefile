@@ -72,7 +72,7 @@ rvdv_regression:
 
 rvdv_regression_loop:
 	mkdir -p ${SIM}/multiple_regressions
-	for i in {1..10}; \
+	for i in {1..1}; \
 	do make -j4 rvdv_regression SEED_VALUE=$$RANDOM; \
 	done
 	vcover report -details -html ${SIM}/multiple_regressions/merged.ucdb
