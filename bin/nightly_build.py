@@ -16,6 +16,7 @@ Features:
         These emails serve as communication channels for stakeholders, providing them with timely updates on the software's regression status.
 
 Usage:
+                    shutil.rmtree(file)
 
 - The script is designed to be scheduled and executed automatically on a nightly basis using task scheduling tools such as Cronjobs. To create a cronjob do the following:
     1)  Open Terminal:
@@ -67,7 +68,8 @@ In summary, this Python script facilitates the automation of nightly regression 
 
 import os
 import shutil
-from datetime import datetime
+from datetime import datetime, timedelta
+import time
 import re
 import markdown
 import subprocess
@@ -121,7 +123,7 @@ class FolderManager:
         Delete a folder, including all of its contents
 
         Args:
-            folder (list): A folder to be deleted
+            folders (list): A folder to be deleted
         
         Returns:
             None
@@ -130,6 +132,29 @@ class FolderManager:
         for folder in folders:
             if os.path.exists(folder):
                 shutil.rmtree(folder)
+
+    def remove_stale_folders(self, folder, days_old=30):
+        """
+        Delete all folders over X days old in a folder. 
+
+        Args:
+            folder (str): Folder to delete folders and files from
+            days_old (int): Number of days old a file must be before deleting
+
+        Returns:
+            None
+        """
+        dirs = os.listdir(folder)
+        threshold = time.time() - days_old*86400
+        
+        for file in dirs:
+            file = os.path.join(folder, file)
+            file_mtime = os.stat(file).st_mtime
+            if file_mtime < threshold:
+                if os.path.isfile(file):
+                    os.remove(file)
+                elif os.path.isdir(file):
+                    shutil.rmtree(file)
 
 
     def clone_repository(self, folder, repo_url):
@@ -576,9 +601,11 @@ class TestRunner:
         
         self.logger.info("Converting markdown file to html file.")
  
-    def send_email(self, sender_email=None, receiver_emails=None, subject="Nightly Regression Test"):
+    def send_email(self, receiver_emails=None, subject="Nightly Regression Test"):
         """
-        Send email with HTML content.
+        Send email with HTML content. 
+        
+        !!! Requires mutt to be set up to send emails !!!
 
         Args:
             self: The instance of the class.
@@ -609,7 +636,6 @@ class TestRunner:
                     '/usr/bin/mutt',
                     '-s', subject,
                     '-e', 'set content_type=text/html',
-                    '-e', f'my_hdr From: <{sender_email}>',
                     '--', receiver_email
                 ]
                 try:
@@ -634,32 +660,29 @@ def main():
 
     parser.add_argument('--path',default = "nightly", help='specify the path for where the nightly repositories will be cloned ex: "nightly-runs')
     parser.add_argument('--repository',default = "https://github.com/openhwgroup/cvw", help='specify which github repository you want to clone')
-    parser.add_argument('--target', default = "all", help='types of tests you can make are: all, wally-riscv-arch-test')
-    parser.add_argument('--tests', default = "nightly", help='types of tests you can run are: test or nightly')
-    parser.add_argument('--send_email',default = "yes", help='do you want to send emails: "yes" or "y"')
+    parser.add_argument('--target', default = "all", help='types of tests you can make are: all, wally-riscv-arch-test, no')
+    parser.add_argument('--tests', default = "nightly", help='types of tests you can run are: nightly, test, test_lint')
+    parser.add_argument('--send_email',default = "", nargs="+", help='What emails to send test results to. Example: "[email1],[email2],..."')
 
     args = parser.parse_args()
 
-    
-
-    
     #############################################
     #                 SETUP                     #
     #############################################
 
-    sender_email = 'kaitlin.verilog@gmail.com'
+    receiver_emails = args.send_email
 
-    receiver_emails = ['thomas.kidd@okstate.edu', 'james.stine@okstate.edu', 'harris@g.hmc.edu', 'rose.thompson10@okstate.edu', 'sarah.harris@unlv.edu', 'nlucio@hmc.edu']
-    testing_emails = ['kaitlin.verilog@gmail.com']
-    
     # file paths for where the results and repos will be saved: repos and results can be changed to whatever
     today = datetime.now().strftime("%Y-%m-%d")
+    yesterday_dt = datetime.now() - timedelta(days=1)
+    yesterday = yesterday_dt.strftime("%Y-%m-%d")
     cvw_path = Path.home().joinpath(args.path, today)
     results_path = Path.home().joinpath(args.path, today, "results")
     log_path = Path.home().joinpath(args.path, today, "logs")
     log_file_path = log_path.joinpath("nightly_build.log")
+    previous_cvw_path = Path.home().joinpath(args.path,f"{yesterday}/cvw")
     # creates the object
-    folder_manager = FolderManager() 
+    folder_manager = FolderManager()
 
     # setting the path on where to clone new repositories of cvw
     folder_manager.create_folders([cvw_path, results_path, log_path])
@@ -668,18 +691,12 @@ def main():
     folder_manager.clone_repository(cvw_path, args.repository)
 
     # Define tests that we can run
-    test_list = [["bash", "lint-wally", "-nightly"]]
-    test_test = [["python", "regression-wally", ""]]
-    test_nightly = [["python", "regression-wally", "--nightly"]]
-    test_coverage = [["python", "regression-wally", "--coverage"]]
-    if (args.tests == "all"):
-        test_list += test_nightly + test_coverage
-    elif (args.tests == "nightly"):
-        test_list += test_nightly
+    if (args.tests == "nightly"):
+        test_list = [["python", "regression-wally", "--nightly"]]
     elif (args.tests == "test"):
-        test_list += test_test
+        test_list = [["python", "regression-wally", ""]]
     elif (args.tests == "test_lint"):
-        pass
+        test_list = [["bash", "lint-wally", "-nightly"]]
     else:
         print(f"Error: Invalid test '"+args.test+"' specified")
         raise SystemExit
@@ -801,16 +818,29 @@ def main():
     #                SEND EMAIL                 #
     #############################################
 
-    if (args.send_email == "yes" or args.send_email == "y"):
-        test_runner.send_email(sender_email=sender_email, receiver_emails=receiver_emails)
-    if (args.send_email == "test"):
-        test_runner.send_email(sender_email=sender_email, receiver_emails=testing_emails)
-
+    if receiver_emails:
+        test_runner.send_email(receiver_emails=receiver_emails)
 
     #############################################
-    #      DELETE REPOSITORY AFTER TESTING      #
+    #   DELETE REPOSITORY OF PREVIOUS NIGHTLYS  #
     #############################################
-    folder_manager.remove_folder([test_runner.cvw])
+    threshold = time.time() - 86400*1
+
+    for log_dir in os.listdir(args.path):
+        try:
+            cvw_dir = os.path.join(args.path,log_dir,"cvw")
+            cvw_mtime = os.stat(cvw_dir).st_mtime
+            if cvw_mtime < threshold:
+                    logger.info(f"Found {cvw_dir} older than 1 day, removing")
+                    shutil.rmtree(cvw_dir)
+        except Exception as e:
+            if os.path.exists(cvw_dir):
+                logger.info(f"ERROR: Failed to remove previous nightly run repo with error {e}")
+
+    #############################################
+    #      DELETE STALE LOGS AFTER TESTING      #
+    #############################################
+    folder_manager.remove_stale_folders(folder=args.path, days_old=30)
 
 if __name__ == "__main__":
     main()
