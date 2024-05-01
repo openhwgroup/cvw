@@ -16,3 +16,6 @@ RVTEST_CODE_BEGIN
 
 RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;",temp)
 
+    la x6, wally_signature
+    sd x0, 0(x6)
+    
