@@ -53,9 +53,10 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   output logic                  ResumeConfirm,
   output logic                  ResetConfirm,
   input  logic                  HaltOnReset,
-  input  logic                  ScanEn,
-  input  logic                  ScanIn,
-  output logic                  ScanOut
+  // Debug scan chain
+  input  logic                  DebugScanEn,
+  input  logic                  DebugScanIn,
+  output logic                  DebugScanOut
 );
 
   logic                          StallF, StallD, StallE, StallM, StallW;
@@ -179,6 +180,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          DCacheStallM, ICacheStallF;
   logic                          wfiM, IntPendingM;
 
+  // Debug register scan chain interconnects
+  logic [1:0]                    ScanReg;
+
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu #(P) ifu(.clk, .reset,
     .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
@@ -200,7 +204,8 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .PrivilegeModeW, .PTE, .PageType, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV,
     .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE, .ITLBWriteF, .sfencevmaM, .ITLBMissF,
     // pmp/pma (inside mmu) signals. 
-    .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW, .InstrAccessFaultF, .InstrUpdateDAF); 
+    .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW, .InstrAccessFaultF, .InstrUpdateDAF,
+    .DebugScanEn, .DebugScanIn(ScanReg[1]), .DebugScanOut(ScanReg[2])); 
     
   // integer execution unit: integer register file, datapath and controller
   ieu #(P) ieu(.clk, .reset,
@@ -225,7 +230,8 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
      // hazards
      .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
      .StructuralStallD, .LoadStallD, .StoreStallD, .PCSrcE,
-     .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .InvalidateICacheM); 
+     .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .InvalidateICacheM,
+     .DebugScanEn, .DebugScanIn(ScanReg[2]), .DebugScanOut(ScanReg[3])); 
 
   lsu #(P) lsu(
     .clk, .reset, .StallM, .FlushM, .StallW, .FlushW,
@@ -261,7 +267,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .StoreAmoAccessFaultM,        // connects to privilege
     .InstrUpdateDAF,
     .PCSpillF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
-    .LSUStallM);                    
+    .LSUStallM, .DebugScanEn, .DebugScanIn(ScanReg[3]), .DebugScanOut);                    
 
   if(P.BUS_SUPPORTED) begin : ebu
     ebu #(P) ebu(// IFU connections
@@ -311,7 +317,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .PrivilegeModeW, .SATP_REGW,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS, 
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
-      .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM);
+      .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM,
+      .DebugScanEn, .DebugScanIn, .DebugScanOut(ScanReg[0]));
+    floprs #(1) scantrapm (.clk, .reset, .q(TrapM), .scan(DebugScanEn), .scanin(ScanReg[0]), .scanout(ScanReg[1]));
   end else begin
     assign CSRReadValW      = '0;
     assign EPCM             = '0;
@@ -322,6 +330,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     assign IntPendingM      = 1'b0;
     assign sfencevmaM       = 1'b0;
     assign BigEndianM       = 1'b0;
+    assign ScanReg[1] = ScanReg[0];
   end
 
   // multiply/divide unit

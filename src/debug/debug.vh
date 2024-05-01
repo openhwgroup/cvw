@@ -143,32 +143,27 @@
 `define AAR64  3
 `define AAR128 4
 
-
-
 // Register Numbers (regno) 
 // (Table 3.3)
 // 0x0000 – 0x0fff | CSRs. The “PC” can be accessed here through dpc.
 // 0x1000 – 0x101f | GPRs
 // 0x1020 – 0x103f | Floating point registers
 // 0xc000 – 0xffff | Reserved for non-standard extensions and internal use.
-`define MISA        16'h301
+`define MISA        16'h0301 // XLEN P.ZICSR_SUPPORTED
+`define TRAPM       16'hC000 // 1'b  P.ZICSR_SUPPORTED
+`define PCM         16'hC001 // XLEN P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED
+`define INSTRM      16'hC002 // 32'b P.ZICSR_SUPPORTED | P.A_SUPPORTED
+// ieu/controller
+`define MEMRWM      16'hC003 // 2'b
+`define INSTRVALIDM 16'hC004 // 1'b  
+// ieu/datapath
+`define WRITEDATAM  16'hC005 // XLEN
+//`define GPR         16'hXXXX // XLEN (+1 (scanreg))
+// lsu
+`define IEUADRM     16'hC006 // XLEN
+`define READDATAM   16'hC007 // LLEN (+1 (scanreg))
 
-`define PCM         16'hC000
-`define TRAPM       16'hC001
-`define INSTRM      16'hC002
-`define INSTRVALIDM 16'hC003
-`define MEMRWM      16'hC004
-`define IEUADRM     16'hC005
-`define READDATAM   16'hC006
-`define WRITEDATAM  16'hC007
-`define RS1         16'hC008
-`define RS2         16'hC009
-`define RD2         16'hC00A
-`define RD1         16'hC00B
-`define WD          16'hC00C
-`define WE          16'hC00D
-
-//`define X0          16'h1000
+`define X0          16'h1000
 `define X1          16'h1001
 `define X2          16'h1002
 `define X3          16'h1003
@@ -184,75 +179,22 @@
 `define X13         16'h100D
 `define X14         16'h100E
 `define X15         16'h100F
-`define X16         16'h1010
-`define X17         16'h1011
-`define X18         16'h1012
-`define X19         16'h1013
-`define X20         16'h1014
-`define X21         16'h1015
-`define X22         16'h1016
-`define X23         16'h1017
-`define X24         16'h1018
-`define X25         16'h1019
-`define X26         16'h101A
-`define X27         16'h101B
-`define X28         16'h101C
-`define X29         16'h101D
-`define X30         16'h101E
-`define X31         16'h101F
-
-// Register scan change position
-// Used to translate register numbers (above) to position on register scan chain
-// Position number will be multiplied by XLEN to get true bit position for capture/update logic
-`define P_MISA        1
-
-`define P_PCM         2
-`define P_TRAPM       3
-`define P_INSTRM      4
-`define P_INSTRVALIDM 5
-`define P_MEMRWM      6
-`define P_IEUADRM     7
-`define P_READDATAM   8
-`define P_WRITEDATAM  9
-`define P_RS1         10
-`define P_RS2         11
-`define P_RD2         12
-`define P_RD1         13
-`define P_WD          14
-`define P_WE          15
-
-`define P_X1          16
-`define P_X2          17
-`define P_X3          18
-`define P_X4          19
-`define P_X5          20
-`define P_X6          21
-`define P_X7          22
-`define P_X8          23
-`define P_X9          24
-`define P_X10         25
-`define P_X11         26
-`define P_X12         27
-`define P_X13         28
-`define P_X14         29
-`define P_X15         30
-`define P_X16         31
-`define P_X17         32
-`define P_X18         33
-`define P_X19         34
-`define P_X20         35
-`define P_X21         36
-`define P_X22         37
-`define P_X23         38
-`define P_X24         39
-`define P_X25         40
-`define P_X26         41
-`define P_X27         42
-`define P_X28         43
-`define P_X29         44
-`define P_X30         45
-`define P_X31         46
-
+`define X16         16'h1010 // E_SUPPORTED
+`define X17         16'h1011 // E_SUPPORTED
+`define X18         16'h1012 // E_SUPPORTED
+`define X19         16'h1013 // E_SUPPORTED
+`define X20         16'h1014 // E_SUPPORTED
+`define X21         16'h1015 // E_SUPPORTED
+`define X22         16'h1016 // E_SUPPORTED
+`define X23         16'h1017 // E_SUPPORTED
+`define X24         16'h1018 // E_SUPPORTED
+`define X25         16'h1019 // E_SUPPORTED
+`define X26         16'h101A // E_SUPPORTED
+`define X27         16'h101B // E_SUPPORTED
+`define X28         16'h101C // E_SUPPORTED
+`define X29         16'h101D // E_SUPPORTED
+`define X30         16'h101E // E_SUPPORTED
+`define X31         16'h101F // E_SUPPORTED
 
 // ACCESS_MEMORY Control ranges (Not implemented)
 //`define AAMVIRTUAL       23

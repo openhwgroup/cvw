@@ -31,7 +31,7 @@
 from telnetlib import Telnet
 
 debug = False
-XLEN = 128
+XLEN = 64 # TODO: infer this value from the MISA
 
 tapname = "cvw.cpu" # this is set via the openocd config. It can be found by running `scan_chain`
 
@@ -39,16 +39,21 @@ def main():
     global tn
     with Telnet("127.0.0.1", 4444) as tn:
         read() # clear welcome message from read buffer
+        #reset_dm()
         activate_dm() # necessary if openocd init is disabled
-        write_dmi("0x07", "0x8888")
+        clear_abstrcmd_err()
         check_errors()
-        write_dmi("0x04", "0x8888")
+        write_data("READDATAM", "0xAA0987210000FFFF")
+        print(f"WRITEDATAM: '{read_data("WRITEDATAM")}'")
+        print(f"IEUADRM: '{read_data("IEUADRM")}'")
+        #write_data("INSTRVALIDM", "0x0")
+        print(f"MEMRWM: '{read_data("MEMRWM")}'")
+        print(f"INSTRVALIDM: '{read_data("INSTRVALIDM")}'")
+        #write_data("MEMRWM", "0x3")
+        #write_data("INSTRVALIDM", "0x0")
         check_errors()
-        write_dtmcs(dmireset=1)
-        write_dmi("0x04", "0x8888")
-        check_errors()
-        #activate_dm() # necessary if openocd init is disabled
-        dmi_reset()
+        #check_errors()
+        #dmi_reset()
         #clear_abstrcmd_err()
         #b = activate_dm()
         #print(b)
@@ -61,12 +66,13 @@ def write_data(register, data):
     # Translate register alias to DM regno
     regno = int(register_translations[register], 16)
     # Write data to 32 bit message registers
-    write_dmi("0x4", f"0x{data[-8::]}")
+    data = int(data, 16)
+    write_dmi("0x4", hex(data & 0xffffffff))
     if XLEN == 64:
-        write_dmi("0x5", f"0x{data[-16:-8]}")
+        write_dmi("0x5", hex((data>>32) & 0xffffffff))
     if XLEN == 128:
-        write_dmi("0x6", f"0x{data[-24:-16]}")
-        write_dmi("0x7", f"0x{data[-32:-24]}")
+        write_dmi("0x6", hex((data>>64) & 0xffffffff))
+        write_dmi("0x7", hex((data>>96) & 0xffffffff))
     # Transfer data from msg registers to target register
     access_register(write=True, regno=regno, addr_size=XLEN)
 
@@ -93,17 +99,17 @@ def access_register(write, regno, addr_size):
     Before starting an abstract command, a debugger must ensure that haltreq, resumereq, and
     ackhavereset are all 0."""
     addr = "0x17"
-    data = 2**17 # transfer bit always set
+    data = 1<<17 # transfer bit always set
     if addr_size == 32:
-        data += 2*2**20
+        data += 2<<20
     elif addr_size == 64:
-        data += 3*2**20
+        data += 3<<20
     elif addr_size == 128:
-        data += 4*2**20
+        data += 4<<20
     else:
         raise Exception("must provide valid register access size (32, 64, 128). See: 3.7.1.1 aarsize")
     if write:
-        data += 2**16
+        data += 1<<16
     data += regno
     data = hex(data)
     write_dmi(addr, data)
@@ -148,6 +154,7 @@ def reset_dm():
 
 def clear_abstrcmd_err():
     write_dmi("0x16", "0x700")
+    check_errors()
 
 
 def activate_dm():
@@ -253,20 +260,15 @@ cmderr_translations = {
 
 # Register alias to regno translation table
 register_translations = {
-    "PCM"         : "0x0",
-    "TRAPM"       : "0x1",
-    "INSTRM"      : "0x2",
-    "INSTRVALIDM" : "0x3",
-    "MEMRWM"      : "0x4",
-    "IEUADRM"     : "0x5",
-    "READDATAM"   : "0x6",
-    "WRITEDATAM"  : "0x7",
-    "RS1"         : "0x8",
-    "RS2"         : "0x9",
-    "RD2"         : "0xA",
-    "RD1"         : "0xB",
-    "WD"          : "0xC",
-    "WE"          : "0xD",
+    "MISA"        : "0x0301",
+    "TRAPM"       : "0xC000",
+    "PCM"         : "0xC001",
+    "INSTRM"      : "0xC002",
+    "MEMRWM"      : "0xC003",
+    "INSTRVALIDM" : "0xC004",
+    "WRITEDATAM"  : "0xC005",
+    "IEUADRM"     : "0xC006",
+    "READDATAM"   : "0xC007",
     #"X0"  : "0x1000",
     "X1"  : "0x1001",
     "X2"  : "0x1002",

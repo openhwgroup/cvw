@@ -2,14 +2,13 @@
 // and resets during various stages of command transactions
 
 `include "config.vh"
-
 import cvw::*;
 
 module testbench ();
 
 `include "parameter-defs.vh"
-
 `include "debug.vh"
+
 localparam JTAG_DEVICE_ID = 32'hDEADBEEF;
 
 integer i,j,k;

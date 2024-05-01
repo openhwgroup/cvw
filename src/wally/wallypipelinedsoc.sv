@@ -102,6 +102,8 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   end
 
   // instantiate debug module
-  
+  dm #(P) dm (.clk, .rst(reset), .tck, .tdi, .tms, .tdo,
+    .HaltReq, .ResumeReq, .ResetReq, .HaltConfirm, .ResumeConfirm,
+    .ResetConfirm, .HaltOnReset, .ScanEn, .ScanIn, .ScanOut);
 
 endmodule

@@ -7,6 +7,6 @@ module dummy_reg #(parameter WIDTH=32, parameter CONST) (
     output logic [WIDTH-1:0] q
 );
 
-scan_reg #(.WIDTH(WIDTH)) sr (.clk, .en, .se, .scan_in, .scan_out, .d(CONST), .q);
+flopenrs #(.WIDTH(WIDTH)) sr (.clk, .reset(1'b0), .en, .scan(se), .scanin(scan_in), .scanout(scan_out), .d(CONST), .q);
 
 endmodule

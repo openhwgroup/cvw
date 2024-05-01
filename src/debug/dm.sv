@@ -36,18 +36,19 @@ module dm import cvw::*; #(parameter cvw_t P) (
   output logic                  tdo,
 
   // TODO: stubs
-  output logic                  CoreHalt,
-  output logic                  CoreResume,
-  output logic                  CoreReset,
-  input  logic                  CoreHaltConfirm,
-  input  logic                  CoreResumeConfirm,
-  input  logic                  CoreResetConfirm,
-  output logic                  CoreHaltOnReset,
+  output logic                  HaltReq,
+  output logic                  ResumeReq,
+  output logic                  ResetReq,
+  input  logic                  HaltConfirm,
+  input  logic                  ResumeConfirm,
+  input  logic                  ResetConfirm,
+  output logic                  HaltOnReset,
 
   // Scan Chain
   output logic                  ScanEn,
   input  logic                  ScanIn,
-  output logic                  ScanOut
+  output logic                  ScanOut,
+  output logic [P.E_SUPPORTED+3:0] DebugGPRAddr
 );
   `include "debug.vh"
 
@@ -55,7 +56,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic                   ReqReady;
   logic                   ReqValid;
   logic [`ADDR_WIDTH-1:0] ReqAddress;
-  logic [31:0]            ReqData;
+  (* mark_debug = "true" *) logic [31:0]            ReqData;
   logic [1:0]             ReqOP;
   logic                   RspReady;
   logic                   RspValid;
@@ -68,10 +69,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
     .ReqReady, .ReqValid, .ReqAddress, .ReqData, .ReqOP, .RspReady,
     .RspValid, .RspData, .RspOP);
 
-  localparam SCANNABLE_REG_COUNT = 2; // TODO: cleanup dummy reg logic
-  localparam SCAN_CHAIN_LEN = (SCANNABLE_REG_COUNT+1)*P.XLEN-1;
-
-  enum bit [3:0] {
+  (* mark_debug = "true" *) enum bit [3:0] {
     INACTIVE, // 0
     IDLE, // 1
     ACK, // 2
@@ -88,20 +86,21 @@ module dm import cvw::*; #(parameter cvw_t P) (
     INVALID // d
   } State;
 
-  enum bit [0:0] {
+  (* mark_debug = "true" *) enum bit [0:0] {
     AC_IDLE,
     AC_SCAN
   } AcState, NewAcState;
 
   // AbsCmd internal state
-  logic          AcWrite;
-  logic [P.XLEN:0] ScanReg;
-  logic [$clog2(SCAN_CHAIN_LEN)-1:0] ShiftCount, Cycle;
-  logic          InvalidRegNo;
+  (* mark_debug = "true" *) logic              AcWrite;
+  (* mark_debug = "true" *) logic [P.XLEN:0]   ScanReg;
+  (* mark_debug = "true" *) logic [P.XLEN-1:0] ARMask;
+  (* mark_debug = "true" *) logic [9:0]        ShiftCount, ScanChainLen, Cycle;
+  (* mark_debug = "true" *) logic              InvalidRegNo;
 
   // message registers
-  logic [31:0] Data0;  // 0x04
-  logic [31:0] Data1;  // 0x05
+  (* mark_debug = "true" *) logic [31:0] Data0;  // 0x04
+  (* mark_debug = "true" *) logic [31:0] Data1;  // 0x05
   logic [31:0] Data2;  // 0x06
   logic [31:0] Data3;  // 0x07
 
@@ -113,8 +112,6 @@ module dm import cvw::*; #(parameter cvw_t P) (
 
   //// DM register fields
   //DMControl
-  logic HaltReq;
-  logic ResumeReq;
   logic HartReset;
   logic AckHaveReset;
   logic AckUnavail;
@@ -183,17 +180,15 @@ module dm import cvw::*; #(parameter cvw_t P) (
     SBAccess32, SBAccess16, SBAccess8};
 
   // translate internal state to hart connections
-  assign CoreHalt = HaltReq;
-  assign CoreResume = ResumeReq;
-  assign CoreReset = HartReset;
+  assign ResetReq = HartReset;
 
   // TODO: implement core state logic
-  assign AllRunning = ~CoreHaltConfirm;
-  assign AnyRunning = ~CoreHaltConfirm;
-  assign AllHalted = CoreHaltConfirm; // TODO: update this
-  assign AnyHalted = CoreHaltConfirm;
-  assign AllResumeAck = CoreResumeConfirm;
-  assign AnyResumeAck = CoreResumeConfirm;
+  assign AllRunning = ~HaltConfirm;
+  assign AnyRunning = ~HaltConfirm;
+  assign AllHalted = HaltConfirm;
+  assign AnyHalted = HaltConfirm;
+  assign AllResumeAck = ResumeConfirm;
+  assign AnyResumeAck = ResumeConfirm;
 
   assign RspValid = (State == ACK);
   assign ReqReady = (State != ACK);
@@ -289,8 +284,8 @@ module dm import cvw::*; #(parameter cvw_t P) (
             5'b10000 : ResumeReq <= HartReset ? 0 : 1; // TODO deassert automatically // TODO clear local ResumeACK
             5'b01000 : HartReset <= ReqData[`HARTRESET];
             //5'b00100 : HaveReset <= 0; // TODO: clear havereset (resetconfirm)
-            5'b00010 : CoreHaltOnReset <= 1;
-            5'b00001 : CoreHaltOnReset <= 0;
+            5'b00010 : HaltOnReset <= 1;
+            5'b00001 : HaltOnReset <= 0;
             default : begin // Failure (not onehot), dont write any changes
               HaltReq <= HaltReq;
               AckUnavail <= AckUnavail;
@@ -343,7 +338,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
             case (ReqData[`CMDTYPE])
               `ACCESS_REGISTER : begin
                 if (ReqData[`AARSIZE] > $clog2(P.XLEN/8)) // if AARSIZE (encoded) is greater than P.XLEN, set CmdErr, do nothing
-                  CmdErr <= `CMDERR_EXCEPTION;
+                  CmdErr <= `CMDERR_BUS;
                 else if (~ReqData[`TRANSFER]); // If not TRANSFER, do nothing
                 else if (InvalidRegNo)
                   CmdErr <= `CMDERR_EXCEPTION; // If InvalidRegNo, set CmdErr, do nothing
@@ -398,7 +393,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
         end
 
         AC_SCAN : begin
-          if (Cycle == SCAN_CHAIN_LEN)
+          if (Cycle == ScanChainLen)
             AcState <= AC_IDLE;
           else
             Cycle <= Cycle + 1;
@@ -409,23 +404,24 @@ module dm import cvw::*; #(parameter cvw_t P) (
 
   assign Busy = ~(AcState == AC_IDLE);
 
-
   // Scan Chain
   assign ScanReg[P.XLEN] = ScanIn;
   assign ScanOut = ScanReg[0];
   assign ScanEn = (AcState == AC_SCAN);
+  // ARMask is used as write enable for subword overwrites (basic mask would overwrite neighbors)
   genvar i;
   for (i=0; i<P.XLEN; i=i+1) begin
     always_ff @(posedge clk) begin
-      if (Cycle == ShiftCount-1 && AcWrite) begin
-        if (P.XLEN == 32)
-          ScanReg[i] <= Data0[i];
-        else if (P.XLEN == 64)
-          ScanReg[i] <= {Data1,Data0}[i];
-        else if (P.XLEN == 128)
-          ScanReg[i] <= {Data3,Data2,Data1,Data0}[i];
-      end else if (ScanEn)
-        ScanReg[i] <= ScanReg[i+1];
+      if (ScanEn)
+        if (Cycle == ShiftCount && AcWrite) begin
+          if (P.XLEN == 32)
+            ScanReg[i] <= ARMask[i] ? Data0[i] : ScanReg[i+1];
+          else if (P.XLEN == 64)
+            ScanReg[i] <= ARMask[i] ? {Data1,Data0}[i] : ScanReg[i+1];
+          else if (P.XLEN == 128)
+            ScanReg[i] <= ARMask[i] ? {Data3,Data2,Data1,Data0}[i] : ScanReg[i+1];
+        end else
+          ScanReg[i] <= ScanReg[i+1];
     end
   end
 
@@ -434,11 +430,11 @@ module dm import cvw::*; #(parameter cvw_t P) (
     if (AcState == AC_SCAN) begin
       if (Cycle == ShiftCount && ~AcWrite) // Read
         if (P.XLEN == 32)
-          Data0 <= ScanReg;
+          Data0 <= ARMask & ScanReg[P.XLEN:1];
         else if (P.XLEN == 64)
-          {Data1,Data0} <= ScanReg;
+          {Data1,Data0} <= ARMask & ScanReg[P.XLEN:1];
         else if (P.XLEN == 128)
-          {Data3,Data2,Data1,Data0} <= ScanReg;
+          {Data3,Data2,Data1,Data0} <= ARMask & ScanReg[P.XLEN:1];
         
     end else if (State == W_DATA && ~Busy) begin // TODO: should these be zeroed if rst?
       if (P.XLEN == 32)
@@ -460,64 +456,6 @@ module dm import cvw::*; #(parameter cvw_t P) (
     end
   end
 
-
-
-  // Register decoder
-  always_comb begin
-    InvalidRegNo = 0;
-    case (ReqData[`REGNO])
-      `MISA        : ShiftCount = `P_MISA * P.XLEN;
-      `PCM         : ShiftCount = `P_PCM * P.XLEN;
-      `TRAPM       : ShiftCount = `P_TRAPM * P.XLEN;
-      `INSTRM      : ShiftCount = `P_INSTRM * P.XLEN;
-      `INSTRVALIDM : ShiftCount = `P_INSTRVALIDM * P.XLEN;
-      `MEMRWM      : ShiftCount = `P_MEMRWM * P.XLEN;
-      `IEUADRM     : ShiftCount = `P_IEUADRM * P.XLEN;
-      `READDATAM   : ShiftCount = `P_READDATAM * P.XLEN;
-      `WRITEDATAM  : ShiftCount = `P_WRITEDATAM * P.XLEN;
-      `RS1         : ShiftCount = `P_RS1 * P.XLEN;
-      `RS2         : ShiftCount = `P_RS2 * P.XLEN;
-      `RD2         : ShiftCount = `P_RD2 * P.XLEN;
-      `RD1         : ShiftCount = `P_RD1 * P.XLEN;
-      `WD          : ShiftCount = `P_WD * P.XLEN;
-      `WE          : ShiftCount = `P_WE * P.XLEN;
-
-      `X1  : ShiftCount = `P_X1 * P.XLEN;
-      `X2  : ShiftCount = `P_X2 * P.XLEN;
-      `X3  : ShiftCount = `P_X3 * P.XLEN;
-      `X4  : ShiftCount = `P_X4 * P.XLEN;
-      `X5  : ShiftCount = `P_X5 * P.XLEN;
-      `X6  : ShiftCount = `P_X6 * P.XLEN;
-      `X7  : ShiftCount = `P_X7 * P.XLEN;
-      `X8  : ShiftCount = `P_X8 * P.XLEN;
-      `X9  : ShiftCount = `P_X9 * P.XLEN;
-      `X10 : ShiftCount = `P_X10 * P.XLEN;
-      `X11 : ShiftCount = `P_X11 * P.XLEN;
-      `X12 : ShiftCount = `P_X12 * P.XLEN;
-      `X13 : ShiftCount = `P_X13 * P.XLEN;
-      `X14 : ShiftCount = `P_X14 * P.XLEN;
-      `X15 : ShiftCount = `P_X15 * P.XLEN;
-      `X16 : ShiftCount = `P_X16 * P.XLEN;
-      `X17 : ShiftCount = `P_X17 * P.XLEN;
-      `X18 : ShiftCount = `P_X18 * P.XLEN;
-      `X19 : ShiftCount = `P_X19 * P.XLEN;
-      `X20 : ShiftCount = `P_X20 * P.XLEN;
-      `X21 : ShiftCount = `P_X21 * P.XLEN;
-      `X22 : ShiftCount = `P_X22 * P.XLEN;
-      `X23 : ShiftCount = `P_X23 * P.XLEN;
-      `X24 : ShiftCount = `P_X24 * P.XLEN;
-      `X25 : ShiftCount = `P_X25 * P.XLEN;
-      `X26 : ShiftCount = `P_X26 * P.XLEN;
-      `X27 : ShiftCount = `P_X27 * P.XLEN;
-      `X28 : ShiftCount = `P_X28 * P.XLEN;
-      `X29 : ShiftCount = `P_X29 * P.XLEN;
-      `X30 : ShiftCount = `P_X30 * P.XLEN;
-      `X31 : ShiftCount = `P_X31 * P.XLEN;
-      default : begin
-        ShiftCount = 'x;
-        InvalidRegNo = 1;
-      end
-    endcase
-  end
+  rad #(P) regnodecode(.AarSize(ReqData[`AARSIZE]),.Regno(ReqData[`REGNO]),.ScanChainLen,.ShiftCount,.InvalidRegNo,.DebugGPRAddr,.ARMask);
 
 endmodule
