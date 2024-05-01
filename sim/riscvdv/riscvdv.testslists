@@ -1,0 +1,27 @@
+# quswarabid@gmail.com 2024
+# A low-level file to be included in Top-level Makefile for CORE-V-Wally
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+riscvdv_rv64gc_testlist =   riscv_arithmetic_basic_test \
+                            riscv_amo_test \
+                            riscv_ebreak_debug_mode_test \
+                            riscv_ebreak_test \
+                            riscv_floating_point_arithmetic_test \
+                            riscv_floating_point_mmu_stress_test \
+                            riscv_floating_point_rand_test \
+                            riscv_full_interrupt_test \
+                            riscv_hint_instr_test \
+                            riscv_illegal_instr_test \
+                            riscv_invalid_csr_test \
+                            riscv_jump_stress_test \
+                            riscv_loop_test \
+                            riscv_machine_mode_rand_test \
+                            riscv_mmu_stress_test \
+                            riscv_no_fence_test \
+                            riscv_non_compressed_instr_test \
+                            riscv_pmp_test \
+                            riscv_privileged_mode_rand_test \
+                            riscv_rand_instr_test \
+                            riscv_rand_jump_test \
+                            riscv_sfence_exception_test \
+                            riscv_unaligned_load_store_test

@@ -1,0 +1,152 @@
+diff --git a/target/rv64gc/testlist.yaml b/target/rv64gc/testlist.yaml
+index fe42940..37a7f67 100644
+--- a/target/rv64gc/testlist.yaml
++++ b/target/rv64gc/testlist.yaml
+@@ -39,7 +39,7 @@
+   iterations: 2
+   gen_test: riscv_instr_base_test
+   gen_opts: >
+-    +instr_cnt=10000
++    +instr_cnt=1000000
+     +num_of_sub_program=5
+     +boot_mode=m
+   rtl_test: core_base_test
+@@ -50,7 +50,7 @@
+   iterations: 2
+   gen_test: riscv_instr_base_test
+   gen_opts: >
+-    +instr_cnt=10000
++    +instr_cnt=1000000
+     +num_of_sub_program=5
+   rtl_test: core_base_test
+ 
+@@ -61,7 +61,7 @@
+   iterations: 2
+   gen_test: riscv_rand_instr_test
+   gen_opts: >
+-    +instr_cnt=6000
++    +instr_cnt=6000000
+     +num_of_sub_program=0
+     +enable_access_invalid_csr_level=1
+     +boot_mode=u
+@@ -96,7 +96,7 @@
+   iterations: 2
+   gen_test: riscv_rand_instr_test
+   gen_opts: >
+-    +instr_cnt=5000
++    +instr_cnt=500000
+     +num_of_sub_program=5
+     +directed_instr_0=riscv_lr_sc_instr_stream,10
+     +directed_instr_1=riscv_amo_instr_stream,10
+@@ -106,7 +106,7 @@
+   description: >
+     Enable floating point instructions
+   gen_opts: >
+-    +instr_cnt=10000
++    +instr_cnt=1000000
+     +num_of_sub_program=0
+     +no_fence=1
+     +no_data_page=1
+@@ -122,7 +122,7 @@
+     Enable floating point instructions
+   gen_opts: >
+     +enable_floating_point=1
+-    +instr_cnt=10000
++    +instr_cnt=100000
+     +num_of_sub_program=5
+     +directed_instr_0=riscv_load_store_rand_instr_stream,4
+     +directed_instr_1=riscv_loop_instr,4
+@@ -140,7 +140,7 @@
+   iterations: 2
+   gen_test: riscv_instr_base_test
+   gen_opts: >
+-    +instr_cnt=5000
++    +instr_cnt=50000
+     +num_of_sub_program=5
+     +enable_floating_point=1
+     +directed_instr_0=riscv_load_store_rand_instr_stream,40
+diff --git a/yaml/base_testlist.yaml b/yaml/base_testlist.yaml
+index 1ef0d20..b848e9b 100644
+--- a/yaml/base_testlist.yaml
++++ b/yaml/base_testlist.yaml
+@@ -35,7 +35,7 @@
+   description: >
+     Arithmetic instruction test, no load/store/branch instructions
+   gen_opts: >
+-    +instr_cnt=10000
++    +instr_cnt=100000
+     +num_of_sub_program=0
+     +directed_instr_0=riscv_int_numeric_corner_stream,4
+     +no_fence=1
+@@ -53,7 +53,7 @@
+   iterations: 2
+   gen_test: riscv_instr_base_test
+   gen_opts: >
+-    +instr_cnt=10000
++    +instr_cnt=100000
+     +num_of_sub_program=5
+     +directed_instr_0=riscv_load_store_rand_instr_stream,4
+     +directed_instr_1=riscv_loop_instr,4
+@@ -70,7 +70,7 @@
+   iterations: 2
+   gen_test: riscv_instr_base_test
+   gen_opts: >
+-    +instr_cnt=5000
++    +instr_cnt=500000
+     +num_of_sub_program=5
+     +directed_instr_1=riscv_jal_instr,20
+   rtl_test: core_base_test
+@@ -81,7 +81,7 @@
+   iterations: 2
+   gen_test: riscv_instr_base_test
+   gen_opts: >
+-    +instr_cnt=10000
++    +instr_cnt=100000
+     +num_of_sub_program=5
+     +directed_instr_1=riscv_loop_instr,20
+   rtl_test: core_base_test
+@@ -92,7 +92,7 @@
+   iterations: 2
+   gen_test: riscv_instr_base_test
+   gen_opts: >
+-    +instr_cnt=10000
++    +instr_cnt=100000
+     +num_of_sub_program=10
+     +directed_instr_0=riscv_load_store_rand_instr_stream,8
+   rtl_test: core_base_test
+@@ -104,7 +104,7 @@
+   iterations: 2
+   gen_test: riscv_instr_base_test
+   gen_opts: >
+-    +instr_cnt=5000
++    +instr_cnt=50000
+     +num_of_sub_program=5
+     +directed_instr_0=riscv_load_store_rand_instr_stream,40
+     +directed_instr_1=riscv_load_store_hazard_instr_stream,40
+@@ -141,7 +141,7 @@
+   iterations: 2
+   gen_test: riscv_rand_instr_test
+   gen_opts: >
+-    +instr_cnt=6000
++    +instr_cnt=600000
+     +no_ebreak=0
+   rtl_test: core_base_test
+ 
+@@ -151,7 +151,7 @@
+   iterations: 2
+   gen_test: riscv_rand_instr_test
+   gen_opts: >
+-    +instr_cnt=6000
++    +instr_cnt=600000
+     +no_ebreak=0
+   rtl_test: core_base_test
+   sim_opts: >
+@@ -189,7 +189,7 @@
+   gcc_opts: >
+     -mno-strict-align
+   gen_opts: >
+-    +instr_cnt=6000
++    +instr_cnt=60000
+     +num_of_sub_program=5
+     +directed_instr_0=riscv_load_store_rand_instr_stream,20
+     +directed_instr_1=riscv_load_store_hazard_instr_stream,20
