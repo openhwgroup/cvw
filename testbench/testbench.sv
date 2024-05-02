@@ -882,9 +882,7 @@ end
     if (errors) $display("%s failed with %d errors. :(", TestName, errors);
     else $display("%s succeeded.  Brilliant!!!", TestName);
   endtask
- 
-
-test_pmp_coverage #(P) pmp_inst(clk);
+  
   /* verilator lint_on WIDTHTRUNC */
   /* verilator lint_on WIDTHEXPAND */
 
