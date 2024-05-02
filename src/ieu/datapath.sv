@@ -33,7 +33,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   // Decode stage signals
   input  logic [2:0]        ImmSrcD,                 // Selects type of immediate extension
   input  logic [31:0]       InstrD,                  // Instruction in Decode stage
-  input  logic [4:0]        Rs1D, Rs2D, Rs2E,             // Source registers
+  input  logic [4:0]        Rs1D, Rs1DM, Rs2D, Rs2E, // Source registers
   // Execute stage signals
   input  logic [P.XLEN-1:0] PCE,                     // PC in Execute stage  
   input  logic [P.XLEN-1:0] PCLinkE,                 // PC + 4 (of instruction in Execute stage)
@@ -72,8 +72,19 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] CSRReadValW,             // CSR read result
   input  logic [P.XLEN-1:0] MDUResultW,              // MDU (Multiply/divide unit) result
   input  logic [P.XLEN-1:0] FIntDivResultW,          // FPU's integer divide result
-  input  logic [4:0]        RdW                      // Destination register
-   // Hazard Unit signals 
+  input  logic [4:0]        RdW,                    // Destination register
+   // Hazard Unit signals
+  // Debug scan chain
+  input  logic                     DebugScanEn,
+  input  logic                     DebugScanIn,
+  output logic                     DebugScanOut,
+  input  logic                     GPRSel,
+  input  logic                     GPRReadEn,
+  input  logic                     GPRWriteEn,
+  input  logic [P.E_SUPPORTED+2:0] GPRAddr,
+  input  logic                     GPRScanEn,
+  input  logic                     GPRScanIn,
+  output logic                     GPRScanOut
 );
 
   // Fetch stage signals
@@ -91,14 +102,25 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0] IFResultM;                      // Result from either IEU or single-cycle FPU op writing an integer register
   // Writeback stage signals
   logic [P.XLEN-1:0] SCResultW;                      // Store Conditional result
-  logic [P.XLEN-1:0] ResultW;                        // Result to write to register file
+  logic [P.XLEN-1:0] ResultW, ResultWM;              // Result to write to register file
+  logic [4:0]        RdWM;                           // Muxed GPR write address
   logic [P.XLEN-1:0] IFResultW;                      // Result from either IEU or single-cycle FPU op writing an integer register
   logic [P.XLEN-1:0] IFCvtResultW;                   // Result from IEU, signle-cycle FPU op, or 2-cycle FCVT float to int 
   logic [P.XLEN-1:0] MulDivResultW;                  // Multiply always comes from MDU.  Divide could come from MDU or FPU (when using fdivsqrt for integer division)
+  // Debug signals
+  logic              DSCR;
+  logic [P.XLEN-1:0] DebugGPRWrite;
 
   // Decode stage
-  regfile #(P.XLEN, P.E_SUPPORTED) regf(clk, reset, RegWriteW, Rs1D, Rs2D, RdW, ResultW, R1D, R2D);
+  regfile #(P.XLEN, P.E_SUPPORTED) regf(clk, reset, (RegWriteW || GPRWriteEn), Rs1DM, Rs2D, RdWM, ResultWM, R1D, R2D);
   extend #(P)        ext(.InstrD(InstrD[31:7]), .ImmSrcD, .ImmExtD);
+
+  // Access GPRs from Debug Module
+  // if regfile can be made scannable, this logic is unnecessary
+  assign Rs1DM = GPRSel ? GPRAddr : Rs1D;
+  assign RdWM = GPRSel ? GPRAddr : RdW;
+  assign ResultWM = GPRSel ? DebugGPRWrite : ResultW;
+  flopenrs #(P.XLEN) GPRScanReg(clk, reset, .en(GPRReadEn), .d(R1D), .q(DebugGPRWrite), .scan(GPRScanEn), .scanin(GPRScanIn), .scanout(GPRScanOut));
  
   // Execute stage pipeline register and logic
   flopenrc #(P.XLEN) RD1EReg(clk, reset, FlushE, ~StallE, R1D, R1E);
@@ -117,7 +139,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   // Memory stage pipeline register
   flopenrc #(P.XLEN) SrcAMReg(clk, reset, FlushM, ~StallM, SrcAE, SrcAM);
   flopenrc #(P.XLEN) IEUResultMReg(clk, reset, FlushM, ~StallM, IEUResultE, IEUResultM);
-  flopenrc #(P.XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, ForwardedSrcBE, WriteDataM); 
+  flopenrcs #(P.XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, ForwardedSrcBE, WriteDataM, DebugScanEn, DebugScanIn, DebugScanOut); 
   
   // Writeback stage pipeline register and logic
   flopenrc #(P.XLEN) IFResultWReg(clk, reset, FlushW, ~StallW, IFResultM, IFResultW);

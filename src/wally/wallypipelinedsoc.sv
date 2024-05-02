@@ -68,6 +68,18 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic [63:0]                MTIME_CLINT;      // from CLINT to CSRs
   logic                       MExtInt,SExtInt;  // from PLIC
 
+  // Debug Module signals
+  logic                       HaltReq;
+  logic                       ResumeReq;
+  logic                       ResetReq;
+  logic                       HaltConfirm;
+  logic                       ResumeConfirm;
+  logic                       ResetConfirm;
+  logic                       HaltOnReset;
+  logic                       ScanEn;
+  logic                       ScanIn;
+  logic                       ScanOut;
+
   // synchronize reset to SOC clock domain
   synchronizer resetsync(.clk, .d(reset_ext), .q(reset)); 
    
@@ -76,7 +88,10 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK
-   );
+    .HaltReq, .ResumeReq, .ResetReq, .HaltConfirm, .ResumeConfirm,
+    .ResetConfirm, .HaltOnReset, .DebugScanEn(ScanEn), .DebugScanIn(ScanOut), .DebugScanOut(ScanIn),
+    .GPRSel, .GPRReadEn, .GPRWriteEn, .GPRAddr, .GPRScanEn, .GPRScanIn(GPRScanOut), .GPRScanOut(GPRScanIn)
+  );
 
   // instantiate uncore if a bus interface exists
   if (P.BUS_SUPPORTED) begin : uncoregen // Hack to work around Verilator bug https://github.com/verilator/verilator/issues/4769
@@ -89,5 +104,11 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     assign {HRDATA, HREADY, HRESP, HSELEXT, HSELEXTSDC, MTimerInt, MSwInt, MExtInt, SExtInt,
             MTIME_CLINT, GPIOOUT, GPIOEN, UARTSout, SPIOut, SPICS} = '0; 
   end
+
+  // instantiate debug module
+  dm #(P) dm (.clk, .rst(reset), .tck, .tdi, .tms, .tdo,
+    .HaltReq, .ResumeReq, .ResetReq, .HaltConfirm, .ResumeConfirm,
+    .ResetConfirm, .HaltOnReset, .ScanEn, .ScanIn, .ScanOut,
+    .GPRSel, .GPRReadEn, .GPRWriteEn, .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut);
 
 endmodule

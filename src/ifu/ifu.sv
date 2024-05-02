@@ -96,7 +96,11 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   input  var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0],// PMP address from privileged unit
   output logic                 InstrAccessFaultF,                        // Instruction access fault 
   output logic                 ICacheAccess,                             // Report I$ read to performance counters
-  output logic                 ICacheMiss                                // Report I$ miss to performance counters
+  output logic                 ICacheMiss,                               // Report I$ miss to performance counters
+  // Debug scan chain
+  input  logic                 DebugScanEn,
+  input  logic                 DebugScanIn,
+  output logic                 DebugScanOut  
 );
 
   localparam [31:0]            nop = 32'h00000013;                       // instruction for NOP
@@ -140,6 +144,8 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   logic [15:0]                 InstrRawE, InstrRawM;
   logic [LINELEN-1:0]          FetchBuffer;
   logic [31:0]                 ShiftUncachedInstr;
+  // Debug scan chain
+  logic [0:0]                  DSCR;
   
   assign PCFExt = {2'b00, PCSpillF};
 
@@ -404,12 +410,18 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   // InstrM is only needed with CSRs or atomic operations
   if (P.ZICSR_SUPPORTED | P.A_SUPPORTED) begin
     mux2    #(32)     FlushInstrMMux(InstrE, nop, FlushM, NextInstrE);
-    flopenr #(32)     InstrMReg(clk, reset, ~StallM, NextInstrE, InstrM);
-  end else assign InstrM = '0;
+    flopenrs #(32)     InstrMReg(clk, reset, ~StallM, NextInstrE, InstrM, DebugScanEn, .DebugScanIn(DSCR[0]), DebugScanOut);
+  end else begin
+    assign InstrM = '0;
+    assign DebugScanOut = DSCR[0];
+  end
   // PCM is only needed with CSRs or branch prediction
   if (P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED) 
-    flopenr #(P.XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
-  else assign PCM = '0; 
+    flopenrs #(P.XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM, DebugScanEn, DebugScanIn, .DebugScanOut(DSCR[0]));
+  else begin
+    assign PCM = '0; 
+    assign DSCR[0] = DebugScanIn;
+  end
   
   // If compressed instructions are supported, increment PCLink by 2 or 4 for a jal.  Otherwise, just by 4
   if (P.COMPRESSED_SUPPORTED) begin
