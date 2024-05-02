@@ -11,13 +11,13 @@
 # Must edit these based on your local environment.
 export MGLS_LICENSE_FILE=27002@zircon.eng.hmc.edu                   # Change this to your Siemens license server for Questa
 export SNPSLMD_LICENSE_FILE=27020@zircon.eng.hmc.edu                # Change this to your Synopsys license server for Design Compiler
-export QUESTA_HOME=/cad/mentor/questa_sim-2023.4                    # Change this for your path to Questa, excluding bin
+export QUESTA_HOME=/cad/mentor/questa_sim-2023.4/questasim          # Change this for your path to Questa, excluding bin
 export DC_HOME=/cad/synopsys/SYN                                    # Change this for your path to Synopsys Design Compiler, excluding bin
 export VCS_HOME=/cad/synopsys/vcs/U-2023.03-SP2-4                   # Change this for your path to Synopsys VCS, exccluding bin
 
 # Tools
 # Questa and Synopsys
-export PATH=$QUESTA_HOME/questasim/bin:$DC_HOME/bin:$VCS_HOME/bin:$PATH
+export PATH=$QUESTA_HOME/bin:$DC_HOME/bin:$VCS_HOME/bin:$PATH
 
 # GCC
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$RISCV/riscv-gnu-toolchain/lib:$RISCV/riscv-gnu-toolchain/riscv64-unknown-elf/lib

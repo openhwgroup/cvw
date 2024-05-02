@@ -71,7 +71,7 @@ BTB_SIZE            32'd5
 # The other syn configurations have the same trimming
 deriv syn_rv32i rv32i syn_rv32e
 deriv syn_rv32imc rv32imc syn_rv32e
-deriv syn_rv32gc syn_rv32e
+deriv syn_rv32gc rv32gc syn_rv32e
 deriv syn_rv64i rv64i syn_rv32e
 deriv syn_rv64gc rv64gc syn_rv32e
 
@@ -84,34 +84,34 @@ USE_SRAM            1
 # The other syn configurations have the same trimming
 deriv syn_sram_rv32i rv32i syn_sram_rv32e
 deriv syn_sram_rv32imc rv32imc syn_sram_rv32e
-deriv syn_sram_rv32gc syn_sram_rv32e
+deriv syn_sram_rv32gc rv32gc syn_sram_rv32e
 deriv syn_sram_rv64i rv64i syn_sram_rv32e
 deriv syn_sram_rv64gc rv64gc syn_sram_rv32e
 
 # The following syn configurations gradually turn off features
-deriv syn_pmp0_rv64gc syn_rv64gc
+deriv syn_rv64gc_pmp0 syn_rv64gc
 PMP_ENTRIES         32'd0
-deriv syn_sram_pmp0_rv64gc syn_sram_rv64gc
+deriv syn_sram_rv64gc_pmp0 syn_sram_rv64gc
 PMP_ENTRIES         32'd0
 
-deriv syn_noPriv_rv64gc syn_pmp0_rv64gc
+deriv syn_rv64gc_noPriv syn_rv64gc_pmp0
 ZICSR_SUPPORTED     0
-deriv syn_sram_noPriv_rv64gc syn_sram_pmp0_rv64gc
+deriv syn_sram_rv64gc_noPriv syn_sram_rv64gc_pmp0
 ZICSR_SUPPORTED     0
 
-deriv syn_noFPU_rv64gc syn_noPriv_rv64gc
+deriv syn_rv64gc_noFPU syn_rv64gc_noPriv
 MISA                (32'h00000104 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0)
-deriv syn_sram_noFPU_rv64gc syn_sram_noPriv_rv64gc
+deriv syn_sram_rv64gc_noFPU syn_sram_rv64gc_noPriv
 MISA                (32'h00000104 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0)
 
-deriv syn_noMulDiv_rv64gc syn_noFPU_rv64gc
+deriv syn_rv64gc_noMulDiv syn_rv64gc_noFPU
 MISA                (32'h00000104 | 1 << 18 | 1 << 20 | 1 << 0)
-deriv syn_sram_noMulDiv_rv64gc syn_sram_noFPU_rv64gc
+deriv syn_sram_rv64gc_noMulDiv syn_sram_rv64gc_noFPU
 MISA                (32'h00000104 | 1 << 18 | 1 << 20 | 1 << 0)
 
-deriv syn_noAtomic_rv64gc syn_noMulDiv_rv64gc
+deriv syn_rv64gc_noAtomic syn_rv64gc_noMulDiv
 MISA                (32'h00000104 | 1 << 18 | 1 << 20)
-deriv syn_sram_noAtomic_rv64gc syn_sram_noMulDiv_rv64gc
+deriv syn_sram_rv64gc_noAtomic syn_sram_rv64gc_noMulDiv
 MISA                (32'h00000104 | 1 << 18 | 1 << 20)
 
 # Divider variants to check logical correctness

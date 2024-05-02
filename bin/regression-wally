@@ -30,8 +30,8 @@ tests = [
         ["rv32gc", ["arch32f", "arch32d", "arch32f_fma", "arch32d_fma", "arch32f_divsqrt", "arch32d_divsqrt", 
                     "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32a", "arch32zifencei", "arch32zicond", 
                     "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "arch32zfh", "arch32zfh_fma", 
-                    "arch32zfh_divsqrt", "arch32zfaf", "wally32a", "wally32priv", "wally32periph", "arch32zcb",
-                    "arch32zbkb", "arch32zbkc", "arch32zbkx", "arch32zknd", "arch32zkne", "arch32zknh"]], #  "arch32zfad"  # fcvtmod.w.d not working because of Sail flag bug. Jordan has PR in to fix Sail
+                    "arch32zfh_divsqrt", "arch32zfaf", "arch32zfad", "wally32a", "wally32priv", "wally32periph", "arch32zcb",
+                    "arch32zbkb", "arch32zbkc", "arch32zbkx", "arch32zknd", "arch32zkne", "arch32zknh"]], 
          ["rv64i", ["arch64i"]]
         ]
 
@@ -274,12 +274,12 @@ os.chdir(regressionDir)
 
 coveragesim = "questa"  # Questa is required for code/functional coverage
 defaultsim = "questa"   # Default simulator for all other tests; change to Verilator when flow is ready
+#defaultsim = "verilator"   # Default simulator for all other tests
 
 coverage = '--coverage' in sys.argv
 fp = '--fp' in sys.argv
 nightly = '--nightly' in sys.argv
 testfloat = '--testfloat' in sys.argv
-buildroot = '--buildroot' in sys.argv
 
 if (nightly):
     nightMode = "--nightly";
@@ -300,9 +300,9 @@ configs = [
     TestCase(
         name="lints",
         variant="all",
-        cmd="lint-wally " + nightMode + " | tee " + WALLY + "/sim/questa/logs/all_lints.log",
+        cmd="lint-wally " + nightMode + " | tee " + WALLY + "/sim/verilator/logs/all_lints.log",
         grepstr="lints run with no errors or warnings",
-        grepfile = WALLY + "/sim/questa/logs/all_lints.log")
+        grepfile = WALLY + "/sim/verilator/logs/all_lints.log")
     ]
 
 if (coverage):  # only run RV64GC tests on Questa in coverage mode
@@ -401,8 +401,6 @@ def main():
         os.chdir(regressionDir)
         os.system('./make-tests.sh | tee ./logs/make-tests.log')
 
-    if '--buildroot' in sys.argv:
-        TIMEOUT_DUR = 60*7200 # 5 days to run
     elif '--coverage' in sys.argv:
         TIMEOUT_DUR = 20*60 # seconds
         os.system('rm -f questa/cov/*.ucdb')

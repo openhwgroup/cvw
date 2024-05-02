@@ -52,6 +52,7 @@ module subwordread import cvw::*;  #(parameter cvw_t P) (
   // Use indexed part select to imply muxes to select each size of subword
   if (P.LLEN == 128) mux2 #(64) dblmux(ReadDataWordMuxM[63:0], ReadDataWordMuxM[127:64], PAdrSwapM[3], DblWordM);
   else if (P.LLEN == 64) assign DblWordM = ReadDataWordMuxM;
+  else assign DblWordM = '0; // unused for RV32F
   if (P.LLEN >= 64) mux2 #(32) wordmux(DblWordM[31:0], DblWordM[63:32], PAdrSwapM[2], WordM);
   else assign WordM = ReadDataWordMuxM;
   mux2 #(16) halfwordmux(WordM[15:0], WordM[31:16], PAdrSwapM[1], HalfwordM);

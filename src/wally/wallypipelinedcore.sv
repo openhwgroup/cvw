@@ -289,6 +289,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .HREADY, .HRESP, .HCLK, .HRESETn,
       .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST,
       .HPROT, .HTRANS, .HMASTLOCK);
+  end else begin
+    assign {IFUHREADY, LSUHREADY, HCLK, HRESETn, HADDR, HWDATA,
+            HWSTRB, HWRITE, HSIZE, HBURST, HPROT, HTRANS, HMASTLOCK} = '0;
   end
 
   // global stall and flush control  
@@ -329,15 +332,12 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .DebugScanEn, .DebugScanIn, .DebugScanOut(ScanReg[0]));
     floprs #(1) scantrapm (.clk, .reset, .q(TrapM), .scan(DebugScanEn), .scanin(ScanReg[0]), .scanout(ScanReg[1]));
   end else begin
-    assign CSRReadValW      = '0;
-    assign EPCM             = '0;
-    assign TrapVectorM      = '0;
-    assign RetM             = 1'b0;
-    assign TrapM            = 1'b0;
-    assign wfiM             = 1'b0;
-    assign IntPendingM      = 1'b0;
-    assign sfencevmaM       = 1'b0;
-    assign BigEndianM       = 1'b0;
+    assign {CSRReadValW, PrivilegeModeW, 
+            SATP_REGW, STATUS_MXR, STATUS_SUM, STATUS_MPRV, STATUS_MPP, STATUS_FS, FRM_REGW,
+            // PMPCFG_ARRAY_REGW, PMPADDR_ARRAY_REGW, 
+            ENVCFG_CBE, ENVCFG_PBMTE, ENVCFG_ADUE, 
+            EPCM, TrapVectorM, RetM, TrapM,
+            sfencevmaM, BigEndianM, wfiM, IntPendingM} = '0;
     assign ScanReg[1] = ScanReg[0];
   end
 
@@ -379,15 +379,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .SetFflagsM,                         // FPU flags (to privileged unit)
       .FIntDivResultW); 
   end else begin                           // no F_SUPPORTED or D_SUPPORTED; tie outputs low
-    assign FPUStallD        = 1'b0;
-    assign FWriteIntE       = 1'b0; 
-    assign FCvtIntE         = 1'b0;
-    assign FIntResM         = '0;
-    assign FCvtIntW         = 1'b0;
-    assign FDivBusyE        = 1'b0;
-    assign IllegalFPUInstrD = 1'b1;
-    assign SetFflagsM       = '0;
-    assign FpLoadStoreM     = 1'b0;
+    assign {FPUStallD, FWriteIntE, FCvtIntE, FIntResM, FCvtIntW, 
+            IllegalFPUInstrD, SetFflagsM, FpLoadStoreM,
+            FWriteDataM, FCvtIntResW, FIntDivResultW, FDivBusyE} = '0;
   end
   
 endmodule

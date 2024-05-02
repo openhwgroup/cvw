@@ -1,5 +1,6 @@
 ///////////////////////////////////////////
-// 1 port sram.
+// ram1p1r2be.sv
+// 1 port sram with byte enables
 //
 // Written: ross1728@gmail.com
 // Created: 3 May 2021
