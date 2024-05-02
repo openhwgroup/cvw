@@ -72,6 +72,59 @@ string tvpaths[] = '{
     "pmpadrdecs"
   };
 
+  string wallycov64i[] = '{
+    `WALLYTEST,
+    "rv64i_m/I/src/WALLY-COV-lh.S",
+    "rv64i_m/I/src/WALLY-COV-srli.S",
+    "rv64i_m/I/src/WALLY-COV-srai.S",
+    "rv64i_m/I/src/WALLY-COV-or.S",
+    "rv64i_m/I/src/WALLY-COV-sra.S",
+    "rv64i_m/I/src/WALLY-COV-sll.S",
+    "rv64i_m/I/src/WALLY-COV-slti.S",
+    "rv64i_m/I/src/WALLY-COV-bne.S",
+    "rv64i_m/I/src/WALLY-COV-bltu.S",
+    "rv64i_m/I/src/WALLY-COV-srliw.S",
+    "rv64i_m/I/src/WALLY-COV-slliw.S",
+    "rv64i_m/I/src/WALLY-COV-sw.S",
+    "rv64i_m/I/src/WALLY-COV-sraiw.S",
+    "rv64i_m/I/src/WALLY-COV-sltu.S",
+    "rv64i_m/I/src/WALLY-COV-addiw.S",
+    "rv64i_m/I/src/WALLY-COV-slli.S",
+    "rv64i_m/I/src/WALLY-COV-beq.S",
+    "rv64i_m/I/src/WALLY-COV-sd.S",
+    "rv64i_m/I/src/WALLY-COV-auipc.S",
+    "rv64i_m/I/src/WALLY-COV-bge.S",
+    "rv64i_m/I/src/WALLY-COV-sltiu.S",
+    "rv64i_m/I/src/WALLY-COV-lui.S",
+    "rv64i_m/I/src/WALLY-COV-lw.S",
+    "rv64i_m/I/src/WALLY-COV-lwu.S",
+    "rv64i_m/I/src/WALLY-COV-slt.S",
+    "rv64i_m/I/src/WALLY-COV-blt.S",
+    "rv64i_m/I/src/WALLY-COV-addw.S",
+    "rv64i_m/I/src/WALLY-COV-lb.S",
+    "rv64i_m/I/src/WALLY-COV-xori.S",
+    "rv64i_m/I/src/WALLY-COV-addi.S",
+    "rv64i_m/I/src/WALLY-COV-xor.S",
+    "rv64i_m/I/src/WALLY-COV-jal.S",
+    "rv64i_m/I/src/WALLY-COV-sb.S",
+    "rv64i_m/I/src/WALLY-COV-ld.S",
+    "rv64i_m/I/src/WALLY-COV-lhu.S",
+    "rv64i_m/I/src/WALLY-COV-andi.S",
+    "rv64i_m/I/src/WALLY-COV-ori.S",
+    "rv64i_m/I/src/WALLY-COV-sub.S",
+    "rv64i_m/I/src/WALLY-COV-and.S",
+    "rv64i_m/I/src/WALLY-COV-sh.S",
+    "rv64i_m/I/src/WALLY-COV-srlw.S",
+    "rv64i_m/I/src/WALLY-COV-sraw.S",
+    "rv64i_m/I/src/WALLY-COV-subw.S",
+    "rv64i_m/I/src/WALLY-COV-sllw.S",
+    "rv64i_m/I/src/WALLY-COV-jalr.S",
+    "rv64i_m/I/src/WALLY-COV-lbu.S",
+    "rv64i_m/I/src/WALLY-COV-add.S",
+    "rv64i_m/I/src/WALLY-COV-srl.S",
+    "rv64i_m/I/src/WALLY-COV-bgeu.S"
+  };
+
   string buildroot[] = '{
     `BUILDROOT,
     "buildroot"
@@ -1929,6 +1982,7 @@ string arch64zknh[] = '{
 
   string arch32f[] = '{
     `RISCVARCHTEST,
+    "rv32i_m/F/src/fadd_b11-01.S",
     "rv32i_m/F/src/fadd_b10-01.S",
     "rv32i_m/F/src/fadd_b1-01.S",
     "rv32i_m/F/src/fadd_b11-01.S",
@@ -2276,7 +2330,7 @@ string arch64zknh[] = '{
     //`RISCVARCHTEST,
     `WALLYTEST,
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b1-01.S",
-//    "rv64i_m/D_Zfa/src/fcvtmod.w.d_b22-01.S", // temporarily excluded because Sail produces wrong signature  https://github.com/riscv/sail-riscv/issues/388
+    "rv64i_m/D_Zfa/src/fcvtmod.w.d_b22-01.S", 
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b23-01.S",
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b24-01.S",
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b27-01.S",
