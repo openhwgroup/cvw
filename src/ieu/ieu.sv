@@ -82,7 +82,15 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   // Debug scan chain
   input  logic              DebugScanEn,
   input  logic              DebugScanIn,
-  output logic              DebugScanOut
+  output logic              DebugScanOut,
+  // GPR debug scan chain
+  input  logic                     GPRSel,
+  input  logic                     GPRReadEn,
+  input  logic                     GPRWriteEn,
+  input  logic [P.E_SUPPORTED+2:0] GPRAddr,
+  input  logic                     GPRScanEn,
+  input  logic                     GPRScanIn,
+  output logic                     GPRScanOut
 );
 
   logic [2:0] ImmSrcD;                                       // Select type of immediate extension 
@@ -134,5 +142,6 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
     .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE, .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE, .CZeroE,
     .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataM, .FCvtIntW,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .SquashSCW, .ResultSrcW, .ReadDataW, .FCvtIntResW,
-    .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW, .DebugScanEn, .DebugScanIn(DSCR), .DebugScanOut);             
+    .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW, .DebugScanEn, .DebugScanIn(DSCR), .DebugScanOut,
+    .GPRSel, .GPRReadEn, .GPRWriteEn, .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut);
 endmodule

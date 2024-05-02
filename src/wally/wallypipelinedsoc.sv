@@ -89,7 +89,8 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK
     .HaltReq, .ResumeReq, .ResetReq, .HaltConfirm, .ResumeConfirm,
-    .ResetConfirm, .HaltOnReset, .ScanEn, .ScanIn, .ScanOut
+    .ResetConfirm, .HaltOnReset, .DebugScanEn(ScanEn), .DebugScanIn(ScanOut), .DebugScanOut(ScanIn),
+    .GPRSel, .GPRReadEn, .GPRWriteEn, .GPRAddr, .GPRScanEn, .GPRScanIn(GPRScanOut), .GPRScanOut(GPRScanIn)
   );
 
   // instantiate uncore if a bus interface exists
@@ -104,6 +105,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   // instantiate debug module
   dm #(P) dm (.clk, .rst(reset), .tck, .tdi, .tms, .tdo,
     .HaltReq, .ResumeReq, .ResetReq, .HaltConfirm, .ResumeConfirm,
-    .ResetConfirm, .HaltOnReset, .ScanEn, .ScanIn, .ScanOut);
+    .ResetConfirm, .HaltOnReset, .ScanEn, .ScanIn, .ScanOut,
+    .GPRSel, .GPRReadEn, .GPRWriteEn, .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut);
 
 endmodule

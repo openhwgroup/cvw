@@ -45,10 +45,16 @@ module dm import cvw::*; #(parameter cvw_t P) (
   output logic                  HaltOnReset,
 
   // Scan Chain
-  output logic                  ScanEn,
-  input  logic                  ScanIn,
-  output logic                  ScanOut,
-  output logic [P.E_SUPPORTED+3:0] DebugGPRAddr
+  output logic                     ScanEn,
+  input  logic                     ScanIn,
+  output logic                     ScanOut,
+  output logic                     GPRSel,
+  output logic                     GPRReadEn,
+  output logic                     GPRWriteEn,
+  output logic [P.E_SUPPORTED+2:0] GPRAddr,
+  output logic                     GPRScanEn,
+  input  logic                     GPRScanIn,
+  output logic                     GPRScanOut
 );
   `include "debug.vh"
 
@@ -86,9 +92,11 @@ module dm import cvw::*; #(parameter cvw_t P) (
     INVALID // d
   } State;
 
-  (* mark_debug = "true" *) enum bit [0:0] {
+  (* mark_debug = "true" *) enum bit [1:0] {
     AC_IDLE,
-    AC_SCAN
+    AC_GPRUPDATE,
+    AC_SCAN,
+    AC_GPRCAPTURE
   } AcState, NewAcState;
 
   // AbsCmd internal state
@@ -97,6 +105,8 @@ module dm import cvw::*; #(parameter cvw_t P) (
   (* mark_debug = "true" *) logic [P.XLEN-1:0] ARMask;
   (* mark_debug = "true" *) logic [9:0]        ShiftCount, ScanChainLen, Cycle;
   (* mark_debug = "true" *) logic              InvalidRegNo;
+  (* mark_debug = "true" *) logic              GPRRegNo;
+  (* mark_debug = "true" *) logic              GPRSel;
 
   // message registers
   (* mark_debug = "true" *) logic [31:0] Data0;  // 0x04
@@ -388,26 +398,39 @@ module dm import cvw::*; #(parameter cvw_t P) (
         AC_IDLE : begin
           Cycle <= 0;
           case (NewAcState)
-            AC_SCAN : AcState <= AC_SCAN;
+            AC_SCAN : AcState <= (GPRSel && ~AcWrite) ? AC_GPRCAPTURE : AC_SCAN;
           endcase
+        end
+
+        AC_GPRCAPTURE : begin
+          AcState <= AC_SCAN;
         end
 
         AC_SCAN : begin
           if (Cycle == ScanChainLen)
-            AcState <= AC_IDLE;
+            AcState <= (GPRSel && AcWrite) ? AC_GPRUPDATE : AC_IDLE;
           else
             Cycle <= Cycle + 1;
+        end
+
+        AC_GPRUPDATE : begin
+          AcState <= AC_IDLE;
         end
       endcase
     end
   end
 
   assign Busy = ~(AcState == AC_IDLE);
+  assign GPRReadEn = (AcState == AC_GPRCAPTURE);
+  assign GPRWriteEn = (AcState == AC_GPRUPDATE);
 
   // Scan Chain
-  assign ScanReg[P.XLEN] = ScanIn;
-  assign ScanOut = ScanReg[0];
-  assign ScanEn = (AcState == AC_SCAN);
+  assign GPRSel = GPRRegNo && (AcState != AC_IDLE);
+  assign ScanReg[P.XLEN] = GPRSel ? GPRScanIn : ScanIn;
+  assign ScanOut = GPRSel ? 1'b0 : ScanReg[0];
+  assign GPRScanOut = GPRSel ? ScanReg[0] : 1'b0;
+  assign ScanEn = ~GPRSel && (AcState == AC_SCAN);
+  assign GPRScanEn = GPRSel && (AcState == AC_SCAN);
   // ARMask is used as write enable for subword overwrites (basic mask would overwrite neighbors)
   genvar i;
   for (i=0; i<P.XLEN; i=i+1) begin
@@ -456,6 +479,6 @@ module dm import cvw::*; #(parameter cvw_t P) (
     end
   end
 
-  rad #(P) regnodecode(.AarSize(ReqData[`AARSIZE]),.Regno(ReqData[`REGNO]),.ScanChainLen,.ShiftCount,.InvalidRegNo,.DebugGPRAddr,.ARMask);
+  rad #(P) regnodecode(.AarSize(ReqData[`AARSIZE]),.Regno(ReqData[`REGNO]),.GPRRegNo,.ScanChainLen,.ShiftCount,.InvalidRegNo,.GPRAddr,.ARMask);
 
 endmodule

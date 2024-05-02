@@ -46,11 +46,11 @@ def main():
         write_data("READDATAM", "0xAA0987210000FFFF")
         print(f"WRITEDATAM: '{read_data("WRITEDATAM")}'")
         print(f"IEUADRM: '{read_data("IEUADRM")}'")
-        #write_data("INSTRVALIDM", "0x0")
+        write_data("TRAPM", "0x0")
         print(f"MEMRWM: '{read_data("MEMRWM")}'")
         print(f"INSTRVALIDM: '{read_data("INSTRVALIDM")}'")
-        #write_data("MEMRWM", "0x3")
-        #write_data("INSTRVALIDM", "0x0")
+        write_data("MEMRWM", "0x3")
+        write_data("INSTRVALIDM", "0x0")
         check_errors()
         #check_errors()
         #dmi_reset()
@@ -269,7 +269,7 @@ register_translations = {
     "WRITEDATAM"  : "0xC005",
     "IEUADRM"     : "0xC006",
     "READDATAM"   : "0xC007",
-    #"X0"  : "0x1000",
+    "X0"  : "0x1000",
     "X1"  : "0x1001",
     "X2"  : "0x1002",
     "X3"  : "0x1003",

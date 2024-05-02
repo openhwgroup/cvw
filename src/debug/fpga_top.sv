@@ -42,7 +42,7 @@ assign led = dm.dtm.jtag.tap.State;
 
 dm #(P) dm (.clk, .rst(~sys_reset), .tck, .tdi, .tms, .tdo,
     .HaltReq, .ResumeReq, .HaltConfirm, .ResumeConfirm,
-    .ScanEn, .ScanIn, .ScanOut, .DebugGPRAddr);
+    .ScanEn, .ScanIn, .ScanOut);
 
 (* mark_debug = "true" *) logic [1:0] memrwm;
 (* mark_debug = "true" *) logic instrvalid;

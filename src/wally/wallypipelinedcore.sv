@@ -56,7 +56,14 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   // Debug scan chain
   input  logic                  DebugScanEn,
   input  logic                  DebugScanIn,
-  output logic                  DebugScanOut
+  output logic                  DebugScanOut,
+  input  logic                     GPRSel,
+  input  logic                     GPRReadEn,
+  input  logic                     GPRWriteEn,
+  input  logic [P.E_SUPPORTED+2:0] GPRAddr,
+  input  logic                     GPRScanEn,
+  input  logic                     GPRScanIn,
+  output logic                     GPRScanOut
 );
 
   logic                          StallF, StallD, StallE, StallM, StallW;
@@ -231,7 +238,8 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
      .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
      .StructuralStallD, .LoadStallD, .StoreStallD, .PCSrcE,
      .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .InvalidateICacheM,
-     .DebugScanEn, .DebugScanIn(ScanReg[2]), .DebugScanOut(ScanReg[3])); 
+     .DebugScanEn, .DebugScanIn(ScanReg[2]), .DebugScanOut(ScanReg[3]),
+     .GPRSel, .GPRReadEn, .GPRWriteEn, .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut); 
 
   lsu #(P) lsu(
     .clk, .reset, .StallM, .FlushM, .StallW, .FlushW,

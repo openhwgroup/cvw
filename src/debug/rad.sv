@@ -28,11 +28,12 @@
 module rad import cvw::*; #(parameter cvw_t P) (
   input  logic [2:0]               AarSize,
   input  logic [15:0]              Regno,
+  output logic                     GPRRegNo,
   output logic [9:0]               ScanChainLen,
   output logic [9:0]               ShiftCount,
   output logic                     InvalidRegNo,
-  output logic [P.E_SUPPORTED+3:0] DebugGPRAddr,
-  output logic [P.XLEN-1:0]          ARMask
+  output logic [P.E_SUPPORTED+3:0] GPRAddr,
+  output logic [P.XLEN-1:0]        ARMask
 );
   `include "debug.vh"
 
@@ -68,19 +69,24 @@ module rad import cvw::*; #(parameter cvw_t P) (
   assign ScanChainLen = SCANCHAINLEN;
 
   if (P.E_SUPPORTED) // TODO: add seperate scan chain for GPR (with read and write signals)
-    assign DebugGPRAddr = Regno[4:0];
+    assign GPRAddr = Regno[4:0];
   else
-    assign DebugGPRAddr = Regno[3:0];
+    assign GPRAddr = Regno[3:0];
 
   // Register decoder
   always_comb begin
     InvalidRegNo = 0;
+    GPRRegNo = 0;
     casez (Regno)
-      //16'h100? : ShiftCount = GPR_IDX;
-      //16'h101? : begin
-      //  ShiftCount = GPR_IDX;
-      //  InvalidRegNo = ~P.E_SUPPORTED;
-      //end
+      16'h100? : begin
+        ShiftCount = P.XLEN;
+        GPRRegNo = 1;
+      end
+      16'h101? : begin
+        ShiftCount = P.XLEN;
+        InvalidRegNo = ~P.E_SUPPORTED;
+        GPRRegNo = 1;
+      end
       `MISA : begin
         ShiftCount = SCANCHAINLEN - MISA_IDX;
         InvalidRegNo = ~P.ZICSR_SUPPORTED;
