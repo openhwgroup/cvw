@@ -12,7 +12,26 @@ TB=${WALLY}/testbench
 CONFIG_VARIANT=${1}
 # Set TESTSUITE from the second script argument
 TESTSUITE=$2
+WKDIR=wkdir/${1}_${2}
 
+if [ ! -d "$WKDIR" ]; then
+    #echo "Directory $WKDIR does not exist. Creating it now..."
+    mkdir -p "$WKDIR"
+    if [ $? -eq 0 ]; then
+        echo "Directory $WKDIR created successfully."
+    else
+        echo "Failed to create directory $WKDIR."
+        exit 1
+    fi
+else
+    echo "Directory $WKDIR already exists."
+fi
+
+if [[ -n "$4" ]]; then
+    GUI="-gui"
+else
+    GUI=""
+fi
 
 INCLUDE_DIRS=$(find ${SRC} -type d | xargs -I {} echo -n "{} ")
 SOURCE_PATH="+incdir+${CFG}/${CONFIG_VARIANT} +incdir+${CFG}/deriv/${CONFIG_VARIANT} +incdir+${CFG}/shared +define+ +define+P.XLEN=64  +define+FPGA=0 +incdir+${TB} ${SRC}/cvw.sv +incdir+${SRC}" 
@@ -21,14 +40,12 @@ SIMFILES="$INCLUDE_DIRS $(find ${SRC} -name "*.sv" ! -path "${SRC}/generic/clock
 OUTPUT="sim_out"
 
 clean() {
-    rm -rf obj_dir work transcript vsim.wlf $OUTPUT *.vcd csrc ucli.key vc_hdrs.h program.out
-    rm -rf simv* *.daidir dve *.vpd *.dump DVEfiles/ verdi* novas* *fsdb* *.vg *.rep *.db *.chk *.log *.out profileReport* simprofile_dir*
+    rm -rf ${WKDIR}/*
 }
 
 # Clean and run simulation with VCS
 clean
 #vcs +lint=all,noGCWM -simprofile -sverilog +vc -Mupdate -line -full64 -kdb -lca -debug_access+all+reverse -v2k_generate  ${SOURCE_PATH} +define+TEST=$TESTSUITE $SIMFILES -o $OUTPUT -error=NOODV
 # lint ignores Unused Inputs (UI), Unnamed Assertipons (SVA-UA), Dynamic Type Sensitivty [IDTS], Null Statement [NS], Unequal Length in Comparison Operation [ULCO]
-vcs +lint=all,noGCWM,noUI,noSVA-UA,noIDTS,noNS,noULCO,noCAWM-L,noWMIA-L,noSV-PIU -simprofile -sverilog +vc -Mupdate -line -full64 -kdb -lca -debug_access+all+reverse  ${SOURCE_PATH} -pvalue+testbench.TEST=$TESTSUITE $SIMFILES -o $OUTPUT -error=NOODV
-./$OUTPUT | tee program.out
-
+vcs +lint=all,noGCWM,noUI,noSVA-UA,noIDTS,noNS,noULCO,noCAWM-L,noWMIA-L,noSV-PIU -simprofile -suppress -sverilog +vc -Mupdate -line -full64 -kdb -lca -debug_access+all+reverse  ${SOURCE_PATH} $SIMFILES -o ${WKDIR}/$OUTPUT  -simdir ${WKDIR} -error=NOODV -work ${WKDIR} ${GUI}
+./${WKDIR}/$OUTPUT +TEST=${TESTSUITE}  +fsdb+gate=off  | tee ${WKDIR}/${WKDIR}.out 
