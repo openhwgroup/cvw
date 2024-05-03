@@ -120,7 +120,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   assign Rs1DM = GPRSel ? GPRAddr : Rs1D;
   assign RdWM = GPRSel ? GPRAddr : RdW;
   assign ResultWM = GPRSel ? DebugGPRWrite : ResultW;
-  flopenrs #(P.XLEN) GPRScanReg(clk, reset, .en(GPRReadEn), .d(R1D), .q(DebugGPRWrite), .scan(GPRScanEn), .scanin(GPRScanIn), .scanout(GPRScanOut));
+  flopenrs #(P.XLEN) GPRScanReg(.clk, .reset, .en(GPRReadEn), .d(R1D), .q(DebugGPRWrite), .scan(GPRScanEn), .scanin(GPRScanIn), .scanout(GPRScanOut));
  
   // Execute stage pipeline register and logic
   flopenrc #(P.XLEN) RD1EReg(clk, reset, FlushE, ~StallE, R1D, R1E);

@@ -166,7 +166,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   // Zero-extend address to 34 bits for XLEN=32
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  flopenrcs #(P.XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM, DebugScanEn, .scanin(DebugScanIn), .scanout(DSCR[0]));
+  flopenrcs #(P.XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM, DebugScanEn, DebugScanIn, DSCR[0]);
   if(MISALIGN_SUPPORT) begin : ziccslm_align
     logic [P.XLEN-1:0] IEUAdrSpillE, IEUAdrSpillM;
     align #(P) align(.clk, .reset, .StallM, .FlushM, .IEUAdrE, .IEUAdrM, .Funct3M, .FpLoadStoreM, 
@@ -431,7 +431,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
 
   // BOZO this module needs to be fully tested
   // Make ReadDataM available to debug scan chain
-  scanreg #(P.LLEN) scanreaddataM (clk, reset, ReadDataM, .scan(DebugScanEn), .scanin(DSCR[0]), .scanout(DebugScanOut));
+  scanreg #(P.LLEN) scanreaddataM (clk, reset, ReadDataM, DebugScanEn, DSCR[0], DebugScanOut);
 
   // Compute byte masks
   swbytemask #(P.LLEN, P.ZICCLSM_SUPPORTED) swbytemask(.Size(LSUFunct3M), .Adr(PAdrM[$clog2(P.LLEN/8)-1:0]), .ByteMask(ByteMaskM), .ByteMaskExtended(ByteMaskExtendedM));

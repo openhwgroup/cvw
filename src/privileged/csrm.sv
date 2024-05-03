@@ -136,7 +136,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   assign MISA_REGW = {(P.XLEN == 32 ? 2'b01 : 2'b10), {(P.XLEN-28){1'b0}}, MISA_26[25:0]};
 
   // Dummy register to provide read access to DM
-  floprs #(P.XLEN) MISAScan (clk, reset, .d(MISA_REGW), .scan(DebugScanEn), .scanin(DebugScanIn), .scanout(DebugScanOut));
+  floprs #(P.XLEN) MISAScan (.clk, .reset, .d(MISA_REGW), .scan(DebugScanEn), .scanin(DebugScanIn), .scanout(DebugScanOut));
 
   // MHARTID is hardwired. It only exists as a signal so that the testbench can easily see it.
   assign MHARTID_REGW = '0;

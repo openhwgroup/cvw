@@ -150,7 +150,7 @@
 // 0x1020 – 0x103f | Floating point registers
 // 0xc000 – 0xffff | Reserved for non-standard extensions and internal use.
 `define MISA        16'h0301 // XLEN P.ZICSR_SUPPORTED
-`define TRAPM       16'hC000 // 1'b  P.ZICSR_SUPPORTED
+`define TRAPM       16'hC000 // 1'b  P.ZICSR_SUPPORTED (Read Only)
 `define PCM         16'hC001 // XLEN P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED
 `define INSTRM      16'hC002 // 32'b P.ZICSR_SUPPORTED | P.A_SUPPORTED
 // ieu/controller

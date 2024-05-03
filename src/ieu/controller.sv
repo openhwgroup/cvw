@@ -446,7 +446,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   assign IntDivE = MDUE & Funct3E[2]; // Integer division operation
   
   // Memory stage pipeline control register
-  flopenrc #(24) controlregM(clk, reset, FlushM, ~StallM,
+  flopenrc #(22) controlregM(clk, reset, FlushM, ~StallM,
                          {RegWriteE, ResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, IntDivE, CMOpE, LSUPrefetchE},
                          {RegWriteM, ResultSrcM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, IntDivM, CMOpM, LSUPrefetchM});
   flopenrcs #(3) controlscanreg(clk, reset, FlushM, ~StallM, {MemRWE,InstrValidE}, {MemRWM,InstrValidM}, DebugScanEn, DebugScanIn, DebugScanOut);
