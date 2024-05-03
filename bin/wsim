@@ -29,8 +29,8 @@ print("Config=" + args.config + " tests=" + args.testsuite + " sim=" + args.sim 
 
 # Validate arguments
 if (args.gui):
-    if (args.sim != "questa"):
-        print("GUI option only supported for Questa")
+    if args.sim not in ["questa", "vcs"]:
+        print("GUI option only supported for Questa and VCS")
         exit(1)
 
 if (args.coverage):
@@ -82,9 +82,9 @@ elif (args.sim == "vcs"):
     if (args.coverage):
         print("Coverage option not available for VCS")
         exit(1)
-    if (args.gui):
-        print("GUI option not available for VCS")
-        exit(1)
-    cmd = cd + "; ./run_vcs " + args.config + " " + "\""+args.testsuite+"\""
+    if (args.gui):  
+        cmd = cd + "; ./run_vcs " + args.config + " " + args.testsuite + " " + args.tb + " " + "1"
+    else:
+        cmd = cd + "; ./run_vcs " + args.config + " " + "\""+args.testsuite+"\""
     print(cmd)
     os.system(cmd)

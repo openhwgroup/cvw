@@ -168,7 +168,6 @@ module testbench;
         "arch64zknd":    if (P.ZKND_SUPPORTED)    tests = arch64zknd;
         "arch64zkne":    if (P.ZKNE_SUPPORTED)    tests = arch64zkne;
         "arch64zknh":    if (P.ZKNH_SUPPORTED)    tests = arch64zknh;
-        "wallycov64i":                            tests = wallycov64i;
       endcase 
     end else begin // RV32
       case (TEST)
@@ -882,7 +881,10 @@ end
     if (errors) $display("%s failed with %d errors. :(", TestName, errors);
     else $display("%s succeeded.  Brilliant!!!", TestName);
   endtask
-  
+ 
+`ifdef PMP_COVERAGE
+test_pmp_coverage #(P) pmp_inst(clk);
+`endif
   /* verilator lint_on WIDTHTRUNC */
   /* verilator lint_on WIDTHEXPAND */
 
