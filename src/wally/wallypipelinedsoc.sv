@@ -31,6 +31,11 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   input  logic                clk, 
   input  logic                reset_ext,        // external asynchronous reset pin
   output logic                reset,            // reset synchronized to clk to prevent races on release
+  // JTAG signals
+  input  logic                tck,
+  input  logic                tdi,
+  input  logic                tms,
+  output logic                tdo,
   // AHB Interface
   input  logic [P.AHBW-1:0]     HRDATAEXT,
   input  logic                HREADYEXT, HRESPEXT,
@@ -79,6 +84,13 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                       ScanEn;
   logic                       ScanIn;
   logic                       ScanOut;
+  logic                       GPRSel;
+  logic                       GPRReadEn;
+  logic                       GPRWriteEn;
+  logic [P.E_SUPPORTED+2:0]   GPRAddr;
+  logic                       GPRScanEn;
+  logic                       GPRScanIn;
+  logic                       GPRScanOut;
 
   // synchronize reset to SOC clock domain
   synchronizer resetsync(.clk, .d(reset_ext), .q(reset)); 
