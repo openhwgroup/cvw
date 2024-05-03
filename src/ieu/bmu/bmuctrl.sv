@@ -150,7 +150,7 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
       else if (P.XLEN==64) // ZBS 64-bit
         casez({OpD, Funct7D, Funct3D})
           17'b0010011_010010?_001: BMUControlsD = `BMUCTRLW'b111_0001_0000_1_1_0_1_1_0_1_0_0;  // bclri (rv64)
-          17'b0010011_010010?_101: BMUControlsD = `BMUCTRLW'b101_0001_0000_1_1_0_1_1_0_1_0_0;  // bexti (rv64)
+          17'b0010011_010010?_101: BMUControlsD = `BMUCTRLW'b101_0001_0000_1_1_0_1_0_0_1_0_0;  // bexti (rv64)
           17'b0010011_011010?_001: BMUControlsD = `BMUCTRLW'b100_0001_0000_1_1_0_1_0_0_1_0_0;  // binvi (rv64)
           17'b0010011_001010?_001: BMUControlsD = `BMUCTRLW'b110_0001_0000_1_1_0_1_0_0_1_0_0;  // bseti (rv64)
         endcase
