@@ -62,7 +62,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic                   ReqReady;
   logic                   ReqValid;
   logic [`ADDR_WIDTH-1:0] ReqAddress;
-  (* mark_debug = "true" *) logic [31:0]            ReqData;
+  logic [31:0]            ReqData;
   logic [1:0]             ReqOP;
   logic                   RspReady;
   logic                   RspValid;
@@ -75,7 +75,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
     .ReqReady, .ReqValid, .ReqAddress, .ReqData, .ReqOP, .RspReady,
     .RspValid, .RspData, .RspOP);
 
-  (* mark_debug = "true" *) enum bit [3:0] {
+  enum bit [3:0] {
     INACTIVE, // 0
     IDLE, // 1
     ACK, // 2
@@ -92,7 +92,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
     INVALID // d
   } State;
 
-  (* mark_debug = "true" *) enum bit [1:0] {
+  enum bit [1:0] {
     AC_IDLE,
     AC_GPRUPDATE,
     AC_SCAN,
@@ -100,17 +100,19 @@ module dm import cvw::*; #(parameter cvw_t P) (
   } AcState, NewAcState;
 
   // AbsCmd internal state
-  (* mark_debug = "true" *) logic              AcWrite;
-  (* mark_debug = "true" *) logic [P.XLEN:0]   ScanReg;
-  (* mark_debug = "true" *) logic [P.XLEN-1:0] ARMask;
-  (* mark_debug = "true" *) logic [9:0]        ShiftCount, ScanChainLen, Cycle;
-  (* mark_debug = "true" *) logic              InvalidRegNo;
-  (* mark_debug = "true" *) logic              GPRRegNo;
-  (* mark_debug = "true" *) logic              GPRSel;
+  logic              AcWrite;
+  logic [P.XLEN:0]   ScanReg;
+  logic [P.XLEN-1:0] ARMask;
+  logic [9:0]        ShiftCount;
+  logic [9:0]        ScanChainLen;
+  logic [9:0]        Cycle;
+  logic              InvalidRegNo;
+  logic              GPRRegNo;
+  logic              GPRSel;
 
   // message registers
-  (* mark_debug = "true" *) logic [31:0] Data0;  // 0x04
-  (* mark_debug = "true" *) logic [31:0] Data1;  // 0x05
+  logic [31:0] Data0;  // 0x04
+  logic [31:0] Data1;  // 0x05
   logic [31:0] Data2;  // 0x06
   logic [31:0] Data3;  // 0x07
 

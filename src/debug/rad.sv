@@ -52,6 +52,7 @@ module rad import cvw::*; #(parameter cvw_t P) (
     + MISALEN + TRAPMLEN + PCMLEN + INSTRMLEN
     + MEMRWMLEN + INSTRVALIDMLEN + WRITEDATAMLEN //+ GPRLEN
     + IEUADRMLEN + READDATAMLEN;
+  localparam GPRCHAINLEN = 2*P.XLEN;
 
   localparam MISA_IDX = MISALEN;
   localparam TRAPM_IDX = MISA_IDX + TRAPMLEN;
@@ -66,7 +67,7 @@ module rad import cvw::*; #(parameter cvw_t P) (
 
   logic [P.XLEN:0] Mask;
 
-  assign ScanChainLen = SCANCHAINLEN;
+  assign ScanChainLen = GPRRegNo ? GPRCHAINLEN : SCANCHAINLEN;
 
   if (P.E_SUPPORTED) // TODO: add seperate scan chain for GPR (with read and write signals)
     assign GPRAddr = Regno[4:0];

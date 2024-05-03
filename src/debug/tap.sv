@@ -40,7 +40,7 @@ module tap (
   output logic select
 );
 
-  (* mark_debug = "true" *) enum bit [3:0] {
+  enum bit [3:0] {
     Exit2DR     = 4'h0,
     Exit1DR     = 4'h1,
     ShiftDR     = 4'h2,

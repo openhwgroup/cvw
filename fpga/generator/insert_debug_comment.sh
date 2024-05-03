@@ -37,4 +37,4 @@ while read line; do
     sigName=`echo "${SigArray[1]}" | awk '{$1=$1};1' | tr -d "\015"`
     filepath=`find $copiedDir -wholename $file`
     sed -i "s/\(.*${sigType}.*${sigName}.*\)/(\* mark_debug = \"true\" \*)\1/g" $filepath
-done < ../constraints/marked_debug.txt
+done < ../constraints/marked_debug_dm.txt

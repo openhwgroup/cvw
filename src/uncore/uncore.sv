@@ -83,7 +83,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   logic [P.XLEN-1:0]           HREADBRIDGE;
   logic                        HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
 
-  (* mark_debug = "true" *) logic             HSELEXTSDCD;
+  logic                        HSELEXTSDCD;
   
 
   // Determine which region of physical memory (if any) is being accessed
