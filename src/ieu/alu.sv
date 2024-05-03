@@ -50,6 +50,7 @@ module alu import cvw::*; #(parameter cvw_t P) (
   logic [P.XLEN-1:0] CondMaskB;                                                   // Result of B mask select mux
   logic [P.XLEN-1:0] CondShiftA;                                                  // Result of A shifted select mux
   logic [P.XLEN-1:0] ZeroCondMaskInvB;                                            // B input to AND gate, accounting for czero.* instructions
+  logic [P.XLEN-1:0] AndResult;                                                   // AND result
   logic              Carry, Neg;                                                  // Flags: carry out, negative
   logic              LT, LTU;                                                     // Less than, Less than unsigned
   logic              Asign, Bsign;                                                // Sign bits of A, B
@@ -72,6 +73,7 @@ module alu import cvw::*; #(parameter cvw_t P) (
   assign Bsign = B[P.XLEN-1];
   assign LT = Asign & ~Bsign | Asign & Neg | ~Bsign & Neg; 
   assign LTU = ~Carry;
+  assign AndResult = A & ZeroCondMaskInvB;
  
   // Select appropriate ALU Result
   always_comb 
@@ -81,9 +83,10 @@ module alu import cvw::*; #(parameter cvw_t P) (
       3'b010: FullResult = {{(P.XLEN-1){1'b0}}, LT};       // slt
       3'b011: FullResult = {{(P.XLEN-1){1'b0}}, LTU};      // sltu
       3'b100: FullResult = A ^ CondMaskInvB;               // xor, xnor, binv
-      3'b101: FullResult = (P.ZBS_SUPPORTED) ? {{(P.XLEN-1){1'b0}},{|(A & CondMaskB)}} : Shift; // bext (or IEU shift when BMU not supported)
+//      3'b101: FullResult = (P.ZBS_SUPPORTED) ? {{(P.XLEN-1){1'b0}},{|(A & CondMaskInvB)}} : Shift; // bext (or IEU shift when BMU not supported)
+      3'b101: FullResult = (P.ZBS_SUPPORTED) ? {{(P.XLEN-1){1'b0}},{|(AndResult)}} : Shift; // bext (or IEU shift when BMU not supported)
       3'b110: FullResult = A | CondMaskInvB;               // or, orn, bset
-      3'b111: FullResult = A & ZeroCondMaskInvB;           // and, bclr, czero.*
+      3'b111: FullResult = AndResult;                      // and, bclr, czero.*
     endcase
 
   // Support RV64I W-type addw/subw/addiw/shifts that discard upper 32 bits and sign-extend 32-bit result to 64 bits
