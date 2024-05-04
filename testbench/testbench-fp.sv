@@ -35,8 +35,8 @@ module testbenchfp;
 
   `include "parameter-defs.vh"   
 
-   parameter MAXVECTORS = 8388610;
-   //parameter MAXVECTORS = 100000;
+   //parameter MAXVECTORS = 8388610;
+   parameter MAXVECTORS = 100000;
 
    // FIXME: needs cleaning of unused variables (jes)
    string                       Tests[];                    // list of tests to be run
@@ -157,6 +157,7 @@ module testbenchfp;
    initial begin
       // Information displayed for user on what is simulating
       // $display("\nThe start of simulation...");      
+      $display("\nThe start of simulation... DIVB: %d",DIVBLEN);      
       // $display("This simulation for TEST is %s", TEST);
       if (P.Q_SUPPORTED & (TEST_SIZE == "QP" | TEST_SIZE == "all")) begin // if Quad percision is supported
          if (TEST === "cvtint" | TEST === "all") begin  // if testing integer conversion
@@ -1081,8 +1082,8 @@ module testbenchfp;
      end   
 
    // Left-over from before - will remove soon
-   always @(posedge clk) 
-     OldFDivBusyE = FDivDoneE;
+   //always @(posedge clk) 
+   //OldFDivBusyE = FDivDoneE;
 
    // state machine to handle timing for testing due
    // various cycle counts for different fp/int operations
@@ -1170,7 +1171,9 @@ module testbenchfp;
       assign FlagMatch = ((ResFlg === AnsFlg) | (AnsFlg === 5'bx));
       assign divsqrtop = (OpCtrlVal == `SQRT_OPCTRL) | (OpCtrlVal == `DIV_OPCTRL) | (OpCtrlVal == `INTDIV_OPCTRL) | (OpCtrlVal ==`INTDIVU_OPCTRL) | (OpCtrlVal == `INTDIVW_OPCTRL) | (OpCtrlVal == `INTDIVUW_OPCTRL) | (OpCtrlVal == `INTREM_OPCTRL) | (OpCtrlVal == `INTREMW_OPCTRL) | (OpCtrlVal == `INTREMU_OPCTRL) | (OpCtrlVal ==`INTREMUW_OPCTRL) ; 
       assign FMAop = (OpCtrlVal == `FMAUNIT);  
-      assign DivDone = OldFDivBusyE & ~FDivBusyE;
+      //assign DivDone = OldFDivBusyE & ~FDivBusyE;
+      //assign DivDone =  ~FDivBusyE;
+      assign DivDone =  FDivDoneE;
       assign CheckNow = ((DivDone | ~divsqrtop) | 
                          (TEST == "add" | TEST == "fma" | TEST == "sub") |
                          ((TEST == "all") & (DivDone | ~divsqrtop)));
