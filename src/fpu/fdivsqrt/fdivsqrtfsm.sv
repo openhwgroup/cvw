@@ -54,6 +54,7 @@ module fdivsqrtfsm import cvw::*;  #(parameter cvw_t P) (
   assign IFDivStartE = (FDivStartE | (IDivStartE & P.IDIV_ON_FPU)) & (state == IDLE) & ~StallM;
   assign FDivDoneE = (state == DONE);
   assign FDivBusyE = (state == BUSY) | IFDivStartE; 
+  //assign FDivBusyE = (state == BUSY);
  
   // terminate immediately on special cases
   assign FSpecialCaseE = XZeroE | XInfE  | XNaNE |  (XsE&SqrtE) | (YZeroE | YInfE | YNaNE)&~SqrtE;
@@ -63,17 +64,17 @@ module fdivsqrtfsm import cvw::*;  #(parameter cvw_t P) (
 
   always_ff @(posedge clk) begin
       if (reset | FlushE) begin
-          state <= #1 IDLE; 
+          state <= IDLE; 
       end else if (IFDivStartE) begin // IFDivStartE implies stat is IDLE
           step <= CyclesE; 
-          if (SpecialCaseE) state <= #1 DONE;
-          else              state <= #1 BUSY;
+          if (SpecialCaseE) state <=  DONE;
+          else              state <=  BUSY;
       end else if (state == BUSY) begin 
-          if (step == 1 | WZeroE) state <= #1 DONE; // finished steps or terminate early on zero residual
+          if (step == 1 | WZeroE) state <=  DONE; // finished steps or terminate early on zero residual
           step <= step - 1;
       end else if (state == DONE) begin // Can't still be stalled in configs tested, but keep this check for paranoia
-        if (StallM) state <= #1 DONE; // exclusion-tag: fdivsqrtfsm stallm
-        else        state <= #1 IDLE;
+        if (StallM) state <=  DONE; // exclusion-tag: fdivsqrtfsm stallm
+        else        state <=  IDLE;
       end 
   end
 
