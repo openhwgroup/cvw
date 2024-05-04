@@ -8,7 +8,7 @@ module divremsqrtearlyterm import cvw::*;  #(parameter cvw_t P) (
 );
     aplusbeq0 #(P.DIVb+4) wspluswceq0(WS, WC, weq0E);
 
-  if (P.RADIX == 2) begin: R2EarlyTerm
+  if (P.RADIX == 3) begin: R2EarlyTerm
     logic [P.DIVb+3:0] FZeroE, FZeroSqrtE, FZeroDivE;
     logic [P.DIVb+2:0] FirstK;
     logic wfeq0E;
