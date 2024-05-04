@@ -59,6 +59,8 @@ funcovreg:
 	iter-elf.bash --search ${WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/I --cover
 	vcover report -details -html ${SIM}/questa/riscv.ucdb
 
+
+
 # test_name=riscv_arithmetic_basic_test
 rvdv: 
 	python3 ${WALLY}/addins/riscv-dv/run.py --test ${test_name} --target rv64gc --output tests/riscvdv  --iterations 1 -si questa --iss spike --verbose --cov --seed 0 --steps gen,gcc_compile			>> ${SIM}/questa/regression_logs/${test_name}.log 2>&1
@@ -100,11 +102,17 @@ rvdv_regression:
 rvdv_combine_coverage:
 	mkdir -p ${SIM}/questa/regcov
 	cd ${SIM}/questa/regcov && rm -rf *
-	vcover merge ${SIM}/questa/regcov/regcov.ucdb  ${SIM}/questa/regression_ucdbs/* -suppress 6854 -64
+	run-elf-cov.bash --seed ${SIM}/questa/seed0.txt --verbose --coverdb ${SIM}/questa/regcov/add.ucdb --elf ${WALLY}/tests/functcov/rv64/I/WALLY-COV-add.elf								>> ${SIM}/questa/regression_logs/add.log 2>&1
+	run-elf-cov.bash --seed ${SIM}/questa/seed0.txt --verbose --coverdb ${SIM}/questa/regcov/and.ucdb --elf ${WALLY}/tests/functcov/rv64/I/WALLY-COV-and.elf								>> ${SIM}/questa/regression_logs/add.log 2>&1
+	run-elf-cov.bash --seed ${SIM}/questa/seed0.txt --verbose --coverdb ${SIM}/questa/regcov/ori.ucdb --elf ${WALLY}/tests/functcov/rv64/I/WALLY-COV-ori.elf								>> ${SIM}/questa/regression_logs/add.log 2>&1
+
+	vcover merge ${SIM}/questa/regcov/regcov.ucdb ${SIM}/questa/regcov/*.ucdb  -suppress 6854 -64
+	# vcover merge ${SIM}/questa/regcov/regcov.ucdb ${SIM}/questa/regression_ucdbs/* -suppress 6854 -64
 	vcover report -details -html ${SIM}/questa/regcov/regcov.ucdb
 	vcover report ${SIM}/questa/regcov/regcov.ucdb -details -cvg > ${SIM}/questa/regcov/regcov.ucdb.log
 	vcover report ${SIM}/questa/regcov/regcov.ucdb -testdetails -cvg > ${SIM}/questa/regcov/regcov.ucdb.testdetails.log
-	vcover report ${SIM}/questa/regcov/regcov.ucdb -details -cvg -below 100 | egrep "Coverpoint|Covergroup|Cross" | grep -v Metric > ${SIM}/questa/regcov/regcov.ucdb.summary.log
+#	vcover report ${SIM}/questa/regcov/regcov.ucdb -details -cvg -below 100 | egrep "Coverpoint|Covergroup|Cross" | grep -v Metric > ${SIM}/questa/regcov/regcov.ucdb.summary.log
+	vcover report ${SIM}/questa/regcov/regcov.ucdb -details -cvg | egrep "Coverpoint|Covergroup|Cross|TYPE"  > ${SIM}/questa/regcov/regcov.ucdb.summary.log
 	grep "Total Coverage By Instance" ${SIM}/questa/regcov/regcov.ucdb.log
 
 remove_rvdv_artifacts:
