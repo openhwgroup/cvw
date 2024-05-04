@@ -90,4 +90,5 @@ module divremsqrtshiftcorrection import cvw::*;  #(parameter cvw_t P) (
   // the quotent is in the range [.5,2) if there is no early termination
   // if the quotent < 1 and not Subnormal then subtract 1 to account for the normalization shift
   assign Ue = (DivResSubnorm & DivSubnormShiftPos) ? '0 : DivUe - {(P.NE+1)'(0), ~LZAPlus1};
+  //assign Ue = (DivResSubnorm ) ? '0 : DivUe - {(P.NE+1)'(0), ~LZAPlus1};
 endmodule
