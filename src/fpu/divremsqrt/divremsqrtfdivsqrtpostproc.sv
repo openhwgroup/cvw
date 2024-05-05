@@ -103,7 +103,8 @@ module divremsqrtfdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
     logic [P.DIVb+3:0] UnsignedQuotM, NormRemM, NormRemDM, NormQuotM;
     logic signed [P.DIVb+3:0] PreResultM, PreIntResultM;
 
-    assign W = $signed(Sum) >>> P.LOGR;
+    //assign W = $signed(Sum) >>> P.LOGR;
+    arithrightshift #(P) rshift(Sum, W);
     assign UnsignedQuotM = {3'b000, PreUmM};
 
     // Integer remainder: sticky and sign correction muxes
@@ -119,15 +120,7 @@ module divremsqrtfdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
 
     // special case logic
     // terminates immediately when B is Zero (div 0) or |A| has more leading 0s than |B|
-    always_comb
-      if (BZeroM) begin         // Divide by zero
-        if (RemOpM) IntDivResultM = AM;  
-        else        IntDivResultM = {(P.XLEN){1'b1}};
-     end else if (ALTBM) begin // Numerator is small
-        if (RemOpM) IntDivResultM = AM;
-        else        IntDivResultM = 0;
-     end else       IntDivResultM = PreIntResultM[P.XLEN-1:0];
-
+    divremsqrtintspecialcase #(P) intspecialcase(BZeroM,RemOpM, ALTBM, AM,PreIntResultM,IntDivResultM);
     // sign extend result for W64
     if (P.XLEN==64) begin
       mux2 #(64) resmux(IntDivResultM[P.XLEN-1:0], 
