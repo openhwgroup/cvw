@@ -219,7 +219,7 @@ def write_tests(coverpoints, test, storecmd, xlen):
     elif (coverpoint == "cp_gpr_hazard"):
       pass # not yet implemented
     else:
-      print("Error: " + coverpoint + " not implemented yet for " + test)
+      print("Warning: " + coverpoint + " not implemented yet for " + test)
       
 def getcovergroups(coverdefdir, coverfiles):
   coverpoints = {}
