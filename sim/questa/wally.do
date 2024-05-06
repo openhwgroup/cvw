@@ -19,6 +19,7 @@
 # (omit the "-c" to see the GUI while running from the shell)
 
 onbreak {resume}
+onerror {quit -f}
 
 set CFG ${1}
 set TESTSUITE ${2}
@@ -102,6 +103,7 @@ vlog -lint -work ${WKDIR} +incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} ${tbArgsLst} -o testbenchopt ${CoverageVoptArg}
+
 #  *** tbArgs producees a warning that TEST not found in design when running sim-testfloat-batch.  Need to separate -G and + arguments to pass separately to vopt and vsim
 vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${PlusArgs} -fatal 7 -suppress 3829 ${CoverageVsimArg} 
 
