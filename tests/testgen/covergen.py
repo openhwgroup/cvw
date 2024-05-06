@@ -33,6 +33,10 @@ def signedImm12(imm):
 
 def writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, storecmd, xlen):
   lines = "\n# Testcase " + str(desc) + "\n"
+  if (rs1val < 0):
+    rs1val = rs1val + 2**xlen
+  if (rs2val < 0):
+    rs2val = rs2val + 2**xlen
   lines = lines + "li x" + str(rd) + ", " + formatstr.format(rdval) + " # initialize rd to a random value that should get changed\n"
   if (test in rtype):
     lines = lines + "li x" + str(rs1) + ", " + formatstr.format(rs1val) + " # initialize rs1 to a random value \n"
@@ -52,6 +56,10 @@ def writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, stor
 def randomize():
     rs1 = randint(1, 31)
     rs2 = randint(1, 31)
+    # choose rd that is different than rs1 and rs2
+    rd = rs1
+    while (rd == rs1 or rd == rs2):
+      rd = randint(1, 31)
     rd = randint(1, 31)
     rs1val = randint(0, 2**xlen-1)
     rs2val = randint(0, 2**xlen-1)
@@ -80,25 +88,25 @@ def make_rs2(test, storecmd, xlen):
 def make_rd_rs1(test, storecmd, xlen):
   for r in range(32):
     [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
-    desc = "cp_rd_rs1 (Test rd = rs1 = x" + str(r) + ")"
+    desc = "cmp_rd_rs1 (Test rd = rs1 = x" + str(r) + ")"
     writeCovVector(desc, r, rs2, r, rs1val, rs2val, immval, rdval, test, storecmd, xlen)
 
 def make_rd_rs2(test, storecmd, xlen):
   for r in range(32):
     [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
-    desc = "cp_rd_rs2 (Test rd = rs1 = x" + str(r) + ")"
+    desc = "cmp_rd_rs2 (Test rd = rs1 = x" + str(r) + ")"
     writeCovVector(desc, rs1, r, r, rs1val, rs2val, immval, rdval, test, storecmd, xlen)
 
 def make_rd_rs1_rs2(test, storecmd, xlen):
   for r in range(32):
     [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
-    desc = "cp_rd_rs1_rs2 (Test rd = rs1 = rs2 = x" + str(r) + ")"
+    desc = "cmp_rd_rs1_rs2 (Test rd = rs1 = rs2 = x" + str(r) + ")"
     writeCovVector(desc, r, r, r, rs1val, rs2val, immval, rdval, test, storecmd, xlen)
 
 def make_rs1_rs2(test, storecmd, xlen):
   for r in range(32):
     [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
-    desc = "cp_rd_rs1_rs2 (Test rs1 = rs2 = x" + str(r) + ")"
+    desc = "cmp_rd_rs1_rs2 (Test rs1 = rs2 = x" + str(r) + ")"
     writeCovVector(desc, r, r, rd, rs1val, rs2val, immval, rdval, test, storecmd, xlen)
 
 def make_rs1_maxvals(test, storecmd, xlen):
@@ -140,14 +148,14 @@ def make_rs1_rs2_eqval(test, storecmd, xlen):
 def make_rs1_sign(test, storecmd, xlen):
    for v in [1, -1]:
     [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
-    rs1val = abs(rs1val) * v;
+    rs1val = abs(rs1val % 2**(xlen-1)) * v;
     desc = "cp_rs1_sign (Test source rs1 value = " + hex(rs1val) + ")"
     writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, storecmd, xlen)
 
 def make_rs2_sign(test, storecmd, xlen):
   for v in [1, -1]:
     [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
-    rs2val = abs(rs2val) * v;
+    rs2val = abs(rs2val % 2**(xlen-1)) * v;
     desc = "cp_rs2_sign (Test source rs2 value = " + hex(rs2val) + ")"
     writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, storecmd, xlen)
 
@@ -155,8 +163,8 @@ def make_cr_rs1_rs2_sign(test, storecmd, xlen):
   for v1 in [1, -1]:
     for v2 in [1, -1]:
       [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
-      rs1val = abs(rs1val) * v1;
-      rs2val = abs(rs2val) * v2;
+      rs1val = abs(rs1val % 2**(xlen-1)) * v1;
+      rs2val = abs(rs2val % 2**(xlen-1)) * v2;
       desc = "cr_rs1_rs2 (Test source rs1 = " + hex(rs1val) + " rs2 = " + hex(rs2val) + ")"
       writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, storecmd, xlen)
 
@@ -211,7 +219,7 @@ def write_tests(coverpoints, test, storecmd, xlen):
     elif (coverpoint == "cp_gpr_hazard"):
       pass # not yet implemented
     else:
-      print("Error: " + coverpoint + " not implemented yet for " + test)
+      print("Warning: " + coverpoint + " not implemented yet for " + test)
       
 def getcovergroups(coverdefdir, coverfiles):
   coverpoints = {}

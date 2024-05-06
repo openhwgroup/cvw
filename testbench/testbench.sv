@@ -320,7 +320,7 @@ module testbench;
   logic [P.XLEN-1:0] testadr;
   always_comb begin
   	begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
- 	end_signature_addr = ProgramAddrLabelArray["sig_end_canary"];
+ 	  end_signature_addr = ProgramAddrLabelArray["sig_end_canary"];
   	signature_size = end_signature_addr - begin_signature_addr;
   end
   logic EcallFaultM;
@@ -409,7 +409,8 @@ module testbench;
         if (!begin_signature_addr)
           $display("begin_signature addr not found in %s", ProgramLabelMapFile);
         else if (TEST != "embench") begin   // *** quick hack for embench.  need a better long term solution
-          CheckSignature(pathname, tests[test], riscofTest, begin_signature_addr, errors);
+//          CheckSignature(pathname, tests[test], riscofTest, begin_signature_addr, errors);
+          CheckSignature(pathname, tests[test], riscofTest, ProgramAddrLabelArray["begin_signature"], errors);
           if(errors > 0) totalerrors = totalerrors + 1;
         end
       end
