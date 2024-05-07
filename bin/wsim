@@ -34,8 +34,8 @@ if (args.gui):
         exit(1)
 
 if (args.coverage):
-    if (args.sim != "questa"):
-        print("Coverage option only available for Questa")
+    if args.sim not in ["questa", "vcs"]:
+        print("Coverage option only available for Questa and VCS")
         exit(1)
 
 if (args.vcd):
@@ -79,12 +79,10 @@ elif (args.sim == "verilator"):
     os.system(f"/usr/bin/make -C {regressionDir}/verilator WALLYCONF={args.config} TEST={args.testsuite} EXTRA_ARGS='{args.args}'")
 elif (args.sim == "vcs"):
     print(f"Running VCS on " + args.config + " " + args.testsuite)
-    if (args.coverage):
-        print("Coverage option not available for VCS")
-        exit(1)
     if (args.gui):  
-        cmd = cd + "; ./run_vcs " + args.config + " " + args.testsuite + " " + args.tb + " " + "1"
-    else:
-        cmd = cd + "; ./run_vcs " + args.config + " " + "\""+args.testsuite+"\""
+        args.args += "gui"
+    elif (args.coverage):
+        args.args += "coverage"
+    cmd = cd + "; ./run_vcs " + args.config + " " + args.testsuite + " " + args.args
     print(cmd)
     os.system(cmd)
