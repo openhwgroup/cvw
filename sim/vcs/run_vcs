@@ -24,8 +24,10 @@ WKDIR="wkdir/${1}_${2}"
 COV="cov/${1}_${2}"
 LOGS="logs"
 
-shift 2
-PLUSARGS="$*"
+if [ ${TESTSUITE} = "buildroot" ]; then
+	shift 2
+	PLUSARGS="$*"
+fi
 
 clean_logs() {
     echo -e "${YELLOW}Cleaning up workspace...${NC}"
