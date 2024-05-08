@@ -323,9 +323,9 @@ else:
     addTests(tests_buildrootshort, defaultsim)
 
 # testfloat tests
-if (testfloat):
+if (testfloat): # for testfloat alone, just run testfloat tests
     configs = []
-
+if (testfloat or nightly): # for nightly, run testfloat along with othres
     testfloatconfigs = ["fdqh_ieee_rv64gc", "fdq_ieee_rv64gc", "fdh_ieee_rv64gc", "fd_ieee_rv64gc", "fh_ieee_rv64gc", "f_ieee_rv64gc", "fdqh_ieee_rv32gc", "f_ieee_rv32gc"]
     for config in testfloatconfigs:
         tests = ["div", "sqrt", "add", "sub", "mul", "cvtint", "cvtfp", "fma", "cmp"]
