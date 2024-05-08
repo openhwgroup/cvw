@@ -24,6 +24,8 @@ WKDIR="wkdir/${1}_${2}"
 COV="cov/${1}_${2}"
 LOGS="logs"
 
+shift 2
+PLUSARGS="$*"
 
 clean_logs() {
     echo -e "${YELLOW}Cleaning up workspace...${NC}"
@@ -31,10 +33,11 @@ clean_logs() {
 }
 clean_simprofile() {
     echo -e "${YELLOW}Cleaning up simprofile_dir...${NC}"
-    rm -rf simprofile_dir* profileReport* 
+    rm -rf simprofile_dir* profileReport*  
 }
+
+#clean_simprofile
 #clean_logs
-clean_simprofile
 # Function to create a directory if it does not exist
 create_directory() {
     local dir=$1  # Local variable for directory name
@@ -85,15 +88,14 @@ RTL_FILES="$INCLUDE_DIRS $(find ${SRC} -name "*.sv" ! -path "${SRC}/generic/cloc
 
 # Simulation and Coverage Commands
 OUTPUT="sim_out"
-VCS_CMD="vcs +lint=all,noGCWM,noUI,noSVA-UA,noIDTS,noNS,noULCO,noCAWM-L,noWMIA-L,noSV-PIU,noSTASKW_CO,noSTASKW_CO1,noSTASKW_RMCOF +vcs+vcdpluson -simprofile -suppress +warn -sverilog +vc -Mupdate -line -full64 -kdb -lca -debug_access+all+reverse  -ntb_opts sensitive_dyn +define+SIM_VCS ${INCLUDE_PATH} $RTL_FILES"
-SIMV_CMD="./${WKDIR}/$OUTPUT +TEST=${TESTSUITE}" 
+VCS_CMD="vcs +lint=all,noGCWM,noUI,noSVA-UA,noIDTS,noNS,noULCO,noCAWM-L,noWMIA-L,noSV-PIU,noSTASKW_CO,noSTASKW_CO1,noSTASKW_RMCOF +vcs+vcdpluson -suppress +warn -sverilog +vc -Mupdate -line -full64 -kdb -lca -debug_access+all+reverse  -ntb_opts sensitive_dyn +define+SIM_VCS ${INCLUDE_PATH} $RTL_FILES"
+SIMV_CMD="./${WKDIR}/$OUTPUT +TEST=${TESTSUITE} ${PLUSARGS}" 
 COV_FILES="${TB}/coverage/test_pmp_coverage.sv"
 COV_OPTIONS="-cm line+cond+branch+fsm+tgl -cm_log ${WKDIR}/coverage.log -cm_dir ${WKDIR}/COVERAGE"
 COV_RUN="urg -dir ${WKDIR}/sim_out.vdb/"
 
 
 # Clean and run simulation with VCS
-#clean
 
 if [ "$3" = "coverage" ]; then
     echo -e "${YELLOW}#### Running VCS Simulation with Coverage ####${NC}"
@@ -105,7 +107,7 @@ if [ "$3" = "coverage" ]; then
 
 else
     echo -e "${YELLOW}#### Running VCS Simulation ####${NC}"
-    $VCS_CMD -o ${WKDIR}/$OUTPUT -work ${WKDIR} -Mlib ${WKDIR} -l "$LOGS/{CONFIG_VARIANT}_{TESTSUITE}.log"
-    $SIMV_CMD ${GUI}
+    $VCS_CMD -Mdir=${WKDIR} -o ${WKDIR}/$OUTPUT -work ${WKDIR} -Mlib ${WKDIR} -l "$LOGS/${CONFIG_VARIANT}_${TESTSUITE}.log"
+    $SIMV_CMD 
 fi
 
