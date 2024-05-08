@@ -94,7 +94,10 @@ VCS_CMD="vcs +lint=all,noGCWM,noUI,noSVA-UA,noIDTS,noNS,noULCO,noCAWM-L,noWMIA-L
 SIMV_CMD="./${WKDIR}/$OUTPUT +TEST=${TESTSUITE} ${PLUSARGS}" 
 COV_FILES="${TB}/coverage/test_pmp_coverage.sv"
 COV_OPTIONS="-cm line+cond+branch+fsm+tgl -cm_log ${WKDIR}/coverage.log -cm_dir ${WKDIR}/COVERAGE"
-COV_RUN="urg -dir ${WKDIR}/sim_out.vdb/"
+### CODE COVERAGE REPORT in IndividualCovReport in XML format
+#COV_RUN="urg -dir ${WKDIR}/COVERAGE.vdb -report IndividualCovReport/${CONFIG_VARIANT}_${TESTSUITE}" 
+### CODE COVERAGE REPORT in IndividualCovReport in text format
+COV_RUN="urg -dir ./${WKDIR}/COVERAGE.vdb -format text -report IndividualCovReport/${CONFIG_VARIANT}_${TESTSUITE}"
 
 
 # Clean and run simulation with VCS
@@ -102,10 +105,10 @@ COV_RUN="urg -dir ${WKDIR}/sim_out.vdb/"
 if [ "$3" = "coverage" ]; then
     echo -e "${YELLOW}#### Running VCS Simulation with Coverage ####${NC}"
     # Code Coverage.
-    $VCS_CMD $COV_OPTIONS -o ${WKDIR}/$OUTPUT -Mlib ${WKDIR} -work ${WKDIR} -l "$LOGS/${CONFIG_VARIANT}_${TESTSUITE}.log"
-    $SIMV_CMD
+    $VCS_CMD -Mdir=${WKDIR} $COV_OPTIONS -o ${WKDIR}/$OUTPUT -Mlib ${WKDIR} -work ${WKDIR} -l "$LOGS/${CONFIG_VARIANT}_${TESTSUITE}.log"
+    $SIMV_CMD $COV_OPTIONS
     $COV_RUN
-    cp -rf urgReport $COV
+    #cp -rf urgReport $COV
 
 else
     echo -e "${YELLOW}#### Running VCS Simulation ####${NC}"
