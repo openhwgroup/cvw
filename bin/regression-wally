@@ -273,6 +273,7 @@ regressionDir = WALLY + '/sim'
 os.chdir(regressionDir)
 
 coveragesim = "questa"  # Questa is required for code/functional coverage
+#defaultsim = "vcs"   # Default simulator for all other tests; change to Verilator when flow is ready
 defaultsim = "questa"   # Default simulator for all other tests; change to Verilator when flow is ready
 #defaultsim = "verilator"   # Default simulator for all other tests
 
@@ -283,7 +284,8 @@ testfloat = '--testfloat' in sys.argv
 
 if (nightly):
     nightMode = "--nightly";
-    sims = [defaultsim] 
+#    sims = [defaultsim] 
+    sims = ["questa", "vcs"] 
 #    sims = ["questa", "verilator", "vcs"] # *** uncomment to exercise all simulators
 else:
     nightMode = ""
