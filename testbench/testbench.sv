@@ -54,6 +54,9 @@ module testbench;
   `ifdef VERILATOR
       import "DPI-C" function string getenvval(input string env_name);
       string       RISCV_DIR = getenvval("RISCV"); // "/opt/riscv";
+  `elsif SIM_VCS 
+      import "DPI-C" function string getenv(input string env_name);
+      string       RISCV_DIR = getenv("RISCV"); // "/opt/riscv";
   `else
       string       RISCV_DIR = "$RISCV"; // "/opt/riscv";
   `endif
