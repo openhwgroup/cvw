@@ -644,7 +644,7 @@ module testbench;
     always @(negedge clk) begin
       if (INSTR_LIMIT > 0) begin
         if((Minstret != 0) && (Minstret % 'd100000 == 0)) $display("Reached %d instructions", Minstret);
-        if((Minstret == INSTR_LIMIT) & (INSTR_LIMIT!=0)) begin $stop; $stop; end
+        if((Minstret == INSTR_LIMIT) & (INSTR_LIMIT!=0)) begin $finish; end
       end
     end
 end
