@@ -633,7 +633,7 @@ module testbench;
 			      dut.core.ieu.dp.regf.a3 == 3 & 
 			      dut.core.ieu.dp.regf.wd3 == 1)) |
            ((InstrM == 32'h6f | InstrM == 32'hfc32a423 | InstrM == 32'hfc32a823) & dut.core.ieu.c.InstrValidM ) |
-           ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"]) & InstrMName == "SW" );
+           ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"] & dut.core.lsu.IEUAdrM != 0) & InstrMName == "SW" );
   end
   
   DCacheFlushFSM #(P) DCacheFlushFSM(.clk, .start(DCacheFlushStart), .done(DCacheFlushDone));
