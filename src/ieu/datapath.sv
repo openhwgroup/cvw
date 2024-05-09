@@ -139,6 +139,6 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   mux5  #(P.XLEN) resultmuxW(IFCvtResultW, ReadDataW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, ResultW); 
  
   // handle Store Conditional result if atomic extension supported
-  if (P.A_SUPPORTED) assign SCResultW = {{(P.XLEN-1){1'b0}}, SquashSCW};
-  else               assign SCResultW = '0;
+  if (P.A_SUPPORTED | P.ZALRSC_SUPPORTED) assign SCResultW = {{(P.XLEN-1){1'b0}}, SquashSCW};
+  else                                    assign SCResultW = '0;
 endmodule

@@ -397,7 +397,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   // Atomic operations
   /////////////////////////////////////////////////////////////////////////////////////////////
  
-  if (P.A_SUPPORTED) begin:atomic
+  if (P.A_SUPPORTED | P.ZAAMO_SUPPORTED | P.ZALRSC_SUPPORTED) begin:atomic
     atomic #(P) atomic(.clk, .reset, .StallW, .ReadDataM(ReadDataM[P.XLEN-1:0]), .IHWriteDataM, .PAdrM, 
       .LSUFunct7M, .LSUFunct3M, .LSUAtomicM, .PreLSURWM, .IgnoreRequest, 
       .IMAWriteDataM, .SquashSCW, .LSURWM);

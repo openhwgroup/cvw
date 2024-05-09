@@ -265,12 +265,12 @@ module controller import cvw::*;  #(parameter cvw_t P) (
                       ControlsD = `CTRLW'b0_001_01_01_000_0_0_0_0_0_0_0_0_0_00_0_0; // stores
       7'b0100111: if (FLSFunctD)
                       ControlsD = `CTRLW'b0_001_01_01_000_0_0_0_0_0_0_0_0_0_00_0_1; // fsw - only legal if FP supported
-      7'b0101111: if (P.A_SUPPORTED & AFunctD) begin
-                    if (InstrD[31:27] == 5'b00010 & Rs2D == 5'b0)
+      7'b0101111: if (AFunctD) begin
+                    if ((P.A_SUPPORTED | P.ZALRSC_SUPPORTED) & InstrD[31:27] == 5'b00010 & Rs2D == 5'b0)
                       ControlsD = `CTRLW'b1_000_00_10_001_0_0_0_0_0_0_0_0_0_01_0_0; // lr
-                    else if (InstrD[31:27] == 5'b00011)
+                    else if ((P.A_SUPPORTED | P.ZALRSC_SUPPORTED) & InstrD[31:27] == 5'b00011)
                       ControlsD = `CTRLW'b1_101_01_01_100_0_0_0_0_0_0_0_0_0_01_0_0; // sc
-                    else if (AMOFunctD) 
+                    else if ((P.A_SUPPORTED | P.ZAAMO_SUPPORTED) & AMOFunctD) 
                       ControlsD = `CTRLW'b1_101_01_11_001_0_0_0_0_0_0_0_0_0_10_0_0; // amo
                  end
       7'b0110011: if (RFunctD)

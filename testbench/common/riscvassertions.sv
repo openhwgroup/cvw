@@ -67,6 +67,7 @@ module riscvassertions import cvw::*; #(parameter cvw_t P);
     assert ((P.ZCF_SUPPORTED == 0) || (P.F_SUPPORTED == 1)) else $fatal(1, "ZCF requires F");
     assert ((P.ZCD_SUPPORTED == 0) || (P.D_SUPPORTED == 1)) else $fatal(1, "ZCD requires D");   
     assert ((P.LLEN == P.XLEN) || (P.DCACHE_SUPPORTED)) else $fatal(1, "LLEN > XLEN (D on RV32 or Q on RV64) requires data cache");
+    assert (P.A_SUPPORTED + P.ZAAMO_SUPPORTED + P.ZALRSC_SUPPORTED < 2) else $fatal(1, "At most one of A, Zaamo, or Zalrsc can be supported");
   end
 
 endmodule
