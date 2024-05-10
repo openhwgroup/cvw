@@ -601,7 +601,7 @@ module testbench;
     loggers (clk, reset, DCacheFlushStart, DCacheFlushDone, memfilename, TEST);
 
   // track the current function or global label
-  if (DEBUG == 1 | ((PrintHPMCounters | BPRED_LOGGER) & P.ZICNTR_SUPPORTED)) begin : FunctionName
+  if (DEBUG > 0 | ((PrintHPMCounters | BPRED_LOGGER) & P.ZICNTR_SUPPORTED)) begin : FunctionName
     FunctionName #(P) FunctionName(.reset(reset_ext | TestBenchReset),
 			      .clk(clk), .ProgramAddrMapFile(ProgramAddrMapFile), .ProgramLabelMapFile(ProgramLabelMapFile));
   end
