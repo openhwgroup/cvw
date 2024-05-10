@@ -61,14 +61,17 @@ for {set i 0} true {incr i} {
 }
 
 if {$argc >= 3} {
-    if {[lindex $lst [expr { [llength $lst] -1 } ]] eq "+acc"} {
+    echo "got at least 3 args"
+    set AccPosition [lsearch $lst "+acc"]
+    echo $AccPosition
+    if {$AccPosition != -1} {
         set GUI 1
         set accFlag "+acc"
-        set tbArgs [lrange $lst 0 end-1]
+        set tbArgs [lreplace $lst $AccPosition $AccPosition]
     } else {
         set tbArgs $lst
     }
-    set tbArgsLst [split $lst " "]
+    set tbArgsLst [split $tbArgs " "]
 
     set index [lsearch -exact $tbArgsLst "-coverage"]
     if {$index >= 0} {
@@ -77,9 +80,9 @@ if {$argc >= 3} {
         set CoverageVsimArg "-coverage"
         echo $tbArgsLst
         set tbArgsLst [lreplace $tbArgsLst $index $index ]
-        echo "help help help !!!!!!!!!!!!!!!!!!!!!!!!!!!"
-        echo $tbArgsLst
-        echo "help help help !!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        #echo "help help help !!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        #echo $tbArgsLst
+        #echo "help help help !!!!!!!!!!!!!!!!!!!!!!!!!!!"
     }
     
     # separate the +args from the -G parameters
@@ -91,6 +94,18 @@ if {$argc >= 3} {
         }
     }
 }
+# helpful debug code remove later
+#echo "help me!!!!!!! GUI ="
+#echo $GUI
+#echo "help me!!!!!!! lst ="
+#echo $lst
+#echo "help me!!!!!!! = accFlag ="
+#echo $accFlag
+#echo "help me!!!!!!! PlusArgs ="
+#echo $PlusArgs
+#echo "help me!!!!!!! ParamArgs ="
+#echo $ParamArgs
+#echo "help me!!!!!!!"
 
 # compile source files
 # suppress spurious warnngs about 
