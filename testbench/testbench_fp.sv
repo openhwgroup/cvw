@@ -51,16 +51,16 @@ module testbench_fp;
    logic [31:0] 		errors=0;                   // how many errors
    logic [31:0] 		VectorNum=0;                // index for test vector
    logic [31:0] 		FrmNum=0;                   // index for rounding mode
-   logic [P.FLEN*4+7:0] 	TestVectors[MAXVECTORS-1:0];     // list of test vectors
+   logic [P.Q_LEN*4+7:0] 	TestVectors[MAXVECTORS-1:0];     // list of test vectors
 
    logic [1:0] 			FmtVal;                     // value of the current Fmt
    logic [2:0] 			UnitVal, OpCtrlVal, FrmVal; // value of the currnet Unit/OpCtrl/FrmVal
    logic                        WriteIntVal;                // value of the current WriteInt
-   logic [P.FLEN-1:0] 		X, Y, Z;                    // inputs read from TestFloat
+   logic [P.Q_LEN-1:0] 		X, Y, Z;                    // inputs read from TestFloat
    logic [P.FLEN-1:0] 		XPostBox;                   // inputs read from TestFloat
    logic [P.XLEN-1:0] 		SrcA;                       // integer input
-   logic [P.FLEN-1:0] 		Ans;                        // correct answer from TestFloat
-   logic [P.FLEN-1:0] 		Res;                        // result from other units
+   logic [P.Q_LEN-1:0] 		Ans;                        // correct answer from TestFloat
+   logic [P.Q_LEN-1:0] 		Res;                        // result from other units
    logic [4:0] 			AnsFlg;                     // correct flags read from testfloat
    logic [4:0] 			ResFlg, Flg;                // Result flags
    logic [P.FMTBITS-1:0] 	ModFmt;                     // format - 10 = half, 00 = single, 01 = double, 11 = quad
@@ -733,7 +733,7 @@ module testbench_fp;
    if (TEST === "cmp" | TEST === "all") begin: fcmp
       fcmp #(P) fcmp (.Fmt(ModFmt), .OpCtrl(OpCtrlVal), .Zfa(1'b0), .Xs, .Ys, .Xe, .Ye, 
                    .Xm, .Ym, .XZero, .YZero, .CmpIntRes(CmpRes),
-                   .XNaN, .YNaN, .XSNaN, .YSNaN, .X, .Y, .CmpNV(CmpFlg[4]), .CmpFpRes(FpCmpRes));
+                   .XNaN, .YNaN, .XSNaN, .YSNaN, .X(X[P.FLEN-1:0]), .Y(Y[P.FLEN-1:0]), .CmpNV(CmpFlg[4]), .CmpFpRes(FpCmpRes));
    end
    
    if (TEST === "div" | TEST === "sqrt" | TEST === "all") begin: fdivsqrt
@@ -975,7 +975,7 @@ module testbench_fp;
          errors += 1;
          $display("\nError in %s", Tests[TestNum]);
          $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);	 
-         $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Expected: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
+         $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Expected: %h %h", X[P.FLEN-1:0], Y[P.FLEN-1:0], Z[P.FLEN-1:0], SrcA, Res[P.FLEN-1:0], ResFlg, Ans[P.FLEN-1:0], AnsFlg);
          $stop;
       end
 
@@ -1012,14 +1012,14 @@ endmodule
 
 module readvectors import cvw::*; #(parameter cvw_t P) (
 		    input logic 		clk,
-		    input logic [P.FLEN*4+7:0] 	TestVector,
+		    input logic [P.Q_LEN*4+7:0] 	TestVector,
 		    input logic [P.FMTBITS-1:0] ModFmt,
 		    input logic [1:0] 		Fmt,
 		    input logic [2:0] 		Unit,
 		    input logic [31:0] 		VectorNum,
 		    input logic [31:0] 		TestNum,
 		    input logic [2:0] 		OpCtrl,
-		    output logic [P.FLEN-1:0] 	Ans,
+		    output logic [P.Q_LEN-1:0] 	Ans,
 		    output logic [P.XLEN-1:0] 	SrcA,
 		    output logic [4:0] 		AnsFlg,
 		    output logic 		Xs, Ys, Zs, // sign bits of XYZ
@@ -1031,7 +1031,8 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		    output logic 		XZero, YZero, ZZero, // is XYZ zero
 		    output logic 		XInf, YInf, ZInf, // is XYZ infinity
 		    output logic 		XExpMax,
-		    output logic [P.FLEN-1:0] 	X, Y, Z, XPostBox
+		    output logic [P.Q_LEN-1:0] 	X, Y, Z,
+          output logic [P.FLEN-1:0]  XPostBox
 		    );
 
    localparam Q_LEN = 32'd128;
@@ -1048,7 +1049,7 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
       case (Unit)
 	`FMAUNIT:
           case (Fmt)
-            2'b11: begin // quad
+            2'b11: if (P.Q_SUPPORTED) begin // quad
                if (OpCtrl === `FMA_OPCTRL) begin
 		  X = TestVector[8+4*(P.Q_LEN)-1:8+3*(P.Q_LEN)];
 		  Y = TestVector[8+3*(P.Q_LEN)-1:8+2*(P.Q_LEN)];
@@ -1371,7 +1372,7 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
    assign ZEn = (Unit == `FMAUNIT);
    assign FPUActive = 1'b1;
    
-   unpack #(P) unpack(.X, .Y, .Z, .Fmt(ModFmt), .FPUActive, .Xs, .Ys, .Zs, .Xe, .Ye, .Ze,
+   unpack #(P) unpack(.X(X[P.FLEN-1:0]), .Y(Y[P.FLEN-1:0]), .Z(Z[P.FLEN-1:0]), .Fmt(ModFmt), .FPUActive, .Xs, .Ys, .Zs, .Xe, .Ye, .Ze,
                       .Xm, .Ym, .Zm, .XNaN, .YNaN, .ZNaN, .XSNaN, .YSNaN, .ZSNaN,
                       .XSubnorm, .XZero, .YZero, .ZZero, .XInf, .YInf, .ZInf,
                       .XEn, .YEn, .ZEn, .XExpMax, .XPostBox);

@@ -927,12 +927,12 @@ string imperas32f[] = '{
     "rv64i_m/Q/src/WALLY-q-01.S"
   };
 
- string wally64a[] = '{
+ string wally64a_lrsc[] = '{
     `WALLYTEST,
     "rv64i_m/privilege/src/WALLY-lrsc-01.S"
   };
 
- string wally32a[] = '{
+ string wally32a_lrsc[] = '{
     `WALLYTEST,
     "rv32i_m/privilege/src/WALLY-lrsc-01.S"
  };
@@ -974,7 +974,7 @@ string imperas32f[] = '{
     "rv64i_m/Zicond/src/czero.nez-01.S"
     };
 
-  string arch32a[] = '{
+  string arch32a_amo[] = '{
     `RISCVARCHTEST,
     "rv32i_m/A/src/amoadd.w-01.S",
     "rv32i_m/A/src/amoand.w-01.S",
@@ -1136,7 +1136,7 @@ string imperas32f[] = '{
     "rv64i_m/M/src/remw-01.S"
    };
 
-  string arch64a[] = '{
+  string arch64a_amo[] = '{
     `RISCVARCHTEST,
     "rv64i_m/A/src/amoadd.w-01.S",
     "rv64i_m/A/src/amoand.w-01.S",
