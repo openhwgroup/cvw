@@ -54,10 +54,7 @@ for d in ["logs", "wkdir", "cov"]:
 cd = "cd $WALLY/sim/" +args.sim
 if (args.sim == "questa"):
     if (args.tb == "testbench_fp"):
-         args.args = " -GTEST=" + args.testsuite + " " + args.args
-#         cmd = "do wally.do " + args.config + " " + args.testsuite + " " + args.tb + " " + " -GTEST=" + args.testsuite + " " + args.args
-#    else:
-#        cmd = "do wally.do " + args.config + " " + args.testsuite + " " + args.tb + " " + args.args
+            args.args = " -GTEST=\"" + args.testsuite + "\" " + args.args
     cmd = "do wally.do " + args.config + " " + args.testsuite + " " + args.tb + " " + args.args
     if (args.coverage):
         cmd += " -coverage"
@@ -76,7 +73,7 @@ elif (args.sim == "verilator"):
     if (args.gui):
         print("GUI option not available for Verilator")
         exit(1)
-    os.system(f"/usr/bin/make -C {regressionDir}/verilator WALLYCONF={args.config} TEST={args.testsuite} EXTRA_ARGS='{args.args}'")
+    os.system(f"/usr/bin/make -C {regressionDir}/verilator WALLYCONF={args.config} TEST={args.testsuite} TESTBENCH={args.tb} EXTRA_ARGS='{args.args}'")
 elif (args.sim == "vcs"):
     print(f"Running VCS on " + args.config + " " + args.testsuite)
     if (args.gui):  
