@@ -118,7 +118,13 @@ localparam LOGCVTLEN = $unsigned($clog2(CVTLEN+1));
 // RV32F: max(32+23+1, 2(23)+4, 3(23)+6) = 3*23+6 = 75
 // RV64F: max(64+23+1, 64 + 23 + 2, 3*23+6) = 89
 // RV64D: max(84+52+1, 64+52+2, 3*52+6) = 162
-localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1), (DIVb + 1 + NF + 1)), (3*NF+6));
+// *** DH 5/10/24 testbench_fp f_ieee_div_2_1_rv64gc cvtint was failing on  
+//     with CVTLEN+NF+1.  Changing to CVTLEN+NF+1+2 fixes failures
+//     This same failure occurred for any test with IDIV_ON_FPU = 0, FLEN=32, XLEN=64
+//     because NORMSHIFTSZ becomes limited by convert rather than divider
+//     Figure out why extra two bits are needed for convert (and only in testbench_fp, not Wally)
+//     Might be a testbench_fp issue
+localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1+2), (DIVb + 1 + NF + 1)), (3*NF+6));
 
 localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));                  // log_2(NORMSHIFTSZ)
 localparam CORRSHIFTSZ = NORMSHIFTSZ-2;                             // Drop leading 2 integer bits
