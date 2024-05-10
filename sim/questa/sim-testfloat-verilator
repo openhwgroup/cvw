@@ -16,11 +16,7 @@
 # sqrt   - test square root
 # all    - test everything
 
-#vsim -c -do "do testfloat.do fdqh_ieee_rv64gc $1"
-
-verilator -GTEST="\"all\"" -GTEST_SIZE="\"all\"" --timescale "1ns/1ns" --timing --binary --top-module testbenchfp "-I../config/shared" "-I../config/deriv/fdqh_ieee_rv64gc" ../src/cvw.sv ../testbench/testbench-fp.sv ../src/fpu/*.sv ../src/fpu/*/*.sv ../src/generic/*.sv  ../src/generic/flop/*.sv --relative-includes
-
-#vlog +incdir+../config/deriv/$1 +incdir+../config/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench-fp.sv ../src/fpu/*.sv ../src/fpu/*/*.sv ../src/generic/*.sv  ../src/generic/flop/*.sv -suppress 2583,7063,8607,2697 
+wsim fdqh_ieee_rv64gc add --tb testbench_fp --sim verilator
 
 # Change TEST_SIZE to only test certain FP width
 # values are QP, DP, SP, HP or all for all tests
