@@ -98,8 +98,8 @@ module testbench_fp;
    logic [P.NE+1:0] 		Se;
    logic 			ASticky;
    logic 			KillProd; 
-   logic [$clog2(3*P.NF+5)-1:0] SCnt;
-   logic [3*P.NF+3:0] 		Sm;       
+   logic [$clog2(3*P.NF+7)-1:0] SCnt;
+   logic [3*P.NF+5:0] 		Sm;       
    logic 			InvA;
    logic 			NegSum;
    logic 			As;
@@ -974,8 +974,8 @@ module testbench_fp;
       if (~(ResMatch & FlagMatch) & CheckNow & (Ans[0] !== 1'bx)) begin
          errors += 1;
          $display("\nError in %s", Tests[TestNum]);
-         $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);	 
-         $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Expected: %h %h", X[P.FLEN-1:0], Y[P.FLEN-1:0], Z[P.FLEN-1:0], SrcA, Res[P.FLEN-1:0], ResFlg, Ans[P.FLEN-1:0], AnsFlg);
+         $display("TestNum %d VectorNum %d OpCtrl %d", TestNum, VectorNum, OpCtrl[TestNum]);	 
+         $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Expected: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
          $stop;
       end
 
