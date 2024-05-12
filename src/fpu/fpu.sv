@@ -116,14 +116,14 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   // Fma Signals
   logic                        FmaAddSubE;                         // Multiply by 1.0 when adding or subtracting
   logic [1:0]                  FmaZSelE;                           // Select Z = Y when adding or subtracting, 0 when multiplying
-  logic [3*P.NF+3:0]           SmE, SmM;                           // Sum significand
+  logic [3*P.NF+5:0]           SmE, SmM;                           // Sum significand
   logic                        FmaAStickyE, FmaAStickyM;           // FMA addend sticky bit output
   logic [P.NE+1:0]             SeE,SeM;                            // Sum exponent
   logic                        InvAE, InvAM;                       // Invert addend
   logic                        AsE, AsM;                           // Addend sign
   logic                        PsE, PsM;                           // Product sign
   logic                        SsE, SsM;                           // Sum sign
-  logic [$clog2(3*P.NF+5)-1:0] SCntE, SCntM;                       // LZA sum leading zero count
+  logic [$clog2(3*P.NF+7)-1:0] SCntE, SCntM;                       // LZA sum leading zero count
   
   // Cvt Signals
   logic [P.NE:0]               CeE, CeM;                           // convert intermediate expoent
@@ -351,8 +351,8 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
     {XsE, YsE, XZeroE, YZeroE, XInfE, YInfE, ZInfE, XNaNE, YNaNE, ZNaNE, XSNaNE, YSNaNE, ZSNaNE},
     {XsM, YsM, XZeroM, YZeroM, XInfM, YInfM, ZInfM, XNaNM, YNaNM, ZNaNM, XSNaNM, YSNaNM, ZSNaNM});     
   flopenrc #(1)  EMRegCmpFlg (clk, reset, FlushM, ~StallM, PreNVE, PreNVM);      
-  flopenrc #(3*P.NF+4) EMRegFma2(clk, reset, FlushM, ~StallM, SmE, SmM);
-  flopenrc #($clog2(3*P.NF+5)+7+P.NE) EMRegFma4(clk, reset, FlushM, ~StallM,
+  flopenrc #(3*P.NF+6) EMRegFma2(clk, reset, FlushM, ~StallM, SmE, SmM);
+  flopenrc #($clog2(3*P.NF+7)+7+P.NE) EMRegFma4(clk, reset, FlushM, ~StallM,
     {FmaAStickyE, InvAE, SCntE, AsE, PsE, SsE, SeE},
     {FmaAStickyM, InvAM, SCntM, AsM, PsM, SsM, SeM});
   flopenrc #(P.NE+P.LOGCVTLEN+P.CVTLEN+4) EMRegCvt(clk, reset, FlushM, ~StallM, 

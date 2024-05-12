@@ -118,7 +118,7 @@ localparam LOGCVTLEN = $unsigned($clog2(CVTLEN+1));
 // RV32F: max(32+23+1, 2(23)+4, 3(23)+6) = 3*23+6 = 75
 // RV64F: max(64+23+1, 64 + 23 + 2, 3*23+6) = 89
 // RV64D: max(84+52+1, 64+52+2, 3*52+6) = 162
-localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1), (DIVb + 1 + NF + 1)), (3*NF+6));
+localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1), (DIVb + 1 + NF + 1)), (3*NF+8));
 
 localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));                  // log_2(NORMSHIFTSZ)
 localparam CORRSHIFTSZ = NORMSHIFTSZ-2;                             // Drop leading 2 integer bits
