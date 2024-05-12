@@ -260,7 +260,8 @@ typedef struct packed {
   logic [1:0] H_FMT;
 
 // Floating point length FLEN and number of exponent (NE) and fraction (NF) bits
-  int FLEN;
+  int         FLEN;
+  int         LOGFLEN;
   int         NE  ;
   int         NF  ;
   logic [1:0] FMT ;

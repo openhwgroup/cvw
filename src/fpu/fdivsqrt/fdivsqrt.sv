@@ -37,6 +37,8 @@ module fdivsqrt import cvw::*;  #(parameter cvw_t P) (
   input  logic                 XInfE, YInfE, 
   input  logic                 XZeroE, YZeroE, 
   input  logic                 XNaNE, YNaNE, 
+  input  logic [P.NE-2:0]      BiasE,                               // Bias of exponent
+  input  logic [P.LOGFLEN-1:0] NfE,                          // Number of fractional bits in selected format
   input  logic                 FDivStartE, IDivStartE,
   input  logic                 StallM,
   input  logic                 FlushE,
@@ -75,7 +77,7 @@ module fdivsqrt import cvw::*;  #(parameter cvw_t P) (
 
   fdivsqrtpreproc #(P) fdivsqrtpreproc(                          // Preprocessor
     .clk, .IFDivStartE, .Xm(XmE), .Ym(YmE), .Xe(XeE), .Ye(YeE),
-    .FmtE, .SqrtE, .XZeroE, .Funct3E, .UeM, .X, .D, .CyclesE,
+    .FmtE, .Bias(BiasE), .Nf(NfE), .SqrtE, .XZeroE, .Funct3E, .UeM, .X, .D, .CyclesE,
     // Int-specific 
     .ForwardedSrcAE, .ForwardedSrcBE, .IntDivE, .W64E, .ISpecialCaseE,
     .BZeroM, .IntNormShiftM, .AM, 

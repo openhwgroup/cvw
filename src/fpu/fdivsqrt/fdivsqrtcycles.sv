@@ -29,39 +29,14 @@
 
 module fdivsqrtcycles import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.FMTBITS-1:0] FmtE,
+  input  logic [P.LOGFLEN-1:0] Nf,          // Number of fractional bits in selected format
   input  logic                 SqrtE,
   input  logic                 IntDivE,
   input  logic [P.DIVBLEN-1:0] IntResultBitsE,    
   output logic [P.DURLEN-1:0]  CyclesE
 );
 
-  logic [P.DIVBLEN-1:0] Nf, FPResultBitsE, ResultBitsE; // number of fractional (result) bits
-
-  /* verilator lint_off WIDTH */
-  if (P.FPSIZES == 1)
-    assign Nf = P.NF;
-  else if (P.FPSIZES == 2)
-    always_comb
-      case (FmtE)
-        1'b0: Nf = P.NF1;
-        1'b1: Nf = P.NF;
-      endcase
-  else if (P.FPSIZES == 3)
-    always_comb
-      case (FmtE)
-        P.FMT:   Nf = P.NF;
-        P.FMT1:  Nf = P.NF1;
-        P.FMT2:  Nf = P.NF2; 
-        default: Nf = 'x; // shouldn't happen
-      endcase
-  else if (P.FPSIZES == 4)  
-    always_comb
-      case(FmtE)
-        P.S_FMT: Nf = P.S_NF;
-        P.D_FMT: Nf = P.D_NF;
-        P.H_FMT: Nf = P.H_NF;
-        P.Q_FMT: Nf = P.Q_NF;
-      endcase 
+  logic [P.DIVBLEN-1:0] FPResultBitsE, ResultBitsE; // number of fractional (result) bits
 
   // Cycle logic
   // P.DIVCOPIES = k. P.LOGR = log(R) = r.  P.RK = rk.  
@@ -70,6 +45,7 @@ module fdivsqrtcycles import cvw::*;  #(parameter cvw_t P) (
   // FP Sqrt needs at least Nf fractional bits and 2 guard/round bits.  The integer bit is always initialized to 1 and does not need a cycle.
   // The datapath produces rk bits per cycle, so Cycles = ceil (ResultBitsE / rk)
 
+  /* verilator lint_off WIDTH */
   always_comb begin 
     FPResultBitsE = Nf + 2 + P.LOGR; // Nf + two fractional bits for round/guard; integer bit implicit because starting at n=1
 

@@ -28,49 +28,21 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fdivsqrtexpcalc import cvw::*;  #(parameter cvw_t P) (
-  input  logic [P.FMTBITS-1:0] Fmt,
+  input  logic [P.NE-2:0]      Bias,      // Bias of exponent
   input  logic [P.NE-1:0]      Xe, Ye,    // input exponents
   input  logic                 Sqrt,
   input  logic [P.DIVBLEN-1:0] ell, m,    // number of leading 0s in Xe and Ye
   output logic [P.NE+1:0]      Ue         // result exponent
   );
-  
-  logic [P.NE-2:0] Bias;
+
   logic [P.NE+1:0] SXExp;
   logic [P.NE+1:0] SExp;
   logic [P.NE+1:0] DExp;
 
-  // Determine exponent bias according to the format
-  
-  if (P.FPSIZES == 1) begin
-    assign Bias = (P.NE-1)'(P.BIAS); 
-
-  end else if (P.FPSIZES == 2) begin
-    assign Bias = Fmt ? (P.NE-1)'(P.BIAS) : (P.NE-1)'(P.BIAS1); 
-
-  end else if (P.FPSIZES == 3) begin
-    always_comb
-      case (Fmt)
-        P.FMT: Bias  =  (P.NE-1)'(P.BIAS);
-        P.FMT1: Bias = (P.NE-1)'(P.BIAS1);
-        P.FMT2: Bias = (P.NE-1)'(P.BIAS2);
-        default: Bias = 'x;
-      endcase
-
-  end else if (P.FPSIZES == 4) begin        
-  always_comb
-    case (Fmt)
-      2'h3: Bias =  (P.NE-1)'(P.Q_BIAS);
-      2'h1: Bias =  (P.NE-1)'(P.D_BIAS);
-      2'h0: Bias =  (P.NE-1)'(P.S_BIAS);
-      2'h2: Bias =  (P.NE-1)'(P.H_BIAS);
-    endcase
-  end
-
   // Square root exponent = (Xe - l - bias) / 2 + bias; l accounts for subnorms
   assign SXExp = {2'b0, Xe} - {{(P.NE+1-P.DIVBLEN){1'b0}}, ell} - (P.NE+2)'(P.BIAS);
   assign SExp  = {SXExp[P.NE+1], SXExp[P.NE+1:1]} + {2'b0, Bias};
-  
+
   // division exponent = (Xe-l) - (Ye-m) + bias; l and m account for subnorms
   assign DExp  = ({2'b0, Xe} - {{(P.NE+1-P.DIVBLEN){1'b0}}, ell} - {2'b0, Ye} + {{(P.NE+1-P.DIVBLEN){1'b0}}, m} + {3'b0, Bias}); 
 

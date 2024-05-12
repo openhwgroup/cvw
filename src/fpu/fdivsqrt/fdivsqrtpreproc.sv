@@ -33,6 +33,8 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.NF:0]        Xm, Ym,      // Floating-point significands
   input  logic [P.NE-1:0]      Xe, Ye,      // Floating-point exponents
   input  logic [P.FMTBITS-1:0] FmtE,
+  input  logic [P.NE-2:0]      Bias,                               // Bias of exponent
+  input  logic [P.LOGFLEN-1:0] Nf,          // Number of fractional bits in selected format
   input  logic                 SqrtE,
   input  logic                 XZeroE,
   input  logic [2:0]           Funct3E,
@@ -209,11 +211,11 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   flopen #(P.DIVb+4) dreg(clk, IFDivStartE, {3'b000, Dnorm}, D);
  
   // Floating-point exponent
-  fdivsqrtexpcalc #(P) expcalc(.Fmt(FmtE), .Xe, .Ye, .Sqrt(SqrtE), .ell, .m(mE), .Ue(UeE));
+  fdivsqrtexpcalc #(P) expcalc(.Bias, .Xe, .Ye, .Sqrt(SqrtE), .ell, .m(mE), .Ue(UeE));
   flopen #(P.NE+2) expreg(clk, IFDivStartE, UeE, UeM);
 
   // Number of FSM cycles (to FSM)
-  fdivsqrtcycles #(P) cyclecalc(.FmtE, .SqrtE, .IntDivE, .IntResultBitsE, .CyclesE);
+  fdivsqrtcycles #(P) cyclecalc(.FmtE, .Nf, .SqrtE, .IntDivE, .IntResultBitsE, .CyclesE);
 
   if (P.IDIV_ON_FPU) begin:intpipelineregs
     logic [P.DIVBLEN-1:0] IntDivNormShiftE, IntRemNormShiftE, IntNormShiftE;

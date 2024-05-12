@@ -75,6 +75,7 @@ localparam NE   = Q_SUPPORTED ? Q_NE   : D_SUPPORTED ? D_NE   : S_NE;
 localparam NF   = Q_SUPPORTED ? Q_NF   : D_SUPPORTED ? D_NF   : S_NF;
 localparam FMT  = Q_SUPPORTED ? 2'd3   : D_SUPPORTED ? 2'd1   : 2'd0;
 localparam BIAS = Q_SUPPORTED ? Q_BIAS : D_SUPPORTED ? D_BIAS : S_BIAS;
+localparam LOGFLEN = $clog2(FLEN);
 
 // Floating point constants needed for FPU paramerterization
 // LEN1/NE1/NF1/FNT1 is the size of the second longest supported format
@@ -124,7 +125,8 @@ localparam LOGCVTLEN = $unsigned($clog2(CVTLEN+1));
 //     because NORMSHIFTSZ becomes limited by convert rather than divider
 //     Figure out why extra two bits are needed for convert (and only in testbench_fp, not Wally)
 //     Might be a testbench_fp issue
-localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1+2), (DIVb + 1 + NF + 1)), (3*NF+6));
+//localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1+2), (DIVb + 1 + NF + 1)), (3*NF+6));
+localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1), (DIVb + 1 + NF + 1)), (3*NF+6));
 
 localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));                  // log_2(NORMSHIFTSZ)
 localparam CORRSHIFTSZ = NORMSHIFTSZ-2;                             // Drop leading 2 integer bits
