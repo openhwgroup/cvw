@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fmaadd import cvw::*;  #(parameter cvw_t P) (
-  input  logic [3*P.NF+3:0]    Am,         // aligned addend's mantissa for addition in U(NF+5.2NF+1)
+  input  logic [3*P.NF+5:0]    Am,         // aligned addend's mantissa for addition in U(NF+5.2NF+1)
   input  logic [P.NE-1:0]      Ze,         // exponent of Z
   input  logic                 Ps,         // the product sign and the alligend addeded's sign (Modified Z sign for other operations)
   input  logic [P.NE+1:0]      Pe,         // product's exponet
@@ -36,14 +36,14 @@ module fmaadd import cvw::*;  #(parameter cvw_t P) (
   input  logic                 InvA,       // invert the aligned addend
   input  logic                 KillProd,   // should the product be set to 0
   input  logic                 ASticky,    // Alighed addend's sticky bit
-  output logic [3*P.NF+3:0]    AmInv,      // aligned addend possibly inverted
+  output logic [3*P.NF+5:0]    AmInv,      // aligned addend possibly inverted
   output logic [2*P.NF+1:0]    PmKilled,   // the product's mantissa possibly killed
   output logic                 Ss,         // sum's sign    
   output logic [P.NE+1:0]      Se,         // sum's exponent
-  output logic [3*P.NF+3:0]    Sm          // the positive sum
+  output logic [3*P.NF+5:0]    Sm          // the positive sum
 );
 
-  logic [3*P.NF+3:0]    PreSum, NegPreSum; // possibly negative sum
+  logic [3*P.NF+5:0]    PreSum, NegPreSum; // possibly negative sum
   logic                 NegSum;            // was the sum negative
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -62,8 +62,8 @@ module fmaadd import cvw::*;  #(parameter cvw_t P) (
   //      addend - prod where product is killed (and not exactly zero) then don't add +1 from negation 
   //          ie ~(InvA&ASticky&KillProd)&InvA = (~ASticky|~KillProd)&InvA
   //          in this case this result is only ever selected when InvA=1 so we can remove &InvA
-  assign {NegSum, PreSum} = {{P.NF+2{1'b0}}, PmKilled, 1'b0} + {InvA, AmInv} + {{3*P.NF+4{1'b0}}, (~ASticky|KillProd)&InvA};
-  assign NegPreSum = Am + {{P.NF+1{1'b1}}, ~PmKilled, 1'b0} + {(3*P.NF+2)'(0), ~ASticky|~KillProd, 1'b0};
+  assign {NegSum, PreSum} = {{P.NF+3{1'b0}}, PmKilled, 2'b0} + {InvA, AmInv} + {{3*P.NF+5{1'b0}}, (~ASticky|KillProd)&InvA};
+  assign NegPreSum = Am + {{P.NF+2{1'b1}}, ~PmKilled, 2'b0} + {(3*P.NF+3)'(0), ~ASticky|~KillProd, 2'b0};
     
   // Choose the positive sum and accompanying LZA result.
   assign Sm = NegSum ? NegPreSum : PreSum;

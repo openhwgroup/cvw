@@ -125,8 +125,8 @@ localparam LOGCVTLEN = $unsigned($clog2(CVTLEN+1));
 //     because NORMSHIFTSZ becomes limited by convert rather than divider
 //     Figure out why extra two bits are needed for convert (and only in testbench_fp, not Wally)
 //     Might be a testbench_fp issue
-//localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1+2), (DIVb + 1 + NF + 1)), (3*NF+6));
-localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1), (DIVb + 1 + NF + 1)), (3*NF+6));
+//localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1+2), (DIVb + 1 + NF + 1)), (3*NF+8));
+localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1), (DIVb + 1 + NF + 1)), (3*NF+8));
 
 localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));                  // log_2(NORMSHIFTSZ)
 localparam CORRSHIFTSZ = NORMSHIFTSZ-2;                             // Drop leading 2 integer bits
