@@ -48,11 +48,8 @@ module packoutput import cvw::*;  #(parameter cvw_t P) (
   if (P.FPSIZES == 1) begin
     assign Packed = Unpacked;
   end else if (P.FPSIZES == 2) begin
-    int NF = P.NF;
-    int NE1 = P.NE1;
-    int top = P.NF + P.NE1-2;
-    int bot = P.NF - P.NF1;
-    always_comb
+    always_comb begin
+      {Exp1, Fract1} = '0; // default if not used, to prevent latch
       case (Fmt)
         1'b1: Packed = Unpacked;
         1'b0: begin
@@ -61,8 +58,10 @@ module packoutput import cvw::*;  #(parameter cvw_t P) (
                 Packed = {{(P.FLEN-P.LEN1){1'b1}}, Sign, Exp1, Fract1}; 
               end
       endcase
+    end
   end else if (P.FPSIZES == 3) begin
-    always_comb
+    always_comb begin
+      {Exp1, Fract1, Exp2, Fract2} = '0; // default if not used, to prevent latch
       case (Fmt)
         P.FMT: Packed = Unpacked;
         P.FMT1: begin
@@ -77,8 +76,10 @@ module packoutput import cvw::*;  #(parameter cvw_t P) (
               end
         default: Packed = 'x;
       endcase
+    end
   end else if (P.FPSIZES == 4) begin        
-    always_comb
+    always_comb begin
+      {Exp1, Fract1, Exp2, Fract2, Exp3, Fract3} = '0; // default if not used, to prevent latch
       case (Fmt)
         2'h3: Packed = Unpacked;  // Quad
         2'h1: begin // double
@@ -97,5 +98,6 @@ module packoutput import cvw::*;  #(parameter cvw_t P) (
                 Packed = {{(P.FLEN-P.H_LEN){1'b1}}, Sign, Exp3, Fract3}; 
               end
       endcase
+    end
   end
 endmodule
