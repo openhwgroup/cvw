@@ -71,6 +71,8 @@ module riscvassertions import cvw::*; #(parameter cvw_t P);
     assert ((P.C_SUPPORTED == 1) || !(P.ZCA_SUPPORTED == 1 && P.ZCD_SUPPORTED == 1 && (P.ZCF_SUPPORTED == 1 || P.XLEN == 64))) else $fatal(1, "Must enable C MISA bit if Zca and Zcd (and Zcf on RV32) are supported");
     assert ((P.LLEN == P.XLEN) || (P.DCACHE_SUPPORTED)) else $fatal(1, "LLEN > XLEN (D on RV32 or Q on RV64) requires data cache");
     assert (P.A_SUPPORTED + P.ZAAMO_SUPPORTED + P.ZALRSC_SUPPORTED < 2) else $fatal(1, "At most one of A, Zaamo, or Zalrsc can be supported");
+    assert ((P.B_SUPPORTED == 0) || (P.ZBA_SUPPORTED == 1 && P.ZBB_SUPPORTED == 1 && P.ZBS_SUPPORTED == 1)) else $fatal(1, "B needs ZBA + ZBB + ZBS");
+    assert ((P.B_SUPPORTED == 1) || !(P.ZBA_SUPPORTED == 1 && P.ZBB_SUPPORTED == 1 && P.ZBS_SUPPORTED)) else $fatal(1, "Must enable B MISA bit if ZBA + ZBB + ZBS are supported");  
   end
 
 endmodule

@@ -25,7 +25,7 @@ localparam SV48 = 4'd9;
 
 // macros to define supported modes
 localparam A_SUPPORTED = ((MISA >> 0) % 2 == 1);
-localparam B_SUPPORTED = ((ZBA_SUPPORTED | ZBB_SUPPORTED | ZBC_SUPPORTED | ZBS_SUPPORTED));// not based on MISA
+localparam B_SUPPORTED = ((MISA >> 1) % 2 == 1);
 localparam C_SUPPORTED = ((MISA >> 2) % 2 == 1);
 localparam D_SUPPORTED = ((MISA >> 3) % 2 == 1);
 localparam E_SUPPORTED = ((MISA >> 4) % 2 == 1);

@@ -34,7 +34,7 @@ localparam XLEN = 32'd64;
 localparam IEEE754 = 0;
 
 // MISA RISC-V configuration per specification
-localparam MISA = (32'h00000104 |  1 << 5 | 1 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0);
+localparam MISA = (32'h00000104 |  1 << 5 | 1 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0 | 1 << 1);
 localparam ZICSR_SUPPORTED = 1;
 localparam ZIFENCEI_SUPPORTED = 1;
 localparam COUNTERS = 12'd32;
