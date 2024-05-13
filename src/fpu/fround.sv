@@ -28,60 +28,34 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fround import cvw::*;  #(parameter cvw_t P) (
+  input  logic [P.FLEN-1:0]       X,            // input before unpacking
   input  logic                    Xs,           // input's sign
   input  logic [P.NE-1:0]         Xe,           // input's exponent
-  input  logic [P.NF:0]           Xm,           // input's fraction
+  input  logic [P.NF:0]           Xm,           // input's fraction with leading integer bit (U1.NF)
   input  logic                    XNaN,         // X is NaN
   input  logic                    XSNaN,        // X is Signalling NaN
   input  logic                    XZero,        // X is Zero
   input  logic [P.FMTBITS-1:0]    Fmt,          // the input's precision (11=quad 01=double 00=single 10=half)
+  input  logic [2:0]              Frm,          // rounding mode
+  input  logic [P.LOGFLEN-1:0]    Nf,           // Number of fractional bits in selected format
+  input  logic                    ZfaFRoundNX,  // froundnx instruction can set inexact flag
   output logic [P.FLEN-1:0]       FRound,       // Rounded result
-  output logic [4:0]              FRoundFlags   // Rounder flags
+  output logic                    FRoundNV,     // fround invalid
+  output logic                    FRoundNX      // fround inexact
 );
 
-  logic [P.NE-2:0] Bias;
-  logic [P.NE-1:0] E;
-  logic [P.NF:0] Imask, Tmasknonneg, Tmaskneg, Tmask, HotE, HotEP1, Trunc, Rnd;
-  logic Lnonneg, Lp, Rnonneg, Rp, Tp;
-
-  //////////////////////////////////////////
-  // Determine exponent bias according to the format
-  //////////////////////////////////////////
-  // *** replicated from fdivsqrt; find a way to share
-  
-  if (P.FPSIZES == 1) begin
-    assign Bias = (P.NE-1)'(P.BIAS); 
-
-  end else if (P.FPSIZES == 2) begin
-    assign Bias = Fmt ? (P.NE-1)'(P.BIAS) : (P.NE-1)'(P.BIAS1); 
-
-  end else if (P.FPSIZES == 3) begin
-    always_comb
-      case (Fmt)
-        P.FMT: Bias  =  (P.NE-1)'(P.BIAS);
-        P.FMT1: Bias = (P.NE-1)'(P.BIAS1);
-        P.FMT2: Bias = (P.NE-1)'(P.BIAS2);
-        default: Bias = 'x;
-      endcase
-
-  end else if (P.FPSIZES == 4) begin        
-  always_comb
-    case (Fmt)
-      2'h3: Bias =  (P.NE-1)'(P.Q_BIAS);
-      2'h1: Bias =  (P.NE-1)'(P.D_BIAS);
-      2'h0: Bias =  (P.NE-1)'(P.S_BIAS);
-      2'h2: Bias =  (P.NE-1)'(P.H_BIAS);
-    endcase
-  end
-
-/*
+  logic [P.NE-1:0] E, Xep1, EminusNf;
+  logic [P.NF:0] IMask, Tmasknonneg, Tmaskneg, Tmask, HotE, HotEP1, Trunc, Rnd;
+  logic [P.FLEN-1:0] W, PackedW;
+  logic Elt0, Eeqm1, Lnonneg, Lp, Rnonneg, Rp, Tp, RoundUp, Two, EgeNf, Exact;
 
   // Unbiased exponent
-  assign E = Xe - Bias;
+  assign E = Xe - P.BIAS[P.NE-1:0];
+  assign Xep1 = Xe + 1;
 
   //////////////////////////////////////////
   // Compute LSB L', rounding bit R' and Sticky bit T'
-  //      if (E < 0)					// negative exponents round to 0 or 1.  
+  //      if (E < 0)					// negative exponents round to 0 or 1.
   //              L' = 0      // LSB = 0
   //              if (E = -1) R' = 1, TMask = 0.1111...111	// if (E = -1) 0.5  X < 1.  Round bit is 1
   //              else R' = 0; TMask = 1.1111...111  	// if (E < -1), X < 0.5.  Round bit is 0
@@ -100,26 +74,25 @@ module fround import cvw::*;  #(parameter cvw_t P) (
   //////////////////////////////////////////
 
   // Check if exponent is negative and -1
-  assign Elt0 = (E < 0);
-  assign Eeqm1 = (E == -1);
+  assign Elt0 = E[P.NE-1]; // (E < 0);
+  assign Eeqm1 = ($signed(E) == -1);
 
   // Logic for nonnegative mask and rounding bits
-  assign Imask = {1'b1, {P.NF{1'b0}}} >>> E;
+  assign IMask = {1'b1, {P.NF{1'b0}}} >>> E;
   assign Tmasknonneg = ~(IMask >>> 1'b1);
-  assign HotE = IMask & !(IMask << 1'b1);
+  assign HotE = IMask & ~(IMask << 1'b1);
   assign HotEP1 = HotE >> 1'b1;
   assign Lnonneg = |(Xm & HotE);
   assign Rnonneg = |(Xm & HotEP1);
-  assign Trunc = Xm & Imask;
-  assign Rnd = Trunc + HotE;
-   
+  assign Trunc = Xm & IMask;
+  assign {Two, Rnd} = Trunc + HotE; // Two means result is 10.000000 = 2.0
+
   // mux and AND-OR logic to select final rounding bits
   mux2 #(1) Lmux(Lnonneg, 1'b0, Elt0, Lp);
   mux2 #(1) Rmux(Rnonneg, Eeqm1, Elt0, Rp);
   assign Tmaskneg = {~Eeqm1, {P.NF{1'b1}}}; // 1.11111 or 0.11111
   mux2 #(P.NF+1) Tmaskmux(Tmasknonneg, Tmaskneg, Elt0, Tmask);
   assign Tp = |(Xm & Tmask);
-
 
   ///////////////////////////
   // Rounding, flags, special Cases 
@@ -144,11 +117,15 @@ module fround import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////
 
   // Exact logic
-  assign Exact = (E >= Nf | XZero); // result will be exact; no need to round
+  /* verilator lint_off WIDTH */
+  assign EminusNf = E - Nf;
+  /* verilator lint_on WIDTH */
+  assign EgeNf = ~EminusNf[P.NE-1] & (~E[P.NE-1] | E[P.NE-2:0] == '0); // E >= Nf if MSB of E-Nf is 0 and E was positive 
+  assign Exact = (EgeNf | XZero) & ~XNaN; // result will be exact; no need to round
 
   // Rounding logic: determine whether to round up in magnitude
-  always_comb
-    case (Rm) // *** make sure this includes dynamic
+  always_comb begin
+    case (Frm) // Frm is either specified in the instruction or is the dynamic rounding mode
       3'b000:  RoundUp = Rp & (Lp | Tp);  // RNE
       3'b001:  RoundUp = 0;               // RZ
       3'b010:  RoundUp = Xs & (Rp | Tp);  // RN
@@ -157,22 +134,23 @@ module fround import cvw::*;  #(parameter cvw_t P) (
       default: RoundUp = 0;               // should never happen
     endcase
 
-    // output logic
-    if (XNaN) W = CanonicalNan; // ***
-    else if (Exact) W = X;
-    else if (Elt0) 
-      if (RoundUp) W = {Xs, bias, {P.NF}} // *** format conversions
+    // If result is not exact, select output in unpacked FLEN format initially
+    if (XNaN) W = {1'b0, {P.NE{1'b1}}, 1'b1, {(P.NF-1){1'b0}}}; // Canonical NaN
+    else if (Elt0) // 0 <= |X| < 1 rounds to 0 or 1
+      if (RoundUp) W = {Xs, P.BIAS[P.NE-1:0], {P.NF{1'b0}}}; // round to +/- 1
+      else         W = {Xs, {(P.FLEN-1){1'b0}}}; // round to +/- 0
+    else begin // |X| > 1 rounds to an integer
+      if (RoundUp & Two) W = {Xs, Xep1, {(P.NF){1'b0}}}; // Round up to 2.0
+      else if (RoundUp)  W = {Xs, Xe, Rnd[P.NF-1:0]};      // Round up to Rnd
+      else               W = {Xs, Xe, Trunc[P.NF-1:0]};    // Round down to Trunc
+    end
+  end
 
-      *** may not need to round to infinity; update docs and pseudocode above
-
-  always_comb
+  packoutput #(P) packoutput(W, Fmt, PackedW); // pack and NaN-box based on selected format.
+  mux2 #(P.FLEN) resultmux(PackedW, X, Exact, FRound);
 
   // Flags
-  assign Invalid = XSNaN;
-  assign Inexact = FRoundNX & ~(XNaN | Exact) & (Rp | T'); 
- */
-
-  assign FRound = '0;
-  assign FRoundFlags = '0;
+  assign FRoundNV = XSNaN;                                        // invalid if input is signaling NaN
+  assign FRoundNX = ZfaFRoundNX & ~(XNaN | Exact) & (Rp | Tp);    // Inexact if Round or Sticky bit set for FRoundNX instruction
 
 endmodule

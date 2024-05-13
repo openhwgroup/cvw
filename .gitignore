@@ -213,9 +213,10 @@ sim/vcs/ucli.key
 sim/vcs/verdi_config_file
 sim/*/testbench.vcd 
 sim/questa/imperas.log
-sim/questa/regression.log
-sim/questa/regression_logs/*
-sim/questa/regression_ucdbs/*
+sim/questa/functcov.log
+sim/questa/functcov_logs/*
+sim/questa/functcov_ucdbs/*
+sim/questa/functcov
 sim/questa/riscv.ucdb
 sim/questa/riscv.ucdb.log
 sim/questa/riscv.ucdb.summary.log
@@ -230,3 +231,7 @@ examples/verilog/fulladder/simprofile_dir/
 examples/verilog/fulladder/simv.daidir/
 examples/verilog/fulladder/ucli.key
 examples/verilog/fulladder/verdi_config_file
+tests/functcov
+tests/functcov/*
+tests/functcov/*/*
+sim/vcs/simprofile*

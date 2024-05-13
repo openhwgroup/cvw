@@ -28,9 +28,9 @@ tests = [
         ["rv32i", ["arch32i"]],
         ["rv32imc", ["arch32i", "arch32c", "arch32m", "wally32periph"]],
         ["rv32gc", ["arch32f", "arch32d", "arch32f_fma", "arch32d_fma", "arch32f_divsqrt", "arch32d_divsqrt", 
-                    "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32a", "arch32zifencei", "arch32zicond", 
+                    "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32a_amo", "arch32zifencei", "arch32zicond", 
                     "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "arch32zfh", "arch32zfh_fma", 
-                    "arch32zfh_divsqrt", "arch32zfaf", "arch32zfad", "wally32a", "wally32priv", "wally32periph", "arch32zcb",
+                    "arch32zfh_divsqrt", "arch32zfaf", "arch32zfad", "wally32a_lrsc", "wally32priv", "wally32periph", "arch32zcb",
                     "arch32zbkb", "arch32zbkc", "arch32zbkx", "arch32zknd", "arch32zkne", "arch32zknh"]], 
          ["rv64i", ["arch64i"]]
         ]
@@ -51,7 +51,7 @@ tests_buildrootboot = [
 # Separate out floating-point tests for RV64 to speed up coverage
 tests64gc_nofp = [
         ["rv64gc", ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m", "arch64zcb",
-                    "arch64zifencei", "arch64zicond", "arch64a", "wally64a", "wally64periph", "wally64priv", 
+                    "arch64zifencei", "arch64zicond", "arch64a_amo", "wally64a_lrsc", "wally64periph", "wally64priv", 
                     "arch64zbkb", "arch64zbkc", "arch64zbkx", "arch64zknd", "arch64zkne", "arch64zknh",
                     "arch64zba",  "arch64zbb",  "arch64zbc", "arch64zbs"]] # add when working:  "arch64zicboz"
     ]
@@ -93,6 +93,12 @@ derivconfigtests = [
         ["nodcache_rv64gc", ["ahb64"]],
         ["nocache_rv64gc", ["ahb64"]],
 
+# Atomic variatnts
+        ["zaamo_rv64gc", ["arch64i", "arch64a_amo"]],
+        ["zalrsc_rv64gc", ["arch64i", "wally64a_lrsc"]],
+        ["zaamo_rv32gc", ["arch32i", "arch32a_amo"]],
+        ["zalrsc_rv32gc", ["arch32i", "wally32a_lrsc"]],
+
         ### add misaligned tests
 
         # fp/int divider permutations
@@ -119,19 +125,19 @@ derivconfigtests = [
         ["div_4_2_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
         ["div_4_2i_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
         ["div_4_4_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
-        ["div_4_4i_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
+        ["div_4_4i_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]], 
 
         # fpu permutations
-        ["f_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma"]],
-        ["fh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32zfh", "arch32zfh_divsqrt"]],
-        ["fdh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32zfh", "arch32zfh_divsqrt"]],
-        ["fdq_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32i"]],
-        ["fdqh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32zfh", "arch32zfh_divsqrt", "arch32i"]],
-        ["f_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma"]],
-        ["fh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64zfh", "arch64zfh_divsqrt"]], 
-        ["fdh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64zfh", "arch64zfh_divsqrt"]],
-        ["fdq_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64i"]],
-        ["fdqh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64zfh", "arch64zfh_divsqrt", "arch64i", "wally64q"]],
+        ["f_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32zfaf"]],
+        ["fh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32zfh", "arch32zfh_divsqrt", "arch32zfaf"]],
+        ["fdh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32zfh", "arch32zfh_divsqrt", "arch32zfaf", "arch32zfad"]],
+        ["fdq_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32i", "arch32zfaf", "arch32zfad"]],
+        ["fdqh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32zfh", "arch32zfh_divsqrt", "arch32i", "arch32zfaf", "arch32zfad"]],
+        ["f_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64zfaf"]],
+        ["fh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64zfh", "arch64zfh_divsqrt", "arch64zfaf"]], 
+        ["fdh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64zfh", "arch64zfh_divsqrt", "arch64zfaf", "arch64zfad"]],
+        ["fdq_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64i", "arch64zfaf", "arch64zfad"]],
+        ["fdqh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64zfh", "arch64zfh_divsqrt", "arch64i", "wally64q", "arch64zfaf", "arch64zfad"]],
     ]
 
 bpredtests = [
@@ -273,6 +279,7 @@ regressionDir = WALLY + '/sim'
 os.chdir(regressionDir)
 
 coveragesim = "questa"  # Questa is required for code/functional coverage
+#defaultsim = "vcs"   # Default simulator for all other tests; change to Verilator when flow is ready
 defaultsim = "questa"   # Default simulator for all other tests; change to Verilator when flow is ready
 #defaultsim = "verilator"   # Default simulator for all other tests
 
@@ -283,7 +290,8 @@ testfloat = '--testfloat' in sys.argv
 
 if (nightly):
     nightMode = "--nightly";
-    sims = [defaultsim] 
+#    sims = [defaultsim] 
+    sims = ["questa", "vcs"] 
 #    sims = ["questa", "verilator", "vcs"] # *** uncomment to exercise all simulators
 else:
     nightMode = ""
@@ -323,9 +331,9 @@ else:
     addTests(tests_buildrootshort, defaultsim)
 
 # testfloat tests
-if (testfloat):
+if (testfloat): # for testfloat alone, just run testfloat tests
     configs = []
-
+if (testfloat or nightly): # for nightly, run testfloat along with othres
     testfloatconfigs = ["fdqh_ieee_rv64gc", "fdq_ieee_rv64gc", "fdh_ieee_rv64gc", "fd_ieee_rv64gc", "fh_ieee_rv64gc", "f_ieee_rv64gc", "fdqh_ieee_rv32gc", "f_ieee_rv32gc"]
     for config in testfloatconfigs:
         tests = ["div", "sqrt", "add", "sub", "mul", "cvtint", "cvtfp", "fma", "cmp"]

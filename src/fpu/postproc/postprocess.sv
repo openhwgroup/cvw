@@ -44,9 +44,9 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   input logic                              FmaPs,               // the product's sign
   input logic                              FmaSs,               // Sum sign
   input logic  [P.NE+1:0]                  FmaSe,               // the sum's exponent
-  input logic  [3*P.NF+3:0]                FmaSm,               // the positive sum
+  input logic  [3*P.NF+5:0]                FmaSm,               // the positive sum
   input logic                              FmaASticky,          // sticky bit that is calculated during alignment
-  input logic  [$clog2(3*P.NF+5)-1:0]      FmaSCnt,             // the normalization shift count
+  input logic  [$clog2(3*P.NF+7)-1:0]      FmaSCnt,             // the normalization shift count
   //divide signals
   input logic                              DivSticky,           // divider sticky bit
   input logic  [P.NE+1:0]                  DivUe,               // divsqrt exponent
@@ -86,7 +86,7 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   // fma signals
   logic [P.NE+1:0]             FmaMe;                // exponent of the normalized sum
   logic                        FmaSZero;             // is the sum zero
-  logic [3*P.NF+5:0]           FmaShiftIn;           // fma shift input
+  logic [3*P.NF+7:0]           FmaShiftIn;           // fma shift input
   logic [P.NE+1:0]             NormSumExp;           // exponent of the normalized sum not taking into account Subnormal or zero results
   logic                        FmaPreResultSubnorm;  // is the result subnormal - calculated before LZA corection
   logic [$clog2(3*P.NF+5)-1:0] FmaShiftAmt;          // normalization shift amount for fma
@@ -155,7 +155,7 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
     case(PostProcSel)
       2'b10: begin // fma
         ShiftAmt = {{P.LOGNORMSHIFTSZ-$clog2(3*P.NF+5){1'b0}}, FmaShiftAmt};
-        ShiftIn  =  {FmaShiftIn, {P.NORMSHIFTSZ-(3*P.NF+6){1'b0}}};
+        ShiftIn  =  {FmaShiftIn, {P.NORMSHIFTSZ-(3*P.NF+8){1'b0}}};
       end
       2'b00: begin // cvt
         ShiftAmt = {{P.LOGNORMSHIFTSZ-$clog2(P.CVTLEN+1){1'b0}}, CvtShiftAmt};

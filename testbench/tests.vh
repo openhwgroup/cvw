@@ -927,12 +927,12 @@ string imperas32f[] = '{
     "rv64i_m/Q/src/WALLY-q-01.S"
   };
 
- string wally64a[] = '{
+ string wally64a_lrsc[] = '{
     `WALLYTEST,
     "rv64i_m/privilege/src/WALLY-lrsc-01.S"
   };
 
- string wally32a[] = '{
+ string wally32a_lrsc[] = '{
     `WALLYTEST,
     "rv32i_m/privilege/src/WALLY-lrsc-01.S"
  };
@@ -974,7 +974,7 @@ string imperas32f[] = '{
     "rv64i_m/Zicond/src/czero.nez-01.S"
     };
 
-  string arch32a[] = '{
+  string arch32a_amo[] = '{
     `RISCVARCHTEST,
     "rv32i_m/A/src/amoadd.w-01.S",
     "rv32i_m/A/src/amoand.w-01.S",
@@ -1136,7 +1136,7 @@ string imperas32f[] = '{
     "rv64i_m/M/src/remw-01.S"
    };
 
-  string arch64a[] = '{
+  string arch64a_amo[] = '{
     `RISCVARCHTEST,
     "rv64i_m/A/src/amoadd.w-01.S",
     "rv64i_m/A/src/amoand.w-01.S",
@@ -1307,6 +1307,24 @@ string imperas32f[] = '{
     "rv64i_m/F/src/fadd_b7-01.S",
     "rv64i_m/F/src/fadd_b8-01.S",
     "rv64i_m/F/src/fclass_b1-01.S",
+    "rv64i_m/F/src/fcvt.s.l_b25-01.S", 
+    "rv64i_m/F/src/fcvt.s.l_b26-01.S",
+    "rv64i_m/F/src/fcvt.s.lu_b25-01.S",
+    "rv64i_m/F/src/fcvt.s.lu_b26-01.S",
+    "rv64i_m/F/src/fcvt.l.s_b1-01.S",
+    "rv64i_m/F/src/fcvt.l.s_b22-01.S",
+    "rv64i_m/F/src/fcvt.l.s_b23-01.S",
+    "rv64i_m/F/src/fcvt.l.s_b24-01.S",
+    "rv64i_m/F/src/fcvt.l.s_b27-01.S",
+    "rv64i_m/F/src/fcvt.l.s_b28-01.S",
+    "rv64i_m/F/src/fcvt.l.s_b29-01.S",
+    "rv64i_m/F/src/fcvt.lu.s_b1-01.S",
+    "rv64i_m/F/src/fcvt.lu.s_b22-01.S",
+    "rv64i_m/F/src/fcvt.lu.s_b23-01.S",
+    "rv64i_m/F/src/fcvt.lu.s_b24-01.S",
+    "rv64i_m/F/src/fcvt.lu.s_b27-01.S",
+    "rv64i_m/F/src/fcvt.lu.s_b28-01.S",
+    "rv64i_m/F/src/fcvt.lu.s_b29-01.S",
     "rv64i_m/F/src/fcvt.s.w_b25-01.S",
     "rv64i_m/F/src/fcvt.s.w_b26-01.S",
     "rv64i_m/F/src/fcvt.s.wu_b25-01.S",
@@ -1623,7 +1641,7 @@ string imperas32f[] = '{
   string arch64d[] = '{
     `RISCVARCHTEST,
     // for speed
-   "rv64i_m/D/src/fadd.d_b10-01.S",
+    "rv64i_m/D/src/fadd.d_b10-01.S",
     "rv64i_m/D/src/fadd.d_b1-01.S",
     "rv64i_m/D/src/fadd.d_b11-01.S",
     "rv64i_m/D/src/fadd.d_b12-01.S",
@@ -2260,6 +2278,7 @@ string arch64zknh[] = '{
   string arch32zfaf[] = '{
     //`RISCVARCHTEST,
     `WALLYTEST,
+    "rv32i_m/F_Zfa/src/fround_b1-01.S",
     "rv32i_m/F_Zfa/src/fleq_b1-01.S",
     "rv32i_m/F_Zfa/src/fleq_b19-01.S", 
     "rv32i_m/F_Zfa/src/fli.s-01.S",
@@ -2271,12 +2290,12 @@ string arch64zknh[] = '{
     "rv32i_m/F_Zfa/src/fminm_b19-01.S",
     "rv32i_m/F_Zfa/src/fmaxm_b1-01.S",
     "rv32i_m/F_Zfa/src/fmaxm_b19-01.S"
-/*    "rv32i_m/F_Zfa/src/fround_b1-01.S" */
   };
 
   string arch32zfad[] = '{
     //`RISCVARCHTEST,
     `WALLYTEST,
+    "rv32i_m/D_Zfa/src/fround_b1-01.S",
     "rv32i_m/D_Zfa/src/fcvtmod.w.d_b1-01.S",
     "rv32i_m/D_Zfa/src/fcvtmod.w.d_b22-01.S",
     "rv32i_m/D_Zfa/src/fcvtmod.w.d_b23-01.S",
@@ -2308,12 +2327,12 @@ string arch64zknh[] = '{
     "rv32i_m/D_Zfa/src/fmvh.x.d_b27-01.S",
     "rv32i_m/D_Zfa/src/fmvh.x.d_b28-01.S",
     "rv32i_m/D_Zfa/src/fmvh.x.d_b29-01.S"
-/*    "rv32i_m/D_Zfa/src/fround_b1-01.S" */
   };
 
   string arch64zfaf[] = '{
     //`RISCVARCHTEST,
     `WALLYTEST,
+    "rv64i_m/F_Zfa/src/fround_b1-01.S",
     "rv64i_m/F_Zfa/src/fleq_b1-01.S",
     "rv64i_m/F_Zfa/src/fleq_b19-01.S", 
     "rv64i_m/F_Zfa/src/fli.s-01.S",
@@ -2323,12 +2342,12 @@ string arch64zknh[] = '{
     "rv64i_m/F_Zfa/src/fminm_b19-01.S",
     "rv64i_m/F_Zfa/src/fmaxm_b1-01.S",
     "rv64i_m/F_Zfa/src/fmaxm_b19-01.S"
-/*    "rv64i_m/F_Zfa/src/fround_b1-01.S" */
   };
 
   string arch64zfad[] = '{
     //`RISCVARCHTEST,
     `WALLYTEST,
+     "rv64i_m/D_Zfa/src/fround_b1-01.S",
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b1-01.S",
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b22-01.S", 
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b23-01.S",
@@ -2345,7 +2364,7 @@ string arch64zknh[] = '{
     "rv64i_m/D_Zfa/src/fminm_b19-01.S",
     "rv64i_m/D_Zfa/src/fmaxm_b1-01.S",
     "rv64i_m/D_Zfa/src/fmaxm_b19-01.S"
-/*     "rv64i_m/D_Zfa/src/fround_b1-01.S" */
+
   };
 
   string arch32d_fma[] = '{

@@ -75,6 +75,7 @@ localparam NE   = Q_SUPPORTED ? Q_NE   : D_SUPPORTED ? D_NE   : S_NE;
 localparam NF   = Q_SUPPORTED ? Q_NF   : D_SUPPORTED ? D_NF   : S_NF;
 localparam FMT  = Q_SUPPORTED ? 2'd3   : D_SUPPORTED ? 2'd1   : 2'd0;
 localparam BIAS = Q_SUPPORTED ? Q_BIAS : D_SUPPORTED ? D_BIAS : S_BIAS;
+localparam LOGFLEN = $clog2(FLEN);
 
 // Floating point constants needed for FPU paramerterization
 // LEN1/NE1/NF1/FNT1 is the size of the second longest supported format
@@ -118,7 +119,14 @@ localparam LOGCVTLEN = $unsigned($clog2(CVTLEN+1));
 // RV32F: max(32+23+1, 2(23)+4, 3(23)+6) = 3*23+6 = 75
 // RV64F: max(64+23+1, 64 + 23 + 2, 3*23+6) = 89
 // RV64D: max(84+52+1, 64+52+2, 3*52+6) = 162
-localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1), (DIVb + 1 + NF + 1)), (3*NF+6));
+// *** DH 5/10/24 testbench_fp f_ieee_div_2_1_rv64gc cvtint was failing for fcvt.lu.s
+//     with CVTLEN+NF+1.  Changing to CVTLEN+NF+1+2 fixes failures
+//     This same failure occurred for any test with IDIV_ON_FPU = 0, FLEN=32, XLEN=64
+//     because NORMSHIFTSZ becomes limited by convert rather than divider
+//     The two extra bits are necessary because shiftcorrection dropped them for fcvt.
+//     May be possible to remove these two bits by modifying shiftcorrection
+localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1+2), (DIVb + 1 + NF + 1)), (3*NF+8));
+//localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1), (DIVb + 1 + NF + 1)), (3*NF+8));
 
 localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));                  // log_2(NORMSHIFTSZ)
 localparam CORRSHIFTSZ = NORMSHIFTSZ-2;                             // Drop leading 2 integer bits

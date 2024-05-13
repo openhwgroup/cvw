@@ -48,7 +48,7 @@ sudo apt update -y
 sudo apt upgrade -y
 sudo apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev libglib2.0-dev python3-pip pkg-config opam z3 zlib1g-dev automake autotools-dev libmpc-dev libmpfr-dev  gperf libtool patchutils bc mutt ssmtp
 # Other python libraries used through the book.
-sudo pip3 install sphinx sphinx_rtd_theme matplotlib scipy scikit-learn adjustText lief markdown 
+sudo -H pip3 install sphinx sphinx_rtd_theme matplotlib scipy scikit-learn adjustText lief markdown pyyaml
 
 # needed for Ubuntu 22.04, gcc cross compiler expects python not python2 or python3.
 if ! command -v python &> /dev/null
@@ -183,8 +183,8 @@ sudo ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV64 /usr/bin/riscv_sim_RV64
 sudo ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV32 /usr/bin/riscv_sim_RV32
 
 # riscof
-sudo pip3 install -U testresources riscv_config
-sudo pip3 install git+https://github.com/riscv/riscof.git
+sudo -H pip3 install -U testresources riscv_config
+sudo -H pip3 install git+https://github.com/riscv/riscof.git
 
 # Download OSU Skywater 130 cell library
 sudo mkdir -p $RISCV/cad/lib

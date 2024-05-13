@@ -61,19 +61,20 @@ module shiftcorrection import cvw::*;  #(parameter cvw_t P) (
   //  - a one has to propagate all the way through a sum. so we can leave the bottom statement alone
   assign LZAPlus1 = Shifted[P.NORMSHIFTSZ-1];
 
+
   // correct the shifting of the divsqrt caused by producing a result in (0.5, 2) range
   // condition: if the msb is 1 or the exponent was one, but the shifted quotent was < 1 (Subnorm)
   assign LeftShiftQm = (LZAPlus1|(DivUe==1&~LZAPlus1));
-  
+ 
   assign RightShift = FmaOp ? LZAPlus1 : LeftShiftQm;
 
   // one bit right shift for FMA or division
   mux2 #(P.NORMSHIFTSZ-2) corrmux(Shifted[P.NORMSHIFTSZ-3:0], Shifted[P.NORMSHIFTSZ-2:1], RightShift, CorrShifted);
-
+  
   // if the result of the divider was calculated to be subnormal, then the result was correctly normalized, so select the top shifted bits
   always_comb
-    if (FmaOp | DivOp & !DivResSubnorm) Mf = CorrShifted;
-    else                                Mf = Shifted[P.NORMSHIFTSZ-1:2]; 
+    if (FmaOp | (DivOp & ~DivResSubnorm))  Mf = CorrShifted;
+    else                               Mf = Shifted[P.NORMSHIFTSZ-1:2];
     
   // Determine sum's exponent
   //  main exponent issues: 
@@ -92,3 +93,4 @@ module shiftcorrection import cvw::*;  #(parameter cvw_t P) (
   // if the quotent < 1 and not Subnormal then subtract 1 to account for the normalization shift
   assign Ue = (DivResSubnorm & DivSubnormShiftPos) ? 0 : DivUe - {(P.NE+1)'(0), ~LZAPlus1};
 endmodule
+

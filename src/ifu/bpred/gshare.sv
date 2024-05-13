@@ -47,7 +47,7 @@ module gshare import cvw::*; #(parameter cvw_t P,
   logic                   MatchF, MatchD, MatchE, MatchM, MatchW;
   logic                   MatchX;
 
-  logic [1:0]             TableBPDirPredF, BPDirPredD, BPDirPredE, FwdNewDirPredF;
+  logic [1:0]             PHTBPDirPredF, BPDirPredD, BPDirPredE, FwdNewDirPredF;
   logic [1:0]             NewBPDirPredE, NewBPDirPredM, NewBPDirPredW;
 
   logic [k-1:0]           IndexNextF, IndexF, IndexD, IndexE, IndexM, IndexW;
@@ -83,12 +83,12 @@ module gshare import cvw::*; #(parameter cvw_t P,
                                    MatchM ? {NewBPDirPredM} :
                    NewBPDirPredW ;
   
-  assign BPDirPredF = MatchX ? FwdNewDirPredF : TableBPDirPredF;
+  assign BPDirPredF = MatchX ? FwdNewDirPredF : PHTBPDirPredF;
 
   ram2p1r1wbe #(.USE_SRAM(P.USE_SRAM), .DEPTH(2**k), .WIDTH(2)) PHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallW & ~FlushW),
     .ra1(IndexNextF),
-    .rd1(TableBPDirPredF),
+    .rd1(PHTBPDirPredF),
     .wa2(IndexM),
     .wd2(NewBPDirPredM),
     .we2(BranchM),

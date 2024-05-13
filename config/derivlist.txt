@@ -511,6 +511,22 @@ BIGENDIAN_SUPPORTED 0
 deriv nobigendian_rv64gc rv64gc
 BIGENDIAN_SUPPORTED 0
 
+deriv zaamo_rv32gc rv32gc
+MISA    (32'h00000104 | 1 << 20 | 1 << 18 | 1 << 12 | 1 <<3 | 1 << 5);
+ZAAMO_SUPPORTED 1
+
+deriv zalrsc_rv32gc rv32gc
+MISA    (32'h00000104 | 1 << 20 | 1 << 18 | 1 << 12 | 1 <<3 | 1 << 5);
+ZALRSC_SUPPORTED 1
+
+deriv zaamo_rv64gc rv64gc
+MISA    (32'h00000104 | 1 << 20 | 1 << 18 | 1 << 12 | 1 <<3 | 1 << 5);
+ZAAMO_SUPPORTED 1
+
+deriv zalrsc_rv64gc rv64gc
+MISA    (32'h00000104 | 1 << 20 | 1 << 18 | 1 << 12 | 1 <<3 | 1 << 5);
+ZALRSC_SUPPORTED 1
+
 # Floating-point modes supported
 
 deriv f_rv32gc rv32gc
