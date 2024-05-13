@@ -30,7 +30,7 @@ import cvw::*;
 module testbench_fp;
    // Two parameters TEST, TEST_SIZE used with testfloat.do in sim dir
    // to run specific precisions (e.g., quad or all)
-   parameter string TEST="none";
+   parameter string TEST="none"; // choices are cvtint, cvtfp, cmp, add, sub, mul, div, sqrt, fma; all does not check properly
    parameter string TEST_SIZE="all";
 
   `include "parameter-defs.vh"   
@@ -149,7 +149,7 @@ module testbench_fp;
    //    sub    - test subtraction
    //    div    - test division
    //    sqrt   - test square root
-   //    all    - test all of the above
+   //    all    - test all of the above < doesn't report errors properly >
    
    initial begin
       // Information displayed for user on what is simulating
