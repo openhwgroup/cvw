@@ -30,7 +30,7 @@ import cvw::*;
 module testbench_fp;
    // Two parameters TEST, TEST_SIZE used with testfloat.do in sim dir
    // to run specific precisions (e.g., quad or all)
-   parameter string TEST="none";
+   parameter string TEST="none"; // choices are cvtint, cvtfp, cmp, add, sub, mul, div, sqrt, fma; all does not check properly
    parameter string TEST_SIZE="all";
 
   `include "parameter-defs.vh"   
@@ -124,6 +124,9 @@ module testbench_fp;
    logic 			CheckNow;                   // Final check
    logic 			FMAop;                      // Is this a FMA operation?
 
+   logic [P.NE-2:0]             BiasE;                              // Bias of exponent
+   logic [P.LOGFLEN-1:0]        NfE;                                // Number of fractional bits
+
    // FSM for testing each item per clock
    typedef enum logic [2:0] {S0, Start, S2, Done} statetype;
    statetype state, nextstate;   
@@ -146,7 +149,7 @@ module testbench_fp;
    //    sub    - test subtraction
    //    div    - test division
    //    sqrt   - test square root
-   //    all    - test all of the above
+   //    all    - test all of the above < doesn't report errors properly >
    
    initial begin
       // Information displayed for user on what is simulating
@@ -671,7 +674,7 @@ module testbench_fp;
       FrmVal = Frm[FrmNum];
    end
 
-   // modify the format signal if only 2 percisions supported
+   // modify the format signal if only 2 precisions supported
    //    - 1 for the larger precision
    //    - 0 for the smaller precision
    always_comb begin
@@ -690,7 +693,7 @@ module testbench_fp;
                                  .XSubnorm, .ZSubnorm, 
                                  .XZero, .YZero, .ZZero,
                                  .XInf, .YInf, .ZInf, .XExpMax,
-                                 .X, .Y, .Z, .XPostBox);
+                                 .X, .Y, .Z, .XPostBox, .NfE, .BiasE);
 
    ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -740,7 +743,7 @@ module testbench_fp;
       fdivsqrt #(P) fdivsqrt(.clk, .reset, .XsE(Xs), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
 			     .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal[0]), .SqrtM(OpCtrlVal[0]),
 			     .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), 
-			     .XNaNE(XNaN), .YNaNE(YNaN), 
+			     .XNaNE(XNaN), .YNaNE(YNaN), .NfE, .BiasE,
 			     .FDivStartE(DivStart), .IDivStartE(1'b0), .W64E(1'b0),
 			     .StallM(1'b0), .DivStickyM(DivSticky), .FDivBusyE, .UeM(DivCalcExp),
 			     .UmM(Quot),
@@ -975,7 +978,8 @@ module testbench_fp;
          errors += 1;
          $display("\nError in %s", Tests[TestNum]);
          $display("TestNum %d VectorNum %d OpCtrl %d", TestNum, VectorNum, OpCtrl[TestNum]);	 
-         $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Expected: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
+         $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Expected: %h %h", 
+            X[P.FLEN-1:0], Y[P.FLEN-1:0], Z[P.FLEN-1:0], SrcA, Res[P.FLEN-1:0], ResFlg, Ans[P.FLEN-1:0], AnsFlg);
          $stop;
       end
 
@@ -1019,7 +1023,7 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		    input logic [31:0] 		VectorNum,
 		    input logic [31:0] 		TestNum,
 		    input logic [2:0] 		OpCtrl,
-		    output logic [P.Q_LEN-1:0] 	Ans,
+   	    output logic [P.Q_LEN-1:0] 	Ans,
 		    output logic [P.XLEN-1:0] 	SrcA,
 		    output logic [4:0] 		AnsFlg,
 		    output logic 		Xs, Ys, Zs, // sign bits of XYZ
@@ -1032,7 +1036,9 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		    output logic 		XInf, YInf, ZInf, // is XYZ infinity
 		    output logic 		XExpMax,
 		    output logic [P.Q_LEN-1:0] 	X, Y, Z,
-          output logic [P.FLEN-1:0]  XPostBox
+          output logic [P.FLEN-1:0]  XPostBox,
+	       output logic [P.NE-2:0] BiasE,                              // Bias of exponent
+          output logic [P.LOGFLEN-1:0] NfE                           // Number of fractional bits
 		    );
 
    localparam Q_LEN = 32'd128;
@@ -1375,6 +1381,6 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
    unpack #(P) unpack(.X(X[P.FLEN-1:0]), .Y(Y[P.FLEN-1:0]), .Z(Z[P.FLEN-1:0]), .Fmt(ModFmt), .FPUActive, .Xs, .Ys, .Zs, .Xe, .Ye, .Ze,
                       .Xm, .Ym, .Zm, .XNaN, .YNaN, .ZNaN, .XSNaN, .YSNaN, .ZSNaN,
                       .XSubnorm, .XZero, .YZero, .ZZero, .XInf, .YInf, .ZInf,
-                      .XEn, .YEn, .ZEn, .XExpMax, .XPostBox);
+                      .XEn, .YEn, .ZEn, .XExpMax, .XPostBox, .Bias(BiasE), .Nf(NfE));
 
 endmodule

@@ -173,6 +173,7 @@ localparam cvw_t P = '{
   H_BIAS : H_BIAS,
   H_FMT : H_FMT,
   FLEN : FLEN,
+  LOGFLEN : LOGFLEN,
   NE   : NE  ,
   NF   : NF  ,
   FMT  : FMT ,

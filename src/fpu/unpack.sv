@@ -41,13 +41,15 @@ module unpack import cvw::*;  #(parameter cvw_t P) (
   output logic                    XZero, YZero, ZZero,  // is XYZ zero
   output logic                    XInf, YInf, ZInf,     // is XYZ infinity
   output logic                    XExpMax,              // does X have the maximum exponent (NaN or Inf)
-  output logic [P.FLEN-1:0]       XPostBox              // X after being properly NaN-boxed
+  output logic [P.FLEN-1:0]       XPostBox,             // X after being properly NaN-boxed
+  output logic [P.NE-2:0]         Bias,                 // Exponent bias
+  output logic [P.LOGFLEN-1:0]    Nf                    // Number of fractional bits
 );
 
   logic XExpNonZero, YExpNonZero, ZExpNonZero;          // is the exponent of XYZ non-zero
   logic XFracZero, YFracZero, ZFracZero;                // is the fraction zero
   logic YExpMax, ZExpMax;                               // is the exponent all 1s
-  
+
   unpackinput #(P) unpackinputX (.A(X), .Fmt, .Sgn(Xs), .Exp(Xe), .Man(Xm), .En(XEn), .FPUActive,
                           .NaN(XNaN), .SNaN(XSNaN), .ExpNonZero(XExpNonZero),
                           .Zero(XZero), .Inf(XInf), .ExpMax(XExpMax), .FracZero(XFracZero), 
@@ -63,4 +65,7 @@ module unpack import cvw::*;  #(parameter cvw_t P) (
                           .Zero(ZZero), .Inf(ZInf), .ExpMax(ZExpMax), .FracZero(ZFracZero), 
                           .Subnorm(), .PostBox());
  
+  // look up bias and fractional bits for the given format
+  fmtparams #(P) fmtparams(Fmt, Bias, Nf);
+
  endmodule
