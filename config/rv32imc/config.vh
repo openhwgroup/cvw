@@ -176,7 +176,7 @@ localparam ZBS_SUPPORTED = 0;
 
 // New compressed instructions
 localparam ZCB_SUPPORTED = 0;
-localparam ZCA_SUPPORTED = 0;
+localparam ZCA_SUPPORTED = 1;
 localparam ZCF_SUPPORTED = 0;
 localparam ZCD_SUPPORTED = 0;
 

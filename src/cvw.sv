@@ -220,7 +220,6 @@ typedef struct packed {
   logic A_SUPPORTED;
   logic B_SUPPORTED;
   logic C_SUPPORTED;
-  logic COMPRESSED_SUPPORTED;  // C or ZCA
   logic D_SUPPORTED;
   logic E_SUPPORTED;
   logic F_SUPPORTED;
