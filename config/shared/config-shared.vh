@@ -128,12 +128,10 @@ localparam FMALEN = 3*NF + 6;
 //     because NORMSHIFTSZ becomes limited by convert rather than divider
 //     The two extra bits are necessary because shiftcorrection dropped them for fcvt.
 //     May be possible to remove these two bits by modifying shiftcorrection
-localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1+2), (DIVb + 1 + NF + 1)), (FMALEN + 2));
-//localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1), (DIVb + 1 + NF + 1)), (FMALEN + 2));
+//localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1+2), (DIVb + 1 + NF + 1)), (FMALEN + 2));
+localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1), (DIVb + 1 + NF + 1)), (FMALEN + 2));
 
 localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));                  // log_2(NORMSHIFTSZ)
-localparam CORRSHIFTSZ = NORMSHIFTSZ-2;                             // Drop leading 2 integer bits
-
 
 // Disable spurious Verilator warnings
 
