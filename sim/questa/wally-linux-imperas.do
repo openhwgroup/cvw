@@ -35,8 +35,8 @@ vlib work
 if {$2 eq "buildroot"} {
     vlog -lint -work work_${1}_${2} \
       +define+USE_IMPERAS_DV \
-      +incdir+../config/deriv/$1 \
-      +incdir+../config/shared \
+      +incdir+../../config/deriv/$1 \
+      +incdir+../../config/shared \
       +incdir+$env(IMPERAS_HOME)/ImpPublic/include/host \
       +incdir+$env(IMPERAS_HOME)/ImpProprietary/include/host \
       $env(IMPERAS_HOME)/ImpPublic/source/host/rvvi/rvviApiPkg.sv    \
@@ -48,10 +48,10 @@ if {$2 eq "buildroot"} {
       $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2log.sv  \
       $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2cov.sv  \
       $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2bin.sv  \
-      ../src/cvw.sv \
-       ../testbench/testbench.sv \
-       ../testbench/common/*.sv ../src/*/*.sv \
-       ../src/*/*/*.sv -suppress 2583
+      ../../src/cvw.sv \
+       ../../testbench/testbench.sv \
+       ../../testbench/common/*.sv ../../src/*/*.sv \
+       ../../src/*/*/*.sv -suppress 2583
 
     #
     # start and run simulation
@@ -61,8 +61,8 @@ if {$2 eq "buildroot"} {
     # visualizer -fprofile+perf+dir=fprofile
     #
     eval vopt +acc work_${1}_${2}.testbench -work work_${1}_${2} -G RISCV_DIR=$3 \
-         -G TEST=$2 -o testbenchopt 
-    eval vsim -lib work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3829,13286  -fatal 7 \
+         -o testbenchopt 
+    eval vsim -lib work_${1}_${2} testbenchopt +TEST=$2 -suppress 8852,12070,3084,3829,13286  -fatal 7 \
         -sv_lib $env(IMPERAS_HOME)/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model \
         $env(OTHERFLAGS)
 
