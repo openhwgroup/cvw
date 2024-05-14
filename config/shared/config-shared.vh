@@ -24,20 +24,14 @@ localparam SV39 = 4'd8;
 localparam SV48 = 4'd9;
 
 // macros to define supported modes
-localparam A_SUPPORTED = ((MISA >> 0) % 2 == 1);
-localparam B_SUPPORTED = ((ZBA_SUPPORTED | ZBB_SUPPORTED | ZBC_SUPPORTED | ZBS_SUPPORTED));// not based on MISA
-localparam C_SUPPORTED = ((MISA >> 2) % 2 == 1);
-localparam COMPRESSED_SUPPORTED = C_SUPPORTED | ZCA_SUPPORTED;
-localparam D_SUPPORTED = ((MISA >> 3) % 2 == 1);
-localparam E_SUPPORTED = ((MISA >> 4) % 2 == 1);
-localparam F_SUPPORTED = ((MISA >> 5) % 2 == 1);
-localparam I_SUPPORTED = ((MISA >> 8) % 2 == 1);
-localparam K_SUPPORTED = ((ZBKB_SUPPORTED | ZBKC_SUPPORTED | ZBKX_SUPPORTED | ZKND_SUPPORTED | ZKNE_SUPPORTED | ZKNH_SUPPORTED));
-localparam M_SUPPORTED = ((MISA >> 12) % 2 == 1);
-localparam Q_SUPPORTED = ((MISA >> 16) % 2 == 1);
-localparam S_SUPPORTED = ((MISA >> 18) % 2 == 1);
-localparam U_SUPPORTED = ((MISA >> 20) % 2 == 1);
-// N-mode user-level interrupts are depricated per Andrew Waterman 1/13/21
+localparam I_SUPPORTED = (!E_SUPPORTED);
+localparam A_SUPPORTED = (ZAAMO_SUPPORTED && ZALRSC_SUPPORTED);
+localparam B_SUPPORTED = ((ZBA_SUPPORTED && ZBB_SUPPORTED && ZBS_SUPPORTED));
+localparam C_SUPPORTED = ZCA_SUPPORTED && (D_SUPPORTED ? ZCD_SUPPORTED : 1) && (F_SUPPORTED ? ((XLEN == 32) ? ZCF_SUPPORTED : 1) : 1);
+localparam ZKN_SUPPORTED = (ZBKB_SUPPORTED && ZBKC_SUPPORTED && ZBKX_SUPPORTED && ZKND_SUPPORTED && ZKNE_SUPPORTED && ZKNH_SUPPORTED);
+
+// Configure MISA based on supported extensions
+localparam MISA = {6'b0, 5'b0, U_SUPPORTED[0], 1'b0, S_SUPPORTED[0], 1'b0, Q_SUPPORTED[0], 3'b0, M_SUPPORTED[0], 3'b0, I_SUPPORTED[0], 2'b0, F_SUPPORTED[0], E_SUPPORTED[0], D_SUPPORTED[0], C_SUPPORTED[0], B_SUPPORTED[0], A_SUPPORTED[0]};
 
 // logarithm of XLEN, used for number of index bits to select
 localparam LOG_XLEN = (XLEN == 32 ? 32'd5 : 32'd6);

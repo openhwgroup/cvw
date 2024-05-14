@@ -33,26 +33,79 @@ localparam XLEN = 32'd64;
 // IEEE 754 compliance
 localparam IEEE754 = 0;
 
-// MISA RISC-V configuration per specification
-localparam MISA = (32'h00000104 |  1 << 5 | 1 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0);
-localparam ZICSR_SUPPORTED = 1;
-localparam ZIFENCEI_SUPPORTED = 1;
-localparam COUNTERS = 12'd32;
-localparam ZICNTR_SUPPORTED = 1;
-localparam ZIHPM_SUPPORTED = 1;
+// RISC-V configuration per specification
+// Base instruction set (defaults to I if E is not supported)
+localparam E_SUPPORTED = 0;
+
+// Integer instruction set extensions
+localparam ZIFENCEI_SUPPORTED = 1; // Instruction-Fetch fence
+localparam ZICSR_SUPPORTED = 1;    // CSR Instructions
+localparam ZICCLSM_SUPPORTED = 1;  // Misaligned loads/stores
+localparam ZICOND_SUPPORTED = 1;   // Integer conditional operations
+
+// Multiplication & division extensions
+localparam M_SUPPORTED = 1;
+localparam ZMMUL_SUPPORTED= 0;
+
+// Atomic extensions
+// A extension is Zaamo + Zalrsc
+localparam ZAAMO_SUPPORTED = 1;
+localparam ZALRSC_SUPPORTED = 1;
+
+// Bit manipulation extensions
+// B extension is Zba + Zbb + Zbs
+localparam ZBA_SUPPORTED = 1;
+localparam ZBB_SUPPORTED = 1;
+localparam ZBS_SUPPORTED = 1;
+localparam ZBC_SUPPORTED = 1;
+
+// Scalar crypto extensions
+// Zkn is all 6
+localparam ZBKB_SUPPORTED = 1;
+localparam ZBKC_SUPPORTED = 1;
+localparam ZBKX_SUPPORTED = 1;
+localparam ZKND_SUPPORTED = 1;
+localparam ZKNE_SUPPORTED = 1;
+localparam ZKNH_SUPPORTED = 1;
+
+// Compressed extensions
+// C extension is Zca + Zcf (if RV32 and F supported) + Zcd (if D supported)
+// All compressed extensions require Zca
+localparam ZCA_SUPPORTED = 1;
+localparam ZCB_SUPPORTED = 1;
+localparam ZCF_SUPPORTED = 0; // RV32 only, requires F
+localparam ZCD_SUPPORTED = 1; // requires D
+
+// Floating point extensions
+localparam F_SUPPORTED = 1;
+localparam D_SUPPORTED = 1;
+localparam Q_SUPPORTED = 0;
 localparam ZFH_SUPPORTED = 1;
 localparam ZFA_SUPPORTED = 1;
-localparam SSTC_SUPPORTED = 1;
+
+// Privelege modes
+localparam S_SUPPORTED = 1; // Supervisor mode
+localparam U_SUPPORTED = 1; // User mode
+
+// Supervisor level extensions
+localparam SSTC_SUPPORTED = 1; // Supervisor-mode timer interrupts
+
+// Hardware performance counters
+localparam ZICNTR_SUPPORTED = 1;
+localparam ZIHPM_SUPPORTED = 1;
+localparam COUNTERS = 12'd32;
+
+// Cache-management operation extensions
 localparam ZICBOM_SUPPORTED = 1;
 localparam ZICBOZ_SUPPORTED = 1;
 localparam ZICBOP_SUPPORTED = 1;
-localparam ZICCLSM_SUPPORTED = 1;
-localparam ZICOND_SUPPORTED = 1;
+
+// Virtual memory extensions
 localparam SVPBMT_SUPPORTED = 1;
 localparam SVNAPOT_SUPPORTED = 1;
 localparam SVINVAL_SUPPORTED = 1;
-localparam ZAAMO_SUPPORTED = 0;
-localparam ZALRSC_SUPPORTED = 0;
+localparam SVADU_SUPPORTED = 1;
+
 
 // LSU microarchitectural Features
 localparam BUS_SUPPORTED = 1;
@@ -156,6 +209,7 @@ localparam PLIC_UART_ID = 32'd10;
 localparam PLIC_SPI_ID = 32'd6;
 localparam PLIC_SDC_ID = 32'd9;
 
+// Branch prediction
 localparam BPRED_SUPPORTED = 1;
 localparam BPRED_TYPE = `BP_GSHARE; // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BASIC, BP_TWOBIT
 localparam BPRED_NUM_LHR = 32'd6;
@@ -164,36 +218,11 @@ localparam BTB_SIZE = 32'd10;
 localparam RAS_SIZE = 32'd16;
 localparam INSTR_CLASS_PRED = 1;
 
-localparam SVADU_SUPPORTED = 1;
-localparam ZMMUL_SUPPORTED = 0;
-
 // FPU division architecture
 localparam RADIX = 32'h4;
 localparam DIVCOPIES = 32'h4;
-
-// bit manipulation
-localparam ZBA_SUPPORTED = 1;
-localparam ZBB_SUPPORTED = 1;
-localparam ZBC_SUPPORTED = 1;
-localparam ZBS_SUPPORTED = 1;
-
-// New compressed instructions
-localparam ZCB_SUPPORTED = 1;
-localparam ZCA_SUPPORTED = 0;
-localparam ZCF_SUPPORTED = 0;
-localparam ZCD_SUPPORTED = 0;
-
-// K extension instructions                                                                
-localparam ZBKB_SUPPORTED = 1;
-localparam ZBKC_SUPPORTED = 1;
-localparam ZBKX_SUPPORTED = 1;
-localparam ZKND_SUPPORTED = 1;
-localparam ZKNE_SUPPORTED = 1;
-localparam ZKNH_SUPPORTED = 1;
-localparam ZK_SUPPORTED = 1;
 
 // Memory synthesis configuration
 localparam USE_SRAM = 0;
 
 `include "config-shared.vh"
-
