@@ -74,13 +74,13 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                       MExtInt,SExtInt;  // from PLIC
 
   // Debug Module signals
-  logic                       HaltReq;
-  logic                       ResumeReq;
-  logic                       ResetReq;
-  logic                       HaltConfirm;
-  logic                       ResumeConfirm;
-  logic                       ResetConfirm;
-  logic                       HaltOnReset;
+  logic                       DebugHalt;
+  logic                       DebugResume;
+  logic                       DebugStallF;
+  logic                       DebugStallD;
+  logic                       DebugStallE;
+  logic                       DebugStallM;
+  logic                       DebugStallW;
   logic                       ScanEn;
   logic                       ScanIn;
   logic                       ScanOut;
@@ -100,8 +100,8 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
-    .HaltReq, .ResumeReq, .ResetReq, .HaltConfirm, .ResumeConfirm,
-    .ResetConfirm, .HaltOnReset, .DebugScanEn(ScanEn), .DebugScanIn(ScanOut), .DebugScanOut(ScanIn),
+    .DebugHalt, .DebugResume, .DebugStallF, .DebugStallD, .DebugStallE, .DebugStallM, 
+    .DebugStallW, .DebugScanEn(ScanEn), .DebugScanIn(ScanOut), .DebugScanOut(ScanIn),
     .GPRSel, .GPRReadEn, .GPRWriteEn, .GPRAddr, .GPRScanEn, .GPRScanIn(GPRScanOut), .GPRScanOut(GPRScanIn)
   );
 
@@ -119,8 +119,8 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
 
   // instantiate debug module
   dm #(P) dm (.clk, .rst(reset), .tck, .tdi, .tms, .tdo,
-    .HaltReq, .ResumeReq, .ResetReq, .HaltConfirm, .ResumeConfirm,
-    .ResetConfirm, .HaltOnReset, .ScanEn, .ScanIn, .ScanOut,
-    .GPRSel, .GPRReadEn, .GPRWriteEn, .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut);
+    .DebugHalt, .DebugResume, .DebugStallF, .DebugStallD, .DebugStallE, .DebugStallM, 
+    .DebugStallW, .ScanEn, .ScanIn, .ScanOut, .GPRSel, .GPRReadEn, .GPRWriteEn, 
+    .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut);
 
 endmodule

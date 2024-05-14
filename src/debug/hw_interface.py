@@ -41,18 +41,23 @@ def main():
         read() # clear welcome message from read buffer
         #reset_dm()
         activate_dm() # necessary if openocd init is disabled
-        clear_abstrcmd_err()
-        check_errors()
-        write_data("READDATAM", "0xAA0987210000FFFF")
-        print(f"WRITEDATAM: '{read_data("WRITEDATAM")}'")
-        print(f"IEUADRM: '{read_data("IEUADRM")}'")
-        write_data("TRAPM", "0x0")
-        print(f"MEMRWM: '{read_data("MEMRWM")}'")
-        print(f"INSTRVALIDM: '{read_data("INSTRVALIDM")}'")
-        write_data("MEMRWM", "0x3")
-        write_data("INSTRVALIDM", "0x0")
-        check_errors()
-        #check_errors()
+        status()
+        halt()
+        status()
+        resume()
+        status()
+        #clear_abstrcmd_err()
+        #write_data("READDATAM", "0xAA0987210000FFFF")
+        #print(f"READDATAM'{read_data("READDATAM")}'")
+        #print(f"WRITEDATAM: '{read_data("WRITEDATAM")}'")
+        #print(f"IEUADRM: '{read_data("IEUADRM")}'")
+        #write_data("TRAPM", "0x0")
+        #print(f"INSTRVALIDM: '{read_data("INSTRVALIDM")}'")
+        #print(f"MEMRWM: '{read_data("MEMRWM")}'")
+        #write_data("MEMRWM", "0x3")
+        #print(f"PCM'{read_data("PCM")}'")
+        #write_data("PCM", "0x100000")
+        #print(f"PCM'{read_data("PCM")}'")
         #dmi_reset()
         #clear_abstrcmd_err()
         #b = activate_dm()
@@ -115,9 +120,27 @@ def access_register(write, regno, addr_size):
     write_dmi(addr, data)
 
 
+def halt():
+    write_dmi("0x10", "0x80000001")
+    check_errors()
+
+
+def step():
+    write_dmi("0x10", "0xC0000001")
+    check_errors()
+
+
+def resume():
+    write_dmi("0x10", "0x40000001")
+    check_errors()
+
+
 def status():
-    # check dmstatus
-    pass
+    dmstatus = int(read_dmi("0x11"), 16)
+    print(f"Core status:::")
+    print(f"Running: {bool((dmstatus>>11)&0x1)}")
+    print(f"Halted:  {bool((dmstatus>>9)&0x1)}")
+    print(f"Reset:   {bool((dmstatus>>19)&0x1)}")
 
 
 def check_errors():

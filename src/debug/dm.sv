@@ -35,14 +35,16 @@ module dm import cvw::*; #(parameter cvw_t P) (
   input  logic                  tms,
   output logic                  tdo,
 
-  // TODO: stubs
-  output logic                  HaltReq,
-  output logic                  ResumeReq,
-  output logic                  ResetReq,
-  input  logic                  HaltConfirm,
-  input  logic                  ResumeConfirm,
-  input  logic                  ResetConfirm,
-  output logic                  HaltOnReset,
+  output logic                  HartReset, // TODO
+
+  // Core hazard signals
+  output logic                  DebugHalt,
+  output logic                  DebugResume,
+  output logic                  DebugStallF,
+  output logic                  DebugStallD,
+  output logic                  DebugStallE,
+  output logic                  DebugStallM,
+  output logic                  DebugStallW,
 
   // Scan Chain
   output logic                     ScanEn,
@@ -51,7 +53,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   output logic                     GPRSel,
   output logic                     GPRReadEn,
   output logic                     GPRWriteEn,
-  output logic [P.E_SUPPORTED+2:0] GPRAddr,
+  output logic [P.E_SUPPORTED+3:0] GPRAddr,
   output logic                     GPRScanEn,
   input  logic                     GPRScanIn,
   output logic                     GPRScanOut
@@ -74,6 +76,16 @@ module dm import cvw::*; #(parameter cvw_t P) (
   dtm #(`ADDR_WIDTH, JTAG_DEVICE_ID) dtm (.clk, .tck, .tdi, .tms, .tdo,
     .ReqReady, .ReqValid, .ReqAddress, .ReqData, .ReqOP, .RspReady,
     .RspValid, .RspData, .RspOP);
+
+  // Core control signals
+  logic                  HaltReq;
+  logic                  Halted;
+  logic                  ResumeReq;
+  logic                  ResumeConfirm;
+  logic                  HaltOnReset;
+
+  dmhazard dmhazard(.clk, .rst, .HaltReq, .Halted, .ResumeReq, .ResumeConfirm, .HaltOnReset, .DebugHalt,
+    .DebugResume, .DebugStallF, .DebugStallD, .DebugStallE, .DebugStallM, .DebugStallW);
 
   enum bit [3:0] {
     INACTIVE, // 0
@@ -108,7 +120,6 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic [9:0]        Cycle;
   logic              InvalidRegNo;
   logic              GPRRegNo;
-  logic              GPRSel;
 
   // message registers
   logic [31:0] Data0;  // 0x04
@@ -124,9 +135,8 @@ module dm import cvw::*; #(parameter cvw_t P) (
 
   //// DM register fields
   //DMControl
-  logic HartReset;
-  logic AckHaveReset;
   logic AckUnavail;
+  logic AckHaveReset;
   const logic HaSel = 0;
   const logic [9:0] HartSelLo = 0;
   const logic [9:0] HartSelHi = 0;
@@ -177,7 +187,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
 
 
   // Pack registers
-  assign DMControl = {HaltReq, 1'b0, HartReset, 2'b0, HaSel, HartSelLo,
+  assign DMControl = {2'b0, HartReset, 2'b0, HaSel, HartSelLo,
     HartSelHi, 4'b0, NdmReset, DmActive};
 
   assign DMStatus = {7'b0, NdmResetPending, StickyUnavail, ImpEBreak, 2'b0, 
@@ -194,13 +204,25 @@ module dm import cvw::*; #(parameter cvw_t P) (
   // translate internal state to hart connections
   assign ResetReq = HartReset;
 
-  // TODO: implement core state logic
-  assign AllRunning = ~HaltConfirm;
-  assign AnyRunning = ~HaltConfirm;
-  assign AllHalted = HaltConfirm;
-  assign AnyHalted = HaltConfirm;
-  assign AllResumeAck = ResumeConfirm;
-  assign AnyResumeAck = ResumeConfirm;
+  assign AllRunning = ~Halted;
+  assign AnyRunning = ~Halted;
+  assign AllHalted = Halted;
+  assign AnyHalted = Halted;
+
+  // Core state logic
+  always_ff @(posedge clk) begin
+    if (ResumeConfirm)
+      AllResumeAck <= 1;
+    else if (ResumeReq)
+      AllResumeAck <= 0;
+
+    if (AckHaveReset)
+      AllHaveReset <= 0;
+    else if (HartReset)
+      AllHaveReset <= 1;
+  end
+  assign AnyResumeAck = AllResumeAck;
+  assign AnyHaveReset = AllHaveReset;
 
   assign RspValid = (State == ACK);
   assign ReqReady = (State != ACK);
@@ -216,6 +238,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
           RspData <= 0;
           HaltReq <= 0;
           HartReset <= 0;
+          HaltOnReset <= 0;
           NdmReset <= 0;
           StickyUnavail <= 0;
           ImpEBreak <= 0;
@@ -234,6 +257,8 @@ module dm import cvw::*; #(parameter cvw_t P) (
 
         ACK : begin
           NewAcState <= AC_IDLE;
+          ResumeReq <= 0;
+          AckHaveReset <= 0;
           if (~ReqValid)
             State <= ~DmActive ? INACTIVE : IDLE;
         end
@@ -293,9 +318,9 @@ module dm import cvw::*; #(parameter cvw_t P) (
           case ({ReqData[`RESUMEREQ],ReqData[`HARTRESET],ReqData[`ACKHAVERESET],
             ReqData[`SETRESETHALTREQ],ReqData[`CLRRESETHALTREQ]})
             5'b00000 :; // None
-            5'b10000 : ResumeReq <= HartReset ? 0 : 1; // TODO deassert automatically // TODO clear local ResumeACK
+            5'b10000 : ResumeReq <= 1;
             5'b01000 : HartReset <= ReqData[`HARTRESET];
-            //5'b00100 : HaveReset <= 0; // TODO: clear havereset (resetconfirm)
+            5'b00100 : AckHaveReset <= 1;
             5'b00010 : HaltOnReset <= 1;
             5'b00001 : HaltOnReset <= 0;
             default : begin // Failure (not onehot), dont write any changes
