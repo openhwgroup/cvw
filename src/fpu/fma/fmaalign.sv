@@ -31,14 +31,14 @@ module fmaalign import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.NE-1:0]      Xe, Ye, Ze,          // biased exponents in B(NE.0) format
   input  logic [P.NF:0]        Zm,                  // significand in U(0.NF) format]
   input  logic                 XZero, YZero, ZZero, // is the input zero
-  output logic [3*P.NF+5:0]    Am,                  // addend aligned for addition in U(NF+5.2NF+1)
+  output logic [P.FMALEN-1:0]  Am,                  // addend aligned for addition in U(NF+5.2NF+1)
   output logic                 ASticky,             // Sticky bit calculated from the aliged addend
   output logic                 KillProd             // should the product be set to zero
 );
 
   logic [P.NE+1:0]             ACnt;                // how far to shift the addend to align with the product in Q(NE+2.0) format
-  logic [4*P.NF+5:0]           ZmShifted;           // output of the alignment shifter including sticky bits U(NF+5.3NF+1)
-  logic [4*P.NF+5:0]           ZmPreshifted;        // input to the alignment shifter U(NF+5.3NF+1)
+  logic [P.FMALEN+P.NF-1:0]    ZmShifted;           // output of the alignment shifter including sticky bits U(NF+5.3NF+1)
+  logic [P.FMALEN+P.NF-1:0]    ZmPreshifted;        // input to the alignment shifter U(NF+5.3NF+1)
   logic                        KillZ;               // should the addend be killed
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -56,7 +56,7 @@ module fmaalign import cvw::*;  #(parameter cvw_t P) (
   //  |   54'b0    |  106'b(product)  | 2'b0 |
   //  | addnend    |
 
-  assign ZmPreshifted = {Zm,(3*P.NF+5)'(0)};
+  assign ZmPreshifted = {Zm,(P.FMALEN-1)'(0)};
   assign KillProd     = (ACnt[P.NE+1]&~ZZero)|XZero|YZero;
   assign KillZ        = $signed(ACnt)>$signed((P.NE+2)'(3)*(P.NE+2)'(P.NF)+(P.NE+2)'(5));
 
@@ -87,6 +87,6 @@ module fmaalign import cvw::*;  #(parameter cvw_t P) (
     end
   end
 
-  assign Am = ZmShifted[4*P.NF+5:P.NF];
+  assign Am = ZmShifted[P.FMALEN+P.NF-1:P.NF];
 
 endmodule

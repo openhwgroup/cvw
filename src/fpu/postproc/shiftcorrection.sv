@@ -41,11 +41,11 @@ module shiftcorrection import cvw::*;  #(parameter cvw_t P) (
   input logic                      FmaSZero,
   // output
   output logic [P.NE+1:0]          FmaMe,                  // exponent of the normalized sum
-  output logic [P.CORRSHIFTSZ-1:0] Mf,                     // the shifted sum after correction
+  output logic [P.NORMSHIFTSZ-1:0] Mf,                     // the shifted sum after correction
   output logic [P.NE+1:0]          Ue                      // corrected exponent for divider
 );
 
-  logic [P.CORRSHIFTSZ-1:0]        CorrShifted;         // the shifted sum after LZA correction
+  logic [P.NORMSHIFTSZ-1:0]        CorrShifted;         // the shifted sum after LZA correction
   logic                            ResSubnorm;             // is the result Subnormal
   logic                            LZAPlus1;               // add one or two to the sum's exponent due to LZA correction
   logic                            LeftShiftQm;            // should the divsqrt result be shifted one to the left
@@ -69,12 +69,12 @@ module shiftcorrection import cvw::*;  #(parameter cvw_t P) (
   assign RightShift = FmaOp ? LZAPlus1 : LeftShiftQm;
 
   // one bit right shift for FMA or division
-  mux2 #(P.NORMSHIFTSZ-2) corrmux(Shifted[P.NORMSHIFTSZ-3:0], Shifted[P.NORMSHIFTSZ-2:1], RightShift, CorrShifted);
+  mux2 #(P.NORMSHIFTSZ) corrmux({Shifted[P.NORMSHIFTSZ-3:0], 2'b00}, {Shifted[P.NORMSHIFTSZ-2:1], 2'b00}, RightShift, CorrShifted);
   
   // if the result of the divider was calculated to be subnormal, then the result was correctly normalized, so select the top shifted bits
   always_comb
     if (FmaOp | (DivOp & ~DivResSubnorm))  Mf = CorrShifted;
-    else                               Mf = Shifted[P.NORMSHIFTSZ-1:2];
+    else                                   Mf = Shifted[P.NORMSHIFTSZ-1:0];
     
   // Determine sum's exponent
   //  main exponent issues: 
