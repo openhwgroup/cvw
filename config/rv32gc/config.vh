@@ -85,7 +85,7 @@ localparam Q_SUPPORTED = 0;
 localparam ZFH_SUPPORTED = 1;
 localparam ZFA_SUPPORTED = 1;
 
-// Privelege modes
+// privilege modes
 localparam S_SUPPORTED = 1; // Supervisor mode
 localparam U_SUPPORTED = 1; // User mode
 

@@ -793,101 +793,101 @@ ZFH_SUPPORTED   1
 # FDQ only , rk variable
 
 deriv fdq_div_2_1_rv32gc    div_2_1_rv32gc    
-Q_SUPPORTED     0
+Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
 deriv fdq_div_2_2_rv32gc    div_2_2_rv32gc    
-Q_SUPPORTED     0
+Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
 deriv fdq_div_2_4_rv32gc    div_2_4_rv32gc
-Q_SUPPORTED     0
+Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
 deriv fdq_div_4_1_rv32gc    div_4_1_rv32gc    
-Q_SUPPORTED     0
+Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
 deriv fdq_div_4_2_rv32gc    div_4_2_rv32gc    
-Q_SUPPORTED     0
+Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
 deriv fdq_div_4_4_rv32gc    div_4_4_rv32gc    
-Q_SUPPORTED     0
+Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
 deriv fdq_div_2_1_rv64gc    div_2_1_rv64gc    
-Q_SUPPORTED     0
+Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
 deriv fdq_div_2_2_rv64gc    div_2_2_rv64gc    
-Q_SUPPORTED     0
+Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
 deriv fdq_div_2_4_rv64gc    div_2_4_rv64gc    
-Q_SUPPORTED     0
+Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
 deriv fdq_div_4_1_rv64gc    div_4_1_rv64gc    
-Q_SUPPORTED     0
+Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
 deriv fdq_div_4_2_rv64gc    div_4_2_rv64gc    
-Q_SUPPORTED     0
+Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
 deriv fdq_div_4_4_rv64gc    div_4_4_rv64gc    
-Q_SUPPORTED     0
+Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
 # FDQH only , rk variable
 
 deriv fdqh_div_2_1_rv32gc    div_2_1_rv32gc    
-Q_SUPPORTED     0
+Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
 deriv fdqh_div_2_2_rv32gc    div_2_2_rv32gc    
-Q_SUPPORTED     0
+Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
 deriv fdqh_div_2_4_rv32gc    div_2_4_rv32gc
-Q_SUPPORTED     0
+Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
 deriv fdqh_div_4_1_rv32gc    div_4_1_rv32gc    
-Q_SUPPORTED     0
+Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
 deriv fdqh_div_4_2_rv32gc    div_4_2_rv32gc    
-Q_SUPPORTED     0
+Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
 deriv fdqh_div_4_4_rv32gc    div_4_4_rv32gc    
-Q_SUPPORTED     0
+Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
 deriv fdqh_div_2_1_rv64gc    div_2_1_rv64gc    
-Q_SUPPORTED     0
+Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
 deriv fdqh_div_2_2_rv64gc    div_2_2_rv64gc    
-Q_SUPPORTED     0
+Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
 deriv fdqh_div_2_4_rv64gc    div_2_4_rv64gc    
-Q_SUPPORTED     0
+Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
 deriv fdqh_div_4_1_rv64gc    div_4_1_rv64gc    
-Q_SUPPORTED     0
+Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
 deriv fdqh_div_4_2_rv64gc    div_4_2_rv64gc    
-Q_SUPPORTED     0
+Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
 deriv fdqh_div_4_4_rv64gc    div_4_4_rv64gc    
-Q_SUPPORTED     0
+Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
 #### DIVIDER VARIANTS WITH IEEE
