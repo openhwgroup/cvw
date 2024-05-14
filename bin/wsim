@@ -59,7 +59,10 @@ if (args.sim == "questa"):
     if (args.coverage):
         cmd += " --coverage"
     if (args.gui):  # launch Questa with GUI; add +acc to keep variables accessible
-         cmd = cd + "; vsim -do \"" + cmd + " +acc -GDEBUG=1\""        
+        if(args.tb == "testbench"): 
+            cmd = cd + "; vsim -do \"" + cmd + " +acc -GDEBUG=1\""
+        elif(args.tb == "testbench_fp"):
+            cmd = cd + "; vsim -do \"" + cmd + " +acc\""
     else: # launch Questa in batch mode
         cmd = cd + "; vsim -c -do \"" + cmd + "\""
     print("Running Questa with command: " + cmd)

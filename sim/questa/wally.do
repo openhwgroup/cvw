@@ -18,7 +18,7 @@
 #     vsim -do wally-batch.do -c
 # (omit the "-c" to see the GUI while running from the shell)
 
-set DEBUG 0
+set DEBUG 1
 
 onbreak {resume}
 onerror {quit -f}
@@ -102,15 +102,17 @@ set LockStepIndex [lsearch -exact $lst "--lockstep"]
 if {$LockStepIndex >= 0} {
     set lockstep 1
 
+    # ideally this would all be one or two variables, but questa is having a real hard time
+    # with this.  For now they have to be separate.
     set lockstepvoptstring "+define+USE_IMPERAS_DV"
     set ImperasPubInc +incdir+$env(IMPERAS_HOME)/ImpPublic/include/host
     set ImperasPrivInc +incdir+$env(IMPERAS_HOME)/ImpProprietary/include/host
     set rvviFiles       $env(IMPERAS_HOME)/ImpPublic/source/host/rvvi/*.sv
     set idvFiles $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/*.sv
-
     set SVLib "-sv_lib"
     set SVLibPath $env(IMPERAS_HOME)/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model
     set OtherFlags $env(OTHERFLAGS)
+
     set lst [lreplace $lst $LockStepIndex $LockStepIndex]
 }
 
@@ -137,18 +139,13 @@ if {$DEBUG > 0} {
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
 
-echo $lockstepvoptstring
-
 vlog -lint -work ${WKDIR}  +incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} ${lockstepvoptstring} ${ImperasPubInc} ${ImperasPrivInc} +incdir+${CONFIG}/shared ${rvviFiles} ${idvFiles} ${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv  ${SRC}/*/*.sv ${SRC}/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} ${lst} -o testbenchopt ${CoverageVoptArg}
 
-#  *** tbArgs producees a warning that TEST not found in design when running sim-testfloat-batch.  Need to separate -G and + arguments to pass separately to vopt and vsim
 vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${PlusArgs} -fatal 7 ${SVLib} ${SVLibPath} ${OtherFlags} -suppress 3829 ${CoverageVsimArg}
-# -sv_lib $env(IMPERAS_HOME)/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model \
-        $env(OTHERFLAGS)
 
 #    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
 # power add generates the logging necessary for said generation.
