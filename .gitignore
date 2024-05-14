@@ -211,6 +211,7 @@ sim/vcs/sim_out*
 sim/vcs/simprofile_dir
 sim/vcs/ucli.key
 sim/vcs/verdi_config_file
+sim/vcs/vcdplus.vpd
 sim/*/testbench.vcd 
 sim/questa/imperas.log
 sim/questa/functcov.log
