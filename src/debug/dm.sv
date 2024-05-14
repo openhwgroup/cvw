@@ -135,6 +135,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
 
   //// DM register fields
   //DMControl
+   logic       ResetReq;   
   logic AckUnavail;
   logic AckHaveReset;
   const logic HaSel = 0;

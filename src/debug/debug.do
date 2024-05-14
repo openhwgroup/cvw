@@ -36,50 +36,50 @@ view wave
 
 -- display input and output signals as hexidecimal values
 # Diplays All Signals recursively
-#add wave -hex -r /testbench/*
-add wave -hex -color gold /testbench/clk
-add wave -hex -color gold /testbench/tck
-add wave -hex -color gold /testbench/dtm/tcks
-add wave -hex -color blue /testbench/r1q
-add wave -hex -color blue /testbench/r2q
-add wave -color purple /testbench/wave_marker
-add wave -hex /testbench/data
-#add wave -hex /testbench/trstn
-#add wave -hex /testbench/tdi
-#add wave -hex /testbench/tdo
-#add wave -hex /testbench/tms
-add wave -hex /testbench/ReqReady
-add wave -hex /testbench/ReqValid
-add wave -hex /testbench/ReqAddress
-add wave -hex /testbench/ReqData
-add wave -hex /testbench/ReqOP
-add wave -hex /testbench/RspReady
-add wave -hex /testbench/RspValid
-add wave -hex /testbench/RspData
-add wave -hex /testbench/RspOP
+#add wave -hex -r /testbench_debug/*
+add wave -hex -color gold /testbench_debug/clk
+add wave -hex -color gold /testbench_debug/tck
+add wave -hex -color gold /testbench_debug/dtm/tcks
+add wave -hex -color blue /testbench_debug/r1q
+add wave -hex -color blue /testbench_debug/r2q
+add wave -color purple /testbench_debug/wave_marker
+add wave -hex /testbench_debug/data
+#add wave -hex /testbench_debug/trstn
+#add wave -hex /testbench_debug/tdi
+#add wave -hex /testbench_debug/tdo
+#add wave -hex /testbench_debug/tms
+add wave -hex /testbench_debug/ReqReady
+add wave -hex /testbench_debug/ReqValid
+add wave -hex /testbench_debug/ReqAddress
+add wave -hex /testbench_debug/ReqData
+add wave -hex /testbench_debug/ReqOP
+add wave -hex /testbench_debug/RspReady
+add wave -hex /testbench_debug/RspValid
+add wave -hex /testbench_debug/RspData
+add wave -hex /testbench_debug/RspOP
 add wave -noupdate -divider -height 32 "Abstract Commands"
-add wave -hex /testbench/dm/AcState
-add wave -hex /testbench/dm/Busy
-add wave -hex /testbench/dm/Cycle
-add wave -hex /testbench/dm/ScanReg
-add wave -hex /testbench/dm/AcWrite
-add wave -hex /testbench/dm/AcTransfer
-add wave -hex /testbench/dm/Data0
-add wave -hex /testbench/dm/Data1
-add wave -hex /testbench/dm/Data2
-add wave -hex /testbench/dm/Data3
+add wave -hex /testbench_debug/dm/AcState
+add wave -hex /testbench_debug/dm/Busy
+add wave -hex /testbench_debug/dm/Cycle
+add wave -hex /testbench_debug/dm/ScanReg
+add wave -hex /testbench_debug/dm/AcWrite
+add wave -hex /testbench_debug/dm/AcTransfer
+add wave -hex /testbench_debug/dm/Data0
+add wave -hex /testbench_debug/dm/Data1
+add wave -hex /testbench_debug/dm/Data2
+add wave -hex /testbench_debug/dm/Data3
 add wave -noupdate -divider -height 32 "DM"
-add wave -hex /testbench/dm/State
-add wave -hex /testbench/dm/*
+add wave -hex /testbench_debug/dm/State
+add wave -hex /testbench_debug/dm/*
 add wave -noupdate -divider -height 32 "DTM"
-add wave -hex /testbench/dtm/*
+add wave -hex /testbench_debug/dtm/*
 add wave -noupdate -divider -height 32 "JTAG"
-add wave -hex /testbench/dtm/jtag/tap/State
-add wave -hex /testbench/dtm/jtag/*
+add wave -hex /testbench_debug/dtm/jtag/tap/State
+add wave -hex /testbench_debug/dtm/jtag/*
 #add wave -noupdate -divider -height 32 "TAP"
-#add wave -hex /testbench/dtm/jtag/tap/*
+#add wave -hex /testbench_debug/dtm/jtag/tap/*
 #add wave -noupdate -divider -height 32 "ID Reg"
-#add wave -hex /testbench/dtm/jtag/id/*
+#add wave -hex /testbench_debug/dtm/jtag/id/*
 
 
 -- Set Wave Output Items 
