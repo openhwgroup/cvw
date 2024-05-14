@@ -57,7 +57,7 @@ if (args.sim == "questa"):
             args.args = " -GTEST=\"" + args.testsuite + "\" " + args.args
     cmd = "do wally.do " + args.config + " " + args.testsuite + " " + args.tb + " " + args.args
     if (args.coverage):
-        cmd += " -coverage"
+        cmd += " --coverage"
     if (args.gui):  # launch Questa with GUI; add +acc to keep variables accessible
          cmd = cd + "; vsim -do \"" + cmd + " +acc -GDEBUG=1\""        
     else: # launch Questa in batch mode
