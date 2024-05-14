@@ -169,6 +169,24 @@ void printF128 (char *msg, float128_t q) {
 
 }
 
+void printF128val(float128_t q) {
+  qp conv;
+  //__int128_t v128;
+  int i, j;
+  char buf[64];
+  //v128 = q.v[1];
+  //v128 = v128 << 64 | q.v[0]; // use union to convert between hexadecimal and floating-point views
+  //conv.v = v128;
+  conv.v64[0] = q.v[0]; // use union to convert between hexadecimal and floating-point views
+  conv.v64[1] = q.v[1]; // use union to convert between hexadecimal and floating-point views  
+
+  // Some compilers can understand %Q for printf on quad precision instead of the
+  // API call of quadmath_snprintf
+  // printf("0x%016" PRIx64 "_%016" PRIx64 " = %1.15Qe\n", q.v[1], q.v[0], conv.q);
+  //quadmath_snprintf (buf, sizeof buf, "%1.15Qe", conv.q);
+  printf("%016" PRIx64 "%016" PRIx64 "\n", q.v[1], q.v[0]);  
+}
+
 void printFlags(void) {
   int NX = softfloat_exceptionFlags % 2;
   int UF = (softfloat_exceptionFlags >> 1) % 2;
@@ -369,7 +387,8 @@ int main(int argc, char *argv[])
           }
           printF128("X", x); printF128("Y", y); 
           //sprintf(cmd, "0x%016lx %c 0x%016lx", x.v, op1, y.v);
-          printF128("Result", r); printFlags();
+          printF128(cmd, r); printFlags();
+          printF128val(r); 
         }
       }
     }
