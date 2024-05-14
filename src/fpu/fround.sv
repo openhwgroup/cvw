@@ -51,7 +51,7 @@ module fround import cvw::*;  #(parameter cvw_t P) (
 
   // Unbiased exponent
   assign E = Xe - P.BIAS[P.NE-1:0];
-  assign Xep1 = Xe + 1;
+  assign Xep1 = Xe + 1'b1;
 
   //////////////////////////////////////////
   // Compute LSB L', rounding bit R' and Sticky bit T'
@@ -85,7 +85,7 @@ module fround import cvw::*;  #(parameter cvw_t P) (
   assign Lnonneg = |(Xm & HotE);
   assign Rnonneg = |(Xm & HotEP1);
   assign Trunc = Xm & IMask;
-  assign {Two, Rnd} = Trunc + HotE; // Two means result is 10.000000 = 2.0
+  assign {Two, Rnd} = Trunc + HotE; // Two means result overflowed to 10.000000 = 2.0
 
   // mux and AND-OR logic to select final rounding bits
   mux2 #(1) Lmux(Lnonneg, 1'b0, Elt0, Lp);

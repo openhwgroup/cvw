@@ -7,6 +7,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
+#include <quadmath.h> // GCC Quad-Math Library
 #include "softfloat.h"
 #include "softfloat_types.h"
 
@@ -25,6 +27,12 @@ typedef union dp {
   uint64_t v;
   double d;
 } dp;
+
+typedef union qp {
+  uint64_t v64[2];
+  __uint128_t v;
+  __float128 q;
+} qp;
 
 
 int opSize = 0;
@@ -140,6 +148,45 @@ void printF64(char *msg, float64_t f) {
   //  msg, conv.v, conv.d, sci, exp, fract); 
 }
 
+void printF128 (char *msg, float128_t q) {
+  qp conv;
+  //__int128_t v128;
+  int i, j;
+  char buf[64];
+  //v128 = q.v[1];
+  //v128 = v128 << 64 | q.v[0]; // use union to convert between hexadecimal and floating-point views
+  //conv.v = v128;
+  conv.v64[0] = q.v[0]; // use union to convert between hexadecimal and floating-point views
+  conv.v64[1] = q.v[1]; // use union to convert between hexadecimal and floating-point views  
+  printf("%s: ", msg);  // print out nicely
+
+  // Some compilers can understand %Q for printf on quad precision instead of the
+  // API call of quadmath_snprintf
+  // printf("0x%016" PRIx64 "_%016" PRIx64 " = %1.15Qe\n", q.v[1], q.v[0], conv.q);
+  quadmath_snprintf (buf, sizeof buf, "%1.15Qe", conv.q);
+  //printf("0x%032" PRIx12 " = %s\n", q.v, buf);  
+  printf("0x%016" PRIx64 "_%016" PRIx64 " = %s\n", q.v[1], q.v[0], buf);  
+
+}
+
+void printF128val(float128_t q) {
+  qp conv;
+  //__int128_t v128;
+  int i, j;
+  char buf[64];
+  //v128 = q.v[1];
+  //v128 = v128 << 64 | q.v[0]; // use union to convert between hexadecimal and floating-point views
+  //conv.v = v128;
+  conv.v64[0] = q.v[0]; // use union to convert between hexadecimal and floating-point views
+  conv.v64[1] = q.v[1]; // use union to convert between hexadecimal and floating-point views  
+
+  // Some compilers can understand %Q for printf on quad precision instead of the
+  // API call of quadmath_snprintf
+  // printf("0x%016" PRIx64 "_%016" PRIx64 " = %1.15Qe\n", q.v[1], q.v[0], conv.q);
+  //quadmath_snprintf (buf, sizeof buf, "%1.15Qe", conv.q);
+  printf("%016" PRIx64 "%016" PRIx64 "\n", q.v[1], q.v[0]);  
+}
+
 void printFlags(void) {
   int NX = softfloat_exceptionFlags % 2;
   int UF = (softfloat_exceptionFlags >> 1) % 2;
@@ -160,14 +207,32 @@ void softfloatInit(void) {
     softfloat_detectTininess = softfloat_tininess_afterRounding; // RISC-V behavior for tininess
 }
 
-uint64_t parseNum(char *num) {
-  uint64_t result;
+__uint128_t strtoul128(char *num, int base) {
+  __uint128_t result = 0;
+  int i;
+  for (i=0; i<strlen(num); i++) {
+    result = result * base;
+    if (num[i] >= '0' && num[i] <= '9') result += num[i] - '0';
+    else if (num[i] >= 'a' && num[i] <= 'f') result += num[i] - 'a' + 10;
+    else if (num[i] >= 'A' && num[i] <= 'F') result += num[i] - 'A' + 10;
+    else {
+      printf("Error: bad character %c in number %s\n", num[i], num);
+      exit(1);
+    }
+  }
+  return result;
+}
+
+__uint128_t parseNum(char *num) {
+//  uint64_t result;
+  __uint128_t result;
   int size; // size of operands in bytes (2= half, 4=single, 8 = double)
   if (strlen(num) < 8) size = 2;
   else if (strlen(num) < 16) size = 4;
-  else if (strlen(num) < 19) size = 8;
+  else if (strlen(num) < 32) size = 8;
+  else if (strlen(num) < 35) size = 16; // *** will need to increase
   else {
-    printf("Error: only half, single, and double precision supported");
+    printf("Error: only half, single, double, or quad precision supported");
     exit(1);
   }
   if (opSize != 0) {
@@ -179,7 +244,7 @@ uint64_t parseNum(char *num) {
     opSize = size;
     //printf ("Operand size is %d\n", opSize);
   }
-  result = (uint64_t)strtoul(num, NULL, 16);
+  result = (__uint128_t)strtoul128(num, 16);
   //printf("Parsed %s as 0x%lx\n", num, result);
   return result;
 }
@@ -206,7 +271,8 @@ char parseRound(char *rnd) {
 
 int main(int argc, char *argv[])
 {
-    uint64_t xn, yn, zn;
+    //uint64_t xn, yn, zn;
+    __uint128_t xn, yn, zn;
     char op1, op2;
     char cmd[200];
 
@@ -217,6 +283,7 @@ int main(int argc, char *argv[])
       exit(1);
     } else {
       softfloat_roundingMode = softfloat_round_near_even;
+      //printf("argv[0] = %s arvg[1] = %s argv[2] = %s argv[3] = %s\n", argv[0], argv[1], argv[2], argv[3]);
       xn = parseNum(argv[1]);
       yn = parseNum(argv[3]);
       op1 = parseOp(argv[2]);
@@ -241,12 +308,22 @@ int main(int argc, char *argv[])
             r = f32_mulAdd(x, y, z);
             printF32("X", x); printF32("Y", y); printF32("Z", z);
             printF32("result = X*Y+Z", r); printFlags();
-          } else { // opSize = 8
+          } else if (opSize == 8) { 
             float64_t x, y, z, r;
             x.v = xn; y.v = yn; z.v = zn;
             r = f64_mulAdd(x, y, z);
             printF64("X", x); printF64("Y", y); printF64("Z", z);
             printF64("result = X*Y+Z", r); printFlags();
+          } else { // opSize = 16
+            float128_t x, y, z, r;
+            qp xc, yc, zc;
+            xc.v = xn; yc.v = yn; zc.v = zn;
+            x.v[0] = xc.v64[0]; x.v[1] = xc.v64[1];
+            y.v[0] = yc.v64[0]; y.v[1] = yc.v64[1];
+            z.v[0] = zc.v64[0]; z.v[1] = zc.v64[1];
+            r = f128_mulAdd(x, y, z);
+            printF128("X", x); printF128("Y", y); printF128("Z", z);
+            printF128("result = X*Y+Z", r); printFlags();
           }
         }
       } else {
@@ -279,7 +356,7 @@ int main(int argc, char *argv[])
           sprintf(cmd, "0x%08x %c 0x%08x", x.v, op1, y.v);
           printF32(cmd, r); printFlags();
 
-        } else { // opSize = 8
+        } else if (opSize == 8) { // opSize = 8
           float64_t x, y, r;
           x.v = xn; y.v = yn;
           switch (op1) {
@@ -293,7 +370,25 @@ int main(int argc, char *argv[])
           printF64("X", x); printF64("Y", y); 
           sprintf(cmd, "0x%016lx %c 0x%016lx", x.v, op1, y.v);
           printF64(cmd, r); printFlags();
-
+        } else { // opSize = 16
+          float128_t x, y, r;
+          qp xc, yc;
+          xc.v = xn; yc.v = yn;
+          x.v[0] = xc.v64[0]; x.v[1] = xc.v64[1];
+          y.v[0] = yc.v64[0]; y.v[1] = yc.v64[1];
+          //x.v = xn; y.v = yn;
+          switch (op1) {
+            case 'x': r = f128_mul(x, y); break;
+            case '+': r = f128_add(x, y); break;
+            case '-': r = f128_sub(x, y); break;
+            case '/': r = f128_div(x, y); break;
+            case '%': r = f128_rem(x, y); break;
+            default: printf("Unknown op %c\n", op1); exit(1);
+          }
+          printF128("X", x); printF128("Y", y); 
+          //sprintf(cmd, "0x%016lx %c 0x%016lx", x.v, op1, y.v);
+          printF128(cmd, r); printFlags();
+          printF128val(r); 
         }
       }
     }
