@@ -25,7 +25,6 @@ logic ResumeConfirm;
 logic ScanEn;
 logic ScanIn;
 logic ScanOut;
-logic [P.E_SUPPORTED+3:0] DebugGPRAddr;
 
 logic [7:0] c;
 logic reg_init;
@@ -41,18 +40,17 @@ assign syncout = dm.dtm.tcks;
 assign led = dm.dtm.jtag.tap.State;
 
 dm #(P) dm (.clk, .rst(~sys_reset), .tck, .tdi, .tms, .tdo,
-    .HaltReq, .ResumeReq, .HaltConfirm, .ResumeConfirm,
     .ScanEn, .ScanIn, .ScanOut);
 
-logic [1:0] memrwm;
-logic instrvalid;
-logic [63:0] writedatam;
-logic [63:0] ieuadrm;
-logic [(P.LLEN+1):0] readdatam;
+(* mark_debug = "true" *)logic [1:0] memrwm;
+(* mark_debug = "true" *)logic instrvalid;
+(* mark_debug = "true" *)logic [63:0] writedatam;
+(* mark_debug = "true" *)logic [63:0] ieuadrm;
+(* mark_debug = "true" *)logic [(P.LLEN+1):0] readdatam;
 
 if (P.ZICSR_SUPPORTED) begin
-    logic [63:0] misa;
-    logic trapm;
+    (* mark_debug = "true" *)logic [63:0] misa;
+    (* mark_debug = "true" *)logic trapm;
     dummy_reg #(.WIDTH(64),.CONST(64'hDEADBEEF15a15a15)) imisa (.clk,.en(reg_init),.se(ScanEn),.scan_in(ScanOut),.scan_out(c[0]),.q(misa));
     dummy_reg #(.WIDTH(1),.CONST(1'b1)) itrapm (.clk,.en(reg_init),.se(ScanEn),.scan_in(c[0]),.scan_out(c[1]),.q(trapm));
 end else begin
@@ -61,13 +59,13 @@ end else begin
 end
 
 if (P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED) begin
-    logic [63:0] pcm;
+    (* mark_debug = "true" *)logic [63:0] pcm;
     dummy_reg #(.WIDTH(64),.CONST(64'h0023456789ABCD00)) ipcm (.clk,.en(reg_init),.se(ScanEn),.scan_in(c[1]),.scan_out(c[2]),.q(pcm));
 end else
     assign c[2] = c[1];
 
 if (P.ZICSR_SUPPORTED | P.A_SUPPORTED) begin
-    logic [31:0] instrm;
+    (* mark_debug = "true" *)logic [31:0] instrm;
     dummy_reg #(.WIDTH(32),.CONST(32'h0051a500)) iinstrm (.clk,.en(reg_init),.se(ScanEn),.scan_in(c[2]),.scan_out(c[3]),.q(instrm));
 end else
     assign c[3] = c[2];

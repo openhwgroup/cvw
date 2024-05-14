@@ -39,29 +39,26 @@ def main():
     global tn
     with Telnet("127.0.0.1", 4444) as tn:
         read() # clear welcome message from read buffer
-        #reset_dm()
         activate_dm() # necessary if openocd init is disabled
         status()
-        halt()
-        status()
-        resume()
-        status()
+        #halt()
+        #status()
+        #resume()
+        #status()
         #clear_abstrcmd_err()
         #write_data("READDATAM", "0xAA0987210000FFFF")
         #print(f"READDATAM'{read_data("READDATAM")}'")
-        #print(f"WRITEDATAM: '{read_data("WRITEDATAM")}'")
-        #print(f"IEUADRM: '{read_data("IEUADRM")}'")
-        #write_data("TRAPM", "0x0")
-        #print(f"INSTRVALIDM: '{read_data("INSTRVALIDM")}'")
-        #print(f"MEMRWM: '{read_data("MEMRWM")}'")
-        #write_data("MEMRWM", "0x3")
-        #print(f"PCM'{read_data("PCM")}'")
-        #write_data("PCM", "0x100000")
-        #print(f"PCM'{read_data("PCM")}'")
+        print(f"WRITEDATAM: '{read_data("WRITEDATAM")}'")
+        print(f"IEUADRM: '{read_data("IEUADRM")}'")
+        write_data("TRAPM", "0x0")
+        print(f"INSTRVALIDM: '{read_data("INSTRVALIDM")}'")
+        print(f"MEMRWM: '{read_data("MEMRWM")}'")
+        write_data("MEMRWM", "0x3")
+        write_data("PCM", "0x100000")
+        print(f"PCM'{read_data("PCM")}'")
+        check_errors()
         #dmi_reset()
         #clear_abstrcmd_err()
-        #b = activate_dm()
-        #print(b)
 
 
 

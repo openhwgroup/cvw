@@ -49,9 +49,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   input  logic                  DebugHalt,
   input  logic                  DebugResume,
   input  logic                  DebugStallF,
-  output logic                  DebugStallD,
-  output logic                  DebugStallE,
-  output logic                  DebugStallM,
+  input  logic                  DebugStallD,
+  input  logic                  DebugStallE,
+  input  logic                  DebugStallM,
   input  logic                  DebugStallW,
   // Debug scan chain
   input  logic                  DebugScanEn,

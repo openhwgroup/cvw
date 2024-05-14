@@ -87,7 +87,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   dmhazard dmhazard(.clk, .rst, .HaltReq, .Halted, .ResumeReq, .ResumeConfirm, .HaltOnReset, .DebugHalt,
     .DebugResume, .DebugStallF, .DebugStallD, .DebugStallE, .DebugStallM, .DebugStallW);
 
-  enum bit [3:0] {
+    enum bit [3:0] {
     INACTIVE, // 0
     IDLE, // 1
     ACK, // 2
@@ -114,12 +114,19 @@ module dm import cvw::*; #(parameter cvw_t P) (
   // AbsCmd internal state
   logic              AcWrite;
   logic [P.XLEN:0]   ScanReg;
+  logic [P.XLEN-1:0] ScanNext;
   logic [P.XLEN-1:0] ARMask;
+  logic [P.XLEN-1:0] PackedDataReg;
+  logic [P.XLEN-1:0] MaskedScanReg;
   logic [9:0]        ShiftCount;
   logic [9:0]        ScanChainLen;
   logic [9:0]        Cycle;
   logic              InvalidRegNo;
   logic              GPRRegNo;
+  logic StoreScanChain; // Store current value of ScanReg into Data0,Data1
+  logic WriteMsgReg;    // Write to Data0,Data1
+  logic WriteScanReg;
+  logic [31:0] Data0Wr, Data1Wr, Data2Wr, Data3Wr;
 
   // message registers
   logic [31:0] Data0;  // 0x04
@@ -458,52 +465,40 @@ module dm import cvw::*; #(parameter cvw_t P) (
   assign GPRScanOut = GPRSel ? ScanReg[0] : 1'b0;
   assign ScanEn = ~GPRSel && (AcState == AC_SCAN);
   assign GPRScanEn = GPRSel && (AcState == AC_SCAN);
-  // ARMask is used as write enable for subword overwrites (basic mask would overwrite neighbors)
+  
+  
+  // Load data from message registers into scan chain
+  if (P.XLEN == 32)
+    assign PackedDataReg = Data0;
+  else if (P.XLEN == 64)
+    assign PackedDataReg = {Data1,Data0};
+  else if (P.XLEN == 128)
+    assign PackedDataReg = {Data3,Data2,Data1,Data0};
+  
+  assign WriteScanReg = (Cycle == ShiftCount) && AcWrite;
   genvar i;
   for (i=0; i<P.XLEN; i=i+1) begin
-    always_ff @(posedge clk) begin
-      if (ScanEn)
-        if (Cycle == ShiftCount && AcWrite) begin
-          if (P.XLEN == 32)
-            ScanReg[i] <= ARMask[i] ? Data0[i] : ScanReg[i+1];
-          else if (P.XLEN == 64)
-            ScanReg[i] <= ARMask[i] ? {Data1,Data0}[i] : ScanReg[i+1];
-          else if (P.XLEN == 128)
-            ScanReg[i] <= ARMask[i] ? {Data3,Data2,Data1,Data0}[i] : ScanReg[i+1];
-        end else
-          ScanReg[i] <= ScanReg[i+1];
-    end
+    // ARMask is used as write enable for subword overwrites (basic mask would overwrite neighbors in the chain)
+    assign ScanNext[i] = WriteScanReg && ARMask[i] ? PackedDataReg[i] : ScanReg[i+1];
+    flopenr #(1) scanreg (.clk, .reset(rst), .en(ScanEn), .d(ScanNext[i]), .q(ScanReg[i]));
   end
-
+  
   // Message Registers
-  always_ff @(posedge clk) begin
-    if (AcState == AC_SCAN) begin
-      if (Cycle == ShiftCount && ~AcWrite) // Read
-        if (P.XLEN == 32)
-          Data0 <= ARMask & ScanReg[P.XLEN:1];
-        else if (P.XLEN == 64)
-          {Data1,Data0} <= ARMask & ScanReg[P.XLEN:1];
-        else if (P.XLEN == 128)
-          {Data3,Data2,Data1,Data0} <= ARMask & ScanReg[P.XLEN:1];
-        
-    end else if (State == W_DATA && ~Busy) begin // TODO: should these be zeroed if rst?
-      if (P.XLEN == 32)
-        case (ReqAddress)
-          `DATA0  : Data0 <= ReqData;
-        endcase
-      else if (P.XLEN == 64)
-        case (ReqAddress)
-          `DATA0  : Data0 <= ReqData;
-          `DATA1  : Data1 <= ReqData;
-        endcase
-      else if (P.XLEN == 128)
-        case (ReqAddress)
-          `DATA0  : Data0 <= ReqData;
-          `DATA1  : Data1 <= ReqData;
-          `DATA2  : Data2 <= ReqData;
-          `DATA3  : Data3 <= ReqData;
-        endcase
-    end
+  assign MaskedScanReg = ARMask & ScanReg[P.XLEN:1];
+  assign WriteMsgReg = (State == W_DATA) && ~Busy;
+  assign StoreScanChain = (AcState == AC_SCAN) && (Cycle == ShiftCount) && ~AcWrite;
+  
+  assign Data0Wr = StoreScanChain ? MaskedScanReg[31:0] : ReqData;;
+  flopenr #(32) data0reg (.clk, .reset(rst), .en(StoreScanChain || WriteMsgReg && (ReqAddress == `DATA0)), .d(Data0Wr), .q(Data0));
+  if (P.XLEN >= 64) begin
+    assign Data1Wr = StoreScanChain ?  MaskedScanReg[63:32] : ReqData;
+    flopenr #(32) data1reg (.clk, .reset(rst), .en(StoreScanChain || WriteMsgReg && (ReqAddress == `DATA1)), .d(Data1Wr), .q(Data1));
+  end 
+  if (P.XLEN == 128) begin
+    assign Data2Wr = StoreScanChain ?  MaskedScanReg[95:64] : ReqData;
+    assign Data3Wr = StoreScanChain ?  MaskedScanReg[127:96] : ReqData;
+    flopenr #(32) data2reg (.clk, .reset(rst), .en(StoreScanChain || WriteMsgReg && (ReqAddress == `DATA2)), .d(Data2Wr), .q(Data2));
+    flopenr #(32) data3reg (.clk, .reset(rst), .en(StoreScanChain || WriteMsgReg && (ReqAddress == `DATA3)), .d(Data3Wr), .q(Data3));
   end
 
   rad #(P) regnodecode(.AarSize(ReqData[`AARSIZE]),.Regno(ReqData[`REGNO]),.GPRRegNo,.ScanChainLen,.ShiftCount,.InvalidRegNo,.GPRAddr,.ARMask);
