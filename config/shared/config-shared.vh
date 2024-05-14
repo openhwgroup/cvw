@@ -115,6 +115,9 @@ localparam CVTLEN = (ZFA_SUPPORTED & D_SUPPORTED) ? `max(BASECVTLEN, 32'd84) : B
 localparam LLEN = `max($unsigned(FLEN), $unsigned(XLEN));
 localparam LOGCVTLEN = $unsigned($clog2(CVTLEN+1));
 
+// size of FMA output
+localparam FMALEN = 3*NF + 6;
+
 // NORMSHIFTSIZE is the bits out of the normalization shifter
 // RV32F: max(32+23+1, 2(23)+4, 3(23)+6) = 3*23+6 = 75
 // RV64F: max(64+23+1, 64 + 23 + 2, 3*23+6) = 89
@@ -125,12 +128,10 @@ localparam LOGCVTLEN = $unsigned($clog2(CVTLEN+1));
 //     because NORMSHIFTSZ becomes limited by convert rather than divider
 //     The two extra bits are necessary because shiftcorrection dropped them for fcvt.
 //     May be possible to remove these two bits by modifying shiftcorrection
-localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1+2), (DIVb + 1 + NF + 1)), (3*NF+8));
-//localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1), (DIVb + 1 + NF + 1)), (3*NF+8));
+//localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1+2), (DIVb + 1 + NF + 1)), (FMALEN + 2));
+localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1), (DIVb + 1 + NF + 1)), (FMALEN + 2));
 
 localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));                  // log_2(NORMSHIFTSZ)
-localparam CORRSHIFTSZ = NORMSHIFTSZ-2;                             // Drop leading 2 integer bits
-
 
 // Disable spurious Verilator warnings
 

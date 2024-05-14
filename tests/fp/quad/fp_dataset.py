@@ -5,6 +5,7 @@ import random
 import sys
 import math
 from decimal import *
+import os
 sys.set_int_max_str_digits(10000)
 
 fzero       = ['0x00000000', '0x80000000']
@@ -347,6 +348,35 @@ def comments_parser(coverpoints):
         cvpts.append((cvpt+ " #nosat",comment))
     return cvpts
 
+def softfloat_sub(a, b):
+    cmd = "$WALLY/examples/fp/fpcalc/fpcalc " + a + " - " + b
+    result = os.system(cmd)
+    print("cmd = ", cmd, "returns result = ", result)
+    return result
+
+# rs1, rs3, result are hexadecimal strings
+def gen_rs2(iflen,opcode,rs1,rs3,result):
+    if opcode in 'fadd':
+        rs2 = softfloat_sub(result, rs1)
+    elif opcode in 'fsub':
+        rs2 = rs1 - fields_dec_converter(iflen,result[i][0])
+    elif opcode in 'fmul':
+        rs2 = fields_dec_converter(iflen,result[i][0])/rs1
+    elif opcode in 'fdiv':
+        if fields_dec_converter(iflen,result[i][0]) != 0:
+            rs2 = rs1/fields_dec_converter(iflen,result[i][0])
+    elif opcode in 'fsqrt':
+        rs2 = fields_dec_converter(iflen,result[i][0])*fields_dec_converter(iflen,result[i][0])
+    elif opcode in 'fmadd':
+        rs2 = (fields_dec_converter(iflen,result[i][0]) - rs3)/rs1
+    elif opcode in 'fnmadd':
+        rs2 = (rs3 - fields_dec_converter(iflen,result[i][0]))/rs1
+    elif opcode in 'fmsub':
+        rs2 = (fields_dec_converter(iflen,result[i][0]) + rs3)/rs1
+    elif opcode in 'fnmsub':
+        rs2 = -1*(rs3 + fields_dec_converter(iflen,result[i][0]))/rs1
+    return rs2
+
 def ibm_b1(flen, iflen, opcode, ops):
     '''
     IBM Model B1 Definition:
@@ -525,25 +555,26 @@ def ibm_b2(flen, iflen, opcode, ops, int_val = 100, seed = -1): #***Quad support
         rs1 = fields_dec_converter(iflen,'0x'+hex(int('1'+rs1_bin[2:],2))[3:])
         #print(rs1)
         rs3 = fields_dec_converter(iflen,'0x'+hex(int('1'+rs3_bin[2:],2))[3:])
-        if opcode in 'fadd':
-            rs2 = fields_dec_converter(iflen,result[i][0]) - rs1
-        elif opcode in 'fsub':
-            rs2 = rs1 - fields_dec_converter(iflen,result[i][0])
-        elif opcode in 'fmul':
-            rs2 = fields_dec_converter(iflen,result[i][0])/rs1
-        elif opcode in 'fdiv':
-            if fields_dec_converter(iflen,result[i][0]) != 0:
-                rs2 = rs1/fields_dec_converter(iflen,result[i][0])
-        elif opcode in 'fsqrt':
-            rs2 = fields_dec_converter(iflen,result[i][0])*fields_dec_converter(iflen,result[i][0])
-        elif opcode in 'fmadd':
-            rs2 = (fields_dec_converter(iflen,result[i][0]) - rs3)/rs1
-        elif opcode in 'fnmadd':
-            rs2 = (rs3 - fields_dec_converter(iflen,result[i][0]))/rs1
-        elif opcode in 'fmsub':
-            rs2 = (fields_dec_converter(iflen,result[i][0]) + rs3)/rs1
-        elif opcode in 'fnmsub':
-            rs2 = -1*(rs3 + fields_dec_converter(iflen,result[i][0]))/rs1
+        rs2 = gen_rs2(iflen,opcode,"3FFF8000000000000000000000000000","3FFF4000000000000000000000000000","3FFF8800000000000000000000000000")
+        # if opcode in 'fadd':
+        #     rs2 = fields_dec_converter(iflen,result[i][0]) - rs1
+        # elif opcode in 'fsub':
+        #     rs2 = rs1 - fields_dec_converter(iflen,result[i][0])
+        # elif opcode in 'fmul':
+        #     rs2 = fields_dec_converter(iflen,result[i][0])/rs1
+        # elif opcode in 'fdiv':
+        #     if fields_dec_converter(iflen,result[i][0]) != 0:
+        #         rs2 = rs1/fields_dec_converter(iflen,result[i][0])
+        # elif opcode in 'fsqrt':
+        #     rs2 = fields_dec_converter(iflen,result[i][0])*fields_dec_converter(iflen,result[i][0])
+        # elif opcode in 'fmadd':
+        #     rs2 = (fields_dec_converter(iflen,result[i][0]) - rs3)/rs1
+        # elif opcode in 'fnmadd':
+        #     rs2 = (rs3 - fields_dec_converter(iflen,result[i][0]))/rs1
+        # elif opcode in 'fmsub':
+        #     rs2 = (fields_dec_converter(iflen,result[i][0]) + rs3)/rs1
+        # elif opcode in 'fnmsub':
+        #     rs2 = -1*(rs3 + fields_dec_converter(iflen,result[i][0]))/rs1
 
         if(iflen==32):
             m = struct.unpack('f', struct.pack('f', rs2))[0]
