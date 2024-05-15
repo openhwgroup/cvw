@@ -44,6 +44,7 @@ localparam logic ZICCLSM_SUPPORTED  = 0; // Misaligned loads/stores
 localparam logic ZICOND_SUPPORTED   = 0; // Integer conditional operations
 
 // Multiplication & division extensions
+// M implies (and in the configuration file requires) Zmmul
 localparam logic M_SUPPORTED     = 0;
 localparam logic ZMMUL_SUPPORTED = 0;
 

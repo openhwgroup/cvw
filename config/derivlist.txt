@@ -108,8 +108,10 @@ D_SUPPORTED         0
 
 deriv syn_rv64gc_noMulDiv syn_rv64gc_noFPU
 M_SUPPORTED         0
+ZMMUL_SUPPORTED     0
 deriv syn_sram_rv64gc_noMulDiv syn_sram_rv64gc_noFPU
 M_SUPPORTED         0
+ZMMUL_SUPPORTED     0
 
 deriv syn_rv64gc_noAtomic syn_rv64gc_noMulDiv
 ZAAMO_SUPPORTED     0
