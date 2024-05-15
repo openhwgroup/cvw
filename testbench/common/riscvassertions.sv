@@ -54,7 +54,7 @@ module riscvassertions import cvw::*; #(parameter cvw_t P);
     assert (P.DCACHE_SUPPORTED || (P.A_SUPPORTED == 0)) else $fatal(1, "Atomic extension (A) requires cache on Wally.");
     assert (P.IDIV_ON_FPU == 0 || P.F_SUPPORTED) else $fatal(1, "IDIV on FPU needs F_SUPPORTED");
     assert (P.SSTC_SUPPORTED == 0 || (P.S_SUPPORTED)) else $fatal(1, "SSTC requires S_SUPPORTED");
-    assert ((P.ZMMUL_SUPPORTED == 0) || (P.M_SUPPORTED ==0)) else $fatal(1, "At most one of ZMMUL_SUPPORTED and M_SUPPORTED can be enabled");
+    assert ((P.M_SUPPORTED == 0) || (P.ZMMUL_SUPPORTED == 1)) else $fatal(1, "M requires ZMMUL");
     assert ((P.ZICNTR_SUPPORTED == 0) || (P.ZICSR_SUPPORTED == 1)) else $fatal(1, "ZICNTR_SUPPORTED requires ZICSR_SUPPORTED");
     assert ((P.ZIHPM_SUPPORTED == 0) || (P.ZICNTR_SUPPORTED == 1)) else $fatal(1, "ZIPHM_SUPPORTED requires ZICNTR_SUPPORTED");
     assert ((P.ZICBOM_SUPPORTED == 0) || (P.DCACHE_SUPPORTED == 1)) else $fatal(1, "ZICBOM requires DCACHE_SUPPORTED");
@@ -62,12 +62,10 @@ module riscvassertions import cvw::*; #(parameter cvw_t P);
     assert ((P.SVPBMT_SUPPORTED == 0) || (P.VIRTMEM_SUPPORTED == 1 && P.XLEN==64)) else $fatal(1, "SVPBMT requires VIRTMEM_SUPPORTED and RV64");
     assert ((P.SVNAPOT_SUPPORTED == 0) || (P.VIRTMEM_SUPPORTED == 1 && P.XLEN==64)) else $fatal(1, "SVNAPOT requires VIRTMEM_SUPPORTED and RV64");
     assert ((P.ZCB_SUPPORTED == 0) || (P.M_SUPPORTED == 1 && (P.ZBA_SUPPORTED == 1 || P.XLEN == 32) && P.ZBB_SUPPORTED == 1)) else $fatal(1, "ZCB requires M and ZBB (and also ZBA for RV64)");
-    assert ((P.C_SUPPORTED == 0) || (P.ZCA_SUPPORTED == 0 && P.ZCF_SUPPORTED == 0 && P.ZCD_SUPPORTED == 0)) else $fatal(1, "C and ZCA/ZCD/ZCF cannot simultaneously be supported");
-    assert ((P.ZCA_SUPPORTED == 1) || (P.ZCD_SUPPORTED == 0 && P.ZCF_SUPPORTED == 0)) else $fatal(1, "ZCF or ZCD requires ZCA");
-    assert ((P.ZCF_SUPPORTED == 0) || (P.F_SUPPORTED == 1)) else $fatal(1, "ZCF requires F");
-    assert ((P.ZCD_SUPPORTED == 0) || (P.D_SUPPORTED == 1)) else $fatal(1, "ZCD requires D");   
+    assert ((P.ZCA_SUPPORTED == 1) || (P.ZCD_SUPPORTED == 0 && P.ZCF_SUPPORTED == 0 && P.ZCB_SUPPORTED == 0)) else $fatal(1, "ZCB, ZCF, or ZCD requires ZCA");
+    assert ((P.ZCF_SUPPORTED == 0) || ((P.F_SUPPORTED == 1) && (P.XLEN == 32))) else $fatal(1, "ZCF requires F and XLEN == 32");
+    assert ((P.ZCD_SUPPORTED == 0) || (P.D_SUPPORTED == 1)) else $fatal(1, "ZCD requires D");
     assert ((P.LLEN == P.XLEN) || (P.DCACHE_SUPPORTED)) else $fatal(1, "LLEN > XLEN (D on RV32 or Q on RV64) requires data cache");
-    assert (P.A_SUPPORTED + P.ZAAMO_SUPPORTED + P.ZALRSC_SUPPORTED < 2) else $fatal(1, "At most one of A, Zaamo, or Zalrsc can be supported");
   end
 
 endmodule

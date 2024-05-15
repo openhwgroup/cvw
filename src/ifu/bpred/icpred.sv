@@ -55,7 +55,7 @@ module icpred import cvw::*;  #(parameter cvw_t P,
     logic     cjal, cj, cjr, cjalr, CJumpF, CBranchF;
     logic     NCJumpF, NCBranchF;
 
-    if(P.COMPRESSED_SUPPORTED) begin
+    if(P.ZCA_SUPPORTED) begin
       logic [4:0] CompressedOpcF;
       assign CompressedOpcF = {PostSpillInstrRawF[1:0], PostSpillInstrRawF[15:13]};
       assign cjal = CompressedOpcF == 5'h09 & P.XLEN == 32;
@@ -71,13 +71,13 @@ module icpred import cvw::*;  #(parameter cvw_t P,
     assign NCJumpF = PostSpillInstrRawF[6:0] == 7'h67 | PostSpillInstrRawF[6:0] == 7'h6F;
     assign NCBranchF = PostSpillInstrRawF[6:0] == 7'h63;
     
-    assign BPBranchF = NCBranchF | (P.COMPRESSED_SUPPORTED & CBranchF);
-    assign BPJumpF = NCJumpF | (P.COMPRESSED_SUPPORTED & (CJumpF));
+    assign BPBranchF = NCBranchF | (P.ZCA_SUPPORTED & CBranchF);
+    assign BPJumpF = NCJumpF | (P.ZCA_SUPPORTED & (CJumpF));
     assign BPReturnF = (NCJumpF & (PostSpillInstrRawF[19:15] & 5'h1B) == 5'h01 & PostSpillInstrRawF[11:7] == 5'b0) | // return must return to ra or r5
-        (P.COMPRESSED_SUPPORTED & cjr & ((PostSpillInstrRawF[11:7] & 5'h1B) == 5'h01));
+        (P.ZCA_SUPPORTED & cjr & ((PostSpillInstrRawF[11:7] & 5'h1B) == 5'h01));
     
     assign BPCallF = (NCJumpF & (PostSpillInstrRawF[11:07] & 5'h1B) == 5'h01) | // call(r) must link to ra or x5
-        (P.COMPRESSED_SUPPORTED & (cjal | (cjalr & (PostSpillInstrRawF[11:7] & 5'h1b) == 5'h01)));
+        (P.ZCA_SUPPORTED & (cjal | (cjalr & (PostSpillInstrRawF[11:7] & 5'h1b) == 5'h01)));
 
   end else begin
     // This section connects the BTB's instruction class prediction.
