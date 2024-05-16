@@ -265,7 +265,7 @@ module testbench;
   logic        ResetCntRst;
   logic        CopyRAM;
 
-  string  signame, memfilename, bootmemfilename, uartoutfilename, pathname;
+  string  signame, elffilename, memfilename, bootmemfilename, uartoutfilename, pathname;
   integer begin_signature_addr, end_signature_addr, signature_size;
   integer uartoutfile;
 
@@ -366,20 +366,24 @@ module testbench;
     if(SelectTest) begin
       if (riscofTest) begin 
         memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
+        elffilename = {pathname, tests[test], "ref/ref.elf"};
         ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
         ProgramLabelMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.lab"};
       end else if(TEST == "buildroot") begin 
         memfilename = {RISCV_DIR, "/linux-testvectors/ram.bin"};
+        elffilename = "buildroot";
         bootmemfilename = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
         uartoutfilename = {"logs/", TEST, "_uart.out"};
         uartoutfile = $fopen(uartoutfilename, "w"); // delete UART output file
         ProgramAddrMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.addr"};
         ProgramLabelMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.lab"};
       end else if(ElfFile != "none") begin
+        elffilename = ElfFile;
         memfilename = {ElfFile, ".memfile"};
         ProgramAddrMapFile = {ElfFile, ".objdump.addr"};
         ProgramLabelMapFile = {ElfFile, ".objdump.lab"};
       end else begin
+        elffilename = {pathname, tests[test], ".elf"};
         memfilename = {pathname, tests[test], ".elf.memfile"};
         ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
         ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
@@ -421,7 +425,7 @@ module testbench;
       end else if (TEST == "coverage64gc") begin
         $display("Coverage tests don't get checked");
       end else if (ElfFile != "none") begin
-        $display("Single Elf file tests don't get signatured checked.");
+        $display("Single Elf file tests are not signatured verified.");
 `ifdef VERILATOR // this macro is defined when verilator is used
         $finish; // Simulator Verilator needs $finish to terminate simulation.
 `elsif SIM_VCS // this macro is defined when vcs is used
@@ -688,6 +692,7 @@ end
               .CMP_CSR     (1)
               ) idv_trace2api(rvvi);
 
+  string filename;
   initial begin
     int iter;
     #1;
@@ -705,7 +710,10 @@ end
     void'(rvviRefConfigSetInt(IDV_CONFIG_MODEL_ADDRESS_BUS_WIDTH,     56));
     void'(rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 6));
 
-    if (!rvviRefInit("")) begin
+    if(elffilename == "buildroot") filename = "";    
+    else filename = elffilename;
+ 
+    if (!rvviRefInit(filename)) begin
       $display($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
       $fatal;
     end
