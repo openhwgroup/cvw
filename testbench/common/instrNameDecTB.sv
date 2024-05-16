@@ -58,17 +58,17 @@ module instrNameDecTB(
                        else if (funct7[6:1] == 6'b010010) name = "BCLRI";
                        else if (funct7[6:1] == 6'b011010) name = "BINVI";
                        else if (funct7[6:1] == 6'b001010) name = "BSETI";
-                       else if (funct7 == 7'b0000100 && rs2 == 5'b01111) name = "ZIP";
-                       else if (funct7 == 7'b0011000 && rs2 == 5'b00000) name = "AES64IM";
-                       else if (funct7 == 7'b0011000 && rs2[4] == 1'b1) name = "AES64KS1I";
-                       else if (funct7 == 7'b0001000 && rs2 == 5'b00010) name = "SHA256SIG0";
-                       else if (funct7 == 7'b0001000 && rs2 == 5'b00011) name = "SHA256SIG1";
-                       else if (funct7 == 7'b0001000 && rs2 == 5'b00000) name = "SHA256SUM0";
-                       else if (funct7 == 7'b0001000 && rs2 == 5'b00001) name = "SHA256SUM1";
-                       else if (funct7 == 7'b0001000 && rs2 == 5'b00110) name = "SHA512SIG0";
-                       else if (funct7 == 7'b0001000 && rs2 == 5'b00111) name = "SHA512SIG1";
-                       else if (funct7 == 7'b0001000 && rs2 == 5'b00100) name = "SHA512SUM0";
-                       else if (funct7 == 7'b0001000 && rs2 == 5'b00101) name = "SHA512SUM1";
+                       else if (funct7 == 7'b0000100 & rs2 == 5'b01111) name = "ZIP";
+                       else if (funct7 == 7'b0011000 & rs2 == 5'b00000) name = "AES64IM";
+                       else if (funct7 == 7'b0011000 & rs2[4] == 1'b1) name = "AES64KS1I";
+                       else if (funct7 == 7'b0001000 & rs2 == 5'b00010) name = "SHA256SIG0";
+                       else if (funct7 == 7'b0001000 & rs2 == 5'b00011) name = "SHA256SIG1";
+                       else if (funct7 == 7'b0001000 & rs2 == 5'b00000) name = "SHA256SUM0";
+                       else if (funct7 == 7'b0001000 & rs2 == 5'b00001) name = "SHA256SUM1";
+                       else if (funct7 == 7'b0001000 & rs2 == 5'b00110) name = "SHA512SIG0";
+                       else if (funct7 == 7'b0001000 & rs2 == 5'b00111) name = "SHA512SIG1";
+                       else if (funct7 == 7'b0001000 & rs2 == 5'b00100) name = "SHA512SUM0";
+                       else if (funct7 == 7'b0001000 & rs2 == 5'b00101) name = "SHA512SUM1";
                        else if (funct7 == 7'b0110000) begin
                          case (rs2)
                            5'b00000: name = "CLZ";
@@ -89,7 +89,7 @@ module instrNameDecTB(
                        else if (funct7[6:1] == 6'b010010) name = "BEXTI";
                        else if (funct7 == 7'b0010100 & rs2 == 5'b00111) name = "ORC.B";
                        else if (imm == 12'b011010000111) name = "BREV8";
-                       else if (funct7 == 7'b0000100 && rs2 == 5'b01111) name = "UNZIP";
+                       else if (funct7 == 7'b0000100 & rs2 == 5'b01111) name = "UNZIP";
                        else                           name = "ILLEGAL"; 
       10'b0010011_110: if      (rd == 0 & rs2 == 0) name = "PREFETCH.I";
                        else if (rd == 0 & rs2 == 1) name = "PREFETCH.R";
@@ -181,9 +181,9 @@ module instrNameDecTB(
                        else if (funct7 == 7'b0010000) name = "SH2ADD";
                        else if (funct7 == 7'b0000101) name = "MIN";
                        else if (funct7 == 7'b0100000) name = "ORN";
-                       else if (funct7 == 7'b0000100 && rs2 == 5'b00000) name = "ZEXT.H";
-                       else if (funct7 == 7'b0000100 && op == 7'b0110011) name = "PACK";
-                       else if (funct7 == 7'b0000100 && op == 7'b0111011) name = "PACKW";
+                       else if (funct7 == 7'b0000100 & rs2 == 5'b00000) name = "ZEXT.H";
+                       else if (funct7 == 7'b0000100 & op == 7'b0110011) name = "PACK";
+                       else if (funct7 == 7'b0000100 & op == 7'b0111011) name = "PACKW";
                        else                           name = "ILLEGAL";
       10'b0110011_101: if      (funct7 == 7'b0000000) name = "SRL";
                        else if (funct7 == 7'b0000001) name = "DIVU";
