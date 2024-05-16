@@ -68,7 +68,7 @@ module testbench;
   logic        ResetMem;
 
   // Variables that can be overwritten with $value$plusargs at start of simulation
-  string       TEST;
+  string       TEST, ElfFile;
   integer      INSTR_LIMIT;
 
   // DUT signals
@@ -115,6 +115,10 @@ module testbench;
     // look for arguments passed to simulation, or use defaults
     if (!$value$plusargs("TEST=%s", TEST))
       TEST = "none";
+    if (!$value$plusargs("ElfFile=%s", ElfFile))
+      ElfFile = "none";
+    else begin
+    end
     if (!$value$plusargs("INSTR_LIMIT=%d", INSTR_LIMIT))
       INSTR_LIMIT = 0;
     
@@ -221,8 +225,12 @@ module testbench;
         "arch32zknh":    if (P.ZKNH_SUPPORTED)    tests = arch32zknh;
       endcase
     end
-    if (tests.size() == 0) begin
-      $display("TEST %s not supported in this configuration", TEST);
+    if (tests.size() == 0 & ElfFile == "none") begin
+      if (tests.size() == 0) begin
+        $display("TEST %s not supported in this configuration", TEST);
+      end else if(ElfFile == "none") begin
+        $display("ElfFile %s not found", ElfFile);
+      end
       $finish;
     end
 `ifdef MAKEVCD
@@ -356,21 +364,23 @@ module testbench;
   //end // added
   //always @(posedge SelectTest) // added
     if(SelectTest) begin
-      if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
-      else if(TEST == "buildroot") begin 
+      if (riscofTest) begin 
+        memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
+        ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
+        ProgramLabelMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.lab"};
+      end else if(TEST == "buildroot") begin 
         memfilename = {RISCV_DIR, "/linux-testvectors/ram.bin"};
         bootmemfilename = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
         uartoutfilename = {"logs/", TEST, "_uart.out"};
         uartoutfile = $fopen(uartoutfilename, "w"); // delete UART output file
-      end
-      else            memfilename = {pathname, tests[test], ".elf.memfile"};
-      if (riscofTest) begin
-        ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
-        ProgramLabelMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.lab"};
-      end else if (TEST == "buildroot") begin
         ProgramAddrMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.addr"};
         ProgramLabelMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.lab"};
+      end else if(ElfFile != "none") begin
+        memfilename = {ElfFile, ".memfile"};
+        ProgramAddrMapFile = {ElfFile, ".objdump.addr"};
+        ProgramLabelMapFile = {ElfFile, ".objdump.lab"};
       end else begin
+        memfilename = {pathname, tests[test], ".elf.memfile"};
         ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
         ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
       end
@@ -410,6 +420,15 @@ module testbench;
         $display("Embench Benchmark: created output file: %s", outputfile);
       end else if (TEST == "coverage64gc") begin
         $display("Coverage tests don't get checked");
+      end else if (ElfFile != "none") begin
+        $display("Single Elf file tests don't get signatured checked.");
+`ifdef VERILATOR // this macro is defined when verilator is used
+        $finish; // Simulator Verilator needs $finish to terminate simulation.
+`elsif SIM_VCS // this macro is defined when vcs is used
+        $finish; // Simulator VCS needs $finish to terminate simulation.
+`else
+         $stop; // if this is changed to $finish for Questa, wally-batch.do does not go to the next step to run coverage, and wally.do terminates without allowing GUI debug
+`endif
       end else begin 
         // for tests with no self checking mechanism, read .signature.output file and compare to check for errors
         // clear signature to prevent contamination from previous tests
