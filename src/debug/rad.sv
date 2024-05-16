@@ -4,7 +4,7 @@
 // Written: matthew.n.otto@okstate.edu
 // Created: 28 April 2024
 //
-// Purpose: Register Address Decoder
+// Purpose: Calculates the numbers of shifts required to access target register on the debug scan chain
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -37,7 +37,6 @@ module rad import cvw::*; #(parameter cvw_t P) (
 );
   `include "debug.vh"
 
-  // BOZO: does this even work?
   localparam MISALEN = P.ZICSR_SUPPORTED ? P.XLEN : 0;
   localparam TRAPMLEN = P.ZICSR_SUPPORTED ? 1 : 0;
   localparam PCMLEN = (P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED) ? P.XLEN : 0;
@@ -45,12 +44,11 @@ module rad import cvw::*; #(parameter cvw_t P) (
   localparam MEMRWMLEN = 2;
   localparam INSTRVALIDMLEN = 1;
   localparam WRITEDATAMLEN = P.XLEN;
-  //localparam GPRLEN = P.XLEN + 1;
   localparam IEUADRMLEN = P.XLEN;
   localparam READDATAMLEN = P.LLEN + 1;
   localparam SCANCHAINLEN = P.XLEN - 1 
     + MISALEN + TRAPMLEN + PCMLEN + INSTRMLEN
-    + MEMRWMLEN + INSTRVALIDMLEN + WRITEDATAMLEN //+ GPRLEN
+    + MEMRWMLEN + INSTRVALIDMLEN + WRITEDATAMLEN
     + IEUADRMLEN + READDATAMLEN;
   localparam GPRCHAINLEN = 2*P.XLEN;
 
@@ -61,7 +59,6 @@ module rad import cvw::*; #(parameter cvw_t P) (
   localparam MEMRWM_IDX = INSTRM_IDX + MEMRWMLEN;
   localparam INSTRVALIDM_IDX = MEMRWM_IDX + INSTRVALIDMLEN;
   localparam WRITEDATAM_IDX = INSTRVALIDM_IDX + WRITEDATAMLEN;
-  //localparam GPR_IDX = WRITEDATAM_IDX + GPRLEN;
   localparam IEUADRM_IDX = WRITEDATAM_IDX + IEUADRMLEN;
   localparam READDATAM_IDX = IEUADRM_IDX + READDATAMLEN;
 
@@ -69,7 +66,7 @@ module rad import cvw::*; #(parameter cvw_t P) (
 
   assign ScanChainLen = GPRRegNo ? GPRCHAINLEN : SCANCHAINLEN;
 
-  if (P.E_SUPPORTED) // TODO: add seperate scan chain for GPR (with read and write signals)
+  if (P.E_SUPPORTED)
     assign GPRAddr = Regno[4:0];
   else
     assign GPRAddr = Regno[3:0];

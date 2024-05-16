@@ -25,8 +25,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-// TODO: test trst at various points in DMI communication
-
 // To recovert from a core reset, DTM will need to DtmHardReset (or trstn / tms zeroscan).
 //    This is mentioned in spec
 // To recover from DTM reset, core will probably need to be reset
@@ -88,7 +86,6 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
   assign DmiStat = ValRspOP;
 
   // Synchronize the edges of tck to the system clock
-  // TODO find the minimum sysclk:tck ratio that works
   synchronizer clksync (.clk(clk), .d(tck), .q(tcks));
 
   jtag #(.ADDR_WIDTH(ADDR_WIDTH), .DEVICE_ID(JTAG_DEVICE_ID)) jtag (.tck(tcks), .tdi, .tms, .tdo,
@@ -138,7 +135,7 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
           end
         end
 
-        START : begin // TODO: add a timeout if ReqReady never asserts?
+        START : begin
           if (ReqReady) begin
             ReqValid <= 0;
             RspReady <= 1;

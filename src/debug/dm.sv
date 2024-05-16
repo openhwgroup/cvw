@@ -27,7 +27,7 @@
 
 module dm import cvw::*; #(parameter cvw_t P) (
   input  logic                  clk, 
-  input  logic                  rst, // Full hardware reset signal (reset button) //TODO make rst functional
+  input  logic                  rst, // Full hardware reset signal (reset button)
 
   // External JTAG signals
   input  logic                  tck,
@@ -142,12 +142,8 @@ module dm import cvw::*; #(parameter cvw_t P) (
 
   //// DM register fields
   //DMControl
-   logic       ResetReq;   
   logic AckUnavail;
   logic AckHaveReset;
-  const logic HaSel = 0;
-  const logic [9:0] HartSelLo = 0;
-  const logic [9:0] HartSelHi = 0;
   logic NdmReset;
   logic DmActive; // This bit is used to (de)activate the DM. Toggling acts as reset
   //DMStatus
@@ -168,35 +164,20 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic AnyHalted;
   const logic Authenticated = 1;
   logic AuthBusy;
-  const logic HasResetHaltReq = 1; // TODO update
+  const logic HasResetHaltReq = 1;
   logic ConfStrPtrValid;
   const logic [3:0] Version = 3; // DM Version
   //AbstractCS
   const logic [4:0] ProgBufSize = 0;
   logic Busy;
-  logic RelaxedPriv; // TODO
+  const logic RelaxedPriv = 1;
   logic [2:0] CmdErr;
-  const logic [3:0] DataCount = (P.XLEN/32);
-  //SysBusCS
-  const logic [2:0] SBVersion = 1;
-  const logic SBBusyError = 0;
-  const logic SBBusy = 0;
-  const logic SBReadOnAddr = 0;
-  const logic [2:0] SBAccess = 0;
-  const logic SBAutoincrement = 0;
-  const logic SBReadOnData = 0;
-  const logic [2:0] SBError = 0;
-  const logic [6:0] SBASize = 0;
-  const logic SBAccess128 = 0;
-  const logic SBAccess64 = 0;
-  const logic SBAccess32 = 0;
-  const logic SBAccess16 = 0;
-  const logic SBAccess8 = 0;
+  const logic [3:0] DataCount = (P.XLEN/32); 
 
 
   // Pack registers
-  assign DMControl = {2'b0, HartReset, 2'b0, HaSel, HartSelLo,
-    HartSelHi, 4'b0, NdmReset, DmActive};
+  assign DMControl = {2'b0, HartReset, 2'b0, 1'b0, 10'b0,
+    10'b0, 4'b0, NdmReset, DmActive};
 
   assign DMStatus = {7'b0, NdmResetPending, StickyUnavail, ImpEBreak, 2'b0, 
     AllHaveReset, AnyHaveReset, AllResumeAck, AnyResumeAck, AllNonExistent, 
@@ -205,13 +186,9 @@ module dm import cvw::*; #(parameter cvw_t P) (
 
   assign AbstractCS = {3'b0, ProgBufSize, 11'b0, Busy, RelaxedPriv, CmdErr, 4'b0, DataCount};
 
-  assign SysBusCS = {SBVersion, 6'b0, SBBusyError, SBBusy, SBReadOnAddr, SBAccess, 
-    SBAutoincrement, SBReadOnData, SBError, SBASize, SBAccess128, SBAccess64, 
-    SBAccess32, SBAccess16, SBAccess8};
+  assign SysBusCS = 32'h20000000; // SBVersion = 1
 
   // translate internal state to hart connections
-  assign ResetReq = HartReset;
-
   assign AllRunning = ~Halted;
   assign AnyRunning = ~Halted;
   assign AllHalted = Halted;
@@ -252,7 +229,6 @@ module dm import cvw::*; #(parameter cvw_t P) (
           ImpEBreak <= 0;
           AuthBusy <= 0;
           ConfStrPtrValid <= 0;
-          RelaxedPriv <= 0; // TODO
           CmdErr <= 0;
           if (ReqValid) begin
             if (ReqAddress == `DMCONTROL && ReqOP == `OP_WRITE && ReqData[`DMACTIVE]) begin
@@ -359,10 +335,8 @@ module dm import cvw::*; #(parameter cvw_t P) (
         W_ABSTRACTCS : begin
           if (Busy)
             CmdErr <= ~|CmdErr ? `CMDERR_BUSY : CmdErr;
-          else begin
-            RelaxedPriv <= ReqData[`RELAXEDPRIV];
+          else
             CmdErr <= |ReqData[`CMDERR] ? `CMDERR_NONE : CmdErr; // clear CmdErr
-          end
           RspOP <= `OP_SUCCESS;
           State <= ACK;
         end
