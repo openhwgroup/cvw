@@ -157,7 +157,7 @@ module testbenchfp;
    initial begin
       // Information displayed for user on what is simulating
       // $display("\nThe start of simulation...");      
-      $display("\nThe start of simulation... DIVB: %d",DIVBLEN);      
+      $display("\nThe start of simulation... DIVB: %d, DIVBLEN: %d",DIVb, DIVBLEN);      
       // $display("This simulation for TEST is %s", TEST);
       if (P.Q_SUPPORTED & (TEST_SIZE == "QP" | TEST_SIZE == "all")) begin // if Quad percision is supported
          if (TEST === "cvtint" | TEST === "all") begin  // if testing integer conversion
@@ -1082,8 +1082,8 @@ module testbenchfp;
      end   
 
    // Left-over from before - will remove soon
-   //always @(posedge clk) 
-   //OldFDivBusyE = FDivDoneE;
+   always @(posedge clk) 
+   OldFDivBusyE = FDivDoneE;
 
    // state machine to handle timing for testing due
    // various cycle counts for different fp/int operations
