@@ -58,7 +58,7 @@ module mdu import cvw::*;  #(parameter cvw_t P) (
   // Start a divide when a new division instruction is received and the divider isn't already busy or finishing
   // When IDIV_ON_FPU is set, use the FPU divider instead
   // In ZMMUL, with M_SUPPORTED = 0, omit the divider
-  if ((P.IDIV_ON_FPU & P.F_SUPPORTED) || (!P.M_SUPPORTED)) begin:nodiv  
+  if ((P.IDIV_ON_FPU & P.F_SUPPORTED) | (!P.M_SUPPORTED)) begin:nodiv  
     assign QuotM = '0;
     assign RemM = '0;
     assign DivBusyE = 1'b0;
