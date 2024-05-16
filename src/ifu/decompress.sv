@@ -173,17 +173,17 @@ module decompress import cvw::*;  #(parameter cvw_t P) (
                       InstrD = {7'b0000000, rs2p, rds1p, 3'b000, rds1p, 7'b0111011}; // c.addw
                     else if (instr16[6:2] == 5'b11000 & P.ZCB_SUPPORTED) 
                       InstrD = {12'b000011111111, rds1p, 3'b111, rds1p, 7'b0010011}; // c.zext.b = andi rd, rs1, 255
-                    else if (instr16[6:2] == 5'b11001 & P.ZCB_SUPPORTED) 
+                    else if (instr16[6:2] == 5'b11001 & P.ZCB_SUPPORTED & P.ZBB_SUPPORTED) 
                       InstrD = {12'b011000000100, rds1p, 3'b001, rds1p, 7'b0010011}; // c.sext.b
-                    else if (instr16[6:2] == 5'b11010 & P.ZCB_SUPPORTED) 
+                    else if (instr16[6:2] == 5'b11010 & P.ZCB_SUPPORTED & P.ZBB_SUPPORTED) 
                       InstrD = {7'b0000100, 5'b00000, rds1p, 3'b100, rds1p, 3'b011, P.XLEN > 32, 3'b011};  // c.zext.h
-                    else if (instr16[6:2] == 5'b11011 & P.ZCB_SUPPORTED) 
+                    else if (instr16[6:2] == 5'b11011 & P.ZCB_SUPPORTED & P.ZBB_SUPPORTED) 
                       InstrD = {12'b011000000101, rds1p, 3'b001, rds1p, 7'b0010011}; // c.sext.h
                     else if (instr16[6:2] == 5'b11101 & P.ZCB_SUPPORTED) 
                       InstrD = {12'b111111111111, rds1p, 3'b100, rds1p, 7'b0010011}; // c.not = xori
-                    else if (instr16[6:2] == 5'b11100 & P.ZCB_SUPPORTED & P.XLEN > 32) 
+                    else if (instr16[6:2] == 5'b11100 & P.ZCB_SUPPORTED & P.ZBA_SUPPORTED & P.XLEN > 32) 
                       InstrD = {7'b0000100, 5'b00000, rds1p, 3'b000, rds1p, 7'b0111011}; // c.zext.w = add.uw rd, rs1, 0
-                    else if (instr16[6:5] == 2'b10 & P.ZCB_SUPPORTED) 
+                    else if (instr16[6:5] == 2'b10 & P.ZCB_SUPPORTED & P.ZMMUL_SUPPORTED) 
                       InstrD = {7'b0000001, rs2p, rds1p, 3'b000, rds1p, 7'b0110011}; // c.mul
                     else begin // reserved  
                       IllegalCompInstrD = 1'b1;

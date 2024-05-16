@@ -61,7 +61,6 @@ module riscvassertions import cvw::*; #(parameter cvw_t P);
     assert ((P.ZICBOZ_SUPPORTED == 0) | (P.DCACHE_SUPPORTED == 1)) else $fatal(1, "ZICBOZ requires DCACHE_SUPPORTED");
     assert ((P.SVPBMT_SUPPORTED == 0) | (P.VIRTMEM_SUPPORTED == 1 & P.XLEN==64)) else $fatal(1, "SVPBMT requires VIRTMEM_SUPPORTED and RV64");
     assert ((P.SVNAPOT_SUPPORTED == 0) | (P.VIRTMEM_SUPPORTED == 1 & P.XLEN==64)) else $fatal(1, "SVNAPOT requires VIRTMEM_SUPPORTED and RV64");
-    assert ((P.ZCB_SUPPORTED == 0) | (P.M_SUPPORTED == 1 & (P.ZBA_SUPPORTED == 1 | P.XLEN == 32) & P.ZBB_SUPPORTED == 1)) else $fatal(1, "ZCB requires M and ZBB (and also ZBA for RV64)");
     assert ((P.ZCA_SUPPORTED == 1) | (P.ZCD_SUPPORTED == 0 & P.ZCF_SUPPORTED == 0 & P.ZCB_SUPPORTED == 0)) else $fatal(1, "ZCB, ZCF, or ZCD requires ZCA");
     assert ((P.ZCF_SUPPORTED == 0) | ((P.F_SUPPORTED == 1) & (P.XLEN == 32))) else $fatal(1, "ZCF requires F and XLEN == 32");
     assert ((P.ZCD_SUPPORTED == 0) | (P.D_SUPPORTED == 1)) else $fatal(1, "ZCD requires D");
