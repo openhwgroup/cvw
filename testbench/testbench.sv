@@ -775,7 +775,7 @@ end
     // *** RT: This section can probably be moved into the same chunk of code which
     // loads the memories.  However I'm not sure that ImperasDV supports reloading
     // the memories without relaunching the simulator.
-    begin
+    if(elffilename == "buildroot") begin
       longint x64;
       int     x32[2];
       longint index;
