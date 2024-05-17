@@ -696,6 +696,10 @@ end
   initial begin
     // imperasDV requires the elffile be defined at the begining of the simulation.
     int iter;
+    longint x64;
+    int     x32[2];
+    longint index;
+    string  memfilenameImperasDV, bootmemfilenameImperasDV;
     #1;
     IDV_MAX_ERRORS = 3;
     elffilename = ElfFile;
@@ -714,10 +718,55 @@ end
 
     if(elffilename == "buildroot") filename = "";    
     else filename = elffilename;
- 
-    if (!rvviRefInit(filename)) begin
-      $display($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
-      $fatal;
+
+    // use the ImperasDV rvviRefInit to load the reference model with an elf file
+    if(elffilename != "none") begin
+      if (!rvviRefInit(filename)) begin
+        $display($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
+        $fatal;
+      end
+    end else begin // for buildroot use the binary instead to load teh reference model.
+      if (!rvviRefInit("")) begin // still have to call with nothing
+        $display($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
+        $fatal;
+      end      
+      
+      memfilenameImperasDV = {RISCV_DIR, "/linux-testvectors/ram.bin"};
+      bootmemfilenameImperasDV = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
+
+      $display("RVVI Loading bootmem.bin");
+      memFile = $fopen(bootmemfilenameImperasDV, "rb");
+      index = 'h1000 - 8;
+      while(!$feof(memFile)) begin
+        index+=8;
+        readResult = $fread(x64, memFile);
+        if (x64 == 0) continue;
+        x32[0] = x64 & 'hffffffff;
+        x32[1] = x64 >> 32;
+        rvviRefMemoryWrite(0, index+0, x32[0], 4);
+        rvviRefMemoryWrite(0, index+4, x32[1], 4);
+        //$display("boot %08X x32[0]=%08X x32[1]=%08X", index, x32[0], x32[1]);
+      end
+      $fclose(memFile);
+            
+      $display("RVVI Loading ram.bin");
+      memFile = $fopen(memfilenameImperasDV, "rb");
+      index = 'h80000000 - 8;
+      while(!$feof(memFile)) begin
+        index+=8;
+        readResult = $fread(x64, memFile);
+        if (x64 == 0) continue;
+        x32[0] = x64 & 'hffffffff;
+        x32[1] = x64 >> 32;
+        rvviRefMemoryWrite(0, index+0, x32[0], 4);
+        rvviRefMemoryWrite(0, index+4, x32[1], 4);
+        //$display("ram  %08X x32[0]=%08X x32[1]=%08X", index, x32[0], x32[1]);
+      end
+      $fclose(memFile);
+      
+      $display("RVVI Loading Complete");
+      
+      void'(rvviRefPcSet(0, P.RESET_VECTOR)); // set BOOTROM address
     end
 
     // Volatile CSRs
@@ -773,53 +822,6 @@ end
 
     void'(rvviRefCsrSetVolatile(0, 32'h104));   // SIE - Temporary!!!!
     
-    // Load memory
-    // *** RT: This section can probably be moved into the same chunk of code which
-    // loads the memories.  However I'm not sure that ImperasDV supports reloading
-    // the memories without relaunching the simulator.
-    if(elffilename == "buildroot") begin
-      longint x64;
-      int     x32[2];
-      longint index;
-      string  memfilenameImperasDV, bootmemfilenameImperasDV;
-      
-      memfilenameImperasDV = {RISCV_DIR, "/linux-testvectors/ram.bin"};
-      bootmemfilenameImperasDV = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
-
-      $display("RVVI Loading bootmem.bin");
-      memFile = $fopen(bootmemfilenameImperasDV, "rb");
-      index = 'h1000 - 8;
-      while(!$feof(memFile)) begin
-        index+=8;
-        readResult = $fread(x64, memFile);
-        if (x64 == 0) continue;
-        x32[0] = x64 & 'hffffffff;
-        x32[1] = x64 >> 32;
-        rvviRefMemoryWrite(0, index+0, x32[0], 4);
-        rvviRefMemoryWrite(0, index+4, x32[1], 4);
-        //$display("boot %08X x32[0]=%08X x32[1]=%08X", index, x32[0], x32[1]);
-      end
-      $fclose(memFile);
-            
-      $display("RVVI Loading ram.bin");
-      memFile = $fopen(memfilenameImperasDV, "rb");
-      index = 'h80000000 - 8;
-      while(!$feof(memFile)) begin
-        index+=8;
-        readResult = $fread(x64, memFile);
-        if (x64 == 0) continue;
-        x32[0] = x64 & 'hffffffff;
-        x32[1] = x64 >> 32;
-        rvviRefMemoryWrite(0, index+0, x32[0], 4);
-        rvviRefMemoryWrite(0, index+4, x32[1], 4);
-        //$display("ram  %08X x32[0]=%08X x32[1]=%08X", index, x32[0], x32[1]);
-      end
-      $fclose(memFile);
-      
-      $display("RVVI Loading Complete");
-      
-      void'(rvviRefPcSet(0, P.RESET_VECTOR)); // set BOOTROM address
-    end
   end
 
   always @(dut.core.priv.priv.csr.csri.MIP_REGW[7])   void'(rvvi.net_push("MTimerInterrupt",    dut.core.priv.priv.csr.csri.MIP_REGW[7]));
