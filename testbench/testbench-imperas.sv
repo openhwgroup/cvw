@@ -97,7 +97,7 @@ module testbench;
   initial
     begin
       ResetCount = 0;
-      ResetThreshold = 2;
+      ResetThreshold = 21;
       InReset = 1;
       testadr = 0;
       testadrNoBase = 0;
