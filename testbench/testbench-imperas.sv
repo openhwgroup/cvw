@@ -240,6 +240,12 @@ module testbench;
 `endif
   end // initial begin
 
+  // Model the testbench as an fsm.
+  // Do this in parts so it easier to verify
+  // part 1: build a version which echos the same behavior as the below code, but does not drive anything
+  // part 2: drive some of the controls
+  // part 3: drive all logic and remove old inital and always @ negedge clk block
+
   typedef enum logic [3:0]{STATE_TESTBENCH_RESET,
                            STATE_INIT_TEST,
                            STATE_RESET_MEMORIES,
@@ -260,33 +266,204 @@ module testbench;
   logic        ResetCntRst;
   logic        CopyRAM;
 
-  string  signame, bootmemfilename, uartoutfilename, pathname;
+  string  signame, elffilename, memfilename, bootmemfilename, uartoutfilename, pathname;
   integer begin_signature_addr, end_signature_addr, signature_size;
   integer uartoutfile;
+
   logic reset_extNew;
   logic DCacheFlushStartNew;
 
+  assign ResetThresholdNew = 3'd5;
+
+  initial begin
+    TestBenchReset = 1'b1;
+    # 100;
+    TestBenchReset = 1'b0;
+  end
+
+  always_ff @(posedge clk)
+    if (TestBenchReset) CurrState <= STATE_TESTBENCH_RESET;
+    else CurrState <= NextState;  
+
+  // fsm next state logic
+  always_comb begin
+    // riscof tests have a different signature, tests[0] == "1" refers to RiscvArchTests 
+    // and tests[0] == "2" refers to WallyRiscvArchTests 
+    //pathname = tvpaths[tests[0].atoi()];
+
+    case(CurrState)
+      STATE_TESTBENCH_RESET:                      NextState = STATE_INIT_TEST;
+      STATE_INIT_TEST:                            NextState = STATE_RESET_MEMORIES;
+      STATE_RESET_MEMORIES:                       NextState = STATE_RESET_MEMORIES2;
+      STATE_RESET_MEMORIES2:                      NextState = STATE_LOAD_MEMORIES;  // Give the reset enough time to ensure the bus is reset before loading the memories.
+      STATE_LOAD_MEMORIES:                        NextState = STATE_RESET_TEST;
+      STATE_RESET_TEST:      if(ResetCountNew < ResetThresholdNew) NextState = STATE_RESET_TEST;
+                             else                 NextState = STATE_RUN_TEST;
+      STATE_RUN_TEST:        if(TestComplete)     NextState = STATE_COPY_RAM;
+                             else                 NextState = STATE_RUN_TEST;
+      STATE_COPY_RAM:                             NextState = STATE_CHECK_TEST;
+      STATE_CHECK_TEST:      if (DCacheFlushDone) NextState = STATE_VALIDATE;
+                             else                 NextState = STATE_CHECK_TEST_WAIT;
+      STATE_CHECK_TEST_WAIT: if(DCacheFlushDone)  NextState = STATE_VALIDATE;
+                             else                 NextState = STATE_CHECK_TEST_WAIT;
+      STATE_VALIDATE:                             NextState = STATE_INIT_TEST;
+      STATE_INCR_TEST:                            NextState = STATE_INIT_TEST;
+      default:                                    NextState = STATE_TESTBENCH_RESET;
+    endcase
+  end // always_comb
+  // fsm output control logic 
+  assign reset_ext = CurrState == STATE_TESTBENCH_RESET | CurrState == STATE_INIT_TEST | 
+                     CurrState == STATE_RESET_MEMORIES | CurrState == STATE_RESET_MEMORIES2 | 
+                     CurrState == STATE_LOAD_MEMORIES | CurrState ==STATE_RESET_TEST;
+  // this initialization is very expensive, only do it for coremark.  
+  assign ResetMem = (CurrState == STATE_RESET_MEMORIES | CurrState == STATE_RESET_MEMORIES2);
+  assign LoadMem = CurrState == STATE_LOAD_MEMORIES;
+  assign ResetCntRst = CurrState == STATE_INIT_TEST;
+  assign ResetCntEn = CurrState == STATE_RESET_TEST;
+  assign Validate = CurrState == STATE_VALIDATE;
+  assign SelectTest = CurrState == STATE_INIT_TEST;
+  assign CopyRAM = TestComplete & CurrState == STATE_RUN_TEST;
+  assign DCacheFlushStartNew = CurrState == STATE_COPY_RAM;
+
+  // fsm reset counter
+  counter #(3) RstCounter(clk, ResetCntRst, ResetCntEn, ResetCountNew);
   
-  logic [P.XLEN-1:0] testadr, testadrNoBase;
-  string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
-  logic [31:0] InstrW;
+  ////////////////////////////////////////////////////////////////////////////////
+  // Find the test vector files and populate the PC to function label converter
+  ////////////////////////////////////////////////////////////////////////////////
+  logic [P.XLEN-1:0] testadr;
 
-
-
-  logic [P.XLEN-1:0] PCW;
-  logic [31:0]      NextInstrE, InstrM;
-
-  string 		testName;
-  string memfilename, testDir, adrstr, elffilename;
-
-
-  logic             InitializingMemories;
-  integer           ResetCount, ResetThreshold;
-  logic             InReset;
-  integer memFile;
-  integer readResult;
-
+  //VCS ignores the dynamic types while processing the implicit sensitivity lists of always @*, always_comb, and always_latch
+  //procedural blocks. VCS supports the dynamic types in the implicit sensitivity list of always @* block as specified in the Section 9.2 of the IEEE Standard SystemVerilog Specification 1800-2012.
+  //To support memory load and dump task verbosity: flag : -diag sys_task_mem
+  always @(*) begin
+  	begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
+ 	end_signature_addr = ProgramAddrLabelArray["sig_end_canary"];
+  	signature_size = end_signature_addr - begin_signature_addr;
+  end
+  logic EcallFaultM;
+  if (P.ZICSR_SUPPORTED)
+    assign EcallFaultM = dut.core.priv.priv.EcallFaultM;
+  else
+    assign EcallFaultM = 0;
   
+  always @(posedge clk) begin
+    ////////////////////////////////////////////////////////////////////////////////
+    // Verify the test ran correctly by checking the memory against a known signature.
+    ////////////////////////////////////////////////////////////////////////////////
+    if(TestBenchReset) test = 1;
+    if (P.ZICSR_SUPPORTED & TEST == "coremark")
+      if (EcallFaultM) begin
+        $display("Benchmark: coremark is done.");
+        $stop;
+      end
+    if (P.ZICSR_SUPPORTED & dut.core.ifu.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.ieu.InstrValidM) begin 
+      $display("Program fetched illegal instruction 0x00000000 from address 0x00000000.  Might be fault with no fault handler.");
+      //$stop; // presently wally32/64priv tests trigger this for reasons not yet understood.
+    end
+  // modifications 4/3/24 kunlin & harris to speed up Verilator
+  // For some reason, Verilator runs ~100x slower when these SelectTest and Validate codes are in the posedge clk block
+  //end // added
+  //always @(posedge SelectTest) // added
+    if(SelectTest) begin
+      if (riscofTest) begin 
+        memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
+        elffilename = {pathname, tests[test], "ref/ref.elf"};
+        ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
+        ProgramLabelMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.lab"};
+      end else if(TEST == "buildroot") begin 
+        memfilename = {RISCV_DIR, "/linux-testvectors/ram.bin"};
+        elffilename = "buildroot";
+        bootmemfilename = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
+        uartoutfilename = {"logs/", TEST, "_uart.out"};
+        uartoutfile = $fopen(uartoutfilename, "w"); // delete UART output file
+        ProgramAddrMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.addr"};
+        ProgramLabelMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.lab"};
+      end else if(ElfFile != "none") begin
+        elffilename = ElfFile;
+        memfilename = {ElfFile, ".memfile"};
+        ProgramAddrMapFile = {ElfFile, ".objdump.addr"};
+        ProgramLabelMapFile = {ElfFile, ".objdump.lab"};
+      end else begin
+        elffilename = {pathname, tests[test], ".elf"};
+        memfilename = {pathname, tests[test], ".elf.memfile"};
+        ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
+        ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
+      end
+      // declare memory labels that interest us, the updateProgramAddrLabelArray task will find 
+      // the addr of each label and fill the array. To expand, add more elements to this array 
+      // and initialize them to zero (also initilaize them to zero at the start of the next test)
+      updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
+    end
+`ifdef VERILATOR // this macro is defined when verilator is used
+  // Simulator Verilator has an issue that the validate logic below slows runtime 110x if it is 
+  // in the posedge clk block rather than a separate posedge Validate block.  
+  // Until it is fixed, provide a silly posedge Validate block to keep Verilator happy.
+  // https://github.com/verilator/verilator/issues/4967
+  end // restored
+  always @(posedge Validate) // added
+`endif
+    if(Validate) begin
+      if (TEST == "buildroot")
+        $fclose(uartoutfile);
+      if (TEST == "embench") begin
+        // Writes contents of begin_signature to .sim.output file
+        // this contains instret and cycles for start and end of test run, used by embench 
+        // python speed script to calculate embench speed score. 
+        // also, begin_signature contains the results of the self checking mechanism, 
+        // which will be read by the python script for error checking
+        $display("Embench Benchmark: %s is done.", tests[test]);
+        if (riscofTest) outputfile = {pathname, tests[test], "/ref/ref.sim.output"};
+        else outputfile = {pathname, tests[test], ".sim.output"};
+        outputFilePointer = $fopen(outputfile, "w");
+        i = 0;
+        testadr = ($unsigned(begin_signature_addr))/(P.XLEN/8);
+        while ($unsigned(i) < $unsigned(5'd5)) begin
+          $fdisplayh(outputFilePointer, DCacheFlushFSM.ShadowRAM[testadr+i]);
+          i = i + 1;
+        end
+        $fclose(outputFilePointer);
+        $display("Embench Benchmark: created output file: %s", outputfile);
+      end else if (TEST == "coverage64gc") begin
+        $display("Coverage tests don't get checked");
+      end else if (ElfFile != "none") begin
+        $display("Single Elf file tests are not signatured verified.");
+`ifdef VERILATOR // this macro is defined when verilator is used
+        $finish; // Simulator Verilator needs $finish to terminate simulation.
+`elsif SIM_VCS // this macro is defined when vcs is used
+        $finish; // Simulator VCS needs $finish to terminate simulation.
+`else
+         $stop; // if this is changed to $finish for Questa, wally-batch.do does not go to the next step to run coverage, and wally.do terminates without allowing GUI debug
+`endif
+      end else begin 
+        // for tests with no self checking mechanism, read .signature.output file and compare to check for errors
+        // clear signature to prevent contamination from previous tests
+        if (!begin_signature_addr)
+          $display("begin_signature addr not found in %s", ProgramLabelMapFile);
+        else if (TEST != "embench") begin   // *** quick hack for embench.  need a better long term solution
+          CheckSignature(pathname, tests[test], riscofTest, begin_signature_addr, errors);
+          if(errors > 0) totalerrors = totalerrors + 1;
+        end
+      end
+      test = test + 1; // *** this probably needs to be moved.
+      if (test == tests.size()) begin
+        if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
+        else $display("FAIL: %d test programs had errors", totalerrors);
+`ifdef VERILATOR // this macro is defined when verilator is used
+        $finish; // Simulator Verilator needs $finish to terminate simulation.
+`elsif SIM_VCS // this macro is defined when vcs is used
+        $finish; // Simulator VCS needs $finish to terminate simulation.
+`else
+         $stop; // if this is changed to $finish for Questa, wally-batch.do does not go to the next step to run coverage, and wally.do terminates without allowing GUI debug
+`endif
+      end
+    end
+`ifndef VERILATOR
+  // Remove this when issue 4967 is resolved and the posedge Validate logic above is removed
+  end 
+`endif
+
+
 
   ////////////////////////////////////////////////////////////////////////////////
   // load memories with program image
@@ -297,6 +474,8 @@ module testbench;
   integer StartIndex;
   integer EndIndex;
   integer BaseIndex;
+  integer memFile;
+  integer readResult;
   if (P.SDC_SUPPORTED) begin
     always @(posedge clk) begin
       if (LoadMem) begin
@@ -365,6 +544,155 @@ module testbench;
         for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
           dut.uncoregen.uncore.ram.ram.memory.RAM[adrindex] = '0;
 
+  ////////////////////////////////////////////////////////////////////////////////
+  // Actual hardware
+  ////////////////////////////////////////////////////////////////////////////////
+
+  // instantiate device to be tested
+  assign GPIOIN = '0;
+  assign UARTSin = 1'b1;
+  assign SPIIn = 1'b0;
+
+  if(P.EXT_MEM_SUPPORTED) begin
+    ram_ahb #(.P(P), .BASE(P.EXT_MEM_BASE), .RANGE(P.EXT_MEM_RANGE)) 
+    ram (.HCLK, .HRESETn, .HADDR, .HWRITE, .HTRANS, .HWDATA, .HSELRam(HSELEXT), 
+      .HREADRam(HRDATAEXT), .HREADYRam(HREADYEXT), .HRESPRam(HRESPEXT), .HREADY, .HWSTRB);
+  end else begin 
+    assign HREADYEXT = 1'b1;
+    assign {HRESPEXT, HRDATAEXT} = '0;
+  end
+
+  if(P.SDC_SUPPORTED) begin : sdcard
+    // *** fix later
+/* -----\/----- EXCLUDED -----\/-----
+    sdModel sdcard
+      (.sdClk(SDCCLK),
+       .cmd(SDCCmd), 
+       .dat(SDCDat));
+
+    assign SDCCmd = SDCCmdOE ? SDCCmdOut : 1'bz;
+    assign SDCCmdIn = SDCCmd;
+    assign SDCDat = sd_dat_reg_t ? sd_dat_reg_o : sd_dat_i;
+    assign SDCDatIn = SDCDat;
+ -----/\----- EXCLUDED -----/\----- */
+    assign SDCIntr = 1'b0;
+  end else begin
+    assign SDCIntr = 1'b0;
+  end
+
+  wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
+    .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
+    .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
+    .UARTSin, .UARTSout, .SDCIntr, .SPIIn, .SPIOut, .SPICS); 
+
+  // generate clock to sequence tests
+  always begin
+    clk = 1'b1; # 5; clk = 1'b0; # 5;
+  end
+
+  /*
+  // Print key info  each cycle for debugging
+  always @(posedge clk) begin 
+    #2;
+    $display("PCM: %x  InstrM: %x (%5s) WriteDataM: %x  IEUResultM: %x",
+         dut.core.PCM, dut.core.InstrM, InstrMName, dut.core.WriteDataM, dut.core.ieu.dp.IEUResultM);
+  end
+  */
+
+  ////////////////////////////////////////////////////////////////////////////////
+  // Support logic
+  ////////////////////////////////////////////////////////////////////////////////
+
+  // Duplicate copy of pipeline registers that are optimized out of some configurations
+  logic [31:0] NextInstrE, InstrM;
+  mux2    #(32)     FlushInstrMMux(dut.core.ifu.InstrE, dut.core.ifu.nop, dut.core.ifu.FlushM, NextInstrE);
+  flopenr #(32)     InstrMReg(clk, reset, ~dut.core.ifu.StallM, NextInstrE, InstrM);
+
+  // Track names of instructions
+  string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
+  logic [31:0] InstrW;
+  flopenr #(32)    InstrWReg(clk, reset, ~dut.core.ieu.dp.StallW,  InstrM, InstrW);
+  instrTrackerTB it(clk, reset, dut.core.ieu.dp.FlushE,
+                dut.core.ifu.InstrRawF[31:0],
+                dut.core.ifu.InstrD, dut.core.ifu.InstrE,
+                InstrM,  InstrW,
+                InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
+
+  // watch for problems such as lockup, reading unitialized memory, bad configs
+  watchdog #(P.XLEN, 1000000) watchdog(.clk, .reset);  // check if PCW is stuck
+  ramxdetector #(P.XLEN, P.LLEN) ramxdetector(clk, dut.core.lsu.MemRWM[1], dut.core.lsu.LSULoadAccessFaultM, dut.core.lsu.ReadDataM, 
+                                      dut.core.ifu.PCM, InstrM, dut.core.lsu.IEUAdrM, InstrMName);
+  riscvassertions #(P) riscvassertions();  // check assertions for a legal configuration
+  loggers #(P, PrintHPMCounters, I_CACHE_ADDR_LOGGER, D_CACHE_ADDR_LOGGER, BPRED_LOGGER)
+    loggers (clk, reset, DCacheFlushStart, DCacheFlushDone, memfilename, TEST);
+
+  // track the current function or global label
+  if (DEBUG > 0 | ((PrintHPMCounters | BPRED_LOGGER) & P.ZICNTR_SUPPORTED)) begin : FunctionName
+    FunctionName #(P) FunctionName(.reset(reset_ext | TestBenchReset),
+			      .clk(clk), .ProgramAddrMapFile(ProgramAddrMapFile), .ProgramLabelMapFile(ProgramLabelMapFile));
+  end
+
+  // Append UART output to file for tests
+  if (P.UART_SUPPORTED) begin: uart_logger
+    always @(posedge clk) begin
+      if (TEST == "buildroot") begin
+        if (~dut.uncoregen.uncore.uartgen.uart.MEMWb & dut.uncoregen.uncore.uartgen.uart.uartPC.A == 3'b000 & ~dut.uncoregen.uncore.uartgen.uart.uartPC.DLAB) begin
+          $fwrite(uartoutfile, "%c", dut.uncoregen.uncore.uartgen.uart.uartPC.Din); // append characters one at a time so we see a consistent log appearing during the run
+          $fflush(uartoutfile);
+        end
+      end
+    end
+  end
+
+  // Termination condition
+  // terminate on a specific ECALL after li x3,1 for old Imperas tests,  *** remove this when old imperas tests are removed
+  // or sw	gp,-56(t0) for new Imperas tests
+  // or sd gp, -56(t0) 
+  // or on a jump to self infinite loop (6f) for RISC-V Arch tests
+  logic ecf; // remove this once we don't rely on old Imperas tests with Ecalls
+  if (P.ZICSR_SUPPORTED) assign ecf = dut.core.priv.priv.EcallFaultM;
+  else                  assign ecf = 0;
+  always_comb begin
+  	TestComplete = ecf & 
+			    (dut.core.ieu.dp.regf.rf[3] == 1 | 
+			     (dut.core.ieu.dp.regf.we3 & 
+			      dut.core.ieu.dp.regf.a3 == 3 & 
+			      dut.core.ieu.dp.regf.wd3 == 1)) |
+           ((InstrM == 32'h6f | InstrM == 32'hfc32a423 | InstrM == 32'hfc32a823) & dut.core.ieu.c.InstrValidM ) |
+           ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"] & dut.core.lsu.IEUAdrM != 0) & InstrMName == "SW" );
+  end
+
+  DCacheFlushFSM #(P) DCacheFlushFSM(.clk, .start(DCacheFlushStart), .done(DCacheFlushDone));
+
+  if(P.ZICSR_SUPPORTED) begin
+    logic [P.XLEN-1:0] Minstret;
+    assign Minstret = testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2];  
+    always @(negedge clk) begin
+      if (INSTR_LIMIT > 0) begin
+        if((Minstret != 0) && (Minstret % 'd100000 == 0)) $display("Reached %d instructions", Minstret);
+        if((Minstret == INSTR_LIMIT) & (INSTR_LIMIT!=0)) begin $finish; end
+      end
+    end
+end
+
+
+
+
+
+
+
+
+  logic [P.XLEN-1:0] testadrNoBase;
+
+
+  string 		testName;
+  string testDir, adrstr;
+
+
+  logic             InitializingMemories;
+  integer           ResetCount, ResetThreshold;
+  logic             InReset;
+
   // Imperas look here.
   initial
     begin
@@ -394,67 +722,8 @@ module testbench;
       
     end
 
-  // Model the testbench as an fsm.
-  // Do this in parts so it easier to verify
-  // part 1: build a version which echos the same behavior as the below code, but does not drive anything
-  // part 2: drive some of the controls
-  // part 3: drive all logic and remove old inital and always @ negedge clk block
 
   
-  assign ResetThresholdNew = 3'd5;
-
-  initial begin
-    TestBenchReset = 1'b1;
-    # 100;
-    TestBenchReset = 1'b0;
-  end
-
-  always_ff @(posedge clk)
-    if (TestBenchReset) CurrState <= STATE_TESTBENCH_RESET;
-    else CurrState <= NextState;  
-
-  // fsm next state logic
-  always_comb begin
-    // riscof tests have a different signature, tests[0] == "1" refers to RiscvArchTests 
-    // and tests[0] == "2" refers to WallyRiscvArchTests 
-    //pathname = tvpaths[tests[0].atoi()];
-
-    case(CurrState)
-      STATE_TESTBENCH_RESET:                      NextState = STATE_INIT_TEST;
-      STATE_INIT_TEST:                            NextState = STATE_RESET_MEMORIES;
-      STATE_RESET_MEMORIES:                       NextState = STATE_RESET_MEMORIES2;
-      STATE_RESET_MEMORIES2:                      NextState = STATE_LOAD_MEMORIES;  // Give the reset enough time to ensure the bus is reset before loading the memories.
-      STATE_LOAD_MEMORIES:                        NextState = STATE_RESET_TEST;
-      STATE_RESET_TEST:      if(ResetCountNew < ResetThresholdNew) NextState = STATE_RESET_TEST;
-                             else                 NextState = STATE_RUN_TEST;
-      STATE_RUN_TEST:        if(TestComplete)     NextState = STATE_COPY_RAM;
-                             else                 NextState = STATE_RUN_TEST;
-      STATE_COPY_RAM:                             NextState = STATE_CHECK_TEST;
-      STATE_CHECK_TEST:      if (DCacheFlushDone) NextState = STATE_VALIDATE;
-                             else                 NextState = STATE_CHECK_TEST_WAIT;
-      STATE_CHECK_TEST_WAIT: if(DCacheFlushDone)  NextState = STATE_VALIDATE;
-                             else                 NextState = STATE_CHECK_TEST_WAIT;
-      STATE_VALIDATE:                             NextState = STATE_INIT_TEST;
-      STATE_INCR_TEST:                            NextState = STATE_INIT_TEST;
-      default:                                    NextState = STATE_TESTBENCH_RESET;
-    endcase
-  end // always_comb
-  // fsm output control logic 
-  assign reset_extNew = CurrState == STATE_TESTBENCH_RESET | CurrState == STATE_INIT_TEST | 
-                     CurrState == STATE_RESET_MEMORIES | CurrState == STATE_RESET_MEMORIES2 | 
-                     CurrState == STATE_LOAD_MEMORIES | CurrState ==STATE_RESET_TEST;
-  // this initialization is very expensive, only do it for coremark.  
-  assign ResetMem = (CurrState == STATE_RESET_MEMORIES | CurrState == STATE_RESET_MEMORIES2);
-  assign LoadMem = CurrState == STATE_LOAD_MEMORIES;
-  assign ResetCntRst = CurrState == STATE_INIT_TEST;
-  assign ResetCntEn = CurrState == STATE_RESET_TEST;
-  assign Validate = CurrState == STATE_VALIDATE;
-  assign SelectTest = CurrState == STATE_INIT_TEST;
-  assign CopyRAM = TestComplete & CurrState == STATE_RUN_TEST;
-  assign DCacheFlushStartNew = CurrState == STATE_COPY_RAM;
-
-  // fsm reset counter
-  counter #(3) RstCounter(clk, ResetCntRst, ResetCntEn, ResetCountNew);
   
 
 `ifdef USE_IMPERAS_DV
@@ -615,134 +884,88 @@ module testbench;
 
 `endif
 
-  flopenr #(P.XLEN) PCWReg(clk, reset, ~dut.core.ieu.dp.StallW, dut.core.ifu.PCM, PCW);
-  flopenr  #(32)   InstrWReg(clk, reset, ~dut.core.ieu.dp.StallW,  InstrM, InstrW);
+  task automatic CheckSignature;
+    // This task must be declared inside this module as it needs access to parameter P.  There is
+    // no way to pass P to the task unless we convert it to a module.
+    
+    input string  pathname;
+    input string  TestName;
+    input logic   riscofTest;
+    input integer begin_signature_addr;
+    output integer errors;
+    int fd, code;
+    string line;
+    int siglines, sigentries;
 
-  // check assertions for a legal configuration
-  riscvassertions #(P) riscvassertions();
+    localparam SIGNATURESIZE = 5000000;
+    integer        i;
+    logic [31:0]   sig32[0:SIGNATURESIZE];
+    logic [31:0]   parsed;
+    logic [P.XLEN-1:0] signature[0:SIGNATURESIZE];
+    string            signame;
+    logic [P.XLEN-1:0] testadr, testadrNoBase;
 
+    //$display("Invoking CheckSignature %s %s %0t", pathname, TestName, $time); 
+    
+    // read .signature.output file and compare to check for errors
+    if (riscofTest) signame = {pathname, TestName, "/ref/Reference-sail_c_simulator.signature"};
+    else signame = {pathname, TestName, ".signature.output"};
 
-  // instantiate device to be tested
-  assign GPIOIN = 0;
-  assign UARTSin = 1;
-
-  if(P.EXT_MEM_SUPPORTED) begin
-    ram_ahb #(.BASE(P.EXT_MEM_BASE), .RANGE(P.EXT_MEM_RANGE)) 
-    ram (.HCLK, .HRESETn, .HADDR, .HWRITE, .HTRANS, .HWDATA, .HSELRam(HSELEXT), 
-         .HREADRam(HRDATAEXT), .HREADYRam(HREADYEXT), .HRESPRam(HRESPEXT), .HREADY,
-         .HWSTRB);
-  end else begin 
-    assign HREADYEXT = 1;
-    assign HRESPEXT = 0;
-    assign HRDATAEXT = 0;
-  end
-
-  if(P.SDC_SUPPORTED) begin : sdcard
-    // *** fix later
-/* -----\/----- EXCLUDED -----\/-----
-    sdModel sdcard
-      (.sdClk(SDCCLK),
-       .cmd(SDCCmd), 
-       .dat(SDCDat));
-
-    assign SDCCmd = SDCCmdOE ? SDCCmdOut : 1'bz;
-    assign SDCCmdIn = SDCCmd;
-    assign SDCDatIn = SDCDat;
- -----/\----- EXCLUDED -----/\----- */
-    assign SDCIntr = 0;
-  end else begin
-    assign SDCIntr = 0;
-  end
-
-  wallypipelinedsoc #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
-                        .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
-                        .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
-                        .UARTSin, .UARTSout, .SDCIntr, .SPICS, .SPIOut, .SPIIn); 
-
-  // Track names of instructions
-  instrTrackerTB it(clk, reset, dut.core.ieu.dp.FlushE,
-                dut.core.ifu.InstrRawF[31:0],
-                dut.core.ifu.InstrD, dut.core.ifu.InstrE,
-                InstrM,  InstrW,
-                InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
-
-  // initialize tests
-
-  // generate clock to sequence tests
-  always
-    begin
-      clk = 1; # 5; clk = 0; # 5;
-      // if ($time % 100000 == 0) $display("Time is %0t", $time);
-    end
-   
-  // check results
-  assign reset_ext = InReset;
-  
-  always @(negedge clk)
-    begin    
-      InitializingMemories = 0;
-      if(InReset == 1) begin
-        // once the test inidicates it's done we need to immediately hold reset for a number of cycles.
-        if(ResetCount < ResetThreshold) ResetCount = ResetCount + 1;
-        else begin // hit reset threshold so we remove reset.
-          InReset = 0;
-          ResetCount = 0;
+    // read signature file from memory and count lines.  Can't use readmemh because we need the line count
+    // $readmemh(signame, sig32);
+    fd = $fopen(signame, "r");
+    siglines = 0;
+    if (fd == 0) $display("Unable to read %s", signame);
+    else begin
+      while (!$feof(fd)) begin
+        code = $fgets(line, fd);
+        if (code != 0) begin
+          int errno;
+          string errstr;
+          errno = $ferror(fd, errstr);
+          if (errno != 0) $display("Error %d (code %d) reading line %d of %s: %s", errno, code, siglines, signame, errstr);
+          if (line.len() > 1) begin // skip blank lines
+            if ($sscanf(line, "%x", parsed) != 0) begin
+              sig32[siglines] = parsed;
+              siglines = siglines + 1; // increment if line is not blank
+            end
+          end
         end
       end
-    end // always @ (negedge clk)
-
-
-  // track the current function or global label
-  if (DEBUG == 1) begin : FunctionName
-    FunctionName #(P) FunctionName(.reset(reset),
-			      .clk(clk),
-			      .ProgramAddrMapFile(ProgramAddrMapFile),
-			      .ProgramLabelMapFile(ProgramLabelMapFile));
-  end
-
-  // Duplicate copy of pipeline registers that are optimized out of some configurations
-  mux2    #(32)     FlushInstrMMux(dut.core.ifu.InstrE, dut.core.ifu.nop, dut.core.ifu.FlushM, NextInstrE);
-  flopenr #(32)     InstrMReg(clk, reset, ~dut.core.ifu.StallM, NextInstrE, InstrM);
-
-  // Termination condition
-  // terminate on a specific ECALL after li x3,1 for old Imperas tests,  *** remove this when old imperas tests are removed
-  // or sw	gp,-56(t0) for new Imperas tests
-  // or sd gp, -56(t0) 
-  // or on a jump to self infinite loop (6f) for RISC-V Arch tests
-  logic ecf; // remove this once we don't rely on old Imperas tests with Ecalls
-  if (P.ZICSR_SUPPORTED) assign ecf = dut.core.priv.priv.EcallFaultM;
-  else                  assign ecf = 0;
-  assign DCacheFlushStart = ecf & 
-			    (dut.core.ieu.dp.regf.rf[3] == 1 | 
-			     (dut.core.ieu.dp.regf.we3 & 
-			      dut.core.ieu.dp.regf.a3 == 3 & 
-			      dut.core.ieu.dp.regf.wd3 == 1)) |
-           ((InstrM == 32'h6f | InstrM == 32'hfc32a423 | InstrM == 32'hfc32a823) & dut.core.ieu.c.InstrValidM ) |
-           ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"]) & InstrMName == "SW" ); 
-
-  DCacheFlushFSM #(P) DCacheFlushFSM(.clk(clk),
-	    		.start(DCacheFlushStart),
-		    	.done(DCacheFlushDone));
-
-  // initialize the branch predictor
-  if (P.BPRED_SUPPORTED == 1)
-    begin
-      genvar adrindex;
-      
-      // Initializing all zeroes into the branch predictor memory.
-      for(adrindex = 0; adrindex < 1024; adrindex++) begin
-        initial begin 
-        force dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
-        force dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
-        #1;
-        release dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex];
-        release dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex];
-        end
-      end
+      $fclose(fd);
     end
 
-  watchdog #(P.XLEN, 1000000) watchdog(.clk, .reset);  // check if PCW is stuck
+    // Check valid number of lines were read
+    if (siglines == 0) begin  
+      errors = 1; 
+      $display("Error: empty test file %s", signame);
+    end else if (P.XLEN == 64 & (siglines % 2)) begin
+      errors = 1;
+      $display("Error: RV64 signature has odd number of lines %s", signame);
+    end else errors = 0;
 
+    // copy lines into signature, converting to XLEN if necessary
+    sigentries = (P.XLEN == 32) ? siglines : siglines/2; // number of signature entries
+    for (i=0; i<sigentries; i++) begin
+      signature[i] = (P.XLEN == 32) ? sig32[i] : {sig32[i*2+1], sig32[i*2]};
+      //$display("XLEN = %d signature[%d] = %x", P.XLEN, i, signature[i]);
+    end
+
+    // Check errors
+    testadr = ($unsigned(begin_signature_addr))/(P.XLEN/8);
+    testadrNoBase = (begin_signature_addr - P.UNCORE_RAM_BASE)/(P.XLEN/8);
+    for (i=0; i<sigentries; i++) begin
+      if (signature[i] !== testbench.DCacheFlushFSM.ShadowRAM[testadr+i]) begin  
+        errors = errors+1;
+        $display("  Error on test %s result %d: adr = %h sim (D$) %h signature = %h", 
+			     TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], signature[i]);
+        $stop; // if this is changed to $finish, wally-batch.do does not get to the next step to run coverage
+      end
+    end
+    if (errors) $display("%s failed with %d errors. :(", TestName, errors);
+    else $display("%s succeeded.  Brilliant!!!", TestName);
+  endtask
+ 
 endmodule
 
 
