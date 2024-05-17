@@ -694,9 +694,11 @@ end
 
   string filename;
   initial begin
+    // imperasDV requires the elffile be defined at the begining of the simulation.
     int iter;
     #1;
     IDV_MAX_ERRORS = 3;
+    elffilename = ElfFile;
 
     // Initialize REF (do this before initializing the DUT)
     if (!rvviVersionCheck(RVVI_API_VERSION)) begin
