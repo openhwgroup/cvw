@@ -30,8 +30,12 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module ahbxuiconverter #(parameter ADDR_SIZE = 31,
-                         parameter DATA_SIZE = 64) (
+module ahbxuiconverter 
+#(
+  parameter ADDR_SIZE = 31,
+  parameter DATA_SIZE = 64,
+  parameter BURST_LEN = 8
+) (
   // AHB signals
   input  logic                   HCLK,
   input  logic                   HRESETn,
@@ -66,6 +70,9 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
   input  logic                   init_calib_complete
 );
 
+  localparam BURST_CNTR_SIZE = $clog2(BURST_LEN);
+  localparam MASK_SIZE = DATA_SIZE >> 3;
+
   assign sys_reset = ~HRESETn;
 
   // Delay AHB address phase signals to align with data phase so we can capture the whole transaction
@@ -88,23 +95,23 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
   logic cmd_w_full, cmd_r_valid;
   logic enqueue_cmd, dequeue_cmd;
   logic inc_cmd_count, reset_cmd_count;
-  logic [2:0] cmd_count;
-  counter #(3) cmd_beat_counter (HCLK, reset_cmd_count, inc_cmd_count, cmd_count);
+  logic [BURST_CNTR_SIZE-1:0] cmd_count;
+  counter #(BURST_CNTR_SIZE) cmd_beat_counter (HCLK, reset_cmd_count, inc_cmd_count, cmd_count);
   always_comb begin: cmd_burst_capture_logic
     // UI treats all reads as burst reads with length 8, so 1 read gets us 8 responses
     // Enqueue all single commands and 1st mod 8 commands in a burst read
     inc_cmd_count = ahb_ready & ahb_sel & (|ahb_burst); // Increment each cycle during burst transactions
     reset_cmd_count = ~|ahb_burst | ~HRESETn; // Reset counter if transaction is not a burst
-    enqueue_cmd = ahb_ready & ahb_sel & ~cmd_w_full & (ahb_wren | (cmd_count == 3'b000)); // enqueue all writes and 1st mod 8 reads in a burst
+    enqueue_cmd = ahb_ready & ahb_sel & ~cmd_w_full & (ahb_wren | (cmd_count == 'b0)); // enqueue all writes and 1st mod BURST_LEN reads in a burst
     dequeue_cmd = ui_ready & cmd_r_valid;
   end
-  logic [ADDR_SIZE-1:0]   ui_addr;
-  logic [DATA_SIZE-1:0]   ui_data;
-  logic [DATA_SIZE/8-1:0] ui_mask;
-  logic                   ui_wren;
-  logic [1:0]             ui_burst; // respfifo should only enqueue 2^(ui_burst) beats of the response
+  logic [ADDR_SIZE-1:0] ui_addr;
+  logic [DATA_SIZE-1:0] ui_data;
+  logic [MASK_SIZE-1:0] ui_mask;
+  logic                 ui_wren;
+  logic [1:0]           ui_burst; // respfifo should only enqueue 2^(ui_burst) beats of the response
   bsg_async_fifo #(
-    .width_p(ADDR_SIZE + 9*DATA_SIZE/8 + 1 + 2), // FIFO needs addr + (data + mask) + write + burst)
+    .width_p(ADDR_SIZE + DATA_SIZE + MASK_SIZE + 1 + 2), // FIFO needs addr+data+mask+write+burst
     .lg_size_p(16), // TODO: Parameterize based on wally config
     .and_data_with_valid_p(1)
   ) cmdfifo (
@@ -121,28 +128,29 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
   assign app_en = cmd_ready & app_wdf_rdy; // Deassert app_en if not ready for write data so we don't accidentally repeat commands
   assign app_cmd = {2'b00, ~app_wdf_wren};
   assign app_wdf_end = app_wdf_wren & ~({ui_addr, ui_wren} == {app_addr, app_wdf_wren});
-  flopen  #(ADDR_SIZE)   appaddrreg (ui_clk, ui_ready, ui_addr, app_addr);
-  flopenr #(1)           appenreg   (ui_clk, ui_clk_sync_rst, ui_ready, dequeue_cmd, cmd_ready);
-  flopenr #(DATA_SIZE)   appdatareg (ui_clk, ui_clk_sync_rst, ui_ready, ui_data, app_wdf_data);
-  flopenr #(DATA_SIZE/8) appmaskreg (ui_clk, ui_clk_sync_rst, ui_ready, ui_mask, app_wdf_mask);
-  flopenr #(1)           appwrenreg (ui_clk, ui_clk_sync_rst, ui_ready, ui_wren, app_wdf_wren);
-  flopenr #(2)           appbrstreg (ui_clk, ui_clk_sync_rst, ui_ready, ui_burst, app_burst);
+  flopen  #(ADDR_SIZE) appaddrreg (ui_clk, ui_ready, ui_addr, app_addr);
+  flopenr #(1)         appenreg   (ui_clk, ui_clk_sync_rst, ui_ready, dequeue_cmd, cmd_ready);
+  flopenr #(DATA_SIZE) appdatareg (ui_clk, ui_clk_sync_rst, ui_ready, ui_data, app_wdf_data);
+  flopenr #(MASK_SIZE) appmaskreg (ui_clk, ui_clk_sync_rst, ui_ready, ui_mask, app_wdf_mask);
+  flopenr #(1)         appwrenreg (ui_clk, ui_clk_sync_rst, ui_ready, ui_wren, app_wdf_wren);
+  flopenr #(2)         appbrstreg (ui_clk, ui_clk_sync_rst, ui_ready, ui_burst, app_burst);
 
   // Hold on to the number of response beats we want until the ui registers the next command (i.e the response is done)
   logic [1:0] resp_burst;
   flopenr #(2) respbrstreg (ui_clk, ui_clk_sync_rst, app_en, app_burst, resp_burst);
+
   // Return read data at HCLK speed
   logic resp_w_full, resp_r_valid;
   logic enqueue_resp, dequeue_resp;
   logic inc_resp_count, reset_resp_count;
-  logic [4:0] resp_count, expected_count;
-  counter #(5) resp_beat_counter (ui_clk, reset_resp_count, inc_resp_count, resp_count);
+  logic [BURST_CNTR_SIZE:0] resp_count, expected_count;
+  counter #(BURST_CNTR_SIZE+1) resp_beat_counter (ui_clk, reset_resp_count, inc_resp_count, resp_count);
   always_comb begin: resp_burst_capture_logic
     // Enqueue only the correct number of beats for each response
     inc_resp_count = app_rd_data_valid; // Increment every time we get a beat of valid response data
     reset_resp_count = app_en | ui_clk_sync_rst; // Reset when the UI gets the next transaction (i.e. the response is done)
-    expected_count = 5'b10 << resp_burst; // 2^(resp_burst)
-    enqueue_resp = app_rd_data_valid & ~resp_w_full & (resp_count < (|resp_burst ? expected_count : 5'b1)); // Only enqueue the expected number of beats
+    expected_count = {{BURST_CNTR_SIZE-1{1'b0}}, 2'b10} << resp_burst; // 2^(resp_burst)
+    enqueue_resp = app_rd_data_valid & ~resp_w_full & (resp_count < (|resp_burst ? expected_count : {{BURST_CNTR_SIZE{1'b0}}, 1'b1})); // Only enqueue the expected number of beats
     dequeue_resp = ahb_sel & resp_r_valid;
   end
   bsg_async_fifo #(

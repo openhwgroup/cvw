@@ -626,7 +626,12 @@ module testbench;
             force ram.dmc.dmc_clk_rst_gen.clk_gen_ds_inst.reset_i = 1'b0;
             force ram.dmc.dmc_clk_rst_gen.clk_gen_ds_inst.strobe_r = 1'b1;
           end
-          bsg_dmc_ahb #(28, P.XLEN, dq_width) ram (
+          bsg_dmc_ahb #(
+            .AHB_ADDR_SIZE(28),
+            .AHB_DATA_SIZE(P.XLEN),
+            .DQ_DATA_SIZE(dq_width),
+            .BURST_LEN(8)
+          ) ram (
             .dmc_config,
             .HCLK, .HRESETn, .HSEL(HSELEXT),
             .HADDR(HADDR[27:0]), .HWDATA, .HWSTRB, .HBURST,

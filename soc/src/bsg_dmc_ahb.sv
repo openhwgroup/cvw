@@ -3,7 +3,7 @@
 //
 // Written: infinitymdm@gmail.com 29 February 2024
 //
-// Purpose: BSG controller and LPDDRDRAM presenting an AHB interface
+// Purpose: BSG memory controller presenting an AHB interface
 // 
 // Documentation: 
 //
@@ -34,9 +34,9 @@ module bsg_dmc_ahb
 #(
   parameter AHB_ADDR_SIZE = 28,
   parameter AHB_DATA_SIZE = 64,
-  parameter DQ_DATA_SIZE  = 64,
-  parameter BURST_LENGTH  = 8,
-  parameter FIFO_DEPTH    = 4
+  parameter DQ_DATA_SIZE  = 32,
+  parameter BURST_LEN  = 8, // bsg_dmc supports 4- or 8-beat bursts
+  parameter FIFO_DEPTH    = 8
 ) (
   input  bsg_dmc_s                   dmc_config,
   input  logic                       HCLK, HRESETn,
@@ -101,7 +101,7 @@ module bsg_dmc_ahb
     .num_adgs_p(1),
     .ui_addr_width_p(AHB_ADDR_SIZE),
     .ui_data_width_p(AHB_DATA_SIZE),
-    .burst_data_width_p(AHB_DATA_SIZE * BURST_LENGTH),
+    .burst_data_width_p(AHB_DATA_SIZE * BURST_LEN),
     .dq_data_width_p(DQ_DATA_SIZE),
     .cmd_afifo_depth_p(FIFO_DEPTH),
     .cmd_sfifo_depth_p(FIFO_DEPTH)
