@@ -26,59 +26,66 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "config.vh"
-
-
-// This is set from the command line script
-// `define USE_IMPERAS_DV
+`include "tests.vh"
+`include "BranchPredictorType.vh"
 
 `ifdef USE_IMPERAS_DV
   `include "idv/idv.svh"
 `endif
 
+
 import cvw::*;
 
 module testbench;
+  /* verilator lint_off WIDTHTRUNC */
+  /* verilator lint_off WIDTHEXPAND */
   parameter DEBUG=0;
+  parameter PrintHPMCounters=0;
+  parameter BPRED_LOGGER=0;
+  parameter I_CACHE_ADDR_LOGGER=0;
+  parameter D_CACHE_ADDR_LOGGER=0;
 
-`ifdef USE_IMPERAS_DV
-  import idvPkg::*;
-  import rvviApiPkg::*;
-  import idvApiPkg::*;
-`endif
+  `ifdef USE_IMPERAS_DV
+    import idvPkg::*;
+    import rvviApiPkg::*;
+    import idvApiPkg::*;
+  `endif
+
+  `ifdef VERILATOR
+      import "DPI-C" function string getenvval(input string env_name);
+      string       RISCV_DIR = getenvval("RISCV"); // "/opt/riscv";
+  `elsif SIM_VCS 
+      import "DPI-C" function string getenv(input string env_name);
+      string       RISCV_DIR = getenv("RISCV"); // "/opt/riscv";
+  `else
+      string       RISCV_DIR = "$RISCV"; // "/opt/riscv";
+  `endif
 
   `include "parameter-defs.vh"
 
   logic        clk;
   logic        reset_ext, reset;
+  logic        ResetMem;
 
+  // Variables that can be overwritten with $value$plusargs at start of simulation
+  string       TEST;
+  string       ElfFile;
+  integer      INSTR_LIMIT;
 
-  logic [P.XLEN-1:0] testadr, testadrNoBase;
-  string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
-  logic [31:0] InstrW;
-
-  logic [3:0]  dummy;
-
-  logic [P.AHBW-1:0] HRDATAEXT;
-  logic             HREADYEXT, HRESPEXT;
-  logic             HSELEXTSDC;
+  // DUT signals
+  logic [P.AHBW-1:0]    HRDATAEXT;
+  logic                 HREADYEXT, HRESPEXT;
+  logic                 HSELEXTSDC;
   logic [P.PA_BITS-1:0] HADDR;
-  logic [P.AHBW-1:0] HWDATA;
-  logic [P.XLEN/8-1:0] HWSTRB;
-  logic             HWRITE;
-  logic [2:0]       HSIZE;
-  logic [2:0]       HBURST;
-  logic [3:0]       HPROT;
-  logic [1:0]       HTRANS;
-  logic             HMASTLOCK;
-  logic             HCLK, HRESETn;
-  logic [P.XLEN-1:0] PCW;
-  logic [31:0]      NextInstrE, InstrM;
-
-  string ProgramAddrMapFile, ProgramLabelMapFile;
-  integer   	ProgramAddrLabelArray [string] = '{ "begin_signature" : 0, "tohost" : 0 };
-  logic 	    DCacheFlushDone, DCacheFlushStart;
-  string 		testName;
-  string memfilename, testDir, adrstr, elffilename;
+  logic [P.AHBW-1:0]    HWDATA;
+  logic [P.XLEN/8-1:0]  HWSTRB;
+  logic                 HWRITE;
+  logic [2:0]           HSIZE;
+  logic [2:0]           HBURST;
+  logic [3:0]           HPROT;
+  logic [1:0]           HTRANS;
+  logic                 HMASTLOCK;
+  logic                 HCLK, HRESETn;
 
   logic [31:0] GPIOIN, GPIOOUT, GPIOEN;
   logic        UARTSin, UARTSout;
@@ -88,10 +95,275 @@ module testbench;
 
   logic        HREADY;
   logic        HSELEXT;
+
+  string  ProgramAddrMapFile, ProgramLabelMapFile;
+  integer ProgramAddrLabelArray [string];
+
+  int test, i, errors, totalerrors;
+
+  string outputfile;
+  integer outputFilePointer;
+
+  string tests[];
+  logic DCacheFlushDone, DCacheFlushStart;
+  logic riscofTest; 
+  logic Validate;
+  logic SelectTest;
+  logic TestComplete;
+
+  initial begin
+    // look for arguments passed to simulation, or use defaults
+    if (!$value$plusargs("TEST=%s", TEST))
+      TEST = "none";
+    if (!$value$plusargs("ElfFile=%s", ElfFile))
+      ElfFile = "none";
+    else begin
+    end
+    if (!$value$plusargs("INSTR_LIMIT=%d", INSTR_LIMIT))
+      INSTR_LIMIT = 0;
+    ElfFile = "/home/rose/repos/active/cvw2/cvw/tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/ref/ref.elf";
+
+    // pick tests based on modes supported
+    //tests = '{};
+    if (P.XLEN == 64) begin // RV64
+      case (TEST)
+        "arch64i":                                tests = arch64i;
+        "arch64priv":                             tests = arch64priv;
+        "arch64c":      if (P.C_SUPPORTED) 
+                          if (P.ZICSR_SUPPORTED)  tests = {arch64c, arch64cpriv};
+                          else                    tests = {arch64c};
+        "arch64m":      if (P.M_SUPPORTED)        tests = arch64m;
+        "arch64a_amo":      if (P.A_SUPPORTED | P.ZAAMO_SUPPORTED)        tests = arch64a_amo;
+        "arch64f":      if (P.F_SUPPORTED)        tests = arch64f;
+        "arch64d":      if (P.D_SUPPORTED)        tests = arch64d;  
+        "arch64f_fma":  if (P.F_SUPPORTED)        tests = arch64f_fma;
+        "arch64d_fma":  if (P.D_SUPPORTED)        tests = arch64d_fma;  
+        "arch64f_divsqrt":  if (P.F_SUPPORTED)        tests = arch64f_divsqrt;
+        "arch64d_divsqrt":  if (P.D_SUPPORTED)        tests = arch64d_divsqrt;  
+        "arch64zifencei":  if (P.ZIFENCEI_SUPPORTED) tests = arch64zifencei;
+        "arch64zicond":  if (P.ZICOND_SUPPORTED)  tests = arch64zicond;
+        "imperas64i":                             tests = imperas64i;
+        "imperas64f":   if (P.F_SUPPORTED)        tests = imperas64f;
+        "imperas64d":   if (P.D_SUPPORTED)        tests = imperas64d;
+        "imperas64m":   if (P.M_SUPPORTED)        tests = imperas64m;
+        "wally64q":     if (P.Q_SUPPORTED)        tests = wally64q;
+        "wally64a_lrsc":     if (P.A_SUPPORTED | P.ZALRSC_SUPPORTED)        tests = wally64a_lrsc;
+        "imperas64c":   if (P.C_SUPPORTED)        tests = imperas64c;
+                        else                      tests = imperas64iNOc;
+        "custom":                                 tests = custom;
+        "wally64i":                               tests = wally64i; 
+        "wally64priv":                            tests = wally64priv;
+        "wally64periph":                          tests = wally64periph;
+        "coremark":                               tests = coremark;
+        "fpga":                                   tests = fpga;
+        "ahb64" :                                 tests = ahb64;
+        "coverage64gc" :                          tests = coverage64gc;
+        "arch64zba":     if (P.ZBA_SUPPORTED)     tests = arch64zba;
+        "arch64zbb":     if (P.ZBB_SUPPORTED)     tests = arch64zbb;
+        "arch64zbc":     if (P.ZBC_SUPPORTED)     tests = arch64zbc;
+        "arch64zbs":     if (P.ZBS_SUPPORTED)     tests = arch64zbs;
+        "arch64zicboz":  if (P.ZICBOZ_SUPPORTED)  tests = arch64zicboz;
+        "arch64zcb":     if (P.ZCB_SUPPORTED)     tests = arch64zcb;
+        "arch64zfh":     if (P.ZFH_SUPPORTED)     tests = arch64zfh;
+        "arch64zfh_fma": if (P.ZFH_SUPPORTED)     tests = arch64zfh_fma; 
+        "arch64zfh_divsqrt":     if (P.ZFH_SUPPORTED)     tests = arch64zfh_divsqrt;
+        "arch64zfaf":    if (P.ZFA_SUPPORTED)     tests = arch64zfaf;
+        "arch64zfad":    if (P.ZFA_SUPPORTED & P.D_SUPPORTED)  tests = arch64zfad;
+        "buildroot":                              tests = buildroot;
+        "arch64zbkb":    if (P.ZBKB_SUPPORTED)    tests = arch64zbkb;
+        "arch64zbkc":    if (P.ZBKC_SUPPORTED)    tests = arch64zbkc;
+        "arch64zbkx":    if (P.ZBKX_SUPPORTED)    tests = arch64zbkx;
+        "arch64zknd":    if (P.ZKND_SUPPORTED)    tests = arch64zknd;
+        "arch64zkne":    if (P.ZKNE_SUPPORTED)    tests = arch64zkne;
+        "arch64zknh":    if (P.ZKNH_SUPPORTED)    tests = arch64zknh;
+      endcase 
+    end else begin // RV32
+      case (TEST)
+        "arch32e":                                tests = arch32e; 
+        "arch32i":                                tests = arch32i;
+        "arch32priv":                             tests = arch32priv;
+        "arch32c":      if (P.C_SUPPORTED) 
+                          if (P.ZICSR_SUPPORTED)  tests = {arch32c, arch32cpriv};
+                          else                    tests = {arch32c};
+        "arch32m":      if (P.M_SUPPORTED)        tests = arch32m;
+        "arch32a_amo":      if (P.A_SUPPORTED | P.ZAAMO_SUPPORTED)  tests = arch32a_amo; 
+        "arch32f":      if (P.F_SUPPORTED)        tests = arch32f;
+        "arch32d":      if (P.D_SUPPORTED)        tests = arch32d;
+        "arch32f_fma":  if (P.F_SUPPORTED)        tests = arch32f_fma;
+        "arch32d_fma":  if (P.D_SUPPORTED)        tests = arch32d_fma;
+        "arch32f_divsqrt":  if (P.F_SUPPORTED)        tests = arch32f_divsqrt;
+        "arch32d_divsqrt":  if (P.D_SUPPORTED)        tests = arch32d_divsqrt;  
+        "arch32zifencei":     if (P.ZIFENCEI_SUPPORTED) tests = arch32zifencei;
+        "arch32zicond":  if (P.ZICOND_SUPPORTED)  tests = arch32zicond;
+        "imperas32i":                             tests = imperas32i;
+        "imperas32f":   if (P.F_SUPPORTED)        tests = imperas32f;
+        "imperas32m":   if (P.M_SUPPORTED)        tests = imperas32m;
+        "wally32a_lrsc":     if (P.A_SUPPORTED | P.ZALRSC_SUPPORTED)        tests = wally32a_lrsc; 
+        "imperas32c":   if (P.C_SUPPORTED)        tests = imperas32c;
+                        else                      tests = imperas32iNOc;
+        "wally32i":                               tests = wally32i; 
+        "wally32priv":                            tests = wally32priv;
+        "wally32periph":                          tests = wally32periph;
+        "ahb32" :                                 tests = ahb32;
+        "embench":                                tests = embench;
+        "coremark":                               tests = coremark;
+        "arch32zba":     if (P.ZBA_SUPPORTED)     tests = arch32zba;
+        "arch32zbb":     if (P.ZBB_SUPPORTED)     tests = arch32zbb;
+        "arch32zbc":     if (P.ZBC_SUPPORTED)     tests = arch32zbc;
+        "arch32zbs":     if (P.ZBS_SUPPORTED)     tests = arch32zbs;
+        "arch32zicboz":  if (P.ZICBOZ_SUPPORTED)  tests = arch32zicboz;
+        "arch32zcb":     if (P.ZCB_SUPPORTED)     tests = arch32zcb;
+        "arch32zfh":     if (P.ZFH_SUPPORTED)     tests = arch32zfh;
+        "arch32zfh_fma": if (P.ZFH_SUPPORTED)     tests = arch32zfh_fma; 
+        "arch32zfh_divsqrt":     if (P.ZFH_SUPPORTED)     tests = arch32zfh_divsqrt;
+        "arch32zfaf":    if (P.ZFA_SUPPORTED)     tests = arch32zfaf;
+        "arch32zfad":    if (P.ZFA_SUPPORTED & P.D_SUPPORTED)  tests = arch32zfad;
+        "arch32zbkb":    if (P.ZBKB_SUPPORTED)    tests = arch32zbkb;
+        "arch32zbkc":    if (P.ZBKC_SUPPORTED)    tests = arch32zbkc;
+        "arch32zbkx":    if (P.ZBKX_SUPPORTED)    tests = arch32zbkx;
+        "arch32zknd":    if (P.ZKND_SUPPORTED)    tests = arch32zknd;
+        "arch32zkne":    if (P.ZKNE_SUPPORTED)    tests = arch32zkne;
+        "arch32zknh":    if (P.ZKNH_SUPPORTED)    tests = arch32zknh;
+      endcase
+    end
+    if (tests.size() == 0 & ElfFile == "none") begin
+      if (tests.size() == 0) begin
+        $display("TEST %s not supported in this configuration", TEST);
+      end else if(ElfFile == "none") begin
+        $display("ElfFile %s not found", ElfFile);
+      end
+      $finish;
+    end
+`ifdef MAKEVCD
+    $dumpfile("testbench.vcd");
+    $dumpvars;
+`endif
+  end // initial begin
+
+  typedef enum logic [3:0]{STATE_TESTBENCH_RESET,
+                           STATE_INIT_TEST,
+                           STATE_RESET_MEMORIES,
+                           STATE_RESET_MEMORIES2,
+                           STATE_LOAD_MEMORIES,
+                           STATE_RESET_TEST,
+                           STATE_RUN_TEST,
+                           STATE_COPY_RAM,
+                           STATE_CHECK_TEST,
+                           STATE_CHECK_TEST_WAIT,
+                           STATE_VALIDATE,
+                           STATE_INCR_TEST} statetype;
+  statetype CurrState, NextState;
+  logic        TestBenchReset;
+  logic [2:0]  ResetCountNew, ResetThresholdNew;
+  logic        LoadMem;
+  logic        ResetCntEn;
+  logic        ResetCntRst;
+  logic        CopyRAM;
+
+  string  signame, bootmemfilename, uartoutfilename, pathname;
+  integer begin_signature_addr, end_signature_addr, signature_size;
+  integer uartoutfile;
+  logic reset_extNew;
+  logic DCacheFlushStartNew;
+
   
+  logic [P.XLEN-1:0] testadr, testadrNoBase;
+  string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
+  logic [31:0] InstrW;
+
+
+
+  logic [P.XLEN-1:0] PCW;
+  logic [31:0]      NextInstrE, InstrM;
+
+  string 		testName;
+  string memfilename, testDir, adrstr, elffilename;
+
+
   logic             InitializingMemories;
   integer           ResetCount, ResetThreshold;
   logic             InReset;
+  integer memFile;
+  integer readResult;
+
+  
+
+  ////////////////////////////////////////////////////////////////////////////////
+  // load memories with program image
+  ////////////////////////////////////////////////////////////////////////////////
+
+  integer ShadowIndex;
+  integer LogXLEN;
+  integer StartIndex;
+  integer EndIndex;
+  integer BaseIndex;
+  if (P.SDC_SUPPORTED) begin
+    always @(posedge clk) begin
+      if (LoadMem) begin
+        string romfilename, sdcfilename;
+        romfilename = {"../tests/custom/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
+        sdcfilename = {"../testbench/sdc/ramdisk2.hex"};   
+        //$readmemh(romfilename, dut.uncoregen.uncore.bootrom.bootrom.memory.ROM);
+        //$readmemh(sdcfilename, sdcard.sdcard.FLASHmem);
+        // shorten sdc timers for simulation
+        //dut.uncoregen.uncore.sdc.SDC.LimitTimers = 1;
+      end
+    end
+  end else if (P.IROM_SUPPORTED) begin
+    always @(posedge clk) begin
+      if (LoadMem) begin
+        $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
+      end
+    end
+  end else if (P.BUS_SUPPORTED) begin : bus_supported
+    always @(posedge clk) begin
+      if (LoadMem) begin
+        if (TEST == "buildroot") begin
+          memFile = $fopen(bootmemfilename, "rb");
+          readResult = $fread(dut.uncoregen.uncore.bootrom.bootrom.memory.ROM, memFile);
+          $fclose(memFile);
+          memFile = $fopen(memfilename, "rb");
+          readResult = $fread(dut.uncoregen.uncore.ram.ram.memory.RAM, memFile);
+          $fclose(memFile);
+        end else 
+          $readmemh(memfilename, dut.uncoregen.uncore.ram.ram.memory.RAM);
+        if (TEST == "embench") $display("Read memfile %s", memfilename);
+      end
+      if (CopyRAM) begin
+        LogXLEN = (1 + P.XLEN/32); // 2 for rv32 and 3 for rv64
+        StartIndex = begin_signature_addr >> LogXLEN;
+        EndIndex = (end_signature_addr >> LogXLEN) + 8;
+        BaseIndex = P.UNCORE_RAM_BASE >> LogXLEN;
+        for(ShadowIndex = StartIndex; ShadowIndex <= EndIndex; ShadowIndex++) begin
+          testbench.DCacheFlushFSM.ShadowRAM[ShadowIndex] = dut.uncoregen.uncore.ram.ram.memory.RAM[ShadowIndex - BaseIndex];
+        end
+      end
+    end
+  end 
+  if (P.DTIM_SUPPORTED) begin
+    always @(posedge clk) begin
+      if (LoadMem) begin
+        $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
+        $display("Read memfile %s", memfilename);
+      end
+      if (CopyRAM) begin
+        LogXLEN = (1 + P.XLEN/32); // 2 for rv32 and 3 for rv64
+        StartIndex = begin_signature_addr >> LogXLEN;
+        EndIndex = (end_signature_addr >> LogXLEN) + 8;
+        BaseIndex = P.UNCORE_RAM_BASE >> LogXLEN;
+        for(ShadowIndex = StartIndex; ShadowIndex <= EndIndex; ShadowIndex++) begin
+          testbench.DCacheFlushFSM.ShadowRAM[ShadowIndex] = dut.core.lsu.dtim.dtim.ram.RAM[ShadowIndex - BaseIndex];
+        end
+      end
+    end
+  end
+
+  integer adrindex;
+  if (P.UNCORE_RAM_SUPPORTED)
+    always @(posedge clk) 
+      if (ResetMem)  // program memory is sometimes reset (e.g. for CoreMark, which needs zeroed memory)
+        for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
+          dut.uncoregen.uncore.ram.ram.memory.RAM[adrindex] = '0;
 
   // Imperas look here.
   initial
@@ -110,8 +382,7 @@ module testbench;
           $error("Must specify test directory using plusarg testDir");
       end
 
-      if (P.BUS_SUPPORTED) $readmemh(memfilename, dut.uncoregen.uncore.ram.ram.memory.RAM);
-	  else $error("Imperas test bench requires BUS.");
+      #130;
 
       ProgramAddrMapFile = {testDir, "/ref/ref.elf.objdump.addr"};
       ProgramLabelMapFile = {testDir, "/ref/ref.elf.objdump.lab"};
@@ -123,98 +394,224 @@ module testbench;
       
     end
 
+  // Model the testbench as an fsm.
+  // Do this in parts so it easier to verify
+  // part 1: build a version which echos the same behavior as the below code, but does not drive anything
+  // part 2: drive some of the controls
+  // part 3: drive all logic and remove old inital and always @ negedge clk block
+
+  
+  assign ResetThresholdNew = 3'd5;
+
+  initial begin
+    TestBenchReset = 1'b1;
+    # 100;
+    TestBenchReset = 1'b0;
+  end
+
+  always_ff @(posedge clk)
+    if (TestBenchReset) CurrState <= STATE_TESTBENCH_RESET;
+    else CurrState <= NextState;  
+
+  // fsm next state logic
+  always_comb begin
+    // riscof tests have a different signature, tests[0] == "1" refers to RiscvArchTests 
+    // and tests[0] == "2" refers to WallyRiscvArchTests 
+    //pathname = tvpaths[tests[0].atoi()];
+
+    case(CurrState)
+      STATE_TESTBENCH_RESET:                      NextState = STATE_INIT_TEST;
+      STATE_INIT_TEST:                            NextState = STATE_RESET_MEMORIES;
+      STATE_RESET_MEMORIES:                       NextState = STATE_RESET_MEMORIES2;
+      STATE_RESET_MEMORIES2:                      NextState = STATE_LOAD_MEMORIES;  // Give the reset enough time to ensure the bus is reset before loading the memories.
+      STATE_LOAD_MEMORIES:                        NextState = STATE_RESET_TEST;
+      STATE_RESET_TEST:      if(ResetCountNew < ResetThresholdNew) NextState = STATE_RESET_TEST;
+                             else                 NextState = STATE_RUN_TEST;
+      STATE_RUN_TEST:        if(TestComplete)     NextState = STATE_COPY_RAM;
+                             else                 NextState = STATE_RUN_TEST;
+      STATE_COPY_RAM:                             NextState = STATE_CHECK_TEST;
+      STATE_CHECK_TEST:      if (DCacheFlushDone) NextState = STATE_VALIDATE;
+                             else                 NextState = STATE_CHECK_TEST_WAIT;
+      STATE_CHECK_TEST_WAIT: if(DCacheFlushDone)  NextState = STATE_VALIDATE;
+                             else                 NextState = STATE_CHECK_TEST_WAIT;
+      STATE_VALIDATE:                             NextState = STATE_INIT_TEST;
+      STATE_INCR_TEST:                            NextState = STATE_INIT_TEST;
+      default:                                    NextState = STATE_TESTBENCH_RESET;
+    endcase
+  end // always_comb
+  // fsm output control logic 
+  assign reset_extNew = CurrState == STATE_TESTBENCH_RESET | CurrState == STATE_INIT_TEST | 
+                     CurrState == STATE_RESET_MEMORIES | CurrState == STATE_RESET_MEMORIES2 | 
+                     CurrState == STATE_LOAD_MEMORIES | CurrState ==STATE_RESET_TEST;
+  // this initialization is very expensive, only do it for coremark.  
+  assign ResetMem = (CurrState == STATE_RESET_MEMORIES | CurrState == STATE_RESET_MEMORIES2);
+  assign LoadMem = CurrState == STATE_LOAD_MEMORIES;
+  assign ResetCntRst = CurrState == STATE_INIT_TEST;
+  assign ResetCntEn = CurrState == STATE_RESET_TEST;
+  assign Validate = CurrState == STATE_VALIDATE;
+  assign SelectTest = CurrState == STATE_INIT_TEST;
+  assign CopyRAM = TestComplete & CurrState == STATE_RUN_TEST;
+  assign DCacheFlushStartNew = CurrState == STATE_COPY_RAM;
+
+  // fsm reset counter
+  counter #(3) RstCounter(clk, ResetCntRst, ResetCntEn, ResetCountNew);
+  
+
 `ifdef USE_IMPERAS_DV
 
-    rvviTrace #(.XLEN(P.XLEN), .FLEN(P.FLEN)) rvvi();
-    wallyTracer #(P) wallyTracer(rvvi);
+  rvviTrace #(.XLEN(P.XLEN), .FLEN(P.FLEN)) rvvi();
+  wallyTracer #(P) wallyTracer(rvvi);
 
-    trace2log idv_trace2log(rvvi);
-    trace2cov idv_trace2cov(rvvi);
+  trace2log idv_trace2log(rvvi);
+  //      trace2cov idv_trace2cov(rvvi);
 
-    // enabling of comparison types
-    trace2api #(.CMP_PC      (1),
-                .CMP_INS     (1),
-                .CMP_GPR     (1),
-                .CMP_FPR     (1),
-                .CMP_VR      (0),
-                .CMP_CSR     (1)
-               ) idv_trace2api(rvvi);
+  // enabling of comparison types
+  trace2api #(.CMP_PC      (1),
+              .CMP_INS     (1),
+              .CMP_GPR     (1),
+              .CMP_FPR     (1),
+              .CMP_VR      (0),
+              .CMP_CSR     (1)
+              ) idv_trace2api(rvvi);
 
-    initial begin 
-      
-      IDV_MAX_ERRORS = 3;
+  string filename;
+  initial begin
+    int iter;
+    #1;
+    IDV_MAX_ERRORS = 3;
 
-      // Initialize REF (do this before initializing the DUT)
-      if (!rvviVersionCheck(RVVI_API_VERSION)) begin
-        $display($sformatf("%m @ t=%0t: Expecting RVVI API version %0d.", $time, RVVI_API_VERSION));
-        $fatal;
-      end
-      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,            "riscv.ovpworld.org"));
-      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME,              "riscv"));
-      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT,           "RV64GC"));
-      void'(rvviRefConfigSetInt(IDV_CONFIG_MODEL_ADDRESS_BUS_WIDTH,     39));
-      void'(rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 6));
+    // Initialize REF (do this before initializing the DUT)
+    if (!rvviVersionCheck(RVVI_API_VERSION)) begin
+      $display($sformatf("%m @ t=%0t: Expecting RVVI API version %0d.", $time, RVVI_API_VERSION));
+      $fatal;
+    end
+    
+    void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,            "riscv.ovpworld.org"));
+    void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME,              "riscv"));
+    void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT,           "RV64GC"));
+    void'(rvviRefConfigSetInt(IDV_CONFIG_MODEL_ADDRESS_BUS_WIDTH,     56));
+    void'(rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 6));
 
-      if (!rvviRefInit(elffilename)) begin
-        $display($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
-        $fatal;
-      end
-
-      // Volatile CSRs
-      void'(rvviRefCsrSetVolatile(0, 32'hC00));   // CYCLE
-      void'(rvviRefCsrSetVolatile(0, 32'hB00));   // MCYCLE
-      void'(rvviRefCsrSetVolatile(0, 32'hC02));   // INSTRET
-      void'(rvviRefCsrSetVolatile(0, 32'hB02));   // MINSTRET
-      void'(rvviRefCsrSetVolatile(0, 32'hC01));   // TIME
-      
-      // cannot predict this register due to latency between
-      // pending and taken
-      void'(rvviRefCsrSetVolatile(0, 32'h344));   // MIP
-      void'(rvviRefCsrSetVolatile(0, 32'h144));   // SIP
-
-      // Privileges for PMA are set in the imperas.ic
-      // volatile (IO) regions are defined here
-      // only real ROM/RAM areas are BOOTROM and UNCORE_RAM
-      if (P.CLINT_SUPPORTED) begin
-          void'(rvviRefMemorySetVolatile(P.CLINT_BASE, (P.CLINT_BASE + P.CLINT_RANGE)));
-      end
-      if (P.GPIO_SUPPORTED) begin
-          void'(rvviRefMemorySetVolatile(P.GPIO_BASE, (P.GPIO_BASE + P.GPIO_RANGE)));
-      end
-      if (P.UART_SUPPORTED) begin
-          void'(rvviRefMemorySetVolatile(P.UART_BASE, (P.UART_BASE + P.UART_RANGE)));
-      end
-      if (P.PLIC_SUPPORTED) begin
-          void'(rvviRefMemorySetVolatile(P.PLIC_BASE, (P.PLIC_BASE + P.PLIC_RANGE)));
-      end
-      if (P.SDC_SUPPORTED) begin
-          void'(rvviRefMemorySetVolatile(P.SDC_BASE, (P.SDC_BASE + P.SDC_RANGE)));
-      end      
-      if (P.SPI_SUPPORTED) begin
-          void'(rvviRefMemorySetVolatile(P.SPI_BASE, (P.SPI_BASE + P.SPI_RANGE)));
-      end
-
-      if(P.XLEN==32) begin
-          void'(rvviRefCsrSetVolatile(0, 32'hC80));   // CYCLEH
-          void'(rvviRefCsrSetVolatile(0, 32'hB80));   // MCYCLEH
-          void'(rvviRefCsrSetVolatile(0, 32'hC82));   // INSTRETH
-          void'(rvviRefCsrSetVolatile(0, 32'hB82));   // MINSTRETH
-      end
-
-      void'(rvviRefCsrSetVolatile(0, 32'h104));   // SIE - Temporary!!!!
-      
+    if(elffilename == "buildroot") filename = "";    
+    else filename = elffilename;
+ 
+    if (!rvviRefInit(filename)) begin
+      $display($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
+      $fatal;
     end
 
-    always @(dut.core.priv.priv.csr.csri.MIP_REGW[7])   void'(rvvi.net_push("MTimerInterrupt",    dut.core.priv.priv.csr.csri.MIP_REGW[7]));
-    always @(dut.core.priv.priv.csr.csri.MIP_REGW[11])  void'(rvvi.net_push("MExternalInterrupt", dut.core.priv.priv.csr.csri.MIP_REGW[11]));
-    always @(dut.core.priv.priv.csr.csri.MIP_REGW[9])   void'(rvvi.net_push("SExternalInterrupt", dut.core.priv.priv.csr.csri.MIP_REGW[9]));
-    always @(dut.core.priv.priv.csr.csri.MIP_REGW[3])   void'(rvvi.net_push("MSWInterrupt",       dut.core.priv.priv.csr.csri.MIP_REGW[3]));
-    always @(dut.core.priv.priv.csr.csri.MIP_REGW[1])   void'(rvvi.net_push("SSWInterrupt",       dut.core.priv.priv.csr.csri.MIP_REGW[1]));
-    always @(dut.core.priv.priv.csr.csri.MIP_REGW[5])   void'(rvvi.net_push("STimerInterrupt",    dut.core.priv.priv.csr.csri.MIP_REGW[5]));
+    // Volatile CSRs
+    void'(rvviRefCsrSetVolatile(0, 32'hC00));   // CYCLE
+    void'(rvviRefCsrSetVolatile(0, 32'hB00));   // MCYCLE
+    void'(rvviRefCsrSetVolatile(0, 32'hC02));   // INSTRET
+    void'(rvviRefCsrSetVolatile(0, 32'hB02));   // MINSTRET
+    void'(rvviRefCsrSetVolatile(0, 32'hC01));   // TIME
+    
+    // User HPMCOUNTER3 - HPMCOUNTER31
+    for (iter='hC03; iter<='hC1F; iter++) begin
+      void'(rvviRefCsrSetVolatile(0, iter));   // HPMCOUNTERx
+    end       
+    
+    // Machine MHPMCOUNTER3 - MHPMCOUNTER31
+    for (iter='hB03; iter<='hB1F; iter++) begin
+      void'(rvviRefCsrSetVolatile(0, iter));   // MHPMCOUNTERx
+    end       
+    
+    // cannot predict this register due to latency between
+    // pending and taken
+    void'(rvviRefCsrSetVolatile(0, 32'h344));   // MIP
+    void'(rvviRefCsrSetVolatile(0, 32'h144));   // SIP
 
-    final begin
-      void'(rvviRefShutdown());
+    // Privileges for PMA are set in the imperas.ic
+    // volatile (IO) regions are defined here
+    // only real ROM/RAM areas are BOOTROM and UNCORE_RAM
+    if (P.CLINT_SUPPORTED) begin
+      void'(rvviRefMemorySetVolatile(P.CLINT_BASE, (P.CLINT_BASE + P.CLINT_RANGE)));
     end
+    if (P.GPIO_SUPPORTED) begin
+      void'(rvviRefMemorySetVolatile(P.GPIO_BASE, (P.GPIO_BASE + P.GPIO_RANGE)));
+    end
+    if (P.UART_SUPPORTED) begin
+      void'(rvviRefMemorySetVolatile(P.UART_BASE, (P.UART_BASE + P.UART_RANGE)));
+    end
+    if (P.PLIC_SUPPORTED) begin
+      void'(rvviRefMemorySetVolatile(P.PLIC_BASE, (P.PLIC_BASE + P.PLIC_RANGE)));
+    end
+    if (P.SDC_SUPPORTED) begin
+      void'(rvviRefMemorySetVolatile(P.SDC_BASE, (P.SDC_BASE + P.SDC_RANGE)));
+    end
+    if (P.SPI_SUPPORTED) begin
+      void'(rvviRefMemorySetVolatile(P.SPI_BASE, (P.SPI_BASE + P.SPI_RANGE)));
+    end
+
+    if(P.XLEN==32) begin
+      void'(rvviRefCsrSetVolatile(0, 32'hC80));   // CYCLEH
+      void'(rvviRefCsrSetVolatile(0, 32'hB80));   // MCYCLEH
+      void'(rvviRefCsrSetVolatile(0, 32'hC82));   // INSTRETH
+      void'(rvviRefCsrSetVolatile(0, 32'hB82));   // MINSTRETH
+    end
+
+    void'(rvviRefCsrSetVolatile(0, 32'h104));   // SIE - Temporary!!!!
+    
+    // Load memory
+    // *** RT: This section can probably be moved into the same chunk of code which
+    // loads the memories.  However I'm not sure that ImperasDV supports reloading
+    // the memories without relaunching the simulator.
+    if(elffilename == "buildroot") begin
+      longint x64;
+      int     x32[2];
+      longint index;
+      string  memfilenameImperasDV, bootmemfilenameImperasDV;
+      
+      memfilenameImperasDV = {RISCV_DIR, "/linux-testvectors/ram.bin"};
+      bootmemfilenameImperasDV = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
+
+      $display("RVVI Loading bootmem.bin");
+      memFile = $fopen(bootmemfilenameImperasDV, "rb");
+      index = 'h1000 - 8;
+      while(!$feof(memFile)) begin
+        index+=8;
+        readResult = $fread(x64, memFile);
+        if (x64 == 0) continue;
+        x32[0] = x64 & 'hffffffff;
+        x32[1] = x64 >> 32;
+        rvviRefMemoryWrite(0, index+0, x32[0], 4);
+        rvviRefMemoryWrite(0, index+4, x32[1], 4);
+        //$display("boot %08X x32[0]=%08X x32[1]=%08X", index, x32[0], x32[1]);
+      end
+      $fclose(memFile);
+            
+      $display("RVVI Loading ram.bin");
+      memFile = $fopen(memfilenameImperasDV, "rb");
+      index = 'h80000000 - 8;
+      while(!$feof(memFile)) begin
+        index+=8;
+        readResult = $fread(x64, memFile);
+        if (x64 == 0) continue;
+        x32[0] = x64 & 'hffffffff;
+        x32[1] = x64 >> 32;
+        rvviRefMemoryWrite(0, index+0, x32[0], 4);
+        rvviRefMemoryWrite(0, index+4, x32[1], 4);
+        //$display("ram  %08X x32[0]=%08X x32[1]=%08X", index, x32[0], x32[1]);
+      end
+      $fclose(memFile);
+      
+      $display("RVVI Loading Complete");
+      
+      void'(rvviRefPcSet(0, P.RESET_VECTOR)); // set BOOTROM address
+    end
+  end
+
+  always @(dut.core.priv.priv.csr.csri.MIP_REGW[7])   void'(rvvi.net_push("MTimerInterrupt",    dut.core.priv.priv.csr.csri.MIP_REGW[7]));
+  always @(dut.core.priv.priv.csr.csri.MIP_REGW[11])  void'(rvvi.net_push("MExternalInterrupt", dut.core.priv.priv.csr.csri.MIP_REGW[11]));
+  always @(dut.core.priv.priv.csr.csri.MIP_REGW[9])   void'(rvvi.net_push("SExternalInterrupt", dut.core.priv.priv.csr.csri.MIP_REGW[9]));
+  always @(dut.core.priv.priv.csr.csri.MIP_REGW[3])   void'(rvvi.net_push("MSWInterrupt",       dut.core.priv.priv.csr.csri.MIP_REGW[3]));
+  always @(dut.core.priv.priv.csr.csri.MIP_REGW[1])   void'(rvvi.net_push("SSWInterrupt",       dut.core.priv.priv.csr.csri.MIP_REGW[1]));
+  always @(dut.core.priv.priv.csr.csri.MIP_REGW[5])   void'(rvvi.net_push("STimerInterrupt",    dut.core.priv.priv.csr.csri.MIP_REGW[5]));
+
+  final begin
+    void'(rvviRefShutdown());
+  end
 
 `endif
 
