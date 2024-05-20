@@ -150,7 +150,8 @@ wsim runs one of multiple simulators, Questa, VCS, or Verilator using a specific
 The general syntax is
 wsim <config> <suite or elf file> [--options]
 
-Options:
+Parameters and options:
+
 	-h, --help                                                 show this help message and exit
 	--elf, -e                                                  Elf file
 	--sim {questa,verilator,vcs}, -s {questa,verilator,vcs}    Simulator
