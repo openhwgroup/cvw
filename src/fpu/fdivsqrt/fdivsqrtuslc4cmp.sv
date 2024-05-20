@@ -48,10 +48,10 @@ module fdivsqrtuslc4cmp (
 
   logic [6:0] mk2, mk1, mk0, mkm1;
   logic [6:0] mkj2, mkj1, mkj0, mkjm1;
-  logic [6:0] mks2[7:0], mks1[7:0]; 
+  logic [6:0] mks2[7:0], mks1[7:0], mks0[7:0], mksm1[7:0];
   logic sqrtspecial;
 
-  // Prepopulate table of mks0
+  // Prepopulate table of mks for comparison
   assign mks2[0] = 12;
   assign mks2[1] = 14;
   assign mks2[2] = 16;
@@ -68,6 +68,24 @@ module fdivsqrtuslc4cmp (
   assign mks1[5] = 8; // is the logic any cheaper if this is a 6?
   assign mks1[6] = 8;
   assign mks1[7] = 8;
+
+  assign mks0[0] = -4;
+  assign mks0[1] = -4;
+  assign mks0[2] = -6;
+  assign mks0[3] = -6;
+  assign mks0[4] = -6;
+  assign mks0[5] = -8;
+  assign mks0[6] = -8;
+  assign mks0[7] = -8;
+  assign mksm1[0] = -13;
+  assign mksm1[1] = -14;
+  assign mksm1[2] = -16;
+  assign mksm1[3] = -17;
+  assign mksm1[4] = -18;
+  assign mksm1[5] = -20; 
+  assign mksm1[6] = -22;
+  assign mksm1[7] = -23;
+
   
   // handles special case when j = 0 or j = 1 for sqrt
   assign mkj2 = 20; // when j = 1 use mk2[101] when j = 0 use anything bigger than 7.
@@ -85,8 +103,13 @@ module fdivsqrtuslc4cmp (
   
   assign mk2 = sqrtspecial ? mkj2 : mks2[A];
   assign mk1 = sqrtspecial ? mkj1 : mks1[A];
+  assign mk0 = sqrtspecial ? -mkj1 : mks0[A];
+  assign mkm1 = sqrtspecial ? -mkj2 : mksm1[A];
+
+/* Nannarelli12 design to exploit symmetry is slower because of negation and mux for special case of A = 000
   assign mk0 = -mk1;
   assign mkm1 = (A == 3'b000) ? -13 : -mk2; // asymmetry in table *** can we hide from critical path
+  */
  
   // Compare residual W to selection constants to choose digit
   always_comb 

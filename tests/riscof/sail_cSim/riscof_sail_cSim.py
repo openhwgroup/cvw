@@ -52,6 +52,7 @@ class sail_cSim(pluginTemplate):
         ispec = utils.load_yaml(isa_yaml)['hart0']
         self.xlen = ('64' if 64 in ispec['supported_xlen'] else '32')
         self.isa = 'rv' + self.xlen
+        self.sailargs = ' '
         self.compile_cmd = self.compile_cmd+' -mabi='+('lp64 ' if 64 in ispec['supported_xlen'] else ('ilp32e ' if "E" in ispec["ISA"] else 'ilp32 '))
         if "I" in ispec["ISA"]:
             self.isa += 'i'
@@ -67,6 +68,8 @@ class sail_cSim(pluginTemplate):
             self.isa += 'f'
         if "D" in ispec["ISA"]:
             self.isa += 'd'
+        if "Zcb" in ispec["ISA"]:   # for some strange reason, Sail requires a command line argument to enable Zcb
+            self.sailargs += "--enable-zcb"
         objdump = "riscv64-unknown-elf-objdump".format(self.xlen)
         if shutil.which(objdump) is None:
             logger.error(objdump+": executable not found. Please check environment setup.")
@@ -112,7 +115,8 @@ class sail_cSim(pluginTemplate):
                 reference_output = re.sub("/src/","/references/", re.sub(".S",".reference_output", test))
                 execute += 'cut -c-{0:g} {1} > {2}'.format(8, reference_output, sig_file) #use cut to remove comments when copying
             else:
-                execute += self.sail_exe[self.xlen] + ' -z268435455 -i --test-signature={0} {1} > {2}.log 2>&1;'.format(sig_file, elf, test_name)
+                execute += self.sail_exe[self.xlen] + ' -z268435455 -i ' + self.sailargs + ' --test-signature={0} {1} > {2}.log 2>&1;'.format(sig_file, elf, test_name)
+#                execute += self.sail_exe[self.xlen] + ' -z268435455 -i --test-signature={0} {1} > {2}.log 2>&1;'.format(sig_file, elf, test_name)
 
             cov_str = ' '
             for label in testentry['coverage_labels']:

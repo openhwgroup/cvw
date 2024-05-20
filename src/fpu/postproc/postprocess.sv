@@ -44,9 +44,9 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   input logic                              FmaPs,               // the product's sign
   input logic                              FmaSs,               // Sum sign
   input logic  [P.NE+1:0]                  FmaSe,               // the sum's exponent
-  input logic  [3*P.NF+3:0]                FmaSm,               // the positive sum
+  input logic  [P.FMALEN-1:0]                FmaSm,               // the positive sum
   input logic                              FmaASticky,          // sticky bit that is calculated during alignment
-  input logic  [$clog2(3*P.NF+5)-1:0]      FmaSCnt,             // the normalization shift count
+  input logic  [$clog2(P.FMALEN+1)-1:0]      FmaSCnt,             // the normalization shift count
   //divide signals
   input logic                              DivSticky,           // divider sticky bit
   input logic  [P.NE+1:0]                  DivUe,               // divsqrt exponent
@@ -70,8 +70,8 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   logic                        Rs;                   // result sign
   logic [P.NF-1:0]             Rf;                   // Result fraction
   logic [P.NE-1:0]             Re;                   // Result exponent
-  logic                        Ms;                   // norMalized sign
-  logic [P.CORRSHIFTSZ-1:0]    Mf;                   // norMalized fraction
+  logic                        Ms;                   // normalized sign
+  logic [P.NORMSHIFTSZ-1:0]    Mf;                   // normalized fraction
   logic [P.NE+1:0]             Me;                   // normalized exponent
   logic [P.NE+1:0]             FullRe;               // Re with bits to determine sign and overflow
   logic                        UfPlus1;              // do you add one (for determining underflow flag)
@@ -86,10 +86,10 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   // fma signals
   logic [P.NE+1:0]             FmaMe;                // exponent of the normalized sum
   logic                        FmaSZero;             // is the sum zero
-  logic [3*P.NF+5:0]           FmaShiftIn;           // fma shift input
+  logic [P.FMALEN+1:0]         FmaShiftIn;           // fma shift input
   logic [P.NE+1:0]             NormSumExp;           // exponent of the normalized sum not taking into account Subnormal or zero results
   logic                        FmaPreResultSubnorm;  // is the result subnormal - calculated before LZA corection
-  logic [$clog2(3*P.NF+5)-1:0] FmaShiftAmt;          // normalization shift amount for fma
+  logic [$clog2(P.FMALEN+1)-1:0] FmaShiftAmt;          // normalization shift amount for fma
   // division signals
   logic [P.LOGNORMSHIFTSZ-1:0] DivShiftAmt;          // divsqrt shif amount
   logic [P.NORMSHIFTSZ-1:0]    DivShiftIn;           // divsqrt shift input
@@ -154,8 +154,8 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   always_comb
     case(PostProcSel)
       2'b10: begin // fma
-        ShiftAmt = {{P.LOGNORMSHIFTSZ-$clog2(3*P.NF+5){1'b0}}, FmaShiftAmt};
-        ShiftIn  =  {FmaShiftIn, {P.NORMSHIFTSZ-(3*P.NF+6){1'b0}}};
+        ShiftAmt = {{P.LOGNORMSHIFTSZ-$clog2(P.FMALEN-1){1'b0}}, FmaShiftAmt};
+        ShiftIn  =  {FmaShiftIn, {P.NORMSHIFTSZ-(P.FMALEN+2){1'b0}}};
       end
       2'b00: begin // cvt
         ShiftAmt = {{P.LOGNORMSHIFTSZ-$clog2(P.CVTLEN+1){1'b0}}, CvtShiftAmt};

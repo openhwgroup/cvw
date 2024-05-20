@@ -35,12 +35,12 @@
 
 string tvpaths[] = '{
     "$RISCV/imperas-riscv-tests/work/",
-    "../tests/riscof/work/riscv-arch-test/",
-    "../tests/riscof/work/wally-riscv-arch-test/",
-    "../benchmarks/coremark/work/",
-    "../addins/embench-iot/",
-    "../tests/custom/work/",
-    "../tests/coverage/"
+    "../../tests/riscof/work/riscv-arch-test/",
+    "../../tests/riscof/work/wally-riscv-arch-test/",
+    "../../benchmarks/coremark/work/",
+    "../../addins/embench-iot/",
+    "../../tests/custom/work/",
+    "../../tests/coverage/"
     };
 
   string coverage64gc[] = '{
@@ -70,6 +70,59 @@ string tvpaths[] = '{
     "pmppriority",
     "pmpcbo",
     "pmpadrdecs"
+  };
+
+  string wallycov64i[] = '{
+    `WALLYTEST,
+    "rv64i_m/I/src/WALLY-COV-lh.S",
+    "rv64i_m/I/src/WALLY-COV-srli.S",
+    "rv64i_m/I/src/WALLY-COV-srai.S",
+    "rv64i_m/I/src/WALLY-COV-or.S",
+    "rv64i_m/I/src/WALLY-COV-sra.S",
+    "rv64i_m/I/src/WALLY-COV-sll.S",
+    "rv64i_m/I/src/WALLY-COV-slti.S",
+    "rv64i_m/I/src/WALLY-COV-bne.S",
+    "rv64i_m/I/src/WALLY-COV-bltu.S",
+    "rv64i_m/I/src/WALLY-COV-srliw.S",
+    "rv64i_m/I/src/WALLY-COV-slliw.S",
+    "rv64i_m/I/src/WALLY-COV-sw.S",
+    "rv64i_m/I/src/WALLY-COV-sraiw.S",
+    "rv64i_m/I/src/WALLY-COV-sltu.S",
+    "rv64i_m/I/src/WALLY-COV-addiw.S",
+    "rv64i_m/I/src/WALLY-COV-slli.S",
+    "rv64i_m/I/src/WALLY-COV-beq.S",
+    "rv64i_m/I/src/WALLY-COV-sd.S",
+    "rv64i_m/I/src/WALLY-COV-auipc.S",
+    "rv64i_m/I/src/WALLY-COV-bge.S",
+    "rv64i_m/I/src/WALLY-COV-sltiu.S",
+    "rv64i_m/I/src/WALLY-COV-lui.S",
+    "rv64i_m/I/src/WALLY-COV-lw.S",
+    "rv64i_m/I/src/WALLY-COV-lwu.S",
+    "rv64i_m/I/src/WALLY-COV-slt.S",
+    "rv64i_m/I/src/WALLY-COV-blt.S",
+    "rv64i_m/I/src/WALLY-COV-addw.S",
+    "rv64i_m/I/src/WALLY-COV-lb.S",
+    "rv64i_m/I/src/WALLY-COV-xori.S",
+    "rv64i_m/I/src/WALLY-COV-addi.S",
+    "rv64i_m/I/src/WALLY-COV-xor.S",
+    "rv64i_m/I/src/WALLY-COV-jal.S",
+    "rv64i_m/I/src/WALLY-COV-sb.S",
+    "rv64i_m/I/src/WALLY-COV-ld.S",
+    "rv64i_m/I/src/WALLY-COV-lhu.S",
+    "rv64i_m/I/src/WALLY-COV-andi.S",
+    "rv64i_m/I/src/WALLY-COV-ori.S",
+    "rv64i_m/I/src/WALLY-COV-sub.S",
+    "rv64i_m/I/src/WALLY-COV-and.S",
+    "rv64i_m/I/src/WALLY-COV-sh.S",
+    "rv64i_m/I/src/WALLY-COV-srlw.S",
+    "rv64i_m/I/src/WALLY-COV-sraw.S",
+    "rv64i_m/I/src/WALLY-COV-subw.S",
+    "rv64i_m/I/src/WALLY-COV-sllw.S",
+    "rv64i_m/I/src/WALLY-COV-jalr.S",
+    "rv64i_m/I/src/WALLY-COV-lbu.S",
+    "rv64i_m/I/src/WALLY-COV-add.S",
+    "rv64i_m/I/src/WALLY-COV-srl.S",
+    "rv64i_m/I/src/WALLY-COV-bgeu.S"
   };
 
   string buildroot[] = '{
@@ -874,12 +927,12 @@ string imperas32f[] = '{
     "rv64i_m/Q/src/WALLY-q-01.S"
   };
 
- string wally64a[] = '{
+ string wally64a_lrsc[] = '{
     `WALLYTEST,
     "rv64i_m/privilege/src/WALLY-lrsc-01.S"
   };
 
- string wally32a[] = '{
+ string wally32a_lrsc[] = '{
     `WALLYTEST,
     "rv32i_m/privilege/src/WALLY-lrsc-01.S"
  };
@@ -921,7 +974,7 @@ string imperas32f[] = '{
     "rv64i_m/Zicond/src/czero.nez-01.S"
     };
 
-  string arch32a[] = '{
+  string arch32a_amo[] = '{
     `RISCVARCHTEST,
     "rv32i_m/A/src/amoadd.w-01.S",
     "rv32i_m/A/src/amoand.w-01.S",
@@ -994,6 +1047,78 @@ string imperas32f[] = '{
     "rv32i_m/B/src/bseti-01.S"
   };
 
+  string arch32zbkc[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/B/src/clmul-01.S",
+    "rv32i_m/B/src/clmulh-01.S"
+  };
+
+  string arch32zbkx[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/K/src/xperm8-01.S",
+    "rv32i_m/K/src/xperm4-01.S"
+  };
+
+  string arch32zknd[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/K/src/aes32dsi-01.S",     
+    "rv32i_m/K/src/aes32dsmi-01.S"    	        
+  };
+
+  string arch32zkne[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/K/src/aes32esi-01.S",  
+    "rv32i_m/K/src/aes32esmi-01.S"  		        
+  };
+
+  string arch32zknh[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/K/src/sha256sig0-01.S",  
+    "rv32i_m/K/src/sha256sig1-01.S",
+    "rv32i_m/K/src/sha256sum0-01.S",  
+    "rv32i_m/K/src/sha256sum1-01.S",
+    "rv32i_m/K/src/sha512sig0h-01.S",  
+    "rv32i_m/K/src/sha512sig0l-01.S",  
+    "rv32i_m/K/src/sha512sig1h-01.S",
+    "rv32i_m/K/src/sha512sig1l-01.S",  
+    "rv32i_m/K/src/sha512sum0r-01.S",
+    "rv32i_m/K/src/sha512sum1r-01.S"       
+  };
+
+  string arch32zbkb[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/B/src/ror-01.S",  
+    "rv32i_m/B/src/rol-01.S",  
+    "rv32i_m/B/src/rori-01.S",  
+    "rv32i_m/B/src/andn-01.S",  
+    "rv32i_m/B/src/orn-01.S",  
+    "rv32i_m/B/src/xnor-01.S",  
+    "rv32i_m/B/src/rev8_32-01.S",  
+    "rv32i_m/K/src/pack-01.S",  
+    "rv32i_m/K/src/packh-01.S",  
+    "rv32i_m/K/src/brev8_32-01.S",  
+    "rv32i_m/K/src/zip-01.S",  
+    "rv32i_m/K/src/unzip-01.S"
+ };
+
+   string arch64zbkb[] = '{
+    `RISCVARCHTEST,
+    "rv64i_m/B/src/ror-01.S",  
+    "rv64i_m/B/src/rol-01.S",  
+    "rv64i_m/B/src/rori-01.S",  
+    "rv64i_m/B/src/rorw-01.S",  
+    "rv64i_m/B/src/rolw-01.S",  
+    "rv64i_m/B/src/roriw-01.S",  
+    "rv64i_m/B/src/andn-01.S",  
+    "rv64i_m/B/src/orn-01.S",  
+    "rv64i_m/B/src/xnor-01.S",  
+    "rv64i_m/B/src/rev8-01.S",  
+    "rv64i_m/K/src/pack-01.S",  
+    "rv64i_m/K/src/packh-01.S",  
+    "rv64i_m/K/src/packw-01.S",  
+    "rv64i_m/K/src/brev8-01.S"
+ };
+
   string arch64m[] = '{
     `RISCVARCHTEST,
     "rv64i_m/M/src/div-01.S",
@@ -1011,7 +1136,7 @@ string imperas32f[] = '{
     "rv64i_m/M/src/remw-01.S"
    };
 
-  string arch64a[] = '{
+  string arch64a_amo[] = '{
     `RISCVARCHTEST,
     "rv64i_m/A/src/amoadd.w-01.S",
     "rv64i_m/A/src/amoand.w-01.S",
@@ -1182,6 +1307,24 @@ string imperas32f[] = '{
     "rv64i_m/F/src/fadd_b7-01.S",
     "rv64i_m/F/src/fadd_b8-01.S",
     "rv64i_m/F/src/fclass_b1-01.S",
+    "rv64i_m/F/src/fcvt.s.l_b25-01.S", 
+    "rv64i_m/F/src/fcvt.s.l_b26-01.S",
+    "rv64i_m/F/src/fcvt.s.lu_b25-01.S",
+    "rv64i_m/F/src/fcvt.s.lu_b26-01.S",
+    "rv64i_m/F/src/fcvt.l.s_b1-01.S",
+    "rv64i_m/F/src/fcvt.l.s_b22-01.S",
+    "rv64i_m/F/src/fcvt.l.s_b23-01.S",
+    "rv64i_m/F/src/fcvt.l.s_b24-01.S",
+    "rv64i_m/F/src/fcvt.l.s_b27-01.S",
+    "rv64i_m/F/src/fcvt.l.s_b28-01.S",
+    "rv64i_m/F/src/fcvt.l.s_b29-01.S",
+    "rv64i_m/F/src/fcvt.lu.s_b1-01.S",
+    "rv64i_m/F/src/fcvt.lu.s_b22-01.S",
+    "rv64i_m/F/src/fcvt.lu.s_b23-01.S",
+    "rv64i_m/F/src/fcvt.lu.s_b24-01.S",
+    "rv64i_m/F/src/fcvt.lu.s_b27-01.S",
+    "rv64i_m/F/src/fcvt.lu.s_b28-01.S",
+    "rv64i_m/F/src/fcvt.lu.s_b29-01.S",
     "rv64i_m/F/src/fcvt.s.w_b25-01.S",
     "rv64i_m/F/src/fcvt.s.w_b26-01.S",
     "rv64i_m/F/src/fcvt.s.wu_b25-01.S",
@@ -1350,7 +1493,7 @@ string imperas32f[] = '{
     "rv64i_m/Zfh/src/fcvt.wu.h_b27-01.S",
     "rv64i_m/Zfh/src/fcvt.wu.h_b28-01.S",
     "rv64i_m/Zfh/src/fcvt.wu.h_b29-01.S",
-    "rv64i_m/Zfh/src/fcvt.h.l_b25-01.S",
+    "rv64i_m/Zfh/src/fcvt.h.l_b25-01.S", 
     "rv64i_m/Zfh/src/fcvt.h.l_b26-01.S",
     "rv64i_m/Zfh/src/fcvt.h.lu_b25-01.S",
     "rv64i_m/Zfh/src/fcvt.h.lu_b26-01.S",
@@ -1498,7 +1641,7 @@ string imperas32f[] = '{
   string arch64d[] = '{
     `RISCVARCHTEST,
     // for speed
-   "rv64i_m/D/src/fadd.d_b10-01.S",
+    "rv64i_m/D/src/fadd.d_b10-01.S",
     "rv64i_m/D/src/fadd.d_b1-01.S",
     "rv64i_m/D/src/fadd.d_b11-01.S",
     "rv64i_m/D/src/fadd.d_b12-01.S",
@@ -1665,7 +1808,6 @@ string arch64zcb[] = '{
       "rv64i_m/C/src/clbu-01.S",
       "rv64i_m/C/src/clh-01.S",
       "rv64i_m/C/src/clhu-01.S",
-      "rv64i_m/C/src/clbu-01.S",
       "rv64i_m/C/src/csb-01.S",
       "rv64i_m/C/src/csh-01.S",
       "rv64i_m/C/src/csext.b-01.S",
@@ -1682,7 +1824,6 @@ string arch32zcb[] = '{
       "rv32i_m/C/src/clbu-01.S",
       "rv32i_m/C/src/clh-01.S",
       "rv32i_m/C/src/clhu-01.S",
-      "rv32i_m/C/src/clbu-01.S",
       "rv32i_m/C/src/csb-01.S",
       "rv32i_m/C/src/csh-01.S",
       "rv32i_m/C/src/csext.b-01.S",
@@ -1752,6 +1893,47 @@ string arch64zbs[] = '{
     "rv64i_m/B/src/bseti-01.S"
 };
 
+string arch64zbkc[] = '{
+  `RISCVARCHTEST,
+  "rv64i_m/B/src/clmul-01.S",
+  "rv64i_m/B/src/clmulh-01.S"
+};
+
+string arch64zbkx[] = '{
+  `RISCVARCHTEST,
+  "rv64i_m/K/src/xperm8-01.S",
+  "rv64i_m/K/src/xperm4-01.S"
+};
+
+string arch64zknd[] = '{
+  `RISCVARCHTEST,
+  "rv64i_m/K/src/aes64ds-01.S",  
+  "rv64i_m/K/src/aes64dsm-01.S",      
+  "rv64i_m/K/src/aes64im-01.S",  
+  "rv64i_m/K/src/aes64ks1i-01.S",    
+  "rv64i_m/K/src/aes64ks2-01.S"
+};
+
+string arch64zkne[] = '{
+  `RISCVARCHTEST,
+  "rv64i_m/K/src/aes64es-01.S",   
+  "rv64i_m/K/src/aes64esm-01.S",
+  "rv64i_m/K/src/aes64ks1i-01.S",
+  "rv64i_m/K/src/aes64ks2-01.S"
+};
+
+string arch64zknh[] = '{
+  `RISCVARCHTEST,
+  "rv64i_m/K/src/sha256sig0-01.S",  
+  "rv64i_m/K/src/sha256sig1-01.S",
+  "rv64i_m/K/src/sha256sum0-01.S",  
+  "rv64i_m/K/src/sha256sum1-01.S",
+  "rv64i_m/K/src/sha512sig0-01.S",  
+  "rv64i_m/K/src/sha512sig1-01.S",  
+  "rv64i_m/K/src/sha512sum0-01.S",
+  "rv64i_m/K/src/sha512sum1-01.S"     
+};
+
     string arch32priv[] = '{
     `RISCVARCHTEST,
     "rv32i_m/privilege/src/ebreak.S",
@@ -1818,6 +2000,7 @@ string arch64zbs[] = '{
 
   string arch32f[] = '{
     `RISCVARCHTEST,
+    "rv32i_m/F/src/fadd_b11-01.S",
     "rv32i_m/F/src/fadd_b10-01.S",
     "rv32i_m/F/src/fadd_b1-01.S",
     "rv32i_m/F/src/fadd_b11-01.S",
@@ -2093,7 +2276,9 @@ string arch64zbs[] = '{
     };
 
   string arch32zfaf[] = '{
-    `RISCVARCHTEST,
+    //`RISCVARCHTEST,
+    `WALLYTEST,
+    "rv32i_m/F_Zfa/src/fround_b1-01.S",
     "rv32i_m/F_Zfa/src/fleq_b1-01.S",
     "rv32i_m/F_Zfa/src/fleq_b19-01.S", 
     "rv32i_m/F_Zfa/src/fli.s-01.S",
@@ -2105,11 +2290,12 @@ string arch64zbs[] = '{
     "rv32i_m/F_Zfa/src/fminm_b19-01.S",
     "rv32i_m/F_Zfa/src/fmaxm_b1-01.S",
     "rv32i_m/F_Zfa/src/fmaxm_b19-01.S"
-/*    "rv32i_m/F_Zfa/src/fround_b1-01.S" */
   };
 
   string arch32zfad[] = '{
-    `RISCVARCHTEST,
+    //`RISCVARCHTEST,
+    `WALLYTEST,
+    "rv32i_m/D_Zfa/src/fround_b1-01.S",
     "rv32i_m/D_Zfa/src/fcvtmod.w.d_b1-01.S",
     "rv32i_m/D_Zfa/src/fcvtmod.w.d_b22-01.S",
     "rv32i_m/D_Zfa/src/fcvtmod.w.d_b23-01.S",
@@ -2141,11 +2327,12 @@ string arch64zbs[] = '{
     "rv32i_m/D_Zfa/src/fmvh.x.d_b27-01.S",
     "rv32i_m/D_Zfa/src/fmvh.x.d_b28-01.S",
     "rv32i_m/D_Zfa/src/fmvh.x.d_b29-01.S"
-/*    "rv32i_m/D_Zfa/src/fround_b1-01.S" */
   };
 
   string arch64zfaf[] = '{
-    `RISCVARCHTEST,
+    //`RISCVARCHTEST,
+    `WALLYTEST,
+    "rv64i_m/F_Zfa/src/fround_b1-01.S",
     "rv64i_m/F_Zfa/src/fleq_b1-01.S",
     "rv64i_m/F_Zfa/src/fleq_b19-01.S", 
     "rv64i_m/F_Zfa/src/fli.s-01.S",
@@ -2155,13 +2342,14 @@ string arch64zbs[] = '{
     "rv64i_m/F_Zfa/src/fminm_b19-01.S",
     "rv64i_m/F_Zfa/src/fmaxm_b1-01.S",
     "rv64i_m/F_Zfa/src/fmaxm_b19-01.S"
-/*    "rv64i_m/F_Zfa/src/fround_b1-01.S" */
   };
 
   string arch64zfad[] = '{
-    `RISCVARCHTEST,
+    //`RISCVARCHTEST,
+    `WALLYTEST,
+     "rv64i_m/D_Zfa/src/fround_b1-01.S",
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b1-01.S",
-    "rv64i_m/D_Zfa/src/fcvtmod.w.d_b22-01.S",
+    "rv64i_m/D_Zfa/src/fcvtmod.w.d_b22-01.S", 
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b23-01.S",
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b24-01.S",
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b27-01.S",
@@ -2176,7 +2364,7 @@ string arch64zbs[] = '{
     "rv64i_m/D_Zfa/src/fminm_b19-01.S",
     "rv64i_m/D_Zfa/src/fmaxm_b1-01.S",
     "rv64i_m/D_Zfa/src/fmaxm_b19-01.S"
-/*     "rv64i_m/D_Zfa/src/fround_b1-01.S" */
+
   };
 
   string arch32d_fma[] = '{

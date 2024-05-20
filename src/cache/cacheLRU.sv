@@ -146,11 +146,11 @@ module cacheLRU
   // Move to = to keep Verilator happy and simulator running fast
   always_ff @(posedge clk) begin
     if (reset | (InvalidateCache & ~FlushStage)) 
-      for (int set = 0; set < NUMLINES; set++) LRUMemory[set] = 0; // exclusion-tag: initialize
+      for (int set = 0; set < NUMLINES; set++) LRUMemory[set] = '0; // exclusion-tag: initialize
     else if(CacheEn) begin
       // Because we are using blocking assignments, change to LRUMemory must occur after LRUMemory is used so we get the proper value
-      if(LRUWriteEn & (PAdr == CacheSetTag)) CurrLRU = #1 NextLRU;
-      else                                   CurrLRU = #1 LRUMemory[CacheSetTag];
+      if(LRUWriteEn & (PAdr == CacheSetTag)) CurrLRU = NextLRU;
+      else                                   CurrLRU = LRUMemory[CacheSetTag];
       if(LRUWriteEn)                         LRUMemory[PAdr] = NextLRU;
     end
   end

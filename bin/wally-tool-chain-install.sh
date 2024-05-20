@@ -46,9 +46,9 @@ sudo mkdir -p $RISCV
 # Update and Upgrade tools (see https://itsfoss.com/apt-update-vs-upgrade/)
 sudo apt update -y
 sudo apt upgrade -y
-sudo apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev libglib2.0-dev python3-pip pkg-config opam z3 zlib1g-dev automake autotools-dev libmpc-dev libmpfr-dev  gperf libtool patchutils bc 
+sudo apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev libglib2.0-dev python3-pip pkg-config opam z3 zlib1g-dev automake autotools-dev libmpc-dev libmpfr-dev  gperf libtool patchutils bc mutt ssmtp
 # Other python libraries used through the book.
-sudo pip3 install sphinx sphinx_rtd_theme matplotlib scipy scikit-learn adjustText lief
+sudo -H pip3 install sphinx sphinx_rtd_theme matplotlib scipy scikit-learn adjustText lief markdown pyyaml
 
 # needed for Ubuntu 22.04, gcc cross compiler expects python not python2 or python3.
 if ! command -v python &> /dev/null
@@ -60,17 +60,15 @@ fi
 # gcc cross-compiler (https://github.com/riscv-collab/riscv-gnu-toolchain)
 # To install GCC from source can take hours to compile. 
 # This configuration enables multilib to target many flavors of RISC-V.   
-# This book is tested with GCC 12.2 (tagged 2023.01.31), but will likely work with newer versions as well. 
-# Note that GCC12.2 has binutils 2.39, which has a known performance bug that causes
-# objdump to run 100x slower than in previous versions, causing riscof to make versy slowly.
-# However GCC12.x is needed for bit manipulation instructions.  There is an open issue to fix this:
-# https://github.com/riscv-collab/riscv-gnu-toolchain/issues/1188
-
+# This book is tested with GCC 13.2.0
+# Versions newer than 2023-12-20 fail to compile the RISC-V arch test with an error:
+# cvw/addins/riscv-arch-test/riscv-test-suite/rv32i_m/I/src/jalr-01.S:72: Error: illegal operands `la x0,5b'
+# PR *** submitted to fix riscv-arch-test to be compatible with latest GCC by modifying test_macros.h for TEST_JALR_OP
 cd $RISCV
 git clone https://github.com/riscv/riscv-gnu-toolchain
 cd riscv-gnu-toolchain
 ./configure --prefix=${RISCV} --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
-make -j ${NUM_THREADS}
+make -j 8
 
 # elf2hex (https://github.com/sifive/elf2hex)
 #The elf2hex utility to converts executable files into hexadecimal files for Verilog simulation. 
@@ -94,23 +92,20 @@ cd $RISCV
 git clone --recurse-submodules https://github.com/qemu/qemu
 cd qemu
 ./configure --target-list=riscv64-softmmu --prefix=$RISCV 
-make -j ${NUM_THREADS}
+make -j 8
 make install
 
 # Spike (https://github.com/riscv-software-src/riscv-isa-sim)
 # Spike also takes a while to install and compile, but this can be done concurrently 
-#with the GCC installation. After the build, we need to change two Makefiles to support atomic instructions.
+# with the GCC installation. 
 cd $RISCV
 git clone https://github.com/riscv-software-src/riscv-isa-sim
 mkdir -p riscv-isa-sim/build
 cd riscv-isa-sim/build
 ../configure --prefix=$RISCV 
-make -j ${NUM_THREADS}
+make -j 8
 make install 
-cd ../arch_test_target/spike/device
-# dh 2/5/24: these should be obsolete
-#sed -i 's/--isa=rv32ic/--isa=rv32iac/' rv32i_m/privilege/Makefile.include
-#sed -i 's/--isa=rv64ic/--isa=rv64iac/' rv64i_m/privilege/Makefile.include
+
 
 # Wally needs Verilator 5.021 or later.
 # Verilator needs to be built from scratch to get the latest version
@@ -126,7 +121,7 @@ git pull         # Make sure git repository is up-to-date
 git checkout master      
 autoconf         # Create ./configure script
 ./configure      # Configure and create Makefile
-make -j ${NUM_THREADS}  # Build Verilator itself (if error, try just 'make')
+make -j 8  # Build Verilator itself (if error, try just 'make')
 sudo make install
 
 # Sail (https://github.com/riscv/sail-riscv)
@@ -163,7 +158,7 @@ sudo make install
 #cd z3
 #python scripts/mk_make.py
 #cd build
-#make  -j ${NUM_THREADS}
+#make  -j 8
 #make install
 #cd ../..
 #pip3 install chardet==3.0.4
@@ -181,14 +176,15 @@ git clone https://github.com/riscv/sail-riscv.git
 cd sail-riscv
 # For now, use checkout that is stable for Wally
 #git checkout 72b2516d10d472ac77482fd959a9401ce3487f60  # not new enough for Zicboz?
-make -j ${NUM_THREADS}
-ARCH=RV32 make -j ${NUM_THREADS}
+export OPAMCLI=2.0  # Sail is not compatible with opam 2.1 as of 4/16/24
+ARCH=RV64 make -j 8 c_emulator/riscv_sim_RV64
+ARCH=RV32 make -j 8 c_emulator/riscv_sim_RV32
 sudo ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV64 /usr/bin/riscv_sim_RV64
 sudo ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV32 /usr/bin/riscv_sim_RV32
 
 # riscof
-sudo pip3 install -U testresources riscv_config
-sudo pip3 install git+https://github.com/riscv/riscof.git
+sudo -H pip3 install -U testresources riscv_config
+sudo -H pip3 install git+https://github.com/riscv/riscof.git
 
 # Download OSU Skywater 130 cell library
 sudo mkdir -p $RISCV/cad/lib

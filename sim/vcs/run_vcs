@@ -1,0 +1,118 @@
+#!/bin/bash
+# VCS Compilation for WALLY
+# Divya Kohli, Rose Thompson, David Harris 2024
+# Note: VCS produces warning about unsupported Linux Version, but runs successfully
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+# Color Definitions
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Directories
+CFG="${WALLY}/config"
+SRC="${WALLY}/src"
+TB="${WALLY}/testbench"
+
+# Set CONFIG_VARIANT from the first script argument
+CONFIG_VARIANT=${1}
+# Set TESTSUITE from the second script argument
+TESTSUITE=$2
+
+WKDIR="wkdir/${1}_${2}"
+COV="cov/${1}_${2}"
+LOGS="logs"
+
+if [ ${TESTSUITE} = "buildroot" ]; then
+	shift 2
+	PLUSARGS="$*"
+fi
+
+clean_logs() {
+    echo -e "${YELLOW}Cleaning up workspace...${NC}"
+    rm -rf wkdir logs cov
+}
+clean_simprofile() {
+    echo -e "${YELLOW}Cleaning up simprofile_dir...${NC}"
+    rm -rf simprofile_dir* profileReport*  
+}
+
+#clean_simprofile
+#clean_logs
+# Function to create a directory if it does not exist
+create_directory() {
+    local dir=$1  # Local variable for directory name
+
+    if [ ! -d "$dir" ]; then
+        mkdir -p "$dir"
+        if [ $? -eq 0 ]; then
+            echo "Directory $dir created successfully."
+        else
+            echo "Failed to create directory $dir."
+            exit 1
+        fi
+    else
+        echo "Directory $dir already exists."
+    fi
+}
+
+# Create or verify WKDIR, COV, and LOGS directories
+create_directory "$WKDIR"
+create_directory "$COV"
+create_directory "$LOGS"
+
+# Ensure the working directory exists
+if [ ! -d "$WKDIR" ]; then
+    echo -e "${YELLOW}Directory $WKDIR does not exist. Creating it now...${NC}"
+    mkdir -p "$WKDIR" && echo -e "${GREEN}Directory $WKDIR created successfully.${NC}" || {
+        echo -e "${RED}Failed to create directory $WKDIR.${NC}"
+        exit 1
+    }
+else
+    echo -e "${GREEN}Directory $WKDIR already exists.${NC}"
+fi
+
+# GUI option handling
+GUI=""
+if [ "$3" = "gui" ]; then
+    GUI="-gui"
+else
+    GUI=""
+fi
+
+# Collect include directories
+INCLUDE_DIRS=$(find ${SRC} -type d | xargs -I {} echo -n "{} ")
+INCLUDE_PATH="+incdir+${CFG}/${CONFIG_VARIANT} +incdir+${CFG}/deriv/${CONFIG_VARIANT} +incdir+${CFG}/shared +incdir+../../tests +define+ +incdir+${TB} ${SRC}/cvw.sv +incdir+${SRC}"
+
+# Prepare RTL files avoiding certain paths
+RTL_FILES="$INCLUDE_DIRS $(find ${SRC} -name "*.sv" ! -path "${SRC}/generic/clockgater.sv" ! -path "${SRC}/generic/mem/rom1p1r_128x64.sv" ! -path "${SRC}/generic/mem/ram2p1r1wbe_128x64.sv" ! -path "${SRC}/generic/mem/rom1p1r_128x32.sv" ! -path "${SRC}/generic/mem/ram2p1r1wbe_512x64.sv")  ${TB}/testbench.sv $(find ${TB}/common -name "*.sv" ! -path "${TB}/common/wallyTracer.sv")"
+
+# Simulation and Coverage Commands
+OUTPUT="sim_out"
+VCS_CMD="vcs +lint=all,noGCWM,noUI,noSVA-UA,noIDTS,noNS,noULCO,noCAWM-L,noWMIA-L,noSV-PIU,noSTASKW_CO,noSTASKW_CO1,noSTASKW_RMCOF +vcs+vcdpluson -suppress +warn -sverilog +vc -Mupdate -line -full64 -kdb -lca -debug_access+all+reverse  -ntb_opts sensitive_dyn +define+SIM_VCS ${INCLUDE_PATH} $RTL_FILES"
+SIMV_CMD="./${WKDIR}/$OUTPUT +TEST=${TESTSUITE} ${PLUSARGS}" 
+COV_FILES="${TB}/coverage/test_pmp_coverage.sv"
+COV_OPTIONS="-cm line+cond+branch+fsm+tgl -cm_log ${WKDIR}/coverage.log -cm_dir ${WKDIR}/COVERAGE"
+### CODE COVERAGE REPORT in IndividualCovReport in XML format
+#COV_RUN="urg -dir ${WKDIR}/COVERAGE.vdb -report IndividualCovReport/${CONFIG_VARIANT}_${TESTSUITE}" 
+### CODE COVERAGE REPORT in IndividualCovReport in text format
+COV_RUN="urg -dir ./${WKDIR}/COVERAGE.vdb -format text -report IndividualCovReport/${CONFIG_VARIANT}_${TESTSUITE}"
+
+
+# Clean and run simulation with VCS
+
+if [ "$3" = "coverage" ]; then
+    echo -e "${YELLOW}#### Running VCS Simulation with Coverage ####${NC}"
+    # Code Coverage.
+    $VCS_CMD -Mdir=${WKDIR} $COV_OPTIONS -o ${WKDIR}/$OUTPUT -Mlib ${WKDIR} -work ${WKDIR} -l "$LOGS/${CONFIG_VARIANT}_${TESTSUITE}.log"
+    $SIMV_CMD $COV_OPTIONS
+    $COV_RUN
+    #cp -rf urgReport $COV
+
+else
+    echo -e "${YELLOW}#### Running VCS Simulation ####${NC}"
+    $VCS_CMD -Mdir=${WKDIR} -o ${WKDIR}/$OUTPUT -work ${WKDIR} -Mlib ${WKDIR} -l "$LOGS/${CONFIG_VARIANT}_${TESTSUITE}.log"
+    $SIMV_CMD 
+fi
+

@@ -45,6 +45,23 @@ module gpio_apb import cvw::*;  #(parameter cvw_t P) (
   output logic                GPIOIntr
 );
 
+  // register map
+  localparam GPIO_INPUT_VAL  = 8'h00;
+  localparam GPIO_INPUT_EN   = 8'h04;
+  localparam GPIO_OUTPUT_EN  = 8'h08;
+  localparam GPIO_OUTPUT_VAL = 8'h0C;
+  localparam GPIO_RISE_IE    = 8'h18;
+  localparam GPIO_RISE_IP    = 8'h1C;
+  localparam GPIO_FALL_IE    = 8'h20;
+  localparam GPIO_FALL_IP    = 8'h24;
+  localparam GPIO_HIGH_IE    = 8'h28;
+  localparam GPIO_HIGH_IP    = 8'h2C;
+  localparam GPIO_LOW_IE     = 8'h30;
+  localparam GPIO_LOW_IP     = 8'h34;
+  localparam GPIO_IOF_EN     = 8'h38;
+  localparam GPIO_IOF_SEL    = 8'h3C;
+  localparam GPIO_OUT_XOR    = 8'h40;
+
   logic [31:0]                input0d, input1d, input2d, input3d;
   logic [31:0]                input_val, input_en, output_en, output_val;
   logic [31:0]                rise_ie, rise_ip, fall_ie, fall_ip, high_ie, high_ip, low_ie, low_ip; 
@@ -67,66 +84,66 @@ module gpio_apb import cvw::*;  #(parameter cvw_t P) (
   // register access
   always_ff @(posedge PCLK, negedge PRESETn)
     if (~PRESETn) begin // asynch reset
-      input_en  <= 0;
-      output_en <= 0;
+      input_en  <= '0;
+      output_en <= '0;
       // *** synch reset not yet implemented [DH: can we delete this comment?  Check if a sync reset is required]
-      output_val <= #1 0;
-      rise_ie    <= #1 0;
-      rise_ip    <= #1 0;
-      fall_ie    <= #1 0;
-      fall_ip    <= #1 0;
-      high_ie    <= #1 0;
-      high_ip    <= #1 0;
-      low_ie     <= #1 0;
-      low_ip     <= #1 0;
-      iof_en     <= #1 0;
-      iof_sel    <= #1 0;
-      out_xor    <= #1 0;
+      output_val <= '0;
+      rise_ie    <= '0;
+      rise_ip    <= '0;
+      fall_ie    <= '0;
+      fall_ip    <= '0;
+      high_ie    <= '0;
+      high_ip    <= '0;
+      low_ie     <= '0;
+      low_ip     <= '0;
+      iof_en     <= '0;
+      iof_sel    <= '0;
+      out_xor    <= '0;
     end else begin     // writes
         // According to FE310 spec: Once the interrupt is pending, it will remain set until a 1 is written to the *_ip register at that bit.
         /* verilator lint_off CASEINCOMPLETE */
       if (memwrite) 
         case(entry)
-          8'h04: input_en   <= #1 Din;
-          8'h08: output_en  <= #1 Din;
-          8'h0C: output_val <= #1 Din;
-          8'h18: rise_ie    <= #1 Din;
-          8'h20: fall_ie    <= #1 Din;
-          8'h28: high_ie    <= #1 Din;
-          8'h30: low_ie     <= #1 Din;
-          8'h38: iof_en     <= #1 Din;
-          8'h3C: iof_sel    <= #1 Din;
-          8'h40: out_xor    <= #1 Din;
+          GPIO_INPUT_EN:   input_en   <= Din;
+          GPIO_OUTPUT_EN:  output_en  <= Din;
+          GPIO_OUTPUT_VAL: output_val <= Din;
+          GPIO_RISE_IE:    rise_ie    <= Din;
+          GPIO_FALL_IE:    fall_ie    <= Din;
+          GPIO_HIGH_IE:    high_ie    <= Din;
+          GPIO_LOW_IE:     low_ie     <= Din;
+          GPIO_IOF_EN:     iof_en     <= Din;
+          GPIO_IOF_SEL:    iof_sel    <= Din;
+          GPIO_OUT_XOR:    out_xor    <= Din;
         endcase
         /* verilator lint_on CASEINCOMPLETE */
 
       // interrupts can be cleared by writing corresponding bits to a register
-      if (memwrite & entry == 8'h1C)   rise_ip <= rise_ip & ~Din;
-      else                             rise_ip <= rise_ip | (input2d & ~input3d);
-      if (memwrite & (entry == 8'h24)) fall_ip <= fall_ip & ~Din;
-      else                             fall_ip <= fall_ip | (~input2d & input3d);
-      if (memwrite & (entry == 8'h2C)) high_ip <= high_ip & ~Din;
-      else                             high_ip <= high_ip | input3d;
-      if (memwrite & (entry == 8'h34)) low_ip  <= low_ip  & ~Din;
-      else                             low_ip  <= low_ip  | ~input3d;
+      if (memwrite & entry == GPIO_RISE_IP)   rise_ip <= rise_ip & ~Din;
+      else                                    rise_ip <= rise_ip | (input2d & ~input3d);
+      if (memwrite & (entry == GPIO_FALL_IP)) fall_ip <= fall_ip & ~Din;
+      else                                    fall_ip <= fall_ip | (~input2d & input3d);
+      if (memwrite & (entry == GPIO_HIGH_IP)) high_ip <= high_ip & ~Din;
+      else                                    high_ip <= high_ip | input3d;
+      if (memwrite & (entry == GPIO_LOW_IP))  low_ip  <= low_ip  & ~Din;
+      else                                    low_ip  <= low_ip  | ~input3d;
 
       case(entry) // flop to sample inputs
-        8'h00: Dout   <= #1 input_val;
-        8'h04: Dout   <= #1 input_en;
-        8'h08: Dout   <= #1 output_en;
-        8'h0C: Dout   <= #1 output_val;
-        8'h18: Dout   <= #1 rise_ie;
-        8'h1C: Dout   <= #1 rise_ip;
-        8'h20: Dout   <= #1 fall_ie;
-        8'h24: Dout   <= #1 fall_ip;
-        8'h28: Dout   <= #1 high_ie;
-        8'h2C: Dout   <= #1 high_ip;
-        8'h30: Dout   <= #1 low_ie;
-        8'h34: Dout   <= #1 low_ip;
-        8'h38: Dout   <= #1 iof_en;
-        8'h3C: Dout   <= #1 iof_sel;
-        8'h40: Dout   <= #1 out_xor; 
-        default: Dout <= #1 0;
+        GPIO_INPUT_VAL:   Dout <= input_val;
+        GPIO_INPUT_EN:    Dout <= input_en;
+        GPIO_OUTPUT_EN:   Dout <= output_en;
+        GPIO_OUTPUT_VAL:  Dout <= output_val;
+        GPIO_RISE_IE:     Dout <= rise_ie;
+        GPIO_RISE_IP:     Dout <= rise_ip;
+        GPIO_FALL_IE:     Dout <= fall_ie;
+        GPIO_FALL_IP:     Dout <= fall_ip;
+        GPIO_HIGH_IE:     Dout <= high_ie;
+        GPIO_HIGH_IP:     Dout <= high_ip;
+        GPIO_LOW_IE:      Dout <= low_ie;
+        GPIO_LOW_IP:      Dout <= low_ip;
+        GPIO_IOF_EN:      Dout <= iof_en;
+        GPIO_IOF_SEL:     Dout <= iof_sel;
+        GPIO_OUT_XOR:     Dout <= out_xor; 
+        default:          Dout <= '0;
       endcase
     end
 

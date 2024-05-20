@@ -37,18 +37,20 @@ module fdivsqrt import cvw::*;  #(parameter cvw_t P) (
   input  logic                 XInfE, YInfE, 
   input  logic                 XZeroE, YZeroE, 
   input  logic                 XNaNE, YNaNE, 
+  input  logic [P.NE-2:0]      BiasE,                               // Bias of exponent
+  input  logic [P.LOGFLEN-1:0] NfE,                          // Number of fractional bits in selected format
   input  logic                 FDivStartE, IDivStartE,
   input  logic                 StallM,
   input  logic                 FlushE,
   input  logic                 SqrtE, SqrtM,
-  input  logic [P.XLEN-1:0]    ForwardedSrcAE, ForwardedSrcBE, // these are the src outputs before the mux choosing between them and PCE to put in srcA/B
+  input  logic [P.XLEN-1:0]    ForwardedSrcAE, ForwardedSrcBE, // these are the src A/B outputs before the mux choosing between them and PCE to put in srcA/B
   input  logic [2:0]           Funct3E, Funct3M,
   input  logic                 IntDivE, W64E,
   output logic                 DivStickyM,
   output logic                 FDivBusyE, IFDivStartE, FDivDoneE,
   output logic [P.NE+1:0]      UeM,                         // Exponent result 
   output logic [P.DIVb:0]      UmM,                         // Significand result
-  output logic [P.XLEN-1:0]    FIntDivResultM
+  output logic [P.XLEN-1:0]    FIntDivResultM               // Integer division result (IntDivResult in figure)
 );
 
   // Floating-point division and square root module, with optional integer division and remainder
@@ -75,7 +77,7 @@ module fdivsqrt import cvw::*;  #(parameter cvw_t P) (
 
   fdivsqrtpreproc #(P) fdivsqrtpreproc(                          // Preprocessor
     .clk, .IFDivStartE, .Xm(XmE), .Ym(YmE), .Xe(XeE), .Ye(YeE),
-    .FmtE, .SqrtE, .XZeroE, .Funct3E, .UeM, .X, .D, .CyclesE,
+    .FmtE, .Bias(BiasE), .Nf(NfE), .SqrtE, .XZeroE, .Funct3E, .UeM, .X, .D, .CyclesE,
     // Int-specific 
     .ForwardedSrcAE, .ForwardedSrcBE, .IntDivE, .W64E, .ISpecialCaseE,
     .BZeroM, .IntNormShiftM, .AM, 

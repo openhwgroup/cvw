@@ -264,6 +264,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .HREADY, .HRESP, .HCLK, .HRESETn,
       .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST,
       .HPROT, .HTRANS, .HMASTLOCK);
+  end else begin
+    assign {IFUHREADY, LSUHREADY, HCLK, HRESETn, HADDR, HWDATA,
+            HWSTRB, HWRITE, HSIZE, HBURST, HPROT, HTRANS, HMASTLOCK} = '0;
   end
 
   // global stall and flush control  
@@ -302,26 +305,23 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
       .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM);
   end else begin
-    assign CSRReadValW      = 0;
-    assign EPCM             = 0;
-    assign TrapVectorM      = 0;
-    assign RetM             = 0;
-    assign TrapM            = 0;
-    assign wfiM             = 0;
-    assign IntPendingM      = 0;
-    assign sfencevmaM       = 0;
-    assign BigEndianM       = 0;
+    assign {CSRReadValW, PrivilegeModeW, 
+            SATP_REGW, STATUS_MXR, STATUS_SUM, STATUS_MPRV, STATUS_MPP, STATUS_FS, FRM_REGW,
+            // PMPCFG_ARRAY_REGW, PMPADDR_ARRAY_REGW, 
+            ENVCFG_CBE, ENVCFG_PBMTE, ENVCFG_ADUE, 
+            EPCM, TrapVectorM, RetM, TrapM,
+            sfencevmaM, BigEndianM, wfiM, IntPendingM} = '0;
   end
 
   // multiply/divide unit
-  if (P.M_SUPPORTED | P.ZMMUL_SUPPORTED) begin:mdu
+  if (P.ZMMUL_SUPPORTED) begin:mdu
     mdu #(P) mdu(.clk, .reset, .StallM, .StallW, .FlushE, .FlushM, .FlushW,
       .ForwardedSrcAE, .ForwardedSrcBE, 
       .Funct3E, .Funct3M, .IntDivE, .W64E, .MDUActiveE,
       .MDUResultW, .DivBusyE); 
   end else begin // no M instructions supported
-    assign MDUResultW = 0; 
-    assign DivBusyE   = 0;
+    assign MDUResultW = '0; 
+    assign DivBusyE   = 1'b0;
   end
 
   // floating point unit
@@ -351,15 +351,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .SetFflagsM,                         // FPU flags (to privileged unit)
       .FIntDivResultW); 
   end else begin                           // no F_SUPPORTED or D_SUPPORTED; tie outputs low
-    assign FPUStallD        = 0;
-    assign FWriteIntE       = 0; 
-    assign FCvtIntE         = 0;
-    assign FIntResM         = 0;
-    assign FCvtIntW         = 0;
-    assign FDivBusyE        = 0;
-    assign IllegalFPUInstrD = 1;
-    assign SetFflagsM       = 0;
-    assign FpLoadStoreM     = 0;
+    assign {FPUStallD, FWriteIntE, FCvtIntE, FIntResM, FCvtIntW, 
+            IllegalFPUInstrD, SetFflagsM, FpLoadStoreM,
+            FWriteDataM, FCvtIntResW, FIntDivResultW, FDivBusyE} = '0;
   end
   
 endmodule

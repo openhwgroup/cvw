@@ -58,7 +58,7 @@ module fdivsqrtstage2 import cvw::*;  #(parameter cvw_t P) (
   // Divisor multiple
   always_comb
     if      (up) Dsel = DBar;
-    else if (uz) Dsel = 0;
+    else if (uz) Dsel = '0;
     else         Dsel = D; // un
 
   // Residual Update

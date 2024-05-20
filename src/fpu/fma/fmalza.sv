@@ -41,7 +41,7 @@ module fmalza #(WIDTH, NF) (
   logic [WIDTH-1:0]                   P, G, K;        // propagate, generate, kill for each column
   logic [WIDTH-1:0]                   Pp1, Gm1, Km1;  // propagate shifted right by 1, generate/kill shifted left 1
 
-  assign B = {{(NF+1){1'b0}}, Pm, 1'b0};              // Zero extend product
+  assign B = {{(NF+2){1'b0}}, Pm, 2'b0};              // Zero extend product
 
   assign P = A^B;
   assign G = A&B;

@@ -44,11 +44,11 @@ module fregfile #(parameter FLEN) (
    // write occurs on falling edge of clock   
    
    always_ff @(negedge clk) // or posedge reset)
-     if (reset) for(i=0; i<32; i++) rf[i] <= 0;
+     if (reset) for(i=0; i<32; i++) rf[i] <= '0;
      else if (we4) rf[a4] <= wd4;  
    
-   assign #2 rd1 = rf[a1];
-   assign #2 rd2 = rf[a2];
-   assign #2 rd3 = rf[a3];
+   assign rd1 = rf[a1];
+   assign rd2 = rf[a2];
+   assign rd3 = rf[a3];
    
 endmodule // regfile

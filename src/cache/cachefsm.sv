@@ -102,7 +102,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
 
   // outputs for the performance counters.
   assign CacheAccess = (|CacheRW) & ((CurrState == STATE_ACCESS & ~Stall & ~FlushStage) | (CurrState == STATE_ADDRESS_SETUP & ~Stall & ~FlushStage)); // exclusion-tag: icache CacheW
-  assign CacheMiss = CacheAccess & ~Hit;
+  assign CacheMiss = CurrState == STATE_ADDRESS_SETUP & ~Stall & ~FlushStage;
 
   // special case on reset. When the fsm first exists reset twayhe
   // PCNextF will no longer be pointing to the correct address.
@@ -110,8 +110,8 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   flop #(1) resetDelayReg(.clk, .d(reset), .q(resetDelay));
 
   always_ff @(posedge clk)
-    if (reset | FlushStage)    CurrState <= #1 STATE_ACCESS;
-    else CurrState <= #1 NextState;  
+    if (reset | FlushStage)    CurrState <= STATE_ACCESS;
+    else CurrState <= NextState;  
   
   always_comb begin
     NextState = STATE_ACCESS;

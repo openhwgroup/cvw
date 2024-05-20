@@ -40,79 +40,14 @@ DIRS32 = rv32e rv32gc rv32imc rv32i
 DIRS64 = rv64i rv64gc
 DIRS = $(DIRS32) $(DIRS64)
 
-# k = 3 6 
-# bpred:
-# 	@$(foreach kval, $(k), rm -rf $(CONFIGDIR)/rv64gc_bpred_$(kval);)
-# 	@$(foreach kval, $(k), cp -r $(CONFIGDIR)/rv64gc $(CONFIGDIR)/rv64gc_bpred_$(kval);)
-# 	@$(foreach kval, $(k), sed -i 's/BPRED_SIZE.*/BPRED_SIZE $(kval)/g' $(CONFIGDIR)/rv64gc_bpred_$(kval)/config.vh;)
-# 	@$(foreach kval, $(k), make synth DESIGN=wallypipelinedcore CONFIG=rv64gc_bpred_$(kval) TECH=sky90 FREQ=500 MAXCORES=4 --jobs;)
-
 configs: $(CONFIG)
 $(CONFIG):
 	@echo $(CONFIG)
 	cp -r $(OLDCONFIGDIR)/shared/*.vh $(CONFIGDIR)
-#   cp -r $(OLDCONFIGDIR)/$(CONFIG)/* $(CONFIGDIR)
-	cp -r $(OLDCONFIGDIR)/deriv/$(CONFIG)/* $(CONFIGDIR)
-
-# adjust DTIM and IROM to reasonable values depending on config	
-ifneq ($(filter $(CONFIG), $(DIRS32)),)
-	sed -i "s/DTIM_RANGE.*/DTIM_RANGE	= 34\'h01FF;/g" $(CONFIGDIR)/config.vh
-	sed -i "s/IROM_RANGE.*/IROM_RANGE	= 34\'h01FF;/g" $(CONFIGDIR)/config.vh
-else ifneq ($(filter $(CONFIG), $(DIRS64)),)
-	sed -i "s/DTIM_RANGE.*/DTIM_RANGE	= 56\'h01FF;/g" $(CONFIGDIR)/config.vh
-	sed -i "s/IROM_RANGE.*/IROM_RANGE	= 56\'h01FF;/g" $(CONFIGDIR)/config.vh
-else 
-	$(info $(CONFIG) does not exist in $(DIRS32) or $(DIRS64))
-	@echo "Config not in list, RAM_RANGE will be unmodified"
-endif
-
-# if USESRAM = 1, set that in the config file, otherwise reduce sizes
-ifeq ($(USESRAM), 1)
-	sed -i 's/USE_SRAM.*/USE_SRAM = 1;/g' $(CONFIGDIR)/config.vh
+ifeq ($(MOD), orig)
+	cp -rf $(OLDCONFIGDIR)/deriv/$(CONFIG)/config.vh $(CONFIGDIR) | true
 else
-	sed -i "s/WAYSIZEINBYTES.*/WAYSIZEINBYTES = 32\'d512;/g" $(CONFIGDIR)/config.vh
-	sed -i "s/NUMWAYS.*/NUMWAYS =32\'d1;/g" $(CONFIGDIR)/config.vh
-	sed -i "s/BPRED_SIZE.*/BPRED_SIZE =32\'d5;/g" $(CONFIGDIR)/config.vh
-	sed -i "s/BTB_SIZE.*/BTB_SIZE = 32\'d5;/g" $(CONFIGDIR)/config.vh
-ifneq ($(filter $(CONFIG), $(DIRS32)),)
-	sed -i "s/BOOTROM_RANGE.*/BOOTROM_RANGE	 = 34\'h01FF;/g" $(CONFIGDIR)/config.vh
-	sed -i "s/UNCORE_RAM_RANGE.*/UNCORE_RAM_RANGE	= 34\'h01FF;/g" $(CONFIGDIR)/config.vh
-else ifneq ($(filter $(CONFIG), $(DIRS64)),)
-	sed -i "s/BOOTROM_RANGE.*/BOOTROM_RANGE	 = 56\'h01FF;/g" $(CONFIGDIR)/config.vh
-	sed -i "s/UNCORE_RAM_RANGE.*/UNCORE_RAM_RANGE	= 56\'h01FF;/g" $(CONFIGDIR)/config.vh
-endif
-endif
-	
-# adjust config if synthesizing with any modifications
-# This code is subtle with ifneq.  It successively turns off a larger
-# set of features in order of cycle time limiting.
-# When mod = orig, all features are ON
-# When mod = PMP0, the number of PMP entries is set to 0
-# when mod = noPriv, the privileged unit and PMP are disabled
-# when mod = noFPU, the FPU, privileged unit, and PMP are disabled
-# when mod = noMulDiv, the MDU, FPU, privileged unit, and PMP are disabled.
-# when mod = noAtomic, the Atomic, MDU, FPU, privileged unit, and PMP are disabled
-
-ifneq ($(MOD), orig)
-	# PMP 0
-	sed -i 's/PMP_ENTRIES.*\(64\|16\)/PMP_ENTRIES = 0;/' $(CONFIGDIR)/config.vh
-ifneq ($(MOD), PMP0)
-	# no priv
-	sed -i 's/ZICSR_SUPPORTED.*1/ZICSR_SUPPORTED = 0;/' $(CONFIGDIR)/config.vh
-ifneq ($(MOD), noPriv)
-	# turn off FPU 
-	sed -i 's/1 *<< *3/0 << 3/' $(CONFIGDIR)/config.vh
-	sed -i 's/1 *<< *5/0 << 5/' $(CONFIGDIR)/config.vh
-ifneq ($(MOD), noFPU)
-	# no muldiv
-	sed -i 's/1 *<< *12/0 << 12/' $(CONFIGDIR)/config.vh
-ifneq ($(MOD), noMulDiv)
-	# no atomic
-	sed -i 's/1 *<< *0/0 << 0/' $(CONFIGDIR)/config.vh
-endif
-endif
-endif
-endif
+	cp -rf $(OLDCONFIGDIR)/deriv/$(CONFIG)_$(MOD)/config.vh $(CONFIGDIR) | true
 endif
 
 ifeq ($(SAIFPOWER), 1)

@@ -33,11 +33,12 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   // Decode stage signals
   input  logic [2:0]        ImmSrcD,                 // Selects type of immediate extension
   input  logic [31:0]       InstrD,                  // Instruction in Decode stage
-  input  logic [4:0]        Rs1D, Rs2D,              // Source registers
+  input  logic [4:0]        Rs1D, Rs2D, Rs2E,             // Source registers
   // Execute stage signals
   input  logic [P.XLEN-1:0] PCE,                     // PC in Execute stage  
   input  logic [P.XLEN-1:0] PCLinkE,                 // PC + 4 (of instruction in Execute stage)
   input  logic [2:0]        Funct3E,                 // Funct3 field of instruction in Execute stage
+  input  logic [6:0]        Funct7E,                 // Funct7 field of instruction in Execute stage
   input  logic              StallE, FlushE,          // Stall, flush Execute stage
   input  logic [1:0]        ForwardAE, ForwardBE,    // Forward ALU operands from later stages
   input  logic              W64E,                    // W64-type instruction
@@ -47,8 +48,8 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   input  logic [2:0]        ALUSelectE,              // ALU mux select signal
   input  logic              JumpE,                   // Is a jump (j) instruction
   input  logic              BranchSignedE,           // Branch comparison operands are signed (if it's a branch)
-  input  logic [1:0]        BSelectE,                // One hot encoding of ZBA_ZBB_ZBC_ZBS instruction
-  input  logic [2:0]        ZBBSelectE,              // ZBB mux select signal
+  input  logic [3:0]        BSelectE,                // One hot encoding of ZBA_ZBB_ZBC_ZBS instruction
+  input  logic [3:0]        ZBBSelectE,              // ZBB mux select signal
   input  logic [2:0]        BALUControlE,            // ALU Control signals for B instructions in Execute Stage
   input  logic              BMUActiveE,              // Bit manipulation instruction being executed
   input  logic [1:0]        CZeroE,                  // {czero.nez, czero.eqz} instructions active
@@ -109,7 +110,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   comparator #(P.XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, BranchSignedE, FlagsE);
   mux2  #(P.XLEN)  srcamux(ForwardedSrcAE, PCE, ALUSrcAE, SrcAE);
   mux2  #(P.XLEN)  srcbmux(ForwardedSrcBE, ImmExtE, ALUSrcBE, SrcBE);
-  alu   #(P)       alu(SrcAE, SrcBE, W64E, SubArithE, ALUSelectE, BSelectE, ZBBSelectE, Funct3E, BALUControlE, BMUActiveE, CZeroE, ALUResultE, IEUAdrE);
+  alu   #(P)       alu(SrcAE, SrcBE, W64E, SubArithE, ALUSelectE, BSelectE, ZBBSelectE, Funct3E, Funct7E, Rs2E, BALUControlE, BMUActiveE, CZeroE, ALUResultE, IEUAdrE);
   mux2  #(P.XLEN)  altresultmux(ImmExtE, PCLinkE, JumpE, AltResultE);
   mux2  #(P.XLEN)  ieuresultmux(ALUResultE, AltResultE, ALUResultSrcE, IEUResultE);
 
@@ -138,6 +139,6 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   mux5  #(P.XLEN) resultmuxW(IFCvtResultW, ReadDataW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, ResultW); 
  
   // handle Store Conditional result if atomic extension supported
-  if (P.A_SUPPORTED) assign SCResultW = {{(P.XLEN-1){1'b0}}, SquashSCW};
-  else               assign SCResultW = 0;
+  if (P.A_SUPPORTED | P.ZALRSC_SUPPORTED) assign SCResultW = {{(P.XLEN-1){1'b0}}, SquashSCW};
+  else                                    assign SCResultW = '0;
 endmodule

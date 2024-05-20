@@ -58,6 +58,17 @@ module instrNameDecTB(
                        else if (funct7[6:1] == 6'b010010) name = "BCLRI";
                        else if (funct7[6:1] == 6'b011010) name = "BINVI";
                        else if (funct7[6:1] == 6'b001010) name = "BSETI";
+                       else if (funct7 == 7'b0000100 & rs2 == 5'b01111) name = "ZIP";
+                       else if (funct7 == 7'b0011000 & rs2 == 5'b00000) name = "AES64IM";
+                       else if (funct7 == 7'b0011000 & rs2[4] == 1'b1) name = "AES64KS1I";
+                       else if (funct7 == 7'b0001000 & rs2 == 5'b00010) name = "SHA256SIG0";
+                       else if (funct7 == 7'b0001000 & rs2 == 5'b00011) name = "SHA256SIG1";
+                       else if (funct7 == 7'b0001000 & rs2 == 5'b00000) name = "SHA256SUM0";
+                       else if (funct7 == 7'b0001000 & rs2 == 5'b00001) name = "SHA256SUM1";
+                       else if (funct7 == 7'b0001000 & rs2 == 5'b00110) name = "SHA512SIG0";
+                       else if (funct7 == 7'b0001000 & rs2 == 5'b00111) name = "SHA512SIG1";
+                       else if (funct7 == 7'b0001000 & rs2 == 5'b00100) name = "SHA512SUM0";
+                       else if (funct7 == 7'b0001000 & rs2 == 5'b00101) name = "SHA512SUM1";
                        else if (funct7 == 7'b0110000) begin
                          case (rs2)
                            5'b00000: name = "CLZ";
@@ -77,6 +88,8 @@ module instrNameDecTB(
                        else if (funct7[6:1] == 6'b011000) name = "RORI";
                        else if (funct7[6:1] == 6'b010010) name = "BEXTI";
                        else if (funct7 == 7'b0010100 & rs2 == 5'b00111) name = "ORC.B";
+                       else if (imm == 12'b011010000111) name = "BREV8";
+                       else if (funct7 == 7'b0000100 & rs2 == 5'b01111) name = "UNZIP";
                        else                           name = "ILLEGAL"; 
       10'b0010011_110: if      (rd == 0 & rs2 == 0) name = "PREFETCH.I";
                        else if (rd == 0 & rs2 == 1) name = "PREFETCH.R";
@@ -130,6 +143,21 @@ module instrNameDecTB(
       10'b0110011_000: if      (funct7 == 7'b0000000) name = "ADD";
                        else if (funct7 == 7'b0000001) name = "MUL";
                        else if (funct7 == 7'b0100000) name = "SUB"; 
+                       else if (funct7[4:0] == 5'b10101) name = "AES32DSI";
+                       else if (funct7[4:0] == 5'b10111) name = "AES32DSMI";
+                       else if (funct7 == 7'b0011101)    name = "AES64DS";
+                       else if (funct7 == 7'b0011111)    name = "AES64DSM";
+                       else if (funct7[4:0] == 5'b10001) name = "AES32ESI";
+                       else if (funct7[4:0] == 5'b10011) name = "AES32ESMI";
+                       else if (funct7 == 7'b0011001)    name = "AES64ES";
+                       else if (funct7 == 7'b0011011)    name = "AES64ESM";
+                       else if (funct7 == 7'b0111111)    name = "AES64KS2";
+                       else if (funct7 == 7'b0101110) name = "SHA512SIG0H";
+                       else if (funct7 == 7'b0101010) name = "SHA512SIG0L";
+                       else if (funct7 == 7'b0101111) name = "SHA512SIG1H";
+                       else if (funct7 == 7'b0101011) name = "SHA512SIG1L";
+                       else if (funct7 == 7'b0101000) name = "SHA512SUM0R";
+                       else if (funct7 == 7'b0101001) name = "SHA512SUM1R";
                        else                           name = "ILLEGAL"; 
       10'b0110011_001: if      (funct7 == 7'b0000000) name = "SLL";
                        else if (funct7 == 7'b0000001) name = "MULH";
@@ -153,7 +181,9 @@ module instrNameDecTB(
                        else if (funct7 == 7'b0010000) name = "SH2ADD";
                        else if (funct7 == 7'b0000101) name = "MIN";
                        else if (funct7 == 7'b0100000) name = "ORN";
-                       else if (funct7 == 7'b0000100) name = "ZEXT.H";
+                       else if (funct7 == 7'b0000100 & rs2 == 5'b00000) name = "ZEXT.H";
+                       else if (funct7 == 7'b0000100 & op == 7'b0110011) name = "PACK";
+                       else if (funct7 == 7'b0000100 & op == 7'b0111011) name = "PACKW";
                        else                           name = "ILLEGAL";
       10'b0110011_101: if      (funct7 == 7'b0000000) name = "SRL";
                        else if (funct7 == 7'b0000001) name = "DIVU";
@@ -311,10 +341,14 @@ module instrNameDecTB(
                        else if (funct7 == 7'b1011011 & funct3 == 3'b000) name = "FMVP.Q.X";
                        else if (funct7 == 7'b1100001 & funct3 == 3'b001 & rs2 == 5'b01000) name = "FCVTMOD.W.D";
                        else                              name = "ILLEGAL";
+      10'b0000111_001: name = "FLH";
       10'b0000111_010: name = "FLW";
-      10'b0100111_010: name = "FSW";
       10'b0000111_011: name = "FLD";
+      10'b0000111_100: name = "FLQ";
+      10'b0100111_001: name = "FSH";
+      10'b0100111_010: name = "FSW";
       10'b0100111_011: name = "FSD";
+      10'b0100111_100: name = "FSQ";
       default:         name = "ILLEGAL";
     endcase
 endmodule

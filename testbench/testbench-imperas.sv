@@ -110,7 +110,7 @@ module testbench;
           $error("Must specify test directory using plusarg testDir");
       end
 
-      if (P.BUS_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
+      if (P.BUS_SUPPORTED) $readmemh(memfilename, dut.uncoregen.uncore.ram.ram.memory.RAM);
 	  else $error("Imperas test bench requires BUS.");
 
       ProgramAddrMapFile = {testDir, "/ref/ref.elf.objdump.addr"};
@@ -324,7 +324,6 @@ module testbench;
            ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"]) & InstrMName == "SW" ); 
 
   DCacheFlushFSM #(P) DCacheFlushFSM(.clk(clk),
-    			.reset(reset),
 	    		.start(DCacheFlushStart),
 		    	.done(DCacheFlushDone));
 

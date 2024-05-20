@@ -34,6 +34,7 @@ module swbytemask #(parameter WORDLEN, EXTEND = 0)(
   output logic [WORDLEN/8-1:0]         ByteMask,
   output logic [WORDLEN/8-1:0]         ByteMaskExtended
 );
+
   if(EXTEND) begin
     logic [WORDLEN*2/8-1:0]              ExtendedByteMask;
     // 'd2 means 2, but stops Design Compiler from complaining about signed to unsigned conversion    
@@ -42,7 +43,7 @@ module swbytemask #(parameter WORDLEN, EXTEND = 0)(
     assign ByteMaskExtended = ExtendedByteMask[WORDLEN*2/8-1:WORDLEN/8];
   end else begin    
     assign ByteMask = (('d2**('d2**Size))-'d1) << Adr;
-    assign ByteMaskExtended = 0;
+    assign ByteMaskExtended = '0;
   end
 
 /* Equivalent to the following
@@ -50,7 +51,7 @@ module swbytemask #(parameter WORDLEN, EXTEND = 0)(
   if(WORDLEN == 64) begin
     always_comb begin
       case(Size[1:0])
-        2'b00: begin ByteMask = 8'b00000000; ByteMask[Adr[2:0]] = 1; end // sb
+        2'b00: begin ByteMask = 8'b00000000; ByteMask[Adr[2:0]] = 1'b1; end // sb
         2'b01: case (Adr[2:1])
                   2'b00: ByteMask = 8'b0000_0011;
                   2'b01: ByteMask = 8'b0000_1100;
@@ -65,7 +66,7 @@ module swbytemask #(parameter WORDLEN, EXTEND = 0)(
   end else begin
     always_comb begin
       case(Size[1:0])
-        2'b00: begin ByteMask = 4'b0000; ByteMask[Adr[1:0]] = 1; end // sb
+        2'b00: begin ByteMask = 4'b0000; ByteMask[Adr[1:0]] = 1'b1; end // sb
         2'b01: if (Adr[1]) ByteMask = 4'b1100;
                else        ByteMask = 4'b0011;
         2'b10: ByteMask = 4'b1111;

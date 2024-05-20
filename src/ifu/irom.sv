@@ -52,7 +52,7 @@ module irom import cvw::*;  #(parameter cvw_t P) (
   end
   // If the memory addres is aligned to 2 bytes return the upper 2 bytes in the lower 2 bytes.
   // The spill logic will handle merging the two together.
-  if (P.COMPRESSED_SUPPORTED) begin
+  if (P.ZCA_SUPPORTED) begin
     flopen #(1) AdrReg1(clk, ce, Adr[1], AdrD[1]);
     assign IROMInstrF = AdrD[1] ? {16'b0, RawIROMInstrF[31:16]} : RawIROMInstrF;
   end else

@@ -51,7 +51,7 @@ module ebufsmarb (
   statetype          CurrState, NextState;
 
   logic              both;                       // Both the LSU and IFU request at the same time
-  logic              IFUReqD;                    // 1 cycle delayed IFU request. Part of arbitration
+  logic              IFUReqDelay;                    // 1 cycle delayed IFU request. Part of arbitration
   logic              FinalBeat, FinalBeatD;      // Indicates the last beat of a burst
   logic              BeatCntEn;
   logic [3:0]        BeatCount;                  // Position within a burst transfer
@@ -85,11 +85,11 @@ module ebufsmarb (
   // Controller 1 (LSU)
   // When both the IFU and LSU request at the same time, the FSM will go into the arbitrate state.
   // Once the LSU request is done the fsm returns to IDLE.  To prevent the LSU from regaining
-  // priority and re-issuing the same memory operation, the delayed IFUReqD squashes the LSU request.
+  // priority and re-issuing the same memory operation, the delayed IFUReqDelay squashes the LSU request.
   // This is necessary because the pipeline is stalled for the entire duration of both transactions,
   // and the LSU memory request will stil be active.
-  flopr #(1) ifureqreg(HCLK, ~HRESETn, IFUReq, IFUReqD);
-  assign LSUDisable = (CurrState == ARBITRATE) ? 1'b0 : (IFUReqD & ~(HREADY & FinalBeatD));
+  flopr #(1) ifureqreg(HCLK, ~HRESETn, IFUReq, IFUReqDelay);
+  assign LSUDisable = (CurrState == ARBITRATE) ? 1'b0 : (IFUReqDelay & ~(HREADY & FinalBeatD));
   assign LSUSelect = (NextState == ARBITRATE) ? 1'b1: LSUReq;
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////

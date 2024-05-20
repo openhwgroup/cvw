@@ -34,13 +34,13 @@ module fma import cvw::*;  #(parameter cvw_t P) (
   input  logic                         XZero, YZero, ZZero,    // is the input zero
   input  logic [2:0]                   OpCtrl,                 // operation control
   output logic                         ASticky,                // sticky bit that is calculated during alignment
-  output logic [3*P.NF+3:0]            Sm,                     // the positive sum's significand
+  output logic [P.FMALEN-1:0]          Sm,                     // the positive sum's significand
   output logic                         InvA,                   // Was A inverted for effective subtraction (P-A or -P+A)
   output logic                         As,                     // the aligned addend's sign (modified Z sign for other operations)
   output logic                         Ps,                     // the product's sign
   output logic                         Ss,                     // the sum's sign
   output logic [P.NE+1:0]              Se,                     // the sum's exponent
-  output logic [$clog2(3*P.NF+5)-1:0]  SCnt                    // normalization shift count
+  output logic [$clog2(P.FMALEN+1)-1:0] SCnt                    // normalization shift count
 );
 
   //  OpCtrl:
@@ -54,8 +54,8 @@ module fma import cvw::*;  #(parameter cvw_t P) (
   //        111 - sub
 
   logic [2*P.NF+1:0]   Pm;         // the product's significand in U(2.2Nf) format
-  logic [3*P.NF+3:0]   Am;         // addend aligned's mantissa for addition in U(NF+4.2NF)
-  logic [3*P.NF+3:0]   AmInv;      // aligned addend's mantissa possibly inverted
+  logic [P.FMALEN-1:0] Am;         // addend aligned's mantissa for addition in U(NF+4.2NF)
+  logic [P.FMALEN-1:0] AmInv;      // aligned addend's mantissa possibly inverted
   logic [2*P.NF+1:0]   PmKilled;   // the product's mantissa possibly killed U(2.2Nf)
   logic                KillProd;   // set the product to zero before addition if the product is too small to matter
   logic [P.NE+1:0]     Pe;         // the product's exponent B(NE+2.0) format; adds 2 bits to allow for size of number and negative sign
@@ -89,6 +89,6 @@ module fma import cvw::*;  #(parameter cvw_t P) (
       
   fmaadd #(P) add(.Am, .Pm, .Ze, .Pe, .Ps, .KillProd, .ASticky, .AmInv, .PmKilled, .InvA, .Sm, .Se, .Ss);
 
-  fmalza #(3*P.NF+4, P.NF) lza(.A(AmInv), .Pm(PmKilled), .Cin(InvA & (~ASticky | KillProd)), .sub(InvA), .SCnt);
+  fmalza #(P.FMALEN, P.NF) lza(.A(AmInv), .Pm(PmKilled), .Cin(InvA & (~ASticky | KillProd)), .sub(InvA), .SCnt);
   
 endmodule

@@ -305,7 +305,7 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
   //          signed | 2^31-1 | 2^63-1 |
   //        unsigned | 2^32-1 | 2^64-1 |
   //
-  //      other: 32 bit unsinged res should be sign extended as if it were a signed number
+  //      other: 32 bit unsigned res should be sign extended as if it were a signed number
 
     if(P.IEEE754) begin   
       always_comb
@@ -339,11 +339,11 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
 
   if (P.ZFA_SUPPORTED & P.D_SUPPORTED) // fcvtmod.w.d support
     always_comb begin
-        if (Zfa) OfIntRes2 = 0;                // fcvtmod.w.d produces 0 on overflow
+        if (Zfa) OfIntRes2 = '0;                // fcvtmod.w.d produces 0 on overflow
         else     OfIntRes2 = OfIntRes;
         if (Zfa) Int64Res = {{(P.XLEN-32){CvtNegRes[P.XLEN-1]}}, CvtNegRes[31:0]};
         else     Int64Res = CvtNegRes[P.XLEN-1:0];
-        if (Zfa) SelCvtOfRes = InfIn | NaNIn  | (CvtCe > 32 + 52); // fcvtmod.w.d only overflows to 0 on NaN or Infinity, or if the shift is so large that only zeros are left
+        if (Zfa) SelCvtOfRes = InfIn | NaNIn | (CvtCe > 32 + 52); // fcvtmod.w.d only overflows to 0 on NaN or Infinity, or if the shift is so large that only zeros are left
         else     SelCvtOfRes = IntInvalid;    // regular fcvt gives an overflow if out of range
     end
   else 

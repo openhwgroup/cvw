@@ -1,4 +1,5 @@
 ///////////////////////////////////////////
+// ram1p1rwe.sv
 // 1 port sram.
 //
 // Written: avercruysse@hmc.edu (Modified from ram1p1rwbe, by ross1728@gmail.com)
@@ -49,19 +50,19 @@ module ram1p1rwe import cvw::* ; #(parameter USE_SRAM=0, DEPTH=64, WIDTH=44) (
     // 64 x 128-bit SRAM
     ram1p1rwbe_64x128 sram1A (.CLK(clk), .CEB(~ce), .WEB(~we),
       .A(addr), .D(din), 
-      .BWEB(0), .Q(dout));
+      .BWEB('0), .Q(dout));
     
   end else if ((USE_SRAM == 1) & (WIDTH == 44)  & (DEPTH == 64)) begin // RV64 cache tag
     // 64 x 44-bit SRAM
     ram1p1rwbe_64x44 sram1B (.CLK(clk), .CEB(~ce), .WEB(~we),
       .A(addr), .D(din), 
-      .BWEB(0), .Q(dout));
+      .BWEB('0), .Q(dout));
 
   end else if ((USE_SRAM == 1) & (WIDTH == 22)  & (DEPTH == 64)) begin // RV32 cache tag
     // 64 x 22-bit SRAM
     ram1p1rwbe_64x22 sram1 (.CLK(clk), .CEB(~ce), .WEB(~we),
       .A(addr), .D(din), 
-      .BWEB(0), .Q(dout));     
+      .BWEB('0), .Q(dout));     
     
     // ***************************************************************************
     // READ first SRAM model
@@ -78,7 +79,7 @@ module ram1p1rwe import cvw::* ; #(parameter USE_SRAM=0, DEPTH=64, WIDTH=44) (
 
     /*      // Alternate read logic reads the old contents of mem[addr].  Increases setup time and adds dout reg, but reduces clk to q
      always_ff @(posedge clk) 
-     if(ce) dout <= #1 mem[addr]; */
+     if(ce) dout <= mem[addr]; */
 
     // Write divided into part for bytes and part for extra msbs
     // Questa sim version 2022.3_2 does not allow multiple drivers for RAM when using always_ff.
@@ -90,6 +91,6 @@ module ram1p1rwe import cvw::* ; #(parameter USE_SRAM=0, DEPTH=64, WIDTH=44) (
       // so we can never get we=1, ce=0 for I$.
       if (ce & we)
         // coverage on
-        RAM[addr] <= #1 din;
+        RAM[addr] <= din;
   end
 endmodule

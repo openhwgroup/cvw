@@ -66,6 +66,8 @@ typedef struct packed {
   logic         SVPBMT_SUPPORTED;
   logic         SVNAPOT_SUPPORTED;
   logic         SVINVAL_SUPPORTED;
+  logic         ZAAMO_SUPPORTED;
+  logic         ZALRSC_SUPPORTED;
 
   // Microarchitectural Features
   logic         BUS_SUPPORTED;
@@ -180,6 +182,15 @@ typedef struct packed {
   logic         ZCD_SUPPORTED;
   logic         ZCF_SUPPORTED;
 
+// Cryptography
+  logic         ZBKB_SUPPORTED;
+  logic         ZBKC_SUPPORTED;
+  logic         ZBKX_SUPPORTED;
+  logic         ZKND_SUPPORTED;
+  logic         ZKNE_SUPPORTED;
+  logic         ZKNH_SUPPORTED;
+  logic         ZKN_SUPPORTED;
+
 // Memory synthesis configuration
   logic         USE_SRAM;
 
@@ -209,7 +220,6 @@ typedef struct packed {
   logic A_SUPPORTED;
   logic B_SUPPORTED;
   logic C_SUPPORTED;
-  logic COMPRESSED_SUPPORTED;  // C or ZCA
   logic D_SUPPORTED;
   logic E_SUPPORTED;
   logic F_SUPPORTED;
@@ -248,7 +258,8 @@ typedef struct packed {
   logic [1:0] H_FMT;
 
 // Floating point length FLEN and number of exponent (NE) and fraction (NF) bits
-  int FLEN;
+  int         FLEN;
+  int         LOGFLEN;
   int         NE  ;
   int         NF  ;
   logic [1:0] FMT ;
@@ -274,7 +285,7 @@ typedef struct packed {
   int LOGCVTLEN;
   int NORMSHIFTSZ;
   int LOGNORMSHIFTSZ;
-  int CORRSHIFTSZ;
+  int FMALEN;
 
 // division constants
   int LOGR       ;
@@ -283,7 +294,6 @@ typedef struct packed {
   int DURLEN     ;
   int DIVb       ;
   int DIVBLEN    ;
-
 } cvw_t;
 
 endpackage

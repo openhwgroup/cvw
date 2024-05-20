@@ -109,11 +109,11 @@ typedef unsigned short ee_u16;
 typedef signed int ee_s32;
 typedef double ee_f32;
 typedef unsigned char ee_u8;
-//typedef unsigned int ee_u32;
-typedef signed int ee_u32; // replaced with signed to improve performance per https://github.com/sifive/benchmark-coremark/blob/master/linux64/core_portme.h#L102
 #if (XLEN==64) 
+	typedef signed int ee_u32; // replaced with signed to improve performance by avoiding zero extension in RV64 per https://github.com/sifive/benchmark-coremark/blob/master/linux64/core_portme.h#L102
 	typedef unsigned long long ee_ptr_int;
 #else
+	typedef unsigned int ee_u32;
 	typedef ee_u32 ee_ptr_int;
 #endif
 typedef size_t ee_size_t;
