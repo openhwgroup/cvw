@@ -151,33 +151,32 @@ The general syntax is
 wsim <config> <suite or elf file> [--options]
 
 Options:
-  -h, --help            show this help message and exit
-  --elf, -e             Elf file
-  --sim {questa,verilator,vcs}, -s {questa,verilator,vcs}
-                        Simulator
-  --tb {testbench,testbench_fp}, -t {testbench,testbench_fp}
-                        Testbench
-  --gui, -g             Simulate with GUI
-  --coverage, -c        Code & Functional Coverage
-  --args ARGS, -a ARGS  Optional arguments passed to simulator via $value$plusargs
-  --vcd, -v             Generate testbench.vcd
-  --lockstep, -l        Run ImperasDV lock, step, and compare.
-  --locksteplog LOCKSTEPLOG, -b LOCKSTEPLOG
+	-h, --help            show this help message and exit
+	--elf, -e             Elf file
+	--sim {questa,verilator,vcs}, -s {questa,verilator,vcs}
+                      Simulator
+	--tb {testbench,testbench_fp}, -t {testbench,testbench_fp}
+                      Testbench
+	--gui, -g             Simulate with GUI
+	--coverage, -c        Code & Functional Coverage
+	--args ARGS, -a ARGS  Optional arguments passed to simulator via $value$plusargs
+	--vcd, -v             Generate testbench.vcd
+	--lockstep, -l        Run ImperasDV lock, step, and compare.
+	--locksteplog LOCKSTEPLOG, -b LOCKSTEPLOG
                         Retired instruction number to be begin logging.
 
 Run basic test with questa
 
-wsim rv64gc arch64i
+	wsim rv64gc arch64i
 
 Run Questa with gui
 
-wsim rv64gc wally64priv --gui
+	wsim rv64gc wally64priv --gui
 
 Run lockstep against ImperasDV with a single elf file in the --gui.  Lockstep requires single elf.
 
-wsim rv64gc ../../tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/ref/ref.elf --elf --lockstep --gui
+	wsim rv64gc ../../tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/ref/ref.elf --elf --lockstep --gui
 
 Run lockstep against ImperasDV with a single elf file.  Compute coverage.
 
-wsim rv64gc ../../tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/ref/ref.elf --elf --lockstep --coverage
-
+	wsim rv64gc ../../tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/ref/ref.elf --elf --lockstep --coverage
