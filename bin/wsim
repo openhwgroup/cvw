@@ -18,14 +18,22 @@ import os
 parser = argparse.ArgumentParser()
 parser.add_argument("config", help="Configuration file")
 parser.add_argument("testsuite", help="Test suite or ELF file")
+parser.add_argument("--elf", "-e", help="Elf file", action="store_true")
 parser.add_argument("--sim", "-s", help="Simulator", choices=["questa", "verilator", "vcs"], default="questa")
 parser.add_argument("--tb", "-t", help="Testbench", choices=["testbench", "testbench_fp"], default="testbench")
 parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true")
 parser.add_argument("--coverage", "-c", help="Code & Functional Coverage", action="store_true")
 parser.add_argument("--args", "-a", help="Optional arguments passed to simulator via $value$plusargs", default="")
 parser.add_argument("--vcd", "-v", help="Generate testbench.vcd", action="store_true")
+parser.add_argument("--lockstep", "-l", help="Run ImperasDV lock, step, and compare.", action="store_true")
+parser.add_argument("--locksteplog", "-b", help="Retired instruction number to be begin logging.", default=0)
 args = parser.parse_args()
 print("Config=" + args.config + " tests=" + args.testsuite + " sim=" + args.sim + " gui=" + str(args.gui) + " args='" + args.args + "'")
+ElfFile=""
+
+if(args.elf):
+    ElfFile = "+ElfFile=" + args.testsuite
+    args.testsuite = "none"
 
 # Validate arguments
 if (args.gui):
@@ -50,21 +58,29 @@ for d in ["logs", "wkdir", "cov"]:
     except:
         pass
         
+
 # Launch selected simulator
 cd = "cd $WALLY/sim/" +args.sim
 if (args.sim == "questa"):
+    if (args.lockstep):
+        Instret = str(args.locksteplog)
+        prefix ="IMPERAS_TOOLS=" + WALLY + "/sim/imperas.ic OTHERFLAGS=\"+IDV_TRACE2LOG=" + Instret + " +IDV_TRACE2COV=" + Instret + "\" ";
+        suffix = "--lockstep"
+    else:
+        prefix = ""
+        suffix = ""
     if (args.tb == "testbench_fp"):
             args.args = " -GTEST=\"" + args.testsuite + "\" " + args.args
-    cmd = "do wally.do " + args.config + " " + args.testsuite + " " + args.tb + " " + args.args
+    cmd = "do wally.do " + args.config + " " + args.testsuite + " " + args.tb + " " + args.args + " " + ElfFile + " " + suffix
     if (args.coverage):
         cmd += " --coverage"
     if (args.gui):  # launch Questa with GUI; add +acc to keep variables accessible
         if(args.tb == "testbench"): 
-            cmd = cd + "; vsim -do \"" + cmd + " +acc -GDEBUG=1\""
+            cmd = cd + "; " + prefix + " vsim -do \"" + cmd + " +acc -GDEBUG=1\""
         elif(args.tb == "testbench_fp"):
-            cmd = cd + "; vsim -do \"" + cmd + " +acc\""
+            cmd = cd + "; " + prefix + " vsim -do \"" + cmd + " +acc\""
     else: # launch Questa in batch mode
-        cmd = cd + "; vsim -c -do \"" + cmd + "\""
+        cmd = cd + "; " + prefix + " vsim -c -do \"" + cmd + "\""
     print("Running Questa with command: " + cmd)
     os.system(cmd)
 elif (args.sim == "verilator"):
