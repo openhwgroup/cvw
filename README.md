@@ -68,7 +68,9 @@ Ubuntu users can install the tools by running
 
 	$ sudo $WALLY/bin/wally-tool-chain-install.sh
 
-The default installation directory is /opt/riscv defined by the environment variable RISCV. You must copy and edit ~/cvw/site-setup.sh to $RISCV/  ~/cvw/setup.sh sources $RISCV/site-setup.sh.
+The default installation directory is /opt/riscv defined by the environment variable RISCV. You must copy and edit ~/cvw/site-setup.sh to $RISCV/site-setup.sh.
+
+~/cvw/setup.sh sources $RISCV/site-setup.sh.
 This allows for customization of the site specific information such as commerical licenses and PATH variables.
 
 Change the following lines to point to the path and license server for your Siemens Questa and Synopsys Design Compiler installation and license server.  If you only have Questa, you can still simulate but cannot run logic synthesis.  If Questa or Design Compiler are already setup on this system then don't set these variables.
