@@ -151,19 +151,16 @@ The general syntax is
 wsim <config> <suite or elf file> [--options]
 
 Options:
-	-h, --help            show this help message and exit
-	--elf, -e             Elf file
-	--sim {questa,verilator,vcs}, -s {questa,verilator,vcs}
-                      Simulator
-	--tb {testbench,testbench_fp}, -t {testbench,testbench_fp}
-                      Testbench
-	--gui, -g             Simulate with GUI
-	--coverage, -c        Code & Functional Coverage
-	--args ARGS, -a ARGS  Optional arguments passed to simulator via $value$plusargs
-	--vcd, -v             Generate testbench.vcd
-	--lockstep, -l        Run ImperasDV lock, step, and compare.
-	--locksteplog LOCKSTEPLOG, -b LOCKSTEPLOG
-                        Retired instruction number to be begin logging.
+	-h, --help                                                 show this help message and exit
+	--elf, -e                                                  Elf file
+	--sim {questa,verilator,vcs}, -s {questa,verilator,vcs}    Simulator
+	--tb {testbench,testbench_fp}, -t {testbench,testbench_fp} Testbench
+	--gui, -g                                                  Simulate with GUI
+	--coverage, -c                                             Code & Functional Coverage
+	--args ARGS, -a ARGS                                       Optional arguments passed to simulator via $value$plusargs
+	--vcd, -v                                                  Generate testbench.vcd
+	--lockstep, -l                                             Run ImperasDV lock, step, and compare.
+	--locksteplog LOCKSTEPLOG, -b LOCKSTEPLOG                  Retired instruction number to be begin logging.
 
 Run basic test with questa
 
