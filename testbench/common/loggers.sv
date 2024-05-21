@@ -153,7 +153,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
     end
   end
 
-  if (P.ICACHE_SUPPORTED && I_CACHE_ADDR_LOGGER) begin : ICacheLogger
+  if (P.ICACHE_SUPPORTED & I_CACHE_ADDR_LOGGER) begin : ICacheLogger
     int    file;
     string LogFile;
     logic  resetD, resetEdge;
@@ -193,7 +193,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
   end
 
 
-  if (P.DCACHE_SUPPORTED && D_CACHE_ADDR_LOGGER) begin : DCacheLogger
+  if (P.DCACHE_SUPPORTED & D_CACHE_ADDR_LOGGER) begin : DCacheLogger
     int    file;
     string LogFile;
     logic  resetD, resetEdge;
