@@ -50,7 +50,7 @@ module rad import cvw::*; #(parameter cvw_t P) (
     + MISALEN + TRAPMLEN + PCMLEN + INSTRMLEN
     + MEMRWMLEN + INSTRVALIDMLEN + WRITEDATAMLEN
     + IEUADRMLEN + READDATAMLEN;
-  localparam GPRCHAINLEN = 2*P.XLEN;
+  localparam GPRCHAINLEN = P.XLEN - 1;
 
   localparam MISA_IDX = MISALEN;
   localparam TRAPM_IDX = MISA_IDX + TRAPMLEN;
@@ -77,11 +77,11 @@ module rad import cvw::*; #(parameter cvw_t P) (
     GPRRegNo = 0;
     casez (Regno)
       16'h100? : begin
-        ShiftCount = P.XLEN;
+        ShiftCount = P.XLEN - 1;
         GPRRegNo = 1;
       end
       16'h101? : begin
-        ShiftCount = P.XLEN;
+        ShiftCount = P.XLEN - 1;
         InvalidRegNo = ~P.E_SUPPORTED;
         GPRRegNo = 1;
       end

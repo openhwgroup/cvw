@@ -33,7 +33,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   // Decode stage signals
   input  logic [2:0]        ImmSrcD,                 // Selects type of immediate extension
   input  logic [31:0]       InstrD,                  // Instruction in Decode stage
-  input  logic [4:0]        Rs1D, Rs1DM, Rs2D, Rs2E, // Source registers
+  input  logic [4:0]        Rs1D, Rs2D, Rs2E,        // Source registers
   // Execute stage signals
   input  logic [P.XLEN-1:0] PCE,                     // PC in Execute stage  
   input  logic [P.XLEN-1:0] PCLinkE,                 // PC + 4 (of instruction in Execute stage)
@@ -89,6 +89,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
 
   // Fetch stage signals
   // Decode stage signals
+(* mark_debug = "true" *)logic [4:0]        Rs1DM;                          // (Debug) Muxed source register
   logic [P.XLEN-1:0] R1D, R2D;                       // Read data from Rs1 (RD1), Rs2 (RD2)
   logic [P.XLEN-1:0] ImmExtD;                        // Extended immediate in Decode stage
   logic [4:0]        RdD;                            // Destination register in Decode stage
@@ -102,14 +103,15 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0] IFResultM;                      // Result from either IEU or single-cycle FPU op writing an integer register
   // Writeback stage signals
   logic [P.XLEN-1:0] SCResultW;                      // Store Conditional result
-  logic [P.XLEN-1:0] ResultW, ResultWM;              // Result to write to register file
-  logic [4:0]        RdWM;                           // Muxed GPR write address
+  logic [P.XLEN-1:0] ResultW;
+  (* mark_debug = "true" *)logic [P.XLEN-1:0] ResultWM;              // Result to write to register file
+  (* mark_debug = "true" *)logic [4:0]        RdWM;                           // Muxed GPR write address
   logic [P.XLEN-1:0] IFResultW;                      // Result from either IEU or single-cycle FPU op writing an integer register
   logic [P.XLEN-1:0] IFCvtResultW;                   // Result from IEU, signle-cycle FPU op, or 2-cycle FCVT float to int 
   logic [P.XLEN-1:0] MulDivResultW;                  // Multiply always comes from MDU.  Divide could come from MDU or FPU (when using fdivsqrt for integer division)
   // Debug signals
   logic              DSCR;
-  logic [P.XLEN-1:0] DebugGPRWrite;
+  (* mark_debug = "true" *)logic [P.XLEN-1:0] DebugGPRWrite;
 
   // Decode stage
   regfile #(P.XLEN, P.E_SUPPORTED) regf(clk, reset, (RegWriteW || GPRWriteEn), Rs1DM, Rs2D, RdWM, ResultWM, R1D, R2D);

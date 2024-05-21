@@ -45,10 +45,10 @@ module dm import cvw::*; #(parameter cvw_t P) (
   input  logic                     ScanIn,
   output logic                     ScanOut,
   output logic                     GPRSel,
-  output logic                     GPRReadEn,
-  output logic                     GPRWriteEn,
-  output logic [P.E_SUPPORTED+3:0] GPRAddr,
-  output logic                     GPRScanEn,
+  (* mark_debug = "true" *)output logic                     GPRReadEn,
+  (* mark_debug = "true" *)output logic                     GPRWriteEn,
+  (* mark_debug = "true" *)output logic [P.E_SUPPORTED+3:0] GPRAddr,
+  (* mark_debug = "true" *)output logic                     GPRScanEn,
   input  logic                     GPRScanIn,
   output logic                     GPRScanOut
 );
@@ -97,7 +97,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
     INVALID // d
   } State;
 
-  enum bit [1:0] {
+  (* mark_debug = "true" *)enum bit [1:0] {
     AC_IDLE,
     AC_GPRUPDATE,
     AC_SCAN,
@@ -400,7 +400,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
         AC_IDLE : begin
           Cycle <= 0;
           case (NewAcState)
-            AC_SCAN : AcState <= (GPRSel && ~AcWrite) ? AC_GPRCAPTURE : AC_SCAN;
+            AC_SCAN : AcState <= (GPRRegNo && ~AcWrite) ? AC_GPRCAPTURE : AC_SCAN;
           endcase
         end
 
@@ -410,7 +410,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
 
         AC_SCAN : begin
           if (Cycle == ScanChainLen)
-            AcState <= (GPRSel && AcWrite) ? AC_GPRUPDATE : AC_IDLE;
+            AcState <= (GPRRegNo && AcWrite) ? AC_GPRUPDATE : AC_IDLE;
           else
             Cycle <= Cycle + 1;
         end
@@ -448,7 +448,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   for (i=0; i<P.XLEN; i=i+1) begin
     // ARMask is used as write enable for subword overwrites (basic mask would overwrite neighbors in the chain)
     assign ScanNext[i] = WriteScanReg && ARMask[i] ? PackedDataReg[i] : ScanReg[i+1];
-    flopenr #(1) scanreg (.clk, .reset(rst), .en(ScanEn), .d(ScanNext[i]), .q(ScanReg[i]));
+    flopenr #(1) scanreg (.clk, .reset(rst), .en(AcState == AC_SCAN), .d(ScanNext[i]), .q(ScanReg[i]));
   end
   
   // Message Registers

@@ -160,7 +160,7 @@
 `define WRITEDATAM  16'hC005 // XLEN
 // lsu
 `define IEUADRM     16'hC006 // XLEN
-`define READDATAM   16'hC007 // LLEN (+1 (scanreg)) (Read Only)
+`define READDATAM   16'hC007 // LLEN (Read Only)
 
 // src/ieu/datapath
 `define X0          16'h1000

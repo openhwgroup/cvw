@@ -42,14 +42,10 @@ def main():
         activate_dm() # necessary if openocd init is disabled
         status()
         halt()
-        pcm1 = read_data("PCM")
-        print(f"PCM: {pcm1}")
-        while True:
-            pcm = read_data("PCM")
-            print(f"PCM: {pcm}")
-            if pcm != pcm1:
-                break
-            step()
+        GPR = dump_GPR()
+        print(GPR)
+        check_errors()
+        print(f"PCM: '{read_data("PCM")}'")
         resume()
         status()
         #clear_abstrcmd_err()
@@ -66,6 +62,21 @@ def main():
         #clear_abstrcmd_err()
 
 
+def dump_GPR():
+    gpr = {}
+    for i in range(1,32):
+        addr = f"X{i}"
+        gpr[addr] = read_data(addr)
+        # DM will assert Abstract Command Err if GPR X16-X31 isn't implemented (CMDERR_EXCEPTION)
+        # This will clear that error and return early. 
+        if i == 16:
+            abstractcs = int(read_dmi("0x16"), 16)
+            cmderr = (abstractcs & 0x700) >> 8
+            if cmderr == 3:
+                clear_abstrcmd_err()
+                break
+    return gpr
+    
 
 
 def write_data(register, data):
