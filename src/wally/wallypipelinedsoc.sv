@@ -95,5 +95,56 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic valid;
   logic [187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)-1:0] rvvi;
   rvvisynth #(P, MAX_CSRS) rvvisynth(.clk, .reset, .valid, .rvvi);
+
+  logic [3:0]                                       m_axi_awid;
+  logic [12:0]                                      m_axi_awaddr;
+  logic [7:0]                                       m_axi_awlen;
+  logic [2:0]                                       m_axi_awsize;
+  logic [1:0]                                       m_axi_awburst;
+  logic [3:0]                                       m_axi_awcache;
+  logic                                             m_axi_awvalid;
+  logic                                             m_axi_awready;
+  // axi 4 write data channel
+  logic [31:0]                                      m_axi_wdata;
+  logic [3:0]                                       m_axi_wstrb;
+  logic                                             m_axi_wlast;
+  logic                                             m_axi_wvalid;
+  logic                                             m_axi_wready;
+  // axi 4 write response channel
+  logic [3:0]                                       m_axi_bid;
+  logic [1:0]                                       m_axi_bresp;
+  logic                                             m_axi_bvalid;
+  logic                                             m_axi_bready;
+  // axi 4 read address channel
+  logic [3:0]                                       m_axi_arid;
+  logic [12:0]                                      m_axi_araddr;
+  logic [7:0]                                       m_axi_arlen;
+  logic [2:0]                                       m_axi_arsize;
+  logic [1:0]                                       m_axi_arburst;
+  logic [3:0]                                       m_axi_arcache;
+  logic                                             m_axi_arvalid;
+  logic                                             m_axi_arready;
+ // axi 4 read data channel
+  logic [3:0]                                       m_axi_rid;
+  logic [31:0]                                      m_axi_rdata;
+  logic [1:0]                                       m_axi_rresp;
+  logic                                             m_axi_rlast;
+  logic                                             m_axi_rvalid;
+  logic                                             m_axi_rready;
+
+
+
+  logic                                             RVVIStall;
+
+  packetizer #(P, MAX_CSRS) packetizer(.rvvi, .valid, .m_axi_aclk(clk), .m_axi_aresetn(~reset), .RVVIStall,
+    .m_axi_awid, .m_axi_awaddr, .m_axi_awlen, .m_axi_awsize, .m_axi_awburst, .m_axi_awcache, .m_axi_awvalid,
+    .m_axi_awready, .m_axi_wdata, .m_axi_wstrb, .m_axi_wlast, .m_axi_wvalid, .m_axi_wready, .m_axi_bid,
+    .m_axi_bresp, .m_axi_bvalid, .m_axi_bready, .m_axi_arid, .m_axi_araddr, .m_axi_arlen, .m_axi_arsize,
+    .m_axi_arburst, .m_axi_arcache, .m_axi_arvalid, .m_axi_arready, .m_axi_rid, .m_axi_rdata, .m_axi_rresp,
+    .m_axi_rlast, .m_axi_rvalid, .m_axi_rready);
+
+  // *** finally fake the axi4 interface
+  assign m_axi_awready = '1;
+  assign m_axi_wready = '1;
   
 endmodule
