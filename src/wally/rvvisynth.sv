@@ -31,15 +31,13 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
                                   parameter integer MAX_CSRS)(
   input logic clk, reset,
   output logic valid,
-  output logic [163+P.XLEN-1:0] Required,
-  output logic [12+2*P.XLEN-1:0] Registers,
-  output logic [12+MAX_CSRS*(P.XLEN+12)-1:0] CSRs
+  output logic [199+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)-1:0] rvvi
   );
 
   localparam TOTAL_CSRS = 36;
   
   // pipeline controlls
-  logic                                     StallW, FlushW;
+  logic                                     StallE, StallM, StallW, FlushE, FlushM, FlushW;
   // required
   logic [P.XLEN-1:0]                        PCM, PCW;
   logic                                     InstrValidM, InstrValidW;
@@ -58,9 +56,17 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
   logic [TOTAL_CSRS-1:0]                    CSRWen [MAX_CSRS-1:0];
   logic [11:0]                              CSRAddr [MAX_CSRS-1:0];
   logic [MAX_CSRS-1:0]                      EnabledCSRs;
+  logic [11:0]                              CSRCount;
+  logic [177+P.XLEN-1:0]                    Required;
+  logic [10+2*P.XLEN-1:0]                   Registers;
+  logic [12+MAX_CSRS*(P.XLEN+12)-1:0]       CSRs;
      
   // get signals from the core.
+  assign StallE         = testbench.dut.core.StallE;
+  assign StallM         = testbench.dut.core.StallM;
   assign StallW         = testbench.dut.core.StallW;
+  assign FlushE         = testbench.dut.core.FlushE;
+  assign FlushM         = testbench.dut.core.FlushM;
   assign FlushW         = testbench.dut.core.FlushW;
   assign InstrValidM    = testbench.dut.core.ieu.InstrValidM;
   assign InstrRawD      = testbench.dut.core.ifu.InstrRawD;
@@ -129,11 +135,11 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
   flopenrc #(1)      TrapWReg (clk, reset, 1'b0, ~StallW, TrapM, TrapW);
 
   assign valid  = InstrValidW & ~StallW;
-  assign Required = {PrivilegeModeW, TrapW, Minstret, Mcycle, InstrRawW, PCW};
-  assign Registers = {FPRWen, GPRWen} == 2'b11 ? {FPRValue, FPRAddr, GPRValue, GPRAddr, FPRWen, GPRWen} :
-                     {FPRWen, GPRWen} == 2'b01 ? {XLENZeros, 5'b0, GPRValue, GPRAddr, FPRWen, GPRWen} :
-                     {FPRWen, GPRWen} == 2'b10 ? {FPRValue, FPRAddr, XLENZeros, 5'b0, FPRWen, GPRWen} :
-                     {XLENZeros, 5'b0, XLENZeros, 5'b0, FPRWen, GPRWen};
+  assign Required = {CSRCount, FPRWen, GPRWen, PrivilegeModeW, TrapW, Minstret, Mcycle, InstrRawW, PCW};
+  assign Registers = {FPRWen, GPRWen} == 2'b11 ? {FPRValue, FPRAddr, GPRValue, GPRAddr} :
+                     {FPRWen, GPRWen} == 2'b01 ? {XLENZeros, 5'b0, GPRValue, GPRAddr} :
+                     {FPRWen, GPRWen} == 2'b10 ? {XLENZeros, 5'b0, FPRValue, FPRAddr} :
+                     '0;
 
   // the CSRs are complex
   // 1. we need to get the CSR values
@@ -153,9 +159,9 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
     assign CSRWen[index] = {{{index}{1'b0}}, CSRWenShort};
     // step 3b
     csrindextoaddr #(TOTAL_CSRS) csrindextoaddr(CSRWen[index], CSRAddr[index]);
-    assign CSRs[(index+1) * (P.XLEN + 12) + 12 - 1: index * (P.XLEN + 12) + 12] = {CSRValue[index], CSRAddr[index]};
+    assign CSRs[(index+1) * (P.XLEN + 12)- 1: index * (P.XLEN + 12)] = {CSRValue[index], CSRAddr[index]};
     assign EnabledCSRs[index] = |CSRWenShort;
   end
-  assign CSRs[11:0] = +EnabledCSRs;
+  assign CSRCount = +EnabledCSRs;
 endmodule
                                                                  

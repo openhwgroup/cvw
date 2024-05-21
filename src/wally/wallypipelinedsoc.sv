@@ -93,9 +93,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
 
   localparam MAX_CSRS = 3;
   logic valid;
-  logic [163+P.XLEN-1:0] Required;
-  logic [12+2*P.XLEN-1:0] Registers;
-  logic [12+MAX_CSRS*(P.XLEN+12)-1:0] CSRs;
-  rvvisynth #(P, MAX_CSRS) rvvisynth(.clk, .reset, .valid, .Required, .Registers, .CSRs);
+  logic [199+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)-1:0] rvvi;
+  rvvisynth #(P, MAX_CSRS) rvvisynth(.clk, .reset, .valid, .rvvi);
   
 endmodule
