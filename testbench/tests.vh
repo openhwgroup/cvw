@@ -2276,8 +2276,7 @@ string arch64zknh[] = '{
     };
 
   string arch32zfaf[] = '{
-    //`RISCVARCHTEST,
-    `WALLYTEST,
+    `RISCVARCHTEST,
     "rv32i_m/F_Zfa/src/fround_b1-01.S",
     "rv32i_m/F_Zfa/src/fleq_b1-01.S",
     "rv32i_m/F_Zfa/src/fleq_b19-01.S", 
@@ -2293,8 +2292,7 @@ string arch64zknh[] = '{
   };
 
   string arch32zfad[] = '{
-    //`RISCVARCHTEST,
-    `WALLYTEST,
+    `RISCVARCHTEST,
     "rv32i_m/D_Zfa/src/fround_b1-01.S",
     "rv32i_m/D_Zfa/src/fcvtmod.w.d_b1-01.S",
     "rv32i_m/D_Zfa/src/fcvtmod.w.d_b22-01.S",
@@ -2330,8 +2328,7 @@ string arch64zknh[] = '{
   };
 
   string arch64zfaf[] = '{
-    //`RISCVARCHTEST,
-    `WALLYTEST,
+    `RISCVARCHTEST,
     "rv64i_m/F_Zfa/src/fround_b1-01.S",
     "rv64i_m/F_Zfa/src/fleq_b1-01.S",
     "rv64i_m/F_Zfa/src/fleq_b19-01.S", 
@@ -2345,8 +2342,7 @@ string arch64zknh[] = '{
   };
 
   string arch64zfad[] = '{
-    //`RISCVARCHTEST,
-    `WALLYTEST,
+    `RISCVARCHTEST,
      "rv64i_m/D_Zfa/src/fround_b1-01.S",
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b1-01.S",
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b22-01.S", 
