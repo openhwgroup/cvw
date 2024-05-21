@@ -56,10 +56,6 @@
 `define ABSTRACTCS   `ADDR_WIDTH'h16
 `define COMMAND      `ADDR_WIDTH'h17
 `define ABSTRACTAUTO `ADDR_WIDTH'h18
-//`define CONFSTRPTR0  `ADDR_WIDTH'h19
-//`define CONFSTRPTR1  `ADDR_WIDTH'h1a
-//`define CONFSTRPTR2  `ADDR_WIDTH'h1b
-//`define CONFSTRPTR3  `ADDR_WIDTH'h1c
 `define NEXTDM       `ADDR_WIDTH'h1d
 //`define dmcs2        `ADDR_WIDTH'h32
 `define SBCS         `ADDR_WIDTH'h38
@@ -149,8 +145,12 @@
 // 0x1000 – 0x101f | GPRs
 // 0x1020 – 0x103f | Floating point registers
 // 0xc000 – 0xffff | Reserved for non-standard extensions and internal use.
-`define MISA        16'h0301 // XLEN P.ZICSR_SUPPORTED
+
+// privileged/csr/csrm
+`define MISA        16'h0301 // XLEN P.ZICSR_SUPPORTED (Read Only)
+// wallypipelinedcore
 `define TRAPM       16'hC000 // 1'b  P.ZICSR_SUPPORTED (Read Only)
+// src/ifu
 `define PCM         16'hC001 // XLEN P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED
 `define INSTRM      16'hC002 // 32'b P.ZICSR_SUPPORTED | P.A_SUPPORTED
 // ieu/controller
@@ -158,11 +158,11 @@
 `define INSTRVALIDM 16'hC004 // 1'b  
 // ieu/datapath
 `define WRITEDATAM  16'hC005 // XLEN
-//`define GPR         16'hXXXX // XLEN (+1 (scanreg))
 // lsu
 `define IEUADRM     16'hC006 // XLEN
-`define READDATAM   16'hC007 // LLEN (+1 (scanreg))
+`define READDATAM   16'hC007 // LLEN (+1 (scanreg)) (Read Only)
 
+// src/ieu/datapath
 `define X0          16'h1000
 `define X1          16'h1001
 `define X2          16'h1002

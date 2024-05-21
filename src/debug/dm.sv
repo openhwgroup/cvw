@@ -38,13 +38,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   output logic                  HartReset, // TODO
 
   // Core hazard signals
-  output logic                  DebugHalt,
-  output logic                  DebugResume,
-  output logic                  DebugStallF,
-  output logic                  DebugStallD,
-  output logic                  DebugStallE,
-  output logic                  DebugStallM,
-  output logic                  DebugStallW,
+  output logic                  DebugStall,
 
   // Scan Chain
   output logic                     ScanEn,
@@ -84,10 +78,9 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic                  ResumeConfirm;
   logic                  HaltOnReset;
 
-  dmhazard dmhazard(.clk, .rst, .HaltReq, .Halted, .ResumeReq, .ResumeConfirm, .HaltOnReset, .DebugHalt,
-    .DebugResume, .DebugStallF, .DebugStallD, .DebugStallE, .DebugStallM, .DebugStallW);
+  dmhazard dmhazard(.clk, .rst, .HaltReq, .Halted, .ResumeReq, .ResumeConfirm, .HaltOnReset, .DebugStall);
 
-    enum bit [3:0] {
+  enum bit [3:0] {
     INACTIVE, // 0
     IDLE, // 1
     ACK, // 2
@@ -112,21 +105,21 @@ module dm import cvw::*; #(parameter cvw_t P) (
   } AcState, NewAcState;
 
   // AbsCmd internal state
-  logic              AcWrite;
-  logic [P.XLEN:0]   ScanReg;
-  logic [P.XLEN-1:0] ScanNext;
-  logic [P.XLEN-1:0] ARMask;
-  logic [P.XLEN-1:0] PackedDataReg;
-  logic [P.XLEN-1:0] MaskedScanReg;
-  logic [9:0]        ShiftCount;
-  logic [9:0]        ScanChainLen;
-  logic [9:0]        Cycle;
-  logic              InvalidRegNo;
-  logic              GPRRegNo;
-  logic StoreScanChain; // Store current value of ScanReg into Data0,Data1
-  logic WriteMsgReg;    // Write to Data0,Data1
-  logic WriteScanReg;
-  logic [31:0] Data0Wr, Data1Wr, Data2Wr, Data3Wr;
+  (* mark_debug = "true" *)logic              AcWrite;        // Abstract Command write state
+  (* mark_debug = "true" *)logic [P.XLEN:0]   ScanReg;        // The part of the debug scan chain located within DM
+  (* mark_debug = "true" *)logic [P.XLEN-1:0] ScanNext;       // New ScanReg value
+  (* mark_debug = "true" *)logic [P.XLEN-1:0] ARMask;         // Masks which bits of the ScanReg get updated
+  (* mark_debug = "true" *)logic [P.XLEN-1:0] PackedDataReg;  // Combines DataX msg registers into a single XLEN wide register
+  (* mark_debug = "true" *)logic [P.XLEN-1:0] MaskedScanReg;  // Masks which bits of the ScanReg get written to DataX
+  (* mark_debug = "true" *)logic [9:0]        ShiftCount;     // Position of the selected register on the debug scan chain
+  (* mark_debug = "true" *)logic [9:0]        ScanChainLen;   // Total length of currently selected scan chain
+  (* mark_debug = "true" *)logic [9:0]        Cycle;          // DM's current position in the scan chain
+  (* mark_debug = "true" *)logic              InvalidRegNo;   // Requested RegNo is invalid
+  (* mark_debug = "true" *)logic              GPRRegNo;       // Requested RegNo is a GPR
+  (* mark_debug = "true" *)logic              StoreScanChain; // Store current value of ScanReg into DataX
+  (* mark_debug = "true" *)logic              WriteMsgReg;    // Write to DataX
+  (* mark_debug = "true" *)logic              WriteScanReg;   // Insert data from DataX into ScanReg
+  (* mark_debug = "true" *)logic              [31:0] Data0Wr, Data1Wr, Data2Wr, Data3Wr; // Muxed inputs to DataX regs
 
   // message registers
   logic [31:0] Data0;  // 0x04

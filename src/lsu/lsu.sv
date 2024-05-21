@@ -159,14 +159,14 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]     WriteDataZM;
   logic                  LSULoadPageFaultM, LSUStoreAmoPageFaultM;
 
-  logic [0:0]            DSCR;
+  logic                  DSCR;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Pipeline for IEUAdr E to M
   // Zero-extend address to 34 bits for XLEN=32
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  flopenrcs #(P.XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM, DebugScanEn, DebugScanIn, DSCR[0]);
+  flopenrcs #(P.XLEN) AddressMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d(IEUAdrE), .q(IEUAdrM), .scan(DebugScanEn), .scanin(DebugScanIn), .scanout(DSCR));
   if(MISALIGN_SUPPORT) begin : ziccslm_align
     logic [P.XLEN-1:0] IEUAdrSpillE, IEUAdrSpillM;
     align #(P) align(.clk, .reset, .StallM, .FlushM, .IEUAdrE, .IEUAdrM, .Funct3M, .FpLoadStoreM, 
@@ -429,9 +429,10 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     .FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
   subwordwrite #(P.LLEN) subwordwrite(.LSUFunct3M, .IMAFWriteDataM, .LittleEndianWriteDataM);
 
-  // BOZO this module needs to be fully tested
-  // Make ReadDataM available to debug scan chain
-  scanreg #(P.LLEN) scanreaddataM (clk, reset, ReadDataM, DebugScanEn, DSCR[0], DebugScanOut);
+  // TODO: set regno to read only
+  // TODO: gate clock so this doesnt switch continuously
+  // Dummy register to provide read access to DM
+  floprs #(P.LLEN) ReadDataMScan (.clk, .reset, .d(ReadDataM), .scan(DebugScanEn), .scanin(DSCR), .scanout(DebugScanOut));
 
   // Compute byte masks
   swbytemask #(P.LLEN, P.ZICCLSM_SUPPORTED) swbytemask(.Size(LSUFunct3M), .Adr(PAdrM[$clog2(P.LLEN/8)-1:0]), .ByteMask(ByteMaskM), .ByteMaskExtended(ByteMaskExtendedM));

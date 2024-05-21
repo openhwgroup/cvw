@@ -74,13 +74,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                       MExtInt,SExtInt;  // from PLIC
 
   // Debug Module signals
-  logic                       DebugHalt;
-  logic                       DebugResume;
-  logic                       DebugStallF;
-  logic                       DebugStallD;
-  logic                       DebugStallE;
-  logic                       DebugStallM;
-  logic                       DebugStallW;
+  logic                       DebugStall;
   logic                       ScanEn;
   logic                       ScanIn;
   logic                       ScanOut;
@@ -100,8 +94,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
-    .DebugHalt, .DebugResume, .DebugStallF, .DebugStallD, .DebugStallE, .DebugStallM, 
-    .DebugStallW, .DebugScanEn(ScanEn), .DebugScanIn(ScanOut), .DebugScanOut(ScanIn),
+    .DebugStall, .DebugScanEn(ScanEn), .DebugScanIn(ScanOut), .DebugScanOut(ScanIn),
     .GPRSel, .GPRReadEn, .GPRWriteEn, .GPRAddr, .GPRScanEn, .GPRScanIn(GPRScanOut), .GPRScanOut(GPRScanIn)
   );
 
@@ -119,8 +112,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
 
   // instantiate debug module
   dm #(P) dm (.clk, .rst(reset), .tck, .tdi, .tms, .tdo,
-    .DebugHalt, .DebugResume, .DebugStallF, .DebugStallD, .DebugStallE, .DebugStallM, 
-    .DebugStallW, .ScanEn, .ScanIn, .ScanOut, .GPRSel, .GPRReadEn, .GPRWriteEn, 
+    .DebugStall, .ScanEn, .ScanIn, .ScanOut, .GPRSel, .GPRReadEn, .GPRWriteEn, 
     .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut);
 
 endmodule

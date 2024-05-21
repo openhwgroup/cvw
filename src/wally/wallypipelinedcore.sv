@@ -46,13 +46,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   output logic [1:0]            HTRANS,
   output logic                  HMASTLOCK,
   // Debug module
-  input  logic                  DebugHalt,
-  input  logic                  DebugResume,
-  input  logic                  DebugStallF,
-  input  logic                  DebugStallD,
-  input  logic                  DebugStallE,
-  input  logic                  DebugStallM,
-  input  logic                  DebugStallW,
+  input  logic                  DebugStall,
   // Debug scan chain
   input  logic                  DebugScanEn,
   input  logic                  DebugScanIn,
@@ -188,7 +182,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          wfiM, IntPendingM;
 
   // Debug register scan chain interconnects
-  logic [1:0]                    ScanReg;
+  logic [3:0]                    ScanReg;
 
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu #(P) ifu(.clk, .reset,
@@ -303,8 +297,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .DivBusyE, .FDivBusyE,
     .wfiM, .IntPendingM,
     // Debug control
-    .DebugHalt, .DebugResume, .DebugStallF, .DebugStallD,
-    .DebugStallE, .DebugStallM, .DebugStallW,
+    .DebugStall,
     // Stall & flush outputs
     .StallF, .StallD, .StallE, .StallM, .StallW,
     .FlushD, .FlushE, .FlushM, .FlushW);    

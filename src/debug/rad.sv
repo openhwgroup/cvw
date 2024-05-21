@@ -45,7 +45,7 @@ module rad import cvw::*; #(parameter cvw_t P) (
   localparam INSTRVALIDMLEN = 1;
   localparam WRITEDATAMLEN = P.XLEN;
   localparam IEUADRMLEN = P.XLEN;
-  localparam READDATAMLEN = P.LLEN + 1;
+  localparam READDATAMLEN = P.LLEN;
   localparam SCANCHAINLEN = P.XLEN - 1 
     + MISALEN + TRAPMLEN + PCMLEN + INSTRMLEN
     + MEMRWMLEN + INSTRVALIDMLEN + WRITEDATAMLEN

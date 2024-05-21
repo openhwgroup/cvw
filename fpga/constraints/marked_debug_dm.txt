@@ -9,9 +9,6 @@ lsu/lsu.sv: logic        WriteDataM
 lsu/lsu.sv: logic       MemRWM
 debug/dm.sv: logic ReqData
 debug/dm.sv: enum bit
-debug/dm.sv: logic ShiftCount
-debug/dm.sv: logic ScanChainLen
-debug/dm.sv: logic InvalidRegNo
 debug/dm.sv: logic GPRSel
 debug/dmhazard.sv: enum bit
 hazard/hazard.sv: logic StallD,
