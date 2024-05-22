@@ -27,7 +27,7 @@
 
 module zbkx #(parameter WIDTH=32) (
    input  logic [WIDTH-1:0] A, B,
-   input  logic [2:0] 	    ZBKXSelect,
+   input  logic  	          ZBKXSelect,
    output logic [WIDTH-1:0] ZBKXResult
 );
    
@@ -46,5 +46,5 @@ module zbkx #(parameter WIDTH=32) (
       end   
    end
 
-   assign ZBKXResult = ZBKXSelect[0] ? xperm4 : xperm8;
+   assign ZBKXResult = ZBKXSelect ? xperm4 : xperm8;
 endmodule

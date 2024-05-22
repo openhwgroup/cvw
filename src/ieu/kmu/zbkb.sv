@@ -27,8 +27,7 @@
 
 module zbkb #(parameter WIDTH=32) (
    input  logic [WIDTH-1:0] A, B,
-   input  logic 	          W64,
-   input  logic [2:0] 	    Funct3,
+  input  logic [2:0] 	    Funct3,
    input  logic [2:0] 	    ZBKBSelect,
    output logic [WIDTH-1:0] ZBKBResult
 );
