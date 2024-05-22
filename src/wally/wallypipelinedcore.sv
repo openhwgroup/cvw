@@ -44,7 +44,8 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    output logic [2:0]            HBURST,
    output logic [3:0]            HPROT,
    output logic [1:0]            HTRANS,
-   output logic                  HMASTLOCK
+   output logic                  HMASTLOCK,
+   input  logic                  RVVIStall
 );
 
   logic                          StallF, StallD, StallE, StallM, StallW;
@@ -274,7 +275,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .BPWrongE, .CSRWriteFenceM, .RetM, .TrapM,
     .StructuralStallD,
     .LSUStallM, .IFUStallF,
-    .FPUStallD,
+    .FPUStallD, .RVVIStall,
     .DivBusyE, .FDivBusyE,
     .wfiM, .IntPendingM,
     // Stall & flush outputs

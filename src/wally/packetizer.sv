@@ -143,7 +143,6 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   assign m_axi_wlast = BurstDone;
   assign m_axi_wvalid = (CurrState == STATE_RDY & valid) | (CurrState == STATE_TRANS);
   
-
   assign m_axi_bready = 1'b1; // *** probably wrong.
 
   // we aren't using the read channels. This ethernet device isn't going to read anything for now
