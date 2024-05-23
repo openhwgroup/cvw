@@ -62,7 +62,6 @@ coveragetests:
 	make -C ../tests/coverage/ --jobs
 
 deriv:
-	rm -rf ../config/deriv
 	derivgen.pl
 
 benchmarks:
