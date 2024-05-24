@@ -33,6 +33,8 @@
     `include "idv/idv.svh"
 `endif
 
+// *** bug replace with config?
+`define RVVI_SYNTH_SUPPORTED 1
 
 import cvw::*;
 
@@ -110,6 +112,7 @@ module testbench;
   logic Validate;
   logic SelectTest;
   logic TestComplete;
+  logic RVVIStall;
 
   initial begin
     // look for arguments passed to simulation, or use defaults
@@ -577,7 +580,7 @@ module testbench;
     assign SDCIntr = 1'b0;
   end
 
-  wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
+  wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .RVVIStall, .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
     .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
     .UARTSin, .UARTSout, .SDCIntr, .SPIIn, .SPIOut, .SPICS); 
@@ -586,6 +589,93 @@ module testbench;
   always begin
     clk = 1'b1; # 5; clk = 1'b0; # 5;
   end
+
+  if(`RVVI_SYNTH_SUPPORTED) begin : rvvi_synth
+    localparam MAX_CSRS = 3;
+    logic                       valid;
+    logic [187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)-1:0] rvvi;
+
+    rvvisynth #(P, MAX_CSRS) rvvisynth(.clk, .reset, .valid, .rvvi);
+
+    // a bunch of these signals would be needed for the xilinx ethernet IP
+    // but I switched to using https://github.com/alexforencich/verilog-ethernet
+    // so most arn't needed anymore.  *** remove once I've confirmed this
+    // works in synthesis.
+    logic [3:0]                                       m_axi_awid;
+    logic [12:0]                                      m_axi_awaddr;
+    logic [7:0]                                       m_axi_awlen;
+    logic [2:0]                                       m_axi_awsize;
+    logic [1:0]                                       m_axi_awburst;
+    logic [3:0]                                       m_axi_awcache;
+    logic                                             m_axi_awvalid;
+    logic                                             m_axi_awready;
+    // axi 4 write data channel
+    logic [31:0]                                      m_axi_wdata;
+    logic [3:0]                                       m_axi_wstrb;
+    logic                                             m_axi_wlast;
+    logic                                             m_axi_wvalid;
+    logic                                             m_axi_wready;
+    // axi 4 write response channel
+    logic [3:0]                                       m_axi_bid;
+    logic [1:0]                                       m_axi_bresp;
+    logic                                             m_axi_bvalid;
+    logic                                             m_axi_bready;
+    // axi 4 read address channel
+    logic [3:0]                                       m_axi_arid;
+    logic [12:0]                                      m_axi_araddr;
+    logic [7:0]                                       m_axi_arlen;
+    logic [2:0]                                       m_axi_arsize;
+    logic [1:0]                                       m_axi_arburst;
+    logic [3:0]                                       m_axi_arcache;
+    logic                                             m_axi_arvalid;
+    logic                                             m_axi_arready;
+    // axi 4 read data channel
+    logic [3:0]                                       m_axi_rid;
+    logic [31:0]                                      m_axi_rdata;
+    logic [1:0]                                       m_axi_rresp;
+    logic                                             m_axi_rlast;
+    logic                                             m_axi_rvalid;
+    logic                                             m_axi_rready;
+
+    logic [3:0]                                       mii_txd;
+    logic                                             mii_tx_en, mii_tx_er;
+    
+    logic                                             tx_error_underflow, tx_fifo_overflow, tx_fifo_bad_frame, tx_fifo_good_frame, rx_error_bad_frame;
+    logic                                             rx_error_bad_fcs, rx_fifo_overflow, rx_fifo_bad_frame, rx_fifo_good_frame;
+
+    packetizer #(P, MAX_CSRS) packetizer(.rvvi, .valid, .m_axi_aclk(clk), .m_axi_aresetn(~reset), .RVVIStall,
+      .m_axi_awid, .m_axi_awaddr, .m_axi_awlen, .m_axi_awsize, .m_axi_awburst, .m_axi_awcache, .m_axi_awvalid,
+      .m_axi_awready, .m_axi_wdata, .m_axi_wstrb, .m_axi_wlast, .m_axi_wvalid, .m_axi_wready, .m_axi_bid,
+      .m_axi_bresp, .m_axi_bvalid, .m_axi_bready, .m_axi_arid, .m_axi_araddr, .m_axi_arlen, .m_axi_arsize,
+      .m_axi_arburst, .m_axi_arcache, .m_axi_arvalid, .m_axi_arready, .m_axi_rid, .m_axi_rdata, .m_axi_rresp,
+      .m_axi_rlast, .m_axi_rvalid, .m_axi_rready);
+
+    eth_mac_mii_fifo #("GENERIC", "BUFG", 32) ethernet(.rst(reset), .logic_clk(clk), .logic_rst(reset),
+      .tx_axis_tdata(m_axi_wdata), .tx_axis_tkeep(m_axi_wstrb), .tx_axis_tvalid(m_axi_wvalid), .tx_axis_tready(m_axi_wready),
+      .tx_axis_tlast(m_axi_wlast), .tx_axis_tuser('0), .rx_axis_tdata(), .rx_axis_tkeep(), .rx_axis_tvalid(), .rx_axis_tready(1'b1),
+      .rx_axis_tlast(), .rx_axis_tuser(),
+
+      // *** update these
+      .mii_rx_clk(clk), // *** need to be the mii clock
+      .mii_rxd('0),
+      .mii_rx_dv('0),
+      .mii_rx_er('0),
+      .mii_tx_clk(clk), // *** needs to be the mii clock
+      .mii_txd,
+      .mii_tx_en,
+      .mii_tx_er,
+
+      // status
+      .tx_error_underflow, .tx_fifo_overflow, .tx_fifo_bad_frame, .tx_fifo_good_frame, .rx_error_bad_frame,
+      .rx_error_bad_fcs, .rx_fifo_overflow, .rx_fifo_bad_frame, .rx_fifo_good_frame, 
+      .cfg_ifg(8'd12), .cfg_tx_enable(1'b1), .cfg_rx_enable(1'b1)
+      );
+  
+  assign m_axi_awready = '1;
+  end else begin
+    assign RVVIStall = '0;
+  end
+  
 
   /*
   // Print key info  each cycle for debugging
