@@ -3,7 +3,7 @@
 //
 // Written: infinitymdm@gmail.com 20 May 2024
 //
-// Purpose: Burst management FSM for AHB to UI converter
+// Purpose: AHB burst management FSM for AHB to UI converter
 // 
 // Documentation: 
 //
@@ -30,102 +30,137 @@ module ahbburstctrl #(parameter BURST_LEN = 8) (
   input  logic clk,
   input  logic reset,
   input  logic op_ready,            // Manager has valid address phase signals on the AHB bus
-  input  logic write,               // Manager has issued a write operation
-  input  logic burst,               // Manager has started a new burst
   input  logic cmd_full,            // Subordinate cannot accept a command right now
+  input  logic new_addr,            // Manager is addressing a new location in memory
+  input  logic [3:0] word_addr,     // Lower bits of the write address
+  input  logic write,               // Manager has issued a write operation
+  input  logic new_burst,           // Manager has initiated a new burst
   input  logic resp_valid,          // Subordinate has response data ready
   output logic capture_op,          // Capture the current AHB op so we can issue it to the subordinate
   output logic record_op,           // Store the current AHB op so we have the option of issuing it to the subordinate later
   output logic select_recorded_op,  // Mux the recorded op to the subordinate
+  output logic mask_write,          // Mask off all bytes in this write op
   output logic issue_op,            // Commit the selected op to the subordinate
-  output logic ready                // Manager can send more commands
+  output logic readyout             // Manager can send more commands
 );
-  // State Definitions
+  // State Definitions (TODO: Update)
   // IDLE: Ready to start the next burst (default)
-  // RBWT: Ready to send read burst, waiting on subordinate
+  // DLYR: Delay Read burst until subordinate is ready
   // RBIP: Read Burst In Progress
   // DROP: Read Burst response received, drop excess burst commands
-  // WBWT: Ready to send next beat of write burst, waiting on subordinate
-  // WBIP: Write Burst In Progress
   // RPTW: Repeat last write op to complete a burst, then start new write burst
   // RPTR: Repeat last write op to complete a burst, then start new read burst
-  typedef enum logic [2:0] {IDLE=0, RBWT, RBIP, DROP, WBWT, WBIP, RPTW, RPTR} state;
+  // RPTP: Repeat last write op to complete a burst, then pad the new write burst
+  // WBIP: Write Burst In Progress
+  // DLYW: Delay Write burst until subordinate is ready
+  // DLYP: Delay write burst until subordinate is ready, then pad until word aligned
+  // PADW: Pad Write burst until word aligned
+  typedef enum logic [3:0] {IDLE=0, DLYR, RBIP, DROP, RPTR, RPTW, RPTP, WBIP, DLYW, DLYP, PADW} state;
 
-  // Op counter
   logic [$clog2(BURST_LEN)-1:0] op_count;
   logic inc_op_count;
+  logic first_op, last_op;
+  logic word_aligned, word_zero;
+  state current_state, next_state;
+  logic [5:0] inputs;
+  logic [6:0] outputs;
+  logic record_op_next, mask_write_next, issue_op_next, ready_next, ready;
+
+  // Op counter
   counter #($clog2(BURST_LEN)) op_counter (clk, reset, inc_op_count, op_count);
 
-  // Aliases for readability (mostly)
-  logic read;
-  assign read = ~write;
-  logic first_op, last_op;
+  // Aliases/shorthands for readability
   assign first_op = ~|op_count; // true when op_count is all 0s
   assign last_op = &op_count; // true when op_count is all 1s
+  assign word_aligned = (word_addr == {op_count, 1'b0}); // word_addr == 2*op_count
+  assign word_zero = ~|word_addr; // word_addr == 4'b0000
+
+  // We make a few big assumptions on the read side of things, that so far have proved valid:
+  // 1) AHB will never issue a read burst that is not aligned to the start of a word
+  // 2) AHB read bursts will always address all 8 bytes of the same word
 
   // State transition logic
-  state current_state, next_state;
-  flopr #(3) statereg (clk, reset, next_state, current_state);
-  logic [4:0] inputs;
-  logic [5:0] outputs;
-  logic record_op_next, issue_op_next, ready_next, ready_delayed;
-  always_comb begin: state_transition_logic
-    inputs = {op_ready, cmd_full, write, burst, resp_valid};
+  flopr #(4) statereg (clk, reset, next_state, current_state);
+  always_comb begin
+    inputs = {op_ready, cmd_full, new_addr, write, new_burst, resp_valid};
     case (current_state)
       IDLE: casez (inputs)
-              5'b0????: {next_state, outputs} = {IDLE, 6'b000010};
-              5'b100??: {next_state, outputs} = {RBIP, 6'b100101};
-              5'b101??: {next_state, outputs} = {WBIP, 6'b110111};
-              5'b110??: {next_state, outputs} = {RBWT, 6'b110000};
-              5'b111??: {next_state, outputs} = {WBWT, 6'b110000};
+              6'b0?????: {next_state, outputs} = {IDLE, 7'b0000001};
+              6'b10?0??: {next_state, outputs} = {RBIP, 7'b1000110};
+              6'b10?1??: if (word_aligned) {next_state, outputs} = {WBIP, 7'b1100111};
+                         else              {next_state, outputs} = {PADW, 7'b1101110};
+              6'b11?0??: {next_state, outputs} = {DLYR, 7'b1100000};
+              6'b11?1??: {next_state, outputs} = {DLYW, 7'b1100000};
             endcase
-      RBWT: casez (inputs)
-              5'b?0???: {next_state, outputs} = {RBIP, 6'b001101};
-              5'b?1???: {next_state, outputs} = {RBWT, 6'b000000};
+      DLYR: case (cmd_full)
+              1'b0: {next_state, outputs} = {RBIP, 7'b0010110};
+              1'b1: {next_state, outputs} = {DLYR, 7'b0000000};
             endcase
       RBIP: casez (inputs)
-              5'b????0: {next_state, outputs} = {RBIP, 6'b000000};
-              5'b0???1: {next_state, outputs} = {DROP, 6'b000010};
-              5'b1???1: {next_state, outputs} = {DROP, 6'b000011};
+              6'b?????0: {next_state, outputs} = {RBIP, 7'b0000000};
+              6'b0????1: {next_state, outputs} = {DROP, 7'b0000001};
+              6'b1????1: {next_state, outputs} = {DROP, 7'b0000011};
             endcase
       DROP: casez (inputs)
-              5'b0????: {next_state, outputs} = {DROP, 6'b000010};
-              5'b1????: {next_state, outputs} = {last_op? IDLE : DROP, 6'b000011};
+              6'b0?????: {next_state, outputs} = {DROP, 7'b0000001};
+              6'b1?????: if (last_op) {next_state, outputs} = {IDLE, 7'b0000011};
+                         else         {next_state, outputs} = {DROP, 7'b0000011};
             endcase
-      WBWT: casez (inputs)
-              5'b?0???: {next_state, outputs} = {WBIP, 6'b001111};
-              5'b?1???: {next_state, outputs} = {WBWT, 6'b000000};
+      RPTR: case (cmd_full)
+              1'b0: if (first_op) {next_state, outputs} = {RBIP, 7'b0010110};
+                    else          {next_state, outputs} = {RPTR, 7'b0011110};
+              1'b1: {next_state, outputs} = {RPTR, 7'b0000000};
+            endcase
+      RPTW: case (cmd_full)
+              1'b0: if (first_op) {next_state, outputs} = {WBIP, 7'b0010111};
+                    else          {next_state, outputs} = {RPTW, 7'b0011110};
+              1'b1: {next_state, outputs} = {RPTW, 7'b0000000};
+            endcase
+      RPTP: case (cmd_full)
+              1'b0: if (first_op) {next_state, outputs} = {PADW, 7'b0011110};
+                    else          {next_state, outputs} = {RPTP, 7'b0011110};
+              1'b1: {next_state, outputs} = {RPTP, 7'b0000000};
             endcase
       WBIP: casez (inputs)
-              5'b0????: {next_state, outputs} = {WBIP, 6'b000010};
-              5'b100??: {next_state, outputs} = {RPTR, 6'b101101};
-              5'b1010?: if (last_op) {next_state, outputs} = {IDLE, 6'b100111};
-                        else         {next_state, outputs} = {WBIP, 6'b110111};
-              5'b1011?: {next_state, outputs} = {RPTW, 6'b101101};
-              5'b110??: {next_state, outputs} = {RPTR, 6'b100000};
-              5'b111??: {next_state, outputs} = {WBWT, 6'b110000};
+              6'b0?????: {next_state, outputs} = {WBIP, 7'b0000001};
+              6'b10?0??: {next_state, outputs} = {RPTR, 7'b1011110};
+              6'b10010?: if (word_aligned)
+                           if (last_op) {next_state, outputs} = {IDLE, 7'b1000111};
+                           else         {next_state, outputs} = {WBIP, 7'b1100111};
+                         else {next_state, outputs} = {PADW, 7'b1101110};
+              6'b10011?: if (word_zero) {next_state, outputs} = {RPTW, 7'b1011110}; // new burst starts at word zero
+                         else           {next_state, outputs} = {RPTP, 7'b1011110}; // new burst needs padding out
+              6'b1011??: if (word_zero) {next_state, outputs} = {RPTW, 7'b1011110}; // burst to new addr starts at word zero
+                         else           {next_state, outputs} = {RPTP, 7'b1011110}; // burst to new addr needs padding out
+              6'b11?0??: {next_state, outputs} = {RPTR, 7'b1000000};
+              6'b11010?: if (word_aligned) {next_state, outputs} = {DLYW, 7'b1100000};
+                         else              {next_state, outputs} = {DLYP, 7'b1100000};
+              6'b11011?: {next_state, outputs} = {RPTW, 7'b1000000};
+              6'b1111??: {next_state, outputs} = {RPTW, 7'b1000000};
             endcase
-      RPTW: casez (inputs)
-              5'b?0???: if (first_op) {next_state, outputs} = {WBIP, 6'b001111};
-                        else          {next_state, outputs} = {RPTW, 6'b001101};
-              5'b?1???: {next_state, outputs} = {RPTW, 6'b000000};
+      DLYW: case (cmd_full)
+              1'b0: if (last_op) {next_state, outputs} = {IDLE, 7'b0010111};
+                    else         {next_state, outputs} = {WBIP, 7'b0010111};
+              1'b1: {next_state, outputs} = {DLYW, 7'b0000000};
             endcase
-      RPTR: casez (inputs)
-              5'b?0???: if (first_op) {next_state, outputs} = {RBIP, 6'b001101};
-                        else          {next_state, outputs} = {RPTR, 6'b001101};
-              5'b?1???: {next_state, outputs} = {RPTR, 6'b000000};
+      DLYP: case (cmd_full)
+              1'b0: {next_state, outputs} = {PADW, 7'b0011111};
+              1'b1: {next_state, outputs} = {DLYP, 7'b0000000};
+            endcase
+      PADW: case (cmd_full)
+              1'b0: if (word_aligned) {next_state, outputs} = {WBIP, 7'b0010111};
+                    else              {next_state, outputs} = {PADW, 7'b0011110};
+              1'b1: {next_state, outputs} = {PADW, 7'b0000000};
             endcase
     endcase
   end
-
-  assign {capture_op, record_op_next, select_recorded_op, issue_op_next, ready_next, inc_op_count} = outputs;
+  assign {capture_op, record_op_next, select_recorded_op, mask_write_next, issue_op_next, inc_op_count, ready_next} = outputs;
 
   // Delay signals to align with ops
-  flopr #(1) recordreg (clk, reset, record_op_next, record_op);
-  flopr #(1) issuereg (clk, reset, issue_op_next, issue_op);
-
-  // Deassert ready immediately, but assert synchronously
-  flopr #(1) readyreg (clk, reset, ready_next, ready_delayed);
-  assign ready = ready_next & ready_delayed;
+  flopr #(1) recordreg (clk, reset, record_op_next,  record_op);
+  flopr #(1) maskreg   (clk, reset, mask_write_next, mask_write);
+  flopr #(1) issuereg  (clk, reset, issue_op_next,   issue_op);
+  flopr #(1) readyreg  (clk, reset, ready_next,      ready);
+  assign readyout = ready_next & ready;  // Deassert readyout immediately, but assert synchronously
 
 endmodule
