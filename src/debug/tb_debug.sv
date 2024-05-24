@@ -35,8 +35,8 @@ module testbench_debug ();
    logic 		      DebugStallW;
    
    logic 		      GPRSel;
-   logic 		      GPRReadEn;
-   logic 		      GPRWriteEn;
+   logic 		      DebugCapture;
+   logic 		      DebugGPRUpdate;
    logic [P.E_SUPPORTED+3:0]  GPRAddr;
    logic 		      GPRScanEn;
    logic 		      GPRScanIn;
@@ -44,7 +44,7 @@ module testbench_debug ();
    
    dm #(P) dm (.clk, .rst, .tck, .tdi, .tms, .tdo, .ScanEn, .ScanIn, .ScanOut, 
 	       .DebugHalt, .DebugResume, .DebugStallF, .DebugStallD, .DebugStallE, .DebugStallM, .DebugStallW,
-	       .GPRSel, .GPRReadEn, .GPRWriteEn, .GPRWriteEn, .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut);
+	       .GPRSel, .DebugCapture, .DebugGPRUpdate, .DebugGPRUpdate, .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut);
    dummy_reg #(.WIDTH(64),.CONST(64'hDEADBEEFBAADF00D)) r1 (.clk,.en(reg_init),.se(ScanEn),.scan_in(ScanOut),.scan_out(c1),.q(r1q));
    dummy_reg #(.WIDTH(64),.CONST(64'h0123456789ABCDEF)) r2 (.clk,.en(reg_init),.se(ScanEn),.scan_in(c1),.scan_out(ScanIn),.q(r2q));
 

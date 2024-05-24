@@ -94,6 +94,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   output logic                     IllegalCSRAccessM,         // Illegal CSR access: CSR doesn't exist or is inaccessible at this privilege level
   output logic                     BigEndianM,                // memory access is big-endian based on privilege mode and STATUS register endian fields
   // Debug scan chain
+  input  logic                     DebugCapture,
   input  logic                     DebugScanEn,
   input  logic                     DebugScanIn,
   output logic                     DebugScanOut
@@ -240,7 +241,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     .MEDELEG_REGW, .MIDELEG_REGW,.PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
     .MIP_REGW, .MIE_REGW, .WriteMSTATUSM, .WriteMSTATUSHM,
     .IllegalCSRMAccessM, .IllegalCSRMWriteReadonlyM,
-    .MENVCFG_REGW, .DebugScanEn, .DebugScanIn, .DebugScanOut);
+    .MENVCFG_REGW, .DebugCapture, .DebugScanEn, .DebugScanIn, .DebugScanOut);
 
 
   if (P.S_SUPPORTED) begin:csrs

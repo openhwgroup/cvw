@@ -8,7 +8,7 @@
 #
 # A component of the CORE-V-WALLY configurable RISC-V project.
 # https:#github.com/openhwgroup/cvw
-# 
+#
 # Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
 #
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
@@ -28,18 +28,22 @@
 # This script uses python to send text commands to OpenOCD via telnet
 # OpenOCD also supports tcl commands directly
 
+import atexit
 from telnetlib import Telnet
 
 debug = False
-XLEN = 64 # TODO: infer this value from the MISA
+XLEN = 64  # TODO: infer this value from the MISA
 
-tapname = "cvw.cpu" # this is set via the openocd config. It can be found by running `scan_chain`
+tapname = "cvw.cpu"  # this is set via the openocd config. It can be found by running `scan_chain`
+
+
+# TODO: if JTAG clk is fast enough, need to check for busy between absract commands
 
 def main():
     global tn
     with Telnet("127.0.0.1", 4444) as tn:
-        read() # clear welcome message from read buffer
-        activate_dm() # necessary if openocd init is disabled
+        read()  # clear welcome message from read buffer
+        activate_dm()  # necessary if openocd init is disabled
         status()
         halt()
         GPR = dump_GPR()
@@ -87,12 +91,15 @@ def write_data(register, data):
     data = int(data, 16)
     write_dmi("0x4", hex(data & 0xffffffff))
     if XLEN == 64:
-        write_dmi("0x5", hex((data>>32) & 0xffffffff))
+        write_dmi("0x5", hex((data >> 32) & 0xffffffff))
     if XLEN == 128:
-        write_dmi("0x6", hex((data>>64) & 0xffffffff))
-        write_dmi("0x7", hex((data>>96) & 0xffffffff))
+        write_dmi("0x6", hex((data >> 64) & 0xffffffff))
+        write_dmi("0x7", hex((data >> 96) & 0xffffffff))
     # Transfer data from msg registers to target register
     access_register(write=True, regno=regno, addr_size=XLEN)
+    # Check that operations completed without error
+    if acerr := check_absrtcmderr():
+        raise Exception(acerr)
 
 
 def read_data(register):
@@ -103,12 +110,15 @@ def read_data(register):
     access_register(write=False, regno=regno, addr_size=XLEN)
     # Read data from 32 bit message registers
     data = ""
-    data = read_dmi("0x4").replace("0x", "").zfill(4)
-    if XLEN == 64:
-        data = read_dmi("0x5").replace("0x", "").zfill(4) + data
+    data = read_dmi("0x4").replace("0x", "").zfill(8)
+    if XLEN >= 64:
+        data = read_dmi("0x5").replace("0x", "").zfill(8) + data
     if XLEN == 128:
-        data = read_dmi("0x6").replace("0x", "").zfill(4) + data
-        data = read_dmi("0x7").replace("0x", "").zfill(4) + data
+        data = read_dmi("0x6").replace("0x", "").zfill(8) + data
+        data = read_dmi("0x7").replace("0x", "").zfill(8) + data
+    # Check that operations completed without error
+    if acerr := check_absrtcmderr():
+        raise Exception(acerr)
     return f"0x{data}"
 
 
@@ -117,13 +127,13 @@ def access_register(write, regno, addr_size):
     Before starting an abstract command, a debugger must ensure that haltreq, resumereq, and
     ackhavereset are all 0."""
     addr = "0x17"
-    data = 1<<17 # transfer bit always set
+    data = 1 << 17  # transfer bit always set
     if addr_size == 32:
-        data += 2<<20
+        data += 2 << 20
     elif addr_size == 64:
-        data += 3<<20
+        data += 3 << 20
     elif addr_size == 128:
-        data += 4<<20
+        data += 4 << 20
     else:
         raise Exception("must provide valid register access size (32, 64, 128). See: 3.7.1.1 aarsize")
     if write:
@@ -150,13 +160,14 @@ def resume():
 
 def status():
     dmstatus = int(read_dmi("0x11"), 16)
-    print(f"Core status:::")
-    print(f"Running: {bool((dmstatus>>11)&0x1)}")
-    print(f"Halted:  {bool((dmstatus>>9)&0x1)}")
-    print(f"Reset:   {bool((dmstatus>>19)&0x1)}")
+    print("Core status:::")
+    print(f"Running: {bool((dmstatus >> 11) & 0x1)}")
+    print(f"Halted:  {bool((dmstatus >> 9) & 0x1)}")
+    print(f"Reset:   {bool((dmstatus >> 19) & 0x1)}")
 
 
 def check_errors():
+    # TODO: update this
     """Checks various status bits and reports any potential errors
     Returns true if any errors are found"""
     # check dtmcs
@@ -172,8 +183,8 @@ def check_errors():
     # check if DM is inactive
     dm_active = int(read_dmi("0x10"), 16) & 0x1
     if not dm_active:
-        print(f"DMControl Error: Debug module is not active")
-        #return True
+        print("DMControl Error: Debug module is not active")
+        # return True
     # check abstract command error
     abstractcs = int(read_dmi("0x16"), 16)
     busy = (abstractcs & 0x1000) >> 12
@@ -181,16 +192,27 @@ def check_errors():
     if not busy and cmderr:
         print(f"Abstract Command Error: {cmderr_translations[cmderr]}")
         return True
-    
 
-def reset_dm():
-    deactivate_dm()
-    activate_dm()
+
+def check_busy():
+    """If an Abstract Command OP is attempted while busy, an abstrcmderr will be asserted"""
+    abstractcs = int(read_dmi("0x16"), 16)
+    return bool((abstractcs & 0x1000) >> 12)
+
+
+def check_absrtcmderr():
+    """These errors must be cleared using clear_abstrcmd_err() before another OP can be executed"""
+    abstractcs = int(read_dmi("0x16"), 16)
+    return cmderr_translations[(abstractcs & 0x700) >> 8]
 
 
 def clear_abstrcmd_err():
     write_dmi("0x16", "0x700")
-    check_errors()
+
+
+def reset_dm():
+    deactivate_dm()
+    activate_dm()
 
 
 def activate_dm():
@@ -224,15 +246,15 @@ def read_dmi(address):
 def write_dtmcs(dtmhardreset=False, dmireset=False):
     data = 0
     if dtmhardreset:
-        data += 0x1<<17
+        data += 0x1 << 17
     if dmireset:
-        data += 0x1<<16
-    execute(f"irscan {tapname} 0x10") # dtmcs instruction
+        data += 0x1 << 16
+    execute(f"irscan {tapname} 0x10")  # dtmcs instruction
     execute(f"drscan {tapname} 32 {hex(data)}")
 
 
 def read_dtmcs():
-    execute(f"irscan {tapname} 0x10") # dtmcs instruction
+    execute(f"irscan {tapname} 0x10")  # dtmcs instruction
     dtmcs = execute(f"drscan {tapname} 32 0x0")
     return dtmcs
 
@@ -256,11 +278,23 @@ def write(cmd):
 def read():
     data = b""
     data = tn.read_until(b"> ").decode('ascii')
-    data = data.replace("\r","").replace("\n","").replace("> ","")
+    data = data.replace("\r", "").replace("\n", "").replace("> ", "")
     if debug:
         print(data)
     return data
 
+
+def init():
+    global tn
+    tn = Telnet("127.0.0.1", 4444)
+    atexit.register(cleanup)
+    read()  # clear welcome message from read buffer
+    activate_dm()
+    # TODO: query misa and get gpr count
+
+
+def cleanup():
+    tn.close()
 
 # 6.1.4 dtmcs errinfo translation table
 errinfo_translations = {
@@ -283,7 +317,7 @@ op_translations = {
 
 # 3.14.6 Abstract command CmdErr value translation table
 cmderr_translations = {
-    0 : "none",
+    0 : None,
     1 : "busy",
     2 : "not supported",
     3 : "exception",
@@ -337,6 +371,14 @@ register_translations = {
     "X29" : "0x101D",
     "X30" : "0x101E",
     "X31" : "0x101F",
+}
+
+nonstandard_register_lengths = {
+    "TRAPM"       : 1,
+    "INSTRM"      : 32,
+    "MEMRWM"      : 2,
+    "INSTRVALIDM" : 1,
+    #"READDATAM"  : P.LLEN
 }
 
 if __name__ == "__main__":

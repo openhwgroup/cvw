@@ -51,6 +51,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   output logic                     IllegalCSRMAccessM, IllegalCSRMWriteReadonlyM,
   output logic [63:0]              MENVCFG_REGW,
   // Debug scan chain
+  input  logic                     DebugCapture,
   input  logic                     DebugScanEn,
   input  logic                     DebugScanIn,
   output logic                     DebugScanOut
@@ -135,8 +136,8 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   // MISA is hardwired.  Spec says it could be written to disable features, but this is not supported by Wally
   assign MISA_REGW = {(P.XLEN == 32 ? 2'b01 : 2'b10), {(P.XLEN-28){1'b0}}, MISA_26[25:0]};
 
-  // Dummy register to provide read access to DM
-  floprs #(P.XLEN) MISAScan (.clk, .reset, .d(MISA_REGW), .scan(DebugScanEn), .scanin(DebugScanIn), .scanout(DebugScanOut));
+  // Dummy register to provide MISA read access to DM
+  flopenrs #(P.XLEN) MISAScanReg (.clk, .reset, .en(DebugCapture), .d(MISA_REGW), .q(), .scan(DebugScanEn), .scanin(DebugScanIn), .scanout(DebugScanOut));
 
   // MHARTID is hardwired. It only exists as a signal so that the testbench can easily see it.
   assign MHARTID_REGW = '0;

@@ -52,9 +52,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   input  logic                  DebugScanIn,
   output logic                  DebugScanOut,
   input  logic                     GPRSel,
-  input  logic                     GPRReadEn,
-  input  logic                     GPRWriteEn,
-  input  logic [P.E_SUPPORTED+2:0] GPRAddr,
+  input  logic                     DebugCapture,
+  input  logic                     DebugGPRUpdate,
+  input  logic [P.E_SUPPORTED+3:0] GPRAddr,
   input  logic                     GPRScanEn,
   input  logic                     GPRScanIn,
   output logic                     GPRScanOut
@@ -233,7 +233,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
      .StructuralStallD, .LoadStallD, .StoreStallD, .PCSrcE,
      .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .InvalidateICacheM,
      .DebugScanEn, .DebugScanIn(ScanReg[2]), .DebugScanOut(ScanReg[3]),
-     .GPRSel, .GPRReadEn, .GPRWriteEn, .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut); 
+     .GPRSel, .DebugCapture, .DebugGPRUpdate, .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut); 
 
   lsu #(P) lsu(
     .clk, .reset, .StallM, .FlushM, .StallW, .FlushW,
@@ -269,7 +269,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .StoreAmoAccessFaultM,        // connects to privilege
     .InstrUpdateDAF,
     .PCSpillF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
-    .LSUStallM, .DebugScanEn, .DebugScanIn(ScanReg[3]), .DebugScanOut);                    
+    .LSUStallM, .DebugCapture, .DebugScanEn, .DebugScanIn(ScanReg[3]), .DebugScanOut);                    
 
   if(P.BUS_SUPPORTED) begin : ebu
     ebu #(P) ebu(// IFU connections
@@ -325,8 +325,8 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS, 
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
       .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM,
-      .DebugScanEn, .DebugScanIn, .DebugScanOut(ScanReg[0]));
-    floprs #(1) scantrapm (.clk, .reset, .d(TrapM), .scan(DebugScanEn), .scanin(ScanReg[0]), .scanout(ScanReg[1]));
+      .DebugCapture, .DebugScanEn, .DebugScanIn, .DebugScanOut(ScanReg[0]));
+    flopenrs #(1) scantrapm (.clk, .reset, .en(DebugCapture), .d(TrapM), .q(), .scan(DebugScanEn), .scanin(ScanReg[0]), .scanout(ScanReg[1]));
   end else begin
     assign {CSRReadValW, PrivilegeModeW, 
             SATP_REGW, STATUS_MXR, STATUS_SUM, STATUS_MPRV, STATUS_MPP, STATUS_FS, FRM_REGW,

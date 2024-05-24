@@ -79,9 +79,9 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   input  logic                     DebugScanIn,
   output logic                     DebugScanOut,
   input  logic                     GPRSel,
-  input  logic                     GPRReadEn,
-  input  logic                     GPRWriteEn,
-  input  logic [P.E_SUPPORTED+2:0] GPRAddr,
+  input  logic                     DebugCapture,
+  input  logic                     DebugGPRUpdate,
+  input  logic [P.E_SUPPORTED+3:0] GPRAddr,
   input  logic                     GPRScanEn,
   input  logic                     GPRScanIn,
   output logic                     GPRScanOut
@@ -102,6 +102,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0] IEUResultM;                     // Result from execution stage
   logic [P.XLEN-1:0] IFResultM;                      // Result from either IEU or single-cycle FPU op writing an integer register
   // Writeback stage signals
+  logic              RegWriteWM;                     // (Debug) Muxed write enable
   logic [P.XLEN-1:0] SCResultW;                      // Store Conditional result
   logic [P.XLEN-1:0] ResultW;
   (* mark_debug = "true" *)logic [P.XLEN-1:0] ResultWM;              // Result to write to register file
@@ -111,18 +112,19 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0] MulDivResultW;                  // Multiply always comes from MDU.  Divide could come from MDU or FPU (when using fdivsqrt for integer division)
   // Debug signals
   logic              DSCR;
-  (* mark_debug = "true" *)logic [P.XLEN-1:0] DebugGPRWrite;
+  (* mark_debug = "true" *)logic [P.XLEN-1:0] DebugGPRWriteD;
 
   // Decode stage
-  regfile #(P.XLEN, P.E_SUPPORTED) regf(clk, reset, (RegWriteW || GPRWriteEn), Rs1DM, Rs2D, RdWM, ResultWM, R1D, R2D);
+  regfile #(P.XLEN, P.E_SUPPORTED) regf(clk, reset, RegWriteWM, Rs1DM, Rs2D, RdWM, ResultWM, R1D, R2D);
   extend #(P)        ext(.InstrD(InstrD[31:7]), .ImmSrcD, .ImmExtD);
 
   // Access GPRs from Debug Module
   // if regfile can be made scannable, this logic is unnecessary
+  assign RegWriteWM = GPRSel ? DebugGPRUpdate : RegWriteW;
   assign Rs1DM = GPRSel ? GPRAddr : Rs1D;
   assign RdWM = GPRSel ? GPRAddr : RdW;
-  assign ResultWM = GPRSel ? DebugGPRWrite : ResultW;
-  flopenrs #(P.XLEN) GPRScanReg(.clk, .reset, .en(GPRReadEn), .d(R1D), .q(DebugGPRWrite), .scan(GPRScanEn), .scanin(GPRScanIn), .scanout(GPRScanOut));
+  assign ResultWM = GPRSel ? DebugGPRWriteD : ResultW;
+  flopenrs #(P.XLEN) GPRScanReg(.clk, .reset, .en(DebugCapture), .d(R1D), .q(DebugGPRWriteD), .scan(GPRScanEn), .scanin(GPRScanIn), .scanout(GPRScanOut));
  
   // Execute stage pipeline register and logic
   flopenrc #(P.XLEN) RD1EReg(clk, reset, FlushE, ~StallE, R1D, R1E);

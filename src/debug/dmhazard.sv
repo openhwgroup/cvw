@@ -41,7 +41,7 @@ module dmhazard(
   output logic DebugStall
 );
 
-  (* mark_debug = "true" *)enum bit [3:0] {
+  (* mark_debug = "true" *)enum bit [1:0] {
     RUNNING,
     HALTED,
     STEP

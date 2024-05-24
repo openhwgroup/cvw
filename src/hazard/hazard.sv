@@ -2,7 +2,8 @@
 // hazard.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
-// Modified: 
+// Modified: matthew.n.otto@okstate.edu 20 May 2024
+//           Add logic to stall pipe and block flushes via DM
 //
 // Purpose: Determine stalls and flushes
 // 
@@ -40,9 +41,9 @@ module hazard import cvw::*;  #(parameter cvw_t P) (
   output logic FlushD, FlushE, FlushM, FlushW
 );
 
-  logic                                       StallFCause, StallDCause, StallECause, StallMCause, StallWCause;
-  logic                                       LatestUnstalledD, LatestUnstalledE, LatestUnstalledM, LatestUnstalledW;
-  logic                                       FlushDCause, FlushECause, FlushMCause, FlushWCause;
+  logic StallFCause, StallDCause, StallECause, StallMCause, StallWCause;
+  logic LatestUnstalledD, LatestUnstalledE, LatestUnstalledM, LatestUnstalledW;
+  logic FlushDCause, FlushECause, FlushMCause, FlushWCause;
 
   logic WFIStallM, WFIInterruptedM;
 
@@ -70,10 +71,10 @@ module hazard import cvw::*;  #(parameter cvw_t P) (
   // Branch misprediction is found in the Execute stage and must flush the next two instructions.
   //   However, an active division operation resides in the Execute stage, and when the BP incorrectly mispredicts the divide as a taken branch, the divde must still complete
   // When a WFI is interrupted and causes a trap, it flushes the rest of the pipeline but not the W stage, because the WFI needs to commit
-  assign FlushDCause = (~DebugStall & TrapM ) | RetM | CSRWriteFenceM | BPWrongE;
-  assign FlushECause = (~DebugStall & TrapM ) | RetM | CSRWriteFenceM |(BPWrongE & ~(DivBusyE | FDivBusyE));
-  assign FlushMCause = (~DebugStall & TrapM ) | RetM | CSRWriteFenceM;
-  assign FlushWCause = (~DebugStall & TrapM ) & ~WFIInterruptedM;
+  assign FlushDCause = TrapM | RetM | CSRWriteFenceM | BPWrongE;
+  assign FlushECause = TrapM | RetM | CSRWriteFenceM |(BPWrongE & ~(DivBusyE | FDivBusyE));
+  assign FlushMCause = TrapM | RetM | CSRWriteFenceM;
+  assign FlushWCause = TrapM & ~WFIInterruptedM;
 
   // Stall causes
   //  Most data depenency stalls are identified in the decode stage
@@ -108,8 +109,9 @@ module hazard import cvw::*;  #(parameter cvw_t P) (
   assign LatestUnstalledW = ~StallW & StallM;
   
   // Each stage flushes if the previous stage is the last one stalled (for cause) or the system has reason to flush
-  assign FlushD = LatestUnstalledD | FlushDCause; 
-  assign FlushE = LatestUnstalledE | FlushECause;
-  assign FlushM = LatestUnstalledM | FlushMCause;
-  assign FlushW = LatestUnstalledW | FlushWCause;
+  // Do not flush if halted for Debug
+  assign FlushD = ~DebugStall & (LatestUnstalledD | FlushDCause);
+  assign FlushE = ~DebugStall & (LatestUnstalledE | FlushECause);
+  assign FlushM = ~DebugStall & (LatestUnstalledM | FlushMCause);
+  assign FlushW = ~DebugStall & (LatestUnstalledW | FlushWCause);
 endmodule

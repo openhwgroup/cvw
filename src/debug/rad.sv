@@ -28,10 +28,12 @@
 module rad import cvw::*; #(parameter cvw_t P) (
   input  logic [2:0]               AarSize,
   input  logic [15:0]              Regno,
+  input  logic                     Write,
   output logic                     GPRRegNo,
   output logic [9:0]               ScanChainLen,
   output logic [9:0]               ShiftCount,
   output logic                     InvalidRegNo,
+  output logic                     ReadOnlyError,
   output logic [P.E_SUPPORTED+3:0] GPRAddr,
   output logic [P.XLEN-1:0]        ARMask
 );
@@ -50,7 +52,7 @@ module rad import cvw::*; #(parameter cvw_t P) (
     + MISALEN + TRAPMLEN + PCMLEN + INSTRMLEN
     + MEMRWMLEN + INSTRVALIDMLEN + WRITEDATAMLEN
     + IEUADRMLEN + READDATAMLEN;
-  localparam GPRCHAINLEN = P.XLEN - 1;
+  localparam GPRCHAINLEN = P.XLEN;
 
   localparam MISA_IDX = MISALEN;
   localparam TRAPM_IDX = MISA_IDX + TRAPMLEN;
@@ -74,6 +76,7 @@ module rad import cvw::*; #(parameter cvw_t P) (
   // Register decoder
   always_comb begin
     InvalidRegNo = 0;
+    ReadOnlyError = 0;
     GPRRegNo = 0;
     casez (Regno)
       16'h100? : begin
@@ -88,10 +91,12 @@ module rad import cvw::*; #(parameter cvw_t P) (
       `MISA : begin
         ShiftCount = SCANCHAINLEN - MISA_IDX;
         InvalidRegNo = ~P.ZICSR_SUPPORTED;
+        ReadOnlyError = Write;
       end
       `TRAPM : begin
         ShiftCount = SCANCHAINLEN - TRAPM_IDX;
         InvalidRegNo = ~P.ZICSR_SUPPORTED;
+        ReadOnlyError = Write;
       end
       `PCM : begin
         ShiftCount = SCANCHAINLEN - PCM_IDX;
@@ -105,7 +110,10 @@ module rad import cvw::*; #(parameter cvw_t P) (
       `INSTRVALIDM : ShiftCount = SCANCHAINLEN - INSTRVALIDM_IDX;
       `WRITEDATAM  : ShiftCount = SCANCHAINLEN - WRITEDATAM_IDX;
       `IEUADRM     : ShiftCount = SCANCHAINLEN - IEUADRM_IDX;
-      `READDATAM   : ShiftCount = SCANCHAINLEN - READDATAM_IDX;
+      `READDATAM : begin
+        ShiftCount = SCANCHAINLEN - READDATAM_IDX;
+        ReadOnlyError = Write;
+      end
       default : begin
         ShiftCount = 0;
         InvalidRegNo = 1;

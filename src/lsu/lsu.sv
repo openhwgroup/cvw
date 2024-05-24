@@ -95,6 +95,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   input var logic [7:0]           PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0], // PMP configuration from privileged unit
   input var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0],// PMP address from privileged unit
   // Debug scan chain
+  input  logic                    DebugCapture,
   input  logic                    DebugScanEn,
   input  logic                    DebugScanIn,
   output logic                    DebugScanOut
@@ -429,10 +430,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     .FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
   subwordwrite #(P.LLEN) subwordwrite(.LSUFunct3M, .IMAFWriteDataM, .LittleEndianWriteDataM);
 
-  // TODO: set regno to read only
-  // TODO: gate clock so this doesnt switch continuously
   // Dummy register to provide read access to DM
-  floprs #(P.LLEN) ReadDataMScan (.clk, .reset, .d(ReadDataM), .scan(DebugScanEn), .scanin(DSCR), .scanout(DebugScanOut));
+  flopenrs #(P.LLEN) ReadDataMScan (.clk, .reset, .en(DebugCapture), .d(ReadDataM), .q(), .scan(DebugScanEn), .scanin(DSCR), .scanout(DebugScanOut));
 
   // Compute byte masks
   swbytemask #(P.LLEN, P.ZICCLSM_SUPPORTED) swbytemask(.Size(LSUFunct3M), .Adr(PAdrM[$clog2(P.LLEN/8)-1:0]), .ByteMask(ByteMaskM), .ByteMaskExtended(ByteMaskExtendedM));

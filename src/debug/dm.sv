@@ -45,8 +45,8 @@ module dm import cvw::*; #(parameter cvw_t P) (
   input  logic                     ScanIn,
   output logic                     ScanOut,
   output logic                     GPRSel,
-  (* mark_debug = "true" *)output logic                     GPRReadEn,
-  (* mark_debug = "true" *)output logic                     GPRWriteEn,
+  (* mark_debug = "true" *)output logic                     DebugCapture,
+  (* mark_debug = "true" *)output logic                     DebugGPRUpdate,
   (* mark_debug = "true" *)output logic [P.E_SUPPORTED+3:0] GPRAddr,
   (* mark_debug = "true" *)output logic                     GPRScanEn,
   input  logic                     GPRScanIn,
@@ -101,7 +101,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
     AC_IDLE,
     AC_GPRUPDATE,
     AC_SCAN,
-    AC_GPRCAPTURE
+    AC_CAPTURE
   } AcState, NewAcState;
 
   // AbsCmd internal state
@@ -115,6 +115,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   (* mark_debug = "true" *)logic [9:0]        ScanChainLen;   // Total length of currently selected scan chain
   (* mark_debug = "true" *)logic [9:0]        Cycle;          // DM's current position in the scan chain
   (* mark_debug = "true" *)logic              InvalidRegNo;   // Requested RegNo is invalid
+  (* mark_debug = "true" *)logic              ReadOnlyError;  // Attempted to write to a readonly RegNo
   (* mark_debug = "true" *)logic              GPRRegNo;       // Requested RegNo is a GPR
   (* mark_debug = "true" *)logic              StoreScanChain; // Store current value of ScanReg into DataX
   (* mark_debug = "true" *)logic              WriteMsgReg;    // Write to DataX
@@ -340,7 +341,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
           State <= ACK;
         end
 
-        ABST_COMMAND : begin // TODO: clean this up
+        ABST_COMMAND : begin
           if (CmdErr != `CMDERR_NONE); // If CmdErr, do nothing
           else if (Busy)
             CmdErr <= `CMDERR_BUSY; // If Busy, set CmdErr, do nothing
@@ -354,6 +355,8 @@ module dm import cvw::*; #(parameter cvw_t P) (
                 else if (~ReqData[`TRANSFER]); // If not TRANSFER, do nothing
                 else if (InvalidRegNo)
                   CmdErr <= `CMDERR_EXCEPTION; // If InvalidRegNo, set CmdErr, do nothing
+                else if (ReadOnlyError)
+                  CmdErr <= `CMDERR_NOT_SUPPORTED; // If writing to a read only register, set CmdErr, do nothing
                 else begin
                   AcWrite <= ReqData[`AARWRITE];
                   NewAcState <= AC_SCAN;
@@ -400,11 +403,11 @@ module dm import cvw::*; #(parameter cvw_t P) (
         AC_IDLE : begin
           Cycle <= 0;
           case (NewAcState)
-            AC_SCAN : AcState <= (GPRRegNo && ~AcWrite) ? AC_GPRCAPTURE : AC_SCAN;
+            AC_SCAN : AcState <= ~AcWrite ? AC_CAPTURE : AC_SCAN;
           endcase
         end
 
-        AC_GPRCAPTURE : begin
+        AC_CAPTURE : begin
           AcState <= AC_SCAN;
         end
 
@@ -423,8 +426,8 @@ module dm import cvw::*; #(parameter cvw_t P) (
   end
 
   assign Busy = ~(AcState == AC_IDLE);
-  assign GPRReadEn = (AcState == AC_GPRCAPTURE);
-  assign GPRWriteEn = (AcState == AC_GPRUPDATE);
+  assign DebugCapture = (AcState == AC_CAPTURE);
+  assign DebugGPRUpdate = (AcState == AC_GPRUPDATE);
 
   // Scan Chain
   assign GPRSel = GPRRegNo && (AcState != AC_IDLE);
@@ -443,7 +446,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   else if (P.XLEN == 128)
     assign PackedDataReg = {Data3,Data2,Data1,Data0};
   
-  assign WriteScanReg = (Cycle == ShiftCount) && AcWrite;
+  assign WriteScanReg = AcWrite && (~GPRRegNo && (Cycle == ShiftCount) || GPRRegNo && (Cycle == 0));
   genvar i;
   for (i=0; i<P.XLEN; i=i+1) begin
     // ARMask is used as write enable for subword overwrites (basic mask would overwrite neighbors in the chain)
@@ -469,6 +472,6 @@ module dm import cvw::*; #(parameter cvw_t P) (
     flopenr #(32) data3reg (.clk, .reset(rst), .en(StoreScanChain || WriteMsgReg && (ReqAddress == `DATA3)), .d(Data3Wr), .q(Data3));
   end
 
-  rad #(P) regnodecode(.AarSize(ReqData[`AARSIZE]),.Regno(ReqData[`REGNO]),.GPRRegNo,.ScanChainLen,.ShiftCount,.InvalidRegNo,.GPRAddr,.ARMask);
+  rad #(P) regnodecode(.AarSize(ReqData[`AARSIZE]),.Regno(ReqData[`REGNO]),.Write(ReqData[`AARWRITE]),.GPRRegNo,.ScanChainLen,.ShiftCount,.InvalidRegNo,.ReadOnlyError,.GPRAddr,.ARMask);
 
 endmodule

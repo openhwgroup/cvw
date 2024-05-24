@@ -79,9 +79,9 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                       ScanIn;
   logic                       ScanOut;
   logic                       GPRSel;
-  logic                       GPRReadEn;
-  logic                       GPRWriteEn;
-  logic [P.E_SUPPORTED+2:0]   GPRAddr;
+  logic                       DebugCapture;
+  logic                       DebugGPRUpdate;
+  logic [P.E_SUPPORTED+3:0]   GPRAddr;
   logic                       GPRScanEn;
   logic                       GPRScanIn;
   logic                       GPRScanOut;
@@ -95,7 +95,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
     .DebugStall, .DebugScanEn(ScanEn), .DebugScanIn(ScanOut), .DebugScanOut(ScanIn),
-    .GPRSel, .GPRReadEn, .GPRWriteEn, .GPRAddr, .GPRScanEn, .GPRScanIn(GPRScanOut), .GPRScanOut(GPRScanIn)
+    .GPRSel, .DebugCapture, .DebugGPRUpdate, .GPRAddr, .GPRScanEn, .GPRScanIn(GPRScanOut), .GPRScanOut(GPRScanIn)
   );
 
   // instantiate uncore if a bus interface exists
@@ -112,7 +112,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
 
   // instantiate debug module
   dm #(P) dm (.clk, .rst(reset), .tck, .tdi, .tms, .tdo,
-    .DebugStall, .ScanEn, .ScanIn, .ScanOut, .GPRSel, .GPRReadEn, .GPRWriteEn, 
+    .DebugStall, .ScanEn, .ScanIn, .ScanOut, .GPRSel, .DebugCapture, .DebugGPRUpdate, 
     .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut);
 
 endmodule
