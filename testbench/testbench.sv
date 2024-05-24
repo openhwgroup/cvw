@@ -597,10 +597,6 @@ module testbench;
 
     rvvisynth #(P, MAX_CSRS) rvvisynth(.clk, .reset, .valid, .rvvi);
 
-    // a bunch of these signals would be needed for the xilinx ethernet IP
-    // but I switched to using https://github.com/alexforencich/verilog-ethernet
-    // so most arn't needed anymore.  *** remove once I've confirmed this
-    // works in synthesis.
     logic                                             m_axi_awready;
     // axi 4 write data channel
     logic [31:0]                                      m_axi_wdata;
@@ -608,27 +604,6 @@ module testbench;
     logic                                             m_axi_wlast;
     logic                                             m_axi_wvalid;
     logic                                             m_axi_wready;
-    // axi 4 write response channel
-    logic [3:0]                                       m_axi_bid;
-    logic [1:0]                                       m_axi_bresp;
-    logic                                             m_axi_bvalid;
-    logic                                             m_axi_bready;
-    // axi 4 read address channel
-    logic [3:0]                                       m_axi_arid;
-    logic [12:0]                                      m_axi_araddr;
-    logic [7:0]                                       m_axi_arlen;
-    logic [2:0]                                       m_axi_arsize;
-    logic [1:0]                                       m_axi_arburst;
-    logic [3:0]                                       m_axi_arcache;
-    logic                                             m_axi_arvalid;
-    logic                                             m_axi_arready;
-    // axi 4 read data channel
-    logic [3:0]                                       m_axi_rid;
-    logic [31:0]                                      m_axi_rdata;
-    logic [1:0]                                       m_axi_rresp;
-    logic                                             m_axi_rlast;
-    logic                                             m_axi_rvalid;
-    logic                                             m_axi_rready;
 
     logic [3:0]                                       mii_txd;
     logic                                             mii_tx_en, mii_tx_er;
@@ -637,10 +612,7 @@ module testbench;
     logic                                             rx_error_bad_fcs, rx_fifo_overflow, rx_fifo_bad_frame, rx_fifo_good_frame;
 
     packetizer #(P, MAX_CSRS) packetizer(.rvvi, .valid, .m_axi_aclk(clk), .m_axi_aresetn(~reset), .RVVIStall,
-      .m_axi_awready, .m_axi_wdata, .m_axi_wstrb, .m_axi_wlast, .m_axi_wvalid, .m_axi_wready, .m_axi_bid,
-      .m_axi_bresp, .m_axi_bvalid, .m_axi_bready, .m_axi_arid, .m_axi_araddr, .m_axi_arlen, .m_axi_arsize,
-      .m_axi_arburst, .m_axi_arcache, .m_axi_arvalid, .m_axi_arready, .m_axi_rid, .m_axi_rdata, .m_axi_rresp,
-      .m_axi_rlast, .m_axi_rvalid, .m_axi_rready);
+      .m_axi_awready, .m_axi_wdata, .m_axi_wstrb, .m_axi_wlast, .m_axi_wvalid, .m_axi_wready);
 
     eth_mac_mii_fifo #("GENERIC", "BUFG", 32) ethernet(.rst(reset), .logic_clk(clk), .logic_rst(reset),
       .tx_axis_tdata(m_axi_wdata), .tx_axis_tkeep(m_axi_wstrb), .tx_axis_tvalid(m_axi_wvalid), .tx_axis_tready(m_axi_wready),

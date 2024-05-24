@@ -40,28 +40,7 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   output logic [3:0] 	   m_axi_wstrb,
   output logic  		   m_axi_wlast,
   output logic  		   m_axi_wvalid,
-  input  logic  		   m_axi_wready,
-  // axi 4 write response channel
-  input  logic [3:0] 	   m_axi_bid,
-  input  logic [1:0] 	   m_axi_bresp,
-  input  logic  		   m_axi_bvalid,
-  output logic  		   m_axi_bready,
-  // axi 4 read address channel
-  output logic [3:0] 	   m_axi_arid,
-  output logic [12:0] 	   m_axi_araddr,
-  output logic [7:0] 	   m_axi_arlen,
-  output logic [2:0] 	   m_axi_arsize,
-  output logic [1:0] 	   m_axi_arburst,
-  output logic [3:0] 	   m_axi_arcache,
-  output logic  		   m_axi_arvalid,
-  input  logic   		   m_axi_arready,
- // axi 4 read data channel
-  input  logic [3:0] 	   m_axi_rid,
-  input  logic [31:0] 	   m_axi_rdata,
-  input  logic [1:0] 	   m_axi_rresp,
-  input  logic  		   m_axi_rlast,
-  input  logic  		   m_axi_rvalid,
-  output logic  		   m_axi_rready
+  input  logic  		   m_axi_wready
   );
 
   localparam TotalFrameLengthBits = 2*48+32+16+187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12);
@@ -133,10 +112,5 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   assign m_axi_wlast = BurstDone;
   assign m_axi_wvalid = (CurrState == STATE_TRANS);
   
-  assign m_axi_bready = 1'b1; // *** probably wrong.
-
-  // we aren't using the read channels. This ethernet device isn't going to read anything for now
-  assign {m_axi_arid, m_axi_araddr, m_axi_arlen, m_axi_arsize, m_axi_arburst, m_axi_arcache, m_axi_arvalid, m_axi_rready} = '0;
-    
 endmodule
  
