@@ -601,13 +601,6 @@ module testbench;
     // but I switched to using https://github.com/alexforencich/verilog-ethernet
     // so most arn't needed anymore.  *** remove once I've confirmed this
     // works in synthesis.
-    logic [3:0]                                       m_axi_awid;
-    logic [12:0]                                      m_axi_awaddr;
-    logic [7:0]                                       m_axi_awlen;
-    logic [2:0]                                       m_axi_awsize;
-    logic [1:0]                                       m_axi_awburst;
-    logic [3:0]                                       m_axi_awcache;
-    logic                                             m_axi_awvalid;
     logic                                             m_axi_awready;
     // axi 4 write data channel
     logic [31:0]                                      m_axi_wdata;
@@ -644,7 +637,6 @@ module testbench;
     logic                                             rx_error_bad_fcs, rx_fifo_overflow, rx_fifo_bad_frame, rx_fifo_good_frame;
 
     packetizer #(P, MAX_CSRS) packetizer(.rvvi, .valid, .m_axi_aclk(clk), .m_axi_aresetn(~reset), .RVVIStall,
-      .m_axi_awid, .m_axi_awaddr, .m_axi_awlen, .m_axi_awsize, .m_axi_awburst, .m_axi_awcache, .m_axi_awvalid,
       .m_axi_awready, .m_axi_wdata, .m_axi_wstrb, .m_axi_wlast, .m_axi_wvalid, .m_axi_wready, .m_axi_bid,
       .m_axi_bresp, .m_axi_bvalid, .m_axi_bready, .m_axi_arid, .m_axi_araddr, .m_axi_arlen, .m_axi_arsize,
       .m_axi_arburst, .m_axi_arcache, .m_axi_arvalid, .m_axi_arready, .m_axi_rid, .m_axi_rdata, .m_axi_rresp,

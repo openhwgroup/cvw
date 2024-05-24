@@ -34,13 +34,6 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   input  logic m_axi_aclk, m_axi_aresetn,
   output logic RVVIStall,
   // axi 4 write address channel
-  output logic [3:0] 	   m_axi_awid,
-  output logic [12:0] 	   m_axi_awaddr,
-  output logic [7:0] 	   m_axi_awlen,
-  output logic [2:0] 	   m_axi_awsize,
-  output logic [1:0] 	   m_axi_awburst,
-  output logic [3:0] 	   m_axi_awcache,
-  output logic             m_axi_awvalid,
   input  logic  		   m_axi_awready,
   // axi 4 write data channel
   output logic [31:0]      m_axi_wdata,
@@ -122,13 +115,6 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   assign BytesInFrame = 12'd76;
   assign BurstDone = WordCount == (BytesInFrame[11:2] - 1'b1);
 
-  assign m_axi_awid = '0;
-  assign m_axi_awaddr = '0; // *** bug update to be based on the correct address during each beat.
-  assign m_axi_awlen = BytesInFrame[11:2];
-  assign m_axi_awsize = 3'b010; // 4 bytes
-  assign m_axi_awburst = 2'b01; // increment
-  assign m_axi_awcache = '0;
-  assign m_axi_awvalid = (CurrState == STATE_RDY & valid) | CurrState == STATE_TRANS;
   genvar index;
   for (index = 0; index < TotalFrameLengthBytes/4; index++) begin 
     assign TotalFrameWords[index] = TotalFrame[(index*32)+32-1 : (index*32)];
