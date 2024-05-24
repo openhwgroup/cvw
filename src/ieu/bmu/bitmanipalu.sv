@@ -113,8 +113,8 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
 
   // ZKND and ZKNE AES decryption and encryption
   if (P.ZKND_SUPPORTED | P.ZKNE_SUPPORTED) begin: zknde
-    if (P.XLEN == 32) zknde32 #(P) ZKN32(.A(ABMU), .B(BBMU), .Funct7, .round(Rs2E[3:0]), .ZKNSelect(ZBBSelect[3:0]), .ZKNDEResult); 
-    else              zknde64 #(P) ZKN64(.A(ABMU), .B(BBMU), .Funct7, .round(Rs2E[3:0]), .ZKNSelect(ZBBSelect[3:0]), .ZKNDEResult); 
+    if (P.XLEN == 32) zknde32 #(P) ZKN32(.A(ABMU), .B(BBMU), .bs(Funct7[6:5]), .round(Rs2E[3:0]), .ZKNSelect(ZBBSelect[3:0]), .ZKNDEResult); 
+    else              zknde64 #(P) ZKN64(.A(ABMU), .B(BBMU),                   .round(Rs2E[3:0]), .ZKNSelect(ZBBSelect[3:0]), .ZKNDEResult); 
   end else assign ZKNDEResult = '0;
  
   // ZKNH Unit

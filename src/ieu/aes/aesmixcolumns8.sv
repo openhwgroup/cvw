@@ -27,7 +27,7 @@
 
 
 module aesmixcolumns8(
-   input  logic [7:0] a, 
+   input  logic [7:0]  a, 
    output logic [31:0] y
 );
 

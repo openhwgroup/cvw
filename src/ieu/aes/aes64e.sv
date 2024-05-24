@@ -48,7 +48,7 @@ module aes64e(
 
     // Apply MixColumns operations
     aesmixcolumns32 mw0(SboxOut[31:0],  MixcolOut[31:0]);
-    aesmixcolumns32 mw1(SboxOut[63:32], MixcolOut[63:32]);    
+    aesmixcolumns32 mw1(SboxOut[63:32], MixcolOut[63:32]);
 
     // Skip mixcolumns on last round
     mux2 #(64) resultmux(MixcolOut, SboxOut, finalround, result);
