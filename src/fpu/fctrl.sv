@@ -165,19 +165,19 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
                                   else if (Rs2D == 5'b00100 & P.ZFA_SUPPORTED)
                                                 ControlsD = `FCTRLW'b1_0_00_00_100_0_0_0_1_0; // fround.s  (Zfa) 
                                   else if (Rs2D == 5'b00101 & P.ZFA_SUPPORTED)
-                                                ControlsD = `FCTRLW'b1_0_00_00_100_0_0_0_1_0; // froundnx.s  (Zfa) 
+                                                ControlsD = `FCTRLW'b1_0_00_00_100_0_0_0_1_1; // froundnx.s  (Zfa) 
                       7'b0100001: if (Rs2D[4:2] == 3'b000  & SupportedFmt2 & Rs2D[1:0] != 2'b01)
                                                 ControlsD = `FCTRLW'b1_0_01_00_001_0_0_0_0_0; // fcvt.d.(s/h/q)
                                   else if (Rs2D == 5'b00100 & P.ZFA_SUPPORTED)
                                                 ControlsD = `FCTRLW'b1_0_00_00_100_0_0_0_1_0; // fround.d  (Zfa)
                                   else if (Rs2D == 5'b00101 & P.ZFA_SUPPORTED)
-                                                ControlsD = `FCTRLW'b1_0_00_00_100_0_0_0_1_0; // froundnx.d  (Zfa)
+                                                ControlsD = `FCTRLW'b1_0_00_00_100_0_0_0_1_1; // froundnx.d  (Zfa)
                       7'b0100010: if (Rs2D[4:2] == 3'b000 & SupportedFmt2 & Rs2D[1:0] != 2'b10)
                                                 ControlsD = `FCTRLW'b1_0_01_00_010_0_0_0_0_0; // fcvt.h.(s/d/q)
                                   else if (Rs2D == 5'b00100 & P.ZFA_SUPPORTED)
                                                 ControlsD = `FCTRLW'b1_0_00_00_100_0_0_0_1_0; // fround.h  (Zfa)
                                   else if (Rs2D == 5'b00101 & P.ZFA_SUPPORTED)
-                                                ControlsD = `FCTRLW'b1_0_00_00_100_0_0_0_1_0; // froundnx.h  (Zfa)
+                                                ControlsD = `FCTRLW'b1_0_00_00_100_0_0_0_1_1; // froundnx.h  (Zfa)
                       // coverage off
                       // Not covered in testing because rv64gc does not support quad precision
                       7'b0100011: if (Rs2D[4:2] == 3'b000  & SupportedFmt2 & Rs2D[1:0] != 2'b11)
@@ -185,7 +185,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
                                   else if (Rs2D == 5'b00100 & P.ZFA_SUPPORTED)
                                                 ControlsD = `FCTRLW'b1_0_00_00_100_0_0_0_1_0; // fround.q  (Zfa)
                                   else if (Rs2D == 5'b00101 & P.ZFA_SUPPORTED)
-                                                ControlsD = `FCTRLW'b1_0_00_00_100_0_0_0_1_0; // froundnx.q  (Zfa)
+                                                ControlsD = `FCTRLW'b1_0_00_00_100_0_0_0_1_1; // froundnx.q  (Zfa)
                       // coverage on
                       7'b1101000: case(Rs2D)
                                     5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0_0_0; // fcvt.s.w   w->s
