@@ -46,7 +46,7 @@ module aes64e(
 
     aessbox32 sbox1(ShiftRowOut[63:32], SboxOut[63:32]); // instantiate second sbox
 
-    // Apply mix columns operations
+    // Apply MixColumns operations
     aesmixcolumns32 mw0(SboxOut[31:0],  MixcolOut[31:0]);
     aesmixcolumns32 mw1(SboxOut[63:32], MixcolOut[63:32]);    
 
