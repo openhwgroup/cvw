@@ -115,7 +115,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   (* mark_debug = "true" *)logic [9:0]        ScanChainLen;   // Total length of currently selected scan chain
   (* mark_debug = "true" *)logic [9:0]        Cycle;          // DM's current position in the scan chain
   (* mark_debug = "true" *)logic              InvalidRegNo;   // Requested RegNo is invalid
-  (* mark_debug = "true" *)logic              ReadOnlyError;  // Attempted to write to a readonly RegNo
+  (* mark_debug = "true" *)logic              ReadOnly;       // Current RegNo points to a readonly register
   (* mark_debug = "true" *)logic              GPRRegNo;       // Requested RegNo is a GPR
   (* mark_debug = "true" *)logic              StoreScanChain; // Store current value of ScanReg into DataX
   (* mark_debug = "true" *)logic              WriteMsgReg;    // Write to DataX
@@ -355,7 +355,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
                 else if (~ReqData[`TRANSFER]); // If not TRANSFER, do nothing
                 else if (InvalidRegNo)
                   CmdErr <= `CMDERR_EXCEPTION; // If InvalidRegNo, set CmdErr, do nothing
-                else if (ReadOnlyError)
+                else if (ReqData[`AARWRITE] && ReadOnly)
                   CmdErr <= `CMDERR_NOT_SUPPORTED; // If writing to a read only register, set CmdErr, do nothing
                 else begin
                   AcWrite <= ReqData[`AARWRITE];
@@ -472,6 +472,6 @@ module dm import cvw::*; #(parameter cvw_t P) (
     flopenr #(32) data3reg (.clk, .reset(rst), .en(StoreScanChain || WriteMsgReg && (ReqAddress == `DATA3)), .d(Data3Wr), .q(Data3));
   end
 
-  rad #(P) regnodecode(.AarSize(ReqData[`AARSIZE]),.Regno(ReqData[`REGNO]),.Write(ReqData[`AARWRITE]),.GPRRegNo,.ScanChainLen,.ShiftCount,.InvalidRegNo,.ReadOnlyError,.GPRAddr,.ARMask);
+  rad #(P) regnodecode(.AarSize(ReqData[`AARSIZE]),.Regno(ReqData[`REGNO]),.GPRRegNo,.ScanChainLen,.ShiftCount,.InvalidRegNo,.ReadOnly,.GPRAddr,.ARMask);
 
 endmodule

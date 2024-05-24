@@ -28,12 +28,11 @@
 module rad import cvw::*; #(parameter cvw_t P) (
   input  logic [2:0]               AarSize,
   input  logic [15:0]              Regno,
-  input  logic                     Write,
   output logic                     GPRRegNo,
   output logic [9:0]               ScanChainLen,
   output logic [9:0]               ShiftCount,
   output logic                     InvalidRegNo,
-  output logic                     ReadOnlyError,
+  output logic                     ReadOnly,
   output logic [P.E_SUPPORTED+3:0] GPRAddr,
   output logic [P.XLEN-1:0]        ARMask
 );
@@ -76,7 +75,7 @@ module rad import cvw::*; #(parameter cvw_t P) (
   // Register decoder
   always_comb begin
     InvalidRegNo = 0;
-    ReadOnlyError = 0;
+    ReadOnly = 0;
     GPRRegNo = 0;
     casez (Regno)
       16'h100? : begin
@@ -91,12 +90,12 @@ module rad import cvw::*; #(parameter cvw_t P) (
       `MISA : begin
         ShiftCount = SCANCHAINLEN - MISA_IDX;
         InvalidRegNo = ~P.ZICSR_SUPPORTED;
-        ReadOnlyError = Write;
+        ReadOnly = 1;
       end
       `TRAPM : begin
         ShiftCount = SCANCHAINLEN - TRAPM_IDX;
         InvalidRegNo = ~P.ZICSR_SUPPORTED;
-        ReadOnlyError = Write;
+        ReadOnly = 1;
       end
       `PCM : begin
         ShiftCount = SCANCHAINLEN - PCM_IDX;
@@ -112,7 +111,7 @@ module rad import cvw::*; #(parameter cvw_t P) (
       `IEUADRM     : ShiftCount = SCANCHAINLEN - IEUADRM_IDX;
       `READDATAM : begin
         ShiftCount = SCANCHAINLEN - READDATAM_IDX;
-        ReadOnlyError = Write;
+        ReadOnly = 1;
       end
       default : begin
         ShiftCount = 0;
