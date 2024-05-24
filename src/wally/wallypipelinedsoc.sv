@@ -99,6 +99,10 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
 
   rvvisynth #(P, MAX_CSRS) rvvisynth(.clk, .reset, .valid, .rvvi);
 
+  // a bunch of these signals would be needed for the xilinx ethernet IP
+  // but I switched to using https://github.com/alexforencich/verilog-ethernet
+  // so most arn't needed anymore.  *** remove once I've confirmed this
+  // works in synthesis.
   logic [3:0]                                       m_axi_awid;
   logic [12:0]                                      m_axi_awaddr;
   logic [7:0]                                       m_axi_awlen;
@@ -140,8 +144,6 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   
   logic                                             tx_error_underflow, tx_fifo_overflow, tx_fifo_bad_frame, tx_fifo_good_frame, rx_error_bad_frame;
   logic                                             rx_error_bad_fcs, rx_fifo_overflow, rx_fifo_bad_frame, rx_fifo_good_frame;
-  
-  
 
   packetizer #(P, MAX_CSRS) packetizer(.rvvi, .valid, .m_axi_aclk(clk), .m_axi_aresetn(~reset), .RVVIStall,
     .m_axi_awid, .m_axi_awaddr, .m_axi_awlen, .m_axi_awsize, .m_axi_awburst, .m_axi_awcache, .m_axi_awvalid,
@@ -171,10 +173,6 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     .cfg_ifg(8'd12), .cfg_tx_enable(1'b1), .cfg_rx_enable(1'b1)
     );
   
-
-
-  // *** finally fake the axi4 interface
   assign m_axi_awready = '1;
-  //assign m_axi_wready = '1;
   
 endmodule

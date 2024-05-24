@@ -85,6 +85,8 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   logic [15:0]             Length;
   logic [TotalFrameLengthBits-1:0] TotalFrame;
   logic [31:0] TotalFrameWords [TotalFrameLengthBytes/4-1:0];
+
+  logic [187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)-1:0] rvviDelay;
   
   typedef enum              {STATE_RDY, STATE_WAIT, STATE_TRANS, STATE_TRANS_DONE} statetype;
   statetype CurrState, NextState;
@@ -111,6 +113,8 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   assign WordCountEnable = (CurrState == STATE_RDY & valid) | (CurrState == STATE_TRANS & TransReady);
   assign WordCountReset = CurrState == STATE_RDY;
 
+  flopenr #(187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)) rvvireg(m_axi_aclk, ~m_axi_aresetn, valid, rvvi, rvviDelay);
+
 
   counter #(10) WordCounter(m_axi_aclk, WordCountReset, WordCountEnable, WordCount);
   // *** BUG BytesInFrame will eventually depend on the length of the data stored into the ethernet frame
@@ -130,7 +134,7 @@ module packetizer import cvw::*; #(parameter cvw_t P,
     assign TotalFrameWords[index] = TotalFrame[(index*32)+32-1 : (index*32)];
   end
 
-  assign TotalFrame = {rvvi, Length, Tag, DstMac, SrcMac};
+  assign TotalFrame = {rvviDelay, Length, Tag, DstMac, SrcMac};
 
   // *** fix me later
   assign SrcMac = 48'h8F54_0000_1654; // made something up
