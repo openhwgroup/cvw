@@ -34,7 +34,6 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   input  logic m_axi_aclk, m_axi_aresetn,
   output logic RVVIStall,
   // axi 4 write address channel
-  input  logic  		   m_axi_awready,
   // axi 4 write data channel
   output logic [31:0]      m_axi_wdata,
   output logic [3:0] 	   m_axi_wstrb,
@@ -81,7 +80,7 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   end
 
   assign RVVIStall = CurrState != STATE_RDY;
-  assign TransReady = m_axi_awready & m_axi_wready;
+  assign TransReady = m_axi_wready;
   assign WordCountEnable = (CurrState == STATE_RDY & valid) | (CurrState == STATE_TRANS & TransReady);
   assign WordCountReset = CurrState == STATE_RDY;
 
