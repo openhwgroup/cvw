@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// aesinvshiftrow.sv
+// aesshiftrows64.sv
 //
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
 //
-// Purpose: AES Shiftrow
+// Purpose: aesshiftrow for taking in first Data line
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,11 +25,11 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aesinvshiftrow64(
+module aesshiftrows64(
    input  logic [127:0] a, 
    output logic [63:0] y
 );
-
-   assign y = {a[95:88],   a[119:112], a[15:8],    a[39:32],
-               a[63:56],   a[87:80],   a[111:104], a[7:0]};
+		    
+   assign y = {a[31:24],   a[119:112], a[79:72],   a[39:32],
+               a[127:120], a[87:80],   a[47:40],   a[7:0]};   
 endmodule

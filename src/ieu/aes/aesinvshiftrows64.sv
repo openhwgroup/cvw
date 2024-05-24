@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// aes64d.sv
+// aesinvshiftrows64.sv
 //
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
 //
-// Purpose: aes64dsm and aes64ds instruction: RV64 middle and final round AES decryption 
+// Purpose: AES Shiftrow
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,27 +25,11 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aes64d(
-   input  logic [63:0] rs1,
-   input  logic [63:0] rs2,
-   input  logic        finalround, aes64im,
-   output logic [63:0] result
+module aesinvshiftrows64(
+   input  logic [127:0] a, 
+   output logic [63:0]  y
 );
-   
-   logic [63:0] 		    ShiftRowsOut, SboxOut, MixcolIn, MixcolOut;
-   
-   // Apply inverse shiftrows to rs2 and rs1
-   aesinvshiftrows64 srow({rs2, rs1}, ShiftRowsOut);
-   
-   // Apply full word inverse substitution to lower doubleord of shiftrow out
-   aesinvsbox64 invsbox(ShiftRowsOut,  SboxOut);
-   
-   mux2 #(64) mixcolmux(SboxOut, rs1, aes64im, MixcolIn);
-   
-   // Apply inverse MixColumns to sbox outputs
-   aesinvmixcolumns32 invmw0(MixcolIn[31:0], MixcolOut[31:0]);
-   aesinvmixcolumns32 invmw1(MixcolIn[63:32], MixcolOut[63:32]);
-   
-   // Final round skips mixcolumns.
-   mux2 #(64) resultmux(MixcolOut, SboxOut, finalround, result);
+
+   assign y = {a[95:88],   a[119:112], a[15:8],    a[39:32],
+               a[63:56],   a[87:80],   a[111:104], a[7:0]};
 endmodule

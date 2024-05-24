@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// aesshiftrow.sv
+// aesshiftrows64.sv
 //
 // Written: ryan.swann@okstate.edu, james.stine@okstate.edu
 // Created: 20 February 2024
@@ -25,9 +25,9 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aesshiftrow64(
+module aesshiftrows64(
    input  logic [127:0] a, 
-   output logic [63:0] y
+   output logic [63:0]  y
 );
 		    
    assign y = {a[31:24],   a[119:112], a[79:72],   a[39:32],
