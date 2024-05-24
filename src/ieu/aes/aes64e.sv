@@ -34,7 +34,7 @@ module aes64e(
     output logic [63:0] result
 );
   
-    logic [63:0]  ShiftRowsOut, SboxOut, MixcolOut;
+    logic [63:0]  ShiftRowsOut, SboxOut, MixcolsOut;
                 
     // AES shiftrow unit
     aesshiftrows64 srow({rs2,rs1}, ShiftRowsOut);
@@ -47,9 +47,9 @@ module aes64e(
     aessbox32 sbox1(ShiftRowsOut[63:32], SboxOut[63:32]); // instantiate second sbox
 
     // Apply MixColumns operations
-    aesmixcolumns32 mw0(SboxOut[31:0],  MixcolOut[31:0]);
-    aesmixcolumns32 mw1(SboxOut[63:32], MixcolOut[63:32]);
+    aesmixcolumns32 mw0(SboxOut[31:0],  MixcolsOut[31:0]);
+    aesmixcolumns32 mw1(SboxOut[63:32], MixcolsOut[63:32]);
 
     // Skip mixcolumns on last round
-    mux2 #(64) resultmux(MixcolOut, SboxOut, finalround, result);
+    mux2 #(64) resultmux(MixcolsOut, SboxOut, finalround, result);
 endmodule
