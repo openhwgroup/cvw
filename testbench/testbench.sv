@@ -598,11 +598,11 @@ module testbench;
     rvvisynth #(P, MAX_CSRS) rvvisynth(.clk, .reset, .valid, .rvvi);
 
     // axi 4 write data channel
-    logic [31:0]                                      m_axi_wdata;
-    logic [3:0]                                       m_axi_wstrb;
-    logic                                             m_axi_wlast;
-    logic                                             m_axi_wvalid;
-    logic                                             m_axi_wready;
+    logic [31:0]                                      RvviAxiWdata;
+    logic [3:0]                                       RvviAxiWstrb;
+    logic                                             RvviAxiWlast;
+    logic                                             RvviAxiWvalid;
+    logic                                             RvviAxiWready;
 
     logic [3:0]                                       mii_txd;
     logic                                             mii_tx_en, mii_tx_er;
@@ -611,11 +611,11 @@ module testbench;
     logic                                             rx_error_bad_fcs, rx_fifo_overflow, rx_fifo_bad_frame, rx_fifo_good_frame;
 
     packetizer #(P, MAX_CSRS) packetizer(.rvvi, .valid, .m_axi_aclk(clk), .m_axi_aresetn(~reset), .RVVIStall,
-      .m_axi_wdata, .m_axi_wstrb, .m_axi_wlast, .m_axi_wvalid, .m_axi_wready);
+      .RvviAxiWdata, .RvviAxiWstrb, .RvviAxiWlast, .RvviAxiWvalid, .RvviAxiWready);
 
     eth_mac_mii_fifo #("GENERIC", "BUFG", 32) ethernet(.rst(reset), .logic_clk(clk), .logic_rst(reset),
-      .tx_axis_tdata(m_axi_wdata), .tx_axis_tkeep(m_axi_wstrb), .tx_axis_tvalid(m_axi_wvalid), .tx_axis_tready(m_axi_wready),
-      .tx_axis_tlast(m_axi_wlast), .tx_axis_tuser('0), .rx_axis_tdata(), .rx_axis_tkeep(), .rx_axis_tvalid(), .rx_axis_tready(1'b1),
+      .tx_axis_tdata(RvviAxiWdata), .tx_axis_tkeep(RvviAxiWstrb), .tx_axis_tvalid(RvviAxiWvalid), .tx_axis_tready(RvviAxiWready),
+      .tx_axis_tlast(RvviAxiWlast), .tx_axis_tuser('0), .rx_axis_tdata(), .rx_axis_tkeep(), .rx_axis_tvalid(), .rx_axis_tready(1'b1),
       .rx_axis_tlast(), .rx_axis_tuser(),
 
       // *** update these

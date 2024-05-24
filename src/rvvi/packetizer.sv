@@ -35,11 +35,11 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   output logic RVVIStall,
   // axi 4 write address channel
   // axi 4 write data channel
-  output logic [31:0]      m_axi_wdata,
-  output logic [3:0] 	   m_axi_wstrb,
-  output logic  		   m_axi_wlast,
-  output logic  		   m_axi_wvalid,
-  input  logic  		   m_axi_wready
+  output logic [31:0]      RvviAxiWdata,
+  output logic [3:0] 	   RvviAxiWstrb,
+  output logic  		   RvviAxiWlast,
+  output logic  		   RvviAxiWvalid,
+  input  logic  		   RvviAxiWready
   );
 
   localparam TotalFrameLengthBits = 2*48+32+16+187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12);
@@ -80,7 +80,7 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   end
 
   assign RVVIStall = CurrState != STATE_RDY;
-  assign TransReady = m_axi_wready;
+  assign TransReady = RvviAxiWready;
   assign WordCountEnable = (CurrState == STATE_RDY & valid) | (CurrState == STATE_TRANS & TransReady);
   assign WordCountReset = CurrState == STATE_RDY;
 
@@ -106,10 +106,10 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   assign Tag = '0;
   assign Length = BytesInFrame + 16'd6 + 16'd6 + 16'd4 + 16'd2;
   
-  assign m_axi_wdata = TotalFrameWords[WordCount];
-  assign m_axi_wstrb = '1;
-  assign m_axi_wlast = BurstDone;
-  assign m_axi_wvalid = (CurrState == STATE_TRANS);
+  assign RvviAxiWdata = TotalFrameWords[WordCount];
+  assign RvviAxiWstrb = '1;
+  assign RvviAxiWlast = BurstDone;
+  assign RvviAxiWvalid = (CurrState == STATE_TRANS);
   
 endmodule
  

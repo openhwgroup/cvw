@@ -667,11 +667,11 @@ add wave -noupdate -group packetizer -color Gold /testbench/rvvi_synth/packetize
 add wave -noupdate -group packetizer -radix unsigned /testbench/rvvi_synth/packetizer/WordCount
 add wave -noupdate -group packetizer /testbench/rvvi_synth/packetizer/RVVIStall
 add wave -noupdate -group packetizer /testbench/rvvi_synth/packetizer/rvviDelay
-add wave -noupdate -group packetizer -expand -group axi-write-interface /testbench/rvvi_synth/packetizer/m_axi_wdata
-add wave -noupdate -group packetizer -expand -group axi-write-interface /testbench/rvvi_synth/packetizer/m_axi_wlast
-add wave -noupdate -group packetizer -expand -group axi-write-interface /testbench/rvvi_synth/packetizer/m_axi_wstrb
-add wave -noupdate -group packetizer -expand -group axi-write-interface /testbench/rvvi_synth/packetizer/m_axi_wvalid
-add wave -noupdate -group packetizer -expand -group axi-write-interface /testbench/rvvi_synth/packetizer/m_axi_wready
+add wave -noupdate -group packetizer -expand -group axi-write-interface /testbench/rvvi_synth/packetizer/RvviAxiWdata
+add wave -noupdate -group packetizer -expand -group axi-write-interface /testbench/rvvi_synth/packetizer/RvviAxiWlast
+add wave -noupdate -group packetizer -expand -group axi-write-interface /testbench/rvvi_synth/packetizer/RvviAxiWstrb
+add wave -noupdate -group packetizer -expand -group axi-write-interface /testbench/rvvi_synth/packetizer/RvviAxiWvalid
+add wave -noupdate -group packetizer -expand -group axi-write-interface /testbench/rvvi_synth/packetizer/RvviAxiWready
 add wave -noupdate -expand -group eth /testbench/rvvi_synth/ethernet/mii_tx_clk
 add wave -noupdate -expand -group eth /testbench/rvvi_synth/ethernet/mii_txd
 add wave -noupdate -expand -group eth /testbench/rvvi_synth/ethernet/mii_tx_en
