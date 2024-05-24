@@ -116,7 +116,7 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   // *** BUG BytesInFrame will eventually depend on the length of the data stored into the ethernet frame
   // for now this will be exactly 608 bits (76 bytes, 19 words)
   assign BytesInFrame = 12'd76;
-  assign BurstDone = WordCount == BytesInFrame[11:2];
+  assign BurstDone = WordCount == (BytesInFrame[11:2] - 1'b1);
 
   assign m_axi_awid = '0;
   assign m_axi_awaddr = '0; // *** bug update to be based on the correct address during each beat.
@@ -133,15 +133,15 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   assign TotalFrame = {rvvi, Length, Tag, DstMac, SrcMac};
 
   // *** fix me later
-  assign SrcMac = '0;
-  assign DstMac = '0;
+  assign SrcMac = 48'h8F54_0000_1654; // made something up
+  assign DstMac = 48'h4502_1111_6843;
   assign Tag = '0;
   assign Length = BytesInFrame + 16'd6 + 16'd6 + 16'd4 + 16'd2;
   
   assign m_axi_wdata = TotalFrameWords[WordCount];
   assign m_axi_wstrb = '1;
   assign m_axi_wlast = BurstDone;
-  assign m_axi_wvalid = (CurrState == STATE_RDY & valid) | (CurrState == STATE_TRANS);
+  assign m_axi_wvalid = (CurrState == STATE_TRANS);
   
   assign m_axi_bready = 1'b1; // *** probably wrong.
 

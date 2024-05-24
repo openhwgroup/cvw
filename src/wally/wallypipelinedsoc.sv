@@ -135,8 +135,13 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                                             m_axi_rvalid;
   logic                                             m_axi_rready;
 
-
-
+  logic [3:0]                                       mii_txd;
+  logic                                             mii_tx_en, mii_tx_er;
+  
+  logic                                             tx_error_underflow, tx_fifo_overflow, tx_fifo_bad_frame, tx_fifo_good_frame, rx_error_bad_frame;
+  logic                                             rx_error_bad_fcs, rx_fifo_overflow, rx_fifo_bad_frame, rx_fifo_good_frame;
+  
+  
 
   packetizer #(P, MAX_CSRS) packetizer(.rvvi, .valid, .m_axi_aclk(clk), .m_axi_aresetn(~reset), .RVVIStall,
     .m_axi_awid, .m_axi_awaddr, .m_axi_awlen, .m_axi_awsize, .m_axi_awburst, .m_axi_awcache, .m_axi_awvalid,
@@ -145,8 +150,31 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     .m_axi_arburst, .m_axi_arcache, .m_axi_arvalid, .m_axi_arready, .m_axi_rid, .m_axi_rdata, .m_axi_rresp,
     .m_axi_rlast, .m_axi_rvalid, .m_axi_rready);
 
+  eth_mac_mii_fifo #("GENERIC", "BUFG", 32) ethernet(.rst(reset), .logic_clk(clk), .logic_rst(reset),
+    .tx_axis_tdata(m_axi_wdata), .tx_axis_tkeep(m_axi_wstrb), .tx_axis_tvalid(m_axi_wvalid), .tx_axis_tready(m_axi_wready),
+    .tx_axis_tlast(m_axi_wlast), .tx_axis_tuser('0), .rx_axis_tdata(), .rx_axis_tkeep(), .rx_axis_tvalid(), .rx_axis_tready(1'b1),
+    .rx_axis_tlast(), .rx_axis_tuser(),
+
+    // *** update these
+    .mii_rx_clk(clk), // *** need to be the mii clock
+    .mii_rxd('0),
+    .mii_rx_dv('0),
+    .mii_rx_er('0),
+    .mii_tx_clk(clk), // *** needs to be the mii clock
+    .mii_txd,
+    .mii_tx_en,
+    .mii_tx_er,
+
+    // status
+    .tx_error_underflow, .tx_fifo_overflow, .tx_fifo_bad_frame, .tx_fifo_good_frame, .rx_error_bad_frame,
+    .rx_error_bad_fcs, .rx_fifo_overflow, .rx_fifo_bad_frame, .rx_fifo_good_frame, 
+    .cfg_ifg(8'd12), .cfg_tx_enable(1'b1), .cfg_rx_enable(1'b1)
+    );
+  
+
+
   // *** finally fake the axi4 interface
   assign m_axi_awready = '1;
-  assign m_axi_wready = '1;
+  //assign m_axi_wready = '1;
   
 endmodule
