@@ -158,8 +158,8 @@ module ahbxuiconverter
   // Use an FSM to issue UI bursts
   uiburstctrl #(BURST_LEN) uictrl (
     .clk(ui_clk), .reset(ui_clk_sync_rst),
-    .app_rdy(ui_initialized & app_rdy), .app_wdf_rdy,
-    .write, .op_ready(cmd_r_valid), .app_rd_data_valid,
+    .ui_initialized, .app_rdy, .app_wdf_rdy,
+    .write, .op_ready(cmd_r_valid),
     .app_en, .app_cmd0(app_cmd[0]), .app_wdf_wren, .app_wdf_end,
     .dequeue_op(cmd_deq)
   );

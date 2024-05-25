@@ -29,18 +29,21 @@
 module uiburstctrl #(parameter BURST_LEN = 8) (
   input  logic clk,
   input  logic reset,
+  input  logic ui_initialized,
   input  logic app_rdy,
   input  logic app_wdf_rdy,
   input  logic write,
   input  logic op_ready,
-  input  logic app_rd_data_valid,
   output logic app_en,
   output logic app_cmd0,
   output logic app_wdf_wren,
   output logic app_wdf_end,
   output logic dequeue_op
 );
-  typedef enum logic [1:0] {IDLE=0, RBIP, WBIP} state;
+  // State Definitions
+  // IDLE: Ready for next command (default)
+  // WBIP: Write Burst In Progress: write addr issued, waiting for write data
+  typedef enum logic {IDLE=0, WBIP} state;
 
   logic [$clog2(BURST_LEN)-1:0] op_count;
   logic inc_op_count;
@@ -49,33 +52,31 @@ module uiburstctrl #(parameter BURST_LEN = 8) (
   logic [4:0] inputs;
   logic [5:0] outputs;
 
-  // Op counter - used to track # writes issued and # read responses received
+  // Op counter - used to track # reads or writes issued
   counter #($clog2(BURST_LEN)) op_counter (clk, reset, inc_op_count, op_count);
   assign last_op = &op_count;
 
   // State transition logic
-  flopr #(2) statereg (clk, reset, next_state, current_state);
+  flopr #(1) statereg (clk, reset, next_state, current_state);
   always_comb begin
-    inputs = {app_rdy, app_wdf_rdy, write, op_ready, app_rd_data_valid};
+    inputs = {ui_initialized, app_rdy, app_wdf_rdy, write, op_ready};
     case (current_state)
       IDLE: casez (inputs)
-              5'b0????: {next_state, outputs} = {IDLE, 6'b000000};
-              5'b1??0?: {next_state, outputs} = {IDLE, 6'b000000};
-              5'b1?01?: {next_state, outputs} = {RBIP, 6'b011000};
-              5'b1011?: {next_state, outputs} = {IDLE, 6'b000000};
-              5'b1111?: {next_state, outputs} = {WBIP, 6'b110101};
-            endcase
-      RBIP: casez (inputs)
-              5'b????0: {next_state, outputs} = {RBIP, 6'b011000};
-              5'b????1: if (last_op) {next_state, outputs} = {IDLE, 6'b111001};
-                        else         {next_state, outputs} = {RBIP, 6'b011001};
+              5'b0????: {next_state, outputs} = {IDLE, 6'b000000}; // Wait for init
+              5'b1???0: {next_state, outputs} = {IDLE, 6'b001000}; // Wait for commands, assuming read
+              5'b10?01: {next_state, outputs} = {IDLE, 6'b011000}; // Issue read w/o dequeuing
+              5'b11?01: {next_state, outputs} = {IDLE, 6'b111000}; // Issue read and dequeue
+              5'b10?11: {next_state, outputs} = {IDLE, 6'b010000}; // Prepare to write
+              5'b11011: {next_state, outputs} = {WBIP, 6'b010000}; // Issue write addr w/o data
+              5'b11111: {next_state, outputs} = {WBIP, 6'b110101}; // Issue write addr and data
             endcase
       WBIP: casez (inputs)
-              5'b0????: {next_state, outputs} = {WBIP, 6'b000000};
-              5'b1??0?: {next_state, outputs} = {WBIP, 6'b000000};
-              5'b10?1?: {next_state, outputs} = {WBIP, 6'b000000};
-              5'b11?1?: if (last_op) {next_state, outputs} = {IDLE, 6'b110111};
-                        else         {next_state, outputs} = {WBIP, 6'b110101};
+              5'b0????:              {next_state, outputs} = {IDLE, 6'b000000}; // This should never happen unless reset
+              5'b1???0:              {next_state, outputs} = {WBIP, 6'b000000}; // Wait for more write data
+              5'b1??01:              {next_state, outputs} = {WBIP, 6'b000000}; // This should never happen as long as ahbburstctrl works correctly
+              5'b1?011:              {next_state, outputs} = {WBIP, 6'b000000}; // Wait until UI is ready for write data
+              5'b1?111: if (last_op) {next_state, outputs} = {IDLE, 6'b100111}; // Issue write data and end the burst
+                        else         {next_state, outputs} = {WBIP, 6'b100101}; // Issue write data
             endcase
     endcase
   end
