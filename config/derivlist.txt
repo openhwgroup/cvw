@@ -530,6 +530,246 @@ ZALRSC_SUPPORTED    0
 deriv zalrsc_rv64gc rv64gc
 ZAAMO_SUPPORTED     0
 
+deriv zba_rv32gc rv32gc
+ZBA_SUPPORTED     1     
+ZBB_SUPPORTED     0     
+ZBS_SUPPORTED     0     
+ZBC_SUPPORTED     0     
+ZBKB_SUPPORTED     0     
+ZBKC_SUPPORTED     0     
+ZBKX_SUPPORTED     0     
+ZKND_SUPPORTED     0     
+ZKNE_SUPPORTED     0     
+ZKNH_SUPPORTED     0     
+
+deriv zbb_rv32gc rv32gc
+ZBA_SUPPORTED     0     
+ZBB_SUPPORTED     1     
+ZBS_SUPPORTED     0     
+ZBC_SUPPORTED     0     
+ZBKB_SUPPORTED     0     
+ZBKC_SUPPORTED     0     
+ZBKX_SUPPORTED     0     
+ZKND_SUPPORTED     0     
+ZKNE_SUPPORTED     0     
+ZKNH_SUPPORTED     0     
+
+deriv zbc_rv32gc rv32gc
+ZBA_SUPPORTED     0     
+ZBB_SUPPORTED     0     
+ZBS_SUPPORTED     0     
+ZBC_SUPPORTED     1     
+ZBKB_SUPPORTED     0     
+ZBKC_SUPPORTED     0     
+ZBKX_SUPPORTED     0     
+ZKND_SUPPORTED     0     
+ZKNE_SUPPORTED     0     
+ZKNH_SUPPORTED     0     
+
+deriv zbs_rv32gc rv32gc
+ZBA_SUPPORTED     0     
+ZBB_SUPPORTED     0     
+ZBS_SUPPORTED     1     
+ZBC_SUPPORTED     0     
+ZBKB_SUPPORTED     0     
+ZBKC_SUPPORTED     0     
+ZBKX_SUPPORTED     0     
+ZKND_SUPPORTED     0     
+ZKNE_SUPPORTED     0     
+ZKNH_SUPPORTED     0     
+
+deriv zbkb_rv32gc rv32gc
+ZBA_SUPPORTED     0     
+ZBB_SUPPORTED     0     
+ZBS_SUPPORTED     0     
+ZBC_SUPPORTED     0     
+ZBKB_SUPPORTED     1     
+ZBKC_SUPPORTED     0     
+ZBKX_SUPPORTED     0     
+ZKND_SUPPORTED     0     
+ZKNE_SUPPORTED     0     
+ZKNH_SUPPORTED     0     
+
+deriv zbkc_rv32gc rv32gc
+ZBA_SUPPORTED     0     
+ZBB_SUPPORTED     0     
+ZBS_SUPPORTED     0     
+ZBC_SUPPORTED     0     
+ZBKB_SUPPORTED     0     
+ZBKC_SUPPORTED     1     
+ZBKX_SUPPORTED     0     
+ZKND_SUPPORTED     0     
+ZKNE_SUPPORTED     0     
+ZKNH_SUPPORTED     0     
+
+deriv zbkx_rv32gc rv32gc
+ZBA_SUPPORTED     0     
+ZBB_SUPPORTED     0     
+ZBS_SUPPORTED     0     
+ZBC_SUPPORTED     0     
+ZBKB_SUPPORTED     0     
+ZBKC_SUPPORTED     0     
+ZBKX_SUPPORTED     1     
+ZKND_SUPPORTED     0     
+ZKNE_SUPPORTED     0     
+ZKNH_SUPPORTED     0     
+
+deriv zknd_rv32gc rv32gc
+ZBA_SUPPORTED     0     
+ZBB_SUPPORTED     0     
+ZBS_SUPPORTED     0     
+ZBC_SUPPORTED     0     
+ZBKB_SUPPORTED     0     
+ZBKC_SUPPORTED     0     
+ZBKX_SUPPORTED     0     
+ZKND_SUPPORTED     1     
+ZKNE_SUPPORTED     0     
+ZKNH_SUPPORTED     0     
+
+deriv zkne_rv32gc rv32gc
+ZBA_SUPPORTED     0     
+ZBB_SUPPORTED     0     
+ZBS_SUPPORTED     0     
+ZBC_SUPPORTED     0     
+ZBKB_SUPPORTED     0     
+ZBKC_SUPPORTED     0     
+ZBKX_SUPPORTED     0     
+ZKND_SUPPORTED     0     
+ZKNE_SUPPORTED     1     
+ZKNH_SUPPORTED     0     
+
+deriv zknh_rv32gc rv32gc
+ZBA_SUPPORTED     0     
+ZBB_SUPPORTED     0     
+ZBS_SUPPORTED     0     
+ZBC_SUPPORTED     0     
+ZBKB_SUPPORTED     0     
+ZBKC_SUPPORTED     0     
+ZBKX_SUPPORTED     0     
+ZKND_SUPPORTED     0     
+ZKNE_SUPPORTED     0     
+ZKNH_SUPPORTED     1     
+
+deriv zba_rv64gc rv64gc
+ZBA_SUPPORTED     1     
+ZBB_SUPPORTED     0     
+ZBS_SUPPORTED     0     
+ZBC_SUPPORTED     0     
+ZBKB_SUPPORTED     0     
+ZBKC_SUPPORTED     0     
+ZBKX_SUPPORTED     0     
+ZKND_SUPPORTED     0     
+ZKNE_SUPPORTED     0     
+ZKNH_SUPPORTED     0     
+
+deriv zbb_rv64gc rv64gc
+ZBA_SUPPORTED     0     
+ZBB_SUPPORTED     1     
+ZBS_SUPPORTED     0     
+ZBC_SUPPORTED     0     
+ZBKB_SUPPORTED     0     
+ZBKC_SUPPORTED     0     
+ZBKX_SUPPORTED     0     
+ZKND_SUPPORTED     0     
+ZKNE_SUPPORTED     0     
+ZKNH_SUPPORTED     0     
+
+deriv zbc_rv64gc rv64gc
+ZBA_SUPPORTED     0     
+ZBB_SUPPORTED     0     
+ZBS_SUPPORTED     0     
+ZBC_SUPPORTED     1     
+ZBKB_SUPPORTED     0     
+ZBKC_SUPPORTED     0     
+ZBKX_SUPPORTED     0     
+ZKND_SUPPORTED     0     
+ZKNE_SUPPORTED     0     
+ZKNH_SUPPORTED     0     
+
+deriv zbs_rv64gc rv64gc
+ZBA_SUPPORTED     0     
+ZBB_SUPPORTED     0     
+ZBS_SUPPORTED     1     
+ZBC_SUPPORTED     0     
+ZBKB_SUPPORTED     0     
+ZBKC_SUPPORTED     0     
+ZBKX_SUPPORTED     0     
+ZKND_SUPPORTED     0     
+ZKNE_SUPPORTED     0     
+ZKNH_SUPPORTED     0     
+
+deriv zbkb_rv64gc rv64gc
+ZBA_SUPPORTED     0     
+ZBB_SUPPORTED     0     
+ZBS_SUPPORTED     0     
+ZBC_SUPPORTED     0     
+ZBKB_SUPPORTED     1     
+ZBKC_SUPPORTED     0     
+ZBKX_SUPPORTED     0     
+ZKND_SUPPORTED     0     
+ZKNE_SUPPORTED     0     
+ZKNH_SUPPORTED     0     
+
+deriv zbkc_rv64gc rv64gc
+ZBA_SUPPORTED     0     
+ZBB_SUPPORTED     0     
+ZBS_SUPPORTED     0     
+ZBC_SUPPORTED     0     
+ZBKB_SUPPORTED     0     
+ZBKC_SUPPORTED     1     
+ZBKX_SUPPORTED     0     
+ZKND_SUPPORTED     0     
+ZKNE_SUPPORTED     0     
+ZKNH_SUPPORTED     0     
+
+deriv zbkx_rv64gc rv64gc
+ZBA_SUPPORTED     0     
+ZBB_SUPPORTED     0     
+ZBS_SUPPORTED     0     
+ZBC_SUPPORTED     0     
+ZBKB_SUPPORTED     0     
+ZBKC_SUPPORTED     0     
+ZBKX_SUPPORTED     1     
+ZKND_SUPPORTED     0     
+ZKNE_SUPPORTED     0     
+ZKNH_SUPPORTED     0     
+
+deriv zknd_rv64gc rv64gc
+ZBA_SUPPORTED     0     
+ZBB_SUPPORTED     0     
+ZBS_SUPPORTED     0     
+ZBC_SUPPORTED     0     
+ZBKB_SUPPORTED     0     
+ZBKC_SUPPORTED     0     
+ZBKX_SUPPORTED     0     
+ZKND_SUPPORTED     1     
+ZKNE_SUPPORTED     0     
+ZKNH_SUPPORTED     0     
+
+deriv zkne_rv64gc rv64gc
+ZBA_SUPPORTED     0     
+ZBB_SUPPORTED     0     
+ZBS_SUPPORTED     0     
+ZBC_SUPPORTED     0     
+ZBKB_SUPPORTED     0     
+ZBKC_SUPPORTED     0     
+ZBKX_SUPPORTED     0     
+ZKND_SUPPORTED     0     
+ZKNE_SUPPORTED     1     
+ZKNH_SUPPORTED     0     
+
+deriv zknh_rv64gc rv64gc
+ZBA_SUPPORTED     0     
+ZBB_SUPPORTED     0     
+ZBS_SUPPORTED     0     
+ZBC_SUPPORTED     0     
+ZBKB_SUPPORTED     0     
+ZBKC_SUPPORTED     0     
+ZBKX_SUPPORTED     0     
+ZKND_SUPPORTED     0     
+ZKNE_SUPPORTED     0     
+ZKNH_SUPPORTED     1     
+
 # Floating-point modes supported
 
 deriv f_rv32gc rv32gc

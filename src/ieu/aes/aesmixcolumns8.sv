@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// aesinvshiftrow.sv
+// aesmixcolumns8.sv
 //
-// Written: ryan.swann@okstate.edu, james.stine@okstate.edu
+// Written: ryan.swann@okstate.edu, james.stine@okstate.edu, David_Harris@hmc.edu
 // Created: 20 February 2024
 //
-// Purpose: AES Shiftrow
+// Purpose: Galois field operation to byte in an individual 32-bit word
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,11 +25,15 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aesinvshiftrow64(
-   input  logic [127:0] a, 
-   output logic [63:0] y
+
+module aesmixcolumns8(
+   input  logic [7:0]  a, 
+   output logic [31:0] y
 );
 
-   assign y = {a[95:88],   a[119:112], a[15:8],    a[39:32],
-               a[63:56],   a[87:80],   a[111:104], a[7:0]};
+   logic [7:0] xa, xapa;
+
+   galoismultforward8 gm(a, xa); // xa
+   assign xapa = a ^ xa;         // a ^ xa
+   assign y = {xapa, a, a, xa};
 endmodule

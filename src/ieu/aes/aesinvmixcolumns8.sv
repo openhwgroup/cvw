@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// aesshiftrow.sv
+// aesinvmixcolumns8.sv
 //
-// Written: ryan.swann@okstate.edu, james.stine@okstate.edu
-// Created: 20 February 2024
+// Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
+// Created: 05 March 2024
 //
-// Purpose: aesshiftrow for taking in first Data line
+// Purpose: AES Inverted Mix Column Function for use with AES
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,11 +25,23 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module aesshiftrow64(
-   input  logic [127:0] a, 
-   output logic [63:0] y
+module aesinvmixcolumns8(
+   input  logic [7:0] a, 
+   output logic [31:0] y
 );
-		    
-   assign y = {a[31:24],   a[119:112], a[79:72],   a[39:32],
-               a[127:120], a[87:80],   a[47:40],   a[7:0]};   
-endmodule
+
+   logic [10:0] t, x0, x1, x2, x3;
+
+   // aes32d operates on shifted versions of the input
+   assign t  = {a, 3'b0} ^ {3'b0, a};
+   assign x0 = {a, 3'b0} ^ {1'b0, a, 2'b0} ^ {2'b0, a, 1'b0};
+   assign x1 = t;
+   assign x2 = t ^ {1'b0, a, 2'b0};
+   assign x3 = t ^ {2'b0, a, 1'b0};
+
+   galoismultinverse8 gm0 (x0, y[7:0]);
+   galoismultinverse8 gm1 (x1, y[15:8]);
+   galoismultinverse8 gm2 (x2, y[23:16]);
+   galoismultinverse8 gm3 (x3, y[31:24]);
+
+ endmodule 

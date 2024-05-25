@@ -264,7 +264,7 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
           17'b0110011_0101111_000:     BMUControlsD = `BMUCTRLW'b000_1000_1010_1_0_0_1_0_0_0_0_0;  // sha512sig1h
           17'b0110011_0101011_000:     BMUControlsD = `BMUCTRLW'b000_1000_1011_1_0_0_1_0_0_0_0_0;  // sha512sig1l
           17'b0110011_0101000_000:     BMUControlsD = `BMUCTRLW'b000_1000_1100_1_0_0_1_0_0_0_0_0;  // sha512sum0r
-          17'b0110011_0101001_000:     BMUControlsD = `BMUCTRLW'b000_1000_1101_1_0_0_1_0_0_0_0_0;  // sha512sum1r
+          17'b0110011_0101001_000:     BMUControlsD = `BMUCTRLW'b000_1000_1110_1_0_0_1_0_0_0_0_0;  // sha512sum1r
         endcase
 
       else if (P.XLEN==64)

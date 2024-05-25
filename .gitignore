@@ -232,6 +232,7 @@ examples/verilog/fulladder/simprofile_dir/
 examples/verilog/fulladder/simv.daidir/
 examples/verilog/fulladder/ucli.key
 examples/verilog/fulladder/verdi_config_file
+examples/crypto/gfmul/gfmul
 tests/functcov
 tests/functcov/*
 tests/functcov/*/*
