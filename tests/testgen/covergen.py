@@ -54,14 +54,25 @@ def writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, stor
   elif (test in itype):
     lines = lines + "li x" + str(rs1) + ", " + formatstr.format(rs1val) + " # initialize rs1 to a random value \n"
     lines = lines + test + " x" + str(rd) + ", x" + str(rs1) + ", " + signedImm12(immval) + " # perform operation\n"
-  elif (test in loaditype):
+  elif (test in loaditype):#["lb", "lh", "lw", "ld", "lbu", "lhu", "lwu"]
     lines = lines + "auipc x" + str(rs1) + ", 0x20" + " # add upper immediate value to pc \n"
     lines = lines + "addi x" + str(rs1) + ", x" + str(rs1) + ", " + signedImm12(immval) + " # add immediate to lower part of rs1 \n"
     lines = lines + test + " x" + str(rd) + ", " + signedImm12(immval) + "(x" + str(rs1) + ") # perform operation \n"
-  elif (test in stypes):
-    print("Error: %s type not implemented yet" % test)
-  elif (test in btypes):
-    print("Error: %s type not implemented yet" % test)
+  elif (test in stypes):#["sb", "sh", "sw", "sd"]
+    #lines = lines + test + " x" + str(rs2) + ", " + signedImm12(immval) + "(x" + str(rs1) + ") # perform operation \n"
+    lines = lines + test + " x" + str(rs2) + ", " "0(x" + str(rs1) + ") # perform operation \n"
+    #print("Error: %s type not implemented yet" % test)
+  elif (test in btypes):#["beq", "bne", "blt", "bge", "bltu", "bgeu"]
+    if (randint(1,100) > 50):
+      rs1val = rs2val
+      lines = lines + "# same values in both registers\n"
+    lines = lines + "nop \n"
+    lines = lines + "li x" + str(rs1) + ", " + formatstr.format(rs1val) + " # initialize rs1 to a random value that should get changed\n"
+    lines = lines + "li x" + str(rs2) + ", " + formatstr.format(rs2val) + " # initialize rs2 to a random value that should get changed\n"
+    lines = lines + test + " x" + str(rs1) + ", x" + str(rs2) + ", some_label_for_sb_types_" + str(immval) + "+4" + " # perform operation \n"
+    lines = lines + "some_label_for_sb_types_" + str(immval) + ":\n"
+    lines = lines + "nop \nnop \nnop \nnop \nnop \n"
+    #print("Error: %s type not implemented yet" % test)
   else:
     pass
     #print("Error: %s type not implemented yet" % test)
