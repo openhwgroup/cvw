@@ -37,17 +37,6 @@ def signedImm20(imm):
     imm = imm - 0x100000
   return str(imm)
 
-'''
-rtype = ["add", "sub", "sll", "slt", "sltu", "xor", "srl", "sra", "or", "and",
-          "addw", "subw", "sllw", "srlw", "sraw"
-          "mul", "mulh", "mulhsu", "mulhu", "div", "divu", "rem", "remu",
-          "mulw", "divw", "divuw", "remw", "remuw"]
-loaditype = ["lb", "lh", "lw", "ld", "lbu", "lhu", "lwu"]
-shiftitype = ["slli", "srli", "srai"]
-itype = ["addi", "slti", "sltiu", "xori", "ori", "andi"]
-stypes = ["sb", "sh", "sw", "sd"]
-btypes = ["beq", "bne", "blt", "bge", "bltu", "bgeu"]
-'''
 def writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, storecmd, xlen):
   lines = "\n# Testcase " + str(desc) + "\n"
   if (rs1val < 0):
@@ -66,15 +55,9 @@ def writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, stor
     lines = lines + "li x" + str(rs1) + ", " + formatstr.format(rs1val) + " # initialize rs1 to a random value \n"
     lines = lines + test + " x" + str(rd) + ", x" + str(rs1) + ", " + signedImm12(immval) + " # perform operation\n"
   elif (test in loaditype):
-    '''
-    auipc	s9,0x2
-    addi	s9,s9,-448 # 80002800 <mtrap_sigptr+0x7f0>
-    lw	a4,-2048(s9)
-    '''
     lines = lines + "auipc x" + str(rs1) + ", 0x20" + " # add upper immediate value to pc \n"
     lines = lines + "addi x" + str(rs1) + ", x" + str(rs1) + ", " + signedImm12(immval) + " # add immediate to lower part of rs1 \n"
     lines = lines + test + " x" + str(rd) + ", " + signedImm12(immval) + "(x" + str(rs1) + ") # perform operation \n"
-    #print("Error: %s type not implemented yet" % test)
   elif (test in stypes):
     print("Error: %s type not implemented yet" % test)
   elif (test in btypes):
