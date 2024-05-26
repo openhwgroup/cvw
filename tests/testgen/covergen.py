@@ -31,6 +31,23 @@ def signedImm12(imm):
     imm = imm - 0x1000
   return str(imm)
 
+def signedImm20(imm):
+  imm = imm % pow(2, 20)
+  if (imm & 0x80000):
+    imm = imm - 0x100000
+  return str(imm)
+
+'''
+rtype = ["add", "sub", "sll", "slt", "sltu", "xor", "srl", "sra", "or", "and",
+          "addw", "subw", "sllw", "srlw", "sraw"
+          "mul", "mulh", "mulhsu", "mulhu", "div", "divu", "rem", "remu",
+          "mulw", "divw", "divuw", "remw", "remuw"]
+loaditype = ["lb", "lh", "lw", "ld", "lbu", "lhu", "lwu"]
+shiftitype = ["slli", "srli", "srai"]
+itype = ["addi", "slti", "sltiu", "xori", "ori", "andi"]
+stypes = ["sb", "sh", "sw", "sd"]
+btypes = ["beq", "bne", "blt", "bge", "bltu", "bgeu"]
+'''
 def writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, storecmd, xlen):
   lines = "\n# Testcase " + str(desc) + "\n"
   if (rs1val < 0):
@@ -48,6 +65,20 @@ def writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, stor
   elif (test in itype):
     lines = lines + "li x" + str(rs1) + ", " + formatstr.format(rs1val) + " # initialize rs1 to a random value \n"
     lines = lines + test + " x" + str(rd) + ", x" + str(rs1) + ", " + signedImm12(immval) + " # perform operation\n"
+  elif (test in loaditype):
+    '''
+    auipc	s9,0x2
+    addi	s9,s9,-448 # 80002800 <mtrap_sigptr+0x7f0>
+    lw	a4,-2048(s9)
+    '''
+    lines = lines + "auipc x" + str(rs1) + ", 0x20" + " # add upper immediate value to pc \n"
+    lines = lines + "addi x" + str(rs1) + ", x" + str(rs1) + ", " + signedImm12(immval) + " # add immediate to lower part of rs1 \n"
+    lines = lines + test + " x" + str(rd) + ", " + signedImm12(immval) + "(x" + str(rs1) + ") # perform operation \n"
+    #print("Error: %s type not implemented yet" % test)
+  elif (test in stypes):
+    print("Error: %s type not implemented yet" % test)
+  elif (test in btypes):
+    print("Error: %s type not implemented yet" % test)
   else:
     pass
     #print("Error: %s type not implemented yet" % test)
@@ -130,12 +161,12 @@ def make_rd_maxvals(test, storecmd, xlen):
 def make_rd_rs1_eqval(test, storecmd, xlen):
   [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
   desc = "cmp_rdm_rs1_eqval (Test rs1 = rd = " + hex(rs1val) + ")"
-  writeCovVector(desc, rs1, 0, rd, rs1val, rs2val, immval, rdval, test, storecmd, xlen)
+  writeCovVector(desc, rs1, 0, rd, rdval, rs2val, immval, rdval, test, storecmd, xlen)
 
 def make_rd_rs2_eqval(test, storecmd, xlen):
   [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
   desc = "cmp_rd_rs2_eqval (Test rs2 = rd = " + hex(rs2val) + ")"
-  writeCovVector(desc, 0, rs2, rd, rs1val, rs2val, immval, rdval, test, storecmd, xlen)
+  writeCovVector(desc, 0, rs2, rd, rs1val, rdval, immval, rdval, test, storecmd, xlen)
 
 def make_rs1_rs2_eqval(test, storecmd, xlen):
   [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
@@ -238,6 +269,7 @@ def getcovergroups(coverdefdir, coverfiles):
       if (m):
         coverpoints[curinstr].append(m.group(1))
     f.close()
+    print(coverpoints)
     return coverpoints
 
 ##################################
@@ -258,6 +290,8 @@ shiftitype = ["slli", "srli", "srai"]
 itype = ["addi", "slti", "sltiu", "xori", "ori", "andi"]
 stypes = ["sb", "sh", "sw", "sd"]
 btypes = ["beq", "bne", "blt", "bge", "bltu", "bgeu"]
+# TODO: auipc missing, check whatelse is missing in ^these^ types
+
 coverpoints = getcovergroups(coverdefdir, coverfiles)
 
 author = "David_Harris@hmc.edu"
