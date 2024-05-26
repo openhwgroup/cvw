@@ -45,7 +45,7 @@ module zbb #(parameter WIDTH=32) (
 
   mux2 #(1) ltmux(LT, LTU, BUnsigned , lt);
   cnt #(WIDTH) cnt(.A, .RevA, .B(B[1:0]), .W64, .CntResult);
-  byteop #(WIDTH) bu(.A, .RevA, .ByteSelect({B[10], B[0]}), .ByteResult);
+  byteop #(WIDTH) bu(.A, .ByteSelect(B[0]), .ByteResult);
   ext #(WIDTH) ext(.A, .ExtSelect({~B[2], {B[2] & B[0]}}), .ExtResult);
 
   // ZBBSelect[2] differentiates between min(u) vs max(u) instruction

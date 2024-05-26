@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// zbkx.sv
+// aesinvshiftrows64.sv
 //
-// Written: kelvin.tran@okstate.edu, james.stine@okstate.edu
-// Created: 1 February 2024
+// Written: ryan.swann@okstate.edu, james.stine@okstate.edu
+// Created: 20 February 2024
 //
-// Purpose: RISC-V ZBKX top level unit: crossbar permutation instructions for crypto
+// Purpose: AES Shiftrow
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -25,26 +25,11 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module zbkx #(parameter WIDTH=32) (
-   input  logic [WIDTH-1:0] A, B,
-   input  logic  	          ZBKXSelect,
-   output logic [WIDTH-1:0] ZBKXResult
+module aesinvshiftrows64(
+   input  logic [127:0] a, 
+   output logic [63:0]  y
 );
-   
-   logic [WIDTH-1:0] 	     xperm4, xperm4lookup;
-   logic [WIDTH-1:0] 	     xperm8, xperm8lookup;
-   int 		     i;
-   
-   always_comb begin
-      for(i=0; i<WIDTH; i=i+4) begin: xperm4calc
-         xperm4lookup = A >> {B[i+:4], 2'b0};
-         xperm4[i+:4] = xperm4lookup[3:0];
-      end
-      for(i=0; i<WIDTH; i=i+8) begin: xperm8calc
-         xperm8lookup = A >> {B[i+:8], 3'b0};
-         xperm8[i+:8] = xperm8lookup[7:0];
-      end   
-   end
 
-   assign ZBKXResult = ZBKXSelect ? xperm4 : xperm8;
+   assign y = {a[95:88],   a[119:112], a[15:8],    a[39:32],
+               a[63:56],   a[87:80],   a[111:104], a[7:0]};
 endmodule
