@@ -66,13 +66,14 @@ def writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, stor
     if (randint(1,100) > 50):
       rs1val = rs2val
       lines = lines + "# same values in both registers\n"
-    lines = lines + "nop \n"
+    lines = lines + "nop\n"
     lines = lines + "li x" + str(rs1) + ", " + formatstr.format(rs1val) + " # initialize rs1 to a random value that should get changed\n"
     lines = lines + "li x" + str(rs2) + ", " + formatstr.format(rs2val) + " # initialize rs2 to a random value that should get changed\n"
     lines = lines + test + " x" + str(rs1) + ", x" + str(rs2) + ", some_label_for_sb_types_" + str(immval) + "+4" + " # perform operation \n"
+    lines = lines + "addi x0, x1, 1\n"
     lines = lines + "some_label_for_sb_types_" + str(immval) + ":\n"
-    lines = lines + "nop \nnop \nnop \nnop \nnop \n"
-    #print("Error: %s type not implemented yet" % test)
+    lines = lines + "addi x0, x2, 2\n"
+    lines = lines + "nop\nnop\nnop\nnop\nnop\n"
   else:
     pass
     #print("Error: %s type not implemented yet" % test)
@@ -232,17 +233,37 @@ def write_tests(coverpoints, test, storecmd, xlen):
     elif (coverpoint == "cp_rs2_sign"):
       make_rs2_sign(test, storecmd, xlen)
     elif (coverpoint == "cp_rd_sign"):
-      pass # hope already covered by rd_maxvals
+      pass #TODO hope already covered by rd_maxvals
     elif (coverpoint == "cr_rs1_rs2"):
       make_cr_rs1_rs2_sign(test, storecmd, xlen)
     elif (coverpoint == "cp_rs1_toggle"):
-      pass # toggle not needed and seems to be covered by other things
+      pass #TODO toggle not needed and seems to be covered by other things
     elif (coverpoint == "cp_rs2_toggle"):
-      pass # toggle not needed and seems to be covered by other things
+      pass #TODO toggle not needed and seems to be covered by other things
     elif (coverpoint == "cp_rd_toggle"):
-      pass # toggle not needed and seems to be covered by other things
+      pass #TODO toggle not needed and seems to be covered by other things
     elif (coverpoint == "cp_gpr_hazard"):
-      pass # not yet implemented
+      pass #TODO not yet implemented
+    elif (coverpoint == "cp_imm_sign"):
+      pass #TODO
+    elif (coverpoint == "cr_rs1_imm"):
+      pass #TODO (not if crosses are not needed)
+    elif (coverpoint == "cp_imm_ones_zeros"):
+      pass #TODO
+    elif (coverpoint == "cp_mem_hazard"):
+      pass #TODO
+    elif (coverpoint == "cp_imm_zero"):
+      pass #TODO
+    elif (coverpoint == "cp_mem_unaligned"):
+      pass #TODO
+    elif (coverpoint == "cp_offset"):
+      pass #TODO
+    elif (coverpoint == "cr_nord_rs1_rs2"):
+      pass #TODO (not if crosses are not needed)
+    elif (coverpoint == "cp_imm_shift"):
+      pass #TODO
+    elif (coverpoint == "cp_rd_boolean"):
+      pass #TODO
     else:
       print("Warning: " + coverpoint + " not implemented yet for " + test)
       
