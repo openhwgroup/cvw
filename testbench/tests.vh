@@ -2278,6 +2278,7 @@ string arch64zknh[] = '{
   string arch32zfaf[] = '{
     `RISCVARCHTEST,
     "rv32i_m/F_Zfa/src/fround_b1-01.S",
+    "rv32i_m/F_Zfa/src/froundnx_b1-01.S",
     "rv32i_m/F_Zfa/src/fleq_b1-01.S",
     "rv32i_m/F_Zfa/src/fleq_b19-01.S", 
     "rv32i_m/F_Zfa/src/fli.s-01.S",
@@ -2294,6 +2295,9 @@ string arch64zknh[] = '{
   string arch32zfad[] = '{
     `RISCVARCHTEST,
     "rv32i_m/D_Zfa/src/fround_b1-01.S",
+    "rv32i_m/D_Zfa/src/froundnx_b1-01.S",
+    "rv32i_m/D_Zfa/src/fround.d_b1-01.S",
+    "rv32i_m/D_Zfa/src/froundnx.d_b1-01.S",
     "rv32i_m/D_Zfa/src/fcvtmod.w.d_b1-01.S",
     "rv32i_m/D_Zfa/src/fcvtmod.w.d_b22-01.S",
     "rv32i_m/D_Zfa/src/fcvtmod.w.d_b23-01.S",
@@ -2330,6 +2334,7 @@ string arch64zknh[] = '{
   string arch64zfaf[] = '{
     `RISCVARCHTEST,
     "rv64i_m/F_Zfa/src/fround_b1-01.S",
+    "rv64i_m/F_Zfa/src/froundnx_b1-01.S",
     "rv64i_m/F_Zfa/src/fleq_b1-01.S",
     "rv64i_m/F_Zfa/src/fleq_b19-01.S", 
     "rv64i_m/F_Zfa/src/fli.s-01.S",
@@ -2342,8 +2347,12 @@ string arch64zknh[] = '{
   };
 
   string arch64zfad[] = '{
-    `RISCVARCHTEST,
-     "rv64i_m/D_Zfa/src/fround_b1-01.S",
+    //`RISCVARCHTEST,
+    `WALLYTEST,
+    "rv64i_m/D_Zfa/src/fround_b1-01.S",
+    "rv64i_m/D_Zfa/src/froundnx_b1-01.S",
+    "rv64i_m/D_Zfa/src/fround.d_b1-01.S",
+    "rv64i_m/D_Zfa/src/froundnx.d_b1-01.S",
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b1-01.S",
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b22-01.S", 
     "rv64i_m/D_Zfa/src/fcvtmod.w.d_b23-01.S",

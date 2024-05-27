@@ -79,7 +79,7 @@ module fround import cvw::*;  #(parameter cvw_t P) (
 
   // Logic for nonnegative mask and rounding bits
   assign IMask = {1'b1, {P.NF{1'b0}}} >>> E;
-  assign Tmasknonneg = ~(IMask >>> 1'b1);
+  assign Tmasknonneg = ~IMask >>> 1'b1;
   assign HotE = IMask & ~(IMask << 1'b1);
   assign HotEP1 = HotE >> 1'b1;
   assign Lnonneg = |(Xm & HotE);
@@ -139,7 +139,7 @@ module fround import cvw::*;  #(parameter cvw_t P) (
     else if (Elt0) // 0 <= |X| < 1 rounds to 0 or 1
       if (RoundUp) W = {Xs, P.BIAS[P.NE-1:0], {P.NF{1'b0}}}; // round to +/- 1
       else         W = {Xs, {(P.FLEN-1){1'b0}}}; // round to +/- 0
-    else begin // |X| > 1 rounds to an integer
+    else begin // |X| >= 1 rounds to an integer
       if (RoundUp & Two) W = {Xs, Xep1, {(P.NF){1'b0}}}; // Round up to 2.0
       else if (RoundUp)  W = {Xs, Xe, Rnd[P.NF-1:0]};      // Round up to Rnd
       else               W = {Xs, Xe, Trunc[P.NF-1:0]};    // Round down to Trunc
