@@ -28,6 +28,7 @@ parser.add_argument("--args", "-a", help="Optional arguments passed to simulator
 parser.add_argument("--vcd", "-v", help="Generate testbench.vcd", action="store_true")
 parser.add_argument("--lockstep", "-l", help="Run ImperasDV lock, step, and compare.", action="store_true")
 parser.add_argument("--locksteplog", "-b", help="Retired instruction number to be begin logging.", default=0)
+parser.add_argument("--covlog", "-d", help="Log coverage after n instructions.", default=0)
 args = parser.parse_args()
 print("Config=" + args.config + " tests=" + args.testsuite + " sim=" + args.sim + " gui=" + str(args.gui) + " args='" + args.args + "'")
 ElfFile=""
@@ -65,7 +66,8 @@ cd = "cd $WALLY/sim/" +args.sim
 if (args.sim == "questa"):
     if (args.lockstep):
         Instret = str(args.locksteplog)
-        prefix ="IMPERAS_TOOLS=" + WALLY + "/sim/imperas.ic OTHERFLAGS=\"+IDV_TRACE2LOG=" + Instret + " +IDV_TRACE2COV=" + Instret + "\" ";
+        CovEnableStr = "1\"" if int(args.covlog) > 0  else "0\"";
+        prefix ="IMPERAS_TOOLS=" + WALLY + "/sim/imperas.ic OTHERFLAGS=\"+IDV_TRACE2LOG=" + Instret + " +IDV_TRACE2COV=" + str(args.covlog) + " +TRACE2COV_ENABLE=" + CovEnableStr;
         suffix = "--lockstep"
     else:
         prefix = ""
