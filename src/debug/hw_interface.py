@@ -29,6 +29,7 @@
 # OpenOCD also supports tcl commands directly
 
 import atexit
+import time
 from telnetlib import Telnet
 
 debug = False
@@ -146,11 +147,14 @@ def access_register(write, regno, addr_size):
 def halt():
     write_dmi("0x10", "0x80000001")
     check_errors()
+    write_dmi("0x10", "0x00000001")
+    check_errors()
 
 
 def step():
-    write_dmi("0x10", "0xC0000001")
-    check_errors()
+    #write_dmi("0x10", "0xC0000001")
+    #check_errors()
+    raise Exception("TODO")
 
 
 def resume():
@@ -203,6 +207,12 @@ def check_busy():
 def check_absrtcmderr():
     """These errors must be cleared using clear_abstrcmd_err() before another OP can be executed"""
     abstractcs = int(read_dmi("0x16"), 16)
+    # CmdErr is only valid if Busy is 0
+    busy = bool((abstractcs & 0x1000) >> 12)
+    while busy:
+        time.sleep(0.05)
+        abstractcs = int(read_dmi("0x16"), 16)
+        busy = bool((abstractcs & 0x1000) >> 12)
     return cmderr_translations[(abstractcs & 0x700) >> 8]
 
 

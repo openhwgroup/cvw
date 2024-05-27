@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// dmhazard.sv
+// hartcontrol.sv
 //
 // Written: matthew.n.otto@okstate.edu 10 May 2024
 // Modified: 
 //
-// Purpose: Determine stalls during DM initiated Halt, Step and Resume
+// Purpose: Controls the state of connected hart
 // 
 // Documentation: RISC-V System on Chip Design 
 //
@@ -27,19 +27,34 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-// TODO: Depending on how complicated the stall logic ends up, this module may be removed completely
-
-module dmhazard(
+module hartcontrol(
   input  logic clk, rst,
+  input  logic NdmReset,    // Triggers HaltOnReset behavior
 
-  input  logic HaltReq,       // Initiate core halt
-  input  logic ResumeReq,     // Initiates core resume
-  input  logic HaltOnReset,   // Halts core immediately on reset
-  output logic Halted,        // Signals completion of halt
-  output logic ResumeConfirm,
+  input  logic HaltReq,     // Initiate core halt
+  input  logic ResumeReq,   // Initiates core resume
+  input  logic HaltOnReset, // Halts core immediately on hart reset
+  input  logic Step,        // Halts one cycle after a resume if asserted
 
-  output logic DebugStall
+  output logic DebugStall,  // Stall signal goes to hazard unit
+
+  // DMStatus bits
+  output logic Halted,
+  output logic AllRunning,
+  output logic AnyRunning,
+  output logic AllHalted,
+  output logic AnyHalted,
+  output logic AllResumeAck,
+  output logic AnyResumeAck
 );
+
+  assign Halted = DebugStall;
+  assign AllRunning = ~DebugStall;
+  assign AnyRunning = ~DebugStall;
+  assign AllHalted = DebugStall;
+  assign AnyHalted = DebugStall;
+  assign AllResumeAck = ~DebugStall;
+  assign AnyResumeAck = ~DebugStall;
 
   (* mark_debug = "true" *)enum bit [1:0] {
     RUNNING,
@@ -48,25 +63,19 @@ module dmhazard(
   } State;
 
   assign DebugStall = (State == HALTED);
-  assign Halted = DebugStall;
 
   always_ff @(posedge clk) begin
-    if (rst) begin
+    if (rst)
+      State <= RUNNING;
+    else if (NdmReset)
       State <= HaltOnReset ? HALTED : RUNNING;
-    end else begin
+    else begin
       case (State)
-        RUNNING : begin
-          ResumeConfirm <= 0;
-          State <= HaltReq ? HALTED : RUNNING;
-        end
+        RUNNING : State <= HaltReq ? HALTED : RUNNING;
 
         HALTED : begin
-          case ({HaltReq, ResumeReq})
-            2'b10 : State <= HALTED;
-            2'b01 : begin
-              State <= RUNNING;
-              ResumeConfirm <= 1;
-            end
+          case ({ResumeReq, Step})
+            2'b10 : State <= RUNNING;
             2'b11 : State <= STEP;
             default : State <= HALTED;
           endcase

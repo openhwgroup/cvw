@@ -74,6 +74,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                       MExtInt,SExtInt;  // from PLIC
 
   // Debug Module signals
+  logic                       NdmReset;
   logic                       DebugStall;
   logic                       ScanEn;
   logic                       ScanIn;
@@ -87,10 +88,10 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                       GPRScanOut;
 
   // synchronize reset to SOC clock domain
-  synchronizer resetsync(.clk, .d(reset_ext), .q(reset)); 
+  synchronizer resetsync(.clk, .d(reset_ext), .q(reset));
    
   // instantiate processor and internal memories
-  wallypipelinedcore #(P) core(.clk, .reset,
+  wallypipelinedcore #(P) core(.clk, .reset(reset || NdmReset),
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
@@ -111,7 +112,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   end
 
   // instantiate debug module
-  dm #(P) dm (.clk, .rst(reset), .tck, .tdi, .tms, .tdo,
+  dm #(P) dm (.clk, .rst(reset), .NdmReset, .tck, .tdi, .tms, .tdo,
     .DebugStall, .ScanEn, .ScanIn, .ScanOut, .GPRSel, .DebugCapture, .DebugGPRUpdate, 
     .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut);
 

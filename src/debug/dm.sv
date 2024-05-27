@@ -25,6 +25,9 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+// TODO: test ndmreset and fix remaining GPR scan bug(s)
+// implement dscr for step command
+
 module dm import cvw::*; #(parameter cvw_t P) (
   input  logic                  clk, 
   input  logic                  rst, // Full hardware reset signal (reset button)
@@ -35,9 +38,9 @@ module dm import cvw::*; #(parameter cvw_t P) (
   input  logic                  tms,
   output logic                  tdo,
 
-  output logic                  HartReset, // TODO
-
-  // Core hazard signals
+  // Platform reset signal
+  output logic                  NdmReset,
+  // Core hazard signal
   output logic                  DebugStall,
 
   // Scan Chain
@@ -73,12 +76,15 @@ module dm import cvw::*; #(parameter cvw_t P) (
 
   // Core control signals
   logic                  HaltReq;
-  logic                  Halted;
   logic                  ResumeReq;
-  logic                  ResumeConfirm;
   logic                  HaltOnReset;
+  logic                  Halted;
 
-  dmhazard dmhazard(.clk, .rst, .HaltReq, .Halted, .ResumeReq, .ResumeConfirm, .HaltOnReset, .DebugStall);
+  // TODO: implement DSCR for step
+  hartcontrol hartcontrol(.clk, .rst(rst || ~DmActive), .NdmReset, .HaltReq,
+    .ResumeReq, .HaltOnReset, .Step(1'b0), .DebugStall, .Halted, .AllRunning,
+    .AnyRunning, .AllHalted, .AnyHalted, .AllResumeAck, .AnyResumeAck);
+
 
   enum bit [3:0] {
     INACTIVE, // 0
@@ -115,7 +121,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   (* mark_debug = "true" *)logic [9:0]        ScanChainLen;   // Total length of currently selected scan chain
   (* mark_debug = "true" *)logic [9:0]        Cycle;          // DM's current position in the scan chain
   (* mark_debug = "true" *)logic              InvalidRegNo;   // Requested RegNo is invalid
-  (* mark_debug = "true" *)logic              ReadOnly;       // Current RegNo points to a readonly register
+  (* mark_debug = "true" *)logic              RegReadOnly;       // Current RegNo points to a readonly register
   (* mark_debug = "true" *)logic              GPRRegNo;       // Requested RegNo is a GPR
   (* mark_debug = "true" *)logic              StoreScanChain; // Store current value of ScanReg into DataX
   (* mark_debug = "true" *)logic              WriteMsgReg;    // Write to DataX
@@ -137,20 +143,15 @@ module dm import cvw::*; #(parameter cvw_t P) (
   //// DM register fields
   //DMControl
   logic AckUnavail;
-  logic AckHaveReset;
-  logic NdmReset;
   logic DmActive; // This bit is used to (de)activate the DM. Toggling acts as reset
   //DMStatus
-  logic NdmResetPending;
   logic StickyUnavail;
   logic ImpEBreak;
-  logic AllHaveReset;
-  logic AnyHaveReset;
   logic AllResumeAck;
   logic AnyResumeAck;
   logic AllNonExistent;
   logic AnyNonExistent;
-  logic AllUnavail;
+  logic AllUnavail; // TODO
   logic AnyUnavail;
   logic AllRunning;
   logic AnyRunning;
@@ -170,11 +171,11 @@ module dm import cvw::*; #(parameter cvw_t P) (
 
 
   // Pack registers
-  assign DMControl = {2'b0, HartReset, 2'b0, 1'b0, 10'b0,
+  assign DMControl = {2'b0, 1'b0, 2'b0, 1'b0, 10'b0,
     10'b0, 4'b0, NdmReset, DmActive};
 
-  assign DMStatus = {7'b0, NdmResetPending, StickyUnavail, ImpEBreak, 2'b0, 
-    AllHaveReset, AnyHaveReset, AllResumeAck, AnyResumeAck, AllNonExistent, 
+  assign DMStatus = {7'b0, 1'b0, StickyUnavail, ImpEBreak, 2'b0, 
+    2'b0, AllResumeAck, AnyResumeAck, AllNonExistent, 
     AnyNonExistent, AllUnavail, AnyUnavail, AllRunning, AnyRunning, AllHalted, 
     AnyHalted, Authenticated, AuthBusy, HasResetHaltReq, ConfStrPtrValid, Version};
 
@@ -182,26 +183,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
 
   assign SysBusCS = 32'h20000000; // SBVersion = 1
 
-  // translate internal state to hart connections
-  assign AllRunning = ~Halted;
-  assign AnyRunning = ~Halted;
-  assign AllHalted = Halted;
-  assign AnyHalted = Halted;
 
-  // Core state logic
-  always_ff @(posedge clk) begin
-    if (ResumeConfirm)
-      AllResumeAck <= 1;
-    else if (ResumeReq)
-      AllResumeAck <= 0;
-
-    if (AckHaveReset)
-      AllHaveReset <= 0;
-    else if (HartReset)
-      AllHaveReset <= 1;
-  end
-  assign AnyResumeAck = AllResumeAck;
-  assign AnyHaveReset = AllHaveReset;
 
   assign RspValid = (State == ACK);
   assign ReqReady = (State != ACK);
@@ -216,7 +198,6 @@ module dm import cvw::*; #(parameter cvw_t P) (
           // Reset Values
           RspData <= 0;
           HaltReq <= 0;
-          HartReset <= 0;
           HaltOnReset <= 0;
           NdmReset <= 0;
           StickyUnavail <= 0;
@@ -236,7 +217,6 @@ module dm import cvw::*; #(parameter cvw_t P) (
         ACK : begin
           NewAcState <= AC_IDLE;
           ResumeReq <= 0;
-          AckHaveReset <= 0;
           if (~ReqValid)
             State <= ~DmActive ? INACTIVE : IDLE;
         end
@@ -287,28 +267,30 @@ module dm import cvw::*; #(parameter cvw_t P) (
         end
 
         W_DMCONTROL : begin
-          HaltReq <= ReqData[`HALTREQ];
-          AckUnavail <= ReqData[`ACKUNAVAIL];
-          NdmReset <= ReqData[`NDMRESET];
-          DmActive <= ReqData[`DMACTIVE]; // Writing 0 here resets the DM
-          
-          // Can only write one of the following at a time
-          case ({ReqData[`RESUMEREQ],ReqData[`HARTRESET],ReqData[`ACKHAVERESET],
-            ReqData[`SETRESETHALTREQ],ReqData[`CLRRESETHALTREQ]})
-            5'b00000 :; // None
-            5'b10000 : ResumeReq <= 1;
-            5'b01000 : HartReset <= ReqData[`HARTRESET];
-            5'b00100 : AckHaveReset <= 1;
-            5'b00010 : HaltOnReset <= 1;
-            5'b00001 : HaltOnReset <= 0;
-            default : begin // Failure (not onehot), dont write any changes
-              HaltReq <= HaltReq;
-              AckUnavail <= AckUnavail;
-              NdmReset <= NdmReset;
-              DmActive <= DmActive;
-              RspOP <= `OP_FAILED;
-            end
-          endcase
+          // While an abstract command is executing (busy in abstractcs is high), a debugger must not change
+          // hartsel, and must not write 1 to haltreq, resumereq, ackhavereset, setresethaltreq, or clrresethaltreq
+          if (Busy && (ReqData[`HALTREQ] || ReqData[`RESUMEREQ] || ReqData[`SETRESETHALTREQ] || ReqData[`CLRRESETHALTREQ]))
+            CmdErr <= ~|CmdErr ? `CMDERR_BUSY : CmdErr;
+          else begin
+            HaltReq <= ReqData[`HALTREQ];
+            AckUnavail <= ReqData[`ACKUNAVAIL];
+            NdmReset <= ReqData[`NDMRESET];
+            DmActive <= ReqData[`DMACTIVE]; // Writing 0 here resets the DM
+            
+            // Can only write one of the following at a time
+            case ({ReqData[`RESUMEREQ],ReqData[`SETRESETHALTREQ],ReqData[`CLRRESETHALTREQ]})
+              3'b000 :; // None
+              3'b100 : ResumeReq <= ReqData[`HALTREQ] ? 0 : 1; // ResumeReq is ignored if HaltReq is asserted
+              3'b010 : HaltOnReset <= 1;
+              3'b001 : HaltOnReset <= 0;
+              default : begin // Invalid (not onehot), dont write any changes
+                HaltReq <= HaltReq;
+                AckUnavail <= AckUnavail;
+                NdmReset <= NdmReset;
+                DmActive <= DmActive;
+              end
+            endcase
+          end
         
           RspOP <= `OP_SUCCESS;
           State <= ACK;
@@ -345,8 +327,10 @@ module dm import cvw::*; #(parameter cvw_t P) (
           if (CmdErr != `CMDERR_NONE); // If CmdErr, do nothing
           else if (Busy)
             CmdErr <= `CMDERR_BUSY; // If Busy, set CmdErr, do nothing
-          //else if (~CoreHaltConfirm) // TODO: this check may be undesired
-          //  CmdErr <= `CMDERR_HALTRESUME; // If not halted, do nothing
+          else if (~Halted)
+            CmdErr <= `CMDERR_HALTRESUME; // If not halted, set CmdErr, do nothing
+          else if (HaltReq || ResumeReq) // Before starting an abstract command, a debugger must ensure that haltreq, resumereq are 0.
+            CmdErr <= `CMDERR_EXCEPTION; // set CmdErr, do nothing
           else begin
             case (ReqData[`CMDTYPE])
               `ACCESS_REGISTER : begin
@@ -355,7 +339,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
                 else if (~ReqData[`TRANSFER]); // If not TRANSFER, do nothing
                 else if (InvalidRegNo)
                   CmdErr <= `CMDERR_EXCEPTION; // If InvalidRegNo, set CmdErr, do nothing
-                else if (ReqData[`AARWRITE] && ReadOnly)
+                else if (ReqData[`AARWRITE] && RegReadOnly)
                   CmdErr <= `CMDERR_NOT_SUPPORTED; // If writing to a read only register, set CmdErr, do nothing
                 else begin
                   AcWrite <= ReqData[`AARWRITE];
@@ -472,6 +456,6 @@ module dm import cvw::*; #(parameter cvw_t P) (
     flopenr #(32) data3reg (.clk, .reset(rst), .en(StoreScanChain || WriteMsgReg && (ReqAddress == `DATA3)), .d(Data3Wr), .q(Data3));
   end
 
-  rad #(P) regnodecode(.AarSize(ReqData[`AARSIZE]),.Regno(ReqData[`REGNO]),.GPRRegNo,.ScanChainLen,.ShiftCount,.InvalidRegNo,.ReadOnly,.GPRAddr,.ARMask);
+  rad #(P) regnodecode(.AarSize(ReqData[`AARSIZE]),.Regno(ReqData[`REGNO]),.GPRRegNo,.ScanChainLen,.ShiftCount,.InvalidRegNo,.RegReadOnly,.GPRAddr,.ARMask);
 
 endmodule
