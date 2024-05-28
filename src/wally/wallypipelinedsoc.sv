@@ -112,8 +112,12 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   end
 
   // instantiate debug module
-  dm #(P) dm (.clk, .rst(reset), .NdmReset, .tck, .tdi, .tms, .tdo,
-    .DebugStall, .ScanEn, .ScanIn, .ScanOut, .GPRSel, .DebugCapture, .DebugGPRUpdate, 
-    .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut);
+  if (P.DEBUG_SUPPORTED) begin
+    dm #(P) dm (.clk, .rst(reset), .NdmReset, .tck, .tdi, .tms, .tdo,
+      .DebugStall, .ScanEn, .ScanIn, .ScanOut, .GPRSel, .DebugCapture, .DebugGPRUpdate, 
+      .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut);
+  end else begin
+    assign {NdmReset, DebugStall, ScanOut, GPRSel, DebugCapture, DebugGPRUpdate, GPRAddr, GPRScanEn, GPRScanOut} = '0;
+  end
 
 endmodule

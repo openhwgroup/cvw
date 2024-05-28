@@ -26,7 +26,7 @@ where the numbers 1-4 correspond to <bus_num>-<port_num>
 run openocd using the command "openocd -f openocd.cfg"
 where openocd.cfg is the path of the config file
 If everything is working corretly, OpenOCD should start without any errors and begin listening for telnet and gdb connections
-connect to openocd vis telnet (telnet 127.0.0.1 4444) to send commands via the command line
+connect to openocd via telnet (telnet 127.0.0.1 4444) to send commands via the command line
 
 3. read and write to the DMI bus
 the riscv debug module can be controlled by writing to various registers via the DMI.

@@ -294,6 +294,9 @@ typedef struct packed {
   int DURLEN     ;
   int DIVb       ;
   int DIVBLEN    ;
+
+  // Debug Module
+  logic DEBUG_SUPPORTED;
 } cvw_t;
 
 endpackage

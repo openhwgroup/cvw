@@ -115,16 +115,18 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   (* mark_debug = "true" *)logic [P.XLEN-1:0] DebugGPRWriteD;
 
   // Decode stage
-  regfile #(P.XLEN, P.E_SUPPORTED) regf(clk, reset, RegWriteWM, Rs1DM, Rs2D, RdWM, ResultWM, R1D, R2D);
   extend #(P)        ext(.InstrD(InstrD[31:7]), .ImmSrcD, .ImmExtD);
-
   // Access GPRs from Debug Module
-  // if regfile can be made scannable, this logic is unnecessary
-  assign RegWriteWM = GPRSel ? DebugGPRUpdate : RegWriteW;
-  assign Rs1DM = GPRSel ? GPRAddr : Rs1D;
-  assign RdWM = GPRSel ? GPRAddr : RdW;
-  assign ResultWM = GPRSel ? DebugGPRWriteD : ResultW;
-  flopenrs #(P.XLEN) GPRScanReg(.clk, .reset, .en(DebugCapture), .d(R1D), .q(DebugGPRWriteD), .scan(GPRScanEn), .scanin(GPRScanIn), .scanout(GPRScanOut));
+  if (P.DEBUG_SUPPORTED) begin
+    regfile #(P.XLEN, P.E_SUPPORTED) regf(clk, reset, RegWriteWM, Rs1DM, Rs2D, RdWM, ResultWM, R1D, R2D);
+    assign RegWriteWM = GPRSel ? DebugGPRUpdate : RegWriteW;
+    assign Rs1DM = GPRSel ? GPRAddr : Rs1D;
+    assign RdWM = GPRSel ? GPRAddr : RdW;
+    assign ResultWM = GPRSel ? DebugGPRWriteD : ResultW;
+    flopenrs #(P.XLEN) GPRScanReg(.clk, .reset, .en(DebugCapture), .d(R1D), .q(DebugGPRWriteD), .scan(GPRScanEn), .scanin(GPRScanIn), .scanout(GPRScanOut));
+  end else begin
+    regfile #(P.XLEN, P.E_SUPPORTED) regf(clk, reset, RegWriteW, Rs1D, Rs2D, RdW, ResultW, R1D, R2D);
+  end
  
   // Execute stage pipeline register and logic
   flopenrc #(P.XLEN) RD1EReg(clk, reset, FlushE, ~StallE, R1D, R1E);
@@ -143,7 +145,10 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   // Memory stage pipeline register
   flopenrc #(P.XLEN) SrcAMReg(clk, reset, FlushM, ~StallM, SrcAE, SrcAM);
   flopenrc #(P.XLEN) IEUResultMReg(clk, reset, FlushM, ~StallM, IEUResultE, IEUResultM);
-  flopenrcs #(P.XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, ForwardedSrcBE, WriteDataM, DebugScanEn, DebugScanIn, DebugScanOut); 
+  if (P.DEBUG_SUPPORTED)
+    flopenrcs #(P.XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, ForwardedSrcBE, WriteDataM, DebugScanEn, DebugScanIn, DebugScanOut);
+  else
+    flopenrc #(P.XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, ForwardedSrcBE, WriteDataM);
   
   // Writeback stage pipeline register and logic
   flopenrc #(P.XLEN) IFResultWReg(clk, reset, FlushW, ~StallW, IFResultM, IFResultW);

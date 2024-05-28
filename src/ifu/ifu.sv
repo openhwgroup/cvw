@@ -410,14 +410,20 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   // InstrM is only needed with CSRs or atomic operations
   if (P.ZICSR_SUPPORTED | P.A_SUPPORTED) begin
     mux2    #(32)     FlushInstrMMux(InstrE, nop, FlushM, NextInstrE);
-    flopenrs #(32)     InstrMReg(clk, reset, ~StallM, NextInstrE, InstrM, DebugScanEn, DSCR, DebugScanOut);
+    if (P.DEBUG_SUPPORTED)
+      flopenrs #(32)     InstrMReg(clk, reset, ~StallM, NextInstrE, InstrM, DebugScanEn, DSCR, DebugScanOut);
+    else
+      flopenr #(32)     InstrMReg(clk, reset, ~StallM, NextInstrE, InstrM);
   end else begin
     assign InstrM = '0;
     assign DebugScanOut = DSCR;
   end
   // PCM is only needed with CSRs or branch prediction
   if (P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED) 
-    flopenrs #(P.XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM, DebugScanEn, DebugScanIn, DSCR);
+    if (P.DEBUG_SUPPORTED)
+      flopenrs #(P.XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM, DebugScanEn, DebugScanIn, DSCR);
+    else
+      flopenr #(P.XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
   else begin
     assign PCM = '0; 
     assign DSCR = DebugScanIn;

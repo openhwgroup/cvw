@@ -326,7 +326,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
       .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM,
       .DebugCapture, .DebugScanEn, .DebugScanIn, .DebugScanOut(ScanReg[0]));
-    flopenrs #(1) scantrapm (.clk, .reset, .en(DebugCapture), .d(TrapM), .q(), .scan(DebugScanEn), .scanin(ScanReg[0]), .scanout(ScanReg[1]));
+    if (P.DEBUG_SUPPORTED) begin
+      flopenrs #(1) scantrapm (.clk, .reset, .en(DebugCapture), .d(TrapM), .q(), .scan(DebugScanEn), .scanin(ScanReg[0]), .scanout(ScanReg[1]));
+    end
   end else begin
     assign {CSRReadValW, PrivilegeModeW, 
             SATP_REGW, STATUS_MXR, STATUS_SUM, STATUS_MPRV, STATUS_MPP, STATUS_FS, FRM_REGW,
