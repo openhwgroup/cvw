@@ -249,7 +249,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
              .SelHPTW('0),
              .CacheMiss(ICacheMiss), .CacheAccess(ICacheAccess),
              .ByteMask('0), .BeatCount('0), .SelBusBeat('0),
-             .CacheWriteData('0),
+             .WriteData('0),
              .CacheRW(CacheRWF),
              .FlushCache('0),
              .NextSet(PCSpillNextF[11:0]),

@@ -335,7 +335,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
         .CacheRW(CacheRWM), 
         .FlushCache(FlushDCache), .NextSet(IEUAdrExtE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskSpillM), .BeatCount(BeatCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
-        .CacheWriteData(LSUWriteDataSpillM), .SelHPTW,
+        .WriteData(LSUWriteDataSpillM), .SelHPTW,
         .CacheStall, .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .CacheCommitted(DCacheCommittedM), 
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(DCacheReadDataWordM), 
