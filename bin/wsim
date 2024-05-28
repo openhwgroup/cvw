@@ -66,8 +66,8 @@ cd = "cd $WALLY/sim/" +args.sim
 if (args.sim == "questa"):
     if (args.lockstep):
         Instret = str(args.locksteplog)
-        CovEnableStr = "1\"" if int(args.covlog) > 0  else "0\"";
-        prefix ="IMPERAS_TOOLS=" + WALLY + "/sim/imperas.ic OTHERFLAGS=\"+IDV_TRACE2LOG=" + Instret + " +IDV_TRACE2COV=" + str(args.covlog) + " +TRACE2COV_ENABLE=" + CovEnableStr;
+        CovEnableStr = "1" if int(args.covlog) > 0  else "0";
+        prefix ="IMPERAS_TOOLS=" + WALLY + "/sim/imperas.ic OTHERFLAGS=\"+IDV_TRACE2LOG=" + Instret + " +IDV_TRACE2COV=" + str(args.covlog) + " +TRACE2COV_ENABLE=" + CovEnableStr + "\"";
         suffix = "--lockstep"
     else:
         prefix = ""
