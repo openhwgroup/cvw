@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module cache import cvw::*; #(parameter cvw_t P,
-                              parameter PA_BITS, XLEN, LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTERVAL, READ_ONLY_CACHE) (
+                              parameter PA_BITS, XLEN, LINELEN,  NUMSETS,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTERVAL, READ_ONLY_CACHE) (
   input  logic                   clk,
   input  logic                   reset,
   input  logic                   Stall,             // Stall the cache, preventing new accesses. In-flight access finished but does not return to READY
@@ -63,12 +63,12 @@ module cache import cvw::*; #(parameter cvw_t P,
   // Cache parameters
   localparam                     LINEBYTELEN = LINELEN/8;            // Line length in bytes
   localparam                     OFFSETLEN = $clog2(LINEBYTELEN);    // Number of bits in offset field
-  localparam                     SETLEN = $clog2(NUMLINES);          // Number of set bits
+  localparam                     SETLEN = $clog2(NUMSETS);          // Number of set bits
   localparam                     SETTOP = SETLEN+OFFSETLEN;          // Number of set plus offset bits
   localparam                     TAGLEN = PA_BITS - SETTOP;          // Number of tag bits
   localparam                     CACHEWORDSPERLINE = LINELEN/WORDLEN;// Number of words in cache line
   localparam                     LOGCWPL = $clog2(CACHEWORDSPERLINE);// Log2 of ^
-  localparam                     FLUSHADRTHRESHOLD = NUMLINES - 1;   // Used to determine when flush is complete
+  localparam                     FLUSHADRTHRESHOLD = NUMSETS - 1;   // Used to determine when flush is complete
   localparam                     LOGLLENBYTES = $clog2(WORDLEN/8);   // Number of bits to address a word
 
 
@@ -119,14 +119,14 @@ module cache import cvw::*; #(parameter cvw_t P,
     AdrSelMuxSelTag, CacheSetTag);
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
-  cacheway #(P, PA_BITS, XLEN, NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, READ_ONLY_CACHE) CacheWays[NUMWAYS-1:0](
+  cacheway #(P, PA_BITS, XLEN, NUMSETS, LINELEN, TAGLEN, OFFSETLEN, SETLEN, READ_ONLY_CACHE) CacheWays[NUMWAYS-1:0](
     .clk, .reset, .CacheEn, .CacheSetData, .CacheSetTag, .PAdr, .LineWriteData, .LineByteMask, .SelVictim,
     .SetValid, .ClearValid, .SetDirty, .ClearDirty, .VictimWay,
     .FlushWay, .FlushCache, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .HitDirtyWay, .TagWay, .FlushStage, .InvalidateCache);
 
   // Select victim way for associative caches
   if(NUMWAYS > 1) begin:vict
-    cacheLRU #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cacheLRU(
+    cacheLRU #(NUMWAYS, SETLEN, OFFSETLEN, NUMSETS) cacheLRU(
       .clk, .reset, .FlushStage, .CacheEn, .HitWay, .ValidWay, .VictimWay, .CacheSetData, .CacheSetTag, .LRUWriteEn,
       .SetValid, .ClearValid, .PAdr(PAdr[SETTOP-1:OFFSETLEN]), .InvalidateCache);
   end else 
