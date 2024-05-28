@@ -219,7 +219,7 @@ run -all
 # power off -r /dut/core/*
 
 if {$coverage || $FunctCoverage} {
-    set UCDB cov/${CFG}_${TESTSUITE}.ucdb
+    set UCDB ${WALLY}/sim/questa/cov/${CFG}_${TESTSUITE}.ucdb
     echo "Saving coverage to ${UCDB}"
     do coverage-exclusions-rv64gc.do  # beware: this assumes testing the rv64gc configuration
     coverage save -instance /testbench/dut/core ${UCDB}
