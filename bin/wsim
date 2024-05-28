@@ -63,18 +63,27 @@ for d in ["logs", "wkdir", "cov"]:
 
 # Launch selected simulator
 cd = "cd $WALLY/sim/" +args.sim
+# ugh.  can't have more than 9 arguments passed to vsim. why? I'll have to remove --lockstep when running
+# functional coverage and imply it.
 if (args.sim == "questa"):
     if (args.lockstep):
-        Instret = str(args.locksteplog)
-        CovEnableStr = "1" if int(args.covlog) > 0  else "0";
-        prefix ="IMPERAS_TOOLS=" + WALLY + "/sim/imperas.ic OTHERFLAGS=\"+IDV_TRACE2LOG=" + Instret + " +IDV_TRACE2COV=" + str(args.covlog) + " +TRACE2COV_ENABLE=" + CovEnableStr + "\"";
-        suffix = "--lockstep"
+        prefix = "IMPERAS_TOOLS=" + WALLY + "/sim/imperas.ic" # OTHERFLAGS=\"+IDV_TRACE2LOG=" + str(args.locksteplog) + " +IDV_TRACE2COV=" + str(args.covlog) + "\"";
+        if(args.fcov):
+            CovEnableStr = "1" if int(args.covlog) > 0  else "0";
+            #ImperasPlusArgs = "+IDV_TRACE2LOG=" + str(args.locksteplog) + " +IDV_TRACE2COV=" + str(args.covlog) + " +TRACE2COV_ENABLE=" + CovEnableStr;
+            ImperasPlusArgs = " +IDV_TRACE2COV=" + str(args.covlog) + " +TRACE2COV_ENABLE=" + CovEnableStr;
+            suffix = ""
+        else:
+            CovEnableStr = ""
+            ImperasPlusArgs = "";
+            suffix = "--lockstep"
     else:
         prefix = ""
+        ImperasPlusArgs = ""
         suffix = ""
     if (args.tb == "testbench_fp"):
-            args.args = " -GTEST=\"" + args.testsuite + "\" " + args.args
-    cmd = "do wally.do " + args.config + " " + args.testsuite + " " + args.tb + " " + args.args + " " + ElfFile + " " + suffix
+        args.args = " -GTEST=\"" + args.testsuite + "\" " + args.args
+    cmd = "do wally.do " + args.config + " " + args.testsuite + " " + args.tb + " " + args.args + " " + ElfFile + " " + suffix + " " + ImperasPlusArgs
     if (args.coverage):
         cmd += " --coverage"
     if (args.fcov):

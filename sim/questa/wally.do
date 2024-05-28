@@ -65,7 +65,7 @@ set lockstep 0
 set lockstepvoptstring ""
 set SVLib ""
 set SVLibPath ""
-set OtherFlags ""
+#set OtherFlags ""
 set ImperasPubInc ""
 set ImperasPrivInc ""
 set rvviFiles ""
@@ -134,7 +134,9 @@ if {$FunctCoverageIndex >= 0} {
 }
 
 set LockStepIndex [lsearch -exact $lst "--lockstep"]
-if {$LockStepIndex >= 0} {
+# ugh.  can't have more than 9 arguments passed to vsim. why? I'll have to remove --lockstep when running
+# functional coverage and imply it.
+if {$LockStepIndex >= 0 || $FunctCoverageIndex >= 0} {
     set lockstep 1
 
     # ideally this would all be one or two variables, but questa is having a real hard time
@@ -146,9 +148,11 @@ if {$LockStepIndex >= 0} {
     set idvFiles $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/*.sv
     set SVLib "-sv_lib"
     set SVLibPath $env(IMPERAS_HOME)/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model
-    set OtherFlags $env(OTHERFLAGS)
+    #set OtherFlags $env(OTHERFLAGS)
 
-    set lst [lreplace $lst $LockStepIndex $LockStepIndex]
+    if {$LockStepIndex >= 0} {
+        set lst [lreplace $lst $LockStepIndex $LockStepIndex]
+    }
 }
 
 # separate the +args from the -G parameters
@@ -164,10 +168,25 @@ if {$DEBUG > 0} {
     echo "GUI = $GUI"
     echo "coverage = $coverage"
     echo "lockstep = $lockstep"
-    echo "remaining list = \'$lst\'"
-    echo "Extra +args = \'$PlusArgs\'"
-    echo "Extra -args = \'$ParamArgs\'"
+    echo "FunctCoverage = $FunctCoverage"
+    echo "remaining list = $lst"
+    echo "Extra +args = $PlusArgs"
+    echo "Extra -args = $ParamArgs"
 }
+
+foreach x $PlusArgs {
+    echo "Element is $x"
+}
+
+# need a better solution this is really ugly
+# Questa really don't like passing $PlusArgs on the command line to vsim.  It treats the whole things
+# as one string rather than mutliple separate +args.  Is there an automated way to pass these?
+set temp0 [lindex $PlusArgs 0]
+set temp1 [lindex $PlusArgs 1]
+set temp2 [lindex $PlusArgs 2]
+set temp3 [lindex $PlusArgs 3]
+
+#quit
 
 # compile source files
 # suppress spurious warnngs about 
@@ -180,7 +199,9 @@ vlog -lint -work ${WKDIR}  +incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CF
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} ${ParamArgs} -o testbenchopt ${CoverageVoptArg}
 
-vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${PlusArgs} -fatal 7 ${SVLib} ${SVLibPath} ${OtherFlags} -suppress 3829 ${CoverageVsimArg}
+#vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${PlusArgs} -fatal 7 ${SVLib} ${SVLibPath} ${OtherFlags} +TRACE2COV_ENABLE=1 -suppress 3829 ${CoverageVsimArg}
+#vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${PlusArgs} -fatal 7 ${SVLib} ${SVLibPath} +IDV_TRACE2COV=1 +TRACE2COV_ENABLE=1 -suppress 3829 ${CoverageVsimArg}
+vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} $temp0 $temp1 $temp2 $temp3 -fatal 7 ${SVLib} ${SVLibPath} -suppress 3829 ${CoverageVsimArg}
 
 #    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
 # power add generates the logging necessary for said generation.
