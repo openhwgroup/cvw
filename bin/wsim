@@ -67,15 +67,19 @@ cd = "cd $WALLY/sim/" +args.sim
 # functional coverage and imply it.
 if (args.sim == "questa"):
     if (args.lockstep):
-        prefix = "IMPERAS_TOOLS=" + WALLY + "/sim/imperas.ic" # OTHERFLAGS=\"+IDV_TRACE2LOG=" + str(args.locksteplog) + " +IDV_TRACE2COV=" + str(args.covlog) + "\"";
+        prefix = "IMPERAS_TOOLS=" + WALLY + "/sim/imperas.ic"
+        if(int(args.locksteplog) >= 1): EnableLog = 1
+        else: EnableLog = 0
+        if(args.locksteplog != 0): ImperasPlusArgs = " +IDV_TRACE2LOG=" + str(EnableLog) + " +IDV_TRACE2LOG_AFTER=" + str(args.locksteplog) 
+        else: ImperasPlusArgs = ""
         if(args.fcov):
             CovEnableStr = "1" if int(args.covlog) > 0  else "0";
-            #ImperasPlusArgs = "+IDV_TRACE2LOG=" + str(args.locksteplog) + " +IDV_TRACE2COV=" + str(args.covlog) + " +TRACE2COV_ENABLE=" + CovEnableStr;
-            ImperasPlusArgs = " +IDV_TRACE2COV=" + str(args.covlog) + " +TRACE2COV_ENABLE=" + CovEnableStr;
+            if(args.covlog >= 1): EnableLog = 1
+            else: EnableLog = 0
+            ImperasPlusArgs = " +IDV_TRACE2COV=" + str(EnableLog) + " +TRACE2LOG_AFTER=" + str(args.covlog) + " +TRACE2COV_ENABLE=" + CovEnableStr;
             suffix = ""
         else:
             CovEnableStr = ""
-            ImperasPlusArgs = "";
             suffix = "--lockstep"
     else:
         prefix = ""
