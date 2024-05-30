@@ -16,7 +16,7 @@ set_property -dict [list CONFIG.PRIM_IN_FREQ {100.000} \
                         CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {166.66667} \
                         CONFIG.CLKOUT2_REQUESTED_OUT_FREQ {200} \
                         CONFIG.CLKOUT3_REQUESTED_OUT_FREQ {20} \
-                        CONFIG.CLKOUT3_REQUESTED_OUT_FREQ {25} \
+                        CONFIG.CLKOUT4_REQUESTED_OUT_FREQ {25} \
                         CONFIG.CLKIN1_JITTER_PS {10.0} \
                        ] [get_ips $ipName]
 
