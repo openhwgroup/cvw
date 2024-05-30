@@ -70,10 +70,10 @@ foreach my $line (<$fh>) {
 }
 &terminateDeriv();
 close($fh);
+system("rm -rf $ENV{WALLY}/config/deriv");
 #foreach my $key (keys %derivs) {
 foreach my $key (@derivnames) {
     my $dir = "$ENV{WALLY}/config/deriv/$key";
-    system("rm -rf $dir");
     system("mkdir -p $dir");
     my $configunmod = "$dir/config_unmod.vh";
     my $config = "$dir/config.vh";

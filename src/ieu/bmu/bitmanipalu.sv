@@ -103,18 +103,18 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
 
   // ZBKB Unit
   if (P.ZBKB_SUPPORTED) begin: zbkb
-    zbkb #(P.XLEN) ZBKB(.A(ABMU), .B(BBMU), .RevA, .W64, .Funct3, .ZBKBSelect(ZBBSelect[2:0]), .ZBKBResult);
+    zbkb #(P.XLEN) ZBKB(.A(ABMU), .B(BBMU), .Funct3, .ZBKBSelect(ZBBSelect[2:0]), .ZBKBResult);
   end else assign ZBKBResult = '0;
 
   // ZBKX Unit
   if (P.ZBKX_SUPPORTED) begin: zbkx
-    zbkx #(P.XLEN) ZBKX(.A(ABMU), .B(BBMU), .ZBKXSelect(ZBBSelect[2:0]), .ZBKXResult);
+    zbkx #(P.XLEN) ZBKX(.A(ABMU), .B(BBMU), .ZBKXSelect(ZBBSelect[0]), .ZBKXResult);
   end else assign ZBKXResult = '0;
 
   // ZKND and ZKNE AES decryption and encryption
   if (P.ZKND_SUPPORTED | P.ZKNE_SUPPORTED) begin: zknde
-    if (P.XLEN == 32) zknde32 #(P) ZKN32(.A(ABMU), .B(BBMU), .Funct7, .round(Rs2E[3:0]), .ZKNSelect(ZBBSelect[3:0]), .ZKNDEResult); 
-    else              zknde64 #(P) ZKN64(.A(ABMU), .B(BBMU), .Funct7, .round(Rs2E[3:0]), .ZKNSelect(ZBBSelect[3:0]), .ZKNDEResult); 
+    if (P.XLEN == 32) zknde32 #(P) ZKN32(.A(ABMU), .B(BBMU), .bs(Funct7[6:5]), .round(Rs2E[3:0]), .ZKNSelect(ZBBSelect[3:0]), .ZKNDEResult); 
+    else              zknde64 #(P) ZKN64(.A(ABMU), .B(BBMU),                   .round(Rs2E[3:0]), .ZKNSelect(ZBBSelect[3:0]), .ZKNDEResult); 
   end else assign ZKNDEResult = '0;
  
   // ZKNH Unit

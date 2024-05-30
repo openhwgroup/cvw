@@ -31,6 +31,12 @@ def signedImm12(imm):
     imm = imm - 0x1000
   return str(imm)
 
+def signedImm20(imm):
+  imm = imm % pow(2, 20)
+  if (imm & 0x80000):
+    imm = imm - 0x100000
+  return str(imm)
+
 def writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, storecmd, xlen):
   lines = "\n# Testcase " + str(desc) + "\n"
   if (rs1val < 0):
@@ -48,6 +54,26 @@ def writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, stor
   elif (test in itype):
     lines = lines + "li x" + str(rs1) + ", " + formatstr.format(rs1val) + " # initialize rs1 to a random value \n"
     lines = lines + test + " x" + str(rd) + ", x" + str(rs1) + ", " + signedImm12(immval) + " # perform operation\n"
+  elif (test in loaditype):#["lb", "lh", "lw", "ld", "lbu", "lhu", "lwu"]
+    lines = lines + "auipc x" + str(rs1) + ", 0x20" + " # add upper immediate value to pc \n"
+    lines = lines + "addi x" + str(rs1) + ", x" + str(rs1) + ", " + signedImm12(immval) + " # add immediate to lower part of rs1 \n"
+    lines = lines + test + " x" + str(rd) + ", " + signedImm12(immval) + "(x" + str(rs1) + ") # perform operation \n"
+  elif (test in stypes):#["sb", "sh", "sw", "sd"]
+    #lines = lines + test + " x" + str(rs2) + ", " + signedImm12(immval) + "(x" + str(rs1) + ") # perform operation \n"
+    lines = lines + test + " x" + str(rs2) + ", " "0(x" + str(rs1) + ") # perform operation \n"
+    #print("Error: %s type not implemented yet" % test)
+  elif (test in btypes):#["beq", "bne", "blt", "bge", "bltu", "bgeu"]
+    if (randint(1,100) > 50):
+      rs1val = rs2val
+      lines = lines + "# same values in both registers\n"
+    lines = lines + "nop\n"
+    lines = lines + "li x" + str(rs1) + ", " + formatstr.format(rs1val) + " # initialize rs1 to a random value that should get changed\n"
+    lines = lines + "li x" + str(rs2) + ", " + formatstr.format(rs2val) + " # initialize rs2 to a random value that should get changed\n"
+    lines = lines + test + " x" + str(rs1) + ", x" + str(rs2) + ", some_label_for_sb_types_" + str(immval) + "+4" + " # perform operation \n"
+    lines = lines + "addi x0, x1, 1\n"
+    lines = lines + "some_label_for_sb_types_" + str(immval) + ":\n"
+    lines = lines + "addi x0, x2, 2\n"
+    lines = lines + "nop\nnop\nnop\nnop\nnop\n"
   else:
     pass
     #print("Error: %s type not implemented yet" % test)
@@ -130,12 +156,12 @@ def make_rd_maxvals(test, storecmd, xlen):
 def make_rd_rs1_eqval(test, storecmd, xlen):
   [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
   desc = "cmp_rdm_rs1_eqval (Test rs1 = rd = " + hex(rs1val) + ")"
-  writeCovVector(desc, rs1, 0, rd, rs1val, rs2val, immval, rdval, test, storecmd, xlen)
+  writeCovVector(desc, rs1, 0, rd, rdval, rs2val, immval, rdval, test, storecmd, xlen)
 
 def make_rd_rs2_eqval(test, storecmd, xlen):
   [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
   desc = "cmp_rd_rs2_eqval (Test rs2 = rd = " + hex(rs2val) + ")"
-  writeCovVector(desc, 0, rs2, rd, rs1val, rs2val, immval, rdval, test, storecmd, xlen)
+  writeCovVector(desc, 0, rs2, rd, rs1val, rdval, immval, rdval, test, storecmd, xlen)
 
 def make_rs1_rs2_eqval(test, storecmd, xlen):
   [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
@@ -207,17 +233,37 @@ def write_tests(coverpoints, test, storecmd, xlen):
     elif (coverpoint == "cp_rs2_sign"):
       make_rs2_sign(test, storecmd, xlen)
     elif (coverpoint == "cp_rd_sign"):
-      pass # hope already covered by rd_maxvals
+      pass #TODO hope already covered by rd_maxvals
     elif (coverpoint == "cr_rs1_rs2"):
       make_cr_rs1_rs2_sign(test, storecmd, xlen)
     elif (coverpoint == "cp_rs1_toggle"):
-      pass # toggle not needed and seems to be covered by other things
+      pass #TODO toggle not needed and seems to be covered by other things
     elif (coverpoint == "cp_rs2_toggle"):
-      pass # toggle not needed and seems to be covered by other things
+      pass #TODO toggle not needed and seems to be covered by other things
     elif (coverpoint == "cp_rd_toggle"):
-      pass # toggle not needed and seems to be covered by other things
+      pass #TODO toggle not needed and seems to be covered by other things
     elif (coverpoint == "cp_gpr_hazard"):
-      pass # not yet implemented
+      pass #TODO not yet implemented
+    elif (coverpoint == "cp_imm_sign"):
+      pass #TODO
+    elif (coverpoint == "cr_rs1_imm"):
+      pass #TODO (not if crosses are not needed)
+    elif (coverpoint == "cp_imm_ones_zeros"):
+      pass #TODO
+    elif (coverpoint == "cp_mem_hazard"):
+      pass #TODO
+    elif (coverpoint == "cp_imm_zero"):
+      pass #TODO
+    elif (coverpoint == "cp_mem_unaligned"):
+      pass #TODO
+    elif (coverpoint == "cp_offset"):
+      pass #TODO
+    elif (coverpoint == "cr_nord_rs1_rs2"):
+      pass #TODO (not if crosses are not needed)
+    elif (coverpoint == "cp_imm_shift"):
+      pass #TODO
+    elif (coverpoint == "cp_rd_boolean"):
+      pass #TODO
     else:
       print("Warning: " + coverpoint + " not implemented yet for " + test)
       
@@ -238,6 +284,7 @@ def getcovergroups(coverdefdir, coverfiles):
       if (m):
         coverpoints[curinstr].append(m.group(1))
     f.close()
+    print(coverpoints)
     return coverpoints
 
 ##################################
@@ -258,6 +305,8 @@ shiftitype = ["slli", "srli", "srai"]
 itype = ["addi", "slti", "sltiu", "xori", "ori", "andi"]
 stypes = ["sb", "sh", "sw", "sd"]
 btypes = ["beq", "bne", "blt", "bge", "bltu", "bgeu"]
+# TODO: auipc missing, check whatelse is missing in ^these^ types
+
 coverpoints = getcovergroups(coverdefdir, coverfiles)
 
 author = "David_Harris@hmc.edu"

@@ -44,6 +44,20 @@ set coverage 0
 set CoverageVoptArg ""
 set CoverageVsimArg ""
 
+set FunctCoverage 0
+set riscvISACOVsrc ""
+set FCdefineINCLUDE_TRACE2COV ""
+set FCdefineCOVER_BASE_RV64I ""
+set FCdefineCOVER_LEVEL_DV_PR_EXT  ""
+set FCdefineCOVER_RV64I ""
+set FCdefineCOVER_RV64M ""
+set FCdefineCOVER_RV64A ""
+set FCdefineCOVER_RV64F ""
+set FCdefineCOVER_RV64D ""
+set FCdefineCOVER_RV64ZICSR ""
+set FCdefineCOVER_RV64C ""
+set FCdefineIDV_INCLUDE_TRACE2COV ""
+
 set lockstep 0
 # ok this is annoying. vlog, vopt, and vsim are very picky about how arguments are passed.
 # unforunately it won't allow these to be grouped as one argument per command so they are broken
@@ -51,7 +65,7 @@ set lockstep 0
 set lockstepvoptstring ""
 set SVLib ""
 set SVLibPath ""
-set OtherFlags ""
+#set OtherFlags ""
 set ImperasPubInc ""
 set ImperasPrivInc ""
 set rvviFiles ""
@@ -98,8 +112,31 @@ if {$CoverageIndex >= 0} {
     set lst [lreplace $lst $CoverageIndex $CoverageIndex]
 }
 
+# if +coverage found set flag and remove from list
+set FunctCoverageIndex [lsearch -exact $lst "--fcov"]
+if {$FunctCoverageIndex >= 0} {
+    set FunctCoverage 1
+    set riscvISACOVsrc +incdir+$env(IMPERAS_HOME)/ImpProprietary/source/host/riscvISACOV/source
+
+    set FCdefineINCLUDE_TRACE2COV "+define+INCLUDE_TRACE2COV"
+    set FCdefineCOVER_BASE_RV64I "+define+COVER_BASE_RV64I"
+    set FCdefineCOVER_LEVEL_DV_PR_EXT  "+define+COVER_LEVEL_DV_PR_EXT"
+    set FCdefineCOVER_RV64I "+define+COVER_RV64I"
+    set FCdefineCOVER_RV64M "+define+COVER_RV64M"
+    set FCdefineCOVER_RV64A "+define+COVER_RV64A"
+    set FCdefineCOVER_RV64F "+define+COVER_RV64F"
+    set FCdefineCOVER_RV64D "+define+COVER_RV64D"
+    set FCdefineCOVER_RV64ZICSR "+define+COVER_RV64ZICSR"
+    set FCdefineCOVER_RV64C "+define+COVER_RV64C"
+    set FCdefineIDV_INCLUDE_TRACE2COV "+define+IDV_INCLUDE_TRACE2COV"
+
+    set lst [lreplace $lst $FunctCoverageIndex $FunctCoverageIndex]
+}
+
 set LockStepIndex [lsearch -exact $lst "--lockstep"]
-if {$LockStepIndex >= 0} {
+# ugh.  can't have more than 9 arguments passed to vsim. why? I'll have to remove --lockstep when running
+# functional coverage and imply it.
+if {$LockStepIndex >= 0 || $FunctCoverageIndex >= 0} {
     set lockstep 1
 
     # ideally this would all be one or two variables, but questa is having a real hard time
@@ -111,9 +148,11 @@ if {$LockStepIndex >= 0} {
     set idvFiles $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/*.sv
     set SVLib "-sv_lib"
     set SVLibPath $env(IMPERAS_HOME)/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model
-    set OtherFlags $env(OTHERFLAGS)
+    #set OtherFlags $env(OTHERFLAGS)
 
-    set lst [lreplace $lst $LockStepIndex $LockStepIndex]
+    if {$LockStepIndex >= 0} {
+        set lst [lreplace $lst $LockStepIndex $LockStepIndex]
+    }
 }
 
 # separate the +args from the -G parameters
@@ -129,23 +168,40 @@ if {$DEBUG > 0} {
     echo "GUI = $GUI"
     echo "coverage = $coverage"
     echo "lockstep = $lockstep"
-    echo "remaining list = \'$lst\'"
-    echo "Extra +args = \'$PlusArgs\'"
-    echo "Extra -args = \'$ParamArgs\'"
+    echo "FunctCoverage = $FunctCoverage"
+    echo "remaining list = $lst"
+    echo "Extra +args = $PlusArgs"
+    echo "Extra -args = $ParamArgs"
 }
+
+foreach x $PlusArgs {
+    echo "Element is $x"
+}
+
+# need a better solution this is really ugly
+# Questa really don't like passing $PlusArgs on the command line to vsim.  It treats the whole things
+# as one string rather than mutliple separate +args.  Is there an automated way to pass these?
+set temp0 [lindex $PlusArgs 0]
+set temp1 [lindex $PlusArgs 1]
+set temp2 [lindex $PlusArgs 2]
+set temp3 [lindex $PlusArgs 3]
+
+#quit
 
 # compile source files
 # suppress spurious warnngs about 
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
 
-vlog -lint -work ${WKDIR}  +incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} ${lockstepvoptstring} ${ImperasPubInc} ${ImperasPrivInc} +incdir+${CONFIG}/shared ${rvviFiles} ${idvFiles} ${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv  ${SRC}/*/*.sv ${SRC}/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
+vlog -lint -work ${WKDIR}  +incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared ${lockstepvoptstring} ${FCdefineIDV_INCLUDE_TRACE2COV} ${FCdefineINCLUDE_TRACE2COV} ${ImperasPubInc} ${ImperasPrivInc} ${rvviFiles} ${idvFiles}  ${FCdefineCOVER_BASE_RV64I} ${FCdefineCOVER_LEVEL_DV_PR_EXT} ${FCdefineCOVER_RV64I} ${FCdefineCOVER_RV64M} ${FCdefineCOVER_RV64A} ${FCdefineCOVER_RV64F} ${FCdefineCOVER_RV64D} ${FCdefineCOVER_RV64ZICSR} ${FCdefineCOVER_RV64C}  ${riscvISACOVsrc} ${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv  ${SRC}/*/*.sv ${SRC}/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} ${lst} -o testbenchopt ${CoverageVoptArg}
+vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} ${ParamArgs} -o testbenchopt ${CoverageVoptArg}
 
-vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${PlusArgs} -fatal 7 ${SVLib} ${SVLibPath} ${OtherFlags} -suppress 3829 ${CoverageVsimArg}
+#vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${PlusArgs} -fatal 7 ${SVLib} ${SVLibPath} ${OtherFlags} +TRACE2COV_ENABLE=1 -suppress 3829 ${CoverageVsimArg}
+#vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${PlusArgs} -fatal 7 ${SVLib} ${SVLibPath} +IDV_TRACE2COV=1 +TRACE2COV_ENABLE=1 -suppress 3829 ${CoverageVsimArg}
+vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} $temp0 $temp1 $temp2 $temp3 -fatal 7 ${SVLib} ${SVLibPath} -suppress 3829 ${CoverageVsimArg}
 
 #    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
 # power add generates the logging necessary for said generation.
@@ -162,8 +218,8 @@ if { ${GUI} } {
 run -all
 # power off -r /dut/core/*
 
-if {$coverage} {
-    set UCDB cov/${CFG}_${TESTSUITE}.ucdb
+if {$coverage || $FunctCoverage} {
+    set UCDB ${WALLY}/sim/questa/cov/${CFG}_${TESTSUITE}.ucdb
     echo "Saving coverage to ${UCDB}"
     do coverage-exclusions-rv64gc.do  # beware: this assumes testing the rv64gc configuration
     coverage save -instance /testbench/dut/core ${UCDB}

@@ -30,24 +30,16 @@
 
 module byteop #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A,             // Operands
-  input  logic [WIDTH-1:0] RevA,          // Reversed A
-  input  logic [1:0]       ByteSelect,    // LSB of Immediate
+  input  logic             ByteSelect,    // LSB of Immediate
   output logic [WIDTH-1:0] ByteResult);   // rev8, orcb result
 
-  logic [WIDTH-1:0] OrcBResult, Rev8Result, Brev8Result;
+  logic [WIDTH-1:0] OrcBResult, Rev8Result;
   genvar i;
 
-  for (i=0;i<WIDTH;i+=8) begin:loop
+  for (i=0;i<WIDTH;i+=8) begin:byteloop
     assign OrcBResult[i+7:i] = {8{|A[i+7:i]}};
     assign Rev8Result[WIDTH-i-1:WIDTH-i-8] = A[i+7:i];
-    assign Brev8Result[i+7:i] = RevA[WIDTH-1-i:WIDTH-i-8];
   end
 
-  // ByteOp Result Mux
-  always_comb begin
-    if (ByteSelect[0] == 1'b0)      ByteResult = Rev8Result;
-    else if (ByteSelect[1] == 1'b0) ByteResult = OrcBResult;
-    else                            ByteResult = Brev8Result;
-  end
-  
+  mux2 #(WIDTH) byteresultmux(Rev8Result, OrcBResult, ByteSelect, ByteResult);
 endmodule

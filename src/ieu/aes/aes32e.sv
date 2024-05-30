@@ -34,8 +34,8 @@ module aes32e(
    logic [7:0] 			  SboxOut;
    logic [31:0] 		     so, mixed;
    
-   aessbox8 sbox(SboxIn, SboxOut);                // Substitute
-   assign so = {24'h0, SboxOut};                  // Pad sbox output
-   aesmixcolumns32 mwd(so, mixed);                // Mix Word using aesmixword component
-   mux2 #(32) rmux(mixed, so, finalround, result); // on final round, skip mixcolumns
+   aessbox8 sbox(SboxIn, SboxOut);                 // Substitute
+   assign so = {24'h0, SboxOut};                   // Pad sbox output
+   aesmixcolumns32 mb(so, mixed);                  // Mix using MixColumns component
+   mux2 #(32) rmux(mixed, so, finalround, result); // on final round, skip MixColumns
 endmodule

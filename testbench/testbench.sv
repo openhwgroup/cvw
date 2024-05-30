@@ -68,7 +68,7 @@ module testbench;
   logic        ResetMem;
 
   // Variables that can be overwritten with $value$plusargs at start of simulation
-  string       TEST;
+  string       TEST, ElfFile;
   integer      INSTR_LIMIT;
 
   // DUT signals
@@ -115,6 +115,10 @@ module testbench;
     // look for arguments passed to simulation, or use defaults
     if (!$value$plusargs("TEST=%s", TEST))
       TEST = "none";
+    if (!$value$plusargs("ElfFile=%s", ElfFile))
+      ElfFile = "none";
+    else begin
+    end
     if (!$value$plusargs("INSTR_LIMIT=%d", INSTR_LIMIT))
       INSTR_LIMIT = 0;
     
@@ -221,8 +225,12 @@ module testbench;
         "arch32zknh":    if (P.ZKNH_SUPPORTED)    tests = arch32zknh;
       endcase
     end
-    if (tests.size() == 0) begin
-      $display("TEST %s not supported in this configuration", TEST);
+    if (tests.size() == 0 & ElfFile == "none") begin
+      if (tests.size() == 0) begin
+        $display("TEST %s not supported in this configuration", TEST);
+      end else if(ElfFile == "none") begin
+        $display("ElfFile %s not found", ElfFile);
+      end
       $finish;
     end
 `ifdef MAKEVCD
@@ -257,7 +265,7 @@ module testbench;
   logic        ResetCntRst;
   logic        CopyRAM;
 
-  string  signame, memfilename, bootmemfilename, uartoutfilename, pathname;
+  string  signame, elffilename, memfilename, bootmemfilename, uartoutfilename, pathname;
   integer begin_signature_addr, end_signature_addr, signature_size;
   integer uartoutfile;
 
@@ -356,21 +364,27 @@ module testbench;
   //end // added
   //always @(posedge SelectTest) // added
     if(SelectTest) begin
-      if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
-      else if(TEST == "buildroot") begin 
+      if (riscofTest) begin 
+        memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
+        elffilename = {pathname, tests[test], "ref/ref.elf"};
+        ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
+        ProgramLabelMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.lab"};
+      end else if(TEST == "buildroot") begin 
         memfilename = {RISCV_DIR, "/linux-testvectors/ram.bin"};
+        elffilename = "buildroot";
         bootmemfilename = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
         uartoutfilename = {"logs/", TEST, "_uart.out"};
         uartoutfile = $fopen(uartoutfilename, "w"); // delete UART output file
-      end
-      else            memfilename = {pathname, tests[test], ".elf.memfile"};
-      if (riscofTest) begin
-        ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
-        ProgramLabelMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.lab"};
-      end else if (TEST == "buildroot") begin
         ProgramAddrMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.addr"};
         ProgramLabelMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.lab"};
+      end else if(ElfFile != "none") begin
+        elffilename = ElfFile;
+        memfilename = {ElfFile, ".memfile"};
+        ProgramAddrMapFile = {ElfFile, ".objdump.addr"};
+        ProgramLabelMapFile = {ElfFile, ".objdump.lab"};
       end else begin
+        elffilename = {pathname, tests[test], ".elf"};
+        memfilename = {pathname, tests[test], ".elf.memfile"};
         ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
         ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
       end
@@ -410,6 +424,15 @@ module testbench;
         $display("Embench Benchmark: created output file: %s", outputfile);
       end else if (TEST == "coverage64gc") begin
         $display("Coverage tests don't get checked");
+      end else if (ElfFile != "none") begin
+        $display("Single Elf file tests are not signatured verified.");
+`ifdef VERILATOR // this macro is defined when verilator is used
+        $finish; // Simulator Verilator needs $finish to terminate simulation.
+`elsif SIM_VCS // this macro is defined when vcs is used
+        $finish; // Simulator VCS needs $finish to terminate simulation.
+`else
+         $stop; // if this is changed to $finish for Questa, wally-batch.do does not go to the next step to run coverage, and wally.do terminates without allowing GUI debug
+`endif
       end else begin 
         // for tests with no self checking mechanism, read .signature.output file and compare to check for errors
         // clear signature to prevent contamination from previous tests
@@ -658,7 +681,7 @@ end
   wallyTracer #(P) wallyTracer(rvvi);
 
   trace2log idv_trace2log(rvvi);
-  //      trace2cov idv_trace2cov(rvvi);
+  trace2cov idv_trace2cov(rvvi);
 
   // enabling of comparison types
   trace2api #(.CMP_PC      (1),
@@ -669,10 +692,17 @@ end
               .CMP_CSR     (1)
               ) idv_trace2api(rvvi);
 
+  string filename;
   initial begin
+    // imperasDV requires the elffile be defined at the begining of the simulation.
     int iter;
+    longint x64;
+    int     x32[2];
+    longint index;
+    string  memfilenameImperasDV, bootmemfilenameImperasDV;
     #1;
     IDV_MAX_ERRORS = 3;
+    elffilename = ElfFile;
 
     // Initialize REF (do this before initializing the DUT)
     if (!rvviVersionCheck(RVVI_API_VERSION)) begin
@@ -686,9 +716,57 @@ end
     void'(rvviRefConfigSetInt(IDV_CONFIG_MODEL_ADDRESS_BUS_WIDTH,     56));
     void'(rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 6));
 
-    if (!rvviRefInit("")) begin
-      $display($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
-      $fatal;
+    if(elffilename == "buildroot") filename = "";    
+    else filename = elffilename;
+
+    // use the ImperasDV rvviRefInit to load the reference model with an elf file
+    if(elffilename != "none") begin
+      if (!rvviRefInit(filename)) begin
+        $display($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
+        $fatal;
+      end
+    end else begin // for buildroot use the binary instead to load teh reference model.
+      if (!rvviRefInit("")) begin // still have to call with nothing
+        $display($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
+        $fatal;
+      end      
+      
+      memfilenameImperasDV = {RISCV_DIR, "/linux-testvectors/ram.bin"};
+      bootmemfilenameImperasDV = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
+
+      $display("RVVI Loading bootmem.bin");
+      memFile = $fopen(bootmemfilenameImperasDV, "rb");
+      index = 'h1000 - 8;
+      while(!$feof(memFile)) begin
+        index+=8;
+        readResult = $fread(x64, memFile);
+        if (x64 == 0) continue;
+        x32[0] = x64 & 'hffffffff;
+        x32[1] = x64 >> 32;
+        rvviRefMemoryWrite(0, index+0, x32[0], 4);
+        rvviRefMemoryWrite(0, index+4, x32[1], 4);
+        //$display("boot %08X x32[0]=%08X x32[1]=%08X", index, x32[0], x32[1]);
+      end
+      $fclose(memFile);
+            
+      $display("RVVI Loading ram.bin");
+      memFile = $fopen(memfilenameImperasDV, "rb");
+      index = 'h80000000 - 8;
+      while(!$feof(memFile)) begin
+        index+=8;
+        readResult = $fread(x64, memFile);
+        if (x64 == 0) continue;
+        x32[0] = x64 & 'hffffffff;
+        x32[1] = x64 >> 32;
+        rvviRefMemoryWrite(0, index+0, x32[0], 4);
+        rvviRefMemoryWrite(0, index+4, x32[1], 4);
+        //$display("ram  %08X x32[0]=%08X x32[1]=%08X", index, x32[0], x32[1]);
+      end
+      $fclose(memFile);
+      
+      $display("RVVI Loading Complete");
+      
+      void'(rvviRefPcSet(0, P.RESET_VECTOR)); // set BOOTROM address
     end
 
     // Volatile CSRs
@@ -744,53 +822,6 @@ end
 
     void'(rvviRefCsrSetVolatile(0, 32'h104));   // SIE - Temporary!!!!
     
-    // Load memory
-    // *** RT: This section can probably be moved into the same chunk of code which
-    // loads the memories.  However I'm not sure that ImperasDV supports reloading
-    // the memories without relaunching the simulator.
-    begin
-      longint x64;
-      int     x32[2];
-      longint index;
-      string  memfilenameImperasDV, bootmemfilenameImperasDV;
-      
-      memfilenameImperasDV = {RISCV_DIR, "/linux-testvectors/ram.bin"};
-      bootmemfilenameImperasDV = {RISCV_DIR, "/linux-testvectors/bootmem.bin"};
-
-      $display("RVVI Loading bootmem.bin");
-      memFile = $fopen(bootmemfilenameImperasDV, "rb");
-      index = 'h1000 - 8;
-      while(!$feof(memFile)) begin
-        index+=8;
-        readResult = $fread(x64, memFile);
-        if (x64 == 0) continue;
-        x32[0] = x64 & 'hffffffff;
-        x32[1] = x64 >> 32;
-        rvviRefMemoryWrite(0, index+0, x32[0], 4);
-        rvviRefMemoryWrite(0, index+4, x32[1], 4);
-        //$display("boot %08X x32[0]=%08X x32[1]=%08X", index, x32[0], x32[1]);
-      end
-      $fclose(memFile);
-            
-      $display("RVVI Loading ram.bin");
-      memFile = $fopen(memfilenameImperasDV, "rb");
-      index = 'h80000000 - 8;
-      while(!$feof(memFile)) begin
-        index+=8;
-        readResult = $fread(x64, memFile);
-        if (x64 == 0) continue;
-        x32[0] = x64 & 'hffffffff;
-        x32[1] = x64 >> 32;
-        rvviRefMemoryWrite(0, index+0, x32[0], 4);
-        rvviRefMemoryWrite(0, index+4, x32[1], 4);
-        //$display("ram  %08X x32[0]=%08X x32[1]=%08X", index, x32[0], x32[1]);
-      end
-      $fclose(memFile);
-      
-      $display("RVVI Loading Complete");
-      
-      void'(rvviRefPcSet(0, P.RESET_VECTOR)); // set BOOTROM address
-    end
   end
 
   always @(dut.core.priv.priv.csr.csri.MIP_REGW[7])   void'(rvvi.net_push("MTimerInterrupt",    dut.core.priv.priv.csr.csri.MIP_REGW[7]));
