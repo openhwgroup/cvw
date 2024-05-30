@@ -51,27 +51,27 @@ module bsg_dmc_ahb
   output logic [AHB_DATA_SIZE-1:0]   HRDATA,
   output logic                       HRESP, HREADYOUT,
   input  logic                       ui_clk,
-  output logic                       ddr_ck_p, ddr_ck_n, ddr_cke,
-  output logic [2:0]                 ddr_ba,
-  output logic [15:0]                ddr_addr,
-  output logic                       ddr_cs, ddr_ras, ddr_cas,
-  output logic                       ddr_we, ddr_reset, ddr_odt,
-  output logic [DQ_DATA_SIZE/8-1:0]  ddr_dm_oen, ddr_dm,
-  output logic [DQ_DATA_SIZE/8-1:0]  ddr_dqs_p_oen, ddr_dqs_p_ien, ddr_dqs_p_out,
-  input  logic [DQ_DATA_SIZE/8-1:0]  ddr_dqs_p_in,
-  output logic [DQ_DATA_SIZE/8-1:0]  ddr_dqs_n_oen, ddr_dqs_n_ien, ddr_dqs_n_out,
-  input  logic [DQ_DATA_SIZE/8-1:0]  ddr_dqs_n_in,
-  output logic [DQ_DATA_SIZE-1:0]    ddr_dq_oen, ddr_dq_out,
-  input  logic [DQ_DATA_SIZE-1:0]    ddr_dq_in,
-  input  logic                       dfi_clk_2x,
-  output logic                       dfi_clk_1x
+  output                             ddr_ck_p_o, ddr_ck_n_o, ddr_cke_o,
+  output       [2:0]                 ddr_ba_o,
+  output       [15:0]                ddr_addr_o,
+  output                             ddr_cs_n_o, ddr_ras_n_o, ddr_cas_n_o,
+  output                             ddr_we_n_o, ddr_reset_n_o, ddr_odt_o,
+  output       [DQ_DATA_SIZE/8-1:0]  ddr_dm_oen_o, ddr_dm_o,
+  output       [DQ_DATA_SIZE/8-1:0]  ddr_dqs_p_oen_o, ddr_dqs_p_ien_o, ddr_dqs_p_o,
+  input        [DQ_DATA_SIZE/8-1:0]  ddr_dqs_p_i,
+  output       [DQ_DATA_SIZE/8-1:0]  ddr_dqs_n_oen_o, ddr_dqs_n_ien_o, ddr_dqs_n_o,
+  input        [DQ_DATA_SIZE/8-1:0]  ddr_dqs_n_i,
+  output       [DQ_DATA_SIZE-1:0]    ddr_dq_oen_o, ddr_dq_o,
+  input        [DQ_DATA_SIZE-1:0]    ddr_dq_i,
+  input  logic                       dfi_clk_2x_i,
+  output logic                       dfi_clk_1x_o
 );
 
   // Global async reset
   logic sys_reset;
 
   // Memory controller config
-  bsg_tag_s                    dmc_rst_tag, dmc_ds_tag;
+  bsg_tag_s                      dmc_rst_tag, dmc_ds_tag;
   bsg_tag_s [DQ_DATA_SIZE/8-1:0] dmc_dly_tag, dmc_dly_trigger_tag;
 
   // UI signals
@@ -84,11 +84,15 @@ module bsg_dmc_ahb
   logic                       app_wdf_end, app_wdf_rdy;
   logic [AHB_DATA_SIZE-1:0]   app_rd_data;
   logic                       app_rd_data_end, app_rd_data_valid;
-  logic                       app_ref_ack, app_zq_ack, app_sr_active; // Sink unused UI signals
+  logic                       app_ref_ack_o, app_zq_ack_o, app_sr_active_o; // Sink unused UI signals
   logic                       init_calib_complete;
   logic [11:0]                device_temp; // Reserved
 
-  ahbxuiconverter #(AHB_ADDR_SIZE, AHB_DATA_SIZE) bsg_dmc_ahb_ui_converter (
+  ahbxuiconverter #(
+    AHB_ADDR_SIZE,
+    AHB_DATA_SIZE,
+    BURST_LEN
+  ) bsg_dmc_ahb_ui_converter (
     .HCLK, .HRESETn, .HSEL, .HADDR, .HWDATA, .HWSTRB, .HBURST, .HWRITE, .HTRANS, .HREADY, .HRDATA, .HRESP, .HREADYOUT,
     .sys_reset, .ui_clk, .ui_clk_sync_rst,
     .app_addr, .app_cmd, .app_en, .app_rdy,
@@ -113,19 +117,19 @@ module bsg_dmc_ahb
     .app_addr_i(app_addr), .app_cmd_i(app_cmd), .app_en_i(app_en), .app_rdy_o(app_rdy),
     .app_wdf_wren_i(app_wdf_wren), .app_wdf_data_i(app_wdf_data), .app_wdf_mask_i(app_wdf_mask), .app_wdf_end_i(app_wdf_end), .app_wdf_rdy_o(app_wdf_rdy),
     .app_rd_data_valid_o(app_rd_data_valid), .app_rd_data_o(app_rd_data), .app_rd_data_end_o(app_rd_data_end),
-    .app_ref_req_i(1'b0), .app_ref_ack_o(app_ref_ack),
-    .app_zq_req_i(1'b0), .app_zq_ack_o(app_zq_ack),
-    .app_sr_req_i(1'b0), .app_sr_active_o(app_sr_active),
+    .app_ref_req_i(1'b0), .app_ref_ack_o,
+    .app_zq_req_i(1'b0), .app_zq_ack_o,
+    .app_sr_req_i(1'b0), .app_sr_active_o,
     .init_calib_complete_o(init_calib_complete),
-    .ddr_ck_p_o(ddr_ck_p), .ddr_ck_n_o(ddr_ck_n), .ddr_cke_o(ddr_cke),
-    .ddr_ba_o(ddr_ba), .ddr_addr_o(ddr_addr), .ddr_cs_n_o(ddr_cs), .ddr_ras_n_o(ddr_ras), .ddr_cas_n_o(ddr_cas),
-    .ddr_we_n_o(ddr_we), .ddr_reset_n_o(ddr_reset), .ddr_odt_o(ddr_odt),
-    .ddr_dm_oen_o(ddr_dm_oen), .ddr_dm_o(ddr_dm),
-    .ddr_dqs_p_oen_o(ddr_dqs_p_oen), .ddr_dqs_p_ien_o(ddr_dqs_p_ien), .ddr_dqs_p_o(ddr_dqs_p_out), .ddr_dqs_p_i(ddr_dqs_p_in),
-    .ddr_dqs_n_oen_o(ddr_dqs_n_oen), .ddr_dqs_n_ien_o(ddr_dqs_n_ien), .ddr_dqs_n_o(ddr_dqs_n_out), .ddr_dqs_n_i(ddr_dqs_n_in),
-    .ddr_dq_oen_o(ddr_dq_oen), .ddr_dq_o(ddr_dq_out), .ddr_dq_i(ddr_dq_in),
+    .ddr_ck_p_o, .ddr_ck_n_o, .ddr_cke_o,
+    .ddr_ba_o, .ddr_addr_o, .ddr_cs_n_o, .ddr_ras_n_o, .ddr_cas_n_o,
+    .ddr_we_n_o, .ddr_reset_n_o, .ddr_odt_o,
+    .ddr_dm_oen_o, .ddr_dm_o,
+    .ddr_dqs_p_oen_o, .ddr_dqs_p_ien_o, .ddr_dqs_p_o, .ddr_dqs_p_i,
+    .ddr_dqs_n_oen_o, .ddr_dqs_n_ien_o, .ddr_dqs_n_o, .ddr_dqs_n_i,
+    .ddr_dq_oen_o, .ddr_dq_o, .ddr_dq_i,
     .ui_clk_i(ui_clk),
-    .dfi_clk_2x_i(dfi_clk_2x), .dfi_clk_1x_o(dfi_clk_1x),
+    .dfi_clk_2x_i, .dfi_clk_1x_o,
     .ui_clk_sync_rst_o(ui_clk_sync_rst),
     .device_temp_o(device_temp)
   );

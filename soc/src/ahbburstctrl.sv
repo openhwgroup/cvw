@@ -148,11 +148,11 @@ module ahbburstctrl #(parameter BURST_LEN = 8) (
               2'b1?: {next_state, outputs} = {DRPPW, 8'b00000101}; // Drop this beat of the read response.
             endcase
       PADR: casez ({resp_valid, word_aligned, first_op, cmd_full})
-              3'b0?0?: {next_state, outputs} = {PADR, 8'b00000000}; // Wait for response data
-              3'b0?10: {next_state, outputs} = {PADR, 8'b00101100}; // We dropped all remaining beats of the burst without realigning. Issue a new read and wait for data. Precount the first beat. (NOTE: This should only happen if we have a misordered read burst, e.g. 0x08 followed by 0x00)
-              3'b0?11: {next_state, outputs} = {PADR, 8'b00000000}; // We are out of response data, but queue is full. Wait for queue to open up.
-              3'b10??: {next_state, outputs} = {PADR, 8'b00000101}; // Response is misaligned. Drop this beat of response data.
-              3'b11??: {next_state, outputs} = {DROP, 8'b00000110}; // Response is now realigned with the read burst. Return to normal read burst handling.
+              4'b0?0?: {next_state, outputs} = {PADR, 8'b00000000}; // Wait for response data
+              4'b0?10: {next_state, outputs} = {PADR, 8'b00101100}; // We dropped all remaining beats of the burst without realigning. Issue a new read and wait for data. Precount the first beat. (NOTE: This should only happen if we have a misordered read burst, e.g. 0x08 followed by 0x00)
+              4'b0?11: {next_state, outputs} = {PADR, 8'b00000000}; // We are out of response data, but queue is full. Wait for queue to open up.
+              4'b10??: {next_state, outputs} = {PADR, 8'b00000101}; // Response is misaligned. Drop this beat of response data.
+              4'b11??: {next_state, outputs} = {DROP, 8'b00000110}; // Response is now realigned with the read burst. Return to normal read burst handling.
             endcase
       RPTR: casez ({cmd_full, first_op})
               2'b00: {next_state, outputs} = {RPTR, 8'b00111100}; // Subordinate is ready for command, and write burst is incomplete. Mask and reissue the write op.

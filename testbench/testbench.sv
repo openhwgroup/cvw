@@ -560,34 +560,34 @@ module testbench;
           localparam dq_width = 32;
           localparam dq_group = dq_width/8;
           logic                 ui_clk;
-          logic                 ddr_ck_p;
-          logic                 ddr_ck_n;
-          logic                 ddr_cke;
-          logic [2:0]           ddr_ba;
-          logic [15:0]          ddr_addr;
-          logic                 ddr_cs;
-          logic                 ddr_ras;
-          logic                 ddr_cas;
-          logic                 ddr_we;
-          logic                 ddr_reset;
-          logic                 ddr_odt;
-          logic [dq_group-1:0]  ddr_dm_oen_o;
-          logic [dq_group-1:0]  ddr_dm;
-          logic [dq_group-1:0]  ddr_dm_o;
-          logic [dq_group-1:0]  ddr_dqs_p_oen_o;
-          logic [dq_group-1:0]  ddr_dqs_p_ien_o;
-          logic [dq_group-1:0]  ddr_dqs_p;
-          logic [dq_group-1:0]  ddr_dqs_p_o;
-          logic [dq_group-1:0]  ddr_dqs_p_i;
-          logic [dq_group-1:0]  ddr_dqs_n_oen_o;
-          logic [dq_group-1:0]  ddr_dqs_n_ien_o;
-          logic [dq_group-1:0]  ddr_dqs_n;
-          logic [dq_group-1:0]  ddr_dqs_n_o;
-          logic [dq_group-1:0]  ddr_dqs_n_i;
-          logic [dq_width-1:0]  ddr_dq_oen_o;
-          logic [dq_width-1:0]  ddr_dq;
-          logic [dq_width-1:0]  ddr_dq_o;
-          logic [dq_width-1:0]  ddr_dq_i;
+          wire                  ddr_ck_p;
+          wire                  ddr_ck_n;
+          wire                  ddr_cke;
+          wire  [2:0]           ddr_ba;
+          wire  [15:0]          ddr_addr;
+          wire                  ddr_cs_n;
+          wire                  ddr_ras_n;
+          wire                  ddr_cas_n;
+          wire                  ddr_we_n;
+          wire                  ddr_reset_n;
+          wire                  ddr_odt;
+          wire  [dq_group-1:0]  ddr_dm_oen_o;
+          wire  [dq_group-1:0]  ddr_dm_o;
+          wire  [dq_group-1:0]  ddr_dm;
+          wire  [dq_group-1:0]  ddr_dqs_p_oen_o;
+          wire  [dq_group-1:0]  ddr_dqs_p_ien_o;
+          wire  [dq_group-1:0]  ddr_dqs_p_o;
+          wire  [dq_group-1:0]  ddr_dqs_p_i;
+          wire  [dq_group-1:0]  ddr_dqs_p;
+          wire  [dq_group-1:0]  ddr_dqs_n_oen_o;
+          wire  [dq_group-1:0]  ddr_dqs_n_ien_o;
+          wire  [dq_group-1:0]  ddr_dqs_n_o;
+          wire  [dq_group-1:0]  ddr_dqs_n_i;
+          wire  [dq_group-1:0]  ddr_dqs_n;
+          wire  [dq_width-1:0]  ddr_dq_oen_o;
+          wire  [dq_width-1:0]  ddr_dq_o;
+          wire  [dq_width-1:0]  ddr_dq_i;
+          wire  [dq_width-1:0]  ddr_dq;
           logic                 dfi_clk_2x_i;
           logic                 dfi_clk_1x_o;
           always #2.5ns ui_clk = ~ui_clk; // ui_clk must be <= 208 MHz
@@ -638,15 +638,25 @@ module testbench;
             .HWRITE, .HTRANS, .HREADY,
             .HRDATA(HRDATAEXT), .HRESP(HRESPEXT), .HREADYOUT(HREADYEXT),
             .ui_clk,
-            .ddr_ck_p, .ddr_ck_n, .ddr_cke, .ddr_ba, .ddr_addr,
-            .ddr_cs, .ddr_ras, .ddr_cas, .ddr_we, .ddr_reset, .ddr_odt,
-            .ddr_dm_oen(ddr_dm_oen_o), .ddr_dm(ddr_dm_o),
-            .ddr_dqs_p_oen(ddr_dqs_p_oen_o), .ddr_dqs_p_ien(ddr_dqs_p_ien_o),
-            .ddr_dqs_p_out(ddr_dqs_p_o), .ddr_dqs_p_in(ddr_dqs_p_i),
-            .ddr_dqs_n_oen(ddr_dqs_n_oen_o), .ddr_dqs_n_ien(ddr_dqs_n_ien_o),
-            .ddr_dqs_n_out(ddr_dqs_n_o), .ddr_dqs_n_in(ddr_dqs_n_i),
-            .ddr_dq_oen(ddr_dq_oen_o), .ddr_dq_out(ddr_dq_o), .ddr_dq_in(ddr_dq_i),
-            .dfi_clk_2x(dfi_clk_2x_i), .dfi_clk_1x(dfi_clk_1x_o));
+            .ddr_ck_p_o(ddr_ck_p), .ddr_ck_n_o(ddr_ck_n), .ddr_cke_o(ddr_cke),
+            .ddr_ba_o(ddr_ba), .ddr_addr_o(ddr_addr),
+            .ddr_cs_n_o(ddr_cs_n), .ddr_ras_n_o(ddr_ras_n), .ddr_cas_n_o(ddr_cas_n),
+            .ddr_we_n_o(ddr_we_n), .ddr_reset_n_o(ddr_reset_n), .ddr_odt_o(ddr_odt),
+            .ddr_dm_oen_o,
+            .ddr_dm_o,
+            .ddr_dqs_p_oen_o,
+            .ddr_dqs_p_ien_o,
+            .ddr_dqs_p_o,
+            .ddr_dqs_p_i,
+            .ddr_dqs_n_oen_o,
+            .ddr_dqs_n_ien_o,
+            .ddr_dqs_n_o,
+            .ddr_dqs_n_i,
+            .ddr_dq_oen_o,
+            .ddr_dq_o,
+            .ddr_dq_i,
+            .dfi_clk_2x_i,
+            .dfi_clk_1x_o);
           for(ddr_i = 0; ddr_i < dq_group; ddr_i++) begin: dm_io
             assign ddr_dm[ddr_i] = !ddr_dm_oen_o[ddr_i]? ddr_dm_o[ddr_i]: 1'bz;
           end
@@ -662,11 +672,18 @@ module testbench;
           end
           for(ddr_i = 0; ddr_i < 2; ddr_i++) begin: lpddr
             mobile_ddr mobile_ddr_inst (
-              .Dq(ddr_dq[dq_width/2*(ddr_i+1)-1:dq_width/2*ddr_i]),
-              .Dqs(ddr_dqs_p[dq_group/2*(ddr_i+1)-1:dq_group/2*ddr_i]),
-              .Addr(ddr_addr[13:0]), .Ba(ddr_ba[1:0]), .Clk(ddr_ck_p), .Clk_n(ddr_ck_n),
-              .Cke(ddr_cke), .Cs_n(ddr_cs), .Ras_n(ddr_ras), .Cas_n(ddr_cas), .We_n(ddr_we),
-              .Dm(ddr_dm[dq_group/2*(ddr_i+1)-1:dq_group/2*ddr_i]));
+              .Dq(ddr_dq[16*ddr_i+15:16*ddr_i]),
+              .Dqs(ddr_dqs_p[2*ddr_i+1:2*ddr_i]),
+              .Addr(ddr_addr[13:0]),
+              .Ba(ddr_ba[1:0]),
+              .Clk(ddr_ck_p),
+              .Clk_n(ddr_ck_n),
+              .Cke(ddr_cke),
+              .Cs_n(ddr_cs_n),
+              .Ras_n(ddr_ras_n),
+              .Cas_n(ddr_cas_n),
+              .We_n(ddr_we_n),
+              .Dm(ddr_dm[2*ddr_i+1:2*ddr_i]));
           end
         `endif
       end else begin
