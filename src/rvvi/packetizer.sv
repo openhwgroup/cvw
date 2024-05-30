@@ -71,7 +71,8 @@ module packetizer import cvw::*; #(parameter cvw_t P,
     case(CurrState)
       STATE_RDY: if (TransReady & valid) NextState = STATE_TRANS;
       else if(~TransReady & valid) NextState = STATE_WAIT;
-      STATE_WAIT: if(TransReady) NextState = STATE_TRANS;
+      else                        NextState = STATE_RDY;
+      STATE_WAIT: if(TransReady)   NextState = STATE_TRANS;
       else NextState = STATE_WAIT;
       STATE_TRANS: if(BurstDone) NextState = STATE_RDY;
       else NextState = STATE_TRANS;
