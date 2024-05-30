@@ -82,6 +82,7 @@ module ahbxuiconverter
   logic                       record_op;
   logic                       select_recorded_op;
   logic                       mask_write;
+  logic                       drop_resp;
   
   logic [OP_SIZE-1:0]         op;
   logic [OP_SIZE-1:0]         recorded_op;
@@ -121,13 +122,13 @@ module ahbxuiconverter
     .resp_valid(resp_r_valid),
     .capture_op, .record_op,
     .select_recorded_op, .mask_write,
-    .issue_op(cmd_enq),
+    .issue_op(cmd_enq), .drop_resp,
     .readyout(HREADYOUT)
   );
 
   // Delay AHB address phase signals. Only capture if indicated by control logic
   flopenr #(1)           ahbwrenreg (HCLK, ~HRESETn, capture_op, HWRITE,              ahb_wren);
-  flopenr #(ADDR_SIZE-4) ahbaddrreg (HCLK, ~HRESETn, capture_op, addr[ADDR_SIZE-1:4], ahb_addr);
+  flopenr #(ADDR_SIZE-4) ahbaddrreg (HCLK, ~HRESETn, capture_op, addr[ADDR_SIZE-1:4], ahb_addr); // The last nibble to UI will always be 'h0, so no need to store it
   flopenr #(2)           ahbbrstreg (HCLK, ~HRESETn, capture_op, HBURST[2:1],         ahb_burst);
   assign op = {ahb_wren, ahb_addr, HWDATA, ~HWSTRB};
 
@@ -170,7 +171,7 @@ module ahbxuiconverter
   // so we need to ensure that never occurs. In theory, since the FSM in ahbburstctrl ensures we
   // never issue a command while a read is in progress, we should never have the read FIFO fill up.
   assign resp_enq = app_rd_data_valid & ~resp_w_full;
-  assign resp_deq = HSEL & resp_r_valid;
+  assign resp_deq = (HSEL & resp_r_valid) | drop_resp;
   bsg_async_fifo #(
     .width_p(DATA_SIZE),
     .lg_size_p(8),
