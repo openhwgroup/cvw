@@ -44,6 +44,21 @@ module fpgaTop
    inout           SDCCmd,
    input           SDCCD,
 
+ /*
+     * Ethernet: 100BASE-T MII
+     */
+    output       phy_ref_clk,
+    input        phy_rx_clk,
+    input  [3:0] phy_rxd,
+    input        phy_rx_dv,
+    input        phy_rx_er,
+    input        phy_tx_clk,
+    output [3:0] phy_txd,
+    output       phy_tx_en,
+    input        phy_col, // nc
+    input        phy_crs, // nc
+    output       phy_reset_n,
+
    inout [15:0]    ddr3_dq,
    inout [1:0]     ddr3_dqs_n,
    inout [1:0]     ddr3_dqs_p,
@@ -428,7 +443,8 @@ module fpgaTop
     wire             mmcm_locked;
   wire [11:0]      device_temp;
     wire             mmcm1_locked;
-  
+
+  logic              RVVIStall;
 
   assign GPIOIN = {28'b0, GPI};
   assign GPO = GPIOOUT[4:0];
@@ -446,6 +462,7 @@ module fpgaTop
   xlnx_mmcm xln_mmcm(.clk_out1(clk167),
                      .clk_out2(clk200),
                      .clk_out3(CPUCLK),
+                     .clk_out4(phy_ref_clk),
                      .reset(1'b0),
                      .locked(mmcm1_locked),
                      .clk_in1(default_100mhz_clk));
@@ -496,7 +513,7 @@ module fpgaTop
                     .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
                     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), 
                     .GPIOIN, .GPIOOUT, .GPIOEN,
-                    .UARTSin, .UARTSout, .SDCIntr); 
+                    .UARTSin, .UARTSout, .SDCIntr, .RVVIStall); 
 
 
   // ahb lite to axi bridge
@@ -1098,6 +1115,47 @@ module fpgaTop
      .init_calib_complete(c0_init_calib_complete),
      .device_temp(device_temp));
   
+  localparam MAX_CSRS = 3;
+  logic                       valid;
+  logic [187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)-1:0] rvvi;
+
+  rvvisynth #(P, MAX_CSRS) rvvisynth(.clk(CPUCLK), .reset(bus_struct_reset), .valid, .rvvi);
+
+  // axi 4 write data channel
+  logic [31:0]                                      RvviAxiWdata;
+  logic [3:0]                                       RvviAxiWstrb;
+  logic                                             RvviAxiWlast;
+  logic                                             RvviAxiWvalid;
+  logic                                             RvviAxiWready;
+
+  logic                                             tx_error_underflow, tx_fifo_overflow, tx_fifo_bad_frame, tx_fifo_good_frame, rx_error_bad_frame;
+  logic                                             rx_error_bad_fcs, rx_fifo_overflow, rx_fifo_bad_frame, rx_fifo_good_frame;
+
+    packetizer #(P, MAX_CSRS) packetizer(.rvvi, .valid, .m_axi_aclk(CPUCLK), .m_axi_aresetn(~bus_struct_reset), .RVVIStall,
+      .RvviAxiWdata, .RvviAxiWstrb, .RvviAxiWlast, .RvviAxiWvalid, .RvviAxiWready);
+
+    eth_mac_mii_fifo #("GENERIC", "BUFG", 32) ethernet(.rst(reset), .logic_clk(CPUCLK), .logic_rst(bus_struct_reset),
+      .tx_axis_tdata(RvviAxiWdata), .tx_axis_tkeep(RvviAxiWstrb), .tx_axis_tvalid(RvviAxiWvalid), .tx_axis_tready(RvviAxiWready),
+      .tx_axis_tlast(RvviAxiWlast), .tx_axis_tuser('0), .rx_axis_tdata(), .rx_axis_tkeep(), .rx_axis_tvalid(), .rx_axis_tready(1'b1),
+      .rx_axis_tlast(), .rx_axis_tuser(),
+
+      // *** update these
+      .mii_rx_clk(phy_rx_clk),
+      .mii_rxd(phy_rxd),
+      .mii_rx_dv(phy_rx_dv),
+      .mii_rx_er(phy_rx_er),
+      .mii_tx_clk(phy_tx_clk),
+      .mii_txd(phy_txd),
+      .mii_tx_en(phy_tx_en),
+      .mii_tx_er(),
+
+      // status
+      .tx_error_underflow, .tx_fifo_overflow, .tx_fifo_bad_frame, .tx_fifo_good_frame, .rx_error_bad_frame,
+      .rx_error_bad_fcs, .rx_fifo_overflow, .rx_fifo_bad_frame, .rx_fifo_good_frame, 
+      .cfg_ifg(8'd12), .cfg_tx_enable(1'b1), .cfg_rx_enable(1'b1)
+      );
+
+  assign phy_reset_n = ~bus_struct_reset;
 
 endmodule
 
