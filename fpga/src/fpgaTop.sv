@@ -24,6 +24,10 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
+`include "config.vh"
+
+import cvw::*;
+
 module fpgaTop 
   (input           default_250mhz_clk1_0_n,
    input           default_250mhz_clk1_0_p, 
@@ -76,8 +80,9 @@ module fpgaTop
   wire 			   HRESPEXT;
   (* mark_debug = "true" *) wire 			   HSELEXT;
   (* mark_debug = "true" *) wire             HSELEXTSDC; // TEMP BOOT SIGNAL - JACOB
-  wire [31:0] 	   HADDR;
+  wire [55:0] 	   HADDR;
   wire [64-1:0]    HWDATA;
+  wire [64/8-1:0]  HWSTRB;
   wire 			   HWRITE;
   wire [2:0] 	   HSIZE;
   wire [2:0] 	   HBURST;
@@ -478,45 +483,56 @@ module fpgaTop
      .peripheral_reset(peripheral_reset), //open
      .interconnect_aresetn(interconnect_aresetn), //open
      .peripheral_aresetn(peripheral_aresetn));
+
+  `include "parameter-defs.vh"
+
+  wallypipelinedsoc  #(P) 
+  wallypipelinedsoc(.clk(CPUCLK), .reset_ext(bus_struct_reset), .reset(), 
+                    .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT,
+                    .HSELEXTSDC, .HCLK(HCLKOpen), .HRESETn(HRESETnOpen), 
+                    .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
+                    .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), 
+                    .GPIOIN, .GPIOOUT, .GPIOEN,
+                    .UARTSin, .UARTSout, .SDCIntr); 
   
 
-  // wally
-  // *** FIXME add sdc interrupt and HSELEXTSDC, remove old sdc
-  wallypipelinedsocwrapper wallypipelinedsocwrapper
-    (.clk(CPUCLK),
-     .reset_ext(bus_struct_reset),
-     // bus interface
-     .HRDATAEXT(HRDATAEXT),
-     .HREADYEXT(HREADYEXT),
-     .HRESPEXT(HRESPEXT),
-     .HSELEXT(HSELEXT),
-     .HSELEXTSDC(HSELEXTSDC),
-     .HCLK(HCLKOpen), // open
-     .HRESETn(HRESETnOpen), // open
-     .HADDR(HADDR),
-     .HWDATA(HWDATA),
-     .HWRITE(HWRITE),
-     .HSIZE(HSIZE),
-     .HBURST(HBURST),
-     .HPROT(HPROT),
-     .HTRANS(HTRANS),
-     .HMASTLOCK(HMASTLOCK),
-     .HREADY(HREADY),
-     // GPIO
-     .GPIOIN(GPIOIN),
-     .GPIOOUT(GPIOOUT),
-     .GPIOEN(GPIOEN),
-     // UART
-     .UARTSin(UARTSin),
-     .UARTSout(UARTSout),
-     .SDCIntr(SDCIntr)
-     // SD Card   
-     /*.SDCDatIn(SDCDatIn),
-     .SDCCmdIn(SDCCmdIn),     
-     .SDCCmdOut(SDCCmdOut),
-     .SDCCmdOE(SDCCmdOE),
-     .SDCCLK(SDCCLK));*/
-     );
+  // // wally
+  // // *** FIXME add sdc interrupt and HSELEXTSDC, remove old sdc
+  // wallypipelinedsocwrapper wallypipelinedsocwrapper
+  //   (.clk(CPUCLK),
+  //    .reset_ext(bus_struct_reset),
+  //    // bus interface
+  //    .HRDATAEXT(HRDATAEXT),
+  //    .HREADYEXT(HREADYEXT),
+  //    .HRESPEXT(HRESPEXT),
+  //    .HSELEXT(HSELEXT),
+  //    .HSELEXTSDC(HSELEXTSDC),
+  //    .HCLK(HCLKOpen), // open
+  //    .HRESETn(HRESETnOpen), // open
+  //    .HADDR(HADDR),
+  //    .HWDATA(HWDATA),
+  //    .HWRITE(HWRITE),
+  //    .HSIZE(HSIZE),
+  //    .HBURST(HBURST),
+  //    .HPROT(HPROT),
+  //    .HTRANS(HTRANS),
+  //    .HMASTLOCK(HMASTLOCK),
+  //    .HREADY(HREADY),
+  //    // GPIO
+  //    .GPIOIN(GPIOIN),
+  //    .GPIOOUT(GPIOOUT),
+  //    .GPIOEN(GPIOEN),
+  //    // UART
+  //    .UARTSin(UARTSin),
+  //    .UARTSout(UARTSout),
+  //    .SDCIntr(SDCIntr)
+  //    // SD Card   
+  //    /*.SDCDatIn(SDCDatIn),
+  //    .SDCCmdIn(SDCCmdIn),     
+  //    .SDCCmdOut(SDCCmdOut),
+  //    .SDCCmdOE(SDCCmdOE),
+  //    .SDCCLK(SDCCLK));*/
+  //    );
   
   // ahb lite to axi bridge
   xlnx_ahblite_axi_bridge xlnx_ahblite_axi_bridge_0
