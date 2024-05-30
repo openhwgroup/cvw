@@ -78,7 +78,7 @@ module fpgaTop
 
   wire 			   CPUCLK;
   wire 			   c0_ddr4_ui_clk_sync_rst;
-  wire 			   bus_struct_reset;
+(* mark_debug = "true" *)  wire 			   bus_struct_reset;
   wire 			   peripheral_reset;
   wire 			   interconnect_aresetn;
   wire 			   peripheral_aresetn;
@@ -444,7 +444,7 @@ module fpgaTop
   wire [11:0]      device_temp;
     wire             mmcm1_locked;
 
-  logic              RVVIStall;
+(* mark_debug = "true" *)  logic              RVVIStall;
 
   assign GPIOIN = {28'b0, GPI};
   assign GPO = GPIOOUT[4:0];
@@ -1116,7 +1116,7 @@ module fpgaTop
      .device_temp(device_temp));
   
   localparam MAX_CSRS = 3;
-  logic                       valid;
+(* mark_debug = "true" *)  logic                       valid;
   logic [187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)-1:0] rvvi;
 
   rvvisynth #(P, MAX_CSRS) rvvisynth(.clk(CPUCLK), .reset(bus_struct_reset), .valid, .rvvi);
@@ -1125,8 +1125,8 @@ module fpgaTop
   logic [31:0]                                      RvviAxiWdata;
   logic [3:0]                                       RvviAxiWstrb;
   logic                                             RvviAxiWlast;
-  logic                                             RvviAxiWvalid;
-  logic                                             RvviAxiWready;
+(* mark_debug = "true" *)  logic                                             RvviAxiWvalid;
+(* mark_debug = "true" *)  logic                                             RvviAxiWready;
 
   logic                                             tx_error_underflow, tx_fifo_overflow, tx_fifo_bad_frame, tx_fifo_good_frame, rx_error_bad_frame;
   logic                                             rx_error_bad_fcs, rx_fifo_overflow, rx_fifo_bad_frame, rx_fifo_good_frame;
