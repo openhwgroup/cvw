@@ -34,7 +34,6 @@ module hartcontrol(
   input  logic HaltReq,     // Initiate core halt
   input  logic ResumeReq,   // Initiates core resume
   input  logic HaltOnReset, // Halts core immediately on hart reset
-  input  logic Step,        // Halts one cycle after a resume if asserted
 
   output logic DebugStall,  // Stall signal goes to hazard unit
 
@@ -56,10 +55,9 @@ module hartcontrol(
   assign AllResumeAck = ~DebugStall;
   assign AnyResumeAck = ~DebugStall;
 
-  (* mark_debug = "true" *)enum bit [1:0] {
+  enum bit {
     RUNNING,
-    HALTED,
-    STEP
+    HALTED
   } State;
 
   assign DebugStall = (State == HALTED);
@@ -73,17 +71,7 @@ module hartcontrol(
       case (State)
         RUNNING : State <= HaltReq ? HALTED : RUNNING;
 
-        HALTED : begin
-          case ({ResumeReq, Step})
-            2'b10 : State <= RUNNING;
-            2'b11 : State <= STEP;
-            default : State <= HALTED;
-          endcase
-        end
-
-        STEP : begin
-          State <= HALTED;
-        end
+        HALTED : State <= ResumeReq ? RUNNING : HALTED;
       endcase
     end
   end

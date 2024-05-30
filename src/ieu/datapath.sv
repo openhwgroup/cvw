@@ -89,7 +89,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
 
   // Fetch stage signals
   // Decode stage signals
-(* mark_debug = "true" *)logic [4:0]        Rs1DM;                          // (Debug) Muxed source register
+  logic [4:0]        Rs1DM;                          // (Debug) Muxed source register
   logic [P.XLEN-1:0] R1D, R2D;                       // Read data from Rs1 (RD1), Rs2 (RD2)
   logic [P.XLEN-1:0] ImmExtD;                        // Extended immediate in Decode stage
   logic [4:0]        RdD;                            // Destination register in Decode stage
@@ -105,14 +105,14 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   logic              RegWriteWM;                     // (Debug) Muxed write enable
   logic [P.XLEN-1:0] SCResultW;                      // Store Conditional result
   logic [P.XLEN-1:0] ResultW;
-  (* mark_debug = "true" *)logic [P.XLEN-1:0] ResultWM;              // Result to write to register file
-  (* mark_debug = "true" *)logic [4:0]        RdWM;                           // Muxed GPR write address
+  logic [P.XLEN-1:0] ResultWM;              // Result to write to register file
+  logic [4:0]        RdWM;                           // Muxed GPR write address
   logic [P.XLEN-1:0] IFResultW;                      // Result from either IEU or single-cycle FPU op writing an integer register
   logic [P.XLEN-1:0] IFCvtResultW;                   // Result from IEU, signle-cycle FPU op, or 2-cycle FCVT float to int 
   logic [P.XLEN-1:0] MulDivResultW;                  // Multiply always comes from MDU.  Divide could come from MDU or FPU (when using fdivsqrt for integer division)
   // Debug signals
   logic              DSCR;
-  (* mark_debug = "true" *)logic [P.XLEN-1:0] DebugGPRWriteD;
+  logic [P.XLEN-1:0] DebugGPRWriteD;
 
   // Decode stage
   extend #(P)        ext(.InstrD(InstrD[31:7]), .ImmSrcD, .ImmExtD);

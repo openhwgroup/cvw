@@ -147,14 +147,6 @@ def access_register(write, regno, addr_size):
 def halt():
     write_dmi("0x10", "0x80000001")
     check_errors()
-    write_dmi("0x10", "0x00000001")
-    check_errors()
-
-
-def step():
-    #write_dmi("0x10", "0xC0000001")
-    #check_errors()
-    raise Exception("TODO")
 
 
 def resume():
@@ -162,12 +154,29 @@ def resume():
     check_errors()
 
 
+def step():
+    write_dmi("0x10", "0xC0000001")
+    check_errors()
+
+
+def set_haltonreset():
+    write_dmi("0x10", "0x9")
+
+
+def clear_haltonreset():
+    write_dmi("0x10", "0x5")
+
+
+def reset_hart():
+    write_dmi("0x10", "0x3")
+    write_dmi("0x10", "0x1")
+
+
 def status():
     dmstatus = int(read_dmi("0x11"), 16)
     print("Core status:::")
     print(f"Running: {bool((dmstatus >> 11) & 0x1)}")
     print(f"Halted:  {bool((dmstatus >> 9) & 0x1)}")
-    print(f"Reset:   {bool((dmstatus >> 19) & 0x1)}")
 
 
 def check_errors():
@@ -188,7 +197,7 @@ def check_errors():
     dm_active = int(read_dmi("0x10"), 16) & 0x1
     if not dm_active:
         print("DMControl Error: Debug module is not active")
-        # return True
+        return True
     # check abstract command error
     abstractcs = int(read_dmi("0x16"), 16)
     busy = (abstractcs & 0x1000) >> 12

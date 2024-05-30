@@ -25,9 +25,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-// TODO: test ndmreset and fix remaining GPR scan bug(s)
-// implement dscr for step command
-
 module dm import cvw::*; #(parameter cvw_t P) (
   input  logic                  clk, 
   input  logic                  rst, // Full hardware reset signal (reset button)
@@ -48,10 +45,10 @@ module dm import cvw::*; #(parameter cvw_t P) (
   input  logic                     ScanIn,
   output logic                     ScanOut,
   output logic                     GPRSel,
-  (* mark_debug = "true" *)output logic                     DebugCapture,
-  (* mark_debug = "true" *)output logic                     DebugGPRUpdate,
-  (* mark_debug = "true" *)output logic [P.E_SUPPORTED+3:0] GPRAddr,
-  (* mark_debug = "true" *)output logic                     GPRScanEn,
+  output logic                     DebugCapture,
+  output logic                     DebugGPRUpdate,
+  output logic [P.E_SUPPORTED+3:0] GPRAddr,
+  output logic                     GPRScanEn,
   input  logic                     GPRScanIn,
   output logic                     GPRScanOut
 );
@@ -80,30 +77,29 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic                  HaltOnReset;
   logic                  Halted;
 
-  // TODO: implement DSCR for step
   hartcontrol hartcontrol(.clk, .rst(rst || ~DmActive), .NdmReset, .HaltReq,
-    .ResumeReq, .HaltOnReset, .Step(1'b0), .DebugStall, .Halted, .AllRunning,
+    .ResumeReq, .HaltOnReset, .DebugStall, .Halted, .AllRunning,
     .AnyRunning, .AllHalted, .AnyHalted, .AllResumeAck, .AnyResumeAck);
 
 
   enum bit [3:0] {
-    INACTIVE, // 0
-    IDLE, // 1
-    ACK, // 2
-    R_DATA, // 3
-    W_DATA, // 4
-    DMSTATUS, // 5
-    W_DMCONTROL, // 6
-    R_DMCONTROL, // 7
-    W_ABSTRACTCS, // 8
-    R_ABSTRACTCS, // 9
-    ABST_COMMAND, // a
-    R_SYSBUSCS, // b
-    READ_ZERO, // c
-    INVALID // d
+    INACTIVE,
+    IDLE,
+    ACK,
+    R_DATA,
+    W_DATA,
+    DMSTATUS,
+    W_DMCONTROL,
+    R_DMCONTROL,
+    W_ABSTRACTCS,
+    R_ABSTRACTCS,
+    ABST_COMMAND,
+    R_SYSBUSCS,
+    READ_ZERO,
+    INVALID
   } State;
 
-  (* mark_debug = "true" *)enum bit [1:0] {
+  enum bit [1:0] {
     AC_IDLE,
     AC_GPRUPDATE,
     AC_SCAN,
@@ -111,22 +107,22 @@ module dm import cvw::*; #(parameter cvw_t P) (
   } AcState, NewAcState;
 
   // AbsCmd internal state
-  (* mark_debug = "true" *)logic              AcWrite;        // Abstract Command write state
-  (* mark_debug = "true" *)logic [P.XLEN:0]   ScanReg;        // The part of the debug scan chain located within DM
-  (* mark_debug = "true" *)logic [P.XLEN-1:0] ScanNext;       // New ScanReg value
-  (* mark_debug = "true" *)logic [P.XLEN-1:0] ARMask;         // Masks which bits of the ScanReg get updated
-  (* mark_debug = "true" *)logic [P.XLEN-1:0] PackedDataReg;  // Combines DataX msg registers into a single XLEN wide register
-  (* mark_debug = "true" *)logic [P.XLEN-1:0] MaskedScanReg;  // Masks which bits of the ScanReg get written to DataX
-  (* mark_debug = "true" *)logic [9:0]        ShiftCount;     // Position of the selected register on the debug scan chain
-  (* mark_debug = "true" *)logic [9:0]        ScanChainLen;   // Total length of currently selected scan chain
-  (* mark_debug = "true" *)logic [9:0]        Cycle;          // DM's current position in the scan chain
-  (* mark_debug = "true" *)logic              InvalidRegNo;   // Requested RegNo is invalid
-  (* mark_debug = "true" *)logic              RegReadOnly;       // Current RegNo points to a readonly register
-  (* mark_debug = "true" *)logic              GPRRegNo;       // Requested RegNo is a GPR
-  (* mark_debug = "true" *)logic              StoreScanChain; // Store current value of ScanReg into DataX
-  (* mark_debug = "true" *)logic              WriteMsgReg;    // Write to DataX
-  (* mark_debug = "true" *)logic              WriteScanReg;   // Insert data from DataX into ScanReg
-  (* mark_debug = "true" *)logic              [31:0] Data0Wr, Data1Wr, Data2Wr, Data3Wr; // Muxed inputs to DataX regs
+  logic              AcWrite;        // Abstract Command write state
+  logic [P.XLEN:0]   ScanReg;        // The part of the debug scan chain located within DM
+  logic [P.XLEN-1:0] ScanNext;       // New ScanReg value
+  logic [P.XLEN-1:0] ARMask;         // Masks which bits of the ScanReg get updated
+  logic [P.XLEN-1:0] PackedDataReg;  // Combines DataX msg registers into a single XLEN wide register
+  logic [P.XLEN-1:0] MaskedScanReg;  // Masks which bits of the ScanReg get written to DataX
+  logic [9:0]        ShiftCount;     // Position of the selected register on the debug scan chain
+  logic [9:0]        ScanChainLen;   // Total length of currently selected scan chain
+  logic [9:0]        Cycle;          // DM's current position in the scan chain
+  logic              InvalidRegNo;   // Requested RegNo is invalid
+  logic              RegReadOnly;    // Current RegNo points to a readonly register
+  logic              GPRRegNo;       // Requested RegNo is a GPR
+  logic              StoreScanChain; // Store current value of ScanReg into DataX
+  logic              WriteMsgReg;    // Write to DataX
+  logic              WriteScanReg;   // Insert data from DataX into ScanReg
+  logic              [31:0] Data0Wr, Data1Wr, Data2Wr, Data3Wr; // Muxed inputs to DataX regs
 
   // message registers
   logic [31:0] Data0;  // 0x04
@@ -141,10 +137,10 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic [31:0] SysBusCS;   // 0x38
 
   //// DM register fields
-  //DMControl
+  // DMControl
   logic AckUnavail;
   logic DmActive; // This bit is used to (de)activate the DM. Toggling acts as reset
-  //DMStatus
+  // DMStatus
   logic StickyUnavail;
   logic ImpEBreak;
   logic AllResumeAck;
@@ -162,12 +158,12 @@ module dm import cvw::*; #(parameter cvw_t P) (
   const logic HasResetHaltReq = 1;
   logic ConfStrPtrValid;
   const logic [3:0] Version = 3; // DM Version
-  //AbstractCS
+  // AbstractCS
   const logic [4:0] ProgBufSize = 0;
   logic Busy;
   const logic RelaxedPriv = 1;
   logic [2:0] CmdErr;
-  const logic [3:0] DataCount = (P.XLEN/32); 
+  const logic [3:0] DataCount = (P.XLEN/32);
 
 
   // Pack registers
@@ -182,7 +178,6 @@ module dm import cvw::*; #(parameter cvw_t P) (
   assign AbstractCS = {3'b0, ProgBufSize, 11'b0, Busy, RelaxedPriv, CmdErr, 4'b0, DataCount};
 
   assign SysBusCS = 32'h20000000; // SBVersion = 1
-
 
 
   assign RspValid = (State == ACK);
@@ -277,10 +272,11 @@ module dm import cvw::*; #(parameter cvw_t P) (
             NdmReset <= ReqData[`NDMRESET];
             DmActive <= ReqData[`DMACTIVE]; // Writing 0 here resets the DM
             
-            // Can only write one of the following at a time
+            // On any given write, a debugger may only write 1 to at most one of the following bits: resumereq,
+            //  hartreset, ackhavereset, setresethaltreq, and clrresethaltreq. The others must be written 0
             case ({ReqData[`RESUMEREQ],ReqData[`SETRESETHALTREQ],ReqData[`CLRRESETHALTREQ]})
               3'b000 :; // None
-              3'b100 : ResumeReq <= ReqData[`HALTREQ] ? 0 : 1; // ResumeReq is ignored if HaltReq is asserted
+              3'b100 : ResumeReq <= 1;
               3'b010 : HaltOnReset <= 1;
               3'b001 : HaltOnReset <= 0;
               default : begin // Invalid (not onehot), dont write any changes
@@ -329,8 +325,6 @@ module dm import cvw::*; #(parameter cvw_t P) (
             CmdErr <= `CMDERR_BUSY; // If Busy, set CmdErr, do nothing
           else if (~Halted)
             CmdErr <= `CMDERR_HALTRESUME; // If not halted, set CmdErr, do nothing
-          else if (HaltReq || ResumeReq) // Before starting an abstract command, a debugger must ensure that haltreq, resumereq are 0.
-            CmdErr <= `CMDERR_EXCEPTION; // set CmdErr, do nothing
           else begin
             case (ReqData[`CMDTYPE])
               `ACCESS_REGISTER : begin

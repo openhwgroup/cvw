@@ -1,4 +1,5 @@
 import random
+import time
 
 from hw_interface import *
 
@@ -10,6 +11,11 @@ def main():
     reg_addrs = list(registers.keys())
 
     init()
+    reset_dm()
+    reset_hart()
+    
+    time.sleep(70) # wait for OpenSBI
+
     halt()
     status()
 
@@ -45,6 +51,8 @@ def main():
             else:
                 raise e
     
+    check_errors()
+
     # GPR X0 is always 0
     test_reg_data["X0"] = "0x" + "0"*(XLEN//4)
 
