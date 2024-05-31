@@ -1,3 +1,11 @@
+Connect JTAG adapter (SiPEED) to  FPGA (Arty-A7)
+
+Using Pmod JA (side closest to ethernet port)
+Connect 5 jumpers on the top row beginning with GND
+The order of the wires matches the order of the USB Adapter
+GND TDI TMS TDO TCK
+(see jtag_pinout.jpg)
+
 To debug Wally using OpenOCD:
 
 1. Select correct jtag adapter
