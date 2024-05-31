@@ -52,8 +52,8 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   logic                    WordCountReset;
   logic                    WordCountEnable;
   logic [47:0]             SrcMac, DstMac;
-  logic [31:0]             Tag;
   logic [15:0]             EthType;
+  logic [31:0]             Tag;
   logic [TotalFrameLengthBits-1:0] TotalFrame;
   logic [31:0] TotalFrameWords [TotalFrameLengthBytes/4-1:0];
 
@@ -91,7 +91,7 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   counter #(10) WordCounter(m_axi_aclk, WordCountReset, WordCountEnable, WordCount);
   // *** BUG BytesInFrame will eventually depend on the length of the data stored into the ethernet frame
   // for now this will be exactly 608 bits (76 bytes, 19 words)
-  assign BytesInFrame = 12'd76;
+  assign BytesInFrame = 12'd2 + 12'd76 + 12'd6 + 12'd6 + 12'd2;
   assign BurstDone = WordCount == (BytesInFrame[11:2] - 1'b1);
 
   genvar index;
@@ -99,13 +99,13 @@ module packetizer import cvw::*; #(parameter cvw_t P,
     assign TotalFrameWords[index] = TotalFrame[(index*32)+32-1 : (index*32)];
   end
 
-  assign TotalFrame = {rvviDelay, EthType, Tag, DstMac, SrcMac};
+  assign TotalFrame = {16'b0, rvviDelay, 4'b0, BytesInFrame, DstMac, SrcMac};
 
   // *** fix me later
-  assign SrcMac = 48'h8F54_0000_1654; // made something up
-  assign DstMac = 48'h4502_1111_6843;
-  assign Tag = '0;
-  assign Length = 16'h0801;
+  assign DstMac = 48'h8F54_0000_1654; // made something up
+  assign SrcMac = 48'h4502_1111_6843;
+  assign Tag = 32'b0;
+  assign EthType = 16'h0801;
   
   assign RvviAxiWdata = TotalFrameWords[WordCount];
   assign RvviAxiWstrb = '1;
