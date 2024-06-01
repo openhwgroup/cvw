@@ -45,6 +45,7 @@ ifu/ifu.sv: logic            PCPF
 ifu/ifu.sv: logic     PostSpillInstrRawF
 mmu/hptw.sv: logic	   ITLBWriteF
 mmu/hptw.sv:	 statetype WalkerState
+mmu/hptw.sv: logic  ValidPTE
 privileged/csrs.sv: logic        CSRSReadValM
 privileged/csrs.sv: logic        SEPC_REGW
 privileged/csrs.sv: logic        MIP_REGW

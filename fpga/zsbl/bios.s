@@ -49,7 +49,12 @@ _start:
 	# set the stack pointer to the top of memory - 8 bytes (pointer size)
 	li sp, 0x87FFFFF8
 
-	jal ra, main
+	li a0, 0x00000000
+	li a1, 0x80000000
+	#li a2, 128*1024*1024/512 # copy 128MB
+	li a2, 127*1024*1024/512 # copy 127MB upper 1MB contains the return address (ra)
+	#li a2, 800 # copy 400KB
+	jal ra, copyFlash
 	
 	fence.i
 	# now toggle led so we know the copy completed.
@@ -81,18 +86,16 @@ delay2:
 	# now that the card is copied and the led toggled we
 	# jump to the copied contents of the sd card.
 
-jumpToLinux:
-	csrr a0, mhartid
-        li s0, 0x80000000
-        la a1, _dtb
-        jr s0
+jumpToLinux:	
+	csrrs	a0, 0xF14, x0   # copy hart ID to a0
+	li	a1, 0x87000000  # end of memory? not 100% sure on this but it's 112MB
+	la	a2, end_of_bios
+	li	t0, 0x80000000  # start of code
+	
+	jalr	x0, t0, 0
+
 end_of_bios:	
 
+	
 
-
-.section .rodata
-.globl _dtb
-.align 4, 0
-_dtb:
-#.incbin "wally-vcu118.dtb"
 
