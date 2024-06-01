@@ -18,7 +18,6 @@ import os
 parser = argparse.ArgumentParser()
 parser.add_argument("config", help="Configuration file")
 parser.add_argument("testsuite", help="Test suite or ELF file")
-parser.add_argument("--elf", "-e", help="Elf file", action="store_true")
 parser.add_argument("--sim", "-s", help="Simulator", choices=["questa", "verilator", "vcs"], default="questa")
 parser.add_argument("--tb", "-t", help="Testbench", choices=["testbench", "testbench_fp"], default="testbench")
 parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true")
@@ -33,7 +32,7 @@ args = parser.parse_args()
 print("Config=" + args.config + " tests=" + args.testsuite + " sim=" + args.sim + " gui=" + str(args.gui) + " args='" + args.args + "'")
 ElfFile=""
 
-if(args.elf):
+if(os.path.isfile(args.testsuite)):
     ElfFile = "+ElfFile=" + args.testsuite
     args.testsuite = "none"
 
