@@ -156,7 +156,6 @@ Parameters and options:
 
 	-h, --help                                                 show this help message and exit
 	--elf, -e                                                  Elf file
-	--sim {questa,verilator,vcs}, -s {questa,verilator,vcs}    Simulator
 	--tb {testbench,testbench_fp}, -t {testbench,testbench_fp} Testbench
 	--gui, -g                                                  Simulate with GUI
 	--coverage, -c                                             Code & Functional Coverage
@@ -175,8 +174,8 @@ Run Questa with gui
 
 Run lockstep against ImperasDV with a single elf file in the --gui.  Lockstep requires single elf.
 
-	wsim rv64gc ../../tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/ref/ref.elf --elf --lockstep --gui
+	wsim rv64gc ../../tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/ref/ref.elf --lockstep --gui
 
 Run lockstep against ImperasDV with a single elf file.  Compute coverage.
 
-	wsim rv64gc ../../tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/ref/ref.elf --elf --lockstep --coverage
+	wsim rv64gc ../../tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/ref/ref.elf --lockstep --coverage
