@@ -52,7 +52,7 @@ module RASPredictor import cvw::*;  #(parameter cvw_t P)(
   logic      RepairD;
   logic      IncrRepairD, DecRepairD;
   
-  logic      DecrementPtr;
+  logic      DecPtr;
   logic      FlushedReturnDE;
   logic      WrongPredReturnD;
   
@@ -71,11 +71,11 @@ module RASPredictor import cvw::*;  #(parameter cvw_t P)(
     
   assign CounterEn = PopF | PushE | RepairD;
 
-  assign DecrementPtr = (PopF | DecRepairD) & ~IncrRepairD;
+  assign DecPtr = (PopF | DecRepairD) & ~IncrRepairD;
 
   assign P1 = 1;
   assign M1 = '1; // -1
-  mux2 #(Depth) PtrMux(P1, M1, DecrementPtr, IncDecPtr);
+  mux2 #(Depth) PtrMux(P1, M1, DecPtr, IncDecPtr);
   logic [Depth-1:0] Sum;
   assign Sum = Ptr + IncDecPtr;
   if(|P.RAS_SIZE[Depth-1:0])
