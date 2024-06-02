@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module cacheLRU
-  #(parameter NUMWAYS = 4, SETLEN = 9, OFFSETLEN = 5, NUMLINES = 128) (
+  #(parameter NUMWAYS = 4, SETLEN = 9, OFFSETLEN = 5, NUMSETS = 128) (
   input  logic                clk, 
   input  logic                reset,
   input  logic                FlushStage,
@@ -48,7 +48,7 @@ module cacheLRU
 
   localparam                           LOGNUMWAYS = $clog2(NUMWAYS);
 
-  logic [NUMWAYS-2:0]                  LRUMemory [NUMLINES-1:0];
+  logic [NUMWAYS-2:0]                  LRUMemory [NUMSETS-1:0];
   logic [NUMWAYS-2:0]                  CurrLRU;
   logic [NUMWAYS-2:0]                  NextLRU;
   logic [LOGNUMWAYS-1:0]               HitWayEncoded, Way;
@@ -146,7 +146,7 @@ module cacheLRU
   // Move to = to keep Verilator happy and simulator running fast
   always_ff @(posedge clk) begin
     if (reset | (InvalidateCache & ~FlushStage)) 
-      for (int set = 0; set < NUMLINES; set++) LRUMemory[set] = '0; // exclusion-tag: initialize
+      for (int set = 0; set < NUMSETS; set++) LRUMemory[set] = '0; // exclusion-tag: initialize
     else if(CacheEn) begin
       // Because we are using blocking assignments, change to LRUMemory must occur after LRUMemory is used so we get the proper value
       if(LRUWriteEn & (PAdr == CacheSetTag)) CurrLRU = NextLRU;
