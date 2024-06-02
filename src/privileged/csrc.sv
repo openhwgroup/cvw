@@ -35,7 +35,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   input  logic              FlushM, 
   input  logic              InstrValidNotFlushedM, LoadStallD, StoreStallD,
   input  logic              CSRMWriteM, CSRWriteM,
-  input  logic              BPDirPredWrongM,
+  input  logic              BPDirWrongM,
   input  logic              BTAWrongM,
   input  logic              RASPredPCWrongM,
   input  logic              IClassWrongM,
@@ -99,7 +99,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
     assign CounterEvent[4]  = IClassM[1] & ~IClassM[2] & InstrValidNotFlushedM;  // jump and not return instructions
     assign CounterEvent[5]  = IClassM[2] & InstrValidNotFlushedM;                    // return instructions
     assign CounterEvent[6]  = BPWrongM & InstrValidNotFlushedM;                          // branch predictor wrong
-    assign CounterEvent[7]  = BPDirPredWrongM & InstrValidNotFlushedM;                   // Branch predictor wrong direction
+    assign CounterEvent[7]  = BPDirWrongM & InstrValidNotFlushedM;                   // Branch predictor wrong direction
     assign CounterEvent[8]  = BTAWrongM & InstrValidNotFlushedM;                         // branch predictor wrong target
     assign CounterEvent[9]  = RASPredPCWrongM & InstrValidNotFlushedM;                   // return address stack wrong address
     assign CounterEvent[10] = IClassWrongM & InstrValidNotFlushedM;                      // instruction class predictor wrong

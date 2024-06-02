@@ -66,7 +66,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0]    PCM,                                      // Memory stage instruction address
   // branch predictor
   output logic [3:0]           IClassM,                              // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
-  output logic                 BPDirPredWrongM,                          // Prediction direction is wrong
+  output logic                 BPDirWrongM,                          // Prediction direction is wrong
   output logic                 BTAWrongM,                                // Prediction target wrong
   output logic                 RASPredPCWrongM,                          // RAS prediction is wrong
   output logic                 IClassWrongM,                             // Class prediction is wrong
@@ -343,7 +343,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
                 .BranchD, .BranchE, .JumpD, .JumpE,
                 .InstrD, .PCNextF, .PCPlus2or4F, .PC1NextF, .PCE, .PCM, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCF, .NextValidPCE,
                 .PCD, .PCLinkE, .IClassM, .BPWrongE, .PostSpillInstrRawF, .BPWrongM,
-                .BPDirPredWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM);
+                .BPDirWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM);
 
   end else begin : bpred
     mux2 #(P.XLEN) pcmux1(.d0(PCPlus2or4F), .d1(IEUAdrE), .s(PCSrcE), .y(PC1NextF));    
@@ -359,7 +359,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       .BPReturnWrongD());
     flopenrc #(1) PCSrcMReg(clk, reset, FlushM, ~StallM, PCSrcE, BPWrongM);
     assign RASPredPCWrongM = 1'b0;
-    assign BPDirPredWrongM = BPWrongM;
+    assign BPDirWrongM = BPWrongM;
     assign BTAWrongM = BPWrongM;
     assign IClassM = {CallM, ReturnM, JumpM, BranchM};
     assign NextValidPCE = PCE;

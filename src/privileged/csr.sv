@@ -57,7 +57,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic                     LoadStallD, StoreStallD, 
   input  logic                     ICacheStallF,
   input  logic                     DCacheStallM,
-  input  logic                     BPDirPredWrongM,
+  input  logic                     BPDirWrongM,
   input  logic                     BTAWrongM,
   input  logic                     RASPredPCWrongM,
   input  logic                     IClassWrongM,
@@ -276,7 +276,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   if (P.ZICNTR_SUPPORTED) begin:counters
     csrc #(P) counters(.clk, .reset, .StallE, .StallM, .FlushM,
       .InstrValidNotFlushedM, .LoadStallD, .StoreStallD, .CSRWriteM, .CSRMWriteM,
-      .BPDirPredWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM, .BPWrongM,
+      .BPDirWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM, .BPWrongM,
       .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .sfencevmaM,
       .InterruptM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
       .CSRAdrM, .PrivilegeModeW, .CSRWriteValM,
