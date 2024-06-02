@@ -41,12 +41,13 @@ module icpred import cvw::*;  #(parameter cvw_t P,
   output logic             ReturnD, ReturnE, ReturnM, ReturnW,
   input  logic             BTBCallF, BTBReturnF, BTBJumpF, BTBBranchF,
   output logic             BPCallF, BPReturnF, BPJumpF, BPBranchF,
-  output logic             IClassWrongM, BPReturnWrongD, IClassWrongE
+  output logic             IClassWrongM, BPReturnWrongD
 );
 
   logic                    IClassWrongD;
   logic                    BPBranchD, BPJumpD, BPReturnD, BPCallD;
-
+  logic                    IClassWrongE;
+  
   if (!INSTR_CLASS_PRED) begin : DirectClassDecode
     // This section is mainly for testing, verification, and PPA comparison.
     // An alternative to using the BTB to store the instruction class is to partially decode
