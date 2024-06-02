@@ -59,7 +59,7 @@ module bpred import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] IEUAdrE,                   // The branch/jump target address
   input  logic [P.XLEN-1:0] IEUAdrM,                   // The branch/jump target address
   input  logic [P.XLEN-1:0] PCLinkE,                   // The address following the branch instruction. (AKA Fall through address)
-  output logic [3:0]       InstrClassM,               // The valid instruction class. 1-hot encoded as call, return, jr (not return), j, br
+  output logic [3:0]       IClassM,               // The valid instruction class. 1-hot encoded as call, return, jr (not return), j, br
 
   // Report branch prediction status
   output logic             BPWrongE,                  // Prediction is wrong
@@ -157,17 +157,17 @@ module bpred import cvw::*;  #(parameter cvw_t P) (
       .BPBTAF, .BPBTAD, .BPBTAE,
       .BTBIClassF({BTBCallF, BTBReturnF, BTBJumpF, BTBBranchF}),
       .BPBTAWrongM,
-      .IClassWrongM, .IClassWrongE,
+      .IClassWrongM,
       .IEUAdrE, .IEUAdrM,
-      .InstrClassD({CallD, ReturnD, JumpD, BranchD}), 
-      .InstrClassE({CallE, ReturnE, JumpE, BranchE}), 
-      .InstrClassM({CallM, ReturnM, JumpM, BranchM}),
-      .InstrClassW({CallW, ReturnW, JumpW, BranchW}));
+      .IClassD({CallD, ReturnD, JumpD, BranchD}), 
+      .IClassE({CallE, ReturnE, JumpE, BranchE}), 
+      .IClassM({CallM, ReturnM, JumpM, BranchM}),
+      .IClassW({CallW, ReturnW, JumpW, BranchW}));
 
   icpred #(P, `INSTR_CLASS_PRED) icpred(.clk, .reset, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, 
     .PostSpillInstrRawF, .InstrD, .BranchD, .BranchE, .JumpD, .JumpE, .BranchM, .BranchW, .JumpM, .JumpW,
     .CallD, .CallE, .CallM, .CallW, .ReturnD, .ReturnE, .ReturnM, .ReturnW, .BTBCallF, .BTBReturnF, .BTBJumpF,
-    .BTBBranchF, .BPCallF, .BPReturnF, .BPJumpF, .BPBranchF, .IClassWrongM, .IClassWrongE, .BPReturnWrongD);
+    .BTBBranchF, .BPCallF, .BPReturnF, .BPJumpF, .BPBranchF, .IClassWrongM, .BPReturnWrongD);
 
   // Part 3 RAS
   RASPredictor #(P) RASPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
@@ -227,6 +227,6 @@ module bpred import cvw::*;  #(parameter cvw_t P) (
   end
 
   // **** Fix me
-  assign InstrClassM = {CallM, ReturnM, JumpM, BranchM};
+  assign IClassM = {CallM, ReturnM, JumpM, BranchM};
   
 endmodule

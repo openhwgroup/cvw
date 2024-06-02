@@ -54,7 +54,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic              RASPredPCWrongM,                                // return adddress stack guessed wrong target
   input  logic              IClassWrongM,                                   // branch predictor guessed wrong instruction class
   input  logic              BPWrongM,                                       // branch predictor is wrong
-  input  logic [3:0]        InstrClassM,                                    // actual instruction class
+  input  logic [3:0]        IClassM,                                    // actual instruction class
   input  logic              DCacheMiss,                                     // data cache miss
   input  logic              DCacheAccess,                                   // data cache accessed (hit or miss)
   input  logic              ICacheMiss,                                     // instruction cache miss
@@ -139,7 +139,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
     .BPDirPredWrongM, .BTAWrongM, .RASPredPCWrongM, .BPWrongM,
     .sfencevmaM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
-    .IClassWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
+    .IClassWrongM, .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
     .NextPrivilegeModeM, .PrivilegeModeW, .CauseM, .SelHPTW,
     .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,
     .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TW, .STATUS_FS,
