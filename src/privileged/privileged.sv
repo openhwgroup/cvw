@@ -96,7 +96,12 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic              InvalidateICacheM,                              // fence instruction
   output logic              BigEndianM,                                     // Use big endian in current privilege mode
   // Fault outputs                                                         
-  output logic              wfiM, IntPendingM                               // Stall in Memory stage for WFI until interrupt pending or timeout
+  output logic              wfiM, IntPendingM,                              // Stall in Memory stage for WFI until interrupt pending or timeout
+  // Debug scan chain                                                                                                                
+  input  logic              DebugCapture,
+  input  logic              DebugScanEn,
+  input  logic              DebugScanIn,
+  output logic              DebugScanOut
 );                                                                         
                                                                            
   logic [3:0]               CauseM;                                         // trap cause
@@ -147,7 +152,8 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .SATP_REGW, .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
     .SetFflagsM, .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE,
     .EPCM, .TrapVectorM,
-    .CSRReadValW, .IllegalCSRAccessM, .BigEndianM);
+    .CSRReadValW, .IllegalCSRAccessM, .BigEndianM,
+    .DebugCapture, .DebugScanEn, .DebugScanIn, .DebugScanOut);
 
   // pipeline early-arriving trap sources
   privpiperegs ppr(.clk, .reset, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
