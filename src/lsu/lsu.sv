@@ -154,13 +154,21 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic                  SelDTIM;                                // Select DTIM rather than bus or D$
   logic [P.XLEN-1:0]     WriteDataZM;
   logic                  LSULoadPageFaultM, LSUStoreAmoPageFaultM;
+
+  logic                  DB_SCR;                                 // Debug Register Scan In
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Pipeline for IEUAdr E to M
   // Zero-extend address to 34 bits for XLEN=32
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  flopenrc #(P.XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
+  if (P.DEBUG_SUPPORTED)
+    flopenrcs #(P.XLEN) AddressMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d(IEUAdrE), .q(IEUAdrM), .scan(DebugScanEn), .scanin(DebugScanIn), .scanout(DB_SCR));
+  else
+    flopenrc #(P.XLEN) AddressMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d(IEUAdrE), .q(IEUAdrM)); 
+
+  // FIXME: delete once working
+  // flopenrc #(P.XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
   if(MISALIGN_SUPPORT) begin : ziccslm_align
     logic [P.XLEN-1:0] IEUAdrSpillE, IEUAdrSpillM;
     align #(P) align(.clk, .reset, .StallM, .FlushM, .IEUAdrE, .IEUAdrM, .Funct3M, .FpLoadStoreM, 
@@ -422,6 +430,11 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   subwordread #(P) subwordread(.ReadDataWordMuxM(LittleEndianReadDataWordM), .PAdrM(PAdrM[3:0]), .BigEndianM,
     .FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
   subwordwrite #(P.LLEN) subwordwrite(.LSUFunct3M, .IMAFWriteDataM, .LittleEndianWriteDataM);
+
+  // Capture ReadDataM
+  if (P.DEBUG_SUPPORTED) begin
+    flopenrs #(P.LLEN) ReadDataMScan (.clk, .reset, .en(DebugCapture), .d(ReadDataM), .q(), .scan(DebugScanEn), .scanin(DB_SCR), .scanout(DebugScanOut));
+  end
 
   // Compute byte masks
   swbytemask #(P.LLEN, P.ZICCLSM_SUPPORTED) swbytemask(.Size(LSUFunct3M), .Adr(PAdrM[$clog2(P.LLEN/8)-1:0]), .ByteMask(ByteMaskM), .ByteMaskExtended(ByteMaskExtendedM));

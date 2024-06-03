@@ -28,45 +28,64 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
-  input  logic                clk, 
-  input  logic                reset_ext,        // external asynchronous reset pin
-  output logic                reset,            // reset synchronized to clk to prevent races on release
+  input  logic                 clk, 
+  input  logic                 reset_ext,         // external asynchronous reset pin
+  output logic                 reset,             // reset synchronized to clk to prevent races on release
+  // JTAG signals                                                                                                                    
+  input  logic                 tck,
+  input  logic                 tdi,
+  input  logic                 tms,
+  output logic                 tdo,
   // AHB Interface
-  input  logic [P.AHBW-1:0]     HRDATAEXT,
-  input  logic                HREADYEXT, HRESPEXT,
-  output logic                HSELEXT,
-  output logic                HSELEXTSDC, 
+  input  logic [P.AHBW-1:0]    HRDATAEXT,
+  input  logic                 HREADYEXT, HRESPEXT,
+  output logic                 HSELEXT,
+  output logic                 HSELEXTSDC, 
   // outputs to external memory, shared with uncore memory
-  output logic                HCLK, HRESETn,
-  output logic [P.PA_BITS-1:0]  HADDR,
-  output logic [P.AHBW-1:0]     HWDATA,
-  output logic [P.XLEN/8-1:0]   HWSTRB,
-  output logic                HWRITE,
-  output logic [2:0]          HSIZE,
-  output logic [2:0]          HBURST,
-  output logic [3:0]          HPROT,
-  output logic [1:0]          HTRANS,
-  output logic                HMASTLOCK,
-  output logic                HREADY,
+  output logic                 HCLK, HRESETn,
+  output logic [P.PA_BITS-1:0] HADDR,
+  output logic [P.AHBW-1:0]    HWDATA,
+  output logic [P.XLEN/8-1:0]  HWSTRB,
+  output logic                 HWRITE,
+  output logic [2:0]           HSIZE,
+  output logic [2:0]           HBURST,
+  output logic [3:0]           HPROT,
+  output logic [1:0]           HTRANS,
+  output logic                 HMASTLOCK,
+  output logic                 HREADY,
   // I/O Interface
-  input  logic                TIMECLK,          // optional for CLINT MTIME counter
-  input  logic [31:0]         GPIOIN,           // inputs from GPIO
-  output logic [31:0]         GPIOOUT,          // output values for GPIO
-  output logic [31:0]         GPIOEN,           // output enables for GPIO
-  input  logic                UARTSin,          // UART serial data input
-  output logic                UARTSout,         // UART serial data output
-  input  logic                SDCIntr,
-  input  logic                SPIIn,            // SPI pins in
-  output logic                SPIOut,           // SPI pins out
-  output logic [3:0]          SPICS             // SPI chip select pins                    
+  input  logic                 TIMECLK,           // optional for CLINT MTIME counter
+  input  logic [31:0]          GPIOIN,            // inputs from GPIO
+  output logic [31:0]          GPIOOUT,           // output values for GPIO
+  output logic [31:0]          GPIOEN,            // output enables for GPIO
+  input  logic                 UARTSin,           // UART serial data input
+  output logic                 UARTSout,          // UART serial data output
+  input  logic                 SDCIntr,
+  input  logic                 SPIIn,             // SPI pins in
+  output logic                 SPIOut,            // SPI pins out
+  output logic [3:0]           SPICS              // SPI chip select pins                    
 );
 
   // Uncore signals
-  logic [P.AHBW-1:0]          HRDATA;           // from AHB mux in uncore
-  logic                       HRESP;            // response from AHB
-  logic                       MTimerInt, MSwInt;// timer and software interrupts from CLINT
-  logic [63:0]                MTIME_CLINT;      // from CLINT to CSRs
-  logic                       MExtInt,SExtInt;  // from PLIC
+  logic [P.AHBW-1:0]           HRDATA;            // from AHB mux in uncore
+  logic                        HRESP;             // response from AHB
+  logic                        MTimerInt, MSwInt; // timer and software interrupts from CLINT
+  logic [63:0]                 MTIME_CLINT;       // from CLINT to CSRs
+  logic                        MExtInt,SExtInt;   // from PLIC
+
+  // Debug Module signals                                                                                                            
+  logic                        NdmReset;
+  logic                        DebugStall;
+  logic                        ScanEn;
+  logic                        ScanIn;
+  logic                        ScanOut;
+  logic                        GPRSel;
+  logic                        DebugCapture;
+  logic                        DebugGPRUpdate;
+  logic [P.E_SUPPORTED+3:0]    GPRAddr;
+  logic                        GPRScanEn;
+  logic                        GPRScanIn;
+  logic                        GPRScanOut;
 
   // synchronize reset to SOC clock domain
   synchronizer resetsync(.clk, .d(reset_ext), .q(reset)); 
@@ -75,7 +94,9 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   wallypipelinedcore #(P) core(.clk, .reset,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
-    .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK
+    .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
+    .DebugStall, .DebugScanEn(ScanEn), .DebugScanIn(ScanOut), .DebugScanOut(ScanIn),
+    .GPRSel, .DebugCapture, .DebugGPRUpdate, .GPRAddr, .GPRScanEn, .GPRScanIn(GPRScanOut), .GPRScanOut(GPRScanIn)			      
    );
 
   // instantiate uncore if a bus interface exists
@@ -90,4 +111,12 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
             MTIME_CLINT, GPIOOUT, GPIOEN, UARTSout, SPIOut, SPICS} = '0; 
   end
 
+  // instantiate debug module (dm)
+  if (P.DEBUG_SUPPORTED) begin
+    dm #(P) dm (.clk, .rst(reset), .NdmReset, .tck, .tdi, .tms, .tdo,
+      .DebugStall, .ScanEn, .ScanIn, .ScanOut, .GPRSel, .DebugCapture, .DebugGPRUpdate,
+      .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut);
+  end else begin
+    assign {NdmReset, DebugStall, ScanOut, GPRSel, DebugCapture, DebugGPRUpdate, GPRAddr, GPRScanEn, GPRScanOut} = '0;
+  end   
 endmodule
