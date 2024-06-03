@@ -155,7 +155,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]     WriteDataZM;
   logic                  LSULoadPageFaultM, LSUStoreAmoPageFaultM;
 
-  logic                  DB_SCR;                                 // Debug Register Scan In
+  logic                  DSCR;                                   // Debug Register Scan In
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Pipeline for IEUAdr E to M
@@ -163,7 +163,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   if (P.DEBUG_SUPPORTED)
-    flopenrcs #(P.XLEN) AddressMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d(IEUAdrE), .q(IEUAdrM), .scan(DebugScanEn), .scanin(DebugScanIn), .scanout(DB_SCR));
+    flopenrcs #(P.XLEN) AddressMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d(IEUAdrE), .q(IEUAdrM), .scan(DebugScanEn), .scanin(DebugScanIn), .scanout(DSCR));
   else
     flopenrc #(P.XLEN) AddressMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d(IEUAdrE), .q(IEUAdrM)); 
 
@@ -433,7 +433,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
 
   // Capture ReadDataM
   if (P.DEBUG_SUPPORTED) begin
-    flopenrs #(P.LLEN) ReadDataMScan (.clk, .reset, .en(DebugCapture), .d(ReadDataM), .q(), .scan(DebugScanEn), .scanin(DB_SCR), .scanout(DebugScanOut));
+    flopenrs #(P.LLEN) ReadDataMScan (.clk, .reset, .en(DebugCapture), .d(ReadDataM), .q(), .scan(DebugScanEn), .scanin(DSCR), .scanout(DebugScanOut));
   end
 
   // Compute byte masks
