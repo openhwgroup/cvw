@@ -1,0 +1,22 @@
+Sun May 05 20:21:22 PDT 2024
+Trace back: Macro Break
+    while executing
+"macroMark"
+    (procedure "update" line 6)
+    invoked from within
+"update idletasks"
+    (object "::.dockbar" method "::mtiwidgets::Dockbar::redoPack" body line 63)
+    invoked from within
+"redoPack {Visibility Event}"
+    ("eval" body line 1)
+    invoked from within
+"eval $args"
+    (object "::.dockbar" method "::mtiwidgets::Dockbar::_delayedEval" body line 3)
+    invoked from within
+"::.dockbar _delayedEval redoPack {Visibility Event}"
+    (in namespace inscope "::mtiwidgets::Dockbar" script line 1)
+    invoked from within
+"namespace inscope ::mtiwidgets::Dockbar ::.dockbar _delayedEval redoPack {Visibility Event}"
+    ("after" script)
+  <2:/cad/mentor/questa_sim-2023.4/questasim/linux_x86_64/tk8.6/bgerror.tcl:106: ::tkerror {Macro Break}
+  <1:eval:1: ::tk::dialog::error::bgerror {Macro Break}

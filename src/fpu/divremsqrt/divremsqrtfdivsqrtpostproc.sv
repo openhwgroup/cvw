@@ -38,11 +38,14 @@ module divremsqrtfdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
   input  logic                 Firstun, SqrtM, SpecialCaseM, 
   input  logic [P.XLEN-1:0]    AM,                // U/Q(XLEN.0)
   input  logic                 RemOpM, ALTBM, BZeroM, AsM, BsM, W64M,
-  input  logic [P.DIVBLEN-1:0] IntNormShiftM,     
+  //input  logic [P.DIVBLEN-1:0] IntNormShiftM,     
+  input  logic [P.DIVb+3:0]    PreIntResultM,
   output logic [P.DIVb:0]      UmM,               // U1.DIVb result significand
   output logic                 WZeroE,
   output logic                 DivStickyM,
-  output logic [P.XLEN-1:0]    FIntDivResultM     // U/Q(XLEN.0)
+  output logic [P.XLEN-1:0]    FIntDivResultM,     // U/Q(XLEN.0)
+  output logic [P.DIVb+3:0]    PreResultM
+
 );
   
   logic [P.DIVb+3:0]         W, Sum;
@@ -58,6 +61,7 @@ module divremsqrtfdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
 
   // check for early termination on an exact result. 
   divremsqrtearlyterm #(P) earlyterm(.FirstC, .FirstUM, .D, .SqrtE, .WC, .WS,.Firstun, .WZeroE);
+  //divremsqrtearlytermkevin #(P) earlyterm(.FirstC, .FirstUM, .D, .SqrtE, .Sum,.Firstun, .WZeroE);
   /*
   aplusbeq0 #(P.DIVb+4) wspluswceq0(WS, WC, weq0E);
 
@@ -101,7 +105,8 @@ module divremsqrtfdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
   // Integer quotient or remainder correction, normalization, and special cases
   if (P.IDIV_ON_FPU) begin:intpostproc // Int supported
     logic [P.DIVb+3:0] UnsignedQuotM, NormRemM, NormRemDM, NormQuotM;
-    logic signed [P.DIVb+3:0] PreResultM, PreIntResultM;
+    logic [P.UNIFIEDSHIFTWIDTH-1:0] PreResultMWide, PreIntResultMWide;
+    logic [P.LOGUNIFIEDSHIFTWIDTH-1:0] IntNormShiftMWide;
 
     //assign W = $signed(Sum) >>> P.LOGR;
     arithrightshift #(P) rshift(Sum, W);
@@ -116,7 +121,10 @@ module divremsqrtfdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
     // Select quotient or remainder and do normalization shift
     mux2 #(P.DIVb+4)    presresultmux(NormQuotM, NormRemM, RemOpM, PreResultM);
     //assign PreIntResultM = $signed(PreResultM >>> IntNormShiftM); 
-    intrightshift #(P) rightshift(PreResultM, IntNormShiftM, PreIntResultM);
+    //intrightshift #(P) rightshift(PreResultM, IntNormShiftM, PreIntResultM);
+   // divremsqrtnormshift #(P) intshift(PreResultM, IntNormShiftM,PreIntResultM);
+    //divremsqrtunifiedshift #(P) unifiedshift(IntNormShiftMWide, PreResultMWide, PreIntResultMWide);
+    
 
     // special case logic
     // terminates immediately when B is Zero (div 0) or |A| has more leading 0s than |B|

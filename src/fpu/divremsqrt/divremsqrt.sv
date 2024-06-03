@@ -48,7 +48,13 @@
   output logic                FDivBusyE, IFDivStartE, FDivDoneE,
   output logic [P.NE+1:0]      UeM,
   output logic [P.DIVb:0]      UmM,
-  output logic [P.XLEN-1:0]    FIntDivResultM
+  output logic [P.XLEN-1:0]    FIntDivResultM,
+  output logic                 IntDivM,
+  // integer normalization shifter signals
+  output logic [P.DIVb+3:0]          PreResultM,
+  input logic [P.DIVb+3:0]          PreIntResultM,
+  output logic [P.DIVBLEN-1:0]       IntNormShiftM
+
 );
 
   // Floating-point division and square root module, with optional integer division and remainder
@@ -67,9 +73,7 @@
                                                             
   // Integer div/rem signals                                
   logic                       BZeroM;                       // Denominator is zero
-  logic                       IntDivM;                      // Integer operation
   logic [P.DIVBLEN:0]          nM, mM;                       // Shift amounts
-  logic [P.DIVBLEN-1:0]          IntNormShiftM;                       // Shift amounts
   logic                       NegQuotM, ALTBM, AsM, BsM, W64M;   // Special handling for postprocessor
   logic [P.XLEN-1:0]           AM;                           // Original Numerator for postprocessor
   logic                       ISpecialCaseE;                // Integer div/remainder special cases
@@ -99,6 +103,6 @@
     .UmM, .WZeroE, .DivStickyM, 
     // Int-specific 
     .ALTBM, .AsM, .BsM, .BZeroM, .W64M, .RemOpM(Funct3M[1]), .AM, 
-    .FIntDivResultM, .IntNormShiftM);
+    .FIntDivResultM,  .PreResultM, .PreIntResultM);
 endmodule
 

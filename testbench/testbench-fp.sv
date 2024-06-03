@@ -44,6 +44,7 @@ module testbenchfp;
    logic [2:0] 			Unit[];                     // list of units being tested
    logic                        WriteInt[];                 // Is being written to integer resgiter
    logic [2:0] 			Frm[4:0] = {3'b100, 3'b010, 3'b011, 3'b001, 3'b000}; // rounding modes: rne-000, rz-001, ru-011, rd-010, rnm-100
+   //logic [2:0] 			Frm[4:0] = {3'b011, 3'b011, 3'b011, 3'b011, 3'b011}; // rounding modes: rne-000, rz-001, ru-011, rd-010, rnm-100 *** MODIFIED ROUNDING MODES
    logic [1:0] 			Fmt[];                      // list of formats for the other units  
 
    logic                        clk=0;

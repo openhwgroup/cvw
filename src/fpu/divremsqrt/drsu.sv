@@ -79,6 +79,9 @@ module drsu import cvw::*;  #(parameter cvw_t P) (
   logic [P.NF+2:0]             UmMexact; //U1.NF+2
   logic [P.NE+1:0]             UeM;
   logic                       DivStickyM;
+  logic [P.DIVb+3:0]          PreResultM;
+  logic [P.DIVb+3:0]          PreIntResultM;
+  logic [P.DIVBLEN-1:0]       IntNormShiftM;
 
   divremsqrt #(P) divremsqrt(.clk, .reset, .XsE, .FmtE, .XmE, .YmE, 
             .XeE, .YeE, .SqrtE, .SqrtM,
@@ -88,11 +91,12 @@ module drsu import cvw::*;  #(parameter cvw_t P) (
                     .StallM, .DivStickyM, .FDivBusyE, .UeM,
                     .UmM,
                     .FlushE, .ForwardedSrcAE, .ForwardedSrcBE, .Funct3M,
-                    .Funct3E, .IntDivE, .FIntDivResultM,
-                    .FDivDoneE, .IFDivStartE);
+                    .Funct3E, .IntDivE, .FIntDivResultM, .IntDivM,
+                    .FDivDoneE, .IFDivStartE, .IntNormShiftM, .PreIntResultM, .PreResultM);
   assign UmMexact = UmM[P.DIVb:P.DIVb-(P.NF+3-1)]; // grabbing top 1+(NF+2) msbs
-  divremsqrtpostprocess #(P) divremsqrtpostprocess(.Xs(XsE), .Ys(YsE), .Xm(XmE), .Ym(YmE), .Frm(Frm), .Fmt(FmtE), .OpCtrl,
+  divremsqrtpostprocess #(P) divremsqrtpostprocess(.Xs(XsE), .Ys(YsE), .Xm(XmE), .Ym(YmE), .Frm(Frm), .Fmt(FmtE), .OpCtrl, .IntDivM,
     .XZero(XZeroE), .YZero(YZeroE), .XInf(XInfE), .YInf(YInfE), .XNaN(XNaNE), .YNaN(YNaNE), .XSNaN(XSNaNE), 
-    .YSNaN(YSNaNE), .PostProcSel,.DivSticky(DivStickyM), .DivUe(UeM), .DivUm(UmMexact), .PostProcRes(FResM), .PostProcFlg(FlgM));
+    .YSNaN(YSNaNE), .PostProcSel,.DivSticky(DivStickyM), .DivUe(UeM), .DivUm(UmMexact), .PostProcRes(FResM), .PostProcFlg(FlgM),
+    .PreIntResultM, .PreResultM, .IntNormShiftM);
 endmodule
 

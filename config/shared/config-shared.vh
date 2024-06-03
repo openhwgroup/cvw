@@ -119,6 +119,8 @@ localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));
 localparam CORRSHIFTSZ = `max((NORMSHIFTSZ-2), (DIVMINb + 1 + NF));
 localparam NORMSHIFTSZDRSU = DIVb+1+NF;
 localparam LOGNORMSHIFTSZDRSU = $clog2(NORMSHIFTSZDRSU);
+localparam UNIFIEDSHIFTWIDTH = `max(NORMSHIFTSZDRSU,XLEN+XLEN+4);
+localparam LOGUNIFIEDSHIFTWIDTH = $clog2(UNIFIEDSHIFTWIDTH);
 
 
 // Disable spurious Verilator warnings
