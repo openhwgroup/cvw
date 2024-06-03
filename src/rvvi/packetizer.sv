@@ -54,7 +54,6 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   logic [47:0]             SrcMac, DstMac;
   logic [15:0]             EthType;
   logic [31:0]             Tag;
-  logic [15:0]             Length;
   logic [TotalFrameLengthBits-1:0] TotalFrame;
   logic [31:0] TotalFrameWords [TotalFrameLengthBytes/4-1:0];
 
@@ -100,8 +99,7 @@ module packetizer import cvw::*; #(parameter cvw_t P,
     assign TotalFrameWords[index] = TotalFrame[(index*32)+32-1 : (index*32)];
   end
 
-  assign Length = {BytesInFrame[7:0], 4'b0, BytesInFrame[11:8]};
-  assign TotalFrame = {16'b0, rvviDelay, Length, DstMac, SrcMac};
+  assign TotalFrame = {16'b0, rvviDelay, 4'b0, BytesInFrame, DstMac, SrcMac};
 
   // *** fix me later
   assign DstMac = 48'h8F54_0000_1654; // made something up
