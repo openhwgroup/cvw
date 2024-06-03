@@ -82,29 +82,11 @@ module dm import cvw::*; #(parameter cvw_t P) (
     .AnyRunning, .AllHalted, .AnyHalted, .AllResumeAck, .AnyResumeAck);
 
 
-  enum bit [3:0] {
-    INACTIVE,
-    IDLE,
-    ACK,
-    R_DATA,
-    W_DATA,
-    DMSTATUS,
-    W_DMCONTROL,
-    R_DMCONTROL,
-    W_ABSTRACTCS,
-    R_ABSTRACTCS,
-    ABST_COMMAND,
-    R_SYSBUSCS,
-    READ_ZERO,
-    INVALID
-  } State;
+  enum logic [3:0] {INACTIVE, IDLE, ACK, R_DATA, W_DATA, DMSTATUS, W_DMCONTROL, R_DMCONTROL, 
+		    W_ABSTRACTCS, R_ABSTRACTCS, ABST_COMMAND, R_SYSBUSCS, READ_ZERO,
+		    INVALID} State;
 
-  enum bit [1:0] {
-    AC_IDLE,
-    AC_GPRUPDATE,
-    AC_SCAN,
-    AC_CAPTURE
-  } AcState, NewAcState;
+  enum logic [1:0] {AC_IDLE, AC_GPRUPDATE, AC_SCAN, AC_CAPTURE} AcState, NewAcState;
 
   // AbsCmd internal state
   logic              AcWrite;        // Abstract Command write state
@@ -178,7 +160,6 @@ module dm import cvw::*; #(parameter cvw_t P) (
   assign AbstractCS = {3'b0, ProgBufSize, 11'b0, Busy, RelaxedPriv, CmdErr, 4'b0, DataCount};
 
   assign SysBusCS = 32'h20000000; // SBVersion = 1
-
 
   assign RspValid = (State == ACK);
   assign ReqReady = (State != ACK);
@@ -413,8 +394,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   assign ScanOut = GPRSel ? 1'b0 : ScanReg[0];
   assign GPRScanOut = GPRSel ? ScanReg[0] : 1'b0;
   assign ScanEn = ~GPRSel && (AcState == AC_SCAN);
-  assign GPRScanEn = GPRSel && (AcState == AC_SCAN);
-  
+  assign GPRScanEn = GPRSel && (AcState == AC_SCAN);  
   
   // Load data from message registers into scan chain
   if (P.XLEN == 32)

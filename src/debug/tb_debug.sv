@@ -11,15 +11,16 @@ module testbench_debug ();
 
    localparam JTAG_DEVICE_ID = 32'hDEADBEEF;
 
-   integer i,j,k;
-   string  wave_marker;
-
-   logic   clk; // core clock
-   logic   rst; // core reset
+   integer                    i,j,k;
+   string 		      wave_marker;
+   
+   logic 		      clk; // core clock
+   logic 		      rst; // core reset
+   
    // JTAG interface
-   logic   tck, tdi, tms, trstn, tdo;
-
-   logic   ScanEn;
+   logic 		      tck, tdi, tms, trstn, tdo;
+   
+   logic 		      ScanEn;
    logic 		      ScanIn;
    logic 		      ScanOut;
    logic [63:0] 	      r1q, r2q;
@@ -46,10 +47,8 @@ module testbench_debug ();
 	       .DebugHalt, .DebugResume, .DebugStallF, .DebugStallD, .DebugStallE, .DebugStallM, .DebugStallW,
 	       .GPRSel, .DebugCapture, .DebugGPRUpdate, .DebugGPRUpdate, .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut);
    dummy_reg #(.WIDTH(64),.CONST(64'hDEADBEEFBAADF00D)) r1 (.clk,.en(reg_init),.se(ScanEn),.scan_in(ScanOut),.scan_out(c1),.q(r1q));
-   dummy_reg #(.WIDTH(64),.CONST(64'h0123456789ABCDEF)) r2 (.clk,.en(reg_init),.se(ScanEn),.scan_in(c1),.scan_out(ScanIn),.q(r2q));
-
-
-
+   dummy_reg #(.WIDTH(64),.CONST(64'h0123456789ABCDEF)) r2 (.clk,.en(reg_init),.se(ScanEn),.scan_in(c1),.scan_out(ScanIn),.q(r2q));  
+   
    // clocks
    initial begin
       clk = 1;
@@ -59,7 +58,7 @@ module testbench_debug ();
       tck = 1;
       forever #100 tck = ~tck;
    end
-
+   
    // Initialize logic
    initial begin
       i=0; j=0; k=0;
@@ -71,31 +70,31 @@ module testbench_debug ();
       reg_init = 1;
       #20 reg_init = 0;
    end
-
+   
    static logic [31:0] data = 0;
-
+   
    initial begin
       
       #10;
-
+      
       wave_marker = "Scan ID";
       ScanID(tck, tms, tdi, tdo);
       
       wave_marker = "Scan DTMCS";
       ScanDTMCS(tck, tms, tdi, tdo, .dtmhardreset(0), .dmireset(1));
-
+      
       $display("Activating Debug Module");
       wave_marker = "Write DMCONTROL (dmactive=1)";
       data = 0; data[`DMACTIVE] = 1;
       ScanDMI(tck, tms, tdi, tdo, .addr(`DMCONTROL), .op(`OP_WRITE), .data(data));
-
+      
       wave_marker = "Wait for DMACTIVE to assert";
       while (1) begin
 	 ScanDMI(tck, tms, tdi, tdo, .addr(`DMCONTROL), .op(`OP_READ), .scanout(data));
 	 if (data[`DMACTIVE])
 	   break;
       end
-
+      
       $display("Halting Hart");
       wave_marker = "Write DMCONTROL (haltreq=1)";
       data = 1; data[`HALTREQ] = 1;
@@ -120,9 +119,6 @@ module testbench_debug ();
       ScanDMI(tck, tms, tdi, tdo, .addr(`DATA0), .op(`OP_READ));
       $display("R1Q: %h", r1q);
       $display("R2Q: %h", r2q);
-
-      //mw
-      //trstn = 0; #20 trstn = 1;
       
       $display("Writing 00000000_BAADFEED to R1");
       wave_marker = $sformatf("Write Data1 %h",32'h0);
@@ -152,9 +148,7 @@ module testbench_debug ();
 endmodule: testbench_debug
 
 
-task automatic ScanID (
-		       ref tck, tms, tdi, tdo
-		       );
+task automatic ScanID (ref tck, tms, tdi, tdo);
 
    integer i,j = 0;
    logic [48:0] tdi_vector;
@@ -185,10 +179,8 @@ task automatic ScanID (
 endtask: ScanID
 
 
-task automatic ScanDTMCS (
-			  ref tck, tms, tdi, tdo,
-			  input dtmhardreset, dmireset
-			  );
+task automatic ScanDTMCS (ref tck, tms, tdi, tdo,
+			  input dtmhardreset, dmireset);
 
    integer 			i,j = 0;
    logic [84:0] 		tdi_vector;
@@ -219,13 +211,12 @@ endtask: ScanDTMCS
 
 
 bit trash;
-task automatic ScanDMI (
-			ref tck, tms, tdi, tdo,
+task automatic ScanDMI (ref tck, tms, tdi, tdo,
 			input [`ADDR_WIDTH-1:0] addr,
 			input [31:0] data = 0,
 			input [1:0] op,
-			output [31:0] scanout = trash
-			);
+			output [31:0] scanout = trash);
+   
    localparam DMI_WIDTH = `ADDR_WIDTH + 32 + 2;
 
    integer 			      i, j = 0;
@@ -260,8 +251,8 @@ task automatic ScanDMI (
            $display("Data: %h", rsp_data);
 	end
 	`DMCONTROL : begin
-           $display("haltreq: %h | resumereq: %h | hartreset: %h | ackhavereset: %h | ackunavail: %h\
- | hasel: %h | hartsello: %h | hartselhi: %h | setkeepalive: %h | clrkeepalive: %h\
+           $display("haltreq: %h | resumereq: %h | hartreset: %h | ackhavereset: %h | ackunavail: %h \
+ | hasel: %h | hartsello: %h | hartselhi: %h | setkeepalive: %h | clrkeepalive: %h \
  | setresethaltreq: %h | clrresethaltreq: %h | ndmreset: %h | dmactive: %h", 
           rsp_data[`HALTREQ], rsp_data[`RESUMEREQ], rsp_data[`HARTRESET], 
           rsp_data[`ACKHAVERESET], rsp_data[`ACKUNAVAIL], rsp_data[`HASEL], 
