@@ -40,7 +40,6 @@ module tap (
   output logic select
 );
 
-   /*
   enum logic [3:0] {
     Exit2DR     = 4'h0,
     Exit1DR     = 4'h1,
@@ -59,12 +58,6 @@ module tap (
     CaptureIR   = 4'hE,
     TLReset     = 4'hF
   } State;
-    */
-   typedef enum logic [3:0] {Exit2DR, Exit1DR, ShiftDR, PauseDR,
-			     SelectIR, UpdateDR, CaptureDR, SelectDR   
-			     Exit2IR, Exit1IR, ShiftIR, PauseIR,
-			     RunTestIdle, UpdateIR, CaptureIR, TLReset} statetype;
-   statetype State;
 
   always @(posedge tck) begin
     case (State)
