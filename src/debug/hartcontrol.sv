@@ -55,10 +55,7 @@ module hartcontrol(
   assign AllResumeAck = ~DebugStall;
   assign AnyResumeAck = ~DebugStall;
 
-  enum bit {
-    RUNNING,
-    HALTED
-  } State;
+  enum logic {RUNNING, HALTED} State;
 
   assign DebugStall = (State == HALTED);
 

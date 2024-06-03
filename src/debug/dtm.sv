@@ -51,12 +51,7 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
 );
   `include "debug.vh"
 
-  enum bit [1:0] {
-    IDLE,
-    START,
-    WAIT,
-    COMPLETE
-  } DMIState;
+  enum logic [1:0] {IDLE, START, WAIT, COMPLETE} DMIState;
 
   // Clock Domain Crossing
   logic                     tcks; // Synchronized JTAG clock
