@@ -34,6 +34,11 @@ module wallypipelinedsocwrapper (
   input  logic                clk, 
   input  logic                reset_ext,        // external asynchronous reset pin
   output logic                reset,            // reset synchronized to clk to prevent races on release
+  // JTAG signals
+  input  logic                tck,
+  input  logic                tdi,
+  input  logic                tms,
+  output logic                tdo,
   // AHB Interface
   input  logic [64-1:0]     HRDATAEXT,
   input  logic                HREADYEXT, HRESPEXT,
@@ -62,7 +67,8 @@ module wallypipelinedsocwrapper (
 );
   `include "parameter-defs.vh"
 
-  wallypipelinedsoc  #(P) wallypipelinedsoc(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT, .HSELEXT,
+  wallypipelinedsoc  #(P) wallypipelinedsoc(.clk, .reset_ext, .reset, .tck, .tdi, .tms, .tdo,
+    .HRDATAEXT,.HREADYEXT, .HRESPEXT, .HSELEXT,
     .HSELEXTSDC, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
     .UARTSin, .UARTSout, .SDCIntr); 

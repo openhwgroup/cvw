@@ -70,7 +70,11 @@ set_false_path -from [get_ports south_reset]
 set_property PACKAGE_PIN D9 [get_ports {south_reset}]
 set_property IOSTANDARD LVCMOS33 [get_ports {south_reset}]
 
-
+##### JTAG Port #####
+set_property -dict {PACKAGE_PIN G13 IOSTANDARD LVCMOS33} [get_ports tck]
+set_property -dict {PACKAGE_PIN B11 IOSTANDARD LVCMOS33} [get_ports tdo]
+set_property -dict {PACKAGE_PIN A11 IOSTANDARD LVCMOS33} [get_ports tms]
+set_property -dict {PACKAGE_PIN D12 IOSTANDARD LVCMOS33} [get_ports tdi]
 
 ##### SD Card I/O #####
 #***** may have to switch to Pmod JB or JC.

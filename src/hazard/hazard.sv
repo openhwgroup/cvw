@@ -2,7 +2,8 @@
 // hazard.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
-// Modified: 
+// Modified: matthew.n.otto@okstate.edu 20 May 2024
+//           Add logic to stall pipe and block flushes via DM
 //
 // Purpose: Determine stalls and flushes
 // 
@@ -28,20 +29,21 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module hazard import cvw::*;  #(parameter cvw_t P) ( 
-  input  logic  BPWrongE, CSRWriteFenceM, RetM, TrapM,   
-  input  logic  StructuralStallD,
-  input  logic  LSUStallM, IFUStallF,
-  input  logic  FPUStallD,
-  input  logic  DivBusyE, FDivBusyE,
-  input  logic  wfiM, IntPendingM,
+  input  logic BPWrongE, CSRWriteFenceM, RetM, TrapM,   
+  input  logic StructuralStallD,
+  input  logic LSUStallM, IFUStallF,
+  input  logic FPUStallD,
+  input  logic DivBusyE, FDivBusyE,
+  input  logic wfiM, IntPendingM,
+  input  logic DebugStall,
   // Stall & flush outputs
   output logic StallF, StallD, StallE, StallM, StallW,
   output logic FlushD, FlushE, FlushM, FlushW
 );
 
-  logic                                       StallFCause, StallDCause, StallECause, StallMCause, StallWCause;
-  logic                                       LatestUnstalledD, LatestUnstalledE, LatestUnstalledM, LatestUnstalledW;
-  logic                                       FlushDCause, FlushECause, FlushMCause, FlushWCause;
+  logic StallFCause, StallDCause, StallECause, StallMCause, StallWCause;
+  logic LatestUnstalledD, LatestUnstalledE, LatestUnstalledM, LatestUnstalledW;
+  logic FlushDCause, FlushECause, FlushMCause, FlushWCause;
 
   logic WFIStallM, WFIInterruptedM;
 
@@ -89,7 +91,7 @@ module hazard import cvw::*;  #(parameter cvw_t P) (
   // Need to gate IFUStallF when the equivalent FlushFCause = FlushDCause = 1.
   // assign StallWCause = ((IFUStallF & ~FlushDCause) | LSUStallM) & ~FlushWCause;
   // Because FlushWCause is a strict subset of FlushDCause, FlushWCause is factored out.
-  assign StallWCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause);
+  assign StallWCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause) | DebugStall;
 
   // Stall each stage for cause or if the next stage is stalled
   // coverage off: StallFCause is always 0
@@ -107,8 +109,9 @@ module hazard import cvw::*;  #(parameter cvw_t P) (
   assign LatestUnstalledW = ~StallW & StallM;
   
   // Each stage flushes if the previous stage is the last one stalled (for cause) or the system has reason to flush
-  assign FlushD = LatestUnstalledD | FlushDCause; 
-  assign FlushE = LatestUnstalledE | FlushECause;
-  assign FlushM = LatestUnstalledM | FlushMCause;
-  assign FlushW = LatestUnstalledW | FlushWCause;
+  // Do not flush if halted for Debug
+  assign FlushD = ~DebugStall & (LatestUnstalledD | FlushDCause);
+  assign FlushE = ~DebugStall & (LatestUnstalledE | FlushECause);
+  assign FlushM = ~DebugStall & (LatestUnstalledM | FlushMCause);
+  assign FlushW = ~DebugStall & (LatestUnstalledW | FlushWCause);
 endmodule

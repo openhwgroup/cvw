@@ -31,6 +31,11 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   input  logic                clk, 
   input  logic                reset_ext,        // external asynchronous reset pin
   output logic                reset,            // reset synchronized to clk to prevent races on release
+  // JTAG signals
+  input  logic                tck,
+  input  logic                tdi,
+  input  logic                tms,
+  output logic                tdo,
   // AHB Interface
   input  logic [P.AHBW-1:0]     HRDATAEXT,
   input  logic                HREADYEXT, HRESPEXT,
@@ -68,15 +73,31 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic [63:0]                MTIME_CLINT;      // from CLINT to CSRs
   logic                       MExtInt,SExtInt;  // from PLIC
 
+  // Debug Module signals
+  logic                       NdmReset;
+  logic                       DebugStall;
+  logic                       ScanEn;
+  logic                       ScanIn;
+  logic                       ScanOut;
+  logic                       GPRSel;
+  logic                       DebugCapture;
+  logic                       DebugGPRUpdate;
+  logic [P.E_SUPPORTED+3:0]   GPRAddr;
+  logic                       GPRScanEn;
+  logic                       GPRScanIn;
+  logic                       GPRScanOut;
+
   // synchronize reset to SOC clock domain
-  synchronizer resetsync(.clk, .d(reset_ext), .q(reset)); 
+  synchronizer resetsync(.clk, .d(reset_ext), .q(reset));
    
   // instantiate processor and internal memories
-  wallypipelinedcore #(P) core(.clk, .reset,
+  wallypipelinedcore #(P) core(.clk, .reset(reset || NdmReset),
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
-    .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK
-   );
+    .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
+    .DebugStall, .DebugScanEn(ScanEn), .DebugScanIn(ScanOut), .DebugScanOut(ScanIn),
+    .GPRSel, .DebugCapture, .DebugGPRUpdate, .GPRAddr, .GPRScanEn, .GPRScanIn(GPRScanOut), .GPRScanOut(GPRScanIn)
+  );
 
   // instantiate uncore if a bus interface exists
   if (P.BUS_SUPPORTED) begin : uncoregen // Hack to work around Verilator bug https://github.com/verilator/verilator/issues/4769
@@ -88,6 +109,15 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   end else begin
     assign {HRDATA, HREADY, HRESP, HSELEXT, HSELEXTSDC, MTimerInt, MSwInt, MExtInt, SExtInt,
             MTIME_CLINT, GPIOOUT, GPIOEN, UARTSout, SPIOut, SPICS} = '0; 
+  end
+
+  // instantiate debug module
+  if (P.DEBUG_SUPPORTED) begin
+    dm #(P) dm (.clk, .rst(reset), .NdmReset, .tck, .tdi, .tms, .tdo,
+      .DebugStall, .ScanEn, .ScanIn, .ScanOut, .GPRSel, .DebugCapture, .DebugGPRUpdate, 
+      .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut);
+  end else begin
+    assign {NdmReset, DebugStall, ScanOut, GPRSel, DebugCapture, DebugGPRUpdate, GPRAddr, GPRScanEn, GPRScanOut} = '0;
   end
 
 endmodule
