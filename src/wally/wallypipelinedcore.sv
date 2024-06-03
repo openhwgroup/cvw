@@ -336,15 +336,6 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     assign ScanReg[1] = ScanReg[0];
   end
 
-  end else begin
-    assign {CSRReadValW, PrivilegeModeW, 
-            SATP_REGW, STATUS_MXR, STATUS_SUM, STATUS_MPRV, STATUS_MPP, STATUS_FS, FRM_REGW,
-            // PMPCFG_ARRAY_REGW, PMPADDR_ARRAY_REGW, 
-            ENVCFG_CBE, ENVCFG_PBMTE, ENVCFG_ADUE, 
-            EPCM, TrapVectorM, RetM, TrapM,
-            sfencevmaM, BigEndianM, wfiM, IntPendingM} = '0;
-  end
-
   // multiply/divide unit
   if (P.ZMMUL_SUPPORTED) begin:mdu
     mdu #(P) mdu(.clk, .reset, .StallM, .StallW, .FlushE, .FlushM, .FlushW,
