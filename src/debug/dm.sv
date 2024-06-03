@@ -26,69 +26,69 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module dm import cvw::*; #(parameter cvw_t P) (
-  input  logic                  clk, 
-  input  logic                  rst, // Full hardware reset signal (reset button)
-
+  input logic 			   clk, 
+  input logic 			   rst, // Full hardware reset signal (reset button)
+					       
   // External JTAG signals
-  input  logic                  tck,
-  input  logic                  tdi,
-  input  logic                  tms,
-  output logic                  tdo,
+  input logic 			   tck,
+  input logic 			   tdi,
+  input logic 			   tms,
+  output logic 			   tdo,
 
   // Platform reset signal
-  output logic                  NdmReset,
+  output logic 			   NdmReset,
   // Core hazard signal
-  output logic                  DebugStall,
+  output logic 			   DebugStall,
 
   // Scan Chain
-  output logic                     ScanEn,
-  input  logic                     ScanIn,
-  output logic                     ScanOut,
-  output logic                     GPRSel,
-  output logic                     DebugCapture,
-  output logic                     DebugGPRUpdate,
+  output logic 			   ScanEn,
+  input logic 			   ScanIn,
+  output logic 			   ScanOut,
+  output logic 			   GPRSel,
+  output logic 			   DebugCapture,
+  output logic 			   DebugGPRUpdate,
   output logic [P.E_SUPPORTED+3:0] GPRAddr,
-  output logic                     GPRScanEn,
-  input  logic                     GPRScanIn,
-  output logic                     GPRScanOut
+  output logic 			   GPRScanEn,
+  input logic 			   GPRScanIn,
+  output logic 			   GPRScanOut
 );
+   
   `include "debug.vh"
 
-  // DMI Signals
-  logic                   ReqReady;
-  logic                   ReqValid;
-  logic [`ADDR_WIDTH-1:0] ReqAddress;
-  logic [31:0]            ReqData;
-  logic [1:0]             ReqOP;
-  logic                   RspReady;
-  logic                   RspValid;
-  logic [31:0]            RspData;
-  logic [1:0]             RspOP;
-
-  localparam JTAG_DEVICE_ID = 32'hdeadbeef; // TODO: put JTAG device ID in parameter struct
-
-  dtm #(`ADDR_WIDTH, JTAG_DEVICE_ID) dtm (.clk, .tck, .tdi, .tms, .tdo,
-    .ReqReady, .ReqValid, .ReqAddress, .ReqData, .ReqOP, .RspReady,
-    .RspValid, .RspData, .RspOP);
-
-  // Core control signals
-  logic                  HaltReq;
-  logic                  ResumeReq;
-  logic                  HaltOnReset;
-  logic                  Halted;
-
-  hartcontrol hartcontrol(.clk, .rst(rst || ~DmActive), .NdmReset, .HaltReq,
-    .ResumeReq, .HaltOnReset, .DebugStall, .Halted, .AllRunning,
-    .AnyRunning, .AllHalted, .AnyHalted, .AllResumeAck, .AnyResumeAck);
-
-
+   // DMI Signals
+   logic 			   ReqReady;
+   logic 			   ReqValid;
+   logic [`ADDR_WIDTH-1:0] 	   ReqAddress;
+   logic [31:0] 		   ReqData;
+   logic [1:0] 			   ReqOP;
+   logic 			   RspReady;
+   logic 			   RspValid;
+   logic [31:0] 		   RspData;
+   logic [1:0] 			   RspOP;
+   
+   localparam JTAG_DEVICE_ID = 32'hdeadbeef; // TODO: put JTAG device ID in parameter struct
+   
+   dtm #(`ADDR_WIDTH, JTAG_DEVICE_ID) dtm (.clk, .tck, .tdi, .tms, .tdo,
+					   .ReqReady, .ReqValid, .ReqAddress, .ReqData, .ReqOP, .RspReady,
+					   .RspValid, .RspData, .RspOP);
+   
+   // Core control signals
+   logic 			   HaltReq;
+   logic 			   ResumeReq;
+   logic 			   HaltOnReset;
+   logic 			   Halted;
+   
+   hartcontrol hartcontrol(.clk, .rst(rst || ~DmActive), .NdmReset, .HaltReq,
+			   .ResumeReq, .HaltOnReset, .DebugStall, .Halted, .AllRunning,
+			   .AnyRunning, .AllHalted, .AnyHalted, .AllResumeAck, .AnyResumeAck);   
+   
   enum logic [3:0] {INACTIVE, IDLE, ACK, R_DATA, W_DATA, DMSTATUS, W_DMCONTROL, R_DMCONTROL, 
 		    W_ABSTRACTCS, R_ABSTRACTCS, ABST_COMMAND, R_SYSBUSCS, READ_ZERO,
 		    INVALID} State;
-
-  enum logic [1:0] {AC_IDLE, AC_GPRUPDATE, AC_SCAN, AC_CAPTURE} AcState, NewAcState;
-
-  // AbsCmd internal state
+   
+   enum logic [1:0] {AC_IDLE, AC_GPRUPDATE, AC_SCAN, AC_CAPTURE} AcState, NewAcState;
+   
+   // AbsCmd internal state
    logic AcWrite;                     // Abstract Command write state
    logic [P.XLEN:0] ScanReg;          // The part of the debug scan chain located within DM
    logic [P.XLEN-1:0] ScanNext;       // New ScanReg value
@@ -110,21 +110,22 @@ module dm import cvw::*; #(parameter cvw_t P) (
    logic [31:0]       Data3Wr;        // Muxed inputs to DataX regs
 
   // message registers
-   logic [31:0]       Data0;  // 0x04
-   logic [31:0]       Data1;  // 0x05
-   logic [31:0]       Data2;  // 0x06
-   logic [31:0]       Data3;  // 0x07
+   logic [31:0]       Data0;          // 0x04
+   logic [31:0]       Data1;          // 0x05
+   logic [31:0]       Data2;          // 0x06
+   logic [31:0]       Data3;          // 0x07
    
    // debug module registers
-   logic [31:0]       DMControl;  // 0x10
-   logic [31:0]       DMStatus;   // 0x11
-   logic [31:0]       AbstractCS; // 0x16
-   logic [31:0]       SysBusCS;   // 0x38
+   logic [31:0]       DMControl;      // 0x10
+   logic [31:0]       DMStatus;       // 0x11
+   logic [31:0]       AbstractCS;     // 0x16
+   logic [31:0]       SysBusCS;       // 0x38
    
-   //// DM register fields
+   // DM register fields
+   
    // DMControl
    logic 	      AckUnavail;
-   logic 	      DmActive; // This bit is used to (de)activate the DM. Toggling acts as reset
+   logic 	      DmActive;       // This bit is used to (de)activate the DM. Toggling acts as reset
    // DMStatus
    logic 	      StickyUnavail;
    logic 	      ImpEBreak;
@@ -132,7 +133,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
    logic 	      AnyResumeAck;
    logic 	      AllNonExistent;
    logic 	      AnyNonExistent;
-   logic 	      AllUnavail; // TODO
+   logic 	      AllUnavail;     // TODO
    logic 	      AnyUnavail;
    logic 	      AllRunning;
    logic 	      AnyRunning;
@@ -142,7 +143,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
    logic 	      AuthBusy;
    const logic 	      HasResetHaltReq = 1;
    logic 	      ConfStrPtrValid;
-   const logic [3:0]  Version = 3; // DM Version
+   const logic [3:0]  Version = 3;    // DM Version
    // AbstractCS
    const logic [4:0]  ProgBufSize = 0;
    logic 	      Busy;
@@ -161,7 +162,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
    
    assign AbstractCS = {3'b0, ProgBufSize, 11'b0, Busy, RelaxedPriv, CmdErr, 4'b0, DataCount};
    
-   assign SysBusCS = 32'h20000000; // SBVersion = 1
+   assign SysBusCS = 32'h20000000;    // SBVersion = 1
    
    assign RspValid = (State == ACK);
    assign ReqReady = (State != ACK);
@@ -218,8 +219,8 @@ module dm import cvw::*; #(parameter cvw_t P) (
 		  {`OP_WRITE,`SBCS}                        : State <= READ_ZERO;
 		  {`OP_READ,`SBCS}                         : State <= R_SYSBUSCS;
 		  {2'bx,`HARTINFO},
-		    {2'bx,`ABSTRACTAUTO},
-		    {2'bx,`NEXTDM}                           : State <= READ_ZERO;
+		  {2'bx,`ABSTRACTAUTO},
+		  {2'bx,`NEXTDM}                           : State <= READ_ZERO;
 		  default                                  : State <= INVALID;
 		endcase
            end
