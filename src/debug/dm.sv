@@ -432,6 +432,5 @@ module dm import cvw::*; #(parameter cvw_t P) (
       flopenr #(32) data3reg (.clk, .reset(rst), .en(StoreScanChain || WriteMsgReg && (ReqAddress == `DATA3)), .d(Data3Wr), .q(Data3));
    end
    
-   rad #(P) regnodecode(.AarSize(ReqData[`AARSIZE]),.Regno(ReqData[`REGNO]),.GPRRegNo,.ScanChainLen,.ShiftCount,.InvalidRegNo,.RegReadOnly,.GPRAddr,.ARMask);
-   
+   rad #(P) regnodecode(.AarSize(ReqData[`AARSIZE]),.Regno(ReqData[`REGNO]),.GPRRegNo,.ScanChainLen,.ShiftCount,.InvalidRegNo,.RegReadOnly,.GPRAddr,.ARMask);   
 endmodule
