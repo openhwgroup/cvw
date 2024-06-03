@@ -51,114 +51,113 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
 );
   `include "debug.vh"
 
-  enum logic [1:0] {IDLE, START, WAIT, COMPLETE} DMIState;
+   enum 			logic [1:0] {IDLE, START, WAIT, COMPLETE} DMIState;
 
-  // Clock Domain Crossing
-  logic                     tcks; // Synchronized JTAG clock
-  logic                     resetn;
-  logic                     UpdateDtmcs;
-  logic [31:0]              DtmcsIn;
-  logic [31:0]              DtmcsOut;
-  logic                     UpdateDmi;
-  logic                     CaptureDmi;
-  logic [34+ADDR_WIDTH-1:0] DmiIn;
-  logic [34+ADDR_WIDTH-1:0] DmiOut;
-
-  // DTMCS Register
-  const logic [2:0]           ErrInfo = 0;
-  logic                       DtmHardReset;
-  logic                       DmiReset;
-  const logic [2:0]           Idle = 0;
-  logic [1:0]                 DmiStat;
-  const logic [5:0]           ABits = ADDR_WIDTH;
-  const logic [3:0]           Version = 1; // DTM spec version 1
-
-  logic [31:0]              ValRspData;
-  logic [1:0]               ValRspOP;
-  logic                     Sticky;
-
-  assign DmiOut = {ReqAddress, ValRspData, ValRspOP};
-  assign DmiStat = ValRspOP;
-
-  // Synchronize the edges of tck to the system clock
-  synchronizer clksync (.clk(clk), .d(tck), .q(tcks));
-
-  jtag #(.ADDR_WIDTH(ADDR_WIDTH), .DEVICE_ID(JTAG_DEVICE_ID)) jtag (.tck(tcks), .tdi, .tms, .tdo,
+   // Clock Domain Crossing
+   logic                     tcks; // Synchronized JTAG clock
+   logic 		     resetn;
+   logic 		     UpdateDtmcs;
+   logic [31:0] 	     DtmcsIn;
+   logic [31:0] 	     DtmcsOut;
+   logic 		     UpdateDmi;
+   logic 		     CaptureDmi;
+   logic [34+ADDR_WIDTH-1:0] DmiIn;
+   logic [34+ADDR_WIDTH-1:0] DmiOut;
+   
+   // DTMCS Register
+   const logic [2:0] 	     ErrInfo = 0;
+   logic 		     DtmHardReset;
+   logic 		     DmiReset;
+   const logic [2:0] 	     Idle = 0;
+   logic [1:0] 		     DmiStat;
+   const logic [5:0] 	     ABits = ADDR_WIDTH;
+   const logic [3:0] 	     Version = 1; // DTM spec version 1
+   
+   logic [31:0] 	     ValRspData;
+   logic [1:0] 		     ValRspOP;
+   logic                     Sticky;
+   
+   assign DmiOut = {ReqAddress, ValRspData, ValRspOP};
+   assign DmiStat = ValRspOP;
+   
+   // Synchronize the edges of tck to the system clock
+   synchronizer clksync (.clk(clk), .d(tck), .q(tcks));
+   
+   jtag #(.ADDR_WIDTH(ADDR_WIDTH), .DEVICE_ID(JTAG_DEVICE_ID)) jtag (.tck(tcks), .tdi, .tms, .tdo,
     .resetn, .UpdateDtmcs, .DtmcsIn, .DtmcsOut, .CaptureDmi, .UpdateDmi, .DmiIn, .DmiOut);
 
-
-  // DTMCS
-  assign DtmcsOut = {11'b0, ErrInfo, 3'b0, Idle, DmiStat, ABits, Version};
-  always_ff @(posedge clk) begin
-    if (~resetn || DtmHardReset) begin
-      DtmHardReset <= 0;
-      DmiReset <= 0;
-    end else if (UpdateDtmcs) begin
-      DtmHardReset <= DtmcsIn[17];
-      DmiReset <= DtmcsIn[16];
-    end else if (DmiReset) begin
-      DmiReset <= 0;
-    end
-  end
-
-  // DMI
-  always_ff @(posedge clk) begin
-    if (~resetn || DtmHardReset) begin
-      ValRspData <= 0;
-      ValRspOP <= `OP_SUCCESS;
-      //ErrInfo <= 4;
-      Sticky <= 0;
-      DMIState <= IDLE;
-    end else if (DmiReset) begin
-      ValRspOP <= `OP_SUCCESS;
-      //ErrInfo <= 4;
-      Sticky <= 0;
-    end else
-      case (DMIState)
-        IDLE : begin
-          if (UpdateDmi && ~Sticky && DmiIn[1:0] != `OP_NOP) begin
-            {ReqAddress, ReqData, ReqOP} <= DmiIn;
-            ReqValid <= 1;
-            // DmiOut is captured immediately on CaptureDmi
-            // this preemptively sets BUSY for next capture unless overwritten
-            ValRspOP <= `OP_BUSY;
-            DMIState <= START;
-          end else begin
-            ReqValid <= 0;
-            if (~Sticky)
-              ValRspOP <= `OP_SUCCESS;
+   // DTMCS
+   assign DtmcsOut = {11'b0, ErrInfo, 3'b0, Idle, DmiStat, ABits, Version};
+   always_ff @(posedge clk) begin
+      if (~resetn || DtmHardReset) begin
+	 DtmHardReset <= 0;
+	 DmiReset <= 0;
+      end else if (UpdateDtmcs) begin
+	 DtmHardReset <= DtmcsIn[17];
+	 DmiReset <= DtmcsIn[16];
+      end else if (DmiReset) begin
+	 DmiReset <= 0;
+      end
+   end
+   
+   // DMI
+   always_ff @(posedge clk) begin
+      if (~resetn || DtmHardReset) begin
+	 ValRspData <= 0;
+	 ValRspOP <= `OP_SUCCESS;
+	 //ErrInfo <= 4;
+	 Sticky <= 0;
+	 DMIState <= IDLE;
+      end else if (DmiReset) begin
+	 ValRspOP <= `OP_SUCCESS;
+	 //ErrInfo <= 4;
+	 Sticky <= 0;
+      end else
+	case (DMIState)
+          IDLE : begin
+             if (UpdateDmi && ~Sticky && DmiIn[1:0] != `OP_NOP) begin
+		{ReqAddress, ReqData, ReqOP} <= DmiIn;
+		ReqValid <= 1;
+		// DmiOut is captured immediately on CaptureDmi
+		// this preemptively sets BUSY for next capture unless overwritten
+		ValRspOP <= `OP_BUSY;
+		DMIState <= START;
+             end else begin
+		ReqValid <= 0;
+		if (~Sticky)
+		  ValRspOP <= `OP_SUCCESS;
+             end
           end
-        end
-
-        START : begin
-          if (ReqReady) begin
-            ReqValid <= 0;
-            RspReady <= 1;
-            DMIState <= WAIT;
+	  
+          START : begin
+             if (ReqReady) begin
+		ReqValid <= 0;
+		RspReady <= 1;
+		DMIState <= WAIT;
+             end
           end
-        end
-
-        WAIT : begin
-          if (RspValid) begin
-            ValRspData <= RspData;
-            if (~Sticky) // update OP if it isn't currently a sticky value
-              ValRspOP <= RspOP;
-            if (RspOP == `OP_FAILED || RspOP == `OP_BUSY)
-              Sticky <= 1;
-            //if (RspOP == `OP_FAILED)
-            //  ErrInfo <= 3;
-            DMIState <= COMPLETE;
-          end else if (CaptureDmi)
-            Sticky <= 1;
-        end
-
-        COMPLETE : begin
-          if (CaptureDmi) begin
-            RspReady <= 0;
-            DMIState <= IDLE;
+	  
+          WAIT : begin
+             if (RspValid) begin
+		ValRspData <= RspData;
+		if (~Sticky) // update OP if it isn't currently a sticky value
+		  ValRspOP <= RspOP;
+		if (RspOP == `OP_FAILED || RspOP == `OP_BUSY)
+		  Sticky <= 1;
+		//if (RspOP == `OP_FAILED)
+		//  ErrInfo <= 3;
+		DMIState <= COMPLETE;
+             end else if (CaptureDmi)
+               Sticky <= 1;
           end
-        end
-      endcase
-  end
 
+          COMPLETE : begin
+             if (CaptureDmi) begin
+		RspReady <= 0;
+		DMIState <= IDLE;
+             end
+          end
+	endcase
+   end
+   
 endmodule

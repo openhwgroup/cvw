@@ -3,7 +3,6 @@ import time
 
 from hw_interface import *
 
-
 random_stimulus = False
 
 def main():

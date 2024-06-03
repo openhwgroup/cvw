@@ -72,5 +72,4 @@ module hartcontrol(
       endcase
     end
   end
-
 endmodule
