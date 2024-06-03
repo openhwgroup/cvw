@@ -93,7 +93,11 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic        CSRWriteFenceM,          // CSR write or fence instruction; needs to flush the following instructions
   output logic [4:0]  RdE, RdM,                // Pipelined destination registers
   // Forwarding controls
-  output logic [4:0]  RdW                      // Register destinations in Execute, Memory, or Writeback stage
+  output logic [4:0]  RdW,                     // Register destinations in Execute, Memory, or Writeback stage
+  // Debug scan chain                                                                                                                
+  input  logic        DebugScanEn,
+  input  logic        DebugScanIn,
+  output logic        DebugScanOut
 );
 
   logic [4:0] Rs1E;                      // pipelined register sources
