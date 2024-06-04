@@ -135,7 +135,7 @@ module rad import cvw::*; #(parameter cvw_t P) (
 
   assign ARMask[31:0] = Mask[31:0];
   if (P.XLEN >= 64)
-    assign ARMask[63:32] = (AarSize == 3'b011 || AarSize == 3'b100) ? Mask[63:32] : '0;
+    assign ARMask[63:32] = (AarSize == 3'b011 | AarSize == 3'b100) ? Mask[63:32] : '0;
   if (P.XLEN == 128)
     assign ARMask[127:64] = (AarSize == 3'b100) ? Mask[127:64] : '0;
 

@@ -65,7 +65,8 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic [31:0]            RspData;
   logic [1:0]             RspOP;
 
-  localparam JTAG_DEVICE_ID = 32'hdeadbeef; // TODO: put JTAG device ID in parameter struct
+  // JTAG ID:  [31:27] ver [27:12] part number [11:1] JEDEC number [0] set to 1
+  localparam JTAG_DEVICE_ID = 32'h1000_1005; 
 
   dtm #(`ADDR_WIDTH, JTAG_DEVICE_ID) dtm (.clk, .tck, .tdi, .tms, .tdo,
     .ReqReady, .ReqValid, .ReqAddress, .ReqData, .ReqOP, .RspReady,
@@ -77,7 +78,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic                  HaltOnReset;
   logic                  Halted;
 
-  hartcontrol hartcontrol(.clk, .rst(rst || ~DmActive), .NdmReset, .HaltReq,
+  hartcontrol hartcontrol(.clk, .rst(rst | ~DmActive), .NdmReset, .HaltReq,
     .ResumeReq, .HaltOnReset, .DebugStall, .Halted, .AllRunning,
     .AnyRunning, .AllHalted, .AnyHalted, .AllResumeAck, .AnyResumeAck);
 
@@ -184,7 +185,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
           ConfStrPtrValid <= 0;
           CmdErr <= 0;
           if (ReqValid) begin
-            if (ReqAddress == `DMCONTROL && ReqOP == `OP_WRITE && ReqData[`DMACTIVE]) begin
+            if (ReqAddress == `DMCONTROL & ReqOP == `OP_WRITE & ReqData[`DMACTIVE]) begin
               DmActive <= ReqData[`DMACTIVE];
               RspOP <= `OP_SUCCESS;
             end
@@ -247,7 +248,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
         W_DMCONTROL : begin
           // While an abstract command is executing (busy in abstractcs is high), a debugger must not change
           // hartsel, and must not write 1 to haltreq, resumereq, ackhavereset, setresethaltreq, or clrresethaltreq
-          if (Busy && (ReqData[`HALTREQ] || ReqData[`RESUMEREQ] || ReqData[`SETRESETHALTREQ] || ReqData[`CLRRESETHALTREQ]))
+          if (Busy & (ReqData[`HALTREQ] | ReqData[`RESUMEREQ] | ReqData[`SETRESETHALTREQ] | ReqData[`CLRRESETHALTREQ]))
             CmdErr <= ~|CmdErr ? `CMDERR_BUSY : CmdErr;
           else begin
             HaltReq <= ReqData[`HALTREQ];
@@ -316,7 +317,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
                 else if (~ReqData[`TRANSFER]); // If not TRANSFER, do nothing
                 else if (InvalidRegNo)
                   CmdErr <= `CMDERR_EXCEPTION; // If InvalidRegNo, set CmdErr, do nothing
-                else if (ReqData[`AARWRITE] && RegReadOnly)
+                else if (ReqData[`AARWRITE] & RegReadOnly)
                   CmdErr <= `CMDERR_NOT_SUPPORTED; // If writing to a read only register, set CmdErr, do nothing
                 else begin
                   AcWrite <= ReqData[`AARWRITE];
@@ -374,7 +375,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
 
         AC_SCAN : begin
           if (Cycle == ScanChainLen)
-            AcState <= (GPRRegNo && AcWrite) ? AC_GPRUPDATE : AC_IDLE;
+            AcState <= (GPRRegNo & AcWrite) ? AC_GPRUPDATE : AC_IDLE;
           else
             Cycle <= Cycle + 1;
         end
@@ -391,12 +392,12 @@ module dm import cvw::*; #(parameter cvw_t P) (
   assign DebugGPRUpdate = (AcState == AC_GPRUPDATE);
 
   // Scan Chain
-  assign GPRSel = GPRRegNo && (AcState != AC_IDLE);
+  assign GPRSel = GPRRegNo & (AcState != AC_IDLE);
   assign ScanReg[P.XLEN] = GPRSel ? GPRScanIn : ScanIn;
   assign ScanOut = GPRSel ? 1'b0 : ScanReg[0];
   assign GPRScanOut = GPRSel ? ScanReg[0] : 1'b0;
-  assign ScanEn = ~GPRSel && (AcState == AC_SCAN);
-  assign GPRScanEn = GPRSel && (AcState == AC_SCAN);  
+  assign ScanEn = ~GPRSel & (AcState == AC_SCAN);
+  assign GPRScanEn = GPRSel & (AcState == AC_SCAN);  
   
   // Load data from message registers into scan chain
   if (P.XLEN == 32)
@@ -406,30 +407,30 @@ module dm import cvw::*; #(parameter cvw_t P) (
   else if (P.XLEN == 128)
     assign PackedDataReg = {Data3,Data2,Data1,Data0};
   
-  assign WriteScanReg = AcWrite && (~GPRRegNo && (Cycle == ShiftCount) || GPRRegNo && (Cycle == 0));
+  assign WriteScanReg = AcWrite & (~GPRRegNo & (Cycle == ShiftCount) | GPRRegNo & (Cycle == 0));
   genvar i;
   for (i=0; i<P.XLEN; i=i+1) begin
     // ARMask is used as write enable for subword overwrites (basic mask would overwrite neighbors in the chain)
-    assign ScanNext[i] = WriteScanReg && ARMask[i] ? PackedDataReg[i] : ScanReg[i+1];
+    assign ScanNext[i] = WriteScanReg & ARMask[i] ? PackedDataReg[i] : ScanReg[i+1];
     flopenr #(1) scanreg (.clk, .reset(rst), .en(AcState == AC_SCAN), .d(ScanNext[i]), .q(ScanReg[i]));
   end
   
   // Message Registers
   assign MaskedScanReg = ARMask & ScanReg[P.XLEN:1];
-  assign WriteMsgReg = (State == W_DATA) && ~Busy;
-  assign StoreScanChain = (AcState == AC_SCAN) && (Cycle == ShiftCount) && ~AcWrite;
+  assign WriteMsgReg = (State == W_DATA) & ~Busy;
+  assign StoreScanChain = (AcState == AC_SCAN) & (Cycle == ShiftCount) & ~AcWrite;
   
   assign Data0Wr = StoreScanChain ? MaskedScanReg[31:0] : ReqData;;
-  flopenr #(32) data0reg (.clk, .reset(rst), .en(StoreScanChain || WriteMsgReg && (ReqAddress == `DATA0)), .d(Data0Wr), .q(Data0));
+  flopenr #(32) data0reg (.clk, .reset(rst), .en(StoreScanChain | WriteMsgReg & (ReqAddress == `DATA0)), .d(Data0Wr), .q(Data0));
   if (P.XLEN >= 64) begin
     assign Data1Wr = StoreScanChain ?  MaskedScanReg[63:32] : ReqData;
-    flopenr #(32) data1reg (.clk, .reset(rst), .en(StoreScanChain || WriteMsgReg && (ReqAddress == `DATA1)), .d(Data1Wr), .q(Data1));
+    flopenr #(32) data1reg (.clk, .reset(rst), .en(StoreScanChain | WriteMsgReg & (ReqAddress == `DATA1)), .d(Data1Wr), .q(Data1));
   end 
   if (P.XLEN == 128) begin
     assign Data2Wr = StoreScanChain ?  MaskedScanReg[95:64] : ReqData;
     assign Data3Wr = StoreScanChain ?  MaskedScanReg[127:96] : ReqData;
-    flopenr #(32) data2reg (.clk, .reset(rst), .en(StoreScanChain || WriteMsgReg && (ReqAddress == `DATA2)), .d(Data2Wr), .q(Data2));
-    flopenr #(32) data3reg (.clk, .reset(rst), .en(StoreScanChain || WriteMsgReg && (ReqAddress == `DATA3)), .d(Data3Wr), .q(Data3));
+    flopenr #(32) data2reg (.clk, .reset(rst), .en(StoreScanChain | WriteMsgReg & (ReqAddress == `DATA2)), .d(Data2Wr), .q(Data2));
+    flopenr #(32) data3reg (.clk, .reset(rst), .en(StoreScanChain | WriteMsgReg & (ReqAddress == `DATA3)), .d(Data3Wr), .q(Data3));
   end
 
   rad #(P) regnodecode(.AarSize(ReqData[`AARSIZE]),.Regno(ReqData[`REGNO]),.GPRRegNo,.ScanChainLen,.ShiftCount,.InvalidRegNo,.RegReadOnly,.GPRAddr,.ARMask);
