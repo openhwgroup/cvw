@@ -100,13 +100,13 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   end
 
   assign Length = {4'b0, BytesInFrame};
-  assign TotalFrame = {16'b0, rvviDelay, Length[7:0], Length[15:8], DstMac, SrcMac};
+  assign TotalFrame = {16'b0, rvviDelay, EthType, DstMac, SrcMac};
 
   // *** fix me later
   assign DstMac = 48'h8F54_0000_1654; // made something up
   assign SrcMac = 48'h4502_1111_6843;
   assign Tag = 32'b0;
-  assign EthType = 16'h0801;
+  assign EthType = 16'h005c;
   
   assign RvviAxiWdata = TotalFrameWords[WordCount];
   assign RvviAxiWstrb = '1;
