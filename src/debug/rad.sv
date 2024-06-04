@@ -87,29 +87,29 @@ module rad import cvw::*; #(parameter cvw_t P) (
         InvalidRegNo = ~P.E_SUPPORTED;
         GPRRegNo = 1;
       end
-      `MISA : begin
+      `MISA_REGNO : begin
         ShiftCount = SCANCHAINLEN - MISA_IDX;
         InvalidRegNo = ~P.ZICSR_SUPPORTED;
         RegReadOnly = 1;
       end
-      `TRAPM : begin
+      `TRAPM_REGNO : begin
         ShiftCount = SCANCHAINLEN - TRAPM_IDX;
         InvalidRegNo = ~P.ZICSR_SUPPORTED;
         RegReadOnly = 1;
       end
-      `PCM : begin
+      `PCM_REGNO : begin
         ShiftCount = SCANCHAINLEN - PCM_IDX;
         InvalidRegNo = ~(P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED);
       end
-      `INSTRM : begin
+      `INSTRM_REGNO : begin
         ShiftCount = SCANCHAINLEN - INSTRM_IDX;
         InvalidRegNo = ~(P.ZICSR_SUPPORTED | P.A_SUPPORTED);
       end
-      `MEMRWM      : ShiftCount = SCANCHAINLEN - MEMRWM_IDX;
-      `INSTRVALIDM : ShiftCount = SCANCHAINLEN - INSTRVALIDM_IDX;
-      `WRITEDATAM  : ShiftCount = SCANCHAINLEN - WRITEDATAM_IDX;
-      `IEUADRM     : ShiftCount = SCANCHAINLEN - IEUADRM_IDX;
-      `READDATAM : begin
+      `MEMRWM_REGNO      : ShiftCount = SCANCHAINLEN - MEMRWM_IDX;
+      `INSTRVALIDM_REGNO : ShiftCount = SCANCHAINLEN - INSTRVALIDM_IDX;
+      `WRITEDATAM_REGNO  : ShiftCount = SCANCHAINLEN - WRITEDATAM_IDX;
+      `IEUADRM_REGNO     : ShiftCount = SCANCHAINLEN - IEUADRM_IDX;
+      `READDATAM_REGNO : begin
         ShiftCount = SCANCHAINLEN - READDATAM_IDX;
         RegReadOnly = 1;
       end
@@ -124,11 +124,11 @@ module rad import cvw::*; #(parameter cvw_t P) (
   always_comb begin
     Mask = 0;
     case(Regno)
-      `TRAPM       : Mask = {1{1'b1}};
-      `INSTRM      : Mask = {32{1'b1}};
-      `MEMRWM      : Mask = {2{1'b1}};
-      `INSTRVALIDM : Mask = {1{1'b1}};
-      `READDATAM   : Mask = {P.LLEN{1'b1}};
+      `TRAPM_REGNO       : Mask = {1{1'b1}};
+      `INSTRM_REGNO      : Mask = {32{1'b1}};
+      `MEMRWM_REGNO      : Mask = {2{1'b1}};
+      `INSTRVALIDM_REGNO : Mask = {1{1'b1}};
+      `READDATAM_REGNO   : Mask = {P.LLEN{1'b1}};
       default      : Mask = {P.XLEN{1'b1}};
     endcase
   end

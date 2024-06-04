@@ -35,21 +35,14 @@ module flopenrcs #(parameter WIDTH = 8) (
 );
   logic [WIDTH-1:0] dmux;
 
-  assign dmux[WIDTH-1] = scan ? scanin : d[WIDTH-1];
+  mux2 #(1) mux (.y(dmux[WIDTH-1]), .s(scan), .d1(scanin), .d0(d[WIDTH-1]));
   assign scanout = q[0];
 
   genvar i;
   for (i=0; i<WIDTH-1; i=i+1) begin
-    assign dmux[i] = scan ? q[i+1] : d[i];
+    mux2 #(1) mux (.y(dmux[i]), .s(scan), .d1(q[i+1]), .d0(d[i]));
   end
 
-  always_ff @(posedge clk)
-    if (reset)
-      q <= '0;
-    else if (en || scan)
-      if (clear)
-        q <= '0;
-      else
-        q <= dmux;
+  flopenrc #(WIDTH) flop (.clk, .reset, .clear, .en(en | scan), .d(dmux), .q(q));
 
 endmodule

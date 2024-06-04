@@ -147,54 +147,54 @@
 // 0xc000 – 0xffff | Reserved for non-standard extensions and internal use.
 
 // privileged/csr/csrm
-`define MISA        16'h0301 // XLEN P.ZICSR_SUPPORTED (Read Only)
+`define MISA_REGNO        16'h0301 // XLEN P.ZICSR_SUPPORTED (Read Only)
 // wallypipelinedcore
-`define TRAPM       16'hC000 // 1'b  P.ZICSR_SUPPORTED (Read Only)
+`define TRAPM_REGNO       16'hC000 // 1'b  P.ZICSR_SUPPORTED (Read Only)
 // src/ifu
-`define PCM         16'hC001 // XLEN P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED
-`define INSTRM      16'hC002 // 32'b P.ZICSR_SUPPORTED | P.A_SUPPORTED
+`define PCM_REGNO         16'hC001 // XLEN P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED
+`define INSTRM_REGNO      16'hC002 // 32'b P.ZICSR_SUPPORTED | P.A_SUPPORTED
 // ieu/controller
-`define MEMRWM      16'hC003 // 2'b
-`define INSTRVALIDM 16'hC004 // 1'b  
+`define MEMRWM_REGNO      16'hC003 // 2'b
+`define INSTRVALIDM_REGNO 16'hC004 // 1'b  
 // ieu/datapath
-`define WRITEDATAM  16'hC005 // XLEN
+`define WRITEDATAM_REGNO  16'hC005 // XLEN
 // lsu
-`define IEUADRM     16'hC006 // XLEN
-`define READDATAM   16'hC007 // LLEN (Read Only)
+`define IEUADRM_REGNO     16'hC006 // XLEN
+`define READDATAM_REGNO   16'hC007 // LLEN (Read Only)
 
 // src/ieu/datapath
-`define X0          16'h1000
-`define X1          16'h1001
-`define X2          16'h1002
-`define X3          16'h1003
-`define X4          16'h1004
-`define X5          16'h1005
-`define X6          16'h1006
-`define X7          16'h1007
-`define X8          16'h1008
-`define X9          16'h1009
-`define X10         16'h100A
-`define X11         16'h100B
-`define X12         16'h100C
-`define X13         16'h100D
-`define X14         16'h100E
-`define X15         16'h100F
-`define X16         16'h1010 // E_SUPPORTED
-`define X17         16'h1011 // E_SUPPORTED
-`define X18         16'h1012 // E_SUPPORTED
-`define X19         16'h1013 // E_SUPPORTED
-`define X20         16'h1014 // E_SUPPORTED
-`define X21         16'h1015 // E_SUPPORTED
-`define X22         16'h1016 // E_SUPPORTED
-`define X23         16'h1017 // E_SUPPORTED
-`define X24         16'h1018 // E_SUPPORTED
-`define X25         16'h1019 // E_SUPPORTED
-`define X26         16'h101A // E_SUPPORTED
-`define X27         16'h101B // E_SUPPORTED
-`define X28         16'h101C // E_SUPPORTED
-`define X29         16'h101D // E_SUPPORTED
-`define X30         16'h101E // E_SUPPORTED
-`define X31         16'h101F // E_SUPPORTED
+`define X0_REGNO          16'h1000
+`define X1_REGNO          16'h1001
+`define X2_REGNO          16'h1002
+`define X3_REGNO          16'h1003
+`define X4_REGNO          16'h1004
+`define X5_REGNO          16'h1005
+`define X6_REGNO          16'h1006
+`define X7_REGNO          16'h1007
+`define X8_REGNO          16'h1008
+`define X9_REGNO          16'h1009
+`define X10_REGNO         16'h100A
+`define X11_REGNO         16'h100B
+`define X12_REGNO         16'h100C
+`define X13_REGNO         16'h100D
+`define X14_REGNO         16'h100E
+`define X15_REGNO         16'h100F
+`define X16_REGNO         16'h1010 // E_SUPPORTED
+`define X17_REGNO         16'h1011 // E_SUPPORTED
+`define X18_REGNO         16'h1012 // E_SUPPORTED
+`define X19_REGNO         16'h1013 // E_SUPPORTED
+`define X20_REGNO         16'h1014 // E_SUPPORTED
+`define X21_REGNO         16'h1015 // E_SUPPORTED
+`define X22_REGNO         16'h1016 // E_SUPPORTED
+`define X23_REGNO         16'h1017 // E_SUPPORTED
+`define X24_REGNO         16'h1018 // E_SUPPORTED
+`define X25_REGNO         16'h1019 // E_SUPPORTED
+`define X26_REGNO         16'h101A // E_SUPPORTED
+`define X27_REGNO         16'h101B // E_SUPPORTED
+`define X28_REGNO         16'h101C // E_SUPPORTED
+`define X29_REGNO         16'h101D // E_SUPPORTED
+`define X30_REGNO         16'h101E // E_SUPPORTED
+`define X31_REGNO         16'h101F // E_SUPPORTED
 
 // ACCESS_MEMORY Control ranges (Not implemented)
 //`define AAMVIRTUAL       23
