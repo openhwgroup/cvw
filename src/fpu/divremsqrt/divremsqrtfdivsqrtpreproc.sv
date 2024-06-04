@@ -125,14 +125,17 @@ module divremsqrtfdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     // calculate number of fractional bits p
     assign ZeroDiff = mE - ell;         // Difference in number of leading zeros
     assign ALTBE = ZeroDiff[P.DIVBLEN-1];  // A less than B (A has more leading zeros)
+    assign SIGNOVERFLOW = &ForwardedSrcBE & (ForwardedSrcAE == {{1'b1}, {(P.XLEN-1){1'b0}}}) & SignedDivE;
+
     mux2 #(P.DIVBLEN) pmux(ZeroDiff, '0, ALTBE, p);          
 
     /* verilator lint_off WIDTH */
-    assign IntResultBitsE = P.LOGR + p;  // Total number of result bits (r integer bits plus p fractional bits)
+    assign IntResultBitsE = P.LOGR + p + (&mE[$clog2(P.XLEN)-1:0]);  // Total number of result bits (r integer bits plus p fractional bits)
+    //assign IntResultBitsE = P.LOGR + p;  // Total number of result bits (r integer bits plus p fractional bits)
     /* verilator lint_on WIDTH */
 
     // Integer special cases (terminate immediately)
-    assign ISpecialCaseE = BZeroE | ALTBE;
+    assign ISpecialCaseE = BZeroE | ALTBE | SIGNOVERFLOW;
 
     // calculate right shift amount RightShiftX to complete in discrete number of steps
     if (P.RK > 1) begin // more than 1 bit per cycle

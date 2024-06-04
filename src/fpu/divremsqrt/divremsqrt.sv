@@ -51,7 +51,7 @@
   output logic [P.XLEN-1:0]    FIntDivResultM,
   output logic                 IntDivM,
   // integer normalization shifter signals
-  output logic [P.DIVb+3:0]          PreResultM,
+  output logic [P.XLEN+3:0]          PreResultM,
   input logic [P.DIVb+3:0]          PreIntResultM,
   output logic [P.DIVBLEN-1:0]       IntNormShiftM
 

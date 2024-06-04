@@ -45,7 +45,7 @@ module divremsqrtpostprocess import cvw::*;  #(parameter cvw_t P)  (
   input logic  [P.NE+1:0]                  DivUe,      // divsqrt exponent
   input logic  [P.NF+2:0]                  DivUm,      // divsqrt significand
   input logic  [P.DIVBLEN-1:0]             IntNormShiftM, // integer normalization left-shift amount (after pre-shifting right)
-  input logic  [P.DIVb+3:0]                PreResultM, // integer result to be shifted
+  input logic  [P.XLEN+3:0]                PreResultM, // integer result to be shifted
   input logic                              IntDivM,
   // final results
   output logic [P.FLEN-1:0]                PostProcRes,// postprocessor final result
@@ -142,7 +142,8 @@ module divremsqrtpostprocess import cvw::*;  #(parameter cvw_t P)  (
 
     // extend signals to fit unified width
     assign IntNormShiftMWide = {{(P.LOGUNIFIEDSHIFTWIDTH-P.DIVBLEN){1'b0}},IntNormShiftM};
-    assign PreResultMWide = {{(P.DIVb){PreResultM[P.DIVb+3]}},PreResultM,{(P.UNIFIEDSHIFTWIDTH-P.DIVb-4-P.DIVb){1'b0}}};
+    //assign PreResultMWide = {{(P.DIVb){PreResultM[P.DIVb+3]}},PreResultM,{(P.UNIFIEDSHIFTWIDTH-P.DIVb-4-P.DIVb){1'b0}}};
+    assign PreResultMWide = {{(P.XLEN){PreResultM[P.XLEN+3]}},PreResultM,{(P.UNIFIEDSHIFTWIDTH-P.XLEN-4-P.XLEN){1'b0}}};
 
     
     assign ShiftInWide = {ShiftIn,{(P.UNIFIEDSHIFTWIDTH-P.NORMSHIFTSZDRSU){1'b0}}};
@@ -158,7 +159,7 @@ module divremsqrtpostprocess import cvw::*;  #(parameter cvw_t P)  (
     assign Shifted = UnifiedShifted[P.UNIFIEDSHIFTWIDTH-1:P.UNIFIEDSHIFTWIDTH-1-P.NORMSHIFTSZDRSU+1];
 
     // extract integer result
-    assign PreIntResultM = UnifiedShifted[P.UNIFIEDSHIFTWIDTH-1:P.UNIFIEDSHIFTWIDTH-1-P.DIVb-4+1];
+    assign PreIntResultM = {{(P.DIVb-P.XLEN){1'b0}},UnifiedShifted[P.UNIFIEDSHIFTWIDTH-1:P.UNIFIEDSHIFTWIDTH-1-P.XLEN-4+1]};
     //assign PreIntResultM = IntNormShiftM
   end
 

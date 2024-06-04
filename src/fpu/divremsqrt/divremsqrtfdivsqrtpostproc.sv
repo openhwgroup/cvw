@@ -44,11 +44,12 @@ module divremsqrtfdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
   output logic                 WZeroE,
   output logic                 DivStickyM,
   output logic [P.XLEN-1:0]    FIntDivResultM,     // U/Q(XLEN.0)
-  output logic [P.DIVb+3:0]    PreResultM
+  output logic [P.XLEN+3:0]    PreResultM
 
 );
   
-  logic [P.DIVb+3:0]         W, Sum;
+  logic [P.DIVb+3:0]         Sum;
+  logic [P.XLEN+3:0]         W;
   logic [P.DIVb:0]           PreUmM;
   logic                      NegStickyM;
   logic                      weq0E, WZeroM;
@@ -104,22 +105,25 @@ module divremsqrtfdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
 
   // Integer quotient or remainder correction, normalization, and special cases
   if (P.IDIV_ON_FPU) begin:intpostproc // Int supported
-    logic [P.DIVb+3:0] UnsignedQuotM, NormRemM, NormRemDM, NormQuotM;
+    logic [P.XLEN+3:0] UnsignedQuotM, NormRemM, NormRemDM, NormQuotM;
     logic [P.UNIFIEDSHIFTWIDTH-1:0] PreResultMWide, PreIntResultMWide;
     logic [P.LOGUNIFIEDSHIFTWIDTH-1:0] IntNormShiftMWide;
+    logic [P.XLEN+3:0] DTrunc, SumTrunc;
 
     //assign W = $signed(Sum) >>> P.LOGR;
-    arithrightshift #(P) rshift(Sum, W);
-    assign UnsignedQuotM = {3'b000, PreUmM};
+    assign SumTrunc = Sum[P.DIVb+3:P.DIVb-P.XLEN];
+    assign DTrunc = D[P.DIVb+3:P.DIVb-P.XLEN];
+    arithrightshift #(P) rshift(SumTrunc, W);
+    assign UnsignedQuotM = {3'b000, PreUmM[P.DIVb:P.DIVb-P.XLEN]};
 
     // Integer remainder: sticky and sign correction muxes
     assign NegQuotM = AsM ^ BsM; // Integer Quotient is negative
-    mux2 #(P.DIVb+4) normremdmux(W, W+D, NegStickyM, NormRemDM);
-    mux2 #(P.DIVb+4) normremsmux(NormRemDM, -NormRemDM, AsM, NormRemM);
-    mux2 #(P.DIVb+4) quotresmux(UnsignedQuotM, -UnsignedQuotM, NegQuotM, NormQuotM);
+    mux2 #(P.XLEN+4) normremdmux(W, W+DTrunc, NegStickyM, NormRemDM);
+    mux2 #(P.XLEN+4) normremsmux(NormRemDM, -NormRemDM, AsM, NormRemM);
+    mux2 #(P.XLEN+4) quotresmux(UnsignedQuotM, -UnsignedQuotM, NegQuotM, NormQuotM);
 
     // Select quotient or remainder and do normalization shift
-    mux2 #(P.DIVb+4)    presresultmux(NormQuotM, NormRemM, RemOpM, PreResultM);
+    mux2 #(P.XLEN+4)    presresultmux(NormQuotM, NormRemM, RemOpM, PreResultM);
     //assign PreIntResultM = $signed(PreResultM >>> IntNormShiftM); 
     //intrightshift #(P) rightshift(PreResultM, IntNormShiftM, PreIntResultM);
    // divremsqrtnormshift #(P) intshift(PreResultM, IntNormShiftM,PreIntResultM);
