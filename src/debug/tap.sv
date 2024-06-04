@@ -90,8 +90,8 @@ module tap (
     updateDR <= State == UpdateDR;
   end
 
-  assign clockIR = tck || State[0] || ~State[1] || ~State[3];
-  assign clockDR = tck || State[0] || ~State[1] || State[3];
+  assign clockIR = tck | State[0] | ~State[1] | ~State[3];
+  assign clockDR = tck | State[0] | ~State[1] | State[3];
   assign select = State[3];
 
 endmodule
