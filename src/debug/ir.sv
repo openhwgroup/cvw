@@ -49,12 +49,12 @@ module ir (
 
   // Shift register
   always @(posedge clockIR) begin
-    shift_reg[0] <= shift_reg[1] || captureIR;
+    shift_reg[0] <= shift_reg[1] | captureIR;
   end
   genvar i;
   for (i = INST_REG_WIDTH; i > 1; i = i - 1) begin
     always @(posedge clockIR) begin
-      shift_reg[i-1] <= shift_reg[i] && ~captureIR;
+      shift_reg[i-1] <= shift_reg[i] & ~captureIR;
     end
   end
 
