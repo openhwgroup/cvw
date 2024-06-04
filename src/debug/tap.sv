@@ -82,7 +82,7 @@ module tap (
 
   always @(negedge tck) begin
     resetn <= ~(State == TLReset);
-    tdo_en <= State == ShiftIR || State == ShiftDR;
+    tdo_en <= State == ShiftIR | State == ShiftDR;
     captureIR <= State == CaptureIR;
     updateIR <= State == UpdateIR;
     shiftDR <= State == ShiftDR;
