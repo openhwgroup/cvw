@@ -154,6 +154,8 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .EPCM, .TrapVectorM,
     .CSRReadValW, .IllegalCSRAccessM, .BigEndianM,
     .DebugCapture, .DebugScanEn, .DebugScanIn, .DebugScanOut);
+    .CSRReadValW, .IllegalCSRAccessM, .BigEndianM,
+    .DebugCapture, .DebugScanEn, .DebugScanIn, .DebugScanOut);
 
   // pipeline early-arriving trap sources
   privpiperegs ppr(.clk, .reset, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,

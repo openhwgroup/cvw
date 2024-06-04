@@ -28,49 +28,49 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module ieu import cvw::*;  #(parameter cvw_t P) (
-  input  logic              clk, reset,
+  input  logic                     clk, reset,
   // Decode stage signals
-  input  logic [31:0]       InstrD,                          // Instruction
-  input  logic [1:0]        STATUS_FS,                       // is FPU enabled?
-  input  logic [3:0]        ENVCFG_CBE,                      // Cache block operation enables
-  input  logic              IllegalIEUFPUInstrD,             // Illegal instruction
-  output logic              IllegalBaseInstrD,               // Illegal I-type instruction, or illegal RV32 access to upper 16 registers
+  input  logic [31:0]              InstrD,                                // Instruction
+  input  logic [1:0]               STATUS_FS,                             // is FPU enabled?
+  input  logic [3:0]               ENVCFG_CBE,                            // Cache block operation enables
+  input  logic                     IllegalIEUFPUInstrD,                   // Illegal instruction
+  output logic                     IllegalBaseInstrD,                     // Illegal I-type instruction, or illegal RV32 access to upper 16 registers
   // Execute stage signals
-  input  logic [P.XLEN-1:0] PCE,                             // PC
-  input  logic [P.XLEN-1:0] PCLinkE,                         // PC + 4
-  output logic              PCSrcE,                          // Select next PC (between PC+4 and IEUAdrE)
-  input  logic              FWriteIntE, FCvtIntE,            // FPU writes to integer register file, FPU converts float to int
-  output logic [P.XLEN-1:0] IEUAdrE,                         // Memory address
-  output logic              IntDivE, W64E,                   // Integer divide, RV64 W-type instruction 
-  output logic [2:0]        Funct3E,                         // Funct3 instruction field
-  output logic [P.XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE,  // ALU src inputs before the mux choosing between them and PCE to put in srcA/B
-  output logic [4:0]        RdE,                             // Destination register
-  output logic              MDUActiveE,                      // Mul/Div instruction being executed
-  output logic [3:0]        CMOpM,                           // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
-  output logic              IFUPrefetchE,                    // instruction prefetch
-  output logic              LSUPrefetchM,                    // datata prefetch
-  // Memory stage signals
-  input  logic              SquashSCW,                       // Squash store conditional, from LSU
-  output logic [1:0]        MemRWE,                          // Read/write control goes to LSU
-  output logic [1:0]        MemRWM,                          // Read/write control goes to LSU
-  output logic [1:0]        AtomicM,                         // Atomic control goes to LSU
-  output logic [P.XLEN-1:0] WriteDataM,                      // Write data to LSU
-  output logic [2:0]        Funct3M,                         // Funct3 (size and signedness) to LSU
-  output logic [P.XLEN-1:0] SrcAM,                           // ALU SrcA to Privileged unit and FPU
-  output logic [4:0]        RdM,                             // Destination register
-  input  logic [P.XLEN-1:0] FIntResM,                        // Integer result from FPU (fmv, fclass, fcmp)
-  output logic              InvalidateICacheM, FlushDCacheM, // Invalidate I$, flush D$
-  output logic              InstrValidD, InstrValidE, InstrValidM, // Instruction is valid
-  output logic              BranchD, BranchE,
-  output logic              JumpD, JumpE,
+  input  logic [P.XLEN-1:0]        PCE,                                   // PC
+  input  logic [P.XLEN-1:0]        PCLinkE,                               // PC + 4
+  output logic                     PCSrcE,                                // Select next PC (between PC+4 and IEUAdrE)
+  input  logic                     FWriteIntE, FCvtIntE,                  // FPU writes to integer register file, FPU converts float to int
+  output logic [P.XLEN-1:0]        IEUAdrE,                               // Memory address
+  output logic                     IntDivE, W64E,                         // Integer divide, RV64 W-type instruction 
+  output logic [2:0]               Funct3E,                               // Funct3 instruction field
+  output logic [P.XLEN-1:0]        ForwardedSrcAE, ForwardedSrcBE,        // ALU src inputs before the mux choosing between them and PCE to put in srcA/B
+  output logic [4:0]               RdE,                                   // Destination register
+  output logic                     MDUActiveE,                            // Mul/Div instruction being executed
+  output logic [3:0]               CMOpM,                                 // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
+  output logic                     IFUPrefetchE,                          // instruction prefetch
+  output logic                     LSUPrefetchM,                          // datata prefetch
+  // Memory stage signals 
+  input  logic                     SquashSCW,                             // Squash store conditional, from LSU
+  output logic [1:0]               MemRWE,                                // Read/write control goes to LSU
+  output logic [1:0]               MemRWM,                                // Read/write control goes to LSU
+  output logic [1:0]               AtomicM,                               // Atomic control goes to LSU
+  output logic [P.XLEN-1:0]        WriteDataM,                            // Write data to LSU
+  output logic [2:0]               Funct3M,                               // Funct3 (size and signedness) to LSU
+  output logic [P.XLEN-1:0]        SrcAM,                                 // ALU SrcA to Privileged unit and FPU
+  output logic [4:0]               RdM,                                   // Destination register
+  input  logic [P.XLEN-1:0]        FIntResM,                              // Integer result from FPU (fmv, fclass, fcmp)
+  output logic                     InvalidateICacheM, FlushDCacheM,       // Invalidate I$, flush D$
+  output logic                     InstrValidD, InstrValidE, InstrValidM, // Instruction is valid
+  output logic                     BranchD, BranchE,
+  output logic                     JumpD, JumpE,
   // Writeback stage signals
-  input  logic [P.XLEN-1:0] FIntDivResultW,                  // Integer divide result from FPU fdivsqrt)
-  input  logic [P.XLEN-1:0] CSRReadValW,                     // CSR read value, 
-  input  logic [P.XLEN-1:0] MDUResultW,                      // multiply/divide unit result
-  input  logic [P.XLEN-1:0] FCvtIntResW,                     // FPU's float to int conversion result
-  input  logic              FCvtIntW,                        // FPU converts float to int
-  output logic [4:0]        RdW,                             // Destination register
-  input  logic [P.XLEN-1:0] ReadDataW,                       // LSU's read data
+  input  logic [P.XLEN-1:0]        FIntDivResultW,                        // Integer divide result from FPU fdivsqrt)
+  input  logic [P.XLEN-1:0]        CSRReadValW,                           // CSR read value, 
+  input  logic [P.XLEN-1:0]        MDUResultW,                            // multiply/divide unit result
+  input  logic [P.XLEN-1:0]        FCvtIntResW,                           // FPU's float to int conversion result
+  input  logic                     FCvtIntW,                              // FPU converts float to int
+  output logic [4:0]               RdW,                                   // Destination register
+  input  logic [P.XLEN-1:0]        ReadDataW,                             // LSU's read data
   // Hazard unit signals
   input  logic              StallD, StallE, StallM, StallW,  // Stall signals from hazard unit
   input  logic              FlushD, FlushE, FlushM, FlushW,  // Flush signals
@@ -93,19 +93,19 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   output logic                     GPRScanOut
 );
 
-  logic [2:0] ImmSrcD;                                       // Select type of immediate extension 
-  logic [1:0] FlagsE;                                        // Comparison flags ({eq, lt})
-  logic       ALUSrcAE, ALUSrcBE;                            // ALU source operands
-  logic [2:0] ResultSrcW;                                    // Selects result in Writeback stage
-  logic       ALUResultSrcE;                                 // Selects ALU result to pass on to Memory stage
-  logic [2:0] ALUSelectE;                                    // ALU select mux signal
-  logic       SCE;                                           // Store Conditional instruction
-  logic       FWriteIntM;                                    // FPU writing to integer register file
-  logic       IntDivW;                                       // Integer divide instruction
-  logic [3:0] BSelectE;                                      // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding
-  logic [3:0] ZBBSelectE;                                    // ZBB Result Select Signal in Execute Stage
-  logic [2:0] BALUControlE;                                  // ALU Control signals for B instructions in Execute Stage
-  logic       SubArithE;                                     // Subtraction or arithmetic shift
+  logic [2:0] ImmSrcD;                                                    // Select type of immediate extension 
+  logic [1:0] FlagsE;                                                     // Comparison flags ({eq, lt})
+  logic       ALUSrcAE, ALUSrcBE;                                         // ALU source operands
+  logic [2:0] ResultSrcW;                                                 // Selects result in Writeback stage
+  logic       ALUResultSrcE;                                              // Selects ALU result to pass on to Memory stage
+  logic [2:0] ALUSelectE;                                                 // ALU select mux signal
+  logic       SCE;                                                        // Store Conditional instruction
+  logic       FWriteIntM;                                                 // FPU writing to integer register file
+  logic       IntDivW;                                                    // Integer divide instruction
+  logic [3:0] BSelectE;                                                   // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding
+  logic [3:0] ZBBSelectE;                                                 // ZBB Result Select Signal in Execute Stage
+  logic [2:0] BALUControlE;                                               // ALU Control signals for B instructions in Execute Stage
+  logic       SubArithE;                                                  // Subtraction or arithmetic shift
 
   logic [6:0] Funct7E;
 
