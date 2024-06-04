@@ -65,7 +65,8 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic [31:0]            RspData;
   logic [1:0]             RspOP;
 
-  localparam JTAG_DEVICE_ID = 32'hdeadbeef; // TODO: put JTAG device ID in parameter struct
+  // JTAG ID:  [31:27] ver [27:12] part number [11:1] JEDEC number [0] set to 1
+  localparam JTAG_DEVICE_ID = 32'h1000_1005; 
 
   dtm #(`ADDR_WIDTH, JTAG_DEVICE_ID) dtm (.clk, .tck, .tdi, .tms, .tdo,
     .ReqReady, .ReqValid, .ReqAddress, .ReqData, .ReqOP, .RspReady,
