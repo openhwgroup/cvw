@@ -242,8 +242,6 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     .MIP_REGW, .MIE_REGW, .WriteMSTATUSM, .WriteMSTATUSHM,
     .IllegalCSRMAccessM, .IllegalCSRMWriteReadonlyM,
     .MENVCFG_REGW, .DebugCapture, .DebugScanEn, .DebugScanIn, .DebugScanOut);
-    .MENVCFG_REGW, .DebugCapture, .DebugScanEn, .DebugScanIn, .DebugScanOut);
-
 
   if (P.S_SUPPORTED) begin:csrs
     logic STCE; 
