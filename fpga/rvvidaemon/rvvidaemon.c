@@ -157,4 +157,6 @@ void DecodeRVVI(uint8_t *payload, uint64_t * PC, uint32_t *insn){
   RequiredRVVI_t *RequiredFields = (RequiredRVVI_t *) payload;
   *PC = RequiredFields->PC;
   *insn = RequiredFields->insn;
+  if(RequiredFields->GPREn)
+    printf("Wrote a reg\n");
 }
