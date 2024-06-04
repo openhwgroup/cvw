@@ -125,18 +125,17 @@ def main():
 
 
 def random_hex(reg_name):
+    pad = XLEN // 4
     if reg_name in nonstandard_register_lengths:
         size = nonstandard_register_lengths[reg_name]
-        pad = (XLEN-size) // 4
     else:
         size = XLEN
-        pad = 0
     
     if random_stimulus:
-        return f"0x{'0'*pad}{random.getrandbits(size):x}"
+        return "0x" + f"{random.getrandbits(size):x}".rjust(pad, "0")
     else:
         data = 0xa5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5
-        return f"0x{'0'*pad}{(data & (2**size-1)):x}"
+        return "0x" + f"{(data & (2**size-1)):x}".rjust(pad, "0")
 
 
 main()
