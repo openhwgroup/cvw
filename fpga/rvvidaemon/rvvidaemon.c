@@ -99,9 +99,7 @@ int main(int argc, char **argv){
     return -1;
   }
 
-  char sender[INET6_ADDRSTRLEN];
   int sockfd;
-  struct ifreq if_idx;
   uint8_t buf[BUF_SIZ];
   int sockopt;
   struct ifreq ifopts;	/* set promiscuous mode */
