@@ -74,8 +74,20 @@ typedef struct {
   uint8_t GPREn : 1;
   uint8_t FPREn : 1;
   uint16_t CSRCount : 12;
-} RequiredRVVI_t;
-    
+} RequiredRVVI_t; // total size is 241 bits or 30.25 bytes
+
+typedef struct {
+  uint8_t fill : 1; // *** depends on the size of the RequiredRVVI_t
+  uint8_t RegAddress : 5;
+  uint64_t RegValue;
+} FirstReg_t;
+
+typedef struct {
+  uint8_t fill : 6; // *** depends on the size of the RequiredRVVI_t and FirstReg_t
+  uint8_t RegAddress : 5;
+  uint64_t RegValue;
+} SecondReg_t;
+
 
 void DecodeRVVI(uint8_t *payload, uint64_t * PC, uint32_t *insn);
 
@@ -127,23 +139,22 @@ int main(int argc, char **argv){
   printf("Here 4\n");
 
   while(1) {
-    printf("listener: Waiting to recvfrom...\n");
+    //printf("listener: Waiting to recvfrom...\n");
     numbytes = recvfrom(sockfd, buf, BUF_SIZ, 0, NULL, NULL);
     headerbytes = (sizeof(struct ether_header));
     payloadbytes = numbytes - headerbytes;
-    printf("listener: got frame %lu bytes\n", numbytes);
-    printf("payload size: %lu bytes\n", payloadbytes);
+    //printf("listener: got frame %lu bytes\n", numbytes);
+    //printf("payload size: %lu bytes\n", payloadbytes);
     if (eh->ether_dhost[0] == DEST_MAC0 &&
         eh->ether_dhost[1] == DEST_MAC1 &&
         eh->ether_dhost[2] == DEST_MAC2 &&
         eh->ether_dhost[3] == DEST_MAC3 &&
         eh->ether_dhost[4] == DEST_MAC4 &&
         eh->ether_dhost[5] == DEST_MAC5) {
-      printf("Correct destination MAC address\n");
+      //printf("Correct destination MAC address\n");
       uint64_t PC;
       uint32_t insn;
       DecodeRVVI(buf + headerbytes, &PC, &insn);
-      printf("PC = %lx, insn = %x\n", PC, insn);
     }
   }
 
@@ -155,8 +166,13 @@ int main(int argc, char **argv){
 void DecodeRVVI(uint8_t *payload, uint64_t * PC, uint32_t *insn){
   // you know this actually easiser in assembly. :(
   RequiredRVVI_t *RequiredFields = (RequiredRVVI_t *) payload;
+  FirstReg_t FirstReg;
+  SecondReg_t SecondReg;
   *PC = RequiredFields->PC;
   *insn = RequiredFields->insn;
-  if(RequiredFields->GPREn)
+  printf("PC = %lx, insn = %x\n", *PC, *insn);
+  if(RequiredFields->GPREn){
+    FirstReg = *(FirstReg_t *) (payload + sizeof(RequiredRVVI_t) - 1);
     printf("Wrote a reg\n");
+  }
 }
