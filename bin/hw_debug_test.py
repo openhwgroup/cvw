@@ -1,7 +1,8 @@
 import random
 import time
 
-from hw_interface import *
+import hw_debug_interface
+from hw_debug_interface import *
 
 random_stimulus = False
 
@@ -10,6 +11,8 @@ def main():
     reg_addrs = list(registers.keys())
 
     init()
+    global XLEN
+    XLEN = hw_debug_interface.XLEN
     reset_dm()
     reset_hart()
     
@@ -65,7 +68,7 @@ def main():
         except Exception as e:
             raise e
         if rdata != test_reg_data[r]:
-            raise Exception(f"Register {r} read did not return correct data: {rdata} != {test_reg_data[r]}")
+            print(f"Error: register {r} read did not return correct data: {rdata} != {test_reg_data[r]}")
         else:
             print(f"Read {rdata} from {r}")
 

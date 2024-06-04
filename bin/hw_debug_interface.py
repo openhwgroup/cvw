@@ -29,43 +29,13 @@
 # OpenOCD also supports tcl commands directly
 
 import atexit
+import re
 import time
 from telnetlib import Telnet
 
 debug = False
-XLEN = 64  # TODO: infer this value from the MISA
-
-tapname = "cvw.cpu"  # this is set via the openocd config. It can be found by running `scan_chain`
-
 
 # TODO: if JTAG clk is fast enough, need to check for busy between absract commands
-
-def main():
-    global tn
-    with Telnet("127.0.0.1", 4444) as tn:
-        read()  # clear welcome message from read buffer
-        activate_dm()  # necessary if openocd init is disabled
-        status()
-        halt()
-        GPR = dump_GPR()
-        print(GPR)
-        check_errors()
-        print(f"PCM: '{read_data("PCM")}'")
-        resume()
-        status()
-        #clear_abstrcmd_err()
-        #write_data("READDATAM", "0xAA0987210000FFFF")
-        #print(f"READDATAM'{read_data("READDATAM")}'")
-        #print(f"WRITEDATAM: '{read_data("WRITEDATAM")}'")
-        #print(f"IEUADRM: '{read_data("IEUADRM")}'")
-        #write_data("TRAPM", "0x0")
-        #print(f"INSTRVALIDM: '{read_data("INSTRVALIDM")}'")
-        #print(f"MEMRWM: '{read_data("MEMRWM")}'")
-        #write_data("MEMRWM", "0x3")
-        #write_data("PCM", "0x100000")
-        #dmi_reset()
-        #clear_abstrcmd_err()
-
 
 def dump_GPR():
     gpr = {}
@@ -303,17 +273,41 @@ def read():
     return data
 
 
+def interrogate():
+    global XLEN
+    global tapname
+    write("scan_chain")
+    raw = tn.read_until(b"> ").decode('ascii')
+    scan_chain = raw.replace("\r", "").replace("> ", "")
+    scan_chain = [tap for tap in scan_chain.split("\n")[2:] if tap]
+    if len(scan_chain) > 1:
+        print(f"Found multiple taps. Selecting tap #0\n{raw}")
+    scan_chain = scan_chain[0]
+    tapname = re.search("\d\s+(.+?)\s+", scan_chain).group(1)
+    print(f"DM tapname: {tapname}")
+
+    write("riscv info")
+    info = tn.read_until(b"> ").decode('ascii').replace("\r", "").replace("> ", "").split("\n")
+    for line in info:
+        if XLEN := re.search("hart.xlen\s+(\d+)", line).group(1):
+            XLEN = int(XLEN)
+            break
+    print(f"XLEN: {XLEN}")
+
+
 def init():
     global tn
     tn = Telnet("127.0.0.1", 4444)
     atexit.register(cleanup)
     read()  # clear welcome message from read buffer
+    interrogate()
     activate_dm()
-    # TODO: query misa and get gpr count
+    # TODO: query gpr count
 
 
 def cleanup():
     tn.close()
+
 
 # 6.1.4 dtmcs errinfo translation table
 errinfo_translations = {
@@ -397,8 +391,5 @@ nonstandard_register_lengths = {
     "INSTRM"      : 32,
     "MEMRWM"      : 2,
     "INSTRVALIDM" : 1,
-    #"READDATAM"  : P.LLEN
+    #"READDATAM"  : P.LLEN  # TODO: find LLEN
 }
-
-if __name__ == "__main__":
-    main()
