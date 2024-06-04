@@ -63,6 +63,20 @@
 //#define ETHER_TYPE	0x0000  // The type defined in packetizer.sv
 #define DEFAULT_IF	"eno1"
 
+
+typedef struct {
+  uint64_t PC;
+  uint32_t insn;
+  uint64_t Mcycle;
+  uint64_t Minstret;
+  uint8_t Trap : 1;
+  uint8_t PrivilegeMode : 2;
+  uint8_t GPREn : 1;
+  uint8_t FPREn : 1;
+  uint16_t CSRCount : 12;
+} RequiredRVVI_t;
+    
+
 void DecodeRVVI(uint8_t *payload, uint64_t * PC, uint32_t *insn);
 
 int main(int argc, char **argv){
@@ -140,6 +154,7 @@ int main(int argc, char **argv){
 
 void DecodeRVVI(uint8_t *payload, uint64_t * PC, uint32_t *insn){
   // you know this actually easiser in assembly. :(
-  *PC = *((uint64_t *) payload);
-  *insn = *((uint32_t *) (payload + 8));
+  RequiredRVVI_t *RequiredFields = (RequiredRVVI_t *) payload;
+  *PC = RequiredFields->PC;
+  *insn = RequiredFields->insn;
 }
