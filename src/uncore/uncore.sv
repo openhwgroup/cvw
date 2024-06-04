@@ -28,7 +28,12 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module uncore import cvw::*;  #(parameter cvw_t P)(
+module uncore
+  import cvw::*;
+  import bsg_dmc_pkg::*;
+#(
+  parameter cvw_t P
+) (
   // AHB Bus Interface
   input  logic                 HCLK, HRESETn,
   input  logic                 TIMECLK,
@@ -58,14 +63,16 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   input  logic                 SDCIntr,
   input  logic                 SPIIn,
   output logic                 SPIOut,
-  output logic [3:0]           SPICS                  
+  output logic [3:0]           SPICS,
+  input  logic                 ui_clk,                    // ~200MHz clock for memory controller interface
+  output bsg_dmc_s             dmc_config                 // Config registers for BSG DDR memory controller
 );
   
   logic [P.XLEN-1:0]           HREADRam, HREADSDC;
 
   logic [11:0]                 HSELRegions;
-  logic                        HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSPI;
-  logic                        HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD, HSELSPID;
+  logic                        HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSPI, HSELBSGDMCCONF, HSELPLLCONF;
+  logic                        HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD, HSELSPID, HSELBSGDMCCONFD, HSELPLLCONFD;
   logic                        HRESPRam,  HRESPSDC;
   logic                        HREADYRam, HRESPSDCD;
   logic [P.XLEN-1:0]           HREADBootRom; 
@@ -75,7 +82,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   logic                        SDCIntM;
   
   logic                        PCLK, PRESETn, PWRITE, PENABLE;
-  logic [4:0]                  PSEL, PREADY;
+  logic [6:0]                  PSEL, PREADY;
   logic [31:0]                 PADDR;
   logic [P.XLEN-1:0]           PWDATA;
   logic [P.XLEN/8-1:0]         PSTRB;
@@ -92,14 +99,14 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   adrdecs #(P) adrdecs(HADDR, 1'b1, 1'b1, 1'b1, HSIZE[1:0], HSELRegions);
 
   // unswizzle HSEL signals
-  assign {HSELSPI, HSELEXTSDC, HSELPLIC, HSELUART, HSELGPIO, HSELCLINT, HSELRam, HSELBootRom, HSELEXT, HSELIROM, HSELDTIM} = HSELRegions[11:1];
+  assign {HSELPLLCONF, HSELBSGDMCCONF, HSELSPI, HSELEXTSDC, HSELPLIC, HSELUART, HSELGPIO, HSELCLINT, HSELRam, HSELBootRom, HSELEXT, HSELIROM, HSELDTIM} = HSELRegions[13:1];
 
   // AHB -> APB bridge
-  ahbapbbridge #(P, 5) ahbapbbridge (
-    .HCLK, .HRESETn, .HSEL({HSELSPI, HSELUART, HSELPLIC, HSELCLINT, HSELGPIO}), .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HTRANS, .HREADY, 
+  ahbapbbridge #(P, 7) ahbapbbridge (
+    .HCLK, .HRESETn, .HSEL({HSELPLLCONF, HSELBSGDMCCONF, HSELSPI, HSELUART, HSELPLIC, HSELCLINT, HSELGPIO}), .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HTRANS, .HREADY, 
     .HRDATA(HREADBRIDGE), .HRESP(HRESPBRIDGE), .HREADYOUT(HREADYBRIDGE),
     .PCLK, .PRESETn, .PSEL, .PWRITE, .PENABLE, .PADDR, .PWDATA, .PSTRB, .PREADY, .PRDATA);
-  assign HSELBRIDGE = HSELGPIO | HSELCLINT | HSELPLIC | HSELUART | HSELSPI; // if any of the bridge signals are selected
+  assign HSELBRIDGE = HSELPLLCONF | HSELBSGDMCCONF | HSELGPIO | HSELCLINT | HSELPLIC | HSELUART | HSELSPI; // if any of the bridge signals are selected
                 
   // on-chip RAM
   if (P.UNCORE_RAM_SUPPORTED) begin : ram
@@ -158,6 +165,17 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
     assign SPIOut = 1'b0; assign SPICS = '0; assign SPIIntr = 1'b0;
   end
 
+  if (P.BSG_DMC_SUPPORTED == 1) begin : bsg_dmc_config
+    bsg_dmc_config_apb #(P.XLEN) bsg_dmc_conf (
+      .PCLK, .PRESETn, .PSEL(PSEL[5]), .PADDR(PADDR[15:0]) .PWDATA, .PWRITE, .PENABLE,
+      .PRDATA(PRDATA[5]), .PREADY(PREADY[5]),
+      .ui_clk, .dmc_config);
+  end
+
+  if (P.PLL_SUPPORTED == 1) begin : pll_config
+    // TODO: Use PSEL[6], PRDATA[6], PREADY[6] here
+  end
+
   // AHB Read Multiplexer
   assign HRDATA = ({P.XLEN{HSELRamD}} & HREADRam) |
                   ({P.XLEN{HSELEXTD | HSELEXTSDCD}} & HRDATAEXT) |   
@@ -170,7 +188,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
                  HSELBootRomD & HRESPBootRom;
   
   assign HREADY = HSELRamD & HREADYRam |
-		          (HSELEXTD | HSELEXTSDCD) & HREADYEXT |		  
+		              (HSELEXTD | HSELEXTSDCD) & HREADYEXT |		  
                   HSELBRIDGED & HREADYBRIDGE |
                   HSELBootRomD & HREADYBootRom |
                   HSELNoneD; // don't lock up the bus if no region is being accessed

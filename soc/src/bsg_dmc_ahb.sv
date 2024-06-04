@@ -35,7 +35,7 @@ module bsg_dmc_ahb
   parameter AHB_ADDR_SIZE = 28,
   parameter AHB_DATA_SIZE = 64,
   parameter DQ_DATA_SIZE  = 32,
-  parameter BURST_LEN  = 8, // bsg_dmc supports 4- or 8-beat bursts
+  parameter BURST_LEN     = 8, // bsg_dmc supports 4- or 8-beat bursts
   parameter FIFO_DEPTH    = 8
 ) (
   input  bsg_dmc_s                   dmc_config,

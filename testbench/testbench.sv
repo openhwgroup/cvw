@@ -553,13 +553,16 @@ module testbench;
   genvar ddr_i;
   generate
     if(P.EXT_MEM_SUPPORTED) begin
-      if (P.USE_BSG_DMC) begin
+      if (P.BSG_DMC_SUPPORTED) begin
         `ifdef USE_BSG
           `include "bsg_dmc.svh"
           import bsg_dmc_pkg::bsg_dmc_s;
           localparam dq_width = 32;
           localparam dq_group = dq_width/8;
           logic                 ui_clk;
+          // DDR wires
+          wire  [dq_width-1:0]  ddr_dq;
+          wire  [dq_group-1:0]  ddr_dqs_p;
           wire                  ddr_ck_p;
           wire                  ddr_ck_n;
           wire                  ddr_cke;
@@ -571,14 +574,14 @@ module testbench;
           wire                  ddr_we_n;
           wire                  ddr_reset_n;
           wire                  ddr_odt;
+          wire  [dq_group-1:0]  ddr_dm;
+          // DDR tristate i/o and enables
           wire  [dq_group-1:0]  ddr_dm_oen_o;
           wire  [dq_group-1:0]  ddr_dm_o;
-          wire  [dq_group-1:0]  ddr_dm;
           wire  [dq_group-1:0]  ddr_dqs_p_oen_o;
           wire  [dq_group-1:0]  ddr_dqs_p_ien_o;
           wire  [dq_group-1:0]  ddr_dqs_p_o;
           wire  [dq_group-1:0]  ddr_dqs_p_i;
-          wire  [dq_group-1:0]  ddr_dqs_p;
           wire  [dq_group-1:0]  ddr_dqs_n_oen_o;
           wire  [dq_group-1:0]  ddr_dqs_n_ien_o;
           wire  [dq_group-1:0]  ddr_dqs_n_o;
@@ -587,7 +590,6 @@ module testbench;
           wire  [dq_width-1:0]  ddr_dq_oen_o;
           wire  [dq_width-1:0]  ddr_dq_o;
           wire  [dq_width-1:0]  ddr_dq_i;
-          wire  [dq_width-1:0]  ddr_dq;
           logic                 dfi_clk_2x_i;
           logic                 dfi_clk_1x_o;
           always #2.5ns ui_clk = ~ui_clk; // ui_clk must be <= 208 MHz
@@ -595,24 +597,6 @@ module testbench;
           // Initialize bsg_dmc
           bsg_dmc_s dmc_config;
           initial begin: bsg_dmc_config
-            dmc_config.trefi = 1023;
-            dmc_config.tmrd = 1;
-            dmc_config.trfc = 15;
-            dmc_config.trc = 10;
-            dmc_config.trp = 2;
-            dmc_config.tras = 7;
-            dmc_config.trrd = 1;
-            dmc_config.trcd = 2;
-            dmc_config.twr = 10;
-            dmc_config.twtr = 7;
-            dmc_config.trtp = 10;
-            dmc_config.tcas = 3;
-            dmc_config.col_width = 11;
-            dmc_config.row_width = 14;
-            dmc_config.bank_width = 2;
-            dmc_config.dqs_sel_cal = 3;
-            dmc_config.init_cycles = 40010;
-            dmc_config.bank_pos = 25;
             force ram.dmc.dmc_clk_rst_gen.btc_async_reset.tag_data_reg.data_r = 0;
             force ram.dmc.dmc_clk_rst_gen.dly_lines[0].dly_line_inst.ctrl_rrr = 31;
             force ram.dmc.dmc_clk_rst_gen.dly_lines[1].dly_line_inst.ctrl_rrr = 31;
