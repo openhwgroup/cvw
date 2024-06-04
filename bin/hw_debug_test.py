@@ -133,10 +133,10 @@ def random_hex(reg_name):
         pad = 0
     
     if random_stimulus:
-        return f"0x{"0"*pad}{random.getrandbits(size):x}"
+        return f"0x{'0'*pad}{random.getrandbits(size):x}"
     else:
         data = 0xa5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5
-        return f"0x{"0"*pad}{(data & (2**size-1)):x}"
+        return f"0x{'0'*pad}{(data & (2**size-1)):x}"
 
 
 main()
