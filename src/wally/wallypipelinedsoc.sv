@@ -73,31 +73,31 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic [63:0]                 MTIME_CLINT;       // from CLINT to CSRs
   logic                        MExtInt,SExtInt;   // from PLIC
 
-  // Debug Module signals                                                                                                            
-  logic                        NdmReset;
-  logic                        DebugStall;
-  logic                        ScanEn;
-  logic                        ScanIn;
-  logic                        ScanOut;
-  logic                        GPRSel;
-  logic                        DebugCapture;
-  logic                        DebugGPRUpdate;
-  logic [P.E_SUPPORTED+3:0]    GPRAddr;
-  logic                        GPRScanEn;
-  logic                        GPRScanIn;
-  logic                        GPRScanOut;
+  // Debug Module signals
+  logic                       NdmReset;
+  logic                       DebugStall;
+  logic                       ScanEn;
+  logic                       ScanIn;
+  logic                       ScanOut;
+  logic                       GPRSel;
+  logic                       DebugCapture;
+  logic                       DebugGPRUpdate;
+  logic [P.E_SUPPORTED+3:0]   GPRAddr;
+  logic                       GPRScanEn;
+  logic                       GPRScanIn;
+  logic                       GPRScanOut;
 
   // synchronize reset to SOC clock domain
-  synchronizer resetsync(.clk, .d(reset_ext), .q(reset)); 
+  synchronizer resetsync(.clk, .d(reset_ext), .q(reset));
    
   // instantiate processor and internal memories
-  wallypipelinedcore #(P) core(.clk, .reset,
+  wallypipelinedcore #(P) core(.clk, .reset(reset || NdmReset),
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
     .DebugStall, .DebugScanEn(ScanEn), .DebugScanIn(ScanOut), .DebugScanOut(ScanIn),
-    .GPRSel, .DebugCapture, .DebugGPRUpdate, .GPRAddr, .GPRScanEn, .GPRScanIn(GPRScanOut), .GPRScanOut(GPRScanIn)			      
-   );
+    .GPRSel, .DebugCapture, .DebugGPRUpdate, .GPRAddr, .GPRScanEn, .GPRScanIn(GPRScanOut), .GPRScanOut(GPRScanIn)
+  );
 
   // instantiate uncore if a bus interface exists
   if (P.BUS_SUPPORTED) begin : uncoregen // Hack to work around Verilator bug https://github.com/verilator/verilator/issues/4769
@@ -111,12 +111,13 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
             MTIME_CLINT, GPIOOUT, GPIOEN, UARTSout, SPIOut, SPICS} = '0; 
   end
 
-  // instantiate debug module (dm)
-  if (P.DEBUG_SUPPORTED) begin
+  // instantiate debug module
+  if (P.DEBUG_SUPPORTED) begin : dm
     dm #(P) dm (.clk, .rst(reset), .NdmReset, .tck, .tdi, .tms, .tdo,
       .DebugStall, .ScanEn, .ScanIn, .ScanOut, .GPRSel, .DebugCapture, .DebugGPRUpdate,
       .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut);
   end else begin
     assign {NdmReset, DebugStall, ScanOut, GPRSel, DebugCapture, DebugGPRUpdate, GPRAddr, GPRScanEn, GPRScanOut} = '0;
-  end   
+  end
+
 endmodule

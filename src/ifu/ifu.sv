@@ -97,7 +97,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   output logic                 InstrAccessFaultF,                        // Instruction access fault 
   output logic                 ICacheAccess,                             // Report I$ read to performance counters
   output logic                 ICacheMiss,                               // Report I$ miss to performance counters
-  // Debug scan chain                                                                                                                
+  // Debug scan chain
   input  logic                 DebugScanEn,
   input  logic                 DebugScanIn,
   output logic                 DebugScanOut
@@ -144,7 +144,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   logic [15:0]                 InstrRawE, InstrRawM;
   logic [LINELEN-1:0]          FetchBuffer;
   logic [31:0]                 ShiftUncachedInstr;
-  // Debug scan chain                                                                                                                
+  // Debug scan chain
   logic                        DSCR;
   
   assign PCFExt = {2'b00, PCSpillF};
@@ -418,14 +418,9 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     assign InstrM = '0;
     assign DebugScanOut = DSCR;
   end
-
-  // FIXME: delete once working
-  //  flopenr #(32)     InstrMReg(clk, reset, ~StallM, NextInstrE, InstrM);
-  //end else assign InstrM = '0;
-   
   // PCM is only needed with CSRs or branch prediction
   if (P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED)
-     if (P.DEBUG_SUPPORTED)
+    if (P.DEBUG_SUPPORTED)
       flopenrs #(P.XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM, DebugScanEn, DebugScanIn, DSCR);
     else
       flopenr #(P.XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
@@ -433,10 +428,6 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     assign PCM = '0;
     assign DSCR = DebugScanIn;
   end
-
-  // FIXME: delete once working
-  //  flopenr #(P.XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
-  //else assign PCM = '0; 
   
   // If compressed instructions are supported, increment PCLink by 2 or 4 for a jal.  Otherwise, just by 4
   if (P.ZCA_SUPPORTED) begin

@@ -78,7 +78,19 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   output logic              LoadStallD,                      // Structural stalls for load, sent to performance counters
   output logic              StoreStallD,                     // load after store hazard
   output logic              CSRReadM, CSRWriteM, PrivilegedM,// CSR read, CSR write, is privileged instruction
-  output logic              CSRWriteFenceM                   // CSR write or fence instruction needs to flush subsequent instructions
+  output logic              CSRWriteFenceM,                  // CSR write or fence instruction needs to flush subsequent instructions
+  // Debug scan chain
+  input  logic              DebugScanEn,
+  input  logic              DebugScanIn,
+  output logic              DebugScanOut,
+  // GPR debug scan chain
+  input  logic                     GPRSel,
+  input  logic                     DebugCapture,
+  input  logic                     DebugGPRUpdate,
+  input  logic [P.E_SUPPORTED+3:0] GPRAddr,
+  input  logic                     GPRScanEn,
+  input  logic                     GPRScanIn,
+  output logic                     GPRScanOut
 );
 
   logic [2:0] ImmSrcD;                                       // Select type of immediate extension 
@@ -107,6 +119,8 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   logic       MDUE;                                          // Multiply/divide instruction
   logic       BMUActiveE;                                    // Bit manipulation instruction being executed
   logic [1:0] CZeroE;                                        // {czero.nez, czero.eqz} instructions active
+
+  logic DSCR;
            
   controller #(P) c(
     .clk, .reset, .StallD, .FlushD, .InstrD, .STATUS_FS, .ENVCFG_CBE, .ImmSrcD,
@@ -120,7 +134,7 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
     .StallM, .FlushM, .MemRWE, .MemRWM, .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
     .RegWriteM, .FlushDCacheM, .InstrValidM, .InstrValidE, .InstrValidD, .FWriteIntM,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .ResultSrcW, .CSRWriteFenceM, .InvalidateICacheM,
-    .RdW, .RdE, .RdM);
+    .RdW, .RdE, .RdM, .DebugScanEn, .DebugScanIn, .DebugScanOut(DSCR));
 
   datapath #(P) dp(
     .clk, .reset, .ImmSrcD, .InstrD, .Rs1D, .Rs2D, .Rs2E, .StallE, .FlushE, .ForwardAE, .ForwardBE, .W64E, .SubArithE,
@@ -128,5 +142,6 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
     .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE, .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE, .CZeroE,
     .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataM, .FCvtIntW,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .SquashSCW, .ResultSrcW, .ReadDataW, .FCvtIntResW,
-    .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW);             
+    .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW, .DebugScanEn, .DebugScanIn(DSCR), .DebugScanOut,
+    .GPRSel, .DebugCapture, .DebugGPRUpdate, .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut);
 endmodule

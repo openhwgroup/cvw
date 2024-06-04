@@ -33,7 +33,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   // Decode stage signals
   input  logic [2:0]        ImmSrcD,                 // Selects type of immediate extension
   input  logic [31:0]       InstrD,                  // Instruction in Decode stage
-  input  logic [4:0]        Rs1D, Rs2D, Rs2E,             // Source registers
+  input  logic [4:0]        Rs1D, Rs2D, Rs2E,        // Source registers
   // Execute stage signals
   input  logic [P.XLEN-1:0] PCE,                     // PC in Execute stage  
   input  logic [P.XLEN-1:0] PCLinkE,                 // PC + 4 (of instruction in Execute stage)
@@ -74,7 +74,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] FIntDivResultW,          // FPU's integer divide result
   input  logic [4:0]        RdW,                     // Destination register
   // Hazard Unit signals
-  // Debug scan chain                                                                                                                
+  // Debug scan chain
   input  logic                     DebugScanEn,
   input  logic                     DebugScanIn,
   output logic                     DebugScanOut,
@@ -84,12 +84,12 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.E_SUPPORTED+3:0] GPRAddr,
   input  logic                     GPRScanEn,
   input  logic                     GPRScanIn,
-  output logic                     GPRScanOut						      
+  output logic                     GPRScanOut
 );
 
   // Fetch stage signals
   // Decode stage signals
-  logic [4:0]        DB_Rs1D;                        // (Debug) Muxed source register
+  logic [4:0]        Rs1DM;                          // (Debug) Muxed source register
   logic [P.XLEN-1:0] R1D, R2D;                       // Read data from Rs1 (RD1), Rs2 (RD2)
   logic [P.XLEN-1:0] ImmExtD;                        // Extended immediate in Decode stage
   logic [4:0]        RdD;                            // Destination register in Decode stage
@@ -104,27 +104,29 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   // Writeback stage signals
   logic              RegWriteWM;                     // (Debug) Muxed write enable
   logic [P.XLEN-1:0] SCResultW;                      // Store Conditional result
-  logic [P.XLEN-1:0] ResultW;                        // Result to write to register file
+  logic [P.XLEN-1:0] ResultW;
+  logic [P.XLEN-1:0] ResultWM;              // Result to write to register file
+  logic [4:0]        RdWM;                           // Muxed GPR write address
   logic [P.XLEN-1:0] IFResultW;                      // Result from either IEU or single-cycle FPU op writing an integer register
   logic [P.XLEN-1:0] IFCvtResultW;                   // Result from IEU, signle-cycle FPU op, or 2-cycle FCVT float to int 
   logic [P.XLEN-1:0] MulDivResultW;                  // Multiply always comes from MDU.  Divide could come from MDU or FPU (when using fdivsqrt for integer division)
-  // Debug signals                                                                                                                   
+  // Debug signals
+  logic              DSCR;
   logic [P.XLEN-1:0] DebugGPRWriteD;
-   
+
   // Decode stage
   extend #(P)        ext(.InstrD(InstrD[31:7]), .ImmSrcD, .ImmExtD);
+  // Access GPRs from Debug Module
   if (P.DEBUG_SUPPORTED) begin
-    regfile #(P.XLEN, P.E_SUPPORTED) regf(clk, reset, RegWriteWM, DB_Rs1D, Rs2D, RdWM, ResultWM, R1D, R2D);
+    regfile #(P.XLEN, P.E_SUPPORTED) regf(clk, reset, RegWriteWM, Rs1DM, Rs2D, RdWM, ResultWM, R1D, R2D);
     assign RegWriteWM = GPRSel ? DebugGPRUpdate : RegWriteW;
-    assign DB_Rs1D = GPRSel ? GPRAddr : Rs1D;
+    assign Rs1DM = GPRSel ? GPRAddr : Rs1D;
     assign RdWM = GPRSel ? GPRAddr : RdW;
     assign ResultWM = GPRSel ? DebugGPRWriteD : ResultW;
     flopenrs #(P.XLEN) GPRScanReg(.clk, .reset, .en(DebugCapture), .d(R1D), .q(DebugGPRWriteD), .scan(GPRScanEn), .scanin(GPRScanIn), .scanout(GPRScanOut));
   end else begin
     regfile #(P.XLEN, P.E_SUPPORTED) regf(clk, reset, RegWriteW, Rs1D, Rs2D, RdW, ResultW, R1D, R2D);
   end
-  // FIXME: Delete once working
-  // regfile #(P.XLEN, P.E_SUPPORTED) regf(clk, reset, RegWriteW, Rs1D, Rs2D, RdW, ResultW, R1D, R2D);   
  
   // Execute stage pipeline register and logic
   flopenrc #(P.XLEN) RD1EReg(clk, reset, FlushE, ~StallE, R1D, R1E);
@@ -147,8 +149,6 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
     flopenrcs #(P.XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, ForwardedSrcBE, WriteDataM, DebugScanEn, DebugScanIn, DebugScanOut);
   else
     flopenrc #(P.XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, ForwardedSrcBE, WriteDataM);
-  // FIXME: Delete once working 
-  // flopenrc #(P.XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, ForwardedSrcBE, WriteDataM); 
   
   // Writeback stage pipeline register and logic
   flopenrc #(P.XLEN) IFResultWReg(clk, reset, FlushW, ~StallW, IFResultM, IFResultW);

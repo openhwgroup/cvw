@@ -93,7 +93,11 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic        CSRWriteFenceM,          // CSR write or fence instruction; needs to flush the following instructions
   output logic [4:0]  RdE, RdM,                // Pipelined destination registers
   // Forwarding controls
-  output logic [4:0]  RdW                      // Register destinations in Execute, Memory, or Writeback stage
+  output logic [4:0]  RdW,                     // Register destinations in Execute, Memory, or Writeback stage
+  // Debug scan chain
+  input  logic        DebugScanEn,
+  input  logic        DebugScanIn,
+  output logic        DebugScanOut
 );
 
   logic [4:0] Rs1E;                      // pipelined register sources
@@ -452,11 +456,6 @@ module controller import cvw::*;  #(parameter cvw_t P) (
                           {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE, IntDivE, CMOpE, LSUPrefetchE},
                           {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, InstrValidM, IntDivM, CMOpM, LSUPrefetchM});
   end
-
-  // FIXME: delete once working
-  //flopenrc #(25) controlregM(clk, reset, FlushM, ~StallM,
-  //                       {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE, IntDivE, CMOpE, LSUPrefetchE},
-  //                       {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, InstrValidM, IntDivM, CMOpM, LSUPrefetchM});
   flopenrc #(5)  RdMReg(clk, reset, FlushM, ~StallM, RdE, RdM);  
 
   // Writeback stage pipeline control register
