@@ -65,8 +65,12 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic [31:0]            RspData;
   logic [1:0]             RspOP;
 
-  // JTAG ID:  [31:27] ver [27:12] part number [11:1] JEDEC number [0] set to 1
-  localparam JTAG_DEVICE_ID = 32'h1000_1005; 
+  // JTAG ID for Wally:  
+  // [31:27] = 1 (4 bits)
+  // ver [27:12] = 0x2A (42)
+  // JEDEC number [11:1] = 0x002 (Open HW Group)
+  // [0] set to 1
+  localparam JTAG_DEVICE_ID = 32'h1002_A005; 
 
   dtm #(`ADDR_WIDTH, JTAG_DEVICE_ID) dtm (.clk, .tck, .tdi, .tms, .tdo,
     .ReqReady, .ReqValid, .ReqAddress, .ReqData, .ReqOP, .RspReady,
