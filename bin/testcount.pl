@@ -30,10 +30,14 @@
 ## and limitations under the License.
 ################################################################################################
 
-for dir in `ls ${WALLY}/addins/riscv-arch-test/riscv-test-suite/rv*/*`
+for dir1 in `ls ${WALLY}/addins/riscv-arch-test/riscv-test-suite/rv*/*`
 do
-    dir=$(echo $dir | cut -d':' -f1)
+    dir=$(echo $dir1 | cut -d':' -f1)
     echo $dir
+    if [ $dir == "src" ]
+    then
+        continue
+    fi
     for fn in `ls $dir/src/*.S`
     do
         result=`grep 'inst_' $fn | tail -n 1`
