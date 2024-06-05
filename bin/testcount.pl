@@ -30,9 +30,9 @@
 ## and limitations under the License.
 ################################################################################################
 
-for dir1 in `ls ${WALLY}/addins/riscv-arch-test/riscv-test-suite/rv*/*`
+for dir in `ls ${WALLY}/addins/riscv-arch-test/riscv-test-suite/rv*/*`
 do
-    dir=$(echo $dir1 | cut -d':' -f1)
+    dir=$(echo $dir | cut -d':' -f1)
     echo $dir
     if [ $dir == "src" ]
     then
