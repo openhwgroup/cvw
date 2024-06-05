@@ -34,7 +34,7 @@ localparam XLEN = 32'd32;
 localparam IEEE754 = 0;
 
 // Debug Module implemented                                                                                                          
-localparam logic DEBUG_SUPPORTED = 1'b0;
+localparam logic DEBUG_SUPPORTED = 1'b1;
 
 // RISC-V configuration per specification
 // Base instruction set (defaults to I if E is not supported)
