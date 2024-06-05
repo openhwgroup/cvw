@@ -84,13 +84,13 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   input  logic              DebugScanIn,
   output logic              DebugScanOut,
   // GPR debug scan chain
-  input  logic                     GPRSel,
-  input  logic                     DebugCapture,
-  input  logic                     DebugGPRUpdate,
-  input  logic [P.E_SUPPORTED+3:0] GPRAddr,
-  input  logic                     GPRScanEn,
-  input  logic                     GPRScanIn,
-  output logic                     GPRScanOut
+  input  logic              GPRSel,
+  input  logic              DebugCapture,
+  input  logic              DebugGPRUpdate,
+  input  logic [4:0]        GPRAddr,
+  input  logic              GPRScanEn,
+  input  logic              GPRScanIn,
+  output logic              GPRScanOut
 );
 
   logic [2:0] ImmSrcD;                                                    // Select type of immediate extension 

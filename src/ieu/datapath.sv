@@ -75,16 +75,16 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   input  logic [4:0]        RdW,                     // Destination register
   // Hazard Unit signals
   // Debug scan chain
-  input  logic                     DebugScanEn,
-  input  logic                     DebugScanIn,
-  output logic                     DebugScanOut,
-  input  logic                     GPRSel,
-  input  logic                     DebugCapture,
-  input  logic                     DebugGPRUpdate,
-  input  logic [P.E_SUPPORTED+3:0] GPRAddr,
-  input  logic                     GPRScanEn,
-  input  logic                     GPRScanIn,
-  output logic                     GPRScanOut
+  input  logic       DebugScanEn,
+  input  logic       DebugScanIn,
+  output logic       DebugScanOut,
+  input  logic       GPRSel,
+  input  logic       DebugCapture,
+  input  logic       DebugGPRUpdate,
+  input  logic [4:0] GPRAddr,
+  input  logic       GPRScanEn,
+  input  logic       GPRScanIn,
+  output logic       GPRScanOut
 );
 
   // Fetch stage signals

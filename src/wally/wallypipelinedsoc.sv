@@ -74,18 +74,18 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                        MExtInt,SExtInt;   // from PLIC
 
   // Debug Module signals
-  logic                       NdmReset;
-  logic                       DebugStall;
-  logic                       ScanEn;
-  logic                       ScanIn;
-  logic                       ScanOut;
-  logic                       GPRSel;
-  logic                       DebugCapture;
-  logic                       DebugGPRUpdate;
-  logic [P.E_SUPPORTED+3:0]   GPRAddr;
-  logic                       GPRScanEn;
-  logic                       GPRScanIn;
-  logic                       GPRScanOut;
+  logic                        NdmReset;
+  logic                        DebugStall;
+  logic                        ScanEn;
+  logic                        ScanIn;
+  logic                        ScanOut;
+  logic                        GPRSel;
+  logic                        DebugCapture;
+  logic                        DebugGPRUpdate;
+  logic [4:0]                  GPRAddr;
+  logic                        GPRScanEn;
+  logic                        GPRScanIn;
+  logic                        GPRScanOut;
 
   // synchronize reset to SOC clock domain
   synchronizer resetsync(.clk, .d(reset_ext), .q(reset));

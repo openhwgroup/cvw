@@ -26,31 +26,31 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module dm import cvw::*; #(parameter cvw_t P) (
-  input  logic                     clk, 
-  input  logic                     rst,
+  input  logic       clk, 
+  input  logic       rst,
 
   // External JTAG signals
-  input  logic                     tck,
-  input  logic                     tdi,
-  input  logic                     tms,
-  output logic                     tdo,
+  input  logic       tck,
+  input  logic       tdi,
+  input  logic       tms,
+  output logic       tdo,
 
   // Platform reset signal
-  output logic                     NdmReset,
+  output logic       NdmReset,
   // Core hazard signal
-  output logic                     DebugStall,
+  output logic       DebugStall,
 
   // Scan Chain
-  output logic                     ScanEn,
-  input  logic                     ScanIn,
-  output logic                     ScanOut,
-  output logic                     GPRSel,
-  output logic                     DebugCapture,
-  output logic                     DebugGPRUpdate,
-  output logic [P.E_SUPPORTED+3:0] GPRAddr,
-  output logic                     GPRScanEn,
-  input  logic                     GPRScanIn,
-  output logic                     GPRScanOut
+  output logic       ScanEn,
+  input  logic       ScanIn,
+  output logic       ScanOut,
+  output logic       GPRSel,
+  output logic       DebugCapture,
+  output logic       DebugGPRUpdate,
+  output logic [4:0] GPRAddr,
+  output logic       GPRScanEn,
+  input  logic       GPRScanIn,
+  output logic       GPRScanOut
 );
   `include "debug.vh"
 

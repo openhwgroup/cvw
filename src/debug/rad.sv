@@ -26,15 +26,15 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module rad import cvw::*; #(parameter cvw_t P) (
-  input  logic [2:0]               AarSize,
-  input  logic [15:0]              Regno,
-  output logic                     GPRRegNo,
-  output logic [9:0]               ScanChainLen,
-  output logic [9:0]               ShiftCount,
-  output logic                     InvalidRegNo,
-  output logic                     RegReadOnly,
-  output logic [P.E_SUPPORTED+3:0] GPRAddr,
-  output logic [P.XLEN-1:0]        ARMask
+  input  logic [2:0]        AarSize,
+  input  logic [15:0]       Regno,
+  output logic              GPRRegNo,
+  output logic [9:0]        ScanChainLen,
+  output logic [9:0]        ShiftCount,
+  output logic              InvalidRegNo,
+  output logic              RegReadOnly,
+  output logic [4:0]        GPRAddr,
+  output logic [P.XLEN-1:0] ARMask
 );
   `include "debug.vh"
 
@@ -68,9 +68,9 @@ module rad import cvw::*; #(parameter cvw_t P) (
   assign ScanChainLen = GPRRegNo ? GPRCHAINLEN : SCANCHAINLEN;
 
   if (P.E_SUPPORTED)
-    assign GPRAddr = Regno[4:0];
-  else
     assign GPRAddr = Regno[3:0];
+  else
+    assign GPRAddr = Regno[4:0];
 
   // Register decoder
   always_comb begin
@@ -84,7 +84,7 @@ module rad import cvw::*; #(parameter cvw_t P) (
       end
       16'h101? : begin
         ShiftCount = P.XLEN - 1;
-        InvalidRegNo = ~P.E_SUPPORTED;
+        InvalidRegNo = P.E_SUPPORTED;
         GPRRegNo = 1;
       end
       `MISA_REGNO : begin
