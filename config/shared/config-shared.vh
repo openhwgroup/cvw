@@ -17,7 +17,7 @@ localparam ASID_BASE = (XLEN==32 ? 32'd22 : 32'd44);
 localparam ASID_BITS = (XLEN==32 ? 32'd9 : 32'd16);
 
 // Debug Module implemented                                                                                                          
-localparam logic DEBUG_SUPPORTED = 1'b1;
+localparam logic DEBUG_SUPPORTED = 1'b0;
 
 // constants to check SATP_MODE against
 // defined in Table 4.3 of the privileged spec
