@@ -66,11 +66,21 @@ module uncore
   output logic [3:0]           SPICS,
   input  logic                 ui_clk,                    // ~200MHz clock for memory controller interface
   output bsg_dmc_s             dmc_config                 // Config registers for BSG DDR memory controller
+  input  logic                 PLLrefclk,
+  input  logic                 PLLrfen,
+  input  logic                 PLLfben,
+  output logic [5:0]           PLLclkr,
+  output logic [12:0]          PLLclkf,
+  output logic [3:0]           PLLclkod,
+  output logic [11:0]          PLLbwadj,
+  output logic                 PLLbypass,
+  output logic                 PLLtest,
+  input  logic                 PLLlock,
 );
   
   logic [P.XLEN-1:0]           HREADRam, HREADSDC;
 
-  logic [11:0]                 HSELRegions;
+  logic [13:0]                 HSELRegions;
   logic                        HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSPI, HSELBSGDMCCONF, HSELPLLCONF;
   logic                        HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD, HSELSPID, HSELBSGDMCCONFD, HSELPLLCONFD;
   logic                        HRESPRam,  HRESPSDC;
@@ -167,13 +177,39 @@ module uncore
 
   if (P.BSG_DMC_SUPPORTED == 1) begin : bsg_dmc_config
     bsg_dmc_config_apb #(P.XLEN) bsg_dmc_conf (
-      .PCLK, .PRESETn, .PSEL(PSEL[5]), .PADDR(PADDR[15:0]) .PWDATA, .PWRITE, .PENABLE,
+      .PCLK, .PRESETn, .PSEL(PSEL[5]), .PADDR(PADDR[7:0]) .PWDATA, .PWRITE, .PENABLE,
       .PRDATA(PRDATA[5]), .PREADY(PREADY[5]),
       .ui_clk, .dmc_config);
+  end else begin : bsg_dmc_config
+    dmc_config.trefi        = 0;
+    dmc_config.tmrd         = 0;
+    dmc_config.trfc         = 0;
+    dmc_config.trc          = 0;
+    dmc_config.trp          = 0;
+    dmc_config.tras         = 0;
+    dmc_config.trrd         = 0;
+    dmc_config.trcd         = 0;
+    dmc_config.twr          = 0;
+    dmc_config.twtr         = 0;
+    dmc_config.trtp         = 0;
+    dmc_config.tcas         = 0;
+    dmc_config.col_width    = 0;
+    dmc_config.row_width    = 0;
+    dmc_config.bank_width   = 0;
+    dmc_config.bank_pos     = 0;
+    dmc_config.dqs_sel_cal  = 0;
+    dmc_config.init_cycles  = 0;
   end
 
   if (P.PLL_SUPPORTED == 1) begin : pll_config
     // TODO: Use PSEL[6], PRDATA[6], PREADY[6] here
+    pll_config_apb #(P.XLEN) pll_conf (
+      .PCLK, .PRESETn, .PSEL(PSEL[6]), .PADDR(PADDR[7:0]), .PWDATA, .PWRITE, .PENABLE,
+      .PRDATA(PRDATA[6]), .PREADY(PREADY[6]),
+      .PLLrefclk, .PLLrfen, .PLLfben, .PLLclkr, .PLLclkf, .PLLclkod, .PLLbwadj,
+      .PLLbypass, .PLLtest, .PLLlock);
+  end else begin : pll_config
+    // TODO
   end
 
   // AHB Read Multiplexer

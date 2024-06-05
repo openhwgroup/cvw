@@ -76,4 +76,33 @@ module mux7 #(parameter WIDTH = 8) (
 
 endmodule
 
+module clockmux2 #(parameter NUM_STAGES = 3) (
+  input  logic clk0, clk1,
+  input  logic s,
+  output logic clkout);
+
+  // Based loosely on https://www.intel.com/content/www/us/en/docs/programmable/683082/23-1/clock-multiplexing.html
+  // Require select to stay high for NUM_STAGES clock cycles (of its respective clock) before switching
+
+  genvar i;
+
+  logic [NUM_STAGES:0] q0, q1;
+  logic                clk0out, clk1out;
+
+  assign q0[0] = ~s & q1[NUM_STAGES];
+  assign q1[0] =  s & q0[NUM_STAGES];
+
+  generate
+    for (i=0; i < NUM_STAGES; i = i+1) begin
+      flop #(1) s0stage (clk0, q0[i], q0[i+1]);
+      flop #(1) s1stage (clk1, q1[i], q1[i+1]);
+    end
+  endgenerate
+
+  assign clk0out = clk0 & q0[NUM_STAGES];
+  assign clk1out = clk1 & q1[NUM_STAGES];
+  assign clkout  = clk0out | clk1out;
+
+endmodule
+
 /* verilator lint_on DECLFILENAME */

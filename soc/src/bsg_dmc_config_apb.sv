@@ -49,7 +49,7 @@ module bsg_dmc_config_apb
   logic [15:0]  rdata;
   logic         fifo_full, fifo_deq;
 
-  assign entry  = {PADDR[7:3], 3'b000};
+  assign entry  = {PADDR[7:3], 3'b0};
   assign wren   = PWRITE & PENABLE & PSEL;
   assign PREADY = ~fifo_full;
 
@@ -82,24 +82,25 @@ module bsg_dmc_config_apb
   assign PRDATA = {APB_DATA_SIZE-17{1'b0}, rdata};
   always_ff @(posedge PCLK) begin
     case (entry)
-      8'h00: rdata <=         dmc_config.trefi;
-      8'h08: rdata <= {12'b0, dmc_config.tmrd};
-      8'h10: rdata <= {12'b0, dmc_config.trfc};
-      8'h18: rdata <= {12'b0, dmc_config.trc};
-      8'h20: rdata <= {12'b0, dmc_config.trp};
-      8'h28: rdata <= {12'b0, dmc_config.tras};
-      8'h30: rdata <= {12'b0, dmc_config.trrd};
-      8'h38: rdata <= {12'b0, dmc_config.trcd};
-      8'h40: rdata <= {12'b0, dmc_config.twr};
-      8'h48: rdata <= {12'b0, dmc_config.twtr};
-      8'h50: rdata <= {12'b0, dmc_config.trtp};
-      8'h58: rdata <= {12'b0, dmc_config.tcas};
-      8'h60: rdata <= {12'b0, dmc_config.col_width};
-      8'h68: rdata <= {12'b0, dmc_config.row_width};
-      8'h70: rdata <= {14'b0, dmc_config.bank_width};
-      8'h78: rdata <= {10'b0, dmc_config.bank_pos};
-      8'h80: rdata <= {13'b0, dmc_config.dqs_sel_cal};
-      8'h88: rdata <=         dmc_config.init_cycles;
+      8'h00:   rdata <=         dmc_config.trefi;
+      8'h08:   rdata <= {12'b0, dmc_config.tmrd};
+      8'h10:   rdata <= {12'b0, dmc_config.trfc};
+      8'h18:   rdata <= {12'b0, dmc_config.trc};
+      8'h20:   rdata <= {12'b0, dmc_config.trp};
+      8'h28:   rdata <= {12'b0, dmc_config.tras};
+      8'h30:   rdata <= {12'b0, dmc_config.trrd};
+      8'h38:   rdata <= {12'b0, dmc_config.trcd};
+      8'h40:   rdata <= {12'b0, dmc_config.twr};
+      8'h48:   rdata <= {12'b0, dmc_config.twtr};
+      8'h50:   rdata <= {12'b0, dmc_config.trtp};
+      8'h58:   rdata <= {12'b0, dmc_config.tcas};
+      8'h60:   rdata <= {12'b0, dmc_config.col_width};
+      8'h68:   rdata <= {12'b0, dmc_config.row_width};
+      8'h70:   rdata <= {14'b0, dmc_config.bank_width};
+      8'h78:   rdata <= {10'b0, dmc_config.bank_pos};
+      8'h80:   rdata <= {13'b0, dmc_config.dqs_sel_cal};
+      8'h88:   rdata <=         dmc_config.init_cycles;
+      default: rdata <= 0;
     endcase
   end
 

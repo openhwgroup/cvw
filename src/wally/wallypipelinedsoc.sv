@@ -27,7 +27,12 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
+module wallypipelinedsoc 
+  import cvw::*;
+  import bsg_dmc_pkg::*;
+#(
+  parameter cvw_t P
+)  (
   input  logic                clk, 
   input  logic                reset_ext,        // external asynchronous reset pin
   output logic                reset,            // reset synchronized to clk to prevent races on release
@@ -58,7 +63,19 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   input  logic                SDCIntr,
   input  logic                SPIIn,            // SPI pins in
   output logic                SPIOut,           // SPI pins out
-  output logic [3:0]          SPICS             // SPI chip select pins                    
+  output logic [3:0]          SPICS,            // SPI chip select pins        
+  input  logic                ui_clk,           // ~200MHz clock for memory controller interface
+  output bsg_dmc_s            dmc_config        // Config registers for BSG DDR memory controller
+  input  logic                PLLrefclk,
+  input  logic                PLLrfen,
+  input  logic                PLLfben,
+  output logic [5:0]          PLLclkr,
+  output logic [12:0]         PLLclkf,
+  output logic [3:0]          PLLclkod,
+  output logic [11:0]         PLLbwadj,
+  output logic                PLLbypass,
+  output logic                PLLtest,
+  input  logic                PLLlock,            
 );
 
   // Uncore signals
@@ -80,14 +97,20 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
 
   // instantiate uncore if a bus interface exists
   if (P.BUS_SUPPORTED) begin : uncoregen // Hack to work around Verilator bug https://github.com/verilator/verilator/issues/4769
-    uncore #(P) uncore(.HCLK, .HRESETn, .TIMECLK,
+    uncore #(P) uncore (
+      .HCLK, .HRESETn, .TIMECLK,
       .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
       .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT, .HSELEXTSDC,
       .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOIN, .GPIOOUT, .GPIOEN, .UARTSin, 
-      .UARTSout, .MTIME_CLINT, .SDCIntr, .SPIIn, .SPIOut, .SPICS);
+      .UARTSout, .MTIME_CLINT, .SDCIntr, .SPIIn, .SPIOut, .SPICS,
+      .ui_clk, .dmc_config,
+      .PLLrfen, .PLLfben, .PLLclkr, .PLLclkf, .PLLclkod, .PLLbwadj,
+      .PLLbypass, .PLLtest, .PLLlock
+    );
   end else begin
     assign {HRDATA, HREADY, HRESP, HSELEXT, HSELEXTSDC, MTimerInt, MSwInt, MExtInt, SExtInt,
-            MTIME_CLINT, GPIOOUT, GPIOEN, UARTSout, SPIOut, SPICS} = '0; 
+            MTIME_CLINT, GPIOOUT, GPIOEN, UARTSout, SPIOut, SPICS, dmc_config, PLLclkr, PLLclkf,
+            PLLclkod, PLLbwadj} = '0;
   end
 
 endmodule

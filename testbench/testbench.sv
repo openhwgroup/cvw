@@ -35,6 +35,7 @@
 
 
 import cvw::*;
+import bsg_dmc_pkg::bsg_dmc_s;
 
 module testbench;
   /* verilator lint_off WIDTHTRUNC */
@@ -91,6 +92,15 @@ module testbench;
   logic        SPIIn, SPIOut;
   logic [3:0]  SPICS;
   logic        SDCIntr;
+  logic        ui_clk;
+  bsg_dmc_s    dmc_config;
+  logic        PLLrefclk;
+  logic        PLLrfen, PLLfben;
+  logic [5:0]  PLLclkr;
+  logic [12:0] PLLclkf;
+  logic [3:0]  PLLclkod;
+  logic [11:0] PLLbwadj;
+  logic        PLLbypass, PLLtest, PLLlock;
 
   logic        HREADY;
   logic        HSELEXT;
@@ -536,7 +546,7 @@ module testbench;
 
   integer adrindex;
   if (P.UNCORE_RAM_SUPPORTED)
-    always @(posedge clk) 
+    always @(posedge clk)
       if (ResetMem)  // program memory is sometimes reset (e.g. for CoreMark, which needs zeroed memory)
         for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
           dut.uncoregen.uncore.ram.ram.memory.RAM[adrindex] = '0;
@@ -556,7 +566,6 @@ module testbench;
       if (P.BSG_DMC_SUPPORTED) begin
         `ifdef USE_BSG
           `include "bsg_dmc.svh"
-          import bsg_dmc_pkg::bsg_dmc_s;
           localparam dq_width = 32;
           localparam dq_group = dq_width/8;
           logic                 ui_clk;
@@ -595,7 +604,6 @@ module testbench;
           always #2.5ns ui_clk = ~ui_clk; // ui_clk must be <= 208 MHz
           always #1.25ns dfi_clk_2x_i = ~dfi_clk_2x_i; // dfi_clk_2x must be 2x ui_clk
           // Initialize bsg_dmc
-          bsg_dmc_s dmc_config;
           initial begin: bsg_dmc_config
             force ram.dmc.dmc_clk_rst_gen.btc_async_reset.tag_data_reg.data_r = 0;
             force ram.dmc.dmc_clk_rst_gen.dly_lines[0].dly_line_inst.ctrl_rrr = 31;
@@ -699,10 +707,28 @@ module testbench;
     assign SDCIntr = 1'b0;
   end
 
-  wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
+  if (P.PLL_SUPPORTED) begin : PLL
+    // TODO: use behavioral PLL model. We should still use regular clock for test though
+    assign PLLrefclk = clk;
+    assign PLLrfen   = clk;
+    assign PLLrben   = clk;
+    assign PLLlock   = 1'b1;
+  end else begin : PLL
+    assign PLLrefclk = clk;
+    assign PLLrfen   = clk;
+    assign PLLrben   = clk;
+    assign PLLlock   = 1'b1;
+  end
+
+  wallypipelinedsoc  #(P) dut(
+    .clk, .reset_ext, .reset, .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
     .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
-    .UARTSin, .UARTSout, .SDCIntr, .SPIIn, .SPIOut, .SPICS); 
+    .UARTSin, .UARTSout, .SDCIntr, .SPIIn, .SPIOut, .SPICS,
+    .ui_clk, .dmc_config,
+    .PLLrfen, .PLLfben, .PLLclkr, .PLLclkf, .PLLclkod, .PLLbwadj,
+    .PLLbypass, .PLLtest, .PLLlock
+  ); 
 
   // generate clock to sequence tests
   always begin
