@@ -314,9 +314,6 @@ BTB_SIZE          32'd14
 deriv bpred_GSHARE_10_16_16_1_rv32gc rv32gc
 BTB_SIZE          32'd16
 
-
-
-
 deriv bpred_GSHARE_6_16_10_0_rv32gc bpred_GSHARE_6_16_10_1_rv32gc 
 INSTR_CLASS_PRED  0
 
@@ -905,7 +902,6 @@ deriv f_div_4_4_rv64gc    div_4_4_rv64gc
 D_SUPPORTED     0
 ZFH_SUPPORTED   0
 
-
 #### FH_only, RK variable
 deriv fh_div_2_1_rv32gc    div_2_1_rv32gc    
 D_SUPPORTED     0
@@ -992,7 +988,6 @@ ZFH_SUPPORTED   0
 
 deriv fd_div_4_4_rv64gc    div_4_4_rv64gc    
 ZFH_SUPPORTED   0
-
 
 # FDH only , rk variable
 
