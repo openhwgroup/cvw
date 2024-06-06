@@ -87,7 +87,7 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
   end
 
   // Bit reverse needed for some ZBB, ZBC instructions
-  if (P.ZBC_SUPPORTED | P.ZBB_SUPPORTED) begin: bitreverse
+  if (P.ZBC_SUPPORTED | P.ZBKC_SUPPORTED | P.ZBB_SUPPORTED) begin: bitreverse
     bitreverse #(P.XLEN) brA(.A(ABMU), .RevA);
   end
 
@@ -99,6 +99,11 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
   // ZBB Unit
   if (P.ZBB_SUPPORTED) begin: zbb
     zbb #(P.XLEN) ZBB(.A(ABMU), .RevA, .B(BBMU), .W64, .LT, .LTU, .BUnsigned(Funct3[0]), .ZBBSelect(ZBBSelect[2:0]), .ZBBResult);
+  end else if (P.ZBKB_SUPPORTED) begin: zbkbonly // only needs rev8 portion
+    genvar i;
+    for (i=0;i<P.XLEN;i+=8) begin:byteloop
+      assign ZBBResult[P.XLEN-i-1:P.XLEN-i-8] = ABMU[i+7:i]; // Rev8
+    end
   end else assign ZBBResult = '0;
 
   // ZBKB Unit
