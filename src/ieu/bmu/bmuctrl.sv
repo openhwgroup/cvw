@@ -98,10 +98,6 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
                                   BMUControlsD = `BMUCTRLW'b000_0010_0001_1_1_0_1_0_0_0_0_0;  // sign extend instruction
                                 else if ((Rs2D[4:2]==3'b000) & ~(Rs2D[1] & Rs2D[0]))
                                   BMUControlsD = `BMUCTRLW'b000_0010_0000_1_1_0_1_0_0_0_0_0;  // count instruction
-//        // coverage off: This case can't occur in RV64
-//        17'b0110011_0000100_100: if (P.XLEN == 32)
-//                                  BMUControlsD = `BMUCTRLW'b000_10_001_1_1_0_1_0_0_0_0_0;  // zexth (rv32)
-//        // coverage on
         17'b0010011_0010100_101: if (Rs2D[4:0] == 5'b00111)
                                   BMUControlsD = `BMUCTRLW'b000_0010_0010_1_1_0_1_0_0_0_0_0;  // orc.b
         17'b0110011_0000101_110: BMUControlsD = `BMUCTRLW'b000_0010_0111_1_0_0_1_1_0_0_0_0;  // max
@@ -124,12 +120,13 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
     if (P.ZBC_SUPPORTED)
       casez({OpD, Funct7D, Funct3D})
         17'b0110011_0000101_010: BMUControlsD = `BMUCTRLW'b000_0011_0001_1_0_0_1_0_0_0_0_0;  // clmulr
-        17'b0110011_0000101_0??: BMUControlsD = `BMUCTRLW'b000_0011_0000_1_0_0_1_0_0_0_0_0;  // ZBC instruction
+        17'b0110011_0000101_0??: BMUControlsD = `BMUCTRLW'b000_0011_0000_1_0_0_1_0_0_0_0_0;  // clmul/clmulh
       endcase
-    if (P.ZBKC_SUPPORTED | P.ZBC_SUPPORTED) begin   
+    if (P.ZBKC_SUPPORTED) begin   
       casez({OpD, Funct7D, Funct3D})
-        17'b0110011_0000101_001: BMUControlsD = `BMUCTRLW'b000_0011_0000_1_0_0_1_0_0_0_0_0;  // clmul
-        17'b0110011_0000101_011: BMUControlsD = `BMUCTRLW'b000_0011_0001_1_0_0_1_0_0_0_0_0;  // clmulh
+        17'b0110011_0000101_0??: BMUControlsD = `BMUCTRLW'b000_0011_0000_1_0_0_1_0_0_0_0_0;  // clmul/clmulh
+        //  17'b0110011_0000101_001: BMUControlsD = `BMUCTRLW'b000_0011_0000_1_0_0_1_0_0_0_0_0;  // clmul
+        // 17'b0110011_0000101_011: BMUControlsD = `BMUCTRLW'b000_0011_0001_1_0_0_1_0_0_0_0_0;  // clmulh
       endcase
     end
 

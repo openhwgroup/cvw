@@ -175,7 +175,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   // Be rigorous about detecting illegal instructions if CSRs or bit manipulation or conditional ops are supported
   // otherwise be cheap
 
-  if (P.ZICSR_SUPPORTED | P.ZBA_SUPPORTED | P.ZBB_SUPPORTED | P.ZBC_SUPPORTED | P.ZBS_SUPPORTED | P.ZICOND_SUPPORTED) begin:legalcheck // Exact integer decoding
+  if (P.ZICSR_SUPPORTED | P.ZBA_SUPPORTED  | P.ZBB_SUPPORTED  | P.ZBC_SUPPORTED  | P.ZBS_SUPPORTED | 
+      P.ZBKB_SUPPORTED  | P.ZBKC_SUPPORTED | P.ZBKX_SUPPORTED | P.ZKNE_SUPPORTED | 
+      P.ZKND_SUPPORTED  | P.ZKNH_SUPPORTED | P.ZICOND_SUPPORTED) begin:legalcheck // Exact integer decoding
     logic Funct7ZeroD, Funct7b5D, IShiftD, INoShiftD;
     logic Funct7ShiftZeroD, Funct7Shiftb5D;
 
@@ -318,7 +320,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   assign BaseSubArithD = ALUOpD & (subD | sraD | sltD | sltuD);
 
   // bit manipulation Configuration Block
-  if (P.ZBS_SUPPORTED | P.ZBA_SUPPORTED | P.ZBB_SUPPORTED | P.ZBC_SUPPORTED) begin: bitmanipi //change the conditional expression to OR any Z supported flags
+  if (P.ZBS_SUPPORTED  | P.ZBA_SUPPORTED  | P.ZBB_SUPPORTED  | P.ZBC_SUPPORTED |
+      P.ZBKB_SUPPORTED | P.ZBKC_SUPPORTED | P.ZBKX_SUPPORTED | P.ZKNE_SUPPORTED | 
+      P.ZKND_SUPPORTED | P.ZKNH_SUPPORTED) begin: bitmanipi 
     logic IllegalBitmanipInstrD;          // Unrecognized B instruction
     logic BRegWriteD;                     // Indicates if it is a R type BMU instruction in decode stage
     logic BW64D;                          // Indicates if it is a W type BMU instruction in decode stage
