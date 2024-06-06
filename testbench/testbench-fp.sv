@@ -636,7 +636,7 @@ module testbenchfp;
             end
          end
       end
-      if (P.IDIV_ON_FPU) begin
+      if (P.IDIV_ON_FPU |1'b1) begin
         if (P.Q_SUPPORTED) begin
            if (TEST === "fdivremsqrt" | TEST === "div_drsu") begin // if division on drsu is being tested
            // add the divide tests/op-ctrls/unit/fmt
@@ -726,7 +726,7 @@ module testbenchfp;
             end
          end
         end
-        if (XLEN == 64) begin
+        if (P.XLEN == 64 & P.IDIV_ON_FPU) begin
          if (TEST === "intrem" | TEST === "intdivrem" | TEST === "fdivremsqrt") begin // if integer remainder is being tested
             Tests = {Tests, int64rem};
             OpCtrl = {OpCtrl, `INTREM_OPCTRL};
@@ -785,7 +785,7 @@ module testbenchfp;
          end
         end
         // RV32 
-        else begin 
+        else if (P.IDIV_ON_FPU) begin 
          if (TEST === "intrem" | TEST === "intdivrem" | TEST === "fdivremsqrt") begin // if integer remainder is being tested
             Tests = {Tests, int32rem};
             OpCtrl = {OpCtrl, `INTREM_OPCTRL};

@@ -43,7 +43,7 @@ module divremsqrtfdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   input  logic                 IntDivE, W64E,
   // Outputs
   output logic                 ISpecialCaseE,
-  output logic [P.DURLEN-1:0]  CyclesE,
+  output logic [P.DURLEN:0]  CyclesE,
   output logic [P.DIVBLEN-1:0] IntNormShiftM,
   output logic                 ALTBM, IntDivM, W64M, SIGNOVERFLOWM, ZeroDiffM,
   output logic                 AsM, BsM, BZeroM,
@@ -64,7 +64,6 @@ module divremsqrtfdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]           AE;                                  // input A after W64 adjustment
   logic                        ALTBE;
   logic                        EvenExp;
-  logic                        elleqmE;
 
   logic [$clog2(P.RK):0] RightShiftX;
   logic [P.DIVBLEN-1:0] ZeroDiff, p;
@@ -131,9 +130,9 @@ module divremsqrtfdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
 
     // calculate number of result bits
     assign ZeroDiff = mE - ell;         // Difference in number of leading zeros
-    assign elleqmE = ~|ZeroDiff;
     assign ALTBE = ZeroDiff[P.DIVBLEN-1];  // A less than B (A has more leading zeros)
-    assign SIGNOVERFLOWE = &ForwardedSrcBE & (ForwardedSrcAE == {{1'b1}, {(P.XLEN-1){1'b0}}}) & SignedDivE;
+    //assign SIGNOVERFLOWE = &ForwardedSrcBE & (ForwardedSrcAE == {{1'b1}, {(P.XLEN-1){1'b0}}}) & SignedDivE;
+    assign SIGNOVERFLOWE = 1'b0;
 
     mux2 #(P.DIVBLEN) pmux(ZeroDiff, '0, ALTBE, p);          
 
@@ -145,7 +144,7 @@ module divremsqrtfdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     /* verilator lint_on WIDTH */
 
     // Integer special cases (terminate immediately)
-    assign ISpecialCaseE = BZeroE | ALTBE | SIGNOVERFLOWE;
+    assign ISpecialCaseE = BZeroE | ALTBE;
 
     // calculate right shift amount RightShiftX to complete in discrete number of steps
     if (P.RK > 1) begin // more than 1 bit per cycle
@@ -162,6 +161,7 @@ module divremsqrtfdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
       /* verilator lint_on WIDTH */
     end else begin // radix 2 1 copy doesn't require shifting
       assign DivXShifted = DivX;
+      assign RightShiftX = 0;
     end
   end else begin
     assign ISpecialCaseE = 0;
@@ -258,7 +258,6 @@ module divremsqrtfdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     flopen #(1)        signedoverflowreg(clk, IFDivStartE, SIGNOVERFLOWE,   SIGNOVERFLOWM);
     flopen #(1)        asignreg(clk, IFDivStartE, AsE,      AsM);
     flopen #(1)        bsignreg(clk, IFDivStartE, BsE,      BsM);
-    flopen #(1)        zerodiffreg(clk, IFDivStartE, elleqmE,      ZeroDiffM);
     flopen #(P.DIVBLEN)   nsreg(clk, IFDivStartE, IntNormShiftE, IntNormShiftM); 
     flopen #(P.XLEN)    srcareg(clk, IFDivStartE, AE,       AM);
     if (P.XLEN==64) 

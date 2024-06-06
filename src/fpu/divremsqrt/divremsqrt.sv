@@ -67,7 +67,7 @@
   logic [P.DIVb+1:0]           FirstC;                       // Step tracker
   logic                       Firstun;                      // Quotient selection
   logic                       WZeroE;                       // Early termination flag
-  logic [P.DURLEN-1:0]         CyclesE;                      // FSM cycles
+  logic [P.DURLEN:0]         CyclesE;                      // FSM cycles
   logic                       SpecialCaseM;                 // Divide by zero, square root of negative, etc.
   logic                       DivStartE;                    // Enable signal for flops during stall
                                                             

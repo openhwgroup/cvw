@@ -38,7 +38,7 @@ module fdivsqrtfsm import cvw::*;  #(parameter cvw_t P) (
   input  logic                StallM, FlushE,
   input  logic                IntDivE,
   input  logic                ISpecialCaseE,
-  input  logic [P.DURLEN-1:0] CyclesE,
+  input  logic [P.DURLEN:0] CyclesE,
   output logic                IFDivStartE,
   output logic                FDivBusyE, FDivDoneE,
   output logic                SpecialCaseM

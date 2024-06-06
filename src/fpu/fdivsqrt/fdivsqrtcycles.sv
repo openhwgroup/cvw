@@ -32,7 +32,7 @@ module fdivsqrtcycles import cvw::*;  #(parameter cvw_t P) (
   input  logic                 SqrtE,
   input  logic                 IntDivE,
   input  logic [P.DIVBLEN-1:0] IntResultBitsE,    
-  output logic [P.DURLEN-1:0]  CyclesE
+  output logic [P.DURLEN:0]  CyclesE
 );
 
   logic [P.DIVBLEN-1:0] Nf, FPResultBitsE, ResultBitsE; // number of fractional (result) bits
