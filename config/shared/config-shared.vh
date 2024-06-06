@@ -113,8 +113,8 @@ localparam DIVBLEN     = $clog2(DIVb+1);                            // enough bi
 localparam INTRESBITS     = XLEN + LOGR; // number of bits in a result: r integer + b fractional
 
 // division constants
-localparam INTFPDUR       = (RESBITS-1)/RK + 1 ;                       // ceiling((r+b)/rk)
-localparam INTDIVb        = FPDUR*RK - LOGR;                           // divsqrt fractional bits, so total number of bits is a multiple of rk after r integer bits
+localparam INTFPDUR       = (INTRESBITS-1)/RK + 1 ;                       // ceiling((r+b)/rk)
+localparam INTDIVb        = INTFPDUR*RK - LOGR;                           // divsqrt fractional bits, so total number of bits is a multiple of rk after r integer bits
 localparam INTDIVBLEN     = $clog2(DIVb+1);                            // enough bits to count number of fractional bits + 1 integer bit
 
 // largest length in IEU/FPU
