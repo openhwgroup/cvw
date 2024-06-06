@@ -45,7 +45,7 @@ module divremsqrtfdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   output logic                 ISpecialCaseE,
   output logic [P.DURLEN-1:0]  CyclesE,
   output logic [P.DIVBLEN-1:0] IntNormShiftM,
-  output logic                 ALTBM, IntDivM, W64M,
+  output logic                 ALTBM, IntDivM, W64M, SIGNOVERFLOWM, ZeroDiffM,
   output logic                 AsM, BsM, BZeroM,
   output logic [P.XLEN-1:0]    AM
 );
@@ -57,12 +57,18 @@ module divremsqrtfdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   logic [P.DIVBLEN-1:0]        mE, ell;                             // Leading zeros of inputs
   logic [P.DIVBLEN-1:0]        IntResultBitsE;                      // bits in integer result
   logic                        NumerZeroE;                          // Numerator is zero (X or A)
+  logic                        SIGNOVERFLOWE;
   logic                        AZeroE, BZeroE;                      // A or B is Zero for integer division
   logic                        SignedDivE;                          // signed division
   logic                        AsE, BsE;                            // Signs of integer inputs
   logic [P.XLEN-1:0]           AE;                                  // input A after W64 adjustment
   logic                        ALTBE;
   logic                        EvenExp;
+  logic                        elleqmE;
+
+  logic [$clog2(P.RK):0] RightShiftX;
+  logic [P.DIVBLEN-1:0] ZeroDiff, p;
+
 
   //////////////////////////////////////////////////////
   // Integer Preprocessing
@@ -119,30 +125,40 @@ module divremsqrtfdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   //  and nE (number of fractional digits)
   //////////////////////////////////////////////////////
 
-  if (P.IDIV_ON_FPU) begin:intrightshift // Int Supported
-    logic [P.DIVBLEN-1:0] ZeroDiff, p;
+  assign DivX = {3'b000, Xnorm}; // Zero-extend numerator for division
 
-    // calculate number of fractional bits p
+  if (P.IDIV_ON_FPU) begin:intrightshift // Int Supported
+
+    // calculate number of result bits
     assign ZeroDiff = mE - ell;         // Difference in number of leading zeros
+    assign elleqmE = ~|ZeroDiff;
     assign ALTBE = ZeroDiff[P.DIVBLEN-1];  // A less than B (A has more leading zeros)
-    assign SIGNOVERFLOW = &ForwardedSrcBE & (ForwardedSrcAE == {{1'b1}, {(P.XLEN-1){1'b0}}}) & SignedDivE;
+    assign SIGNOVERFLOWE = &ForwardedSrcBE & (ForwardedSrcAE == {{1'b1}, {(P.XLEN-1){1'b0}}}) & SignedDivE;
 
     mux2 #(P.DIVBLEN) pmux(ZeroDiff, '0, ALTBE, p);          
 
     /* verilator lint_off WIDTH */
-    assign IntResultBitsE = P.LOGR + p + (&mE[$clog2(P.XLEN)-1:0]);  // Total number of result bits (r integer bits plus p fractional bits)
+    //assign IntResultBitsE = P.LOGR + p;  // Total number of result bits (r integer bits plus p fractional bits)
+    assign IntResultBitsE = P.LOGR + p;  // Total number of result bits (r integer bits plus p fractional bits)
+    //assign IntResultBitsE =  p + (&mE[$clog2(P.XLEN)-1:0]);  // Total number of result bits (r integer bits plus p fractional bits)
     //assign IntResultBitsE = P.LOGR + p;  // Total number of result bits (r integer bits plus p fractional bits)
     /* verilator lint_on WIDTH */
 
     // Integer special cases (terminate immediately)
-    assign ISpecialCaseE = BZeroE | ALTBE | SIGNOVERFLOW;
+    assign ISpecialCaseE = BZeroE | ALTBE | SIGNOVERFLOWE;
 
     // calculate right shift amount RightShiftX to complete in discrete number of steps
     if (P.RK > 1) begin // more than 1 bit per cycle
-      logic [$clog2(P.RK)-1:0] RightShiftX;
+      
       /* verilator lint_offf WIDTH */
       assign RightShiftX = P.RK - 1 - ((IntResultBitsE - 1) % P.RK); // Right shift amount
+      //assign RightShiftX = P.RK - ((p+1) % P.RK); // Right shift amount
+      //assign RightShiftX = P.RK - ((p+1) % P.RK); // Right shift amount
+      //assign RightShiftX = CyclesE * P.RK - P.DIVb - 1;
+      //assign RightShiftX = CyclesE*P.RK - p - 1;
+      //assign RightShiftX = ((IntResultBitsE) % P.RK); // Right shift amount
       assign DivXShifted = DivX >> RightShiftX;                     // shift X by up to R*K-1 to complete in n steps
+      //assign DivXShifted = DivX;
       /* verilator lint_on WIDTH */
     end else begin // radix 2 1 copy doesn't require shifting
       assign DivXShifted = DivX;
@@ -159,7 +175,6 @@ module divremsqrtfdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   // Subnormal numbers have Xe = 0 and an unbiased exponent of 1-BIAS.  They are shifted right if the number of leading zeros is odd.
    //////////////////////////////////////////////////////
 
-  assign DivX = {3'b000, Xnorm}; // Zero-extend numerator for division
 
   // Sqrt is initialized on step one as R(X-1), so depends on Radix
   // If X = 0, then special case logic sets sqrt = 0 so this portion doesn't matter
@@ -223,10 +238,13 @@ module divremsqrtfdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     logic               RemOpE;
 
     /* verilator lint_off WIDTH */
-    //assign IntDivNormShiftE = P.DIVb - (CyclesE * P.RK - P.LOGR); // b - rn, used for integer normalization right shift.  rn = Cycles * r * k - r ***explain
-    assign IntDivNormShiftE = (CyclesE * P.RK - P.LOGR); // b - rn, used for integer normalization right shift.  rn = Cycles * r * k - r ***explain
-    //assign IntRemNormShiftE = mE + (P.DIVb-(P.XLEN-1));           // m + b - (N-1) for remainder normalization shift
-    assign IntRemNormShiftE = (P.XLEN-1)-mE;           // m + b - (N-1) for remainder normalization shift
+    assign IntDivNormShiftE = RightShiftX + p+1+3; // b - rn, used for integer normalization right shift.  rn = Cycles * r * k - r ***explain
+    //assign IntDivNormShiftE = RightShiftX + ((CyclesE-1) * P.RK)+3; // b - rn, used for integer normalization right shift.  rn = Cycles * r * k - r ***explain
+    //assign IntDivNormShiftE = (CyclesE * P.RK)+3; // b - rn, used for integer normalization right shift.  rn = Cycles * r * k - r ***explain
+    //assign IntDivNormShiftE = CyclesE * P.RK + 3 - 1;
+    //assign IntDivNormShiftE = (CyclesE-1) * P.RK +3 + RightShiftX;
+    //assign IntDivNormShiftE = (CyclesE * P.RK); // b - rn, used for integer normalization right shift.  rn = Cycles * r * k - r ***explain
+    assign IntRemNormShiftE = (P.XLEN-1)-mE+4;           // m + b - (N-1) for remainder normalization shift
 
 
     /* verilator lint_on WIDTH */
@@ -237,8 +255,10 @@ module divremsqrtfdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     flopen #(1)          mdureg(clk, IFDivStartE, IntDivE,  IntDivM);
     flopen #(1)         altbreg(clk, IFDivStartE, ALTBE,    ALTBM);
     flopen #(1)        bzeroreg(clk, IFDivStartE, BZeroE,   BZeroM);
+    flopen #(1)        signedoverflowreg(clk, IFDivStartE, SIGNOVERFLOWE,   SIGNOVERFLOWM);
     flopen #(1)        asignreg(clk, IFDivStartE, AsE,      AsM);
     flopen #(1)        bsignreg(clk, IFDivStartE, BsE,      BsM);
+    flopen #(1)        zerodiffreg(clk, IFDivStartE, elleqmE,      ZeroDiffM);
     flopen #(P.DIVBLEN)   nsreg(clk, IFDivStartE, IntNormShiftE, IntNormShiftM); 
     flopen #(P.XLEN)    srcareg(clk, IFDivStartE, AE,       AM);
     if (P.XLEN==64) 

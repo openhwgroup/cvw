@@ -51,8 +51,8 @@
   output logic [P.XLEN-1:0]    FIntDivResultM,
   output logic                 IntDivM,
   // integer normalization shifter signals
-  output logic [P.XLEN+3:0]          PreResultM,
-  input logic [P.DIVb+3:0]          PreIntResultM,
+  output logic [P.INTDIVb+3:0]          PreResultM,
+  input logic [P.XLEN-1:0]          PreIntResultM,
   output logic [P.DIVBLEN-1:0]       IntNormShiftM
 
 );
@@ -74,9 +74,10 @@
   // Integer div/rem signals                                
   logic                       BZeroM;                       // Denominator is zero
   logic [P.DIVBLEN:0]          nM, mM;                       // Shift amounts
-  logic                       NegQuotM, ALTBM, AsM, BsM, W64M;   // Special handling for postprocessor
+  logic                       NegQuotM, ALTBM, AsM, BsM, W64M, SIGNOVERFLOWM, ZeroDiffM;   // Special handling for postprocessor
   logic [P.XLEN-1:0]           AM;                           // Original Numerator for postprocessor
   logic                       ISpecialCaseE;                // Integer div/remainder special cases
+
 
   divremsqrtfdivsqrtpreproc #(P) divremsqrtfdivsqrtpreproc(                          // Preprocessor
     .clk, .IFDivStartE, .Xm(XmE), .Ym(YmE), .Xe(XeE), .Ye(YeE),
@@ -84,7 +85,7 @@
     // Int-specific 
     .ForwardedSrcAE, .ForwardedSrcBE, .IntDivE, .W64E, .ISpecialCaseE,
     .BZeroM, .AM, 
-    .IntDivM, .W64M, .ALTBM, .AsM, .BsM, .IntNormShiftM);
+    .IntDivM, .W64M, .ALTBM, .AsM, .BsM, .IntNormShiftM, .SIGNOVERFLOWM, .ZeroDiffM);
 
   fdivsqrtfsm #(P) fdivsqrtfsm(                                  // FSM
     .clk, .reset, .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, 
@@ -103,6 +104,6 @@
     .UmM, .WZeroE, .DivStickyM, 
     // Int-specific 
     .ALTBM, .AsM, .BsM, .BZeroM, .W64M, .RemOpM(Funct3M[1]), .AM, 
-    .FIntDivResultM,  .PreResultM, .PreIntResultM);
+    .FIntDivResultM,  .PreResultM, .PreIntResultM, .SIGNOVERFLOWM, .ZeroDiffM, .IntDivM);
 endmodule
 

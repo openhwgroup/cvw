@@ -158,7 +158,7 @@ module testbenchfp;
    initial begin
       // Information displayed for user on what is simulating
       // $display("\nThe start of simulation...");      
-      $display("\nThe start of simulation... DIVB: %d, DIVBLEN: %d",DIVb, DIVBLEN);      
+      $display("\nThe start of simulation... INTDIVb: %d, DIVB: %d, DIVBLEN: %d , RK: %d",INTDIVb, DIVb, DIVBLEN, RK);      
       // $display("This simulation for TEST is %s", TEST);
       if (P.Q_SUPPORTED & (TEST_SIZE == "QP" | TEST_SIZE == "all")) begin // if Quad percision is supported
          if (TEST === "cvtint" | TEST === "all") begin  // if testing integer conversion

@@ -67,7 +67,7 @@ module fdivsqrtfsm import cvw::*;  #(parameter cvw_t P) (
           state <= IDLE; 
       end else if (IFDivStartE) begin // IFDivStartE implies stat is IDLE
           step <= CyclesE; 
-          if (SpecialCaseE) state <=  DONE;
+          if (SpecialCaseE | CyclesE== 0) state <=  DONE;
           else              state <=  BUSY;
       end else if (state == BUSY) begin 
           if (step == 1 | WZeroE) state <=  DONE; // finished steps or terminate early on zero residual

@@ -298,6 +298,10 @@ typedef struct packed {
   int DURLEN     ;
   int DIVb       ;
   int DIVBLEN    ;
+  int INTRESBITS ;
+  int INTFPDUR   ;
+  int INTDIVb    ;
+  int INTDIVBLEN ;
 
 } cvw_t;
 

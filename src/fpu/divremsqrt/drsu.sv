@@ -79,8 +79,8 @@ module drsu import cvw::*;  #(parameter cvw_t P) (
   logic [P.NF+2:0]             UmMexact; //U1.NF+2
   logic [P.NE+1:0]             UeM;
   logic                       DivStickyM;
-  logic [P.XLEN+3:0]          PreResultM;
-  logic [P.DIVb+3:0]          PreIntResultM;
+  logic [P.INTDIVb+3:0]          PreResultM;
+  logic [P.XLEN-1:0]          PreIntResultM;
   logic [P.DIVBLEN-1:0]       IntNormShiftM;
 
   divremsqrt #(P) divremsqrt(.clk, .reset, .XsE, .FmtE, .XmE, .YmE, 

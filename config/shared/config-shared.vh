@@ -109,6 +109,14 @@ localparam DIVb        = FPDUR*RK - LOGR;                           // divsqrt f
 localparam DURLEN      = $clog2(FPDUR);                             // enough bits to count the duration
 localparam DIVBLEN     = $clog2(DIVb+1);                            // enough bits to count number of fractional bits + 1 integer bit
 
+
+localparam INTRESBITS     = XLEN + LOGR; // number of bits in a result: r integer + b fractional
+
+// division constants
+localparam INTFPDUR       = (RESBITS-1)/RK + 1 ;                       // ceiling((r+b)/rk)
+localparam INTDIVb        = FPDUR*RK - LOGR;                           // divsqrt fractional bits, so total number of bits is a multiple of rk after r integer bits
+localparam INTDIVBLEN     = $clog2(DIVb+1);                            // enough bits to count number of fractional bits + 1 integer bit
+
 // largest length in IEU/FPU
 localparam BASECVTLEN = `max(XLEN, NF); // convert length excluding Zfa fcvtmod.w.d
 localparam CVTLEN = ZFA_SUPPORTED ? `max(BASECVTLEN, 32'd84) : BASECVTLEN; // fcvtmod.w.d needs at least 32+52 because a double with 52 fractional bits might be into upper bits of 32 bit word
@@ -119,7 +127,7 @@ localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));
 localparam CORRSHIFTSZ = `max((NORMSHIFTSZ-2), (DIVMINb + 1 + NF));
 localparam NORMSHIFTSZDRSU = DIVb+1+NF;
 localparam LOGNORMSHIFTSZDRSU = $clog2(NORMSHIFTSZDRSU);
-localparam UNIFIEDSHIFTWIDTH = `max(NORMSHIFTSZDRSU,XLEN+XLEN+4);
+localparam UNIFIEDSHIFTWIDTH = `max(NORMSHIFTSZDRSU,INTDIVb+XLEN+4);
 //localparam UNIFIEDSHIFTWIDTH = `max(NORMSHIFTSZDRSU,DIVb+DIVb+4);
 localparam LOGUNIFIEDSHIFTWIDTH = $clog2(UNIFIEDSHIFTWIDTH);
 

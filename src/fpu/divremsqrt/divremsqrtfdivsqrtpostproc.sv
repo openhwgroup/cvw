@@ -37,19 +37,19 @@ module divremsqrtfdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
   input  logic                 SqrtE,
   input  logic                 Firstun, SqrtM, SpecialCaseM, 
   input  logic [P.XLEN-1:0]    AM,                // U/Q(XLEN.0)
-  input  logic                 RemOpM, ALTBM, BZeroM, AsM, BsM, W64M,
+  input  logic                 RemOpM, ALTBM, BZeroM, AsM, BsM, W64M, SIGNOVERFLOWM, ZeroDiffM, IntDivM,
   //input  logic [P.DIVBLEN-1:0] IntNormShiftM,     
-  input  logic [P.DIVb+3:0]    PreIntResultM,
+  input  logic [P.XLEN-1:0]    PreIntResultM,
   output logic [P.DIVb:0]      UmM,               // U1.DIVb result significand
   output logic                 WZeroE,
   output logic                 DivStickyM,
   output logic [P.XLEN-1:0]    FIntDivResultM,     // U/Q(XLEN.0)
-  output logic [P.XLEN+3:0]    PreResultM
+  output logic [P.INTDIVb+3:0]    PreResultM
 
 );
   
   logic [P.DIVb+3:0]         Sum;
-  logic [P.XLEN+3:0]         W;
+  logic [P.INTDIVb+3:0]         W;
   logic [P.DIVb:0]           PreUmM;
   logic                      NegStickyM;
   logic                      weq0E, WZeroM;
@@ -105,34 +105,39 @@ module divremsqrtfdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
 
   // Integer quotient or remainder correction, normalization, and special cases
   if (P.IDIV_ON_FPU) begin:intpostproc // Int supported
-    logic [P.XLEN+3:0] UnsignedQuotM, NormRemM, NormRemDM, NormQuotM;
+    logic [P.INTDIVb+3:0] UnsignedQuotM, NormRemM, NormRemDM, NormQuotM;
     logic [P.UNIFIEDSHIFTWIDTH-1:0] PreResultMWide, PreIntResultMWide;
     logic [P.LOGUNIFIEDSHIFTWIDTH-1:0] IntNormShiftMWide;
-    logic [P.XLEN+3:0] DTrunc, SumTrunc;
+    logic [P.INTDIVb+3:0] DTrunc, SumTrunc;
+    logic ALTBMPOSTPROC;
 
     //assign W = $signed(Sum) >>> P.LOGR;
-    assign SumTrunc = Sum[P.DIVb+3:P.DIVb-P.XLEN];
-    assign DTrunc = D[P.DIVb+3:P.DIVb-P.XLEN];
+    assign SumTrunc = Sum[P.DIVb+3:P.DIVb-P.INTDIVb];
+    assign DTrunc = D[P.DIVb+3:P.DIVb-P.INTDIVb];
     arithrightshift #(P) rshift(SumTrunc, W);
-    assign UnsignedQuotM = {3'b000, PreUmM[P.DIVb:P.DIVb-P.XLEN]};
+    //assign UnsignedQuotM = {3'b000, PreUmM[P.DIVb:P.DIVb-P.XLEN]};
+    assign UnsignedQuotM = {3'b000, PreUmM[P.DIVb:P.DIVb-P.INTDIVb]};
 
     // Integer remainder: sticky and sign correction muxes
     assign NegQuotM = AsM ^ BsM; // Integer Quotient is negative
-    mux2 #(P.XLEN+4) normremdmux(W, W+DTrunc, NegStickyM, NormRemDM);
-    mux2 #(P.XLEN+4) normremsmux(NormRemDM, -NormRemDM, AsM, NormRemM);
-    mux2 #(P.XLEN+4) quotresmux(UnsignedQuotM, -UnsignedQuotM, NegQuotM, NormQuotM);
+    mux2 #(P.INTDIVb+4) normremdmux(W, W+DTrunc, NegStickyM, NormRemDM);
+    mux2 #(P.INTDIVb+4) normremsmux(NormRemDM, -NormRemDM, AsM, NormRemM);
+    mux2 #(P.INTDIVb+4) quotresmux(UnsignedQuotM, -UnsignedQuotM, NegQuotM, NormQuotM);
+
 
     // Select quotient or remainder and do normalization shift
-    mux2 #(P.XLEN+4)    presresultmux(NormQuotM, NormRemM, RemOpM, PreResultM);
+    mux2 #(P.INTDIVb+4)    presresultmux(NormQuotM, NormRemM, RemOpM, PreResultM);
     //assign PreIntResultM = $signed(PreResultM >>> IntNormShiftM); 
     //intrightshift #(P) rightshift(PreResultM, IntNormShiftM, PreIntResultM);
    // divremsqrtnormshift #(P) intshift(PreResultM, IntNormShiftM,PreIntResultM);
     //divremsqrtunifiedshift #(P) unifiedshift(IntNormShiftMWide, PreResultMWide, PreIntResultMWide);
+    //assign ALTBMPOSTPROC = ALTBM | (ZeroDiffM & ~PreUmM[P.DIVb]); // if the quotient integer bit is 0 then ALTB
+    assign ALTBMPOSTPROC = ALTBM;
     
 
     // special case logic
     // terminates immediately when B is Zero (div 0) or |A| has more leading 0s than |B|
-    divremsqrtintspecialcase #(P) intspecialcase(BZeroM,RemOpM, ALTBM, AM,PreIntResultM,IntDivResultM);
+    divremsqrtintspecialcase #(P) intspecialcase(BZeroM,RemOpM, ALTBMPOSTPROC, SIGNOVERFLOWM, AM,PreIntResultM,IntDivResultM);
     // sign extend result for W64
     if (P.XLEN==64) begin
       mux2 #(64) resmux(IntDivResultM[P.XLEN-1:0], 
