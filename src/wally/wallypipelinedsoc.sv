@@ -86,6 +86,12 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                        GPRScanEn;
   logic                        GPRScanIn;
   logic                        GPRScanOut;
+  logic                        FPRSel;
+  logic                        DebugFPRUpdate;
+  logic [4:0]                  FPRAddr;
+  logic                        FPRScanEn;
+  logic                        FPRScanIn;
+  logic                        FPRScanOut;   
 
   // synchronize reset to SOC clock domain
   synchronizer resetsync(.clk, .d(reset_ext), .q(reset));
@@ -96,8 +102,8 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
     .DebugStall, .DebugScanEn(ScanEn), .DebugScanIn(ScanOut), .DebugScanOut(ScanIn),
-    .GPRSel, .DebugCapture, .DebugGPRUpdate, .GPRAddr, .GPRScanEn, .GPRScanIn(GPRScanOut), .GPRScanOut(GPRScanIn)
-  );
+    .GPRSel, .DebugCapture, .DebugGPRUpdate, .GPRAddr, .GPRScanEn, .GPRScanIn(GPRScanOut), .GPRScanOut(GPRScanIn),
+    .FPRSel, .DebugFPRUpdate, .FPRAddr, .FPRScanEn, .FPRScanIn, .FPRScanOut);
 
   // instantiate uncore if a bus interface exists
   if (P.BUS_SUPPORTED) begin : uncoregen // Hack to work around Verilator bug https://github.com/verilator/verilator/issues/4769
@@ -115,9 +121,11 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   if (P.DEBUG_SUPPORTED) begin : dm
     dm #(P) dm (.clk, .rst(reset), .NdmReset, .tck, .tdi, .tms, .tdo,
       .DebugStall, .ScanEn, .ScanIn, .ScanOut, .GPRSel, .DebugCapture, .DebugGPRUpdate,
-      .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut);
+      .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut, .FPRSel, .DebugFPRUpdate, 
+      .FPRAddr, .FPRScanEn, .FPRScanIn, .FPRScanOut);
   end else begin
-    assign {NdmReset, DebugStall, ScanOut, GPRSel, DebugCapture, DebugGPRUpdate, GPRAddr, GPRScanEn, GPRScanOut} = '0;
+    assign {NdmReset, DebugStall, ScanOut, GPRSel, DebugCapture, DebugGPRUpdate, GPRAddr, GPRScanEn, GPRScanOut, 
+            FPRSel, DebugFPRUpdate, FPRAddr, FPRScanEn, FPRScanOut} = '0;
   end
 
 endmodule

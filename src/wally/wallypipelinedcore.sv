@@ -56,7 +56,13 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    input  logic [4:0]           GPRAddr,
    input  logic                 GPRScanEn,
    input  logic                 GPRScanIn,
-   output logic                 GPRScanOut							       
+   output logic                 GPRScanOut,
+   input  logic                 FPRSel,
+   input  logic                 DebugFPRUpdate,
+   input  logic [4:0]           FPRAddr,
+   input  logic                 FPRScanEn,
+   input  logic                 FPRScanIn,
+   output logic                 FPRScanOut							       							       
 );
 
   logic                          StallF, StallD, StallE, StallM, StallW;
@@ -372,7 +378,17 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .FDivBusyE,                          // Is the divide/sqrt unit busy (stall execute stage)
       .IllegalFPUInstrD,                   // Is the instruction an illegal fpu instruction
       .SetFflagsM,                         // FPU flags (to privileged unit)
-      .FIntDivResultW); 
+      .FIntDivResultW,
+      .DebugScanEn, 
+      .DebugScanIn(ScanReg[2]), 
+      .DebugScanOut(ScanReg[3]),
+      .FPRSel, 
+      .DebugCapture, 
+      .DebugFPRUpdate, 
+      .FPRAddr, 
+      .FPRScanEn, 
+      .FPRScanIn, 
+      .FPRScanOut); 
   end else begin                           // no F_SUPPORTED or D_SUPPORTED; tie outputs low
     assign {FPUStallD, FWriteIntE, FCvtIntE, FIntResM, FCvtIntW, 
             IllegalFPUInstrD, SetFflagsM, FpLoadStoreM,
