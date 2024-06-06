@@ -131,7 +131,7 @@ def random_hex(reg_name):
     else:
         size = XLEN
 
-    // Reset ReadDataM to a value
+    # Reset ReadDataM to a value
     nonstandard_register_lengths["READDATAM"] = XLEN
     if random_stimulus:
         return "0x" + f"{random.getrandbits(size):x}".rjust(pad, "0")
