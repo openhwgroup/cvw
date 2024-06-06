@@ -62,6 +62,17 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0]    FCvtIntResW,                        // convert result to to be written to integer register (to IEU)
   output logic                 FCvtIntW,                           // select FCvtIntRes (to IEU)
   output logic [P.XLEN-1:0]    FIntDivResultW                      // Result from integer division (to IEU)
+  // Debug scan chain
+  input  logic                 DebugScanEn,
+  input  logic                 DebugScanIn,
+  output logic                 DebugScanOut,
+  input  logic                 FPRSel,
+  input  logic                 DebugCapture,
+  input  logic                 DebugFPRUpdate,
+  input  logic [4:0]           FPRAddr,
+  input  logic                 FPRScanEn,
+  input  logic                 FPRScanIn,
+  output logic                 FPRScanOut
 );
 
   // RISC-V FPU specifics:
@@ -169,6 +180,9 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   logic [P.FLEN-1:0]           ZfaResE;                            // Result of Zfa fli or fround instruction
   logic                        FRoundNVE, FRoundNXE;               // Zfa fround invalid and inexact flags
 
+  // Debug signals
+  logic [P.XLEN-1:0]           DebugFPRWriteD;
+   
   //////////////////////////////////////////////////////////////////////////////////////////
   // Decode Stage: fctrl decoder, read register file
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -182,13 +196,26 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
               .IllegalFPUInstrD, .XEnD, .YEnD, .ZEnD, .XEnE, .YEnE, .ZEnE,
               .FResSelE, .FResSelM, .FResSelW, .FPUActiveE, .PostProcSelE, .PostProcSelM, .FCvtIntW, 
               .Adr1D, .Adr2D, .Adr3D, .Adr1E, .Adr2E, .Adr3E);
-
+   
   // FP register file
-  fregfile #(P.FLEN) fregfile (.clk, .reset, .we4(FRegWriteW),
-    .a1(InstrD[19:15]), .a2(InstrD[24:20]), .a3(InstrD[31:27]), 
-    .a4(RdW), .wd4(FResultW),
-    .rd1(FRD1D), .rd2(FRD2D), .rd3(FRD3D));  
-
+  // Access FPRs from Debug Module
+  if (P.DEBUG_SUPPORTED) begin
+    fregfile #(P.FLEN) fregfile (.clk, .reset, .we4(FRegWriteWM),
+      .a1(Rs1DM), .a2(InstrD[24:20]), .a3(InstrD[31:27]), 
+      .a4(RdWM), .wd4(FResultWM),
+      .rd1(FRD1D), .rd2(FRD2D), .rd3(FRD3D));       
+    assign FRegWriteWM = FPRSel ? DebugFPRUpdate : FRegWriteW;
+    assign Rs1DM = FPRSel ? FPRAddr : InstrD[19:15];
+    assign RdWM = FPRSel ? FPRAddr : RdW;
+    assign FResultWM = GPRSel ? DebugFPRWriteD : FResultW;
+    flopenrs #(P.XLEN) GPRScanReg(.clk, .reset, .en(DebugCapture), .d(FRD1D), .q(DebugFPRWriteD), .scan(FPRScanEn), .scanin(FPRScanIn), .scanout(FPRScanOut));
+  end else begin
+    fregfile #(P.FLEN) fregfile (.clk, .reset, .we4(FRegWriteW),
+      .a1(InstrD[19:15]), .a2(InstrD[24:20]), .a3(InstrD[31:27]), 
+      .a4(RdW), .wd4(FResultW),
+      .rd1(FRD1D), .rd2(FRD2D), .rd3(FRD3D));       
+  end
+   
   // D/E pipeline registers  
   flopenrc #(P.FLEN) DEReg1(clk, reset, FlushE, ~StallE, FRD1D, FRD1E);
   flopenrc #(P.FLEN) DEReg2(clk, reset, FlushE, ~StallE, FRD2D, FRD2E);
