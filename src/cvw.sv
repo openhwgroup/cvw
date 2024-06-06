@@ -140,6 +140,12 @@ typedef struct packed {
   logic         SPI_SUPPORTED;
   logic [63:0]  SPI_BASE;
   logic [63:0]  SPI_RANGE;
+  logic         PLL_SUPPORTED;
+  logic [63:0]  PLL_CONF_BASE;
+  logic [63:0]  PLL_CONF_RANGE;
+  logic         BSG_DMC_SUPPORTED;
+  logic [63:0]  BSG_DMC_CONF_BASE;
+  logic [63:0]  BSG_DMC_CONF_RANGE;
 
 // Test modes
 
@@ -193,7 +199,6 @@ typedef struct packed {
 
 // Memory synthesis configuration
   logic         USE_SRAM;
-  logic					USE_BSG_DMC;
 
 // constants defining different privilege modes
 // defined in Table 1.1 of the privileged spec

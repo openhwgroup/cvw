@@ -65,7 +65,8 @@ module uncore
   output logic                 SPIOut,
   output logic [3:0]           SPICS,
   input  logic                 ui_clk,                    // ~200MHz clock for memory controller interface
-  output bsg_dmc_s             dmc_config                 // Config registers for BSG DDR memory controller
+  output bsg_dmc_s             dmc_config,                // Config registers for BSG DDR memory controller
+  output logic                 dmc_config_changed,
   input  logic                 PLLrefclk,
   input  logic                 PLLrfen,
   input  logic                 PLLfben,
@@ -75,7 +76,7 @@ module uncore
   output logic [11:0]          PLLbwadj,
   output logic                 PLLbypass,
   output logic                 PLLtest,
-  input  logic                 PLLlock,
+  input  logic                 PLLlock
 );
   
   logic [P.XLEN-1:0]           HREADRam, HREADSDC;
@@ -96,7 +97,7 @@ module uncore
   logic [31:0]                 PADDR;
   logic [P.XLEN-1:0]           PWDATA;
   logic [P.XLEN/8-1:0]         PSTRB;
-  logic [4:0][P.XLEN-1:0]      PRDATA;
+  logic [6:0][P.XLEN-1:0]      PRDATA;
   logic [P.XLEN-1:0]           HREADBRIDGE;
   logic                        HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
 
@@ -177,39 +178,44 @@ module uncore
 
   if (P.BSG_DMC_SUPPORTED == 1) begin : bsg_dmc_config
     bsg_dmc_config_apb #(P.XLEN) bsg_dmc_conf (
-      .PCLK, .PRESETn, .PSEL(PSEL[5]), .PADDR(PADDR[7:0]) .PWDATA, .PWRITE, .PENABLE,
+      .PCLK, .PRESETn, .PSEL(PSEL[5]), .PADDR(PADDR[7:0]), .PWDATA, .PWRITE, .PENABLE,
       .PRDATA(PRDATA[5]), .PREADY(PREADY[5]),
-      .ui_clk, .dmc_config);
+      .ui_clk, .dmc_config, .dmc_config_changed);
   end else begin : bsg_dmc_config
-    dmc_config.trefi        = 0;
-    dmc_config.tmrd         = 0;
-    dmc_config.trfc         = 0;
-    dmc_config.trc          = 0;
-    dmc_config.trp          = 0;
-    dmc_config.tras         = 0;
-    dmc_config.trrd         = 0;
-    dmc_config.trcd         = 0;
-    dmc_config.twr          = 0;
-    dmc_config.twtr         = 0;
-    dmc_config.trtp         = 0;
-    dmc_config.tcas         = 0;
-    dmc_config.col_width    = 0;
-    dmc_config.row_width    = 0;
-    dmc_config.bank_width   = 0;
-    dmc_config.bank_pos     = 0;
-    dmc_config.dqs_sel_cal  = 0;
-    dmc_config.init_cycles  = 0;
+    assign dmc_config.trefi        = 0;
+    assign dmc_config.tmrd         = 0;
+    assign dmc_config.trfc         = 0;
+    assign dmc_config.trc          = 0;
+    assign dmc_config.trp          = 0;
+    assign dmc_config.tras         = 0;
+    assign dmc_config.trrd         = 0;
+    assign dmc_config.trcd         = 0;
+    assign dmc_config.twr          = 0;
+    assign dmc_config.twtr         = 0;
+    assign dmc_config.trtp         = 0;
+    assign dmc_config.tcas         = 0;
+    assign dmc_config.col_width    = 0;
+    assign dmc_config.row_width    = 0;
+    assign dmc_config.bank_width   = 0;
+    assign dmc_config.bank_pos     = 0;
+    assign dmc_config.dqs_sel_cal  = 0;
+    assign dmc_config.init_cycles  = 0;
+    assign dmc_config_changed      = 0;
   end
 
   if (P.PLL_SUPPORTED == 1) begin : pll_config
-    // TODO: Use PSEL[6], PRDATA[6], PREADY[6] here
     pll_config_apb #(P.XLEN) pll_conf (
       .PCLK, .PRESETn, .PSEL(PSEL[6]), .PADDR(PADDR[7:0]), .PWDATA, .PWRITE, .PENABLE,
       .PRDATA(PRDATA[6]), .PREADY(PREADY[6]),
       .PLLrefclk, .PLLrfen, .PLLfben, .PLLclkr, .PLLclkf, .PLLclkod, .PLLbwadj,
       .PLLbypass, .PLLtest, .PLLlock);
   end else begin : pll_config
-    // TODO
+    assign PLLclkr   = 0;
+    assign PLLclkf   = 0;
+    assign PLLclkod  = 0;
+    assign PLLbwadj  = 0;
+    assign PLLbypass = 0;
+    assign PLLtest   = 0;
   end
 
   // AHB Read Multiplexer
@@ -234,8 +240,9 @@ module uncore
   // takes more than 1 cycle to repsond it needs to hold on to the old select until the
   // device is ready.  Hense this register must be selectively enabled by HREADY.
   // However on reset None must be seleted.
-  flopenl #(12) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions, 12'b1, 
-    {HSELSPID, HSELEXTSDCD, HSELPLICD, HSELUARTD, HSELGPIOD, HSELCLINTD,
-      HSELRamD, HSELBootRomD, HSELEXTD, HSELIROMD, HSELDTIMD, HSELNoneD});
+  flopenl #(14) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions, 14'b1, 
+    {HSELPLLCONFD, HSELBSGDMCCONFD, HSELSPID, HSELEXTSDCD, HSELPLICD, HSELUARTD,
+     HSELGPIOD, HSELCLINTD, HSELRamD, HSELBootRomD, HSELEXTD, HSELIROMD, HSELDTIMD,
+     HSELNoneD});
   flopenr #(1) hselbridgedelayreg(HCLK, ~HRESETn, HREADY, HSELBRIDGE, HSELBRIDGED);
 endmodule

@@ -94,6 +94,7 @@ module testbench;
   logic        SDCIntr;
   logic        ui_clk;
   bsg_dmc_s    dmc_config;
+  logic        dmc_config_changed;
   logic        PLLrefclk;
   logic        PLLrfen, PLLfben;
   logic [5:0]  PLLclkr;
@@ -568,7 +569,6 @@ module testbench;
           `include "bsg_dmc.svh"
           localparam dq_width = 32;
           localparam dq_group = dq_width/8;
-          logic                 ui_clk;
           // DDR wires
           wire  [dq_width-1:0]  ddr_dq;
           wire  [dq_group-1:0]  ddr_dqs_p;
@@ -625,6 +625,7 @@ module testbench;
             .BURST_LEN(8)
           ) ram (
             .dmc_config,
+            .dmc_config_changed,
             .HCLK, .HRESETn, .HSEL(HSELEXT),
             .HADDR(HADDR[27:0]), .HWDATA, .HWSTRB, .HBURST,
             .HWRITE, .HTRANS, .HREADY,
@@ -711,12 +712,12 @@ module testbench;
     // TODO: use behavioral PLL model. We should still use regular clock for test though
     assign PLLrefclk = clk;
     assign PLLrfen   = clk;
-    assign PLLrben   = clk;
+    assign PLLfben   = clk;
     assign PLLlock   = 1'b1;
   end else begin : PLL
     assign PLLrefclk = clk;
     assign PLLrfen   = clk;
-    assign PLLrben   = clk;
+    assign PLLfben   = clk;
     assign PLLlock   = 1'b1;
   end
 
@@ -725,8 +726,8 @@ module testbench;
     .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
     .UARTSin, .UARTSout, .SDCIntr, .SPIIn, .SPIOut, .SPICS,
-    .ui_clk, .dmc_config,
-    .PLLrfen, .PLLfben, .PLLclkr, .PLLclkf, .PLLclkod, .PLLbwadj,
+    .ui_clk, .dmc_config, .dmc_config_changed,
+    .PLLrefclk, .PLLrfen, .PLLfben, .PLLclkr, .PLLclkf, .PLLclkod, .PLLbwadj,
     .PLLbypass, .PLLtest, .PLLlock
   ); 
 

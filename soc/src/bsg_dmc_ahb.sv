@@ -39,6 +39,7 @@ module bsg_dmc_ahb
   parameter FIFO_DEPTH    = 8
 ) (
   input  bsg_dmc_s                   dmc_config,
+  input  logic                       dmc_config_changed,
   input  logic                       HCLK, HRESETn,
   input  logic                       HSEL,
   input  logic [AHB_ADDR_SIZE-1:0]   HADDR,
@@ -93,7 +94,8 @@ module bsg_dmc_ahb
     AHB_DATA_SIZE,
     BURST_LEN
   ) bsg_dmc_ahb_ui_converter (
-    .HCLK, .HRESETn, .HSEL, .HADDR, .HWDATA, .HWSTRB, .HBURST, .HWRITE, .HTRANS, .HREADY, .HRDATA, .HRESP, .HREADYOUT,
+    .HCLK, .HRESETn(HRESETn & ~dmc_config_changed), // Allow changes to dmc_config to reset the converter FSM and reinit bsg_dmc
+    .HSEL, .HADDR, .HWDATA, .HWSTRB, .HBURST, .HWRITE, .HTRANS, .HREADY, .HRDATA, .HRESP, .HREADYOUT,
     .sys_reset, .ui_clk, .ui_clk_sync_rst,
     .app_addr, .app_cmd, .app_en, .app_rdy,
     .app_wdf_wren, .app_wdf_data, .app_wdf_mask, .app_wdf_end, .app_wdf_rdy,

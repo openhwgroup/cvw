@@ -65,7 +65,8 @@ module wallypipelinedsoc
   output logic                SPIOut,           // SPI pins out
   output logic [3:0]          SPICS,            // SPI chip select pins        
   input  logic                ui_clk,           // ~200MHz clock for memory controller interface
-  output bsg_dmc_s            dmc_config        // Config registers for BSG DDR memory controller
+  output bsg_dmc_s            dmc_config,       // Config registers for BSG DDR memory controller
+  output logic                dmc_config_changed,
   input  logic                PLLrefclk,
   input  logic                PLLrfen,
   input  logic                PLLfben,
@@ -75,7 +76,7 @@ module wallypipelinedsoc
   output logic [11:0]         PLLbwadj,
   output logic                PLLbypass,
   output logic                PLLtest,
-  input  logic                PLLlock,            
+  input  logic                PLLlock
 );
 
   // Uncore signals
@@ -103,8 +104,8 @@ module wallypipelinedsoc
       .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT, .HSELEXTSDC,
       .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOIN, .GPIOOUT, .GPIOEN, .UARTSin, 
       .UARTSout, .MTIME_CLINT, .SDCIntr, .SPIIn, .SPIOut, .SPICS,
-      .ui_clk, .dmc_config,
-      .PLLrfen, .PLLfben, .PLLclkr, .PLLclkf, .PLLclkod, .PLLbwadj,
+      .ui_clk, .dmc_config, .dmc_config_changed,
+      .PLLrefclk, .PLLrfen, .PLLfben, .PLLclkr, .PLLclkf, .PLLclkod, .PLLbwadj,
       .PLLbypass, .PLLtest, .PLLlock
     );
   end else begin

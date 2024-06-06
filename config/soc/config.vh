@@ -113,12 +113,6 @@ localparam UNCORE_RAM_PRELOAD = 1'b0;
 localparam EXT_MEM_SUPPORTED = 1'b1;
 localparam logic [63:0] EXT_MEM_BASE =       64'h90000000;
 localparam logic [63:0] EXT_MEM_RANGE =      64'h07FFFFFF;
-localparam PLL_SUPPORTED = 1'b1;
-localparam logic [63:0] PLL_CONF_BASE =   64'h00020000;
-localparam logic [63:0] PLL_CONF_RANGE =  64'h000000FF;
-localparam BSG_DMC_SUPPORTED = 1'b1;
-localparam logic [63:0] BSG_DMC_CONF_BASE =  64'h00030000;
-localparam logic [63:0] BSG_DMC_CONF_RANGE = 64'h000000FF;
 localparam CLINT_SUPPORTED = 1'b1;
 localparam logic [63:0] CLINT_BASE =  64'h02000000;
 localparam logic [63:0] CLINT_RANGE = 64'h0000FFFF;
@@ -137,6 +131,12 @@ localparam logic [63:0] SDC_RANGE = 64'h0000007F;
 localparam SPI_SUPPORTED = 1'b1;
 localparam logic [63:0] SPI_BASE = 64'h10040000;
 localparam logic [63:0] SPI_RANGE = 64'h00000FFF;
+localparam PLL_SUPPORTED = 1'b1;
+localparam logic [63:0] PLL_CONF_BASE =   64'h00020000;
+localparam logic [63:0] PLL_CONF_RANGE =  64'h000000FF;
+localparam BSG_DMC_SUPPORTED = 1'b1;
+localparam logic [63:0] BSG_DMC_CONF_BASE =  64'h00030000;
+localparam logic [63:0] BSG_DMC_CONF_RANGE = 64'h000000FF;
 
 // Test modes
 

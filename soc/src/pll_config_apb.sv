@@ -35,7 +35,7 @@ module pll_config_apb #(
   input  logic [APB_DATA_SIZE-1:0] PWDATA,
   input  logic                     PWRITE,
   input  logic                     PENABLE,
-  output logic                     PRDATA,
+  output logic [APB_DATA_SIZE-1:0] PRDATA,
   output logic                     PREADY,
   input  logic                     PLLrefclk,
   input  logic                     PLLrfen,
@@ -54,6 +54,7 @@ module pll_config_apb #(
   logic [12:0] wdata;
   logic [12:0] rdata;
   logic [5:0]  wcode;
+  logic        clkr_en, clkf_en, clkod_en, bwadj_en, bypass_en, test_en;
 
   assign entry  = {PADDR[7:3], 3'b0};
   assign wren   = PWRITE & PENABLE & PSEL;
@@ -64,7 +65,7 @@ module pll_config_apb #(
   // TODO: check if this ^ is correct
 
   // Read on PCLK
-  assign PRDATA = {APB_DATA_SIZE-14{1'b0}, rdata}
+  assign PRDATA = {{APB_DATA_SIZE-14{1'b0}}, rdata};
   always_ff @(posedge PCLK) begin
     case (entry)
       8'h00:   rdata <= { 7'b0, PLLclkr};
@@ -98,12 +99,12 @@ module pll_config_apb #(
 
   // Writes are synced to different clocks depending on the signal
   flopen #(13) wdatareg (PCLK, wren, PWDATA[12:0], wdata);
-  pll_sync #(6)  clkrsync   (.clk(PCLK), .trigger(PLLrfen),   .reset(~PRESETn), .data(wdata[5:0]),  .enable(clkr_enable),   .sync_data(PLLclkr));
-  pll_sync #(13) clkfsync   (.clk(PCLK), .trigger(PLLfben),   .reset(~PRESETn), .data(wdata),       .enable(clkf_enable),   .sync_data(PLLclkf));
-  pll_sync #(4)  clkodsync  (.clk(PCLK), .trigger(PLLrefclk), .reset(~PRESETn), .data(wdata[3:0]),  .enable(clkod_enable),  .sync_data(PLLclkod));
-  pll_sync #(12) bwadjsync  (.clk(PCLK), .trigger(PLLrefclk), .reset(~PRESETn), .data(wdata[11:0]), .enable(bwadj_enable),  .sync_data(PLLbwadj));
-  pll_sync #(1)  bypasssync (.clk(PCLK), .trigger(PLLrefclk), .reset(~PRESETn), .data(wdata[0]),    .enable(bypass_enable), .sync_data(PLLbypass));
-  pll_sync #(1)  testsync   (.clk(PCLK), .trigger(PLLrefclk), .reset(~PRESETn), .data(wdata[0]),    .enable(test_enable),   .sync_data(PLLtest));
+  pll_sync #(6)  clkrsync   (.clk(PCLK), .trigger(PLLrfen),   .reset(~PRESETn), .data(wdata[5:0]),  .enable(clkr_en),   .sync_data(PLLclkr));
+  pll_sync #(13) clkfsync   (.clk(PCLK), .trigger(PLLfben),   .reset(~PRESETn), .data(wdata),       .enable(clkf_en),   .sync_data(PLLclkf));
+  pll_sync #(4)  clkodsync  (.clk(PCLK), .trigger(PLLrefclk), .reset(~PRESETn), .data(wdata[3:0]),  .enable(clkod_en),  .sync_data(PLLclkod));
+  pll_sync #(12) bwadjsync  (.clk(PCLK), .trigger(PLLrefclk), .reset(~PRESETn), .data(wdata[11:0]), .enable(bwadj_en),  .sync_data(PLLbwadj));
+  pll_sync #(1)  bypasssync (.clk(PCLK), .trigger(PLLrefclk), .reset(~PRESETn), .data(wdata[0]),    .enable(bypass_en), .sync_data(PLLbypass));
+  pll_sync #(1)  testsync   (.clk(PCLK), .trigger(PLLrefclk), .reset(~PRESETn), .data(wdata[0]),    .enable(test_en),   .sync_data(PLLtest));
 
 endmodule
 
@@ -116,15 +117,13 @@ module pll_sync #(parameter SIZE = 8) (
   output logic [SIZE-1:0] sync_data
 );
 
-  // TCI sync logic from PLL guide
-
   logic selected_clk;
   logic [SIZE-1:0] data1d;
   logic            enable1d, enable2d;
   logic            sync_enable, sync_enable1d, sync_enable2d;
 
   // Use clk during reset. Otherwise sync to rising edge of trigger signal
-  clockmux2 clkmux (trigger, ref_clk, reset, selected_clk);
+  clockmux2 clkmux (trigger, clk, reset, selected_clk);
 
   // Feedback loop for data enable
   always @(posedge clk or negedge sync_enable2d) begin: enablesync1
@@ -144,4 +143,4 @@ module pll_sync #(parameter SIZE = 8) (
   flopen #(SIZE) datasync1 (clk,          enable1d,    data, data1d);
   flopen #(SIZE) datasync2 (selected_clk, sync_enable, data1d, sync_data);
 
-endmodule]
+endmodule

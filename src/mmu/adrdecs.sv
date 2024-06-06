@@ -49,8 +49,8 @@ module adrdecs import cvw::*;  #(parameter cvw_t P) (
   adrdec #(P.PA_BITS) plicdec(PhysicalAddress, P.PLIC_BASE[P.PA_BITS-1:0], P.PLIC_RANGE[P.PA_BITS-1:0], P.PLIC_SUPPORTED, AccessRW, Size, 4'b0100, SelRegions[9]);
   adrdec #(P.PA_BITS) sdcdec(PhysicalAddress, P.SDC_BASE[P.PA_BITS-1:0], P.SDC_RANGE[P.PA_BITS-1:0], P.SDC_SUPPORTED, AccessRW, Size, SUPPORTED_SIZE & 4'b1100, SelRegions[10]); 
   adrdec #(P.PA_BITS) spidec(PhysicalAddress, P.SPI_BASE[P.PA_BITS-1:0], P.SPI_RANGE[P.PA_BITS-1:0], P.SPI_SUPPORTED, AccessRW, Size, 4'b0100, SelRegions[11]);
-  adrdec #(P.PA_BITS) pllconfdec(PhysicalAddress, P.PLL_CONF_BASE[P.PA_BITS-1:0], P.PLL_CONF_RANGE[P.PA_BITS-1:0], P.PLL_SUPPORTED, AccessRW, Size, SUPPORTED_SIZE, SelRegions[12]);
-  adrdec #(P.PA_BITS) bsgdmcconfdec(PhysicalAddress, P.BSG_DMC_CONF_BASE[P.PA_BITS-1:0], P.BSG_DMC_CONF_RANGE[P.PA_BITS-1:0], P.BSG_DMC_SUPPORTED, AccessRW, Size, SUPPORTED_SIZE, SelRegions[13]);
+  adrdec #(P.PA_BITS) bsgdmcconfdec(PhysicalAddress, P.BSG_DMC_CONF_BASE[P.PA_BITS-1:0], P.BSG_DMC_CONF_RANGE[P.PA_BITS-1:0], P.BSG_DMC_SUPPORTED, AccessRW, Size, SUPPORTED_SIZE, SelRegions[12]);
+  adrdec #(P.PA_BITS) pllconfdec(PhysicalAddress, P.PLL_CONF_BASE[P.PA_BITS-1:0], P.PLL_CONF_RANGE[P.PA_BITS-1:0], P.PLL_SUPPORTED, AccessRW, Size, SUPPORTED_SIZE, SelRegions[13]);
 
   assign SelRegions[0] = ~|(SelRegions[13:1]); // none of the regions are selected
 endmodule
