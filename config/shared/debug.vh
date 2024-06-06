@@ -196,6 +196,40 @@
 `define X30_REGNO         16'h101E // E_SUPPORTED
 `define X31_REGNO         16'h101F // E_SUPPORTED
 
+// src/fpu/fpu
+`define FP0_REGNO         16'h1020 // F/D_SUPPORTED
+`define FP1_REGNO         16'h1021 // F/D_SUPPORTED
+`define FP2_REGNO         16'h1022 // F/D_SUPPORTED
+`define FP3_REGNO         16'h1023 // F/D_SUPPORTED
+`define FP4_REGNO         16'h1024 // F/D_SUPPORTED
+`define FP5_REGNO         16'h1025 // F/D_SUPPORTED
+`define FP6_REGNO         16'h1026 // F/D_SUPPORTED
+`define FP7_REGNO         16'h1027 // F/D_SUPPORTED
+`define FP8_REGNO         16'h1028 // F/D_SUPPORTED
+`define FP9_REGNO         16'h1029 // F/D_SUPPORTED
+`define FP10_REGNO        16'h102A // F/D_SUPPORTED
+`define FP11_REGNO        16'h102B // F/D_SUPPORTED
+`define FP12_REGNO        16'h102C // F/D_SUPPORTED
+`define FP13_REGNO        16'h102D // F/D_SUPPORTED
+`define FP14_REGNO        16'h102E // F/D_SUPPORTED
+`define FP15_REGNO        16'h102F // F/D_SUPPORTED
+`define FP16_REGNO        16'h1030 // F/D_SUPPORTED
+`define FP17_REGNO        16'h1031 // F/D_SUPPORTED
+`define FP18_REGNO        16'h1032 // F/D_SUPPORTED
+`define FP19_REGNO        16'h1033 // F/D_SUPPORTED
+`define FP20_REGNO        16'h1034 // F/D_SUPPORTED
+`define FP21_REGNO        16'h1035 // F/D_SUPPORTED
+`define FP22_REGNO        16'h1036 // F/D_SUPPORTED
+`define FP23_REGNO        16'h1037 // F/D_SUPPORTED
+`define FP24_REGNO        16'h1038 // F/D_SUPPORTED
+`define FP25_REGNO        16'h1039 // F/D_SUPPORTED
+`define FP26_REGNO        16'h103A // F/D_SUPPORTED
+`define FP27_REGNO        16'h103B // F/D_SUPPORTED
+`define FP28_REGNO        16'h103C // F/D_SUPPORTED
+`define FP29_REGNO        16'h103D // F/D_SUPPORTED
+`define FP30_REGNO        16'h103E // F/D_SUPPORTED
+`define FP31_REGNO        16'h103F // F/D_SUPPORTED
+
 // ACCESS_MEMORY Control ranges (Not implemented)
 //`define AAMVIRTUAL       23
 //`define AAMSIZE          22:20
