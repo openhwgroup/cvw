@@ -99,7 +99,7 @@ def main():
         if rdata != test_reg_data[r]:
             print(f"Error: register {r} read did not return correct data: {rdata} != {test_reg_data[r]}")
         else:
-            print(f"Read {rdata} from {r}")
+            print(f"Reading {rdata} from {r}")
 
     # Return all registers to original state
     reg_addrs = list(registers.keys())
@@ -130,7 +130,9 @@ def random_hex(reg_name):
         size = nonstandard_register_lengths[reg_name]
     else:
         size = XLEN
-    
+
+    // Reset ReadDataM to a value
+    nonstandard_register_lengths["READDATAM"] = XLEN
     if random_stimulus:
         return "0x" + f"{random.getrandbits(size):x}".rjust(pad, "0")
     else:
