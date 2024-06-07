@@ -180,15 +180,14 @@ localparam logic [63:0] PLIC_RANGE         = 64'h03FFFFFF;
 localparam logic SDC_SUPPORTED = 0;
 localparam logic [63:0] SDC_BASE           = 64'h00013000;
 localparam logic [63:0] SDC_RANGE          = 64'h0000007F;
-localparam logic SPI_SUPPORTED = 1;
+localparam logic SPI_SUPPORTED = 0; // Needs to be set to 1 when using actual SDC hardware. Currently setting to 1 immediately breaks simulation
 localparam logic [63:0] SPI_BASE           = 64'h10040000;
 localparam logic [63:0] SPI_RANGE          = 64'h00000FFF;
-localparam logic PLL_SUPPORTED = 1'b1;
+localparam logic PLL_SUPPORTED = 1;
 localparam logic [63:0] PLL_CONF_BASE      = 64'h00020000;
 localparam logic [63:0] PLL_CONF_RANGE     = 64'h000000FF;
-localparam logic BSG_DMC_SUPPORTED = 1'b1;
+localparam logic BSG_DMC_SUPPORTED = 1;
 localparam logic [63:0] BSG_DMC_CONF_BASE  = 64'h00030000;
-localparam logic [63:0] BSG_DMC_CONF_RANGE = 64'h000000FF;
 
 // Bus Interface width
 localparam AHBW = (XLEN);
@@ -229,6 +228,6 @@ localparam RADIX = 32'd4;
 localparam DIVCOPIES = 32'd4;
 
 // Memory synthesis configuration
-localparam logic USE_SRAM = 0;
+localparam logic USE_SRAM = 1;
 
 `include "config-shared.vh"
