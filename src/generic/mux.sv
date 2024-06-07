@@ -89,8 +89,8 @@ module clockmux2 #(parameter NUM_STAGES = 3) (
   logic [NUM_STAGES:0] q0, q1;
   logic                clk0out, clk1out;
 
-  assign q0[0] = ~s & q1[NUM_STAGES];
-  assign q1[0] =  s & q0[NUM_STAGES];
+  assign q0[0] = ~s & ~q1[NUM_STAGES];
+  assign q1[0] =  s & ~q0[NUM_STAGES];
 
   generate
     for (i=0; i < NUM_STAGES; i = i+1) begin

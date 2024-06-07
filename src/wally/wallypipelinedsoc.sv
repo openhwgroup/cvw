@@ -74,9 +74,8 @@ module wallypipelinedsoc
   output logic [12:0]         PLLclkf,
   output logic [3:0]          PLLclkod,
   output logic [11:0]         PLLbwadj,
-  output logic                PLLbypass,
-  output logic                PLLtest,
-  input  logic                PLLlock
+  input  logic                PLLlock,
+  output logic                PLLconfigdone
 );
 
   // Uncore signals
@@ -106,7 +105,7 @@ module wallypipelinedsoc
       .UARTSout, .MTIME_CLINT, .SDCIntr, .SPIIn, .SPIOut, .SPICS,
       .ui_clk, .dmc_config, .dmc_config_changed,
       .PLLrefclk, .PLLrfen, .PLLfben, .PLLclkr, .PLLclkf, .PLLclkod, .PLLbwadj,
-      .PLLbypass, .PLLtest, .PLLlock
+      .PLLlock, .PLLconfigdone
     );
   end else begin
     assign {HRDATA, HREADY, HRESP, HSELEXT, HSELEXTSDC, MTimerInt, MSwInt, MExtInt, SExtInt,

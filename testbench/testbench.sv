@@ -101,7 +101,8 @@ module testbench;
   logic [12:0] PLLclkf;
   logic [3:0]  PLLclkod;
   logic [11:0] PLLbwadj;
-  logic        PLLbypass, PLLtest, PLLlock;
+  logic        PLLlock;
+  logic        PLLconfigdone;
 
   logic        HREADY;
   logic        HSELEXT;
@@ -729,7 +730,7 @@ module testbench;
     .UARTSin, .UARTSout, .SDCIntr, .SPIIn, .SPIOut, .SPICS,
     .ui_clk, .dmc_config, .dmc_config_changed,
     .PLLrefclk, .PLLrfen, .PLLfben, .PLLclkr, .PLLclkf, .PLLclkod, .PLLbwadj,
-    .PLLbypass, .PLLtest, .PLLlock
+    .PLLlock, .PLLconfigdone
   ); 
 
   // generate clock to sequence tests

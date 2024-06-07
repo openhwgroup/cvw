@@ -74,9 +74,8 @@ module uncore
   output logic [12:0]          PLLclkf,
   output logic [3:0]           PLLclkod,
   output logic [11:0]          PLLbwadj,
-  output logic                 PLLbypass,
-  output logic                 PLLtest,
-  input  logic                 PLLlock
+  input  logic                 PLLlock,
+  output logic                 PLLconfigdone
 );
   
   logic [P.XLEN-1:0]           HREADRam, HREADSDC;
@@ -207,15 +206,15 @@ module uncore
     pll_config_apb #(P.XLEN) pll_conf (
       .PCLK, .PRESETn, .PSEL(PSEL[6]), .PADDR(PADDR[7:0]), .PWDATA, .PWRITE, .PENABLE,
       .PRDATA(PRDATA[6]), .PREADY(PREADY[6]),
-      .PLLrefclk, .PLLrfen, .PLLfben, .PLLclkr, .PLLclkf, .PLLclkod, .PLLbwadj,
-      .PLLbypass, .PLLtest, .PLLlock);
+      .PLLrefclk, .PLLrfen, .PLLfben, 
+      .PLLclkr, .PLLclkf, .PLLclkod, .PLLbwadj, .PLLlock,
+      .PLLconfigdone);
   end else begin : pll_config
-    assign PLLclkr   = 0;
-    assign PLLclkf   = 0;
-    assign PLLclkod  = 0;
-    assign PLLbwadj  = 0;
-    assign PLLbypass = 0;
-    assign PLLtest   = 0;
+    assign PLLclkr       = 0;
+    assign PLLclkf       = 0;
+    assign PLLclkod      = 0;
+    assign PLLbwadj      = 0;
+    assign PLLconfigdone = 1;
   end
 
   // AHB Read Multiplexer
