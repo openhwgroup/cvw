@@ -1,4 +1,4 @@
-section .text
+.section .text
 .globl config_pll
 .type config_pll, @function
 

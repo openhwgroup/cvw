@@ -166,6 +166,7 @@ module testbench;
         "wally64periph":                          tests = wally64periph;
         "coremark":                               tests = coremark;
         "fpga":                                   tests = fpga;
+        "soc":                                    tests = soc;
         "ahb64" :                                 tests = ahb64;
         "coverage64gc" :                          tests = coverage64gc;
         "arch64zba":     if (P.ZBA_SUPPORTED)     tests = arch64zba;

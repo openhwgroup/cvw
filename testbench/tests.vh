@@ -2782,12 +2782,17 @@ string arch32zfh_fma[] = '{
 
  string custom[] = '{
     `CUSTOM,
-    "lpddr_test",
     "simple",
     "debug",
     "cacheTest"
  };
-  string testsBP64[] = '{
+
+ string soc[] = '{
+    `CUSTOM,
+    "lpddr_test"
+ };
+
+ string testsBP64[] = '{
     `IMPERASTEST,
     "rv64BP/simple"
 //    "rv64BP/mmm",

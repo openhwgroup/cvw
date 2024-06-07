@@ -1,4 +1,4 @@
-section .text
+.section .text
 .globl config_bsg_dmc
 .type config_bsg_dmc, @function
 
