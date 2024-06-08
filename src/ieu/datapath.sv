@@ -80,8 +80,8 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   output logic       DebugScanOut,
   input  logic       GPRSel,
   input  logic       DebugCapture,
-  input  logic       DebugGPRUpdate,
-  input  logic [4:0] GPRAddr,
+  input  logic       DebugRegUpdate,
+  input  logic [4:0] RegAddr,
   input  logic       GPRScanEn,
   input  logic       GPRScanIn,
   output logic       GPRScanOut
@@ -119,11 +119,11 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   // Access GPRs from Debug Module
   if (P.DEBUG_SUPPORTED) begin
     regfile #(P.XLEN, P.E_SUPPORTED) regf(clk, reset, RegWriteWM, Rs1DM, Rs2D, RdWM, ResultWM, R1D, R2D);
-    assign RegWriteWM = GPRSel ? DebugGPRUpdate : RegWriteW;
-    assign Rs1DM = GPRSel ? GPRAddr : Rs1D;
-    assign RdWM = GPRSel ? GPRAddr : RdW;
+    assign RegWriteWM = GPRSel ? DebugRegUpdate : RegWriteW;
+    assign Rs1DM = GPRSel ? RegAddr : Rs1D;
+    assign RdWM = GPRSel ? RegAddr : RdW;
     assign ResultWM = GPRSel ? DebugGPRWriteD : ResultW;
-    flopenrs #(P.XLEN) GPRScanReg(.clk, .reset, .en(DebugCapture), .d(R1D), .q(DebugGPRWriteD), .scan(GPRScanEn), .scanin(GPRScanIn), .scanout(GPRScanOut));
+    flopenrs #(P.XLEN) GPScanReg(.clk, .reset, .en(DebugCapture), .d(R1D), .q(DebugGPRWriteD), .scan(GPRScanEn), .scanin(GPRScanIn), .scanout(GPRScanOut));
   end else begin
     regfile #(P.XLEN, P.E_SUPPORTED) regf(clk, reset, RegWriteW, Rs1D, Rs2D, RdW, ResultW, R1D, R2D);
   end

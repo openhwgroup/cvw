@@ -61,15 +61,12 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.FLEN-1:0]    ReadDataW,                          // Read data (from LSU)
   output logic [P.XLEN-1:0]    FCvtIntResW,                        // convert result to to be written to integer register (to IEU)
   output logic                 FCvtIntW,                           // select FCvtIntRes (to IEU)
-  output logic [P.XLEN-1:0]    FIntDivResultW                      // Result from integer division (to IEU)
+  output logic [P.XLEN-1:0]    FIntDivResultW,                     // Result from integer division (to IEU)
   // Debug scan chain
-  input  logic                 DebugScanEn,
-  input  logic                 DebugScanIn,
-  output logic                 DebugScanOut,
   input  logic                 FPRSel,
   input  logic                 DebugCapture,
-  input  logic                 DebugFPRUpdate,
-  input  logic [4:0]           FPRAddr,
+  input  logic                 DebugRegUpdate,
+  input  logic [4:0]           RegAddr,
   input  logic                 FPRScanEn,
   input  logic                 FPRScanIn,
   output logic                 FPRScanOut
@@ -181,7 +178,11 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   logic                        FRoundNVE, FRoundNXE;               // Zfa fround invalid and inexact flags
 
   // Debug signals
-  logic [P.XLEN-1:0]           DebugFPRWriteD;
+  logic                        FRegWriteWM;
+  logic [4:0]                  RA1;
+  logic [4:0]                  WA1;
+  logic [P.FLEN-1:0]           FResultWM;
+  logic [P.FLEN-1:0]           DebugFPRWriteD;
    
   //////////////////////////////////////////////////////////////////////////////////////////
   // Decode Stage: fctrl decoder, read register file
@@ -201,14 +202,14 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   // Access FPRs from Debug Module
   if (P.DEBUG_SUPPORTED) begin
     fregfile #(P.FLEN) fregfile (.clk, .reset, .we4(FRegWriteWM),
-      .a1(Rs1DM), .a2(InstrD[24:20]), .a3(InstrD[31:27]), 
-      .a4(RdWM), .wd4(FResultWM),
+      .a1(RA1), .a2(InstrD[24:20]), .a3(InstrD[31:27]), 
+      .a4(WA1), .wd4(FResultWM),
       .rd1(FRD1D), .rd2(FRD2D), .rd3(FRD3D));       
-    assign FRegWriteWM = FPRSel ? DebugFPRUpdate : FRegWriteW;
-    assign Rs1DM = FPRSel ? FPRAddr : InstrD[19:15];
-    assign RdWM = FPRSel ? FPRAddr : RdW;
-    assign FResultWM = GPRSel ? DebugFPRWriteD : FResultW;
-    flopenrs #(P.XLEN) GPRScanReg(.clk, .reset, .en(DebugCapture), .d(FRD1D), .q(DebugFPRWriteD), .scan(FPRScanEn), .scanin(FPRScanIn), .scanout(FPRScanOut));
+    assign FRegWriteWM = FPRSel ? DebugRegUpdate : FRegWriteW;
+    assign RA1 = FPRSel ? RegAddr : InstrD[19:15];
+    assign WA1 = FPRSel ? RegAddr : RdW;
+    assign FResultWM = FPRSel ? DebugFPRWriteD : FResultW;
+    flopenrs #(P.FLEN) FPScanReg(.clk, .reset, .en(DebugCapture), .d(FRD1D), .q(DebugFPRWriteD), .scan(FPRScanEn), .scanin(FPRScanIn), .scanout(FPRScanOut));
   end else begin
     fregfile #(P.FLEN) fregfile (.clk, .reset, .we4(FRegWriteW),
       .a1(InstrD[19:15]), .a2(InstrD[24:20]), .a3(InstrD[31:27]), 

@@ -86,8 +86,8 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   // GPR debug scan chain
   input  logic              GPRSel,
   input  logic              DebugCapture,
-  input  logic              DebugGPRUpdate,
-  input  logic [4:0]        GPRAddr,
+  input  logic              DebugRegUpdate,
+  input  logic [4:0]        RegAddr,
   input  logic              GPRScanEn,
   input  logic              GPRScanIn,
   output logic              GPRScanOut
@@ -143,5 +143,5 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
     .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataM, .FCvtIntW,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .SquashSCW, .ResultSrcW, .ReadDataW, .FCvtIntResW,
     .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW, .DebugScanEn, .DebugScanIn(DSCR), .DebugScanOut,
-    .GPRSel, .DebugCapture, .DebugGPRUpdate, .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut);
+    .GPRSel, .DebugCapture, .DebugRegUpdate, .RegAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut);
 endmodule

@@ -45,15 +45,13 @@ module dm import cvw::*; #(parameter cvw_t P) (
   input  logic            ScanIn,
   output logic            ScanOut,
   output logic            GPRSel,
+  output logic            FPRSel,
+  output logic [4:0]      RegAddr,
   output logic            DebugCapture,
-  output logic            DebugGPRUpdate,
-  output logic [4:0]      GPRAddr,
+  output logic            DebugRegUpdate,
   output logic            GPRScanEn,
   input  logic            GPRScanIn,
   output logic            GPRScanOut,
-  output logic            FPRSel,
-  output logic            DebugFPRUpdate,
-  output logic [4:0]      FPRAddr,
   output logic            FPRScanEn,
   input  logic            FPRScanIn,
   output logic            FPRScanOut					       
@@ -97,21 +95,22 @@ module dm import cvw::*; #(parameter cvw_t P) (
 		    W_ABSTRACTCS, R_ABSTRACTCS, ABST_COMMAND, R_SYSBUSCS, READ_ZERO,
 		    INVALID} State;
 
-  enum logic [1:0] {AC_IDLE, AC_GPRUPDATE, AC_SCAN, AC_CAPTURE} AcState, NewAcState;
+  enum logic [1:0] {AC_IDLE, AC_UPDATE, AC_SCAN, AC_CAPTURE} AcState, NewAcState;
 
   // AbsCmd internal state
   logic              AcWrite;        // Abstract Command write state
-  logic [P.XLEN:0]   ScanReg;        // The part of the debug scan chain located within DM
-  logic [P.XLEN-1:0] ScanNext;       // New ScanReg value
-  logic [P.XLEN-1:0] ARMask;         // Masks which bits of the ScanReg get updated
-  logic [P.XLEN-1:0] PackedDataReg;  // Combines DataX msg registers into a single XLEN wide register
-  logic [P.XLEN-1:0] MaskedScanReg;  // Masks which bits of the ScanReg get written to DataX
+  logic [P.LLEN:0]   ScanReg;        // The part of the debug scan chain located within DM
+  logic [P.LLEN-1:0] ScanNext;       // New ScanReg value
+  logic [P.LLEN-1:0] ARMask;         // Masks which bits of the ScanReg get updated
+  logic [P.LLEN-1:0] PackedDataReg;  // Combines DataX msg registers into a single LLEN wide register
+  logic [P.LLEN-1:0] MaskedScanReg;  // Masks which bits of the ScanReg get written to DataX
   logic [9:0]        ShiftCount;     // Position of the selected register on the debug scan chain
   logic [9:0]        ScanChainLen;   // Total length of currently selected scan chain
   logic [9:0]        Cycle;          // DM's current position in the scan chain
   logic              InvalidRegNo;   // Requested RegNo is invalid
   logic              RegReadOnly;    // Current RegNo points to a readonly register
-  logic              GPRRegNo;       // Requested RegNo is a GPR
+  logic              GPRegNo;        // Requested RegNo is a GPR
+  logic              FPRegNo;        // Requested RegNo is a FPR
   logic              StoreScanChain; // Store current value of ScanReg into DataX
   logic              WriteMsgReg;    // Write to DataX
   logic              WriteScanReg;   // Insert data from DataX into ScanReg
@@ -158,7 +157,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic              Busy;
   const logic        RelaxedPriv = 1;
   logic [2:0]        CmdErr;
-  const logic [3:0]  DataCount = (P.XLEN/32);
+  const logic [3:0]  DataCount = (P.LLEN/32);
 
   // Pack registers
   assign DMControl = {2'b0, 1'b0, 2'b0, 1'b0, 10'b0,
@@ -214,10 +213,10 @@ module dm import cvw::*; #(parameter cvw_t P) (
             case ({ReqOP, ReqAddress}) inside
               {`OP_WRITE,`DATA0}                       : State <= W_DATA;
               {`OP_READ,`DATA0}                        : State <= R_DATA;
-              {`OP_WRITE,`DATA1}                       : State <= (P.XLEN >= 64) ? W_DATA : INVALID;
-              {`OP_READ,`DATA1}                        : State <= (P.XLEN >= 64) ? R_DATA : INVALID;
-              [{`OP_WRITE,`DATA2}:{`OP_WRITE,`DATA3}]  : State <= (P.XLEN >= 128) ? W_DATA : INVALID;
-              [{`OP_READ,`DATA2}:{`OP_READ,`DATA3}]    : State <= (P.XLEN >= 128) ? R_DATA : INVALID;
+              {`OP_WRITE,`DATA1}                       : State <= (P.LLEN >= 64) ? W_DATA : INVALID;
+              {`OP_READ,`DATA1}                        : State <= (P.LLEN >= 64) ? R_DATA : INVALID;
+              [{`OP_WRITE,`DATA2}:{`OP_WRITE,`DATA3}]  : State <= (P.LLEN >= 128) ? W_DATA : INVALID;
+              [{`OP_READ,`DATA2}:{`OP_READ,`DATA3}]    : State <= (P.LLEN >= 128) ? R_DATA : INVALID;
               {`OP_WRITE,`DMCONTROL}                   : State <= W_DMCONTROL;
               {`OP_READ,`DMCONTROL}                    : State <= R_DMCONTROL;
               {`OP_READ,`DMSTATUS}                     : State <= DMSTATUS;
@@ -321,7 +320,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
           else begin
             case (ReqData[`CMDTYPE])
               `ACCESS_REGISTER : begin
-                if (ReqData[`AARSIZE] > $clog2(P.XLEN/8)) // if AARSIZE (encoded) is greater than P.XLEN, set CmdErr, do nothing
+                if (ReqData[`AARSIZE] > $clog2(P.LLEN/8)) // if AARSIZE (encoded) is greater than P.LLEN, set CmdErr, do nothing
                   CmdErr <= `CMDERR_BUS;
                 else if (~ReqData[`TRANSFER]); // If not TRANSFER, do nothing
                 else if (InvalidRegNo)
@@ -382,13 +381,17 @@ module dm import cvw::*; #(parameter cvw_t P) (
         end
 
         AC_SCAN : begin
-          if (Cycle == ScanChainLen)
-            AcState <= (GPRRegNo & AcWrite) ? AC_GPRUPDATE : AC_IDLE;
+          if ((GPRegNo | FPRegNo) & AcWrite & (Cycle == ScanChainLen)) // Writes to GPR/FPR are shifted in len(GPR) or len(FPR) cycles
+            AcState <= AC_UPDATE;
+          else if ((GPRegNo | FPRegNo) & ~AcWrite & (Cycle == P.LLEN)) // Reads from GPR/FPR are shifted in len(ScanReg) cycles
+            AcState <= AC_IDLE;
+          else if (~(GPRegNo | FPRegNo) & (Cycle == ScanChainLen)) // Misc scanchain must be scanned completely
+            AcState <= AC_IDLE;
           else
             Cycle <= Cycle + 1;
         end
 
-        AC_GPRUPDATE : begin
+        AC_UPDATE : begin
           AcState <= AC_IDLE;
         end
       endcase
@@ -397,50 +400,68 @@ module dm import cvw::*; #(parameter cvw_t P) (
 
   assign Busy = ~(AcState == AC_IDLE);
   assign DebugCapture = (AcState == AC_CAPTURE);
-  assign DebugGPRUpdate = (AcState == AC_GPRUPDATE);
+  assign DebugRegUpdate = (AcState == AC_UPDATE);
 
   // Scan Chain
-  assign GPRSel = GPRRegNo & (AcState != AC_IDLE);
-  assign ScanReg[P.XLEN] = GPRSel ? GPRScanIn : ScanIn;
-  assign ScanOut = GPRSel ? 1'b0 : ScanReg[0];
-  assign GPRScanOut = GPRSel ? ScanReg[0] : 1'b0;
-  assign ScanEn = ~GPRSel & (AcState == AC_SCAN);
-  assign GPRScanEn = GPRSel & (AcState == AC_SCAN);  
+  assign GPRSel = GPRegNo & (AcState != AC_IDLE);
+  assign FPRSel = FPRegNo & (AcState != AC_IDLE);
+
+  always_comb begin
+    {ScanOut,GPRScanOut,FPRScanOut} = 0;
+    {ScanEn,GPRScanEn,FPRScanEn} = 0;
+    case ({GPRSel, FPRSel})
+      2'b10 : begin
+        ScanReg[P.LLEN] = GPRScanIn;
+        GPRScanOut = ScanReg[0];
+        GPRScanEn = (AcState == AC_SCAN);
+      end
+      2'b01 : begin
+        ScanReg[P.LLEN] = FPRScanIn;
+        FPRScanOut = ScanReg[0];
+        FPRScanEn = (AcState == AC_SCAN);
+      end
+      2'b00 : begin
+        ScanReg[P.LLEN] = ScanIn;
+        ScanOut = ScanReg[0];
+        ScanEn = (AcState == AC_SCAN);
+      end
+    endcase
+  end
   
-  // Load data from message registers into scan chain
-  if (P.XLEN == 32)
+  if (P.LLEN == 32)
     assign PackedDataReg = Data0;
-  else if (P.XLEN == 64)
+  else if (P.LLEN == 64)
     assign PackedDataReg = {Data1,Data0};
-  else if (P.XLEN == 128)
+  else if (P.LLEN == 128)
     assign PackedDataReg = {Data3,Data2,Data1,Data0};
-  
-  assign WriteScanReg = AcWrite & (~GPRRegNo & (Cycle == ShiftCount) | GPRRegNo & (Cycle == 0));
+      
+  // Load data from message registers into scan chain
+  assign WriteScanReg = AcWrite & (~(GPRegNo | FPRegNo) & (Cycle == ShiftCount) | (GPRegNo | FPRegNo) & (Cycle == 0));
   genvar i;
-  for (i=0; i<P.XLEN; i=i+1) begin
+  for (i=0; i<P.LLEN; i=i+1) begin
     // ARMask is used as write enable for subword overwrites (basic mask would overwrite neighbors in the chain)
     assign ScanNext[i] = WriteScanReg & ARMask[i] ? PackedDataReg[i] : ScanReg[i+1];
     flopenr #(1) scanreg (.clk, .reset(rst), .en(AcState == AC_SCAN), .d(ScanNext[i]), .q(ScanReg[i]));
   end
   
   // Message Registers
-  assign MaskedScanReg = ARMask & ScanReg[P.XLEN:1];
+  assign MaskedScanReg = ARMask & ScanReg[P.LLEN:1];
   assign WriteMsgReg = (State == W_DATA) & ~Busy;
   assign StoreScanChain = (AcState == AC_SCAN) & (Cycle == ShiftCount) & ~AcWrite;
   
-  assign Data0Wr = StoreScanChain ? MaskedScanReg[31:0] : ReqData;;
+  assign Data0Wr = WriteMsgReg ? ReqData : MaskedScanReg[31:0];
   flopenr #(32) data0reg (.clk, .reset(rst), .en(StoreScanChain | WriteMsgReg & (ReqAddress == `DATA0)), .d(Data0Wr), .q(Data0));
-  if (P.XLEN >= 64) begin
-    assign Data1Wr = StoreScanChain ?  MaskedScanReg[63:32] : ReqData;
+  if (P.LLEN >= 64) begin
+    assign Data1Wr = WriteMsgReg ? ReqData : MaskedScanReg[63:32];
     flopenr #(32) data1reg (.clk, .reset(rst), .en(StoreScanChain | WriteMsgReg & (ReqAddress == `DATA1)), .d(Data1Wr), .q(Data1));
   end 
-  if (P.XLEN == 128) begin
-    assign Data2Wr = StoreScanChain ?  MaskedScanReg[95:64] : ReqData;
-    assign Data3Wr = StoreScanChain ?  MaskedScanReg[127:96] : ReqData;
+  if (P.LLEN == 128) begin
+    assign Data2Wr = WriteMsgReg ? ReqData : MaskedScanReg[95:64];
+    assign Data3Wr = WriteMsgReg ? ReqData : MaskedScanReg[127:96];
     flopenr #(32) data2reg (.clk, .reset(rst), .en(StoreScanChain | WriteMsgReg & (ReqAddress == `DATA2)), .d(Data2Wr), .q(Data2));
     flopenr #(32) data3reg (.clk, .reset(rst), .en(StoreScanChain | WriteMsgReg & (ReqAddress == `DATA3)), .d(Data3Wr), .q(Data3));
   end
 
-  rad #(P) regnodecode(.AarSize(ReqData[`AARSIZE]),.Regno(ReqData[`REGNO]),.GPRRegNo,.ScanChainLen,.ShiftCount,.InvalidRegNo,.RegReadOnly,.GPRAddr,.ARMask);
+  rad #(P) regnodecode(.AarSize(ReqData[`AARSIZE]),.Regno(ReqData[`REGNO]),.GPRegNo,.FPRegNo,.ScanChainLen,.ShiftCount,.InvalidRegNo,.RegReadOnly,.RegAddr,.ARMask);
 
 endmodule

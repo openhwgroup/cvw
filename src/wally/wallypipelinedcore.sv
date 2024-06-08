@@ -52,14 +52,12 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    output logic                 DebugScanOut,
    input  logic                 GPRSel,
    input  logic                 DebugCapture,
-   input  logic                 DebugGPRUpdate,
-   input  logic [4:0]           GPRAddr,
+   input  logic                 DebugRegUpdate,
+   input  logic [4:0]           RegAddr,
    input  logic                 GPRScanEn,
    input  logic                 GPRScanIn,
    output logic                 GPRScanOut,
    input  logic                 FPRSel,
-   input  logic                 DebugFPRUpdate,
-   input  logic [4:0]           FPRAddr,
    input  logic                 FPRScanEn,
    input  logic                 FPRScanIn,
    output logic                 FPRScanOut							       							       
@@ -238,7 +236,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
      .StructuralStallD, .LoadStallD, .StoreStallD, .PCSrcE,
      .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .InvalidateICacheM,
      .DebugScanEn, .DebugScanIn(ScanReg[2]), .DebugScanOut(ScanReg[3]),
-     .GPRSel, .DebugCapture, .DebugGPRUpdate, .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut);
+     .GPRSel, .DebugCapture, .DebugRegUpdate, .RegAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut);
 
   lsu #(P) lsu(
     .clk, .reset, .StallM, .FlushM, .StallW, .FlushW,
@@ -379,16 +377,13 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .IllegalFPUInstrD,                   // Is the instruction an illegal fpu instruction
       .SetFflagsM,                         // FPU flags (to privileged unit)
       .FIntDivResultW,
-      .DebugScanEn, 
-      .DebugScanIn(ScanReg[2]), 
-      .DebugScanOut(ScanReg[3]),
-      .FPRSel, 
-      .DebugCapture, 
-      .DebugFPRUpdate, 
-      .FPRAddr, 
-      .FPRScanEn, 
-      .FPRScanIn, 
-      .FPRScanOut); 
+      .FPRSel,
+      .DebugCapture,
+      .DebugRegUpdate,
+      .RegAddr,
+      .FPRScanEn,
+      .FPRScanIn,
+      .FPRScanOut);
   end else begin                           // no F_SUPPORTED or D_SUPPORTED; tie outputs low
     assign {FPUStallD, FWriteIntE, FCvtIntE, FIntResM, FCvtIntW, 
             IllegalFPUInstrD, SetFflagsM, FpLoadStoreM,

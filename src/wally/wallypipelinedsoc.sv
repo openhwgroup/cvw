@@ -81,14 +81,12 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                        ScanOut;
   logic                        GPRSel;
   logic                        DebugCapture;
-  logic                        DebugGPRUpdate;
-  logic [4:0]                  GPRAddr;
+  logic                        DebugRegUpdate;
+  logic [4:0]                  RegAddr;
   logic                        GPRScanEn;
   logic                        GPRScanIn;
   logic                        GPRScanOut;
   logic                        FPRSel;
-  logic                        DebugFPRUpdate;
-  logic [4:0]                  FPRAddr;
   logic                        FPRScanEn;
   logic                        FPRScanIn;
   logic                        FPRScanOut;   
@@ -102,8 +100,8 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
     .DebugStall, .DebugScanEn(ScanEn), .DebugScanIn(ScanOut), .DebugScanOut(ScanIn),
-    .GPRSel, .DebugCapture, .DebugGPRUpdate, .GPRAddr, .GPRScanEn, .GPRScanIn(GPRScanOut), .GPRScanOut(GPRScanIn),
-    .FPRSel, .DebugFPRUpdate, .FPRAddr, .FPRScanEn, .FPRScanIn, .FPRScanOut);
+    .GPRSel, .DebugCapture, .DebugRegUpdate, .RegAddr, .GPRScanEn, .GPRScanIn(GPRScanOut), .GPRScanOut(GPRScanIn),
+    .FPRSel, .FPRScanEn, .FPRScanIn(FPRScanOut), .FPRScanOut(FPRScanIn));
 
   // instantiate uncore if a bus interface exists
   if (P.BUS_SUPPORTED) begin : uncoregen // Hack to work around Verilator bug https://github.com/verilator/verilator/issues/4769
@@ -120,12 +118,12 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   // instantiate debug module
   if (P.DEBUG_SUPPORTED) begin : dm
     dm #(P) dm (.clk, .rst(reset), .NdmReset, .tck, .tdi, .tms, .tdo,
-      .DebugStall, .ScanEn, .ScanIn, .ScanOut, .GPRSel, .DebugCapture, .DebugGPRUpdate,
-      .GPRAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut, .FPRSel, .DebugFPRUpdate, 
-      .FPRAddr, .FPRScanEn, .FPRScanIn, .FPRScanOut);
+      .DebugStall, .ScanEn, .ScanIn, .ScanOut, .GPRSel, .DebugCapture, .DebugRegUpdate,
+      .RegAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut, .FPRSel, 
+      .FPRScanEn, .FPRScanIn, .FPRScanOut);
   end else begin
-    assign {NdmReset, DebugStall, ScanOut, GPRSel, DebugCapture, DebugGPRUpdate, GPRAddr, GPRScanEn, GPRScanOut, 
-            FPRSel, DebugFPRUpdate, FPRAddr, FPRScanEn, FPRScanOut} = '0;
+    assign {NdmReset, DebugStall, ScanOut, GPRSel, DebugCapture, DebugRegUpdate, RegAddr, GPRScanEn, GPRScanOut, 
+            FPRSel, FPRScanEn, FPRScanOut} = '0;
   end
 
 endmodule

@@ -28,13 +28,14 @@
 module rad import cvw::*; #(parameter cvw_t P) (
   input  logic [2:0]        AarSize,
   input  logic [15:0]       Regno,
-  output logic              GPRRegNo,
+  output logic              GPRegNo,
+  output logic              FPRegNo,
   output logic [9:0]        ScanChainLen,
   output logic [9:0]        ShiftCount,
   output logic              InvalidRegNo,
   output logic              RegReadOnly,
-  output logic [4:0]        GPRAddr,
-  output logic [P.XLEN-1:0] ARMask
+  output logic [4:0]        RegAddr,
+  output logic [P.LLEN-1:0] ARMask
 );
   `include "debug.vh"
 
@@ -52,6 +53,7 @@ module rad import cvw::*; #(parameter cvw_t P) (
     + MEMRWMLEN + INSTRVALIDMLEN + WRITEDATAMLEN
     + IEUADRMLEN + READDATAMLEN;
   localparam GPRCHAINLEN = P.XLEN;
+  localparam FPRCHAINLEN = P.FLEN;
 
   localparam MISA_IDX = MISALEN;
   localparam TRAPM_IDX = MISA_IDX + TRAPMLEN;
@@ -63,29 +65,31 @@ module rad import cvw::*; #(parameter cvw_t P) (
   localparam IEUADRM_IDX = WRITEDATAM_IDX + IEUADRMLEN;
   localparam READDATAM_IDX = IEUADRM_IDX + READDATAMLEN;
 
-  logic [P.XLEN:0] Mask;
+  logic [P.LLEN:0] Mask;
 
-  assign ScanChainLen = GPRRegNo ? GPRCHAINLEN : SCANCHAINLEN;
-
-  if (P.E_SUPPORTED)
-    assign GPRAddr = Regno[3:0];
-  else
-    assign GPRAddr = Regno[4:0];
+  assign RegAddr = Regno[4:0];
+  assign ScanChainLen = GPRegNo ? GPRCHAINLEN : FPRegNo ? FPRCHAINLEN : SCANCHAINLEN;
 
   // Register decoder
   always_comb begin
     InvalidRegNo = 0;
     RegReadOnly = 0;
-    GPRRegNo = 0;
-    casez (Regno)
-      16'h100? : begin
+    GPRegNo = 0;
+    FPRegNo = 0;
+    case (Regno) inside
+      [`X0_REGNO:`X15_REGNO] : begin
         ShiftCount = P.XLEN - 1;
-        GPRRegNo = 1;
+        GPRegNo = 1;
       end
-      16'h101? : begin
+      [`X16_REGNO:`X31_REGNO] : begin
         ShiftCount = P.XLEN - 1;
         InvalidRegNo = P.E_SUPPORTED;
-        GPRRegNo = 1;
+        GPRegNo = 1;
+      end
+      [`FP0_REGNO:`FP31_REGNO] : begin
+        ShiftCount = P.FLEN - 1;
+        InvalidRegNo = ~(P.F_SUPPORTED | P.D_SUPPORTED | P.Q_SUPPORTED);
+        FPRegNo = 1;
       end
       `MISA_REGNO : begin
         ShiftCount = SCANCHAINLEN - MISA_IDX;
@@ -123,20 +127,21 @@ module rad import cvw::*; #(parameter cvw_t P) (
   // Mask calculator
   always_comb begin
     Mask = 0;
-    case(Regno)
-      `TRAPM_REGNO       : Mask = {1{1'b1}};
-      `INSTRM_REGNO      : Mask = {32{1'b1}};
-      `MEMRWM_REGNO      : Mask = {2{1'b1}};
-      `INSTRVALIDM_REGNO : Mask = {1{1'b1}};
-      `READDATAM_REGNO   : Mask = {P.LLEN{1'b1}};
-      default      : Mask = {P.XLEN{1'b1}};
+    case (Regno) inside
+      `TRAPM_REGNO             : Mask = {1{1'b1}};
+      `INSTRM_REGNO            : Mask = {32{1'b1}};
+      `MEMRWM_REGNO            : Mask = {2{1'b1}};
+      `INSTRVALIDM_REGNO       : Mask = {1{1'b1}};
+      `READDATAM_REGNO         : Mask = {P.LLEN{1'b1}};
+      [`FP0_REGNO:`FP31_REGNO] : Mask = {P.FLEN{1'b1}};
+      default                  : Mask = {P.XLEN{1'b1}};
     endcase
   end
 
   assign ARMask[31:0] = Mask[31:0];
-  if (P.XLEN >= 64)
+  if (P.LLEN >= 64)
     assign ARMask[63:32] = (AarSize == 3'b011 | AarSize == 3'b100) ? Mask[63:32] : '0;
-  if (P.XLEN == 128)
+  if (P.LLEN == 128)
     assign ARMask[127:64] = (AarSize == 3'b100) ? Mask[127:64] : '0;
 
 endmodule
