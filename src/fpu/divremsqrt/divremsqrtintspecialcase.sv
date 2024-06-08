@@ -1,7 +1,7 @@
 module divremsqrtintspecialcase import cvw::*; #(parameter cvw_t P) (
     input logic BZeroM,RemOpM, ALTBM, SIGNOVERFLOWM,
     input logic [P.XLEN-1:0] AM,
-    input  signed [P.XLEN-1:0] PreIntResultM,
+    input  signed [P.INTDIVb+3:0] PreIntResultM,
     output logic [P.XLEN-1:0] IntDivResultM
 );
 always_comb
@@ -14,5 +14,5 @@ always_comb
      end else if (ALTBM) begin // Numerator is small
         if (RemOpM) IntDivResultM = AM;
         else        IntDivResultM = 0;
-     end else       IntDivResultM = PreIntResultM;
+     end else       IntDivResultM = PreIntResultM[P.XLEN-1:0];
 endmodule

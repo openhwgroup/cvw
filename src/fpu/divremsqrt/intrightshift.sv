@@ -28,10 +28,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module intrightshift import cvw::*;  #(parameter cvw_t P) (
-  input logic signed [P.DIVb+3:0] shiftin,
+  input logic signed [P.INTDIVb+3:0] shiftin,
   input logic [P.DIVBLEN-1:0] shiftamt,
-  output logic signed [P.DIVb+3:0] shifted
+  output logic signed [P.INTDIVb+3:0] shifted
 );
-  assign shifted = shiftin >>> shiftamt;
+  assign shifted = shiftin >> shiftamt;
 
 endmodule

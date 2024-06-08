@@ -79,7 +79,7 @@
   logic                       ISpecialCaseE;                // Integer div/remainder special cases
 
 
-  divremsqrtfdivsqrtpreproc #(P) divremsqrtfdivsqrtpreproc(                          // Preprocessor
+  kevindivremsqrtfdivsqrtpreproc #(P) divremsqrtfdivsqrtpreproc(                          // Preprocessor
     .clk, .IFDivStartE, .Xm(XmE), .Ym(YmE), .Xe(XeE), .Ye(YeE),
     .FmtE, .SqrtE, .XZeroE, .Funct3E, .UeM, .X, .D, .CyclesE,
     // Int-specific 
@@ -98,12 +98,21 @@
     .clk, .IFDivStartE, .FDivBusyE, .SqrtE, .X, .D, 
     .FirstU, .FirstUM, .FirstC, .Firstun, .FirstWS(WS), .FirstWC(WC));
 
-  divremsqrtfdivsqrtpostproc #(P) fdivsqrtpostproc(                        // Postprocessor
+  kevindivremsqrtfdivsqrtpostproc #(P) fdivsqrtpostproc(                        // Postprocessor
     .clk, .reset, .StallM, .WS, .WC, .D, .FirstU, .FirstUM, .FirstC, 
     .SqrtE, .Firstun, .SqrtM, .SpecialCaseM, 
     .UmM, .WZeroE, .DivStickyM, 
     // Int-specific 
     .ALTBM, .AsM, .BsM, .BZeroM, .W64M, .RemOpM(Funct3M[1]), .AM, 
-    .FIntDivResultM,  .PreResultM, .PreIntResultM, .SIGNOVERFLOWM, .ZeroDiffM, .IntDivM);
+    .FIntDivResultM,  .PreResultM, .PreIntResultM, .SIGNOVERFLOWM, .ZeroDiffM, .IntDivM, .IntNormShiftM);
+  
+  
+  /*divremsqrtfdivsqrtpostproc #(P) fdivsqrtpostproc(                        // Postprocessor
+    .clk, .reset, .StallM, .WS, .WC, .D, .FirstU, .FirstUM, .FirstC, 
+    .SqrtE, .Firstun, .SqrtM, .SpecialCaseM, 
+    .UmM, .WZeroE, .DivStickyM, 
+    // Int-specific 
+    .ALTBM, .AsM, .BsM, .BZeroM, .W64M, .RemOpM(Funct3M[1]), .AM, 
+    .FIntDivResultM,  .PreResultM, .PreIntResultM, .SIGNOVERFLOWM, .ZeroDiffM, .IntDivM);*/
 endmodule
 

@@ -94,7 +94,7 @@ module drsu import cvw::*;  #(parameter cvw_t P) (
                     .Funct3E, .IntDivE, .FIntDivResultM, .IntDivM,
                     .FDivDoneE, .IFDivStartE, .IntNormShiftM, .PreIntResultM, .PreResultM);
   assign UmMexact = UmM[P.DIVb:P.DIVb-(P.NF+3-1)]; // grabbing top 1+(NF+2) msbs
-  divremsqrtpostprocess #(P) divremsqrtpostprocess(.Xs(XsE), .Ys(YsE), .Xm(XmE), .Ym(YmE), .Frm(Frm), .Fmt(FmtE), .OpCtrl, .IntDivM,
+  kevindivremsqrtpostprocess #(P) divremsqrtpostprocess(.Xs(XsE), .Ys(YsE), .Xm(XmE), .Ym(YmE), .Frm(Frm), .Fmt(FmtE), .OpCtrl, .IntDivM,
     .XZero(XZeroE), .YZero(YZeroE), .XInf(XInfE), .YInf(YInfE), .XNaN(XNaNE), .YNaN(YNaNE), .XSNaN(XSNaNE), 
     .YSNaN(YSNaNE), .PostProcSel,.DivSticky(DivStickyM), .DivUe(UeM), .DivUm(UmMexact), .PostProcRes(FResM), .PostProcFlg(FlgM),
     .PreIntResultM, .PreResultM, .IntNormShiftM);
