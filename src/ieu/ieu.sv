@@ -120,6 +120,7 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   logic       BMUActiveE;                                    // Bit manipulation instruction being executed
   logic [1:0] CZeroE;                                        // {czero.nez, czero.eqz} instructions active
 
+  // Debug Control and Status (debug spec)
   logic DSCR;
            
   controller #(P) c(

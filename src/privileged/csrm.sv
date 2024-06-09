@@ -95,7 +95,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   localparam TDATA2        = 12'h7A2;
   localparam TDATA3        = 12'h7A3;
   localparam DCSR          = 12'h7B0;
-  localparam DPC           = 12'h7B1;
+  localparam DPC           = 12'h7B1;  // Debug PC (DPC)  
   localparam DSCRATCH0     = 12'h7B2;
   localparam DSCRATCH1     = 12'h7B3;
   // Constants

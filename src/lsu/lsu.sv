@@ -101,7 +101,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   output logic                    DebugScanOut
 );
   localparam logic MISALIGN_SUPPORT = P.ZICCLSM_SUPPORTED & P.DCACHE_SUPPORTED;
-  localparam MLEN = MISALIGN_SUPPORT ? 2*P.LLEN : P.LLEN; // widen buffer for misaligned accessess
+  localparam MLEN = MISALIGN_SUPPORT ? 2*P.LLEN : P.LLEN;        // widen buffer for misaligned accessess
 
   logic [P.XLEN+1:0]     IEUAdrExtM;                             // Memory stage address zero-extended to PA_BITS or XLEN whichever is longer
   logic [P.XLEN+1:0]     IEUAdrExtE;                             // Execution stage address zero-extended to PA_BITS or XLEN whichever is longer
@@ -158,9 +158,10 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic                  IgnoreRequest;                          // On FlushM or TLB miss ignore memory operation
   logic                  SelDTIM;                                // Select DTIM rather than bus or D$
   logic [P.XLEN-1:0]     WriteDataZM;
-  logic                  LSULoadPageFaultM, LSUStoreAmoPageFaultM;
+  logic 		 LSULoadPageFaultM;
+  logic                  LSUStoreAmoPageFaultM;
 
-  logic                  DSCR;
+  logic                  DSCR;                                   // Debug Control and Status
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Pipeline for IEUAdr E to M
