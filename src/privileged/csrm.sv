@@ -94,10 +94,10 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   localparam TDATA1        = 12'h7A1;
   localparam TDATA2        = 12'h7A2;
   localparam TDATA3        = 12'h7A3;
-  localparam DCSR          = 12'h7B0;
-  localparam DPC           = 12'h7B1;  // Debug PC (DPC)  
-  localparam DSCRATCH0     = 12'h7B2;
-  localparam DSCRATCH1     = 12'h7B3;
+  localparam DCSR          = 12'h7B0;  // Debug Control and Status Register 
+  localparam DPC           = 12'h7B1;  // Debug PC 
+  localparam DSCRATCH0     = 12'h7B2;  // Debug Scratch Register 0
+  localparam DSCRATCH1     = 12'h7B3;  // Debug Scratch Register 1
   // Constants
   localparam ZERO = {(P.XLEN){1'b0}};
   // when compressed instructions are supported, there can't be misaligned instructions
