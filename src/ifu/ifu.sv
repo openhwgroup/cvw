@@ -145,7 +145,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   logic [LINELEN-1:0]          FetchBuffer;
   logic [31:0]                 ShiftUncachedInstr;
   // Debug scan chain
-  logic                        DSCR;
+  logic                        DSCR;                                     // Debug Scan Chain Register
   
   assign PCFExt = {2'b00, PCSpillF};
 

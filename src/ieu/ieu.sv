@@ -72,13 +72,13 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   output logic [4:0]               RdW,                                   // Destination register
   input  logic [P.XLEN-1:0]        ReadDataW,                             // LSU's read data
   // Hazard unit signals
-  input  logic              StallD, StallE, StallM, StallW,  // Stall signals from hazard unit
-  input  logic              FlushD, FlushE, FlushM, FlushW,  // Flush signals
-  output logic              StructuralStallD,                // IEU detects structural hazard in Decode stage
-  output logic              LoadStallD,                      // Structural stalls for load, sent to performance counters
-  output logic              StoreStallD,                     // load after store hazard
-  output logic              CSRReadM, CSRWriteM, PrivilegedM,// CSR read, CSR write, is privileged instruction
-  output logic              CSRWriteFenceM,                  // CSR write or fence instruction needs to flush subsequent instructions
+  input  logic              StallD, StallE, StallM, StallW,               // Stall signals from hazard unit
+  input  logic              FlushD, FlushE, FlushM, FlushW,               // Flush signals
+  output logic              StructuralStallD,                             // IEU detects structural hazard in Decode stage
+  output logic              LoadStallD,                                   // Structural stalls for load, sent to performance counters
+  output logic              StoreStallD,                                  // load after store hazard
+  output logic              CSRReadM, CSRWriteM, PrivilegedM,             // CSR read, CSR write, is privileged instruction
+  output logic              CSRWriteFenceM,                               // CSR write or fence instruction needs to flush subsequent instructions
   // Debug scan chain
   input  logic              DebugScanEn,
   input  logic              DebugScanIn,
@@ -111,16 +111,16 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
 
   // Forwarding signals
   logic [4:0] Rs1D, Rs2D;
-  logic [4:0] Rs2E;                                    // Source registers
-  logic [1:0] ForwardAE, ForwardBE;                          // Select signals for forwarding multiplexers
-  logic       RegWriteM, RegWriteW;                          // Register will be written in Memory, Writeback stages
-  logic       MemReadE, CSRReadE;                            // Load, CSRRead instruction
-  logic       BranchSignedE;                                 // Branch does signed comparison on operands
-  logic       MDUE;                                          // Multiply/divide instruction
-  logic       BMUActiveE;                                    // Bit manipulation instruction being executed
-  logic [1:0] CZeroE;                                        // {czero.nez, czero.eqz} instructions active
+  logic [4:0] Rs2E;                                                       // Source registers
+  logic [1:0] ForwardAE, ForwardBE;                                       // Select signals for forwarding multiplexers
+  logic       RegWriteM, RegWriteW;                                       // Register will be written in Memory, Writeback stages
+  logic       MemReadE, CSRReadE;                                         // Load, CSRRead instruction
+  logic       BranchSignedE;                                              // Branch does signed comparison on operands
+  logic       MDUE;                                                       // Multiply/divide instruction
+  logic       BMUActiveE;                                                 // Bit manipulation instruction being executed
+  logic [1:0] CZeroE;                                                     // {czero.nez, czero.eqz} instructions active
 
-  logic DSCR;
+  logic DSCR;                                                             // Debug Scan Chain Register
            
   controller #(P) c(
     .clk, .reset, .StallD, .FlushD, .InstrD, .STATUS_FS, .ENVCFG_CBE, .ImmSrcD,
