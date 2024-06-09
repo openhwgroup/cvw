@@ -55,7 +55,7 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
 
   // Clock Domain Crossing
   logic                     tcks; // Synchronized JTAG clock
-  logic                     resetn;
+  logic                     resetn; // TODO: reset DM (but not hart)
   logic                     UpdateDtmcs;
   logic [31:0]              DtmcsIn;
   logic [31:0]              DtmcsOut;
@@ -65,13 +65,13 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
   logic [34+ADDR_WIDTH-1:0] DmiOut;
 
   // DTMCS Register
-  const logic [2:0]           ErrInfo = 0;
-  logic                       DtmHardReset;
-  logic                       DmiReset;
-  const logic [2:0]           Idle = 0;
-  logic [1:0]                 DmiStat;
-  const logic [5:0]           ABits = ADDR_WIDTH;
-  const logic [3:0]           Version = 1; // DTM spec version 1
+  const logic [2:0]         ErrInfo = 0;
+  logic                     DtmHardReset;
+  logic                     DmiReset;
+  const logic [2:0]         Idle = 0;
+  logic [1:0]               DmiStat;
+  const logic [5:0]         ABits = ADDR_WIDTH;
+  const logic [3:0]         Version = 1; // DTM spec version 1
 
   logic [31:0]              ValRspData;
   logic [1:0]               ValRspOP;

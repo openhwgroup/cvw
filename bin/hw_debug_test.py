@@ -6,7 +6,7 @@
 # Written: matthew.n.otto@okstate.edu
 # Created: 19 April 2024
 #
-# Purpose: Send test commands to OpenOCD via local telnet connection
+# Purpose: script to automate testing of hardware debug interface
 #
 # A component of the CORE-V-WALLY configurable RISC-V project.
 # https:#github.com/openhwgroup/cvw
@@ -30,98 +30,96 @@
 import random
 import time
 
-import hw_debug_interface
-from hw_debug_interface import *
+from openocd_tcl_wrapper import OpenOCD
 
-random_stimulus = False
+random_stimulus = True
 
 def main():
-    registers = dict.fromkeys(register_translations.keys(),[])
-    reg_addrs = list(registers.keys())
+    with OpenOCD() as cvw:
+        registers = dict.fromkeys(cvw.register_translations.keys(),[])
+        reg_addrs = list(registers.keys())
 
-    init()
-    global XLEN
-    XLEN = hw_debug_interface.XLEN
-    reset_dm()
-    reset_hart()
-    
-    time.sleep(70) # wait for OpenSBI
+        global XLEN
+        XLEN = cvw.LLEN
+        global nonstandard_register_lengths
+        nonstandard_register_lengths = cvw.nonstandard_register_lengths
 
-    halt()
-    status()
+        cvw.reset_dm()
+        cvw.reset_hart()
 
-    # dump data in all registers
-    for r in reg_addrs:
-        try:
-            data = read_data(r)
-            registers[r] = data
-            print(f"{r}: {data}")
-        except Exception as e:
-            if e.args[0] == "exception":  # Invalid register (not implemented)
-                del registers[r]
-                clear_abstrcmd_err()
-            else:
+        time.sleep(70)  # wait for OpenSBI
+
+        cvw.halt()
+
+        # dump data in all registers
+        for r in reg_addrs:
+            try:
+                data = cvw.read_data(r)
+                registers[r] = data
+                print(f"{r}: {data}")
+            except Exception as e:
+                if e.args[0] == "exception":  # Invalid register (not implemented)
+                    del registers[r]
+                    cvw.clear_abstrcmd_err()
+                else:
+                    raise e
+        input("Compare values to ILA, press any key to continue")
+
+        # Write random data to all registers
+        reg_addrs = list(registers.keys())
+        if random_stimulus:
+            random.shuffle(reg_addrs)
+        test_reg_data = {}
+        for r in reg_addrs:
+            test_data = random_hex(r)
+            try:
+                cvw.write_data(r, test_data)
+                test_reg_data[r] = test_data
+                print(f"Writing {test_data} to {r}")
+            except Exception as e:
+                if e.args[0] == "not supported":  # Register is read only
+                    del registers[r]
+                    cvw.clear_abstrcmd_err()
+                else:
+                    raise e
+
+        # GPR X0 is always 0
+        test_reg_data["x0"] = "0x" + "0"*(cvw.LLEN//4)
+
+        # Confirm data was written correctly
+        reg_addrs = list(registers.keys())
+        if random_stimulus:
+            random.shuffle(reg_addrs)
+        for r in reg_addrs:
+            try:
+                rdata = cvw.read_data(r)
+            except Exception as e:
                 raise e
-    input("Compare values to ILA, press any key to continue")
-
-    # Write random data to all registers
-    reg_addrs = list(registers.keys())
-    if random_stimulus:
-        random.shuffle(reg_addrs)
-    test_reg_data = {}
-    for r in reg_addrs:
-        test_data = random_hex(r)
-        try:
-            write_data(r, test_data)
-            test_reg_data[r] = test_data
-            print(f"Writing {test_data} to {r}")
-        except Exception as e:
-            if e.args[0] == "not supported":  # Register is read only
-                del registers[r]
-                clear_abstrcmd_err()
+            if rdata != test_reg_data[r]:
+                print(f"Error: register {r} read did not return correct data: {rdata} != {test_reg_data[r]}")
             else:
+                print(f"Reading {rdata} from {r}")
+
+        # Return all registers to original state
+        reg_addrs = list(registers.keys())
+        for r in reg_addrs:
+            print(f"Writing {registers[r]} to {r}")
+            try:
+                cvw.write_data(r, registers[r])
+            except Exception as e:
                 raise e
-    
-    check_errors()
 
-    # GPR X0 is always 0
-    test_reg_data["X0"] = "0x" + "0"*(XLEN//4)
+        # Confirm data was written correctly
+        for r in reg_addrs:
+            try:
+                rdata = cvw.read_data(r)
+            except Exception as e:
+                raise e
+            if rdata != registers[r]:
+                raise Exception(f"Register {r} read did not return correct data: {rdata} != {registers[r]}")
+        print("All writes successful")
 
-    # Confirm data was written correctly
-    reg_addrs = list(registers.keys())
-    if random_stimulus:
-        random.shuffle(reg_addrs)
-    for r in reg_addrs:
-        try:
-            rdata = read_data(r)
-        except Exception as e:
-            raise e
-        if rdata != test_reg_data[r]:
-            print(f"Error: register {r} read did not return correct data: {rdata} != {test_reg_data[r]}")
-        else:
-            print(f"Reading {rdata} from {r}")
-
-    # Return all registers to original state
-    reg_addrs = list(registers.keys())
-    for r in reg_addrs:
-        print(f"Writing {registers[r]} to {r}")
-        try:
-            write_data(r, registers[r])
-        except Exception as e:
-            raise e
-
-    # Confirm data was written correctly
-    for r in reg_addrs:
-        try:
-            rdata = read_data(r)
-        except Exception as e:
-            raise e
-        if rdata != registers[r]:
-            raise Exception(f"Register {r} read did not return correct data: {rdata} != {registers[r]}")
-    print("All writes successful")
-
-    resume()
-    status()
+        cvw.resume()
 
 
 def random_hex(reg_name):
