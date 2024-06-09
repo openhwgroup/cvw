@@ -161,7 +161,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic 		 LSULoadPageFaultM;
   logic                  LSUStoreAmoPageFaultM;
 
-  logic                  DSCR;                                   // Debug Control and Status
+  logic                  DSCR;                                   // Debug Scan Chain Register (DSCR)
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Pipeline for IEUAdr E to M
