@@ -151,6 +151,7 @@
 // wallypipelinedcore
 `define TRAPM_REGNO       16'hC000 // 1'b  P.ZICSR_SUPPORTED (Read Only)
 // src/ifu
+`define DPC_REGNO         16'h07B1 // BOZO: Alias to PCM until DPC CSR is added
 `define PCM_REGNO         16'hC001 // XLEN P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED
 `define INSTRM_REGNO      16'hC002 // 32'b P.ZICSR_SUPPORTED | P.A_SUPPORTED
 // ieu/controller

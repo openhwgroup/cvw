@@ -101,6 +101,7 @@ module rad import cvw::*; #(parameter cvw_t P) (
         InvalidRegNo = ~P.ZICSR_SUPPORTED;
         RegReadOnly = 1;
       end
+      `DPC_REGNO,  // BOZO: Alias to PCM until DPC CSR is added
       `PCM_REGNO : begin
         ShiftCount = SCANCHAINLEN - PCM_IDX;
         InvalidRegNo = ~(P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED);
