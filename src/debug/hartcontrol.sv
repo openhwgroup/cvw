@@ -30,6 +30,7 @@
 module hartcontrol(
   input  logic clk, rst,
   input  logic NdmReset,    // Triggers HaltOnReset behavior
+  input  logic AckHaveReset, // Clears *HaveReset status
 
   input  logic HaltReq,     // Initiate core halt
   input  logic ResumeReq,   // Initiates core resume
@@ -44,18 +45,31 @@ module hartcontrol(
   output logic AllHalted,
   output logic AnyHalted,
   output logic AllResumeAck,
-  output logic AnyResumeAck
+  output logic AnyResumeAck,
+  output logic AllHaveReset,
+  output logic AnyHaveReset
 );
+  enum logic {RUNNING, HALTED} State;
+  
+  assign AnyHaveReset = AllHaveReset;
+
+  always_ff @(posedge clk) begin
+    if (NdmReset)
+      AllHaveReset <= 1;
+    else if (AckHaveReset)
+      AllHaveReset <= 0;
+  end
+  
 
   assign Halted = DebugStall;
   assign AllRunning = ~DebugStall;
   assign AnyRunning = ~DebugStall;
   assign AllHalted = DebugStall;
   assign AnyHalted = DebugStall;
-  assign AllResumeAck = ~DebugStall;
-  assign AnyResumeAck = ~DebugStall;
-
-  enum logic {RUNNING, HALTED} State;
+  // BOZO: when sdext is implemented (proper step support is added)
+  //       change ResumeReq to be ignored when HaltReq
+  //       but ResumeReq should still always clear *ResumeAck
+  assign AnyResumeAck = AllResumeAck;
 
   assign DebugStall = (State == HALTED);
 
@@ -66,9 +80,20 @@ module hartcontrol(
       State <= HaltOnReset ? HALTED : RUNNING;
     else begin
       case (State)
-        RUNNING : State <= HaltReq ? HALTED : RUNNING;
+        RUNNING : begin
+          if (HaltReq) begin
+            State <= HALTED;
+          end else if (ResumeReq) begin
+            AllResumeAck <= 0;
+          end
+        end
 
-        HALTED : State <= ResumeReq ? RUNNING : HALTED;
+        HALTED : begin
+          if (ResumeReq) begin
+            State <= RUNNING;
+            AllResumeAck <= 1;
+          end
+        end
       endcase
     end
   end

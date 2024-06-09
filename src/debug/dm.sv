@@ -81,14 +81,15 @@ module dm import cvw::*; #(parameter cvw_t P) (
     .RspValid, .RspData, .RspOP);
 
   // Core control signals
-  logic                  HaltReq;
-  logic                  ResumeReq;
-  logic                  HaltOnReset;
-  logic                  Halted;
+  logic HaltReq;
+  logic ResumeReq;
+  logic HaltOnReset;
+  logic Halted;
+  logic AckHaveReset;
 
-  hartcontrol hartcontrol(.clk, .rst(rst | ~DmActive), .NdmReset, .HaltReq,
-    .ResumeReq, .HaltOnReset, .DebugStall, .Halted, .AllRunning,
-    .AnyRunning, .AllHalted, .AnyHalted, .AllResumeAck, .AnyResumeAck);
+  hartcontrol hartcontrol(.clk, .rst(rst | ~DmActive), .NdmReset, .AckHaveReset, .HaltReq,
+    .ResumeReq, .HaltOnReset, .DebugStall, .Halted, .AllRunning, .AnyRunning, 
+    .AllHalted, .AnyHalted, .AllResumeAck, .AnyResumeAck, .AllHaveReset, .AnyHaveReset);
 
 
   enum logic [3:0] {INACTIVE, IDLE, ACK, R_DATA, W_DATA, DMSTATUS, W_DMCONTROL, R_DMCONTROL, 
@@ -137,9 +138,11 @@ module dm import cvw::*; #(parameter cvw_t P) (
   // DMStatus
   logic              StickyUnavail;
   logic              ImpEBreak;
+  logic              AllHaveReset;
+  logic              AnyHaveReset;
   logic              AllResumeAck;
   logic              AnyResumeAck;
-  logic              AllNonExistent;
+  logic              AllNonExistent; // TODO
   logic              AnyNonExistent;
   logic              AllUnavail;     // TODO
   logic              AnyUnavail;
@@ -164,7 +167,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
     10'b0, 4'b0, NdmReset, DmActive};
 
   assign DMStatus = {7'b0, 1'b0, StickyUnavail, ImpEBreak, 2'b0, 
-    2'b0, AllResumeAck, AnyResumeAck, AllNonExistent, 
+    AllHaveReset, AnyHaveReset, AllResumeAck, AnyResumeAck, AllNonExistent, 
     AnyNonExistent, AllUnavail, AnyUnavail, AllRunning, AnyRunning, AllHalted, 
     AnyHalted, Authenticated, AuthBusy, HasResetHaltReq, ConfStrPtrValid, Version};
 
@@ -183,8 +186,11 @@ module dm import cvw::*; #(parameter cvw_t P) (
       case (State)
         INACTIVE : begin
           // Reset Values
+          // TODO: one-line these
           RspData <= 0;
           HaltReq <= 0;
+          ResumeReq <= 0;
+          AckHaveReset <= 0;
           HaltOnReset <= 0;
           NdmReset <= 0;
           StickyUnavail <= 0;
@@ -204,6 +210,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
         ACK : begin
           NewAcState <= AC_IDLE;
           ResumeReq <= 0;
+          AckHaveReset <= 0;
           if (~ReqValid)
             State <= ~DmActive ? INACTIVE : IDLE;
         end
@@ -256,7 +263,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
         W_DMCONTROL : begin
           // While an abstract command is executing (busy in abstractcs is high), a debugger must not change
           // hartsel, and must not write 1 to haltreq, resumereq, ackhavereset, setresethaltreq, or clrresethaltreq
-          if (Busy & (ReqData[`HALTREQ] | ReqData[`RESUMEREQ] | ReqData[`SETRESETHALTREQ] | ReqData[`CLRRESETHALTREQ]))
+          if (Busy & (ReqData[`HALTREQ] | ReqData[`RESUMEREQ] | ReqData[`ACKHAVERESET] | ReqData[`SETRESETHALTREQ] | ReqData[`CLRRESETHALTREQ]))
             CmdErr <= ~|CmdErr ? `CMDERR_BUSY : CmdErr;
           else begin
             HaltReq <= ReqData[`HALTREQ];
@@ -266,11 +273,12 @@ module dm import cvw::*; #(parameter cvw_t P) (
             
             // On any given write, a debugger may only write 1 to at most one of the following bits: resumereq,
             //  hartreset, ackhavereset, setresethaltreq, and clrresethaltreq. The others must be written 0
-            case ({ReqData[`RESUMEREQ],ReqData[`SETRESETHALTREQ],ReqData[`CLRRESETHALTREQ]})
-              3'b000 :; // None
-              3'b100 : ResumeReq <= 1;
-              3'b010 : HaltOnReset <= 1;
-              3'b001 : HaltOnReset <= 0;
+            case ({ReqData[`RESUMEREQ],ReqData[`ACKHAVERESET],ReqData[`SETRESETHALTREQ],ReqData[`CLRRESETHALTREQ]})
+              4'b0000 :; // None
+              4'b1000 : ResumeReq <= 1;
+              4'b0100 : AckHaveReset <= 1;
+              4'b0010 : HaltOnReset <= 1;
+              4'b0001 : HaltOnReset <= 0;
               default : begin // Invalid (not onehot), dont write any changes
                 HaltReq <= HaltReq;
                 AckUnavail <= AckUnavail;
