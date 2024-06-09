@@ -72,7 +72,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   // JTAG ID for Wally:  
   // [31:27] = 1 (4 bits)
   // ver [27:12] = 0x2A (42)
-  // JEDEC number [11:1] = 0x002 (Open HW Group)
+  // JEDEC number [11:1] = 000_0000_0010 (Open HW Group)
   // [0] set to 1
   localparam JTAG_DEVICE_ID = 32'h1002_A005; 
 
@@ -162,10 +162,10 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic [2:0]        CmdErr;
   const logic [3:0]  DataCount = (P.LLEN/32);
 
-  // Pack registers
-  assign DMControl = {2'b0, 1'b0, 2'b0, 1'b0, 10'b0,
-    10'b0, 4'b0, NdmReset, DmActive};
+  // See spec 3.14.2
+  assign DMControl = {2'b0, 1'b0, 2'b0, 1'b0, 10'b0, 10'b0, 4'b0, NdmReset, DmActive};
 
+  // See spec 3.14.1
   assign DMStatus = {7'b0, 1'b0, StickyUnavail, ImpEBreak, 2'b0, 
     AllHaveReset, AnyHaveReset, AllResumeAck, AnyResumeAck, AllNonExistent, 
     AnyNonExistent, AllUnavail, AnyUnavail, AllRunning, AnyRunning, AllHalted, 

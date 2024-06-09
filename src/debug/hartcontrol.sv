@@ -29,14 +29,14 @@
 
 module hartcontrol(
   input  logic clk, rst,
-  input  logic NdmReset,    // Triggers HaltOnReset behavior
+  input  logic NdmReset,     // Triggers HaltOnReset behavior
   input  logic AckHaveReset, // Clears *HaveReset status
 
-  input  logic HaltReq,     // Initiate core halt
-  input  logic ResumeReq,   // Initiates core resume
-  input  logic HaltOnReset, // Halts core immediately on hart reset
+  input  logic HaltReq,      // Initiate core halt
+  input  logic ResumeReq,    // Initiates core resume
+  input  logic HaltOnReset,  // Halts core immediately on hart reset
 
-  output logic DebugStall,  // Stall signal goes to hazard unit
+  output logic DebugStall,   // Stall signal goes to hazard unit
 
   // DMStatus bits
   output logic Halted,
