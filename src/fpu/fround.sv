@@ -43,7 +43,7 @@ module fround import cvw::*;  #(parameter cvw_t P) (
   output logic                    FRoundNX      // fround inexact
 );
 
-  logic [P.NE-1:0] E, Xep1, EminusNf;
+  logic [P.NE-1:0] E, Xep1;
   logic [P.NF:0] IMask, Tmasknonneg, Tmaskneg, Tmask, HotE, HotEP1, Trunc, Rnd;
   logic [P.FLEN-1:0] W, PackedW;
   logic Elt0, Eeqm1, Lnonneg, Lp, Rnonneg, Rp, Tp, RoundUp, Two, EgeNf;
@@ -99,7 +99,7 @@ module fround import cvw::*;  #(parameter cvw_t P) (
   //      if (X is NaN)
   //              W = Canonical NaN
   //              Invalid = (X is signaling NaN)
-  //      else if (E >= Nf or X is +/- 0) 
+  //      else if (E >= Nf) 
   //              W = X						// is exact; this also handles infinity
   //      else 
   //              RoundUp = RoundingLogic(Xs, L', R', T', rm)	// Table 16.4
@@ -116,10 +116,9 @@ module fround import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////
 
   // Exact logic
-  /* verilator lint_off WIDTH */
-  assign EminusNf = E - Nf;
-  /* verilator lint_on WIDTH */
-  assign EgeNf = ~EminusNf[P.NE-1] & (~E[P.NE-1] | E[P.NE-2:0] == '0); // E >= Nf if MSB of E-Nf is 0 and E was positive 
+  // verilator lint_off WIDTHEXPAND
+  assign EgeNf = (E >= Nf) & Xe[P.NE-1]; // Check if E >= Nf.  Also check that Xe is positive to avoid wraparound problems
+  // verilator lint_on WIDTHEXPAND
 
   // Rounding logic: determine whether to round up in magnitude
   always_comb begin
@@ -133,22 +132,22 @@ module fround import cvw::*;  #(parameter cvw_t P) (
     endcase
 
     // If result is not exact, select output in unpacked FLEN format initially
-    if (XNaN) W = {1'b0, {P.NE{1'b1}}, 1'b1, {(P.NF-1){1'b0}}}; // Canonical NaN
-    else if (EgeNf) W = {Xs, Xe, Xm[P.NF-1:0]}; // Exact, no rounding needed
-    else if (Elt0)                              // 0 <= |X| < 1 rounds to 0 or 1
-      if (RoundUp) W = {Xs, P.BIAS[P.NE-1:0], {P.NF{1'b0}}}; // round to +/- 1
-      else         W = {Xs, {(P.FLEN-1){1'b0}}}; // round to +/- 0
-    else begin // |X| >= 1 rounds to an integer
-      if (RoundUp & Two) W = {Xs, Xep1, {(P.NF){1'b0}}}; // Round up to 2.0
-      else if (RoundUp)  W = {Xs, Xe, Rnd[P.NF-1:0]};      // Round up to Rnd
-      else               W = {Xs, Xe, Trunc[P.NF-1:0]};    // Round down to Trunc
+    if (XNaN)            W = {1'b0, {P.NE{1'b1}}, 1'b1, {(P.NF-1){1'b0}}};  // Canonical NaN
+    else if (EgeNf)      W = {Xs, Xe, Xm[P.NF-1:0]};                        // Exact, no rounding needed
+    else if (Elt0)                                                          // 0 <= |X| < 1 rounds to 0 or 1
+      if (RoundUp)       W = {Xs, P.BIAS[P.NE-1:0], {P.NF{1'b0}}};          //   round to +/- 1
+      else               W = {Xs, {(P.FLEN-1){1'b0}}};                      //   round to +/- 0
+    else begin                                                              // |X| >= 1 rounds to an integer
+      if (RoundUp & Two) W = {Xs, Xep1, {(P.NF){1'b0}}};                    //   Round up to 2.0
+      else if (RoundUp)  W = {Xs, Xe, Rnd[P.NF-1:0]};                       //   Round up to Rnd
+      else               W = {Xs, Xe, Trunc[P.NF-1:0]};                     //   Round down to Trunc
     end
   end
 
   packoutput #(P) packoutput(W, Fmt, FRound); // pack and NaN-box based on selected format.
 
   // Flags
-  assign FRoundNV = XSNaN;                                        // invalid if input is signaling NaN
-  assign FRoundNX = ZfaFRoundNX & ~(XNaN | EgeNf) & (Rp | Tp);    // Inexact if Round or Sticky bit set for FRoundNX instruction
+  assign FRoundNV = XSNaN;                               // invalid if input is signaling NaN
+  assign FRoundNX = ZfaFRoundNX & ~EgeNf & (Rp | Tp);    // Inexact if Round or Sticky bit set for FRoundNX instruction
 
 endmodule
