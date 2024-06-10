@@ -57,7 +57,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   output logic                     DebugScanOut
 );
 
-  logic [P.XLEN-1:0]               MISA_REGW, MHARTID_REGW;
+  logic [P.XLEN-1:0]               MISA_REGW, MHARTID_REGW, DCSR_REGW, DPC_REGW;
   logic [P.XLEN-1:0]               MSCRATCH_REGW, MTVAL_REGW, MCAUSE_REGW;
   logic [P.XLEN-1:0]               MENVCFGH_REGW;
   logic                            WriteMTVECM, WriteMEDELEGM, WriteMIDELEGM;
@@ -96,8 +96,8 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   localparam TDATA3        = 12'h7A3;
   localparam DCSR          = 12'h7B0;  // Debug Control and Status Register 
   localparam DPC           = 12'h7B1;  // Debug PC 
-  localparam DSCRATCH0     = 12'h7B2;  // Debug Scratch Register 0
-  localparam DSCRATCH1     = 12'h7B3;  // Debug Scratch Register 1
+  localparam DSCRATCH0     = 12'h7B2;  // Debug Scratch Register 0 (opt)
+  localparam DSCRATCH1     = 12'h7B3;  // Debug Scratch Register 1 (opt)
   // Constants
   localparam ZERO = {(P.XLEN){1'b0}};
   // when compressed instructions are supported, there can't be misaligned instructions
@@ -135,6 +135,9 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
 
   // MISA is hardwired.  Spec says it could be written to disable features, but this is not supported by Wally
   assign MISA_REGW = {(P.XLEN == 32 ? 2'b01 : 2'b10), {(P.XLEN-28){1'b0}}, MISA_26[25:0]};
+  // Debug registers (stubbed out)
+  assign DPC_REGW = {P.XLEN{1'b0}};
+  assign DCSR_REGW = {P.XLEN{1'b0}};
 
   // Dummy register to provide MISA read access to DM
   if (P.DEBUG_SUPPORTED) begin
@@ -156,6 +159,9 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   assign WriteMTVALM         = MTrapM | (CSRMWriteM & (CSRAdrM == MTVAL));
   assign WriteMCOUNTERENM    = CSRMWriteM & (CSRAdrM == MCOUNTEREN);
   assign WriteMCOUNTINHIBITM = CSRMWriteM & (CSRAdrM == MCOUNTINHIBIT);
+
+  assign WriteDPC            = CSRMWriteM & (CSRAdrM == DPC);
+  assign WriteDCSR           = CSRMWriteM & (CSRAdrM == DCSR);
 
   assign IllegalCSRMWriteReadonlyM = UngatedCSRMWriteM & (CSRAdrM == MVENDORID | CSRAdrM == MARCHID | CSRAdrM == MIMPID | CSRAdrM == MHARTID | CSRAdrM == MCONFIGPTR);
 
@@ -250,6 +256,8 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
       MENVCFGH:      if (P.U_SUPPORTED & P.XLEN==32) CSRMReadValM = MENVCFGH_REGW;
                      else IllegalCSRMAccessM = 1'b1;
       MCOUNTINHIBIT: CSRMReadValM = {{(P.XLEN-32){1'b0}}, MCOUNTINHIBIT_REGW};
+      DCSR:          CSRMReadValM = DCSR_REGW;
+      DPC:           CSRMReadValM = DPC_REGW;	   
       default:       IllegalCSRMAccessM = 1'b1;
     endcase
   end
