@@ -28,18 +28,17 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fmashiftcalc import cvw::*;  #(parameter cvw_t P) (
-  input  logic [P.FMTBITS-1:0]         Fmt,                 // precision 1 = double 0 = single
-  input  logic [P.NE+1:0]              FmaSe,               // sum's exponent
-  input  logic [P.FMALEN-1:0]          FmaSm,               // the positive sum
+  input  logic [P.FMTBITS-1:0]          Fmt,                 // precision 1 = double 0 = single
+  input  logic [P.NE+1:0]               FmaSe,               // sum's exponent
+  input  logic [P.FMALEN-1:0]           FmaSm,               // the positive sum
   input  logic [$clog2(P.FMALEN+1)-1:0] FmaSCnt,             // normalization shift count
-  output logic [P.NE+1:0]              NormSumExp,          // exponent of the normalized sum not taking into account Subnormal or zero results
-  output logic                         FmaSZero,            //  is the sum zero
-  output logic                         FmaPreResultSubnorm, // is the result subnormal - calculated before LZA corection
-  output logic [$clog2(P.FMALEN+1)-1:0] FmaShiftAmt,         // normalization shift count
-  output logic [P.FMALEN+1:0]          FmaShiftIn           
+  output logic [P.NE+1:0]               NormSumExp,          // exponent of the normalized sum not taking into account Subnormal or zero results
+  output logic                          FmaSZero,            // is the sum zero
+  output logic                          FmaPreResultSubnorm, // is the result subnormal - calculated before LZA corection
+  output logic [$clog2(P.FMALEN+1)-1:0] FmaShiftAmt          // normalization shift count
 );
-  logic [P.NE+1:0]                     PreNormSumExp;       // the exponent of the normalized sum with the P.FLEN bias
-  logic [P.NE+1:0]                     BiasCorr;            // correction for bias
+  logic [P.NE+1:0]                      PreNormSumExp;       // the exponent of the normalized sum with the P.FLEN bias
+  logic [P.NE+1:0]                      BiasCorr;            // correction for bias
 
   ///////////////////////////////////////////////////////////////////////////////
   // Normalization
@@ -130,7 +129,6 @@ module fmashiftcalc import cvw::*;  #(parameter cvw_t P) (
 
   // set and calculate the shift input and amount
   //  - shift once if killing a product and the result is subnormal
-  assign FmaShiftIn = {2'b0, FmaSm};
   if (P.FPSIZES == 1) assign FmaShiftAmt = FmaPreResultSubnorm ? FmaSe[$clog2(P.FMALEN-1)-1:0]+($clog2(P.FMALEN-1))'(P.NF+3): FmaSCnt+1;
   else                assign FmaShiftAmt = FmaPreResultSubnorm ? FmaSe[$clog2(P.FMALEN-1)-1:0]+($clog2(P.FMALEN-1))'(P.NF+3)+BiasCorr[$clog2(P.FMALEN-1)-1:0]: FmaSCnt+1;
 endmodule

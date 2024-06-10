@@ -44,7 +44,7 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   input logic                              FmaPs,               // the product's sign
   input logic                              FmaSs,               // Sum sign
   input logic  [P.NE+1:0]                  FmaSe,               // the sum's exponent
-  input logic  [P.FMALEN-1:0]                FmaSm,               // the positive sum
+  input logic  [P.FMALEN-1:0]              FmaSm,               // the positive sum
   input logic                              FmaASticky,          // sticky bit that is calculated during alignment
   input logic  [$clog2(P.FMALEN+1)-1:0]      FmaSCnt,             // the normalization shift count
   //divide signals
@@ -86,7 +86,6 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   // fma signals
   logic [P.NE+1:0]             FmaMe;                // exponent of the normalized sum
   logic                        FmaSZero;             // is the sum zero
-  logic [P.FMALEN+1:0]         FmaShiftIn;           // fma shift input
   logic [P.NE+1:0]             NormSumExp;           // exponent of the normalized sum not taking into account Subnormal or zero results
   logic                        FmaPreResultSubnorm;  // is the result subnormal - calculated before LZA corection
   logic [$clog2(P.FMALEN+1)-1:0] FmaShiftAmt;          // normalization shift amount for fma
@@ -145,8 +144,8 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   cvtshiftcalc #(P) cvtshiftcalc(.ToInt, .CvtCe, .CvtResSubnormUf, .Xm, .CvtLzcIn,  
       .XZero, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);
 
-  fmashiftcalc #(P) fmashiftcalc(.FmaSm, .FmaSCnt, .Fmt, .NormSumExp, .FmaSe,
-      .FmaSZero, .FmaPreResultSubnorm, .FmaShiftAmt, .FmaShiftIn);
+  fmashiftcalc #(P) fmashiftcalc(.FmaSCnt, .Fmt, .NormSumExp, .FmaSe, .FmaSm,
+      .FmaSZero, .FmaPreResultSubnorm, .FmaShiftAmt);
 
   divshiftcalc #(P) divshiftcalc(.DivUe, .DivUm, .DivResSubnorm, .DivSubnormShiftPos, .DivShiftAmt, .DivShiftIn);
 
@@ -155,7 +154,7 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
     case(PostProcSel)
       2'b10: begin // fma
         ShiftAmt = {{P.LOGNORMSHIFTSZ-$clog2(P.FMALEN-1){1'b0}}, FmaShiftAmt};
-        ShiftIn  =  {FmaShiftIn, {P.NORMSHIFTSZ-(P.FMALEN+2){1'b0}}};
+        ShiftIn  =  {{2'b00, FmaSm}, {P.NORMSHIFTSZ-(P.FMALEN+2){1'b0}}};
       end
       2'b00: begin // cvt
         ShiftAmt = {{P.LOGNORMSHIFTSZ-$clog2(P.CVTLEN+1){1'b0}}, CvtShiftAmt};
