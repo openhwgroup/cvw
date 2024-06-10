@@ -91,7 +91,6 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   logic [$clog2(P.FMALEN+1)-1:0] FmaShiftAmt;          // normalization shift amount for fma
   // division signals
   logic [P.LOGNORMSHIFTSZ-1:0] DivShiftAmt;          // divsqrt shif amount
-  logic [P.NORMSHIFTSZ-1:0]    DivShiftIn;           // divsqrt shift input
   logic [P.NE+1:0]             Ue;                   // divsqrt corrected exponent after corretion shift
   logic                        DivByZero;            // divide by zero flag
   logic                        DivResSubnorm;        // is the divsqrt result subnormal
@@ -147,7 +146,7 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   fmashiftcalc #(P) fmashiftcalc(.FmaSCnt, .Fmt, .NormSumExp, .FmaSe, .FmaSm,
       .FmaSZero, .FmaPreResultSubnorm, .FmaShiftAmt);
 
-  divshiftcalc #(P) divshiftcalc(.DivUe, .DivUm, .DivResSubnorm, .DivSubnormShiftPos, .DivShiftAmt, .DivShiftIn);
+  divshiftcalc #(P) divshiftcalc(.DivUe, .DivResSubnorm, .DivSubnormShiftPos, .DivShiftAmt);
 
   // select which unit's output to shift
   always_comb
@@ -162,7 +161,7 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
       end
       2'b01: begin //divsqrt
         ShiftAmt = DivShiftAmt;
-        ShiftIn  =  DivShiftIn;
+        ShiftIn  = {{P.NF{1'b0}}, DivUm, {P.NORMSHIFTSZ-P.DIVb-1-P.NF{1'b0}}};
       end
       default: begin 
         ShiftAmt = {P.LOGNORMSHIFTSZ{1'bx}}; 
