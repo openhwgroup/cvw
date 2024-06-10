@@ -29,7 +29,6 @@
 
 module wallypipelinedsoc 
   import cvw::*;
-  import bsg_dmc_pkg::*;
 #(
   parameter cvw_t P
 )  (
@@ -64,8 +63,25 @@ module wallypipelinedsoc
   input  logic                SPIIn,            // SPI pins in
   output logic                SPIOut,           // SPI pins out
   output logic [3:0]          SPICS,            // SPI chip select pins        
-  input  logic                ui_clk,           // ~200MHz clock for memory controller interface
-  output bsg_dmc_s            dmc_config,       // Config registers for BSG DDR memory controller
+  input  logic                ui_clk,
+  output logic [15:0]         dmc_trefi,
+  output logic [3:0]          dmc_tmrd,
+  output logic [3:0]          dmc_trfc,
+  output logic [3:0]          dmc_trc,
+  output logic [3:0]          dmc_trp,
+  output logic [3:0]          dmc_tras,
+  output logic [3:0]          dmc_trrd,
+  output logic [3:0]          dmc_trcd,
+  output logic [3:0]          dmc_twr,
+  output logic [3:0]          dmc_twtr,
+  output logic [3:0]          dmc_trtp,
+  output logic [3:0]          dmc_tcas,
+  output logic [3:0]          dmc_col_width,
+  output logic [3:0]          dmc_row_width,
+  output logic [1:0]          dmc_bank_width,
+  output logic [5:0]          dmc_bank_pos,
+  output logic [2:0]          dmc_dqs_sel_cal,
+  output logic [15:0]         dmc_init_cycles,
   output logic                dmc_config_changed,
   input  logic                PLLrefclk,
   input  logic                PLLrfen,
@@ -103,14 +119,18 @@ module wallypipelinedsoc
       .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT, .HSELEXTSDC,
       .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOIN, .GPIOOUT, .GPIOEN, .UARTSin, 
       .UARTSout, .MTIME_CLINT, .SDCIntr, .SPIIn, .SPIOut, .SPICS,
-      .ui_clk, .dmc_config, .dmc_config_changed,
+      .ui_clk, .dmc_trefi, .dmc_tmrd, .dmc_trfc, .dmc_trc, .dmc_trp, .dmc_tras, .dmc_trrd,
+      .dmc_trcd, .dmc_twr, .dmc_twtr, .dmc_trtp, .dmc_tcas, .dmc_col_width, .dmc_row_width,
+      .dmc_bank_width, .dmc_bank_pos, .dmc_dqs_sel_cal, .dmc_init_cycles, .dmc_config_changed,
       .PLLrefclk, .PLLrfen, .PLLfben, .PLLclkr, .PLLclkf, .PLLclkod, .PLLbwadj,
       .PLLlock, .PLLconfigdone
     );
   end else begin
     assign {HRDATA, HREADY, HRESP, HSELEXT, HSELEXTSDC, MTimerInt, MSwInt, MExtInt, SExtInt,
-            MTIME_CLINT, GPIOOUT, GPIOEN, UARTSout, SPIOut, SPICS, dmc_config, PLLclkr, PLLclkf,
-            PLLclkod, PLLbwadj} = '0;
+            MTIME_CLINT, GPIOOUT, GPIOEN, UARTSout, SPIOut, SPICS, dmc_trefi, dmc_tmrd, dmc_trfc,
+            dmc_trc, dmc_trp, dmc_tras, dmc_trrd, dmc_trcd, dmc_twr, dmc_twtr, dmc_trtp, dmc_tcas,
+            dmc_col_width, dmc_row_width, dmc_bank_width, dmc_bank_pos, dmc_dqs_sel_cal,
+            dmc_init_cycles, PLLclkr, PLLclkf, PLLclkod, PLLbwadj} = '0;
   end
 
 endmodule

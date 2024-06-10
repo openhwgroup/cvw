@@ -30,7 +30,6 @@
 
 module uncore
   import cvw::*;
-  import bsg_dmc_pkg::*;
 #(
   parameter cvw_t P
 ) (
@@ -64,8 +63,25 @@ module uncore
   input  logic                 SPIIn,
   output logic                 SPIOut,
   output logic [3:0]           SPICS,
-  input  logic                 ui_clk,                    // ~200MHz clock for memory controller interface
-  output bsg_dmc_s             dmc_config,                // Config registers for BSG DDR memory controller
+  input  logic                 ui_clk,
+  output logic [15:0]          dmc_trefi,
+  output logic [3:0]           dmc_tmrd,
+  output logic [3:0]           dmc_trfc,
+  output logic [3:0]           dmc_trc,
+  output logic [3:0]           dmc_trp,
+  output logic [3:0]           dmc_tras,
+  output logic [3:0]           dmc_trrd,
+  output logic [3:0]           dmc_trcd,
+  output logic [3:0]           dmc_twr,
+  output logic [3:0]           dmc_twtr,
+  output logic [3:0]           dmc_trtp,
+  output logic [3:0]           dmc_tcas,
+  output logic [3:0]           dmc_col_width,
+  output logic [3:0]           dmc_row_width,
+  output logic [1:0]           dmc_bank_width,
+  output logic [5:0]           dmc_bank_pos,
+  output logic [2:0]           dmc_dqs_sel_cal,
+  output logic [15:0]          dmc_init_cycles,
   output logic                 dmc_config_changed,
   input  logic                 PLLrefclk,
   input  logic                 PLLrfen,
@@ -179,26 +195,28 @@ module uncore
     bsg_dmc_config_apb #(P.XLEN) bsg_dmc_conf (
       .PCLK, .PRESETn, .PSEL(PSEL[5]), .PADDR(PADDR[7:0]), .PWDATA, .PWRITE, .PENABLE,
       .PRDATA(PRDATA[5]), .PREADY(PREADY[5]),
-      .ui_clk, .dmc_config, .dmc_config_changed);
+      .ui_clk, .dmc_trefi, .dmc_tmrd, .dmc_trfc, .dmc_trc, .dmc_trp, .dmc_tras, .dmc_trrd,
+      .dmc_trcd, .dmc_twr, .dmc_twtr, .dmc_trtp, .dmc_tcas, .dmc_col_width, .dmc_row_width,
+      .dmc_bank_width, .dmc_bank_pos, .dmc_dqs_sel_cal, .dmc_init_cycles, .dmc_config_changed);
   end else begin : bsg_dmc_config
-    assign dmc_config.trefi        = 0;
-    assign dmc_config.tmrd         = 0;
-    assign dmc_config.trfc         = 0;
-    assign dmc_config.trc          = 0;
-    assign dmc_config.trp          = 0;
-    assign dmc_config.tras         = 0;
-    assign dmc_config.trrd         = 0;
-    assign dmc_config.trcd         = 0;
-    assign dmc_config.twr          = 0;
-    assign dmc_config.twtr         = 0;
-    assign dmc_config.trtp         = 0;
-    assign dmc_config.tcas         = 0;
-    assign dmc_config.col_width    = 0;
-    assign dmc_config.row_width    = 0;
-    assign dmc_config.bank_width   = 0;
-    assign dmc_config.bank_pos     = 0;
-    assign dmc_config.dqs_sel_cal  = 0;
-    assign dmc_config.init_cycles  = 0;
+    assign dmc_trefi        = 0;
+    assign dmc_tmrd         = 0;
+    assign dmc_trfc         = 0;
+    assign dmc_trc          = 0;
+    assign dmc_trp          = 0;
+    assign dmc_tras         = 0;
+    assign dmc_trrd         = 0;
+    assign dmc_trcd         = 0;
+    assign dmc_twr          = 0;
+    assign dmc_twtr         = 0;
+    assign dmc_trtp         = 0;
+    assign dmc_tcas         = 0;
+    assign dmc_col_width    = 0;
+    assign dmc_row_width    = 0;
+    assign dmc_bank_width   = 0;
+    assign dmc_bank_pos     = 0;
+    assign dmc_dqs_sel_cal  = 0;
+    assign dmc_init_cycles  = 0;
     assign dmc_config_changed      = 0;
   end
 

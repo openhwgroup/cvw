@@ -26,11 +26,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module bsg_dmc_config_apb 
-  import bsg_dmc_pkg::*;
-#(
-  parameter APB_DATA_SIZE = 64
-) (
+module bsg_dmc_config_apb #(parameter APB_DATA_SIZE = 64) (
   input  logic                     PCLK, PRESETn,
   input  logic                     PSEL,
   input  logic [7:0]               PADDR,
@@ -40,7 +36,24 @@ module bsg_dmc_config_apb
   output logic [APB_DATA_SIZE-1:0] PRDATA,
   output logic                     PREADY,
   input  logic                     ui_clk,
-  output bsg_dmc_s                 dmc_config,
+  output logic [15:0]              dmc_trefi,
+  output logic [3:0]               dmc_tmrd,
+  output logic [3:0]               dmc_trfc,
+  output logic [3:0]               dmc_trc,
+  output logic [3:0]               dmc_trp,
+  output logic [3:0]               dmc_tras,
+  output logic [3:0]               dmc_trrd,
+  output logic [3:0]               dmc_trcd,
+  output logic [3:0]               dmc_twr,
+  output logic [3:0]               dmc_twtr,
+  output logic [3:0]               dmc_trtp,
+  output logic [3:0]               dmc_tcas,
+  output logic [3:0]               dmc_col_width,
+  output logic [3:0]               dmc_row_width,
+  output logic [1:0]               dmc_bank_width,
+  output logic [5:0]               dmc_bank_pos,
+  output logic [2:0]               dmc_dqs_sel_cal,
+  output logic [15:0]              dmc_init_cycles,
   output logic                     dmc_config_changed
 );
 
@@ -76,45 +89,45 @@ module bsg_dmc_config_apb
   always_ff @(posedge ui_clk, negedge PRESETn) begin
     if (~PRESETn) begin
       // TODO: Should these be reset to Micron defaults instead?
-      dmc_config.trefi        <= 0;
-      dmc_config.tmrd         <= 0;
-      dmc_config.trfc         <= 0;
-      dmc_config.trc          <= 0;
-      dmc_config.trp          <= 0;
-      dmc_config.tras         <= 0;
-      dmc_config.trrd         <= 0;
-      dmc_config.trcd         <= 0;
-      dmc_config.twr          <= 0;
-      dmc_config.twtr         <= 0;
-      dmc_config.trtp         <= 0;
-      dmc_config.tcas         <= 0;
-      dmc_config.col_width    <= 0;
-      dmc_config.row_width    <= 0;
-      dmc_config.bank_width   <= 0;
-      dmc_config.bank_pos     <= 0;
-      dmc_config.dqs_sel_cal  <= 0;
-      dmc_config.init_cycles  <= 0;
+      dmc_trefi        <= 0;
+      dmc_tmrd         <= 0;
+      dmc_trfc         <= 0;
+      dmc_trc          <= 0;
+      dmc_trp          <= 0;
+      dmc_tras         <= 0;
+      dmc_trrd         <= 0;
+      dmc_trcd         <= 0;
+      dmc_twr          <= 0;
+      dmc_twtr         <= 0;
+      dmc_trtp         <= 0;
+      dmc_tcas         <= 0;
+      dmc_col_width    <= 0;
+      dmc_row_width    <= 0;
+      dmc_bank_width   <= 0;
+      dmc_bank_pos     <= 0;
+      dmc_dqs_sel_cal  <= 0;
+      dmc_init_cycles  <= 0;
     end else begin
       if (dmc_config_changed) begin
         case (wentry)
-          8'h00: dmc_config.trefi       <= wdata;
-          8'h08: dmc_config.tmrd        <= wdata[3:0];
-          8'h10: dmc_config.trfc        <= wdata[3:0];
-          8'h18: dmc_config.trc         <= wdata[3:0];
-          8'h20: dmc_config.trp         <= wdata[3:0];
-          8'h28: dmc_config.tras        <= wdata[3:0];
-          8'h30: dmc_config.trrd        <= wdata[3:0];
-          8'h38: dmc_config.trcd        <= wdata[3:0];
-          8'h40: dmc_config.twr         <= wdata[3:0];
-          8'h48: dmc_config.twtr        <= wdata[3:0];
-          8'h50: dmc_config.trtp        <= wdata[3:0];
-          8'h58: dmc_config.tcas        <= wdata[3:0];
-          8'h60: dmc_config.col_width   <= wdata[3:0];
-          8'h68: dmc_config.row_width   <= wdata[3:0];
-          8'h70: dmc_config.bank_width  <= wdata[1:0];
-          8'h78: dmc_config.bank_pos    <= wdata[5:0];
-          8'h80: dmc_config.dqs_sel_cal <= wdata[2:0];
-          8'h88: dmc_config.init_cycles <= wdata;
+          8'h00: dmc_trefi       <= wdata;
+          8'h08: dmc_tmrd        <= wdata[3:0];
+          8'h10: dmc_trfc        <= wdata[3:0];
+          8'h18: dmc_trc         <= wdata[3:0];
+          8'h20: dmc_trp         <= wdata[3:0];
+          8'h28: dmc_tras        <= wdata[3:0];
+          8'h30: dmc_trrd        <= wdata[3:0];
+          8'h38: dmc_trcd        <= wdata[3:0];
+          8'h40: dmc_twr         <= wdata[3:0];
+          8'h48: dmc_twtr        <= wdata[3:0];
+          8'h50: dmc_trtp        <= wdata[3:0];
+          8'h58: dmc_tcas        <= wdata[3:0];
+          8'h60: dmc_col_width   <= wdata[3:0];
+          8'h68: dmc_row_width   <= wdata[3:0];
+          8'h70: dmc_bank_width  <= wdata[1:0];
+          8'h78: dmc_bank_pos    <= wdata[5:0];
+          8'h80: dmc_dqs_sel_cal <= wdata[2:0];
+          8'h88: dmc_init_cycles <= wdata;
         endcase
       end
     end
@@ -124,24 +137,24 @@ module bsg_dmc_config_apb
   assign PRDATA = {{APB_DATA_SIZE-17{1'b0}}, rdata};
   always_ff @(posedge PCLK) begin
     case (entry)
-      8'h00:   rdata <=         dmc_config.trefi;
-      8'h08:   rdata <= {12'b0, dmc_config.tmrd};
-      8'h10:   rdata <= {12'b0, dmc_config.trfc};
-      8'h18:   rdata <= {12'b0, dmc_config.trc};
-      8'h20:   rdata <= {12'b0, dmc_config.trp};
-      8'h28:   rdata <= {12'b0, dmc_config.tras};
-      8'h30:   rdata <= {12'b0, dmc_config.trrd};
-      8'h38:   rdata <= {12'b0, dmc_config.trcd};
-      8'h40:   rdata <= {12'b0, dmc_config.twr};
-      8'h48:   rdata <= {12'b0, dmc_config.twtr};
-      8'h50:   rdata <= {12'b0, dmc_config.trtp};
-      8'h58:   rdata <= {12'b0, dmc_config.tcas};
-      8'h60:   rdata <= {12'b0, dmc_config.col_width};
-      8'h68:   rdata <= {12'b0, dmc_config.row_width};
-      8'h70:   rdata <= {14'b0, dmc_config.bank_width};
-      8'h78:   rdata <= {10'b0, dmc_config.bank_pos};
-      8'h80:   rdata <= {13'b0, dmc_config.dqs_sel_cal};
-      8'h88:   rdata <=         dmc_config.init_cycles;
+      8'h00:   rdata <=         dmc_trefi;
+      8'h08:   rdata <= {12'b0, dmc_tmrd};
+      8'h10:   rdata <= {12'b0, dmc_trfc};
+      8'h18:   rdata <= {12'b0, dmc_trc};
+      8'h20:   rdata <= {12'b0, dmc_trp};
+      8'h28:   rdata <= {12'b0, dmc_tras};
+      8'h30:   rdata <= {12'b0, dmc_trrd};
+      8'h38:   rdata <= {12'b0, dmc_trcd};
+      8'h40:   rdata <= {12'b0, dmc_twr};
+      8'h48:   rdata <= {12'b0, dmc_twtr};
+      8'h50:   rdata <= {12'b0, dmc_trtp};
+      8'h58:   rdata <= {12'b0, dmc_tcas};
+      8'h60:   rdata <= {12'b0, dmc_col_width};
+      8'h68:   rdata <= {12'b0, dmc_row_width};
+      8'h70:   rdata <= {14'b0, dmc_bank_width};
+      8'h78:   rdata <= {10'b0, dmc_bank_pos};
+      8'h80:   rdata <= {13'b0, dmc_dqs_sel_cal};
+      8'h88:   rdata <=         dmc_init_cycles;
       default: rdata <= 0;
     endcase
   end

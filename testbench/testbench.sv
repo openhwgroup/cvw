@@ -35,7 +35,6 @@
 
 
 import cvw::*;
-import bsg_dmc_pkg::bsg_dmc_s;
 
 module testbench;
   /* verilator lint_off WIDTHTRUNC */
@@ -93,7 +92,24 @@ module testbench;
   logic [3:0]  SPICS;
   logic        SDCIntr;
   logic        ui_clk;
-  bsg_dmc_s    dmc_config;
+  logic [15:0] dmc_trefi;
+  logic [3:0]  dmc_tmrd;
+  logic [3:0]  dmc_trfc;
+  logic [3:0]  dmc_trc;
+  logic [3:0]  dmc_trp;
+  logic [3:0]  dmc_tras;
+  logic [3:0]  dmc_trrd;
+  logic [3:0]  dmc_trcd;
+  logic [3:0]  dmc_twr;
+  logic [3:0]  dmc_twtr;
+  logic [3:0]  dmc_trtp;
+  logic [3:0]  dmc_tcas;
+  logic [3:0]  dmc_col_width;
+  logic [3:0]  dmc_row_width;
+  logic [1:0]  dmc_bank_width;
+  logic [5:0]  dmc_bank_pos;
+  logic [2:0]  dmc_dqs_sel_cal;
+  logic [15:0] dmc_init_cycles;
   logic        dmc_config_changed;
   logic        PLLrefclk;
   logic        PLLrfen, PLLfben;
@@ -568,9 +584,12 @@ module testbench;
     if(P.EXT_MEM_SUPPORTED) begin
       if (P.BSG_DMC_SUPPORTED) begin
         `ifdef USE_BSG
+          import bsg_dmc_pkg::bsg_dmc_s;
           `include "bsg_dmc.svh"
+
           localparam dq_width = 32;
           localparam dq_group = dq_width/8;
+          
           // DDR wires
           wire  [dq_width-1:0]  ddr_dq;
           wire  [dq_group-1:0]  ddr_dqs_p;
@@ -603,8 +622,31 @@ module testbench;
           wire  [dq_width-1:0]  ddr_dq_i;
           logic                 dfi_clk_2x_i;
           logic                 dfi_clk_1x_o;
+
+          // Wire up dmc_config to config registers
+          bsg_dmc_s dmc_config;
+          dmc_config.trefi        = dmc_trefi;
+          dmc_config.tmrd         = dmc_tmrd;
+          dmc_config.trfc         = dmc_trfc;
+          dmc_config.trc          = dmc_trc;
+          dmc_config.trp          = dmc_trp;
+          dmc_config.tras         = dmc_tras;
+          dmc_config.trrd         = dmc_trrd;
+          dmc_config.trcd         = dmc_trcd;
+          dmc_config.twr          = dmc_twr;
+          dmc_config.twtr         = dmc_twtr;
+          dmc_config.trtp         = dmc_trtp;
+          dmc_config.tcas         = dmc_tcas;
+          dmc_config.col_width    = dmc_col_width;
+          dmc_config.row_width    = dmc_row_width;
+          dmc_config.bank_width   = dmc_bank_width;
+          dmc_config.bank_pos     = dmc_bank_pos;
+          dmc_config.dqs_sel_cal  = dmc_dqs_sel_cal;
+          dmc_config.init_cycles  = dmc_init_cycles;
+
           always #2.5ns ui_clk = ~ui_clk; // ui_clk must be <= 208 MHz
           always #1.25ns dfi_clk_2x_i = ~dfi_clk_2x_i; // dfi_clk_2x must be 2x ui_clk
+
           // Initialize bsg_dmc
           initial begin: bsg_dmc_config
             force ram.dmc.dmc_clk_rst_gen.btc_async_reset.tag_data_reg.data_r = 0;
@@ -728,7 +770,9 @@ module testbench;
     .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
     .UARTSin, .UARTSout, .SDCIntr, .SPIIn, .SPIOut, .SPICS,
-    .ui_clk, .dmc_config, .dmc_config_changed,
+    .ui_clk, .dmc_trefi, .dmc_tmrd, .dmc_trfc, .dmc_trc, .dmc_trp, .dmc_tras, .dmc_trrd,
+    .dmc_trcd, .dmc_twr, .dmc_twtr, .dmc_trtp, .dmc_tcas, .dmc_col_width, .dmc_row_width,
+    .dmc_bank_width, .dmc_bank_pos, .dmc_dqs_sel_cal, .dmc_init_cycles, .dmc_config_changed,
     .PLLrefclk, .PLLrfen, .PLLfben, .PLLclkr, .PLLclkf, .PLLclkod, .PLLbwadj,
     .PLLlock, .PLLconfigdone
   ); 

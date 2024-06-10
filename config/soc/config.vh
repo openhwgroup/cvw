@@ -188,6 +188,7 @@ localparam logic [63:0] PLL_CONF_BASE      = 64'h00020000;
 localparam logic [63:0] PLL_CONF_RANGE     = 64'h000000FF;
 localparam logic BSG_DMC_SUPPORTED = 1;
 localparam logic [63:0] BSG_DMC_CONF_BASE  = 64'h00030000;
+localparam logic [63:0] BSG_DMC_CONF_RANGE = 64'h000000FF;
 
 // Bus Interface width
 localparam AHBW = (XLEN);
@@ -228,6 +229,6 @@ localparam RADIX = 32'd4;
 localparam DIVCOPIES = 32'd4;
 
 // Memory synthesis configuration
-localparam logic USE_SRAM = 1;
+localparam logic USE_SRAM = 0; // 1 in actual hardware
 
 `include "config-shared.vh"
