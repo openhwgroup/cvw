@@ -78,19 +78,19 @@ module fmashiftcalc import cvw::*;  #(parameter cvw_t P) (
     assign NormSumExp = PreNormSumExp+BiasCorr;
   end
   
-  // determine if the result is subnormal: (NormSumExp <= 0) & (NormSumExp >= -FracLen) & ~FmaSZero
+  // determine if the result is subnormal: (NormSumExp <= 0) & (NormSumExp >= -FracLen)
   if (P.FPSIZES == 1) begin
     logic Sum0LEZ, Sum0GEFL;
     assign Sum0LEZ  = PreNormSumExp[P.NE+1] | ~|PreNormSumExp;
     assign Sum0GEFL = $signed(PreNormSumExp) >= $signed((P.NE+2)'(-P.NF-1)); // changed from -2 dh 4/3/24 for issue 655
-    assign FmaPreResultSubnorm = Sum0LEZ & Sum0GEFL & ~FmaSZero;
+    assign FmaPreResultSubnorm = Sum0LEZ & Sum0GEFL;
   end else if (P.FPSIZES == 2) begin
     logic Sum0LEZ, Sum0GEFL, Sum1LEZ, Sum1GEFL;
     assign Sum0LEZ  = PreNormSumExp[P.NE+1] | ~|PreNormSumExp;
     assign Sum0GEFL = $signed(PreNormSumExp) >= $signed((P.NE+2)'(-P.NF-1)); // changed from -2 dh 4/3/24 for issue 655
     assign Sum1LEZ  = $signed(PreNormSumExp) <= $signed((P.NE+2)'(P.BIAS-P.BIAS1));
     assign Sum1GEFL = $signed(PreNormSumExp) >= $signed((P.NE+2)'(-P.NF1-1+P.BIAS-P.BIAS1)) | ~|PreNormSumExp;
-    assign FmaPreResultSubnorm = (Fmt ? Sum0LEZ : Sum1LEZ) & (Fmt ? Sum0GEFL : Sum1GEFL) & ~FmaSZero;
+    assign FmaPreResultSubnorm = (Fmt ? Sum0LEZ : Sum1LEZ) & (Fmt ? Sum0GEFL : Sum1GEFL);
   end else if (P.FPSIZES == 3) begin
     logic Sum0LEZ, Sum0GEFL, Sum1LEZ, Sum1GEFL, Sum2LEZ, Sum2GEFL;
     assign Sum0LEZ  = PreNormSumExp[P.NE+1] | ~|PreNormSumExp;
@@ -101,9 +101,9 @@ module fmashiftcalc import cvw::*;  #(parameter cvw_t P) (
     assign Sum2GEFL = $signed(PreNormSumExp) >= $signed((P.NE+2)'(-P.NF2-1+P.BIAS-P.BIAS2)) | ~|PreNormSumExp;
     always_comb begin
       case (Fmt)
-        P.FMT: FmaPreResultSubnorm   = Sum0LEZ & Sum0GEFL; // & ~FmaSZero; // checking sum is not zero is harmless but turns out to be unnecessary
-        P.FMT1: FmaPreResultSubnorm  = Sum1LEZ & Sum1GEFL; // & ~FmaSZero;
-        P.FMT2: FmaPreResultSubnorm  = Sum2LEZ & Sum2GEFL; // & ~FmaSZero; 
+        P.FMT: FmaPreResultSubnorm   = Sum0LEZ & Sum0GEFL;
+        P.FMT1: FmaPreResultSubnorm  = Sum1LEZ & Sum1GEFL;
+        P.FMT2: FmaPreResultSubnorm  = Sum2LEZ & Sum2GEFL;
         default: FmaPreResultSubnorm = 1'bx;
       endcase
     end
@@ -119,10 +119,10 @@ module fmashiftcalc import cvw::*;  #(parameter cvw_t P) (
     assign Sum3GEFL = $signed(PreNormSumExp) >= $signed((P.NE+2)'(-P.H_NF-1+P.BIAS-P.H_BIAS)) | ~|PreNormSumExp;
     always_comb begin
       case (Fmt)
-        2'h3: FmaPreResultSubnorm = Sum0LEZ & Sum0GEFL & ~FmaSZero;
-        2'h1: FmaPreResultSubnorm = Sum1LEZ & Sum1GEFL & ~FmaSZero;
-        2'h0: FmaPreResultSubnorm = Sum2LEZ & Sum2GEFL & ~FmaSZero;
-        2'h2: FmaPreResultSubnorm = Sum3LEZ & Sum3GEFL & ~FmaSZero;
+        2'h3: FmaPreResultSubnorm = Sum0LEZ & Sum0GEFL;
+        2'h1: FmaPreResultSubnorm = Sum1LEZ & Sum1GEFL;
+        2'h0: FmaPreResultSubnorm = Sum2LEZ & Sum2GEFL;
+        2'h2: FmaPreResultSubnorm = Sum3LEZ & Sum3GEFL;
       endcase
     end
   end
