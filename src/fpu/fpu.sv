@@ -281,7 +281,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
 
     // fround
     fround #(P) fround(.X(XE), .Xs(XsE), .Xe(XeE), .Xm(XmE), 
-                       .XNaN(XNaNE), .XSNaN(XSNaNE), .XZero(XZeroE), .Fmt(FmtE), .Frm(FrmE), .Nf(NfE), 
+                       .XNaN(XNaNE), .XSNaN(XSNaNE), .Fmt(FmtE), .Frm(FrmE), .Nf(NfE), 
                        .ZfaFRoundNX(ZfaFRoundNXE),
                        .FRound(FRoundE), .FRoundNV(FRoundNVE), .FRoundNX(FRoundNXE));
 
