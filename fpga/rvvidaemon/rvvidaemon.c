@@ -158,6 +158,9 @@ int main(int argc, char **argv){
 void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, uint64_t * PC, uint32_t *insn){
   // you know this actually easiser in assembly. :(
   uint8_t buf2[BUF_SIZ], buf3[BUF_SIZ];
+  uint8_t * buf2ptr, *buf3ptr;
+  buf2ptr = buf2;
+  buf3ptr = buf3;
   //int PayloadSize = sizeof(RequiredRVVI_t) - 1;
   int PayloadSize = 30;
   int Buf2Size = BUF_SIZ - PayloadSize;
@@ -175,9 +178,11 @@ void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, uint64_t * PC, uint32_t *
   uint32_t RequiredFlags;
   RequiredFlags = * (uint32_t *) payload;
   uint8_t Trap, PrivilegeMode, GPRWen, FPRWen;
-  uint16_t CSRCount;
-  uint8_t GPRReg;
-  uint64_t GPRData;
+  uint16_t CSRCount = 0;
+  uint8_t GPRReg = 0;
+  uint64_t GPRData = 0;
+  uint8_t FPRReg = 0;
+  uint64_t FPRData = 0;
 
   Trap = RequiredFlags & 0x1;
   PrivilegeMode = (RequiredFlags >> 1) & 0x3;
@@ -203,10 +208,22 @@ void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, uint64_t * PC, uint32_t *
     }
     printf("\n");
     if(GPRWen){
-      GPRReg = * (uint8_t *) buf2;
+      GPRReg = * (uint8_t *) buf2ptr;
       GPRReg = GPRReg & 0x1F;
-      BitShiftArray(buf3, buf2, 5, newPayloadSize);
+      BitShiftArray(buf3, buf2ptr, 5, newPayloadSize);
       GPRData = * (uint64_t *) buf3;
+      if(FPRWen){
+	buf3ptr += 8;
+	FPRReg = * (uint8_t *) buf3ptr;
+	BitShiftArray(buf2, buf3ptr, 5, newPayloadSize - 8);
+	FPRReg = FPRReg & 0x1F;
+	FPRData = * (uint64_t *) buf2;
+      }
+    }else if(FPRWen){
+      FPRReg = * (uint8_t *) buf2;
+      FPRReg = FPRReg & 0x1F;
+      BitShiftArray(buf3, buf2, 5, newPayloadSize);
+      FPRData = * (uint64_t *) buf3;
     }
     printf("Wrote register %d with value = %lx\n", GPRReg, GPRData);
     int bits;
