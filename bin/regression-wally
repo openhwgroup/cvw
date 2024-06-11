@@ -301,7 +301,7 @@ else:
 if (coverage):  # only run RV64GC tests in coverage mode
     coverStr = '--coverage'
 else:
-   coverStr = ''
+    coverStr = ''
 
 
 # Run Lint
