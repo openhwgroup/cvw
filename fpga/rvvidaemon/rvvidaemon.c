@@ -40,6 +40,7 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <netinet/ether.h>
+#include "rvviApi.h" // *** bug fix me when this file gets included into the correct directory.
 
 
 #define DEST_MAC0	0x43
