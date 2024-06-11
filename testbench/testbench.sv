@@ -302,7 +302,7 @@ module testbench;
 
   initial begin
     TestBenchReset = 1'b1;
-    # 100;
+    # 100ns;
     TestBenchReset = 1'b0;
   end
 
@@ -625,24 +625,26 @@ module testbench;
 
           // Wire up dmc_config to config registers
           bsg_dmc_s dmc_config;
-          dmc_config.trefi        = dmc_trefi;
-          dmc_config.tmrd         = dmc_tmrd;
-          dmc_config.trfc         = dmc_trfc;
-          dmc_config.trc          = dmc_trc;
-          dmc_config.trp          = dmc_trp;
-          dmc_config.tras         = dmc_tras;
-          dmc_config.trrd         = dmc_trrd;
-          dmc_config.trcd         = dmc_trcd;
-          dmc_config.twr          = dmc_twr;
-          dmc_config.twtr         = dmc_twtr;
-          dmc_config.trtp         = dmc_trtp;
-          dmc_config.tcas         = dmc_tcas;
-          dmc_config.col_width    = dmc_col_width;
-          dmc_config.row_width    = dmc_row_width;
-          dmc_config.bank_width   = dmc_bank_width;
-          dmc_config.bank_pos     = dmc_bank_pos;
-          dmc_config.dqs_sel_cal  = dmc_dqs_sel_cal;
-          dmc_config.init_cycles  = dmc_init_cycles;
+          always_comb begin
+            dmc_config.trefi        = dmc_trefi;
+            dmc_config.tmrd         = dmc_tmrd;
+            dmc_config.trfc         = dmc_trfc;
+            dmc_config.trc          = dmc_trc;
+            dmc_config.trp          = dmc_trp;
+            dmc_config.tras         = dmc_tras;
+            dmc_config.trrd         = dmc_trrd;
+            dmc_config.trcd         = dmc_trcd;
+            dmc_config.twr          = dmc_twr;
+            dmc_config.twtr         = dmc_twtr;
+            dmc_config.trtp         = dmc_trtp;
+            dmc_config.tcas         = dmc_tcas;
+            dmc_config.col_width    = dmc_col_width;
+            dmc_config.row_width    = dmc_row_width;
+            dmc_config.bank_width   = dmc_bank_width;
+            dmc_config.bank_pos     = dmc_bank_pos;
+            dmc_config.dqs_sel_cal  = dmc_dqs_sel_cal;
+            dmc_config.init_cycles  = dmc_init_cycles;
+          end
 
           always #2.5ns ui_clk = ~ui_clk; // ui_clk must be <= 208 MHz
           always #1.25ns dfi_clk_2x_i = ~dfi_clk_2x_i; // dfi_clk_2x must be 2x ui_clk
@@ -779,7 +781,7 @@ module testbench;
 
   // generate clock to sequence tests
   always begin
-    clk = 1'b1; # 5; clk = 1'b0; # 5;
+    clk = 1'b1; # 5ns; clk = 1'b0; # 5ns;
   end
 
   /*

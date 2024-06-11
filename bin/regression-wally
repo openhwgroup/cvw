@@ -398,6 +398,7 @@ if (testfloat or nightly): # for nightly, run testfloat along with othres
 if (soc):
     configs = []
     addTests([['soc', tests64gc_nofp[0][1]]], defaultsim)
+    addTests([['soc', tests64gc_fp[0][1]]], defaultsim)
     addTests([['soc', ['custom']]], defaultsim)
 
 
