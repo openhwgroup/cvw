@@ -75,22 +75,15 @@ typedef struct {
   uint8_t GPREn : 1;
   uint8_t FPREn : 1;
   uint16_t CSRCount : 12;
-} RequiredRVVI_t; // total size is 241 bits or 30.25 bytes
+} RequiredRVVI_t; // total size is 241 bits or 30.125 bytes
 
 typedef struct {
-  uint8_t fill : 1; // *** depends on the size of the RequiredRVVI_t
   uint8_t RegAddress : 5;
   uint64_t RegValue;
-} FirstReg_t;
-
-typedef struct {
-  uint8_t fill : 6; // *** depends on the size of the RequiredRVVI_t and FirstReg_t
-  uint8_t RegAddress : 5;
-  uint64_t RegValue;
-} SecondReg_t;
-
+} Reg_t;
 
 void DecodeRVVI(uint8_t *payload, uint64_t * PC, uint32_t *insn);
+void BitShiftArray(uint8_t *dst, uint8_t *src, uint8_t ShiftAmount, int Length);
 
 int main(int argc, char **argv){
   
@@ -164,14 +157,78 @@ int main(int argc, char **argv){
 
 void DecodeRVVI(uint8_t *payload, uint64_t * PC, uint32_t *insn){
   // you know this actually easiser in assembly. :(
+  uint8_t buf2[BUF_SIZ], buf3[BUF_SIZ];
+  //int PayloadSize = sizeof(RequiredRVVI_t) - 1;
+  int PayloadSize = 30;
+  int Buf2Size = BUF_SIZ - PayloadSize;
   RequiredRVVI_t *RequiredFields = (RequiredRVVI_t *) payload;
-  FirstReg_t FirstReg;
-  SecondReg_t SecondReg;
-  *PC = RequiredFields->PC;
-  *insn = RequiredFields->insn;
-  printf("PC = %lx, insn = %x\n", *PC, *insn);
+  uint8_t *CurrentBytePointer = payload + PayloadSize;
+  Reg_t *FirstReg;
+  Reg_t SecondReg;
+  uint64_t Mcycle, Minstret;
+  // unforunately the struct appoarch does not work?!?
+  //*PC = RequiredFields->PC;
+  *PC = * (uint64_t *) payload;
+  //*insn = RequiredFields->insn;
+  payload += 8;
+  *insn = * (uint32_t *) payload;
+  // Mcycle = RequiredFields->Mcycle;
+  payload += 4;
+  Mcycle = * (uint64_t *) payload;
+  payload += 8;
+  Minstret = * (uint64_t *) payload;
+  //Minstret = RequiredFields->Minstret;
+  payload += 8;
+  // the next 4 bytes contain CSRCount (12), FPRWen(1), GPRWen(1), PrivilegeMode(2), Trap(1)
+  uint32_t RequiredFlags;
+  RequiredFlags = * (uint32_t *) payload;
+  uint8_t Trap, PrivilegeMode, GPRWen, FPRWen;
+  uint16_t CSRCount;
+
+  Trap = RequiredFlags & 0x1;
+  PrivilegeMode = (RequiredFlags >> 1) & 0x3;
+  GPRWen = (RequiredFlags >> 3) & 0x1;
+  FPRWen = (RequiredFlags >> 4) & 0x1;
+  CSRCount = (RequiredFlags >> 5) & 0xFFF;
+
+  int bits;
+
+  printf("PC = %lx, insn = %x, Mcycle = %lx, Minstret = %lx, Trap = %hhx, PrivilegeMode = %hhx, GPRWen = %hhx, FPRWen = %hhx, CSRCount == %hx\n", *PC, *insn, Mcycle, Minstret, Trap, PrivilegeMode, GPRWen, FPRWen, CSRCount);
   if(RequiredFields->GPREn){
-    FirstReg = *(FirstReg_t *) (payload + sizeof(RequiredRVVI_t) - 1);
-    printf("Wrote a reg\n");
+    BitShiftArray(buf2, CurrentBytePointer, 1, Buf2Size);
+    FirstReg = (Reg_t *) buf2;
+    printf("Wrote reg %d = %lx\n", FirstReg->RegAddress, FirstReg->RegValue);
   }
+  printf("!!!!!\n\n");
+}
+
+void BitShiftArray(uint8_t *dst, uint8_t *src, uint8_t ShiftAmount, int Length){
+  // always shift right by ShiftAmount (0 to 7 bit positions).
+  // *** this implemenation is very inefficient. improve later.
+  if(ShiftAmount < 0 || ShiftAmount > 7) return;
+  /* Read the first source byte
+     Read the second source byte
+     Right Shift byte 1 by ShiftAmount
+     Right Rotate byte 2 by ShiftAmount
+     Mask byte 2 by ~(2^ShiftAmount -1)
+     OR together the two bytes to form the final next byte
+
+     repeat this for each byte
+     On the last byte we don't do the last steps
+   */
+  int Index;
+  for(Index = 0; Index < Length - 1; Index++){
+    uint8_t byte1 = src[Index];
+    uint8_t byte2 = src[Index+1];
+    byte1 = byte1 >> ShiftAmount;
+    uint8_t byte2rot = byte2 >> ShiftAmount | byte2 << (unsigned) (8 - ShiftAmount);
+    byte2rot = byte2rot & ~(2^ShiftAmount - 1);
+    uint8_t byte1final = byte2rot | byte1;
+    dst[Index] = byte1final;
+  }
+  // fence post
+  // For last one there is only one source byte
+  uint8_t byte1 = src[Length-1];
+  byte1 = byte1 >> ShiftAmount;
+  dst[Length-1] = byte1;
 }
