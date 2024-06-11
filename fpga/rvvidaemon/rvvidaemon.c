@@ -82,7 +82,7 @@ typedef struct {
   uint64_t RegValue;
 } Reg_t;
 
-void DecodeRVVI(uint8_t *payload, uint64_t * PC, uint32_t *insn);
+void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, uint64_t * PC, uint32_t *insn);
 void BitShiftArray(uint8_t *dst, uint8_t *src, uint8_t ShiftAmount, int Length);
 
 int main(int argc, char **argv){
@@ -146,7 +146,7 @@ int main(int argc, char **argv){
       //printf("Correct destination MAC address\n");
       uint64_t PC;
       uint32_t insn;
-      DecodeRVVI(buf + headerbytes, &PC, &insn);
+      DecodeRVVI(buf + headerbytes, payloadbytes, &PC, &insn);
     }
   }
 
@@ -155,35 +155,29 @@ int main(int argc, char **argv){
   return 0;
 }
 
-void DecodeRVVI(uint8_t *payload, uint64_t * PC, uint32_t *insn){
+void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, uint64_t * PC, uint32_t *insn){
   // you know this actually easiser in assembly. :(
   uint8_t buf2[BUF_SIZ], buf3[BUF_SIZ];
   //int PayloadSize = sizeof(RequiredRVVI_t) - 1;
   int PayloadSize = 30;
   int Buf2Size = BUF_SIZ - PayloadSize;
-  RequiredRVVI_t *RequiredFields = (RequiredRVVI_t *) payload;
-  uint8_t *CurrentBytePointer = payload + PayloadSize;
-  Reg_t *FirstReg;
-  Reg_t SecondReg;
   uint64_t Mcycle, Minstret;
   // unforunately the struct appoarch does not work?!?
-  //*PC = RequiredFields->PC;
   *PC = * (uint64_t *) payload;
-  //*insn = RequiredFields->insn;
   payload += 8;
   *insn = * (uint32_t *) payload;
-  // Mcycle = RequiredFields->Mcycle;
   payload += 4;
   Mcycle = * (uint64_t *) payload;
   payload += 8;
   Minstret = * (uint64_t *) payload;
-  //Minstret = RequiredFields->Minstret;
   payload += 8;
   // the next 4 bytes contain CSRCount (12), FPRWen(1), GPRWen(1), PrivilegeMode(2), Trap(1)
   uint32_t RequiredFlags;
   RequiredFlags = * (uint32_t *) payload;
   uint8_t Trap, PrivilegeMode, GPRWen, FPRWen;
   uint16_t CSRCount;
+  uint8_t GPRReg;
+  uint64_t GPRData;
 
   Trap = RequiredFlags & 0x1;
   PrivilegeMode = (RequiredFlags >> 1) & 0x3;
@@ -191,13 +185,38 @@ void DecodeRVVI(uint8_t *payload, uint64_t * PC, uint32_t *insn){
   FPRWen = (RequiredFlags >> 4) & 0x1;
   CSRCount = (RequiredFlags >> 5) & 0xFFF;
 
-  int bits;
-
   printf("PC = %lx, insn = %x, Mcycle = %lx, Minstret = %lx, Trap = %hhx, PrivilegeMode = %hhx, GPRWen = %hhx, FPRWen = %hhx, CSRCount == %hx\n", *PC, *insn, Mcycle, Minstret, Trap, PrivilegeMode, GPRWen, FPRWen, CSRCount);
-  if(RequiredFields->GPREn){
-    BitShiftArray(buf2, CurrentBytePointer, 1, Buf2Size);
-    FirstReg = (Reg_t *) buf2;
-    printf("Wrote reg %d = %lx\n", FirstReg->RegAddress, FirstReg->RegValue);
+  if(GPRWen || FPRWen || (CSRCount != 0)){
+    payload += 2;
+    // the first bit of payload is the last bit of CSRCount.
+    ssize_t newPayloadSize = payloadsize - 30;
+    BitShiftArray(buf2, payload, 1, newPayloadSize);
+    int index;
+    printf("payload = ");
+    for(index = 0; index < 10; index++){
+      printf("%02hhx", payload[index]);
+    }
+    printf("\n");
+    printf("buf2    = ");
+    for(index = 0; index < 10; index++){
+      printf("%02hhx", buf2[index]);
+    }
+    printf("\n");
+    if(GPRWen){
+      GPRReg = * (uint8_t *) buf2;
+      GPRReg = GPRReg & 0x1F;
+      BitShiftArray(buf3, buf2, 5, newPayloadSize);
+      GPRData = * (uint64_t *) buf3;
+    }
+    printf("Wrote register %d with value = %lx\n", GPRReg, GPRData);
+    int bits;
+    printf("Start at Reg data = ");
+    for(bits = 0; bits < newPayloadSize; bits++){
+      printf("%02hhX", buf2[bits]);
+    }
+    printf("\n");
+
+    //printf("Wrote reg %d = %lx\n", FirstReg->RegAddress, FirstReg->RegValue);
   }
   printf("!!!!!\n\n");
 }
@@ -221,8 +240,7 @@ void BitShiftArray(uint8_t *dst, uint8_t *src, uint8_t ShiftAmount, int Length){
     uint8_t byte1 = src[Index];
     uint8_t byte2 = src[Index+1];
     byte1 = byte1 >> ShiftAmount;
-    uint8_t byte2rot = byte2 >> ShiftAmount | byte2 << (unsigned) (8 - ShiftAmount);
-    byte2rot = byte2rot & ~(2^ShiftAmount - 1);
+    uint8_t byte2rot = (byte2 << (unsigned) (8 - ShiftAmount)) & 0xff;
     uint8_t byte1final = byte2rot | byte1;
     dst[Index] = byte1final;
   }
