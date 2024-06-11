@@ -89,6 +89,7 @@ riscvdv_functcov:
 
 combine_functcov:
 	mkdir -p ${SIM}/questa/functcov
+	mkdir -p ${SIM}/questa/functcov_logs
 	cd ${SIM}/questa/functcov && rm -rf *
 	run-elf-cov.bash --seed ${SIM}/questa/seed0.txt --verbose --coverdb ${SIM}/questa/functcov/add.ucdb --elf ${WALLY}/tests/functcov/rv64/I/WALLY-COV-add.elf								>> ${SIM}/questa/functcov_logs/add.log 2>&1
 	run-elf-cov.bash --seed ${SIM}/questa/seed0.txt --verbose --coverdb ${SIM}/questa/functcov/and.ucdb --elf ${WALLY}/tests/functcov/rv64/I/WALLY-COV-and.elf								>> ${SIM}/questa/functcov_logs/add.log 2>&1

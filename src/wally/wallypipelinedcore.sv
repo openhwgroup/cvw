@@ -147,11 +147,11 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          LSUHREADY;
   
   logic                          BPWrongE, BPWrongM;
-  logic                          BPDirPredWrongM;
+  logic                          BPDirWrongM;
   logic                          BTAWrongM;
   logic                          RASPredPCWrongM;
   logic                          IClassWrongM;
-  logic [3:0]                    InstrClassM;
+  logic [3:0]                    IClassM;
   logic                          InstrAccessFaultF, HPTWInstrAccessFaultF, HPTWInstrPageFaultF;
   logic [2:0]                    LSUHSIZE;
   logic [2:0]                    LSUHBURST;
@@ -182,7 +182,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .PCLinkE, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCE, .BPWrongE,  .BPWrongM, 
     // Mem
     .CommittedF, .EPCM, .TrapVectorM, .RetM, .TrapM, .InvalidateICacheM, .CSRWriteFenceM,
-    .InstrD, .InstrM, .InstrOrigM, .PCM, .InstrClassM, .BPDirPredWrongM,
+    .InstrD, .InstrM, .InstrOrigM, .PCM, .IClassM, .BPDirWrongM,
     .BTAWrongM, .RASPredPCWrongM, .IClassWrongM,
     // Faults out
     .IllegalBaseInstrD, .IllegalFPUInstrD, .InstrPageFaultF, .IllegalIEUFPUInstrD, .InstrMisalignedFaultM,
@@ -292,9 +292,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .RetM, .TrapM, .sfencevmaM, .InvalidateICacheM, .DCacheStallM, .ICacheStallF,
       .InstrValidM, .CommittedM, .CommittedF,
       .FRegWriteM, .LoadStallD, .StoreStallD,
-      .BPDirPredWrongM, .BTAWrongM, .BPWrongM,
+      .BPDirWrongM, .BTAWrongM, .BPWrongM,
       .RASPredPCWrongM, .IClassWrongM, .DivBusyE, .FDivBusyE,
-      .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
+      .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
       .InstrPageFaultF, .LoadPageFaultM, .StoreAmoPageFaultM,
       .InstrMisalignedFaultM, .IllegalIEUFPUInstrD, 
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,

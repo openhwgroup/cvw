@@ -7,7 +7,7 @@ SECTIONS
 {
   /* Read-only sections, merged into text segment: */
   /* init segment to ensure we get a consistent start routine*/
-  . = 0x0000000000000000; 
+  . = 0x0000000000001000; 
   . = ALIGN(0x0); 
   .init : {  
   	*(.init) 
@@ -72,6 +72,7 @@ SECTIONS
   PROVIDE (__etext = .);
   PROVIDE (_etext = .);
   PROVIDE (etext = .);
+  . = 0x0000000000002000;
   .rodata         : { *(.rodata .rodata.* .gnu.linkonce.r.*) }
   .rodata1        : { *(.rodata1) }
   .sdata2         :

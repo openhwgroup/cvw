@@ -29,14 +29,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module cacheLRU
-  #(parameter NUMWAYS = 4, SETLEN = 9, OFFSETLEN = 5, NUMLINES = 128) (
+  #(parameter NUMWAYS = 4, SETLEN = 9, OFFSETLEN = 5, NUMSETS = 128) (
   input  logic                clk, 
   input  logic                reset,
   input  logic                FlushStage,
   input  logic                CacheEn,         // Enable the cache memory arrays.  Disable hold read data constant
   input  logic [NUMWAYS-1:0]  HitWay,          // Which way is valid and matches PAdr's tag
   input  logic [NUMWAYS-1:0]  ValidWay,        // Which ways for a particular set are valid, ignores tag
-  input  logic [SETLEN-1:0]   CacheSetData,    // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
   input  logic [SETLEN-1:0]   CacheSetTag,     // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
   input  logic [SETLEN-1:0]   PAdr,            // Physical address 
   input  logic                LRUWriteEn,      // Update the LRU state
@@ -48,7 +47,7 @@ module cacheLRU
 
   localparam                           LOGNUMWAYS = $clog2(NUMWAYS);
 
-  logic [NUMWAYS-2:0]                  LRUMemory [NUMLINES-1:0];
+  logic [NUMWAYS-2:0]                  LRUMemory [NUMSETS-1:0];
   logic [NUMWAYS-2:0]                  CurrLRU;
   logic [NUMWAYS-2:0]                  NextLRU;
   logic [LOGNUMWAYS-1:0]               HitWayEncoded, Way;
@@ -140,13 +139,13 @@ module cacheLRU
 
   // LRU storage must be reset for modelsim to run. However the reset value does not actually matter in practice.
   // This is a two port memory.
-  // Every cycle must read from CacheSetData and each load/store must write the new LRU.
+  // Every cycle must read from CacheSetTag and each load/store must write the new LRU.
 
   // note: Verilator lint doesn't like <= for array initialization (https://verilator.org/warn/BLKLOOPINIT?v=5.021)
   // Move to = to keep Verilator happy and simulator running fast
   always_ff @(posedge clk) begin
     if (reset | (InvalidateCache & ~FlushStage)) 
-      for (int set = 0; set < NUMLINES; set++) LRUMemory[set] = '0; // exclusion-tag: initialize
+      for (int set = 0; set < NUMSETS; set++) LRUMemory[set] = '0; // exclusion-tag: initialize
     else if(CacheEn) begin
       // Because we are using blocking assignments, change to LRUMemory must occur after LRUMemory is used so we get the proper value
       if(LRUWriteEn & (PAdr == CacheSetTag)) CurrLRU = NextLRU;

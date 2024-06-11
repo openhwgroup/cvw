@@ -35,12 +35,12 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   input  logic              FlushM, 
   input  logic              InstrValidNotFlushedM, LoadStallD, StoreStallD,
   input  logic              CSRMWriteM, CSRWriteM,
-  input  logic              BPDirPredWrongM,
+  input  logic              BPDirWrongM,
   input  logic              BTAWrongM,
   input  logic              RASPredPCWrongM,
   input  logic              IClassWrongM,
   input  logic              BPWrongM,                                  // branch predictor is wrong
-  input  logic [3:0]        InstrClassM,
+  input  logic [3:0]        IClassM,
   input  logic              DCacheMiss,
   input  logic              DCacheAccess,
   input  logic              ICacheMiss,
@@ -95,11 +95,11 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   assign CounterEvent[1]    = 1'b0;                                                      // Counter 1 doesn't exist
   assign CounterEvent[2]    = InstrValidNotFlushedM;                                     // MINSTRET instructions retired
   if (P.ZIHPM_SUPPORTED) begin: cevent                                                   // User-defined counters
-    assign CounterEvent[3]  = InstrClassM[0] & InstrValidNotFlushedM;                    // branch instruction
-    assign CounterEvent[4]  = InstrClassM[1] & ~InstrClassM[2] & InstrValidNotFlushedM;  // jump and not return instructions
-    assign CounterEvent[5]  = InstrClassM[2] & InstrValidNotFlushedM;                    // return instructions
+    assign CounterEvent[3]  = IClassM[0] & InstrValidNotFlushedM;                    // branch instruction
+    assign CounterEvent[4]  = IClassM[1] & ~IClassM[2] & InstrValidNotFlushedM;  // jump and not return instructions
+    assign CounterEvent[5]  = IClassM[2] & InstrValidNotFlushedM;                    // return instructions
     assign CounterEvent[6]  = BPWrongM & InstrValidNotFlushedM;                          // branch predictor wrong
-    assign CounterEvent[7]  = BPDirPredWrongM & InstrValidNotFlushedM;                   // Branch predictor wrong direction
+    assign CounterEvent[7]  = BPDirWrongM & InstrValidNotFlushedM;                   // Branch predictor wrong direction
     assign CounterEvent[8]  = BTAWrongM & InstrValidNotFlushedM;                         // branch predictor wrong target
     assign CounterEvent[9]  = RASPredPCWrongM & InstrValidNotFlushedM;                   // return address stack wrong address
     assign CounterEvent[10] = IClassWrongM & InstrValidNotFlushedM;                      // instruction class predictor wrong

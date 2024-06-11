@@ -65,8 +65,8 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   output logic [31:0]          InstrOrigM,                               // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction MTVAL
   output logic [P.XLEN-1:0]    PCM,                                      // Memory stage instruction address
   // branch predictor
-  output logic [3:0]           InstrClassM,                              // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
-  output logic                 BPDirPredWrongM,                          // Prediction direction is wrong
+  output logic [3:0]           IClassM,                              // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
+  output logic                 BPDirWrongM,                          // Prediction direction is wrong
   output logic                 BTAWrongM,                                // Prediction target wrong
   output logic                 RASPredPCWrongM,                          // RAS prediction is wrong
   output logic                 IClassWrongM,                             // Class prediction is wrong
@@ -148,7 +148,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   if(P.ZCA_SUPPORTED) begin : Spill
-    spill #(P) spill(.clk, .reset, .StallD, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF, .InstrUpdateDAF, .CacheableF, 
+    spill #(P) spill(.clk, .reset, .StallF, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF, .InstrUpdateDAF, .CacheableF, 
       .IFUCacheBusStallF, .ITLBMissF, .PCSpillNextF, .PCSpillF, .SelSpillNextF, .PostSpillInstrRawF, .CompressedF);
   end else begin : NoSpill
     assign PCSpillNextF = PCNextF;
@@ -239,7 +239,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       assign CacheRWF = ~ITLBMissF & CacheableF & ~SelIROM ? IFURWF : '0;
       // *** RT: PAdr and NextSet are replaced with mux between PCPF/IEUAdrM and PCSpillNextF/IEUAdrE.
       cache #(.P(P), .PA_BITS(P.PA_BITS), .XLEN(P.XLEN), .LINELEN(P.ICACHE_LINELENINBITS),
-              .NUMLINES(P.ICACHE_WAYSIZEINBYTES*8/P.ICACHE_LINELENINBITS),
+              .NUMSETS(P.ICACHE_WAYSIZEINBYTES*8/P.ICACHE_LINELENINBITS),
               .NUMWAYS(P.ICACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .READ_ONLY_CACHE(1))
       icache(.clk, .reset, .FlushStage(FlushD), .Stall(GatedStallD),
              .FetchBuffer, .CacheBusAck(ICacheBusAck),
@@ -249,7 +249,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
              .SelHPTW('0),
              .CacheMiss(ICacheMiss), .CacheAccess(ICacheAccess),
              .ByteMask('0), .BeatCount('0), .SelBusBeat('0),
-             .CacheWriteData('0),
+             .WriteData('0),
              .CacheRW(CacheRWF),
              .FlushCache('0),
              .NextSet(PCSpillNextF[11:0]),
@@ -342,8 +342,8 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
                 .FlushD, .FlushE, .FlushM, .FlushW, .InstrValidD, .InstrValidE, 
                 .BranchD, .BranchE, .JumpD, .JumpE,
                 .InstrD, .PCNextF, .PCPlus2or4F, .PC1NextF, .PCE, .PCM, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCF, .NextValidPCE,
-                .PCD, .PCLinkE, .InstrClassM, .BPWrongE, .PostSpillInstrRawF, .BPWrongM,
-                .BPDirPredWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM);
+                .PCD, .PCLinkE, .IClassM, .BPWrongE, .PostSpillInstrRawF, .BPWrongM,
+                .BPDirWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM);
 
   end else begin : bpred
     mux2 #(P.XLEN) pcmux1(.d0(PCPlus2or4F), .d1(IEUAdrE), .s(PCSrcE), .y(PC1NextF));    
@@ -356,12 +356,12 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       .CallD, .CallE, .CallM, .CallW, .ReturnD, .ReturnE, .ReturnM, .ReturnW, 
       .BTBCallF(1'b0), .BTBReturnF(1'b0), .BTBJumpF(1'b0),
       .BTBBranchF(1'b0), .BPCallF(), .BPReturnF(), .BPJumpF(), .BPBranchF(), .IClassWrongM,
-      .IClassWrongE(), .BPReturnWrongD());
+      .BPReturnWrongD());
     flopenrc #(1) PCSrcMReg(clk, reset, FlushM, ~StallM, PCSrcE, BPWrongM);
     assign RASPredPCWrongM = 1'b0;
-    assign BPDirPredWrongM = BPWrongM;
+    assign BPDirWrongM = BPWrongM;
     assign BTAWrongM = BPWrongM;
-    assign InstrClassM = {CallM, ReturnM, JumpM, BranchM};
+    assign IClassM = {CallM, ReturnM, JumpM, BranchM};
     assign NextValidPCE = PCE;
   end      
 

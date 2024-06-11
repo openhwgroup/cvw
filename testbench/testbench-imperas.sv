@@ -149,10 +149,11 @@ module testbench;
         $display($sformatf("%m @ t=%0t: Expecting RVVI API version %0d.", $time, RVVI_API_VERSION));
         $fatal;
       end
+      
       void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,            "riscv.ovpworld.org"));
       void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME,              "riscv"));
       void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT,           "RV64GC"));
-      void'(rvviRefConfigSetInt(IDV_CONFIG_MODEL_ADDRESS_BUS_WIDTH,     39));
+      void'(rvviRefConfigSetInt(IDV_CONFIG_MODEL_ADDRESS_BUS_WIDTH,     56));
       void'(rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 6));
 
       if (!rvviRefInit(elffilename)) begin
@@ -189,7 +190,7 @@ module testbench;
       end
       if (P.SDC_SUPPORTED) begin
           void'(rvviRefMemorySetVolatile(P.SDC_BASE, (P.SDC_BASE + P.SDC_RANGE)));
-      end      
+      end
       if (P.SPI_SUPPORTED) begin
           void'(rvviRefMemorySetVolatile(P.SPI_BASE, (P.SPI_BASE + P.SPI_RANGE)));
       end
