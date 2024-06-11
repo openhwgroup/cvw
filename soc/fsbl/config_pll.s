@@ -25,4 +25,14 @@ config_pll:
     li t2, 0xa
     sd t2, 0(t1)
 
+    # test
+    addi t1, t1, 8
+    li t2, 0x0
+    sd t2, 0(t1)
+
+    # fasten
+    addi t1, t1, 8
+    li t2, 0x0
+    sd t2, 0(t1)
+
     ret

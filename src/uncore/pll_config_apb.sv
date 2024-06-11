@@ -44,6 +44,8 @@ module pll_config_apb #(
   output logic [12:0]              PLLclkf,
   output logic [3:0]               PLLclkod,
   output logic [11:0]              PLLbwadj,
+  output logic                     PLLtest,
+  output logic                     PLLfasten,
   input  logic                     PLLlock,
   output logic                     PLLconfigdone
 );
@@ -52,9 +54,9 @@ module pll_config_apb #(
   logic        wren;
   logic [12:0] wdata;
   logic [12:0] rdata;
-  logic [3:0]  wcode;
-  logic        clkr_en,  clkf_en,  clkod_en,  bwadj_en;
-  logic        clkr_rdy, clkf_rdy, clkod_rdy, bwadj_rdy;
+  logic [5:0]  wcode;
+  logic        clkr_en,  clkf_en,  clkod_en,  bwadj_en,  test_en,  fasten_en;
+  logic        clkr_rdy, clkf_rdy, clkod_rdy, bwadj_rdy, test_rdy, fasten_rdy;
 
   assign entry  = {PADDR[7:3], 3'b0};
   assign wren   = PWRITE & PENABLE & PSEL;
@@ -71,7 +73,9 @@ module pll_config_apb #(
       8'h08:   rdata <=         PLLclkf;
       8'h10:   rdata <= { 9'b0, PLLclkod};
       8'h18:   rdata <= { 1'b0, PLLbwadj};
-      8'h20:   rdata <= {12'b0, PLLlock};
+      8'h20:   rdata <= {12'b0, PLLtest};
+      8'h28:   rdata <= {12'b0, PLLfasten};
+      8'h30:   rdata <= {12'b0, PLLlock};
       default: rdata <= 0;
     endcase
   end
@@ -80,24 +84,28 @@ module pll_config_apb #(
   always_comb begin
     if (wren) begin
       case (entry)
-        8'h00:   wcode = 4'b1000;
-        8'h08:   wcode = 4'b0100;
-        8'h10:   wcode = 4'b0010;
-        8'h18:   wcode = 4'b0001;
-        default: wcode = 4'b0000;
+        8'h00:   wcode = 6'b100000;
+        8'h08:   wcode = 6'b010000;
+        8'h10:   wcode = 6'b001000;
+        8'h18:   wcode = 6'b000100;
+        8'h20:   wcode = 6'b000010;
+        8'h28:   wcode = 6'b000001;
+        default: wcode = 6'b000000;
       endcase
     end else begin
-      wcode = 4'b0000;
+      wcode = 6'b000000;
     end
   end
-  assign {clkr_en, clkf_en, clkod_en, bwadj_en} = wcode;
+  assign {clkr_en, clkf_en, clkod_en, bwadj_en, test_en, fasten_en} = wcode;
 
   // Writes are synced to different clocks depending on the signal
   flopen #(13) datareg (PCLK, PREADY, PWDATA[12:0], wdata);
-  pll_sync #(6)  clkrsync   (.clk(PCLK), .trigger(PLLrfen),   .reset(~PRESETn), .data(wdata[5:0]),  .enable(clkr_en),   .sync_data(PLLclkr),  .ready(clkr_rdy));
-  pll_sync #(13) clkfsync   (.clk(PCLK), .trigger(PLLfben),   .reset(~PRESETn), .data(wdata),       .enable(clkf_en),   .sync_data(PLLclkf),  .ready(clkf_rdy));
-  pll_sync #(4)  clkodsync  (.clk(PCLK), .trigger(PLLrefclk), .reset(~PRESETn), .data(wdata[3:0]),  .enable(clkod_en),  .sync_data(PLLclkod), .ready(clkod_rdy));
-  pll_sync #(12) bwadjsync  (.clk(PCLK), .trigger(PLLrefclk), .reset(~PRESETn), .data(wdata[11:0]), .enable(bwadj_en),  .sync_data(PLLbwadj), .ready(bwadj_rdy));
+  pll_sync #(6)  clkrsync   (.clk(PCLK), .trigger(PLLrfen),   .reset(~PRESETn), .data(wdata[5:0]),  .enable(clkr_en),   .sync_data(PLLclkr),   .ready(clkr_rdy));
+  pll_sync #(13) clkfsync   (.clk(PCLK), .trigger(PLLfben),   .reset(~PRESETn), .data(wdata),       .enable(clkf_en),   .sync_data(PLLclkf),   .ready(clkf_rdy));
+  pll_sync #(4)  clkodsync  (.clk(PCLK), .trigger(PLLrefclk), .reset(~PRESETn), .data(wdata[3:0]),  .enable(clkod_en),  .sync_data(PLLclkod),  .ready(clkod_rdy));
+  pll_sync #(12) bwadjsync  (.clk(PCLK), .trigger(PLLrefclk), .reset(~PRESETn), .data(wdata[11:0]), .enable(bwadj_en),  .sync_data(PLLbwadj),  .ready(bwadj_rdy));
+  pll_sync #(1)  testsync   (.clk(PCLK), .trigger(PLLrefclk), .reset(~PRESETn), .data(wdata[0]),    .enable(test_en),   .sync_data(PLLtest),   .ready(test_rdy));
+  pll_sync #(1)  fastensync (.clk(PCLK), .trigger(PLLrefclk), .reset(~PRESETn), .data(wdata[0]),    .enable(fasten_en), .sync_data(PLLfasten), .ready(fasten_rdy));
 
 endmodule
 

@@ -90,6 +90,8 @@ module wallypipelinedsoc
   output logic [12:0]         PLLclkf,
   output logic [3:0]          PLLclkod,
   output logic [11:0]         PLLbwadj,
+  output logic                PLLtest,
+  output logic                PLLfasten,
   input  logic                PLLlock,
   output logic                PLLconfigdone
 );
@@ -123,14 +125,14 @@ module wallypipelinedsoc
       .dmc_trcd, .dmc_twr, .dmc_twtr, .dmc_trtp, .dmc_tcas, .dmc_col_width, .dmc_row_width,
       .dmc_bank_width, .dmc_bank_pos, .dmc_dqs_sel_cal, .dmc_init_cycles, .dmc_config_changed,
       .PLLrefclk, .PLLrfen, .PLLfben, .PLLclkr, .PLLclkf, .PLLclkod, .PLLbwadj,
-      .PLLlock, .PLLconfigdone
+      .PLLtest, .PLLfasten, .PLLlock, .PLLconfigdone
     );
   end else begin
     assign {HRDATA, HREADY, HRESP, HSELEXT, HSELEXTSDC, MTimerInt, MSwInt, MExtInt, SExtInt,
             MTIME_CLINT, GPIOOUT, GPIOEN, UARTSout, SPIOut, SPICS, dmc_trefi, dmc_tmrd, dmc_trfc,
             dmc_trc, dmc_trp, dmc_tras, dmc_trrd, dmc_trcd, dmc_twr, dmc_twtr, dmc_trtp, dmc_tcas,
             dmc_col_width, dmc_row_width, dmc_bank_width, dmc_bank_pos, dmc_dqs_sel_cal,
-            dmc_init_cycles, PLLclkr, PLLclkf, PLLclkod, PLLbwadj} = '0;
+            dmc_init_cycles, PLLclkr, PLLclkf, PLLclkod, PLLbwadj, PLLtest, PLLfasten} = '0;
   end
 
 endmodule

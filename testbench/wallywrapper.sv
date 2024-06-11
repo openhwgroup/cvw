@@ -79,6 +79,8 @@ module wallywrapper;
   logic [12:0] PLLclkf;
   logic [3:0]  PLLclkod;
   logic [11:0] PLLbwadj;
+  logic        PLLtest;
+  logic        PLLfasten;
   logic        PLLlock;
   logic        PLLconfigdone;
 
@@ -105,7 +107,7 @@ module wallywrapper;
     .dmc_trcd, .dmc_twr, .dmc_twtr, .dmc_trtp, .dmc_tcas, .dmc_col_width, .dmc_row_width,
     .dmc_bank_width, .dmc_bank_pos, .dmc_dqs_sel_cal, .dmc_init_cycles, .dmc_config_changed,
     .PLLrefclk, .PLLrfen, .PLLfben, .PLLclkr, .PLLclkf, .PLLclkod, .PLLbwadj,
-    .PLLlock, .PLLconfigdone
+    .PLLtest, .PLLfasten, .PLLlock, .PLLconfigdone
   );
 
 endmodule
