@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <net/if.h>
@@ -90,7 +91,7 @@ typedef struct {
   uint64_t RegValue;
 } Reg_t;
 
-void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, uint64_t * PC, uint32_t *insn, RequiredRVVI_t *InstructionData);
+void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, RequiredRVVI_t *InstructionData);
 void BitShiftArray(uint8_t *dst, uint8_t *src, uint8_t ShiftAmount, int Length);
 
 int main(int argc, char **argv){
@@ -138,6 +139,14 @@ int main(int argc, char **argv){
   }
   printf("Here 4\n");
 
+  if(!rvviVersionCheck(RVVI_API_VERSION)){
+    printf("Bad RVVI_API_VERSION\n");
+  }
+
+  //rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR, "riscv.ovpworld.org");
+
+  rvviRefInit(NULL);
+
   while(1) {
     //printf("listener: Waiting to recvfrom...\n");
     numbytes = recvfrom(sockfd, buf, BUF_SIZ, 0, NULL, NULL);
@@ -155,16 +164,18 @@ int main(int argc, char **argv){
       uint64_t PC;
       uint32_t insn;
       RequiredRVVI_t InstructionData;
-      DecodeRVVI(buf + headerbytes, payloadbytes, &PC, &insn, &InstructionData);
+      DecodeRVVI(buf + headerbytes, payloadbytes, &InstructionData);
     }
   }
 
   close(sockfd);
 
+  
+
   return 0;
 }
 
-void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, uint64_t * PC, uint32_t *insn, RequiredRVVI_t *InstructionData){
+void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, RequiredRVVI_t *InstructionData){
   // you know this actually easiser in assembly. :(
   uint8_t buf2[BUF_SIZ], buf3[BUF_SIZ];
   uint8_t * buf2ptr, *buf3ptr;
@@ -174,10 +185,12 @@ void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, uint64_t * PC, uint32_t *
   int PayloadSize = 30;
   int Buf2Size = BUF_SIZ - PayloadSize;
   uint64_t Mcycle, Minstret;
+  uint64_t PC;
+  uint32_t insn;
   // unforunately the struct appoarch does not work?!?
-  *PC = * (uint64_t *) payload;
+  PC = * (uint64_t *) payload;
   payload += 8;
-  *insn = * (uint32_t *) payload;
+  insn = * (uint32_t *) payload;
   payload += 4;
   Mcycle = * (uint64_t *) payload;
   payload += 8;
@@ -203,7 +216,7 @@ void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, uint64_t * PC, uint32_t *
   CSRCount = (RequiredFlags >> 5) & 0xFFF;
   payload += 2;
 
-  printf("PC = %lx, insn = %x, Mcycle = %lx, Minstret = %lx, Trap = %hhx, PrivilegeMode = %hhx, GPRWen = %hhx, FPRWen = %hhx, CSRCount == %hx\n", *PC, *insn, Mcycle, Minstret, Trap, PrivilegeMode, GPRWen, FPRWen, CSRCount);
+  printf("PC = %lx, insn = %x, Mcycle = %lx, Minstret = %lx, Trap = %hhx, PrivilegeMode = %hhx, GPRWen = %hhx, FPRWen = %hhx, CSRCount == %hx\n", PC, insn, Mcycle, Minstret, Trap, PrivilegeMode, GPRWen, FPRWen, CSRCount);
   if(GPRWen || FPRWen || (CSRCount != 0)){
     // the first bit of payload is the last bit of CSRCount.
     ssize_t newPayloadSize = payloadsize - 30;
@@ -272,8 +285,8 @@ void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, uint64_t * PC, uint32_t *
       }
     }
 
-    InstructionData->PC = *PC;
-    InstructionData->insn = *insn;
+    InstructionData->PC = PC;
+    InstructionData->insn = insn;
     InstructionData->Mcycle = Mcycle;
     InstructionData->Minstret = Minstret;
     InstructionData->Trap = Trap;
@@ -294,6 +307,20 @@ void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, uint64_t * PC, uint32_t *
     //printf("Wrote reg %d = %lx\n", FirstReg->RegAddress, FirstReg->RegValue);
   }
   printf("!!!!!\n\n");
+}
+
+void PrintInstructionData(RequiredRVVI_t *InstructionData){
+  int CSRIndex;
+  printf("PC = %lx, insn = %x, Mcycle = %lx, Minstret = %lx, Trap = %hhx, PrivilegeMode = %hhx, GPRWen = %hhx, FPRWen = %hhx, CSRCount == %hx\n",
+	 InstructionData->PC, InstructionData->insn, InstructionData->Mcycle, InstructionData->Minstret, InstructionData->Trap, InstructionData->PrivilegeMode, InstructionData->GPREn, InstructionData->FPREn, InstructionData->CSRCount);
+  if(InstructionData->GPREn){
+    
+  }
+  for(CSRIndex = 0; CSRIndex < 3; CSRIndex++){
+    if(InstructionData->CSRWen[CSRIndex]){
+      printf("Wrote CSR %x with value %lx\n", InstructionData->CSRReg[CSRIndex], InstructionData->CSRValue[CSRIndex]);
+    }
+  }
 }
 
 void BitShiftArray(uint8_t *dst, uint8_t *src, uint8_t ShiftAmount, int Length){
