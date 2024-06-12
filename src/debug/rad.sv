@@ -83,7 +83,7 @@ module rad import cvw::*; #(parameter cvw_t P) (
       `MENVCFGH_REGNO,
       `MCOUNTINHIBIT_REGNO,
       [`MSCRATCH_REGNO:`MIP_REGNO],
-      [`PMPCFG0_REGNO:`PMPADDRF_REGNO], // TODO This is variable len (P.PA_BITS)?
+      [`PMPCFG0_REGNO:`PMPADDR3F_REGNO], // TODO This is variable len (P.PA_BITS)?
       [`TSELECT_REGNO:`TDATA3_REGNO],
       [`DCSR_REGNO:`DPC_REGNO],
       `SIP_REGNO,

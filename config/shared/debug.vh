@@ -183,7 +183,7 @@
 `define PMPCFGF_REGNO        16'h03AF
 `define PMPADDR0_REGNO       16'h03B0// P.PA_BITS
 //range
-`define PMPADDRF_REGNO       16'h03EF
+`define PMPADDR3F_REGNO      16'h03EF
 
 `define TSELECT_REGNO        16'h07A0
 `define TDATA1_REGNO         16'h07A1
