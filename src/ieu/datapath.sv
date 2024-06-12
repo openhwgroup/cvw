@@ -75,16 +75,16 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   input  logic [4:0]        RdW,                     // Destination register
   // Hazard Unit signals
   // Debug scan chain
-  input  logic       DebugScanEn,
-  input  logic       DebugScanIn,
-  output logic       DebugScanOut,
-  input  logic       GPRSel,
-  input  logic       DebugCapture,
-  input  logic       DebugRegUpdate,
-  input  logic [4:0] RegAddr,
-  input  logic       GPRScanEn,
-  input  logic       GPRScanIn,
-  output logic       GPRScanOut
+  input  logic              DebugScanEn,
+  input  logic              DebugScanIn,
+  output logic              DebugScanOut,
+  input  logic              MiscSel,
+  input  logic              GPRSel,
+  input  logic              DebugCapture,
+  input  logic              DebugRegUpdate,
+  input  logic [4:0]        RegAddr,
+  input  logic              GPRScanIn,
+  output logic              GPRScanOut
 );
 
   // Fetch stage signals
@@ -123,7 +123,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
     assign Rs1DM = GPRSel ? RegAddr : Rs1D;
     assign RdWM = GPRSel ? RegAddr : RdW;
     assign ResultWM = GPRSel ? DebugGPRWriteD : ResultW;
-    flopenrs #(P.XLEN) GPScanReg(.clk, .reset, .en(DebugCapture), .d(R1D), .q(DebugGPRWriteD), .scan(GPRScanEn), .scanin(GPRScanIn), .scanout(GPRScanOut));
+    flopenrs #(P.XLEN) GPScanReg(.clk, .reset, .en(DebugCapture), .d(R1D), .q(DebugGPRWriteD), .scan(DebugScanEn & GPRSel), .scanin(GPRScanIn), .scanout(GPRScanOut));
   end else begin
     regfile #(P.XLEN, P.E_SUPPORTED) regf(clk, reset, RegWriteW, Rs1D, Rs2D, RdW, ResultW, R1D, R2D);
   end
@@ -146,7 +146,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(P.XLEN) SrcAMReg(clk, reset, FlushM, ~StallM, SrcAE, SrcAM);
   flopenrc #(P.XLEN) IEUResultMReg(clk, reset, FlushM, ~StallM, IEUResultE, IEUResultM);
   if (P.DEBUG_SUPPORTED)
-    flopenrcs #(P.XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, ForwardedSrcBE, WriteDataM, DebugScanEn, DebugScanIn, DebugScanOut);
+    flopenrcs #(P.XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, ForwardedSrcBE, WriteDataM, (DebugScanEn & MiscSel), DebugScanIn, DebugScanOut);
   else
     flopenrc #(P.XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, ForwardedSrcBE, WriteDataM);
   

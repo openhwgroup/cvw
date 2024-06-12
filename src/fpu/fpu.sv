@@ -63,13 +63,13 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   output logic                 FCvtIntW,                           // select FCvtIntRes (to IEU)
   output logic [P.XLEN-1:0]    FIntDivResultW,                     // Result from integer division (to IEU)
   // Debug scan chain
-  input  logic                 FPRSel,
+  input  logic                 DebugSel,
+  input  logic [4:0]           RegAddr,
   input  logic                 DebugCapture,
   input  logic                 DebugRegUpdate,
-  input  logic [4:0]           RegAddr,
-  input  logic                 FPRScanEn,
-  input  logic                 FPRScanIn,
-  output logic                 FPRScanOut
+  input  logic                 DebugScanEn,
+  input  logic                 DebugScanIn,
+  output logic                 DebugScanOut
 );
 
   // RISC-V FPU specifics:
@@ -205,11 +205,11 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
       .a1(RA1), .a2(InstrD[24:20]), .a3(InstrD[31:27]), 
       .a4(WA1), .wd4(FResultWM),
       .rd1(FRD1D), .rd2(FRD2D), .rd3(FRD3D));       
-    assign FRegWriteWM = FPRSel ? DebugRegUpdate : FRegWriteW;
-    assign RA1 = FPRSel ? RegAddr : InstrD[19:15];
-    assign WA1 = FPRSel ? RegAddr : RdW;
-    assign FResultWM = FPRSel ? DebugFPRWriteD : FResultW;
-    flopenrs #(P.FLEN) FPScanReg(.clk, .reset, .en(DebugCapture), .d(FRD1D), .q(DebugFPRWriteD), .scan(FPRScanEn), .scanin(FPRScanIn), .scanout(FPRScanOut));
+    assign FRegWriteWM = DebugSel ? DebugRegUpdate : FRegWriteW;
+    assign RA1 = DebugSel ? RegAddr : InstrD[19:15];
+    assign WA1 = DebugSel ? RegAddr : RdW;
+    assign FResultWM = DebugSel ? DebugFPRWriteD : FResultW;
+    flopenrs #(P.FLEN) FPScanReg(.clk, .reset, .en(DebugCapture), .d(FRD1D), .q(DebugFPRWriteD), .scan(DebugScanEn), .scanin(DebugScanIn), .scanout(DebugScanOut));
   end else begin
     fregfile #(P.FLEN) fregfile (.clk, .reset, .we4(FRegWriteW),
       .a1(InstrD[19:15]), .a2(InstrD[24:20]), .a3(InstrD[31:27]), 

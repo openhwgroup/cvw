@@ -41,20 +41,19 @@ module dm import cvw::*; #(parameter cvw_t P) (
   output logic            DebugStall,
 
   // Scan Chain
-  output logic            ScanEn,
-  input  logic            ScanIn,
-  output logic            ScanOut,
-  output logic            GPRSel,
-  output logic            FPRSel,
-  output logic [4:0]      RegAddr,
-  output logic            DebugCapture,
-  output logic            DebugRegUpdate,
-  output logic            GPRScanEn,
-  input  logic            GPRScanIn,
-  output logic            GPRScanOut,
-  output logic            FPRScanEn,
-  input  logic            FPRScanIn,
-  output logic            FPRScanOut					       
+  output logic            DebugScanEn,    // puts scannable flops into scan mode
+  input  logic            DebugScanIn,    // (misc) scan chain data in
+  input  logic            GPRScanIn,      // (GPR) scan chain data in
+  input  logic            FPRScanIn,      // (FPR) scan chain data in
+  input  logic            CSRScanIn,      // (CSR) scan chain data in
+  output logic            DebugScanOut,   // scan chain data out
+  output logic            MiscSel,        // selects general scan chain
+  output logic            GPRSel,         // selects GPR scan chain
+  output logic            FPRSel,         // selects FPR scan chain
+  output logic            CSRSel,         // selects CSR scan chain
+  output logic [11:0]     RegAddr,        // address for scanable regfiles (GPR, FPR, CSR)
+  output logic            DebugCapture,   // latches values into scan register before scanning out
+  output logic            DebugRegUpdate  // writes values from scan register after scanning in				       
 );
   `include "debug.vh"
 
@@ -112,6 +111,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic              RegReadOnly;    // Current RegNo points to a readonly register
   logic              GPRegNo;        // Requested RegNo is a GPR
   logic              FPRegNo;        // Requested RegNo is a FPR
+  logic              CSRegNo;        // Requested RegNo is a CSR
   logic              StoreScanChain; // Store current value of ScanReg into DataX
   logic              WriteMsgReg;    // Write to DataX
   logic              WriteScanReg;   // Insert data from DataX into ScanReg
@@ -407,32 +407,25 @@ module dm import cvw::*; #(parameter cvw_t P) (
   end
 
   assign Busy = ~(AcState == AC_IDLE);
+
+  // Scan Chain
+  assign DebugScanEn = (AcState == AC_SCAN);
   assign DebugCapture = (AcState == AC_CAPTURE);
   assign DebugRegUpdate = (AcState == AC_UPDATE);
 
-  // Scan Chain
+  assign MiscSel = ~(CSRegNo | GPRegNo | FPRegNo) & (AcState != AC_IDLE);
+  assign CSRSel = CSRegNo & (AcState != AC_IDLE);
   assign GPRSel = GPRegNo & (AcState != AC_IDLE);
   assign FPRSel = FPRegNo & (AcState != AC_IDLE);
 
+  assign DebugScanOut = ScanReg[0];
+
   always_comb begin
-    {ScanOut,GPRScanOut,FPRScanOut} = 0;
-    {ScanEn,GPRScanEn,FPRScanEn} = 0;
-    case ({GPRSel, FPRSel})
-      2'b10 : begin
-        ScanReg[P.LLEN] = GPRScanIn;
-        GPRScanOut = ScanReg[0];
-        GPRScanEn = (AcState == AC_SCAN);
-      end
-      2'b01 : begin
-        ScanReg[P.LLEN] = FPRScanIn;
-        FPRScanOut = ScanReg[0];
-        FPRScanEn = (AcState == AC_SCAN);
-      end
-      2'b00 : begin
-        ScanReg[P.LLEN] = ScanIn;
-        ScanOut = ScanReg[0];
-        ScanEn = (AcState == AC_SCAN);
-      end
+    case ({CSRSel, GPRSel, FPRSel})
+      3'b100  : ScanReg[P.LLEN] = CSRScanIn;
+      3'b010  : ScanReg[P.LLEN] = GPRScanIn;
+      3'b001  : ScanReg[P.LLEN] = FPRScanIn;
+      default : ScanReg[P.LLEN] = DebugScanIn;
     endcase
   end
   
@@ -470,6 +463,6 @@ module dm import cvw::*; #(parameter cvw_t P) (
     flopenr #(32) data3reg (.clk, .reset(rst), .en(StoreScanChain | WriteMsgReg & (ReqAddress == `DATA3)), .d(Data3Wr), .q(Data3));
   end
 
-  rad #(P) regnodecode(.AarSize(ReqData[`AARSIZE]),.Regno(ReqData[`REGNO]),.GPRegNo,.FPRegNo,.ScanChainLen,.ShiftCount,.InvalidRegNo,.RegReadOnly,.RegAddr,.ARMask);
+  rad #(P) regnodecode(.AarSize(ReqData[`AARSIZE]),.Regno(ReqData[`REGNO]),.CSRegNo,.GPRegNo,.FPRegNo,.ScanChainLen,.ShiftCount,.InvalidRegNo,.RegReadOnly,.RegAddr,.ARMask);
 
 endmodule

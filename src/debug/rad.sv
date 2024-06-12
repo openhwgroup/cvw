@@ -4,7 +4,8 @@
 // Written: matthew.n.otto@okstate.edu
 // Created: 28 April 2024
 //
-// Purpose: Calculates the numbers of shifts required to access target register on the debug scan chain
+// Purpose: Decodes the register address and generates various control signals 
+//          required to access target register on the debug scan chain
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -30,11 +31,12 @@ module rad import cvw::*; #(parameter cvw_t P) (
   input  logic [15:0]       Regno,
   output logic              GPRegNo,
   output logic              FPRegNo,
+  output logic              CSRegNo,
   output logic [9:0]        ScanChainLen,
   output logic [9:0]        ShiftCount,
   output logic              InvalidRegNo,
   output logic              RegReadOnly,
-  output logic [4:0]        RegAddr,
+  output logic [11:0]       RegAddr,
   output logic [P.LLEN-1:0] ARMask
 );
   `include "debug.vh"
@@ -52,8 +54,6 @@ module rad import cvw::*; #(parameter cvw_t P) (
     + MISALEN + TRAPMLEN + PCMLEN + INSTRMLEN
     + MEMRWMLEN + INSTRVALIDMLEN + WRITEDATAMLEN
     + IEUADRMLEN + READDATAMLEN;
-  localparam GPRCHAINLEN = P.XLEN;
-  localparam FPRCHAINLEN = P.FLEN;
 
   localparam MISA_IDX = MISALEN;
   localparam TRAPM_IDX = MISA_IDX + TRAPMLEN;
@@ -67,8 +67,8 @@ module rad import cvw::*; #(parameter cvw_t P) (
 
   logic [P.LLEN:0] Mask;
 
-  assign RegAddr = Regno[4:0];
-  assign ScanChainLen = GPRegNo ? GPRCHAINLEN : FPRegNo ? FPRCHAINLEN : SCANCHAINLEN;
+  assign RegAddr = Regno[11:0];
+  assign ScanChainLen = (CSRegNo | GPRegNo) ? P.XLEN : FPRegNo ? P.FLEN : SCANCHAINLEN;
 
   // Register decoder
   always_comb begin
@@ -77,6 +77,35 @@ module rad import cvw::*; #(parameter cvw_t P) (
     GPRegNo = 0;
     FPRegNo = 0;
     case (Regno) inside
+      [`USTATUS_REGNO:`UTVEC_REGNO],
+      [`USCRATCH_REGNO:`UIP_REGNO],
+      `SSTATUS_REGNO,
+      [`SEDELEG_REGNO:`SCOUNTEREN_REGNO],
+      [`SSCRATCH_REGNO:`SIP_REGNO],
+      `SATP_REGNO,
+      [`MSTATUS_REGNO:`MCOUNTEREN_REGNO],
+      [`MHPMEVENT3_REGNO:`MIP_REGNO],
+      [`PMPCFG0_REGNO:`PMPCFG3_REGNO],
+      [`PMPADDR0_REGNO:`PMPADDR15_REGNO],
+      [`TSELECT_REGNO:`TDATA3_REGNO],
+      [`DCSR_REGNO:`DPC_REGNO],
+      `MCYCLE_REGNO,
+      [`MINSTRET_REGNO:`MHPMCOUNTER31_REGNO],
+      `MCYCLEH_REGNO,
+      [`MINSTRETH_REGNO:`MHPMCOUNTER31H_REGNO] : begin
+        ShiftCount = P.XLEN - 1;
+        CSRegNo = 1;
+        RegReadOnly = 1; // TODO: eventually DCSR (any maybe others) will be RW
+      end
+
+      [`CYCLE_REGNO:`HPMCOUNTER31_REGNO],
+      [`CYCLEH_REGNO:`HPMCOUNTER31H_REGNO],
+      [`MVENDORID_REGNO:`MHARTID_REGNO] : begin
+        ShiftCount = P.XLEN - 1;
+        CSRegNo = 1;
+        RegReadOnly = 1;
+      end
+
       [`X0_REGNO:`X15_REGNO] : begin
         ShiftCount = P.XLEN - 1;
         GPRegNo = 1;
@@ -91,17 +120,16 @@ module rad import cvw::*; #(parameter cvw_t P) (
         InvalidRegNo = ~(P.F_SUPPORTED | P.D_SUPPORTED | P.Q_SUPPORTED);
         FPRegNo = 1;
       end
-      `MISA_REGNO : begin
-        ShiftCount = SCANCHAINLEN - MISA_IDX;
-        InvalidRegNo = ~P.ZICSR_SUPPORTED;
-        RegReadOnly = 1;
-      end
+      //`MISA_REGNO : begin
+      //  ShiftCount = SCANCHAINLEN - MISA_IDX;
+      //  InvalidRegNo = ~P.ZICSR_SUPPORTED;
+      //  RegReadOnly = 1;
+      //end
       `TRAPM_REGNO : begin
         ShiftCount = SCANCHAINLEN - TRAPM_IDX;
         InvalidRegNo = ~P.ZICSR_SUPPORTED;
         RegReadOnly = 1;
       end
-      `DPC_REGNO,  // BOZO: Alias to PCM until DPC CSR is added
       `PCM_REGNO : begin
         ShiftCount = SCANCHAINLEN - PCM_IDX;
         InvalidRegNo = ~(P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED);

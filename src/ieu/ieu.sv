@@ -81,16 +81,15 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   output logic              CSRWriteFenceM,                               // CSR write or fence instruction needs to flush subsequent instructions
   // Debug scan chain
   input  logic              DebugScanEn,
-  input  logic              DebugScanIn,
-  output logic              DebugScanOut,
-  // GPR debug scan chain
+  input  logic              MiscSel,
   input  logic              GPRSel,
+  input  logic              DebugScanIn,
+  input  logic              GPRScanIn,
+  output logic              DebugScanOut,
+  output logic              GPRScanOut,
   input  logic              DebugCapture,
   input  logic              DebugRegUpdate,
-  input  logic [4:0]        RegAddr,
-  input  logic              GPRScanEn,
-  input  logic              GPRScanIn,
-  output logic              GPRScanOut
+  input  logic [4:0]        RegAddr
 );
 
   logic [2:0] ImmSrcD;                                                    // Select type of immediate extension 
@@ -134,7 +133,7 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
     .StallM, .FlushM, .MemRWE, .MemRWM, .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
     .RegWriteM, .FlushDCacheM, .InstrValidM, .InstrValidE, .InstrValidD, .FWriteIntM,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .ResultSrcW, .CSRWriteFenceM, .InvalidateICacheM,
-    .RdW, .RdE, .RdM, .DebugScanEn, .DebugScanIn, .DebugScanOut(DSCR));
+    .RdW, .RdE, .RdM, .DebugScanEn(DebugScanEn & MiscSel), .DebugScanIn, .DebugScanOut(DSCR));
 
   datapath #(P) dp(
     .clk, .reset, .ImmSrcD, .InstrD, .Rs1D, .Rs2D, .Rs2E, .StallE, .FlushE, .ForwardAE, .ForwardBE, .W64E, .SubArithE,
@@ -143,5 +142,5 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
     .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataM, .FCvtIntW,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .SquashSCW, .ResultSrcW, .ReadDataW, .FCvtIntResW,
     .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW, .DebugScanEn, .DebugScanIn(DSCR), .DebugScanOut,
-    .GPRSel, .DebugCapture, .DebugRegUpdate, .RegAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut);
+    .MiscSel, .GPRSel, .DebugCapture, .DebugRegUpdate, .RegAddr, .GPRScanIn, .GPRScanOut);
 endmodule

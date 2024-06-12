@@ -94,7 +94,10 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   output logic                     IllegalCSRAccessM,         // Illegal CSR access: CSR doesn't exist or is inaccessible at this privilege level
   output logic                     BigEndianM,                // memory access is big-endian based on privilege mode and STATUS register endian fields
   // Debug scan chain
+  input  logic                     DebugSel,
+  input  logic [11:0]              DebugRegAddr,
   input  logic                     DebugCapture,
+  input  logic                     DebugRegUpdate,
   input  logic                     DebugScanEn,
   input  logic                     DebugScanIn,
   output logic                     DebugScanOut
@@ -107,7 +110,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]       CSRReadValM;  
   logic [P.XLEN-1:0]       CSRSrcM;
   logic [P.XLEN-1:0]       CSRRWM, CSRRSM, CSRRCM;  
-  logic [P.XLEN-1:0]       CSRWriteValM;
+  logic [P.XLEN-1:0]       CSRWriteValM, CSRWriteValDM, DebugCSRScanVal;
   logic [P.XLEN-1:0]       MSTATUS_REGW, SSTATUS_REGW, MSTATUSH_REGW;
   logic [P.XLEN-1:0]       STVEC_REGW, MTVEC_REGW;
   logic [P.XLEN-1:0]       MEPC_REGW, SEPC_REGW;
@@ -118,7 +121,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic                    WriteFRMM, WriteFFLAGSM;
   logic [P.XLEN-1:0]       UnalignedNextEPCM, NextEPCM, NextMtvalM;
   logic [4:0]              NextCauseM;
-  logic [11:0]             CSRAdrM;
+  logic [11:0]             CSRAdrM, CSRAdrDM;
   logic                    IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM;
   logic                    InsufficientCSRPrivilegeM;
   logic                    IllegalCSRMWriteReadonlyM;
@@ -134,6 +137,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]       SENVCFG_REGW;
   logic                    ENVCFG_STCE; // supervisor timer counter enable
   logic                    ENVCFG_FIOM; // fence implies io (presently not used)
+  logic                    CSRMWriteDM;
 
   // only valid unflushed instructions can access CSRs
   assign InstrValidNotFlushedM = InstrValidM & ~StallW & ~FlushW;
@@ -184,7 +188,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     CSRSrcM = InstrM[14] ? {{(P.XLEN-5){1'b0}}, InstrM[19:15]} : SrcAM;
 
     // CSR set and clear for MIP/SIP should only touch internal state, not interrupt inputs
-    if (CSRAdrM == MIP | CSRAdrM == SIP) CSRReadVal2M = {{(P.XLEN-12){1'b0}}, MIP_REGW_writeable};
+    if (CSRAdrDM == MIP | CSRAdrDM == SIP) CSRReadVal2M = {{(P.XLEN-12){1'b0}}, MIP_REGW_writeable};
     else                                 CSRReadVal2M = CSRReadValM;
 
     // Compute AND/OR modification
@@ -204,10 +208,10 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////
 
   assign CSRAdrM = InstrM[31:20];
-  assign UnalignedNextEPCM = TrapM ? PCM : CSRWriteValM;
+  assign UnalignedNextEPCM = TrapM ? PCM : CSRWriteValDM;
   assign NextEPCM = P.ZCA_SUPPORTED ? {UnalignedNextEPCM[P.XLEN-1:1], 1'b0} : {UnalignedNextEPCM[P.XLEN-1:2], 2'b00}; // 3.1.15 alignment
-  assign NextCauseM = TrapM ? {InterruptM, CauseM}: {CSRWriteValM[P.XLEN-1], CSRWriteValM[3:0]};
-  assign NextMtvalM = TrapM ? NextFaultMtvalM : CSRWriteValM;
+  assign NextCauseM = TrapM ? {InterruptM, CauseM}: {CSRWriteValDM[P.XLEN-1], CSRWriteValDM[3:0]};
+  assign NextMtvalM = TrapM ? NextFaultMtvalM : CSRWriteValDM;
   assign UngatedCSRMWriteM = CSRWriteM & (PrivilegeModeW == P.M_MODE);
   assign CSRMWriteM = UngatedCSRMWriteM & InstrValidNotFlushedM;
   assign CSRSWriteM = CSRWriteM & (|PrivilegeModeW) & InstrValidNotFlushedM;
@@ -220,37 +224,37 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////
 
   csri #(P) csri(.clk, .reset,  
-    .CSRMWriteM, .CSRSWriteM, .CSRWriteValM, .CSRAdrM, 
+    .CSRMWriteM, .CSRSWriteM, .CSRWriteValM(CSRWriteValDM), .CSRAdrM(CSRAdrDM), 
     .MExtInt, .SExtInt, .MTimerInt, .STimerInt, .MSwInt,
     .MIDELEG_REGW, .ENVCFG_STCE, .MIP_REGW, .MIE_REGW, .MIP_REGW_writeable);
 
   csrsr #(P) csrsr(.clk, .reset, .StallW, 
     .WriteMSTATUSM, .WriteMSTATUSHM, .WriteSSTATUSM, 
     .TrapM, .FRegWriteM, .NextPrivilegeModeM, .PrivilegeModeW,
-    .mretM, .sretM, .WriteFRMM, .WriteFFLAGSM, .CSRWriteValM, .SelHPTW,
+    .mretM, .sretM, .WriteFRMM, .WriteFFLAGSM, .CSRWriteValM(CSRWriteValDM), .SelHPTW,
     .MSTATUS_REGW, .SSTATUS_REGW, .MSTATUSH_REGW,
     .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TW,
     .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TVM,
     .STATUS_FS, .BigEndianM);
 
   csrm #(P) csrm(.clk, .reset, 
-    .UngatedCSRMWriteM, .CSRMWriteM, .MTrapM, .CSRAdrM,
+    .UngatedCSRMWriteM, .CSRMWriteM, .MTrapM, .CSRAdrM(CSRAdrDM),
     .NextEPCM, .NextCauseM, .NextMtvalM, .MSTATUS_REGW, .MSTATUSH_REGW,
-    .CSRWriteValM, .CSRMReadValM, .MTVEC_REGW,
+    .CSRWriteValM(CSRWriteValDM), .CSRMReadValM, .MTVEC_REGW,
     .MEPC_REGW, .MCOUNTEREN_REGW, .MCOUNTINHIBIT_REGW, 
     .MEDELEG_REGW, .MIDELEG_REGW,.PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
     .MIP_REGW, .MIE_REGW, .WriteMSTATUSM, .WriteMSTATUSHM,
     .IllegalCSRMAccessM, .IllegalCSRMWriteReadonlyM,
-    .MENVCFG_REGW, .DebugCapture, .DebugScanEn, .DebugScanIn, .DebugScanOut);
+    .MENVCFG_REGW);
 
   if (P.S_SUPPORTED) begin:csrs
     logic STCE; 
     assign STCE = P.SSTC_SUPPORTED & (PrivilegeModeW == P.M_MODE | (MCOUNTEREN_REGW[1] & ENVCFG_STCE));
     csrs #(P) csrs(.clk, .reset,
-      .CSRSWriteM, .STrapM, .CSRAdrM,
+      .CSRSWriteM, .STrapM, .CSRAdrM(CSRAdrDM),
       .NextEPCM, .NextCauseM, .NextMtvalM, .SSTATUS_REGW, 
       .STATUS_TVM, 
-      .CSRWriteValM, .PrivilegeModeW,
+      .CSRWriteValM(CSRWriteValDM), .PrivilegeModeW,
       .CSRSReadValM, .STVEC_REGW, .SEPC_REGW,      
       .SCOUNTEREN_REGW,
       .SATP_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MTIME_CLINT, .STCE,
@@ -268,7 +272,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   // Floating Point CSRs in User Mode only needed if Floating Point is supported
   if (P.F_SUPPORTED | P.D_SUPPORTED) begin:csru
     csru #(P) csru(.clk, .reset, .InstrValidNotFlushedM, 
-      .CSRUWriteM, .CSRAdrM, .CSRWriteValM, .STATUS_FS, .CSRUReadValM,  
+      .CSRUWriteM, .CSRAdrM(CSRAdrDM), .CSRWriteValM(CSRWriteValDM), .STATUS_FS, .CSRUReadValM,  
       .SetFflagsM, .FRM_REGW, .WriteFRMM, .WriteFFLAGSM,
       .IllegalCSRUAccessM);
   end else begin
@@ -283,7 +287,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       .BPDirPredWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM, .BPWrongM,
       .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .sfencevmaM,
       .InterruptM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
-      .CSRAdrM, .PrivilegeModeW, .CSRWriteValM,
+      .CSRAdrM(CSRAdrDM), .PrivilegeModeW, .CSRWriteValM(CSRWriteValDM),
       .MCOUNTINHIBIT_REGW, .MCOUNTEREN_REGW, .SCOUNTEREN_REGW,
       .MTIME_CLINT,  .CSRCReadValM, .IllegalCSRCAccessM);
   end else begin
@@ -308,9 +312,23 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(P.XLEN) CSRValWReg(clk, reset, FlushW, ~StallW, CSRReadValM, CSRReadValW);
 
   // merge illegal accesses: illegal if none of the CSR addresses is legal or privilege is insufficient
-  assign InsufficientCSRPrivilegeM = (CSRAdrM[9:8] == 2'b11 & PrivilegeModeW != P.M_MODE) |
-                                     (CSRAdrM[9:8] == 2'b01 & PrivilegeModeW == P.U_MODE);
+  // TODO: ignore/modify this check when in debug mode
+  assign InsufficientCSRPrivilegeM = (CSRAdrDM[9:8] == 2'b11 & PrivilegeModeW != P.M_MODE) |
+                                     (CSRAdrDM[9:8] == 2'b01 & PrivilegeModeW == P.U_MODE);
   assign IllegalCSRAccessM = ((IllegalCSRCAccessM & IllegalCSRMAccessM & 
     IllegalCSRSAccessM & IllegalCSRUAccessM |
     InsufficientCSRPrivilegeM) & CSRReadM) | IllegalCSRMWriteReadonlyM;
+
+  // Debug module CSR access
+  // TODO: should DM be able to access CSRs when hart isn't in M mode?
+  if (P.DEBUG_SUPPORTED) begin
+    assign CSRAdrDM = DebugSel ? DebugRegAddr : CSRAdrM;
+    //assign CSRMWriteDM = DebugSel ? DebugRegUpdate : CSRMWriteM; // TODO: add write support
+    assign CSRWriteValDM = DebugSel ? DebugCSRScanVal : CSRWriteValM;
+    flopenrs #(P.XLEN) GPScanReg(.clk, .reset, .en(DebugCapture), .d(CSRReadValM), .q(DebugCSRScanVal), .scan(DebugScanEn), .scanin(DebugScanIn), .scanout(DebugScanOut));
+  end else begin
+    assign CSRAdrDM = CSRAdrM;
+    //assign CSRMWriteDM = CSRMWriteM;
+    assign CSRWriteValDM = CSRWriteValM;
+  end
 endmodule

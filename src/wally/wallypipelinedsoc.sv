@@ -76,20 +76,19 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   // Debug Module signals
   logic                        NdmReset;
   logic                        DebugStall;
-  logic                        ScanEn;
-  logic                        ScanIn;
-  logic                        ScanOut;
+  logic                        DebugScanEn;
+  logic                        DebugScanIn;
+  logic                        GPRScanIn;
+  logic                        FPRScanIn;
+  logic                        CSRScanIn;
+  logic                        DebugScanOut;
+  logic                        MiscSel;
   logic                        GPRSel;
+  logic                        FPRSel;
+  logic                        CSRSel;
+  logic [11:0]                 DebugRegAddr;
   logic                        DebugCapture;
   logic                        DebugRegUpdate;
-  logic [4:0]                  RegAddr;
-  logic                        GPRScanEn;
-  logic                        GPRScanIn;
-  logic                        GPRScanOut;
-  logic                        FPRSel;
-  logic                        FPRScanEn;
-  logic                        FPRScanIn;
-  logic                        FPRScanOut;   
 
   // synchronize reset to SOC clock domain
   synchronizer resetsync(.clk, .d(reset_ext), .q(reset));
@@ -99,9 +98,8 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
-    .DebugStall, .DebugScanEn(ScanEn), .DebugScanIn(ScanOut), .DebugScanOut(ScanIn),
-    .GPRSel, .DebugCapture, .DebugRegUpdate, .RegAddr, .GPRScanEn, .GPRScanIn(GPRScanOut), .GPRScanOut(GPRScanIn),
-    .FPRSel, .FPRScanEn, .FPRScanIn(FPRScanOut), .FPRScanOut(FPRScanIn));
+    .DebugStall, .DebugScanEn, .DebugScanOut(DebugScanIn), .GPRScanOut(GPRScanIn), .FPRScanOut(FPRScanIn), .CSRScanOut(CSRScanIn), 
+    .DebugScanIn(DebugScanOut), .MiscSel, .GPRSel, .FPRSel, .CSRSel, .DebugRegAddr, .DebugCapture, .DebugRegUpdate);
 
   // instantiate uncore if a bus interface exists
   if (P.BUS_SUPPORTED) begin : uncoregen // Hack to work around Verilator bug https://github.com/verilator/verilator/issues/4769
@@ -117,13 +115,9 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
 
   // instantiate debug module
   if (P.DEBUG_SUPPORTED) begin : dm
-    dm #(P) dm (.clk, .rst(reset), .NdmReset, .tck, .tdi, .tms, .tdo,
-      .DebugStall, .ScanEn, .ScanIn, .ScanOut, .GPRSel, .DebugCapture, .DebugRegUpdate,
-      .RegAddr, .GPRScanEn, .GPRScanIn, .GPRScanOut, .FPRSel, 
-      .FPRScanEn, .FPRScanIn, .FPRScanOut);
-  end else begin
-    assign {NdmReset, DebugStall, ScanOut, GPRSel, DebugCapture, DebugRegUpdate, RegAddr, GPRScanEn, GPRScanOut, 
-            FPRSel, FPRScanEn, FPRScanOut} = '0;
+    dm #(P) dm (.clk, .rst(reset), .tck, .tdi, .tms, .tdo, .NdmReset, .DebugStall,
+      .DebugScanEn, .DebugScanIn, .GPRScanIn, .FPRScanIn, .CSRScanIn, .DebugScanOut,
+      .MiscSel, .GPRSel, .FPRSel, .CSRSel, .RegAddr(DebugRegAddr), .DebugCapture, .DebugRegUpdate);
   end
 
 endmodule
