@@ -189,10 +189,10 @@ void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, uint64_t * PC, uint32_t *
   GPRWen = (RequiredFlags >> 3) & 0x1;
   FPRWen = (RequiredFlags >> 4) & 0x1;
   CSRCount = (RequiredFlags >> 5) & 0xFFF;
+  payload += 2;
 
   printf("PC = %lx, insn = %x, Mcycle = %lx, Minstret = %lx, Trap = %hhx, PrivilegeMode = %hhx, GPRWen = %hhx, FPRWen = %hhx, CSRCount == %hx\n", *PC, *insn, Mcycle, Minstret, Trap, PrivilegeMode, GPRWen, FPRWen, CSRCount);
   if(GPRWen || FPRWen || (CSRCount != 0)){
-    payload += 2;
     // the first bit of payload is the last bit of CSRCount.
     ssize_t newPayloadSize = payloadsize - 30;
     BitShiftArray(buf2, payload, 1, newPayloadSize);
@@ -232,6 +232,36 @@ void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, uint64_t * PC, uint32_t *
       printf("%02hhX", buf2[bits]);
     }
     printf("\n");
+    if(GPRWen ^ FPRWen){
+      payload += 8;
+      Buf2Size = payloadsize - 38;
+      BitShiftArray(buf2, payload, 6, Buf2Size);
+    }else if(GPRWen & FPRWen){
+      payload += 17;
+      Buf2Size = payloadsize - 47;
+      BitShiftArray(buf2, payload, 3, Buf2Size);
+    }else{
+      Buf2Size = payloadsize - 30;
+      BitShiftArray(buf2, payload, 1, Buf2Size);
+    }
+    int CSRIndex;
+    uint8_t CSRWen[3] = {0, 0, 0};
+    uint16_t CSRReg[3];
+    uint64_t CSRValue[3];
+    buf2ptr = buf2;
+    for(CSRIndex = 0; CSRIndex < CSRCount; CSRIndex++){
+      CSRReg[CSRIndex] = (*(uint16_t *) buf2ptr) & 0xFFF;
+      Buf2Size -= 1;
+      BitShiftArray(buf3, buf2ptr + 1, 4, Buf2Size);
+      CSRValue[CSRIndex] = (*(uint64_t *) buf3);
+      CSRWen[CSRIndex] = 1;
+      buf2ptr = buf3;
+    }
+    for(CSRIndex = 0; CSRIndex < 3; CSRIndex++){
+      if(CSRWen[CSRIndex]){
+	printf("Wrote CSR %x with value %lx\n", CSRReg[CSRIndex], CSRValue[CSRIndex]);
+      }
+    }
 
     //printf("Wrote reg %d = %lx\n", FirstReg->RegAddress, FirstReg->RegValue);
   }
