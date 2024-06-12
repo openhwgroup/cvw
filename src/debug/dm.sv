@@ -25,6 +25,20 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+// TODO List:
+// fix CSR scanning
+// determine config/permissions of all CSRs
+// DCSR and DPC should exist even when not privileged_supported
+// test all combinations of XLEN/FLEN
+// improve halting / implement "debug mode"
+//// Debug Mode = M-mode with stalled pipe
+// Flush pipe with NOPs during halt?
+// implement better steps
+// Alias DPC to PCF/PCNextF?
+
+// (stretch) add system bus access?
+
+
 module dm import cvw::*; #(parameter cvw_t P) (
   input  logic            clk, 
   input  logic            rst,

@@ -41,7 +41,6 @@ module rad import cvw::*; #(parameter cvw_t P) (
 );
   `include "debug.vh"
 
-  localparam MISALEN = P.ZICSR_SUPPORTED ? P.XLEN : 0;
   localparam TRAPMLEN = P.ZICSR_SUPPORTED ? 1 : 0;
   localparam PCMLEN = (P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED) ? P.XLEN : 0;
   localparam INSTRMLEN = (P.ZICSR_SUPPORTED | P.A_SUPPORTED) ? 32 : 0;
@@ -50,13 +49,12 @@ module rad import cvw::*; #(parameter cvw_t P) (
   localparam WRITEDATAMLEN = P.XLEN;
   localparam IEUADRMLEN = P.XLEN;
   localparam READDATAMLEN = P.LLEN;
-  localparam SCANCHAINLEN = P.XLEN - 1 
-    + MISALEN + TRAPMLEN + PCMLEN + INSTRMLEN
+  localparam SCANCHAINLEN = P.LLEN - 1 
+    + TRAPMLEN + PCMLEN + INSTRMLEN
     + MEMRWMLEN + INSTRVALIDMLEN + WRITEDATAMLEN
     + IEUADRMLEN + READDATAMLEN;
 
-  localparam MISA_IDX = MISALEN;
-  localparam TRAPM_IDX = MISA_IDX + TRAPMLEN;
+  localparam TRAPM_IDX = TRAPMLEN;
   localparam PCM_IDX = TRAPM_IDX + PCMLEN;
   localparam INSTRM_IDX = PCM_IDX + INSTRMLEN;
   localparam MEMRWM_IDX = INSTRM_IDX + MEMRWMLEN;
@@ -74,6 +72,7 @@ module rad import cvw::*; #(parameter cvw_t P) (
   always_comb begin
     InvalidRegNo = 0;
     RegReadOnly = 0;
+    CSRegNo = 0;
     GPRegNo = 0;
     FPRegNo = 0;
     case (Regno) inside

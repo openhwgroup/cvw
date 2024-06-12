@@ -27,6 +27,9 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Note: This module controls all of the per-hart debug state.
+// In a multihart system, this module should be instantiated under wallypipelinedcore
+
 module hartcontrol(
   input  logic clk, rst,
   input  logic NdmReset,     // Triggers HaltOnReset behavior
