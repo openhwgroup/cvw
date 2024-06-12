@@ -261,11 +261,11 @@ module loggers import cvw::*; #(parameter cvw_t P,
           $fwrite(file, "BEGIN %s\n", memfilename);
           $fwrite(CFIfile, "BEGIN %s\n", memfilename);
         end
-        if(dut.core.ifu.InstrClassM[0] & ~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM) begin
+        if(dut.core.ifu.IClassM[0] & ~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM) begin
           direction = PCSrcM ? "t" : "n";
           $fwrite(file, "%h %s\n", dut.core.PCM, direction);
         end
-        if((|dut.core.ifu.InstrClassM) & ~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM) begin
+        if((|dut.core.ifu.IClassM) & ~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM) begin
           direction = PCSrcM ? "t" : "n";
           $fwrite(CFIfile, "%h %s\n", dut.core.PCM, direction);
         end
