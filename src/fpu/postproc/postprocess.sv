@@ -157,11 +157,11 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
       end
       2'b00: begin // cvt
         ShiftAmt = {{P.LOGNORMSHIFTSZ-$clog2(P.CVTLEN+1){1'b0}}, CvtShiftAmt};
-        ShiftIn  =  {CvtShiftIn, {P.NORMSHIFTSZ-P.CVTLEN-P.NF-1{1'b0}}};
+        ShiftIn  =  {CvtShiftIn, {P.NORMSHIFTSZ-(P.CVTLEN+P.NF+1){1'b0}}};
       end
       2'b01: begin //divsqrt
         ShiftAmt = DivShiftAmt;
-        ShiftIn  = {{P.NF{1'b0}}, DivUm, {P.NORMSHIFTSZ-P.DIVb-1-P.NF{1'b0}}};
+        ShiftIn  = {{P.NF{1'b0}}, DivUm, {P.NORMSHIFTSZ-(P.DIVb+1+P.NF){1'b0}}};
       end
       default: begin 
         ShiftAmt = {P.LOGNORMSHIFTSZ{1'bx}}; 

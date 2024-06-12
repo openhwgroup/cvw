@@ -69,12 +69,14 @@ module shiftcorrection import cvw::*;  #(parameter cvw_t P) (
   assign RightShift = FmaOp ? LZAPlus1 : LeftShiftQm;
 
   // one bit right shift for FMA or division
-  mux2 #(P.NORMSHIFTSZ) corrmux({Shifted[P.NORMSHIFTSZ-3:0], 2'b00}, {Shifted[P.NORMSHIFTSZ-2:1], 2'b00}, RightShift, CorrShifted);
+//  mux2 #(P.NORMSHIFTSZ) corrmux({Shifted[P.NORMSHIFTSZ-3:0], 2'b00}, {Shifted[P.NORMSHIFTSZ-2:1], 2'b00}, RightShift, CorrShifted);
   
   // if the result of the divider was calculated to be subnormal, then the result was correctly normalized, so select the top shifted bits
   always_comb
-    if (FmaOp | (DivOp & ~DivResSubnorm))  Mf = CorrShifted;
-    else                                   Mf = Shifted[P.NORMSHIFTSZ-1:0];
+    if (FmaOp | (DivOp & ~DivResSubnorm))  // one bit shift for FMA or division
+      if (RightShift)                      Mf = {Shifted[P.NORMSHIFTSZ-2:1], 2'b00};
+      else                                 Mf = {Shifted[P.NORMSHIFTSZ-3:0], 2'b00};
+    else                                   Mf =  Shifted[P.NORMSHIFTSZ-1:0];  // convert and subnormal division result
     
   // Determine sum's exponent
   //  main exponent issues: 
