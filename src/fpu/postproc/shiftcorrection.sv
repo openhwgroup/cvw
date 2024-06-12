@@ -61,19 +61,17 @@ module shiftcorrection import cvw::*;  #(parameter cvw_t P) (
   //  - a one has to propagate all the way through a sum. so we can leave the bottom statement alone
   assign LZAPlus1 = Shifted[P.NORMSHIFTSZ-1];
 
-
   // correct the shifting of the divsqrt caused by producing a result in (0.5, 2) range
   // condition: if the msb is 1 or the exponent was one, but the shifted quotent was < 1 (Subnorm)
-  assign LeftShiftQm = (LZAPlus1|(DivUe==1&~LZAPlus1));
- 
-  assign RightShift = FmaOp ? LZAPlus1 : LeftShiftQm;
+  assign LeftShiftQm = (LZAPlus1|(DivUe==1&~LZAPlus1)); 
 
-  // one bit right shift for FMA or division
-//  mux2 #(P.NORMSHIFTSZ) corrmux({Shifted[P.NORMSHIFTSZ-3:0], 2'b00}, {Shifted[P.NORMSHIFTSZ-2:1], 2'b00}, RightShift, CorrShifted);
-  
+  // Determine the shif for either FMA or divsqrt
+  assign RightShift = FmaOp ? LZAPlus1 : LeftShiftQm;
+ 
+  // possible one bit right shift for FMA or division
   // if the result of the divider was calculated to be subnormal, then the result was correctly normalized, so select the top shifted bits
   always_comb
-    if (FmaOp | (DivOp & ~DivResSubnorm))  // one bit shift for FMA or division
+    if (FmaOp | (DivOp & ~DivResSubnorm))  // one bit shift for FMA or divsqrt
       if (RightShift)                      Mf = {Shifted[P.NORMSHIFTSZ-2:1], 2'b00};
       else                                 Mf = {Shifted[P.NORMSHIFTSZ-3:0], 2'b00};
     else                                   Mf =  Shifted[P.NORMSHIFTSZ-1:0];  // convert and subnormal division result
