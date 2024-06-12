@@ -75,6 +75,14 @@ typedef struct {
   uint8_t GPREn : 1;
   uint8_t FPREn : 1;
   uint16_t CSRCount : 12;
+  uint8_t GPRReg : 5;
+  uint64_t GPRValue;
+  uint8_t FPRReg : 5;
+  uint64_t FPRValue;
+  uint8_t CSRWen[3];
+  uint16_t CSRReg[3];
+  uint64_t CSRValue[3];
+  
 } RequiredRVVI_t; // total size is 241 bits or 30.125 bytes
 
 typedef struct {
@@ -82,7 +90,7 @@ typedef struct {
   uint64_t RegValue;
 } Reg_t;
 
-void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, uint64_t * PC, uint32_t *insn);
+void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, uint64_t * PC, uint32_t *insn, RequiredRVVI_t *InstructionData);
 void BitShiftArray(uint8_t *dst, uint8_t *src, uint8_t ShiftAmount, int Length);
 
 int main(int argc, char **argv){
@@ -146,7 +154,8 @@ int main(int argc, char **argv){
       //printf("Correct destination MAC address\n");
       uint64_t PC;
       uint32_t insn;
-      DecodeRVVI(buf + headerbytes, payloadbytes, &PC, &insn);
+      RequiredRVVI_t InstructionData;
+      DecodeRVVI(buf + headerbytes, payloadbytes, &PC, &insn, &InstructionData);
     }
   }
 
@@ -155,7 +164,7 @@ int main(int argc, char **argv){
   return 0;
 }
 
-void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, uint64_t * PC, uint32_t *insn){
+void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, uint64_t * PC, uint32_t *insn, RequiredRVVI_t *InstructionData){
   // you know this actually easiser in assembly. :(
   uint8_t buf2[BUF_SIZ], buf3[BUF_SIZ];
   uint8_t * buf2ptr, *buf3ptr;
@@ -183,6 +192,9 @@ void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, uint64_t * PC, uint32_t *
   uint64_t GPRData = 0;
   uint8_t FPRReg = 0;
   uint64_t FPRData = 0;
+  uint8_t CSRWen[3] = {0, 0, 0};
+  uint16_t CSRReg[3];
+  uint64_t CSRValue[3];
 
   Trap = RequiredFlags & 0x1;
   PrivilegeMode = (RequiredFlags >> 1) & 0x3;
@@ -245,9 +257,6 @@ void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, uint64_t * PC, uint32_t *
       BitShiftArray(buf2, payload, 1, Buf2Size);
     }
     int CSRIndex;
-    uint8_t CSRWen[3] = {0, 0, 0};
-    uint16_t CSRReg[3];
-    uint64_t CSRValue[3];
     buf2ptr = buf2;
     for(CSRIndex = 0; CSRIndex < CSRCount; CSRIndex++){
       CSRReg[CSRIndex] = (*(uint16_t *) buf2ptr) & 0xFFF;
@@ -263,6 +272,25 @@ void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, uint64_t * PC, uint32_t *
       }
     }
 
+    InstructionData->PC = *PC;
+    InstructionData->insn = *insn;
+    InstructionData->Mcycle = Mcycle;
+    InstructionData->Minstret = Minstret;
+    InstructionData->Trap = Trap;
+    InstructionData->PrivilegeMode = PrivilegeMode;
+    InstructionData->GPREn = GPRWen;
+    InstructionData->FPREn = FPRWen;
+    InstructionData->CSRCount = CSRCount;
+    InstructionData->GPRReg = GPRReg;
+    InstructionData->GPRValue = GPRData;
+    InstructionData->FPRReg = FPRReg;
+    InstructionData->FPRValue = FPRData;
+    for(CSRIndex = 0; CSRIndex < 3; CSRIndex++){
+      InstructionData->CSRWen[CSRIndex] = CSRWen[CSRIndex];
+      InstructionData->CSRReg[CSRIndex] = CSRReg[CSRIndex];
+      InstructionData->CSRValue[CSRIndex] = CSRValue[CSRIndex];
+    }
+    
     //printf("Wrote reg %d = %lx\n", FirstReg->RegAddress, FirstReg->RegValue);
   }
   printf("!!!!!\n\n");
