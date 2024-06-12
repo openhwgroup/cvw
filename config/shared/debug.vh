@@ -155,7 +155,6 @@
 `define FFLAGS_REGNO         16'h0001
 `define FRM_REGNO            16'h0002
 `define FCSR_REGNO           16'h0003
-
 // privileged/csrm
 `define MSTATUS_REGNO        16'h0300
 `define MISA_REGNO           16'h0301
@@ -199,9 +198,46 @@
 `define MIMPID_REGNO         16'h0F13
 `define MHARTID_REGNO        16'h0F14
 `define MCONFIGPTR_REGNO     16'h0F15
+// privileged/csr
+`define SIP_REGNO            16'h0144
+`define MIP_REGNO            16'h0344
+// privileged/csrc
+`define MHPMEVENTBASE_REGNO    16'h0320
 
+`define MHPMCOUNTERBASE_REGNO  16'h0B00
 
+`define MHPMCOUNTERHBASE_REGNO 16'h0B80
 
+`define HPMCOUNTERBASE_REGNO   16'h0C00
+`define TIME_REGNO             16'h0C01
+
+`define HPMCOUNTERHBASE_REGNO  16'h0C80
+`define TIMEH_REGNO            16'h0C81
+// privileged/csrs
+`define SSTATUS_REGNO        16'h0100
+
+`define SIE_REGNO            16'h0104
+`define STVEC_REGNO          16'h0105
+`define SCOUNTEREN_REGNO     16'h0106
+
+`define SENVCFG_REGNO        16'h010A
+
+`define SSCRATCH_REGNO       16'h0140
+`define SEPC_REGNO           16'h0141
+`define SCAUSE_REGNO         16'h0142
+`define STVAL_REGNO          16'h0143
+`define SIP_REGNO            16'h0144
+
+`define STIMECMP_REGNO       16'h014D
+
+`define STIMECMPH_REGNO      16'h015D
+
+`define SATP_REGNO           16'h0180
+// privileged/csri
+`define SIE_REGNO            16'h0104
+`define SIP_REGNO            16'h0144
+`define MIE_REGNO            16'h0304
+`define MIP_REGNO            16'h0344
 
 // src/ieu/datapath
 `define X0_REGNO          16'h1000

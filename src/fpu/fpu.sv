@@ -64,7 +64,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0]    FIntDivResultW,                     // Result from integer division (to IEU)
   // Debug scan chain
   input  logic                 DebugSel,
-  input  logic [4:0]           RegAddr,
+  input  logic [4:0]           DebugRegAddr,
   input  logic                 DebugCapture,
   input  logic                 DebugRegUpdate,
   input  logic                 DebugScanEn,
@@ -206,8 +206,8 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
       .a4(WA1), .wd4(FResultWM),
       .rd1(FRD1D), .rd2(FRD2D), .rd3(FRD3D));       
     assign FRegWriteWM = DebugSel ? DebugRegUpdate : FRegWriteW;
-    assign RA1 = DebugSel ? RegAddr : InstrD[19:15];
-    assign WA1 = DebugSel ? RegAddr : RdW;
+    assign RA1 = DebugSel ? DebugRegAddr : InstrD[19:15];
+    assign WA1 = DebugSel ? DebugRegAddr : RdW;
     assign FResultWM = DebugSel ? DebugFPRWriteD : FResultW;
     flopenrs #(P.FLEN) FPScanReg(.clk, .reset, .en(DebugCapture), .d(FRD1D), .q(DebugFPRWriteD), .scan(DebugScanEn), .scanin(DebugScanIn), .scanout(DebugScanOut));
   end else begin

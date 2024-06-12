@@ -77,30 +77,42 @@ module rad import cvw::*; #(parameter cvw_t P) (
     GPRegNo = 0;
     FPRegNo = 0;
     case (Regno) inside
-      [`USTATUS_REGNO:`UTVEC_REGNO],
-      [`USCRATCH_REGNO:`UIP_REGNO],
-      `SSTATUS_REGNO,
-      [`SEDELEG_REGNO:`SCOUNTEREN_REGNO],
-      [`SSCRATCH_REGNO:`SIP_REGNO],
-      `SATP_REGNO,
+      [`FFLAGS_REGNO:`FCSR_REGNO],
       [`MSTATUS_REGNO:`MCOUNTEREN_REGNO],
-      [`MHPMEVENT3_REGNO:`MIP_REGNO],
-      [`PMPCFG0_REGNO:`PMPCFG3_REGNO],
-      [`PMPADDR0_REGNO:`PMPADDR15_REGNO],
+      `MENVCFG_REGNO,
+      `MSTATUSH_REGNO,
+      `MENVCFGH_REGNO,
+      `MCOUNTINHIBIT_REGNO,
+      [`MSCRATCH_REGNO:`MIP_REGNO],
+      [`PMPCFG0_REGNO:`PMPADDRF_REGNO], // TODO This is variable len (P.PA_BITS)?
       [`TSELECT_REGNO:`TDATA3_REGNO],
       [`DCSR_REGNO:`DPC_REGNO],
-      `MCYCLE_REGNO,
-      [`MINSTRET_REGNO:`MHPMCOUNTER31_REGNO],
-      `MCYCLEH_REGNO,
-      [`MINSTRETH_REGNO:`MHPMCOUNTER31H_REGNO] : begin
+      `SIP_REGNO,
+      `MIP_REGNO,
+      `MHPMEVENTBASE_REGNO,
+      `MHPMCOUNTERBASE_REGNO,
+      `MHPMCOUNTERHBASE_REGNO,
+      [`HPMCOUNTERBASE_REGNO:`TIME_REGNO],
+      [`HPMCOUNTERHBASE_REGNO:`TIMEH_REGNO],
+      `SSTATUS_REGNO,
+      [`SIE_REGNO:`SCOUNTEREN_REGNO],
+      `SENVCFG_REGNO,
+      [`SSCRATCH_REGNO:`SIP_REGNO],
+      `STIMECMP_REGNO,
+      `STIMECMPH_REGNO,
+      `SATP_REGNO,
+      `SIE_REGNO,
+      `SIP_REGNO,
+      `MIE_REGNO,
+      `MIP_REGNO : begin
         ShiftCount = P.XLEN - 1;
         CSRegNo = 1;
         RegReadOnly = 1; // TODO: eventually DCSR (any maybe others) will be RW
       end
 
-      [`CYCLE_REGNO:`HPMCOUNTER31_REGNO],
-      [`CYCLEH_REGNO:`HPMCOUNTER31H_REGNO],
-      [`MVENDORID_REGNO:`MHARTID_REGNO] : begin
+      [`HPMCOUNTERBASE_REGNO:`TIME_REGNO],
+      [`HPMCOUNTERHBASE_REGNO:`TIMEH_REGNO],
+      [`MVENDORID_REGNO:`MCONFIGPTR_REGNO] : begin
         ShiftCount = P.XLEN - 1;
         CSRegNo = 1;
         RegReadOnly = 1;

@@ -82,7 +82,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   input  logic              GPRSel,
   input  logic              DebugCapture,
   input  logic              DebugRegUpdate,
-  input  logic [4:0]        RegAddr,
+  input  logic [4:0]        DebugRegAddr,
   input  logic              GPRScanIn,
   output logic              GPRScanOut
 );
@@ -120,8 +120,8 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   if (P.DEBUG_SUPPORTED) begin
     regfile #(P.XLEN, P.E_SUPPORTED) regf(clk, reset, RegWriteWM, Rs1DM, Rs2D, RdWM, ResultWM, R1D, R2D);
     assign RegWriteWM = GPRSel ? DebugRegUpdate : RegWriteW;
-    assign Rs1DM = GPRSel ? RegAddr : Rs1D;
-    assign RdWM = GPRSel ? RegAddr : RdW;
+    assign Rs1DM = GPRSel ? DebugRegAddr : Rs1D;
+    assign RdWM = GPRSel ? DebugRegAddr : RdW;
     assign ResultWM = GPRSel ? DebugGPRWriteD : ResultW;
     flopenrs #(P.XLEN) GPScanReg(.clk, .reset, .en(DebugCapture), .d(R1D), .q(DebugGPRWriteD), .scan(DebugScanEn & GPRSel), .scanin(GPRScanIn), .scanout(GPRScanOut));
   end else begin

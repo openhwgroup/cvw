@@ -89,7 +89,7 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   output logic              GPRScanOut,
   input  logic              DebugCapture,
   input  logic              DebugRegUpdate,
-  input  logic [4:0]        RegAddr
+  input  logic [4:0]        DebugRegAddr
 );
 
   logic [2:0] ImmSrcD;                                                    // Select type of immediate extension 
@@ -142,5 +142,5 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
     .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataM, .FCvtIntW,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .SquashSCW, .ResultSrcW, .ReadDataW, .FCvtIntResW,
     .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW, .DebugScanEn, .DebugScanIn(DSCR), .DebugScanOut,
-    .MiscSel, .GPRSel, .DebugCapture, .DebugRegUpdate, .RegAddr, .GPRScanIn, .GPRScanOut);
+    .MiscSel, .GPRSel, .DebugCapture, .DebugRegUpdate, .DebugRegAddr, .GPRScanIn, .GPRScanOut);
 endmodule
