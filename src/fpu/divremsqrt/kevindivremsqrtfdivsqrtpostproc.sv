@@ -125,7 +125,7 @@ module kevindivremsqrtfdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
     intrightshift #(P) intnormshifter(PreResultM, IntNormShiftM, PreResultShiftedM);
     mux2 #(P.INTDIVb+4)    preintresultmux(PreResultShiftedM, -PreResultShiftedM,AsM ^ (BsM&~RemOpM), PreIntResultM);
 
-    divremsqrtintspecialcase #(P) intspecialcase(BZeroM,RemOpM, ALTBM, SIGNOVERFLOWM, AM,PreIntResultM,IntDivResultM);
+    divremsqrtintspecialcase #(P) intspecialcase(BZeroM,RemOpM, ALTBM,AM,PreIntResultM,IntDivResultM);
     // sign extend result for W64
     if (P.XLEN==64) begin
       mux2 #(64) resmux(IntDivResultM[P.XLEN-1:0], 

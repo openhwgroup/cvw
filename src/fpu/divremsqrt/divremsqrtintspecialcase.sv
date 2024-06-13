@@ -1,5 +1,5 @@
 module divremsqrtintspecialcase import cvw::*; #(parameter cvw_t P) (
-    input logic BZeroM,RemOpM, ALTBM, SIGNOVERFLOWM,
+    input logic BZeroM,RemOpM, ALTBM,
     input logic [P.XLEN-1:0] AM,
     input  signed [P.INTDIVb+3:0] PreIntResultM,
     output logic [P.XLEN-1:0] IntDivResultM
