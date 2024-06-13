@@ -93,7 +93,7 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
 
   // ZBC and ZBKCUnit
   if (P.ZBC_SUPPORTED | P.ZBKC_SUPPORTED) begin: zbc
-    zbc #(P.XLEN) ZBC(.A(ABMU), .RevA, .B(BBMU), .Funct3, .ZBCResult);
+    zbc #(P) ZBC(.A(ABMU), .RevA, .B(BBMU), .Funct3, .ZBCResult);
   end else assign ZBCResult = '0;
 
   // ZBB Unit
