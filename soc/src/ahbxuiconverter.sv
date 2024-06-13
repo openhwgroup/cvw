@@ -142,7 +142,7 @@ module ahbxuiconverter
   // Buffer input down to ui_clk speed
   bsg_async_fifo #(
     .width_p(OP_SIZE),
-    .lg_size_p(16),
+    .lg_size_p(5),
     .and_data_with_valid_p(1)
   ) cmdfifo (
     .w_data_i({selected_op, selected_mask}),
@@ -174,7 +174,7 @@ module ahbxuiconverter
   assign resp_deq = (HSEL & resp_r_valid) | drop_resp;
   bsg_async_fifo #(
     .width_p(DATA_SIZE),
-    .lg_size_p(8),
+    .lg_size_p(4),
     .and_data_with_valid_p(1)
   ) respfifo (
     .w_data_i(app_rd_data),

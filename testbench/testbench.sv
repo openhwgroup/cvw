@@ -618,7 +618,6 @@ module testbench;
           wire  [dq_group-1:0]  ddr_dqs_n_ien_o;
           wire  [dq_group-1:0]  ddr_dqs_n_o;
           wire  [dq_group-1:0]  ddr_dqs_n_i;
-          wire  [dq_group-1:0]  ddr_dqs_n;
           wire  [dq_width-1:0]  ddr_dq_oen_o;
           wire  [dq_width-1:0]  ddr_dq_o;
           wire  [dq_width-1:0]  ddr_dq_i;
@@ -704,8 +703,7 @@ module testbench;
           for(ddr_i = 0; ddr_i < dq_group; ddr_i++) begin: dqs_io
             assign ddr_dqs_p[ddr_i]   = !ddr_dqs_p_oen_o[ddr_i]? ddr_dqs_p_o[ddr_i]: 1'bz;
             assign ddr_dqs_p_i[ddr_i] = !ddr_dqs_p_ien_o[ddr_i]? ddr_dqs_p[ddr_i]: 1'b0;
-            assign ddr_dqs_n[ddr_i]   = !ddr_dqs_n_oen_o[ddr_i]? ddr_dqs_n_o[ddr_i]: 1'bz;
-            assign ddr_dqs_n_i[ddr_i] = !ddr_dqs_n_ien_o[ddr_i]? ddr_dqs_n[ddr_i]: 1'b1;
+            assign ddr_dqs_n_i[ddr_i] = ~ddr_dqs_p_i[ddr_i];
           end
           for(ddr_i = 0; ddr_i < dq_width; ddr_i++) begin: dq_io
             assign ddr_dq[ddr_i]    = !ddr_dq_oen_o[ddr_i]? ddr_dq_o[ddr_i]: 1'bz;

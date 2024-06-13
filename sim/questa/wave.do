@@ -47,16 +47,16 @@ add wave -noupdate -group HDU -group interrupts /testbench/dut/core/priv/priv/tr
 add wave -noupdate -group HDU -group interrupts /testbench/dut/core/priv/priv/trap/InstrValidM
 add wave -noupdate -group HDU -group interrupts /testbench/dut/core/priv/priv/trap/ValidIntsM
 add wave -noupdate -group HDU -group interrupts /testbench/dut/core/hzu/WFIInterruptedM
-add wave -noupdate -expand -group {instruction pipeline} /testbench/InstrFName
-add wave -noupdate -expand -group {instruction pipeline} /testbench/dut/core/ifu/PostSpillInstrRawF
-add wave -noupdate -expand -group {instruction pipeline} /testbench/dut/core/ifu/InstrD
-add wave -noupdate -expand -group {instruction pipeline} /testbench/dut/core/ifu/InstrE
-add wave -noupdate -expand -group {instruction pipeline} /testbench/dut/core/ifu/InstrM
-add wave -noupdate -expand -group PCS /testbench/dut/core/ifu/PCNextF
-add wave -noupdate -expand -group PCS /testbench/dut/core/ifu/PCF
-add wave -noupdate -expand -group PCS /testbench/dut/core/ifu/PCD
-add wave -noupdate -expand -group PCS /testbench/dut/core/PCE
-add wave -noupdate -expand -group PCS /testbench/dut/core/PCM
+add wave -noupdate -group {instruction pipeline} /testbench/InstrFName
+add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/PostSpillInstrRawF
+add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/InstrD
+add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/InstrE
+add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/InstrM
+add wave -noupdate -group PCS /testbench/dut/core/ifu/PCNextF
+add wave -noupdate -group PCS /testbench/dut/core/ifu/PCF
+add wave -noupdate -group PCS /testbench/dut/core/ifu/PCD
+add wave -noupdate -group PCS /testbench/dut/core/PCE
+add wave -noupdate -group PCS /testbench/dut/core/PCM
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCPlus2or4F
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/IEUAdrE
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCSrcE
@@ -683,68 +683,70 @@ add wave -noupdate -group {BSG DMC Config} /testbench/dut/uncoregen/uncore/bsg_d
 add wave -noupdate -group {BSG DMC Config} /testbench/dut/uncoregen/uncore/bsg_dmc_config/bsg_dmc_conf/dmc_dqs_sel_cal
 add wave -noupdate -group {BSG DMC Config} /testbench/dut/uncoregen/uncore/bsg_dmc_config/bsg_dmc_conf/dmc_init_cycles
 add wave -noupdate -group {BSG DMC Config} /testbench/dut/uncoregen/uncore/bsg_dmc_config/bsg_dmc_conf/dmc_config_changed
-add wave -noupdate -expand -group {PLL Config} /testbench/dut/uncoregen/uncore/pll_config/pll_conf/PLLclkr
-add wave -noupdate -expand -group {PLL Config} /testbench/dut/uncoregen/uncore/pll_config/pll_conf/PLLclkf
-add wave -noupdate -expand -group {PLL Config} /testbench/dut/uncoregen/uncore/pll_config/pll_conf/PLLclkod
-add wave -noupdate -expand -group {PLL Config} /testbench/dut/uncoregen/uncore/pll_config/pll_conf/PLLbwadj
-add wave -noupdate -expand -group {PLL Config} /testbench/dut/uncoregen/uncore/pll_config/pll_conf/PLLlock
-add wave -noupdate -expand -group {PLL Config} /testbench/dut/uncoregen/uncore/pll_config/pll_conf/PLLconfigdone
-add wave -noupdate -expand -group {AHB <-> UI} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/HCLK
-add wave -noupdate -expand -group {AHB <-> UI} -group {AHB Interface} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/HRESETn
-add wave -noupdate -expand -group {AHB <-> UI} -group {AHB Interface} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/HSEL
-add wave -noupdate -expand -group {AHB <-> UI} -group {AHB Interface} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/HADDR
-add wave -noupdate -expand -group {AHB <-> UI} -group {AHB Interface} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/HWDATA
-add wave -noupdate -expand -group {AHB <-> UI} -group {AHB Interface} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/HTRANS
-add wave -noupdate -expand -group {AHB <-> UI} -group {AHB Interface} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/HBURST
-add wave -noupdate -expand -group {AHB <-> UI} -group {AHB Interface} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/HREADY
-add wave -noupdate -expand -group {AHB <-> UI} -group {AHB Interface} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/HRDATA
-add wave -noupdate -expand -group {AHB <-> UI} -group {AHB Interface} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/HREADYOUT
-add wave -noupdate -expand -group {AHB <-> UI} -expand -group {AHB burst ctrl FSM} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/ahbctrl/current_state
-add wave -noupdate -expand -group {AHB <-> UI} -expand -group {AHB burst ctrl FSM} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/ahbctrl/next_state
-add wave -noupdate -expand -group {AHB <-> UI} -expand -group {AHB burst ctrl FSM} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/ahbctrl/word_addr
-add wave -noupdate -expand -group {AHB <-> UI} -expand -group {AHB burst ctrl FSM} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/ahbctrl/op_count
-add wave -noupdate -expand -group {AHB <-> UI} -expand -group {AHB burst ctrl FSM} -label inputs /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/ahbctrl/ahb_fsm_inputs
-add wave -noupdate -expand -group {AHB <-> UI} -expand -group {AHB burst ctrl FSM} -label outputs /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/ahbctrl/ahb_fsm_outputs
-add wave -noupdate -expand -group {AHB <-> UI} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/op
-add wave -noupdate -expand -group {AHB <-> UI} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/recorded_op
-add wave -noupdate -expand -group {AHB <-> UI} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/selected_op
-add wave -noupdate -expand -group {AHB <-> UI} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/selected_mask
-add wave -noupdate -expand -group {AHB <-> UI} -group {cmd FIFO} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/cmd_enq
-add wave -noupdate -expand -group {AHB <-> UI} -group {cmd FIFO} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/cmdfifo/w_data_i
-add wave -noupdate -expand -group {AHB <-> UI} -group {cmd FIFO} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/cmd_w_full
-add wave -noupdate -expand -group {AHB <-> UI} -group {cmd FIFO} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/cmd_deq
-add wave -noupdate -expand -group {AHB <-> UI} -group {cmd FIFO} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/cmdfifo/r_data_o
-add wave -noupdate -expand -group {AHB <-> UI} -group {cmd FIFO} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/cmd_r_valid
-add wave -noupdate -expand -group {AHB <-> UI} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/ui_clk
-add wave -noupdate -expand -group {AHB <-> UI} -group {UI burst ctrl FSM} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/uictrl/current_state
-add wave -noupdate -expand -group {AHB <-> UI} -group {UI burst ctrl FSM} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/uictrl/next_state
-add wave -noupdate -expand -group {AHB <-> UI} -group {UI burst ctrl FSM} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/uictrl/op_count
-add wave -noupdate -expand -group {AHB <-> UI} -group {UI burst ctrl FSM} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/uictrl/last_op
-add wave -noupdate -expand -group {AHB <-> UI} -group {UI burst ctrl FSM} -label inputs /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/uictrl/ui_fsm_inputs
-add wave -noupdate -expand -group {AHB <-> UI} -group {UI burst ctrl FSM} -label outputs /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/uictrl/ui_fsm_outputs
-add wave -noupdate -expand -group {AHB <-> UI} -group {resp FIFO} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/resp_enq
-add wave -noupdate -expand -group {AHB <-> UI} -group {resp FIFO} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/respfifo/w_data_i
-add wave -noupdate -expand -group {AHB <-> UI} -group {resp FIFO} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/resp_w_full
-add wave -noupdate -expand -group {AHB <-> UI} -group {resp FIFO} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/resp_deq
-add wave -noupdate -expand -group {AHB <-> UI} -group {resp FIFO} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/respfifo/r_data_o
-add wave -noupdate -expand -group {AHB <-> UI} -group {resp FIFO} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/resp_r_valid
-add wave -noupdate -expand -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/sys_reset
-add wave -noupdate -expand -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/ui_clk_sync_rst
-add wave -noupdate -expand -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/app_addr
-add wave -noupdate -expand -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/app_cmd
-add wave -noupdate -expand -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/app_en
-add wave -noupdate -expand -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/app_rdy
-add wave -noupdate -expand -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/app_wdf_wren
-add wave -noupdate -expand -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/app_wdf_data
-add wave -noupdate -expand -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/app_wdf_mask
-add wave -noupdate -expand -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/app_wdf_end
-add wave -noupdate -expand -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/app_wdf_rdy
-add wave -noupdate -expand -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/app_rd_data
-add wave -noupdate -expand -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/app_rd_data_end
-add wave -noupdate -expand -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/app_rd_data_valid
-add wave -noupdate -expand -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/init_calib_complete
+add wave -noupdate -group {PLL Config} /testbench/dut/uncoregen/uncore/pll_config/pll_conf/PLLclkr
+add wave -noupdate -group {PLL Config} /testbench/dut/uncoregen/uncore/pll_config/pll_conf/PLLclkf
+add wave -noupdate -group {PLL Config} /testbench/dut/uncoregen/uncore/pll_config/pll_conf/PLLclkod
+add wave -noupdate -group {PLL Config} /testbench/dut/uncoregen/uncore/pll_config/pll_conf/PLLbwadj
+add wave -noupdate -group {PLL Config} /testbench/dut/uncoregen/uncore/pll_config/pll_conf/PLLlock
+add wave -noupdate -group {PLL Config} /testbench/dut/uncoregen/uncore/pll_config/pll_conf/PLLconfigdone
+add wave -noupdate -group {AHB <-> UI} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/HCLK
+add wave -noupdate -group {AHB <-> UI} -group {AHB Interface} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/HRESETn
+add wave -noupdate -group {AHB <-> UI} -group {AHB Interface} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/HSEL
+add wave -noupdate -group {AHB <-> UI} -group {AHB Interface} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/HADDR
+add wave -noupdate -group {AHB <-> UI} -group {AHB Interface} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/HWDATA
+add wave -noupdate -group {AHB <-> UI} -group {AHB Interface} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/HTRANS
+add wave -noupdate -group {AHB <-> UI} -group {AHB Interface} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/HBURST
+add wave -noupdate -group {AHB <-> UI} -group {AHB Interface} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/HREADY
+add wave -noupdate -group {AHB <-> UI} -group {AHB Interface} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/HRDATA
+add wave -noupdate -group {AHB <-> UI} -group {AHB Interface} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/HREADYOUT
+add wave -noupdate -group {AHB <-> UI} -group {AHB burst ctrl FSM} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/ahbctrl/current_state
+add wave -noupdate -group {AHB <-> UI} -group {AHB burst ctrl FSM} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/ahbctrl/next_state
+add wave -noupdate -group {AHB <-> UI} -group {AHB burst ctrl FSM} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/ahbctrl/word_addr
+add wave -noupdate -group {AHB <-> UI} -group {AHB burst ctrl FSM} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/ahbctrl/op_count
+add wave -noupdate -group {AHB <-> UI} -group {AHB burst ctrl FSM} -label inputs /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/ahbctrl/ahb_fsm_inputs
+add wave -noupdate -group {AHB <-> UI} -group {AHB burst ctrl FSM} -label outputs /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/ahbctrl/ahb_fsm_outputs
+add wave -noupdate -group {AHB <-> UI} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/op
+add wave -noupdate -group {AHB <-> UI} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/recorded_op
+add wave -noupdate -group {AHB <-> UI} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/selected_op
+add wave -noupdate -group {AHB <-> UI} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/selected_mask
+add wave -noupdate -group {AHB <-> UI} -group {cmd FIFO} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/cmd_enq
+add wave -noupdate -group {AHB <-> UI} -group {cmd FIFO} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/cmdfifo/w_data_i
+add wave -noupdate -group {AHB <-> UI} -group {cmd FIFO} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/cmd_w_full
+add wave -noupdate -group {AHB <-> UI} -group {cmd FIFO} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/cmd_deq
+add wave -noupdate -group {AHB <-> UI} -group {cmd FIFO} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/cmdfifo/r_data_o
+add wave -noupdate -group {AHB <-> UI} -group {cmd FIFO} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/cmd_r_valid
+add wave -noupdate -group {AHB <-> UI} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/ui_clk
+add wave -noupdate -group {AHB <-> UI} -group {UI burst ctrl FSM} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/uictrl/current_state
+add wave -noupdate -group {AHB <-> UI} -group {UI burst ctrl FSM} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/uictrl/next_state
+add wave -noupdate -group {AHB <-> UI} -group {UI burst ctrl FSM} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/uictrl/op_count
+add wave -noupdate -group {AHB <-> UI} -group {UI burst ctrl FSM} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/uictrl/last_op
+add wave -noupdate -group {AHB <-> UI} -group {UI burst ctrl FSM} -label inputs /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/uictrl/ui_fsm_inputs
+add wave -noupdate -group {AHB <-> UI} -group {UI burst ctrl FSM} -label outputs /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/uictrl/ui_fsm_outputs
+add wave -noupdate -group {AHB <-> UI} -group {resp FIFO} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/resp_enq
+add wave -noupdate -group {AHB <-> UI} -group {resp FIFO} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/respfifo/w_data_i
+add wave -noupdate -group {AHB <-> UI} -group {resp FIFO} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/resp_w_full
+add wave -noupdate -group {AHB <-> UI} -group {resp FIFO} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/resp_deq
+add wave -noupdate -group {AHB <-> UI} -group {resp FIFO} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/respfifo/r_data_o
+add wave -noupdate -group {AHB <-> UI} -group {resp FIFO} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/resp_r_valid
+add wave -noupdate -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/sys_reset
+add wave -noupdate -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/ui_clk_sync_rst
+add wave -noupdate -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/app_addr
+add wave -noupdate -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/app_cmd
+add wave -noupdate -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/app_en
+add wave -noupdate -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/app_rdy
+add wave -noupdate -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/app_wdf_wren
+add wave -noupdate -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/app_wdf_data
+add wave -noupdate -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/app_wdf_mask
+add wave -noupdate -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/app_wdf_end
+add wave -noupdate -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/app_wdf_rdy
+add wave -noupdate -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/app_rd_data
+add wave -noupdate -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/app_rd_data_end
+add wave -noupdate -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/app_rd_data_valid
+add wave -noupdate -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/bsg_dmc_ahb_ui_converter/init_calib_complete
+add wave -noupdate -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/dfi_clk_2x_i
+add wave -noupdate -group {AHB <-> UI} -group {UI Signals} /testbench/genblk5/genblk1/ram/dfi_clk_1x_o
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 4} {6586000 ps} 1} {{Cursor 4} {183774 ps} 0} {{Cursor 3} {403021000 ps} 1}
+WaveRestoreCursors {{Cursor 4} {6586000 ps} 1} {{Cursor 4} {2011162 ps} 0} {{Cursor 3} {403021000 ps} 1}
 quietly wave cursor active 2
 configure wave -namecolwidth 214
 configure wave -valuecolwidth 194
@@ -760,4 +762,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {0 ps} {1325626 ps}
+WaveRestoreZoom {1887991 ps} {2111223 ps}
