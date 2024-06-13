@@ -131,7 +131,7 @@ module pll_sync #(parameter SIZE = 8) (
 
   // Feedback loop for data enable
   initial enable1d = 0;
-  always @(posedge clk or negedge sync_enable2d) begin: enablesync1
+  always @(posedge clk or posedge sync_enable2d) begin: enablesync1
     // We use an SR FF to ensure enable is latched until data sync is complete
     if (sync_enable2d) enable1d <= 0;
     else begin
