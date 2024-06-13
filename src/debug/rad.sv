@@ -77,7 +77,7 @@ module rad import cvw::*; #(parameter cvw_t P) (
     FPRegNo = 0;
     case (Regno) inside
       [`FFLAGS_REGNO:`FCSR_REGNO],
-      [`MSTATUS_REGNO:`MCOUNTEREN_REGNO],
+      [`MSTATUS_REGNO:`MCOUNTEREN_REGNO], //  InvalidRegNo = ~P.ZICSR_SUPPORTED;
       `MENVCFG_REGNO,
       `MSTATUSH_REGNO,
       `MENVCFGH_REGNO,
@@ -104,7 +104,7 @@ module rad import cvw::*; #(parameter cvw_t P) (
       `SIP_REGNO,
       `MIE_REGNO,
       `MIP_REGNO : begin
-        ShiftCount = P.XLEN - 1;
+        ShiftCount = P.LLEN - 1;
         CSRegNo = 1;
         RegReadOnly = 1; // TODO: eventually DCSR (any maybe others) will be RW
       end
@@ -112,30 +112,25 @@ module rad import cvw::*; #(parameter cvw_t P) (
       [`HPMCOUNTERBASE_REGNO:`TIME_REGNO],
       [`HPMCOUNTERHBASE_REGNO:`TIMEH_REGNO],
       [`MVENDORID_REGNO:`MCONFIGPTR_REGNO] : begin
-        ShiftCount = P.XLEN - 1;
+        ShiftCount = P.LLEN - 1;
         CSRegNo = 1;
         RegReadOnly = 1;
       end
 
       [`X0_REGNO:`X15_REGNO] : begin
-        ShiftCount = P.XLEN - 1;
+        ShiftCount = P.LLEN - 1;
         GPRegNo = 1;
       end
       [`X16_REGNO:`X31_REGNO] : begin
-        ShiftCount = P.XLEN - 1;
+        ShiftCount = P.LLEN - 1;
         InvalidRegNo = P.E_SUPPORTED;
         GPRegNo = 1;
       end
       [`FP0_REGNO:`FP31_REGNO] : begin
-        ShiftCount = P.FLEN - 1;
+        ShiftCount = P.LLEN - 1;
         InvalidRegNo = ~(P.F_SUPPORTED | P.D_SUPPORTED | P.Q_SUPPORTED);
         FPRegNo = 1;
       end
-      //`MISA_REGNO : begin
-      //  ShiftCount = SCANCHAINLEN - MISA_IDX;
-      //  InvalidRegNo = ~P.ZICSR_SUPPORTED;
-      //  RegReadOnly = 1;
-      //end
       `TRAPM_REGNO : begin
         ShiftCount = SCANCHAINLEN - TRAPM_IDX;
         InvalidRegNo = ~P.ZICSR_SUPPORTED;

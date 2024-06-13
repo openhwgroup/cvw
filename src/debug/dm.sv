@@ -123,6 +123,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic [9:0]        Cycle;          // DM's current position in the scan chain
   logic              InvalidRegNo;   // Requested RegNo is invalid
   logic              RegReadOnly;    // Current RegNo points to a readonly register
+  logic              MiscRegNo;      // Requested RegNo is on the Misc scan chain
   logic              GPRegNo;        // Requested RegNo is a GPR
   logic              FPRegNo;        // Requested RegNo is a FPR
   logic              CSRegNo;        // Requested RegNo is a CSR
@@ -427,7 +428,8 @@ module dm import cvw::*; #(parameter cvw_t P) (
   assign DebugCapture = (AcState == AC_CAPTURE);
   assign DebugRegUpdate = (AcState == AC_UPDATE);
 
-  assign MiscSel = ~(CSRegNo | GPRegNo | FPRegNo) & (AcState != AC_IDLE);
+  assign MiscRegNo = ~(CSRegNo | GPRegNo | FPRegNo);
+  assign MiscSel = MiscRegNo & (AcState != AC_IDLE);
   assign CSRSel = CSRegNo & (AcState != AC_IDLE);
   assign GPRSel = GPRegNo & (AcState != AC_IDLE);
   assign FPRSel = FPRegNo & (AcState != AC_IDLE);
@@ -451,7 +453,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
     assign PackedDataReg = {Data3,Data2,Data1,Data0};
       
   // Load data from message registers into scan chain
-  assign WriteScanReg = AcWrite & (~(GPRegNo | FPRegNo) & (Cycle == ShiftCount) | (GPRegNo | FPRegNo) & (Cycle == 0));
+  assign WriteScanReg = AcWrite & (MiscRegNo & (Cycle == ShiftCount) | ~MiscRegNo & (Cycle == 0));
   genvar i;
   for (i=0; i<P.LLEN; i=i+1) begin
     // ARMask is used as write enable for subword overwrites (basic mask would overwrite neighbors in the chain)

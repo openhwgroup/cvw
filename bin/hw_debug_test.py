@@ -33,6 +33,7 @@ import time
 from openocd_tcl_wrapper import OpenOCD
 
 random_stimulus = True
+random_order = False
 
 def main():
     with OpenOCD() as cvw:
@@ -67,7 +68,7 @@ def main():
 
         # Write random data to all registers
         reg_addrs = list(registers.keys())
-        if random_stimulus:
+        if random_order:
             random.shuffle(reg_addrs)
         test_reg_data = {}
         for r in reg_addrs:
@@ -88,7 +89,7 @@ def main():
 
         # Confirm data was written correctly
         reg_addrs = list(registers.keys())
-        if random_stimulus:
+        if random_order:
             random.shuffle(reg_addrs)
         for r in reg_addrs:
             try:
