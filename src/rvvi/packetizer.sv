@@ -59,23 +59,32 @@ module packetizer import cvw::*; #(parameter cvw_t P,
 
   logic [187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)-1:0] rvviDelay;
   
-  typedef enum              {STATE_RDY, STATE_WAIT, STATE_TRANS, STATE_TRANS_DONE} statetype;
-  statetype CurrState, NextState;
+  typedef enum              {STATE_RST, STATE_COUNT, STATE_RDY, STATE_WAIT, STATE_TRANS, STATE_TRANS_INSERT_DELAY} statetype;
+(* mark_debug = "true" *)  statetype CurrState, NextState;
+
+  logic [31:0] 	            RstCount;
+  logic 		    RstCountRst, RstCountEn, CountFlag, DelayFlag;
+   
 
   always_ff @(posedge m_axi_aclk) begin
-    if(~m_axi_aresetn) CurrState <= STATE_RDY;
+    if(~m_axi_aresetn) CurrState <= STATE_RST;
     else               CurrState <= NextState;
   end
 
   always_comb begin
     case(CurrState)
+      STATE_RST: NextState = STATE_COUNT;
+      STATE_COUNT: if (CountFlag) NextState = STATE_RDY;
+                   else           NextState = STATE_COUNT;
       STATE_RDY: if (TransReady & valid) NextState = STATE_TRANS;
       else if(~TransReady & valid) NextState = STATE_WAIT;
       else                        NextState = STATE_RDY;
-      STATE_WAIT: if(TransReady)   NextState = STATE_TRANS;
-      else NextState = STATE_WAIT;
-      STATE_TRANS: if(BurstDone) NextState = STATE_RDY;
-      else NextState = STATE_TRANS;
+      STATE_WAIT: if(TransReady)  NextState = STATE_TRANS;
+                  else            NextState = STATE_WAIT;
+      STATE_TRANS: if(BurstDone) NextState = STATE_TRANS_INSERT_DELAY;
+                   else          NextState = STATE_TRANS;
+      STATE_TRANS_INSERT_DELAY: if(DelayFlag) NextState = STATE_RDY;
+                                else          NextState = STATE_TRANS_INSERT_DELAY;
       default: NextState = STATE_RDY;
     endcase
   end
@@ -84,6 +93,14 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   assign TransReady = RvviAxiWready;
   assign WordCountEnable = (CurrState == STATE_RDY & valid) | (CurrState == STATE_TRANS & TransReady);
   assign WordCountReset = CurrState == STATE_RDY;
+  assign RstCountEn = CurrState == STATE_COUNT | CurrState == STATE_TRANS_INSERT_DELAY;
+  assign RstCountRst = CurrState == STATE_RST | CurrState == STATE_TRANS;
+
+  // have to count at least 250 ms after reset pulled to wait for the phy to actually be ready
+  // at 20MHz 250 ms is 250e-3 / (1/20e6) = 5,000,000.
+  counter #(32) rstcounter(m_axi_aclk, RstCountRst, RstCountEn, RstCount);
+  assign CountFlag = RstCount == 32'd100000000;
+  assign DelayFlag = RstCount == 32'd48;
 
   flopenr #(187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)) rvvireg(m_axi_aclk, ~m_axi_aresetn, valid, rvvi, rvviDelay);
 

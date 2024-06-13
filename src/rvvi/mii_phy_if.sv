@@ -53,8 +53,8 @@ module mii_phy_if #
     output wire        mac_mii_rx_er,
     output wire        mac_mii_tx_clk,
     output wire        mac_mii_tx_rst,
-    input  wire [3:0]  mac_mii_txd,
-    input  wire        mac_mii_tx_en,
+(* mark_debug = "true" *)    input  wire [3:0]  mac_mii_txd,
+(* mark_debug = "true" *)    input  wire        mac_mii_tx_en,
     input  wire        mac_mii_tx_er,
 
     /*
