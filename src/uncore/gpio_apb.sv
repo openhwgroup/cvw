@@ -86,7 +86,6 @@ module gpio_apb import cvw::*;  #(parameter cvw_t P) (
     if (~PRESETn) begin // asynch reset
       input_en  <= '0;
       output_en <= '0;
-      // *** synch reset not yet implemented [DH: can we delete this comment?  Check if a sync reset is required]
       output_val <= '0;
       rise_ie    <= '0;
       rise_ip    <= '0;

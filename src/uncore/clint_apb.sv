@@ -116,7 +116,6 @@ module clint_apb import cvw::*;  #(parameter cvw_t P) (
       if (~PRESETn) begin
         MSIP <= 1'b0;
         MTIMECMP <= '0;
-        // MTIMECMP is not reset ***?
       end else if (memwrite) begin
         if (entry == 16'h0000) MSIP <= PWDATA[0];
         if (entry == 16'h4000) 
@@ -195,7 +194,7 @@ module timereg  import cvw::*;  #(parameter cvw_t P) (
     // Synchronizing this for a read is safe because we are guaranteed to get either the old or the new value.
     // Writing to the counter requires a request/acknowledge handshake to ensure the write value is held long enough.
     // The handshake signals are synchronized in each direction across the interface
-    // There is no back pressure on instructions, so if multiple counter writes occur ***
+    // There is no back pressure on instructions, so if multiple counter writes occur too close together, the results are unpredictable.
 
     logic req, req_sync, ack, we0_stored, we1_stored, ack_stored, resetn_sync;
     logic [P.XLEN-1:0] wd_stored;
@@ -203,7 +202,7 @@ module timereg  import cvw::*;  #(parameter cvw_t P) (
 
     // When a write enable is asserted for a cycle, sample the enables and data and raise a request until it is acknowledged
     // When the acknowledge falls, the transaction is done and the system is ready for another write.
-    // ***look at redoing this assuming write enable and data are held rather than pulsed.
+    // When adding asynchronous timebase, look at redoing this assuming write enable and data are held rather than pulsed.
     always_ff @(posedge PCLK or negedge PRESETn) 
       if (~PRESETn) 
         req <= 0; // don't bother resetting wd

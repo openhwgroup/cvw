@@ -281,7 +281,6 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   // 2. If the store would generate an exception don't store to dcache but still write the TLB.  When we go back
   // to LEAF then the PMA/P.  Wait this does not work.  The PMA/P won't be looking a the address in the table, but
   // rather than physical address of the translated instruction/data.  So we must generate the exception.
-  // *** DH 1/1/24 another bug: when the NAPOT bits (PTE[62:61]) are nonzero on a nonleaf PTE, the walker should make a page fault (Issue 546)
   flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset | FlushW, 1'b1, NextWalkerState, IDLE, WalkerState); 
   always_comb 
     case (WalkerState)

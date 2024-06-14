@@ -496,9 +496,17 @@ module testbench;
       if (LoadMem) begin
         if (TEST == "buildroot") begin
           memFile = $fopen(bootmemfilename, "rb");
+          if (memFile == 0) begin
+            $display("Error: Could not open file %s", memfilename);
+            $finish;
+          end
           readResult = $fread(dut.uncoregen.uncore.bootrom.bootrom.memory.ROM, memFile);
           $fclose(memFile);
           memFile = $fopen(memfilename, "rb");
+          if (memFile == 0) begin
+            $display("Error: Could not open file %s", memfilename);
+            $finish;
+          end
           readResult = $fread(dut.uncoregen.uncore.ram.ram.memory.ram.RAM, memFile);
           $fclose(memFile);
         end else 
@@ -725,7 +733,7 @@ end
         $display($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
         $fatal;
       end
-    end else begin // for buildroot use the binary instead to load teh reference model.
+    end else begin // for buildroot use the binary instead to load the reference model.
       if (!rvviRefInit("")) begin // still have to call with nothing
         $display($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
         $fatal;
@@ -955,7 +963,7 @@ task automatic updateProgramAddrLabelArray;
       returncode = $fscanf(ProgramAddrMapFP, "%s\n", adrstr);
       if (ProgramAddrLabelArray.exists(label)) ProgramAddrLabelArray[label] = adrstr.atohex();
     end
-  end
+  end 
 
 //  if(ProgramAddrLabelArray["begin_signature"] == 0) $display("Couldn't find begin_signature in %s", ProgramLabelMapFile);
 //  if(ProgramAddrLabelArray["sig_end_canary"] == 0) $display("Couldn't find sig_end_canary in %s", ProgramLabelMapFile);
