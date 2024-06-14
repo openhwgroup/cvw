@@ -44,8 +44,6 @@ module ram1p1rwbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=64, WIDTH=44, PRE
   output logic [WIDTH-1:0]        dout
 );
 
-  bit [WIDTH-1:0]               RAM[DEPTH-1:0];
-
   ///////////////////////////////////////////////////////////////////////////////
   // TRUE SRAM macro
   ///////////////////////////////////////////////////////////////////////////////
@@ -83,6 +81,7 @@ module ram1p1rwbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=64, WIDTH=44, PRE
     // READ first SRAM model
     ///////////////////////////////////////////////////////////////////////////////
   end else begin: ram
+    bit [WIDTH-1:0] RAM[DEPTH-1:0];
     integer i;
 
     if (PRELOAD_ENABLED) begin

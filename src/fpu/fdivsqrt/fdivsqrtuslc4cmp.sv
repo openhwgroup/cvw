@@ -95,7 +95,7 @@ module fdivsqrtuslc4cmp (
   // Choose A for current operation 
  always_comb
     if (SqrtE) begin 
-      if (Smsbs[4]) A = 3'b111; // for S = 1.0000  *** can we optimize away this case?
+      if (Smsbs[4]) A = 3'b111; // for S = 1.0000
       else A = Smsbs[2:0];
     end else A = Dmsbs;
     
@@ -108,7 +108,7 @@ module fdivsqrtuslc4cmp (
 
 /* Nannarelli12 design to exploit symmetry is slower because of negation and mux for special case of A = 000
   assign mk0 = -mk1;
-  assign mkm1 = (A == 3'b000) ? -13 : -mk2; // asymmetry in table *** can we hide from critical path
+  assign mkm1 = (A == 3'b000) ? -13 : -mk2; // asymmetry in table
   */
  
   // Compare residual W to selection constants to choose digit
@@ -117,5 +117,5 @@ module fdivsqrtuslc4cmp (
     else if ($signed(Wmsbs) >= $signed(mk1))  udigit = 4'b0100; // choose 1
     else if ($signed(Wmsbs) >= $signed(mk0))  udigit = 4'b0000; // choose 0
     else if ($signed(Wmsbs) >= $signed(mkm1)) udigit = 4'b0010; // choose -1
-    else                                      udigit = 4'b0001; // choose -2  
+    else                                      udigit = 4'b0001; // choose -2
 endmodule
