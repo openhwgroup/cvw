@@ -85,7 +85,7 @@ module clint_apb import cvw::*;  #(parameter cvw_t P) (
         if (entry == CLINT_MTIMECMP) begin
           for(i=0;i<P.XLEN/8;i++)
             if(PSTRB[i])
-              MTIMECMP[i*8 +: 8] <= PWDATA[i*8 +: 8]; // ***dh: this notation isn't in book yet - maybe from Ross
+              MTIMECMP[i*8 +: 8] <= PWDATA[i*8 +: 8];
         end
       end
 

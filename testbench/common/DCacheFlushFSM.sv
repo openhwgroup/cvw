@@ -97,7 +97,7 @@ module DCacheFlushFSM import cvw::*; #(parameter cvw_t P)
                   // see https://verificationacademy.com/forums/systemverilog/range-must-be-bounded-constant-expressions
                   //ShadowRAM[CacheAdr[j][i][k] >> $clog2(P.XLEN/8)] = cacheline[P.XLEN*(k+1)-1:P.XLEN*k];
                   /* verilator lint_off WIDTHTRUNC */
-                  // *** lint error: address trunc warning for shadowram index
+                  // avoid lint error: address trunc warning for shadowram index
                   ShadowRAM[(CacheAdr[j][i][l] >> $clog2(P.XLEN/8)) + {{{P.PA_BITS-32}{1'b0}}, k}] = CacheData[j][i][l][P.XLEN*k +: P.XLEN];
                   /* verilator lint_on WIDTHTRUNC */
                 end

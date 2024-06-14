@@ -51,7 +51,7 @@ module shiftcorrection import cvw::*;  #(parameter cvw_t P) (
   logic                            LeftShiftQm;            // should the divsqrt result be shifted one to the left
   logic                            RightShift;             // shift right by 1
 
-  // *** 4/16/24 this code is a mess and needs cleaning and explaining
+  // dh 4/16/24 this code is a mess and needs cleaning and explaining
   // define bit widths
   // seems to shift by 0, 1, or 2.  right and left shift is confusing
   
