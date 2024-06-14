@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// hartcontrol.sv
+// dmc.sv
 //
 // Written: matthew.n.otto@okstate.edu 10 May 2024
 // Modified: 
 //
-// Purpose: Controls the state of connected hart
+// Purpose: Controls pipeline during Debug Mode
 // 
 // Documentation: RISC-V System on Chip Design 
 //
@@ -30,72 +30,43 @@
 // Note: This module controls all of the per-hart debug state.
 // In a multihart system, this module should be instantiated under wallypipelinedcore
 
-module hartcontrol(
-  input  logic clk, rst,
-  input  logic NdmReset,     // Triggers HaltOnReset behavior
-  input  logic AckHaveReset, // Clears *HaveReset status
-
-  input  logic HaltReq,      // Initiate core halt
+module dmc(
+  input  logic clk, reset,
+  input  logic Step,
+  input  logic HaltReq,      // Initiates core halt
   input  logic ResumeReq,    // Initiates core resume
   input  logic HaltOnReset,  // Halts core immediately on hart reset
+  input  logic AckHaveReset, // Clears HaveReset status
 
-  output logic DebugStall,   // Stall signal goes to hazard unit
-
-  // DMStatus bits
-  output logic Halted,
-  output logic AllRunning,
-  output logic AnyRunning,
-  output logic AllHalted,
-  output logic AnyHalted,
-  output logic AllResumeAck,
-  output logic AnyResumeAck,
-  output logic AllHaveReset,
-  output logic AnyHaveReset
+  output logic DebugMode,
+  output logic ResumeAck,    // Signals Hart has been resumed
+  output logic HaveReset,    // Signals Hart has been reset
+  output logic DebugStall    // Stall signal goes to hazard unit
 );
   enum logic {RUNNING, HALTED} State;
-  
-  assign AnyHaveReset = AllHaveReset;
 
   always_ff @(posedge clk) begin
-    if (NdmReset)
-      AllHaveReset <= 1;
+    if (reset)
+      HaveReset <= 1;
     else if (AckHaveReset)
-      AllHaveReset <= 0;
+      HaveReset <= 0;
   end
-  
 
-  assign Halted = DebugStall;
-  assign AllRunning = ~DebugStall;
-  assign AnyRunning = ~DebugStall;
-  assign AllHalted = DebugStall;
-  assign AnyHalted = DebugStall;
-  // BOZO: when sdext is implemented (proper step support is added)
-  //       change ResumeReq to be ignored when HaltReq
-  //       but ResumeReq should still always clear *ResumeAck
-  assign AnyResumeAck = AllResumeAck;
-
+  assign DebugMode = (State != RUNNING); // TODO: update this
   assign DebugStall = (State == HALTED);
 
   always_ff @(posedge clk) begin
-    if (rst)
-      State <= RUNNING;
-    else if (NdmReset)
+    if (reset)
       State <= HaltOnReset ? HALTED : RUNNING;
     else begin
       case (State)
         RUNNING : begin
-          if (HaltReq) begin
-            State <= HALTED;
-          end else if (ResumeReq) begin
-            AllResumeAck <= 0;
-          end
+          State <= Step | HaltReq ? HALTED : RUNNING;
         end
 
         HALTED : begin
-          if (ResumeReq) begin
-            State <= RUNNING;
-            AllResumeAck <= 1;
-          end
+          State <= ResumeReq ? RUNNING : HALTED;
+          ResumeAck <= ResumeReq ? 1 : ResumeAck;
         end
       endcase
     end

@@ -106,7 +106,7 @@ module rad import cvw::*; #(parameter cvw_t P) (
       `MIP_REGNO : begin
         ShiftCount = P.LLEN - 1;
         CSRegNo = 1;
-        RegReadOnly = 1; // TODO: eventually DCSR (any maybe others) will be RW
+        //RegReadOnly = 1;
       end
 
       [`HPMCOUNTERBASE_REGNO:`TIME_REGNO],

@@ -73,9 +73,17 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic [63:0]                 MTIME_CLINT;       // from CLINT to CSRs
   logic                        MExtInt,SExtInt;   // from PLIC
 
-  // Debug Module signals
+  // Debug Mode control signals
   logic                        NdmReset;
+  logic                        HaltReq;
+  logic                        ResumeReq;
+  logic                        HaltOnReset;
+  logic                        AckHaveReset;
+  logic                        ResumeAck;
+  logic                        HaveReset;
+  logic                        DebugMode;
   logic                        DebugStall;
+  // Debug Module signals
   logic                        DebugScanEn;
   logic                        DebugScanIn;
   logic                        GPRScanIn;
@@ -98,7 +106,8 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
-    .DebugStall, .DebugScanEn, .DebugScanOut(DebugScanIn), .GPRScanOut(GPRScanIn), .FPRScanOut(FPRScanIn), .CSRScanOut(CSRScanIn), 
+    .HaltReq, .ResumeReq, .HaltOnReset, .AckHaveReset, .ResumeAck, .HaveReset, .DebugMode,
+    .DebugScanEn, .DebugScanOut(DebugScanIn), .GPRScanOut(GPRScanIn), .FPRScanOut(FPRScanIn), .CSRScanOut(CSRScanIn), 
     .DebugScanIn(DebugScanOut), .MiscSel, .GPRSel, .FPRSel, .CSRSel, .DebugRegAddr, .DebugCapture, .DebugRegUpdate);
 
   // instantiate uncore if a bus interface exists
@@ -115,7 +124,8 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
 
   // instantiate debug module
   if (P.DEBUG_SUPPORTED) begin : dm
-    dm #(P) dm (.clk, .rst(reset), .tck, .tdi, .tms, .tdo, .NdmReset, .DebugStall,
+    dm #(P) dm (.clk, .rst(reset), .tck, .tdi, .tms, .tdo, .NdmReset,
+      .HaltReq, .ResumeReq, .HaltOnReset, .AckHaveReset, .ResumeAck, .HaveReset, .DebugMode,
       .DebugScanEn, .DebugScanIn, .GPRScanIn, .FPRScanIn, .CSRScanIn, .DebugScanOut,
       .MiscSel, .GPRSel, .FPRSel, .CSRSel, .RegAddr(DebugRegAddr), .DebugCapture, .DebugRegUpdate);
   end

@@ -26,14 +26,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 // TODO List:
-// fix CSR scanning
 // determine config/permissions of all CSRs
-// DCSR and DPC should exist even when not privileged_supported
-// test all combinations of XLEN/FLEN
 // improve halting / implement "debug mode"
 //// Debug Mode = M-mode with stalled pipe
 // Flush pipe with NOPs during halt?
-// implement better steps
 // Alias DPC to PCF/PCNextF?
 
 // (stretch) add system bus access?
@@ -51,8 +47,14 @@ module dm import cvw::*; #(parameter cvw_t P) (
 
   // Platform reset signal
   output logic            NdmReset,
-  // Core hazard signal
-  output logic            DebugStall,
+  // Core control signals
+  input  logic            ResumeAck,      // Signals Hart has been resumed
+  input  logic            HaveReset,      // Signals Hart has been reset
+  input  logic            DebugMode,      // Signals core is halted
+  output logic            HaltReq,        // Initiates core halt
+  output logic            ResumeReq,      // Initiates core resume
+  output logic            HaltOnReset,    // Halts core immediately on hart reset
+  output logic            AckHaveReset,   // Clears HaveReset status
 
   // Scan Chain
   output logic            DebugScanEn,    // puts scannable flops into scan mode
@@ -83,27 +85,15 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic [1:0]             RspOP;
 
   // JTAG ID for Wally:  
-  // [31:27] = 1 (4 bits)
-  // ver [27:12] = 0x2A (42)
-  // JEDEC number [11:1] = 000_0000_0010 (Open HW Group)
-  // [0] set to 1
-  localparam JTAG_DEVICE_ID = 32'h1002_A005; 
+  // Version [31:28] = 0x1 : 0001
+  // PartNumber [27:12] = 0x2A : 00000000_00101010
+  // JEDEC number [11:1] = 0x602 : Bank 13 (1100) Open HW Group (0000010) 
+  // [0] = 1
+  localparam JTAG_DEVICE_ID = 32'h1002AC05; 
 
   dtm #(`ADDR_WIDTH, JTAG_DEVICE_ID) dtm (.clk, .tck, .tdi, .tms, .tdo,
     .ReqReady, .ReqValid, .ReqAddress, .ReqData, .ReqOP, .RspReady,
     .RspValid, .RspData, .RspOP);
-
-  // Core control signals
-  logic HaltReq;
-  logic ResumeReq;
-  logic HaltOnReset;
-  logic Halted;
-  logic AckHaveReset;
-
-  hartcontrol hartcontrol(.clk, .rst(rst | ~DmActive), .NdmReset, .AckHaveReset, .HaltReq,
-    .ResumeReq, .HaltOnReset, .DebugStall, .Halted, .AllRunning, .AnyRunning, 
-    .AllHalted, .AnyHalted, .AllResumeAck, .AnyResumeAck, .AllHaveReset, .AnyHaveReset);
-
 
   enum logic [3:0] {INACTIVE, IDLE, ACK, R_DATA, W_DATA, DMSTATUS, W_DMCONTROL, R_DMCONTROL, 
 		    W_ABSTRACTCS, R_ABSTRACTCS, ABST_COMMAND, R_SYSBUSCS, READ_ZERO,
@@ -149,7 +139,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   //// DM register fields
   // DMControl
   logic              AckUnavail;
-  logic              DmActive;       // This bit is used to (de)activate the DM. Toggling acts as reset
+  logic              DmActive;       // This bit is used to (de)activate the DM. Toggling off/on acts as reset
   // DMStatus
   logic              StickyUnavail;
   logic              ImpEBreak;
@@ -157,10 +147,10 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic              AnyHaveReset;
   logic              AllResumeAck;
   logic              AnyResumeAck;
-  logic              AllNonExistent; // TODO
-  logic              AnyNonExistent;
-  logic              AllUnavail;     // TODO
-  logic              AnyUnavail;
+  const logic        AllNonExistent = 0;
+  const logic        AnyNonExistent = 0;
+  const logic        AllUnavail = 0;
+  const logic        AnyUnavail = 0;
   logic              AllRunning;
   logic              AnyRunning;
   logic              AllHalted;
@@ -177,6 +167,18 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic [2:0]        CmdErr;
   const logic [3:0]  DataCount = (P.LLEN/32);
 
+  // Core control signals
+  assign AllHaveReset = HaveReset;
+  assign AnyHaveReset = HaveReset;
+  assign AnyHalted = DebugMode;
+  assign AllHalted = DebugMode;
+  assign AnyRunning = ~DebugMode;
+  assign AllRunning = ~DebugMode;
+  // I believe resumeack is used to determine when a resume is requested but never completes
+  // It's pretty worthless in this implementation (complain to the debug working group)
+  assign AllResumeAck = ResumeAck;
+  assign AnyResumeAck = ResumeAck;
+  
   // See spec 3.14.2
   assign DMControl = {2'b0, 1'b0, 2'b0, 1'b0, 10'b0, 10'b0, 4'b0, NdmReset, DmActive};
 
@@ -290,7 +292,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
             //  hartreset, ackhavereset, setresethaltreq, and clrresethaltreq. The others must be written 0
             case ({ReqData[`RESUMEREQ],ReqData[`ACKHAVERESET],ReqData[`SETRESETHALTREQ],ReqData[`CLRRESETHALTREQ]})
               4'b0000 :; // None
-              4'b1000 : ResumeReq <= 1;
+              4'b1000 : ResumeReq <= ~ReqData[`HALTREQ]; // Ignore ResumeReq if HaltReq
               4'b0100 : AckHaveReset <= 1;
               4'b0010 : HaltOnReset <= 1;
               4'b0001 : HaltOnReset <= 0;
@@ -338,7 +340,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
           if (CmdErr != `CMDERR_NONE); // If CmdErr, do nothing
           else if (Busy)
             CmdErr <= `CMDERR_BUSY; // If Busy, set CmdErr, do nothing
-          else if (~Halted)
+          else if (~DebugMode)
             CmdErr <= `CMDERR_HALTRESUME; // If not halted, set CmdErr, do nothing
           else begin
             case (ReqData[`CMDTYPE])

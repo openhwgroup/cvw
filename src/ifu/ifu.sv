@@ -145,7 +145,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   logic [LINELEN-1:0]          FetchBuffer;
   logic [31:0]                 ShiftUncachedInstr;
   // Debug scan chain
-  logic                        DSCR;                                     // Debug Scan Chain Register
+  logic                        DebugScanChainReg;                                     // Debug Scan Chain Register
   
   assign PCFExt = {2'b00, PCSpillF};
 
@@ -411,22 +411,22 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   if (P.ZICSR_SUPPORTED | P.A_SUPPORTED) begin
     mux2    #(32)     FlushInstrMMux(InstrE, nop, FlushM, NextInstrE);
     if (P.DEBUG_SUPPORTED)
-      flopenrs #(32)     InstrMReg(clk, reset, ~StallM, NextInstrE, InstrM, DebugScanEn, DSCR, DebugScanOut);
+      flopenrs #(32)     InstrMReg(clk, reset, ~StallM, NextInstrE, InstrM, DebugScanEn, DebugScanChainReg, DebugScanOut);
     else
       flopenr #(32)     InstrMReg(clk, reset, ~StallM, NextInstrE, InstrM);
   end else begin
     assign InstrM = '0;
-    assign DebugScanOut = DSCR;
+    assign DebugScanOut = DebugScanChainReg;
   end
   // PCM is only needed with CSRs or branch prediction
   if (P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED)
     if (P.DEBUG_SUPPORTED)
-      flopenrs #(P.XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM, DebugScanEn, DebugScanIn, DSCR);
+      flopenrs #(P.XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM, DebugScanEn, DebugScanIn, DebugScanChainReg);
     else
       flopenr #(P.XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
   else begin
     assign PCM = '0;
-    assign DSCR = DebugScanIn;
+    assign DebugScanChainReg = DebugScanIn;
   end
   
   // If compressed instructions are supported, increment PCLink by 2 or 4 for a jal.  Otherwise, just by 4

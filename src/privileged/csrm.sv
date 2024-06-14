@@ -58,8 +58,6 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   logic                            WriteMTVECM, WriteMEDELEGM, WriteMIDELEGM;
   logic                            WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
   logic                            WriteMCOUNTERENM, WriteMCOUNTINHIBITM;
-  logic [31:0]                     DCSR_REGW, DPC_REGW;
-  logic                            WriteDPCM, WriteDCSRM;
 
   // Machine CSRs
   localparam MVENDORID     = 12'hF11;
@@ -91,10 +89,6 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   localparam TDATA1        = 12'h7A1;
   localparam TDATA2        = 12'h7A2;
   localparam TDATA3        = 12'h7A3;
-  localparam DCSR          = 12'h7B0;  // Debug Control and Status Register 
-  localparam DPC           = 12'h7B1;  // Debug PC 
-  localparam DSCRATCH0     = 12'h7B2;  // Debug Scratch Register 0 (opt)
-  localparam DSCRATCH1     = 12'h7B3;  // Debug Scratch Register 1 (opt)
   // Constants
   localparam ZERO = {(P.XLEN){1'b0}};
   // when compressed instructions are supported, there can't be misaligned instructions
@@ -132,9 +126,6 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
 
   // MISA is hardwired.  Spec says it could be written to disable features, but this is not supported by Wally
   assign MISA_REGW = {(P.XLEN == 32 ? 2'b01 : 2'b10), {(P.XLEN-28){1'b0}}, MISA_26[25:0]};
-  // Debug registers (stubbed out)
-  assign DPC_REGW = {32'hd099f00d};
-  assign DCSR_REGW = {32'hdeadbeef};
 
   // MHARTID is hardwired. It only exists as a signal so that the testbench can easily see it.
   assign MHARTID_REGW = '0;
@@ -151,10 +142,8 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   assign WriteMTVALM         = MTrapM | (CSRMWriteM & (CSRAdrM == MTVAL));
   assign WriteMCOUNTERENM    = CSRMWriteM & (CSRAdrM == MCOUNTEREN);
   assign WriteMCOUNTINHIBITM = CSRMWriteM & (CSRAdrM == MCOUNTINHIBIT);
-  assign WriteDPCM           = CSRMWriteM & (CSRAdrM == DPC);
-  assign WriteDCSRM          = CSRMWriteM & (CSRAdrM == DCSR);
 
-  assign IllegalCSRMWriteReadonlyM = UngatedCSRMWriteM & (CSRAdrM == MVENDORID | CSRAdrM == MARCHID | CSRAdrM == MIMPID | CSRAdrM == MHARTID | CSRAdrM == MCONFIGPTR); // TODO: add DPC
+  assign IllegalCSRMWriteReadonlyM = UngatedCSRMWriteM & (CSRAdrM == MVENDORID | CSRAdrM == MARCHID | CSRAdrM == MIMPID | CSRAdrM == MHARTID | CSRAdrM == MCONFIGPTR);
 
   // CSRs
   flopenr #(P.XLEN) MTVECreg(clk, reset, WriteMTVECM, {CSRWriteValM[P.XLEN-1:2], 1'b0, CSRWriteValM[0]}, MTVEC_REGW); 
@@ -171,12 +160,6 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   if (P.U_SUPPORTED) begin: mcounteren // MCOUNTEREN only exists when user mode is supported
     flopenr #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], MCOUNTEREN_REGW);
   end else assign MCOUNTEREN_REGW = '0;
-  if (P.DEBUG_SUPPORTED) begin
-    //flopenr #(32) DPCreg(clk, reset, WriteDPCM, CSRWriteValM[31:0], DPC_REGW); // TODO: update DPC from PC (M?)
-    //flopenr #(32) DCSRreg(clk, reset, WriteDCSRM, CSRWriteValM[31:0], DCSR_REGW); // TODO: control writes to DCSR
-  end else begin
-    assign {DPC_REGW,DCSR_REGW} = '0;
-  end
 
   // MENVCFG register
   if (P.U_SUPPORTED) begin // menvcfg only exists if there is a lower privilege to control
@@ -253,10 +236,6 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
       MENVCFGH:      if (P.U_SUPPORTED & P.XLEN==32) CSRMReadValM = MENVCFGH_REGW;
                      else IllegalCSRMAccessM = 1'b1;
       MCOUNTINHIBIT: CSRMReadValM = {{(P.XLEN-32){1'b0}}, MCOUNTINHIBIT_REGW};
-      DCSR:          if (P.DEBUG_SUPPORTED) CSRMReadValM = DCSR_REGW;
-                     else IllegalCSRMAccessM = 1'b1;
-      DPC:           if (P.DEBUG_SUPPORTED) CSRMReadValM = DPC_REGW;
-                     else IllegalCSRMAccessM = 1'b1;
       default:       IllegalCSRMAccessM = 1'b1;
     endcase
   end

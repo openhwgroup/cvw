@@ -35,6 +35,7 @@ from openocd_tcl_wrapper import OpenOCD
 random_stimulus = True
 random_order = False
 
+
 def main():
     with OpenOCD() as cvw:
         registers = dict.fromkeys(cvw.register_translations.keys(),[])

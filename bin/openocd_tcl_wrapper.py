@@ -131,14 +131,12 @@ class OpenOCD:
         dmstat = int(self.read_dmi("0x11"), 16)  # Check resumeack bit
         if not ((dmstat >> 16) & 0x3):
             raise Exception("Error: Hart failed to resume")
-        self.write_dmi("0x10", "0x40000001")  # Clear resumeack bit
 
     def step(self):
-        self.write_dmi("0x10", "0xC0000001")
-        # BOZO: checking resumeack after halt is pointless until sdext halt method is added
-        dmstat = int(self.read_dmi("0x11"), 16)
-        if not ((dmstat >> 16) & 0x3):
-            raise Exception("Error: Hart failed to resume")
+        # Set halt bit #TODO save curent value of dcsr
+        self.write_data("DCSR", "0x4")
+        # Resume
+        #self.resume()
 
     def access_register(self, write, regno, addr_size=None):
         data = 1 << 17  # transfer bit always set

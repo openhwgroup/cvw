@@ -101,6 +101,20 @@
 `define CMDTYPE 31:24
 `define CONTROL 23:0
 
+// DCSR
+`define EBREAKVS  17
+`define EBREAKVU  16
+`define EBREAKM   15
+`define EBREAKS   13
+`define EBREAKU   12
+`define STEPIE    11
+`define STOPCOUNT 10
+`define STOPTIME  9
+`define V         5
+`define MPRVEN    4
+`define STEP      2
+`define PRV       1:0
+
 //// Abstract Commands
 // cmderr
 `define CMDERR_NONE          3'h0
