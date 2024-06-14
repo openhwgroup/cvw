@@ -329,7 +329,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   assign InsufficientCSRPrivilegeM = (CSRAdrDM[9:8] == 2'b11 & PrivilegeModeW != P.M_MODE) |
                                      (CSRAdrDM[9:8] == 2'b01 & PrivilegeModeW == P.U_MODE);
   assign IllegalCSRAccessM = ((IllegalCSRCAccessM & IllegalCSRMAccessM & 
-    IllegalCSRSAccessM & IllegalCSRUAccessM /*& IllegalCSRDAccessM*/ |
+    IllegalCSRSAccessM & IllegalCSRUAccessM & IllegalCSRDAccessM |
     InsufficientCSRPrivilegeM) & CSRReadM) | IllegalCSRMWriteReadonlyM;
 
   // Debug module CSR access

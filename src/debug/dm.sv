@@ -406,11 +406,11 @@ module dm import cvw::*; #(parameter cvw_t P) (
         end
 
         AC_SCAN : begin
-          if ((GPRegNo | FPRegNo) & AcWrite & (Cycle == ScanChainLen)) // Writes to GPR/FPR are shifted in len(GPR) or len(FPR) cycles
+          if (~MiscRegNo & AcWrite & (Cycle == ScanChainLen)) // Writes to CSR/GPR/FPR are shifted in len(CSR/GPR) or len(FPR) cycles
             AcState <= AC_UPDATE;
-          else if ((GPRegNo | FPRegNo) & ~AcWrite & (Cycle == P.LLEN)) // Reads from GPR/FPR are shifted in len(ScanReg) cycles
+          else if (~MiscRegNo & ~AcWrite & (Cycle == P.LLEN)) // Reads from CSR/GPR/FPR are shifted in len(ScanReg) cycles
             AcState <= AC_IDLE;
-          else if (~(GPRegNo | FPRegNo) & (Cycle == ScanChainLen)) // Misc scanchain must be scanned completely
+          else if (MiscRegNo & (Cycle == ScanChainLen)) // Misc scanchain must be scanned completely
             AcState <= AC_IDLE;
           else
             Cycle <= Cycle + 1;

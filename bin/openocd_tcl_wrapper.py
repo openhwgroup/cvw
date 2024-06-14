@@ -133,10 +133,16 @@ class OpenOCD:
             raise Exception("Error: Hart failed to resume")
 
     def step(self):
-        # Set halt bit #TODO save curent value of dcsr
-        self.write_data("DCSR", "0x4")
-        # Resume
-        #self.resume()
+        # Set step bit if it isn't already set
+        dcsr = int(self.read_data("DCSR"), 16)
+        if not (dcsr >> 2) & 0x1:
+            dcsr |= 0x4
+            self.write_data("DCSR", hex(dcsr))
+        # Resume once
+        self.resume()
+        # Unset step bit
+        dcsr &= ~0x4
+        self.write_data("DCSR", hex(dcsr))
 
     def access_register(self, write, regno, addr_size=None):
         data = 1 << 17  # transfer bit always set
