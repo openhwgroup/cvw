@@ -34,16 +34,19 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0] CSRDReadValM,
   output logic              IllegalCSRDAccessM,
 
-  output logic              Step
+  output logic              Step,
+  output logic [P.XLEN-1:0] DPC,
+  input  logic [P.XLEN-1:0] PCNextF,
+  input  logic              CapturePCNextF
 );
   `include "debug.vh"
 
-  localparam DCSR = 12'h7B0;  // Debug Control and Status Register 
-  localparam DPC  = 12'h7B1;  // Debug PC 
+  localparam DCSR_ADDR = 12'h7B0;  // Debug Control and Status Register 
+  localparam DPC_ADDR  = 12'h7B1;  // Debug PC 
 
   // TODO: these registers are only accessible from Debug Mode.
   logic [31:0] DCSR_REGW;
-  logic [31:0] DPC_REGW;
+  logic [P.XLEN-1:0] DPC_REGW, DPCWriteVal;
   logic WriteDCSRM;
   logic WriteDPCM;
 
@@ -65,8 +68,8 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
 
 
 
-  assign WriteDCSRM = CSRWriteDM & (CSRAdrM == DCSR);
-  assign WriteDPCM  = CSRWriteDM & (CSRAdrM == DPC);
+  assign WriteDCSRM = CSRWriteDM & (CSRAdrM == DCSR_ADDR);
+  assign WriteDPCM  = CSRWriteDM & (CSRAdrM == DPC_ADDR);
 
   always_ff @(posedge clk) begin
     if (reset)
@@ -77,21 +80,22 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
       Prv <= CSRWriteValM[`PRV]; // TODO: overwrite hart privilege mode
   end
 
-  flopenr ebreakreg(clk, reset, WriteDCSRM, 
+  flopenr #(4) DCSRreg (clk, reset, WriteDCSRM, 
     {CSRWriteValM[`EBREAKM], CSRWriteValM[`EBREAKS], CSRWriteValM[`EBREAKU], CSRWriteValM[`STEP]}, 
     {ebreakM, ebreakS, ebreakU, Step});
 
-
   assign DCSR_REGW = {4'b0100, 10'b0, ebreakVS, ebreakVU, ebreakM, 1'b0, ebreakS, ebreakU, StepIE,
                       StopCount, StopTime, Cause, V, MPrvEn, NMIP, Step, Prv};
-  assign DPC_REGW = {32'hd099f00d};
+
+  assign DPCWriteVal = CapturePCNextF ? PCNextF : CSRWriteValM;
+  flopenr #(P.XLEN) DPCreg (clk, reset, WriteDPCM | CapturePCNextF, DPCWriteVal, DPC_REGW);
 
   always_comb begin
     CSRDReadValM = 0;
     IllegalCSRDAccessM = 0;
     case (CSRAdrM)
-      DCSR   : CSRDReadValM = DCSR_REGW;
-      DPC    : CSRDReadValM = DPC_REGW;
+      DCSR_ADDR : CSRDReadValM = DCSR_REGW;
+      DPC_ADDR  : CSRDReadValM = DPC_REGW;
       default: IllegalCSRDAccessM = 1'b1;
     endcase
   end

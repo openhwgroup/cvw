@@ -99,6 +99,9 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   output logic              wfiM, IntPendingM,                              // Stall in Memory stage for WFI until interrupt pending or timeout
   // Debuge Mode
   output logic              Step,
+  output logic [P.XLEN-1:0] DPC,
+  input  logic [P.XLEN-1:0] PCNextF,
+  input  logic              CapturePCNextF,
   // Debug scan chain
   input  logic              DebugSel,
   input  logic [11:0]       DebugRegAddr,
@@ -157,7 +160,8 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .SATP_REGW, .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
     .SetFflagsM, .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE,
     .EPCM, .TrapVectorM,
-    .CSRReadValW, .IllegalCSRAccessM, .BigEndianM, .Step,
+    .CSRReadValW, .IllegalCSRAccessM, .BigEndianM,
+    .Step, .DPC, .PCNextF, .CapturePCNextF,
     .DebugSel, .DebugRegAddr, .DebugCapture, .DebugRegUpdate, .DebugScanEn, .DebugScanIn, .DebugScanOut);
 
   // pipeline early-arriving trap sources

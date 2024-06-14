@@ -97,6 +97,11 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   output logic                 InstrAccessFaultF,                        // Instruction access fault 
   output logic                 ICacheAccess,                             // Report I$ read to performance counters
   output logic                 ICacheMiss,                               // Report I$ miss to performance counters
+  // Debug Mode logic
+  (* mark_debug = "true" *)input  logic                 ForceDPCNextF,
+  (* mark_debug = "true" *)input  logic [P.XLEN-1:0]    DPC,
+  (* mark_debug = "true" *)output logic [P.XLEN-1:0]    PCNextF,                                  // Next PCF, selected from Branch predictor, Privilege, or PC+2/4
+  (* mark_debug = "true" *)input  logic                 ForceNOP,
   // Debug scan chain
   input  logic                 DebugScanEn,
   input  logic                 DebugScanIn,
@@ -106,7 +111,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   localparam [31:0]            nop = 32'h00000013;                       // instruction for NOP
   localparam            LINELEN = P.ICACHE_SUPPORTED ? P.ICACHE_LINELENINBITS : P.XLEN;
 
-  logic [P.XLEN-1:0]           PCNextF;                                  // Next PCF, selected from Branch predictor, Privilege, or PC+2/4
+  logic [P.XLEN-1:0]           PCNextFM;                                 // (muxed for debug) Next PCF, selected from Branch predictor, Privilege, or PC+2/4
   logic [P.XLEN-1:0]           PC1NextF;                                 // Branch predictor next PCF
   logic [P.XLEN-1:0]           PC2NextF;                                 // Selected PC between branch prediction and next valid PC if CSRWriteFence
   logic [P.XLEN-1:0]           UnalignedPCNextF;                         // The next PCF, but not aligned to 2 bytes. 
@@ -145,7 +150,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   logic [LINELEN-1:0]          FetchBuffer;
   logic [31:0]                 ShiftUncachedInstr;
   // Debug scan chain
-  logic                        DebugScanChainReg;                                     // Debug Scan Chain Register
+  logic                        DebugScanChainReg;                        // Debug Scan Chain Register
   
   assign PCFExt = {2'b00, PCSpillF};
 
@@ -320,8 +325,14 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   else assign PC2NextF = PC1NextF;
 
   mux3 #(P.XLEN) pcmux3(PC2NextF, EPCM, TrapVectorM, {TrapM, RetM}, UnalignedPCNextF);
-  mux2 #(P.XLEN) pcresetmux({UnalignedPCNextF[P.XLEN-1:1], 1'b0}, P.RESET_VECTOR[P.XLEN-1:0], reset, PCNextF);
-  flopen #(P.XLEN) pcreg(clk, ~StallF | reset, PCNextF, PCF);
+  if (P.DEBUG_SUPPORTED) begin
+    mux2 #(P.XLEN) pcresetmux({UnalignedPCNextF[P.XLEN-1:1], 1'b0}, P.RESET_VECTOR[P.XLEN-1:0], reset, PCNextFM);
+    assign PCNextF = ForceDPCNextF ? DPC : PCNextFM;
+    flopen #(P.XLEN) pcreg(clk, ~StallF | reset | ForceDPCNextF, PCNextF, PCF);
+  end else begin
+    mux2 #(P.XLEN) pcresetmux({UnalignedPCNextF[P.XLEN-1:1], 1'b0}, P.RESET_VECTOR[P.XLEN-1:0], reset, PCNextF);
+    flopen #(P.XLEN) pcreg(clk, ~StallF | reset, PCNextF, PCF);
+  end
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32

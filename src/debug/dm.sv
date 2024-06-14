@@ -139,7 +139,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   //// DM register fields
   // DMControl
   logic              AckUnavail;
-  logic              DmActive;       // This bit is used to (de)activate the DM. Toggling off/on acts as reset
+  logic              DmActive;       // This bit is used to (de)activate the DM. Toggling off-on acts as reset
   // DMStatus
   logic              StickyUnavail;
   logic              ImpEBreak;
