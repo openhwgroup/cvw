@@ -31,23 +31,26 @@
 // In a multihart system, this module should be instantiated under wallypipelinedcore
 
 module dmc (
-  input  logic clk, reset,
-  input  logic Step,
-  input  logic HaltReq,      // Initiates core halt
-  input  logic ResumeReq,    // Initiates core resume
-  input  logic HaltOnReset,  // Halts core immediately on hart reset
-  input  logic AckHaveReset, // Clears HaveReset status
+  input  logic       clk, reset,
+  input  logic       Step,
+  input  logic       HaltReq,      // Initiates core halt
+  input  logic       ResumeReq,    // Initiates core resume
+  input  logic       HaltOnReset,  // Halts core immediately on hart reset
+  input  logic       AckHaveReset, // Clears HaveReset status
 
-  output logic DebugMode,
-  output logic ResumeAck,      // Signals Hart has been resumed
-  output logic HaveReset,      // Signals Hart has been reset
-  output logic DebugStall,     // Stall signal goes to hazard unit
+  output logic       DebugMode,
+  output logic [2:0] DebugCause,     // Reason Hart entered debug mode
+  output logic       ResumeAck,      // Signals Hart has been resumed
+  output logic       HaveReset,      // Signals Hart has been reset
+  output logic       DebugStall,     // Stall signal goes to hazard unit
 
-  output logic CapturePCNextF, // Store PCNextF in DPC when entering Debug Mode
-  output logic ForceDPCNextF,  // Updates PCNextF with the current value of DPC
-  output logic ForceNOP        // Fills the pipeline with NOP
+  output logic       EnterDebugMode, // Store PCNextF in DPC when entering Debug Mode
+  output logic       ExitDebugMode,  // Updates PCNextF with the current value of DPC
+  output logic       ForceNOP        // Fills the pipeline with NOP
 );
-  enum logic [1:0] {RUNNING, FLUSH, HALTED, RESUME} State;
+  `include "debug.vh"
+
+enum logic [1:0] {RUNNING, FLUSH, HALTED, RESUME} State;
 
   localparam NOP_CYCLE_DURATION = 0;
   logic [$clog2(NOP_CYCLE_DURATION+1)-1:0] Counter;
@@ -62,20 +65,24 @@ module dmc (
   assign DebugMode = (State != RUNNING);
   assign DebugStall = (State == HALTED);
 
-  assign CapturePCNextF = (State == FLUSH) & (Counter == 0);
-  assign ForceDPCNextF = (State == HALTED) & ResumeReq;
+  assign EnterDebugMode = (State == FLUSH) & (Counter == 0);
+  assign ExitDebugMode = (State == HALTED) & ResumeReq;
   assign ForceNOP = (State == FLUSH);
 
   always_ff @(posedge clk) begin
     if (reset) begin
       State <= HaltOnReset ? HALTED : RUNNING;
+      DebugCause <= HaltOnReset ? `CAUSE_RESETHALTREQ : 0;
     end else begin
       case (State)
         RUNNING : begin
           if (HaltReq) begin
             Counter <= 0;
             State <= FLUSH;
-          end
+            DebugCause <= `CAUSE_HALTREQ;
+          end 
+          //else if (eBreak) TODO: halt on ebreak if DCSR bit is set
+          // DebugCause <= `CAUSE_EBREAK;
         end
 
         // fill the pipe with NOP before halting
@@ -95,6 +102,7 @@ module dmc (
           if (Step) begin
             Counter <= 0;
             State <= FLUSH;
+            DebugCause <= `CAUSE_STEP;
           end else begin
             State <= RUNNING;
             ResumeAck <= 1;

@@ -94,10 +94,11 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   output logic                     IllegalCSRAccessM,         // Illegal CSR access: CSR doesn't exist or is inaccessible at this privilege level
   output logic                     BigEndianM,                // memory access is big-endian based on privilege mode and STATUS register endian fields
   // Debug Mode output
+  input  logic [2:0]               DebugCause,
   output logic                     Step,
   output logic [P.XLEN-1:0]        DPC,
   input  logic [P.XLEN-1:0]        PCNextF,
-  input  logic                     CapturePCNextF,
+  input  logic                     EnterDebugMode,
   // Debug scan chain
   input  logic                     DebugSel,
   input  logic [11:0]              DebugRegAddr,
@@ -304,7 +305,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   if (P.DEBUG_SUPPORTED) begin:csrd
     csrd #(P) csrd(.clk, .reset,
     .CSRWriteDM, .CSRAdrM(CSRAdrDM), .CSRWriteValM(CSRWriteValDM), .CSRDReadValM, .IllegalCSRDAccessM,
-    .Step, .DPC, .PCNextF, .CapturePCNextF);
+    .DebugCause, .Step, .DPC, .PCNextF, .EnterDebugMode);
   end else begin
     assign CSRDReadValM = '0;
     assign IllegalCSRDAccessM = 1'b1; // Debug isn't supported

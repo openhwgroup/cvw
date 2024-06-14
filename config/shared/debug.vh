@@ -143,6 +143,14 @@
 `define AAR64  3
 `define AAR128 4
 
+// debug mode cause
+`define CAUSE_EBREAK       3'h1
+`define CAUSE_TRIGGER      3'h2
+`define CAUSE_HALTREQ      3'h3
+`define CAUSE_STEP         3'h4
+`define CAUSE_RESETHALTREQ 3'h5
+`define CAUSE_GROUP        3'h6
+
 // Register Numbers (regno)
 // (Table 3.3)
 // 0x0000 – 0x0fff | CSRs. The “PC” can be accessed here through dpc.

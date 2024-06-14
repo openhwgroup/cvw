@@ -98,10 +98,10 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   output logic                 ICacheAccess,                             // Report I$ read to performance counters
   output logic                 ICacheMiss,                               // Report I$ miss to performance counters
   // Debug Mode logic
-  (* mark_debug = "true" *)input  logic                 ForceDPCNextF,
-  (* mark_debug = "true" *)input  logic [P.XLEN-1:0]    DPC,
-  (* mark_debug = "true" *)output logic [P.XLEN-1:0]    PCNextF,                                  // Next PCF, selected from Branch predictor, Privilege, or PC+2/4
-  (* mark_debug = "true" *)input  logic                 ForceNOP,
+  input  logic                 ExitDebugMode,
+  input  logic [P.XLEN-1:0]    DPC,
+  output logic [P.XLEN-1:0]    PCNextF,                                  // Next PCF, selected from Branch predictor, Privilege, or PC+2/4
+  input  logic                 ForceNOP,
   // Debug scan chain
   input  logic                 DebugScanEn,
   input  logic                 DebugScanIn,
@@ -327,8 +327,8 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   mux3 #(P.XLEN) pcmux3(PC2NextF, EPCM, TrapVectorM, {TrapM, RetM}, UnalignedPCNextF);
   if (P.DEBUG_SUPPORTED) begin
     mux2 #(P.XLEN) pcresetmux({UnalignedPCNextF[P.XLEN-1:1], 1'b0}, P.RESET_VECTOR[P.XLEN-1:0], reset, PCNextFM);
-    assign PCNextF = ForceDPCNextF ? DPC : PCNextFM;
-    flopen #(P.XLEN) pcreg(clk, ~StallF | reset | ForceDPCNextF, PCNextF, PCF);
+    assign PCNextF = ExitDebugMode ? DPC : PCNextFM;
+    flopen #(P.XLEN) pcreg(clk, ~StallF | reset | ExitDebugMode, PCNextF, PCF);
   end else begin
     mux2 #(P.XLEN) pcresetmux({UnalignedPCNextF[P.XLEN-1:1], 1'b0}, P.RESET_VECTOR[P.XLEN-1:0], reset, PCNextF);
     flopen #(P.XLEN) pcreg(clk, ~StallF | reset, PCNextF, PCF);
