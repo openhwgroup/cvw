@@ -7,7 +7,7 @@
 // Purpose: Counter CSRs
 //          See RISC-V Privileged Mode Specification 20190608 3.1.10-11
 // 
-// Documentation: RISC-V System on Chip Design Chapter 5
+// Documentation: RISC-V System on Chip Design
 //    MHPMEVENT is not supported
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.

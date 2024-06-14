@@ -7,7 +7,7 @@
 //
 // Purpose: Implements the I$ and D$. Interfaces with requests from IEU and HPTW and ahbcacheinterface
 //
-// Documentation: RISC-V System on Chip Design Chapter 7 (Figures 7.9, 7.10, and 7.19)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

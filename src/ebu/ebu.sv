@@ -11,7 +11,7 @@
 //          Connects core to peripherals and I/O pins on SOC
 //          Bus width presently matches XLEN
 // 
-// Documentation: RISC-V System on Chip Design Chapter 6 (Figures 6.25 and 6.26)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

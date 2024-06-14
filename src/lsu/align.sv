@@ -9,7 +9,7 @@
 //          It is simlar to the IFU's spill module and probably could be merged together with 
 //          some effort.
 //
-// Documentation: RISC-V System on Chip Design Chapter 11 (Figure 11.5)
+// Documentation: RISC-V System on Chip Design
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

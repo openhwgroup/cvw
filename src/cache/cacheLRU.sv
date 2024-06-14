@@ -7,7 +7,7 @@
 //
 // Purpose: Implements Pseudo LRU. Tested for Powers of 2.
 //
-// Documentation: RISC-V System on Chip Design Chapter 7 (Figures 7.8 and 7.15 to 7.18)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

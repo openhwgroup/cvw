@@ -9,7 +9,7 @@
 //          HPTW, DMMU, data cache, interface to external bus
 //          Atomic, Endian swap, and subword read/write logic
 //  
-// Documentation: RISC-V System on Chip Design Chapter 9 (Figure 9.2)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

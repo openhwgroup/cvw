@@ -7,7 +7,7 @@
 // Purpose: Status register (and environment configuration register and others shared across modes)
 //          See RISC-V Privileged Mode Specification 20190608 
 // 
-// Documentation: RISC-V System on Chip Design Chapter 5
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

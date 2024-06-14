@@ -66,7 +66,7 @@ module ram1p1rwe import cvw::* ; #(parameter USE_SRAM=0, DEPTH=64, WIDTH=44) (
     // READ first SRAM model
     //////////////////////////////////////////////////////////////////////////////
   end else begin: ram
-    // *** Vivado is not implementing this as block ram for some reason.
+    // Vivado is not implementing this as block ram for some reason.
     // The version with byte write enables it correctly infers block ram.
 
     bit [WIDTH-1:0]               RAM[DEPTH-1:0];

@@ -6,7 +6,7 @@
 //
 // Purpose: Floating point conversions of configurable size
 // 
-// Documentation: RISC-V System on Chip Design Chapter 13
+// Documentation: RISC-V System on Chip Design
 //
 // Int component of the Wally configurable RISC-V project.
 // 
