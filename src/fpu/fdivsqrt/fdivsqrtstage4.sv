@@ -6,7 +6,7 @@
 //
 // Purpose: radix-4 divsqrt recurrence stage
 // 
-// Documentation: RISC-V System on Chip Design Chapter 13
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -52,7 +52,7 @@ module fdivsqrtstage4 import cvw::*;  #(parameter cvw_t P) (
 
   // Digit Selection logic
   assign j0     = ~C[P.DIVb+1];             // first step of R digit selection: C = 00...0
-  assign j1     = C[P.DIVb] & ~C[P.DIVb-1]; // second step of R digit selection: C = 1100...0; *** could simplify to ~C[P.DIVb-1] because j=0 case takes priority
+  assign j1     = ~C[P.DIVb-1]; // second step of R digit selection: C = 1100...0; simplified from  C[P.DIVb] & ~C[P.DIVb-1] because j=0 case takes priority
   assign Smsbs  = U[P.DIVb:P.DIVb-4];       // U1.4 most significant bits of square root
   assign Dmsbs  = D[P.DIVb-1:P.DIVb-3];     // U0.3 most significant fractional bits of divisor after leading 1
   assign WCmsbs = WC[P.DIVb+3:P.DIVb-4];    // Q4.4 most significant bits of residual

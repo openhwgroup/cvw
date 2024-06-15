@@ -423,6 +423,7 @@ def main():
     """Run the tests and count the failures"""
     global configs, coverage
     os.chdir(regressionDir)
+    os.system('rm -rf questa/wkdir')
     for d in ["questa/logs", "questa/wkdir", "verilator/logs", "verilator/wkdir", "vcs/logs", "vcs/wkdir"]:
         try:
             os.mkdir(d)

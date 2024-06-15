@@ -7,7 +7,7 @@
 //
 // Purpose: 2 bit saturating counter predictor with parameterized table depth.
 // 
-// Documentation: RISC-V System on Chip Design Chapter 10 (Figure ***)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

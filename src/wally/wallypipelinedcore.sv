@@ -6,7 +6,7 @@
 //
 // Purpose: Pipelined RISC-V Processor
 // 
-// Documentation: RISC-V System on Chip Design (Figure 4.1)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

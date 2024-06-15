@@ -6,7 +6,7 @@
 //
 // Purpose: Divide/Square root preprocessing: integer absolute value and W64, normalization shift
 // 
-// Documentation: RISC-V System on Chip Design Chapter 13
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -222,7 +222,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     logic               RemOpE;
 
     /* verilator lint_off WIDTH */
-    assign IntDivNormShiftE = P.DIVb - (CyclesE * P.RK - P.LOGR); // b - rn, used for integer normalization right shift.  rn = Cycles * r * k - r ***explain
+    assign IntDivNormShiftE = P.DIVb - (CyclesE * P.RK - P.LOGR); // b - rn, used for integer normalization right shift.  n = (Cycles * k - 1)
     assign IntRemNormShiftE = mE + (P.DIVb-(P.XLEN-1));           // m + b - (N-1) for remainder normalization shift
     /* verilator lint_on WIDTH */
     assign RemOpE = Funct3E[1];

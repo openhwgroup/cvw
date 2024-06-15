@@ -110,20 +110,10 @@ localparam CVTLEN = (ZFA_SUPPORTED & D_SUPPORTED) ? `max(BASECVTLEN, 32'd84) : B
 localparam LLEN = `max($unsigned(FLEN), $unsigned(XLEN));
 localparam LOGCVTLEN = $unsigned($clog2(CVTLEN+1));
 
-// size of FMA output
+// size of FMA output in U(NF+4).(3NF+2) format
 localparam FMALEN = 3*NF + 6;
 
 // NORMSHIFTSIZE is the bits out of the normalization shifter
-// RV32F: max(32+23+1, 2(23)+4, 3(23)+6) = 3*23+6 = 75
-// RV64F: max(64+23+1, 64 + 23 + 2, 3*23+6) = 89
-// RV64D: max(84+52+1, 64+52+2, 3*52+6) = 162
-// *** DH 5/10/24 testbench_fp f_ieee_div_2_1_rv64gc cvtint was failing for fcvt.lu.s
-//     with CVTLEN+NF+1.  Changing to CVTLEN+NF+1+2 fixes failures
-//     This same failure occurred for any test with IDIV_ON_FPU = 0, FLEN=32, XLEN=64
-//     because NORMSHIFTSZ becomes limited by convert rather than divider
-//     The two extra bits are necessary because shiftcorrection dropped them for fcvt.
-//     May be possible to remove these two bits by modifying shiftcorrection
-//localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1+2), (DIVb + 1 + NF + 1)), (FMALEN + 2));
 localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1), (DIVb + 1 + NF + 1)), (FMALEN + 2));
 
 localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));                  // log_2(NORMSHIFTSZ)

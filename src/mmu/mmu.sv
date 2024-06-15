@@ -6,7 +6,7 @@
 //
 // Purpose: Memory management unit, including TLB, PMA, PMP
 // 
-// Documentation: RISC-V System on Chip Design Chapter 8
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -95,7 +95,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   end else begin:tlb // just pass address through as physical
     assign Translate    = 1'b0;
     assign TLBMiss      = 1'b0;
-    assign TLBHit       = 1'b1; // *** is this necessary
+    assign TLBHit       = 1'b0;
     assign TLBPageFault = 1'b0;
     assign PBMemoryType = 2'b00;
   end

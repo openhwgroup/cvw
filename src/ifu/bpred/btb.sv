@@ -8,7 +8,7 @@
 // Purpose: Branch Target Buffer (BTB). The BTB predicts the target address of all control flow instructions.
 //          It also guesses the type of instrution; jalr(r), return, jump (jr), or branch.
 //
-// Documentation: RISC-V System on Chip Design Chapter 10 (Figure ***)
+// Documentation: RISC-V System on Chip Design
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

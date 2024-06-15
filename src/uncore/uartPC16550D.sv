@@ -13,7 +13,7 @@
 //   Generates 2 rather than 1.5 stop bits when 5-bit word length is slected and LCR[2] = 1
 //   Timeout not yet implemented
 // 
-// Documentation: RISC-V System on Chip Design Chapter 15
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -297,7 +297,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
 
   // ERROR CONDITIONS
   assign rxparity     = ^rxdata;
-  assign rxparityerr  = (rxparity ^ rxparitybit ^ ~evenparitysel) & LCR[3]; // Check even/odd parity (*** check if LCR needs to be inverted)
+  assign rxparityerr  = (rxparity ^ rxparitybit ^ ~evenparitysel) & LCR[3]; // Check even/odd parity
   assign rxoverrunerr = fifoenabled ? (rxfifoentries == 15) : rxdataready; // overrun if FIFO or receive buffer register full 
   assign rxframingerr = ~rxstopbit; // framing error if no stop bit
   assign rxbreak      = rxframingerr & (rxdata9 == 9'b0); // break when 0 for start + data + parity + stop time

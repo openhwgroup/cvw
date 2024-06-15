@@ -8,7 +8,7 @@
 // Purpose: Supervisor-Mode Control and Status Registers
 //          See RISC-V Privileged Mode Specification 20190608 
 //
-// Documentation: RISC-V System on Chip Design Chapter 5
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

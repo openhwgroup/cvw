@@ -6,7 +6,7 @@
 //
 // Purpose: Floating point multiply-accumulate of configurable size
 // 
-// Documentation: RISC-V System on Chip Design Chapter 13 (Figure 13.7, 9)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

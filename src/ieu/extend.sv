@@ -7,7 +7,7 @@
 //
 // Purpose: Produce sign-extended immediates from various formats
 // 
-// Documentation: RISC-V System on Chip Design Chapter 4 (Figure 4.3)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
