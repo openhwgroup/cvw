@@ -141,8 +141,9 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic              AckUnavail;
   logic              DmActive;       // This bit is used to (de)activate the DM. Toggling off-on acts as reset
   // DMStatus
-  logic              StickyUnavail;
-  logic              ImpEBreak;
+  const logic        NdmResetPending = 0;
+  const logic        StickyUnavail = 0;
+  const logic        ImpEBreak = 0; // TODO: change this to const 1 if implementing 1x32bit progbuf
   logic              AllHaveReset;
   logic              AnyHaveReset;
   logic              AllResumeAck;
@@ -156,9 +157,9 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic              AllHalted;
   logic              AnyHalted;
   const logic        Authenticated = 1;
-  logic              AuthBusy;
+  const logic        AuthBusy = 0;
   const logic        HasResetHaltReq = 1;
-  logic              ConfStrPtrValid;
+  const logic        ConfStrPtrValid = 0; // Used with SysBusAccess
   const logic [3:0]  Version = 3;    // DM Version
   // AbstractCS
   const logic [4:0]  ProgBufSize = 0;
@@ -179,11 +180,9 @@ module dm import cvw::*; #(parameter cvw_t P) (
   assign AllResumeAck = ResumeAck;
   assign AnyResumeAck = ResumeAck;
   
-  // See spec 3.14.2
   assign DMControl = {2'b0, 1'b0, 2'b0, 1'b0, 10'b0, 10'b0, 4'b0, NdmReset, DmActive};
 
-  // See spec 3.14.1
-  assign DMStatus = {7'b0, 1'b0, StickyUnavail, ImpEBreak, 2'b0, 
+  assign DMStatus = {7'b0, NdmResetPending, StickyUnavail, ImpEBreak, 2'b0, 
     AllHaveReset, AnyHaveReset, AllResumeAck, AnyResumeAck, AllNonExistent, 
     AnyNonExistent, AllUnavail, AnyUnavail, AllRunning, AnyRunning, AllHalted, 
     AnyHalted, Authenticated, AuthBusy, HasResetHaltReq, ConfStrPtrValid, Version};
@@ -203,17 +202,8 @@ module dm import cvw::*; #(parameter cvw_t P) (
       case (State)
         INACTIVE : begin
           // Reset Values
-          // TODO: one-line these
+          {HaltReq, ResumeReq, AckHaveReset, HaltOnReset, NdmReset} <= 0;
           RspData <= 0;
-          HaltReq <= 0;
-          ResumeReq <= 0;
-          AckHaveReset <= 0;
-          HaltOnReset <= 0;
-          NdmReset <= 0;
-          StickyUnavail <= 0;
-          ImpEBreak <= 0;
-          AuthBusy <= 0;
-          ConfStrPtrValid <= 0;
           CmdErr <= 0;
           if (ReqValid) begin
             if (ReqAddress == `DMCONTROL & ReqOP == `OP_WRITE & ReqData[`DMACTIVE]) begin

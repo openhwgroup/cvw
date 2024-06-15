@@ -195,8 +195,8 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic [P.XLEN-1:0]             DPC, PCNextF;
   logic                          ExitDebugMode;
   logic                          EnterDebugMode;
-  logic                          ForceNOP;
   logic [2:0]                    DebugCause;
+  logic                          ForceNOP;
   // Debug register scan chain interconnects
   logic [2:0]                    DebugScanReg;
 
@@ -350,7 +350,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS, 
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
       .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM,
-      .DebugCause, .Step, .DPC, .PCNextF, .EnterDebugMode,
+      .DebugMode, .DebugCause, .Step, .DPC, .PCNextF, .EnterDebugMode,
       .DebugSel(CSRSel), .DebugRegAddr, .DebugCapture, .DebugRegUpdate, .DebugScanEn(DebugScanEn & CSRSel), .DebugScanIn, .DebugScanOut(CSRScanOut));
     if (P.DEBUG_SUPPORTED) begin
       flopenrs #(1) scantrapm (.clk, .reset, .en(DebugCapture), .d(TrapM), .q(), .scan(DebugScanEn), .scanin(DebugScanIn), .scanout(DebugScanReg[0]));

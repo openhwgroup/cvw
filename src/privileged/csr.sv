@@ -94,6 +94,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   output logic                     IllegalCSRAccessM,         // Illegal CSR access: CSR doesn't exist or is inaccessible at this privilege level
   output logic                     BigEndianM,                // memory access is big-endian based on privilege mode and STATUS register endian fields
   // Debug Mode output
+  input  logic                     DebugMode,
   input  logic [2:0]               DebugCause,
   output logic                     Step,
   output logic [P.XLEN-1:0]        DPC,
@@ -123,7 +124,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic [31:0]             MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW;
   logic                    WriteMSTATUSM, WriteMSTATUSHM, WriteSSTATUSM;
   logic                    CSRWriteDM;
-  logic                    CSRMWriteM, CSRSWriteM, CSRUWriteM, CSRDWriteM;
+  logic                    CSRMWriteM, CSRSWriteM, CSRUWriteM;
   logic                    UngatedCSRMWriteM;
   logic                    WriteFRMM, WriteFFLAGSM;
   logic [P.XLEN-1:0]       UnalignedNextEPCM, NextEPCM, NextMtvalM;
@@ -222,7 +223,6 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   assign CSRMWriteM = UngatedCSRMWriteM & InstrValidNotFlushedM;
   assign CSRSWriteM = CSRWriteDM & (|PrivilegeModeW) & InstrValidNotFlushedM;
   assign CSRUWriteM = CSRWriteDM & InstrValidNotFlushedM;
-  assign CSRDWriteM = CSRWriteDM;
   assign MTrapM = TrapM & (NextPrivilegeModeM == P.M_MODE);
   assign STrapM = TrapM & (NextPrivilegeModeM == P.S_MODE) & P.S_SUPPORTED;
 
@@ -303,7 +303,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   end
 
   if (P.DEBUG_SUPPORTED) begin:csrd
-    csrd #(P) csrd(.clk, .reset,
+    csrd #(P) csrd(.clk, .reset, .DebugMode, .PrivilegeModeW,
     .CSRWriteDM, .CSRAdrM(CSRAdrDM), .CSRWriteValM(CSRWriteValDM), .CSRDReadValM, .IllegalCSRDAccessM,
     .DebugCause, .Step, .DPC, .PCNextF, .EnterDebugMode);
   end else begin

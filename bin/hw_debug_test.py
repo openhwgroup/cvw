@@ -36,7 +36,20 @@ random_stimulus = True
 random_order = False
 
 
-def main():
+def flow_control_test():
+    with OpenOCD() as cvw:
+        cvw.reset_dm()
+        cvw.reset_hart()
+
+        cvw.halt()
+        cvw.read_data("DCSR")
+        for _ in range(50):
+            cvw.step()
+            cvw.read_data("PCM")
+        cvw.resume()
+
+
+def register_rw_test():
     with OpenOCD() as cvw:
         registers = dict.fromkeys(cvw.register_translations.keys(),[])
         reg_addrs = list(registers.keys())
@@ -49,7 +62,7 @@ def main():
         cvw.reset_dm()
         cvw.reset_hart()
 
-        time.sleep(70)  # wait for OpenSBI
+        #time.sleep(70)  # wait for OpenSBI
 
         cvw.halt()
 
@@ -140,4 +153,5 @@ def random_hex(reg_name):
         return "0x" + f"{(data & (2**size-1)):x}".rjust(pad, "0")
 
 
-main()
+#register_rw_test()
+flow_control_test()

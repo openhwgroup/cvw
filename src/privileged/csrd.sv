@@ -28,6 +28,8 @@
 
 module csrd import cvw::*;  #(parameter cvw_t P) (
   input  logic              clk, reset,
+  input  logic              DebugMode,
+  input  logic [1:0]        PrivilegeModeW,
   input  logic              CSRWriteDM,
   input  logic [11:0]       CSRAdrM,
   input  logic [P.XLEN-1:0] CSRWriteValM,
@@ -45,7 +47,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   localparam DCSR_ADDR = 12'h7B0;  // Debug Control and Status Register 
   localparam DPC_ADDR  = 12'h7B1;  // Debug PC 
 
-  // TODO: these registers are only accessible from Debug Mode.
+  logic CSRDWriteM;
   logic [31:0] DCSR;
   logic [P.XLEN-1:0] DPCWriteVal;
   logic WriteDCSRM;
@@ -68,40 +70,44 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   logic [1:0]       Prv;
 
 
+  assign CSRDWriteM = CSRWriteDM & (PrivilegeModeW == P.M_MODE) & DebugMode;
+
+  assign WriteDCSRM = CSRDWriteM & (CSRAdrM == DCSR_ADDR);
+  assign WriteDPCM  = CSRDWriteM & (CSRAdrM == DPC_ADDR);
 
   always_ff @(posedge clk) begin
     if (reset) begin
-      Prv <= 3;
-      Cause <= 0;
+      Prv <= 2'h3;
+      Cause <= 3'h0;
     end else if (EnterDebugMode) begin
-    //  Prv <= // hart priv mode
+      Prv <= PrivilegeModeW;
       Cause <= DebugCause;
     end else if (WriteDCSRM) begin
       Prv <= CSRWriteValM[`PRV]; // TODO: overwrite hart privilege mode
     end
   end
 
-  assign WriteDCSRM = CSRWriteDM & (CSRAdrM == DCSR_ADDR);
-  assign WriteDPCM  = CSRWriteDM & (CSRAdrM == DPC_ADDR);
-
   flopenr #(4) DCSRreg (clk, reset, WriteDCSRM, 
     {CSRWriteValM[`EBREAKM], CSRWriteValM[`EBREAKS], CSRWriteValM[`EBREAKU], CSRWriteValM[`STEP]}, 
     {ebreakM, ebreakS, ebreakU, Step});
 
-  assign DCSR = {4'b0100, 10'b0, ebreakVS, ebreakVU, ebreakM, 1'b0, ebreakS, ebreakU, StepIE,
+  assign DCSR = {DebugVer, 10'b0, ebreakVS, ebreakVU, ebreakM, 1'b0, ebreakS, ebreakU, StepIE,
                       StopCount, StopTime, Cause, V, MPrvEn, NMIP, Step, Prv};
 
   assign DPCWriteVal = EnterDebugMode ? PCNextF : CSRWriteValM;
   flopenr #(P.XLEN) DPCreg (clk, reset, WriteDPCM | EnterDebugMode, DPCWriteVal, DPC);
 
   always_comb begin
-    CSRDReadValM = 0;
-    IllegalCSRDAccessM = 0;
-    case (CSRAdrM)
-      DCSR_ADDR : CSRDReadValM = DCSR;
-      DPC_ADDR  : CSRDReadValM = DPC;
-      default: IllegalCSRDAccessM = 1'b1;
-    endcase
+    CSRDReadValM = '0;
+    IllegalCSRDAccessM = 1'b0;
+    if (~((PrivilegeModeW == P.M_MODE) & DebugMode))
+      IllegalCSRDAccessM = 1'b1;
+    else
+      case (CSRAdrM)
+        DCSR_ADDR : CSRDReadValM = DCSR;
+        DPC_ADDR  : CSRDReadValM = DPC;
+        default: IllegalCSRDAccessM = 1'b1;
+      endcase
   end
 
 endmodule

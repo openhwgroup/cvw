@@ -76,6 +76,11 @@ module rad import cvw::*; #(parameter cvw_t P) (
     GPRegNo = 0;
     FPRegNo = 0;
     case (Regno) inside
+      [`DCSR_REGNO:`DPC_REGNO] : begin
+        ShiftCount = P.LLEN - 1;
+        CSRegNo = 1;
+      end
+
       [`FFLAGS_REGNO:`FCSR_REGNO],
       [`MSTATUS_REGNO:`MCOUNTEREN_REGNO], //  InvalidRegNo = ~P.ZICSR_SUPPORTED;
       `MENVCFG_REGNO,
@@ -85,7 +90,6 @@ module rad import cvw::*; #(parameter cvw_t P) (
       [`MSCRATCH_REGNO:`MIP_REGNO],
       [`PMPCFG0_REGNO:`PMPADDR3F_REGNO], // TODO This is variable len (P.PA_BITS)?
       [`TSELECT_REGNO:`TDATA3_REGNO],
-      [`DCSR_REGNO:`DPC_REGNO],
       `SIP_REGNO,
       `MIP_REGNO,
       `MHPMEVENTBASE_REGNO,
@@ -106,7 +110,7 @@ module rad import cvw::*; #(parameter cvw_t P) (
       `MIP_REGNO : begin
         ShiftCount = P.LLEN - 1;
         CSRegNo = 1;
-        //RegReadOnly = 1;
+        RegReadOnly = 1;
       end
 
       [`HPMCOUNTERBASE_REGNO:`TIME_REGNO],
