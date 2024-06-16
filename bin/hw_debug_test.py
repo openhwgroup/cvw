@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 #########################################################################################
-# hw_test.py
+# hw_debug_test.py
 #
 # Written: matthew.n.otto@okstate.edu
 # Created: 19 April 2024
@@ -45,7 +45,7 @@ def flow_control_test():
         cvw.read_data("DCSR")
         for _ in range(50):
             cvw.step()
-            cvw.read_data("PCM")
+            print(cvw.read_data("PCM"))
         cvw.resume()
 
 

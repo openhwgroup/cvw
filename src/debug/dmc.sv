@@ -50,7 +50,7 @@ module dmc (
 );
   `include "debug.vh"
 
-enum logic [1:0] {RUNNING, FLUSH, HALTED, RESUME} State;
+  enum logic [1:0] {RUNNING, FLUSH, HALTED, RESUME} State;
 
   localparam NOP_CYCLE_DURATION = 0;
   logic [$clog2(NOP_CYCLE_DURATION+1)-1:0] Counter;

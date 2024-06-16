@@ -98,7 +98,7 @@ class OpenOCD:
         dmstat = int(self.read_dmi("0x10"), 16)
         if not dmstat & 0x1:
             raise Exception("Error: failed to activate debug module")
-  
+
     def reset_dm(self):
         self.write_dmi("0x10", "0x0")
         dmstat = int(self.read_dmi("0x10"), 16)

@@ -82,9 +82,6 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
     end else if (EnterDebugMode) begin
       Prv <= PrivilegeModeW;
       Cause <= DebugCause;
-    end else if (WriteDCSRM) begin
-      Prv <= CSRWriteValM[`PRV]; // TODO: overwrite hart privilege mode
-    end
   end
 
   flopenr #(4) DCSRreg (clk, reset, WriteDCSRM, 
