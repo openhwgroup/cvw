@@ -82,6 +82,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
     end else if (EnterDebugMode) begin
       Prv <= PrivilegeModeW;
       Cause <= DebugCause;
+    end
   end
 
   flopenr #(4) DCSRreg (clk, reset, WriteDCSRM, 
