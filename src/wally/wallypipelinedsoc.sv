@@ -81,7 +81,6 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                        AckHaveReset;
   logic                        ResumeAck;
   logic                        HaveReset;
-  logic                        DebugMode;
   logic                        DebugStall;
   // Debug Module signals
   logic                        DebugScanEn;
@@ -97,6 +96,9 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic [11:0]                 DebugRegAddr;
   logic                        DebugCapture;
   logic                        DebugRegUpdate;
+  logic                        ProgBuffScanEn;
+  logic                        ProgBuffScanOut;
+  logic                        ExecProgBuff;
 
   // synchronize reset to SOC clock domain
   synchronizer resetsync(.clk, .d(reset_ext), .q(reset));
@@ -106,7 +108,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
-    .HaltReq, .ResumeReq, .HaltOnReset, .AckHaveReset, .ResumeAck, .HaveReset, .DebugMode,
+    .HaltReq, .ResumeReq, .HaltOnReset, .AckHaveReset, .ResumeAck, .HaveReset, .DebugStall,
     .DebugScanEn, .DebugScanOut(DebugScanIn), .GPRScanOut(GPRScanIn), .FPRScanOut(FPRScanIn), .CSRScanOut(CSRScanIn), 
     .DebugScanIn(DebugScanOut), .MiscSel, .GPRSel, .FPRSel, .CSRSel, .DebugRegAddr, .DebugCapture, .DebugRegUpdate);
 
@@ -125,9 +127,10 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   // instantiate debug module
   if (P.DEBUG_SUPPORTED) begin : dm
     dm #(P) dm (.clk, .rst(reset), .tck, .tdi, .tms, .tdo, .NdmReset,
-      .HaltReq, .ResumeReq, .HaltOnReset, .AckHaveReset, .ResumeAck, .HaveReset, .DebugMode,
+      .HaltReq, .ResumeReq, .HaltOnReset, .AckHaveReset, .ResumeAck, .HaveReset, .DebugStall,
       .DebugScanEn, .DebugScanIn, .GPRScanIn, .FPRScanIn, .CSRScanIn, .DebugScanOut,
-      .MiscSel, .GPRSel, .FPRSel, .CSRSel, .RegAddr(DebugRegAddr), .DebugCapture, .DebugRegUpdate);
+      .MiscSel, .GPRSel, .FPRSel, .CSRSel, .RegAddr(DebugRegAddr), .DebugCapture, .DebugRegUpdate,
+      .ProgBuffScanEn, .ProgBuffScanOut, .ExecProgBuff);
   end
 
 endmodule

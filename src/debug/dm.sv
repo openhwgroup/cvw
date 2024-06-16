@@ -26,13 +26,15 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 // TODO List:
-// determine config/permissions of all CSRs
-// improve halting / implement "debug mode"
-//// Debug Mode = M-mode with stalled pipe
-// Flush pipe with NOPs during halt?
-// Alias DPC to PCF/PCNextF?
+// add "progbuff" register to overwrite instrF
+// overwrite wfi instructions with NOP during DebugMode
+// mask all interrupts in debug mode (even NMI)
+// Ignore traps in debug mode
 
-// (stretch) add system bus access?
+// capture CSR read/write failures as convert them to cmderr
+
+// Flush pipe with NOPs during halt?
+
 
 
 module dm import cvw::*; #(parameter cvw_t P) (
@@ -50,7 +52,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   // Core control signals
   input  logic            ResumeAck,      // Signals Hart has been resumed
   input  logic            HaveReset,      // Signals Hart has been reset
-  input  logic            DebugMode,      // Signals core is halted
+  input  logic            DebugStall,      // Signals core is halted
   output logic            HaltReq,        // Initiates core halt
   output logic            ResumeReq,      // Initiates core resume
   output logic            HaltOnReset,    // Halts core immediately on hart reset
@@ -69,7 +71,12 @@ module dm import cvw::*; #(parameter cvw_t P) (
   output logic            CSRSel,         // selects CSR scan chain
   output logic [11:0]     RegAddr,        // address for scanable regfiles (GPR, FPR, CSR)
   output logic            DebugCapture,   // latches values into scan register before scanning out
-  output logic            DebugRegUpdate  // writes values from scan register after scanning in				       
+  output logic            DebugRegUpdate, // writes values from scan register after scanning in			
+  
+  // Program Buffer
+  output logic            ProgBuffScanEn,
+  output logic            ProgBuffScanOut,
+  output logic            ExecProgBuff
 );
   `include "debug.vh"
 
@@ -96,10 +103,10 @@ module dm import cvw::*; #(parameter cvw_t P) (
     .RspValid, .RspData, .RspOP);
 
   enum logic [3:0] {INACTIVE, IDLE, ACK, R_DATA, W_DATA, DMSTATUS, W_DMCONTROL, R_DMCONTROL, 
-		    W_ABSTRACTCS, R_ABSTRACTCS, ABST_COMMAND, R_SYSBUSCS, READ_ZERO,
+		    W_ABSTRACTCS, R_ABSTRACTCS, ABST_COMMAND, R_SYSBUSCS, W_PROGBUF, READ_ZERO,
 		    INVALID} State;
 
-  enum logic [1:0] {AC_IDLE, AC_UPDATE, AC_SCAN, AC_CAPTURE} AcState, NewAcState;
+  enum logic [2:0] {AC_IDLE, AC_UPDATE, AC_SCAN, AC_CAPTURE, PROGBUFF_WRITE} AcState, NewAcState;
 
   // AbsCmd internal state
   logic              AcWrite;        // Abstract Command write state
@@ -120,6 +127,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic              StoreScanChain; // Store current value of ScanReg into DataX
   logic              WriteMsgReg;    // Write to DataX
   logic              WriteScanReg;   // Insert data from DataX into ScanReg
+  logic              WriteProgBuff;  // Insert data from DMI into ScanReg
   logic [31:0]       Data0Wr;        // Muxed inputs to DataX regs
   logic [31:0]       Data1Wr;        // Muxed inputs to DataX regs
   logic [31:0]       Data2Wr;        // Muxed inputs to DataX regs
@@ -143,7 +151,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   // DMStatus
   const logic        NdmResetPending = 0;
   const logic        StickyUnavail = 0;
-  const logic        ImpEBreak = 0; // TODO: change this to const 1 if implementing 1x32bit progbuf
+  const logic        ImpEBreak = 1;
   logic              AllHaveReset;
   logic              AnyHaveReset;
   logic              AllResumeAck;
@@ -162,7 +170,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   const logic        ConfStrPtrValid = 0; // Used with SysBusAccess
   const logic [3:0]  Version = 3;    // DM Version
   // AbstractCS
-  const logic [4:0]  ProgBufSize = 0;
+  const logic [4:0]  ProgBufSize = 1;
   logic              Busy;
   const logic        RelaxedPriv = 1;
   logic [2:0]        CmdErr;
@@ -171,10 +179,10 @@ module dm import cvw::*; #(parameter cvw_t P) (
   // Core control signals
   assign AllHaveReset = HaveReset;
   assign AnyHaveReset = HaveReset;
-  assign AnyHalted = DebugMode;
-  assign AllHalted = DebugMode;
-  assign AnyRunning = ~DebugMode;
-  assign AllRunning = ~DebugMode;
+  assign AnyHalted = DebugStall;
+  assign AllHalted = DebugStall;
+  assign AnyRunning = ~DebugStall;
+  assign AllRunning = ~DebugStall;
   // I believe resumeack is used to determine when a resume is requested but never completes
   // It's pretty worthless in this implementation (complain to the debug working group)
   assign AllResumeAck = ResumeAck;
@@ -240,6 +248,8 @@ module dm import cvw::*; #(parameter cvw_t P) (
               {`OP_READ,`COMMAND}                      : State <= READ_ZERO;
               {`OP_WRITE,`SBCS}                        : State <= READ_ZERO;
               {`OP_READ,`SBCS}                         : State <= R_SYSBUSCS;
+              {`OP_WRITE,`PROGBUF0}                    : State <= W_PROGBUF;
+              {`OP_READ,`PROGBUF0},
               {2'bx,`HARTINFO},
               {2'bx,`ABSTRACTAUTO},
               {2'bx,`NEXTDM}                           : State <= READ_ZERO;
@@ -330,7 +340,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
           if (CmdErr != `CMDERR_NONE); // If CmdErr, do nothing
           else if (Busy)
             CmdErr <= `CMDERR_BUSY; // If Busy, set CmdErr, do nothing
-          else if (~DebugMode)
+          else if (~DebugStall)
             CmdErr <= `CMDERR_HALTRESUME; // If not halted, set CmdErr, do nothing
           else begin
             case (ReqData[`CMDTYPE])
@@ -344,7 +354,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
                   CmdErr <= `CMDERR_NOT_SUPPORTED; // If writing to a read only register, set CmdErr, do nothing
                 else begin
                   AcWrite <= ReqData[`AARWRITE];
-                  NewAcState <= AC_SCAN;
+                  NewAcState <= ~ReqData[`AARWRITE] ? AC_CAPTURE : AC_SCAN;
                 end
               end
               //`QUICK_ACCESS : State <= QUICK_ACCESS;
@@ -352,6 +362,15 @@ module dm import cvw::*; #(parameter cvw_t P) (
               default : CmdErr <= `CMDERR_NOT_SUPPORTED;
             endcase
           end
+          RspOP <= `OP_SUCCESS;
+          State <= ACK;
+        end
+
+        W_PROGBUF : begin
+          if (Busy)
+            CmdErr <= ~|CmdErr ? `CMDERR_BUSY : CmdErr;
+          else
+            NewAcState <= PROGBUFF_WRITE;
           RspOP <= `OP_SUCCESS;
           State <= ACK;
         end
@@ -386,9 +405,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
       case (AcState)
         AC_IDLE : begin
           Cycle <= 0;
-          case (NewAcState)
-            AC_SCAN : AcState <= ~AcWrite ? AC_CAPTURE : AC_SCAN;
-          endcase
+          AcState <= NewAcState;
         end
 
         AC_CAPTURE : begin
@@ -409,13 +426,25 @@ module dm import cvw::*; #(parameter cvw_t P) (
         AC_UPDATE : begin
           AcState <= AC_IDLE;
         end
+
+        PROGBUFF_WRITE : begin
+          if (Cycle == 32)
+            AcState <= AC_IDLE;
+          else
+            Cycle <= Cycle + 1;
+        end
       endcase
     end
   end
 
   assign Busy = ~(AcState == AC_IDLE);
 
+  // Program Buffer
+  assign ProgBuffScanEn = (AcState == PROGBUFF_WRITE);
+  assign ProgBuffScanOut = ScanReg[0];
+
   // Scan Chain
+  assign DebugScanOut = ScanReg[0];
   assign DebugScanEn = (AcState == AC_SCAN);
   assign DebugCapture = (AcState == AC_CAPTURE);
   assign DebugRegUpdate = (AcState == AC_UPDATE);
@@ -426,7 +455,6 @@ module dm import cvw::*; #(parameter cvw_t P) (
   assign GPRSel = GPRegNo & (AcState != AC_IDLE);
   assign FPRSel = FPRegNo & (AcState != AC_IDLE);
 
-  assign DebugScanOut = ScanReg[0];
 
   always_comb begin
     case ({CSRSel, GPRSel, FPRSel})
@@ -443,14 +471,19 @@ module dm import cvw::*; #(parameter cvw_t P) (
     assign PackedDataReg = {Data1,Data0};
   else if (P.LLEN == 128)
     assign PackedDataReg = {Data3,Data2,Data1,Data0};
-      
+  
+  // Load data from DMI into scan chain
+  assign WriteProgBuff = (AcState == PROGBUFF_WRITE) & (Cycle == 0);
   // Load data from message registers into scan chain
   assign WriteScanReg = AcWrite & (MiscRegNo & (Cycle == ShiftCount) | ~MiscRegNo & (Cycle == 0));
   genvar i;
   for (i=0; i<P.LLEN; i=i+1) begin
     // ARMask is used as write enable for subword overwrites (basic mask would overwrite neighbors in the chain)
-    assign ScanNext[i] = WriteScanReg & ARMask[i] ? PackedDataReg[i] : ScanReg[i+1];
-    flopenr #(1) scanreg (.clk, .reset(rst), .en(AcState == AC_SCAN), .d(ScanNext[i]), .q(ScanReg[i]));
+    if (i < 32)
+      assign ScanNext[i] = WriteProgBuff ? ReqData[i] : WriteScanReg & ARMask[i] ? PackedDataReg[i] : ScanReg[i+1];
+    else
+      assign ScanNext[i] = WriteScanReg & ARMask[i] ? PackedDataReg[i] : ScanReg[i+1];
+    flopenr #(1) scanreg (.clk, .reset(rst), .en(DebugScanEn | ProgBuffScanEn), .d(ScanNext[i]), .q(ScanReg[i]));
   end
   
   // Message Registers

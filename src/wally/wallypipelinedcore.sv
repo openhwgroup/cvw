@@ -52,7 +52,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    input  logic                  AckHaveReset,
    output logic                  ResumeAck,
    output logic                  HaveReset,
-   output logic                  DebugMode,
+   output logic                  DebugStall,
    // Debug scan chain
    input  logic                  DebugScanEn,    // puts scannable flops into scan mode
    output logic                  DebugScanOut,   // (misc) scan chain data out
@@ -72,7 +72,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          StallF, StallD, StallE, StallM, StallW;
   logic                          FlushD, FlushE, FlushM, FlushW;
   logic                          TrapM, RetM;
-  logic                          DebugStall, Step;
+  logic                          DebugMode, Step;
 
   //  signals that must connect through DP
   logic                          IntDivE, W64E;

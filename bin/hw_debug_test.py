@@ -36,6 +36,12 @@ random_stimulus = True
 random_order = False
 
 
+def prog_buff_test(cvw):
+    cvw.halt()
+    cvw.write_dmi("0x20", "0x7ee7beef")
+    print()
+
+
 def flow_control_test():
     with OpenOCD() as cvw:
         cvw.reset_dm()
@@ -153,5 +159,9 @@ def random_hex(reg_name):
         return "0x" + f"{(data & (2**size-1)):x}".rjust(pad, "0")
 
 
-#register_rw_test()
-flow_control_test()
+with OpenOCD() as cvw:
+    cvw.reset_dm()
+    cvw.reset_hart()
+    #register_rw_test()
+    #flow_control_test()
+    prog_buff_test(cvw)

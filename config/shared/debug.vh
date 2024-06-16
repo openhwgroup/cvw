@@ -47,6 +47,7 @@
 `define COMMAND      `ADDR_WIDTH'h17
 `define ABSTRACTAUTO `ADDR_WIDTH'h18
 `define NEXTDM       `ADDR_WIDTH'h1d
+`define PROGBUF0     `ADDR_WIDTH'h20
 //`define dmcs2        `ADDR_WIDTH'h32
 `define SBCS         `ADDR_WIDTH'h38
 
