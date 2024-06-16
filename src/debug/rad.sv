@@ -110,7 +110,10 @@ module rad import cvw::*; #(parameter cvw_t P) (
       `MIP_REGNO : begin
         ShiftCount = P.LLEN - 1;
         CSRegNo = 1;
-        RegReadOnly = 1;
+	// Comment out because gives error on openocd
+	// This value cause the csrs to all go read-only
+	// which openocd doesnt like
+        //RegReadOnly = 1;
       end
 
       [`HPMCOUNTERBASE_REGNO:`TIME_REGNO],
