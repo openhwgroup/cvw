@@ -98,6 +98,7 @@ void PrintInstructionData(RequiredRVVI_t *InstructionData);
 void ProcessRvviAll(RequiredRVVI_t *InstructionData);
 void set_gpr(int hart, int reg, uint64_t value);
 void set_fpr(int hart, int reg, uint64_t value);
+void state_compare(int hart, uint64_t Minstret);
 
 int main(int argc, char **argv){
   
@@ -232,9 +233,43 @@ void ProcessRvviAll(RequiredRVVI_t *InstructionData){
 
   if(InstructionData->GPREn) set_gpr(0, InstructionData->GPRReg, InstructionData->GPRValue);
   if(InstructionData->FPREn) set_fpr(0, InstructionData->FPRReg, InstructionData->FPRValue);
+
+  if (trap) {
+    rvviDutTrap(0, InstructionData->PC, InstructionData->insn);
+  } else {
+    rvviDutRetire(0, InstructionData->PC, InstructionData->insn, 0);
+  }
+
+  if(!trap) state_compare(0, InstructionData->Minstret);
+
   // *** set is for nets like interrupts  come back to this.
   //found = rvviRefNetIndexGet("pc_rdata");
   //rvviRefNetSet(found, InstructionData->PC, time);
+  
+}
+
+void state_compare(int hart, uint64_t Minstret){
+  uint8_t result = 1;
+  uint8_t stepOk = 0;
+  char buf[80];
+  rvviDutCycleCountSet(Minstret);
+  if(rvviRefEventStep(hart) != 0) {
+    stepOk = 1;
+    result &= rvviRefPcCompare(hart);
+    result &= rvviRefInsBinCompare(hart);
+    result &= rvviRefGprsCompare(hart);
+    result &= rvviRefFprsCompare(hart);
+    //result &= rvviRefCsrCompare(hart);
+  } else {
+    result = 0;
+  }
+
+  if (result == 0) {
+    sprintf(buf, "MISMATCH @ instruction # %ld\n", Minstret);
+    idvMsgError(buf);
+
+    //if (ON_MISMATCH_DUMP_STATE) dump_state(hart);
+  }
   
 }
 
