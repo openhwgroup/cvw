@@ -95,6 +95,9 @@ typedef struct {
 void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, RequiredRVVI_t *InstructionData);
 void BitShiftArray(uint8_t *dst, uint8_t *src, uint8_t ShiftAmount, int Length);
 void PrintInstructionData(RequiredRVVI_t *InstructionData);
+void ProcessRvviAll(RequiredRVVI_t *InstructionData);
+void set_gpr(int hart, int reg, uint64_t value);
+void set_fpr(int hart, int reg, uint64_t value);
 
 int main(int argc, char **argv){
   
@@ -207,6 +210,9 @@ int main(int argc, char **argv){
       uint32_t insn;
       RequiredRVVI_t InstructionData;
       DecodeRVVI(buf + headerbytes, payloadbytes, &InstructionData);
+      // now let's drive IDV
+      // start simple just drive and compare PC.
+      ProcessRvviAll(&InstructionData);
       PrintInstructionData(&InstructionData);
     }
   }
@@ -216,6 +222,28 @@ int main(int argc, char **argv){
   
 
   return 0;
+}
+
+void ProcessRvviAll(RequiredRVVI_t *InstructionData){
+  long int found;
+  uint64_t time = InstructionData->Mcycle;
+  uint8_t trap = InstructionData->Trap;
+  uint64_t order = InstructionData->Minstret;
+
+  if(InstructionData->GPREn) set_gpr(0, InstructionData->GPRReg, InstructionData->GPRValue);
+  if(InstructionData->FPREn) set_fpr(0, InstructionData->FPRReg, InstructionData->FPRValue);
+  // *** set is for nets like interrupts  come back to this.
+  //found = rvviRefNetIndexGet("pc_rdata");
+  //rvviRefNetSet(found, InstructionData->PC, time);
+  
+}
+
+void set_gpr(int hart, int reg, uint64_t value){
+  rvviDutGprSet(hart, reg, value);
+}
+
+void set_fpr(int hart, int reg, uint64_t value){
+  rvviDutFprSet(hart, reg, value);
 }
 
 void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, RequiredRVVI_t *InstructionData){
