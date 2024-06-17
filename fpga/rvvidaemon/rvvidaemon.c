@@ -42,6 +42,7 @@
 #include <net/if.h>
 #include <netinet/ether.h>
 #include "rvviApi.h" // *** bug fix me when this file gets included into the correct directory.
+#include "idv/idv.h"
 
 
 #define DEST_MAC0	0x43
@@ -140,13 +141,53 @@ int main(int argc, char **argv){
   }
   printf("Here 4\n");
 
-  /* if(!rvviVersionCheck(RVVI_API_VERSION)){ */
-  /*   printf("Bad RVVI_API_VERSION\n"); */
-  /* } */
+  if(!rvviVersionCheck(RVVI_API_VERSION)){
+    printf("Bad RVVI_API_VERSION\n");
+  }
 
-  //rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR, "riscv.ovpworld.org");
+  rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR, "riscv.ovpworld.org");
+  rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME,"riscv");
+  rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT, "RV64GC");
+  rvviRefConfigSetInt(IDV_CONFIG_MODEL_ADDRESS_BUS_WIDTH, 56);
+  rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 6);
 
-  //rvviRefInit(NULL);
+  // eventually we want to put the elffiles here
+  rvviRefInit(NULL);
+  rvviRefPcSet(0, 0x1000);
+  
+  // Volatile CSRs
+  rvviRefCsrSetVolatile(0, 0xC00);   // CYCLE
+  rvviRefCsrSetVolatile(0, 0xB00);   // MCYCLE
+  rvviRefCsrSetVolatile(0, 0xC02);   // INSTRET
+  rvviRefCsrSetVolatile(0, 0xB02);   // MINSTRET
+  rvviRefCsrSetVolatile(0, 0xC01);   // TIME
+
+  int iter;
+  for (iter = 0xC03; iter <= 0xC1F; iter++) {
+    rvviRefCsrSetVolatile(0, iter);   // HPMCOUNTERx
+  }
+  // Machine MHPMCOUNTER3 - MHPMCOUNTER31
+  for (iter = 0xB03; iter <= 0xB1F; iter++) {
+    rvviRefCsrSetVolatile(0, iter);   // MHPMCOUNTERx
+  }
+  // cannot predict this register due to latency between
+  // pending and taken
+  rvviRefCsrSetVolatile(0, 0x344);   // MIP
+  rvviRefCsrSetVolatile(0, 0x144);   // SIP
+
+  // set bootrom and bootram as volatile memory
+  rvviRefMemorySetVolatile(0x1000, 0x1FFF);
+  rvviRefMemorySetVolatile(0x2000, 0x2FFF);
+
+  // Privileges for PMA are set in the imperas.ic
+  // volatile (IO) regions are defined here
+  // only real ROM/RAM areas are BOOTROM and UNCORE_RAM
+  rvviRefMemorySetVolatile(0x2000000, 0x2000000 + 0xFFFF);
+  rvviRefMemorySetVolatile(0x10060000, 0x10060000 + 0xFF);
+  rvviRefMemorySetVolatile(0x10000000, 0x10000000 + 0x7);
+  rvviRefMemorySetVolatile(0x0C000000, 0x0C000000 + 0x03FFFFFF);
+  rvviRefMemorySetVolatile(0x00013000, 0x00013000 + 0x7F);
+  rvviRefMemorySetVolatile(0x10040000, 0x10040000 + 0xFFF);
 
   while(1) {
     //printf("listener: Waiting to recvfrom...\n");
