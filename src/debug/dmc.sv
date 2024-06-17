@@ -65,7 +65,7 @@ module dmc (
   assign DebugMode = (State != RUNNING);
   assign DebugStall = (State == HALTED);
 
-  assign EnterDebugMode = (State == FLUSH) & (Counter == 0);
+  assign EnterDebugMode = (State == FLUSH) & ~|Counter;
   assign ExitDebugMode = (State == HALTED) & ResumeReq;
   assign ForceNOP = (State == FLUSH);
 
@@ -77,7 +77,7 @@ module dmc (
       case (State)
         RUNNING : begin
           if (HaltReq) begin
-            Counter <= 0;
+            Counter <= NOP_CYCLE_DURATION;
             State <= FLUSH;
             DebugCause <= `CAUSE_HALTREQ;
           end 
@@ -87,25 +87,22 @@ module dmc (
 
         // fill the pipe with NOP before halting
         FLUSH : begin
-          if (Counter == NOP_CYCLE_DURATION)
+          if (~|Counter)
             State <= HALTED;
           else
-            Counter <= Counter + 1;
+            Counter <= Counter - 1;
         end
 
         HALTED : begin
-          if (ResumeReq)
-            State <= RESUME;
-        end
-
-        RESUME : begin
-          if (Step) begin
-            Counter <= 0;
-            State <= FLUSH;
-            DebugCause <= `CAUSE_STEP;
-          end else begin
-            State <= RUNNING;
-            ResumeAck <= 1;
+          if (ResumeReq) begin
+            if (Step) begin
+              Counter <= NOP_CYCLE_DURATION;
+              State <= FLUSH;
+              DebugCause <= `CAUSE_STEP;
+            end else begin
+              State <= RUNNING;
+              ResumeAck <= 1;
+            end
           end
         end
       endcase

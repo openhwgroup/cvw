@@ -31,7 +31,7 @@
 
 module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
   // System clock
-  input  logic                  clk,
+  input  logic                  clk, rst,
   // External JTAG signals
   input  logic                  tck,
   input  logic                  tdi,
@@ -90,7 +90,7 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
   // DTMCS
   assign DtmcsOut = {11'b0, ErrInfo, 3'b0, Idle, DmiStat, ABits, Version};
   always_ff @(posedge clk) begin
-    if (~resetn | DtmHardReset) begin
+    if (rst | ~resetn | DtmHardReset) begin
       DtmHardReset <= 0;
       DmiReset <= 0;
     end else if (UpdateDtmcs) begin
@@ -103,7 +103,7 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
 
   // DMI
   always_ff @(posedge clk) begin
-    if (~resetn | DtmHardReset) begin
+    if (rst | ~resetn | DtmHardReset) begin
       ValRspData <= 0;
       ValRspOP <= `OP_SUCCESS;
       //ErrInfo <= 4;

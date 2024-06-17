@@ -98,7 +98,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   // [0] = 1
   localparam JTAG_DEVICE_ID = 32'h1002AC05; 
 
-  dtm #(`ADDR_WIDTH, JTAG_DEVICE_ID) dtm (.clk, .tck, .tdi, .tms, .tdo,
+  dtm #(`ADDR_WIDTH, JTAG_DEVICE_ID) dtm (.clk, .rst, .tck, .tdi, .tms, .tdo,
     .ReqReady, .ReqValid, .ReqAddress, .ReqData, .ReqOP, .RspReady,
     .RspValid, .RspData, .RspOP);
 
@@ -253,7 +253,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
               {2'bx,`HARTINFO},
               {2'bx,`ABSTRACTAUTO},
               {2'bx,`NEXTDM}                           : State <= READ_ZERO;
-              default                                  : State <= INVALID;
+              default                                  : State <= READ_ZERO;//INVALID;
             endcase
         end
 
@@ -388,7 +388,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
         end
 
         INVALID : begin
-          RspOP <= `OP_FAILED;
+          RspOP <= `OP_SUCCESS;//`OP_FAILED;
           State <= ACK;
         end
       endcase

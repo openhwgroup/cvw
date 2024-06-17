@@ -26,6 +26,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module jtag #(parameter ADDR_WIDTH, parameter DEVICE_ID) (
+  input  logic                     rst,
   // JTAG signals
   input  logic                     tck,
   input  logic                     tdi,
@@ -79,7 +80,7 @@ module jtag #(parameter ADDR_WIDTH, parameter DEVICE_ID) (
   assign CaptureDmi = captureDR & DmiInstr;
   assign UpdateDmi = updateDR & DmiInstr;
 
-  tap tap (.tck, .tms, .resetn, .tdo_en, .captureIR,
+  tap tap (.rst, .tck, .tms, .resetn, .tdo_en, .captureIR,
     .clockIR, .updateIR, .shiftDR, .captureDR, .clockDR, .updateDR, .select);
 
   // IR/DR input demux
@@ -103,34 +104,23 @@ module jtag #(parameter ADDR_WIDTH, parameter DEVICE_ID) (
     endcase
   end
 
-  always_ff @(posedge UpdateDtmcs)
-    DtmcsIn <= DtmcsShiftReg[31:0];
-
-  always_ff @(posedge UpdateDmi)
-    DmiIn <= DmiShiftReg[34+ADDR_WIDTH-1:0];
+  flopr #(32) dtmcsreg (.clk(UpdateDtmcs), .reset(rst), .d(DtmcsShiftReg[31:0]), .q(DtmcsIn));
+  flopr #(34+ADDR_WIDTH) dmireg (.clk(UpdateDmi), .reset(rst), .d(DmiShiftReg[34+ADDR_WIDTH-1:0]), .q(DmiIn));
 
   assign DtmcsShiftReg[32] = tdi_dr;
   assign tdo_dtmcs = DtmcsShiftReg[0];
-  for (i = 0; i < 32; i = i + 1) begin
-    always_ff @(posedge clockDR) begin
-      DtmcsShiftReg[i] <= captureDR ? DtmcsOut[i] : DtmcsShiftReg[i+1];
-    end
-  end
+  for (i = 0; i < 32; i = i + 1)
+    flopr #(1) dtmcsshiftreg (.clk(clockDR), .reset(rst), .d(captureDR ? DtmcsOut[i] : DtmcsShiftReg[i+1]), .q(DtmcsShiftReg[i]));
 
   assign DmiShiftReg[34+ADDR_WIDTH] = tdi_dr;
   assign tdo_dmi = DmiShiftReg[0];
-  for (i = 0; i < 34+ADDR_WIDTH; i = i + 1) begin
-    always_ff @(posedge clockDR) begin
-      DmiShiftReg[i] <= captureDR ? DmiOut[i] : DmiShiftReg[i+1];
-    end
-  end
+  for (i = 0; i < 34+ADDR_WIDTH; i = i + 1)
+    flopr #(1) dmishiftreg (.clk(clockDR), .reset(rst), .d(captureDR ? DmiOut[i] : DmiShiftReg[i+1]), .q(DmiShiftReg[i]));
 
   // jtag id register
   idreg #(DEVICE_ID) id (.tdi(tdi_dr), .clockDR, .captureDR, .tdo(tdo_idcode));
 
   // bypass register
-  always_ff @(posedge clockDR) begin
-    tdo_bypass <= tdi_dr & shiftDR;
-  end
+  flopr #(1) bypassreg (.clk(clockDR), .reset(rst), .d(tdi_dr & shiftDR), .q(tdo_bypass));
 
 endmodule

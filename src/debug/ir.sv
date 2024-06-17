@@ -48,15 +48,10 @@ module ir (
   assign tdo = shift_reg[0];
 
   // Shift register
-  always @(posedge clockIR) begin
-    shift_reg[0] <= shift_reg[1] | captureIR;
-  end
+  flop #(1) shift_regmsb (.clk(clockIR), .d(shift_reg[1] | captureIR), .q(shift_reg[0]));
   genvar i;
-  for (i = INST_REG_WIDTH; i > 1; i = i - 1) begin
-    always @(posedge clockIR) begin
-      shift_reg[i-1] <= shift_reg[i] & ~captureIR;
-    end
-  end
+  for (i = INST_REG_WIDTH; i > 1; i = i - 1)
+    flop #(1) shift_reg (.clk(clockIR), .d(shift_reg[i] & ~captureIR), .q(shift_reg[i-1]));
 
   // Instruction decoder
   // 6.1.2
