@@ -53,16 +53,13 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic        ALUSrcAE, ALUSrcBE,      // ALU operands
   output logic        ALUResultSrcE,           // Selects result to pass on to Memory stage
   output logic [2:0]  ALUSelectE,              // ALU mux select signal
-  output logic        MemReadE, CSRReadE,      // Instruction reads memory, reads a CSR (needed for Hazard unit)
   output logic [2:0]  Funct3E,                 // Instruction's funct3 field
   output logic [6:0]  Funct7E,                 // Instruction's funct7 field
   output logic        IntDivE,                 // Integer divide
-  output logic        MDUE,                    // MDU (multiply/divide) operatio
   output logic        W64E,                    // RV64 W-type operation
   output logic        SubArithE,               // Subtraction or arithmetic shift
   output logic        JumpE,                   // jump instruction
   output logic        BranchE,                 // Branch instruction
-  output logic        SCE,                     // Store Conditional instruction
   output logic        BranchSignedE,           // Branch comparison operands are signed (if it's a branch)
   output logic [3:0]  BSelectE,                // One-Hot encoding of if it's ZBA_ZBB_ZBC_ZBS instruction
   output logic [3:0]  ZBBSelectE,              // ZBB mux select signal in Execute stage
@@ -81,7 +78,6 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic        CSRReadM, CSRWriteM, PrivilegedM, // CSR read, write, or privileged instruction
   output logic [1:0]  AtomicM,                 // Atomic (AMO) instruction
   output logic [2:0]  Funct3M,                 // Instruction's funct3 field
-  output logic        RegWriteM,               // Instruction writes a register (needed for Hazard unit)
   output logic        InvalidateICacheM, FlushDCacheM, // Invalidate I$, flush D$
   output logic        InstrValidD, InstrValidE, InstrValidM, // Instruction is valid
   output logic        FWriteIntM,              // FPU controller writes integer register file
@@ -122,6 +118,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        FenceXD;                        // Fence instruction
   logic        CMOD;                           // Cache management instruction
   logic        InvalidateICacheD, FlushDCacheD;// Invalidate I$, flush D$
+  logic        MemReadE, CSRReadE;             // Instruction reads memory, reads a CSR (needed for Hazard unit)
+  logic        MDUE;                           // MDU (multiply/divide) operatio
+  logic        SCE;                            // Store Conditional instruction
   logic        CSRWriteD, CSRWriteE;           // CSR write
   logic        PrivilegedD, PrivilegedE;       // Privileged instruction
   logic        InvalidateICacheE, FlushDCacheE;// Invalidate I$, flush D$
@@ -133,14 +132,12 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        unused; 
   logic        BranchFlagE;                    // Branch flag to use (chosen between eq or lt)
   logic        IEURegWriteE;                   // Register write 
-  logic        BRegWriteE;                     // Register write from BMU controller in Execute Stage
   logic        IllegalERegAdrD;                // RV32E attempts to write upper 16 registers
   logic [1:0]  AtomicE;                        // Atomic instruction 
   logic        FenceD, FenceE;                 // Fence instruction
   logic        SFenceVmaD;                     // sfence.vma instruction
   logic        IntDivM;                        // Integer divide instruction
-  logic [3:0]  BSelectD;                       // One-Hot encoding if it's ZBA_ZBB_ZBC_ZBS instruction in decode stage
-  logic [3:0]  ZBBSelectD;                     // ZBB Mux Select Signal
+  logic        RegWriteM;                      // Instruction writes a register (needed for Hazard unit)
   logic [1:0]  CZeroD;
   logic        IFunctD, RFunctD, MFunctD;      // Detect I, R, and M-type RV32IM/Rv64IM instructions
   logic        LFunctD, SFunctD, BFunctD;      // Detect load, store, branch instructions
@@ -158,7 +155,6 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic [3:0]  CMOpD, CMOpE;                   // which CMO instruction 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
   logic        IFUPrefetchD;                   // instruction prefetch
   logic        LSUPrefetchD, LSUPrefetchE;     // data prefetch
-  logic        CMOStallD;                      // Structural hazards from cache management ops
   logic        MatchDE;                        // Match between a source register in Decode stage and destination register in Execute stage
   logic        FCvtIntStallD, MDUStallD, CSRRdStallD; // Stall due to conversion, load, multiply/divide, CSR read 
   logic        FunctCZeroD;                    // Funct7 and Funct3 indicate czero.* (not including Op check)
@@ -329,9 +325,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     logic BSubArithD;                     // TRUE for BMU ext, clr, andn, orn, xnor
     logic BALUSrcBD;                      // BMU alu src select signal
 
-    bmuctrl #(P) bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUOpD, .BSelectD, .ZBBSelectD, 
+    bmuctrl #(P) bmuctrl(.clk, .reset, .InstrD, .ALUOpD,
       .BRegWriteD, .BALUSrcBD, .BW64D, .BSubArithD, .IllegalBitmanipInstrD, .StallE, .FlushE, 
-      .ALUSelectD(PreALUSelectD), .BSelectE, .ZBBSelectE, .BRegWriteE, .BALUControlE, .BMUActiveE);
+      .ALUSelectD(PreALUSelectD), .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE);
     if (P.ZBA_SUPPORTED) begin
       // ALU Decoding is more comprehensive when ZBA is supported. slt and slti conflicts with sh1add, sh1add.uw
       assign sltD = (Funct3D == 3'b010 & (~(Funct7D[4]) | ~OpD[5])) ;
@@ -357,7 +353,6 @@ module controller import cvw::*;  #(parameter cvw_t P) (
 
     // tie off unused bit manipulation signals
     assign BSelectE = 4'b0000;
-    assign BSelectD = 4'b0000;
     assign ZBBSelectE = 4'b0000;
     assign BALUControlE = 3'b0;
     assign BMUActiveE = 1'b0;

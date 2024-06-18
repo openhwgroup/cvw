@@ -111,14 +111,6 @@ module ram2p1r1wbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=1024, WIDTH=68) 
     ///////////////////////////////////////////////////////////////////////////////
 
     bit [WIDTH-1:0] RAM[DEPTH-1:0];
-    integer i;
-/*    
-    initial begin // initialize memory for simulation only; not needed because done in the testbench now
-      integer j;
-      for (j=0; j < DEPTH; j++) 
-        RAM[j] = '0;
-    end 
-*/
 
     // Read
     logic [$clog2(DEPTH)-1:0] ra1d;
@@ -128,11 +120,13 @@ module ram2p1r1wbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=1024, WIDTH=68) 
     // Write divided into part for bytes and part for extra msbs
     // coverage off     
     //   when byte write enables are tied high, the last IF is always taken
-    if(WIDTH >= 8) 
+    if(WIDTH >= 8) begin
+      integer i;
       always @(posedge clk) 
         if (ce2 & we2) 
           for(i = 0; i < WIDTH/8; i++) 
             if(bwe2[i]) RAM[wa2][i*8 +: 8] <= wd2[i*8 +: 8];
+    end
     // coverage on
   
     if (WIDTH%8 != 0) // handle msbs if width not a multiple of 8

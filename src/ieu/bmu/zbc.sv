@@ -30,7 +30,7 @@
 
 module zbc import cvw::*; #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] A, RevA, B,       // Operands
-  input  logic [2:0]        Funct3,           // Indicates operation to perform
+  input  logic [1:0]        Funct3,           // Indicates operation to perform
   output logic [P.XLEN-1:0] ZBCResult);       // ZBC result
 
   logic [P.XLEN-1:0] ClmulResult, RevClmulResult;

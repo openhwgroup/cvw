@@ -31,7 +31,6 @@
 module tlblru #(parameter TLB_ENTRIES = 8) (
   input  logic                    clk, reset,
   input  logic                    TLBWrite,
-  input  logic                    TLBFlush,
   input  logic [TLB_ENTRIES-1:0]  Matches,
   input  logic                    TLBHit,
   output logic [TLB_ENTRIES-1:0]  WriteEnables

@@ -26,7 +26,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module packer #(parameter WIDTH=32) (
-  input  logic [WIDTH-1:0] A, B,
+  input  logic [WIDTH/2-1:0] A, B,
   input  logic [2:0] 	  PackSelect, 
   output logic [WIDTH-1:0] PackResult
 );

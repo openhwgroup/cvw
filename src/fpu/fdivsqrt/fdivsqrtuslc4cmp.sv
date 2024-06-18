@@ -47,7 +47,7 @@ module fdivsqrtuslc4cmp (
   // Wmsbs = |        |
 
   logic [6:0] mk2, mk1, mk0, mkm1;
-  logic [6:0] mkj2, mkj1, mkj0, mkjm1;
+  logic [6:0] mkj2, mkj1;
   logic [6:0] mks2[7:0], mks1[7:0], mks0[7:0], mksm1[7:0];
   logic sqrtspecial;
 

@@ -40,7 +40,6 @@ module cacheLRU
   input  logic [SETLEN-1:0]   PAdr,            // Physical address 
   input  logic                LRUWriteEn,      // Update the LRU state
   input  logic                SetValid,        // Set the dirty bit in the selected way and set
-  input  logic                ClearValid,      // Clear the dirty bit in the selected way and set
   input  logic                InvalidateCache, // Clear all valid bits
   output logic [NUMWAYS-1:0]  VictimWay        // LRU selects a victim to evict
 );
@@ -145,7 +144,7 @@ module cacheLRU
   // LRU read path with write forwarding
   assign ReadLRU = LRUMemory[CacheSetTag];
   assign ForwardLRU = LRUWriteEn & (PAdr == CacheSetTag);
-  mux2 #(NUMWAYS-1) ReadLRUmux(LRUMemory[CacheSetTag], NextLRU, ForwardLRU, BypassedLRU);
+  mux2 #(NUMWAYS-1) ReadLRUmux(ReadLRU, NextLRU, ForwardLRU, BypassedLRU);
   flop #(NUMWAYS-1) CurrLRUReg(clk, BypassedLRU, CurrLRU);
 endmodule
 

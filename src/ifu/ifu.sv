@@ -211,7 +211,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   // delay the interrupt until the LSU is in a clean state.
   assign CommittedF = CacheCommittedF | BusCommittedF;
 
-  logic  IgnoreRequest;
+  logic  IgnoreRequest; // *** unused; RT: is this a bug or delete?
   assign IgnoreRequest = ITLBMissF | FlushD;
 
   // The IROM uses untranslated addresses, so it is not compatible with virtual memory.

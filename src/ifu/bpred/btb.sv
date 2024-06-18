@@ -36,8 +36,6 @@ module btb import cvw::*;  #(parameter cvw_t P,
   input  logic             StallF, StallD, StallE, StallM, StallW, FlushD, FlushE, FlushM, FlushW,
   input  logic [P.XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM, // PC at various stages
   output logic [P.XLEN-1:0] BPBTAF,                      // BTB's guess at PC
-  output logic [P.XLEN-1:0] BPBTAD,
-  output logic [P.XLEN-1:0] BPBTAE,
   output logic [3:0]       BTBIClassF,                  // BTB's guess at instruction class
   output logic BPBTAWrongM,
   // update
@@ -52,11 +50,12 @@ module btb import cvw::*;  #(parameter cvw_t P,
 
   logic [Depth-1:0]        PCNextFIndex, PCFIndex, PCDIndex, PCEIndex, PCMIndex, PCWIndex;
   logic                    MatchD, MatchE, MatchM, MatchW, MatchX;
-  logic [P.XLEN+3:0]        ForwardBTBPredF;
-  logic [P.XLEN+3:0]        TableBTBPredF;
-  logic [P.XLEN-1:0]        IEUAdrW;
-  logic [P.XLEN-1:0]        PCW;
-  logic                    BTBWrongE, BPBTAWrongE;
+  logic [P.XLEN+3:0]       ForwardBTBPredF;
+  logic [P.XLEN+3:0]       TableBTBPredF;
+  logic [P.XLEN-1:0]       IEUAdrW;
+  logic [P.XLEN-1:0]       PCW;
+  logic [P.XLEN-1:0]       BPBTAD, BPBTAE;
+  logic                    BPBTAWrongE;
   logic                    BTBWrongM;
   
   

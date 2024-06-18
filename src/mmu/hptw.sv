@@ -49,7 +49,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   input  logic              ITLBMissF,
   input  logic              DTLBMissM,
   input  logic              FlushW,
-  input  logic              InstrUpdateDAF,
+  input  logic              InstrUpdateDAF,  // *** unused; RT, can we delete or is this a bug?
   input  logic              DataUpdateDAM,
   output logic [P.XLEN-1:0] PTE,                    // page table entry to TLBs
   output logic [1:0]        PageType,               // page type to TLBs
@@ -105,7 +105,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   logic                     HPTWLoadPageFault, HPTWStoreAmoPageFault, HPTWInstrPageFault;
   logic                     HPTWLoadPageFaultDelay, HPTWStoreAmoPageFaultDelay, HPTWInstrPageFaultDelay;
   logic                     HPTWAccessFaultDelay;
-  logic                     TakeHPTWFault, TakeHPTWFaultDelay;
+  logic                     TakeHPTWFault;
   logic [P.XLEN-1:0]        ReadDataNoXM;
   logic                     PBMTFaultM;
   logic                     HPTWFaultM;
@@ -120,9 +120,9 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   assign HPTWStoreAmoPageFault   = PBMTFaultM & DTLBWalk & MemRWM[0];   
   assign HPTWInstrPageFault      = PBMTFaultM & ~DTLBWalk;
 
-  flopr #(7) HPTWAccesFaultReg(clk, reset, {TakeHPTWFault, HPTWLoadAccessFault, HPTWStoreAmoAccessFault, HPTWInstrAccessFault, 
+  flopr #(6) HPTWAccesFaultReg(clk, reset, {HPTWLoadAccessFault, HPTWStoreAmoAccessFault, HPTWInstrAccessFault, 
                                             HPTWLoadPageFault, HPTWStoreAmoPageFault, HPTWInstrPageFault},
-                               {TakeHPTWFaultDelay, HPTWLoadAccessFaultDelay, HPTWStoreAmoAccessFaultDelay, HPTWInstrAccessFaultDelay,
+                               {HPTWLoadAccessFaultDelay, HPTWStoreAmoAccessFaultDelay, HPTWInstrAccessFaultDelay,
                                 HPTWLoadPageFaultDelay, HPTWStoreAmoPageFaultDelay, HPTWInstrPageFaultDelay});
 
   assign TakeHPTWFault = WalkerState != IDLE;
@@ -320,7 +320,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   // stall and asserts one of HPTWLoadAccessFault, HPTWStoreAmoAccessFault or HPTWInstrAccessFaultDelay.
   // The FSM directly transistions to IDLE to ready for the next operation when the delayed version will not be high.
 
-  assign HPTWAccessFaultDelay = HPTWLoadAccessFaultDelay | HPTWStoreAmoAccessFaultDelay | HPTWInstrAccessFaultDelay;
+  assign HPTWAccessFaultDelay = HPTWLoadAccessFaultDelay | HPTWStoreAmoAccessFaultDelay | HPTWInstrAccessFaultDelay; // *** unused - RT, can we delete?
   assign HPTWStall = (WalkerState != IDLE & WalkerState != FAULT) | (WalkerState == IDLE & TLBMiss); 
 
   assign DTLBMissOrUpdateDAM = DTLBMissM | (P.SVADU_SUPPORTED & DataUpdateDAM);  

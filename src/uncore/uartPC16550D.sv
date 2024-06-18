@@ -94,7 +94,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
   logic [7:0]                   txfifo[15:0];
   logic [4:0]                   rxfifotailunwrapped;
   logic [3:0]                   rxfifohead, rxfifotail, txfifohead, txfifotail, rxfifotriggerlevel;
-  logic [3:0]                   rxfifoentries, txfifoentries;
+  logic [3:0]                   rxfifoentries;
   logic [3:0]                   rxbitsexpected, txbitsexpected;
 
   // receive data
@@ -145,7 +145,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
   // Register interface (Table 1, note some are read only and some write only)
   ///////////////////////////////////////////
   
-  always_ff @(posedge PCLK, negedge PRESETn) 
+  always_ff @(posedge PCLK) 
     if (~PRESETn) begin // Table 3 Reset Configuration
       IER <= 4'b0;
       FCR <= 8'b0;
@@ -222,7 +222,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
   // the data, so the baud rate is 320x10^6 / (65 x 2^5 x 16) = 9615 Hz, which is
   // close enough to 9600 baud to stay synchronized over the duration of one character.
   ///////////////////////////////////////////
-  always_ff @(posedge PCLK, negedge PRESETn) 
+  always_ff @(posedge PCLK) 
     if (~PRESETn) begin
       baudcount <= 1;
       baudpulse <= 1'b0;
@@ -248,7 +248,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
   // receive timing and control
   ///////////////////////////////////////////
   
-  always_ff @(posedge PCLK, negedge PRESETn)
+  always_ff @(posedge PCLK)
     if (~PRESETn) begin
       rxoversampledcnt   <= '0;
       rxstate            <= UART_IDLE;
@@ -281,7 +281,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
   // receive shift register, buffer register, FIFO
   ///////////////////////////////////////////
   
-  always_ff @(posedge PCLK, negedge PRESETn)
+  always_ff @(posedge PCLK)
     if (~PRESETn) rxshiftreg <= 10'b0000000001; // initialize so that there is a valid stop bit
     else if (rxcentered) rxshiftreg <= {rxshiftreg[8:0], SINsync}; // capture bit
   assign rxparitybit = rxshiftreg[1]; // parity, if it exists, in bit 1 when all done
@@ -363,7 +363,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
   assign rxfifohaserr   = |(RXerrbit & rxfullbit);
 
   // receive buffer register and ready bit
-  always_ff @(posedge PCLK, negedge PRESETn) // track rxrdy for DMA mode (FCR3 = FCR0 = 1)
+  always_ff @(posedge PCLK) // track rxrdy for DMA mode (FCR3 = FCR0 = 1)
     if (~PRESETn) rxfifodmaready <= 1'b0;
     else if (rxfifotriggered | rxfifotimeout) rxfifodmaready <= 1'b1;
     else if (rxfifoempty) rxfifodmaready <= 1'b0;
@@ -383,7 +383,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
   // transmit timing and control
   ///////////////////////////////////////////
   
-  always_ff @(posedge PCLK, negedge PRESETn)
+  always_ff @(posedge PCLK)
     if (~PRESETn) begin
       txoversampledcnt <= '0;
       txstate          <= UART_IDLE;
@@ -431,7 +431,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
   end
   
   // registers & FIFO
-  always_ff @(posedge PCLK, negedge PRESETn)
+  always_ff @(posedge PCLK)
     if (~PRESETn) begin
       txfifohead <= '0; txfifotail <= '0; txhrfull <= 1'b0; txsrfull <= 1'b0; TXHR <= '0; txsr <= 12'hfff;
     end else if (~MEMWb & (A == 3'b010) & Din[2]) begin
@@ -467,7 +467,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
         end
     end
 
-  always_ff @(posedge PCLK, negedge PRESETn) begin
+  always_ff @(posedge PCLK) begin
   // special condition to check if the fifo is empty or full.  Because the head
   // pointer indicates where the next write goes and not the location of the
   // current head, the head and tail pointer being equal imply two different
@@ -484,15 +484,11 @@ module uartPC16550D #(parameter UART_PRESCALE) (
     HeadPointerLastMove <= 1'b0;
   end
 
-  assign txfifoempty   = (txfifohead == txfifotail) & ~HeadPointerLastMove;
-  // verilator lint_off WIDTH
-  assign txfifoentries = (txfifohead >= txfifotail) ? (txfifohead-txfifotail) : 
-                         (txfifohead + 16 - txfifotail);
-  // verilator lint_on WIDTH
-  assign txfifofull = (txfifohead == txfifotail) & HeadPointerLastMove;
+  assign txfifoempty = (txfifohead == txfifotail) & ~HeadPointerLastMove;
+  assign txfifofull  = (txfifohead == txfifotail) & HeadPointerLastMove;
 
   // transmit buffer ready bit
-  always_ff @(posedge PCLK, negedge PRESETn) // track txrdy for DMA mode (FCR3 = FCR0 = 1)
+  always_ff @(posedge PCLK) // track txrdy for DMA mode (FCR3 = FCR0 = 1)
     if (~PRESETn)         txfifodmaready <= 1'b0;
     else if (txfifoempty) txfifodmaready <= 1'b1;
     else if (txfifofull)  txfifodmaready <= 1'b0;
