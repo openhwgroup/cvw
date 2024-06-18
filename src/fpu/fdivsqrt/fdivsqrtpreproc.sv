@@ -58,7 +58,6 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   logic [P.DIVb:0]             IFX, IFD;                            // Correctly-sized inputs for iterator, selected from int or fp input
   logic [P.DIVBLEN-1:0]        mE, ell;                             // Leading zeros of inputs
   logic [P.DIVBLEN-1:0]        IntResultBitsE;                      // bits in integer result
-  logic                        NumerZeroE;                          // Numerator is zero (X or A)
   logic                        AZeroE, BZeroE;                      // A or B is Zero for integer division
   logic                        SignedDivE;                          // signed division
   logic                        AsE, BsE;                            // Signs of integer inputs
@@ -96,11 +95,9 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     // Select integer or floating point inputs
     mux2 #(P.DIVb+1) ifxmux({Xm, {(P.DIVb-P.NF){1'b0}}}, {PosA, {(P.DIVb-P.XLEN+1){1'b0}}}, IntDivE, IFX);
     mux2 #(P.DIVb+1) ifdmux({Ym, {(P.DIVb-P.NF){1'b0}}}, {PosB, {(P.DIVb-P.XLEN+1){1'b0}}}, IntDivE, IFD);
-    mux2 #(1)    numzmux(XZeroE, AZeroE, IntDivE, NumerZeroE);
   end else begin // Int not supported
     assign IFX = {Xm, {(P.DIVb-P.NF){1'b0}}};
     assign IFD = {Ym, {(P.DIVb-P.NF){1'b0}}};
-    assign NumerZeroE = XZeroE;
   end
 
   //////////////////////////////////////////////////////
@@ -174,7 +171,6 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   // 4          2(x)-4 = 4(x/2 - 1))  2(x/2)-4 = 4(x/4 - 1)
   // Summary: PreSqrtX = r(x/2or4 - 1)
 
-  logic [P.DIVb:0] PreSqrtX;
   assign EvenExp = Xe[0] ^ ell[0]; // effective unbiased exponent after normalization is even
   mux2 #(P.DIVb+4) sqrtxmux({4'b0,Xnorm[P.DIVb:1]}, {5'b00, Xnorm[P.DIVb:2]}, EvenExp, SqrtX); // X/2 if exponent odd, X/4 if exponent even
 
@@ -215,7 +211,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   flopen #(P.NE+2) expreg(clk, IFDivStartE, UeE, UeM);
 
   // Number of FSM cycles (to FSM)
-  fdivsqrtcycles #(P) cyclecalc(.FmtE, .Nf, .SqrtE, .IntDivE, .IntResultBitsE, .CyclesE);
+  fdivsqrtcycles #(P) cyclecalc(.Nf, .IntDivE, .IntResultBitsE, .CyclesE);
 
   if (P.IDIV_ON_FPU) begin:intpipelineregs
     logic [P.DIVBLEN-1:0] IntDivNormShiftE, IntRemNormShiftE, IntNormShiftE;

@@ -65,7 +65,6 @@ module fdivsqrt import cvw::*;  #(parameter cvw_t P) (
   logic                        WZeroE;                       // Early termination flag
   logic [P.DURLEN-1:0]         CyclesE;                      // FSM cycles
   logic                        SpecialCaseM;                 // Divide by zero, square root of negative, etc.
-  logic                        DivStartE;                    // Enable signal for flops during stall
                                                             
   // Integer div/rem signals                                
   logic                        BZeroM;                       // Denominator is zero

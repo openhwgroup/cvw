@@ -72,7 +72,6 @@ module tlb import cvw::*;  #(parameter cvw_t P,
   input  logic                     TLBFlush,
   output logic [P.PA_BITS-1:0]     TLBPAdr,
   output logic                     TLBMiss,
-  output logic                     TLBHit,
   output logic                     Translate,
   output logic                     TLBPageFault,
   output logic                     UpdateDA,
@@ -87,6 +86,7 @@ module tlb import cvw::*;  #(parameter cvw_t P,
   logic [11:0]                    PTEAccessBits;
   logic [1:0]                     HitPageType;
   logic                           CAMHit;
+  logic                           TLBHit;
   logic                           SV39Mode;
   logic                           Misaligned;
   logic                           MegapageMisaligned;

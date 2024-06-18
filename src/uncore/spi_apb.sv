@@ -96,7 +96,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     logic [2:0] TransmitWriteWatermarkLevel, ReceiveReadWatermarkLevel; // unused generic FIFO outputs
     /* verilator lint_off UNDRIVEN */
     logic [7:0] ReceiveShiftRegEndian;              // Reverses ReceiveShiftReg if Format[2] set (little endian transmission)
-    rsrstatetype ReceiveState, ReceiveNextState;
+    rsrstatetype ReceiveState;
 
     // Transmission signals
     logic sck;
@@ -253,7 +253,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
         if (~PRESETn) ReceiveState <= ReceiveShiftNotFullState;
         else if (SCLKenable) begin
             case (ReceiveState)
-                ReceiveShiftFullState: ReceiveState <= ReceiveShiftNotFullState;
+                ReceiveShiftFullState:    ReceiveState <= ReceiveShiftNotFullState;
                 ReceiveShiftNotFullState: if (ReceivePenultimateFrame & (SampleEdge)) ReceiveState <= ReceiveShiftDelayState;
                                           else ReceiveState <= ReceiveShiftNotFullState;
                 ReceiveShiftDelayState:   ReceiveState <= ReceiveShiftFullState;

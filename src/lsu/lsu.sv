@@ -131,7 +131,6 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic [P.LLEN-1:0]     DCacheReadDataWordSpillM;               // D$ read data
   logic [P.LLEN-1:0]     ReadDataWordMuxM;                       // DTIM or D$ read data
   logic [P.LLEN-1:0]     LittleEndianReadDataWordM;              // Endian-swapped read data
-  logic [P.LLEN-1:0]     ReadDataWordM;                          // Read data before subword selection
   logic [P.LLEN-1:0]     ReadDataM;                              // Final read data
 
   logic [P.XLEN-1:0]     IHWriteDataM;                           // IEU or HPTW write data

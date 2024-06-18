@@ -49,7 +49,6 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
   logic [P.XLEN-1:0]        ZBBResult;               // ZBB Result
   logic [P.XLEN-1:0]        ZBCResult;               // ZBC Result   
   logic [P.XLEN-1:0] 	      ZBKBResult;              // ZBKB Result
-  logic [P.XLEN-1:0]        ZBKCResult;              // ZBKC Result
   logic [P.XLEN-1:0]        ZBKXResult;              // ZBKX Result      
   logic [P.XLEN-1:0]        ZKNHResult;              // ZKNH Result
   logic [P.XLEN-1:0]        ZKNDEResult;             // ZKNE or ZKND Result   
