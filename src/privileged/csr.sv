@@ -271,6 +271,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign FRM_REGW = '0;
     assign CSRUReadValM = '0;
     assign IllegalCSRUAccessM = 1'b1;
+    assign WriteFRMM = 1'b0;
+    assign WriteFFLAGSM = 1'b0;
   end
   
   if (P.ZICNTR_SUPPORTED) begin:counters

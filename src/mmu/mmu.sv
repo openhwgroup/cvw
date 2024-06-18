@@ -98,6 +98,8 @@ module mmu import cvw::*;  #(parameter cvw_t P,
     assign TLBHit       = 1'b0;
     assign TLBPageFault = 1'b0;
     assign PBMemoryType = 2'b00;
+    assign UpdateDA     = 1'b0;
+    assign TLBPAdr      = '0;
   end
 
   // If translation is occuring, select translated physical address from TLB

@@ -147,7 +147,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
       assign DivXShifted = DivX;
     end
   end else begin
-    assign ISpecialCaseE = 1'b0;
+    assign {ISpecialCaseE, IntResultBitsE} = '0;
   end
 
   //////////////////////////////////////////////////////
@@ -238,7 +238,8 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     flopen #(P.XLEN)    srcareg(clk, IFDivStartE, AE,       AM);
     if (P.XLEN==64) 
       flopen #(1)        w64reg(clk, IFDivStartE, W64E,     W64M);
-  end
+  end else
+    assign {ALTBM, IntDivM, W64M, AsM, BsM, BZeroM, AM, IntNormShiftM} = 0;
 
 endmodule
 

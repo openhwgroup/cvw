@@ -353,7 +353,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .SetFflagsM,                         // FPU flags (to privileged unit)
       .FIntDivResultW); 
   end else begin                           // no F_SUPPORTED or D_SUPPORTED; tie outputs low
-    assign {FPUStallD, FWriteIntE, FCvtIntE, FIntResM, FCvtIntW, 
+    assign {FPUStallD, FWriteIntE, FCvtIntE, FIntResM, FCvtIntW, FRegWriteM,
             IllegalFPUInstrD, SetFflagsM, FpLoadStoreM,
             FWriteDataM, FCvtIntResW, FIntDivResultW, FDivBusyE} = '0;
   end

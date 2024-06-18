@@ -131,5 +131,6 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
         W64M, FIntDivResultM);
     end else 
       assign FIntDivResultM = IntDivResultM[P.XLEN-1:0];
-  end
+  end else
+    assign FIntDivResultM = '0;
 endmodule
