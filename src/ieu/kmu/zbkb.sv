@@ -43,7 +43,7 @@ module zbkb #(parameter WIDTH=32) (
          assign Brev8Result[i*8+j] = A[i*8+7-j];
    
    packer #(WIDTH) pack(.A, .B, .PackSelect({ZBKBSelect[2], Funct3[1:0]}), .PackResult);
-   zipper #(WIDTH) zip(.A, .ZipSelect(Funct3[2]), .ZipResult);
+   zipper #(WIDTH) zipper(.A, .ZipSelect(Funct3[2]), .ZipResult);
    
    // ZBKB Result Select Mux
    mux3 #(WIDTH) zbkbresultmux(Brev8Result, PackResult, ZipResult, ZBKBSelect[1:0], ZBKBResult);   
