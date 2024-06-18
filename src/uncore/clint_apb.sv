@@ -76,7 +76,7 @@ module clint_apb import cvw::*;  #(parameter cvw_t P) (
         default:        PRDATA <= '0;
       endcase
     end 
-    always_ff @(posedge PCLK or negedge PRESETn) 
+    always_ff @(posedge PCLK) 
       if (~PRESETn) begin
         MSIP <= 1'b0;
         MTIMECMP <= 64'hFFFFFFFFFFFFFFFF; // Spec says MTIMECMP is not reset, but we reset to maximum value to prevent spurious timer interrupts
@@ -92,7 +92,7 @@ module clint_apb import cvw::*;  #(parameter cvw_t P) (
 // eventually replace MTIME logic below with timereg
 //    timereg tr(PCLK, PRESETn, TIMECLK, memwrite & (entry==16'hBFF8), 1'b0, PWDATA, MTIME, done);
 
-    always_ff @(posedge PCLK or negedge PRESETn) 
+    always_ff @(posedge PCLK) 
       if (~PRESETn) begin
         MTIME <= '0;
       end else if (memwrite & entry == 16'hBFF8) begin

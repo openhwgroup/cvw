@@ -82,8 +82,8 @@ module gpio_apb import cvw::*;  #(parameter cvw_t P) (
   else              assign PRDATA = Dout;    
 
   // register access
-  always_ff @(posedge PCLK, negedge PRESETn)
-    if (~PRESETn) begin // asynch reset
+  always_ff @(posedge PCLK)
+    if (~PRESETn) begin
       input_en  <= '0;
       output_en <= '0;
       output_val <= '0;
