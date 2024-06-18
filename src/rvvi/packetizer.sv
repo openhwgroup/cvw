@@ -100,7 +100,8 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   // at 20MHz 250 ms is 250e-3 / (1/20e6) = 5,000,000.
   counter #(32) rstcounter(m_axi_aclk, RstCountRst, RstCountEn, RstCount);
   assign CountFlag = RstCount == 32'd100000000;
-  assign DelayFlag = RstCount == 32'd200;
+  //assign DelayFlag = RstCount == 32'd200;
+   assign DelayFlag = RstCount == 32'd0;
 
   flopenr #(187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)) rvvireg(m_axi_aclk, ~m_axi_aresetn, valid, rvvi, rvviDelay);
 
