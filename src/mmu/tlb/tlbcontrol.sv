@@ -38,7 +38,6 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   input  logic                     ReadAccess, WriteAccess,
   input  logic [3:0]               CMOpM,
   input  logic                     DisableTranslation,
-  input  logic                     TLBFlush,           // Invalidate all TLB entries
   input  logic [11:0]              PTEAccessBits,
   input  logic                     CAMHit,
   input  logic                     Misaligned,

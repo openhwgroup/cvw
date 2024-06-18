@@ -110,7 +110,7 @@ module tlb import cvw::*;  #(parameter cvw_t P,
   assign NAPOT4 = (PPN[3:0] == 4'b1000); // 64 KiB contiguous region with pte.napot_bits = 4
 
   tlbcontrol #(P, ITLB) tlbcontrol(.SATP_MODE, .VAdr, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE,
-    .PrivilegeModeW, .ReadAccess, .WriteAccess, .CMOpM, .DisableTranslation, .TLBFlush,
+    .PrivilegeModeW, .ReadAccess, .WriteAccess, .CMOpM, .DisableTranslation,
     .PTEAccessBits, .CAMHit, .Misaligned, .NAPOT4, 
     .TLBMiss, .TLBHit, .TLBPageFault, 
     .UpdateDA, .SV39Mode, .Translate, .PTE_N, .PBMemoryType);

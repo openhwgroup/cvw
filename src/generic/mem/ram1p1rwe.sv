@@ -71,8 +71,6 @@ module ram1p1rwe import cvw::* ; #(parameter USE_SRAM=0, DEPTH=64, WIDTH=44) (
 
     bit [WIDTH-1:0]               RAM[DEPTH-1:0];
 
-    integer i;
-
     // Combinational read: register address and read after clock edge
     logic [$clog2(DEPTH)-1:0] addrd;
     flopen #($clog2(DEPTH)) adrreg(clk, ce, addr, addrd);

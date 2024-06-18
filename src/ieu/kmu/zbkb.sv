@@ -26,10 +26,11 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module zbkb #(parameter WIDTH=32) (
-   input  logic [WIDTH-1:0] A, B,
-  input  logic [2:0] 	    Funct3,
-   input  logic [2:0] 	    ZBKBSelect,
-   output logic [WIDTH-1:0] ZBKBResult
+  input  logic [WIDTH-1:0]   A, 
+  input  logic [WIDTH/2-1:0] B,
+  input  logic [2:0] 	     Funct3,
+  input  logic [2:0] 	     ZBKBSelect,
+  output logic [WIDTH-1:0]   ZBKBResult
 );
    
    logic [WIDTH-1:0] 	     Brev8Result;  // rev8, brev8
