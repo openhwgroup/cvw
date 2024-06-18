@@ -380,7 +380,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       if(P.DTIM_SUPPORTED) mux2 #(P.XLEN) ReadDataMux2(FetchBuffer, DTIMReadDataWordM[P.XLEN-1:0], SelDTIM, ReadDataWordMuxM[P.XLEN-1:0]);
       else assign ReadDataWordMuxM[P.XLEN-1:0] = FetchBuffer[P.XLEN-1:0]; // *** bus only does not support double wide floats.
       assign LSUHBURST = 3'b0;
-      assign {DCacheStallM, DCacheCommittedM, DCacheMiss, DCacheAccess} = '0;
+      assign {DCacheStallM, DCacheCommittedM, DCacheMiss, DCacheAccess, DCacheReadDataWordM} = '0;
     end
   end else begin: nobus // block: bus, only DTIM
     assign {LSUHWDATA, LSUHADDR, LSUHWRITE, LSUHSIZE, LSUHBURST, LSUHTRANS, LSUHWSTRB} = '0; 

@@ -115,8 +115,10 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          SelHPTW;
 
   // PMA checker signals
+  /* verilator lint_off UNDRIVEN */ // these signals are undriven in configurations without a privileged unit
   var logic [P.PA_BITS-3:0]      PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0];
   var logic [7:0]                PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0];
+  /* verilator lint_on UNDRIVEN */
 
   // IMem stalls
   logic                          IFUStallF;
