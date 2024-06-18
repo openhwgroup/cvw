@@ -81,7 +81,7 @@ module packetizer import cvw::*; #(parameter cvw_t P,
       else                        NextState = STATE_RDY;
       STATE_WAIT: if(TransReady)  NextState = STATE_TRANS;
                   else            NextState = STATE_WAIT;
-      STATE_TRANS: if(BurstDone) NextState = STATE_TRANS_INSERT_DELAY;
+      STATE_TRANS: if(BurstDone & TransReady) NextState = STATE_TRANS_INSERT_DELAY;
                    else          NextState = STATE_TRANS;
       STATE_TRANS_INSERT_DELAY: if(DelayFlag) NextState = STATE_RDY;
                                 else          NextState = STATE_TRANS_INSERT_DELAY;
@@ -100,6 +100,7 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   // at 20MHz 250 ms is 250e-3 / (1/20e6) = 5,000,000.
   counter #(32) rstcounter(m_axi_aclk, RstCountRst, RstCountEn, RstCount);
   assign CountFlag = RstCount == 32'd100000000;
+  //assign CountFlag = RstCount == 32'd10;
   //assign DelayFlag = RstCount == 32'd200;
    assign DelayFlag = RstCount == 32'd0;
 
@@ -128,7 +129,7 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   
   assign RvviAxiWdata = TotalFrameWords[WordCount];
   assign RvviAxiWstrb = '1;
-  assign RvviAxiWlast = BurstDone;
+  assign RvviAxiWlast = BurstDone & (CurrState == STATE_TRANS);
   assign RvviAxiWvalid = (CurrState == STATE_TRANS);
   
 endmodule

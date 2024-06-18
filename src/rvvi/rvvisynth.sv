@@ -27,6 +27,8 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+`define FPGA 1
+
 module rvvisynth import cvw::*; #(parameter cvw_t P,
                                   parameter integer MAX_CSRS)(
   input logic clk, reset,
@@ -62,6 +64,7 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
   logic [MAX_CSRS*(P.XLEN+12)-1:0]       CSRs;
      
   // get signals from the core.
+   if (`FPGA) begin
   assign StallE         = fpgaTop.wallypipelinedsoc.core.StallE;
   assign StallM         = fpgaTop.wallypipelinedsoc.core.StallM;
   assign StallW         = fpgaTop.wallypipelinedsoc.core.StallW;
@@ -120,6 +123,66 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
   assign CSRArray[33] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csru.csru.FFLAGS_REGW; // 12'h001
   assign CSRArray[34] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csru.csru.FRM_REGW; // 12'h002
   assign CSRArray[35] = {fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csru.csru.FRM_REGW, fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csru.csru.FFLAGS_REGW}; // 12'h003
+   end else begin // if (`FPGA)
+        assign StallE         = dut.core.StallE;
+  assign StallM         = dut.core.StallM;
+  assign StallW         = dut.core.StallW;
+  assign FlushE         = dut.core.FlushE;
+  assign FlushM         = dut.core.FlushM;
+  assign FlushW         = dut.core.FlushW;
+  assign InstrValidM    = dut.core.ieu.InstrValidM;
+  assign InstrRawD      = dut.core.ifu.InstrRawD;
+  assign PCM            = dut.core.ifu.PCM;
+  assign Mcycle         = dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[0];
+  assign Minstret       = dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2];
+  assign TrapM          = dut.core.TrapM;
+  assign PrivilegeModeW = dut.core.priv.priv.privmode.PrivilegeModeW;
+  assign GPRAddr        = dut.core.ieu.dp.regf.a3;
+  assign GPRWen         = dut.core.ieu.dp.regf.we3;
+  assign GPRValue       = dut.core.ieu.dp.regf.wd3;
+  assign FPRAddr        = dut.core.fpu.fpu.fregfile.a4;
+  assign FPRWen         = dut.core.fpu.fpu.fregfile.we4;
+  assign FPRValue       = dut.core.fpu.fpu.fregfile.wd4;
+
+  assign CSRArray[0] = dut.core.priv.priv.csr.csrm.MSTATUS_REGW; // 12'h300
+  assign CSRArray[1] = dut.core.priv.priv.csr.csrm.MSTATUSH_REGW; // 12'h310
+  assign CSRArray[2] = dut.core.priv.priv.csr.csrm.MTVEC_REGW; // 12'h305
+  assign CSRArray[3] = dut.core.priv.priv.csr.csrm.MEPC_REGW; // 12'h341
+  assign CSRArray[4] = dut.core.priv.priv.csr.csrm.MCOUNTEREN_REGW; // 12'h306
+  assign CSRArray[5] = dut.core.priv.priv.csr.csrm.MCOUNTINHIBIT_REGW; // 12'h320
+  assign CSRArray[6] = dut.core.priv.priv.csr.csrm.MEDELEG_REGW; // 12'h302
+  assign CSRArray[7] = dut.core.priv.priv.csr.csrm.MIDELEG_REGW; // 12'h303
+  assign CSRArray[8] = dut.core.priv.priv.csr.csrm.MIP_REGW; // 12'h344
+  assign CSRArray[9] = dut.core.priv.priv.csr.csrm.MIE_REGW; // 12'h304
+  assign CSRArray[10] = dut.core.priv.priv.csr.csrm.MISA_REGW; // 12'h301
+  assign CSRArray[11] = dut.core.priv.priv.csr.csrm.MENVCFG_REGW; // 12'h30A
+  assign CSRArray[12] = dut.core.priv.priv.csr.csrm.MHARTID_REGW; // 12'hF14
+  assign CSRArray[13] = dut.core.priv.priv.csr.csrm.MSCRATCH_REGW; // 12'h340
+  assign CSRArray[14] = dut.core.priv.priv.csr.csrm.MCAUSE_REGW; // 12'h342
+  assign CSRArray[15] = dut.core.priv.priv.csr.csrm.MTVAL_REGW; // 12'h343
+  assign CSRArray[16] = 0; // 12'hF11
+  assign CSRArray[17] = 0; // 12'hF12
+  assign CSRArray[18] = {{P.XLEN-12{1'b0}}, 12'h100}; //P.XLEN'h100; // 12'hF13
+  assign CSRArray[19] = 0; // 12'hF15
+  assign CSRArray[20] = 0; // 12'h34A
+	  // supervisor CSRs
+  assign CSRArray[21] = dut.core.priv.priv.csr.csrs.csrs.SSTATUS_REGW; // 12'h100
+  assign CSRArray[22] = dut.core.priv.priv.csr.csrm.MIE_REGW & 12'h222; // 12'h104
+  assign CSRArray[23] = dut.core.priv.priv.csr.csrs.csrs.STVEC_REGW; // 12'h105
+  assign CSRArray[24] = dut.core.priv.priv.csr.csrs.csrs.SEPC_REGW; // 12'h141
+  assign CSRArray[25] = dut.core.priv.priv.csr.csrs.csrs.SCOUNTEREN_REGW; // 12'h106
+  assign CSRArray[26] = dut.core.priv.priv.csr.csrs.csrs.SENVCFG_REGW; // 12'h10A
+  assign CSRArray[27] = dut.core.priv.priv.csr.csrs.csrs.SATP_REGW; // 12'h180
+  assign CSRArray[28] = dut.core.priv.priv.csr.csrs.csrs.SSCRATCH_REGW; // 12'h140
+  assign CSRArray[29] = dut.core.priv.priv.csr.csrs.csrs.STVAL_REGW; // 12'h143
+  assign CSRArray[30] = dut.core.priv.priv.csr.csrs.csrs.SCAUSE_REGW; // 12'h142
+  assign CSRArray[31] = dut.core.priv.priv.csr.csrm.MIP_REGW & 12'h222 & dut.core.priv.priv.csr.csrm.MIDELEG_REGW; // 12'h144
+  assign CSRArray[32] = dut.core.priv.priv.csr.csrs.csrs.STIMECMP_REGW; // 12'h14D
+	  // user CSRs
+  assign CSRArray[33] = dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW; // 12'h001
+  assign CSRArray[34] = dut.core.priv.priv.csr.csru.csru.FRM_REGW; // 12'h002
+  assign CSRArray[35] = {dut.core.priv.priv.csr.csru.csru.FRM_REGW, dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW}; // 12'h003
+   end
 
   //
   assign XLENZeros = '0;
