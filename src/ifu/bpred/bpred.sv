@@ -72,33 +72,26 @@ module bpred import cvw::*;  #(parameter cvw_t P) (
 
   logic [1:0]              BPDirPredF;
 
-  logic [P.XLEN-1:0]        BPBTAF, RASPCF;
-  logic                    BPPCWrongE;
-  logic                    IClassWrongE;
+  logic [P.XLEN-1:0]       BPBTAF, RASPCF;
   logic                    BPDirPredWrongE;
   
   logic                    BPPCSrcF;
-  logic [P.XLEN-1:0]        BPPCF;
-  logic [P.XLEN-1:0]        PC0NextF;
-  logic [P.XLEN-1:0]        PCCorrectE;
-  logic [3:0]              WrongPredInstrClassD;
+  logic [P.XLEN-1:0]       BPPCF;
+  logic [P.XLEN-1:0]       PC0NextF;
+  logic [P.XLEN-1:0]       PCCorrectE;
 
-  logic                    BTBTargetWrongE;
   logic                    RASTargetWrongE;
 
-  logic [P.XLEN-1:0]        BPBTAD;
-
-  logic                     BTBCallF, BTBReturnF, BTBJumpF, BTBBranchF;
-  logic                     BPBranchF, BPJumpF, BPReturnF, BPCallF;
-  logic                     BPBranchD, BPJumpD, BPReturnD, BPCallD;
-  logic                     ReturnD, CallD;
-  logic                     ReturnE, CallE;
-  logic                     BranchM, JumpM, ReturnM, CallM;
-  logic                     BranchW, JumpW, ReturnW, CallW;
-  logic                     BPReturnWrongD;
-  logic [P.XLEN-1:0]        BPBTAE;
-  logic                     BPBTAWrongM;
-  logic                     PCSrcM;
+  logic                    BTBCallF, BTBReturnF, BTBJumpF, BTBBranchF;
+  logic                    BPBranchF, BPJumpF, BPReturnF, BPCallF;
+  logic                    BPBranchD, BPJumpD, BPReturnD, BPCallD;
+  logic                    ReturnD, CallD;
+  logic                    ReturnE, CallE;
+  logic                    BranchM, JumpM, ReturnM, CallM;
+  logic                    BranchW, JumpW, ReturnW, CallW;
+  logic                    BPReturnWrongD;
+  logic                    BPBTAWrongM;
+  logic                    PCSrcM;
   
   // Part 1 branch direction prediction
   if (P.BPRED_TYPE == `BP_TWOBIT) begin:Predictor
@@ -154,7 +147,7 @@ module bpred import cvw::*;  #(parameter cvw_t P) (
   btb #(P, P.BTB_SIZE) 
     TargetPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .PCM,
-      .BPBTAF, .BPBTAD, .BPBTAE,
+      .BPBTAF, 
       .BTBIClassF({BTBCallF, BTBReturnF, BTBJumpF, BTBBranchF}),
       .BPBTAWrongM,
       .IClassWrongM,

@@ -45,7 +45,6 @@ module shiftcorrection import cvw::*;  #(parameter cvw_t P) (
   output logic [P.NE+1:0]          Ue                      // corrected exponent for divider
 );
 
-  logic [P.NORMSHIFTSZ-1:0]        CorrShifted;         // the shifted sum after LZA correction
   logic                            ResSubnorm;             // is the result Subnormal
   logic                            LZAPlus1;               // add one or two to the sum's exponent due to LZA correction
   logic                            LeftShiftQm;            // should the divsqrt result be shifted one to the left

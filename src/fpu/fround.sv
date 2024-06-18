@@ -28,7 +28,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fround import cvw::*;  #(parameter cvw_t P) (
-  input  logic [P.FLEN-1:0]       X,            // input before unpacking
   input  logic                    Xs,           // input's sign
   input  logic [P.NE-1:0]         Xe,           // input's exponent
   input  logic [P.NF:0]           Xm,           // input's fraction with leading integer bit (U1.NF)
@@ -45,7 +44,7 @@ module fround import cvw::*;  #(parameter cvw_t P) (
 
   logic [P.NE-1:0] E, Xep1;
   logic [P.NF:0] IMask, Tmasknonneg, Tmaskneg, Tmask, HotE, HotEP1, Trunc, Rnd;
-  logic [P.FLEN-1:0] W, PackedW;
+  logic [P.FLEN-1:0] W;
   logic Elt0, Eeqm1, Lnonneg, Lp, Rnonneg, Rp, Tp, RoundUp, Two, EgeNf;
 
   // Unbiased exponent

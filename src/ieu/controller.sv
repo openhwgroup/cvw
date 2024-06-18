@@ -158,7 +158,6 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic [3:0]  CMOpD, CMOpE;                   // which CMO instruction 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
   logic        IFUPrefetchD;                   // instruction prefetch
   logic        LSUPrefetchD, LSUPrefetchE;     // data prefetch
-  logic        CMOStallD;                      // Structural hazards from cache management ops
   logic        MatchDE;                        // Match between a source register in Decode stage and destination register in Execute stage
   logic        FCvtIntStallD, MDUStallD, CSRRdStallD; // Stall due to conversion, load, multiply/divide, CSR read 
   logic        FunctCZeroD;                    // Funct7 and Funct3 indicate czero.* (not including Op check)
@@ -329,7 +328,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     logic BSubArithD;                     // TRUE for BMU ext, clr, andn, orn, xnor
     logic BALUSrcBD;                      // BMU alu src select signal
 
-    bmuctrl #(P) bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUOpD, .BSelectD, .ZBBSelectD, 
+    bmuctrl #(P) bmuctrl(.clk, .reset, .InstrD, .ALUOpD, .BSelectD, .ZBBSelectD, 
       .BRegWriteD, .BALUSrcBD, .BW64D, .BSubArithD, .IllegalBitmanipInstrD, .StallE, .FlushE, 
       .ALUSelectD(PreALUSelectD), .BSelectE, .ZBBSelectE, .BRegWriteE, .BALUControlE, .BMUActiveE);
     if (P.ZBA_SUPPORTED) begin

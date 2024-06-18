@@ -76,7 +76,6 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   logic                               ClearValidWay;
   logic                               SetDirtyWay;
   logic                               ClearDirtyWay;
-  logic                               SelNonHit;
   logic                               SelectedWay;
   logic                               InvalidateCacheDelay;
   

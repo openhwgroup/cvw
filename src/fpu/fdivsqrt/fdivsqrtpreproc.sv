@@ -47,7 +47,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   output logic                 ISpecialCaseE,
   output logic [P.DURLEN-1:0]  CyclesE,
   output logic [P.DIVBLEN-1:0] IntNormShiftM,
-  output logic                 ALTBM, IntDivM, W64M,
+  output logic                 ALTBM, W64M,
   output logic                 AsM, BsM, BZeroM,
   output logic [P.XLEN-1:0]    AM
 );
@@ -229,7 +229,6 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     mux2 #(P.DIVBLEN) normshiftmux(IntDivNormShiftE, IntRemNormShiftE, RemOpE, IntNormShiftE);
 
     // pipeline registers
-    flopen #(1)          mdureg(clk, IFDivStartE, IntDivE,  IntDivM);
     flopen #(1)         altbreg(clk, IFDivStartE, ALTBE,    ALTBM);
     flopen #(1)        bzeroreg(clk, IFDivStartE, BZeroE,   BZeroM);
     flopen #(1)        asignreg(clk, IFDivStartE, AsE,      AsM);
@@ -239,7 +238,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     if (P.XLEN==64) 
       flopen #(1)        w64reg(clk, IFDivStartE, W64E,     W64M);
   end else
-    assign {ALTBM, IntDivM, W64M, AsM, BsM, BZeroM, AM, IntNormShiftM} = 0;
+    assign {ALTBM, W64M, AsM, BsM, BZeroM, AM, IntNormShiftM} = 0;
 
 endmodule
 

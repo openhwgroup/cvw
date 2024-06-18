@@ -94,7 +94,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
   logic [7:0]                   txfifo[15:0];
   logic [4:0]                   rxfifotailunwrapped;
   logic [3:0]                   rxfifohead, rxfifotail, txfifohead, txfifotail, rxfifotriggerlevel;
-  logic [3:0]                   rxfifoentries, txfifoentries;
+  logic [3:0]                   rxfifoentries;
   logic [3:0]                   rxbitsexpected, txbitsexpected;
 
   // receive data
@@ -484,12 +484,8 @@ module uartPC16550D #(parameter UART_PRESCALE) (
     HeadPointerLastMove <= 1'b0;
   end
 
-  assign txfifoempty   = (txfifohead == txfifotail) & ~HeadPointerLastMove;
-  // verilator lint_off WIDTH
-  assign txfifoentries = (txfifohead >= txfifotail) ? (txfifohead-txfifotail) : 
-                         (txfifohead + 16 - txfifotail);
-  // verilator lint_on WIDTH
-  assign txfifofull = (txfifohead == txfifotail) & HeadPointerLastMove;
+  assign txfifoempty = (txfifohead == txfifotail) & ~HeadPointerLastMove;
+  assign txfifofull  = (txfifohead == txfifotail) & HeadPointerLastMove;
 
   // transmit buffer ready bit
   always_ff @(posedge PCLK) // track txrdy for DMA mode (FCR3 = FCR0 = 1)

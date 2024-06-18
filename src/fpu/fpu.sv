@@ -279,7 +279,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
     logic [P.FLEN-1:0]           FliResE;                            // Zfa Floating-point load immediate value
 
     // fround
-    fround #(P) fround(.X(XE), .Xs(XsE), .Xe(XeE), .Xm(XmE), 
+    fround #(P) fround(.Xs(XsE), .Xe(XeE), .Xm(XmE), 
                        .XNaN(XNaNE), .XSNaN(XSNaNE), .Fmt(FmtE), .Frm(FrmE), .Nf(NfE), 
                        .ZfaFRoundNX(ZfaFRoundNXE),
                        .FRound(FRoundE), .FRoundNV(FRoundNVE), .FRoundNX(FRoundNXE));
