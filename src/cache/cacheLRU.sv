@@ -48,12 +48,12 @@ module cacheLRU
   localparam                           LOGNUMWAYS = $clog2(NUMWAYS);
 
   logic [NUMWAYS-2:0]                  LRUMemory [NUMSETS-1:0];
-  logic [NUMWAYS-2:0]                  CurrLRU;
-  logic [NUMWAYS-2:0]                  NextLRU;
+  logic [NUMWAYS-2:0]                  CurrLRU, NextLRU, ReadLRU, BypassedLRU;
   logic [LOGNUMWAYS-1:0]               HitWayEncoded, Way;
   logic [NUMWAYS-2:0]                  WayExpanded;
   logic                                AllValid;
-  
+  logic                                ForwardLRU;
+ 
   genvar                               row;
 
   /* verilator lint_off UNOPTFLAT */
@@ -131,29 +131,22 @@ module cacheLRU
     assign Intermediate[node] = CurrLRU[node] ? int1[LOGNUMWAYS-1:0] : int0[LOGNUMWAYS-1:0];
   end
 
-  
   priorityonehot #(NUMWAYS) FirstZeroEncoder(~ValidWay, FirstZero);
   binencoder #(NUMWAYS) FirstZeroWayEncoder(FirstZero, FirstZeroWay);
   mux2 #(LOGNUMWAYS) VictimMux(FirstZeroWay, Intermediate[NUMWAYS-2], AllValid, VictimWayEnc);
   decoder #(LOGNUMWAYS) decoder (VictimWayEnc, VictimWay);
 
-  // LRU storage must be reset for modelsim to run. However the reset value does not actually matter in practice.
-  // This is a two port memory.
-  // Every cycle must read from CacheSetTag and each load/store must write the new LRU.
-
-  // note: Verilator lint doesn't like <= for array initialization (https://verilator.org/warn/BLKLOOPINIT?v=5.021)
-  // Move to = to keep Verilator happy and simulator running fast
-  always_ff @(posedge clk) begin
+  // LRU memory must be reset for Questa to run. The reset value does not matter but it is best to be deterministc.
+  always_ff @(posedge clk)
     if (reset | (InvalidateCache & ~FlushStage)) 
-      for (int set = 0; set < NUMSETS; set++) LRUMemory[set] = '0; // exclusion-tag: initialize
-    else if(CacheEn) begin
-      // Because we are using blocking assignments, change to LRUMemory must occur after LRUMemory is used so we get the proper value
-      if(LRUWriteEn & (PAdr == CacheSetTag)) CurrLRU = NextLRU;
-      else                                   CurrLRU = LRUMemory[CacheSetTag];
-      if(LRUWriteEn)                         LRUMemory[PAdr] = NextLRU;
-    end
-  end
+      for (int set = 0; set < NUMSETS; set++) LRUMemory[set] <= '0; // exclusion-tag: initialize
+    else if (CacheEn & LRUWriteEn) LRUMemory[PAdr] <= NextLRU;
 
+  // LRU read path with write forwarding
+  assign ReadLRU = LRUMemory[CacheSetTag];
+  assign ForwardLRU = LRUWriteEn & (PAdr == CacheSetTag);
+  mux2 #(NUMWAYS-1) ReadLRUmux(LRUMemory[CacheSetTag], NextLRU, ForwardLRU, BypassedLRU);
+  flop #(NUMWAYS-1) CurrLRUReg(clk, BypassedLRU, CurrLRU);
 endmodule
 
 
