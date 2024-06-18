@@ -31,7 +31,7 @@
 module RASPredictor import cvw::*;  #(parameter cvw_t P)(
   input  logic             clk,
   input  logic             reset, 
-  input  logic             StallF, StallD, StallE, StallM, FlushD, FlushE, FlushM,
+  input  logic             StallD, StallE, StallM, FlushD, FlushE, FlushM,
   input  logic             BPReturnWrongD,                      // Prediction class is wrong
   input  logic             ReturnD,
   input  logic             ReturnE, CallE,                  // Instr class

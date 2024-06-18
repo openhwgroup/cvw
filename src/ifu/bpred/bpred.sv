@@ -163,7 +163,7 @@ module bpred import cvw::*;  #(parameter cvw_t P) (
     .BTBBranchF, .BPCallF, .BPReturnF, .BPJumpF, .BPBranchF, .IClassWrongM, .BPReturnWrongD);
 
   // Part 3 RAS
-  RASPredictor #(P) RASPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
+  RASPredictor #(P) RASPredictor(.clk, .reset, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
     .BPReturnF, .ReturnD, .ReturnE, .CallE,
     .BPReturnWrongD, .RASPCF, .PCLinkE);
 

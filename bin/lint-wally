@@ -51,4 +51,5 @@ echo -e "${GREEN}All ${#configs[@]} lints run with no errors or warnings"
 # -I points to the include directory where files such as `include config.vh  are found
 
 # For more exhaustive (and sometimes spurious) warnings, add --Wall to the Verilator command
+# verilator --lint-only -Wall --quiet --top-module wallywrapper -Iconfig/shared -Iconfig/rv64gc src/cvw.sv testbench/wallywrapper.sv src/*/*.sv src/*/*/*.sv -Wno-UNUSEDPARAM -Wno-VARHIDDEN -Wno-GENUNNAMED -Wno-PINCONNECTEMPTY
 # Unfortunately, this produces a bunch of UNUSED and UNDRIVEN signal warnings in blocks that are configured to not exist.

@@ -79,8 +79,7 @@ module ahbcacheinterface import cvw::*; #(
   logic [P.PA_BITS-1:0]         LocalHADDR;                             // Address after selecting between cached and uncached operation
   logic [AHBWLOGBWPL-1:0]     BeatCountDelayed;                       // Beat within the cache line in the second (Data) cache stage
   logic                       CaptureEn;                              // Enable updating the Fetch buffer with valid data from HRDATA
-  logic [P.AHBW/8-1:0]          BusByteMaskM;                           // Byte enables within a word. For cache request all 1s
-  logic [P.AHBW-1:0]            PreHWDATA;                              // AHB Address phase write data
+ logic [P.AHBW-1:0]            PreHWDATA;                              // AHB Address phase write data
   logic [P.PA_BITS-1:0]         PAdrZero;
 
   genvar                      index;
@@ -117,6 +116,8 @@ module ahbcacheinterface import cvw::*; #(
   if (READ_ONLY_CACHE) begin
     assign HWSTRB = '0;
   end else begin // compute byte mask for AHB transaction based on size and address.  AHBW may be different than LLEN
+    logic [P.AHBW/8-1:0]          BusByteMaskM;                           // Byte enables within a word. For cache request all 1s
+     
     swbytemask #(P.AHBW) busswbytemask(.Size(HSIZE), .Adr(HADDR[$clog2(P.AHBW/8)-1:0]), .ByteMask(BusByteMaskM), .ByteMaskExtended());
     flopen #(P.AHBW/8) HWSTRBReg(HCLK, HREADY, BusByteMaskM[P.AHBW/8-1:0], HWSTRB);
   end
