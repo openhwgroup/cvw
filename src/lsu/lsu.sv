@@ -351,11 +351,6 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
         .Cacheable(CacheableOrFlushCacheM), .BusRW, .Stall(GatedStallW),
         .BusStall, .BusCommitted(BusCommittedM));
 
-
-    // Mux between the 3 sources of read data, 0: cache, 1: Bus, 2: DTIM
-    // Uncache bus access may be smaller width than LLEN.  Duplicate LLENPOVERAHBW times.
-      // *** DTIMReadDataWordM should be increased to LLEN.
-      // pma should generate exception for LLEN read to periph.
       mux3 #(P.LLEN) UnCachedDataMux(.d0(DCacheReadDataWordSpillM), .d1({LLENPOVERAHBW{FetchBuffer[P.XLEN-1:0]}}),
                                     .d2({{P.LLEN-P.XLEN{1'b0}}, DTIMReadDataWordM[P.XLEN-1:0]}),
                                     .s({SelDTIM, ~(CacheableOrFlushCacheM)}), .y(ReadDataWordMuxM));
@@ -374,7 +369,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
 
     // Mux between the 2 sources of read data, 0: Bus, 1: DTIM
       if(P.DTIM_SUPPORTED) mux2 #(P.XLEN) ReadDataMux2(FetchBuffer, DTIMReadDataWordM[P.XLEN-1:0], SelDTIM, ReadDataWordMuxM[P.XLEN-1:0]);
-      else assign ReadDataWordMuxM[P.XLEN-1:0] = FetchBuffer[P.XLEN-1:0]; // *** bus only does not support double wide floats.
+      else assign ReadDataWordMuxM[P.XLEN-1:0] = FetchBuffer[P.XLEN-1:0];
       assign LSUHBURST = 3'b0;
       assign {DCacheStallM, DCacheCommittedM, DCacheMiss, DCacheAccess, DCacheReadDataWordM} = '0;
     end
