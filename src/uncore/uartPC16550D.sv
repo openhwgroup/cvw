@@ -149,11 +149,11 @@ module uartPC16550D #(parameter UART_PRESCALE) (
     if (~PRESETn) begin // Table 3 Reset Configuration
       IER <= 4'b0;
       FCR <= 8'b0;
-      LCR <= 8'b11; // **** fpga used to require reset to 3, double check this is no longer needed.
+      LCR <= 8'b11; // PC16550D datasheet resets to 0, but all modern systems will use 8-bit data.  Wally resets to 3 for 8-bit data.
       MCR <= 5'b0;
-      LSR <= 8'b01100000;
+      LSR <= 8'b0110_0000;
       MSR <= 4'b0;
-      DLL <= 8'd1; // this cannot be zero with DLM also zer0.
+      DLL <= 8'd1; // this cannot be zero with DLM also zero.
       DLM <= 8'b0;
       SCR <= 8'b0; // not strictly necessary to reset
     end else begin

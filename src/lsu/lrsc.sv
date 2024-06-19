@@ -45,7 +45,6 @@ module lrsc import cvw::*;  #(parameter cvw_t P) (
   localparam RESERVATION_SET_SIZE_IN_BYTES = P.XLEN/8;
   localparam RESERVATION_SET_ADDRESS_BITS = $clog2(RESERVATION_SET_SIZE_IN_BYTES); // 2 for rv32, 3 for rv64
 
-  // possible bug: *** double check if PreLSURWM needs to be flushed by ignorerequest.
   // Handle atomic load reserved / store conditional
   logic [P.PA_BITS-1:RESERVATION_SET_ADDRESS_BITS]        ReservationPAdrW;
   logic                        ReservationValidM, ReservationValidW; 
