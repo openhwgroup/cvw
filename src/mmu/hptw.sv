@@ -46,10 +46,9 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   input  logic              DCacheBusStallM,           // stall from LSU
   input  logic [2:0]        Funct3M,
   input  logic [6:0]        Funct7M,
-  input  logic              ITLBMissF,
-  input  logic              DTLBMissM,
+  input  logic              ITLBMissOrUpdateAF,
+  input  logic              DTLBMissOrUpdateDAM,
   input  logic              FlushW,
-  input  logic              InstrUpdateDAF,
   input  logic              DataUpdateDAM,
   output logic [P.XLEN-1:0] PTE,                    // page table entry to TLBs
   output logic [1:0]        PageType,               // page type to TLBs
@@ -83,7 +82,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   logic                     Misaligned, MegapageMisaligned;
   logic                     ValidPTE, LeafPTE, ValidLeafPTE, ValidNonLeafPTE;
   logic                     StartWalk;
-  logic                     TLBMiss;
+  logic                     TLBMissOrUpdateDA;
   logic                     PRegEn;
   logic [1:0]               NextPageType;
   logic [P.SVMODE_BITS-1:0] SvMode;
@@ -94,8 +93,6 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   logic [P.PA_BITS-1:0]     HPTWReadAdr;
   logic                     SelHPTWAdr;
   logic [P.XLEN+1:0]        HPTWAdrExt;
-  logic                     DTLBMissOrUpdateDAM;
-  logic 		    ITLBMissOrUpdateDAF;
   logic                     LSUAccessFaultM;
   logic [P.PA_BITS-1:0]     HPTWAdr;
   logic [1:0]               HPTWRW;
@@ -139,7 +136,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   // Extract bits from CSRs and inputs
   assign SvMode = SATP_REGW[P.XLEN-1:P.XLEN-P.SVMODE_BITS];
   assign BasePageTablePPN = SATP_REGW[P.PPN_BITS-1:0];
-  assign TLBMiss = DTLBMissOrUpdateDAM | ITLBMissOrUpdateDAF;
+  assign TLBMissOrUpdateDA = DTLBMissOrUpdateDAM | ITLBMissOrUpdateAF;
 
   // Determine which address to translate
   mux2 #(P.XLEN) vadrmux(PCSpillF, IEUAdrExtM[P.XLEN-1:0], DTLBWalk, TranslationVAdr);
@@ -220,7 +217,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   end
 
   // Enable and select signals based on states
-  assign StartWalk  = (WalkerState == IDLE) & TLBMiss; 
+  assign StartWalk  = (WalkerState == IDLE) & TLBMissOrUpdateDA; 
   assign HPTWRW[1]  = (WalkerState == L3_RD) | (WalkerState == L2_RD) | (WalkerState == L1_RD) | (WalkerState == L0_RD);
   assign DTLBWriteM = (WalkerState == LEAF & ~HPTWUpdateDA) & DTLBWalk;
   assign ITLBWriteF = (WalkerState == LEAF & ~HPTWUpdateDA) & ~DTLBWalk;
@@ -285,7 +282,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset | FlushW, 1'b1, NextWalkerState, IDLE, WalkerState); 
   always_comb 
     case (WalkerState)
-      IDLE:       if (TLBMiss)                                        NextWalkerState = InitialWalkerState;                      
+      IDLE:       if (TLBMissOrUpdateDA)                              NextWalkerState = InitialWalkerState;                      
                   else                                                NextWalkerState = IDLE;
       L3_ADR:                                                         NextWalkerState = L3_RD; // first access in SV48
       L3_RD:      if (DCacheBusStallM)                                NextWalkerState = L3_RD;
@@ -314,7 +311,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
       default:                                                        NextWalkerState = IDLE; // should never be reached
     endcase // case (WalkerState)
 
-  assign IgnoreRequestTLB = (WalkerState == IDLE & TLBMiss) | (HPTWFaultM); // RT : 05 April 2023 if hptw request has pmp/a fault suppress bus access.
+  assign IgnoreRequestTLB = (WalkerState == IDLE & TLBMissOrUpdateDA) | (HPTWFaultM); // RT : 05 April 2023 if hptw request has pmp/a fault suppress bus access.
   assign SelHPTW = WalkerState != IDLE;
 
   // RT 30 May 2023: When there is an access fault caused by the hptw itself, the fsm jumps to FAULT, removes
@@ -322,10 +319,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   // The FSM directly transistions to IDLE to ready for the next operation when the delayed version will not be high.
 
   assign HPTWAccessFaultDelay = HPTWLoadAccessFaultDelay | HPTWStoreAmoAccessFaultDelay | HPTWInstrAccessFaultDelay; // *** unused - RT, can we delete?
-  assign HPTWStall = (WalkerState != IDLE & WalkerState != FAULT) | (WalkerState == IDLE & TLBMiss); 
-
-  assign DTLBMissOrUpdateDAM = DTLBMissM | (P.SVADU_SUPPORTED & DataUpdateDAM);  
-  assign ITLBMissOrUpdateDAF = ITLBMissF | (P.SVADU_SUPPORTED & InstrUpdateDAF);  
+  assign HPTWStall = (WalkerState != IDLE & WalkerState != FAULT) | (WalkerState == IDLE & TLBMissOrUpdateDA); 
 
   // HTPW address/data/control muxing
 
@@ -349,5 +343,5 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
 endmodule
 
 // another idea.  We keep gating the control by ~FlushW, but this adds considerable length to the critical path.
-// should we do this differently?  For example TLBMiss is gated by ~FlushW and then drives HPTWStall, which drives LSUStallM, which drives
+// should we do this differently?  For example TLBMissOrUpdateDA is gated by ~FlushW and then drives HPTWStall, which drives LSUStallM, which drives
 // the hazard unit to issue stall and flush controlls. ~FlushW already suppresses these in the hazard unit.

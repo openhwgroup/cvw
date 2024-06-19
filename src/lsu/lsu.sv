@@ -86,8 +86,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   input  logic                    ENVCFG_PBMTE,                         // Page-based memory types enabled
   input  logic                    ENVCFG_ADUE,                          // HPTW A/D Update enable
   input  logic [P.XLEN-1:0]       PCSpillF,                             // Fetch PC 
-  input  logic                    ITLBMissF,                            // ITLB miss causes HPTW (hardware pagetable walker) walk
-  input  logic                    InstrUpdateDAF,                       // ITLB hit needs to update dirty or access bits
+  input  logic                    ITLBMissOrUpdateAF,                   // ITLB miss causes HPTW (hardware pagetable walker) walk or update access bit
   output logic [P.XLEN-1:0]       PTE,                                  // Page table entry write to ITLB
   output logic [1:0]              PageType,                             // Type of page table entry to write to ITLB
   output logic                    ITLBWriteF,                           // Write PTE to ITLB
@@ -153,6 +152,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic                  SelDTIM;                                // Select DTIM rather than bus or D$
   logic [P.XLEN-1:0]     WriteDataZM;
   logic                  LSULoadPageFaultM, LSUStoreAmoPageFaultM;
+  logic 		 DTLBMissOrUpdateDAM;
+   
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Pipeline for IEUAdr E to M
@@ -192,8 +193,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   if(P.VIRTMEM_SUPPORTED) begin : hptw
-    hptw #(P) hptw(.clk, .reset, .MemRWM, .AtomicM, .ITLBMissF, .ITLBWriteF,
-      .DTLBMissM, .DTLBWriteM, .InstrUpdateDAF, .DataUpdateDAM,
+    hptw #(P) hptw(.clk, .reset, .MemRWM, .AtomicM, .ITLBMissOrUpdateAF, .ITLBWriteF,
+      .DTLBMissOrUpdateDAM, .DTLBWriteM, .DataUpdateDAM,
       .FlushW, .DCacheBusStallM, .SATP_REGW, .PCSpillF,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_ADUE, .PrivilegeModeW,
       .ReadDataM(ReadDataM[P.XLEN-1:0]), // ReadDataM is LLEN, but HPTW only needs XLEN
@@ -251,7 +252,9 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       .WriteAccessM, .ReadAccessM(PreLSURWM[1]),
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
 
+    assign DTLBMissOrUpdateDAM = DTLBMissM | (P.SVADU_SUPPORTED & DataUpdateDAM);  
   end else begin  // No MMU, so no PMA/page faults and no address translation
+    assign DTLBMissOrUpdateDAM = '0;
     assign {DTLBMissM, LSULoadAccessFaultM, LSUStoreAmoAccessFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM} = '0;
     assign {LSULoadPageFaultM, LSUStoreAmoPageFaultM} = '0;
     assign PAdrM = IHAdrM[P.PA_BITS-1:0];
