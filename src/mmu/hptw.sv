@@ -49,7 +49,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   input  logic              ITLBMissF,
   input  logic              DTLBMissM,
   input  logic              FlushW,
-  input  logic              InstrUpdateDAF,  // *** unused; RT, can we delete or is this a bug?
+  input  logic              InstrUpdateDAF,
   input  logic              DataUpdateDAM,
   output logic [P.XLEN-1:0] PTE,                    // page table entry to TLBs
   output logic [1:0]        PageType,               // page type to TLBs
@@ -95,6 +95,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   logic                     SelHPTWAdr;
   logic [P.XLEN+1:0]        HPTWAdrExt;
   logic                     DTLBMissOrUpdateDAM;
+  logic 		    ITLBMissOrUpdateDAF;
   logic                     LSUAccessFaultM;
   logic [P.PA_BITS-1:0]     HPTWAdr;
   logic [1:0]               HPTWRW;
@@ -138,7 +139,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   // Extract bits from CSRs and inputs
   assign SvMode = SATP_REGW[P.XLEN-1:P.XLEN-P.SVMODE_BITS];
   assign BasePageTablePPN = SATP_REGW[P.PPN_BITS-1:0];
-  assign TLBMiss = (DTLBMissOrUpdateDAM | ITLBMissF);
+  assign TLBMiss = DTLBMissOrUpdateDAM | ITLBMissOrUpdateDAF;
 
   // Determine which address to translate
   mux2 #(P.XLEN) vadrmux(PCSpillF, IEUAdrExtM[P.XLEN-1:0], DTLBWalk, TranslationVAdr);
@@ -324,6 +325,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   assign HPTWStall = (WalkerState != IDLE & WalkerState != FAULT) | (WalkerState == IDLE & TLBMiss); 
 
   assign DTLBMissOrUpdateDAM = DTLBMissM | (P.SVADU_SUPPORTED & DataUpdateDAM);  
+  assign ITLBMissOrUpdateDAF = ITLBMissF | (P.SVADU_SUPPORTED & InstrUpdateDAF);  
 
   // HTPW address/data/control muxing
 
