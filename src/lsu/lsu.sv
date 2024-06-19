@@ -245,7 +245,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       .InstrAccessFaultF(), .LoadAccessFaultM(LSULoadAccessFaultM), 
       .StoreAmoAccessFaultM(LSUStoreAmoAccessFaultM), .InstrPageFaultF(), .LoadPageFaultM(LSULoadPageFaultM), 
     .StoreAmoPageFaultM(LSUStoreAmoPageFaultM),
-      .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,   // *** these faults need to be supressed during hptw.
+      .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
       .UpdateDA(DataUpdateDAM), .CMOpM(CMOpM),
       .AtomicAccessM(|LSUAtomicM), .ExecuteAccessF(1'b0), 
       .WriteAccessM, .ReadAccessM(PreLSURWM[1]),
@@ -279,10 +279,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     // The DTIM uses untranslated addresses, so it is not compatible with virtual memory.
     mux2 #(P.PA_BITS) DTIMAdrMux(IEUAdrExtE[P.PA_BITS-1:0], IEUAdrExtM[P.PA_BITS-1:0], MemRWM[0], DTIMAdr);
     assign DTIMMemRWM = SelDTIM & ~IgnoreRequestTLB ? LSURWM : 0;
-    // **** fix ReadDataWordM to be LLEN. ByteMask is wrong length.
-    // **** create config to support DTIM with floating point.
-    // Add support for cboz
-    dtim #(P) dtim(.clk, .reset, .ce(~GatedStallW), .MemRWE(MemRWE), // *** update when you update the cache RWE
+    dtim #(P) dtim(.clk, .reset, .ce(~GatedStallW),
               .MemRWM(DTIMMemRWM),
               .DTIMAdr, .FlushW, .WriteDataM(LSUWriteDataM), 
               .ReadDataWordM(DTIMReadDataWordM[P.LLEN-1:0]), .ByteMaskM(ByteMaskM));
