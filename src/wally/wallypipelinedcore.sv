@@ -104,7 +104,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
 
   // memory management unit signals
   logic                          ITLBWriteF;
-  logic                          ITLBMissF;
+  logic                          ITLBMissOrUpdateAF;
   logic [P.XLEN-1:0]             SATP_REGW;
   logic                          STATUS_MXR, STATUS_SUM, STATUS_MPRV;
   logic [1:0]                    STATUS_MPP, STATUS_FS;
@@ -148,7 +148,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          LSUHREADY;
   
   logic                          BPWrongE, BPWrongM;
-  logic                          BPDirPredWrongM;
+  logic                          BPDirWrongM;
   logic                          BTAWrongM;
   logic                          RASPredPCWrongM;
   logic                          IClassWrongM;
@@ -162,7 +162,6 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          DCacheAccess;
   logic                          ICacheMiss;
   logic                          ICacheAccess;
-  logic                          InstrUpdateDAF;
   logic                          BigEndianM;
   logic                          FCvtIntE;
   logic                          CommittedF;
@@ -183,15 +182,15 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .PCLinkE, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCE, .BPWrongE,  .BPWrongM, 
     // Mem
     .CommittedF, .EPCM, .TrapVectorM, .RetM, .TrapM, .InvalidateICacheM, .CSRWriteFenceM,
-    .InstrD, .InstrM, .InstrOrigM, .PCM, .IClassM, .BPDirPredWrongM,
+    .InstrD, .InstrM, .InstrOrigM, .PCM, .IClassM, .BPDirWrongM,
     .BTAWrongM, .RASPredPCWrongM, .IClassWrongM,
     // Faults out
     .IllegalBaseInstrD, .IllegalFPUInstrD, .InstrPageFaultF, .IllegalIEUFPUInstrD, .InstrMisalignedFaultM,
     // mmu management
     .PrivilegeModeW, .PTE, .PageType, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV,
-    .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE, .ITLBWriteF, .sfencevmaM, .ITLBMissF,
+    .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE, .ITLBWriteF, .sfencevmaM, .ITLBMissOrUpdateAF,
     // pmp/pma (inside mmu) signals. 
-    .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW, .InstrAccessFaultF, .InstrUpdateDAF); 
+    .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW, .InstrAccessFaultF); 
     
   // integer execution unit: integer register file, datapath and controller
   ieu #(P) ieu(.clk, .reset,
@@ -250,8 +249,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .HPTWInstrPageFaultF,         // connects to privilege
     .StoreAmoMisalignedFaultM,    // connects to privilege
     .StoreAmoAccessFaultM,        // connects to privilege
-    .InstrUpdateDAF,
-    .PCSpillF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
+    .PCSpillF, .ITLBMissOrUpdateAF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
     .LSUStallM);                    
 
   if(P.BUS_SUPPORTED) begin : ebu
@@ -293,7 +291,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .RetM, .TrapM, .sfencevmaM, .InvalidateICacheM, .DCacheStallM, .ICacheStallF,
       .InstrValidM, .CommittedM, .CommittedF,
       .FRegWriteM, .LoadStallD, .StoreStallD,
-      .BPDirPredWrongM, .BTAWrongM, .BPWrongM,
+      .BPDirWrongM, .BTAWrongM, .BPWrongM,
       .RASPredPCWrongM, .IClassWrongM, .DivBusyE, .FDivBusyE,
       .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
       .InstrPageFaultF, .LoadPageFaultM, .StoreAmoPageFaultM,

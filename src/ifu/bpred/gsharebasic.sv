@@ -36,16 +36,16 @@ module gsharebasic import cvw::*; #(parameter cvw_t P,
   input logic             reset,
   input logic             StallF, StallD, StallE, StallM, StallW,
   input logic             FlushD, FlushE, FlushM, FlushW,
-  output logic [1:0]      BPDirPredF, 
-  output logic            BPDirPredWrongE,
+  output logic [1:0]      BPDirF, 
+  output logic            BPDirWrongE,
   // update
   input logic [XLEN-1:0] PCNextF, PCM,
   input logic             BranchE, BranchM, PCSrcE
 );
 
   logic [k-1:0]           IndexNextF, IndexM;
-  logic [1:0]             BPDirPredD, BPDirPredE;
-  logic [1:0]             NewBPDirPredE, NewBPDirPredM;
+  logic [1:0]             BPDirD, BPDirE;
+  logic [1:0]             NewBPDirE, NewBPDirM;
 
   logic [k-1:0]           GHRF, GHRD, GHRE, GHRM, GHR;
   logic [k-1:0]           GHRNext;
@@ -62,19 +62,19 @@ module gsharebasic import cvw::*; #(parameter cvw_t P,
   ram2p1r1wbe #(.USE_SRAM(P.USE_SRAM), .DEPTH(2**k), .WIDTH(2)) PHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallW & ~FlushW),
     .ra1(IndexNextF),
-    .rd1(BPDirPredF),
+    .rd1(BPDirF),
     .wa2(IndexM),
-    .wd2(NewBPDirPredM),
+    .wd2(NewBPDirM),
     .we2(BranchM),
     .bwe2(1'b1));
 
-  flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, BPDirPredF, BPDirPredD);
-  flopenrc #(2) PredictionRegE(clk, reset,  FlushE, ~StallE, BPDirPredD, BPDirPredE);
+  flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, BPDirF, BPDirD);
+  flopenrc #(2) PredictionRegE(clk, reset,  FlushE, ~StallE, BPDirD, BPDirE);
 
-  satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(BPDirPredE), .NewState(NewBPDirPredE));
-  flopenrc #(2) NewPredictionRegM(clk, reset,  FlushM, ~StallM, NewBPDirPredE, NewBPDirPredM);
+  satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(BPDirE), .NewState(NewBPDirE));
+  flopenrc #(2) NewPredictionRegM(clk, reset,  FlushM, ~StallM, NewBPDirE, NewBPDirM);
 
-  assign BPDirPredWrongE = PCSrcE != BPDirPredE[1] & BranchE;
+  assign BPDirWrongE = PCSrcE != BPDirE[1] & BranchE;
 
   assign GHRNext = BranchM ? {PCSrcM, GHR[k-1:1]} : GHR;
   flopenr #(k) GHRReg(clk, reset, ~StallM & ~FlushM & BranchM, GHRNext, GHR);

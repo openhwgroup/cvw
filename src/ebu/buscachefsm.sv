@@ -128,7 +128,6 @@ module buscachefsm #(
   assign CacheAccess = CurrState == CACHE_FETCH | CurrState == CACHE_WRITEBACK;
 
   assign BusStall = (CurrState == ADR_PHASE & ((|BusRW) | (|CacheBusRW) | BusCMOZero)) |
-                    //(CurrState == DATA_PHASE & ~BusRW[0]) |  // *** replace the next line with this.  Fails uart test but i think it's a test problem not a hardware problem.
                     (CurrState == DATA_PHASE) | 
                     (CurrState == ATOMIC_PHASE) |
                     (CurrState == ATOMIC_READ_DATA_PHASE) |
