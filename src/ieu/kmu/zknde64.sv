@@ -48,8 +48,8 @@ module zknde64 import cvw::*; #(parameter cvw_t P) (
     aessbox32 sbox(Sbox0In, Sbox0Out);                       // Substitute bytes of value obtained for tmp2 using Rijndael sbox
 
     // Both ZKND and ZKNE support aes64ks1i and aes64ks2 instructions
-    aes64ks1i aes64ks1i(.round, .rs1(A), .Sbox0Out, .SboxKIn, .result(aes64ks1iRes));
-    aes64ks2  aes64ks2(.rs2(B), .rs1(A), .result(aes64ks2Res));
+    aes64ks1i aes64ks1i(.round, .rs1(A[63:32]), .Sbox0Out, .SboxKIn, .result(aes64ks1iRes));
+    aes64ks2  aes64ks2(.rs2(B), .rs1(A[63:32]), .result(aes64ks2Res));
    
     // Choose among decrypt, encrypt, key schedule 1, key schedule 2 results
     mux4 #(64) zkndmux(aes64dRes, aes64eRes, aes64ks1iRes, aes64ks2Res, ZKNSelect[1:0], ZKNDEResult);

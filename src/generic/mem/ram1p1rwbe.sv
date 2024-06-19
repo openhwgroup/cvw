@@ -44,11 +44,9 @@ module ram1p1rwbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=64, WIDTH=44, PRE
   output logic [WIDTH-1:0]        dout
 );
 
-  bit [WIDTH-1:0]               RAM[DEPTH-1:0];
-
-  // ***************************************************************************
+  ///////////////////////////////////////////////////////////////////////////////
   // TRUE SRAM macro
-  // ***************************************************************************
+  ///////////////////////////////////////////////////////////////////////////////
   if ((USE_SRAM == 1) & (WIDTH == 128) & (DEPTH == 64)) begin // Cache data subarray
     genvar index;
     // 64 x 128-bit SRAM
@@ -79,11 +77,11 @@ module ram1p1rwbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=64, WIDTH=44, PRE
       .A(addr), .D(din), 
       .BWEB(~BitWriteMask), .Q(dout));     
     
-    // ***************************************************************************
+    ///////////////////////////////////////////////////////////////////////////////
     // READ first SRAM model
-    // ***************************************************************************
+    ///////////////////////////////////////////////////////////////////////////////
   end else begin: ram
-    integer i;
+    bit [WIDTH-1:0] RAM[DEPTH-1:0];
 
     if (PRELOAD_ENABLED) begin
       initial begin
@@ -103,11 +101,13 @@ module ram1p1rwbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=64, WIDTH=44, PRE
     // Write divided into part for bytes and part for extra msbs
     // Questa sim version 2022.3_2 does not allow multiple drivers for RAM when using always_ff.
     // Therefore these always blocks use the older always @(posedge clk) 
-    if(WIDTH >= 8) 
+    if(WIDTH >= 8) begin
+      integer i;
       always @(posedge clk) 
         if (ce & we) 
           for(i = 0; i < WIDTH/8; i++) 
             if(bwe[i]) RAM[addr][i*8 +: 8] <= din[i*8 +: 8];
+    end
   
     if (WIDTH%8 != 0) // handle msbs if width not a multiple of 8
       always @(posedge clk) 

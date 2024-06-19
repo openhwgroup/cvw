@@ -9,7 +9,7 @@
 //          cache line boundaries or if instruction address without a cache crosses
 //          XLEN/8 boundary.
 //
-// Documentation: RISC-V System on Chip Design Chapter 11 (Figure 11.5)
+// Documentation: RISC-V System on Chip Design
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

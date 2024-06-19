@@ -112,7 +112,6 @@ make install
 # Verilator needs to be built from scratch to get the latest version
 # apt-get install verilator installs version 4.028 as of 6/8/23
 sudo apt-get install -y perl g++ ccache help2man libgoogle-perftools-dev numactl perl-doc zlib1g 
-sudo apt-get install -y perl g++ ccache help2man libgoogle-perftools-dev numactl perl-doc zlib1g 
 cd $RISCV
 git clone https://github.com/verilator/verilator   # Only first time
 # unsetenv VERILATOR_ROOT  # For csh; ignore error if on bash

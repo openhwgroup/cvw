@@ -44,7 +44,7 @@ module gshare import cvw::*; #(parameter cvw_t P,
   input logic             BPBranchF, BranchD, BranchE, BranchM, BranchW, PCSrcE
 );
 
-  logic                   MatchF, MatchD, MatchE, MatchM, MatchW;
+  logic                   MatchD, MatchE, MatchM, MatchW;
   logic                   MatchX;
 
   logic [1:0]             PHTBPDirF, BPDirD, BPDirE, FwdNewBPDirF;

@@ -6,7 +6,7 @@
 //
 // Purpose: Determine number of cycles for divsqrt
 // 
-// Documentation: RISC-V System on Chip Design Chapter 13
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -28,9 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fdivsqrtcycles import cvw::*;  #(parameter cvw_t P) (
-  input  logic [P.FMTBITS-1:0] FmtE,
   input  logic [P.LOGFLEN-1:0] Nf,          // Number of fractional bits in selected format
-  input  logic                 SqrtE,
   input  logic                 IntDivE,
   input  logic [P.DIVBLEN-1:0] IntResultBitsE,    
   output logic [P.DURLEN-1:0]  CyclesE

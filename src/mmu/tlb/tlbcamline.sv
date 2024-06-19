@@ -9,7 +9,7 @@
 // Purpose: CAM line for the translation lookaside buffer (TLB)
 //          Determines whether a virtual page number matches the stored key.
 // 
-// Documentation: RISC-V System on Chip Design Chapter 8
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

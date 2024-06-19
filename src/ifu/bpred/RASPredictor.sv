@@ -7,7 +7,7 @@
 //
 // Purpose: 2 bit saturating counter predictor with parameterized table depth.
 // 
-// Documentation: RISC-V System on Chip Design Chapter 10 (Figure ***)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -31,7 +31,7 @@
 module RASPredictor import cvw::*;  #(parameter cvw_t P)(
   input  logic             clk,
   input  logic             reset, 
-  input  logic             StallF, StallD, StallE, StallM, FlushD, FlushE, FlushM,
+  input  logic             StallD, StallE, StallM, FlushD, FlushE, FlushM,
   input  logic             BPReturnWrongD,                      // Prediction class is wrong
   input  logic             ReturnD,
   input  logic             ReturnE, CallE,                  // Instr class

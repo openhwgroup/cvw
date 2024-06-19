@@ -7,7 +7,7 @@
 //
 // Purpose: RISC-V Arithmetic/Logic Unit Bit-Manipulation Extension and K extension
 //
-// Documentation: RISC-V System on Chip Design Chapter 15
+// Documentation: RISC-V System on Chip Design
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -49,7 +49,6 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
   logic [P.XLEN-1:0]        ZBBResult;               // ZBB Result
   logic [P.XLEN-1:0]        ZBCResult;               // ZBC Result   
   logic [P.XLEN-1:0] 	      ZBKBResult;              // ZBKB Result
-  logic [P.XLEN-1:0]        ZBKCResult;              // ZBKC Result
   logic [P.XLEN-1:0]        ZBKXResult;              // ZBKX Result      
   logic [P.XLEN-1:0]        ZKNHResult;              // ZKNH Result
   logic [P.XLEN-1:0]        ZKNDEResult;             // ZKNE or ZKND Result   
@@ -93,7 +92,7 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
 
   // ZBC and ZBKCUnit
   if (P.ZBC_SUPPORTED | P.ZBKC_SUPPORTED) begin: zbc
-    zbc #(P) ZBC(.A(ABMU), .RevA, .B(BBMU), .Funct3, .ZBCResult);
+    zbc #(P) ZBC(.A(ABMU), .RevA, .B(BBMU), .Funct3(Funct3[1:0]), .ZBCResult);
   end else assign ZBCResult = '0;
 
   // ZBB Unit
@@ -108,7 +107,7 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
 
   // ZBKB Unit
   if (P.ZBKB_SUPPORTED) begin: zbkb
-    zbkb #(P.XLEN) ZBKB(.A(ABMU), .B(BBMU), .Funct3, .ZBKBSelect(ZBBSelect[2:0]), .ZBKBResult);
+    zbkb #(P.XLEN) ZBKB(.A(ABMU), .B(BBMU[P.XLEN/2-1:0]), .Funct3, .ZBKBSelect(ZBBSelect[2:0]), .ZBKBResult);
   end else assign ZBKBResult = '0;
 
   // ZBKX Unit
@@ -125,7 +124,7 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
   // ZKNH Unit
   if (P.ZKNH_SUPPORTED) begin: zknh
     if (P.XLEN == 32) zknh32 ZKNH32(.A(ABMU), .B(BBMU), .ZKNHSelect(ZBBSelect), .ZKNHResult(ZKNHResult));
-    else              zknh64 ZKNH64(.A(ABMU), .B(BBMU), .ZKNHSelect(ZBBSelect), .ZKNHResult(ZKNHResult));
+    else              zknh64 ZKNH64(.A(ABMU),           .ZKNHSelect(ZBBSelect), .ZKNHResult(ZKNHResult));
   end else assign ZKNHResult = '0;
 
   // Result Select Mux

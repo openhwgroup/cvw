@@ -6,7 +6,7 @@
 //
 // Purpose: Memory management unit, including TLB, PMA, PMP
 // 
-// Documentation: RISC-V System on Chip Design Chapter 8
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -71,7 +71,6 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   logic                        PMPStoreAmoAccessFaultM;  // Store or AMO access fault from PMP
   logic                        DataMisalignedM;          // load or store misaligned
   logic                        Translate;                // Translation occurs when virtual memory is active and DisableTranslation is off
-  logic                        TLBHit;                   // Hit in TLB
   logic                        TLBPageFault;             // Page fault from TLB
   logic                        ReadNoAmoAccessM;         // Read that is not part of atomic operation causes Load faults.  Otherwise StoreAmo faults
   logic [1:0]                  PBMemoryType;             // PBMT field of PTE during TLB hit, or 00 otherwise
@@ -90,14 +89,15 @@ module mmu import cvw::*;  #(parameter cvw_t P,
           .VAdr(VAdr[P.XLEN-1:0]), .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE,
           .PrivilegeModeW, .ReadAccess, .WriteAccess, .CMOpM,
           .DisableTranslation, .PTE, .PageTypeWriteVal,
-          .TLBWrite, .TLBFlush, .TLBPAdr, .TLBMiss, .TLBHit, 
+          .TLBWrite, .TLBFlush, .TLBPAdr, .TLBMiss,
           .Translate, .TLBPageFault, .UpdateDA, .PBMemoryType);
   end else begin:tlb // just pass address through as physical
     assign Translate    = 1'b0;
     assign TLBMiss      = 1'b0;
-    assign TLBHit       = 1'b1; // *** is this necessary
     assign TLBPageFault = 1'b0;
     assign PBMemoryType = 2'b00;
+    assign UpdateDA     = 1'b0;
+    assign TLBPAdr      = '0;
   end
 
   // If translation is occuring, select translated physical address from TLB

@@ -6,7 +6,7 @@
 //
 // Purpose: FMA significand adder
 // 
-// Documentation: RISC-V System on Chip Design Chapter 13 (Figure 13.11)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

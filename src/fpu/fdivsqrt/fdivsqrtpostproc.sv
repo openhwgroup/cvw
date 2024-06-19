@@ -6,7 +6,7 @@
 //
 // Purpose: Divide/Square root postprocessing
 // 
-// Documentation: RISC-V System on Chip Design Chapter 13
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -131,5 +131,6 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
         W64M, FIntDivResultM);
     end else 
       assign FIntDivResultM = IntDivResultM[P.XLEN-1:0];
-  end
+  end else
+    assign FIntDivResultM = '0;
 endmodule

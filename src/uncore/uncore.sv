@@ -7,7 +7,7 @@
 // Purpose: System-on-Chip components outside the core
 //          Memories, peripherals, external bus control
 // 
-// Documentation: RISC-V System on Chip Design Chapter 15 (and Figure 6.20)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -75,11 +75,14 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   logic                        SDCIntM;
   
   logic                        PCLK, PRESETn, PWRITE, PENABLE;
-  logic [4:0]                  PSEL, PREADY;
+  logic [4:0]                  PSEL;
   logic [31:0]                 PADDR;
   logic [P.XLEN-1:0]           PWDATA;
   logic [P.XLEN/8-1:0]         PSTRB;
+  /* verilator lint_off UNDRIVEN */ // undriven in rv32e configuration
+  logic [4:0]                  PREADY;
   logic [4:0][P.XLEN-1:0]      PRDATA;
+  /* verilator lint_on UNDRIVEN */
   logic [P.XLEN-1:0]           HREADBRIDGE;
   logic                        HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
 
@@ -106,13 +109,13 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
     ram_ahb #(.P(P), .BASE(P.UNCORE_RAM_BASE), .RANGE(P.UNCORE_RAM_RANGE), .PRELOAD(P.UNCORE_RAM_PRELOAD)) ram (
       .HCLK, .HRESETn, .HSELRam, .HADDR, .HWRITE, .HREADY, 
       .HTRANS, .HWDATA, .HWSTRB, .HREADRam, .HRESPRam, .HREADYRam);
-  end
+  end else assign {HREADRam, HRESPRam, HREADYRam} = '0;
 
  if (P.BOOTROM_SUPPORTED) begin : bootrom
     rom_ahb #(.P(P), .BASE(P.BOOTROM_BASE), .RANGE(P.BOOTROM_RANGE), .PRELOAD(P.BOOTROM_PRELOAD))
     bootrom(.HCLK, .HRESETn, .HSELRom(HSELBootRom), .HADDR, .HREADY, .HTRANS, 
       .HREADRom(HREADBootRom), .HRESPRom(HRESPBootRom), .HREADYRom(HREADYBootRom));
-  end
+  end else assign {HREADBootRom, HRESPBootRom, HREADYBootRom} = '0;
 
   // memory-mapped I/O peripherals
   if (P.CLINT_SUPPORTED == 1) begin : clint

@@ -7,7 +7,7 @@
 //
 // Purpose: RISC-V ZBC top-level unit
 //
-// Documentation: RISC-V System on Chip Design Chapter 15
+// Documentation: RISC-V System on Chip Design
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -30,7 +30,7 @@
 
 module zbc import cvw::*; #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] A, RevA, B,       // Operands
-  input  logic [2:0]        Funct3,           // Indicates operation to perform
+  input  logic [1:0]        Funct3,           // Indicates operation to perform
   output logic [P.XLEN-1:0] ZBCResult);       // ZBC result
 
   logic [P.XLEN-1:0] ClmulResult, RevClmulResult;

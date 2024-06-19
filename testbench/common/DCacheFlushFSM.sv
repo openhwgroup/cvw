@@ -64,13 +64,13 @@ module DCacheFlushFSM import cvw::*; #(parameter cvw_t P)
           .loglinebytelen(loglinebytelen), .sramlen(sramlen))
           copyShadow(.clk,
           .start,
-          .tag(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.RAM[index][P.PA_BITS-1-tagstart:0]),
+          .tag(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.ram.RAM[index][P.PA_BITS-1-tagstart:0]),
           .valid(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].ValidBits[index]),
           .dirty(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].DirtyBits[index]),
                            // these dirty bit selections would be needed if dirty is moved inside the tag array.
           //.dirty(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].dirty.DirtyMem.RAM[index]),
           //.dirty(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.RAM[index][P.PA_BITS+tagstart]),
-          .data(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].word[cacheWord].wordram.CacheDataMem.RAM[index]),
+          .data(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].word[cacheWord].wordram.CacheDataMem.ram.RAM[index]),
           .index(index),
           .cacheWord(cacheWord),
           .CacheData(CacheData[way][index][cacheWord]),
@@ -97,7 +97,7 @@ module DCacheFlushFSM import cvw::*; #(parameter cvw_t P)
                   // see https://verificationacademy.com/forums/systemverilog/range-must-be-bounded-constant-expressions
                   //ShadowRAM[CacheAdr[j][i][k] >> $clog2(P.XLEN/8)] = cacheline[P.XLEN*(k+1)-1:P.XLEN*k];
                   /* verilator lint_off WIDTHTRUNC */
-                  // *** lint error: address trunc warning for shadowram index
+                  // avoid lint error: address trunc warning for shadowram index
                   ShadowRAM[(CacheAdr[j][i][l] >> $clog2(P.XLEN/8)) + {{{P.PA_BITS-32}{1'b0}}, k}] = CacheData[j][i][l][P.XLEN*k +: P.XLEN];
                   /* verilator lint_on WIDTHTRUNC */
                 end
