@@ -1048,7 +1048,6 @@ module fpgaTop
      .sys_rst(resetn),    // omg. this is active low?!?!?? 
      .mmcm_locked(mmcm_locked),
 
-     // *** What are these? 
      .app_sr_req(1'b0),  // reserved command
      .app_ref_req(1'b0), // refresh command
      .app_zq_req(1'b0),  // recalibrate command
