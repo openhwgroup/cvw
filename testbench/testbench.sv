@@ -438,12 +438,12 @@ module testbench;
         // clear signature to prevent contamination from previous tests
         if (!begin_signature_addr)
           $display("begin_signature addr not found in %s", ProgramLabelMapFile);
-        else if (TEST != "embench") begin   // *** quick hack for embench.  need a better long term solution
+        else if (TEST != "embench") begin 
           CheckSignature(pathname, tests[test], riscofTest, begin_signature_addr, errors);
           if(errors > 0) totalerrors = totalerrors + 1;
         end
       end
-      test = test + 1; // *** this probably needs to be moved.
+      test = test + 1; 
       if (test == tests.size()) begin
         if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
         else $display("FAIL: %d test programs had errors", totalerrors);
@@ -568,8 +568,8 @@ module testbench;
   end
 
   if(P.SDC_SUPPORTED) begin : sdcard
-    // *** fix later
-/* -----\/----- EXCLUDED -----\/-----
+    // JP: Add back sd card when sd card AHB implementation done
+    /* -----\/----- EXCLUDED -----\/-----
     sdModel sdcard
       (.sdClk(SDCCLK),
        .cmd(SDCCmd), 
@@ -579,7 +579,7 @@ module testbench;
     assign SDCCmdIn = SDCCmd;
     assign SDCDat = sd_dat_reg_t ? sd_dat_reg_o : sd_dat_i;
     assign SDCDatIn = SDCDat;
- -----/\----- EXCLUDED -----/\----- */
+    -----/\----- EXCLUDED -----/\----- */
     assign SDCIntr = 1'b0;
   end else begin
     assign SDCIntr = 1'b0;
@@ -632,10 +632,8 @@ module testbench;
     loggers (clk, reset, DCacheFlushStart, DCacheFlushDone, memfilename, TEST);
 
   // track the current function or global label
-  if (DEBUG > 0 | ((PrintHPMCounters | BPRED_LOGGER) & P.ZICNTR_SUPPORTED)) begin : FunctionName
-    FunctionName #(P) FunctionName(.reset(reset_ext | TestBenchReset),
-			      .clk(clk), .ProgramAddrMapFile(ProgramAddrMapFile), .ProgramLabelMapFile(ProgramLabelMapFile));
-  end
+   FunctionName #(P) FunctionName(.reset(reset_ext | TestBenchReset),
+     .clk(clk), .ProgramAddrMapFile(ProgramAddrMapFile), .ProgramLabelMapFile(ProgramLabelMapFile));
 
   // Append UART output to file for tests
   if (P.UART_SUPPORTED) begin: uart_logger
@@ -650,21 +648,14 @@ module testbench;
   end
 
   // Termination condition
-  // terminate on a specific ECALL after li x3,1 for old Imperas tests,  *** remove this when old imperas tests are removed
-  // or sw	gp,-56(t0) for new Imperas tests
-  // or sd gp, -56(t0) 
-  // or on a jump to self infinite loop (6f) for RISC-V Arch tests
-  logic ecf; // remove this once we don't rely on old Imperas tests with Ecalls
-  if (P.ZICSR_SUPPORTED) assign ecf = dut.core.priv.priv.EcallFaultM;
-  else                  assign ecf = 0;
+  // Terminate on 
+  // 1. jump to self loop (0x0000006f)
+  // 2. a store word writes to the address "tohost"
+  // 3. or PC is stuck at 0
   always_comb begin
-  	TestComplete = ecf & 
-			    (dut.core.ieu.dp.regf.rf[3] == 1 | 
-			     (dut.core.ieu.dp.regf.we3 & 
-			      dut.core.ieu.dp.regf.a3 == 3 & 
-			      dut.core.ieu.dp.regf.wd3 == 1)) |
-           ((InstrM == 32'h6f | InstrM == 32'hfc32a423 | InstrM == 32'hfc32a823) & dut.core.ieu.c.InstrValidM ) |
-           ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"] & dut.core.lsu.IEUAdrM != 0) & InstrMName == "SW" );
+    TestComplete = ((InstrM == 32'h6f) & dut.core.InstrValidM ) |
+		   ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"] & dut.core.lsu.IEUAdrM != 0) & InstrMName == "SW" ) | 
+    (FunctionName.PCM == 4 & dut.core.ieu.c.InstrValidM);
   end
   
   DCacheFlushFSM #(P) DCacheFlushFSM(.clk, .start(DCacheFlushStart), .done(DCacheFlushDone));
