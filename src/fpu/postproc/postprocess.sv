@@ -134,6 +134,7 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
       assign OutFmt = IntToFp|~CvtOp ? Fmt : (OpCtrl[1:0] == P.FMT); 
   else if (P.FPSIZES == 3 | P.FPSIZES == 4) 
       assign OutFmt = IntToFp|~CvtOp ? Fmt : OpCtrl[1:0]; 
+  else assign OutFmt = 0; // FPSIZES = 1
 
   ///////////////////////////////////////////////////////////////////////////////
   // Normalization
