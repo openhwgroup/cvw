@@ -7,7 +7,7 @@
 //
 // Purpose: Top level bit manipulation instruction decoder
 // 
-// Documentation: RISC-V System on Chip Design Chapter 15
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -31,11 +31,8 @@
 module bmuctrl import cvw::*;  #(parameter cvw_t P) (
   input  logic        clk, reset,
   // Decode stage control signals
-  input  logic        StallD, FlushD,          // Stall, flush Decode stage
   input  logic [31:0] InstrD,                  // Instruction in Decode stage
   input  logic        ALUOpD,                  // Regular ALU Operation
-  output logic [3:0]  BSelectD,                // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding in Decode stage
-  output logic [3:0]  ZBBSelectD,              // ZBB mux select signal in Decode stage NOTE: do we need this in decode?
   output logic        BRegWriteD,              // Indicates if it is a R type B instruction in Decode Stage
   output logic        BALUSrcBD,               // Indicates if it is an I/IW (non auipc) type B instruction in Decode Stage
   output logic        BW64D,                   // Indiciates if it is a W type B instruction in Decode Stage
@@ -46,7 +43,6 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
   output logic [2:0]  ALUSelectD,              // ALU select
   output logic [3:0]  BSelectE,                // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding
   output logic [3:0]  ZBBSelectE,              // ZBB mux select signal
-  output logic        BRegWriteE,              // Indicates if it is a R type B instruction in Execute
   output logic [2:0]  BALUControlE,            // ALU Control signals for B instructions in Execute Stage
   output logic        BMUActiveE               // Bit manipulation instruction being executed
 );
@@ -61,6 +57,8 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
   logic [2:0] BALUControlD;                    // ALU Control signals for B instructions
   logic [2:0] BALUSelectD;                     // ALU Mux select signal in Decode Stage for BMU operations
   logic       BALUOpD;                         // Indicates if it is an ALU B instruction in Decode Stage
+  logic [3:0] BSelectD;                        // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding in Decode stage
+  logic [3:0] ZBBSelectD;                      // ZBB mux select signal in Decode stage
 
   `define BMUCTRLW 20
 
@@ -98,10 +96,6 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
                                   BMUControlsD = `BMUCTRLW'b000_0010_0001_1_1_0_1_0_0_0_0_0;  // sign extend instruction
                                 else if ((Rs2D[4:2]==3'b000) & ~(Rs2D[1] & Rs2D[0]))
                                   BMUControlsD = `BMUCTRLW'b000_0010_0000_1_1_0_1_0_0_0_0_0;  // count instruction
-//        // coverage off: This case can't occur in RV64
-//        17'b0110011_0000100_100: if (P.XLEN == 32)
-//                                  BMUControlsD = `BMUCTRLW'b000_10_001_1_1_0_1_0_0_0_0_0;  // zexth (rv32)
-//        // coverage on
         17'b0010011_0010100_101: if (Rs2D[4:0] == 5'b00111)
                                   BMUControlsD = `BMUCTRLW'b000_0010_0010_1_1_0_1_0_0_0_0_0;  // orc.b
         17'b0110011_0000101_110: BMUControlsD = `BMUCTRLW'b000_0010_0111_1_0_0_1_1_0_0_0_0;  // max
@@ -124,12 +118,13 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
     if (P.ZBC_SUPPORTED)
       casez({OpD, Funct7D, Funct3D})
         17'b0110011_0000101_010: BMUControlsD = `BMUCTRLW'b000_0011_0001_1_0_0_1_0_0_0_0_0;  // clmulr
-        17'b0110011_0000101_0??: BMUControlsD = `BMUCTRLW'b000_0011_0000_1_0_0_1_0_0_0_0_0;  // ZBC instruction
+        17'b0110011_0000101_0??: BMUControlsD = `BMUCTRLW'b000_0011_0000_1_0_0_1_0_0_0_0_0;  // clmul/clmulh
       endcase
-    if (P.ZBKC_SUPPORTED | P.ZBC_SUPPORTED) begin   
+    if (P.ZBKC_SUPPORTED) begin   
       casez({OpD, Funct7D, Funct3D})
-        17'b0110011_0000101_001: BMUControlsD = `BMUCTRLW'b000_0011_0000_1_0_0_1_0_0_0_0_0;  // clmul
-        17'b0110011_0000101_011: BMUControlsD = `BMUCTRLW'b000_0011_0001_1_0_0_1_0_0_0_0_0;  // clmulh
+        17'b0110011_0000101_0??: BMUControlsD = `BMUCTRLW'b000_0011_0000_1_0_0_1_0_0_0_0_0;  // clmul/clmulh
+        //  17'b0110011_0000101_001: BMUControlsD = `BMUCTRLW'b000_0011_0000_1_0_0_1_0_0_0_0_0;  // clmul
+        // 17'b0110011_0000101_011: BMUControlsD = `BMUCTRLW'b000_0011_0001_1_0_0_1_0_0_0_0_0;  // clmulh
       endcase
     end
 
@@ -288,5 +283,5 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
   assign ALUSelectD = BALUOpD ? BALUSelectD : (ALUOpD ? Funct3D : 3'b000);
 
   // BMU Execute stage pipieline control register
-  flopenrc #(13) controlregBMU(clk, reset, FlushE, ~StallE, {BSelectD, ZBBSelectD, BRegWriteD, BALUControlD, ~IllegalBitmanipInstrD}, {BSelectE, ZBBSelectE, BRegWriteE, BALUControlE, BMUActiveE});
+  flopenrc #(12) controlregBMU(clk, reset, FlushE, ~StallE, {BSelectD, ZBBSelectD, BALUControlD, ~IllegalBitmanipInstrD}, {BSelectE, ZBBSelectE, BALUControlE, BMUActiveE});
 endmodule

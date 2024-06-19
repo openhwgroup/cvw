@@ -7,7 +7,7 @@
 //
 // Purpose: RISC-V Arithmetic/Logic Unit
 //
-// Documentation: RISC-V System on Chip Design Chapter 4 (Figure 4.4)
+// Documentation: RISC-V System on Chip Design
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -109,7 +109,9 @@ module alu import cvw::*; #(parameter cvw_t P) (
   else              assign PreALUResult = FullResult;
 
   // Bit manipulation muxing
-  if (P.ZBC_SUPPORTED | P.ZBS_SUPPORTED | P.ZBA_SUPPORTED | P.ZBB_SUPPORTED | P.ZBKB_SUPPORTED | P.ZBKC_SUPPORTED | P.ZBKX_SUPPORTED | P.ZKND_SUPPORTED | P.ZKNE_SUPPORTED | P.ZKNH_SUPPORTED) begin : bitmanipalu
+  if (P.ZBC_SUPPORTED  | P.ZBS_SUPPORTED  | P.ZBA_SUPPORTED  | P.ZBB_SUPPORTED |
+      P.ZBKB_SUPPORTED | P.ZBKC_SUPPORTED | P.ZBKX_SUPPORTED | 
+      P.ZKND_SUPPORTED | P.ZKNE_SUPPORTED | P.ZKNH_SUPPORTED) begin : bitmanipalu
     bitmanipalu #(P) balu(
       .A, .B, .W64, .BSelect, .ZBBSelect, .BMUActive,
       .Funct3, .Funct7, .Rs2E, .LT,.LTU, .BALUControl, .PreALUResult, .FullResult,

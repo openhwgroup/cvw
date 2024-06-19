@@ -6,7 +6,7 @@
 //
 // Purpose: Division shift calculation
 // 
-// Documentation: RISC-V System on Chip Design Chapter 13
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -28,10 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module divshiftcalc import cvw::*;  #(parameter cvw_t P) (
-  input  logic [P.DIVb:0]              DivUm,              // divsqrt significand
   input  logic [P.NE+1:0]              DivUe,              // divsqrt exponent
   output logic [P.LOGNORMSHIFTSZ-1:0]  DivShiftAmt,        // divsqrt shift amount
-  output logic [P.NORMSHIFTSZ-1:0]     DivShiftIn,         // divsqrt shift input
   output logic                         DivResSubnorm,      // is the divsqrt result subnormal
   output logic                         DivSubnormShiftPos  // is the subnormal shift amount positive
 );
@@ -68,6 +66,4 @@ module divshiftcalc import cvw::*;  #(parameter cvw_t P) (
   assign DivSubnormShiftAmt = DivSubnormShiftPos ? DivSubnormShift[P.LOGNORMSHIFTSZ-1:0] : '0;
   assign DivShiftAmt        = DivResSubnorm ? DivSubnormShiftAmt : NormShift;
 
-  // pre-shift the divider result for normalization
-  assign DivShiftIn = {{P.NF{1'b0}}, DivUm, {P.NORMSHIFTSZ-P.DIVb-1-P.NF{1'b0}}};
 endmodule

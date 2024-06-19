@@ -8,7 +8,7 @@
 //   See FE310-G002-Manual-v19p05 for specifications
 //   No interrupts, drive strength, or pull-ups supported
 // 
-// Documentation: RISC-V System on Chip Design Chapter 15
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -82,11 +82,10 @@ module gpio_apb import cvw::*;  #(parameter cvw_t P) (
   else              assign PRDATA = Dout;    
 
   // register access
-  always_ff @(posedge PCLK, negedge PRESETn)
-    if (~PRESETn) begin // asynch reset
+  always_ff @(posedge PCLK)
+    if (~PRESETn) begin
       input_en  <= '0;
       output_en <= '0;
-      // *** synch reset not yet implemented [DH: can we delete this comment?  Check if a sync reset is required]
       output_val <= '0;
       rise_ie    <= '0;
       rise_ip    <= '0;

@@ -7,7 +7,7 @@
 //
 // Purpose: RISC-V ZBB top level unit
 //
-// Documentation: RISC-V System on Chip Design Chapter 15
+// Documentation: RISC-V System on Chip Design
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -46,7 +46,7 @@ module zbb #(parameter WIDTH=32) (
   mux2 #(1) ltmux(LT, LTU, BUnsigned , lt);
   cnt #(WIDTH) cnt(.A, .RevA, .B(B[1:0]), .W64, .CntResult);
   byteop #(WIDTH) bu(.A, .ByteSelect(B[0]), .ByteResult);
-  ext #(WIDTH) ext(.A, .ExtSelect({~B[2], {B[2] & B[0]}}), .ExtResult);
+  ext #(WIDTH) ext(.A(A[15:0]), .ExtSelect({~B[2], {B[2] & B[0]}}), .ExtResult);
 
   // ZBBSelect[2] differentiates between min(u) vs max(u) instruction
   mux2 #(WIDTH) minmaxmux(B, A, ZBBSelect[2]^lt, MinMaxResult);

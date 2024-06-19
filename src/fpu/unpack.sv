@@ -6,7 +6,7 @@
 //
 // Purpose: unpack X, Y, Z floating-point inputs
 // 
-// Documentation: RISC-V System on Chip Design Chapter 13
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -46,23 +46,21 @@ module unpack import cvw::*;  #(parameter cvw_t P) (
   output logic [P.LOGFLEN-1:0]    Nf                    // Number of fractional bits
 );
 
-  logic XExpNonZero, YExpNonZero, ZExpNonZero;          // is the exponent of XYZ non-zero
-  logic XFracZero, YFracZero, ZFracZero;                // is the fraction zero
   logic YExpMax, ZExpMax;                               // is the exponent all 1s
 
   unpackinput #(P) unpackinputX (.A(X), .Fmt, .Sgn(Xs), .Exp(Xe), .Man(Xm), .En(XEn), .FPUActive,
-                          .NaN(XNaN), .SNaN(XSNaN), .ExpNonZero(XExpNonZero),
-                          .Zero(XZero), .Inf(XInf), .ExpMax(XExpMax), .FracZero(XFracZero), 
+                          .NaN(XNaN), .SNaN(XSNaN),
+                          .Zero(XZero), .Inf(XInf), .ExpMax(XExpMax),
                           .Subnorm(XSubnorm), .PostBox(XPostBox));
 
   unpackinput #(P) unpackinputY (.A(Y), .Fmt, .Sgn(Ys), .Exp(Ye), .Man(Ym), .En(YEn), .FPUActive,
-                          .NaN(YNaN), .SNaN(YSNaN), .ExpNonZero(YExpNonZero),
-                          .Zero(YZero), .Inf(YInf), .ExpMax(YExpMax), .FracZero(YFracZero), 
+                          .NaN(YNaN), .SNaN(YSNaN),
+                          .Zero(YZero), .Inf(YInf), .ExpMax(YExpMax),
                           .Subnorm(), .PostBox());
 
   unpackinput #(P) unpackinputZ (.A(Z), .Fmt, .Sgn(Zs), .Exp(Ze), .Man(Zm), .En(ZEn), .FPUActive,
-                          .NaN(ZNaN), .SNaN(ZSNaN), .ExpNonZero(ZExpNonZero),
-                          .Zero(ZZero), .Inf(ZInf), .ExpMax(ZExpMax), .FracZero(ZFracZero), 
+                          .NaN(ZNaN), .SNaN(ZSNaN),
+                          .Zero(ZZero), .Inf(ZInf), .ExpMax(ZExpMax),
                           .Subnorm(), .PostBox());
  
   // look up bias and fractional bits for the given format

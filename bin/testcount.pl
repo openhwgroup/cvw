@@ -34,6 +34,10 @@ for dir in `ls ${WALLY}/addins/riscv-arch-test/riscv-test-suite/rv*/*`
 do
     dir=$(echo $dir | cut -d':' -f1)
     echo $dir
+    if [ $dir == "src" ]
+    then
+        continue
+    fi
     for fn in `ls $dir/src/*.S`
     do
         result=`grep 'inst_' $fn | tail -n 1`

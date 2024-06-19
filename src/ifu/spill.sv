@@ -9,7 +9,7 @@
 //          cache line boundaries or if instruction address without a cache crosses
 //          XLEN/8 boundary.
 //
-// Documentation: RISC-V System on Chip Design Chapter 11 (Figure 11.5)
+// Documentation: RISC-V System on Chip Design
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -33,7 +33,7 @@
 module spill import cvw::*;  #(parameter cvw_t P) (
   input logic               clk,               
   input logic               reset,
-  input logic               StallD, FlushD,
+  input logic               StallF, FlushD,
   input logic [P.XLEN-1:0]  PCF,               // 2 byte aligned PC in Fetch stage
   input logic [P.XLEN-1:2]  PCPlus4F,          // PCF + 4
   input logic [P.XLEN-1:0]  PCNextF,           // The next PCF
@@ -96,7 +96,7 @@ module spill import cvw::*;  #(parameter cvw_t P) (
     case (CurrState)
       STATE_READY: if (TakeSpillF)                NextState = STATE_SPILL;
                    else                           NextState = STATE_READY;
-      STATE_SPILL: if(StallD)                     NextState = STATE_SPILL;
+      STATE_SPILL: if(StallF)                     NextState = STATE_SPILL;
                    else                           NextState = STATE_READY;
       default:                                    NextState = STATE_READY;
     endcase

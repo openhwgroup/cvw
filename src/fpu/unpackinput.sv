@@ -6,7 +6,7 @@
 //
 // Purpose: unpack input: extract sign, exponent, significand, characteristics
 // 
-// Documentation: RISC-V System on Chip Design Chapter 13
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -39,8 +39,6 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
   output logic                     SNaN,       // is the number a signaling NaN
   output logic                     Zero,       // is the number zero
   output logic                     Inf,        // is the number infinity
-  output logic                     ExpNonZero, // is the exponent not zero
-  output logic                     FracZero,   // is the fraction zero
   output logic                     ExpMax,     // does In have the maximum exponent (NaN or Inf)
   output logic                     Subnorm,    // is the number subnormal
   output logic [P.FLEN-1:0]        PostBox     // Number reboxed correctly as a NaN
@@ -48,6 +46,8 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
 
   logic [P.NF-1:0] Frac;        // Fraction of XYZ
   logic            BadNaNBox;   // incorrectly NaN Boxed
+  logic            FracZero;    // is the fraction zero
+  logic            ExpNonZero;  // is the exponent non-zero
   logic [P.FLEN-1:0] In;
 
   // Gate input when FPU is not active to save power and simulation

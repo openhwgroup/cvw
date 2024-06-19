@@ -7,7 +7,7 @@
 //
 // Purpose: Storage and read/write access to data cache data, tag valid, dirty, and replacement.
 // 
-// Documentation: RISC-V System on Chip Design Chapter 7 (Figure 7.11)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -76,7 +76,6 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   logic                               ClearValidWay;
   logic                               SetDirtyWay;
   logic                               ClearDirtyWay;
-  logic                               SelNonHit;
   logic                               SelectedWay;
   logic                               InvalidateCacheDelay;
   

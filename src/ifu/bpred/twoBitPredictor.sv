@@ -54,7 +54,7 @@ module twoBitPredictor import cvw::*; #(parameter cvw_t P, parameter XLEN,
   assign IndexM = {PCM[k+1] ^ PCM[1], PCM[k:2]};  
 
 
-  ram2p1r1wbe #(.USE_SRAM(P.USE_SRAM), .DEPTH(2**k), .WIDTH(2)) PHT(.clk(clk),
+  ram2p1r1wbe #(.USE_SRAM(P.USE_SRAM), .DEPTH(2**k), .WIDTH(2)) BHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallW & ~FlushW),
     .ra1(IndexNextF),
     .rd1(BPDirPredF),

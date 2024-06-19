@@ -34,7 +34,7 @@ module aplusbeq0 #(parameter WIDTH = 8) (
   logic [WIDTH-1:0] orshift;
 
   // The sum is zero if the bitwise XOR is equal to the bitwise OR shifted left by 1, for all columns
-  // *** explain, cite book
+  // See J. A. Prabhu and G. Zyner, "167 MHz radix-8 divide and square root using overlapped radix-2 stages," IEEE Symp. Computer Arithmetic, 1995, pp. 155-162.
 
   assign x = a ^ b;
   assign orshift = {a[WIDTH-2:0] | b[WIDTH-2:0], 1'b0};

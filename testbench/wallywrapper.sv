@@ -26,14 +26,18 @@
 
 `include "config.vh"
 
-import cvw::*;
 
-module wallywrapper;
+
+module wallywrapper import cvw::*;(
+  input logic clk,
+  input logic reset_ext,
+  input logic SPIIn,
+  input logic SDCIntr
+);
  
 `include "parameter-defs.vh"
 
-  logic        clk;
-  logic        reset_ext, reset;
+  logic        reset;
 
   logic [P.AHBW-1:0]    HRDATAEXT;
   logic                HREADYEXT, HRESPEXT;
@@ -50,9 +54,8 @@ module wallywrapper;
 
   logic [31:0] GPIOIN, GPIOOUT, GPIOEN;
   logic        UARTSin, UARTSout;
-  logic        SPIIn, SPIOut;
+  logic        SPIOut;
   logic [3:0]  SPICS;
-  logic        SDCIntr;
 
   logic        HREADY;
   logic        HSELEXT;

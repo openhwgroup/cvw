@@ -44,13 +44,12 @@ module ram2p1r1wbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=1024, WIDTH=68) 
   output logic [WIDTH-1:0]         rd1
 );
 
-  bit [WIDTH-1:0]                 mem[DEPTH-1:0];
   localparam                      SRAMWIDTH = 32;
   localparam                      SRAMNUMSETS = SRAMWIDTH/WIDTH;      
 
-  // ***************************************************************************
-  // TRUE Smem macro
-  // ***************************************************************************
+  ///////////////////////////////////////////////////////////////////////////////
+  // TRUE SRAM macro
+  ///////////////////////////////////////////////////////////////////////////////
 
   if ((USE_SRAM == 1) & (WIDTH == 68) & (DEPTH == 1024)) begin
     
@@ -105,39 +104,35 @@ module ram2p1r1wbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=1024, WIDTH=68) 
       .QA(SRAMReadData),
       .QB());
 
-  end else begin
+  end else begin:ram
     
-    // ***************************************************************************
+    ///////////////////////////////////////////////////////////////////////////////
     // READ first SRAM model
-    // ***************************************************************************
-    integer i;
-/*    
-    initial begin // initialize memory for simulation only; not needed because done in the testbench now
-      integer j;
-      for (j=0; j < DEPTH; j++) 
-        mem[j] = '0;
-    end 
-*/
+    ///////////////////////////////////////////////////////////////////////////////
+
+    bit [WIDTH-1:0] RAM[DEPTH-1:0];
 
     // Read
     logic [$clog2(DEPTH)-1:0] ra1d;
     flopen #($clog2(DEPTH)) adrreg(clk, ce1, ra1, ra1d);
-    assign rd1 = mem[ra1d];
+    assign rd1 = RAM[ra1d];
     
     // Write divided into part for bytes and part for extra msbs
     // coverage off     
     //   when byte write enables are tied high, the last IF is always taken
-    if(WIDTH >= 8) 
+    if(WIDTH >= 8) begin
+      integer i;
       always @(posedge clk) 
         if (ce2 & we2) 
           for(i = 0; i < WIDTH/8; i++) 
-            if(bwe2[i]) mem[wa2][i*8 +: 8] <= wd2[i*8 +: 8];
+            if(bwe2[i]) RAM[wa2][i*8 +: 8] <= wd2[i*8 +: 8];
+    end
     // coverage on
   
     if (WIDTH%8 != 0) // handle msbs if width not a multiple of 8
       always @(posedge clk) 
         if (ce2 & we2 & bwe2[WIDTH/8])
-          mem[wa2][WIDTH-1:WIDTH-WIDTH%8] <= wd2[WIDTH-1:WIDTH-WIDTH%8];
+          RAM[wa2][WIDTH-1:WIDTH-WIDTH%8] <= wd2[WIDTH-1:WIDTH-WIDTH%8];
   end
   
 endmodule

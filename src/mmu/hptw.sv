@@ -10,7 +10,7 @@
 //
 // Purpose: Hardware Page Table Walker
 //
-// Documentation: RISC-V System on Chip Design Chapter 8
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -49,7 +49,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   input  logic              ITLBMissF,
   input  logic              DTLBMissM,
   input  logic              FlushW,
-  input  logic              InstrUpdateDAF,
+  input  logic              InstrUpdateDAF,  // *** unused; RT, can we delete or is this a bug?
   input  logic              DataUpdateDAM,
   output logic [P.XLEN-1:0] PTE,                    // page table entry to TLBs
   output logic [1:0]        PageType,               // page type to TLBs
@@ -105,7 +105,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   logic                     HPTWLoadPageFault, HPTWStoreAmoPageFault, HPTWInstrPageFault;
   logic                     HPTWLoadPageFaultDelay, HPTWStoreAmoPageFaultDelay, HPTWInstrPageFaultDelay;
   logic                     HPTWAccessFaultDelay;
-  logic                     TakeHPTWFault, TakeHPTWFaultDelay;
+  logic                     TakeHPTWFault;
   logic [P.XLEN-1:0]        ReadDataNoXM;
   logic                     PBMTFaultM;
   logic                     HPTWFaultM;
@@ -120,9 +120,9 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   assign HPTWStoreAmoPageFault   = PBMTFaultM & DTLBWalk & MemRWM[0];   
   assign HPTWInstrPageFault      = PBMTFaultM & ~DTLBWalk;
 
-  flopr #(7) HPTWAccesFaultReg(clk, reset, {TakeHPTWFault, HPTWLoadAccessFault, HPTWStoreAmoAccessFault, HPTWInstrAccessFault, 
+  flopr #(6) HPTWAccesFaultReg(clk, reset, {HPTWLoadAccessFault, HPTWStoreAmoAccessFault, HPTWInstrAccessFault, 
                                             HPTWLoadPageFault, HPTWStoreAmoPageFault, HPTWInstrPageFault},
-                               {TakeHPTWFaultDelay, HPTWLoadAccessFaultDelay, HPTWStoreAmoAccessFaultDelay, HPTWInstrAccessFaultDelay,
+                               {HPTWLoadAccessFaultDelay, HPTWStoreAmoAccessFaultDelay, HPTWInstrAccessFaultDelay,
                                 HPTWLoadPageFaultDelay, HPTWStoreAmoPageFaultDelay, HPTWInstrPageFaultDelay});
 
   assign TakeHPTWFault = WalkerState != IDLE;
@@ -281,7 +281,6 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   // 2. If the store would generate an exception don't store to dcache but still write the TLB.  When we go back
   // to LEAF then the PMA/P.  Wait this does not work.  The PMA/P won't be looking a the address in the table, but
   // rather than physical address of the translated instruction/data.  So we must generate the exception.
-  // *** DH 1/1/24 another bug: when the NAPOT bits (PTE[62:61]) are nonzero on a nonleaf PTE, the walker should make a page fault (Issue 546)
   flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset | FlushW, 1'b1, NextWalkerState, IDLE, WalkerState); 
   always_comb 
     case (WalkerState)
@@ -321,7 +320,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   // stall and asserts one of HPTWLoadAccessFault, HPTWStoreAmoAccessFault or HPTWInstrAccessFaultDelay.
   // The FSM directly transistions to IDLE to ready for the next operation when the delayed version will not be high.
 
-  assign HPTWAccessFaultDelay = HPTWLoadAccessFaultDelay | HPTWStoreAmoAccessFaultDelay | HPTWInstrAccessFaultDelay;
+  assign HPTWAccessFaultDelay = HPTWLoadAccessFaultDelay | HPTWStoreAmoAccessFaultDelay | HPTWInstrAccessFaultDelay; // *** unused - RT, can we delete?
   assign HPTWStall = (WalkerState != IDLE & WalkerState != FAULT) | (WalkerState == IDLE & TLBMiss); 
 
   assign DTLBMissOrUpdateDAM = DTLBMissM | (P.SVADU_SUPPORTED & DataUpdateDAM);  

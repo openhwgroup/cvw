@@ -6,7 +6,7 @@
 //
 // Purpose: Combined Divide and Square Root Floating Point and Integer Unit
 // 
-// Documentation: RISC-V System on Chip Design Chapter 13
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -65,11 +65,9 @@ module fdivsqrt import cvw::*;  #(parameter cvw_t P) (
   logic                        WZeroE;                       // Early termination flag
   logic [P.DURLEN-1:0]         CyclesE;                      // FSM cycles
   logic                        SpecialCaseM;                 // Divide by zero, square root of negative, etc.
-  logic                        DivStartE;                    // Enable signal for flops during stall
                                                             
   // Integer div/rem signals                                
   logic                        BZeroM;                       // Denominator is zero
-  logic                        IntDivM;                      // Integer operation
   logic [P.DIVBLEN-1:0]        IntNormShiftM;                // Integer normalizatoin shift amount
   logic                        ALTBM, AsM, BsM, W64M;        // Special handling for postprocessor
   logic [P.XLEN-1:0]           AM;                           // Original Numerator for postprocessor
@@ -80,8 +78,7 @@ module fdivsqrt import cvw::*;  #(parameter cvw_t P) (
     .FmtE, .Bias(BiasE), .Nf(NfE), .SqrtE, .XZeroE, .Funct3E, .UeM, .X, .D, .CyclesE,
     // Int-specific 
     .ForwardedSrcAE, .ForwardedSrcBE, .IntDivE, .W64E, .ISpecialCaseE,
-    .BZeroM, .IntNormShiftM, .AM, 
-    .IntDivM, .W64M, .ALTBM, .AsM, .BsM);
+    .BZeroM, .IntNormShiftM, .AM, .W64M, .ALTBM, .AsM, .BsM);
 
   fdivsqrtfsm #(P) fdivsqrtfsm(                                  // FSM
     .clk, .reset, .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, 

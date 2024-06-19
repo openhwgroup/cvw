@@ -496,13 +496,21 @@ module testbench;
       if (LoadMem) begin
         if (TEST == "buildroot") begin
           memFile = $fopen(bootmemfilename, "rb");
+          if (memFile == 0) begin
+            $display("Error: Could not open file %s", memfilename);
+            $finish;
+          end
           readResult = $fread(dut.uncoregen.uncore.bootrom.bootrom.memory.ROM, memFile);
           $fclose(memFile);
           memFile = $fopen(memfilename, "rb");
-          readResult = $fread(dut.uncoregen.uncore.ram.ram.memory.RAM, memFile);
+          if (memFile == 0) begin
+            $display("Error: Could not open file %s", memfilename);
+            $finish;
+          end
+          readResult = $fread(dut.uncoregen.uncore.ram.ram.memory.ram.RAM, memFile);
           $fclose(memFile);
         end else 
-          $readmemh(memfilename, dut.uncoregen.uncore.ram.ram.memory.RAM);
+          $readmemh(memfilename, dut.uncoregen.uncore.ram.ram.memory.ram.RAM);
         if (TEST == "embench") $display("Read memfile %s", memfilename);
       end
       if (CopyRAM) begin
@@ -511,7 +519,7 @@ module testbench;
         EndIndex = (end_signature_addr >> LogXLEN) + 8;
         BaseIndex = P.UNCORE_RAM_BASE >> LogXLEN;
         for(ShadowIndex = StartIndex; ShadowIndex <= EndIndex; ShadowIndex++) begin
-          testbench.DCacheFlushFSM.ShadowRAM[ShadowIndex] = dut.uncoregen.uncore.ram.ram.memory.RAM[ShadowIndex - BaseIndex];
+          testbench.DCacheFlushFSM.ShadowRAM[ShadowIndex] = dut.uncoregen.uncore.ram.ram.memory.ram.RAM[ShadowIndex - BaseIndex];
         end
       end
     end
@@ -519,7 +527,7 @@ module testbench;
   if (P.DTIM_SUPPORTED) begin
     always @(posedge clk) begin
       if (LoadMem) begin
-        $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
+        $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.ram.RAM);
         $display("Read memfile %s", memfilename);
       end
       if (CopyRAM) begin
@@ -528,7 +536,7 @@ module testbench;
         EndIndex = (end_signature_addr >> LogXLEN) + 8;
         BaseIndex = P.UNCORE_RAM_BASE >> LogXLEN;
         for(ShadowIndex = StartIndex; ShadowIndex <= EndIndex; ShadowIndex++) begin
-          testbench.DCacheFlushFSM.ShadowRAM[ShadowIndex] = dut.core.lsu.dtim.dtim.ram.RAM[ShadowIndex - BaseIndex];
+          testbench.DCacheFlushFSM.ShadowRAM[ShadowIndex] = dut.core.lsu.dtim.dtim.ram.ram.RAM[ShadowIndex - BaseIndex];
         end
       end
     end
@@ -539,7 +547,7 @@ module testbench;
     always @(posedge clk) 
       if (ResetMem)  // program memory is sometimes reset (e.g. for CoreMark, which needs zeroed memory)
         for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
-          dut.uncoregen.uncore.ram.ram.memory.RAM[adrindex] = '0;
+          dut.uncoregen.uncore.ram.ram.memory.ram.RAM[adrindex] = '0;
 
   ////////////////////////////////////////////////////////////////////////////////
   // Actual hardware
@@ -725,7 +733,7 @@ end
         $display($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
         $fatal;
       end
-    end else begin // for buildroot use the binary instead to load teh reference model.
+    end else begin // for buildroot use the binary instead to load the reference model.
       if (!rvviRefInit("")) begin // still have to call with nothing
         $display($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
         $fatal;
@@ -955,7 +963,7 @@ task automatic updateProgramAddrLabelArray;
       returncode = $fscanf(ProgramAddrMapFP, "%s\n", adrstr);
       if (ProgramAddrLabelArray.exists(label)) ProgramAddrLabelArray[label] = adrstr.atohex();
     end
-  end
+  end 
 
 //  if(ProgramAddrLabelArray["begin_signature"] == 0) $display("Couldn't find begin_signature in %s", ProgramLabelMapFile);
 //  if(ProgramAddrLabelArray["sig_end_canary"] == 0) $display("Couldn't find sig_end_canary in %s", ProgramLabelMapFile);

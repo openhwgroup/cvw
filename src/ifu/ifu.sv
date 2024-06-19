@@ -65,7 +65,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   output logic [31:0]          InstrOrigM,                               // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction MTVAL
   output logic [P.XLEN-1:0]    PCM,                                      // Memory stage instruction address
   // branch predictor
-  output logic [3:0]           InstrClassM,                              // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
+  output logic [3:0]           IClassM,                              // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
   output logic                 BPDirPredWrongM,                          // Prediction direction is wrong
   output logic                 BTAWrongM,                                // Prediction target wrong
   output logic                 RASPredPCWrongM,                          // RAS prediction is wrong
@@ -148,7 +148,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   if(P.ZCA_SUPPORTED) begin : Spill
-    spill #(P) spill(.clk, .reset, .StallD, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF, .InstrUpdateDAF, .CacheableF, 
+    spill #(P) spill(.clk, .reset, .StallF, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF, .InstrUpdateDAF, .CacheableF, 
       .IFUCacheBusStallF, .ITLBMissF, .PCSpillNextF, .PCSpillF, .SelSpillNextF, .PostSpillInstrRawF, .CompressedF);
   end else begin : NoSpill
     assign PCSpillNextF = PCNextF;
@@ -211,7 +211,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   // delay the interrupt until the LSU is in a clean state.
   assign CommittedF = CacheCommittedF | BusCommittedF;
 
-  logic  IgnoreRequest;
+  logic  IgnoreRequest; // *** unused; RT: is this a bug or delete?
   assign IgnoreRequest = ITLBMissF | FlushD;
 
   // The IROM uses untranslated addresses, so it is not compatible with virtual memory.
@@ -342,7 +342,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
                 .FlushD, .FlushE, .FlushM, .FlushW, .InstrValidD, .InstrValidE, 
                 .BranchD, .BranchE, .JumpD, .JumpE,
                 .InstrD, .PCNextF, .PCPlus2or4F, .PC1NextF, .PCE, .PCM, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCF, .NextValidPCE,
-                .PCD, .PCLinkE, .InstrClassM, .BPWrongE, .PostSpillInstrRawF, .BPWrongM,
+                .PCD, .PCLinkE, .IClassM, .BPWrongE, .PostSpillInstrRawF, .BPWrongM,
                 .BPDirPredWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM);
 
   end else begin : bpred
@@ -356,12 +356,12 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       .CallD, .CallE, .CallM, .CallW, .ReturnD, .ReturnE, .ReturnM, .ReturnW, 
       .BTBCallF(1'b0), .BTBReturnF(1'b0), .BTBJumpF(1'b0),
       .BTBBranchF(1'b0), .BPCallF(), .BPReturnF(), .BPJumpF(), .BPBranchF(), .IClassWrongM,
-      .IClassWrongE(), .BPReturnWrongD());
+      .BPReturnWrongD());
     flopenrc #(1) PCSrcMReg(clk, reset, FlushM, ~StallM, PCSrcE, BPWrongM);
     assign RASPredPCWrongM = 1'b0;
     assign BPDirPredWrongM = BPWrongM;
     assign BTAWrongM = BPWrongM;
-    assign InstrClassM = {CallM, ReturnM, JumpM, BranchM};
+    assign IClassM = {CallM, ReturnM, JumpM, BranchM};
     assign NextValidPCE = PCE;
   end      
 
