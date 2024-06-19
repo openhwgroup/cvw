@@ -101,7 +101,7 @@ module localrepairbp import cvw::*; #(parameter cvw_t P,
 
   assign IndexLHRD = {PCE[m+1] ^ PCE[1], PCE[m:2]};
   assign LHRNextE = BranchD ? {BPDirD[1], LHRE[k-1:1]} : LHRE;
-  // *** replace with a small CAM
+  // RT: TODO active research: replace with a small CAM, quantify benefit
   ram2p1r1wbe #(.USE_SRAM(P.USE_SRAM), .DEPTH(2**m), .WIDTH(k)) SHB(.clk(clk),
     .ce1(~StallF), .ce2(~StallE & ~FlushE),
     .ra1(IndexLHRNextF),
@@ -110,7 +110,7 @@ module localrepairbp import cvw::*; #(parameter cvw_t P,
     .wd2(LHRNextE),
     .we2(BranchD),
     .bwe2('1));
-  // **** replace with small CAM
+  // RT: TODO active research: replace with small CAM, quantify benefit
   logic [2**m-1:0]        FlushedBits;
   always_ff @(posedge clk) begin // Valid bit array,
     SpeculativeFlushedF <= FlushedBits[IndexLHRNextF];
