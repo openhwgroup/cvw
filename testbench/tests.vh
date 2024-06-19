@@ -2347,8 +2347,7 @@ string arch64zknh[] = '{
   };
 
   string arch64zfad[] = '{
-    //`RISCVARCHTEST,
-    `WALLYTEST,
+    `RISCVARCHTEST,
     "rv64i_m/D_Zfa/src/fround_b1-01.S",
     "rv64i_m/D_Zfa/src/froundnx_b1-01.S",
     "rv64i_m/D_Zfa/src/fround.d_b1-01.S",
