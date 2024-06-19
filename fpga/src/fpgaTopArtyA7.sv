@@ -485,7 +485,7 @@ module fpgaTop
      .peripheral_aresetn(peripheral_aresetn));
 
   // wally
-  // *** FIXME add sdc interrupt and HSELEXTSDC, remove old sdc
+  // RT and JP: FIXME add sdc interrupt and HSELEXTSDC, remove old sdc after the new sdc ahb version is implemented
 
   `include "parameter-defs.vh"
 
