@@ -233,8 +233,9 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     flopen #(P.XLEN)    srcareg(clk, IFDivStartE, AE,       AM);
     if (P.XLEN==64) 
       flopen #(1)        w64reg(clk, IFDivStartE, W64E,     W64M);
+    else assign W64M = 0;
   end else
-    assign {ALTBM, W64M, AsM, BsM, BZeroM, AM, IntNormShiftM} = 0;
+    assign {ALTBM, W64M, AsM, BsM, BZeroM, AM, IntNormShiftM} = '0;
 
 endmodule
 
