@@ -74,11 +74,13 @@ module dm import cvw::*; #(parameter cvw_t P) (
   output logic            DebugRegUpdate, // writes values from scan register after scanning in			
   
   // Program Buffer
+  output logic [3:0]      ProgBufAddr,
   output logic            ProgBuffScanEn,
-  output logic            ProgBuffScanOut,
   output logic            ExecProgBuff
 );
   `include "debug.vh"
+
+  localparam PROGBUF_SIZE = (P.PROGBUF_RANGE+1)/4;
 
   // DMI Signals
   logic                   ReqReady;
@@ -93,7 +95,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
 
   // JTAG ID for Wally:  
   // Version [31:28] = 0x1 : 0001
-  // PartNumber [27:12] = 0x2A : 00000000_00101010
+  // PartNumber [27:12] = 0x2A : Wally (00000000_00101010)
   // JEDEC number [11:1] = 0x602 : Bank 13 (1100) Open HW Group (0000010) 
   // [0] = 1
   localparam JTAG_DEVICE_ID = 32'h1002AC05; 
@@ -151,7 +153,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   // DMStatus
   const logic        NdmResetPending = 0;
   const logic        StickyUnavail = 0;
-  const logic        ImpEBreak = 1;
+  const logic        ImpEBreak = 0;
   logic              AllHaveReset;
   logic              AnyHaveReset;
   logic              AllResumeAck;
@@ -170,7 +172,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   const logic        ConfStrPtrValid = 0; // Used with SysBusAccess
   const logic [3:0]  Version = 3;    // DM Version
   // AbstractCS
-  const logic [4:0]  ProgBufSize = 1;
+  const logic [4:0]  ProgBufSize = PROGBUF_SIZE;
   logic              Busy;
   const logic        RelaxedPriv = 1;
   logic [2:0]        CmdErr;
@@ -233,27 +235,27 @@ module dm import cvw::*; #(parameter cvw_t P) (
         IDLE : begin
           if (ReqValid)
             case ({ReqOP, ReqAddress}) inside
-              {`OP_WRITE,`DATA0}                       : State <= W_DATA;
-              {`OP_READ,`DATA0}                        : State <= R_DATA;
-              {`OP_WRITE,`DATA1}                       : State <= (P.LLEN >= 64) ? W_DATA : INVALID;
-              {`OP_READ,`DATA1}                        : State <= (P.LLEN >= 64) ? R_DATA : INVALID;
-              [{`OP_WRITE,`DATA2}:{`OP_WRITE,`DATA3}]  : State <= (P.LLEN >= 128) ? W_DATA : INVALID;
-              [{`OP_READ,`DATA2}:{`OP_READ,`DATA3}]    : State <= (P.LLEN >= 128) ? R_DATA : INVALID;
-              {`OP_WRITE,`DMCONTROL}                   : State <= W_DMCONTROL;
-              {`OP_READ,`DMCONTROL}                    : State <= R_DMCONTROL;
-              {`OP_READ,`DMSTATUS}                     : State <= DMSTATUS;
-              {`OP_WRITE,`ABSTRACTCS}                  : State <= W_ABSTRACTCS;
-              {`OP_READ,`ABSTRACTCS}                   : State <= R_ABSTRACTCS;
-              {`OP_WRITE,`COMMAND}                     : State <= ABST_COMMAND;
-              {`OP_READ,`COMMAND}                      : State <= READ_ZERO;
-              {`OP_WRITE,`SBCS}                        : State <= READ_ZERO;
-              {`OP_READ,`SBCS}                         : State <= R_SYSBUSCS;
-              {`OP_WRITE,`PROGBUF0}                    : State <= W_PROGBUF;
-              {`OP_READ,`PROGBUF0},
+              {`OP_WRITE,`DATA0}                            : State <= W_DATA;
+              {`OP_READ,`DATA0}                             : State <= R_DATA;
+              {`OP_WRITE,`DATA1}                            : State <= (P.LLEN >= 64) ? W_DATA : INVALID;
+              {`OP_READ,`DATA1}                             : State <= (P.LLEN >= 64) ? R_DATA : INVALID;
+              [{`OP_WRITE,`DATA2}:{`OP_WRITE,`DATA3}]       : State <= (P.LLEN >= 128) ? W_DATA : INVALID;
+              [{`OP_READ,`DATA2}:{`OP_READ,`DATA3}]         : State <= (P.LLEN >= 128) ? R_DATA : INVALID;
+              {`OP_WRITE,`DMCONTROL}                        : State <= W_DMCONTROL;
+              {`OP_READ,`DMCONTROL}                         : State <= R_DMCONTROL;
+              {`OP_READ,`DMSTATUS}                          : State <= DMSTATUS;
+              {`OP_WRITE,`ABSTRACTCS}                       : State <= W_ABSTRACTCS;
+              {`OP_READ,`ABSTRACTCS}                        : State <= R_ABSTRACTCS;
+              {`OP_WRITE,`COMMAND}                          : State <= ABST_COMMAND;
+              {`OP_READ,`COMMAND}                           : State <= READ_ZERO;
+              {`OP_WRITE,`SBCS}                             : State <= READ_ZERO;
+              {`OP_READ,`SBCS}                              : State <= R_SYSBUSCS;
+              [{`OP_WRITE,`PROGBUF0}:{`OP_WRITE,`PROGBUF3}] : State <= W_PROGBUF; // TODO: update decode range dynamically using PROGBUF_RANGE
+              [{`OP_READ,`PROGBUF0}:{`OP_READ,`PROGBUFF}],
               {2'bx,`HARTINFO},
               {2'bx,`ABSTRACTAUTO},
-              {2'bx,`NEXTDM}                           : State <= READ_ZERO;
-              default                                  : State <= READ_ZERO;//INVALID;
+              {2'bx,`NEXTDM}                                : State <= READ_ZERO;
+              default                                       : State <= INVALID;
             endcase
         end
 
@@ -369,8 +371,10 @@ module dm import cvw::*; #(parameter cvw_t P) (
         W_PROGBUF : begin
           if (Busy)
             CmdErr <= ~|CmdErr ? `CMDERR_BUSY : CmdErr;
-          else
+          else begin
             NewAcState <= PROGBUFF_WRITE;
+            ProgBufAddr <= ReqAddress[$clog2(PROGBUF_SIZE)-1:0];
+          end
           RspOP <= `OP_SUCCESS;
           State <= ACK;
         end
@@ -441,7 +445,6 @@ module dm import cvw::*; #(parameter cvw_t P) (
 
   // Program Buffer
   assign ProgBuffScanEn = (AcState == PROGBUFF_WRITE);
-  assign ProgBuffScanOut = ScanReg[0];
 
   // Scan Chain
   assign DebugScanOut = ScanReg[0];

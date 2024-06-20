@@ -98,11 +98,13 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   output logic                 ICacheAccess,                             // Report I$ read to performance counters
   output logic                 ICacheMiss,                               // Report I$ miss to performance counters
   // Debug Mode logic
+  output logic [P.XLEN-1:0]    PCNextF,                                  // Next PCF, selected from Branch predictor, Privilege, or PC+2/4
   input  logic                 ExitDebugMode,
   input  logic [P.XLEN-1:0]    DPC,
-  output logic [P.XLEN-1:0]    PCNextF,                                  // Next PCF, selected from Branch predictor, Privilege, or PC+2/4
-  input  logic                 ForceNOP,
+  input  logic                 ProgBuffScanEn,
   // Debug scan chain
+  input  logic [3:0]           ProgBufAddr,
+  input  logic                 ProgBufScanIn,
   input  logic                 DebugScanEn,
   input  logic                 DebugScanIn,
   output logic                 DebugScanOut
@@ -111,7 +113,6 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   localparam [31:0]            nop = 32'h00000013;                       // instruction for NOP
   localparam            LINELEN = P.ICACHE_SUPPORTED ? P.ICACHE_LINELENINBITS : P.XLEN;
 
-  logic [P.XLEN-1:0]           PCNextFM;                                 // (muxed for debug) Next PCF, selected from Branch predictor, Privilege, or PC+2/4
   logic [P.XLEN-1:0]           PC1NextF;                                 // Branch predictor next PCF
   logic [P.XLEN-1:0]           PC2NextF;                                 // Selected PC between branch prediction and next valid PC if CSRWriteFence
   logic [P.XLEN-1:0]           UnalignedPCNextF;                         // The next PCF, but not aligned to 2 bytes. 
@@ -128,6 +129,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   logic [31:0]                 IROMInstrF;                               // Instruction from the IROM
   logic [31:0]                 ICacheInstrF;                             // Instruction from the I$
   logic [31:0]                 InstrRawF;                                // Instruction from the IROM, I$, or bus
+  logic [31:0]                 ProgBufInstrF;                            // Instruction from the ProgBuf
   logic                        CompressedF, CompressedE;                 // The fetched instruction is compressed
   logic [31:0]                 PostSpillInstrRawF;                       // Fetch instruction after merge two halves of spill
   logic [31:0]                 InstrRawD;                                // Non-decompressed instruction in the Decode stage
@@ -146,6 +148,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   logic                        BusCommittedF;                            // Bus memory operation in flight, delay interrupts
   logic                        CacheCommittedF;                          // I$ memory operation started, delay interrupts
   logic                        SelIROM;                                  // PMA indicates instruction address is in the IROM
+  logic                        SelProgBuf;                               // PMA indicates instruction address is in Program Buffer
   logic [15:0]                 InstrRawE, InstrRawM;
   logic [LINELEN-1:0]          FetchBuffer;
   logic [31:0]                 ShiftUncachedInstr;
@@ -196,7 +199,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
          .TLBFlush,
          .PhysicalAddress(PCPF),
          .TLBMiss(ITLBMissF),
-         .Cacheable(CacheableF), .Idempotent(), .SelTIM(SelIROM),
+         .Cacheable(CacheableF), .Idempotent(), .SelTIM(SelIROM), .SelProgBuf,
          .InstrAccessFaultF, .LoadAccessFaultM(), .StoreAmoAccessFaultM(),
          .InstrPageFaultF, .LoadPageFaultM(), .StoreAmoPageFaultM(),
          .LoadMisalignedFaultM(), .StoreAmoMisalignedFaultM(),
@@ -209,6 +212,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     assign PCPF = PCFExt[P.PA_BITS-1:0];
     assign CacheableF = 1'b1;
     assign SelIROM = '0;
+    assign SelProgBuf = '0;
   end
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -218,7 +222,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   // CommittedM tells the CPU's privileged unit the current instruction
   // in the memory stage is a memory operaton and that memory operation is either completed
   // or is partially executed. Partially completed memory operations need to prevent an interrupts.
-  // There is not a clean way to restore back to a partial executed instruction.  CommiteedM will
+  // There is not a clean way to restore back to a partial executed instruction.  CommittedM will
   // delay the interrupt until the LSU is in a clean state.
   assign CommittedF = CacheCommittedF | BusCommittedF;
 
@@ -314,7 +318,14 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   assign IFUStallF = IFUCacheBusStallF | SelSpillNextF;
   assign GatedStallD = StallD & ~SelSpillNextF;
   
-  flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawF, nop, InstrRawD);
+  if (P.DEBUG_SUPPORTED) begin
+    logic [31:0] PostSpillInstrRawFM;
+    progbuf #(P) progbuf(.clk, .reset, .Addr(PCNextF[3:0]), .ProgBufInstrF, .ScanAddr(ProgBufAddr), .Scan(ProgBuffScanEn), .ScanIn(ProgBufScanIn));
+    assign PostSpillInstrRawFM = SelProgBuf ? ProgBufInstrF : PostSpillInstrRawF;
+    flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawFM, nop, InstrRawD);
+  end else begin
+    flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawF, nop, InstrRawD);
+  end
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // PCNextF logic
@@ -324,10 +335,11 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     mux2 #(P.XLEN) pcmux2(.d0(PC1NextF), .d1(NextValidPCE), .s(CSRWriteFenceM),.y(PC2NextF));
   else assign PC2NextF = PC1NextF;
 
+
   mux3 #(P.XLEN) pcmux3(PC2NextF, EPCM, TrapVectorM, {TrapM, RetM}, UnalignedPCNextF);
+
   if (P.DEBUG_SUPPORTED) begin
-    mux2 #(P.XLEN) pcresetmux({UnalignedPCNextF[P.XLEN-1:1], 1'b0}, P.RESET_VECTOR[P.XLEN-1:0], reset, PCNextFM);
-    assign PCNextF = ExitDebugMode ? DPC : PCNextFM;
+    mux3 #(P.XLEN) pcresetmux(.d2(P.RESET_VECTOR[P.XLEN-1:0]), .d1(DPC), .d0({UnalignedPCNextF[P.XLEN-1:1], 1'b0}), .s({reset,ExitDebugMode}), .y(PCNextF));
     flopen #(P.XLEN) pcreg(clk, ~StallF | reset | ExitDebugMode, PCNextF, PCF);
   end else begin
     mux2 #(P.XLEN) pcresetmux({UnalignedPCNextF[P.XLEN-1:1], 1'b0}, P.RESET_VECTOR[P.XLEN-1:0], reset, PCNextF);

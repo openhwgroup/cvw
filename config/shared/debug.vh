@@ -48,6 +48,21 @@
 `define ABSTRACTAUTO `ADDR_WIDTH'h18
 `define NEXTDM       `ADDR_WIDTH'h1d
 `define PROGBUF0     `ADDR_WIDTH'h20
+`define PROGBUF1     `ADDR_WIDTH'h21
+`define PROGBUF2     `ADDR_WIDTH'h22
+`define PROGBUF3     `ADDR_WIDTH'h23
+`define PROGBUF4     `ADDR_WIDTH'h24
+`define PROGBUF5     `ADDR_WIDTH'h25
+`define PROGBUF6     `ADDR_WIDTH'h26
+`define PROGBUF7     `ADDR_WIDTH'h27
+`define PROGBUF8     `ADDR_WIDTH'h28
+`define PROGBUF9     `ADDR_WIDTH'h29
+`define PROGBUFA     `ADDR_WIDTH'h2A
+`define PROGBUFB     `ADDR_WIDTH'h2B
+`define PROGBUFC     `ADDR_WIDTH'h2C
+`define PROGBUFD     `ADDR_WIDTH'h2D
+`define PROGBUFE     `ADDR_WIDTH'h2E
+`define PROGBUFF     `ADDR_WIDTH'h2F
 //`define dmcs2        `ADDR_WIDTH'h32
 `define SBCS         `ADDR_WIDTH'h38
 

@@ -97,12 +97,14 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   output logic              BigEndianM,                                     // Use big endian in current privilege mode
   // Fault outputs                                                         
   output logic              wfiM, IntPendingM,                              // Stall in Memory stage for WFI until interrupt pending or timeout
+  output logic              ebreakM,                                        // Notifies DM to enter debug mode
   // Debuge Mode
+  output logic              ebreakEn,
+  input  logic              ForceBreakPoint,
   input  logic              DebugMode,
   input  logic [2:0]        DebugCause,
   output logic              Step,
   output logic [P.XLEN-1:0] DPC,
-  input  logic [P.XLEN-1:0] PCNextF,
   input  logic              EnterDebugMode,
   // Debug scan chain
   input  logic              DebugSel,
@@ -142,9 +144,9 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
 
   // decode privileged instructions
   privdec #(P) pmd(.clk, .reset, .StallW, .FlushW, .InstrM(InstrM[31:15]), 
-    .PrivilegedM, .IllegalIEUFPUInstrM, .IllegalCSRAccessM, 
+    .PrivilegedM, .IllegalIEUFPUInstrM, .IllegalCSRAccessM, .ForceBreakPoint,
     .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .IllegalInstrFaultM, 
-    .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .RetM, .wfiM, .wfiW, .sfencevmaM);
+    .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .RetM, .wfiM, .wfiW, .sfencevmaM, .ebreakM);
 
   // Control and Status Registers
   csr #(P) csr(.clk, .reset, .FlushM, .FlushW, .StallE, .StallM, .StallW,
@@ -163,7 +165,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .SetFflagsM, .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE,
     .EPCM, .TrapVectorM,
     .CSRReadValW, .IllegalCSRAccessM, .BigEndianM,
-    .DebugMode, .DebugCause, .Step, .DPC, .PCNextF, .EnterDebugMode,
+    .DebugMode, .DebugCause, .ebreakEn, .Step, .DPC, .EnterDebugMode,
     .DebugSel, .DebugRegAddr, .DebugCapture, .DebugRegUpdate, .DebugScanEn, .DebugScanIn, .DebugScanOut);
 
   // pipeline early-arriving trap sources

@@ -35,12 +35,12 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] CSRWriteValM,
   output logic [P.XLEN-1:0] CSRDReadValM,
   output logic              IllegalCSRDAccessM,
-
+  input  logic [P.XLEN-1:0] PCM,
+  input  logic              EnterDebugMode,
   input  logic [2:0]        DebugCause,
+  output logic              ebreakEn,
   output logic              Step,
-  output logic [P.XLEN-1:0] DPC,
-  input  logic [P.XLEN-1:0] PCNextF,
-  input  logic              EnterDebugMode
+  output logic [P.XLEN-1:0] DPC
 );
   `include "debug.vh"
 
@@ -58,8 +58,8 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   const logic       ebreakVS = 0;
   const logic       ebreakVU = 0;
   logic             ebreakM;
-  logic             ebreakS;
-  logic             ebreakU;
+  const logic       ebreakS = 0;
+  const logic       ebreakU = 0;
   const logic       StepIE = 0;
   const logic       StopCount = 0;
   const logic       StopTime = 0;
@@ -69,7 +69,8 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   logic             NMIP;      // pending non-maskable interrupt
   logic [1:0]       Prv;
 
-
+  
+  assign ebreakEn = ebreakM; // Only support ebreak from M mode
   assign CSRDWriteM = CSRWriteDM & (PrivilegeModeW == P.M_MODE) & DebugMode;
 
   assign WriteDCSRM = CSRDWriteM & (CSRAdrM == DCSR_ADDR);
@@ -85,15 +86,13 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
     end
   end
 
-  flopenr #(4) DCSRreg (clk, reset, WriteDCSRM, 
-    {CSRWriteValM[`EBREAKM], CSRWriteValM[`EBREAKS], CSRWriteValM[`EBREAKU], CSRWriteValM[`STEP]}, 
-    {ebreakM, ebreakS, ebreakU, Step});
+  flopenr #(4) DCSRreg (clk, reset, WriteDCSRM, {CSRWriteValM[`EBREAKM], CSRWriteValM[`STEP]}, {ebreakM, Step});
 
   assign DCSR = {DebugVer, 10'b0, ebreakVS, ebreakVU, ebreakM, 1'b0, ebreakS, ebreakU, StepIE,
                       StopCount, StopTime, Cause, V, MPrvEn, NMIP, Step, Prv};
 
-  assign DPCWriteVal = EnterDebugMode ? PCNextF : CSRWriteValM;
-  flopenr #(P.XLEN) DPCreg (clk, reset, WriteDPCM | EnterDebugMode, DPCWriteVal, DPC);
+  assign DPCWriteVal = EnterDebugMode ? PCM : CSRWriteValM;
+  flopenr #(P.XLEN) DPCreg (clk, reset, WriteDPCM | EnterDebugMode, DPCWriteVal, DPC); // TODO: reset to something sane (0x80000000?)
 
   always_comb begin
     CSRDReadValM = '0;

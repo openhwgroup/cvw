@@ -140,6 +140,9 @@ typedef struct packed {
   logic         SPI_SUPPORTED;
   logic [63:0]  SPI_BASE;
   logic [63:0]  SPI_RANGE;
+  // Debug program buffer support is enabled with DEBUG_SUPPORTED
+  logic [63:0]  PROGBUF_BASE;
+  logic [63:0]  PROGBUF_RANGE;
 
   // Test modes
 

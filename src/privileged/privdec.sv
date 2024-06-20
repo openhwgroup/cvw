@@ -30,7 +30,8 @@
 
 module privdec import cvw::*;  #(parameter cvw_t P) (
   input  logic         clk, reset,
-  input  logic         StallW, FlushW, 
+  input  logic         StallW, FlushW,
+  input  logic         ForceBreakPoint,                             // Debug Module initiated break to debug mode
   input  logic [31:15] InstrM,                              // privileged instruction function field
   input  logic         PrivilegedM,                         // is this a privileged instruction (from IEU controller)
   input  logic         IllegalIEUFPUInstrM,                 // Not a legal IEU instruction
@@ -40,13 +41,14 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   output logic         IllegalInstrFaultM,                  // Illegal instruction
   output logic         EcallFaultM, BreakpointFaultM,       // Ecall or breakpoint; must retire, so don't flush it when the trap occurs
   output logic         sretM, mretM, RetM,                  // return instructions
-  output logic         wfiM, wfiW, sfencevmaM               // wfi / sfence.vma / sinval.vma instructions
+  output logic         wfiM, wfiW, sfencevmaM,              // wfi / sfence.vma / sinval.vma instructions
+  output logic         ebreakM                              // ebreak instruction
 );
 
   logic                rs1zeroM;                            // rs1 field = 0
   logic                IllegalPrivilegedInstrM;             // privileged instruction isn't a legal one or in legal mode
   logic                WFITimeoutM;                         // WFI reaches timeout threshold
-  logic                ebreakM, ecallM;                     // ebreak / ecall instructions
+  logic                ecallM;                              // ecall instructions
   logic                sinvalvmaM;                          // sinval.vma
   logic                sfencewinvalM, sfenceinvalirM;       // sfence.w.inval, sfence.inval.ir
   logic                invalM;                              // any of the svinval instructions
@@ -94,7 +96,10 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   // Extract exceptions by name and handle them 
   ///////////////////////////////////////////
 
-  assign BreakpointFaultM = ebreakM; // could have other causes from a debugger
+  if (P.DEBUG_SUPPORTED)
+    assign BreakpointFaultM = ebreakM | ForceBreakPoint;
+  else
+    assign BreakpointFaultM = ebreakM;
   assign EcallFaultM = ecallM;
 
   ///////////////////////////////////////////

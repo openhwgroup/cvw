@@ -108,9 +108,8 @@ module hazard import cvw::*;  #(parameter cvw_t P) (
   assign LatestUnstalledW = ~StallW & StallM;
   
   // Each stage flushes if the previous stage is the last one stalled (for cause) or the system has reason to flush
-  // Do not flush if halted for Debug
-  assign FlushD = ~DebugStall & (LatestUnstalledD | FlushDCause);
-  assign FlushE = ~DebugStall & (LatestUnstalledE | FlushECause);
-  assign FlushM = ~DebugStall & (LatestUnstalledM | FlushMCause);
-  assign FlushW = ~DebugStall & (LatestUnstalledW | FlushWCause);
+  assign FlushD = (LatestUnstalledD | FlushDCause);
+  assign FlushE = (LatestUnstalledE | FlushECause);
+  assign FlushM = (LatestUnstalledM | FlushMCause);
+  assign FlushW = (LatestUnstalledW | FlushWCause);
 endmodule

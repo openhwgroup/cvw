@@ -27,12 +27,28 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Note: This module controls all of the per-hart debug state.
-// In a multihart system, this module should be instantiated under wallypipelinedcore
+// On HaltReq/eBreak:
+// store value of NextPC in DPC
+// trigger trap (flush pipe)
+// stall pipe
+
+// On Step:
+// unstall pipe until instruction receaches M stage
+// goto: HaltReq/eBreak
+
+// On exec_progbuf
+// change NextPC to progbuf_address (using DPC?)
+// goto: resume (implicic ebreak will return to debug mode)
+
+// On Resume:
+// update NextPC from DPC
+// Unstall pipe
 
 module dmc (
   input  logic       clk, reset,
   input  logic       Step,
+  input  logic       ebreakM,      // ebreak instruction
+  input  logic       ebreakEn,     // DCSR: enter debug mode on ebreak
   input  logic       HaltReq,      // Initiates core halt
   input  logic       ResumeReq,    // Initiates core resume
   input  logic       HaltOnReset,  // Halts core immediately on hart reset
@@ -46,14 +62,14 @@ module dmc (
 
   output logic       EnterDebugMode, // Store PCNextF in DPC when entering Debug Mode
   output logic       ExitDebugMode,  // Updates PCNextF with the current value of DPC
-  output logic       ForceNOP        // Fills the pipeline with NOP
+  output logic       ForceBreakPoint // Causes artificial ebreak that puts core in debug mode
 );
   `include "debug.vh"
 
-  enum logic [1:0] {RUNNING, FLUSH, HALTED, RESUME} State;
+   enum logic [2:0] {RUNNING, HALTED, RESUME, STEP, PROGBUF} State;
 
-  localparam NOP_CYCLE_DURATION = 0;
-  logic [$clog2(NOP_CYCLE_DURATION+1)-1:0] Counter;
+  localparam E2M_CYCLE_COUNT = 3;
+  logic [$clog2(E2M_CYCLE_COUNT+1)-1:0] Counter;
 
   always_ff @(posedge clk) begin
     if (reset)
@@ -62,12 +78,13 @@ module dmc (
       HaveReset <= 0;
   end
 
-  assign DebugMode = (State != RUNNING);
-  assign DebugStall = (State == HALTED);
+  assign ForceBreakPoint = (State == RUNNING) & HaltReq | (State == STEP) & ~|Counter;
 
-  assign EnterDebugMode = (State == FLUSH) & ~|Counter;
+  assign DebugMode = (State != RUNNING);
+  assign DebugStall = (State == HALTED) | (State == RESUME);
+
+  assign EnterDebugMode = (State == RUNNING) & (ebreakM & ebreakEn) | ForceBreakPoint;
   assign ExitDebugMode = (State == HALTED) & ResumeReq;
-  assign ForceNOP = (State == FLUSH);
 
   always_ff @(posedge clk) begin
     if (reset) begin
@@ -77,33 +94,37 @@ module dmc (
       case (State)
         RUNNING : begin
           if (HaltReq) begin
-            Counter <= NOP_CYCLE_DURATION;
-            State <= FLUSH;
-            DebugCause <= `CAUSE_HALTREQ;
-          end 
-          //else if (eBreak) TODO: halt on ebreak if DCSR bit is set
-          // DebugCause <= `CAUSE_EBREAK;
-        end
-
-        // fill the pipe with NOP before halting
-        FLUSH : begin
-          if (~|Counter)
             State <= HALTED;
-          else
-            Counter <= Counter - 1;
+            DebugCause <= `CAUSE_HALTREQ;
+          end else if (ebreakM & ebreakEn) begin
+            State <= HALTED;
+            DebugCause <= `CAUSE_EBREAK;
+          end
         end
 
         HALTED : begin
-          if (ResumeReq) begin
-            if (Step) begin
-              Counter <= NOP_CYCLE_DURATION;
-              State <= FLUSH;
-              DebugCause <= `CAUSE_STEP;
-            end else begin
-              State <= RUNNING;
-              ResumeAck <= 1;
-            end
+          if (ResumeReq)
+            State <= RESUME;
+        end
+
+        // Wait a cycle to load PCF from DPC before resuming
+        // TODO: test without resume stage
+        RESUME : begin
+          if (Step) begin
+            Counter <= E2M_CYCLE_COUNT;
+            State <= STEP;
+          end else begin
+            State <= RUNNING;
+            ResumeAck <= 1;
           end
+        end
+
+        STEP : begin
+          if (~|Counter) begin
+            DebugCause <= `CAUSE_STEP;
+            State <= HALTED;
+          end else
+            Counter <= Counter - 1;
         end
       endcase
     end

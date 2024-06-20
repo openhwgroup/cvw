@@ -96,9 +96,9 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   // Debug Mode output
   input  logic                     DebugMode,
   input  logic [2:0]               DebugCause,
+  output logic                     ebreakEn,
   output logic                     Step,
   output logic [P.XLEN-1:0]        DPC,
-  input  logic [P.XLEN-1:0]        PCNextF,
   input  logic                     EnterDebugMode,
   // Debug scan chain
   input  logic                     DebugSel,
@@ -215,10 +215,10 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////
 
   assign CSRAdrM = InstrM[31:20];
-  assign UnalignedNextEPCM = TrapM ? PCM : CSRWriteValDM;
+  assign UnalignedNextEPCM = TrapM ? PCM : CSRWriteValM;
   assign NextEPCM = P.ZCA_SUPPORTED ? {UnalignedNextEPCM[P.XLEN-1:1], 1'b0} : {UnalignedNextEPCM[P.XLEN-1:2], 2'b00}; // 3.1.15 alignment
-  assign NextCauseM = TrapM ? {InterruptM, CauseM}: {CSRWriteValDM[P.XLEN-1], CSRWriteValDM[3:0]};
-  assign NextMtvalM = TrapM ? NextFaultMtvalM : CSRWriteValDM;
+  assign NextCauseM = TrapM ? {InterruptM, CauseM}: {CSRWriteValM[P.XLEN-1], CSRWriteValM[3:0]};
+  assign NextMtvalM = TrapM ? NextFaultMtvalM : CSRWriteValM;
   assign UngatedCSRMWriteM = CSRWriteDM & (PrivilegeModeW == P.M_MODE);
   assign CSRMWriteM = UngatedCSRMWriteM & InstrValidNotFlushedM;
   assign CSRSWriteM = CSRWriteDM & (|PrivilegeModeW) & InstrValidNotFlushedM;
@@ -305,7 +305,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   if (P.DEBUG_SUPPORTED) begin:csrd
     csrd #(P) csrd(.clk, .reset, .DebugMode, .PrivilegeModeW,
     .CSRWriteDM, .CSRAdrM(CSRAdrDM), .CSRWriteValM(CSRWriteValDM), .CSRDReadValM, .IllegalCSRDAccessM,
-    .DebugCause, .Step, .DPC, .PCNextF, .EnterDebugMode);
+    .DebugCause, .ebreakEn, .Step, .DPC, .PCM, .EnterDebugMode);
   end else begin
     assign CSRDReadValM = '0;
     assign IllegalCSRDAccessM = 1'b1; // Debug isn't supported

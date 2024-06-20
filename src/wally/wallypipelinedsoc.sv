@@ -82,6 +82,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                        ResumeAck;
   logic                        HaveReset;
   logic                        DebugStall;
+  logic                        ExecProgBuff;
   // Debug Module signals
   logic                        DebugScanEn;
   logic                        DebugScanIn;
@@ -96,9 +97,8 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic [11:0]                 DebugRegAddr;
   logic                        DebugCapture;
   logic                        DebugRegUpdate;
+  logic [3:0]                  ProgBufAddr;
   logic                        ProgBuffScanEn;
-  logic                        ProgBuffScanOut;
-  logic                        ExecProgBuff;
 
   // synchronize reset to SOC clock domain
   synchronizer resetsync(.clk, .d(reset_ext), .q(reset));
@@ -108,9 +108,10 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
-    .HaltReq, .ResumeReq, .HaltOnReset, .AckHaveReset, .ResumeAck, .HaveReset, .DebugStall,
+    .HaltReq, .ResumeReq, .HaltOnReset, .AckHaveReset, .ResumeAck, .HaveReset, .DebugStall, .ExecProgBuff,
     .DebugScanEn, .DebugScanOut(DebugScanIn), .GPRScanOut(GPRScanIn), .FPRScanOut(FPRScanIn), .CSRScanOut(CSRScanIn), 
-    .DebugScanIn(DebugScanOut), .MiscSel, .GPRSel, .FPRSel, .CSRSel, .DebugRegAddr, .DebugCapture, .DebugRegUpdate);
+    .DebugScanIn(DebugScanOut), .MiscSel, .GPRSel, .FPRSel, .CSRSel, .DebugRegAddr, .DebugCapture, .DebugRegUpdate,
+    .ProgBufAddr, .ProgBuffScanEn);
 
   // instantiate uncore if a bus interface exists
   if (P.BUS_SUPPORTED) begin : uncoregen // Hack to work around Verilator bug https://github.com/verilator/verilator/issues/4769
@@ -130,7 +131,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
       .HaltReq, .ResumeReq, .HaltOnReset, .AckHaveReset, .ResumeAck, .HaveReset, .DebugStall,
       .DebugScanEn, .DebugScanIn, .GPRScanIn, .FPRScanIn, .CSRScanIn, .DebugScanOut,
       .MiscSel, .GPRSel, .FPRSel, .CSRSel, .RegAddr(DebugRegAddr), .DebugCapture, .DebugRegUpdate,
-      .ProgBuffScanEn, .ProgBuffScanOut, .ExecProgBuff);
+      .ProgBufAddr, .ProgBuffScanEn, .ExecProgBuff);
   end
 
 endmodule

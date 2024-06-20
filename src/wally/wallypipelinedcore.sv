@@ -53,6 +53,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    output logic                  ResumeAck,
    output logic                  HaveReset,
    output logic                  DebugStall,
+   input  logic                  ExecProgBuff,
    // Debug scan chain
    input  logic                  DebugScanEn,    // puts scannable flops into scan mode
    output logic                  DebugScanOut,   // (misc) scan chain data out
@@ -66,13 +67,16 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    input  logic                  CSRSel,         // selects CSR scan chain
    input  logic [11:0]           DebugRegAddr,   // address for scanable regfiles (GPR, FPR, CSR)
    input  logic                  DebugCapture,   // latches values into scan register before scanning out
-   input  logic                  DebugRegUpdate  // writes values from scan register after scanning in							       							       
+   input  logic                  DebugRegUpdate,  // writes values from scan register after scanning in	
+   input  logic [3:0]            ProgBufAddr,
+   input  logic                  ProgBuffScanEn
 );
 
   logic                          StallF, StallD, StallE, StallM, StallW;
   logic                          FlushD, FlushE, FlushM, FlushW;
   logic                          TrapM, RetM;
   logic                          DebugMode, Step;
+  logic                          ebreakEn;
 
   //  signals that must connect through DP
   logic                          IntDivE, W64E;
@@ -190,13 +194,14 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          BranchD, BranchE, JumpD, JumpE;
   logic                          DCacheStallM, ICacheStallF;
   logic                          wfiM, IntPendingM;
+  logic                          ebreakM;
 
   // Debug mode logic
   logic [P.XLEN-1:0]             DPC, PCNextF;
   logic                          ExitDebugMode;
   logic                          EnterDebugMode;
   logic [2:0]                    DebugCause;
-  logic                          ForceNOP;
+  logic                          ForceBreakPoint;
   // Debug register scan chain interconnects
   logic [2:0]                    DebugScanReg;
 
@@ -222,7 +227,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE, .ITLBWriteF, .sfencevmaM, .ITLBMissF,
     // pmp/pma (inside mmu) signals. 
     .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW, .InstrAccessFaultF, .InstrUpdateDAF,
-    .ExitDebugMode, .DPC, .PCNextF, .ForceNOP,
+    .ExitDebugMode, .DPC, .PCNextF, .ProgBuffScanEn, .ProgBufAddr, .ProgBufScanIn(DebugScanIn),
     .DebugScanEn(DebugScanEn & MiscSel), .DebugScanIn(DebugScanReg[0]), .DebugScanOut(DebugScanReg[1]));
     
   // integer execution unit: integer register file, datapath and controller
@@ -320,9 +325,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   if (P.DEBUG_SUPPORTED) begin
     dmc debugcontrol(
       .clk, .reset,
-      .Step, .HaltReq, .ResumeReq, .HaltOnReset, .AckHaveReset,
+      .Step, .ebreakM, .ebreakEn, .HaltReq, .ResumeReq, .HaltOnReset, .AckHaveReset,
       .ResumeAck, .HaveReset, .DebugMode, .DebugCause, .DebugStall,
-      .EnterDebugMode, .ExitDebugMode, .ForceNOP);
+      .EnterDebugMode, .ExitDebugMode, .ForceBreakPoint);
   end else begin
     assign DebugStall = 1'b0;
   end
@@ -349,8 +354,8 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .PrivilegeModeW, .SATP_REGW,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS, 
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
-      .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM,
-      .DebugMode, .DebugCause, .Step, .DPC, .PCNextF, .EnterDebugMode,
+      .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM, .ebreakM,
+      .ebreakEn, .ForceBreakPoint, .DebugMode, .DebugCause, .Step, .DPC, .EnterDebugMode,
       .DebugSel(CSRSel), .DebugRegAddr, .DebugCapture, .DebugRegUpdate, .DebugScanEn(DebugScanEn & CSRSel), .DebugScanIn, .DebugScanOut(CSRScanOut));
     if (P.DEBUG_SUPPORTED) begin
       flopenrs #(1) scantrapm (.clk, .reset, .en(DebugCapture), .d(TrapM), .q(), .scan(DebugScanEn), .scanin(DebugScanIn), .scanout(DebugScanReg[0]));

@@ -38,7 +38,13 @@ random_order = False
 
 def prog_buff_test(cvw):
     cvw.halt()
-    cvw.write_dmi("0x20", "0x7ee7beef")
+    cvw.write_dmi("0x20", "0x00100073")
+    #cvw.write_dmi("0x21", "0xf00daedd")
+    #cvw.write_dmi("0x22", "0xdaede105")
+    #cvw.write_dmi("0x23", "0x00100073") # ebreak
+
+    cvw.write_data("DPC", "0x00002000") # Progbuf addr
+    cvw.resume()
     print()
 
 
@@ -46,10 +52,13 @@ def flow_control_test(cvw):
     #time.sleep(70)  # wait for OpenSBI
 
     cvw.halt()
-    cvw.read_data("DCSR")
+    time.sleep(1)
+    #cvw.read_data("DCSR")
     for _ in range(50):
-        cvw.step()
-        print(cvw.read_data("PCM"))
+        cvw.resume()
+        cvw.halt()
+        #cvw.step()
+        #print(cvw.read_data("PCM"))
     cvw.resume()
 
 
@@ -154,11 +163,11 @@ def random_hex(reg_name):
 
 
 with OpenOCD() as cvw:
-    print(cvw.read_dmi("0x16"))
-    cvw.trst()
+    #cvw.trst()
     cvw.reset_dm()
+    time.sleep(1)
     cvw.reset_hart()
-    quit()
+    time.sleep(1)
     #register_rw_test(cvw)
-    flow_control_test(cvw)
-    #prog_buff_test(cvw)
+    #flow_control_test(cvw)
+    prog_buff_test(cvw)

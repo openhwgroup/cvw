@@ -38,7 +38,7 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
   input  logic                 WriteAccessM,   // Write access 
   input  logic                 ReadAccessM,    // Read access
   input  logic [1:0]           PBMemoryType,     // PBMT field of PTE during TLB hit, or 00 otherwise
-  output logic                 Cacheable, Idempotent, SelTIM,
+  output logic                 Cacheable, Idempotent, SelTIM, SelProgBuf,
   output logic                 PMAInstrAccessFaultF,
   output logic                 PMALoadAccessFaultM,
   output logic                 PMAStoreAmoAccessFaultM
@@ -46,7 +46,7 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
 
   logic                        PMAAccessFault;
   logic                        AccessRW, AccessRWXC, AccessRX;
-  logic [11:0]                 SelRegions;
+  logic [12:0]                 SelRegions;
   logic                        AtomicAllowed;
   logic                        CacheableRegion, IdempotentRegion;
 
@@ -71,6 +71,9 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
   assign AtomicAllowed = SelRegions[1] | SelRegions[3] | SelRegions[5]; // exclusion-tag: unused-atomic
   // Check if tightly integrated memories are selected
   assign SelTIM = SelRegions[1] | SelRegions[2]; // exclusion-tag: unused-tim
+
+  // Debug program buffer
+  assign SelProgBuf = SelRegions[12];
 
   // Detect access faults
   assign PMAAccessFault          = SelRegions[0] & AccessRWXC | AtomicAccessM & ~AtomicAllowed;  

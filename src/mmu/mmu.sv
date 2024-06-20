@@ -50,6 +50,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   output logic                 Cacheable,          // PMA indicates memory address is cachable
   output logic                 Idempotent,         // PMA indicates memory address is idempotent
   output logic                 SelTIM,             // Select a tightly integrated memory
+  output logic                 SelProgBuf,         // Select ProgBuf
   // Faults
   output logic                 InstrAccessFaultF, LoadAccessFaultM, StoreAmoAccessFaultM, // access fault sources
   output logic                 InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM,       // page fault sources
@@ -112,7 +113,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
 
   pmachecker #(P) pmachecker(.PhysicalAddress, .Size, .CMOpM, 
     .AtomicAccessM, .ExecuteAccessF, .WriteAccessM, .ReadAccessM, .PBMemoryType,
-    .Cacheable, .Idempotent, .SelTIM, 
+    .Cacheable, .Idempotent, .SelTIM, .SelProgBuf,
     .PMAInstrAccessFaultF, .PMALoadAccessFaultM, .PMAStoreAmoAccessFaultM);
  
   if (P.PMP_ENTRIES > 0) begin : pmp

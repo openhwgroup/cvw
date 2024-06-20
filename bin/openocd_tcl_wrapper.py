@@ -114,6 +114,12 @@ class OpenOCD:
             raise Exception("Error: Hart failed to reset")
         self.write_dmi("0x10", "0x10000001")  # ack HaveReset
 
+    def write_progbuf(self, data):
+        #TODO query progbuf size and error is len(data) is greater
+        baseaddr = 0x20
+        for idx, instr in enumerate(data):
+            self.write_dmi(hex(baseaddr+idx), instr)
+
     def set_haltonreset(self):
         self.write_dmi("0x10", "0x9")
 
@@ -139,7 +145,7 @@ class OpenOCD:
             dcsr |= 0x4
             self.write_data("DCSR", hex(dcsr))
         # Resume once
-        self.resume()
+        self.write_dmi("0x10", "0x40000001")
         # Unset step bit
         dcsr &= ~0x4
         self.write_data("DCSR", hex(dcsr))
@@ -153,7 +159,7 @@ class OpenOCD:
         data += int(math.log2(addr_size // 8)) << 20
         data += write << 16
         data += regno
-        self.write_dmi("0x17", hex(data))
+        self.write_dmi("0x17", hex(data))  
 
     def write_data(self, register, data):
         """Write data to specified register"""
