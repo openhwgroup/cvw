@@ -633,7 +633,14 @@ module testbench;
       .rx_error_bad_fcs, .rx_fifo_overflow, .rx_fifo_bad_frame, .rx_fifo_good_frame, 
       .cfg_ifg(8'd12), .cfg_tx_enable(1'b1), .cfg_rx_enable(1'b1)
       );
-  
+
+    logic MiiTxEnDelay;
+    logic EthernetTXCounterEn;
+    logic [31:0] EthernetTXCount;
+    flopr #(1) txedgereg(clk, reset, mii_tx_en, MiiTxEnDelay);
+    assign EthernetTXCounterEn = ~mii_tx_en & MiiTxEnDelay;
+    counter #(32) ethernexttxcounter(clk, reset, EthernetTXCounterEn, EthernetTXCount);
+
   end else begin
     assign RVVIStall = '0;
   end

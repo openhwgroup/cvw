@@ -213,8 +213,8 @@ int main(int argc, char **argv){
       DecodeRVVI(buf + headerbytes, payloadbytes, &InstructionData);
       // now let's drive IDV
       // start simple just drive and compare PC.
-      ProcessRvviAll(&InstructionData);
       PrintInstructionData(&InstructionData);
+      ProcessRvviAll(&InstructionData);
     }
   }
 

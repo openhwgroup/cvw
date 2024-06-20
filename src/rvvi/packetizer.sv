@@ -62,7 +62,8 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   typedef enum              {STATE_RST, STATE_COUNT, STATE_RDY, STATE_WAIT, STATE_TRANS, STATE_TRANS_INSERT_DELAY} statetype;
 (* mark_debug = "true" *)  statetype CurrState, NextState;
 
-  logic [31:0] 	            RstCount;
+   logic [31:0] 	    RstCount;
+(* mark_debug = "true" *)   logic [31:0] 	    FrameCount;
   logic 		    RstCountRst, RstCountEn, CountFlag, DelayFlag;
    
 
@@ -101,8 +102,11 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   counter #(32) rstcounter(m_axi_aclk, RstCountRst, RstCountEn, RstCount);
   assign CountFlag = RstCount == 32'd100000000;
   //assign CountFlag = RstCount == 32'd10;
-  //assign DelayFlag = RstCount == 32'd200;
-   assign DelayFlag = RstCount == 32'd0;
+  assign DelayFlag = RstCount == 32'd200;
+  //assign DelayFlag = RstCount == 32'd0;
+
+  counter #(32) framecounter(m_axi_aclk, ~m_axi_aresetn, (RvviAxiWready & RvviAxiWlast), FrameCount);
+   
 
   flopenr #(187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)) rvvireg(m_axi_aclk, ~m_axi_aresetn, valid, rvvi, rvviDelay);
 
