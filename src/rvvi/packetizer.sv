@@ -102,7 +102,7 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   counter #(32) rstcounter(m_axi_aclk, RstCountRst, RstCountEn, RstCount);
   assign CountFlag = RstCount == 32'd100000000;
   //assign CountFlag = RstCount == 32'd10;
-  assign DelayFlag = RstCount == 32'd200;
+  assign DelayFlag = RstCount == 32'd800;
   //assign DelayFlag = RstCount == 32'd0;
 
   counter #(32) framecounter(m_axi_aclk, ~m_axi_aresetn, (RvviAxiWready & RvviAxiWlast), FrameCount);
