@@ -91,8 +91,8 @@ def neg2(D,LEN):
     
 
 
-X = "000100000001101111111111100"
-D = "000100000000000000000000000"
+X = "000101000000000000000011110"
+D = "000101000000000000000000000"
 
 print(X)
 if len((bp.parse_to_binary(int(bp.parse_to_num(D))*5/4)).decode()) > (len(D)-3) or not ".0" in str(float(bp.parse_to_num(D))*5/4):
