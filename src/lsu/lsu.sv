@@ -144,7 +144,6 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   
   logic                  DTLBMissM;                              // DTLB miss causes HPTW walk
   logic                  DTLBWriteM;                             // Writes PTE and PageType to DTLB
-  logic                  DataUpdateDAM;                          // DTLB hit needs to update dirty or access bits
   logic                  LSULoadAccessFaultM;                    // Load acces fault
   logic                  LSUStoreAmoAccessFaultM;                // Store access fault
   logic                  IgnoreRequestTLB;                       // On either ITLB or DTLB miss, ignore miss so HPTW can handle
@@ -194,13 +193,13 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
 
   if(P.VIRTMEM_SUPPORTED) begin : hptw
     hptw #(P) hptw(.clk, .reset, .MemRWM, .AtomicM, .ITLBMissOrUpdateAF, .ITLBWriteF,
-      .DTLBMissOrUpdateDAM, .DTLBWriteM, .DataUpdateDAM,
+      .DTLBMissOrUpdateDAM, .DTLBWriteM,
       .FlushW, .DCacheBusStallM, .SATP_REGW, .PCSpillF,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_ADUE, .PrivilegeModeW,
       .ReadDataM(ReadDataM[P.XLEN-1:0]), // ReadDataM is LLEN, but HPTW only needs XLEN
       .WriteDataM(WriteDataZM), .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
       .IEUAdrExtM, .PTE, .IHWriteDataM, .PageType, .PreLSURWM, .LSUAtomicM,
-      .IHAdrM, .HPTWStall, .SelHPTW,
+      .IHAdrM, .HPTWStall, .SelHPTW, 
       .IgnoreRequestTLB, .LSULoadAccessFaultM, .LSUStoreAmoAccessFaultM, 
       .LoadAccessFaultM, .StoreAmoAccessFaultM, .HPTWInstrAccessFaultF,
       .LoadPageFaultM, .StoreAmoPageFaultM, .LSULoadPageFaultM, .LSUStoreAmoPageFaultM, .HPTWInstrPageFaultF
@@ -236,6 +235,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   if(P.ZICSR_SUPPORTED == 1) begin : dmmu
     logic DisableTranslation;                             // During HPTW walk or D$ flush disable virtual memory address translation
     logic WriteAccessM;
+    logic DataUpdateDAM;                                  // DTLB hit needs to update dirty or access bits
+
     assign DisableTranslation = SelHPTW | FlushDCacheM;
     assign WriteAccessM = PreLSURWM[0];
     mmu #(.P(P), .TLB_ENTRIES(P.DTLB_ENTRIES), .IMMU(0))
@@ -245,7 +246,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       .PhysicalAddress(PAdrM), .TLBMiss(DTLBMissM), .Cacheable(CacheableM), .Idempotent(), .SelTIM(SelDTIM), 
       .InstrAccessFaultF(), .LoadAccessFaultM(LSULoadAccessFaultM), 
       .StoreAmoAccessFaultM(LSUStoreAmoAccessFaultM), .InstrPageFaultF(), .LoadPageFaultM(LSULoadPageFaultM), 
-    .StoreAmoPageFaultM(LSUStoreAmoPageFaultM),
+      .StoreAmoPageFaultM(LSUStoreAmoPageFaultM),
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
       .UpdateDA(DataUpdateDAM), .CMOpM(CMOpM),
       .AtomicAccessM(|LSUAtomicM), .ExecuteAccessF(1'b0), 

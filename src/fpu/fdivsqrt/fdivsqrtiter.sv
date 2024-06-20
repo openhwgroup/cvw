@@ -35,7 +35,6 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.DIVb+3:0] X, D,                  // Q4.DIVb
   output logic [P.DIVb:0]   FirstU, FirstUM,       // U1.DIVb
   output logic [P.DIVb+1:0] FirstC,                // Q2.DIVb
-  output logic              Firstun,
   output logic [P.DIVb+3:0] FirstWS, FirstWC       // Q4.DIVb
 );
 
@@ -119,6 +118,5 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
   assign FirstU  = U[0];
   assign FirstUM = UM[0];
   assign FirstC  = C[0];
-  assign Firstun = un[0];
 endmodule
 

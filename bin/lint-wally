@@ -12,7 +12,7 @@ NC='\033[0m' # No Color
 fails=0
 
 if [ "$1" == "--nightly" ]; then
-    configs=(rv32e rv64gc rv32gc rv32imc rv32i rv64i) # fdqh_rv64gc
+    configs=(rv32e rv64gc rv32gc rv32imc rv32i rv64i) 
     derivconfigs=`ls $WALLY/config/deriv`
     for entry in $derivconfigs
     do
@@ -21,7 +21,7 @@ if [ "$1" == "--nightly" ]; then
         fi
     done
 else
-    configs=(rv32e rv64gc rv32gc rv32imc rv32i rv64i ) # add fdqh_rv64gc when working
+    configs=(rv32e rv64gc rv32gc rv32imc rv32i rv64i fdqh_rv64gc)
 fi
 
 for config in ${configs[@]}; do

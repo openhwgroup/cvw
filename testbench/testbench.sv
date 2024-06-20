@@ -110,6 +110,7 @@ module testbench;
   logic Validate;
   logic SelectTest;
   logic TestComplete;
+  logic PrevPCZero;
 
   initial begin
     // look for arguments passed to simulation, or use defaults
@@ -354,15 +355,6 @@ module testbench;
         $display("Benchmark: coremark is done.");
         $stop;
       end
-    if (P.ZICSR_SUPPORTED & dut.core.ifu.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.ieu.InstrValidM) begin 
-      $display("Program fetched illegal instruction 0x00000000 from address 0x00000000.  Might be fault with no fault handler.");
-      //$stop; // presently wally32/64priv tests trigger this for reasons not yet understood.
-    end
-
-  // modifications 4/3/24 kunlin & harris to speed up Verilator
-  // For some reason, Verilator runs ~100x slower when these SelectTest and Validate codes are in the posedge clk block
-  //end // added
-  //always @(posedge SelectTest) // added
     if(SelectTest) begin
       if (riscofTest) begin 
         memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
@@ -402,6 +394,7 @@ module testbench;
   always @(posedge Validate) // added
 `endif
     if(Validate) begin
+      if (PrevPCZero) totalerrors = totalerrors + 1; //  error if PC is stuck at zero
       if (TEST == "buildroot")
         $fclose(uartoutfile);
       if (TEST == "embench") begin
@@ -632,8 +625,10 @@ module testbench;
     loggers (clk, reset, DCacheFlushStart, DCacheFlushDone, memfilename, TEST);
 
   // track the current function or global label
-   FunctionName #(P) FunctionName(.reset(reset_ext | TestBenchReset),
-     .clk(clk), .ProgramAddrMapFile(ProgramAddrMapFile), .ProgramLabelMapFile(ProgramLabelMapFile));
+  if (DEBUG > 0 | ((PrintHPMCounters | BPRED_LOGGER) & P.ZICNTR_SUPPORTED)) begin : FunctionName
+    FunctionName #(P) FunctionName(.reset(reset_ext | TestBenchReset),
+			      .clk(clk), .ProgramAddrMapFile(ProgramAddrMapFile), .ProgramLabelMapFile(ProgramLabelMapFile));
+  end
 
   // Append UART output to file for tests
   if (P.UART_SUPPORTED) begin: uart_logger
@@ -652,12 +647,18 @@ module testbench;
   // 1. jump to self loop (0x0000006f)
   // 2. a store word writes to the address "tohost"
   // 3. or PC is stuck at 0
-  always_comb begin
-    TestComplete = ((InstrM == 32'h6f) & dut.core.InstrValidM ) |
-		   ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"] & dut.core.lsu.IEUAdrM != 0) & InstrMName == "SW" ) | 
-    (FunctionName.PCM == 4 & dut.core.ieu.c.InstrValidM);
-  end
-  
+
+
+  always @(posedge clk) begin
+  //  if (reset) PrevPCZero <= 0;
+  //  else if (dut.core.InstrValidM) PrevPCZero <= (FunctionName.PCM == 0 & dut.core.ifu.InstrM == 0);
+    TestComplete <= ((InstrM == 32'h6f) & dut.core.InstrValidM ) |
+		   ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"] & dut.core.lsu.IEUAdrM != 0) & InstrMName == "SW"); // |
+    //   (FunctionName.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.InstrValidM & PrevPCZero));
+   // if (FunctionName.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.InstrValidM & PrevPCZero)
+    //  $error("Program fetched illegal instruction 0x00000000 from address 0x00000000 twice in a row.  Usually due to fault with no fault handler.");
+  end 
+
   DCacheFlushFSM #(P) DCacheFlushFSM(.clk, .start(DCacheFlushStart), .done(DCacheFlushDone));
 
   if(P.ZICSR_SUPPORTED) begin

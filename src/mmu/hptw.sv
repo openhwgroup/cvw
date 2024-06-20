@@ -49,7 +49,6 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   input  logic              ITLBMissOrUpdateAF,
   input  logic              DTLBMissOrUpdateDAM,
   input  logic              FlushW,
-  input  logic              DataUpdateDAM,
   output logic [P.XLEN-1:0] PTE,                    // page table entry to TLBs
   output logic [1:0]        PageType,               // page type to TLBs
   output logic              ITLBWriteF, DTLBWriteM, // write TLB with new entry
