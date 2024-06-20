@@ -43,7 +43,7 @@ module zknde64 import cvw::*; #(parameter cvw_t P) (
         aes64e    aes64e(.rs1(A), .rs2(B), .finalround(ZKNSelect[2]), .Sbox0Out, .SboxEIn, .result(aes64eRes));
         mux2 #(32) sboxmux(SboxEIn, SboxKIn, ZKNSelect[1], Sbox0In);
     end else begin  
-        assign aes64dRes = '0;
+        assign aes64eRes = '0;
         assign Sbox0In = SboxKIn;
     end
     
