@@ -45,10 +45,10 @@ set -e # break on error
 
 # Get distribution information
 test -e /etc/os-release && os_release="/etc/os-release" || os_release="/usr/lib/os-release"
-source $os_release
+source "$os_release"
 
 # Check for compatible distro
-if [[ $ID = rhel || $ID = rocky ]]; then
+if [[ "$ID" = rhel || "$ID" = rocky ]]; then
   FAMILY=rhel
   if [ "${VERSION_ID:0:1}" = 8 ]; then
     RHEL_VERSION=8
@@ -58,7 +58,7 @@ if [[ $ID = rhel || $ID = rocky ]]; then
     echo "The Wally install script is only compatible with versions 8 and 9 of RHEL and Rocky Linux. You have version $VERSION."
     exit 1
   fi
-elif [[ $ID = ubuntu || $ID_LIKE = *ubuntu* ]]; then
+elif [[ "$ID" = ubuntu || "$ID_LIKE" = *ubuntu* ]]; then
   FAMILY=ubuntu
 else
   echo "The Wally install script is currently only compatible with Ubuntu and Red Hat family \
@@ -68,11 +68,11 @@ commands in this script, but it is likely that some will need to be altered."
 fi
 
 # Check if root
-ROOT=$( [ "${EUID:=$(id -u)}" = 0 ] && echo 1 || echo 0);
+ROOT=$( [ "${EUID:=$(id -u)}" = 0 ] && echo true || echo false);
 
 # All tools will be installed under the $RISCV directory. By default, if run as root (with sudo)
 # this is set to /opt/riscv. Otherwise, it is set to ~/riscv. This value can be changed if needed.
-if [ $ROOT = 1 ]; then
+if [ "$ROOT" = true ]; then
   export RISCV=/opt/riscv
 else
   export RISCV=~/riscv
@@ -93,17 +93,17 @@ echo -e "***********************************************************************
 echo -e "Installing Dependencies from Package Manager"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n"
-if [ $FAMILY = rhel ]; then
+if [ "$FAMILY" = rhel ]; then
   sudo dnf install -y dnf-plugins-core
-  if [ $ID = rocky ]; then
-    if [ $RHEL_VERSION = 8 ]; then
+  if [ "$ID" = rocky ]; then
+    if [ "$RHEL_VERSION" = 8 ]; then
       sudo dnf config-manager -y --set-enabled powertools
     else # Version 9
       sudo dnf config-manager -y --set-enabled crb
     fi
     sudo dnf install -y epel-release
   else # RHEL
-    if [ $RHEL_VERSION = 8 ]; then
+    if [ "$RHEL_VERSION" = 8 ]; then
       sudo subscription-manager repos --enable codeready-builder-for-rhel-8-x86_64-rpms
       sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
     else # Version 9
@@ -114,7 +114,7 @@ if [ $FAMILY = rhel ]; then
   sudo dnf update -y
   sudo dnf group install -y "Development Tools"
   sudo dnf install -y git gawk make texinfo bison flex python3.12 expat-devel autoconf dtc ninja-build pixman-devel ncurses-base ncurses ncurses-libs ncurses-devel dialog curl wget ftp gmp-devel glib2-devel python3-pip pkgconfig zlib-devel automake libmpc-devel mpfr-devel gperf libtool patchutils bc mutt cmake perl gcc-c++ clang help2man numactl ocaml mold gperftools ccache
-  if [ $RHEL_VERSION = 9 ]; then
+  if [ "$RHEL_VERSION" = 9 ]; then
     sudo dnf install -y z3
   fi
   sudo dnf install -y gcc-toolset-13*
@@ -136,13 +136,12 @@ source $RISCV/riscv-python/bin/activate
 pip install -U pip
 pip install -U sphinx sphinx_rtd_theme matplotlib scipy scikit-learn adjustText lief markdown pyyaml meson testresources riscv_config
 pip install -U riscv_isac # to generate new tests, such as quads with fp_dataset.py
-if [ $RHEL_VERSION = 8 ]; then
+if [ "$RHEL_VERSION" = 8 ]; then
   pip install -U z3-solver
 fi
-
 source $RISCV/riscv-python/bin/activate
 
-if [ $RHEL_VERSION = 8 ]; then
+if [ "$RHEL_VERSION" = 8 ]; then
   # Other dependencies
   # newer versin of glib required for Qemu
   # anything newer than this won't build on red hat 8
@@ -193,7 +192,7 @@ echo -e "Installing RISC-V GNU Toolchain"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n"
 cd $RISCV
-if [[ ((! -e riscv-gnu-toolchain) && ($(git clone https://github.com/riscv/riscv-gnu-toolchain) || 1)) || ($(cd riscv-gnu-toolchain; git fetch; git rev-parse HEAD) != $(cd riscv-gnu-toolchain; git rev-parse master)) || (! -e $RISCV/riscv-gnu-toolchain/stamps/build-gcc-newlib-stage2) ]]; then
+if [[ ((! -e riscv-gnu-toolchain) && ($(git clone https://github.com/riscv/riscv-gnu-toolchain) || true)) || ($(cd riscv-gnu-toolchain; git fetch; git rev-parse HEAD) != $(cd riscv-gnu-toolchain; git rev-parse master)) || (! -e $RISCV/riscv-gnu-toolchain/stamps/build-gcc-newlib-stage2) ]]; then
   cd riscv-gnu-toolchain
   git checkout master
   git pull
@@ -215,7 +214,7 @@ echo -e "***********************************************************************
 echo -e "*************************************************************************\n"
 cd $RISCV
 export PATH=$RISCV/bin:$PATH
-if [[ ((! -e elf2hex) && ($(git clone https://github.com/sifive/elf2hex.git) || 1)) || ($(cd elf2hex; git fetch; git rev-parse HEAD) != $(cd elf2hex; git rev-parse master)) || (! -e $RISCV/bin/riscv64-unknown-elf-elf2bin) ]]; then
+if [[ ((! -e elf2hex) && ($(git clone https://github.com/sifive/elf2hex.git) || true)) || ($(cd elf2hex; git fetch; git rev-parse HEAD) != $(cd elf2hex; git rev-parse master)) || (! -e $RISCV/bin/riscv64-unknown-elf-elf2bin) ]]; then
   cd elf2hex
   git reset --hard && git clean -f && git checkout master && git pull
   autoreconf -i
@@ -232,7 +231,7 @@ echo -e "Installing QEMU"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n"
 cd $RISCV
-if [[ ((! -e qemu) && ($(git clone --recurse-submodules https://github.com/qemu/qemu) || 1)) || ($(cd qemu; git fetch --recurse-submodules=yes; git rev-parse HEAD) != $(cd qemu; git rev-parse master)) || (! -e $RISCV/include/qemu-plugin.h) ]]; then
+if [[ ((! -e qemu) && ($(git clone --recurse-submodules https://github.com/qemu/qemu) || true)) || ($(cd qemu; git fetch --recurse-submodules=yes; git rev-parse HEAD) != $(cd qemu; git rev-parse master)) || (! -e $RISCV/include/qemu-plugin.h) ]]; then
   cd qemu
   git reset --hard && git clean -f && git checkout master && git pull --recurse-submodules
   ./configure --target-list=riscv64-softmmu --prefix=$RISCV
@@ -249,7 +248,7 @@ echo -e "Installing SPIKE"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n"
 cd $RISCV
-if [[ ((! -e riscv-isa-sim) && ($(git clone https://github.com/riscv-software-src/riscv-isa-sim) || 1)) || ($(cd riscv-isa-sim; git fetch; git rev-parse HEAD) != $(cd riscv-isa-sim; git rev-parse master)) || (! -e $RISCV/lib/pkgconfig/riscv-riscv.pc) ]]; then
+if [[ ((! -e riscv-isa-sim) && ($(git clone https://github.com/riscv-software-src/riscv-isa-sim) || true)) || ($(cd riscv-isa-sim; git fetch; git rev-parse HEAD) != $(cd riscv-isa-sim; git rev-parse master)) || (! -e $RISCV/lib/pkgconfig/riscv-riscv.pc) ]]; then
   cd riscv-isa-sim
   git reset --hard && git clean -f && git checkout master && git pull
   mkdir -p build
@@ -267,7 +266,7 @@ echo -e "Installing Verilator"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n"
 cd $RISCV
-if [[ ((! -e verilator) && ($(git clone https://github.com/verilator/verilator) || 1)) || ($(cd verilator; git fetch; git rev-parse HEAD) != $(cd verilator; git rev-parse master)) || (! -e $RISCV/share/pkgconfig/verilator.pc) ]]; then
+if [[ ((! -e verilator) && ($(git clone https://github.com/verilator/verilator) || true)) || ($(cd verilator; git fetch; git rev-parse HEAD) != $(cd verilator; git rev-parse master)) || (! -e $RISCV/share/pkgconfig/verilator.pc) ]]; then
   # unsetenv VERILATOR_ROOT  # For csh; ignore error if on bash
   unset VERILATOR_ROOT     # For bash
   cd verilator
@@ -312,7 +311,7 @@ echo -e "Installing riscv-sail Model"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n"
 eval $(opam config env)
-if [[ ((! -e sail-riscv) && ($(git clone https://github.com/riscv/sail-riscv.git) || 1)) || ($(cd sail-riscv; git fetch; git rev-parse HEAD) != $(cd sail-riscv; git rev-parse master)) || (! -e $RISCV/bin/riscv_sim_RV32) ]]; then
+if [[ ((! -e sail-riscv) && ($(git clone https://github.com/riscv/sail-riscv.git) || true)) || ($(cd sail-riscv; git fetch; git rev-parse HEAD) != $(cd sail-riscv; git rev-parse master)) || (! -e $RISCV/bin/riscv_sim_RV32) ]]; then
   cd sail-riscv
   git reset --hard && git clean -f && git checkout master && git pull
   export OPAMCLI=2.0  # Sail is not compatible with opam 2.1 as of 4/16/24
@@ -339,7 +338,7 @@ echo -e "***********************************************************************
 echo -e "*************************************************************************\n"
 mkdir -p $RISCV/cad/lib
 cd $RISCV/cad/lib
-if [[ ((! -e sky130_osu_sc_t12) && ($(git clone https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12) || 1)) || ($(cd sky130_osu_sc_t12; git fetch; git rev-parse HEAD) != $(cd sky130_osu_sc_t12; git rev-parse master)) ]]; then
+if [[ ((! -e sky130_osu_sc_t12) && ($(git clone https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12) || true)) || ($(cd sky130_osu_sc_t12; git fetch; git rev-parse HEAD) != $(cd sky130_osu_sc_t12; git rev-parse master)) ]]; then
   cd sky130_osu_sc_t12
   git reset --hard && git clean -f && git checkout main && git pull
 fi
