@@ -54,7 +54,7 @@ module testbench;
   `ifdef VERILATOR
       import "DPI-C" function string getenvval(input string env_name);
       string       RISCV_DIR = getenvval("RISCV"); // "/opt/riscv";
-  `elsif SIM_VCS 
+  `elsif VCS
       import "DPI-C" function string getenv(input string env_name);
       string       RISCV_DIR = getenv("RISCV"); // "/opt/riscv";
   `else
@@ -421,7 +421,7 @@ module testbench;
         $display("Single Elf file tests are not signatured verified.");
 `ifdef VERILATOR // this macro is defined when verilator is used
         $finish; // Simulator Verilator needs $finish to terminate simulation.
-`elsif SIM_VCS // this macro is defined when vcs is used
+`elsif VCS // this macro is defined when vcs is used
         $finish; // Simulator VCS needs $finish to terminate simulation.
 `else
          $stop; // if this is changed to $finish for Questa, wally-batch.do does not go to the next step to run coverage, and wally.do terminates without allowing GUI debug
@@ -442,7 +442,7 @@ module testbench;
         else $display("FAIL: %d test programs had errors", totalerrors);
 `ifdef VERILATOR // this macro is defined when verilator is used
         $finish; // Simulator Verilator needs $finish to terminate simulation.
-`elsif SIM_VCS // this macro is defined when vcs is used
+`elsif VCS // this macro is defined when vcs is used
         $finish; // Simulator VCS needs $finish to terminate simulation.
 `else
          $stop; // if this is changed to $finish for Questa, wally-batch.do does not go to the next step to run coverage, and wally.do terminates without allowing GUI debug
