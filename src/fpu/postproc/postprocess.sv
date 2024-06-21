@@ -6,7 +6,7 @@
 //
 // Purpose: Post-Processing: normalization, rounding, sign, flags, special cases
 // 
-// Documentation: RISC-V System on Chip Design Chapter 13
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -134,6 +134,7 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
       assign OutFmt = IntToFp|~CvtOp ? Fmt : (OpCtrl[1:0] == P.FMT); 
   else if (P.FPSIZES == 3 | P.FPSIZES == 4) 
       assign OutFmt = IntToFp|~CvtOp ? Fmt : OpCtrl[1:0]; 
+  else assign OutFmt = 0; // FPSIZES = 1
 
   ///////////////////////////////////////////////////////////////////////////////
   // Normalization
@@ -157,11 +158,11 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
       end
       2'b00: begin // cvt
         ShiftAmt = {{P.LOGNORMSHIFTSZ-$clog2(P.CVTLEN+1){1'b0}}, CvtShiftAmt};
-        ShiftIn  =  {CvtShiftIn, {P.NORMSHIFTSZ-P.CVTLEN-P.NF-1{1'b0}}};
+        ShiftIn  =  {CvtShiftIn, {P.NORMSHIFTSZ-(P.CVTLEN+P.NF+1){1'b0}}};
       end
       2'b01: begin //divsqrt
         ShiftAmt = DivShiftAmt;
-        ShiftIn  = {{P.NF{1'b0}}, DivUm, {P.NORMSHIFTSZ-P.DIVb-1-P.NF{1'b0}}};
+        ShiftIn  = {{P.NF{1'b0}}, DivUm, {P.NORMSHIFTSZ-(P.DIVb+1+P.NF){1'b0}}};
       end
       default: begin 
         ShiftAmt = {P.LOGNORMSHIFTSZ{1'bx}}; 

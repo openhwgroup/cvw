@@ -34,17 +34,17 @@ module localrepairbp import cvw::*; #(parameter cvw_t P,
   input logic             reset,
   input logic             StallF, StallD, StallE, StallM, StallW,
   input logic             FlushD, FlushE, FlushM, FlushW,
-  output logic [1:0]      BPDirPredD, 
-  output logic            BPDirPredWrongE,
+  output logic [1:0]      BPDirD, 
+  output logic            BPDirWrongE,
   // update
   input logic [XLEN-1:0] PCNextF, PCE, PCM,
   input logic             BranchD, BranchE, BranchM, PCSrcE
 );
 
-  //logic [1:0]             BPDirPredD, BPDirPredE;
-  logic [1:0]             BPDirPredE;
-  logic [1:0]             BPDirPredM;
-  logic [1:0]             NewBPDirPredE, NewBPDirPredM, NewBPDirPredW;
+  //logic [1:0]             BPDirD, BPDirE;
+  logic [1:0]             BPDirE;
+  logic [1:0]             BPDirM;
+  logic [1:0]             NewBPDirE, NewBPDirM, NewBPDirW;
 
   logic [k-1:0]           LHRF, LHRD, LHRE, LHRM, LHRW, LHRNextF;
   logic [k-1:0]           LHRNextW;
@@ -62,21 +62,21 @@ module localrepairbp import cvw::*; #(parameter cvw_t P,
   ram2p1r1wbe #(.USE_SRAM(P.USE_SRAM), .DEPTH(2**k), .WIDTH(2)) PHT(.clk(clk),
     .ce1(~StallD), .ce2(~StallW & ~FlushW),
     .ra1(LHRF),
-    .rd1(BPDirPredD),
+    .rd1(BPDirD),
     .wa2(LHRW),
-    .wd2(NewBPDirPredW),
+    .wd2(NewBPDirW),
     .we2(BranchM),
     .bwe2(1'b1));
 
-  //flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, BPDirPredF, BPDirPredD);
-  flopenrc #(2) PredictionRegE(clk, reset,  FlushE, ~StallE, BPDirPredD, BPDirPredE);
-  flopenrc #(2) PredictionRegM(clk, reset,  FlushM, ~StallM, BPDirPredE, BPDirPredM);
+  //flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, BPDirF, BPDirD);
+  flopenrc #(2) PredictionRegE(clk, reset,  FlushE, ~StallE, BPDirD, BPDirE);
+  flopenrc #(2) PredictionRegM(clk, reset,  FlushM, ~StallM, BPDirE, BPDirM);
 
-  satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(BPDirPredM), .NewState(NewBPDirPredM));
-  //flopenrc #(2) NewPredictionRegM(clk, reset,  FlushM, ~StallM, NewBPDirPredE, NewBPDirPredM);
-  flopenrc #(2) NewPredictionRegW(clk, reset,  FlushW, ~StallW, NewBPDirPredM, NewBPDirPredW);
+  satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(BPDirM), .NewState(NewBPDirM));
+  //flopenrc #(2) NewPredictionRegM(clk, reset,  FlushM, ~StallM, NewBPDirE, NewBPDirM);
+  flopenrc #(2) NewPredictionRegW(clk, reset,  FlushW, ~StallW, NewBPDirM, NewBPDirW);
 
-  assign BPDirPredWrongE = PCSrcE != BPDirPredM[1] & BranchE;
+  assign BPDirWrongE = PCSrcE != BPDirM[1] & BranchE;
 
   // This is the main difference between global and local history basic implementations. In global, 
   // the ghr wraps back into itself directly without
@@ -100,8 +100,8 @@ module localrepairbp import cvw::*; #(parameter cvw_t P,
     .bwe2('1));
 
   assign IndexLHRD = {PCE[m+1] ^ PCE[1], PCE[m:2]};
-  assign LHRNextE = BranchD ? {BPDirPredD[1], LHRE[k-1:1]} : LHRE;
-  // *** replace with a small CAM
+  assign LHRNextE = BranchD ? {BPDirD[1], LHRE[k-1:1]} : LHRE;
+  // RT: TODO active research: replace with a small CAM, quantify benefit
   ram2p1r1wbe #(.USE_SRAM(P.USE_SRAM), .DEPTH(2**m), .WIDTH(k)) SHB(.clk(clk),
     .ce1(~StallF), .ce2(~StallE & ~FlushE),
     .ra1(IndexLHRNextF),
@@ -110,7 +110,7 @@ module localrepairbp import cvw::*; #(parameter cvw_t P,
     .wd2(LHRNextE),
     .we2(BranchD),
     .bwe2('1));
-  // **** replace with small CAM
+  // RT: TODO active research: replace with small CAM, quantify benefit
   logic [2**m-1:0]        FlushedBits;
   always_ff @(posedge clk) begin // Valid bit array,
     SpeculativeFlushedF <= FlushedBits[IndexLHRNextF];

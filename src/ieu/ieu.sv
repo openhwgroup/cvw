@@ -6,7 +6,7 @@
 //
 // Purpose: Integer Execution Unit: datapath and controller
 // 
-// Documentation: RISC-V System on Chip Design Chapter 4 (Figure 4.12)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -92,33 +92,29 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   input  logic [4:0]        DebugRegAddr
 );
 
-  logic [2:0] ImmSrcD;                                                    // Select type of immediate extension 
-  logic [1:0] FlagsE;                                                     // Comparison flags ({eq, lt})
-  logic       ALUSrcAE, ALUSrcBE;                                         // ALU source operands
-  logic [2:0] ResultSrcW;                                                 // Selects result in Writeback stage
-  logic       ALUResultSrcE;                                              // Selects ALU result to pass on to Memory stage
-  logic [2:0] ALUSelectE;                                                 // ALU select mux signal
-  logic       SCE;                                                        // Store Conditional instruction
-  logic       FWriteIntM;                                                 // FPU writing to integer register file
-  logic       IntDivW;                                                    // Integer divide instruction
-  logic [3:0] BSelectE;                                                   // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding
-  logic [3:0] ZBBSelectE;                                                 // ZBB Result Select Signal in Execute Stage
-  logic [2:0] BALUControlE;                                               // ALU Control signals for B instructions in Execute Stage
-  logic       SubArithE;                                                  // Subtraction or arithmetic shift
+  logic [2:0] ImmSrcD;                                       // Select type of immediate extension 
+  logic [1:0] FlagsE;                                        // Comparison flags ({eq, lt})
+  logic       ALUSrcAE, ALUSrcBE;                            // ALU source operands
+  logic [2:0] ResultSrcW;                                    // Selects result in Writeback stage
+  logic       ALUResultSrcE;                                 // Selects ALU result to pass on to Memory stage
+  logic [2:0] ALUSelectE;                                    // ALU select mux signal
+  logic       FWriteIntM;                                    // FPU writing to integer register file
+  logic       IntDivW;                                       // Integer divide instruction
+  logic [3:0] BSelectE;                                      // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding
+  logic [3:0] ZBBSelectE;                                    // ZBB Result Select Signal in Execute Stage
+  logic [2:0] BALUControlE;                                  // ALU Control signals for B instructions in Execute Stage
+  logic       SubArithE;                                     // Subtraction or arithmetic shift
 
   logic [6:0] Funct7E;
 
   // Forwarding signals
   logic [4:0] Rs1D, Rs2D;
-  logic [4:0] Rs2E;                                                       // Source registers
-  logic [1:0] ForwardAE, ForwardBE;                                       // Select signals for forwarding multiplexers
-  logic       RegWriteM, RegWriteW;                                       // Register will be written in Memory, Writeback stages
-  logic       MemReadE, CSRReadE;                                         // Load, CSRRead instruction
-  logic       BranchSignedE;                                              // Branch does signed comparison on operands
-  logic       MDUE;                                                       // Multiply/divide instruction
-  logic       BMUActiveE;                                                 // Bit manipulation instruction being executed
-  logic [1:0] CZeroE;                                                     // {czero.nez, czero.eqz} instructions active
-
+  logic [4:0] Rs2E;                                          // Source registers
+  logic [1:0] ForwardAE, ForwardBE;                          // Select signals for forwarding multiplexers
+  logic       RegWriteW;                                     // Register will be written in Writeback stage
+  logic       BranchSignedE;                                 // Branch does signed comparison on operands
+  logic       BMUActiveE;                                    // Bit manipulation instruction being executed
+  logic [1:0] CZeroE;                                        // {czero.nez, czero.eqz} instructions active
   logic DSCR;                                                             // Debug Scan Chain Register
            
   controller #(P) c(
@@ -126,12 +122,12 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
     .IllegalIEUFPUInstrD, .IllegalBaseInstrD, 
     .StructuralStallD, .LoadStallD, .StoreStallD, .Rs1D, .Rs2D,  .Rs2E,
     .StallE, .FlushE, .FlagsE, .FWriteIntE,
-    .PCSrcE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .MemReadE, .CSRReadE, 
-    .Funct3E, .Funct7E, .IntDivE, .MDUE, .W64E, .SubArithE, .BranchD, .BranchE, .JumpD, .JumpE, .SCE, 
+    .PCSrcE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE,
+    .Funct3E, .Funct7E, .IntDivE, .W64E, .SubArithE, .BranchD, .BranchE, .JumpD, .JumpE,
     .BranchSignedE, .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE, .CZeroE, .MDUActiveE, 
     .FCvtIntE, .ForwardAE, .ForwardBE, .CMOpM, .IFUPrefetchE, .LSUPrefetchM,
     .StallM, .FlushM, .MemRWE, .MemRWM, .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
-    .RegWriteM, .FlushDCacheM, .InstrValidM, .InstrValidE, .InstrValidD, .FWriteIntM,
+    .FlushDCacheM, .InstrValidM, .InstrValidE, .InstrValidD, .FWriteIntM,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .ResultSrcW, .CSRWriteFenceM, .InvalidateICacheM,
     .RdW, .RdE, .RdM, .DebugScanEn(DebugScanEn & MiscSel), .DebugScanIn, .DebugScanOut(DSCR));
 

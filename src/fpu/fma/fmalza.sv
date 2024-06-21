@@ -6,7 +6,7 @@
 //
 // Purpose: Leading Zero Anticipator
 // 
-// Documentation: RISC-V System on Chip Design Chapter 13 (Figure 13.14)
+// Documentation: RISC-V System on Chip Design
 //    See also [Schmookler & Nowka, Leading zero anticipation and detection, IEEE Sym. Computer Arithmetic, 2001]
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.

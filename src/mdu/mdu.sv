@@ -6,7 +6,7 @@
 //
 // Purpose: M extension multiply and divide
 // 
-// Documentation: RISC-V System on Chip Design Chapter 12 (Figure 12.21)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -44,12 +44,6 @@ module mdu import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]        PrelimResultM;                  // selected result before W truncation
   logic [P.XLEN-1:0]        MDUResultM;                     // result after W truncation
   logic                     W64M;                           // W-type instruction
-
-  logic [P.XLEN-1:0]        AMDU, BMDU;                     // Gated inputs to MDU
-
-  // gate data inputs to MDU to only operate when MDU is active.
-  assign AMDU = ForwardedSrcAE & {P.XLEN{MDUActiveE}};
-  assign BMDU = ForwardedSrcBE & {P.XLEN{MDUActiveE}};
 
   // Multiplier
   mul #(P.XLEN) mul(.clk, .reset, .StallM, .FlushM, .ForwardedSrcAE, .ForwardedSrcBE, .Funct3E, .ProdM);

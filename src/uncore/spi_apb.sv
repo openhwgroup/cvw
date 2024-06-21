@@ -61,6 +61,10 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     localparam SPI_IE =      8'h70;
     localparam SPI_IP =      8'h74;
 
+    // receive shift register states
+    typedef enum logic [1:0] {ReceiveShiftFullState, ReceiveShiftNotFullState, ReceiveShiftDelayState} rsrstatetype;
+
+
     // SPI control registers. Refer to SiFive FU540-C000 manual 
     logic [11:0] SckDiv;
     logic [1:0]  SckMode;
@@ -88,8 +92,11 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     logic ReceiveFIFOReadIncrement;
     logic ReceiveFIFOWriteFull, ReceiveFIFOReadEmpty;
     logic [7:0] TransmitFIFOReadData;
-    logic [2:0] TransmitWriteWatermarkLevel, ReceiveReadWatermarkLevel;
+    /* verilator lint_off UNDRIVEN */
+    logic [2:0] TransmitWriteWatermarkLevel, ReceiveReadWatermarkLevel; // unused generic FIFO outputs
+    /* verilator lint_off UNDRIVEN */
     logic [7:0] ReceiveShiftRegEndian;              // Reverses ReceiveShiftReg if Format[2] set (little endian transmission)
+    rsrstatetype ReceiveState;
 
     // Transmission signals
     logic sck;
@@ -150,7 +157,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     else              assign PRDATA =  Dout;  
 
     // Register access  
-    always_ff@(posedge PCLK, negedge PRESETn)
+    always_ff@(posedge PCLK)
         if (~PRESETn) begin 
             SckDiv <= 12'd3;
             SckMode <= 2'b0;
@@ -215,7 +222,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     // Active at 2x SCLK frequency to account for implicit half cycle delays and actions on both clock edges depending on phase
     assign SCLKenable = (DivCounter == SckDiv);
     assign SCLKenableEarly = ((DivCounter + 12'b1) == SckDiv);
-    always_ff @(posedge PCLK, negedge PRESETn)
+    always_ff @(posedge PCLK)
         if (~PRESETn) DivCounter <= '0;
         else if (SCLKenable) DivCounter <= 12'b0;
         else DivCounter <= DivCounter + 12'b1;
@@ -229,33 +236,56 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     assign ImplicitDelay2 = SckMode[0] ? 9'b1 : 9'b0;
 
     // Calculate when tx/rx shift registers are full/empty
-    TransmitShiftFSM TransmitShiftFSM(PCLK, PRESETn, TransmitFIFOReadEmpty, ReceivePenultimateFrame, Active0, TransmitShiftEmpty);
-    ReceiveShiftFSM ReceiveShiftFSM(PCLK, PRESETn, SCLKenable, ReceivePenultimateFrame, SampleEdge, SckMode[0], ReceiveShiftFull);
+
+    // Transmit Shift FSM
+    always_ff @(posedge PCLK)
+        if (~PRESETn) TransmitShiftEmpty <= 1'b1;
+        else if (TransmitShiftEmpty) begin        
+            if (TransmitFIFOReadEmpty | (~TransmitFIFOReadEmpty & (ReceivePenultimateFrame & Active0))) TransmitShiftEmpty <= 1'b1;
+            else if (~TransmitFIFOReadEmpty) TransmitShiftEmpty <= 1'b0;
+        end else begin
+            if (ReceivePenultimateFrame & Active0) TransmitShiftEmpty <= 1'b1;
+            else TransmitShiftEmpty <= 1'b0;
+        end
+
+    // Receive Shift FSM
+    always_ff @(posedge PCLK)
+        if (~PRESETn) ReceiveState <= ReceiveShiftNotFullState;
+        else if (SCLKenable) begin
+            case (ReceiveState)
+                ReceiveShiftFullState:    ReceiveState <= ReceiveShiftNotFullState;
+                ReceiveShiftNotFullState: if (ReceivePenultimateFrame & (SampleEdge)) ReceiveState <= ReceiveShiftDelayState;
+                                          else ReceiveState <= ReceiveShiftNotFullState;
+                ReceiveShiftDelayState:   ReceiveState <= ReceiveShiftFullState;
+            endcase
+        end
+
+    assign ReceiveShiftFull = SckMode[0] ? (ReceiveState == ReceiveShiftFullState) : (ReceiveState == ReceiveShiftDelayState);
 
     // Calculate tx/rx fifo write and recieve increment signals 
 
-    always_ff @(posedge PCLK, negedge PRESETn)
+    always_ff @(posedge PCLK)
         if (~PRESETn) TransmitFIFOWriteIncrement <= 1'b0;
         else TransmitFIFOWriteIncrement <= (Memwrite & (Entry == 8'h48) & ~TransmitFIFOWriteFull & TransmitInactive);
 
-    always_ff @(posedge PCLK, negedge PRESETn)
+    always_ff @(posedge PCLK)
         if (~PRESETn) ReceiveFIFOReadIncrement <= 1'b0;
         else ReceiveFIFOReadIncrement <= ((Entry == 8'h4C) & ~ReceiveFIFOReadEmpty & PSEL & ~ReceiveFIFOReadIncrement);
     
     // Tx/Rx FIFOs
-    SynchFIFO #(3,8) txFIFO(PCLK, 1'b1, SCLKenable, PRESETn, TransmitFIFOWriteIncrement, TransmitShiftEmpty, TransmitData[7:0], TransmitWriteWatermarkLevel, TransmitWatermark[2:0],
+    spi_fifo #(3,8) txFIFO(PCLK, 1'b1, SCLKenable, PRESETn, TransmitFIFOWriteIncrement, TransmitShiftEmpty, TransmitData[7:0], TransmitWriteWatermarkLevel, TransmitWatermark[2:0],
                             TransmitFIFOReadData[7:0], TransmitFIFOWriteFull, TransmitFIFOReadEmpty, TransmitWriteMark, TransmitReadMark);
-    SynchFIFO #(3,8) rxFIFO(PCLK, SCLKenable, 1'b1, PRESETn, ReceiveShiftFullDelay, ReceiveFIFOReadIncrement, ReceiveShiftRegEndian, ReceiveWatermark[2:0], ReceiveReadWatermarkLevel, 
+    spi_fifo #(3,8) rxFIFO(PCLK, SCLKenable, 1'b1, PRESETn, ReceiveShiftFullDelay, ReceiveFIFOReadIncrement, ReceiveShiftRegEndian, ReceiveWatermark[2:0], ReceiveReadWatermarkLevel, 
                             ReceiveData[7:0], ReceiveFIFOWriteFull, ReceiveFIFOReadEmpty, RecieveWriteMark, RecieveReadMark);
 
-    always_ff @(posedge PCLK, negedge PRESETn)
+    always_ff @(posedge PCLK)
         if (~PRESETn) TransmitFIFOReadEmptyDelay <= 1'b1;
         else  if (SCLKenable) TransmitFIFOReadEmptyDelay <= TransmitFIFOReadEmpty;
 
-    always_ff @(posedge PCLK, negedge PRESETn)
+    always_ff @(posedge PCLK)
         if (~PRESETn) ReceiveShiftFullDelay <= 1'b0;
         else if (SCLKenable) ReceiveShiftFullDelay <= ReceiveShiftFull;
-    always_ff @(posedge PCLK, negedge PRESETn)
+    always_ff @(posedge PCLK)
         if (~PRESETn) ReceiveShiftFullDelayPCLK <= 1'b0;
         else if (SCLKenableEarly) ReceiveShiftFullDelayPCLK <= ReceiveShiftFull; 
 
@@ -265,7 +295,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     typedef enum logic [2:0] {CS_INACTIVE, DELAY_0, ACTIVE_0, ACTIVE_1, DELAY_1,INTER_CS, INTER_XFR} statetype;
     statetype state;
 
-    always_ff @(posedge PCLK, negedge PRESETn)
+    always_ff @(posedge PCLK)
         if (~PRESETn) begin 
                         state <= CS_INACTIVE;
                         FrameCount <= 4'b0;                      
@@ -347,7 +377,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
 
     // Transmit shift register
     assign TransmitDataEndian = Format[0] ? {TransmitFIFOReadData[0], TransmitFIFOReadData[1], TransmitFIFOReadData[2], TransmitFIFOReadData[3], TransmitFIFOReadData[4], TransmitFIFOReadData[5], TransmitFIFOReadData[6], TransmitFIFOReadData[7]} : TransmitFIFOReadData[7:0];
-    always_ff @(posedge PCLK, negedge PRESETn)
+    always_ff @(posedge PCLK)
         if(~PRESETn)                        TransmitShiftReg <= 8'b0; 
         else if (TransmitShiftRegLoad)      TransmitShiftReg <= TransmitDataEndian;
         else if (ShiftEdge & Active)        TransmitShiftReg <= {TransmitShiftReg[6:0], 1'b0};
@@ -359,7 +389,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     assign ShiftIn = P.SPI_LOOPBACK_TEST ? SPIOut : SPIIn;
 
     // Receive shift register
-    always_ff @(posedge PCLK, negedge PRESETn)
+    always_ff @(posedge PCLK)
         if(~PRESETn)  ReceiveShiftReg <= 8'b0;
         else if (SampleEdge & SCLKenable) begin
             if (~Active)    ReceiveShiftReg <= 8'b0;
@@ -385,94 +415,3 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
 
     assign SPICS = ChipSelectMode[0] ? ChipSelectDef : ChipSelectAuto;
 endmodule
-
-module SynchFIFO #(parameter M=3, N=8)(                 // 2^M entries of N bits each
-    input  logic         PCLK, wen, ren, PRESETn,
-    input  logic         winc, rinc,
-    input  logic [N-1:0] wdata,
-    input  logic [M-1:0] wwatermarklevel, rwatermarklevel,
-    output logic [N-1:0] rdata,
-    output logic         wfull, rempty,
-    output logic         wwatermark, rwatermark);
-
-    /* Pointer FIFO using design elements from "Simulation and Synthesis Techniques
-       for Asynchronous FIFO Design" by Clifford E. Cummings. Namely, M bit read and write pointers
-       are an extra bit larger than address size to determine full/empty conditions. 
-       Watermark comparisons use 2's complement subtraction between the M-1 bit pointers,
-       which are also used to address memory
-    */
-       
-    logic [N-1:0] mem[2**M];
-    logic [M:0] rptr, wptr;
-    logic [M:0] rptrnext, wptrnext;
-    logic [M-1:0] raddr;
-    logic [M-1:0] waddr;
- 
-    assign rdata = mem[raddr];
-    always_ff @(posedge PCLK)
-        if (winc & ~wfull) mem[waddr] <= wdata;
-
-    // write and read are enabled 
-    always_ff @(posedge PCLK, negedge PRESETn)
-        if (~PRESETn) begin 
-            rptr <= '0;
-            wptr <= '0;
-            wfull <= 1'b0;
-            rempty <= 1'b1;
-        end else begin 
-            if (wen) begin
-                wfull <= ({~wptrnext[M], wptrnext[M-1:0]} == rptr);
-                wptr  <= wptrnext;
-            end
-            if (ren) begin 
-                rptr <= rptrnext;
-                rempty <= (wptr == rptrnext);
-            end
-        end 
-    
-    assign raddr = rptr[M-1:0];
-    assign rptrnext = rptr + {{(M){1'b0}}, (rinc & ~rempty)};      
-    assign rwatermark = ((waddr - raddr) < rwatermarklevel) & ~wfull;
-    assign waddr = wptr[M-1:0];
-    assign wwatermark = ((waddr - raddr) > wwatermarklevel) | wfull;
-    assign wptrnext = wptr + {{(M){1'b0}}, (winc & ~wfull)};
-endmodule
-
-module TransmitShiftFSM(
-    input  logic PCLK, PRESETn,
-    input  logic TransmitFIFOReadEmpty, ReceivePenultimateFrame, Active0,
-    output logic TransmitShiftEmpty);
-
-    always_ff @(posedge PCLK, negedge PRESETn)
-        if (~PRESETn) TransmitShiftEmpty <= 1'b1;
-        else if (TransmitShiftEmpty) begin        
-            if (TransmitFIFOReadEmpty | (~TransmitFIFOReadEmpty & (ReceivePenultimateFrame & Active0))) TransmitShiftEmpty <= 1'b1;
-            else if (~TransmitFIFOReadEmpty) TransmitShiftEmpty <= 1'b0;
-        end else begin
-            if (ReceivePenultimateFrame & Active0) TransmitShiftEmpty <= 1'b1;
-            else TransmitShiftEmpty <= 1'b0;
-        end
-
-endmodule
-
-module ReceiveShiftFSM(
-    input  logic PCLK, PRESETn, SCLKenable,
-    input  logic ReceivePenultimateFrame, SampleEdge, SckMode,
-    output logic ReceiveShiftFull
-);
-    typedef enum logic [1:0] {ReceiveShiftFullState, ReceiveShiftNotFullState, ReceiveShiftDelayState} statetype;
-    statetype ReceiveState, ReceiveNextState;
-    always_ff @(posedge PCLK, negedge PRESETn)
-        if (~PRESETn) ReceiveState <= ReceiveShiftNotFullState;
-        else if (SCLKenable) begin
-            case (ReceiveState)
-                ReceiveShiftFullState: ReceiveState <= ReceiveShiftNotFullState;
-                ReceiveShiftNotFullState: if (ReceivePenultimateFrame & (SampleEdge)) ReceiveState <= ReceiveShiftDelayState;
-                                          else ReceiveState <= ReceiveShiftNotFullState;
-                ReceiveShiftDelayState:   ReceiveState <= ReceiveShiftFullState;
-            endcase
-        end
-
-    assign ReceiveShiftFull = SckMode ? (ReceiveState == ReceiveShiftFullState) : (ReceiveState == ReceiveShiftDelayState);
-endmodule
-

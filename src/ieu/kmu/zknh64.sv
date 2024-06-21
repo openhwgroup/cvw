@@ -26,7 +26,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module zknh64 (
-   input  logic [63:0] A, B, 
+   input  logic [63:0] A,
    input  logic [3:0]  ZKNHSelect,
    output logic [63:0] ZKNHResult
 );

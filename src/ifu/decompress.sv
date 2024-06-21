@@ -6,10 +6,6 @@
 // Modified: 18 January 2023
 //
 // Purpose: Expand 16-bit compressed instructions to 32 bits
-//
-// Documentation: RISC-V System on Chip Design Chapter 11 (Section 11.3.1)
-//                RISC-V Specification 13 Dec 2019 Chapter 16 pg. 97
-// *** probably need more documentation in this file since the book is very light on decompression.
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

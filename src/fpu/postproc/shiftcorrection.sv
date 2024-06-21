@@ -6,7 +6,7 @@
 //
 // Purpose: shift correction
 // 
-// Documentation: RISC-V System on Chip Design Chapter 13
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -45,13 +45,12 @@ module shiftcorrection import cvw::*;  #(parameter cvw_t P) (
   output logic [P.NE+1:0]          Ue                      // corrected exponent for divider
 );
 
-  logic [P.NORMSHIFTSZ-1:0]        CorrShifted;         // the shifted sum after LZA correction
   logic                            ResSubnorm;             // is the result Subnormal
   logic                            LZAPlus1;               // add one or two to the sum's exponent due to LZA correction
   logic                            LeftShiftQm;            // should the divsqrt result be shifted one to the left
   logic                            RightShift;             // shift right by 1
 
-  // *** 4/16/24 this code is a mess and needs cleaning and explaining
+  // dh 4/16/24 this code is a mess and needs cleaning and explaining
   // define bit widths
   // seems to shift by 0, 1, or 2.  right and left shift is confusing
   
@@ -61,20 +60,20 @@ module shiftcorrection import cvw::*;  #(parameter cvw_t P) (
   //  - a one has to propagate all the way through a sum. so we can leave the bottom statement alone
   assign LZAPlus1 = Shifted[P.NORMSHIFTSZ-1];
 
-
   // correct the shifting of the divsqrt caused by producing a result in (0.5, 2) range
   // condition: if the msb is 1 or the exponent was one, but the shifted quotent was < 1 (Subnorm)
-  assign LeftShiftQm = (LZAPlus1|(DivUe==1&~LZAPlus1));
- 
-  assign RightShift = FmaOp ? LZAPlus1 : LeftShiftQm;
+  assign LeftShiftQm = (LZAPlus1|(DivUe==1&~LZAPlus1)); 
 
-  // one bit right shift for FMA or division
-  mux2 #(P.NORMSHIFTSZ) corrmux({Shifted[P.NORMSHIFTSZ-3:0], 2'b00}, {Shifted[P.NORMSHIFTSZ-2:1], 2'b00}, RightShift, CorrShifted);
-  
+  // Determine the shif for either FMA or divsqrt
+  assign RightShift = FmaOp ? LZAPlus1 : LeftShiftQm;
+ 
+  // possible one bit right shift for FMA or division
   // if the result of the divider was calculated to be subnormal, then the result was correctly normalized, so select the top shifted bits
   always_comb
-    if (FmaOp | (DivOp & ~DivResSubnorm))  Mf = CorrShifted;
-    else                                   Mf = Shifted[P.NORMSHIFTSZ-1:0];
+    if (FmaOp | (DivOp & ~DivResSubnorm))  // one bit shift for FMA or divsqrt
+      if (RightShift)                      Mf = {Shifted[P.NORMSHIFTSZ-2:1], 2'b00};
+      else                                 Mf = {Shifted[P.NORMSHIFTSZ-3:0], 2'b00};
+    else                                   Mf =  Shifted[P.NORMSHIFTSZ-1:0];  // convert and subnormal division result
     
   // Determine sum's exponent
   //  main exponent issues: 

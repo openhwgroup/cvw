@@ -6,7 +6,7 @@
 //
 // Purpose: Pipelined RISC-V Processor
 // 
-// Documentation: RISC-V System on Chip Design (Figure 4.1)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -131,7 +131,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
 
   // memory management unit signals
   logic                          ITLBWriteF;
-  logic                          ITLBMissF;
+  logic                          ITLBMissOrUpdateAF;
   logic [P.XLEN-1:0]             SATP_REGW;
   logic                          STATUS_MXR, STATUS_SUM, STATUS_MPRV;
   logic [1:0]                    STATUS_MPP, STATUS_FS;
@@ -142,8 +142,10 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          SelHPTW;
 
   // PMA checker signals
+  /* verilator lint_off UNDRIVEN */ // these signals are undriven in configurations without a privileged unit
   var logic [P.PA_BITS-3:0]      PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0];
   var logic [7:0]                PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0];
+  /* verilator lint_on UNDRIVEN */
 
   // IMem stalls
   logic                          IFUStallF;
@@ -173,7 +175,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          LSUHREADY;
   
   logic                          BPWrongE, BPWrongM;
-  logic                          BPDirPredWrongM;
+  logic                          BPDirWrongM;
   logic                          BTAWrongM;
   logic                          RASPredPCWrongM;
   logic                          IClassWrongM;
@@ -187,7 +189,6 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          DCacheAccess;
   logic                          ICacheMiss;
   logic                          ICacheAccess;
-  logic                          InstrUpdateDAF;
   logic                          BigEndianM;
   logic                          FCvtIntE;
   logic                          CommittedF;
@@ -218,15 +219,15 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .PCLinkE, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCE, .BPWrongE,  .BPWrongM, 
     // Mem
     .CommittedF, .EPCM, .TrapVectorM, .RetM, .TrapM, .InvalidateICacheM, .CSRWriteFenceM,
-    .InstrD, .InstrM, .InstrOrigM, .PCM, .IClassM, .BPDirPredWrongM,
+    .InstrD, .InstrM, .InstrOrigM, .PCM, .IClassM, .BPDirWrongM,
     .BTAWrongM, .RASPredPCWrongM, .IClassWrongM,
     // Faults out
     .IllegalBaseInstrD, .IllegalFPUInstrD, .InstrPageFaultF, .IllegalIEUFPUInstrD, .InstrMisalignedFaultM,
     // mmu management
     .PrivilegeModeW, .PTE, .PageType, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV,
-    .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE, .ITLBWriteF, .sfencevmaM, .ITLBMissF,
-    // pmp/pma (inside mmu) signals. 
-    .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW, .InstrAccessFaultF, .InstrUpdateDAF,
+    .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE, .ITLBWriteF, .sfencevmaM, .ITLBMissOrUpdateAF,
+    // pmp/pma (inside mmu) signals.
+    .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW, .InstrAccessFaultF,
     .PCNextF, .ProgBuffScanEn, .ProgBufAddr, .ProgBufScanIn(DebugScanIn),
     .DebugScanEn(DebugScanEn & MiscSel), .DebugScanIn(DebugScanReg[0]), .DebugScanOut(DebugScanReg[1]));
     
@@ -289,8 +290,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .HPTWInstrPageFaultF,         // connects to privilege
     .StoreAmoMisalignedFaultM,    // connects to privilege
     .StoreAmoAccessFaultM,        // connects to privilege
-    .InstrUpdateDAF,
-    .PCSpillF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
+    .PCSpillF, .ITLBMissOrUpdateAF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
     .LSUStallM, .DebugCapture, .DebugScanEn(DebugScanEn & MiscSel), .DebugScanIn(DebugScanReg[2]), .DebugScanOut);                    
 
   if(P.BUS_SUPPORTED) begin : ebu
@@ -342,7 +342,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .RetM, .TrapM, .sfencevmaM, .InvalidateICacheM, .DCacheStallM, .ICacheStallF,
       .InstrValidM, .CommittedM, .CommittedF,
       .FRegWriteM, .LoadStallD, .StoreStallD,
-      .BPDirPredWrongM, .BTAWrongM, .BPWrongM,
+      .BPDirWrongM, .BTAWrongM, .BPWrongM,
       .RASPredPCWrongM, .IClassWrongM, .DivBusyE, .FDivBusyE,
       .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
       .InstrPageFaultF, .LoadPageFaultM, .StoreAmoPageFaultM,
@@ -415,7 +415,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .DebugScanIn,
       .DebugScanOut(FPRScanOut));
   end else begin                           // no F_SUPPORTED or D_SUPPORTED; tie outputs low
-    assign {FPUStallD, FWriteIntE, FCvtIntE, FIntResM, FCvtIntW, 
+    assign {FPUStallD, FWriteIntE, FCvtIntE, FIntResM, FCvtIntW, FRegWriteM,
             IllegalFPUInstrD, SetFflagsM, FpLoadStoreM,
             FWriteDataM, FCvtIntResW, FIntDivResultW, FDivBusyE} = '0;
   end

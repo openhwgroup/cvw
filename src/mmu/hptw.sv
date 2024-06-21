@@ -10,7 +10,7 @@
 //
 // Purpose: Hardware Page Table Walker
 //
-// Documentation: RISC-V System on Chip Design Chapter 8
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -46,11 +46,9 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   input  logic              DCacheBusStallM,           // stall from LSU
   input  logic [2:0]        Funct3M,
   input  logic [6:0]        Funct7M,
-  input  logic              ITLBMissF,
-  input  logic              DTLBMissM,
+  input  logic              ITLBMissOrUpdateAF,
+  input  logic              DTLBMissOrUpdateDAM,
   input  logic              FlushW,
-  input  logic              InstrUpdateDAF,
-  input  logic              DataUpdateDAM,
   output logic [P.XLEN-1:0] PTE,                    // page table entry to TLBs
   output logic [1:0]        PageType,               // page type to TLBs
   output logic              ITLBWriteF, DTLBWriteM, // write TLB with new entry
@@ -83,7 +81,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   logic                     Misaligned, MegapageMisaligned;
   logic                     ValidPTE, LeafPTE, ValidLeafPTE, ValidNonLeafPTE;
   logic                     StartWalk;
-  logic                     TLBMiss;
+  logic                     TLBMissOrUpdateDA;
   logic                     PRegEn;
   logic [1:0]               NextPageType;
   logic [P.SVMODE_BITS-1:0] SvMode;
@@ -94,7 +92,6 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   logic [P.PA_BITS-1:0]     HPTWReadAdr;
   logic                     SelHPTWAdr;
   logic [P.XLEN+1:0]        HPTWAdrExt;
-  logic                     DTLBMissOrUpdateDAM;
   logic                     LSUAccessFaultM;
   logic [P.PA_BITS-1:0]     HPTWAdr;
   logic [1:0]               HPTWRW;
@@ -105,8 +102,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   logic                     HPTWLoadPageFault, HPTWStoreAmoPageFault, HPTWInstrPageFault;
   logic                     HPTWLoadPageFaultDelay, HPTWStoreAmoPageFaultDelay, HPTWInstrPageFaultDelay;
   logic                     HPTWAccessFaultDelay;
-  logic                     TakeHPTWFault, TakeHPTWFaultDelay;
-  logic [P.XLEN-1:0]        ReadDataNoXM;
+  logic                     TakeHPTWFault;
   logic                     PBMTFaultM;
   logic                     HPTWFaultM;
   
@@ -120,9 +116,9 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   assign HPTWStoreAmoPageFault   = PBMTFaultM & DTLBWalk & MemRWM[0];   
   assign HPTWInstrPageFault      = PBMTFaultM & ~DTLBWalk;
 
-  flopr #(7) HPTWAccesFaultReg(clk, reset, {TakeHPTWFault, HPTWLoadAccessFault, HPTWStoreAmoAccessFault, HPTWInstrAccessFault, 
+  flopr #(6) HPTWAccesFaultReg(clk, reset, {HPTWLoadAccessFault, HPTWStoreAmoAccessFault, HPTWInstrAccessFault, 
                                             HPTWLoadPageFault, HPTWStoreAmoPageFault, HPTWInstrPageFault},
-                               {TakeHPTWFaultDelay, HPTWLoadAccessFaultDelay, HPTWStoreAmoAccessFaultDelay, HPTWInstrAccessFaultDelay,
+                               {HPTWLoadAccessFaultDelay, HPTWStoreAmoAccessFaultDelay, HPTWInstrAccessFaultDelay,
                                 HPTWLoadPageFaultDelay, HPTWStoreAmoPageFaultDelay, HPTWInstrPageFaultDelay});
 
   assign TakeHPTWFault = WalkerState != IDLE;
@@ -138,7 +134,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   // Extract bits from CSRs and inputs
   assign SvMode = SATP_REGW[P.XLEN-1:P.XLEN-P.SVMODE_BITS];
   assign BasePageTablePPN = SATP_REGW[P.PPN_BITS-1:0];
-  assign TLBMiss = (DTLBMissOrUpdateDAM | ITLBMissF);
+  assign TLBMissOrUpdateDA = DTLBMissOrUpdateDAM | ITLBMissOrUpdateAF;
 
   // Determine which address to translate
   mux2 #(P.XLEN) vadrmux(PCSpillF, IEUAdrExtM[P.XLEN-1:0], DTLBWalk, TranslationVAdr);
@@ -173,9 +169,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
     logic [P.XLEN-1:0]    AccessedPTE;
 
     assign AccessedPTE = {PTE[P.XLEN-1:8], (SetDirty | PTE[7]), 1'b1, PTE[5:0]}; // set accessed bit, conditionally set dirty bit
-    //assign ReadDataNoXM = (ReadDataM[0] === 'x) ? 0 : ReadDataM; // If the PTE.V bit is x because it was read from uninitialized memory set to 0 to avoid x propagation and hanging the simulation.
-    assign ReadDataNoXM = ReadDataM; // *** temporary fix for synthesis; === and x in line above are not synthesizable.
-    mux2 #(P.XLEN) NextPTEMux(ReadDataNoXM, AccessedPTE, UpdatePTE, NextPTE); // NextPTE = ReadDataNoXM when ADUE = 0 because UpdatePTE = 0
+    mux2 #(P.XLEN) NextPTEMux(ReadDataM, AccessedPTE, UpdatePTE, NextPTE); // NextPTE = ReadDataM when ADUE = 0 because UpdatePTE = 0
     flopenr #(P.PA_BITS) HPTWAdrWriteReg(clk, reset, SaveHPTWAdr, HPTWReadAdr, HPTWWriteAdr);
     
     assign SaveHPTWAdr = WalkerState == L0_ADR;
@@ -211,7 +205,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
     assign UpdatePTE = (WalkerState == LEAF) & HPTWUpdateDA;  // UpdatePTE will always be 0 if ADUE = 0 because HPTWUpdateDA will be 0
 
   end else begin // block: hptwwrites
-    assign NextPTE = ReadDataNoXM;
+    assign NextPTE = ReadDataM;
     assign HPTWAdr = HPTWReadAdr;
     assign HPTWUpdateDA = 1'b0;
     assign UpdatePTE = 1'b0;
@@ -219,7 +213,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   end
 
   // Enable and select signals based on states
-  assign StartWalk  = (WalkerState == IDLE) & TLBMiss; 
+  assign StartWalk  = (WalkerState == IDLE) & TLBMissOrUpdateDA; 
   assign HPTWRW[1]  = (WalkerState == L3_RD) | (WalkerState == L2_RD) | (WalkerState == L1_RD) | (WalkerState == L0_RD);
   assign DTLBWriteM = (WalkerState == LEAF & ~HPTWUpdateDA) & DTLBWalk;
   assign ITLBWriteF = (WalkerState == LEAF & ~HPTWUpdateDA) & ~DTLBWalk;
@@ -267,86 +261,65 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   end else begin
     logic  GigapageMisaligned, TerapageMisaligned;
     assign InitialWalkerState = (SvMode == P.SV48) ? L3_ADR : L2_ADR;
-    assign TerapageMisaligned = |(CurrentPPN[26:0]); // must have zero PPN2, PPN1, PPN0
-    assign GigapageMisaligned = |(CurrentPPN[17:0]); // must have zero PPN1 and PPN0
-    assign MegapageMisaligned = |(CurrentPPN[8:0]); // must have zero PPN0      
+    assign TerapageMisaligned = |(CurrentPPN[26:0]); // Must have zero PPN2, PPN1, PPN0
+    assign GigapageMisaligned = |(CurrentPPN[17:0]); // Must have zero PPN1 and PPN0
+    assign MegapageMisaligned = |(CurrentPPN[8:0]);  // Must have zero PPN0      
     assign Misaligned = ((WalkerState == L2_ADR) & TerapageMisaligned) | ((WalkerState == L1_ADR) & GigapageMisaligned) | ((WalkerState == L0_ADR) & MegapageMisaligned);
   end
 
   // Page Table Walker FSM
-  // *** there is a bug here (RT).  Each memory access needs to be potentially flushed if the PMA/P checkers
-  // generate an access fault.  Specially the store on UDPATE_PTE needs to check for access violation.
-  // I think the solution is to do 1 of the following
-  // 1. Allow the HPTW to generate exceptions and stop walking immediately.
-  // 2. If the store would generate an exception don't store to dcache but still write the TLB.  When we go back
-  // to LEAF then the PMA/P.  Wait this does not work.  The PMA/P won't be looking a the address in the table, but
-  // rather than physical address of the translated instruction/data.  So we must generate the exception.
-  // *** DH 1/1/24 another bug: when the NAPOT bits (PTE[62:61]) are nonzero on a nonleaf PTE, the walker should make a page fault (Issue 546)
   flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset | FlushW, 1'b1, NextWalkerState, IDLE, WalkerState); 
   always_comb 
     case (WalkerState)
-      IDLE:       if (TLBMiss)                                        NextWalkerState = InitialWalkerState;                      
+      IDLE:       if (TLBMissOrUpdateDA)                              NextWalkerState = InitialWalkerState;                      
                   else                                                NextWalkerState = IDLE;
-      L3_ADR:                                                         NextWalkerState = L3_RD; // first access in SV48
+      L3_ADR:                                                         NextWalkerState = L3_RD; // First access in SV48
       L3_RD:      if (DCacheBusStallM)                                NextWalkerState = L3_RD;
-                  else if(HPTWFaultM)                                 NextWalkerState = FAULT;
+                  else if (HPTWFaultM)                                NextWalkerState = FAULT;
                   else                                                NextWalkerState = L2_ADR;
-      L2_ADR:     if (InitialWalkerState == L2_ADR | ValidNonLeafPTE) NextWalkerState = L2_RD; // first access in SV39
+      L2_ADR:     if (InitialWalkerState == L2_ADR | ValidNonLeafPTE) NextWalkerState = L2_RD; // First access in SV39
                   else                                                NextWalkerState = LEAF;
       L2_RD:      if (DCacheBusStallM)                                NextWalkerState = L2_RD;
-                  else if(HPTWFaultM)                                 NextWalkerState = FAULT;
+                  else if (HPTWFaultM)                                NextWalkerState = FAULT;
                   else                                                NextWalkerState = L1_ADR;
-      L1_ADR:     if (InitialWalkerState == L1_ADR | ValidNonLeafPTE) NextWalkerState = L1_RD; // first access in SV32                 
+      L1_ADR:     if (InitialWalkerState == L1_ADR | ValidNonLeafPTE) NextWalkerState = L1_RD; // First access in SV32                 
                   else                                                NextWalkerState = LEAF;  
       L1_RD:      if (DCacheBusStallM)                                NextWalkerState = L1_RD;
-                  else if(HPTWFaultM)                                 NextWalkerState = FAULT;
+                  else if (HPTWFaultM)                                NextWalkerState = FAULT;
                   else                                                NextWalkerState = L0_ADR;
       L0_ADR:     if (ValidNonLeafPTE)                                NextWalkerState = L0_RD;
                   else                                                NextWalkerState = LEAF;
       L0_RD:      if (DCacheBusStallM)                                NextWalkerState = L0_RD;
-                  else if(HPTWFaultM)                                 NextWalkerState = FAULT;
+                  else if (HPTWFaultM)                                NextWalkerState = FAULT;
                   else                                                NextWalkerState = LEAF;
       LEAF:       if (P.SVADU_SUPPORTED & HPTWUpdateDA)               NextWalkerState = UPDATE_PTE;
                   else                                                NextWalkerState = IDLE;
-      UPDATE_PTE: if(DCacheBusStallM)                                 NextWalkerState = UPDATE_PTE;
+      UPDATE_PTE: if (DCacheBusStallM)                                NextWalkerState = UPDATE_PTE;
                   else                                                NextWalkerState = LEAF;
       FAULT:                                                          NextWalkerState = IDLE;
-      default:                                                        NextWalkerState = IDLE; // should never be reached
+      default:                                                        NextWalkerState = IDLE; // Should never be reached
     endcase // case (WalkerState)
 
-  assign IgnoreRequestTLB = (WalkerState == IDLE & TLBMiss) | (HPTWFaultM); // RT : 05 April 2023 if hptw request has pmp/a fault suppress bus access.
+  assign IgnoreRequestTLB = (WalkerState == IDLE & TLBMissOrUpdateDA) | (HPTWFaultM); // If hptw request has pmp/a fault suppress bus access.
   assign SelHPTW = WalkerState != IDLE;
-
-  // RT 30 May 2023: When there is an access fault caused by the hptw itself, the fsm jumps to FAULT, removes
-  // stall and asserts one of HPTWLoadAccessFault, HPTWStoreAmoAccessFault or HPTWInstrAccessFaultDelay.
-  // The FSM directly transistions to IDLE to ready for the next operation when the delayed version will not be high.
-
-  assign HPTWAccessFaultDelay = HPTWLoadAccessFaultDelay | HPTWStoreAmoAccessFaultDelay | HPTWInstrAccessFaultDelay;
-  assign HPTWStall = (WalkerState != IDLE & WalkerState != FAULT) | (WalkerState == IDLE & TLBMiss); 
-
-  assign DTLBMissOrUpdateDAM = DTLBMissM | (P.SVADU_SUPPORTED & DataUpdateDAM);  
+  assign HPTWStall = (WalkerState != IDLE & WalkerState != FAULT) | (WalkerState == IDLE & TLBMissOrUpdateDA); 
 
   // HTPW address/data/control muxing
 
   // Once the walk is done and it is time to update the TLB we need to switch back 
   // to the orignal data virtual address.
   assign SelHPTWAdr = SelHPTW & ~(DTLBWriteM | ITLBWriteF);
-  // always block interrupts when using the hardware page table walker.
 
   // multiplex the outputs to LSU
-  if(P.XLEN == 64) assign HPTWAdrExt = {{(P.XLEN+2-P.PA_BITS){1'b0}}, HPTWAdr}; // extend to 66 bits
-  else             assign HPTWAdrExt = HPTWAdr;
+  if (P.XLEN == 64) assign HPTWAdrExt = {{(P.XLEN+2-P.PA_BITS){1'b0}}, HPTWAdr}; // Extend to 66 bits
+  else              assign HPTWAdrExt = HPTWAdr;
   mux2 #(2) rwmux(MemRWM, HPTWRW, SelHPTW, PreLSURWM);
   mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, LSUFunct3M);
   mux2 #(7) funct7mux(Funct7M, 7'b0, SelHPTW, LSUFunct7M);    
   mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LSUAtomicM);
   mux2 #(P.XLEN+2) lsupadrmux(IEUAdrExtM, HPTWAdrExt, SelHPTWAdr, IHAdrM);
-  if(P.SVADU_SUPPORTED)
+  if (P.SVADU_SUPPORTED) 
     mux2 #(P.XLEN) lsuwritedatamux(WriteDataM, PTE, SelHPTW, IHWriteDataM);
   else assign IHWriteDataM = WriteDataM;
 
 endmodule
-
-// another idea.  We keep gating the control by ~FlushW, but this adds considerable length to the critical path.
-// should we do this differently?  For example TLBMiss is gated by ~FlushW and then drives HPTWStall, which drives LSUStallM, which drives
-// the hazard unit to issue stall and flush controlls. ~FlushW already suppresses these in the hazard unit.

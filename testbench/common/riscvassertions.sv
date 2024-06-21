@@ -59,12 +59,13 @@ module riscvassertions import cvw::*; #(parameter cvw_t P);
     assert ((P.ZIHPM_SUPPORTED == 0) | (P.ZICNTR_SUPPORTED == 1)) else $fatal(1, "ZIPHM_SUPPORTED requires ZICNTR_SUPPORTED");
     assert ((P.ZICBOM_SUPPORTED == 0) | (P.DCACHE_SUPPORTED == 1)) else $fatal(1, "ZICBOM requires DCACHE_SUPPORTED");
     assert ((P.ZICBOZ_SUPPORTED == 0) | (P.DCACHE_SUPPORTED == 1)) else $fatal(1, "ZICBOZ requires DCACHE_SUPPORTED");
+    assert ((P.ZICBOZ_SUPPORTED == 0) | (P.DTIM_SUPPORTED == 0)) else $fatal(1, "ZICBOZ incompatible with DTIM");
     assert ((P.SVPBMT_SUPPORTED == 0) | (P.VIRTMEM_SUPPORTED == 1 & P.XLEN==64)) else $fatal(1, "SVPBMT requires VIRTMEM_SUPPORTED and RV64");
     assert ((P.SVNAPOT_SUPPORTED == 0) | (P.VIRTMEM_SUPPORTED == 1 & P.XLEN==64)) else $fatal(1, "SVNAPOT requires VIRTMEM_SUPPORTED and RV64");
     assert ((P.ZCA_SUPPORTED == 1) | (P.ZCD_SUPPORTED == 0 & P.ZCF_SUPPORTED == 0 & P.ZCB_SUPPORTED == 0)) else $fatal(1, "ZCB, ZCF, or ZCD requires ZCA");
     assert ((P.ZCF_SUPPORTED == 0) | ((P.F_SUPPORTED == 1) & (P.XLEN == 32))) else $fatal(1, "ZCF requires F and XLEN == 32");
     assert ((P.ZCD_SUPPORTED == 0) | (P.D_SUPPORTED == 1)) else $fatal(1, "ZCD requires D");
-    assert ((P.LLEN == P.XLEN) | (P.DCACHE_SUPPORTED)) else $fatal(1, "LLEN > XLEN (D on RV32 or Q on RV64) requires data cache");
+    assert ((P.LLEN == P.XLEN) | (P.DCACHE_SUPPORTED & P.DTIM_SUPPORTED == 0)) else $fatal(1, "LLEN > XLEN (D on RV32 or Q on RV64) requires data cache");
   end
 
 endmodule

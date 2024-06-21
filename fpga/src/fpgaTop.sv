@@ -496,8 +496,7 @@ module fpgaTop
                     .UARTSin, .UARTSout, .SDCIntr); 
   
 
-  // // wally
-  // // *** FIXME add sdc interrupt and HSELEXTSDC, remove old sdc
+  // RT and JP: FIXME add sdc interrupt and HSELEXTSDC, remove old sdc after the new sdc ahb version is implemented
   // wallypipelinedsocwrapper wallypipelinedsocwrapper
   //   (.clk(CPUCLK),
   //    .reset_ext(bus_struct_reset),

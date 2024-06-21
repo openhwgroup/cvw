@@ -11,7 +11,7 @@
 //   - Disabling portions of the instruction set with bits of the MISA register
 //   - Changing from RV64 to RV32 by writing the SXL/UXL bits of the STATUS register
 //
-// Documentation: RISC-V System on Chip Design Chapter 5
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -45,8 +45,10 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   output logic [31:0]              MCOUNTEREN_REGW, MCOUNTINHIBIT_REGW, 
   output logic [15:0]              MEDELEG_REGW,
   output logic [11:0]              MIDELEG_REGW,
+  /* verilator lint_off UNDRIVEN */ // PMP registers are only used when PMP_ENTRIES > 0
   output var logic [7:0]           PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0],
   output var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW [P.PMP_ENTRIES-1:0],
+  /* verilator lint_on UNDRIVEN */
   output logic                     WriteMSTATUSM, WriteMSTATUSHM,
   output logic                     IllegalCSRMAccessM, IllegalCSRMWriteReadonlyM,
   output logic [63:0]              MENVCFG_REGW

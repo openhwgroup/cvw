@@ -86,7 +86,7 @@ INCLUDE_DIRS=$(find ${SRC} -type d | xargs -I {} echo -n "{} ")
 INCLUDE_PATH="+incdir+${CFG}/${CONFIG_VARIANT} +incdir+${CFG}/deriv/${CONFIG_VARIANT} +incdir+${CFG}/shared +incdir+../../tests +define+ +incdir+${TB} ${SRC}/cvw.sv +incdir+${SRC}"
 
 # Prepare RTL files avoiding certain paths
-RTL_FILES="$INCLUDE_DIRS $(find ${SRC} -name "*.sv" ! -path "${SRC}/generic/clockgater.sv" ! -path "${SRC}/generic/mem/rom1p1r_128x64.sv" ! -path "${SRC}/generic/mem/ram2p1r1wbe_128x64.sv" ! -path "${SRC}/generic/mem/rom1p1r_128x32.sv" ! -path "${SRC}/generic/mem/ram2p1r1wbe_512x64.sv")  ${TB}/testbench.sv $(find ${TB}/common -name "*.sv" ! -path "${TB}/common/wallyTracer.sv")"
+RTL_FILES="$INCLUDE_DIRS $(find ${SRC} -name "*.sv" ! -path "${SRC}/generic/mem/rom1p1r_128x64.sv" ! -path "${SRC}/generic/mem/ram2p1r1wbe_128x64.sv" ! -path "${SRC}/generic/mem/rom1p1r_128x32.sv" ! -path "${SRC}/generic/mem/ram2p1r1wbe_2048x64.sv")  ${TB}/testbench.sv $(find ${TB}/common -name "*.sv" ! -path "${TB}/common/wallyTracer.sv")"
 
 # Simulation and Coverage Commands
 OUTPUT="sim_out"

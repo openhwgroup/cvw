@@ -8,7 +8,7 @@
 //          Emulates interface of Texas Instruments PC165550D
 //          Compatible with UART in Imperas Virtio model
 // 
-// Documentation: RISC-V System on Chip Design Chapter 15
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
