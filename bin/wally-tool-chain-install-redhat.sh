@@ -50,11 +50,12 @@ echo -e "\n************************************************************"
 echo -e "Installing Dependencies from Package Manager"
 echo -e "************************************************************\n"
 sudo yum install -y dnf-plugins-core
-sudo yum config-manager --set-enabled powertools # FOR ROCKY
+sudo yum config-manager --set-enabled powertools # FOR ROCKY 8
+sudo yum install -y epel-release
 # sudo subscription-manager repos --enable codeready-builder-for-rhel-8-x86_64-rpms # FOR RHEL
 sudo yum update -y
 sudo yum group install -y "Development Tools"
-sudo yum install -y git gawk make texinfo bison flex python3.12 expat-devel autoconf dtc ninja-build pixman-devel ncurses-base ncurses ncurses-libs ncurses-devel dialog curl wget ftp gmp-devel glib2-devel python3-pip pkgconfig zlib-devel automake libmpc-devel mpfr-devel gperf libtool patchutils bc mutt cmake perl gcc-c++ clang help2man numactl ocaml
+sudo yum install -y git gawk make texinfo bison flex python3.12 expat-devel autoconf dtc ninja-build pixman-devel ncurses-base ncurses ncurses-libs ncurses-devel dialog curl wget ftp gmp-devel glib2-devel python3-pip pkgconfig zlib-devel automake libmpc-devel mpfr-devel gperf libtool patchutils bc mutt cmake perl gcc-c++ clang help2man numactl ocaml mold gperftools ccache
 sudo yum install -y gcc-toolset-13*
 
 # activate gcc13
@@ -91,36 +92,6 @@ if [ ! -e $RISCV/include/glib-2.0 ]; then
   meson install -C _build
   cd $RISCV
   rm -rf glib-2.70.5
-fi
-# gperftools - not available in yum, needed for Verilator
-if [ ! -e $RISCV/include/gperftools ]; then
-  echo -e "\n************************************************************"
-  echo -e "Installing gperftools"
-  echo -e "************************************************************\n"
-  cd $RISCV
-  wget https://github.com/gperftools/gperftools/releases/download/gperftools-2.15/gperftools-2.15.tar.gz
-  tar -xzf gperftools-2.15.tar.gz
-  rm gperftools-2.15.tar.gz
-  cd gperftools-2.15
-  ./configure --prefix=$RISCV
-  make -j ${NUM_THREADS}
-  make install
-  cd $RISCV
-  rm -rf gperftools-2.15
-fi
-# ccache - not available in yum, needed for Verilator
-if [ ! -e $RISCV/bin/ccache ]; then
-  echo -e "\n************************************************************"
-  echo -e "Installing ccache"
-  echo -e "************************************************************\n"
-  cd $RISCV
-  wget https://github.com/ccache/ccache/releases/download/v4.10/ccache-4.10-linux-x86_64.tar.xz
-  tar -xJf ccache-4.10-linux-x86_64.tar.xz
-  rm ccache-4.10-linux-x86_64.tar.xz
-  cd ccache-4.10-linux-x86_64
-  cp ccache $RISCV/bin/ccache
-  cd $RISCV
-  rm -rf ccache-4.10-linux-x86_64
 fi
 # newer version of gmp needed for sail-riscv model
 if [ ! -e $RISCV/include/gmp.h ]; then
