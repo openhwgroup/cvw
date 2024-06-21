@@ -103,8 +103,16 @@ module dmc (
         end
 
         HALTED : begin
-          if (ResumeReq)
-            State <= RESUME;
+          if (ResumeReq) begin
+            //State <= RESUME;
+            if (Step) begin
+              Counter <= E2M_CYCLE_COUNT;
+              State <= STEP;
+            end else begin
+              State <= RUNNING;
+              ResumeAck <= 1;
+            end
+          end
         end
 
         // Wait a cycle to load PCF from DPC before resuming

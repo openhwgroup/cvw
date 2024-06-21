@@ -227,7 +227,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE, .ITLBWriteF, .sfencevmaM, .ITLBMissF,
     // pmp/pma (inside mmu) signals. 
     .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW, .InstrAccessFaultF, .InstrUpdateDAF,
-    .ExitDebugMode, .DPC, .PCNextF, .ProgBuffScanEn, .ProgBufAddr, .ProgBufScanIn(DebugScanIn),
+    .PCNextF, .ProgBuffScanEn, .ProgBufAddr, .ProgBufScanIn(DebugScanIn),
     .DebugScanEn(DebugScanEn & MiscSel), .DebugScanIn(DebugScanReg[0]), .DebugScanOut(DebugScanReg[1]));
     
   // integer execution unit: integer register file, datapath and controller
@@ -355,7 +355,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS, 
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
       .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM, .ebreakM,
-      .ebreakEn, .ForceBreakPoint, .DebugMode, .DebugCause, .Step, .DPC, .EnterDebugMode,
+      .ebreakEn, .ForceBreakPoint, .DebugMode, .DebugCause, .Step, .DPC, .EnterDebugMode, .ExitDebugMode,
       .DebugSel(CSRSel), .DebugRegAddr, .DebugCapture, .DebugRegUpdate, .DebugScanEn(DebugScanEn & CSRSel), .DebugScanIn, .DebugScanOut(CSRScanOut));
     if (P.DEBUG_SUPPORTED) begin
       flopenrs #(1) scantrapm (.clk, .reset, .en(DebugCapture), .d(TrapM), .q(), .scan(DebugScanEn), .scanin(DebugScanIn), .scanout(DebugScanReg[0]));

@@ -169,5 +169,5 @@ with OpenOCD() as cvw:
     cvw.reset_hart()
     time.sleep(1)
     #register_rw_test(cvw)
-    #flow_control_test(cvw)
-    prog_buff_test(cvw)
+    flow_control_test(cvw)
+    #prog_buff_test(cvw)

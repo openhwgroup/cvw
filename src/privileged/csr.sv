@@ -99,6 +99,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   output logic                     ebreakEn,
   output logic                     Step,
   output logic [P.XLEN-1:0]        DPC,
+  input  logic                     ExitDebugMode,
   input  logic                     EnterDebugMode,
   // Debug scan chain
   input  logic                     DebugSel,
@@ -184,7 +185,12 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   // Trap Returns
   // A trap sets the PC to TrapVector
   // A return sets the PC to MEPC or SEPC
-  mux2 #(P.XLEN) epcmux(SEPC_REGW, MEPC_REGW, mretM, EPCM);
+  if (P.DEBUG_SUPPORTED) begin
+    mux3 #(P.XLEN) epcmux(SEPC_REGW, MEPC_REGW, DPC, {ExitDebugMode,mretM}, EPCM);
+  end else begin
+    mux2 #(P.XLEN) epcmux(SEPC_REGW, MEPC_REGW, mretM, EPCM);
+  end
+
 
   ///////////////////////////////////////////
   // CSRWriteValM

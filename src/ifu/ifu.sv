@@ -99,8 +99,6 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   output logic                 ICacheMiss,                               // Report I$ miss to performance counters
   // Debug Mode logic
   output logic [P.XLEN-1:0]    PCNextF,                                  // Next PCF, selected from Branch predictor, Privilege, or PC+2/4
-  input  logic                 ExitDebugMode,
-  input  logic [P.XLEN-1:0]    DPC,
   input  logic                 ProgBuffScanEn,
   // Debug scan chain
   input  logic [3:0]           ProgBufAddr,
@@ -337,14 +335,8 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
 
 
   mux3 #(P.XLEN) pcmux3(PC2NextF, EPCM, TrapVectorM, {TrapM, RetM}, UnalignedPCNextF);
-
-  if (P.DEBUG_SUPPORTED) begin
-    mux3 #(P.XLEN) pcresetmux(.d2(P.RESET_VECTOR[P.XLEN-1:0]), .d1(DPC), .d0({UnalignedPCNextF[P.XLEN-1:1], 1'b0}), .s({reset,ExitDebugMode}), .y(PCNextF));
-    flopen #(P.XLEN) pcreg(clk, ~StallF | reset | ExitDebugMode, PCNextF, PCF);
-  end else begin
-    mux2 #(P.XLEN) pcresetmux({UnalignedPCNextF[P.XLEN-1:1], 1'b0}, P.RESET_VECTOR[P.XLEN-1:0], reset, PCNextF);
-    flopen #(P.XLEN) pcreg(clk, ~StallF | reset, PCNextF, PCF);
-  end
+  mux2 #(P.XLEN) pcresetmux({UnalignedPCNextF[P.XLEN-1:1], 1'b0}, P.RESET_VECTOR[P.XLEN-1:0], reset, PCNextF);
+  flopen #(P.XLEN) pcreg(clk, ~StallF | reset, PCNextF, PCF);
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32
