@@ -97,12 +97,18 @@ localparam RK          = LOGR*DIVCOPIES;                            // r*k bits 
 localparam FPDIVMINb   = NF + 2; // minimum length of fractional part: Nf result bits + guard and round bits + 1 extra bit to allow sqrt being shifted right
 localparam DIVMINb     = ((FPDIVMINb<XLEN) & IDIV_ON_FPU) ? XLEN : FPDIVMINb; // minimum fractional bits b = max(XLEN, FPDIVMINb)
 localparam RESBITS     = DIVMINb + LOGR; // number of bits in a result: r integer + b fractional
-
+                 
 // division constants
 localparam FPDUR       = (RESBITS-1)/RK + 1 ;                       // ceiling((r+b)/rk)
 localparam DIVb        = FPDUR*RK - LOGR;                           // divsqrt fractional bits, so total number of bits is a multiple of rk after r integer bits
 localparam DURLEN      = $clog2(FPDUR);                             // enough bits to count the duration
 localparam DIVBLEN     = $clog2(DIVb+1);                            // enough bits to count number of fractional bits + 1 integer bit
+
+// integer division/remainder constants
+localparam INTRESBITS     = XLEN + LOGR; // number of bits in a result: r integer + XLEN fractional
+localparam INTFPDUR       = (INTRESBITS-1)/RK + 1 ;                 
+localparam INTDIVb        = INTFPDUR*RK - LOGR;                     
+localparam INTDIVBLEN     = $clog2(INTDIVb+1);        
 
 // largest length in IEU/FPU
 localparam BASECVTLEN = `max(XLEN, NF); // convert length excluding Zfa fcvtmod.w.d

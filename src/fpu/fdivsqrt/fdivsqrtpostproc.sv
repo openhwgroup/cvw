@@ -97,20 +97,26 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
 
   // Integer quotient or remainder correction, normalization, and special cases
   if (P.IDIV_ON_FPU) begin:intpostproc // Int supported
-    logic [P.DIVb+3:0] UnsignedQuotM, NormRemM, NormRemDM, NormQuotM;
-    logic signed [P.DIVb+3:0] PreResultM, PreIntResultM;
+    logic [P.INTDIVb+3:0] UnsignedQuotM, NormRemM, NormRemDM, NormQuotM;
+    logic signed [P.INTDIVb+3:0] PreResultM, PreResultShiftedM, PreIntResultM;
+    logic [P.INTDIVb+3:0] DTrunc, SumTrunc;
+
+
+    assign SumTrunc = Sum[P.DIVb+3:P.DIVb-P.INTDIVb];
+    assign DTrunc = D[P.DIVb+3:P.DIVb-P.INTDIVb];
 
     assign W = $signed(Sum) >>> P.LOGR;
-    assign UnsignedQuotM = {3'b000, PreUmM};
+    assign UnsignedQuotM = {3'b000, PreUmM[P.DIVb:P.DIVb-P.INTDIVb]};
+
 
     // Integer remainder: sticky and sign correction muxes
     assign NegQuotM = AsM ^ BsM; // Integer Quotient is negative
-    mux2 #(P.DIVb+4) normremdmux(W, W+D, NegStickyM, NormRemDM);
-    mux2 #(P.DIVb+4) normremsmux(NormRemDM, -NormRemDM, AsM, NormRemM);
-    mux2 #(P.DIVb+4) quotresmux(UnsignedQuotM, -UnsignedQuotM, NegQuotM, NormQuotM);
+    mux2 #(P.INTDIVb+4) normremdmux(W, W+D, NegStickyM, NormRemDM);
+    mux2 #(P.INTDIVb+4) normremsmux(NormRemDM, -NormRemDM, AsM, NormRemM);
+    mux2 #(P.INTDIVb+4) quotresmux(UnsignedQuotM, -UnsignedQuotM, NegQuotM, NormQuotM);
 
     // Select quotient or remainder and do normalization shift
-    mux2 #(P.DIVb+4)    presresultmux(NormQuotM, NormRemM, RemOpM, PreResultM);
+    mux2 #(P.INTDIVb+4)    presresultmux(NormQuotM, NormRemM, RemOpM, PreResultM);
     assign PreIntResultM = $signed(PreResultM >>> IntNormShiftM); 
 
     // special case logic
