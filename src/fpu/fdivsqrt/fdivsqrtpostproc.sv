@@ -45,7 +45,7 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0]    FIntDivResultM     // U/Q(XLEN.0)
 );
   
-  logic [P.DIVb+3:0]         um, Sum;
+  logic [P.DIVb+3:0]         Sum;
   logic [P.INTDIVb+3:0]      W;
   logic [P.DIVb:0]           PreUmM;
   logic                      NegStickyM;
