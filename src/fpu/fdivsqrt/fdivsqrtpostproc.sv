@@ -45,7 +45,7 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0]    FIntDivResultM     // U/Q(XLEN.0)
 );
   
-  logic [P.DIVb+3:0]         Sum;
+  logic [P.DIVb+3:0]         um, Sum;
   logic [P.INTDIVb+3:0]      W;
   logic [P.DIVb:0]           PreUmM;
   logic                      NegStickyM;
@@ -112,13 +112,13 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
 
     // Integer remainder: sticky and sign correction muxes
     assign NegQuotM = AsM ^ BsM; // Integer Quotient is negative
-    mux2 #(P.INTDIVb+4) normremdmux(W, W+D, NegStickyM, NormRemDM);
-    mux2 #(P.INTDIVb+4) normremsmux(NormRemDM, -NormRemDM, AsM, NormRemM);
-    mux2 #(P.INTDIVb+4) quotresmux(UnsignedQuotM, -UnsignedQuotM, NegQuotM, NormQuotM);
+    mux2 #(P.INTDIVb+4) normremdmux(W, W+DTrunc, NegStickyM, NormRemDM);
+
 
     // Select quotient or remainder and do normalization shift
-    mux2 #(P.INTDIVb+4)    presresultmux(NormQuotM, NormRemM, RemOpM, PreResultM);
-    assign PreIntResultM = $signed(PreResultM >>> IntNormShiftM); 
+    mux2 #(P.INTDIVb+4)    presresultmux(UnsignedQuotM, NormRemDM, RemOpM, PreResultM);
+    assign PreResultShiftedM = PreResultM >> IntNormShiftM;
+    mux2 #(P.INTDIVb+4)    preintresultmux(PreResultShiftedM, -PreResultShiftedM,AsM ^ (BsM&~RemOpM), PreIntResultM);
 
     // special case logic
     // terminates immediately when B is Zero (div 0) or |A| has more leading 0s than |B|
