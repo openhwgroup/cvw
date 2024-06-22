@@ -81,14 +81,14 @@ ROOT=$( [ "${EUID:=$(id -u)}" = 0 ] && echo true || echo false);
 # All tools will be installed under the $RISCV directory. By default, if run as root (with sudo)
 # this is set to /opt/riscv. Otherwise, it is set to ~/riscv. This value can be changed if needed.
 if [ "$ROOT" = true ]; then
-  export RISCV=/opt/riscv
+  export RISCV="${1:-/opt/riscv}"
 else
-  export RISCV=~/riscv
+  export RISCV="${1:-$HOME/riscv}"
 fi
 
 export PATH=$PATH:$RISCV/bin:/usr/bin
 export PKG_CONFIG_PATH=$RISCV/lib64/pkgconfig:$RISCV/lib/pkgconfig:$RISCV/share/pkgconfig:$PKG_CONFIG_PATH
-mkdir -p $RISCV
+mkdir -p "$RISCV"
 
 echo -e "\nDetected information:"
 echo "Distribution: $NAME_PRETTY"
@@ -131,56 +131,56 @@ echo -e "***********************************************************************
 echo -e "Setting up Python Environment"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n"
-cd $RISCV
-if [ ! -e $RISCV/riscv-python/bin/activate ]; then
+cd "$RISCV"
+if [ ! -e "$RISCV"/riscv-python/bin/activate ]; then
   python3.12 -m venv riscv-python
 fi
-source $RISCV/riscv-python/bin/activate
+source "$RISCV"/riscv-python/bin/activate
 pip install -U pip
 pip install -U sphinx sphinx_rtd_theme matplotlib scipy scikit-learn adjustText lief markdown pyyaml meson testresources riscv_config
 pip install -U riscv_isac # to generate new tests, such as quads with fp_dataset.py
 if [ "$RHEL_VERSION" = 8 ]; then
   pip install -U z3-solver
 fi
-source $RISCV/riscv-python/bin/activate
+source "$RISCV"/riscv-python/bin/activate
 
 if [ "$RHEL_VERSION" = 8 ]; then
   # Other dependencies
   # newer versin of glib required for Qemu
   # anything newer than this won't build on red hat 8
-  if [ ! -e $RISCV/include/glib-2.0 ]; then
+  if [ ! -e "$RISCV"/include/glib-2.0 ]; then
     echo -e "\n*************************************************************************"
     echo -e "*************************************************************************"
     echo -e "Installing glib"
     echo -e "*************************************************************************"
     echo -e "*************************************************************************\n"
-    cd $RISCV
+    cd "$RISCV"
     wget https://download.gnome.org/sources/glib/2.70/glib-2.70.5.tar.xz
     tar -xJf glib-2.70.5.tar.xz
     rm glib-2.70.5.tar.xz
     cd glib-2.70.5
-    meson setup _build --prefix=$RISCV
+    meson setup _build --prefix="$RISCV"
     meson compile -C _build
     meson install -C _build
-    cd $RISCV
+    cd "$RISCV"
     rm -rf glib-2.70.5
   fi
   # newer version of gmp needed for sail-riscv model
-  if [ ! -e $RISCV/include/gmp.h ]; then
+  if [ ! -e "$RISCV"/include/gmp.h ]; then
     echo -e "\n*************************************************************************"
     echo -e "*************************************************************************"
     echo -e "Installing gmp"
     echo -e "*************************************************************************"
     echo -e "*************************************************************************\n"
-    cd $RISCV
+    cd "$RISCV"
     wget https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz
     tar -xJf gmp-6.3.0.tar.xz
     rm gmp-6.3.0.tar.xz
     cd gmp-6.3.0
-    ./configure --prefix=$RISCV
+    ./configure --prefix="$RISCV"
     make -j ${NUM_THREADS}
     make install
-    cd $RISCV
+    cd "$RISCV"
     rm -rf gmp-6.3.0
   fi
 fi
@@ -194,12 +194,12 @@ echo -e "***********************************************************************
 echo -e "Installing RISC-V GNU Toolchain"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n"
-cd $RISCV
+cd "$RISCV"
 if [[ ((! -e riscv-gnu-toolchain) && ($(git clone https://github.com/riscv/riscv-gnu-toolchain) || true)) || ($(cd riscv-gnu-toolchain; git fetch; git rev-parse HEAD) != $(cd riscv-gnu-toolchain; git rev-parse master)) || (! -e $RISCV/riscv-gnu-toolchain/stamps/build-gcc-newlib-stage2) ]]; then
   cd riscv-gnu-toolchain
   git checkout master
   git pull
-  ./configure --prefix=${RISCV} --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
+  ./configure --prefix="${RISCV}" --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
   make -j ${NUM_THREADS}
 fi
 
@@ -215,13 +215,13 @@ echo -e "***********************************************************************
 echo -e "Installing elf2hex"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n"
-cd $RISCV
+cd "$RISCV"
 export PATH=$RISCV/bin:$PATH
 if [[ ((! -e elf2hex) && ($(git clone https://github.com/sifive/elf2hex.git) || true)) || ($(cd elf2hex; git fetch; git rev-parse HEAD) != $(cd elf2hex; git rev-parse master)) || (! -e $RISCV/bin/riscv64-unknown-elf-elf2bin) ]]; then
   cd elf2hex
   git reset --hard && git clean -f && git checkout master && git pull
   autoreconf -i
-  ./configure --target=riscv64-unknown-elf --prefix=$RISCV
+  ./configure --target=riscv64-unknown-elf --prefix="$RISCV"
   make
   make install
 fi
@@ -233,11 +233,11 @@ echo -e "***********************************************************************
 echo -e "Installing QEMU"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n"
-cd $RISCV
+cd "$RISCV"
 if [[ ((! -e qemu) && ($(git clone --recurse-submodules https://github.com/qemu/qemu) || true)) || ($(cd qemu; git fetch --recurse-submodules=yes; git rev-parse HEAD) != $(cd qemu; git rev-parse master)) || (! -e $RISCV/include/qemu-plugin.h) ]]; then
   cd qemu
   git reset --hard && git clean -f && git checkout master && git pull --recurse-submodules
-  ./configure --target-list=riscv64-softmmu --prefix=$RISCV
+  ./configure --target-list=riscv64-softmmu --prefix="$RISCV"
   make -j ${NUM_THREADS}
   make install
 fi
@@ -250,13 +250,13 @@ echo -e "***********************************************************************
 echo -e "Installing SPIKE"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n"
-cd $RISCV
+cd "$RISCV"
 if [[ ((! -e riscv-isa-sim) && ($(git clone https://github.com/riscv-software-src/riscv-isa-sim) || true)) || ($(cd riscv-isa-sim; git fetch; git rev-parse HEAD) != $(cd riscv-isa-sim; git rev-parse master)) || (! -e $RISCV/lib/pkgconfig/riscv-riscv.pc) ]]; then
   cd riscv-isa-sim
   git reset --hard && git clean -f && git checkout master && git pull
   mkdir -p build
   cd build
-  ../configure --prefix=$RISCV
+  ../configure --prefix="$RISCV"
   make -j ${NUM_THREADS}
   make install
 fi
@@ -268,14 +268,14 @@ echo -e "***********************************************************************
 echo -e "Installing Verilator"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n"
-cd $RISCV
+cd "$RISCV"
 if [[ ((! -e verilator) && ($(git clone https://github.com/verilator/verilator) || true)) || ($(cd verilator; git fetch; git rev-parse HEAD) != $(cd verilator; git rev-parse master)) || (! -e $RISCV/share/pkgconfig/verilator.pc) ]]; then
   # unsetenv VERILATOR_ROOT  # For csh; ignore error if on bash
   unset VERILATOR_ROOT     # For bash
   cd verilator
   git reset --hard && git clean -f && git checkout master && git pull
   autoconf         # Create ./configure script
-  ./configure --prefix=$RISCV     # Configure and create Makefile
+  ./configure --prefix="$RISCV"     # Configure and create Makefile
   make -j ${NUM_THREADS}  # Build Verilator itself (if error, try just 'make')
   make install
 fi
@@ -290,12 +290,12 @@ echo -e "***********************************************************************
 echo -e "Installing Opam"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n"
-cd $RISCV
+cd "$RISCV"
 mkdir -p opam
 cd opam
 wget https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh
-printf '%s\n' $RISCV/bin Y | sh install.sh # the print command provides $RISCV/bin as the installation path when prompted
-cd $RISCV
+printf '%s\n' "$RISCV"/bin Y | sh install.sh # the print command provides $RISCV/bin as the installation path when prompted
+cd "$RISCV"
 rm -rf opam
 echo -e "\n*************************************************************************"
 echo -e "*************************************************************************"
@@ -320,7 +320,7 @@ if [[ ((! -e sail-riscv) && ($(git clone https://github.com/riscv/sail-riscv.git
   export OPAMCLI=2.0  # Sail is not compatible with opam 2.1 as of 4/16/24
   ARCH=RV64 make -j ${NUM_THREADS} c_emulator/riscv_sim_RV64
   ARCH=RV32 make -j ${NUM_THREADS} c_emulator/riscv_sim_RV32
-  cd $RISCV
+  cd "$RISCV"
   ln -sf ../sail-riscv/c_emulator/riscv_sim_RV64 bin/riscv_sim_RV64
   ln -sf ../sail-riscv/c_emulator/riscv_sim_RV32 bin/riscv_sim_RV32
 fi
@@ -339,8 +339,8 @@ echo -e "***********************************************************************
 echo -e "Installing OSU Skywater 130 cell library"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n"
-mkdir -p $RISCV/cad/lib
-cd $RISCV/cad/lib
+mkdir -p "$RISCV"/cad/lib
+cd "$RISCV"/cad/lib
 if [[ ((! -e sky130_osu_sc_t12) && ($(git clone https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12) || true)) || ($(cd sky130_osu_sc_t12; git fetch; git rev-parse HEAD) != $(cd sky130_osu_sc_t12; git rev-parse master)) ]]; then
   cd sky130_osu_sc_t12
   git reset --hard && git clean -f && git checkout main && git pull
