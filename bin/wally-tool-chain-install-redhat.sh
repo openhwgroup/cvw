@@ -78,8 +78,8 @@ fi
 # Check if root
 ROOT=$( [ "${EUID:=$(id -u)}" = 0 ] && echo true || echo false);
 
-# All tools will be installed under the $RISCV directory. By default, if run as root (with sudo)
-# this is set to /opt/riscv. Otherwise, it is set to ~/riscv. This value can be changed if needed.
+# All tools will be installed under the $RISCV directory. By default, if run as root (with sudo) this is set to
+# /opt/riscv. Otherwise, it is set to ~/riscv. This value can be overridden with an argument passed to the script.
 if [ "$ROOT" = true ]; then
   export RISCV="${1:-/opt/riscv}"
 else
@@ -102,9 +102,10 @@ echo -e "Installing Dependencies from Package Manager"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n"
 if [ "$FAMILY" = rhel ]; then
+  # Enable extra package repos
   sudo dnf install -y dnf-plugins-core
   if [ "$ID" = rhel ]; then
-      sudo subscription-manager repos --enable "codeready-builder-for-rhel-$RHEL_VERSION-x86_64-rpms"
+      sudo subscription-manager repos --enable "codeready-builder-for-rhel-$RHEL_VERSION-$(arch)-rpms"
       sudo dnf install -y "https://dl.fedoraproject.org/pub/epel/epel-release-latest-$RHEL_VERSION.noarch.rpm"
   else
     if [ "$RHEL_VERSION" = 8 ]; then
@@ -114,16 +115,27 @@ if [ "$FAMILY" = rhel ]; then
     fi
     sudo dnf install -y epel-release
   fi
+
+  # Update packages and install additional core tools
   sudo dnf update -y
   sudo dnf group install -y "Development Tools"
-  sudo dnf install -y git gawk make texinfo bison flex python3.12 expat-devel autoconf dtc ninja-build pixman-devel ncurses-base ncurses ncurses-libs ncurses-devel dialog curl wget ftp gmp-devel glib2-devel python3-pip pkgconfig zlib-devel automake libmpc-devel mpfr-devel gperf libtool patchutils bc mutt cmake perl gcc-c++ clang help2man numactl ocaml mold gperftools ccache
-  if [ "$RHEL_VERSION" = 9 ]; then
-    sudo dnf install -y z3
-  fi
-  sudo dnf install -y gcc-toolset-13*
 
-  # activate gcc13
-  source /opt/rh/gcc-toolset-13/enable
+ # Packages are grouped by which tool requires them, split by line.
+ # If mutltipole tools need a package, it is included in the first tool only
+ # General/Wally specific, riscv-gnu-toolchain, qemu, spike, verilator
+  sudo dnf install -y git make cmake python3.12 python3-pip curl wget ftp tar pkgconfig dialog mutt ssmtp \
+                      autoconf automake  libmpc-devel mpfr-devel gmp-devel gawk bison flex texinfo gperf libtool patchutils bc gcc gcc-c++ zlib-devel expat-devel libslirp-devel \
+                      glib2-devel libfdt-devel pixman-devel bzip2 ninja-build \
+                      dtc boost-devel \
+                      help2man perl clang ccache gperftools numactl mold
+  # Extra packages not availale in rhel8, nice for verialtor and needed for sail respectively
+  if [ "$RHEL_VERSION" = 9 ]; then
+    sudo dnf install -y perl-doc z3
+  fi
+
+  # A newer version of gcc is required for qemu
+  sudo dnf install -y gcc-toolset-13*
+  source /opt/rh/gcc-toolset-13/enable  # activate gcc13
 fi
 
 echo -e "\n*************************************************************************"
@@ -131,23 +143,29 @@ echo -e "***********************************************************************
 echo -e "Setting up Python Environment"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n"
+# Create python virtual environment so the python command targets our desired version of python
+# and installed packages are isolated from the rest of the system.
 cd "$RISCV"
 if [ ! -e "$RISCV"/riscv-python/bin/activate ]; then
   python3.12 -m venv riscv-python
 fi
-source "$RISCV"/riscv-python/bin/activate
+source "$RISCV"/riscv-python/bin/activate # activate python virtual environment
+
+# Install python packages
 pip install -U pip
 pip install -U sphinx sphinx_rtd_theme matplotlib scipy scikit-learn adjustText lief markdown pyyaml meson testresources riscv_config
 pip install -U riscv_isac # to generate new tests, such as quads with fp_dataset.py
+
+# Needed for sail and not availabe from dnf for rhel 8
 if [ "$RHEL_VERSION" = 8 ]; then
   pip install -U z3-solver
 fi
-source "$RISCV"/riscv-python/bin/activate
+source "$RISCV"/riscv-python/bin/activate # reload python virtual environment
 
+# Extra dependecies needed for rhel 8 that don't have new enough versions available from dnf
 if [ "$RHEL_VERSION" = 8 ]; then
-  # Other dependencies
-  # newer versin of glib required for Qemu
-  # anything newer than this won't build on red hat 8
+  # Newer versin of glib required for Qemu.
+  # Anything newer than this won't build on red hat 8
   if [ ! -e "$RISCV"/include/glib-2.0 ]; then
     echo -e "\n*************************************************************************"
     echo -e "*************************************************************************"
@@ -165,7 +183,7 @@ if [ "$RHEL_VERSION" = 8 ]; then
     cd "$RISCV"
     rm -rf glib-2.70.5
   fi
-  # newer version of gmp needed for sail-riscv model
+  # Newer version of gmp needed for sail-riscv model
   if [ ! -e "$RISCV"/include/gmp.h ]; then
     echo -e "\n*************************************************************************"
     echo -e "*************************************************************************"
@@ -280,11 +298,13 @@ if [[ ((! -e verilator) && ($(git clone https://github.com/verilator/verilator) 
   make install
 fi
 
-# Sail (https://github.com/riscv/sail-riscv)
-# Sail is the golden reference model for RISC-V.  Sail is written in OCaml, which
-# is an object-oriented extension of ML, which in turn is a functional programming
-# language suited to formal verification.  OCaml is installed with the opam OCcaml
-# package manager. Sail has so many dependencies that it can be difficult to install.
+# RISC-V Sail Model (https://github.com/riscv/sail-riscv)
+# The RISC-V Sail Model is the golden reference model for RISC-V. It is written in Sail,
+# a language designed for expressing the semantics of an ISA. Sail itself is written in 
+# OCaml, which is an object-oriented extension of ML, which in turn is a functional programming
+# language suited to formal verification. The Sail compiler is installed with the opam OCcaml
+# package manager. The Sail compiler has so many dependencies that it can be difficult to install,
+# but a binary release of it should be available soon, removing the need to use opam.
 echo -e "\n*************************************************************************"
 echo -e "*************************************************************************"
 echo -e "Installing Opam"
@@ -297,6 +317,7 @@ wget https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh
 printf '%s\n' "$RISCV"/bin Y | sh install.sh # the print command provides $RISCV/bin as the installation path when prompted
 cd "$RISCV"
 rm -rf opam
+
 echo -e "\n*************************************************************************"
 echo -e "*************************************************************************"
 echo -e "Installing Sail Compiler"
@@ -310,11 +331,11 @@ opam install sail -y
 
 echo -e "\n*************************************************************************"
 echo -e "*************************************************************************"
-echo -e "Installing riscv-sail Model"
+echo -e "Installing RISC-V Sail Model"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n"
-eval $(opam config env)
 if [[ ((! -e sail-riscv) && ($(git clone https://github.com/riscv/sail-riscv.git) || true)) || ($(cd sail-riscv; git fetch; git rev-parse HEAD) != $(cd sail-riscv; git rev-parse master)) || (! -e $RISCV/bin/riscv_sim_RV32) ]]; then
+  eval $(opam config env)
   cd sail-riscv
   git reset --hard && git clean -f && git checkout master && git pull
   export OPAMCLI=2.0  # Sail is not compatible with opam 2.1 as of 4/16/24

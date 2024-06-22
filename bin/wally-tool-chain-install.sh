@@ -60,13 +60,16 @@ echo -e "***********************************************************************
 # Update and Upgrade tools (see https://itsfoss.com/apt-update-vs-upgrade/)
 sudo apt update -y
 sudo apt upgrade -y
-sudo apt install -y git gawk make texinfo bison flex build-essential python3 python3-venv libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev libglib2.0-dev python3-pip pkg-config opam z3 zlib1g-dev automake autotools-dev libmpc-dev libmpfr-dev  gperf libtool patchutils bc mutt ssmtp perl g++ ccache help2man libgoogle-perftools-dev numactl perl-doc
 
-# 24
-# Note, selecting 'zlib1g-dev' instead of 'libz-dev'
-# Note, selecting 'libexpat1-dev' instead of 'libexpat-dev'
-# Note, selecting 'libncurses-dev' instead of 'libncurses5-dev'
-
+# Packages are grouped by which tool requires them, split by line. 
+# If mutltipole tools need a package, it is included in the first tool only
+# General/Wally specific, riscv-gnu-toolchain, qemu, spike, verilator, sail
+sudo apt install -y git make cmake python3 python3-pip python3-venv curl wget ftp tar pkg-config dialog mutt ssmtp \
+                    autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat1-dev ninja-build libglib2.0-dev libslirp-dev \
+                    libfdt-dev libpixman-1-dev \
+                    device-tree-compiler libboost-regex-dev libboost-system-dev \
+                    help2man perl g++ clang ccache libgoogle-perftools-dev numactl mold perl-doc libfl2 libfl-dev zlib1g \
+                    opam z3
 
 echo -e "\n*************************************************************************"
 echo -e "*************************************************************************"
@@ -80,7 +83,7 @@ if [ ! -e "$RISCV"/riscv-python/bin/activate ]; then
 fi
 source "$RISCV"/riscv-python/bin/activate
 pip install -U pip
-pip install -U sphinx sphinx_rtd_theme matplotlib scipy scikit-learn adjustText lief markdown pyyaml meson testresources riscv_config
+pip install -U sphinx sphinx_rtd_theme matplotlib scipy scikit-learn adjustText lief markdown pyyaml testresources riscv_config
 pip install -U riscv_isac # to generate new tests, such as quads with fp_dataset.py
 source "$RISCV"/riscv-python/bin/activate
 
@@ -88,9 +91,6 @@ source "$RISCV"/riscv-python/bin/activate
 # To install GCC from source can take hours to compile. 
 # This configuration enables multilib to target many flavors of RISC-V.   
 # This book is tested with GCC 13.2.0
-# Versions newer than 2023-12-20 fail to compile the RISC-V arch test with an error:
-# cvw/addins/riscv-arch-test/riscv-test-suite/rv32i_m/I/src/jalr-01.S:72: Error: illegal operands `la x0,5b'
-# PR *** submitted to fix riscv-arch-test to be compatible with latest GCC by modifying test_macros.h for TEST_JALR_OP
 echo -e "\n*************************************************************************"
 echo -e "*************************************************************************"
 echo -e "Installing RISC-V GNU Toolchain"
@@ -184,12 +184,13 @@ if [[ ((! -e verilator) && ($(git clone https://github.com/verilator/verilator) 
   make install
 fi
 
-# Sail (https://github.com/riscv/sail-riscv)
-# Sail is the new golden reference model for RISC-V.  Sail is written in OCaml, which 
-# is an object-oriented extension of ML, which in turn is a functional programming 
-# language suited to formal verification.  OCaml is installed with the opam OCcaml 
-# package manager. Sail has so many dependencies that it can be difficult to install.
-# This script works for Ubuntu.
+# RISC-V Sail Model (https://github.com/riscv/sail-riscv)
+# The RISC-V Sail Model is the golden reference model for RISC-V. It is written in Sail,
+# a language designed for expressing the semantics of an ISA. Sail itself is written in 
+# OCaml, which is an object-oriented extension of ML, which in turn is a functional programming
+# language suited to formal verification. The Sail compiler is installed with the opam OCcaml
+# package manager. The Sail compiler has so many dependencies that it can be difficult to install,
+# but a binary release of it should be available soon, removing the need to use opam.
 echo -e "\n*************************************************************************"
 echo -e "*************************************************************************"
 echo -e "Installing Sail Compiler"
@@ -202,8 +203,13 @@ opam upgrade -y
 opam switch create 5.1.0 || opam switch set 5.1.0
 opam install sail -y
 
-eval $(opam config env)
+echo -e "\n*************************************************************************"
+echo -e "*************************************************************************"
+echo -e "Installing RISC-V Sail Model"
+echo -e "*************************************************************************"
+echo -e "*************************************************************************\n"
 if [[ ((! -e sail-riscv) && ($(git clone https://github.com/riscv/sail-riscv.git) || true)) || ($(cd sail-riscv; git fetch; git rev-parse HEAD) != $(cd sail-riscv; git rev-parse master)) || (! -e $RISCV/bin/riscv_sim_RV32) ]]; then
+  eval $(opam config env)
   cd sail-riscv
   git reset --hard && git clean -f && git checkout master && git pull
   export OPAMCLI=2.0  # Sail is not compatible with opam 2.1 as of 4/16/24
@@ -232,5 +238,5 @@ mkdir -p "$RISCV"/cad/lib
 cd "$RISCV"/cad/lib
 if [[ ((! -e sky130_osu_sc_t12) && ($(git clone https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12) || true)) || ($(cd sky130_osu_sc_t12; git fetch; git rev-parse HEAD) != $(cd sky130_osu_sc_t12; git rev-parse master)) ]]; then
   cd sky130_osu_sc_t12
-  git reset --hard && git clean -f && git checkout master && git pull
+  git reset --hard && git clean -f && git checkout main && git pull
 fi
