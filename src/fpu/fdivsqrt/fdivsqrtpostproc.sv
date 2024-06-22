@@ -45,7 +45,8 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0]    FIntDivResultM     // U/Q(XLEN.0)
 );
   
-  logic [P.DIVb+3:0]         W, Sum;
+  logic [P.DIVb+3:0]         Sum;
+  logic [P.INTDIVb+3:0]      W;
   logic [P.DIVb:0]           PreUmM;
   logic                      NegStickyM;
   logic                      weq0E, WZeroM;
@@ -105,7 +106,7 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
     assign SumTrunc = Sum[P.DIVb+3:P.DIVb-P.INTDIVb];
     assign DTrunc = D[P.DIVb+3:P.DIVb-P.INTDIVb];
 
-    assign W = $signed(Sum) >>> P.LOGR;
+    assign W = $signed(SumTrunc) >>> P.LOGR;
     assign UnsignedQuotM = {3'b000, PreUmM[P.DIVb:P.DIVb-P.INTDIVb]};
 
 
