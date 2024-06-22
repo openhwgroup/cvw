@@ -38,6 +38,7 @@ module divremsqrtfdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
   input  logic                 Firstun, SqrtM, SpecialCaseM, 
   input  logic [P.XLEN-1:0]    AM,                // U/Q(XLEN.0)
   input  logic                 RemOpM, ALTBM, BZeroM, AsM, BsM, W64M, SIGNOVERFLOWM, ZeroDiffM, IntDivM,
+  input  logic [P.DIVBLEN-1:0] IntNormShiftM,
   //input  logic [P.DIVBLEN-1:0] IntNormShiftM,     
   input  logic [P.XLEN-1:0]    PreIntResultM,
   output logic [P.DIVb:0]      UmM,               // U1.DIVb result significand
@@ -97,47 +98,34 @@ module divremsqrtfdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
   //  If the result is not exact, the sticky should be set
   assign DivStickyM = ~WZeroM & ~SpecialCaseM; 
 
-  // Determine if sticky bit is negative 
+  // Determine if sticky bit is negative *** Full sum only needed for Integer
   assign Sum = WC + WS;
   assign NegStickyM = Sum[P.DIVb+3];
   mux2 #(P.DIVb+1) preummux(FirstU, FirstUM, NegStickyM, PreUmM); // Select U or U-1 depending on negative sticky bit
   mux2 #(P.DIVb+1)    ummux(PreUmM, (PreUmM << 1), SqrtM, UmM);
 
-  // Integer quotient or remainder correction, normalization, and special cases
+   // Integer quotient or remainder correction, normalization, and special cases
   if (P.IDIV_ON_FPU) begin:intpostproc // Int supported
     logic [P.INTDIVb+3:0] UnsignedQuotM, NormRemM, NormRemDM, NormQuotM;
-    logic [P.UNIFIEDSHIFTWIDTH-1:0] PreResultMWide, PreIntResultMWide;
-    logic [P.LOGUNIFIEDSHIFTWIDTH-1:0] IntNormShiftMWide;
+    logic signed [P.INTDIVb+3:0] PreResultM, PreResultShiftedM, PreIntResultM;
     logic [P.INTDIVb+3:0] DTrunc, SumTrunc;
-    logic ALTBMPOSTPROC;
 
-    //assign W = $signed(Sum) >>> P.LOGR;
     assign SumTrunc = Sum[P.DIVb+3:P.DIVb-P.INTDIVb];
     assign DTrunc = D[P.DIVb+3:P.DIVb-P.INTDIVb];
     arithrightshift #(P) rshift(SumTrunc, W);
-    //assign UnsignedQuotM = {3'b000, PreUmM[P.DIVb:P.DIVb-P.XLEN]};
+
     assign UnsignedQuotM = {3'b000, PreUmM[P.DIVb:P.DIVb-P.INTDIVb]};
 
     // Integer remainder: sticky and sign correction muxes
     assign NegQuotM = AsM ^ BsM; // Integer Quotient is negative
     mux2 #(P.INTDIVb+4) normremdmux(W, W+DTrunc, NegStickyM, NormRemDM);
-    mux2 #(P.INTDIVb+4) normremsmux(NormRemDM, -NormRemDM, AsM, NormRemM);
-    mux2 #(P.INTDIVb+4) quotresmux(UnsignedQuotM, -UnsignedQuotM, NegQuotM, NormQuotM);
-
 
     // Select quotient or remainder and do normalization shift
-    mux2 #(P.INTDIVb+4)    presresultmux(NormQuotM, NormRemM, RemOpM, PreResultM);
-    //assign PreIntResultM = $signed(PreResultM >>> IntNormShiftM); 
-    //intrightshift #(P) rightshift(PreResultM, IntNormShiftM, PreIntResultM);
-   // divremsqrtnormshift #(P) intshift(PreResultM, IntNormShiftM,PreIntResultM);
-    //divremsqrtunifiedshift #(P) unifiedshift(IntNormShiftMWide, PreResultMWide, PreIntResultMWide);
-    //assign ALTBMPOSTPROC = ALTBM | (ZeroDiffM & ~PreUmM[P.DIVb]); // if the quotient integer bit is 0 then ALTB
-    assign ALTBMPOSTPROC = ALTBM;
-    
+    mux2 #(P.INTDIVb+4)    presresultmux(UnsignedQuotM, NormRemDM, RemOpM, PreResultM);
+    intrightshift #(P) intnormshifter(PreResultM, IntNormShiftM, PreResultShiftedM);
+    mux2 #(P.INTDIVb+4)    preintresultmux(PreResultShiftedM, -PreResultShiftedM,AsM ^ (BsM&~RemOpM), PreIntResultM);
 
-    // special case logic
-    // terminates immediately when B is Zero (div 0) or |A| has more leading 0s than |B|
-    divremsqrtintspecialcase #(P) intspecialcase(BZeroM,RemOpM, ALTBMPOSTPROC, SIGNOVERFLOWM, AM,PreIntResultM,IntDivResultM);
+    divremsqrtintspecialcase #(P) intspecialcase(BZeroM,RemOpM, ALTBM,AM,PreIntResultM,IntDivResultM);
     // sign extend result for W64
     if (P.XLEN==64) begin
       mux2 #(64) resmux(IntDivResultM[P.XLEN-1:0], 

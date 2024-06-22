@@ -79,7 +79,7 @@
   logic                       ISpecialCaseE;                // Integer div/remainder special cases
 
 
-  kevindivremsqrtfdivsqrtpreproc #(P) divremsqrtfdivsqrtpreproc(                          // Preprocessor
+  divremsqrtfdivsqrtpreproc #(P) divremsqrtfdivsqrtpreproc(                          // Preprocessor
     .clk, .IFDivStartE, .Xm(XmE), .Ym(YmE), .Xe(XeE), .Ye(YeE),
     .FmtE, .SqrtE, .XZeroE, .Funct3E, .UeM, .X, .D, .CyclesE,
     // Int-specific 
@@ -98,7 +98,7 @@
     .clk, .IFDivStartE, .FDivBusyE, .SqrtE, .X, .D, 
     .FirstU, .FirstUM, .FirstC, .Firstun, .FirstWS(WS), .FirstWC(WC));
 
-  kevindivremsqrtfdivsqrtpostproc #(P) fdivsqrtpostproc(                        // Postprocessor
+  divremsqrtfdivsqrtpostproc #(P) fdivsqrtpostproc(                        // Postprocessor
     .clk, .reset, .StallM, .WS, .WC, .D, .FirstU, .FirstUM, .FirstC, 
     .SqrtE, .Firstun, .SqrtM, .SpecialCaseM, 
     .UmM, .WZeroE, .DivStickyM, 

@@ -216,8 +216,7 @@ module divremsqrtfdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   //////////////////////////////////////////////////////
   // Selet integer or floating-point operands
   //////////////////////////////////////////////////////
-
-  if (P.IDIV_ON_FPU) begin
+ if (P.IDIV_ON_FPU) begin
     mux2 #(P.DIVb+4) xmux(PreShiftX, DivXShifted, IntDivE, X);
   end else begin
     assign X = PreShiftX;
@@ -238,15 +237,8 @@ module divremsqrtfdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     logic               RemOpE;
 
     /* verilator lint_off WIDTH */
-    assign IntDivNormShiftE = RightShiftX + p+1+3; // b - rn, used for integer normalization right shift.  rn = Cycles * r * k - r ***explain
-    //assign IntDivNormShiftE = RightShiftX + ((CyclesE-1) * P.RK)+3; // b - rn, used for integer normalization right shift.  rn = Cycles * r * k - r ***explain
-    //assign IntDivNormShiftE = (CyclesE * P.RK)+3; // b - rn, used for integer normalization right shift.  rn = Cycles * r * k - r ***explain
-    //assign IntDivNormShiftE = CyclesE * P.RK + 3 - 1;
-    //assign IntDivNormShiftE = (CyclesE-1) * P.RK +3 + RightShiftX;
-    //assign IntDivNormShiftE = (CyclesE * P.RK); // b - rn, used for integer normalization right shift.  rn = Cycles * r * k - r ***explain
-    assign IntRemNormShiftE = (P.XLEN-1)-mE+4;           // m + b - (N-1) for remainder normalization shift
-
-
+    assign IntDivNormShiftE = P.INTDIVb - (CyclesE * P.RK - P.LOGR); // b - rn, used for integer normalization right shift.  rn = Cycles * r * k - r ***explain
+    assign IntRemNormShiftE = mE + (P.INTDIVb-(P.XLEN-1));           // m + b - (N-1) for remainder normalization shift
     /* verilator lint_on WIDTH */
     assign RemOpE = Funct3E[1];
     mux2 #(P.DIVBLEN) normshiftmux(IntDivNormShiftE, IntRemNormShiftE, RemOpE, IntNormShiftE);
@@ -255,7 +247,6 @@ module divremsqrtfdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     flopen #(1)          mdureg(clk, IFDivStartE, IntDivE,  IntDivM);
     flopen #(1)         altbreg(clk, IFDivStartE, ALTBE,    ALTBM);
     flopen #(1)        bzeroreg(clk, IFDivStartE, BZeroE,   BZeroM);
-    flopen #(1)        signedoverflowreg(clk, IFDivStartE, SIGNOVERFLOWE,   SIGNOVERFLOWM);
     flopen #(1)        asignreg(clk, IFDivStartE, AsE,      AsM);
     flopen #(1)        bsignreg(clk, IFDivStartE, BsE,      BsM);
     flopen #(P.DIVBLEN)   nsreg(clk, IFDivStartE, IntNormShiftE, IntNormShiftM); 

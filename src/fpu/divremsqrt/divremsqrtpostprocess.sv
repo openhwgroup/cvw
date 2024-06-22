@@ -133,35 +133,7 @@ module divremsqrtpostprocess import cvw::*;  #(parameter cvw_t P)  (
   assign ShiftIn = DivShiftIn;
   
   // main normalization shift
-  if (~P.IDIV_ON_FPU) begin
-    divremsqrtnormshift #(P) divremsqrtnormshift (.ShiftIn, .ShiftAmt, .Shifted);
-  end else begin
-    // use unified shifter
-    logic [P.UNIFIEDSHIFTWIDTH-1:0] UnifiedShiftIn, ShiftInWide, PreResultMWide, UnifiedShifted;
-    logic [P.LOGUNIFIEDSHIFTWIDTH-1:0] UnifiedShiftAmt, IntNormShiftMWide, ShiftAmtWide;
-
-    // extend signals to fit unified width
-    assign IntNormShiftMWide = {{(P.LOGUNIFIEDSHIFTWIDTH-P.DIVBLEN){1'b0}},IntNormShiftM};
-    //assign PreResultMWide = {{(P.DIVb){PreResultM[P.DIVb+3]}},PreResultM,{(P.UNIFIEDSHIFTWIDTH-P.DIVb-4-P.DIVb){1'b0}}};
-    assign PreResultMWide = {{(P.XLEN){PreResultM[P.INTDIVb+3]}},PreResultM,{(P.UNIFIEDSHIFTWIDTH-P.INTDIVb-4-P.XLEN){1'b0}}};
-
-    
-    assign ShiftInWide = {ShiftIn,{(P.UNIFIEDSHIFTWIDTH-P.NORMSHIFTSZDRSU){1'b0}}};
-    assign ShiftAmtWide = {{(P.LOGUNIFIEDSHIFTWIDTH-P.LOGNORMSHIFTSZDRSU){1'b0}},ShiftAmt};
-
-
-    // mux between fp or int normalization shift inputs
-    mux2 #(P.UNIFIEDSHIFTWIDTH) unifiedshiftinmux(ShiftInWide, PreResultMWide, IntDivM, UnifiedShiftIn);
-    mux2 #(P.LOGUNIFIEDSHIFTWIDTH) unifiedshiftamtmux(ShiftAmtWide, IntNormShiftMWide, IntDivM, UnifiedShiftAmt);
-
-    divremsqrtunifiedshift #(P) unifiedshift(UnifiedShiftAmt, UnifiedShiftIn, UnifiedShifted);
-    // extract fp result
-    assign Shifted = UnifiedShifted[P.UNIFIEDSHIFTWIDTH-1:P.UNIFIEDSHIFTWIDTH-1-P.NORMSHIFTSZDRSU+1];
-
-    // extract integer result
-    assign PreIntResultM = {UnifiedShifted[P.UNIFIEDSHIFTWIDTH-1:P.UNIFIEDSHIFTWIDTH-1-P.XLEN+1]};
-    //assign PreIntResultM = IntNormShiftM
-  end
+  divremsqrtnormshift #(P) divremsqrtnormshift (.ShiftIn, .ShiftAmt, .Shifted);
 
   // correct for LZA/divsqrt error
   divremsqrtshiftcorrection #(P) shiftcorrection(.DivResSubnorm, .DivSubnormShiftPos, .DivOp(1'b1), .DivUe, .Ue, .Shifted, .Mf);
