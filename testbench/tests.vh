@@ -1125,11 +1125,11 @@ string imperas32f[] = '{
     "rv64i_m/M/src/divu-01.S",
     "rv64i_m/M/src/divuw-01.S",
     "rv64i_m/M/src/divw-01.S",
-    //"rv64i_m/M/src/mul-01.S",
-    //"rv64i_m/M/src/mulh-01.S",
-    //"rv64i_m/M/src/mulhsu-01.S",
-    //"rv64i_m/M/src/mulhu-01.S",
-    //"rv64i_m/M/src/mulw-01.S",
+    "rv64i_m/M/src/mul-01.S",
+    "rv64i_m/M/src/mulh-01.S",
+    "rv64i_m/M/src/mulhsu-01.S",
+    "rv64i_m/M/src/mulhu-01.S",
+    "rv64i_m/M/src/mulw-01.S",
     "rv64i_m/M/src/rem-01.S",
     "rv64i_m/M/src/remu-01.S",
     "rv64i_m/M/src/remuw-01.S",
@@ -1802,7 +1802,6 @@ string imperas32f[] = '{
     };
 
 
-  string arch64d_fma[] = '{
     `RISCVARCHTEST,
     //"rv64i_m/D/src/fmadd.d_b15-01.S",
     //"rv64i_m/D/src/fmsub.d_b15-01.S",
