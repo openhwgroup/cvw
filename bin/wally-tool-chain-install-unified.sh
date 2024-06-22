@@ -90,9 +90,9 @@ export PATH=$PATH:$RISCV/bin:/usr/bin
 export PKG_CONFIG_PATH=$RISCV/lib64/pkgconfig:$RISCV/lib/pkgconfig:$RISCV/share/pkgconfig:$PKG_CONFIG_PATH
 mkdir -p "$RISCV"
 
-echo -e "\nDetected information:"
-echo "Distribution: $NAME_PRETTY"
-echo "Version: $VERSION_PRETTY"
+echo -e "\nDetected information"
+echo "Distribution: $PRETTY_NAME"
+echo "Version: $VERSION"
 echo "Running as root: $ROOT"
 echo "Installation path: $RISCV"
 
