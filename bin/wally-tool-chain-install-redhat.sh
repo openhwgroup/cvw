@@ -48,8 +48,12 @@ test -e /etc/os-release && os_release="/etc/os-release" || os_release="/usr/lib/
 source "$os_release"
 
 # Check for compatible distro
-if [[ "$ID" = rhel || "$ID" = rocky ]]; then
+if [[ "$ID" = rhel || "$ID_LIKE" = *rhel* ]]; then
   FAMILY=rhel
+  if [ "$ID" != rhel ] && [ "$ID" != rocky ]; then
+    echo "For Red Hat family distros, the Wally install script has only been tested on RHEL and Rocky Linux. Your distro \
+is $PRETTY_NAME. The regular Red Hat install will be attempted, but there will likely be issues."
+  fi
   if [ "${VERSION_ID:0:1}" = 8 ]; then
     RHEL_VERSION=8
   elif [ "${VERSION_ID:0:1}" = 9 ]; then
@@ -60,6 +64,10 @@ if [[ "$ID" = rhel || "$ID" = rocky ]]; then
   fi
 elif [[ "$ID" = ubuntu || "$ID_LIKE" = *ubuntu* ]]; then
   FAMILY=ubuntu
+    if [ "$ID" != ubuntu ]; then
+      echo "For Ubuntu family distros, the Wally install script has only been tested on standard Ubuntu. Your distro \
+is $PRETTY_NAME. The regular Ubuntu install will be attempted, but there may be issues."
+  fi
 else
   echo "The Wally install script is currently only compatible with Ubuntu and Red Hat family \
 (RHEL or Rocky Linux) distros. Your detected distro is $ID. You may try manually running the \
@@ -82,9 +90,9 @@ export PATH=$PATH:$RISCV/bin:/usr/bin
 export PKG_CONFIG_PATH=$RISCV/lib64/pkgconfig:$RISCV/lib/pkgconfig:$RISCV/share/pkgconfig:$PKG_CONFIG_PATH
 mkdir -p $RISCV
 
-echo "Detected information:"
-echo "Distribution: $NAME"
-echo "Version: $VERSION"
+echo -e "\nDetected information:"
+echo "Distribution: $NAME_PRETTY"
+echo "Version: $VERSION_PRETTY"
 echo "Running as root: $ROOT"
 echo "Installation path: $RISCV"
 
@@ -95,21 +103,16 @@ echo -e "***********************************************************************
 echo -e "*************************************************************************\n"
 if [ "$FAMILY" = rhel ]; then
   sudo dnf install -y dnf-plugins-core
-  if [ "$ID" = rocky ]; then
+  if [ "$ID" = rhel ]; then
+      sudo subscription-manager repos --enable "codeready-builder-for-rhel-$RHEL_VERSION-x86_64-rpms"
+      sudo dnf install -y "https://dl.fedoraproject.org/pub/epel/epel-release-latest-$RHEL_VERSION.noarch.rpm"
+  else
     if [ "$RHEL_VERSION" = 8 ]; then
       sudo dnf config-manager -y --set-enabled powertools
     else # Version 9
       sudo dnf config-manager -y --set-enabled crb
     fi
     sudo dnf install -y epel-release
-  else # RHEL
-    if [ "$RHEL_VERSION" = 8 ]; then
-      sudo subscription-manager repos --enable codeready-builder-for-rhel-8-x86_64-rpms
-      sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-    else # Version 9
-      sudo subscription-manager repos --enable codeready-builder-for-rhel-9-x86_64-rpms
-      sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
-    fi
   fi
   sudo dnf update -y
   sudo dnf group install -y "Development Tools"
