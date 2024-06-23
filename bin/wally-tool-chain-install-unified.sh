@@ -127,7 +127,7 @@ if [ "$FAMILY" = rhel ]; then
   sudo dnf install -y git make cmake python3.12 python3-pip curl wget ftp tar pkgconfig dialog mutt ssmtp \
                       autoconf automake  libmpc-devel mpfr-devel gmp-devel gawk bison flex texinfo gperf libtool patchutils bc gcc gcc-c++ zlib-devel expat-devel libslirp-devel \
                       glib2-devel libfdt-devel pixman-devel bzip2 ninja-build \
-                      dtc boost-devel \
+                      dtc boost-regex boost-system \
                       help2man perl clang ccache gperftools numactl mold
   # Extra packages not availale in rhel8, nice for verialtor and needed for sail respectively
   if [ "$RHEL_VERSION" = 9 ]; then
