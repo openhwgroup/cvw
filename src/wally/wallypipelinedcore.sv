@@ -53,7 +53,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    output logic                  ResumeAck,
    output logic                  HaveReset,
    output logic                  DebugStall,
-   input  logic                  ExecProgBuff,
+   input  logic                  ExecProgBuf,
    // Debug scan chain
    input  logic                  DebugScanEn,    // puts scannable flops into scan mode
    output logic                  DebugScanOut,   // (misc) scan chain data out
@@ -198,7 +198,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          ebreakM;
 
   // Debug mode logic
-  logic [P.XLEN-1:0]             DPC, PCNextF;
+  logic [P.XLEN-1:0]             DPC;
   logic                          ExitDebugMode;
   logic                          EnterDebugMode;
   logic [2:0]                    DebugCause;
@@ -228,7 +228,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE, .ITLBWriteF, .sfencevmaM, .ITLBMissOrUpdateAF,
     // pmp/pma (inside mmu) signals.
     .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW, .InstrAccessFaultF,
-    .PCNextF, .ProgBuffScanEn, .ProgBufAddr, .ProgBufScanIn(DebugScanIn),
+    .ExitDebugMode, .ProgBuffScanEn, .ProgBufAddr, .ProgBufScanIn(DebugScanIn),
     .DebugScanEn(DebugScanEn & MiscSel), .DebugScanIn(DebugScanReg[0]), .DebugScanOut(DebugScanReg[1]));
     
   // integer execution unit: integer register file, datapath and controller
@@ -312,7 +312,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
 
   // global stall and flush control  
   hazard #(P) hzu(
-    .BPWrongE, .CSRWriteFenceM, .RetM, .TrapM,
+    .BPWrongE, .CSRWriteFenceM, .RetM, .TrapM, .ExitDebugMode,
     .StructuralStallD,
     .LSUStallM, .IFUStallF,
     .FPUStallD,
@@ -326,7 +326,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     dmc debugcontrol(
       .clk, .reset,
       .Step, .ebreakM, .ebreakEn, .HaltReq, .ResumeReq, .HaltOnReset, .AckHaveReset,
-      .ResumeAck, .HaveReset, .DebugMode, .DebugCause, .DebugStall,
+      .ResumeAck, .HaveReset, .DebugMode, .DebugCause, .DebugStall, .ExecProgBuf,
       .EnterDebugMode, .ExitDebugMode, .ForceBreakPoint);
   end else begin
     assign DebugStall = 1'b0;
@@ -355,7 +355,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS, 
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
       .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM, .ebreakM,
-      .ebreakEn, .ForceBreakPoint, .DebugMode, .DebugCause, .Step, .DPC, .EnterDebugMode, .ExitDebugMode,
+      .ebreakEn, .ForceBreakPoint, .DebugMode, .DebugCause, .Step, .DPC, .EnterDebugMode, .ExitDebugMode, .ExecProgBuf,
       .DebugSel(CSRSel), .DebugRegAddr, .DebugCapture, .DebugRegUpdate, .DebugScanEn(DebugScanEn & CSRSel), .DebugScanIn, .DebugScanOut(CSRScanOut));
     if (P.DEBUG_SUPPORTED) begin
       flopenrs #(1) scantrapm (.clk, .reset, .en(DebugCapture), .d(TrapM), .q(), .scan(DebugScanEn), .scanin(DebugScanIn), .scanout(DebugScanReg[0]));

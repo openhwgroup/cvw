@@ -28,7 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module hazard import cvw::*;  #(parameter cvw_t P) ( 
-  input  logic BPWrongE, CSRWriteFenceM, RetM, TrapM,   
+  input  logic BPWrongE, CSRWriteFenceM, RetM, TrapM,
+  input  logic ExitDebugMode,
   input  logic StructuralStallD,
   input  logic LSUStallM, IFUStallF,
   input  logic FPUStallD,
@@ -70,9 +71,9 @@ module hazard import cvw::*;  #(parameter cvw_t P) (
   // Branch misprediction is found in the Execute stage and must flush the next two instructions.
   //   However, an active division operation resides in the Execute stage, and when the BP incorrectly mispredicts the divide as a taken branch, the divde must still complete
   // When a WFI is interrupted and causes a trap, it flushes the rest of the pipeline but not the W stage, because the WFI needs to commit
-  assign FlushDCause = TrapM | RetM | CSRWriteFenceM | BPWrongE;
-  assign FlushECause = TrapM | RetM | CSRWriteFenceM |(BPWrongE & ~(DivBusyE | FDivBusyE));
-  assign FlushMCause = TrapM | RetM | CSRWriteFenceM;
+  assign FlushDCause = TrapM | RetM | ExitDebugMode | CSRWriteFenceM | BPWrongE;
+  assign FlushECause = TrapM | RetM | ExitDebugMode | CSRWriteFenceM |(BPWrongE & ~(DivBusyE | FDivBusyE));
+  assign FlushMCause = TrapM | RetM | ExitDebugMode | CSRWriteFenceM;
   assign FlushWCause = TrapM & ~WFIInterruptedM;
 
   // Stall causes
@@ -90,7 +91,7 @@ module hazard import cvw::*;  #(parameter cvw_t P) (
   // Need to gate IFUStallF when the equivalent FlushFCause = FlushDCause = 1.
   // assign StallWCause = ((IFUStallF & ~FlushDCause) | LSUStallM) & ~FlushWCause;
   // Because FlushWCause is a strict subset of FlushDCause, FlushWCause is factored out.
-  assign StallWCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause) | DebugStall;
+  assign StallWCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause) | (DebugStall & ~ExitDebugMode);
 
   // Stall each stage for cause or if the next stage is stalled
   // coverage off: StallFCause is always 0

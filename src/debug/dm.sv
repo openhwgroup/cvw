@@ -26,15 +26,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 // TODO List:
-// add "progbuff" register to overwrite instrF
-// overwrite wfi instructions with NOP during DebugMode
-// mask all interrupts in debug mode (even NMI)
-// Ignore traps in debug mode
-
+// Ignore wfi instructions in debug mode (overwrite with NOP?)
+// mask all interrupts/ignore all traps (except ebreak) in debug mode
 // capture CSR read/write failures as convert them to cmderr
-
-// Flush pipe with NOPs during halt?
-
 
 
 module dm import cvw::*; #(parameter cvw_t P) (
@@ -52,7 +46,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   // Core control signals
   input  logic            ResumeAck,      // Signals Hart has been resumed
   input  logic            HaveReset,      // Signals Hart has been reset
-  input  logic            DebugStall,      // Signals core is halted
+  input  logic            DebugStall,     // Signals core is halted
   output logic            HaltReq,        // Initiates core halt
   output logic            ResumeReq,      // Initiates core resume
   output logic            HaltOnReset,    // Halts core immediately on hart reset
@@ -76,7 +70,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   // Program Buffer
   output logic [3:0]      ProgBufAddr,
   output logic            ProgBuffScanEn,
-  output logic            ExecProgBuff
+  output logic            ExecProgBuf
 );
   `include "debug.vh"
 
@@ -106,7 +100,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
 
   enum logic [3:0] {INACTIVE, IDLE, ACK, R_DATA, W_DATA, DMSTATUS, W_DMCONTROL, R_DMCONTROL, 
 		    W_ABSTRACTCS, R_ABSTRACTCS, ABST_COMMAND, R_SYSBUSCS, W_PROGBUF, READ_ZERO,
-		    INVALID} State;
+		    INVALID, EXEC_PROGBUF} State;
 
   enum logic [2:0] {AC_IDLE, AC_UPDATE, AC_SCAN, AC_CAPTURE, PROGBUFF_WRITE} AcState, NewAcState;
 
@@ -186,7 +180,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   assign AnyRunning = ~DebugStall;
   assign AllRunning = ~DebugStall;
   // I believe resumeack is used to determine when a resume is requested but never completes
-  // It's pretty worthless in this implementation (complain to the debug working group)
+  // It's pretty worthless in this implementation (complain to the riscv debug working group)
   assign AllResumeAck = ResumeAck;
   assign AnyResumeAck = ResumeAck;
   
@@ -339,6 +333,9 @@ module dm import cvw::*; #(parameter cvw_t P) (
         end
 
         ABST_COMMAND : begin
+          RspOP <= `OP_SUCCESS;
+          State <= ACK;
+
           if (CmdErr != `CMDERR_NONE); // If CmdErr, do nothing
           else if (Busy)
             CmdErr <= `CMDERR_BUSY; // If Busy, set CmdErr, do nothing
@@ -347,16 +344,18 @@ module dm import cvw::*; #(parameter cvw_t P) (
           else begin
             case (ReqData[`CMDTYPE])
               `ACCESS_REGISTER : begin
-                if (ReqData[`AARSIZE] > $clog2(P.LLEN/8)) // if AARSIZE (encoded) is greater than P.LLEN, set CmdErr, do nothing
-                  CmdErr <= `CMDERR_BUS;
-                else if (~ReqData[`TRANSFER]); // If not TRANSFER, do nothing
+                if (ReqData[`AARSIZE] > $clog2(P.LLEN/8))
+                  CmdErr <= `CMDERR_BUS;  // if AARSIZE (encoded) is greater than P.LLEN, set CmdErr, do nothing
                 else if (InvalidRegNo)
-                  CmdErr <= `CMDERR_EXCEPTION; // If InvalidRegNo, set CmdErr, do nothing
+                  CmdErr <= `CMDERR_EXCEPTION;  // If InvalidRegNo, set CmdErr, do nothing
                 else if (ReqData[`AARWRITE] & RegReadOnly)
-                  CmdErr <= `CMDERR_NOT_SUPPORTED; // If writing to a read only register, set CmdErr, do nothing
+                  CmdErr <= `CMDERR_NOT_SUPPORTED;  // If writing to a read only register, set CmdErr, do nothing
                 else begin
-                  AcWrite <= ReqData[`AARWRITE];
-                  NewAcState <= ~ReqData[`AARWRITE] ? AC_CAPTURE : AC_SCAN;
+                  if (ReqData[`TRANSFER]) begin
+                    AcWrite <= ReqData[`AARWRITE];
+                    NewAcState <= ~ReqData[`AARWRITE] ? AC_CAPTURE : AC_SCAN;
+                  end
+                  State <= ReqData[`POSTEXEC] ? EXEC_PROGBUF : ACK;
                 end
               end
               //`QUICK_ACCESS : State <= QUICK_ACCESS;
@@ -364,8 +363,6 @@ module dm import cvw::*; #(parameter cvw_t P) (
               default : CmdErr <= `CMDERR_NOT_SUPPORTED;
             endcase
           end
-          RspOP <= `OP_SUCCESS;
-          State <= ACK;
         end
 
         W_PROGBUF : begin
@@ -392,8 +389,14 @@ module dm import cvw::*; #(parameter cvw_t P) (
         end
 
         INVALID : begin
-          RspOP <= `OP_SUCCESS;//`OP_FAILED;
+          RspOP <= `OP_SUCCESS;  // openocd cannot recover from `OP_FAILED;
           State <= ACK;
+        end
+
+        EXEC_PROGBUF : begin
+          NewAcState <= AC_IDLE;
+          if (~Busy)
+            State <= ACK;
         end
       endcase
     end
@@ -442,6 +445,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   end
 
   assign Busy = ~(AcState == AC_IDLE);
+  assign ExecProgBuf = (State == EXEC_PROGBUF) & ~Busy;
 
   // Program Buffer
   assign ProgBuffScanEn = (AcState == PROGBUFF_WRITE);

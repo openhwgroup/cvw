@@ -51,15 +51,17 @@ def prog_buff_test(cvw):
 def flow_control_test(cvw):
     #time.sleep(70)  # wait for OpenSBI
 
-    cvw.halt()
+    #cvw.halt()
     time.sleep(1)
     #cvw.read_data("DCSR")
-    for _ in range(50):
-        cvw.resume()
+    for _ in range(100):
+        time.sleep(random.randint(5,10))
+        print("Halting")
         cvw.halt()
+        cvw.resume()
         #cvw.step()
         #print(cvw.read_data("PCM"))
-    cvw.resume()
+    #cvw.resume()
 
 
 def register_rw_test(cvw):

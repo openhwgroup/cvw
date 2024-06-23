@@ -97,7 +97,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   output logic                 ICacheAccess,                             // Report I$ read to performance counters
   output logic                 ICacheMiss,                               // Report I$ miss to performance counters
   // Debug Mode logic
-  output logic [P.XLEN-1:0]    PCNextF,                                  // Next PCF, selected from Branch predictor, Privilege, or PC+2/4
+  input  logic                 ExitDebugMode,
   input  logic                 ProgBuffScanEn,
   // Debug scan chain
   input  logic [3:0]           ProgBufAddr,
@@ -110,6 +110,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   localparam [31:0]            nop = 32'h00000013;                       // instruction for NOP
   localparam            LINELEN = P.ICACHE_SUPPORTED ? P.ICACHE_LINELENINBITS : P.XLEN;
 
+  logic [P.XLEN-1:0]           PCNextF;                                  // Next PCF, selected from Branch predictor, Privilege, or PC+2/4
   logic [P.XLEN-1:0]           PC1NextF;                                 // Branch predictor next PCF
   logic [P.XLEN-1:0]           PC2NextF;                                 // Selected PC between branch prediction and next valid PC if CSRWriteFence
   logic [P.XLEN-1:0]           UnalignedPCNextF;                         // The next PCF, but not aligned to 2 bytes. 
@@ -332,7 +333,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   else assign PC2NextF = PC1NextF;
 
 
-  mux3 #(P.XLEN) pcmux3(PC2NextF, EPCM, TrapVectorM, {TrapM, RetM}, UnalignedPCNextF);
+  mux3 #(P.XLEN) pcmux3(PC2NextF, EPCM, TrapVectorM, {TrapM, (RetM | ExitDebugMode)}, UnalignedPCNextF);
   mux2 #(P.XLEN) pcresetmux({UnalignedPCNextF[P.XLEN-1:1], 1'b0}, P.RESET_VECTOR[P.XLEN-1:0], reset, PCNextF);
   flopen #(P.XLEN) pcreg(clk, ~StallF | reset, PCNextF, PCF);
 

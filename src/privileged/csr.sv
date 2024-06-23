@@ -99,8 +99,9 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   output logic                     ebreakEn,
   output logic                     Step,
   output logic [P.XLEN-1:0]        DPC,
-  input  logic                     ExitDebugMode,
   input  logic                     EnterDebugMode,
+  input  logic                     ExitDebugMode,
+  input  logic                     ExecProgBuf,
   // Debug scan chain
   input  logic                     DebugSel,
   input  logic [11:0]              DebugRegAddr,
@@ -186,7 +187,11 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   // A trap sets the PC to TrapVector
   // A return sets the PC to MEPC or SEPC
   if (P.DEBUG_SUPPORTED) begin
-    mux3 #(P.XLEN) epcmux(SEPC_REGW, MEPC_REGW, DPC, {ExitDebugMode,mretM}, EPCM);
+    always_comb
+      if      (ExecProgBuf)   EPCM = P.PROGBUF_BASE;
+      else if (ExitDebugMode) EPCM = DPC;
+      else if (mretM)         EPCM = MEPC_REGW;
+      else                    EPCM = SEPC_REGW;
   end else begin
     mux2 #(P.XLEN) epcmux(SEPC_REGW, MEPC_REGW, mretM, EPCM);
   end

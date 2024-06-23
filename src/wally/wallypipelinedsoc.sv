@@ -82,7 +82,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                        ResumeAck;
   logic                        HaveReset;
   logic                        DebugStall;
-  logic                        ExecProgBuff;
+  logic                        ExecProgBuf;
   // Debug Module signals
   logic                        DebugScanEn;
   logic                        DebugScanIn;
@@ -108,7 +108,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
-    .HaltReq, .ResumeReq, .HaltOnReset, .AckHaveReset, .ResumeAck, .HaveReset, .DebugStall, .ExecProgBuff,
+    .HaltReq, .ResumeReq, .HaltOnReset, .AckHaveReset, .ResumeAck, .HaveReset, .DebugStall, .ExecProgBuf,
     .DebugScanEn, .DebugScanOut(DebugScanIn), .GPRScanOut(GPRScanIn), .FPRScanOut(FPRScanIn), .CSRScanOut(CSRScanIn), 
     .DebugScanIn(DebugScanOut), .MiscSel, .GPRSel, .FPRSel, .CSRSel, .DebugRegAddr, .DebugCapture, .DebugRegUpdate,
     .ProgBufAddr, .ProgBuffScanEn);
@@ -131,7 +131,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
       .HaltReq, .ResumeReq, .HaltOnReset, .AckHaveReset, .ResumeAck, .HaveReset, .DebugStall,
       .DebugScanEn, .DebugScanIn, .GPRScanIn, .FPRScanIn, .CSRScanIn, .DebugScanOut,
       .MiscSel, .GPRSel, .FPRSel, .CSRSel, .RegAddr(DebugRegAddr), .DebugCapture, .DebugRegUpdate,
-      .ProgBufAddr, .ProgBuffScanEn, .ExecProgBuff);
+      .ProgBufAddr, .ProgBuffScanEn, .ExecProgBuf);
   end
 
 endmodule

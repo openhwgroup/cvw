@@ -27,22 +27,11 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-// On HaltReq/eBreak:
-// store value of NextPC in DPC
-// trigger trap (flush pipe)
-// stall pipe
 
-// On Step:
-// unstall pipe until instruction receaches M stage
-// goto: HaltReq/eBreak
-
-// On exec_progbuf
-// change NextPC to progbuf_address (using DPC?)
-// goto: resume (implicic ebreak will return to debug mode)
-
-// On Resume:
-// update NextPC from DPC
-// Unstall pipe
+// TODO:
+// Figure out what is causing resumes from stalls to error out
+// Calculate correct cycle timing for step
+// Test progbuf
 
 module dmc (
   input  logic       clk, reset,
@@ -53,6 +42,7 @@ module dmc (
   input  logic       ResumeReq,    // Initiates core resume
   input  logic       HaltOnReset,  // Halts core immediately on hart reset
   input  logic       AckHaveReset, // Clears HaveReset status
+  input  logic       ExecProgBuf,  // Updates PC to progbuf and resumes core
 
   output logic       DebugMode,
   output logic [2:0] DebugCause,     // Reason Hart entered debug mode
@@ -66,7 +56,8 @@ module dmc (
 );
   `include "debug.vh"
 
-   enum logic [2:0] {RUNNING, HALTED, RESUME, STEP, PROGBUF} State;
+
+  enum logic [1:0] {RUNNING, HALTED, STEP} State;
 
   localparam E2M_CYCLE_COUNT = 3;
   logic [$clog2(E2M_CYCLE_COUNT+1)-1:0] Counter;
@@ -81,10 +72,10 @@ module dmc (
   assign ForceBreakPoint = (State == RUNNING) & HaltReq | (State == STEP) & ~|Counter;
 
   assign DebugMode = (State != RUNNING);
-  assign DebugStall = (State == HALTED) | (State == RESUME);
+  assign DebugStall = (State == HALTED);
 
   assign EnterDebugMode = (State == RUNNING) & (ebreakM & ebreakEn) | ForceBreakPoint;
-  assign ExitDebugMode = (State == HALTED) & ResumeReq;
+  assign ExitDebugMode = (State == HALTED) & (ResumeReq | ExecProgBuf);
 
   always_ff @(posedge clk) begin
     if (reset) begin
@@ -104,7 +95,6 @@ module dmc (
 
         HALTED : begin
           if (ResumeReq) begin
-            //State <= RESUME;
             if (Step) begin
               Counter <= E2M_CYCLE_COUNT;
               State <= STEP;
@@ -112,20 +102,12 @@ module dmc (
               State <= RUNNING;
               ResumeAck <= 1;
             end
-          end
-        end
-
-        // Wait a cycle to load PCF from DPC before resuming
-        // TODO: test without resume stage
-        RESUME : begin
-          if (Step) begin
-            Counter <= E2M_CYCLE_COUNT;
-            State <= STEP;
-          end else begin
+          end else if (ExecProgBuf) begin
             State <= RUNNING;
             ResumeAck <= 1;
           end
         end
+
 
         STEP : begin
           if (~|Counter) begin
