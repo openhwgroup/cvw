@@ -26,5 +26,5 @@ loop_read:
 done_read:
         bne t6, t2, lpddr_test
 tohost:
-        li t0, 0x80000000
-        sw zero, 0(t0) # Terminate the regression test
+        la t0, tohost
+        sw t2, 0(t0)
