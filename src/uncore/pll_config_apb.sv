@@ -109,6 +109,7 @@ module pll_config_apb #(
 
 endmodule
 
+/* verilator lint_off DECLFILENAME */
 module pll_sync #(parameter SIZE = 8) (
   input  logic            clk,
   input  logic            trigger,
@@ -117,7 +118,7 @@ module pll_sync #(parameter SIZE = 8) (
   input  logic            enable,
   output logic [SIZE-1:0] sync_data,
   output logic            ready
-);
+); /* lint_on */
 
   logic selected_clk;
   logic [SIZE-1:0] data1d;

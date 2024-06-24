@@ -7,7 +7,7 @@
 //
 // Purpose: Translates cache bus requests and uncached ieu memory requests into AHB transactions.
 //
-// Documentation: RISC-V System on Chip Design Chapter 9 (Figure 9.8)
+// Documentation: RISC-V System on Chip Design
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -79,8 +79,7 @@ module ahbcacheinterface import cvw::*; #(
   logic [P.PA_BITS-1:0]         LocalHADDR;                             // Address after selecting between cached and uncached operation
   logic [AHBWLOGBWPL-1:0]     BeatCountDelayed;                       // Beat within the cache line in the second (Data) cache stage
   logic                       CaptureEn;                              // Enable updating the Fetch buffer with valid data from HRDATA
-  logic [P.AHBW/8-1:0]          BusByteMaskM;                           // Byte enables within a word. For cache request all 1s
-  logic [P.AHBW-1:0]            PreHWDATA;                              // AHB Address phase write data
+ logic [P.AHBW-1:0]            PreHWDATA;                              // AHB Address phase write data
   logic [P.PA_BITS-1:0]         PAdrZero;
 
   genvar                      index;
@@ -114,11 +113,14 @@ module ahbcacheinterface import cvw::*; #(
     .s(~(CacheableOrFlushCacheM)), .y(PreHWDATA));
   flopen #(P.AHBW) wdreg(HCLK, HREADY, PreHWDATA, HWDATA); // delay HWDATA by 1 cycle per spec
 
-  // *** bummer need a second byte mask for bus as it is AHBW rather than LLEN.
-  // probably can merge by muxing PAdrM's LLEN/8-1 index bit based on HTRANS being != 0.
-  swbytemask #(P.AHBW) busswbytemask(.Size(HSIZE), .Adr(HADDR[$clog2(P.AHBW/8)-1:0]), .ByteMask(BusByteMaskM), .ByteMaskExtended());
-  
-  flopen #(P.AHBW/8) HWSTRBReg(HCLK, HREADY, BusByteMaskM[P.AHBW/8-1:0], HWSTRB);
+  if (READ_ONLY_CACHE) begin
+    assign HWSTRB = '0;
+  end else begin // compute byte mask for AHB transaction based on size and address.  AHBW may be different than LLEN
+    logic [P.AHBW/8-1:0]          BusByteMaskM;                           // Byte enables within a word. For cache request all 1s
+     
+    swbytemask #(P.AHBW) busswbytemask(.Size(HSIZE), .Adr(HADDR[$clog2(P.AHBW/8)-1:0]), .ByteMask(BusByteMaskM), .ByteMaskExtended());
+    flopen #(P.AHBW/8) HWSTRBReg(HCLK, HREADY, BusByteMaskM[P.AHBW/8-1:0], HWSTRB);
+  end
   
   buscachefsm #(BeatCountThreshold, AHBWLOGBWPL, READ_ONLY_CACHE, P.BURST_EN) AHBBuscachefsm(
     .HCLK, .HRESETn, .Flush, .BusRW, .BusAtomic, .Stall, .BusCommitted, .BusStall, .CaptureEn, .SelBusBeat,

@@ -9,7 +9,7 @@
 //          It is simlar to the IFU's spill module and probably could be merged together with 
 //          some effort.
 //
-// Documentation: RISC-V System on Chip Design Chapter 11 (Figure 11.5)
+// Documentation: RISC-V System on Chip Design
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -76,6 +76,8 @@ module align import cvw::*;  #(parameter cvw_t P) (
   logic [$clog2(LLENINBYTES)-1:0]              AccessByteOffsetM;
   logic [$clog2(LLENINBYTES)+2:0]              ShiftAmount;
   logic                                        PotentialSpillM;
+  logic [P.LLEN*3-1:0]                         LSUWriteDataShiftedExtM; 
+
 
   /* verilator lint_off WIDTHEXPAND */
   assign IEUAdrIncrementM = IEUAdrM + LLENINBYTES;
@@ -152,10 +154,9 @@ module align import cvw::*;  #(parameter cvw_t P) (
   assign ReadDataWordSpillShiftedM = ReadDataWordSpillAllM >> ShiftAmount;
   assign DCacheReadDataWordSpillM = ReadDataWordSpillShiftedM[P.LLEN-1:0];
 
-  // write path. Also has the 8:1 shifter muxing for the byteoffset
-  // then it also has the mux to select when a spill occurs
-  logic [P.LLEN*3-1:0] LSUWriteDataShiftedExtM;  // *** RT: Find a better way.  I've extending in both directions so we don't shift in zeros.  The cache expects the writedata to not have any zero data, but instead replicated data.
-
+  // write path. 
+  // 3*LLEN to 2*LLEN funnel shifter to perform left rotation.
+  // Vivado correctly optimizes as 2*LLEN log2(LLEN):1 muxes
   assign LSUWriteDataShiftedExtM = {LSUWriteDataM, LSUWriteDataM, LSUWriteDataM} << ShiftAmount;
   assign LSUWriteDataSpillM = LSUWriteDataShiftedExtM[P.LLEN*3-1:P.LLEN];
 

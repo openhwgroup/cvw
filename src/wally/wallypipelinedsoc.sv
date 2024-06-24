@@ -6,7 +6,7 @@
 //
 // Purpose: System on chip including pipelined processor and uncore memories/peripherals
 //
-// Documentation: RISC-V System on Chip Design (Figure 6.20)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -132,7 +132,8 @@ module wallypipelinedsoc
             MTIME_CLINT, GPIOOUT, GPIOEN, UARTSout, SPIOut, SPICS, dmc_trefi, dmc_tmrd, dmc_trfc,
             dmc_trc, dmc_trp, dmc_tras, dmc_trrd, dmc_trcd, dmc_twr, dmc_twtr, dmc_trtp, dmc_tcas,
             dmc_col_width, dmc_row_width, dmc_bank_width, dmc_bank_pos, dmc_dqs_sel_cal,
-            dmc_init_cycles, PLLclkr, PLLclkf, PLLclkod, PLLbwadj, PLLtest, PLLfasten} = '0;
+            dmc_init_cycles, dmc_config_changed, PLLclkr, PLLclkf, PLLclkod, PLLbwadj, PLLtest,
+            PLLfasten, PLLconfigdone} = '0;
   end
 
 endmodule

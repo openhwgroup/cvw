@@ -6,7 +6,7 @@
 //
 // Purpose: Floating point conversions of configurable size
 // 
-// Documentation: RISC-V System on Chip Design Chapter 13
+// Documentation: RISC-V System on Chip Design
 //
 // Int component of the Wally configurable RISC-V project.
 // 
@@ -190,7 +190,7 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
   // shifter
   ///////////////////////////////////////////////////////////////////////////
 
-  // kill the shift if it's negative
+  // kill the shift if it is negative
   // select the amount to shift by
   //      fp -> int: 
   //          - shift left by CalcExp - essentially shifting until the unbiased exponent = 0
@@ -201,10 +201,10 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
   //          - shift left by LeadingZeros - to shift till the result is normalized
   //              - only shift fp -> fp if the intital value is subnormal
   //                  - this is a problem because the input to the lzc was the fraction rather than the mantissa
-  //                  - rather have a few and-gates than an extra bit in the priority encoder??? *** is this true?
+  //                  - rather have a few and-gates than an extra bit in the priority encoder???
   always_comb
       if(ToInt)                       ShiftAmt = Ce[P.LOGCVTLEN-1:0]&{P.LOGCVTLEN{~Ce[P.NE]}};
-      else if (ResSubnormUf)  ShiftAmt = (P.LOGCVTLEN)'(P.NF-1)+Ce[P.LOGCVTLEN-1:0];
+      else if (ResSubnormUf)          ShiftAmt = (P.LOGCVTLEN)'(P.NF-1)+Ce[P.LOGCVTLEN-1:0];
       else                            ShiftAmt = LeadingZeros;
       
   ///////////////////////////////////////////////////////////////////////////

@@ -90,7 +90,7 @@ foreach my $key (@derivnames) {
 
     my $datestring = localtime();
     my %hit = ();
-    print $fh "// Config $key automatically derived from $basederiv{$key} on $datestring usubg derivgen.pl\n";
+    print $fh "// Config $key automatically derived from $basederiv{$key} on $datestring using derivgen.pl\n";
     foreach my $line (<$unmod>) {
         foreach my $entry (@{$derivs{$key}}) {    
             my @ent = @{$entry};

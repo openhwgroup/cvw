@@ -44,8 +44,8 @@ default: run
 
 run: wkdir/$(WALLYCONF)_$(TEST)/V${TESTBENCH}
 	mkdir -p $(VERILATOR_DIR)/logs
-	wkdir/$(WALLYCONF)_$(TEST)/V${TESTBENCH} ${ARGTEST} 
-	
+	wkdir/$(WALLYCONF)_$(TEST)/V${TESTBENCH} ${ARGTEST} $(EXTRA_ARGS) 
+
 profile: obj_dir_profiling/V${TESTBENCH}_$(WALLYCONF)
 	$(VERILATOR_DIR)/obj_dir_profiling/V${TESTBENCH}_$(WALLYCONF) ${ARGTEST}
 	mv gmon.out gmon_$(WALLYCONF).out
@@ -61,7 +61,6 @@ wkdir/$(WALLYCONF)_$(TEST)/V${TESTBENCH}: $(DEPENDENCIES)
 	--Mdir wkdir/$(WALLYCONF)_$(TEST) -o V${TESTBENCH} \
 	--binary --trace \
 	$(OPT) $(PARAMS) $(NONPROF) \
-	$(EXTRA_ARGS) \
 	--top-module ${TESTBENCH}  --relative-includes \
 	$(INCLUDE_PATH) \
 	${WRAPPER} \
@@ -74,7 +73,6 @@ obj_dir_profiling/V${TESTBENCH}_$(WALLYCONF): $(DEPENDENCIES)
 	--Mdir obj_dir_profiling -o V${TESTBENCH}_$(WALLYCONF) \
 	--binary \
 	--prof-cfuncs $(OPT) $(PARAMS) \
-	$(EXTRA_ARGS) \
 	--top-module ${TESTBENCH}  --relative-includes \
 	$(INCLUDE_PATH) \
 	${WRAPPER} \

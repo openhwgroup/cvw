@@ -6,7 +6,7 @@
 //
 // Purpose: Combined Divide and Square Root Floating Point and Integer Unit
 // 
-// Documentation: RISC-V System on Chip Design Chapter 13
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -61,15 +61,12 @@ module fdivsqrt import cvw::*;  #(parameter cvw_t P) (
   logic [P.DIVb+3:0]           D;                            // Iterator Divisor
   logic [P.DIVb:0]             FirstU, FirstUM;              // Intermediate result values
   logic [P.DIVb+1:0]           FirstC;                       // Step tracker
-  logic                        Firstun;                      // Quotient selection
   logic                        WZeroE;                       // Early termination flag
   logic [P.DURLEN-1:0]         CyclesE;                      // FSM cycles
   logic                        SpecialCaseM;                 // Divide by zero, square root of negative, etc.
-  logic                        DivStartE;                    // Enable signal for flops during stall
                                                             
   // Integer div/rem signals                                
   logic                        BZeroM;                       // Denominator is zero
-  logic                        IntDivM;                      // Integer operation
   logic [P.DIVBLEN-1:0]        IntNormShiftM;                // Integer normalizatoin shift amount
   logic                        ALTBM, AsM, BsM, W64M;        // Special handling for postprocessor
   logic [P.XLEN-1:0]           AM;                           // Original Numerator for postprocessor
@@ -80,8 +77,7 @@ module fdivsqrt import cvw::*;  #(parameter cvw_t P) (
     .FmtE, .Bias(BiasE), .Nf(NfE), .SqrtE, .XZeroE, .Funct3E, .UeM, .X, .D, .CyclesE,
     // Int-specific 
     .ForwardedSrcAE, .ForwardedSrcBE, .IntDivE, .W64E, .ISpecialCaseE,
-    .BZeroM, .IntNormShiftM, .AM, 
-    .IntDivM, .W64M, .ALTBM, .AsM, .BsM);
+    .BZeroM, .IntNormShiftM, .AM, .W64M, .ALTBM, .AsM, .BsM);
 
   fdivsqrtfsm #(P) fdivsqrtfsm(                                  // FSM
     .clk, .reset, .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, 
@@ -92,11 +88,11 @@ module fdivsqrt import cvw::*;  #(parameter cvw_t P) (
 
   fdivsqrtiter #(P) fdivsqrtiter(                                // CSA Iterator
     .clk, .IFDivStartE, .FDivBusyE, .SqrtE, .X, .D, 
-    .FirstU, .FirstUM, .FirstC, .Firstun, .FirstWS(WS), .FirstWC(WC));
+    .FirstU, .FirstUM, .FirstC, .FirstWS(WS), .FirstWC(WC));
 
   fdivsqrtpostproc #(P) fdivsqrtpostproc(                        // Postprocessor
     .clk, .reset, .StallM, .WS, .WC, .D, .FirstU, .FirstUM, .FirstC, 
-    .SqrtE, .Firstun, .SqrtM, .SpecialCaseM, 
+    .SqrtE, .SqrtM, .SpecialCaseM, 
     .UmM, .WZeroE, .DivStickyM, 
     // Int-specific 
     .IntNormShiftM, .ALTBM, .AsM, .BsM, .BZeroM, .W64M, .RemOpM(Funct3M[1]), .AM, 

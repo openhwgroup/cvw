@@ -296,9 +296,6 @@ RAS_SIZE          32'd6
 deriv bpred_GSHARE_10_10_10_1_rv32gc rv32gc
 RAS_SIZE          32'd10
 
-deriv bpred_GSHARE_10_16_10_1_rv32gc rv32gc
-RAS_SIZE          32'd16
-
 deriv bpred_GSHARE_10_16_6_1_rv32gc rv32gc
 BTB_SIZE          32'd6
 
@@ -368,9 +365,6 @@ INSTR_CLASS_PRED          0
 deriv bpred_GSHARE_10_10_10_0_rv32gc bpred_GSHARE_10_10_10_1_rv32gc
 INSTR_CLASS_PRED          0
 
-deriv bpred_GSHARE_10_16_10_0_rv32gc bpred_GSHARE_10_16_10_1_rv32gc
-INSTR_CLASS_PRED          0
-
 deriv bpred_GSHARE_10_16_6_0_rv32gc bpred_GSHARE_10_16_6_1_rv32gc
 INSTR_CLASS_PRED          0
 
@@ -394,10 +388,23 @@ VIRTMEM_SUPPORTED    0
 
 deriv nodcache_rv32gc rv32gc
 DCACHE_SUPPORTED    0
+D_SUPPORTED         0
+ZALRSC_SUPPORTED    0
+ZAAMO_SUPPORTED     0
+ZICBOM_SUPPORTED    0
+ZICBOZ_SUPPORTED    0
+VIRTMEM_SUPPORTED    0
 
+# nocache_rv32gc must also disable several features incompatible with no cache
 deriv nocache_rv32gc rv32gc
 ICACHE_SUPPORTED    0
 DCACHE_SUPPORTED    0
+D_SUPPORTED         0
+ZALRSC_SUPPORTED    0
+ZAAMO_SUPPORTED     0
+ZICBOM_SUPPORTED    0
+ZICBOZ_SUPPORTED    0
+VIRTMEM_SUPPORTED    0
 
 deriv noicache_rv64gc rv64gc
 ICACHE_SUPPORTED    0

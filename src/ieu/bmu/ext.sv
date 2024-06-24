@@ -7,7 +7,7 @@
 //
 // Purpose: Sign/Zero Extension Submodule
 //
-// Documentation: RISC-V System on Chip Design Chapter 15
+// Documentation: RISC-V System on Chip Design
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module ext #(parameter WIDTH = 32) (
-  input  logic [WIDTH-1:0] A,            // Operands
+  input  logic [15:0]      A,            // Operand to extend
   input  logic [1:0]       ExtSelect,    // B[2], B[0] of immediate
   output logic [WIDTH-1:0] ExtResult);   // Extend Result
 

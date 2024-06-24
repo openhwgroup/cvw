@@ -8,7 +8,7 @@
 // Purpose: Counter Control and Status Registers
 //          See RISC-V Privileged Mode Specification 20190608 
 // 
-// Documentation: RISC-V System on Chip Design Chapter 5
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -57,7 +57,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic                     LoadStallD, StoreStallD, 
   input  logic                     ICacheStallF,
   input  logic                     DCacheStallM,
-  input  logic                     BPDirPredWrongM,
+  input  logic                     BPDirWrongM,
   input  logic                     BTAWrongM,
   input  logic                     RASPredPCWrongM,
   input  logic                     IClassWrongM,
@@ -271,12 +271,14 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign FRM_REGW = '0;
     assign CSRUReadValM = '0;
     assign IllegalCSRUAccessM = 1'b1;
+    assign WriteFRMM = 1'b0;
+    assign WriteFFLAGSM = 1'b0;
   end
   
   if (P.ZICNTR_SUPPORTED) begin:counters
     csrc #(P) counters(.clk, .reset, .StallE, .StallM, .FlushM,
       .InstrValidNotFlushedM, .LoadStallD, .StoreStallD, .CSRWriteM, .CSRMWriteM,
-      .BPDirPredWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM, .BPWrongM,
+      .BPDirWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM, .BPWrongM,
       .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .sfencevmaM,
       .InterruptM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
       .CSRAdrM, .PrivilegeModeW, .CSRWriteValM,

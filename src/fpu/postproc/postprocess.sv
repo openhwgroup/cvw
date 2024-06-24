@@ -6,7 +6,7 @@
 //
 // Purpose: Post-Processing: normalization, rounding, sign, flags, special cases
 // 
-// Documentation: RISC-V System on Chip Design Chapter 13
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -44,7 +44,7 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   input logic                              FmaPs,               // the product's sign
   input logic                              FmaSs,               // Sum sign
   input logic  [P.NE+1:0]                  FmaSe,               // the sum's exponent
-  input logic  [P.FMALEN-1:0]                FmaSm,               // the positive sum
+  input logic  [P.FMALEN-1:0]              FmaSm,               // the positive sum
   input logic                              FmaASticky,          // sticky bit that is calculated during alignment
   input logic  [$clog2(P.FMALEN+1)-1:0]      FmaSCnt,             // the normalization shift count
   //divide signals
@@ -86,13 +86,11 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   // fma signals
   logic [P.NE+1:0]             FmaMe;                // exponent of the normalized sum
   logic                        FmaSZero;             // is the sum zero
-  logic [P.FMALEN+1:0]         FmaShiftIn;           // fma shift input
   logic [P.NE+1:0]             NormSumExp;           // exponent of the normalized sum not taking into account Subnormal or zero results
   logic                        FmaPreResultSubnorm;  // is the result subnormal - calculated before LZA corection
   logic [$clog2(P.FMALEN+1)-1:0] FmaShiftAmt;          // normalization shift amount for fma
   // division signals
   logic [P.LOGNORMSHIFTSZ-1:0] DivShiftAmt;          // divsqrt shif amount
-  logic [P.NORMSHIFTSZ-1:0]    DivShiftIn;           // divsqrt shift input
   logic [P.NE+1:0]             Ue;                   // divsqrt corrected exponent after corretion shift
   logic                        DivByZero;            // divide by zero flag
   logic                        DivResSubnorm;        // is the divsqrt result subnormal
@@ -136,6 +134,7 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
       assign OutFmt = IntToFp|~CvtOp ? Fmt : (OpCtrl[1:0] == P.FMT); 
   else if (P.FPSIZES == 3 | P.FPSIZES == 4) 
       assign OutFmt = IntToFp|~CvtOp ? Fmt : OpCtrl[1:0]; 
+  else assign OutFmt = 0; // FPSIZES = 1
 
   ///////////////////////////////////////////////////////////////////////////////
   // Normalization
@@ -145,25 +144,25 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   cvtshiftcalc #(P) cvtshiftcalc(.ToInt, .CvtCe, .CvtResSubnormUf, .Xm, .CvtLzcIn,  
       .XZero, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);
 
-  fmashiftcalc #(P) fmashiftcalc(.FmaSm, .FmaSCnt, .Fmt, .NormSumExp, .FmaSe,
-      .FmaSZero, .FmaPreResultSubnorm, .FmaShiftAmt, .FmaShiftIn);
+  fmashiftcalc #(P) fmashiftcalc(.FmaSCnt, .Fmt, .NormSumExp, .FmaSe, .FmaSm,
+      .FmaSZero, .FmaPreResultSubnorm, .FmaShiftAmt);
 
-  divshiftcalc #(P) divshiftcalc(.DivUe, .DivUm, .DivResSubnorm, .DivSubnormShiftPos, .DivShiftAmt, .DivShiftIn);
+  divshiftcalc #(P) divshiftcalc(.DivUe, .DivResSubnorm, .DivSubnormShiftPos, .DivShiftAmt);
 
   // select which unit's output to shift
   always_comb
     case(PostProcSel)
       2'b10: begin // fma
         ShiftAmt = {{P.LOGNORMSHIFTSZ-$clog2(P.FMALEN-1){1'b0}}, FmaShiftAmt};
-        ShiftIn  =  {FmaShiftIn, {P.NORMSHIFTSZ-(P.FMALEN+2){1'b0}}};
+        ShiftIn  =  {{2'b00, FmaSm}, {P.NORMSHIFTSZ-(P.FMALEN+2){1'b0}}};
       end
       2'b00: begin // cvt
         ShiftAmt = {{P.LOGNORMSHIFTSZ-$clog2(P.CVTLEN+1){1'b0}}, CvtShiftAmt};
-        ShiftIn  =  {CvtShiftIn, {P.NORMSHIFTSZ-P.CVTLEN-P.NF-1{1'b0}}};
+        ShiftIn  =  {CvtShiftIn, {P.NORMSHIFTSZ-(P.CVTLEN+P.NF+1){1'b0}}};
       end
       2'b01: begin //divsqrt
         ShiftAmt = DivShiftAmt;
-        ShiftIn  =  DivShiftIn;
+        ShiftIn  = {{P.NF{1'b0}}, DivUm, {P.NORMSHIFTSZ-(P.DIVb+1+P.NF){1'b0}}};
       end
       default: begin 
         ShiftAmt = {P.LOGNORMSHIFTSZ{1'bx}}; 

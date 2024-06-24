@@ -6,7 +6,7 @@
 //
 // Purpose: Handle Traps: Exceptions and Interrupts
 // 
-// Documentation: RISC-V System on Chip Design Chapter 5 (Figure 5.9)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -88,7 +88,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
                       BreakpointFaultM | EcallFaultM |
                       LoadAccessFaultM | StoreAmoAccessFaultM;
   // coverage on
-  assign TrapM = (ExceptionM & ~CommittedF) | InterruptM; // *** RT: review this additional ~CommittedF with DH and update priv chapter.
+  assign TrapM = (ExceptionM & ~CommittedF) | InterruptM;
 
   ///////////////////////////////////////////
   // Cause priority defined in privileged spec

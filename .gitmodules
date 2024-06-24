@@ -23,6 +23,7 @@
 [submodule "addins/riscv-arch-test"]
 	path = addins/riscv-arch-test
 	url = https://github.com/riscv-non-isa/riscv-arch-test
+	branch = dev
 [submodule "addins/branch-predictor-simulator"]
 	path = addins/branch-predictor-simulator
 	url = https://github.com/ross144/branch-predictor-simulator

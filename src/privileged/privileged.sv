@@ -7,7 +7,7 @@
 // Purpose: Implements the CSRs, Exceptions, and Privileged operations
 //          See RISC-V Privileged Mode Specification 20190608 
 // 
-// Documentation: RISC-V System on Chip Design Chapter 5 (Figure 5.8)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -49,7 +49,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic              StoreStallD,                                    // store instruction is stalling
   input  logic              ICacheStallF,                                   // I cache stalled
   input  logic              DCacheStallM,                                   // D cache stalled
-  input  logic              BPDirPredWrongM,                                // branch predictor guessed wrong direction
+  input  logic              BPDirWrongM,                                // branch predictor guessed wrong direction
   input  logic              BTAWrongM,                                      // branch predictor guessed wrong target
   input  logic              RASPredPCWrongM,                                // return adddress stack guessed wrong target
   input  logic              IClassWrongM,                                   // branch predictor guessed wrong instruction class
@@ -137,7 +137,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
     .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
-    .BPDirPredWrongM, .BTAWrongM, .RASPredPCWrongM, .BPWrongM,
+    .BPDirWrongM, .BTAWrongM, .RASPredPCWrongM, .BPWrongM,
     .sfencevmaM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
     .IClassWrongM, .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
     .NextPrivilegeModeM, .PrivilegeModeW, .CauseM, .SelHPTW,

@@ -6,7 +6,7 @@
 //
 // Purpose: One line of the RAM, with enabled flip-flop and logic for reading into distributed OR
 // 
-// Documentation: RISC-V System on Chip Design Chapter 8
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

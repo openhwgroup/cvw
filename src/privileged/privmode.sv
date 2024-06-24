@@ -6,7 +6,7 @@
 //
 // Purpose: Track privilege mode.  Change on traps and returns.
 // 
-// Documentation: RISC-V System on Chip Design Chapter 5
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

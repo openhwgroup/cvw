@@ -11,7 +11,7 @@
 //          Connects core to peripherals and I/O pins on SOC
 //          Bus width presently matches XLEN
 // 
-// Documentation: RISC-V System on Chip Design Chapter 6 (Figures 6.25 and 6.26)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -110,7 +110,7 @@ module ebu import cvw::*;  #(parameter cvw_t P) (
     .HWRITEOut(LSUHWRITEOut), .HSIZEOut(LSUHSIZEOut), .HBURSTOut(LSUHBURSTOut),
     .HTRANSOut(LSUHTRANSOut), .HADDROut(LSUHADDROut), .HREADYIn(HREADY));
 
-  // output mux //*** switch to structural implementation
+  // output mux 
   assign HADDR = LSUSelect ? LSUHADDROut : IFUSelect ? IFUHADDROut : '0;
   assign HSIZE = LSUSelect ? LSUHSIZEOut : IFUSelect ? IFUHSIZEOut: '0; 
   assign HBURST = LSUSelect ? LSUHBURSTOut : IFUSelect ? IFUHBURSTOut : '0; // If doing memory accesses, use LSUburst, else use Instruction burst.

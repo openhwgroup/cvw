@@ -37,18 +37,18 @@ module gshare import cvw::*; #(parameter cvw_t P,
   input logic             reset,
   input logic             StallF, StallD, StallE, StallM, StallW,
   input logic             FlushD, FlushE, FlushM, FlushW,
-  output logic [1:0]      BPDirPredF, 
-  output logic            BPDirPredWrongE,
+  output logic [1:0]      BPDirF, 
+  output logic            BPDirWrongE,
   // update
   input logic [XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM,
   input logic             BPBranchF, BranchD, BranchE, BranchM, BranchW, PCSrcE
 );
 
-  logic                   MatchF, MatchD, MatchE, MatchM, MatchW;
+  logic                   MatchD, MatchE, MatchM, MatchW;
   logic                   MatchX;
 
-  logic [1:0]             PHTBPDirPredF, BPDirPredD, BPDirPredE, FwdNewDirPredF;
-  logic [1:0]             NewBPDirPredE, NewBPDirPredM, NewBPDirPredW;
+  logic [1:0]             PHTBPDirF, BPDirD, BPDirE, FwdNewBPDirF;
+  logic [1:0]             NewBPDirE, NewBPDirM, NewBPDirW;
 
   logic [k-1:0]           IndexNextF, IndexF, IndexD, IndexE, IndexM, IndexW;
 
@@ -78,33 +78,33 @@ module gshare import cvw::*; #(parameter cvw_t P,
   assign MatchW = BranchW & ~FlushW & (IndexF == IndexW);
   assign MatchX = MatchD | MatchE | MatchM | MatchW;
 
-  assign FwdNewDirPredF = MatchD ? {2{BPDirPredD[1]}} :
-                                   MatchE ? {NewBPDirPredE} :
-                                   MatchM ? {NewBPDirPredM} :
-                   NewBPDirPredW ;
+  assign FwdNewBPDirF = MatchD ? {2{BPDirD[1]}} :
+                                   MatchE ? {NewBPDirE} :
+                                   MatchM ? {NewBPDirM} :
+                   NewBPDirW ;
   
-  assign BPDirPredF = MatchX ? FwdNewDirPredF : PHTBPDirPredF;
+  assign BPDirF = MatchX ? FwdNewBPDirF : PHTBPDirF;
 
   ram2p1r1wbe #(.USE_SRAM(P.USE_SRAM), .DEPTH(2**k), .WIDTH(2)) PHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallW & ~FlushW),
     .ra1(IndexNextF),
-    .rd1(PHTBPDirPredF),
+    .rd1(PHTBPDirF),
     .wa2(IndexM),
-    .wd2(NewBPDirPredM),
+    .wd2(NewBPDirM),
     .we2(BranchM),
     .bwe2(1'b1));
 
-  flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, BPDirPredF, BPDirPredD);
-  flopenrc #(2) PredictionRegE(clk, reset,  FlushE, ~StallE, BPDirPredD, BPDirPredE);
+  flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, BPDirF, BPDirD);
+  flopenrc #(2) PredictionRegE(clk, reset,  FlushE, ~StallE, BPDirD, BPDirE);
 
-  satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(BPDirPredE), .NewState(NewBPDirPredE));
-  flopenrc #(2) NewPredictionRegM(clk, reset,  FlushM, ~StallM, NewBPDirPredE, NewBPDirPredM);
-  flopenrc #(2) NewPredictionRegW(clk, reset,  FlushW, ~StallW, NewBPDirPredM, NewBPDirPredW);
+  satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(BPDirE), .NewState(NewBPDirE));
+  flopenrc #(2) NewPredictionRegM(clk, reset,  FlushM, ~StallM, NewBPDirE, NewBPDirM);
+  flopenrc #(2) NewPredictionRegW(clk, reset,  FlushW, ~StallW, NewBPDirM, NewBPDirW);
 
-  assign BPDirPredWrongE = PCSrcE != BPDirPredE[1] & BranchE;
+  assign BPDirWrongE = PCSrcE != BPDirE[1] & BranchE;
 
-  assign GHRNextF = BPBranchF ? {BPDirPredF[1], GHRF[k-1:1]} : GHRF;
-  assign GHRF = BranchD  ? {BPDirPredD[1], GHRD[k-1:1]} : GHRD;
+  assign GHRNextF = BPBranchF ? {BPDirF[1], GHRF[k-1:1]} : GHRF;
+  assign GHRF = BranchD  ? {BPDirD[1], GHRD[k-1:1]} : GHRD;
   assign GHRD = BranchE ? {PCSrcE, GHRE[k-1:1]} : GHRE;
   assign GHRE = BranchM ? {PCSrcM, GHRM[k-1:1]} : GHRM;
 

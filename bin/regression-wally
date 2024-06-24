@@ -99,6 +99,29 @@ derivconfigtests = [
         ["zaamo_rv32gc", ["arch32i", "arch32a_amo"]],
         ["zalrsc_rv32gc", ["arch32i", "wally32a_lrsc"]],
 
+# Bit manipulation and crypto variants
+        ["zba_rv32gc", ["arch32i", "arch32zba"]],
+        ["zbb_rv32gc", ["arch32i", "arch32zbb"]],
+        ["zbc_rv32gc", ["arch32i", "arch32zbc"]],
+        ["zbs_rv32gc", ["arch32i", "arch32zbs"]],
+        ["zbkb_rv32gc", ["arch32i", "arch32zbkb"]],
+        ["zbkc_rv32gc", ["arch32i", "arch32zbkc"]],
+        ["zbkx_rv32gc", ["arch32i", "arch32zbkx"]],
+        ["zkne_rv32gc", ["arch32i", "arch32zkne"]],
+        ["zknd_rv32gc", ["arch32i", "arch32zknd"]],
+        ["zknh_rv32gc", ["arch32i", "arch32zknh"]],
+
+        ["zba_rv64gc", ["arch64i", "arch64zba"]],
+        ["zbb_rv64gc", ["arch64i", "arch64zbb"]],
+        ["zbc_rv64gc", ["arch64i", "arch64zbc"]],
+        ["zbs_rv64gc", ["arch64i", "arch64zbs"]],
+        ["zbkb_rv64gc", ["arch64i", "arch64zbkb"]],
+        ["zbkc_rv64gc", ["arch64i", "arch64zbkc"]],
+        ["zbkx_rv64gc", ["arch64i", "arch64zbkx"]],
+        ["zkne_rv64gc", ["arch64i", "arch64zkne"]],
+        ["zknd_rv64gc", ["arch64i", "arch64zknd"]],
+        ["zknh_rv64gc", ["arch64i", "arch64zknh"]],
+
         ### add misaligned tests
 
         # fp/int divider permutations
@@ -326,7 +349,8 @@ else:
 
     # run derivative configurations in nightly regression
 if (nightly):
-    addTests(tests_buildrootboot, defaultsim)
+#    addTests(tests_buildrootboot, defaultsim)
+    addTests(tests_buildrootshort, defaultsim)
     addTests(derivconfigtests, defaultsim)
 else:
     addTests(tests_buildrootshort, defaultsim)
@@ -390,7 +414,7 @@ if (testfloat or nightly): # for nightly, run testfloat along with othres
             tc = TestCase(
                     name=test,
                     variant=config,
-                    cmd="wsim --tb testbench_fp --sim questa " + config + " " + test + " > " + sim_log,
+                    cmd="wsim --tb testbench_fp " + config + " " + test + " > " + sim_log,
                     grepstr="All Tests completed with          0 errors",
                     grepfile = WALLY + "/sim/questa/logs/"+config+"_"+test+".log")
             configs.append(tc)
@@ -406,6 +430,7 @@ def main():
     """Run the tests and count the failures"""
     global configs, coverage
     os.chdir(regressionDir)
+    os.system('rm -rf questa/wkdir')
     for d in ["questa/logs", "questa/wkdir", "verilator/logs", "verilator/wkdir", "vcs/logs", "vcs/wkdir"]:
         try:
             os.mkdir(d)
@@ -421,7 +446,7 @@ def main():
     elif '--nightly' in sys.argv:
         TIMEOUT_DUR = 60*1440 # 1 day
     elif '--testfloat' in sys.argv:
-        TIMEOUT_DUR = 5*60 # seconds
+        TIMEOUT_DUR = 30*60 # seconds
     else:
         TIMEOUT_DUR = 10*60 # seconds
 

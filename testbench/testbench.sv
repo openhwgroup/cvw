@@ -140,6 +140,7 @@ module testbench;
   logic Validate;
   logic SelectTest;
   logic TestComplete;
+  logic PrevPCZero;
 
   initial begin
     // look for arguments passed to simulation, or use defaults
@@ -385,15 +386,6 @@ module testbench;
         $display("Benchmark: coremark is done.");
         $stop;
       end
-    if (P.ZICSR_SUPPORTED & dut.core.ifu.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.ieu.InstrValidM) begin 
-      $display("Program fetched illegal instruction 0x00000000 from address 0x00000000.  Might be fault with no fault handler.");
-      //$stop; // presently wally32/64priv tests trigger this for reasons not yet understood.
-    end
-
-  // modifications 4/3/24 kunlin & harris to speed up Verilator
-  // For some reason, Verilator runs ~100x slower when these SelectTest and Validate codes are in the posedge clk block
-  //end // added
-  //always @(posedge SelectTest) // added
     if(SelectTest) begin
       if (riscofTest) begin 
         memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
@@ -433,6 +425,7 @@ module testbench;
   always @(posedge Validate) // added
 `endif
     if(Validate) begin
+      if (PrevPCZero) totalerrors = totalerrors + 1; //  error if PC is stuck at zero
       if (TEST == "buildroot")
         $fclose(uartoutfile);
       if (TEST == "embench") begin
@@ -469,12 +462,12 @@ module testbench;
         // clear signature to prevent contamination from previous tests
         if (!begin_signature_addr)
           $display("begin_signature addr not found in %s", ProgramLabelMapFile);
-        else if (TEST != "embench") begin   // *** quick hack for embench.  need a better long term solution
+        else if (TEST != "embench") begin 
           CheckSignature(pathname, tests[test], riscofTest, begin_signature_addr, errors);
           if(errors > 0) totalerrors = totalerrors + 1;
         end
       end
-      test = test + 1; // *** this probably needs to be moved.
+      test = test + 1; 
       if (test == tests.size()) begin
         if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
         else $display("FAIL: %d test programs had errors", totalerrors);
@@ -527,13 +520,21 @@ module testbench;
       if (LoadMem) begin
         if (TEST == "buildroot") begin
           memFile = $fopen(bootmemfilename, "rb");
+          if (memFile == 0) begin
+            $display("Error: Could not open file %s", memfilename);
+            $finish;
+          end
           readResult = $fread(dut.uncoregen.uncore.bootrom.bootrom.memory.ROM, memFile);
           $fclose(memFile);
           memFile = $fopen(memfilename, "rb");
-          readResult = $fread(dut.uncoregen.uncore.ram.ram.memory.RAM, memFile);
+          if (memFile == 0) begin
+            $display("Error: Could not open file %s", memfilename);
+            $finish;
+          end
+          readResult = $fread(dut.uncoregen.uncore.ram.ram.memory.ram.RAM, memFile);
           $fclose(memFile);
         end else 
-          $readmemh(memfilename, dut.uncoregen.uncore.ram.ram.memory.RAM);
+          $readmemh(memfilename, dut.uncoregen.uncore.ram.ram.memory.ram.RAM);
         if (TEST == "embench") $display("Read memfile %s", memfilename);
       end
       if (CopyRAM) begin
@@ -542,7 +543,7 @@ module testbench;
         EndIndex = (end_signature_addr >> LogXLEN) + 8;
         BaseIndex = P.UNCORE_RAM_BASE >> LogXLEN;
         for(ShadowIndex = StartIndex; ShadowIndex <= EndIndex; ShadowIndex++) begin
-          testbench.DCacheFlushFSM.ShadowRAM[ShadowIndex] = dut.uncoregen.uncore.ram.ram.memory.RAM[ShadowIndex - BaseIndex];
+          testbench.DCacheFlushFSM.ShadowRAM[ShadowIndex] = dut.uncoregen.uncore.ram.ram.memory.ram.RAM[ShadowIndex - BaseIndex];
         end
       end
     end
@@ -550,7 +551,7 @@ module testbench;
   if (P.DTIM_SUPPORTED) begin
     always @(posedge clk) begin
       if (LoadMem) begin
-        $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
+        $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.ram.RAM);
         $display("Read memfile %s", memfilename);
       end
       if (CopyRAM) begin
@@ -559,7 +560,7 @@ module testbench;
         EndIndex = (end_signature_addr >> LogXLEN) + 8;
         BaseIndex = P.UNCORE_RAM_BASE >> LogXLEN;
         for(ShadowIndex = StartIndex; ShadowIndex <= EndIndex; ShadowIndex++) begin
-          testbench.DCacheFlushFSM.ShadowRAM[ShadowIndex] = dut.core.lsu.dtim.dtim.ram.RAM[ShadowIndex - BaseIndex];
+          testbench.DCacheFlushFSM.ShadowRAM[ShadowIndex] = dut.core.lsu.dtim.dtim.ram.ram.RAM[ShadowIndex - BaseIndex];
         end
       end
     end
@@ -570,7 +571,7 @@ module testbench;
     always @(posedge clk)
       if (ResetMem)  // program memory is sometimes reset (e.g. for CoreMark, which needs zeroed memory)
         for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
-          dut.uncoregen.uncore.ram.ram.memory.RAM[adrindex] = '0;
+          dut.uncoregen.uncore.ram.ram.memory.ram.RAM[adrindex] = '0;
 
   ////////////////////////////////////////////////////////////////////////////////
   // Actual hardware
@@ -737,8 +738,8 @@ module testbench;
   endgenerate
 
   if(P.SDC_SUPPORTED) begin : sdcard
-    // *** fix later
-/* -----\/----- EXCLUDED -----\/-----
+    // JP: Add back sd card when sd card AHB implementation done
+    /* -----\/----- EXCLUDED -----\/-----
     sdModel sdcard
       (.sdClk(SDCCLK),
        .cmd(SDCCmd), 
@@ -748,7 +749,7 @@ module testbench;
     assign SDCCmdIn = SDCCmd;
     assign SDCDat = sd_dat_reg_t ? sd_dat_reg_o : sd_dat_i;
     assign SDCDatIn = SDCDat;
- -----/\----- EXCLUDED -----/\----- */
+    -----/\----- EXCLUDED -----/\----- */
     assign SDCIntr = 1'b0;
   end else begin
     assign SDCIntr = 1'b0;
@@ -839,23 +840,22 @@ module testbench;
   end
 
   // Termination condition
-  // terminate on a specific ECALL after li x3,1 for old Imperas tests,  *** remove this when old imperas tests are removed
-  // or sw	gp,-56(t0) for new Imperas tests
-  // or sd gp, -56(t0) 
-  // or on a jump to self infinite loop (6f) for RISC-V Arch tests
-  logic ecf; // remove this once we don't rely on old Imperas tests with Ecalls
-  if (P.ZICSR_SUPPORTED) assign ecf = dut.core.priv.priv.EcallFaultM;
-  else                  assign ecf = 0;
-  always_comb begin
-  	TestComplete = ecf & 
-			    (dut.core.ieu.dp.regf.rf[3] == 1 | 
-			     (dut.core.ieu.dp.regf.we3 & 
-			      dut.core.ieu.dp.regf.a3 == 3 & 
-			      dut.core.ieu.dp.regf.wd3 == 1)) |
-           ((InstrM == 32'h6f | InstrM == 32'hfc32a423 | InstrM == 32'hfc32a823) & dut.core.ieu.c.InstrValidM ) |
-           ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"] & dut.core.lsu.IEUAdrM != 0) & InstrMName == "SW" );
-  end
-  
+  // Terminate on 
+  // 1. jump to self loop (0x0000006f)
+  // 2. a store word writes to the address "tohost"
+  // 3. or PC is stuck at 0
+
+
+  always @(posedge clk) begin
+  //  if (reset) PrevPCZero <= 0;
+  //  else if (dut.core.InstrValidM) PrevPCZero <= (FunctionName.PCM == 0 & dut.core.ifu.InstrM == 0);
+    TestComplete <= ((InstrM == 32'h6f) & dut.core.InstrValidM ) |
+		   ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"] & dut.core.lsu.IEUAdrM != 0) & InstrMName == "SW"); // |
+    //   (FunctionName.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.InstrValidM & PrevPCZero));
+   // if (FunctionName.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.InstrValidM & PrevPCZero)
+    //  $error("Program fetched illegal instruction 0x00000000 from address 0x00000000 twice in a row.  Usually due to fault with no fault handler.");
+  end 
+
   DCacheFlushFSM #(P) DCacheFlushFSM(.clk, .start(DCacheFlushStart), .done(DCacheFlushDone));
 
   if(P.ZICSR_SUPPORTED) begin
@@ -922,7 +922,7 @@ end
         $display($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
         $fatal;
       end
-    end else begin // for buildroot use the binary instead to load teh reference model.
+    end else begin // for buildroot use the binary instead to load the reference model.
       if (!rvviRefInit("")) begin // still have to call with nothing
         $display($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
         $fatal;
@@ -1152,7 +1152,7 @@ task automatic updateProgramAddrLabelArray;
       returncode = $fscanf(ProgramAddrMapFP, "%s\n", adrstr);
       if (ProgramAddrLabelArray.exists(label)) ProgramAddrLabelArray[label] = adrstr.atohex();
     end
-  end
+  end 
 
 //  if(ProgramAddrLabelArray["begin_signature"] == 0) $display("Couldn't find begin_signature in %s", ProgramLabelMapFile);
 //  if(ProgramAddrLabelArray["sig_end_canary"] == 0) $display("Couldn't find sig_end_canary in %s", ProgramLabelMapFile);

@@ -485,7 +485,7 @@ module fpgaTop
      .peripheral_aresetn(peripheral_aresetn));
 
   // wally
-  // *** FIXME add sdc interrupt and HSELEXTSDC, remove old sdc
+  // RT and JP: FIXME add sdc interrupt and HSELEXTSDC, remove old sdc after the new sdc ahb version is implemented
 
   `include "parameter-defs.vh"
 
@@ -1048,7 +1048,6 @@ module fpgaTop
      .sys_rst(resetn),    // omg. this is active low?!?!?? 
      .mmcm_locked(mmcm_locked),
 
-     // *** What are these? 
      .app_sr_req(1'b0),  // reserved command
      .app_ref_req(1'b0), // refresh command
      .app_zq_req(1'b0),  // recalibrate command

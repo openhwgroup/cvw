@@ -7,7 +7,7 @@
 //
 // Purpose: Controller for the cache fsm
 //
-// Documentation: RISC-V System on Chip Design Chapter 7 (Figure 7.14 and Table 7.1)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

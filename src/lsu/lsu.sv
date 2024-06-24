@@ -9,7 +9,7 @@
 //          HPTW, DMMU, data cache, interface to external bus
 //          Atomic, Endian swap, and subword read/write logic
 //  
-// Documentation: RISC-V System on Chip Design Chapter 9 (Figure 9.2)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -86,8 +86,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   input  logic                    ENVCFG_PBMTE,                         // Page-based memory types enabled
   input  logic                    ENVCFG_ADUE,                          // HPTW A/D Update enable
   input  logic [P.XLEN-1:0]       PCSpillF,                             // Fetch PC 
-  input  logic                    ITLBMissF,                            // ITLB miss causes HPTW (hardware pagetable walker) walk
-  input  logic                    InstrUpdateDAF,                       // ITLB hit needs to update dirty or access bits
+  input  logic                    ITLBMissOrUpdateAF,                   // ITLB miss causes HPTW (hardware pagetable walker) walk or update access bit
   output logic [P.XLEN-1:0]       PTE,                                  // Page table entry write to ITLB
   output logic [1:0]              PageType,                             // Type of page table entry to write to ITLB
   output logic                    ITLBWriteF,                           // Write PTE to ITLB
@@ -131,7 +130,6 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic [P.LLEN-1:0]     DCacheReadDataWordSpillM;               // D$ read data
   logic [P.LLEN-1:0]     ReadDataWordMuxM;                       // DTIM or D$ read data
   logic [P.LLEN-1:0]     LittleEndianReadDataWordM;              // Endian-swapped read data
-  logic [P.LLEN-1:0]     ReadDataWordM;                          // Read data before subword selection
   logic [P.LLEN-1:0]     ReadDataM;                              // Final read data
 
   logic [P.XLEN-1:0]     IHWriteDataM;                           // IEU or HPTW write data
@@ -146,7 +144,6 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   
   logic                  DTLBMissM;                              // DTLB miss causes HPTW walk
   logic                  DTLBWriteM;                             // Writes PTE and PageType to DTLB
-  logic                  DataUpdateDAM;                          // DTLB hit needs to update dirty or access bits
   logic                  LSULoadAccessFaultM;                    // Load acces fault
   logic                  LSUStoreAmoAccessFaultM;                // Store access fault
   logic                  IgnoreRequestTLB;                       // On either ITLB or DTLB miss, ignore miss so HPTW can handle
@@ -154,6 +151,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic                  SelDTIM;                                // Select DTIM rather than bus or D$
   logic [P.XLEN-1:0]     WriteDataZM;
   logic                  LSULoadPageFaultM, LSUStoreAmoPageFaultM;
+  logic 		 DTLBMissOrUpdateDAM;
+   
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Pipeline for IEUAdr E to M
@@ -193,14 +192,14 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   if(P.VIRTMEM_SUPPORTED) begin : hptw
-    hptw #(P) hptw(.clk, .reset, .MemRWM, .AtomicM, .ITLBMissF, .ITLBWriteF,
-      .DTLBMissM, .DTLBWriteM, .InstrUpdateDAF, .DataUpdateDAM,
+    hptw #(P) hptw(.clk, .reset, .MemRWM, .AtomicM, .ITLBMissOrUpdateAF, .ITLBWriteF,
+      .DTLBMissOrUpdateDAM, .DTLBWriteM,
       .FlushW, .DCacheBusStallM, .SATP_REGW, .PCSpillF,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_ADUE, .PrivilegeModeW,
       .ReadDataM(ReadDataM[P.XLEN-1:0]), // ReadDataM is LLEN, but HPTW only needs XLEN
       .WriteDataM(WriteDataZM), .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
       .IEUAdrExtM, .PTE, .IHWriteDataM, .PageType, .PreLSURWM, .LSUAtomicM,
-      .IHAdrM, .HPTWStall, .SelHPTW,
+      .IHAdrM, .HPTWStall, .SelHPTW, 
       .IgnoreRequestTLB, .LSULoadAccessFaultM, .LSUStoreAmoAccessFaultM, 
       .LoadAccessFaultM, .StoreAmoAccessFaultM, .HPTWInstrAccessFaultF,
       .LoadPageFaultM, .StoreAmoPageFaultM, .LSULoadPageFaultM, .LSUStoreAmoPageFaultM, .HPTWInstrPageFaultF
@@ -236,6 +235,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   if(P.ZICSR_SUPPORTED == 1) begin : dmmu
     logic DisableTranslation;                             // During HPTW walk or D$ flush disable virtual memory address translation
     logic WriteAccessM;
+    logic DataUpdateDAM;                                  // DTLB hit needs to update dirty or access bits
+
     assign DisableTranslation = SelHPTW | FlushDCacheM;
     assign WriteAccessM = PreLSURWM[0];
     mmu #(.P(P), .TLB_ENTRIES(P.DTLB_ENTRIES), .IMMU(0))
@@ -245,14 +246,16 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       .PhysicalAddress(PAdrM), .TLBMiss(DTLBMissM), .Cacheable(CacheableM), .Idempotent(), .SelTIM(SelDTIM), 
       .InstrAccessFaultF(), .LoadAccessFaultM(LSULoadAccessFaultM), 
       .StoreAmoAccessFaultM(LSUStoreAmoAccessFaultM), .InstrPageFaultF(), .LoadPageFaultM(LSULoadPageFaultM), 
-    .StoreAmoPageFaultM(LSUStoreAmoPageFaultM),
-      .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,   // *** these faults need to be supressed during hptw.
+      .StoreAmoPageFaultM(LSUStoreAmoPageFaultM),
+      .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
       .UpdateDA(DataUpdateDAM), .CMOpM(CMOpM),
       .AtomicAccessM(|LSUAtomicM), .ExecuteAccessF(1'b0), 
       .WriteAccessM, .ReadAccessM(PreLSURWM[1]),
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
 
+    assign DTLBMissOrUpdateDAM = DTLBMissM | (P.SVADU_SUPPORTED & DataUpdateDAM);  
   end else begin  // No MMU, so no PMA/page faults and no address translation
+    assign DTLBMissOrUpdateDAM = '0;
     assign {DTLBMissM, LSULoadAccessFaultM, LSUStoreAmoAccessFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM} = '0;
     assign {LSULoadPageFaultM, LSUStoreAmoPageFaultM} = '0;
     assign PAdrM = IHAdrM[P.PA_BITS-1:0];
@@ -280,10 +283,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     // The DTIM uses untranslated addresses, so it is not compatible with virtual memory.
     mux2 #(P.PA_BITS) DTIMAdrMux(IEUAdrExtE[P.PA_BITS-1:0], IEUAdrExtM[P.PA_BITS-1:0], MemRWM[0], DTIMAdr);
     assign DTIMMemRWM = SelDTIM & ~IgnoreRequestTLB ? LSURWM : 0;
-    // **** fix ReadDataWordM to be LLEN. ByteMask is wrong length.
-    // **** create config to support DTIM with floating point.
-    // Add support for cboz
-    dtim #(P) dtim(.clk, .reset, .ce(~GatedStallW), .MemRWE(MemRWE), // *** update when you update the cache RWE
+    dtim #(P) dtim(.clk, .reset, .ce(~GatedStallW),
               .MemRWM(DTIMMemRWM),
               .DTIMAdr, .FlushW, .WriteDataM(LSUWriteDataM), 
               .ReadDataWordM(DTIMReadDataWordM[P.LLEN-1:0]), .ByteMaskM(ByteMaskM));
@@ -355,11 +355,6 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
         .Cacheable(CacheableOrFlushCacheM), .BusRW, .Stall(GatedStallW),
         .BusStall, .BusCommitted(BusCommittedM));
 
-
-    // Mux between the 3 sources of read data, 0: cache, 1: Bus, 2: DTIM
-    // Uncache bus access may be smaller width than LLEN.  Duplicate LLENPOVERAHBW times.
-      // *** DTIMReadDataWordM should be increased to LLEN.
-      // pma should generate exception for LLEN read to periph.
       mux3 #(P.LLEN) UnCachedDataMux(.d0(DCacheReadDataWordSpillM), .d1({LLENPOVERAHBW{FetchBuffer[P.XLEN-1:0]}}),
                                     .d2({{P.LLEN-P.XLEN{1'b0}}, DTIMReadDataWordM[P.XLEN-1:0]}),
                                     .s({SelDTIM, ~(CacheableOrFlushCacheM)}), .y(ReadDataWordMuxM));
@@ -378,9 +373,9 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
 
     // Mux between the 2 sources of read data, 0: Bus, 1: DTIM
       if(P.DTIM_SUPPORTED) mux2 #(P.XLEN) ReadDataMux2(FetchBuffer, DTIMReadDataWordM[P.XLEN-1:0], SelDTIM, ReadDataWordMuxM[P.XLEN-1:0]);
-      else assign ReadDataWordMuxM[P.XLEN-1:0] = FetchBuffer[P.XLEN-1:0]; // *** bus only does not support double wide floats.
+      else assign ReadDataWordMuxM[P.XLEN-1:0] = FetchBuffer[P.XLEN-1:0];
       assign LSUHBURST = 3'b0;
-      assign {DCacheStallM, DCacheCommittedM, DCacheMiss, DCacheAccess} = '0;
+      assign {DCacheStallM, DCacheCommittedM, DCacheMiss, DCacheAccess, DCacheReadDataWordM} = '0;
     end
   end else begin: nobus // block: bus, only DTIM
     assign {LSUHWDATA, LSUHADDR, LSUHWRITE, LSUHSIZE, LSUHBURST, LSUHTRANS, LSUHWSTRB} = '0; 

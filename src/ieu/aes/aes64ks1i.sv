@@ -26,11 +26,11 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module aes64ks1i(
-   input  logic [3:0]  round,
-   input  logic [63:0] rs1,
-   input  logic [31:0] Sbox0Out,
-   output logic [31:0] SboxKIn,
-   output logic [63:0] result
+   input  logic [3:0]   round,
+   input  logic [63:32] rs1,
+   input  logic [31:0]  Sbox0Out,
+   output logic [31:0]  SboxKIn,
+   output logic [63:0]  result
 );                 
                  
    logic 			        finalround;
