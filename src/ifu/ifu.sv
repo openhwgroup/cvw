@@ -431,8 +431,10 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     mux2    #(32)     FlushInstrMMux(InstrE, nop, FlushM, NextInstrE);
     if (P.DEBUG_SUPPORTED)
       flopenrs #(32)     InstrMReg(clk, reset, ~StallM, NextInstrE, InstrM, DebugScanEn, DebugScanChainReg, DebugScanOut);
-    else
+    else begin
       flopenr #(32)     InstrMReg(clk, reset, ~StallM, NextInstrE, InstrM);
+      assign DebugScanOut = DebugScanChainReg;
+    end
   end else begin
     assign InstrM = '0;
     assign DebugScanOut = DebugScanChainReg;
@@ -441,8 +443,10 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   if (P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED)
     if (P.DEBUG_SUPPORTED)
       flopenrs #(P.XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM, DebugScanEn, DebugScanIn, DebugScanChainReg);
-    else
+    else begin
       flopenr #(P.XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
+      assign DebugScanChainReg = DebugScanIn;
+    end
   else begin
     assign PCM = '0;
     assign DebugScanChainReg = DebugScanIn;

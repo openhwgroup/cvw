@@ -49,7 +49,7 @@ module rad import cvw::*; #(parameter cvw_t P) (
   localparam WRITEDATAMLEN = P.XLEN;
   localparam IEUADRMLEN = P.XLEN;
   localparam READDATAMLEN = P.LLEN;
-  localparam SCANCHAINLEN = P.LLEN - 1 
+  localparam SCANCHAINLEN = P.LLEN 
     + TRAPMLEN + PCMLEN + INSTRMLEN
     + MEMRWMLEN + INSTRVALIDMLEN + WRITEDATAMLEN
     + IEUADRMLEN + READDATAMLEN;
@@ -66,7 +66,7 @@ module rad import cvw::*; #(parameter cvw_t P) (
   logic [P.LLEN-1:0] Mask;
 
   assign RegAddr = Regno[11:0];
-  assign ScanChainLen = (CSRegNo | GPRegNo) ? P.XLEN : FPRegNo ? P.FLEN : SCANCHAINLEN;
+  assign ScanChainLen = (CSRegNo | GPRegNo) ? P.XLEN[9:0] : FPRegNo ? P.FLEN[9:0] : SCANCHAINLEN[9:0];
 
   // Register decoder
   always_comb begin
@@ -77,7 +77,7 @@ module rad import cvw::*; #(parameter cvw_t P) (
     FPRegNo = 0;
     case (Regno) inside
       [`DCSR_REGNO:`DPC_REGNO] : begin
-        ShiftCount = P.LLEN - 1;
+        ShiftCount = P.LLEN[9:0] - 1;
         CSRegNo = 1;
       end
 
@@ -108,7 +108,7 @@ module rad import cvw::*; #(parameter cvw_t P) (
       `SIP_REGNO,
       `MIE_REGNO,
       `MIP_REGNO : begin
-        ShiftCount = P.LLEN - 1;
+        ShiftCount = P.LLEN[9:0] - 1'b1;
         CSRegNo = 1;
 	// Comment out because gives error on openocd
 	// This value cause the csrs to all go read-only
@@ -119,44 +119,44 @@ module rad import cvw::*; #(parameter cvw_t P) (
       [`HPMCOUNTERBASE_REGNO:`TIME_REGNO],
       [`HPMCOUNTERHBASE_REGNO:`TIMEH_REGNO],
       [`MVENDORID_REGNO:`MCONFIGPTR_REGNO] : begin
-        ShiftCount = P.LLEN - 1;
+        ShiftCount = P.LLEN[9:0] - 1;
         CSRegNo = 1;
         RegReadOnly = 1;
       end
 
       [`X0_REGNO:`X15_REGNO] : begin
-        ShiftCount = P.LLEN - 1;
+        ShiftCount = P.LLEN[9:0] - 1;
         GPRegNo = 1;
       end
       [`X16_REGNO:`X31_REGNO] : begin
-        ShiftCount = P.LLEN - 1;
+        ShiftCount = P.LLEN[9:0] - 1;
         InvalidRegNo = P.E_SUPPORTED;
         GPRegNo = 1;
       end
       [`FP0_REGNO:`FP31_REGNO] : begin
-        ShiftCount = P.LLEN - 1;
+        ShiftCount = P.LLEN[9:0] - 1;
         InvalidRegNo = ~(P.F_SUPPORTED | P.D_SUPPORTED | P.Q_SUPPORTED);
         FPRegNo = 1;
       end
       `TRAPM_REGNO : begin
-        ShiftCount = SCANCHAINLEN - TRAPM_IDX;
+        ShiftCount = SCANCHAINLEN[9:0] - TRAPM_IDX[9:0];
         InvalidRegNo = ~P.ZICSR_SUPPORTED;
         RegReadOnly = 1;
       end
       `PCM_REGNO : begin
-        ShiftCount = SCANCHAINLEN - PCM_IDX;
+        ShiftCount = SCANCHAINLEN[9:0] - PCM_IDX[9:0];
         InvalidRegNo = ~(P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED);
       end
       `INSTRM_REGNO : begin
-        ShiftCount = SCANCHAINLEN - INSTRM_IDX;
+        ShiftCount = SCANCHAINLEN[9:0] - INSTRM_IDX[9:0];
         InvalidRegNo = ~(P.ZICSR_SUPPORTED | P.A_SUPPORTED);
       end
-      `MEMRWM_REGNO      : ShiftCount = SCANCHAINLEN - MEMRWM_IDX;
-      `INSTRVALIDM_REGNO : ShiftCount = SCANCHAINLEN - INSTRVALIDM_IDX;
-      `WRITEDATAM_REGNO  : ShiftCount = SCANCHAINLEN - WRITEDATAM_IDX;
-      `IEUADRM_REGNO     : ShiftCount = SCANCHAINLEN - IEUADRM_IDX;
+      `MEMRWM_REGNO      : ShiftCount = SCANCHAINLEN[9:0] - MEMRWM_IDX[9:0];
+      `INSTRVALIDM_REGNO : ShiftCount = SCANCHAINLEN[9:0] - INSTRVALIDM_IDX[9:0];
+      `WRITEDATAM_REGNO  : ShiftCount = SCANCHAINLEN[9:0] - WRITEDATAM_IDX[9:0];
+      `IEUADRM_REGNO     : ShiftCount = SCANCHAINLEN[9:0] - IEUADRM_IDX[9:0];
       `READDATAM_REGNO : begin
-        ShiftCount = SCANCHAINLEN - READDATAM_IDX;
+        ShiftCount = SCANCHAINLEN[9:0] - READDATAM_IDX[9:0];
         RegReadOnly = 1;
       end
       default : begin

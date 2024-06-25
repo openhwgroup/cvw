@@ -188,8 +188,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   // A return sets the PC to MEPC or SEPC
   if (P.DEBUG_SUPPORTED) begin
     always_comb
-      if      (ExecProgBuf)   EPCM = P.PROGBUF_BASE;
-      else if (DRet) EPCM = DPC;
+      if      (ExecProgBuf)   EPCM = P.PROGBUF_BASE[P.XLEN-1:0];
+      else if (DRet)          EPCM = DPC;
       else if (mretM)         EPCM = MEPC_REGW;
       else                    EPCM = SEPC_REGW;
   end else begin
@@ -320,6 +320,10 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     .CSRWriteDM, .CSRAdrM(CSRAdrDM), .CSRWriteValM(CSRWriteValDM), .CSRDReadValM, .IllegalCSRDAccessM,
     .DebugCause, .ebreakEn, .Step, .DPC, .PCM, .DCall);
   end else begin
+    assign Step = '0;
+    assign DPC = '0;
+    assign DebugScanOut = '0;
+    assign ebreakEn = 0;
     assign CSRDReadValM = '0;
     assign IllegalCSRDAccessM = 1'b1; // Debug isn't supported
   end

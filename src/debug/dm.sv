@@ -76,6 +76,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
 
   localparam PROGBUF_SIZE = (P.PROGBUF_RANGE+1)/4;
   localparam DATA_COUNT = (P.LLEN/32);
+  localparam AARSIZE_ENC = $clog2(P.LLEN/8);
 
   // DMI Signals
   logic                       ReqReady;
@@ -348,7 +349,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
               `ACCESS_REGISTER : begin
                 if (~ReqData[`TRANSFER])
                   State <= ReqData[`POSTEXEC] ? EXEC_PROGBUF : ACK;  // If not transfer, exec progbuf or do nothing
-                else if (ReqData[`AARSIZE] > $clog2(P.LLEN/8)[2:0])
+                else if (ReqData[`AARSIZE] > AARSIZE_ENC[2:0])
                   CmdErr <= `CMDERR_BUS;                             // If AARSIZE (encoded) is greater than P.LLEN, set CmdErr, do nothing
                 else if (InvalidRegNo)
                   CmdErr <= `CMDERR_EXCEPTION;                       // If InvalidRegNo, set CmdErr, do nothing
