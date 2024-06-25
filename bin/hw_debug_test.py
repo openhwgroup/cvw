@@ -38,20 +38,27 @@ random_order = False
 
 def prog_buff_test(cvw):
     cvw.halt()
-    cvw.write_dmi("0x20", "0x00100073")
-    #cvw.write_dmi("0x21", "0xf00daedd")
-    #cvw.write_dmi("0x22", "0xdaede105")
-    #cvw.write_dmi("0x23", "0x00100073") # ebreak
+    pb = ["0x00840413", "0xd2e3ca40", "0x00100073"]
+    cvw.write_data("DCSR", hex(0x1 << 15))
+    cvw.write_progbuf(pb)
+    cvw.exec_progbuf()
 
-    cvw.write_data("DPC", "0x00002000") # Progbuf addr
     cvw.resume()
     print()
 
 
 def flow_control_test(cvw):
-    #time.sleep(70)  # wait for OpenSBI
+    #time.sleep(200)  # wait for full boot
 
     #cvw.halt()
+    for _ in range(5):
+        time.sleep(random.randint(5,10))
+        cvw.halt()
+        cvw.step()
+        cvw.step()
+        cvw.resume()
+    return
+
     time.sleep(1)
     #cvw.read_data("DCSR")
     for _ in range(100):
@@ -171,5 +178,5 @@ with OpenOCD() as cvw:
     cvw.reset_hart()
     time.sleep(1)
     #register_rw_test(cvw)
-    flow_control_test(cvw)
-    #prog_buff_test(cvw)
+    #flow_control_test(cvw)
+    prog_buff_test(cvw)

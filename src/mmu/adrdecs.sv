@@ -33,7 +33,7 @@ module adrdecs import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.PA_BITS-1:0] PhysicalAddress,
   input  logic                 AccessRW, AccessRX, AccessRWXC,
   input  logic [1:0]           Size,
-  output logic [12:0]          SelRegions
+  output logic [14:0]          SelRegions
 );
 
   localparam logic [3:0]       SUPPORTED_SIZE = (P.LLEN == 32 ? 4'b0111 : 4'b1111);
@@ -49,7 +49,7 @@ module adrdecs import cvw::*;  #(parameter cvw_t P) (
   adrdec #(P.PA_BITS) plicdec(PhysicalAddress, P.PLIC_BASE[P.PA_BITS-1:0], P.PLIC_RANGE[P.PA_BITS-1:0], P.PLIC_SUPPORTED, AccessRW, Size, 4'b0100, SelRegions[9]);
   adrdec #(P.PA_BITS) sdcdec(PhysicalAddress, P.SDC_BASE[P.PA_BITS-1:0], P.SDC_RANGE[P.PA_BITS-1:0], P.SDC_SUPPORTED, AccessRW, Size, SUPPORTED_SIZE & 4'b1100, SelRegions[10]); 
   adrdec #(P.PA_BITS) spidec(PhysicalAddress, P.SPI_BASE[P.PA_BITS-1:0], P.SPI_RANGE[P.PA_BITS-1:0], P.SPI_SUPPORTED, AccessRW, Size, 4'b0100, SelRegions[11]);
-  adrdec #(P.PA_BITS) progbufdec(PhysicalAddress, P.PROGBUF_BASE[P.PA_BITS-1:0], P.PROGBUF_RANGE[P.PA_BITS-1:0], P.DEBUG_SUPPORTED, AccessRX, Size, SUPPORTED_SIZE, SelRegions[12]);
+  adrdec #(P.PA_BITS) progbufdec(PhysicalAddress, P.PROGBUF_BASE[P.PA_BITS-1:0], P.PROGBUF_RANGE[P.PA_BITS-1:0], P.DEBUG_SUPPORTED, AccessRX, Size, SUPPORTED_SIZE, SelRegions[14]);
 
   assign SelRegions[0] = ~|(SelRegions[11:1]); // none of the regions are selected
 endmodule

@@ -28,7 +28,7 @@
 
 module progbuf import cvw::*;  #(parameter cvw_t P) (
     input  logic        clk, reset,
-    input  logic [3:0]  Addr,
+    input  logic [5:0]  Addr,
     output logic [31:0] ProgBufInstrF,
 
     input  logic [3:0]  ScanAddr,
@@ -44,6 +44,7 @@ module progbuf import cvw::*;  #(parameter cvw_t P) (
   logic EnPrevClk;
   logic WriteProgBuf;
   logic [32:0] WriteData;
+  logic [31:0] ReadRaw;
   logic [ADDR_WIDTH-1:0] AddrM;
 
   flopr #(1) Scanenhist (.clk, .reset, .d(Scan), .q(EnPrevClk));
@@ -55,15 +56,17 @@ module progbuf import cvw::*;  #(parameter cvw_t P) (
     flopenr #(1) Scanreg (.clk, .reset, .en(Scan), .d(WriteData[i+1]), .q(WriteData[i]));
   end
 
-  assign AddrM = WriteProgBuf ? ScanAddr[ADDR_WIDTH-1:0] : Addr[ADDR_WIDTH-1:0];
+  assign AddrM = WriteProgBuf ? ScanAddr[ADDR_WIDTH-1:0] : Addr[ADDR_WIDTH-1+2:2];
 
   always_ff @(posedge clk) begin
     if (WriteProgBuf)
       RAM[AddrM] <= WriteData;
     if (reset)
-      ProgBufInstrF <= 0;
+      ReadRaw <= 0;
     else
-      ProgBufInstrF <= RAM[AddrM];
+      ReadRaw <= RAM[AddrM];
   end
+
+  assign ProgBufInstrF = Addr[1] ? {16'b0,ReadRaw[31:16]}: ReadRaw; // 
 
 endmodule

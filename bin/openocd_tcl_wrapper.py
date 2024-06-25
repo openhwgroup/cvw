@@ -115,10 +115,14 @@ class OpenOCD:
         self.write_dmi("0x10", "0x10000001")  # ack HaveReset
 
     def write_progbuf(self, data):
-        #TODO query progbuf size and error is len(data) is greater
+        #TODO query progbuf size and error if len(data) is greater
         baseaddr = 0x20
         for idx, instr in enumerate(data):
+            z = hex(baseaddr+idx) #debug
             self.write_dmi(hex(baseaddr+idx), instr)
+
+    def exec_progbuf(self):
+        self.write_dmi("0x17", hex(0x1 << 18))
 
     def set_haltonreset(self):
         self.write_dmi("0x10", "0x9")

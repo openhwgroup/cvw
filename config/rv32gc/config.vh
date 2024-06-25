@@ -186,6 +186,9 @@ localparam logic [63:0] SDC_RANGE        = 64'h0000007F;
 localparam logic SPI_SUPPORTED = 1;
 localparam logic [63:0] SPI_BASE         = 64'h10040000;
 localparam logic [63:0] SPI_RANGE        = 64'h00000FFF;
+// Debug program buffer support is enabled with DEBUG_SUPPORTED
+localparam logic [63:0] PROGBUF_BASE     = 64'h00002000;
+localparam logic [63:0] PROGBUF_RANGE    = 64'h0000000F;
 
 // Bus Interface width
 localparam AHBW = (XLEN);

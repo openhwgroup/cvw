@@ -86,7 +86,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
     end
   end
 
-  flopenr #(4) DCSRreg (clk, reset, WriteDCSRM, {CSRWriteValM[`EBREAKM], CSRWriteValM[`STEP]}, {ebreakM, Step});
+  flopenr #(2) DCSRreg (clk, reset, WriteDCSRM, {CSRWriteValM[`EBREAKM], CSRWriteValM[`STEP]}, {ebreakM, Step});
 
   assign DCSR = {DebugVer, 10'b0, ebreakVS, ebreakVU, ebreakM, 1'b0, ebreakS, ebreakU, StepIE,
                       StopCount, StopTime, Cause, V, MPrvEn, NMIP, Step, Prv};

@@ -77,15 +77,15 @@ module dm import cvw::*; #(parameter cvw_t P) (
   localparam PROGBUF_SIZE = (P.PROGBUF_RANGE+1)/4;
 
   // DMI Signals
-  logic                   ReqReady;
-  logic                   ReqValid;
-  logic [`ADDR_WIDTH-1:0] ReqAddress;
-  logic [31:0]            ReqData;
-  logic [1:0]             ReqOP;
-  logic                   RspReady;
-  logic                   RspValid;
-  logic [31:0]            RspData;
-  logic [1:0]             RspOP;
+  logic                       ReqReady;
+  logic                       ReqValid;
+  logic [`DMI_ADDR_WIDTH-1:0] ReqAddress;
+  logic [31:0]                ReqData;
+  logic [1:0]                 ReqOP;
+  logic                       RspReady;
+  logic                       RspValid;
+  logic [31:0]                RspData;
+  logic [1:0]                 RspOP;
 
   // JTAG ID for Wally:  
   // Version [31:28] = 0x1 : 0001
@@ -94,7 +94,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   // [0] = 1
   localparam JTAG_DEVICE_ID = 32'h1002AC05; 
 
-  dtm #(`ADDR_WIDTH, JTAG_DEVICE_ID) dtm (.clk, .rst, .tck, .tdi, .tms, .tdo,
+  dtm #(`DMI_ADDR_WIDTH, JTAG_DEVICE_ID) dtm (.clk, .rst, .tck, .tdi, .tms, .tdo,
     .ReqReady, .ReqValid, .ReqAddress, .ReqData, .ReqOP, .RspReady,
     .RspValid, .RspData, .RspOP);
 
@@ -344,17 +344,17 @@ module dm import cvw::*; #(parameter cvw_t P) (
           else begin
             case (ReqData[`CMDTYPE])
               `ACCESS_REGISTER : begin
-                if (ReqData[`AARSIZE] > $clog2(P.LLEN/8))
-                  CmdErr <= `CMDERR_BUS;  // if AARSIZE (encoded) is greater than P.LLEN, set CmdErr, do nothing
+                if (~ReqData[`TRANSFER])
+                  State <= ReqData[`POSTEXEC] ? EXEC_PROGBUF : ACK;  // If not transfer, exec progbuf or do nothing
+                else if (ReqData[`AARSIZE] > $clog2(P.LLEN/8))
+                  CmdErr <= `CMDERR_BUS;                             // If AARSIZE (encoded) is greater than P.LLEN, set CmdErr, do nothing
                 else if (InvalidRegNo)
-                  CmdErr <= `CMDERR_EXCEPTION;  // If InvalidRegNo, set CmdErr, do nothing
+                  CmdErr <= `CMDERR_EXCEPTION;                       // If InvalidRegNo, set CmdErr, do nothing
                 else if (ReqData[`AARWRITE] & RegReadOnly)
-                  CmdErr <= `CMDERR_NOT_SUPPORTED;  // If writing to a read only register, set CmdErr, do nothing
+                  CmdErr <= `CMDERR_NOT_SUPPORTED;                   // If writing to a read only register, set CmdErr, do nothing
                 else begin
-                  if (ReqData[`TRANSFER]) begin
-                    AcWrite <= ReqData[`AARWRITE];
-                    NewAcState <= ~ReqData[`AARWRITE] ? AC_CAPTURE : AC_SCAN;
-                  end
+                  AcWrite <= ReqData[`AARWRITE];
+                  NewAcState <= ~ReqData[`AARWRITE] ? AC_CAPTURE : AC_SCAN;
                   State <= ReqData[`POSTEXEC] ? EXEC_PROGBUF : ACK;
                 end
               end

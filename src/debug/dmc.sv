@@ -29,7 +29,6 @@
 
 
 // TODO:
-// Figure out what is causing resumes from stalls to error out
 // Calculate correct cycle timing for step
 // Test progbuf
 

@@ -46,7 +46,7 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
 
   logic                        PMAAccessFault;
   logic                        AccessRW, AccessRWXC, AccessRX;
-  logic [12:0]                 SelRegions;
+  logic [14:0]                 SelRegions;
   logic                        AtomicAllowed;
   logic                        CacheableRegion, IdempotentRegion;
 
@@ -73,7 +73,7 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
   assign SelTIM = SelRegions[1] | SelRegions[2]; // exclusion-tag: unused-tim
 
   // Debug program buffer
-  assign SelProgBuf = SelRegions[12];
+  assign SelProgBuf = SelRegions[14];
 
   // Detect access faults
   assign PMAAccessFault          = SelRegions[0] & AccessRWXC | AtomicAccessM & ~AtomicAllowed;  

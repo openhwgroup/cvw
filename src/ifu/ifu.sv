@@ -126,7 +126,8 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
 
   logic [31:0]                 IROMInstrF;                               // Instruction from the IROM
   logic [31:0]                 ICacheInstrF;                             // Instruction from the I$
-  logic [31:0]                 InstrRawF;                                // Instruction from the IROM, I$, or bus
+  logic [31:0]                 InstrRawFMain;                            // Instruction from the IROM, I$, or bus  TODO: pick a better name for this signal
+  logic [31:0]                 InstrRawF;                                // Instruction from ProgBuf pr InstrRawFMain (IROM, I$, bus)
   logic [31:0]                 ProgBufInstrF;                            // Instruction from the ProgBuf
   logic                        CompressedF, CompressedE;                 // The fetched instruction is compressed
   logic [31:0]                 PostSpillInstrRawF;                       // Fetch instruction after merge two halves of spill
@@ -280,7 +281,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
             .BusStall, .BusCommitted(BusCommittedF));
 
       mux3 #(32) UnCachedDataMux(.d0(ICacheInstrF), .d1(ShiftUncachedInstr), .d2(IROMInstrF),
-                                 .s({SelIROM, ~CacheableF}), .y(InstrRawF[31:0]));
+                                 .s({SelIROM, ~CacheableF}), .y(InstrRawFMain[31:0]));
     end else begin : passthrough
       assign IFUHADDR = PCPF;
       logic [1:0] BusRW;
@@ -293,8 +294,8 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
         .Stall(GatedStallD), .BusStall, .BusCommitted(BusCommittedF), .FetchBuffer(FetchBuffer));
 
       assign CacheCommittedF = '0;
-      if(P.IROM_SUPPORTED) mux2 #(32) UnCachedDataMux2(ShiftUncachedInstr, IROMInstrF, SelIROM, InstrRawF);
-      else assign InstrRawF = ShiftUncachedInstr;
+      if(P.IROM_SUPPORTED) mux2 #(32) UnCachedDataMux2(ShiftUncachedInstr, IROMInstrF, SelIROM, InstrRawFMain);
+      else assign InstrRawFMain = ShiftUncachedInstr;
       assign IFUHBURST = 3'b0;
       assign {ICacheMiss, ICacheAccess, ICacheStallF} = '0;
     end
@@ -308,21 +309,23 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     assign {IFUHADDR, IFUHWRITE, IFUHSIZE, IFUHBURST, IFUHTRANS, 
             BusStall, CacheCommittedF, BusCommittedF, FetchBuffer} = '0;   
     assign {ICacheStallF, ICacheMiss, ICacheAccess} = '0;
-    assign InstrRawF = IROMInstrF;
+    assign InstrRawFMain = IROMInstrF;
   end
-  
+
+  // Mux between InstrRawFMain and Progbuf
+  if (P.DEBUG_SUPPORTED) begin
+    progbuf #(P) progbuf(.clk, .reset, .Addr(PCF[5:0]), .ProgBufInstrF, .ScanAddr(ProgBufAddr), .Scan(ProgBuffScanEn), .ScanIn(ProgBufScanIn));
+    assign InstrRawF = SelProgBuf ? ProgBufInstrF : InstrRawFMain;
+  end else begin
+    assign InstrRawF = InstrRawFMain;
+  end
+
   assign IFUCacheBusStallF = ICacheStallF | BusStall;
   assign IFUStallF = IFUCacheBusStallF | SelSpillNextF;
   assign GatedStallD = StallD & ~SelSpillNextF;
-  
-  if (P.DEBUG_SUPPORTED) begin
-    logic [31:0] PostSpillInstrRawFM;
-    progbuf #(P) progbuf(.clk, .reset, .Addr(PCNextF[3:0]), .ProgBufInstrF, .ScanAddr(ProgBufAddr), .Scan(ProgBuffScanEn), .ScanIn(ProgBufScanIn));
-    assign PostSpillInstrRawFM = SelProgBuf ? ProgBufInstrF : PostSpillInstrRawF;
-    flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawFM, nop, InstrRawD);
-  end else begin
-    flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawF, nop, InstrRawD);
-  end
+
+  flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawF, nop, InstrRawD);
+
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // PCNextF logic

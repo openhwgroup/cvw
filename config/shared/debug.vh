@@ -23,48 +23,48 @@
 `define OP_FAILED  2'b10
 `define OP_BUSY    2'b11
 
-// Debug Bus Address Width
-`define ADDR_WIDTH 7
+// DMI register Address Width
+`define DMI_ADDR_WIDTH 7
 
 // Debug Module Debug Bus Register Addresses
 // DM Internal registers
-`define DATA0        `ADDR_WIDTH'h04
-`define DATA1        `ADDR_WIDTH'h05
-`define DATA2        `ADDR_WIDTH'h06
-`define DATA3        `ADDR_WIDTH'h07
-`define DATA4        `ADDR_WIDTH'h08
-`define DATA5        `ADDR_WIDTH'h09
-`define DATA6        `ADDR_WIDTH'h0A
-`define DATA7        `ADDR_WIDTH'h0B
-`define DATA8        `ADDR_WIDTH'h0C
-`define DATA9        `ADDR_WIDTH'h0D
-`define DATA10       `ADDR_WIDTH'h0E
-`define DATA11       `ADDR_WIDTH'h0F
-`define DMCONTROL    `ADDR_WIDTH'h10
-`define DMSTATUS     `ADDR_WIDTH'h11
-`define HARTINFO     `ADDR_WIDTH'h12
-`define ABSTRACTCS   `ADDR_WIDTH'h16
-`define COMMAND      `ADDR_WIDTH'h17
-`define ABSTRACTAUTO `ADDR_WIDTH'h18
-`define NEXTDM       `ADDR_WIDTH'h1d
-`define PROGBUF0     `ADDR_WIDTH'h20
-`define PROGBUF1     `ADDR_WIDTH'h21
-`define PROGBUF2     `ADDR_WIDTH'h22
-`define PROGBUF3     `ADDR_WIDTH'h23
-`define PROGBUF4     `ADDR_WIDTH'h24
-`define PROGBUF5     `ADDR_WIDTH'h25
-`define PROGBUF6     `ADDR_WIDTH'h26
-`define PROGBUF7     `ADDR_WIDTH'h27
-`define PROGBUF8     `ADDR_WIDTH'h28
-`define PROGBUF9     `ADDR_WIDTH'h29
-`define PROGBUFA     `ADDR_WIDTH'h2A
-`define PROGBUFB     `ADDR_WIDTH'h2B
-`define PROGBUFC     `ADDR_WIDTH'h2C
-`define PROGBUFD     `ADDR_WIDTH'h2D
-`define PROGBUFE     `ADDR_WIDTH'h2E
-`define PROGBUFF     `ADDR_WIDTH'h2F
-//`define dmcs2        `ADDR_WIDTH'h32
-`define SBCS         `ADDR_WIDTH'h38
+`define DATA0        `DMI_ADDR_WIDTH'h04
+`define DATA1        `DMI_ADDR_WIDTH'h05
+`define DATA2        `DMI_ADDR_WIDTH'h06
+`define DATA3        `DMI_ADDR_WIDTH'h07
+`define DATA4        `DMI_ADDR_WIDTH'h08
+`define DATA5        `DMI_ADDR_WIDTH'h09
+`define DATA6        `DMI_ADDR_WIDTH'h0A
+`define DATA7        `DMI_ADDR_WIDTH'h0B
+`define DATA8        `DMI_ADDR_WIDTH'h0C
+`define DATA9        `DMI_ADDR_WIDTH'h0D
+`define DATA10       `DMI_ADDR_WIDTH'h0E
+`define DATA11       `DMI_ADDR_WIDTH'h0F
+`define DMCONTROL    `DMI_ADDR_WIDTH'h10
+`define DMSTATUS     `DMI_ADDR_WIDTH'h11
+`define HARTINFO     `DMI_ADDR_WIDTH'h12
+`define ABSTRACTCS   `DMI_ADDR_WIDTH'h16
+`define COMMAND      `DMI_ADDR_WIDTH'h17
+`define ABSTRACTAUTO `DMI_ADDR_WIDTH'h18
+`define NEXTDM       `DMI_ADDR_WIDTH'h1d
+`define PROGBUF0     `DMI_ADDR_WIDTH'h20
+`define PROGBUF1     `DMI_ADDR_WIDTH'h21
+`define PROGBUF2     `DMI_ADDR_WIDTH'h22
+`define PROGBUF3     `DMI_ADDR_WIDTH'h23
+`define PROGBUF4     `DMI_ADDR_WIDTH'h24
+`define PROGBUF5     `DMI_ADDR_WIDTH'h25
+`define PROGBUF6     `DMI_ADDR_WIDTH'h26
+`define PROGBUF7     `DMI_ADDR_WIDTH'h27
+`define PROGBUF8     `DMI_ADDR_WIDTH'h28
+`define PROGBUF9     `DMI_ADDR_WIDTH'h29
+`define PROGBUFA     `DMI_ADDR_WIDTH'h2A
+`define PROGBUFB     `DMI_ADDR_WIDTH'h2B
+`define PROGBUFC     `DMI_ADDR_WIDTH'h2C
+`define PROGBUFD     `DMI_ADDR_WIDTH'h2D
+`define PROGBUFE     `DMI_ADDR_WIDTH'h2E
+`define PROGBUFF     `DMI_ADDR_WIDTH'h2F
+//`define dmcs2        `DMI_ADDR_WIDTH'h32
+`define SBCS         `DMI_ADDR_WIDTH'h38
 
 
 //// Register field ranges
