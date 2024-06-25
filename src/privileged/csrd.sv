@@ -66,7 +66,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   logic [2:0]       Cause;
   const logic       V = 0;
   const logic       MPrvEn = 0;
-  logic             NMIP;      // pending non-maskable interrupt
+  const logic       NMIP = 0;      // pending non-maskable interrupt TODO: update
   logic [1:0]       Prv;
 
   
@@ -102,7 +102,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
       IllegalCSRDAccessM = 1'b1;
     else
       case (CSRAdrM)
-        DCSR_ADDR : CSRDReadValM = DCSR;
+        DCSR_ADDR : CSRDReadValM = {{(P.XLEN-32){1'b0}},DCSR};
         DPC_ADDR  : CSRDReadValM = DPC;
         default: IllegalCSRDAccessM = 1'b1;
       endcase

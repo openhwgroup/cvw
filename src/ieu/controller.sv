@@ -454,6 +454,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     flopenrc #(25) controlregM(clk, reset, FlushM, ~StallM,
                           {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE, IntDivE, CMOpE, LSUPrefetchE},
                           {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, InstrValidM, IntDivM, CMOpM, LSUPrefetchM});
+    assign DebugScanOut = DebugScanIn;
   end
   flopenrc #(5)  RdMReg(clk, reset, FlushM, ~StallM, RdE, RdM);  
 

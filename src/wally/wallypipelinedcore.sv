@@ -68,9 +68,11 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    input  logic [11:0]           DebugRegAddr,   // address for scanable regfiles (GPR, FPR, CSR)
    input  logic                  DebugCapture,   // latches values into scan register before scanning out
    input  logic                  DebugRegUpdate,  // writes values from scan register after scanning in	
-   input  logic [3:0]            ProgBufAddr,
+   input  logic [$clog2(PROGBUF_SIZE)-1:0] ProgBufAddr,
    input  logic                  ProgBuffScanEn
 );
+
+  localparam PROGBUF_SIZE = (P.PROGBUF_RANGE+1)/4;
 
   logic                          StallF, StallD, StallE, StallM, StallW;
   logic                          FlushD, FlushE, FlushM, FlushW;
@@ -329,7 +331,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .ResumeAck, .HaveReset, .DebugMode, .DebugCause, .DebugStall, .ExecProgBuf,
       .DCall, .DRet, .ForceBreakPoint);
   end else begin
-    assign DebugStall = 1'b0;
+    assign {DebugMode, DebugCause, ResumeAck, HaveReset, DebugStall, DCall, DRet, ForceBreakPoint} = '0;
   end
 
   // privileged unit
@@ -355,10 +357,14 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS, 
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
       .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM, .ebreakM,
-      .ebreakEn, .ForceBreakPoint, .DebugMode, .DebugCause, .Step, .DPC, .DCall, .DRet, .ExecProgBuf,
-      .DebugSel(CSRSel), .DebugRegAddr, .DebugCapture, .DebugRegUpdate, .DebugScanEn(DebugScanEn & CSRSel), .DebugScanIn, .DebugScanOut(CSRScanOut));
+      .ebreakEn, .ForceBreakPoint, .DebugMode, .DebugCause, .Step, .DPC, .DCall,
+      .DRet, .ExecProgBuf, .DebugSel(CSRSel), .DebugRegAddr, .DebugCapture,
+      .DebugRegUpdate, .DebugScanEn(DebugScanEn & CSRSel), .DebugScanIn, .DebugScanOut(CSRScanOut));
     if (P.DEBUG_SUPPORTED) begin
-      flopenrs #(1) scantrapm (.clk, .reset, .en(DebugCapture), .d(TrapM), .q(), .scan(DebugScanEn), .scanin(DebugScanIn), .scanout(DebugScanReg[0]));
+      flopenrs #(1) scantrapm (.clk, .reset, .en(DebugCapture), .d(TrapM), .q(),
+        .scan(DebugScanEn), .scanin(DebugScanIn), .scanout(DebugScanReg[0]));
+    end else begin
+      assign DebugScanReg[0] = DebugScanIn;
     end
   end else begin
     assign {CSRReadValW, PrivilegeModeW,
@@ -366,7 +372,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
             // PMPCFG_ARRAY_REGW, PMPADDR_ARRAY_REGW,
             ENVCFG_CBE, ENVCFG_PBMTE, ENVCFG_ADUE,
             EPCM, TrapVectorM, RetM, TrapM,
-            sfencevmaM, BigEndianM, wfiM, IntPendingM} = '0;
+            sfencevmaM, BigEndianM, wfiM, IntPendingM, CSRScanOut} = '0;
     assign DebugScanReg[0] = DebugScanIn;
   end
 
@@ -417,7 +423,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   end else begin                           // no F_SUPPORTED or D_SUPPORTED; tie outputs low
     assign {FPUStallD, FWriteIntE, FCvtIntE, FIntResM, FCvtIntW, FRegWriteM,
             IllegalFPUInstrD, SetFflagsM, FpLoadStoreM,
-            FWriteDataM, FCvtIntResW, FIntDivResultW, FDivBusyE} = '0;
+            FWriteDataM, FCvtIntResW, FIntDivResultW, FDivBusyE, FPRScanOut} = '0;
   end
   
 endmodule

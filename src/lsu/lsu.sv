@@ -165,10 +165,14 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   // Zero-extend address to 34 bits for XLEN=32
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  if (P.DEBUG_SUPPORTED)
-    flopenrcs #(P.XLEN) AddressMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d(IEUAdrE), .q(IEUAdrM), .scan(DebugScanEn), .scanin(DebugScanIn), .scanout(DSCR));
-  else
+  if (P.DEBUG_SUPPORTED) begin
+    flopenrcs #(P.XLEN) AddressMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d(IEUAdrE), .q(IEUAdrM),
+      .scan(DebugScanEn), .scanin(DebugScanIn), .scanout(DSCR));
+  end else begin
     flopenrc #(P.XLEN) AddressMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d(IEUAdrE), .q(IEUAdrM));
+    assign DSCR = DebugScanIn;
+  end
+
   if(MISALIGN_SUPPORT) begin : ziccslm_align
     logic [P.XLEN-1:0] IEUAdrSpillE, IEUAdrSpillM;
     align #(P) align(.clk, .reset, .StallM, .FlushM, .IEUAdrE, .IEUAdrM, .Funct3M, .FpLoadStoreM, 
@@ -429,7 +433,10 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
 
   // Capture ReadDataM
   if (P.DEBUG_SUPPORTED) begin
-    flopenrs #(P.LLEN) ReadDataMScan (.clk, .reset, .en(DebugCapture), .d(ReadDataM), .q(), .scan(DebugScanEn), .scanin(DSCR), .scanout(DebugScanOut));
+    flopenrs #(P.LLEN) ReadDataMScan (.clk, .reset, .en(DebugCapture), .d(ReadDataM), .q(),
+      .scan(DebugScanEn), .scanin(DSCR), .scanout(DebugScanOut));
+  end else begin
+    assign DebugScanOut = DSCR;
   end
 
   // Compute byte masks

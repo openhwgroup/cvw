@@ -63,7 +63,7 @@ module rad import cvw::*; #(parameter cvw_t P) (
   localparam IEUADRM_IDX = WRITEDATAM_IDX + IEUADRMLEN;
   localparam READDATAM_IDX = IEUADRM_IDX + READDATAMLEN;
 
-  logic [P.LLEN:0] Mask;
+  logic [P.LLEN-1:0] Mask;
 
   assign RegAddr = Regno[11:0];
   assign ScanChainLen = (CSRegNo | GPRegNo) ? P.XLEN : FPRegNo ? P.FLEN : SCANCHAINLEN;
@@ -168,15 +168,14 @@ module rad import cvw::*; #(parameter cvw_t P) (
 
   // Mask calculator
   always_comb begin
-    Mask = 0;
     case (Regno) inside
-      `TRAPM_REGNO             : Mask = {1{1'b1}};
-      `INSTRM_REGNO            : Mask = {32{1'b1}};
-      `MEMRWM_REGNO            : Mask = {2{1'b1}};
-      `INSTRVALIDM_REGNO       : Mask = {1{1'b1}};
+      `TRAPM_REGNO             : Mask = {{P.LLEN-1{1'b0}}, 1'b1};
+      `INSTRM_REGNO            : Mask = {{P.LLEN-32{1'b0}}, {32{1'b1}}};
+      `MEMRWM_REGNO            : Mask = {{P.LLEN-2{1'b0}}, 2'b11};
+      `INSTRVALIDM_REGNO       : Mask = {{P.LLEN-1{1'b0}}, 1'b1};
       `READDATAM_REGNO         : Mask = {P.LLEN{1'b1}};
-      [`FP0_REGNO:`FP31_REGNO] : Mask = {P.FLEN{1'b1}};
-      default                  : Mask = {P.XLEN{1'b1}};
+      [`FP0_REGNO:`FP31_REGNO] : Mask = {{P.LLEN-P.FLEN{1'b0}}, {P.FLEN{1'b1}}};
+      default                  : Mask = {{P.LLEN-P.XLEN{1'b0}}, {P.XLEN{1'b1}}};
     endcase
   end
 

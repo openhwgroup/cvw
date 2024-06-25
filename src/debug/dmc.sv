@@ -114,7 +114,6 @@ module dmc (
           end
         end
 
-
         STEP : begin
           if (~|Counter) begin
             DebugCause <= `CAUSE_STEP;
@@ -122,6 +121,7 @@ module dmc (
           end else
             Counter <= Counter - 1;
         end
+        default: ; // empty defualt case to make the linter happy
       endcase
     end
   end

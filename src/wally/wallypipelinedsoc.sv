@@ -83,6 +83,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                        HaveReset;
   logic                        DebugStall;
   logic                        ExecProgBuf;
+
   // Debug Module signals
   logic                        DebugScanEn;
   logic                        DebugScanIn;
@@ -97,29 +98,33 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic [11:0]                 DebugRegAddr;
   logic                        DebugCapture;
   logic                        DebugRegUpdate;
-  logic [3:0]                  ProgBufAddr;
+  logic [$clog2(PROGBUF_SIZE)-1:0] ProgBufAddr;
   logic                        ProgBuffScanEn;
+
+  localparam PROGBUF_SIZE = (P.PROGBUF_RANGE+1)/4;
 
   // synchronize reset to SOC clock domain
   synchronizer resetsync(.clk, .d(reset_ext), .q(reset));
    
   // instantiate processor and internal memories
-  wallypipelinedcore #(P) core(.clk, .reset(reset || NdmReset),
-    .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
-    .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
-    .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
-    .HaltReq, .ResumeReq, .HaltOnReset, .AckHaveReset, .ResumeAck, .HaveReset, .DebugStall, .ExecProgBuf,
-    .DebugScanEn, .DebugScanOut(DebugScanIn), .GPRScanOut(GPRScanIn), .FPRScanOut(FPRScanIn), .CSRScanOut(CSRScanIn), 
-    .DebugScanIn(DebugScanOut), .MiscSel, .GPRSel, .FPRSel, .CSRSel, .DebugRegAddr, .DebugCapture, .DebugRegUpdate,
-    .ProgBufAddr, .ProgBuffScanEn);
+  wallypipelinedcore #(P) core (
+    .clk, .reset(reset || NdmReset), .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
+    .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST,
+    .HPROT, .HTRANS, .HMASTLOCK, .HaltReq, .ResumeReq, .HaltOnReset, .AckHaveReset, .ResumeAck,
+    .HaveReset, .DebugStall, .ExecProgBuf, .DebugScanEn, .DebugScanOut(DebugScanIn),
+    .GPRScanOut(GPRScanIn), .FPRScanOut(FPRScanIn), .CSRScanOut(CSRScanIn),
+    .DebugScanIn(DebugScanOut), .MiscSel, .GPRSel, .FPRSel, .CSRSel, .DebugRegAddr, .DebugCapture,
+    .DebugRegUpdate, .ProgBufAddr, .ProgBuffScanEn
+  );
 
   // instantiate uncore if a bus interface exists
   if (P.BUS_SUPPORTED) begin : uncoregen // Hack to work around Verilator bug https://github.com/verilator/verilator/issues/4769
-    uncore #(P) uncore(.HCLK, .HRESETn, .TIMECLK,
-      .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
-      .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT, .HSELEXTSDC,
-      .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOIN, .GPIOOUT, .GPIOEN, .UARTSin, 
-      .UARTSout, .MTIME_CLINT, .SDCIntr, .SPIIn, .SPIOut, .SPICS);
+    uncore #(P) uncore (
+      .HCLK, .HRESETn, .TIMECLK, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
+      .HTRANS, .HMASTLOCK, .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT,
+      .HSELEXTSDC, .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOIN, .GPIOOUT, .GPIOEN, .UARTSin,
+      .UARTSout, .MTIME_CLINT, .SDCIntr, .SPIIn, .SPIOut, .SPICS
+    );
   end else begin
     assign {HRDATA, HREADY, HRESP, HSELEXT, HSELEXTSDC, MTimerInt, MSwInt, MExtInt, SExtInt,
             MTIME_CLINT, GPIOOUT, GPIOEN, UARTSout, SPIOut, SPICS} = '0; 
@@ -127,11 +132,17 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
 
   // instantiate debug module
   if (P.DEBUG_SUPPORTED) begin : dm
-    dm #(P) dm (.clk, .rst(reset), .tck, .tdi, .tms, .tdo, .NdmReset,
-      .HaltReq, .ResumeReq, .HaltOnReset, .AckHaveReset, .ResumeAck, .HaveReset, .DebugStall,
-      .DebugScanEn, .DebugScanIn, .GPRScanIn, .FPRScanIn, .CSRScanIn, .DebugScanOut,
-      .MiscSel, .GPRSel, .FPRSel, .CSRSel, .RegAddr(DebugRegAddr), .DebugCapture, .DebugRegUpdate,
-      .ProgBufAddr, .ProgBuffScanEn, .ExecProgBuf);
+    dm #(P) dm (
+      .clk, .rst(reset), .tck, .tdi, .tms, .tdo, .NdmReset, .HaltReq, .ResumeReq, .HaltOnReset,
+      .AckHaveReset, .ResumeAck, .HaveReset, .DebugStall, .DebugScanEn, .DebugScanIn, .GPRScanIn,
+      .FPRScanIn, .CSRScanIn, .DebugScanOut, .MiscSel, .GPRSel, .FPRSel, .CSRSel,
+      .RegAddr(DebugRegAddr), .DebugCapture, .DebugRegUpdate, .ProgBufAddr, .ProgBuffScanEn,
+      .ExecProgBuf
+    );
+  end else begin
+    assign {tdo, HaltReq, ResumeReq, HaltOnReset, AckHaveReset, DebugScanEn, DebugScanOut, MiscSel,
+            NdmReset, GPRSel, FPRSel, CSRSel, DebugRegAddr, DebugCapture, DebugRegUpdate,
+            ProgBufAddr, ProgBuffScanEn, ExecProgBuf} = '0;
   end
 
 endmodule

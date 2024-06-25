@@ -58,17 +58,17 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   input  logic                 SDCIntr,
   input  logic                 SPIIn,
   output logic                 SPIOut,
-  output logic [3:0]           SPICS                  
+  output logic [3:0]           SPICS
 );
   
   logic [P.XLEN-1:0]           HREADRam, HREADSDC;
 
-  logic [11:0]                 HSELRegions;
+  logic [14:0]                 HSELRegions;
   logic                        HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSPI;
   logic                        HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD, HSELSPID;
   logic                        HRESPRam,  HRESPSDC;
   logic                        HREADYRam, HRESPSDCD;
-  logic [P.XLEN-1:0]           HREADBootRom; 
+  logic [P.XLEN-1:0]           HREADBootRom;
   logic                        HSELBootRom, HSELBootRomD, HRESPBootRom, HREADYBootRom, HREADYSDC;
   logic                        HSELNoneD;
   logic                        UARTIntr,GPIOIntr, SPIIntr;
@@ -183,7 +183,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   // takes more than 1 cycle to repsond it needs to hold on to the old select until the
   // device is ready.  Hense this register must be selectively enabled by HREADY.
   // However on reset None must be seleted.
-  flopenl #(12) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions, 12'b1, 
+  flopenl #(12) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions[11:0], 12'b1,
     {HSELSPID, HSELEXTSDCD, HSELPLICD, HSELUARTD, HSELGPIOD, HSELCLINTD,
       HSELRamD, HSELBootRomD, HSELEXTD, HSELIROMD, HSELDTIMD, HSELNoneD});
   flopenr #(1) hselbridgedelayreg(HCLK, ~HRESETn, HREADY, HSELBRIDGE, HSELBRIDGED);

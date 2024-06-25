@@ -83,13 +83,13 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
   // Synchronize the edges of tck to the system clock
   synchronizer clksync (.clk(clk), .d(tck), .q(tcks));
 
-  jtag #(.ADDR_WIDTH(ADDR_WIDTH), .DEVICE_ID(JTAG_DEVICE_ID)) jtag (.rst, .tck(tcks), .tdi, .tms, .tdo,
+  jtag #(.ADDR_WIDTH(ADDR_WIDTH), .DEVICE_ID(JTAG_DEVICE_ID)) jtag (.tck(tcks), .tdi, .tms, .tdo,
     .resetn, .UpdateDtmcs, .DtmcsIn, .DtmcsOut, .CaptureDmi, .UpdateDmi, .DmiIn, .DmiOut);
 
 
   // DTMCS
   assign DtmcsOut = {11'b0, ErrInfo, 3'b0, Idle, DmiStat, ABits, Version};
-  always_ff @(posedge clk) begin
+  always @(posedge clk) begin
     if (rst | ~resetn | DtmHardReset) begin
       DtmHardReset <= 0;
       DmiReset <= 0;

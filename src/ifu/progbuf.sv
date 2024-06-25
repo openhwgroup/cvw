@@ -60,7 +60,7 @@ module progbuf import cvw::*;  #(parameter cvw_t P) (
 
   always_ff @(posedge clk) begin
     if (WriteProgBuf)
-      RAM[AddrM] <= WriteData;
+      RAM[AddrM] <= WriteData[31:0];
     if (reset)
       ReadRaw <= 0;
     else

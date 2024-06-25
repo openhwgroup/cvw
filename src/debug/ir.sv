@@ -57,20 +57,22 @@ module ir (
   // 6.1.2
   always_comb begin
     unique case (shift_reg[INST_REG_WIDTH-1:0])
-      5'h00   : decoded <= 4'b1000; // bypass
-      5'h01   : decoded <= 4'b0100; // idcode
-      5'h10   : decoded <= 4'b0010; // dtmcs
-      5'h11   : decoded <= 4'b0001; // dmi
-      5'h1F   : decoded <= 4'b1000; // bypass
-      default : decoded <= 4'b1000; // bypass
+      5'h00   : decoded = 4'b1000; // bypass
+      5'h01   : decoded = 4'b0100; // idcode
+      5'h10   : decoded = 4'b0010; // dtmcs
+      5'h11   : decoded = 4'b0001; // dmi
+      5'h1F   : decoded = 4'b1000; // bypass
+      default : decoded = 4'b1000; // bypass
     endcase
   end
 
   // Flop decoded instruction to minimizes switching during shiftIR
+  /* verilator lint_off SYNCASYNCNET */
   always @(posedge updateIR or negedge resetn) begin
     if (~resetn)
       {BypassInstr, IDCodeInstr, DtmcsIntrs, DmiInstr} <= 4'b0100;
     else if (updateIR)
       {BypassInstr, IDCodeInstr, DtmcsIntrs, DmiInstr} <= decoded;
   end
+  /* verilator lint_on SYNCASYNCNET */
 endmodule

@@ -124,6 +124,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
     flopenrs #(P.XLEN) GPScanReg(.clk, .reset, .en(DebugCapture), .d(R1D), .q(DebugGPRWriteD), .scan(DebugScanEn & GPRSel), .scanin(GPRScanIn), .scanout(GPRScanOut));
   end else begin
     regfile #(P.XLEN, P.E_SUPPORTED) regf(clk, reset, RegWriteW, Rs1D, Rs2D, RdW, ResultW, R1D, R2D);
+    assign GPRScanOut = GPRScanIn;
   end
  
   // Execute stage pipeline register and logic
@@ -145,8 +146,10 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(P.XLEN) IEUResultMReg(clk, reset, FlushM, ~StallM, IEUResultE, IEUResultM);
   if (P.DEBUG_SUPPORTED)
     flopenrcs #(P.XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, ForwardedSrcBE, WriteDataM, (DebugScanEn & MiscSel), DebugScanIn, DebugScanOut);
-  else
+  else begin
     flopenrc #(P.XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, ForwardedSrcBE, WriteDataM);
+    assign DebugScanOut = DebugScanIn;
+  end
   
   // Writeback stage pipeline register and logic
   flopenrc #(P.XLEN) IFResultWReg(clk, reset, FlushW, ~StallW, IFResultM, IFResultW);

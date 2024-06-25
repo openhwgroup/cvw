@@ -68,13 +68,14 @@ module dm import cvw::*; #(parameter cvw_t P) (
   output logic            DebugRegUpdate, // writes values from scan register after scanning in			
   
   // Program Buffer
-  output logic [3:0]      ProgBufAddr,
+  output logic [$clog2(PROGBUF_SIZE)-1:0]      ProgBufAddr,
   output logic            ProgBuffScanEn,
   output logic            ExecProgBuf
 );
   `include "debug.vh"
 
   localparam PROGBUF_SIZE = (P.PROGBUF_RANGE+1)/4;
+  localparam DATA_COUNT = (P.LLEN/32);
 
   // DMI Signals
   logic                       ReqReady;
@@ -166,11 +167,11 @@ module dm import cvw::*; #(parameter cvw_t P) (
   const logic        ConfStrPtrValid = 0; // Used with SysBusAccess
   const logic [3:0]  Version = 3;    // DM Version
   // AbstractCS
-  const logic [4:0]  ProgBufSize = PROGBUF_SIZE;
+  const logic [4:0]  ProgBufSize = PROGBUF_SIZE[4:0];
   logic              Busy;
   const logic        RelaxedPriv = 1;
   logic [2:0]        CmdErr;
-  const logic [3:0]  DataCount = (P.LLEN/32);
+  const logic [3:0]  DataCount = DATA_COUNT[3:0];
 
   // Core control signals
   assign AllHaveReset = HaveReset;
@@ -204,7 +205,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
       State <= INACTIVE;
     end else begin
       case (State)
-        INACTIVE : begin
+        default : begin  // INACTIVE
           // Reset Values
           {HaltReq, ResumeReq, AckHaveReset, HaltOnReset, NdmReset} <= 0;
           RspData <= 0;
@@ -246,9 +247,9 @@ module dm import cvw::*; #(parameter cvw_t P) (
               {`OP_READ,`SBCS}                              : State <= R_SYSBUSCS;
               [{`OP_WRITE,`PROGBUF0}:{`OP_WRITE,`PROGBUF3}] : State <= W_PROGBUF; // TODO: update decode range dynamically using PROGBUF_RANGE
               [{`OP_READ,`PROGBUF0}:{`OP_READ,`PROGBUFF}],
-              {2'bx,`HARTINFO},
-              {2'bx,`ABSTRACTAUTO},
-              {2'bx,`NEXTDM}                                : State <= READ_ZERO;
+              {2'b??,`HARTINFO},
+              {2'b??,`ABSTRACTAUTO},
+              {2'b??,`NEXTDM}                               : State <= READ_ZERO;
               default                                       : State <= INVALID;
             endcase
         end
@@ -261,6 +262,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
             `DATA1  : RspData <= Data1;
             `DATA2  : RspData <= Data2;
             `DATA3  : RspData <= Data3;
+            default : RspData <= 32'b0;
           endcase
           RspOP <= `OP_SUCCESS;
           State <= ACK;
@@ -346,7 +348,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
               `ACCESS_REGISTER : begin
                 if (~ReqData[`TRANSFER])
                   State <= ReqData[`POSTEXEC] ? EXEC_PROGBUF : ACK;  // If not transfer, exec progbuf or do nothing
-                else if (ReqData[`AARSIZE] > $clog2(P.LLEN/8))
+                else if (ReqData[`AARSIZE] > $clog2(P.LLEN/8)[2:0])
                   CmdErr <= `CMDERR_BUS;                             // If AARSIZE (encoded) is greater than P.LLEN, set CmdErr, do nothing
                 else if (InvalidRegNo)
                   CmdErr <= `CMDERR_EXCEPTION;                       // If InvalidRegNo, set CmdErr, do nothing
@@ -422,7 +424,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
         AC_SCAN : begin
           if (~MiscRegNo & AcWrite & (Cycle == ScanChainLen)) // Writes to CSR/GPR/FPR are shifted in len(CSR/GPR) or len(FPR) cycles
             AcState <= AC_UPDATE;
-          else if (~MiscRegNo & ~AcWrite & (Cycle == P.LLEN)) // Reads from CSR/GPR/FPR are shifted in len(ScanReg) cycles
+          else if (~MiscRegNo & ~AcWrite & (Cycle == P.LLEN[9:0])) // Reads from CSR/GPR/FPR are shifted in len(ScanReg) cycles
             AcState <= AC_IDLE;
           else if (MiscRegNo & (Cycle == ScanChainLen)) // Misc scanchain must be scanned completely
             AcState <= AC_IDLE;
@@ -440,6 +442,8 @@ module dm import cvw::*; #(parameter cvw_t P) (
           else
             Cycle <= Cycle + 1;
         end
+
+        default:;
       endcase
     end
   end
@@ -503,13 +507,15 @@ module dm import cvw::*; #(parameter cvw_t P) (
   if (P.LLEN >= 64) begin
     assign Data1Wr = WriteMsgReg ? ReqData : MaskedScanReg[63:32];
     flopenr #(32) data1reg (.clk, .reset(rst), .en(StoreScanChain | WriteMsgReg & (ReqAddress == `DATA1)), .d(Data1Wr), .q(Data1));
-  end 
+  end else
+    assign Data1 = '0;
   if (P.LLEN == 128) begin
     assign Data2Wr = WriteMsgReg ? ReqData : MaskedScanReg[95:64];
     assign Data3Wr = WriteMsgReg ? ReqData : MaskedScanReg[127:96];
     flopenr #(32) data2reg (.clk, .reset(rst), .en(StoreScanChain | WriteMsgReg & (ReqAddress == `DATA2)), .d(Data2Wr), .q(Data2));
     flopenr #(32) data3reg (.clk, .reset(rst), .en(StoreScanChain | WriteMsgReg & (ReqAddress == `DATA3)), .d(Data3Wr), .q(Data3));
-  end
+  end else
+    assign {Data3,Data2} = '0;
 
   rad #(P) regnodecode(.AarSize(ReqData[`AARSIZE]),.Regno(ReqData[`REGNO]),.CSRegNo,.GPRegNo,.FPRegNo,.ScanChainLen,.ShiftCount,.InvalidRegNo,.RegReadOnly,.RegAddr,.ARMask);
 

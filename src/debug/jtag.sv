@@ -26,7 +26,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module jtag #(parameter ADDR_WIDTH, parameter DEVICE_ID) (
-  input  logic                     rst,
   // JTAG signals
   input  logic                     tck,
   input  logic                     tdi,
@@ -80,7 +79,7 @@ module jtag #(parameter ADDR_WIDTH, parameter DEVICE_ID) (
   assign CaptureDmi = captureDR & DmiInstr;
   assign UpdateDmi = updateDR & DmiInstr;
 
-  tap tap (.rst, .tck, .tms, .resetn, .tdo_en, .captureIR,
+  tap tap (.tck, .tms, .resetn, .tdo_en, .captureIR,
     .clockIR, .updateIR, .shiftDR, .captureDR, .clockDR, .updateDR, .select);
 
   // IR/DR input demux
@@ -96,31 +95,31 @@ module jtag #(parameter ADDR_WIDTH, parameter DEVICE_ID) (
   // DR demux
   always_comb begin
     unique case ({BypassInstr, IDCodeInstr, DtmcsIntrs, DmiInstr})
-      4'b1000 : tdo_dr <= tdo_bypass;
-      4'b0100 : tdo_dr <= tdo_idcode;
-      4'b0010 : tdo_dr <= tdo_dtmcs;
-      4'b0001 : tdo_dr <= tdo_dmi;
-      default : tdo_dr <= tdo_bypass;
+      4'b1000 : tdo_dr = tdo_bypass;
+      4'b0100 : tdo_dr = tdo_idcode;
+      4'b0010 : tdo_dr = tdo_dtmcs;
+      4'b0001 : tdo_dr = tdo_dmi;
+      default : tdo_dr = tdo_bypass;
     endcase
   end
 
-  flopr #(32) dtmcsreg (.clk(UpdateDtmcs), .reset(rst), .d(DtmcsShiftReg[31:0]), .q(DtmcsIn));
-  flopr #(34+ADDR_WIDTH) dmireg (.clk(UpdateDmi), .reset(rst), .d(DmiShiftReg[34+ADDR_WIDTH-1:0]), .q(DmiIn));
+  flop #(32) dtmcsreg (.clk(UpdateDtmcs), .d(DtmcsShiftReg[31:0]), .q(DtmcsIn));
+  flop #(34+ADDR_WIDTH) dmireg (.clk(UpdateDmi), .d(DmiShiftReg[34+ADDR_WIDTH-1:0]), .q(DmiIn));
 
   assign DtmcsShiftReg[32] = tdi_dr;
   assign tdo_dtmcs = DtmcsShiftReg[0];
   for (i = 0; i < 32; i = i + 1)
-    flopr #(1) dtmcsshiftreg (.clk(clockDR), .reset(rst), .d(captureDR ? DtmcsOut[i] : DtmcsShiftReg[i+1]), .q(DtmcsShiftReg[i]));
+    flop #(1) dtmcsshiftreg (.clk(clockDR), .d(captureDR ? DtmcsOut[i] : DtmcsShiftReg[i+1]), .q(DtmcsShiftReg[i]));
 
   assign DmiShiftReg[34+ADDR_WIDTH] = tdi_dr;
   assign tdo_dmi = DmiShiftReg[0];
   for (i = 0; i < 34+ADDR_WIDTH; i = i + 1)
-    flopr #(1) dmishiftreg (.clk(clockDR), .reset(rst), .d(captureDR ? DmiOut[i] : DmiShiftReg[i+1]), .q(DmiShiftReg[i]));
+    flop #(1) dmishiftreg (.clk(clockDR), .d(captureDR ? DmiOut[i] : DmiShiftReg[i+1]), .q(DmiShiftReg[i]));
 
   // jtag id register
   idreg #(DEVICE_ID) id (.tdi(tdi_dr), .clockDR, .captureDR, .tdo(tdo_idcode));
 
   // bypass register
-  flopr #(1) bypassreg (.clk(clockDR), .reset(rst), .d(tdi_dr & shiftDR), .q(tdo_bypass));
+  flop #(1) bypassreg (.clk(clockDR), .d(tdi_dr & shiftDR), .q(tdo_bypass));
 
 endmodule
