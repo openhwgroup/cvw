@@ -68,11 +68,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    input  logic [11:0]           DebugRegAddr,   // address for scanable regfiles (GPR, FPR, CSR)
    input  logic                  DebugCapture,   // latches values into scan register before scanning out
    input  logic                  DebugRegUpdate,  // writes values from scan register after scanning in	
-   input  logic [$clog2(PROGBUF_SIZE)-1:0] ProgBufAddr,
+   input  logic [P.XLEN-1:0]     ProgBufAddr,
    input  logic                  ProgBuffScanEn
 );
-
-  localparam PROGBUF_SIZE = (P.PROGBUF_RANGE+1)/4;
 
   logic                          StallF, StallD, StallE, StallM, StallW;
   logic                          FlushD, FlushE, FlushM, FlushW;

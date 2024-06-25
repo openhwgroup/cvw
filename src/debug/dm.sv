@@ -68,7 +68,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   output logic            DebugRegUpdate, // writes values from scan register after scanning in			
   
   // Program Buffer
-  output logic [$clog2(PROGBUF_SIZE)-1:0]      ProgBufAddr,
+  output logic [P.XLEN-1:0] ProgBufAddr,
   output logic            ProgBuffScanEn,
   output logic            ExecProgBuf
 );
@@ -88,6 +88,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic                       RspValid;
   logic [31:0]                RspData;
   logic [1:0]                 RspOP;
+  logic [P.XLEN-`DMI_ADDR_WIDTH-1:0] UpperReqAddr;
 
   // JTAG ID for Wally:  
   // Version [31:28] = 0x1 : 0001
@@ -173,6 +174,8 @@ module dm import cvw::*; #(parameter cvw_t P) (
   const logic        RelaxedPriv = 1;
   logic [2:0]        CmdErr;
   const logic [3:0]  DataCount = DATA_COUNT[3:0];
+
+  assign UpperReqAddr = '0;
 
   // Core control signals
   assign AllHaveReset = HaveReset;
@@ -373,7 +376,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
             CmdErr <= ~|CmdErr ? `CMDERR_BUSY : CmdErr;
           else begin
             NewAcState <= PROGBUFF_WRITE;
-            ProgBufAddr <= ReqAddress[$clog2(PROGBUF_SIZE)-1:0];
+            ProgBufAddr <= {UpperReqAddr, ReqAddress};
           end
           RspOP <= `OP_SUCCESS;
           State <= ACK;

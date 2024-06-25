@@ -100,14 +100,12 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   input  logic                 DRet,
   input  logic                 ProgBuffScanEn,
   // Debug scan chain
-  input  logic [$clog2(PROGBUF_SIZE)-1:0] ProgBufAddr,
+  input  logic [P.XLEN-1:0]    ProgBufAddr,
   input  logic                 ProgBufScanIn,
   input  logic                 DebugScanEn,
   input  logic                 DebugScanIn,
   output logic                 DebugScanOut
 );
-
-  localparam PROGBUF_SIZE = (P.PROGBUF_RANGE+1)/4;
 
   localparam [31:0]            nop = 32'h00000013;                       // instruction for NOP
   localparam            LINELEN = P.ICACHE_SUPPORTED ? P.ICACHE_LINELENINBITS : P.XLEN;

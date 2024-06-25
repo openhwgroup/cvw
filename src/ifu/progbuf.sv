@@ -31,7 +31,7 @@ module progbuf import cvw::*;  #(parameter cvw_t P) (
     input  logic [5:0]  Addr,
     output logic [31:0] ProgBufInstrF,
 
-    input  logic [$clog2(PROGBUF_SIZE)-1:0] ScanAddr,
+    input  logic [P.XLEN-1:0] ScanAddr,
     input  logic        Scan,
     input  logic        ScanIn
 );

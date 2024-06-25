@@ -98,10 +98,8 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic [11:0]                 DebugRegAddr;
   logic                        DebugCapture;
   logic                        DebugRegUpdate;
-  logic [$clog2(PROGBUF_SIZE)-1:0] ProgBufAddr;
+  logic [P.XLEN-1:0]           ProgBufAddr;
   logic                        ProgBuffScanEn;
-
-  localparam PROGBUF_SIZE = (P.PROGBUF_RANGE+1)/4;
 
   // synchronize reset to SOC clock domain
   synchronizer resetsync(.clk, .d(reset_ext), .q(reset));
