@@ -199,8 +199,8 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
 
   // Debug mode logic
   logic [P.XLEN-1:0]             DPC;
-  logic                          ExitDebugMode;
-  logic                          EnterDebugMode;
+  logic                          DRet;
+  logic                          DCall;
   logic [2:0]                    DebugCause;
   logic                          ForceBreakPoint;
   // Debug register scan chain interconnects
@@ -228,7 +228,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE, .ITLBWriteF, .sfencevmaM, .ITLBMissOrUpdateAF,
     // pmp/pma (inside mmu) signals.
     .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW, .InstrAccessFaultF,
-    .ExitDebugMode, .ProgBuffScanEn, .ProgBufAddr, .ProgBufScanIn(DebugScanIn),
+    .DRet, .ProgBuffScanEn, .ProgBufAddr, .ProgBufScanIn(DebugScanIn),
     .DebugScanEn(DebugScanEn & MiscSel), .DebugScanIn(DebugScanReg[0]), .DebugScanOut(DebugScanReg[1]));
     
   // integer execution unit: integer register file, datapath and controller
@@ -312,7 +312,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
 
   // global stall and flush control  
   hazard #(P) hzu(
-    .BPWrongE, .CSRWriteFenceM, .RetM, .TrapM, .ExitDebugMode,
+    .BPWrongE, .CSRWriteFenceM, .RetM, .TrapM, .DRet,
     .StructuralStallD,
     .LSUStallM, .IFUStallF,
     .FPUStallD,
@@ -327,7 +327,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .clk, .reset,
       .Step, .ebreakM, .ebreakEn, .HaltReq, .ResumeReq, .HaltOnReset, .AckHaveReset,
       .ResumeAck, .HaveReset, .DebugMode, .DebugCause, .DebugStall, .ExecProgBuf,
-      .EnterDebugMode, .ExitDebugMode, .ForceBreakPoint);
+      .DCall, .DRet, .ForceBreakPoint);
   end else begin
     assign DebugStall = 1'b0;
   end
@@ -355,7 +355,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS, 
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
       .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM, .ebreakM,
-      .ebreakEn, .ForceBreakPoint, .DebugMode, .DebugCause, .Step, .DPC, .EnterDebugMode, .ExitDebugMode, .ExecProgBuf,
+      .ebreakEn, .ForceBreakPoint, .DebugMode, .DebugCause, .Step, .DPC, .DCall, .DRet, .ExecProgBuf,
       .DebugSel(CSRSel), .DebugRegAddr, .DebugCapture, .DebugRegUpdate, .DebugScanEn(DebugScanEn & CSRSel), .DebugScanIn, .DebugScanOut(CSRScanOut));
     if (P.DEBUG_SUPPORTED) begin
       flopenrs #(1) scantrapm (.clk, .reset, .en(DebugCapture), .d(TrapM), .q(), .scan(DebugScanEn), .scanin(DebugScanIn), .scanout(DebugScanReg[0]));

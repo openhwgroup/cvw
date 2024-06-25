@@ -105,8 +105,8 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic [2:0]        DebugCause,
   output logic              Step,
   output logic [P.XLEN-1:0] DPC,
-  input  logic              EnterDebugMode,
-  input  logic              ExitDebugMode,
+  input  logic              DCall,
+  input  logic              DRet,
   input  logic              ExecProgBuf,
   // Debug scan chain
   input  logic              DebugSel,
@@ -167,7 +167,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .SetFflagsM, .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE,
     .EPCM, .TrapVectorM,
     .CSRReadValW, .IllegalCSRAccessM, .BigEndianM,
-    .DebugMode, .DebugCause, .ebreakEn, .Step, .DPC, .EnterDebugMode, .ExitDebugMode, .ExecProgBuf,
+    .DebugMode, .DebugCause, .ebreakEn, .Step, .DPC, .DCall, .DRet, .ExecProgBuf,
     .DebugSel, .DebugRegAddr, .DebugCapture, .DebugRegUpdate, .DebugScanEn, .DebugScanIn, .DebugScanOut);
 
   // pipeline early-arriving trap sources
@@ -182,6 +182,6 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .LoadAccessFaultM, .StoreAmoAccessFaultM, .EcallFaultM, .InstrPageFaultM,
     .LoadPageFaultM, .StoreAmoPageFaultM, .PrivilegeModeW, 
     .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .STATUS_MIE, .STATUS_SIE,
-    .InstrValidM, .CommittedM, .CommittedF,
+    .InstrValidM, .CommittedM, .CommittedF, .DebugMode,
     .TrapM, .wfiM, .wfiW, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM);
 endmodule

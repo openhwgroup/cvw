@@ -36,7 +36,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0] CSRDReadValM,
   output logic              IllegalCSRDAccessM,
   input  logic [P.XLEN-1:0] PCM,
-  input  logic              EnterDebugMode,
+  input  logic              DCall,
   input  logic [2:0]        DebugCause,
   output logic              ebreakEn,
   output logic              Step,
@@ -44,8 +44,8 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
 );
   `include "debug.vh"
 
-  localparam DCSR_ADDR = 12'h7B0;  // Debug Control and Status Register 
-  localparam DPC_ADDR  = 12'h7B1;  // Debug PC 
+  localparam DCSR_ADDR = 12'h7B0;  // Debug Control and Status Register
+  localparam DPC_ADDR  = 12'h7B1;  // Debug PC
 
   logic CSRDWriteM;
   logic [31:0] DCSR;
@@ -70,7 +70,8 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   logic [1:0]       Prv;
 
   
-  assign ebreakEn = ebreakM; // Only support ebreak from M mode
+  //assign ebreakEn = ebreakM; // Only support ebreak from M mode
+  assign ebreakEn = 1'b1; // OpenOCD doesn't set ebreakM????         ebreakM; // Only support ebreak from M mode
   assign CSRDWriteM = CSRWriteDM & (PrivilegeModeW == P.M_MODE) & DebugMode;
 
   assign WriteDCSRM = CSRDWriteM & (CSRAdrM == DCSR_ADDR);
@@ -80,7 +81,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
     if (reset) begin
       Prv <= 2'h3;
       Cause <= 3'h0;
-    end else if (EnterDebugMode) begin
+    end else if (DCall) begin
       Prv <= PrivilegeModeW;
       Cause <= DebugCause;
     end
@@ -91,8 +92,8 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   assign DCSR = {DebugVer, 10'b0, ebreakVS, ebreakVU, ebreakM, 1'b0, ebreakS, ebreakU, StepIE,
                       StopCount, StopTime, Cause, V, MPrvEn, NMIP, Step, Prv};
 
-  assign DPCWriteVal = EnterDebugMode ? PCM : CSRWriteValM;
-  flopenr #(P.XLEN) DPCreg (clk, reset, WriteDPCM | EnterDebugMode, DPCWriteVal, DPC); // TODO: reset to something sane (0x80000000?)
+  assign DPCWriteVal = DCall ? PCM : CSRWriteValM;
+  flopenr #(P.XLEN) DPCreg (clk, reset, WriteDPCM | DCall, DPCWriteVal, DPC);
 
   always_comb begin
     CSRDReadValM = '0;

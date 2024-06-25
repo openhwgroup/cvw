@@ -97,7 +97,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   output logic                 ICacheAccess,                             // Report I$ read to performance counters
   output logic                 ICacheMiss,                               // Report I$ miss to performance counters
   // Debug Mode logic
-  input  logic                 ExitDebugMode,
+  input  logic                 DRet,
   input  logic                 ProgBuffScanEn,
   // Debug scan chain
   input  logic [3:0]           ProgBufAddr,
@@ -336,7 +336,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   else assign PC2NextF = PC1NextF;
 
 
-  mux3 #(P.XLEN) pcmux3(PC2NextF, EPCM, TrapVectorM, {TrapM, (RetM | ExitDebugMode)}, UnalignedPCNextF);
+  mux3 #(P.XLEN) pcmux3(PC2NextF, EPCM, TrapVectorM, {TrapM, (RetM | DRet)}, UnalignedPCNextF);
   mux2 #(P.XLEN) pcresetmux({UnalignedPCNextF[P.XLEN-1:1], 1'b0}, P.RESET_VECTOR[P.XLEN-1:0], reset, PCNextF);
   flopen #(P.XLEN) pcreg(clk, ~StallF | reset, PCNextF, PCF);
 

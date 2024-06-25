@@ -43,22 +43,21 @@ module dmc (
   input  logic       AckHaveReset, // Clears HaveReset status
   input  logic       ExecProgBuf,  // Updates PC to progbuf and resumes core
 
-  output logic       DebugMode,
+  output logic       DebugMode,      // Sets state in DM and controls masking of interrupts
   output logic [2:0] DebugCause,     // Reason Hart entered debug mode
   output logic       ResumeAck,      // Signals Hart has been resumed
   output logic       HaveReset,      // Signals Hart has been reset
   output logic       DebugStall,     // Stall signal goes to hazard unit
 
-  output logic       EnterDebugMode, // Store PCNextF in DPC when entering Debug Mode
-  output logic       ExitDebugMode,  // Updates PCNextF with the current value of DPC
+  output logic       DCall,          // Store PCNextF in DPC when entering Debug Mode
+  output logic       DRet,           // Updates PCNextF with the current value of DPC
   output logic       ForceBreakPoint // Causes artificial ebreak that puts core in debug mode
 );
   `include "debug.vh"
 
+  enum logic [1:0] {RUNNING, EXECPROGBUF, HALTED, STEP} State;
 
-  enum logic [1:0] {RUNNING, HALTED, STEP} State;
-
-  localparam E2M_CYCLE_COUNT = 3;
+  localparam E2M_CYCLE_COUNT = 4;
   logic [$clog2(E2M_CYCLE_COUNT+1)-1:0] Counter;
 
   always_ff @(posedge clk) begin
@@ -73,8 +72,8 @@ module dmc (
   assign DebugMode = (State != RUNNING);
   assign DebugStall = (State == HALTED);
 
-  assign EnterDebugMode = (State == RUNNING) & (ebreakM & ebreakEn) | ForceBreakPoint;
-  assign ExitDebugMode = (State == HALTED) & (ResumeReq | ExecProgBuf);
+  assign DCall = ((State == RUNNING) | (State == EXECPROGBUF)) & ((ebreakM & ebreakEn) | ForceBreakPoint);
+  assign DRet = (State == HALTED) & (ResumeReq | ExecProgBuf);
 
   always_ff @(posedge clk) begin
     if (reset) begin
@@ -92,6 +91,14 @@ module dmc (
           end
         end
 
+        // Similar to RUNNING, but DebugMode isn't deasserted
+        EXECPROGBUF : begin
+          if (ebreakM & ebreakEn) begin
+            State <= HALTED;
+            DebugCause <= `CAUSE_EBREAK;
+          end
+        end
+
         HALTED : begin
           if (ResumeReq) begin
             if (Step) begin
@@ -102,7 +109,7 @@ module dmc (
               ResumeAck <= 1;
             end
           end else if (ExecProgBuf) begin
-            State <= RUNNING;
+            State <= EXECPROGBUF;
             ResumeAck <= 1;
           end
         end

@@ -99,8 +99,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   output logic                     ebreakEn,
   output logic                     Step,
   output logic [P.XLEN-1:0]        DPC,
-  input  logic                     EnterDebugMode,
-  input  logic                     ExitDebugMode,
+  input  logic                     DCall,
+  input  logic                     DRet,
   input  logic                     ExecProgBuf,
   // Debug scan chain
   input  logic                     DebugSel,
@@ -189,7 +189,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   if (P.DEBUG_SUPPORTED) begin
     always_comb
       if      (ExecProgBuf)   EPCM = P.PROGBUF_BASE;
-      else if (ExitDebugMode) EPCM = DPC;
+      else if (DRet) EPCM = DPC;
       else if (mretM)         EPCM = MEPC_REGW;
       else                    EPCM = SEPC_REGW;
   end else begin
@@ -318,7 +318,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   if (P.DEBUG_SUPPORTED) begin:csrd
     csrd #(P) csrd(.clk, .reset, .DebugMode, .PrivilegeModeW,
     .CSRWriteDM, .CSRAdrM(CSRAdrDM), .CSRWriteValM(CSRWriteValDM), .CSRDReadValM, .IllegalCSRDAccessM,
-    .DebugCause, .ebreakEn, .Step, .DPC, .PCM, .EnterDebugMode);
+    .DebugCause, .ebreakEn, .Step, .DPC, .PCM, .DCall);
   end else begin
     assign CSRDReadValM = '0;
     assign IllegalCSRDAccessM = 1'b1; // Debug isn't supported

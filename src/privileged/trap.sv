@@ -40,6 +40,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   input  logic                 STATUS_MIE, STATUS_SIE,                          // machine/supervisor interrupt enables
   input  logic                 InstrValidM,                                     // current instruction is valid, not flushed
   input  logic                 CommittedM, CommittedF,                          // LSU/IFU has committed to a bus operation that can't be interrupted
+  input  logic                 DebugMode,                                       // Ignore all interrupts in debug mode
   output logic                 TrapM,                                           // Trap is occurring
   output logic                 InterruptM,                                      // Interrupt is occurring
   output logic                 ExceptionM,                                      // exception is occurring
@@ -88,7 +89,9 @@ module trap import cvw::*;  #(parameter cvw_t P) (
                       BreakpointFaultM | EcallFaultM |
                       LoadAccessFaultM | StoreAmoAccessFaultM;
   // coverage on
-  assign TrapM = (ExceptionM & ~CommittedF) | InterruptM;
+  //assign TrapM = (ExceptionM & ~CommittedF) | InterruptM;
+  // Debug Test
+  assign TrapM = DebugMode ? BreakpointFaultM : (ExceptionM & ~CommittedF) | InterruptM;
 
   ///////////////////////////////////////////
   // Cause priority defined in privileged spec

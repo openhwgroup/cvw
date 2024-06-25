@@ -23,7 +23,7 @@
 `define OP_FAILED  2'b10
 `define OP_BUSY    2'b11
 
-// DMI register Address Width
+// DMI Bus Address Width
 `define DMI_ADDR_WIDTH 7
 
 // Debug Module Debug Bus Register Addresses
