@@ -66,6 +66,7 @@
 //#define ETHER_TYPE	0x0000  // The type defined in packetizer.sv
 #define DEFAULT_IF	"eno1"
 
+FILE *VivadoPipeFP;
 
 typedef struct {
   uint64_t PC;
@@ -95,10 +96,10 @@ typedef struct {
 void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, RequiredRVVI_t *InstructionData);
 void BitShiftArray(uint8_t *dst, uint8_t *src, uint8_t ShiftAmount, int Length);
 void PrintInstructionData(RequiredRVVI_t *InstructionData);
-void ProcessRvviAll(RequiredRVVI_t *InstructionData);
+int ProcessRvviAll(RequiredRVVI_t *InstructionData);
 void set_gpr(int hart, int reg, uint64_t value);
 void set_fpr(int hart, int reg, uint64_t value);
-void state_compare(int hart, uint64_t Minstret);
+int state_compare(int hart, uint64_t Minstret);
 
 int main(int argc, char **argv){
   
@@ -108,6 +109,24 @@ int main(int argc, char **argv){
     return -1;
   }
 
+  // step 1 open a pipe to vivado
+  if (( VivadoPipeFP = popen("sort", "w")) == NULL){
+    perror("popen");
+    exit(1);
+  }
+  fputs("open_hw_manager\n", VivadoPipeFP);
+  fputs("connect_hw_server -url localhost:3121\n", VivadoPipeFP);
+  fputs("current_hw_target [get_hw_targets */xilinx_tcf/Digilent/*]\n", VivadoPipeFP);
+  fputs("open_hw_target\n", VivadoPipeFP);
+  fputs("set_property PARAM.FREQUENCY 7500000 [get_hw_targets localhost:3121/xilinx_tcf/Digilent/210319B7CA87A]\n", VivadoPipeFP);
+
+  // *** bug these need to made relative paths.
+  fputs("set_property PROBES.FILE {/home/ross/repos/cvw/fpga/generator/WallyFPGA.runs/impl_1/fpgaTop.ltx} [get_hw_devices xc7a100t_0]\n", VivadoPipeFP);
+  fputs("set_property FULL_PROBES.FILE {/home/ross/repos/cvw/fpga/generator/WallyFPGA.runs/impl_1/fpgaTop.ltx} [get_hw_devices xc7a100t_0]\n", VivadoPipeFP);
+  fputs("set_property PROGRAM.FILE {/home/ross/repos/cvw/fpga/generator/WallyFPGA.runs/impl_1/fpgaTop.bit} [get_hw_devices xc7a100t_0]\n", VivadoPipeFP);
+  fputs("refresh_hw_device [lindex [get_hw_devices xc7a100t_0] 0]\n", VivadoPipeFP);
+  fputs("[get_hw_devices xc7a100t_0] -filter {CELL_NAME=~\"u_ila_0\"}]]\n", VivadoPipeFP);
+  
   int sockfd;
   uint8_t buf[BUF_SIZ];
   int sockopt;
@@ -198,6 +217,7 @@ int main(int argc, char **argv){
     numbytes = recvfrom(sockfd, buf, BUF_SIZ, 0, NULL, NULL);
     headerbytes = (sizeof(struct ether_header));
     payloadbytes = numbytes - headerbytes;
+    int result;
     //printf("listener: got frame %lu bytes\n", numbytes);
     //printf("payload size: %lu bytes\n", payloadbytes);
     if (eh->ether_dhost[0] == DEST_MAC0 &&
@@ -214,10 +234,14 @@ int main(int argc, char **argv){
       // now let's drive IDV
       // start simple just drive and compare PC.
       PrintInstructionData(&InstructionData);
-      ProcessRvviAll(&InstructionData);
+      result = ProcessRvviAll(&InstructionData);
+      if(result == -1) break;
     }
   }
 
+  printf("Simulation halted due to mismatch\n");
+
+  pclose(VivadoPipeFP);
   close(sockfd);
 
   
@@ -225,12 +249,14 @@ int main(int argc, char **argv){
   return 0;
 }
 
-void ProcessRvviAll(RequiredRVVI_t *InstructionData){
+int ProcessRvviAll(RequiredRVVI_t *InstructionData){
   long int found;
   uint64_t time = InstructionData->Mcycle;
   uint8_t trap = InstructionData->Trap;
   uint64_t order = InstructionData->Minstret;
+  int result;
 
+  result = 0;
   if(InstructionData->GPREn) set_gpr(0, InstructionData->GPRReg, InstructionData->GPRValue);
   if(InstructionData->FPREn) set_fpr(0, InstructionData->FPRReg, InstructionData->FPRValue);
 
@@ -240,15 +266,15 @@ void ProcessRvviAll(RequiredRVVI_t *InstructionData){
     rvviDutRetire(0, InstructionData->PC, InstructionData->insn, 0);
   }
 
-  if(!trap) state_compare(0, InstructionData->Minstret);
-
+  if(!trap) result = state_compare(0, InstructionData->Minstret);
   // *** set is for nets like interrupts  come back to this.
   //found = rvviRefNetIndexGet("pc_rdata");
   //rvviRefNetSet(found, InstructionData->PC, time);
+  return result;
   
 }
 
-void state_compare(int hart, uint64_t Minstret){
+int state_compare(int hart, uint64_t Minstret){
   uint8_t result = 1;
   uint8_t stepOk = 0;
   char buf[80];
@@ -267,7 +293,11 @@ void state_compare(int hart, uint64_t Minstret){
   if (result == 0) {
     sprintf(buf, "MISMATCH @ instruction # %ld\n", Minstret);
     idvMsgError(buf);
-
+    fputs("run_hw_ila [get_hw_ilas -of_objects [get_hw_devices xc7a100t_0] -filter {CELL_NAME=~\"u_ila_0\"}] -trigger_now\n", VivadoPipeFP);
+    fputs("current_hw_ila_data [upload_hw_ila_data hw_ila_1]\n", VivadoPipeFP);
+    fputs("display_hw_ila_data [current_hw_ila_data]\n", VivadoPipeFP);
+    fputs("write_hw_ila_data my_hw_ila_data [current_hw_ila_data]\n", VivadoPipeFP);
+    return -1;
     //if (ON_MISMATCH_DUMP_STATE) dump_state(hart);
   }
   
