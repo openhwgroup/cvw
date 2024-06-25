@@ -1,8 +1,6 @@
 hart_ids: [0]
 hart0:
-  ISA: RV32IMAFDCZicsr_Zicond_Zifencei_Zfa_Zfh_Zba_Zbb_Zbc_Zbkb_Zbkc_Zbkx_Zbs_Zknd_Zkne_Zknh
-#  ISA: RV32IMAFDCZicsr_Zicond_Zifencei_Zfa_Zfh_Zba_Zbb_Zbc_Zbs
-#  ISA: RV32IMAFDCZicsr_Zicboz_Zifencei_Zca_Zba_Zbb_Zbc_Zbs # _Zbkb_Zcb
+  ISA: RV32IMAFDCZicsr_Zicond_Zifencei_Zfa_Zfh_Zca_Zcb_Zba_Zbb_Zbc_Zbkb_Zbkc_Zbkx_Zbs_Zknd_Zkne_Zknh
   physical_addr_sz: 32
   User_Spec_Version: '2.3'
   supported_xlen: [32]
@@ -27,4 +25,4 @@ hart0:
               legal:
                 - extensions[25:0] bitmask [0x000112D, 0x0000000]
               wr_illegal:
-                - Unchanged
+                - Unchangedcd 

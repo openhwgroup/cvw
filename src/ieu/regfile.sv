@@ -7,7 +7,7 @@
 //
 // Purpose: 3-port register file
 // 
-// Documentation: RISC-V System on Chip Design Chapter 4
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -50,7 +50,7 @@ module regfile #(parameter XLEN, E_SUPPORTED) (
   // can logic be adjusted to not need resettable registers?
     
   always_ff @(negedge clk)
-    if (reset) for(i=1; i<NUMREGS; i++) rf[i] <= 0;
+    if (reset) for(i=1; i<NUMREGS; i++) rf[i] <= '0;
     else       if (we3)                 rf[a3] <= wd3;  
 
   assign rd1 = (a1 != 0) ? rf[a1] : 0;

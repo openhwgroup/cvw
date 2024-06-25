@@ -6,7 +6,7 @@
 //
 // Purpose: Divide/Square root preprocessing: integer absolute value and W64, normalization shift
 // 
-// Documentation: RISC-V System on Chip Design Chapter 13
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -33,6 +33,8 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.NF:0]        Xm, Ym,      // Floating-point significands
   input  logic [P.NE-1:0]      Xe, Ye,      // Floating-point exponents
   input  logic [P.FMTBITS-1:0] FmtE,
+  input  logic [P.NE-2:0]      Bias,                               // Bias of exponent
+  input  logic [P.LOGFLEN-1:0] Nf,          // Number of fractional bits in selected format
   input  logic                 SqrtE,
   input  logic                 XZeroE,
   input  logic [2:0]           Funct3E,
@@ -45,7 +47,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   output logic                 ISpecialCaseE,
   output logic [P.DURLEN-1:0]  CyclesE,
   output logic [P.DIVBLEN-1:0] IntNormShiftM,
-  output logic                 ALTBM, IntDivM, W64M,
+  output logic                 ALTBM, W64M,
   output logic                 AsM, BsM, BZeroM,
   output logic [P.XLEN-1:0]    AM
 );
@@ -56,7 +58,6 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   logic [P.DIVb:0]             IFX, IFD;                            // Correctly-sized inputs for iterator, selected from int or fp input
   logic [P.DIVBLEN-1:0]        mE, ell;                             // Leading zeros of inputs
   logic [P.DIVBLEN-1:0]        IntResultBitsE;                      // bits in integer result
-  logic                        NumerZeroE;                          // Numerator is zero (X or A)
   logic                        AZeroE, BZeroE;                      // A or B is Zero for integer division
   logic                        SignedDivE;                          // signed division
   logic                        AsE, BsE;                            // Signs of integer inputs
@@ -94,11 +95,9 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     // Select integer or floating point inputs
     mux2 #(P.DIVb+1) ifxmux({Xm, {(P.DIVb-P.NF){1'b0}}}, {PosA, {(P.DIVb-P.XLEN+1){1'b0}}}, IntDivE, IFX);
     mux2 #(P.DIVb+1) ifdmux({Ym, {(P.DIVb-P.NF){1'b0}}}, {PosB, {(P.DIVb-P.XLEN+1){1'b0}}}, IntDivE, IFD);
-    mux2 #(1)    numzmux(XZeroE, AZeroE, IntDivE, NumerZeroE);
   end else begin // Int not supported
     assign IFX = {Xm, {(P.DIVb-P.NF){1'b0}}};
     assign IFD = {Ym, {(P.DIVb-P.NF){1'b0}}};
-    assign NumerZeroE = XZeroE;
   end
 
   //////////////////////////////////////////////////////
@@ -145,7 +144,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
       assign DivXShifted = DivX;
     end
   end else begin
-    assign ISpecialCaseE = 0;
+    assign {ISpecialCaseE, IntResultBitsE} = '0;
   end
 
   //////////////////////////////////////////////////////
@@ -172,7 +171,6 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   // 4          2(x)-4 = 4(x/2 - 1))  2(x/2)-4 = 4(x/4 - 1)
   // Summary: PreSqrtX = r(x/2or4 - 1)
 
-  logic [P.DIVb:0] PreSqrtX;
   assign EvenExp = Xe[0] ^ ell[0]; // effective unbiased exponent after normalization is even
   mux2 #(P.DIVb+4) sqrtxmux({4'b0,Xnorm[P.DIVb:1]}, {5'b00, Xnorm[P.DIVb:2]}, EvenExp, SqrtX); // X/2 if exponent odd, X/4 if exponent even
 
@@ -209,25 +207,24 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   flopen #(P.DIVb+4) dreg(clk, IFDivStartE, {3'b000, Dnorm}, D);
  
   // Floating-point exponent
-  fdivsqrtexpcalc #(P) expcalc(.Fmt(FmtE), .Xe, .Ye, .Sqrt(SqrtE), .ell, .m(mE), .Ue(UeE));
+  fdivsqrtexpcalc #(P) expcalc(.Bias, .Xe, .Ye, .Sqrt(SqrtE), .ell, .m(mE), .Ue(UeE));
   flopen #(P.NE+2) expreg(clk, IFDivStartE, UeE, UeM);
 
   // Number of FSM cycles (to FSM)
-  fdivsqrtcycles #(P) cyclecalc(.FmtE, .SqrtE, .IntDivE, .IntResultBitsE, .CyclesE);
+  fdivsqrtcycles #(P) cyclecalc(.Nf, .IntDivE, .IntResultBitsE, .CyclesE);
 
   if (P.IDIV_ON_FPU) begin:intpipelineregs
     logic [P.DIVBLEN-1:0] IntDivNormShiftE, IntRemNormShiftE, IntNormShiftE;
     logic               RemOpE;
 
     /* verilator lint_off WIDTH */
-    assign IntDivNormShiftE = P.DIVb - (CyclesE * P.RK - P.LOGR); // b - rn, used for integer normalization right shift.  rn = Cycles * r * k - r ***explain
+    assign IntDivNormShiftE = P.DIVb - (CyclesE * P.RK - P.LOGR); // b - rn, used for integer normalization right shift.  n = (Cycles * k - 1)
     assign IntRemNormShiftE = mE + (P.DIVb-(P.XLEN-1));           // m + b - (N-1) for remainder normalization shift
     /* verilator lint_on WIDTH */
     assign RemOpE = Funct3E[1];
     mux2 #(P.DIVBLEN) normshiftmux(IntDivNormShiftE, IntRemNormShiftE, RemOpE, IntNormShiftE);
 
     // pipeline registers
-    flopen #(1)          mdureg(clk, IFDivStartE, IntDivE,  IntDivM);
     flopen #(1)         altbreg(clk, IFDivStartE, ALTBE,    ALTBM);
     flopen #(1)        bzeroreg(clk, IFDivStartE, BZeroE,   BZeroM);
     flopen #(1)        asignreg(clk, IFDivStartE, AsE,      AsM);
@@ -236,7 +233,9 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     flopen #(P.XLEN)    srcareg(clk, IFDivStartE, AE,       AM);
     if (P.XLEN==64) 
       flopen #(1)        w64reg(clk, IFDivStartE, W64E,     W64M);
-  end
+    else assign W64M = 0;
+  end else
+    assign {ALTBM, W64M, AsM, BsM, BZeroM, AM, IntNormShiftM} = '0;
 
 endmodule
 

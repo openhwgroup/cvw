@@ -7,7 +7,7 @@
 //
 // Purpose: Performs AMO operations
 // 
-// Documentation: RISC-V System on Chip Design Chapter 14 (Figure ***)
+// Documentation: RISC-V System on Chip Design
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -73,7 +73,7 @@ module amoalu import cvw::*;  #(parameter cvw_t P) (
       5'b10100: y = cmp ? a : b; // amomax
       5'b11000: y = cmp ? a : b; // amominu
       5'b11100: y = cmp ? a : b; // amomaxu
-      default:  y = 'x;          // undefined; *** could change to b for efficiency
+      default:  y = 'x;          // undefined
     endcase
 
   // sign extend output if necessary for w64

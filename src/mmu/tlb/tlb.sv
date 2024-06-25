@@ -9,7 +9,7 @@
 // Purpose: Translation lookaside buffer
 //          Cache of virtural-to-physical address translations
 // 
-// Documentation: RISC-V System on Chip Design Chapter 8
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -72,7 +72,6 @@ module tlb import cvw::*;  #(parameter cvw_t P,
   input  logic                     TLBFlush,
   output logic [P.PA_BITS-1:0]     TLBPAdr,
   output logic                     TLBMiss,
-  output logic                     TLBHit,
   output logic                     Translate,
   output logic                     TLBPageFault,
   output logic                     UpdateDA,
@@ -87,6 +86,7 @@ module tlb import cvw::*;  #(parameter cvw_t P,
   logic [11:0]                    PTEAccessBits;
   logic [1:0]                     HitPageType;
   logic                           CAMHit;
+  logic                           TLBHit;
   logic                           SV39Mode;
   logic                           Misaligned;
   logic                           MegapageMisaligned;
@@ -110,12 +110,12 @@ module tlb import cvw::*;  #(parameter cvw_t P,
   assign NAPOT4 = (PPN[3:0] == 4'b1000); // 64 KiB contiguous region with pte.napot_bits = 4
 
   tlbcontrol #(P, ITLB) tlbcontrol(.SATP_MODE, .VAdr, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE,
-    .PrivilegeModeW, .ReadAccess, .WriteAccess, .CMOpM, .DisableTranslation, .TLBFlush,
+    .PrivilegeModeW, .ReadAccess, .WriteAccess, .CMOpM, .DisableTranslation,
     .PTEAccessBits, .CAMHit, .Misaligned, .NAPOT4, 
     .TLBMiss, .TLBHit, .TLBPageFault, 
     .UpdateDA, .SV39Mode, .Translate, .PTE_N, .PBMemoryType);
 
-  tlblru #(TLB_ENTRIES) lru(.clk, .reset, .TLBWrite, .TLBFlush, .Matches, .TLBHit, .WriteEnables);
+  tlblru #(TLB_ENTRIES) lru(.clk, .reset, .TLBWrite, .Matches, .TLBHit, .WriteEnables);
   tlbcam #(P, TLB_ENTRIES, P.VPN_BITS + P.ASID_BITS, P.VPN_SEGMENT_BITS) 
   tlbcam(.clk, .reset, .VPN, .PageTypeWriteVal, .SV39Mode, .TLBFlush, .WriteEnables, .PTE_Gs, .PTE_NAPOTs,
            .SATP_ASID, .Matches, .HitPageType, .CAMHit);

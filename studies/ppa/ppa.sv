@@ -693,8 +693,6 @@ module ppa_mux8_128 #(parameter WIDTH = 128) (
   assign y = s[2] ? (s[1] ? (s[0] ? d5 : d4) : (s[0] ? d6 : d7)) : (s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0)); 
 endmodule
 
-// *** some way to express data-critical inputs
-
 module ppa_flop #(parameter WIDTH = 8) ( 
   input  logic             clk,
   input  logic [WIDTH-1:0] d, 

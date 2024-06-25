@@ -58,7 +58,12 @@ module fpgaTop
    output [0:0]    ddr3_cke,
    output [0:0]    ddr3_cs_n,
    output [1:0]    ddr3_dm,
-   output [0:0]    ddr3_odt
+   output [0:0]    ddr3_odt,
+   // JTAG signals
+   input           tck,
+   input           tdi,
+   input           tms,
+   output          tdo
    );
 
   wire 			   CPUCLK;
@@ -485,12 +490,12 @@ module fpgaTop
      .peripheral_aresetn(peripheral_aresetn));
 
   // wally
-  // *** FIXME add sdc interrupt and HSELEXTSDC, remove old sdc
+  // RT and JP: FIXME add sdc interrupt and HSELEXTSDC, remove old sdc after the new sdc ahb version is implemented
 
   `include "parameter-defs.vh"
 
   wallypipelinedsoc  #(P) 
-  wallypipelinedsoc(.clk(CPUCLK), .reset_ext(bus_struct_reset), .reset(), 
+  wallypipelinedsoc(.clk(CPUCLK), .reset_ext(bus_struct_reset), .reset(), .tck, .tdi, .tms, .tdo,
                     .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT,
                     .HSELEXTSDC, .HCLK(HCLKOpen), .HRESETn(HRESETnOpen), 
                     .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
@@ -1048,7 +1053,6 @@ module fpgaTop
      .sys_rst(resetn),    // omg. this is active low?!?!?? 
      .mmcm_locked(mmcm_locked),
 
-     // *** What are these? 
      .app_sr_req(1'b0),  // reserved command
      .app_ref_req(1'b0), // refresh command
      .app_zq_req(1'b0),  // recalibrate command

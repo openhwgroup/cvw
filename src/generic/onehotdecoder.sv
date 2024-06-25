@@ -31,7 +31,7 @@ module onehotdecoder #(parameter WIDTH = 2) (
 );
 
   always_comb begin
-    decoded = 0;
+    decoded = '0;
     decoded[bin] = 1'b1;
   end
     

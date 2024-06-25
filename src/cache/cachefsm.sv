@@ -7,7 +7,7 @@
 //
 // Purpose: Controller for the cache fsm
 //
-// Documentation: RISC-V System on Chip Design Chapter 7 (Figure 7.14 and Table 7.1)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -102,7 +102,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
 
   // outputs for the performance counters.
   assign CacheAccess = (|CacheRW) & ((CurrState == STATE_ACCESS & ~Stall & ~FlushStage) | (CurrState == STATE_ADDRESS_SETUP & ~Stall & ~FlushStage)); // exclusion-tag: icache CacheW
-  assign CacheMiss = CacheAccess & ~Hit;
+  assign CacheMiss = CurrState == STATE_ADDRESS_SETUP & ~Stall & ~FlushStage;
 
   // special case on reset. When the fsm first exists reset twayhe
   // PCNextF will no longer be pointing to the correct address.

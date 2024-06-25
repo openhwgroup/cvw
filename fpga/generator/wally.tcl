@@ -19,7 +19,7 @@ read_verilog -sv  ../src/CopiedFiles_do_not_add_to_repo/cvw.sv
 if {$board=="ArtyA7"} {
     read_verilog  {../src/fpgaTopArtyA7.sv}
 } else {
-    read_verilog  {../src/fpgaTop.v}
+    read_verilog  {../src/fpgaTop.sv}
 }
 
 # read in ip
@@ -93,7 +93,7 @@ if {$board=="ArtyA7"} {
 
 } else {
     # source ../constraints/vcu-small-debug.xdc
-    source ../constraints/debug4.xdc
+    source ../constraints/debug6.xdc
 }
 
 

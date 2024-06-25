@@ -16,7 +16,7 @@ OBJECTS		:= $(OBJECTS:.$(CPPEXT)=.$(OBJEXT))
 OBJECTS		:= $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(OBJECTS))
 
 TARGETDIR	:= bin
-TARGET		:= $(TARGETDIR)/fpga-test-sdc
+TARGET		:= $(TARGETDIR)/boot
 ROOT		:= ..
 LIBRARY_DIRS	:= 
 LIBRARY_FILES	:=
@@ -24,11 +24,13 @@ LIBRARY_FILES	:=
 MARCH           :=-march=rv64imfdc_zifencei
 MABI            :=-mabi=lp64d
 LINK_FLAGS      :=$(MARCH) $(MABI) -nostartfiles
-LINKER		:=linker.x
+LINKER		:=linker1000.x
 
 
 AFLAGS =$(MARCH) $(MABI) -W
-CFLAGS =$(MARCH) $(MABI) -mcmodel=medany  -O2
+# Override directive allows us to prepend other options on the command line
+# e.g. $ make CFLAGS=-g
+override CFLAGS +=$(MARCH) $(MABI) -mcmodel=medany -O2 -g
 AS=riscv64-unknown-elf-as
 CC=riscv64-unknown-elf-gcc
 AR=riscv64-unknown-elf-ar
@@ -104,7 +106,7 @@ $(BUILDDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(CPPEXT)
 # convert to hex
 $(TARGET).memfile: $(TARGET)
 	@echo 'Making object dump file.'
-	@riscv64-unknown-elf-objdump -D $< > $<.objdump
+	riscv64-unknown-elf-objdump -DS $< > $<.objdump
 	@echo 'Making memory file'
 	riscv64-unknown-elf-elf2hex --bit-width 64 --input $^ --output $@
 	extractFunctionRadix.sh $<.objdump

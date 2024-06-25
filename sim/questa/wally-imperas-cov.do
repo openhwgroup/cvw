@@ -24,10 +24,19 @@ vlib work
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
         # *** modelsim won't take `PA_BITS, but will take other defines for the lengths of DTIM_RANGE and IROM_LEN.  For now just live with the warnings.
-vlog +incdir+../config/$1 \
-     +incdir+../config/shared \
+vlog +incdir+$env(WALLY)/config/$1 \
+     +incdir+$env(WALLY)/config/deriv/$1 \
+     +incdir+$env(WALLY)/config/shared \
      +define+USE_IMPERAS_DV \
      +define+IDV_INCLUDE_TRACE2COV \
+     +define+INCLUDE_TRACE2COV +define+COVER_BASE_RV64I +define+COVER_LEVEL_DV_PR_EXT \
+       +define+COVER_RV64I \
+       +define+COVER_RV64M \
+       +define+COVER_RV64A \
+       +define+COVER_RV64F \
+       +define+COVER_RV64D \
+       +define+COVER_RV64ZICSR \
+       +define+COVER_RV64C \
      +incdir+$env(IMPERAS_HOME)/ImpPublic/include/host \
      +incdir+$env(IMPERAS_HOME)/ImpProprietary/include/host \
      $env(IMPERAS_HOME)/ImpPublic/source/host/rvvi/rvviApiPkg.sv    \
@@ -38,27 +47,23 @@ vlog +incdir+../config/$1 \
      $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2api.sv  \
      $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2log.sv  \
      \
-     +define+INCLUDE_TRACE2COV +define+COVER_BASE_RV64I +define+COVER_LEVEL_DV_PR_EXT \
-       +define+COVER_RV64I \
-       +define+COVER_RV64C \
-       +define+COVER_RV64M \
      +incdir+$env(IMPERAS_HOME)/ImpProprietary/source/host/riscvISACOV/source \
      $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2cov.sv  \
     \
-    ../src/cvw.sv \
-     ../testbench/testbench-imperas.sv \
-     ../testbench/common/*.sv   \
-     ../src/*/*.sv \
-     ../src/*/*/*.sv \
+     $env(WALLY)/src/cvw.sv \
+     $env(WALLY)/testbench/testbench.sv \
+     $env(WALLY)/testbench/common/*.sv   \
+     $env(WALLY)/src/*/*.sv \
+     $env(WALLY)/src/*/*/*.sv \
      -suppress 2583 \
      -suppress 7063  \
      +acc
 vopt +acc work.testbench -G DEBUG=1 -o workopt 
 eval vsim workopt +nowarn3829  -fatal 7 \
      -sv_lib $env(IMPERAS_HOME)/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model \
-     +testDir=$env(TESTDIR) $env(OTHERFLAGS) +TRACE2COV_ENABLE=1
+     +ElfFile=$env(TESTDIR)/ref/ref.elf $env(OTHERFLAGS) +TRACE2COV_ENABLE=1
 
-coverage save -onexit ./riscv.ucdb
+coverage save -onexit $env(WALLY)/sim/questa/riscv.ucdb
 
 
 view wave
@@ -68,7 +73,7 @@ view wave
 
 run -all
 
-noview ../testbench/testbench-imperas.sv
+noview $env(WALLY)/testbench/testbench-imperas.sv
 view wave
 
-quit -f
+#quit -f

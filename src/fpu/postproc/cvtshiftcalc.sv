@@ -6,7 +6,7 @@
 //
 // Purpose: Conversion shift calculation
 // 
-// Documentation: RISC-V System on Chip Design Chapter 13
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -83,7 +83,7 @@ module cvtshiftcalc import cvw::*;  #(parameter cvw_t P) (
               P.FMT:  ResNegNF  = -($clog2(P.NF)+1)'(P.NF);
               P.FMT1: ResNegNF  = -($clog2(P.NF)+1)'(P.NF1);
               P.FMT2: ResNegNF  = -($clog2(P.NF)+1)'(P.NF2);
-              default: ResNegNF = 0; // Not used for floating-point so don't care, but convert to unsigned long has OutFmt = 11.
+              default: ResNegNF = '0; // Not used for floating-point so don't care, but convert to unsigned long has OutFmt = 11.
           endcase
 
   end else if (P.FPSIZES == 4) begin        

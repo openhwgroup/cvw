@@ -57,7 +57,8 @@ PreProcessFiles:
 	# modify config  *** RT: eventually setup for variably defined sized memory
 	#sed -i "s/EXT_MEM_RANGE.*/EXT_MEM_RANGE = 64'h0FFFFFFF;/g" ../src/CopiedFiles_do_not_add_to_repo/config/config.vh
 	# This line allows the Bootloader to be loaded in a Block RAM on the FPGA
-	sed -i "s/logic \[DATA_WIDTH-1:0\].*ROM.*/(\* rom_style=\"block\" \*) &/g" ../src/CopiedFiles_do_not_add_to_repo/generic/mem/rom1p1r.sv
+	sed -i "s/bit \[DATA_WIDTH-1:0\].*ROM.*/(\* rom_style=\"block\" \*) &/g" ../src/CopiedFiles_do_not_add_to_repo/generic/mem/rom1p1r.sv
+	sed -i 's/$$WALLY/\.\.\/\.\.\/\.\.\//g' ../src/CopiedFiles_do_not_add_to_repo/generic/mem/rom1p1r.sv
 
 $(dst)/%.log: %.tcl
 	mkdir -p IP

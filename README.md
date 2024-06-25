@@ -41,37 +41,45 @@ Clone your fork of the repo and run the setup script. Change <yourgithubid> to y
 	$ git remote add upstream https://github.com/openhwgroup/cvw
 	$ source ./setup.sh
 
+If you are installing on a new system without any tools installed please jump to the next section, Toolchain Installation then come back here.
+
 Add the following lines to your .bashrc or .bash_profile to run the setup script each time you log in.
 
 	if [ -f ~/cvw/setup.sh ]; then
 		source ~/cvw/setup.sh
 	fi
 
-Edit setup.sh and change the following lines to point to the path and license server for your Siemens Questa and Synopsys Design Compiler installation and license server.  If you only have Questa, you can still simulate but cannot run logic synthesis.
-
-	export MGLS_LICENSE_FILE=1717@solidworks.eng.hmc.edu                # Change this to your Siemens license server
-	export SNPSLMD_LICENSE_FILE=27020@zircon.eng.hmc.edu                # Change this to your Synopsys license server
-	export QUESTAPATH=/cad/mentor/questa_sim-2021.2_1/questasim/bin     # Change this for your path to Questa
-	export SNPSPATH=/cad/synopsys/SYN/bin                               # Change this for your path to Design Compiler
-
 If the tools are not yet installed on your server, follow the Toolchain Installation instructions in the section below.
 
 Build the tests and run a regression simulation with Questa to prove everything is installed.  Building tests will take a while.
 
 	$ make
-	$ cd sim
-	$ ./regression-wally       (depends on having Questa installed)
+	$ regression-wally       (depends on having Questa installed)
 
 # Toolchain Installation (Sys Admin)
 
 This section describes the open source toolchain installation.  The
-current version of the toolchain has been tested on Ubuntu and Red
+current version of the toolchain has been tested on Ubuntu and partly on Red
 Hat/Rocky 8 Linux.  Ubuntu works more smoothly and is recommended
-unless you have a compelling need for RedHat.  
+unless you have a compelling need for RedHat.  However, Ubuntu 22.04LTS
+is incompatible with Synopsys Design Compiler.
 
 Ubuntu users can install the tools by running
 
 	$ sudo $WALLY/bin/wally-tool-chain-install.sh
+
+The default installation directory is /opt/riscv defined by the environment variable RISCV. You must copy and edit ~/cvw/site-setup.sh to $RISCV/site-setup.sh.
+
+~/cvw/setup.sh sources $RISCV/site-setup.sh.
+This allows for customization of the site specific information such as commerical licenses and PATH variables.
+
+Change the following lines to point to the path and license server for your Siemens Questa and Synopsys Design Compiler installation and license server.  If you only have Questa, you can still simulate but cannot run logic synthesis.  If Questa or Design Compiler are already setup on this system then don't set these variables.
+
+	export MGLS_LICENSE_FILE=..         # Change this to your Siemens license server
+	export SNPSLMD_LICENSE_FILE=..      # Change this to your Synopsys license server
+	export QUESTAPATH=..                # Change this for your path to Questa
+	export SNPSPATH=..                  # Change this for your path to Design Compiler
+
 
 See wally-tool-chain-install.sh for a detailed description of each component,
 or to issue the commands one at a time to install on the command line.
@@ -131,9 +139,54 @@ Startups can expect to spend more than $1 million on CAD tools to get a chip to 
 ## Adding Cron Job for nightly builds
 
 If you want to add a cronjob you can do the following:
-1) `crontab -e`
-2) add this code:
+1) Set up the email client `mutt` for your distribution
+2) Enter `crontab -e` into a terminal
+3) add this code to test building CVW and then running `regression-wally --nightly` at 9:30 PM each day
 ```
-0 3 * * * BASH_ENV=~/.bashrc bash -l -c "PATH_TO_CVW/cvw/bin/wrapper_nightly_runs.sh > PATH_TO_LOG_FOLDER/cron.log"
+30 21 * * * bash -l -c "source ~/PATH/TO/CVW/setup.sh; PATH_TO_CVW/cvw/bin/wrapper_nightly_runs.sh --path {PATH_TO_TEST_LOCATION} --target all --tests nightly --send_email harris@hmc.edu,kaitlin.verilog@gmail.com"
 ```
 
+# Example wsim commands
+
+wsim runs one of multiple simulators, Questa, VCS, or Verilator using a specific configuration and either a suite of tests or a specific elf file.
+The general syntax is
+wsim <config> <suite or elf file or directory> [--options]
+
+Parameters and options:
+
+	-h, --help                                                   show this help message and exit
+	--sim {questa,verilator,vcs}, -s {questa,verilator,vcs}      Simulator
+	--tb {testbench,testbench_fp}, -t {testbench,testbench_fp}   Testbench
+	--gui, -g                                                    Simulate with GUI
+	--coverage, -c                                               Code & Functional Coverage
+	--fcov, -f                                                   Code & Functional Coverage
+	--args ARGS, -a ARGS                                         Optional arguments passed to simulator via $value$plusargs
+	--vcd, -v                                                    Generate testbench.vcd
+	--lockstep, -l                                               Run ImperasDV lock, step, and compare.
+	--locksteplog LOCKSTEPLOG, -b LOCKSTEPLOG                    Retired instruction number to be begin logging.
+	--covlog COVLOG, -d COVLOG                                   Log coverage after n instructions.
+	--elfext ELFEXT, -e ELFEXT                                   When searching for elf files only includes ones which end in this extension
+
+Run basic test with questa
+
+	wsim rv64gc arch64i
+
+Run Questa with gui
+
+	wsim rv64gc wally64priv --gui
+
+Run lockstep against ImperasDV with a single elf file in the --gui.  Lockstep requires single elf.
+
+	wsim rv64gc ../../tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/ref/ref.elf --lockstep --gui
+
+Run lockstep against ImperasDV with a single elf file.  Compute coverage.
+
+	wsim rv64gc ../../tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/ref/ref.elf --lockstep --coverage
+
+Run lockstep against ImperasDV with directory file.  
+
+	wsim rv64gc ../../tests/riscof/work/riscv-arch-test/rv64i_m/I/src/ --lockstep
+
+Run lockstep against ImperasDV with directory file and specify specific extension.
+
+	wsim rv64gc ../../tests/riscof/work/riscv-arch-test/rv64i_m/I/src/ --lockstep --elfext ref.elf

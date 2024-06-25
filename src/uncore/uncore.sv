@@ -7,7 +7,7 @@
 // Purpose: System-on-Chip components outside the core
 //          Memories, peripherals, external bus control
 // 
-// Documentation: RISC-V System on Chip Design Chapter 15 (and Figure 6.20)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -28,7 +28,11 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module uncore import cvw::*;  #(parameter cvw_t P)(
+module uncore
+  import cvw::*;
+#(
+  parameter cvw_t P
+) (
   // AHB Bus Interface
   input  logic                 HCLK, HRESETn,
   input  logic                 TIMECLK,
@@ -58,28 +62,61 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   input  logic                 SDCIntr,
   input  logic                 SPIIn,
   output logic                 SPIOut,
-  output logic [3:0]           SPICS                  
+  output logic [3:0]           SPICS,
+  input  logic                 ui_clk,
+  output logic [15:0]          dmc_trefi,
+  output logic [3:0]           dmc_tmrd,
+  output logic [3:0]           dmc_trfc,
+  output logic [3:0]           dmc_trc,
+  output logic [3:0]           dmc_trp,
+  output logic [3:0]           dmc_tras,
+  output logic [3:0]           dmc_trrd,
+  output logic [3:0]           dmc_trcd,
+  output logic [3:0]           dmc_twr,
+  output logic [3:0]           dmc_twtr,
+  output logic [3:0]           dmc_trtp,
+  output logic [3:0]           dmc_tcas,
+  output logic [3:0]           dmc_col_width,
+  output logic [3:0]           dmc_row_width,
+  output logic [1:0]           dmc_bank_width,
+  output logic [5:0]           dmc_bank_pos,
+  output logic [2:0]           dmc_dqs_sel_cal,
+  output logic [15:0]          dmc_init_cycles,
+  output logic                 dmc_config_changed,
+  input  logic                 PLLrefclk,
+  input  logic                 PLLrfen,
+  input  logic                 PLLfben,
+  output logic [5:0]           PLLclkr,
+  output logic [12:0]          PLLclkf,
+  output logic [3:0]           PLLclkod,
+  output logic [11:0]          PLLbwadj,
+  output logic                 PLLtest,
+  output logic                 PLLfasten,
+  input  logic                 PLLlock,
+  output logic                 PLLconfigdone
 );
   
   logic [P.XLEN-1:0]           HREADRam, HREADSDC;
 
-  logic [11:0]                 HSELRegions;
-  logic                        HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSPI;
-  logic                        HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD, HSELSPID;
+  logic [14:0]                 HSELRegions;
+  logic                        HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSPI, HSELBSGDMCCONF, HSELPLLCONF;
+  logic                        HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD, HSELSPID, HSELBSGDMCCONFD, HSELPLLCONFD;
   logic                        HRESPRam,  HRESPSDC;
   logic                        HREADYRam, HRESPSDCD;
-  logic [P.XLEN-1:0]           HREADBootRom; 
+  logic [P.XLEN-1:0]           HREADBootRom;
   logic                        HSELBootRom, HSELBootRomD, HRESPBootRom, HREADYBootRom, HREADYSDC;
   logic                        HSELNoneD;
   logic                        UARTIntr,GPIOIntr, SPIIntr;
   logic                        SDCIntM;
-  
   logic                        PCLK, PRESETn, PWRITE, PENABLE;
-  logic [4:0]                  PSEL, PREADY;
+  logic [6:0]                  PSEL;
   logic [31:0]                 PADDR;
   logic [P.XLEN-1:0]           PWDATA;
   logic [P.XLEN/8-1:0]         PSTRB;
-  logic [4:0][P.XLEN-1:0]      PRDATA;
+  /* verilator lint_off UNDRIVEN */ // undriven in rv32e configuration
+  logic [6:0]                  PREADY;
+  logic [6:0][P.XLEN-1:0]      PRDATA;
+  /* verilator lint_on UNDRIVEN */
   logic [P.XLEN-1:0]           HREADBRIDGE;
   logic                        HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
 
@@ -92,43 +129,43 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   adrdecs #(P) adrdecs(HADDR, 1'b1, 1'b1, 1'b1, HSIZE[1:0], HSELRegions);
 
   // unswizzle HSEL signals
-  assign {HSELSPI, HSELEXTSDC, HSELPLIC, HSELUART, HSELGPIO, HSELCLINT, HSELRam, HSELBootRom, HSELEXT, HSELIROM, HSELDTIM} = HSELRegions[11:1];
+  assign {HSELPLLCONF, HSELBSGDMCCONF, HSELSPI, HSELEXTSDC, HSELPLIC, HSELUART, HSELGPIO, HSELCLINT, HSELRam, HSELBootRom, HSELEXT, HSELIROM, HSELDTIM} = HSELRegions[13:1];
 
   // AHB -> APB bridge
-  ahbapbbridge #(P, 5) ahbapbbridge (
-    .HCLK, .HRESETn, .HSEL({HSELSPI, HSELUART, HSELPLIC, HSELCLINT, HSELGPIO}), .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HTRANS, .HREADY, 
+  ahbapbbridge #(P, 7) ahbapbbridge (
+    .HCLK, .HRESETn, .HSEL({HSELPLLCONF, HSELBSGDMCCONF, HSELSPI, HSELUART, HSELPLIC, HSELCLINT, HSELGPIO}), .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HTRANS, .HREADY, 
     .HRDATA(HREADBRIDGE), .HRESP(HRESPBRIDGE), .HREADYOUT(HREADYBRIDGE),
     .PCLK, .PRESETn, .PSEL, .PWRITE, .PENABLE, .PADDR, .PWDATA, .PSTRB, .PREADY, .PRDATA);
-  assign HSELBRIDGE = HSELGPIO | HSELCLINT | HSELPLIC | HSELUART | HSELSPI; // if any of the bridge signals are selected
+  assign HSELBRIDGE = HSELPLLCONF | HSELBSGDMCCONF | HSELGPIO | HSELCLINT | HSELPLIC | HSELUART | HSELSPI; // if any of the bridge signals are selected
                 
   // on-chip RAM
   if (P.UNCORE_RAM_SUPPORTED) begin : ram
     ram_ahb #(.P(P), .BASE(P.UNCORE_RAM_BASE), .RANGE(P.UNCORE_RAM_RANGE), .PRELOAD(P.UNCORE_RAM_PRELOAD)) ram (
       .HCLK, .HRESETn, .HSELRam, .HADDR, .HWRITE, .HREADY, 
       .HTRANS, .HWDATA, .HWSTRB, .HREADRam, .HRESPRam, .HREADYRam);
-  end
+  end else assign {HREADRam, HRESPRam, HREADYRam} = '0;
 
  if (P.BOOTROM_SUPPORTED) begin : bootrom
     rom_ahb #(.P(P), .BASE(P.BOOTROM_BASE), .RANGE(P.BOOTROM_RANGE), .PRELOAD(P.BOOTROM_PRELOAD))
     bootrom(.HCLK, .HRESETn, .HSELRom(HSELBootRom), .HADDR, .HREADY, .HTRANS, 
       .HREADRom(HREADBootRom), .HRESPRom(HRESPBootRom), .HREADYRom(HREADYBootRom));
-  end
+  end else assign {HREADBootRom, HRESPBootRom, HREADYBootRom} = '0;
 
   // memory-mapped I/O peripherals
   if (P.CLINT_SUPPORTED == 1) begin : clint
     clint_apb #(P) clint(.PCLK, .PRESETn, .PSEL(PSEL[1]), .PADDR(PADDR[15:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
       .PRDATA(PRDATA[1]), .PREADY(PREADY[1]), .MTIME(MTIME_CLINT), .MTimerInt, .MSwInt);
   end else begin : clint
-    assign MTIME_CLINT = 0;
-    assign MTimerInt = 0; assign MSwInt = 0;
+    assign MTIME_CLINT = '0;
+    assign MTimerInt = 1'b0; assign MSwInt = 1'b0;
   end
 
   if (P.PLIC_SUPPORTED == 1) begin : plic
     plic_apb #(P) plic(.PCLK, .PRESETn, .PSEL(PSEL[2]), .PADDR(PADDR[27:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
       .PRDATA(PRDATA[2]), .PREADY(PREADY[2]), .UARTIntr, .GPIOIntr, .SDCIntr, .SPIIntr, .MExtInt, .SExtInt);
   end else begin : plic
-    assign MExtInt = 0;
-    assign SExtInt = 0;
+    assign MExtInt = 1'b0;
+    assign SExtInt = 1'b0;
   end
 
   if (P.GPIO_SUPPORTED == 1) begin : gpio
@@ -137,9 +174,9 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
       .PRDATA(PRDATA[0]), .PREADY(PREADY[0]), 
       .iof0(), .iof1(), .GPIOIN, .GPIOOUT, .GPIOEN, .GPIOIntr);
   end else begin : gpio
-    assign GPIOOUT = 0; assign GPIOEN = 0; assign GPIOIntr = 0;
+    assign GPIOOUT = '0; assign GPIOEN = '0; assign GPIOIntr = 1'b0;
   end
-  if (P.UART_SUPPORTED == 1) begin : uart
+  if (P.UART_SUPPORTED == 1) begin : uartgen // Hack to work around Verilator bug https://github.com/verilator/verilator/issues/4769
     uart_apb #(P) uart(
       .PCLK, .PRESETn, .PSEL(PSEL[3]), .PADDR(PADDR[2:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
       .PRDATA(PRDATA[3]), .PREADY(PREADY[3]), 
@@ -147,7 +184,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
       .SOUT(UARTSout), .RTSb(), .DTRb(),                                // to E1A driver to RS232 interface
       .OUT1b(), .OUT2b(), .INTR(UARTIntr), .TXRDYb(), .RXRDYb());       // to CPU
   end else begin : uart
-    assign UARTSout = 0; assign UARTIntr = 0; 
+    assign UARTSout = 1'b0; assign UARTIntr = 1'b0; 
   end
   if (P.SPI_SUPPORTED == 1) begin : spi
     spi_apb  #(P) spi (
@@ -155,7 +192,53 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
       .PREADY(PREADY[4]), .PRDATA(PRDATA[4]), 
       .SPIOut, .SPIIn, .SPICS, .SPIIntr);
   end else begin : spi
-    assign SPIOut = 0; assign SPICS = 0; assign SPIIntr = 0;
+    assign SPIOut = 1'b0; assign SPICS = '0; assign SPIIntr = 1'b0;
+  end
+
+  if (P.BSG_DMC_SUPPORTED == 1) begin : bsg_dmc_config
+    bsg_dmc_config_apb #(P.XLEN) bsg_dmc_conf (
+      .PCLK, .PRESETn, .PSEL(PSEL[5]), .PADDR(PADDR[7:0]), .PWDATA, .PWRITE, .PENABLE,
+      .PRDATA(PRDATA[5]), .PREADY(PREADY[5]),
+      .ui_clk, .dmc_trefi, .dmc_tmrd, .dmc_trfc, .dmc_trc, .dmc_trp, .dmc_tras, .dmc_trrd,
+      .dmc_trcd, .dmc_twr, .dmc_twtr, .dmc_trtp, .dmc_tcas, .dmc_col_width, .dmc_row_width,
+      .dmc_bank_width, .dmc_bank_pos, .dmc_dqs_sel_cal, .dmc_init_cycles, .dmc_config_changed);
+  end else begin : bsg_dmc_config
+    assign dmc_trefi        = 0;
+    assign dmc_tmrd         = 0;
+    assign dmc_trfc         = 0;
+    assign dmc_trc          = 0;
+    assign dmc_trp          = 0;
+    assign dmc_tras         = 0;
+    assign dmc_trrd         = 0;
+    assign dmc_trcd         = 0;
+    assign dmc_twr          = 0;
+    assign dmc_twtr         = 0;
+    assign dmc_trtp         = 0;
+    assign dmc_tcas         = 0;
+    assign dmc_col_width    = 0;
+    assign dmc_row_width    = 0;
+    assign dmc_bank_width   = 0;
+    assign dmc_bank_pos     = 0;
+    assign dmc_dqs_sel_cal  = 0;
+    assign dmc_init_cycles  = 0;
+    assign dmc_config_changed      = 0;
+  end
+
+  if (P.PLL_SUPPORTED == 1) begin : pll_config
+    pll_config_apb #(P.XLEN) pll_conf (
+      .PCLK, .PRESETn, .PSEL(PSEL[6]), .PADDR(PADDR[7:0]), .PWDATA, .PWRITE, .PENABLE,
+      .PRDATA(PRDATA[6]), .PREADY(PREADY[6]),
+      .PLLrefclk, .PLLrfen, .PLLfben, 
+      .PLLclkr, .PLLclkf, .PLLclkod, .PLLbwadj, .PLLtest, .PLLfasten, .PLLlock,
+      .PLLconfigdone);
+  end else begin : pll_config
+    assign PLLclkr       = 0;
+    assign PLLclkf       = 0;
+    assign PLLclkod      = 0;
+    assign PLLbwadj      = 0;
+    assign PLLtest       = 0;
+    assign PLLfasten     = 0;
+    assign PLLconfigdone = 1;
   end
 
   // AHB Read Multiplexer
@@ -170,7 +253,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
                  HSELBootRomD & HRESPBootRom;
   
   assign HREADY = HSELRamD & HREADYRam |
-		          (HSELEXTD | HSELEXTSDCD) & HREADYEXT |		  
+		              (HSELEXTD | HSELEXTSDCD) & HREADYEXT |		  
                   HSELBRIDGED & HREADYBRIDGE |
                   HSELBootRomD & HREADYBootRom |
                   HSELNoneD; // don't lock up the bus if no region is being accessed
@@ -180,8 +263,9 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   // takes more than 1 cycle to repsond it needs to hold on to the old select until the
   // device is ready.  Hense this register must be selectively enabled by HREADY.
   // However on reset None must be seleted.
-  flopenl #(12) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions, 12'b1, 
-    {HSELSPID, HSELEXTSDCD, HSELPLICD, HSELUARTD, HSELGPIOD, HSELCLINTD,
-      HSELRamD, HSELBootRomD, HSELEXTD, HSELIROMD, HSELDTIMD, HSELNoneD});
+  flopenl #(14) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions[13:0], 14'b1, 
+    {HSELPLLCONFD, HSELBSGDMCCONFD, HSELSPID, HSELEXTSDCD, HSELPLICD, HSELUARTD,
+     HSELGPIOD, HSELCLINTD, HSELRamD, HSELBootRomD, HSELEXTD, HSELIROMD, HSELDTIMD,
+     HSELNoneD});
   flopenr #(1) hselbridgedelayreg(HCLK, ~HRESETn, HREADY, HSELBRIDGE, HSELBRIDGED);
 endmodule

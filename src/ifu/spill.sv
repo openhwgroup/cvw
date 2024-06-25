@@ -9,7 +9,7 @@
 //          cache line boundaries or if instruction address without a cache crosses
 //          XLEN/8 boundary.
 //
-// Documentation: RISC-V System on Chip Design Chapter 11 (Figure 11.5)
+// Documentation: RISC-V System on Chip Design
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -33,14 +33,13 @@
 module spill import cvw::*;  #(parameter cvw_t P) (
   input logic               clk,               
   input logic               reset,
-  input logic               StallD, FlushD,
+  input logic               StallF, FlushD,
   input logic [P.XLEN-1:0]  PCF,               // 2 byte aligned PC in Fetch stage
   input logic [P.XLEN-1:2]  PCPlus4F,          // PCF + 4
   input logic [P.XLEN-1:0]  PCNextF,           // The next PCF
   input logic [31:0]        InstrRawF,         // Instruction from the IROM, I$, or bus. Used to check if the instruction if compressed
   input logic               IFUCacheBusStallF, // I$ or bus are stalled. Transition to second fetch of spill after the first is fetched
-  input logic               ITLBMissF,         // ITLB miss, ignore memory request
-  input logic               InstrUpdateDAF,    // Ignore memory request if the hptw support write and a DA page fault occurs (hptw is still active)
+  input logic               ITLBMissOrUpdateAF, // ITLB miss causes HPTW (hardware pagetable walker) walk or update access bit
   input logic               CacheableF,        // Is the instruction from the cache?
   output logic [P.XLEN-1:0] PCSpillNextF,      // The next PCF for one of the two memory addresses of the spill
   output logic [P.XLEN-1:0] PCSpillF,          // PCF for one of the two memory addresses of the spill
@@ -86,7 +85,7 @@ module spill import cvw::*;  #(parameter cvw_t P) (
   end else
     assign SpillF = PCF[1];
   // Don't take the spill if there is a stall, TLB miss, or hardware update to the D/A bits
-  assign TakeSpillF = SpillF & ~EarlyCompressedF & ~IFUCacheBusStallF & ~(ITLBMissF | (P.SVADU_SUPPORTED & InstrUpdateDAF));
+  assign TakeSpillF = SpillF & ~EarlyCompressedF & ~IFUCacheBusStallF & ~ITLBMissOrUpdateAF;
   
   always_ff @(posedge clk)
     if (reset | FlushD)    CurrState <= STATE_READY;
@@ -96,7 +95,7 @@ module spill import cvw::*;  #(parameter cvw_t P) (
     case (CurrState)
       STATE_READY: if (TakeSpillF)                NextState = STATE_SPILL;
                    else                           NextState = STATE_READY;
-      STATE_SPILL: if(StallD)                     NextState = STATE_SPILL;
+      STATE_SPILL: if(StallF)                     NextState = STATE_SPILL;
                    else                           NextState = STATE_READY;
       default:                                    NextState = STATE_READY;
     endcase

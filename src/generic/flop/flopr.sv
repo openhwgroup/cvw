@@ -31,7 +31,7 @@ module flopr #(parameter WIDTH = 8) (
   output logic [WIDTH-1:0] q);
 
   always_ff @(posedge clk)
-    if (reset) q <= 0;
+    if (reset) q <= '0;
     else       q <= d;
 endmodule
 

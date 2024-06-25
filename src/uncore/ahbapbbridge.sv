@@ -5,7 +5,7 @@
 //
 // Purpose: AHB to APB bridge
 // 
-// Documentation: RISC-V System on Chip Design Chapter 6
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -89,7 +89,7 @@ module ahbapbbridge import cvw::*;  #(parameter cvw_t P,
   int i;
   always_comb begin
     // default: no peripheral selected: read 0, indicate ready during access phase so bus doesn't hang
-    HRDATA = 0;
+    HRDATA = '0;
     PREADYOUT = 1'b1; 
     for (i=0; i<PERIPHS; i++)  begin
       if (PSEL[i]) begin // highest numbered peripheral has priority, but multiple PSEL should never be asserted
@@ -101,5 +101,5 @@ module ahbapbbridge import cvw::*;  #(parameter cvw_t P,
 assign HREADYOUT = PREADYOUT & ~initTransSelD; // don't raise HREADYOUT before access phase
 
   // resp logic
-  assign HRESP = 0; // bridge never indicates errors
+  assign HRESP = 1'b0; // bridge never indicates errors
 endmodule

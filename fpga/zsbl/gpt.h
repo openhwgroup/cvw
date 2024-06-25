@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "boot.h"
 
 // LBA 0: Protective MBR
 // ignored here
@@ -36,4 +37,4 @@ typedef struct partition_entries
 } partition_entries_t;
 
 // Find boot partition and load it to the destination
-int gpt_find_boot_partition(long int* dest, uint32_t size);
+int gpt_load_partitions(BYTE card_type);

@@ -7,7 +7,7 @@
 // Purpose: Implements the CSRs, Exceptions, and Privileged operations
 //          See RISC-V Privileged Mode Specification 20190608 
 // 
-// Documentation: RISC-V System on Chip Design Chapter 5 (Figure 5.8)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -49,12 +49,12 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic              StoreStallD,                                    // store instruction is stalling
   input  logic              ICacheStallF,                                   // I cache stalled
   input  logic              DCacheStallM,                                   // D cache stalled
-  input  logic              BPDirPredWrongM,                                // branch predictor guessed wrong direction
+  input  logic              BPDirWrongM,                                // branch predictor guessed wrong direction
   input  logic              BTAWrongM,                                      // branch predictor guessed wrong target
   input  logic              RASPredPCWrongM,                                // return adddress stack guessed wrong target
   input  logic              IClassWrongM,                                   // branch predictor guessed wrong instruction class
   input  logic              BPWrongM,                                       // branch predictor is wrong
-  input  logic [3:0]        InstrClassM,                                    // actual instruction class
+  input  logic [3:0]        IClassM,                                    // actual instruction class
   input  logic              DCacheMiss,                                     // data cache miss
   input  logic              DCacheAccess,                                   // data cache accessed (hit or miss)
   input  logic              ICacheMiss,                                     // instruction cache miss
@@ -96,9 +96,28 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic              InvalidateICacheM,                              // fence instruction
   output logic              BigEndianM,                                     // Use big endian in current privilege mode
   // Fault outputs                                                         
-  output logic              wfiM, IntPendingM                               // Stall in Memory stage for WFI until interrupt pending or timeout
-);                                                                         
-                                                                           
+  output logic              wfiM, IntPendingM,                              // Stall in Memory stage for WFI until interrupt pending or timeout
+  output logic              ebreakM,                                        // Notifies DM to enter debug mode
+  // Debuge Mode
+  output logic              ebreakEn,
+  input  logic              ForceBreakPoint,
+  input  logic              DebugMode,
+  input  logic [2:0]        DebugCause,
+  output logic              Step,
+  output logic [P.XLEN-1:0] DPC,
+  input  logic              DCall,
+  input  logic              DRet,
+  input  logic              ExecProgBuf,
+  // Debug scan chain
+  input  logic              DebugSel,
+  input  logic [11:0]       DebugRegAddr,
+  input  logic              DebugCapture,
+  input  logic              DebugRegUpdate,
+  input  logic              DebugScanEn,
+  input  logic              DebugScanIn,
+  output logic              DebugScanOut
+);
+
   logic [3:0]               CauseM;                                         // trap cause
   logic [15:0]              MEDELEG_REGW;                                   // exception delegation CSR
   logic [11:0]              MIDELEG_REGW;                                   // interrupt delegation CSR
@@ -127,9 +146,9 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
 
   // decode privileged instructions
   privdec #(P) pmd(.clk, .reset, .StallW, .FlushW, .InstrM(InstrM[31:15]), 
-    .PrivilegedM, .IllegalIEUFPUInstrM, .IllegalCSRAccessM, 
+    .PrivilegedM, .IllegalIEUFPUInstrM, .IllegalCSRAccessM, .ForceBreakPoint,
     .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .IllegalInstrFaultM, 
-    .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .RetM, .wfiM, .wfiW, .sfencevmaM);
+    .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .RetM, .wfiM, .wfiW, .sfencevmaM, .ebreakM);
 
   // Control and Status Registers
   csr #(P) csr(.clk, .reset, .FlushM, .FlushW, .StallE, .StallM, .StallW,
@@ -137,9 +156,9 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
     .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
-    .BPDirPredWrongM, .BTAWrongM, .RASPredPCWrongM, .BPWrongM,
+    .BPDirWrongM, .BTAWrongM, .RASPredPCWrongM, .BPWrongM,
     .sfencevmaM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
-    .IClassWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
+    .IClassWrongM, .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
     .NextPrivilegeModeM, .PrivilegeModeW, .CauseM, .SelHPTW,
     .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,
     .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TW, .STATUS_FS,
@@ -147,7 +166,9 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .SATP_REGW, .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
     .SetFflagsM, .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE,
     .EPCM, .TrapVectorM,
-    .CSRReadValW, .IllegalCSRAccessM, .BigEndianM);
+    .CSRReadValW, .IllegalCSRAccessM, .BigEndianM,
+    .DebugMode, .DebugCause, .ebreakEn, .Step, .DPC, .DCall, .DRet, .ExecProgBuf,
+    .DebugSel, .DebugRegAddr, .DebugCapture, .DebugRegUpdate, .DebugScanEn, .DebugScanIn, .DebugScanOut);
 
   // pipeline early-arriving trap sources
   privpiperegs ppr(.clk, .reset, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
@@ -161,6 +182,6 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .LoadAccessFaultM, .StoreAmoAccessFaultM, .EcallFaultM, .InstrPageFaultM,
     .LoadPageFaultM, .StoreAmoPageFaultM, .PrivilegeModeW, 
     .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .STATUS_MIE, .STATUS_SIE,
-    .InstrValidM, .CommittedM, .CommittedF,
+    .InstrValidM, .CommittedM, .CommittedF, .DebugMode,
     .TrapM, .wfiM, .wfiW, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM);
 endmodule

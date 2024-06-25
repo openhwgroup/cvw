@@ -194,7 +194,7 @@ def create_vectors(my_config):
                 # get answer from Ref...signature
                 # answers span two lines and are reversed
                 answer = src_file2.readline().strip()
-                print(f"Answer: {answer}")
+                # print(f"Answer: {answer}")
                 #print(answer1,answer2)
                 if not (answer == "6f5ca309"): # if there is still stuff to read
                     # parse through .S file
@@ -239,9 +239,9 @@ def create_vectors(my_config):
             while reading:
                 # get answer and flags from Ref...signature
                 answer = src_file2.readline()
-                print(answer)
+                #print(answer)
                 packed = src_file2.readline()[6:]
-                print("Packed: ", packed)
+                #print("Packed: ", packed)
                 if len(packed.strip())>0: # if there is still stuff to read
                     # print("packed")
                     # parse through .S file

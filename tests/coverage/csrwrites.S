@@ -38,8 +38,8 @@ main:
     csrrw t1, menvcfg, t0
     csrrw t2, senvcfg, t0
 
-    # testing FIOM with different privelege modes
-    # setting environment config (to both 1 and 0) in each privelege mode
+    # testing FIOM with different privilege modes
+    # setting environment config (to both 1 and 0) in each privilege mode
     csrsi menvcfg, 1
     li a0, 1
     ecall               # enter supervisor mode

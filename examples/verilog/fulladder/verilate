@@ -1,5 +1,3 @@
-#verilator --timescale "1ns/1ns" --timing -cc --exe --build --top-module testbench fulladder.sv
-#verilator --timescale "1ns/1ns" --timing -cc --exe --top-module testbench fulladder.sv
-#verilator --binary --top-module testbench fulladder.sv
-verilator --timescale "1ns/1ns" --timing --binary --top-module testbench fulladder.sv
+verilator --binary --top-module testbench --trace fulladder.sv
+obj_dir/Vtestbench
 

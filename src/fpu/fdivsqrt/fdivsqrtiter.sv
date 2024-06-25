@@ -6,7 +6,7 @@
 //
 // Purpose: k stages of divsqrt logic, plus registers
 // 
-// Documentation: RISC-V System on Chip Design Chapter 13
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -35,7 +35,6 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.DIVb+3:0] X, D,                  // Q4.DIVb
   output logic [P.DIVb:0]   FirstU, FirstUM,       // U1.DIVb
   output logic [P.DIVb+1:0] FirstC,                // Q2.DIVb
-  output logic              Firstun,
   output logic [P.DIVb+3:0] FirstWS, FirstWC       // Q4.DIVb
 );
 
@@ -44,7 +43,7 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
   logic [P.DIVb+3:0]      WCNext[P.DIVCOPIES-1:0]; // Q4.DIVb
   logic [P.DIVb+3:0]      WS[P.DIVCOPIES:0];       // Q4.DIVb
   logic [P.DIVb+3:0]      WC[P.DIVCOPIES:0];       // Q4.DIVb
-  logic [P.DIVb:0]        U[P.DIVCOPIES:0];        // U1.DIVb // *** probably Q not U.  See Table 16.26 notes
+  logic [P.DIVb:0]        U[P.DIVCOPIES:0];        // U1.DIVb
   logic [P.DIVb:0]        UM[P.DIVCOPIES:0];       // U1.DIVb
   logic [P.DIVb:0]        UNext[P.DIVCOPIES-1:0];  // U1.DIVb
   logic [P.DIVb:0]        UMNext[P.DIVCOPIES-1:0]; // U1.DIVb
@@ -81,7 +80,7 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
 
   // C register/initialization mux: C = -R:
   // C = -4 = 00.000000... (in Q2.DIVb) for radix 4, C = -2 = 10.000000... for radix2
-  if(P.RADIX == 4) assign initC = 0;
+  if(P.RADIX == 4) assign initC = '0;
   else             assign initC = {2'b10, {{P.DIVb{1'b0}}}};
   mux2   #(P.DIVb+2) cmux(C[P.DIVCOPIES], initC, IFDivStartE, NextC); 
   flopen #(P.DIVb+2) creg(clk, FDivBusyE, NextC, C[0]);
@@ -119,6 +118,5 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
   assign FirstU  = U[0];
   assign FirstUM = UM[0];
   assign FirstC  = C[0];
-  assign Firstun = un[0];
 endmodule
 

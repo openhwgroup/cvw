@@ -6,7 +6,7 @@
 //
 // Purpose: Check for good upper address bits in RV64 mode
 // 
-// Documentation: RISC-V System on Chip Design Chapter 8
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -28,10 +28,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module vm64check import cvw::*;  #(parameter cvw_t P) (
-  input  logic [P.SVMODE_BITS-1:0] SATP_MODE,
-  input  logic [P.XLEN-1:0]        VAdr,
-  output logic                    SV39Mode, 
-  output logic                    UpperBitsUnequal
+  input  logic [P.SVMODE_BITS-1:0]  SATP_MODE,
+  input  logic [P.XLEN-1:0]         VAdr,
+  output logic                      SV39Mode, 
+  output logic                      UpperBitsUnequal
 );
 
   if (P.XLEN == 64) begin
@@ -43,7 +43,7 @@ module vm64check import cvw::*;  #(parameter cvw_t P) (
     assign eq_63_47 = &(VAdr[63:47]) | ~|(VAdr[63:47]); 
     assign UpperBitsUnequal = SV39Mode ? ~(eq_63_47 & eq_46_38) : ~eq_63_47;
   end else begin
-    assign SV39Mode = 0;
-    assign UpperBitsUnequal = 0;
+    assign SV39Mode = 1'b0;
+    assign UpperBitsUnequal = 1'b0;
   end
 endmodule

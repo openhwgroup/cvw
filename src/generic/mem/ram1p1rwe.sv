@@ -1,4 +1,5 @@
 ///////////////////////////////////////////
+// ram1p1rwe.sv
 // 1 port sram.
 //
 // Written: avercruysse@hmc.edu (Modified from ram1p1rwbe, by ross1728@gmail.com)
@@ -40,36 +41,35 @@ module ram1p1rwe import cvw::* ; #(parameter USE_SRAM=0, DEPTH=64, WIDTH=44) (
   output logic [WIDTH-1:0]        dout
 );
 
-  bit [WIDTH-1:0]               RAM[DEPTH-1:0];
-
-  // ***************************************************************************
+  //////////////////////////////////////////////////////////////////////////////
   // TRUE SRAM macro
-  // ***************************************************************************
+  //////////////////////////////////////////////////////////////////////////////
   if ((USE_SRAM == 1) & (WIDTH == 128) & (DEPTH == 64)) begin // Cache data subarray
     // 64 x 128-bit SRAM
     ram1p1rwbe_64x128 sram1A (.CLK(clk), .CEB(~ce), .WEB(~we),
       .A(addr), .D(din), 
-      .BWEB(0), .Q(dout));
+      .BWEB('0), .Q(dout));
     
   end else if ((USE_SRAM == 1) & (WIDTH == 44)  & (DEPTH == 64)) begin // RV64 cache tag
     // 64 x 44-bit SRAM
     ram1p1rwbe_64x44 sram1B (.CLK(clk), .CEB(~ce), .WEB(~we),
       .A(addr), .D(din), 
-      .BWEB(0), .Q(dout));
+      .BWEB('0), .Q(dout));
 
   end else if ((USE_SRAM == 1) & (WIDTH == 22)  & (DEPTH == 64)) begin // RV32 cache tag
     // 64 x 22-bit SRAM
     ram1p1rwbe_64x22 sram1 (.CLK(clk), .CEB(~ce), .WEB(~we),
       .A(addr), .D(din), 
-      .BWEB(0), .Q(dout));     
+      .BWEB('0), .Q(dout));     
     
-    // ***************************************************************************
+    //////////////////////////////////////////////////////////////////////////////
     // READ first SRAM model
-    // ***************************************************************************
+    //////////////////////////////////////////////////////////////////////////////
   end else begin: ram
-    // *** Vivado is not implementing this as block ram for some reason.
+    // Vivado is not implementing this as block ram for some reason.
     // The version with byte write enables it correctly infers block ram.
-    integer i;
+
+    bit [WIDTH-1:0]               RAM[DEPTH-1:0];
 
     // Combinational read: register address and read after clock edge
     logic [$clog2(DEPTH)-1:0] addrd;

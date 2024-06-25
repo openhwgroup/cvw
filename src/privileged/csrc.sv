@@ -7,7 +7,7 @@
 // Purpose: Counter CSRs
 //          See RISC-V Privileged Mode Specification 20190608 3.1.10-11
 // 
-// Documentation: RISC-V System on Chip Design Chapter 5
+// Documentation: RISC-V System on Chip Design
 //    MHPMEVENT is not supported
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
@@ -35,12 +35,12 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   input  logic              FlushM, 
   input  logic              InstrValidNotFlushedM, LoadStallD, StoreStallD,
   input  logic              CSRMWriteM, CSRWriteM,
-  input  logic              BPDirPredWrongM,
+  input  logic              BPDirWrongM,
   input  logic              BTAWrongM,
   input  logic              RASPredPCWrongM,
   input  logic              IClassWrongM,
   input  logic              BPWrongM,                                  // branch predictor is wrong
-  input  logic [3:0]        InstrClassM,
+  input  logic [3:0]        IClassM,
   input  logic              DCacheMiss,
   input  logic              DCacheAccess,
   input  logic              ICacheMiss,
@@ -95,34 +95,36 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   assign CounterEvent[1]    = 1'b0;                                                      // Counter 1 doesn't exist
   assign CounterEvent[2]    = InstrValidNotFlushedM;                                     // MINSTRET instructions retired
   if (P.ZIHPM_SUPPORTED) begin: cevent                                                   // User-defined counters
-    assign CounterEvent[3]  = InstrClassM[0] & InstrValidNotFlushedM;                    // branch instruction
-    assign CounterEvent[4]  = InstrClassM[1] & ~InstrClassM[2] & InstrValidNotFlushedM;  // jump and not return instructions
-    assign CounterEvent[5]  = InstrClassM[2] & InstrValidNotFlushedM;                    // return instructions
+    // Ideally all events would be counted in the M stage, but the pipelining is costly. The counters may
+    // count an event in a previous pipeline stage.
+    assign CounterEvent[3]  = IClassM[0] & InstrValidNotFlushedM;                        // branch instruction
+    assign CounterEvent[4]  = IClassM[1] & ~IClassM[2] & InstrValidNotFlushedM;          // jump and not return instructions
+    assign CounterEvent[5]  = IClassM[2] & InstrValidNotFlushedM;                        // return instructions
     assign CounterEvent[6]  = BPWrongM & InstrValidNotFlushedM;                          // branch predictor wrong
-    assign CounterEvent[7]  = BPDirPredWrongM & InstrValidNotFlushedM;                   // Branch predictor wrong direction
+    assign CounterEvent[7]  = BPDirWrongM & InstrValidNotFlushedM;                       // Branch predictor wrong direction
     assign CounterEvent[8]  = BTAWrongM & InstrValidNotFlushedM;                         // branch predictor wrong target
     assign CounterEvent[9]  = RASPredPCWrongM & InstrValidNotFlushedM;                   // return address stack wrong address
     assign CounterEvent[10] = IClassWrongM & InstrValidNotFlushedM;                      // instruction class predictor wrong
     assign CounterEvent[11] = LoadStallM;                                                // Load Stalls. don't want to suppress on flush as this only happens if flushed.
-    assign CounterEvent[12] = StoreStallM;                                               // depricated Store Stall
+    assign CounterEvent[12] = StoreStallM;                                               // Store Stall
     assign CounterEvent[13] = DCacheAccess;                                              // data cache access
     assign CounterEvent[14] = DCacheMiss;                                                // data cache miss. Miss asserted 1 cycle at start of cache miss
-    assign CounterEvent[15] = DCacheStallM;                                              // d cache miss cycles
+    assign CounterEvent[15] = DCacheStallM;                                              // D$ miss cycles
     assign CounterEvent[16] = ICacheAccess;                                              // instruction cache access
     assign CounterEvent[17] = ICacheMiss;                                                // instruction cache miss. Miss asserted 1 cycle at start of cache miss
-    assign CounterEvent[18] = ICacheStallF;                                              // i cache miss cycles
+    assign CounterEvent[18] = ICacheStallF;                                              // I$ miss cycles
     assign CounterEvent[19] = CSRWriteM & InstrValidNotFlushedM;                         // CSR writes
     assign CounterEvent[20] = InvalidateICacheM & InstrValidNotFlushedM;                 // fence.i
     assign CounterEvent[21] = sfencevmaM & InstrValidNotFlushedM;                        // sfence.vma
     assign CounterEvent[22] = InterruptM;                                                // interrupt, InstrValidNotFlushedM will be low
     assign CounterEvent[23] = ExceptionM;                                                // exceptions, InstrValidNotFlushedM will be low
     // coverage off
-    // DivBusyE will never be assert high since this configuration uses the FPU to do integer division
-    assign CounterEvent[24] = DivBusyE | FDivBusyE;                                      // division cycles *** RT: might need to be delay until the next cycle
+    // DivBusyE will never be asserted high because the RV64GC configuration uses the FPU to do integer division
+    assign CounterEvent[24] = DivBusyE | FDivBusyE;                                      // division cycles
     // coverage on
-    assign CounterEvent[P.COUNTERS-1:25] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
+    assign CounterEvent[P.COUNTERS-1:25] = '0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
   end else begin: cevent
-    assign CounterEvent[P.COUNTERS-1:3] = 0;
+    assign CounterEvent[P.COUNTERS-1:3] = '0;
   end
   
   // Counter update and write logic
@@ -130,7 +132,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
       assign WriteHPMCOUNTERM[i] = CSRMWriteM & (CSRAdrM == MHPMCOUNTERBASE + i);
       assign NextHPMCOUNTERM[i][P.XLEN-1:0] = WriteHPMCOUNTERM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][P.XLEN-1:0];
       always_ff @(posedge clk) //, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
-        if (reset) HPMCOUNTER_REGW[i][P.XLEN-1:0] <= 0;
+        if (reset) HPMCOUNTER_REGW[i][P.XLEN-1:0] <= '0;
         else       HPMCOUNTER_REGW[i][P.XLEN-1:0] <= NextHPMCOUNTERM[i];
 
       if (P.XLEN==32) begin // write high and low separately
@@ -140,10 +142,11 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
         assign WriteHPMCOUNTERHM[i] = CSRMWriteM & (CSRAdrM == MHPMCOUNTERHBASE + i);
         assign NextHPMCOUNTERHM[i] = WriteHPMCOUNTERHM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][63:32];
         always_ff @(posedge clk) //, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
-            if (reset) HPMCOUNTERH_REGW[i][P.XLEN-1:0] <= 0;
+            if (reset) HPMCOUNTERH_REGW[i][P.XLEN-1:0] <= '0;
             else       HPMCOUNTERH_REGW[i][P.XLEN-1:0] <= NextHPMCOUNTERHM[i];
       end else begin // XLEN=64; write entire register
           assign HPMCOUNTERPlusM[i] = HPMCOUNTER_REGW[i] + {63'b0, CounterEvent[i] & ~MCOUNTINHIBIT_REGW[i]};
+          assign HPMCOUNTERH_REGW[i] = '0; // disregard for RV64
       end
   end
 
@@ -152,7 +155,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   always_comb 
     if (PrivilegeModeW == P.M_MODE | 
         MCOUNTEREN_REGW[CounterNumM] & (!P.S_SUPPORTED | PrivilegeModeW == P.S_MODE | SCOUNTEREN_REGW[CounterNumM])) begin
-      IllegalCSRCAccessM = 0;
+      IllegalCSRCAccessM = 1'b0;
       if (P.XLEN==64) begin // 64-bit counter reads
         // Veri lator doesn't realize this only occurs for XLEN=64
         /* verilator lint_off WIDTH */  
@@ -163,8 +166,8 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
         else if (CSRAdrM >= HPMCOUNTERBASE  & CSRAdrM  < HPMCOUNTERBASE+P.COUNTERS)  
                  CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
         else begin
-            CSRCReadValM = 0;
-            IllegalCSRCAccessM = 1;  // requested CSR doesn't exist
+            CSRCReadValM = '0;
+            IllegalCSRCAccessM = 1'b1;  // requested CSR doesn't exist
         end
       end else begin // 32-bit counter reads
         // Veril ator doesn't realize this only occurs for XLEN=32
@@ -181,13 +184,13 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
         else if (CSRAdrM >= HPMCOUNTERHBASE  & CSRAdrM < HPMCOUNTERHBASE+P.COUNTERS)   
                  CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
         else begin
-          CSRCReadValM = 0;
-          IllegalCSRCAccessM = 1; // requested CSR doesn't exist
+          CSRCReadValM = '0;
+          IllegalCSRCAccessM = 1'b1; // requested CSR doesn't exist
         end            
       end
     end else begin 
-      CSRCReadValM = 0;
-      IllegalCSRCAccessM = 1; // no privileges for this csr
+      CSRCReadValM = '0;
+      IllegalCSRCAccessM = 1'b1; // no privileges for this csr
     end
 endmodule
 

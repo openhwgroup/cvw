@@ -64,7 +64,7 @@ coverage exclude -scope /dut/core/fpu/fpu/postprocess/cvtshiftcalc -linerange [G
 # This is cleaner than trying to set an I$-specific pragma in cachefsm.sv (which would exclude it for the D$ instance too)
 # Also exclude the write line to ready transition for the I$ since we can't get a flush during this operation.
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -fstate CurrState STATE_FLUSH STATE_FLUSH_WRITEBACK STATE_FLUSH_WRITEBACK STATE_WRITEBACK
-coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -ftrans CurrState STATE_WRITE_LINE->STATE_READY STATE_FETCH->STATE_READY
+coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -ftrans CurrState STATE_WRITE_LINE->STATE_ACCESS STATE_FETCH->STATE_ACCESS
 # exclude unused transitions from case statement. Unfortunately the whole branch needs to be excluded I think. Expression coverage should still work.
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ${SRC}/cache/cachefsm.sv "exclusion-tag: icache state-case"] -item b 1
 # I$ does not flush
@@ -151,7 +151,7 @@ for {set i 0} {$i < $numcacheways} {incr i} {
 # Not right; other ways can get flushed and dirtied simultaneously    coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/CacheWays[$i] -linerange [GetLineNum ${SRC}/cache/cacheway.sv "exclusion-tag: cache UpdateDirty"] -item c 1 -feccondrow 6
 }
 # D$ writeback, flush, write_line, or flush_writeback states can't be cancelled by a flush
-coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -ftrans CurrState STATE_WRITEBACK->STATE_READY STATE_FLUSH->STATE_READY STATE_WRITE_LINE->STATE_READY STATE_FLUSH_WRITEBACK->STATE_READY 
+coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -ftrans CurrState STATE_WRITEBACK->STATE_ACCESS STATE_FLUSH->STATE_ACCESS STATE_WRITE_LINE->STATE_ACCESS STATE_FLUSH_WRITEBACK->STATE_ACCESS 
 
 ####################
 # Unused / illegal peripheral accesses

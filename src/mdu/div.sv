@@ -6,7 +6,7 @@
 //
 // Purpose: Restoring integer division using a shift register and subtractor
 // 
-// Documentation: RISC-V System on Chip Design Chapter 12 (Figure 12.19)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

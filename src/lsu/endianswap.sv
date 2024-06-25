@@ -7,7 +7,7 @@
 //
 // Purpose: Swap byte order for Big-Endian accesses
 // 
-// Documentation: RISC-V System on Chip Design Chapter 5 (Figure 5.9)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

@@ -7,7 +7,7 @@
 // Purpose: Implementation of bit pseudo least-recently-used algorithm for
 //          cache evictions. Outputs the index of the next entry to be written.
 // 
-// Documentation: RISC-V System on Chip Design Chapter 8
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -31,7 +31,6 @@
 module tlblru #(parameter TLB_ENTRIES = 8) (
   input  logic                    clk, reset,
   input  logic                    TLBWrite,
-  input  logic                    TLBFlush,
   input  logic [TLB_ENTRIES-1:0]  Matches,
   input  logic                    TLBHit,
   output logic [TLB_ENTRIES-1:0]  WriteEnables

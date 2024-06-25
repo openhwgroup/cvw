@@ -2,6 +2,7 @@
 // ahbxuiconverter.sv
 //
 // Written: infinitymdm@gmail.com 29 February 2024
+// Modified: infinitymdm@gmail.com 02 April 2024
 //
 // Purpose: AHB to Xilinx UI converter
 // 
@@ -26,8 +27,12 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module ahbxuiconverter #(parameter ADDR_SIZE = 31,
-                         parameter DATA_SIZE = 64) (
+module ahbxuiconverter 
+#(
+  parameter ADDR_SIZE = 31,
+  parameter DATA_SIZE = 64,
+  parameter BURST_LEN = 8
+) (
   // AHB signals
   input  logic                   HCLK,
   input  logic                   HRESETn,
@@ -37,6 +42,7 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
   input  logic [DATA_SIZE/8-1:0] HWSTRB,
   input  logic                   HWRITE,
   input  logic [1:0]             HTRANS,
+  input  logic [2:0]             HBURST,
   input  logic                   HREADY,
   output logic [DATA_SIZE-1:0]   HRDATA,
   output logic                   HRESP,
@@ -46,7 +52,7 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
   output logic                   sys_reset,
   input  logic                   ui_clk, // from PLL
   input  logic                   ui_clk_sync_rst,
-  output logic [ADDR_SIZE-1:0]   app_addr, // Double check this width
+  output logic [ADDR_SIZE-1:0]   app_addr,
   output logic [2:0]             app_cmd,
   output logic                   app_en,
   input  logic                   app_rdy,
@@ -61,54 +67,124 @@ module ahbxuiconverter #(parameter ADDR_SIZE = 31,
   input  logic                   init_calib_complete
 );
 
+  localparam BURST_CNTR_SIZE = $clog2(BURST_LEN);
+  localparam MASK_SIZE = DATA_SIZE >> 3;
+  localparam OP_SIZE = 1 + ADDR_SIZE-4 + DATA_SIZE + MASK_SIZE; // wren + addr (minus last nibble) + data + mask
+
+  logic [ADDR_SIZE-1:0]       addr;
+  logic                       ahb_wren;
+  logic [ADDR_SIZE-1:4]       ahb_addr;
+  logic [1:0]                 ahb_burst;
+  
+  logic                       op_ready;
+  logic                       new_addr;
+  logic                       new_burst;
+  logic                       record_op;
+  logic                       select_recorded_op;
+  logic                       mask_write;
+  logic                       drop_resp;
+  
+  logic [OP_SIZE-1:0]         op;
+  logic [OP_SIZE-1:0]         recorded_op;
+  logic                       capture_op;
+  logic [OP_SIZE-1:MASK_SIZE] selected_op;
+  logic [MASK_SIZE-1:0]       mask;
+  logic [MASK_SIZE-1:0]       selected_mask;
+
+  logic                       cmd_w_full;
+  logic                       cmd_r_valid;
+  logic                       cmd_enq;
+  logic                       cmd_deq;
+
+  logic                       ui_initialized;
+  logic                       write;
+
+  logic                       resp_w_full;
+  logic                       resp_r_valid;
+  logic                       resp_enq;
+  logic                       resp_deq;
+
   assign sys_reset = ~HRESETn;
 
-  // Enable this peripheral when:
-  // a) selected, AND
-  // b) a transfer is started, AND
-  // c) the bus is ready
-  logic ahbEnable;
-  assign ahbEnable = HSEL & HTRANS[1] & HREADY;
+  // Wally uses byte addressing, but DDR gives us 32 bits per address
+  // Compensate for this with a bit of address translation - just divide by 4
+  assign addr = HADDR >> 2;
 
-  // UI is ready for a command when initialized and ready to read and write
-  logic uiReady;
-  assign uiReady = app_rdy & app_wdf_rdy & init_calib_complete;
-
-  // Buffer the input down to ui_clk speed
-  logic [ADDR_SIZE-1:0]   addr;
-  logic [DATA_SIZE-1:0]   data;
-  logic [DATA_SIZE/8-1:0] mask;
-  logic                   cmdEnable, cmdWrite;
-  logic                   cmdwfull, cmdrempty;
-  // FIFO needs addr + (data + mask) + (enable + write)
-  fifo #(ADDR_SIZE + 9*DATA_SIZE/8 + 2, 32) cmdfifo (
-    .wdata({HADDR, HWDATA, HWSTRB, ahbEnable, HWRITE}),
-    .winc(ahbEnable), .wclk(HCLK), .wrst_n(HRESETn),
-    .rinc(uiReady), .rclk(ui_clk), .rrst_n(~ui_clk_sync_rst),
-    .rdata({addr, data, mask, cmdEnable, cmdWrite}),
-    .wfull(cmdwfull), .rempty(cmdrempty)
+  // We use an FSM to line up AHB commands into bursts for the UI
+  assign op_ready = HSEL & HTRANS[1] & HREADY;
+  assign new_addr = ~(ahb_addr == addr[ADDR_SIZE-1:4]);
+  assign new_burst = ~(ahb_burst == HBURST);
+  ahbburstctrl #(BURST_LEN) ahbctrl (
+    .clk(HCLK), .reset(~HRESETn),
+    .op_ready, .cmd_full(cmd_w_full),
+    .new_addr, .word_addr(addr[3:0]),
+    .write(HWRITE), .new_burst,
+    .resp_valid(resp_r_valid),
+    .capture_op, .record_op,
+    .select_recorded_op, .mask_write,
+    .issue_op(cmd_enq), .drop_resp,
+    .readyout(HREADYOUT)
   );
 
-  // Delay transactions 1 clk so we can set wren on the cycle after write commands
-  flopen  #(ADDR_SIZE)   addrreg  (ui_clk, uiReady, addr, app_addr);
-  flopenr #(3)           cmdreg   (ui_clk, ui_clk_sync_rst, uiReady, {2'b0, ~cmdWrite}, app_cmd);
-  flopenr #(1)           cmdenreg (ui_clk, ui_clk_sync_rst, uiReady, cmdEnable, app_en);
-  flopenr #(1)           wrenreg  (ui_clk, ui_clk_sync_rst, uiReady, ~app_cmd[0], app_wdf_wren);
-  flopenr #(DATA_SIZE)   datareg  (ui_clk, ui_clk_sync_rst, uiReady, data, app_wdf_data);
-  flopenr #(DATA_SIZE/8) maskreg  (ui_clk, ui_clk_sync_rst, uiReady, mask, app_wdf_mask);
-  assign app_wdf_end = app_wdf_wren; // Since AHB will always put data on the bus after a write cmd, this is always valid
-  
-  // Return read data at HCLK speed TODO: Double check that rinc is correct
-  logic respwfull, resprempty;
-  fifo #(DATA_SIZE, 16) respfifo (
-    .wdata(app_rd_data),
-    .winc(app_rd_data_valid), .wclk(ui_clk), .wrst_n(~ui_clk_sync_rst),
-    .rinc(ahbEnable), .rclk(HCLK), .rrst_n(HRESETn),
-    .rdata(HRDATA),
-    .wfull(respwfull), .rempty(resprempty)
+  // Delay AHB address phase signals. Only capture if indicated by control logic
+  flopenr #(1)           ahbwrenreg (HCLK, ~HRESETn, capture_op, HWRITE,              ahb_wren);
+  flopenr #(ADDR_SIZE-4) ahbaddrreg (HCLK, ~HRESETn, capture_op, addr[ADDR_SIZE-1:4], ahb_addr); // The last nibble to UI will always be 'h0, so no need to store it
+  flopenr #(2)           ahbbrstreg (HCLK, ~HRESETn, capture_op, HBURST[2:1],         ahb_burst);
+  assign op = {ahb_wren, ahb_addr, HWDATA, ~HWSTRB};
+
+  // Store a previously captured op for later if requested by control logic
+  flopenr #(OP_SIZE) recordedopreg (HCLK, ~HRESETn, record_op, op, recorded_op);
+
+  // Select signals according to control logic
+  mux2 #(OP_SIZE)   opselect   (op,   recorded_op,       select_recorded_op, {selected_op, mask});
+  mux2 #(MASK_SIZE) maskselect (mask, {MASK_SIZE{1'b1}}, mask_write,         selected_mask);
+
+  // Buffer input down to ui_clk speed
+  bsg_async_fifo #(
+    .width_p(OP_SIZE),
+    .lg_size_p(5),
+    .and_data_with_valid_p(1)
+  ) cmdfifo (
+    .w_data_i({selected_op, selected_mask}),
+    .w_enq_i(cmd_enq), .w_clk_i(HCLK), .w_reset_i(~HRESETn),
+    .r_deq_i(cmd_deq), .r_clk_i(ui_clk), .r_reset_i(ui_clk_sync_rst),
+    .r_data_o({write, app_addr[ADDR_SIZE-1:4], app_wdf_data, app_wdf_mask}),
+    .w_full_o(cmd_w_full), .r_valid_o(cmd_r_valid)
   );
-  
-  assign HRESP = 0; // do not indicate errors
-  assign HREADYOUT = uiReady & ~cmdwfull; // TODO: Double check
+  assign app_addr[3:0] = 4'b0;
+
+  // Synchronize ui init flag
+  flopr #(1) initreg (ui_clk, sys_reset, init_calib_complete, ui_initialized);
+
+  // Use an FSM to issue UI bursts
+  uiburstctrl #(BURST_LEN) uictrl (
+    .clk(ui_clk), .reset(ui_clk_sync_rst),
+    .ui_initialized, .app_rdy, .app_wdf_rdy,
+    .write, .op_ready(cmd_r_valid),
+    .app_en, .app_cmd0(app_cmd[0]), .app_wdf_wren, .app_wdf_end,
+    .dequeue_op(cmd_deq)
+  );
+  assign app_cmd[2:1] = {2'b0};
+
+  // Return read data at HCLK speed
+  // There is no mechanism to stall the UI in the event that the FIFO is full during a read burst,
+  // so we need to ensure that never occurs. In theory, since the FSM in ahbburstctrl ensures we
+  // never issue a command while a read is in progress, we should never have the read FIFO fill up.
+  assign resp_enq = app_rd_data_valid & ~resp_w_full;
+  assign resp_deq = (HSEL & resp_r_valid) | drop_resp;
+  bsg_async_fifo #(
+    .width_p(DATA_SIZE),
+    .lg_size_p(4),
+    .and_data_with_valid_p(1)
+  ) respfifo (
+    .w_data_i(app_rd_data),
+    .w_enq_i(resp_enq), .w_clk_i(ui_clk), .w_reset_i(ui_clk_sync_rst),
+    .r_deq_i(resp_deq), .r_clk_i(HCLK), .r_reset_i(~HRESETn),
+    .r_data_o(HRDATA),
+    .w_full_o(resp_w_full), .r_valid_o(resp_r_valid)
+  );
+
+  // do not indicate errors
+  assign HRESP = 0;
 
 endmodule

@@ -24,20 +24,15 @@ localparam SV39 = 4'd8;
 localparam SV48 = 4'd9;
 
 // macros to define supported modes
-localparam A_SUPPORTED = ((MISA >> 0) % 2 == 1);
-localparam B_SUPPORTED = ((ZBA_SUPPORTED | ZBB_SUPPORTED | ZBC_SUPPORTED | ZBS_SUPPORTED));// not based on MISA
-localparam C_SUPPORTED = ((MISA >> 2) % 2 == 1);
-localparam COMPRESSED_SUPPORTED = C_SUPPORTED | ZCA_SUPPORTED;
-localparam D_SUPPORTED = ((MISA >> 3) % 2 == 1);
-localparam E_SUPPORTED = ((MISA >> 4) % 2 == 1);
-localparam F_SUPPORTED = ((MISA >> 5) % 2 == 1);
-localparam I_SUPPORTED = ((MISA >> 8) % 2 == 1);
-localparam K_SUPPORTED = ((ZBKB_SUPPORTED | ZBKC_SUPPORTED | ZBKX_SUPPORTED | ZKND_SUPPORTED | ZKNE_SUPPORTED | ZKNH_SUPPORTED));
-localparam M_SUPPORTED = ((MISA >> 12) % 2 == 1);
-localparam Q_SUPPORTED = ((MISA >> 16) % 2 == 1);
-localparam S_SUPPORTED = ((MISA >> 18) % 2 == 1);
-localparam U_SUPPORTED = ((MISA >> 20) % 2 == 1);
-// N-mode user-level interrupts are depricated per Andrew Waterman 1/13/21
+localparam logic I_SUPPORTED = (!E_SUPPORTED);
+localparam logic A_SUPPORTED = (ZAAMO_SUPPORTED & ZALRSC_SUPPORTED);
+localparam logic B_SUPPORTED = ((ZBA_SUPPORTED & ZBB_SUPPORTED & ZBS_SUPPORTED));
+localparam logic C_SUPPORTED = ZCA_SUPPORTED & (D_SUPPORTED ? ZCD_SUPPORTED : 1) & (F_SUPPORTED ? ((XLEN == 32) ? ZCF_SUPPORTED : 1) : 1);
+localparam logic ZKN_SUPPORTED = (ZBKB_SUPPORTED & ZBKC_SUPPORTED & ZBKX_SUPPORTED & ZKND_SUPPORTED & ZKNE_SUPPORTED & ZKNH_SUPPORTED);
+
+// Configure MISA based on supported extensions
+localparam MISA = {6'b0, 5'b0, U_SUPPORTED, 1'b0, S_SUPPORTED, 1'b0, Q_SUPPORTED, 3'b0, M_SUPPORTED, 3'b0, I_SUPPORTED, 2'b0, 
+                   F_SUPPORTED, E_SUPPORTED, D_SUPPORTED, C_SUPPORTED, B_SUPPORTED, A_SUPPORTED};
 
 // logarithm of XLEN, used for number of index bits to select
 localparam LOG_XLEN = (XLEN == 32 ? 32'd5 : 32'd6);
@@ -75,6 +70,7 @@ localparam NE   = Q_SUPPORTED ? Q_NE   : D_SUPPORTED ? D_NE   : S_NE;
 localparam NF   = Q_SUPPORTED ? Q_NF   : D_SUPPORTED ? D_NF   : S_NF;
 localparam FMT  = Q_SUPPORTED ? 2'd3   : D_SUPPORTED ? 2'd1   : 2'd0;
 localparam BIAS = Q_SUPPORTED ? Q_BIAS : D_SUPPORTED ? D_BIAS : S_BIAS;
+localparam LOGFLEN = $clog2(FLEN);
 
 // Floating point constants needed for FPU paramerterization
 // LEN1/NE1/NF1/FNT1 is the size of the second longest supported format
@@ -99,7 +95,6 @@ localparam RK          = LOGR*DIVCOPIES;                            // r*k bits 
 
 // intermediate division parameters not directly used in fdivsqrt hardware
 localparam FPDIVMINb   = NF + 2; // minimum length of fractional part: Nf result bits + guard and round bits + 1 extra bit to allow sqrt being shifted right
-//localparam FPDIVMINb   = NF + 2 + (RADIX == 2); // minimum length of fractional part: Nf result bits + guard and round bits + 1 extra bit for preshifting radix2 square root right, if radix4 doesn't use a right shift.  This version saves one cycle on double-precision with R=4,k=4.  However, it doesn't work yet because C is too short, so k is incorrectly calculated as a 1 in the lsb after the last step.
 localparam DIVMINb     = ((FPDIVMINb<XLEN) & IDIV_ON_FPU) ? XLEN : FPDIVMINb; // minimum fractional bits b = max(XLEN, FPDIVMINb)
 localparam RESBITS     = DIVMINb + LOGR; // number of bits in a result: r integer + b fractional
 
@@ -111,13 +106,17 @@ localparam DIVBLEN     = $clog2(DIVb+1);                            // enough bi
 
 // largest length in IEU/FPU
 localparam BASECVTLEN = `max(XLEN, NF); // convert length excluding Zfa fcvtmod.w.d
-localparam CVTLEN = ZFA_SUPPORTED ? `max(BASECVTLEN, 32'd84) : BASECVTLEN; // fcvtmod.w.d needs at least 32+52 because a double with 52 fractional bits might be into upper bits of 32 bit word
+localparam CVTLEN = (ZFA_SUPPORTED & D_SUPPORTED) ? `max(BASECVTLEN, 32'd84) : BASECVTLEN; // fcvtmod.w.d needs at least 32+52 because a double with 52 fractional bits might be into upper bits of 32 bit word
 localparam LLEN = `max($unsigned(FLEN), $unsigned(XLEN));
 localparam LOGCVTLEN = $unsigned($clog2(CVTLEN+1));
-localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1), (DIVb + 1 + NF + 1)), (3*NF+6));
-localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));
-localparam CORRSHIFTSZ = `max((NORMSHIFTSZ-2), (DIVMINb + 1 + NF));
 
+// size of FMA output in U(NF+4).(3NF+2) format
+localparam FMALEN = 3*NF + 6;
+
+// NORMSHIFTSIZE is the bits out of the normalization shifter
+localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1), (DIVb + 1 + NF + 1)), (FMALEN + 2));
+
+localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));                  // log_2(NORMSHIFTSZ)
 
 // Disable spurious Verilator warnings
 

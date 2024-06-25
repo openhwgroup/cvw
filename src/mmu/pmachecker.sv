@@ -8,7 +8,7 @@
 //          the memory region accessed.
 //          Can report illegal accesses to the trap unit and cause a fault.
 // 
-// Documentation: RISC-V System on Chip Design Chapter 8
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -38,7 +38,7 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
   input  logic                 WriteAccessM,   // Write access 
   input  logic                 ReadAccessM,    // Read access
   input  logic [1:0]           PBMemoryType,     // PBMT field of PTE during TLB hit, or 00 otherwise
-  output logic                 Cacheable, Idempotent, SelTIM,
+  output logic                 Cacheable, Idempotent, SelTIM, SelProgBuf,
   output logic                 PMAInstrAccessFaultF,
   output logic                 PMALoadAccessFaultM,
   output logic                 PMAStoreAmoAccessFaultM
@@ -46,7 +46,7 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
 
   logic                        PMAAccessFault;
   logic                        AccessRW, AccessRWXC, AccessRX;
-  logic [11:0]                 SelRegions;
+  logic [14:0]                 SelRegions;
   logic                        AtomicAllowed;
   logic                        CacheableRegion, IdempotentRegion;
 
@@ -60,7 +60,7 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
 
   // Only non-core RAM/ROM memory regions are cacheable. PBMT can override cachable; NC and IO are uncachable
   assign CacheableRegion = SelRegions[3] | SelRegions[4] | SelRegions[5];  // exclusion-tag: unused-cachable
-  assign Cacheable = (PBMemoryType == 2'b00) ? CacheableRegion : 0;  
+  assign Cacheable = (PBMemoryType == 2'b00) ? CacheableRegion : 1'b0;  
 
   // Nonidemdempotent means access could have side effect and must not be done speculatively or redundantly
   // I/O is nonidempotent.  PBMT can override PMA; NC is idempotent and IO is non-idempotent
@@ -71,6 +71,9 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
   assign AtomicAllowed = SelRegions[1] | SelRegions[3] | SelRegions[5]; // exclusion-tag: unused-atomic
   // Check if tightly integrated memories are selected
   assign SelTIM = SelRegions[1] | SelRegions[2]; // exclusion-tag: unused-tim
+
+  // Debug program buffer
+  assign SelProgBuf = SelRegions[14];
 
   // Detect access faults
   assign PMAAccessFault          = SelRegions[0] & AccessRWXC | AtomicAccessM & ~AtomicAllowed;  

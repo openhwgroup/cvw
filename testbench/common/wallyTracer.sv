@@ -46,7 +46,6 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   logic 						 StallE, StallM, StallW;
   logic 						 FlushD, FlushE, FlushM, FlushW;
   logic 						 TrapM, TrapW;
-  logic 						 IntrF, IntrD, IntrE, IntrM, IntrW;
   logic 						 HaltM, HaltW;
   logic [1:0] 					 PrivilegeModeW;
   logic [P.XLEN-1:0] 			 rf[NUMREGS];
@@ -268,13 +267,6 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   flopenrc #(1)     TrapWReg (clk, reset, 1'b0, ~StallW, TrapM, TrapW);
   flopenrc #(1)     InterruptWReg (clk, reset, 1'b0, ~StallW, InterruptM, InterruptW);
   flopenrc #(1)     HaltWReg (clk, reset, 1'b0, ~StallW, HaltM, HaltW);
-
-  // **** remove?  are these used?
-  flopenrc #(1)     IntrFReg (clk, reset, 1'b0, ~StallF, TrapM, IntrF);
-  flopenrc #(1)     IntrDReg (clk, reset, FlushD, ~StallD, IntrF, IntrD);
-  flopenrc #(1)     IntrEReg (clk, reset, FlushE, ~StallE, IntrD, IntrE);
-  flopenrc #(1)     IntrMReg (clk, reset, FlushM, ~StallM, IntrE, IntrM);
-  flopenrc #(1)     IntrWReg (clk, reset, FlushW, ~StallW, IntrM, IntrW);
 
   flopenrc #(12)    CSRAdrWReg (clk, reset, FlushW, ~StallW, CSRAdrM, CSRAdrW);
   flopenrc #(1)     CSRWriteWReg (clk, reset, FlushW, ~StallW, CSRWriteM, CSRWriteW);

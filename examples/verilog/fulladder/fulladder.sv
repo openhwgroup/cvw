@@ -19,6 +19,8 @@ module testbench();
   // at start of test, load vectors and pulse reset
   initial
     begin
+      $dumpfile("fulladder.vcd");
+      $dumpvars;
       $readmemb("fulladder.tv", testvectors);
       cycle = 0;
       vectornum = 0; errors = 0;
@@ -47,6 +49,7 @@ module testbench();
         $finish;
       end
     end
+
 endmodule
 
 module fulladder(input  logic a, b, c,
