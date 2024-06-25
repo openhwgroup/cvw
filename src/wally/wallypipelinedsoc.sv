@@ -35,23 +35,28 @@ module wallypipelinedsoc
   input  logic                clk, 
   input  logic                reset_ext,        // external asynchronous reset pin
   output logic                reset,            // reset synchronized to clk to prevent races on release
+  // JTAG signals                                                                                                                    
+  input  logic                 tck,
+  input  logic                 tdi,
+  input  logic                 tms,
+  output logic                 tdo,
   // AHB Interface
-  input  logic [P.AHBW-1:0]     HRDATAEXT,
-  input  logic                HREADYEXT, HRESPEXT,
-  output logic                HSELEXT,
-  output logic                HSELEXTSDC, 
+  input  logic [P.AHBW-1:0]    HRDATAEXT,
+  input  logic                 HREADYEXT, HRESPEXT,
+  output logic                 HSELEXT,
+  output logic                 HSELEXTSDC, 
   // outputs to external memory, shared with uncore memory
-  output logic                HCLK, HRESETn,
-  output logic [P.PA_BITS-1:0]  HADDR,
-  output logic [P.AHBW-1:0]     HWDATA,
-  output logic [P.XLEN/8-1:0]   HWSTRB,
-  output logic                HWRITE,
-  output logic [2:0]          HSIZE,
-  output logic [2:0]          HBURST,
-  output logic [3:0]          HPROT,
-  output logic [1:0]          HTRANS,
-  output logic                HMASTLOCK,
-  output logic                HREADY,
+  output logic                 HCLK, HRESETn,
+  output logic [P.PA_BITS-1:0] HADDR,
+  output logic [P.AHBW-1:0]    HWDATA,
+  output logic [P.XLEN/8-1:0]  HWSTRB,
+  output logic                 HWRITE,
+  output logic [2:0]           HSIZE,
+  output logic [2:0]           HBURST,
+  output logic [3:0]           HPROT,
+  output logic [1:0]           HTRANS,
+  output logic                 HMASTLOCK,
+  output logic                 HREADY,
   // I/O Interface
   input  logic                TIMECLK,          // optional for CLINT MTIME counter
   input  logic [31:0]         GPIOIN,           // inputs from GPIO
@@ -97,35 +102,65 @@ module wallypipelinedsoc
 );
 
   // Uncore signals
-  logic [P.AHBW-1:0]          HRDATA;           // from AHB mux in uncore
-  logic                       HRESP;            // response from AHB
-  logic                       MTimerInt, MSwInt;// timer and software interrupts from CLINT
-  logic [63:0]                MTIME_CLINT;      // from CLINT to CSRs
-  logic                       MExtInt,SExtInt;  // from PLIC
+  logic [P.AHBW-1:0]           HRDATA;            // from AHB mux in uncore
+  logic                        HRESP;             // response from AHB
+  logic                        MTimerInt, MSwInt; // timer and software interrupts from CLINT
+  logic [63:0]                 MTIME_CLINT;       // from CLINT to CSRs
+  logic                        MExtInt,SExtInt;   // from PLIC
+
+  // Debug Mode control signals
+  logic                        NdmReset;
+  logic                        HaltReq;
+  logic                        ResumeReq;
+  logic                        HaltOnReset;
+  logic                        AckHaveReset;
+  logic                        ResumeAck;
+  logic                        HaveReset;
+  logic                        DebugStall;
+  logic                        ExecProgBuf;
+
+  // Debug Module signals
+  logic                        DebugScanEn;
+  logic                        DebugScanIn;
+  logic                        GPRScanIn;
+  logic                        FPRScanIn;
+  logic                        CSRScanIn;
+  logic                        DebugScanOut;
+  logic                        MiscSel;
+  logic                        GPRSel;
+  logic                        FPRSel;
+  logic                        CSRSel;
+  logic [11:0]                 DebugRegAddr;
+  logic                        DebugCapture;
+  logic                        DebugRegUpdate;
+  logic [P.XLEN-1:0]           ProgBufAddr;
+  logic                        ProgBuffScanEn;
 
   // synchronize reset to SOC clock domain
-  synchronizer resetsync(.clk, .d(reset_ext), .q(reset)); 
+  synchronizer resetsync(.clk, .d(reset_ext), .q(reset));
    
   // instantiate processor and internal memories
-  wallypipelinedcore #(P) core(.clk, .reset,
-    .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
-    .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
-    .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK
-   );
+  wallypipelinedcore #(P) core (
+    .clk, .reset(reset || NdmReset), .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
+    .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST,
+    .HPROT, .HTRANS, .HMASTLOCK, .HaltReq, .ResumeReq, .HaltOnReset, .AckHaveReset, .ResumeAck,
+    .HaveReset, .DebugStall, .ExecProgBuf, .DebugScanEn, .DebugScanOut(DebugScanIn),
+    .GPRScanOut(GPRScanIn), .FPRScanOut(FPRScanIn), .CSRScanOut(CSRScanIn),
+    .DebugScanIn(DebugScanOut), .MiscSel, .GPRSel, .FPRSel, .CSRSel, .DebugRegAddr, .DebugCapture,
+    .DebugRegUpdate, .ProgBufAddr, .ProgBuffScanEn
+  );
 
   // instantiate uncore if a bus interface exists
   if (P.BUS_SUPPORTED) begin : uncoregen // Hack to work around Verilator bug https://github.com/verilator/verilator/issues/4769
     uncore #(P) uncore (
-      .HCLK, .HRESETn, .TIMECLK,
-      .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
-      .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT, .HSELEXTSDC,
-      .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOIN, .GPIOOUT, .GPIOEN, .UARTSin, 
-      .UARTSout, .MTIME_CLINT, .SDCIntr, .SPIIn, .SPIOut, .SPICS,
-      .ui_clk, .dmc_trefi, .dmc_tmrd, .dmc_trfc, .dmc_trc, .dmc_trp, .dmc_tras, .dmc_trrd,
-      .dmc_trcd, .dmc_twr, .dmc_twtr, .dmc_trtp, .dmc_tcas, .dmc_col_width, .dmc_row_width,
-      .dmc_bank_width, .dmc_bank_pos, .dmc_dqs_sel_cal, .dmc_init_cycles, .dmc_config_changed,
-      .PLLrefclk, .PLLrfen, .PLLfben, .PLLclkr, .PLLclkf, .PLLclkod, .PLLbwadj,
-      .PLLtest, .PLLfasten, .PLLlock, .PLLconfigdone
+      .HCLK, .HRESETn, .TIMECLK, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
+      .HTRANS, .HMASTLOCK, .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT,
+      .HSELEXTSDC, .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOIN, .GPIOOUT, .GPIOEN, .UARTSin,
+      .UARTSout, .MTIME_CLINT, .SDCIntr, .SPIIn, .SPIOut, .SPICS, .ui_clk, .dmc_trefi, .dmc_tmrd,
+      .dmc_trfc, .dmc_trc, .dmc_trp, .dmc_tras, .dmc_trrd, .dmc_trcd, .dmc_twr, .dmc_twtr,
+      .dmc_trtp, .dmc_tcas, .dmc_col_width, .dmc_row_width, .dmc_bank_width, .dmc_bank_pos,
+      .dmc_dqs_sel_cal, .dmc_init_cycles, .dmc_config_changed, .PLLrefclk, .PLLrfen, .PLLfben,
+      .PLLclkr, .PLLclkf, .PLLclkod, .PLLbwadj, .PLLtest, .PLLfasten, .PLLlock, .PLLconfigdone
     );
   end else begin
     assign {HRDATA, HREADY, HRESP, HSELEXT, HSELEXTSDC, MTimerInt, MSwInt, MExtInt, SExtInt,
@@ -134,6 +169,21 @@ module wallypipelinedsoc
             dmc_col_width, dmc_row_width, dmc_bank_width, dmc_bank_pos, dmc_dqs_sel_cal,
             dmc_init_cycles, dmc_config_changed, PLLclkr, PLLclkf, PLLclkod, PLLbwadj, PLLtest,
             PLLfasten, PLLconfigdone} = '0;
+  end
+
+  // instantiate debug module
+  if (P.DEBUG_SUPPORTED) begin : dm
+    dm #(P) dm (
+      .clk, .rst(reset), .tck, .tdi, .tms, .tdo, .NdmReset, .HaltReq, .ResumeReq, .HaltOnReset,
+      .AckHaveReset, .ResumeAck, .HaveReset, .DebugStall, .DebugScanEn, .DebugScanIn, .GPRScanIn,
+      .FPRScanIn, .CSRScanIn, .DebugScanOut, .MiscSel, .GPRSel, .FPRSel, .CSRSel,
+      .RegAddr(DebugRegAddr), .DebugCapture, .DebugRegUpdate, .ProgBufAddr, .ProgBuffScanEn,
+      .ExecProgBuf
+    );
+  end else begin
+    assign {tdo, HaltReq, ResumeReq, HaltOnReset, AckHaveReset, DebugScanEn, DebugScanOut, MiscSel,
+            NdmReset, GPRSel, FPRSel, CSRSel, DebugRegAddr, DebugCapture, DebugRegUpdate,
+            ProgBufAddr, ProgBuffScanEn, ExecProgBuf} = '0;
   end
 
 endmodule

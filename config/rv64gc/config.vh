@@ -33,6 +33,9 @@ localparam XLEN = 32'd64;
 // IEEE 754 compliance
 localparam IEEE754 = 0;
 
+// Debug Module implemented                                                                                                          
+localparam logic DEBUG_SUPPORTED = 1'b1;
+
 // RISC-V configuration per specification
 // Base instruction set (defaults to I if E is not supported)
 localparam logic E_SUPPORTED = 0;
@@ -189,6 +192,9 @@ localparam logic [63:0] PLL_CONF_RANGE     = 64'h000000FF;
 localparam logic BSG_DMC_SUPPORTED = 1'b0;
 localparam logic [63:0] BSG_DMC_CONF_BASE  = 64'h00030000;
 localparam logic [63:0] BSG_DMC_CONF_RANGE = 64'h000000FF;
+// Debug program buffer support is enabled with DEBUG_SUPPORTED
+localparam logic [63:0] PROGBUF_BASE     = 64'h00002000;
+localparam logic [63:0] PROGBUF_RANGE    = 64'h0000000F;
 
 // Bus Interface width
 localparam AHBW = (XLEN);

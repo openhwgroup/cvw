@@ -58,7 +58,12 @@ module fpgaTop
    output [0:0]    ddr3_cke,
    output [0:0]    ddr3_cs_n,
    output [1:0]    ddr3_dm,
-   output [0:0]    ddr3_odt
+   output [0:0]    ddr3_odt,
+   // JTAG signals
+   input           tck,
+   input           tdi,
+   input           tms,
+   output          tdo
    );
 
   wire 			   CPUCLK;
@@ -490,7 +495,7 @@ module fpgaTop
   `include "parameter-defs.vh"
 
   wallypipelinedsoc  #(P) 
-  wallypipelinedsoc(.clk(CPUCLK), .reset_ext(bus_struct_reset), .reset(), 
+  wallypipelinedsoc(.clk(CPUCLK), .reset_ext(bus_struct_reset), .reset(), .tck, .tdi, .tms, .tdo,
                     .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT,
                     .HSELEXTSDC, .HCLK(HCLKOpen), .HRESETn(HRESETnOpen), 
                     .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,

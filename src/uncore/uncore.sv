@@ -98,12 +98,12 @@ module uncore
   
   logic [P.XLEN-1:0]           HREADRam, HREADSDC;
 
-  logic [13:0]                 HSELRegions;
+  logic [14:0]                 HSELRegions;
   logic                        HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSPI, HSELBSGDMCCONF, HSELPLLCONF;
   logic                        HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD, HSELSPID, HSELBSGDMCCONFD, HSELPLLCONFD;
   logic                        HRESPRam,  HRESPSDC;
   logic                        HREADYRam, HRESPSDCD;
-  logic [P.XLEN-1:0]           HREADBootRom; 
+  logic [P.XLEN-1:0]           HREADBootRom;
   logic                        HSELBootRom, HSELBootRomD, HRESPBootRom, HREADYBootRom, HREADYSDC;
   logic                        HSELNoneD;
   logic                        UARTIntr,GPIOIntr, SPIIntr;
@@ -263,7 +263,7 @@ module uncore
   // takes more than 1 cycle to repsond it needs to hold on to the old select until the
   // device is ready.  Hense this register must be selectively enabled by HREADY.
   // However on reset None must be seleted.
-  flopenl #(14) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions, 14'b1, 
+  flopenl #(14) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions[13:0], 14'b1, 
     {HSELPLLCONFD, HSELBSGDMCCONFD, HSELSPID, HSELEXTSDCD, HSELPLICD, HSELUARTD,
      HSELGPIOD, HSELCLINTD, HSELRamD, HSELBootRomD, HSELEXTD, HSELIROMD, HSELDTIMD,
      HSELNoneD});

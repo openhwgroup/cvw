@@ -40,6 +40,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   input  logic                 STATUS_MIE, STATUS_SIE,                          // machine/supervisor interrupt enables
   input  logic                 InstrValidM,                                     // current instruction is valid, not flushed
   input  logic                 CommittedM, CommittedF,                          // LSU/IFU has committed to a bus operation that can't be interrupted
+  input  logic                 DebugMode,                                       // Ignore all interrupts in debug mode
   output logic                 TrapM,                                           // Trap is occurring
   output logic                 InterruptM,                                      // Interrupt is occurring
   output logic                 ExceptionM,                                      // exception is occurring
@@ -66,7 +67,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   assign IntPendingM   = |PendingIntsM;
   assign Committed     = CommittedM | CommittedF;
   assign EnabledIntsM  = (MIntGlobalEnM ? PendingIntsM & ~MIDELEG_REGW : '0) | (SIntGlobalEnM ? PendingIntsM & MIDELEG_REGW : '0);
-  assign ValidIntsM    = Committed ? '0 : EnabledIntsM;
+  assign ValidIntsM    = (Committed | DebugMode) ? '0 : EnabledIntsM;
   assign InterruptM    = (|ValidIntsM) & InstrValidM & (~wfiM | wfiW); // suppress interrupt if the memory system has partially processed a request. Delay interrupt until wfi is in the W stage. 
   // wfiW is to support possible but unlikely back to back wfi instructions. wfiM would be high in the M stage, while also in the W stage.
   assign DelegateM     = P.S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM] : MEDELEG_REGW[CauseM]) & 
@@ -88,14 +89,16 @@ module trap import cvw::*;  #(parameter cvw_t P) (
                       BreakpointFaultM | EcallFaultM |
                       LoadAccessFaultM | StoreAmoAccessFaultM;
   // coverage on
-  assign TrapM = (ExceptionM & ~CommittedF) | InterruptM;
+  //assign TrapM = (ExceptionM & ~CommittedF) | InterruptM;
+  // Debug Test
+  assign TrapM = DebugMode ? BreakpointFaultM : (ExceptionM & ~CommittedF) | InterruptM;
 
   ///////////////////////////////////////////
   // Cause priority defined in privileged spec
   ///////////////////////////////////////////
 
   always_comb
-    if      (reset)                    CauseM = 4'd0; // hard reset 3.3
+    if      (reset)                    CauseM = 4'd0;  // hard reset 3.3
     else if (ValidIntsM[11])           CauseM = 4'd11; // Machine External Int
     else if (ValidIntsM[3])            CauseM = 4'd3;  // Machine Sw Int
     else if (ValidIntsM[7])            CauseM = 4'd7;  // Machine Timer Int

@@ -89,7 +89,11 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic        CSRWriteFenceM,          // CSR write or fence instruction; needs to flush the following instructions
   output logic [4:0]  RdE, RdM,                // Pipelined destination registers
   // Forwarding controls
-  output logic [4:0]  RdW                      // Register destinations in Execute, Memory, or Writeback stage
+  output logic [4:0]  RdW,                     // Register destinations in Execute, Memory, or Writeback stage
+  // Debug scan chain
+  input  logic        DebugScanEn,
+  input  logic        DebugScanIn,
+  output logic        DebugScanOut
 );
 
   logic [4:0] Rs1E;                      // pipelined register sources
@@ -441,9 +445,17 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   assign IntDivE = MDUE & Funct3E[2]; // Integer division operation
   
   // Memory stage pipeline control register
-  flopenrc #(25) controlregM(clk, reset, FlushM, ~StallM,
-                         {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE, IntDivE, CMOpE, LSUPrefetchE},
-                         {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, InstrValidM, IntDivM, CMOpM, LSUPrefetchM});
+  if (P.DEBUG_SUPPORTED) begin
+    flopenrc #(22) controlregM(clk, reset, FlushM, ~StallM,
+                          {RegWriteE, ResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, IntDivE, CMOpE, LSUPrefetchE},
+                          {RegWriteM, ResultSrcM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, IntDivM, CMOpM, LSUPrefetchM});
+    flopenrcs #(3) controlscanreg(clk, reset, FlushM, ~StallM, {MemRWE,InstrValidE}, {MemRWM,InstrValidM}, DebugScanEn, DebugScanIn, DebugScanOut);
+  end else begin
+    flopenrc #(25) controlregM(clk, reset, FlushM, ~StallM,
+                          {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE, IntDivE, CMOpE, LSUPrefetchE},
+                          {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, InstrValidM, IntDivM, CMOpM, LSUPrefetchM});
+    assign DebugScanOut = DebugScanIn;
+  end
   flopenrc #(5)  RdMReg(clk, reset, FlushM, ~StallM, RdE, RdM);  
 
   // Writeback stage pipeline control register

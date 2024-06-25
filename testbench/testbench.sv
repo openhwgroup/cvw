@@ -67,6 +67,11 @@ module testbench;
   logic        reset_ext, reset;
   logic        ResetMem;
 
+  logic tck;
+  logic tdi;
+  logic tms;
+  logic tdo;
+
   // Variables that can be overwritten with $value$plusargs at start of simulation
   string       TEST, ElfFile;
   integer      INSTR_LIMIT;
@@ -768,8 +773,14 @@ module testbench;
     assign PLLlock   = 1'b1;
   end
 
-  wallypipelinedsoc  #(P) dut(
-    .clk, .reset_ext, .reset, .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
+  // Change these if testing debug
+  assign tck = 0;
+  assign tdi = 0;
+  assign tms = 0;
+
+  wallypipelinedsoc #(P) dut(
+    .clk, .reset_ext, .reset, .tck, .tdi, .tms, .tdo,
+    .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
     .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
     .UARTSin, .UARTSout, .SDCIntr, .SPIIn, .SPIOut, .SPICS,
