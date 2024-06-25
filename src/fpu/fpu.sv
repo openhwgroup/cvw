@@ -211,6 +211,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
     assign FResultWM = DebugSel ? DebugFPRWriteD : FResultW;
     flopenrs #(P.FLEN) FPScanReg(.clk, .reset, .en(DebugCapture), .d(FRD1D), .q(DebugFPRWriteD), .scan(DebugScanEn), .scanin(DebugScanIn), .scanout(DebugScanOut));
   end else begin
+    assign DebugScanOut = '0;
     fregfile #(P.FLEN) fregfile (.clk, .reset, .we4(FRegWriteW),
       .a1(InstrD[19:15]), .a2(InstrD[24:20]), .a3(InstrD[31:27]), 
       .a4(RdW), .wd4(FResultW),

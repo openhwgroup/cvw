@@ -207,6 +207,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
     if (rst) begin
       DmActive <= 0;
       State <= INACTIVE;
+      NewAcState <= AC_IDLE;
     end else begin
       case (State)
         default : begin  // INACTIVE
@@ -447,7 +448,10 @@ module dm import cvw::*; #(parameter cvw_t P) (
             Cycle <= Cycle + 1;
         end
 
-        default:;
+        default : begin 
+          AcState <= AC_IDLE;
+          Cycle <= Cycle;
+        end
       endcase
     end
   end
