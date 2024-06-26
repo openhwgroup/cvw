@@ -110,7 +110,7 @@ int main(int argc, char **argv){
   }
 
   // step 1 open a pipe to vivado
-  if (( VivadoPipeFP = popen("sort", "w")) == NULL){
+  if (( VivadoPipeFP = popen("vivado -mode tcl", "w")) == NULL){
     perror("popen");
     exit(1);
   }
