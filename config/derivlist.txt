@@ -106,6 +106,7 @@ F_SUPPORTED         0
 ZCF_SUPPORTED       0
 D_SUPPORTED         0
 ZCD_SUPPORTED       0
+
 deriv syn_sram_rv64gc_noFPU syn_sram_rv64gc_noPriv
 F_SUPPORTED         0
 ZCF_SUPPORTED       0
@@ -788,10 +789,12 @@ ZKNH_SUPPORTED     1
 deriv f_rv32gc rv32gc
 D_SUPPORTED     0
 ZFH_SUPPORTED   0
+ZCD_SUPPORTED   0
 
 deriv fh_rv32gc rv32gc
 D_SUPPORTED     0
 ZFH_SUPPORTED   1
+ZCD_SUPPORTED   0
 
 deriv fd_rv32gc rv32gc
 ZFH_SUPPORTED   0
@@ -810,10 +813,12 @@ ZFH_SUPPORTED   1
 deriv f_rv64gc rv64gc
 D_SUPPORTED     0
 ZFH_SUPPORTED   0
+ZCD_SUPPORTED   0
 
 deriv fh_rv64gc rv64gc
 D_SUPPORTED     0
 ZFH_SUPPORTED   1
+ZCD_SUPPORTED   0
 
 deriv fd_rv64gc rv64gc
 ZFH_SUPPORTED   0
