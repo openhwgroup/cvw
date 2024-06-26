@@ -70,6 +70,8 @@ class sail_cSim(pluginTemplate):
             self.isa += 'd'
         if "Zcb" in ispec["ISA"]:   # for some strange reason, Sail requires a command line argument to enable Zcb
             self.sailargs += "--enable-zcb"
+        if "Q" in ispec["ISA"]:
+            self.isa += 'q'
         objdump = "riscv64-unknown-elf-objdump".format(self.xlen)
         if shutil.which(objdump) is None:
             logger.error(objdump+": executable not found. Please check environment setup.")
