@@ -96,7 +96,7 @@ foreach my $key (@derivnames) {
             my @ent = @{$entry};
             my $param = $ent[0];
             my $value = $ent[1]; 
-            if ($line =~ s/$param\s*=\s*.*;/$param = $value;/) {
+            if ($line =~ s/\b$param\s*=\s*.*;/$param = $value;/) {
                 $hit{$param} = 1;
 #               print("Hit: new line in $config for $param is $line");
             }
