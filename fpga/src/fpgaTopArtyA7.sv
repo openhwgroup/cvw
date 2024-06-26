@@ -1128,6 +1128,14 @@ module fpgaTop
 (* mark_debug = "true" *)  logic                                             RvviAxiWvalid;
 (* mark_debug = "true" *)  logic                                             RvviAxiWready;
 
+  logic RvviAxiRdata [31:0];
+  logic RvviAxiRstrb [3:0];
+  logic RvviAxiRlast;
+  logic RvviAxiRvalid;
+(* mark_debug = "true" *)  logic IlaTrigger;
+   
+   
+
   logic                                             tx_error_underflow, tx_fifo_overflow, tx_fifo_bad_frame, tx_fifo_good_frame, rx_error_bad_frame;
   logic                                             rx_error_bad_fcs, rx_fifo_overflow, rx_fifo_bad_frame, rx_fifo_good_frame;
 
@@ -1139,7 +1147,6 @@ module fpgaTop
       .tx_axis_tlast(RvviAxiWlast), .tx_axis_tuser('0), .rx_axis_tdata(), .rx_axis_tkeep(), .rx_axis_tvalid(), .rx_axis_tready(1'b1),
       .rx_axis_tlast(), .rx_axis_tuser(),
 
-      // *** update these
       .mii_rx_clk(phy_rx_clk),
       .mii_rxd(phy_rxd),
       .mii_rx_dv(phy_rx_dv),
@@ -1154,6 +1161,9 @@ module fpgaTop
       .rx_error_bad_fcs, .rx_fifo_overflow, .rx_fifo_bad_frame, .rx_fifo_good_frame, 
       .cfg_ifg(8'd12), .cfg_tx_enable(1'b1), .cfg_rx_enable(1'b1)
       );
+
+  triggergen triggergen(.clk(CPUCLK), .reset(bus_struct_reset), .RvviAxiRdata,
+    .RvviAxiRstrb, .RvviAxiRlast, .RvviAxiRvalid, .IlaTrigger)
 
   //assign phy_reset_n = ~bus_struct_reset;
    assign phy_reset_n = ~1'b0;
