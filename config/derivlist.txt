@@ -58,15 +58,17 @@ PLIC_SDC_ID         32'd20
 BPRED_SIZE          32'd12
 
 # The syn configurations are trimmed down for faster synthesis.  
-deriv   syn_rv32e   rv32e
-DTIM_RANGE          64'h1FF
-IROM_RANGE          64'h1FF
-BOOTROM_RANGE       64'h1FF
-UNCORE_RAM_RANGE    64'h1FF
-WAYSIZEINBYTES      32'd512
-NUMWAYS             32'd1
-BPRED_SIZE          32'd5
-BTB_SIZE            32'd5 
+deriv   syn_rv32e       rv32e
+DTIM_RANGE              64'h1FF
+IROM_RANGE              64'h1FF
+BOOTROM_RANGE           64'h1FF
+UNCORE_RAM_RANGE        64'h1FF
+DCACHE_WAYSIZEINBYTES   32'd512
+ICACHE_WAYSIZEINBYTES   32'd512
+DCACHE_NUMWAYS          32'd1
+ICACHE_NUMWAYS          32'd1
+BPRED_SIZE              32'd5
+BTB_SIZE                32'd5 
 
 # The other syn configurations have the same trimming
 deriv syn_rv32i rv32i syn_rv32e
@@ -101,10 +103,14 @@ ZICSR_SUPPORTED     0
 
 deriv syn_rv64gc_noFPU syn_rv64gc_noPriv
 F_SUPPORTED         0
+ZCF_SUPPORTED       0
 D_SUPPORTED         0
+ZCD_SUPPORTED       0
 deriv syn_sram_rv64gc_noFPU syn_sram_rv64gc_noPriv
 F_SUPPORTED         0
+ZCF_SUPPORTED       0
 D_SUPPORTED         0
+ZCD_SUPPORTED       0
 
 deriv syn_rv64gc_noMulDiv syn_rv64gc_noFPU
 M_SUPPORTED         0
