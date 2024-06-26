@@ -1128,8 +1128,8 @@ module fpgaTop
 (* mark_debug = "true" *)  logic                                             RvviAxiWvalid;
 (* mark_debug = "true" *)  logic                                             RvviAxiWready;
 
-  logic RvviAxiRdata [31:0];
-  logic RvviAxiRstrb [3:0];
+  logic [31:0] RvviAxiRdata;
+  logic [3:0] RvviAxiRstrb;
   logic RvviAxiRlast;
   logic RvviAxiRvalid;
 (* mark_debug = "true" *)  logic IlaTrigger;
@@ -1163,8 +1163,8 @@ module fpgaTop
       );
 
   triggergen triggergen(.clk(CPUCLK), .reset(bus_struct_reset), .RvviAxiRdata,
-    .RvviAxiRstrb, .RvviAxiRlast, .RvviAxiRvalid, .IlaTrigger)
-
+    .RvviAxiRstrb, .RvviAxiRlast, .RvviAxiRvalid, .IlaTrigger);
+   
   //assign phy_reset_n = ~bus_struct_reset;
    assign phy_reset_n = ~1'b0;
 
