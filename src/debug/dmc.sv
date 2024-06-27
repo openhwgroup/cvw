@@ -119,7 +119,7 @@ module dmc (
             DebugCause <= `CAUSE_STEP;
             State <= HALTED;
           end else
-            Counter <= Counter - 1;
+            Counter <= Counter - 1; // TODO: sync unstall bit in pipe instead of counting cycles
         end
         default: ; // empty defualt case to make the linter happy
       endcase

@@ -104,6 +104,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic              DebugMode,
   input  logic [2:0]        DebugCause,
   output logic              Step,
+  output logic              DebugStopTime_REGW,
   output logic [P.XLEN-1:0] DPC,
   input  logic              DCall,
   input  logic              DRet,
@@ -167,7 +168,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .SetFflagsM, .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE,
     .EPCM, .TrapVectorM,
     .CSRReadValW, .IllegalCSRAccessM, .BigEndianM,
-    .DebugMode, .DebugCause, .ebreakEn, .Step, .DPC, .DCall, .DRet, .ExecProgBuf,
+    .DebugMode, .DebugCause, .ebreakM, .ebreakEn, .Step, .DebugStopTime_REGW, .DPC, .DCall, .DRet, .ExecProgBuf,
     .DebugSel, .DebugRegAddr, .DebugCapture, .DebugRegUpdate, .DebugScanEn, .DebugScanIn, .DebugScanOut);
 
   // pipeline early-arriving trap sources

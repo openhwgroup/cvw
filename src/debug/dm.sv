@@ -114,11 +114,6 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic AcceptAbstrCmdReqs;
   logic ValAccRegReq;
 
-  assign AcceptAbstrCmdReqs = ~|CmdErr & ~Busy & DebugStall;  // No cmderr, not busy (another abstrcmd isn't running), and core is halted
-
-  // Transfer set, AARSIZE (encoded) isn't bigger than XLEN, RegNo is valid, not writing to readonly RegNo
-  assign ValAccRegReq = (AARSIZE_ENC[2:0] >= ReqData[`AARSIZE]) & ~InvalidRegNo & ~(ReqData[`AARWRITE] & RegReadOnly);
-
   //// DM register fields
   // DMControl
   logic              AckUnavail;
@@ -197,6 +192,9 @@ module dm import cvw::*; #(parameter cvw_t P) (
 
   assign dmreset = rst | ~DmActive;
   assign ActivateReq = (State == INACTIVE) & ReqValid & (ReqAddress == `DMCONTROL) & (ReqOP == `OP_WRITE);
+  // Transfer set, AARSIZE (encoded) isn't bigger than XLEN, RegNo is valid, not writing to readonly RegNo
+  assign ValAccRegReq = (AARSIZE_ENC[2:0] >= ReqData[`AARSIZE]) & ~InvalidRegNo & ~(ReqData[`AARWRITE] & RegReadOnly);
+  assign AcceptAbstrCmdReqs = ~|CmdErr & ~Busy & DebugStall;  // No cmderr, not busy (another abstrcmd isn't running), and core is halted
   
   // DMControl
   // While an abstract command is executing (busy in abstractcs is high), a debugger must not change
@@ -236,6 +234,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   assign RspValid = (State == ACK);
   assign ReqReady = (State != ACK);
 
+  // BOZO: review DTM/DM interface
   always_ff @(posedge clk) begin
     if (rst) begin
       State <= INACTIVE;
@@ -472,8 +471,8 @@ module dm import cvw::*; #(parameter cvw_t P) (
       assign ScanNext[i] = WriteProgBuff ? ReqData[i] : WriteScanReg & ARMask[i] ? PackedDataReg[i] : ScanReg[i+1];
     else
       assign ScanNext[i] = WriteScanReg & ARMask[i] ? PackedDataReg[i] : ScanReg[i+1];
-    flopenr #(1) scanreg (.clk, .reset(rst), .en(DebugScanEn | ProgBuffScanEn), .d(ScanNext[i]), .q(ScanReg[i]));
   end
+  flopenr #(P.LLEN) scanreg (.clk, .reset(rst), .en(DebugScanEn | ProgBuffScanEn), .d(ScanNext), .q(ScanReg[P.LLEN-1:0]));
 
   // Message Registers
   assign MaskedScanReg = ARMask & ScanReg[P.LLEN:1];

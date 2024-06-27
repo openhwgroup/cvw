@@ -96,8 +96,10 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   // Debug Mode output
   input  logic                     DebugMode,
   input  logic [2:0]               DebugCause,
+  input  logic                     ebreakM,
   output logic                     ebreakEn,
   output logic                     Step,
+  output logic                     DebugStopTime_REGW,
   output logic [P.XLEN-1:0]        DPC,
   input  logic                     DCall,
   input  logic                     DRet,
@@ -147,6 +149,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]       SENVCFG_REGW;
   logic                    ENVCFG_STCE; // supervisor timer counter enable
   logic                    ENVCFG_FIOM; // fence implies io (presently not used)
+  logic                    DebugStopCount_REGW;
 
   // only valid unflushed instructions can access CSRs
   assign InstrValidNotFlushedM = InstrValidM & ~StallW & ~FlushW;
@@ -309,7 +312,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       .InterruptM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
       .CSRAdrM(CSRAdrDM), .PrivilegeModeW, .CSRWriteValM(CSRWriteValDM),
       .MCOUNTINHIBIT_REGW, .MCOUNTEREN_REGW, .SCOUNTEREN_REGW,
-      .MTIME_CLINT,  .CSRCReadValM, .IllegalCSRCAccessM);
+      .MTIME_CLINT, .DebugStopCount_REGW, .CSRCReadValM, .IllegalCSRCAccessM);
   end else begin
     assign CSRCReadValM = '0;
     assign IllegalCSRCAccessM = 1'b1; // counters aren't enabled
@@ -318,8 +321,10 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   if (P.DEBUG_SUPPORTED) begin:csrd
     csrd #(P) csrd(.clk, .reset, .DebugMode, .PrivilegeModeW,
     .CSRWriteDM, .CSRAdrM(CSRAdrDM), .CSRWriteValM(CSRWriteValDM), .CSRDReadValM, .IllegalCSRDAccessM,
-    .DebugCause, .ebreakEn, .Step, .DPC, .PCM, .DCall);
+    .DebugCause, .ebreakM, .ebreakEn, .Step, .DebugStopTime_REGW, .DebugStopCount_REGW, .DPC, .PCM, .DCall);
   end else begin
+    assign DebugStopCount_REGW = '0;
+    assign DebugStopTime_REGW = '0;
     assign Step = '0;
     assign DPC = '0;
     assign DebugScanOut = '0;

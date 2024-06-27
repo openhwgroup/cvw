@@ -100,6 +100,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                        DebugRegUpdate;
   logic [P.XLEN-1:0]           ProgBufAddr;
   logic                        ProgBuffScanEn;
+  logic                        DebugStopTime_REGW;
 
   // synchronize reset to SOC clock domain
   synchronizer resetsync(.clk, .d(reset_ext), .q(reset));
@@ -112,7 +113,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     .HaveReset, .DebugStall, .ExecProgBuf, .DebugScanEn, .DebugScanOut(DebugScanIn),
     .GPRScanOut(GPRScanIn), .FPRScanOut(FPRScanIn), .CSRScanOut(CSRScanIn),
     .DebugScanIn(DebugScanOut), .MiscSel, .GPRSel, .FPRSel, .CSRSel, .DebugRegAddr, .DebugCapture,
-    .DebugRegUpdate, .ProgBufAddr, .ProgBuffScanEn
+    .DebugRegUpdate, .ProgBufAddr, .ProgBuffScanEn, .DebugStopTime_REGW
   );
 
   // instantiate uncore if a bus interface exists
@@ -121,7 +122,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
       .HCLK, .HRESETn, .TIMECLK, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
       .HTRANS, .HMASTLOCK, .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT,
       .HSELEXTSDC, .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOIN, .GPIOOUT, .GPIOEN, .UARTSin,
-      .UARTSout, .MTIME_CLINT, .SDCIntr, .SPIIn, .SPIOut, .SPICS
+      .UARTSout, .MTIME_CLINT, .SDCIntr, .SPIIn, .DebugStopTime_REGW, .SPIOut, .SPICS
     );
   end else begin
     assign {HRDATA, HREADY, HRESP, HSELEXT, HSELEXTSDC, MTimerInt, MSwInt, MExtInt, SExtInt,

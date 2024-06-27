@@ -55,6 +55,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    output logic                  DebugStall,
    input  logic                  ExecProgBuf,
    // Debug scan chain
+   output logic                  DebugStopTime_REGW,
    input  logic                  DebugScanEn,    // puts scannable flops into scan mode
    output logic                  DebugScanOut,   // (misc) scan chain data out
    output logic                  GPRScanOut,     // (GPR) scan chain data out
@@ -355,13 +356,14 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS, 
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
       .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM, .ebreakM,
-      .ebreakEn, .ForceBreakPoint, .DebugMode, .DebugCause, .Step, .DPC, .DCall,
+      .ebreakEn, .ForceBreakPoint, .DebugMode, .DebugCause, .Step, .DebugStopTime_REGW, .DPC, .DCall,
       .DRet, .ExecProgBuf, .DebugSel(CSRSel), .DebugRegAddr, .DebugCapture,
       .DebugRegUpdate, .DebugScanEn(DebugScanEn & CSRSel), .DebugScanIn, .DebugScanOut(CSRScanOut));
     if (P.DEBUG_SUPPORTED) begin
       flopenrs #(1) scantrapm (.clk, .reset, .en(DebugCapture), .d(TrapM), .q(),
         .scan(DebugScanEn), .scanin(DebugScanIn), .scanout(DebugScanReg[0]));
     end else begin
+      assign DebugStopTime_REGW = '0;
       assign DebugScanReg[0] = DebugScanIn;
     end
   end else begin
@@ -372,6 +374,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
             EPCM, TrapVectorM, RetM, TrapM,
             sfencevmaM, BigEndianM, wfiM, IntPendingM, CSRScanOut} = '0;
     assign DebugScanReg[0] = DebugScanIn;
+    assign DebugStopTime_REGW = '0;
   end
 
   // multiply/divide unit

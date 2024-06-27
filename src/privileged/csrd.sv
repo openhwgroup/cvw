@@ -38,8 +38,11 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] PCM,
   input  logic              DCall,
   input  logic [2:0]        DebugCause,
+  input  logic              ebreakM,
   output logic              ebreakEn,
   output logic              Step,
+  output logic              DebugStopTime_REGW,
+  output logic              DebugStopCount_REGW,
   output logic [P.XLEN-1:0] DPC
 );
   `include "debug.vh"
@@ -54,19 +57,17 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   logic WriteDPCM;
 
   // DCSR fields
-  const logic [3:0] DebugVer = 4;
-  const logic       ebreakVS = 0;
-  const logic       ebreakVU = 0;
-  logic             ebreakM;
-  const logic       ebreakS = 0;
-  const logic       ebreakU = 0;
-  const logic       StepIE = 0;
-  const logic       StopCount = 0;
-  const logic       StopTime = 0;
+  const logic [3:0] DebugVer = 4'h4;
+  const logic       ebreakVS = '0;
+  const logic       ebreakVU = '0;
+  logic             MEbreak;
+  logic             SEbreak;
+  logic             UEbreak;
+  const logic       StepIE = '0;
   logic [2:0]       Cause;
-  const logic       V = 0;
-  const logic       MPrvEn = 0;
-  const logic       NMIP = 0;      // pending non-maskable interrupt TODO: update
+  const logic       V = '0;
+  const logic       MPrvEn = '0;
+  const logic       NMIP = '0;      // pending non-maskable interrupt TODO: update
   logic [1:0]       Prv;
 
   
@@ -84,13 +85,38 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
     end else if (DCall) begin
       Prv <= PrivilegeModeW;
       Cause <= DebugCause;
+    end else if (WriteDCSRM) begin
+      Prv <= CSRWriteValM[`PRV];
     end
   end
 
-  flopenr #(2) DCSRreg (clk, reset, WriteDCSRM, {CSRWriteValM[`EBREAKM], CSRWriteValM[`STEP]}, {ebreakM, Step});
+  always_ff @(posedge clk) begin
+    MEbreak <= '0;
+    SEbreak <= '0;
+    UEbreak <= '0;
+    if (reset) begin
+      MEbreak <= '0;
+      SEbreak <= '0;
+      UEbreak <= '0;
+    end else begin
+      if (ebreakM) begin
+        if (PrivilegeModeW == P.M_MODE) MEbreak <= 1'b1;
+        if (PrivilegeModeW == P.S_MODE) SEbreak <= 1'b1;
+        if (PrivilegeModeW == P.U_MODE) UEbreak <= 1'b1;
+      end else if (WriteDCSRM) begin
+        MEbreak <= CSRWriteValM[`EBREAKM];
+        SEbreak <= CSRWriteValM[`EBREAKS];
+        UEbreak <= CSRWriteValM[`EBREAKU];
+      end
+    end
+  end
 
-  assign DCSR = {DebugVer, 10'b0, ebreakVS, ebreakVU, ebreakM, 1'b0, ebreakS, ebreakU, StepIE,
-                      StopCount, StopTime, Cause, V, MPrvEn, NMIP, Step, Prv};
+  flopenr #(3) DCSRreg (clk, reset, WriteDCSRM, 
+  {CSRWriteValM[`STEP], CSRWriteValM[`STOPTIME], CSRWriteValM[`STOPCOUNT]}, 
+  {Step, DebugStopTime_REGW, DebugStopCount_REGW});
+
+  assign DCSR = {DebugVer, 10'b0, ebreakVS, ebreakVU, MEbreak, 1'b0, SEbreak, UEbreak, StepIE,
+                DebugStopCount_REGW, DebugStopTime_REGW, Cause, V, MPrvEn, NMIP, Step, Prv};
 
   assign DPCWriteVal = DCall ? PCM : CSRWriteValM;
   flopenr #(P.XLEN) DPCreg (clk, reset, WriteDPCM | DCall, DPCWriteVal, DPC);

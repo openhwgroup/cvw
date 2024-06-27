@@ -57,6 +57,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   output logic                 UARTSout,                  // UART serial output
   input  logic                 SDCIntr,
   input  logic                 SPIIn,
+  input  logic                 DebugStopTime_REGW,
   output logic                 SPIOut,
   output logic [3:0]           SPICS
 );
@@ -120,7 +121,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   // memory-mapped I/O peripherals
   if (P.CLINT_SUPPORTED == 1) begin : clint
     clint_apb #(P) clint(.PCLK, .PRESETn, .PSEL(PSEL[1]), .PADDR(PADDR[15:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
-      .PRDATA(PRDATA[1]), .PREADY(PREADY[1]), .MTIME(MTIME_CLINT), .MTimerInt, .MSwInt);
+      .PRDATA(PRDATA[1]), .PREADY(PREADY[1]), .MTIME(MTIME_CLINT), .MTimerInt, .MSwInt, .DebugStopTime_REGW);
   end else begin : clint
     assign MTIME_CLINT = '0;
     assign MTimerInt = 1'b0; assign MSwInt = 1'b0;

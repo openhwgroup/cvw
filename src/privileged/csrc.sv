@@ -57,7 +57,8 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   input  logic [1:0]        PrivilegeModeW,
   input  logic [P.XLEN-1:0] CSRWriteValM,
   input  logic [31:0]       MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
-  input  logic [63:0]       MTIME_CLINT, 
+  input  logic [63:0]       MTIME_CLINT,
+  input  logic              DebugStopCount_REGW,
   output logic [P.XLEN-1:0] CSRCReadValM,
   output logic              IllegalCSRCAccessM
 );
@@ -138,7 +139,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
       if (P.XLEN==32) begin // write high and low separately
         logic [P.COUNTERS-1:0] WriteHPMCOUNTERHM;
         logic [P.XLEN-1:0] NextHPMCOUNTERHM[P.COUNTERS-1:0];
-        assign HPMCOUNTERPlusM[i] = {HPMCOUNTERH_REGW[i], HPMCOUNTER_REGW[i]} + {63'b0, CounterEvent[i] & ~MCOUNTINHIBIT_REGW[i]};
+        assign HPMCOUNTERPlusM[i] = {HPMCOUNTERH_REGW[i], HPMCOUNTER_REGW[i]} + {63'b0, CounterEvent[i] & ~(MCOUNTINHIBIT_REGW[i] | DebugStopCount_REGW)};
         assign WriteHPMCOUNTERHM[i] = CSRMWriteM & (CSRAdrM == MHPMCOUNTERHBASE + i);
         assign NextHPMCOUNTERHM[i] = WriteHPMCOUNTERHM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][63:32];
         always_ff @(posedge clk) //, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
