@@ -1083,7 +1083,7 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
                end
                Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
             end
-            2'b00: if (P.S_SUPPORTED) begin // single
+            2'b00: if (P.F_SUPPORTED) begin // single
                if (OpCtrl === `FMA_OPCTRL) begin
 		  X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+4*(P.S_LEN)-1:8+3*(P.S_LEN)]};
 		  Y = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+3*(P.S_LEN)-1:8+2*(P.S_LEN)]};
@@ -1125,7 +1125,7 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		 X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]};
 		 Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
               end
-              2'b00: if (P.S_SUPPORTED) begin // single
+              2'b00: if (P.F_SUPPORTED) begin // single
 		 X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+1*(P.S_LEN)]};
 		 Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
               end
@@ -1146,7 +1146,7 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		 Y = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]};
 		 Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
               end
-              2'b00: if (P.S_SUPPORTED) begin // single
+              2'b00: if (P.F_SUPPORTED) begin // single
 		 X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+3*(P.S_LEN)-1:8+2*(P.S_LEN)]};
 		 Y = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+1*(P.S_LEN)]};
 		 Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
@@ -1169,7 +1169,7 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
                Y = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[12+(P.D_LEN)-1:12]};
                Ans = {{P.FLEN-1{1'b0}}, TestVector[8]};
             end
-            2'b00: if (P.S_SUPPORTED) begin // single
+            2'b00: if (P.F_SUPPORTED) begin // single
                X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[12+2*(P.S_LEN)-1:12+(P.S_LEN)]};
                Y = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[12+(P.S_LEN)-1:12]};
                Ans = {{P.FLEN-1{1'b0}}, TestVector[8]};
@@ -1222,7 +1222,7 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		 end
                endcase
             end
-            2'b00: if (P.S_SUPPORTED) begin // single
+            2'b00: if (P.F_SUPPORTED) begin // single
                case (OpCtrl[1:0])
 		 2'b11: begin // quad
 		    X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+P.S_LEN+P.Q_LEN-1:8+(P.Q_LEN)]};
@@ -1252,7 +1252,7 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		    X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+P.H_LEN+P.D_LEN-1:8+(P.D_LEN)]};
 		    Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
 		 end
-		 2'b00:	if (P.S_SUPPORTED) begin // single
+		 2'b00:	if (P.F_SUPPORTED) begin // single
 		    X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+P.H_LEN+P.S_LEN-1:8+(P.S_LEN)]};
 		    Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
 		 end
@@ -1317,7 +1317,7 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		 end
                endcase
             end
-            2'b00: if (P.S_SUPPORTED) begin // single
+            2'b00: if (P.F_SUPPORTED) begin // single
                // {is the integer a long, is the opperation to an integer}
                casez ({OpCtrl[2:1]})
 		 2'b11: begin // long -> single
