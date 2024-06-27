@@ -262,7 +262,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   end
 
   // Floating Point CSRs in User Mode only needed if Floating Point is supported
-  if (P.F_SUPPORTED | P.D_SUPPORTED) begin:csru
+  if (P.F_SUPPORTED) begin:csru
     csru #(P) csru(.clk, .reset, .InstrValidNotFlushedM, 
       .CSRUWriteM, .CSRAdrM, .CSRWriteValM, .STATUS_FS, .CSRUReadValM,  
       .SetFflagsM, .FRM_REGW, .WriteFRMM, .WriteFFLAGSM,
