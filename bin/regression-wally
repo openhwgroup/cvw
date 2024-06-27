@@ -123,18 +123,14 @@ derivconfigtests = [
         ["zknh_rv64gc", ["arch64i", "arch64zknh"]],
 
 # No privilege modes variants
-        ["noS_rv32gc", ["arch32i", "arch32f", "arch32d", "arch32priv", "arch32c", "arch32m", "arch32a_amo",
-                        "arch32zifencei", "arch32zicond", "arch32zba", "arch32zfh", "arch32zfh_fma", "arch32zfh_divsqrt",
-                        "arch32zfaf", "arch32zfad", "wally32a_lrsc", "arch32zcb", "arch32zbkx", "arch32zknd"]],
-        ["noS_rv64gc", ["arch64i", "arch64f", "arch64d", "arch64priv", "arch64c", "arch64m", "arch64a_amo",
-                "arch64zifencei", "arch64zicond", "arch64zba", "arch64zfh", "arch64zfh_fma", "arch64zfh_divsqrt",
-                "arch64zfaf", "arch64zfad", "wally64a_lrsc", "arch64zcb", "arch64zbkx", "arch64zknd"]],
-        ["noU_rv32gc", ["arch32i", "arch32f", "arch32d", "arch32priv", "arch32c", "arch32m", "arch32a_amo",
-                        "arch32zifencei", "arch32zicond", "arch32zba", "arch32zfh", "arch32zfh_fma", "arch32zfh_divsqrt",
-                        "arch32zfaf", "arch32zfad", "wally32a_lrsc", "arch32zcb", "arch32zbkx", "arch32zknd"]],
-        ["noU_rv64gc", ["arch64i", "arch64f", "arch64d", "arch64priv", "arch64c", "arch64m", "arch64a_amo",
-                "arch64zifencei", "arch64zicond", "arch64zba", "arch64zfh", "arch64zfh_fma", "arch64zfh_divsqrt",
-                "arch64zfaf", "arch64zfad", "wally64a_lrsc", "arch64zcb", "arch64zbkx", "arch64zknd"]],
+        ["noS_rv32gc", ["arch32i", "arch32f", "arch32priv", "arch32c", "arch32m", "arch32a_amo", "arch32zifencei", "arch32zicond",
+                        "arch32zba", "arch32zfaf", "arch32zfad", "wally32a_lrsc", "arch32zcb", "arch32zbkx", "arch32zknd"]],
+        ["noS_rv64gc", ["arch64i", "arch64f", "arch64priv", "arch64c", "arch64m", "arch64a_amo", "arch64zifencei", "arch64zicond",
+                        "arch64zba", "arch64zfaf", "arch64zfad", "wally64a_lrsc", "arch64zcb", "arch64zbkx", "arch64zknd"]],
+        ["noU_rv32gc", ["arch32i", "arch32f", "arch32priv", "arch32c", "arch32m", "arch32a_amo", "arch32zifencei", "arch32zicond",
+                        "arch32zba", "arch32zfaf", "arch32zfad", "wally32a_lrsc", "arch32zcb", "arch32zbkx", "arch32zknd"]],
+        ["noU_rv64gc", ["arch64i", "arch64f", "arch64priv", "arch64c", "arch64m", "arch64a_amo", "arch64zifencei", "arch64zicond",
+                        "arch64zba", "arch64zfaf", "arch64zfad", "wally64a_lrsc", "arch64zcb", "arch64zbkx", "arch64zknd"]],
 
         ### add misaligned tests
 
