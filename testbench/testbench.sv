@@ -419,12 +419,10 @@ module testbench;
         $display("Coverage tests don't get checked");
       end else if (ElfFile != "none") begin
         $display("Single Elf file tests are not signatured verified.");
-`ifdef VERILATOR // this macro is defined when verilator is used
-        $finish; // Simulator Verilator needs $finish to terminate simulation.
-`elsif VCS // this macro is defined when vcs is used
-        $finish; // Simulator VCS needs $finish to terminate simulation.
+`ifdef QUESTA
+        $stop;  // if this is changed to $finish for Questa, wally-batch.do does not go to the next step to run coverage, and wally.do terminates without allowing GUI debug
 `else
-         $stop; // if this is changed to $finish for Questa, wally-batch.do does not go to the next step to run coverage, and wally.do terminates without allowing GUI debug
+        $finish;
 `endif
       end else begin 
         // for tests with no self checking mechanism, read .signature.output file and compare to check for errors
@@ -440,12 +438,10 @@ module testbench;
       if (test == tests.size()) begin
         if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
         else $display("FAIL: %d test programs had errors", totalerrors);
-`ifdef VERILATOR // this macro is defined when verilator is used
-        $finish; // Simulator Verilator needs $finish to terminate simulation.
-`elsif VCS // this macro is defined when vcs is used
-        $finish; // Simulator VCS needs $finish to terminate simulation.
+`ifdef QUESTA
+        $stop;  // if this is changed to $finish for Questa, wally-batch.do does not go to the next step to run coverage, and wally.do terminates without allowing GUI debug
 `else
-         $stop; // if this is changed to $finish for Questa, wally-batch.do does not go to the next step to run coverage, and wally.do terminates without allowing GUI debug
+        $finish;
 `endif
       end
     end
