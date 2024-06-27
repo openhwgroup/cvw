@@ -259,6 +259,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign SCOUNTEREN_REGW = '0;
     assign SATP_REGW = '0;
     assign IllegalCSRSAccessM = 1'b1;
+    assign STimerInt = '0;
+    assign SENVCFG_REGW = '0;
   end
 
   // Floating Point CSRs in User Mode only needed if Floating Point is supported
