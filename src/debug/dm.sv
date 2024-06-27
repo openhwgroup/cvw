@@ -88,7 +88,6 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic                       RspValid;
   logic [31:0]                RspData;
   logic [1:0]                 RspOP;
-  logic [P.XLEN-`DMI_ADDR_WIDTH-1:0] UpperReqAddr;
 
   // JTAG ID for Wally:  
   // Version [31:28] = 0x1 : 0001
@@ -101,11 +100,57 @@ module dm import cvw::*; #(parameter cvw_t P) (
     .ReqReady, .ReqValid, .ReqAddress, .ReqData, .ReqOP, .RspReady,
     .RspValid, .RspData, .RspOP);
 
-  enum logic [3:0] {INACTIVE, IDLE, ACK, R_DATA, W_DATA, DMSTATUS, W_DMCONTROL, R_DMCONTROL, 
+  enum logic [3:0] {INACTIVE, IDLE, ACK, R_DATA, W_DATA, R_DMSTATUS, W_DMCONTROL, R_DMCONTROL,
 		    W_ABSTRACTCS, R_ABSTRACTCS, ABST_COMMAND, R_SYSBUSCS, W_PROGBUF, READ_ZERO,
 		    INVALID, EXEC_PROGBUF} State;
 
   enum logic [2:0] {AC_IDLE, AC_UPDATE, AC_SCAN, AC_CAPTURE, PROGBUFF_WRITE} AcState, NewAcState;
+
+  logic dmreset;  // Sysreset or not DmActive
+  const logic [P.XLEN-`DMI_ADDR_WIDTH-1:0] UpperReqAddr = 0;  // concat with ReqAddr to make linter happer
+  logic ActivateReq;
+  logic WriteDMControl;
+  logic WriteDMControlBusy;
+  logic AcceptAbstrCmdReqs;
+  logic ValAccRegReq;
+
+  assign AcceptAbstrCmdReqs = ~|CmdErr & ~Busy & DebugStall;  // No cmderr, not busy (another abstrcmd isn't running), and core is halted
+
+  // Transfer set, AARSIZE (encoded) isn't bigger than XLEN, RegNo is valid, not writing to readonly RegNo
+  assign ValAccRegReq = (AARSIZE_ENC[2:0] >= ReqData[`AARSIZE]) & ~InvalidRegNo & ~(ReqData[`AARWRITE] & RegReadOnly);
+
+  //// DM register fields
+  // DMControl
+  logic              AckUnavail;
+  logic              DmActive;       // This bit is used to (de)activate the DM. Toggling off-on acts as reset
+
+  // DMStatus
+  const logic        NdmResetPending = 0;
+  const logic        StickyUnavail = 0;
+  const logic        ImpEBreak = 0;
+  logic              AllHaveReset;
+  logic              AnyHaveReset;
+  logic              AllResumeAck;
+  logic              AnyResumeAck;
+  const logic        AllNonExistent = 0;
+  const logic        AnyNonExistent = 0;
+  const logic        AllUnavail = 0;
+  const logic        AnyUnavail = 0;
+  logic              AllRunning;
+  logic              AnyRunning;
+  logic              AllHalted;
+  logic              AnyHalted;
+  const logic        Authenticated = 1;
+  const logic        AuthBusy = 0;
+  const logic        HasResetHaltReq = 1;
+  const logic        ConfStrPtrValid = 0; // Used with SysBusAccess
+  const logic [3:0]  Version = 3;    // DM Version
+  // AbstractCS
+  const logic [4:0]  ProgBufSize = PROGBUF_SIZE[4:0];
+  logic              Busy;
+  const logic        RelaxedPriv = 1;
+  logic [2:0]        CmdErr;
+  const logic [3:0]  DataCount = DATA_COUNT[3:0];
 
   // AbsCmd internal state
   logic              AcWrite;        // Abstract Command write state
@@ -137,45 +182,6 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic [31:0]       Data2;          // 0x06
   logic [31:0]       Data3;          // 0x07
 
-  // debug module registers
-  logic [31:0]       DMControl;      // 0x10
-  logic [31:0]       DMStatus;       // 0x11
-  logic [31:0]       AbstractCS;     // 0x16
-  logic [31:0]       SysBusCS;       // 0x38
-
-  //// DM register fields
-  // DMControl
-  logic              AckUnavail;
-  logic              DmActive;       // This bit is used to (de)activate the DM. Toggling off-on acts as reset
-  // DMStatus
-  const logic        NdmResetPending = 0;
-  const logic        StickyUnavail = 0;
-  const logic        ImpEBreak = 0;
-  logic              AllHaveReset;
-  logic              AnyHaveReset;
-  logic              AllResumeAck;
-  logic              AnyResumeAck;
-  const logic        AllNonExistent = 0;
-  const logic        AnyNonExistent = 0;
-  const logic        AllUnavail = 0;
-  const logic        AnyUnavail = 0;
-  logic              AllRunning;
-  logic              AnyRunning;
-  logic              AllHalted;
-  logic              AnyHalted;
-  const logic        Authenticated = 1;
-  const logic        AuthBusy = 0;
-  const logic        HasResetHaltReq = 1;
-  const logic        ConfStrPtrValid = 0; // Used with SysBusAccess
-  const logic [3:0]  Version = 3;    // DM Version
-  // AbstractCS
-  const logic [4:0]  ProgBufSize = PROGBUF_SIZE[4:0];
-  logic              Busy;
-  const logic        RelaxedPriv = 1;
-  logic [2:0]        CmdErr;
-  const logic [3:0]  DataCount = DATA_COUNT[3:0];
-
-  assign UpperReqAddr = '0;
 
   // Core control signals
   assign AllHaveReset = HaveReset;
@@ -188,46 +194,61 @@ module dm import cvw::*; #(parameter cvw_t P) (
   // It's pretty worthless in this implementation (complain to the riscv debug working group)
   assign AllResumeAck = ResumeAck;
   assign AnyResumeAck = ResumeAck;
+
+  assign dmreset = rst | ~DmActive;
+  assign ActivateReq = (State == INACTIVE) & ReqValid & (ReqAddress == `DMCONTROL) & (ReqOP == `OP_WRITE);
   
-  assign DMControl = {2'b0, 1'b0, 2'b0, 1'b0, 10'b0, 10'b0, 4'b0, NdmReset, DmActive};
+  // DMControl
+  // While an abstract command is executing (busy in abstractcs is high), a debugger must not change
+  // hartsel, and must not write 1 to haltreq, resumereq, ackhavereset, setresethaltreq, or clrresethaltreq
+  assign WriteDMControlBusy = Busy & (ReqData[`HALTREQ] | ReqData[`RESUMEREQ] | ReqData[`ACKHAVERESET] | ReqData[`SETRESETHALTREQ] | ReqData[`CLRRESETHALTREQ]);
+  assign WriteDMControl = (State == W_DMCONTROL) & ~WriteDMControlBusy;
 
-  assign DMStatus = {7'b0, NdmResetPending, StickyUnavail, ImpEBreak, 2'b0, 
-    AllHaveReset, AnyHaveReset, AllResumeAck, AnyResumeAck, AllNonExistent, 
-    AnyNonExistent, AllUnavail, AnyUnavail, AllRunning, AnyRunning, AllHalted, 
-    AnyHalted, Authenticated, AuthBusy, HasResetHaltReq, ConfStrPtrValid, Version};
+  flopenr #(1) DmActiveReg (.clk, .reset(rst), .en(ActivateReq | WriteDMControl), .d(ReqData[`DMACTIVE]), .q(DmActive));
+  flopenr #(3) DmControlReg (.clk, .reset(dmreset), .en(WriteDMControl),
+    .d({ReqData[`HALTREQ], ReqData[`ACKUNAVAIL], ReqData[`NDMRESET]}),
+    .q({HaltReq, AckUnavail, NdmReset}));
+  // AckHaveReset automatically deasserts after one cycle
+  flopr #(1) AckHaveResetReg (.clk, .reset(rst), .d(WriteDMControl & ReqData[`ACKHAVERESET]), .q(AckHaveReset));
+  // ResumeReq automatically deasserts after one cycle
+  flopr #(1) ResumeReqReg (.clk, .reset(rst), .d(WriteDMControl & ~ReqData[`HALTREQ] & ReqData[`RESUMEREQ]), .q(ResumeReq));
 
-  assign AbstractCS = {3'b0, ProgBufSize, 11'b0, Busy, RelaxedPriv, CmdErr, 4'b0, DataCount};
+  always_ff @(posedge clk) begin
+    if (dmreset)
+      HaltOnReset <= 0;
+    else if (WriteDMControl)
+      if (ReqData[`SETRESETHALTREQ])
+        HaltOnReset <= 1;
+      else if (ReqData[`CLRRESETHALTREQ])
+        HaltOnReset <= 0;
+  end
 
-  assign SysBusCS = 32'h20000000; // SBVersion = 1
+  //// Basic Ready/Valid handshake between DM and DTM:
+  // DM idles with ReqReady asserted
+  // When a value is written to DMI register, ReqValid is asserted in DTM
+  // DTM waits for RspValid
+  // DM processes request. Moves to ACK, asserts RspValid, deasserts ReqReady
+  // DM waits for ReqValid to deassert
+  // DTM stores response to be captured into shift register on next scan
 
+  // DM/DTM might lock up in the incredibly unlikely case that the hardware debugger 
+  // can complete an entire scan faster than the DM can complete a request
   assign RspValid = (State == ACK);
   assign ReqReady = (State != ACK);
 
   always_ff @(posedge clk) begin
     if (rst) begin
-      DmActive <= 0;
       State <= INACTIVE;
       NewAcState <= AC_IDLE;
     end else begin
       case (State)
         default : begin  // INACTIVE
-          // Reset Values
-          {HaltReq, ResumeReq, AckHaveReset, HaltOnReset, NdmReset} <= 0;
-          RspData <= 0;
-          CmdErr <= 0;
-          if (ReqValid) begin
-            if (ReqAddress == `DMCONTROL & ReqOP == `OP_WRITE & ReqData[`DMACTIVE]) begin
-              DmActive <= ReqData[`DMACTIVE];
-              RspOP <= `OP_SUCCESS;
-            end
-            State <= ACK; // acknowledge all Reqs even if they don't activate DM
-          end
+          if (ReqValid)
+            State <= ACK;
         end
 
         ACK : begin
           NewAcState <= AC_IDLE;
-          ResumeReq <= 0;
-          AckHaveReset <= 0;
           if (~ReqValid)
             State <= ~DmActive ? INACTIVE : IDLE;
         end
@@ -243,7 +264,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
               [{`OP_READ,`DATA2}:{`OP_READ,`DATA3}]         : State <= (P.LLEN >= 128) ? R_DATA : INVALID;
               {`OP_WRITE,`DMCONTROL}                        : State <= W_DMCONTROL;
               {`OP_READ,`DMCONTROL}                         : State <= R_DMCONTROL;
-              {`OP_READ,`DMSTATUS}                          : State <= DMSTATUS;
+              {`OP_READ,`DMSTATUS}                          : State <= R_DMSTATUS;
               {`OP_WRITE,`ABSTRACTCS}                       : State <= W_ABSTRACTCS;
               {`OP_READ,`ABSTRACTCS}                        : State <= R_ABSTRACTCS;
               {`OP_WRITE,`COMMAND}                          : State <= ABST_COMMAND;
@@ -259,144 +280,37 @@ module dm import cvw::*; #(parameter cvw_t P) (
             endcase
         end
 
-        R_DATA : begin
-          if (Busy)
-            CmdErr <= ~|CmdErr ? `CMDERR_BUSY : CmdErr;
-          case (ReqAddress)
-            `DATA0  : RspData <= Data0;
-            `DATA1  : RspData <= Data1;
-            `DATA2  : RspData <= Data2;
-            `DATA3  : RspData <= Data3;
-            default : RspData <= 32'b0;
-          endcase
-          RspOP <= `OP_SUCCESS;
-          State <= ACK;
-        end
-
-        W_DATA : begin
-          if (Busy)
-            CmdErr <= ~|CmdErr ? `CMDERR_BUSY : CmdErr;
-          RspOP <= `OP_SUCCESS;
-          State <= ACK;
-        end
-
-        W_DMCONTROL : begin
-          // While an abstract command is executing (busy in abstractcs is high), a debugger must not change
-          // hartsel, and must not write 1 to haltreq, resumereq, ackhavereset, setresethaltreq, or clrresethaltreq
-          if (Busy & (ReqData[`HALTREQ] | ReqData[`RESUMEREQ] | ReqData[`ACKHAVERESET] | ReqData[`SETRESETHALTREQ] | ReqData[`CLRRESETHALTREQ]))
-            CmdErr <= ~|CmdErr ? `CMDERR_BUSY : CmdErr;
-          else begin
-            HaltReq <= ReqData[`HALTREQ];
-            AckUnavail <= ReqData[`ACKUNAVAIL];
-            NdmReset <= ReqData[`NDMRESET];
-            DmActive <= ReqData[`DMACTIVE]; // Writing 0 here resets the DM
-            
-            // On any given write, a debugger may only write 1 to at most one of the following bits: resumereq,
-            //  hartreset, ackhavereset, setresethaltreq, and clrresethaltreq. The others must be written 0
-            case ({ReqData[`RESUMEREQ],ReqData[`ACKHAVERESET],ReqData[`SETRESETHALTREQ],ReqData[`CLRRESETHALTREQ]})
-              4'b0000 :; // None
-              4'b1000 : ResumeReq <= ~ReqData[`HALTREQ]; // Ignore ResumeReq if HaltReq
-              4'b0100 : AckHaveReset <= 1;
-              4'b0010 : HaltOnReset <= 1;
-              4'b0001 : HaltOnReset <= 0;
-              default : begin // Invalid (not onehot), dont write any changes
-                HaltReq <= HaltReq;
-                AckUnavail <= AckUnavail;
-                NdmReset <= NdmReset;
-                DmActive <= DmActive;
-              end
-            endcase
-          end
-        
-          RspOP <= `OP_SUCCESS;
-          State <= ACK;
-        end
-
-        R_DMCONTROL : begin
-          RspData <= DMControl;
-          RspOP <= `OP_SUCCESS;
-          State <= ACK;
-        end
-
-        DMSTATUS : begin
-          RspData <= DMStatus;
-          RspOP <= `OP_SUCCESS;
-          State <= ACK;
-        end
-
-        W_ABSTRACTCS : begin
-          if (Busy)
-            CmdErr <= ~|CmdErr ? `CMDERR_BUSY : CmdErr;
-          else
-            CmdErr <= |ReqData[`CMDERR] ? `CMDERR_NONE : CmdErr; // clear CmdErr
-          RspOP <= `OP_SUCCESS;
-          State <= ACK;
-        end
-
-        R_ABSTRACTCS : begin
-          RspData <= AbstractCS;
-          RspOP <= `OP_SUCCESS;
-          State <= ACK;
-        end
+        R_DMCONTROL,
+        R_DMSTATUS,
+        R_ABSTRACTCS,
+        R_SYSBUSCS,
+        READ_ZERO,
+        INVALID,
+        R_DATA,
+        W_DATA,
+        W_DMCONTROL,
+        W_ABSTRACTCS : State <= ACK;
 
         ABST_COMMAND : begin
-          RspOP <= `OP_SUCCESS;
           State <= ACK;
-
-          if (CmdErr != `CMDERR_NONE); // If CmdErr, do nothing
-          else if (Busy)
-            CmdErr <= `CMDERR_BUSY; // If Busy, set CmdErr, do nothing
-          else if (~DebugStall)
-            CmdErr <= `CMDERR_HALTRESUME; // If not halted, set CmdErr, do nothing
-          else begin
-            case (ReqData[`CMDTYPE])
-              `ACCESS_REGISTER : begin
-                if (~ReqData[`TRANSFER])
-                  State <= ReqData[`POSTEXEC] ? EXEC_PROGBUF : ACK;  // If not transfer, exec progbuf or do nothing
-                else if (ReqData[`AARSIZE] > AARSIZE_ENC[2:0])
-                  CmdErr <= `CMDERR_BUS;                             // If AARSIZE (encoded) is greater than P.LLEN, set CmdErr, do nothing
-                else if (InvalidRegNo)
-                  CmdErr <= `CMDERR_EXCEPTION;                       // If InvalidRegNo, set CmdErr, do nothing
-                else if (ReqData[`AARWRITE] & RegReadOnly)
-                  CmdErr <= `CMDERR_NOT_SUPPORTED;                   // If writing to a read only register, set CmdErr, do nothing
-                else begin
-                  AcWrite <= ReqData[`AARWRITE];
-                  NewAcState <= ~ReqData[`AARWRITE] ? AC_CAPTURE : AC_SCAN;
-                  State <= ReqData[`POSTEXEC] ? EXEC_PROGBUF : ACK;
-                end
+          if (AcceptAbstrCmdReqs) begin
+            if (ReqData[`CMDTYPE] == `ACCESS_REGISTER) begin
+              if (~ReqData[`TRANSFER])
+                State <= ReqData[`POSTEXEC] ? EXEC_PROGBUF : ACK;
+              else if (ValAccRegReq) begin
+                AcWrite <= ReqData[`AARWRITE];
+                NewAcState <= ~ReqData[`AARWRITE] ? AC_CAPTURE : AC_SCAN;
+                State <= ReqData[`POSTEXEC] ? EXEC_PROGBUF : ACK;
               end
-              //`QUICK_ACCESS : State <= QUICK_ACCESS;
-              //`ACCESS_MEMORY : State <= ACCESS_MEMORY;
-              default : CmdErr <= `CMDERR_NOT_SUPPORTED;
-            endcase
+            end
           end
         end
 
         W_PROGBUF : begin
-          if (Busy)
-            CmdErr <= ~|CmdErr ? `CMDERR_BUSY : CmdErr;
-          else begin
+          if (~Busy) begin
             NewAcState <= PROGBUFF_WRITE;
             ProgBufAddr <= {UpperReqAddr, ReqAddress};
           end
-          RspOP <= `OP_SUCCESS;
-          State <= ACK;
-        end
-
-        R_SYSBUSCS : begin
-          RspData <= SysBusCS;
-          RspOP <= `OP_SUCCESS;
-          State <= ACK;
-        end
-
-        READ_ZERO : begin // Writes ignored, Read Zero
-          RspData <= 0;
-          RspOP <= `OP_SUCCESS;
-          State <= ACK;
-        end
-
-        INVALID : begin
-          RspOP <= `OP_SUCCESS;  // openocd cannot recover from `OP_FAILED;
           State <= ACK;
         end
 
@@ -409,13 +323,70 @@ module dm import cvw::*; #(parameter cvw_t P) (
     end
   end
 
+  // DMI response
+  always_ff @(posedge clk) begin
+    // RspData
+    case(State)
+      R_DATA : begin
+        case (ReqAddress)
+          `DATA0  : RspData <= Data0;
+          `DATA1  : RspData <= Data1;
+          `DATA2  : RspData <= Data2;
+          `DATA3  : RspData <= Data3;
+          default : RspData <= '0;
+        endcase
+      end
+      R_DMCONTROL  : RspData <= {2'b0, 1'b0, 2'b0, 1'b0, 10'b0, 10'b0, 4'b0, NdmReset, DmActive};
+      R_DMSTATUS   :  begin
+        RspData <= {7'b0, NdmResetPending, StickyUnavail, ImpEBreak, 2'b0, 
+                    AllHaveReset, AnyHaveReset, AllResumeAck, AnyResumeAck, AllNonExistent, 
+                    AnyNonExistent, AllUnavail, AnyUnavail, AllRunning, AnyRunning, AllHalted, 
+                    AnyHalted, Authenticated, AuthBusy, HasResetHaltReq, ConfStrPtrValid, Version};
+      end
+      R_ABSTRACTCS : RspData <= {3'b0, ProgBufSize, 11'b0, Busy, RelaxedPriv, CmdErr, 4'b0, DataCount};
+      R_SYSBUSCS   : RspData <= 32'h20000000; // SBVersion = 1
+      READ_ZERO    : RspData <= '0;
+      default: RspData <= '0;
+    endcase
+
+    // RspOP
+    case (State)
+      INVALID : RspOP <= `OP_SUCCESS;  // openocd cannot recover from `OP_FAILED;
+      default : RspOP <= `OP_SUCCESS;
+    endcase
+  end
+
+  // Command Error
+  always_ff @(posedge clk) begin
+    if (dmreset)
+      CmdErr <= `CMDERR_NONE;
+    else
+      case (State)
+        R_DATA,
+        W_DATA,
+        W_PROGBUF    : if (~|CmdErr & Busy) CmdErr <= `CMDERR_BUSY;
+        W_DMCONTROL  : if (~|CmdErr & Busy & WriteDMControlBusy) CmdErr <= `CMDERR_BUSY;
+        W_ABSTRACTCS : if (~|CmdErr & Busy) CmdErr <= `CMDERR_BUSY;
+                       else if (|ReqData[`CMDERR]) CmdErr <= `CMDERR_NONE;
+        ABST_COMMAND : begin
+          if (~DebugStall) CmdErr <= `CMDERR_HALTRESUME;
+          else if ((ReqData[`CMDTYPE] == `ACCESS_REGISTER) & ReqData[`TRANSFER])  // Access register
+              if (ReqData[`AARSIZE] > AARSIZE_ENC[2:0])  CmdErr <= `CMDERR_BUS;           // If AARSIZE (encoded) is greater than P.LLEN
+              else if (InvalidRegNo)                     CmdErr <= `CMDERR_EXCEPTION;     // If InvalidRegNo
+              else if (ReqData[`AARWRITE] & RegReadOnly) CmdErr <= `CMDERR_NOT_SUPPORTED; // If writing to a read only register
+          else if ((ReqData[`CMDTYPE] != `ACCESS_REGISTER)) CmdErr <= `CMDERR_NOT_SUPPORTED;
+        end
+        default : CmdErr <= CmdErr;
+      endcase
+  end
+
   // Abstract command engine
   // Due to length of the register scan chain,
   // abstract commands execute independently of other DM operations
   always_ff @(posedge clk) begin
     if (rst)
       AcState <= AC_IDLE;
-    else begin
+    else
       case (AcState)
         AC_IDLE : begin
           Cycle <= 0;
@@ -453,7 +424,6 @@ module dm import cvw::*; #(parameter cvw_t P) (
           Cycle <= Cycle;
         end
       endcase
-    end
   end
 
   assign Busy = ~(AcState == AC_IDLE);
@@ -483,14 +453,14 @@ module dm import cvw::*; #(parameter cvw_t P) (
       default : ScanReg[P.LLEN] = DebugScanIn;
     endcase
   end
-  
+
   if (P.LLEN == 32)
     assign PackedDataReg = Data0;
   else if (P.LLEN == 64)
     assign PackedDataReg = {Data1,Data0};
   else if (P.LLEN == 128)
     assign PackedDataReg = {Data3,Data2,Data1,Data0};
-  
+
   // Load data from DMI into scan chain
   assign WriteProgBuff = (AcState == PROGBUFF_WRITE) & (Cycle == 0);
   // Load data from message registers into scan chain
@@ -504,7 +474,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
       assign ScanNext[i] = WriteScanReg & ARMask[i] ? PackedDataReg[i] : ScanReg[i+1];
     flopenr #(1) scanreg (.clk, .reset(rst), .en(DebugScanEn | ProgBuffScanEn), .d(ScanNext[i]), .q(ScanReg[i]));
   end
-  
+
   // Message Registers
   assign MaskedScanReg = ARMask & ScanReg[P.LLEN:1];
   assign WriteMsgReg = (State == W_DATA) & ~Busy;

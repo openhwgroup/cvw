@@ -86,7 +86,6 @@ module dtm #(parameter ADDR_WIDTH, parameter JTAG_DEVICE_ID) (
   jtag #(.ADDR_WIDTH(ADDR_WIDTH), .DEVICE_ID(JTAG_DEVICE_ID)) jtag (.tck(tcks), .tdi, .tms, .tdo,
     .resetn, .UpdateDtmcs, .DtmcsIn, .DtmcsOut, .CaptureDmi, .UpdateDmi, .DmiIn, .DmiOut);
 
-
   // DTMCS
   assign DtmcsOut = {11'b0, ErrInfo, 3'b0, Idle, DmiStat, ABits, Version};
   always @(posedge clk) begin
