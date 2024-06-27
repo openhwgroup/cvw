@@ -71,7 +71,7 @@ module ir (
   always @(posedge updateIR or negedge resetn) begin
     if (~resetn)
       {BypassInstr, IDCodeInstr, DtmcsIntrs, DmiInstr} <= 4'b0100;
-    else if (updateIR)
+    else
       {BypassInstr, IDCodeInstr, DtmcsIntrs, DmiInstr} <= decoded;
   end
   /* verilator lint_on SYNCASYNCNET */
