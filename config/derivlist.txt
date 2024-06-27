@@ -786,6 +786,28 @@ ZKND_SUPPORTED     0
 ZKNE_SUPPORTED     0     
 ZKNH_SUPPORTED     1     
 
+deriv noS_rv32gc rv32gc
+S_SUPPORTED        0
+SSTC_SUPPORTED     0
+VIRTMEM_SUPPORTED  0
+SVINVAL_SUPPORTED  0
+SVADU_SUPPORTED    0
+
+deriv noS_rv64gc rv64gc
+S_SUPPORTED       0
+SSTC_SUPPORTED    0
+VIRTMEM_SUPPORTED 0
+SVPBMT_SUPPORTED  0
+SVNAPOT_SUPPORTED 0
+SVINVAL_SUPPORTED 0
+SVADU_SUPPORTED   0
+
+deriv noU_rv32gc noS_rv32gc
+U_SUPPORTED    0
+
+deriv noU_rv64gc noS_rv64gc
+U_SUPPORTED    0
+
 # Floating-point modes supported
 
 deriv f_rv32gc rv32gc
