@@ -39,7 +39,6 @@ module divremsqrtfdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0]    AM,                // U/Q(XLEN.0)
   input  logic                 RemOpM, ALTBM, BZeroM, AsM, BsM, W64M, SIGNOVERFLOWM, ZeroDiffM, IntDivM,
   input  logic [P.DIVBLEN-1:0] IntNormShiftM,
-  //input  logic [P.DIVBLEN-1:0] IntNormShiftM,     
   input  logic [P.XLEN-1:0]    PreIntResultM,
   output logic [P.DIVb:0]      UmM,               // U1.DIVb result significand
   output logic                 WZeroE,
@@ -63,27 +62,7 @@ module divremsqrtfdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
 
   // check for early termination on an exact result. 
   divremsqrtearlyterm #(P) earlyterm(.FirstC, .FirstUM, .D, .SqrtE, .WC, .WS,.Firstun, .WZeroE);
-  //divremsqrtearlytermkevin #(P) earlyterm(.FirstC, .FirstUM, .D, .SqrtE, .Sum,.Firstun, .WZeroE);
-  /*
-  aplusbeq0 #(P.DIVb+4) wspluswceq0(WS, WC, weq0E);
-
-  if (P.RADIX == 2) begin: R2EarlyTerm
-    logic [P.DIVb+3:0] FZeroE, FZeroSqrtE, FZeroDivE;
-    logic [P.DIVb+2:0] FirstK;
-    logic wfeq0E;
-    logic [P.DIVb+3:0] WCF, WSF;
-
-    assign FirstK = ({1'b1, FirstC} & ~({1'b1, FirstC} << 1));
-    assign FZeroSqrtE = {FirstUM[P.DIVb], FirstUM, 2'b0} | {FirstK,1'b0};    // F for square root
-    assign FZeroDivE =  D << 1;                                    // F for divide
-    mux2 #(P.DIVb+4) fzeromux(FZeroDivE, FZeroSqrtE, SqrtE, FZeroE);
-    csa #(P.DIVb+4) fadd(WS, WC, FZeroE, 1'b0, WSF, WCF); // compute {WCF, WSF} = {WS + WC + FZero};
-    aplusbeq0 #(P.DIVb+4) wcfpluswsfeq0(WCF, WSF, wfeq0E);
-    assign WZeroE = weq0E|(wfeq0E & Firstun);
-  end else begin
-    assign WZeroE = weq0E;
-  end 
-  */
+  
 
   //////////////////////////
   // E/M Pipeline register

@@ -131,16 +131,13 @@ module divremsqrtfdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     // calculate number of result bits
     assign ZeroDiff = mE - ell;         // Difference in number of leading zeros
     assign ALTBE = ZeroDiff[P.DIVBLEN-1];  // A less than B (A has more leading zeros)
-    //assign SIGNOVERFLOWE = &ForwardedSrcBE & (ForwardedSrcAE == {{1'b1}, {(P.XLEN-1){1'b0}}}) & SignedDivE;
     assign SIGNOVERFLOWE = 1'b0;
 
     mux2 #(P.DIVBLEN) pmux(ZeroDiff, '0, ALTBE, p);          
 
     /* verilator lint_off WIDTH */
-    //assign IntResultBitsE = P.LOGR + p;  // Total number of result bits (r integer bits plus p fractional bits)
     assign IntResultBitsE = P.LOGR + p;  // Total number of result bits (r integer bits plus p fractional bits)
-    //assign IntResultBitsE =  p + (&mE[$clog2(P.XLEN)-1:0]);  // Total number of result bits (r integer bits plus p fractional bits)
-    //assign IntResultBitsE = P.LOGR + p;  // Total number of result bits (r integer bits plus p fractional bits)
+   
     /* verilator lint_on WIDTH */
 
     // Integer special cases (terminate immediately)
@@ -151,13 +148,7 @@ module divremsqrtfdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
       
       /* verilator lint_offf WIDTH */
       assign RightShiftX = P.RK - 1 - ((IntResultBitsE - 1) % P.RK); // Right shift amount
-      //assign RightShiftX = P.RK - ((p+1) % P.RK); // Right shift amount
-      //assign RightShiftX = P.RK - ((p+1) % P.RK); // Right shift amount
-      //assign RightShiftX = CyclesE * P.RK - P.DIVb - 1;
-      //assign RightShiftX = CyclesE*P.RK - p - 1;
-      //assign RightShiftX = ((IntResultBitsE) % P.RK); // Right shift amount
       assign DivXShifted = DivX >> RightShiftX;                     // shift X by up to R*K-1 to complete in n steps
-      //assign DivXShifted = DivX;
       /* verilator lint_on WIDTH */
     end else begin // radix 2 1 copy doesn't require shifting
       assign DivXShifted = DivX;

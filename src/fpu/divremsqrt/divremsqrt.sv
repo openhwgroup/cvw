@@ -107,12 +107,5 @@
     .FIntDivResultM,  .PreResultM, .PreIntResultM, .SIGNOVERFLOWM, .ZeroDiffM, .IntDivM, .IntNormShiftM);
   
   
-  /*divremsqrtfdivsqrtpostproc #(P) fdivsqrtpostproc(                        // Postprocessor
-    .clk, .reset, .StallM, .WS, .WC, .D, .FirstU, .FirstUM, .FirstC, 
-    .SqrtE, .Firstun, .SqrtM, .SpecialCaseM, 
-    .UmM, .WZeroE, .DivStickyM, 
-    // Int-specific 
-    .ALTBM, .AsM, .BsM, .BZeroM, .W64M, .RemOpM(Funct3M[1]), .AM, 
-    .FIntDivResultM,  .PreResultM, .PreIntResultM, .SIGNOVERFLOWM, .ZeroDiffM, .IntDivM);*/
 endmodule
 

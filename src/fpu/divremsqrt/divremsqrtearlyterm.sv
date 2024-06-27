@@ -18,10 +18,8 @@ module divremsqrtearlyterm import cvw::*;  #(parameter cvw_t P) (
     assign FZeroSqrtE = {FirstUM[P.DIVb], FirstUM, 2'b0} | {FirstK,1'b0};    // F for square root
     assign FZeroDivE =  D << 1;                                    // F for divide
     mux2 #(P.DIVb+4) fzeromux(FZeroDivE, FZeroSqrtE, SqrtE, FZeroE);
-    //mux2 #(P.DIVb+4) fzeromux(FZeroDivE, FZeroDivE, SqrtE, FZeroE);
     csa #(P.DIVb+4) fadd(WS, WC, FZeroE, 1'b0, WSF, WCF); // compute {WCF, WSF} = {WS + WC + FZero};
     aplusbeq0 #(P.DIVb+4) wcfpluswsfeq0(WCF, WSF, wfeq0E);
-    //assign WZeroE = weq0E|(wfeq0E & Firstun);
     assign WZeroE = weq0E|wfeq0E;
   end else begin
     assign WZeroE = weq0E;

@@ -96,12 +96,7 @@ module divremsqrtpostprocess import cvw::*;  #(parameter cvw_t P)  (
   logic                       NaNIn;      // are any of the inputs NaN
 
   // signals to help readability
-  //assign Signed =  OpCtrl[0];
-  //assign Int64 =   OpCtrl[1];
-  //assign IntToFp = OpCtrl[2];
-  //assign Mult = OpCtrl[2]&~OpCtrl[1]&~OpCtrl[0];
-  //assign CvtOp = (PostProcSel == 2'b00);
-  //assign FmaOp = (PostProcSel == 2'b10);
+  
   assign DivOp = (PostProcSel == 2'b01);
   assign Sqrt =  OpCtrl[0];
 
@@ -124,8 +119,6 @@ module divremsqrtpostprocess import cvw::*;  #(parameter cvw_t P)  (
   ///////////////////////////////////////////////////////////////////////////////
 
   // final claulations before shifting
-  /*cvtshiftcalc cvtshiftcalc(.ToInt, .CvtCe, .CvtResSubnormUf, .Xm, .CvtLzcIn,  
-      .XZero, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);*/
 
   divremsqrtdivshiftcalc #(P) divremsqrtdivshiftcalc(.DivUe, .DivUm, .DivResSubnorm, .DivSubnormShiftPos, .DivShiftAmt, .DivShiftIn);
 
@@ -158,8 +151,6 @@ module divremsqrtpostprocess import cvw::*;  #(parameter cvw_t P)  (
   // Sign calculation
   ///////////////////////////////////////////////////////////////////////////////
 
-  /*resultsign resultsign(.Frm, .FmaPs, .FmaAs, .Round, .Sticky, .Guard,
-      .FmaOp, .ZInf, .InfIn, .FmaSZero, .Mult, .Ms, .Rs);*/
   assign Rs = Ms;
 
   ///////////////////////////////////////////////////////////////////////////////
