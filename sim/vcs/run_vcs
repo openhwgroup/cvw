@@ -92,24 +92,22 @@ RTL_FILES="$INCLUDE_DIRS $(find ${SRC} -name "*.sv" ! -path "${SRC}/generic/mem/
 OUTPUT="sim_out"
 VCS_CMD="vcs +lint=all,noGCWM,noUI,noSVA-UA,noIDTS,noNS,noULCO,noCAWM-L,noWMIA-L,noSV-PIU,noSTASKW_CO,noSTASKW_CO1,noSTASKW_RMCOF +vcs+vcdpluson -suppress +warn -sverilog +vc -Mupdate -line -full64 -kdb -lca -debug_access+all+reverse  -ntb_opts sensitive_dyn ${INCLUDE_PATH} $RTL_FILES"
 SIMV_CMD="./${WKDIR}/$OUTPUT +TEST=${TESTSUITE} ${PLUSARGS}" 
-COV_FILES="${TB}/coverage/test_pmp_coverage.sv"
-COV_OPTIONS="-cm line+cond+branch+fsm+tgl -cm_log ${WKDIR}/coverage.log -cm_dir ${WKDIR}/COVERAGE"
-### CODE COVERAGE REPORT in IndividualCovReport in XML format
-#COV_RUN="urg -dir ${WKDIR}/COVERAGE.vdb -report IndividualCovReport/${CONFIG_VARIANT}_${TESTSUITE}" 
-### CODE COVERAGE REPORT in IndividualCovReport in text format
-COV_RUN="urg -dir ./${WKDIR}/COVERAGE.vdb -format text -report IndividualCovReport/${CONFIG_VARIANT}_${TESTSUITE}"
-
 
 # Clean and run simulation with VCS
 
-if [ "$3" = "coverage" ]; then
+if [ "$3" = "--coverage" ]; then
     echo -e "${YELLOW}#### Running VCS Simulation with Coverage ####${NC}"
-    # Code Coverage.
+    COV_OPTIONS="-cm line+cond+branch+fsm+tgl -cm_log ${WKDIR}/coverage.log -cm_dir ${WKDIR}/COVERAGE"
+    COV_RUN="urg -dir ./${WKDIR}/COVERAGE.vdb -format text -report IndividualCovReport/${CONFIG_VARIANT}_${TESTSUITE}"
     $VCS_CMD -Mdir=${WKDIR} $COV_OPTIONS -o ${WKDIR}/$OUTPUT -Mlib ${WKDIR} -work ${WKDIR} -l "$LOGS/${CONFIG_VARIANT}_${TESTSUITE}.log"
-    $SIMV_CMD $COV_OPTIONS
+    $SIMV_CMD $COV_OPTIONS # dh 6/27/24 *** are COV_OPTIONS really needed?
     $COV_RUN
     #cp -rf urgReport $COV
-
+elif [ "$3" = "--lockstep" ]; then
+    echo -e "${YELLOW}#### Running VCS Simulation with Lockstep ####${NC}"
+    LOCKSTEPVOPTSTRING=" +define+USE_IMPERAS_DV +incdir+$env(IMPERAS_HOME)/ImpPublic/include/host  +incdir+$env(IMPERAS_HOME)/ImpProprietary/include/host  ${IMPERAS_HOME}/ImpPublic/source/host/rvvi/*.sv ${IMPERAS_HOME}/ImpProprietary/source/host/idv/*.sv -sv_lib ${IMPERAS_HOME}/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model "
+    $VCS_CMD -Mdir=${WKDIR} $LOCKSTEP_OPTIONS -o ${WKDIR}/$OUTPUT -Mlib ${WKDIR} -work ${WKDIR} -l "$LOGS/${CONFIG_VARIANT}_${TESTSUITE}.log"
+    $SIMV_CMD 
 else
     echo -e "${YELLOW}#### Running VCS Simulation ####${NC}"
     $VCS_CMD -Mdir=${WKDIR} -o ${WKDIR}/$OUTPUT -work ${WKDIR} -Mlib ${WKDIR} -l "$LOGS/${CONFIG_VARIANT}_${TESTSUITE}.log"
