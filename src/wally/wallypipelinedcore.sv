@@ -44,12 +44,40 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    output logic [2:0]            HBURST,
    output logic [3:0]            HPROT,
    output logic [1:0]            HTRANS,
-   output logic                  HMASTLOCK
+   output logic                  HMASTLOCK,
+   // Debug Mode Control
+   input  logic                  HaltReq,
+   input  logic                  ResumeReq,
+   input  logic                  HaltOnReset,
+   input  logic                  AckHaveReset,
+   output logic                  ResumeAck,
+   output logic                  HaveReset,
+   output logic                  DebugStall,
+   input  logic                  ExecProgBuf,
+   // Debug scan chain
+   output logic                  DebugStopTime_REGW,
+   input  logic                  DebugScanEn,    // puts scannable flops into scan mode
+   output logic                  DebugScanOut,   // (misc) scan chain data out
+   output logic                  GPRScanOut,     // (GPR) scan chain data out
+   output logic                  FPRScanOut,     // (FPR) scan chain data out
+   output logic                  CSRScanOut,     // (CSR) scan chain data out
+   input  logic                  DebugScanIn,    // scan chain data in
+   input  logic                  MiscSel,        // selects general scan chain
+   input  logic                  GPRSel,         // selects GPR scan chain
+   input  logic                  FPRSel,         // selects FPR scan chain
+   input  logic                  CSRSel,         // selects CSR scan chain
+   input  logic [11:0]           DebugRegAddr,   // address for scanable regfiles (GPR, FPR, CSR)
+   input  logic                  DebugCapture,   // latches values into scan register before scanning out
+   input  logic                  DebugRegUpdate,  // writes values from scan register after scanning in	
+   input  logic [P.XLEN-1:0]     ProgBufAddr,
+   input  logic                  ProgBuffScanEn
 );
 
   logic                          StallF, StallD, StallE, StallM, StallW;
   logic                          FlushD, FlushE, FlushM, FlushW;
   logic                          TrapM, RetM;
+  logic                          DebugMode, Step;
+  logic                          ebreakEn;
 
   //  signals that must connect through DP
   logic                          IntDivE, W64E;
@@ -168,6 +196,16 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          BranchD, BranchE, JumpD, JumpE;
   logic                          DCacheStallM, ICacheStallF;
   logic                          wfiM, IntPendingM;
+  logic                          ebreakM;
+
+  // Debug mode logic
+  logic [P.XLEN-1:0]             DPC;
+  logic                          DRet;
+  logic                          DCall;
+  logic [2:0]                    DebugCause;
+  logic                          ForceBreakPoint;
+  // Debug register scan chain interconnects
+  logic [2:0]                    DebugScanReg;
 
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu #(P) ifu(.clk, .reset,
@@ -189,8 +227,10 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     // mmu management
     .PrivilegeModeW, .PTE, .PageType, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV,
     .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE, .ITLBWriteF, .sfencevmaM, .ITLBMissOrUpdateAF,
-    // pmp/pma (inside mmu) signals. 
-    .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW, .InstrAccessFaultF); 
+    // pmp/pma (inside mmu) signals.
+    .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW, .InstrAccessFaultF,
+    .DRet, .ProgBuffScanEn, .ProgBufAddr, .ProgBufScanIn(DebugScanIn),
+    .DebugScanEn(DebugScanEn & MiscSel), .DebugScanIn(DebugScanReg[0]), .DebugScanOut(DebugScanReg[1]));
     
   // integer execution unit: integer register file, datapath and controller
   ieu #(P) ieu(.clk, .reset,
@@ -215,7 +255,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
      // hazards
      .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
      .StructuralStallD, .LoadStallD, .StoreStallD, .PCSrcE,
-     .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .InvalidateICacheM); 
+     .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .InvalidateICacheM,
+     .DebugScanEn, .DebugScanIn(DebugScanReg[1]), .GPRScanIn(DebugScanIn), .DebugScanOut(DebugScanReg[2]), .GPRScanOut,
+     .MiscSel, .GPRSel, .DebugCapture, .DebugRegUpdate, .DebugRegAddr(DebugRegAddr[4:0]));
 
   lsu #(P) lsu(
     .clk, .reset, .StallM, .FlushM, .StallW, .FlushW,
@@ -250,7 +292,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .StoreAmoMisalignedFaultM,    // connects to privilege
     .StoreAmoAccessFaultM,        // connects to privilege
     .PCSpillF, .ITLBMissOrUpdateAF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
-    .LSUStallM);                    
+    .LSUStallM, .DebugCapture, .DebugScanEn(DebugScanEn & MiscSel), .DebugScanIn(DebugScanReg[2]), .DebugScanOut);                    
 
   if(P.BUS_SUPPORTED) begin : ebu
     ebu #(P) ebu(// IFU connections
@@ -271,15 +313,25 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
 
   // global stall and flush control  
   hazard #(P) hzu(
-    .BPWrongE, .CSRWriteFenceM, .RetM, .TrapM,
+    .BPWrongE, .CSRWriteFenceM, .RetM, .TrapM, .DRet,
     .StructuralStallD,
     .LSUStallM, .IFUStallF,
     .FPUStallD,
     .DivBusyE, .FDivBusyE,
-    .wfiM, .IntPendingM,
+    .wfiM, .IntPendingM, .DebugStall,
     // Stall & flush outputs
     .StallF, .StallD, .StallE, .StallM, .StallW,
-    .FlushD, .FlushE, .FlushM, .FlushW);    
+    .FlushD, .FlushE, .FlushM, .FlushW);
+
+  if (P.DEBUG_SUPPORTED) begin
+    dmc debugcontrol(
+      .clk, .reset,
+      .Step, .ebreakM, .ebreakEn, .HaltReq, .ResumeReq, .HaltOnReset, .AckHaveReset,
+      .ResumeAck, .HaveReset, .DebugMode, .DebugCause, .DebugStall, .ExecProgBuf,
+      .DCall, .DRet, .ForceBreakPoint);
+  end else begin
+    assign {DebugMode, DebugCause, ResumeAck, HaveReset, DebugStall, DCall, DRet, ForceBreakPoint} = '0;
+  end
 
   // privileged unit
   if (P.ZICSR_SUPPORTED) begin:priv
@@ -303,14 +355,26 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .PrivilegeModeW, .SATP_REGW,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS, 
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
-      .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM);
+      .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM, .ebreakM,
+      .ebreakEn, .ForceBreakPoint, .DebugMode, .DebugCause, .Step, .DebugStopTime_REGW, .DPC, .DCall,
+      .DRet, .ExecProgBuf, .DebugSel(CSRSel), .DebugRegAddr, .DebugCapture,
+      .DebugRegUpdate, .DebugScanEn(DebugScanEn & CSRSel), .DebugScanIn, .DebugScanOut(CSRScanOut));
+    if (P.DEBUG_SUPPORTED) begin
+      flopenrs #(1) scantrapm (.clk, .reset, .en(DebugCapture), .d(TrapM), .q(),
+        .scan(DebugScanEn), .scanin(DebugScanIn), .scanout(DebugScanReg[0]));
+    end else begin
+      assign DebugStopTime_REGW = '0;
+      assign DebugScanReg[0] = DebugScanIn;
+    end
   end else begin
-    assign {CSRReadValW, PrivilegeModeW, 
+    assign {CSRReadValW, PrivilegeModeW,
             SATP_REGW, STATUS_MXR, STATUS_SUM, STATUS_MPRV, STATUS_MPP, STATUS_FS, FRM_REGW,
-            // PMPCFG_ARRAY_REGW, PMPADDR_ARRAY_REGW, 
-            ENVCFG_CBE, ENVCFG_PBMTE, ENVCFG_ADUE, 
+            // PMPCFG_ARRAY_REGW, PMPADDR_ARRAY_REGW,
+            ENVCFG_CBE, ENVCFG_PBMTE, ENVCFG_ADUE,
             EPCM, TrapVectorM, RetM, TrapM,
-            sfencevmaM, BigEndianM, wfiM, IntPendingM} = '0;
+            sfencevmaM, BigEndianM, wfiM, IntPendingM, CSRScanOut} = '0;
+    assign DebugScanReg[0] = DebugScanIn;
+    assign DebugStopTime_REGW = '0;
   end
 
   // multiply/divide unit
@@ -349,11 +413,18 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .FDivBusyE,                          // Is the divide/sqrt unit busy (stall execute stage)
       .IllegalFPUInstrD,                   // Is the instruction an illegal fpu instruction
       .SetFflagsM,                         // FPU flags (to privileged unit)
-      .FIntDivResultW); 
+      .FIntDivResultW,
+      .DebugSel(FPRSel),
+      .DebugRegAddr(DebugRegAddr[4:0]),
+      .DebugCapture,
+      .DebugRegUpdate,
+      .DebugScanEn(DebugScanEn & FPRSel),
+      .DebugScanIn,
+      .DebugScanOut(FPRScanOut));
   end else begin                           // no F_SUPPORTED or D_SUPPORTED; tie outputs low
     assign {FPUStallD, FWriteIntE, FCvtIntE, FIntResM, FCvtIntW, FRegWriteM,
             IllegalFPUInstrD, SetFflagsM, FpLoadStoreM,
-            FWriteDataM, FCvtIntResW, FIntDivResultW, FDivBusyE} = '0;
+            FWriteDataM, FCvtIntResW, FIntDivResultW, FDivBusyE, FPRScanOut} = '0;
   end
   
 endmodule

@@ -57,18 +57,19 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   output logic                 UARTSout,                  // UART serial output
   input  logic                 SDCIntr,
   input  logic                 SPIIn,
+  input  logic                 DebugStopTime_REGW,
   output logic                 SPIOut,
-  output logic [3:0]           SPICS                  
+  output logic [3:0]           SPICS
 );
   
   logic [P.XLEN-1:0]           HREADRam, HREADSDC;
 
-  logic [11:0]                 HSELRegions;
+  logic [14:0]                 HSELRegions;
   logic                        HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSPI;
   logic                        HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD, HSELSPID;
   logic                        HRESPRam,  HRESPSDC;
   logic                        HREADYRam, HRESPSDCD;
-  logic [P.XLEN-1:0]           HREADBootRom; 
+  logic [P.XLEN-1:0]           HREADBootRom;
   logic                        HSELBootRom, HSELBootRomD, HRESPBootRom, HREADYBootRom, HREADYSDC;
   logic                        HSELNoneD;
   logic                        UARTIntr,GPIOIntr, SPIIntr;
@@ -120,7 +121,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   // memory-mapped I/O peripherals
   if (P.CLINT_SUPPORTED == 1) begin : clint
     clint_apb #(P) clint(.PCLK, .PRESETn, .PSEL(PSEL[1]), .PADDR(PADDR[15:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
-      .PRDATA(PRDATA[1]), .PREADY(PREADY[1]), .MTIME(MTIME_CLINT), .MTimerInt, .MSwInt);
+      .PRDATA(PRDATA[1]), .PREADY(PREADY[1]), .MTIME(MTIME_CLINT), .MTimerInt, .MSwInt, .DebugStopTime_REGW);
   end else begin : clint
     assign MTIME_CLINT = '0;
     assign MTimerInt = 1'b0; assign MSwInt = 1'b0;
@@ -183,7 +184,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   // takes more than 1 cycle to repsond it needs to hold on to the old select until the
   // device is ready.  Hense this register must be selectively enabled by HREADY.
   // However on reset None must be seleted.
-  flopenl #(12) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions, 12'b1, 
+  flopenl #(12) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions[11:0], 12'b1,
     {HSELSPID, HSELEXTSDCD, HSELPLICD, HSELUARTD, HSELGPIOD, HSELCLINTD,
       HSELRamD, HSELBootRomD, HSELEXTD, HSELIROMD, HSELDTIMD, HSELNoneD});
   flopenr #(1) hselbridgedelayreg(HCLK, ~HRESETn, HREADY, HSELBRIDGE, HSELBRIDGED);
