@@ -313,8 +313,8 @@ os.chdir(regressionDir)
 
 coveragesim = "questa"  # Questa is required for code/functional coverage
 #defaultsim = "vcs"   # Default simulator for all other tests; change to Verilator when flow is ready
-defaultsim = "questa"   # Default simulator for all other tests; change to Verilator when flow is ready
-#defaultsim = "verilator"   # Default simulator for all other tests
+#defaultsim = "questa"   # Default simulator for all other tests; change to Verilator when flow is ready
+defaultsim = "verilator"   # Default simulator for all other tests
 
 coverage = '--coverage' in sys.argv
 fp = '--fp' in sys.argv
@@ -323,9 +323,8 @@ testfloat = '--testfloat' in sys.argv
 
 if (nightly):
     nightMode = "--nightly";
-#    sims = [defaultsim] 
-    sims = ["questa", "vcs"] 
-#    sims = ["questa", "verilator", "vcs"] # *** uncomment to exercise all simulators
+#    sims = [defaultsim]                    # uncomment to use only the default simulator
+    sims = ["questa", "verilator", "vcs"] # uncomment to exercise all simulators
 else:
     nightMode = ""
     sims = [defaultsim]
@@ -352,6 +351,7 @@ if (coverage):  # only run RV64GC tests on Questa in coverage mode
         addTests(tests64gc_fp, "questa")
 else:
     for sim in sims:
+        addTests(tests_buildrootshort, sim)
         addTests(tests, sim)
         addTests(tests64gc_nofp, sim)
         addTests(tests64gc_fp, sim)
@@ -359,10 +359,7 @@ else:
     # run derivative configurations in nightly regression
 if (nightly):
 #    addTests(tests_buildrootboot, defaultsim)
-    addTests(tests_buildrootshort, defaultsim)
     addTests(derivconfigtests, defaultsim)
-else:
-    addTests(tests_buildrootshort, defaultsim)
 
 # testfloat tests
 if (testfloat): # for testfloat alone, just run testfloat tests
@@ -433,9 +430,10 @@ def main():
     """Run the tests and count the failures"""
     global configs, coverage
     os.chdir(regressionDir)
-    os.system('rm -rf questa/wkdir')
-    for d in ["questa/logs", "questa/wkdir", "verilator/logs", "verilator/wkdir", "vcs/logs", "vcs/wkdir"]:
+    dirs = ["questa/logs", "questa/wkdir", "verilator/logs", "verilator/wkdir", "vcs/logs", "vcs/wkdir"]
+    for d in dirs: 
         try:
+            os.system('rm -rf %s' % d)
             os.mkdir(d)
         except:
             pass
