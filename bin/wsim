@@ -23,7 +23,7 @@ def LaunchSim(ElfFile, flags):
         # Questa cannot accept more than 9 arguments.  fcov implies lockstep
         if (args.tb == "testbench_fp"):
             args.args = " -GTEST=\"" + args.testsuite + "\" " + args.args
-        cmd = "do wally.do " + args.config + " " + args.testsuite + " " + args.tb + " " + args.args + " " + ElfFile + " " + suffix + " " + flags
+        cmd = "do wally.do " + args.config + " " + args.testsuite + " " + args.tb + " " + args.args + " " + ElfFile + " " + flags
         if (args.gui):  # launch Questa with GUI; add +acc to keep variables accessible
             if(args.tb == "testbench"): 
                 cmd = cd + "; " + prefix + " vsim -do \"" + cmd + " +acc -GDEBUG=1\""
@@ -114,7 +114,7 @@ else:
     prefix = ""
     ImperasPlusArgs = ""
     suffix = ""
-flags = ImperasPlusArgs 
+flags = suffix + " " + ImperasPlusArgs
 
 # other flags
 if (args.coverage):
