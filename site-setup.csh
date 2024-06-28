@@ -25,11 +25,11 @@ extend LD_LIBRARY_PATH $RISCV/lib64
 extend PATH $RISCV/bin
 
 # Activate riscv-python Virtual Environment
-source "$RISCV"/riscv-python/bin/activate
+source "$RISCV"/riscv-python/bin/activate.csh
 
 # environment variables needed for RISCV-DV
-setenv RISCV_GCC $(which riscv64-unknown-elf-gcc)		            # Copy this as it is
-setenv RISCV_OBJCOPY $(which riscv64-unknown-elf-objcopy)	        # Copy this as it is
+setenv RISCV_GCC `which riscv64-unknown-elf-gcc`		            # Copy this as it is
+setenv RISCV_OBJCOPY `which riscv64-unknown-elf-objcopy`	        # Copy this as it is
 setenv SPIKE_PATH $RISCV/bin										# Change this for your path to riscv-isa-sim (spike)
 
 # Verilator needs a larger stack to simulate CORE-V Wally
