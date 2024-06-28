@@ -1,11 +1,14 @@
 hart_ids: [0]
 hart0:
-  ISA: RV64IMAFDQCSUZicsr_Zicond_Zifencei_Zfa_Zfh_Zca_Zcb_Zba_Zbb_Zbc_Zbkb_Zbkc_Zbkx_Zbs_Zknd_Zkne_Zknh
+#  ISA: RV64IMAFDQCSUZicboz_Zicsr_Zicond_Zifencei_Zfa_Zfh_Zca_Zcb_Zba_Zbb_Zbc_Zbkb_Zbkc_Zbkx_Zbs_Zknd_Zkne_Zknh
+  ISA: RV64IMAFDCSUZicsr_Zicond_Zifencei_Zfa_Zfh_Zca_Zcb_Zba_Zbb_Zbc_Zbkb_Zbkc_Zbkx_Zbs_Zknd_Zkne_Zknh
+#  ISA: RV64IMAFDQCSUZicsr_Zicond_Zifencei_Zfa_Zfh_Zca_Zcb_Zba_Zbb_Zbc_Zbkb_Zbkc_Zbkx_Zbs_Zknd_Zkne_Zknh  
   physical_addr_sz: 56
   User_Spec_Version: '2.3'
   supported_xlen: [64]
   misa:
-   reset-val: 0x800000000015112D
+   reset-val: 0x800000000014112D
+#    reset-val: 0x800000000015112D
    rv32:
       accessible: false
    rv64:

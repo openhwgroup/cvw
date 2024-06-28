@@ -73,6 +73,7 @@ module csri import cvw::*;  #(parameter cvw_t P) (
     assign MIP_WRITE_MASK = 12'h000;
     assign SIP_WRITE_MASK = 12'h000;
     assign MIE_WRITE_MASK = 12'h888;
+    assign STIP = '0;
   end
   always_ff @(posedge clk)
     if (reset)          MIP_REGW_writeable <= 12'b0;

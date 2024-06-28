@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "../../../riscv-isac"
+		},
+		{
+			"path": "../../../cvw"
+		},
+		{
+			"path": "../.."
+		},
+		{
+			"path": "../../../riscv-arch-test"
+		},
+		{
+			"path": "../../../riscof"
+		}
+	],
+	"settings": {}
+}

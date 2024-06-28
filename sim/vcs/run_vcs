@@ -90,7 +90,7 @@ RTL_FILES="$INCLUDE_DIRS $(find ${SRC} -name "*.sv" ! -path "${SRC}/generic/mem/
 
 # Simulation and Coverage Commands
 OUTPUT="sim_out"
-VCS_CMD="vcs +lint=all,noGCWM,noUI,noSVA-UA,noIDTS,noNS,noULCO,noCAWM-L,noWMIA-L,noSV-PIU,noSTASKW_CO,noSTASKW_CO1,noSTASKW_RMCOF +vcs+vcdpluson -suppress +warn -sverilog +vc -Mupdate -line -full64 -kdb -lca -debug_access+all+reverse  -ntb_opts sensitive_dyn +define+SIM_VCS ${INCLUDE_PATH} $RTL_FILES"
+VCS_CMD="vcs +lint=all,noGCWM,noUI,noSVA-UA,noIDTS,noNS,noULCO,noCAWM-L,noWMIA-L,noSV-PIU,noSTASKW_CO,noSTASKW_CO1,noSTASKW_RMCOF +vcs+vcdpluson -suppress +warn -sverilog +vc -Mupdate -line -full64 -kdb -lca -debug_access+all+reverse  -ntb_opts sensitive_dyn ${INCLUDE_PATH} $RTL_FILES"
 SIMV_CMD="./${WKDIR}/$OUTPUT +TEST=${TESTSUITE} ${PLUSARGS}" 
 COV_FILES="${TB}/coverage/test_pmp_coverage.sv"
 COV_OPTIONS="-cm line+cond+branch+fsm+tgl -cm_log ${WKDIR}/coverage.log -cm_dir ${WKDIR}/COVERAGE"

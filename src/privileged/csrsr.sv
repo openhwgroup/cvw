@@ -99,7 +99,7 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
   assign STATUS_UXL  = P.U_SUPPORTED ? 2'b10 : 2'b00; // 10 if user mode supported
   assign STATUS_SUM  = P.S_SUPPORTED & P.VIRTMEM_SUPPORTED & STATUS_SUM_INT; // override reigster with 0 if supervisor mode not supported
   assign STATUS_MPRV = P.U_SUPPORTED & STATUS_MPRV_INT; // override with 0 if user mode not supported
-  assign STATUS_FS   = (P.S_SUPPORTED & (P.F_SUPPORTED | P.D_SUPPORTED)) ? STATUS_FS_INT : 2'b00; // off if no FP  
+  assign STATUS_FS   = P.F_SUPPORTED ? STATUS_FS_INT : 2'b00; // off if no FP
   assign STATUS_SD   = (STATUS_FS == 2'b11) | (STATUS_XS == 2'b11); // dirty state logic
   assign STATUS_XS   = 2'b00; // No additional user-mode state to be dirty
 

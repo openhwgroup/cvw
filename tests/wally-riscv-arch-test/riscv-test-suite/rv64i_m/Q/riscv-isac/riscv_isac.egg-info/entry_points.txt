@@ -1,0 +1,3 @@
+[console_scripts]
+riscv_isac = riscv_isac.main:cli
+
