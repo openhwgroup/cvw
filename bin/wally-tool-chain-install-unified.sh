@@ -401,5 +401,6 @@ if [ ! -e "${RISCV}"/site-setup.sh ]; then
   wget https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.csh
   if [ "$FAMILY" = rhel ]; then
     echo "source /opt/rh/gcc-toolset-13/enable" >> site-setup.sh
+    echo "source /opt/rh/gcc-toolset-13/enable" >> site-setup.csh
   fi
 fi
