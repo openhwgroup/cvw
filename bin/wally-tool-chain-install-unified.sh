@@ -70,7 +70,7 @@ is $PRETTY_NAME. The regular Ubuntu install will be attempted, but there may be 
   fi
 else
   echo "The Wally install script is currently only compatible with Ubuntu and Red Hat family \
-(RHEL or Rocky Linux) distros. Your detected distro is $ID. You may try manually running the \
+(RHEL or Rocky Linux) distros. Your detected distro is $PRETTY_NAME. You may try manually running the \
 commands in this script, but it is likely that some will need to be altered."
   exit 1
 fi
@@ -371,7 +371,7 @@ fi
 # riscof
 echo -e "\n*************************************************************************"
 echo -e "*************************************************************************"
-echo -e "Installing riscof"
+echo -e "Installing Riscof"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n"
 pip3 install git+https://github.com/riscv/riscof.git
@@ -387,4 +387,19 @@ cd "$RISCV"/cad/lib
 if [[ ((! -e sky130_osu_sc_t12) && ($(git clone https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12) || true)) || ($(cd sky130_osu_sc_t12; git fetch; git rev-parse HEAD) != $(cd sky130_osu_sc_t12; git rev-parse origin/main)) ]]; then
   cd sky130_osu_sc_t12
   git reset --hard && git clean -f && git checkout main && git pull
+fi
+
+# site-setup script
+echo -e "\n*************************************************************************"
+echo -e "*************************************************************************"
+echo -e "Downloading Site Setup Script"
+echo -e "*************************************************************************"
+echo -e "*************************************************************************\n"
+cd "$RISCV"
+if [ ! -e "${RISCV}"/site-setup.sh ]; then
+  wget https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.sh
+  wget https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.csh
+  if [ "$FAMILY" = rhel ]; then
+    echo "source /opt/rh/gcc-toolset-13/enable" >> site-setup.sh
+  fi
 fi
