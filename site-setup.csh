@@ -8,24 +8,30 @@ setenv MGLS_LICENSE_FILE 27002@zircon.eng.hmc.edu                 # Change this 
 setenv SNPSLMD_LICENSE_FILE 27020@zircon.eng.hmc.edu              # Change this to your Synopsys license server
 setenv QUESTAPATH /cad/mentor/questa_sim-2022.4_2/questasim/bin   # Change this for your path to Questa
 setenv SNPSPATH /cad/synopsys/SYN/bin                             # Change this for your path to Design Compiler
+setenv VCSPATH /cad/synopsys/vcs/U-2023.03-SP2-4/bin              # Change this for your path to Synopsys VCS
 
 # Tools
 # Questa and Synopsys
 extend PATH $QUESTAPATH
 extend PATH $SNPSPATH 
+extend PATH $VCSPATH 
 
 # GCC
-prepend LD_LIBRARY_PATH $RISCV/riscv-gnu-toolchain/lib
-prepend LD_LIBRARY_PATH $RISCV/riscv-gnu-toolchain/riscv64-unknown-elf/lib
-extend PATH $RISCV/riscv-gnu-toolchain/bin # GCC tools
-extend PATH $RISCV/riscv-gnu-toolchain/riscv64-unknown-elf/bin # GCC tools
+extend LD_LIBRARY_PATH $RISCV/riscv64-unknown-elf/lib
 
-# Spike
+# RISC-V Tools
 extend LD_LIBRARY_PATH $RISCV/lib
+extend LD_LIBRARY_PATH $RISCV/lib64
 extend PATH $RISCV/bin
 
-# Verilator
-extend PATH /usr/local/bin/verilator # Change this for your path to Verilator
+# Activate riscv-python Virtual Environment
+source "$RISCV"/riscv-python/bin/activate
+
+# environment variables needed for RISCV-DV
+setenv RISCV_GCC $(which riscv64-unknown-elf-gcc)		            # Copy this as it is
+setenv RISCV_OBJCOPY $(which riscv64-unknown-elf-objcopy)	        # Copy this as it is
+setenv SPIKE_PATH $RISCV/bin										# Change this for your path to riscv-isa-sim (spike)
+
 # Verilator needs a larger stack to simulate CORE-V Wally
 limit stacksize unlimited
 
