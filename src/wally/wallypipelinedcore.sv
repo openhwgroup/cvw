@@ -363,7 +363,6 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       flopenrs #(1) scantrapm (.clk, .reset, .en(DebugCapture), .d(TrapM), .q(),
         .scan(DebugScanEn), .scanin(DebugScanIn), .scanout(DebugScanReg[0]));
     end else begin
-      assign DebugStopTime_REGW = '0;
       assign DebugScanReg[0] = DebugScanIn;
     end
   end else begin
