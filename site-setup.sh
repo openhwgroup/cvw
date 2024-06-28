@@ -20,19 +20,22 @@ export VCS_HOME=/cad/synopsys/vcs/U-2023.03-SP2-4                   # Change thi
 export PATH=$QUESTA_HOME/bin:$DC_HOME/bin:$VCS_HOME/bin:$PATH
 
 # GCC
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$RISCV/riscv-gnu-toolchain/lib:$RISCV/riscv-gnu-toolchain/riscv64-unknown-elf/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$RISCV/riscv64-unknown-elf/lib
 
-# Spike
-export LD_LIBRARY_PATH=$RISCV/lib:$LD_LIBRARY_PATH
+# RISC-V Tools
+export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$LD_LIBRARY_PATH
 export PATH=$PATH:$RISCV/bin
 
-# Verilator
-export PATH=/usr/local/bin/verilator:$PATH # Change this for your path to Verilator
+# Activate riscv-python Virtual Environment
+source "$RISCV"/riscv-python/bin/activate
 
 # environment variables needed for RISCV-DV
-export RISCV_GCC=`which riscv64-unknown-elf-gcc`		            # Copy this as it is
-export RISCV_OBJCOPY=`which riscv64-unknown-elf-objcopy`	        # Copy this as it is
-export SPIKE_PATH=/usr/bin											# Change this for your path to riscv-isa-sim (spike)
+export RISCV_GCC=$(which riscv64-unknown-elf-gcc)		            # Copy this as it is
+export RISCV_OBJCOPY=$(which riscv64-unknown-elf-objcopy)	        # Copy this as it is
+export SPIKE_PATH=$RISCV/bin										# Change this for your path to riscv-isa-sim (spike)
+
+# Verilator needs a larger stack to simulate CORE-V Wally
+ulimit -c 234613
 
 # Imperas OVPsim; put this in if you are using it
 #export PATH=$RISCV/imperas-riscv-tests/riscv-ovpsim-plus/bin/Linux64:$PATH  
@@ -48,5 +51,3 @@ if [ -e "$IDV" ]; then
     setupImperas ${IMPERAS_HOME}
     export PATH=$IDV/scripts/cvw:$PATH
 fi
-
-
