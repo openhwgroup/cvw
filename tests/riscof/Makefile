@@ -43,7 +43,10 @@ wally64:
 	riscof run --work-dir=$(work_dir) --config=config64.ini --suite=$(wally_dir)/riscv-test-suite/ --env=$(wally_dir)/riscv-test-suite/env --no-browser --no-dut-run
 	rsync -a $(work_dir)/rv64i_m/ $(wally_workdir)/rv64i_m/ || echo "error suppressed"
 #	 Also copy F and D tests to RV64
-	rsync -a $(work_dir)/rv32i_m/ $(wally_workdir)/rv64i_m/ || echo "error suppressed"  
+	rsync -a $(work_dir)/rv32i_m/ $(wally_workdir)/rv64i_m/ || echo "error suppressed"
+
+quad64:
+	riscof run --work-dir=$(work_dir) --config=config64.ini --suite=$(wally_dir)/riscv-test-suite/rv64i_m/Q/riscv-ctg/tests/ --env=$(wally_dir)/riscv-test-suite/env
 
 #wally32e:
 #	riscof run --work-dir=$(work_dir) --config=config32e.ini --suite=$(wally_dir)/riscv-test-suite/ --env=$(wally_dir)/riscv-test-suite/env --no-browser --no-dut-run

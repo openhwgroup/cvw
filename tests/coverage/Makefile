@@ -17,7 +17,7 @@ all: $(OBJECTS)
 
 # Change many things if bit width isn't 64
 %.elf: $(SRCDIR)/%.$(SEXT) WALLY-init-lib.h Makefile
-	riscv64-unknown-elf-gcc -g -o $@ -march=rv64gqc_zfa_zba_zbb_zbc_zbs_zfh_zicboz_zicbop_zicbom -mabi=lp64 -mcmodel=medany \
+	riscv64-unknown-elf-gcc -g -o $@ -march=rv64gqc_zfa_zba_zbb_zbc_zbs_zfh_zicboz_zicbop_zicbom_zbkb_zbkx_zknd_zkne_zknh -mabi=lp64 -mcmodel=medany \
 	    -nostartfiles -T../../examples/link/link.ld $<
 	riscv64-unknown-elf-objdump -S -D $@ > $@.objdump
 	riscv64-unknown-elf-elf2hex --bit-width 64 --input $@ --output $@.memfile

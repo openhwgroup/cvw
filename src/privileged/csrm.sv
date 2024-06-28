@@ -195,6 +195,9 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
       flopenr #(P.XLEN) MENVCFGHreg(clk, reset, WriteMENVCFGHM, MENVCFG_WriteValM[63:32], MENVCFG_REGW[63:32]);
       assign MENVCFGH_REGW = MENVCFG_REGW[63:32];
     end
+  end else begin
+    assign MENVCFG_REGW = '0;
+    assign MENVCFGH_REGW = '0;
   end
 
   // Read machine mode CSRs

@@ -123,7 +123,7 @@ if [ "$FAMILY" = rhel ]; then
  # Packages are grouped by which tool requires them, split by line.
  # If mutltipole tools need a package, it is included in the first tool only
  # General/Wally specific, riscv-gnu-toolchain, qemu, spike, verilator
-  sudo dnf install -y git make cmake python3.12 python3-pip curl wget ftp tar pkgconfig dialog mutt ssmtp \
+  sudo dnf install -y git make cmake python3.12 python3-pip curl wget ftp tar pkgconfig dialog mutt ssmtp gcc-gfortran boost-devel\
                       autoconf automake  libmpc-devel mpfr-devel gmp-devel gawk bison flex texinfo gperf libtool patchutils bc gcc gcc-c++ zlib-devel expat-devel libslirp-devel \
                       glib2-devel libfdt-devel pixman-devel bzip2 ninja-build \
                       dtc boost-regex boost-system \
