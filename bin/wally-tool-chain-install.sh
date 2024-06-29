@@ -146,7 +146,7 @@ elif [ "$FAMILY" = ubuntu ]; then
   # Packages are grouped by which tool requires them, split by line. 
   # If mutltipole tools need a package, it is included in the first tool only
   # General/Wally specific, riscv-gnu-toolchain, qemu, spike, verilator, sail, buildroot
-  sudo apt install -y git make cmake python3 python3-pip python3-venv curl wget ftp tar pkg-config dialog mutt ssmtp gfortran libboost-all-dev \
+  sudo apt install -y git make cmake python3 python3-pip python3-venv curl wget ftp tar pkg-config dialog mutt ssmtp gfortran \
                       autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat1-dev ninja-build libglib2.0-dev libslirp-dev \
                       libfdt-dev libpixman-1-dev \
                       device-tree-compiler libboost-regex-dev libboost-system-dev \
