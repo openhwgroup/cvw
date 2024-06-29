@@ -67,7 +67,7 @@ module fdivsqrt import cvw::*;  #(parameter cvw_t P) (
                                                             
   // Integer div/rem signals                                
   logic                        BZeroM;                       // Denominator is zero
-  logic [P.DIVBLEN-1:0]        IntNormShiftM;                // Integer normalizatoin shift amount
+  logic [P.INTDIVBLEN-1:0]        IntNormShiftM;                // Integer normalizatoin shift amount
   logic                        ALTBM, AsM, BsM, W64M;        // Special handling for postprocessor
   logic [P.XLEN-1:0]           AM;                           // Original Numerator for postprocessor
   logic                        ISpecialCaseE;                // Integer div/remainder special cases

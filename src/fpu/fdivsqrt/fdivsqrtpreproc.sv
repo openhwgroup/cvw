@@ -57,7 +57,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   logic [P.NE+1:0]             UeE;                                 // Result Exponent (FP only)
   logic [P.DIVb:0]             IFX, IFD;                            // Correctly-sized inputs for iterator, selected from int or fp input
   logic [P.DIVBLEN-1:0]        mE, ell;                             // Leading zeros of inputs
-  logic [P.DIVBLEN-1:0]        IntResultBitsE;                      // bits in integer result
+  logic [P.INTDIVBLEN-1:0]        IntResultBitsE;                      // bits in integer result
   logic                        AZeroE, BZeroE;                      // A or B is Zero for integer division
   logic                        SignedDivE;                          // signed division
   logic                        AsE, BsE;                            // Signs of integer inputs
@@ -214,7 +214,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   fdivsqrtcycles #(P) cyclecalc(.Nf, .IntDivE, .IntResultBitsE, .CyclesE);
 
   if (P.IDIV_ON_FPU) begin:intpipelineregs
-    logic [P.DIVBLEN-1:0] IntDivNormShiftE, IntRemNormShiftE, IntNormShiftE;
+    logic [P.INTDIVBLEN-1:0] IntDivNormShiftE, IntRemNormShiftE, IntNormShiftE;
     logic               RemOpE;
 
     /* verilator lint_off WIDTH */
