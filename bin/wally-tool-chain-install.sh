@@ -163,6 +163,15 @@ elif [ "$FAMILY" = ubuntu ]; then
     if (( UBUNTU_VERSION >= 22 )); then
         sudo apt install -y mold
     fi
+    # Newer version of gcc needed for Ubuntu 20.04 for Verilator
+    if (( UBUNTU_VERSION < 22 )); then
+        sudo apt install -y gcc-10 g++-10 cpp-10
+        mkdir -p "$RISCV"/gcc-10/bin
+        for f in gcc cpp g++ gcc-ar gcc-nm gcc-ranlib gcov gcov-dump gcov-tool lto-dump; do
+            ln -vsf /usr/bin/$f-10 "$RISCV"/gcc-10/bin/$f
+        done
+        export PATH="$RISCV"/gcc-10/bin:$PATH
+    fi
 fi
 
 echo -e "\n*************************************************************************"
@@ -418,5 +427,8 @@ if [ ! -e "${RISCV}"/site-setup.sh ]; then
     wget https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.csh
     if [ "$FAMILY" = rhel ]; then
         echo "source /opt/rh/gcc-toolset-13/enable" >> site-setup.sh
+    elif (( UBUNTU_VERSION < 22 )); then
+        echo "export PATH=\$RISCV/gcc-10/bin:\$PATH" >> site-setup.sh
+        echo "prepend PATH \$RISCV/gcc-10/bin" >> site-setup.csh
     fi
 fi
