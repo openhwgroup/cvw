@@ -41,7 +41,7 @@ limit stacksize unlimited
 
 setenv IDV $RISCV/ImperasDV-OpenHW
 if ($?IDV) then
-#    echo "Imperas exists"
+    # echo "Imperas exists"
     setenv IMPERAS_HOME $IDV/Imperas
     setenv IMPERAS_PERSONALITY CPUMAN_DV_ASYNC
     setenv ROOTDIR ~/

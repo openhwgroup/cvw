@@ -49,30 +49,30 @@ source "$os_release"
 
 # Check for compatible distro
 if [[ "$ID" = rhel || "$ID_LIKE" = *rhel* ]]; then
-  FAMILY=rhel
-  if [ "$ID" != rhel ] && [ "$ID" != rocky ]; then
-    echo "For Red Hat family distros, the Wally install script has only been tested on RHEL and Rocky Linux. Your distro \
-is $PRETTY_NAME. The regular Red Hat install will be attempted, but there will likely be issues."
-  fi
-  if [ "${VERSION_ID:0:1}" = 8 ]; then
-    RHEL_VERSION=8
-  elif [ "${VERSION_ID:0:1}" = 9 ]; then
-    RHEL_VERSION=9
-  else
-    echo "The Wally install script is only compatible with versions 8 and 9 of RHEL and Rocky Linux. You have version $VERSION."
-    exit 1
-  fi
+    FAMILY=rhel
+    if [ "$ID" != rhel ] && [ "$ID" != rocky ]; then
+        printf "%s\n" "For Red Hat family distros, the Wally install script has only been tested on RHEL and Rocky Linux. Your distro " \
+               "is $PRETTY_NAME. The regular Red Hat install will be attempted, but there will likely be issues."
+    fi
+    if [ "${VERSION_ID:0:1}" = 8 ]; then
+        RHEL_VERSION=8
+    elif [ "${VERSION_ID:0:1}" = 9 ]; then
+        RHEL_VERSION=9
+    else
+        echo "The Wally install script is only compatible with versions 8 and 9 of RHEL and Rocky Linux. You have version $VERSION."
+        exit 1
+    fi
 elif [[ "$ID" = ubuntu || "$ID_LIKE" = *ubuntu* ]]; then
-  FAMILY=ubuntu
+    FAMILY=ubuntu
     if [ "$ID" != ubuntu ]; then
-      echo "For Ubuntu family distros, the Wally install script has only been tested on standard Ubuntu. Your distro \
-is $PRETTY_NAME. The regular Ubuntu install will be attempted, but there may be issues."
-  fi
+        printf "%s\n" "For Ubuntu family distros, the Wally install script has only been tested on standard Ubuntu. Your distro " \
+               "is $PRETTY_NAME. The regular Ubuntu install will be attempted, but there may be issues."
+    fi
 else
-  echo "The Wally install script is currently only compatible with Ubuntu and Red Hat family \
-(RHEL or Rocky Linux) distros. Your detected distro is $PRETTY_NAME. You may try manually running the \
-commands in this script, but it is likely that some will need to be altered."
-  exit 1
+    printf "%s\n" "The Wally install script is currently only compatible with Ubuntu and Red Hat family " \
+           "(RHEL or Rocky Linux) distros. Your detected distro is $PRETTY_NAME. You may try manually running the " \
+           "commands in this script, but it is likely that some will need to be altered."
+    exit 1
 fi
 
 # Check if root
@@ -81,16 +81,16 @@ ROOT=$( [ "${EUID:=$(id -u)}" = 0 ] && echo true || echo false);
 # All tools will be installed under the $RISCV directory. By default, if run as root (with sudo) this is set to
 # /opt/riscv. Otherwise, it is set to ~/riscv. This value can be overridden with an argument passed to the script.
 if [ "$ROOT" = true ]; then
-  export RISCV="${1:-/opt/riscv}"
+    export RISCV="${1:-/opt/riscv}"
 else
-  export RISCV="${1:-$HOME/riscv}"
+    export RISCV="${1:-$HOME/riscv}"
 fi
 
 export PATH=$PATH:$RISCV/bin:/usr/bin
 export PKG_CONFIG_PATH=$RISCV/lib64/pkgconfig:$RISCV/lib/pkgconfig:$RISCV/share/pkgconfig:$PKG_CONFIG_PATH
 mkdir -p "$RISCV"
 
-echo -e "Detected information"
+echo "Detected information"
 echo "Distribution: $PRETTY_NAME"
 echo "Version: $VERSION"
 echo "Running as root: $ROOT"
@@ -103,56 +103,56 @@ echo -e "***********************************************************************
 echo -e "*************************************************************************\n"
 # Installs appropriate packages for rhel or ubuntu distros, picking apt or dnf appropriately
 if [ "$FAMILY" = rhel ]; then
-  # Enable extra package repos
-  sudo dnf install -y dnf-plugins-core
-  if [ "$ID" = rhel ]; then
-      sudo subscription-manager repos --enable "codeready-builder-for-rhel-$RHEL_VERSION-$(arch)-rpms"
-      sudo dnf install -y "https://dl.fedoraproject.org/pub/epel/epel-release-latest-$RHEL_VERSION.noarch.rpm"
-  else
-    if [ "$RHEL_VERSION" = 8 ]; then
-      sudo dnf config-manager -y --set-enabled powertools
-    else # Version 9
-      sudo dnf config-manager -y --set-enabled crb
+    # Enable extra package repos
+    sudo dnf install -y dnf-plugins-core
+    if [ "$ID" = rhel ]; then
+        sudo subscription-manager repos --enable "codeready-builder-for-rhel-$RHEL_VERSION-$(arch)-rpms"
+        sudo dnf install -y "https://dl.fedoraproject.org/pub/epel/epel-release-latest-$RHEL_VERSION.noarch.rpm"
+    else
+        if [ "$RHEL_VERSION" = 8 ]; then
+            sudo dnf config-manager -y --set-enabled powertools
+        else # Version 9
+            sudo dnf config-manager -y --set-enabled crb
+        fi
+        sudo dnf install -y epel-release
     fi
-    sudo dnf install -y epel-release
-  fi
 
-  # Update packages and install additional core tools
-  sudo dnf update -y
-  sudo dnf group install -y "Development Tools"
+    # Update packages and install additional core tools
+    sudo dnf update -y
+    sudo dnf group install -y "Development Tools"
 
  # Packages are grouped by which tool requires them, split by line.
  # If mutltipole tools need a package, it is included in the first tool only
  # General/Wally specific, riscv-gnu-toolchain, qemu, spike, verilator, buildroot
-  sudo dnf install -y git make cmake python3.12 python3-pip curl wget ftp tar pkgconfig dialog mutt ssmtp gcc-gfortran \
-                      autoconf automake  libmpc-devel mpfr-devel gmp-devel gawk bison flex texinfo gperf libtool patchutils bc gcc gcc-c++ zlib-devel expat-devel libslirp-devel \
-                      glib2-devel libfdt-devel pixman-devel bzip2 ninja-build \
-                      dtc boost-regex boost-system \
-                      help2man perl clang ccache gperftools numactl mold \
-                      ncurses-base ncurses ncurses-libs ncurses-devel
-  # Extra packages not availale in rhel8, nice for verialtor and needed for sail respectively
-  if [ "$RHEL_VERSION" = 9 ]; then
-    sudo dnf install -y perl-doc z3
-  fi
+    sudo dnf install -y git make cmake python3.12 python3-pip curl wget ftp tar pkgconfig dialog mutt ssmtp gcc-gfortran \
+                        autoconf automake  libmpc-devel mpfr-devel gmp-devel gawk bison flex texinfo gperf libtool patchutils bc gcc gcc-c++ zlib-devel expat-devel libslirp-devel \
+                        glib2-devel libfdt-devel pixman-devel bzip2 ninja-build \
+                        dtc boost-regex boost-system \
+                        help2man perl clang ccache gperftools numactl mold \
+                        ncurses-base ncurses ncurses-libs ncurses-devel
+    # Extra packages not availale in rhel8, nice for verialtor and needed for sail respectively
+    if [ "$RHEL_VERSION" = 9 ]; then
+        sudo dnf install -y perl-doc z3
+    fi
 
-  # A newer version of gcc is required for qemu
-  sudo dnf install -y gcc-toolset-13*
-  source /opt/rh/gcc-toolset-13/enable  # activate gcc13
+    # A newer version of gcc is required for qemu
+    sudo dnf install -y gcc-toolset-13*
+    source /opt/rh/gcc-toolset-13/enable  # activate gcc13
 elif [ "$FAMILY" = ubuntu ]; then
-  # Update and Upgrade tools (see https://itsfoss.com/apt-update-vs-upgrade/)
-  sudo apt update -y
-  sudo apt upgrade -y
+    # Update and Upgrade tools (see https://itsfoss.com/apt-update-vs-upgrade/)
+    sudo apt update -y
+    sudo apt upgrade -y
 
-  # Packages are grouped by which tool requires them, split by line. 
-  # If mutltipole tools need a package, it is included in the first tool only
-  # General/Wally specific, riscv-gnu-toolchain, qemu, spike, verilator, sail, buildroot
-  sudo apt install -y git make cmake python3 python3-pip python3-venv curl wget ftp tar pkg-config dialog mutt ssmtp gfortran \
-                      autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat1-dev ninja-build libglib2.0-dev libslirp-dev \
-                      libfdt-dev libpixman-1-dev \
-                      device-tree-compiler libboost-regex-dev libboost-system-dev \
-                      help2man perl g++ clang ccache libgoogle-perftools-dev numactl mold perl-doc libfl2 libfl-dev zlib1g \
-                      opam z3 \
-                      ncurses-base ncurses-bin libncurses-dev
+    # Packages are grouped by which tool requires them, split by line. 
+    # If mutltipole tools need a package, it is included in the first tool only
+    # General/Wally specific, riscv-gnu-toolchain, qemu, spike, verilator, sail, buildroot
+    sudo apt install -y git make cmake python3 python3-pip python3-venv curl wget ftp tar pkg-config dialog mutt ssmtp gfortran \
+                        autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat1-dev ninja-build libglib2.0-dev libslirp-dev \
+                        libfdt-dev libpixman-1-dev \
+                        device-tree-compiler libboost-regex-dev libboost-system-dev \
+                        help2man perl g++ clang ccache libgoogle-perftools-dev numactl mold perl-doc libfl2 libfl-dev zlib1g \
+                        opam z3 \
+                        ncurses-base ncurses-bin libncurses-dev
 fi
 
 echo -e "\n*************************************************************************"
@@ -164,12 +164,12 @@ echo -e "***********************************************************************
 # and installed packages are isolated from the rest of the system.
 cd "$RISCV"
 if [ ! -e "$RISCV"/riscv-python/bin/activate ]; then
-  # If python3.12 is avaiable, use it. Otherise, use whatever version of python3 is installed.
-  if [ "$(which python3.12)" ]; then
-    python3.12 -m venv riscv-python
-  else
-    python3 -m venv riscv-python
-  fi
+    # If python3.12 is avaiable, use it. Otherise, use whatever version of python3 is installed.
+    if [ "$(which python3.12)" ]; then
+        python3.12 -m venv riscv-python
+    else
+        python3 -m venv riscv-python
+    fi
 fi
 source "$RISCV"/riscv-python/bin/activate # activate python virtual environment
 
@@ -180,54 +180,54 @@ pip install -U riscv_isac # to generate new tests, such as quads with fp_dataset
 
 # z3 is eeded for sail and not availabe from dnf for rhel 8. Meson is needed to build extra dependencies
 if [ "$RHEL_VERSION" = 8 ]; then
-  pip install -U z3-solver meson
+    pip install -U z3-solver meson
 fi
 source "$RISCV"/riscv-python/bin/activate # reload python virtual environment
 
 # Extra dependecies needed for rhel 8 that don't have new enough versions available from dnf
 if [ "$RHEL_VERSION" = 8 ]; then
-  # Newer versin of glib required for Qemu.
-  # Anything newer than this won't build on red hat 8
-  if [ ! -e "$RISCV"/include/glib-2.0 ]; then
-    echo -e "\n*************************************************************************"
-    echo -e "*************************************************************************"
-    echo -e "Installing glib"
-    echo -e "*************************************************************************"
-    echo -e "*************************************************************************\n"
-    cd "$RISCV"
-    wget https://download.gnome.org/sources/glib/2.70/glib-2.70.5.tar.xz
-    tar -xJf glib-2.70.5.tar.xz
-    rm glib-2.70.5.tar.xz
-    cd glib-2.70.5
-    meson setup _build --prefix="$RISCV"
-    meson compile -C _build
-    meson install -C _build
-    cd "$RISCV"
-    rm -rf glib-2.70.5
-  fi
-  # Newer version of gmp needed for sail-riscv model
-  if [ ! -e "$RISCV"/include/gmp.h ]; then
-    echo -e "\n*************************************************************************"
-    echo -e "*************************************************************************"
-    echo -e "Installing gmp"
-    echo -e "*************************************************************************"
-    echo -e "*************************************************************************\n"
-    cd "$RISCV"
-    wget https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz
-    tar -xJf gmp-6.3.0.tar.xz
-    rm gmp-6.3.0.tar.xz
-    cd gmp-6.3.0
-    ./configure --prefix="$RISCV"
-    make -j ${NUM_THREADS}
-    make install
-    cd "$RISCV"
-    rm -rf gmp-6.3.0
-  fi
+    # Newer versin of glib required for Qemu.
+    # Anything newer than this won't build on red hat 8
+    if [ ! -e "$RISCV"/include/glib-2.0 ]; then
+        echo -e "\n*************************************************************************"
+        echo -e "*************************************************************************"
+        echo -e "Installing glib"
+        echo -e "*************************************************************************"
+        echo -e "*************************************************************************\n"
+        cd "$RISCV"
+        wget https://download.gnome.org/sources/glib/2.70/glib-2.70.5.tar.xz
+        tar -xJf glib-2.70.5.tar.xz
+        rm glib-2.70.5.tar.xz
+        cd glib-2.70.5
+        meson setup _build --prefix="$RISCV"
+        meson compile -C _build
+        meson install -C _build
+        cd "$RISCV"
+        rm -rf glib-2.70.5
+    fi
+    # Newer version of gmp needed for sail-riscv model
+    if [ ! -e "$RISCV"/include/gmp.h ]; then
+        echo -e "\n*************************************************************************"
+        echo -e "*************************************************************************"
+        echo -e "Installing gmp"
+        echo -e "*************************************************************************"
+        echo -e "*************************************************************************\n"
+        cd "$RISCV"
+        wget https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz
+        tar -xJf gmp-6.3.0.tar.xz
+        rm gmp-6.3.0.tar.xz
+        cd gmp-6.3.0
+        ./configure --prefix="$RISCV"
+        make -j ${NUM_THREADS}
+        make install
+        cd "$RISCV"
+        rm -rf gmp-6.3.0
+    fi
 fi
 
 # gcc cross-compiler (https://github.com/riscv-collab/riscv-gnu-toolchain)
 # To install GCC from source can take hours to compile.
-# This configuration enables multilib to target many flavors of RISC-V.   
+# This configuration enables multilib to target many flavors of RISC-V.
 # This book is tested with GCC 13.2.0
 echo -e "\n*************************************************************************"
 echo -e "*************************************************************************"
@@ -236,11 +236,11 @@ echo -e "***********************************************************************
 echo -e "*************************************************************************\n"
 cd "$RISCV"
 if [[ ((! -e riscv-gnu-toolchain) && ($(git clone https://github.com/riscv/riscv-gnu-toolchain) || true)) || ($(cd riscv-gnu-toolchain; git fetch; git rev-parse HEAD) != $(cd riscv-gnu-toolchain; git rev-parse origin/master)) || (! -e $RISCV/riscv-gnu-toolchain/stamps/build-gcc-newlib-stage2) ]]; then
-  cd riscv-gnu-toolchain
-  git checkout master
-  git pull
-  ./configure --prefix="${RISCV}" --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
-  make -j ${NUM_THREADS}
+    cd riscv-gnu-toolchain
+    git checkout master
+    git pull
+    ./configure --prefix="${RISCV}" --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
+    make -j ${NUM_THREADS}
 fi
 
 # elf2hex (https://github.com/sifive/elf2hex)
@@ -258,12 +258,12 @@ echo -e "***********************************************************************
 cd "$RISCV"
 export PATH=$RISCV/bin:$PATH
 if [[ ((! -e elf2hex) && ($(git clone https://github.com/sifive/elf2hex.git) || true)) || ($(cd elf2hex; git fetch; git rev-parse HEAD) != $(cd elf2hex; git rev-parse origin/master)) || (! -e $RISCV/bin/riscv64-unknown-elf-elf2bin) ]]; then
-  cd elf2hex
-  git reset --hard && git clean -f && git checkout master && git pull
-  autoreconf -i
-  ./configure --target=riscv64-unknown-elf --prefix="$RISCV"
-  make
-  make install
+    cd elf2hex
+    git reset --hard && git clean -f && git checkout master && git pull
+    autoreconf -i
+    ./configure --target=riscv64-unknown-elf --prefix="$RISCV"
+    make
+    make install
 fi
 
 # QEMU (https://www.qemu.org/docs/master/system/target-riscv.html)
@@ -274,11 +274,11 @@ echo -e "***********************************************************************
 echo -e "*************************************************************************\n"
 cd "$RISCV"
 if [[ ((! -e qemu) && ($(git clone --recurse-submodules https://github.com/qemu/qemu) || true)) || ($(cd qemu; git fetch --recurse-submodules=yes; git rev-parse HEAD) != $(cd qemu; git rev-parse origin/master)) || (! -e $RISCV/include/qemu-plugin.h) ]]; then
-  cd qemu
-  git reset --hard && git clean -f && git checkout master && git pull --recurse-submodules
-  ./configure --target-list=riscv64-softmmu --prefix="$RISCV"
-  make -j ${NUM_THREADS}
-  make install
+    cd qemu
+    git reset --hard && git clean -f && git checkout master && git pull --recurse-submodules
+    ./configure --target-list=riscv64-softmmu --prefix="$RISCV"
+    make -j ${NUM_THREADS}
+    make install
 fi
 
 # Spike (https://github.com/riscv-software-src/riscv-isa-sim)
@@ -291,13 +291,13 @@ echo -e "***********************************************************************
 echo -e "*************************************************************************\n"
 cd "$RISCV"
 if [[ ((! -e riscv-isa-sim) && ($(git clone https://github.com/riscv-software-src/riscv-isa-sim) || true)) || ($(cd riscv-isa-sim; git fetch; git rev-parse HEAD) != $(cd riscv-isa-sim; git rev-parse origin/master)) || (! -e $RISCV/lib/pkgconfig/riscv-riscv.pc) ]]; then
-  cd riscv-isa-sim
-  git reset --hard && git clean -f && git checkout master && git pull
-  mkdir -p build
-  cd build
-  ../configure --prefix="$RISCV"
-  make -j ${NUM_THREADS}
-  make install
+    cd riscv-isa-sim
+    git reset --hard && git clean -f && git checkout master && git pull
+    mkdir -p build
+    cd build
+    ../configure --prefix="$RISCV"
+    make -j ${NUM_THREADS}
+    make install
 fi
 
 # Wally needs Verilator 5.021 or later.
@@ -309,14 +309,14 @@ echo -e "***********************************************************************
 echo -e "*************************************************************************\n"
 cd "$RISCV"
 if [[ ((! -e verilator) && ($(git clone https://github.com/verilator/verilator) || true)) || ($(cd verilator; git fetch; git rev-parse HEAD) != $(cd verilator; git rev-parse origin/master)) || (! -e $RISCV/share/pkgconfig/verilator.pc) ]]; then
-  # unsetenv VERILATOR_ROOT  # For csh; ignore error if on bash
-  unset VERILATOR_ROOT     # For bash
-  cd verilator
-  git reset --hard && git clean -f && git checkout master && git pull
-  autoconf         # Create ./configure script
-  ./configure --prefix="$RISCV"     # Configure and create Makefile
-  make -j ${NUM_THREADS}  # Build Verilator itself (if error, try just 'make')
-  make install
+    # unsetenv VERILATOR_ROOT  # For csh; ignore error if on bash
+    unset VERILATOR_ROOT     # For bash
+    cd verilator
+    git reset --hard && git clean -f && git checkout master && git pull
+    autoconf         # Create ./configure script
+    ./configure --prefix="$RISCV"     # Configure and create Makefile
+    make -j ${NUM_THREADS}  # Build Verilator itself (if error, try just 'make')
+    make install
 fi
 
 # RISC-V Sail Model (https://github.com/riscv/sail-riscv)
@@ -328,17 +328,17 @@ fi
 # but a binary release of it should be available soon, removing the need to use opam.
 cd "$RISCV"
 if [ "$FAMILY" = rhel ]; then
-  echo -e "\n*************************************************************************"
-  echo -e "*************************************************************************"
-  echo -e "Installing Opam"
-  echo -e "*************************************************************************"
-  echo -e "*************************************************************************\n"
-  mkdir -p opam
-  cd opam
-  wget https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh
-  printf '%s\n' "$RISCV"/bin Y | sh install.sh # the print command provides $RISCV/bin as the installation path when prompted
-  cd "$RISCV"
-  rm -rf opam
+    echo -e "\n*************************************************************************"
+    echo -e "*************************************************************************"
+    echo -e "Installing Opam"
+    echo -e "*************************************************************************"
+    echo -e "*************************************************************************\n"
+    mkdir -p opam
+    cd opam
+    wget https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh
+    printf '%s\n' "$RISCV"/bin Y | sh install.sh # the print command provides $RISCV/bin as the installation path when prompted
+    cd "$RISCV"
+    rm -rf opam
 fi
 
 echo -e "\n*************************************************************************"
@@ -359,15 +359,15 @@ echo -e "Installing RISC-V Sail Model"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n"
 if [[ ((! -e sail-riscv) && ($(git clone https://github.com/riscv/sail-riscv.git) || true)) || ($(cd sail-riscv; git fetch; git rev-parse HEAD) != $(cd sail-riscv; git rev-parse origin/master)) || (! -e $RISCV/bin/riscv_sim_RV32) ]]; then
-  eval $(opam config env)
-  cd sail-riscv
-  git reset --hard && git clean -f && git checkout master && git pull
-  export OPAMCLI=2.0  # Sail is not compatible with opam 2.1 as of 4/16/24
-  ARCH=RV64 make -j ${NUM_THREADS} c_emulator/riscv_sim_RV64
-  ARCH=RV32 make -j ${NUM_THREADS} c_emulator/riscv_sim_RV32
-  cd "$RISCV"
-  ln -sf ../sail-riscv/c_emulator/riscv_sim_RV64 bin/riscv_sim_RV64
-  ln -sf ../sail-riscv/c_emulator/riscv_sim_RV32 bin/riscv_sim_RV32
+    eval $(opam config env)
+    cd sail-riscv
+    git reset --hard && git clean -f && git checkout master && git pull
+    export OPAMCLI=2.0  # Sail is not compatible with opam 2.1 as of 4/16/24
+    ARCH=RV64 make -j ${NUM_THREADS} c_emulator/riscv_sim_RV64
+    ARCH=RV32 make -j ${NUM_THREADS} c_emulator/riscv_sim_RV32
+    cd "$RISCV"
+    ln -sf ../sail-riscv/c_emulator/riscv_sim_RV64 bin/riscv_sim_RV64
+    ln -sf ../sail-riscv/c_emulator/riscv_sim_RV32 bin/riscv_sim_RV32
 fi
 
 # riscof
@@ -387,8 +387,8 @@ echo -e "***********************************************************************
 mkdir -p "$RISCV"/cad/lib
 cd "$RISCV"/cad/lib
 if [[ ((! -e sky130_osu_sc_t12) && ($(git clone https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12) || true)) || ($(cd sky130_osu_sc_t12; git fetch; git rev-parse HEAD) != $(cd sky130_osu_sc_t12; git rev-parse origin/main)) ]]; then
-  cd sky130_osu_sc_t12
-  git reset --hard && git clean -f && git checkout main && git pull
+    cd sky130_osu_sc_t12
+    git reset --hard && git clean -f && git checkout main && git pull
 fi
 
 # site-setup script
@@ -399,9 +399,9 @@ echo -e "***********************************************************************
 echo -e "*************************************************************************\n"
 cd "$RISCV"
 if [ ! -e "${RISCV}"/site-setup.sh ]; then
-  wget https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.sh
-  wget https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.csh
-  if [ "$FAMILY" = rhel ]; then
-    echo "source /opt/rh/gcc-toolset-13/enable" >> site-setup.sh
-  fi
+    wget https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.sh
+    wget https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.csh
+    if [ "$FAMILY" = rhel ]; then
+        echo "source /opt/rh/gcc-toolset-13/enable" >> site-setup.sh
+    fi
 fi
