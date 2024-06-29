@@ -48,5 +48,5 @@ if ($?IDV) then
     source ${IMPERAS_HOME}/bin/setup.sh
     setupImperas ${IMPERAS_HOME}
     extend PATH $IDV/scripts/cvw
-endfi
+endif
 
