@@ -50,8 +50,8 @@ source "$os_release"
 # Check for compatible distro
 if [[ "$ID" = rhel || "$ID_LIKE" = *rhel* ]]; then
     FAMILY=rhel
-    if [ "$ID" != rhel ] && [ "$ID" != rocky ]; then
-        printf "%s\n" "For Red Hat family distros, the Wally install script has only been tested on RHEL and Rocky Linux. Your distro " \
+    if [ "$ID" != rhel ] && [ "$ID" != rocky ] && [ "$ID" != almalinux ]; then
+        printf "%s\n" "For Red Hat family distros, the Wally install script has only been tested on RHEL, Rocky Linux, and AlmaLinux. Your distro " \
                "is $PRETTY_NAME. The regular Red Hat install will be attempted, but there will likely be issues."
     fi
     if [ "${VERSION_ID:0:1}" = 8 ]; then
@@ -59,7 +59,7 @@ if [[ "$ID" = rhel || "$ID_LIKE" = *rhel* ]]; then
     elif [ "${VERSION_ID:0:1}" = 9 ]; then
         RHEL_VERSION=9
     else
-        echo "The Wally install script is only compatible with versions 8 and 9 of RHEL and Rocky Linux. You have version $VERSION."
+        echo "The Wally install script is only compatible with versions 8 and 9 of RHEL, Rocky Linux, and AlmaLinux. You have version $VERSION."
         exit 1
     fi
 elif [[ "$ID" = ubuntu || "$ID_LIKE" = *ubuntu* ]]; then
@@ -76,7 +76,7 @@ elif [[ "$ID" = ubuntu || "$ID_LIKE" = *ubuntu* ]]; then
     fi
 else
     printf "%s\n" "The Wally install script is currently only compatible with Ubuntu and Red Hat family " \
-           "(RHEL or Rocky Linux) distros. Your detected distro is $PRETTY_NAME. You may try manually running the " \
+           "(RHEL, Rocky Linux, or AlmaLinux) distros. Your detected distro is $PRETTY_NAME. You may try manually running the " \
            "commands in this script, but it is likely that some will need to be altered."
     exit 1
 fi
@@ -107,14 +107,14 @@ echo -e "***********************************************************************
 echo -e "Installing Dependencies from Package Manager"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n"
-# Installs appropriate packages for rhel or ubuntu distros, picking apt or dnf appropriately
+# Installs appropriate packages for red hat or ubuntu distros, picking apt or dnf appropriately
 if [ "$FAMILY" = rhel ]; then
     # Enable extra package repos
     sudo dnf install -y dnf-plugins-core
     if [ "$ID" = rhel ]; then
         sudo subscription-manager repos --enable "codeready-builder-for-rhel-$RHEL_VERSION-$(arch)-rpms"
         sudo dnf install -y "https://dl.fedoraproject.org/pub/epel/epel-release-latest-$RHEL_VERSION.noarch.rpm"
-    else
+    else # RHEL clone
         if [ "$RHEL_VERSION" = 8 ]; then
             sudo dnf config-manager -y --set-enabled powertools
         else # Version 9
