@@ -108,7 +108,6 @@ localparam DIVBLEN     = $clog2(DIVb+1);                            // enough bi
 localparam INTRESBITS     = XLEN + LOGR; // number of bits in a result: r integer + XLEN fractional
 localparam INTFPDUR       = (INTRESBITS-1)/RK + 1 ;                 
 localparam INTDIVb        = INTFPDUR*RK - LOGR;                     
-localparam INTDIVBLEN     = $clog2(INTDIVb+1);        
 
 // largest length in IEU/FPU
 localparam BASECVTLEN = `max(XLEN, NF); // convert length excluding Zfa fcvtmod.w.d
