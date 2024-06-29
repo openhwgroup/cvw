@@ -152,7 +152,7 @@ elif [ "$FAMILY" = ubuntu ]; then
                       device-tree-compiler libboost-regex-dev libboost-system-dev \
                       help2man perl g++ clang ccache libgoogle-perftools-dev numactl mold perl-doc libfl2 libfl-dev zlib1g \
                       opam z3 \
-                      ncurses-base ncurses-bin libncurses5-dev
+                      ncurses-base ncurses-bin libncurses-dev
 fi
 
 echo -e "\n*************************************************************************"
