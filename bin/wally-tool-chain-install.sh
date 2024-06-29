@@ -90,7 +90,7 @@ export PATH=$PATH:$RISCV/bin:/usr/bin
 export PKG_CONFIG_PATH=$RISCV/lib64/pkgconfig:$RISCV/lib/pkgconfig:$RISCV/share/pkgconfig:$PKG_CONFIG_PATH
 mkdir -p "$RISCV"
 
-echo -e "\nDetected information"
+echo -e "Detected information"
 echo "Distribution: $PRETTY_NAME"
 echo "Version: $VERSION"
 echo "Running as root: $ROOT"
@@ -403,6 +403,5 @@ if [ ! -e "${RISCV}"/site-setup.sh ]; then
   wget https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.csh
   if [ "$FAMILY" = rhel ]; then
     echo "source /opt/rh/gcc-toolset-13/enable" >> site-setup.sh
-    echo "source /opt/rh/gcc-toolset-13/enable" >> site-setup.csh
   fi
 fi
