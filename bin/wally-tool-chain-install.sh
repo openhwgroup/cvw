@@ -67,6 +67,12 @@ elif [[ "$ID" = ubuntu || "$ID_LIKE" = *ubuntu* ]]; then
     if [ "$ID" != ubuntu ]; then
         printf "%s\n" "For Ubuntu family distros, the Wally install script has only been tested on standard Ubuntu. Your distro " \
                "is $PRETTY_NAME. The regular Ubuntu install will be attempted, but there may be issues."
+    else
+        UBUNTU_VERSION="${VERSION_ID:0:2}"
+        if (( UBUNTU_VERSION < 20 )); then
+            echo "The Wally install script is only compatible with versions 20.04, 22.04, and 24.04 of Ubuntu. You have version $VERSION."
+            exit 1
+        fi
     fi
 else
     printf "%s\n" "The Wally install script is currently only compatible with Ubuntu and Red Hat family " \
@@ -150,9 +156,13 @@ elif [ "$FAMILY" = ubuntu ]; then
                         autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat1-dev ninja-build libglib2.0-dev libslirp-dev \
                         libfdt-dev libpixman-1-dev \
                         device-tree-compiler libboost-regex-dev libboost-system-dev \
-                        help2man perl g++ clang ccache libgoogle-perftools-dev numactl mold perl-doc libfl2 libfl-dev zlib1g \
+                        help2man perl g++ clang ccache libgoogle-perftools-dev numactl perl-doc libfl2 libfl-dev zlib1g \
                         opam z3 \
                         ncurses-base ncurses-bin libncurses-dev
+    # Extra packages not availale in Ubuntu 20.04, nice for verialtor
+    if (( UBUNTU_VERSION >= 22 )); then
+        sudo apt install -y mold
+    fi
 fi
 
 echo -e "\n*************************************************************************"
@@ -184,8 +194,8 @@ if [ "$RHEL_VERSION" = 8 ]; then
 fi
 source "$RISCV"/riscv-python/bin/activate # reload python virtual environment
 
-# Extra dependecies needed for rhel 8 that don't have new enough versions available from dnf
-if [ "$RHEL_VERSION" = 8 ]; then
+# Extra dependecies needed for older distros that don't have new enough versions available from package manager
+if [ "$RHEL_VERSION" = 8 ] || (( UBUNTU_VERSION < 22 )); then
     # Newer versin of glib required for Qemu.
     # Anything newer than this won't build on red hat 8
     if [ ! -e "$RISCV"/include/glib-2.0 ]; then
@@ -205,7 +215,10 @@ if [ "$RHEL_VERSION" = 8 ]; then
         cd "$RISCV"
         rm -rf glib-2.70.5
     fi
-    # Newer version of gmp needed for sail-riscv model
+fi
+
+# Newer version of gmp needed for sail-riscv model
+if [ "$RHEL_VERSION" = 8 ]; then
     if [ ! -e "$RISCV"/include/gmp.h ]; then
         echo -e "\n*************************************************************************"
         echo -e "*************************************************************************"
