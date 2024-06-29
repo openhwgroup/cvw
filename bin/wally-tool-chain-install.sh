@@ -261,7 +261,7 @@ echo -e "***********************************************************************
 cd "$RISCV"
 if [[ ((! -e riscv-gnu-toolchain) && ($(git clone https://github.com/riscv/riscv-gnu-toolchain) || true)) || ($(cd riscv-gnu-toolchain; git fetch; git rev-parse HEAD) != $(cd riscv-gnu-toolchain; git rev-parse origin/master)) || (! -e $RISCV/riscv-gnu-toolchain/stamps/build-gcc-newlib-stage2) ]]; then
     cd riscv-gnu-toolchain
-    git checkout master
+    git reset --hard && git clean -f && git checkout master && git pull
     git pull
     ./configure --prefix="${RISCV}" --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
     make -j ${NUM_THREADS}
@@ -297,7 +297,7 @@ echo -e "Installing QEMU"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n"
 cd "$RISCV"
-if [[ ((! -e qemu) && ($(git clone --recurse-submodules https://github.com/qemu/qemu) || true)) || ($(cd qemu; git fetch --recurse-submodules=yes; git rev-parse HEAD) != $(cd qemu; git rev-parse origin/master)) || (! -e $RISCV/include/qemu-plugin.h) ]]; then
+if [[ ((! -e qemu) && ($(git clone --recurse-submodules https://github.com/qemu/qemu) || true)) || ($(cd qemu; git fetch; git rev-parse HEAD) != $(cd qemu; git rev-parse origin/master)) || (! -e $RISCV/include/qemu-plugin.h) ]]; then
     cd qemu
     git reset --hard && git clean -f && git checkout master && git pull --recurse-submodules
     ./configure --target-list=riscv64-softmmu --prefix="$RISCV"
