@@ -38,12 +38,12 @@ export SPIKE_PATH=$RISCV/bin										# Change this for your path to riscv-isa-s
 ulimit -c 234613
 
 # Imperas OVPsim; put this in if you are using it
-#export PATH=$RISCV/imperas-riscv-tests/riscv-ovpsim-plus/bin/Linux64:$PATH  
+#export PATH=$RISCV/imperas-riscv-tests/riscv-ovpsim-plus/bin/Linux64:$PATH
 #export LD_LIBRARY_PATH=$RISCV/imperas_riscv_tests/riscv-ovpsim-plus/bin/Linux64:$LD_LIBRARY_PATH
 
 export IDV=$RISCV/ImperasDV-OpenHW
 if [ -e "$IDV" ]; then
-#    echo "Imperas exists"
+    # echo "Imperas exists"
     export IMPERAS_HOME=$IDV/Imperas
     export IMPERAS_PERSONALITY=CPUMAN_DV_ASYNC
     export ROOTDIR=~/

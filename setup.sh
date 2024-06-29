@@ -31,7 +31,7 @@ WALLY=$(dirname "${BASH_SOURCE[0]:-$0}")
 export WALLY=$(cd "$WALLY" && pwd)
 echo \$WALLY set to "${WALLY}"
 # utility functions in Wally repository
-export PATH=$WALLY/bin:$PATH    
+export PATH=$WALLY/bin:$PATH
 
 # load site licenses and tool locations
 source "${RISCV}"/site-setup.sh
