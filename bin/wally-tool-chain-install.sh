@@ -164,7 +164,7 @@ elif [ "$FAMILY" = ubuntu ]; then
         sudo apt install -y mold
     fi
     # Newer version of gcc needed for Ubuntu 20.04 for Verilator
-    if (( UBUNTU_VERSION < 22 )); then
+    if [ "$UBUNTU_VERSION" = 20 ]; then
         sudo apt install -y gcc-10 g++-10 cpp-10
         mkdir -p "$RISCV"/gcc-10/bin
         for f in gcc cpp g++ gcc-ar gcc-nm gcc-ranlib gcov gcov-dump gcov-tool lto-dump; do
@@ -204,7 +204,7 @@ fi
 source "$RISCV"/riscv-python/bin/activate # reload python virtual environment
 
 # Extra dependecies needed for older distros that don't have new enough versions available from package manager
-if [ "$RHEL_VERSION" = 8 ] || (( UBUNTU_VERSION < 22 )); then
+if [ "$RHEL_VERSION" = 8 ] || [ "$UBUNTU_VERSION" = 20 ]; then
     # Newer versin of glib required for Qemu.
     # Anything newer than this won't build on red hat 8
     if [ ! -e "$RISCV"/include/glib-2.0 ]; then
@@ -427,7 +427,7 @@ if [ ! -e "${RISCV}"/site-setup.sh ]; then
     wget https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.csh
     if [ "$FAMILY" = rhel ]; then
         echo "source /opt/rh/gcc-toolset-13/enable" >> site-setup.sh
-    elif (( UBUNTU_VERSION < 22 )); then
+    elif [ "$UBUNTU_VERSION" = 20 ]; then
         echo "export PATH=\$RISCV/gcc-10/bin:\$PATH" >> site-setup.sh
         echo "prepend PATH \$RISCV/gcc-10/bin" >> site-setup.csh
     fi
