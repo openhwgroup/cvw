@@ -93,7 +93,7 @@ else
 fi
 
 export PATH=$PATH:$RISCV/bin:/usr/bin
-export PKG_CONFIG_PATH=$RISCV/lib64/pkgconfig:$RISCV/lib/pkgconfig:$RISCV/share/pkgconfig:$PKG_CONFIG_PATH
+export PKG_CONFIG_PATH=$RISCV/lib64/pkgconfig:$RISCV/lib/pkgconfig:$RISCV/share/pkgconfig:$RISCV/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH
 mkdir -p "$RISCV"
 
 echo "Detected information"
@@ -188,9 +188,9 @@ pip install -U pip
 pip install -U sphinx sphinx_rtd_theme matplotlib scipy scikit-learn adjustText lief markdown pyyaml testresources riscv_config
 pip install -U riscv_isac # to generate new tests, such as quads with fp_dataset.py
 
-# z3 is eeded for sail and not availabe from dnf for rhel 8. Meson is needed to build extra dependencies
+# z3 is eeded for sail and not availabe from dnf for rhel 8
 if [ "$RHEL_VERSION" = 8 ]; then
-    pip install -U z3-solver meson
+    pip install -U z3-solver
 fi
 source "$RISCV"/riscv-python/bin/activate # reload python virtual environment
 
@@ -204,6 +204,8 @@ if [ "$RHEL_VERSION" = 8 ] || (( UBUNTU_VERSION < 22 )); then
         echo -e "Installing glib"
         echo -e "*************************************************************************"
         echo -e "*************************************************************************\n"
+        # Meson is needed to build glib
+        pip install -U meson
         cd "$RISCV"
         wget https://download.gnome.org/sources/glib/2.70/glib-2.70.5.tar.xz
         tar -xJf glib-2.70.5.tar.xz
