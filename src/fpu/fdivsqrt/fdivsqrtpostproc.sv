@@ -38,7 +38,7 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
   input  logic                 SqrtM, SpecialCaseM, 
   input  logic [P.XLEN-1:0]    AM,                // U/Q(XLEN.0)
   input  logic                 RemOpM, ALTBM, BZeroM, AsM, BsM, W64M,
-  input  logic [P.INTDIVBLEN-1:0] IntNormShiftM,     
+  input  logic [P.DIVBLEN-1:0] IntNormShiftM,     
   output logic [P.DIVb:0]      UmM,               // U1.DIVb result significand
   output logic                 WZeroE,
   output logic                 DivStickyM,
