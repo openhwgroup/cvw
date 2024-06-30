@@ -92,11 +92,11 @@ else
 fi
 
 # Check if root
-ROOT=$( [ "${EUID:=$(id -u)}" = 0 ] && echo true || echo false);
+ROOT=$( [ "${EUID:=$(id -u)}" = 0 ] && echo true)
 
 # All tools will be installed under the $RISCV directory. By default, if run as root (with sudo) this is set to
 # /opt/riscv. Otherwise, it is set to ~/riscv. This value can be overridden with an argument passed to the script.
-if [ "$ROOT" = true ]; then
+if [ "$ROOT" ]; then
     export RISCV="${1:-/opt/riscv}"
 else
     export RISCV="${1:-$HOME/riscv}"
