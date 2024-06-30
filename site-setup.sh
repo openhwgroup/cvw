@@ -35,7 +35,7 @@ export RISCV_OBJCOPY=$(which riscv64-unknown-elf-objcopy)	        # Copy this as
 export SPIKE_PATH=$RISCV/bin										# Change this for your path to riscv-isa-sim (spike)
 
 # Verilator needs a larger stack to simulate CORE-V Wally
-ulimit -c 234613
+ulimit -c 300000
 
 # Imperas OVPsim; put this in if you are using it
 #export PATH=$RISCV/imperas-riscv-tests/riscv-ovpsim-plus/bin/Linux64:$PATH
