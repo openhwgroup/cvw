@@ -199,5 +199,7 @@ localparam cvw_t P = '{
   FPDUR       : FPDUR,
   DURLEN      : DURLEN,
   DIVb        : DIVb,
-  DIVBLEN     : DIVBLEN
+  DIVBLEN     : DIVBLEN,
+  INTDIVb     : INTDIVb
 };
+
