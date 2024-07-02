@@ -385,14 +385,6 @@ module testbench;
       // and initialize them to zero (also initilaize them to zero at the start of the next test)
       updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
     end
-`ifdef VERILATOR // this macro is defined when verilator is used
-  // Simulator Verilator has an issue that the validate logic below slows runtime 110x if it is 
-  // in the posedge clk block rather than a separate posedge Validate block.  
-  // Until it is fixed, provide a silly posedge Validate block to keep Verilator happy.
-  // https://github.com/verilator/verilator/issues/4967
-  end // restored
-  always @(posedge Validate) // added
-`endif
     if(Validate) begin
       if (PrevPCZero) totalerrors = totalerrors + 1; //  error if PC is stuck at zero
       if (TEST == "buildroot")
@@ -445,10 +437,7 @@ module testbench;
 `endif
       end
     end
-`ifndef VERILATOR
-  // Remove this when issue 4967 is resolved and the posedge Validate logic above is removed
-  end 
-`endif
+  end
 
 
   ////////////////////////////////////////////////////////////////////////////////
