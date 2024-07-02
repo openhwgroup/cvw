@@ -66,6 +66,7 @@ module testbench_fp;
    logic [P.FMTBITS-1:0] 	ModFmt;                     // format - 10 = half, 00 = single, 01 = double, 11 = quad
    logic [P.FLEN-1:0] 		FpRes, FpCmpRes;            // Results from each unit
    logic [P.XLEN-1:0] 		IntRes, CmpRes;             // Results from each unit
+   logic [P.Q_LEN-1:0]     FpResExtended;              // FpRes extended to same length as Ans/Res
    logic [4:0] 			FmaFlg, CvtFlg, DivFlg;     // Outputed flags
    logic [4:0] 			CmpFlg;                     // Outputed flags
    logic                        AnsNaN, ResNaN, NaNGood;
@@ -820,13 +821,14 @@ module testbench_fp;
    end 
    
    always_comb begin
+      FpResExtended = {{(P.Q_LEN-P.FLEN){1'b1}}, FpRes};
       // select the result to check
       case (UnitVal)
-	`FMAUNIT: Res = FpRes;
-	`DIVUNIT: Res = FpRes;
-	`CMPUNIT: Res = {{(FLEN > XLEN ? FLEN-XLEN : XLEN-FLEN){1'b0}}, CmpRes};
-	`CVTINTUNIT: if (WriteIntVal) Res = {{(FLEN > XLEN ? FLEN-XLEN : XLEN-FLEN){1'b0}}, IntRes}; else Res = FpRes;
-	`CVTFPUNIT: Res = FpRes;
+	`FMAUNIT: Res = FpResExtended;
+	`DIVUNIT: Res = FpResExtended;
+	`CMPUNIT: Res = {{(Q_LEN-XLEN){1'b0}}, CmpRes};
+	`CVTINTUNIT: if (WriteIntVal) Res = {{(Q_LEN-XLEN){1'b0}}, IntRes}; else Res = FpResExtended;
+	`CVTFPUNIT: Res = FpResExtended;
       endcase
 
       // select the flag to check
@@ -965,7 +967,7 @@ module testbench_fp;
       ///////////////////////////////////////////////////////////////////////////////////////////////
 
       // check if result is correct
-      assign ResMatch = ((Res === Ans) | NaNGood | (NaNGood === 1'bx));
+      assign ResMatch = ((Res[P.FLEN-1:0] === Ans[P.FLEN-1:0]) | NaNGood | (NaNGood === 1'bx));
       assign FlagMatch = ((ResFlg === AnsFlg) | (AnsFlg === 5'bx));
       assign divsqrtop = (OpCtrlVal == `SQRT_OPCTRL) | (OpCtrlVal == `DIV_OPCTRL);
       assign FMAop = (OpCtrlVal == `FMAUNIT);  
@@ -987,7 +989,7 @@ module testbench_fp;
          // increment the test
          TestNum += 1;
          // clear the vectors
-         for(int i=0; i<MAXVECTORS; i++) TestVectors[i] = {P.FLEN*4+8{1'bx}};
+         for(int i=0; i<MAXVECTORS; i++) TestVectors[i] = {P.Q_LEN*4+8{1'bx}};
          // read next files
          $readmemh({`PATH, Tests[TestNum]}, TestVectors);
          // set the vector index back to 0
@@ -1052,6 +1054,7 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
    // Format of vectors Inputs(1/2/3)_AnsFlg
    always @(VectorNum) begin
       AnsFlg = TestVector[4:0];
+      //$display("Entering readvectors with VectorNum=%d, TestVector=%x, Unit=%d, Fmt=%d, OpCtrl=%d", VectorNum, TestVector, Unit, Fmt, OpCtrl);
       case (Unit)
 	`FMAUNIT:
           case (Fmt)
@@ -1070,48 +1073,49 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
             end
             2'b01: if (P.D_SUPPORTED) begin // double
                if (OpCtrl === `FMA_OPCTRL) begin
-		  X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+4*(P.D_LEN)-1:8+3*(P.D_LEN)]};
-		  Y = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+3*(P.D_LEN)-1:8+2*(P.D_LEN)]};
-		  Z = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+P.D_LEN]};
+		  X = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+4*(P.D_LEN)-1:8+3*(P.D_LEN)]};
+		  Y = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+3*(P.D_LEN)-1:8+2*(P.D_LEN)]};
+		  Z = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+P.D_LEN]};
+               $display("Read %x %x %x", X, Y, Z);
                end
                else begin
-		  X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+3*(P.D_LEN)-1:8+2*(P.D_LEN)]};
-		  if (OpCtrl === `MUL_OPCTRL) Y = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]}; 
-		  else Y = {{P.FLEN-P.D_LEN{1'b1}}, 2'b0, {P.D_NE-1{1'b1}}, (P.D_NF)'(0)};
-		  if (OpCtrl === `MUL_OPCTRL) Z = {{P.FLEN-P.D_LEN{1'b1}}, {P.D_LEN{1'b0}}}; 
-		  else Z = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]};
+		  X = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+3*(P.D_LEN)-1:8+2*(P.D_LEN)]};
+		  if (OpCtrl === `MUL_OPCTRL) Y = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]}; 
+		  else Y = {{P.Q_LEN-P.D_LEN{1'b1}}, 2'b0, {P.D_NE-1{1'b1}}, (P.D_NF)'(0)};
+		  if (OpCtrl === `MUL_OPCTRL) Z = {{P.Q_LEN-P.D_LEN{1'b1}}, {P.D_LEN{1'b0}}}; 
+		  else Z = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]};
                end
-               Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
+               Ans = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
             end
             2'b00: if (P.F_SUPPORTED) begin // single
                if (OpCtrl === `FMA_OPCTRL) begin
-		  X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+4*(P.S_LEN)-1:8+3*(P.S_LEN)]};
-		  Y = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+3*(P.S_LEN)-1:8+2*(P.S_LEN)]};
-		  Z = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+P.S_LEN]};
+		  X = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+4*(P.S_LEN)-1:8+3*(P.S_LEN)]};
+		  Y = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+3*(P.S_LEN)-1:8+2*(P.S_LEN)]};
+		  Z = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+P.S_LEN]};
                end
                else begin
-		  X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+3*(P.S_LEN)-1:8+2*(P.S_LEN)]};
-		  if (OpCtrl === `MUL_OPCTRL) Y = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+(P.S_LEN)]}; 
-		  else Y = {{P.FLEN-P.S_LEN{1'b1}}, 2'b0, {P.S_NE-1{1'b1}}, (P.S_NF)'(0)};
-		  if (OpCtrl === `MUL_OPCTRL) Z = {{P.FLEN-P.S_LEN{1'b1}}, {P.S_LEN{1'b0}}}; 
-		  else Z = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+(P.S_LEN)]};
+		  X = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+3*(P.S_LEN)-1:8+2*(P.S_LEN)]};
+		  if (OpCtrl === `MUL_OPCTRL) Y = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+(P.S_LEN)]}; 
+		  else Y = {{P.Q_LEN-P.S_LEN{1'b1}}, 2'b0, {P.S_NE-1{1'b1}}, (P.S_NF)'(0)};
+		  if (OpCtrl === `MUL_OPCTRL) Z = {{P.Q_LEN-P.S_LEN{1'b1}}, {P.S_LEN{1'b0}}}; 
+		  else Z = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+(P.S_LEN)]};
                end
-               Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
+               Ans = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
             end
             2'b10: begin // half
                if (OpCtrl === `FMA_OPCTRL) begin
-		  X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+4*(P.H_LEN)-1:8+3*(P.H_LEN)]};
-		  Y = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+3*(P.H_LEN)-1:8+2*(P.H_LEN)]};
-		  Z = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+P.H_LEN]};
+		  X = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+4*(P.H_LEN)-1:8+3*(P.H_LEN)]};
+		  Y = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+3*(P.H_LEN)-1:8+2*(P.H_LEN)]};
+		  Z = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+P.H_LEN]};
                end
                else begin
-		  X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+3*(P.H_LEN)-1:8+2*(P.H_LEN)]};
-		  if (OpCtrl === `MUL_OPCTRL) Y = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+(P.H_LEN)]}; 
-		  else Y = {{P.FLEN-P.H_LEN{1'b1}}, 2'b0, {P.H_NE-1{1'b1}}, (P.H_NF)'(0)};
-		  if (OpCtrl === `MUL_OPCTRL) Z = {{P.FLEN-P.H_LEN{1'b1}}, {P.H_LEN{1'b0}}}; 
-		  else Z = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+(P.H_LEN)]};
+		  X = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+3*(P.H_LEN)-1:8+2*(P.H_LEN)]};
+		  if (OpCtrl === `MUL_OPCTRL) Y = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+(P.H_LEN)]}; 
+		  else Y = {{P.Q_LEN-P.H_LEN{1'b1}}, 2'b0, {P.H_NE-1{1'b1}}, (P.H_NF)'(0)};
+		  if (OpCtrl === `MUL_OPCTRL) Z = {{P.Q_LEN-P.H_LEN{1'b1}}, {P.H_LEN{1'b0}}}; 
+		  else Z = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+(P.H_LEN)]};
                end
-               Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
+               Ans = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
             end
           endcase
 	`DIVUNIT:
@@ -1122,16 +1126,16 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		 Ans = TestVector[8+(P.Q_LEN-1):8];
               end
               2'b01: if (P.D_SUPPORTED) begin // double
-		 X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]};
-		 Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
+		 X = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]};
+		 Ans = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
               end
               2'b00: if (P.F_SUPPORTED) begin // single
-		 X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+1*(P.S_LEN)]};
-		 Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
+		 X = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+1*(P.S_LEN)]};
+		 Ans = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
               end
               2'b10: begin // half
-		 X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+(P.H_LEN)]};
-		 Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
+		 X = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+(P.H_LEN)]};
+		 Ans = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
               end
             endcase
           else
@@ -1142,19 +1146,19 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		 Ans = TestVector[8+(P.Q_LEN-1):8];
               end
               2'b01: if (P.D_SUPPORTED) begin // double
-		 X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+3*(P.D_LEN)-1:8+2*(P.D_LEN)]};
-		 Y = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]};
-		 Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
+		 X = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+3*(P.D_LEN)-1:8+2*(P.D_LEN)]};
+		 Y = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]};
+		 Ans = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
               end
               2'b00: if (P.F_SUPPORTED) begin // single
-		 X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+3*(P.S_LEN)-1:8+2*(P.S_LEN)]};
-		 Y = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+1*(P.S_LEN)]};
-		 Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
+		 X = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+3*(P.S_LEN)-1:8+2*(P.S_LEN)]};
+		 Y = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+1*(P.S_LEN)]};
+		 Ans = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
               end
               2'b10: begin // half
-		 X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+3*(P.H_LEN)-1:8+2*(P.H_LEN)]};
-		 Y = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+(P.H_LEN)]};
-		 Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
+		 X = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+3*(P.H_LEN)-1:8+2*(P.H_LEN)]};
+		 Y = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+(P.H_LEN)]};
+		 Ans = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
               end
             endcase
 	`CMPUNIT:
@@ -1162,22 +1166,22 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
             2'b11: begin // quad
                X = TestVector[12+2*(P.Q_LEN)-1:12+(P.Q_LEN)];
                Y = TestVector[12+(P.Q_LEN)-1:12];
-               Ans = {{P.FLEN-1{1'b0}}, TestVector[8]};
+               Ans = {{P.Q_LEN-1{1'b0}}, TestVector[8]};
             end
             2'b01: if (P.D_SUPPORTED) begin // double
-               X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[12+2*(P.D_LEN)-1:12+(P.D_LEN)]};
-               Y = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[12+(P.D_LEN)-1:12]};
-               Ans = {{P.FLEN-1{1'b0}}, TestVector[8]};
+               X = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[12+2*(P.D_LEN)-1:12+(P.D_LEN)]};
+               Y = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[12+(P.D_LEN)-1:12]};
+               Ans = {{P.Q_LEN-1{1'b0}}, TestVector[8]};
             end
             2'b00: if (P.F_SUPPORTED) begin // single
-               X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[12+2*(P.S_LEN)-1:12+(P.S_LEN)]};
-               Y = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[12+(P.S_LEN)-1:12]};
-               Ans = {{P.FLEN-1{1'b0}}, TestVector[8]};
+               X = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[12+2*(P.S_LEN)-1:12+(P.S_LEN)]};
+               Y = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[12+(P.S_LEN)-1:12]};
+               Ans = {{P.Q_LEN-1{1'b0}}, TestVector[8]};
             end
             2'b10: begin // half
-               X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[12+2*(P.H_LEN)-1:12+(P.H_LEN)]};
-               Y = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[12+(P.H_LEN)-1:12]};
-               Ans = {{P.FLEN-1{1'b0}}, TestVector[8]};
+               X = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[12+2*(P.H_LEN)-1:12+(P.H_LEN)]};
+               Y = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[12+(P.H_LEN)-1:12]};
+               Ans = {{P.Q_LEN-1{1'b0}}, TestVector[8]};
             end
           endcase
 	`CVTFPUNIT:
@@ -1190,75 +1194,75 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		 end
 		 2'b01:	if (P.D_SUPPORTED) begin // double
 		    X = {TestVector[8+P.Q_LEN+P.D_LEN-1:8+(P.D_LEN)]};
-		    Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
+		    Ans = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
 		 end
 		 2'b00:	begin // single
 		    X = {TestVector[8+P.Q_LEN+P.S_LEN-1:8+(P.S_LEN)]};
-		    Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
+		    Ans = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
 		 end
 		 2'b10:	begin // half
 		    X = {TestVector[8+P.Q_LEN+P.H_LEN-1:8+(P.H_LEN)]};
-		    Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
+		    Ans = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
 		 end
                endcase
             end
             2'b01: if (P.D_SUPPORTED) begin // double
                case (OpCtrl[1:0])
 		 2'b11: begin // quad
-		    X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+P.D_LEN+P.Q_LEN-1:8+(P.Q_LEN)]};
+		    X = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+P.D_LEN+P.Q_LEN-1:8+(P.Q_LEN)]};
 		    Ans = TestVector[8+(P.Q_LEN-1):8];
 		 end
 		 2'b01:	begin // double
-		    X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+P.D_LEN+P.D_LEN-1:8+(P.D_LEN)]};
-		    Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
+		    X = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+P.D_LEN+P.D_LEN-1:8+(P.D_LEN)]};
+		    Ans = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
 		 end
 		 2'b00:	begin // single
-		    X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+P.D_LEN+P.S_LEN-1:8+(P.S_LEN)]};
-		    Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
+		    X = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+P.D_LEN+P.S_LEN-1:8+(P.S_LEN)]};
+		    Ans = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
 		 end
 		 2'b10:	begin // half
-		    X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+P.D_LEN+P.H_LEN-1:8+(P.H_LEN)]};
-		    Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
+		    X = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+P.D_LEN+P.H_LEN-1:8+(P.H_LEN)]};
+		    Ans = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
 		 end
                endcase
             end
             2'b00: if (P.F_SUPPORTED) begin // single
                case (OpCtrl[1:0])
 		 2'b11: begin // quad
-		    X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+P.S_LEN+P.Q_LEN-1:8+(P.Q_LEN)]};
+		    X = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+P.S_LEN+P.Q_LEN-1:8+(P.Q_LEN)]};
 		    Ans = TestVector[8+(P.Q_LEN-1):8];
 		 end
 		 2'b01:	if (P.D_SUPPORTED) begin // double
-		    X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+P.S_LEN+P.D_LEN-1:8+(P.D_LEN)]};
-		    Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
+		    X = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+P.S_LEN+P.D_LEN-1:8+(P.D_LEN)]};
+		    Ans = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
 		 end
 		 2'b00:	begin // single
-		    X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+P.S_LEN+P.S_LEN-1:8+(P.S_LEN)]};
-		    Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
+		    X = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+P.S_LEN+P.S_LEN-1:8+(P.S_LEN)]};
+		    Ans = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
 		 end
 		 2'b10:	begin // half
-		    X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+P.S_LEN+P.H_LEN-1:8+(P.H_LEN)]};
-		    Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
+		    X = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+P.S_LEN+P.H_LEN-1:8+(P.H_LEN)]};
+		    Ans = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
 		 end
                endcase
             end
             2'b10: begin // half
                case (OpCtrl[1:0])
 		 2'b11: begin // quad
-		    X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+P.H_LEN+P.Q_LEN-1:8+(P.Q_LEN)]};
+		    X = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+P.H_LEN+P.Q_LEN-1:8+(P.Q_LEN)]};
 		    Ans = TestVector[8+(P.Q_LEN-1):8];
 		 end
 		 2'b01:	if (P.D_SUPPORTED) begin // double
-		    X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+P.H_LEN+P.D_LEN-1:8+(P.D_LEN)]};
-		    Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
+		    X = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+P.H_LEN+P.D_LEN-1:8+(P.D_LEN)]};
+		    Ans = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
 		 end
 		 2'b00:	if (P.F_SUPPORTED) begin // single
-		    X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+P.H_LEN+P.S_LEN-1:8+(P.S_LEN)]};
-		    Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
+		    X = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+P.H_LEN+P.S_LEN-1:8+(P.S_LEN)]};
+		    Ans = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
 		 end
 		 2'b10:	begin // half
-		    X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+P.H_LEN+P.H_LEN-1:8+(P.H_LEN)]};
-		    Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
+		    X = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+P.H_LEN+P.H_LEN-1:8+(P.H_LEN)]};
+		    Ans = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
 		 end
                endcase
             end
@@ -1269,25 +1273,25 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
                // {is the integer a long, is the opperation to an integer}
                casez ({OpCtrl[2:1]})
 		 2'b11: begin // long -> quad
-                    X = {P.FLEN{1'bx}};
+                    X = {P.Q_LEN{1'bx}};
                     SrcA = TestVector[8+P.Q_LEN+P.XLEN-1:8+(P.Q_LEN)];
                     Ans = TestVector[8+(P.Q_LEN-1):8];
 		 end
 		 2'b10:	begin // int -> quad
                     // correctly sign extend the integer depending on if it's a signed/unsigned test
-                    X = {P.FLEN{1'bx}};
+                    X = {P.Q_LEN{1'bx}};
                     SrcA = {{P.XLEN-32{TestVector[8+P.Q_LEN+32-1]}}, TestVector[8+P.Q_LEN+32-1:8+(P.Q_LEN)]};
                     Ans = TestVector[8+(P.Q_LEN-1):8];
 		 end
 		 2'b01:	begin // quad -> long
                     X = {TestVector[8+P.XLEN+P.Q_LEN-1:8+(P.XLEN)]};
                     SrcA = {P.XLEN{1'bx}};
-                    Ans = {{(P.FLEN > 64 ? P.FLEN-64 : 0){1'b0}}, TestVector[8+(P.XLEN-1):8]};
+                    Ans = {{(P.Q_LEN-64){1'b0}}, TestVector[8+(64-1):8]};
 		 end
 		 2'b00:	begin // quad -> int
                     X = {TestVector[8+32+P.Q_LEN-1:8+(32)]};
                     SrcA = {P.XLEN{1'bx}};
-                    Ans = {{P.FLEN-32{TestVector[8+32-1]}},TestVector[8+(32-1):8]};
+                    Ans = {{(P.Q_LEN-32){TestVector[8+32-1]}},TestVector[8+(32-1):8]};
 		 end
                endcase
             end
@@ -1295,25 +1299,25 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
                // {Int->Fp?, is the integer a long}
                casez ({OpCtrl[2:1]})
 		 2'b11: begin // long -> double
-                    X = {P.FLEN{1'bx}};
+                    X = {P.Q_LEN{1'bx}};
                     SrcA = TestVector[8+P.D_LEN+P.XLEN-1:8+(P.D_LEN)];
-                    Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
+                    Ans = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
 		 end
 		 2'b10:	begin // int -> double
                     // correctly sign extend the integer depending on if it's a signed/unsigned test
-                    X = {P.FLEN{1'bx}};
+                    X = {P.Q_LEN{1'bx}};
                     SrcA = {{P.XLEN-32{TestVector[8+P.D_LEN+32-1]}}, TestVector[8+P.D_LEN+32-1:8+(P.D_LEN)]};
-                    Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
+                    Ans = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
 		 end
 		 2'b01:	begin // double -> long
-                    X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+P.XLEN+P.D_LEN-1:8+(P.XLEN)]};
+                    X = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+P.XLEN+P.D_LEN-1:8+(P.XLEN)]};
                     SrcA = {P.XLEN{1'bx}};
-                    Ans = {{(P.FLEN-64){1'b0}}, TestVector[8+(P.XLEN-1):8]};
+                    Ans = {{(P.Q_LEN-64){1'b0}}, TestVector[8+(64-1):8]};
 		 end
 		 2'b00:	begin // double -> int
-                    X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+32+P.D_LEN-1:8+(32)]};
+                    X = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+32+P.D_LEN-1:8+(32)]};
                     SrcA = {P.XLEN{1'bx}};
-                    Ans = {{P.FLEN-32{TestVector[8+32-1]}},TestVector[8+(32-1):8]};
+                    Ans = {{P.Q_LEN-32{TestVector[8+32-1]}},TestVector[8+(32-1):8]};
 		 end
                endcase
             end
@@ -1321,25 +1325,25 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
                // {is the integer a long, is the opperation to an integer}
                casez ({OpCtrl[2:1]})
 		 2'b11: begin // long -> single
-                    X = {P.FLEN{1'bx}};
+                    X = {P.Q_LEN{1'bx}};
                     SrcA = TestVector[8+P.S_LEN+P.XLEN-1:8+(P.S_LEN)];
-                    Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
+                    Ans = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
 		 end
 		 2'b10:	begin // int -> single
                     // correctly sign extend the integer depending on if it's a signed/unsigned test
-                    X = {P.FLEN{1'bx}};
+                    X = {P.Q_LEN{1'bx}};
                     SrcA = {{P.XLEN-32{TestVector[8+P.S_LEN+32-1]}}, TestVector[8+P.S_LEN+32-1:8+(P.S_LEN)]};
-                    Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
+                    Ans = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
 		 end
 		 2'b01:	begin // single -> long
-                    X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+P.XLEN+P.S_LEN-1:8+(P.XLEN)]};
+                    X = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+P.XLEN+P.S_LEN-1:8+(P.XLEN)]};
                     SrcA = {P.XLEN{1'bx}};
-                    Ans = {{(P.FLEN > 64 ? P.FLEN-64 : 0){1'b0}}, TestVector[8+(P.XLEN-1):8]};
+                    Ans = {{(P.Q_LEN-64){1'b0}}, TestVector[8+(64-1):8]};
 		 end
 		 2'b00:	begin // single -> int
-                    X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+32+P.S_LEN-1:8+(32)]};
+                    X = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+32+P.S_LEN-1:8+(32)]};
                     SrcA = {P.XLEN{1'bx}};
-                    Ans = {{P.FLEN-32{TestVector[8+32-1]}},TestVector[8+(32-1):8]};
+                    Ans = {{(P.Q_LEN-32){TestVector[8+32-1]}},TestVector[8+(32-1):8]};
 		 end
                endcase
             end
@@ -1347,25 +1351,25 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
                // {is the integer a long, is the opperation to an integer}
                casez ({OpCtrl[2:1]})
 		 2'b11: begin // long -> half
-                    X = {P.FLEN{1'bx}};
+                    X = {P.Q_LEN{1'bx}};
                     SrcA = TestVector[8+P.H_LEN+P.XLEN-1:8+(P.H_LEN)];
-                    Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
+                    Ans = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
 		 end
 		 2'b10:	begin // int -> half
                     // correctly sign extend the integer depending on if it's a signed/unsigned test
-                    X = {P.FLEN{1'bx}};
+                    X = {P.Q_LEN{1'bx}};
                     SrcA = {{P.XLEN-32{TestVector[8+P.H_LEN+32-1]}}, TestVector[8+P.H_LEN+32-1:8+(P.H_LEN)]};
-                    Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
+                    Ans = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
 		 end
 		 2'b01:	begin // half -> long
-                    X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+P.XLEN+P.H_LEN-1:8+(P.XLEN)]};
+                    X = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+P.XLEN+P.H_LEN-1:8+(P.XLEN)]};
                     SrcA = {P.XLEN{1'bx}};
-                    Ans = {{(P.FLEN > 64 ? P.FLEN-64 : 0){1'b0}}, TestVector[8+(P.XLEN-1):8]};
+                    Ans = {{(P.Q_LEN-64){1'b0}}, TestVector[8+(64-1):8]};
 		 end
 		 2'b00:	begin // half -> int
-                    X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+32+P.H_LEN-1:8+(32)]};
+                    X = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+32+P.H_LEN-1:8+(32)]};
                     SrcA = {P.XLEN{1'bx}};
-                    Ans = {{P.FLEN-32{TestVector[8+32-1]}}, TestVector[8+(32-1):8]};
+                    Ans = {{(P.Q_LEN-32){TestVector[8+32-1]}}, TestVector[8+(32-1):8]};
 		 end
                endcase
             end
