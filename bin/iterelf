@@ -1,0 +1,100 @@
+#!/usr/bin/python3
+
+# iterelf
+# David_Harris@hmc.edu and Rose Thompson 7/3/2024
+# Run wsim on all the ELF files in a directory in parallel in lockstep
+
+
+import argparse
+import os
+import multiprocessing
+from multiprocessing import Pool, TimeoutError
+TIMEOUT_DUR = 60  # 1` minute
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+def search_log_for_mismatches(logfile):
+    """Search through the given log file for text, returning True if it is found or False if it is not"""
+    grepwarn = "grep -H Warning: " + logfile
+    os.system(grepwarn)
+    greperr = "grep -H Error: " + logfile
+    os.system(greperr)
+    grepcmd = "grep -a -e 'Mismatches            : 0' '%s' > /dev/null" % logfile
+#    print("  search_log_for_text invoking %s" % grepcmd)
+    return os.system(grepcmd) == 0
+
+def run_test_case(elf):
+    """Run the given test case, and return 0 if the test suceeds and 1 if it fails"""
+    WALLY = os.environ.get('WALLY')
+    fields = elf.rsplit('/', 3)
+    if (fields[2] == "ref"):
+        shortelf = fields[1] + "_" + fields[3]
+    else:
+        shorelf = fields[2] + "_" + fields[3]
+#    shortelf = fields[1] + "_" + fields[2]
+    logfile = WALLY + "/sim/" + args.sim + "/logs/" + shortelf + ".log"
+    cmd = "wsim " + args.config + " " + shortelf + " --elf " + elf + " --sim " + args.sim + " --lockstep > " + logfile   # add coveerage flags if necessary
+#    print("cmd = " + cmd)
+    os.system(cmd)
+    if search_log_for_mismatches(logfile):
+        print(f"{bcolors.OKGREEN}%s: Success{bcolors.ENDC}" % (cmd))
+        return 0
+    else:
+        print(f"{bcolors.FAIL}%s: Failures detected in output{bcolors.ENDC}" % (cmd))
+        print("  Check %s" % logfile)
+        return 1
+
+##################################
+# Main body
+##################################
+
+# Parse arguments
+parser = argparse.ArgumentParser()
+parser.add_argument("dir", help="Configuration file")
+parser.add_argument("--config", help="Configuration", default="rv64gc")
+parser.add_argument("--sim", "-s", help="Simulator", choices=["questa", "vcs"], default="questa")
+parser.add_argument("--coverage", "-c", help="Code & Functional Coverage", action="store_true")
+parser.add_argument("--fcov", "-f", help="Code & Functional Coverage", action="store_true")
+parser.add_argument("--exclude", help="Exclude files with this sufix", default="my.elf")
+args = parser.parse_args()
+
+# find all ELF files in directory
+
+ElfList = []
+if (os.path.isdir(args.dir)):
+    DirectorMode = 1
+    for dirpath, dirnames, filenames in os.walk(os.path.abspath(args.dir)):
+        for file in filenames:
+            if (file.endswith("elf") and not file.endswith(args.exclude)):
+                ElfList.append(os.path.join(dirpath, file))
+else:
+    print(args.dir + " is not a directory")
+    exit(1)
+#print(ElfList)
+
+# spawn parallel wsim jobs for each ELF file
+
+ImperasDVLicenseCount = 8
+with Pool(processes=min(len(ElfList),multiprocessing.cpu_count(), ImperasDVLicenseCount)) as pool:
+    num_fail = 0
+    results = {}
+    for elf in ElfList:
+        results[elf] = pool.apply_async(run_test_case,(elf,))
+    for (elf,result) in results.items():
+        try:
+            num_fail+=result.get(timeout=TIMEOUT_DUR)
+        except TimeoutError:
+            num_fail+=1
+            print(f"{bcolors.FAIL}%s_%s: Timeout - runtime exceeded %d seconds{bcolors.ENDC}" % (elf, TIMEOUT_DUR))
+print("Completed %d tests with %d failures" % (len(ElfList), num_fail))
+
+# *** generate memfiles

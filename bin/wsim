@@ -14,44 +14,6 @@
 import argparse
 import os
 
-
-def LaunchSim(ElfFile, flags):
-    cd = "cd $WALLY/sim/" +args.sim
-
-    # per-simulator launch
-    if (args.sim == "questa"):
-        # Questa cannot accept more than 9 arguments.  fcov implies lockstep
-        if (args.tb == "testbench_fp"):
-            args.args = " -GTEST=\"" + args.testsuite + "\" " + args.args
-        cmd = "do wally.do " + args.config + " " + args.testsuite + " " + args.tb + " " + args.args + " " + ElfFile + " " + flags
-        if (args.gui):  # launch Questa with GUI; add +acc to keep variables accessible
-            if(args.tb == "testbench"): 
-                cmd = cd + "; " + prefix + " vsim -do \"" + cmd + " +acc -GDEBUG=1\""
-            elif(args.tb == "testbench_fp"):
-                cmd = cd + "; " + prefix + " vsim -do \"" + cmd + " +acc\""
-        else: # launch Questa in batch mode
-            cmd = cd + "; " + prefix + " vsim -c -do \"" + cmd + "\""
-        print("Running Questa with command: " + cmd)
-        os.system(cmd)
-    elif (args.sim == "verilator"):
-        # PWD=${WALLY}/sim CONFIG=rv64gc TESTSUITE=arch64i
-        print(f"Running Verilator on {args.config} {args.testsuite}")
-        os.system(f"/usr/bin/make -C {regressionDir}/verilator WALLYCONF={args.config} TEST={args.testsuite} TESTBENCH={args.tb} EXTRA_ARGS='{args.args}'")
-    elif (args.sim == "vcs"):
-        print(f"Running VCS on " + args.config + " " + args.testsuite)
-        if (args.gui):  
-            args.args += "gui"
-        if (args.args == ""):
-            vcsargs = ""
-        else:
-            vcsargs = " --args " + args.args
-        if (ElfFile != ""):
-            ElfFile = " --elffile " + ElfFile
-        cmd = cd + "; ./run_vcs " + args.config + " " + args.testsuite + vcsargs + ElfFile + " " + flags
-        print(cmd)
-        os.system(cmd)
-
-
 ########################
 # main wsim script
 ########################
@@ -60,6 +22,7 @@ def LaunchSim(ElfFile, flags):
 parser = argparse.ArgumentParser()
 parser.add_argument("config", help="Configuration file")
 parser.add_argument("testsuite", help="Test suite or ELF file")
+parser.add_argument("--elf", "-e", help="ELF File name", default="")
 parser.add_argument("--sim", "-s", help="Simulator", choices=["questa", "verilator", "vcs"], default="questa")
 parser.add_argument("--tb", "-t", help="Testbench", choices=["testbench", "testbench_fp"], default="testbench")
 parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true")
@@ -70,26 +33,14 @@ parser.add_argument("--vcd", "-v", help="Generate testbench.vcd", action="store_
 parser.add_argument("--lockstep", "-l", help="Run ImperasDV lock, step, and compare.", action="store_true")
 parser.add_argument("--locksteplog", "-b", help="Retired instruction number to be begin logging.", default=0)
 parser.add_argument("--covlog", "-d", help="Log coverage after n instructions.", default=0)
-parser.add_argument("--elfext", "-e", help="When searching for elf files only includes ones which end in this extension", default=".elf")
 args = parser.parse_args()
 print("Config=" + args.config + " tests=" + args.testsuite + " sim=" + args.sim + " gui=" + str(args.gui) + " args='" + args.args + "'")
 ElfFile=""
 DirectorMode = 0
-ElfList = []
 WALLY = os.environ.get('WALLY')
 
-if(os.path.isfile(args.testsuite)):
-    ElfFile = "+ElfFile=" + args.testsuite
-    args.testsuite = "none"
-    ElfList.append("+ElfFile=" + args.testsuite)
-elif(os.path.isdir(args.testsuite)):
-    DirectorMode = 1
-    for dirpath, dirnames, filenames in os.walk(args.testsuite):
-        for file in filenames:
-            if file.endswith(args.elfext):
-                ElfList.append("+ElfFile=" + os.path.join(dirpath, file))
-    args.testsuite = "none"
-print(ElfList)
+if(os.path.isfile(args.elf)):
+    ElfFile = "+ElfFile=" + args.elf
 
 # Validate arguments
 if (args.gui or args.coverage or args.fcov or args.lockstep):
@@ -135,10 +86,38 @@ for d in ["logs", "wkdir", "cov"]:
         os.mkdir(regressionDir+args.sim+"/"+d)
     except:
         pass
-        
-if(DirectorMode):
-    for ElfFile in ElfList:
-        LaunchSim(ElfFile, flags)
 
-else:
-    LaunchSim(ElfFile, flags)
+cd = "cd $WALLY/sim/" +args.sim
+
+# per-simulator launch
+if (args.sim == "questa"):
+    # Questa cannot accept more than 9 arguments.  fcov implies lockstep
+    if (args.tb == "testbench_fp"):
+        args.args = " -GTEST=\"" + args.testsuite + "\" " + args.args
+    cmd = "do wally.do " + args.config + " " + args.testsuite + " " + args.tb + " " + args.args + " " + ElfFile + " " + flags
+    if (args.gui):  # launch Questa with GUI; add +acc to keep variables accessible
+        if(args.tb == "testbench"): 
+            cmd = cd + "; " + prefix + " vsim -do \"" + cmd + " +acc -GDEBUG=1\""
+        elif(args.tb == "testbench_fp"):
+            cmd = cd + "; " + prefix + " vsim -do \"" + cmd + " +acc\""
+    else: # launch Questa in batch mode
+        cmd = cd + "; " + prefix + " vsim -c -do \"" + cmd + "\""
+    print("Running Questa with command: " + cmd)
+    os.system(cmd)
+elif (args.sim == "verilator"):
+    # PWD=${WALLY}/sim CONFIG=rv64gc TESTSUITE=arch64i
+    print(f"Running Verilator on {args.config} {args.testsuite}")
+    os.system(f"/usr/bin/make -C {regressionDir}/verilator WALLYCONF={args.config} TEST={args.testsuite} TESTBENCH={args.tb} EXTRA_ARGS='{args.args}'")
+elif (args.sim == "vcs"):
+    print(f"Running VCS on " + args.config + " " + args.testsuite)
+    if (args.gui):  
+        args.args += "gui"
+    if (args.args == ""):
+        vcsargs = ""
+    else:
+        vcsargs = " --args " + args.args
+    if (ElfFile != ""):
+        ElfFile = " --elffile " + ElfFile
+    cmd = cd + "; ./run_vcs " + args.config + " " + args.testsuite + vcsargs + ElfFile + " " + flags
+    print(cmd)
+    os.system(cmd)
