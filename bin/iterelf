@@ -94,7 +94,7 @@ with Pool(processes=min(len(ElfList),multiprocessing.cpu_count(), ImperasDVLicen
             num_fail+=result.get(timeout=TIMEOUT_DUR)
         except TimeoutError:
             num_fail+=1
-            print(f"{bcolors.FAIL}%s_%s: Timeout - runtime exceeded %d seconds{bcolors.ENDC}" % (elf, TIMEOUT_DUR))
+            print(f"{bcolors.FAIL}%s: Timeout - runtime exceeded %d seconds{bcolors.ENDC}" % (elf, TIMEOUT_DUR))
 print("Completed %d tests with %d failures" % (len(ElfList), num_fail))
 
 # *** generate memfiles
