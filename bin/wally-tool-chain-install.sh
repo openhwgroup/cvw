@@ -70,9 +70,9 @@ echo "Installation path: $RISCV"
 
 # Install/update packages if root. Otherwise, check that packages are already installed.
 if [ "$ROOT" = true ]; then
-    ./wally-package-install.sh
+    source wally-package-install.sh
 else
-    ./wally-package-install.sh --check
+    source wally-package-install.sh --check
 fi
 
 if [ "$FAMILY" = rhel ]; then
