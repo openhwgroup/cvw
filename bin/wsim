@@ -47,7 +47,7 @@ def LaunchSim(ElfFile, flags):
             vcsargs = " --args " + args.args
         if (ElfFile != ""):
             ElfFile = " --elffile " + ElfFile
-        cmd = cd + "; ./run_vcs.py " + args.config + " " + args.testsuite + vcsargs + ElfFile + " " + flags
+        cmd = cd + "; ./run_vcs " + args.config + " " + args.testsuite + vcsargs + ElfFile + " " + flags
         print(cmd)
         os.system(cmd)
 
