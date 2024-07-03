@@ -38,7 +38,8 @@ ENDC='\033[0m'
 
 # If run standalone, determine distro information. Otherwise, use info from main install script
 if [ -z "$FAMILY" ]; then
-    source wally-distro-check.sh
+    dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    source "${dir}"/wally-distro-check.sh
 fi
 
 # Generate list of packages to install, determined based on distro
