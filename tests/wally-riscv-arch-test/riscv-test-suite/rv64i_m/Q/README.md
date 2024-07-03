@@ -22,7 +22,12 @@ riscv-ctg-> This folder consists of the CTG tool which is responsible for genera
 
 riscof -> The riscof directory in Wally was changed to include some Quad precision template files for compilation. Along with modification of scripts and yaml files to support FLEN=128
 
-
+TO DO: 
+    Debug why fadd.q_b1 doesn't match Sail vs. Spike
+    Run the q test on Wally RTL
+    Make more tests from the working datasets
+    Get other datasets working by using softfloat to do quad math
+    Push changes back to riscv-ctg and riscv-isac and remove them from wally-riscv-arch/tsts/riscv-test-suite/rv64i_m/Q
 
 
 Start by installing riscv-ctg via the following commands : 
