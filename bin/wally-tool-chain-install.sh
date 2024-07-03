@@ -36,6 +36,7 @@ NUM_THREADS=8  # for >= 32GiB
 #NUM_THREADS=16  # for >= 64GiB
 
 set -e # break on error
+dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Colors
 BOLD='\033[1m'
@@ -48,7 +49,7 @@ FAIL_COLOR='\033[91m'
 ENDC='\033[0m'
 
 # Get Linux distro and version
-source wally-distro-check.sh
+source "${dir}"/wally-distro-check.sh
 
 # Check if root
 ROOT=$( [ "${EUID:=$(id -u)}" = 0 ] && echo true || echo false);
@@ -70,9 +71,9 @@ echo "Installation path: $RISCV"
 
 # Install/update packages if root. Otherwise, check that packages are already installed.
 if [ "$ROOT" = true ]; then
-    source wally-package-install.sh
+    source "${dir}"/wally-package-install.sh
 else
-    source wally-package-install.sh --check
+    source "${dir}"/wally-package-install.sh --check
 fi
 
 if [ "$FAMILY" = rhel ]; then
