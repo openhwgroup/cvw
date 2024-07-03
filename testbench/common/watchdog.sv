@@ -26,7 +26,8 @@
 
 module watchdog #(parameter XLEN, WatchDogTimerThreshold) 
   (input clk,
-   input reset
+   input reset,
+   string TEST
    );
   
   // check for hang up.
@@ -46,9 +47,14 @@ module watchdog #(parameter XLEN, WatchDogTimerThreshold)
   always_comb begin
     WatchDogTimeOut = WatchDogTimerCount >= WatchDogTimerThreshold;
     if(WatchDogTimeOut) begin
-      $display("FAILURE: Watch Dog Time Out triggered. PCW stuck at %x for more than %d cycles", PCW, WatchDogTimerCount);
-      $stop;
-	end
+      if (TEST == "buildroot") $display("Watch Dog Time Out triggered.  This is a normal termination for a full buildroot boot.  Check sim/<simulator>/logs/buildroot_uart.log to check if the boot printed the login prompt.");
+      else $display("FAILURE: Watch Dog Time Out triggered. PCW stuck at %x for more than %d cycles", PCW, WatchDogTimerCount);
+      `ifdef QUESTA
+        $stop;  // if this is changed to $finish for Questa, wally-batch.do does not go to the next step to run coverage, and wally.do terminates without allowing GUI debug
+      `else
+        $finish;
+      `endif
+    end
   end
 
 endmodule

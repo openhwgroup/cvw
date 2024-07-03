@@ -170,7 +170,7 @@ derivconfigtests = [
         ["fh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64zfh", "arch64zfh_divsqrt", "arch64zfaf"]], 
         ["fdh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64zfh", "arch64zfh_divsqrt", "arch64zfaf", "arch64zfad"]],
         ["fdq_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64i", "arch64zfaf", "arch64zfad"]],
-        ["fdqh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64zfh", "arch64zfh_divsqrt", "arch64i", "wally64q", "arch64zfaf", "arch64zfad"]],
+        ["fdqh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64zfh", "arch64zfh_divsqrt", "arch64i",  "arch64zfaf", "arch64zfad"]], # "wally64q" when Q is supported again in riscof config file
     ]
 
 bpredtests = [
@@ -312,7 +312,6 @@ regressionDir = WALLY + '/sim'
 os.chdir(regressionDir)
 
 coveragesim = "questa"  # Questa is required for code/functional coverage
-#defaultsim = "vcs"   # Default simulator for all other tests; change to Verilator when flow is ready
 #defaultsim = "questa"   # Default simulator for all other tests; change to Verilator when flow is ready
 defaultsim = "verilator"   # Default simulator for all other tests
 
@@ -320,6 +319,7 @@ coverage = '--coverage' in sys.argv
 fp = '--fp' in sys.argv
 nightly = '--nightly' in sys.argv
 testfloat = '--testfloat' in sys.argv
+buildroot = '--buildroot' in sys.argv
 
 if (nightly):
     nightMode = "--nightly";
@@ -345,21 +345,26 @@ configs = [
         grepfile = WALLY + "/sim/verilator/logs/all_lints.log")
     ]
 
+# run full buildroot boot simulation (slow) if buildroot flag is set.  Start it early to overlap with other tests
+if (buildroot):
+    addTests(tests_buildrootboot, defaultsim)
+
 if (coverage):  # only run RV64GC tests on Questa in coverage mode
     addTests(tests64gc_nofp, "questa")
     if (fp):
         addTests(tests64gc_fp, "questa")
 else:
     for sim in sims:
-        addTests(tests_buildrootshort, sim)
+        if (not (buildroot and sim == defaultsim)):  # skip shot buildroot sim if running long one
+            addTests(tests_buildrootshort, sim)
         addTests(tests, sim)
         addTests(tests64gc_nofp, sim)
         addTests(tests64gc_fp, sim)
 
-    # run derivative configurations in nightly regression
+# run derivative configurations in nightly regression
 if (nightly):
-#    addTests(tests_buildrootboot, defaultsim)
     addTests(derivconfigtests, defaultsim)
+
 
 # testfloat tests
 if (testfloat): # for testfloat alone, just run testfloat tests
