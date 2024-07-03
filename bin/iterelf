@@ -39,7 +39,7 @@ def run_test_case(elf):
     if (fields[2] == "ref"):
         shortelf = fields[1] + "_" + fields[3]
     else:
-        shorelf = fields[2] + "_" + fields[3]
+        shortelf = fields[2] + "_" + fields[3]
 #    shortelf = fields[1] + "_" + fields[2]
     logfile = WALLY + "/sim/" + args.sim + "/logs/" + shortelf + ".log"
     cmd = "wsim " + args.config + " " + shortelf + " --elf " + elf + " --sim " + args.sim + " --lockstep > " + logfile   # add coveerage flags if necessary

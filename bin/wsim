@@ -40,7 +40,7 @@ DirectorMode = 0
 WALLY = os.environ.get('WALLY')
 
 if(os.path.isfile(args.elf)):
-    ElfFile = "+ElfFile=" + args.elf
+    ElfFile = "+ElfFile=" + os.path.abspath(args.elf)
 
 # Validate arguments
 if (args.gui or args.coverage or args.fcov or args.lockstep):
