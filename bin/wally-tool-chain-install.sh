@@ -35,6 +35,8 @@
 NUM_THREADS=8  # for >= 32GiB
 #NUM_THREADS=16  # for >= 64GiB
 
+set -e # break on error
+
 # Colors
 BOLD='\033[1m'
 UNDERLINE='\033[4m'
@@ -45,58 +47,15 @@ WARNING_COLOR='\033[93m'
 FAIL_COLOR='\033[91m'
 ENDC='\033[0m'
 
-echo -e "${SECTION_COLOR}\n*************************************************************************"
-echo -e "*************************************************************************"
-echo -e "Checking System Requirements and Configuring Installation"
-echo -e "*************************************************************************"
-echo -e "*************************************************************************\n${ENDC}"
-
-set -e # break on error
-
-# Get distribution information
-test -e /etc/os-release && os_release="/etc/os-release" || os_release="/usr/lib/os-release"
-source "$os_release"
-
-# Check for compatible distro
-if [[ "$ID" = rhel || "$ID_LIKE" = *rhel* ]]; then
-    FAMILY=rhel
-    if [ "$ID" != rhel ] && [ "$ID" != rocky ] && [ "$ID" != almalinux ]; then
-        printf "${WARNING_COLOR}%s\n${ENDC}" "For Red Hat family distros, the Wally install script has only been tested on RHEL, Rocky Linux," \
-               " and AlmaLinux. Your distro is $PRETTY_NAME. The regular Red Hat install will be attempted, but there will likely be issues."
-    fi
-    if [ "${VERSION_ID:0:1}" = 8 ]; then
-        RHEL_VERSION=8
-    elif [ "${VERSION_ID:0:1}" = 9 ]; then
-        RHEL_VERSION=9
-    else
-        echo "${FAIL_COLOR}The Wally install script is only compatible with versions 8 and 9 of RHEL, Rocky Linux, and AlmaLinux. You have version $VERSION.${ENDC}"
-        exit 1
-    fi
-elif [[ "$ID" = ubuntu || "$ID_LIKE" = *ubuntu* ]]; then
-    FAMILY=ubuntu
-    if [ "$ID" != ubuntu ]; then
-        printf "${WARNING_COLOR}%s\n${ENDC}" "For Ubuntu family distros, the Wally install script has only been tested on standard Ubuntu. Your distro " \
-               "is $PRETTY_NAME. The regular Ubuntu install will be attempted, but there may be issues."
-    else
-        UBUNTU_VERSION="${VERSION_ID:0:2}"
-        if (( UBUNTU_VERSION < 20 )); then
-            echo "${FAIL_COLOR}The Wally install script is only compatible with versions 20.04, 22.04, and 24.04 of Ubuntu. You have version $VERSION.${ENDC}"
-            exit 1
-        fi
-    fi
-else
-    printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally install script is currently only compatible with Ubuntu and Red Hat family " \
-           "(RHEL, Rocky Linux, or AlmaLinux) distros. Your detected distro is $PRETTY_NAME. You may try manually running the " \
-           "commands in this script, but it is likely that some will need to be altered."
-    exit 1
-fi
+# Get Linux distro and version
+source wally-distro-check.sh
 
 # Check if root
-ROOT=$( [ "${EUID:=$(id -u)}" = 0 ] && echo true)
+ROOT=$( [ "${EUID:=$(id -u)}" = 0 ] && echo true || echo false);
 
 # All tools will be installed under the $RISCV directory. By default, if run as root (with sudo) this is set to
 # /opt/riscv. Otherwise, it is set to ~/riscv. This value can be overridden with an argument passed to the script.
-if [ "$ROOT" ]; then
+if [ "$ROOT" = true ]; then
     export RISCV="${1:-/opt/riscv}"
 else
     export RISCV="${1:-$HOME/riscv}"
@@ -106,85 +65,27 @@ export PATH=$PATH:$RISCV/bin:/usr/bin
 export PKG_CONFIG_PATH=$RISCV/lib64/pkgconfig:$RISCV/lib/pkgconfig:$RISCV/share/pkgconfig:$RISCV/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH
 mkdir -p "$RISCV"
 
-echo "${OK_COLOR}${UNDERLINE}Detected information${ENDC}"
-echo "Distribution: $PRETTY_NAME"
-echo "Version: $VERSION"
 echo "Running as root: $ROOT"
 echo "Installation path: $RISCV"
 
-echo -e "${SECTION_COLOR}\n*************************************************************************"
-echo -e "*************************************************************************"
-echo -e "Installing/Updating Dependencies from Package Manager"
-echo -e "*************************************************************************"
-echo -e "*************************************************************************\n${ENDC}"
-# Installs appropriate packages for red hat or ubuntu distros, picking apt or dnf appropriately
-if [ "$FAMILY" = rhel ]; then
-    # Enable extra package repos
-    sudo dnf install -y dnf-plugins-core
-    if [ "$ID" = rhel ]; then
-        sudo subscription-manager repos --enable "codeready-builder-for-rhel-$RHEL_VERSION-$(arch)-rpms"
-        sudo dnf install -y "https://dl.fedoraproject.org/pub/epel/epel-release-latest-$RHEL_VERSION.noarch.rpm"
-    else # RHEL clone
-        if [ "$RHEL_VERSION" = 8 ]; then
-            sudo dnf config-manager -y --set-enabled powertools
-        else # Version 9
-            sudo dnf config-manager -y --set-enabled crb
-        fi
-        sudo dnf install -y epel-release
-    fi
-
-    # Update packages and install additional core tools
-    sudo dnf update -y
-    sudo dnf group install -y "Development Tools"
-
- # Packages are grouped by which tool requires them, split by line.
- # If mutltipole tools need a package, it is included in the first tool only
- # General/Wally specific, riscv-gnu-toolchain, qemu, spike, verilator, buildroot
-    sudo dnf install -y git make cmake python3.12 python3-pip curl wget ftp tar pkgconfig dialog mutt ssmtp \
-                        autoconf automake  libmpc-devel mpfr-devel gmp-devel gawk bison flex texinfo gperf libtool patchutils bc gcc gcc-c++ zlib-devel expat-devel libslirp-devel \
-                        glib2-devel libfdt-devel pixman-devel bzip2 ninja-build \
-                        dtc boost-regex boost-system \
-                        help2man perl clang ccache gperftools numactl mold \
-                        ncurses-base ncurses ncurses-libs ncurses-devel gcc-gfortran
-    # Extra packages not availale in rhel8, nice for verialtor and needed for sail respectively
-    if [ "$RHEL_VERSION" = 9 ]; then
-        sudo dnf install -y perl-doc z3
-    fi
-
-    # A newer version of gcc is required for qemu
-    sudo dnf install -y gcc-toolset-13*
-    source /opt/rh/gcc-toolset-13/enable  # activate gcc13
-elif [ "$FAMILY" = ubuntu ]; then
-    # Update and Upgrade tools (see https://itsfoss.com/apt-update-vs-upgrade/)
-    sudo apt update -y
-    sudo apt upgrade -y
-
-    # Packages are grouped by which tool requires them, split by line. 
-    # If mutltipole tools need a package, it is included in the first tool only
-    # General/Wally specific, riscv-gnu-toolchain, qemu, spike, verilator, sail, buildroot
-    sudo apt install -y git make cmake python3 python3-pip python3-venv curl wget ftp tar pkg-config dialog mutt ssmtp \
-                        autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat1-dev ninja-build libglib2.0-dev libslirp-dev \
-                        libfdt-dev libpixman-1-dev \
-                        device-tree-compiler libboost-regex-dev libboost-system-dev \
-                        help2man perl g++ clang ccache libgoogle-perftools-dev numactl perl-doc libfl2 libfl-dev zlib1g \
-                        opam z3 \
-                        ncurses-base ncurses-bin libncurses-dev gfortran
-    # Extra packages not availale in Ubuntu 20.04, nice for verialtor
-    if (( UBUNTU_VERSION >= 22 )); then
-        sudo apt install -y mold
-    fi
-    # Newer version of gcc needed for Ubuntu 20.04 for Verilator
-    if [ "$UBUNTU_VERSION" = 20 ]; then
-        sudo apt install -y gcc-10 g++-10 cpp-10
-        mkdir -p "$RISCV"/gcc-10/bin
-        for f in gcc cpp g++ gcc-ar gcc-nm gcc-ranlib gcov gcov-dump gcov-tool lto-dump; do
-            ln -vsf /usr/bin/$f-10 "$RISCV"/gcc-10/bin/$f
-        done
-        export PATH="$RISCV"/gcc-10/bin:$PATH
-    fi
+# Install/update packages if root. Otherwise, check that packages are already installed.
+if [ "$ROOT" = true ]; then
+    ./wally-package-install.sh
+else
+    ./wally-package-install.sh --check
 fi
 
-echo -e "${SUCCESS_COLOR}Packages successfully installed.${ENDC}"
+if [ "$FAMILY" = rhel ]; then
+    # A newer version of gcc is required for qemu
+    source /opt/rh/gcc-toolset-13/enable  # activate gcc13
+    # Newer version of gcc needed for Ubuntu 20.04 for Verilator
+elif [ "$UBUNTU_VERSION" = 20 ]; then
+    mkdir -p "$RISCV"/gcc-10/bin
+    for f in gcc cpp g++ gcc-ar gcc-nm gcc-ranlib gcov gcov-dump gcov-tool lto-dump; do
+        ln -vsf /usr/bin/$f-10 "$RISCV"/gcc-10/bin/$f
+    done
+    export PATH="$RISCV"/gcc-10/bin:$PATH
+fi
 
 echo -e "${SECTION_COLOR}\n*************************************************************************"
 echo -e "*************************************************************************"
