@@ -54,11 +54,14 @@ module testbench;
   `ifdef VERILATOR
       import "DPI-C" function string getenvval(input string env_name);
       string       RISCV_DIR = getenvval("RISCV"); // "/opt/riscv";
+      string       WALLY_DIR = getenvval("WALLY"); // ~/cvw typical
   `elsif VCS
       import "DPI-C" function string getenv(input string env_name);
       string       RISCV_DIR = getenv("RISCV"); // "/opt/riscv";
+      string       WALLY_DIR = getenv("WALLY"); 
   `else
       string       RISCV_DIR = "$RISCV"; // "/opt/riscv";
+      string       WALLY_DIR = "$WALLY";
   `endif
 
   `include "parameter-defs.vh"
@@ -382,7 +385,7 @@ module testbench;
       // declare memory labels that interest us, the updateProgramAddrLabelArray task will find 
       // the addr of each label and fill the array. To expand, add more elements to this array 
       // and initialize them to zero (also initilaize them to zero at the start of the next test)
-      updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
+      updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, memfilename, WALLY_DIR, ProgramAddrLabelArray);
     end
 `ifdef VERILATOR // this macro is defined when verilator is used
   // Simulator Verilator has an issue that the validate logic below slows runtime 110x if it is 
@@ -931,10 +934,15 @@ endmodule
 task automatic updateProgramAddrLabelArray;
   /* verilator lint_off WIDTHTRUNC */
   /* verilator lint_off WIDTHEXPAND */
-  input string ProgramAddrMapFile, ProgramLabelMapFile;
+  input string ProgramAddrMapFile, ProgramLabelMapFile, memfilename, WALLY_DIR;
   inout  integer ProgramAddrLabelArray [string];
   // Gets the memory location of begin_signature
   integer ProgramLabelMapFP, ProgramAddrMapFP;
+  string cmd;
+
+  // if memfile, label, or addr files are out of date or don't exist, generate them
+  cmd = {"make -f ", WALLY_DIR, "/testbench/Makefile ", memfilename, " ", ProgramAddrMapFile};
+  $system(cmd);
 
   ProgramLabelMapFP = $fopen(ProgramLabelMapFile, "r");
   ProgramAddrMapFP = $fopen(ProgramAddrMapFile, "r");
