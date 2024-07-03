@@ -67,6 +67,8 @@ module testbench;
   logic        reset_ext, reset;
   logic        ResetMem;
 
+  // JTAG driver signals
+  logic jtag_clk; // divided clock that runs jtag_driver
   logic tck;
   logic tdi;
   logic tms;
@@ -271,7 +273,7 @@ module testbench;
   logic        ResetCntRst;
   logic        CopyRAM;
 
-  string  signame, elffilename, memfilename, bootmemfilename, uartoutfilename, pathname;
+  string  signame, elffilename, memfilename, bootmemfilename, uartoutfilename, pathname, jtagmemfilename;
   integer begin_signature_addr, end_signature_addr, signature_size;
   integer uartoutfile;
 
@@ -579,10 +581,21 @@ module testbench;
     assign SDCIntr = 1'b0;
   end
 
-  // Change these if testing debug
-  assign tck = 0;
-  assign tdi = 0;
-  assign tms = 0;
+  // TODO: drive jtag clock at 1/10th core clock (variable)
+  if (P.DEBUG_SUPPORTED) begin
+    always @(posedge clk) begin
+      jtagmemfilename = "../tests/test.svf.memfile";
+      if (LoadMem) begin
+        $readmemh(jtagmemfilename, jtag.MEM);
+        $display("Read memfile %s", jtagmemfilename);
+      end
+    end
+
+    clk_divider #(2) cdiv (.clk_in(clk), .clk_out(jtag_clk), .reset(reset_ext));
+    jtag_driver jtag(.clk(jtag_clk), .reset(reset_ext), .tdi, .tms, .tck, .tdo);
+  end else begin
+    assign {tdi,tms,tck} = '0;
+  end
 
   wallypipelinedsoc #(P) dut(
     .clk, .reset_ext, .reset, .tck, .tdi, .tms, .tdo,

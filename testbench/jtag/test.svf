@@ -1,0 +1,8 @@
+// SVF commands to pull to idcode out of jtag module
+SIR 5 TDI(1); // IDCODE
+SDR 32 TDO(DEADBEEF);
+SDR 32 TDO(DEADBEAF); // JTAG_Driver should throw error if TDO value doesn't match what is scanned out
+RUNTEST 55;
+sir 8 !and multiline commands
+tdo(99);
+

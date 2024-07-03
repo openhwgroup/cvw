@@ -79,6 +79,7 @@ module tap (
       PauseIR     : State <= tms ? Exit2IR : PauseIR;
       Exit2IR     : State <= tms ? UpdateIR : ShiftIR;
       UpdateIR    : State <= tms ? SelectDR : RunTestIdle;
+      default     : State <= TLReset;
     endcase
   end
   
