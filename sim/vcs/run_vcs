@@ -1,117 +1,84 @@
-#!/bin/bash
-# VCS Compilation for WALLY
-# Divya Kohli, Rose Thompson, David Harris 2024
-# Note: VCS produces warning about unsupported Linux Version, but runs successfully
+#!/usr/bin/python3
+
+# run_vcs
+# David_Harris@hmc.edu 2 July 2024
+# Run VCS on a given file, passing appropriate flags
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
-# Color Definitions
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
 
-# Directories
-CFG="${WALLY}/config"
-SRC="${WALLY}/src"
-TB="${WALLY}/testbench"
+import argparse
+import os
+import subprocess
 
-# Set CONFIG_VARIANT from the first script argument
-CONFIG_VARIANT=${1}
-# Set TESTSUITE from the second script argument
-TESTSUITE=$2
+# run a Linux command and return the result as a string in a form that VCS can use
+def runfindcmd(cmd):
+#    print("Executing: " + str(cmd) )
+    res = subprocess.check_output(cmd, shell=True)
+    res = str(res)
+    res = res.replace("\\n", " ")  # replace newline with space
+    res = res.replace("\'", "")  # strip off quotation marks
+    res = res[1:] # strip off leading b from byte string
+    return res
 
-WKDIR="wkdir/${1}_${2}"
-COV="cov/${1}_${2}"
-LOGS="logs"
+parser = argparse.ArgumentParser()
+parser.add_argument("config", help="Configuration file")
+parser.add_argument("testsuite", help="Test suite (or none, when running a single ELF file) ")
+parser.add_argument("--elffile", "-e", help="ELF file name", default="")
+parser.add_argument("--coverage", "-c", help="Code & Functional Coverage", action="store_true")
+parser.add_argument("--fcov", "-f", help="Code & Functional Coverage", action="store_true")
+parser.add_argument("--args", "-a", help="Optional arguments passed to simulator via $value$plusargs", default="")
+parser.add_argument("--lockstep", "-l", help="Run ImperasDV lock, step, and compare.", action="store_true")
+# GUI not yet implemented
+#parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true")
+args = parser.parse_args()
+print("run_vcs Config=" + args.config + " tests=" + args.testsuite + " elffile=" + args.elffile + " lockstep=" + str(args.lockstep) + " args='" + args.args + "'")
 
-if [ ${TESTSUITE} = "buildroot" ]; then
-	shift 2
-	PLUSARGS="$*"
-fi
+cfgdir = "$WALLY/config"
+srcdir = "$WALLY/src"
+tbdir = "$WALLY/testbench"
+wkdir = "$WALLY/sim/vcs/wkdir/" + args.config + "_" + args.testsuite
+covdir = "$WALLY/sim/vcs/cov/" + args.config + "_" + args.testsuite
+logdir = "$WALLY/sim/vcs/logs"
 
-clean_logs() {
-    echo -e "${YELLOW}Cleaning up workspace...${NC}"
-    rm -rf wkdir logs cov
-}
-clean_simprofile() {
-    echo -e "${YELLOW}Cleaning up simprofile_dir...${NC}"
-    rm -rf simprofile_dir* profileReport*  
-}
+os.system("mkdir -p " + wkdir)
+os.system("mkdir -p " + covdir)
+os.system("mkdir -p " + logdir)
 
-#clean_simprofile
-#clean_logs
-# Function to create a directory if it does not exist
-create_directory() {
-    local dir=$1  # Local variable for directory name
+# Find RTL source files
+rtlsrc_cmd = "find " + srcdir + ' -name "*.sv" ! -path "' + srcdir + '/generic/mem/rom1p1r_128x64.sv" ! -path "' + srcdir + '/generic/mem/ram2p1r1wbe_128x64.sv" ! -path "' + srcdir + '/generic/mem/rom1p1r_128x32.sv" ! -path "' + srcdir + '/generic/mem/ram2p1r1wbe_2048x64.sv"'
+rtlsrc_files = runfindcmd(rtlsrc_cmd)
+tbcommon_cmd = 'find ' + tbdir+'/common -name "*.sv" ! -path "' + tbdir+'/common/wallyTracer.sv"'
+tbcommon_files = runfindcmd(tbcommon_cmd)
+RTL_FILES = tbdir+'/testbench.sv ' + str(rtlsrc_files) + ' '  + str(tbcommon_files)
 
-    if [ ! -d "$dir" ]; then
-        mkdir -p "$dir"
-        if [ $? -eq 0 ]; then
-            echo "Directory $dir created successfully."
-        else
-            echo "Failed to create directory $dir."
-            exit 1
-        fi
-    else
-        echo "Directory $dir already exists."
-    fi
-}
+# Include directories
+INCLUDE_PATH="+incdir+" + cfgdir + "/" + args.config + " +incdir+" + cfgdir + "/deriv/" + args.config + " +incdir+" + cfgdir + "/shared +incdir+$WALLY/tests +incdir+" + tbdir + " +incdir+" + srcdir
 
-# Create or verify WKDIR, COV, and LOGS directories
-create_directory "$WKDIR"
-create_directory "$COV"
-create_directory "$LOGS"
+# lockstep mode
+if (args.lockstep):
+    LOCKSTEP_OPTIONS = " +define+USE_IMPERAS_DV +incdir+$IMPERAS_HOME/ImpPublic/include/host  +incdir+$IMPERAS_HOME/ImpProprietary/include/host  $IMPERAS_HOME/ImpPublic/source/host/rvvi/*.sv $IMPERAS_HOME/ImpProprietary/source/host/idv/*.sv " + tbdir + "/common/wallyTracer.sv"
+    LOCKSTEP_SIMV = "-sv_lib $IMPERAS_HOME/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model"
+else:
+    LOCKSTEP_OPTIONS = ""
+    LOCKSTEP_SIMV = ""
 
-# Ensure the working directory exists
-if [ ! -d "$WKDIR" ]; then
-    echo -e "${YELLOW}Directory $WKDIR does not exist. Creating it now...${NC}"
-    mkdir -p "$WKDIR" && echo -e "${GREEN}Directory $WKDIR created successfully.${NC}" || {
-        echo -e "${RED}Failed to create directory $WKDIR.${NC}"
-        exit 1
-    }
-else
-    echo -e "${GREEN}Directory $WKDIR already exists.${NC}"
-fi
+# coverage mode
+if (args.coverage):
+    COV_OPTIONS = "-cm line+cond+branch+fsm+tgl -cm_log " + wkdir + "/coverage.log -cm_dir " + wkdir + "/coverage"
+else:
+    COV_OPTIONS = ""
 
-# GUI option handling
-GUI=""
-if [ "$3" = "gui" ]; then
-    GUI="-gui"
-else
-    GUI=""
-fi
-
-# Collect include directories
-INCLUDE_DIRS=$(find ${SRC} -type d | xargs -I {} echo -n "{} ")
-INCLUDE_PATH="+incdir+${CFG}/${CONFIG_VARIANT} +incdir+${CFG}/deriv/${CONFIG_VARIANT} +incdir+${CFG}/shared +incdir+../../tests +define+ +incdir+${TB} ${SRC}/cvw.sv +incdir+${SRC}"
-
-# Prepare RTL files avoiding certain paths
-RTL_FILES="$INCLUDE_DIRS $(find ${SRC} -name "*.sv" ! -path "${SRC}/generic/mem/rom1p1r_128x64.sv" ! -path "${SRC}/generic/mem/ram2p1r1wbe_128x64.sv" ! -path "${SRC}/generic/mem/rom1p1r_128x32.sv" ! -path "${SRC}/generic/mem/ram2p1r1wbe_2048x64.sv")  ${TB}/testbench.sv $(find ${TB}/common -name "*.sv" ! -path "${TB}/common/wallyTracer.sv")"
-
-# Simulation and Coverage Commands
+# Simulation commands
 OUTPUT="sim_out"
-VCS_CMD="vcs +lint=all,noGCWM,noUI,noSVA-UA,noIDTS,noNS,noULCO,noCAWM-L,noWMIA-L,noSV-PIU,noSTASKW_CO,noSTASKW_CO1,noSTASKW_RMCOF -suppress +warn -sverilog +vc -Mupdate -line -full64 -lca -ntb_opts sensitive_dyn ${INCLUDE_PATH} " # Disabled Debug flags; add them back for a GUI mode -debug_access+all+reverse  -kdb +vcs+vcdpluson 
-SIMV_CMD="./${WKDIR}/$OUTPUT +TEST=${TESTSUITE} ${PLUSARGS} -no_save" 
+VCS_CMD="vcs +lint=all,noGCWM,noUI,noSVA-UA,noIDTS,noNS,noULCO,noCAWM-L,noWMIA-L,noSV-PIU,noSTASKW_CO,noSTASKW_CO1,noSTASKW_RMCOF -suppress +warn -sverilog +vc -Mupdate -line -full64 -lca -ntb_opts sensitive_dyn " + INCLUDE_PATH # Disabled Debug flags; add them back for a GUI mode -debug_access+all+reverse  -kdb +vcs+vcdpluson 
+VCS = VCS_CMD + " -Mdir=" + wkdir + " " + srcdir + "/cvw.sv " + LOCKSTEP_OPTIONS + " " + COV_OPTIONS + " " + RTL_FILES + " -o " + wkdir + "/" + OUTPUT + " -work " + wkdir + " -Mlib " + wkdir + " -l " + logdir + "/" + args.config + "_" + args.testsuite + ".log"
+SIMV_CMD= wkdir + "/" + OUTPUT + " +TEST=" + args.testsuite + " " + args.elffile + " " + args.args + " -no_save " + LOCKSTEP_SIMV 
 
-# Clean and run simulation with VCS
-
-if [ "$3" = "--coverage" ]; then
-    echo -e "${YELLOW}#### Running VCS Simulation with Coverage ####${NC}"
-    COV_OPTIONS="-cm line+cond+branch+fsm+tgl -cm_log ${WKDIR}/coverage.log -cm_dir ${WKDIR}/COVERAGE"
-    COV_RUN="urg -dir ./${WKDIR}/COVERAGE.vdb -format text -report IndividualCovReport/${CONFIG_VARIANT}_${TESTSUITE}"
-    $VCS_CMD -Mdir=${WKDIR} $COV_OPTIONS $RTL_FILES -o ${WKDIR}/$OUTPUT -Mlib ${WKDIR} -work ${WKDIR} -l "$LOGS/${CONFIG_VARIANT}_${TESTSUITE}.log"
-    $SIMV_CMD $COV_OPTIONS # dh 6/27/24 *** are COV_OPTIONS really needed?
-    $COV_RUN
-    #cp -rf urgReport $COV
-elif [ "$3" = "--lockstep" ]; then
-    echo -e "${YELLOW}#### Running VCS Simulation with Lockstep ####${NC}"
-    LOCKSTEP_OPTIONS=" +define+USE_IMPERAS_DV +incdir+${IMPERAS_HOME}/ImpPublic/include/host  +incdir+${IMPERAS_HOME}/ImpProprietary/include/host  ${IMPERAS_HOME}/ImpPublic/source/host/rvvi/*.sv ${IMPERAS_HOME}/ImpProprietary/source/host/idv/*.sv ${TB}/common/wallyTracer.sv"
-    LOCKSTEP_SIMV="-sv_lib ${IMPERAS_HOME}/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model"
-    $VCS_CMD -Mdir=${WKDIR} $LOCKSTEP_OPTIONS $RTL_FILES -o ${WKDIR}/$OUTPUT -Mlib ${WKDIR} -work ${WKDIR} -l "$LOGS/${CONFIG_VARIANT}_${TESTSUITE}.log"
-    $SIMV_CMD $LOCKSTEP_SIMV
-else
-    echo -e "${YELLOW}#### Running VCS Simulation ####${NC}"
-    $VCS_CMD -Mdir=${WKDIR} $RTL_FILES -o ${WKDIR}/$OUTPUT -work ${WKDIR} -Mlib ${WKDIR} -l "$LOGS/${CONFIG_VARIANT}_${TESTSUITE}.log"
-    $SIMV_CMD 
-fi
+# Run simulation
+print("Executing: " + str(VCS) )
+subprocess.run(VCS, shell=True)
+subprocess.run(SIMV_CMD, shell=True)
+if (args.coverage):
+    COV_RUN = "urg -dir " + wkdir + "/coverage.vdb -format text -report IndividualCovReport/" + args.config + "_" + args.testsuite
+    subprocess.run(COV_RUN, shell=True)
 
