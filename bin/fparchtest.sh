@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 #
 # fparchtest.sh
 # David_Harris@hmc.edu 26 December 2023

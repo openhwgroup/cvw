@@ -1,4 +1,4 @@
-#!/bin/perl -W
+#!/usr/bin/env perl -w
 
 ###########################################
 ## derivgen.pl
