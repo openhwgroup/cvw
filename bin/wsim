@@ -118,6 +118,6 @@ elif (args.sim == "vcs"):
         vcsargs = " --args " + args.args
     if (ElfFile != ""):
         ElfFile = " --elffile " + ElfFile
-    cmd = cd + "; ./run_vcs " + args.config + " " + args.testsuite + vcsargs + ElfFile + " " + flags
+    cmd = cd + "; " + prefix + " ./run_vcs " + args.config + " " + args.testsuite + vcsargs + ElfFile + " " + flags
     print(cmd)
     os.system(cmd)
