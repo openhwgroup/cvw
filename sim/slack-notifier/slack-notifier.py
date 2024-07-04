@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 import os,sys,subprocess
 from datetime import datetime, timezone, timedelta
 

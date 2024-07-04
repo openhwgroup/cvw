@@ -1,4 +1,4 @@
-#! /usr/bin/python3
+#!/usr/bin/env python3
 
 # author: Alessandro Maiuolo, Kevin Kim
 # contact: amaiuolo@g.hmc.edu, kekim@hmc.edu

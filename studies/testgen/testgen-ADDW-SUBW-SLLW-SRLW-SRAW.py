@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 ##################################
 # testgen-ADDW-SUBW-SLLW-SRLW-SRAW.py
 #
