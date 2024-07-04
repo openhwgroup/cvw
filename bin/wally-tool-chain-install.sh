@@ -36,6 +36,18 @@ NUM_THREADS=8  # for >= 32GiB
 #NUM_THREADS=16  # for >= 64GiB
 
 set -e # break on error
+STATUS="setup" # keep track of what part of the installation is running for error messages
+
+# Error handler
+error() {
+    echo -e "${FAIL_COLOR}Error: $STATUS installation failed$"
+    echo -e "Error on line ${BASH_LINENO[0]} with command $BASH_COMMAND${ENDC}"
+    exit 1
+}
+
+trap error ERR # run error function on error
+
+# Get the directory of the script to find other scripts
 dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Colors
@@ -70,6 +82,7 @@ echo "Running as root: $ROOT"
 echo "Installation path: $RISCV"
 
 # Install/update packages if root. Otherwise, check that packages are already installed.
+STATUS="system packages"
 if [ "$ROOT" = true ]; then
     source "${dir}"/wally-package-install.sh
 else
@@ -95,6 +108,7 @@ echo -e "***********************************************************************
 echo -e "*************************************************************************\n${ENDC}"
 # Create python virtual environment so the python command targets our desired version of python
 # and installed packages are isolated from the rest of the system.
+STATUS="python virtual environment"
 cd "$RISCV"
 if [ ! -e "$RISCV"/riscv-python/bin/activate ]; then
     # If python3.12 is avaiable, use it. Otherise, use whatever version of python3 is installed.
@@ -110,6 +124,7 @@ fi
 source "$RISCV"/riscv-python/bin/activate # activate python virtual environment
 
 # Install python packages
+STATUS="python packages"
 pip install -U pip
 pip install -U sphinx sphinx_rtd_theme matplotlib scipy scikit-learn adjustText lief markdown pyyaml testresources riscv_config
 pip install -U riscv_isac # to generate new tests, such as quads with fp_dataset.py
@@ -125,6 +140,7 @@ echo -e "${SUCCESS_COLOR}Python environment successfully configured.${ENDC}"
 if [ "$RHEL_VERSION" = 8 ] || [ "$UBUNTU_VERSION" = 20 ]; then
     # Newer versin of glib required for Qemu.
     # Anything newer than this won't build on red hat 8
+    STATUS="glib"
     if [ ! -e "$RISCV"/include/glib-2.0 ]; then
         echo -e "${SECTION_COLOR}\n*************************************************************************"
         echo -e "*************************************************************************"
@@ -149,6 +165,7 @@ fi
 
 # Newer version of gmp needed for sail-riscv model
 if [ "$RHEL_VERSION" = 8 ]; then
+    STATUS="gmp"
     if [ ! -e "$RISCV"/include/gmp.h ]; then
         echo -e "${SECTION_COLOR}\n*************************************************************************"
         echo -e "*************************************************************************"
@@ -178,6 +195,7 @@ echo -e "***********************************************************************
 echo -e "Installing/Updating RISC-V GNU Toolchain"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n${ENDC}"
+STATUS="RISC-V GNU Toolchain"
 cd "$RISCV"
 if [[ ((! -e riscv-gnu-toolchain) && ($(git clone https://github.com/riscv/riscv-gnu-toolchain) || true)) || ($(cd riscv-gnu-toolchain; git fetch; git rev-parse HEAD) != $(cd riscv-gnu-toolchain; git rev-parse origin/master)) || (! -e $RISCV/riscv-gnu-toolchain/stamps/build-gcc-newlib-stage2) ]]; then
     cd riscv-gnu-toolchain
@@ -202,6 +220,7 @@ echo -e "***********************************************************************
 echo -e "Installing/Updating elf2hex"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n${ENDC}"
+STATUS="elf2hex"
 cd "$RISCV"
 export PATH=$RISCV/bin:$PATH
 if [[ ((! -e elf2hex) && ($(git clone https://github.com/sifive/elf2hex.git) || true)) || ($(cd elf2hex; git fetch; git rev-parse HEAD) != $(cd elf2hex; git rev-parse origin/master)) || (! -e $RISCV/bin/riscv64-unknown-elf-elf2bin) ]]; then
@@ -222,6 +241,7 @@ echo -e "***********************************************************************
 echo -e "Installing/Updating QEMU"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n${ENDC}"
+STATUS="QEMU"
 cd "$RISCV"
 if [[ ((! -e qemu) && ($(git clone --recurse-submodules -j ${NUM_THREADS} https://github.com/qemu/qemu) || true)) || ($(cd qemu; git fetch; git rev-parse HEAD) != $(cd qemu; git rev-parse origin/master)) || (! -e $RISCV/include/qemu-plugin.h) ]]; then
     cd qemu
@@ -242,6 +262,7 @@ echo -e "***********************************************************************
 echo -e "Installing/Updating SPIKE"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n${ENDC}"
+STATUS="SPIKE"
 cd "$RISCV"
 if [[ ((! -e riscv-isa-sim) && ($(git clone https://github.com/riscv-software-src/riscv-isa-sim) || true)) || ($(cd riscv-isa-sim; git fetch; git rev-parse HEAD) != $(cd riscv-isa-sim; git rev-parse origin/master)) || (! -e $RISCV/lib/pkgconfig/riscv-riscv.pc) ]]; then
     cd riscv-isa-sim
@@ -263,6 +284,7 @@ echo -e "***********************************************************************
 echo -e "Installing/Updating Verilator"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n${ENDC}"
+STATUS="Verilator"
 cd "$RISCV"
 if [[ ((! -e verilator) && ($(git clone https://github.com/verilator/verilator) || true)) || ($(cd verilator; git fetch; git rev-parse HEAD) != $(cd verilator; git rev-parse origin/master)) || (! -e $RISCV/share/pkgconfig/verilator.pc) ]]; then
     # unsetenv VERILATOR_ROOT  # For csh; ignore error if on bash
@@ -292,6 +314,7 @@ if [ "$FAMILY" = rhel ]; then
     echo -e "Installing/Updating Opam"
     echo -e "*************************************************************************"
     echo -e "*************************************************************************\n${ENDC}"
+    STATUS="Opam"
     mkdir -p opam
     cd opam
     wget https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh
@@ -306,6 +329,7 @@ echo -e "***********************************************************************
 echo -e "Installing/Updating Sail Compiler"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n${ENDC}"
+STATUS="Sail Compiler"
 cd "$RISCV"
 opam init -y --disable-sandboxing
 opam update -y
@@ -319,6 +343,7 @@ echo -e "***********************************************************************
 echo -e "Installing/Updating RISC-V Sail Model"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n${ENDC}"
+STATUS="RISC-V Sail Model"
 if [[ ((! -e sail-riscv) && ($(git clone https://github.com/riscv/sail-riscv.git) || true)) || ($(cd sail-riscv; git fetch; git rev-parse HEAD) != $(cd sail-riscv; git rev-parse origin/master)) || (! -e $RISCV/bin/riscv_sim_RV32) ]]; then
     eval $(opam config env)
     cd sail-riscv
@@ -340,6 +365,7 @@ echo -e "***********************************************************************
 echo -e "Installing/Updating RISCOF"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n${ENDC}"
+STATUS="RISCOF"
 pip3 install git+https://github.com/riscv/riscof.git
 
 # Download OSU Skywater 130 cell library
@@ -348,6 +374,7 @@ echo -e "***********************************************************************
 echo -e "Installing/Updating OSU Skywater 130 cell library"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n${ENDC}"
+STATUS="OSU Skywater 130 cell library"
 mkdir -p "$RISCV"/cad/lib
 cd "$RISCV"/cad/lib
 if [[ ((! -e sky130_osu_sc_t12) && ($(git clone https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12) || true)) || ($(cd sky130_osu_sc_t12; git fetch; git rev-parse HEAD) != $(cd sky130_osu_sc_t12; git rev-parse origin/main)) ]]; then
@@ -364,6 +391,7 @@ echo -e "***********************************************************************
 echo -e "Downloading Site Setup Script"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n${ENDC}"
+STATUS="site-setup scripts"
 cd "$RISCV"
 if [ ! -e "${RISCV}"/site-setup.sh ]; then
     wget https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.sh
