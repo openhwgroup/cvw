@@ -118,10 +118,9 @@ module testbench;
       TEST = "none";
     if (!$value$plusargs("ElfFile=%s", ElfFile))
       ElfFile = "none";
-    else begin
-    end
     if (!$value$plusargs("INSTR_LIMIT=%d", INSTR_LIMIT))
       INSTR_LIMIT = 0;
+    //$display("TEST = %s ElfFile = %s", TEST, ElfFile);
     
     // pick tests based on modes supported
     //tests = '{};
@@ -613,7 +612,7 @@ module testbench;
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // watch for problems such as lockup, reading unitialized memory, bad configs
-  watchdog #(P.XLEN, 1000000) watchdog(.clk, .reset);  // check if PCW is stuck
+  watchdog #(P.XLEN, 1000000) watchdog(.clk, .reset, .TEST);  // check if PCW is stuck
   ramxdetector #(P.XLEN, P.LLEN) ramxdetector(clk, dut.core.lsu.MemRWM[1], dut.core.lsu.LSULoadAccessFaultM, dut.core.lsu.ReadDataM, 
                                       dut.core.ifu.PCM, InstrM, dut.core.lsu.IEUAdrM, InstrMName);
   riscvassertions #(P) riscvassertions();  // check assertions for a legal configuration

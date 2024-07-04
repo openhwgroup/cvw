@@ -116,7 +116,7 @@ module ebu import cvw::*;  #(parameter cvw_t P) (
   assign HBURST = LSUSelect ? LSUHBURSTOut : IFUSelect ? IFUHBURSTOut : '0; // If doing memory accesses, use LSUburst, else use Instruction burst.
   assign HTRANS = LSUSelect ? LSUHTRANSOut : IFUSelect ? IFUHTRANSOut: '0; // SEQ if not first read or write, NONSEQ if first read or write, IDLE otherwise
   assign HWRITE = LSUSelect ? LSUHWRITEOut : '0;
-  assign HPROT = 4'b0011; // not used; see Section 3.7
+  assign HPROT = {3'b001, LSUSelect}; // treat as privileged access of either Opcode fetch or Data access
   assign HMASTLOCK = 1'b0; // no locking supported
 
   // data phase muxing.  This would be a mux if IFU wrote data.
