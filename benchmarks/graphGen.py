@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Daniel Torres 2022
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 

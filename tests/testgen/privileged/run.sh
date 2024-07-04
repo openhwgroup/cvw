@@ -12,7 +12,7 @@ printf "\n\n#####\nStarting tests for $1\n#####\n\n"
 if [[ "$2" != "-simonly" ]]
 then
 	cd $WALLY/testgen/privileged
-	python3 "testgen-$1.py"
+	$RISCV/riscv-python/bin/python3 "testgen-$1.py"
 	printf "\n\n#####\nRan testgen-$1.py Making...\n#####\n\n\n"
 
 	if [[ "$2" == "-c" ]]
