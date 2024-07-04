@@ -692,7 +692,7 @@ def main():
 
     # Define tests that we can run
     if (args.tests == "nightly"):
-        test_list = [["python", "regression-wally", "--nightly"]]
+        test_list = [["python", "regression-wally", "--nightly --buildroot"]]
     elif (args.tests == "test"):
         test_list = [["python", "regression-wally", ""]]
     elif (args.tests == "test_lint"):
