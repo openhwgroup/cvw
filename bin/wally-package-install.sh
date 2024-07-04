@@ -34,7 +34,7 @@ BOLD='\033[1m'
 SECTION_COLOR='\033[95m'$BOLD
 SUCCESS_COLOR='\033[92m'
 FAIL_COLOR='\033[91m'
-ENDC='\033[0m'
+ENDC='\033[0m' # Reset to default color
 
 # If run standalone, determine distro information. Otherwise, use info from main install script
 if [ -z "$FAMILY" ]; then
@@ -42,11 +42,12 @@ if [ -z "$FAMILY" ]; then
     source "${dir}"/wally-distro-check.sh
 fi
 
-# Generate list of packages to install, determined based on distro
+
+# Generate list of packages to install and package manager commands based on distro
+# Packages are grouped by which tool requires them. If multiple tools need a package, it is included in the first tool only
 if [ "$FAMILY" = rhel ]; then
     PACKAGE_MANAGER="dnf"
     UPDATE_COMMAND="sudo dnf update -y"
-    # Packages are grouped by which tool requires them. If multiple tools need a package, it is included in the first tool only
     GENERAL_PACKAGES="git make cmake python3.12 python3-pip curl wget ftp tar pkgconf-pkg-config dialog mutt ssmtp"
     GNU_PACKAGES="autoconf automake  libmpc-devel mpfr-devel gmp-devel gawk bison flex texinfo gperf libtool patchutils bc gcc gcc-c++ zlib-devel expat-devel libslirp-devel"
     QEMU_PACKAGES="glib2-devel libfdt-devel pixman-devel bzip2 ninja-build"
@@ -63,7 +64,6 @@ if [ "$FAMILY" = rhel ]; then
 elif [ "$FAMILY" = ubuntu ]; then
     PACKAGE_MANAGER=apt
     UPDATE_COMMAND="sudo apt update -y && sudo apt upgrade -y"
-    # Packages are grouped by which tool requires them. If multiple tools need a package, it is included in the first tool only
     GENERAL_PACKAGES="git make cmake python3 python3-pip python3-venv curl wget ftp tar pkg-config dialog mutt ssmtp"
     GNU_PACKAGES="autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat1-dev ninja-build libglib2.0-dev libslirp-dev"
     QEMU_PACKAGES="libfdt-dev libpixman-1-dev"
@@ -81,7 +81,8 @@ elif [ "$FAMILY" = ubuntu ]; then
     fi
 fi
 
-# Check packages are installed or install/update them depending on passed flag.
+
+# Check if required packages are installed or install/update them depending on passed flag.
 if [ "${1}" = "--check" ]; then
     echo -e "${SECTION_COLOR}\n*************************************************************************"
     echo -e "*************************************************************************"
@@ -107,7 +108,7 @@ else
     echo -e "Installing/Updating Dependencies from Package Manager"
     echo -e "*************************************************************************"
     echo -e "*************************************************************************\n${ENDC}"
-    # Extra red hat commands to set up package manager with extra repos
+    # Enable extra repos necessary for rhel
     if [ "$FAMILY" = rhel ]; then
         sudo dnf install -y dnf-plugins-core
         sudo dnf group install -y "Development Tools"
@@ -126,7 +127,7 @@ else
 
     # Update and Upgrade tools
     eval "$UPDATE_COMMAND"
-    # Install packages listed above
+    # Install packages listed above using appropriate package manager
     sudo "$PACKAGE_MANAGER" install -y $GENERAL_PACKAGES $GNU_PACKAGES $QEMU_PACKAGES $SPIKE_PACKAGES $VERILATOR_PACKAGES $SAIL_PACKAGES $BUILDROOT_PACKAGES $OTHER_PACKAGES
     echo -e "${SUCCESS_COLOR}Packages successfully installed.${ENDC}"
 fi
