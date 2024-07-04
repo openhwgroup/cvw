@@ -1,6 +1,6 @@
 # core-v-wally
 
-Wally is a 5-stage pipelined processor configurable to support all the standard RISC-V options, incluidng RV32/64, A, C, F, D, Q, M, and Zb* extensions, virtual memory, PMP, and the various privileged modes and CSRs. It provides optional caches, branch prediction, and standard RISC-V peripherals (CLINT, PLIC, UART, GPIO).   Wally is written in SystemVerilog.  It passes the RISC-V Arch Tests and boots Linux on an FPGA.  Configurations range from a minimal RV32E core to a fully featured RV64GC application processor.
+Wally is a 5-stage pipelined processor configurable to support all the standard RISC-V options, including RV32/64, A, B, C, D, F, M, Q, and Zk* extensions, virtual memory, PMP, and the various privileged modes and CSRs. It provides optional caches, branch prediction, and standard RISC-V peripherals (CLINT, PLIC, UART, GPIO).   Wally is written in SystemVerilog.  It passes the [RISC-V Arch Tests](https://github.com/riscv-non-isa/riscv-arch-test) and boots Linux on an FPGA.  Configurations range from a minimal RV32E core to a fully featured RV64GC application processor.
 
 ![Wally block diagram](wallyriscvTopAll.png)
 
@@ -29,49 +29,63 @@ Then fork and clone the repo, source setup, make the tests and run regression
 	If you don't already have a Github account, create one
 	In a web browser, visit https://github.com/openhwgroup/cvw
 	In the upper right part of the screen, click on Fork
-	Create a fork, choosing the owner as your github account 
+	Create a fork, choosing the owner as your github account
 	and the repository as cvw.
-	
+
 	On the Linux computer where you will be working, log in
 
-Clone your fork of the repo and run the setup script. Change <yourgithubid> to your github id. 
+Clone your fork of the repo. Change `<yourgithubid>` to your github id.
 
 	$ git clone --recurse-submodules https://github.com/<yourgithubid>/cvw
 	$ cd cvw
 	$ git remote add upstream https://github.com/openhwgroup/cvw
+
+If you are installing on a new system without any tools installed, please jump to the next section, Toolchain Installation then come back here.
+
+Run the setup script to update your `PATH` and activate the python virtual environment.
+
 	$ source ./setup.sh
 
-If you are installing on a new system without any tools installed please jump to the next section, Toolchain Installation then come back here.
-
-Add the following lines to your .bashrc or .bash_profile to run the setup script each time you log in.
+Add the following lines to your `.bashrc` or `.bash_profile` to run the setup script each time you log in.
 
 	if [ -f ~/cvw/setup.sh ]; then
 		source ~/cvw/setup.sh
 	fi
 
-If the tools are not yet installed on your server, follow the Toolchain Installation instructions in the section below.
 
-Build the tests and run a regression simulation with Questa to prove everything is installed.  Building tests will take a while.
+Build the tests and run a regression simulation to prove everything is installed.  Building tests will take a while.
 
 	$ make
-	$ regression-wally       (depends on having Questa installed)
+	$ regression-wally
 
-# Toolchain Installation (Sys Admin)
+# Toolchain Installation and Configuration (Sys Admin)
 
-This section describes the open source toolchain installation.  The
-current version of the toolchain has been tested on Ubuntu and partly on Red
-Hat/Rocky 8 Linux.  Ubuntu works more smoothly and is recommended
-unless you have a compelling need for RedHat.  However, Ubuntu 22.04LTS
-is incompatible with Synopsys Design Compiler.
+This section describes the open source toolchain installation. The current version of the toolchain has been tested on Ubuntu (versions 20.04, 22.04, and 24.04) and on Red Hat/Rocky/AlmaLinux (versions 8 and 9).
+NOTE: Ubuntu 22.04LTS is incompatible with Synopsys Design Compiler.
 
-Ubuntu users can install the tools by running
+### Installation
 
-	$ sudo $WALLY/bin/wally-tool-chain-install.sh
+The tools can be installed by running
 
-The default installation directory is /opt/riscv defined by the environment variable RISCV. You must copy and edit ~/cvw/site-setup.sh to $RISCV/site-setup.sh.
+	$ $WALLY/bin/wally-tool-chain-install.sh
 
-~/cvw/setup.sh sources $RISCV/site-setup.sh.
-This allows for customization of the site specific information such as commerical licenses and PATH variables.
+If this script is run as root or using `sudo`, it will also install all of the prerequisite packages using the system package manager. The default installation directory when run in this manner is `/opt/riscv`.
+
+If a user-level installation is desired, the script can instead be run by any user without `sudo` and the installation directory will be `~/riscv`. In this case, the prerequisite packages must first be installed by running
+
+	$ sudo $WALLY/bin/wally-package-install.sh
+
+In either case, the installation directory can be overridden by passing the desired directory as an argument to the installation script. For example,
+
+	$ sudo $WALLY/bin/wally-tool-chain-install.sh /home/riscv
+
+See wally-tool-chain-install.sh for a detailed description of each component,
+or to issue the commands one at a time to install on the command line.
+
+### Configuration
+`$WALLY/setup.sh` sources `$RISCV/site-setup.sh`. If the toolchain was installed in either of the default locations (`/opt/riscv` or `~/riscv`), `$RISCV` will automatically be set to the correct path when `setup.sh` is run. If a custom installation directory was used, then `$WALLY/setup.sh` must be modified to set the correct path.
+
+`$RISCV/site-setup.sh` allows for customization of the site specific information such as commercial licenses and PATH variables. It is automatically copied into your `$RISCV` folder when the installation script is run.
 
 Change the following lines to point to the path and license server for your Siemens Questa and Synopsys Design Compiler installation and license server.  If you only have Questa, you can still simulate but cannot run logic synthesis.  If Questa or Design Compiler are already setup on this system then don't set these variables.
 
@@ -81,24 +95,22 @@ Change the following lines to point to the path and license server for your Siem
 	export SNPSPATH=..                  # Change this for your path to Design Compiler
 
 
-See wally-tool-chain-install.sh for a detailed description of each component,
-or to issue the commands one at a time to install on the command line.
 ## Installing EDA Tools
 
 Electronic Design Automation (EDA) tools are vital to implementations of System on Chip architectures as well as validating different designs.   Open-source and commercial tools exist for multiple strategies and although the one can spend a lifetime using combinations of different tools, only a small subset of tools is utilized for this text.  The tools are chosen because of their ease in access as well as their repeatability for accomplishing many of the tasks utilized to design Wally.  It is anticipated that additional tools may be documented later after this is text is published to improve use and access.
 
-Siemens Quest is the primary tool utilized for simulating and validating Wally.    For logic synthesis, you will need Synopsys Design Compiler.  Questa and Design Compiler are commercial tools that require an educational or commercial license.  
+Siemens Questa is the primary tool utilized for simulating and validating Wally.    For logic synthesis, you will need Synopsys Design Compiler.  Questa and Design Compiler are commercial tools that require an educational or commercial license.
 
-Note: Some EDA tools utilize LM_LICENSE_FILE for their environmental variable to point to their license server.  Some operating systems may also utilize MGLS_LICENSE_FILE instead, therefore, it is important to read the user manual on the preferred environmental variable required to point to a user’s license file.  Although there are different mechanisms to allow licenses to work, many companies commonly utilize the FlexLM (i.e., Flex-enabled) license server manager that runs off a node locked license.
+Note: Some EDA tools utilize `LM_LICENSE_FILE` for their environmental variable to point to their license server.  Some operating systems may also utilize `MGLS_LICENSE_FILE` instead, therefore, it is important to read the user manual on the preferred environmental variable required to point to a user’s license file.  Although there are different mechanisms to allow licenses to work, many companies commonly utilize the FlexLM (i.e., Flex-enabled) license server manager that runs off a node locked license.
 
-Although most EDA tools are Linux-friendly, they tend to have issues when not installed on recommended OS flavors.  Both Red Hat Enterprise Linux and SUSE Linux products typically tend to be recommended for installing commercial-based EDA tools and are recommended for utilizing complex simulation and architecture exploration.  Questa can also be installed on Microsoft Windows as well as Mac OS with a Virtual Machine such as Parallels.  
+Although most EDA tools are Linux-friendly, they tend to have issues when not installed on recommended OS flavors.  Both Red Hat Enterprise Linux and SUSE Linux products typically tend to be recommended for installing commercial-based EDA tools and are recommended for utilizing complex simulation and architecture exploration.  Questa can also be installed on Microsoft Windows as well as Mac OS with a Virtual Machine such as Parallels.
 
-Siemens Questa
+#### Siemens Questa
 
-Siemens Questa simulates behavioral, RTL and gate-level HDL.  To install Siemens Questa first go to a web browser and navigate to 
-https://eda.sw.siemens.com/en-US/ic/questa/simulation/advanced-simulator/.  Click Sign In and log in with your credentials and the product can easily be downloaded and installed.  Some  Windows-based installations also require gcc libraries that are typically provided as a compressed zip download through Siemens.  
+Siemens Questa simulates behavioral, RTL and gate-level HDL.  To install Siemens Questa first go to a web browser and navigate to
+https://eda.sw.siemens.com/en-US/ic/questa/simulation/advanced-simulator/.  Click Sign In and log in with your credentials and the product can easily be downloaded and installed.  Some  Windows-based installations also require gcc libraries that are typically provided as a compressed zip download through Siemens.
 
-Synopsys Design Compiler (DC)
+#### Synopsys Design Compiler (DC)
 
 Many commercial synthesis and place and route tools require a common installer.  These installers are provided by the EDA vendor and Synopsys has one called Synopsys Installer.  To use Synopsys Installer, you will need to acquire a license through Synopsys that is typically Called Synopsys Common Licensing (SCL).  Both the Synopsys Installer, license key file, and Design Compiler can all be downloaded through Synopsys Solvnet.  First open a web browser, log into Synsopsy Solvnet, and download the installer and Design Compiler installation files.  Then, install the Installer
 
@@ -110,7 +122,7 @@ Select the latest version (currently 5.4).  Click Download Here, agree,
 Click on SynopsysInstaller_v5.4.run
 Return to downloads and also get Design Compiler (synthesis) latest version, and any others you want.
 	Click on all parts and the .spf file, then click Download Files near the top
-move the SynopsysIntaller into /cad/synopsys/Installer_5.4 with 755 permission for cad, 
+move the SynopsysInstaller into /cad/synopsys/Installer_5.4 with 755 permission for cad,
 move other files into /cad/synopsys/downloads and work as user cad from here on
 
 	$ cd /cad/synopsys/installer_5.4
@@ -121,17 +133,17 @@ move other files into /cad/synopsys/downloads and work as user cad from here on
 	When prompted, enter your site ID
 	Follow prompts
 
-Installer can be utilized in graphical or text-based modes.  It is far easier to use the text-based installation tool.  To install DC, navigate to the location where your downloaded DC files are and type installer.  You should be prompted with questions related to where you wish to have your files installed.  
+Installer can be utilized in graphical or text-based modes.  It is far easier to use the text-based installation tool.  To install DC, navigate to the location where your downloaded DC files are and type installer.  You should be prompted with questions related to where you wish to have your files installed.
 
 The Synopsys Installer automatically installs all downloaded product files into a single top-level target directory. You do not need to specify the installation directory for each product. For example, if you specify /import/programs/synopsys as the target directory, your installation directory structure might look like this after installation:
 
 	/import/programs/synopsys/syn/S-2021.06-SP1
 
-Note: Although most parts of Wally, including the software used in this chapter and Questa simulation, will work on most modern Linux platforms, as of 2022, the Synopsys CAD tools for SoC design are only supported on RedHat Enterprise Linux 7.4 or 8 or SUSE Linux Enterprise Server (SLES) 12 or 15. Moreover, the RISC-V formal specification (sail-riscv) does not build gracefully on RHEL7. 
+Note: Although most parts of Wally, including the Questa simulator, will work on most modern Linux platforms, as of 2022, the Synopsys CAD tools for SoC design are only supported on RedHat Enterprise Linux 7.4 or 8 or SUSE Linux Enterprise Server (SLES) 12 or 15. Moreover, the RISC-V formal specification (sail-riscv) does not build gracefully on RHEL7.
 
-The Verilog simulation has been tested with Siemens Questa/ModelSim. This package is available to universities worldwide as part of the Design Verification Bundle through the Siemens Academic Partner Program members for $990/year. 
+The Verilog simulation has been tested with Siemens Questa/ModelSim. This package is available to universities worldwide as part of the Design Verification Bundle through the Siemens Academic Partner Program members for $990/year.
 
-If you want to implement your own version of the chip, your tool and license complexity rises significantly. Logic synthesis uses Synopsys Design Compiler. Placement and routing uses Cadence Innovus. Both Synopsys and Cadence offer their tools at a steep discount to their university program members, but the cost is still several thousand dollars per year. Most research universities with integrated circuit design programs have Siemens, Synopsys, and Cadence licenses. You also need a process design kit (PDK) for a specific integrated circuit technology and its libraries. The open-source Google Skywater 130 nm PDK is sufficient to synthesize the core but lacks memories. Google presently funds some fabrication runs for universities. IMEC and Muse Semiconductor offers full access to multiproject wafer fabrication on the TSMC 28 nm process including logic, I/O, and memory libraries; this involves three non-disclosure agreements. Fabrication costs on the order of $10,000 for a batch of 1 mm2 chips. 
+If you want to implement your own version of the chip, your tool and license complexity rises significantly. Logic synthesis uses Synopsys Design Compiler. Placement and routing uses Cadence Innovus. Both Synopsys and Cadence offer their tools at a steep discount to their university program members, but the cost is still several thousand dollars per year. Most research universities with integrated circuit design programs have Siemens, Synopsys, and Cadence licenses. You also need a process design kit (PDK) for a specific integrated circuit technology and its libraries. The open-source Google Skywater 130 nm PDK is sufficient to synthesize the core but lacks memories. Google presently funds some fabrication runs for universities. IMEC and Muse Semiconductor offers full access to multiproject wafer fabrication on the TSMC 28 nm process including logic, I/O, and memory libraries; this involves three non-disclosure agreements. Fabrication costs on the order of $10,000 for a batch of 1 mm2 chips.
 
 Startups can expect to spend more than $1 million on CAD tools to get a chip to market. Commercial CAD tools are not realistically available to individuals without a university or company connection.
 
@@ -183,7 +195,7 @@ Run lockstep against ImperasDV with a single elf file.  Compute coverage.
 
 	wsim rv64gc ../../tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/ref/ref.elf --lockstep --coverage
 
-Run lockstep against ImperasDV with directory file.  
+Run lockstep against ImperasDV with directory file.
 
 	wsim rv64gc ../../tests/riscof/work/riscv-arch-test/rv64i_m/I/src/ --lockstep
 
