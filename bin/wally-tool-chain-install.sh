@@ -223,9 +223,9 @@ echo -e "Installing/Updating QEMU"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n${ENDC}"
 cd "$RISCV"
-if [[ ((! -e qemu) && ($(git clone --recurse-submodules https://github.com/qemu/qemu) || true)) || ($(cd qemu; git fetch; git rev-parse HEAD) != $(cd qemu; git rev-parse origin/master)) || (! -e $RISCV/include/qemu-plugin.h) ]]; then
+if [[ ((! -e qemu) && ($(git clone --recurse-submodules -j ${NUM_THREADS} https://github.com/qemu/qemu) || true)) || ($(cd qemu; git fetch; git rev-parse HEAD) != $(cd qemu; git rev-parse origin/master)) || (! -e $RISCV/include/qemu-plugin.h) ]]; then
     cd qemu
-    git reset --hard && git clean -f && git checkout master && git pull --recurse-submodules
+    git reset --hard && git clean -f && git checkout master && git pull --recurse-submodules -j ${NUM_THREADS}
     ./configure --target-list=riscv64-softmmu --prefix="$RISCV"
     make -j ${NUM_THREADS}
     make install
