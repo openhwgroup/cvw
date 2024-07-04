@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 %.elf.memfile: %.elf
-	riscv64-unknown-elf-elf2hex --bit-width 64 --input $< --output $@
+	riscv64-unknown-elf-elf2hex  --bit-width $(if $(findstring rv32,$*),32,64) --input $< --output $@
 
 %.elf.objdump.addr: %.elf.objdump
 	extractFunctionRadix.sh $<

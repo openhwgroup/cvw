@@ -941,7 +941,7 @@ task automatic updateProgramAddrLabelArray;
   string cmd;
 
   // if memfile, label, or addr files are out of date or don't exist, generate them
-  cmd = {"make -f ", WALLY_DIR, "/testbench/Makefile ", memfilename, " ", ProgramAddrMapFile};
+  cmd = {"make -s -f ", WALLY_DIR, "/testbench/Makefile ", memfilename, " ", ProgramAddrMapFile};
   $system(cmd);
 
   ProgramLabelMapFP = $fopen(ProgramLabelMapFile, "r");
