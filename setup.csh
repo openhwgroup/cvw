@@ -18,7 +18,7 @@ else if ( -e ~/riscv ) then
 else
     # set the $RISCV directory here and remove the subsequent two lines
     # setenv RISCV
-    echo "\$RISCV directory not found. Checked /opt/riscv and ~/riscv. Edit setup.sh to point to your custom \$RISCV directory."
+    echo "\$RISCV directory not found. Checked /opt/riscv and ~/riscv. Edit setup.csh to point to your custom \$RISCV directory."
     exit 1;
 endif
 echo \$RISCV set to "${RISCV}"
