@@ -491,7 +491,12 @@ module testbench;
             $display("Error: Could not open file %s", memfilename);
             $finish;
           end
-          readResult = $fread(dut.uncoregen.uncore.bootrom.bootrom.memory.ROM, memFile);
+          if (P.BOOTROM_SUPPORTED)
+            readResult = $fread(dut.uncoregen.uncore.bootrom.bootrom.memory.ROM, memFile);
+          else begin
+            $display("Buildroot test requires BOOTROM_SUPPORTED");
+            $finish;
+          end
           $fclose(memFile);
           memFile = $fopen(memfilename, "rb");
           if (memFile == 0) begin
