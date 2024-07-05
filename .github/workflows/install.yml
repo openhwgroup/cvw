@@ -10,5 +10,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: install
-        run: sudo ./bin/wally-tool-chain-install
+        run: |
+          pwd
+          cd cvw
+          sudo ./bin/wally-tool-chain-install
     
