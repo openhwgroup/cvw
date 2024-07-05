@@ -9,6 +9,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - run: sudo apt update
+      - run: sudo apt upgrade -y
+      - run: sudo apt install -y libunwind-dev
       - name: install
         run: |
           pwd
