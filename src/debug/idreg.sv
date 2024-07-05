@@ -38,11 +38,9 @@ module idreg #(parameter DEVICE_ID) (
 
     genvar i;
     for (i = 0; i < 32; i = i + 1) begin
-        always @(posedge clockDR) begin
-            if (i > 0)
-                ShiftReg[i] <= captureDR ? DEVICE_ID[i] : ShiftReg[i+1];
-            else
-                ShiftReg[0] <= captureDR ? 1'b1 : ShiftReg[i+1];
-        end
+        if (i == 0)
+            flop #(1) idregi (.clk(clockDR), .d(captureDR ? 1'b1 : ShiftReg[i+1]), .q(ShiftReg[i]));
+        else
+            flop #(1) idregi (.clk(clockDR), .d(captureDR ? DEVICE_ID[i] : ShiftReg[i+1]), .q(ShiftReg[i]));
     end
 endmodule
