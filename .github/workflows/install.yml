@@ -12,6 +12,7 @@ jobs:
       - run: sudo apt update
       - run: sudo apt upgrade -y
       - run: sudo apt install -y libunwind-dev
+      - run: git clone --recurse-submodules -j 4 https://github.com/qemu/qemu
       - name: install
         run: |
           pwd
