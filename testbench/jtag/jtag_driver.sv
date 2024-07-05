@@ -73,7 +73,7 @@ module jtag_driver(
         DR3 : State <= SHIFTDR;
 
         SHIFTDR : begin
-          ScanData[Idx] <= tdo;
+          ScanData[Idx[$clog2(DATA_BITS)-1:0]] <= tdo;
           if (Idx == Length-1)
             State <= RTI1;
           else
@@ -86,7 +86,7 @@ module jtag_driver(
         IR4 : State <= SHIFTIR;
 
         SHIFTIR : begin
-          ScanData[Idx] <= tdo;
+          ScanData[Idx[$clog2(DATA_BITS)-1:0]] <= tdo;
           if (Idx == Length-1)
             State <= RTI1;
           else
@@ -103,6 +103,8 @@ module jtag_driver(
 
         COMPLETE : State <= COMPLETE;
         ERROR : State <= ERROR;
+
+        default: State <= RESET;
       endcase
   end
 
@@ -125,7 +127,7 @@ module jtag_driver(
 
       SHIFTDR : begin
         tms <= (Idx == Length-1);
-        tdi <= ScanIn[Idx];
+        tdi <= ScanIn[Idx[$clog2(DATA_BITS)-1:0]];
       end
 
       IR1 : tms <= 1;
@@ -135,24 +137,19 @@ module jtag_driver(
 
       SHIFTIR : begin
         tms <= (Idx == Length-1);
-        tdi <= ScanIn[Idx];
+        tdi <= ScanIn[Idx[$clog2(DATA_BITS)-1:0]];
       end
 
       RTI1 : tms <= 1;
       RTI2 : tms <= 0;
+
+      default;
     endcase
   end
 
   // tck driver
   always_comb begin
     case (State)
-      LOAD,
-      DECODE,
-      COMPLETE,
-      ERROR : begin
-        tck = 0;
-      end
-
       RESET,
       NOP,
       DR1,
@@ -165,9 +162,9 @@ module jtag_driver(
       IR4,
       SHIFTIR,
       RTI1,
-      RTI2 : begin
-        tck = clk;
-      end
+      RTI2 : tck = clk;
+
+      default : tck = 0;
     endcase
   end
 
