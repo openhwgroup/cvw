@@ -1,0 +1,14 @@
+name: Installation test
+
+on: [workflow_dispatch]
+
+jobs:
+  install:
+    name: Test installation on Ubuntu 22.04LTS
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: install
+        run: sudo ./bin/wally-tool-chain-install
+    
