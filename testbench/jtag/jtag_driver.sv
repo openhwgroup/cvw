@@ -139,6 +139,7 @@ module jtag_driver(
   always_ff @(negedge clk) begin
     // default values
     tdi <= 1'bx;
+    tms <= 1'b1;
 
     case (State)
       RESET : tms <= (Idx != 5);

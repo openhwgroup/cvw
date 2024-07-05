@@ -581,7 +581,7 @@ module testbench;
   end
 
   // TODO: drive jtag clock at 1/10th core clock (variable)
-  if (P.DEBUG_SUPPORTED) begin
+  if (P.DEBUG_SUPPORTED) begin : JTAG
     always @(posedge clk) begin
       jtagmemfilename = "../tests/jtag/test.memfile";
       if (LoadMem) begin
