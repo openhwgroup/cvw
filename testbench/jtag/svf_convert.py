@@ -11,7 +11,7 @@ MAXLEN = 2**LENGTH_BITS
 
 def main():
     filepath = "testbench/jtag/test.svf"
-    dest_filepath = "testbench/jtag/test.mem"
+    dest_filepath = "testbench/jtag/test.memfile"
     with open(filepath, "r") as file:
         data = file.read()
     data = data.lower()

@@ -583,7 +583,7 @@ module testbench;
   // TODO: drive jtag clock at 1/10th core clock (variable)
   if (P.DEBUG_SUPPORTED) begin
     always @(posedge clk) begin
-      jtagmemfilename = "../tests/test.svf.memfile";
+      jtagmemfilename = "../tests/jtag/test.memfile";
       if (LoadMem) begin
         $readmemh(jtagmemfilename, jtag.MEM);
         $display("Read memfile %s", jtagmemfilename);

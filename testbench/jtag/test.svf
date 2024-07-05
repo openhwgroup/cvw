@@ -1,8 +1,12 @@
 // SVF commands to pull to idcode out of jtag module
 SIR 5 TDI(1); // IDCODE
-SDR 32 TDO(DEADBEEF);
-SDR 32 TDO(DEADBEAF); // JTAG_Driver should throw error if TDO value doesn't match what is scanned out
-RUNTEST 55;
-sir 8 !and multiline commands
-tdo(99);
+SDR 32 TDO(1002AC05);
+//SDR 32 TDO(DEADBEAF); ! JTAG_Driver should throw error if TDO value doesn't match what is scanned out
+!RUNTEST 55;
+SIR 5 TDI(10); // DTMCS
+SDR 32 TDO(71) MASK(FFFF8FFF);
+SIR 5 TDI(11); // DMI
+SDR 41 TDI(4000000006); // Activate DM
+SDR 41 TDI(4400000001); // Send Read DMStatus command
+SDR 41 TDO(A3) MASK(FF); // Scan out DMStatus
 
