@@ -53,6 +53,7 @@ vlog +incdir+$env(WALLY)/config/$1 \
      $env(WALLY)/src/cvw.sv \
      $env(WALLY)/testbench/testbench.sv \
      $env(WALLY)/testbench/common/*.sv   \
+     $env(WALLY)/testbench/jtag/*.sv   \
      $env(WALLY)/src/*/*.sv \
      $env(WALLY)/src/*/*/*.sv \
      -suppress 2583 \

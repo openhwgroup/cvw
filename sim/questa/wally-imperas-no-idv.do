@@ -30,6 +30,7 @@ vlog +incdir+../config/$1 \
      ../src/cvw.sv \
      ../testbench/testbench_imperas.sv \
      ../testbench/common/*.sv   \
+     ../testbench/jtag/*.sv   \
      ../src/*/*.sv \
      ../src/*/*/*.sv \
      -suppress 2583 \
