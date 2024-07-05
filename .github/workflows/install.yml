@@ -12,6 +12,6 @@ jobs:
       - name: install
         run: |
           pwd
-          cd cvw
-          sudo ./bin/wally-tool-chain-install
+          ls
+          sudo ./bin/wally-tool-chain-install.sh
     
