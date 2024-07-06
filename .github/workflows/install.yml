@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
+      - run: df -h
       - uses: actions/checkout@v4
       - name: install
         run: sudo ./bin/wally-tool-chain-install.sh
