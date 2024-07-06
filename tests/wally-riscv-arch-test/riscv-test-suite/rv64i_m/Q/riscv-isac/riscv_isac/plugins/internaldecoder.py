@@ -18,8 +18,8 @@ class disassembler():
             0b0011011: self.rv64i_arithi_ops,
             0b0111011: self.rv64i_arith_ops,
             0b0101111: self.rv64_rv32_atomic_ops,
-            0b0000111: self.flw_fld,
-            0b0100111: self.fsw_fsd,
+            0b0000111: self.flw_fld_flq,
+            0b0100111: self.fsw_fsd_fsq,
             0b1000011: self.fmadd,
             0b1000111: self.fmsub,
             0b1001011: self.fnmsub,
@@ -1606,7 +1606,7 @@ class disassembler():
 
             return instrObj
 
-    def flw_fld(self, instrObj):
+    def flw_fld_flq(self, instrObj):
         instr = instrObj.instr
         rd = ((instr & self.RD_MASK) >> 7, 'f')
         rs1 = ((instr & self.RS1_MASK) >> 15, 'x')
@@ -1621,10 +1621,12 @@ class disassembler():
             instrObj.instr_name = 'flw'
         elif funct3 == 0b011:
             instrObj.instr_name = 'fld'
+        elif funct3 == 0b100:
+            instrObj.instr_name = 'flq'
 
         return instrObj
 
-    def fsw_fsd(self, instrObj):
+    def fsw_fsd_fsq(self, instrObj):
         instr = instrObj.instr
         imm_4_0 = (instr & self.RD_MASK) >> 7
         imm_11_5 = (instr >> 25) << 5
@@ -1642,6 +1644,8 @@ class disassembler():
             instrObj.instr_name = 'fsw'
         elif funct3 == 0b011:
             instrObj.instr_name = 'fsd'
+        elif funct3 == 0b100:
+            instrObj.instr_name = 'fsq'
 
         return instrObj
 
@@ -1766,6 +1770,14 @@ class disassembler():
             instrObj.instr_name = 'fmul.d'
         elif funct7 == 0b0001101:
             instrObj.instr_name = 'fdiv.d'
+        elif funct7 == 0b0000011:
+            instrObj.instr_name = 'fadd.q'
+        elif funct7 == 0b0000111:
+            instrObj.instr_name = 'fsub.q'
+        elif funct7 == 0b0001011:
+            instrObj.instr_name = 'fmul.q'
+        elif funct7 == 0b0001111:
+            instrObj.instr_name = 'fdiv.q'
 
         # fsqrt
         if funct7 == 0b0101100:
@@ -1774,6 +1786,10 @@ class disassembler():
             return instrObj
         elif funct7 == 0b0101101:
             instrObj.instr_name = 'fsqrt.d'
+            instrObj.rs2 = None
+            return instrObj
+        elif funct7 == 0b0101111:
+            instrObj.instr_name = 'fsqrt.q'
             instrObj.rs2 = None
             return instrObj
 
