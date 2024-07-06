@@ -1656,6 +1656,7 @@ deriv fdqh_ieee_div_4_4i_rv64gc fdqh_ieee_div_4_4_rv64gc
 IDIV_ON_FPU     1
 
 # imperas used for a smart memory
+# VCS doesn't like removing the bootrom, but make it tiny in a random unused location
 derive imperas rv64gc
 ICACHE_SUPPORTED    0
 DCACHE_SUPPORTED    0
@@ -1666,5 +1667,5 @@ ZICBOM_SUPPORTED    0
 ZICBOZ_SUPPORTED    0
 SVPBMT_SUPPORTED    0
 SVNAPOT_SUPPORTED   0
-BOOTROM_BASE        64'h4
-BOOTROM_RANGE       64'h0
+BOOTROM_BASE        64'h700012340010
+BOOTROM_RANGE       64'h10
