@@ -7,6 +7,9 @@ jobs:
     name: Test installation on Rocky 9
     runs-on: ubuntu-latest
     container: rockylinux:8
+    defaults:
+      run: 
+        shell: bash
 
     steps:
       - name: Free up storage
