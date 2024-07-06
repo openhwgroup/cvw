@@ -1,0 +1,38 @@
+name: Installation test
+
+on: [workflow_dispatch]
+
+jobs:
+  install:
+    name: Test installation on Rocky 9
+    runs-on: ubuntu-latest
+    container: rockylinux:8
+
+    steps:
+      - name: Free up storage
+        run: |
+              sudo rm -rf /usr/local/lib/android &> /dev/null
+              sudo rm -rf /usr/share/dotnet &> /dev/null
+              sudo rm -rf /opt/ghc &> /dev/null
+              sudo rm -rf /opt/hostedtoolcache/CodeQL &> /dev/null
+              sudo docker image prune --all --force &> /dev/null
+              sudo apt-get purge -y \
+                '^llvm-.*' \
+                'php.*' \
+                '^mongodb-.*' \
+                '^mysql-.*' \
+                azure-cli \
+                google-cloud-cli \
+                google-chrome-stable \
+                firefox \
+                powershell \
+                microsoft-edge-stable \
+                mono-devel \
+                &> /dev/null
+              sudo apt-get autoremove -y &> /dev/null
+              sudo apt-get clean &> /dev/null
+              df -h
+      - uses: actions/checkout@v4
+      - name: install
+        run: sudo ./bin/wally-tool-chain-install.sh
+    
