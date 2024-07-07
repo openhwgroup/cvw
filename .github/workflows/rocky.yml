@@ -13,6 +13,7 @@ jobs:
 
     steps:
       - run: df -h
+      - run: dnf install -y sudo
       - uses: actions/checkout@v4
       - name: install
         run: ./bin/wally-tool-chain-install.sh
