@@ -13,14 +13,6 @@ jobs:
 
     steps:
       - run: df -h
-      - name: Free up storage
-        run: |
-              rm -rf /usr/local/lib/android
-              rm -rf /usr/share/dotnet
-              rm -rf /opt/ghc
-              rm -rf /opt/hostedtoolcache/CodeQL
-              docker image prune --all --&> /dev/null
-      - run: df -h
       - uses: actions/checkout@v4
       - name: install
         run: sudo ./bin/wally-tool-chain-install.sh
