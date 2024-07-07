@@ -15,5 +15,5 @@ jobs:
       - run: df -h
       - uses: actions/checkout@v4
       - name: install
-        run: sudo ./bin/wally-tool-chain-install.sh
+        run: ./bin/wally-tool-chain-install.sh
     
