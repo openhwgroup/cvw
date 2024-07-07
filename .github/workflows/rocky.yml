@@ -12,6 +12,9 @@ jobs:
         shell: bash
 
     steps:
+      - run: pwd
+      - run: ls
+      - run: df -h
       - name: Free up storage
         run: |
               sudo rm -rf /usr/local/lib/android &> /dev/null
