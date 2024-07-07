@@ -17,11 +17,11 @@ jobs:
       - run: df -h
       - name: Free up storage
         run: |
-              sudo rm -rf /usr/local/lib/android &> /dev/null
-              sudo rm -rf /usr/share/dotnet &> /dev/null
-              sudo rm -rf /opt/ghc &> /dev/null
-              sudo rm -rf /opt/hostedtoolcache/CodeQL &> /dev/null
-              sudo docker image prune --all --force &> /dev/null
+              sudo rm -rf /usr/local/lib/android
+              sudo rm -rf /usr/share/dotnet
+              sudo rm -rf /opt/ghc
+              sudo rm -rf /opt/hostedtoolcache/CodeQL
+              sudo docker image prune --all --force
               sudo apt-get purge -y \
                 '^llvm-.*' \
                 'php.*' \
@@ -35,7 +35,7 @@ jobs:
                 microsoft-edge-stable \
                 mono-devel \
                 &> /dev/null
-              sudo apt-get autoremove -y &> /dev/null
+              sudo apt-get autoremove -y
               sudo apt-get clean &> /dev/null
               df -h
       - uses: actions/checkout@v4
