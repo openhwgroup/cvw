@@ -12,32 +12,15 @@ jobs:
         shell: bash
 
     steps:
-      - run: pwd
-      - run: ls
       - run: df -h
       - name: Free up storage
         run: |
-              sudo rm -rf /usr/local/lib/android
-              sudo rm -rf /usr/share/dotnet
-              sudo rm -rf /opt/ghc
-              sudo rm -rf /opt/hostedtoolcache/CodeQL
-              sudo docker image prune --all --force
-              sudo apt-get purge -y \
-                '^llvm-.*' \
-                'php.*' \
-                '^mongodb-.*' \
-                '^mysql-.*' \
-                azure-cli \
-                google-cloud-cli \
-                google-chrome-stable \
-                firefox \
-                powershell \
-                microsoft-edge-stable \
-                mono-devel \
-                &> /dev/null
-              sudo apt-get autoremove -y
-              sudo apt-get clean &> /dev/null
-              df -h
+              rm -rf /usr/local/lib/android
+              rm -rf /usr/share/dotnet
+              rm -rf /opt/ghc
+              rm -rf /opt/hostedtoolcache/CodeQL
+              docker image prune --all --&> /dev/null
+      - run: df -h
       - uses: actions/checkout@v4
       - name: install
         run: sudo ./bin/wally-tool-chain-install.sh
