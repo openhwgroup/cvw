@@ -6,13 +6,15 @@ jobs:
   install:
     name: Test installation on Rocky 9
     runs-on: ubuntu-latest
-    container: rockylinux:8
     defaults:
       run: 
         shell: bash
 
     steps:
       - run: df -h
+      - name: free up storage
+        run: sudo rm -rf /usr/local/lib/android
+      - run: docker run rockylinux:8
       - run: dnf install -y sudo
       - uses: actions/checkout@v4
       - name: install
