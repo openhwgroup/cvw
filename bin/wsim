@@ -26,11 +26,14 @@ def LaunchSim(ElfFile, flags):
         cmd = "do wally.do " + args.config + " " + args.testsuite + " " + args.tb + " " + args.args + " " + ElfFile + " " + flags
         if (args.gui):  # launch Questa with GUI; add +acc to keep variables accessible
             if(args.tb == "testbench"): 
-                cmd = cd + "; " + prefix + " vsim -do \"" + cmd + " +acc -GDEBUG=1\""
+                cmd = cd + "; " + prefix + " vsim -do \"" + cmd + " +acc -GDEBUG=1"
             elif(args.tb == "testbench_fp"):
-                cmd = cd + "; " + prefix + " vsim -do \"" + cmd + " +acc\""
+                cmd = cd + "; " + prefix + " vsim -do \"" + cmd + " +acc"
         else: # launch Questa in batch mode
-            cmd = cd + "; " + prefix + " vsim -c -do \"" + cmd + "\""
+            cmd = cd + "; " + prefix + " vsim -c -do \"" + cmd
+        if (args.jtag):
+            cmd += " +JTAGTESTFILE=" + args.jtag
+        cmd += "\""
         print("Running Questa with command: " + cmd)
         os.system(cmd)
     elif (args.sim == "verilator"):
@@ -71,6 +74,7 @@ parser.add_argument("--lockstep", "-l", help="Run ImperasDV lock, step, and comp
 parser.add_argument("--locksteplog", "-b", help="Retired instruction number to be begin logging.", default=0)
 parser.add_argument("--covlog", "-d", help="Log coverage after n instructions.", default=0)
 parser.add_argument("--elfext", "-e", help="When searching for elf files only includes ones which end in this extension", default=".elf")
+parser.add_argument("--jtag", "-j", help="JTAG SVF file to load", default=0)
 args = parser.parse_args()
 print("Config=" + args.config + " tests=" + args.testsuite + " sim=" + args.sim + " gui=" + str(args.gui) + " args='" + args.args + "'")
 ElfFile=""

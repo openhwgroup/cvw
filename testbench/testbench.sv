@@ -75,7 +75,7 @@ module testbench;
   logic tdo;
 
   // Variables that can be overwritten with $value$plusargs at start of simulation
-  string       TEST, ElfFile;
+  string       TEST, ElfFile, JTAGTESTFILE;
   integer      INSTR_LIMIT;
 
   // DUT signals
@@ -127,6 +127,8 @@ module testbench;
       ElfFile = "none";
     if (!$value$plusargs("INSTR_LIMIT=%d", INSTR_LIMIT))
       INSTR_LIMIT = 0;
+    if (!$value$plusargs("JTAGTESTFILE=%s", JTAGTESTFILE))
+      JTAGTESTFILE = "none";
     //$display("TEST = %s ElfFile = %s", TEST, ElfFile);
     
     // pick tests based on modes supported
@@ -272,7 +274,7 @@ module testbench;
   logic        ResetCntRst;
   logic        CopyRAM;
 
-  string  signame, elffilename, memfilename, bootmemfilename, uartoutfilename, pathname, jtagmemfilename;
+  string  signame, elffilename, memfilename, bootmemfilename, uartoutfilename, pathname;
   integer begin_signature_addr, end_signature_addr, signature_size;
   integer uartoutfile;
 
@@ -583,10 +585,9 @@ module testbench;
   // TODO: drive jtag clock at 1/10th core clock (variable)
   if (P.DEBUG_SUPPORTED) begin : JTAG
     always @(posedge clk) begin
-      jtagmemfilename = "../tests/jtag/test.memfile";
-      if (LoadMem) begin
-        $readmemh(jtagmemfilename, jtag.MEM);
-        $display("Read memfile %s", jtagmemfilename);
+      if (JTAGTESTFILE != "none" & LoadMem) begin
+        $display("Read jtagfile %s", JTAGTESTFILE);
+        $readmemh(JTAGTESTFILE, jtag.MEM);
       end
     end
 
