@@ -37,7 +37,7 @@ NUM_THREADS=8  # for >= 32GiB
 
 # Error handler
 error() {
-    echo -e "${FAIL_COLOR}Error: $STATUS installation failed$"
+    echo -e "${FAIL_COLOR}Error: $STATUS installation failed"
     echo -e "Error on line ${BASH_LINENO[0]} with command $BASH_COMMAND${ENDC}"
     exit 1
 }
@@ -347,6 +347,7 @@ echo -e "Installing/Updating Sail Compiler"
 echo -e "*************************************************************************"
 echo -e "*************************************************************************\n${ENDC}"
 STATUS="Sail Compiler"
+OPAMROOTISOK=1 # Silence warnings about running opam as root
 cd "$RISCV"
 opam init -y --disable-sandboxing
 opam update -y
