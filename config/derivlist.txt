@@ -35,6 +35,7 @@
 # If <inherited config name> is not empty, all the list of parameter changes in the inherited 
 # configuration are also applied to this configuration
 
+
 # buildroot is used for the Linux boot
 deriv   buildroot   rv64gc
 RESET_VECTOR    64'h1000
@@ -1654,4 +1655,17 @@ IDIV_ON_FPU     1
 deriv fdqh_ieee_div_4_4i_rv64gc fdqh_ieee_div_4_4_rv64gc        
 IDIV_ON_FPU     1
 
-
+# imperas used for a smart memory
+# VCS doesn't like removing the bootrom, but make it tiny in a random unused location
+derive imperas rv64gc
+ICACHE_SUPPORTED    0
+DCACHE_SUPPORTED    0
+VIRTMEM_SUPPORTED   0
+ZAAMO_SUPPORTED     0
+ZALRSC_SUPPORTED    0
+ZICBOM_SUPPORTED    0
+ZICBOZ_SUPPORTED    0
+SVPBMT_SUPPORTED    0
+SVNAPOT_SUPPORTED   0
+BOOTROM_BASE        64'h700012340010
+BOOTROM_RANGE       64'h10
