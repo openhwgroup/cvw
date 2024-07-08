@@ -38,12 +38,11 @@ WARNING_COLOR='\033[93m'
 FAIL_COLOR='\033[91m'
 ENDC='\033[0m' # Reset to default color
 
-
-echo -e "${SECTION_COLOR}\n*************************************************************************"
-echo -e "*************************************************************************"
+printf "${SECTION_COLOR}%$(tput cols)s" | tr ' ' '#'
+printf "%$(tput cols)s" | tr ' ' '#'
 echo -e "Checking System Requirements and Configuring Installation"
-echo -e "*************************************************************************"
-echo -e "*************************************************************************\n${ENDC}"
+printf "%$(tput cols)s" | tr ' ' '#'
+printf "%$(tput cols)s${ENDC}" | tr ' ' '#'
 
 # Get distribution information
 test -e /etc/os-release && os_release="/etc/os-release" || os_release="/usr/lib/os-release"

@@ -84,11 +84,12 @@ fi
 
 # Check if required packages are installed or install/update them depending on passed flag.
 if [ "${1}" = "--check" ]; then
-    echo -e "${SECTION_COLOR}\n*************************************************************************"
-    echo -e "*************************************************************************"
+    printf "${SECTION_COLOR}%$(tput cols)s" | tr ' ' '#'
+    printf "%$(tput cols)s" | tr ' ' '#'
     echo -e "Checking Dependencies from Package Manager"
-    echo -e "*************************************************************************"
-    echo -e "*************************************************************************\n${ENDC}"
+    printf "%$(tput cols)s" | tr ' ' '#'
+    printf "%$(tput cols)s${ENDC}" | tr ' ' '#'
+
     if [ "$FAMILY" = rhel ]; then
         for pack in $GENERAL_PACKAGES $GNU_PACKAGES $QEMU_PACKAGES $SPIKE_PACKAGES $VERILATOR_PACKAGES $SAIL_PACKAGES $BUILDROOT_PACKAGES $OTHER_PACKAGES; do
             rpm -q "$pack" > /dev/null || (echo -e "${FAIL_COLOR}Missing packages detected (${WARNING_COLOR}$pack${FAIL_COLOR}). Run as root to auto-install or run wally-package-install.sh first.${ENDC}" && exit 1)
@@ -103,11 +104,12 @@ else
     # Check if root, otherwise exit with error message
     [ "${EUID:=$(id -u)}" -ne 0 ] && echo -e "\n${FAIL_COLOR}Must be run as root${ENDC}" && exit 1
 
-    echo -e "${SECTION_COLOR}\n*************************************************************************"
-    echo -e "*************************************************************************"
-    echo -e "Installing/Updating Dependencies from Package Manager"
-    echo -e "*************************************************************************"
-    echo -e "*************************************************************************\n${ENDC}"
+    printf "${SECTION_COLOR}%$(tput cols)s" | tr ' ' '#'
+    printf "%$(tput cols)s" | tr ' ' '#'
+    echo -e ""Installing/Updating Dependencies from Package Manager""
+    printf "%$(tput cols)s" | tr ' ' '#'
+    printf "%$(tput cols)s${ENDC}" | tr ' ' '#'
+
     # Enable extra repos necessary for rhel
     if [ "$FAMILY" = rhel ]; then
         sudo dnf install -y dnf-plugins-core
