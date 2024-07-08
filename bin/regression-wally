@@ -47,6 +47,11 @@ tests_buildrootboot = [
                         "WallyHostname login: ", "buildroot_uart.out"]
     ]
 
+tests_buildrootbootlockstep = [
+                    ["buildroot", ["buildroot"], [f"+INSTR_LIMIT=600000000 --lockstep"], # boot entire buildroot Linux to login prompt
+                        "WallyHostname login: ", "buildroot_uart.out"]
+    ]
+
 
 # Separate out floating-point tests for RV64 to speed up coverage
 tests64gc_nofp = [
@@ -345,9 +350,12 @@ configs = [
         grepfile = WALLY + "/sim/verilator/logs/all_lints.log")
     ]
 
+
+
 # run full buildroot boot simulation (slow) if buildroot flag is set.  Start it early to overlap with other tests
 if (buildroot):
-    addTests(tests_buildrootboot, defaultsim)
+    # addTests(tests_buildrootboot, defaultsim) # non-lockstep with Verilator runs in about 2 hours
+    addTests(tests_buildrootbootlockstep, "questa") # lockstep with Questa and ImperasDV runs overnight
 
 if (coverage):  # only run RV64GC tests on Questa in coverage mode
     addTests(tests64gc_nofp, "questa")
@@ -361,26 +369,43 @@ else:
         addTests(tests64gc_nofp, sim)
         addTests(tests64gc_fp, sim)
 
-# run derivative configurations in nightly regression
+# run derivative configurations and lockstep tests in nightly regression
 if (nightly):
     addTests(derivconfigtests, defaultsim)
+    sim_log = WALLY + "/sim/questa/logs/lockstep_coverage.log" 
+    tc = TestCase(
+            name="lockstep_coverage",
+            variant="rv64gc",
+            cmd="iterelf " + WALLY + "/tests/coverage > " + sim_log,
+            grepstr="SUCCESS! All tests ran without failures",
+            grepfile = sim_log)
+    configs.append(tc)
 
+    sim_log = WALLY + "/sim/questa/logs/lockstep_wally-riscv-arch-test.log" 
+    tc = TestCase(
+            name="lockstep_wally-riscv-arch-test",
+            variant="rv64gc",
+            cmd="iterelf " + WALLY + "/tests/riscof/work/wally-riscv-arch-test/rv64i_m/privilege > " + sim_log,
+            grepstr="SUCCESS! All tests ran without failures",
+            grepfile = sim_log)
+    configs.append(tc)
 
 # testfloat tests
 if (testfloat): # for testfloat alone, just run testfloat tests
     configs = []
 if (testfloat or nightly): # for nightly, run testfloat along with othres
+    testfloatsim = "questa" # change to Verilator when Issue #707 about testfloat not running Verilator is resolved
     testfloatconfigs = ["fdqh_ieee_rv64gc", "fdq_ieee_rv64gc", "fdh_ieee_rv64gc", "fd_ieee_rv64gc", "fh_ieee_rv64gc", "f_ieee_rv64gc", "fdqh_ieee_rv32gc", "f_ieee_rv32gc"]
     for config in testfloatconfigs:
         tests = ["div", "sqrt", "add", "sub", "mul", "cvtint", "cvtfp", "fma", "cmp"]
         if ("f_" in config):
             tests.remove("cvtfp")
         for test in tests:
-            sim_log = WALLY + "/sim/questa/logs/"+config+"_"+test+".log" # TODO: Change hardcoded questa log directory to simulator
+            sim_log = WALLY + "/sim/" + testfloatsim + "/logs/"+config+"_"+test+".log" 
             tc = TestCase(
                     name=test,
                     variant=config,
-                    cmd="wsim --tb testbench_fp " + config + " " + test + " > " + sim_log,
+                    cmd="wsim --tb testbench_fp --sim " + testfloatsim + " " + config + " " + test + " > " + sim_log,
                     grepstr="All Tests completed with          0 errors",
                     grepfile = sim_log)
             configs.append(tc)
