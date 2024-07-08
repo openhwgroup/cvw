@@ -35,20 +35,6 @@
 NUM_THREADS=8  # for >= 32GiB
 #NUM_THREADS=16  # for >= 64GiB
 
-# Error handler
-error() {
-    echo -e "${FAIL_COLOR}Error: $STATUS installation failed"
-    echo -e "Error on line ${BASH_LINENO[0]} with command $BASH_COMMAND${ENDC}"
-    exit 1
-}
-
-set -e # break on error
-trap error ERR # run error handler on error
-STATUS="setup" # keep track of what part of the installation is running for error messages
-
-# Determine script directory to locate related scripts
-dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
 # Colors
 BOLD='\033[1m'
 UNDERLINE='\033[4m'
@@ -58,6 +44,29 @@ SUCCESS_COLOR='\033[92m'
 WARNING_COLOR='\033[93m'
 FAIL_COLOR='\033[91m'
 ENDC='\033[0m' # Reset to default color
+
+# Error handler
+error() {
+    echo -e "${FAIL_COLOR}Error: $STATUS installation failed"
+    echo -e "Error on line ${BASH_LINENO[0]} with command $BASH_COMMAND${ENDC}"
+    exit 1
+}
+
+# Print section header
+section_header() {
+    printf "${SECTION_COLOR}%$(tput cols)s" | tr ' ' '#'
+    printf "%$(tput cols)s" | tr ' ' '#'
+    echo -e "$1"
+    printf "%$(tput cols)s" | tr ' ' '#'
+    printf "%$(tput cols)s${ENDC}" | tr ' ' '#'
+}
+
+set -e # break on error
+trap error ERR # run error handler on error
+STATUS="setup" # keep track of what part of the installation is running for error messages
+
+# Determine script directory to locate related scripts
+dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Get Linux distro and version
 source "${dir}"/wally-distro-check.sh
@@ -105,13 +114,9 @@ elif [ "$UBUNTU_VERSION" = 20 ]; then
 fi
 
 
-echo -e "${SECTION_COLOR}\n*************************************************************************"
-echo -e "*************************************************************************"
-echo -e "Setting up Python Environment"
-echo -e "*************************************************************************"
-echo -e "*************************************************************************\n${ENDC}"
 # Create python virtual environment so the python command targets desired version of python
 # and installed packages are isolated from the rest of the system.
+section_header "Setting up Python Environment"
 STATUS="python virtual environment"
 cd "$RISCV"
 if [ ! -e "$RISCV"/riscv-python/bin/activate ]; then
@@ -149,11 +154,7 @@ if [ "$RHEL_VERSION" = 8 ] || [ "$UBUNTU_VERSION" = 20 ]; then
     # Anything newer than this won't build on red hat 8
     STATUS="glib"
     if [ ! -e "$RISCV"/include/glib-2.0 ]; then
-        echo -e "${SECTION_COLOR}\n*************************************************************************"
-        echo -e "*************************************************************************"
-        echo -e "Installing glib"
-        echo -e "*************************************************************************"
-        echo -e "*************************************************************************\n${ENDC}"
+        section_header "Installing glib"
         pip install -U meson # Meson is needed to build glib
         cd "$RISCV"
         wget https://download.gnome.org/sources/glib/2.70/glib-2.70.5.tar.xz
@@ -173,11 +174,7 @@ fi
 if [ "$RHEL_VERSION" = 8 ]; then
     STATUS="gmp"
     if [ ! -e "$RISCV"/include/gmp.h ]; then
-        echo -e "${SECTION_COLOR}\n*************************************************************************"
-        echo -e "*************************************************************************"
-        echo -e "Installing gmp"
-        echo -e "*************************************************************************"
-        echo -e "*************************************************************************\n${ENDC}"
+        section_header "Installing gmp"
         cd "$RISCV"
         wget https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz
         tar -xJf gmp-6.3.0.tar.xz
@@ -199,11 +196,7 @@ fi
 # To install GCC from source can take hours to compile.
 # This configuration enables multilib to target many flavors of RISC-V.
 # This book is tested with GCC 13.2.0
-echo -e "${SECTION_COLOR}\n*************************************************************************"
-echo -e "*************************************************************************"
-echo -e "Installing/Updating RISC-V GNU Toolchain"
-echo -e "*************************************************************************"
-echo -e "*************************************************************************\n${ENDC}"
+section_header "Installing/Updating RISC-V GNU Toolchain"
 STATUS="RISC-V GNU Toolchain"
 cd "$RISCV"
 if [[ ((! -e riscv-gnu-toolchain) && ($(git clone https://github.com/riscv/riscv-gnu-toolchain) || true)) || ($(cd riscv-gnu-toolchain; git fetch; git rev-parse HEAD) != $(cd riscv-gnu-toolchain; git rev-parse origin/master)) || (! -e $RISCV/riscv-gnu-toolchain/stamps/build-gcc-newlib-stage2) ]]; then
@@ -225,11 +218,7 @@ fi
 # For example, if Python version 2.x is in your path, it won’t install correctly.
 # Also, be sure riscv64-unknown-elf-objcopy shows up in your path in $RISCV/riscv-gnu-toolchain/bin
 # at the time of compilation, or elf2hex won’t work properly.
-echo -e "${SECTION_COLOR}\n*************************************************************************"
-echo -e "*************************************************************************"
-echo -e "Installing/Updating elf2hex"
-echo -e "*************************************************************************"
-echo -e "*************************************************************************\n${ENDC}"
+section_header "Installing/Updating elf2hex"
 STATUS="elf2hex"
 cd "$RISCV"
 export PATH=$RISCV/bin:$PATH
@@ -248,11 +237,7 @@ fi
 
 # QEMU (https://www.qemu.org/docs/master/system/target-riscv.html)
 # QEMU is an open source machine emulator and virtualizer capable of emulating RISC-V
-echo -e "${SECTION_COLOR}\n*************************************************************************"
-echo -e "*************************************************************************"
-echo -e "Installing/Updating QEMU"
-echo -e "*************************************************************************"
-echo -e "*************************************************************************\n${ENDC}"
+section_header "Installing/Updating QEMU"
 STATUS="QEMU"
 cd "$RISCV"
 if [[ ((! -e qemu) && ($(git clone --recurse-submodules -j ${NUM_THREADS} https://github.com/qemu/qemu) || true)) || ($(cd qemu; git fetch; git rev-parse HEAD) != $(cd qemu; git rev-parse origin/master)) || (! -e $RISCV/include/qemu-plugin.h) ]]; then
@@ -269,11 +254,7 @@ fi
 
 # Spike (https://github.com/riscv-software-src/riscv-isa-sim)
 # Spike is a reference model for RISC-V. It is a functional simulator that can be used to run RISC-V programs.
-echo -e "${SECTION_COLOR}\n*************************************************************************"
-echo -e "*************************************************************************"
-echo -e "Installing/Updating SPIKE"
-echo -e "*************************************************************************"
-echo -e "*************************************************************************\n${ENDC}"
+section_header "Installing/Updating SPIKE"
 STATUS="SPIKE"
 cd "$RISCV"
 if [[ ((! -e riscv-isa-sim) && ($(git clone https://github.com/riscv-software-src/riscv-isa-sim) || true)) || ($(cd riscv-isa-sim; git fetch; git rev-parse HEAD) != $(cd riscv-isa-sim; git rev-parse origin/master)) || (! -e $RISCV/lib/pkgconfig/riscv-riscv.pc) ]]; then
@@ -294,11 +275,7 @@ fi
 # Verilator is a fast open-source Verilog simulator that compiles synthesizable Verilog code into C++ code.
 # It is used for linting and simulation of Wally.
 # Verilator needs to be built from source to get the latest version (Wally needs 5.021 or later).
-echo -e "\n${SECTION_COLOR}*************************************************************************"
-echo -e "*************************************************************************"
-echo -e "Installing/Updating Verilator"
-echo -e "*************************************************************************"
-echo -e "*************************************************************************\n${ENDC}"
+section_header "Installing/Updating Verilator"
 STATUS="Verilator"
 cd "$RISCV"
 if [[ ((! -e verilator) && ($(git clone https://github.com/verilator/verilator) || true)) || ($(cd verilator; git fetch; git rev-parse HEAD) != $(cd verilator; git rev-parse origin/master)) || (! -e $RISCV/share/pkgconfig/verilator.pc) ]]; then
@@ -319,11 +296,7 @@ cd "$RISCV"
 if [ "$FAMILY" = rhel ]; then
     # Install opam from binary disribution on rhel as it is not available from dnf
     # Opam is needed to install the sail compiler
-    echo -e "${SECTION_COLOR}\n*************************************************************************"
-    echo -e "*************************************************************************"
-    echo -e "Installing/Updating Opam"
-    echo -e "*************************************************************************"
-    echo -e "*************************************************************************\n${ENDC}"
+    section_header "Installing/Updating Opam"
     STATUS="Opam"
     mkdir -p opam
     cd opam
@@ -341,11 +314,7 @@ fi
 # is a functional programming language suited to formal verification. The Sail compiler is installed
 # with the opam OCaml package manager. It has so many dependencies that it can be difficult to install,
 # but a binary release of it should be available soon, removing the need to use opam.
-echo -e "${SECTION_COLOR}\n*************************************************************************"
-echo -e "*************************************************************************"
-echo -e "Installing/Updating Sail Compiler"
-echo -e "*************************************************************************"
-echo -e "*************************************************************************\n${ENDC}"
+section_header "Installing/Updating Sail Compiler"
 STATUS="Sail Compiler"
 OPAMROOTISOK=1 # Silence warnings about running opam as root
 cd "$RISCV"
@@ -358,11 +327,7 @@ echo -e "${SUCCESS_COLOR}Sail Compiler successfully installed/updated${ENDC}"
 
 # RISC-V Sail Model (https://github.com/riscv/sail-riscv)
 # The RISC-V Sail Model is the golden reference model for RISC-V. It is written in Sail (described above)
-echo -e "${SECTION_COLOR}\n*************************************************************************"
-echo -e "*************************************************************************"
-echo -e "Installing/Updating RISC-V Sail Model"
-echo -e "*************************************************************************"
-echo -e "*************************************************************************\n${ENDC}"
+section_header "Installing/Updating RISC-V Sail Model"
 STATUS="RISC-V Sail Model"
 if [[ ((! -e sail-riscv) && ($(git clone https://github.com/riscv/sail-riscv.git) || true)) || ($(cd sail-riscv; git fetch; git rev-parse HEAD) != $(cd sail-riscv; git rev-parse origin/master)) || (! -e $RISCV/bin/riscv_sim_RV32) ]]; then
     eval $(opam config env)
@@ -382,22 +347,14 @@ fi
 
 # RISCOF (https://github.com/riscv/riscof.git)
 # RISCOF is a RISC-V compliance test framework that is used to run the RISC-V Arch Tests.
-echo -e "${SECTION_COLOR}\n*************************************************************************"
-echo -e "*************************************************************************"
-echo -e "Installing/Updating RISCOF"
-echo -e "*************************************************************************"
-echo -e "*************************************************************************\n${ENDC}"
+section_header "Installing/Updating RISCOF"
 STATUS="RISCOF"
 pip3 install git+https://github.com/riscv/riscof.git
 
 
 # OSU Skywater 130 cell library (https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12)
 # The OSU Skywater 130 cell library is a standard cell library that is used to synthesize Wally.
-echo -e "${SECTION_COLOR}\n*************************************************************************"
-echo -e "*************************************************************************"
-echo -e "Installing/Updating OSU Skywater 130 cell library"
-echo -e "*************************************************************************"
-echo -e "*************************************************************************\n${ENDC}"
+section_header "Installing/Updating OSU Skywater 130 cell library"
 STATUS="OSU Skywater 130 cell library"
 mkdir -p "$RISCV"/cad/lib
 cd "$RISCV"/cad/lib
@@ -413,11 +370,7 @@ fi
 # Download site-setup scripts
 # The site-setup script is used to set up the environment for the RISC-V tools and EDA tools by setting
 # the PATH and other environment variables. It also sources the Python virtual environment.
-echo -e "${SECTION_COLOR}\n*************************************************************************"
-echo -e "*************************************************************************"
-echo -e "Downloading Site Setup Script"
-echo -e "*************************************************************************"
-echo -e "*************************************************************************\n${ENDC}"
+section_header "Downloading Site Setup Script"
 STATUS="site-setup scripts"
 cd "$RISCV"
 if [ ! -e "${RISCV}"/site-setup.sh ]; then
