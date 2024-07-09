@@ -15,6 +15,7 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <netinet/ether.h>
+#include <unistd.h>
 
 #define DEST_MAC0	0x43
 #define DEST_MAC1	0x68
@@ -23,8 +24,16 @@
 #define DEST_MAC4	0x02
 #define DEST_MAC5	0x45
 
+#define SRC_MAC0	0x54
+#define SRC_MAC1	0x16
+#define SRC_MAC2	0x00
+#define SRC_MAC3	0x00
+#define SRC_MAC4	0x54
+#define SRC_MAC5	0x8F
+
 #define DEFAULT_IF	"eth0"
 #define BUF_SIZ		1024
+#define ETHER_TYPE	0x5c00  // The type defined in packetizer.sv
 
 int main(int argc, char *argv[])
 {
@@ -45,7 +54,8 @@ int main(int argc, char *argv[])
 		strcpy(ifName, DEFAULT_IF);
 
 	/* Open RAW socket to send on */
-	if ((sockfd = socket(AF_PACKET, SOCK_RAW, IPPROTO_RAW)) == -1) {
+	//if ((sockfd = socket(AF_PACKET, SOCK_RAW, IPPROTO_RAW)) == -1) {
+	if ((sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETHER_TYPE))) == -1) {
 	    perror("socket");
 	}
 
@@ -63,12 +73,18 @@ int main(int argc, char *argv[])
 	/* Construct the Ethernet header */
 	memset(sendbuf, 0, BUF_SIZ);
 	/* Ethernet header */
-	eh->ether_shost[0] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[0];
-	eh->ether_shost[1] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[1];
-	eh->ether_shost[2] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[2];
-	eh->ether_shost[3] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[3];
-	eh->ether_shost[4] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[4];
-	eh->ether_shost[5] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[5];
+	/* eh->ether_shost[0] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[0]; */
+	/* eh->ether_shost[1] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[1]; */
+	/* eh->ether_shost[2] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[2]; */
+	/* eh->ether_shost[3] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[3]; */
+	/* eh->ether_shost[4] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[4]; */
+	/* eh->ether_shost[5] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[5]; */
+	eh->ether_shost[0] = SRC_MAC0;
+	eh->ether_shost[1] = SRC_MAC1;
+	eh->ether_shost[2] = SRC_MAC2;
+	eh->ether_shost[3] = SRC_MAC3;
+	eh->ether_shost[4] = SRC_MAC4;
+	eh->ether_shost[5] = SRC_MAC5;
 	eh->ether_dhost[0] = DEST_MAC0;
 	eh->ether_dhost[1] = DEST_MAC1;
 	eh->ether_dhost[2] = DEST_MAC2;
@@ -76,7 +92,8 @@ int main(int argc, char *argv[])
 	eh->ether_dhost[4] = DEST_MAC4;
 	eh->ether_dhost[5] = DEST_MAC5;
 	/* Ethertype field */
-	eh->ether_type = htons(ETH_P_IP);
+	//eh->ether_type = htons(ETH_P_IP);
+	eh->ether_type = htons(ETHER_TYPE);
 	tx_len += sizeof(struct ether_header);
 
 	/* Packet data */
@@ -103,10 +120,14 @@ int main(int argc, char *argv[])
 	  printf("%02hhx ", sendbuf[i]);
 	}
 	printf("\n");
+	printf("sockfd %x\n", sockfd);
 
 	/* Send packet */
-	if (sendto(sockfd, sendbuf, tx_len, 0, (struct sockaddr*)&socket_address, sizeof(struct sockaddr_ll)) < 0)
+	if (sendto(sockfd, sendbuf, tx_len, 0, (struct sockaddr*)&socket_address, sizeof(struct sockaddr_ll)) < 0){
 	    printf("Send failed\n");
+	}else {
 	printf("send success!\n");
+	}
+	close(sockfd);
 	return 0;
 }

@@ -71,6 +71,7 @@ struct sockaddr_ll socket_address;
 uint8_t sendbuf[BUF_SIZ];
 struct ether_header *sendeh = (struct ether_header *) sendbuf;
 int tx_len = 0;
+int sockfd;
 
 typedef struct {
   uint64_t PC;
@@ -131,7 +132,6 @@ int main(int argc, char **argv){
   /* fputs("refresh_hw_device [lindex [get_hw_devices xc7a100t_0] 0]\n", VivadoPipeFP); */
   /* fputs("[get_hw_devices xc7a100t_0] -filter {CELL_NAME=~\"u_ila_0\"}]]\n", VivadoPipeFP); */
   
-  int sockfd;
   uint8_t buf[BUF_SIZ];
   int sockopt;
   struct ifreq ifopts;	/* set promiscuous mode */
@@ -224,7 +224,7 @@ int main(int argc, char **argv){
   }
   printf("\n");
   printf("sockfd %x\n", sockfd);
-  
+
   // eventually we want to put the elffiles here
   rvviRefInit(NULL);
   rvviRefPcSet(0, 0x1000);
@@ -342,6 +342,13 @@ int state_compare(int hart, uint64_t Minstret){
   }
 
   if (result == 0) {
+    /* Send packet */
+    if (sendto(sockfd, sendbuf, tx_len, 0, (struct sockaddr*)&socket_address, sizeof(struct sockaddr_ll)) < 0){
+      printf("Send failed\n");
+    }else {
+      printf("send success!\n");
+    }
+
     sprintf(buf, "MISMATCH @ instruction # %ld\n", Minstret);
     idvMsgError(buf);
     /* fputs("run_hw_ila [get_hw_ilas -of_objects [get_hw_devices xc7a100t_0] -filter {CELL_NAME=~\"u_ila_0\"}] -trigger_now\n", VivadoPipeFP); */
