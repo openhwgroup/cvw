@@ -194,10 +194,12 @@ int main(int argc, char **argv){
   sendeh->ether_type = htons(ETHER_TYPE);
   tx_len += sizeof(struct ether_header);
   /* Packet data */
-  sendbuf[tx_len++] = 0xde;
-  sendbuf[tx_len++] = 0xad;
-  sendbuf[tx_len++] = 0xbe;
-  sendbuf[tx_len++] = 0xef;
+  sendbuf[tx_len++] = 't';
+  sendbuf[tx_len++] = 'r';
+  sendbuf[tx_len++] = 'i';
+  sendbuf[tx_len++] = 'g';
+  sendbuf[tx_len++] = 'i';
+  sendbuf[tx_len++] = 'n';
 
   rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR, "riscv.ovpworld.org");
   rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME,"riscv");
