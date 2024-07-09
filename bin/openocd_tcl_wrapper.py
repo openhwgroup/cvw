@@ -252,6 +252,9 @@ class SVF_Generator:
     def comment(self, comment):
         self.print_svf(f"// {comment}")
 
+    def spin(self, cycles):
+        self.print_svf(f"RUNTEST {cycles}")
+
     def instruction(self, instr):
         if self.INSTR != instr:
             self.print_svf(f"SIR 5 TDI({hex(instr)[2:]});")
@@ -322,6 +325,7 @@ class SVF_Generator:
 
     def exec_progbuf(self):
         self.write_dmi(0x17, 0x1 << 18)
+        self.spin(10)
 
     def set_haltonreset(self):
         self.write_dmi("0x10", "0x9")
@@ -340,7 +344,8 @@ class SVF_Generator:
         data += int(math.log2(self.XLEN // 8)) << 20
         data += write << 16
         data += regno
-        self.write_dmi("0x17", hex(data)) 
+        self.write_dmi("0x17", hex(data))
+        self.spin(self.XLEN)  # required wait duration depends on which register was accessed
 
     def write_data(self, register, data):
         if data > 0 and math.log2(data) > self.XLEN:
