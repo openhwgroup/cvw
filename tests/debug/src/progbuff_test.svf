@@ -1,0 +1,17 @@
+// Check jtag id
+SDR 32 TDO(1002ac05);
+// Activating DM
+SIR 5 TDI(11);
+SDR 41 TDI(4000000006);
+// Read DMStatus, compare bottom 8 bits to 0xa3
+SDR 41 TDI(4400000001);
+SDR 41 TDO(28c) MASK(3ff);
+// Reset hart
+SDR 41 TDI(400000000e);
+SDR 41 TDI(4000000006);
+SDR 41 TDI(4040000006);
+// Write 0x99, 0x88 to program buffer
+SDR 41 TDI(8000000266);
+SDR 41 TDI(8400000222);
+// Execute Program Buffer
+SDR 41 TDI(5c00100002);
