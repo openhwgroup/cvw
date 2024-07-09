@@ -41,11 +41,9 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <netinet/ether.h>
-#include <linux/udp.h>
 #include "rvviApi.h" // *** bug fix me when this file gets included into the correct directory.
 #include "idv/idv.h"
 
-#include <netinet/in.h>
 
 #define DEST_MAC0	0x43
 #define DEST_MAC1	0x68
@@ -69,8 +67,6 @@
 #define DEFAULT_IF	"eno1"
 
 FILE *VivadoPipeFP;
-int sockfd;
-struct ifreq ifopts, if_mac;	/* set promiscuous mode */
 
 typedef struct {
   uint64_t PC;
@@ -104,7 +100,6 @@ int ProcessRvviAll(RequiredRVVI_t *InstructionData);
 void set_gpr(int hart, int reg, uint64_t value);
 void set_fpr(int hart, int reg, uint64_t value);
 int state_compare(int hart, uint64_t Minstret);
-void SendILATrigger();
 
 int main(int argc, char **argv){
   
@@ -114,57 +109,40 @@ int main(int argc, char **argv){
     return -1;
   }
 
-  /* // step 1 open a pipe to vivado */
-  /* if (( VivadoPipeFP = popen("vivado -mode tcl", "w")) == NULL){ */
-  /*   perror("popen"); */
-  /*   exit(1); */
-  /* } */
-  /* fputs("open_hw_manager\n", VivadoPipeFP); */
-  /* fputs("connect_hw_server -url localhost:3121\n", VivadoPipeFP); */
-  /* fputs("current_hw_target [get_hw_targets *\/xilinx_tcf/Digilent/\*]\n", VivadoPipeFP); */
-  /* fputs("open_hw_target\n", VivadoPipeFP); */
-  /* fputs("set_property PARAM.FREQUENCY 7500000 [get_hw_targets localhost:3121/xilinx_tcf/Digilent/210319B7CA87A]\n", VivadoPipeFP); */
+  // step 1 open a pipe to vivado
+  if (( VivadoPipeFP = popen("vivado -mode tcl", "w")) == NULL){
+    perror("popen");
+    exit(1);
+  }
+  fputs("open_hw_manager\n", VivadoPipeFP);
+  fputs("connect_hw_server -url localhost:3121\n", VivadoPipeFP);
+  fputs("current_hw_target [get_hw_targets */xilinx_tcf/Digilent/*]\n", VivadoPipeFP);
+  fputs("open_hw_target\n", VivadoPipeFP);
+  fputs("set_property PARAM.FREQUENCY 7500000 [get_hw_targets localhost:3121/xilinx_tcf/Digilent/210319B7CA87A]\n", VivadoPipeFP);
 
-  /* // *** bug these need to made relative paths. */
-  /* fputs("set_property PROBES.FILE {/home/ross/repos/cvw/fpga/generator/WallyFPGA.runs/impl_1/fpgaTop.ltx} [get_hw_devices xc7a100t_0]\n", VivadoPipeFP); */
-  /* fputs("set_property FULL_PROBES.FILE {/home/ross/repos/cvw/fpga/generator/WallyFPGA.runs/impl_1/fpgaTop.ltx} [get_hw_devices xc7a100t_0]\n", VivadoPipeFP); */
-  /* fputs("set_property PROGRAM.FILE {/home/ross/repos/cvw/fpga/generator/WallyFPGA.runs/impl_1/fpgaTop.bit} [get_hw_devices xc7a100t_0]\n", VivadoPipeFP); */
-  /* fputs("refresh_hw_device [lindex [get_hw_devices xc7a100t_0] 0]\n", VivadoPipeFP); */
-  /* fputs("[get_hw_devices xc7a100t_0] -filter {CELL_NAME=~\"u_ila_0\"}]]\n", VivadoPipeFP); */
-  /* fflush(VivadoPipeFP); */
+  // *** bug these need to made relative paths.
+  fputs("set_property PROBES.FILE {/home/ross/repos/cvw/fpga/generator/WallyFPGA.runs/impl_1/fpgaTop.ltx} [get_hw_devices xc7a100t_0]\n", VivadoPipeFP);
+  fputs("set_property FULL_PROBES.FILE {/home/ross/repos/cvw/fpga/generator/WallyFPGA.runs/impl_1/fpgaTop.ltx} [get_hw_devices xc7a100t_0]\n", VivadoPipeFP);
+  fputs("set_property PROGRAM.FILE {/home/ross/repos/cvw/fpga/generator/WallyFPGA.runs/impl_1/fpgaTop.bit} [get_hw_devices xc7a100t_0]\n", VivadoPipeFP);
+  fputs("refresh_hw_device [lindex [get_hw_devices xc7a100t_0] 0]\n", VivadoPipeFP);
+  fputs("[get_hw_devices xc7a100t_0] -filter {CELL_NAME=~\"u_ila_0\"}]]\n", VivadoPipeFP);
   
+  int sockfd;
   uint8_t buf[BUF_SIZ];
   int sockopt;
+  struct ifreq ifopts;	/* set promiscuous mode */
   struct ether_header *eh = (struct ether_header *) buf;
   ssize_t headerbytes, numbytes, payloadbytes;
-
   
   /* Open RAW socket to receive frames */
   if ((sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETHER_TYPE))) == -1) {
-    // *** remove. This is not the problem
-  //if ((sockfd = socket(AF_PACKET, SOCK_RAW, IPPROTO_RAW)) == -1) {
     perror("socket");
   }
-  printf("sockfd %x\n", sockfd);
   printf("Here 0\n");
 
   /* Set interface to promiscuous mode - do we need to do this every time? */
-  memset(&ifopts, 0, sizeof(struct ifreq));
   strncpy(ifopts.ifr_name, argv[1], IFNAMSIZ-1);
   ioctl(sockfd, SIOCGIFFLAGS, &ifopts);
-
-  /* Get the index of the interface to send on */
-  //memset(&if_idx, 0, sizeof(struct ifreq));
-  //strncpy(if_idx.ifr_name, argv[1], IFNAMSIZ-1);
-  if (ioctl(sockfd, SIOCGIFINDEX, &ifopts) < 0)
-    perror("SIOCGIFINDEX");
-
-  /* Get the MAC address of the interface to send on */
-  memset(&if_mac, 0, sizeof(struct ifreq));
-  strncpy(if_mac.ifr_name, argv[1], IFNAMSIZ-1);
-  if (ioctl(sockfd, SIOCGIFHWADDR, &if_mac) < 0)
-    perror("SIOCGIFHWADDR");
-
   printf("Here 1\n");
   ifopts.ifr_flags |= IFF_PROMISC;
   ioctl(sockfd, SIOCSIFFLAGS, &ifopts);
@@ -185,8 +163,6 @@ int main(int argc, char **argv){
     exit(EXIT_FAILURE);
   }
   printf("Here 4\n");
-  SendILATrigger();
-  exit(0);
 
   if(!rvviVersionCheck(RVVI_API_VERSION)){
     printf("Bad RVVI_API_VERSION\n");
@@ -265,8 +241,7 @@ int main(int argc, char **argv){
 
   printf("Simulation halted due to mismatch\n");
 
-  //pclose(VivadoPipeFP);
-  printf("closed pipe to vivado\n");
+  pclose(VivadoPipeFP);
   close(sockfd);
 
   
@@ -316,81 +291,17 @@ int state_compare(int hart, uint64_t Minstret){
   }
 
   if (result == 0) {
-    SendILATrigger();
     sprintf(buf, "MISMATCH @ instruction # %ld\n", Minstret);
     idvMsgError(buf);
-    /* fputs("run_hw_ila [get_hw_ilas -of_objects [get_hw_devices xc7a100t_0] -filter {CELL_NAME=~\"u_ila_0\"}] -trigger_now\n", VivadoPipeFP); */
-    /* fputs("current_hw_ila_data [upload_hw_ila_data hw_ila_1]\n", VivadoPipeFP); */
-    /* fputs("display_hw_ila_data [current_hw_ila_data]\n", VivadoPipeFP); */
-    /* fputs("write_hw_ila_data -force my_hw_ila_data [current_hw_ila_data]\n", VivadoPipeFP); */
-    /* fflush(VivadoPipeFP); */
+    fputs("run_hw_ila [get_hw_ilas -of_objects [get_hw_devices xc7a100t_0] -filter {CELL_NAME=~\"u_ila_0\"}] -trigger_now\n", VivadoPipeFP);
+    fputs("current_hw_ila_data [upload_hw_ila_data hw_ila_1]\n", VivadoPipeFP);
+    fputs("display_hw_ila_data [current_hw_ila_data]\n", VivadoPipeFP);
+    fputs("write_hw_ila_data my_hw_ila_data [current_hw_ila_data]\n", VivadoPipeFP);
     return -1;
     //if (ON_MISMATCH_DUMP_STATE) dump_state(hart);
   }
   
 }
-
-void SendILATrigger(){
-  uint8_t buf[BUF_SIZ];
-  struct ether_header *eh = (struct ether_header *) buf;
-  int crc32;
-  struct sockaddr_ll socket_address;
-  
-  eh->ether_dhost[0] = DEST_MAC0;
-  eh->ether_dhost[1] = DEST_MAC1;
-  eh->ether_dhost[2] = DEST_MAC2;
-  eh->ether_dhost[3] = DEST_MAC3;
-  eh->ether_dhost[4] = DEST_MAC4;
-  eh->ether_dhost[5] = DEST_MAC5;
-  //c8:4b:d6:5f:89:25 is the real source mac for this laptop. I don't think it needs to be correct.
-  /* eh->ether_shost[0] = SRC_MAC0; */
-  /* eh->ether_shost[1] = SRC_MAC1; */
-  /* eh->ether_shost[2] = SRC_MAC2; */
-  /* eh->ether_shost[3] = SRC_MAC3; */
-  /* eh->ether_shost[4] = SRC_MAC4; */
-  /* eh->ether_shost[5] = SRC_MAC5; */
-  eh->ether_shost[0] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[0];
-  eh->ether_shost[1] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[1];
-  eh->ether_shost[2] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[2];
-  eh->ether_shost[3] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[3];
-  eh->ether_shost[4] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[4];
-  eh->ether_shost[5] = ((uint8_t *)&if_mac.ifr_hwaddr.sa_data)[5];
-  eh->ether_type = htons(ETH_P_IP);
-  //buf[12] = (ETHER_TYPE) >> 8;
-  //buf[13] = (ETHER_TYPE) && 0xFF; // *** does not work for some reason
-  buf[13] = 0;
-  buf[14] = 't';
-  buf[15] = 'r';
-  buf[16] = 'i';
-  buf[17] = 'g';
-  buf[18] = 'i';
-  buf[19] = 'n';
-  memset(&buf[20], 0, 40); // fill 36 bytes of 0
-  int i;
-  printf("buffer: ");
-  for(i = 0; i < 60; i++){
-    printf("%02x ", buf[i]);
-  }
-  printf("\n");
-  //if (sendto(sockfd, buf, 60, 0, NULL, 0)) {
-  printf("sockfd %x\n", sockfd);
-  /* Index of the network device */
-  socket_address.sll_ifindex = ifopts.ifr_ifindex;
-  /* Address length*/
-  socket_address.sll_halen = ETH_ALEN;
-  /* Destination MAC */
-  socket_address.sll_addr[0] = DEST_MAC0;
-  socket_address.sll_addr[1] = DEST_MAC1;
-  socket_address.sll_addr[2] = DEST_MAC2;
-  socket_address.sll_addr[3] = DEST_MAC3;
-  socket_address.sll_addr[4] = DEST_MAC4;
-  socket_address.sll_addr[5] = DEST_MAC5;
-  if (sendto(sockfd, buf, 60, MSG_DONTROUTE, (struct sockaddr*)&socket_address, sizeof(struct sockaddr_ll)) < 0) {
-    perror("ugh why???????????????????? sendto()");
-    exit(3);
-  }
-}
-
 
 void set_gpr(int hart, int reg, uint64_t value){
   rvviDutGprSet(hart, reg, value);
@@ -554,4 +465,3 @@ void BitShiftArray(uint8_t *dst, uint8_t *src, uint8_t ShiftAmount, int Length){
   byte1 = byte1 >> ShiftAmount;
   dst[Length-1] = byte1;
 }
-
