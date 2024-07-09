@@ -67,6 +67,10 @@
 #define DEFAULT_IF	"eno1"
 
 FILE *VivadoPipeFP;
+struct sockaddr_ll socket_address;
+uint8_t sendbuf[BUF_SIZ];
+struct ether_header *sendeh = (struct ether_header *) sendbuf;
+int tx_len = 0;
 
 typedef struct {
   uint64_t PC;
@@ -110,22 +114,22 @@ int main(int argc, char **argv){
   }
 
   // step 1 open a pipe to vivado
-  if (( VivadoPipeFP = popen("vivado -mode tcl", "w")) == NULL){
-    perror("popen");
-    exit(1);
-  }
-  fputs("open_hw_manager\n", VivadoPipeFP);
-  fputs("connect_hw_server -url localhost:3121\n", VivadoPipeFP);
-  fputs("current_hw_target [get_hw_targets */xilinx_tcf/Digilent/*]\n", VivadoPipeFP);
-  fputs("open_hw_target\n", VivadoPipeFP);
-  fputs("set_property PARAM.FREQUENCY 7500000 [get_hw_targets localhost:3121/xilinx_tcf/Digilent/210319B7CA87A]\n", VivadoPipeFP);
+  /* if (( VivadoPipeFP = popen("vivado -mode tcl", "w")) == NULL){ */
+  /*   perror("popen"); */
+  /*   exit(1); */
+  /* } */
+  /* fputs("open_hw_manager\n", VivadoPipeFP); */
+  /* fputs("connect_hw_server -url localhost:3121\n", VivadoPipeFP); */
+  /* fputs("current_hw_target [get_hw_targets *\/xilinx_tcf/Digilent/\*]\n", VivadoPipeFP); */
+  /* fputs("open_hw_target\n", VivadoPipeFP); */
+  /* fputs("set_property PARAM.FREQUENCY 7500000 [get_hw_targets localhost:3121/xilinx_tcf/Digilent/210319B7CA87A]\n", VivadoPipeFP); */
 
-  // *** bug these need to made relative paths.
-  fputs("set_property PROBES.FILE {/home/ross/repos/cvw/fpga/generator/WallyFPGA.runs/impl_1/fpgaTop.ltx} [get_hw_devices xc7a100t_0]\n", VivadoPipeFP);
-  fputs("set_property FULL_PROBES.FILE {/home/ross/repos/cvw/fpga/generator/WallyFPGA.runs/impl_1/fpgaTop.ltx} [get_hw_devices xc7a100t_0]\n", VivadoPipeFP);
-  fputs("set_property PROGRAM.FILE {/home/ross/repos/cvw/fpga/generator/WallyFPGA.runs/impl_1/fpgaTop.bit} [get_hw_devices xc7a100t_0]\n", VivadoPipeFP);
-  fputs("refresh_hw_device [lindex [get_hw_devices xc7a100t_0] 0]\n", VivadoPipeFP);
-  fputs("[get_hw_devices xc7a100t_0] -filter {CELL_NAME=~\"u_ila_0\"}]]\n", VivadoPipeFP);
+  /* // *** bug these need to made relative paths. */
+  /* fputs("set_property PROBES.FILE {/home/ross/repos/cvw/fpga/generator/WallyFPGA.runs/impl_1/fpgaTop.ltx} [get_hw_devices xc7a100t_0]\n", VivadoPipeFP); */
+  /* fputs("set_property FULL_PROBES.FILE {/home/ross/repos/cvw/fpga/generator/WallyFPGA.runs/impl_1/fpgaTop.ltx} [get_hw_devices xc7a100t_0]\n", VivadoPipeFP); */
+  /* fputs("set_property PROGRAM.FILE {/home/ross/repos/cvw/fpga/generator/WallyFPGA.runs/impl_1/fpgaTop.bit} [get_hw_devices xc7a100t_0]\n", VivadoPipeFP); */
+  /* fputs("refresh_hw_device [lindex [get_hw_devices xc7a100t_0] 0]\n", VivadoPipeFP); */
+  /* fputs("[get_hw_devices xc7a100t_0] -filter {CELL_NAME=~\"u_ila_0\"}]]\n", VivadoPipeFP); */
   
   int sockfd;
   uint8_t buf[BUF_SIZ];
@@ -147,6 +151,8 @@ int main(int argc, char **argv){
   ifopts.ifr_flags |= IFF_PROMISC;
   ioctl(sockfd, SIOCSIFFLAGS, &ifopts);
   printf("Here 2\n");
+  if (ioctl(sockfd, SIOCGIFINDEX, &ifopts) < 0)
+    perror("SIOCGIFINDEX");
   
   /* Allow the socket to be reused - incase connection is closed prematurely */
   if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &sockopt, sizeof sockopt) == -1) {
@@ -168,12 +174,57 @@ int main(int argc, char **argv){
     printf("Bad RVVI_API_VERSION\n");
   }
 
+  /* Construct the Ethernet header */
+  memset(sendbuf, 0, BUF_SIZ);
+  /* Ethernet header */
+  sendeh->ether_shost[0] = SRC_MAC0;
+  sendeh->ether_shost[1] = SRC_MAC1;
+  sendeh->ether_shost[2] = SRC_MAC2;
+  sendeh->ether_shost[3] = SRC_MAC3;
+  sendeh->ether_shost[4] = SRC_MAC4;
+  sendeh->ether_shost[5] = SRC_MAC5;
+  sendeh->ether_dhost[0] = DEST_MAC0;
+  sendeh->ether_dhost[1] = DEST_MAC1;
+  sendeh->ether_dhost[2] = DEST_MAC2;
+  sendeh->ether_dhost[3] = DEST_MAC3;
+  sendeh->ether_dhost[4] = DEST_MAC4;
+  sendeh->ether_dhost[5] = DEST_MAC5;
+  /* Ethertype field */
+  //eh->ether_type = htons(ETH_P_IP);
+  sendeh->ether_type = htons(ETHER_TYPE);
+  tx_len += sizeof(struct ether_header);
+  /* Packet data */
+  sendbuf[tx_len++] = 0xde;
+  sendbuf[tx_len++] = 0xad;
+  sendbuf[tx_len++] = 0xbe;
+  sendbuf[tx_len++] = 0xef;
+
   rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR, "riscv.ovpworld.org");
   rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME,"riscv");
   rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT, "RV64GC");
   rvviRefConfigSetInt(IDV_CONFIG_MODEL_ADDRESS_BUS_WIDTH, 56);
   rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 6);
 
+  /* Index of the network device */
+  socket_address.sll_ifindex = ifopts.ifr_ifindex;
+  /* Address length*/
+  socket_address.sll_halen = ETH_ALEN;
+  /* Destination MAC */
+  socket_address.sll_addr[0] = DEST_MAC0;
+  socket_address.sll_addr[1] = DEST_MAC1;
+  socket_address.sll_addr[2] = DEST_MAC2;
+  socket_address.sll_addr[3] = DEST_MAC3;
+  socket_address.sll_addr[4] = DEST_MAC4;
+  socket_address.sll_addr[5] = DEST_MAC5;
+
+  int i;
+  printf("buffer: ");
+  for(i=0;i<tx_len;i++){
+    printf("%02hhx ", sendbuf[i]);
+  }
+  printf("\n");
+  printf("sockfd %x\n", sockfd);
+  
   // eventually we want to put the elffiles here
   rvviRefInit(NULL);
   rvviRefPcSet(0, 0x1000);
@@ -241,7 +292,7 @@ int main(int argc, char **argv){
 
   printf("Simulation halted due to mismatch\n");
 
-  pclose(VivadoPipeFP);
+  //pclose(VivadoPipeFP);
   close(sockfd);
 
   
@@ -293,10 +344,10 @@ int state_compare(int hart, uint64_t Minstret){
   if (result == 0) {
     sprintf(buf, "MISMATCH @ instruction # %ld\n", Minstret);
     idvMsgError(buf);
-    fputs("run_hw_ila [get_hw_ilas -of_objects [get_hw_devices xc7a100t_0] -filter {CELL_NAME=~\"u_ila_0\"}] -trigger_now\n", VivadoPipeFP);
-    fputs("current_hw_ila_data [upload_hw_ila_data hw_ila_1]\n", VivadoPipeFP);
-    fputs("display_hw_ila_data [current_hw_ila_data]\n", VivadoPipeFP);
-    fputs("write_hw_ila_data my_hw_ila_data [current_hw_ila_data]\n", VivadoPipeFP);
+    /* fputs("run_hw_ila [get_hw_ilas -of_objects [get_hw_devices xc7a100t_0] -filter {CELL_NAME=~\"u_ila_0\"}] -trigger_now\n", VivadoPipeFP); */
+    /* fputs("current_hw_ila_data [upload_hw_ila_data hw_ila_1]\n", VivadoPipeFP); */
+    /* fputs("display_hw_ila_data [current_hw_ila_data]\n", VivadoPipeFP); */
+    /* fputs("write_hw_ila_data my_hw_ila_data [current_hw_ila_data]\n", VivadoPipeFP); */
     return -1;
     //if (ON_MISMATCH_DUMP_STATE) dump_state(hart);
   }
