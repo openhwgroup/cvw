@@ -27,8 +27,11 @@
 # and limitations under the License.
 ################################################
 
+import argparse
 from enum import Enum
 from math import log2
+import os
+import sys
 
 # Assembled SVF command format
 CMD_BITS = 3
@@ -38,17 +41,45 @@ DATA_BITS = 48
 # Derived constants
 MAXLEN = 2**LENGTH_BITS
 
+usage = f"""
+Converts SVF file to proprietary memfile for use with jtag_driver.sv\n
+
+Usage: svf_convert.py <source_directory> <output_directory>
+"""
+
 def main():
-    filepath = "testbench/jtag/test.svf"
-    dest_filepath = "testbench/jtag/test.memfile"
-    with open(filepath, "r") as file:
+    parser = argparse.ArgumentParser(description=usage, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument(dest="source_directory", help="The absolute path of the directory contianing SVF test files")
+    parser.add_argument(dest="output_directory", help="The absolute path of the directory where memfiles will be generated")
+    args = parser.parse_args()
+    srcdir = args.source_directory
+    workdir = args.output_directory
+
+    if not os.path.exists(srcdir):
+        print(f"Error: source directory '{srcdir}' does not exist")
+        sys.exit(1)
+    if not os.path.exists(workdir):
+        # os.makedirs(workdir, exist_ok=True)
+        print(f"Error: output directory '{workdir}' does not exist")
+        sys.exit(1)
+
+    for file in os.scandir(srcdir):
+        if file.is_file() and file.name.endswith(".svf"):
+            memfilename = file.name.replace(".svf", ".memfile")
+            memfilepath = os.path.join(workdir, memfilename)
+            convert(file.path, memfilepath)
+            print(f"Successfully converted {file.name} -> {memfilename}")
+
+
+def convert(input_path, output_path):
+    with open(input_path, "r") as file:
         data = file.read()
     data = data.lower()
 
     tokens = svf_tokenizer(data)
     tokens = remove_comments(tokens)
     cmds = parse_tokens(tokens)
-    with open(dest_filepath, "w") as file:
+    with open(output_path, "w") as file:
         for cmd in cmds:
             asm = assemble_svf(cmd)
             file.write(asm + '\n')
