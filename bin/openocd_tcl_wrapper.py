@@ -253,7 +253,7 @@ class SVF_Generator:
         self.print_svf(f"// {comment}")
 
     def spin(self, cycles):
-        self.print_svf(f"RUNTEST {cycles}")
+        self.print_svf(f"RUNTEST {cycles};")
 
     def instruction(self, instr):
         if self.INSTR != instr:
