@@ -290,16 +290,19 @@ typedef struct packed {
   int           LOGNORMSHIFTSZ;
   int           FMALEN;
 
-  // division constants
-  int           LOGR;
-  int           RK;
-  int           FPDUR;
-  int           DURLEN;
-  int           DIVb;
-  int           DIVBLEN;
+// division constants
+  int LOGR       ;
+  int RK         ;
+  int FPDUR      ;
+  int DURLEN     ;
+  int DIVb       ;
+  int DIVBLEN    ;
+// integer division/remainder constants
+  int INTDIVb    ;
 
-  // Debug Module
+// Debug Module
   logic         DEBUG_SUPPORTED;
+  
 } cvw_t;
 
 endpackage

@@ -93,7 +93,7 @@ synthDC/wallyplots/
 synthDC/runArchive
 synthDC/hdl
 sim/power.saif
-tests/fp/vectors/*.tv
+tests/fp/vectors
 synthDC/Summary.csv
 tests/custom/work
 tests/custom/*/*/*.list
@@ -237,3 +237,4 @@ tests/functcov
 tests/functcov/*
 tests/functcov/*/*
 sim/vcs/simprofile*
+sim/verilator/verilator.log
