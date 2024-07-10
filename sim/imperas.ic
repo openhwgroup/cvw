@@ -15,8 +15,8 @@
 
 # bit manipulation
 --override cpu/add_Extensions=B 
-#--override cpu/add_implicit_Extensions=B 
 --override cpu/bitmanip_version=1.0.0
+--override cpu/misa_B_Zba_Zbb_Zbs=T
 
 # More extensions
 --override cpu/Zcb=T
@@ -60,17 +60,11 @@
 --override cpu/misa_Extensions_mask=0x0 # MISA not writable
 --override cpu/Sstc=T
 
-# unsuccessfully attempt to add B extension (DH 12/21/23)
-#--override cpu/add_Extensions="B"
-#--override cpu/misa_Extensions=0x0014112F
-
 # Enable SVADU hardware update of A/D bits when menvcfg.ADUE=1
 --override cpu/Svadu=T
 #--override cpu/updatePTEA=F
 #--override cpu/updatePTED=F
 
-
-# THIS NEEDS FIXING to 16
 --override cpu/PMP_registers=16
 --override cpu/PMP_undefined=T
 
@@ -89,6 +83,7 @@
 #
 # SVxx Memory 0x0000000000 0x7FFFFFFFFF
 #
+--callcommand refRoot/cpu/setPMA -lo 0x0000000000 -hi 0xFFFFFFFFFFFFFFFFFF -attributes " ---a-- ---- " # All memory inaccessible unless defined otherwise
 --callcommand refRoot/cpu/setPMA -lo 0x0000000000 -hi 0x7FFFFFFFFF -attributes " ---a-- ---- " # INITIAL
 --callcommand refRoot/cpu/setPMA -lo 0x0000001000 -hi 0x0000001FFF -attributes " r-x-A- 1248 " # BOOTROM
 --callcommand refRoot/cpu/setPMA -lo 0x0000012100 -hi 0x000001211F -attributes " rw-aA- --48 " # SDC
@@ -97,7 +92,6 @@
 --callcommand refRoot/cpu/setPMA -lo 0x0010000000 -hi 0x0010000007 -attributes " rw-aA- 1--- " # UART0 error - 0x10000000 - 0x100000FF
 --callcommand refRoot/cpu/setPMA -lo 0x0010060000 -hi 0x00100600FF -attributes " rw-aA- --4- " # GPIO  error - 0x10069000 - 0x100600FF
 --callcommand refRoot/cpu/setPMA -lo 0x0010040000 -hi 0x0010040FFF -attributes " rw-aA- --4- " # SPI   error - 0x10040000 - 0x10040FFF
-#--callcommand refRoot/cpu/setPMA -lo 0x0080000000 -hi 0x008FFFFFFF -attributes " rwxaA- 1248 " # UNCORE_RAM
 --callcommand refRoot/cpu/setPMA -lo 0x0080000000 -hi 0x008FFFFFFF -attributes " rwx--- 1248 " # UNCORE_RAM
 
 # Enable the Imperas instruction coverage
@@ -106,8 +100,8 @@
 #-override  refRoot/cpu/cv/extensions=RV32I
 
 # Add Imperas simulator application instruction tracing
---verbose
-#--trace --tracechange --traceshowicount --tracemode -tracemem ASX --monitornetschange --traceafter 300000000
+# uncomment these to provide tracing
+#--verbose --trace --tracechange --traceshowicount --tracemode -tracemem ASX --monitornetschange # --traceafter 300000000
 --override cpu/debugflags=6 --override cpu/verbose=1
 --override cpu/show_c_prefix=T
 
