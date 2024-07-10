@@ -235,7 +235,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   assign ReqReady = (State != ACK);
 
   // BOZO: review DTM/DM interface
-  always_ff @(posedge clk) begin
+  always_ff @(posedge clk) begin : DM_state
     if (rst) begin
       State <= INACTIVE;
       NewAcState <= AC_IDLE;
@@ -323,7 +323,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   end
 
   // DMI response
-  always_ff @(posedge clk) begin
+  always_ff @(posedge clk) begin : DMI_response
     // RspData
     case(State)
       R_DATA : begin
@@ -356,7 +356,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   end
 
   // Command Error
-  always_ff @(posedge clk) begin
+  always_ff @(posedge clk) begin : command_Error
     if (dmreset)
       CmdErr <= `CMDERR_NONE;
     else
@@ -382,7 +382,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   // Abstract command engine
   // Due to length of the register scan chain,
   // abstract commands execute independently of other DM operations
-  always_ff @(posedge clk) begin
+  always_ff @(posedge clk) begin : abstrc_cmd_engine
     if (rst)
       AcState <= AC_IDLE;
     else
@@ -465,7 +465,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   // Load data from message registers into scan chain
   assign WriteScanReg = AcWrite & (MiscRegNo & (Cycle == ShiftCount) | ~MiscRegNo & (Cycle == 0));
   genvar i;
-  for (i=0; i<P.LLEN; i=i+1) begin
+  for (i=0; i<P.LLEN; i=i+1) begin : scanreg
     // ARMask is used as write enable for subword overwrites (basic mask would overwrite neighbors in the chain)
     if (i < 32)
       assign ScanNext[i] = WriteProgBuff ? ReqData[i] : WriteScanReg & ARMask[i] ? PackedDataReg[i] : ScanReg[i+1];

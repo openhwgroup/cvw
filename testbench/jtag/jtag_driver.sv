@@ -52,7 +52,7 @@ module jtag_driver(
   logic [DATA_BITS-1:0] ScanIn, ScanOut, Mask, ScanData;
 
   
-  always_ff @(posedge clk) begin
+  always_ff @(posedge clk, posedge reset) begin
     if (reset) begin
       IP <= 0;
       Idx <= 0;
