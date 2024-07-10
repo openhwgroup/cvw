@@ -465,7 +465,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   // Load data from message registers into scan chain
   assign WriteScanReg = AcWrite & (MiscRegNo & (Cycle == ShiftCount) | ~MiscRegNo & (Cycle == 0));
   genvar i;
-  for (i=0; i<P.LLEN; i=i+1) begin : scanreg
+  for (i=0; i<P.LLEN; i=i+1) begin : scanreg_gen
     // ARMask is used as write enable for subword overwrites (basic mask would overwrite neighbors in the chain)
     if (i < 32)
       assign ScanNext[i] = WriteProgBuff ? ReqData[i] : WriteScanReg & ARMask[i] ? PackedDataReg[i] : ScanReg[i+1];
