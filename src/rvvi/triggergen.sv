@@ -46,9 +46,9 @@ module triggergen import cvw::*; (
   logic 	    RvviAxiRvalidDelay;
   logic 	    Match, Overflow, Mismatch, Threshold;
    
-  assign mem[0] = 32'h0000_1654; // src mac [31:0]
-  assign mem[1] = 32'h6843_8F54; // dst mac [15:0], src mac [47:32]
-  assign mem[2] = 32'h4502_1111; // dst mac [47:16]
+  assign mem[0] = 32'h1111_6843; // dst mac [31:0]
+  assign mem[1] = 32'h1654_4502; // src mac [15:0], dst mac [47:32]
+  assign mem[2] = 32'h8f54_0000; // src mac [47:16]
   assign mem[3] = 32'h7274_005c; // "rt", ether type 005c
   assign mem[4] = 32'h6e69_6769; // "igin" (trigin)
    

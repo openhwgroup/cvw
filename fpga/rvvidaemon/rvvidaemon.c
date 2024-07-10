@@ -176,19 +176,32 @@ int main(int argc, char **argv){
 
   /* Construct the Ethernet header */
   memset(sendbuf, 0, BUF_SIZ);
+  sendbuf[0] = DEST_MAC0;
+  sendbuf[1] = DEST_MAC1;
+  sendbuf[2] = DEST_MAC2;
+  sendbuf[3] = DEST_MAC3;
+  sendbuf[4] = DEST_MAC4;
+  sendbuf[5] = DEST_MAC5;
+  sendbuf[6] = SRC_MAC0;
+  sendbuf[7] = SRC_MAC1;
+  sendbuf[8] = SRC_MAC2;
+  sendbuf[9] = SRC_MAC3;
+  sendbuf[10] = SRC_MAC4;
+  sendbuf[11] = SRC_MAC5;
+
   /* Ethernet header */
-  sendeh->ether_shost[0] = SRC_MAC0;
-  sendeh->ether_shost[1] = SRC_MAC1;
-  sendeh->ether_shost[2] = SRC_MAC2;
-  sendeh->ether_shost[3] = SRC_MAC3;
-  sendeh->ether_shost[4] = SRC_MAC4;
-  sendeh->ether_shost[5] = SRC_MAC5;
-  sendeh->ether_dhost[0] = DEST_MAC0;
-  sendeh->ether_dhost[1] = DEST_MAC1;
-  sendeh->ether_dhost[2] = DEST_MAC2;
-  sendeh->ether_dhost[3] = DEST_MAC3;
-  sendeh->ether_dhost[4] = DEST_MAC4;
-  sendeh->ether_dhost[5] = DEST_MAC5;
+  /* sendeh->ether_shost[0] = SRC_MAC0; */
+  /* sendeh->ether_shost[1] = SRC_MAC1; */
+  /* sendeh->ether_shost[2] = SRC_MAC2; */
+  /* sendeh->ether_shost[3] = SRC_MAC3; */
+  /* sendeh->ether_shost[4] = SRC_MAC4; */
+  /* sendeh->ether_shost[5] = SRC_MAC5; */
+  /* sendeh->ether_dhost[0] = DEST_MAC0; */
+  /* sendeh->ether_dhost[1] = DEST_MAC1; */
+  /* sendeh->ether_dhost[2] = DEST_MAC2; */
+  /* sendeh->ether_dhost[3] = DEST_MAC3; */
+  /* sendeh->ether_dhost[4] = DEST_MAC4; */
+  /* sendeh->ether_dhost[5] = DEST_MAC5; */
   /* Ethertype field */
   //eh->ether_type = htons(ETH_P_IP);
   sendeh->ether_type = htons(ETHER_TYPE);
