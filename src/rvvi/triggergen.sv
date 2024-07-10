@@ -45,7 +45,7 @@ module triggergen import cvw::*; (
   logic [3:0] 	    RvviAxiRstrbDelay;
   logic 	    RvviAxiRvalidDelay;
   logic 	    Match, Overflow, Mismatch, Threshold;
-(* mark_debug = "true" *)  logic 	    IlaTriggerOneCycle;
+  logic 	    IlaTriggerOneCycle;
    
   assign mem[0] = 32'h1111_6843; // dst mac [31:0]
   assign mem[1] = 32'h1654_4502; // src mac [15:0], dst mac [47:32]
@@ -99,11 +99,12 @@ module triggergen import cvw::*; (
   end
  -----/\----- EXCLUDED -----/\----- */
 
-(* mark_debug = "true" *)   logic [3:0] TriggerCount;
-(* mark_debug = "true" *)   logic       TriggerReset, TriggerEn;
-   counter #(4) triggercounter(clk, reset | TriggerReset, TriggerEn, TriggerCount);
-   assign TriggerReset = TriggerCount == 4'd10;
-   assign TriggerEn = IlaTriggerOneCycle | (TriggerCount != 4'd0 & TriggerCount < 4'd10);
-   assign IlaTrigger = TriggerEn;
+  // this is a bit hacky, but it works!
+  logic [3:0] TriggerCount;
+  logic       TriggerReset, TriggerEn;
+  counter #(4) triggercounter(clk, reset | TriggerReset, TriggerEn, TriggerCount);
+  assign TriggerReset = TriggerCount == 4'd10;
+  assign TriggerEn = IlaTriggerOneCycle | (TriggerCount != 4'd0 & TriggerCount < 4'd10);
+  assign IlaTrigger = TriggerEn;
 
 endmodule

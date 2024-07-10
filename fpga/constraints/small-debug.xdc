@@ -19,7 +19,7 @@ connect_debug_port u_ila_0/clk [get_nets CPUCLK]
 
 set_property port_width 32 [get_debug_ports u_ila_0/probe0]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe0]
-connect_debug_port u_ila_0/probe0 [get_nets [list {RvviAxiRdata[0]} {RvviAxiRdata[1]} {RvviAxiRdata[2]} {RvviAxiRdata[3]} {RvviAxiRdata[4]} {RvviAxiRdata[5]} {RvviAxiRdata[6]} {RvviAxiRdata[7]} {RvviAxiRdata[8]} {RvviAxiRdata[9]} {RvviAxiRdata[10]} {RvviAxiRdata[11]} {RvviAxiRdata[12]} {RvviAxiRdata[13]} {RvviAxiRdata[14]} {RvviAxiRdata[15]} {RvviAxiRdata[16]} {RvviAxiRdata[17]} {RvviAxiRdata[18]} {RvviAxiRdata[19]} {RvviAxiRdata[20]} {RvviAxiRdata[21]} {RvviAxiRdata[22]} {RvviAxiRdata[23]} {RvviAxiRdata[24]} {RvviAxiRdata[25]} {RvviAxiRdata[26]} {RvviAxiRdata[27]} {RvviAxiRdata[28]} {RvviAxiRdata[29]} {RvviAxiRdata[30]} {RvviAxiRdata[31]} ]]
+connect_debug_port u_ila_0/probe0 [get_nets [list {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][0]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][1]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][2]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][3]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][4]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][5]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][6]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][7]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][8]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][9]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][10]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][11]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][12]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][13]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][14]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][15]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][16]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][17]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][18]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][19]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][20]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][21]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][22]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][23]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][24]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][25]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][26]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][27]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][28]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][29]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][30]} {wallypipelinedsoc/core/priv.priv/csr/HPMCOUNTER_REGW[0][31]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe1]
@@ -90,26 +90,6 @@ create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe13]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe13]
 connect_debug_port u_ila_0/probe13 [get_nets [list {RvviAxiRvalid}]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe14]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe14]
-connect_debug_port u_ila_0/probe14 [get_nets [list {triggergen/IlaTriggerOneCycle}]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe15]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe15]
-connect_debug_port u_ila_0/probe15 [get_nets [list {triggergen/TriggerReset}]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe16]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe16]
-connect_debug_port u_ila_0/probe16 [get_nets [list {triggergen/TriggerEn}]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 4 [get_debug_ports u_ila_0/probe17]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe17]
-connect_debug_port u_ila_0/probe17 [get_nets [list {triggergen/TriggerCount[0]} {triggergen/TriggerCount[1]} {triggergen/TriggerCount[2]} {triggergen/TriggerCount[3]}]]
 
 
 # the debug hub has issues with the clocks from the mmcm so lets give up an connect to the 100Mhz input clock.
