@@ -1128,10 +1128,10 @@ module fpgaTop
 (* mark_debug = "true" *)  logic                                             RvviAxiWvalid;
 (* mark_debug = "true" *)  logic                                             RvviAxiWready;
 
-  logic [31:0] RvviAxiRdata;
+(* mark_debug = "true" *)  logic [31:0] RvviAxiRdata;
   logic [3:0] RvviAxiRstrb;
-  logic RvviAxiRlast;
-  logic RvviAxiRvalid;
+(* mark_debug = "true" *)  logic RvviAxiRlast;
+(* mark_debug = "true" *)  logic RvviAxiRvalid;
 (* mark_debug = "true" *)  logic IlaTrigger;
    
    
@@ -1144,8 +1144,9 @@ module fpgaTop
 
     eth_mac_mii_fifo #(.TARGET("XILINX"), .CLOCK_INPUT_STYLE("BUFG"), .AXIS_DATA_WIDTH(32), .TX_FIFO_DEPTH(1024)) ethernet(.rst(bus_struct_reset), .logic_clk(CPUCLK), .logic_rst(bus_struct_reset),
       .tx_axis_tdata(RvviAxiWdata), .tx_axis_tkeep(RvviAxiWstrb), .tx_axis_tvalid(RvviAxiWvalid), .tx_axis_tready(RvviAxiWready),
-      .tx_axis_tlast(RvviAxiWlast), .tx_axis_tuser('0), .rx_axis_tdata(), .rx_axis_tkeep(), .rx_axis_tvalid(), .rx_axis_tready(1'b1),
-      .rx_axis_tlast(), .rx_axis_tuser(),
+      .tx_axis_tlast(RvviAxiWlast), .tx_axis_tuser('0), .rx_axis_tdata(RvviAxiRdata),
+      .rx_axis_tkeep(RvviAxiRstrb), .rx_axis_tvalid(RvviAxiRvalid), .rx_axis_tready(1'b1),
+      .rx_axis_tlast(RvviAxiRlast), .rx_axis_tuser(),
 
       .mii_rx_clk(phy_rx_clk),
       .mii_rxd(phy_rxd),
