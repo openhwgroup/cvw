@@ -19,7 +19,7 @@ connect_debug_port u_ila_0/clk [get_nets CPUCLK]
 
 set_property port_width 32 [get_debug_ports u_ila_0/probe0]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe0]
-connect_debug_port u_ila_0/probe0 [get_nets [list {RvviAxiWdata[0]} {RvviAxiWdata[1]} {RvviAxiWdata[2]} {RvviAxiWdata[3]} {RvviAxiWdata[4]} {RvviAxiWdata[5]} {RvviAxiWdata[6]} {RvviAxiWdata[7]} {RvviAxiWdata[8]} {RvviAxiWdata[9]} {RvviAxiWdata[10]} {RvviAxiWdata[11]} {RvviAxiWdata[12]} {RvviAxiWdata[13]} {RvviAxiWdata[14]} {RvviAxiWdata[15]} {RvviAxiWdata[16]} {RvviAxiWdata[17]} {RvviAxiWdata[18]} {RvviAxiWdata[19]} {RvviAxiWdata[20]} {RvviAxiWdata[21]} {RvviAxiWdata[22]} {RvviAxiWdata[23]} {RvviAxiWdata[24]} {RvviAxiWdata[25]} {RvviAxiWdata[26]} {RvviAxiWdata[27]} {RvviAxiWdata[28]} {RvviAxiWdata[29]} {RvviAxiWdata[30]} {RvviAxiWdata[31]} ]]
+connect_debug_port u_ila_0/probe0 [get_nets [list {RvviAxiRdata[0]} {RvviAxiRdata[1]} {RvviAxiRdata[2]} {RvviAxiRdata[3]} {RvviAxiRdata[4]} {RvviAxiRdata[5]} {RvviAxiRdata[6]} {RvviAxiRdata[7]} {RvviAxiRdata[8]} {RvviAxiRdata[9]} {RvviAxiRdata[10]} {RvviAxiRdata[11]} {RvviAxiRdata[12]} {RvviAxiRdata[13]} {RvviAxiRdata[14]} {RvviAxiRdata[15]} {RvviAxiRdata[16]} {RvviAxiRdata[17]} {RvviAxiRdata[18]} {RvviAxiRdata[19]} {RvviAxiRdata[20]} {RvviAxiRdata[21]} {RvviAxiRdata[22]} {RvviAxiRdata[23]} {RvviAxiRdata[24]} {RvviAxiRdata[25]} {RvviAxiRdata[26]} {RvviAxiRdata[27]} {RvviAxiRdata[28]} {RvviAxiRdata[29]} {RvviAxiRdata[30]} {RvviAxiRdata[31]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe1]
@@ -76,6 +76,40 @@ set_property port_width 1 [get_debug_ports u_ila_0/probe10]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe10]
 connect_debug_port u_ila_0/probe10 [get_nets [list {RvviAxiWready}]]
 
+create_debug_port u_ila_0 probe
+set_property port_width 3 [get_debug_ports u_ila_0/probe11]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe11]
+connect_debug_port u_ila_0/probe11 [get_nets [list {triggergen/CurrState[0]} {triggergen/CurrState[1]} {triggergen/CurrState[2]}]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 1 [get_debug_ports u_ila_0/probe12]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe12]
+connect_debug_port u_ila_0/probe12 [get_nets [list {RvviAxiRlast}]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 1 [get_debug_ports u_ila_0/probe13]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe13]
+connect_debug_port u_ila_0/probe13 [get_nets [list {RvviAxiRvalid}]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 1 [get_debug_ports u_ila_0/probe14]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe14]
+connect_debug_port u_ila_0/probe14 [get_nets [list {triggergen/IlaTriggerOneCycle}]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 1 [get_debug_ports u_ila_0/probe15]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe15]
+connect_debug_port u_ila_0/probe15 [get_nets [list {triggergen/TriggerReset}]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 1 [get_debug_ports u_ila_0/probe16]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe16]
+connect_debug_port u_ila_0/probe16 [get_nets [list {triggergen/TriggerEn}]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 4 [get_debug_ports u_ila_0/probe17]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe17]
+connect_debug_port u_ila_0/probe17 [get_nets [list {triggergen/TriggerCount[0]} {triggergen/TriggerCount[1]} {triggergen/TriggerCount[2]} {triggergen/TriggerCount[3]}]]
 
 
 # the debug hub has issues with the clocks from the mmcm so lets give up an connect to the 100Mhz input clock.
