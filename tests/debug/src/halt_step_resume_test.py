@@ -28,14 +28,14 @@ def main():
         svf.reset_hart()
         svf.comment("Halt hart")
         svf.halt()
-        svf.comment("Write \"0x80000000\" to x8")
-        svf.write_data("X8", 0x80000000)
-        svf.comment("Write \"0xbadc0ffee0ddf00d\" to x9")
-        svf.write_data("X9", 0xbadc0ffee0ddf00d)
-        svf.comment("Write program buffer:")
-        svf.write_progbuf([0x00943023, 0x00840413, 0x00100073])
-        svf.comment("Execute Program Buffer")
-        svf.exec_progbuf()
+        svf.comment("Step")
+        svf.halt()
+        svf.comment("Idle for 50 cycles")
+        svf.spin(50)
+        svf.comment("Step")
+        svf.halt()
+        svf.comment("Resume")
+        svf.resume()
 
 
 
