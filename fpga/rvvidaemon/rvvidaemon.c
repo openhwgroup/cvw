@@ -316,7 +316,7 @@ int state_compare(int hart, uint64_t Minstret){
     result &= rvviRefInsBinCompare(hart);
     result &= rvviRefGprsCompare(hart);
     result &= rvviRefFprsCompare(hart);
-    //result &= rvviRefCsrCompare(hart);
+    result &= rvviRefCsrsCompare(hart);
   } else {
     result = 0;
   }
