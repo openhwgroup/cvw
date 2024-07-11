@@ -66,7 +66,6 @@
 //#define ETHER_TYPE	0x0000  // The type defined in packetizer.sv
 #define DEFAULT_IF	"eno1"
 
-FILE *VivadoPipeFP;
 struct sockaddr_ll socket_address;
 uint8_t sendbuf[BUF_SIZ];
 struct ether_header *sendeh = (struct ether_header *) sendbuf;
@@ -114,24 +113,6 @@ int main(int argc, char **argv){
     return -1;
   }
 
-  // step 1 open a pipe to vivado
-  /* if (( VivadoPipeFP = popen("vivado -mode tcl", "w")) == NULL){ */
-  /*   perror("popen"); */
-  /*   exit(1); */
-  /* } */
-  /* fputs("open_hw_manager\n", VivadoPipeFP); */
-  /* fputs("connect_hw_server -url localhost:3121\n", VivadoPipeFP); */
-  /* fputs("current_hw_target [get_hw_targets *\/xilinx_tcf/Digilent/\*]\n", VivadoPipeFP); */
-  /* fputs("open_hw_target\n", VivadoPipeFP); */
-  /* fputs("set_property PARAM.FREQUENCY 7500000 [get_hw_targets localhost:3121/xilinx_tcf/Digilent/210319B7CA87A]\n", VivadoPipeFP); */
-
-  /* // *** bug these need to made relative paths. */
-  /* fputs("set_property PROBES.FILE {/home/ross/repos/cvw/fpga/generator/WallyFPGA.runs/impl_1/fpgaTop.ltx} [get_hw_devices xc7a100t_0]\n", VivadoPipeFP); */
-  /* fputs("set_property FULL_PROBES.FILE {/home/ross/repos/cvw/fpga/generator/WallyFPGA.runs/impl_1/fpgaTop.ltx} [get_hw_devices xc7a100t_0]\n", VivadoPipeFP); */
-  /* fputs("set_property PROGRAM.FILE {/home/ross/repos/cvw/fpga/generator/WallyFPGA.runs/impl_1/fpgaTop.bit} [get_hw_devices xc7a100t_0]\n", VivadoPipeFP); */
-  /* fputs("refresh_hw_device [lindex [get_hw_devices xc7a100t_0] 0]\n", VivadoPipeFP); */
-  /* fputs("[get_hw_devices xc7a100t_0] -filter {CELL_NAME=~\"u_ila_0\"}]]\n", VivadoPipeFP); */
-  
   uint8_t buf[BUF_SIZ];
   int sockopt;
   struct ifreq ifopts;	/* set promiscuous mode */
@@ -189,21 +170,6 @@ int main(int argc, char **argv){
   sendbuf[10] = SRC_MAC4;
   sendbuf[11] = SRC_MAC5;
 
-  /* Ethernet header */
-  /* sendeh->ether_shost[0] = SRC_MAC0; */
-  /* sendeh->ether_shost[1] = SRC_MAC1; */
-  /* sendeh->ether_shost[2] = SRC_MAC2; */
-  /* sendeh->ether_shost[3] = SRC_MAC3; */
-  /* sendeh->ether_shost[4] = SRC_MAC4; */
-  /* sendeh->ether_shost[5] = SRC_MAC5; */
-  /* sendeh->ether_dhost[0] = DEST_MAC0; */
-  /* sendeh->ether_dhost[1] = DEST_MAC1; */
-  /* sendeh->ether_dhost[2] = DEST_MAC2; */
-  /* sendeh->ether_dhost[3] = DEST_MAC3; */
-  /* sendeh->ether_dhost[4] = DEST_MAC4; */
-  /* sendeh->ether_dhost[5] = DEST_MAC5; */
-  /* Ethertype field */
-  //eh->ether_type = htons(ETH_P_IP);
   sendeh->ether_type = htons(ETHER_TYPE);
   tx_len += sizeof(struct ether_header);
   /* Packet data */
@@ -307,7 +273,6 @@ int main(int argc, char **argv){
 
   printf("Simulation halted due to mismatch\n");
 
-  //pclose(VivadoPipeFP);
   close(sockfd);
 
   
@@ -366,12 +331,7 @@ int state_compare(int hart, uint64_t Minstret){
 
     sprintf(buf, "MISMATCH @ instruction # %ld\n", Minstret);
     idvMsgError(buf);
-    /* fputs("run_hw_ila [get_hw_ilas -of_objects [get_hw_devices xc7a100t_0] -filter {CELL_NAME=~\"u_ila_0\"}] -trigger_now\n", VivadoPipeFP); */
-    /* fputs("current_hw_ila_data [upload_hw_ila_data hw_ila_1]\n", VivadoPipeFP); */
-    /* fputs("display_hw_ila_data [current_hw_ila_data]\n", VivadoPipeFP); */
-    /* fputs("write_hw_ila_data my_hw_ila_data [current_hw_ila_data]\n", VivadoPipeFP); */
     return -1;
-    //if (ON_MISMATCH_DUMP_STATE) dump_state(hart);
   }
   
 }
