@@ -368,7 +368,7 @@ class SVF_Generator:
     def step(self):
         if not (self.DCSR >> 2) & 0x1:
             self.DCSR |= 0x4
-            self.write_dmi("DCSR", self.DCSR)
+            self.write_data("DCSR", self.DCSR)
         # Resume once
         self.write_dmi("0x10", "0x40000001")
         # Unset step bit

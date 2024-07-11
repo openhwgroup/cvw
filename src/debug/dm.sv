@@ -107,7 +107,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   enum logic [2:0] {AC_IDLE, AC_UPDATE, AC_SCAN, AC_CAPTURE, PROGBUFF_WRITE} AcState, NewAcState;
 
   logic dmreset;  // Sysreset or not DmActive
-  const logic [P.XLEN-`DMI_ADDR_WIDTH-1:0] UpperReqAddr = 0;  // concat with ReqAddr to make linter happer
+  const logic [P.XLEN-`DMI_ADDR_WIDTH-1:0] UpperReqAddr = 0;  // concat with ReqAddr to make linter happy
   logic ActivateReq;
   logic WriteDMControl;
   logic WriteDMControlBusy;

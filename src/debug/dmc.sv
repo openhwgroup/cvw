@@ -28,10 +28,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-// TODO:
-// Calculate correct cycle timing for step
-// Test progbuf
-
 module dmc (
   input  logic       clk, reset,
   input  logic       Step,

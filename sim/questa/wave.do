@@ -657,6 +657,26 @@ add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/WFITimeoutM
 add wave -noupdate -expand -group testbench /testbench/DCacheFlushStart
 add wave -noupdate /testbench/dut/core/lsu/hptw/hptw/HPTWLoadPageFault
 add wave -noupdate /testbench/dut/core/lsu/hptw/hptw/HPTWLoadPageFaultDelay
+add wave -noupdate -group DM /testbench/dut/dm/dm/DmActive
+add wave -noupdate -group DM /testbench/dut/dm/dm/ReqAddress
+add wave -noupdate -group DM /testbench/dut/dm/dm/ReqData
+add wave -noupdate -group DM /testbench/dut/dm/dm/ReqOp
+add wave -noupdate -group DM /testbench/dut/dm/dm/State
+add wave -noupdate -group DM /testbench/dut/dm/dm/AcState
+add wave -noupdate -group DM /testbench/dut/dm/dm/AllHaveReset
+add wave -noupdate -group DM /testbench/dut/dm/dm/AllRunning
+add wave -noupdate -group DM /testbench/dut/dm/dm/AllHalted
+add wave -noupdate -group DM /testbench/dut/dm/dm/Busy
+add wave -noupdate -group DM /testbench/dut/dm/dm/CmdErr
+add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/State
+add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/DebugMode
+add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/DebugCause
+add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/Step
+add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/DCall
+add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/DRet
+add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/ForceBreakPoint
+add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/ebreakM
+add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/DebugStall
 TreeUpdate [SetDefaultTree]
 WaveRestoreCursors {{Cursor 4} {6586 ns} 1} {{Cursor 4} {2112952 ns} 0} {{Cursor 3} {403021 ns} 1}
 quietly wave cursor active 2

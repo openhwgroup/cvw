@@ -313,7 +313,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   end
 
   // Mux between InstrRawFMain and Progbuf
-  if (P.DEBUG_SUPPORTED) begin
+  if (P.DEBUG_SUPPORTED) begin : progbufgen
     progbuf #(P) progbuf(.clk, .reset, .Addr(PCF[5:0]), .ProgBufInstrF, .ScanAddr(ProgBufAddr), .Scan(ProgBuffScanEn), .ScanIn(ProgBufScanIn));
     assign InstrRawF = SelProgBuf ? ProgBufInstrF : InstrRawFMain;
   end else begin

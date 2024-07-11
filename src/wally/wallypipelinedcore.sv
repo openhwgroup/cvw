@@ -323,7 +323,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .StallF, .StallD, .StallE, .StallM, .StallW,
     .FlushD, .FlushE, .FlushM, .FlushW);
 
-  if (P.DEBUG_SUPPORTED) begin
+  if (P.DEBUG_SUPPORTED) begin : dmc
     dmc debugcontrol(
       .clk, .reset,
       .Step, .ebreakM, .ebreakEn, .HaltReq, .ResumeReq, .HaltOnReset, .AckHaveReset,

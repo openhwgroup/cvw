@@ -29,11 +29,11 @@ def main():
         svf.comment("Halt hart")
         svf.halt()
         svf.comment("Step")
-        svf.halt()
+        svf.step()
         svf.comment("Idle for 50 cycles")
         svf.spin(50)
         svf.comment("Step")
-        svf.halt()
+        svf.step()
         svf.comment("Resume")
         svf.resume()
 
