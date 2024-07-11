@@ -660,7 +660,7 @@ add wave -noupdate /testbench/dut/core/lsu/hptw/hptw/HPTWLoadPageFaultDelay
 add wave -noupdate -group DM /testbench/dut/dm/dm/DmActive
 add wave -noupdate -group DM /testbench/dut/dm/dm/ReqAddress
 add wave -noupdate -group DM /testbench/dut/dm/dm/ReqData
-add wave -noupdate -group DM /testbench/dut/dm/dm/ReqOp
+add wave -noupdate -group DM /testbench/dut/dm/dm/ReqOP
 add wave -noupdate -group DM /testbench/dut/dm/dm/State
 add wave -noupdate -group DM /testbench/dut/dm/dm/AcState
 add wave -noupdate -group DM /testbench/dut/dm/dm/AllHaveReset
@@ -672,6 +672,9 @@ add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/State
 add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/DebugMode
 add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/DebugCause
 add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/Step
+add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/HaltReq
+add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/ResumeReq
+add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/ExecProgBuf
 add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/DCall
 add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/DRet
 add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/ForceBreakPoint

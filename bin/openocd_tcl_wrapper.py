@@ -137,6 +137,7 @@ class OpenOCD:
         dmstat = int(self.read_dmi("0x11"), 16)  # Check halted bit
         if not ((dmstat >> 8) & 0x3):
             raise Exception("Error: Hart failed to halt")
+        self.write_dmi("0x10", "0x1")  # Deassert HaltReq
 
     def resume(self):
         self.write_dmi("0x10", "0x40000001")  # Send resume command
@@ -334,7 +335,8 @@ class SVF_Generator:
         self.write_dmi("0x10", "0x5")
 
     def halt(self):
-        self.write_dmi(0x10, 0x80000001)  # Send halt command
+        self.write_dmi(0x10, 0x80000001)  # Set HaltReq
+        self.write_dmi(0x10, 0x1)  # Release HaltReq
         self.read_dmi(0x11, 0x300, 0x300)  # Check halted bit
 
     def resume(self):
