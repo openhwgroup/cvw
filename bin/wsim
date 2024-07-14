@@ -40,12 +40,19 @@ WALLY = os.environ.get('WALLY')
 
 if(os.path.isfile(args.elf)):
     ElfFile = "+ElfFile=" + os.path.abspath(args.elf)
-elif(args.testsuite.endswith('.elf') and os.path.isfile(args.testsuite)):
-     ElfFile = "+ElfFile=" + os.path.abspath(args.testsuite)
-     args.testsuite=args.testsuite.rsplit('/', 1)[1]
-else:
+elif (args.elf != ""):
     print("ELF file not found: " + args.elf)
     exit(1)
+
+if(args.testsuite.endswith('.elf')):
+    if (os.path.isfile(args.testsuite)):
+        ElfFile = "+ElfFile=" + os.path.abspath(args.testsuite)
+        args.testsuite=args.testsuite.rsplit('/', 1)[1]
+    else:
+        print("ELF file not found: " + args.testsuite)
+        exit(1)
+    
+
 
 # Validate arguments
 if (args.gui or args.coverage or args.fcov or args.lockstep):
