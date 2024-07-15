@@ -17,28 +17,27 @@ all: riscoftests memfiles coveragetests deriv
 
 wally-riscv-arch-test: wallyriscoftests memfiles
 
-QuestaCoverage: questa/cov/rv64gc_arch64i.ucdb 
-	#iter-elf.bash --cover --search ../tests/coverage
-	vcover merge -out questa/cov/cov.ucdb questa/cov/rv64gc_arch64i.ucdb questa/cov/rv64gc*.ucdb -logfile questa/cov/log
-#	vcover merge -out questa/cov/cov.ucdb questa/cov/rv64gc_arch64i.ucdb questa/cov/rv64gc*.ucdb questa/cov/buildroot_buildroot.ucdb riscv.ucdb -logfile questa/cov/log
-	vcover report -details questa/cov/cov.ucdb > questa/cov/rv64gc_coverage_details.rpt
-	vcover report questa/cov/cov.ucdb -details -instance=/core/ebu. > questa/cov/rv64gc_coverage_ebu.rpt
-	vcover report questa/cov/cov.ucdb -details -instance=/core/priv. > questa/cov/rv64gc_coverage_priv.rpt
-	vcover report questa/cov/cov.ucdb -details -instance=/core/ifu. > questa/cov/rv64gc_coverage_ifu.rpt
-	vcover report questa/cov/cov.ucdb -details -instance=/core/lsu. > questa/cov/rv64gc_coverage_lsu.rpt
-	vcover report questa/cov/cov.ucdb -details -instance=/core/fpu. > questa/cov/rv64gc_coverage_fpu.rpt
-	vcover report questa/cov/cov.ucdb -details -instance=/core/ieu. > questa/cov/rv64gc_coverage_ieu.rpt
-	vcover report questa/cov/cov.ucdb -below 100 -details -instance=/core/ebu. > questa/cov/rv64gc_uncovered_ebu.rpt
-	vcover report questa/cov/cov.ucdb -below 100 -details -instance=/core/priv. > questa/cov/rv64gc_uncovered_priv.rpt
-	vcover report questa/cov/cov.ucdb -below 100 -details -instance=/core/ifu. > questa/cov/rv64gc_uncovered_ifu.rpt
-	vcover report questa/cov/cov.ucdb -below 100 -details -instance=/core/lsu. > questa/cov/rv64gc_uncovered_lsu.rpt
-	vcover report questa/cov/cov.ucdb -below 100 -details -instance=/core/fpu. > questa/cov/rv64gc_uncovered_fpu.rpt
-	vcover report questa/cov/cov.ucdb -below 100 -details -instance=/core/ieu. > questa/cov/rv64gc_uncovered_ieu.rpt
-	vcover report -hierarchical questa/cov/cov.ucdb > questa/cov/rv64gc_coverage_hierarchical.rpt
-	vcover report -below 100 -hierarchical questa/cov/cov.ucdb > questa/cov/rv64gc_uncovered_hierarchical.rpt
-#	vcover report -below 100 questa/cov/cov.ucdb > questa/cov/rv64gc_coverage.rpt
-#	vcover report -recursive questa/cov/cov.ucdb > questa/cov/rv64gc_recursive.rpt
-	vcover report -details -threshH 100 -html questa/cov/cov.ucdb
+QuestaCodeCoverage: questa/ucdb/rv64gc_arch64i.ucdb 
+	vcover merge -out questa/ucdb/cov.ucdb questa/ucdb/rv64gc_arch64i.ucdb questa/ucdb/rv64gc*.ucdb -logfile questa/cov/log
+#	vcover merge -out questa/ucdb/cov.ucdb questa/ucdb/rv64gc_arch64i.ucdb questa/ucdb/rv64gc*.ucdb questa/ucdb/buildroot_buildroot.ucdb riscv.ucdb -logfile questa/cov/log
+	vcover report -details questa/ucdb/cov.ucdb > questa/cov/rv64gc_coverage_details.rpt
+	vcover report questa/ucdb/cov.ucdb -details -instance=/core/ebu. > questa/cov/rv64gc_coverage_ebu.rpt
+	vcover report questa/ucdb/cov.ucdb -details -instance=/core/priv. > questa/cov/rv64gc_coverage_priv.rpt
+	vcover report questa/ucdb/cov.ucdb -details -instance=/core/ifu. > questa/cov/rv64gc_coverage_ifu.rpt
+	vcover report questa/ucdb/cov.ucdb -details -instance=/core/lsu. > questa/cov/rv64gc_coverage_lsu.rpt
+	vcover report questa/ucdb/cov.ucdb -details -instance=/core/fpu. > questa/cov/rv64gc_coverage_fpu.rpt
+	vcover report questa/ucdb/cov.ucdb -details -instance=/core/ieu. > questa/cov/rv64gc_coverage_ieu.rpt
+	vcover report questa/ucdb/cov.ucdb -below 100 -details -instance=/core/ebu. > questa/cov/rv64gc_uncovered_ebu.rpt
+	vcover report questa/ucdb/cov.ucdb -below 100 -details -instance=/core/priv. > questa/cov/rv64gc_uncovered_priv.rpt
+	vcover report questa/ucdb/cov.ucdb -below 100 -details -instance=/core/ifu. > questa/cov/rv64gc_uncovered_ifu.rpt
+	vcover report questa/ucdb/cov.ucdb -below 100 -details -instance=/core/lsu. > questa/cov/rv64gc_uncovered_lsu.rpt
+	vcover report questa/ucdb/cov.ucdb -below 100 -details -instance=/core/fpu. > questa/cov/rv64gc_uncovered_fpu.rpt
+	vcover report questa/ucdb/cov.ucdb -below 100 -details -instance=/core/ieu. > questa/cov/rv64gc_uncovered_ieu.rpt
+	vcover report -hierarchical questa/ucdb/cov.ucdb > questa/cov/rv64gc_coverage_hierarchical.rpt
+	vcover report -below 100 -hierarchical questa/ucdb/cov.ucdb > questa/cov/rv64gc_uncovered_hierarchical.rpt
+#	vcover report -below 100 questa/ucdb/cov.ucdb > questa/cov/rv64gc_coverage.rpt
+#	vcover report -recursive questa/ucdb/cov.ucdb > questa/cov/rv64gc_recursive.rpt
+	vcover report -details -threshH 100 -html questa/ucdb/cov.ucdb
 
 allclean: clean all
 

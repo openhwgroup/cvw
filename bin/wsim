@@ -26,8 +26,8 @@ parser.add_argument("--elf", "-e", help="ELF File name; use if name does not end
 parser.add_argument("--sim", "-s", help="Simulator", choices=["questa", "verilator", "vcs"], default="questa")
 parser.add_argument("--tb", "-t", help="Testbench", choices=["testbench", "testbench_fp"], default="testbench")
 parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true")
-parser.add_argument("--coverage", "-c", help="Code & Functional Coverage", action="store_true")
-parser.add_argument("--fcov", "-f", help="Code & Functional Coverage", action="store_true")
+parser.add_argument("--ccov", "-c", help="Code Coverage", action="store_true")
+parser.add_argument("--fcov", "-f", help="Functional Coverage", action="store_true")
 parser.add_argument("--args", "-a", help="Optional arguments passed to simulator via $value$plusargs", default="")
 parser.add_argument("--vcd", "-v", help="Generate testbench.vcd", action="store_true")
 parser.add_argument("--lockstep", "-l", help="Run ImperasDV lock, step, and compare.", action="store_true")
@@ -55,7 +55,7 @@ if(args.testsuite.endswith('.elf') and args.elf == ""): # No --elf argument; che
 
 
 # Validate arguments
-if (args.gui or args.coverage or args.fcov or args.lockstep):
+if (args.gui or args.ccov or args.fcov or args.lockstep):
     if args.sim not in ["questa", "vcs"]:
         print("Option only supported for Questa and VCS")
         exit(1)
@@ -86,14 +86,14 @@ else:
 flags = suffix + " " + ImperasPlusArgs
 
 # other flags
-if (args.coverage):
-    flags += " --coverage"
+if (args.ccov):
+    flags += " --ccov"
 if (args.fcov):
     flags += " --fcov"
 
 #  create the output sub-directories.
 regressionDir = WALLY + '/sim/'
-for d in ["logs", "wkdir", "cov"]:
+for d in ["logs", "wkdir", "cov", "ucdb"]:
     try:
         os.mkdir(regressionDir+args.sim+"/"+d)
     except:

@@ -8,7 +8,7 @@
 #
 # Takes 1:10 to run RV64IC tests using gui
 
-# Usage: do wally-batch.do <config> <testcases> <testbench> [-coverage] [+acc] [any number of +value] [any number of -G VAR=VAL]
+# Usage: do wally-batch.do <config> <testcases> <testbench> [--ccov] [--fcov] [+acc] [any number of +value] [any number of -G VAR=VAL]
 # Example: do wally-batch.do rv64gc arch64i testbench
 
 # Use this wally-batch.do file to run this example.
@@ -40,7 +40,7 @@ vlib ${WKDIR}
 # Create directory for coverage data
 mkdir -p cov
 
-set coverage 0
+set ccov 0
 set CoverageVoptArg ""
 set CoverageVsimArg ""
 
@@ -104,9 +104,9 @@ if {$AccIndex >= 0} {
 }
 
 # if +coverage found set flag and remove from list
-set CoverageIndex [lsearch -exact $lst "--coverage"]
+set CoverageIndex [lsearch -exact $lst "--ccov"]
 if {$CoverageIndex >= 0} {
-    set coverage 1
+    set ccov 1
     set CoverageVoptArg "+cover=sbecf"
     set CoverageVsimArg "-coverage"
     set lst [lreplace $lst $CoverageIndex $CoverageIndex]
@@ -166,7 +166,7 @@ foreach otherArg $lst {
 
 if {$DEBUG > 0} {
     echo "GUI = $GUI"
-    echo "coverage = $coverage"
+    echo "ccov = $ccov"
     echo "lockstep = $lockstep"
     echo "FunctCoverage = $FunctCoverage"
     echo "remaining list = $lst"
@@ -215,14 +215,18 @@ if { ${GUI} } {
     }
 }
 
+if {$ccov || $FunctCoverage} {
+    set UCDB ${WALLY}/sim/questa/ucdb/${CFG}_${TESTSUITE}.ucdb
+    echo "Saving coverage to ${UCDB}"
+    coverage save -instance /testbench/dut/core ${UCDB}
+}
+
 run -all
 # power off -r /dut/core/*
 
-if {$coverage || $FunctCoverage} {
-    set UCDB ${WALLY}/sim/questa/cov/${CFG}_${TESTSUITE}.ucdb
-    echo "Saving coverage to ${UCDB}"
+# Code coverage exclusions
+if {$ccov} {
     do coverage-exclusions-rv64gc.do  # beware: this assumes testing the rv64gc configuration
-    coverage save -instance /testbench/dut/core ${UCDB}
 }
 
 # These aren't doing anything helpful
