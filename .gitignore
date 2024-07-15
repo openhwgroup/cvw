@@ -193,7 +193,7 @@ config/deriv
 docs/docker/buildroot-config-src
 docs/docker/testvector-generation
 sim/questa/cov
-sim/questa/covhtmlreport/
+sim/covhtmlreport/
 sim/questa/logs
 sim/questa/wkdir
 sim/questa/ucdb
