@@ -31,7 +31,9 @@
 			status = "okay";
 			compatible = "riscv";
 			riscv,isa = "rv64imafdcsu";
-                        riscv,isa-extensions = "imafdc", "sstc", "svinval", "svnapot", "svpbmt", "zba", "zbb", "zbc", "zbs", "zicbom", "zicbop", "zicbopz", "zicntr", "zicsr", "zifencei", "zihpm";
+			riscv,isa-base = "rv64i";
+            riscv,isa-extensions = "i", "m", "a", "f", "d", "c", "sstc", "svinval", "svnapot", "svpbmt", "zba", "zbb", "zbc", "zbs", "zicbom", "zicbop", "zicbopz", "zicntr", "zicsr", "zifencei", "zihpm";
+			riscv,cbom-block-size = <64>;
 			mmu-type = "riscv,sv48";
 
 			interrupt-controller {

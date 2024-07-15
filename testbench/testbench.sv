@@ -462,7 +462,7 @@ module testbench;
   integer StartIndex;
   integer EndIndex;
   integer BaseIndex;
-  integer memFile;
+  integer memFile, uncoreMemFile;
   integer readResult;
   if (P.SDC_SUPPORTED) begin
     always @(posedge clk) begin
@@ -505,8 +505,16 @@ module testbench;
           end
           readResult = $fread(dut.uncoregen.uncore.ram.ram.memory.ram.RAM, memFile);
           $fclose(memFile);
-        end else 
-          $readmemh(memfilename, dut.uncoregen.uncore.ram.ram.memory.ram.RAM);
+        end else begin
+          uncoreMemFile = $fopen(memfilename, "r");  // Is there a better way to test if a file exists?
+          if (uncoreMemFile == 0) begin
+            $display("Error: Could not open file %s", memfilename);
+            $finish;
+          end else begin
+            $fclose(uncoreMemFile);
+            $readmemh(memfilename, dut.uncoregen.uncore.ram.ram.memory.ram.RAM);
+          end
+        end
         if (TEST == "embench") $display("Read memfile %s", memfilename);
       end
       if (CopyRAM) begin
