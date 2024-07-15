@@ -130,7 +130,7 @@ if {$FunctCoverageIndex >= 0} {
     set FCdefineCOVER_RV64ZICSR "+define+COVER_RV64ZICSR"
     set FCdefineCOVER_RV64C "+define+COVER_RV64C"
     set FCdefineIDV_INCLUDE_TRACE2COV "+define+IDV_INCLUDE_TRACE2COV"
-    set FCTRACE2COV "+TRACE2COV_ENABLE=1 +VERBOSE=1"
+    set FCTRACE2COV "+TRACE2COV_ENABLE=1"
 
     set lst [lreplace $lst $FunctCoverageIndex $FunctCoverageIndex]
 }\
@@ -218,24 +218,24 @@ if { ${GUI} } {
     }
 }
 
-if {$ccov} {
-    set UCDB ${WALLY}/sim/questa/ucdb/${CFG}_${TESTSUITE}.ucdb
-    echo "Saving coverage to ${UCDB}"
-    coverage save -instance /testbench/dut/core ${UCDB}
-}
-
 if {$FunctCoverage} {
     set UCDB ${WALLY}/sim/questa/fcov_ucdb/${CFG}_${TESTSUITE}.ucdb
     coverage save -onexit ${UCDB}
 }
 
 run -all
+
+if {$ccov} {
+    set UCDB ${WALLY}/sim/questa/ucdb/${CFG}_${TESTSUITE}.ucdb
+    echo "Saving coverage to ${UCDB}"
+    do coverage-exclusions-rv64gc.do  # beware: this assumes testing the rv64gc configuration
+    coverage save -instance /testbench/dut/core ${UCDB}
+}
+
+
 # power off -r /dut/core/*
 
-# Code coverage exclusions
-if {$ccov} {
-    do coverage-exclusions-rv64gc.do  # beware: this assumes testing the rv64gc configuration
-}
+
 
 # These aren't doing anything helpful
 #profile report -calltree -file wally-calltree.rpt -cutoff 2
