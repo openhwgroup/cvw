@@ -1,5 +1,5 @@
 
-all: riscoftests memfiles coveragetests deriv 
+all: riscoftests memfiles coveragetests deriv jtag
 	# *** Build old tests/imperas-riscv-tests for now;
 	# Delete this part when the privileged tests transition over to tests/wally-riscv-arch-test
 	# DH: 2/27/22 temporarily commented out imperas-riscv-tests because license expired
@@ -63,6 +63,9 @@ coveragetests:
 
 deriv:
 	derivgen.pl
+
+jtag:
+	svf_convert.py ../tests/debug/src/ ../tests/debug/work/
 
 benchmarks:
 	$(MAKE) -C ../benchmarks/embench build
