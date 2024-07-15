@@ -197,6 +197,9 @@ sim/covhtmlreport/
 sim/questa/logs
 sim/questa/wkdir
 sim/questa/ucdb
+sim/questa/fcov 
+sim/questa/fcov_logs
+sim/questa/fcov_ucdb
 sim/verilator/logs
 sim/verilator/wkdir
 sim/vcs/logs
