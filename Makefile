@@ -107,7 +107,7 @@ combine_functcov:
 	grep "Total Coverage By Instance" ${SIM}/questa/functcov/functcov.ucdb.log
 
 remove_functcov_artifacts:
-	rm ${SIM}/questa/riscv.ucdb ${SIM}/questa/functcov.log covhtmlreport/ ${SIM}/questa/functcov_logs/ ${SIM}/questa/functcov_ucdbs/ ${SIM}/questa/functcov/ -rf
+	rm ${SIM}/questa/riscv.ucdb ${SIM}/questa/functcov.log ${SIM}/questa/covhtmlreport/ ${SIM}/questa/functcov_logs/ ${SIM}/questa/functcov_ucdbs/ ${SIM}/questa/functcov/ -rf
 
 collect_functcov: remove_functcov_artifacts riscvdv_functcov combine_functcov
 
