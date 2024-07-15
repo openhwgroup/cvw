@@ -196,10 +196,12 @@ sim/questa/cov
 sim/questa/covhtmlreport/
 sim/questa/logs
 sim/questa/wkdir
+sim/questa/ucdb
 sim/verilator/logs
 sim/verilator/wkdir
 sim/vcs/logs
 sim/vcs/wkdir
+sim/vcs/ucdb
 benchmarks/coremark/coremark_results.csv
 fpga/zsbl/OBJ/*
 fpga/zsbl/bin/*
