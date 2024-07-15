@@ -89,14 +89,14 @@ combine_functcov:
 	mkdir -p ${SIM}/questa/fcov
 	mkdir -p ${SIM}/questa/fcov_logs
 	cd ${SIM}/questa/fcov && rm -rf *
+	cd ${SIM}/questa/fcov_ucdb && rm -rf *
 	wsim rv64gc ${WALLY}/tests/functcov/rv64/I/WALLY-COV-add.elf --fcov > ${SIM}/questa/fcov_logs/add.log 2>&1
 
 	#run-elf-cov.bash --seed ${SIM}/questa/seed0.txt --verbose --coverdb ${SIM}/questa/fcov/add.ucdb --elf ${WALLY}/tests/functcov/rv64/I/WALLY-COV-add.elf								>> ${SIM}/questa/fcov_logs/add.log 2>&1
 	#run-elf-cov.bash --seed ${SIM}/questa/seed0.txt --verbose --coverdb ${SIM}/questa/fcov/and.ucdb --elf ${WALLY}/tests/functcov/rv64/I/WALLY-COV-and.elf								>> ${SIM}/questa/fcov_logs/add.log 2>&1
 	#run-elf-cov.bash --seed ${SIM}/questa/seed0.txt --verbose --coverdb ${SIM}/questa/fcov/ori.ucdb --elf ${WALLY}/tests/functcov/rv64/I/WALLY-COV-ori.elf								>> ${SIM}/questa/fcov_logs/add.log 2>&1
 
-	vcover merge ${SIM}/questa/fcov_ucdb/fcov.ucdb ${SIM}/questa/fcov_ucdb/*.ucdb ${SIM}/questa/fcov_ucdb/* -suppress 6854 -64
-	# vcover merge ${SIM}/questa/fcov/fcov.ucdb ${SIM}/questa/fcov_ucdbs/* -suppress 6854 -64
+	vcover merge ${SIM}/questa/fcov_ucdb/fcov.ucdb ${SIM}/questa/fcov_ucdb/*.ucdb -suppress 6854 -64
 	vcover report -details -html ${SIM}/questa/fcov_ucdb/fcov.ucdb
 	vcover report ${SIM}/questa/fcov_ucdb/fcov.ucdb -details -cvg > ${SIM}/questa/fcov/fcov.log
 	vcover report ${SIM}/questa/fcov_ucdb/fcov.ucdb -testdetails -cvg > ${SIM}/questa/fcov/fcov.testdetails.log
