@@ -48,6 +48,10 @@ def run_test_case(elf):
     if search_log_for_mismatches(logfile):
         print(f"{bcolors.OKGREEN}%s: Success{bcolors.ENDC}" % (cmd))
         return 0
+    elif("WALLY-cbom-01" in elf):
+        # Remove this when CBO instructions are modeled in ImperasDV
+        print(f"{bcolors.OKCYAN}%s: Expected mismatch because ImperasDV does not yet model cache for CBO instructions {bcolors.ENDC}" % (cmd))
+        return 0
     else:
         print(f"{bcolors.FAIL}%s: Failures detected in output{bcolors.ENDC}" % (cmd))
         print("  Check %s" % logfile)
