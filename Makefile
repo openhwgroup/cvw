@@ -91,9 +91,11 @@ combine_functcov:
 	mkdir -p ${SIM}/questa/functcov
 	mkdir -p ${SIM}/questa/functcov_logs
 	cd ${SIM}/questa/functcov && rm -rf *
-	run-elf-cov.bash --seed ${SIM}/questa/seed0.txt --verbose --coverdb ${SIM}/questa/functcov/add.ucdb --elf ${WALLY}/tests/functcov/rv64/I/WALLY-COV-add.elf								>> ${SIM}/questa/functcov_logs/add.log 2>&1
-	run-elf-cov.bash --seed ${SIM}/questa/seed0.txt --verbose --coverdb ${SIM}/questa/functcov/and.ucdb --elf ${WALLY}/tests/functcov/rv64/I/WALLY-COV-and.elf								>> ${SIM}/questa/functcov_logs/add.log 2>&1
-	run-elf-cov.bash --seed ${SIM}/questa/seed0.txt --verbose --coverdb ${SIM}/questa/functcov/ori.ucdb --elf ${WALLY}/tests/functcov/rv64/I/WALLY-COV-ori.elf								>> ${SIM}/questa/functcov_logs/add.log 2>&1
+	wsim rv64gc ${WALLY}/tests/functcov/rv64/I/WALLY-COV-add.elf > ${SIM}/questa/functcov_logs/add.log 2>&1
+
+	#run-elf-cov.bash --seed ${SIM}/questa/seed0.txt --verbose --coverdb ${SIM}/questa/functcov/add.ucdb --elf ${WALLY}/tests/functcov/rv64/I/WALLY-COV-add.elf								>> ${SIM}/questa/functcov_logs/add.log 2>&1
+	#run-elf-cov.bash --seed ${SIM}/questa/seed0.txt --verbose --coverdb ${SIM}/questa/functcov/and.ucdb --elf ${WALLY}/tests/functcov/rv64/I/WALLY-COV-and.elf								>> ${SIM}/questa/functcov_logs/add.log 2>&1
+	#run-elf-cov.bash --seed ${SIM}/questa/seed0.txt --verbose --coverdb ${SIM}/questa/functcov/ori.ucdb --elf ${WALLY}/tests/functcov/rv64/I/WALLY-COV-ori.elf								>> ${SIM}/questa/functcov_logs/add.log 2>&1
 
 	vcover merge ${SIM}/questa/functcov/functcov.ucdb ${SIM}/questa/functcov/*.ucdb ${SIM}/questa/functcov_ucdbs/* -suppress 6854 -64
 	# vcover merge ${SIM}/questa/functcov/functcov.ucdb ${SIM}/questa/functcov_ucdbs/* -suppress 6854 -64
