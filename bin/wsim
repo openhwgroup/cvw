@@ -93,7 +93,7 @@ if (args.fcov):
 
 #  create the output sub-directories.
 regressionDir = WALLY + '/sim/'
-for d in ["logs", "wkdir", "cov", "ucdb"]:
+for d in ["logs", "wkdir", "cov", "ucdb", "fcov", "fcov_ucdb"]:
     try:
         os.mkdir(regressionDir+args.sim+"/"+d)
     except:
