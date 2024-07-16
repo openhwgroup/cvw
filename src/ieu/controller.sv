@@ -56,7 +56,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic [2:0]  Funct3E,                 // Instruction's funct3 field
   output logic [6:0]  Funct7E,                 // Instruction's funct7 field
   output logic        IntDivE,                 // Integer divide
-  output logic        W64E,                    // RV64 W-type operation
+  output logic        W64E, UW64E,             // RV64 W/.uw-type operation
   output logic        SubArithE,               // Subtraction or arithmetic shift
   output logic        JumpE,                   // jump instruction
   output logic        BranchE,                 // Branch instruction
@@ -158,6 +158,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        MatchDE;                        // Match between a source register in Decode stage and destination register in Execute stage
   logic        FCvtIntStallD, MDUStallD, CSRRdStallD; // Stall due to conversion, load, multiply/divide, CSR read 
   logic        FunctCZeroD;                    // Funct7 and Funct3 indicate czero.* (not including Op check)
+  logic        BUW64D;                         // Indiciates if it is a .uw type B instruction in Decode Stage
   
   // Extract fields
   assign OpD     = InstrD[6:0];
@@ -326,7 +327,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     logic BALUSrcBD;                      // BMU alu src select signal
 
     bmuctrl #(P) bmuctrl(.clk, .reset, .InstrD, .ALUOpD,
-      .BRegWriteD, .BALUSrcBD, .BW64D, .BSubArithD, .IllegalBitmanipInstrD, .StallE, .FlushE, 
+      .BRegWriteD, .BALUSrcBD, .BW64D, .BUW64D, .BSubArithD, .IllegalBitmanipInstrD, .StallE, .FlushE, 
       .ALUSelectD(PreALUSelectD), .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE);
     if (P.ZBA_SUPPORTED) begin
       // ALU Decoding is more comprehensive when ZBA is supported. slt and slti conflicts with sh1add, sh1add.uw
@@ -350,6 +351,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign W64D = BaseW64D;
     assign ALUSrcBD = BaseALUSrcBD;
     assign SubArithD = BaseSubArithD; // TRUE If B-type or R-type instruction involves inverted operand
+    assign BUW64D = 1'b0; // no .uw instructions
 
     // tie off unused bit manipulation signals
     assign BSelectE = 4'b0000;
@@ -417,9 +419,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(1)  controlregD(clk, reset, FlushD, ~StallD, 1'b1, InstrValidD);
 
   // Execute stage pipeline control register and logic
-  flopenrc #(44) controlregE(clk, reset, FlushE, ~StallE,
-                           {ALUSelectD, RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, Funct7D, W64D, SubArithD, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, CMOpD, IFUPrefetchD, LSUPrefetchD, CZeroD, InstrValidD},
-                           {ALUSelectE, IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, Funct7E, W64E, SubArithE, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, CMOpE, IFUPrefetchE, LSUPrefetchE, CZeroE, InstrValidE});
+  flopenrc #(45) controlregE(clk, reset, FlushE, ~StallE,
+                           {ALUSelectD, RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, Funct7D, W64D, BUW64D, SubArithD, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, CMOpD, IFUPrefetchD, LSUPrefetchD, CZeroD, InstrValidD},
+                           {ALUSelectE, IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, Funct7E, W64E, UW64E, SubArithE, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, CMOpE, IFUPrefetchE, LSUPrefetchE, CZeroE, InstrValidE});
   flopenrc #(5)  Rs1EReg(clk, reset, FlushE, ~StallE, Rs1D, Rs1E);
   flopenrc #(5)  Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
   flopenrc #(5)  RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);

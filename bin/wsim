@@ -47,7 +47,8 @@ elif (args.elf != ""):
 if(args.testsuite.endswith('.elf') and args.elf == ""): # No --elf argument; check if testsuite has a .elf extension and use that instead
     if (os.path.isfile(args.testsuite)):
         ElfFile = "+ElfFile=" + os.path.abspath(args.testsuite)
-        args.testsuite=args.testsuite.rsplit('/', 1)[1]
+        if ('/' in args.testsuite):
+            args.testsuite=args.testsuite.rsplit('/', 1)[1] # strip off path if present
     else:
         print("ELF file not found: " + args.testsuite)
         exit(1)
