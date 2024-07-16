@@ -30,6 +30,8 @@
 
 module dmc (
   input  logic       clk, reset,
+  input  logic       StallD, StallE, StallM,
+  input  logic       FlushD, FlushE, FlushM,
   input  logic       Step,
   input  logic       ebreakM,      // ebreak instruction
   input  logic       ebreakEn,     // DCSR: enter debug mode on ebreak
@@ -51,10 +53,9 @@ module dmc (
 );
   `include "debug.vh"
 
-  enum logic [1:0] {RUNNING, EXECPROGBUF, HALTED, STEP} State;
+  logic ForceEbreakD, ForceEbreakE, ForceEbreakM;
 
-  localparam E2M_CYCLE_COUNT = 4;
-  logic [$clog2(E2M_CYCLE_COUNT+1)-1:0] Counter;
+  enum logic [1:0] {RUNNING, EXECPROGBUF, HALTED, STEP} State;
 
   always_ff @(posedge clk) begin
     if (reset)
@@ -63,12 +64,12 @@ module dmc (
       HaveReset <= 0;
   end
 
-  assign ForceBreakPoint = (State == RUNNING) & HaltReq | (State == STEP) & ~|Counter;
+  assign ForceBreakPoint = (State == RUNNING) & HaltReq;
 
   assign DebugMode = (State != RUNNING);
   assign DebugStall = (State == HALTED);
 
-  assign DCall = ((State == RUNNING) | (State == EXECPROGBUF)) & ((ebreakM & ebreakEn) | ForceBreakPoint);
+  assign DCall = ((State == RUNNING) | (State == EXECPROGBUF)) & ((ebreakM & ebreakEn) | ForceBreakPoint) | ForceEbreakM;
   assign DRet = (State == HALTED) & (ResumeReq | ExecProgBuf);
 
   always_ff @(posedge clk) begin
@@ -98,7 +99,6 @@ module dmc (
         HALTED : begin
           if (ResumeReq) begin
             if (Step) begin
-              Counter <= E2M_CYCLE_COUNT;
               State <= STEP;
             end else begin
               State <= RUNNING;
@@ -111,14 +111,15 @@ module dmc (
         end
 
         STEP : begin
-          if (~|Counter) begin
-            DebugCause <= `CAUSE_STEP;
+          if (ForceEbreakM)
             State <= HALTED;
-          end else
-            Counter <= Counter - 1; // TODO: sync unstall bit in pipe instead of counting cycles
         end
         default: ; // empty defualt case to make the linter happy
       endcase
     end
   end
+
+  flopenrc #(1) forceebreakD (.clk, .reset, .clear(FlushD), .en(~StallD), .d((State == HALTED) & ResumeReq & Step), .q(ForceEbreakD));
+  flopenrc #(1) forceebreakE (.clk, .reset, .clear(FlushE), .en(~StallE), .d(ForceEbreakD), .q(ForceEbreakE));
+  flopenrc #(1) forceebreakM (.clk, .reset, .clear(FlushM), .en(~StallM), .d(ForceEbreakE), .q(ForceEbreakM));
 endmodule
