@@ -37,6 +37,12 @@ jobs:
       - uses: actions/checkout@v4
       - name: install
         run: sudo ./bin/wally-tool-chain-install.sh
+      - name: setup
+        run: source setup.sh
+      - name: make tests
+        run: make
+      - name: regresssion
+        run: regression-wally
   rhel_family_install:
     name: Test installation on ${{ matrix.os }}
     runs-on: ubuntu-latest
@@ -62,3 +68,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: install
         run: ./bin/wally-tool-chain-install.sh
+      - name: setup
+        run: source setup.sh
+      - name: make tests
+        run: make
+      - name: regresssion
+        run: regression-wally
