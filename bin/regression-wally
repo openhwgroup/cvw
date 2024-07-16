@@ -320,7 +320,7 @@ coveragesim = "questa"  # Questa is required for code/functional coverage
 #defaultsim = "questa"   # Default simulator for all other tests; change to Verilator when flow is ready
 defaultsim = "verilator"   # Default simulator for all other tests
 
-coverage = '--coverage' in sys.argv
+ccov = '--ccov' in sys.argv
 fp = '--fp' in sys.argv
 nightly = '--nightly' in sys.argv
 testfloat = '--testfloat' in sys.argv
@@ -334,8 +334,8 @@ else:
     nightMode = ""
     sims = [defaultsim]
 
-if (coverage):  # only run RV64GC tests in coverage mode
-    coverStr = '--coverage'
+if (ccov):  # only run RV64GC tests in coverage mode
+    coverStr = '--ccov'
 else:
    coverStr = ''
 
@@ -357,7 +357,7 @@ if (buildroot):
     # addTests(tests_buildrootboot, defaultsim) # non-lockstep with Verilator runs in about 2 hours
     addTests(tests_buildrootbootlockstep, "questa") # lockstep with Questa and ImperasDV runs overnight
 
-if (coverage):  # only run RV64GC tests on Questa in coverage mode
+if (ccov):  # only run RV64GC tests on Questa in code coverage mode
     addTests(tests64gc_nofp, "questa")
     if (fp):
         addTests(tests64gc_fp, "questa")
@@ -385,7 +385,7 @@ if (nightly):
     tc = TestCase(
             name="lockstep_wally-riscv-arch-test",
             variant="rv64gc",
-            cmd="iterelf " + WALLY + "/tests/riscof/work/wally-riscv-arch-test/rv64i_m/privilege > " + sim_log,
+            cmd="iterelf " + WALLY + "/tests/riscof/work/wally-riscv-arch-test/rv64i_m > " + sim_log,
             grepstr="SUCCESS! All tests ran without failures",
             grepfile = sim_log)
     configs.append(tc)
@@ -393,7 +393,7 @@ if (nightly):
 # testfloat tests
 if (testfloat): # for testfloat alone, just run testfloat tests
     configs = []
-if (testfloat or nightly): # for nightly, run testfloat along with othres
+if (testfloat or nightly): # for nightly, run testfloat along with others
     testfloatsim = "questa" # change to Verilator when Issue #707 about testfloat not running Verilator is resolved
     testfloatconfigs = ["fdqh_ieee_rv64gc", "fdq_ieee_rv64gc", "fdh_ieee_rv64gc", "fd_ieee_rv64gc", "fh_ieee_rv64gc", "f_ieee_rv64gc", "fdqh_ieee_rv32gc", "f_ieee_rv32gc"]
     for config in testfloatconfigs:
@@ -458,7 +458,7 @@ if (testfloat or nightly): # for nightly, run testfloat along with othres
 
 def main():
     """Run the tests and count the failures"""
-    global configs, coverage
+    global configs, ccov
     os.chdir(regressionDir)
     dirs = ["questa/logs", "questa/wkdir", "verilator/logs", "verilator/wkdir", "vcs/logs", "vcs/wkdir"]
     for d in dirs: 
@@ -472,7 +472,7 @@ def main():
         os.chdir(regressionDir)
         os.system('./make-tests.sh | tee ./logs/make-tests.log')
 
-    elif '--coverage' in sys.argv:
+    elif '--ccov' in sys.argv:
         TIMEOUT_DUR = 20*60 # seconds
         os.system('rm -f questa/cov/*.ucdb')
     elif '--nightly' in sys.argv:
@@ -497,8 +497,8 @@ def main():
              print(f"{bcolors.FAIL}%s_%s: Timeout - runtime exceeded %d seconds{bcolors.ENDC}" % (config.variant, config.name, TIMEOUT_DUR))
 
     # Coverage report
-    if coverage:
-       os.system('make QuestaCoverage')
+    if ccov:
+       os.system('make QuestaCodeCoverage')
     # Count the number of failures
     if num_fail:
         print(f"{bcolors.FAIL}Regression failed with %s failed configurations{bcolors.ENDC}" % num_fail)
