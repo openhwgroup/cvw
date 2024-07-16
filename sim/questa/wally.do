@@ -58,7 +58,7 @@ set FCdefineCOVER_RV64ZICSR ""
 set FCdefineCOVER_RV64C ""
 set FCdefineIDV_INCLUDE_TRACE2COV ""
 set FCTRACE2COV ""
-
+set FCdefineIDV_TRACE2COV ""
 set lockstep 0
 # ok this is annoying. vlog, vopt, and vsim are very picky about how arguments are passed.
 # unforunately it won't allow these to be grouped as one argument per command so they are broken
@@ -131,7 +131,7 @@ if {$FunctCoverageIndex >= 0} {
     set FCdefineCOVER_RV64C "+define+COVER_RV64C"
     set FCdefineIDV_INCLUDE_TRACE2COV "+define+IDV_INCLUDE_TRACE2COV"
     set FCTRACE2COV "+TRACE2COV_ENABLE=1"
-
+    set FCdefineIDV_TRACE2COV "+IDV_TRACE2COV=1"
     set lst [lreplace $lst $FunctCoverageIndex $FunctCoverageIndex]
 }\
  
@@ -196,7 +196,7 @@ set temp3 [lindex $PlusArgs 3]
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
 
-vlog -lint -work ${WKDIR}  +incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared ${lockstepvoptstring} ${FCdefineIDV_INCLUDE_TRACE2COV} ${FCdefineINCLUDE_TRACE2COV} ${ImperasPubInc} ${ImperasPrivInc} ${rvviFiles} ${idvFiles}  ${FCdefineCOVER_BASE_RV64I} ${FCdefineCOVER_LEVEL_DV_PR_EXT} ${FCdefineCOVER_RV64I} ${FCdefineCOVER_RV64M} ${FCdefineCOVER_RV64A} ${FCdefineCOVER_RV64F} ${FCdefineCOVER_RV64D} ${FCdefineCOVER_RV64ZICSR} ${FCdefineCOVER_RV64C}  ${riscvISACOVsrc} ${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv  ${SRC}/*/*.sv ${SRC}/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
+vlog -lint -work ${WKDIR}  +incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared ${lockstepvoptstring} ${FCdefineIDV_INCLUDE_TRACE2COV} ${FCdefineINCLUDE_TRACE2COV} ${ImperasPubInc} ${ImperasPrivInc} ${rvviFiles} ${FCdefineCOVER_BASE_RV64I} ${FCdefineCOVER_LEVEL_DV_PR_EXT} ${FCdefineCOVER_RV64I} ${FCdefineCOVER_RV64M} ${FCdefineCOVER_RV64A} ${FCdefineCOVER_RV64F} ${FCdefineCOVER_RV64D} ${FCdefineCOVER_RV64ZICSR} ${FCdefineCOVER_RV64C}  ${idvFiles}   ${riscvISACOVsrc} ${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv  ${SRC}/*/*.sv ${SRC}/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
@@ -204,7 +204,7 @@ vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} ${ParamArgs}
 
 #vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${PlusArgs} -fatal 7 ${SVLib} ${SVLibPath} ${OtherFlags} +TRACE2COV_ENABLE=1 -suppress 3829 ${CoverageVsimArg}
 #vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${PlusArgs} -fatal 7 ${SVLib} ${SVLibPath} +IDV_TRACE2COV=1 +TRACE2COV_ENABLE=1 -suppress 3829 ${CoverageVsimArg}
-vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} $temp0 $temp1 $temp2 $temp3 -fatal 7 ${SVLib} ${SVLibPath} ${OtherFlags} ${FCTRACE2COV} -suppress 3829 ${CoverageVsimArg}
+vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} $temp0 $temp1 $temp2 $temp3 -fatal 7 ${SVLib} ${SVLibPath} ${OtherFlags} ${FCTRACE2COV} ${FCdefineIDV_TRACE2COV} -suppress 3829 ${CoverageVsimArg}
 
 #    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
 # power add generates the logging necessary for said generation.
