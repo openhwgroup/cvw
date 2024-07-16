@@ -16,6 +16,7 @@ jobs:
         run: |
               pwd
               ls
+              mkdir /opt/riscv
               source setup.sh
               echo $PATH
   rhel_family_install:
@@ -34,5 +35,6 @@ jobs:
         run: |
               pwd
               ls
+              mkdir /opt/riscv
               source setup.sh
               echo $PATH
