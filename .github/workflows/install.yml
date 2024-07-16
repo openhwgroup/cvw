@@ -35,6 +35,8 @@ jobs:
               sudo apt-get clean &> /dev/null
               df -h
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: install
         run: sudo ./bin/wally-tool-chain-install.sh
       - name: setup
@@ -54,8 +56,6 @@ jobs:
       matrix:
         os: ["rockylinux:8", "almalinux:8"]
     steps:
-      - name: check distro
-        run: cat /etc/os-release
       - run: dnf install -y sudo
       - name: free up storage
         run: |
@@ -66,6 +66,8 @@ jobs:
               sudo rm -rf /host/opt/hostedtoolcache/CodeQL &> /dev/null
               df -h
       - uses: actions/checkout@v4
+        with:
+            submodules: recursive
       - name: install
         run: ./bin/wally-tool-chain-install.sh
       - name: setup
