@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: rockylinux:8
-      options: --privileged --mount type=bind,source=/,target=/
+      options: --privileged --mount type=bind,source=/,target=/host
     steps:
       - name: check distro
         run: cat /etc/os-release
@@ -16,7 +16,7 @@ jobs:
       - name: free up storage
         run: |
               df -h
-              sudo rm -rf /usr/local/lib/android
+              sudo rm -rf /host/usr/local/lib/android
       - uses: actions/checkout@v4
       - name: install
         run: ./bin/wally-tool-chain-install.sh
