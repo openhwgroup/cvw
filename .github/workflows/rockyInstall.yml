@@ -17,6 +17,10 @@ jobs:
         run: |
               df -h
               sudo rm -rf /host/usr/local/lib/android
+              sudo rm -rf /host/usr/share/dotnet &> /dev/null
+              sudo rm -rf /host/opt/ghc &> /dev/null
+              sudo rm -rf /host/opt/hostedtoolcache/CodeQL &> /dev/null
+              df -h
       - uses: actions/checkout@v4
       - name: install
         run: ./bin/wally-tool-chain-install.sh
