@@ -680,6 +680,7 @@ add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/DRet
 add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/ForceBreakPoint
 add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/ebreakM
 add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/DebugStall
+add wave -noupdate /testbench/dut/core/priv/priv/csr/csrd/csrd/DPC
 TreeUpdate [SetDefaultTree]
 WaveRestoreCursors {{Cursor 4} {6586 ns} 1} {{Cursor 4} {2112952 ns} 0} {{Cursor 3} {403021 ns} 1}
 quietly wave cursor active 2
