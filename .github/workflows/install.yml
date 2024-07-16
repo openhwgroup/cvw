@@ -56,7 +56,7 @@ jobs:
       matrix:
         os: ["rockylinux:8", "almalinux:8"]
     steps:
-      - run: dnf install -y sudo
+      - run: dnf install -y sudo git
       - name: free up storage
         run: |
               df -h

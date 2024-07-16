@@ -4,7 +4,7 @@ on: [workflow_dispatch]
 
 jobs:
   storage-space:
-    runs-on: ubuntu-22
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Root
