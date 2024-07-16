@@ -1,12 +1,14 @@
-name: Installation test
+name: Installation
 
 on: [workflow_dispatch]
 
 jobs:
-  install:
-    name: Test installation on Ubuntu 22.04LTS
-    runs-on: ubuntu-22.04
-
+  ubuntu_install:
+    name: Test installation on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04]
     steps:
       - name: Free up storage
         run: |
@@ -34,4 +36,27 @@ jobs:
       - uses: actions/checkout@v4
       - name: install
         run: sudo ./bin/wally-tool-chain-install.sh
-    
+  rhel_family_install:
+    name: Test installation on ${{ matrix.os }}
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.os }}
+      options: --privileged --mount type=bind,source=/,target=/host
+    strategy:
+      matrix:
+        os: [rockylinux:8, rockylinux:9, almalinux:8, almalinux:9]
+    steps:
+      - name: check distro
+        run: cat /etc/os-release
+      - run: dnf install -y sudo
+      - name: free up storage
+        run: |
+              df -h
+              sudo rm -rf /host/usr/local/lib/android
+              sudo rm -rf /host/usr/share/dotnet &> /dev/null
+              sudo rm -rf /host/opt/ghc &> /dev/null
+              sudo rm -rf /host/opt/hostedtoolcache/CodeQL &> /dev/null
+              df -h
+      - uses: actions/checkout@v4
+      - name: install
+        run: ./bin/wally-tool-chain-install.sh
