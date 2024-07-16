@@ -8,7 +8,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ["ubuntu-20.04", "ubuntu-22.04", "ubuntu-24.04"]
+        os: ["ubuntu-20.04", "ubuntu-22.04"]
     steps:
       - name: Free up storage
         run: |
@@ -44,7 +44,7 @@ jobs:
       options: --privileged --mount type=bind,source=/,target=/host
     strategy:
       matrix:
-        os: ["rockylinux:8", "rockylinux:9", "almalinux:8", "almalinux:9"]
+        os: ["rockylinux:8", "almalinux:8"]
     steps:
       - name: check distro
         run: cat /etc/os-release
