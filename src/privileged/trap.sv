@@ -91,7 +91,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   // coverage on
   //assign TrapM = (ExceptionM & ~CommittedF) | InterruptM;
   // Debug Test
-  assign TrapM = DebugMode ? BreakpointFaultM : (ExceptionM & ~CommittedF) | InterruptM;
+  assign TrapM = ~DebugMode & ((ExceptionM & ~CommittedF) | InterruptM);
 
   ///////////////////////////////////////////
   // Cause priority defined in privileged spec
