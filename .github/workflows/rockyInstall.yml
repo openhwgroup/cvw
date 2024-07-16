@@ -4,11 +4,11 @@ on: [workflow_dispatch]
 
 jobs:
   install:
-    name: Test installation on Rocky 9
+    name: Test installation on Rocky 8
     runs-on: ubuntu-latest
     container:
       image: rockylinux:8
-      options: --privileged --mount type=bind, source=/, target=/
+      options: --privileged --mount type=bind,source=/,target=/
     steps:
       - name: check distro
         run: cat /etc/os-release
