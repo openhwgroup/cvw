@@ -1,0 +1,38 @@
+name: List Storage Space
+on: [workflow_dispatch]
+
+
+jobs:
+  storage-space:
+    runs-on: ubuntu-22
+
+    steps:
+      - name: Root
+        run: |
+          df -h
+          cd /
+          du -h --max-depth=1 / | sort -h
+      - name: /usr
+        run: |
+          cd /usr
+          du -h --max-depth=1 / | sort -h
+      - name: /usr/bin
+        run: |
+            cd /usr/bin
+            du -h --max-depth=1 / | sort -h
+      - name: /usr/local
+        run: |
+            cd /usr/local
+            du -h --max-depth=1 / | sort -h
+      - name: /usr/share
+        run: |
+            cd /usr/share
+            du -h --max-depth=1 / | sort -h
+      - name: /opt
+        run: |
+            cd /opt
+            du -h --max-depth=1 / | sort -h
+      - name: /opt/hostedtoolcache
+        run: |
+            cd /opt/hostedtoolcache
+            du -h --max-depth=1 / | sort -h
