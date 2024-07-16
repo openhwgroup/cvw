@@ -6,16 +6,17 @@ jobs:
   install:
     name: Test installation on Rocky 9
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-
+    container:
+      image: rockylinux:8
+      options: --privileged --mount type=bind, source=/, target=/
     steps:
-      - run: df -h
-      - name: free up storage
-        run: sudo rm -rf /usr/local/lib/android
-      - run: docker run -ia rockylinux:8
+      - name: check distro
+        run: cat /etc/os-release
       - run: dnf install -y sudo
+      - name: free up storage
+        run: |
+              df -h
+              sudo rm -rf /usr/local/lib/android
       - uses: actions/checkout@v4
       - name: install
         run: ./bin/wally-tool-chain-install.sh
