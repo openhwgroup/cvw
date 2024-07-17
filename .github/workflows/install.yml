@@ -41,7 +41,10 @@ jobs:
       matrix:
         os: ["rockylinux:8", "rockylinux:9", "almalinux:8", "almalinux:9"]
     steps:
-      - run: dnf install -y sudo git
+      - name: Install dependencies
+        run: |
+              dnf install -y sudo git
+              dnf remove -y curl-minimal || true
       - name: Free up storage
         run: |
               df -h
