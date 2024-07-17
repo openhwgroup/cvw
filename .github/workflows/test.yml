@@ -1,108 +1,69 @@
-name: List Storage Space
+name: Test
+
 on: [workflow_dispatch]
 
-
 jobs:
-  clean-ubuntu:
-    name: clean ${{ matrix.os }}
+  ubuntu_install:
+    name: Test on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: ["ubuntu-20.04", "ubuntu-22.04", "ubuntu-24.04"]
     steps:
-      - run: df -h
-      - name: remove packages
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Free up storage
         run: |
-              removePacks=( '^llvm-.*' 'php.*' '^mongodb-.*' '^mysql-.*' '^dotnet-sdk-.*' 'azure-cli' 'google-cloud-cli' 'google-chrome-stable' 'firefox' 'powershell*' 'microsoft-edge-stable' 'mono-devel' )
-              for pack in "${removePacks[@]}"; do
-                echo "REMOVING ${pack}"
-                sudo apt-get purge -y $pack || true
-              done
-              sudo apt-get autoremove -y
-              sudo apt-get clean
-      - run: df -h
-      - name: check packages
-        run: dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -nr
-      - name: remove dirs
+              df -h
+              ./.github/cli-space-cleanup.sh
+              df -h
+      - run: mkdir -p /opt/riscv
+      - run: sudo apt install -y python3 python3-pip python3-venv
+      - run: python3 -m venv /opt/riscv
+      - run: |
+              source /opt/riscv/bin/activate
+              pip install --upgrade pip
+              pip install -r requirements.txt
+      - name: make tests
         run: |
-              sudo rm -rf /usr/local/lib/android
-              sudo rm -rf /usr/share/dotnet
-              sudo rm -rf /usr/share/swift
-              sudo rm -rf /usr/share/miniconda
-              sudo rm -rf /usr/share/az*
-              sudo rm -rf /usr/share/gradle-*
-              sudo rm -rf /usr/share/sbt
-              sudo rm -rf /opt/ghc
-              sudo rm -rf /usr/local/.ghcup
-              sudo rm -rf /usr/local/share/powershell
-              sudo rm -rf /usr/local/lib/node_modules
-              sudo rm -rf /usr/local/julia*
-              sudo rm -rf /usr/local/share/chromium
-              sudo rm -rf /usr/local/share/vcpkg
-              sudo rm -rf /usr/local/games
-              sudo rm -rf /usr/local/sqlpackage
-              sudo rm -rf /usr/lib/google-cloud-sdk
-              sudo rm -rf /usr/lib/jvm
-              sudo rm -rf /usr/lib/mono
-              sudo rm -rf /usr/lib/R
-              sudo rm -rf /usr/lib/postgresql
-              sudo rm -rf /usr/lib/heroku
-              sudo rm -rf /usr/lib/llvm*
-              sudo rm -rf /usr/lib/firefox
-              sudo rm -rf /opt/hostedtoolcache
-              sudo docker image prune --all --force
-      - run: df -h
+              source setup.sh
+              source /opt/riscv/bin/activate
+              make || true
 
-  clean-rhel:
-    name: clean ${{ matrix.os }}
+
+  rhel_family_install:
+    name: Test on ${{ matrix.os }}
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
     container:
       image: ${{ matrix.os }}
       options: --privileged --mount type=bind,source=/,target=/host --pid=host --entrypoint /bin/bash
     strategy:
       fail-fast: false
       matrix:
-        os: ["rockylinux:8", "almalinux:8", "rockylinux:9", "almalinux:9"]
+        os: ["rockylinux:8", "rockylinux:9", "almalinux:8", "almalinux:9"]
     steps:
-      - run: dnf install -y sudo git
+      - name: Install dependencies
+        run: |
+              dnf install -y sudo git
+              dnf install curl -y --allowerasing || true
       - uses: actions/checkout@v4
-      - run: df -h
-      - name: remove packages
+        with:
+          submodules: recursive
+      - run: dnf install -y python3.12 python3-pip
+      - run: mkdir -p /opt/riscv
+      - run: python3.12 -m venv /opt/riscv
+      - run: |
+              source /opt/riscv/bin/activate
+              pip install --upgrade pip
+              pip install -r requirements.txt
+      - name: make tests
         run: |
-              nsenter -t 1 -m -u -n -i bash -c "$(cat .github/cli-space-cleanup.sh)"
-      - run: df -h
-      - name: check packages
-        run: dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -nr
-      - name: remove dirs
+              source setup.sh
+              source /opt/riscv/bin/activate
+              make || true
+      - name: regresssion
         run: |
-              sudo rm -rf host/usr/local/lib/android
-              sudo rm -rf host/usr/share/dotnet
-              sudo rm -rf host/usr/share/swift
-              sudo rm -rf host/usr/share/miniconda
-              sudo rm -rf host/usr/share/az*
-              sudo rm -rf host/usr/share/gradle-*
-              sudo rm -rf host/usr/share/sbt
-              sudo rm -rf host/opt/ghc
-              sudo rm -rf host/usr/local/.ghcup
-              sudo rm -rf host/usr/local/share/powershell
-              sudo rm -rf host/usr/local/lib/node_modules
-              sudo rm -rf host/usr/local/julia*
-              sudo rm -rf host/usr/local/share/chromium
-              sudo rm -rf host/usr/local/share/vcpkg
-              sudo rm -rf host/usr/local/games
-              sudo rm -rf host/usr/local/sqlpackage
-              sudo rm -rf host/usr/lib/google-cloud-sdk
-              sudo rm -rf host/usr/lib/jvm
-              sudo rm -rf host/usr/lib/mono
-              sudo rm -rf host/usr/lib/R
-              sudo rm -rf host/usr/lib/postgresql
-              sudo rm -rf host/usr/lib/heroku
-              sudo rm -rf host/usr/lib/llvm*
-              sudo rm -rf host/usr/lib/firefox
-              sudo rm -rf host/opt/hostedtoolcache
-              sudo docker image prune --all --force
-      - run: df -h  
+              source setup.sh
+              regression-wally
