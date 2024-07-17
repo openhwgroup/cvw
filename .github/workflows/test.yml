@@ -73,7 +73,7 @@ jobs:
       - run: df -h
       - name: remove packages
         run: |
-              nsenter -t 1 -m -u -n -i bash -c "$(cat .github/cli-space-cleanup.sh)" #-c "sudo apt-get purge -y google-cloud-cli || true; sudo apt-get autoremove -y; sudo apt-get clean"
+              nsenter -t 1 -m -u -n -i bash -c "$(cat .github/cli-space-cleanup.sh)"
       - run: df -h
       - name: check packages
         run: dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -nr

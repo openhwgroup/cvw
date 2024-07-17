@@ -14,51 +14,21 @@ jobs:
       - name: Free up storage
         run: |
               df -h
-              removePacks=( '^llvm-.*' 'php.*' '^mongodb-.*' '^mysql-.*' '^dotnet-sdk-.*' 'azure-cli' 'google-cloud-cli' 'google-chrome-stable' 'firefox' '^powershell*' 'microsoft-edge-stable' 'mono-devel' 'hhvm' )
-              for pack in "${removePacks[@]}"; do
-                sudo apt-get purge -y $pack &> /dev/null || true
-              done
-              sudo apt-get autoremove -y &> /dev/null
-              sudo apt-get clean &> /dev/null
-
-              sudo rm -rf /usr/local/lib/android &> /dev/null
-              sudo rm -rf /usr/share/dotnet &> /dev/null
-              sudo rm -rf /usr/share/swift &> /dev/null
-              sudo rm -rf /usr/share/miniconda &> /dev/null
-              sudo rm -rf /usr/share/az* &> /dev/null
-              sudo rm -rf /usr/share/gradle-* &> /dev/null
-              sudo rm -rf /usr/share/sbt &> /dev/null
-              sudo rm -rf /opt/ghc &> /dev/null
-              sudo rm -rf /usr/local/.ghcup &> /dev/null
-              sudo rm -rf /usr/local/share/powershell &> /dev/null
-              sudo rm -rf /usr/local/lib/node_modules &> /dev/null
-              sudo rm -rf /usr/local/julia* &> /dev/null
-              sudo rm -rf /usr/local/share/chromium &> /dev/null
-              sudo rm -rf /usr/local/share/vcpkg &> /dev/null
-              sudo rm -rf /usr/local/games &> /dev/null
-              sudo rm -rf /usr/local/sqlpackage &> /dev/null
-              sudo rm -rf /usr/lib/google-cloud-sdk &> /dev/null
-              sudo rm -rf /usr/lib/jvm &> /dev/null
-              sudo rm -rf /usr/lib/mono &> /dev/null
-              sudo rm -rf /usr/lib/R &> /dev/null
-              sudo rm -rf /usr/lib/postgresql &> /dev/null
-              sudo rm -rf /usr/lib/heroku &> /dev/null
-              sudo rm -rf /usr/lib/llvm* &> /dev/null
-              sudo rm -rf /usr/lib/firefox &> /dev/null
-              sudo rm -rf /opt/hostedtoolcache &> /dev/null
-              sudo docker image prune --all --force &> /dev/null
+              ./github/cli-space-cleanup.sh
               df -h
       - uses: actions/checkout@v4
         with:
           submodules: recursive
       - name: install
         run: sudo ./bin/wally-tool-chain-install.sh
-      - name: setup
-        run: source setup.sh
       - name: make tests
-        run: make
+        run: |
+              source setup.sh
+              make
       - name: regresssion
-        run: regression-wally
+        run: |
+              source setup.sh
+              regression-wally
 
   rhel_family_install:
     name: Test installation on ${{ matrix.os }}
@@ -72,34 +42,10 @@ jobs:
         os: ["rockylinux:8", "rockylinux:9", "almalinux:8", "almalinux:9"]
     steps:
       - run: dnf install -y sudo git
-      - name: free up storage
+      - name: Free up storage
         run: |
               df -h
-              sudo rm -rf /host/usr/local/lib/android &> /dev/null
-              sudo rm -rf /host/usr/share/dotnet &> /dev/null
-              sudo rm -rf /host/usr/share/swift &> /dev/null
-              sudo rm -rf /host/usr/share/miniconda &> /dev/null
-              sudo rm -rf /host/usr/share/az* &> /dev/null
-              sudo rm -rf /host/usr/share/gradle-* &> /dev/null
-              sudo rm -rf /host/usr/share/sbt &> /dev/null
-              sudo rm -rf /host/opt/ghc &> /dev/null
-              sudo rm -rf /host/usr/local/.ghcup &> /dev/null
-              sudo rm -rf /host/usr/local/share/powershell &> /dev/null
-              sudo rm -rf /host/usr/local/lib/node_modules &> /dev/null
-              sudo rm -rf /host/usr/local/julia* &> /dev/null
-              sudo rm -rf /host/usr/local/share/chromium &> /dev/null
-              sudo rm -rf /host/usr/local/share/vcpkg &> /dev/null
-              sudo rm -rf /host/usr/local/games &> /dev/null
-              sudo rm -rf /host/usr/local/sqlpackage &> /dev/null
-              sudo rm -rf /host/usr/lib/google-cloud-sdk &> /dev/null
-              sudo rm -rf /host/usr/lib/jvm &> /dev/null
-              sudo rm -rf /host/usr/lib/mono &> /dev/null
-              sudo rm -rf /host/usr/lib/R &> /dev/null
-              sudo rm -rf /host/usr/lib/postgresql &> /dev/null
-              sudo rm -rf /host/usr/lib/heroku &> /dev/null
-              sudo rm -rf /host/usr/lib/llvm* &> /dev/null
-              sudo rm -rf /host/usr/lib/firefox &> /dev/null
-              sudo rm -rf /host/opt/hostedtoolcache &> /dev/null
+              nsenter -t 1 -m -u -n -i bash -c "$(cat .github/cli-space-cleanup.sh)"
               df -h
       - uses: actions/checkout@v4
         with:
