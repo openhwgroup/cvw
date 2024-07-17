@@ -65,11 +65,11 @@ jobs:
       matrix:
         os: ["rockylinux:8", "almalinux:8", "rockylinux:9", "almalinux:9"]
     steps:
+      - run: dnf install -y sudo git
       - uses: actions/checkout@v4
       - run: df -h
       - name: remove packages
-        run: |
-              nsenter -t 1 -m -u -n -i bash .github/cli-space-cleanup.sh
+        run: nsenter -t 1 -m -u -n -i bash /__w/cvw/cvw/.github/cli-space-cleanup.sh
       - run: df -h
       - name: check packages
         run: dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -nr
