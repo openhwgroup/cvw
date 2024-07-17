@@ -59,22 +59,17 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ${{ matrix.os }}
-      options: --privileged --mount type=bind,source=/,target=/host
+      options: --privileged --mount type=bind,source=/,target=/host --pid=host
     strategy:
       fail-fast: false
       matrix:
         os: ["rockylinux:8", "almalinux:8", "rockylinux:9", "almalinux:9"]
     steps:
+      - uses: actions/checkout@v4
       - run: df -h
       - name: remove packages
         run: |
-              removePacks=( '^llvm-.*' 'php.*' '^mongodb-.*' '^mysql-.*' '^dotnet-sdk-.*' 'azure-cli' 'google-cloud-cli' 'google-chrome-stable' 'firefox' 'powershell*' 'microsoft-edge-stable' 'mono-devel' )
-              for pack in "${removePacks[@]}"; do
-                echo "REMOVING ${pack}"
-                sudo apt-get purge -y $pack || true
-              done
-              sudo apt-get autoremove -y
-              sudo apt-get clean
+              nsenter -t 1 -m -u -n -i bash .github/cli-space-cleanup.sh
       - run: df -h
       - name: check packages
         run: dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -nr
