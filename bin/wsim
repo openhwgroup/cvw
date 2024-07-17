@@ -27,7 +27,7 @@ parser.add_argument("--sim", "-s", help="Simulator", choices=["questa", "verilat
 parser.add_argument("--tb", "-t", help="Testbench", choices=["testbench", "testbench_fp"], default="testbench")
 parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true")
 parser.add_argument("--ccov", "-c", help="Code Coverage", action="store_true")
-parser.add_argument("--fcov", "-f", help="Functional Coverage", action="store_true")
+parser.add_argument("--fcov", "-f", help="Functional Coverage, implies lockstep", action="store_true")
 parser.add_argument("--args", "-a", help="Optional arguments passed to simulator via $value$plusargs", default="")
 parser.add_argument("--vcd", "-v", help="Generate testbench.vcd", action="store_true")
 parser.add_argument("--lockstep", "-l", help="Run ImperasDV lock, step, and compare.", action="store_true")
