@@ -1,6 +1,8 @@
 name: Installation
-
 on: [workflow_dispatch]
+defaults:
+  run:
+    shell: bash
 
 jobs:
   ubuntu_install:
