@@ -109,16 +109,17 @@ module decompress import cvw::*;  #(parameter cvw_t P) (
                       LInstrD = {1'b0, immCS[11:5], rs2p, rs1p, 3'b010, immCS[4:0], 7'b0100111}; // c.fsw
                   end else
                     LInstrD = {1'b0, immCSD[11:5], rs2p, rs1p, 3'b011, immCSD[4:0], 7'b0100011}; //c.sd
-        5'b01000: LInstrD = {1'b0, immCI, rds1, 3'b000, rds1, 7'b0010011}; // c.addi
+        5'b01000: if (rds1 != 5'b0) LInstrD = {1'b0, immCI, rds1, 3'b000, rds1, 7'b0010011}; // c.addi 
+                  else if (immCI[5:0] == 6'b0) LInstrD = {1'b0, 25'b0, 7'b0010011}; // c.nop
         5'b01001: if (P.XLEN==32) 
                     LInstrD = {1'b0, immCJ, 5'b00001, 7'b1101111}; // c.jal
                   else
                     LInstrD = {1'b0, immCI, rds1, 3'b000, rds1, 7'b0011011}; // c.addiw
-        5'b01010: LInstrD = {1'b0, immCI, 5'b00000, 3'b000, rds1, 7'b0010011}; // c.li
-        5'b01011: if (rds1 != 5'b00010)
-                    LInstrD = {1'b0, immCILUI, rds1, 7'b0110111}; // c.lui
-                  else 
+        5'b01010: if (rds1 != 5'b0) LInstrD = {1'b0, immCI, 5'b00000, 3'b000, rds1, 7'b0010011}; // c.li
+        5'b01011: if (rds1 == 5'b00010)
                     LInstrD = {1'b0, immCIASP, rds1, 3'b000, rds1, 7'b0010011}; // c.addi16sp
+                  else if (rds1 != 5'b0)
+                    LInstrD = {1'b0, immCILUI, rds1, 7'b0110111}; // c.lui
         5'b01100: if (instr16[11:10] == 2'b00)
                     LInstrD = {1'b0, 6'b000000, immSH, rds1p, 3'b101, rds1p, 7'b0010011}; // c.srli
                   else if (instr16[11:10] == 2'b01)
@@ -159,25 +160,25 @@ module decompress import cvw::*;  #(parameter cvw_t P) (
         5'b01111: LInstrD = {1'b0, immCB[11:5], 5'b00000, rs1p, 3'b001, immCB[4:0], 7'b1100011}; // c.bnez
         5'b10000: LInstrD = {1'b0, 6'b000000, immSH, rds1, 3'b001, rds1, 7'b0010011}; // c.slli
         5'b10001: if (P.ZCD_SUPPORTED)
-                    LInstrD = {1'b0, immCILSPD, 5'b00010, 3'b011, rds1, 7'b0000111}; // c.fldsp
-        5'b10010: LInstrD = {1'b0, immCILSP, 5'b00010, 3'b010, rds1, 7'b0000011}; // c.lwsp
+                    if (rds1 != 5'b0) LInstrD = {1'b0, immCILSPD, 5'b00010, 3'b011, rds1, 7'b0000111}; // c.fldsp
+        5'b10010: if (rds1 != 5'b0) LInstrD = {1'b0, immCILSP, 5'b00010, 3'b010, rds1, 7'b0000011}; // c.lwsp
         5'b10011: if (P.XLEN == 32) begin 
                     if (P.ZCF_SUPPORTED) 
                       LInstrD = {1'b0, immCILSP, 5'b00010, 3'b010, rds1, 7'b0000111}; // c.flwsp
                   end else 
                     LInstrD = {1'b0, immCILSPD, 5'b00010, 3'b011, rds1, 7'b0000011}; // c.ldsp
         5'b10100: if (instr16[12] == 0)
-                    if (instr16[6:2] == 5'b00000) 
-                      LInstrD = {1'b0, 7'b0000000, 5'b00000, rds1, 3'b000, 5'b00000, 7'b1100111}; // c.jr
-                    else
+                    if (instr16[6:2] == 5'b00000) begin 
+                      if (rds1 != 5'b0) LInstrD = {1'b0, 7'b0000000, 5'b00000, rds1, 3'b000, 5'b00000, 7'b1100111}; // c.jr
+                    end else
                       LInstrD = {1'b0, 7'b0000000, rs2, 5'b00000, 3'b000, rds1, 7'b0110011}; // c.mv
                   else
-                    if (rs2 == 5'b00000)
+                    if (rs2 == 5'b00000) begin
                       if (rds1 == 5'b00000) 
                         LInstrD = {1'b0, 12'b1, 5'b00000, 3'b000, 5'b00000, 7'b1110011}; // c.ebreak
                       else
-                        LInstrD = {1'b0, 12'b0, rds1, 3'b000, 5'b00001, 7'b1100111}; // c.jalr
-                    else
+                        if (rds1 != 5'b0) LInstrD = {1'b0, 12'b0, rds1, 3'b000, 5'b00001, 7'b1100111}; // c.jalr
+                    end else
                       LInstrD = {1'b0, 7'b0000000, rs2, rds1, 3'b000, rds1, 7'b0110011}; // c.add
         5'b10101: if (P.ZCD_SUPPORTED)
                     LInstrD = {1'b0, immCSSD[11:5], rs2, 5'b00010, 3'b011, immCSSD[4:0], 7'b0100111}; // c.fsdsp
