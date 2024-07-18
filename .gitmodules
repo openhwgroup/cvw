@@ -29,3 +29,7 @@
 [submodule "addins/ahbsdc"]
 	path = addins/ahbsdc
 	url = http://github.com/JacobPease/ahbsdc.git
+[submodule "addins/verilog-ethernet"]
+	sparseCheckout = true
+	path = addins/verilog-ethernet
+	url = https://github.com/ross144/verilog-ethernet.git
