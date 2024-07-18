@@ -30,16 +30,16 @@
 
 module bitmanipalu import cvw::*; #(parameter cvw_t P) (
   input logic [P.XLEN-1:0]  A, B,                    // Operands
-  input logic 		    W64,                     // W64-type instruction
+  input logic 		        W64, UW64,                     // W64/.uw-type instruction
   input logic [3:0] 	    BSelect,                 // Binary encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
   input logic [3:0] 	    ZBBSelect,               // ZBB mux select signal
   input logic [2:0] 	    Funct3,                  // Funct3 field of opcode indicates operation to perform
   input logic [6:0] 	    Funct7,                  // Funct7 field for ZKND and ZKNE operations
   input logic [4:0] 	    Rs2E,                    // Register source2 for RNUM of ZKNE/ZKND
-  input logic 		    LT,                      // less than flag
-  input logic 		    LTU,                     // less than unsigned flag
+  input logic 		        LT,                      // less than flag
+  input logic 		        LTU,                     // less than unsigned flag
   input logic [2:0] 	    BALUControl,             // ALU Control signals for B instructions in Execute Stage
-  input logic 		    BMUActive,               // Bit manipulation instruction being executed
+  input logic 		        BMUActive,               // Bit manipulation instruction being executed
   input logic [P.XLEN-1:0]  PreALUResult,            // PreALUResult signals
   input  logic [P.XLEN-1:0] FullResult,              // FullResult signals
   output logic [P.XLEN-1:0] CondMaskB,               // B is conditionally masked for ZBS instructions
@@ -76,7 +76,7 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
   // 0-3 bit Pre-Shift Mux
   if (P.ZBA_SUPPORTED) begin: zbapreshift
     if (P.XLEN == 64) begin
-      mux2 #(64) zextmux(A, {{32{1'b0}}, A[31:0]}, W64, CondZextA); 
+      mux2 #(64) zextmux(A, {{32{1'b0}}, A[31:0]}, UW64, CondZextA); 
     end else assign CondZextA = A;
     assign PreShiftAmt = Funct3[2:1] & {2{PreShift}};
     assign CondShiftA = CondZextA << (PreShiftAmt);
