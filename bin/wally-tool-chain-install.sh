@@ -69,9 +69,9 @@ git_check() {
     local check=$3
     local branch="${4:-master}"
     if [[ ((! -e $repo) && ($(git clone "$url") || true)) || ($(cd "$repo"; git fetch; git rev-parse HEAD) != $(cd repo; git rev-parse origin/"$branch")) || (! -e $check) ]]; then
-        return 1
-    else
         return 0
+    else
+        return 1
     fi
 }
 
@@ -257,7 +257,7 @@ cd "$RISCV"
 if git_check "qemu" "https://github.com/qemu/qemu" "$RISCV/include/qemu-plugin.h"; then
     cd qemu
     git reset --hard && git clean -f && git checkout master && git pull --recurse-submodules -j ${NUM_THREADS}
-    submodule update --init --recursive
+    git submodule update --init --recursive
     ./configure --target-list=riscv64-softmmu --prefix="$RISCV"
     make -j ${NUM_THREADS}
     make install
