@@ -1,0 +1,16 @@
+rtl/eth_mac_mii_fifo.v
+rtl/eth_mac_mii.v
+rtl/mii_phy_if.v
+rtl/ssio_ddr_in.v
+rtl/eth_mac_1g.v
+rtl/axis_gmii_rx.v
+rtl/lfsr.v
+rtl/eth_axis_tx.v
+rtl/mac_ctrl_tx.v
+rtl/axis_gmii_tx.v
+rtl/mac_ctrl_rx.v
+rtl/mac_pause_ctrl_tx.v
+rtl/mac_pause_ctrl_rx.v
+lib/axis/rtl/axis_async_fifo_adapter.v
+lib/axis/rtl/axis_adapter.v
+lib/axis/rtl/axis_async_fifo.v
