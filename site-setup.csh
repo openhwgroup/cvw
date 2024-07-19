@@ -25,7 +25,12 @@ extend LD_LIBRARY_PATH $RISCV/lib64
 extend PATH $RISCV/bin
 
 # Activate riscv-python Virtual Environment
-source "$RISCV"/riscv-python/bin/activate.csh
+if ( -e "$RISCV"/riscv-python/bin/activate ) then
+    source "$RISCV"/riscv-python/bin/activate.csh
+else
+    echo "Python virtual environment not found. Rerun wally-toolchain-install.sh to automatically create it."
+    exit 1
+fi
 
 # environment variables needed for RISCV-DV
 setenv RISCV_GCC `which riscv64-unknown-elf-gcc`		            # Copy this as it is

@@ -316,7 +316,7 @@ fi
 # but a binary release of it should be available soon, removing the need to use opam.
 section_header "Installing/Updating Sail Compiler"
 STATUS="Sail Compiler"
-OPAMROOTISOK=1 # Silence warnings about running opam as root
+export OPAMROOTISOK=1 # Silence warnings about running opam as root
 cd "$RISCV"
 opam init -y --disable-sandboxing
 opam update -y
@@ -330,7 +330,7 @@ echo -e "${SUCCESS_COLOR}Sail Compiler successfully installed/updated${ENDC}"
 section_header "Installing/Updating RISC-V Sail Model"
 STATUS="RISC-V Sail Model"
 if [[ ((! -e sail-riscv) && ($(git clone https://github.com/riscv/sail-riscv.git) || true)) || ($(cd sail-riscv; git fetch; git rev-parse HEAD) != $(cd sail-riscv; git rev-parse origin/master)) || (! -e $RISCV/bin/riscv_sim_RV32) ]]; then
-    eval $(opam config env)
+    eval "$(opam config env)"
     cd sail-riscv
     git reset --hard && git clean -f && git checkout master && git pull
     export OPAMCLI=2.0  # Sail is not compatible with opam 2.1 as of 4/16/24
@@ -388,7 +388,8 @@ if [ ! -e "${RISCV}"/site-setup.sh ]; then
     fi
     echo -e "${SUCCESS_COLOR}Site setup script successfully downloaded${ENDC}"
 else
-    echo -e "${OK_COLOR}Site setup script already exists. Not checking for updates to avoid overwritng modifications${ENDC}"
+    echo -e "${OK_COLOR}Site setup script already exists. Not checking for updates to avoid overwritng modifications."
+    echo -e "You may need to manually update it if there were changes upstream.${ENDC}"
 fi
 
 echo -e "${SUCCESS_COLOR}${BOLD}\n\nINSTALLATION SUCCESSFUL\n\n${ENDC}"
