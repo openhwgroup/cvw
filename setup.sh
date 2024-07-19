@@ -14,9 +14,9 @@
 echo "Executing Wally setup.sh"
 
 # Path to RISC-V Tools
-if [ -e /opt/riscv ]; then
+if [ -d /opt/riscv ]; then
     export RISCV=/opt/riscv
-elif [ -e ~/riscv ]; then
+elif [ -d ~/riscv ]; then
     export RISCV=~/riscv
 else
     # set the $RISCV directory here and remove the subsequent two lines
@@ -34,6 +34,10 @@ echo \$WALLY set to "${WALLY}"
 export PATH=$WALLY/bin:$PATH
 
 # load site licenses and tool locations
-source "${RISCV}"/site-setup.sh
+if [ -e "${RISCV}"/site-setup.sh ]; then
+    source "${RISCV}"/site-setup.sh
+else
+    echo "site-setup.sh not found in \$RISCV directory. Rerun wally-toolchain-install.sh to automatically download it."
+fi
 
 echo "setup done"

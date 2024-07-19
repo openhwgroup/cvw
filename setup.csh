@@ -11,9 +11,9 @@ alias extend 'if (-d \!:2) if ("$\!:1" \!~ *"\!:2"*) setenv \!:1 ${\!:1}:\!:2;ec
 alias prepend 'if (-d \!:2) if ("$\!:1" \!~ *"\!:2"*) setenv \!:1 "\!:2":${\!:1};echo Added \!:2 to \!:1'
 
 # Path to RISC-V Tools
-if ( -e /opt/riscv ) then
+if ( -d /opt/riscv ) then
     setenv RISCV /opt/riscv
-else if ( -e ~/riscv ) then
+else if ( -d ~/riscv ) then
     setenv RISCV ~/riscv
 else
     # set the $RISCV directory here and remove the subsequent two lines
@@ -30,6 +30,10 @@ echo '$WALLY set to ' ${WALLY}
 extend PATH $WALLY/bin
 
 # load site licenses and tool locations
-source $RISCV/site-setup.csh
+if ( -e "${RISCV}"/site-setup.csh ) then
+    source $RISCV/site-setup.csh
+else
+    echo "site-setup.csh not found in \$RISCV directory. Rerun wally-toolchain-install.sh to automatically download it."
+fi
 
 echo "setup done"
