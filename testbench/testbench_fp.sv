@@ -660,7 +660,9 @@ module testbench_fp;
       tt0 = $sformatf("%s", Tests[TestNum]);
       testname = {pp, tt0};
       //$display("Here you are %s", testname);     
-      $display("\n\nRunning %s vectors ", Tests[TestNum]);
+      // clear the vectors
+      for(int i=0; i<MAXVECTORS; i++) TestVectors[i] = '1; 
+       $display("\n\nRunning %s vectors ", Tests[TestNum]);
       $readmemh(testname, TestVectors);
       // set the test index to 0
       TestNum = 0;
@@ -774,9 +776,9 @@ module testbench_fp;
    // Check if the correct answer and result is a NaN
    always_comb begin
       if (UnitVal === `CVTINTUNIT | UnitVal === `CMPUNIT) begin
-	 // an integer output can't be a NaN
-	 AnsNaN = 1'b0;
-	 ResNaN = 1'b0;
+         // an integer output can't be a NaN
+         AnsNaN = 1'b0;
+         ResNaN = 1'b0;
       end
       else if (UnitVal === `CVTFPUNIT) begin
 	 case (OpCtrlVal[1:0])
@@ -894,11 +896,12 @@ module testbench_fp;
       if (reset)
         state <= S0;
       else
-	state <= nextstate;      
+	      state <= nextstate;      
 
       // Increment the vector when Done with each test
-      if (state == Done)
-	VectorNum += 1; // increment the vector
+      if (state == Done) begin
+	      VectorNum += 1; // increment the vector
+      end
       
    end
 
@@ -982,14 +985,16 @@ module testbench_fp;
          $display("TestNum %d VectorNum %d OpCtrl %d", TestNum, VectorNum, OpCtrl[TestNum]);	 
          $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Expected: %h %h", 
             X[P.FLEN-1:0], Y[P.FLEN-1:0], Z[P.FLEN-1:0], SrcA, Res[P.FLEN-1:0], ResFlg, Ans[P.FLEN-1:0], AnsFlg);
+         //$display("  fma.Xs %h Xe %h Xm %h Ys %h Ye %h Ym %h Ss %h Se %h Sm %h", fma.Xs, fma.Xe, fma.Xm, fma.Ys, fma.Ye, fma.Ym, fma.Ss, fma.Se, fma.Sm);
+         //$display("  readvectors.unpack.X %h Xs %h Xe %h Xm %h", readvectors.unpack.X, readvectors.unpack.Xs, readvectors.unpack.Xe, readvectors.unpack.Xm);
          $stop;
       end
 
-      if (TestVectors[VectorNum][0] === 1'bx & Tests[TestNum] !== "") begin // if reached the eof
+      if (TestVectors[VectorNum] == '1 & Tests[TestNum] !== "") begin // if reached the eof
          // increment the test
          TestNum += 1;
          // clear the vectors
-         for(int i=0; i<MAXVECTORS; i++) TestVectors[i] = {P.Q_LEN*4+8{1'bx}};
+         for(int i=0; i<MAXVECTORS; i++) TestVectors[i] = '1;
          // read next files
          $readmemh({`PATH, Tests[TestNum]}, TestVectors);
          // set the vector index back to 0
@@ -999,12 +1004,12 @@ module testbench_fp;
          // increment the rounding mode or loop back to rne 
          if (FrmNum < 4) FrmNum += 1;
          else begin
-	    FrmNum = 0;
+	         FrmNum = 0;
             // Add some time as a buffer between tests at the end of each test
-	    // (to be removed)
-	    repeat (10)
-              @(posedge clk);
-	 end
+            // (to be removed, but as of 7/14/24 breaks Verilator sqrt sim to remove dh)
+            repeat (10)
+                  @(posedge clk);
+	      end
          // if no more Tests - finish
          if (Tests[TestNum] === "") begin
                   $display("\nAll Tests completed with %d errors\n", errors);
@@ -1052,9 +1057,9 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 
    // apply test vectors on rising edge of clk
    // Format of vectors Inputs(1/2/3)_AnsFlg
-   always @(VectorNum) begin
+   always @(posedge clk) begin
       AnsFlg = TestVector[4:0];
-      //$display("Entering readvectors with VectorNum=%d, TestVector=%x, Unit=%d, Fmt=%d, OpCtrl=%d", VectorNum, TestVector, Unit, Fmt, OpCtrl);
+      //$display("  Entering readvectors with VectorNum=%d, TestVector=%x, Unit=%d, Fmt=%d, OpCtrl=%d", VectorNum, TestVector, Unit, Fmt, OpCtrl); */
       case (Unit)
 	`FMAUNIT:
           case (Fmt)
@@ -1076,7 +1081,6 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
 		  X = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+4*(P.D_LEN)-1:8+3*(P.D_LEN)]};
 		  Y = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+3*(P.D_LEN)-1:8+2*(P.D_LEN)]};
 		  Z = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+P.D_LEN]};
-               $display("Read %x %x %x", X, Y, Z);
                end
                else begin
 		  X = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+3*(P.D_LEN)-1:8+2*(P.D_LEN)]};
