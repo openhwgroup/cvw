@@ -100,11 +100,8 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   // have to count at least 250 ms after reset pulled to wait for the phy to actually be ready
   // at 20MHz 250 ms is 250e-3 / (1/20e6) = 5,000,000.
   counter #(32) rstcounter(m_axi_aclk, RstCountRst, RstCountEn, RstCount);
-  assign CountFlag = RstCount == 32'd100000000;
-  //assign CountFlag = RstCount == 32'd10;
-  //assign DelayFlag = RstCount == 32'd800;
-  assign DelayFlag = RstCount == 32'd350;
-  //assign DelayFlag = RstCount == 32'd0;
+  assign CountFlag = RstCount == P.RVVI_INIT_TIME_OUT;
+  assign DelayFlag = RstCount == P.RVVI_PACKET_DELAY;
 
   counter #(32) framecounter(m_axi_aclk, ~m_axi_aresetn, (RvviAxiWready & RvviAxiWlast), FrameCount);
    

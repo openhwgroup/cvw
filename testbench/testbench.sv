@@ -580,7 +580,8 @@ module testbench;
     assign SDCIntr = 1'b0;
   end
 
-  wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .RVVIStall, .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
+  wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .ExternalStall(RVVIStall), 
+    .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
     .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
     .UARTSin, .UARTSout, .SDCIntr, .SPIIn, .SPIOut, .SPICS); 
@@ -590,12 +591,91 @@ module testbench;
     clk = 1'b1; # 5; clk = 1'b0; # 5;
   end
 
-  if(`RVVI_SYNTH_SUPPORTED) begin : rvvi_synth
+  if(P.RVVI_SYNTH_SUPPORTED) begin : rvvi_synth
     localparam MAX_CSRS = 3;
     logic                       valid;
     logic [187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)-1:0] rvvi;
 
-    rvvisynth #(P, MAX_CSRS) rvvisynth(.clk, .reset, .valid, .rvvi);
+    localparam TOTAL_CSRS = 36;
+    
+    // pipeline controlls
+    logic                                             StallE, StallM, StallW, FlushE, FlushM, FlushW;
+    // required
+    logic [P.XLEN-1:0]                                PCM;
+    logic                                             InstrValidM;
+    logic [31:0]                                      InstrRawD;
+    logic [63:0]                                      Mcycle, Minstret;
+    logic                                             TrapM;
+    logic [1:0]                                       PrivilegeModeW;
+    // registers gpr and fpr
+    logic                                             GPRWen, FPRWen;
+    logic [4:0]                                       GPRAddr, FPRAddr;
+    logic [P.XLEN-1:0]                                GPRValue, FPRValue;
+    logic [P.XLEN-1:0]                                CSRArray [TOTAL_CSRS-1:0];
+
+    assign StallE         = dut.core.StallE;
+    assign StallM         = dut.core.StallM;
+    assign StallW         = dut.core.StallW;
+    assign FlushE         = dut.core.FlushE;
+    assign FlushM         = dut.core.FlushM;
+    assign FlushW         = dut.core.FlushW;
+    assign InstrValidM    = dut.core.ieu.InstrValidM;
+    assign InstrRawD      = dut.core.ifu.InstrRawD;
+    assign PCM            = dut.core.ifu.PCM;
+    assign Mcycle         = dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[0];
+    assign Minstret       = dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2];
+    assign TrapM          = dut.core.TrapM;
+    assign PrivilegeModeW = dut.core.priv.priv.privmode.PrivilegeModeW;
+    assign GPRAddr        = dut.core.ieu.dp.regf.a3;
+    assign GPRWen         = dut.core.ieu.dp.regf.we3;
+    assign GPRValue       = dut.core.ieu.dp.regf.wd3;
+    assign FPRAddr        = dut.core.fpu.fpu.fregfile.a4;
+    assign FPRWen         = dut.core.fpu.fpu.fregfile.we4;
+    assign FPRValue       = dut.core.fpu.fpu.fregfile.wd4;
+
+    assign CSRArray[0] = dut.core.priv.priv.csr.csrm.MSTATUS_REGW; // 12'h300
+    assign CSRArray[1] = dut.core.priv.priv.csr.csrm.MSTATUSH_REGW; // 12'h310
+    assign CSRArray[2] = dut.core.priv.priv.csr.csrm.MTVEC_REGW; // 12'h305
+    assign CSRArray[3] = dut.core.priv.priv.csr.csrm.MEPC_REGW; // 12'h341
+    assign CSRArray[4] = dut.core.priv.priv.csr.csrm.MCOUNTEREN_REGW; // 12'h306
+    assign CSRArray[5] = dut.core.priv.priv.csr.csrm.MCOUNTINHIBIT_REGW; // 12'h320
+    assign CSRArray[6] = dut.core.priv.priv.csr.csrm.MEDELEG_REGW; // 12'h302
+    assign CSRArray[7] = dut.core.priv.priv.csr.csrm.MIDELEG_REGW; // 12'h303
+    assign CSRArray[8] = dut.core.priv.priv.csr.csrm.MIP_REGW; // 12'h344
+    assign CSRArray[9] = dut.core.priv.priv.csr.csrm.MIE_REGW; // 12'h304
+    assign CSRArray[10] = dut.core.priv.priv.csr.csrm.MISA_REGW; // 12'h301
+    assign CSRArray[11] = dut.core.priv.priv.csr.csrm.MENVCFG_REGW; // 12'h30A
+    assign CSRArray[12] = dut.core.priv.priv.csr.csrm.MHARTID_REGW; // 12'hF14
+    assign CSRArray[13] = dut.core.priv.priv.csr.csrm.MSCRATCH_REGW; // 12'h340
+    assign CSRArray[14] = dut.core.priv.priv.csr.csrm.MCAUSE_REGW; // 12'h342
+    assign CSRArray[15] = dut.core.priv.priv.csr.csrm.MTVAL_REGW; // 12'h343
+    assign CSRArray[16] = 0; // 12'hF11
+    assign CSRArray[17] = 0; // 12'hF12
+    assign CSRArray[18] = {{P.XLEN-12{1'b0}}, 12'h100}; //P.XLEN'h100; // 12'hF13
+    assign CSRArray[19] = 0; // 12'hF15
+    assign CSRArray[20] = 0; // 12'h34A
+	// supervisor CSRs
+    assign CSRArray[21] = dut.core.priv.priv.csr.csrs.csrs.SSTATUS_REGW; // 12'h100
+    assign CSRArray[22] = dut.core.priv.priv.csr.csrm.MIE_REGW & 12'h222; // 12'h104
+    assign CSRArray[23] = dut.core.priv.priv.csr.csrs.csrs.STVEC_REGW; // 12'h105
+    assign CSRArray[24] = dut.core.priv.priv.csr.csrs.csrs.SEPC_REGW; // 12'h141
+    assign CSRArray[25] = dut.core.priv.priv.csr.csrs.csrs.SCOUNTEREN_REGW; // 12'h106
+    assign CSRArray[26] = dut.core.priv.priv.csr.csrs.csrs.SENVCFG_REGW; // 12'h10A
+    assign CSRArray[27] = dut.core.priv.priv.csr.csrs.csrs.SATP_REGW; // 12'h180
+    assign CSRArray[28] = dut.core.priv.priv.csr.csrs.csrs.SSCRATCH_REGW; // 12'h140
+    assign CSRArray[29] = dut.core.priv.priv.csr.csrs.csrs.STVAL_REGW; // 12'h143
+    assign CSRArray[30] = dut.core.priv.priv.csr.csrs.csrs.SCAUSE_REGW; // 12'h142
+    assign CSRArray[31] = dut.core.priv.priv.csr.csrm.MIP_REGW & 12'h222 & dut.core.priv.priv.csr.csrm.MIDELEG_REGW; // 12'h144
+    assign CSRArray[32] = dut.core.priv.priv.csr.csrs.csrs.STIMECMP_REGW; // 12'h14D
+	// user CSRs
+    assign CSRArray[33] = dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW; // 12'h001
+    assign CSRArray[34] = dut.core.priv.priv.csr.csru.csru.FRM_REGW; // 12'h002
+    assign CSRArray[35] = {dut.core.priv.priv.csr.csru.csru.FRM_REGW, dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW}; // 12'h003
+
+    rvvisynth #(P, MAX_CSRS, TOTAL_CSRS) rvvisynth(.clk, .reset, .StallE, .StallM, .StallW, .FlushE, .FlushM, .FlushW,
+      .PCM, .InstrValidM, .InstrRawD, .Mcycle, .Minstret, .TrapM, 
+      .PrivilegeModeW, .GPRWen, .FPRWen, .GPRAddr, .FPRAddr, .GPRValue, .FPRValue, .CSRArray,
+      .valid, .rvvi);
 
     // axi 4 write data channel
     logic [31:0]                                      RvviAxiWdata;
@@ -618,12 +698,11 @@ module testbench;
       .tx_axis_tlast(RvviAxiWlast), .tx_axis_tuser('0), .rx_axis_tdata(), .rx_axis_tkeep(), .rx_axis_tvalid(), .rx_axis_tready(1'b1),
       .rx_axis_tlast(), .rx_axis_tuser(),
 
-      // *** update these
-      .mii_rx_clk(clk), // *** need to be the mii clock
+      .mii_rx_clk(clk),
       .mii_rxd('0),
       .mii_rx_dv('0),
       .mii_rx_er('0),
-      .mii_tx_clk(clk), // *** needs to be the mii clock
+      .mii_tx_clk(clk),
       .mii_txd,
       .mii_tx_en,
       .mii_tx_er,

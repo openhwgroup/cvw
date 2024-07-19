@@ -27,32 +27,38 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`define FPGA 1
+`define FPGA 0
 
 module rvvisynth import cvw::*; #(parameter cvw_t P,
-                                  parameter integer MAX_CSRS)(
+                                  parameter integer MAX_CSRS, TOTAL_CSRS = 36)(
   input logic clk, reset,
+  input logic                                     StallE, StallM, StallW, FlushE, FlushM, FlushW,
+  // required
+  input logic [P.XLEN-1:0]                        PCM,
+  input logic                                     InstrValidM,
+  input logic [31:0]                              InstrRawD,
+  input logic [63:0]                              Mcycle, Minstret,
+  input logic                                     TrapM,
+  input logic [1:0]                               PrivilegeModeW,
+  // registers gpr and fpr
+  input logic                                     GPRWen, FPRWen,
+  input logic [4:0]                               GPRAddr, FPRAddr,
+  input logic [P.XLEN-1:0]                        GPRValue, FPRValue,
+  input logic [P.XLEN-1:0]                        CSRArray [TOTAL_CSRS-1:0],
   output logic valid,
   output logic [187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)-1:0] rvvi
   );
 
-  localparam TOTAL_CSRS = 36;
-  
   // pipeline controlls
-  logic                                     StallE, StallM, StallW, FlushE, FlushM, FlushW;
+
   // required
-  logic [P.XLEN-1:0]                        PCM, PCW;
-  logic                                     InstrValidM, InstrValidW;
-  logic [31:0]                              InstrRawD, InstrRawE, InstrRawM, InstrRawW;
-  logic [63:0]                              Mcycle, Minstret;
-  logic                                     TrapM, TrapW;
-  logic [1:0]                               PrivilegeModeW;
+  logic [P.XLEN-1:0]                        PCW;
+  logic                                     InstrValidW;
+  logic [31:0]                              InstrRawE, InstrRawM, InstrRawW;
+  logic                                     TrapW;
+
   // registers gpr and fpr
-  logic                                     GPRWen, FPRWen;
-  logic [4:0]                               GPRAddr, FPRAddr;
-  logic [P.XLEN-1:0]                        GPRValue, FPRValue;
   logic [P.XLEN-1:0]                        XLENZeros;
-  logic [P.XLEN-1:0]                        CSRArray [TOTAL_CSRS-1:0];
   logic [TOTAL_CSRS-1:0]                    CSRArrayWen;
   logic [P.XLEN-1:0]                        CSRValue [MAX_CSRS-1:0];
   logic [TOTAL_CSRS-1:0]                    CSRWen [MAX_CSRS-1:0];
@@ -61,10 +67,11 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
   logic [11:0]                              CSRCount;
   logic [177+P.XLEN-1:0]                    Required;
   logic [10+2*P.XLEN-1:0]                   Registers;
-  logic [MAX_CSRS*(P.XLEN+12)-1:0]       CSRs;
+  logic [MAX_CSRS*(P.XLEN+12)-1:0]          CSRs;
      
   // get signals from the core.
    if (`FPGA) begin
+/* -----\/----- EXCLUDED -----\/-----
   assign StallE         = fpgaTop.wallypipelinedsoc.core.StallE;
   assign StallM         = fpgaTop.wallypipelinedsoc.core.StallM;
   assign StallW         = fpgaTop.wallypipelinedsoc.core.StallW;
@@ -123,7 +130,9 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
   assign CSRArray[33] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csru.csru.FFLAGS_REGW; // 12'h001
   assign CSRArray[34] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csru.csru.FRM_REGW; // 12'h002
   assign CSRArray[35] = {fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csru.csru.FRM_REGW, fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csru.csru.FFLAGS_REGW}; // 12'h003
+ -----/\----- EXCLUDED -----/\----- */
    end else begin // if (`FPGA)
+/* -----\/----- EXCLUDED -----\/-----
         assign StallE         = dut.core.StallE;
   assign StallM         = dut.core.StallM;
   assign StallW         = dut.core.StallW;
@@ -182,6 +191,7 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
   assign CSRArray[33] = dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW; // 12'h001
   assign CSRArray[34] = dut.core.priv.priv.csr.csru.csru.FRM_REGW; // 12'h002
   assign CSRArray[35] = {dut.core.priv.priv.csr.csru.csru.FRM_REGW, dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW}; // 12'h003
+ -----/\----- EXCLUDED -----/\----- */
    end
 
   //

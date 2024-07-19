@@ -37,7 +37,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   output logic                HSELEXT,
   output logic                HSELEXTSDC, 
   // fpga debug signals
-  input  logic                RVVIStall,
+  input  logic                ExternalStall,
   // outputs to external memory, shared with uncore memory
   output logic                HCLK, HRESETn,
   output logic [P.PA_BITS-1:0]  HADDR,
@@ -77,7 +77,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   wallypipelinedcore #(P) core(.clk, .reset,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
-    .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .RVVIStall
+    .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .ExternalStall
    );
 
   // instantiate uncore if a bus interface exists

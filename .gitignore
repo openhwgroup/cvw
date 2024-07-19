@@ -237,3 +237,4 @@ tests/functcov
 tests/functcov/*
 tests/functcov/*/*
 sim/vcs/simprofile*
+/fpga/rvvidaemon/rvvidaemon

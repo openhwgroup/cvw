@@ -294,6 +294,11 @@ typedef struct packed {
   int DURLEN     ;
   int DIVb       ;
   int DIVBLEN    ;
+
+// debug tools
+  logic RVVI_SYNTH_SUPPORTED;
+  logic [31:0] RVVI_INIT_TIME_OUT;
+  logic [31:0] RVVI_PACKET_DELAY; 
 } cvw_t;
 
 endpackage
