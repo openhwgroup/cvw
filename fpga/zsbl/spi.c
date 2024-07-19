@@ -5,6 +5,10 @@ void write_reg(uintptr_t addr, uint32_t value) {
   *loc = value;
 }
 
+void read_red(uintptr_t addr) {
+  return *(volatile uint32_t *) addr;
+}
+
 // Initialize Sifive FU540 based SPI Controller
 void spi_init() {
   // Disable interrupts by default
@@ -21,4 +25,27 @@ void spi_init() {
             SIFIVE_SPI_DELAY1_INTERCS(1) |
             SIFIVE_SPI_DELAY1_INTERXFR(0));
 }
+
+// Sends and receives a single byte
+uint8_t spi_send_byte(uint8_t byte) {
+  // Write byte to transfer fifo
+  write_reg(SPI_TXDATA, byte);
+
+  /* Not sure how necessary this is. Will keep commented for now.
+  // Wait a decent amount of time for data to send
+  for (int i = 0; i < 100; i++) {
+    __asm__ volatile("nop");
+  }
+  */
+  
+  // Wait for data to come into receive fifo
+  while (read_reg(SPI_IP) != 2) {}
+
+  // Read received data
+  result = read_reg(SPI_RXDATA);
+
+  // Return result
+  return result;
+}
+
 
