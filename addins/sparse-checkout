@@ -2,6 +2,7 @@ rtl/eth_mac_mii_fifo.sv
 rtl/eth_mac_mii.sv
 rtl/mii_phy_if.sv
 rtl/ssio_ddr_in.sv
+rtl/ssio_sdr_in.sv
 rtl/eth_mac_1g.sv
 rtl/axis_gmii_rx.sv
 rtl/lfsr.sv
