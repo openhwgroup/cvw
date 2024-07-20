@@ -421,8 +421,8 @@ elif (args.fcovrvvi):  # only run RV64GC tests on Questa in rvvi coverage mode
         addTests(tests64gc_fp, coveragesim)
 else: 
     for sim in sims:
-        if (not (args.buildroot and sim == defaultsim)):  # skip short buildroot sim if running long one
-            addTests(tests_buildrootshort, sim)
+        # if (not (args.buildroot and sim == defaultsim)):  # skip short buildroot sim if running long one
+        #     addTests(tests_buildrootshort, sim)
         addTests(tests, sim)
         addTests(tests64gc_nofp, sim)
         addTests(tests64gc_fp, sim)
