@@ -361,11 +361,11 @@ else
 fi
 
 
-# RISCOF (https://github.com/riscv/riscof.git)
+# RISCOF (https://github.com/riscv-software-src/riscof.git)
 # RISCOF is a RISC-V compliance test framework that is used to run the RISC-V Arch Tests.
 section_header "Installing/Updating RISCOF"
 STATUS="RISCOF"
-pip3 install git+https://github.com/riscv/riscof.git
+pip3 install git+https://github.com/riscv-software-src/riscof.git
 
 
 # OSU Skywater 130 cell library (https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12)
