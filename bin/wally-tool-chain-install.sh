@@ -307,12 +307,13 @@ else
 fi
 
 
-cd "$RISCV"
 if [ "$FAMILY" == rhel ]; then
     # Install opam from binary disribution on rhel as it is not available from dnf
     # Opam is needed to install the sail compiler
     section_header "Installing/Updating Opam"
     STATUS="Opam"
+    export OPAMROOTISOK=1 # Silence warnings about running opam as root
+    cd "$RISCV"
     mkdir -p opam
     cd opam
     wget https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh
@@ -332,11 +333,12 @@ fi
 section_header "Installing/Updating Sail Compiler"
 STATUS="Sail Compiler"
 export OPAMROOTISOK=1 # Silence warnings about running opam as root
+export OPAMROOT="$RISCV"/opam
 cd "$RISCV"
-opam init -y --disable-sandboxing
+opam init -y --disable-sandboxing --no-setup --compiler=5.1.0
+eval "$(opam config env)"
 opam update -y
 opam upgrade -y
-opam switch create 5.1.0 || opam switch set 5.1.0
 opam install sail -y
 echo -e "${SUCCESS_COLOR}Sail Compiler successfully installed/updated${ENDC}"
 
@@ -345,7 +347,6 @@ echo -e "${SUCCESS_COLOR}Sail Compiler successfully installed/updated${ENDC}"
 section_header "Installing/Updating RISC-V Sail Model"
 STATUS="RISC-V Sail Model"
 if git_check "sail-riscv" "https://github.com/riscv/sail-riscv.git" "$RISCV/bin/riscv_sim_RV32"; then
-    eval "$(opam config env)"
     cd sail-riscv
     git reset --hard && git clean -f && git checkout master && git pull
     export OPAMCLI=2.0  # Sail is not compatible with opam 2.1 as of 4/16/24
