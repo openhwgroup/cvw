@@ -22,7 +22,7 @@ jobs:
               ./.github/cli-space-cleanup.sh
               df -h
       - name: install
-        run: sudo ./bin/wally-tool-chain-install.sh
+        run: sudo ./bin/wally-tool-chain-install.sh --clean
       - name: make tests
         run: |
               source setup.sh
@@ -56,7 +56,7 @@ jobs:
               nsenter -t 1 -m -u -n -i bash -c "$(cat .github/cli-space-cleanup.sh)"
               df -h
       - name: install
-        run: ./bin/wally-tool-chain-install.sh
+        run: ./bin/wally-tool-chain-install.sh --clean
       - name: make tests
         run: |
               source setup.sh

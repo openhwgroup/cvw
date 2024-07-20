@@ -72,7 +72,7 @@ logger() {
     cat < /dev/stdin | tee -a "$log" | (grep -iE --color=never "(\bwarning|\berror|\bfail|\bsuccess|\bstamp|\bdoesn't work)" || true) | (grep -viE --color=never "(_warning|warning_|_error|error_|-warning|warning-|-error|error-|Werror|error\.o|warning flags)" || true)
 }
 
-set -e # break on error
+set -ex # break on error
 trap error ERR # run error handler on error
 STATUS="setup" # keep track of what part of the installation is running for error messages
 
