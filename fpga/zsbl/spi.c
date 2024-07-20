@@ -48,4 +48,3 @@ uint8_t spi_send_byte(uint8_t byte) {
   return result;
 }
 
-
