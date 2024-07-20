@@ -86,13 +86,13 @@ dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${dir}"/wally-distro-check.sh
 
 # Check if root
-ROOT=$( [ "${EUID:=$(id -u)}" = 0 ] && echo true || echo false);
+ROOT=$( [ "${EUID:=$(id -u)}" == 0 ] && echo true || echo false);
 
 # Set installation directory based on execution privileges
 # If the script is run as root, the default installation path is /opt/riscv
 # If the script is run as a user, the default installation path is ~/riscv
 # The installation path can be overridden with an argument passed to the script.
-if [ "$ROOT" = true ]; then
+if [ "$ROOT" == true ]; then
     export RISCV="${1:-/opt/riscv}"
 else
     export RISCV="${1:-$HOME/riscv}"
@@ -110,16 +110,16 @@ echo "Installation path: $RISCV"
 
 # Install/update system packages if root. Otherwise, check that packages are already installed.
 STATUS="system packages"
-if [ "$ROOT" = true ]; then
+if [ "$ROOT" == true ]; then
     source "${dir}"/wally-package-install.sh
 else
     source "${dir}"/wally-package-install.sh --check
 fi
 
 # Enable newer version of gcc for older distros (required for QEMU/Verilator)
-if [ "$FAMILY" = rhel ]; then
+if [ "$FAMILY" == rhel ]; then
     source /opt/rh/gcc-toolset-13/enable
-elif [ "$UBUNTU_VERSION" = 20 ]; then
+elif (( UBUNTU_VERSION == 20 )); then
     mkdir -p "$RISCV"/gcc-10/bin
     for f in gcc cpp g++ gcc-ar gcc-nm gcc-ranlib gcov gcov-dump gcov-tool lto-dump; do
         ln -vsf /usr/bin/$f-10 "$RISCV"/gcc-10/bin/$f
@@ -154,7 +154,7 @@ pip install -U sphinx sphinx_rtd_theme matplotlib scipy scikit-learn adjustText 
 pip install -U riscv_isac # to generate new tests, such as quads with fp_dataset.py
 
 # z3 is needed for sail and not availabe from dnf for rhel 8
-if [ "$RHEL_VERSION" = 8 ]; then
+if (( RHEL_VERSION == 8 )); then
     pip install -U z3-solver
 fi
 
@@ -163,7 +163,7 @@ echo -e "${SUCCESS_COLOR}Python environment successfully configured.${ENDC}"
 
 
 # Extra dependecies needed for older distros that don't have new enough versions available from package manager
-if [ "$RHEL_VERSION" = 8 ] || [ "$UBUNTU_VERSION" = 20 ]; then
+if (( RHEL_VERSION == 8 )) || (( UBUNTU_VERSION == 20 )); then
     # Newer versin of glib required for Qemu.
     # Anything newer than this won't build on red hat 8
     STATUS="glib"
@@ -185,7 +185,7 @@ if [ "$RHEL_VERSION" = 8 ] || [ "$UBUNTU_VERSION" = 20 ]; then
 fi
 
 # Newer version of gmp needed for sail-riscv model
-if [ "$RHEL_VERSION" = 8 ]; then
+if (( RHEL_VERSION == 8 )); then
     STATUS="gmp"
     if [ ! -e "$RISCV"/include/gmp.h ]; then
         section_header "Installing gmp"
@@ -308,7 +308,7 @@ fi
 
 
 cd "$RISCV"
-if [ "$FAMILY" = rhel ]; then
+if [ "$FAMILY" == rhel ]; then
     # Install opam from binary disribution on rhel as it is not available from dnf
     # Opam is needed to install the sail compiler
     section_header "Installing/Updating Opam"
@@ -392,10 +392,10 @@ if [ ! -e "${RISCV}"/site-setup.sh ]; then
     wget https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.sh
     wget https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.csh
     # Add necessary lines to site-setup script to activate newer version of gcc for older distros
-    if [ "$FAMILY" = rhel ]; then
+    if [ "$FAMILY" == rhel ]; then
         echo "# Activate newer gcc version" >> site-setup.sh
         echo "source /opt/rh/gcc-toolset-13/enable" >> site-setup.sh
-    elif [ "$UBUNTU_VERSION" = 20 ]; then
+    elif (( UBUNTU_VERSION == 20 )); then
         echo "# Activate newer gcc version" >> site-setup.sh
         echo "export PATH=\$RISCV/gcc-10/bin:\$PATH" >> site-setup.sh
         echo "# Activate newer gcc version" >> site-setup.csh

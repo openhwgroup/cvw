@@ -45,7 +45,7 @@ fi
 
 # Generate list of packages to install and package manager commands based on distro
 # Packages are grouped by which tool requires them. If multiple tools need a package, it is included in the first tool only
-if [ "$FAMILY" = rhel ]; then
+if [ "$FAMILY" == rhel ]; then
     PACKAGE_MANAGER="dnf"
     UPDATE_COMMAND="sudo dnf update -y"
     GENERAL_PACKAGES="which rsync git make cmake python3.12 python3-pip curl wget ftp tar pkgconf-pkg-config dialog mutt ssmtp"
@@ -55,13 +55,13 @@ if [ "$FAMILY" = rhel ]; then
     VERILATOR_PACKAGES="help2man perl clang ccache gperftools numactl mold"
     BUILDROOT_PACKAGES="ncurses-base ncurses ncurses-libs ncurses-devel gcc-gfortran"
     # Extra packages not availale in rhel8, nice for Verilator and needed for sail respectively
-    if [ "$RHEL_VERSION" = 9 ]; then
+    if (( RHEL_VERSION == 9 )); then
         VERILATOR_PACKAGES="$VERILATOR_PACKAGES perl-doc"
         SAIL_PACKAGES="z3"
     fi
     # A newer version of gcc is required for qemu
     OTHER_PACKAGES="gcc-toolset-13"
-elif [ "$FAMILY" = ubuntu ]; then
+elif [ "$FAMILY" == ubuntu ]; then
     PACKAGE_MANAGER=apt-get
     UPDATE_COMMAND="sudo apt-get update -y && sudo apt-get upgrade -y --with-new-pkgs"
     GENERAL_PACKAGES="rsync git make cmake python3 python3-pip python3-venv curl wget ftp tar pkg-config dialog mutt ssmtp"
@@ -76,25 +76,25 @@ elif [ "$FAMILY" = ubuntu ]; then
         VERILATOR_PACKAGES="$VERILATOR_PACKAGES mold"
     fi
     # Newer version of gcc needed for Ubuntu 20.04 for Verilator
-    if [ "$UBUNTU_VERSION" = 20 ]; then
+    if (( UBUNTU_VERSION == 20 )); then
         OTHER_PACKAGES="gcc-10 g++-10 cpp-10"
     fi
 fi
 
 
 # Check if required packages are installed or install/update them depending on passed flag.
-if [ "${1}" = "--check" ]; then
+if [ "${1}" == "--check" ]; then
     printf "${SECTION_COLOR}%$(tput cols)s" | tr ' ' '#'
     printf "%$(tput cols)s" | tr ' ' '#'
     echo -e "Checking Dependencies from Package Manager"
     printf "%$(tput cols)s" | tr ' ' '#'
     printf "%$(tput cols)s${ENDC}" | tr ' ' '#'
 
-    if [ "$FAMILY" = rhel ]; then
+    if [ "$FAMILY" == rhel ]; then
         for pack in $GENERAL_PACKAGES $GNU_PACKAGES $QEMU_PACKAGES $SPIKE_PACKAGES $VERILATOR_PACKAGES $SAIL_PACKAGES $BUILDROOT_PACKAGES $OTHER_PACKAGES; do
             rpm -q "$pack" > /dev/null || (echo -e "${FAIL_COLOR}Missing packages detected (${WARNING_COLOR}$pack${FAIL_COLOR}). Run as root to auto-install or run wally-package-install.sh first.${ENDC}" && exit 1)
         done
-    elif [ "$FAMILY" = ubuntu ]; then
+    elif [ "$FAMILY" == ubuntu ]; then
         for pack in $GENERAL_PACKAGES $GNU_PACKAGES $QEMU_PACKAGES $SPIKE_PACKAGES $VERILATOR_PACKAGES $SAIL_PACKAGES $BUILDROOT_PACKAGES $OTHER_PACKAGES; do
             dpkg -l "$pack" | grep "ii" > /dev/null || (echo -e "${FAIL_COLOR}Missing packages detected (${WARNING_COLOR}$pack${FAIL_COLOR}). Run as root to auto-install or run wally-package-install.sh first." && exit 1)
         done
@@ -111,14 +111,14 @@ else
     printf "%$(tput cols)s${ENDC}" | tr ' ' '#'
 
     # Enable extra repos necessary for rhel
-    if [ "$FAMILY" = rhel ]; then
+    if [ "$FAMILY" == rhel ]; then
         sudo dnf install -y dnf-plugins-core
         sudo dnf group install -y "Development Tools"
-        if [ "$ID" = rhel ]; then
+        if [ "$ID" == rhel ]; then
             sudo subscription-manager repos --enable "codeready-builder-for-rhel-$RHEL_VERSION-$(arch)-rpms"
             sudo dnf install -y "https://dl.fedoraproject.org/pub/epel/epel-release-latest-$RHEL_VERSION.noarch.rpm"
         else # RHEL clone
-            if [ "$RHEL_VERSION" = 8 ]; then
+            if (( RHEL_VERSION == 8 )); then
                 sudo dnf config-manager -y --set-enabled powertools
             else # Version 9
                 sudo dnf config-manager -y --set-enabled crb
