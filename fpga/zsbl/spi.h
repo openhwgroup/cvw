@@ -40,6 +40,7 @@
 void write_reg(uintptr_t addr, uint32_t value);
 uint32_t read_reg(uintptr_t addr);
 uint8_t spi_send_byte(uint8_t byte);
+
 void spi_init();
 
 #endif
