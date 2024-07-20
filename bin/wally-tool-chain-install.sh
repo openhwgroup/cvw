@@ -68,7 +68,7 @@ git_check() {
     local url=$2
     local check=$3
     local branch="${4:-master}"
-    if [[ ((! -e $repo) && ($(git clone "$url") || true)) || ($(cd "$repo"; git fetch; git rev-parse HEAD) != $(cd repo; git rev-parse origin/"$branch")) || (! -e $check) ]]; then
+    if [[ ((! -e $repo) && ($(git clone "$url") || true)) || ($(cd "$repo"; git fetch; git rev-parse HEAD) != $(cd $repo; git rev-parse origin/"$branch")) || (! -e $check) ]]; then
         return 0
     else
         return 1
