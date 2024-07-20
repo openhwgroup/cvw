@@ -26,7 +26,7 @@ jobs:
       - name: make tests
         run: |
               source setup.sh
-              make
+              make riscof
       - name: regresssion
         run: |
               source setup.sh
@@ -62,7 +62,7 @@ jobs:
       - name: make tests
         run: |
               source setup.sh
-              make
+              make riscof
       - name: regresssion
         run: |
               source setup.sh
