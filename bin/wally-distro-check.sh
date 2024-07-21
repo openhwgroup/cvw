@@ -55,11 +55,8 @@ if [[ "$ID" == rhel || "$ID_LIKE" == *rhel* ]]; then
         printf "${WARNING_COLOR}%s\n${ENDC}" "For Red Hat family distros, the Wally install script has only been tested on RHEL, Rocky Linux," \
             " and AlmaLinux. Your distro is $PRETTY_NAME. The regular Red Hat install will be attempted, but there will likely be issues."
     fi
-    if (( "${VERSION_ID:0:1}" == 8 )); then
-        export RHEL_VERSION=8
-    elif (( "${VERSION_ID:0:1}" = 9 )); then
-        export RHEL_VERSION=9
-    else
+    export RHEL_VERSION="${VERSION_ID:0:1}"
+    if (( RHEL_VERSION < 8 )); then
         echo "${FAIL_COLOR}The Wally install script is only compatible with versions 8 and 9 of RHEL, Rocky Linux, and AlmaLinux. You have version $VERSION.${ENDC}"
         exit 1
     fi
@@ -68,12 +65,11 @@ elif [[ "$ID" == ubuntu || "$ID_LIKE" == *ubuntu* ]]; then
     if [ "$ID" != ubuntu ]; then
         printf "${WARNING_COLOR}%s\n${ENDC}" "For Ubuntu family distros, the Wally install script has only been tested on standard Ubuntu. Your distro " \
             "is $PRETTY_NAME. The regular Ubuntu install will be attempted, but there may be issues."
-    else
-        export UBUNTU_VERSION="${VERSION_ID:0:2}"
-        if (( UBUNTU_VERSION < 20 )); then
-            echo "${FAIL_COLOR}The Wally install script is only compatible with versions 20.04, 22.04, and 24.04 of Ubuntu. You have version $VERSION.${ENDC}"
-            exit 1
-        fi
+    fi
+    export UBUNTU_VERSION="${VERSION_ID:0:2}"
+    if (( UBUNTU_VERSION < 20 )); then
+        echo "${FAIL_COLOR}The Wally install script is only compatible with versions 20.04, 22.04, and 24.04 of Ubuntu. You have version $VERSION.${ENDC}"
+        exit 1
     fi
 else
     printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally install script is currently only compatible with Ubuntu and Red Hat family " \
