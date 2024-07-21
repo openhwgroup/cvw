@@ -79,6 +79,12 @@ set -e # break on error
 trap error ERR # run error handler on error
 STATUS="setup" # keep track of what part of the installation is running for error messages
 
+# Check for clean flag
+if [ "$1" == "--clean" ]; then
+    clean=true
+    shift
+fi
+
 # Determine script directory to locate related scripts
 dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -219,6 +225,10 @@ if git_check "riscv-gnu-toolchain" "https://github.com/riscv/riscv-gnu-toolchain
     git pull
     ./configure --prefix="${RISCV}" --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
     make -j ${NUM_THREADS}
+    if [ "$clean" ]; then
+        cd "$RISCV"
+        rm -rf riscv-gnu-toolchain
+    fi
     echo -e "${SUCCESS_COLOR}RISC-V GNU Toolchain successfully installed${ENDC}"
 else
     echo -e "${SUCCESS_COLOR}RISC-V GNU Toolchain already up to date${ENDC}"
@@ -243,6 +253,10 @@ if git_check "elf2hex" "https://github.com/sifive/elf2hex.git" "$RISCV/bin/riscv
     ./configure --target=riscv64-unknown-elf --prefix="$RISCV"
     make
     make install
+    if [ "$clean" ]; then
+        cd "$RISCV"
+        rm -rf elf2hex
+    fi
     echo -e "${SUCCESS_COLOR}elf2hex successfully installed${ENDC}"
 else
     echo -e "${SUCCESS_COLOR}elf2hex already up to date${ENDC}"
@@ -261,6 +275,10 @@ if git_check "qemu" "https://github.com/qemu/qemu" "$RISCV/include/qemu-plugin.h
     ./configure --target-list=riscv64-softmmu --prefix="$RISCV"
     make -j ${NUM_THREADS}
     make install
+    if [ "$clean" ]; then
+        cd "$RISCV"
+        rm -rf qemu
+    fi
     echo -e "${SUCCESS_COLOR}QEMU successfully installed${ENDC}"
 else
     echo -e "${SUCCESS_COLOR}QEMU already up to date${ENDC}"
@@ -280,6 +298,10 @@ if git_check "riscv-isa-sim" "https://github.com/riscv-software-src/riscv-isa-si
     ../configure --prefix="$RISCV"
     make -j ${NUM_THREADS}
     make install
+    if [ "$clean" ]; then
+        cd "$RISCV"
+        rm -rf riscv-isa-sim
+    fi
     echo -e "${SUCCESS_COLOR}Spike successfully installed${ENDC}"
 else
     echo -e "${SUCCESS_COLOR}Spike already up to date${ENDC}"
@@ -301,6 +323,10 @@ if git_check "verilator" "https://github.com/verilator/verilator" "$RISCV/share/
     ./configure --prefix="$RISCV"
     make -j ${NUM_THREADS}
     make install
+    if [ "$clean" ]; then
+        cd "$RISCV"
+        rm -rf verilator
+    fi
     echo -e "${SUCCESS_COLOR}Verilator successfully installed${ENDC}"
 else
     echo -e "${SUCCESS_COLOR}Verilator already up to date${ENDC}"
@@ -352,9 +378,12 @@ if git_check "sail-riscv" "https://github.com/riscv/sail-riscv.git" "$RISCV/bin/
     export OPAMCLI=2.0  # Sail is not compatible with opam 2.1 as of 4/16/24
     ARCH=RV64 make -j ${NUM_THREADS} c_emulator/riscv_sim_RV64
     ARCH=RV32 make -j ${NUM_THREADS} c_emulator/riscv_sim_RV32
-    cd "$RISCV"
-    ln -sf ../sail-riscv/c_emulator/riscv_sim_RV64 bin/riscv_sim_RV64
-    ln -sf ../sail-riscv/c_emulator/riscv_sim_RV32 bin/riscv_sim_RV32
+    cp -f c_emulator/riscv_sim_RV64 "$RISCV"/bin/riscv_sim_RV64
+    cp -f c_emulator/riscv_sim_RV32 "$RISCV"/bin/riscv_sim_RV32
+    if [ "$clean" ]; then
+        cd "$RISCV"
+        rm -rf sail-riscv
+    fi
     echo -e "${SUCCESS_COLOR}RISC-V Sail Model successfully installed${ENDC}"
 else
     echo -e "${SUCCESS_COLOR}RISC-V Sail Model already up to date${ENDC}"
