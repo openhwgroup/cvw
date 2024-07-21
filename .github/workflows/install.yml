@@ -1,5 +1,5 @@
 name: Installation
-on: [workflow_dispatch]
+on: [workflow_dispatch, push]
 defaults:
   run:
     shell: bash
@@ -31,7 +31,7 @@ jobs:
         run: |
               source setup.sh
               regression-wally
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: regression-logs-${{ matrix.os }}
@@ -48,6 +48,11 @@ jobs:
       matrix:
         os: ["rockylinux:8", "rockylinux:9", "almalinux:8", "almalinux:9"]
     steps:
+      - name: Unique name for Artifacts
+        id: prep_artifact_name
+        run: |
+              name=$(echo -n "${{ matrix.os }}" | sed -e 's/[ \t:\/\\"<>|*?]/-/g' -e 's/--*/-/g')
+              echo "ARTIFACT_NAME=$name" >> $GITHUB_ENV
       - name: Install dependencies
         run: |
               dnf install -y sudo git
@@ -72,8 +77,8 @@ jobs:
         run: |
               source setup.sh
               regression-wally
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: regression-logs-${{ matrix.os }}
+          name: regression-logs-${{ env.ARTIFACT_NAME }}
           path: ${{ github.workspace }}/sim/verilator/logs/
