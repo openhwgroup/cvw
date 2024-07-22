@@ -57,9 +57,9 @@ EXT_MEM_RANGE       64'h0FFFFFFF
 SDC_SUPPORTED       1
 PLIC_SDC_ID         32'd20
 BPRED_SIZE          32'd12
-RVVI_SYNTH_SUPPORTED 0
+RVVI_SYNTH_SUPPORTED 1
 RVVI_INIT_TIME_OUT  32'd100000000
-RVVI_PACKET_DELAY   32'd350
+RVVI_PACKET_DELAY   32'd400
 
 
 # The syn configurations are trimmed down for faster synthesis.  
