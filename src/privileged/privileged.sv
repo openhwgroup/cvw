@@ -102,6 +102,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   output logic              ebreakEn,
   input  logic              ForceBreakPoint,
   input  logic              DebugMode,
+  output logic              ProgBufTrap,
   input  logic [2:0]        DebugCause,
   output logic              Step,
   output logic              DebugStopTime_REGW,
@@ -183,6 +184,6 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .LoadAccessFaultM, .StoreAmoAccessFaultM, .EcallFaultM, .InstrPageFaultM,
     .LoadPageFaultM, .StoreAmoPageFaultM, .PrivilegeModeW, 
     .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .STATUS_MIE, .STATUS_SIE,
-    .InstrValidM, .CommittedM, .CommittedF, .DebugMode,
+    .InstrValidM, .CommittedM, .CommittedF, .DebugMode, .ProgBufTrap,
     .TrapM, .wfiM, .wfiW, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM);
 endmodule

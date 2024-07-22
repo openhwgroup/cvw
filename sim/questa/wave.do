@@ -670,6 +670,7 @@ add wave -noupdate -group DM /testbench/dut/dm/dm/Busy
 add wave -noupdate -group DM /testbench/dut/dm/dm/CmdErr
 add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/State
 add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/DebugMode
+add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/ProgBufTrap
 add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/DebugCause
 add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/Step
 add wave -noupdate -group DMC /testbench/dut/core/dmc/debugcontrol/HaltReq

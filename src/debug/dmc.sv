@@ -41,6 +41,7 @@ module dmc (
   input  logic       AckHaveReset, // Clears HaveReset status
   input  logic       ExecProgBuf,  // Updates PC to progbuf and resumes core
 
+  input  logic       ProgBufTrap,    // Trap while executing progbuf
   output logic       DebugMode,      // Sets state in DM and controls masking of interrupts
   output logic [2:0] DebugCause,     // Reason Hart entered debug mode
   output logic       ResumeAck,      // Signals Hart has been resumed
@@ -88,11 +89,9 @@ module dmc (
           end
         end
 
-        // Similar to RUNNING, but DebugMode isn't deasserted
         EXECPROGBUF : begin
-          if (ebreakM & ebreakEn) begin
+          if (ProgBufTrap) begin
             State <= HALTED;
-            DebugCause <= `CAUSE_EBREAK;
           end
         end
 

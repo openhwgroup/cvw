@@ -36,6 +36,7 @@ def main():
         svf.write_progbuf([0x00943023, 0x00840413, 0x00100073])
         svf.comment("Execute Program Buffer")
         svf.exec_progbuf()
+        svf.resume()
 
 
 

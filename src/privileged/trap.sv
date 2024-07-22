@@ -41,6 +41,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   input  logic                 InstrValidM,                                     // current instruction is valid, not flushed
   input  logic                 CommittedM, CommittedF,                          // LSU/IFU has committed to a bus operation that can't be interrupted
   input  logic                 DebugMode,                                       // Ignore all interrupts in debug mode
+  output logic                 ProgBufTrap,                                     // Trap while executing progbuf returns to debug mode
   output logic                 TrapM,                                           // Trap is occurring
   output logic                 InterruptM,                                      // Interrupt is occurring
   output logic                 ExceptionM,                                      // exception is occurring
@@ -92,6 +93,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   //assign TrapM = (ExceptionM & ~CommittedF) | InterruptM;
   // Debug Test
   assign TrapM = ~DebugMode & ((ExceptionM & ~CommittedF) | InterruptM);
+  assign ProgBufTrap = ExceptionM & ~CommittedF;
 
   ///////////////////////////////////////////
   // Cause priority defined in privileged spec
