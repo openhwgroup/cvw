@@ -1115,6 +1115,9 @@ module fpgaTop
      .init_calib_complete(c0_init_calib_complete),
      .device_temp(device_temp));
 
+  (* mark_debug = "true" *)  logic IlaTrigger;
+    
+   
   if(P.RVVI_SYNTH_SUPPORTED) begin : rvvi_synth
     localparam MAX_CSRS = 3;
     localparam TOTAL_CSRS = 36;
@@ -1212,9 +1215,6 @@ module fpgaTop
     logic [3:0]                                       RvviAxiRstrb;
     logic RvviAxiRlast;
     logic RvviAxiRvalid;
-    (* mark_debug = "true" *)  logic IlaTrigger;
-    
-   
 
     logic                                             tx_error_underflow, tx_fifo_overflow, tx_fifo_bad_frame, tx_fifo_good_frame, rx_error_bad_frame;
     logic                                             rx_error_bad_fcs, rx_fifo_overflow, rx_fifo_bad_frame, rx_fifo_good_frame;
@@ -1246,11 +1246,12 @@ module fpgaTop
     triggergen triggergen(.clk(CPUCLK), .reset(bus_struct_reset), .RvviAxiRdata,
       .RvviAxiRstrb, .RvviAxiRlast, .RvviAxiRvalid, .IlaTrigger);
   end else begin // if (P.RVVI_SYNTH_SUPPORTED)
+    assign IlaTrigger = '0;
     assign RVVIStall = '0;
   end
    
   //assign phy_reset_n = ~bus_struct_reset;
    assign phy_reset_n = ~1'b0;
-
+  
 endmodule
 
