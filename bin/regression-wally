@@ -513,7 +513,8 @@ def main():
 
     # Scale the number of concurrent processes to the number of test cases, but
     # max out at a limited number of concurrent processes to not overwhelm the system
-    if (args.lockstep or args.fcov):
+    # right now fcov, ccov, nightly all use Imperas
+    if (args.ccov or args.fcov or args.nightly):
         ImperasDVLicenseCount = 8 # limit number of concurrent processes to avoid overloading ImperasDV licenses
     else:
         ImperasDVLicenseCount = 10000 # effectively no license limit for non-lockstep tests
