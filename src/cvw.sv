@@ -296,7 +296,10 @@ typedef struct packed {
   int DIVBLEN    ;
 // integer division/remainder constants
   int INTDIVb    ;
-  
+// debug tools
+  logic RVVI_SYNTH_SUPPORTED;
+  logic [31:0] RVVI_INIT_TIME_OUT;
+  logic [31:0] RVVI_PACKET_DELAY; 
 } cvw_t;
 
 endpackage
