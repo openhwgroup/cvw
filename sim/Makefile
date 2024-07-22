@@ -91,6 +91,7 @@ combine_functcov:
 	cd ${SIM}/questa/fcov && rm -rf *
 	cd ${SIM}/questa/fcov_ucdb && rm -rf *
 	wsim rv64gc ${WALLY}/tests/functcov/rv64/I/WALLY-COV-add.elf --fcov > ${SIM}/questa/fcov_logs/add.log 2>&1
+	wsim rv64gc ${WALLY}/tests/functcov/rv64/I/WALLY-COV-and.elf --fcov > ${SIM}/questa/fcov_logs/and.log 2>&1
 
 	#run-elf-cov.bash --seed ${SIM}/questa/seed0.txt --verbose --coverdb ${SIM}/questa/fcov/add.ucdb --elf ${WALLY}/tests/functcov/rv64/I/WALLY-COV-add.elf								>> ${SIM}/questa/fcov_logs/add.log 2>&1
 	#run-elf-cov.bash --seed ${SIM}/questa/seed0.txt --verbose --coverdb ${SIM}/questa/fcov/and.ucdb --elf ${WALLY}/tests/functcov/rv64/I/WALLY-COV-and.elf								>> ${SIM}/questa/fcov_logs/add.log 2>&1
