@@ -104,6 +104,7 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   logic [3:0] ZBBSelectE;                                    // ZBB Result Select Signal in Execute Stage
   logic [2:0] BALUControlE;                                  // ALU Control signals for B instructions in Execute Stage
   logic       SubArithE;                                     // Subtraction or arithmetic shift
+  logic       UW64E;                                         // .uw-type instruction
 
   logic [6:0] Funct7E;
 
@@ -123,7 +124,7 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
     .StructuralStallD, .LoadStallD, .StoreStallD, .Rs1D, .Rs2D,  .Rs2E,
     .StallE, .FlushE, .FlagsE, .FWriteIntE,
     .PCSrcE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE,
-    .Funct3E, .Funct7E, .IntDivE, .W64E, .SubArithE, .BranchD, .BranchE, .JumpD, .JumpE,
+    .Funct3E, .Funct7E, .IntDivE, .W64E, .UW64E, .SubArithE, .BranchD, .BranchE, .JumpD, .JumpE,
     .BranchSignedE, .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE, .CZeroE, .MDUActiveE, 
     .FCvtIntE, .ForwardAE, .ForwardBE, .CMOpM, .IFUPrefetchE, .LSUPrefetchM,
     .StallM, .FlushM, .MemRWE, .MemRWM, .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
@@ -132,7 +133,7 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
     .RdW, .RdE, .RdM, .DebugScanEn(DebugScanEn & MiscSel), .DebugScanIn, .DebugScanOut(DSCR));
 
   datapath #(P) dp(
-    .clk, .reset, .ImmSrcD, .InstrD, .Rs1D, .Rs2D, .Rs2E, .StallE, .FlushE, .ForwardAE, .ForwardBE, .W64E, .SubArithE,
+    .clk, .reset, .ImmSrcD, .InstrD, .Rs1D, .Rs2D, .Rs2E, .StallE, .FlushE, .ForwardAE, .ForwardBE, .W64E, .UW64E, .SubArithE,
     .Funct3E, .Funct7E, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .JumpE, .BranchSignedE, 
     .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE, .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE, .CZeroE,
     .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataM, .FCvtIntW,

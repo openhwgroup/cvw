@@ -11,6 +11,7 @@
 #
 ##################################
 import sys,os,shutil
+import argparse
 import multiprocessing
 from collections import namedtuple
 from multiprocessing import Pool, TimeoutError
@@ -281,6 +282,22 @@ def addTests(tests, sim):
                     grepfile = grepfile)
             configs.append(tc)
 
+def addLockstepTestsByDir(dir, config, sim):
+    sim_logdir = WALLY+ "/sim/" + sim + "/logs/"
+    cmdPrefix="wsim --sim " + sim + " " + coverStr + " " + config
+    for file in os.listdir(dir):
+        if file.endswith(".elf"):
+            fullfile = os.path.join(dir, file)
+            sim_log = sim_logdir + config + "_" + file
+            grepstring = ""
+            tc = TestCase(
+                    name=file,
+                    variant=config,
+                    cmd=cmdPrefix + " " + fullfile + " > " + sim_log,
+                    grepstr="Mismatches            : 0",
+                    grepfile = sim_log)
+            configs.append(tc)
+
 def search_log_for_text(text, grepfile):
     """Search through the given log file for text, returning True if it is found or False if it is not"""
     grepwarn = "grep -H Warning: " + grepfile
@@ -320,22 +337,26 @@ coveragesim = "questa"  # Questa is required for code/functional coverage
 #defaultsim = "questa"   # Default simulator for all other tests; change to Verilator when flow is ready
 defaultsim = "verilator"   # Default simulator for all other tests
 
-coverage = '--coverage' in sys.argv
-fp = '--fp' in sys.argv
-nightly = '--nightly' in sys.argv
-testfloat = '--testfloat' in sys.argv
-buildroot = '--buildroot' in sys.argv
+parser = argparse.ArgumentParser()
+parser.add_argument("--ccov", help="Code Coverage", action="store_true")
+parser.add_argument("--fcov", help="Functional Coverage", action="store_true")
+parser.add_argument("--nightly", help="Run large nightly regression", action="store_true")
+parser.add_argument("--buildroot", help="Include Buildroot Linux boot test (takes many hours, done along with --nightly)", action="store_true")
+parser.add_argument("--testfloat", help="Include Testfloat floating-point unit tests", action="store_true")
+parser.add_argument("--fp", help="Include floating-point tests in coverage (slower runtime)", action="store_true")
+args = parser.parse_args()
 
-if (nightly):
+if (args.nightly):
     nightMode = "--nightly";
-#    sims = [defaultsim]                    # uncomment to use only the default simulator
-    sims = ["questa", "verilator", "vcs"] # uncomment to exercise all simulators
+    sims = ["questa", "verilator", "vcs"] # exercise all simulators; can omit a sim if no license is available
 else:
     nightMode = ""
     sims = [defaultsim]
 
-if (coverage):  # only run RV64GC tests in coverage mode
-    coverStr = '--coverage'
+if (args.ccov):  # only run RV64GC tests in coverage mode
+    coverStr = '--ccov'
+elif (args.fcov):  # only run RV64GC tests in lockstep in coverage mode
+    coverStr = '--fcov'
 else:
    coverStr = ''
 
@@ -353,25 +374,34 @@ configs = [
 
 
 # run full buildroot boot simulation (slow) if buildroot flag is set.  Start it early to overlap with other tests
-if (buildroot):
+if (args.buildroot):
     # addTests(tests_buildrootboot, defaultsim) # non-lockstep with Verilator runs in about 2 hours
     addTests(tests_buildrootbootlockstep, "questa") # lockstep with Questa and ImperasDV runs overnight
 
-if (coverage):  # only run RV64GC tests on Questa in coverage mode
-    addTests(tests64gc_nofp, "questa")
-    if (fp):
-        addTests(tests64gc_fp, "questa")
-else:
+if (args.ccov):  # only run RV64GC tests on Questa in code coverage mode
+    addTests(tests64gc_nofp, coveragesim)
+    if (args.fp):
+        addTests(tests64gc_fp, coveragesim)
+elif (args.fcov):  # only run RV64GC tests on Questa in lockstep in functional coverage mode
+    addLockstepTestsByDir(WALLY+"/tests/functcov/rv64/I", "rv64gc", coveragesim)
+    #sim_log = WALLY + "/sim/questa/logs/fcov.log" 
+    #tc = TestCase(
+    #        name="lockstep_functcov",
+    #        variant="rv64gc",
+    #        cmd="iterelf " + WALLY + "/tests/functcov/rv64/I > " + sim_log,
+    #        grepstr="SUCCESS! All tests ran without failures",
+    #        grepfile = sim_log)
+    #configs.append(tc)
+else: 
     for sim in sims:
-        if (not (buildroot and sim == defaultsim)):  # skip shot buildroot sim if running long one
+        if (not (args.buildroot and sim == defaultsim)):  # skip short buildroot sim if running long one
             addTests(tests_buildrootshort, sim)
         addTests(tests, sim)
         addTests(tests64gc_nofp, sim)
         addTests(tests64gc_fp, sim)
 
 # run derivative configurations and lockstep tests in nightly regression
-if (nightly):
-    addTests(derivconfigtests, defaultsim)
+if (args.nightly):
     sim_log = WALLY + "/sim/questa/logs/lockstep_coverage.log" 
     tc = TestCase(
             name="lockstep_coverage",
@@ -385,15 +415,16 @@ if (nightly):
     tc = TestCase(
             name="lockstep_wally-riscv-arch-test",
             variant="rv64gc",
-            cmd="iterelf " + WALLY + "/tests/riscof/work/wally-riscv-arch-test/rv64i_m/privilege > " + sim_log,
+            cmd="iterelf " + WALLY + "/tests/riscof/work/wally-riscv-arch-test/rv64i_m > " + sim_log,
             grepstr="SUCCESS! All tests ran without failures",
             grepfile = sim_log)
     configs.append(tc)
+    addTests(derivconfigtests, defaultsim)
 
 # testfloat tests
-if (testfloat): # for testfloat alone, just run testfloat tests
+if (args.testfloat): # for testfloat alone, just run testfloat tests
     configs = []
-if (testfloat or nightly): # for nightly, run testfloat along with othres
+if (args.testfloat or args.nightly): # for nightly, run testfloat along with others
     testfloatsim = "questa" # change to Verilator when Issue #707 about testfloat not running Verilator is resolved
     testfloatconfigs = ["fdqh_ieee_rv64gc", "fdq_ieee_rv64gc", "fdh_ieee_rv64gc", "fd_ieee_rv64gc", "fh_ieee_rv64gc", "f_ieee_rv64gc", "fdqh_ieee_rv32gc", "f_ieee_rv32gc"]
     for config in testfloatconfigs:
@@ -458,7 +489,7 @@ if (testfloat or nightly): # for nightly, run testfloat along with othres
 
 def main():
     """Run the tests and count the failures"""
-    global configs, coverage
+    global configs, args
     os.chdir(regressionDir)
     dirs = ["questa/logs", "questa/wkdir", "verilator/logs", "verilator/wkdir", "vcs/logs", "vcs/wkdir"]
     for d in dirs: 
@@ -467,24 +498,27 @@ def main():
             os.mkdir(d)
         except:
             pass
- 
-    if '--makeTests' in sys.argv:
-        os.chdir(regressionDir)
-        os.system('./make-tests.sh | tee ./logs/make-tests.log')
-
-    elif '--coverage' in sys.argv:
+    if args.ccov:
         TIMEOUT_DUR = 20*60 # seconds
         os.system('rm -f questa/cov/*.ucdb')
-    elif '--nightly' in sys.argv:
+    elif args.fcov:
+        TIMEOUT_DUR = 1*60
+        os.system('rm -f questa/fcov_ucdb/* questa/fcov_logs/* questa/fcov/*')
+    elif args.nightly:
         TIMEOUT_DUR = 60*1440 # 1 day
-    elif '--testfloat' in sys.argv:
+    elif args.testfloat:
         TIMEOUT_DUR = 30*60 # seconds
     else:
         TIMEOUT_DUR = 10*60 # seconds
 
     # Scale the number of concurrent processes to the number of test cases, but
     # max out at a limited number of concurrent processes to not overwhelm the system
-    with Pool(processes=min(len(configs),multiprocessing.cpu_count())) as pool:
+    # right now fcov, ccov, nightly all use Imperas
+    if (args.ccov or args.fcov or args.nightly):
+        ImperasDVLicenseCount = 8 # limit number of concurrent processes to avoid overloading ImperasDV licenses
+    else:
+        ImperasDVLicenseCount = 10000 # effectively no license limit for non-lockstep tests
+    with Pool(processes=min(len(configs),multiprocessing.cpu_count(), ImperasDVLicenseCount)) as pool:
        num_fail = 0
        results = {}
        for config in configs:
@@ -497,8 +531,10 @@ def main():
              print(f"{bcolors.FAIL}%s_%s: Timeout - runtime exceeded %d seconds{bcolors.ENDC}" % (config.variant, config.name, TIMEOUT_DUR))
 
     # Coverage report
-    if coverage:
-       os.system('make QuestaCoverage')
+    if args.ccov:
+       os.system('make QuestaCodeCoverage')
+    if args.fcov:
+       os.system('make QuestaFunctCoverage')
     # Count the number of failures
     if num_fail:
         print(f"{bcolors.FAIL}Regression failed with %s failed configurations{bcolors.ENDC}" % num_fail)

@@ -41,7 +41,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   input  logic [6:0]        Funct7E,                 // Funct7 field of instruction in Execute stage
   input  logic              StallE, FlushE,          // Stall, flush Execute stage
   input  logic [1:0]        ForwardAE, ForwardBE,    // Forward ALU operands from later stages
-  input  logic              W64E,                    // W64-type instruction
+  input  logic              W64E,UW64E,              // W64/.uw-type instruction
   input  logic              SubArithE,               // Subtraction or arithmetic shift
   input  logic              ALUSrcAE, ALUSrcBE,      // ALU operands
   input  logic              ALUResultSrcE,           // Selects result to pass on to Memory stage
@@ -137,7 +137,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   comparator #(P.XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, BranchSignedE, FlagsE);
   mux2  #(P.XLEN)  srcamux(ForwardedSrcAE, PCE, ALUSrcAE, SrcAE);
   mux2  #(P.XLEN)  srcbmux(ForwardedSrcBE, ImmExtE, ALUSrcBE, SrcBE);
-  alu   #(P)       alu(SrcAE, SrcBE, W64E, SubArithE, ALUSelectE, BSelectE, ZBBSelectE, Funct3E, Funct7E, Rs2E, BALUControlE, BMUActiveE, CZeroE, ALUResultE, IEUAdrE);
+  alu   #(P)       alu(SrcAE, SrcBE, W64E, UW64E, SubArithE, ALUSelectE, BSelectE, ZBBSelectE, Funct3E, Funct7E, Rs2E, BALUControlE, BMUActiveE, CZeroE, ALUResultE, IEUAdrE);
   mux2  #(P.XLEN)  altresultmux(ImmExtE, PCLinkE, JumpE, AltResultE);
   mux2  #(P.XLEN)  ieuresultmux(ALUResultE, AltResultE, ALUResultSrcE, IEUResultE);
 
