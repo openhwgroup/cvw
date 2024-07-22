@@ -42,7 +42,8 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     output logic                SPIOut,
     input  logic                SPIIn,
     output logic [3:0]          SPICS,
-    output logic                SPIIntr
+    output logic                SPIIntr,
+    output logic                SPICLK
 );
 
     // register map
@@ -99,7 +100,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     rsrstatetype ReceiveState;
 
     // Transmission signals
-    logic sck;
+    // logic sck;
     logic [11:0] DivCounter;                        // Counter for sck 
     logic SCLKenable;                               // Flip flop enable high every sclk edge
 
@@ -358,7 +359,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
 
     assign DelayMode = SckMode[0] ? (state == DELAY_1) : (state == ACTIVE_1 & ReceiveShiftFull);
     assign ChipSelectInternal = (state == CS_INACTIVE | state == INTER_CS | DelayMode & ~|(Delay0[15:8])) ? ChipSelectDef : ~ChipSelectDef;
-    assign sck = (state == ACTIVE_0) ? ~SckMode[1] : SckMode[1];
+    assign SPICLK = (state == ACTIVE_0) ? ~SckMode[1] : SckMode[1];
     assign Active = (state == ACTIVE_0 | state == ACTIVE_1);
     assign SampleEdge = SckMode[0] ? (state == ACTIVE_1) : (state == ACTIVE_0);
     assign ZeroDelayHoldMode = ((ChipSelectMode == 2'b10) & (~|(Delay1[7:4])));
@@ -368,11 +369,11 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     // Signal tracks which edge of sck to shift data
     always_comb
         case(SckMode[1:0])
-            2'b00: ShiftEdge = ~sck & SCLKenable;
-            2'b01: ShiftEdge = (sck & |(FrameCount) & SCLKenable);
-            2'b10: ShiftEdge = sck & SCLKenable;
-            2'b11: ShiftEdge = (~sck & |(FrameCount) & SCLKenable);
-            default: ShiftEdge = sck & SCLKenable;
+            2'b00: ShiftEdge = ~SPICLK & SCLKenable;
+            2'b01: ShiftEdge = (SPICLK & |(FrameCount) & SCLKenable);
+            2'b10: ShiftEdge = SPICLK & SCLKenable;
+            2'b11: ShiftEdge = (~SPICLK & |(FrameCount) & SCLKenable);
+            default: ShiftEdge = SPICLK & SCLKenable;
         endcase
 
     // Transmit shift register
