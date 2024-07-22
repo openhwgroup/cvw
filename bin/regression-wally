@@ -282,6 +282,22 @@ def addTests(tests, sim):
                     grepfile = grepfile)
             configs.append(tc)
 
+def addLockstepTestsByDir(dir, config, sim):
+    sim_logdir = WALLY+ "/sim/" + sim + "/logs/"
+    cmdPrefix="wsim --sim " + sim + " " + coverStr + " " + config
+    for file in os.listdir(dir):
+        if file.endswith(".elf"):
+            fullfile = os.path.join(dir, file)
+            sim_log = sim_logdir + config + "_" + file
+            grepstring = ""
+            tc = TestCase(
+                    name=file,
+                    variant=config,
+                    cmd=cmdPrefix + " " + fullfile + " > " + sim_log,
+                    grepstr="Mismatches            : 0",
+                    grepfile = sim_log)
+            configs.append(tc)
+
 def search_log_for_text(text, grepfile):
     """Search through the given log file for text, returning True if it is found or False if it is not"""
     grepwarn = "grep -H Warning: " + grepfile
@@ -332,14 +348,15 @@ args = parser.parse_args()
 
 if (args.nightly):
     nightMode = "--nightly";
-#    sims = [defaultsim]                    # uncomment to use only the default simulator
-    sims = ["questa", "verilator", "vcs"] # uncomment to exercise all simulators
+    sims = ["questa", "verilator", "vcs"] # exercise all simulators; can omit a sim if no license is available
 else:
     nightMode = ""
     sims = [defaultsim]
 
 if (args.ccov):  # only run RV64GC tests in coverage mode
     coverStr = '--ccov'
+elif (args.fcov):  # only run RV64GC tests in lockstep in coverage mode
+    coverStr = '--fcov'
 else:
    coverStr = ''
 
@@ -362,10 +379,20 @@ if (args.buildroot):
     addTests(tests_buildrootbootlockstep, "questa") # lockstep with Questa and ImperasDV runs overnight
 
 if (args.ccov):  # only run RV64GC tests on Questa in code coverage mode
-    addTests(tests64gc_nofp, "questa")
+    addTests(tests64gc_nofp, coveragesim)
     if (args.fp):
-        addTests(tests64gc_fp, "questa")
-else:
+        addTests(tests64gc_fp, coveragesim)
+elif (args.fcov):  # only run RV64GC tests on Questa in lockstep in functional coverage mode
+    addLockstepTestsByDir(WALLY+"/tests/functcov/rv64/I", "rv64gc", coveragesim)
+    #sim_log = WALLY + "/sim/questa/logs/fcov.log" 
+    #tc = TestCase(
+    #        name="lockstep_functcov",
+    #        variant="rv64gc",
+    #        cmd="iterelf " + WALLY + "/tests/functcov/rv64/I > " + sim_log,
+    #        grepstr="SUCCESS! All tests ran without failures",
+    #        grepfile = sim_log)
+    #configs.append(tc)
+else: 
     for sim in sims:
         if (not (args.buildroot and sim == defaultsim)):  # skip short buildroot sim if running long one
             addTests(tests_buildrootshort, sim)
@@ -375,7 +402,6 @@ else:
 
 # run derivative configurations and lockstep tests in nightly regression
 if (args.nightly):
-    addTests(derivconfigtests, defaultsim)
     sim_log = WALLY + "/sim/questa/logs/lockstep_coverage.log" 
     tc = TestCase(
             name="lockstep_coverage",
@@ -393,6 +419,7 @@ if (args.nightly):
             grepstr="SUCCESS! All tests ran without failures",
             grepfile = sim_log)
     configs.append(tc)
+    addTests(derivconfigtests, defaultsim)
 
 # testfloat tests
 if (args.testfloat): # for testfloat alone, just run testfloat tests
@@ -474,16 +501,23 @@ def main():
     if args.ccov:
         TIMEOUT_DUR = 20*60 # seconds
         os.system('rm -f questa/cov/*.ucdb')
-    elif args.nightly in sys.argv:
+    elif args.fcov:
+        TIMEOUT_DUR = 1*60
+        os.system('rm -f questa/fcov_ucdb/* questa/fcov_logs/* questa/fcov/*')
+    elif args.nightly:
         TIMEOUT_DUR = 60*1440 # 1 day
-    elif args.testfloat in sys.argv:
+    elif args.testfloat:
         TIMEOUT_DUR = 30*60 # seconds
     else:
         TIMEOUT_DUR = 10*60 # seconds
 
     # Scale the number of concurrent processes to the number of test cases, but
     # max out at a limited number of concurrent processes to not overwhelm the system
-    with Pool(processes=min(len(configs),multiprocessing.cpu_count())) as pool:
+    if (args.lockstep or args.fcov):
+        ImperasDVLicenseCount = 8 # limit number of concurrent processes to avoid overloading ImperasDV licenses
+    else:
+        ImperasDVLicenseCount = 10000 # effectively no license limit for non-lockstep tests
+    with Pool(processes=min(len(configs),multiprocessing.cpu_count(), ImperasDVLicenseCount)) as pool:
        num_fail = 0
        results = {}
        for config in configs:
@@ -498,6 +532,8 @@ def main():
     # Coverage report
     if args.ccov:
        os.system('make QuestaCodeCoverage')
+    if args.fcov:
+       os.system('make QuestaFunctCoverage')
     # Count the number of failures
     if num_fail:
         print(f"{bcolors.FAIL}Regression failed with %s failed configurations{bcolors.ENDC}" % num_fail)
