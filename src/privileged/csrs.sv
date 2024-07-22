@@ -78,6 +78,7 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
 
   logic [P.XLEN-1:0]       SSCRATCH_REGW, STVAL_REGW, SCAUSE_REGW;
   logic [P.XLEN-1:0]       SENVCFG_WriteValM;
+  logic [P.XLEN-1:0]               TVECWriteValM;
 
   logic [63:0]             STIMECMP_REGW;
   
@@ -100,7 +101,8 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
   assign WriteSTIMECMPHM  = CSRSWriteM & (CSRAdrM == STIMECMPH) & STCE & (P.XLEN == 32);
 
   // CSRs
-  flopenr #(P.XLEN) STVECreg(clk, reset, WriteSTVECM, {CSRWriteValM[P.XLEN-1:2], 1'b0, CSRWriteValM[0]}, STVEC_REGW); 
+  assign TVECWriteValM = CSRWriteValM[0] ? {CSRWriteValM[P.XLEN-1:6], 6'b000001} : {CSRWriteValM[P.XLEN-1:2], 2'b00}; // could share this with MTVEC, but reduces to 4-bit AND to mask bits [5:2]
+  flopenr #(P.XLEN) STVECreg(clk, reset, WriteSTVECM, TVECWriteValM, STVEC_REGW); 
   flopenr #(P.XLEN) SSCRATCHreg(clk, reset, WriteSSCRATCHM, CSRWriteValM, SSCRATCH_REGW);
   flopenr #(P.XLEN) SEPCreg(clk, reset, WriteSEPCM, NextEPCM, SEPC_REGW); 
   flopenr #(P.XLEN) SCAUSEreg(clk, reset, WriteSCAUSEM, {NextCauseM[4], {(P.XLEN-5){1'b0}}, NextCauseM[3:0]}, SCAUSE_REGW);

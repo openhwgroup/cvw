@@ -30,6 +30,13 @@ QuestaCodeCoverage: questa/ucdb/rv64gc_arch64i.ucdb
 #	vcover report -recursive questa/ucdb/cov.ucdb > questa/cov/rv64gc_recursive.rpt
 	vcover report -details -threshH 100 -html questa/ucdb/cov.ucdb
 
+QuestaFunctCoverage: ${SIM}/questa/fcov_ucdb/rv64gc_WALLY-COV-add.elf.ucdb 
+	vcover merge -out ${SIM}/questa/fcov_ucdb/fcov.ucdb ${SIM}/questa/fcov_ucdb/rv64gc_WALLY-COV-add.elf.ucdb ${SIM}/questa/fcov_ucdb/rv64gc_WALLY*.ucdb -logfile ${SIM}/questa/fcov_logs/log
+	vcover report -details -html ${SIM}/questa/fcov_ucdb/fcov.ucdb
+	vcover report ${SIM}/questa/fcov_ucdb/fcov.ucdb -details -cvg > ${SIM}/questa/fcov/fcov.log
+	vcover report ${SIM}/questa/fcov_ucdb/fcov.ucdb -testdetails -cvg > ${SIM}/questa/fcov/fcov.testdetails.log
+	vcover report ${SIM}/questa/fcov_ucdb/fcov.ucdb -details -cvg | egrep "Coverpoint|Covergroup|Cross|TYPE"  > ${SIM}/questa/fcov/fcov.summary.log
+	grep "TOTAL COVERGROUP COVERAGE" ${SIM}/questa/fcov/fcov.log
 
 imperasdv_cov:
 	touch ${SIM}/seed0.txt
@@ -91,6 +98,7 @@ combine_functcov:
 	cd ${SIM}/questa/fcov && rm -rf *
 	cd ${SIM}/questa/fcov_ucdb && rm -rf *
 	wsim rv64gc ${WALLY}/tests/functcov/rv64/I/WALLY-COV-add.elf --fcov > ${SIM}/questa/fcov_logs/add.log 2>&1
+	wsim rv64gc ${WALLY}/tests/functcov/rv64/I/WALLY-COV-and.elf --fcov > ${SIM}/questa/fcov_logs/and.log 2>&1
 
 	#run-elf-cov.bash --seed ${SIM}/questa/seed0.txt --verbose --coverdb ${SIM}/questa/fcov/add.ucdb --elf ${WALLY}/tests/functcov/rv64/I/WALLY-COV-add.elf								>> ${SIM}/questa/fcov_logs/add.log 2>&1
 	#run-elf-cov.bash --seed ${SIM}/questa/seed0.txt --verbose --coverdb ${SIM}/questa/fcov/and.ucdb --elf ${WALLY}/tests/functcov/rv64/I/WALLY-COV-and.elf								>> ${SIM}/questa/fcov_logs/add.log 2>&1

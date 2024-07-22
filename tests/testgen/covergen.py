@@ -31,52 +31,71 @@ def signedImm12(imm):
     imm = imm - 0x1000
   return str(imm)
 
-def signedImm20(imm):
+def unsignedImm20(imm):
   imm = imm % pow(2, 20)
-  if (imm & 0x80000):
-    imm = imm - 0x100000
   return str(imm)
 
-def writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, storecmd, xlen):
+def writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, xlen):
   lines = "\n# Testcase " + str(desc) + "\n"
   if (rs1val < 0):
     rs1val = rs1val + 2**xlen
   if (rs2val < 0):
     rs2val = rs2val + 2**xlen
-  lines = lines + "li x" + str(rd) + ", " + formatstr.format(rdval) + " # initialize rd to a random value that should get changed\n"
+  lines = lines + "li x" + str(rd) + ", " + formatstr.format(rdval) + " # initialize rd to a random value that should get changed; helps covering rd_toggle\n"
   if (test in rtype):
-    lines = lines + "li x" + str(rs1) + ", " + formatstr.format(rs1val) + " # initialize rs1 to a random value \n"
-    lines = lines + "li x" + str(rs2) + ", " + formatstr.format(rs2val) + " # initialize rs2 to a random value\n"
+    lines = lines + "li x" + str(rs1) + ", " + formatstr.format(rs1val) + " # initialize rs1\n"
+    lines = lines + "li x" + str(rs2) + ", " + formatstr.format(rs2val) + " # initialize rs2\n"
     lines = lines + test + " x" + str(rd) + ", x" + str(rs1) + ", x" + str(rs2) + " # perform operation\n" 
   elif (test in shiftitype):
-    lines = lines + "li x" + str(rs1) + ", " + formatstr.format(rs1val) + " # initialize rs1 to a random value \n"
+    lines = lines + "li x" + str(rs1) + ", " + formatstr.format(rs1val) + " # initialize rs1\n"
     lines = lines + test + " x" + str(rd) + ", x" + str(rs1) + ", " + shiftImm(immval, xlen) + " # perform operation\n"
   elif (test in itype):
-    lines = lines + "li x" + str(rs1) + ", " + formatstr.format(rs1val) + " # initialize rs1 to a random value \n"
+    lines = lines + "li x" + str(rs1) + ", " + formatstr.format(rs1val) + " # initialize rs1\n"
     lines = lines + test + " x" + str(rd) + ", x" + str(rs1) + ", " + signedImm12(immval) + " # perform operation\n"
   elif (test in loaditype):#["lb", "lh", "lw", "ld", "lbu", "lhu", "lwu"]
-    lines = lines + "auipc x" + str(rs1) + ", 0x20" + " # add upper immediate value to pc \n"
-    lines = lines + "addi x" + str(rs1) + ", x" + str(rs1) + ", " + signedImm12(immval) + " # add immediate to lower part of rs1 \n"
-    lines = lines + test + " x" + str(rd) + ", " + signedImm12(immval) + "(x" + str(rs1) + ") # perform operation \n"
-  elif (test in stypes):#["sb", "sh", "sw", "sd"]
+    pass
+    #lines = lines + "auipc x" + str(rs1) + ", 0x20" + " # add upper immediate value to pc \n"
+    #lines = lines + "addi x" + str(rs1) + ", x" + str(rs1) + ", " + signedImm12(-immval) + " # add immediate to lower part of rs1\n"
+    #lines = lines + test + " x" + str(rd) + ", " + signedImm12(immval) + "(x" + str(rs1) + ") # perform operation\n"
+  elif (test in stype):#["sb", "sh", "sw", "sd"]
     #lines = lines + test + " x" + str(rs2) + ", " + signedImm12(immval) + "(x" + str(rs1) + ") # perform operation \n"
     #lines = lines + test + " x" + str(rs2) + ", " "0(x" + str(rs1) + ") # perform operation \n"
-    print("Error: %s type not implemented yet" % test)
-  elif (test in btypes):#["beq", "bne", "blt", "bge", "bltu", "bgeu"]
+    #print("Error: %s type not implemented yet" % test)
+    pass
+  elif (test in btype):#["beq", "bne", "blt", "bge", "bltu", "bgeu"]
     if (randint(1,100) > 50):
       rs1val = rs2val
       lines = lines + "# same values in both registers\n"
     lines = lines + "nop\n"
-    lines = lines + "li x" + str(rs1) + ", " + formatstr.format(rs1val) + " # initialize rs1 to a random value that should get changed\n"
-    lines = lines + "li x" + str(rs2) + ", " + formatstr.format(rs2val) + " # initialize rs2 to a random value that should get changed\n"
+    lines = lines + "li x" + str(rs1) + ", " + formatstr.format(rs1val) + " # initialize rs1\n"
+    lines = lines + "li x" + str(rs2) + ", " + formatstr.format(rs2val) + " # initialize rs2\n"
     lines = lines + test + " x" + str(rs1) + ", x" + str(rs2) + ", some_label_for_sb_types_" + str(immval) + "+4" + " # perform operation \n"
     lines = lines + "addi x0, x1, 1\n"
     lines = lines + "some_label_for_sb_types_" + str(immval) + ":\n"
     lines = lines + "addi x0, x2, 2\n"
     lines = lines + "nop\nnop\nnop\nnop\nnop\n"
+  elif (test in jtype):#["jal"]
+    lines = lines + "jal x" + str(rd) + ", 1f # perform operation\n"
+    lines = lines + "nop\n"
+    lines = lines + "1:\n"
+  elif (test in jalrtype):#["jalr"]
+    lines = lines + "la x" + str(rs1) + ", 1f\n"
+    lines = lines + "addi x" + str(rs1) + ", x" + str(rs1) + ", " + signedImm12(-immval) + " # add immediate to lower part of rs1\n"
+    lines = lines + "jalr x" + str(rd) + ", x" + str(rs1) + ", " + signedImm12(immval) + " # perform operation\n"
+    lines = lines + "nop\n"
+    lines = lines + "1:\n"
+  elif (test in utype):#["lui", "auipc"]
+    lines = lines + test + " x" + str(rd) + ", " + unsignedImm20(immval) + " # perform operation\n"
   else:
     pass
     #print("Error: %s type not implemented yet" % test)
+  f.write(lines)
+
+def writeHazardVector(desc, rs1a, rs2a, rda, rs1b, rs2b, rdb, test):
+  # consecutive R-type instructions to trigger hazards
+  lines = "\n# Testcase " + str(desc) + "\n"
+  lines = lines + test + " x" + str(rda) + ", x" + str(rs1a) + ", x" + str(rs2a) + " # perform first operation\n" 
+  lines = lines + test + " x" + str(rdb) + ", x" + str(rs1b) + ", x" + str(rs2b) + " # perform second operation\n" 
   f.write(lines)
 
 def randomize():
@@ -93,159 +112,191 @@ def randomize():
     rdval = randint(0, 2**xlen-1)
     return [rs1, rs2, rd, rs1val, rs2val, immval, rdval]
 
-def make_rd(test, storecmd, xlen):
+def make_rd(test, xlen):
   for r in range(32):
     [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
     desc = "cp_rd (Test destination rd = x" + str(r) + ")"
-    writeCovVector(desc, rs1, rs2, r, rs1val, rs2val, immval, rdval, test, storecmd, xlen)
+    writeCovVector(desc, rs1, rs2, r, rs1val, rs2val, immval, rdval, test, xlen)
 
-def make_rs1(test, storecmd, xlen):
+def make_rs1(test, xlen):
   for r in range(32):
     [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
     desc = "cp_rs1 (Test source rs1 = x" + str(r) + ")"
-    writeCovVector(desc, r, rs2, rd, rs1val, rs2val, immval, rdval, test, storecmd, xlen)
+    writeCovVector(desc, r, rs2, rd, rs1val, rs2val, immval, rdval, test, xlen)
 
-def make_rs2(test, storecmd, xlen):
+def make_rs2(test, xlen):
   for r in range(32):
     [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
     desc = "cp_rs2 (Test source rs2 = x" + str(r) + ")"
-    writeCovVector(desc, rs1, r, rd, rs1val, rs2val, immval, rdval, test, storecmd, xlen)
+    writeCovVector(desc, rs1, r, rd, rs1val, rs2val, immval, rdval, test, xlen)
 
-def make_rd_rs1(test, storecmd, xlen):
+def make_rd_rs1(test, xlen):
   for r in range(32):
     [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
     desc = "cmp_rd_rs1 (Test rd = rs1 = x" + str(r) + ")"
-    writeCovVector(desc, r, rs2, r, rs1val, rs2val, immval, rdval, test, storecmd, xlen)
+    writeCovVector(desc, r, rs2, r, rs1val, rs2val, immval, rdval, test, xlen)
 
-def make_rd_rs2(test, storecmd, xlen):
+def make_rd_rs2(test, xlen):
   for r in range(32):
     [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
     desc = "cmp_rd_rs2 (Test rd = rs1 = x" + str(r) + ")"
-    writeCovVector(desc, rs1, r, r, rs1val, rs2val, immval, rdval, test, storecmd, xlen)
+    writeCovVector(desc, rs1, r, r, rs1val, rs2val, immval, rdval, test, xlen)
 
-def make_rd_rs1_rs2(test, storecmd, xlen):
+def make_rd_rs1_rs2(test, xlen):
   for r in range(32):
     [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
     desc = "cmp_rd_rs1_rs2 (Test rd = rs1 = rs2 = x" + str(r) + ")"
-    writeCovVector(desc, r, r, r, rs1val, rs2val, immval, rdval, test, storecmd, xlen)
+    writeCovVector(desc, r, r, r, rs1val, rs2val, immval, rdval, test, xlen)
 
-def make_rs1_rs2(test, storecmd, xlen):
+def make_rs1_rs2(test, xlen):
   for r in range(32):
     [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
     desc = "cmp_rd_rs1_rs2 (Test rs1 = rs2 = x" + str(r) + ")"
-    writeCovVector(desc, r, r, rd, rs1val, rs2val, immval, rdval, test, storecmd, xlen)
+    writeCovVector(desc, r, r, rd, rs1val, rs2val, immval, rdval, test, xlen)
 
-def make_rs1_maxvals(test, storecmd, xlen):
+def make_rs1_maxvals(test, xlen):
    for v in [0, 2**(xlen-1), 2**(xlen-1)-1, 2**xlen-1, 1, 2**(xlen-1)+1]:
     [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
     desc = "cp_rs1_maxvals (Test source rs1 value = " + hex(v) + ")"
-    writeCovVector(desc, rs1, rs2, rd, v, rs2val, immval, rdval, test, storecmd, xlen)
+    writeCovVector(desc, rs1, rs2, rd, v, rs2val, immval, rdval, test, xlen)
 
-def make_rs2_maxvals(test, storecmd, xlen):
+def make_rs2_maxvals(test, xlen):
    for v in [0, 2**(xlen-1), 2**(xlen-1)-1, 2**xlen-1, 1, 2**(xlen-1)+1]:
     [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
     desc = "cp_rs2_maxvals (Test source rs2 value = " + hex(v) + ")"
-    writeCovVector(desc, rs1, rs2, rd, rs1val, v, immval, rdval, test, storecmd, xlen)
+    writeCovVector(desc, rs1, rs2, rd, rs1val, v, immval, rdval, test, xlen)
 
-def make_rd_maxvals(test, storecmd, xlen):
+def make_rd_maxvals(test, xlen):
    for v in [0, 2**(xlen-1), 2**(xlen-1)-1, 2**xlen-1, 1, 2**(xlen-1)+1]:
+    # rs1 = 0, rs2 = v, others are random
     [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
     desc = "cp_rd_maxvals (Test rd value = " + hex(v) + ")"
-    writeCovVector(desc, rs1, 0, rd, v, rs2val, immval, rdval, test, storecmd, xlen)
+    writeCovVector(desc, rs1, 0, rd, v, rs2val, immval, rdval, test, xlen)
+    # rs1, rs2 = v, others are random
+    [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
+    desc = "cp_rd_maxvals (Test rd value = " + hex(v) + ")"
+    writeCovVector(desc, rs1, rs2, rd, v, v, immval, rdval, test, xlen)
+    # rs1 = all 1s, rs2 = v, others are random
+    [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
+    desc = "cp_rd_maxvals (Test rd value = " + hex(v) + ")"
+    writeCovVector(desc, rs1, rs2, rd, -1, v, immval, rdval, test, xlen)
 
-def make_rd_rs1_eqval(test, storecmd, xlen):
+def make_rd_rs1_eqval(test, xlen):
   [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
   desc = "cmp_rdm_rs1_eqval (Test rs1 = rd = " + hex(rs1val) + ")"
-  writeCovVector(desc, rs1, 0, rd, rdval, rs2val, immval, rdval, test, storecmd, xlen)
+  writeCovVector(desc, rs1, 0, rd, rdval, rs2val, immval, rdval, test, xlen)
 
-def make_rd_rs2_eqval(test, storecmd, xlen):
+def make_rd_rs2_eqval(test, xlen):
   [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
   desc = "cmp_rd_rs2_eqval (Test rs2 = rd = " + hex(rs2val) + ")"
-  writeCovVector(desc, 0, rs2, rd, rs1val, rdval, immval, rdval, test, storecmd, xlen)
+  writeCovVector(desc, 0, rs2, rd, rs1val, rdval, immval, rdval, test, xlen)
 
-def make_rs1_rs2_eqval(test, storecmd, xlen):
+def make_rs1_rs2_eqval(test, xlen):
   [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
   desc = "cmp_rs1_rs2_eqval (Test rs1 = rs2 = " + hex(rs1val) + ")"
-  writeCovVector(desc, rs1, rs2, rd, rs1val, rs1val, immval, rdval, test, storecmd, xlen)
+  writeCovVector(desc, rs1, rs2, rd, rs1val, rs1val, immval, rdval, test, xlen)
 
-#def make_cp_gpr_hazard(test, storecmd, xlen):
-#  pass # *** to be implemented ***
+def make_cp_gpr_hazard(test, xlen):
+  for haz in ["raw", "waw", "war"]:
+    for src in range(2):
+      [rs1a, rs2a, rda, rs1vala, rs2vala, immvala, rdvala] = randomize()
+      [rs1b, rs2b, rdb, rs1valb, rs2valb, immvalb, rdvalb] = randomize()
+      # set up hazard
+      if (haz == "raw"):
+        if (src):
+          rs2b = rda
+        else:
+          rs1b = rda
+      elif (haz == "waw"):  
+        rdb = rda
+      elif (haz == "war"):
+        if (src):
+          rdb = rs2a
+        else:
+          rdb = rs1a
+      desc = "cmp_gpr_hazard " + haz +  " test"
+      writeHazardVector(desc, rs1a, rs2a, rda, rs1b, rs2b, rdb, test)
 
-def make_rs1_sign(test, storecmd, xlen):
+def make_rs1_sign(test, xlen):
    for v in [1, -1]:
     [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
     rs1val = abs(rs1val % 2**(xlen-1)) * v;
     desc = "cp_rs1_sign (Test source rs1 value = " + hex(rs1val) + ")"
-    writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, storecmd, xlen)
+    writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, xlen)
 
-def make_rs2_sign(test, storecmd, xlen):
+def make_rs2_sign(test, xlen):
   for v in [1, -1]:
     [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
     rs2val = abs(rs2val % 2**(xlen-1)) * v;
     desc = "cp_rs2_sign (Test source rs2 value = " + hex(rs2val) + ")"
-    writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, storecmd, xlen)
+    writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, xlen)
 
-def make_cr_rs1_rs2_sign(test, storecmd, xlen):
+def make_cr_rs1_rs2_sign(test, xlen):
   for v1 in [1, -1]:
     for v2 in [1, -1]:
       [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
       rs1val = abs(rs1val % 2**(xlen-1)) * v1;
       rs2val = abs(rs2val % 2**(xlen-1)) * v2;
       desc = "cr_rs1_rs2 (Test source rs1 = " + hex(rs1val) + " rs2 = " + hex(rs2val) + ")"
-      writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, storecmd, xlen)
+      writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, xlen)
 
-def write_tests(coverpoints, test, storecmd, xlen):
+def make_imm_zero(test, xlen):
+  [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
+  desc = "cp_imm_zero"
+  writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, 0, rdval, test, xlen)
+
+def write_tests(coverpoints, test, xlen):
   for coverpoint in coverpoints:
     if (coverpoint == "cp_asm_count"):
       pass
     elif (coverpoint == "cp_rd"):
-      make_rd(test, storecmd, xlen)
+      make_rd(test, xlen)
     elif (coverpoint == "cp_rs1"):
-      make_rs1(test, storecmd, xlen)
+      make_rs1(test, xlen)
     elif (coverpoint == "cp_rs2"):
-      make_rs2(test, storecmd, xlen)
+      make_rs2(test, xlen)
     elif (coverpoint == "cmp_rd_rs1"):
-      make_rd_rs1(test, storecmd, xlen)
+      make_rd_rs1(test, xlen)
     elif (coverpoint == "cmp_rd_rs2"):
-      make_rd_rs2(test, storecmd, xlen)
+      make_rd_rs2(test, xlen)
     elif (coverpoint == "cmp_rd_rs1_rs2"):
-      make_rd_rs1_rs2(test, storecmd, xlen)
+      make_rd_rs1_rs2(test, xlen)
     elif (coverpoint == "cmp_rd_rs1_eq"):
       pass # duplicate of cmp_rd_rs1
     elif (coverpoint == "cmp_rd_rs2_eq"):
       pass # duplicate of cmp_rd_rs2
     elif (coverpoint == "cmp_rs1_rs2_eq"):
-      make_rs1_rs2(test, storecmd, xlen)
+      make_rs1_rs2(test, xlen)
     elif (coverpoint == "cp_rs1_maxvals"):
-      make_rs1_maxvals(test, storecmd, xlen)
+      make_rs1_maxvals(test, xlen)
     elif (coverpoint == "cp_rs2_maxvals"):
-      make_rs2_maxvals(test, storecmd, xlen)
+      make_rs2_maxvals(test, xlen)
     elif (coverpoint == "cp_rd_maxvals"):
-      make_rd_maxvals(test, storecmd, xlen)
+      make_rd_maxvals(test, xlen)
     elif (coverpoint == "cmp_rd_rs1_eqval"):
-      make_rd_rs1_eqval(test, storecmd, xlen)
+      make_rd_rs1_eqval(test, xlen)
     elif (coverpoint == "cmp_rd_rs2_eqval"):
-      make_rd_rs2_eqval(test, storecmd, xlen)
+      make_rd_rs2_eqval(test, xlen)
     elif (coverpoint == "cmp_rs1_rs2_eqval"):
-      make_rs1_rs2_eqval(test, storecmd, xlen)
+      make_rs1_rs2_eqval(test, xlen)
     elif (coverpoint == "cp_rs1_sign"):
-      make_rs1_sign(test, storecmd, xlen)
+      make_rs1_sign(test, xlen)
     elif (coverpoint == "cp_rs2_sign"):
-      make_rs2_sign(test, storecmd, xlen)
+      make_rs2_sign(test, xlen)
     elif (coverpoint == "cp_rd_sign"):
       pass #TODO hope already covered by rd_maxvals
     elif (coverpoint == "cr_rs1_rs2"):
-      make_cr_rs1_rs2_sign(test, storecmd, xlen)
+      make_cr_rs1_rs2_sign(test, xlen)
+    elif (coverpoint == "cp_gpr_hazard"):
+      make_cp_gpr_hazard(test, xlen)
     elif (coverpoint == "cp_rs1_toggle"):
       pass #TODO toggle not needed and seems to be covered by other things
     elif (coverpoint == "cp_rs2_toggle"):
       pass #TODO toggle not needed and seems to be covered by other things
     elif (coverpoint == "cp_rd_toggle"):
       pass #TODO toggle not needed and seems to be covered by other things
-    elif (coverpoint == "cp_gpr_hazard"):
-      pass #TODO not yet implemented
     elif (coverpoint == "cp_imm_sign"):
-      pass #TODO
+      make_imm_zero(test, xlen)
     elif (coverpoint == "cr_rs1_imm"):
       pass #TODO (not if crosses are not needed)
     elif (coverpoint == "cp_imm_ones_zeros"):
@@ -253,7 +304,7 @@ def write_tests(coverpoints, test, storecmd, xlen):
     elif (coverpoint == "cp_mem_hazard"):
       pass #TODO
     elif (coverpoint == "cp_imm_zero"):
-      pass #TODO
+      make_imm_zero(test, xlen)
     elif (coverpoint == "cp_mem_unaligned"):
       pass #TODO
     elif (coverpoint == "cp_offset"):
@@ -303,8 +354,11 @@ rtype = ["add", "sub", "sll", "slt", "sltu", "xor", "srl", "sra", "or", "and",
 loaditype = ["lb", "lh", "lw", "ld", "lbu", "lhu", "lwu"]
 shiftitype = ["slli", "srli", "srai"]
 itype = ["addi", "slti", "sltiu", "xori", "ori", "andi"]
-stypes = ["sb", "sh", "sw", "sd"]
-btypes = ["beq", "bne", "blt", "bge", "bltu", "bgeu"]
+stype = ["sb", "sh", "sw", "sd"]
+btype = ["beq", "bne", "blt", "bge", "bltu", "bgeu"]
+jtype = ["jal"]
+jalrtype = ["jalr"]
+utype = ["lui", "auipc"]
 # TODO: auipc missing, check whatelse is missing in ^these^ types
 
 coverpoints = getcovergroups(coverdefdir, coverfiles)
@@ -327,12 +381,11 @@ for xlen in xlens:
   else:
     storecmd = "sd"
     wordsize = 8
+  WALLY = os.environ.get('WALLY')
+  pathname = WALLY+"/tests/functcov/rv" + str(xlen) + "/I/"
+  cmd = "mkdir -p " + pathname + " ; rm -f " + pathname + "/*" # make directory and remove old tests in dir
+  os.system(cmd)
   for test in coverpoints.keys():
-#    pathname = "../wally-riscv-arch-test/riscv-test-suite/rv" + str(xlen) + "i_m/I/"
-    WALLY = os.environ.get('WALLY')
-    pathname = WALLY+"/tests/functcov/rv" + str(xlen) + "/I/"
-    cmd = "mkdir -p " + pathname
-    os.system(cmd)
     basename = "WALLY-COV-" + test 
     fname = pathname + "/" + basename + ".S"
 
@@ -340,9 +393,9 @@ for xlen in xlens:
     f = open(fname, "w")
     line = "///////////////////////////////////////////\n"
     f.write(line)
-    lines="// "+fname+ "\n// " + author + "\n"
-    f.write(lines)
-    line ="// Created " + str(datetime.now()) 
+    line="// "+fname+ "\n// " + author + "\n"
+    f.write(line)
+    line ="// Created " + str(datetime.now()) + "\n"
     f.write(line)
 
     # insert generic header
@@ -355,8 +408,8 @@ for xlen in xlens:
     #if (test not in rtests):
     #  exit("Error: %s not implemented yet" % test)
     #else:
-    #  write_rtype_arith_vectors(test, storecmd, xlen)
-    write_tests(coverpoints[test], test, storecmd, xlen) 
+    #  write_rtype_arith_vectors(test, xlen)
+    write_tests(coverpoints[test], test, xlen) 
 
     # print footer
     line = "\n.EQU NUMTESTS," + str(1) + "\n\n"
@@ -366,9 +419,6 @@ for xlen in xlens:
       f.write(line)
 
     # Finish
-#    lines = ".fill " + str(testnum) + ", " + str(wordsize) + ", -1\n"
-#    lines = lines + "\nRV_COMPLIANCE_DATA_END\n" 
-    f.write(lines)
     f.close()
 
 
