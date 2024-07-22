@@ -1,12 +1,15 @@
 #include "sd.h"
 #include "spi.h"
 
+// Parallel byte update CRC7-CCITT algorithm.
+// The result is the CRC7 result, left shifted over by 1
+// which is perfect, since we append a 1 at the end anyway
 uint8_t crc7(uint8_t prev, uint8_t in) {
     // CRC polynomial 0x89
-    uint8_t remainder = prev & in;
+    uint8_t remainder = prev ^ in;
     remainder ^= (remainder >> 4) ^ (remainder >> 7);
-    remainder ^= remainder << 4;
-    return remainder & 0x7f;
+    remainder = (remainder << 1) ^ (remainder << 4);
+    return remainder & 0xff;
 }
 
 uint16_t crc16(uint16_t crc, uint8_t data) {
