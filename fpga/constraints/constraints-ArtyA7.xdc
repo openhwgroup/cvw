@@ -4,6 +4,7 @@
 # This clock is not used by wally or the AHB Bus. However it is used by the AXI BUS on the DD3 IP.
 
 #create_generated_clock -name CLKDiv64_Gen -source [get_pins wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/I0] -multiply_by 1 -divide_by 1 [get_pins wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/O]
+create_generated_clock -name SPISDCClock -source [get_pins clk_out3_xlnx_mmcm] -multiply_by 1 -divide_by 1 [get_pins wallypipelinedsoc/uncore.uncore/sdc.sdc/SPICLK]
 
 ##### clock #####
 set_property PACKAGE_PIN E3 [get_ports {default_100mhz_clk}]
@@ -74,41 +75,43 @@ set_property IOSTANDARD LVCMOS33 [get_ports {south_reset}]
 
 ##### SD Card I/O #####
 #***** may have to switch to Pmod JB or JC.
-set_property PACKAGE_PIN D4 [get_ports {SDCDat[3]}]
-set_property PACKAGE_PIN D2 [get_ports {SDCDat[2]}]
-set_property PACKAGE_PIN E2 [get_ports {SDCDat[1]}]
-set_property PACKAGE_PIN F4 [get_ports {SDCDat[0]}]
-set_property PACKAGE_PIN F3 [get_ports SDCCLK]
-set_property PACKAGE_PIN D3 [get_ports {SDCCmd}]
-set_property PACKAGE_PIN H2 [get_ports {SDCCD}]
+#set_property PACKAGE_PIN D4 [get_ports {SDCDat[3]}]
+#set_property PACKAGE_PIN D2 [get_ports {SDCDat[2]}]
+#set_property PACKAGE_PIN E2 [get_ports {SDCDat[1]}]
+#set_property PACKAGE_PIN F4 [get_ports {SDCDat[0]}]
+#set_property PACKAGE_PIN F3 [get_ports SDCCLK]
+#set_property PACKAGE_PIN D3 [get_ports {SDCCmd}]
+#set_property PACKAGE_PIN H2 [get_ports {SDCCD}]
 
+#set_property IOSTANDARD LVCMOS33 [get_ports {SDCDat[3]}]
+#set_property IOSTANDARD LVCMOS33 [get_ports {SDCDat[2]}]
+#set_property IOSTANDARD LVCMOS33 [get_ports {SDCDat[1]}]
+#set_property IOSTANDARD LVCMOS33 [get_ports {SDCDat[0]}]
+#set_property IOSTANDARD LVCMOS33 [get_ports SDCCLK]
+#set_property IOSTANDARD LVCMOS33 [get_ports {SDCCmd}]
+#set_property IOSTANDARD LVCMOS33 [get_ports {SDCCD}]
+#set_property PULLUP true [get_ports {SDCDat[3]}]
+#set_property PULLUP true [get_ports {SDCDat[2]}]
+#set_property PULLUP true [get_ports {SDCDat[1]}]
+#set_property PULLUP true [get_ports {SDCDat[0]}]
+#set_property PULLUP true [get_ports {SDCCmd}]
+#set_property PULLUP true [get_ports {SDCCD}]
 
-set_property IOSTANDARD LVCMOS33 [get_ports {SDCDat[3]}]
-set_property IOSTANDARD LVCMOS33 [get_ports {SDCDat[2]}]
-set_property IOSTANDARD LVCMOS33 [get_ports {SDCDat[1]}]
-set_property IOSTANDARD LVCMOS33 [get_ports {SDCDat[0]}]
-set_property IOSTANDARD LVCMOS33 [get_ports SDCCLK]
-set_property IOSTANDARD LVCMOS33 [get_ports {SDCCmd}]
-set_property IOSTANDARD LVCMOS33 [get_ports {SDCCD}]
-set_property PULLUP true [get_ports {SDCDat[3]}]
-set_property PULLUP true [get_ports {SDCDat[2]}]
-set_property PULLUP true [get_ports {SDCDat[1]}]
-set_property PULLUP true [get_ports {SDCDat[0]}]
-set_property PULLUP true [get_ports {SDCCmd}]
-set_property PULLUP true [get_ports {SDCCD}]
+set_property -dict {PACKAGE_PIN D4 IOSTANDARD LVCMOS33 PULLUP true} [get_ports {SDCDat[3]}]
+set_property -dict {PACKAGE_PIN D2 IOSTANDARD LVCMOS33 PULLUP true} [get_ports {SDCDat[2]}]
+set_property -dict {PACKAGE_PIN E2 IOSTANDARD LVCMOS33 PULLUP true} [get_ports {SDCDat[1]}]
+set_property -dict {PACKAGE_PIN F4 IOSTANDARD LVCMOS33 PULLUP true} [get_ports {SDCDat[0]}]
+set_property -dict {PACKAGE_PIN F3 IOSTANDARD LVCMOS33 PULLUP true} [get_ports {SDCClk}]
+set_property -dict {PACKAGE_PIN D3 IOSTANDARD LVCMOS33 PULLUP true} [get_ports {SDCCmd}]
+set_property -dict {PACKAGE_PIN H2 IOSTANDARD LVCMOS33 PULLUP true} [get_ports {SDCCD}]
 
+set_input_delay -clock [get_clocks SPISDCClock] -min -add_delay 2.500 [get_ports {SDCDat[*]}]
+set_input_delay -clock [get_clocks SPISDCClock] -max -add_delay 21.000 [get_ports {SDCDat[*]}]
 
-set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -min -add_delay 2.500 [get_ports {SDCDat[*]}]
-set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay 21.000 [get_ports {SDCDat[*]}]
+set_output_delay -clock [get_clocks SPISDCClock] -min -add_delay 2.000 [get_ports {SDCCmd}]
+set_output_delay -clock [get_clocks SPISDCClock] -max -add_delay 6.000 [get_ports {SDCCmd}]
 
-set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -min -add_delay 2.500 [get_ports {SDCCmd}]
-set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay 14.000 [get_ports {SDCCmd}]
-
-
-set_output_delay -clock [get_clocks clk_out3_xlnx_mmcm] -min -add_delay 2.000 [get_ports {SDCCmd}]
-set_output_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay 6.000 [get_ports {SDCCmd}]
-
-set_output_delay -clock [get_clocks clk_out3_xlnx_mmcm] 0.000 [get_ports SDCCLK]
+set_output_delay -clock [get_clocks SPISDCClock] 0.000 [get_ports SDCCLK]
 
 #set_multicycle_path -from [get_pins xlnx_ddr3_c0/u_xlnx_ddr3_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_calib_top/init_calib_complete_reg/C] -to [get_pins xlnx_proc_sys_reset_0/U0/EXT_LPF/lpf_int_reg/D] 10
 
