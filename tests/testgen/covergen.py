@@ -31,10 +31,8 @@ def signedImm12(imm):
     imm = imm - 0x1000
   return str(imm)
 
-def signedImm20(imm):
+def unsignedImm20(imm):
   imm = imm % pow(2, 20)
-  if (imm & 0x80000):
-    imm = imm - 0x100000
   return str(imm)
 
 def writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, xlen):
@@ -43,7 +41,7 @@ def writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, xlen
     rs1val = rs1val + 2**xlen
   if (rs2val < 0):
     rs2val = rs2val + 2**xlen
-  lines = lines + "li x" + str(rd) + ", " + formatstr.format(rdval) + " # initialize rd to a random value that should get changed\n"
+  lines = lines + "li x" + str(rd) + ", " + formatstr.format(rdval) + " # initialize rd to a random value that should get changed; helps covering rd_toggle\n"
   if (test in rtype):
     lines = lines + "li x" + str(rs1) + ", " + formatstr.format(rs1val) + " # initialize rs1\n"
     lines = lines + "li x" + str(rs2) + ", " + formatstr.format(rs2val) + " # initialize rs2\n"
@@ -55,15 +53,16 @@ def writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, xlen
     lines = lines + "li x" + str(rs1) + ", " + formatstr.format(rs1val) + " # initialize rs1\n"
     lines = lines + test + " x" + str(rd) + ", x" + str(rs1) + ", " + signedImm12(immval) + " # perform operation\n"
   elif (test in loaditype):#["lb", "lh", "lw", "ld", "lbu", "lhu", "lwu"]
-    lines = lines + "auipc x" + str(rs1) + ", 0x20" + " # add upper immediate value to pc \n"
-    lines = lines + "addi x" + str(rs1) + ", x" + str(rs1) + ", " + signedImm12(immval) + " # add immediate to lower part of rs1\n"
-    lines = lines + test + " x" + str(rd) + ", " + signedImm12(immval) + "(x" + str(rs1) + ") # perform operation\n"
-  elif (test in stypes):#["sb", "sh", "sw", "sd"]
+    pass
+    #lines = lines + "auipc x" + str(rs1) + ", 0x20" + " # add upper immediate value to pc \n"
+    #lines = lines + "addi x" + str(rs1) + ", x" + str(rs1) + ", " + signedImm12(-immval) + " # add immediate to lower part of rs1\n"
+    #lines = lines + test + " x" + str(rd) + ", " + signedImm12(immval) + "(x" + str(rs1) + ") # perform operation\n"
+  elif (test in stype):#["sb", "sh", "sw", "sd"]
     #lines = lines + test + " x" + str(rs2) + ", " + signedImm12(immval) + "(x" + str(rs1) + ") # perform operation \n"
     #lines = lines + test + " x" + str(rs2) + ", " "0(x" + str(rs1) + ") # perform operation \n"
     #print("Error: %s type not implemented yet" % test)
     pass
-  elif (test in btypes):#["beq", "bne", "blt", "bge", "bltu", "bgeu"]
+  elif (test in btype):#["beq", "bne", "blt", "bge", "bltu", "bgeu"]
     if (randint(1,100) > 50):
       rs1val = rs2val
       lines = lines + "# same values in both registers\n"
@@ -75,6 +74,18 @@ def writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, xlen
     lines = lines + "some_label_for_sb_types_" + str(immval) + ":\n"
     lines = lines + "addi x0, x2, 2\n"
     lines = lines + "nop\nnop\nnop\nnop\nnop\n"
+  elif (test in jtype):#["jal"]
+    lines = lines + "jal x" + str(rd) + ", 1f # perform operation\n"
+    lines = lines + "nop\n"
+    lines = lines + "1:\n"
+  elif (test in jalrtype):#["jalr"]
+    lines = lines + "la x" + str(rs1) + ", 1f\n"
+    lines = lines + "addi x" + str(rs1) + ", x" + str(rs1) + ", " + signedImm12(-immval) + " # add immediate to lower part of rs1\n"
+    lines = lines + "jalr x" + str(rd) + ", x" + str(rs1) + ", " + signedImm12(immval) + " # perform operation\n"
+    lines = lines + "nop\n"
+    lines = lines + "1:\n"
+  elif (test in utype):#["lui", "auipc"]
+    lines = lines + test + " x" + str(rd) + ", " + unsignedImm20(immval) + " # perform operation\n"
   else:
     pass
     #print("Error: %s type not implemented yet" % test)
@@ -229,6 +240,11 @@ def make_cr_rs1_rs2_sign(test, xlen):
       desc = "cr_rs1_rs2 (Test source rs1 = " + hex(rs1val) + " rs2 = " + hex(rs2val) + ")"
       writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, xlen)
 
+def make_imm_zero(test, xlen):
+  [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
+  desc = "cp_imm_zero"
+  writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, 0, rdval, test, xlen)
+
 def write_tests(coverpoints, test, xlen):
   for coverpoint in coverpoints:
     if (coverpoint == "cp_asm_count"):
@@ -280,7 +296,7 @@ def write_tests(coverpoints, test, xlen):
     elif (coverpoint == "cp_rd_toggle"):
       pass #TODO toggle not needed and seems to be covered by other things
     elif (coverpoint == "cp_imm_sign"):
-      pass #TODO
+      make_imm_zero(test, xlen)
     elif (coverpoint == "cr_rs1_imm"):
       pass #TODO (not if crosses are not needed)
     elif (coverpoint == "cp_imm_ones_zeros"):
@@ -288,7 +304,7 @@ def write_tests(coverpoints, test, xlen):
     elif (coverpoint == "cp_mem_hazard"):
       pass #TODO
     elif (coverpoint == "cp_imm_zero"):
-      pass #TODO
+      make_imm_zero(test, xlen)
     elif (coverpoint == "cp_mem_unaligned"):
       pass #TODO
     elif (coverpoint == "cp_offset"):
@@ -338,8 +354,11 @@ rtype = ["add", "sub", "sll", "slt", "sltu", "xor", "srl", "sra", "or", "and",
 loaditype = ["lb", "lh", "lw", "ld", "lbu", "lhu", "lwu"]
 shiftitype = ["slli", "srli", "srai"]
 itype = ["addi", "slti", "sltiu", "xori", "ori", "andi"]
-stypes = ["sb", "sh", "sw", "sd"]
-btypes = ["beq", "bne", "blt", "bge", "bltu", "bgeu"]
+stype = ["sb", "sh", "sw", "sd"]
+btype = ["beq", "bne", "blt", "bge", "bltu", "bgeu"]
+jtype = ["jal"]
+jalrtype = ["jalr"]
+utype = ["lui", "auipc"]
 # TODO: auipc missing, check whatelse is missing in ^these^ types
 
 coverpoints = getcovergroups(coverdefdir, coverfiles)
@@ -362,12 +381,11 @@ for xlen in xlens:
   else:
     storecmd = "sd"
     wordsize = 8
+  WALLY = os.environ.get('WALLY')
+  pathname = WALLY+"/tests/functcov/rv" + str(xlen) + "/I/"
+  cmd = "mkdir -p " + pathname + " ; rm -f " + pathname + "/*" # make directory and remove old tests in dir
+  os.system(cmd)
   for test in coverpoints.keys():
-#    pathname = "../wally-riscv-arch-test/riscv-test-suite/rv" + str(xlen) + "i_m/I/"
-    WALLY = os.environ.get('WALLY')
-    pathname = WALLY+"/tests/functcov/rv" + str(xlen) + "/I/"
-    cmd = "mkdir -p " + pathname
-    os.system(cmd)
     basename = "WALLY-COV-" + test 
     fname = pathname + "/" + basename + ".S"
 
@@ -375,9 +393,9 @@ for xlen in xlens:
     f = open(fname, "w")
     line = "///////////////////////////////////////////\n"
     f.write(line)
-    lines="// "+fname+ "\n// " + author + "\n"
-    f.write(lines)
-    line ="// Created " + str(datetime.now()) 
+    line="// "+fname+ "\n// " + author + "\n"
+    f.write(line)
+    line ="// Created " + str(datetime.now()) + "\n"
     f.write(line)
 
     # insert generic header
@@ -401,9 +419,6 @@ for xlen in xlens:
       f.write(line)
 
     # Finish
-#    lines = ".fill " + str(testnum) + ", " + str(wordsize) + ", -1\n"
-#    lines = lines + "\nRV_COMPLIANCE_DATA_END\n" 
-    f.write(lines)
     f.close()
 
 
