@@ -32,10 +32,12 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   input  logic                reset_ext,        // external asynchronous reset pin
   output logic                reset,            // reset synchronized to clk to prevent races on release
   // AHB Interface
-  input  logic [P.AHBW-1:0]     HRDATAEXT,
+  input  logic [P.AHBW-1:0]   HRDATAEXT,
   input  logic                HREADYEXT, HRESPEXT,
   output logic                HSELEXT,
   output logic                HSELEXTSDC, 
+  // fpga debug signals
+  input  logic                ExternalStall,
   // outputs to external memory, shared with uncore memory
   output logic                HCLK, HRESETn,
   output logic [P.PA_BITS-1:0]  HADDR,
@@ -75,7 +77,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   wallypipelinedcore #(P) core(.clk, .reset,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
-    .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK
+    .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .ExternalStall
    );
 
   // instantiate uncore if a bus interface exists
@@ -90,4 +92,5 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
             MTIME_CLINT, GPIOOUT, GPIOEN, UARTSout, SPIOut, SPICS} = '0; 
   end
 
+  
 endmodule
