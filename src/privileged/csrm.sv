@@ -57,6 +57,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]               MISA_REGW, MHARTID_REGW;
   logic [P.XLEN-1:0]               MSCRATCH_REGW, MTVAL_REGW, MCAUSE_REGW;
   logic [P.XLEN-1:0]               MENVCFGH_REGW;
+  logic [P.XLEN-1:0]               TVECWriteValM;
   logic                            WriteMTVECM, WriteMEDELEGM, WriteMIDELEGM;
   logic                            WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
   logic                            WriteMCOUNTERENM, WriteMCOUNTINHIBITM;
@@ -152,7 +153,8 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   assign IllegalCSRMWriteReadonlyM = UngatedCSRMWriteM & (CSRAdrM == MVENDORID | CSRAdrM == MARCHID | CSRAdrM == MIMPID | CSRAdrM == MHARTID | CSRAdrM == MCONFIGPTR);
 
   // CSRs
-  flopenr #(P.XLEN) MTVECreg(clk, reset, WriteMTVECM, {CSRWriteValM[P.XLEN-1:2], 1'b0, CSRWriteValM[0]}, MTVEC_REGW); 
+  assign TVECWriteValM = CSRWriteValM[0] ? {CSRWriteValM[P.XLEN-1:6], 6'b000001} : {CSRWriteValM[P.XLEN-1:2], 2'b00};
+  flopenr #(P.XLEN) MTVECreg(clk, reset, WriteMTVECM, TVECWriteValM, MTVEC_REGW); 
   if (P.S_SUPPORTED) begin:deleg // DELEG registers should exist
     flopenr #(16) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM[15:0] & MEDELEG_MASK, MEDELEG_REGW);
     flopenr #(12) MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM[11:0] & MIDELEG_MASK, MIDELEG_REGW);
