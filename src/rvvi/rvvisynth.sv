@@ -44,7 +44,7 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
   input logic                                     GPRWen, FPRWen,
   input logic [4:0]                               GPRAddr, FPRAddr,
   input logic [P.XLEN-1:0]                        GPRValue, FPRValue,
-  input logic [P.XLEN-1:0]                        CSRArray [TOTAL_CSRS-1:0],
+  input var logic [P.XLEN-1:0]                    CSRArray [TOTAL_CSRS-1:0],
   output logic valid,
   output logic [187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)-1:0] rvvi
   );
