@@ -144,11 +144,10 @@ fi
 
 source "$RISCV"/riscv-python/bin/activate # activate python virtual environment
 
-# Install python packages
+# Install python packages, including RISCOF (https://github.com/riscv-software-src/riscof.git)
+# RISCOF is a RISC-V compliance test framework that is used to run the RISC-V Arch Tests.
 STATUS="python packages"
-pip install -U pip
-pip install -U sphinx sphinx_rtd_theme matplotlib scipy scikit-learn adjustText lief markdown pyyaml testresources riscv_config
-pip install -U riscv_isac # to generate new tests, such as quads with fp_dataset.py
+pip install --upgrade pip && pip install -r "$dir"/requirements.txt
 
 # z3 is needed for sail and not availabe from dnf for rhel 8
 if (( RHEL_VERSION == 8 )); then
@@ -379,13 +378,6 @@ if git_check "sail-riscv" "https://github.com/riscv/sail-riscv.git" "$RISCV/bin/
 else
     echo -e "${SUCCESS_COLOR}RISC-V Sail Model already up to date${ENDC}"
 fi
-
-
-# RISCOF (https://github.com/riscv-software-src/riscof.git)
-# RISCOF is a RISC-V compliance test framework that is used to run the RISC-V Arch Tests.
-section_header "Installing/Updating RISCOF"
-STATUS="RISCOF"
-pip3 install git+https://github.com/riscv-software-src/riscof.git
 
 
 # OSU Skywater 130 cell library (https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12)
