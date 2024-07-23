@@ -38,11 +38,20 @@ WARNING_COLOR='\033[93m'
 FAIL_COLOR='\033[91m'
 ENDC='\033[0m' # Reset to default color
 
-printf "${SECTION_COLOR}%$(tput cols)s" | tr ' ' '#'
-printf "%$(tput cols)s" | tr ' ' '#'
-echo -e "Checking System Requirements and Configuring Installation"
-printf "%$(tput cols)s" | tr ' ' '#'
-printf "%$(tput cols)s${ENDC}" | tr ' ' '#'
+# Print section header
+section_header() {
+    if tput cols > /dev/null 2>&1; then
+        printf "${SECTION_COLOR}%$(tput cols)s" | tr ' ' '#'
+        printf "%$(tput cols)s" | tr ' ' '#'
+        echo -e "$1"
+        printf "%$(tput cols)s" | tr ' ' '#'
+        printf "%$(tput cols)s${ENDC}" | tr ' ' '#'
+    else
+        echo -e "${SECTION_COLOR}$1${ENDC}"
+    fi
+}
+
+section_header "Checking System Requirements and Configuring Installation"
 
 # Get distribution information
 test -e /etc/os-release && os_release="/etc/os-release" || os_release="/usr/lib/os-release"
