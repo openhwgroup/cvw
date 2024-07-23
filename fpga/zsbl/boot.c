@@ -52,10 +52,40 @@ int disk_read(BYTE * buf, LBA_t sector, UINT count) {
     return -1;
   }
 
-  // Begin reading 
+  // Begin reading blocks
   for (i = 0; i < count; i++) {
+    uint16_t crc, crc_exp;
+    
+    // Read the data token
+    r = spi_readbyte();
+    if (r != SD_DATA_TOKEN) {
+      print_uart("Didn't receive data token first thing. Shoot: ");
+      print_byte(r & 0xff);
+      return -1;
+    }
+
+    // Read block into memory.
+    for (int j = 0; j < 8; j++) {
+      *buf = sd_read64(&crc);
+      buf = buf + 64;
+    }
+
+    // Read CRC16 and check
+    crc_exp = ((uint16_t)spi_txrx(0xff) << 8);
+    crc_exp |= spi_txrx(0xff);
+
+    if (crc != crc_exp) {
+      print_uart("Stinking CRC16 didn't match on block ");
+      print_int(i);
+      print_uart("\r\n");
+      return -1;
+    }
     
   }
+
+  sd_cmd(SD_CMD_STOP_TRANSMISSION, 0, 0x01);
+  spi_txrx(0xff);
+  return 0;
 }
 
 // copyFlash: --------------------------------------------------------

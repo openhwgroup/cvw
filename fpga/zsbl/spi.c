@@ -58,6 +58,12 @@ inline void waitrx() {
   while(read_reg(SPI_IP) & 2)) {}
 }
 
+uint8_t spi_txrx(uint8_t byte) {
+  spi_sendbyte(0xFF);
+  waittx();
+  return spi_readbyte();
+}
+
 uint64_t spi_read64() {
   uint64_t r;
   uint8_t rbyte;
