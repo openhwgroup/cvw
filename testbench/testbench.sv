@@ -604,7 +604,7 @@ module testbench;
   end
 
   if(P.RVVI_SYNTH_SUPPORTED) begin : rvvi_synth
-    localparam MAX_CSRS = 3;
+    localparam MAX_CSRS = 5;
     logic                       valid;
     logic [187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)-1:0] rvvi;
 
