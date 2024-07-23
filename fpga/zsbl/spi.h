@@ -55,7 +55,7 @@ inline void waittx();
 inline void waitrx();
 uint8_t spi_txrx(uint8_t byte);
 inline uint8_t spi_readbyte();
-
+uint64_t spi_read64();
 void spi_init();
 
 #endif

@@ -58,6 +58,24 @@ inline void waitrx() {
   while(read_reg(SPI_IP) & 2)) {}
 }
 
+uint64_t spi_read64() {
+  uint64_t r;
+  uint8_t rbyte;
+  int i;
+
+  for (i = 0; i < 8; i++) {
+    spi_sendbyte(0xFF);
+  }
+
+  waittx();
+
+  for (i = 0; i < 8; i++) {
+    rbyte = spi_readbyte();
+    r = r | (rbyte << ((8 - 1 - i)*8));
+  }
+
+  return r;
+}
 
 // Initialize Sifive FU540 based SPI Controller
 void spi_init() {
