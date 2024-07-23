@@ -56,7 +56,7 @@ if [ "$FAMILY" == rhel ]; then
     VERILATOR_PACKAGES+=(help2man perl clang ccache gperftools numactl mold)
     BUILDROOT_PACKAGES+=(ncurses-base ncurses ncurses-libs ncurses-devel gcc-gfortran)
     # Extra packages not availale in rhel8, nice for Verilator and needed for sail respectively
-    if (( RHEL_VERSION == 9 )); then
+    if (( RHEL_VERSION >= 9 )); then
         VERILATOR_PACKAGES+=(perl-doc)
         SAIL_PACKAGES=(z3)
     fi
@@ -66,11 +66,11 @@ elif [ "$FAMILY" == ubuntu ]; then
     if (( UBUNTU_VERSION >= 24 )); then
         PYTHON_VERSION=python3.12
         VERILATOR_PACKAGES+=(mold) # Not availale in Ubuntu 20.04, nice for Verilator
-    elif (( UBUNTU_VERSION == 22 )); then
+    elif (( UBUNTU_VERSION >= 22 )); then
         PYTHON_VERSION=python3.11
         VERILATOR_PACKAGES+=(mold) # Not availale in Ubuntu 20.04, nice for Verilator
-    elif (( UBUNTU_VERSION == 20 )); then
-        PYTHON_VERSION=python3.11
+    elif (( UBUNTU_VERSION >= 20 )); then
+        PYTHON_VERSION=python3.9
         OTHER_PACKAGES+=(gcc-10 g++-10 cpp-10) # Newer version of gcc needed for Verilator
     fi
     PACKAGE_MANAGER="DEBIAN_FRONTEND=noninteractive apt-get"
