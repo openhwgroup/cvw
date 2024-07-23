@@ -1,5 +1,6 @@
 #include "sd.h"
 #include "spi.h"
+#include "uart.h"
 
 // Parallel byte update CRC7-CCITT algorithm.
 // The result is the CRC7 result, left shifted over by 1
@@ -23,27 +24,44 @@ uint16_t crc16(uint16_t crc, uint8_t data) {
     return crc;
 }
 
+// sd_cmd ------------------------------------------------------------
+// Sends SD card command using SPI mode.
+// This function:
+// * Chooses the response length based on the input command
+// * Makes use of SPI's full duplex. For every byte sent,
+//   a byte is received. Thus for every byte sent as part of
+//   a command, a useless byte must be read from the receive
+//   FIFO.
+// * Takes advantage of the Sifive SPI peripheral spec's
+//   watermark and interrupt features to determine when a
+//   transfer is complete. This should save on cycles since
+//   no arbitrary delays need to be added.
 uint64_t sd_cmd(uint8_t cmd, uint32_t arg, uint8_t crc) {
   uint8_t response_len;
   uint8_t i;
   uint64_t r;
   uint8_t rbyte;
-  
+
+  // Initialize the response with 0's.
+  r = 0;
+
+  // Choose response length based on cmd input.
+  // Most commands return an R1 format response.
   switch (cmd) {
-    case 0:
-      response_len = 1;
-      break;
     case 8:
-      response_len = 7
+      response_len = R7_RESPONSE;
       break;
+    case 12:
+      response_len = R1B_RESPONSE;
     default:
-      response_len = 1;
+      response_len = R1_RESPONSE;
       break;
   }
 
   // Make interrupt pending after response fifo receives the correct
-  // response length.
-  write_reg(SPI_RXMARK, response_len);
+  // response length.  Probably unecessary so let's wait and see what
+  // happens.
+  // write_reg(SPI_RXMARK, response_len);
   
   // Write all 6 bytes into transfer fifo
   spi_sendbyte(0x40 | cmd);
@@ -79,18 +97,44 @@ uint64_t sd_cmd(uint8_t cmd, uint32_t arg, uint8_t crc) {
   }
 
   return r;
-}
+} // sd_cmd
 
-#define   cmd0() sd_cmd( 0, 0x00000000, 0x95)
-#define   cmd8() sd_cmd( 8, 0x000001aa, 0x87)
-// CMD55 has to be sent before ACMD41 (it means the next command is
-// application specific)
-#define  cmd55() sd_cmd(55, 0x00000000, 0x65)
-#defube acmd41() sd_cmd(41, 0x40000000, 0x77)
+// Utility defines for CMD0, CMD8, CMD55, and ACMD41
+#define CMD0()   sd_cmd( 0, 0x00000000, 0x95) // Reset SD card into IDLE state
+#define CMD8()   sd_cmd( 8, 0x000001aa, 0x87) // 
+#define CMD55()  sd_cmd(55, 0x00000000, 0x65) //
+#define ACMD41() sd_cmd(41, 0x40000000, 0x77) //
 
+// init_sd: ----------------------------------------------------------
+// This first initializes the SPI peripheral then initializes the SD
+// card itself. We use the uart to display anything that goes wrong.
 void init_sd(){
   init_spi();
 
-  cmd0()
+  uint64_t r;
+
+  print_uart("Initializing SD Card in SPI mode");
+  
+  // Reset SD Card command
+  // Initializes SD card into SPI mode if CS is asserted '0'
+  if (!(( r = CMD0() ) & 0x10) ) {
+    print_uart("SD ERROR: ");
+    print_uart_byte(r & 0xff);
+    print_uart("\r\n");
+  }
+
+  // 
+  if (!(( r = CMD8() ) & 0x10 )) {
+    print_uart("SD ERROR: ");
+    print_uart_byte(r & 0xff);
+    print_uart("\r\n");
+  }
+
+  do {
+    CMD55();
+    r = ACMD41();
+  } while (r == 0x1);
+
+  print_uart("SD card is initialized");
 }
 
