@@ -27,7 +27,11 @@ jobs:
         run: |
               source setup.sh
               make riscof
-      - name: regresssion
+      - name: make buildroot
+        run: |
+              source setup.sh
+              make -C linux
+      - name: regression
         run: |
               source setup.sh
               regression-wally
