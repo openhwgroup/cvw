@@ -42,7 +42,7 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   input  logic  		   RvviAxiWready
   );
 
-  localparam TotalFrameLengthBits = 2*48+32+16+187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12);
+  localparam TotalFrameLengthBits = 2*48+17+16+187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12);
   localparam TotalFrameLengthBytes = TotalFrameLengthBits / 8;
 
   logic [9:0]              WordCount;
@@ -121,7 +121,7 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   end
 
   assign Length = {4'b0, BytesInFrame};
-  assign TotalFrame = {16'b0, rvviDelay, EthType, DstMac, SrcMac};
+  assign TotalFrame = {17'b0, rvviDelay, EthType, DstMac, SrcMac};
 
   // *** fix me later
   assign DstMac = 48'h8F54_0000_1654; // made something up
