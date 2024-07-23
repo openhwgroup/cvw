@@ -29,9 +29,9 @@ OBJDUMPS := $(foreach name, $(OBJDUMPS), $(DIS)/$(name).objdump)
 
 .PHONY: all generate disassemble install clean cleanDTB cleanDriver test
 
-all: clean download Image disassemble install
+all: clean download Image disassemble install dumptvs
 
-all_nosudo: clean download Image disassemble install_nosudo
+all_nosudo: clean download Image disassemble install_nosudo dumptvs_nosudo
 
 Image:
 	bash -c "unset LD_LIBRARY_PATH; make -C $(BUILDROOT) --jobs;"
