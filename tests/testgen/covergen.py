@@ -48,32 +48,48 @@ def writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, xlen
     lines = lines + test + " x" + str(rd) + ", x" + str(rs1) + ", x" + str(rs2) + " # perform operation\n" 
   elif (test in shiftitype):
     lines = lines + "li x" + str(rs1) + ", " + formatstr.format(rs1val) + " # initialize rs1\n"
-    lines = lines + test + " x" + str(rd) + ", x" + str(rs1) + ", " + shiftImm(immval, xlen) + " # perform operation\n"
+    if (test in shiftiwtype):
+      lines = lines + test + " x" + str(rd) + ", x" + str(rs1) + ", " + shiftImm(immval, 32) + " # perform operation\n"
+    else:
+      lines = lines + test + " x" + str(rd) + ", x" + str(rs1) + ", " + shiftImm(immval, xlen) + " # perform operation\n"
   elif (test in itype):
     lines = lines + "li x" + str(rs1) + ", " + formatstr.format(rs1val) + " # initialize rs1\n"
     lines = lines + test + " x" + str(rd) + ", x" + str(rs1) + ", " + signedImm12(immval) + " # perform operation\n"
   elif (test in loaditype):#["lb", "lh", "lw", "ld", "lbu", "lhu", "lwu"]
-    pass
-    #lines = lines + "auipc x" + str(rs1) + ", 0x20" + " # add upper immediate value to pc \n"
-    #lines = lines + "addi x" + str(rs1) + ", x" + str(rs1) + ", " + signedImm12(-immval) + " # add immediate to lower part of rs1\n"
-    #lines = lines + test + " x" + str(rd) + ", " + signedImm12(immval) + "(x" + str(rs1) + ") # perform operation\n"
+    if (rs1 != 0):
+      lines = lines + "li x" + str(rs2) + ", " + formatstr.format(rs2val)  + " # initialize rs2\n"
+      lines = lines + "la x" + str(rs1) + ", scratch" + " # base address \n"
+      lines = lines + "addi x" + str(rs1) + ", x" + str(rs1) + ", " + signedImm12(-immval) + " # sub immediate from rs1 to counter offset\n"
+      if (xlen == 32):
+        storeop = "sw"
+      else:
+        storeop = "sd"
+      lines = lines + storeop + " x" + str(rs2) + ", " + signedImm12(immval) +" (x" + str(rs1) + ") # store value to put someting in memory\n"
+      lines = lines + test + " x" + str(rd) + ", " + signedImm12(immval) + "(x" + str(rs1) + ") # perform operation\n"
+#      lines = lines + test + " x" + str(rd) + ", 0(x" + str(rs1) + ") # perform operation\n"
   elif (test in stype):#["sb", "sh", "sw", "sd"]
-    #lines = lines + test + " x" + str(rs2) + ", " + signedImm12(immval) + "(x" + str(rs1) + ") # perform operation \n"
-    #lines = lines + test + " x" + str(rs2) + ", " "0(x" + str(rs1) + ") # perform operation \n"
-    #print("Error: %s type not implemented yet" % test)
-    pass
+    if (rs1 != 0):
+      if (rs2 == rs1): # make sure registers are different so they don't conflict
+          rs2 = (rs1 + 1) % 32
+          if (rs2 == 0):
+            rs2 = 1
+      lines = lines + "li x" + str(rs2) + ", " + formatstr.format(rs2val)  + " # initialize rs2\n"
+      lines = lines + "la x" + str(rs1) + ", scratch" + " # base address \n"
+      lines = lines + "addi x" + str(rs1) + ", x" + str(rs1) + ", " + signedImm12(-immval) + " # sub immediate from rs1 to counter offset\n"
+      lines = lines + test + " x" + str(rs2) + ", " + signedImm12(immval) + "(x" + str(rs1) + ") # perform operation \n"
   elif (test in btype):#["beq", "bne", "blt", "bge", "bltu", "bgeu"]
-    if (randint(1,100) > 50):
-      rs1val = rs2val
-      lines = lines + "# same values in both registers\n"
-    lines = lines + "nop\n"
-    lines = lines + "li x" + str(rs1) + ", " + formatstr.format(rs1val) + " # initialize rs1\n"
-    lines = lines + "li x" + str(rs2) + ", " + formatstr.format(rs2val) + " # initialize rs2\n"
-    lines = lines + test + " x" + str(rs1) + ", x" + str(rs2) + ", some_label_for_sb_types_" + str(immval) + "+4" + " # perform operation \n"
-    lines = lines + "addi x0, x1, 1\n"
-    lines = lines + "some_label_for_sb_types_" + str(immval) + ":\n"
-    lines = lines + "addi x0, x2, 2\n"
-    lines = lines + "nop\nnop\nnop\nnop\nnop\n"
+    for same in range(2):
+      if (same):
+        rs1val = rs2val
+        lines = lines + "# same values in both registers\n"
+      lines = lines + "nop\n"
+      lines = lines + "li x" + str(rs1) + ", " + formatstr.format(rs1val) + " # initialize rs1\n"
+      lines = lines + "li x" + str(rs2) + ", " + formatstr.format(rs2val) + " # initialize rs2\n"
+      lines = lines + test + " x" + str(rs1) + ", x" + str(rs2) + ", some_label_for_btype_" + str(immval) + str(same) + " # perform operation \n"
+      lines = lines + "addi x0, x1, 1\n"
+      lines = lines + "some_label_for_btype_" + str(immval)+ str(same) + ":\n"
+      lines = lines + "addi x0, x2, 2\n"
+      lines = lines + "nop\nnop\nnop\nnop\nnop\n"
   elif (test in jtype):#["jal"]
     lines = lines + "jal x" + str(rd) + ", 1f # perform operation\n"
     lines = lines + "nop\n"
@@ -151,7 +167,7 @@ def make_rd_rs1_rs2(test, xlen):
 def make_rs1_rs2(test, xlen):
   for r in range(32):
     [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
-    desc = "cmp_rd_rs1_rs2 (Test rs1 = rs2 = x" + str(r) + ")"
+    desc = "cmp_rs1_rs2 (Test rs1 = rs2 = x" + str(r) + ")"
     writeCovVector(desc, r, r, rd, rs1val, rs2val, immval, rdval, test, xlen)
 
 def make_rs1_maxvals(test, xlen):
@@ -171,15 +187,15 @@ def make_rd_maxvals(test, xlen):
     # rs1 = 0, rs2 = v, others are random
     [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
     desc = "cp_rd_maxvals (Test rd value = " + hex(v) + ")"
-    writeCovVector(desc, rs1, 0, rd, v, rs2val, immval, rdval, test, xlen)
+    writeCovVector(desc, rs1, 0, rd, v, rs2val, 0, rdval, test, xlen)
     # rs1, rs2 = v, others are random
     [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
     desc = "cp_rd_maxvals (Test rd value = " + hex(v) + ")"
-    writeCovVector(desc, rs1, rs2, rd, v, v, immval, rdval, test, xlen)
+    writeCovVector(desc, rs1, rs2, rd, v, v, v, rdval, test, xlen)
     # rs1 = all 1s, rs2 = v, others are random
     [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
     desc = "cp_rd_maxvals (Test rd value = " + hex(v) + ")"
-    writeCovVector(desc, rs1, rs2, rd, -1, v, immval, rdval, test, xlen)
+    writeCovVector(desc, rs1, rs2, rd, v, -1, -1, rdval, test, xlen)
 
 def make_rd_rs1_eqval(test, xlen):
   [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
@@ -245,6 +261,53 @@ def make_imm_zero(test, xlen):
   desc = "cp_imm_zero"
   writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, 0, rdval, test, xlen)
 
+def make_j_imm_ones_zeros(test, xlen):
+  for align in range(2,19):
+    lines = "\n# Testcase cp_imm_ones_zeros " + str(align) + "\n"
+    lines = lines + "li x1, " + formatstr.format(randint(0, 2**xlen-1)) + "\n"
+    lines = lines + "jal x20, 1f # jump to aligned address to stress immediate\n"
+    lines = lines + ".align " + str(align) + "\n"
+    lines = lines + "1:\n"
+    f.write(lines)
+
+def make_offset(test, xlen):
+  if (test in btype):
+    lines = "\n# Testcase cp_offset\n"
+    lines = lines + "j 2f # jump past backward branch target\n"
+    lines = lines + "1: j 3f # backward branch target: jump past backward branch\n"
+    lines = lines + "2: " + test + " x0, x0, 1b # backward branch\n"
+    lines = lines + "3: nop # done with sequence\n"
+    f.write(lines)
+
+def make_mem_hazard(test, xlen):
+  lines = "\n# Testcase mem_hazard (no dependency)\n"
+  lines = lines + "la x1, scratch\n"
+  lines = lines + test + " x2, 0(x1)\n"
+  f.write(lines)
+
+def make_cr_rs1_imm(test, xlen):
+  desc = "cp_cr_rs1_imm"
+  [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
+  for s1 in range(2):
+    for s2 in range(3):
+      if (s1):
+        rs1v = -abs(rs1val)
+      else:
+        rs1v = abs(rs1val)
+      if (s2 == 0):
+        immv = 0
+      elif (s2 == 1):
+        immv = abs(immval)
+      else:
+        immv = -abs(immval)
+      writeCovVector(desc, rs1, rs2, rd, rs1v, rs2val, immv, rdval, test, xlen)
+
+def make_imm_shift(test, xlen):
+  desc = "cp_imm_shift"
+  for shift in range(0, xlen):
+    [rs1, rs2, rd, rs1val, rs2val, immval, rdval] = randomize()
+    writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, shift, rdval, test, xlen)
+
 def write_tests(coverpoints, test, xlen):
   for coverpoint in coverpoints:
     if (coverpoint == "cp_asm_count"):
@@ -298,23 +361,24 @@ def write_tests(coverpoints, test, xlen):
     elif (coverpoint == "cp_imm_sign"):
       make_imm_zero(test, xlen)
     elif (coverpoint == "cr_rs1_imm"):
-      pass #TODO (not if crosses are not needed)
+      make_cr_rs1_imm(test, xlen)
     elif (coverpoint == "cp_imm_ones_zeros"):
-      pass #TODO
+      if (test in jtype):
+        make_j_imm_ones_zeros(test, xlen)
     elif (coverpoint == "cp_mem_hazard"):
-      pass #TODO
+      make_mem_hazard(test, xlen)
     elif (coverpoint == "cp_imm_zero"):
       make_imm_zero(test, xlen)
     elif (coverpoint == "cp_mem_unaligned"):
-      pass #TODO
+      pass # seems this should be part of privileged tests
     elif (coverpoint == "cp_offset"):
-      pass #TODO
+      make_offset(test, xlen)
     elif (coverpoint == "cr_nord_rs1_rs2"):
       pass #TODO (not if crosses are not needed)
     elif (coverpoint == "cp_imm_shift"):
-      pass #TODO
+      make_imm_shift(test, xlen)
     elif (coverpoint == "cp_rd_boolean"):
-      pass #TODO
+      pass # covered by other generators
     else:
       print("Warning: " + coverpoint + " not implemented yet for " + test)
       
@@ -352,8 +416,9 @@ rtype = ["add", "sub", "sll", "slt", "sltu", "xor", "srl", "sra", "or", "and",
           "mul", "mulh", "mulhsu", "mulhu", "div", "divu", "rem", "remu",
           "mulw", "divw", "divuw", "remw", "remuw"]
 loaditype = ["lb", "lh", "lw", "ld", "lbu", "lhu", "lwu"]
-shiftitype = ["slli", "srli", "srai"]
-itype = ["addi", "slti", "sltiu", "xori", "ori", "andi"]
+shiftitype = ["slli", "srli", "srai", "slliw", "srliw", "sraiw"]
+shiftiwtype = ["slliw", "srliw", "sraiw"]
+itype = ["addi", "slti", "sltiu", "xori", "ori", "andi", "addiw"]
 stype = ["sb", "sh", "sw", "sd"]
 btype = ["beq", "bne", "blt", "bge", "bltu", "bgeu"]
 jtype = ["jal"]
