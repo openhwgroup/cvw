@@ -99,6 +99,25 @@ uint64_t sd_cmd(uint8_t cmd, uint32_t arg, uint8_t crc) {
   return r;
 } // sd_cmd
 
+uint64_t sd_read64(uint16_t * crc) {
+  uint64_t r;
+  uint8_t rbyte;
+  int i;
+
+  for (i = 0; i < 8; i++) {
+    spi_sendbyte(0xFF);
+  }
+
+  waittx();
+
+  for (i = 0; i < 8; i++) {
+    rbyte = spi_readbyte();
+    *crc = crc16(*crc, rbyte);
+    r = r | (rbyte << ((8 - 1 - i)*8));
+  }
+
+  return r;
+}
 
 // Utility defines for CMD0, CMD8, CMD55, and ACMD41
 #define CMD0()   sd_cmd( 0, 0x00000000, 0x95) // Reset SD card into IDLE state
