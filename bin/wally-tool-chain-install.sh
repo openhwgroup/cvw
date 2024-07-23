@@ -59,7 +59,7 @@ git_check() {
     local url=$2
     local check=$3
     local branch="${4:-master}"
-    if [[ ((! -e $repo) && ($(git clone "$url") || true)) || ($(cd "$repo"; git fetch; git rev-parse HEAD) != $(cd $repo; git rev-parse origin/"$branch")) || (! -e $check) ]]; then
+    if [[ ((! -e $repo) && ($(git clone "$url") || true)) || ($(cd "$repo"; git fetch; git rev-parse HEAD) != $(cd "$repo"; git rev-parse origin/"$branch")) || (! -e $check) ]]; then
         return 0
     else
         return 1
@@ -131,12 +131,7 @@ section_header "Setting up Python Environment"
 STATUS="python virtual environment"
 cd "$RISCV"
 if [ ! -e "$RISCV"/riscv-python/bin/activate ]; then
-    # If python3.12 is avaiable, use it. Otherise, use whatever version of python3 is installed.
-    if [ "$(which python3.12)" ]; then
-        python3.12 -m venv riscv-python
-    else
-        python3 -m venv riscv-python
-    fi
+    "$PYTHON_VERSION" -m venv riscv-python
     echo -e "${OK_COLOR}Python virtual environment created.\nInstalling pip packages.${ENDC}"
 else
     echo -e "${OK_COLOR}Python virtual environment already exists.\nUpdating pip packages.${ENDC}"
