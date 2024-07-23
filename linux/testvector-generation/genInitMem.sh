@@ -10,20 +10,20 @@ rawUntrimmedBootmemFile="$tvDir/untrimmedBootmemFileGDB.bin"
 untrimmedBootmemFile="$tvDir/untrimmedBootmemFile.bin"
 DEVICE_TREE=${imageDir}/wally-virt.dtb
 
-if [ ! -d "$tvDir" ]; then
-    echo "Error: linux testvector directory $tvDir not found!">&2
-    echo "Please create it. For example:">&2
-    echo "    sudo mkdir -p $tvDir">&2
+if ! mkdir -p "$tvDir"; then
+    echo "Error: unable to create linux testvector directory $tvDir!">&2
+    echo "Please try running as sudo.">&2
     exit 1
 fi
-test -w $tvDir
-if [ ! $? -eq 0 ]; then
-    echo "Error: insuffcient write privileges for linux testvector directory $tvDir !">&2
-    echo "Please chmod it. For example:">&2
-    echo "    sudo chmod -R a+rw $tvDir">&2
-    exit 1
+if ! test -w "$tvDir"; then
+    echo "Using sudo to gain access to $tvDir"
+    if ! sudo chmod -R a+rw "$tvDir"; then
+        echo "Error: insuffcient write privileges for linux testvector directory $tvDir !">&2
+        echo "Please chmod it. For example:">&2
+        echo "    sudo chmod -R a+rw $tvDir">&2
+        exit 1
+    fi
 fi
-
 echo "Launching QEMU in replay mode!"
 (qemu-system-riscv64 \
 -M virt -m 256M -dtb $DEVICE_TREE \
