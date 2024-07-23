@@ -99,6 +99,7 @@ uint64_t sd_cmd(uint8_t cmd, uint32_t arg, uint8_t crc) {
   return r;
 } // sd_cmd
 
+
 // Utility defines for CMD0, CMD8, CMD55, and ACMD41
 #define CMD0()   sd_cmd( 0, 0x00000000, 0x95) // Reset SD card into IDLE state
 #define CMD8()   sd_cmd( 8, 0x000001aa, 0x87) // 

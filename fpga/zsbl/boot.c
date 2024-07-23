@@ -1,6 +1,9 @@
 #include <stddef.h>
 #include "boot.h"
 #include "gpt.h"
+#include "uart.h"
+#include "spi.h"
+#include "sd.h"
 
 /* int disk_read(BYTE * buf, LBA_t sector, UINT count, BYTE card_type) { */
 
@@ -32,7 +35,27 @@
 /* } */
 
 int disk_read(BYTE * buf, LBA_t sector, UINT count) {
+  uint64_t r;
+  UINT i;
   
+  uint8_t crc = 0;
+  crc = crc7(crc, 0x40 | SD_CMD_READ_BLOCK_MULTIPLE);
+  crc = crc7(crc, (sector >> 24) & 0xff);
+  crc = crc7(crc, (sector >> 16) & 0xff);
+  crc = crc7(crc, (sector >> 8) & 0xff);
+  crc = crc7(crc, sector & 0xff);
+  crc = crc | 1;
+  
+  if (sd_cmd(18, sector &, crc) != 0x00) {
+    print_uart("disk_read: CMD18 failed. r = ");
+    print_byte(r & 0xff);
+    return -1;
+  }
+
+  // Begin reading 
+  for (i = 0; i < count; i++) {
+    
+  }
 }
 
 // copyFlash: --------------------------------------------------------
@@ -48,7 +71,7 @@ void copyFlash(QWORD address, QWORD * Dst, DWORD numBlocks) {
   // Print the wally banner
   print_uart(BANNER);
 
-  
+  // Intialize the SD card
   init_sd();
   
   ret = gpt_load_partitions(card_type);
