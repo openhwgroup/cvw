@@ -19,6 +19,16 @@ typedef QWORD LBA_t;
 #define OPENSBI_ADDRESS 0x80000000      // FW_TEXT_START
 #define KERNEL_ADDRESS 0x80200000       // FW_JUMP_ADDR
 
+#define BANNER " █▀█        █▀█        █▀█        █▀▀                 █ █\n" \
+" █          █ █        █▄▀        █▄▄       ▄▄▄       █ █\n" \
+" █▄█        █▄█        █ █        █▄▄                 ▀▄▀\n" \
+" ____          ____  ____      ___      ___   ____    ___\n"      \
+" \\   \\        /   / /    \\    |   |    |   |  \\   \\  /  /\n" \
+"  \\   \\  __  /   / /      \\   |   |    |   |   \\   \\/  /\n" \
+"   \\   \\/  \\/   / /   /\\   \\  |   |    |   |    \\     /\n" \
+"    \\          / /   ____   \\ |   |___ |   |___  |   |\n" \
+"     \\___/\\___/ /___/    \\___\\|_______||_______| |___|\n\n"
+
 // Export disk_read
 int disk_read(BYTE * buf, LBA_t sector, UINT count, BYTE card_type);
 
