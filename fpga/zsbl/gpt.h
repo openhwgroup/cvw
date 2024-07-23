@@ -37,4 +37,4 @@ typedef struct partition_entries
 } partition_entries_t;
 
 // Find boot partition and load it to the destination
-int gpt_load_partitions(BYTE card_type);
+int gpt_load_partitions();
