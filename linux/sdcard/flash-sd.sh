@@ -25,7 +25,6 @@ ERRORTEXT="$BOLDRED"ERROR:"$NC"
 WARNINGTEXT="$BOLDYELLOW"Warning:"$NC"
 
 # Default values for buildroot and device tree
-RISCV=/opt/riscv
 BUILDROOT=$RISCV/buildroot
 DEVICE_TREE=wally-vcu108.dtb
 MNT_DIR=wallyimg

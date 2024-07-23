@@ -34,9 +34,9 @@ QuestaCodeCoverage: questa/ucdb/rv64gc_arch64i.ucdb
 imperasdv_cov:
 	touch ${SIM}/seed0.txt
 	echo "0" > ${SIM}/seed0.txt
-#	/opt/riscv/ImperasDV-OpenHW/scripts/cvw/run-elf-cov.bash --verbose --seed 0 --search ${WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m
-#	/opt/riscv/ImperasDV-OpenHW/scripts/cvw/run-elf-cov.bash --elf ${WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/dut/my.elf --seed ${SIM}/seed0.txt --coverdb ${SIM}/cov/rv64gc_arch64i.ucdb --verbose
-#	/opt/riscv/ImperasDV-OpenHW/scripts/cvw/run-elf-cov.bash --elf ${WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/dut/my.elf --seed ${SIM}/seed0.txt --coverdb ${SIM}/questa/riscv.ucdb --verbose
+#	${RISCV}/ImperasDV-OpenHW/scripts/cvw/run-elf-cov.bash --verbose --seed 0 --search ${WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m
+#	${RISCV}/ImperasDV-OpenHW/scripts/cvw/run-elf-cov.bash --elf ${WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/dut/my.elf --seed ${SIM}/seed0.txt --coverdb ${SIM}/cov/rv64gc_arch64i.ucdb --verbose
+#	${RISCV}/ImperasDV-OpenHW/scripts/cvw/run-elf-cov.bash --elf ${WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/dut/my.elf --seed ${SIM}/seed0.txt --coverdb ${SIM}/questa/riscv.ucdb --verbose
 	run-elf-cov.bash --elf ${WALLY}/tests/riscvdv/asm_test/riscv_arithmetic_basic_test_0.elf --seed ${SIM}/questa/seed0.txt --coverdb ${SIM}/questa/riscv.ucdb --verbose
 	vcover report -details -html ${SIM}/questa/riscv.ucdb
 
