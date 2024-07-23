@@ -123,7 +123,15 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
     assign CSRs[(index+1) * (P.XLEN + 12)- 1: index * (P.XLEN + 12)] = {CSRValue[index], CSRAddr[index]};
     assign EnabledCSRs[index] = |CSRWenPriorityMatrix[index];
   end
-  assign CSRCountShort = +EnabledCSRs;
+
+  integer index2;
+  always_comb begin
+    CSRCountShort = '0;
+    for(index2 = 0; index2 < MAX_CSRS; index2++) begin
+      CSRCountShort += EnabledCSRs[index2];
+    end
+  end
+
   assign CSRCount = {{{12-MAX_CSRS}{1'b0}}, CSRCountShort};
   assign rvvi = {CSRs, Registers, Required};
   
