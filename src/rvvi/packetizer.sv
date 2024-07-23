@@ -129,7 +129,7 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   assign Tag = 32'b0;
   assign EthType = 16'h005c;
   
-  assign RvviAxiWdata = TotalFrameWords[WordCount];
+  assign RvviAxiWdata = TotalFrameWords[WordCount[4:0]];
   assign RvviAxiWstrb = '1;
   assign RvviAxiWlast = BurstDone & (CurrState == STATE_TRANS);
   assign RvviAxiWvalid = (CurrState == STATE_TRANS);
