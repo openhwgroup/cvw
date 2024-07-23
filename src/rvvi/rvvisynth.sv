@@ -102,14 +102,26 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
   end
 
   // step 3a
-  for(index = 0; index < MAX_CSRS; index = index + 1) begin
+  logic [TOTAL_CSRS-1:0] CSRWenPriorityMatrix [MAX_CSRS-1:0];
+  logic [TOTAL_CSRS-1:0] CSRWenFilterMatrix [MAX_CSRS-1:0];
+  
+  priorityaomux #(TOTAL_CSRS, P.XLEN) firstpriorityaomux(CSRArrayWen, CSRArray, CSRValue[0], CSRWenPriorityMatrix[0]);
+  assign CSRWenFilterMatrix[0] = CSRArrayWen;
+
+  for(index = 1; index < MAX_CSRS; index = index + 1) begin
+/* -----\/----- EXCLUDED -----\/-----
     logic [MAX_CSRS-index-1:0] CSRWenShort;
     priorityaomux #(MAX_CSRS-index, P.XLEN) priorityaomux(CSRArrayWen[MAX_CSRS-1:index], CSRArray[MAX_CSRS-1:index], CSRValue[index], CSRWenShort);
     assign CSRWen[index] = {{{index}{1'b0}}, CSRWenShort};
+ -----/\----- EXCLUDED -----/\----- */
+    priorityaomux #(TOTAL_CSRS, P.XLEN) priorityaomux(CSRWenFilterMatrix[index], CSRArray, CSRValue[index], CSRWenPriorityMatrix[index]);
+    assign CSRWenFilterMatrix[index] = CSRWenFilterMatrix[index-1] & ~CSRWenPriorityMatrix[index-1];
+  end
+  for(index = 0; index < MAX_CSRS; index = index + 1) begin
     // step 3b
-    csrindextoaddr #(TOTAL_CSRS) csrindextoaddr(CSRWen[index], CSRAddr[index]);
+    csrindextoaddr #(TOTAL_CSRS) csrindextoaddr(CSRWenPriorityMatrix[index], CSRAddr[index]);
     assign CSRs[(index+1) * (P.XLEN + 12)- 1: index * (P.XLEN + 12)] = {CSRValue[index], CSRAddr[index]};
-    assign EnabledCSRs[index] = |CSRWenShort;
+    assign EnabledCSRs[index] = |CSRWenPriorityMatrix[index];
   end
   assign CSRCountShort = +EnabledCSRs;
   assign CSRCount = {{{12-MAX_CSRS}{1'b0}}, CSRCountShort};
