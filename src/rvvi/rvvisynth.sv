@@ -88,6 +88,9 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
                      {FPRWen, GPRWen} == 2'b10 ? {XLENZeros, 5'b0, FPRValue, FPRAddr} :
                      '0;
 
+  /* verilator lint_off UNOPTFLAT */
+  // For some reason verilator complains about CSRWenFilterMatrix being in a circular loop when it is not.
+
   // the CSRs are complex
   // 1. we need to get the CSR values
   // 2. we check if the CSR value changes by registering the value then XORing with the old value.
@@ -121,9 +124,12 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
   always_comb begin
     CSRCountShort = '0;
     for(index2 = 0; index2 < MAX_CSRS; index2++) begin
+      /* verilator lint_off WIDTHEXPAND */
       CSRCountShort += EnabledCSRs[index2];
+      /* verilator lint_on WIDTHEXPAND */
     end
   end
+  /* verilator lint_on UNOPTFLAT */
 
   assign CSRCount = {{{12-MAX_CSRS}{1'b0}}, CSRCountShort};
   assign rvvi = {CSRs, Registers, Required};
