@@ -82,6 +82,10 @@ jobs:
         run: |
               source setup.sh
               make riscof
+      - name: make buildroot
+        run: |
+              source setup.sh
+              make -C linux
       - name: regression
         run: |
               source setup.sh
