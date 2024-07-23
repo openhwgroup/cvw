@@ -52,15 +52,6 @@ error() {
     exit 1
 }
 
-# Print section header
-section_header() {
-    printf "${SECTION_COLOR}%$(tput cols)s" | tr ' ' '#'
-    printf "%$(tput cols)s" | tr ' ' '#'
-    echo -e "$1"
-    printf "%$(tput cols)s" | tr ' ' '#'
-    printf "%$(tput cols)s${ENDC}" | tr ' ' '#'
-}
-
 # Check if a git repository exists, is up to date, and has been installed
 # Clones the repository if it doesn't exist
 git_check() {
