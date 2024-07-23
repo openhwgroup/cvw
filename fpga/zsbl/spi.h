@@ -28,15 +28,15 @@
 #define SPI_IP                SPI_BASE + 0x74 /* Interrupt Pendings Register */
 
 /* delay0 bits */
-#define SIFIVE_SPI_DELAY0_CSSCK(x)       ((u32)(x))
+#define SIFIVE_SPI_DELAY0_CSSCK(x)       ((uint32_t)(x))
 #define SIFIVE_SPI_DELAY0_CSSCK_MASK     0xffU
-#define SIFIVE_SPI_DELAY0_SCKCS(x)       ((u32)(x) << 16)
+#define SIFIVE_SPI_DELAY0_SCKCS(x)       ((uint32_t)(x) << 16)
 #define SIFIVE_SPI_DELAY0_SCKCS_MASK     (0xffU << 16)
 
 /* delay1 bits */
-#define SIFIVE_SPI_DELAY1_INTERCS(x)     ((u32)(x))
+#define SIFIVE_SPI_DELAY1_INTERCS(x)     ((uint32_t)(x))
 #define SIFIVE_SPI_DELAY1_INTERCS_MASK   0xffU
-#define SIFIVE_SPI_DELAY1_INTERXFR(x)    ((u32)(x) << 16)
+#define SIFIVE_SPI_DELAY1_INTERXFR(x)    ((uint32_t)(x) << 16)
 #define SIFIVE_SPI_DELAY1_INTERXFR_MASK  (0xffU << 16)
 
 /* csmode bits */
@@ -48,14 +48,42 @@
 #define WAITTX while(!(read_reg(SPI_IP) & 1) {}
 #define WAITRX while(read_reg(SPI_IP) & 2) {}
 
-inline void write_reg(uintptr_t addr, uint32_t value);
-inline uint32_t read_reg(uintptr_t addr);
-inline void spi_sendbyte(uint8_t byte);
-inline void waittx();
-inline void waitrx();
+// inline void write_reg(uintptr_t addr, uint32_t value);
+//inline uint32_t read_reg(uintptr_t addr);
+//inline void spi_sendbyte(uint8_t byte);
+//inline void waittx();
+//inline void waitrx();
 uint8_t spi_txrx(uint8_t byte);
-inline uint8_t spi_readbyte();
+//inline uint8_t spi_readbyte();
 uint64_t spi_read64();
 void spi_init();
+
+static inline void write_reg(uintptr_t addr, uint32_t value) {
+  volatile uint32_t * loc = (volatile uint32_t *) addr;
+  *loc = value;
+}
+
+// Read a register
+static inline uint32_t read_reg(uintptr_t addr) {
+  return *(volatile uint32_t *) addr;
+}
+
+// Queues a single byte in the transfer fifo
+static inline void spi_sendbyte(uint8_t byte) {
+  // Write byte to transfer fifo
+  write_reg(SPI_TXDATA, byte);
+}
+
+static inline void waittx() {
+  while(!(read_reg(SPI_IP) & 1)) {}
+}
+
+static inline void waitrx() {
+  while(read_reg(SPI_IP) & 2) {}
+}
+
+static inline uint8_t spi_readbyte() {
+  return read_reg(SPI_RXDATA);
+}
 
 #endif

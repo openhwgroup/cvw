@@ -30,7 +30,7 @@ typedef QWORD LBA_t;
 "     \\___/\\___/ /___/    \\___\\|_______||_______| |___|\n\n"
 
 // Export disk_read
-int disk_read(BYTE * buf, LBA_t sector, UINT count, BYTE card_type);
+int disk_read(BYTE * buf, LBA_t sector, UINT count);
 
 #endif // WALLYBOOT
 

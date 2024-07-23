@@ -14,12 +14,12 @@ uint8_t read_reg_u8(uintptr_t addr)
 
 int is_transmit_empty()
 {
-    return read_reg_u8(UART_LINE_STATUS) & 0x20;
+    return read_reg_u8(UART_LSR) & 0x20;
 }
 
 int is_receive_empty()
 {
-    return !(read_reg_u8(UART_LINE_STATUS) & 0x1);
+    return !(read_reg_u8(UART_LSR) & 0x1);
 }
 
 void write_serial(char a)
