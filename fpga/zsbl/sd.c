@@ -129,7 +129,7 @@ uint64_t sd_read64(uint16_t * crc) {
 // This first initializes the SPI peripheral then initializes the SD
 // card itself. We use the uart to display anything that goes wrong.
 void init_sd(){
-  init_spi();
+  spi_init();
 
   uint64_t r;
 

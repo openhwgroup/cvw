@@ -46,9 +46,9 @@ int disk_read(BYTE * buf, LBA_t sector, UINT count) {
   crc = crc7(crc, sector & 0xff);
   crc = crc | 1;
   
-  if (sd_cmd(18, sector &, crc) != 0x00) {
+  if (sd_cmd(18, sector & 0xffffffff, crc) != 0x00) {
     print_uart("disk_read: CMD18 failed. r = ");
-    print_byte(r & 0xff);
+    print_uart_byte(r & 0xff);
     return -1;
   }
 
@@ -60,7 +60,7 @@ int disk_read(BYTE * buf, LBA_t sector, UINT count) {
     r = spi_readbyte();
     if (r != SD_DATA_TOKEN) {
       print_uart("Didn't receive data token first thing. Shoot: ");
-      print_byte(r & 0xff);
+      print_uart_byte(r & 0xff);
       return -1;
     }
 
@@ -76,7 +76,7 @@ int disk_read(BYTE * buf, LBA_t sector, UINT count) {
 
     if (crc != crc_exp) {
       print_uart("Stinking CRC16 didn't match on block ");
-      print_int(i);
+      print_uart_int(i);
       print_uart("\r\n");
       return -1;
     }
@@ -104,5 +104,5 @@ void copyFlash(QWORD address, QWORD * Dst, DWORD numBlocks) {
   // Intialize the SD card
   init_sd();
   
-  ret = gpt_load_partitions(card_type);
+  ret = gpt_load_partitions();
 }
