@@ -168,9 +168,9 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
 
   if (P.SDC_SUPPORTED == 1) begin : sdc
     spi_apb #(P) sdc(
-      .PCLK, .PRESETN, .PSEL(.PSEL[5]), .PADDR(PADDR[7:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE,
+      .PCLK, .PRESETn, .PSEL(PSEL[5]), .PADDR(PADDR[7:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE,
       .PREADY(PREADY[5]), .PRDATA(PRDATA[5]),
-      .SPIOut(SDCCmd), .SPIIn(SDCIn), .SPICS(SDCCS), .SPICLK(SDCCLK), .SPIIntr(.SDCIntr));                                      
+      .SPIOut(SDCCmd), .SPIIn(SDCIn), .SPICS(SDCCS), .SPICLK(SDCCLK), .SPIIntr(SDCIntr));                                      
   end else begin : sdc
     assign SDCCmd = '0; assign SDCCD = 1'b0; assign SDCIntr = 1'b0; assign SDCCLK = 1'b0;
   end

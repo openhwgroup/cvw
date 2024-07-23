@@ -80,7 +80,6 @@ module fpgaTop
   wire [63:0]      HRDATAEXT;
   wire 			   HREADYEXT;
   wire 			   HRESPEXT;
-  wire             HSELEXTSDC; // TEMP BOOT SIGNAL - JACOB
   wire 			   HSELEXT;
   wire [55:0] 	   HADDR;
   wire [63:0]      HWDATA;
@@ -240,7 +239,7 @@ module fpgaTop
   wallypipelinedsoc  #(P) 
   wallypipelinedsoc(.clk(CPUCLK), .reset_ext(bus_struct_reset), .reset(), 
                     .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT,
-                    .HSELEXTSDC, .HCLK(HCLKOpen), .HRESETn(HRESETnOpen), 
+                    .HCLK(HCLKOpen), .HRESETn(HRESETnOpen), 
                     .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
                     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), 
                     .GPIOIN, .GPIOOUT, .GPIOEN,

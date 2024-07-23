@@ -35,7 +35,6 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   input  logic [P.AHBW-1:0]     HRDATAEXT,
   input  logic                HREADYEXT, HRESPEXT,
   output logic                HSELEXT,
-  output logic                HSELEXTSDC, 
   // outputs to external memory, shared with uncore memory
   output logic                HCLK, HRESETn,
   output logic [P.PA_BITS-1:0]  HADDR,
@@ -86,11 +85,11 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   if (P.BUS_SUPPORTED) begin : uncoregen // Hack to work around Verilator bug https://github.com/verilator/verilator/issues/4769
     uncore #(P) uncore(.HCLK, .HRESETn, .TIMECLK,
       .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
-      .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT, .HSELEXTSDC,
+      .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT,
       .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOIN, .GPIOOUT, .GPIOEN, .UARTSin, 
       .UARTSout, .MTIME_CLINT, .SPIIn, .SPIOut, .SPICS, .SPICLK, .SDCIn, .SDCCmd, .SDCCS, .SDCCLK);
   end else begin
-    assign {HRDATA, HREADY, HRESP, HSELEXT, HSELEXTSDC, MTimerInt, MSwInt, MExtInt, SExtInt,
+    assign {HRDATA, HREADY, HRESP, HSELEXT, MTimerInt, MSwInt, MExtInt, SExtInt,
             MTIME_CLINT, GPIOOUT, GPIOEN, UARTSout, SPIOut, SPICS} = '0; 
   end
 
