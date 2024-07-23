@@ -30,7 +30,8 @@
 `define FPGA 0
 
 module rvvisynth import cvw::*; #(parameter cvw_t P,
-                                  parameter integer MAX_CSRS, TOTAL_CSRS = 36)(
+                                  parameter integer MAX_CSRS = 3, 
+                                  parameter integer TOTAL_CSRS = 36)(
   input logic clk, reset,
   input logic                                     StallE, StallM, StallW, FlushE, FlushM, FlushW,
   // required
@@ -64,6 +65,7 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
   logic [TOTAL_CSRS-1:0]                    CSRWen [MAX_CSRS-1:0];
   logic [11:0]                              CSRAddr [MAX_CSRS-1:0];
   logic [MAX_CSRS-1:0]                      EnabledCSRs;
+  logic [MAX_CSRS-1:0]                      CSRCountShort;
   logic [11:0]                              CSRCount;
   logic [177+P.XLEN-1:0]                    Required;
   logic [10+2*P.XLEN-1:0]                   Registers;
@@ -94,7 +96,7 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
   // 3. Then use priorityaomux to collect CSR values and addresses for compating into the compressed rvvi format
 
   // step 2
-  genvar                                    index;
+  genvar                                   index;
   for (index = 0; index < TOTAL_CSRS; index = index + 1) begin
     regchangedetect #(P.XLEN) changedetect(clk, reset, CSRArray[index], CSRArrayWen[index]);
   end
@@ -109,7 +111,8 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
     assign CSRs[(index+1) * (P.XLEN + 12)- 1: index * (P.XLEN + 12)] = {CSRValue[index], CSRAddr[index]};
     assign EnabledCSRs[index] = |CSRWenShort;
   end
-  assign CSRCount = +EnabledCSRs;
+  assign CSRCountShort = +EnabledCSRs;
+  assign CSRCount = {{{12-MAX_CSRS}{1'b0}}, CSRCountShort};
   assign rvvi = {CSRs, Registers, Required};
   
 endmodule
