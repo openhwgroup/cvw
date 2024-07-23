@@ -27,8 +27,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`define FPGA 0
-
 module rvvisynth import cvw::*; #(parameter cvw_t P,
                                   parameter integer MAX_CSRS = 3, 
                                   parameter integer TOTAL_CSRS = 36)(
@@ -109,11 +107,6 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
   assign CSRWenFilterMatrix[0] = CSRArrayWen;
 
   for(index = 1; index < MAX_CSRS; index = index + 1) begin
-/* -----\/----- EXCLUDED -----\/-----
-    logic [MAX_CSRS-index-1:0] CSRWenShort;
-    priorityaomux #(MAX_CSRS-index, P.XLEN) priorityaomux(CSRArrayWen[MAX_CSRS-1:index], CSRArray[MAX_CSRS-1:index], CSRValue[index], CSRWenShort);
-    assign CSRWen[index] = {{{index}{1'b0}}, CSRWenShort};
- -----/\----- EXCLUDED -----/\----- */
     priorityaomux #(TOTAL_CSRS, P.XLEN) priorityaomux(CSRWenFilterMatrix[index], CSRArray, CSRValue[index], CSRWenPriorityMatrix[index]);
     assign CSRWenFilterMatrix[index] = CSRWenFilterMatrix[index-1] & ~CSRWenPriorityMatrix[index-1];
   end
