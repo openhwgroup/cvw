@@ -30,7 +30,7 @@ jobs:
       - name: make buildroot
         run: |
               source setup.sh
-              make -C linux
+              sudo make -C linux
       - name: regression
         run: |
               source setup.sh
@@ -77,7 +77,7 @@ jobs:
               nsenter -t 1 -m -u -n -i bash -c "$(cat .github/cli-space-cleanup.sh)"
               df -h
       - name: install
-        run: ./bin/wally-tool-chain-install.sh --clean
+        run: sudo ./bin/wally-tool-chain-install.sh --clean
       - name: make tests
         run: |
               source setup.sh
@@ -85,7 +85,7 @@ jobs:
       - name: make buildroot
         run: |
               source setup.sh
-              make -C linux
+              sudo make -C linux
       - name: regression
         run: |
               source setup.sh
