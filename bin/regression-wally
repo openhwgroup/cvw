@@ -288,7 +288,7 @@ def addLockstepTestsByDir(dir, config, sim):
     for file in os.listdir(dir):
         if file.endswith(".elf"):
             fullfile = os.path.join(dir, file)
-            sim_log = sim_logdir + config + "_" + file
+            sim_log = sim_logdir + config + "_" + file + ".log"
             grepstring = ""
             tc = TestCase(
                     name=file,
