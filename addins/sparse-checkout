@@ -1,0 +1,17 @@
+rtl/eth_mac_mii_fifo.sv
+rtl/eth_mac_mii.sv
+rtl/mii_phy_if.sv
+rtl/ssio_ddr_in.sv
+rtl/ssio_sdr_in.sv
+rtl/eth_mac_1g.sv
+rtl/axis_gmii_rx.sv
+rtl/lfsr.sv
+rtl/eth_axis_tx.sv
+rtl/mac_ctrl_tx.sv
+rtl/axis_gmii_tx.sv
+rtl/mac_ctrl_rx.sv
+rtl/mac_pause_ctrl_tx.sv
+rtl/mac_pause_ctrl_rx.sv
+lib/axis/rtl/axis_async_fifo_adapter.sv
+lib/axis/rtl/axis_adapter.sv
+lib/axis/rtl/axis_async_fifo.sv
