@@ -209,7 +209,7 @@ if git_check "riscv-gnu-toolchain" "https://github.com/riscv/riscv-gnu-toolchain
     git reset --hard && git clean -f && git checkout master && git pull
     git pull
     ./configure --prefix="${RISCV}" --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
-    make -j ${NUM_THREADS} 2>&1 | tee "$RISCV"/logs/riscv-gnu-toolchain.log | (grep -iE "(warning|error|fail|success|stamp)" || true)
+    make -j ${NUM_THREADS} 2>&1 | tee "$RISCV"/logs/riscv-gnu-toolchain.log | (grep -iE "(\bwarning|\berror|\bfail|\bsuccess|\bstamp)" || true)
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf riscv-gnu-toolchain
@@ -236,8 +236,8 @@ if git_check "elf2hex" "https://github.com/sifive/elf2hex.git" "$RISCV/bin/riscv
     git reset --hard && git clean -f && git checkout master && git pull
     autoreconf -i
     ./configure --target=riscv64-unknown-elf --prefix="$RISCV"
-    make 
-    make install
+    make 2>&1 | tee "$RISCV"/logs/elf2hex.log | (grep -iE "(\bwarning|\berror|\bfail|\bsuccess)" || true)
+    make install 2>&1 | tee -a "$RISCV"/logs/elf2hex.log | (grep -iE "(\bwarning|\berror|\bfail|\bsuccess)" || true)
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf elf2hex
@@ -258,8 +258,8 @@ if git_check "qemu" "https://github.com/qemu/qemu" "$RISCV/include/qemu-plugin.h
     git reset --hard && git clean -f && git checkout master && git pull --recurse-submodules -j ${NUM_THREADS}
     git submodule update --init --recursive
     ./configure --target-list=riscv64-softmmu --prefix="$RISCV"
-    make -j ${NUM_THREADS} 2>&1 | tee "$RISCV"/logs/qemu.log | (grep -iE "(warning|error|fail|success)" || true)
-    make install 2>&1 | tee -a "$RISCV"/logs/qemu.log | (grep -iE "(warning|error|fail|success)" || true)
+    make -j ${NUM_THREADS} 2>&1 | tee "$RISCV"/logs/qemu.log | (grep -iE "(\bwarning|\berror|\bfail|\bsuccess)" || true)
+    make install 2>&1 | tee -a "$RISCV"/logs/qemu.log | (grep -iE "(\bwarning|\berror|\bfail|\bsuccess)" || true)
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf qemu
@@ -281,8 +281,8 @@ if git_check "riscv-isa-sim" "https://github.com/riscv-software-src/riscv-isa-si
     mkdir -p build
     cd build
     ../configure --prefix="$RISCV"
-    make -j ${NUM_THREADS} 2>&1 | tee "$RISCV"/logs/spike.log | (grep -iE "(warning|error|fail|success)" || true)
-    make install 2>&1 | tee -a "$RISCV"/logs/spike.log | (grep -iE "(warning|error|fail|success)" || true)
+    make -j ${NUM_THREADS} 2>&1 | tee "$RISCV"/logs/spike.log | (grep -iE "(\bwarning|\berror|\bfail|\bsuccess)" || true)
+    make install 2>&1 | tee -a "$RISCV"/logs/spike.log | (grep -iE "(\bwarning|\berror|\bfail|\bsuccess)" || true)
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf riscv-isa-sim
@@ -306,8 +306,8 @@ if git_check "verilator" "https://github.com/verilator/verilator" "$RISCV/share/
     git reset --hard && git clean -f && git checkout master && git pull
     autoconf
     ./configure --prefix="$RISCV"
-    make -j ${NUM_THREADS} 2>&1 | tee "$RISCV"/logs/verilator.log | (grep -iE "(warning|error|fail|success)" || true)
-    make install 2>&1 | tee -a "$RISCV"/logs/verilator.log | (grep -iE "(warning|error|fail|success)" || true)
+    make -j ${NUM_THREADS} 2>&1 | tee "$RISCV"/logs/verilator.log | (grep -iE "(\bwarning|\berror|\bfail|\bsuccess)" || true)
+    make install 2>&1 | tee -a "$RISCV"/logs/verilator.log | (grep -iE "(\bwarning|\berror|\bfail|\bsuccess)" || true)
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf verilator
@@ -361,8 +361,8 @@ if git_check "sail-riscv" "https://github.com/riscv/sail-riscv.git" "$RISCV/bin/
     cd sail-riscv
     git reset --hard && git clean -f && git checkout master && git pull
     export OPAMCLI=2.0  # Sail is not compatible with opam 2.1 as of 4/16/24
-    ARCH=RV64 make -j ${NUM_THREADS} c_emulator/riscv_sim_RV64  2>&1 | tee "$RISCV"/logs/sail_model.log | (grep -iE "(warning|error|fail|success)" || true)
-    ARCH=RV32 make -j ${NUM_THREADS} c_emulator/riscv_sim_RV32 2>&1 | tee -a "$RISCV"/logs/sail_model.log | (grep -iE "(warning|error|fail|success)" || true)
+    ARCH=RV64 make -j ${NUM_THREADS} c_emulator/riscv_sim_RV64  2>&1 | tee "$RISCV"/logs/sail_model.log | (grep -iE "(\bwarning|\berror|\bfail|\bsuccess)" || true)
+    ARCH=RV32 make -j ${NUM_THREADS} c_emulator/riscv_sim_RV32 2>&1 | tee -a "$RISCV"/logs/sail_model.log | (grep -iE "(\bwarning|\berror|\bfail|\bsuccess)" || true)
     cp -f c_emulator/riscv_sim_RV64 "$RISCV"/bin/riscv_sim_RV64
     cp -f c_emulator/riscv_sim_RV32 "$RISCV"/bin/riscv_sim_RV32
     if [ "$clean" ]; then
