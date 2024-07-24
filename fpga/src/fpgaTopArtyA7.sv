@@ -28,7 +28,7 @@
 
 import cvw::*;
 
-module fpgaTop 
+module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
   (input           default_100mhz_clk,
 (* mark_debug = "true" *)   input           resetn,
    input           south_reset,
@@ -1117,9 +1117,11 @@ module fpgaTop
   (* mark_debug = "true" *)  logic IlaTrigger;
     
    
-  if(P.RVVI_SYNTH_SUPPORTED) begin : rvvi_synth
+  if(RVVI_SYNTH_SUPPORTED) begin : rvvi_synth
     localparam MAX_CSRS = 3;
     localparam TOTAL_CSRS = 36;
+    localparam [31:0] RVVI_INIT_TIME_OUT = 32'd100000000;
+    localparam [31:0] RVVI_PACKET_DELAY = 32'd400;
     
     // pipeline controlls
     logic                                             StallE, StallM, StallW, FlushE, FlushM, FlushW;
@@ -1218,7 +1220,7 @@ module fpgaTop
     logic                                             tx_error_underflow, tx_fifo_overflow, tx_fifo_bad_frame, tx_fifo_good_frame, rx_error_bad_frame;
     logic                                             rx_error_bad_fcs, rx_fifo_overflow, rx_fifo_bad_frame, rx_fifo_good_frame;
 
-    packetizer #(P, MAX_CSRS) packetizer(.rvvi, .valid, .m_axi_aclk(CPUCLK), .m_axi_aresetn(~bus_struct_reset), .RVVIStall,
+    packetizer #(P, MAX_CSRS, RVVI_INIT_TIME_OUT, RVVI_PACKET_DELAY) packetizer(.rvvi, .valid, .m_axi_aclk(CPUCLK), .m_axi_aresetn(~bus_struct_reset), .RVVIStall,
       .RvviAxiWdata, .RvviAxiWstrb, .RvviAxiWlast, .RvviAxiWvalid, .RvviAxiWready);
 
     eth_mac_mii_fifo #(.TARGET("XILINX"), .CLOCK_INPUT_STYLE("BUFG"), .AXIS_DATA_WIDTH(32), .TX_FIFO_DEPTH(1024)) ethernet(.rst(bus_struct_reset), .logic_clk(CPUCLK), .logic_rst(bus_struct_reset),

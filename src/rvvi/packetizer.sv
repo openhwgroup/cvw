@@ -28,7 +28,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module packetizer import cvw::*; #(parameter cvw_t P,
-                                   parameter integer MAX_CSRS)(
+                                   parameter integer MAX_CSRS, 
+                                   parameter logic [31:0] RVVI_INIT_TIME_OUT = 32'd4,
+                                   parameter logic [31:0] RVVI_PACKET_DELAY = 32'd2
+)(
   input  logic [187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)-1:0] rvvi,
   input  logic valid,
   input  logic m_axi_aclk, m_axi_aresetn,
@@ -100,8 +103,8 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   // have to count at least 250 ms after reset pulled to wait for the phy to actually be ready
   // at 20MHz 250 ms is 250e-3 / (1/20e6) = 5,000,000.
   counter #(32) rstcounter(m_axi_aclk, RstCountRst, RstCountEn, RstCount);
-  assign CountFlag = RstCount == P.RVVI_INIT_TIME_OUT;
-  assign DelayFlag = RstCount == P.RVVI_PACKET_DELAY;
+  assign CountFlag = RstCount == RVVI_INIT_TIME_OUT;
+  assign DelayFlag = RstCount == RVVI_PACKET_DELAY;
 
   counter #(32) framecounter(m_axi_aclk, ~m_axi_aresetn, (RvviAxiWready & RvviAxiWlast), FrameCount);
    

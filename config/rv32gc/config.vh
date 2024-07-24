@@ -225,9 +225,4 @@ localparam DIVCOPIES = 32'd2;
 // Memory synthesis configuration
 localparam logic USE_SRAM = 0;
 
-// debug tools
-localparam logic RVVI_SYNTH_SUPPORTED = 0;
-localparam [31:0] RVVI_INIT_TIME_OUT = 32'd4;
-localparam [31:0] RVVI_PACKET_DELAY = 32'd2;
-
 `include "config-shared.vh"
