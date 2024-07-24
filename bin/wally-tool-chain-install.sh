@@ -29,11 +29,8 @@
 ## and limitations under the License.
 ################################################################################################
 
-# MODIFY FOR YOUR MACHINE
 # Increasing NUM_THREADS will speed up parallel compilation of the tools
-#NUM_THREADS=2 # for low memory machines > 16GiB
-NUM_THREADS=8  # for >= 32GiB
-#NUM_THREADS=16  # for >= 64GiB
+NUM_THREADS=$(nproc --ignore 1) # One less than the total number of threads
 
 # Colors
 BOLD='\033[1m'
