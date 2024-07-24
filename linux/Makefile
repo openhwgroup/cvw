@@ -33,7 +33,7 @@ all: check_write_permissions clean download Image disassemble install dumptvs
 check_write_permissions:
 	@mkdir -p $(RISCV)/.test || \
 		(echo "ERROR: Cannot write to '$(RISCV)'." \
-		"Make sure you have write permissions (you may need to run as sudo).'" \
+		"Make sure you have write permissions (you may need to run as sudo).'" >&2 \
 		&& exit 1)
 	@rm -r $(RISCV)/.test
 
@@ -60,7 +60,7 @@ $(IMAGES):
 
 $(RISCV):
 	@ echo "ERROR: No $(RISCV) directory. Make sure you have installed the Wally Toolchain."
-	@ echo "this can be done with <WALLY>/bin/wally-tool-chain-install.sh"
+	@ echo "and sourced setup.sh"
 
 # Disassembly rules ---------------------------------------------------
 
@@ -93,7 +93,6 @@ $(IMAGES)/busybox:
 
 # Generating new Buildroot directories --------------------------------
 
-# This directive should be run as: make install BUILDROOT=path/to/buildroot
 download: $(BUILDROOT)/package/fpga-axi-sdc $(WALLYBOARD)
 	cp $(WALLYBOARD)/main.config $(BUILDROOT)/.config
 
