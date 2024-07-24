@@ -1,4 +1,3 @@
-#BUILDROOT := ${RISCV}/buildroot-test
 BUILDROOT := buildroot
 IMAGES := ${BUILDROOT}/output/images
 WALLY := $(shell dirname $(shell pwd))
@@ -27,35 +26,28 @@ BINARIES := fw_jump.elf vmlinux busybox
 OBJDUMPS := $(foreach name, $(BINARIES), $(basename $(name) .elf))
 OBJDUMPS := $(foreach name, $(OBJDUMPS), $(DIS)/$(name).objdump)
 
-.PHONY: all generate disassemble install clean cleanDTB cleanDriver test
+.PHONY: all generate disassemble install clean cleanDTB cleanDriver check_write_permissions
 
-all: clean download Image disassemble install dumptvs
+all: check_write_permissions clean download Image disassemble install dumptvs
 
-all_nosudo: clean download Image disassemble install_nosudo dumptvs_nosudo
+check_write_permissions:
+	@mkdir -p $(RISCV)/.test || \
+		(echo "ERROR: Cannot write to '$(RISCV)'." \
+		"Make sure you have write permissions (you may need to run as sudo).'" \
+		&& exit 1)
+	@rm -r $(RISCV)/.test
 
 Image:
 	bash -c "unset LD_LIBRARY_PATH; make -C $(BUILDROOT) --jobs ${shell nproc --ignore 1};"
 	$(MAKE) generate
 
-install:
-	sudo rm -rf $(RISCV)/$(BUILDROOT)
-	sudo mv $(BUILDROOT) $(RISCV)/$(BUILDROOT)
-
-install_nosudo:
+install: check_write_permissions
 	rm -rf $(RISCV)/$(BUILDROOT)
 	mv $(BUILDROOT) $(RISCV)/$(BUILDROOT)
 
-dumptvs:
-	sudo mkdir -p $(RISCV)/linux-testvectors 
-	cd testvector-generation; sudo ./genInitMem.sh
-
-dumptvs_nosudo:
+dumptvs: check_write_permissions
 	mkdir -p $(RISCV)/linux-testvectors 
 	cd testvector-generation; ./genInitMem.sh
-
-# Temp rule for debugging
-test:
-	echo $(shell find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/linux-[0-9]+\.[0-9]+\.[0-9]+$$")
 
 generate: $(DTB) $(IMAGES)
 

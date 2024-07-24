@@ -7,7 +7,6 @@ ramFile="$tvDir/ram.bin"
 rawBootmemFile="$tvDir/bootmemGDB.bin"
 bootmemFile="$tvDir/bootmem.bin"
 rawUntrimmedBootmemFile="$tvDir/untrimmedBootmemFileGDB.bin"
-untrimmedBootmemFile="$tvDir/untrimmedBootmemFile.bin"
 DEVICE_TREE=${imageDir}/wally-virt.dtb
 
 if ! mkdir -p "$tvDir"; then
@@ -24,6 +23,7 @@ if ! test -w "$tvDir"; then
         exit 1
     fi
 fi
+
 echo "Launching QEMU in replay mode!"
 (qemu-system-riscv64 \
 -M virt -m 256M -dtb $DEVICE_TREE \
@@ -44,15 +44,10 @@ echo "Launching QEMU in replay mode!"
 -ex "kill" \
 -ex "q"
 
-#-ex "printf \"Warning - please verify that the second half of $rawUntrimmedBootmemFile is all 0s\n\"" \
-#-ex "printf \"Creating $rawUntrimmedBootmemFile\n\"" \
-#-ex "dump binary memory $rawUntrimmedBootmemFile 0x1000 0x2fff" \
-
 echo "Changing Endianness"
 make fixBinMem
 ./fixBinMem "$rawRamFile" "$ramFile"
 ./fixBinMem "$rawBootmemFile" "$bootmemFile"
-#./fixBinMem "$rawUntrimmedBootmemFile" "$untrimmedBootmemFile"  # doesn't seem to be used for anything
 rm -f "$rawRamFile" "$rawBootmemFile" "$rawUntrimmedBootmemFile"
 
 echo "genInitMem.sh completed!"
@@ -60,4 +55,3 @@ echo "You may want to restrict write access to $tvDir now and give cad ownership
 echo "Run the following:"
 echo "    sudo chown -R cad:cad $tvDir"
 echo "    sudo chmod -R go-w $tvDir"
-
