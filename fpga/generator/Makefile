@@ -51,6 +51,8 @@ PreProcessFiles:
 	$(MAKE) -C ../../sim deriv
 	rm -rf ../src/CopiedFiles_do_not_add_to_repo/
 	cp -r ../../src/ ../src/CopiedFiles_do_not_add_to_repo/
+	cp -r ../../addins/verilog-ethernet/*/*.sv ../src/CopiedFiles_do_not_add_to_repo/rvvi
+	cp -r ../../addins/verilog-ethernet/*/*/*/*.sv ../src/CopiedFiles_do_not_add_to_repo/rvvi
 	mkdir ../src/CopiedFiles_do_not_add_to_repo/config/
 	cp ../../config/deriv/fpga/config.vh ../src/CopiedFiles_do_not_add_to_repo/config/
 	./insert_debug_comment.sh
