@@ -34,7 +34,7 @@ all: clean download Image disassemble install dumptvs
 all_nosudo: clean download Image disassemble install_nosudo dumptvs_nosudo
 
 Image:
-	bash -c "unset LD_LIBRARY_PATH; make -C $(BUILDROOT) --jobs;"
+	bash -c "unset LD_LIBRARY_PATH; make -C $(BUILDROOT) --jobs ${shell nproc --ignore 1};"
 	$(MAKE) generate
 
 install:
