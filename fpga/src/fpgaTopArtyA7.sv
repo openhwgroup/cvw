@@ -28,7 +28,7 @@
 
 import cvw::*;
 
-module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
+module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 1)
   (input           default_100mhz_clk,
 (* mark_debug = "true" *)   input           resetn,
    input           south_reset,
