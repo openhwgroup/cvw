@@ -30,7 +30,7 @@ jobs:
       - name: make buildroot
         run: |
               source setup.sh
-              sudo make -C linux
+              sudo make -C linux 2>&1 | tee -a $RISCV/logs/buildroot.log 
       - name: regression
         run: |
               source setup.sh
@@ -85,7 +85,7 @@ jobs:
       - name: make buildroot
         run: |
               source setup.sh
-              sudo make -C linux
+              sudo make -C linux 2>&1 | tee -a $RISCV/logs/buildroot.log
       - name: regression
         run: |
               source setup.sh
