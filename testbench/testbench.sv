@@ -33,9 +33,6 @@
     `include "idv/idv.svh"
 `endif
 
-// *** bug replace with config?
-`define RVVI_SYNTH_SUPPORTED 1
-
 import cvw::*;
 
 module testbench;
@@ -46,6 +43,7 @@ module testbench;
   parameter BPRED_LOGGER=0;
   parameter I_CACHE_ADDR_LOGGER=0;
   parameter D_CACHE_ADDR_LOGGER=0;
+  parameter RVVI_SYNTH_SUPPORTED=0;
   
   `ifdef USE_IMPERAS_DV
     import idvPkg::*;
@@ -603,9 +601,11 @@ module testbench;
     clk = 1'b1; # 5; clk = 1'b0; # 5;
   end
 
-  if(P.RVVI_SYNTH_SUPPORTED) begin : rvvi_synth
+  if(RVVI_SYNTH_SUPPORTED) begin : rvvi_synth
     localparam MAX_CSRS = 5;
-    logic                       valid;
+    localparam logic [31:0] RVVI_INIT_TIME_OUT = 32'd4;
+    localparam logic [31:0] RVVI_PACKET_DELAY = 32'd2;
+    logic                   valid;
     logic [187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)-1:0] rvvi;
 
     localparam TOTAL_CSRS = 36;
@@ -702,7 +702,7 @@ module testbench;
     logic                                             tx_error_underflow, tx_fifo_overflow, tx_fifo_bad_frame, tx_fifo_good_frame, rx_error_bad_frame;
     logic                                             rx_error_bad_fcs, rx_fifo_overflow, rx_fifo_bad_frame, rx_fifo_good_frame;
 
-    packetizer #(P, MAX_CSRS) packetizer(.rvvi, .valid, .m_axi_aclk(clk), .m_axi_aresetn(~reset), .RVVIStall,
+    packetizer #(P, MAX_CSRS, RVVI_INIT_TIME_OUT, RVVI_PACKET_DELAY) packetizer(.rvvi, .valid, .m_axi_aclk(clk), .m_axi_aresetn(~reset), .RVVIStall,
       .RvviAxiWdata, .RvviAxiWstrb, .RvviAxiWlast, .RvviAxiWvalid, .RvviAxiWready);
 
     eth_mac_mii_fifo #("GENERIC", "BUFG", 32) ethernet(.rst(reset), .logic_clk(clk), .logic_rst(reset),
