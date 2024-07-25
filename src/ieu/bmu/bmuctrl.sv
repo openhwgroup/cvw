@@ -238,7 +238,7 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
     
     if ((P.ZKND_SUPPORTED | P.ZKNE_SUPPORTED) & P.XLEN == 64) begin // ZKND and ZKNE shared instructions
       casez({OpD, Funct7D, Funct3D})
-        17'b0010011_0011000_001: if (Rs2D[4] == 1'b1)
+        17'b0010011_0011000_001: if (Rs2D[4] == 1'b1 & $unsigned(Rs2D[3:0]) <= 10)
                                    BMUControlsD = `BMUCTRLW'b000_0111_0010_1_0_0_0_1_0_0_0_0_0;  // aes64ks1i - key schedule istr1
           17'b0110011_0111111_000: BMUControlsD = `BMUCTRLW'b000_0111_0011_1_0_0_0_1_0_0_0_0_0;  // aes64ks2 - key schedule istr2
       endcase
