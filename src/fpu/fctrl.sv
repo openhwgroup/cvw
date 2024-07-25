@@ -95,8 +95,11 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   assign SupportedFmt2 = (Fmt2 == 2'b00 | (Fmt2 == 2'b01 & P.D_SUPPORTED) |
                          (Fmt2 == 2'b10 & P.ZFH_SUPPORTED) | (Fmt2 == 2'b11 & P.Q_SUPPORTED));
   // rounding modes 5 and 6 are reserved.  Rounding mode 7 is dynamic, and is reserved if FRM is 5, 6, or 7
-  assign SupportedRM =  ~(Funct3D == 3'b101 | Funct3D == 3'b110 | (Funct3D == 3'b111 & (FRM_REGW == 3'b101 | FRM_REGW == 3'b110 | FRM_REGW == 3'b111)));
-
+  assign SupportedRM =  ~(Funct3D == 3'b101 | Funct3D == 3'b110 | (Funct3D == 3'b111 & (FRM_REGW == 3'b101 | FRM_REGW == 3'b110 | FRM_REGW == 3'b111))) |
+                         (OpD == 7'b1010011 & Funct3D == 3'b101 & Funct7D[6:2] == 5'b10100 & P.ZFA_SUPPORTED); // Zfa fltq has a funny rounding mode
+  /*assign SupportedRM =  ~(Funct3D == 3'b101 | Funct3D == 3'b110 | (Funct3D == 3'b111 & (FRM_REGW == 3'b101 | FRM_REGW == 3'b110 | FRM_REGW == 3'b111))) |
+                          (OpD == 7'b1010011 & P.ZFA_SUPPORTED);
+*/
   // decode the instruction                       
   // FRegWrite_FWriteInt_FResSel_PostProcSel_FOpCtrl_FDivStart_IllegalFPUInstr_FCvtInt_Zfa_FroundNX
   always_comb
