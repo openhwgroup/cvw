@@ -26,6 +26,7 @@ jobs:
       - name: make tests
         run: |
               source setup.sh
+              sed -i 's,jobs=4,jobs=3,g' "$WALLY"/tests/riscof/config.ini
               make riscof
       - name: make buildroot
         run: |
@@ -81,6 +82,7 @@ jobs:
       - name: make tests
         run: |
               source setup.sh
+              sed -i 's,jobs=4,jobs=3,g' "$WALLY"/tests/riscof/config.ini
               make riscof
       - name: make buildroot
         run: |
