@@ -49,6 +49,7 @@ int disk_read(BYTE * buf, LBA_t sector, UINT count) {
   if (sd_cmd(18, sector & 0xffffffff, crc) != 0x00) {
     print_uart("disk_read: CMD18 failed. r = ");
     print_uart_byte(r & 0xff);
+    print_uart("\r\n");
     return -1;
   }
 
@@ -61,6 +62,7 @@ int disk_read(BYTE * buf, LBA_t sector, UINT count) {
     if (r != SD_DATA_TOKEN) {
       print_uart("Didn't receive data token first thing. Shoot: ");
       print_uart_byte(r & 0xff);
+      print_uart("\r\n");
       return -1;
     }
 
@@ -97,7 +99,8 @@ void copyFlash(QWORD address, QWORD * Dst, DWORD numBlocks) {
 
   // Initialize UART for messages
   init_uart(20000000, 115200);
-  
+
+  print_uart("Booting wally.\r\n");
   // Print the wally banner
   print_uart(BANNER);
 

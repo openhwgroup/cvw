@@ -42,21 +42,21 @@ int gpt_load_partitions() {
   // Load device tree
   ret = disk_read((BYTE *)FDT_ADDRESS, fdt->first_lba, fdt->last_lba - fdt->first_lba + 1);
   if (ret < 0) {
-    print_uart("Failed to load device tree!");
+    print_uart("Failed to load device tree!\r\n");
     return -1;
   }
 
   // Load OpenSBI
   ret = disk_read((BYTE *)OPENSBI_ADDRESS, opensbi->first_lba, opensbi->last_lba - opensbi->first_lba + 1);
   if (ret < 0) {
-    print_uart("Failed to load OpenSBI!");
+    print_uart("Failed to load OpenSBI!\r\n");
     return -1;
   }
 
   // Load Linux
   ret = disk_read((BYTE *)KERNEL_ADDRESS, kernel->first_lba,kernel->last_lba - kernel->first_lba + 1);
   if (ret < 0) {
-    print_uart("Failed to load Linux!");
+    print_uart("Failed to load Linux!\r\n");
     return -1;
   }
 

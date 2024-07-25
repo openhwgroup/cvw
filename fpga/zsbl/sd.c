@@ -133,7 +133,7 @@ void init_sd(){
 
   uint64_t r;
 
-  print_uart("Initializing SD Card in SPI mode");
+  print_uart("Initializing SD Card in SPI mode.\r\n");
   
   // Reset SD Card command
   // Initializes SD card into SPI mode if CS is asserted '0'
@@ -155,6 +155,6 @@ void init_sd(){
     r = ACMD41();
   } while (r == 0x1);
 
-  print_uart("SD card is initialized");
+  print_uart("SD card is initialized.\n\r");
 }
 
