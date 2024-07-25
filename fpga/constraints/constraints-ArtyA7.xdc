@@ -101,7 +101,7 @@ set_property -dict {PACKAGE_PIN D4 IOSTANDARD LVCMOS33 PULLUP true} [get_ports {
 set_property -dict {PACKAGE_PIN D2 IOSTANDARD LVCMOS33 PULLUP true} [get_ports {SDCDat[2]}]
 set_property -dict {PACKAGE_PIN E2 IOSTANDARD LVCMOS33 PULLUP true} [get_ports {SDCDat[1]}]
 set_property -dict {PACKAGE_PIN F4 IOSTANDARD LVCMOS33 PULLUP true} [get_ports {SDCDat[0]}]
-set_property -dict {PACKAGE_PIN F3 IOSTANDARD LVCMOS33 PULLUP true} [get_ports {SDCClk}]
+set_property -dict {PACKAGE_PIN F3 IOSTANDARD LVCMOS33 PULLUP true} [get_ports {SDCCLK}]
 set_property -dict {PACKAGE_PIN D3 IOSTANDARD LVCMOS33 PULLUP true} [get_ports {SDCCmd}]
 set_property -dict {PACKAGE_PIN H2 IOSTANDARD LVCMOS33 PULLUP true} [get_ports {SDCCD}]
 
