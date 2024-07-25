@@ -78,13 +78,13 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   logic                        SDCIntM;
   
   logic                        PCLK, PRESETn, PWRITE, PENABLE;
-  logic [4:0]                  PSEL;
+  logic [5:0]                  PSEL;
   logic [31:0]                 PADDR;
   logic [P.XLEN-1:0]           PWDATA;
   logic [P.XLEN/8-1:0]         PSTRB;
   /* verilator lint_off UNDRIVEN */ // undriven in rv32e configuration
-  logic [4:0]                  PREADY;
-  logic [4:0][P.XLEN-1:0]      PRDATA;
+  logic [5:0]                  PREADY;
+  logic [5:0][P.XLEN-1:0]      PRDATA;
   /* verilator lint_on UNDRIVEN */
   logic [P.XLEN-1:0]           HREADBRIDGE;
   logic                        HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
@@ -102,7 +102,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
 
   // AHB -> APB bridge
   ahbapbbridge #(P, 6) ahbapbbridge (
-    .HCLK, .HRESETn, .HSEL({HSELSPI, HSELUART, HSELPLIC, HSELCLINT, HSELGPIO, HSELSDC}), .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HTRANS, .HREADY, 
+    .HCLK, .HRESETn, .HSEL({HSELSDC, HSELSPI, HSELUART, HSELPLIC, HSELCLINT, HSELGPIO}), .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HTRANS, .HREADY, 
     .HRDATA(HREADBRIDGE), .HRESP(HRESPBRIDGE), .HREADYOUT(HREADYBRIDGE),
     .PCLK, .PRESETn, .PSEL, .PWRITE, .PENABLE, .PADDR, .PWDATA, .PSTRB, .PREADY, .PRDATA);
   assign HSELBRIDGE = HSELGPIO | HSELCLINT | HSELPLIC | HSELUART | HSELSPI | HSELSDC; // if any of the bridge signals are selected
@@ -172,7 +172,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
       .PREADY(PREADY[5]), .PRDATA(PRDATA[5]),
       .SPIOut(SDCCmd), .SPIIn(SDCIn), .SPICS(SDCCS), .SPICLK(SDCCLK), .SPIIntr(SDCIntr));                                      
   end else begin : sdc
-    assign SDCCmd = '0; assign SDCCD = 1'b0; assign SDCIntr = 1'b0; assign SDCCLK = 1'b0;
+    assign SDCCmd = '0; assign SDCCS = 1'b0; assign SDCIntr = 1'b0; assign SDCCLK = 1'b0;
   end
   
 
