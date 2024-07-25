@@ -1,5 +1,6 @@
 #include "gpt.h"
 #include "boot.h"
+#include "uart.h"
 #include <stddef.h>
 
 /* PSUEDOCODE
