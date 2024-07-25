@@ -35,7 +35,7 @@ void init_uart(uint32_t freq, uint32_t baud)
 
     write_reg_u8(UART_IER, 0x00);                   // Disable all interrupts
     write_reg_u8(UART_LCR, 0x80);                   // Enable DLAB (set baud rate divisor)
-    write_reg_u8(UART_DLL, divisor);                // divisor (lo byte)
+    write_reg_u8(UART_DLL, divisor & 0xFF);         // divisor (lo byte)
     write_reg_u8(UART_DLM, (divisor >> 8) & 0xFF);  // divisor (hi byte)
     write_reg_u8(UART_LCR, 0x03);                   // 8 bits, no parity, one stop bit
     write_reg_u8(UART_FCR, 0xC7);                   // Enable FIFO, clear them, with 14-byte threshold
