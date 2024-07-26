@@ -122,13 +122,14 @@ if {$FunctCoverageIndex >= 0} {
     set FCdefineINCLUDE_TRACE2COV "+define+INCLUDE_TRACE2COV"
     set FCdefineCOVER_BASE_RV64I "+define+COVER_BASE_RV64I"
     set FCdefineCOVER_LEVEL_DV_PR_EXT  "+define+COVER_LEVEL_DV_PR_EXT"
+    # Uncomment various cover statements below to control which extensions get functional coverage
     set FCdefineCOVER_RV64I "+define+COVER_RV64I"
-    set FCdefineCOVER_RV64M "+define+COVER_RV64M"
-    set FCdefineCOVER_RV64A "+define+COVER_RV64A"
-    set FCdefineCOVER_RV64F "+define+COVER_RV64F"
-    set FCdefineCOVER_RV64D "+define+COVER_RV64D"
-    set FCdefineCOVER_RV64ZICSR "+define+COVER_RV64ZICSR"
-    set FCdefineCOVER_RV64C "+define+COVER_RV64C"
+    #set FCdefineCOVER_RV64M "+define+COVER_RV64M"
+    #set FCdefineCOVER_RV64A "+define+COVER_RV64A"
+    #set FCdefineCOVER_RV64F "+define+COVER_RV64F"
+    #set FCdefineCOVER_RV64D "+define+COVER_RV64D"
+    #set FCdefineCOVER_RV64ZICSR "+define+COVER_RV64ZICSR"
+    #set FCdefineCOVER_RV64C "+define+COVER_RV64C"
     set FCdefineIDV_INCLUDE_TRACE2COV "+define+IDV_INCLUDE_TRACE2COV"
     set FCTRACE2COV "+TRACE2COV_ENABLE=1"
     set FCdefineIDV_TRACE2COV "+IDV_TRACE2COV=1"
@@ -196,7 +197,7 @@ set temp3 [lindex $PlusArgs 3]
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
 
-vlog -lint -work ${WKDIR}  +incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared ${lockstepvoptstring} ${FCdefineIDV_INCLUDE_TRACE2COV} ${FCdefineINCLUDE_TRACE2COV} ${ImperasPubInc} ${ImperasPrivInc} ${rvviFiles} ${FCdefineCOVER_BASE_RV64I} ${FCdefineCOVER_LEVEL_DV_PR_EXT} ${FCdefineCOVER_RV64I} ${FCdefineCOVER_RV64M} ${FCdefineCOVER_RV64A} ${FCdefineCOVER_RV64F} ${FCdefineCOVER_RV64D} ${FCdefineCOVER_RV64ZICSR} ${FCdefineCOVER_RV64C}  ${idvFiles}   ${riscvISACOVsrc} ${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv  ${SRC}/*/*.sv ${SRC}/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
+vlog -lint -work ${WKDIR}  +incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared ${lockstepvoptstring} ${FCdefineIDV_INCLUDE_TRACE2COV} ${FCdefineINCLUDE_TRACE2COV} ${ImperasPubInc} ${ImperasPrivInc} ${rvviFiles} ${FCdefineCOVER_BASE_RV64I} ${FCdefineCOVER_LEVEL_DV_PR_EXT} ${FCdefineCOVER_RV64I} ${FCdefineCOVER_RV64M} ${FCdefineCOVER_RV64A} ${FCdefineCOVER_RV64F} ${FCdefineCOVER_RV64D} ${FCdefineCOVER_RV64ZICSR} ${FCdefineCOVER_RV64C}  ${idvFiles}   ${riscvISACOVsrc} ${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv  ${SRC}/*/*.sv ${SRC}/*/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
