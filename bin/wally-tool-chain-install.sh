@@ -159,7 +159,7 @@ echo -e "${SUCCESS_COLOR}Python environment successfully configured.${ENDC}"
 
 # Extra dependecies needed for older distros that don't have new enough versions available from package manager
 if (( RHEL_VERSION == 8 )) || (( UBUNTU_VERSION == 20 )); then
-    # Newer versin of glib required for Qemu.
+    # Newer versin of glib required for QEMU.
     # Anything newer than this won't build on red hat 8
     STATUS="glib"
     if [ ! -e "$RISCV"/include/glib-2.0 ]; then
@@ -211,8 +211,7 @@ cd "$RISCV"
 if git_check "riscv-gnu-toolchain" "https://github.com/riscv/riscv-gnu-toolchain" "$RISCV/riscv-gnu-toolchain/stamps/build-gcc-newlib-stage2"; then
     cd riscv-gnu-toolchain
     git reset --hard && git clean -f && git checkout master && git pull
-    git pull
-    ./configure --prefix="${RISCV}" --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
+       ./configure --prefix="${RISCV}" --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
     make -j ${NUM_THREADS} 2>&1 | logger riscv-gnu-toolchain; [ "${PIPESTATUS[0]}" == 0 ]
     if [ "$clean" ]; then
         cd "$RISCV"
@@ -321,10 +320,9 @@ else
     echo -e "${SUCCESS_COLOR}Verilator already up to date${ENDC}"
 fi
 
-
+# Install opam from binary disribution on rhel as it is not available from dnf
+# Opam is needed to install the sail compiler
 if [ "$FAMILY" == rhel ]; then
-    # Install opam from binary disribution on rhel as it is not available from dnf
-    # Opam is needed to install the sail compiler
     section_header "Installing/Updating Opam"
     STATUS="Opam"
     export OPAMROOTISOK=1 # Silence warnings about running opam as root
