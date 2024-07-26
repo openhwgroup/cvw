@@ -49,7 +49,7 @@ if [ "$FAMILY" == rhel ]; then
     PYTHON_VERSION=python3.12
     PACKAGE_MANAGER="dnf"
     UPDATE_COMMAND="sudo $PACKAGE_MANAGER update -y"
-    GENERAL_PACKAGES+=(which rsync git make cmake "$PYTHON_VERSION" "$PYTHON_VERSION"-pip curl wget ftp tar pkgconf-pkg-config dialog mutt ssmtp)
+    GENERAL_PACKAGES+=(which rsync git make cmake "$PYTHON_VERSION" "$PYTHON_VERSION"-pip curl wget tar pkgconf-pkg-config dialog mutt ssmtp)
     GNU_PACKAGES+=(autoconf automake  libmpc-devel mpfr-devel gmp-devel gawk bison flex texinfo gperf libtool patchutils bc gcc gcc-c++ zlib-devel expat-devel libslirp-devel)
     QEMU_PACKAGES+=(glib2-devel libfdt-devel pixman-devel bzip2 ninja-build)
     SPIKE_PACKAGES+=(dtc boost-regex boost-system)
@@ -75,7 +75,7 @@ elif [ "$FAMILY" == ubuntu ]; then
     fi
     PACKAGE_MANAGER="DEBIAN_FRONTEND=noninteractive apt-get"
     UPDATE_COMMAND="sudo $PACKAGE_MANAGER update -y && sudo $PACKAGE_MANAGER upgrade -y --with-new-pkgs"
-    GENERAL_PACKAGES+=(rsync git make cmake "$PYTHON_VERSION" python3-pip "$PYTHON_VERSION"-venv curl wget ftp tar pkg-config dialog mutt ssmtp)
+    GENERAL_PACKAGES+=(rsync git make cmake "$PYTHON_VERSION" python3-pip "$PYTHON_VERSION"-venv curl wget tar pkg-config dialog mutt ssmtp)
     GNU_PACKAGES+=(autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat1-dev ninja-build libglib2.0-dev libslirp-dev)
     QEMU_PACKAGES+=(libfdt-dev libpixman-1-dev)
     SPIKE_PACKAGES+=(device-tree-compiler libboost-regex-dev libboost-system-dev)
