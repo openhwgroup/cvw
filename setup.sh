@@ -33,6 +33,9 @@ echo \$WALLY set to "${WALLY}"
 # utility functions in Wally repository
 export PATH=$WALLY/bin:$PATH
 
+# Verilator needs a larger stack to simulate CORE-V Wally
+ulimit -c 300000
+
 # load site licenses and tool locations
 if [ -e "${RISCV}"/site-setup.sh ]; then
     source "${RISCV}"/site-setup.sh

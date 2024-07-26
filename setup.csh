@@ -29,6 +29,9 @@ echo '$WALLY set to ' ${WALLY}
 # utility functions in Wally repository
 extend PATH $WALLY/bin
 
+# Verilator needs a larger stack to simulate CORE-V Wally
+limit stacksize unlimited
+
 # load site licenses and tool locations
 if ( -e "${RISCV}"/site-setup.csh ) then
     source $RISCV/site-setup.csh
