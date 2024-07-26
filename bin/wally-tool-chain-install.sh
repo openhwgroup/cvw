@@ -388,7 +388,25 @@ if git_check "sky130_osu_sc_t12" "https://foss-eda-tools.googlesource.com/skywat
     git reset --hard && git clean -f && git checkout main && git pull
     echo -e "${SUCCESS_COLOR}OSU Skywater library successfully installed${ENDC}"
 else
-    echo -e "${SUCCESS_COLOR}OSU Skywater library already up to date${ENDC}"
+    echo -e "${SUCCESS_COLOR}OSU Skywater library already up to date.${ENDC}"
+fi
+
+
+# Buildroot and Linux testvectors
+# Buildroot is used to boot a minimal versio of Linux on Wally.
+# Testvectors are generated using QEMU.
+section_header "Installing Buildroot and Creating Linux testvectors"
+STATUS="Buildroot"
+cd "$dir"/../linux
+if [ ! -e "$RISCV"/buildroot ]; then
+    make 2>&1 | logger buildroot; [ "${PIPESTATUS[0]}" == 0 ]
+    echo -e "${SUCCESS_COLOR}Buildroot successfully installed!${ENDC}"
+elif [ ! -e "$RISCV"/linux-testvectors ]; then
+    echo -e "${OK_COLOR}Buildroot already exists, but Linix testvectors are missing. Generating them now.${ENDC}"
+    make dumptvs 2>&1 | logger buildroot; [ "${PIPESTATUS[0]}" == 0 ]
+    echo -e "${SUCCESS_COLOR}Linux testvectors successfully generated!${ENDC}"
+else
+    echo -e "${OK_COLOR}Buildroot and Linux testvectors already exist.${ENDC}"
 fi
 
 
