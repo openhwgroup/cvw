@@ -13,8 +13,8 @@ setenv VCSPATH /cad/synopsys/vcs/U-2023.03-SP2-4/bin              # Change this 
 # Tools
 # Questa and Synopsys
 extend PATH $QUESTAPATH
-extend PATH $SNPSPATH 
-extend PATH $VCSPATH 
+extend PATH $SNPSPATH
+extend PATH $VCSPATH
 
 # GCC
 if ( ! $?LD_LIBRARY_PATH ) then
@@ -34,7 +34,7 @@ if ( -e "$RISCV"/riscv-python/bin/activate ) then
 else
     echo "Python virtual environment not found. Rerun wally-toolchain-install.sh to automatically create it."
     exit 1
-fi
+endif
 
 # environment variables needed for RISCV-DV
 setenv RISCV_GCC `which riscv64-unknown-elf-gcc`		            # Copy this as it is
@@ -55,4 +55,3 @@ if ($?IDV) then
     setupImperas ${IMPERAS_HOME}
     extend PATH $IDV/scripts/cvw
 endif
-
