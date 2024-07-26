@@ -6,6 +6,13 @@ DIS := ${IMAGES}/disassembly
 BRPACKAGES := $(WALLYLINUX)/buildroot-packages
 BR2023 := $(WALLYLINUX)/buildroot-config-src/buildroot-2023.05.1
 
+# set sudo if needed depending on $RISCV
+ifeq ($(shell mkdir -p $(RISCV)/.test > /dev/null 2>&1 ; echo $$?), 0)
+	SUDO :=
+else
+	SUDO := sudo
+endif
+
 # Buildroot Config Stuff
 WALLYBOARDSRC := $(WALLYLINUX)/buildroot-config-src/wally
 WALLYBOARD := $(BUILDROOT)/board/wally
@@ -16,7 +23,7 @@ FPGA_AXI_SDC := ${WALLYLINUX}/buildroot-packages/fpga-axi-sdc
 DRIVER := ${PACKAGE_SOURCE}/fpga-axi-sdc.c
 PATCHFILE := $(BRPACKAGES)/package-2023.05.1.patch
 
-# Device tree files 
+# Device tree files
 DTS ?= $(shell find devicetree -type f -regex ".*\.dts" | sort)
 DTB := $(DTS:%.dts=%.dtb)
 DTB := $(foreach name, $(DTB), $(IMAGES)/$(shell basename $(name)))
@@ -31,23 +38,26 @@ OBJDUMPS := $(foreach name, $(OBJDUMPS), $(DIS)/$(name).objdump)
 all: check_write_permissions clean download Image disassemble install dumptvs
 
 check_write_permissions:
-	@mkdir -p $(RISCV)/.test || \
-		(echo "ERROR: Cannot write to '$(RISCV)'." \
-		"Make sure you have write permissions (you may need to run as sudo).'" >&2 \
+ifeq ($(SUDO), sudo)
+	@echo "Cannot write to '$(RISCV)'." \
+		"Using sudo (you may be prompted for your password several times throughout the install)"
+endif
+	@$(SUDO) mkdir -p $(RISCV)/.test || \
+		(echo "ERROR: Still unable to write to '$(RISCV)'." >&2 \
 		&& exit 1)
-	@rm -r $(RISCV)/.test
+	@$(SUDO) rm -r $(RISCV)/.test
 
 Image:
 	bash -c "unset LD_LIBRARY_PATH; make -C $(BUILDROOT) --jobs ${shell nproc --ignore 1};"
 	$(MAKE) generate
 
 install: check_write_permissions
-	rm -rf $(RISCV)/$(BUILDROOT)
-	mv $(BUILDROOT) $(RISCV)/$(BUILDROOT)
+	$(SUDO) rm -rf $(RISCV)/$(BUILDROOT)
+	$(SUDO) mv $(BUILDROOT) $(RISCV)/$(BUILDROOT)
 
 dumptvs: check_write_permissions
-	mkdir -p $(RISCV)/linux-testvectors 
-	cd testvector-generation; ./genInitMem.sh
+	$(SUDO) mkdir -p $(RISCV)/linux-testvectors
+	cd testvector-generation; $(SUDO) ./genInitMem.sh
 
 generate: $(DTB) $(IMAGES)
 
