@@ -398,6 +398,11 @@ fi
 # Testvectors are generated using QEMU.
 section_header "Installing Buildroot and Creating Linux testvectors"
 STATUS="Buildroot"
+if [ -z "$LD_LIBRARY_PATH" ]; then
+    export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$RISCV/riscv64-unknown-elf/lib
+else
+    export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$LD_LIBRARY_PATH:$RISCV/riscv64-unknown-elf/lib
+fi
 cd "$dir"/../linux
 if [ ! -e "$RISCV"/buildroot ]; then
     make 2>&1 | logger buildroot; [ "${PIPESTATUS[0]}" == 0 ]
