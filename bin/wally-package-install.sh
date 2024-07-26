@@ -54,7 +54,7 @@ if [ "$FAMILY" == rhel ]; then
     QEMU_PACKAGES+=(glib2-devel libfdt-devel pixman-devel bzip2 ninja-build)
     SPIKE_PACKAGES+=(dtc boost-regex boost-system)
     VERILATOR_PACKAGES+=(help2man perl clang ccache gperftools numactl mold)
-    BUILDROOT_PACKAGES+=(ncurses-base ncurses ncurses-libs ncurses-devel gcc-gfortran cpio)
+    BUILDROOT_PACKAGES+=(ncurses-base ncurses ncurses-libs ncurses-devel gcc-gfortran cpio) # gfortran is only needed for compiling spec benchmarks on buildroot linux
     # Extra packages not availale in rhel8, nice for Verilator and needed for sail respectively
     if (( RHEL_VERSION >= 9 )); then
         VERILATOR_PACKAGES+=(perl-doc)
@@ -81,7 +81,7 @@ elif [ "$FAMILY" == ubuntu ]; then
     SPIKE_PACKAGES+=(device-tree-compiler libboost-regex-dev libboost-system-dev)
     VERILATOR_PACKAGES+=(help2man perl g++ clang ccache libunwind-dev libgoogle-perftools-dev numactl perl-doc libfl2 libfl-dev zlib1g)
     SAIL_PACKAGES+=(opam z3)
-    BUILDROOT_PACKAGES+=(ncurses-base ncurses-bin libncurses-dev gfortran cpio)
+    BUILDROOT_PACKAGES+=(ncurses-base ncurses-bin libncurses-dev gfortran cpio) # gfortran is only needed for compiling spec benchmarks on buildroot linux
 fi
 
 
