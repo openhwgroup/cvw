@@ -48,16 +48,19 @@ endif
 	@$(SUDO) rm -r $(RISCV)/.test
 
 Image:
-	bash -c "unset LD_LIBRARY_PATH; make -C $(BUILDROOT) --jobs ${shell nproc --ignore 1};"
+	bash -c "unset LD_LIBRARY_PATH; $(MAKE) -C $(BUILDROOT)"
 	$(MAKE) generate
+	@echo "Buildroot Image successfully generated."
 
 install: check_write_permissions
 	$(SUDO) rm -rf $(RISCV)/$(BUILDROOT)
 	$(SUDO) mv $(BUILDROOT) $(RISCV)/$(BUILDROOT)
+	@echo "Buildroot successfully installed."
 
 dumptvs: check_write_permissions
 	$(SUDO) mkdir -p $(RISCV)/linux-testvectors
 	cd testvector-generation; $(SUDO) ./genInitMem.sh
+	@echo "Testvectors successfully generated."
 
 generate: $(DTB) $(IMAGES)
 
@@ -79,11 +82,12 @@ disassemble:
 	rm -rf $(BUILDROOT)/output/images/disassembly
 	find  $(BUILDROOT)/output/build/linux-* -maxdepth 1 -name "vmlinux" | xargs  cp -t $(BUILDROOT)/output/images/
 	mkdir -p $(DIS)
-	make -j $(OBJDUMPS)
+	$(MAKE) $(OBJDUMPS)
 	# extract rootfs
 	mkdir -p $(BUILDROOT)/output/images/disassembly/rootfs
-	echo "Ignore error about dev/console when extracting rootfs from rootfs.cpio"
+	@echo "Ignore error about dev/console when extracting rootfs from rootfs.cpio"
 	-cpio -i -D $(BUILDROOT)/output/images/disassembly/rootfs < $(BUILDROOT)/output/images/rootfs.cpio
+	@echo "Disassembly successfully completed."
 
 
 $(DIS)/%.objdump: SHELL:=/bin/bash
@@ -109,6 +113,7 @@ $(IMAGES)/busybox:
 
 download: $(BUILDROOT)/package/fpga-axi-sdc $(WALLYBOARD)
 	cp $(WALLYBOARD)/main.config $(BUILDROOT)/.config
+	@echo "Buildroot successfully download."
 
 # CONFIG DEPENDENCIES 2023.05.1 ---------------------------------------
 $(WALLYBOARD): $(BUILDROOT)
