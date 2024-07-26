@@ -81,6 +81,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   logic [1:0]                  Fmt, Fmt2;                          // format - before possible reduction
   logic                        SupportedFmt;                       // is the format supported
   logic                        SupportedFmt2;                      // is the source format supported for fp -> fp
+  logic                        SupportedRM;                        // is the rounding mode supported
   logic                        FCvtIntD, FCvtIntM;                 // convert to integer operation
   logic                        ZfaD;                               // Zfa variants of instructions
   logic                        ZfaFRoundNXD;                       // Zfa froundnx instruction
@@ -93,14 +94,19 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
                          (Fmt == 2'b10 & P.ZFH_SUPPORTED)  | (Fmt == 2'b11 & P.Q_SUPPORTED));
   assign SupportedFmt2 = (Fmt2 == 2'b00 | (Fmt2 == 2'b01 & P.D_SUPPORTED) |
                          (Fmt2 == 2'b10 & P.ZFH_SUPPORTED) | (Fmt2 == 2'b11 & P.Q_SUPPORTED));
-
+  // rounding modes 5 and 6 are reserved.  Rounding mode 7 is dynamic, and is reserved if FRM is 5, 6, or 7
+  assign SupportedRM =  ~(Funct3D == 3'b101 | Funct3D == 3'b110 | (Funct3D == 3'b111 & (FRM_REGW == 3'b101 | FRM_REGW == 3'b110 | FRM_REGW == 3'b111))) |
+                         (OpD == 7'b1010011 & Funct3D == 3'b101 & Funct7D[6:2] == 5'b10100 & P.ZFA_SUPPORTED); // Zfa fltq has a funny rounding mode
+  /*assign SupportedRM =  ~(Funct3D == 3'b101 | Funct3D == 3'b110 | (Funct3D == 3'b111 & (FRM_REGW == 3'b101 | FRM_REGW == 3'b110 | FRM_REGW == 3'b111))) |
+                          (OpD == 7'b1010011 & P.ZFA_SUPPORTED);
+*/
   // decode the instruction                       
   // FRegWrite_FWriteInt_FResSel_PostProcSel_FOpCtrl_FDivStart_IllegalFPUInstr_FCvtInt_Zfa_FroundNX
   always_comb
     if (STATUS_FS == 2'b00) // FPU instructions are illegal when FPU is disabled
       ControlsD = `FCTRLW'b0_0_00_00_000_0_1_0_0_0;
-    else if (OpD != 7'b0000111 & OpD != 7'b0100111 & ~SupportedFmt) 
-      ControlsD = `FCTRLW'b0_0_00_00_000_0_1_0_0_0; // for anything other than loads and stores, check for supported format
+    else if (OpD != 7'b0000111 & OpD != 7'b0100111 & (~SupportedFmt | ~SupportedRM)) 
+      ControlsD = `FCTRLW'b0_0_00_00_000_0_1_0_0_0; // for anything other than loads and stores, check for supported format and rounding mode
     else begin 
       ControlsD = `FCTRLW'b0_0_00_00_000_0_1_0_0_0; // default: non-implemented instruction
       /* verilator lint_off CASEINCOMPLETE */   // default value above has priority so no other default needed
