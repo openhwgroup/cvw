@@ -136,7 +136,7 @@ STATUS="python virtual environment"
 cd "$RISCV"
 if [ ! -e "$RISCV"/riscv-python/bin/activate ]; then
     "$PYTHON_VERSION" -m venv riscv-python
-    echo -e "${OK_COLOR}Python virtual environment created.\nInstalling pip packages.${ENDC}"
+    echo -e "${OK_COLOR}Python virtual environment created!\nInstalling pip packages.${ENDC}"
 else
     echo -e "${OK_COLOR}Python virtual environment already exists.\nUpdating pip packages.${ENDC}"
 fi
@@ -154,7 +154,7 @@ if (( RHEL_VERSION == 8 )); then
 fi
 
 source "$RISCV"/riscv-python/bin/activate # reload python virtual environment
-echo -e "${SUCCESS_COLOR}Python environment successfully configured.${ENDC}"
+echo -e "${SUCCESS_COLOR}Python environment successfully configured!${ENDC}"
 
 
 # Extra dependecies needed for older distros that don't have new enough versions available from package manager
@@ -175,7 +175,7 @@ if (( RHEL_VERSION == 8 )) || (( UBUNTU_VERSION == 20 )); then
         meson install -C _build
         cd "$RISCV"
         rm -rf glib-2.70.5
-        echo -e "${SUCCESS_COLOR}glib successfully installed${ENDC}"
+        echo -e "${SUCCESS_COLOR}glib successfully installed!${ENDC}"
     fi
 fi
 
@@ -190,11 +190,11 @@ if (( RHEL_VERSION == 8 )); then
         rm gmp-6.3.0.tar.xz
         cd gmp-6.3.0
         ./configure --prefix="$RISCV"
-        make -j ${NUM_THREADS}
+        make -j "${NUM_THREADS}"
         make install
         cd "$RISCV"
         rm -rf gmp-6.3.0
-        echo -e "${SUCCESS_COLOR}gmp successfully installed${ENDC}"
+        echo -e "${SUCCESS_COLOR}gmp successfully installed!${ENDC}"
     fi
 fi
 
@@ -211,15 +211,15 @@ cd "$RISCV"
 if git_check "riscv-gnu-toolchain" "https://github.com/riscv/riscv-gnu-toolchain" "$RISCV/riscv-gnu-toolchain/stamps/build-gcc-newlib-stage2"; then
     cd riscv-gnu-toolchain
     git reset --hard && git clean -f && git checkout master && git pull
-       ./configure --prefix="${RISCV}" --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
-    make -j ${NUM_THREADS} 2>&1 | logger riscv-gnu-toolchain; [ "${PIPESTATUS[0]}" == 0 ]
+    ./configure --prefix="${RISCV}" --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
+    make -j "${NUM_THREADS}" 2>&1 | logger riscv-gnu-toolchain; [ "${PIPESTATUS[0]}" == 0 ]
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf riscv-gnu-toolchain
     fi
-    echo -e "${SUCCESS_COLOR}RISC-V GNU Toolchain successfully installed${ENDC}"
+    echo -e "${SUCCESS_COLOR}RISC-V GNU Toolchain successfully installed/updated!${ENDC}"
 else
-    echo -e "${SUCCESS_COLOR}RISC-V GNU Toolchain already up to date${ENDC}"
+    echo -e "${SUCCESS_COLOR}RISC-V GNU Toolchain already up to date.${ENDC}"
 fi
 
 
@@ -245,9 +245,9 @@ if git_check "elf2hex" "https://github.com/sifive/elf2hex.git" "$RISCV/bin/riscv
         cd "$RISCV"
         rm -rf elf2hex
     fi
-    echo -e "${SUCCESS_COLOR}elf2hex successfully installed${ENDC}"
+    echo -e "${SUCCESS_COLOR}elf2hex successfully installed/updated!${ENDC}"
 else
-    echo -e "${SUCCESS_COLOR}elf2hex already up to date${ENDC}"
+    echo -e "${SUCCESS_COLOR}elf2hex already up to date.${ENDC}"
 fi
 
 
@@ -258,18 +258,18 @@ STATUS="QEMU"
 cd "$RISCV"
 if git_check "qemu" "https://github.com/qemu/qemu" "$RISCV/include/qemu-plugin.h"; then
     cd qemu
-    git reset --hard && git clean -f && git checkout master && git pull --recurse-submodules -j ${NUM_THREADS}
+    git reset --hard && git clean -f && git checkout master && git pull --recurse-submodules -j "${NUM_THREADS}"
     git submodule update --init --recursive
     ./configure --target-list=riscv64-softmmu --prefix="$RISCV"
-    make -j ${NUM_THREADS} 2>&1 | logger qemu; [ "${PIPESTATUS[0]}" == 0 ]
+    make -j "${NUM_THREADS}" 2>&1 | logger qemu; [ "${PIPESTATUS[0]}" == 0 ]
     make install 2>&1 | logger qemu; [ "${PIPESTATUS[0]}" == 0 ]
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf qemu
     fi
-    echo -e "${SUCCESS_COLOR}QEMU successfully installed${ENDC}"
+    echo -e "${SUCCESS_COLOR}QEMU successfully installed/updated!${ENDC}"
 else
-    echo -e "${SUCCESS_COLOR}QEMU already up to date${ENDC}"
+    echo -e "${SUCCESS_COLOR}QEMU already up to date.${ENDC}"
 fi
 
 
@@ -284,15 +284,15 @@ if git_check "riscv-isa-sim" "https://github.com/riscv-software-src/riscv-isa-si
     mkdir -p build
     cd build
     ../configure --prefix="$RISCV"
-    make -j ${NUM_THREADS} 2>&1 | logger spike; [ "${PIPESTATUS[0]}" == 0 ]
+    make -j "${NUM_THREADS}" 2>&1 | logger spike; [ "${PIPESTATUS[0]}" == 0 ]
     make install 2>&1 | logger spike; [ "${PIPESTATUS[0]}" == 0 ]
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf riscv-isa-sim
     fi
-    echo -e "${SUCCESS_COLOR}Spike successfully installed${ENDC}"
+    echo -e "${SUCCESS_COLOR}Spike successfully installed/updated!${ENDC}"
 else
-    echo -e "${SUCCESS_COLOR}Spike already up to date${ENDC}"
+    echo -e "${SUCCESS_COLOR}Spike already up to date.${ENDC}"
 fi
 
 
@@ -309,16 +309,17 @@ if git_check "verilator" "https://github.com/verilator/verilator" "$RISCV/share/
     git reset --hard && git clean -f && git checkout master && git pull
     autoconf
     ./configure --prefix="$RISCV"
-    make -j ${NUM_THREADS} 2>&1 | logger verilator; [ "${PIPESTATUS[0]}" == 0 ]
+    make -j "${NUM_THREADS}" 2>&1 | logger verilator; [ "${PIPESTATUS[0]}" == 0 ]
     make install 2>&1 | logger verilator; [ "${PIPESTATUS[0]}" == 0 ]
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf verilator
     fi
-    echo -e "${SUCCESS_COLOR}Verilator successfully installed${ENDC}"
+    echo -e "${SUCCESS_COLOR}Verilator successfully installed/updated!${ENDC}"
 else
-    echo -e "${SUCCESS_COLOR}Verilator already up to date${ENDC}"
+    echo -e "${SUCCESS_COLOR}Verilator already up to date.${ENDC}"
 fi
+
 
 # Install opam from binary disribution on rhel as it is not available from dnf
 # Opam is needed to install the sail compiler
@@ -333,7 +334,7 @@ if [ "$FAMILY" == rhel ]; then
     printf '%s\n' "$RISCV"/bin Y | sh install.sh # the print command provides $RISCV/bin as the installation path when prompted
     cd "$RISCV"
     rm -rf opam
-    echo -e "${SUCCESS_COLOR}Opam successfully installed/updated${ENDC}"
+    echo -e "${SUCCESS_COLOR}Opam successfully installed/updated!${ENDC}"
 fi
 
 # Sail Compiler (https://github.com/rems-project/sail)
@@ -353,7 +354,7 @@ eval "$(opam config env)"
 opam update -y
 opam upgrade -y
 opam install sail -y
-echo -e "${SUCCESS_COLOR}Sail Compiler successfully installed/updated${ENDC}"
+echo -e "${SUCCESS_COLOR}Sail Compiler successfully installed/updated!${ENDC}"
 
 # RISC-V Sail Model (https://github.com/riscv/sail-riscv)
 # The RISC-V Sail Model is the golden reference model for RISC-V. It is written in Sail (described above)
@@ -363,17 +364,17 @@ if git_check "sail-riscv" "https://github.com/riscv/sail-riscv.git" "$RISCV/bin/
     cd sail-riscv
     git reset --hard && git clean -f && git checkout master && git pull
     export OPAMCLI=2.0  # Sail is not compatible with opam 2.1 as of 4/16/24
-    ARCH=RV64 make -j ${NUM_THREADS} c_emulator/riscv_sim_RV64  2>&1 | logger sailModel; [ "${PIPESTATUS[0]}" == 0 ]
-    ARCH=RV32 make -j ${NUM_THREADS} c_emulator/riscv_sim_RV32 2>&1 | logger sailModel; [ "${PIPESTATUS[0]}" == 0 ]
+    ARCH=RV64 make -j "${NUM_THREADS}" c_emulator/riscv_sim_RV64  2>&1 | logger sailModel; [ "${PIPESTATUS[0]}" == 0 ]
+    ARCH=RV32 make -j "${NUM_THREADS}" c_emulator/riscv_sim_RV32 2>&1 | logger sailModel; [ "${PIPESTATUS[0]}" == 0 ]
     cp -f c_emulator/riscv_sim_RV64 "$RISCV"/bin/riscv_sim_RV64
     cp -f c_emulator/riscv_sim_RV32 "$RISCV"/bin/riscv_sim_RV32
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf sail-riscv
     fi
-    echo -e "${SUCCESS_COLOR}RISC-V Sail Model successfully installed${ENDC}"
+    echo -e "${SUCCESS_COLOR}RISC-V Sail Model successfully installed/updated!${ENDC}"
 else
-    echo -e "${SUCCESS_COLOR}RISC-V Sail Model already up to date${ENDC}"
+    echo -e "${SUCCESS_COLOR}RISC-V Sail Model already up to date.${ENDC}"
 fi
 
 
@@ -386,7 +387,7 @@ cd "$RISCV"/cad/lib
 if git_check "sky130_osu_sc_t12" "https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12" "$RISCV/cad/lib/sky130_osu_sc_t12" "main"; then
     cd sky130_osu_sc_t12
     git reset --hard && git clean -f && git checkout main && git pull
-    echo -e "${SUCCESS_COLOR}OSU Skywater library successfully installed${ENDC}"
+    echo -e "${SUCCESS_COLOR}OSU Skywater library successfully installed!${ENDC}"
 else
     echo -e "${SUCCESS_COLOR}OSU Skywater library already up to date.${ENDC}"
 fi
@@ -429,7 +430,8 @@ if [ ! -e "${RISCV}"/site-setup.sh ]; then
         echo "# Activate newer gcc version" >> site-setup.csh
         echo "prepend PATH \$RISCV/gcc-10/bin" >> site-setup.csh
     fi
-    echo -e "${SUCCESS_COLOR}Site setup script successfully downloaded${ENDC}"
+    echo -e "${SUCCESS_COLOR}Site setup script successfully downloaded!${ENDC}"
+    echo -e "${WARNING_COLOR}Make sure to edit the environment variables in $RISCV/site-setup.sh (or .csh) to point to your installation of EDA tools and licensce files.${ENDC}"
 else
     echo -e "${OK_COLOR}Site setup script already exists. Not checking for updates to avoid overwritng modifications."
     echo -e "You may need to manually update it if there were changes upstream.${ENDC}"
@@ -439,4 +441,4 @@ if [ "$clean" ]; then
     rm -rf "$RISCV"/logs
 fi
 
-echo -e "${SUCCESS_COLOR}${BOLD}\n\nINSTALLATION SUCCESSFUL\n\n${ENDC}"
+echo -e "${SUCCESS_COLOR}${BOLD}\n\nINSTALLATION SUCCESSFUL!!!\n\n${ENDC}"
