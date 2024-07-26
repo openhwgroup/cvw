@@ -75,12 +75,16 @@ disassemble:
 	echo "Ignore error about dev/console when extracting rootfs from rootfs.cpio"
 	-cpio -i -D $(BUILDROOT)/output/images/disassembly/rootfs < $(BUILDROOT)/output/images/rootfs.cpio
 
+
+$(DIS)/%.objdump: SHELL:=/bin/bash
 $(DIS)/%.objdump: $(IMAGES)/%.elf
-	riscv64-unknown-elf-objdump -DS $< >> $@
+	source ../setup.sh && \
+	riscv64-unknown-elf-objdump -DS $< >> $@ && \
 	extractFunctionRadix.sh $@
 
 $(DIS)/%.objdump: $(IMAGES)/%
-	riscv64-unknown-elf-objdump -S $< >> $@
+	source ../setup.sh && \
+	riscv64-unknown-elf-objdump -S $< >> $@ && \
 	extractFunctionRadix.sh $@
 
 $(IMAGES)/vmlinux:
