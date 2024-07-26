@@ -17,7 +17,11 @@ extend PATH $SNPSPATH
 extend PATH $VCSPATH 
 
 # GCC
-extend LD_LIBRARY_PATH $RISCV/riscv64-unknown-elf/lib
+if ( ! $?LD_LIBRARY_PATH ) then
+    setenv LD_LIBRARY_PATH $RISCV/riscv64-unknown-elf/lib
+else
+    extend LD_LIBRARY_PATH $RISCV/riscv64-unknown-elf/lib
+endif
 
 # RISC-V Tools
 extend LD_LIBRARY_PATH $RISCV/lib

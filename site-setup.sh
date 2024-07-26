@@ -20,14 +20,17 @@ export VCS_HOME=/cad/synopsys/vcs/U-2023.03-SP2-4                   # Change thi
 export PATH=$QUESTA_HOME/bin:$DC_HOME/bin:$VCS_HOME/bin:$PATH
 
 # GCC
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$RISCV/riscv64-unknown-elf/lib
+if [ -z "$LD_LIBRARY_PATH" ]; then
+    export LD_LIBRARY_PATH=$RISCV/riscv64-unknown-elf/lib
+else
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$RISCV/riscv64-unknown-elf/lib
+fi
 
 # RISC-V Tools
 export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$LD_LIBRARY_PATH
 export PATH=$PATH:$RISCV/bin
 
 # Activate riscv-python Virtual Environment
-
 if [ -e "$RISCV"/riscv-python/bin/activate ]; then
     source "$RISCV"/riscv-python/bin/activate
 else
@@ -35,16 +38,16 @@ else
     exit 1
 fi
 
-
-# environment variables needed for RISCV-DV
+# Environment variables needed for RISCV-DV
 export RISCV_GCC=$(which riscv64-unknown-elf-gcc)		            # Copy this as it is
 export RISCV_OBJCOPY=$(which riscv64-unknown-elf-objcopy)	        # Copy this as it is
-export SPIKE_PATH=$RISCV/bin										# Change this for your path to riscv-isa-sim (spike)
+export SPIKE_PATH=$RISCV/bin										# Copy this as it is
 
 # Imperas OVPsim; put this in if you are using it
 #export PATH=$RISCV/imperas-riscv-tests/riscv-ovpsim-plus/bin/Linux64:$PATH
 #export LD_LIBRARY_PATH=$RISCV/imperas_riscv_tests/riscv-ovpsim-plus/bin/Linux64:$LD_LIBRARY_PATH
 
+# Imperas DV setup
 export IDV=$RISCV/ImperasDV-OpenHW
 if [ -e "$IDV" ]; then
     # echo "Imperas exists"
