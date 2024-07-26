@@ -23,15 +23,15 @@ jobs:
               df -h
       - name: install
         run: sudo ./bin/wally-tool-chain-install.sh --clean
+      - name: check buildroot
+        run: |
+              source setup.sh
+              ls $RISCV/linux-testvectors
       - name: make tests
         run: |
               source setup.sh
               sed -i 's,jobs=4,jobs=3,g' "$WALLY"/tests/riscof/config.ini
               make riscof
-      - name: make buildroot
-        run: |
-              source setup.sh
-              make -C linux 2>&1 | tee -a $RISCV/logs/buildroot.log
       - name: regression
         run: |
               source setup.sh
