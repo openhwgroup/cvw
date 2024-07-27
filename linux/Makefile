@@ -91,11 +91,11 @@ disassemble:
 
 $(DIS)/%.objdump: $(IMAGES)/%.elf
 	riscv64-unknown-elf-objdump -DS $< >> $@
-	extractFunctionRadix.sh $@
+	$(WALLY)/bin/extractFunctionRadix.sh $@
 
 $(DIS)/%.objdump: $(IMAGES)/%
 	riscv64-unknown-elf-objdump -S $< >> $@
-	extractFunctionRadix.sh $@
+	$(WALLY)/bin/extractFunctionRadix.sh $@
 
 $(IMAGES)/vmlinux:
 	linuxDir=$$(find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/linux-[0-9]+\.[0-9]+\.[0-9]+$$") ;\
