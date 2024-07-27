@@ -32,7 +32,7 @@ module hazard import cvw::*;  #(parameter cvw_t P) (
   input  logic DRet,
   input  logic StructuralStallD,
   input  logic LSUStallM, IFUStallF,
-  input  logic FPUStallD,
+  input  logic FPUStallD, ExternalStall,
   input  logic DivBusyE, FDivBusyE,
   input  logic wfiM, IntPendingM,
   input  logic DebugStall,
