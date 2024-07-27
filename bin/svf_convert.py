@@ -59,7 +59,6 @@ def main():
         print(f"Error: source directory '{srcdir}' does not exist")
         sys.exit(1)
     if not os.path.exists(workdir):
-        # os.makedirs(workdir, exist_ok=True)
         print(f"Error: output directory '{workdir}' does not exist")
         sys.exit(1)
 

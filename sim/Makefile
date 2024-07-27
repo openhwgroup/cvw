@@ -142,6 +142,7 @@ deriv:
 	derivgen.pl
 
 jtag:
+	mkdir -p ../tests/debug/work
 	svf_convert.py ../tests/debug/src/ ../tests/debug/work/
 
 benchmarks:
