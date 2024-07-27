@@ -34,6 +34,7 @@ parser.add_argument("--lockstep", "-l", help="Run ImperasDV lock, step, and comp
 parser.add_argument("--locksteplog", "-b", help="Retired instruction number to be begin logging.", default=0)
 parser.add_argument("--covlog", "-d", help="Log coverage after n instructions.", default=0)
 parser.add_argument("--jtag", "-j", help="JTAG SVF file to load", default=0)
+parser.add_argument("--rvvi", "-r", help="Simulate rvvi hardware interface and ethernet.", action="store_true")
 args = parser.parse_args()
 print("Config=" + args.config + " tests=" + args.testsuite + " sim=" + args.sim + " gui=" + str(args.gui) + " args='" + args.args + "'")
 ElfFile=""
@@ -64,6 +65,9 @@ if (args.gui or args.ccov or args.fcov or args.lockstep):
 
 if (args.vcd):
     args.args += " -DMAKEVCD=1"
+
+if (args.rvvi):
+    args.args += " -GRVVI_SYNTH_SUPPORTED=1"
 
 # if lockstep is enabled, then we need to pass the Imperas lockstep arguments
 if(int(args.locksteplog) >= 1): EnableLog = 1

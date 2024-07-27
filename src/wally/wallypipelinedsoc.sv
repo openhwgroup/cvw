@@ -37,10 +37,12 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   input  logic                 tms,
   output logic                 tdo,
   // AHB Interface
-  input  logic [P.AHBW-1:0]    HRDATAEXT,
-  input  logic                 HREADYEXT, HRESPEXT,
-  output logic                 HSELEXT,
-  output logic                 HSELEXTSDC, 
+  input  logic [P.AHBW-1:0]   HRDATAEXT,
+  input  logic                HREADYEXT, HRESPEXT,
+  output logic                HSELEXT,
+  output logic                HSELEXTSDC, 
+  // fpga debug signals
+  input  logic                ExternalStall,
   // outputs to external memory, shared with uncore memory
   output logic                 HCLK, HRESETn,
   output logic [P.PA_BITS-1:0] HADDR,
@@ -109,7 +111,8 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   wallypipelinedcore #(P) core (
     .clk, .reset(reset || NdmReset), .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST,
-    .HPROT, .HTRANS, .HMASTLOCK, .HaltReq, .ResumeReq, .HaltOnReset, .AckHaveReset, .ResumeAck,
+    .HPROT, .HTRANS, .HMASTLOCK, .ExternalStall, 
+    .HaltReq, .ResumeReq, .HaltOnReset, .AckHaveReset, .ResumeAck,
     .HaveReset, .DebugStall, .ExecProgBuf, .DebugScanEn, .DebugScanOut(DebugScanIn),
     .GPRScanOut(GPRScanIn), .FPRScanOut(FPRScanIn), .CSRScanOut(CSRScanIn),
     .DebugScanIn(DebugScanOut), .MiscSel, .GPRSel, .FPRSel, .CSRSel, .DebugRegAddr, .DebugCapture,

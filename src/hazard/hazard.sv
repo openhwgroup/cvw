@@ -91,7 +91,7 @@ module hazard import cvw::*;  #(parameter cvw_t P) (
   // Need to gate IFUStallF when the equivalent FlushFCause = FlushDCause = 1.
   // assign StallWCause = ((IFUStallF & ~FlushDCause) | LSUStallM) & ~FlushWCause;
   // Because FlushWCause is a strict subset of FlushDCause, FlushWCause is factored out.
-  assign StallWCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause) | (DebugStall & ~DRet);
+  assign StallWCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause) | (DebugStall & ~DRet) | ExternalStall;
 
   // Stall each stage for cause or if the next stage is stalled
   // coverage off: StallFCause is always 0

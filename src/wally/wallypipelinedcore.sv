@@ -45,6 +45,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    output logic [3:0]            HPROT,
    output logic [1:0]            HTRANS,
    output logic                  HMASTLOCK,
+   input  logic                  ExternalStall,
    // Debug Mode Control
    input  logic                  HaltReq,
    input  logic                  ResumeReq,
@@ -316,7 +317,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .BPWrongE, .CSRWriteFenceM, .RetM, .TrapM, .DRet,
     .StructuralStallD,
     .LSUStallM, .IFUStallF,
-    .FPUStallD,
+    .FPUStallD, .ExternalStall,
     .DivBusyE, .FDivBusyE,
     .wfiM, .IntPendingM, .DebugStall,
     // Stall & flush outputs

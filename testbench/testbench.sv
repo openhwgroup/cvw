@@ -33,7 +33,6 @@
     `include "idv/idv.svh"
 `endif
 
-
 import cvw::*;
 
 module testbench;
@@ -44,6 +43,7 @@ module testbench;
   parameter BPRED_LOGGER=0;
   parameter I_CACHE_ADDR_LOGGER=0;
   parameter D_CACHE_ADDR_LOGGER=0;
+  parameter RVVI_SYNTH_SUPPORTED=0;
   
   `ifdef USE_IMPERAS_DV
     import idvPkg::*;
@@ -121,6 +121,7 @@ module testbench;
   logic SelectTest;
   logic TestComplete;
   logic PrevPCZero;
+  logic RVVIStall;
 
   initial begin
     // look for arguments passed to simulation, or use defaults
@@ -615,6 +616,7 @@ module testbench;
 
   wallypipelinedsoc #(P) dut(
     .clk, .reset_ext, .reset, .tck, .tdi, .tms, .tdo,
+    .ExternalStall(RVVIStall), 
     .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
     .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
@@ -624,6 +626,22 @@ module testbench;
   always begin
     clk = 1'b1; # 5; clk = 1'b0; # 5;
   end
+
+  if(RVVI_SYNTH_SUPPORTED) begin : rvvi_synth
+    localparam MAX_CSRS = 5;
+    localparam logic [31:0] RVVI_INIT_TIME_OUT = 32'd4;
+    localparam logic [31:0] RVVI_PACKET_DELAY = 32'd2;
+
+    logic [3:0]                                       mii_txd;
+    logic                                             mii_tx_en, mii_tx_er;
+
+    rvvitbwrapper #(P, MAX_CSRS, RVVI_INIT_TIME_OUT, RVVI_PACKET_DELAY) 
+    rvvitbwrapper(.clk, .reset, .RVVIStall, .mii_tx_clk(clk), .mii_txd, .mii_tx_en, .mii_tx_er,
+                  .mii_rx_clk(clk), .mii_rxd('0), .mii_rx_dv('0), .mii_rx_er('0));
+  end else begin
+    assign RVVIStall = '0;
+  end
+  
 
   /*
   // Print key info  each cycle for debugging

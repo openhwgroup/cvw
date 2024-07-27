@@ -28,7 +28,7 @@
 
 import cvw::*;
 
-module fpgaTop 
+module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 1)
   (input           default_100mhz_clk,
 (* mark_debug = "true" *)   input           resetn,
    input           south_reset,
@@ -43,6 +43,21 @@ module fpgaTop
    output          SDCCLK,
    inout           SDCCmd,
    input           SDCCD,
+
+ /*
+     * Ethernet: 100BASE-T MII
+     */
+    output       phy_ref_clk,
+    input        phy_rx_clk,
+    input  [3:0] phy_rxd,
+    input        phy_rx_dv,
+    input        phy_rx_er,
+    input        phy_tx_clk,
+    output [3:0] phy_txd,
+    output       phy_tx_en,
+    input        phy_col, // nc
+    input        phy_crs, // nc
+    output       phy_reset_n,
 
    inout [15:0]    ddr3_dq,
    inout [1:0]     ddr3_dqs_n,
@@ -433,7 +448,8 @@ module fpgaTop
     wire             mmcm_locked;
   wire [11:0]      device_temp;
     wire             mmcm1_locked;
-  
+
+(* mark_debug = "true" *)  logic              RVVIStall;
 
   assign GPIOIN = {28'b0, GPI};
   assign GPO = GPIOOUT[4:0];
@@ -451,6 +467,7 @@ module fpgaTop
   xlnx_mmcm xln_mmcm(.clk_out1(clk167),
                      .clk_out2(clk200),
                      .clk_out3(CPUCLK),
+                     .clk_out4(phy_ref_clk),
                      .reset(1'b0),
                      .locked(mmcm1_locked),
                      .clk_in1(default_100mhz_clk));
@@ -501,7 +518,7 @@ module fpgaTop
                     .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
                     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), 
                     .GPIOIN, .GPIOOUT, .GPIOEN,
-                    .UARTSin, .UARTSout, .SDCIntr); 
+                    .UARTSin, .UARTSout, .SDCIntr, .ExternalStall(RVVIStall)); 
 
 
   // ahb lite to axi bridge
@@ -1101,7 +1118,146 @@ module fpgaTop
 
      .init_calib_complete(c0_init_calib_complete),
      .device_temp(device_temp));
-  
 
+  (* mark_debug = "true" *)  logic IlaTrigger;
+    
+   
+  if(RVVI_SYNTH_SUPPORTED) begin : rvvi_synth
+    localparam MAX_CSRS = 3;
+    localparam TOTAL_CSRS = 36;
+    localparam [31:0] RVVI_INIT_TIME_OUT = 32'd100000000;
+    localparam [31:0] RVVI_PACKET_DELAY = 32'd400;
+    
+    // pipeline controlls
+    logic                                             StallE, StallM, StallW, FlushE, FlushM, FlushW;
+    // required
+    logic [P.XLEN-1:0]                                PCM;
+    logic                                             InstrValidM;
+    logic [31:0]                                      InstrRawD;
+    logic [63:0]                                      Mcycle, Minstret;
+    logic                                             TrapM;
+    logic [1:0]                                       PrivilegeModeW;
+    // registers gpr and fpr
+    logic                                             GPRWen, FPRWen;
+    logic [4:0]                                       GPRAddr, FPRAddr;
+    logic [P.XLEN-1:0]                                GPRValue, FPRValue;
+    logic [P.XLEN-1:0]                                CSRArray [TOTAL_CSRS-1:0];
+
+    logic                                             valid;
+    logic [187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)-1:0] rvvi;
+
+    assign StallE         = fpgaTop.wallypipelinedsoc.core.StallE;
+    assign StallM         = fpgaTop.wallypipelinedsoc.core.StallM;
+    assign StallW         = fpgaTop.wallypipelinedsoc.core.StallW;
+    assign FlushE         = fpgaTop.wallypipelinedsoc.core.FlushE;
+    assign FlushM         = fpgaTop.wallypipelinedsoc.core.FlushM;
+    assign FlushW         = fpgaTop.wallypipelinedsoc.core.FlushW;
+    assign InstrValidM    = fpgaTop.wallypipelinedsoc.core.ieu.InstrValidM;
+    assign InstrRawD      = fpgaTop.wallypipelinedsoc.core.ifu.InstrRawD;
+    assign PCM            = fpgaTop.wallypipelinedsoc.core.ifu.PCM;
+    assign Mcycle         = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[0];
+    assign Minstret       = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2];
+    assign TrapM          = fpgaTop.wallypipelinedsoc.core.TrapM;
+    assign PrivilegeModeW = fpgaTop.wallypipelinedsoc.core.priv.priv.privmode.PrivilegeModeW;
+    assign GPRAddr        = fpgaTop.wallypipelinedsoc.core.ieu.dp.regf.a3;
+    assign GPRWen         = fpgaTop.wallypipelinedsoc.core.ieu.dp.regf.we3;
+    assign GPRValue       = fpgaTop.wallypipelinedsoc.core.ieu.dp.regf.wd3;
+    assign FPRAddr        = fpgaTop.wallypipelinedsoc.core.fpu.fpu.fregfile.a4;
+    assign FPRWen         = fpgaTop.wallypipelinedsoc.core.fpu.fpu.fregfile.we4;
+    assign FPRValue       = fpgaTop.wallypipelinedsoc.core.fpu.fpu.fregfile.wd4;
+
+    assign CSRArray[0] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrm.MSTATUS_REGW; // 12'h300
+    assign CSRArray[1] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrm.MSTATUSH_REGW; // 12'h310
+    assign CSRArray[2] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrm.MTVEC_REGW; // 12'h305
+    assign CSRArray[3] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrm.MEPC_REGW; // 12'h341
+    assign CSRArray[4] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrm.MCOUNTEREN_REGW; // 12'h306
+    assign CSRArray[5] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrm.MCOUNTINHIBIT_REGW; // 12'h320
+    assign CSRArray[6] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrm.MEDELEG_REGW; // 12'h302
+    assign CSRArray[7] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrm.MIDELEG_REGW; // 12'h303
+    assign CSRArray[8] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrm.MIP_REGW; // 12'h344
+    assign CSRArray[9] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrm.MIE_REGW; // 12'h304
+    assign CSRArray[10] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrm.MISA_REGW; // 12'h301
+    assign CSRArray[11] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrm.MENVCFG_REGW; // 12'h30A
+    assign CSRArray[12] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrm.MHARTID_REGW; // 12'hF14
+    assign CSRArray[13] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrm.MSCRATCH_REGW; // 12'h340
+    assign CSRArray[14] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrm.MCAUSE_REGW; // 12'h342
+    assign CSRArray[15] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrm.MTVAL_REGW; // 12'h343
+    assign CSRArray[16] = 0; // 12'hF11
+    assign CSRArray[17] = 0; // 12'hF12
+    assign CSRArray[18] = {{P.XLEN-12{1'b0}}, 12'h100}; //P.XLEN'h100; // 12'hF13
+    assign CSRArray[19] = 0; // 12'hF15
+    assign CSRArray[20] = 0; // 12'h34A
+    // supervisor CSRs
+    assign CSRArray[21] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrs.csrs.SSTATUS_REGW; // 12'h100
+    assign CSRArray[22] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrm.MIE_REGW & 12'h222; // 12'h104
+    assign CSRArray[23] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrs.csrs.STVEC_REGW; // 12'h105
+    assign CSRArray[24] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrs.csrs.SEPC_REGW; // 12'h141
+    assign CSRArray[25] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrs.csrs.SCOUNTEREN_REGW; // 12'h106
+    assign CSRArray[26] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrs.csrs.SENVCFG_REGW; // 12'h10A
+    assign CSRArray[27] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrs.csrs.SATP_REGW; // 12'h180
+    assign CSRArray[28] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrs.csrs.SSCRATCH_REGW; // 12'h140
+    assign CSRArray[29] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrs.csrs.STVAL_REGW; // 12'h143
+    assign CSRArray[30] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrs.csrs.SCAUSE_REGW; // 12'h142
+    assign CSRArray[31] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrm.MIP_REGW & 12'h222 & fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrm.MIDELEG_REGW; // 12'h144
+    assign CSRArray[32] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csrs.csrs.STIMECMP_REGW; // 12'h14D
+    // user CSRs
+    assign CSRArray[33] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csru.csru.FFLAGS_REGW; // 12'h001
+    assign CSRArray[34] = fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csru.csru.FRM_REGW; // 12'h002
+    assign CSRArray[35] = {fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csru.csru.FRM_REGW, fpgaTop.wallypipelinedsoc.core.priv.priv.csr.csru.csru.FFLAGS_REGW}; // 12'h003
+
+    rvvisynth #(P, MAX_CSRS) rvvisynth(.clk(CPUCLK), .reset(bus_struct_reset), .StallE, .StallM, .StallW, .FlushE, .FlushM, .FlushW,
+      .PCM, .InstrValidM, .InstrRawD, .Mcycle, .Minstret, .TrapM, 
+      .PrivilegeModeW, .GPRWen, .FPRWen, .GPRAddr, .FPRAddr, .GPRValue, .FPRValue, .CSRArray,
+      .valid, .rvvi);
+
+    // axi 4 write data channel
+    logic [31:0]                                      RvviAxiWdata;
+    logic [3:0]                                       RvviAxiWstrb;
+    logic                                             RvviAxiWlast;
+    logic                                             RvviAxiWvalid;
+    logic                                             RvviAxiWready;
+
+    logic [31:0] RvviAxiRdata;
+    logic [3:0]                                       RvviAxiRstrb;
+    logic RvviAxiRlast;
+    logic RvviAxiRvalid;
+
+    logic                                             tx_error_underflow, tx_fifo_overflow, tx_fifo_bad_frame, tx_fifo_good_frame, rx_error_bad_frame;
+    logic                                             rx_error_bad_fcs, rx_fifo_overflow, rx_fifo_bad_frame, rx_fifo_good_frame;
+
+    packetizer #(P, MAX_CSRS, RVVI_INIT_TIME_OUT, RVVI_PACKET_DELAY) packetizer(.rvvi, .valid, .m_axi_aclk(CPUCLK), .m_axi_aresetn(~bus_struct_reset), .RVVIStall,
+      .RvviAxiWdata, .RvviAxiWstrb, .RvviAxiWlast, .RvviAxiWvalid, .RvviAxiWready);
+
+    eth_mac_mii_fifo #(.TARGET("XILINX"), .CLOCK_INPUT_STYLE("BUFG"), .AXIS_DATA_WIDTH(32), .TX_FIFO_DEPTH(1024)) ethernet(.rst(bus_struct_reset), .logic_clk(CPUCLK), .logic_rst(bus_struct_reset),
+      .tx_axis_tdata(RvviAxiWdata), .tx_axis_tkeep(RvviAxiWstrb), .tx_axis_tvalid(RvviAxiWvalid), .tx_axis_tready(RvviAxiWready),
+      .tx_axis_tlast(RvviAxiWlast), .tx_axis_tuser('0), .rx_axis_tdata(RvviAxiRdata),
+      .rx_axis_tkeep(RvviAxiRstrb), .rx_axis_tvalid(RvviAxiRvalid), .rx_axis_tready(1'b1),
+      .rx_axis_tlast(RvviAxiRlast), .rx_axis_tuser(),
+
+      .mii_rx_clk(phy_rx_clk),
+      .mii_rxd(phy_rxd),
+      .mii_rx_dv(phy_rx_dv),
+      .mii_rx_er(phy_rx_er),
+      .mii_tx_clk(phy_tx_clk),
+      .mii_txd(phy_txd),
+      .mii_tx_en(phy_tx_en),
+      .mii_tx_er(),
+
+      // status
+      .tx_error_underflow, .tx_fifo_overflow, .tx_fifo_bad_frame, .tx_fifo_good_frame, .rx_error_bad_frame,
+      .rx_error_bad_fcs, .rx_fifo_overflow, .rx_fifo_bad_frame, .rx_fifo_good_frame, 
+      .cfg_ifg(8'd12), .cfg_tx_enable(1'b1), .cfg_rx_enable(1'b1)
+      );
+
+    triggergen triggergen(.clk(CPUCLK), .reset(bus_struct_reset), .RvviAxiRdata,
+      .RvviAxiRstrb, .RvviAxiRlast, .RvviAxiRvalid, .IlaTrigger);
+  end else begin // if (P.RVVI_SYNTH_SUPPORTED)
+    assign IlaTrigger = '0;
+    assign RVVIStall = '0;
+  end
+   
+  //assign phy_reset_n = ~bus_struct_reset;
+   assign phy_reset_n = ~1'b0;
+  
 endmodule
 
