@@ -442,8 +442,4 @@ else
     echo -e "You may need to manually update it if there were changes upstream.${ENDC}"
 fi
 
-if [ "$clean" ]; then
-    rm -rf "$RISCV"/logs
-fi
-
 echo -e "${SUCCESS_COLOR}${BOLD}\n\nINSTALLATION SUCCESSFUL!!!\n\n${ENDC}"
