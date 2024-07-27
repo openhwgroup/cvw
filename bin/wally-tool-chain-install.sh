@@ -371,6 +371,7 @@ if git_check "sail-riscv" "https://github.com/riscv/sail-riscv.git" "$RISCV/bin/
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf sail-riscv
+        rm -rf opam
     fi
     echo -e "${SUCCESS_COLOR}RISC-V Sail Model successfully installed/updated!${ENDC}"
 else
@@ -406,9 +407,9 @@ fi
 cd "$dir"/../linux
 if [ ! -e "$RISCV"/buildroot ]; then
     make 2>&1 | logger buildroot; [ "${PIPESTATUS[0]}" == 0 ]
-    echo -e "${SUCCESS_COLOR}Buildroot successfully installed!${ENDC}"
+    echo -e "${SUCCESS_COLOR}Buildroot successfully installed and Linux testvectors created!${ENDC}"
 elif [ ! -e "$RISCV"/linux-testvectors ]; then
-    echo -e "${OK_COLOR}Buildroot already exists, but Linix testvectors are missing. Generating them now.${ENDC}"
+    echo -e "${OK_COLOR}Buildroot already exists, but Linux testvectors are missing. Generating them now.${ENDC}"
     make dumptvs 2>&1 | logger buildroot; [ "${PIPESTATUS[0]}" == 0 ]
     echo -e "${SUCCESS_COLOR}Linux testvectors successfully generated!${ENDC}"
 else
