@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 tcpPort=1235
 imageDir=$RISCV/buildroot/output/images
 tvDir=$RISCV/linux-testvectors

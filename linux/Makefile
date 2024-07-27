@@ -59,7 +59,7 @@ install: check_write_permissions
 
 dumptvs: check_write_permissions
 	$(SUDO) mkdir -p $(RISCV)/linux-testvectors
-	cd testvector-generation; $(SUDO) ./genInitMem.sh
+	cd testvector-generation; ./genInitMem.sh
 	@echo "Testvectors successfully generated."
 
 generate: $(DTB) $(IMAGES)
@@ -89,16 +89,12 @@ disassemble:
 	-cpio -i -D $(BUILDROOT)/output/images/disassembly/rootfs < $(BUILDROOT)/output/images/rootfs.cpio
 	@echo "Disassembly successfully completed."
 
-
-$(DIS)/%.objdump: SHELL:=/bin/bash
 $(DIS)/%.objdump: $(IMAGES)/%.elf
-	source ../setup.sh && \
-	riscv64-unknown-elf-objdump -DS $< >> $@ && \
+	riscv64-unknown-elf-objdump -DS $< >> $@
 	extractFunctionRadix.sh $@
 
 $(DIS)/%.objdump: $(IMAGES)/%
-	source ../setup.sh && \
-	riscv64-unknown-elf-objdump -S $< >> $@ && \
+	riscv64-unknown-elf-objdump -S $< >> $@
 	extractFunctionRadix.sh $@
 
 $(IMAGES)/vmlinux:
