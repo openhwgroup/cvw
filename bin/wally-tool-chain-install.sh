@@ -400,9 +400,9 @@ fi
 section_header "Installing Buildroot and Creating Linux testvectors"
 STATUS="Buildroot"
 if [ -z "$LD_LIBRARY_PATH" ]; then
-    export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$RISCV/riscv64-unknown-elf/lib
+    export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$RISCV/riscv64-unknown-elf/lib:$RISCV/lib/x86_64-linux-gnu/
 else
-    export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$LD_LIBRARY_PATH:$RISCV/riscv64-unknown-elf/lib
+    export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$LD_LIBRARY_PATH:$RISCV/riscv64-unknown-elf/lib:$RISCV/lib/x86_64-linux-gnu/
 fi
 cd "$dir"/../linux
 if [ ! -e "$RISCV"/buildroot ]; then

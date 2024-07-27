@@ -26,6 +26,7 @@ endif
 # RISC-V Tools
 extend LD_LIBRARY_PATH $RISCV/lib
 extend LD_LIBRARY_PATH $RISCV/lib64
+extend LD_LIBRARY_PATH $RISCV/lib/x86_64-linux-gnu/
 extend PATH $RISCV/bin
 
 # Activate riscv-python Virtual Environment

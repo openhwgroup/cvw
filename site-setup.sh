@@ -27,7 +27,7 @@ else
 fi
 
 # RISC-V Tools
-export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$LD_LIBRARY_PATH:$RISCV/lib/x86_64-linux-gnu/
 export PATH=$PATH:$RISCV/bin
 
 # Activate riscv-python Virtual Environment
@@ -54,7 +54,7 @@ if [ -e "$IDV" ]; then
     export IMPERAS_HOME=$IDV/Imperas
     export IMPERAS_PERSONALITY=CPUMAN_DV_ASYNC
     export ROOTDIR=~/
-    source ${IMPERAS_HOME}/bin/setup.sh
-    setupImperas ${IMPERAS_HOME}
+    source "${IMPERAS_HOME}"/bin/setup.sh
+    setupImperas "${IMPERAS_HOME}"
     export PATH=$IDV/scripts/cvw:$PATH
 fi
