@@ -115,7 +115,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   // Decode stage
   extend #(P)        ext(.InstrD(InstrD[31:7]), .ImmSrcD, .ImmExtD);
   // Access GPRs from Debug Module
-  if (P.DEBUG_SUPPORTED) begin
+  if (P.DEBUG_SUPPORTED) begin : gpr
     regfile #(P.XLEN, P.E_SUPPORTED) regf(clk, reset, RegWriteWM, Rs1DM, Rs2D, RdWM, ResultWM, R1D, R2D);
     assign RegWriteWM = GPRSel ? DebugRegUpdate : RegWriteW;
     assign Rs1DM = GPRSel ? DebugRegAddr : Rs1D;

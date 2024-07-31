@@ -200,7 +200,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
    
   // FP register file
   // Access FPRs from Debug Module
-  if (P.DEBUG_SUPPORTED) begin
+  if (P.DEBUG_SUPPORTED) begin : fpr
     fregfile #(P.FLEN) fregfile (.clk, .reset, .we4(FRegWriteWM),
       .a1(RA1), .a2(InstrD[24:20]), .a3(InstrD[31:27]), 
       .a4(WA1), .wd4(FResultWM),
