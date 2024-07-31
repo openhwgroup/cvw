@@ -62,10 +62,10 @@ void bin_to_hex(uint8_t inp, uint8_t res[2])
   return;
 }
 
-void print_uart_int(uint32_t addr)
+void print_uart_hex(uint64_t addr, int n)
 {
   int i;
-  for (i = 3; i > -1; i--)  {
+  for (i = n - 1; i > -1; i--) {
     uint8_t cur = (addr >> (i * 8)) & 0xff;
     uint8_t hex[2];
     bin_to_hex(cur, hex);
@@ -74,22 +74,54 @@ void print_uart_int(uint32_t addr)
   }
 }
 
-void print_uart_addr(uint64_t addr)
-{
-  int i;
-  for (i = 7; i > -1; i--) {
-    uint8_t cur = (addr >> (i * 8)) & 0xff;
-    uint8_t hex[2];
-    bin_to_hex(cur, hex);
-    write_serial(hex[0]);
-    write_serial(hex[1]);
+void print_uart_dec(uint64_t addr) {
+
+  // floor(log(2^64)) = 19
+  char str[19] = {'\0'};
+  uint8_t length = 0;
+  
+  uint64_t cur = addr;
+  while (cur != 0) {
+    char digit = bin_to_hex_table[cur % 10];
+    // write_serial(digit);
+    str[length] = digit;
+    cur = cur/10;
+    length++;
+  }
+
+  for (int i = length; i > -1; i--) {
+    write_serial(str[i]);
   }
 }
 
-void print_uart_byte(uint8_t byte)
-{
-  uint8_t hex[2];
-  bin_to_hex(byte, hex);
-  write_serial(hex[0]);
-  write_serial(hex[1]);
-}
+/* void print_uart_int(uint32_t addr) */
+/* { */
+/*   int i; */
+/*   for (i = 3; i > -1; i--)  { */
+/*     uint8_t cur = (addr >> (i * 8)) & 0xff; */
+/*     uint8_t hex[2]; */
+/*     bin_to_hex(cur, hex); */
+/*     write_serial(hex[0]); */
+/*     write_serial(hex[1]); */
+/*   } */
+/* } */
+
+/* void print_uart_addr(uint64_t addr) */
+/* { */
+/*   int i; */
+/*   for (i = 7; i > -1; i--) { */
+/*     uint8_t cur = (addr >> (i * 8)) & 0xff; */
+/*     uint8_t hex[2]; */
+/*     bin_to_hex(cur, hex); */
+/*     write_serial(hex[0]); */
+/*     write_serial(hex[1]); */
+/*   } */
+/* } */
+
+/* void print_uart_byte(uint8_t byte) */
+/* { */
+/*   uint8_t hex[2]; */
+/*   bin_to_hex(byte, hex); */
+/*   write_serial(hex[0]); */
+/*   write_serial(hex[1]); */
+/* } */
