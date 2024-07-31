@@ -34,10 +34,12 @@
 /*     return 0;; */
 /* } */
 
+#define SYSTEMCLOCK 20000000
+
 int disk_read(BYTE * buf, LBA_t sector, UINT count) {
   uint64_t r;
   UINT i;
-  
+
   uint8_t crc = 0;
   crc = crc7(crc, 0x40 | SD_CMD_READ_BLOCK_MULTIPLE);
   crc = crc7(crc, (sector >> 24) & 0xff);
@@ -46,25 +48,29 @@ int disk_read(BYTE * buf, LBA_t sector, UINT count) {
   crc = crc7(crc, sector & 0xff);
   crc = crc | 1;
   
-  if (sd_cmd(18, sector & 0xffffffff, crc) != 0x00) {
-    print_uart("disk_read: CMD18 failed. r = ");
-    print_uart_byte(r & 0xff);
+  if ((r = sd_cmd(18, sector & 0xffffffff, crc) & 0xff) != 0x00) {
+    print_uart("disk_read: CMD18 failed. r = 0x");
+    print_uart_byte(r);
     print_uart("\r\n");
     return -1;
   }
 
+  // write_reg(SPI_CSMODE, SIFIVE_SPI_CSMODE_MODE_HOLD);
   // Begin reading blocks
   for (i = 0; i < count; i++) {
     uint16_t crc, crc_exp;
     
     // Read the data token
     r = spi_readbyte();
-    if (r != SD_DATA_TOKEN) {
-      print_uart("Didn't receive data token first thing. Shoot: ");
-      print_uart_byte(r & 0xff);
-      print_uart("\r\n");
-      return -1;
-    }
+    /* if (r != SD_DATA_TOKEN) { */
+    /*   print_uart("Didn't receive data token first thing. Shoot: "); */
+    /*   print_uart_byte(r & 0xff); */
+    /*   print_uart("\r\n"); */
+    /*   return -1; */
+    /* } */
+
+    // Wait for data token
+    while((r & 0xff) != SD_DATA_TOKEN);
 
     // Read block into memory.
     for (int j = 0; j < 8; j++) {
@@ -77,7 +83,7 @@ int disk_read(BYTE * buf, LBA_t sector, UINT count) {
     crc_exp |= spi_txrx(0xff);
 
     if (crc != crc_exp) {
-      print_uart("Stinking CRC16 didn't match on block ");
+      print_uart("Stinking CRC16 didn't match on block read.\r\n");
       print_uart_int(i);
       print_uart("\r\n");
       return -1;
@@ -86,7 +92,8 @@ int disk_read(BYTE * buf, LBA_t sector, UINT count) {
   }
 
   sd_cmd(SD_CMD_STOP_TRANSMISSION, 0, 0x01);
-  spi_txrx(0xff);
+  // write_reg(SPI_CSMODE, SIFIVE_SPI_CSMODE_MODE_AUTO);
+  //spi_txrx(0xff);
   return 0;
 }
 
@@ -100,12 +107,17 @@ void copyFlash(QWORD address, QWORD * Dst, DWORD numBlocks) {
   // Initialize UART for messages
   init_uart(20000000, 115200);
 
-  print_uart("Booting wally.\r\n");
   // Print the wally banner
   print_uart(BANNER);
 
+  /* print_uart("System clock speed: "); */
+  /* print_uart_dec(SYSTEMCLOCK); */
+  /* print_uart("\r\n"); */
+
+  println_with_dec("Hello, does this work? Here's the clock: ", SYSTEMCLOCK);
+
   // Intialize the SD card
-  init_sd();
+  init_sd(SYSTEMCLOCK, SYSTEMCLOCK/2);
   
   ret = gpt_load_partitions();
 }
