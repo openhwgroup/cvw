@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 
+// UART register addresses
 #define UART_BASE 0x10000000
 
 #define UART_RBR UART_BASE + 0x00
@@ -16,6 +17,7 @@
 #define UART_DLL UART_BASE + 0x00
 #define UART_DLM UART_BASE + 0x01
 
+// Primary function prototypes
 void init_uart(uint32_t freq, uint32_t baud);
 void write_reg_u8(uintptr_t addr, uint8_t value);
 uint8_t read_reg_u8(uintptr_t addr);
@@ -27,6 +29,7 @@ void print_uart_addr(uint64_t addr);
 void print_uart_hex(uint64_t addr, int n);
 void print_uart_byte(uint8_t byte);
 
+// Print numbers in hex with specified widths
 #define print_uart_int(addr) print_uart_hex(addr, 4)
 #define print_uart_addr(addr) print_uart_hex(addr, 8)
 #define print_uart_byte(addr) print_uart_hex(addr, 1)
