@@ -83,8 +83,13 @@ uint64_t spi_read64() {
   return r;
 }
 
+void spi_set_clock(uint32_t clkin, uint32_t clkout) {
+  uint32_t div = (clkin/(2*clkout)) - 1;
+  write_reg(SPI_SCKDIV, div);
+}
+
 // Initialize Sifive FU540 based SPI Controller
-void spi_init() {
+void spi_init(uint32_t clkin) {
   // Enable interrupts
   write_reg(SPI_IE, 0x3);
 
