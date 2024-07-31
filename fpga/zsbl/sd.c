@@ -62,8 +62,14 @@ uint64_t sd_cmd(uint8_t cmd, uint32_t arg, uint8_t crc) {
   // response length.  Probably unecessary so let's wait and see what
   // happens.
   // write_reg(SPI_RXMARK, response_len);
+
+  // Chip select must remain asserted during transaction
+  if (cmd != SD_CMD_STOP_TRANSMISSION) {
+    write_reg(SPI_CSMODE, SIFIVE_SPI_CSMODE_MODE_HOLD);
+  }
   
-  // Write all 6 bytes into transfer fifo
+  // Write all 7 bytes into transfer fifo
+  // spi_sendbyte(0xff);
   spi_sendbyte(0x40 | cmd);
   spi_sendbyte(arg >> 24);
   spi_sendbyte(arg >> 16);
@@ -77,7 +83,7 @@ uint64_t sd_cmd(uint8_t cmd, uint32_t arg, uint8_t crc) {
   waittx();
 
   // Read the dummy rxFIFO entries to move the head back to the tail
-  for (i = 0; i < 6; i++) {
+  for (i = 0; i < 7; i++) {
     spi_readbyte();
   }
 
@@ -90,12 +96,24 @@ uint64_t sd_cmd(uint8_t cmd, uint32_t arg, uint8_t crc) {
   // Wait for transfer fifo again
   waittx();
 
+  // Wait for actual response from SD card
+  // All responses start with a 0. Output of SDCIn is high, unless
+  // a message is being transferred.
+  do {
+    rbyte = spi_txrx(0xff);
+  } while ( (rbyte & 0x80) != 0 );
+
+  r = r | (rbyte << ((response_len - 1)*8));
+  
   // Read rxfifo response
-  for (i = 0; i < response_len; i++) {
+  for (i = 1; i < response_len; i++) {
     rbyte = spi_readbyte();
     r = r | (rbyte << ((response_len - 1 - i)*8));
   }
 
+  if (cmd != 18) {
+    write_reg(SPI_CSMODE, SIFIVE_SPI_CSMODE_MODE_AUTO);
+  }
   return r;
 } // sd_cmd
 
@@ -128,33 +146,50 @@ uint64_t sd_read64(uint16_t * crc) {
 // init_sd: ----------------------------------------------------------
 // This first initializes the SPI peripheral then initializes the SD
 // card itself. We use the uart to display anything that goes wrong.
-void init_sd(){
+int init_sd(uint32_t freq, uint32_t sdclk){
   spi_init();
 
   uint64_t r;
+  uint32_t newClockDiv;
 
-  print_uart("Initializing SD Card in SPI mode.\r\n");
+  println("Initializing SD Card in SPI mode.");
+  // This is necessary. This is the card's pre-init state initialization.
+  write_reg(SPI_CSMODE, SIFIVE_SPI_CSMODE_MODE_OFF);
+  for (int i = 0; i < 10; i++) {
+    spi_txrx(0xff);
+  }
+  write_reg(SPI_CSMODE, SIFIVE_SPI_CSMODE_MODE_AUTO);
   
+  // CMD0 --------------------------------------------------------------
   // Reset SD Card command
   // Initializes SD card into SPI mode if CS is asserted '0'
-  if (!(( r = CMD0() ) & 0x10) ) {
-    print_uart("SD ERROR: ");
-    print_uart_byte(r & 0xff);
-    print_uart("\r\n");
-  }
+  // We expect to get the R1 response 0x01 which means that the
+  // card has been put into the idle state.
+  print_uart("CMD0: ");
+  do {
+    r = CMD0();
+  } while ( r != 0x01 );
+  println_with_r1("Success, r = 0x", r & 0xff);
 
+  // CMD8 -------------------------------------------------------------
   // 
-  if (!(( r = CMD8() ) & 0x10 )) {
-    print_uart("SD ERROR: ");
-    print_uart_byte(r & 0xff);
-    print_uart("\r\n");
+  print_uart("CMD8: ");
+  r = CMD8();
+  if ((r & 0x000000ff0000ffff) != 0x01000001aa) {
+    println_with_r7("Failed, 0x", r);
   }
+  println_with_r7("Success, 0x", r);
 
+  // ACMD41 -----------------------------------------------------------
+  print_uart("ACMD41: ");
   do {
     CMD55();
     r = ACMD41();
   } while (r == 0x1);
+  println_with_r1("Success, r = 0x", r & 0xff);
 
-  print_uart("SD card is initialized.\n\r");
+  println_with_dec("New clock frequency: ", (uint64_t)sdclk);
+  spi_set_clock(freq, sdclk);
+  println("SD card is initialized.");
 }
 

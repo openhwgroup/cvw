@@ -9,11 +9,11 @@
 
 // Response lengths in bytes
 #define R1_RESPONSE  1
-#define R7_RESPONSE  7
+#define R7_RESPONSE  5
 #define R1B_RESPONSE 2
 
 uint8_t crc7(uint8_t prev, uint8_t in);
 uint16_t crc16(uint16_t crc, uint8_t data);
 uint64_t sd_cmd(uint8_t cmd, uint32_t arg, uint8_t crc);
 uint64_t sd_read64(uint16_t * crc);
-void init_sd();
+int init_sd(uint32_t freq, uint32_t sdclk);
