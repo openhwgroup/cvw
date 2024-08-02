@@ -1,6 +1,8 @@
 #include "sd.h"
 #include "spi.h"
 #include "uart.h"
+#include "fail.h"
+#include "time.h"
 
 // Parallel byte update CRC7-CCITT algorithm.
 // The result is the CRC7 result, left shifted over by 1
@@ -36,9 +38,11 @@ uint16_t crc16(uint16_t crc, uint8_t data) {
 //   watermark and interrupt features to determine when a
 //   transfer is complete. This should save on cycles since
 //   no arbitrary delays need to be added.
+
 uint64_t sd_cmd(uint8_t cmd, uint32_t arg, uint8_t crc) {
   uint8_t response_len;
   uint8_t i;
+  uint8_t shiftAmnt;
   uint64_t r;
   uint8_t rbyte;
 
@@ -53,6 +57,7 @@ uint64_t sd_cmd(uint8_t cmd, uint32_t arg, uint8_t crc) {
       break;
     case 12:
       response_len = R1B_RESPONSE;
+      break;
     default:
       response_len = R1_RESPONSE;
       break;
@@ -70,6 +75,7 @@ uint64_t sd_cmd(uint8_t cmd, uint32_t arg, uint8_t crc) {
   
   // Write all 7 bytes into transfer fifo
   // spi_sendbyte(0xff);
+  spi_dummy();
   spi_sendbyte(0x40 | cmd);
   spi_sendbyte(arg >> 24);
   spi_sendbyte(arg >> 16);
@@ -89,30 +95,34 @@ uint64_t sd_cmd(uint8_t cmd, uint32_t arg, uint8_t crc) {
 
   // Send "dummy signals". Since SPI is duplex,
   // useless bytes must be transferred
-  for (i = 0; i < response_len; i++) {
-    spi_sendbyte(0xFF);
-  }
+  /* for (i = 0; i < response_len; i++) { */
+  /*   spi_sendbyte(0xFF); */
+  /* } */
 
-  // Wait for transfer fifo again
-  waittx();
+  /* // Wait for transfer fifo again */
+  /* waittx(); */
 
   // Wait for actual response from SD card
   // All responses start with a 0. Output of SDCIn is high, unless
   // a message is being transferred.
   do {
-    rbyte = spi_txrx(0xff);
+    rbyte = spi_dummy();
   } while ( (rbyte & 0x80) != 0 );
 
-  r = r | (rbyte << ((response_len - 1)*8));
+  // Note about the compiler. In order to compile as sll instead of
+  // sllw, the number to shift has to be a 64 bit number.
+  r = ((uint64_t)rbyte) << ((response_len - 1)*8);
   
   // Read rxfifo response
   for (i = 1; i < response_len; i++) {
-    rbyte = spi_readbyte();
-    r = r | (rbyte << ((response_len - 1 - i)*8));
+    rbyte = spi_dummy();
+    r = r | (((uint64_t)rbyte) << ((response_len - 1 - i)*8));
   }
 
   if (cmd != 18) {
     write_reg(SPI_CSMODE, SIFIVE_SPI_CSMODE_MODE_AUTO);
+  } else {
+    spi_dummy();
   }
   return r;
 } // sd_cmd
@@ -122,16 +132,16 @@ uint64_t sd_read64(uint16_t * crc) {
   uint8_t rbyte;
   int i;
 
-  for (i = 0; i < 8; i++) {
-    spi_sendbyte(0xFF);
-  }
+  /* for (i = 0; i < 8; i++) { */
+  /*   spi_sendbyte(0xFF); */
+  /* } */
 
-  waittx();
+  /* waittx(); */
 
   for (i = 0; i < 8; i++) {
-    rbyte = spi_readbyte();
+    rbyte = spi_dummy();
     *crc = crc16(*crc, rbyte);
-    r = r | (rbyte << ((8 - 1 - i)*8));
+    r = r | ((uint64_t)(rbyte) << ((8 - 1 - i)*8));
   }
 
   return r;
@@ -147,11 +157,15 @@ uint64_t sd_read64(uint16_t * crc) {
 // This first initializes the SPI peripheral then initializes the SD
 // card itself. We use the uart to display anything that goes wrong.
 int init_sd(uint32_t freq, uint32_t sdclk){
+  print_time();
+  println("Initializing SPI Controller.");
   spi_init();
 
   uint64_t r;
   uint32_t newClockDiv;
+  int n;
 
+  print_time();
   println("Initializing SD Card in SPI mode.");
   // This is necessary. This is the card's pre-init state initialization.
   write_reg(SPI_CSMODE, SIFIVE_SPI_CSMODE_MODE_OFF);
@@ -165,31 +179,48 @@ int init_sd(uint32_t freq, uint32_t sdclk){
   // Initializes SD card into SPI mode if CS is asserted '0'
   // We expect to get the R1 response 0x01 which means that the
   // card has been put into the idle state.
+  print_time();
   print_uart("CMD0: ");
+  n = 0;
   do {
     r = CMD0();
+    n++;
+    if (n == 1000) {
+      fail();
+    }
   } while ( r != 0x01 );
   println_with_r1("Success, r = 0x", r & 0xff);
 
   // CMD8 -------------------------------------------------------------
-  // 
+  //
+  print_time();
   print_uart("CMD8: ");
   r = CMD8();
   if ((r & 0x000000ff0000ffff) != 0x01000001aa) {
     println_with_r7("Failed, 0x", r);
+    fail();
   }
   println_with_r7("Success, 0x", r);
 
   // ACMD41 -----------------------------------------------------------
+  print_time();
   print_uart("ACMD41: ");
+  n = 0;
   do {
     CMD55();
     r = ACMD41();
+    n++;
+    if (n == 1000) {
+      fail();
+    }
   } while (r == 0x1);
   println_with_r1("Success, r = 0x", r & 0xff);
 
+  print_time();
   println_with_dec("New clock frequency: ", (uint64_t)sdclk);
   spi_set_clock(freq, sdclk);
+  
+  print_time();
   println("SD card is initialized.");
 }
 

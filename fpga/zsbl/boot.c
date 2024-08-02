@@ -4,6 +4,9 @@
 #include "uart.h"
 #include "spi.h"
 #include "sd.h"
+#include "time.h"
+#include "riscv.h"
+#include "fail.h"
 
 /* int disk_read(BYTE * buf, LBA_t sector, UINT count, BYTE card_type) { */
 
@@ -34,11 +37,31 @@
 /*     return 0;; */
 /* } */
 
-#define SYSTEMCLOCK 20000000
+// Need to convert this
+/* void print_progress(size_t count, size_t max) { */
+/*     const int bar_width = 50; */
+
+/*     float progress = (float) count / max; */
+/*     int bar_length = progress * bar_width; */
+
+/*     printf("\r["); */
+/*     for (int i = 0; i < bar_length; ++i) { */
+/*         printf("#"); */
+/*     } */
+/*     for (int i = bar_length; i < bar_width; ++i) { */
+/*         printf("-"); */
+/*     } */
+/*     printf("] %.2f%%", progress * 100); */
+
+/*     fflush(stdout); */
+/* } */
 
 int disk_read(BYTE * buf, LBA_t sector, UINT count) {
   uint64_t r;
   UINT i;
+  volatile uint8_t *p = buf;
+
+  UINT modulus = count/50;
 
   uint8_t crc = 0;
   crc = crc7(crc, 0x40 | SD_CMD_READ_BLOCK_MULTIPLE);
@@ -52,48 +75,69 @@ int disk_read(BYTE * buf, LBA_t sector, UINT count) {
     print_uart("disk_read: CMD18 failed. r = 0x");
     print_uart_byte(r);
     print_uart("\r\n");
-    return -1;
+    fail();
+    // return -1;
   }
 
+  print_uart("\r          Blocks loaded: ");
+  print_uart("0");
+  print_uart("/");
+  print_uart_dec(count);
   // write_reg(SPI_CSMODE, SIFIVE_SPI_CSMODE_MODE_HOLD);
   // Begin reading blocks
   for (i = 0; i < count; i++) {
     uint16_t crc, crc_exp;
-    
-    // Read the data token
-    r = spi_readbyte();
-    /* if (r != SD_DATA_TOKEN) { */
-    /*   print_uart("Didn't receive data token first thing. Shoot: "); */
-    /*   print_uart_byte(r & 0xff); */
-    /*   print_uart("\r\n"); */
-    /*   return -1; */
-    /* } */
+    uint64_t n = 0;
 
     // Wait for data token
-    while((r & 0xff) != SD_DATA_TOKEN);
+    while((r = spi_dummy()) != SD_DATA_TOKEN);
+    // println_with_byte("Received data token: 0x", r & 0xff);
 
+    // println_with_dec("Block ", i);
     // Read block into memory.
-    for (int j = 0; j < 8; j++) {
-      *buf = sd_read64(&crc);
-      buf = buf + 64;
-    }
-
+    /* for (int j = 0; j < 64; j++) { */
+    /*   *buf = sd_read64(&crc); */
+    /*   println_with_addr("0x", *buf); */
+    /*   buf = buf + 64; */
+    /* } */
+    crc = 0;
+    n = 512;
+    do {
+      uint8_t x = spi_dummy();
+      *p++ = x;
+      crc = crc16(crc, x);
+    } while (--n > 0);
+    
     // Read CRC16 and check
-    crc_exp = ((uint16_t)spi_txrx(0xff) << 8);
-    crc_exp |= spi_txrx(0xff);
+    crc_exp = ((uint16_t)spi_dummy() << 8);
+    crc_exp |= spi_dummy();
 
     if (crc != crc_exp) {
       print_uart("Stinking CRC16 didn't match on block read.\r\n");
       print_uart_int(i);
       print_uart("\r\n");
-      return -1;
+      //return -1;
+      fail();
     }
-    
+
+    if ( (i % modulus) == 0 ) {
+      print_uart("\r          Blocks loaded: ");
+      print_uart_dec(i);
+      print_uart("/");
+      print_uart_dec(count);
+    }
+
   }
 
   sd_cmd(SD_CMD_STOP_TRANSMISSION, 0, 0x01);
+
+  print_uart("\r          Blocks loaded: ");
+  print_uart_dec(count);
+  print_uart("/");
+  print_uart_dec(count);
   // write_reg(SPI_CSMODE, SIFIVE_SPI_CSMODE_MODE_AUTO);
   //spi_txrx(0xff);
+  print_uart("\r\n");
   return 0;
 }
 
@@ -106,7 +150,7 @@ void copyFlash(QWORD address, QWORD * Dst, DWORD numBlocks) {
 
   // Initialize UART for messages
   init_uart(20000000, 115200);
-
+  
   // Print the wally banner
   print_uart(BANNER);
 
@@ -114,10 +158,8 @@ void copyFlash(QWORD address, QWORD * Dst, DWORD numBlocks) {
   /* print_uart_dec(SYSTEMCLOCK); */
   /* print_uart("\r\n"); */
 
-  println_with_dec("Hello, does this work? Here's the clock: ", SYSTEMCLOCK);
-
   // Intialize the SD card
-  init_sd(SYSTEMCLOCK, SYSTEMCLOCK/2);
+  init_sd(SYSTEMCLOCK, 3000000);
   
   ret = gpt_load_partitions();
 }
