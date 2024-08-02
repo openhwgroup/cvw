@@ -42,10 +42,11 @@ module fpgaTop
    output        UARTSout,
 
    // SDC Signals connecting to an SPI peripheral
-   input [3:0]   SDCDat,
+   input         SDCIn,
    output        SDCCLK,
    output        SDCCmd,
-   output        SDCCD,
+   output        SDCCS,
+   input         SDCCD,
 
    // Memory signals
    inout [15:0]  ddr3_dq,
@@ -199,10 +200,8 @@ module fpgaTop
   assign cpu_reset = bus_struct_reset;
   assign calib = c0_init_calib_complete;
 
-  logic [3:0] SDCCS;
-  assign SDCCD = SDCCS[0];
-  logic SDCIn;
-  assign SDCIn = SDCDat[0];
+  logic [3:0] SDCCSin;
+  assign SDCCS = SDCCSin[0];
 
   // mmcm
 
@@ -243,14 +242,14 @@ module fpgaTop
                     .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
                     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), 
                     .GPIOIN, .GPIOOUT, .GPIOEN,
-                    .UARTSin, .UARTSout, .SDCIn, .SDCCmd, .SDCCS, .SDCCLK); 
+                    .UARTSin, .UARTSout, .SDCIn, .SDCCmd, .SDCCS(SDCCSin), .SDCCLK); 
 
 
   // ahb lite to axi bridge
   xlnx_ahblite_axi_bridge xlnx_ahblite_axi_bridge_0
     (.s_ahb_hclk(CPUCLK),
      .s_ahb_hresetn(peripheral_aresetn),
-     .s_ahb_hsel(HSELEXT | HSELEXTSDC),
+     .s_ahb_hsel(HSELEXT),
      .s_ahb_haddr(HADDR[31:0]),
      .s_ahb_hprot(HPROT),
      .s_ahb_htrans(HTRANS),
