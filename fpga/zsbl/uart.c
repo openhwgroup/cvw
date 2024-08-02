@@ -1,6 +1,5 @@
 #include "uart.h"
 
-
 void write_reg_u8(uintptr_t addr, uint8_t value)
 {
   volatile uint8_t *loc_addr = (volatile uint8_t *)addr;
@@ -78,7 +77,7 @@ void print_uart_dec(uint64_t addr) {
 
   // floor(log(2^64)) = 19
   char str[19] = {'\0'};
-  uint8_t length = 0;
+  uint8_t length = 1;
   
   uint64_t cur = addr;
   while (cur != 0) {
@@ -90,6 +89,43 @@ void print_uart_dec(uint64_t addr) {
   }
 
   for (int i = length; i > -1; i--) {
+    write_serial(str[i]);
+  }
+}
+
+// Print a floating point number on the UART 
+void print_uart_float(float num, int precision) {
+  char str[32] = {'\0'};
+  char digit;
+  uint8_t length = precision + 1;
+  int i;
+  uint64_t cur;
+  
+  str[precision] = '.';
+
+  int pow = 1;
+
+  // Calculate power for precision
+  for (i = 0; i < precision; i++) {
+    pow = pow * 10;
+  }
+  
+  cur = (uint64_t)(num * pow);
+  for (i = 0; i < precision; i++) {
+    digit = bin_to_hex_table[cur % 10];
+    str[i] = digit;
+    cur = cur / 10;
+  }
+
+  cur = (uint64_t)num;
+  do {
+    digit = bin_to_hex_table[cur % 10];
+    str[length] = digit;
+    cur = cur/10;
+    length++;
+  } while (cur != 0);
+  
+  for (i = length; i > -1; i--) {
     write_serial(str[i]);
   }
 }

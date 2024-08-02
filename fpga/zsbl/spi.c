@@ -55,9 +55,13 @@
 /* } */
 
 uint8_t spi_txrx(uint8_t byte) {
-  spi_sendbyte(0xFF);
+  spi_sendbyte(byte);
   waittx();
   return spi_readbyte();
+}
+
+uint8_t spi_dummy() {
+  return spi_txrx(0xff);
 }
 
 /* inline uint8_t spi_readbyte() { */

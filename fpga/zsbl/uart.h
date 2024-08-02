@@ -1,5 +1,7 @@
 #pragma once
 #include <stdint.h>
+#include "riscv.h"
+#include "time.h"
 
 // UART register addresses
 #define UART_BASE 0x10000000
@@ -28,6 +30,8 @@ void print_uart_dec(uint64_t addr);
 void print_uart_addr(uint64_t addr);
 void print_uart_hex(uint64_t addr, int n);
 void print_uart_byte(uint8_t byte);
+void print_uart_float(float num, int precision);
+// void print_time();
 
 // Print numbers in hex with specified widths
 #define print_uart_int(addr) print_uart_hex(addr, 4)
@@ -44,4 +48,11 @@ void print_uart_byte(uint8_t byte);
 #define println_with_addr(msg, num) print_uart(msg); print_uart_addr(num); print_uart("\r\n")
 #define println_with_r1(msg, num) print_uart(msg); print_r1(num); print_uart("\r\n")
 #define println_with_r7(msg, num) print_uart(msg); print_r7(num); print_uart("\r\n")
+#define println_with_float(msg, num) print_uart(msg); set_status_fs(); print_uart_float(num,5); clear_status_fs(); print_uart("\r\n")
+
+/* #define print_time() print_uart("["); \ */
+/*   set_status_fs();                    \ */
+/*   print_uart_float(getTime(),5);      \ */
+/*   clear_status_fs();                  \ */
+/*   print_uart("] ") */
 
