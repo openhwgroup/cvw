@@ -148,6 +148,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     // APB access
     assign Entry = {PADDR[7:2],2'b00};  //  32-bit word-aligned accesses
     assign Memwrite = PWRITE & PENABLE & PSEL;  // Only write in access phase
+    // JACOB: This shouldn't behave this way
     assign PREADY = TransmitInactive; // Tie PREADY to transmission for hardware interlock
 
     // Account for subword read/write circuitry
@@ -366,22 +367,25 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     assign TransmitInactive = ((state == INTER_CS) | (state == CS_INACTIVE) | (state == INTER_XFR) | (ReceiveShiftFullDelayPCLK & ZeroDelayHoldMode));
     assign Active0 = (state == ACTIVE_0);
 
-    // Signal tracks which edge of sck to shift data
+  // Signal tracks which edge of sck to shift data
+  // Jacob: We need to confirm that this represents the actual polarity and phase options for sampling.
+  //        The first option now samples on the leading edge and shifts on the falling edge like it's supposed to.
+  //        We need to confirm the validity of the other options. 
     always_comb
         case(SckMode[1:0])
-            2'b00: ShiftEdge = ~SPICLK & SCLKenable;
-            2'b01: ShiftEdge = (SPICLK & |(FrameCount) & SCLKenable);
-            2'b10: ShiftEdge = SPICLK & SCLKenable;
-            2'b11: ShiftEdge = (~SPICLK & |(FrameCount) & SCLKenable);
+            2'b00: ShiftEdge = SPICLK & SCLKenable;
+            2'b01: ShiftEdge = (SPICLK & |(FrameCount) & SCLKenable); // Probably wrong
+            2'b10: ShiftEdge = ~SPICLK & SCLKenable; // Probably wrong
+            2'b11: ShiftEdge = (~SPICLK & |(FrameCount) & SCLKenable); // Probably wrong
             default: ShiftEdge = SPICLK & SCLKenable;
         endcase
 
     // Transmit shift register
     assign TransmitDataEndian = Format[0] ? {TransmitFIFOReadData[0], TransmitFIFOReadData[1], TransmitFIFOReadData[2], TransmitFIFOReadData[3], TransmitFIFOReadData[4], TransmitFIFOReadData[5], TransmitFIFOReadData[6], TransmitFIFOReadData[7]} : TransmitFIFOReadData[7:0];
     always_ff @(posedge PCLK)
-        if(~PRESETn)                        TransmitShiftReg <= 8'b0; 
+        if(~PRESETn)                        TransmitShiftReg <= 8'b0; // Temporarily changing to 1s 
         else if (TransmitShiftRegLoad)      TransmitShiftReg <= TransmitDataEndian;
-        else if (ShiftEdge & Active)        TransmitShiftReg <= {TransmitShiftReg[6:0], 1'b0};
+        else if (ShiftEdge & Active)        TransmitShiftReg <= {TransmitShiftReg[6:0], TransmitShiftReg[0]}; // Temporarily changing to 1s
     
     assign SPIOut = TransmitShiftReg[7];
 

@@ -172,7 +172,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
       .PREADY(PREADY[5]), .PRDATA(PRDATA[5]),
       .SPIOut(SDCCmd), .SPIIn(SDCIn), .SPICS(SDCCS), .SPICLK(SDCCLK), .SPIIntr(SDCIntr));                                      
   end else begin : sdc
-    assign SDCCmd = '0; assign SDCCS = 1'b0; assign SDCIntr = 1'b0; assign SDCCLK = 1'b0;
+    assign SDCCmd = '0; assign SDCCS = 4'b0; assign SDCIntr = 1'b0; assign SDCCLK = 1'b0;
   end
   
 
