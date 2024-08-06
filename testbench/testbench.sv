@@ -76,8 +76,7 @@ module testbench;
 
   // DUT signals
   logic [P.AHBW-1:0]    HRDATAEXT;
-  logic                 HREADYEXT, HRESPEXT;
-  logic                 HSELEXTSDC;
+  logic                 HREADYEXT, HRESPEXT; 
   logic [P.PA_BITS-1:0] HADDR;
   logic [P.AHBW-1:0]    HWDATA;
   logic [P.XLEN/8-1:0]  HWSTRB;
@@ -93,7 +92,11 @@ module testbench;
   logic        UARTSin, UARTSout;
   logic        SPIIn, SPIOut;
   logic [3:0]  SPICS;
-  logic        SDCIntr;
+  logic        SPICLK;
+  logic        SDCCmd;
+  logic        SDCIn;
+  logic [3:0]  SDCCS;
+  logic        SDCCLK;        
 
   logic        HREADY;
   logic        HSELEXT;
@@ -372,6 +375,11 @@ module testbench;
         uartoutfile = $fopen(uartoutfilename, "w"); // delete UART output file
         ProgramAddrMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.addr"};
         ProgramLabelMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.lab"};
+      end else if(TEST == "fpga") begin
+        bootmemfilename = {WALLY_DIR, "/fpga/src/boot.mem"};
+        memfilename = {WALLY_DIR, "/fpga/src/data.mem"};
+        ProgramAddrMapFile = {WALLY_DIR, "/fpga/zsbl/bin/boot.objdump.addr"};
+        ProgramLabelMapFile = {WALLY_DIR, "/fpga/zsbl/bin/boot.objdump.lab"};
       end else if(ElfFile != "none") begin
         elffilename = ElfFile;
         memfilename = {ElfFile, ".memfile"};
@@ -506,6 +514,23 @@ module testbench;
           end
           readResult = $fread(dut.uncoregen.uncore.ram.ram.memory.ram.RAM, memFile);
           $fclose(memFile);
+        end else if (TEST == "fpga") begin
+          memFile = $fopen(bootmemfilename, "rb");
+          if (memFile == 0) begin
+            $display("Error: Could not open file %s", memfilename);
+            $finish;
+          end
+          if (P.BOOTROM_SUPPORTED) begin
+            readResult = $fread(dut.uncoregen.uncore.bootrom.bootrom.memory.ROM, memFile);
+          end
+          $fclose(memFile);
+          memFile = $fopen(memfilename, "rb");
+          if (memFile == 0) begin
+            $display("Error: Could not open file %s", memfilename);
+            $finish;
+          end
+          readResult = $fread(dut.uncoregen.uncore.ram.ram.memory.ram.RAM, memFile);
+          $fclose(memFile);
         end else begin
           uncoreMemFile = $fopen(memfilename, "r");  // Is there a better way to test if a file exists?
           if (uncoreMemFile == 0) begin
@@ -585,16 +610,16 @@ module testbench;
     assign SDCDat = sd_dat_reg_t ? sd_dat_reg_o : sd_dat_i;
     assign SDCDatIn = SDCDat;
     -----/\----- EXCLUDED -----/\----- */
-    assign SDCIntr = 1'b0;
   end else begin
-    assign SDCIntr = 1'b0;
+    assign SDCIn = 1'b1;
+    
   end
 
   wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .ExternalStall(RVVIStall), 
-    .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
+    .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT,
     .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
-    .UARTSin, .UARTSout, .SDCIntr, .SPIIn, .SPIOut, .SPICS); 
+    .UARTSin, .UARTSout, .SPIIn, .SPIOut, .SPICS, .SPICLK, .SDCIn, .SDCCmd, .SDCCS, .SDCCLK); 
 
   // generate clock to sequence tests
   always begin
