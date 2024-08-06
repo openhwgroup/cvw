@@ -99,11 +99,11 @@ module ram1p1rwbe import cvw::*; #(parameter USE_SRAM=0, DEPTH=64, WIDTH=44, PRE
           `ifdef VERILATOR
             // because Verilator doesn't automatically accept $WALLY from shell
             string       WALLY_DIR = getenvval("WALLY"); 
-            $readmemh({WALLY_DIR,"/fpga/src/data.mem"}, RAM, 0);  // load boot ROM for FPGA
+            $readmemh({WALLY_DIR,"/fpga/src/data.mem"}, RAM, 0);  // load boot RAM for FPGA
           `else
-            $readmemh({"$WALLY/fpga/src/data.mem"}, RAM, 0);  // load boot ROM for FPGA
+            $readmemh({"$WALLY/fpga/src/data.mem"}, RAM, 0);  // load boot RAM for FPGA
           `endif
-        end else begin // put something in the ROM so it is not optimized away
+        end else begin // put something in the RAM so it is not optimized away
         RAM[0] = 'h00002197;
         end
       end
