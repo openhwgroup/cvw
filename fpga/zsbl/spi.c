@@ -29,31 +29,6 @@
 
 #include "spi.h"
 
-// Write to a register
-/* inline void write_reg(uintptr_t addr, uint32_t value) { */
-/*   volatile uint32_t * loc = (volatile uint32_t *) addr; */
-/*   *loc = value; */
-/* } */
-
-/* // Read a register */
-/* inline uint32_t read_reg(uintptr_t addr) { */
-/*   return *(volatile uint32_t *) addr; */
-/* } */
-
-/* // Queues a single byte in the transfer fifo */
-/* inline void spi_sendbyte(uint8_t byte) { */
-/*   // Write byte to transfer fifo */
-/*   write_reg(SPI_TXDATA, byte); */
-/* } */
-
-/* inline void waittx() { */
-/*   while(!(read_reg(SPI_IP) & 1)) {} */
-/* } */
-
-/* inline void waitrx() { */
-/*   while(read_reg(SPI_IP) & 2) {} */
-/* } */
-
 uint8_t spi_txrx(uint8_t byte) {
   spi_sendbyte(byte);
   waittx();
@@ -63,10 +38,6 @@ uint8_t spi_txrx(uint8_t byte) {
 uint8_t spi_dummy() {
   return spi_txrx(0xff);
 }
-
-/* inline uint8_t spi_readbyte() { */
-/*   return read_reg(SPI_RXDATA); */
-/* } */
 
 uint64_t spi_read64() {
   uint64_t r;
