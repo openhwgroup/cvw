@@ -47,6 +47,7 @@ module fpgaTop
    output        SDCCmd,
    output        SDCCS,
    input         SDCCD,
+   input         SDCWP,         
 
    // Memory signals
    inout [15:0]  ddr3_dq,
@@ -194,7 +195,7 @@ module fpgaTop
   wire             mmcm1_locked;
   
 
-  assign GPIOIN = {28'b0, GPI};
+  assign GPIOIN = {25'b0, SDCCD, SDCWP, 1'b0, GPI};
   assign GPO = GPIOOUT[4:0];
   assign ahblite_resetn = peripheral_aresetn;
   assign cpu_reset = bus_struct_reset;

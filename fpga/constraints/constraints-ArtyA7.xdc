@@ -35,6 +35,7 @@ set_property IOSTANDARD LVCMOS33 [get_ports {GPO[2]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {GPO[1]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {GPO[0]}]
 set_max_delay -to [get_ports {GPO[*]}] 20.000
+
 set_output_delay -clock [get_clocks clk_out3_xlnx_mmcm] -min -add_delay 0.000 [get_ports {GPO[*]}]
 set_output_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay 0.000 [get_ports {GPO[*]}]
 
@@ -106,17 +107,20 @@ set_property -dict {PACKAGE_PIN F4 IOSTANDARD LVCMOS33 PULLUP true} [get_ports {
 set_property -dict {PACKAGE_PIN F3 IOSTANDARD LVCMOS33 PULLUP true} [get_ports {SDCCLK}]
 set_property -dict {PACKAGE_PIN D3 IOSTANDARD LVCMOS33 PULLUP true} [get_ports {SDCCmd}]
 set_property -dict {PACKAGE_PIN H2 IOSTANDARD LVCMOS33 PULLUP true} [get_ports {SDCCD}]
+set_property -dict {PACKAGE_PIN G2 IOSTANDARD LVCMOS33 PULLUP true} [get_ports {SDCWP}]
+
 
 set_input_delay -clock [get_clocks SPISDCClock] -min -add_delay 2.500 [get_ports {SDCCS}]
-set_input_delay -clock [get_clocks SPISDCClock] -max -add_delay 21.000 [get_ports {SDCCS}]
+set_input_delay -clock [get_clocks SPISDCClock] -max -add_delay 10.000 [get_ports {SDCCS}]
 
 set_input_delay -clock [get_clocks SPISDCClock] -min -add_delay 2.500 [get_ports {SDCIn}]
-set_input_delay -clock [get_clocks SPISDCClock] -max -add_delay 21.000 [get_ports {SDCIn}]
+set_input_delay -clock [get_clocks SPISDCClock] -max -add_delay 10.000 [get_ports {SDCIn}]
 
 set_output_delay -clock [get_clocks SPISDCClock] -min -add_delay 2.000 [get_ports {SDCCmd}]
 set_output_delay -clock [get_clocks SPISDCClock] -max -add_delay 6.000 [get_ports {SDCCmd}]
 
 set_output_delay -clock [get_clocks SPISDCClock] 0.000 [get_ports SDCCLK]
+
 
 #set_multicycle_path -from [get_pins xlnx_ddr3_c0/u_xlnx_ddr3_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_calib_top/init_calib_complete_reg/C] -to [get_pins xlnx_proc_sys_reset_0/U0/EXT_LPF/lpf_int_reg/D] 10
 
