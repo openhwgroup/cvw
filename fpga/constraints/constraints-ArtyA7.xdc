@@ -10,6 +10,32 @@ create_generated_clock -name SPISDCClock -source [get_pins clk_out3_xlnx_mmcm] -
 set_property PACKAGE_PIN E3 [get_ports {default_100mhz_clk}]
 set_property IOSTANDARD LVCMOS33 [get_ports {default_100mhz_clk}]
 
+##### RVVI Ethernet ####
+# taken from https://github.com/alexforencich/verilog-ethernet/blob/master/example/Arty/fpga/fpga.xdc
+set_property -dict {LOC F15  IOSTANDARD LVCMOS33} [get_ports phy_rx_clk]
+set_property -dict {LOC D18  IOSTANDARD LVCMOS33} [get_ports {phy_rxd[0]}]
+set_property -dict {LOC E17  IOSTANDARD LVCMOS33} [get_ports {phy_rxd[1]}]
+set_property -dict {LOC E18  IOSTANDARD LVCMOS33} [get_ports {phy_rxd[2]}]
+set_property -dict {LOC G17  IOSTANDARD LVCMOS33} [get_ports {phy_rxd[3]}]
+set_property -dict {LOC G16  IOSTANDARD LVCMOS33} [get_ports phy_rx_dv]
+set_property -dict {LOC C17  IOSTANDARD LVCMOS33} [get_ports phy_rx_er]
+set_property -dict {LOC H16  IOSTANDARD LVCMOS33} [get_ports phy_tx_clk]
+set_property -dict {LOC H14  IOSTANDARD LVCMOS33 SLEW FAST DRIVE 12} [get_ports {phy_txd[0]}]
+set_property -dict {LOC J14  IOSTANDARD LVCMOS33 SLEW FAST DRIVE 12} [get_ports {phy_txd[1]}]
+set_property -dict {LOC J13  IOSTANDARD LVCMOS33 SLEW FAST DRIVE 12} [get_ports {phy_txd[2]}]
+set_property -dict {LOC H17  IOSTANDARD LVCMOS33 SLEW FAST DRIVE 12} [get_ports {phy_txd[3]}]
+set_property -dict {LOC H15  IOSTANDARD LVCMOS33 SLEW FAST DRIVE 12} [get_ports phy_tx_en]
+set_property -dict {LOC D17  IOSTANDARD LVCMOS33} [get_ports phy_col]
+set_property -dict {LOC G14  IOSTANDARD LVCMOS33} [get_ports phy_crs]
+set_property -dict {LOC G18  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 12} [get_ports phy_ref_clk]
+set_property -dict {LOC C16  IOSTANDARD LVCMOS33 SLEW SLOW DRIVE 12} [get_ports phy_reset_n]
+
+create_clock -period 40.000 -name phy_rx_clk [get_ports phy_rx_clk]
+create_clock -period 40.000 -name phy_tx_clk [get_ports phy_tx_clk]
+
+set_false_path -to [get_ports {phy_ref_clk phy_reset_n}]
+set_output_delay 0 [get_ports {phy_ref_clk phy_reset_n}]
+
 ##### GPI ####
 set_property PACKAGE_PIN A8 [get_ports {GPI[0]}]
 set_property PACKAGE_PIN C9 [get_ports {GPI[1]}]

@@ -1658,7 +1658,7 @@ IDIV_ON_FPU     1
 
 # imperas used for a smart memory
 # VCS doesn't like removing the bootrom, but make it tiny in a random unused location
-derive imperas rv64gc
+derive ImperasTG rv64gc
 ICACHE_SUPPORTED    0
 DCACHE_SUPPORTED    0
 VIRTMEM_SUPPORTED   0
@@ -1669,6 +1669,13 @@ ZICBOM_SUPPORTED    0
 ZICBOZ_SUPPORTED    0
 SVPBMT_SUPPORTED    0
 SVNAPOT_SUPPORTED   0
-BOOTROM_BASE        64'h700012340010
+BOOTROM_BASE        64'h700012340080
 BOOTROM_RANGE       64'h10
+CLINT_SUPPORTED     0
+GPIO_SUPPORTED      0
+UART_SUPPORTED      0
+PLIC_SUPPORTED      0
+SPI_SUPPORTED       0
+
+
 
