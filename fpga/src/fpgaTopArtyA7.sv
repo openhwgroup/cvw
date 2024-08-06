@@ -1139,7 +1139,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 1)
     logic [P.XLEN-1:0]                                CSRArray [TOTAL_CSRS-1:0];
 
     logic                                             valid;
-    logic [187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)-1:0] rvvi;
+    logic [72+(5*P.XLEN) + MAX_CSRS*(P.XLEN+16)-1:0] rvvi;
 
     assign StallE         = fpgaTop.wallypipelinedsoc.core.StallE;
     assign StallM         = fpgaTop.wallypipelinedsoc.core.StallM;
