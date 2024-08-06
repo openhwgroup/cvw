@@ -1,3 +1,32 @@
+///////////////////////////////////////////////////////////////////////
+// boot.c
+//
+// Written: Jacob Pease jacob.pease@okstate.edu 7/22/2024
+//
+// Purpose: Main bootloader entry point
+//
+// 
+//
+// A component of the Wally configurable RISC-V project.
+// 
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
+//
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+//
+// Licensed under the Solderpad Hardware License v 2.1 (the
+// “License”); you may not use this file except in compliance with the
+// License, or, at your option, the Apache License version 2.0. You
+// may obtain a copy of the License at
+//
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work
+// distributed under the License is distributed on an “AS IS” BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+// implied. See the License for the specific language governing
+// permissions and limitations under the License.
+///////////////////////////////////////////////////////////////////////
+
 #include <stddef.h>
 #include "boot.h"
 #include "gpt.h"
@@ -7,54 +36,6 @@
 #include "time.h"
 #include "riscv.h"
 #include "fail.h"
-
-/* int disk_read(BYTE * buf, LBA_t sector, UINT count, BYTE card_type) { */
-
-/*   /\* This is not needed. This has everything to do with the FAT */
-/*      filesystem stuff that I'm not including. All I need to do is */
-/*      initialize the SD card and read from it. Anything in here that is */
-/*      checking for potential errors, I'm going to have to temporarily */
-/*      do without. */
-/*    *\/ */
-/*   // if (!count) return RES_PARERR; */
-/*     /\* if (drv_status & STA_NOINIT) return RES_NOTRDY; *\/ */
-
-/*   uint32_t response[4]; */
-/*   struct sdc_regs * regs = (struct sdc_regs *)SDC; */
-  
-/*     /\* Convert LBA to byte address if needed *\/ */
-/*     if (!(card_type & CT_BLOCK)) sector *= 512; */
-/*     while (count > 0) { */
-/*         UINT bcnt = count > MAX_BLOCK_CNT ? MAX_BLOCK_CNT : count; */
-/*         unsigned bytes = bcnt * 512; */
-/*         if (send_data_cmd(bcnt == 1 ? CMD17 : CMD18, sector, buf, bcnt, response) < 0) return 1; */
-/*         if (bcnt > 1 && send_cmd(CMD12, 0, response) < 0) return 1; */
-/*         sector += (card_type & CT_BLOCK) ? bcnt : bytes; */
-/*         count -= bcnt; */
-/*         buf += bytes; */
-/*     } */
-
-/*     return 0;; */
-/* } */
-
-// Need to convert this
-/* void print_progress(size_t count, size_t max) { */
-/*     const int bar_width = 50; */
-
-/*     float progress = (float) count / max; */
-/*     int bar_length = progress * bar_width; */
-
-/*     printf("\r["); */
-/*     for (int i = 0; i < bar_length; ++i) { */
-/*         printf("#"); */
-/*     } */
-/*     for (int i = bar_length; i < bar_width; ++i) { */
-/*         printf("-"); */
-/*     } */
-/*     printf("] %.2f%%", progress * 100); */
-
-/*     fflush(stdout); */
-/* } */
 
 int disk_read(BYTE * buf, LBA_t sector, UINT count) {
   uint64_t r;
