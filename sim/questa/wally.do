@@ -31,6 +31,7 @@ set WALLY $::env(WALLY)
 set CONFIG ${WALLY}/config
 set SRC ${WALLY}/src
 set TB ${WALLY}/testbench
+set FCRVVI ${WALLY}/addins/cvw-arch-verif/fcov
 
 # create library
 if [file exists ${WKDIR}] {
@@ -39,10 +40,15 @@ if [file exists ${WKDIR}] {
 vlib ${WKDIR}
 # Create directory for coverage data
 mkdir -p cov
+# Create directory for functional coverage data
+mkdir  ${WALLY}/addins/cvw-arch-verif/work
 
 set ccov 0
 set CoverageVoptArg ""
 set CoverageVsimArg ""
+
+set FuncCovRVVI 0
+set FCdefineRVVI_COVERAGE ""
 
 set FunctCoverage 0
 set riscvISACOVsrc ""
@@ -113,6 +119,13 @@ if {$CoverageIndex >= 0} {
     set lst [lreplace $lst $CoverageIndex $CoverageIndex]
 }
 
+set FCoverageIndexRVVI [lsearch -exact $lst "--fcovrvvi"]
+if {$FCoverageIndexRVVI >= 0} {
+    set FuncCovRVVI 1
+    set FCdefineRVVI_COVERAGE "+define+RVVI_COVERAGE"
+    set lst [lreplace $lst $FCoverageIndexRVVI $FCoverageIndexRVVI]
+}
+
 # if +coverage found set flag and remove from list
 set FunctCoverageIndex [lsearch -exact $lst "--fcov"]
 if {$FunctCoverageIndex >= 0} {
@@ -172,6 +185,7 @@ if {$DEBUG > 0} {
     echo "GUI = $GUI"
     echo "ccov = $ccov"
     echo "lockstep = $lockstep"
+    echo "FuncCovRVVI = $FuncCovRVVI"
     echo "FunctCoverage = $FunctCoverage"
     echo "remaining list = $lst"
     echo "Extra +args = $PlusArgs"
@@ -197,7 +211,7 @@ set temp3 [lindex $PlusArgs 3]
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
 
-vlog -lint -work ${WKDIR}  +incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared ${lockstepvoptstring} ${FCdefineIDV_INCLUDE_TRACE2COV} ${FCdefineINCLUDE_TRACE2COV} ${ImperasPubInc} ${ImperasPrivInc} ${rvviFiles} ${FCdefineCOVER_BASE_RV64I} ${FCdefineCOVER_LEVEL_DV_PR_EXT} ${FCdefineCOVER_RV64I} ${FCdefineCOVER_RV64M} ${FCdefineCOVER_RV64A} ${FCdefineCOVER_RV64F} ${FCdefineCOVER_RV64D} ${FCdefineCOVER_RV64ZICSR} ${FCdefineCOVER_RV64C}  ${idvFiles}   ${riscvISACOVsrc} ${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv  ${SRC}/*/*.sv ${SRC}/*/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
+vlog -lint -work ${WKDIR}  +incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared ${lockstepvoptstring} ${FCdefineIDV_INCLUDE_TRACE2COV} ${FCdefineINCLUDE_TRACE2COV} ${ImperasPubInc} ${ImperasPrivInc} ${rvviFiles} ${FCdefineCOVER_BASE_RV64I} ${FCdefineCOVER_LEVEL_DV_PR_EXT} ${FCdefineCOVER_RV64I} ${FCdefineCOVER_RV64M} ${FCdefineCOVER_RV64A} ${FCdefineCOVER_RV64F} ${FCdefineCOVER_RV64D} ${FCdefineCOVER_RV64ZICSR} ${FCdefineCOVER_RV64C} ${FCdefineRVVI_COVERAGE} ${idvFiles}   ${riscvISACOVsrc} ${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv  ${SRC}/*/*.sv ${SRC}/*/*/*.sv +incdir+${FCRVVI}/common +incdir+${FCRVVI} ${WALLY}/addins/verilog-ethernet/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
@@ -221,6 +235,11 @@ if { ${GUI} } {
 
 if {$FunctCoverage} {
     set UCDB ${WALLY}/sim/questa/fcov_ucdb/${CFG}_${TESTSUITE}.ucdb
+    coverage save -onexit ${UCDB}
+}
+
+if {$FuncCovRVVI} {
+    set UCDB ${WALLY}/addins/cvw-arch-verif/work/${CFG}_${TESTSUITE}.ucdb
     coverage save -onexit ${UCDB}
 }
 
