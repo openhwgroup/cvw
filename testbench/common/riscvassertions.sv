@@ -51,7 +51,7 @@ module riscvassertions import cvw::*; #(parameter cvw_t P);
     assert ((P.DCACHE_SUPPORTED == 0 & P.ICACHE_SUPPORTED == 0) | P.BUS_SUPPORTED) else $fatal(1, "Dcache and Icache requires DBUS_SUPPORTED.");
     assert (P.DCACHE_LINELENINBITS <= P.XLEN*16 | (!P.DCACHE_SUPPORTED)) else $fatal(1, "DCACHE_LINELENINBITS must not exceed 16 words because max AHB burst size is 16");
     assert (P.DCACHE_LINELENINBITS % 4 == 0) else $fatal(1, "DCACHE_LINELENINBITS must hold 4, 8, or 16 words");
-    assert (P.DCACHE_SUPPORTED | (P.A_SUPPORTED == 0)) else $fatal(1, "Atomic extension (A) requires cache on Wally.");
+    assert (P.DCACHE_SUPPORTED | (P.ZAAMO_SUPPORTED == 0 & P.ZALRSC_SUPPORTED == 0)) else $fatal(1, "Atomic extension (ZAAMO/ZALRSC) requires cache on Wally.");
     assert (P.IDIV_ON_FPU == 0 | P.F_SUPPORTED) else $fatal(1, "IDIV on FPU needs F_SUPPORTED");
     assert (P.SSTC_SUPPORTED == 0 | (P.S_SUPPORTED)) else $fatal(1, "SSTC requires S_SUPPORTED");
     assert ((P.M_SUPPORTED == 0) | (P.ZMMUL_SUPPORTED == 1)) else $fatal(1, "M requires ZMMUL");
