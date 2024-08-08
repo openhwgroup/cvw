@@ -107,7 +107,7 @@ $(IMAGES)/busybox:
 
 # Generating new Buildroot directories --------------------------------
 
-download: $(BUILDROOT)/package/fpga-axi-sdc $(WALLYBOARD)
+download: $(WALLYBOARD)
 	cp $(WALLYBOARD)/main.config $(BUILDROOT)/.config
 	@echo "Buildroot successfully download."
 

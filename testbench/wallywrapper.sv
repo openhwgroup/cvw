@@ -32,7 +32,7 @@ module wallywrapper import cvw::*;(
   input logic clk,
   input logic reset_ext,
   input logic SPIIn,
-  input logic SDCIntr
+  input logic SDCIn
 );
  
 `include "parameter-defs.vh"
@@ -56,10 +56,15 @@ module wallywrapper import cvw::*;(
   logic        UARTSin, UARTSout;
   logic        SPIOut;
   logic [3:0]  SPICS;
+  logic        SPICLK;
+
+  logic        SDCCmd;
+  logic [3:0]  SDCCS;
+  logic        SDCCLK;
 
   logic        HREADY;
   logic        HSELEXT;
-  logic        HSELEXTSDC;
+
   logic        ExternalStall;
   
   // instantiate device to be tested
@@ -72,9 +77,9 @@ module wallywrapper import cvw::*;(
 
   assign ExternalStall = '0;
 
-  wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .ExternalStall, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT, .HSELEXTSDC,
+  wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .ExternalStall, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
                         .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
                         .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
-                        .UARTSin, .UARTSout, .SPIIn, .SPIOut, .SPICS, .SDCIntr); 
+                        .UARTSin, .UARTSout, .SPIIn, .SPIOut, .SPICS, .SPICLK, .SDCIn, .SDCCmd, .SDCCS, .SDCCLK); 
 
 endmodule

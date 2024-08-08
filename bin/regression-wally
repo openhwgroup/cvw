@@ -340,6 +340,7 @@ defaultsim = "verilator"   # Default simulator for all other tests
 parser = argparse.ArgumentParser()
 parser.add_argument("--ccov", help="Code Coverage", action="store_true")
 parser.add_argument("--fcov", help="Functional Coverage", action="store_true")
+parser.add_argument("--fcovrvvi", help="Functional Coverage RVVI", action="store_true")
 parser.add_argument("--nightly", help="Run large nightly regression", action="store_true")
 parser.add_argument("--buildroot", help="Include Buildroot Linux boot test (takes many hours, done along with --nightly)", action="store_true")
 parser.add_argument("--testfloat", help="Include Testfloat floating-point unit tests", action="store_true")
@@ -357,6 +358,8 @@ if (args.ccov):  # only run RV64GC tests in coverage mode
     coverStr = '--ccov'
 elif (args.fcov):  # only run RV64GC tests in lockstep in coverage mode
     coverStr = '--fcov'
+elif (args.fcovrvvi):  # only run RV64GC tests in rvvi coverage mode
+    coverStr = '--fcovrvvi'
 else:
    coverStr = ''
 
@@ -392,6 +395,10 @@ elif (args.fcov):  # only run RV64GC tests on Questa in lockstep in functional c
     #        grepstr="SUCCESS! All tests ran without failures",
     #        grepfile = sim_log)
     #configs.append(tc)
+elif (args.fcovrvvi):  # only run RV64GC tests on Questa in rvvi coverage mode
+    addTests(tests64gc_nofp, coveragesim)
+    if (args.fp):
+        addTests(tests64gc_fp, coveragesim)
 else: 
     for sim in sims:
         if (not (args.buildroot and sim == defaultsim)):  # skip short buildroot sim if running long one
@@ -501,6 +508,9 @@ def main():
     if args.ccov:
         TIMEOUT_DUR = 20*60 # seconds
         os.system('rm -f questa/cov/*.ucdb')
+    elif args.fcovrvvi:
+        TIMEOUT_DUR = 20*60
+        os.system('rm -f questa/fcovrvvi_ucdb/* questa/fcovrvvi_logs/* questa/fcovrvvi/*')
     elif args.fcov:
         TIMEOUT_DUR = 1*60
         os.system('rm -f questa/fcov_ucdb/* questa/fcov_logs/* questa/fcov/*')
@@ -535,6 +545,8 @@ def main():
        os.system('make QuestaCodeCoverage')
     if args.fcov:
        os.system('make QuestaFunctCoverage')
+    if args.fcovrvvi:
+        os.system('make QuestaFunctCoverageRvvi')
     # Count the number of failures
     if num_fail:
         print(f"{bcolors.FAIL}Regression failed with %s failed configurations{bcolors.ENDC}" % num_fail)

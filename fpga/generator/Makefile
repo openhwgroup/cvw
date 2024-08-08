@@ -1,14 +1,14 @@
 dst := IP
 
 # vcu118
-#export XILINX_PART := xcvu9p-flga2104-2L-e
-#export XILINX_BOARD := xilinx.com:vcu118:part0:2.4
-#export board := vcu118
+# export XILINX_PART := xcvu9p-flga2104-2L-e
+# export XILINX_BOARD := xilinx.com:vcu118:part0:2.4
+# export board := vcu118
 
 # vcu108
-#export XILINX_PART := xcvu095-ffva2104-2-e
-#export XILINX_BOARD := xilinx.com:vcu108:part0:1.2
-#export board := vcu108
+# export XILINX_PART := xcvu095-ffva2104-2-e
+# export XILINX_BOARD := xilinx.com:vcu108:part0:1.7
+# export board := vcu108
 
 # Arty A7
 export XILINX_PART := xc7a100tcsg324-1
@@ -40,11 +40,11 @@ IP_Arty: $(dst)/xlnx_proc_sys_reset.log \
 	$(dst)/xlnx_ddr3-$(board).log \
 	$(dst)/xlnx_mmcm.log \
 	$(dst)/xlnx_axi_clock_converter.log \
-	$(dst)/xlnx_ahblite_axi_bridge.log \
-	$(dst)/xlnx_axi_crossbar.log \
-	$(dst)/xlnx_axi_dwidth_conv_32to64.log \
-	$(dst)/xlnx_axi_dwidth_conv_64to32.log \
-	$(dst)/xlnx_axi_prtcl_conv.log
+	$(dst)/xlnx_ahblite_axi_bridge.log
+#$(dst)/xlnx_axi_crossbar.log \
+#$(dst)/xlnx_axi_dwidth_conv_32to64.log \
+#$(dst)/xlnx_axi_dwidth_conv_64to32.log \
+#$(dst)/xlnx_axi_prtcl_conv.log
 
 
 PreProcessFiles:
@@ -61,6 +61,7 @@ PreProcessFiles:
 	# This line allows the Bootloader to be loaded in a Block RAM on the FPGA
 	sed -i "s/bit \[DATA_WIDTH-1:0\].*ROM.*/(\* rom_style=\"block\" \*) &/g" ../src/CopiedFiles_do_not_add_to_repo/generic/mem/rom1p1r.sv
 	sed -i 's/$$WALLY/\.\.\/\.\.\/\.\.\//g' ../src/CopiedFiles_do_not_add_to_repo/generic/mem/rom1p1r.sv
+	sed -i 's/$$WALLY/\.\.\/\.\.\/\.\.\//g' ../src/CopiedFiles_do_not_add_to_repo/generic/mem/ram1p1rwbe.sv
 
 $(dst)/%.log: %.tcl
 	mkdir -p IP
