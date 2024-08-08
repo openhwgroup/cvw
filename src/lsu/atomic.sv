@@ -49,14 +49,14 @@ module atomic import cvw::*;  #(parameter cvw_t P) (
   logic                       MemReadM;
 
   // AMO ALU
-  if (P.A_SUPPORTED | P.ZAAMO_SUPPORTED) begin
+  if (P.ZAAMO_SUPPORTED) begin
     amoalu #(P) amoalu(.ReadDataM, .IHWriteDataM, .LSUFunct7M, .LSUFunct3M, .AMOResultM);
     mux2 #(P.XLEN) wdmux(IHWriteDataM, AMOResultM, LSUAtomicM[1], IMAWriteDataM);
   end else 
     assign IMAWriteDataM = IHWriteDataM;
   
   // LRSC unit
-  if (P.A_SUPPORTED | P.ZALRSC_SUPPORTED) begin
+  if (P.ZALRSC_SUPPORTED) begin
     assign MemReadM = PreLSURWM[1] & ~IgnoreRequest;
     lrsc #(P) lrsc(.clk, .reset, .StallW, .MemReadM, .PreLSURWM, .LSUAtomicM, .PAdrM, .SquashSCW, .LSURWM);
   end else begin
