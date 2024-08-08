@@ -33,6 +33,11 @@
     `include "idv/idv.svh"
 `endif
 
+`ifdef RVVI_COVERAGE
+    `include "RISCV_trace_data.svh"
+    `include "rvvicov.svh"
+    `include "wrapper.sv"
+`endif
 
 import cvw::*;
 
@@ -44,6 +49,7 @@ module testbench;
   parameter BPRED_LOGGER=0;
   parameter I_CACHE_ADDR_LOGGER=0;
   parameter D_CACHE_ADDR_LOGGER=0;
+  parameter RVVI_SYNTH_SUPPORTED=0;
   
   `ifdef USE_IMPERAS_DV
     import idvPkg::*;
@@ -76,8 +82,7 @@ module testbench;
 
   // DUT signals
   logic [P.AHBW-1:0]    HRDATAEXT;
-  logic                 HREADYEXT, HRESPEXT;
-  logic                 HSELEXTSDC;
+  logic                 HREADYEXT, HRESPEXT; 
   logic [P.PA_BITS-1:0] HADDR;
   logic [P.AHBW-1:0]    HWDATA;
   logic [P.XLEN/8-1:0]  HWSTRB;
@@ -93,7 +98,11 @@ module testbench;
   logic        UARTSin, UARTSout;
   logic        SPIIn, SPIOut;
   logic [3:0]  SPICS;
-  logic        SDCIntr;
+  logic        SPICLK;
+  logic        SDCCmd;
+  logic        SDCIn;
+  logic [3:0]  SDCCS;
+  logic        SDCCLK;        
 
   logic        HREADY;
   logic        HSELEXT;
@@ -114,6 +123,7 @@ module testbench;
   logic SelectTest;
   logic TestComplete;
   logic PrevPCZero;
+  logic RVVIStall;
 
   initial begin
     // look for arguments passed to simulation, or use defaults
@@ -371,6 +381,11 @@ module testbench;
         uartoutfile = $fopen(uartoutfilename, "w"); // delete UART output file
         ProgramAddrMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.addr"};
         ProgramLabelMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.lab"};
+      end else if(TEST == "fpga") begin
+        bootmemfilename = {WALLY_DIR, "/fpga/src/boot.mem"};
+        memfilename = {WALLY_DIR, "/fpga/src/data.mem"};
+        ProgramAddrMapFile = {WALLY_DIR, "/fpga/zsbl/bin/boot.objdump.addr"};
+        ProgramLabelMapFile = {WALLY_DIR, "/fpga/zsbl/bin/boot.objdump.lab"};
       end else if(ElfFile != "none") begin
         elffilename = ElfFile;
         memfilename = {ElfFile, ".memfile"};
@@ -462,7 +477,7 @@ module testbench;
   integer StartIndex;
   integer EndIndex;
   integer BaseIndex;
-  integer memFile;
+  integer memFile, uncoreMemFile;
   integer readResult;
   if (P.SDC_SUPPORTED) begin
     always @(posedge clk) begin
@@ -505,8 +520,33 @@ module testbench;
           end
           readResult = $fread(dut.uncoregen.uncore.ram.ram.memory.ram.RAM, memFile);
           $fclose(memFile);
-        end else 
-          $readmemh(memfilename, dut.uncoregen.uncore.ram.ram.memory.ram.RAM);
+        end else if (TEST == "fpga") begin
+          memFile = $fopen(bootmemfilename, "rb");
+          if (memFile == 0) begin
+            $display("Error: Could not open file %s", memfilename);
+            $finish;
+          end
+          if (P.BOOTROM_SUPPORTED) begin
+            readResult = $fread(dut.uncoregen.uncore.bootrom.bootrom.memory.ROM, memFile);
+          end
+          $fclose(memFile);
+          memFile = $fopen(memfilename, "rb");
+          if (memFile == 0) begin
+            $display("Error: Could not open file %s", memfilename);
+            $finish;
+          end
+          readResult = $fread(dut.uncoregen.uncore.ram.ram.memory.ram.RAM, memFile);
+          $fclose(memFile);
+        end else begin
+          uncoreMemFile = $fopen(memfilename, "r");  // Is there a better way to test if a file exists?
+          if (uncoreMemFile == 0) begin
+            $display("Error: Could not open file %s", memfilename);
+            $finish;
+          end else begin
+            $fclose(uncoreMemFile);
+            $readmemh(memfilename, dut.uncoregen.uncore.ram.ram.memory.ram.RAM);
+          end
+        end
         if (TEST == "embench") $display("Read memfile %s", memfilename);
       end
       if (CopyRAM) begin
@@ -576,20 +616,37 @@ module testbench;
     assign SDCDat = sd_dat_reg_t ? sd_dat_reg_o : sd_dat_i;
     assign SDCDatIn = SDCDat;
     -----/\----- EXCLUDED -----/\----- */
-    assign SDCIntr = 1'b0;
   end else begin
-    assign SDCIntr = 1'b0;
+    assign SDCIn = 1'b1;
+    
   end
 
-  wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
+  wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .ExternalStall(RVVIStall), 
+    .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT,
     .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
-    .UARTSin, .UARTSout, .SDCIntr, .SPIIn, .SPIOut, .SPICS); 
+    .UARTSin, .UARTSout, .SPIIn, .SPIOut, .SPICS, .SPICLK, .SDCIn, .SDCCmd, .SDCCS, .SDCCLK); 
 
   // generate clock to sequence tests
   always begin
     clk = 1'b1; # 5; clk = 1'b0; # 5;
   end
+
+  if(RVVI_SYNTH_SUPPORTED) begin : rvvi_synth
+    localparam MAX_CSRS = 5;
+    localparam logic [31:0] RVVI_INIT_TIME_OUT = 32'd4;
+    localparam logic [31:0] RVVI_PACKET_DELAY = 32'd2;
+
+    logic [3:0]                                       mii_txd;
+    logic                                             mii_tx_en, mii_tx_er;
+
+    rvvitbwrapper #(P, MAX_CSRS, RVVI_INIT_TIME_OUT, RVVI_PACKET_DELAY) 
+    rvvitbwrapper(.clk, .reset, .RVVIStall, .mii_tx_clk(clk), .mii_txd, .mii_tx_en, .mii_tx_er,
+                  .mii_rx_clk(clk), .mii_rxd('0), .mii_rx_dv('0), .mii_rx_er('0));
+  end else begin
+    assign RVVIStall = '0;
+  end
+  
 
   /*
   // Print key info  each cycle for debugging
@@ -930,6 +987,12 @@ test_pmp_coverage #(P) pmp_inst(clk);
 `endif
   /* verilator lint_on WIDTHTRUNC */
   /* verilator lint_on WIDTHEXPAND */
+
+`ifdef RVVI_COVERAGE
+    rvviTrace #(.XLEN(P.XLEN), .FLEN(P.FLEN)) rvvi();
+    wallyTracer #(P) wallyTracer(rvvi);
+    wrapper #(P) wrap(clk);
+`endif
 
 endmodule
 

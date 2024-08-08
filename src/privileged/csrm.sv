@@ -57,6 +57,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]               MISA_REGW, MHARTID_REGW;
   logic [P.XLEN-1:0]               MSCRATCH_REGW, MTVAL_REGW, MCAUSE_REGW;
   logic [P.XLEN-1:0]               MENVCFGH_REGW;
+  logic [P.XLEN-1:0]               TVECWriteValM;
   logic                            WriteMTVECM, WriteMEDELEGM, WriteMIDELEGM;
   logic                            WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
   logic                            WriteMCOUNTERENM, WriteMCOUNTINHIBITM;
@@ -105,7 +106,10 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   genvar i;
   if (P.PMP_ENTRIES > 0) begin:pmp
     logic [P.PMP_ENTRIES-1:0] WritePMPCFGM;
-    logic [P.PMP_ENTRIES-1:0] WritePMPADDRM ; 
+    logic [P.PMP_ENTRIES-1:0] WritePMPADDRM; 
+    logic [7:0]               CSRPMPWriteValM[P.PMP_ENTRIES-1:0];
+    logic [7:0]               CSRPMPLegalizedWriteValM[P.PMP_ENTRIES-1:0];
+    logic [1:0]               CSRPMPWRLegalizedWriteValM[P.PMP_ENTRIES-1:0]; 
     logic [P.PMP_ENTRIES-1:0] ADDRLocked, CFGLocked;
     for(i=0; i<P.PMP_ENTRIES; i++) begin
       // when the lock bit is set, don't allow writes to the PMPCFG or PMPADDR
@@ -120,11 +124,15 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
       flopenr #(P.PA_BITS-2) PMPADDRreg(clk, reset, WritePMPADDRM[i], CSRWriteValM[P.PA_BITS-3:0], PMPADDR_ARRAY_REGW[i]);
       if (P.XLEN==64) begin
         assign WritePMPCFGM[i] = (CSRMWriteM & (CSRAdrM == (PMPCFG0+2*(i/8)))) & ~CFGLocked[i];
-        flopenr #(8) PMPCFGreg(clk, reset, WritePMPCFGM[i], CSRWriteValM[(i%8)*8+7:(i%8)*8], PMPCFG_ARRAY_REGW[i]);
+        assign CSRPMPWriteValM[i] = CSRWriteValM[(i%8)*8+7:(i%8)*8];
       end else begin
         assign WritePMPCFGM[i]  = (CSRMWriteM & (CSRAdrM == (PMPCFG0+i/4))) & ~CFGLocked[i];
-        flopenr #(8) PMPCFGreg(clk, reset, WritePMPCFGM[i], CSRWriteValM[(i%4)*8+7:(i%4)*8], PMPCFG_ARRAY_REGW[i]);
+        assign CSRPMPWriteValM[i] = CSRWriteValM[(i%4)*8+7:(i%4)*8];
       end
+
+      assign CSRPMPWRLegalizedWriteValM[i] = {(CSRPMPWriteValM[i][1] & CSRPMPWriteValM[i][0]), CSRPMPWriteValM[i][0]}; // legalize WR fields (reserved 10 written as 00)
+      assign CSRPMPLegalizedWriteValM[i] = {CSRPMPWriteValM[i][7], 2'b00, CSRPMPWriteValM[i][4:2], CSRPMPWRLegalizedWriteValM[i]};
+      flopenr #(8) PMPCFGreg(clk, reset, WritePMPCFGM[i], CSRPMPWriteValM[i], PMPCFG_ARRAY_REGW[i]);
     end
   end
 
@@ -152,7 +160,8 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   assign IllegalCSRMWriteReadonlyM = UngatedCSRMWriteM & (CSRAdrM == MVENDORID | CSRAdrM == MARCHID | CSRAdrM == MIMPID | CSRAdrM == MHARTID | CSRAdrM == MCONFIGPTR);
 
   // CSRs
-  flopenr #(P.XLEN) MTVECreg(clk, reset, WriteMTVECM, {CSRWriteValM[P.XLEN-1:2], 1'b0, CSRWriteValM[0]}, MTVEC_REGW); 
+  assign TVECWriteValM = CSRWriteValM[0] ? {CSRWriteValM[P.XLEN-1:6], 6'b000001} : {CSRWriteValM[P.XLEN-1:2], 2'b00};
+  flopenr #(P.XLEN) MTVECreg(clk, reset, WriteMTVECM, TVECWriteValM, MTVEC_REGW); 
   if (P.S_SUPPORTED) begin:deleg // DELEG registers should exist
     flopenr #(16) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM[15:0] & MEDELEG_MASK, MEDELEG_REGW);
     flopenr #(12) MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM[11:0] & MIDELEG_MASK, MIDELEG_REGW);

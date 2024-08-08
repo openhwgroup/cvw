@@ -102,7 +102,7 @@ $(IMAGES)/busybox:
 # Generating new Buildroot directories --------------------------------
 
 # This directive should be run as: make install BUILDROOT=path/to/buildroot
-download: $(BUILDROOT)/package/fpga-axi-sdc $(WALLYBOARD)
+download: $(WALLYBOARD)
 	cp $(WALLYBOARD)/main.config $(BUILDROOT)/.config
 
 # CONFIG DEPENDENCIES 2023.05.1 ---------------------------------------
