@@ -59,14 +59,14 @@ module testbench;
 
   `ifdef VERILATOR
       import "DPI-C" function string getenvval(input string env_name);
-      string       RISCV_DIR = getenvval("RISCV"); // "/opt/riscv";
+      string       RISCV_DIR = getenvval("RISCV");
       string       WALLY_DIR = getenvval("WALLY"); // ~/cvw typical
   `elsif VCS
       import "DPI-C" function string getenv(input string env_name);
-      string       RISCV_DIR = getenv("RISCV"); // "/opt/riscv";
+      string       RISCV_DIR = getenv("RISCV");
       string       WALLY_DIR = getenv("WALLY"); 
   `else
-      string       RISCV_DIR = "$RISCV"; // "/opt/riscv";
+      string       RISCV_DIR = "$RISCV";
       string       WALLY_DIR = "$WALLY";
   `endif
 

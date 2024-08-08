@@ -14,23 +14,33 @@
 echo "Executing Wally setup.sh"
 
 # Path to RISC-V Tools
-export RISCV=/opt/riscv   # change this if you installed the tools in a different location
+if [ -d /opt/riscv ]; then
+    export RISCV=/opt/riscv
+elif [ -d ~/riscv ]; then
+    export RISCV=~/riscv
+else
+    # set the $RISCV directory here and remove the subsequent two lines
+    # export RISCV=
+    echo "\$RISCV directory not found. Checked /opt/riscv and ~/riscv. Edit setup.sh to point to your custom \$RISCV directory."
+    exit 1
+fi
+echo \$RISCV set to "${RISCV}"
 
 # Path to Wally repository
-WALLY=$(dirname ${BASH_SOURCE[0]:-$0})
+WALLY=$(dirname "${BASH_SOURCE[0]:-$0}")
 export WALLY=$(cd "$WALLY" && pwd)
-echo \$WALLY set to ${WALLY}
+echo \$WALLY set to "${WALLY}"
 # utility functions in Wally repository
-export PATH=$WALLY/bin:$PATH    
+export PATH=$WALLY/bin:$PATH
 
-# Verilator needs a larger stack to simulate CORE-V Wally
-ulimit -c 234613
+# Verilator needs a larger core file size to simulate CORE-V Wally
+ulimit -c 300000
 
 # load site licenses and tool locations
-if [ -f ${RISCV}/site-setup.sh ]; then
-    source ${RISCV}/site-setup.sh
+if [ -e "${RISCV}"/site-setup.sh ]; then
+    source "${RISCV}"/site-setup.sh
 else
-    source ${WALLY}/site-setup.sh
+    echo "site-setup.sh not found in \$RISCV directory. Rerun wally-toolchain-install.sh to automatically download it."
 fi
 
 echo "setup done"

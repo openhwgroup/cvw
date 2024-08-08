@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # 
 # disassembleBootTrace.py
 # David_Harris@hmc.edu 22 November 2023

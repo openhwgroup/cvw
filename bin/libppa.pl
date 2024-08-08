@@ -1,4 +1,4 @@
-#!/bin/perl -W
+#!/usr/bin/env -S perl -w
 
 ###########################################
 ## libppa.pl
@@ -43,7 +43,7 @@ my @cr; my @cf; my @rt; my @ft;
 my $libpath; my $libbase; my $cellname; my @corners;
 
 # Sky130
-$libpath ="/opt/riscv/cad/lib/sky130_osu_sc_t12/12T_ms/lib";
+$libpath ="$ENV{RISCV}/cad/lib/sky130_osu_sc_t12/12T_ms/lib";
 $libbase = "sky130_osu_sc_12T_ms_";
 $cellname = "sky130_osu_sc_12T_ms__inv_1";
 @corners = ("TT_1P8_25C.ccs", "tt_1P80_25C.ccs", "tt_1P62_25C.ccs", "tt_1P89_25C.ccs", "ss_1P60_-40C.ccs", "ss_1P60_100C.ccs", "ss_1P60_150C.ccs", "ff_1P95_-40C.ccs", "ff_1P95_100C.ccs", "ff_1P95_150C.ccs");
@@ -53,7 +53,7 @@ foreach my $corner (@corners) {
 }
 
 # Sky90
-$libpath ="/opt/riscv/cad/lib/sky90/sky90_sc/V1.7.4/lib";
+$libpath ="$ENV{RISCV}/cad/lib/sky90/sky90_sc/V1.7.4/lib";
 $libbase = "scc9gena_";
 $cellname = "scc9gena_inv_1";
 @corners = ("tt_1.2v_25C", "tt_1.08v_25C", "tt_1.32v_25C", "tt_1.2v_-40C", "tt_1.2v_85C", "tt_1.2v_125C", "ss_1.2v_25C", "ss_1.08v_-40C", "ss_1.08v_25C", "ss_1.08v_125C", "ff_1.2v_25C", "ff_1.32v_-40C", "ff_1.32v_25C", "ff_1.32v_125C");

@@ -10,43 +10,51 @@
 # license servers and commercial CAD tool paths
 # Must edit these based on your local environment.
 export MGLS_LICENSE_FILE=27002@zircon.eng.hmc.edu                   # Change this to your Siemens license server for Questa
-export SNPSLMD_LICENSE_FILE=27020@zircon.eng.hmc.edu                # Change this to your Synopsys license server for Design Compiler
+export SNPSLMD_LICENSE_FILE=27020@zircon.eng.hmc.edu                # Change this to your Synopsys license server
 export QUESTA_HOME=/cad/mentor/questa_sim-2023.4/questasim          # Change this for your path to Questa, excluding bin
 export DC_HOME=/cad/synopsys/SYN                                    # Change this for your path to Synopsys Design Compiler, excluding bin
-export VCS_HOME=/cad/synopsys/vcs/U-2023.03-SP2-4                   # Change this for your path to Synopsys VCS, exccluding bin
+export VCS_HOME=/cad/synopsys/vcs/U-2023.03-SP2-4                   # Change this for your path to Synopsys VCS, excluding bin
 
 # Tools
 # Questa and Synopsys
 export PATH=$QUESTA_HOME/bin:$DC_HOME/bin:$VCS_HOME/bin:$PATH
 
 # GCC
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$RISCV/riscv-gnu-toolchain/lib:$RISCV/riscv-gnu-toolchain/riscv64-unknown-elf/lib
+if [ -z "$LD_LIBRARY_PATH" ]; then
+    export LD_LIBRARY_PATH=$RISCV/riscv64-unknown-elf/lib
+else
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$RISCV/riscv64-unknown-elf/lib
+fi
 
-# Spike
-export LD_LIBRARY_PATH=$RISCV/lib:$LD_LIBRARY_PATH
+# RISC-V Tools
+export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$LD_LIBRARY_PATH:$RISCV/lib/x86_64-linux-gnu/
 export PATH=$PATH:$RISCV/bin
 
-# Verilator
-export PATH=/usr/local/bin/verilator:$PATH # Change this for your path to Verilator
+# Activate riscv-python Virtual Environment
+if [ -e "$RISCV"/riscv-python/bin/activate ]; then
+    source "$RISCV"/riscv-python/bin/activate
+else
+    echo "Python virtual environment not found. Rerun wally-toolchain-install.sh to automatically create it."
+    exit 1
+fi
 
-# environment variables needed for RISCV-DV
-export RISCV_GCC=`which riscv64-unknown-elf-gcc`		            # Copy this as it is
-export RISCV_OBJCOPY=`which riscv64-unknown-elf-objcopy`	        # Copy this as it is
-export SPIKE_PATH=/usr/bin											# Change this for your path to riscv-isa-sim (spike)
+# Environment variables needed for RISCV-DV
+export RISCV_GCC=$(which riscv64-unknown-elf-gcc)		            # Copy this as it is
+export RISCV_OBJCOPY=$(which riscv64-unknown-elf-objcopy)	        # Copy this as it is
+export SPIKE_PATH=$RISCV/bin										# Copy this as it is
 
 # Imperas OVPsim; put this in if you are using it
-#export PATH=$RISCV/imperas-riscv-tests/riscv-ovpsim-plus/bin/Linux64:$PATH  
+#export PATH=$RISCV/imperas-riscv-tests/riscv-ovpsim-plus/bin/Linux64:$PATH
 #export LD_LIBRARY_PATH=$RISCV/imperas_riscv_tests/riscv-ovpsim-plus/bin/Linux64:$LD_LIBRARY_PATH
 
+# Imperas DV setup
 export IDV=$RISCV/ImperasDV-OpenHW
 if [ -e "$IDV" ]; then
-#    echo "Imperas exists"
+    # echo "Imperas exists"
     export IMPERAS_HOME=$IDV/Imperas
     export IMPERAS_PERSONALITY=CPUMAN_DV_ASYNC
     export ROOTDIR=~/
-    source ${IMPERAS_HOME}/bin/setup.sh
-    setupImperas ${IMPERAS_HOME}
+    source "${IMPERAS_HOME}"/bin/setup.sh
+    setupImperas "${IMPERAS_HOME}"
     export PATH=$IDV/scripts/cvw:$PATH
 fi
-
-

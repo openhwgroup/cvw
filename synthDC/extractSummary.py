@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # Madeleine Masser-Frye (mmmasserfrye@hmc.edu) 06/2022
 from collections import namedtuple
 import re

@@ -1,4 +1,4 @@
-#!/bin/perl -W
+#!/usr/bin/env -S perl -w
 
 ###########################################
 ## extractArea.pl
