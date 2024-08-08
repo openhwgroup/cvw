@@ -35,5 +35,5 @@
 	path = addins/verilog-ethernet
 	url = https://github.com/ross144/verilog-ethernet.git
 [submodule "cvw-arch-verif"]
-	path = cvw-arch-verif
+	path = addins/cvw-arch-verif
 	url = https://github.com/openhwgroup/cvw-arch-verif
