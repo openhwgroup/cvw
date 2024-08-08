@@ -140,9 +140,18 @@ jobs:
 
 
   custom_location_install:
-    name: Test installation with custom location
+    name: Test installation with custom location ${{ matrix.path }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        path: ["/home/riscv"]
     steps:
+      - name: Unique name for Artifacts
+        id: prep_artifact_name
+        run: |
+              name=$(echo -n "${{ matrix.os }}" | sed -e 's/[ \t:\/\\"<>|*?]/-/g' -e 's/--*/-/g')
+              echo "ARTIFACT_NAME=$name" >> $GITHUB_ENV
       - uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -152,15 +161,15 @@ jobs:
               ./.github/cli-space-cleanup.sh
               df -h
       - name: install
-        run: sudo ./bin/wally-tool-chain-install.sh --clean /home/riscv
+        run: sudo ./bin/wally-tool-chain-install.sh --clean ${{ matrix.path }}
       - name: Upload instalation logs
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: installation-logs-custom-location-install
-          path: /home/riscv/logs/
+          name: installation-logs-custom-location-install-${{ env.ARTIFACT_NAME }}
+          path: ${{ matrix.path }}/logs/
       - name: Update setup.sh with new $RISCV location
-        run: sed -i 's,/opt/riscv,/home/riscv,g' setup.sh
+        run: sed -i 's,exit 1,export RISCV=${{ matrix.path }},g' setup.sh
       - name: make tests
         run: |
               source setup.sh
@@ -174,5 +183,5 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: installation-logs-${{ env.ARTIFACT_NAME }}
-          path: /opt/riscv/logs/
+          name: regression-logs-custom-location-install-${{ env.ARTIFACT_NAME }}
+          path: ${{ github.workspace }}/sim/verilator/logs/
