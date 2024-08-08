@@ -296,7 +296,6 @@ typedef struct packed {
   int DIVBLEN    ;
 // integer division/remainder constants
   int INTDIVb    ;
-  
 } cvw_t;
 
 endpackage

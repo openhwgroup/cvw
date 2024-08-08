@@ -7,3 +7,4 @@ lsu/lsu.sv: logic        PAdrM
 lsu/lsu.sv: logic        ReadDataM
 lsu/lsu.sv: logic        WriteDataM
 lsu/lsu.sv: logic       MemRWM
+privileged/csrc.sv: logic      HPMCOUNTER_REGW

@@ -32,13 +32,15 @@ module decompress import cvw::*;  #(parameter cvw_t P) (
   output logic [31:0] InstrD,            // Decompressed instruction
   output logic        IllegalCompInstrD  // Invalid decompressed instruction
 );
-                        
+
+  logic [32:0]        LInstrD; // decompressed instruction with illegal flag in [32]                      
   logic [15:0]        instr16;
   logic [4:0]         rds1, rs2, rs1p, rs2p, rds1p, rdp;
   logic [11:0]        immCILSP, immCILSPD, immCSS, immCSSD, immCL, immCLD, immCI, immCS, immCSD, immCB, immCIASP, immCIW;
   logic [19:0]        immCJ, immCILUI;
   logic [5:0]         immSH;
   logic [1:0]         op;
+  logic               LegalCompInstrD;   
     
   // Extract op and register source/destination fields
   assign instr16 = InstrRawD[15:0]; // instruction is already aligned
@@ -62,10 +64,10 @@ module decompress import cvw::*;  #(parameter cvw_t P) (
   assign immCJ = {instr16[12], instr16[8], instr16[10:9], instr16[6], instr16[7], instr16[2], instr16[11], instr16[5:3], {9{instr16[12]}}};
   assign immCB = {{4{instr16[12]}}, instr16[6:5], instr16[2], instr16[11:10], instr16[4:3], instr16[12]};
   assign immCI = {{7{instr16[12]}}, instr16[6:2]};
-  assign immCILUI = {{15{instr16[12]}}, instr16[6:2]};
-  assign immCIASP = {{3{instr16[12]}}, instr16[4:3], instr16[5], instr16[2], instr16[6], 4'b0000};
+  assign immCILUI = {{15{instr16[12]}}, instr16[6:2]};                                                    // c.lui
+  assign immCIASP = {{3{instr16[12]}}, instr16[4:3], instr16[5], instr16[2], instr16[6], 4'b0000};        // c.addi16sp
   assign immCIW = {2'b00, instr16[10:7], instr16[12:11], instr16[5], instr16[6], 2'b00};
-  assign immSH = {instr16[12], instr16[6:2]};
+  assign immSH = {instr16[12], instr16[6:2]};                                                             // c. shift instructions: c.srli, c.srai, c.slli
 
 // only for RV128  
 //      assign immCILSPQ = {2{instr16[5]}, instr16[5:2], instr16[12], instr16[6], 4'b0000};
@@ -75,173 +77,110 @@ module decompress import cvw::*;  #(parameter cvw_t P) (
 
   always_comb
     if (op == 2'b11) begin // noncompressed instruction
-      InstrD = InstrRawD; 
-      IllegalCompInstrD = '0;
+      LInstrD = {1'b1, InstrRawD}; 
     end else begin  // convert compressed instruction into uncompressed
-      IllegalCompInstrD = '0;
+      LInstrD = {1'b0, 16'b0, instr16}; // if a legal instruction is not decoded, default to illegal and preserve 16-bit value for mtval
       case ({op, instr16[15:13]})
-        5'b00000: if (immCIW != 0) InstrD = {immCIW, 5'b00010, 3'b000, rdp, 7'b0010011}; // c.addi4spn
-                  else begin // illegal instruction
-                    IllegalCompInstrD = 1'b1;
-                    InstrD = {16'b0, instr16}; // preserve instruction for mtval on trap
-                  end
-        5'b00001: if (P.ZCD_SUPPORTED)
-                    InstrD = {immCLD, rs1p, 3'b011, rdp, 7'b0000111}; // c.fld
-                  else begin // unsupported instruction
-                    IllegalCompInstrD = 1'b1;
-                    InstrD = {16'b0, instr16}; // preserve instruction for mtval on trap
-                  end
-        5'b00010: InstrD = {immCL, rs1p, 3'b010, rdp, 7'b0000011}; // c.lw
-        5'b00011: if (P.XLEN==32)
-                    if (P.ZCF_SUPPORTED) 
-                      InstrD = {immCL, rs1p, 3'b010, rdp, 7'b0000111}; // c.flw
-                    else begin
-                      IllegalCompInstrD = 1'b1;
-                      InstrD = {16'b0, instr16}; // preserve instruction for mtval on trap
-                    end
-                  else
-                    InstrD = {immCLD, rs1p, 3'b011, rdp, 7'b0000011}; // c.ld;
+        5'b00000: if (immCIW != 0)                      LInstrD = {1'b1, immCIW, 5'b00010, 3'b000, rdp, 7'b0010011};                      // c.addi4spn
+        5'b00001: if (P.ZCD_SUPPORTED)                  LInstrD = {1'b1, immCLD, rs1p, 3'b011, rdp, 7'b0000111};                          // c.fld
+        5'b00010:                                       LInstrD = {1'b1, immCL, rs1p, 3'b010, rdp, 7'b0000011};                           // c.lw
+        5'b00011: if (P.XLEN==32) begin
+                    if (P.ZCF_SUPPORTED)                LInstrD = {1'b1, immCL, rs1p, 3'b010, rdp, 7'b0000111};                           // c.flw
+                  end else                              LInstrD = {1'b1, immCLD, rs1p, 3'b011, rdp, 7'b0000011};                          // c.ld
         5'b00100: if (P.ZCB_SUPPORTED) 
-                    if (instr16[12:10] == 3'b000) 
-                      InstrD = {10'b0, instr16[5], instr16[6], rs1p, 3'b100, rdp, 7'b0000011}; // c.lbu
+                    if (instr16[12:10] == 3'b000)       LInstrD = {1'b1, 10'b0, instr16[5], instr16[6], rs1p, 3'b100, rdp, 7'b0000011};   // c.lbu
                     else if (instr16[12:10] == 3'b001) begin
-                      if (instr16[6]) 
-                        InstrD = {10'b0, instr16[5], 1'b0, rs1p, 3'b001, rdp, 7'b0000011}; // c.lh
-                      else
-                        InstrD = {10'b0, instr16[5], 1'b0, rs1p, 3'b101, rdp, 7'b0000011}; // c.lhu
+                      if (instr16[6])                   LInstrD = {1'b1, 10'b0, instr16[5], 1'b0, rs1p, 3'b001, rdp, 7'b0000011};         // c.lh
+                      else                              LInstrD = {1'b1, 10'b0, instr16[5], 1'b0, rs1p, 3'b101, rdp, 7'b0000011};         // c.lhu
                     end else if (instr16[12:10] == 3'b010)
-                      InstrD = {7'b0, rs2p, rs1p, 3'b000, 3'b000, instr16[5], instr16[6], 7'b0100011}; // c.sb 
+                                                        LInstrD = {1'b1, 7'b0, rs2p, rs1p, 3'b000, 3'b000, instr16[5], instr16[6], 7'b0100011}; // c.sb 
                     else if (instr16[12:10] == 3'b011 & instr16[6] == 1'b0)
-                      InstrD = {7'b0, rs2p, rs1p, 3'b001, 3'b000, instr16[5], 1'b0, 7'b0100011}; // c.sh
-                    else begin
-                      IllegalCompInstrD = 1'b1;
-                      InstrD = {16'b0, instr16}; // preserve instruction for mtval on trap
-                    end
-                 else begin
-                    IllegalCompInstrD = 1'b1;
-                    InstrD = {16'b0, instr16}; // preserve instruction for mtval on trap
-                  end
-        5'b00101: if (P.ZCD_SUPPORTED)
-                    InstrD = {immCSD[11:5], rs2p, rs1p, 3'b011, immCSD[4:0], 7'b0100111}; // c.fsd
-                  else begin // unsupported instruction
-                    IllegalCompInstrD = 1'b1;
-                    InstrD = {16'b0, instr16}; // preserve instruction for mtval on trap
-                  end
-        5'b00110: InstrD = {immCS[11:5], rs2p, rs1p, 3'b010, immCS[4:0], 7'b0100011}; // c.sw
-        5'b00111: if (P.XLEN==32)
-                    if (P.ZCF_SUPPORTED) 
-                      InstrD = {immCS[11:5], rs2p, rs1p, 3'b010, immCS[4:0], 7'b0100111}; // c.fsw
-                    else begin
-                      IllegalCompInstrD = 1'b1;
-                      InstrD = {16'b0, instr16}; // preserve instruction for mtval on trap
-                    end
-                  else
-                    InstrD = {immCSD[11:5], rs2p, rs1p, 3'b011, immCSD[4:0], 7'b0100011}; //c.sd
-        5'b01000: InstrD = {immCI, rds1, 3'b000, rds1, 7'b0010011}; // c.addi
-        5'b01001: if (P.XLEN==32) 
-                    InstrD = {immCJ, 5'b00001, 7'b1101111}; // c.jal
-                  else
-                    InstrD = {immCI, rds1, 3'b000, rds1, 7'b0011011}; // c.addiw
-        5'b01010: InstrD = {immCI, 5'b00000, 3'b000, rds1, 7'b0010011}; // c.li
-        5'b01011: if (rds1 != 5'b00010)
-                    InstrD = {immCILUI, rds1, 7'b0110111}; // c.lui
-                  else 
-                    InstrD = {immCIASP, rds1, 3'b000, rds1, 7'b0010011}; // c.addi16sp
-        5'b01100: if (instr16[11:10] == 2'b00)
-                    InstrD = {6'b000000, immSH, rds1p, 3'b101, rds1p, 7'b0010011}; // c.srli
-                  else if (instr16[11:10] == 2'b01)
-                    InstrD = {6'b010000, immSH, rds1p, 3'b101, rds1p, 7'b0010011}; // c.srai
-                  else if (instr16[11:10] == 2'b10) 
-                    InstrD = {immCI, rds1p, 3'b111, rds1p, 7'b0010011}; // c.andi
-                  else if (instr16[12:10] == 3'b011)
-                    if (instr16[6:5] == 2'b00) 
-                      InstrD = {7'b0100000, rs2p, rds1p, 3'b000, rds1p, 7'b0110011}; // c.sub
-                    else if (instr16[6:5] == 2'b01) 
-                      InstrD = {7'b0000000, rs2p, rds1p, 3'b100, rds1p, 7'b0110011}; // c.xor
-                    else if (instr16[6:5] == 2'b10) 
-                      InstrD = {7'b0000000, rs2p, rds1p, 3'b110, rds1p, 7'b0110011}; // c.or
-                    else // if (instr16[6:5] == 2'b11) 
-                      InstrD = {7'b0000000, rs2p, rds1p, 3'b111, rds1p, 7'b0110011}; // c.and
-                  else begin // (instr16[12:10] == 3'b111)
+                                                        LInstrD = {1'b1, 7'b0, rs2p, rs1p, 3'b001, 3'b000, instr16[5], 1'b0, 7'b0100011}; // c.sh
+        5'b00101: if (P.ZCD_SUPPORTED)                  LInstrD = {1'b1, immCSD[11:5], rs2p, rs1p, 3'b011, immCSD[4:0], 7'b0100111};      // c.fsd
+        5'b00110:                                       LInstrD = {1'b1, immCS[11:5], rs2p, rs1p, 3'b010, immCS[4:0], 7'b0100011};        // c.sw
+        5'b00111: if (P.XLEN==32) begin
+                    if (P.ZCF_SUPPORTED)                LInstrD = {1'b1, immCS[11:5], rs2p, rs1p, 3'b010, immCS[4:0], 7'b0100111};        // c.fsw
+                  end else                              LInstrD = {1'b1, immCSD[11:5], rs2p, rs1p, 3'b011, immCSD[4:0], 7'b0100011};      // c.sd
+        5'b01000: if (rds1 != 5'b0) 
+                    if (immCI[5:0] != 0)                LInstrD = {1'b1, immCI, rds1, 3'b000, rds1, 7'b0010011};                          // c.addi 
+                    else                                LInstrD = {1'b1, 25'b0, 7'b0010011};                                              // c.addi with imm = 0 is a HINT, treated as nop
+                  else if (immCI[5:0] == 6'b0)          LInstrD = {1'b1, 25'b0, 7'b0010011};                                              // c.nop = addi x0, x0, 0
+                  else                                  LInstrD = {1'b1, 25'b0, 7'b0010011};                                              // c.nop with imm != 0 is a HINT, treated as nop
+        5'b01001: if (P.XLEN==32)                       LInstrD = {1'b1, immCJ, 5'b00001, 7'b1101111};                                    // c.jal
+                  else if (rds1 != 5'b0)                LInstrD = {1'b1, immCI, rds1, 3'b000, rds1, 7'b0011011};                          // c.addiw
+        5'b01010: if (rds1 != 5'b0)                     LInstrD = {1'b1, immCI, 5'b00000, 3'b000, rds1, 7'b0010011};                      // c.li
+                  else                                  LInstrD = {1'b1, 25'b0, 7'b0010011};                                              // c.li with rd = 0 is a HINT, treated as nop
+        5'b01011: if (rds1 == 5'b00010) begin                
+                     if (immCIASP[9:4] != 6'b0)         LInstrD = {1'b1, immCIASP, rds1, 3'b000, rds1, 7'b0010011};                       // c.addi16sp
+                  end else if (immCILUI[5:0] != 0) 
+                    if (rds1 != 5'b0)                   LInstrD = {1'b1, immCILUI, rds1, 7'b0110111};                                     // c.lui
+                    else                                LInstrD = {1'b1, 25'b0, 7'b0010011};                                              // c.lui with rd = 0, imm!=0 is a HINT, treated as nop
+        5'b01100: if (instr16[11:10] == 2'b00) begin
+                    if (P.XLEN > 32 | ~immSH[5])        LInstrD = {1'b1, 6'b000000, immSH, rds1p, 3'b101, rds1p, 7'b0010011};             // c.srli; shamt[5] must be 0 in RV32C
+                  end else if (instr16[11:10] == 2'b01) begin 
+                    if (P.XLEN > 32 | ~immSH[5])        LInstrD = {1'b1, 6'b010000, immSH, rds1p, 3'b101, rds1p, 7'b0010011};             // c.srai; shamt[5] must be 0 in RV32C
+                  end else if (instr16[11:10] == 2'b10) LInstrD = {1'b1, immCI, rds1p, 3'b111, rds1p, 7'b0010011};                        // c.andi
+                  else if (instr16[12:10] == 3'b011) begin
+                    if (instr16[6:5] == 2'b00)          LInstrD = {1'b1, 7'b0100000, rs2p, rds1p, 3'b000, rds1p, 7'b0110011};             // c.sub
+                    else if (instr16[6:5] == 2'b01)     LInstrD = {1'b1, 7'b0000000, rs2p, rds1p, 3'b100, rds1p, 7'b0110011};             // c.xor
+                    else if (instr16[6:5] == 2'b10)     LInstrD = {1'b1, 7'b0000000, rs2p, rds1p, 3'b110, rds1p, 7'b0110011};             // c.or
+                    else                                LInstrD = {1'b1, 7'b0000000, rs2p, rds1p, 3'b111, rds1p, 7'b0110011};             // c.and
+                  end else begin // (instr16[12:10] == 3'b111)
                     if (instr16[6:5] == 2'b00 & P.XLEN > 32)
-                      InstrD = {7'b0100000, rs2p, rds1p, 3'b000, rds1p, 7'b0111011}; // c.subw
+                                                        LInstrD = {1'b1, 7'b0100000, rs2p, rds1p, 3'b000, rds1p, 7'b0111011};             // c.subw
                     else if (instr16[6:5] == 2'b01 & P.XLEN > 32)
-                      InstrD = {7'b0000000, rs2p, rds1p, 3'b000, rds1p, 7'b0111011}; // c.addw
+                                                        LInstrD = {1'b1, 7'b0000000, rs2p, rds1p, 3'b000, rds1p, 7'b0111011};             // c.addw
                     else if (instr16[6:2] == 5'b11000 & P.ZCB_SUPPORTED) 
-                      InstrD = {12'b000011111111, rds1p, 3'b111, rds1p, 7'b0010011}; // c.zext.b = andi rd, rs1, 255
+                                                        LInstrD = {1'b1, 12'b000011111111, rds1p, 3'b111, rds1p, 7'b0010011};             // c.zext.b = andi rd, rs1, 255
                     else if (instr16[6:2] == 5'b11001 & P.ZCB_SUPPORTED & P.ZBB_SUPPORTED) 
-                      InstrD = {12'b011000000100, rds1p, 3'b001, rds1p, 7'b0010011}; // c.sext.b
+                                                        LInstrD = {1'b1, 12'b011000000100, rds1p, 3'b001, rds1p, 7'b0010011};             // c.sext.b
                     else if (instr16[6:2] == 5'b11010 & P.ZCB_SUPPORTED & P.ZBB_SUPPORTED) 
-                      InstrD = {7'b0000100, 5'b00000, rds1p, 3'b100, rds1p, 3'b011, P.XLEN > 32, 3'b011};  // c.zext.h
+                                                        LInstrD = {1'b1, 7'b0000100, 5'b00000, rds1p, 3'b100, rds1p, 3'b011, P.XLEN > 32, 3'b011};  // c.zext.h
                     else if (instr16[6:2] == 5'b11011 & P.ZCB_SUPPORTED & P.ZBB_SUPPORTED) 
-                      InstrD = {12'b011000000101, rds1p, 3'b001, rds1p, 7'b0010011}; // c.sext.h
+                                                        LInstrD = {1'b1, 12'b011000000101, rds1p, 3'b001, rds1p, 7'b0010011};             // c.sext.h
                     else if (instr16[6:2] == 5'b11101 & P.ZCB_SUPPORTED) 
-                      InstrD = {12'b111111111111, rds1p, 3'b100, rds1p, 7'b0010011}; // c.not = xori
+                                                        LInstrD = {1'b1, 12'b111111111111, rds1p, 3'b100, rds1p, 7'b0010011};             // c.not = xori
                     else if (instr16[6:2] == 5'b11100 & P.ZCB_SUPPORTED & P.ZBA_SUPPORTED & P.XLEN > 32) 
-                      InstrD = {7'b0000100, 5'b00000, rds1p, 3'b000, rds1p, 7'b0111011}; // c.zext.w = add.uw rd, rs1, 0
+                                                        LInstrD = {1'b1, 7'b0000100, 5'b00000, rds1p, 3'b000, rds1p, 7'b0111011};         // c.zext.w = add.uw rd, rs1, 0
                     else if (instr16[6:5] == 2'b10 & P.ZCB_SUPPORTED & P.ZMMUL_SUPPORTED) 
-                      InstrD = {7'b0000001, rs2p, rds1p, 3'b000, rds1p, 7'b0110011}; // c.mul
-                    else begin // reserved  
-                      IllegalCompInstrD = 1'b1;
-                      InstrD = {16'b0, instr16}; // preserve instruction for mtval on trap
-                    end
-                  /** end else begin // illegal instruction
-                    IllegalCompInstrD = 1'b1;
-                    InstrD = {16'b0, instr16}; // preserve instruction for mtval on trap **/
+                                                        LInstrD = {1'b1, 7'b0000001, rs2p, rds1p, 3'b000, rds1p, 7'b0110011};             // c.mul
                   end
-        5'b01101: InstrD = {immCJ, 5'b00000, 7'b1101111}; // c.j
-        5'b01110: InstrD = {immCB[11:5], 5'b00000, rs1p, 3'b000, immCB[4:0], 7'b1100011}; // c.beqz
-        5'b01111: InstrD = {immCB[11:5], 5'b00000, rs1p, 3'b001, immCB[4:0], 7'b1100011}; // c.bnez
-        5'b10000: InstrD = {6'b000000, immSH, rds1, 3'b001, rds1, 7'b0010011}; // c.slli
+        5'b01101:                                       LInstrD = {1'b1, immCJ, 5'b00000, 7'b1101111}; // c.j
+        5'b01110:                                       LInstrD = {1'b1, immCB[11:5], 5'b00000, rs1p, 3'b000, immCB[4:0], 7'b1100011};    // c.beqz
+        5'b01111:                                       LInstrD = {1'b1, immCB[11:5], 5'b00000, rs1p, 3'b001, immCB[4:0], 7'b1100011};    // c.bnez
+        5'b10000: if (rds1 != 5'b0) begin
+                    if (P.XLEN > 32 | ~immSH[5])        LInstrD = {1'b1, 6'b000000, immSH, rds1, 3'b001, rds1, 7'b0010011};               // c.slli; shamt[5] must be 0 in RV32C
+                  end else if (immSH != 0)              LInstrD = {1'b1, 25'b0, 7'b0010011};                                              // c.slli with rd = 0, immm != 0 is a HINT, treated as nop
         5'b10001: if (P.ZCD_SUPPORTED)
-                    InstrD = {immCILSPD, 5'b00010, 3'b011, rds1, 7'b0000111}; // c.fldsp
-                  else begin // unsupported instruction
-                    IllegalCompInstrD = 1'b1;
-                    InstrD = {16'b0, instr16}; // preserve instruction for mtval on trap
-                  end
-        5'b10010: InstrD = {immCILSP, 5'b00010, 3'b010, rds1, 7'b0000011}; // c.lwsp
-        5'b10011: if (P.XLEN == 32)
-                    if (P.ZCF_SUPPORTED) 
-                      InstrD = {immCILSP, 5'b00010, 3'b010, rds1, 7'b0000111}; // c.flwsp
-                    else begin
-                      IllegalCompInstrD = 1'b1;
-                      InstrD = {16'b0, instr16}; // preserve instruction for mtval on trap
-                    end                    
-                  else 
-                    InstrD = {immCILSPD, 5'b00010, 3'b011, rds1, 7'b0000011}; // c.ldsp
+                    if (rds1 != 5'b0)                   LInstrD = {1'b1, immCILSPD, 5'b00010, 3'b011, rds1, 7'b0000111};                  // c.fldsp
+        5'b10010: if (rds1 != 5'b0)                     LInstrD = {1'b1, immCILSP, 5'b00010, 3'b010, rds1, 7'b0000011};                   // c.lwsp
+        5'b10011: if (P.XLEN == 32) begin 
+                    if (P.ZCF_SUPPORTED)                LInstrD = {1'b1, immCILSP, 5'b00010, 3'b010, rds1, 7'b0000111};                   // c.flwsp
+                  end else if (rds1 != 5'b0)            LInstrD = {1'b1, immCILSPD, 5'b00010, 3'b011, rds1, 7'b0000011};                  // c.ldsp
         5'b10100: if (instr16[12] == 0)
-                    if (instr16[6:2] == 5'b00000) 
-                      InstrD = {7'b0000000, 5'b00000, rds1, 3'b000, 5'b00000, 7'b1100111}; // c.jr
-                    else
-                      InstrD = {7'b0000000, rs2, 5'b00000, 3'b000, rds1, 7'b0110011}; // c.mv
+                    if (rs2 == 5'b00000) begin 
+                      if (rds1 != 5'b0)                 LInstrD = {1'b1, 7'b0000000, 5'b00000, rds1, 3'b000, 5'b00000, 7'b1100111};       // c.jr
+                    end else
+                      if (rds1 != 5'b0)                 LInstrD = {1'b1, 7'b0000000, rs2, 5'b00000, 3'b000, rds1, 7'b0110011};            // c.mv
+                      else                              LInstrD = {1'b1, 25'b0, 7'b0010011};                                              // c.mv with rd = 0 is a HINT, treated as nop
                   else
-                    if (rs2 == 5'b00000)
-                      if (rds1 == 5'b00000) 
-                        InstrD = {12'b1, 5'b00000, 3'b000, 5'b00000, 7'b1110011}; // c.ebreak
-                      else
-                        InstrD = {12'b0, rds1, 3'b000, 5'b00001, 7'b1100111}; // c.jalr
-                    else
-                      InstrD = {7'b0000000, rs2, rds1, 3'b000, rds1, 7'b0110011}; // c.add
-        5'b10101: if (P.ZCD_SUPPORTED)
-                    InstrD = {immCSSD[11:5], rs2, 5'b00010, 3'b011, immCSSD[4:0], 7'b0100111}; // c.fsdsp
-                  else begin // unsupported instruction
-                    IllegalCompInstrD = 1'b1;
-                    InstrD = {16'b0, instr16}; // preserve instruction for mtval on trap
-                  end
-        5'b10110: InstrD = {immCSS[11:5], rs2, 5'b00010, 3'b010, immCSS[4:0], 7'b0100011}; // c.swsp
-        5'b10111: if (P.XLEN==32)
-                    if (P.ZCF_SUPPORTED) 
-                      InstrD = {immCSS[11:5], rs2, 5'b00010, 3'b010, immCSS[4:0], 7'b0100111}; // c.fswsp
-                    else begin
-                      IllegalCompInstrD = 1'b1;
-                      InstrD = {16'b0, instr16}; // preserve instruction for mtval on trap
-                    end                    
-                  else
-                    InstrD = {immCSSD[11:5], rs2, 5'b00010, 3'b011, immCSSD[4:0], 7'b0100011}; // c.sdsp
-        default: begin // illegal instruction
-                    IllegalCompInstrD = 1'b1;
-                    InstrD = {16'b0, instr16}; // preserve instruction for mtval on trap
-                  end
+                    if (rs2 == 5'b00000) begin
+                      if (rds1 == 5'b00000)             LInstrD = {1'b1, 12'b1, 5'b00000, 3'b000, 5'b00000, 7'b1110011};                  // c.ebreak
+                      else if (rds1 != 5'b0)            LInstrD = {1'b1, 12'b0, rds1, 3'b000, 5'b00001, 7'b1100111};                      // c.jalr
+                    end else
+                      if (rds1 != 0)                    LInstrD = {1'b1, 7'b0000000, rs2, rds1, 3'b000, rds1, 7'b0110011};                // c.add
+                      else                              LInstrD = {1'b1, 25'b0, 7'b0010011};                                              // c.add with rd = 0 is a HINT, treated as nop, even if it is a C.NTL
+        5'b10101: if (P.ZCD_SUPPORTED)                  LInstrD = {1'b1, immCSSD[11:5], rs2, 5'b00010, 3'b011, immCSSD[4:0], 7'b0100111}; // c.fsdsp
+        5'b10110:                                       LInstrD = {1'b1, immCSS[11:5], rs2, 5'b00010, 3'b010, immCSS[4:0], 7'b0100011};   // c.swsp
+        5'b10111: if (P.XLEN==32) begin 
+                    if (P.ZCF_SUPPORTED)                LInstrD = {1'b1, immCSS[11:5], rs2, 5'b00010, 3'b010, immCSS[4:0], 7'b0100111};   // c.fswsp
+                  end else                              LInstrD = {1'b1, immCSSD[11:5], rs2, 5'b00010, 3'b011, immCSSD[4:0], 7'b0100011}; // c.sdsp
+        default: ; // illegal instruction
       endcase
     end
+
+  // extract instruction and illegal from LInstrD
+  assign {LegalCompInstrD, InstrD} = LInstrD;
+  assign IllegalCompInstrD = ~LegalCompInstrD;
+
 endmodule

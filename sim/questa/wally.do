@@ -8,7 +8,7 @@
 #
 # Takes 1:10 to run RV64IC tests using gui
 
-# Usage: do wally-batch.do <config> <testcases> <testbench> [-coverage] [+acc] [any number of +value] [any number of -G VAR=VAL]
+# Usage: do wally-batch.do <config> <testcases> <testbench> [--ccov] [--fcov] [+acc] [any number of +value] [any number of -G VAR=VAL]
 # Example: do wally-batch.do rv64gc arch64i testbench
 
 # Use this wally-batch.do file to run this example.
@@ -31,6 +31,7 @@ set WALLY $::env(WALLY)
 set CONFIG ${WALLY}/config
 set SRC ${WALLY}/src
 set TB ${WALLY}/testbench
+set FCRVVI ${WALLY}/addins/cvw-arch-verif/fcov
 
 # create library
 if [file exists ${WKDIR}] {
@@ -39,10 +40,15 @@ if [file exists ${WKDIR}] {
 vlib ${WKDIR}
 # Create directory for coverage data
 mkdir -p cov
+# Create directory for functional coverage data
+mkdir  ${WALLY}/addins/cvw-arch-verif/work
 
-set coverage 0
+set ccov 0
 set CoverageVoptArg ""
 set CoverageVsimArg ""
+
+set FuncCovRVVI 0
+set FCdefineRVVI_COVERAGE ""
 
 set FunctCoverage 0
 set riscvISACOVsrc ""
@@ -57,7 +63,8 @@ set FCdefineCOVER_RV64D ""
 set FCdefineCOVER_RV64ZICSR ""
 set FCdefineCOVER_RV64C ""
 set FCdefineIDV_INCLUDE_TRACE2COV ""
-
+set FCTRACE2COV ""
+set FCdefineIDV_TRACE2COV ""
 set lockstep 0
 # ok this is annoying. vlog, vopt, and vsim are very picky about how arguments are passed.
 # unforunately it won't allow these to be grouped as one argument per command so they are broken
@@ -65,7 +72,7 @@ set lockstep 0
 set lockstepvoptstring ""
 set SVLib ""
 set SVLibPath ""
-#set OtherFlags ""
+set OtherFlags ""
 set ImperasPubInc ""
 set ImperasPrivInc ""
 set rvviFiles ""
@@ -104,12 +111,19 @@ if {$AccIndex >= 0} {
 }
 
 # if +coverage found set flag and remove from list
-set CoverageIndex [lsearch -exact $lst "--coverage"]
+set CoverageIndex [lsearch -exact $lst "--ccov"]
 if {$CoverageIndex >= 0} {
-    set coverage 1
+    set ccov 1
     set CoverageVoptArg "+cover=sbecf"
     set CoverageVsimArg "-coverage"
     set lst [lreplace $lst $CoverageIndex $CoverageIndex]
+}
+
+set FCoverageIndexRVVI [lsearch -exact $lst "--fcovrvvi"]
+if {$FCoverageIndexRVVI >= 0} {
+    set FuncCovRVVI 1
+    set FCdefineRVVI_COVERAGE "+define+RVVI_COVERAGE"
+    set lst [lreplace $lst $FCoverageIndexRVVI $FCoverageIndexRVVI]
 }
 
 # if +coverage found set flag and remove from list
@@ -121,18 +135,20 @@ if {$FunctCoverageIndex >= 0} {
     set FCdefineINCLUDE_TRACE2COV "+define+INCLUDE_TRACE2COV"
     set FCdefineCOVER_BASE_RV64I "+define+COVER_BASE_RV64I"
     set FCdefineCOVER_LEVEL_DV_PR_EXT  "+define+COVER_LEVEL_DV_PR_EXT"
+    # Uncomment various cover statements below to control which extensions get functional coverage
     set FCdefineCOVER_RV64I "+define+COVER_RV64I"
-    set FCdefineCOVER_RV64M "+define+COVER_RV64M"
-    set FCdefineCOVER_RV64A "+define+COVER_RV64A"
-    set FCdefineCOVER_RV64F "+define+COVER_RV64F"
-    set FCdefineCOVER_RV64D "+define+COVER_RV64D"
-    set FCdefineCOVER_RV64ZICSR "+define+COVER_RV64ZICSR"
-    set FCdefineCOVER_RV64C "+define+COVER_RV64C"
+    #set FCdefineCOVER_RV64M "+define+COVER_RV64M"
+    #set FCdefineCOVER_RV64A "+define+COVER_RV64A"
+    #set FCdefineCOVER_RV64F "+define+COVER_RV64F"
+    #set FCdefineCOVER_RV64D "+define+COVER_RV64D"
+    #set FCdefineCOVER_RV64ZICSR "+define+COVER_RV64ZICSR"
+    #set FCdefineCOVER_RV64C "+define+COVER_RV64C"
     set FCdefineIDV_INCLUDE_TRACE2COV "+define+IDV_INCLUDE_TRACE2COV"
-
+    set FCTRACE2COV "+TRACE2COV_ENABLE=1"
+    set FCdefineIDV_TRACE2COV "+IDV_TRACE2COV=1"
     set lst [lreplace $lst $FunctCoverageIndex $FunctCoverageIndex]
-}
-
+}\
+ 
 set LockStepIndex [lsearch -exact $lst "--lockstep"]
 # ugh.  can't have more than 9 arguments passed to vsim. why? I'll have to remove --lockstep when running
 # functional coverage and imply it.
@@ -148,12 +164,13 @@ if {$LockStepIndex >= 0 || $FunctCoverageIndex >= 0} {
     set idvFiles $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/*.sv
     set SVLib "-sv_lib"
     set SVLibPath $env(IMPERAS_HOME)/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model
-    #set OtherFlags $env(OTHERFLAGS)
+    #set OtherFlags $::env(OTHERFLAGS)  # not working 7/15/24 dh; this should be the way to pass things like --verbose (Issue 871)
 
     if {$LockStepIndex >= 0} {
         set lst [lreplace $lst $LockStepIndex $LockStepIndex]
     }
 }
+
 
 # separate the +args from the -G parameters
 foreach otherArg $lst {
@@ -166,8 +183,9 @@ foreach otherArg $lst {
 
 if {$DEBUG > 0} {
     echo "GUI = $GUI"
-    echo "coverage = $coverage"
+    echo "ccov = $ccov"
     echo "lockstep = $lockstep"
+    echo "FuncCovRVVI = $FuncCovRVVI"
     echo "FunctCoverage = $FunctCoverage"
     echo "remaining list = $lst"
     echo "Extra +args = $PlusArgs"
@@ -193,7 +211,7 @@ set temp3 [lindex $PlusArgs 3]
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
 
-vlog -lint -work ${WKDIR}  +incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared ${lockstepvoptstring} ${FCdefineIDV_INCLUDE_TRACE2COV} ${FCdefineINCLUDE_TRACE2COV} ${ImperasPubInc} ${ImperasPrivInc} ${rvviFiles} ${idvFiles}  ${FCdefineCOVER_BASE_RV64I} ${FCdefineCOVER_LEVEL_DV_PR_EXT} ${FCdefineCOVER_RV64I} ${FCdefineCOVER_RV64M} ${FCdefineCOVER_RV64A} ${FCdefineCOVER_RV64F} ${FCdefineCOVER_RV64D} ${FCdefineCOVER_RV64ZICSR} ${FCdefineCOVER_RV64C}  ${riscvISACOVsrc} ${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv  ${SRC}/*/*.sv ${SRC}/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
+vlog -lint -work ${WKDIR}  +incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared ${lockstepvoptstring} ${FCdefineIDV_INCLUDE_TRACE2COV} ${FCdefineINCLUDE_TRACE2COV} ${ImperasPubInc} ${ImperasPrivInc} ${rvviFiles} ${FCdefineCOVER_BASE_RV64I} ${FCdefineCOVER_LEVEL_DV_PR_EXT} ${FCdefineCOVER_RV64I} ${FCdefineCOVER_RV64M} ${FCdefineCOVER_RV64A} ${FCdefineCOVER_RV64F} ${FCdefineCOVER_RV64D} ${FCdefineCOVER_RV64ZICSR} ${FCdefineCOVER_RV64C} ${FCdefineRVVI_COVERAGE} ${idvFiles}   ${riscvISACOVsrc} ${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv  ${SRC}/*/*.sv ${SRC}/*/*/*.sv +incdir+${FCRVVI}/common +incdir+${FCRVVI} ${WALLY}/addins/verilog-ethernet/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
@@ -201,7 +219,7 @@ vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} ${ParamArgs}
 
 #vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${PlusArgs} -fatal 7 ${SVLib} ${SVLibPath} ${OtherFlags} +TRACE2COV_ENABLE=1 -suppress 3829 ${CoverageVsimArg}
 #vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${PlusArgs} -fatal 7 ${SVLib} ${SVLibPath} +IDV_TRACE2COV=1 +TRACE2COV_ENABLE=1 -suppress 3829 ${CoverageVsimArg}
-vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} $temp0 $temp1 $temp2 $temp3 -fatal 7 ${SVLib} ${SVLibPath} -suppress 3829 ${CoverageVsimArg}
+vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} $temp0 $temp1 $temp2 $temp3 -fatal 7 ${SVLib} ${SVLibPath} ${OtherFlags} ${FCTRACE2COV} ${FCdefineIDV_TRACE2COV} -suppress 3829 ${CoverageVsimArg}
 
 #    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
 # power add generates the logging necessary for said generation.
@@ -215,15 +233,29 @@ if { ${GUI} } {
     }
 }
 
-run -all
-# power off -r /dut/core/*
+if {$FunctCoverage} {
+    set UCDB ${WALLY}/sim/questa/fcov_ucdb/${CFG}_${TESTSUITE}.ucdb
+    coverage save -onexit ${UCDB}
+}
 
-if {$coverage || $FunctCoverage} {
-    set UCDB ${WALLY}/sim/questa/cov/${CFG}_${TESTSUITE}.ucdb
+if {$FuncCovRVVI} {
+    set UCDB ${WALLY}/addins/cvw-arch-verif/work/${CFG}_${TESTSUITE}.ucdb
+    coverage save -onexit ${UCDB}
+}
+
+run -all
+
+if {$ccov} {
+    set UCDB ${WALLY}/sim/questa/ucdb/${CFG}_${TESTSUITE}.ucdb
     echo "Saving coverage to ${UCDB}"
     do coverage-exclusions-rv64gc.do  # beware: this assumes testing the rv64gc configuration
     coverage save -instance /testbench/dut/core ${UCDB}
 }
+
+
+# power off -r /dut/core/*
+
+
 
 # These aren't doing anything helpful
 #profile report -calltree -file wally-calltree.rpt -cutoff 2
