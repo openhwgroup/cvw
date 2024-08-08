@@ -22,7 +22,7 @@ else
     # set the $RISCV directory here and remove the subsequent two lines
     # export RISCV=
     echo "\$RISCV directory not found. Checked /opt/riscv and ~/riscv. Edit setup.sh to point to your custom \$RISCV directory."
-    exit 1;
+    exit 1
 fi
 echo \$RISCV set to "${RISCV}"
 
@@ -33,7 +33,7 @@ echo \$WALLY set to "${WALLY}"
 # utility functions in Wally repository
 export PATH=$WALLY/bin:$PATH
 
-# Verilator needs a larger stack to simulate CORE-V Wally
+# Verilator needs a larger core file size to simulate CORE-V Wally
 ulimit -c 300000
 
 # load site licenses and tool locations
