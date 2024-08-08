@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 from fp_dataset import *
 #coverpoints=ibm_b1(128, 128, 'fadd.q', 2) #ibm_b1(flen, iflen, opcode, ops)

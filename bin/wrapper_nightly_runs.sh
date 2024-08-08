@@ -17,5 +17,5 @@ source ./setup.sh
 cd $PYTHON_SCRIPT
 pwd
 echo "Running python file"
-python nightly_build.py 
+$RISCV/riscv-python/bin/python nightly_build.py
 echo "Finished"

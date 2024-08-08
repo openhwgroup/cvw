@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # Madeleine Masser-Frye mmasserfrye@hmc.edu 1/2023
 
 import subprocess

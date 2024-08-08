@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 #
 # Python regression test for DC
 # Madeleine Masser-Frye mmasserfrye@hmc.edu 5/22

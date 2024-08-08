@@ -9,7 +9,6 @@ NC='\033[0m'
 NAME="$GREEN"${0:2}"$NC"
 
 # File location variables
-RISCV=/opt/riscv
 IMAGES=$RISCV/buildroot/output/images
 FW_JUMP=$IMAGES/fw_jump.bin
 LINUX_KERNEL=$IMAGES/Image

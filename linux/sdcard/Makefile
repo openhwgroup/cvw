@@ -1,5 +1,3 @@
-RISCV := /opt/riscv
-
 .PHONY: all clean
 
 all:
