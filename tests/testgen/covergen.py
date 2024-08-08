@@ -61,7 +61,8 @@ def writeCovVector(desc, rs1, rs2, rd, rs1val, rs2val, immval, rdval, test, stor
   elif (test in stypes):#["sb", "sh", "sw", "sd"]
     #lines = lines + test + " x" + str(rs2) + ", " + signedImm12(immval) + "(x" + str(rs1) + ") # perform operation \n"
     #lines = lines + test + " x" + str(rs2) + ", " "0(x" + str(rs1) + ") # perform operation \n"
-    print("Error: %s type not implemented yet" % test)
+    #print("Error: %s type not implemented yet" % test)
+    pass
   elif (test in btypes):#["beq", "bne", "blt", "bge", "bltu", "bgeu"]
     if (randint(1,100) > 50):
       rs1val = rs2val
