@@ -17,6 +17,7 @@ OBJECTS		:= $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(OBJECTS))
 
 TARGETDIR	:= bin
 TARGET		:= $(TARGETDIR)/boot
+MEMFILES    := $(TARGETDIR/boot.mem $(TARGETDIR)/data.mem
 ROOT		:= ..
 LIBRARY_DIRS	:= 
 LIBRARY_FILES	:=
@@ -37,7 +38,7 @@ AR=riscv64-unknown-elf-ar
 
 
 #Default Make
-all: directories  $(TARGET).memfile
+all: directories $(TARGET).memfile
 
 #Remake
 remake: clean all
@@ -48,7 +49,7 @@ directories:
 	@mkdir -p $(BUILDDIR)
 
 clean:
-	rm -rf $(BUILDDIR) $(TARGETDIR) *.memfile *.objdump 
+	rm -rf $(BUILDDIR) $(TARGETDIR) *.memfile *.objdump boot.mem data.mem
 
 
 #Needed for building additional library projects
@@ -112,3 +113,7 @@ $(TARGET).memfile: $(TARGET)
 	extractFunctionRadix.sh $<.objdump
 	mkdir -p ../../imperas-riscv-tests/work/rv64BP/
 	cp -f $(TARGETDIR)/* ../../imperas-riscv-tests/work/rv64BP/
+	@echo 'Splitting memfile.'
+	./splitfile.sh $@
+	mv boot.mem ../src/boot.mem
+	mv data.mem ../src/data.mem

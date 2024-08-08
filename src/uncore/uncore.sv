@@ -46,7 +46,6 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   output logic [P.AHBW-1:0]    HRDATA,
   output logic                 HREADY, HRESP,
   output logic                 HSELEXT,
-  output logic                 HSELEXTSDC,
   // peripheral pins          
   output logic                 MTimerInt, MSwInt,         // Timer and software interrupts from CLINT
   output logic                 MExtInt, SExtInt,          // External interrupts from PLIC
@@ -55,16 +54,20 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   output logic [31:0]          GPIOOUT, GPIOEN,           // GPIO pin output value and enable
   input  logic                 UARTSin,                   // UART serial input
   output logic                 UARTSout,                  // UART serial output
-  input  logic                 SDCIntr,
   input  logic                 SPIIn,
   output logic                 SPIOut,
-  output logic [3:0]           SPICS                  
+  output logic [3:0]           SPICS,
+  output logic                 SPICLK,
+  input  logic                 SDCIn,                                                 
+  output logic                 SDCCmd,
+  output logic [3:0]           SDCCS,
+  output logic                 SDCCLK
 );
   
   logic [P.XLEN-1:0]           HREADRam, HREADSDC;
 
   logic [11:0]                 HSELRegions;
-  logic                        HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSPI;
+  logic                        HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART,HSELSDC, HSELSPI;
   logic                        HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD, HSELSPID;
   logic                        HRESPRam,  HRESPSDC;
   logic                        HREADYRam, HRESPSDCD;
@@ -75,18 +78,18 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   logic                        SDCIntM;
   
   logic                        PCLK, PRESETn, PWRITE, PENABLE;
-  logic [4:0]                  PSEL;
+  logic [5:0]                  PSEL;
   logic [31:0]                 PADDR;
   logic [P.XLEN-1:0]           PWDATA;
   logic [P.XLEN/8-1:0]         PSTRB;
   /* verilator lint_off UNDRIVEN */ // undriven in rv32e configuration
-  logic [4:0]                  PREADY;
-  logic [4:0][P.XLEN-1:0]      PRDATA;
+  logic [5:0]                  PREADY;
+  logic [5:0][P.XLEN-1:0]      PRDATA;
   /* verilator lint_on UNDRIVEN */
   logic [P.XLEN-1:0]           HREADBRIDGE;
   logic                        HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
-
-  (* mark_debug = "true" *) logic             HSELEXTSDCD;
+  /* SDC Interrupt (SPI Controller) */
+  logic                        SDCIntr;
   
 
   // Determine which region of physical memory (if any) is being accessed
@@ -95,14 +98,14 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   adrdecs #(P) adrdecs(HADDR, 1'b1, 1'b1, 1'b1, HSIZE[1:0], HSELRegions);
 
   // unswizzle HSEL signals
-  assign {HSELSPI, HSELEXTSDC, HSELPLIC, HSELUART, HSELGPIO, HSELCLINT, HSELRam, HSELBootRom, HSELEXT, HSELIROM, HSELDTIM} = HSELRegions[11:1];
+  assign {HSELSPI, HSELSDC, HSELPLIC, HSELUART, HSELGPIO, HSELCLINT, HSELRam, HSELBootRom, HSELEXT, HSELIROM, HSELDTIM} = HSELRegions[11:1];
 
   // AHB -> APB bridge
-  ahbapbbridge #(P, 5) ahbapbbridge (
-    .HCLK, .HRESETn, .HSEL({HSELSPI, HSELUART, HSELPLIC, HSELCLINT, HSELGPIO}), .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HTRANS, .HREADY, 
+  ahbapbbridge #(P, 6) ahbapbbridge (
+    .HCLK, .HRESETn, .HSEL({HSELSDC, HSELSPI, HSELUART, HSELPLIC, HSELCLINT, HSELGPIO}), .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HTRANS, .HREADY, 
     .HRDATA(HREADBRIDGE), .HRESP(HRESPBRIDGE), .HREADYOUT(HREADYBRIDGE),
     .PCLK, .PRESETn, .PSEL, .PWRITE, .PENABLE, .PADDR, .PWDATA, .PSTRB, .PREADY, .PRDATA);
-  assign HSELBRIDGE = HSELGPIO | HSELCLINT | HSELPLIC | HSELUART | HSELSPI; // if any of the bridge signals are selected
+  assign HSELBRIDGE = HSELGPIO | HSELCLINT | HSELPLIC | HSELUART | HSELSPI | HSELSDC; // if any of the bridge signals are selected
                 
   // on-chip RAM
   if (P.UNCORE_RAM_SUPPORTED) begin : ram
@@ -142,6 +145,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   end else begin : gpio
     assign GPIOOUT = '0; assign GPIOEN = '0; assign GPIOIntr = 1'b0;
   end
+  
   if (P.UART_SUPPORTED == 1) begin : uartgen // Hack to work around Verilator bug https://github.com/verilator/verilator/issues/4769
     uart_apb #(P) uart(
       .PCLK, .PRESETn, .PSEL(PSEL[3]), .PADDR(PADDR[2:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
@@ -152,28 +156,39 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   end else begin : uart
     assign UARTSout = 1'b0; assign UARTIntr = 1'b0; 
   end
+  
   if (P.SPI_SUPPORTED == 1) begin : spi
     spi_apb  #(P) spi (
       .PCLK, .PRESETn, .PSEL(PSEL[4]), .PADDR(PADDR[7:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
       .PREADY(PREADY[4]), .PRDATA(PRDATA[4]), 
-      .SPIOut, .SPIIn, .SPICS, .SPIIntr);
+      .SPIOut, .SPIIn, .SPICS, .SPICLK, .SPIIntr);
   end else begin : spi
-    assign SPIOut = 1'b0; assign SPICS = '0; assign SPIIntr = 1'b0;
+    assign SPIOut = 1'b0; assign SPICS = '0; assign SPIIntr = 1'b0; assign SPICLK = 1'b0;
   end
+
+  if (P.SDC_SUPPORTED == 1) begin : sdc
+    spi_apb #(P) sdc(
+      .PCLK, .PRESETn, .PSEL(PSEL[5]), .PADDR(PADDR[7:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE,
+      .PREADY(PREADY[5]), .PRDATA(PRDATA[5]),
+      .SPIOut(SDCCmd), .SPIIn(SDCIn), .SPICS(SDCCS), .SPICLK(SDCCLK), .SPIIntr(SDCIntr));                                      
+  end else begin : sdc
+    assign SDCCmd = '0; assign SDCCS = 4'b0; assign SDCIntr = 1'b0; assign SDCCLK = 1'b0;
+  end
+  
 
   // AHB Read Multiplexer
   assign HRDATA = ({P.XLEN{HSELRamD}} & HREADRam) |
-                  ({P.XLEN{HSELEXTD | HSELEXTSDCD}} & HRDATAEXT) |   
+                  ({P.XLEN{HSELEXTD}} & HRDATAEXT) |
                   ({P.XLEN{HSELBRIDGED}} & HREADBRIDGE) |
                   ({P.XLEN{HSELBootRomD}} & HREADBootRom);
 
   assign HRESP = HSELRamD & HRESPRam |
-                 (HSELEXTD | HSELEXTSDCD) & HRESPEXT |
+                 HSELEXTD & HRESPEXT |
                  HSELBRIDGE & HRESPBRIDGE |
                  HSELBootRomD & HRESPBootRom;
   
   assign HREADY = HSELRamD & HREADYRam |
-		          (HSELEXTD | HSELEXTSDCD) & HREADYEXT |		  
+		          HSELEXTD & HREADYEXT |		  
                   HSELBRIDGED & HREADYBRIDGE |
                   HSELBootRomD & HREADYBootRom |
                   HSELNoneD; // don't lock up the bus if no region is being accessed
@@ -184,7 +199,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   // device is ready.  Hense this register must be selectively enabled by HREADY.
   // However on reset None must be seleted.
   flopenl #(12) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions, 12'b1, 
-    {HSELSPID, HSELEXTSDCD, HSELPLICD, HSELUARTD, HSELGPIOD, HSELCLINTD,
+    {HSELSPID, HSELSDCD, HSELPLICD, HSELUARTD, HSELGPIOD, HSELCLINTD,
       HSELRamD, HSELBootRomD, HSELEXTD, HSELIROMD, HSELDTIMD, HSELNoneD});
   flopenr #(1) hselbridgedelayreg(HCLK, ~HRESETn, HREADY, HSELBRIDGE, HSELBRIDGED);
 endmodule
