@@ -76,8 +76,6 @@ $(RISCV):
 	@ echo "and sourced setup.sh"
 
 # Disassembly rules ---------------------------------------------------
-
-
 disassemble:
 	rm -rf $(BUILDROOT)/output/images/disassembly
 	find  $(BUILDROOT)/output/build/linux-* -maxdepth 1 -name "vmlinux" | xargs  cp -t $(BUILDROOT)/output/images/
@@ -106,7 +104,6 @@ $(IMAGES)/busybox:
 	cp $$busyboxDir/busybox $@ ;\
 
 # Generating new Buildroot directories --------------------------------
-
 download: $(WALLYBOARD)
 	cp $(WALLYBOARD)/main.config $(BUILDROOT)/.config
 	@echo "Buildroot successfully download."
