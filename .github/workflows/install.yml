@@ -23,10 +23,12 @@ jobs:
               df -h
       - name: install
         run: sudo ./bin/wally-tool-chain-install.sh --clean
-      - name: check buildroot
-        run: |
-              source setup.sh
-              ls $RISCV/linux-testvectors
+      - name: Upload installation logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: installation-logs-${{ matrix.os }}
+          path: /opt/riscv/logs/
       - name: make tests
         run: |
               source setup.sh
@@ -36,16 +38,12 @@ jobs:
         run: |
               source setup.sh
               regression-wally
-      - uses: actions/upload-artifact@v4
+      - name: Upload regression logs
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: regression-logs-${{ matrix.os }}
           path: ${{ github.workspace }}/sim/verilator/logs/
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: installation-logs-${{ matrix.os }}
-          path: /opt/riscv/logs/
 
   rhel_family_install:
     name: Test installation on ${{ matrix.os }}
@@ -79,10 +77,12 @@ jobs:
               df -h
       - name: install
         run: sudo ./bin/wally-tool-chain-install.sh --clean
-      - name: check buildroot
-        run: |
-              source setup.sh
-              ls $RISCV/linux-testvectors
+      - name: Upload installation logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: installation-logs-${{ env.ARTIFACT_NAME }}
+          path: /opt/riscv/logs/
       - name: make tests
         run: |
               source setup.sh
@@ -92,12 +92,86 @@ jobs:
         run: |
               source setup.sh
               regression-wally
-      - uses: actions/upload-artifact@v4
+      - name: Upload regression logs
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: regression-logs-${{ env.ARTIFACT_NAME }}
           path: ${{ github.workspace }}/sim/verilator/logs/
-      - uses: actions/upload-artifact@v4
+
+
+  user_install:
+    name: Test installation with user permissions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Free up storage
+        run: |
+              df -h
+              ./.github/cli-space-cleanup.sh
+              df -h
+      - name: install packages with sudo
+        run: sudo ./bin/wally-package-install.sh
+      - name: install
+        run: ./bin/wally-tool-chain-install.sh --clean
+      - name: Upload installation logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: installation-logs-user-install
+          path: ~/riscv/logs/
+      - name: make tests
+        run: |
+              source setup.sh
+              sed -i 's,jobs=4,jobs=3,g' "$WALLY"/tests/riscof/config.ini
+              make riscof
+      - name: regression
+        run: |
+              source setup.sh
+              regression-wally
+      - name: Upload regression logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: regression-logs-user-install
+          path: ${{ github.workspace }}/sim/verilator/logs/
+
+
+  custom_location_install:
+    name: Test installation with custom location
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Free up storage
+        run: |
+              df -h
+              ./.github/cli-space-cleanup.sh
+              df -h
+      - name: install
+        run: sudo ./bin/wally-tool-chain-install.sh --clean /home/riscv
+      - name: Upload instalation logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: installation-logs-custom-location-install
+          path: /home/riscv/logs/
+      - name: Update setup.sh with new $RISCV location
+        run: sed -i 's,/opt/riscv,/home/riscv,g' setup.sh
+      - name: make tests
+        run: |
+              source setup.sh
+              sed -i 's,jobs=4,jobs=3,g' "$WALLY"/tests/riscof/config.ini
+              make riscof
+      - name: regression
+        run: |
+              source setup.sh
+              regression-wally
+      - name: Upload regression logs
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: installation-logs-${{ env.ARTIFACT_NAME }}
