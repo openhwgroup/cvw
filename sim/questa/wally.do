@@ -41,7 +41,7 @@ vlib ${WKDIR}
 # Create directory for coverage data
 mkdir -p cov
 # Create directory for functional coverage data
-mkdir  ${WALLY}/addins/cvw-arch-verif/work
+mkdir -p ${WALLY}/addins/cvw-arch-verif/work
 
 set ccov 0
 set CoverageVoptArg ""
