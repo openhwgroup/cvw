@@ -284,7 +284,7 @@ def addTests(tests, sim):
 
 def addLockstepTestsByDir(dir, config, sim):
     sim_logdir = WALLY+ "/sim/" + sim + "/logs/"
-    cmdPrefix="wsim --sim " + sim + " " + coverStr + " " + config
+    cmdPrefix="wsim --lockstep --sim " + sim + " " + coverStr + " " + config
     for file in os.listdir(dir):
         if file.endswith(".elf"):
             fullfile = os.path.join(dir, file)
@@ -387,14 +387,6 @@ if (args.ccov):  # only run RV64GC tests on Questa in code coverage mode
         addTests(tests64gc_fp, coveragesim)
 elif (args.fcov):  # only run RV64GC tests on Questa in lockstep in functional coverage mode
     addLockstepTestsByDir(WALLY+"/tests/functcov/rv64/I", "rv64gc", coveragesim)
-    #sim_log = WALLY + "/sim/questa/logs/fcov.log" 
-    #tc = TestCase(
-    #        name="lockstep_functcov",
-    #        variant="rv64gc",
-    #        cmd="iterelf " + WALLY + "/tests/functcov/rv64/I > " + sim_log,
-    #        grepstr="SUCCESS! All tests ran without failures",
-    #        grepfile = sim_log)
-    #configs.append(tc)
 elif (args.fcovrvvi):  # only run RV64GC tests on Questa in rvvi coverage mode
     addTests(tests64gc_nofp, coveragesim)
     if (args.fp):
@@ -409,23 +401,8 @@ else:
 
 # run derivative configurations and lockstep tests in nightly regression
 if (args.nightly):
-    sim_log = WALLY + "/sim/questa/logs/lockstep_coverage.log" 
-    tc = TestCase(
-            name="lockstep_coverage",
-            variant="rv64gc",
-            cmd="iterelf " + WALLY + "/tests/coverage > " + sim_log,
-            grepstr="SUCCESS! All tests ran without failures",
-            grepfile = sim_log)
-    configs.append(tc)
-
-    sim_log = WALLY + "/sim/questa/logs/lockstep_wally-riscv-arch-test.log" 
-    tc = TestCase(
-            name="lockstep_wally-riscv-arch-test",
-            variant="rv64gc",
-            cmd="iterelf " + WALLY + "/tests/riscof/work/wally-riscv-arch-test/rv64i_m > " + sim_log,
-            grepstr="SUCCESS! All tests ran without failures",
-            grepfile = sim_log)
-    configs.append(tc)
+    addLockstepTestsByDir(WALLY+"/tests/coverage", "rv64gc", "questa")
+    addLockstepTestsByDir(WALLY+"/tests/riscof/work/wally-riscv-arch-test/rv64i_m", "rv64gc", "questa")
     addTests(derivconfigtests, defaultsim)
 
 # testfloat tests
