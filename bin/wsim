@@ -49,7 +49,15 @@ elif (args.elf != ""):
 if(args.testsuite.endswith('.elf') and args.elf == ""): # No --elf argument; check if testsuite has a .elf extension and use that instead
     if (os.path.isfile(args.testsuite)):
         ElfFile = "+ElfFile=" + os.path.abspath(args.testsuite)
-        if ('/' in args.testsuite):
+        # extract the elf name from the path to be the test suite
+        fields = args.testsuite.rsplit('/', 3)
+        # if the name is just ref.elf in a deep path (riscv-arch-test/wally-riscv-arch-test), then use the directory name as the test suite to make it unique; otherwise work directory will have duplicates.
+        if (len(fields) > 3):
+            if (fields[2] == "ref"):
+                args.testsuite = fields[1] + "_" + fields[3]
+            else:
+                args.testsuite = fields[2] + "_" + fields[3]
+        elif ('/' in args.testsuite): 
             args.testsuite=args.testsuite.rsplit('/', 1)[1] # strip off path if present
     else:
         print("ELF file not found: " + args.testsuite)

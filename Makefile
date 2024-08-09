@@ -8,7 +8,7 @@ all:
 	make riscof	
 	make testfloat
 #	make verify
-#	make coverage
+	make coverage
 #	make benchmarks
 
 # riscof builds the riscv-arch-test and wally-riscv-arch-test suites
@@ -34,6 +34,9 @@ coremark:
 
 embench:
 	cd ${WALLY}/benchmarks/embench; make; make run
+
+coverage:
+	make -C tests/coverage
 
 
 clean:
