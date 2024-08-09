@@ -229,6 +229,13 @@ bpredtests = [
         ["bpred_GSHARE_10_10_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"]
 ]
 
+# list of tests not supported by ImperasDV yet that should be waived during lockstep testing
+lockstepwaivers = [
+    "WALLY-q-01.S_ref.elf",     # Q extension is not supported by ImperasDV
+    "WALLY-cbom-01.S_ref.elf",  # cbom extension is not supported by ImperasDV because there is no cache model in ImperasDV
+    "coverage_ieu.elf"          # Issue 881: ImperasDV misinterprets 0x6BF05013 as a grevi rather than an illegal instruction
+]
+
 ##################################
 # Data Types & Functions
 ##################################
@@ -282,21 +289,35 @@ def addTests(tests, sim):
                     grepfile = grepfile)
             configs.append(tc)
 
+
 def addLockstepTestsByDir(dir, config, sim):
     sim_logdir = WALLY+ "/sim/" + sim + "/logs/"
     cmdPrefix="wsim --lockstep --sim " + sim + " " + coverStr + " " + config
-    for file in os.listdir(dir):
-        if file.endswith(".elf"):
-            fullfile = os.path.join(dir, file)
-            sim_log = sim_logdir + config + "_" + file + ".log"
-            grepstring = ""
-            tc = TestCase(
-                    name=file,
-                    variant=config,
-                    cmd=cmdPrefix + " " + fullfile + " > " + sim_log,
-                    grepstr="Mismatches            : 0",
-                    grepfile = sim_log)
-            configs.append(tc)
+    if (os.path.isdir(dir)): 
+        for dirpath, dirnames, filenames in os.walk(os.path.abspath(dir)):
+            for file in filenames:
+                if file.endswith(".elf"):
+                    fullfile = os.path.join(dirpath, file)
+                    fields = fullfile.rsplit('/', 3)
+                    if (fields[2] == "ref"):
+                        shortelf = fields[1] + "_" + fields[3]
+                    else:
+                        shortelf = fields[2] + "_" + fields[3]
+                    if (shortelf in lockstepwaivers): # skip tests that itch bugs in ImperasDV
+                        print(f"{bcolors.WARNING}Skipping waived test {shortelf}{bcolors.ENDC}")
+                        continue
+                    sim_log = sim_logdir + config + "_" + shortelf + ".log"
+                    grepstring = ""
+                    tc = TestCase(
+                            name=file,
+                            variant=config,
+                            cmd=cmdPrefix + " " + fullfile + " > " + sim_log,
+                            grepstr="Mismatches            : 0",
+                            grepfile = sim_log)
+                    configs.append(tc)
+    else:
+        print("Error: Directory not found: " + dir)
+        exit(1)
 
 def search_log_for_text(text, grepfile):
     """Search through the given log file for text, returning True if it is found or False if it is not"""

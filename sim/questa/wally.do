@@ -222,7 +222,7 @@ vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} ${ParamArgs}
 vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} $temp0 $temp1 $temp2 $temp3 -fatal 7 ${SVLib} ${SVLibPath} ${OtherFlags} ${FCTRACE2COV} ${FCdefineIDV_TRACE2COV} -suppress 3829 ${CoverageVsimArg}
 
 #    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
-# power add generates the logging necessary for said generation.
+# power add generates the logging necessary for saif generation.
 # power add -r /dut/core/*
 if { ${GUI} } {
     add log -recursive /*
