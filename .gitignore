@@ -106,6 +106,8 @@ sim/sd_model.log
 fpga/src/sdc/*
 fpga/src/sdc.tar.gz
 fpga/src/CopiedFiles_do_not_add_to_repo/*
+fpga/src/boot.mem
+fpga/src/data.mem
 sim/branch.log
 /fpga/generator/sim/imp-funcsim.v
 /fpga/generator/sim/imp-timesim.sdf

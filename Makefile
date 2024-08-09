@@ -5,7 +5,8 @@
 SIM = ${WALLY}/sim
 
 all:
-	make riscof	
+	make riscof
+	make zsbl
 	make testfloat
 #	make verify
 #	make coverage
@@ -19,6 +20,9 @@ testfloat:
 	cd ${WALLY}/addins/SoftFloat-3e/build/Linux-x86_64-GCC; make
 	cd ${WALLY}/addins/TestFloat-3e/build/Linux-x86_64-GCC; make
 	cd ${WALLY}/tests/fp; ./create_all_vectors.sh
+
+zsbl:
+	$(MAKE) -C ${WALLY}/fpga/zsbl
 
 verify:
 	cd ${SIM}; ./regression-wally
