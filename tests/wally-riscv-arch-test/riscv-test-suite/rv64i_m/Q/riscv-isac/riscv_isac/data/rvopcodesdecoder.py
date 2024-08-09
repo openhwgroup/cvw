@@ -362,7 +362,7 @@ class disassembler():
                 if 'rs1' in arg:
                     treg = reg_type
                     if any([instr_name.startswith(x) for x in [
-                            'fsw','fsd','fcvt.s','fcvt.d','fmv.w','fmv.l']]):
+                            'fsw','fsd','fsq','fcvt.s','fcvt.d','fmv.w','fmv.l']]):
                         treg = 'x'
                     temp_instrobj.rs1 = (int(get_arg_val(arg)(mcode), 2), treg)
                 if 'rs2' in arg:
