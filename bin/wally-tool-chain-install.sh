@@ -67,7 +67,7 @@ git_check() {
 # Log output to a file and only print lines with keywords
 logger() {
     local log="$RISCV/logs/$1.log"
-    cat < /dev/stdin | tee -a "$log" | (grep -iE --color=never "(\bwarning|\berror|\bfail|\bsuccess|\bstamp)" || true) | (grep -viE --color=never "(Wno-error)" || true)
+    cat < /dev/stdin | tee -a "$log" | (grep -iE --color=never "(\bwarning|\berror|\bfail|\bsuccess|\bstamp)" || true) | (grep -viE --color=never "(_warning|warning_|_error|error_|-warning|warning-|-error|error-|Werror|error\.o|warning flags)" || true)
 }
 
 set -e # break on error
@@ -135,7 +135,7 @@ section_header "Setting up Python Environment"
 STATUS="python virtual environment"
 cd "$RISCV"
 if [ ! -e "$RISCV"/riscv-python/bin/activate ]; then
-    "$PYTHON_VERSION" -m venv riscv-python
+    "$PYTHON_VERSION" -m venv riscv-python --prompt cvw
     echo -e "${OK_COLOR}Python virtual environment created!\nInstalling pip packages.${ENDC}"
 else
     echo -e "${OK_COLOR}Python virtual environment already exists.\nUpdating pip packages.${ENDC}"
