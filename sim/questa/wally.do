@@ -1,8 +1,8 @@
-# wally-batch.do 
+# wally-batch.do
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 #
 # Modification by Oklahoma State University & Harvey Mudd College
-# Use with Testbench 
+# Use with Testbench
 # James Stine, 2008; David Harris 2021
 # Go Cowboys!!!!!!
 #
@@ -68,7 +68,7 @@ set FCdefineIDV_TRACE2COV ""
 set lockstep 0
 # ok this is annoying. vlog, vopt, and vsim are very picky about how arguments are passed.
 # unforunately it won't allow these to be grouped as one argument per command so they are broken
-# apart. 
+# apart.
 set lockstepvoptstring ""
 set SVLib ""
 set SVLibPath ""
@@ -148,7 +148,7 @@ if {$FunctCoverageIndex >= 0} {
     set FCdefineIDV_TRACE2COV "+IDV_TRACE2COV=1"
     set lst [lreplace $lst $FunctCoverageIndex $FunctCoverageIndex]
 }\
- 
+
 set LockStepIndex [lsearch -exact $lst "--lockstep"]
 # ugh.  can't have more than 9 arguments passed to vsim. why? I'll have to remove --lockstep when running
 # functional coverage and imply it.
@@ -196,18 +196,10 @@ foreach x $PlusArgs {
     echo "Element is $x"
 }
 
-# need a better solution this is really ugly
-# Questa really don't like passing $PlusArgs on the command line to vsim.  It treats the whole things
-# as one string rather than mutliple separate +args.  Is there an automated way to pass these?
-set temp0 [lindex $PlusArgs 0]
-set temp1 [lindex $PlusArgs 1]
-set temp2 [lindex $PlusArgs 2]
-set temp3 [lindex $PlusArgs 3]
-
 #quit
 
 # compile source files
-# suppress spurious warnngs about 
+# suppress spurious warnngs about
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
 
@@ -215,11 +207,9 @@ vlog -lint -work ${WKDIR}  +incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CF
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} ${ParamArgs} -o testbenchopt ${CoverageVoptArg}
+vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} {*}${ParamArgs} -o testbenchopt ${CoverageVoptArg}
 
-#vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${PlusArgs} -fatal 7 ${SVLib} ${SVLibPath} ${OtherFlags} +TRACE2COV_ENABLE=1 -suppress 3829 ${CoverageVsimArg}
-#vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${PlusArgs} -fatal 7 ${SVLib} ${SVLibPath} +IDV_TRACE2COV=1 +TRACE2COV_ENABLE=1 -suppress 3829 ${CoverageVsimArg}
-vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} $temp0 $temp1 $temp2 $temp3 -fatal 7 ${SVLib} ${SVLibPath} ${OtherFlags} ${FCTRACE2COV} ${FCdefineIDV_TRACE2COV} -suppress 3829 ${CoverageVsimArg}
+vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} {*}${PlusArgs} -fatal 7 ${SVLib} ${SVLibPath} ${OtherFlags} ${FCTRACE2COV} ${FCdefineIDV_TRACE2COV} -suppress 3829 ${CoverageVsimArg}
 
 #    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
 # power add generates the logging necessary for said generation.
