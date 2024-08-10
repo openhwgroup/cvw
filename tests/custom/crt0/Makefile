@@ -6,7 +6,7 @@ LIBRARY_FILES	:=
 
 MARCH           :=-march=rv64imfdc
 MABI            :=-mabi=lp64d
-LINK_FLAGS      :=$(MARCH) $(MABI) -nostartfiles
+LINK_FLAGS      :=$(MARCH) $(MABI) -nostartfiles -L $(RISCV)/riscv64-unknown-elf/lib
 LINKER          := ${ROOT}/linker.x
 
 AFLAGS =$(MARCH) $(MABI) -W
