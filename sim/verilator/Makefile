@@ -12,6 +12,8 @@ NONPROF?=--stats
 VERILATOR_DIR=${WALLY}/sim/verilator
 SOURCE=${WALLY}/config/shared/*.vh ${WALLY}/config/${WALLYCONF} ${WALLY}/config/deriv/${WALLYCONF} ${WALLY}/src/cvw.sv ${WALLY}/testbench/*.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
 EXTRA_ARGS=
+PLUS_ARGS:=$(filter pattern +%, $(EXTRA_ARGS))
+PARAM_ARGS:=$(filter-out pattern +%, $(EXTRA_ARGS))
 
 
 WALLYCONF?=rv64gc
@@ -44,7 +46,7 @@ default: run
 
 run: wkdir/$(WALLYCONF)_$(TEST)/V${TESTBENCH}
 	mkdir -p $(VERILATOR_DIR)/logs
-	wkdir/$(WALLYCONF)_$(TEST)/V${TESTBENCH} ${ARGTEST} $(EXTRA_ARGS) 
+	wkdir/$(WALLYCONF)_$(TEST)/V${TESTBENCH} ${ARGTEST} $(PLUS_ARGS)
 
 profile: obj_dir_profiling/V${TESTBENCH}_$(WALLYCONF)
 	$(VERILATOR_DIR)/obj_dir_profiling/V${TESTBENCH}_$(WALLYCONF) ${ARGTEST}
@@ -65,6 +67,7 @@ wkdir/$(WALLYCONF)_$(TEST)/V${TESTBENCH}: $(DEPENDENCIES)
 	$(INCLUDE_PATH) \
 	${WRAPPER} \
 	${GTEST} \
+	${PARAM_ARGS} \
 	$(SOURCES)
 
 obj_dir_profiling/V${TESTBENCH}_$(WALLYCONF): $(DEPENDENCIES)
@@ -77,6 +80,7 @@ obj_dir_profiling/V${TESTBENCH}_$(WALLYCONF): $(DEPENDENCIES)
 	$(INCLUDE_PATH) \
 	${WRAPPER} \
 	${GTEST} \
+	${PARAM_ARGS} \
 	$(SOURCES)
 
 clean:

@@ -127,7 +127,7 @@ if (args.sim == "questa"):
 elif (args.sim == "verilator"):
     # PWD=${WALLY}/sim CONFIG=rv64gc TESTSUITE=arch64i
     print(f"Running Verilator on {args.config} {args.testsuite}")
-    os.system(f"/usr/bin/make -C {regressionDir}/verilator WALLYCONF={args.config} TEST={args.testsuite} TESTBENCH={args.tb} EXTRA_ARGS='{args.args}'")
+    os.system(f"/usr/bin/make -C {regressionDir}/verilator WALLYCONF={args.config} TEST={args.testsuite} TESTBENCH={args.tb} EXTRA_ARGS=\"{args.args}\"")
 elif (args.sim == "vcs"):
     print(f"Running VCS on " + args.config + " " + args.testsuite)
     if (args.gui):  
@@ -135,7 +135,7 @@ elif (args.sim == "vcs"):
     if (args.args == ""):
         vcsargs = ""
     else:
-        vcsargs = " --args " + args.args
+        vcsargs = " --args \"" + args.args + "\""
     if (ElfFile != ""):
         ElfFile = " --elffile " + ElfFile
     cmd = cd + "; " + prefix + " ./run_vcs " + args.config + " " + args.testsuite + vcsargs + ElfFile + " " + flags
