@@ -426,16 +426,6 @@ cd "$RISCV"
 if [ ! -e "${RISCV}"/site-setup.sh ]; then
     wget https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.sh
     wget https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.csh
-    # Add necessary lines to site-setup script to activate newer version of gcc for older distros
-    if [ "$FAMILY" == rhel ]; then
-        echo "# Activate newer gcc version" >> site-setup.sh
-        echo "source /opt/rh/gcc-toolset-13/enable" >> site-setup.sh
-    elif (( UBUNTU_VERSION == 20 )); then
-        echo "# Activate newer gcc version" >> site-setup.sh
-        echo "export PATH=\$RISCV/gcc-10/bin:\$PATH" >> site-setup.sh
-        echo "# Activate newer gcc version" >> site-setup.csh
-        echo "prepend PATH \$RISCV/gcc-10/bin" >> site-setup.csh
-    fi
     echo -e "${SUCCESS_COLOR}Site setup script successfully downloaded!${ENDC}"
     echo -e "${WARNING_COLOR}Make sure to edit the environment variables in $RISCV/site-setup.sh (or .csh) to point to your installation of EDA tools and licensce files.${ENDC}"
 else
@@ -443,4 +433,4 @@ else
     echo -e "You may need to manually update it if there were changes upstream.${ENDC}"
 fi
 
-echo -e "${SUCCESS_COLOR}${BOLD}\n\nINSTALLATION SUCCESSFUL!!!\n\n${ENDC}"
+echo -e "${SUCCESS_COLOR}${BOLD}\n\nWALLY INSTALLATION SUCCESSFUL!!!\n\n${ENDC}"

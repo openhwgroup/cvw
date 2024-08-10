@@ -58,3 +58,10 @@ if [ -e "$IDV" ]; then
     setupImperas "${IMPERAS_HOME}"
     export PATH=$IDV/scripts/cvw:$PATH
 fi
+
+# Use newer gcc version for older distros
+if [ -e /opt/rh/gcc-toolset-13/enable ]; then
+    source /opt/rh/gcc-toolset-13/enable # Red Hat Family
+elif [ -e $RISCV/gcc-10 ]; then
+    export PATH=$RISCV/gcc-10/bin:$PATH  # Ubuntu 20.04 LTS
+fi
