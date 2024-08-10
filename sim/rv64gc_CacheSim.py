@@ -65,8 +65,8 @@ if __name__ == '__main__':
     parser.add_argument('-s', "--sim", help="Simulator", choices=["questa", "verilator", "vcs"], default="verilator")
 
     args = parser.parse_args()
-
-    testcmd = "wsim --sim " + args.sim + " rv64gc {} > /dev/null"
+    simargs = "-GI_CACHE_ADDR_LOGGER=1\\\'b1 -GD_CACHE_ADDR_LOGGER=1\\\'b1"
+    testcmd = "wsim --sim " + args.sim + " rv64gc {} --args \"" + simargs + "\" > /dev/null"
     cachecmd = "CacheSim.py 64 4 56 44 -f {}"
 
     if args.perf:
@@ -76,6 +76,9 @@ if __name__ == '__main__':
 
     for test in tests64gc:
         print(f"{bcolors.HEADER}Commencing test", test+f":{bcolors.ENDC}")
+        # remove wkdir to force recompile with logging enabled
+        os.system("rm -rf " + simdir + "/" + args.sim + "/wkdir/rv64gc_" + test)
+        os.system("rm -rf " + simdir + "/" + args.sim + "/*Cache.log")
         print(testcmd.format(test))
         os.system(testcmd.format(test))
         for cache in cachetypes:
