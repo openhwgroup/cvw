@@ -123,7 +123,7 @@ sim/test1.rep
 sim/questa/vsim.log
 tests/coverage/*.elf
 *.elf.memfile
-sim/*Cache.log
+sim/*/*Cache.log
 sim/branch
 tests/fp/combined_IF_vectors/IF_vectors/*.tv
 /sim/branch-march14.tar.gz
