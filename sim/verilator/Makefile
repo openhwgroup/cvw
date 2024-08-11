@@ -7,14 +7,13 @@ SHELL := /bin/bash
 
 # verilator configurations
 OPT=
-PARAMS?=-DVERILATOR=1 --no-trace-top
+PARAMS?=--no-trace-top
 NONPROF?=--stats
 VERILATOR_DIR=${WALLY}/sim/verilator
 SOURCE=${WALLY}/config/shared/*.vh ${WALLY}/config/${WALLYCONF} ${WALLY}/config/deriv/${WALLYCONF} ${WALLY}/src/cvw.sv ${WALLY}/testbench/*.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
-EXTRA_ARGS=
-PLUS_ARGS:=$(filter pattern +%, $(EXTRA_ARGS))
-PARAM_ARGS:=$(filter-out pattern +%, $(EXTRA_ARGS))
-
+PLUS_ARGS=
+PARAM_ARGS=
+EXPANDED_PARAM_ARGS:=$(patsubst %,-G%,$(PARAM_ARGS))
 
 WALLYCONF?=rv64gc
 TEST?=arch64i
@@ -34,11 +33,9 @@ DEPENDENCIES=${WALLY}/config/shared/*.vh $(SOURCES)
 # regular testbench requires a wrapper defining getenvval
 ifeq ($(TESTBENCH), testbench)
 	WRAPPER=${WALLY}/sim/verilator/wrapper.c
-	GTEST=
 	ARGTEST=+TEST=$(TEST)
 else
 	WRAPPER=
-	GTEST=-GTEST="\"${TEST}\"" 
 	ARGTEST=
 endif
 
@@ -66,8 +63,7 @@ wkdir/$(WALLYCONF)_$(TEST)/V${TESTBENCH}: $(DEPENDENCIES)
 	--top-module ${TESTBENCH}  --relative-includes \
 	$(INCLUDE_PATH) \
 	${WRAPPER} \
-	${GTEST} \
-	${PARAM_ARGS} \
+	${EXPANDED_PARAM_ARGS} \
 	$(SOURCES)
 
 obj_dir_profiling/V${TESTBENCH}_$(WALLYCONF): $(DEPENDENCIES)
@@ -79,8 +75,7 @@ obj_dir_profiling/V${TESTBENCH}_$(WALLYCONF): $(DEPENDENCIES)
 	--top-module ${TESTBENCH}  --relative-includes \
 	$(INCLUDE_PATH) \
 	${WRAPPER} \
-	${GTEST} \
-	${PARAM_ARGS} \
+	${EXPANDED_PARAM_ARGS} \
 	$(SOURCES)
 
 clean:

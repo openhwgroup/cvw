@@ -8,8 +8,8 @@
 #
 # Takes 1:10 to run RV64IC tests using gui
 
-# Usage: do wally-batch.do <config> <testcases> <testbench> [--ccov] [--fcov] [+acc] [any number of +value] [any number of -G VAR=VAL]
-# Example: do wally-batch.do rv64gc arch64i testbench
+# Usage: do wally.do <config> <testcases> <testbench> [--ccov] [--fcov] [+acc] [--args "any number of +value"] [--params "any number of VAR=VAL parameter overrides"]
+# Example: do wally.do rv64gc arch64i testbench
 
 # Use this wally.do file to run this example.
 # Either bring up ModelSim and type the following at the "ModelSim>" prompt:
@@ -53,6 +53,11 @@ if [file exists ${WKDIR}] {
 vlib ${WKDIR}
 # Create directory for functional coverage data
 mkdir -p ${FCRVVI}
+
+set PlusArgs ""
+set ParamArgs ""
+set ExpandedParamArgs {}
+
 set ccov 0
 set CoverageVoptArg ""
 set CoverageVsimArg ""
@@ -81,8 +86,6 @@ set from 4
 set step 1
 set lst {}
 
-set PlusArgs {}
-set ParamArgs {}
 for {set i 0} true {incr i} {
     set x [expr {$i*$step + $from}]
     if {$x > $argc} break
@@ -144,13 +147,22 @@ if {[lcheck lst "--lockstep"] || $FunctCoverage == 1} {
     #set OtherFlags $::env(OTHERFLAGS)  # not working 7/15/24 dh; this should be the way to pass things like --verbose (Issue 871)
 }
 
-# separate the +args from the -G parameters
-foreach otherArg $lst {
-    if {[string index $otherArg 0] eq "+"} {
-        lappend PlusArgs $otherArg
-    } else {
-        lappend ParamArgs $otherArg
+# Set PlusArgs passed using the --args flag
+set PlusArgsIndex [lsearch -exact $lst "--args"]
+if {$PlusArgsIndex >= 0} {
+    set PlusArgs [lindex $lst [expr {$PlusArgsIndex + 1}]]
+    set lst [lreplace $lst $PlusArgsIndex [expr {$PlusArgsIndex + 1}]]
+}
+
+# Set ParamArgs passed using the --params flag and expand into a list of -G<param> arguments
+set ParamArgsIndex [lsearch -exact $lst "--params"]
+if {$ParamArgsIndex >= 0} {
+    set ParamArgs [lindex $lst [expr {$ParamArgsIndex + 1}]]
+    set ParamArgs [regexp -all -inline {\S+} $ParamArgs]
+    foreach param $ParamArgs {
+        lappend ExpandedParamArgs -G$param
     }
+    set lst [lreplace $lst $ParamArgsIndex [expr {$ParamArgsIndex + 1}]]
 }
 
 # Debug print statements
@@ -162,7 +174,7 @@ if {$DEBUG > 0} {
     echo "FunctCoverage = $FunctCoverage"
     echo "remaining list = $lst"
     echo "Extra +args = $PlusArgs"
-    echo "Extra -args = $ParamArgs"
+    echo "Extra -args = $ExpandedParamArgs"
 }
 
 # compile source files
@@ -175,7 +187,7 @@ vlog -lint -work ${WKDIR} {*}${INC_DIRS} {*}${FCvlog} {*}${FCdefineCOVER_EXTS} {
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} {*}${ParamArgs} -o testbenchopt ${CoverageVoptArg}
+vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} {*}${ExpandedParamArgs} -o testbenchopt ${CoverageVoptArg}
 
 vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} {*}${PlusArgs} -fatal 7 {*}${SVLib} ${OtherFlags} {*}${FCvopt} -suppress 3829 ${CoverageVsimArg}
 

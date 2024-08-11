@@ -6,6 +6,7 @@
 ## Written: lserafini@hmc.edu
 ## Created: 11 April 2023
 ## Modified: 12 April 2023
+## Modified: 10 August 2023, jcarlin@hmc.edu
 ##
 ## Purpose: Run the cache simulator on each rv64gc test suite in turn.
 ##
@@ -48,13 +49,12 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-# tests64gc = ["coverage64gc", "arch64f", "arch64d", "arch64i", "arch64priv", "arch64c",  "arch64m",
-tests64gc = ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m",
-             "arch64zi", "wally64a", "wally64periph", "wally64priv",
-             "arch64zba",  "arch64zbb",  "arch64zbc",  "arch64zbs",
-             "imperas64f", "imperas64d", "imperas64c", "imperas64i"]
+tests64gc = ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m", "arch64zcb",
+             "arch64zifencei", "arch64zicond", "arch64a_amo", "wally64a_lrsc", "wally64periph", "wally64priv",
+             "arch64zbkb", "arch64zbkc", "arch64zbkx", "arch64zknd", "arch64zkne", "arch64zknh",
+             "arch64zba",  "arch64zbb",  "arch64zbc", "arch64zbs"]
 # arch64i is the most interesting case.  Uncomment line below to run just that case
-tests64gc = ["arch64i"]
+# tests64gc = ["arch64i"]
 
 cachetypes = ["ICache", "DCache"]
 simdir = os.path.expandvars("$WALLY/sim")
@@ -65,9 +65,8 @@ def main():
     parser.add_argument('-d', "--dist", action='store_true', help="Report distribution of operations")
     parser.add_argument('-s', "--sim", help="Simulator", choices=["questa", "verilator", "vcs"], default="verilator")
     args = parser.parse_args()
-
-    simargs = "-GI_CACHE_ADDR_LOGGER=1\\\'b1 -GD_CACHE_ADDR_LOGGER=1\\\'b1"
-    testcmd = "wsim --sim " + args.sim + " rv64gc {} --args \"" + simargs + "\" > /dev/null"
+    simargs = "I_CACHE_ADDR_LOGGER=1\\\'b1 D_CACHE_ADDR_LOGGER=1\\\'b1"
+    testcmd = "wsim --sim " + args.sim + " rv64gc {} --params \"" + simargs + "\" > /dev/null"
     cachecmd = "CacheSim.py 64 4 56 44 -f {}"
     mismatches = 0
 
