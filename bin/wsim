@@ -124,7 +124,7 @@ cd = "cd $WALLY/sim/" +args.sim
 
 # per-simulator launch
 if (args.sim == "questa"):
-    if (args.gui) and (args.testbench == "testbench"):
+    if (args.gui) and (args.tb == "testbench"):
         args.params += "DEBUG=1"
     if (ElfFile != ""):
         args.args += " " + ElfFile
