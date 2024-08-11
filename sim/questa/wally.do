@@ -191,7 +191,7 @@ vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} {*}${Expande
 
 vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} {*}${PlusArgs} -fatal 7 {*}${SVLib} ${OtherFlags} {*}${FCvopt} -suppress 3829 ${CoverageVsimArg}
 
-# power add generates the logging necessary for said generation.
+# power add generates the logging necessary for saif generation.
 # power add -r /dut/core/*
 
 # add waveforms if GUI is enabled

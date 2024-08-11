@@ -56,3 +56,8 @@ if ($?IDV) then
     setupImperas ${IMPERAS_HOME}
     extend PATH $IDV/scripts/cvw
 endif
+
+# Use newer gcc version for older distros
+if ( -e $RISCV/gcc-10 ) then
+    prepend PATH \$RISCV/gcc-10/bin # Ubuntu 20.04 LTS
+endif
