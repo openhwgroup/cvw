@@ -637,7 +637,11 @@ module testbench_fp;
       // check if nothing is being tested
       if (Tests.size() == 0) begin
 	 $display("TEST %s not supported in this configuration", TEST);
-	 $stop;
+`ifdef QUESTA
+    $stop;  // if this is changed to $finish for Questa, wally.do terminates without allowing GUI debug
+`else
+    $finish;
+`endif
       end
    end
 
@@ -987,7 +991,11 @@ module testbench_fp;
             X[P.FLEN-1:0], Y[P.FLEN-1:0], Z[P.FLEN-1:0], SrcA, Res[P.FLEN-1:0], ResFlg, Ans[P.FLEN-1:0], AnsFlg);
          //$display("  fma.Xs %h Xe %h Xm %h Ys %h Ye %h Ym %h Ss %h Se %h Sm %h", fma.Xs, fma.Xe, fma.Xm, fma.Ys, fma.Ye, fma.Ym, fma.Ss, fma.Se, fma.Sm);
          //$display("  readvectors.unpack.X %h Xs %h Xe %h Xm %h", readvectors.unpack.X, readvectors.unpack.Xs, readvectors.unpack.Xe, readvectors.unpack.Xm);
-         $stop;
+`ifdef QUESTA
+        $stop;  // if this is changed to $finish for Questa, wally.do terminates without allowing GUI debug
+`else
+        $finish;
+`endif
       end
 
       if (TestVectors[VectorNum] == '1 & Tests[TestNum] !== "") begin // if reached the eof
@@ -1013,7 +1021,11 @@ module testbench_fp;
          // if no more Tests - finish
          if (Tests[TestNum] === "") begin
                   $display("\nAll Tests completed with %d errors\n", errors);
-                  $stop;
+`ifdef QUESTA
+                  $stop;  // if this is changed to $finish for Questa, wally.do terminates without allowing GUI debug
+`else
+                  $finish;
+`endif
          end 
          $display("Running %s vectors", Tests[TestNum]);
       end
