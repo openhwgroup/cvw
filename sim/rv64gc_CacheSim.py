@@ -29,6 +29,7 @@
 ################################################################################################
 import os
 import argparse
+import subprocess
 
 # NOTE: make sure testbench.sv has the ICache and DCache loggers enabled!
 # This does not check the test output for correctness, run regression for that.
@@ -58,16 +59,17 @@ tests64gc = ["arch64i"]
 cachetypes = ["ICache", "DCache"]
 simdir = os.path.expandvars("$WALLY/sim")
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description="Runs the cache simulator on all rv64gc test suites")
     parser.add_argument('-p', "--perf", action='store_true', help="Report hit/miss ratio")
     parser.add_argument('-d', "--dist", action='store_true', help="Report distribution of operations")
     parser.add_argument('-s', "--sim", help="Simulator", choices=["questa", "verilator", "vcs"], default="verilator")
-
     args = parser.parse_args()
+
     simargs = "-GI_CACHE_ADDR_LOGGER=1\\\'b1 -GD_CACHE_ADDR_LOGGER=1\\\'b1"
     testcmd = "wsim --sim " + args.sim + " rv64gc {} --args \"" + simargs + "\" > /dev/null"
     cachecmd = "CacheSim.py 64 4 56 44 -f {}"
+    mismatches = 0
 
     if args.perf:
         cachecmd += " -p"
@@ -83,5 +85,11 @@ if __name__ == '__main__':
         os.system(testcmd.format(test))
         for cache in cachetypes:
             print(f"{bcolors.OKCYAN}Running the", cache, f"simulator.{bcolors.ENDC}")
-            os.system(cachecmd.format(args.sim+"/"+cache+".log"))
+            result = subprocess.run(cachecmd.format(args.sim+"/"+cache+".log"), shell=True)
+            mismatches += result.returncode
         print()
+    return mismatches
+
+if __name__ == '__main__':
+    exit(main())
+
