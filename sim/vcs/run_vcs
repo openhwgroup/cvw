@@ -72,7 +72,7 @@ else:
     COV_OPTIONS = ""
 
 # Write parameter overrides to a file
-f = open(os.path.expandvars(wkdir) + "/param_overrides.txt", "x")
+f = open(os.path.expandvars(wkdir) + "/param_overrides.txt", "w")
 for param in args.params.split():
     [param, value] = param.split("=")
     value = value.replace("\\'", "'")
