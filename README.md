@@ -1,4 +1,7 @@
 # divremsqrt
+This branch contains the relevant hardware and test/synthesis flows for cvw's unified integer/fp divide/sqrt recurrence unit. The recurrence unit can be generated for a variety configurations, which span flavors of radix = {2,4}, floating-point precision = {float,double,quad}, integer width = {unsupported,32,64} and divider copies = {1,2,4,8}. 
+
+The fpu postprocessor on cvw handles inputs not only from the div/sqrt unit, but also the fma and convert units. This branch's drsu unit contains a postprocessor with logic only relevant to division/sqrt.
 
 # file hiearchy 
 
