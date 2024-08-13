@@ -415,6 +415,32 @@ if (intdiv):
     "f_ieee_div_2_8i_rv64gc",
     "f_ieee_div_2_8i_rv32gc"
     ]
+    nointdivconfigs = [
+    "fdh_ieee_div_2_1_rv32gc", "fdh_ieee_div_2_1_rv64gc", "fdh_ieee_div_2_2_rv32gc",
+    "fdh_ieee_div_2_2_rv64gc", "fdh_ieee_div_2_4_rv32gc", "fdh_ieee_div_2_4_rv64gc",
+    "fdh_ieee_div_4_1_rv32gc", "fdh_ieee_div_4_1_rv64gc", "fdh_ieee_div_4_2_rv32gc",
+    "fdh_ieee_div_4_2_rv64gc", "fdh_ieee_div_4_4_rv32gc", "fdh_ieee_div_4_4_rv64gc",
+    "fd_ieee_div_2_1_rv32gc", "fd_ieee_div_2_1_rv64gc", "fd_ieee_div_2_2_rv32gc",
+    "fd_ieee_div_2_2_rv64gc", "fd_ieee_div_2_4_rv32gc", "fd_ieee_div_2_4_rv64gc",
+    "fd_ieee_div_4_1_rv32gc", "fd_ieee_div_4_1_rv64gc", "fd_ieee_div_4_2_rv32gc",
+    "fd_ieee_div_4_2_rv64gc", "fd_ieee_div_4_4_rv32gc", "fd_ieee_div_4_4_rv64gc",
+    "fdqh_ieee_div_2_1_rv32gc", "fdqh_ieee_div_2_1_rv64gc", "fdqh_ieee_div_2_2_rv32gc",
+    "fdqh_ieee_div_2_2_rv64gc", "fdqh_ieee_div_2_4_rv32gc", "fdqh_ieee_div_2_4_rv64gc",
+    "fdqh_ieee_div_4_1_rv32gc", "fdqh_ieee_div_4_1_rv64gc", "fdqh_ieee_div_4_2_rv32gc",
+    "fdqh_ieee_div_4_2_rv64gc", "fdqh_ieee_div_4_4_rv32gc", "fdqh_ieee_div_4_4_rv64gc",
+    "fdq_ieee_div_2_1_rv32gc", "fdq_ieee_div_2_1_rv64gc", "fdq_ieee_div_2_2_rv32gc",
+    "fdq_ieee_div_2_2_rv64gc", "fdq_ieee_div_2_4_rv32gc", "fdq_ieee_div_2_4_rv64gc",
+    "fdq_ieee_div_4_1_rv32gc", "fdq_ieee_div_4_1_rv64gc", "fdq_ieee_div_4_2_rv32gc",
+    "fdq_ieee_div_4_2_rv64gc", "fdq_ieee_div_4_4_rv32gc", "fdq_ieee_div_4_4_rv64gc",
+    "fh_ieee_div_2_1_rv32gc", "fh_ieee_div_2_1_rv64gc", "fh_ieee_div_2_2_rv32gc",
+    "fh_ieee_div_2_2_rv64gc", "fh_ieee_div_2_4_rv32gc", "fh_ieee_div_2_4_rv64gc",
+    "fh_ieee_div_4_1_rv32gc", "fh_ieee_div_4_1_rv64gc", "fh_ieee_div_4_2_rv32gc",
+    "fh_ieee_div_4_2_rv64gc", "fh_ieee_div_4_4_rv32gc", "fh_ieee_div_4_4_rv64gc",
+    "f_ieee_div_2_1_rv32gc", "f_ieee_div_2_1_rv64gc", "f_ieee_div_2_2_rv32gc",
+    "f_ieee_div_2_2_rv64gc", "f_ieee_div_2_4_rv32gc", "f_ieee_div_2_4_rv64gc",
+    "f_ieee_div_4_1_rv32gc", "f_ieee_div_4_1_rv64gc", "f_ieee_div_4_2_rv32gc",
+    "f_ieee_div_4_2_rv64gc", "f_ieee_div_4_4_rv32gc", "f_ieee_div_4_4_rv64gc"
+    ]
 
     for config in intdivconfigs:
         # fdivremsqrt test case
@@ -425,6 +451,22 @@ if (intdiv):
             grepstr="All Tests completed with          0 errors"
         )
         configs.insert(0,fdivremsqrttestcase)
+    for config in nointdivconfigs:
+        # div,sqrt test cases for no integer flavor of divider
+        divtestcase = TestCase(
+            name="fdiv",
+            variant=config,
+            cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " div_drsu \n!",
+            grepstr="All Tests completed with          0 errors"
+        )
+        configs.insert(0,divtestcase)
+        sqrttestcase = TestCase(
+            name="fsqrt",
+            variant=config,
+            cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " sqrt_drsu \n!",
+            grepstr="All Tests completed with          0 errors"
+        )
+        configs.insert(0,sqrttestcase)
 
 import os
 from multiprocessing import Pool, TimeoutError
