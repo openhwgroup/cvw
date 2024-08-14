@@ -4,45 +4,34 @@
 
 SIM = ${WALLY}/sim
 
-all:
-	make riscof
-	make zsbl
-	make testfloat
-#	make verify
-	make coverage
-#	make benchmarks
+.PHONY: all riscof testfloat zsbl benchmarks coremark embench coverage clean
+
+all: riscof	testfloat zsbl coverage # benchmarks
 
 # riscof builds the riscv-arch-test and wally-riscv-arch-test suites
 riscof:
-	make -C sim
+	$(MAKE) -C sim
 
 testfloat:
-	cd ${WALLY}/addins/SoftFloat-3e/build/Linux-x86_64-GCC; make
-	cd ${WALLY}/addins/TestFloat-3e/build/Linux-x86_64-GCC; make
-	cd ${WALLY}/tests/fp; ./create_all_vectors.sh
+	$(MAKE) -C ${WALLY}/addins/SoftFloat-3e/build/Linux-x86_64-GCC
+	$(MAKE) -C ${WALLY}/addins/TestFloat-3e/build/Linux-x86_64-GCC
+	cd ${WALLY}/tests/fp && ./create_all_vectors.sh
 
 zsbl:
 	$(MAKE) -C ${WALLY}/fpga/zsbl
 
-verify:
-	cd ${SIM}; ./regression-wally
-	cd ${SIM}/sim; ./sim-testfloat-batch all
-	make imperasdv
-
 benchmarks:
-	make coremark
-	make embench
+	$(MAKE) coremark
+	$(MAKE) embench
 
 coremark:
-	cd ${WALLY}/benchmarks/coremark; make; make run
+	cd ${WALLY}/benchmarks/coremark; $(MAKE); #$(MAKE) run
 
 embench:
-	cd ${WALLY}/benchmarks/embench; make; make run
+	cd ${WALLY}/benchmarks/embench; $(MAKE); #$(MAKE) run
 
 coverage:
-	make -C tests/coverage
-
+	$(MAKE) -C tests/coverage
 
 clean:
-	make clean -C sim
-
+	$(MAKE) clean -C sim
