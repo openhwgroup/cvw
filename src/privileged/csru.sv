@@ -37,7 +37,7 @@ module csru import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0] CSRUReadValM,  
   input  logic [4:0]        SetFflagsM,
   output logic [2:0]        FRM_REGW,
-  output logic              WriteFRMM, WriteFFLAGSM,
+  output logic              WriteFRMM, SetOrWriteFFLAGSM,
   output logic              IllegalCSRUAccessM
 );
 
@@ -48,7 +48,7 @@ module csru import cvw::*;  #(parameter cvw_t P) (
   logic [4:0]               FFLAGS_REGW;
   logic [2:0]               NextFRMM;
   logic [4:0]               NextFFLAGSM;
-  logic                     SetOrWriteFFLAGSM;
+  logic                     WriteFFLAGSM;
   
   // Write enables
   assign WriteFRMM    = CSRUWriteM & (STATUS_FS != 2'b00) & (CSRAdrM == FRM | CSRAdrM == FCSR);

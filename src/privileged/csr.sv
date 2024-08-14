@@ -110,7 +110,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic                    WriteMSTATUSM, WriteMSTATUSHM, WriteSSTATUSM;
   logic                    CSRMWriteM, CSRSWriteM, CSRUWriteM;
   logic                    UngatedCSRMWriteM;
-  logic                    WriteFRMM, WriteFFLAGSM;
+  logic                    WriteFRMM, SetOrWriteFFLAGSM;
   logic [P.XLEN-1:0]       UnalignedNextEPCM, NextEPCM, NextMtvalM;
   logic [4:0]              NextCauseM;
   logic [11:0]             CSRAdrM;
@@ -222,7 +222,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   csrsr #(P) csrsr(.clk, .reset, .StallW, 
     .WriteMSTATUSM, .WriteMSTATUSHM, .WriteSSTATUSM, 
     .TrapM, .FRegWriteM, .NextPrivilegeModeM, .PrivilegeModeW,
-    .mretM, .sretM, .WriteFRMM, .WriteFFLAGSM, .CSRWriteValM, .SelHPTW,
+    .mretM, .sretM, .WriteFRMM, .SetOrWriteFFLAGSM, .CSRWriteValM, .SelHPTW,
     .MSTATUS_REGW, .SSTATUS_REGW, .MSTATUSH_REGW,
     .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TW,
     .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TVM,
@@ -267,14 +267,14 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   if (P.F_SUPPORTED) begin:csru
     csru #(P) csru(.clk, .reset, .InstrValidNotFlushedM, 
       .CSRUWriteM, .CSRAdrM, .CSRWriteValM, .STATUS_FS, .CSRUReadValM,  
-      .SetFflagsM, .FRM_REGW, .WriteFRMM, .WriteFFLAGSM,
+      .SetFflagsM, .FRM_REGW, .WriteFRMM, .SetOrWriteFFLAGSM,
       .IllegalCSRUAccessM);
   end else begin
     assign FRM_REGW = '0;
     assign CSRUReadValM = '0;
     assign IllegalCSRUAccessM = 1'b1;
     assign WriteFRMM = 1'b0;
-    assign WriteFFLAGSM = 1'b0;
+    assign SetOrWriteFFLAGSM = 1'b0;
   end
   
   if (P.ZICNTR_SUPPORTED) begin:counters
