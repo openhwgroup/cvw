@@ -24,7 +24,7 @@ LIBRARY_FILES	:=
 
 MARCH           :=-march=rv64imfdc_zifencei
 MABI            :=-mabi=lp64d
-LINK_FLAGS      :=$(MARCH) $(MABI) -nostartfiles
+LINK_FLAGS      :=$(MARCH) $(MABI) -nostartfiles -L $(RISCV)/riscv64-unknown-elf/lib
 LINKER		:=linker1000.x
 
 
