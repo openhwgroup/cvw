@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // ahbinterface.sv
 //
-// Written: Ross Thompson ross1728@gmail.com
+// Written: Rose Thompson ross1728@gmail.com
 // Created: August 29, 2022
 // Modified: 18 January 2023
 //

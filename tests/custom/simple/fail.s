@@ -1,4 +1,4 @@
-# Ross Thompson
+# Rose Thompson
 # March 17, 2021
 # Oklahoma State University
 

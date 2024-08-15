@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // localrepairbp
 //
-// Written: Ross Thompson
+// Written: Rose Thompson
 // Email: ross1728@gmail.com
 // Created: 15 April 2023
 //

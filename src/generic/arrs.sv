@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // arrs.sv
 //
-// Written: Ross Thompson ross1728@gmail.com
+// Written: Rose Thompson ross1728@gmail.com
 // Modified: November 12, 2021
 //
 // Purpose: resets are typically asynchronous but need to be synchronized to

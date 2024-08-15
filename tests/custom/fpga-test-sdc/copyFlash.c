@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // copyFlash.sv
 //
-// Written: Ross Thompson September 25, 2021
+// Written: Rose Thompson September 25, 2021
 // Modified: 
 //
 // Purpose: copies flash card into memory
