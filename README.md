@@ -5,9 +5,24 @@ The fpu postprocessor on cvw handles inputs not only from the div/sqrt unit, but
 
 # file hiearchy 
 
+The RTL files for the divider can be found under cvw/src/fpu
+
+The majority of divider modules are found in cvw/src/fpu/divremsqrt, which also borrows some modules from cvw/src/fpu/fdivsqrt
+
+divremsqrt/drsu desribes the top-level unit for the divider, taking in unpacked floating point signals, including Xs, Xm Xe, Ys, Ym, Ye.
+
+drsu first feeds signals to divremsqrt/divremsqrt, which contains the preprocessor, iteration units, fsm, and postprocessing logic. The postprocessor in divremsqrt/divremsqrt also contains all integer postprocessing logic. Outputs from divremsqrt/divremsqrt are then sent to divremsqrt/divremsqrtpostprocess, which handles rounding and flags.
+
 # verification flow
 
+drsu is verified with the risc-v arch test Berkeley SoftFloat floating point suite of test vectors for floating point square-root and division. In order to run the top-level regression script, run `./cvw/sim/regression -intdiv`
+
+The top-level regression python script is found accordingly in cvw/sim/regression-wally. The testbench is found in cvw/testbench/testbench-fp, which runs drsu against testvectors. Batches of testvectors are stored within cvw/testbench/tests-fp.vh, and the raw binary test vectors are read from tests/fp/vectors
+ 
 # synthesis flow
+
+# start-up steps
+
 
 
 Wally is a 5-stage pipelined processor configurable to support all the standard RISC-V options, incluidng RV32/64, A, C, F, D, Q, M, and Zb* extensions, virtual memory, PMP, and the various privileged modes and CSRs. It provides optional caches, branch prediction, and standard RISC-V peripherals (CLINT, PLIC, UART, GPIO).   Wally is written in SystemVerilog.  It passes the RISC-V Arch Tests and boots Linux on an FPGA.  Configurations range from a minimal RV32E core to a fully featured RV64GC application processor.
