@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // localbpbasic
 //
-// Written: Ross Thompson
+// Written: Rose Thompson
 // Email: ross1728@gmail.com
 // Created: 16 March 2021
 //

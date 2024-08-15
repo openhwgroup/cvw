@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // twoBitPredictor.sv
 //
-// Written: Ross Thomposn
+// Written: Rose Thomposn
 // Email: ross1728@gmail.com
 // Created: February 14, 2021
 // Modified: 

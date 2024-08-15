@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // busfsm.sv
 //
-// Written: Ross Thompson ross1728@gmail.com 
+// Written: Rose Thompson ross1728@gmail.com 
 // Created: December 29, 2021
 // Modified: 18 January 2023 
 //
