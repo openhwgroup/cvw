@@ -4,18 +4,19 @@
 
 SIM = ${WALLY}/sim
 
-.PHONY: all riscof testfloat zsbl benchmarks coremark embench coverage clean
+.PHONY: all riscof testfloat combined_IF_vectors zsbl benchmarks coremark embench coverage clean
 
-all: riscof	testfloat zsbl coverage # benchmarks
+all: riscof	testfloat combined_IF_vectors zsbl coverage # benchmarks
 
 # riscof builds the riscv-arch-test and wally-riscv-arch-test suites
 riscof:
 	$(MAKE) -C sim
 
 testfloat:
-	$(MAKE) -C ${WALLY}/addins/SoftFloat-3e/build/Linux-x86_64-GCC
-	$(MAKE) -C ${WALLY}/addins/TestFloat-3e/build/Linux-x86_64-GCC
-	cd ${WALLY}/tests/fp && ./create_all_vectors.sh
+	$(MAKE) -C ${WALLY}/tests/fp vectors
+
+combined_IF_vectors: testfloat riscof
+	$(MAKE) -C ${WALLY}/tests/fp combined_IF_vectors
 
 zsbl:
 	$(MAKE) -C ${WALLY}/fpga/zsbl
@@ -35,3 +36,4 @@ coverage:
 
 clean:
 	$(MAKE) clean -C sim
+	$(MAKE) clean -C ${WALLY}/tests/fp
