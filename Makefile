@@ -26,10 +26,10 @@ benchmarks:
 	$(MAKE) embench
 
 coremark:
-	cd ${WALLY}/benchmarks/coremark; $(MAKE); #$(MAKE) run
+	cd ${WALLY}/benchmarks/coremark; $(MAKE); $(MAKE) run
 
 embench:
-	cd ${WALLY}/benchmarks/embench; $(MAKE); #$(MAKE) run
+	cd ${WALLY}/benchmarks/embench; $(MAKE); $(MAKE) run
 
 coverage:
 	$(MAKE) -C tests/coverage
