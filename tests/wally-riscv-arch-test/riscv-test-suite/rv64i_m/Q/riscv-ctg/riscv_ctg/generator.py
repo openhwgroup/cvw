@@ -55,7 +55,7 @@ def toint(x: str):
         return int(x)
 
 def get_rm(opcode):
-    insns = ['fsgnj','fle','flt','feq','fclass','fmv','flw','fsw','fld','fsd','fmin','fmax',
+    insns = ['fsgnj','fle','flt','feq','fclass','fmv','flw','fsw','fld','fsd','flq','fsq','fmin','fmax',
              'fcvt.d.s', 'fcvt.d.w','fcvt.d.wu']
     insns += ['fminm', 'fmaxm']
     if any([x in opcode for x in insns]):
@@ -242,7 +242,7 @@ class Generator():
 
 
         is_nan_box = False
-        is_fext = any(['F' in x or 'D' in x for x in opnode['isa']])
+        is_fext = any(['F' in x or 'D' in x or 'Q' in x for x in opnode['isa']])
 
         if is_fext:
             if fl>ifl:
@@ -260,7 +260,7 @@ class Generator():
         self.is_fext = is_fext
         self.is_nan_box = is_nan_box
 
-        if opcode in ['sw', 'sh', 'sb', 'lw', 'lhu', 'lh', 'lb', 'lbu', 'ld', 'lwu', 'sd',"jal","beq","bge","bgeu","blt","bltu","bne","jalr","flw","fsw","fld","fsd"]:
+        if opcode in ['sw', 'sh', 'sb', 'lw', 'lhu', 'lh', 'lb', 'lbu', 'ld', 'lwu', 'sd',"jal","beq","bge","bgeu","blt","bltu","bne","jalr","flw","fsw","fld","fsd","flq","fsq"]:
             self.val_vars = self.val_vars + ['ea_align']
         self.template = opnode['template']
         self.opnode = opnode
