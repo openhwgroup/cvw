@@ -1,3 +1,8 @@
+# imperas.ic
+# Initialization file for ImperasDV lock step simulation
+# David_Harris@hmc.edu 15 August 2024
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
 #--mpdconsole
 #--gdbconsole
 #--showoverrides
@@ -68,6 +73,9 @@
 --override cpu/PMP_registers=16
 --override cpu/PMP_undefined=T
 
+# mstatus.FS is set dirty on any write to a FPR, or when a fp operation signals an exception
+--override cpu/mstatus_fs_mode=rvfs_write_nz
+
 # PMA Settings 
 # 'r': read access allowed
 # 'w': write access allowed
@@ -101,7 +109,7 @@
 
 # Add Imperas simulator application instruction tracing
 # uncomment these to provide tracing
-#--verbose --trace --tracechange --traceshowicount --tracemode -tracemem ASX --monitornetschange # --traceafter 300000000
+--verbose --trace --tracechange --traceshowicount --tracemode -tracemem ASX --monitornetschange # --traceafter 300000000
 --override cpu/debugflags=6 --override cpu/verbose=1
 --override cpu/show_c_prefix=T
 
