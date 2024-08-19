@@ -27,7 +27,7 @@ Regression log files can be found in `cvw/sim/logs` after running `regression-wa
 * integer denotes whether integer division/remainder is supported on the divider: i
 * XLEN denotes the width of integers: 32, 64 (this only matters if integer is supported on the divider)
 * TESTNAME denotes which tests are being run:
-* fdivremsqrt: runs fdiv, fsqrt, intdiv, intrem
+    * fdivremsqrt: runs fdiv, fsqrt, intdiv, intrem
     * fdiv: runs fdiv
     * fsqrt: runs fsqrt
    
