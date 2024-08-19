@@ -22,7 +22,12 @@ The top-level regression python script is found accordingly in cvw/sim/regressio
 # synthesis flow
 
 # start-up steps
-
+1) `git clone --recurse-submodules https://github.com/openhwgroup/cvw.git`
+2) `cd cvw`
+3) `git checkout divremsqrt`
+4) `source ./setup.sh`
+5) `make`
+6) `/sim/regression-wally -intdiv`
 
 
 Wally is a 5-stage pipelined processor configurable to support all the standard RISC-V options, incluidng RV32/64, A, C, F, D, Q, M, and Zb* extensions, virtual memory, PMP, and the various privileged modes and CSRs. It provides optional caches, branch prediction, and standard RISC-V peripherals (CLINT, PLIC, UART, GPIO).   Wally is written in SystemVerilog.  It passes the RISC-V Arch Tests and boots Linux on an FPGA.  Configurations range from a minimal RV32E core to a fully featured RV64GC application processor.
