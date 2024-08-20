@@ -319,7 +319,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
                         else if ((~TransmitFIFOReadEmpty | ~TransmitShiftEmpty)) begin
                           state <= ACTIVE_0;
                           SPICLK <= ~SckMode[1];
-                        end
+                        end else SPICLK <= SckMode[1];
                         end
                 DELAY_0: begin
                         CS_SCKCount <= CS_SCKCount + 9'b1;
@@ -357,6 +357,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
                         end
                 INTER_CS: begin
                         InterCSCount <= InterCSCount + 9'b1;
+                        SPICLK <= SckMode[1];
                         if (InterCSCount >= ({Delay1[7:0],1'b0})) state <= CS_INACTIVE;
                         end
                 INTER_XFR: begin
@@ -369,6 +370,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
                           state <= ACTIVE_0;
                           SPICLK <= ~SckMode[1];
                         end else if (~|ChipSelectMode[1:0]) state <= CS_INACTIVE;
+                        else SPICLK <= SckMode[1];
                         end
             endcase
             /* verilator lint_off CASEINCOMPLETE */
@@ -382,7 +384,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     assign Active = (state == ACTIVE_0 | state == ACTIVE_1);
     assign SampleEdge = SckMode[0] ? (state == ACTIVE_1) : (state == ACTIVE_0);
     assign ZeroDelayHoldMode = ((ChipSelectMode == 2'b10) & (~|(Delay1[7:4])));
-    assign TransmitInactive = ((state == INTER_CS) | (state == CS_INACTIVE) | (state == INTER_XFR) | (ReceiveShiftFullDelayPCLK & ZeroDelayHoldMode) | ((state == ACTIVE_1) & ((ChipSelectMode[1:0] == 2'b10) & ~|(Delay1[15:8]) & (~TransmitFIFOReadEmpty) & (FrameCount == 4'd8))));
+    assign TransmitInactive = ((state == INTER_CS) | (state == CS_INACTIVE) | (state == INTER_XFR) | (ReceiveShiftFullDelayPCLK & ZeroDelayHoldMode) | ((state == ACTIVE_1) & ((ChipSelectMode[1:0] == 2'b10) & ~|(Delay1[15:8]) & (~TransmitFIFOReadEmpty) & (FrameCount == Format[4:1]))));
     assign Active0 = (state == ACTIVE_0);
 
   // Signal tracks which edge of sck to shift data
@@ -392,9 +394,9 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     always_comb
         case(SckMode[1:0])
             2'b00: ShiftEdge = SPICLK & SCLKenable;
-            2'b01: ShiftEdge = (SPICLK & |(FrameCount) & SCLKenable); // Probably wrong
+            2'b01: ShiftEdge = (~SPICLK & (|(FrameCount) | (CS_SCKCount >= (({Delay0[7:0], 1'b0}) + ImplicitDelay1))) & SCLKenable & (FrameCount != Format[4:1]) & ~TransmitInactive); // Probably wrong
             2'b10: ShiftEdge = ~SPICLK & SCLKenable; // Probably wrong
-            2'b11: ShiftEdge = (~SPICLK & |(FrameCount) & SCLKenable); // Probably wrong
+            2'b11: ShiftEdge = (SPICLK & (|(FrameCount) | (CS_SCKCount >= (({Delay0[7:0], 1'b0}) + ImplicitDelay1))) & SCLKenable & (FrameCount != Format[4:1]) & ~TransmitInactive); // Probably wrong
             default: ShiftEdge = SPICLK & SCLKenable;
         endcase
 
