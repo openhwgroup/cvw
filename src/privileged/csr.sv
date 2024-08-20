@@ -8,7 +8,7 @@
 // Purpose: Counter Control and Status Registers
 //          See RISC-V Privileged Mode Specification 20190608 
 // 
-// Documentation: RISC-V System on Chip Design Chapter 5
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -57,12 +57,12 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic                     LoadStallD, StoreStallD, 
   input  logic                     ICacheStallF,
   input  logic                     DCacheStallM,
-  input  logic                     BPDirPredWrongM,
+  input  logic                     BPDirWrongM,
   input  logic                     BTAWrongM,
   input  logic                     RASPredPCWrongM,
   input  logic                     IClassWrongM,
   input  logic                     BPWrongM,                  // branch predictor is wrong
-  input  logic [3:0]               InstrClassM,
+  input  logic [3:0]               IClassM,
   input  logic                     DCacheMiss,
   input  logic                     DCacheAccess,
   input  logic                     ICacheMiss,
@@ -138,12 +138,12 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////
 
   always_comb
-    if (InterruptM)           NextFaultMtvalM = 0;
+    if (InterruptM)           NextFaultMtvalM = '0;
     else case (CauseM)
       12, 1, 3:               NextFaultMtvalM = PCM;  // Instruction page/access faults, breakpoint
       2:                      NextFaultMtvalM = {{(P.XLEN-32){1'b0}}, InstrOrigM}; // Illegal instruction fault 
       0, 4, 6, 13, 15, 5, 7:  NextFaultMtvalM = IEUAdrM; // Instruction misaligned, Load/Store Misaligned/page/access faults
-      default:                NextFaultMtvalM = 0; // Ecall, interrupts
+      default:                NextFaultMtvalM = '0; // Ecall, interrupts
     endcase
 
   ///////////////////////////////////////////
@@ -200,7 +200,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
 
   assign CSRAdrM = InstrM[31:20];
   assign UnalignedNextEPCM = TrapM ? PCM : CSRWriteValM;
-  assign NextEPCM = P.COMPRESSED_SUPPORTED ? {UnalignedNextEPCM[P.XLEN-1:1], 1'b0} : {UnalignedNextEPCM[P.XLEN-1:2], 2'b00}; // 3.1.15 alignment
+  assign NextEPCM = P.ZCA_SUPPORTED ? {UnalignedNextEPCM[P.XLEN-1:1], 1'b0} : {UnalignedNextEPCM[P.XLEN-1:2], 2'b00}; // 3.1.15 alignment
   assign NextCauseM = TrapM ? {InterruptM, CauseM}: {CSRWriteValM[P.XLEN-1], CSRWriteValM[3:0]};
   assign NextMtvalM = TrapM ? NextFaultMtvalM : CSRWriteValM;
   assign UngatedCSRMWriteM = CSRWriteM & (PrivilegeModeW == P.M_MODE);
@@ -252,39 +252,43 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       .SATP_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MTIME_CLINT, .STCE,
       .WriteSSTATUSM, .IllegalCSRSAccessM, .STimerInt, .SENVCFG_REGW);
   end else begin
-    assign WriteSSTATUSM = 0;
-    assign CSRSReadValM = 0;
-    assign SEPC_REGW = 0;
-    assign STVEC_REGW = 0;
-    assign SCOUNTEREN_REGW = 0;
-    assign SATP_REGW = 0;
-    assign IllegalCSRSAccessM = 1;
+    assign WriteSSTATUSM = 1'b0;
+    assign CSRSReadValM = '0;
+    assign SEPC_REGW = '0;
+    assign STVEC_REGW = '0;
+    assign SCOUNTEREN_REGW = '0;
+    assign SATP_REGW = '0;
+    assign IllegalCSRSAccessM = 1'b1;
+    assign STimerInt = '0;
+    assign SENVCFG_REGW = '0;
   end
 
   // Floating Point CSRs in User Mode only needed if Floating Point is supported
-  if (P.F_SUPPORTED | P.D_SUPPORTED) begin:csru
+  if (P.F_SUPPORTED) begin:csru
     csru #(P) csru(.clk, .reset, .InstrValidNotFlushedM, 
       .CSRUWriteM, .CSRAdrM, .CSRWriteValM, .STATUS_FS, .CSRUReadValM,  
       .SetFflagsM, .FRM_REGW, .WriteFRMM, .WriteFFLAGSM,
       .IllegalCSRUAccessM);
   end else begin
-    assign FRM_REGW = 0;
-    assign CSRUReadValM = 0;
-    assign IllegalCSRUAccessM = 1;
+    assign FRM_REGW = '0;
+    assign CSRUReadValM = '0;
+    assign IllegalCSRUAccessM = 1'b1;
+    assign WriteFRMM = 1'b0;
+    assign WriteFFLAGSM = 1'b0;
   end
   
   if (P.ZICNTR_SUPPORTED) begin:counters
     csrc #(P) counters(.clk, .reset, .StallE, .StallM, .FlushM,
       .InstrValidNotFlushedM, .LoadStallD, .StoreStallD, .CSRWriteM, .CSRMWriteM,
-      .BPDirPredWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM, .BPWrongM,
-      .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .sfencevmaM,
+      .BPDirWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM, .BPWrongM,
+      .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .sfencevmaM,
       .InterruptM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
       .CSRAdrM, .PrivilegeModeW, .CSRWriteValM,
       .MCOUNTINHIBIT_REGW, .MCOUNTEREN_REGW, .SCOUNTEREN_REGW,
       .MTIME_CLINT,  .CSRCReadValM, .IllegalCSRCAccessM);
   end else begin
-    assign CSRCReadValM = 0;
-    assign IllegalCSRCAccessM = 1; // counters aren't enabled
+    assign CSRCReadValM = '0;
+    assign IllegalCSRCAccessM = 1'b1; // counters aren't enabled
   end
 
    // Broadcast appropriate environment configuration based on privilege mode

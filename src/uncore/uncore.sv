@@ -7,7 +7,7 @@
 // Purpose: System-on-Chip components outside the core
 //          Memories, peripherals, external bus control
 // 
-// Documentation: RISC-V System on Chip Design Chapter 15 (and Figure 6.20)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -75,11 +75,14 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   logic                        SDCIntM;
   
   logic                        PCLK, PRESETn, PWRITE, PENABLE;
-  logic [4:0]                  PSEL, PREADY;
+  logic [4:0]                  PSEL;
   logic [31:0]                 PADDR;
   logic [P.XLEN-1:0]           PWDATA;
   logic [P.XLEN/8-1:0]         PSTRB;
+  /* verilator lint_off UNDRIVEN */ // undriven in rv32e configuration
+  logic [4:0]                  PREADY;
   logic [4:0][P.XLEN-1:0]      PRDATA;
+  /* verilator lint_on UNDRIVEN */
   logic [P.XLEN-1:0]           HREADBRIDGE;
   logic                        HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
 
@@ -106,29 +109,29 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
     ram_ahb #(.P(P), .BASE(P.UNCORE_RAM_BASE), .RANGE(P.UNCORE_RAM_RANGE), .PRELOAD(P.UNCORE_RAM_PRELOAD)) ram (
       .HCLK, .HRESETn, .HSELRam, .HADDR, .HWRITE, .HREADY, 
       .HTRANS, .HWDATA, .HWSTRB, .HREADRam, .HRESPRam, .HREADYRam);
-  end
+  end else assign {HREADRam, HRESPRam, HREADYRam} = '0;
 
  if (P.BOOTROM_SUPPORTED) begin : bootrom
     rom_ahb #(.P(P), .BASE(P.BOOTROM_BASE), .RANGE(P.BOOTROM_RANGE), .PRELOAD(P.BOOTROM_PRELOAD))
     bootrom(.HCLK, .HRESETn, .HSELRom(HSELBootRom), .HADDR, .HREADY, .HTRANS, 
       .HREADRom(HREADBootRom), .HRESPRom(HRESPBootRom), .HREADYRom(HREADYBootRom));
-  end
+  end else assign {HREADBootRom, HRESPBootRom, HREADYBootRom} = '0;
 
   // memory-mapped I/O peripherals
   if (P.CLINT_SUPPORTED == 1) begin : clint
     clint_apb #(P) clint(.PCLK, .PRESETn, .PSEL(PSEL[1]), .PADDR(PADDR[15:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
       .PRDATA(PRDATA[1]), .PREADY(PREADY[1]), .MTIME(MTIME_CLINT), .MTimerInt, .MSwInt);
   end else begin : clint
-    assign MTIME_CLINT = 0;
-    assign MTimerInt = 0; assign MSwInt = 0;
+    assign MTIME_CLINT = '0;
+    assign MTimerInt = 1'b0; assign MSwInt = 1'b0;
   end
 
   if (P.PLIC_SUPPORTED == 1) begin : plic
     plic_apb #(P) plic(.PCLK, .PRESETn, .PSEL(PSEL[2]), .PADDR(PADDR[27:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
       .PRDATA(PRDATA[2]), .PREADY(PREADY[2]), .UARTIntr, .GPIOIntr, .SDCIntr, .SPIIntr, .MExtInt, .SExtInt);
   end else begin : plic
-    assign MExtInt = 0;
-    assign SExtInt = 0;
+    assign MExtInt = 1'b0;
+    assign SExtInt = 1'b0;
   end
 
   if (P.GPIO_SUPPORTED == 1) begin : gpio
@@ -137,9 +140,9 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
       .PRDATA(PRDATA[0]), .PREADY(PREADY[0]), 
       .iof0(), .iof1(), .GPIOIN, .GPIOOUT, .GPIOEN, .GPIOIntr);
   end else begin : gpio
-    assign GPIOOUT = 0; assign GPIOEN = 0; assign GPIOIntr = 0;
+    assign GPIOOUT = '0; assign GPIOEN = '0; assign GPIOIntr = 1'b0;
   end
-  if (P.UART_SUPPORTED == 1) begin : uart
+  if (P.UART_SUPPORTED == 1) begin : uartgen // Hack to work around Verilator bug https://github.com/verilator/verilator/issues/4769
     uart_apb #(P) uart(
       .PCLK, .PRESETn, .PSEL(PSEL[3]), .PADDR(PADDR[2:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
       .PRDATA(PRDATA[3]), .PREADY(PREADY[3]), 
@@ -147,7 +150,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
       .SOUT(UARTSout), .RTSb(), .DTRb(),                                // to E1A driver to RS232 interface
       .OUT1b(), .OUT2b(), .INTR(UARTIntr), .TXRDYb(), .RXRDYb());       // to CPU
   end else begin : uart
-    assign UARTSout = 0; assign UARTIntr = 0; 
+    assign UARTSout = 1'b0; assign UARTIntr = 1'b0; 
   end
   if (P.SPI_SUPPORTED == 1) begin : spi
     spi_apb  #(P) spi (
@@ -155,7 +158,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
       .PREADY(PREADY[4]), .PRDATA(PRDATA[4]), 
       .SPIOut, .SPIIn, .SPICS, .SPIIntr);
   end else begin : spi
-    assign SPIOut = 0; assign SPICS = 0; assign SPIIntr = 0;
+    assign SPIOut = 1'b0; assign SPICS = '0; assign SPIIntr = 1'b0;
   end
 
   // AHB Read Multiplexer

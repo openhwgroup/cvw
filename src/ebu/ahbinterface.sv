@@ -7,7 +7,7 @@
 //
 // Purpose: Translates LSU simple memory requests into AHB transactions (NON_SEQ).
 // 
-// Documentation: RISC-V System on Chip Design Chapter 6 (Figure 6.21)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -62,8 +62,8 @@ module ahbinterface #(
     flop #(XLEN)   wdreg(HCLK, WriteData, HWDATA); 
     flop #(XLEN/8) HWSTRBReg(HCLK, ByteMask, HWSTRB);
   end else begin
-    assign HWDATA = 0;
-    assign HWSTRB = 0;
+    assign HWDATA = '0;
+    assign HWSTRB = '0;
   end    
 
   busfsm #(~LSU) busfsm(.HCLK, .HRESETn, .Flush, .BusRW, .BusAtomic,

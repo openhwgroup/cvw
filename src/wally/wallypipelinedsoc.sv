@@ -6,7 +6,7 @@
 //
 // Purpose: System on chip including pipelined processor and uncore memories/peripherals
 //
-// Documentation: RISC-V System on Chip Design (Figure 6.20)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -79,12 +79,15 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
    );
 
   // instantiate uncore if a bus interface exists
-  if (P.BUS_SUPPORTED) begin : uncore
+  if (P.BUS_SUPPORTED) begin : uncoregen // Hack to work around Verilator bug https://github.com/verilator/verilator/issues/4769
     uncore #(P) uncore(.HCLK, .HRESETn, .TIMECLK,
       .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
       .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT, .HSELEXTSDC,
       .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOIN, .GPIOOUT, .GPIOEN, .UARTSin, 
       .UARTSout, .MTIME_CLINT, .SDCIntr, .SPIIn, .SPIOut, .SPICS);
+  end else begin
+    assign {HRDATA, HREADY, HRESP, HSELEXT, HSELEXTSDC, MTimerInt, MSwInt, MExtInt, SExtInt,
+            MTIME_CLINT, GPIOOUT, GPIOEN, UARTSout, SPIOut, SPICS} = '0; 
   end
 
 endmodule

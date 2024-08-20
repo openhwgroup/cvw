@@ -7,7 +7,7 @@
 //
 // Purpose: Count Instruction Submodule
 //
-// Documentation: RISC-V System on Chip Design Chapter 15
+// Documentation: RISC-V System on Chip Design
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -56,8 +56,8 @@ module cnt #(parameter WIDTH = 32) (
   lzc #(WIDTH) lzc(.num(lzcA), .ZeroCnt(czResult[$clog2(WIDTH):0]));
   popcnt #(WIDTH) popcntw(.num(popcntA), .PopCnt(cpopResult[$clog2(WIDTH):0]));
   // zero extend these results to fit into width
-  assign czResult[WIDTH-1:$clog2(WIDTH)+1] = 0;
-  assign cpopResult[WIDTH-1:$clog2(WIDTH)+1] = 0;
+  assign czResult[WIDTH-1:$clog2(WIDTH)+1] = '0;
+  assign cpopResult[WIDTH-1:$clog2(WIDTH)+1] = '0;
 
   mux2 #(WIDTH) cntresultmux(czResult, cpopResult, B[1], CntResult);
 endmodule

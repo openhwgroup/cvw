@@ -7,7 +7,7 @@
 //
 // Purpose: Wally Integer Datapath
 // 
-// Documentation: RISC-V System on Chip Design Chapter 4 (Figure 4.12)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -80,7 +80,6 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   // Decode stage signals
   logic [P.XLEN-1:0] R1D, R2D;                       // Read data from Rs1 (RD1), Rs2 (RD2)
   logic [P.XLEN-1:0] ImmExtD;                        // Extended immediate in Decode stage
-  logic [4:0]        RdD;                            // Destination register in Decode stage
   // Execute stage signals
   logic [P.XLEN-1:0] R1E, R2E;                       // Source operands read from register file
   logic [P.XLEN-1:0] ImmExtE;                        // Extended immediate in Execute stage 
@@ -139,6 +138,6 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   mux5  #(P.XLEN) resultmuxW(IFCvtResultW, ReadDataW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, ResultW); 
  
   // handle Store Conditional result if atomic extension supported
-  if (P.A_SUPPORTED) assign SCResultW = {{(P.XLEN-1){1'b0}}, SquashSCW};
-  else               assign SCResultW = 0;
+  if (P.A_SUPPORTED | P.ZALRSC_SUPPORTED) assign SCResultW = {{(P.XLEN-1){1'b0}}, SquashSCW};
+  else                                    assign SCResultW = '0;
 endmodule

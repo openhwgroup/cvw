@@ -6,7 +6,7 @@
 //
 // Purpose: Divide/Square root postprocessing
 // 
-// Documentation: RISC-V System on Chip Design Chapter 13
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -35,7 +35,7 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.DIVb:0]      FirstU, FirstUM,   // U1.DIVb
   input  logic [P.DIVb+1:0]    FirstC,            // Q2.DIVb
   input  logic                 SqrtE,
-  input  logic                 Firstun, SqrtM, SpecialCaseM, 
+  input  logic                 SqrtM, SpecialCaseM, 
   input  logic [P.XLEN-1:0]    AM,                // U/Q(XLEN.0)
   input  logic                 RemOpM, ALTBM, BZeroM, AsM, BsM, W64M,
   input  logic [P.DIVBLEN-1:0] IntNormShiftM,     
@@ -71,7 +71,7 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
     mux2 #(P.DIVb+4) fzeromux(FZeroDivE, FZeroSqrtE, SqrtE, FZeroE);
     csa #(P.DIVb+4) fadd(WS, WC, FZeroE, 1'b0, WSF, WCF); // compute {WCF, WSF} = {WS + WC + FZero};
     aplusbeq0 #(P.DIVb+4) wcfpluswsfeq0(WCF, WSF, wfeq0E);
-    assign WZeroE = weq0E|(wfeq0E & Firstun);
+    assign WZeroE = weq0E | wfeq0E;
   end else begin
     assign WZeroE = weq0E;
   end 
@@ -121,7 +121,7 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
         else        IntDivResultM = {(P.XLEN){1'b1}};
      end else if (ALTBM) begin // Numerator is small
         if (RemOpM) IntDivResultM = AM;
-        else        IntDivResultM = 0;
+        else        IntDivResultM = '0;
      end else       IntDivResultM = PreIntResultM[P.XLEN-1:0];
 
     // sign extend result for W64
@@ -131,5 +131,6 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
         W64M, FIntDivResultM);
     end else 
       assign FIntDivResultM = IntDivResultM[P.XLEN-1:0];
-  end
+  end else
+    assign FIntDivResultM = '0;
 endmodule

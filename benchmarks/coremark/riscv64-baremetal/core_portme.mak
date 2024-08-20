@@ -107,7 +107,7 @@ port_prebuild: $(PGO_STAGE)
 
 .PHONY: build_pgo_gcc
 build_pgo_gcc:
-	$(MAKE) PGO=gen XCFLAGS="$(XCFLAGS) -fprofile-generate -DTOTAL_DATA_SIZE=1200" ITERATIONS=10 gen_pgo_data REBUILD=1
+	$(MAKE) PGO=gen XCFLAGS="$(XCFLAGS) -fprofile-generate -DTOTAL_DATA_SIZE=1200" gen_pgo_data REBUILD=1
 
 # Target: port_postbuild
 # Generate any files that are needed after actual build end.

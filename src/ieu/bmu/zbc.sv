@@ -7,7 +7,7 @@
 //
 // Purpose: RISC-V ZBC top-level unit
 //
-// Documentation: RISC-V System on Chip Design Chapter 15
+// Documentation: RISC-V System on Chip Design
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -28,23 +28,31 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module zbc #(parameter WIDTH=32) (
-  input  logic [WIDTH-1:0] A, RevA, B,       // Operands
-  input  logic [2:0]       Funct3,           // Indicates operation to perform
-  output logic [WIDTH-1:0] ZBCResult);       // ZBC result
+module zbc import cvw::*; #(parameter cvw_t P) (
+  input  logic [P.XLEN-1:0] A, RevA, B,       // Operands
+  input  logic [1:0]        Funct3,           // Indicates operation to perform
+  output logic [P.XLEN-1:0] ZBCResult);       // ZBC result
 
-  logic [WIDTH-1:0] ClmulResult, RevClmulResult;
-  logic [WIDTH-1:0] RevB;
-  logic [WIDTH-1:0] X, Y;
+  logic [P.XLEN-1:0] ClmulResult, RevClmulResult;
+  logic [P.XLEN-1:0] RevB;
+  logic [P.XLEN-1:0] X, Y;
 
-  bitreverse #(WIDTH) brB(B, RevB);
+  bitreverse #(P.XLEN) brB(B, RevB);
 
-  mux3 #(WIDTH) xmux({RevA[WIDTH-2:0], {1'b0}}, RevA, A, ~Funct3[1:0], X);
-  mux2 #(WIDTH) ymux(RevB, B, ~Funct3[1], Y);
+  // choose X = A for clmul, Rev(A) << 1 for clmulh, Rev(A) for clmulr
+  // unshifted Rev(A) source is only needed for clmulr in ZBC, not in ZBKC
+  if (P.ZBC_SUPPORTED)
+    mux3 #(P.XLEN) xmux({RevA[P.XLEN-2:0], {1'b0}}, RevA, A, ~Funct3[1:0], X);
+  else
+    mux2 #(P.XLEN) xmux(A, {RevA[P.XLEN-2:0], {1'b0}}, Funct3[1], X);
 
-  clmul #(WIDTH) clm(.X, .Y, .ClmulResult);
-  
-  bitreverse  #(WIDTH) brClmulResult(ClmulResult, RevClmulResult);
+  // choose X = B for clmul, Rev(B) for clmulH
+  mux2 #(P.XLEN) ymux(B, RevB, Funct3[1], Y);
 
-  mux2 #(WIDTH) zbcresultmux(ClmulResult, RevClmulResult, Funct3[1], ZBCResult);
+  // carry free multiplier
+  clmul #(P.XLEN) clm(.X, .Y, .ClmulResult);
+
+  // choose result = rev(X @ Y) for clmulh/clmulr
+  bitreverse #(P.XLEN) brClmulResult(ClmulResult, RevClmulResult);
+  mux2 #(P.XLEN) zbcresultmux(ClmulResult, RevClmulResult, Funct3[1], ZBCResult);
 endmodule

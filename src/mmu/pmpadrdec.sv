@@ -10,7 +10,7 @@
 //          naturally aligned power-of-two region/NAPOT), then selects the
 //          output based on which mode is input.
 // 
-// Documentation: RISC-V System on Chip Design Chapter 8
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -77,7 +77,7 @@ module pmpadrdec import cvw::*;  #(parameter cvw_t P) (
 
   assign Match = (AdrMode == TOR) ? TORMatch : 
                  (AdrMode == NA4 | AdrMode == NAPOT) ? NAMatch :
-                 0;
+                 1'b0;
 
   assign L = PMPCfg[7];
   assign X = PMPCfg[2];

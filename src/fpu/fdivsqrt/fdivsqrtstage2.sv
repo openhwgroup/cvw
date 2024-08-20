@@ -6,7 +6,7 @@
 //
 // Purpose: radix-2 divsqrt recurrence stage
 // 
-// Documentation: RISC-V System on Chip Design Chapter 13
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -58,7 +58,7 @@ module fdivsqrtstage2 import cvw::*;  #(parameter cvw_t P) (
   // Divisor multiple
   always_comb
     if      (up) Dsel = DBar;
-    else if (uz) Dsel = 0;
+    else if (uz) Dsel = '0;
     else         Dsel = D; // un
 
   // Residual Update

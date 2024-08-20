@@ -7,7 +7,7 @@
 //
 // Purpose: RISC-V Arithmetic/Logic Unit Bit-Manipulation Extension and K extension
 //
-// Documentation: RISC-V System on Chip Design Chapter 15
+// Documentation: RISC-V System on Chip Design
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -49,7 +49,6 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
   logic [P.XLEN-1:0]        ZBBResult;               // ZBB Result
   logic [P.XLEN-1:0]        ZBCResult;               // ZBC Result   
   logic [P.XLEN-1:0] 	      ZBKBResult;              // ZBKB Result
-  logic [P.XLEN-1:0]        ZBKCResult;              // ZBKC Result
   logic [P.XLEN-1:0]        ZBKXResult;              // ZBKX Result      
   logic [P.XLEN-1:0]        ZKNHResult;              // ZKNH Result
   logic [P.XLEN-1:0]        ZKNDEResult;             // ZKNE or ZKND Result   
@@ -87,40 +86,46 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
   end
 
   // Bit reverse needed for some ZBB, ZBC instructions
-  if (P.ZBC_SUPPORTED | P.ZBB_SUPPORTED) begin: bitreverse
+  if (P.ZBC_SUPPORTED | P.ZBKC_SUPPORTED | P.ZBB_SUPPORTED) begin: bitreverse
     bitreverse #(P.XLEN) brA(.A(ABMU), .RevA);
   end
 
   // ZBC and ZBKCUnit
   if (P.ZBC_SUPPORTED | P.ZBKC_SUPPORTED) begin: zbc
-    zbc #(P.XLEN) ZBC(.A(ABMU), .RevA, .B(BBMU), .Funct3, .ZBCResult);
-  end else assign ZBCResult = 0;
+    zbc #(P) ZBC(.A(ABMU), .RevA, .B(BBMU), .Funct3(Funct3[1:0]), .ZBCResult);
+  end else assign ZBCResult = '0;
 
   // ZBB Unit
   if (P.ZBB_SUPPORTED) begin: zbb
     zbb #(P.XLEN) ZBB(.A(ABMU), .RevA, .B(BBMU), .W64, .LT, .LTU, .BUnsigned(Funct3[0]), .ZBBSelect(ZBBSelect[2:0]), .ZBBResult);
-  end else assign ZBBResult = 0;
+  end else if (P.ZBKB_SUPPORTED) begin: zbkbonly // only needs rev8 portion
+    genvar i;
+    for (i=0;i<P.XLEN;i+=8) begin:byteloop
+      assign ZBBResult[P.XLEN-i-1:P.XLEN-i-8] = ABMU[i+7:i]; // Rev8
+    end
+  end else assign ZBBResult = '0;
 
   // ZBKB Unit
   if (P.ZBKB_SUPPORTED) begin: zbkb
-    zbkb #(P.XLEN) ZBKB(.A(ABMU), .B(BBMU), .RevA, .W64, .Funct3, .ZBKBSelect(ZBBSelect[2:0]), .ZBKBResult);
-  end else assign ZBKBResult = 0;
+    zbkb #(P.XLEN) ZBKB(.A(ABMU), .B(BBMU[P.XLEN/2-1:0]), .Funct3, .ZBKBSelect(ZBBSelect[2:0]), .ZBKBResult);
+  end else assign ZBKBResult = '0;
 
   // ZBKX Unit
   if (P.ZBKX_SUPPORTED) begin: zbkx
-    zbkx #(P.XLEN) ZBKX(.A(ABMU), .B(BBMU), .ZBKXSelect(ZBBSelect[2:0]), .ZBKXResult);
-  end else assign ZBKXResult = 0;
+    zbkx #(P.XLEN) ZBKX(.A(ABMU), .B(BBMU), .ZBKXSelect(ZBBSelect[0]), .ZBKXResult);
+  end else assign ZBKXResult = '0;
 
   // ZKND and ZKNE AES decryption and encryption
-  if (P.ZKND_SUPPORTED | P.ZKNE_SUPPORTED)
-    if (P.XLEN == 32) zknde32 #(P) ZKN32(.A(ABMU), .B(BBMU), .Funct7, .round(Rs2E[3:0]), .ZKNSelect(ZBBSelect[3:0]), .ZKNDEResult); 
-    else              zknde64 #(P) ZKN64(.A(ABMU), .B(BBMU), .Funct7, .round(Rs2E[3:0]), .ZKNSelect(ZBBSelect[3:0]), .ZKNDEResult); 
+  if (P.ZKND_SUPPORTED | P.ZKNE_SUPPORTED) begin: zknde
+    if (P.XLEN == 32) zknde32 #(P) ZKN32(.A(ABMU), .B(BBMU), .bs(Funct7[6:5]), .round(Rs2E[3:0]), .ZKNSelect(ZBBSelect[3:0]), .ZKNDEResult); 
+    else              zknde64 #(P) ZKN64(.A(ABMU), .B(BBMU),                   .round(Rs2E[3:0]), .ZKNSelect(ZBBSelect[3:0]), .ZKNDEResult); 
+  end else assign ZKNDEResult = '0;
  
   // ZKNH Unit
   if (P.ZKNH_SUPPORTED) begin: zknh
     if (P.XLEN == 32) zknh32 ZKNH32(.A(ABMU), .B(BBMU), .ZKNHSelect(ZBBSelect), .ZKNHResult(ZKNHResult));
-    else              zknh64 ZKNH64(.A(ABMU), .B(BBMU), .ZKNHSelect(ZBBSelect), .ZKNHResult(ZKNHResult));
-  end else assign ZKNHResult = 0;
+    else              zknh64 ZKNH64(.A(ABMU),           .ZKNHSelect(ZBBSelect), .ZKNHResult(ZKNHResult));
+  end else assign ZKNHResult = '0;
 
   // Result Select Mux
   always_comb

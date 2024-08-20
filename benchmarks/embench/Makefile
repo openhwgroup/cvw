@@ -38,26 +38,27 @@ build_speedopt_size:
 build_sizeopt_size:
 	$(embench_dir)/build_all.py --builddir=bd_sizeopt_size --arch riscv32 --chip generic --board rv32wallyverilog --ldflags="-nostdlib -nostartfiles ../../../config/riscv32/boards/rv32wallyverilog/startup/dummy.S -march=$(ARCH)" --cflags="-Os -msave-restore -march=$(ARCH)" --dummy-libs="libgcc libm libc crt0"
 
-# builds dependencies, then launches modelsim and finally runs python wrapper script to present results
-sim: modelsim_build_memfile modelsim_run speed
+# builds dependencies, then launches sim and finally runs python wrapper script to present results
+sim: sim_build_memfile sim_run speed
 
-# launches modelsim to simulate tests on wally
-modelsim_run:
-	mkdir -p ../../sim/wkdir
-	(cd ../../sim/ && vsim -c -do "do wally-batch.do rv32gc embench")
-	cd ../../benchmarks/embench/
+# launches sim to simulate tests on wally
+sim_run:
+	wsim rv32gc embench
+	#mkdir -p ../../sim/wkdir
+	#(cd ../../sim/ && wsim rv32gc embench)
+	#cd ../../benchmarks/embench/
 
 # builds the objdump based on the compiled c elf files
 objdump:
 	find $(embench_dir)/bd_*_speed/ -type f -name "*.elf" | while read f; do riscv64-unknown-elf-objdump -S -D "$$f" > "$$f.objdump"; done
 
 # build memfiles, objdump.lab and objdump.addr files
-modelsim_build_memfile: objdump
+sim_build_memfile: objdump
 	find $(embench_dir)/bd_*_speed/ -type f -name "*.elf" | while read f; do riscv64-unknown-elf-elf2hex --bit-width 32 --input "$$f" --output "$$f.memfile"; done
 	find $(embench_dir)/bd_*_speed/ -type f -name "*.elf.objdump" | while read f; do extractFunctionRadix.sh $$f; done
 
 # builds the tests for speed, runs them on spike and then launches python script to present results
-# note that the speed python script benchmark_speed.py can get confused if there's both a .output file created from spike and modelsim
+# note that the speed python script benchmark_speed.py can get confused if there's both a .output file created from spike and questa
 # you'll need to manually remove one of the two .output files, or run make clean
 spike: buildspeed spike_run speed
 

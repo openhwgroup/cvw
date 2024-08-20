@@ -12,7 +12,6 @@
 ##################################
 import sys,os,shutil
 import multiprocessing
-#import os
 from collections import namedtuple
 from multiprocessing import Pool, TimeoutError
 
@@ -24,26 +23,37 @@ from multiprocessing import Pool, TimeoutError
 # The element consists of the configuration name, a list of test suites to run, 
 # optionally a string to pass to the simulator, and optionally a nonstandard grep string to check for success
 
-INSTR_LIMIT = 1000000 # multiple of 100000; 4M is interesting because it gets into the kernel and enabling VM
 tests = [
         ["rv32e", ["arch32e"]],
         ["rv32i", ["arch32i"]],
         ["rv32imc", ["arch32i", "arch32c", "arch32m", "wally32periph"]],
         ["rv32gc", ["arch32f", "arch32d", "arch32f_fma", "arch32d_fma", "arch32f_divsqrt", "arch32d_divsqrt", 
-                    "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32a", "arch32zifencei", "arch32zicond", 
+                    "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32a_amo", "arch32zifencei", "arch32zicond", 
                     "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "arch32zfh", "arch32zfh_fma", 
-                    "arch32zfh_divsqrt", "arch32zfaf", "wally32a", "wally32priv", "wally32periph", 
-                    "arch32zbkb", "arch32zbkc", "arch32zbkx", "arch32zknd", "arch32zkne", "arch32zknh"]], # "arch32zcb", "arch32zfad",
-        ["rv64i", ["arch64i"]],
-        ["buildroot", ["buildroot"], [f"+INSTR_LIMIT={INSTR_LIMIT}"], str(INSTR_LIMIT)+" instructions"]
+                    "arch32zfh_divsqrt", "arch32zfaf", "arch32zfad", "wally32a_lrsc", "wally32priv", "wally32periph", "arch32zcb",
+                    "arch32zbkb", "arch32zbkc", "arch32zbkx", "arch32zknd", "arch32zkne", "arch32zknh"]], 
+         ["rv64i", ["arch64i"]]
         ]
+
+# Separate test for short buildroot run through OpenSBI UART output
+tests_buildrootshort = [
+                    ["buildroot", ["buildroot"], [f"+INSTR_LIMIT=1400000"], # Instruction limit gets to first OpenSBI UART output  
+                        "OpenSBI v", "buildroot_uart.out"]
+    ]
+
+# Separate test for full buildroot run
+tests_buildrootboot = [
+                    ["buildroot", ["buildroot"], [f"+INSTR_LIMIT=600000000"], # boot entire buildroot Linux to login prompt
+                        "WallyHostname login: ", "buildroot_uart.out"]
+    ]
+
 
 # Separate out floating-point tests for RV64 to speed up coverage
 tests64gc_nofp = [
-        ["rv64gc", ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m",
-                    "arch64zifencei", "arch64zicond", "arch64a", "wally64a", "wally64periph", "wally64priv", 
+        ["rv64gc", ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m", "arch64zcb",
+                    "arch64zifencei", "arch64zicond", "arch64a_amo", "wally64a_lrsc", "wally64periph", "wally64priv", 
                     "arch64zbkb", "arch64zbkc", "arch64zbkx", "arch64zknd", "arch64zkne", "arch64zknh",
-                    "arch64zba",  "arch64zbb",  "arch64zbc", "arch64zbs"]] # add when working: "arch64zcb", "arch64zicboz"
+                    "arch64zba",  "arch64zbb",  "arch64zbc", "arch64zbs"]] # add when working:  "arch64zicboz"
     ]
 
 tests64gc_fp = [
@@ -83,6 +93,45 @@ derivconfigtests = [
         ["nodcache_rv64gc", ["ahb64"]],
         ["nocache_rv64gc", ["ahb64"]],
 
+# Atomic variants
+        ["zaamo_rv64gc", ["arch64i", "arch64a_amo"]],
+        ["zalrsc_rv64gc", ["arch64i", "wally64a_lrsc"]],
+        ["zaamo_rv32gc", ["arch32i", "arch32a_amo"]],
+        ["zalrsc_rv32gc", ["arch32i", "wally32a_lrsc"]],
+
+# Bit manipulation and crypto variants
+        ["zba_rv32gc", ["arch32i", "arch32zba"]],
+        ["zbb_rv32gc", ["arch32i", "arch32zbb"]],
+        ["zbc_rv32gc", ["arch32i", "arch32zbc"]],
+        ["zbs_rv32gc", ["arch32i", "arch32zbs"]],
+        ["zbkb_rv32gc", ["arch32i", "arch32zbkb"]],
+        ["zbkc_rv32gc", ["arch32i", "arch32zbkc"]],
+        ["zbkx_rv32gc", ["arch32i", "arch32zbkx"]],
+        ["zkne_rv32gc", ["arch32i", "arch32zkne"]],
+        ["zknd_rv32gc", ["arch32i", "arch32zknd"]],
+        ["zknh_rv32gc", ["arch32i", "arch32zknh"]],
+
+        ["zba_rv64gc", ["arch64i", "arch64zba"]],
+        ["zbb_rv64gc", ["arch64i", "arch64zbb"]],
+        ["zbc_rv64gc", ["arch64i", "arch64zbc"]],
+        ["zbs_rv64gc", ["arch64i", "arch64zbs"]],
+        ["zbkb_rv64gc", ["arch64i", "arch64zbkb"]],
+        ["zbkc_rv64gc", ["arch64i", "arch64zbkc"]],
+        ["zbkx_rv64gc", ["arch64i", "arch64zbkx"]],
+        ["zkne_rv64gc", ["arch64i", "arch64zkne"]],
+        ["zknd_rv64gc", ["arch64i", "arch64zknd"]],
+        ["zknh_rv64gc", ["arch64i", "arch64zknh"]],
+
+# No privilege modes variants
+        ["noS_rv32gc", ["arch32i", "arch32f", "arch32priv", "arch32c", "arch32m", "arch32a_amo", "arch32zifencei", "arch32zicond",
+                        "arch32zba", "arch32zfaf", "arch32zfad", "wally32a_lrsc", "arch32zcb", "arch32zbkx", "arch32zknd"]],
+        ["noS_rv64gc", ["arch64i", "arch64f", "arch64priv", "arch64c", "arch64m", "arch64a_amo", "arch64zifencei", "arch64zicond",
+                        "arch64zba", "arch64zfaf", "arch64zfad", "wally64a_lrsc", "arch64zcb", "arch64zbkx", "arch64zknd"]],
+        ["noU_rv32gc", ["arch32i", "arch32f", "arch32priv", "arch32c", "arch32m", "arch32a_amo", "arch32zifencei", "arch32zicond",
+                        "arch32zba", "arch32zfaf", "arch32zfad", "wally32a_lrsc", "arch32zcb", "arch32zbkx", "arch32zknd"]],
+        ["noU_rv64gc", ["arch64i", "arch64f", "arch64priv", "arch64c", "arch64m", "arch64a_amo", "arch64zifencei", "arch64zicond",
+                        "arch64zba", "arch64zfaf", "arch64zfad", "wally64a_lrsc", "arch64zcb", "arch64zbkx", "arch64zknd"]],
+
         ### add misaligned tests
 
         # fp/int divider permutations
@@ -109,22 +158,24 @@ derivconfigtests = [
         ["div_4_2_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
         ["div_4_2i_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
         ["div_4_4_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
-        ["div_4_4i_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
+        ["div_4_4i_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]], 
 
         # fpu permutations
-        ["f_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma"]],
-        ["fh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32zfh", "arch32zfh_divsqrt"]],
-        ["fdh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32zfh", "arch32zfh_divsqrt"]],
-        ["fdq_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32i"]],
-        ["fdqh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32zfh", "arch32zfh_divsqrt", "arch32i"]],
-        ["f_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma"]],
-        ["fh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64zfh", "arch64zfh_divsqrt"]], 
-        ["fdh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64zfh", "arch64zfh_divsqrt"]],
-        ["fdq_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64i"]],
-        ["fdqh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64zfh", "arch64zfh_divsqrt", "arch64i", "wally64q"]],
+        ["f_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32zfaf"]],
+        ["fh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32zfh", "arch32zfh_divsqrt", "arch32zfaf"]],
+        ["fdh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32zfh", "arch32zfh_divsqrt", "arch32zfaf", "arch32zfad"]],
+        ["fdq_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32i", "arch32zfaf", "arch32zfad"]],
+        ["fdqh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32zfh", "arch32zfh_divsqrt", "arch32i", "arch32zfaf", "arch32zfad"]],
+        ["f_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64zfaf"]],
+        ["fh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64zfh", "arch64zfh_divsqrt", "arch64zfaf"]], 
+        ["fdh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64zfh", "arch64zfh_divsqrt", "arch64zfaf", "arch64zfad"]],
+        ["fdq_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64i", "arch64zfaf", "arch64zfad"]],
+        ["fdqh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64zfh", "arch64zfh_divsqrt", "arch64i", "wally64q", "arch64zfaf", "arch64zfad"]],
     ]
 
 bpredtests = [
+    
+        ["nobpred_rv32gc", ["rv32i"]],
         ["bpred_TWOBIT_6_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
         ["bpred_TWOBIT_8_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
         ["bpred_TWOBIT_10_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],        
@@ -176,7 +227,7 @@ bpredtests = [
 # Data Types & Functions
 ##################################
 
-TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr'])
+TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr', 'grepfile'])
 # name:     the name of this test configuration (used in printing human-readable
 #           output and picking logfile names)
 # cmd:      the command to run to test (should include the logfile as '{}', and
@@ -184,6 +235,7 @@ TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr'])
 # grepstr:  the string to grep through the log file for. The test succeeds iff
 #           grep finds that string in the logfile (is used by grep, so it may
 #           be any pattern grep accepts, see `man 1 grep` for more info).
+# grepfile:  a string containing the location of the file to be searched for output
 
 class bcolors:
     HEADER = '\033[95m'
@@ -197,6 +249,7 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 def addTests(tests, sim):
+    sim_logdir = WALLY+ "/sim/" + sim + "/logs/"
     for test in tests:
         config = test[0];
         suites = test[1];
@@ -208,38 +261,45 @@ def addTests(tests, sim):
             gs = test[3]
         else:
             gs = "All tests ran without failures"
-        cmdPrefix="wsim --sim " + sim + " " + config
+        cmdPrefix="wsim --sim " + sim + " " + coverStr + " " + config
         for t in suites:
+            sim_log = sim_logdir + config + "_" + t + ".log"
+            if (len(test) >= 5):
+                grepfile = sim_logdir + test[4]
+            else:
+                grepfile = sim_log
             tc = TestCase(
                     name=t,
                     variant=config,
-                    cmd=cmdPrefix + " " + t + args,
-                    grepstr=gs)
+                    cmd=cmdPrefix + " " + t + args + " > " + sim_log,
+                    grepstr=gs,
+                    grepfile = grepfile)
             configs.append(tc)
 
-def search_log_for_text(text, logfile):
+def search_log_for_text(text, grepfile):
     """Search through the given log file for text, returning True if it is found or False if it is not"""
-    grepcmd = "grep -e '%s' '%s' > /dev/null" % (text, logfile)
+    grepwarn = "grep -H Warning: " + grepfile
+    os.system(grepwarn)
+    greperr = "grep -H Error: " + grepfile
+    os.system(greperr)
+    grepcmd = "grep -a -e '%s' '%s' > /dev/null" % (text, grepfile)
 #    print("  search_log_for_text invoking %s" % grepcmd)
     return os.system(grepcmd) == 0
 
 def run_test_case(config):
     """Run the given test case, and return 0 if the test suceeds and 1 if it fails"""
-    logname = WALLY + "/sim/questa/logs/"+config.variant+"_"+config.name+".log"   ### *** fix hardwiring to questa log
-    #cmd = config.cmd + " > " + logname
-    if ("lint-wally" in config.cmd):
-        cmd = config.cmd + " | tee " + logname
-    else:
-        cmd = config.cmd + " > " + logname
+    grepfile = config.grepfile
+    cmd = config.cmd
     os.chdir(regressionDir)
-#    print("  run_test_case invoking %s" % cmd)
+    # print("  run_test_case invoking %s" % cmd)
     os.system(cmd)
-    if search_log_for_text(config.grepstr, logname):
-        print(f"{bcolors.OKGREEN}%s_%s: Success{bcolors.ENDC}" % (config.variant, config.name))
+    if search_log_for_text(config.grepstr, grepfile):
+#        print(f"{bcolors.OKGREEN}%s_%s: Success{bcolors.ENDC}" % (config.variant, config.name))
+        print(f"{bcolors.OKGREEN}%s: Success{bcolors.ENDC}" % (config.cmd))
         return 0
     else:
-        print(f"{bcolors.FAIL}%s_%s: Failures detected in output{bcolors.ENDC}" % (config.variant, config.name))
-        print("  Check %s" % logname)
+        print(f"{bcolors.FAIL}%s: Failures detected in output{bcolors.ENDC}" % (config.cmd))
+        print("  Check %s" % grepfile)
         return 1
 
 ##################################
@@ -252,7 +312,9 @@ regressionDir = WALLY + '/sim'
 os.chdir(regressionDir)
 
 coveragesim = "questa"  # Questa is required for code/functional coverage
+#defaultsim = "vcs"   # Default simulator for all other tests; change to Verilator when flow is ready
 defaultsim = "questa"   # Default simulator for all other tests; change to Verilator when flow is ready
+#defaultsim = "verilator"   # Default simulator for all other tests
 
 coverage = '--coverage' in sys.argv
 fp = '--fp' in sys.argv
@@ -262,9 +324,11 @@ soc = '--soc' in sys.argv
 
 if (nightly):
     nightMode = "--nightly";
-    sims = ["questa", "verilator", "vcs"]
+#    sims = [defaultsim] 
+    sims = ["questa", "vcs"] 
+#    sims = ["questa", "verilator", "vcs"] # *** uncomment to exercise all simulators
 else:
-    nightMode = "";
+    nightMode = ""
     sims = [defaultsim]
 
 if (coverage):  # only run RV64GC tests in coverage mode
@@ -278,9 +342,9 @@ configs = [
     TestCase(
         name="lints",
         variant="all",
-        cmd="lint-wally " + nightMode,
-        grepstr="lints run with no errors or warnings"
-    )
+        cmd="lint-wally " + nightMode + " | tee " + WALLY + "/sim/verilator/logs/all_lints.log",
+        grepstr="lints run with no errors or warnings",
+        grepfile = WALLY + "/sim/verilator/logs/all_lints.log")
     ]
 
 if (coverage):  # only run RV64GC tests on Questa in coverage mode
@@ -292,25 +356,32 @@ else:
         addTests(tests, sim)
         addTests(tests64gc_nofp, sim)
         addTests(tests64gc_fp, sim)
+
     # run derivative configurations in nightly regression
-    if (nightly):
-        addTests(derivconfigtests, defaultsim)
+if (nightly):
+#    addTests(tests_buildrootboot, defaultsim)
+    addTests(tests_buildrootshort, defaultsim)
+    addTests(derivconfigtests, defaultsim)
+else:
+    addTests(tests_buildrootshort, defaultsim)
 
 # testfloat tests
-if (testfloat):
+if (testfloat): # for testfloat alone, just run testfloat tests
     configs = []
-
+if (testfloat or nightly): # for nightly, run testfloat along with othres
     testfloatconfigs = ["fdqh_ieee_rv64gc", "fdq_ieee_rv64gc", "fdh_ieee_rv64gc", "fd_ieee_rv64gc", "fh_ieee_rv64gc", "f_ieee_rv64gc", "fdqh_ieee_rv32gc", "f_ieee_rv32gc"]
     for config in testfloatconfigs:
         tests = ["div", "sqrt", "add", "sub", "mul", "cvtint", "cvtfp", "fma", "cmp"]
         if ("f_" in config):
             tests.remove("cvtfp")
         for test in tests:
+            sim_log = WALLY + "/sim/questa/logs/"+config+"_"+test+".log" # TODO: Change hardcoded questa log directory to simulator
             tc = TestCase(
                     name=test,
                     variant=config,
-                    cmd="wsim --tb testbench_fp " + config + " " + test,
-                    grepstr="All Tests completed with          0 errors")
+                    cmd="wsim --tb testbench_fp " + config + " " + test + " > " + sim_log,
+                    grepstr="All Tests completed with          0 errors",
+                    grepfile = sim_log)
             configs.append(tc)
 
 
@@ -349,11 +420,13 @@ if (testfloat):
         if ("f_" in config):
             tests.remove("cvtfp")
         for test in tests:
+            sim_log = WALLY + "/sim/questa/logs/"+config+"_"+test+".log"
             tc = TestCase(
                     name=test,
                     variant=config,
-                    cmd="wsim --tb testbench_fp --sim questa " + config + " " + test,
-                    grepstr="All Tests completed with          0 errors")
+                    cmd="wsim --tb testbench_fp " + config + " " + test + " > " + sim_log,
+                    grepstr="All Tests completed with          0 errors",
+                    grepfile = WALLY + "/sim/questa/logs/"+config+"_"+test+".log")
             configs.append(tc)
 
 if (soc):
@@ -365,6 +438,7 @@ def main():
     """Run the tests and count the failures"""
     global configs, coverage
     os.chdir(regressionDir)
+    os.system('rm -rf questa/wkdir')
     for d in ["questa/logs", "questa/wkdir", "verilator/logs", "verilator/wkdir", "vcs/logs", "vcs/wkdir"]:
         try:
             os.mkdir(d)
@@ -375,29 +449,15 @@ def main():
         os.chdir(regressionDir)
         os.system('./make-tests.sh | tee ./logs/make-tests.log')
 
-    if '--all' in sys.argv:
-        TIMEOUT_DUR = 30*7200 # seconds
-        #configs.append(getBuildrootTC(boot=True))
-    elif '--buildroot' in sys.argv:
-        TIMEOUT_DUR = 30*7200 # seconds
-        #configs=[getBuildrootTC(boot=True)]
     elif '--coverage' in sys.argv:
-        TIMEOUT_DUR = 20*60 # seconds    
-    #   Presently don't run buildroot because it has a different config and can't be merged with the rv64gc coverage.
-    #   Also it is slow to run.   
-    #    configs.append(getBuildrootTC(boot=False))
-        os.system('rm -f cov/*.ucdb')
+        TIMEOUT_DUR = 20*60 # seconds
+        os.system('rm -f questa/cov/*.ucdb')
     elif '--nightly' in sys.argv:
         TIMEOUT_DUR = 60*1440 # 1 day
-        #configs.append(getBuildrootTC(boot=False))
     elif '--testfloat' in sys.argv:
-        TIMEOUT_DUR = 60*60 # seconds
-    elif '--soc' in sys.argv:
-        TIMEOUT_DUR = 10*60 # seconds
-        # Don't run buildroot because soc is based on rv64gc
+        TIMEOUT_DUR = 30*60 # seconds
     else:
         TIMEOUT_DUR = 10*60 # seconds
-        #configs.append(getBuildrootTC(boot=False))
 
     # Scale the number of concurrent processes to the number of test cases, but
     # max out at a limited number of concurrent processes to not overwhelm the system
@@ -415,7 +475,7 @@ def main():
 
     # Coverage report
     if coverage:
-       os.system('make coverage')
+       os.system('make QuestaCoverage')
     # Count the number of failures
     if num_fail:
         print(f"{bcolors.FAIL}Regression failed with %s failed configurations{bcolors.ENDC}" % num_fail)

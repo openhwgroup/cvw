@@ -7,7 +7,7 @@
 //
 // Purpose: Top level controller module
 // 
-// Documentation: RISC-V System on Chip Design Chapter 4 (Section 4.1.4, Figure 4.8, Table 4.5)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -53,16 +53,13 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic        ALUSrcAE, ALUSrcBE,      // ALU operands
   output logic        ALUResultSrcE,           // Selects result to pass on to Memory stage
   output logic [2:0]  ALUSelectE,              // ALU mux select signal
-  output logic        MemReadE, CSRReadE,      // Instruction reads memory, reads a CSR (needed for Hazard unit)
   output logic [2:0]  Funct3E,                 // Instruction's funct3 field
   output logic [6:0]  Funct7E,                 // Instruction's funct7 field
   output logic        IntDivE,                 // Integer divide
-  output logic        MDUE,                    // MDU (multiply/divide) operatio
   output logic        W64E,                    // RV64 W-type operation
   output logic        SubArithE,               // Subtraction or arithmetic shift
   output logic        JumpE,                   // jump instruction
   output logic        BranchE,                 // Branch instruction
-  output logic        SCE,                     // Store Conditional instruction
   output logic        BranchSignedE,           // Branch comparison operands are signed (if it's a branch)
   output logic [3:0]  BSelectE,                // One-Hot encoding of if it's ZBA_ZBB_ZBC_ZBS instruction
   output logic [3:0]  ZBBSelectE,              // ZBB mux select signal in Execute stage
@@ -81,7 +78,6 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic        CSRReadM, CSRWriteM, PrivilegedM, // CSR read, write, or privileged instruction
   output logic [1:0]  AtomicM,                 // Atomic (AMO) instruction
   output logic [2:0]  Funct3M,                 // Instruction's funct3 field
-  output logic        RegWriteM,               // Instruction writes a register (needed for Hazard unit)
   output logic        InvalidateICacheM, FlushDCacheM, // Invalidate I$, flush D$
   output logic        InstrValidD, InstrValidE, InstrValidM, // Instruction is valid
   output logic        FWriteIntM,              // FPU controller writes integer register file
@@ -122,6 +118,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        FenceXD;                        // Fence instruction
   logic        CMOD;                           // Cache management instruction
   logic        InvalidateICacheD, FlushDCacheD;// Invalidate I$, flush D$
+  logic        MemReadE, CSRReadE;             // Instruction reads memory, reads a CSR (needed for Hazard unit)
+  logic        MDUE;                           // MDU (multiply/divide) operatio
+  logic        SCE;                            // Store Conditional instruction
   logic        CSRWriteD, CSRWriteE;           // CSR write
   logic        PrivilegedD, PrivilegedE;       // Privileged instruction
   logic        InvalidateICacheE, FlushDCacheE;// Invalidate I$, flush D$
@@ -133,14 +132,12 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        unused; 
   logic        BranchFlagE;                    // Branch flag to use (chosen between eq or lt)
   logic        IEURegWriteE;                   // Register write 
-  logic        BRegWriteE;                     // Register write from BMU controller in Execute Stage
   logic        IllegalERegAdrD;                // RV32E attempts to write upper 16 registers
   logic [1:0]  AtomicE;                        // Atomic instruction 
   logic        FenceD, FenceE;                 // Fence instruction
   logic        SFenceVmaD;                     // sfence.vma instruction
   logic        IntDivM;                        // Integer divide instruction
-  logic [3:0]  BSelectD;                       // One-Hot encoding if it's ZBA_ZBB_ZBC_ZBS instruction in decode stage
-  logic [3:0]  ZBBSelectD;                     // ZBB Mux Select Signal
+  logic        RegWriteM;                      // Instruction writes a register (needed for Hazard unit)
   logic [1:0]  CZeroD;
   logic        IFunctD, RFunctD, MFunctD;      // Detect I, R, and M-type RV32IM/Rv64IM instructions
   logic        LFunctD, SFunctD, BFunctD;      // Detect load, store, branch instructions
@@ -158,7 +155,6 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic [3:0]  CMOpD, CMOpE;                   // which CMO instruction 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
   logic        IFUPrefetchD;                   // instruction prefetch
   logic        LSUPrefetchD, LSUPrefetchE;     // data prefetch
-  logic        CMOStallD;                      // Structural hazards from cache management ops
   logic        MatchDE;                        // Match between a source register in Decode stage and destination register in Execute stage
   logic        FCvtIntStallD, MDUStallD, CSRRdStallD; // Stall due to conversion, load, multiply/divide, CSR read 
   logic        FunctCZeroD;                    // Funct7 and Funct3 indicate czero.* (not including Op check)
@@ -175,7 +171,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   // Be rigorous about detecting illegal instructions if CSRs or bit manipulation or conditional ops are supported
   // otherwise be cheap
 
-  if (P.ZICSR_SUPPORTED | P.ZBA_SUPPORTED | P.ZBB_SUPPORTED | P.ZBC_SUPPORTED | P.ZBS_SUPPORTED | P.ZICOND_SUPPORTED) begin:legalcheck // Exact integer decoding
+  if (P.ZICSR_SUPPORTED | P.ZBA_SUPPORTED  | P.ZBB_SUPPORTED  | P.ZBC_SUPPORTED  | P.ZBS_SUPPORTED | 
+      P.ZBKB_SUPPORTED  | P.ZBKC_SUPPORTED | P.ZBKX_SUPPORTED | P.ZKNE_SUPPORTED | 
+      P.ZKND_SUPPORTED  | P.ZKNH_SUPPORTED | P.ZICOND_SUPPORTED) begin:legalcheck // Exact integer decoding
     logic Funct7ZeroD, Funct7b5D, IShiftD, INoShiftD;
     logic Funct7ShiftZeroD, Funct7Shiftb5D;
 
@@ -219,23 +217,23 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign CSRFunctD        = Funct3D[1:0] != 2'b00; 
     assign IWValidFunct3D   = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b101;
   end else begin:legalcheck2
-    assign IFunctD = 1; // Don't bother to separate out shift decoding
+    assign IFunctD = 1'b1; // Don't bother to separate out shift decoding
     assign RFunctD = ~Funct7D[0]; // Not a multiply
     assign MFunctD = Funct7D[0] & (P.M_SUPPORTED | (P.ZMMUL_SUPPORTED & ~Funct3D[2])); // muldiv
-    assign LFunctD = 1; // don't bother to check Funct3 for loads
-    assign FLSFunctD = 1; // don't bother to check Func3 for floating-point loads/stores
-    assign FenceFunctD = 1; // don't bother to check fields for fences
-    assign CMOFunctD = 1; // don't bother to check fields for CMO instructions
-    assign AFunctD = 1; // don't bother to check fields for atomics
-    assign AMOFunctD = 1; // don't bother to check Funct7 for AMO operations
-    assign RWFunctD = 1; // don't bother to check fields for RW instructions
-    assign MWFunctD = 1; // don't bother to check fields for MW instructions
-    assign SFunctD = 1; // don't bother to check Funct3 for stores
-    assign BFunctD = 1; // don't bother to check Funct3 for branches
-    assign JRFunctD = 1; // don't bother to check Funct3 for jalrs
-    assign PFunctD = 1; // don't bother to check fields for privileged instructions
-    assign CSRFunctD = 1; // don't bother to check Funct3 for CSR operations
-    assign IWValidFunct3D = 1;
+    assign LFunctD = 1'b1; // don't bother to check Funct3 for loads
+    assign FLSFunctD = 1'b1; // don't bother to check Func3 for floating-point loads/stores
+    assign FenceFunctD = 1'b1; // don't bother to check fields for fences
+    assign CMOFunctD = 1'b1; // don't bother to check fields for CMO instructions
+    assign AFunctD = 1'b1; // don't bother to check fields for atomics
+    assign AMOFunctD = 1'b1; // don't bother to check Funct7 for AMO operations
+    assign RWFunctD = 1'b1; // don't bother to check fields for RW instructions
+    assign MWFunctD = 1'b1; // don't bother to check fields for MW instructions
+    assign SFunctD = 1'b1; // don't bother to check Funct3 for stores
+    assign BFunctD = 1'b1; // don't bother to check Funct3 for branches
+    assign JRFunctD = 1'b1; // don't bother to check Funct3 for jalrs
+    assign PFunctD = 1'b1; // don't bother to check fields for privileged instructions
+    assign CSRFunctD = 1'b1; // don't bother to check Funct3 for CSR operations
+    assign IWValidFunct3D = 1'b1;
   end
 
   // Main Instruction Decoder
@@ -265,12 +263,12 @@ module controller import cvw::*;  #(parameter cvw_t P) (
                       ControlsD = `CTRLW'b0_001_01_01_000_0_0_0_0_0_0_0_0_0_00_0_0; // stores
       7'b0100111: if (FLSFunctD)
                       ControlsD = `CTRLW'b0_001_01_01_000_0_0_0_0_0_0_0_0_0_00_0_1; // fsw - only legal if FP supported
-      7'b0101111: if (P.A_SUPPORTED & AFunctD) begin
-                    if (InstrD[31:27] == 5'b00010 & Rs2D == 5'b0)
+      7'b0101111: if (AFunctD) begin
+                    if ((P.A_SUPPORTED | P.ZALRSC_SUPPORTED) & InstrD[31:27] == 5'b00010 & Rs2D == 5'b0)
                       ControlsD = `CTRLW'b1_000_00_10_001_0_0_0_0_0_0_0_0_0_01_0_0; // lr
-                    else if (InstrD[31:27] == 5'b00011)
+                    else if ((P.A_SUPPORTED | P.ZALRSC_SUPPORTED) & InstrD[31:27] == 5'b00011)
                       ControlsD = `CTRLW'b1_101_01_01_100_0_0_0_0_0_0_0_0_0_01_0_0; // sc
-                    else if (AMOFunctD) 
+                    else if ((P.A_SUPPORTED | P.ZAAMO_SUPPORTED) & AMOFunctD) 
                       ControlsD = `CTRLW'b1_101_01_11_001_0_0_0_0_0_0_0_0_0_10_0_0; // amo
                  end
       7'b0110011: if (RFunctD)
@@ -318,16 +316,18 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   assign BaseSubArithD = ALUOpD & (subD | sraD | sltD | sltuD);
 
   // bit manipulation Configuration Block
-  if (P.ZBS_SUPPORTED | P.ZBA_SUPPORTED | P.ZBB_SUPPORTED | P.ZBC_SUPPORTED) begin: bitmanipi //change the conditional expression to OR any Z supported flags
+  if (P.ZBS_SUPPORTED  | P.ZBA_SUPPORTED  | P.ZBB_SUPPORTED  | P.ZBC_SUPPORTED |
+      P.ZBKB_SUPPORTED | P.ZBKC_SUPPORTED | P.ZBKX_SUPPORTED | P.ZKNE_SUPPORTED | 
+      P.ZKND_SUPPORTED | P.ZKNH_SUPPORTED) begin: bitmanipi 
     logic IllegalBitmanipInstrD;          // Unrecognized B instruction
     logic BRegWriteD;                     // Indicates if it is a R type BMU instruction in decode stage
     logic BW64D;                          // Indicates if it is a W type BMU instruction in decode stage
     logic BSubArithD;                     // TRUE for BMU ext, clr, andn, orn, xnor
     logic BALUSrcBD;                      // BMU alu src select signal
 
-    bmuctrl #(P) bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUOpD, .BSelectD, .ZBBSelectD, 
+    bmuctrl #(P) bmuctrl(.clk, .reset, .InstrD, .ALUOpD,
       .BRegWriteD, .BALUSrcBD, .BW64D, .BSubArithD, .IllegalBitmanipInstrD, .StallE, .FlushE, 
-      .ALUSelectD(PreALUSelectD), .BSelectE, .ZBBSelectE, .BRegWriteE, .BALUControlE, .BMUActiveE);
+      .ALUSelectD(PreALUSelectD), .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE);
     if (P.ZBA_SUPPORTED) begin
       // ALU Decoding is more comprehensive when ZBA is supported. slt and slti conflicts with sh1add, sh1add.uw
       assign sltD = (Funct3D == 3'b010 & (~(Funct7D[4]) | ~OpD[5])) ;
@@ -353,7 +353,6 @@ module controller import cvw::*;  #(parameter cvw_t P) (
 
     // tie off unused bit manipulation signals
     assign BSelectE = 4'b0000;
-    assign BSelectD = 4'b0000;
     assign ZBBSelectE = 4'b0000;
     assign BALUControlE = 3'b0;
     assign BMUActiveE = 1'b0;
@@ -378,8 +377,8 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign InvalidateICacheD = FenceID;
     assign FlushDCacheD = FenceID;
   end else begin:fencei
-    assign InvalidateICacheD = 0;
-    assign FlushDCacheD = 0;
+    assign InvalidateICacheD = 1'b0;
+    assign FlushDCacheD = 1'b0;
   end
 
   // Cache Management instructions

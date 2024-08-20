@@ -9,7 +9,7 @@
 //          It is simlar to the IFU's spill module and probably could be merged together with 
 //          some effort.
 //
-// Documentation: RISC-V System on Chip Design Chapter 11 (Figure 11.5)
+// Documentation: RISC-V System on Chip Design
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -76,6 +76,8 @@ module align import cvw::*;  #(parameter cvw_t P) (
   logic [$clog2(LLENINBYTES)-1:0]              AccessByteOffsetM;
   logic [$clog2(LLENINBYTES)+2:0]              ShiftAmount;
   logic                                        PotentialSpillM;
+  logic [P.LLEN*3-1:0]                         LSUWriteDataShiftedExtM; 
+
 
   /* verilator lint_off WIDTHEXPAND */
   assign IEUAdrIncrementM = IEUAdrM + LLENINBYTES;
@@ -95,21 +97,21 @@ module align import cvw::*;  #(parameter cvw_t P) (
   // compute misalignement
   always_comb begin
     case (Funct3M & {FpLoadStoreM, 2'b11}) 
-      3'b000: AccessByteOffsetM = 0; // byte access
+      3'b000: AccessByteOffsetM = '0; // byte access
       3'b001: AccessByteOffsetM = {{OFFSET_LEN-1{1'b0}}, IEUAdrM[0]}; // half access
       3'b010: AccessByteOffsetM = {{OFFSET_LEN-2{1'b0}}, IEUAdrM[1:0]}; // word access
       3'b011: if(P.LLEN >= 64) AccessByteOffsetM = {{OFFSET_LEN-3{1'b0}}, IEUAdrM[2:0]}; // double access
-              else             AccessByteOffsetM = 0;                                    // shouldn't happen
+              else             AccessByteOffsetM = '0;                                    // shouldn't happen
       3'b100: if(P.LLEN == 128) AccessByteOffsetM = IEUAdrM[OFFSET_LEN-1:0]; // quad access
               else              AccessByteOffsetM = IEUAdrM[OFFSET_LEN-1:0];
-      default: AccessByteOffsetM = 0;                                        // shouldn't happen
+      default: AccessByteOffsetM = '0;                                        // shouldn't happen
     endcase
     case (Funct3M[1:0]) 
-      2'b00: PotentialSpillM = 0; // byte access
+      2'b00: PotentialSpillM = 1'b0; // byte access
       2'b01: PotentialSpillM = IEUAdrM[OFFSET_BIT_POS-1:1] == '1; // half access
       2'b10: PotentialSpillM = IEUAdrM[OFFSET_BIT_POS-1:2] == '1; // word access
       2'b11: PotentialSpillM = IEUAdrM[OFFSET_BIT_POS-1:3] == '1; // double access
-      default: PotentialSpillM = 0;
+      default: PotentialSpillM = 1'b0;
     endcase
   end
   assign MisalignedM = (|MemRWM) & (AccessByteOffsetM != 0);
@@ -148,14 +150,13 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   // shifter (4:1 mux for 32 bit, 8:1 mux for 64 bit)
   // 8 * is for shifting by bytes not bits
-  assign ShiftAmount = SelHPTW ? 0 : {AccessByteOffsetM, 3'b0}; // AND gate
+  assign ShiftAmount = SelHPTW ? '0 : {AccessByteOffsetM, 3'b0}; // AND gate
   assign ReadDataWordSpillShiftedM = ReadDataWordSpillAllM >> ShiftAmount;
   assign DCacheReadDataWordSpillM = ReadDataWordSpillShiftedM[P.LLEN-1:0];
 
-  // write path. Also has the 8:1 shifter muxing for the byteoffset
-  // then it also has the mux to select when a spill occurs
-  logic [P.LLEN*3-1:0] LSUWriteDataShiftedExtM;  // *** RT: Find a better way.  I've extending in both directions so we don't shift in zeros.  The cache expects the writedata to not have any zero data, but instead replicated data.
-
+  // write path. 
+  // 3*LLEN to 2*LLEN funnel shifter to perform left rotation.
+  // Vivado correctly optimizes as 2*LLEN log2(LLEN):1 muxes
   assign LSUWriteDataShiftedExtM = {LSUWriteDataM, LSUWriteDataM, LSUWriteDataM} << ShiftAmount;
   assign LSUWriteDataSpillM = LSUWriteDataShiftedExtM[P.LLEN*3-1:P.LLEN];
 

@@ -7,7 +7,7 @@
 // Purpose: Implements the CSRs, Exceptions, and Privileged operations
 //          See RISC-V Privileged Mode Specification 20190608 
 // 
-// Documentation: RISC-V System on Chip Design Chapter 5 (Figure 5.8)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -49,12 +49,12 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic              StoreStallD,                                    // store instruction is stalling
   input  logic              ICacheStallF,                                   // I cache stalled
   input  logic              DCacheStallM,                                   // D cache stalled
-  input  logic              BPDirPredWrongM,                                // branch predictor guessed wrong direction
+  input  logic              BPDirWrongM,                                // branch predictor guessed wrong direction
   input  logic              BTAWrongM,                                      // branch predictor guessed wrong target
   input  logic              RASPredPCWrongM,                                // return adddress stack guessed wrong target
   input  logic              IClassWrongM,                                   // branch predictor guessed wrong instruction class
   input  logic              BPWrongM,                                       // branch predictor is wrong
-  input  logic [3:0]        InstrClassM,                                    // actual instruction class
+  input  logic [3:0]        IClassM,                                    // actual instruction class
   input  logic              DCacheMiss,                                     // data cache miss
   input  logic              DCacheAccess,                                   // data cache accessed (hit or miss)
   input  logic              ICacheMiss,                                     // instruction cache miss
@@ -137,9 +137,9 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
     .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
-    .BPDirPredWrongM, .BTAWrongM, .RASPredPCWrongM, .BPWrongM,
+    .BPDirWrongM, .BTAWrongM, .RASPredPCWrongM, .BPWrongM,
     .sfencevmaM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
-    .IClassWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
+    .IClassWrongM, .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
     .NextPrivilegeModeM, .PrivilegeModeW, .CauseM, .SelHPTW,
     .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,
     .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TW, .STATUS_FS,

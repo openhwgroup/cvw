@@ -7,7 +7,7 @@
 // Purpose: Interrupt Control & Status Registers (IP, EI)
 //          See RISC-V Privileged Mode Specification 20190608 & 20210108 draft
 // 
-// Documentation: RISC-V System on Chip Design Chapter 5
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -73,6 +73,7 @@ module csri import cvw::*;  #(parameter cvw_t P) (
     assign MIP_WRITE_MASK = 12'h000;
     assign SIP_WRITE_MASK = 12'h000;
     assign MIE_WRITE_MASK = 12'h888;
+    assign STIP = '0;
   end
   always_ff @(posedge clk)
     if (reset)          MIP_REGW_writeable <= 12'b0;

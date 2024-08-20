@@ -70,10 +70,10 @@ foreach my $line (<$fh>) {
 }
 &terminateDeriv();
 close($fh);
+system("rm -rf $ENV{WALLY}/config/deriv");
 #foreach my $key (keys %derivs) {
 foreach my $key (@derivnames) {
     my $dir = "$ENV{WALLY}/config/deriv/$key";
-    system("rm -rf $dir");
     system("mkdir -p $dir");
     my $configunmod = "$dir/config_unmod.vh";
     my $config = "$dir/config.vh";
@@ -90,13 +90,13 @@ foreach my $key (@derivnames) {
 
     my $datestring = localtime();
     my %hit = ();
-    print $fh "// Config $key automatically derived from $basederiv{$key} on $datestring usubg derivgen.pl\n";
+    print $fh "// Config $key automatically derived from $basederiv{$key} on $datestring using derivgen.pl\n";
     foreach my $line (<$unmod>) {
         foreach my $entry (@{$derivs{$key}}) {    
             my @ent = @{$entry};
             my $param = $ent[0];
             my $value = $ent[1]; 
-            if ($line =~ s/$param\s*=\s*.*;/$param = $value;/) {
+            if ($line =~ s/\b$param\s*=\s*.*;/$param = $value;/) {
                 $hit{$param} = 1;
 #               print("Hit: new line in $config for $param is $line");
             }

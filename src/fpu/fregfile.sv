@@ -6,7 +6,7 @@
 //
 // Purpose: 3R1W 4-port register file for FPU
 // 
-// Documentation: RISC-V System on Chip Design Chapter 13
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -44,7 +44,7 @@ module fregfile #(parameter FLEN) (
    // write occurs on falling edge of clock   
    
    always_ff @(negedge clk) // or posedge reset)
-     if (reset) for(i=0; i<32; i++) rf[i] <= 0;
+     if (reset) for(i=0; i<32; i++) rf[i] <= '0;
      else if (we4) rf[a4] <= wd4;  
    
    assign rd1 = rf[a1];

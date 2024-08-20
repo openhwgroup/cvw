@@ -7,7 +7,7 @@
 //
 // Purpose: RISC-V 32/64 bit shifter
 // 
-// Documentation: RISC-V System on Chip Design Chapter 4 (Figure 4.5, Table 4.3)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -40,7 +40,7 @@ module shifter import cvw::*; #(parameter cvw_t P) (
 
   assign Sign = A[P.XLEN-1] & SubArith;  // sign bit for sign extension
   if (P.XLEN==32) begin // rv32
-    if (P.ZBB_SUPPORTED) begin: rotfunnel32 //rv32 shifter with rotates
+    if (P.ZBB_SUPPORTED | P.ZBKB_SUPPORTED) begin: rotfunnel32 //rv32 shifter with rotates
       always_comb  // funnel mux
         case({Right, Rotate})
           2'b00: Z = {A[31:0], 31'b0};
@@ -57,7 +57,7 @@ module shifter import cvw::*; #(parameter cvw_t P) (
   end else begin // rv64
     logic [P.XLEN-1:0]         A64;                            
     mux3 #(64) extendmux({{32{1'b0}}, A[31:0]}, {{32{A[31]}}, A[31:0]}, A, {~W64, SubArith}, A64); // bottom 32 bits are always A[31:0], so effectively a 32-bit upper mux
-    if (P.ZBB_SUPPORTED) begin: rotfunnel64 // rv64 shifter with rotates
+    if (P.ZBB_SUPPORTED | P.ZBKB_SUPPORTED) begin: rotfunnel64 // rv64 shifter with rotates
       // shifter rotate source select mux
       logic [P.XLEN-1:0]   RotA;                          // rotate source
       mux2 #(P.XLEN) rotmux(A, {A[31:0], A[31:0]}, W64, RotA); // W64 rotatons

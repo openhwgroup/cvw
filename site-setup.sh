@@ -21,7 +21,6 @@ export PATH=$QUESTA_HOME/bin:$DC_HOME/bin:$VCS_HOME/bin:$PATH
 
 # GCC
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$RISCV/riscv-gnu-toolchain/lib:$RISCV/riscv-gnu-toolchain/riscv64-unknown-elf/lib
-export PATH=$PATH:$RISCV/riscv-gnu-toolchain/bin:$RISCV/riscv-gnu-toolchain/riscv64-unknown-elf/bin      # GCC tools
 
 # Spike
 export LD_LIBRARY_PATH=$RISCV/lib:$LD_LIBRARY_PATH
@@ -29,6 +28,11 @@ export PATH=$PATH:$RISCV/bin
 
 # Verilator
 export PATH=/usr/local/bin/verilator:$PATH # Change this for your path to Verilator
+
+# environment variables needed for RISCV-DV
+export RISCV_GCC=`which riscv64-unknown-elf-gcc`		            # Copy this as it is
+export RISCV_OBJCOPY=`which riscv64-unknown-elf-objcopy`	        # Copy this as it is
+export SPIKE_PATH=/usr/bin											# Change this for your path to riscv-isa-sim (spike)
 
 # Imperas OVPsim; put this in if you are using it
 #export PATH=$RISCV/imperas-riscv-tests/riscv-ovpsim-plus/bin/Linux64:$PATH  
@@ -44,4 +48,5 @@ if [ -e "$IDV" ]; then
     setupImperas ${IMPERAS_HOME}
     export PATH=$IDV/scripts/cvw:$PATH
 fi
+
 

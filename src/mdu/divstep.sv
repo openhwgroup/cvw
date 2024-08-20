@@ -6,7 +6,7 @@
 //
 // Purpose: Radix-2 restoring integer division step.  k steps are used in div
 // 
-// Documentation: RISC-V System on Chip Design Chapter 12 (Figure 12.19)
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw

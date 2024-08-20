@@ -27,12 +27,14 @@
 
 module zbkx #(parameter WIDTH=32) (
    input  logic [WIDTH-1:0] A, B,
-   input  logic [2:0] 	    ZBKXSelect,
+   input  logic  	          ZBKXSelect,
    output logic [WIDTH-1:0] ZBKXResult
 );
    
-   logic [WIDTH-1:0] 	     xperm4, xperm4lookup;
-   logic [WIDTH-1:0] 	     xperm8, xperm8lookup;
+   logic [WIDTH-1:0] 	     xperm4, xperm8;
+   /* verilator lint_off UNUSEDSIGNAL */
+   logic [WIDTH-1:0]         xperm4lookup, xperm8lookup; // not all bits are used
+   /* verilator lint_on UNUSEDSIGNAL */
    int 		     i;
    
    always_comb begin
@@ -46,5 +48,5 @@ module zbkx #(parameter WIDTH=32) (
       end   
    end
 
-   assign ZBKXResult = ZBKXSelect[0] ? xperm4 : xperm8;
+   assign ZBKXResult = ZBKXSelect ? xperm4 : xperm8;
 endmodule

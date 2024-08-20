@@ -7,7 +7,7 @@
 //
 // Purpose: RISC-V Arithmetic/Logic Unit
 //
-// Documentation: RISC-V System on Chip Design Chapter 4 (Figure 4.4)
+// Documentation: RISC-V System on Chip Design
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -50,6 +50,7 @@ module alu import cvw::*; #(parameter cvw_t P) (
   logic [P.XLEN-1:0] CondMaskB;                                                   // Result of B mask select mux
   logic [P.XLEN-1:0] CondShiftA;                                                  // Result of A shifted select mux
   logic [P.XLEN-1:0] ZeroCondMaskInvB;                                            // B input to AND gate, accounting for czero.* instructions
+  logic [P.XLEN-1:0] AndResult;                                                   // AND result
   logic              Carry, Neg;                                                  // Flags: carry out, negative
   logic              LT, LTU;                                                     // Less than, Less than unsigned
   logic              Asign, Bsign;                                                // Sign bits of A, B
@@ -59,50 +60,8 @@ module alu import cvw::*; #(parameter cvw_t P) (
   // CondShiftA is A for add/sub or a shifted version of A for shift-and-add BMU instructions
   assign CondMaskInvB = SubArith ? ~CondMaskB : CondMaskB;
   assign {Carry, Sum} = CondShiftA + CondMaskInvB + {{(P.XLEN-1){1'b0}}, SubArith};
-  
-  // Shifts (configurable for rotation)
-  shifter #(P) sh(.A, .Amt(B[P.LOG_XLEN-1:0]), .Right(Funct3[2]), .W64, .SubArith, .Y(Shift), .Rotate(BALUControl[2]));
 
-  // Condition code flags are based on subtraction output Sum = A-B.
-  // Overflow occurs when the numbers being subtracted have the opposite sign 
-  // and the result has the opposite sign of A.
-  // LT is simplified from Overflow = Asign & Bsign & Asign & Neg; LT = Neg ^ Overflow
-  assign Neg  = Sum[P.XLEN-1];
-  assign Asign = A[P.XLEN-1];
-  assign Bsign = B[P.XLEN-1];
-  assign LT = Asign & ~Bsign | Asign & Neg | ~Bsign & Neg; 
-  assign LTU = ~Carry;
- 
-  // Select appropriate ALU Result
-  always_comb 
-    case (ALUSelect)                                
-      3'b000: FullResult = Sum;                            // add or sub (including address generation)
-      3'b001: FullResult = Shift;                          // sll, sra, or srl
-      3'b010: FullResult = {{(P.XLEN-1){1'b0}}, LT};       // slt
-      3'b011: FullResult = {{(P.XLEN-1){1'b0}}, LTU};      // sltu
-      3'b100: FullResult = A ^ CondMaskInvB;               // xor, xnor, binv
-      3'b101: FullResult = (P.ZBS_SUPPORTED | P.ZBB_SUPPORTED) ? {{(P.XLEN-1){1'b0}},{|(A & CondMaskB)}} : Shift; // bext (or IEU shift when BMU not supported)
-      3'b110: FullResult = A | CondMaskInvB;               // or, orn, bset
-      3'b111: FullResult = A & ZeroCondMaskInvB;           // and, bclr, czero.*
-    endcase
-
-  // Support RV64I W-type addw/subw/addiw/shifts that discard upper 32 bits and sign-extend 32-bit result to 64 bits
-  if (P.XLEN == 64)  assign PreALUResult = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
-  else              assign PreALUResult = FullResult;
-
-  // Bit manipulation muxing
-  if (P.ZBC_SUPPORTED | P.ZBS_SUPPORTED | P.ZBA_SUPPORTED | P.ZBB_SUPPORTED | P.ZBKB_SUPPORTED | P.ZBKC_SUPPORTED | P.ZBKX_SUPPORTED | P.ZKND_SUPPORTED | P.ZKNE_SUPPORTED | P.ZKNH_SUPPORTED) begin : bitmanipalu
-    bitmanipalu #(P) balu(
-      .A, .B, .W64, .BSelect, .ZBBSelect, .BMUActive,
-      .Funct3, .Funct7, .Rs2E, .LT,.LTU, .BALUControl, .PreALUResult, .FullResult,
-      .CondMaskB, .CondShiftA, .ALUResult);
-  end else begin
-    assign ALUResult = PreALUResult;
-    assign CondMaskB = B;
-    assign CondShiftA = A;
-  end
-
-  // Zicond block
+  // Zicond block conditionally zeros B
   if (P.ZICOND_SUPPORTED) begin: zicond
     logic  BZero;
     
@@ -116,4 +75,51 @@ module alu import cvw::*; #(parameter cvw_t P) (
         default: ZeroCondMaskInvB = CondMaskInvB;     // otherwise normal behavior
       endcase
   end else assign ZeroCondMaskInvB = CondMaskInvB; // no masking if Zicond is not supported
+
+  // Shifts (configurable for rotation)
+  shifter #(P) sh(.A, .Amt(B[P.LOG_XLEN-1:0]), .Right(Funct3[2]), .W64, .SubArith, .Y(Shift), .Rotate(BALUControl[2]));
+
+  // Condition code flags are based on subtraction output Sum = A-B.
+  // Overflow occurs when the numbers being subtracted have the opposite sign 
+  // and the result has the opposite sign of A.
+  // LT is simplified from Overflow = Asign & Bsign & Asign & Neg; LT = Neg ^ Overflow
+  assign Neg  = Sum[P.XLEN-1];
+  assign Asign = A[P.XLEN-1];
+  assign Bsign = B[P.XLEN-1];
+  assign LT = Asign & ~Bsign | Asign & Neg | ~Bsign & Neg; 
+  assign LTU = ~Carry;
+  assign AndResult = A & ZeroCondMaskInvB;
+ 
+  // Select appropriate ALU Result
+  always_comb 
+    case (ALUSelect)                                
+      3'b000: FullResult = Sum;                            // add or sub (including address generation)
+      3'b001: FullResult = Shift;                          // sll, sra, or srl
+      3'b010: FullResult = {{(P.XLEN-1){1'b0}}, LT};       // slt
+      3'b011: FullResult = {{(P.XLEN-1){1'b0}}, LTU};      // sltu
+      3'b100: FullResult = A ^ CondMaskInvB;               // xor, xnor, binv
+//      3'b101: FullResult = (P.ZBS_SUPPORTED) ? {{(P.XLEN-1){1'b0}},{|(A & CondMaskInvB)}} : Shift; // bext (or IEU shift when BMU not supported)
+      3'b101: FullResult = (P.ZBS_SUPPORTED) ? {{(P.XLEN-1){1'b0}},{|(AndResult)}} : Shift; // bext (or IEU shift when BMU not supported)
+      3'b110: FullResult = A | CondMaskInvB;               // or, orn, bset
+      3'b111: FullResult = AndResult;                      // and, bclr, czero.*
+    endcase
+
+  // Support RV64I W-type addw/subw/addiw/shifts that discard upper 32 bits and sign-extend 32-bit result to 64 bits
+  if (P.XLEN == 64) assign PreALUResult = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
+  else              assign PreALUResult = FullResult;
+
+  // Bit manipulation muxing
+  if (P.ZBC_SUPPORTED  | P.ZBS_SUPPORTED  | P.ZBA_SUPPORTED  | P.ZBB_SUPPORTED |
+      P.ZBKB_SUPPORTED | P.ZBKC_SUPPORTED | P.ZBKX_SUPPORTED | 
+      P.ZKND_SUPPORTED | P.ZKNE_SUPPORTED | P.ZKNH_SUPPORTED) begin : bitmanipalu
+    bitmanipalu #(P) balu(
+      .A, .B, .W64, .BSelect, .ZBBSelect, .BMUActive,
+      .Funct3, .Funct7, .Rs2E, .LT,.LTU, .BALUControl, .PreALUResult, .FullResult,
+      .CondMaskB, .CondShiftA, .ALUResult);
+  end else begin
+    assign ALUResult = PreALUResult;
+    assign CondMaskB = B;
+    assign CondShiftA = A;
+  end
+
 endmodule

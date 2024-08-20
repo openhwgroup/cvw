@@ -9,7 +9,7 @@
 // Purpose: CAM line for the translation lookaside buffer (TLB)
 //          Determines whether a virtual page number matches the stored key.
 // 
-// Documentation: RISC-V System on Chip Design Chapter 8
+// Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -41,7 +41,7 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
   input  logic                  PTE_NAPOT,  // entry is in NAPOT mode (N bit set and PPN[3:0] = 1000)
   input  logic [1:0]            PageTypeWriteVal,
   input  logic                  TLBFlush,   // Flush this line (set valid to 0)
-  output logic [1:0]            PageTypeRead,  // *** should this be the stored version or the always updated one?
+  output logic [1:0]            PageTypeRead,  
   output logic                  Match
 );
 
@@ -102,8 +102,6 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
 
   // On a write, set the valid bit high and update the stored key.
   // On a flush, zero the valid bit and leave the key unchanged.
-  // *** Might we want to update stored key right away to output match on the
-  // write cycle? (using a mux)
   flopenr #(1) validbitflop(clk, reset, WriteEnable | TLBFlush, ~TLBFlush, Valid);
   flopenr #(KEY_BITS) keyflop(clk, reset, WriteEnable, {SATP_ASID, VPN}, Key);
 endmodule
