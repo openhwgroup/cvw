@@ -180,6 +180,12 @@ test_cases:
 .8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 .8byte rx_data, 0x0000000B, read32_test     # read rx_data
 
+# Test phase polarity
+.8byte sck_mode, 0x00000003, write32_test   # set sck mode to 11
+.8byte tx_data, 0x000000F3, write32_test    # place f3 into tx_data
+.8byte 0x0, 0x00000000, spi_data_wait       # wait for transmission to end
+.8byte rx_data, 0x000000F3, read32_test     # read rx_data
+    
 # Test chip select polarity
 
 .8byte sck_mode, 0x00000000, write32_test   # reset sck polarity to active high
