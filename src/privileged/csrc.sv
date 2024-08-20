@@ -159,11 +159,11 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
       if (P.XLEN==64) begin // 64-bit counter reads
         // Veri lator doesn't realize this only occurs for XLEN=64
         /* verilator lint_off WIDTH */  
-        if      (CSRAdrM == TIME)  CSRCReadValM = MTIME_CLINT; // TIME register is a shadow of the memory-mapped MTIME from the CLINT
+        if      (CSRAdrM == TIME & ~CSRWriteM)  CSRCReadValM = MTIME_CLINT; // TIME register is a shadow of the memory-mapped MTIME from the CLINT
         /* verilator lint_on WIDTH */  
         else if (CSRAdrM >= MHPMCOUNTERBASE & CSRAdrM < MHPMCOUNTERBASE+P.COUNTERS & CSRAdrM != MTIME) 
                  CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
-        else if (CSRAdrM >= HPMCOUNTERBASE  & CSRAdrM  < HPMCOUNTERBASE+P.COUNTERS)  
+        else if (CSRAdrM >= HPMCOUNTERBASE  & CSRAdrM  < HPMCOUNTERBASE+P.COUNTERS & ~CSRWriteM)  // read-only
                  CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
         else begin
             CSRCReadValM = '0;
@@ -172,16 +172,16 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
       end else begin // 32-bit counter reads
         // Veril ator doesn't realize this only occurs for XLEN=32
         /* verilator lint_off WIDTH */  
-        if      (CSRAdrM == TIME)  CSRCReadValM = MTIME_CLINT[31:0];// TIME register is a shadow of the memory-mapped MTIME from the CLINT
-        else if (CSRAdrM == TIMEH) CSRCReadValM = MTIME_CLINT[63:32];
+        if      (CSRAdrM == TIME & ~CSRWriteM)  CSRCReadValM = MTIME_CLINT[31:0];// TIME register is a shadow of the memory-mapped MTIME from the CLINT
+        else if (CSRAdrM == TIMEH & ~CSRWriteM) CSRCReadValM = MTIME_CLINT[63:32];
         /* verilator lint_on WIDTH */  
         else if (CSRAdrM >= MHPMCOUNTERBASE  & CSRAdrM < MHPMCOUNTERBASE+P.COUNTERS & CSRAdrM != MTIME)   
                  CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
-        else if (CSRAdrM >= HPMCOUNTERBASE   & CSRAdrM < HPMCOUNTERBASE+P.COUNTERS)    
+        else if (CSRAdrM >= HPMCOUNTERBASE   & CSRAdrM < HPMCOUNTERBASE+P.COUNTERS  & ~CSRWriteM)    // read-only
                  CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
         else if (CSRAdrM >= MHPMCOUNTERHBASE & CSRAdrM < MHPMCOUNTERHBASE+P.COUNTERS & CSRAdrM != MTIMEH)  
                  CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
-        else if (CSRAdrM >= HPMCOUNTERHBASE  & CSRAdrM < HPMCOUNTERHBASE+P.COUNTERS)   
+        else if (CSRAdrM >= HPMCOUNTERHBASE  & CSRAdrM < HPMCOUNTERHBASE+P.COUNTERS  & ~CSRWriteM)   // read-only
                  CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
         else begin
           CSRCReadValM = '0;
