@@ -37,12 +37,29 @@
 #include "riscv.h"
 #include "fail.h"
 
+
+// Maximum SD card clock frequency is either 20MHz or half of the
+// system clock
+
+/*
+PSEUDOCODE:
+transmit 8 dummy bytes
+wait for receive fifo to get a byte.
+- as soon as a byte is in the receive fifo
+- process the byte and increment a byte counter.
+when 8 bytes are transferred
+
+
+ */
+
 int disk_read(BYTE * buf, LBA_t sector, UINT count) {
   uint64_t r;
-  UINT i;
+  UINT i, j;
   volatile uint8_t *p = buf;
 
-  UINT modulus = count/50;
+  // Quarter of the Systemclock, divided by the number of bits in a block
+  // equals the number of blocks per second transferred.
+  UINT modulus = SDCCLOCK/(8*512);
 
   uint8_t crc = 0;
   crc = crc7(crc, 0x40 | SD_CMD_READ_BLOCK_MULTIPLE);
@@ -72,15 +89,7 @@ int disk_read(BYTE * buf, LBA_t sector, UINT count) {
 
     // Wait for data token
     while((r = spi_dummy()) != SD_DATA_TOKEN);
-    // println_with_byte("Received data token: 0x", r & 0xff);
 
-    // println_with_dec("Block ", i);
-    // Read block into memory.
-    /* for (int j = 0; j < 64; j++) { */
-    /*   *buf = sd_read64(&crc); */
-    /*   println_with_addr("0x", *buf); */
-    /*   buf = buf + 64; */
-    /* } */
     crc = 0;
     n = 512;
     do {
@@ -88,6 +97,22 @@ int disk_read(BYTE * buf, LBA_t sector, UINT count) {
       *p++ = x;
       crc = crc16(crc, x);
     } while (--n > 0);
+
+    /* n = 512/8; */
+    /* do { */
+    /*   // Send 8 dummy bytes (fifo should be empty) */
+    /*   for (j = 0; j < 8; j++) { */
+    /*     spi_sendbyte(0xff); */
+    /*   } */
+
+    /*   // Reset counter. Process bytes AS THEY COME IN. */
+    /*   for (j = 0; j < 8; j++) { */
+    /*     while (!(read_reg(SPI_IP) & 2)) {} */
+    /*     uint8_t x = spi_readbyte(); */
+    /*     *p++ = x; */
+    /*     crc = crc16(crc, x);         */
+    /*   } */
+    /* } while(--n > 0); */
     
     // Read CRC16 and check
     crc_exp = ((uint16_t)spi_dummy() << 8);
@@ -116,8 +141,6 @@ int disk_read(BYTE * buf, LBA_t sector, UINT count) {
   print_uart_dec(count);
   print_uart("/");
   print_uart_dec(count);
-  // write_reg(SPI_CSMODE, SIFIVE_SPI_CSMODE_MODE_AUTO);
-  //spi_txrx(0xff);
   print_uart("\r\n");
   return 0;
 }
@@ -140,7 +163,7 @@ void copyFlash(QWORD address, QWORD * Dst, DWORD numBlocks) {
   /* print_uart("\r\n"); */
 
   // Intialize the SD card
-  init_sd(SYSTEMCLOCK, 5000000);
+  init_sd(SYSTEMCLOCK, SDCCLOCK);
   
   ret = gpt_load_partitions();
 }

@@ -63,5 +63,14 @@ int disk_read(BYTE * buf, LBA_t sector, UINT count);
 
 #define SYSTEMCLOCK 20000000
 
+// TODO: This line needs to change back to 20MHz when we fix the
+// timing problems.
+#define MAXSDCCLOCK 5000000
+
+// Maximum SDC speed is either the system clock divided by 2 (because
+// of the SPI peripheral clock division) or the maximum speed an SD
+// card can be pushed to.
+#define SDCCLOCK (SYSTEMCLOCK/2 > MAXSDCCLOCK ? MAXSDCCLOCK : SYSTEMCLOCK/2)
+
 #endif // WALLYBOOT
 
