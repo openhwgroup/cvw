@@ -38,6 +38,14 @@ QuestaFunctCoverage: ${SIM}/questa/fcov_ucdb/rv64gc_WALLY-COV-add.elf.ucdb
 	vcover report ${SIM}/questa/fcov_ucdb/fcov.ucdb -details -cvg | egrep "Coverpoint|Covergroup|Cross|TYPE"  > ${SIM}/questa/fcov/fcov.summary.log
 	grep "TOTAL COVERGROUP COVERAGE" ${SIM}/questa/fcov/fcov.log
 
+QuestaFunctCoverageRvvi: ${WALLY}/addins/cvw-arch-verif/work/rv64gc_arch64i.ucdb 
+	vcover merge -out ${SIM}/questa/fcovrvvi_ucdb/fcovrvvi.ucdb ${WALLY}/addins/cvw-arch-verif/work/rv64gc_arch64i.ucdb ${WALLY}/addins/cvw-arch-verif/work/rv64gc_*.ucdb -logfile ${SIM}/questa/fcovrvvi/log
+	vcover report -details -html ${SIM}/questa/fcovrvvi_ucdb/fcovrvvi.ucdb
+	vcover report ${SIM}/questa/fcovrvvi_ucdb/fcovrvvi.ucdb -details -cvg > ${SIM}/questa/fcovrvvi/fcovrvvi.log
+	vcover report ${SIM}/questa/fcovrvvi_ucdb/fcovrvvi.ucdb -testdetails -cvg > ${SIM}/questa/fcovrvvi/fcovrvvi.testdetails.log
+	vcover report ${SIM}/questa/fcovrvvi_ucdb/fcovrvvi.ucdb -details -cvg | egrep "Coverpoint|Covergroup|Cross|TYPE"  > ${SIM}/questa/fcovrvvi/fcovrvvi.summary.log
+	grep "TOTAL COVERGROUP COVERAGE" ${SIM}/questa/fcovrvvi/fcovrvvi.log
+
 imperasdv_cov:
 	touch ${SIM}/seed0.txt
 	echo "0" > ${SIM}/seed0.txt
