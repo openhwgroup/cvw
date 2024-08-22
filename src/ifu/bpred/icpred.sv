@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // icpred.sv
 //
-// Written: Ross Thomposn ross1728@gmail.com
+// Written: Rose Thomposn ross1728@gmail.com
 // Created: February 26, 2023
 // Modified: February 26, 2023
 //

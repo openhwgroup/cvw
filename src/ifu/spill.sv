@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // spill.sv
 //
-// Written: Ross Thompson ross1728@gmail.com
+// Written: Rose Thompson ross1728@gmail.com
 // Created: 28 January 2022
 // Modified: 19 January 2023
 //
