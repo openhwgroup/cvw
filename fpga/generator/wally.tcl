@@ -89,10 +89,11 @@ report_clock_interaction                                                -file re
 write_verilog -force -mode funcsim sim/syn-funcsim.v
 
 if {$board=="ArtyA7"} {
-    source ../constraints/small-debug.xdc
+    #source ../constraints/small-debug.xdc
     #source ../constraints/small-debug-rvvi.xdc
 } else {
-    source ../constraints/vcu-small-debug.xdc
+    #source ../constraints/vcu-small-debug.xdc
+    source ../constraints/small-debug.xdc
 }
 
 

@@ -225,7 +225,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
   // 2. a second clock which is 200 MHz
   // Wally requires a slower clock.  At this point I don't know what speed the atrix 7 will run so I'm initially targetting 25Mhz.
   // the mig will output a clock at 1/4 the sys clock or 41Mhz which might work with wally so we may be able to simplify the logic a lot.
-  xlnx_mmcm xln_mmcm(.clk_out1(clk167),
+  mmcm mmcm(.clk_out1(clk167),
                      .clk_out2(clk200),
                      .clk_out3(CPUCLK),
                      .clk_out4(phy_ref_clk),
@@ -236,7 +236,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
   
 
   // reset controller XILINX IP
-  xlnx_proc_sys_reset xlnx_proc_sys_reset_0
+  sysrst sysrst
     (.slowest_sync_clk(CPUCLK),
      .ext_reset_in(1'b0),
      .aux_reset_in(south_reset),
@@ -262,7 +262,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
 
 
   // ahb lite to axi bridge
-  xlnx_ahblite_axi_bridge xlnx_ahblite_axi_bridge_0
+  ahbaxibridge ahbaxibridge
     (.s_ahb_hclk(CPUCLK),
      .s_ahb_hresetn(peripheral_aresetn),
      .s_ahb_hsel(HSELEXT),
@@ -314,7 +314,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
      .m_axi_rready(m_axi_rready));
 
   // AXI Clock Converter
-  xlnx_axi_clock_converter xlnx_axi_clock_converter_0
+  clkconverter clkconverter
     (.s_axi_aclk(CPUCLK),
      .s_axi_aresetn(peripheral_aresetn),
      .s_axi_awid(m_axi_awid),

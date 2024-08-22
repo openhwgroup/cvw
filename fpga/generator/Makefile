@@ -27,19 +27,15 @@ FPGA_VCU: PreProcessFiles IP_VCU
 
 # Generate IP Blocks
 .PHONY: IP_Arty IP_VCU
-IP_VCU: $(dst)/xlnx_proc_sys_reset.log \
+IP_VCU: $(dst)/sysrst.log \
 	MEM_VCU \
-	$(dst)/xlnx_axi_clock_converter.log \
-	$(dst)/xlnx_ahblite_axi_bridge.log \
-	$(dst)/xlnx_axi_crossbar.log \
-	$(dst)/xlnx_axi_dwidth_conv_32to64.log \
-	$(dst)/xlnx_axi_dwidth_conv_64to32.log \
-	$(dst)/xlnx_axi_prtcl_conv.log
-IP_Arty: $(dst)/xlnx_proc_sys_reset.log \
+	$(dst)/clkconverter.log \
+	$(dst)/ahbaxibridge.log
+IP_Arty: $(dst)/sysrst.log \
 	MEM_Arty \
-	$(dst)/xlnx_mmcm.log \
-	$(dst)/xlnx_axi_clock_converter.log \
-	$(dst)/xlnx_ahblite_axi_bridge.log
+	$(dst)/mmcm.log \
+	$(dst)/clkconverter.log \
+	$(dst)/ahbaxibridge.log
 #$(dst)/xlnx_axi_crossbar.log \
 #$(dst)/xlnx_axi_dwidth_conv_32to64.log \
 #$(dst)/xlnx_axi_dwidth_conv_64to32.log \
