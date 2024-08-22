@@ -2,7 +2,7 @@
 set partNumber $::env(XILINX_PART)
 set boardName $::env(XILINX_BOARD)
 
-set ipName xlnx_ddr3
+set ipName ddr3
 
 create_project $ipName . -force -part $partNumber
 set_property board_part $boardName [current_project]

@@ -400,7 +400,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
      .m_axi_rready(BUS_axi_rready));
 
   // DDR3 Controller
-  xlnx_ddr3 xlnx_ddr3_c0
+  ddr3 ddr3
     (
      // ddr3 I/O
      .ddr3_dq(ddr3_dq),

@@ -44,9 +44,9 @@ IP_Arty: $(dst)/sysrst.log \
 # Generate Memory IP Blocks
 .PHONY: MEM_VCU MEM_Arty
 MEM_VCU:
-	$(MAKE) $(dst)/xlnx_ddr4-$(board).log
+	$(MAKE) $(dst)/ddr4-$(board).log
 MEM_Arty:
-	$(MAKE) $(dst)/xlnx_ddr3-$(board).log
+	$(MAKE) $(dst)/ddr3-$(board).log
 
 # Copy files and make necessary modifications
 .PHONY: PreProcessFiles
