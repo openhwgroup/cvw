@@ -195,7 +195,7 @@ module fpgaTop
 
    
   // reset controller XILINX IP
-  xlnx_proc_sys_reset xlnx_proc_sys_reset_0
+  sysrst sysrst
     (.slowest_sync_clk(CPUCLK),
      .ext_reset_in(c0_ddr4_ui_clk_sync_rst),
      .aux_reset_in(south_rst),
@@ -220,7 +220,7 @@ module fpgaTop
                     .UARTSin, .UARTSout, .SDCIn, .SDCCmd, .SDCCS(SDCCSin), .SDCCLK, .ExternalStall(RVVIStall)); 
   
   // ahb lite to axi bridge
-  xlnx_ahblite_axi_bridge xlnx_ahblite_axi_bridge_0
+  ahbaxibridge ahbaxibridge
     (.s_ahb_hclk(CPUCLK),
      .s_ahb_hresetn(peripheral_aresetn),
      .s_ahb_hsel(HSELEXT),
@@ -270,8 +270,8 @@ module fpgaTop
      .m_axi_rvalid(m_axi_rvalid),
      .m_axi_rlast(m_axi_rlast),
      .m_axi_rready(m_axi_rready));
-   
-  xlnx_axi_clock_converter xlnx_axi_clock_converter_0
+
+  clkconverter clkconverter
     (.s_axi_aclk(CPUCLK),
      .s_axi_aresetn(peripheral_aresetn),
      .s_axi_awid(m_axi_awid),
@@ -356,7 +356,7 @@ module fpgaTop
      .m_axi_rlast(BUS_axi_rlast),
      .m_axi_rready(BUS_axi_rready));
    
-  xlnx_ddr4 xlnx_ddr4_c0
+  ddr4 ddr4
     (.c0_init_calib_complete(c0_init_calib_complete),
      .dbg_clk(dbg_clk), // open
      .c0_sys_clk_p(default_250mhz_clk1_0_p),

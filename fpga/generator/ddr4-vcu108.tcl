@@ -15,12 +15,12 @@ set_property -dict [list CONFIG.C0.ControllerType {DDR4_SDRAM} \
 			CONFIG.No_Controller {1} \
 			CONFIG.Phy_Only {Complete_Memory_Controller} \
 			CONFIG.C0.DDR4_PhyClockRatio {4:1} \
-			CONFIG.C0.DDR4_TimePeriod {1200} \
+			CONFIG.C0.DDR4_TimePeriod {833} \
 			CONFIG.C0.DDR4_MemoryPart {MT40A256M16GE-083E} \
 			CONFIG.C0.DDR4_BurstLength {8} \
 			CONFIG.C0.DDR4_BurstType {Sequential} \
-			CONFIG.C0.DDR4_CasLatency {13} \
-			CONFIG.C0.DDR4_CasWriteLatency {10} \
+			CONFIG.C0.DDR4_CasLatency {16} \
+			CONFIG.C0.DDR4_CasWriteLatency {12} \
 			CONFIG.C0.DDR4_Slot {Single} \
 			CONFIG.C0.DDR4_MemoryVoltage {1.2V} \
 			CONFIG.C0.DDR4_DataWidth {64} \
@@ -36,14 +36,11 @@ set_property -dict [list CONFIG.C0.ControllerType {DDR4_SDRAM} \
 			CONFIG.C0.DDR4_AxiIDWidth {4} \
 			CONFIG.C0.DDR4_AxiAddressWidth {31} \
 			CONFIG.C0.DDR4_AxiNarrowBurst {false} \
-			CONFIG.C0.DDR4_CLKFBOUT_MULT {5} \
-			CONFIG.C0.DDR4_DIVCLK_DIVIDE {1} \
-			CONFIG.C0.DDR4_CLKOUT0_DIVIDE {6} \
 			CONFIG.Reference_Clock {Differential} \
 			CONFIG.ADDN_UI_CLKOUT1.INSERT_VIP {0} \
-			CONFIG.ADDN_UI_CLKOUT1_FREQ_HZ {22} \
+			CONFIG.ADDN_UI_CLKOUT1_FREQ_HZ {50} \
 			CONFIG.ADDN_UI_CLKOUT2.INSERT_VIP {0} \
-			CONFIG.ADDN_UI_CLKOUT2_FREQ_HZ {208} \
+			CONFIG.ADDN_UI_CLKOUT2_FREQ_HZ {300} \
 			CONFIG.ADDN_UI_CLKOUT3.INSERT_VIP {0} \
 			CONFIG.ADDN_UI_CLKOUT3_FREQ_HZ {None} \
 			CONFIG.ADDN_UI_CLKOUT4.INSERT_VIP {0} \
@@ -106,7 +103,7 @@ set_property -dict [list CONFIG.C0.ControllerType {DDR4_SDRAM} \
 			CONFIG.C0.DDR4_CustomParts {no_file_loaded} \
 			CONFIG.C0.DDR4_EN_PARITY {false} \
 			CONFIG.C0.DDR4_Enable_LVAUX {false} \
-			CONFIG.C0.DDR4_InputClockPeriod {3359} \
+			CONFIG.C0.DDR4_InputClockPeriod {3332} \
 			CONFIG.C0.DDR4_LR_SKEW_0 {0} \
 			CONFIG.C0.DDR4_LR_SKEW_1 {0} \
 			CONFIG.C0.DDR4_MemoryName {MainMemory} \
@@ -115,6 +112,7 @@ set_property -dict [list CONFIG.C0.ControllerType {DDR4_SDRAM} \
 			CONFIG.C0.DDR4_ODT_SKEW_2 {0} \
 			CONFIG.C0.DDR4_ODT_SKEW_3 {0} \
 			CONFIG.C0.DDR4_OnDieTermination {RZQ/6} \
+			CONFIG.C0.DDR4_OutputDriverImpedenceControl {RZQ/7} \
 			CONFIG.C0.DDR4_PAR_SKEW {0} \
 			CONFIG.C0.DDR4_Specify_MandD {false} \
 			CONFIG.C0.DDR4_TREFI {0} \
