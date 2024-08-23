@@ -5,6 +5,11 @@ set boardName $::env(XILINX_BOARD)
 set boardSubName [lindex [split ${boardName} :] 1]
 set board $::env(board)
 
+set partNumber xc7a100tcsg324-1
+set boardName digilentinc.com:arty-a7-100:part0:1.1
+set boardSubName arty-a7-100
+set board ArtyA7
+
 set ipName WallyFPGA
 
 create_project $ipName . -force -part $partNumber
@@ -23,15 +28,15 @@ if {$board=="ArtyA7"} {
 }
 
 # read in ip
-read_ip IP/sysrst.srcs/sources_1/ip/sysrst/sysrst.xci
-read_ip IP/ahbaxibridge.srcs/sources_1/ip/ahbaxibridge/ahbaxibridge.xci
-read_ip IP/clkconverter.srcs/sources_1/ip/clkconverter/clkconverter.xci
+import_ip IP/sysrst.srcs/sources_1/ip/sysrst/sysrst.xci
+import_ip IP/ahbaxibridge.srcs/sources_1/ip/ahbaxibridge/ahbaxibridge.xci
+import_ip IP/clkconverter.srcs/sources_1/ip/clkconverter/clkconverter.xci
 
 if {$board=="ArtyA7"} {
-    read_ip IP/ddr3.srcs/sources_1/ip/ddr3/ddr3.xci
-    read_ip IP/mmcm.srcs/sources_1/ip/mmcm/mmcm.xci
+    import_ip IP/ddr3.srcs/sources_1/ip/ddr3/ddr3.xci
+    import_ip IP/mmcm.srcs/sources_1/ip/mmcm/mmcm.xci
 } else {
-    read_ip IP/ddr4.srcs/sources_1/ip/ddr4/ddr4.xci
+    import_ip IP/ddr4.srcs/sources_1/ip/ddr4/ddr4.xci
 }
 
 # read in all other rtl
@@ -41,13 +46,6 @@ read_verilog [glob -type f ../../addins/ahbsdc/sdc/*.v]
 
 set_property include_dirs {../src/CopiedFiles_do_not_add_to_repo/config ../../config/shared ../../addins/ahbsdc/sdc} [current_fileset]
 
-if {$board=="ArtyA7"} {
-    add_files -fileset constrs_1 -norecurse ../constraints/constraints-$board.xdc
-    set_property PROCESSING_ORDER NORMAL [get_files  ../constraints/constraints-$board.xdc]
-} else {
-    add_files -fileset constrs_1 -norecurse ../constraints/constraints-$boardSubName.xdc
-    set_property PROCESSING_ORDER NORMAL [get_files  ../constraints/constraints-$boardSubName.xdc]
-}
 
 # define top level
 set_property top fpgaTop [current_fileset]
@@ -56,6 +54,14 @@ update_compile_order -fileset sources_1
 # This is important as the ddr3/4 IP contains the generate clock constraint which the user constraints depend on.
 exec mkdir -p reports/
 exec rm -rf reports/*
+
+if {$board=="ArtyA7"} {
+    add_files -fileset constrs_1 -norecurse ../constraints/constraints-$board.xdc
+    set_property PROCESSING_ORDER NORMAL [get_files  ../constraints/constraints-$board.xdc]
+} else {
+    add_files -fileset constrs_1 -norecurse ../constraints/constraints-$boardSubName.xdc
+    set_property PROCESSING_ORDER NORMAL [get_files  ../constraints/constraints-$boardSubName.xdc]
+}
 
 report_compile_order -constraints > reports/compile_order.rpt
 

@@ -33,7 +33,7 @@ IP_VCU: $(dst)/sysrst.log \
 	$(dst)/ahbaxibridge.log
 IP_Arty: $(dst)/sysrst.log \
 	MEM_Arty \
-	$(dst)/mmcm.log \
+	$(dst)/xlnx_mmcm.log \
 	$(dst)/clkconverter.log \
 	$(dst)/ahbaxibridge.log
 #$(dst)/xlnx_axi_crossbar.log \
