@@ -48,7 +48,6 @@ module fpgaTop
    input         SDCCD,
    input         SDCWP,         
 
-   output          calib,
    output          cpu_reset,
    output          ahblite_resetn,
 
@@ -188,7 +187,6 @@ module fpgaTop
   assign GPO = GPIOOUT[4:0];
   assign ahblite_resetn = peripheral_aresetn;
   assign cpu_reset = bus_struct_reset;
-  assign calib = c0_init_calib_complete;
   
   logic [3:0] SDCCSin;
   assign SDCCS = SDCCSin[0];
