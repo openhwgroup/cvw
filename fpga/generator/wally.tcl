@@ -5,10 +5,10 @@ set boardName $::env(XILINX_BOARD)
 set boardSubName [lindex [split ${boardName} :] 1]
 set board $::env(board)
 
-set partNumber xc7a100tcsg324-1
-set boardName digilentinc.com:arty-a7-100:part0:1.1
-set boardSubName arty-a7-100
-set board ArtyA7
+#set partNumber xc7a100tcsg324-1
+#set boardName digilentinc.com:arty-a7-100:part0:1.1
+#set boardSubName arty-a7-100
+#set board ArtyA7
 
 set ipName WallyFPGA
 
