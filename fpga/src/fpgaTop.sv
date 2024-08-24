@@ -34,7 +34,7 @@ module fpgaTop
    input           reset,
    input           south_rst,
 
-   input [3:0]     GPI,
+   input [2:0]     GPI,
    output [4:0]    GPO,
 
    input           UARTSin,
@@ -183,7 +183,7 @@ module fpgaTop
 
   logic		   CLK208;
 
-  assign GPIOIN = {25'b0, SDCCD, SDCWP, 1'b0, GPI};
+  assign GPIOIN = {25'b0, SDCCD, SDCWP, 2'b0, GPI};
   assign GPO = GPIOOUT[4:0];
   assign ahblite_resetn = peripheral_aresetn;
   assign cpu_reset = bus_struct_reset;

@@ -11,8 +11,8 @@ create_generated_clock -name SPISDCClock -source [get_pins ddr4/addn_ui_clkout1]
 set_property PACKAGE_PIN E34 [get_ports {GPI[0]}]
 set_property PACKAGE_PIN M22 [get_ports {GPI[1]}]
 set_property PACKAGE_PIN AW27 [get_ports {GPI[2]}]
-set_property PACKAGE_PIN A10 [get_ports {GPI[3]}]
-set_property IOSTANDARD LVCMOS12 [get_ports {GPI[3]}]
+#set_property PACKAGE_PIN A10 [get_ports {GPI[3]}]
+#set_property IOSTANDARD LVCMOS12 [get_ports {GPI[3]}]
 set_property IOSTANDARD LVCMOS12 [get_ports {GPI[2]}]
 set_property IOSTANDARD LVCMOS12 [get_ports {GPI[1]}]
 set_property IOSTANDARD LVCMOS12 [get_ports {GPI[0]}]
@@ -59,7 +59,7 @@ set_input_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 0.000 [get_port
 set_input_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 0.000 [get_ports reset]
 set_max_delay -from [get_ports reset] 15.000
 set_false_path -from [get_ports reset]
-set_property PACKAGE_PIN E34 [get_ports {reset}]
+set_property PACKAGE_PIN A10 [get_ports {reset}]
 set_property IOSTANDARD LVCMOS12 [get_ports {reset}]
 
 
@@ -104,7 +104,7 @@ set_property PACKAGE_PIN AW12 [get_ports SDCCD]
 set_property IOSTANDARD LVCMOS18 [get_ports SDCCD]
 set_property PULLTYPE PULLUP [get_ports SDCCD]
 set_property PACKAGE_PIN BC16 [get_ports SDCWP]
-set_property IOSTANDARD LVCMO18 [get_ports SDCWP]
+set_property IOSTANDARD LVCMOS18 [get_ports SDCWP]
 set_property PULLTYPE PULLUP [get_ports SDCWP]
 
 #set_input_delay -clock [get_clocks CLKDiv64_Gen] -min -add_delay 2.500 [get_ports {SDCDat[*]}]
