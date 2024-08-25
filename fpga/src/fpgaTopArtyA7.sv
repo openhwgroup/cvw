@@ -29,183 +29,183 @@
 import cvw::*;
 
 module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
-  (input           default_100mhz_clk,
-(* mark_debug = "true" *)   input           resetn,
-   input           south_reset,
+  (input logic           default_100mhz_clk,
+   input logic           resetn,
+   input logic           south_reset,
 
    // GPIO signals
-   input [3:0]   GPI,
-   output [4:0]  GPO,
+   input logic [3:0]   GPI,
+   output logic [4:0]  GPO,
 
    // UART Signals
-   input         UARTSin,
-   output        UARTSout,
+   input logic         UARTSin,
+   output logic        UARTSout,
 
    // SDC Signals connecting to an SPI peripheral
-   input         SDCIn,
-   output        SDCCLK,
-   output        SDCCmd,
-   output        SDCCS,
-   input         SDCCD,
-   input         SDCWP,         
+   input logic         SDCIn,
+   output logic        SDCCLK,
+   output logic        SDCCmd,
+   output logic        SDCCS,
+   input logic         SDCCD,
+   input logic         SDCWP,         
  /*
      * Ethernet: 100BASE-T MII
      */
-    output       phy_ref_clk,
-    input        phy_rx_clk,
-    input  [3:0] phy_rxd,
-    input        phy_rx_dv,
-    input        phy_rx_er,
-    input        phy_tx_clk,
-    output [3:0] phy_txd,
-    output       phy_tx_en,
-    input        phy_col, // nc
-    input        phy_crs, // nc
-    output       phy_reset_n,
+    output logic       phy_ref_clk,
+    input logic        phy_rx_clk,
+    input logic  [3:0] phy_rxd,
+    input logic        phy_rx_dv,
+    input logic        phy_rx_er,
+    input logic        phy_tx_clk,
+    output logic [3:0] phy_txd,
+    output logic       phy_tx_en,
+    input logic        phy_col, // nc
+    input logic        phy_crs, // nc
+    output logic       phy_reset_n,
 
-   inout [15:0]    ddr3_dq,
-   inout [1:0]     ddr3_dqs_n,
-   inout [1:0]     ddr3_dqs_p,
-   output [13:0]   ddr3_addr,
-   output [2:0]    ddr3_ba,
-   output          ddr3_ras_n,
-   output          ddr3_cas_n,
-   output          ddr3_we_n,
-   output          ddr3_reset_n,
-   output [0:0]    ddr3_ck_p,
-   output [0:0]    ddr3_ck_n,
-   output [0:0]    ddr3_cke,
-   output [0:0]    ddr3_cs_n,
-   output [1:0]    ddr3_dm,
-   output [0:0]    ddr3_odt
+   inout logic [15:0]    ddr3_dq,
+   inout logic [1:0]     ddr3_dqs_n,
+   inout logic [1:0]     ddr3_dqs_p,
+   output logic [13:0]   ddr3_addr,
+   output logic [2:0]    ddr3_ba,
+   output logic          ddr3_ras_n,
+   output logic          ddr3_cas_n,
+   output logic          ddr3_we_n,
+   output logic          ddr3_reset_n,
+   output logic [0:0]    ddr3_ck_p,
+   output logic [0:0]    ddr3_ck_n,
+   output logic [0:0]    ddr3_cke,
+   output logic [0:0]    ddr3_cs_n,
+   output logic [1:0]    ddr3_dm,
+   output logic [0:0]    ddr3_odt
    );
 
   // MMCM Signals
-  wire 			   CPUCLK;
-  wire 			   c0_ddr4_ui_clk_sync_rst;
-  wire 			   bus_struct_reset;
-  wire 			   peripheral_reset;
-  wire 			   interconnect_aresetn;
-  wire 			   peripheral_aresetn;
-  wire 			   mb_reset;
+  logic 			   CPUCLK;
+  logic 			   c0_ddr4_ui_clk_sync_rst;
+  logic 			   bus_struct_reset;
+  logic 			   peripheral_reset;
+  logic 			   interconnect_aresetn;
+  logic 			   peripheral_aresetn;
+  logic 			   mb_reset;
   
   // AHB Signals from Wally
-  wire 			   HCLKOpen;
-  wire 			   HRESETnOpen;
-  wire [63:0]      HRDATAEXT;
-  wire 			   HREADYEXT;
-  wire 			   HRESPEXT;
-  wire 			   HSELEXT;
-  wire [55:0] 	   HADDR;
-  wire [63:0]      HWDATA;
-  wire [64/8-1:0]  HWSTRB;
-  wire 			   HWRITE;
-  wire [2:0] 	   HSIZE;
-  wire [2:0] 	   HBURST;
-  wire [1:0] 	   HTRANS;
-  wire 			   HREADY;
-  wire [3:0] 	   HPROT;
-  wire 			   HMASTLOCK;
+  logic 			   HCLKOpen;
+  logic 			   HRESETnOpen;
+  logic [63:0]      HRDATAEXT;
+  logic 			   HREADYEXT;
+  logic 			   HRESPEXT;
+  logic 			   HSELEXT;
+  logic [55:0] 	   HADDR;
+  logic [63:0]      HWDATA;
+  logic [64/8-1:0]  HWSTRB;
+  logic 			   HWRITE;
+  logic [2:0] 	   HSIZE;
+  logic [2:0] 	   HBURST;
+  logic [1:0] 	   HTRANS;
+  logic 			   HREADY;
+  logic [3:0] 	   HPROT;
+  logic 			   HMASTLOCK;
 
   // GPIO Signals
-  wire [31:0] 	   GPIOIN, GPIOOUT, GPIOEN;
+  logic [31:0] 	   GPIOIN, GPIOOUT, GPIOEN;
 
   // AHB to AXI Bridge Signals
-  wire [3:0] 	   m_axi_awid;
-  wire [7:0] 	   m_axi_awlen;
-  wire [2:0] 	   m_axi_awsize;
-  wire [1:0] 	   m_axi_awburst;
-  wire [3:0] 	   m_axi_awcache;
-  wire [31:0] 	   m_axi_awaddr;
-  wire [2:0] 	   m_axi_awprot;
-  wire             m_axi_awvalid;
-  wire             m_axi_awready;
-  wire             m_axi_awlock;
-  wire [63:0] 	   m_axi_wdata;
-  wire [7:0] 	   m_axi_wstrb;
-  wire             m_axi_wlast;
-  wire             m_axi_wvalid;
-  wire             m_axi_wready;
-  wire [3:0] 	   m_axi_bid;
-  wire [1:0] 	   m_axi_bresp;
-  wire             m_axi_bvalid;
-  wire             m_axi_bready;
-  wire [3:0] 	   m_axi_arid;
-  wire [7:0] 	   m_axi_arlen;
-  wire [2:0] 	   m_axi_arsize;
-  wire [1:0] 	   m_axi_arburst;
-  wire [2:0] 	   m_axi_arprot;
-  wire [3:0] 	   m_axi_arcache;
-  wire             m_axi_arvalid;
-  wire [31:0] 	   m_axi_araddr;
-  wire 			   m_axi_arlock;
-  wire             m_axi_arready;
-  wire [3:0] 	   m_axi_rid;
-  wire [63:0] 	   m_axi_rdata;
-  wire [1:0] 	   m_axi_rresp;
-  wire             m_axi_rvalid;
-  wire             m_axi_rlast;
-  wire             m_axi_rready;
+  logic [3:0] 	   m_axi_awid;
+  logic [7:0] 	   m_axi_awlen;
+  logic [2:0] 	   m_axi_awsize;
+  logic [1:0] 	   m_axi_awburst;
+  logic [3:0] 	   m_axi_awcache;
+  logic [31:0] 	   m_axi_awaddr;
+  logic [2:0] 	   m_axi_awprot;
+  logic             m_axi_awvalid;
+  logic             m_axi_awready;
+  logic             m_axi_awlock;
+  logic [63:0] 	   m_axi_wdata;
+  logic [7:0] 	   m_axi_wstrb;
+  logic             m_axi_wlast;
+  logic             m_axi_wvalid;
+  logic             m_axi_wready;
+  logic [3:0] 	   m_axi_bid;
+  logic [1:0] 	   m_axi_bresp;
+  logic             m_axi_bvalid;
+  logic             m_axi_bready;
+  logic [3:0] 	   m_axi_arid;
+  logic [7:0] 	   m_axi_arlen;
+  logic [2:0] 	   m_axi_arsize;
+  logic [1:0] 	   m_axi_arburst;
+  logic [2:0] 	   m_axi_arprot;
+  logic [3:0] 	   m_axi_arcache;
+  logic             m_axi_arvalid;
+  logic [31:0] 	   m_axi_araddr;
+  logic 			   m_axi_arlock;
+  logic             m_axi_arready;
+  logic [3:0] 	   m_axi_rid;
+  logic [63:0] 	   m_axi_rdata;
+  logic [1:0] 	   m_axi_rresp;
+  logic             m_axi_rvalid;
+  logic             m_axi_rlast;
+  logic             m_axi_rready;
 
   // AXI Signals going out of Clock Converter
-  wire [3:0] 	   BUS_axi_arregion;
-  wire [3:0] 	   BUS_axi_arqos;
-  wire [3:0] 	   BUS_axi_awregion;
-  wire [3:0] 	   BUS_axi_awqos;
-  wire [3:0] 	   BUS_axi_awid;
-  wire [7:0] 	   BUS_axi_awlen;
-  wire [2:0] 	   BUS_axi_awsize;
-  wire [1:0] 	   BUS_axi_awburst;
-  wire [3:0] 	   BUS_axi_awcache;
-  wire [31:0] 	   BUS_axi_awaddr;
-  wire [2:0] 	   BUS_axi_awprot;
-  wire 			   BUS_axi_awvalid;
-  wire 			   BUS_axi_awready;
-  wire 			   BUS_axi_awlock;
-  wire [63:0] 	   BUS_axi_wdata;
-  wire [7:0] 	   BUS_axi_wstrb;
-  wire 			   BUS_axi_wlast;
-  wire 			   BUS_axi_wvalid;
-  wire 			   BUS_axi_wready;
-  wire [3:0] 	   BUS_axi_bid;
-  wire [1:0] 	   BUS_axi_bresp;
-  wire 			   BUS_axi_bvalid;
-  wire 			   BUS_axi_bready;
-  wire [3:0] 	   BUS_axi_arid;
-  wire [7:0] 	   BUS_axi_arlen;
-  wire [2:0] 	   BUS_axi_arsize;
-  wire [1:0] 	   BUS_axi_arburst;
-  wire [2:0] 	   BUS_axi_arprot;
-  wire [3:0] 	   BUS_axi_arcache;
-  wire 			   BUS_axi_arvalid;
-  wire [31:0] 	   BUS_axi_araddr;
-  wire 			   BUS_axi_arlock;
-  wire 			   BUS_axi_arready;
-  wire [3:0] 	   BUS_axi_rid;
-  wire [63:0] 	   BUS_axi_rdata;
-  wire [1:0] 	   BUS_axi_rresp;
-  wire 			   BUS_axi_rvalid;
-  wire 			   BUS_axi_rlast;
-  wire 			   BUS_axi_rready;
+  logic [3:0] 	   BUS_axi_arregion;
+  logic [3:0] 	   BUS_axi_arqos;
+  logic [3:0] 	   BUS_axi_awregion;
+  logic [3:0] 	   BUS_axi_awqos;
+  logic [3:0] 	   BUS_axi_awid;
+  logic [7:0] 	   BUS_axi_awlen;
+  logic [2:0] 	   BUS_axi_awsize;
+  logic [1:0] 	   BUS_axi_awburst;
+  logic [3:0] 	   BUS_axi_awcache;
+  logic [31:0] 	   BUS_axi_awaddr;
+  logic [2:0] 	   BUS_axi_awprot;
+  logic 			   BUS_axi_awvalid;
+  logic 			   BUS_axi_awready;
+  logic 			   BUS_axi_awlock;
+  logic [63:0] 	   BUS_axi_wdata;
+  logic [7:0] 	   BUS_axi_wstrb;
+  logic 			   BUS_axi_wlast;
+  logic 			   BUS_axi_wvalid;
+  logic 			   BUS_axi_wready;
+  logic [3:0] 	   BUS_axi_bid;
+  logic [1:0] 	   BUS_axi_bresp;
+  logic 			   BUS_axi_bvalid;
+  logic 			   BUS_axi_bready;
+  logic [3:0] 	   BUS_axi_arid;
+  logic [7:0] 	   BUS_axi_arlen;
+  logic [2:0] 	   BUS_axi_arsize;
+  logic [1:0] 	   BUS_axi_arburst;
+  logic [2:0] 	   BUS_axi_arprot;
+  logic [3:0] 	   BUS_axi_arcache;
+  logic 			   BUS_axi_arvalid;
+  logic [31:0] 	   BUS_axi_araddr;
+  logic 			   BUS_axi_arlock;
+  logic 			   BUS_axi_arready;
+  logic [3:0] 	   BUS_axi_rid;
+  logic [63:0] 	   BUS_axi_rdata;
+  logic [1:0] 	   BUS_axi_rresp;
+  logic 			   BUS_axi_rvalid;
+  logic 			   BUS_axi_rlast;
+  logic 			   BUS_axi_rready;
   
-  wire 			   BUSCLK;
-  wire             sdio_reset_open;
+  logic 			   BUSCLK;
+  logic             sdio_reset_open;
   
-  wire             c0_init_calib_complete;
-  wire 			   dbg_clk;
-  wire [511 : 0]   dbg_bus;
-  wire             ui_clk_sync_rst;
+  logic             c0_init_calib_complete;
+  logic 			   dbg_clk;
+  logic [511 : 0]   dbg_bus;
+  logic             ui_clk_sync_rst;
   
-  wire 			   CLK208;
-  wire             clk167;
-  wire             clk200;
+  logic 			   CLK208;
+  logic             clk167;
+  logic             clk200;
 
-  wire             app_sr_active;
-  wire             app_ref_ack;
-  wire             app_zq_ack;
-  wire             mmcm_locked;
-  wire [11:0]      device_temp;
-  wire             mmcm1_locked;
+  logic             app_sr_active;
+  logic             app_ref_ack;
+  logic             app_zq_ack;
+  logic             mmcm_locked;
+  logic [11:0]      device_temp;
+  logic             mmcm1_locked;
 
 (* mark_debug = "true" *)  logic              RVVIStall;
 
@@ -225,7 +225,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
   // 2. a second clock which is 200 MHz
   // Wally requires a slower clock.  At this point I don't know what speed the atrix 7 will run so I'm initially targetting 25Mhz.
   // the mig will output a clock at 1/4 the sys clock or 41Mhz which might work with wally so we may be able to simplify the logic a lot.
-  xlnx_mmcm xln_mmcm(.clk_out1(clk167),
+  mmcm mmcm(.clk_out1(clk167),
                      .clk_out2(clk200),
                      .clk_out3(CPUCLK),
                      .clk_out4(phy_ref_clk),
@@ -236,7 +236,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
   
 
   // reset controller XILINX IP
-  xlnx_proc_sys_reset xlnx_proc_sys_reset_0
+  sysrst sysrst
     (.slowest_sync_clk(CPUCLK),
      .ext_reset_in(1'b0),
      .aux_reset_in(south_reset),
@@ -262,7 +262,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
 
 
   // ahb lite to axi bridge
-  xlnx_ahblite_axi_bridge xlnx_ahblite_axi_bridge_0
+  ahbaxibridge ahbaxibridge
     (.s_ahb_hclk(CPUCLK),
      .s_ahb_hresetn(peripheral_aresetn),
      .s_ahb_hsel(HSELEXT),
@@ -314,7 +314,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
      .m_axi_rready(m_axi_rready));
 
   // AXI Clock Converter
-  xlnx_axi_clock_converter xlnx_axi_clock_converter_0
+  clkconverter clkconverter
     (.s_axi_aclk(CPUCLK),
      .s_axi_aresetn(peripheral_aresetn),
      .s_axi_awid(m_axi_awid),
@@ -400,7 +400,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
      .m_axi_rready(BUS_axi_rready));
 
   // DDR3 Controller
-  xlnx_ddr3 xlnx_ddr3_c0
+  ddr3 ddr3
     (
      // ddr3 I/O
      .ddr3_dq(ddr3_dq),

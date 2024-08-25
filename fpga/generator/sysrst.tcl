@@ -1,19 +1,23 @@
 
 set partNumber $::env(XILINX_PART)
 set boardName $::env(XILINX_BOARD)
+#set partNumber xcvu9p-flga2104-2L-e
+#set boardName  xilinx.com:vcu118:part0:2.4
 
-set ipName xlnx_ddr3
+set ipName sysrst
 
 create_project $ipName . -force -part $partNumber
-set_property board_part $boardName [current_project]
+if {$boardName!="ArtyA7"} {
+    set_property board_part $boardName [current_project]
+}
 
 # really just these two lines which change
-create_ip -name mig_7series -vendor xilinx.com -library ip -module_name $ipName
-
-exec mkdir -p IP/$ipName.srcs/sources_1/ip/$ipName
-exec cp ../xlnx_ddr3-artya7-mig.prj $ipName.srcs/sources_1/ip/$ipName/xlnx_ddr3-artya7-mig.prj
-
-set_property -dict [list CONFIG.XML_INPUT_FILE {xlnx_ddr3-artya7-mig.prj} CONFIG.RESET_BOARD_INTERFACE {Custom} CONFIG.MIG_DONT_TOUCH_PARAM {Custom} CONFIG.BOARD_MIG_PARAM {Custom}] [get_ips $ipName]
+create_ip -name proc_sys_reset -vendor xilinx.com -library ip -module_name $ipName
+set_property -dict [list CONFIG.C_AUX_RESET_HIGH {1} \
+			CONFIG.C_AUX_RST_WIDTH {1} \
+			CONFIG.C_EXT_RESET_HIGH {1} \
+			CONFIG.C_EXT_RST_WIDTH {1} \
+			CONFIG.C_NUM_BUS_RST {1}] [get_ips $ipName]
 
 generate_target {instantiation_template} [get_files ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]
 generate_target all [get_files  ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]
