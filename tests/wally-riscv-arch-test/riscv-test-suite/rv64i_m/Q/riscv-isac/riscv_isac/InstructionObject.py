@@ -2,7 +2,7 @@ import struct
 
 instrs_sig_mutable = ['auipc','jal','jalr']
 instrs_sig_update = ['sh','sb','sw','sd','c.sw','c.sd','c.swsp','c.sdsp','fsw','fsd',\
-        'c.fsw','c.fsd','c.fswsp','c.fsdsp']
+        'fsq','c.fsw','c.fsd','c.fswsp','c.fsdsp']
 instrs_no_reg_tracking = ['beq','bne','blt','bge','bltu','bgeu','fence','c.j','c.jal','c.jalr',\
         'c.jr','c.beqz','c.bnez', 'c.ebreak'] + instrs_sig_update
 instrs_fcsr_affected = ['fmadd.s','fmsub.s','fnmsub.s','fnmadd.s','fadd.s','fsub.s','fmul.s','fdiv.s',\
@@ -11,8 +11,8 @@ instrs_fcsr_affected = ['fmadd.s','fmsub.s','fnmsub.s','fnmadd.s','fadd.s','fsub
         'fcvt.s.lu', 'fmadd.d','fmsub.d','fnmsub.d','fnmadd.d','fadd.d','fsub.d',\
         'fmul.d','fdiv.d','fsqrt.d','fmin.d','fmax.d','fcvt.s.d','fcvt.d.s',\
         'feq.d','flt.d','fle.d','fcvt.w.d','fcvt.wu.d','fcvt.l.d','fcvt.lu.d',\
-        'fcvt.d.l','fcvt.d.lu']
-unsgn_rs1 = ['sw','sd','sh','sb','ld','lw','lwu','lh','lhu','lb', 'lbu','flw','fld','fsw','fsd',\
+        'fcvt.d.l','fcvt.d.lu','fadd.q','fsub.q','fmadd.q','fmsub.q','fnmsub.q','fnmadd.q']
+unsgn_rs1 = ['sw','sd','sh','sb','ld','lw','lwu','lh','lhu','lb', 'lbu','flw','fld','flq','fsw','fsd','fsq',\
         'bgeu', 'bltu', 'sltiu', 'sltu','c.lw','c.ld','c.lwsp','c.ldsp',\
         'c.sw','c.sd','c.swsp','c.sdsp','mulhu','divu','remu','divuw',\
         'remuw','aes64ds','aes64dsm','aes64es','aes64esm','aes64ks2',\
@@ -33,9 +33,9 @@ unsgn_rs2 = ['bgeu', 'bltu', 'sltiu', 'sltu', 'sll', 'srl', 'sra','mulhu',\
         'xperm.n','xperm.b', 'aes32esmi', 'aes32esi', 'aes32dsmi', 'aes32dsi',\
         'sha512sum1r','sha512sum0r','sha512sig1l','sha512sig1h','sha512sig0l','sha512sig0h','fsw',\
         'bclr','bext','binv','bset','minu','maxu','add.uw','sh1add.uw','sh2add.uw','sh3add.uw']
-f_instrs_pref = ['fadd', 'fclass', 'fcvt', 'fdiv', 'feq', 'fld', 'fle', 'flt', 'flw', 'fmadd',\
+f_instrs_pref = ['fadd', 'fclass', 'fcvt', 'fdiv', 'feq', 'fld','flq', 'fle', 'flt', 'flw', 'fmadd',\
         'fmax', 'fmin', 'fmsub', 'fmul', 'fmv', 'fnmadd', 'fnmsub', 'fsd', 'fsgnj', 'fsqrt',\
-        'fsub', 'fsw']
+        'fsub', 'fsw','fsq']
 
 
 instr_var_evaluator_funcs = {} # dictionary for holding registered evaluator funcs
@@ -146,6 +146,8 @@ class instructionObject():
             instr_vars['iflen'] = 32
         elif self.instr_name.endswith(".d"):
             instr_vars['iflen'] = 64
+        elif self.instr_name.endswith(".q"):
+            instr_vars['iflen'] = 128
 
         # capture the operands
         if self.rs1 is not None:
@@ -179,6 +181,8 @@ class instructionObject():
             ea_align = (rs1_val + imm_val) % 4
         if self.instr_name in ['ld','sd','fld','fsd']:
             ea_align = (rs1_val + imm_val) % 8
+        if self.instr_name in ['flq','fsq']:
+            ea_align = (rs1_val + imm_val) % 16
 
         instr_vars.update({
             'rs1_val': rs1_val,
@@ -439,9 +443,12 @@ class instructionObject():
         if iflen == 32:
             e_sz = 8
             m_sz = 23
-        else:
+        elif iflen == 64:
             e_sz = 11
             m_sz = 52
+        elif iflen == 128:
+            e_sz = 15
+            m_sz = 112
         bin_val = ('{:0'+str(flen)+'b}').format(reg_val)
 
         if flen > iflen:

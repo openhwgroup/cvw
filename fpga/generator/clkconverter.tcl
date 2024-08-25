@@ -1,24 +1,25 @@
+
 set partNumber $::env(XILINX_PART)
 set boardName $::env(XILINX_BOARD)
-
-# vcu118 board
 #set partNumber xcvu9p-flga2104-2L-e
 #set boardName  xilinx.com:vcu118:part0:2.4
 
-# kcu105 board
-#set partNumber  xcku040-ffva1156-2-e
-#set boardName  xilinx.com:kcu105:part0:1.7
-
-set ipName xlnx_axi_dwidth_conv_64to32
+set ipName clkconverter
 
 create_project $ipName . -force -part $partNumber
-set_property board_part $boardName [current_project]
+if {$boardName!="ArtyA7"} {
+    set_property board_part $boardName [current_project]
+}
 
-create_ip -name axi_dwidth_converter -vendor xilinx.com -library ip -version 2.1 -module_name $ipName
+create_ip -name axi_clock_converter -vendor xilinx.com -library ip -module_name $ipName
 
-set_property -dict [list CONFIG.Component_Name {axi_dwidth_conv_64to32} \
-						CONFIG.SI_DATA_WIDTH {64} \
-						CONFIG.MI_DATA_WIDTH {32}] [get_ips $ipName]
+set_property -dict [list CONFIG.ACLK_ASYNC {1} \
+			CONFIG.PROTOCOL {AXI4} \
+			CONFIG.ADDR_WIDTH {32} \
+			CONFIG.DATA_WIDTH {64} \
+			CONFIG.ID_WIDTH {4} \
+		        CONFIG.MI_CLK.FREQ_HZ {208333333} \
+			CONFIG.SI_CLK.FREQ_HZ {10000000}] [get_ips $ipName]
 
 generate_target {instantiation_template} [get_files ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]
 generate_target all [get_files  ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]

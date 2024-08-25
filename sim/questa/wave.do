@@ -204,7 +204,7 @@ add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/dp/SrcAE
 add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/dp/SrcBE
 add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/dp/ALUResultE
 add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/dp/ResultW
-add wave -noupdate -expand -group {Memory Stage} /testbench/FunctionName/FunctionName
+add wave -noupdate -expand -group {Memory Stage} /testbench/FunctionName/FunctionName/FunctionName
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/InstrValidM
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/PCM
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/InstrM
@@ -657,22 +657,6 @@ add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/WFITimeoutM
 add wave -noupdate -expand -group testbench /testbench/DCacheFlushStart
 add wave -noupdate /testbench/dut/core/lsu/hptw/hptw/HPTWLoadPageFault
 add wave -noupdate /testbench/dut/core/lsu/hptw/hptw/HPTWLoadPageFaultDelay
-add wave -noupdate -expand -group rvvi /testbench/rvvi_synth/rvvisynth/clk
-add wave -noupdate -expand -group rvvi /testbench/rvvi_synth/rvvisynth/rvvi
-add wave -noupdate -expand -group rvvi /testbench/rvvi_synth/rvvisynth/valid
-add wave -noupdate -group packetizer -color Gold /testbench/rvvi_synth/packetizer/CurrState
-add wave -noupdate -group packetizer -radix unsigned /testbench/rvvi_synth/packetizer/WordCount
-add wave -noupdate -group packetizer /testbench/rvvi_synth/packetizer/RVVIStall
-add wave -noupdate -group packetizer /testbench/rvvi_synth/packetizer/rvviDelay
-add wave -noupdate -group packetizer -expand -group axi-write-interface /testbench/rvvi_synth/packetizer/RvviAxiWdata
-add wave -noupdate -group packetizer -expand -group axi-write-interface /testbench/rvvi_synth/packetizer/RvviAxiWlast
-add wave -noupdate -group packetizer -expand -group axi-write-interface /testbench/rvvi_synth/packetizer/RvviAxiWstrb
-add wave -noupdate -group packetizer -expand -group axi-write-interface /testbench/rvvi_synth/packetizer/RvviAxiWvalid
-add wave -noupdate -group packetizer -expand -group axi-write-interface /testbench/rvvi_synth/packetizer/RvviAxiWready
-add wave -noupdate -expand -group eth /testbench/rvvi_synth/ethernet/mii_tx_clk
-add wave -noupdate -expand -group eth /testbench/rvvi_synth/ethernet/mii_txd
-add wave -noupdate -expand -group eth /testbench/rvvi_synth/ethernet/mii_tx_en
-add wave -noupdate -expand -group eth /testbench/rvvi_synth/ethernet/mii_tx_er
 TreeUpdate [SetDefaultTree]
 WaveRestoreCursors {{Cursor 4} {640 ns} 1} {{Cursor 4} {2400 ns} 1} {{Cursor 3} {554 ns} 0} {{Cursor 4} {120089 ns} 0}
 quietly wave cursor active 4
@@ -690,4 +674,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {0 ns} {1033211 ns}
+WaveRestoreZoom {0 ns} {755549 ns}

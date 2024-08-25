@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // gsharebasic.sv
 //
-// Written: Ross Thompson
+// Written: Rose Thompson
 // Email: ross1728@gmail.com
 // Created: 16 March 2021
 // Adapted from ssanghai@hmc.edu (Shreya Sanghai) global history predictor implementation.

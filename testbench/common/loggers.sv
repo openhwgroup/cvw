@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // loggers.sv
 //
-// Written: Ross Thompson ross1728@gmail.com
+// Written: Rose Thompson ross1728@gmail.com
 // Modified: 14 June 2023
 // 
 // Purpose: Log branch instructions, log instruction fetches,
@@ -246,8 +246,8 @@ module loggers import cvw::*; #(parameter cvw_t P,
       flop #(1) ResetDReg(clk, reset, resetD);
       assign resetEdge = ~reset & resetD;
       initial begin
-        LogFile = "branch.log"; // will break some of Ross's research analysis scripts
-        CFILogFile = "cfi.log"; // will break some of Ross's research analysis scripts
+        LogFile = "branch.log"; // will break some of Rose's research analysis scripts
+        CFILogFile = "cfi.log"; // will break some of Rose's research analysis scripts
         //LogFile = $psprintf("branch_%s%0d.log", P.BPRED_TYPE, P.BPRED_SIZE);
         file = $fopen(LogFile, "w");
         CFIfile = $fopen(CFILogFile, "w");
