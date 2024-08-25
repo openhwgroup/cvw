@@ -17,7 +17,7 @@ drsu first feeds signals to `divremsqrt/divremsqrt`, which contains the preproce
 
 drsu is verified with the risc-v arch test Berkeley SoftFloat floating point suite of test vectors for floating point square-root and division. In order to run the top-level regression script, run `./cvw/sim/regression -intdiv`
 
-The top-level regression python script is found accordingly in cvw/sim/regression-wally. The testbench is found in cvw/testbench/testbench-fp, which runs drsu against testvectors. Batches of testvectors are stored within cvw/testbench/tests-fp.vh, and the raw binary test vectors are read from tests/fp/vectors
+The top-level regression python script is found accordingly in `cvw/sim/regression-wally`. The testbench is found in `cvw/testbench/testbench-fp`, which runs drsu against testvectors. Batches of testvectors are stored within `cvw/testbench/tests-fp.vh`, and the raw binary test vectors are read from `tests/fp/vectors`
 
 Regression log files can be found in `cvw/sim/logs` after running `regression-wally -intdiv`. Files are named with `{precision}_ieee_div_{R}_{K}_{integer}_rv{XLEN}gc_{TESTNAME}.log`
 
