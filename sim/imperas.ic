@@ -74,7 +74,7 @@
 --override cpu/PMP_undefined=T
 
 # mstatus.FS is set dirty on any write to a FPR, or when a fp operation signals an exception
---override cpu/mstatus_fs_mode=rvfs_write_nz
+--override cpu/mstatus_fs_mode=write_1
 
 # PMA Settings 
 # 'r': read access allowed
