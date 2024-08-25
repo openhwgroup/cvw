@@ -34,7 +34,7 @@ Regression log files can be found in `cvw/sim/logs` after running `regression-wa
 
  
 # synthesis flow
-To run synthesis results for all flavors of the recurrence unit, go to `cvw/synthDC/scripts` and run `python3 synthdrsu.py`. This will execute a python script that runs the installed version of synopsis design compiler on divider permutations for a target frequency of 5GHz and 100MHz. To then pipe area, delay and energy results to a CSV, run `./writeCSV.sh`
+To run synthesis results for all flavors of the recurrence unit, go to `cvw/synthDC/scripts` and run `python3 synthdrsu.py`. This will execute a python script that runs the installed version of synopsis design compiler on divider permutations for a target frequency of 5GHz and 100MHz. To then pipe area, delay and energy results to a CSV, run `./writeCSV.sh`. Results can then be viewed in `fp-synthresults_reordered.csv` in a format similar to the one presented in the paper.
 # start-up steps
 1) `git clone --recurse-submodules https://github.com/openhwgroup/cvw.git`
 2) `cd cvw`
