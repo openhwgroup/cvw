@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // satCounter2.sv
 //
-// Written: Ross Thomposn
+// Written: Rose Thomposn
 // Email: ross1728@gmail.com
 // Created: February 13, 2021
 // Modified: 

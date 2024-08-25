@@ -2,7 +2,7 @@
 ###########################################
 ## Tool chain install script.
 ##
-## Written: Ross Thompson ross1728@gmail.com
+## Written: Rose Thompson ross1728@gmail.com
 ## Created: 18 January 2023
 ## Modified: 22 January 2023
 ## Modified: 23 March 2023

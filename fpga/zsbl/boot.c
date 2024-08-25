@@ -214,7 +214,7 @@ void copyFlash(QWORD address, QWORD * Dst, DWORD numBlocks) {
   int ret = 0;
 
   // Initialize UART for messages
-  init_uart(20000000, 115200);
+  init_uart(SYSTEMCLOCK, 115200);
   
   // Print the wally banner
   print_uart(BANNER);

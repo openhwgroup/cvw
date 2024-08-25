@@ -27,19 +27,15 @@ FPGA_VCU: PreProcessFiles IP_VCU
 
 # Generate IP Blocks
 .PHONY: IP_Arty IP_VCU
-IP_VCU: $(dst)/xlnx_proc_sys_reset.log \
+IP_VCU: $(dst)/sysrst.log \
 	MEM_VCU \
-	$(dst)/xlnx_axi_clock_converter.log \
-	$(dst)/xlnx_ahblite_axi_bridge.log \
-	$(dst)/xlnx_axi_crossbar.log \
-	$(dst)/xlnx_axi_dwidth_conv_32to64.log \
-	$(dst)/xlnx_axi_dwidth_conv_64to32.log \
-	$(dst)/xlnx_axi_prtcl_conv.log
-IP_Arty: $(dst)/xlnx_proc_sys_reset.log \
+	$(dst)/clkconverter.log \
+	$(dst)/ahbaxibridge.log
+IP_Arty: $(dst)/sysrst.log \
 	MEM_Arty \
 	$(dst)/xlnx_mmcm.log \
-	$(dst)/xlnx_axi_clock_converter.log \
-	$(dst)/xlnx_ahblite_axi_bridge.log
+	$(dst)/clkconverter.log \
+	$(dst)/ahbaxibridge.log
 #$(dst)/xlnx_axi_crossbar.log \
 #$(dst)/xlnx_axi_dwidth_conv_32to64.log \
 #$(dst)/xlnx_axi_dwidth_conv_64to32.log \
@@ -48,9 +44,9 @@ IP_Arty: $(dst)/xlnx_proc_sys_reset.log \
 # Generate Memory IP Blocks
 .PHONY: MEM_VCU MEM_Arty
 MEM_VCU:
-	$(MAKE) $(dst)/xlnx_ddr4-$(board).log
+	$(MAKE) $(dst)/ddr4-$(board).log
 MEM_Arty:
-	$(MAKE) $(dst)/xlnx_ddr3-$(board).log
+	$(MAKE) $(dst)/ddr3-$(board).log
 
 # Copy files and make necessary modifications
 .PHONY: PreProcessFiles
