@@ -5,13 +5,13 @@ The fpu postprocessor on cvw handles inputs not only from the div/sqrt unit, but
 
 # file hiearchy 
 
-The RTL files for the divider can be found under cvw/src/fpu
+The RTL files for the divider can be found under `cvw/src/fpu`
 
-The majority of divider modules are found in cvw/src/fpu/divremsqrt, which also borrows some modules from cvw/src/fpu/fdivsqrt
+The majority of divider modules are found in `cvw/src/fpu/divremsqrt`, which also borrows some modules from `cvw/src/fpu/fdivsqrt`
 
 divremsqrt/drsu desribes the top-level unit for the divider, taking in unpacked floating point signals, including Xs, Xm Xe, Ys, Ym, Ye.
 
-drsu first feeds signals to divremsqrt/divremsqrt, which contains the preprocessor, iteration units, fsm, and postprocessing logic. The postprocessor in divremsqrt/divremsqrt also contains all integer postprocessing logic. Outputs from divremsqrt/divremsqrt are then sent to divremsqrt/divremsqrtpostprocess, which handles rounding and flags.
+drsu first feeds signals to `divremsqrt/divremsqrt`, which contains the preprocessor, iteration units, fsm, and postprocessing logic. The postprocessor in `divremsqrt/divremsqrt` also contains all integer postprocessing logic. Outputs from `divremsqrt/divremsqrt` are then sent to `divremsqrt/divremsqrtpostprocess`, which handles rounding and flags.
 
 # verification flow
 
