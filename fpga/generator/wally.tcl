@@ -23,13 +23,13 @@ if {$boardName!="ArtyA7"} {
 }
 
 # read package first
-read_verilog -sv  ../src/CopiedFiles_do_not_add_to_repo/cvw.sv
+add_files  ../src/CopiedFiles_do_not_add_to_repo/cvw.sv
 #read_verilog -sv  ../src/wallypipelinedsocwrapper.sv
 # then read top level
 if {$board=="ArtyA7"} {
-    read_verilog  {../src/fpgaTopArtyA7.sv}
+    add_files  {../src/fpgaTopArtyA7.sv}
 } else {
-    read_verilog  {../src/fpgaTop.sv}
+    add_files  {../src/fpgaTop.sv}
 }
 
 # read in ip
@@ -45,9 +45,7 @@ if {$board=="ArtyA7"} {
 }
 
 # read in all other rtl
-read_verilog -sv [glob -type f  ../src/CopiedFiles_do_not_add_to_repo/*/*.sv ../src/CopiedFiles_do_not_add_to_repo/*/*/*.sv]
-# *** Once the sdc is updated to use ahb changes these to system verilog.
-read_verilog [glob -type f ../../addins/ahbsdc/sdc/*.v]
+add_files [glob -type f  ../src/CopiedFiles_do_not_add_to_repo/*/*.sv ../src/CopiedFiles_do_not_add_to_repo/*/*/*.sv]
 
 set_property include_dirs {../src/CopiedFiles_do_not_add_to_repo/config ../../config/shared ../../addins/ahbsdc/sdc} [current_fileset]
 
@@ -64,7 +62,7 @@ exec rm -rf reports/*
 report_compile_order -constraints > reports/compile_order.rpt
 
 # this is elaboration not synthesis.
-synth_design -rtl -name rtl_1  -flatten_hierarchy none
+#synth_design -rtl -name rtl_1  -flatten_hierarchy none
 
 # apply timing constraint after elaboration
 if {$board=="ArtyA7"} {
@@ -75,7 +73,6 @@ if {$board=="ArtyA7"} {
     set_property PROCESSING_ORDER NORMAL [get_files  ../constraints/constraints-$boardSubName.xdc]
 }
 
-report_clocks -file reports/clocks.rpt
 
 # Temp
 set_param messaging.defaultLimit 100000
@@ -86,6 +83,8 @@ launch_runs synth_1 -jobs 16
 
 wait_on_run synth_1
 open_run synth_1
+
+report_clocks -file reports/clocks.rpt
 
 check_timing -verbose                                                   -file reports/check_timing.rpt
 report_timing -max_paths 10 -nworst 10 -delay_type max -sort_by slack   -file reports/timing_WORST_10.rpt
