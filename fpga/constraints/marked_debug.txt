@@ -17,3 +17,6 @@ uncore/spi_apb.sv: logic SPIOut
 uncore/spi_apb.sv: logic SPICS
 uncore/spi_apb.sv: logic SckMode
 uncore/spi_apb.sv: logic SckDiv
+uncore/spi_apb.sv: logic ShiftEdge
+uncore/spi_apb.sv: logic TransmitShiftRegLoad
+uncore/spi_apb.sv: logic TransmitShiftReg

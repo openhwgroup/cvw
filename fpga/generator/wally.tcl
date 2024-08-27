@@ -10,10 +10,10 @@ set board $::env(board)
 #set boardSubName arty-a7-100
 #set board ArtyA7
 
-set partNumber xcvu095-ffva2104-2-e
-set boardName xilinx.com:vcu108:part0:1.7
-set boardSubName vcu108
-set board FPU_VCU
+#set partNumber xcvu095-ffva2104-2-e
+#set boardName xilinx.com:vcu108:part0:1.7
+#set boardSubName vcu108
+#set board FPU_VCU
 
 set ipName WallyFPGA
 
