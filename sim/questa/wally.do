@@ -148,11 +148,33 @@ if {$FunctCoverageIndex >= 0} {
     set FCdefineIDV_TRACE2COV "+IDV_TRACE2COV=1"
     set lst [lreplace $lst $FunctCoverageIndex $FunctCoverageIndex]
 }\
+
+set FunctCoverageIndex2 [lsearch -exact $lst "--fcov2"]
+if {$FunctCoverageIndex2 >= 0} {
+    set FunctCoverage 1
+    set riscvISACOVsrc +incdir+$env(IMPERAS_HOME)/ImpProprietary/source/host/riscvISACOV/source
+
+    set FCdefineINCLUDE_TRACE2COV "+define+INCLUDE_TRACE2COV"
+    set FCdefineCOVER_BASE_RV64I "+define+COVER_BASE_RV64I"
+    set FCdefineCOVER_LEVEL_DV_PR_EXT  "+define+COVER_LEVEL_DV_PR_EXT"
+    # Uncomment various cover statements below to control which extensions get functional coverage
+    set FCdefineCOVER_RV64I "+define+COVER_RV64I"
+    #set FCdefineCOVER_RV64M "+define+COVER_RV64M"
+    #set FCdefineCOVER_RV64A "+define+COVER_RV64A"
+    #set FCdefineCOVER_RV64F "+define+COVER_RV64F"
+    #set FCdefineCOVER_RV64D "+define+COVER_RV64D"
+    #set FCdefineCOVER_RV64ZICSR "+define+COVER_RV64ZICSR"
+    #set FCdefineCOVER_RV64C "+define+COVER_RV64C"
+    set FCdefineIDV_INCLUDE_TRACE2COV "+define+IDV_INCLUDE_TRACE2COV"
+    set FCTRACE2COV "+TRACE2COV_ENABLE=1"
+    set FCdefineIDV_TRACE2COV "+IDV_TRACE2COV=1"
+    set lst [lreplace $lst $FunctCoverageIndex2 $FunctCoverageIndex2]
+}\
  
 set LockStepIndex [lsearch -exact $lst "--lockstep"]
 # ugh.  can't have more than 9 arguments passed to vsim. why? I'll have to remove --lockstep when running
 # functional coverage and imply it.
-if {$LockStepIndex >= 0 || $FunctCoverageIndex >= 0} {
+if {$LockStepIndex >= 0 || $FunctCoverageIndex >= 0 || $FunctCoverageIndex2 >= 0} {
     set lockstep 1
 
     # ideally this would all be one or two variables, but questa is having a real hard time

@@ -28,6 +28,7 @@ parser.add_argument("--tb", "-t", help="Testbench", choices=["testbench", "testb
 parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true")
 parser.add_argument("--ccov", "-c", help="Code Coverage", action="store_true")
 parser.add_argument("--fcov", "-f", help="Functional Coverage, implies lockstep", action="store_true")
+parser.add_argument("--fcov2", "-f2", help="Functional Coverage, implies lockstep", action="store_true")
 parser.add_argument("--fcovrvvi", "-fr", help="Functional Coverage RVVI", action="store_true")
 parser.add_argument("--args", "-a", help="Optional arguments passed to simulator via $value$plusargs", default="")
 parser.add_argument("--vcd", "-v", help="Generate testbench.vcd", action="store_true")
@@ -66,7 +67,7 @@ if(args.testsuite.endswith('.elf') and args.elf == ""): # No --elf argument; che
 
 
 # Validate arguments
-if (args.gui or args.ccov or args.fcov or args.fcovrvvi or args.lockstep):
+if (args.gui or args.ccov or args.fcov or args.fcov2 or args.fcovrvvi or args.lockstep):
     if args.sim not in ["questa", "vcs"]:
         print("Option only supported for Questa and VCS")
         exit(1)
@@ -90,6 +91,12 @@ if (args.lockstep):
         else: EnableLog = 0
         ImperasPlusArgs = " +IDV_TRACE2COV=" + str(EnableLog) + " +TRACE2LOG_AFTER=" + str(args.covlog) + " +TRACE2COV_ENABLE=" + CovEnableStr;
         suffix = ""
+    if(args.fcov2):
+        CovEnableStr = "1" if int(args.covlog) > 0  else "0";
+        if(args.covlog >= 1): EnableLog = 1
+        else: EnableLog = 0
+        ImperasPlusArgs = " +IDV_TRACE2COV=" + str(EnableLog) + " +TRACE2LOG_AFTER=" + str(args.covlog) + " +TRACE2COV_ENABLE=" + CovEnableStr;
+        suffix = ""
     else:
         CovEnableStr = ""
         suffix = "--lockstep"
@@ -104,6 +111,8 @@ if (args.ccov):
     flags += " --ccov"
 if (args.fcov):
     flags += " --fcov"
+if (args.fcov2):
+    flags += " --fcov2"
 if (args.fcovrvvi):
     flags += "--fcovrvvi"
 
