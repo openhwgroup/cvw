@@ -35,7 +35,7 @@ module divremsqrtfdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.DIVb:0]      FirstU, FirstUM,   // U1.DIVb
   input  logic [P.DIVb+1:0]    FirstC,            // Q2.DIVb
   input  logic                 SqrtE,
-  input  logic                 Firstun, SqrtM, SpecialCaseM, 
+  input  logic                 SqrtM, SpecialCaseM, 
   input  logic [P.XLEN-1:0]    AM,                // U/Q(XLEN.0)
   input  logic                 RemOpM, ALTBM, BZeroM, AsM, BsM, W64M, SIGNOVERFLOWM, ZeroDiffM, IntDivM,
   input  logic [P.DIVBLEN-1:0] IntNormShiftM,
@@ -61,7 +61,7 @@ module divremsqrtfdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
   //////////////////////////
 
   // check for early termination on an exact result. 
-  divremsqrtearlyterm #(P) earlyterm(.FirstC, .FirstUM, .D, .SqrtE, .WC, .WS,.Firstun, .WZeroE);
+  divremsqrtearlyterm #(P) earlyterm(.FirstC, .FirstUM, .D, .SqrtE, .WC, .WS, .WZeroE);
   
 
   //////////////////////////

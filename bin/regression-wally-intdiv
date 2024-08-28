@@ -27,7 +27,9 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 from collections import namedtuple
-regressionDir = os.path.dirname(os.path.abspath(__file__))
+
+WALLY = os.environ.get('WALLY')
+regressionDir = WALLY + '/sim'
 os.chdir(regressionDir)
 
 coverage = '-coverage' in sys.argv
@@ -309,6 +311,7 @@ if (nightly):
 
 # softfloat tests
 if (softfloat):
+    testfloatsim = "questa" # change to Verilator when Issue #707 about testfloat not running Verilator is resolved
     configs = []
     softfloatconfigs = [
     "fdh_ieee_div_2_1_rv32gc", "fdh_ieee_div_2_1_rv64gc", "fdh_ieee_div_2_2_rv32gc",
@@ -381,6 +384,7 @@ if (softfloat):
 # intdiv verification
 if (intdiv):
     configs = []
+    testfloatsim = "questa" # change to Verilator when Issue #707 about testfloat not running Verilator is resolved
     # ***NOTE add to this
     
     intdivconfigs = [
@@ -441,29 +445,38 @@ if (intdiv):
     "f_ieee_div_4_1_rv32gc", "f_ieee_div_4_1_rv64gc", "f_ieee_div_4_2_rv32gc",
     "f_ieee_div_4_2_rv64gc", "f_ieee_div_4_4_rv32gc", "f_ieee_div_4_4_rv64gc"
     ]
-
     for config in intdivconfigs:
         # fdivremsqrt test case
+        name = "div_drsu"
+        logname = WALLY + "/sim/" + testfloatsim + "/logs/"+config+"_"+name+".log" 
         fdivremsqrttestcase = TestCase(
-            name="fdivremsqrt",
+            name=name,
             variant=config,
-            cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " fdivremsqrt \n!",
+            cmd="wsim --tb testbench_fp " + " " + config + " " + name + " > " + logname,
             grepstr="All Tests completed with          0 errors"
         )
         configs.insert(0,fdivremsqrttestcase)
     for config in nointdivconfigs:
         # div,sqrt test cases for no integer flavor of divider
+
+        name = "div_drsu"
+        logname = WALLY + "/sim/" + testfloatsim + "/logs/"+config+"_"+name+".log" 
         divtestcase = TestCase(
-            name="fdiv",
+            name=name,
             variant=config,
-            cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " div_drsu \n!",
+            #cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " div_drsu \n!",
+            cmd="wsim --tb testbench_fp " + " " + config + " " + name + " > " + logname,
             grepstr="All Tests completed with          0 errors"
         )
         configs.insert(0,divtestcase)
+
+        name = "sqrt_drsu"
+        logname = WALLY + "/sim/" + testfloatsim + "/logs/"+config+"_"+name+".log" 
         sqrttestcase = TestCase(
-            name="fsqrt",
+            name=name,
             variant=config,
-            cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " sqrt_drsu \n!",
+            #cmd="vsim > {} -c  <<!\ndo testfloat-batch.do " + config + " sqrt_drsu \n!",
+            cmd="wsim --tb testbench_fp  " + " " + config + " " + name + " > " + logname,
             grepstr="All Tests completed with          0 errors"
         )
         configs.insert(0,sqrttestcase)
@@ -477,8 +490,11 @@ def search_log_for_text(text, logfile):
     return os.system(grepcmd) == 0
 
 def run_test_case(config):
+    testfloatsim = "questa" # change to Verilator when Issue #707 about testfloat not running Verilator is resolved
     """Run the given test case, and return 0 if the test suceeds and 1 if it fails"""
-    logname = "logs/"+config.variant+"_"+config.name+".log"
+    #sim_logdir = WALLY+ "/sim/" + sim + "/logs/"
+    logname = WALLY + "/sim/" + testfloatsim + "/logs/"+config.variant+"_"+config.name+".log" 
+    #logname = "logs/"+config.variant+"_"+config.name+".log"
     cmd = config.cmd.format(logname)
 #    print(cmd)
     os.chdir(regressionDir)

@@ -65,7 +65,6 @@
   logic [P.DIVb+3:0]           D;                            // Iterator Divisor
   logic [P.DIVb:0]             FirstU, FirstUM;              // Intermediate result values
   logic [P.DIVb+1:0]           FirstC;                       // Step tracker
-  logic                       Firstun;                      // Quotient selection
   logic                       WZeroE;                       // Early termination flag
   logic [P.DURLEN:0]         CyclesE;                      // FSM cycles
   logic                       SpecialCaseM;                 // Divide by zero, square root of negative, etc.
@@ -96,11 +95,11 @@
 
   fdivsqrtiter #(P) fdivsqrtiter(                                // CSA Iterator
     .clk, .IFDivStartE, .FDivBusyE, .SqrtE, .X, .D, 
-    .FirstU, .FirstUM, .FirstC, .Firstun, .FirstWS(WS), .FirstWC(WC));
+    .FirstU, .FirstUM, .FirstC, .FirstWS(WS), .FirstWC(WC));
 
   divremsqrtfdivsqrtpostproc #(P) fdivsqrtpostproc(                        // Postprocessor
     .clk, .reset, .StallM, .WS, .WC, .D, .FirstU, .FirstUM, .FirstC, 
-    .SqrtE, .Firstun, .SqrtM, .SpecialCaseM, 
+    .SqrtE, .SqrtM, .SpecialCaseM, 
     .UmM, .WZeroE, .DivStickyM, 
     // Int-specific 
     .ALTBM, .AsM, .BsM, .BZeroM, .W64M, .RemOpM(Funct3M[1]), .AM, 

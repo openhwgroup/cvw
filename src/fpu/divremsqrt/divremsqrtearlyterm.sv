@@ -3,7 +3,7 @@ module divremsqrtearlyterm import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.DIVb+3:0]    D,                 // Q4.DIVb
   input  logic [P.DIVb:0]      FirstUM,   // U1.DIVb
   input  logic [P.DIVb+1:0]    FirstC,            // Q2.DIVb
-  input  logic                 Firstun, SqrtE,
+  input  logic                 SqrtE,
   output logic                 WZeroE
 );
   logic weq0E;
