@@ -92,7 +92,7 @@ void main() {
   do {
     // Send 8 dummy bytes (fifo should be empty)
     for (j = 0; j < 8; j++) {
-      spi_sendbyte(0xaa);
+      spi_sendbyte(0xaa + j);
     }
     
     // Reset counter. Process bytes AS THEY COME IN.
