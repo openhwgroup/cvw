@@ -9,6 +9,7 @@
 #--showcommands
 
 # Core settings
+--variant RV32GC # for RV32GC
 --override cpu/priv_version=1.12 
 --override cpu/user_version=20191213
 # arch
@@ -38,11 +39,12 @@
 --override lr_sc_grain=8   # Za64rs requires <=64; we use native word size
 
 # 64 KiB continuous huge pages supported
---override cpu/Svpbmt=T
---override cpu/Svnapot_page_mask=65536
+#--override cpu/Svpbmt=F
+#--override cpu/Svnapot_page_mask=65536
 
-# SV39 and SV48 supported
---override cpu/Sv_modes=768
+# SV32 supported
+--override cpu/Sv_modes=3
+#--showoverrides
 
 --override cpu/Svinval=T
 
@@ -59,7 +61,7 @@
 
 --override cpu/reset_address=0x80000000
 
---override cpu/unaligned=T  # Zicclsm (should be true)
+--override cpu/unaligned=F  # Zicclsm (should be true)
 --override cpu/ignore_non_leaf_DAU=1
 --override cpu/wfi_is_nop=T
 --override cpu/misa_Extensions_mask=0x0 # MISA not writable

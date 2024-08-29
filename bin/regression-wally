@@ -517,6 +517,8 @@ def main():
         TIMEOUT_DUR = 60*1440 # 1 day
     elif args.testfloat:
         TIMEOUT_DUR = 30*60 # seconds
+    elif args.nightly:
+        TIMEOUT_DUR = 30*60 # seconds
     else:
         TIMEOUT_DUR = 10*60 # seconds
 
