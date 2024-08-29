@@ -161,15 +161,13 @@ if (( RHEL_VERSION == 8 )) || (( UBUNTU_VERSION == 20 )); then
         section_header "Installing glib"
         pip install -U meson # Meson is needed to build glib
         cd "$RISCV"
-        wget https://download.gnome.org/sources/glib/2.70/glib-2.70.5.tar.xz
-        tar -xJf glib-2.70.5.tar.xz
-        rm glib-2.70.5.tar.xz
-        cd glib-2.70.5
+        curl --location https://download.gnome.org/sources/glib/2.70/glib-2.70.5.tar.xz | tar xJf --directory="glib"
+        cd glib
         meson setup _build --prefix="$RISCV"
         meson compile -C _build
         meson install -C _build
         cd "$RISCV"
-        rm -rf glib-2.70.5
+        rm -rf glib
         echo -e "${SUCCESS_COLOR}glib successfully installed!${ENDC}"
     fi
 fi
@@ -180,15 +178,13 @@ if (( RHEL_VERSION == 8 )); then
     if [ ! -e "$RISCV"/include/gmp.h ]; then
         section_header "Installing gmp"
         cd "$RISCV"
-        wget https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz
-        tar -xJf gmp-6.3.0.tar.xz
-        rm gmp-6.3.0.tar.xz
-        cd gmp-6.3.0
+        curl --location https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz | tar xJf --directory="gmp"
+        cd gmp
         ./configure --prefix="$RISCV"
         make -j "${NUM_THREADS}"
         make install
         cd "$RISCV"
-        rm -rf gmp-6.3.0
+        rm -rf gmp
         echo -e "${SUCCESS_COLOR}gmp successfully installed!${ENDC}"
     fi
 fi
@@ -328,17 +324,7 @@ section_header "Installing/Updating Sail Compiler"
 STATUS="Sail Compiler"
 if [ ! -e "$RISCV"/bin/sail ]; then
     cd "$RISCV"
-    rm -rf sail
-    wget https://github.com/rems-project/sail/releases/latest/download/sail.tar.gz
-    tar -xf sail.tar.gz
-    rm sail.tar.gz
-    cd sail
-    cp -r bin/* "$RISCV"/bin
-    cp -r share/* "$RISCV"/share
-    if [ "$clean" ]; then
-        cd "$RISCV"
-        rm -rf sail
-    fi
+    curl --location https://github.com/rems-project/sail/releases/latest/download/sail.tar.gz | tar xvz --directory="$RISCV"
     echo -e "${SUCCESS_COLOR}gmp successfully installed!${ENDC}"
 fi
 echo -e "${SUCCESS_COLOR}Sail Compiler successfully installed/updated!${ENDC}"
