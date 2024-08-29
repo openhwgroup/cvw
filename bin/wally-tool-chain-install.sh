@@ -161,13 +161,13 @@ if (( RHEL_VERSION == 8 )) || (( UBUNTU_VERSION == 20 )); then
         section_header "Installing glib"
         pip install -U meson # Meson is needed to build glib
         cd "$RISCV"
-        curl --location https://download.gnome.org/sources/glib/2.70/glib-2.70.5.tar.xz | tar xJf --directory="glib"
-        cd glib
+        curl --location https://download.gnome.org/sources/glib/2.70/glib-2.70.5.tar.xz | tar xJf
+        cd glib-2.70.5
         meson setup _build --prefix="$RISCV"
         meson compile -C _build
         meson install -C _build
         cd "$RISCV"
-        rm -rf glib
+        rm -rf glib-2.70.5
         echo -e "${SUCCESS_COLOR}glib successfully installed!${ENDC}"
     fi
 fi
@@ -178,13 +178,13 @@ if (( RHEL_VERSION == 8 )); then
     if [ ! -e "$RISCV"/include/gmp.h ]; then
         section_header "Installing gmp"
         cd "$RISCV"
-        curl --location https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz | tar xJf --directory="gmp"
-        cd gmp
+        curl --location https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz | tar xJf
+        cd gmp-6.3.0
         ./configure --prefix="$RISCV"
         make -j "${NUM_THREADS}"
         make install
         cd "$RISCV"
-        rm -rf gmp
+        rm -rf gmp-6.3.0
         echo -e "${SUCCESS_COLOR}gmp successfully installed!${ENDC}"
     fi
 fi
