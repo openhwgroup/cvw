@@ -317,9 +317,7 @@ fi
 # Sail is a formal specification language designed for describing the semantics of an ISA.
 # It is used to generate the RISC-V Sail Model, which is the golden reference model for RISC-V.
 # The Sail Compiler is written in OCaml, which is an object-oriented extension of ML, which in turn
-# is a functional programming language suited to formal verification. The Sail compiler is installed
-# with the opam OCaml package manager. It has so many dependencies that it can be difficult to install,
-# but a binary release of it should be available soon, removing the need to use opam.
+# is a functional programming language suited to formal verification.
 section_header "Installing/Updating Sail Compiler"
 STATUS="Sail Compiler"
 if [ ! -e "$RISCV"/bin/sail ]; then
@@ -336,7 +334,6 @@ STATUS="RISC-V Sail Model"
 if git_check "sail-riscv" "https://github.com/riscv/sail-riscv.git" "$RISCV/bin/riscv_sim_RV32"; then
     cd sail-riscv
     git reset --hard && git clean -f && git checkout master && git pull
-    export OPAMCLI=2.0  # Sail is not compatible with opam 2.1 as of 4/16/24
     ARCH=RV64 make -j "${NUM_THREADS}" c_emulator/riscv_sim_RV64  2>&1 | logger sailModel; [ "${PIPESTATUS[0]}" == 0 ]
     ARCH=RV32 make -j "${NUM_THREADS}" c_emulator/riscv_sim_RV32 2>&1 | logger sailModel; [ "${PIPESTATUS[0]}" == 0 ]
     cp -f c_emulator/riscv_sim_RV64 "$RISCV"/bin/riscv_sim_RV64
@@ -344,7 +341,6 @@ if git_check "sail-riscv" "https://github.com/riscv/sail-riscv.git" "$RISCV/bin/
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf sail-riscv
-        rm -rf opam
     fi
     echo -e "${SUCCESS_COLOR}RISC-V Sail Model successfully installed/updated!${ENDC}"
 else
