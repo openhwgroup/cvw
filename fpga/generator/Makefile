@@ -36,10 +36,6 @@ IP_Arty: $(dst)/sysrst.log \
 	$(dst)/xlnx_mmcm.log \
 	$(dst)/clkconverter.log \
 	$(dst)/ahbaxibridge.log
-#$(dst)/xlnx_axi_crossbar.log \
-#$(dst)/xlnx_axi_dwidth_conv_32to64.log \
-#$(dst)/xlnx_axi_dwidth_conv_64to32.log \
-#$(dst)/xlnx_axi_prtcl_conv.log
 
 # Generate Memory IP Blocks
 .PHONY: MEM_VCU MEM_Arty
@@ -57,10 +53,8 @@ PreProcessFiles:
 	cp -r ../../addins/verilog-ethernet/*/*.sv ../src/CopiedFiles_do_not_add_to_repo/rvvi
 	cp -r ../../addins/verilog-ethernet/*/*/*/*.sv ../src/CopiedFiles_do_not_add_to_repo/rvvi
 	mkdir ../src/CopiedFiles_do_not_add_to_repo/config/
-	cp ../../config/deriv/fpga/config.vh ../src/CopiedFiles_do_not_add_to_repo/config/
+	cp ../../config/deriv/fpga$(board)/config.vh ../src/CopiedFiles_do_not_add_to_repo/config/
 	./insert_debug_comment.sh
-	# modify config  *** RT: eventually setup for variably defined sized memory
-	#sed -i "s/EXT_MEM_RANGE.*/EXT_MEM_RANGE = 64'h0FFFFFFF;/g" ../src/CopiedFiles_do_not_add_to_repo/config/config.vh
 	# This line allows the Bootloader to be loaded in a Block RAM on the FPGA
 	sed -i "s/bit \[DATA_WIDTH-1:0\].*ROM.*/(\* rom_style=\"block\" \*) &/g" ../src/CopiedFiles_do_not_add_to_repo/generic/mem/rom1p1r.sv
 	sed -i 's/$$WALLY/\.\.\/\.\.\/\.\.\//g' ../src/CopiedFiles_do_not_add_to_repo/generic/mem/rom1p1r.sv
