@@ -31,3 +31,6 @@
 [submodule "cvw-arch-verif"]
 	path = addins/cvw-arch-verif
 	url = https://github.com/openhwgroup/cvw-arch-verif
+[submodule "addins/riscvISACOV"]
+	path = addins/riscvISACOV
+	url = git@github.com:riscv-verification/riscvISACOV.git

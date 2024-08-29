@@ -106,6 +106,9 @@ else:
     suffix = ""
 flags = suffix + " " + ImperasPlusArgs
 
+if((args.lockstep or args.fcov) and args.sim == "questa"):
+    prefix = "MTI_VCO_MODE=64 " + prefix
+
 # other flags
 if (args.ccov):
     flags += " --ccov"
