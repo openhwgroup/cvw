@@ -135,6 +135,25 @@ if {[lcheck lst "--fcov"]} {
 
 }
 
+# if --fcov2 found set flag and remove from list
+if {[lcheck lst "--fcov2"]} {
+    set FunctCoverage 1
+    set FCvlog "+define+INCLUDE_TRACE2COV \
+                +define+IDV_INCLUDE_TRACE2COV \
+                +define+COVER_BASE_RV32I \
+                +define+COVER_LEVEL_DV_PR_EXT \
+                +incdir+$env(WALLY)/addins/riscvISACOV/source"
+    set FCvopt "+TRACE2COV_ENABLE=1 +IDV_TRACE2COV=1"
+    # Uncomment various cover statements below to control which extensions get functional coverage
+    lappend FCdefineCOVER_EXTS "+define+COVER_RV32I"
+    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64M"
+    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64A"
+    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64F"
+    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64D"
+    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64ZICSR"
+    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64C"
+}\
+
 # if --lockstep or --fcov found set flag and remove from list
 if {[lcheck lst "--lockstep"] || $FunctCoverage == 1} {
     set lockstep 1

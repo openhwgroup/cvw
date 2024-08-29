@@ -762,7 +762,7 @@ end
     void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,            "riscv.ovpworld.org"));
     void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME,              "riscv"));
     void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT,           "RV64GCK"));
-    void'(rvviRefConfigSetInt(IDV_CONFIG_MODEL_ADDRESS_BUS_WIDTH,     56));
+    void'(rvviRefConfigSetInt(IDV_CONFIG_MODEL_ADDRESS_BUS_WIDTH,     XLEN==64 ? 56 : 34));
     void'(rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 6));
 
     if(elffilename == "buildroot") filename = "";    
@@ -824,15 +824,25 @@ end
     void'(rvviRefCsrSetVolatile(0, 32'hC02));   // INSTRET
     void'(rvviRefCsrSetVolatile(0, 32'hB02));   // MINSTRET
     void'(rvviRefCsrSetVolatile(0, 32'hC01));   // TIME
-    
+    if (P.XLEN == 32) begin
+      void'(rvviRefCsrSetVolatile(0, 32'hC80));   // CYCLEH
+      void'(rvviRefCsrSetVolatile(0, 32'hB80));   // MCYCLEH
+      void'(rvviRefCsrSetVolatile(0, 32'hC82));   // INSTRETH
+      void'(rvviRefCsrSetVolatile(0, 32'hB82));   // MINSTRETH
+      void'(rvviRefCsrSetVolatile(0, 32'hC81));   // TIMEH 
+    end
     // User HPMCOUNTER3 - HPMCOUNTER31
     for (iter='hC03; iter<='hC1F; iter++) begin
       void'(rvviRefCsrSetVolatile(0, iter));   // HPMCOUNTERx
+      if (P.XLEN == 32) 
+        void'(rvviRefCsrSetVolatile(0, iter+128));   // HPMCOUNTERxH
     end       
     
     // Machine MHPMCOUNTER3 - MHPMCOUNTER31
     for (iter='hB03; iter<='hB1F; iter++) begin
       void'(rvviRefCsrSetVolatile(0, iter));   // MHPMCOUNTERx
+      if (P.XLEN == 32) 
+        void'(rvviRefCsrSetVolatile(0, iter+128));   // MHPMCOUNTERxH
     end       
     
     // cannot predict this register due to latency between
