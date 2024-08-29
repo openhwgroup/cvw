@@ -55,10 +55,9 @@ if [ "$FAMILY" == rhel ]; then
     SPIKE_PACKAGES+=(dtc boost-regex boost-system)
     VERILATOR_PACKAGES+=(help2man perl clang ccache gperftools numactl mold)
     BUILDROOT_PACKAGES+=(ncurses-base ncurses ncurses-libs ncurses-devel gcc-gfortran cpio) # gcc-gfortran is only needed for compiling spec benchmarks on buildroot linux
-    # Extra packages not availale in rhel8, nice for Verilator and needed for sail respectively
+    # Extra packages not availale in rhel8, nice for Verilator
     if (( RHEL_VERSION >= 9 )); then
         VERILATOR_PACKAGES+=(perl-doc)
-        SAIL_PACKAGES=(z3)
     fi
     # A newer version of gcc is required for qemu
     OTHER_PACKAGES=(gcc-toolset-13)
@@ -80,7 +79,6 @@ elif [ "$FAMILY" == ubuntu ]; then
     QEMU_PACKAGES+=(libfdt-dev libpixman-1-dev)
     SPIKE_PACKAGES+=(device-tree-compiler libboost-regex-dev libboost-system-dev)
     VERILATOR_PACKAGES+=(help2man perl g++ clang ccache libunwind-dev libgoogle-perftools-dev numactl perl-doc libfl2 libfl-dev zlib1g)
-    SAIL_PACKAGES+=(z3)
     BUILDROOT_PACKAGES+=(ncurses-base ncurses-bin libncurses-dev gfortran cpio) # gfortran is only needed for compiling spec benchmarks on buildroot linux
     VIVADO_PACKAGES+=(libncurses*) # Vivado hangs on the third stage of installation without this
 fi
@@ -90,11 +88,11 @@ fi
 if [ "${1}" == "--check" ]; then
     section_header "Checking Dependencies from Package Manager"
     if [ "$FAMILY" == rhel ]; then
-        for pack in "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${SAIL_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${OTHER_PACKAGES[@]}"; do
+        for pack in "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${OTHER_PACKAGES[@]}"; do
             rpm -q "$pack" > /dev/null || (echo -e "${FAIL_COLOR}Missing packages detected (${WARNING_COLOR}$pack${FAIL_COLOR}). Run as root to auto-install or run wally-package-install.sh first.${ENDC}" && exit 1)
         done
     elif [ "$FAMILY" == ubuntu ]; then
-        for pack in "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${SAIL_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${OTHER_PACKAGES[@]}"; do
+        for pack in "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${OTHER_PACKAGES[@]}"; do
             dpkg -l "$pack" | grep "ii" > /dev/null || (echo -e "${FAIL_COLOR}Missing packages detected (${WARNING_COLOR}$pack${FAIL_COLOR}). Run as root to auto-install or run wally-package-install.sh first." && exit 1)
         done
     fi
@@ -124,6 +122,6 @@ else
     # Update and Upgrade tools
     eval "$UPDATE_COMMAND"
     # Install packages listed above using appropriate package manager
-    sudo $PACKAGE_MANAGER install -y "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${SAIL_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${OTHER_PACKAGES[@]}" "${VIVADO_PACKAGES[@]}"
+    sudo $PACKAGE_MANAGER install -y "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${OTHER_PACKAGES[@]}" "${VIVADO_PACKAGES[@]}"
     echo -e "${SUCCESS_COLOR}Packages successfully installed.${ENDC}"
 fi
