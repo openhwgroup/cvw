@@ -148,11 +148,6 @@ source "$RISCV"/riscv-python/bin/activate # activate python virtual environment
 STATUS="python packages"
 pip install --upgrade pip && pip install -r "$dir"/requirements.txt
 
-# z3 is needed for sail and not availabe from dnf for rhel 8
-if (( RHEL_VERSION == 8 )); then
-    pip install -U z3-solver
-fi
-
 source "$RISCV"/riscv-python/bin/activate # reload python virtual environment
 echo -e "${SUCCESS_COLOR}Python environment successfully configured!${ENDC}"
 
