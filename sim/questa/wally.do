@@ -152,13 +152,13 @@ if {$FunctCoverageIndex >= 0} {
 set FunctCoverageIndex2 [lsearch -exact $lst "--fcov2"]
 if {$FunctCoverageIndex2 >= 0} {
     set FunctCoverage 1
-    set riscvISACOVsrc +incdir+$env(IMPERAS_HOME)/ImpProprietary/source/host/riscvISACOV/source
+    set riscvISACOVsrc +incdir+$env(WALLY)/addins/riscvISACOV/source
 
     set FCdefineINCLUDE_TRACE2COV "+define+INCLUDE_TRACE2COV"
-    set FCdefineCOVER_BASE_RV64I "+define+COVER_BASE_RV64I"
+    set FCdefineCOVER_BASE_RV64I "+define+COVER_BASE_RV32I"
     set FCdefineCOVER_LEVEL_DV_PR_EXT  "+define+COVER_LEVEL_DV_PR_EXT"
     # Uncomment various cover statements below to control which extensions get functional coverage
-    set FCdefineCOVER_RV64I "+define+COVER_RV64I"
+    set FCdefineCOVER_RV64I "+define+COVER_RV32I"
     #set FCdefineCOVER_RV64M "+define+COVER_RV64M"
     #set FCdefineCOVER_RV64A "+define+COVER_RV64A"
     #set FCdefineCOVER_RV64F "+define+COVER_RV64F"
