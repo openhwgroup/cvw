@@ -323,9 +323,10 @@ STATUS="Sail Compiler"
 if [ ! -e "$RISCV"/bin/sail ]; then
     cd "$RISCV"
     curl --location https://github.com/rems-project/sail/releases/latest/download/sail.tar.gz | tar xvz --directory="$RISCV" --strip-components=1
-    echo -e "${SUCCESS_COLOR}gmp successfully installed!${ENDC}"
+    echo -e "${SUCCESS_COLOR}Sail Compiler successfully installed/updated!${ENDC}"
+else
+    echo -e "${SUCCESS_COLOR}Sail Compiler already installed.${ENDC}"
 fi
-echo -e "${SUCCESS_COLOR}Sail Compiler successfully installed/updated!${ENDC}"
 
 # RISC-V Sail Model (https://github.com/riscv/sail-riscv)
 # The RISC-V Sail Model is the golden reference model for RISC-V. It is written in Sail (described above)
