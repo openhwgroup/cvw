@@ -81,7 +81,7 @@
 uint8_t spi_txrx(uint8_t byte);
 uint8_t spi_dummy();
 //inline uint8_t spi_readbyte();
-uint64_t spi_read64();
+//uint64_t spi_read64();
 void spi_init();
 void spi_set_clock(uint32_t clkin, uint32_t clkout);
 

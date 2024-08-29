@@ -1,7 +1,7 @@
 set partNumber $::env(XILINX_PART)
 set boardName  $::env(XILINX_BOARD)
 
-set ipName xlnx_mmcm
+set ipName mmcm
 
 create_project $ipName . -force -part $partNumber
 set_property board_part $boardName [current_project]
@@ -15,7 +15,7 @@ set_property -dict [list CONFIG.PRIM_IN_FREQ {100.000} \
                         CONFIG.CLKOUT4_USED {true} \
                         CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {166.66667} \
                         CONFIG.CLKOUT2_REQUESTED_OUT_FREQ {200} \
-                        CONFIG.CLKOUT3_REQUESTED_OUT_FREQ {20} \
+                        CONFIG.CLKOUT3_REQUESTED_OUT_FREQ {25} \
                         CONFIG.CLKOUT4_REQUESTED_OUT_FREQ {25} \
                         CONFIG.CLKIN1_JITTER_PS {10.0} \
                        ] [get_ips $ipName]

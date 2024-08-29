@@ -148,7 +148,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     // APB access
     assign Entry = {PADDR[7:2],2'b00};  //  32-bit word-aligned accesses
     assign Memwrite = PWRITE & PENABLE & PSEL;  // Only write in access phase
-    assign PREADY = Entry == SPI_TXDATA | Entry == SPI_RXDATA | TransmitInactive; // Tie PREADY to transmission for hardware interlock
+    assign PREADY = Entry == SPI_TXDATA | Entry == SPI_RXDATA | Entry == SPI_IP | TransmitInactive; // Tie PREADY to transmission for hardware interlock
 
     // Account for subword read/write circuitry
     // -- Note SPI registers are 32 bits no matter what; access them with LW SW.
