@@ -347,14 +347,21 @@ fi
 # but a binary release of it should be available soon, removing the need to use opam.
 section_header "Installing/Updating Sail Compiler"
 STATUS="Sail Compiler"
-export OPAMROOTISOK=1 # Silence warnings about running opam as root
-export OPAMROOT="$RISCV"/opam
-cd "$RISCV"
-opam init -y --disable-sandboxing --no-setup --compiler=5.1.0
-eval "$(opam config env)"
-opam update -y
-opam upgrade -y
-opam install sail -y
+if [ ! -e "$RISCV"/bin/sail ]; then
+    cd "$RISCV"
+    rm -rf sail
+    wget https://github.com/rems-project/sail/releases/latest/download/sail.tar.gz
+    tar -xf sail.tar.gz
+    rm sail.tar.gz
+    cd sail
+    cp bin/* "$RISCV"/bin
+    cp share/* "$RISCV"/share
+    if [ "$clean" ]; then
+        cd "$RISCV"
+        rm -rf sail
+    fi
+    echo -e "${SUCCESS_COLOR}gmp successfully installed!${ENDC}"
+fi
 echo -e "${SUCCESS_COLOR}Sail Compiler successfully installed/updated!${ENDC}"
 
 # RISC-V Sail Model (https://github.com/riscv/sail-riscv)
