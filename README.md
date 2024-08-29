@@ -1,3 +1,49 @@
+# divremsqrt
+This branch contains the relevant hardware and test/synthesis flows for cvw's unified integer/fp divide/sqrt recurrence unit. The recurrence unit can be generated for a variety configurations, which span flavors of radix = {2,4}, floating-point precision = {float,double,quad}, integer width = {unsupported,32,64} and divider copies = {1,2,4,8}. 
+
+The fpu postprocessor on cvw handles inputs not only from the div/sqrt unit, but also the fma and convert units. This branch's drsu unit contains a postprocessor with logic only relevant to division/sqrt.
+
+# file hiearchy 
+
+The RTL files for the divider can be found under `cvw/src/fpu`
+
+The majority of divider modules are found in `cvw/src/fpu/divremsqrt`, which also borrows some modules from `cvw/src/fpu/fdivsqrt`
+
+divremsqrt/drsu desribes the top-level unit for the divider, taking in unpacked floating point signals, including Xs, Xm Xe, Ys, Ym, Ye.
+
+drsu first feeds signals to `divremsqrt/divremsqrt`, which contains the preprocessor, iteration units, fsm, and postprocessing logic. The postprocessor in `divremsqrt/divremsqrt` also contains all integer postprocessing logic. Outputs from `divremsqrt/divremsqrt` are then sent to `divremsqrt/divremsqrtpostprocess`, which handles rounding and flags.
+
+# verification flow
+
+drsu is verified with the risc-v arch test Berkeley SoftFloat floating point suite of test vectors for floating point square-root and division. In order to run the top-level regression script, run `regression-wally-intdiv -intdiv`
+
+The top-level regression python script is found accordingly in `cvw/bin/regression-wally-intdiv`. The testbench is found in `cvw/testbench/testbench_fp`, which runs drsu against testvectors. Batches of testvectors are stored within `cvw/testbench/tests-fp.vh`, and the raw binary test vectors are read from `tests/fp/vectors`
+
+Regression log files can be found in `cvw/sim/questa/logs` after running `regression-wally-intdiv -intdiv`. Files are named with `{precision}_ieee_div_{R}_{K}_{integer}_rv{XLEN}gc_{TESTNAME}.log`
+
+* precision denotes the floating-point precision types supported by the divider: f, fd, fdq, fdqh
+* R denotes the radix of the divider: 2,4
+* K denotes the number of divider copies in the unit: 1,2,4,8
+* integer denotes whether integer division/remainder is supported on the divider: i
+* XLEN denotes the width of integers: 32, 64 (this only matters if integer is supported on the divider)
+* TESTNAME denotes which tests are being run:
+    * fdivremsqrt: runs fdiv, fsqrt, intdiv, intrem
+    * fdiv: runs fdiv
+    * fsqrt: runs fsqrt
+   
+
+ 
+# synthesis flow
+To run synthesis results for all flavors of the recurrence unit, go to `cvw/synthDC/scripts` and run `python3 synthdrsu.py`. This will execute a python script that runs the installed version of synopsis design compiler on divider permutations for a target frequency of 5GHz and 100MHz. To then pipe area, delay and energy results to a CSV, run `./writeCSV.sh`. Results can then be viewed in `fp-synthresults_reordered.csv` in a format similar to the one presented in the paper.
+# start-up steps
+1) `git clone --recurse-submodules https://github.com/openhwgroup/cvw.git`
+2) `cd cvw`
+3) `git checkout divremsqrt`
+4) `source ./setup.sh`
+5) `make`
+6) `/sim/regression-wally -intdiv`
+
+
 # core-v-wally
 
 Wally is a 5-stage pipelined processor configurable to support all the standard RISC-V options, including RV32/64, A, B, C, D, F, M, Q, and Zk* extensions, virtual memory, PMP, and the various privileged modes and CSRs. It provides optional caches, branch prediction, and standard RISC-V peripherals (CLINT, PLIC, UART, GPIO).   Wally is written in SystemVerilog.  It passes the [RISC-V Arch Tests](https://github.com/riscv-non-isa/riscv-arch-test) and boots Linux on an FPGA.  Configurations range from a minimal RV32E core to a fully featured RV64GC application processor.
