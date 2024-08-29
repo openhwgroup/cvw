@@ -324,7 +324,7 @@ section_header "Installing/Updating Sail Compiler"
 STATUS="Sail Compiler"
 if [ ! -e "$RISCV"/bin/sail ]; then
     cd "$RISCV"
-    curl --location https://github.com/rems-project/sail/releases/latest/download/sail.tar.gz | tar xvz --directory="$RISCV"
+    curl --location https://github.com/rems-project/sail/releases/latest/download/sail.tar.gz | tar xvz --directory="$RISCV" --strip-components=1
     echo -e "${SUCCESS_COLOR}gmp successfully installed!${ENDC}"
 fi
 echo -e "${SUCCESS_COLOR}Sail Compiler successfully installed/updated!${ENDC}"
