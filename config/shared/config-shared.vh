@@ -123,6 +123,10 @@ localparam NORMSHIFTSZ = `max(`max((CVTLEN+NF+1), (DIVb + 1 + NF + 1)), (FMALEN 
 
 localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));                  // log_2(NORMSHIFTSZ)
 
+localparam CORRSHIFTSZ = `max((NORMSHIFTSZ-2), (DIVMINb + 1 + NF));
+localparam NORMSHIFTSZDRSU = DIVb+1+NF;
+localparam LOGNORMSHIFTSZDRSU = $clog2(NORMSHIFTSZDRSU);
+
 // Disable spurious Verilator warnings
 
 /* verilator lint_off STMTDLY */

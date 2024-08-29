@@ -27,7 +27,7 @@
 
 import cvw::*;
 
-module testbench_fp;
+module testbenchfp;
    // Two parameters TEST, TEST_SIZE used with testfloat.do in sim dir
    // to run specific precisions (e.g., quad or all)
    parameter TEST="none";
@@ -89,7 +89,7 @@ module testbench_fp;
    logic [P.LOGCVTLEN-1:0] 	CvtShiftAmtE;               // how much to shift by
    logic [P.DIVb:0] 		Quot;
    logic                        CvtResSubnormUfE;
-   logic                        DivStart;
+   logic                        DivStart=0;
    logic 			FDivBusyE;
    logic 			OldFDivBusyE;
    logic                        reset = 1'b0;
@@ -851,22 +851,12 @@ module testbench_fp;
       TestNum = 0;
    end
 
- // set the signals for all tests
-   always_ff @(posedge clk) begin
-      UnitVal = Unit[TestNum];
-      FmtVal = Fmt[TestNum];
-      OpCtrlVal = OpCtrl[OpCtrlNum];
-      WriteIntVal = WriteInt[OpCtrlNum];
-      FrmVal = Frm[FrmNum];
-   end
-   /*
    // set a the signals for all tests
    always_comb UnitVal = Unit[TestNum];
    always_comb FmtVal = Fmt[TestNum];
    always_comb OpCtrlVal = OpCtrl[OpCtrlNum];
    always_comb WriteIntVal = WriteInt[OpCtrlNum];
    always_comb FrmVal = Frm[FrmNum];
-   */
 
    // modify the format signal if only 2 percisions supported
    //    - 1 for the larger precision
@@ -1081,12 +1071,6 @@ module testbench_fp;
            IntDivE = 1'b0;
            nextstate = S0;
         end	
-        default: begin
-           DivStart = 1'b0;
-           IDivStart = 1'b0;
-           IntDivE = 1'b0;
-           nextstate = S0;
-        end
       endcase // case (state)
       
    end 

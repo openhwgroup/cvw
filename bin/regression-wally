@@ -371,6 +371,7 @@ args = parser.parse_args()
 if (args.nightly):
     nightMode = "--nightly";
     sims = ["questa", "verilator", "vcs"] # exercise all simulators; can omit a sim if no license is available
+#    sims = ["questa", "verilator"] # exercise all simulators; can omit a sim if no license is available
 else:
     nightMode = ""
     sims = [defaultsim]
@@ -512,9 +513,11 @@ def main():
     elif args.fcov:
         TIMEOUT_DUR = 1*60
         os.system('rm -f questa/fcov_ucdb/* questa/fcov_logs/* questa/fcov/*')
-    elif args.nightly:
+    elif args.buildroot:
         TIMEOUT_DUR = 60*1440 # 1 day
     elif args.testfloat:
+        TIMEOUT_DUR = 30*60 # seconds
+    elif args.nightly:
         TIMEOUT_DUR = 30*60 # seconds
     else:
         TIMEOUT_DUR = 10*60 # seconds
