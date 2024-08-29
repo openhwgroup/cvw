@@ -322,22 +322,6 @@ else
 fi
 
 
-# Install opam from binary disribution on rhel as it is not available from dnf
-# Opam is needed to install the sail compiler
-if [ "$FAMILY" == rhel ]; then
-    section_header "Installing/Updating Opam"
-    STATUS="Opam"
-    export OPAMROOTISOK=1 # Silence warnings about running opam as root
-    cd "$RISCV"
-    mkdir -p opam
-    cd opam
-    wget https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh
-    printf '%s\n' "$RISCV"/bin Y | sh install.sh # the print command provides $RISCV/bin as the installation path when prompted
-    cd "$RISCV"
-    rm -rf opam
-    echo -e "${SUCCESS_COLOR}Opam successfully installed/updated!${ENDC}"
-fi
-
 # Sail Compiler (https://github.com/rems-project/sail)
 # Sail is a formal specification language designed for describing the semantics of an ISA.
 # It is used to generate the RISC-V Sail Model, which is the golden reference model for RISC-V.

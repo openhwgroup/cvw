@@ -80,7 +80,7 @@ elif [ "$FAMILY" == ubuntu ]; then
     QEMU_PACKAGES+=(libfdt-dev libpixman-1-dev)
     SPIKE_PACKAGES+=(device-tree-compiler libboost-regex-dev libboost-system-dev)
     VERILATOR_PACKAGES+=(help2man perl g++ clang ccache libunwind-dev libgoogle-perftools-dev numactl perl-doc libfl2 libfl-dev zlib1g)
-    SAIL_PACKAGES+=(opam z3)
+    SAIL_PACKAGES+=(z3)
     BUILDROOT_PACKAGES+=(ncurses-base ncurses-bin libncurses-dev gfortran cpio) # gfortran is only needed for compiling spec benchmarks on buildroot linux
     VIVADO_PACKAGES+=(libncurses*) # Vivado hangs on the third stage of installation without this
 fi
