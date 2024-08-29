@@ -333,8 +333,8 @@ if [ ! -e "$RISCV"/bin/sail ]; then
     tar -xf sail.tar.gz
     rm sail.tar.gz
     cd sail
-    cp bin/* "$RISCV"/bin
-    cp share/* "$RISCV"/share
+    cp -r bin/* "$RISCV"/bin
+    cp -r share/* "$RISCV"/share
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf sail
