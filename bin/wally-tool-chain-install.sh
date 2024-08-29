@@ -7,6 +7,7 @@
 ## Modified: 22 January 2023
 ## Modified: 23 March 2023
 ## Modified: 30 June 2024, Jordan Carlin jcarlin@hmc.edu
+## Modified: 1 September 2024
 ##
 ## Purpose: Open source tool chain installation script
 ##
@@ -161,7 +162,7 @@ if (( RHEL_VERSION == 8 )) || (( UBUNTU_VERSION == 20 )); then
         section_header "Installing glib"
         pip install -U meson # Meson is needed to build glib
         cd "$RISCV"
-        curl --location https://download.gnome.org/sources/glib/2.70/glib-2.70.5.tar.xz | tar xJf
+        curl --location https://download.gnome.org/sources/glib/2.70/glib-2.70.5.tar.xz | tar xJ
         cd glib-2.70.5
         meson setup _build --prefix="$RISCV"
         meson compile -C _build
@@ -178,7 +179,7 @@ if (( RHEL_VERSION == 8 )); then
     if [ ! -e "$RISCV"/include/gmp.h ]; then
         section_header "Installing gmp"
         cd "$RISCV"
-        curl --location https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz | tar xJf
+        curl --location https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz | tar xJ
         cd gmp-6.3.0
         ./configure --prefix="$RISCV"
         make -j "${NUM_THREADS}"
