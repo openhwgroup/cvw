@@ -950,6 +950,9 @@ D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   0
 
+deriv f_div_2_8_rv64gc    f_div_2_4_rv64gc    
+DIVCOPIES       32'd8
+
 deriv f_div_4_1_rv64gc    div_4_1_rv64gc    
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
@@ -982,6 +985,9 @@ D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   1
 
+deriv fh_div_2_8_rv32gc    fh_div_2_4_rv32gc    
+DIVCOPIES       32'd8
+
 deriv fh_div_4_1_rv32gc    div_4_1_rv32gc    
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
@@ -1012,6 +1018,9 @@ D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   1
 
+deriv fh_div_2_8_rv64gc    fh_div_2_4_rv64gc    
+DIVCOPIES       32'd8
+
 deriv fh_div_4_1_rv64gc    div_4_1_rv64gc    
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
@@ -1038,6 +1047,9 @@ ZFH_SUPPORTED   0
 deriv fd_div_2_4_rv32gc    div_2_4_rv32gc
 ZFH_SUPPORTED   0
 
+deriv fd_div_2_8_rv32gc    fd_div_2_4_rv32gc    
+DIVCOPIES       32'd8
+
 deriv fd_div_4_1_rv32gc    div_4_1_rv32gc    
 ZFH_SUPPORTED   0
 
@@ -1055,6 +1067,9 @@ ZFH_SUPPORTED   0
 
 deriv fd_div_2_4_rv64gc    div_2_4_rv64gc    
 ZFH_SUPPORTED   0
+
+deriv fd_div_2_8_rv64gc    fd_div_2_4_rv64gc    
+DIVCOPIES       32'd8
 
 deriv fd_div_4_1_rv64gc    div_4_1_rv64gc    
 ZFH_SUPPORTED   0
@@ -1077,6 +1092,9 @@ ZFH_SUPPORTED   1
 deriv fdh_div_2_4_rv32gc    div_2_4_rv32gc
 ZFH_SUPPORTED   1
 
+deriv fdh_div_2_8_rv32gc    fdh_div_2_4_rv32gc    
+DIVCOPIES       32'd8
+
 deriv fdh_div_4_1_rv32gc    div_4_1_rv32gc    
 ZFH_SUPPORTED   1
 
@@ -1094,6 +1112,9 @@ ZFH_SUPPORTED   1
 
 deriv fdh_div_2_4_rv64gc    div_2_4_rv64gc    
 ZFH_SUPPORTED   1
+
+deriv fdh_div_2_8_rv64gc    fdh_div_2_4_rv64gc    
+DIVCOPIES       32'd8
 
 deriv fdh_div_4_1_rv64gc    div_4_1_rv64gc    
 ZFH_SUPPORTED   1
@@ -1118,6 +1139,9 @@ deriv fdq_div_2_4_rv32gc    div_2_4_rv32gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
+deriv fdq_div_2_8_rv32gc    fdq_div_2_4_rv32gc    
+DIVCOPIES       32'd8
+
 deriv fdq_div_4_1_rv32gc    div_4_1_rv32gc    
 Q_SUPPORTED     1
 ZFH_SUPPORTED   0
@@ -1141,6 +1165,9 @@ ZFH_SUPPORTED   0
 deriv fdq_div_2_4_rv64gc    div_2_4_rv64gc    
 Q_SUPPORTED     1
 ZFH_SUPPORTED   0
+
+deriv fdq_div_2_8_rv64gc    fdq_div_2_4_rv64gc    
+DIVCOPIES       32'd8
 
 deriv fdq_div_4_1_rv64gc    div_4_1_rv64gc    
 Q_SUPPORTED     1
@@ -1168,6 +1195,9 @@ deriv fdqh_div_2_4_rv32gc    div_2_4_rv32gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
+deriv fdqh_div_2_8_rv32gc    fdqh_div_2_4_rv32gc    
+DIVCOPIES       32'd8
+
 deriv fdqh_div_4_1_rv32gc    div_4_1_rv32gc    
 Q_SUPPORTED     1
 ZFH_SUPPORTED   1
@@ -1192,6 +1222,9 @@ deriv fdqh_div_2_4_rv64gc    div_2_4_rv64gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
+deriv fdqh_div_2_8_rv64gc    fdqh_div_2_4_rv64gc    
+DIVCOPIES       32'd8
+
 deriv fdqh_div_4_1_rv64gc    div_4_1_rv64gc    
 Q_SUPPORTED     1
 ZFH_SUPPORTED   1
@@ -1215,6 +1248,9 @@ IEEE754         1
 deriv f_ieee_div_2_4_rv32gc    f_div_2_4_rv32gc    
 IEEE754         1
 
+deriv f_ieee_div_2_8_rv32gc    f_ieee_div_2_4_rv32gc    
+DIVCOPIES       32'd8
+
 deriv f_ieee_div_4_1_rv32gc    f_div_4_1_rv32gc    
 IEEE754         1
 
@@ -1232,6 +1268,9 @@ IEEE754         1
 
 deriv f_ieee_div_2_4_rv64gc    f_div_2_4_rv64gc    
 IEEE754         1
+
+deriv f_ieee_div_2_8_rv64gc    f_ieee_div_2_4_rv64gc    
+DIVCOPIES       32'd8
 
 deriv f_ieee_div_4_1_rv64gc    f_div_4_1_rv64gc    
 IEEE754         1
@@ -1252,6 +1291,9 @@ IEEE754         1
 deriv fh_ieee_div_2_4_rv32gc    fh_div_2_4_rv32gc    
 IEEE754         1
 
+deriv fh_ieee_div_2_8_rv32gc    fh_ieee_div_2_4_rv32gc    
+DIVCOPIES       32'd8
+
 deriv fh_ieee_div_4_1_rv32gc    fh_div_4_1_rv32gc    
 IEEE754         1
 
@@ -1269,6 +1311,9 @@ IEEE754         1
 
 deriv fh_ieee_div_2_4_rv64gc    fh_div_2_4_rv64gc    
 IEEE754         1
+
+deriv fh_ieee_div_2_8_rv64gc    fh_ieee_div_2_4_rv64gc    
+DIVCOPIES       32'd8
 
 deriv fh_ieee_div_4_1_rv64gc    fh_div_4_1_rv64gc    
 IEEE754         1
@@ -1289,6 +1334,9 @@ IEEE754         1
 deriv fd_ieee_div_2_4_rv32gc    fd_div_2_4_rv32gc    
 IEEE754         1
 
+deriv fd_ieee_div_2_8_rv32gc    fd_ieee_div_2_4_rv32gc    
+DIVCOPIES       32'd8
+
 deriv fd_ieee_div_4_1_rv32gc    fd_div_4_1_rv32gc    
 IEEE754         1
 
@@ -1306,6 +1354,9 @@ IEEE754         1
 
 deriv fd_ieee_div_2_4_rv64gc    fd_div_2_4_rv64gc    
 IEEE754         1
+
+deriv fd_ieee_div_2_8_rv64gc    fd_ieee_div_2_4_rv64gc    
+DIVCOPIES       32'd8
 
 deriv fd_ieee_div_4_1_rv64gc    fd_div_4_1_rv64gc    
 IEEE754         1
@@ -1327,6 +1378,9 @@ IEEE754         1
 deriv fdh_ieee_div_2_4_rv32gc    fdh_div_2_4_rv32gc    
 IEEE754         1
 
+deriv fdh_ieee_div_2_8_rv32gc    fdh_ieee_div_2_4_rv32gc    
+DIVCOPIES       32'd8
+
 deriv fdh_ieee_div_4_1_rv32gc    fdh_div_4_1_rv32gc    
 IEEE754         1
 
@@ -1344,6 +1398,9 @@ IEEE754         1
 
 deriv fdh_ieee_div_2_4_rv64gc    fdh_div_2_4_rv64gc    
 IEEE754         1
+
+deriv fdh_ieee_div_2_8_rv64gc    fdh_ieee_div_2_4_rv64gc    
+DIVCOPIES       32'd8
 
 deriv fdh_ieee_div_4_1_rv64gc    fdh_div_4_1_rv64gc    
 IEEE754         1
@@ -1364,6 +1421,9 @@ IEEE754         1
 deriv fdq_ieee_div_2_4_rv32gc    fdq_div_2_4_rv32gc    
 IEEE754         1
 
+deriv fdq_ieee_div_2_8_rv32gc    fdq_ieee_div_2_4_rv32gc    
+DIVCOPIES       32'd8
+
 deriv fdq_ieee_div_4_1_rv32gc    fdq_div_4_1_rv32gc    
 IEEE754         1
 
@@ -1381,6 +1441,9 @@ IEEE754         1
 
 deriv fdq_ieee_div_2_4_rv64gc    fdq_div_2_4_rv64gc    
 IEEE754         1
+
+deriv fdq_ieee_div_2_8_rv64gc    fdq_ieee_div_2_4_rv64gc    
+DIVCOPIES       32'd8
 
 deriv fdq_ieee_div_4_1_rv64gc    fdq_div_4_1_rv64gc    
 IEEE754         1
@@ -1402,6 +1465,9 @@ IEEE754         1
 deriv fdqh_ieee_div_2_4_rv32gc    fdqh_div_2_4_rv32gc    
 IEEE754         1
 
+deriv fdqh_ieee_div_2_8_rv32gc    fdqh_ieee_div_2_4_rv32gc    
+DIVCOPIES       32'd8
+
 deriv fdqh_ieee_div_4_1_rv32gc    fdqh_div_4_1_rv32gc    
 IEEE754         1
 
@@ -1419,6 +1485,9 @@ IEEE754         1
 
 deriv fdqh_ieee_div_2_4_rv64gc    fdqh_div_2_4_rv64gc    
 IEEE754         1
+
+deriv fdqh_ieee_div_2_8_rv64gc    fdqh_ieee_div_2_4_rv64gc    
+DIVCOPIES       32'd8
 
 deriv fdqh_ieee_div_4_1_rv64gc    fdqh_div_4_1_rv64gc    
 IEEE754         1
@@ -1440,6 +1509,9 @@ IDIV_ON_FPU     1
 deriv f_ieee_div_2_4i_rv32gc f_ieee_div_2_4_rv32gc        
 IDIV_ON_FPU     1
 
+deriv f_ieee_div_2_8i_rv32gc f_ieee_div_2_4i_rv32gc 
+DIVCOPIES       32'd8
+
 deriv f_ieee_div_4_1i_rv32gc f_ieee_div_4_1_rv32gc        
 IDIV_ON_FPU     1
 
@@ -1457,6 +1529,9 @@ IDIV_ON_FPU     1
 
 deriv f_ieee_div_2_4i_rv64gc f_ieee_div_2_4_rv64gc        
 IDIV_ON_FPU     1
+
+deriv f_ieee_div_2_8i_rv64gc f_ieee_div_2_4i_rv64gc 
+DIVCOPIES       32'd8
 
 deriv f_ieee_div_4_1i_rv64gc f_ieee_div_4_1_rv64gc        
 IDIV_ON_FPU     1
@@ -1477,6 +1552,9 @@ IDIV_ON_FPU     1
 deriv fh_ieee_div_2_4i_rv32gc fh_ieee_div_2_4_rv32gc        
 IDIV_ON_FPU     1
 
+deriv fh_ieee_div_2_8i_rv32gc fh_ieee_div_2_4i_rv32gc 
+DIVCOPIES       32'd8
+
 deriv fh_ieee_div_4_1i_rv32gc fh_ieee_div_4_1_rv32gc        
 IDIV_ON_FPU     1
 
@@ -1494,6 +1572,9 @@ IDIV_ON_FPU     1
 
 deriv fh_ieee_div_2_4i_rv64gc fh_ieee_div_2_4_rv64gc        
 IDIV_ON_FPU     1
+
+deriv fh_ieee_div_2_8i_rv64gc fh_ieee_div_2_4i_rv64gc 
+DIVCOPIES       32'd8
 
 deriv fh_ieee_div_4_1i_rv64gc fh_ieee_div_4_1_rv64gc        
 IDIV_ON_FPU     1
@@ -1515,6 +1596,9 @@ IDIV_ON_FPU     1
 deriv fd_ieee_div_2_4i_rv32gc fd_ieee_div_2_4_rv32gc        
 IDIV_ON_FPU     1
 
+deriv fd_ieee_div_2_8i_rv32gc fd_ieee_div_2_4i_rv32gc 
+DIVCOPIES       32'd8
+
 deriv fd_ieee_div_4_1i_rv32gc fd_ieee_div_4_1_rv32gc        
 IDIV_ON_FPU     1
 
@@ -1532,6 +1616,9 @@ IDIV_ON_FPU     1
 
 deriv fd_ieee_div_2_4i_rv64gc fd_ieee_div_2_4_rv64gc        
 IDIV_ON_FPU     1
+
+deriv fd_ieee_div_2_8i_rv64gc fd_ieee_div_2_4i_rv64gc 
+DIVCOPIES       32'd8
 
 deriv fd_ieee_div_4_1i_rv64gc fd_ieee_div_4_1_rv64gc        
 IDIV_ON_FPU     1
@@ -1553,6 +1640,9 @@ IDIV_ON_FPU     1
 deriv fdh_ieee_div_2_4i_rv32gc fdh_ieee_div_2_4_rv32gc        
 IDIV_ON_FPU     1
 
+deriv fdh_ieee_div_2_8i_rv32gc fdh_ieee_div_2_4i_rv32gc 
+DIVCOPIES       32'd8
+
 deriv fdh_ieee_div_4_1i_rv32gc fdh_ieee_div_4_1_rv32gc        
 IDIV_ON_FPU     1
 
@@ -1570,6 +1660,9 @@ IDIV_ON_FPU     1
 
 deriv fdh_ieee_div_2_4i_rv64gc fdh_ieee_div_2_4_rv64gc        
 IDIV_ON_FPU     1
+
+deriv fdh_ieee_div_2_8i_rv64gc fdh_ieee_div_2_4i_rv64gc 
+DIVCOPIES       32'd8
 
 deriv fdh_ieee_div_4_1i_rv64gc fdh_ieee_div_4_1_rv64gc        
 IDIV_ON_FPU     1
@@ -1591,6 +1684,9 @@ IDIV_ON_FPU     1
 deriv fdq_ieee_div_2_4i_rv32gc fdq_ieee_div_2_4_rv32gc        
 IDIV_ON_FPU     1
 
+deriv fdq_ieee_div_2_8i_rv32gc fdq_ieee_div_2_4i_rv32gc 
+DIVCOPIES       32'd8
+
 deriv fdq_ieee_div_4_1i_rv32gc fdq_ieee_div_4_1_rv32gc        
 IDIV_ON_FPU     1
 
@@ -1608,6 +1704,9 @@ IDIV_ON_FPU     1
 
 deriv fdq_ieee_div_2_4i_rv64gc fdq_ieee_div_2_4_rv64gc        
 IDIV_ON_FPU     1
+
+deriv fdq_ieee_div_2_8i_rv64gc fdq_ieee_div_2_4i_rv64gc 
+DIVCOPIES       32'd8
 
 deriv fdq_ieee_div_4_1i_rv64gc fdq_ieee_div_4_1_rv64gc        
 IDIV_ON_FPU     1
@@ -1629,6 +1728,9 @@ IDIV_ON_FPU     1
 deriv fdqh_ieee_div_2_4i_rv32gc fdqh_ieee_div_2_4_rv32gc        
 IDIV_ON_FPU     1
 
+deriv fdqh_ieee_div_2_8i_rv32gc fdqh_ieee_div_2_4i_rv32gc 
+DIVCOPIES       32'd8
+
 deriv fdqh_ieee_div_4_1i_rv32gc fdqh_ieee_div_4_1_rv32gc        
 IDIV_ON_FPU     1
 
@@ -1646,6 +1748,9 @@ IDIV_ON_FPU     1
 
 deriv fdqh_ieee_div_2_4i_rv64gc fdqh_ieee_div_2_4_rv64gc        
 IDIV_ON_FPU     1
+
+deriv fdqh_ieee_div_2_8i_rv64gc fdqh_ieee_div_2_4i_rv64gc 
+DIVCOPIES       32'd8
 
 deriv fdqh_ieee_div_4_1i_rv64gc fdqh_ieee_div_4_1_rv64gc        
 IDIV_ON_FPU     1
