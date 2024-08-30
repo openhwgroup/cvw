@@ -101,6 +101,7 @@ sim/localhistory_m6k10_results_april24.txt
 sim/cfi/*
 sim/branch/*
 sim/covhtmlreport/
+sim/*/*Cache.log
 
 # Questa
 sim/questa/logs
