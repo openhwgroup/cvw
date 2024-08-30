@@ -163,7 +163,6 @@ if {[lcheck lst "--lockstep"] || $FunctCoverage == 1} {
                       ${IMPERAS_HOME}/ImpPublic/source/host/rvvi/*.sv \
                       ${IMPERAS_HOME}/ImpProprietary/source/host/idv/*.sv"
     set SVLib "-sv_lib ${IMPERAS_HOME}/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model"
-    #set OtherFlags $::env(OTHERFLAGS)  # not working 7/15/24 dh; this should be the way to pass things like --verbose (Issue 871)
 }
 
 # Set PlusArgs passed using the --args flag
@@ -208,7 +207,7 @@ vlog -lint +nowarnRDGN -work ${WKDIR} {*}${INC_DIRS} {*}${FCvlog} {*}${FCdefineC
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} {*}${ExpandedParamArgs} -o testbenchopt ${CoverageVoptArg}
 
-vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} {*}${PlusArgs} -fatal 7 {*}${SVLib} ${OtherFlags} {*}${FCvopt} -suppress 3829 ${CoverageVsimArg}
+vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} {*}${PlusArgs} -fatal 7 {*}${SVLib} {*}${FCvopt} -suppress 3829 ${CoverageVsimArg}
 
 # power add generates the logging necessary for saif generation.
 # power add -r /dut/core/*
