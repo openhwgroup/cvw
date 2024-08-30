@@ -152,7 +152,7 @@ if {[lcheck lst "--fcov2"]} {
     #lappend FCdefineCOVER_EXTS "+define+COVER_RV64D"
     #lappend FCdefineCOVER_EXTS "+define+COVER_RV64ZICSR"
     #lappend FCdefineCOVER_EXTS "+define+COVER_RV64C"
-}\
+}
 
 # if --lockstep or --fcov found set flag and remove from list
 if {[lcheck lst "--lockstep"] || $FunctCoverage == 1} {
