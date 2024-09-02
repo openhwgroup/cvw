@@ -1,33 +1,46 @@
-# wally-batch.do 
+# wally.do
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 #
 # Modification by Oklahoma State University & Harvey Mudd College
-# Use with Testbench 
+# Use with Testbench
 # James Stine, 2008; David Harris 2021
 # Go Cowboys!!!!!!
 #
 # Takes 1:10 to run RV64IC tests using gui
 
-# Usage: do wally-batch.do <config> <testcases> <testbench> [--ccov] [--fcov] [+acc] [any number of +value] [any number of -G VAR=VAL]
-# Example: do wally-batch.do rv64gc arch64i testbench
+# Usage: do wally.do <config> <testcases> <testbench> [--ccov] [--fcov] [+acc] [--args "any number of +value"] [--params "any number of VAR=VAL parameter overrides"]
+# Example: do wally.do rv64gc arch64i testbench
 
-# Use this wally-batch.do file to run this example.
+# Use this wally.do file to run this example.
 # Either bring up ModelSim and type the following at the "ModelSim>" prompt:
-#     do wally-batch.do
+#     do wally.do
 # or, to run from a shell, type the following at the shell prompt:
-#     vsim -do wally-batch.do -c
+#     vsim -do wally.do -c
 # (omit the "-c" to see the GUI while running from the shell)
 
-set DEBUG 1
+# lcheck - return 1 if value is in list and remove it from list
+proc lcheck {listVariable value} {
+    upvar 1 $listVariable list
+    set index [lsearch -exact $list $value]
+    if {$index >= 0} {
+        set list [lreplace $list $index $index]
+        return 1
+    } else {
+        return 0
+    }
+}
 
+set DEBUG 1
 onbreak {resume}
 onerror {quit -f}
 
+# Initialize variables
 set CFG ${1}
 set TESTSUITE ${2}
 set TESTBENCH ${3}
 set WKDIR wkdir/${CFG}_${TESTSUITE}
 set WALLY $::env(WALLY)
+set IMPERAS_HOME $::env(IMPERAS_HOME)
 set CONFIG ${WALLY}/config
 set SRC ${WALLY}/src
 set TB ${WALLY}/testbench
@@ -38,10 +51,12 @@ if [file exists ${WKDIR}] {
     vdel -lib ${WKDIR} -all
 }
 vlib ${WKDIR}
-# Create directory for coverage data
-mkdir -p cov
 # Create directory for functional coverage data
-mkdir -p ${WALLY}/addins/cvw-arch-verif/work
+mkdir -p ${FCRVVI}
+
+set PlusArgs ""
+set ParamArgs ""
+set ExpandedParamArgs {}
 
 set ccov 0
 set CoverageVoptArg ""
@@ -51,47 +66,26 @@ set FuncCovRVVI 0
 set FCdefineRVVI_COVERAGE ""
 
 set FunctCoverage 0
-set riscvISACOVsrc ""
-set FCdefineINCLUDE_TRACE2COV ""
-set FCdefineCOVER_BASE_RV64I ""
-set FCdefineCOVER_LEVEL_DV_PR_EXT  ""
-set FCdefineCOVER_RV64I ""
-set FCdefineCOVER_RV64M ""
-set FCdefineCOVER_RV64A ""
-set FCdefineCOVER_RV64F ""
-set FCdefineCOVER_RV64D ""
-set FCdefineCOVER_RV64ZICSR ""
-set FCdefineCOVER_RV64C ""
-set FCdefineIDV_INCLUDE_TRACE2COV ""
-set FCTRACE2COV ""
-set FCdefineIDV_TRACE2COV ""
+set FCvlog ""
+set FCvopt ""
+set FCdefineCOVER_EXTS {}
+
 set lockstep 0
-# ok this is annoying. vlog, vopt, and vsim are very picky about how arguments are passed.
-# unforunately it won't allow these to be grouped as one argument per command so they are broken
-# apart. 
-set lockstepvoptstring ""
+set lockstepvlog ""
 set SVLib ""
-set SVLibPath ""
 set OtherFlags ""
-set ImperasPubInc ""
-set ImperasPrivInc ""
-set rvviFiles ""
-set idvFiles ""
 
 set GUI 0
 set accFlag ""
 
 # Need to be able to pass arguments to vopt.  Unforunately argv does not work because
 # it takes on different values if vsim and the do file are called from the command line or
-# if the do file isd called from questa sim directly.  This chunk of code uses the $4 through $n
+# if the do file is called from questa sim directly.  This chunk of code uses the $4 through $n
 # variables and compacts into a single list for passing to vopt.
-set tbArgs ""
 set from 4
 set step 1
 set lst {}
 
-set PlusArgs {}
-set ParamArgs {}
 for {set i 0} true {incr i} {
     set x [expr {$i*$step + $from}]
     if {$x > $argc} break
@@ -103,84 +97,96 @@ echo "number of args = $argc"
 echo "lst = $lst"
 
 # if +acc found set flag and remove from list
-set AccIndex [lsearch -exact $lst "+acc"]
-if {$AccIndex >= 0} {
+if {[lcheck lst "+acc"]} {
     set GUI 1
     set accFlag "+acc"
-    set lst [lreplace $lst $AccIndex $AccIndex]
 }
 
-# if +coverage found set flag and remove from list
-set CoverageIndex [lsearch -exact $lst "--ccov"]
-if {$CoverageIndex >= 0} {
+# if --ccov found set flag and remove from list
+if {[lcheck lst "--ccov"]} {
     set ccov 1
     set CoverageVoptArg "+cover=sbecf"
     set CoverageVsimArg "-coverage"
-    set lst [lreplace $lst $CoverageIndex $CoverageIndex]
 }
 
-set FCoverageIndexRVVI [lsearch -exact $lst "--fcovrvvi"]
-if {$FCoverageIndexRVVI >= 0} {
+# if --fcovrvvi found set flag and remove from list
+if {[lcheck lst "--fcovrvvi"]} {
     set FuncCovRVVI 1
     set FCdefineRVVI_COVERAGE "+define+RVVI_COVERAGE"
-    set lst [lreplace $lst $FCoverageIndexRVVI $FCoverageIndexRVVI]
 }
 
-# if +coverage found set flag and remove from list
-set FunctCoverageIndex [lsearch -exact $lst "--fcov"]
-if {$FunctCoverageIndex >= 0} {
+# if --fcov found set flag and remove from list
+if {[lcheck lst "--fcov"]} {
     set FunctCoverage 1
-    set riscvISACOVsrc +incdir+$env(IMPERAS_HOME)/ImpProprietary/source/host/riscvISACOV/source
-
-    set FCdefineINCLUDE_TRACE2COV "+define+INCLUDE_TRACE2COV"
-    set FCdefineCOVER_BASE_RV64I "+define+COVER_BASE_RV64I"
-    set FCdefineCOVER_LEVEL_DV_PR_EXT  "+define+COVER_LEVEL_DV_PR_EXT"
+    set FCvlog "+define+INCLUDE_TRACE2COV \
+                +define+IDV_INCLUDE_TRACE2COV \
+                +define+COVER_BASE_RV64I \
+                +define+COVER_LEVEL_DV_PR_EXT \
+                +incdir+${IMPERAS_HOME}/ImpProprietary/source/host/riscvISACOV/source"
+    set FCvopt "+TRACE2COV_ENABLE=1 +IDV_TRACE2COV=1"
     # Uncomment various cover statements below to control which extensions get functional coverage
-    set FCdefineCOVER_RV64I "+define+COVER_RV64I"
-    #set FCdefineCOVER_RV64M "+define+COVER_RV64M"
-    #set FCdefineCOVER_RV64A "+define+COVER_RV64A"
-    #set FCdefineCOVER_RV64F "+define+COVER_RV64F"
-    #set FCdefineCOVER_RV64D "+define+COVER_RV64D"
-    #set FCdefineCOVER_RV64ZICSR "+define+COVER_RV64ZICSR"
-    #set FCdefineCOVER_RV64C "+define+COVER_RV64C"
-    set FCdefineIDV_INCLUDE_TRACE2COV "+define+IDV_INCLUDE_TRACE2COV"
-    set FCTRACE2COV "+TRACE2COV_ENABLE=1"
-    set FCdefineIDV_TRACE2COV "+IDV_TRACE2COV=1"
-    set lst [lreplace $lst $FunctCoverageIndex $FunctCoverageIndex]
-}\
- 
-set LockStepIndex [lsearch -exact $lst "--lockstep"]
-# ugh.  can't have more than 9 arguments passed to vsim. why? I'll have to remove --lockstep when running
-# functional coverage and imply it.
-if {$LockStepIndex >= 0 || $FunctCoverageIndex >= 0} {
+    lappend FCdefineCOVER_EXTS "+define+COVER_RV64I"
+    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64M"
+    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64A"
+    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64F"
+    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64D"
+    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64ZICSR"
+    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64C"
+
+}
+
+# if --fcov2 found set flag and remove from list
+if {[lcheck lst "--fcov2"]} {
+    set FunctCoverage 1
+    set FCvlog "+define+INCLUDE_TRACE2COV \
+                +define+IDV_INCLUDE_TRACE2COV \
+                +define+COVER_BASE_RV32I \
+                +define+COVER_LEVEL_DV_PR_EXT \
+                +incdir+$env(WALLY)/addins/riscvISACOV/source \
+		+incdir+$env(WALLY)/addins/cvw-arch-verif/fcov/RV32"
+    set FCvopt "+TRACE2COV_ENABLE=1 +IDV_TRACE2COV=1"
+    # Uncomment various cover statements below to control which extensions get functional coverage
+    lappend FCdefineCOVER_EXTS "+define+COVER_RV32I"
+    lappend FCdefineCOVER_EXTS "+define+COVER_RV32M"
+    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64M"
+    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64A"
+    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64F"
+    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64D"
+    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64ZICSR"
+    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64C"
+}
+
+# if --lockstep or --fcov found set flag and remove from list
+if {[lcheck lst "--lockstep"] || $FunctCoverage == 1} {
     set lockstep 1
-
-    # ideally this would all be one or two variables, but questa is having a real hard time
-    # with this.  For now they have to be separate.
-    set lockstepvoptstring "+define+USE_IMPERAS_DV"
-    set ImperasPubInc +incdir+$env(IMPERAS_HOME)/ImpPublic/include/host
-    set ImperasPrivInc +incdir+$env(IMPERAS_HOME)/ImpProprietary/include/host
-    set rvviFiles       $env(IMPERAS_HOME)/ImpPublic/source/host/rvvi/*.sv
-    set idvFiles $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/*.sv
-    set SVLib "-sv_lib"
-    set SVLibPath $env(IMPERAS_HOME)/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model
+    set lockstepvlog "+define+USE_IMPERAS_DV \
+                      +incdir+${IMPERAS_HOME}/ImpPublic/include/host \
+                      +incdir+${IMPERAS_HOME}/ImpProprietary/include/host \
+                      ${IMPERAS_HOME}/ImpPublic/source/host/rvvi/*.sv \
+                      ${IMPERAS_HOME}/ImpProprietary/source/host/idv/*.sv"
+    set SVLib "-sv_lib ${IMPERAS_HOME}/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model"
     #set OtherFlags $::env(OTHERFLAGS)  # not working 7/15/24 dh; this should be the way to pass things like --verbose (Issue 871)
-
-    if {$LockStepIndex >= 0} {
-        set lst [lreplace $lst $LockStepIndex $LockStepIndex]
-    }
 }
 
-
-# separate the +args from the -G parameters
-foreach otherArg $lst {
-    if {[string index $otherArg 0] eq "+"} {
-        lappend PlusArgs $otherArg
-    } else {
-        lappend ParamArgs $otherArg
-    }
+# Set PlusArgs passed using the --args flag
+set PlusArgsIndex [lsearch -exact $lst "--args"]
+if {$PlusArgsIndex >= 0} {
+    set PlusArgs [lindex $lst [expr {$PlusArgsIndex + 1}]]
+    set lst [lreplace $lst $PlusArgsIndex [expr {$PlusArgsIndex + 1}]]
 }
 
+# Set ParamArgs passed using the --params flag and expand into a list of -G<param> arguments
+set ParamArgsIndex [lsearch -exact $lst "--params"]
+if {$ParamArgsIndex >= 0} {
+    set ParamArgs [lindex $lst [expr {$ParamArgsIndex + 1}]]
+    set ParamArgs [regexp -all -inline {\S+} $ParamArgs]
+    foreach param $ParamArgs {
+        lappend ExpandedParamArgs -G$param
+    }
+    set lst [lreplace $lst $ParamArgsIndex [expr {$ParamArgsIndex + 1}]]
+}
+
+# Debug print statements
 if {$DEBUG > 0} {
     echo "GUI = $GUI"
     echo "ccov = $ccov"
@@ -189,41 +195,27 @@ if {$DEBUG > 0} {
     echo "FunctCoverage = $FunctCoverage"
     echo "remaining list = $lst"
     echo "Extra +args = $PlusArgs"
-    echo "Extra -args = $ParamArgs"
+    echo "Extra -args = $ExpandedParamArgs"
 }
-
-foreach x $PlusArgs {
-    echo "Element is $x"
-}
-
-# need a better solution this is really ugly
-# Questa really don't like passing $PlusArgs on the command line to vsim.  It treats the whole things
-# as one string rather than mutliple separate +args.  Is there an automated way to pass these?
-set temp0 [lindex $PlusArgs 0]
-set temp1 [lindex $PlusArgs 1]
-set temp2 [lindex $PlusArgs 2]
-set temp3 [lindex $PlusArgs 3]
-
-#quit
 
 # compile source files
-# suppress spurious warnngs about 
+# suppress spurious warnngs about
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
-
-vlog -lint +nowarnRDGN -suppress 2244 -work ${WKDIR}  +incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared ${lockstepvoptstring} ${FCdefineIDV_INCLUDE_TRACE2COV} ${FCdefineINCLUDE_TRACE2COV} ${ImperasPubInc} ${ImperasPrivInc} ${rvviFiles} ${FCdefineCOVER_BASE_RV64I} ${FCdefineCOVER_LEVEL_DV_PR_EXT} ${FCdefineCOVER_RV64I} ${FCdefineCOVER_RV64M} ${FCdefineCOVER_RV64A} ${FCdefineCOVER_RV64F} ${FCdefineCOVER_RV64D} ${FCdefineCOVER_RV64ZICSR} ${FCdefineCOVER_RV64C} ${FCdefineRVVI_COVERAGE} ${idvFiles}   ${riscvISACOVsrc} ${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv  ${SRC}/*/*.sv ${SRC}/*/*/*.sv +incdir+${FCRVVI}/common +incdir+${FCRVVI} ${WALLY}/addins/verilog-ethernet/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*/*/*.sv -suppress 2244 -suppress 2282 -suppress 2583 -suppress 7063,2596,13286 
+set INC_DIRS "+incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared +incdir+${FCRVVI}/common +incdir+${FCRVVI}"
+set SOURCES "${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv ${SRC}/*/*.sv ${SRC}/*/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*/*/*.sv"
+vlog -lint +nowarnRDGN -work ${WKDIR} {*}${INC_DIRS} {*}${FCvlog} {*}${FCdefineCOVER_EXTS} {*}${lockstepvlog} ${FCdefineRVVI_COVERAGE} {*}${SOURCES} -suppress 2244 -suppress 2282 -suppress 2583 -suppress 7063,2596,13286
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} ${ParamArgs} -o testbenchopt ${CoverageVoptArg}
+vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} {*}${ExpandedParamArgs} -o testbenchopt ${CoverageVoptArg}
 
-#vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${PlusArgs} -fatal 7 ${SVLib} ${SVLibPath} ${OtherFlags} +TRACE2COV_ENABLE=1 -suppress 3829 ${CoverageVsimArg}
-#vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} ${PlusArgs} -fatal 7 ${SVLib} ${SVLibPath} +IDV_TRACE2COV=1 +TRACE2COV_ENABLE=1 -suppress 3829 ${CoverageVsimArg}
-vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} $temp0 $temp1 $temp2 $temp3 -fatal 7 ${SVLib} ${SVLibPath} ${OtherFlags} ${FCTRACE2COV} ${FCdefineIDV_TRACE2COV} -suppress 3829 ${CoverageVsimArg}
+vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} {*}${PlusArgs} -fatal 7 {*}${SVLib} ${OtherFlags} {*}${FCvopt} -suppress 3829 ${CoverageVsimArg}
 
-#    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
 # power add generates the logging necessary for saif generation.
 # power add -r /dut/core/*
+
+# add waveforms if GUI is enabled
 if { ${GUI} } {
     add log -recursive /*
     if { ${TESTBENCH} eq "testbench_fp" } {
@@ -265,4 +257,3 @@ if {$ccov} {
 if { ${GUI} == 0} {
     quit
 }
-
