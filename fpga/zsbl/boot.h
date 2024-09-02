@@ -31,6 +31,7 @@
 #define WALLYBOOT 10000
 
 #include <stdint.h>
+#include "system.h"
 typedef unsigned int    UINT;   /* int must be 16-bit or 32-bit */
 typedef unsigned char   BYTE;   /* char must be 8-bit */
 typedef uint16_t        WORD;   /* 16-bit unsigned integer */
@@ -44,7 +45,7 @@ typedef QWORD LBA_t;
 // These locations are copied from the generic configuration
 // of OpenSBI. These addresses can be found in:
 // buildroot/output/build/opensbi-0.9/platform/generic/config.mk
-#define FDT_ADDRESS 0x87000000          // FW_JUMP_FDT_ADDR
+#define FDT_ADDRESS 0xFF000000          // FW_JUMP_FDT_ADDR
 #define OPENSBI_ADDRESS 0x80000000      // FW_TEXT_START
 #define KERNEL_ADDRESS 0x80200000       // FW_JUMP_ADDR
 
@@ -61,11 +62,12 @@ typedef QWORD LBA_t;
 // Export disk_read
 int disk_read(BYTE * buf, LBA_t sector, UINT count);
 
-#define SYSTEMCLOCK 20000000
+//#define SYSTEMCLOCK 50000000
+// *** fix me: now defined in system.h
 
 // TODO: This line needs to change back to 20MHz when we fix the
 // timing problems.
-#define MAXSDCCLOCK 5000000
+#define MAXSDCCLOCK 12500000
 
 // Maximum SDC speed is either the system clock divided by 2 (because
 // of the SPI peripheral clock division) or the maximum speed an SD

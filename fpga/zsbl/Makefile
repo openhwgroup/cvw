@@ -27,11 +27,16 @@ MABI            :=-mabi=lp64d
 LINK_FLAGS      :=$(MARCH) $(MABI) -nostartfiles -L $(RISCV)/riscv64-unknown-elf/lib
 LINKER		:=linker1000.x
 
+# FGPA parameters
+CLOCK ?= 20000000
+MEMSTART ?= 0x80000000
+MEMSIZE ?=  0x10000000
+
 
 AFLAGS =$(MARCH) $(MABI) -W
 # Override directive allows us to prepend other options on the command line
 # e.g. $ make CFLAGS=-g
-override CFLAGS +=$(MARCH) $(MABI) -mcmodel=medany -O2 -g
+override CFLAGS +=$(MARCH) $(MABI) -mcmodel=medany -O2 -g  -DSYSTEMCLOCK=${CLOCK} -DMEMSTART=${MEMSTART} -DMEMSIZE=${MEMSIZE}
 AS=riscv64-unknown-elf-as
 CC=riscv64-unknown-elf-gcc
 AR=riscv64-unknown-elf-ar
