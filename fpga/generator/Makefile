@@ -7,20 +7,20 @@ all: ArtyA7
 ArtyA7: export XILINX_PART := xc7a100tcsg324-1
 ArtyA7: export XILINX_BOARD := digilentinc.com:arty-a7-100:part0:1.1
 ArtyA7: export board := ArtyA7
+ArtyA7: export SYSTEMCLOCK := 20000000
 ArtyA7: FPGA_Arty
-ArtyA7: SYSTEMCLOCK := 20000000
 
 vcu118: export XILINX_PART := xcvu9p-flga2104-2L-e
 vcu118: export XILINX_BOARD := xilinx.com:vcu118:part0:2.4
 vcu118: export board := vcu118
+vcu118: export SYSTEMCLOCK := 71000000
 vcu118: FPGA_VCU
-vcu118: SYSTEMCLOCK := 71000000
 
 vcu108: export XILINX_PART := xcvu095-ffva2104-2-e
 vcu108: export XILINX_BOARD := xilinx.com:vcu108:part0:1.7
 vcu108: export board := vcu108
+vcu108: export SYSTEMCLOCK := 50000000
 vcu108: FPGA_VCU
-vcu108: SYSTEMCLOCK := 50000000
 
 # variables computed from config
 EXT_MEM_BASE = $(shell grep 'EXT_MEM_BASE' ../../config/deriv/fpga$(board)/config.vh | sed 's/.*=.*h\([[:alnum:]]*\);/0x\1/g')
@@ -72,7 +72,8 @@ PreProcessFiles:
 # build the Zero stage boot loader (ZSBL)
 .PHONE: zsbl
 zsbl:
-	SYSTEMCLOCK = $(SYSTEMCLOCK) $(MAKE) EXT_MEM_BASE = $(EXT_MEM_BASE) EXT_MEM_RANGE = $(EXT_MEM_RANGE) -C ../zsbl 
+	$(MAKE) -C ../zsbl clean
+	SYSTEMCLOCK=$(SYSTEMCLOCK) EXT_MEM_BASE=$(EXT_MEM_BASE) EXT_MEM_RANGE=$(EXT_MEM_RANGE) $(MAKE) -C ../zsbl 
 
 # Generate Individual IP Blocks
 $(dst)/%.log: %.tcl
