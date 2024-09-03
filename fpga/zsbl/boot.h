@@ -64,13 +64,6 @@ typedef QWORD LBA_t;
 // Export disk_read
 int disk_read(BYTE * buf, LBA_t sector, UINT count);
 
-// now defined in system.h
-//#define SYSTEMCLOCK 50000000
-
-// TODO: This line needs to change back to 20MHz when we fix the
-// timing problems.
-#define MAXSDCCLOCK 12500000
-
 // Maximum SDC speed is either the system clock divided by 2 (because
 // of the SPI peripheral clock division) or the maximum speed an SD
 // card can be pushed to.

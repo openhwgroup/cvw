@@ -8,18 +8,21 @@ ArtyA7: export XILINX_PART := xc7a100tcsg324-1
 ArtyA7: export XILINX_BOARD := digilentinc.com:arty-a7-100:part0:1.1
 ArtyA7: export board := ArtyA7
 ArtyA7: export SYSTEMCLOCK := 20000000
+ArtyA7: export MAXSDCCLOCK  :=  5000000
 ArtyA7: FPGA_Arty
 
 vcu118: export XILINX_PART := xcvu9p-flga2104-2L-e
 vcu118: export XILINX_BOARD := xilinx.com:vcu118:part0:2.4
 vcu118: export board := vcu118
 vcu118: export SYSTEMCLOCK := 71000000
+ArtyA7: export MAXSDCLOCK  :=  1000000
 vcu118: FPGA_VCU
 
 vcu108: export XILINX_PART := xcvu095-ffva2104-2-e
 vcu108: export XILINX_BOARD := xilinx.com:vcu108:part0:1.7
 vcu108: export board := vcu108
 vcu108: export SYSTEMCLOCK := 50000000
+ArtyA7: export MAXSDCLOCK  := 12500000
 vcu108: FPGA_VCU
 
 # variables computed from config
