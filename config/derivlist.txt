@@ -65,6 +65,16 @@ EXT_MEM_RANGE       64'h0FFFFFFF
 deriv fpgavcu108 fpga
 EXT_MEM_RANGE       64'h7FFFFFFF
 
+# temporary spitest configuration
+deriv spitest rv64gc
+UNCORE_RAM_RANGE    64'h0FFFFFFF
+SPI_LOOPBACK_TEST   1
+UART_PRESCALE       32'd0
+PLIC_NUM_SRC        32'd53
+SDC_SUPPORTED       1
+PLIC_SDC_ID         32'd20
+BPRED_SIZE          32'd12
+
 # The syn configurations are trimmed down for faster synthesis.  
 deriv   syn_rv32e       rv32e
 DTIM_RANGE              64'h1FF
