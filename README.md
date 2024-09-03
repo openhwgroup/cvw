@@ -222,3 +222,4 @@ Run lockstep against ImperasDV with directory file.
 Run lockstep against ImperasDV with directory file and specify specific extension.
 
 	wsim rv64gc ../../tests/riscof/work/riscv-arch-test/rv64i_m/I/src/ --lockstep --elfext ref.elf
+
