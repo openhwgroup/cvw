@@ -7,7 +7,7 @@ set SYSTEMCLOCK $::env(SYSTEMCLOCK)
 
 set ipName ddr4
 
-set SYSTEMCLOCK_MHz [expr $SYSTEMCLOCK/1000000.0]
+set SYSTEMCLOCK_MHz [expr $SYSTEMCLOCK/1000000]
 
 create_project $ipName . -force -part $partNumber
 set_property board_part $boardName [current_project]
