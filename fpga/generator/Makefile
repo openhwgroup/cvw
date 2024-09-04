@@ -73,7 +73,7 @@ PreProcessFiles:
 	sed -i 's/$$WALLY/\.\.\/\.\.\/\.\.\//g' ../src/CopiedFiles_do_not_add_to_repo/generic/mem/ram1p1rwbe.sv
 
 # build the Zero stage boot loader (ZSBL)
-.PHONE: zsbl
+.PHONY: zsbl
 zsbl:
 	$(MAKE) -C ../zsbl clean
 	SYSTEMCLOCK=$(SYSTEMCLOCK) EXT_MEM_BASE=$(EXT_MEM_BASE) EXT_MEM_RANGE=$(EXT_MEM_RANGE) $(MAKE) -C ../zsbl 
