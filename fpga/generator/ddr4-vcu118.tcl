@@ -1,10 +1,13 @@
 
 set partNumber $::env(XILINX_PART)
 set boardName $::env(XILINX_BOARD)
+set SYSTEMCLOCK $::env(SYSTEMCLOCK)
 #set partNumber xcvu9p-flga2104-2L-e
 #set boardName  xilinx.com:vcu118:part0:2.4
 
 set ipName ddr4
+
+set SYSTEMCLOCK_MHz [expr $SYSTEMCLOCK/1000000.0]
 
 create_project $ipName . -force -part $partNumber
 set_property board_part $boardName [current_project]
@@ -38,7 +41,7 @@ set_property -dict [list CONFIG.C0.ControllerType {DDR4_SDRAM} \
 			CONFIG.C0.DDR4_AxiNarrowBurst {false} \
 			CONFIG.Reference_Clock {Differential} \
 			CONFIG.ADDN_UI_CLKOUT1.INSERT_VIP {0} \
-			CONFIG.ADDN_UI_CLKOUT1_FREQ_HZ {71} \
+			CONFIG.ADDN_UI_CLKOUT1_FREQ_HZ $SYSTEMCLOCK_MHz \
 			CONFIG.ADDN_UI_CLKOUT2.INSERT_VIP {0} \
 			CONFIG.ADDN_UI_CLKOUT2_FREQ_HZ {300} \
 			CONFIG.ADDN_UI_CLKOUT3.INSERT_VIP {0} \

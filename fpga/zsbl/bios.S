@@ -1,5 +1,6 @@
-PERIOD = 11000000
-#PERIOD = 20
+#include "system.h"
+
+PERIOD = (SYSTEMCLOCK / 2)
 
 .section .init
 .global _start
@@ -47,10 +48,10 @@ _start:
 
 
 	# set the stack pointer to the top of memory - 8 bytes (pointer size)
-	li sp, 0x87FFFFF8
+	li sp, (EXT_MEM_END - 8)
 
 	li a0, 0x00000000
-	li a1, 0x80000000
+	li a1, EXT_MEM_BASE
 	#li a2, 128*1024*1024/512 # copy 128MB
 	li a2, 127*1024*1024/512 # copy 127MB upper 1MB contains the return address (ra)
 	#li a2, 800 # copy 400KB
@@ -88,9 +89,9 @@ delay2:
 
 jumpToLinux:	
 	csrrs	a0, 0xF14, x0   # copy hart ID to a0
-	li	a1, 0x87000000  # end of memory? not 100% sure on this but it's 112MB
+	li	a1, FDT_ADDRESS  # This is the device tree address
 	la	a2, end_of_bios
-	li	t0, 0x80000000  # start of code
+	li	t0, EXT_MEM_BASE  # start of code
 	
 	jalr	x0, t0, 0
 
