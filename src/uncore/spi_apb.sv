@@ -152,8 +152,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     logic SCLKenableEarly;                          // SCLKenable 1 PCLK cycle early, needed for on time register changes when ChipSelectMode is hold and Delay1[15:8] (InterXFR delay) is 0
 
 
-
-
+    logic	  ReceiveFiFoTakingData;
 
     // APB access
     assign Entry = {PADDR[7:2],2'b00};  //  32-bit word-aligned accesses
