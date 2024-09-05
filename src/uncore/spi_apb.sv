@@ -99,6 +99,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     /* verilator lint_off UNDRIVEN */
     logic [7:0] ReceiveShiftRegEndian;              // Reverses ReceiveShiftReg if Format[2] set (little endian transmission)
     rsrstatetype ReceiveState;
+    logic ReceiveFiFoTakingData;
 
     // Transmission signals
     logic ZeroDiv;                                  // High when SckDiv is 0
@@ -313,7 +314,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
         if (~PRESETn) ReceiveShiftFullDelay <= 1'b0;
         else if (SCLKenable) ReceiveShiftFullDelay <= ReceiveShiftFull;
 
-  assign ReceiveFiFoTakingData = ReceiveFiFoWriteInc & ~ReceiveFIFOWriteFull;
+    assign ReceiveFiFoTakingData = ReceiveFiFoWriteInc & ~ReceiveFIFOWriteFull;
   
     always_ff @(posedge PCLK)
         if (~PRESETn) ReceiveFiFoWriteInc <= 1'b0;
