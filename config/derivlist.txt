@@ -54,7 +54,23 @@ UNCORE_RAM_RANGE    64'h1FFF
 BOOTROM_RANGE       64'hFFF
 EXT_MEM_SUPPORTED   1
 EXT_MEM_BASE        64'h80000000
+EXT_MEM_RANGE       64'h7FFFFFFF
+SDC_SUPPORTED       1
+PLIC_SDC_ID         32'd20
+BPRED_SIZE          32'd12
+
+deriv fpgaArtyA7 fpga
 EXT_MEM_RANGE       64'h0FFFFFFF
+
+deriv fpgavcu108 fpga
+EXT_MEM_RANGE       64'h7FFFFFFF
+
+# temporary spitest configuration
+deriv spitest rv64gc
+UNCORE_RAM_RANGE    64'h0FFFFFFF
+SPI_LOOPBACK_TEST   1
+UART_PRESCALE       32'd0
+PLIC_NUM_SRC        32'd53
 SDC_SUPPORTED       1
 PLIC_SDC_ID         32'd20
 BPRED_SIZE          32'd12
