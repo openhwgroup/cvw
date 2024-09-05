@@ -90,6 +90,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     logic TransmitWriteMark, TransmitReadMark, RecieveWriteMark, RecieveReadMark; 
     logic TransmitFIFOWriteFull, TransmitFIFOReadEmpty;
     logic TransmitFIFOWriteIncrement;
+    logic ReceiveFiFoWriteInc;
     logic ReceiveFIFOReadIncrement;
     logic ReceiveFIFOWriteFull, ReceiveFIFOReadEmpty;
     logic [7:0] TransmitFIFOReadData;
@@ -301,7 +302,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     // Tx/Rx FIFOs
     spi_fifo #(3,8) txFIFO(PCLK, 1'b1, SCLKenable, PRESETn, TransmitFIFOWriteIncrement, TransmitFIFOReadIncrement, TransmitData[7:0], TransmitWriteWatermarkLevel, TransmitWatermark[2:0],
                             TransmitFIFOReadData[7:0], TransmitFIFOWriteFull, TransmitFIFOReadEmpty, TransmitWriteMark, TransmitReadMark);
-    spi_fifo #(3,8) rxFIFO(PCLK, SCLKenable, 1'b1, PRESETn, ReceiveShiftFullDelay, ReceiveFIFOReadIncrement, ReceiveShiftRegEndian, ReceiveWatermark[2:0], ReceiveReadWatermarkLevel, 
+    spi_fifo #(3,8) rxFIFO(PCLK, SCLKenable, 1'b1, PRESETn, ReceiveFiFoWriteInc, ReceiveFIFOReadIncrement, ReceiveShiftRegEndian, ReceiveWatermark[2:0], ReceiveReadWatermarkLevel, 
                             ReceiveData[7:0], ReceiveFIFOWriteFull, ReceiveFIFOReadEmpty, RecieveWriteMark, RecieveReadMark);
 
     always_ff @(posedge PCLK)
@@ -311,6 +312,13 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     always_ff @(posedge PCLK)
         if (~PRESETn) ReceiveShiftFullDelay <= 1'b0;
         else if (SCLKenable) ReceiveShiftFullDelay <= ReceiveShiftFull;
+
+  assign ReceiveFiFoTakingData = ReceiveFiFoWriteInc & ~ReceiveFIFOWriteFull;
+  
+    always_ff @(posedge PCLK)
+        if (~PRESETn) ReceiveFiFoWriteInc <= 1'b0;
+        else if (SCLKenable & ReceiveShiftFull) ReceiveFiFoWriteInc <= 1'b1;
+        else if (SCLKenable & ReceiveFiFoTakingData) ReceiveFiFoWriteInc <= 1'b0;
     always_ff @(posedge PCLK)
         if (~PRESETn) ReceiveShiftFullDelayPCLK <= 1'b0;
         else if (SCLKenableEarly) ReceiveShiftFullDelayPCLK <= ReceiveShiftFull; 
