@@ -546,8 +546,8 @@ def main():
     if args.ccov:
        os.system('make QuestaCodeCoverage')
     if args.fcov:
-       os.system('make QuestaFunctCoverage')
-       os.system('make -f "+WALLY+"/addins/cvw-arch-verif/Makefile merge')
+       #os.system('make QuestaFunctCoverage')
+       os.system('make -f '+WALLY+'/addins/cvw-arch-verif/Makefile merge')
     if args.fcovrvvi:
         os.system('make QuestaFunctCoverageRvvi')
     # Count the number of failures
