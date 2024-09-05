@@ -99,6 +99,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     /* verilator lint_off UNDRIVEN */
     logic [7:0] ReceiveShiftRegEndian;              // Reverses ReceiveShiftReg if Format[2] set (little endian transmission)
     rsrstatetype ReceiveState;
+    logic	  ReceiveFiFoTakingData;
 
     // Transmission signals
     logic ZeroDiv;                                  // High when SckDiv is 0
@@ -152,7 +153,6 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     logic SCLKenableEarly;                          // SCLKenable 1 PCLK cycle early, needed for on time register changes when ChipSelectMode is hold and Delay1[15:8] (InterXFR delay) is 0
 
 
-    logic	  ReceiveFiFoTakingData;
 
     // APB access
     assign Entry = {PADDR[7:2],2'b00};  //  32-bit word-aligned accesses
