@@ -232,8 +232,8 @@ bpredtests = [
 # list of tests not supported by ImperasDV yet that should be waived during lockstep testing
 lockstepwaivers = [
     "WALLY-q-01.S_ref.elf",     # Q extension is not supported by ImperasDV
-    "WALLY-cbom-01.S_ref.elf",  # cbom extension is not supported by ImperasDV because there is no cache model in ImperasDV
-    "coverage_ieu.elf"          # Issue 881: ImperasDV misinterprets 0x6BF05013 as a grevi rather than an illegal instruction
+    "WALLY-cbom-01.S_ref.elf" #,  # cbom extension is not supported by ImperasDV because there is no cache model in ImperasDV
+#    "coverage_ieu.elf"          # Issue 881: ImperasDV misinterprets 0x6BF05013 as a grevi rather than an illegal instruction
 ]
 
 ##################################
@@ -408,7 +408,8 @@ if (args.ccov):  # only run RV64GC tests on Questa in code coverage mode
     if (args.fp):
         addTests(tests64gc_fp, coveragesim)
 elif (args.fcov):  # only run RV64GC tests on Questa in lockstep in functional coverage mode
-    addLockstepTestsByDir(WALLY+"/tests/functcov/rv64/I", "rv64gc", coveragesim)
+#    addLockstepTestsByDir(WALLY+"/tests/functcov/rv64/I", "rv64gc", coveragesim)
+    addLockstepTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/rv32/I", "rv32gc", coveragesim)
 elif (args.fcovrvvi):  # only run RV64GC tests on Questa in rvvi coverage mode
     addTests(tests64gc_nofp, coveragesim)
     if (args.fp):

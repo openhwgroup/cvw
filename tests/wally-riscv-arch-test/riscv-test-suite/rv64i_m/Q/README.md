@@ -8,7 +8,7 @@ This folder consists of all the required files and tools to generate Q tests for
 
 NOTE : Only some of the IBM tests are currently supporting Quad testing. 
 
-Tests which are working : ibm1, ibm9,ibm21,ibm23,ibm24,ibm25,ibm26,ibm27,ibm28,ibm29
+Tests which are implemented in riscv-isac/riscv_isac/fp_dataset.py  : ibm1, ibm9,ibm21,ibm23,ibm24,ibm25,ibm26,ibm27,ibm28,ibm29
 These ibm tests can be included in the riscv-ctg tests generation command, along with riscof.
 
 The tests which are currently breaking due to overflow errors are : ibm2,ibm3,ibm4,ibm5,ibm6,ibm7,ibm8,ibm10,ibm11,ibm12,ibm13,ibm14,ibm15,ibm16,ibm17,ibm18,ibm19,ibm20,ibm22
@@ -26,7 +26,7 @@ TO DO:
     Debug why fadd.q_b1 doesn't match Sail vs. Spike
     Run the q test on Wally RTL
     Make more tests from the working datasets
-    Get other datasets working by using softfloat to do quad math
+    Get other fp_dataset.py datasets working by using softfloat to do quad math
     Push changes back to riscv-ctg and riscv-isac and remove them from wally-riscv-arch/tsts/riscv-test-suite/rv64i_m/Q
 
 
