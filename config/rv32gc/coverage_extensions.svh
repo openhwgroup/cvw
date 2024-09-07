@@ -6,5 +6,4 @@
 // It defines which extensions are enabled for that config.
 
 `define COVER_BASE_RV32I
-
 `include "coverage/RV32I_coverage.svh"
