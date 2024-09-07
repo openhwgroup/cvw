@@ -150,12 +150,6 @@ if {[lcheck lst "--fcov"]} {
     # Uncomment various cover statements below to control which extensions get functional coverage
     lappend FCdefineCOVER_EXTS "+define+COVER_RV32I"
     lappend FCdefineCOVER_EXTS "+define+COVER_RV32M"
-    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64M"
-    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64A"
-    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64F"
-    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64D"
-    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64ZICSR"
-    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64C"
 }
 
 # if --lockstep or --fcov found set flag and remove from list
