@@ -292,7 +292,10 @@ def addTests(tests, sim):
 
 def addLockstepTestsByDir(dir, config, sim):
     sim_logdir = WALLY+ "/sim/" + sim + "/logs/"
-    cmdPrefix="wsim --lockstep --sim " + sim + " " + coverStr + " " + config
+    if (coverStr != ""): # use --fcov in place of --lockstep
+        cmdPrefix="wsim --sim " + sim + " " + coverStr + " " + config
+    else:
+        cmdPrefix="wsim --lockstep --sim " + sim + " " + config
     if (os.path.isdir(dir)): 
         for dirpath, dirnames, filenames in os.walk(os.path.abspath(dir)):
             for file in filenames:

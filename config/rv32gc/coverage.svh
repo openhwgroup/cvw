@@ -1,4 +1,4 @@
-// coverage_extensions.svh
+// coverage.svh
 // David_Harris@hmc.edu 7 September 2024
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
@@ -7,5 +7,7 @@
 
 `define COVER_RV32I
 `define COVER_RV32M
+`define COVER_RV32F
 `include "coverage/RV32I_coverage.svh"
 `include "coverage/RV32M_coverage.svh"
+`include "coverage/RV32F_coverage.svh"
