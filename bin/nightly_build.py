@@ -751,8 +751,7 @@ def main():
         # Compile Linux for local testing
         test_runner.set_env_var("RISCV",str(test_runner.cvw))
         linux_path = test_runner.cvw / "linux"
-        test_runner.execute_makefile(target = "all_nosudo", makefile_path=linux_path)
-        test_runner.execute_makefile(target = "dumptvs_nosudo", makefile_path=linux_path)
+        test_runner.execute_makefile(target = "all", makefile_path=linux_path)
 
     #############################################
     #               RUN TESTS                   #
