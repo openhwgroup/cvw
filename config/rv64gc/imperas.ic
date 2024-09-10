@@ -107,11 +107,5 @@
 #-override  refRoot/cpu/cv/cover=basic
 #-override  refRoot/cpu/cv/extensions=RV32I
 
-# Add Imperas simulator application instruction tracing
-# uncomment these to provide tracing
-#--verbose --trace --tracechange --traceshowicount --tracemode -tracemem ASX --monitornetschange # --traceafter 300000000
-#--override cpu/debugflags=6 --override cpu/verbose=1
-#--override cpu/show_c_prefix=T
-
 # Store simulator output to logfile
 --output imperas.log
