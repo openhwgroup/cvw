@@ -27,8 +27,8 @@ parser.add_argument("--sim", "-s", help="Simulator", choices=["questa", "verilat
 parser.add_argument("--tb", "-t", help="Testbench", choices=["testbench", "testbench_fp"], default="testbench")
 parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true")
 parser.add_argument("--ccov", "-c", help="Code Coverage", action="store_true")
-parser.add_argument("--fcov", "-f", help="Functional Coverage, implies lockstep", action="store_true")
-parser.add_argument("--fcov2", "-f2", help="Functional Coverage, implies lockstep", action="store_true")
+parser.add_argument("--fcovimp", "-f2", help="Functional Coverage with Imperas licensed riscvISACOV, implies lockstep", action="store_true")
+parser.add_argument("--fcov", "-f", help="Functional Coverage with cvw-arch-verif, implies lockstep", action="store_true")
 parser.add_argument("--fcovrvvi", "-fr", help="Functional Coverage RVVI", action="store_true")
 parser.add_argument("--args", "-a", help="Optional arguments passed to simulator via $value$plusargs", default="")
 parser.add_argument("--params", "-p", help="Optional top-level parameter overrides of the form param=value", default="")
@@ -69,7 +69,7 @@ if(args.testsuite.endswith('.elf') and args.elf == ""): # No --elf argument; che
 
 
 # Validate arguments
-if (args.gui or args.ccov or args.fcov or args.fcov2 or args.fcovrvvi or args.lockstep or args.lockstepverbose):
+if (args.gui or args.ccov or args.fcov or args.fcovimp or args.fcovrvvi or args.lockstep or args.lockstepverbose):
     if args.sim not in ["questa", "vcs"]:
         print("Option only supported for Questa and VCS")
         exit(1)
@@ -86,7 +86,7 @@ if (args.tb == "testbench_fp"):
 # if lockstep is enabled, then we need to pass the Imperas lockstep arguments
 if(int(args.locksteplog) >= 1): EnableLog = 1
 else: EnableLog = 0
-if((args.lockstep or args.lockstepverbose or args.fcov or args.fcov2) and args.sim == "questa"):
+if((args.lockstep or args.lockstepverbose or args.fcov or args.fcovimp) and args.sim == "questa"):
     prefix = "IMPERAS_TOOLS=" + WALLY + "/config/"+args.config+"/imperas.ic"
     prefix = "MTI_VCO_MODE=64 " + prefix
 else:
@@ -95,13 +95,13 @@ else:
 if (args.lockstep or args.lockstepverbose):
     if(args.locksteplog != 0): ImperasPlusArgs = " +IDV_TRACE2LOG=" + str(EnableLog) + " +IDV_TRACE2LOG_AFTER=" + str(args.locksteplog) 
     else: ImperasPlusArgs = ""
-    if(args.fcov):
+    if(args.fcovimp):
         CovEnableStr = "1" if int(args.covlog) > 0  else "0"
         if(args.covlog >= 1): EnableLog = 1
         else: EnableLog = 0
         ImperasPlusArgs = " +IDV_TRACE2COV=" + str(EnableLog) + " +TRACE2LOG_AFTER=" + str(args.covlog) + " +TRACE2COV_ENABLE=" + CovEnableStr
         suffix = ""
-    if(args.fcov2):
+    if(args.fcov):
         CovEnableStr = "1" if int(args.covlog) > 0  else "0";
         if(args.covlog >= 1): EnableLog = 1
         else: EnableLog = 0
@@ -124,8 +124,8 @@ if (args.ccov):
     flags += " --ccov"
 if (args.fcov):
     flags += " --fcov"
-if (args.fcov2):
-    flags += " --fcov2"
+if (args.fcovimp):
+    flags += " --fcovimp"
 if (args.fcovrvvi):
     flags += "--fcovrvvi"
 

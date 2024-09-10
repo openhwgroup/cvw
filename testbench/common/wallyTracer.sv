@@ -52,7 +52,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   logic [NUMREGS-1:0] 			 rf_wb;
   logic [4:0] 					 rf_a3;
   logic 						 rf_we3;
-  logic [P.XLEN-1:0] 			 frf[32];
+  logic [P.FLEN-1:0] 			 frf[32];
   logic [`NUM_REGS-1:0] 		 frf_wb;
   logic [4:0] 					 frf_a4;
   logic 						 frf_we4;
