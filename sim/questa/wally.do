@@ -73,7 +73,6 @@ set FCdefineCOVER_EXTS {}
 set lockstep 0
 set lockstepvlog ""
 set SVLib ""
-set OtherFlags ""
 
 set GUI 0
 set accFlag ""
