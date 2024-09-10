@@ -138,6 +138,7 @@ if {[lcheck lst "--fcovimp"]} {
 # if --fcov found set flag and remove from list
 if {[lcheck lst "--fcov"]} {
     set FunctCoverage 1
+    # COVER_BASE_RV32I is just needed to keep riscvISACOV happy, but no longer affects tests
     set FCvlog "+define+INCLUDE_TRACE2COV \
                 +define+IDV_INCLUDE_TRACE2COV \
                 +define+COVER_BASE_RV32I \
@@ -192,7 +193,7 @@ if {$DEBUG > 0} {
 # suppress spurious warnngs about
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
-set INC_DIRS "+incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared +incdir+${FCRVVI} +incdir+${FCRVVI}/rv32 +incdir+${FCRVVI}/common +incdir+${FCRVVI}"
+set INC_DIRS "+incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared +incdir+${FCRVVI} +incdir+${FCRVVI}/rv32 +incdir+${FCRVVI}/rv64 +incdir+${FCRVVI}/common +incdir+${FCRVVI}"
 set SOURCES "${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv ${SRC}/*/*.sv ${SRC}/*/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*/*/*.sv"
 vlog -lint +nowarnRDGN -work ${WKDIR} {*}${INC_DIRS} {*}${FCvlog} {*}${FCdefineCOVER_EXTS} {*}${lockstepvlog} ${FCdefineRVVI_COVERAGE} {*}${SOURCES} -suppress 2244 -suppress 2282 -suppress 2583 -suppress 7063,2596,13286
 

@@ -411,8 +411,8 @@ if (args.ccov):  # only run RV64GC tests on Questa in code coverage mode
     if (args.fp):
         addTests(tests64gc_fp, coveragesim)
 elif (args.fcov):  # only run RV64GC tests on Questa in lockstep in functional coverage mode
-#    addLockstepTestsByDir(WALLY+"/tests/functcov/rv64/I", "rv64gc", coveragesim)
     addLockstepTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/rv32/I", "rv32gc", coveragesim)
+#    addLockstepTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/rv64/I", "rv64gc", coveragesim)
 elif (args.fcovrvvi):  # only run RV64GC tests on Questa in rvvi coverage mode
     addTests(tests64gc_nofp, coveragesim)
     if (args.fp):
