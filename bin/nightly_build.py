@@ -794,8 +794,8 @@ def main():
     logger.info(f"The total sucesses for all tests ran are: {total_number_success}")
     logger.info(f"The total failures for all tests ran are: {total_number_failures}")
 
-    # Copy actual test logs from sim/questa, sim/verilator
-    test_runner.copy_sim_logs([test_runner.cvw / "sim/questa/logs", test_runner.cvw / "sim/verilator/logs"])
+    # Copy actual test logs from sim/questa, sim/verilator, sim/vcs
+    test_runner.copy_sim_logs([test_runner.cvw / "sim/questa/logs", test_runner.cvw / "sim/verilator/logs", test_runner.cvw / "sim/vcs/logs"])
 
     #############################################
     #               FORMAT TESTS                #
