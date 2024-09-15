@@ -2,21 +2,21 @@
 SHELL := /bin/bash
 
 TESTFLOAT_DIR := ${WALLY}/addins/TestFloat-3e/build/Linux-x86_64-GCC
-TESTFLOAT_GEN_CMD := ${TESTFLOAT_DIR}/testfloat_gen -tininessafter -level
+TESTFLOAT_GEN_CMD := ${TESTFLOAT_DIR}/testfloat_gen -tininessafter
 
 # List of testvectors to generate. Each rounding mode will be generated for each test.
-convert := ui32_to_f16 ui32_to_f32 ui32_to_f64 ui32_to_f128 \
-         ui64_to_f16 ui64_to_f32 ui64_to_f64 ui64_to_f128 \
-				 i32_to_f16 i32_to_f32 i32_to_f64 i32_to_f128 \
-				 i64_to_f16 i64_to_f32 i64_to_f64 i64_to_f128 \
-				 f16_to_ui32 f32_to_ui32 f64_to_ui32 f128_to_ui32 \
-				 f16_to_ui64 f32_to_ui64 f64_to_ui64 f128_to_ui64 \
-				 f16_to_i32 f32_to_i32 f64_to_i32 f128_to_i32 \
-				 f16_to_i64 f32_to_i64 f64_to_i64 f128_to_i64 \
-				 f16_to_f32 f16_to_f64 f16_to_f128 \
-				 f32_to_f16 f32_to_f64 f32_to_f128 \
-				 f64_to_f16 f64_to_f32 f64_to_f128 \
-				 f128_to_f16 f128_to_f32 f128_to_f64
+cvtint := ui32_to_f16 ui32_to_f32 ui32_to_f64 ui32_to_f128 \
+          ui64_to_f16 ui64_to_f32 ui64_to_f64 ui64_to_f128 \
+          i32_to_f16 i32_to_f32 i32_to_f64 i32_to_f128 \
+          i64_to_f16 i64_to_f32 i64_to_f64 i64_to_f128 \
+          f16_to_ui32 f32_to_ui32 f64_to_ui32 f128_to_ui32 \
+          f16_to_ui64 f32_to_ui64 f64_to_ui64 f128_to_ui64
+cvtfp := f16_to_i32 f32_to_i32 f64_to_i32 f128_to_i32 \
+         f16_to_i64 f32_to_i64 f64_to_i64 f128_to_i64 \
+         f16_to_f32 f16_to_f64 f16_to_f128 \
+         f32_to_f16 f32_to_f64 f32_to_f128 \
+         f64_to_f16 f64_to_f32 f64_to_f128 \
+         f128_to_f16 f128_to_f32 f128_to_f64
 add := f16_add f32_add f64_add f128_add
 sub := f16_sub f32_sub f64_sub f128_sub
 mul := f16_mul f32_mul f64_mul f128_mul
@@ -27,11 +27,23 @@ le := f16_le f32_le f64_le f128_le
 lt := f16_lt f32_lt f64_lt f128_lt
 mulAdd := f16_mulAdd f32_mulAdd f64_mulAdd f128_mulAdd
 
-tests := $(convert) $(add) $(sub) $(mul) $(div) $(sqrt) $(eq) $(le) $(lt) $(mulAdd)
+tests := $(cvtfp) $(cvtint) $(add) $(sub) $(mul) $(div) $(sqrt) $(eq) $(le) $(lt) $(mulAdd)
 
+# Set rounding modes and extensions
+rne: ROUND_MODE := rnear_even
+rne: ROUND_EXT  := rne
+rz: ROUND_MODE  := rminMag
+rz: ROUND_EXT   := rz
+ru: ROUND_MODE  := rmax
+ru: ROUND_EXT   := ru
+rd: ROUND_MODE  := rmin
+rd: ROUND_EXT   := rd
+rnm: ROUND_MODE := rnear_maxMag
+rnm: ROUND_EXT  := rnm
 
 .PHONY: all rne rz ru rd rnm clean
 
+# Generate all test vectors
 all: rne rz ru rd rnm
 
 # Generate test vectors for each rounding mode
@@ -41,35 +53,12 @@ ru: $(addsuffix _ru.tv, $(tests))
 rd: $(addsuffix _rd.tv, $(tests))
 rnm: $(addsuffix _rnm.tv, $(tests))
 
-# Rules to generate individual test vectors, broken up by rounding mode
-%_rne.tv: ${TESTFLOAT_GEN}
-	@echo Creating $*_rne.tv vectors
+# Rule to generate individual test vectors
+%.tv: ${TESTFLOAT_GEN}
+	@echo Creating $@ vectors
 	@if [[ "$*" =~ "to" ]] || [[ "$*" =~ "sqrt" ]] ; then level=2 ; else level=1 ; fi ; \
-	${TESTFLOAT_GEN_CMD} $$level -rnear_even $* > $@
-	@sed -i 's/ /_/g' $@
-
-%_rz.tv: ${TESTFLOAT_GEN}
-	@echo Creating $*_rz.tv vectors
-	@if [[ "$*" =~ "to" ]] || [[ "$*" =~ "sqrt" ]] ; then level=2 ; else level=1 ; fi ; \
-	${TESTFLOAT_GEN_CMD} $$level -rminMag $* > $@
-	@sed -i 's/ /_/g' $@
-
-%_ru.tv: ${TESTFLOAT_GEN}
-	@echo Creating $*_ru.tv vectors
-	@if [[ "$*" =~ "to" ]] || [[ "$*" =~ "sqrt" ]] ; then level=2 ; else level=1 ; fi ; \
-	${TESTFLOAT_GEN_CMD} $$level -rmax $* > $@
-	@sed -i 's/ /_/g' $@
-
-%_rd.tv: ${TESTFLOAT_GEN}
-	@echo Creating $*_rd.tv vectors
-	@if [[ "$*" =~ "to" ]] || [[ "$*" =~ "sqrt" ]] ; then level=2 ; else level=1 ; fi ; \
-	${TESTFLOAT_GEN_CMD} $$level -rmin $* > $@
-	@sed -i 's/ /_/g' $@
-
-%_rnm.tv: ${TESTFLOAT_GEN}
-	@echo Creating $*_rnm.tv vectors
-	@if [[ "$*" =~ "to" ]] || [[ "$*" =~ "sqrt" ]] ; then level=2 ; else level=1 ; fi ; \
-	${TESTFLOAT_GEN_CMD} $$level -rnear_maxMag $* > $@
+	if [[ "$*" =~ "to_i" ]] || [[ "$*" =~ "to_u" ]] ; then exact="-exact" ; else exact="" ; fi ; \
+	${TESTFLOAT_GEN_CMD} -level $$level $$exact -$(ROUND_MODE) $(patsubst %_$(ROUND_EXT).tv, %, $@) > $@
 	@sed -i 's/ /_/g' $@
 
 # Generate TestFloat first if necessary
