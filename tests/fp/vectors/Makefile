@@ -27,7 +27,7 @@ le := f16_le f32_le f64_le f128_le
 lt := f16_lt f32_lt f64_lt f128_lt
 mulAdd := f16_mulAdd f32_mulAdd f64_mulAdd f128_mulAdd
 
-tests := $(convert) $(add) $(sub) $(mul) $(div) $(sqrt) $(eq) $(le) $(lt) $(mulAdd)
+tests := $(cvtfp) $(cvtint) $(add) $(sub) $(mul) $(div) $(sqrt) $(eq) $(le) $(lt) $(mulAdd)
 
 
 .PHONY: all rne rz ru rd rnm clean
@@ -45,31 +45,36 @@ rnm: $(addsuffix _rnm.tv, $(tests))
 %_rne.tv: ${TESTFLOAT_GEN}
 	@echo Creating $*_rne.tv vectors
 	@if [[ "$*" =~ "to" ]] || [[ "$*" =~ "sqrt" ]] ; then level=2 ; else level=1 ; fi ; \
-	${TESTFLOAT_GEN_CMD} $$level -rnear_even $* > $@
+	if [[ "$*" =~ "to_i" ]] || [[ "$*" =~ "to_u" ]] ; then exact="-exact" ; else exact="" ; fi ; \
+	${TESTFLOAT_GEN_CMD} $$level $$exact -rnear_even $* > $@
 	@sed -i 's/ /_/g' $@
 
 %_rz.tv: ${TESTFLOAT_GEN}
 	@echo Creating $*_rz.tv vectors
 	@if [[ "$*" =~ "to" ]] || [[ "$*" =~ "sqrt" ]] ; then level=2 ; else level=1 ; fi ; \
-	${TESTFLOAT_GEN_CMD} $$level -rminMag $* > $@
+	if [[ "$*" =~ "to_i" ]] || [[ "$*" =~ "to_u" ]] ; then exact="-exact" ; else exact="" ; fi ; \
+	${TESTFLOAT_GEN_CMD} $$level $$exact -rminMag $* > $@
 	@sed -i 's/ /_/g' $@
 
 %_ru.tv: ${TESTFLOAT_GEN}
 	@echo Creating $*_ru.tv vectors
 	@if [[ "$*" =~ "to" ]] || [[ "$*" =~ "sqrt" ]] ; then level=2 ; else level=1 ; fi ; \
-	${TESTFLOAT_GEN_CMD} $$level -rmax $* > $@
+	if [[ "$*" =~ "to_i" ]] || [[ "$*" =~ "to_u" ]] ; then exact="-exact" ; else exact="" ; fi ; \
+	${TESTFLOAT_GEN_CMD} $$level $$exact -rmax $* > $@
 	@sed -i 's/ /_/g' $@
 
 %_rd.tv: ${TESTFLOAT_GEN}
 	@echo Creating $*_rd.tv vectors
 	@if [[ "$*" =~ "to" ]] || [[ "$*" =~ "sqrt" ]] ; then level=2 ; else level=1 ; fi ; \
-	${TESTFLOAT_GEN_CMD} $$level -rmin $* > $@
+	if [[ "$*" =~ "to_i" ]] || [[ "$*" =~ "to_u" ]] ; then exact="-exact" ; else exact="" ; fi ; \
+	${TESTFLOAT_GEN_CMD} $$level $$exact -rmin $* > $@
 	@sed -i 's/ /_/g' $@
 
 %_rnm.tv: ${TESTFLOAT_GEN}
 	@echo Creating $*_rnm.tv vectors
 	@if [[ "$*" =~ "to" ]] || [[ "$*" =~ "sqrt" ]] ; then level=2 ; else level=1 ; fi ; \
-	${TESTFLOAT_GEN_CMD} $$level -rnear_maxMag $* > $@
+	if [[ "$*" =~ "to_i" ]] || [[ "$*" =~ "to_u" ]] ; then exact="-exact" ; else exact="" ; fi ; \
+	${TESTFLOAT_GEN_CMD} $$level $$exact -rnear_maxMag $* > $@
 	@sed -i 's/ /_/g' $@
 
 # Generate TestFloat first if necessary
