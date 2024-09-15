@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 SOFTFLOAT_DIR := ${WALLY}/addins/berkeley-softfloat-3/build/Linux-x86_64-GCC
-TESTFLOAT_DIR := ${WALLY}/addins/TestFloat-3e/build/Linux-x86_64-GCC
+TESTFLOAT_DIR := ${WALLY}/addins/berkeley-testfloat-3/build/Linux-x86_64-GCC
 
 .PHONY: all softfloat testfloat vectors combined_IF_vectors clean
 

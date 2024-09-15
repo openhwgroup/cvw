@@ -1,7 +1,7 @@
 .DELETE_ON_ERROR:
 SHELL := /bin/bash
 
-TESTFLOAT_DIR := ${WALLY}/addins/TestFloat-3e/build/Linux-x86_64-GCC
+TESTFLOAT_DIR := ${WALLY}/addins/berkeley-testfloat-3/build/Linux-x86_64-GCC
 TESTFLOAT_GEN_CMD := ${TESTFLOAT_DIR}/testfloat_gen -tininessafter
 
 # List of testvectors to generate. Each rounding mode will be generated for each test.
