@@ -40,3 +40,4 @@
 [submodule "addins/berkeley-testfloat-3"]
 	path = addins/berkeley-testfloat-3
 	url = https://github.com/ucb-bar/berkeley-testfloat-3
+	ignore = dirty
