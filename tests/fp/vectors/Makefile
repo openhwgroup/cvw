@@ -5,18 +5,18 @@ TESTFLOAT_DIR := ${WALLY}/addins/TestFloat-3e/build/Linux-x86_64-GCC
 TESTFLOAT_GEN_CMD := ${TESTFLOAT_DIR}/testfloat_gen -tininessafter -level
 
 # List of testvectors to generate. Each rounding mode will be generated for each test.
-convert := ui32_to_f16 ui32_to_f32 ui32_to_f64 ui32_to_f128 \
-         ui64_to_f16 ui64_to_f32 ui64_to_f64 ui64_to_f128 \
-				 i32_to_f16 i32_to_f32 i32_to_f64 i32_to_f128 \
-				 i64_to_f16 i64_to_f32 i64_to_f64 i64_to_f128 \
-				 f16_to_ui32 f32_to_ui32 f64_to_ui32 f128_to_ui32 \
-				 f16_to_ui64 f32_to_ui64 f64_to_ui64 f128_to_ui64 \
-				 f16_to_i32 f32_to_i32 f64_to_i32 f128_to_i32 \
-				 f16_to_i64 f32_to_i64 f64_to_i64 f128_to_i64 \
-				 f16_to_f32 f16_to_f64 f16_to_f128 \
-				 f32_to_f16 f32_to_f64 f32_to_f128 \
-				 f64_to_f16 f64_to_f32 f64_to_f128 \
-				 f128_to_f16 f128_to_f32 f128_to_f64
+cvtint := ui32_to_f16 ui32_to_f32 ui32_to_f64 ui32_to_f128 \
+          ui64_to_f16 ui64_to_f32 ui64_to_f64 ui64_to_f128 \
+          i32_to_f16 i32_to_f32 i32_to_f64 i32_to_f128 \
+          i64_to_f16 i64_to_f32 i64_to_f64 i64_to_f128 \
+          f16_to_ui32 f32_to_ui32 f64_to_ui32 f128_to_ui32 \
+          f16_to_ui64 f32_to_ui64 f64_to_ui64 f128_to_ui64
+cvtfp := f16_to_i32 f32_to_i32 f64_to_i32 f128_to_i32 \
+         f16_to_i64 f32_to_i64 f64_to_i64 f128_to_i64 \
+         f16_to_f32 f16_to_f64 f16_to_f128 \
+         f32_to_f16 f32_to_f64 f32_to_f128 \
+         f64_to_f16 f64_to_f32 f64_to_f128 \
+         f128_to_f16 f128_to_f32 f128_to_f64
 add := f16_add f32_add f64_add f128_add
 sub := f16_sub f32_sub f64_sub f128_sub
 mul := f16_mul f32_mul f64_mul f128_mul
