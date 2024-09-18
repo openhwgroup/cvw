@@ -21,13 +21,13 @@ export VCS_HOME=/cad/synopsys/vcs/U-2023.03-SP2-4                   # Change thi
 export PATH=$QUESTA_HOME/bin:$DC_HOME/bin:$VCS_HOME/bin:$PATH
 
 # Environmental variables for SoC
-export pdk=/proj/models/tsmc28/libraries/28nmtsmc/tcbn28hpcplusbwp30p140_190a/
+export SYN_pdk=/proj/models/tsmc28/libraries/28nmtsmc/tcbn28hpcplusbwp30p140_190a/
 #export osupdk=/import/yukari1/pdk/TSMC/28/CMOS/HPC+/stclib/9-track/tcbn28hpcplusbwp30p140-set/tcbn28hpcplusbwp30p140_190a_FE/
-export TLU=/home/jstine/TLU+
+export SYN_TLU=/home/jstine/TLU+
 #export OSUTLU=/import/yukari1/pdk/TSMC/TLU+
-export MW=/home/jstine/MW
+export SYN_MW=/home/jstine/MW
 #export OSUMW=/import/yukari1/pdk/TSMC/MW
-export memory=/home/jstine/WallyMem/rv64gc/
+export SYN_memory=/home/jstine/WallyMem/rv64gc/
 #export osumemory=/import/yukari1/pdk/TSMC/WallyMem/rv64gc/
 
 # GCC
