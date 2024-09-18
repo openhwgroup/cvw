@@ -30,7 +30,7 @@ export SYN_MW=/home/jstine/MW
 export SYN_memory=/home/jstine/WallyMem/rv64gc/
 #export osumemory=/import/yukari1/pdk/TSMC/WallyMem/rv64gc/
 
-# Environmental variables for FPGA
+# Environmental variables for CTG (https://github.com/riscv-software-src/riscv-ctg)
 export RISCVCTG=/home/harris/repos/riscv-ctg
 
 
