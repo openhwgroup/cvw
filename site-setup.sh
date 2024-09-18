@@ -30,6 +30,10 @@ export SYN_MW=/home/jstine/MW
 export SYN_memory=/home/jstine/WallyMem/rv64gc/
 #export osumemory=/import/yukari1/pdk/TSMC/WallyMem/rv64gc/
 
+# Environmental variables for CTG (https://github.com/riscv-software-src/riscv-ctg)
+export RISCVCTG=/home/harris/repos/riscv-ctg
+
+
 # GCC
 if [ -z "$LD_LIBRARY_PATH" ]; then
     export LD_LIBRARY_PATH=$RISCV/riscv64-unknown-elf/lib
