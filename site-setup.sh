@@ -13,12 +13,22 @@ export MGLS_LICENSE_FILE=27002@zircon.eng.hmc.edu                   # Change thi
 export SNPSLMD_LICENSE_FILE=27020@zircon.eng.hmc.edu                # Change this to your Synopsys license server
 export IMPERASD_LICENSE_FILE=27020@zircon.eng.hmc.edu               # Change this to your Imperas license server
 export QUESTA_HOME=/cad/mentor/questa_sim-2023.4/questasim          # Change this for your path to Questa, excluding bin
-export DC_HOME=/cad/synopsys/SYN                                    # Change this for your path to Synopsys Design Compiler, excluding bin
+export DC_HOME=/cad/synopsys/SYN                                    # Change this for your path to Synopsys DC, excluding bin
 export VCS_HOME=/cad/synopsys/vcs/U-2023.03-SP2-4                   # Change this for your path to Synopsys VCS, excluding bin
 
 # Tools
 # Questa and Synopsys
 export PATH=$QUESTA_HOME/bin:$DC_HOME/bin:$VCS_HOME/bin:$PATH
+
+# Environmental variables for SoC
+export SYN_pdk=/proj/models/tsmc28/libraries/28nmtsmc/tcbn28hpcplusbwp30p140_190a/
+#export osupdk=/import/yukari1/pdk/TSMC/28/CMOS/HPC+/stclib/9-track/tcbn28hpcplusbwp30p140-set/tcbn28hpcplusbwp30p140_190a_FE/
+export SYN_TLU=/home/jstine/TLU+
+#export OSUTLU=/import/yukari1/pdk/TSMC/TLU+
+export SYN_MW=/home/jstine/MW
+#export OSUMW=/import/yukari1/pdk/TSMC/MW
+export SYN_memory=/home/jstine/WallyMem/rv64gc/
+#export osumemory=/import/yukari1/pdk/TSMC/WallyMem/rv64gc/
 
 # GCC
 if [ -z "$LD_LIBRARY_PATH" ]; then
