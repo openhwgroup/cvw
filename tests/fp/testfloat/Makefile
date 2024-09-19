@@ -14,7 +14,7 @@ TESTFLOAT_EXECUTABLES := ${TESTFLOAT_BUILD_DIR}/testfloat ${TESTFLOAT_BUILD_DIR}
                          ${TESTFLOAT_BUILD_DIR}/testfloat_ver ${TESTFLOAT_BUILD_DIR}/testsoftfloat \
 												 ${TESTFLOAT_BUILD_DIR}/timesoftfloat
 
-.PHONY: all ieee-softfloat riscv-softfloat testfloat clean
+.PHONY: all ieee-softfloat riscv-softfloat clean
 
 all: $(TESTFLOATS)
 
@@ -31,7 +31,7 @@ ieee-softfloat:
 
 riscv-softfloat:
 	$(MAKE) -C $(SOFTFLOAT_BUILD_DIR) clean
-	$(MAKE) SPECIALIZE_TYPE=riscv -C $(SOFTFLOAT_BUILD_DIR)
+	$(MAKE) SPECIALIZE_TYPE=RISCV -C $(SOFTFLOAT_BUILD_DIR)
 
 clean:
 	$(MAKE) -C $(SOFTFLOAT_BUILD_DIR) clean
