@@ -6,24 +6,25 @@
 
 # Disable parallel execution because both versions of softfloat/testfloat use the same build directory
 .NOTPARALLEL:
+.SECONDEXPANSION:
 
-TESTFLOATS := ieee-testfloat riscv-testfloat
-SOFTFLOAT_BUILD_DIR := ${WALLY}/addins/berkeley-softfloat-3/build/Linux-x86_64-GCC
-TESTFLOAT_BUILD_DIR := ${WALLY}/addins/berkeley-testfloat-3/build/Linux-x86_64-GCC
-TESTFLOAT_EXECUTABLES := ${TESTFLOAT_BUILD_DIR}/testfloat ${TESTFLOAT_BUILD_DIR}/testfloat_gen \
-                         ${TESTFLOAT_BUILD_DIR}/testfloat_ver ${TESTFLOAT_BUILD_DIR}/testsoftfloat \
-												 ${TESTFLOAT_BUILD_DIR}/timesoftfloat
+TESTFLOATS := ieee riscv
+SOFTFLOAT_BUILD_DIR := ${WALLY}/addins/berkeley-softfloat-3/build/Linux-x86_64-GCC/
+TESTFLOAT_BUILD_DIR := ${WALLY}/addins/berkeley-testfloat-3/build/Linux-x86_64-GCC/
+TESTFLOAT_EXECUTABLES := testfloat testfloat_gen testfloat_ver testsoftfloat timesoftfloat
+ORIGINAL_TESTFLOAT_EXECUTABLES := $(foreach item,${TESTFLOAT_EXECUTABLES},$(patsubst %,${TESTFLOAT_BUILD_DIR}%,${item}))
 
-.PHONY: all ieee-softfloat riscv-softfloat clean
+.PHONY: all ieee-softfloat riscv-softfloat ${TESTFLOATS} testfloat clean
 
-all: $(TESTFLOATS)
+all: riscv ieee
 
-%-testfloat:
-	$(MAKE) -C $(TESTFLOAT_BUILD_DIR) clean
+${TESTFLOATS}: dir_$$@ $$@/testfloat_gen
+
+.PRECIOUS: %/testfloat_gen
+%/testfloat_gen:
 	$(MAKE) $*-softfloat
-	$(MAKE) -C ${TESTFLOAT_BUILD_DIR}
-	mkdir -p $*
-	cp -r ${TESTFLOAT_EXECUTABLES} $*/
+	$(MAKE) testfloat
+	cp -r ${ORIGINAL_TESTFLOAT_EXECUTABLES} $*/
 
 ieee-softfloat:
 	$(MAKE) -C $(SOFTFLOAT_BUILD_DIR) clean
@@ -32,6 +33,13 @@ ieee-softfloat:
 riscv-softfloat:
 	$(MAKE) -C $(SOFTFLOAT_BUILD_DIR) clean
 	$(MAKE) SPECIALIZE_TYPE=RISCV -C $(SOFTFLOAT_BUILD_DIR)
+
+testfloat:
+	$(MAKE) -C $(TESTFLOAT_BUILD_DIR) clean
+	$(MAKE) -C $(TESTFLOAT_BUILD_DIR)
+
+dir_%:
+	mkdir -p $*
 
 clean:
 	$(MAKE) -C $(SOFTFLOAT_BUILD_DIR) clean
