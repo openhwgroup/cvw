@@ -1,8 +1,13 @@
 .DELETE_ON_ERROR:
+.SECONDEXPANSION:
+.ONESHELL:
+# MAKEFLAGS += --no-print-directory
+
 SHELL := /bin/bash
 
-TESTFLOAT_DIR := ${WALLY}/addins/berkeley-testfloat-3/build/Linux-x86_64-GCC
-TESTFLOAT_GEN_CMD := ${TESTFLOAT_DIR}/testfloat_gen -tininessafter
+VECTOR_TYPE := ieee
+TESTFLOAT_DIR := ${WALLY}/tests/fp/testfloat
+TESTFLOAT_GEN := ${TESTFLOAT_DIR}/${VECTOR_TYPE}/testfloat_gen
 
 # List of testvectors to generate. Each rounding mode will be generated for each test.
 cvtint := ui32_to_f16 ui32_to_f32 ui32_to_f64 ui32_to_f128 \
@@ -43,7 +48,6 @@ rnm: ROUND_EXT  := rnm
 
 .PHONY: all rne rz ru rd rnm clean
 
-# Generate all test vectors
 all: rne rz ru rd rnm
 
 # Generate test vectors for each rounding mode
@@ -55,15 +59,15 @@ rnm: $(addsuffix _rnm.tv, $(tests))
 
 # Rule to generate individual test vectors
 %.tv: ${TESTFLOAT_GEN}
-	@echo Creating $@ vectors
-	@if [[ "$*" =~ "to" ]] || [[ "$*" =~ "sqrt" ]] ; then level=2 ; else level=1 ; fi ; \
-	if [[ "$*" =~ "to_i" ]] || [[ "$*" =~ "to_u" ]] ; then exact="-exact" ; else exact="" ; fi ; \
-	${TESTFLOAT_GEN_CMD} -level $$level $$exact -$(ROUND_MODE) $(patsubst %_$(ROUND_EXT).tv, %, $@) > $@
+	@echo "Creating $(VECTOR_TYPE) $@ vectors"
+	@if [[ "$*" =~ "to" ]] || [[ "$*" =~ "sqrt" ]] ; then level=2 ; else level=1 ; fi
+	@if [[ "$*" =~ "to_i" ]] || [[ "$*" =~ "to_u" ]] ; then exact="-exact" ; else exact="" ; fi
+	${TESTFLOAT_GEN}  -tininessafter -level $$level $$exact -$(ROUND_MODE) $(patsubst %_$(ROUND_EXT).tv, %, $@) > $@
 	@sed -i 's/ /_/g' $@
 
-# Generate TestFloat first if necessary
+# Appropriate testfloat_gen must exist
 ${TESTFLOAT_GEN}:
-	$(MAKE) -C ${WALLY}/tests/fp testfloat
+	$(MAKE) -C ${TESTFLOAT_DIR} ${VECTOR_TYPE}
 
 clean:
 	rm -f *.tv
