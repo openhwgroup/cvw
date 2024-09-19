@@ -5,9 +5,11 @@
 // This file is needed in the config subdirectory for each config supporting coverage.
 // It defines which extensions are enabled for that config.
 
-`define COVER_RV64I
-`define COVER_RV64M
-`define COVER_RV64F
-`include "coverage/RV64I_coverage.svh"
-`include "coverage/RV64M_coverage.svh"
-`include "coverage/RV64F_coverage.svh"
+//`define COVER_RV64I
+// `define COVER_RV64M
+// `define COVER_RV64F
+`define COVER_RV64VM
+//`include "RV64I_coverage.svh"
+// `include "coverage/RV64M_coverage.svh"
+// `include "coverage/RV64F_coverage.svh"
+`include "RV64VM_coverage.svh"
