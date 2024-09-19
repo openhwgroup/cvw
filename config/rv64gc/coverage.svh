@@ -7,5 +7,5 @@
 
 `include "RV64I_coverage.svh"
 `include "RV64M_coverage.svh"
-`include "RV64F_coverage.svh"
+//`include "RV64F_coverage.svh"
 `include "RV64Zicond_coverage.svh"

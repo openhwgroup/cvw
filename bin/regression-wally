@@ -290,7 +290,7 @@ def addTests(tests, sim):
             configs.append(tc)
 
 
-def addLockstepTestsByDir(dir, config, sim):
+def addLockstepTestsByDir(dir, config, sim, fcovMode):
     sim_logdir = WALLY+ "/sim/" + sim + "/logs/"
     if (coverStr != ""): # use --fcov in place of --lockstep
         cmdPrefix="wsim --sim " + sim + " " + coverStr + " " + config
@@ -299,7 +299,8 @@ def addLockstepTestsByDir(dir, config, sim):
     if (os.path.isdir(dir)): 
         for dirpath, dirnames, filenames in os.walk(os.path.abspath(dir)):
             for file in filenames:
-                if file.endswith(".elf"):
+                # fcov lockstep only runs on WALLY-COV-ALL.elf files; other lockstep runs on all files
+                if (file.endswith(".elf") and fcovMode == 0 or file.endswith("ALL.elf") and fcovMode == 1):
                     fullfile = os.path.join(dirpath, file)
                     fields = fullfile.rsplit('/', 3)
                     if (fields[2] == "ref"):
@@ -411,8 +412,8 @@ if (args.ccov):  # only run RV64GC tests on Questa in code coverage mode
     if (args.fp):
         addTests(tests64gc_fp, coveragesim)
 elif (args.fcov):  # only run RV64GC tests on Questa in lockstep in functional coverage mode
-    addLockstepTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/rv32/", "rv32gc", coveragesim)
-#    addLockstepTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/rv64/I", "rv64gc", coveragesim)
+    addLockstepTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/rv32/", "rv32gc", coveragesim, 1)
+    addLockstepTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/rv64/", "rv64gc", coveragesim, 1)
 elif (args.fcovrvvi):  # only run RV64GC tests on Questa in rvvi coverage mode
     addTests(tests64gc_nofp, coveragesim)
     if (args.fp):
@@ -427,8 +428,8 @@ else:
 
 # run derivative configurations and lockstep tests in nightly regression
 if (args.nightly):
-    addLockstepTestsByDir(WALLY+"/tests/coverage", "rv64gc", "questa")
-    addLockstepTestsByDir(WALLY+"/tests/riscof/work/wally-riscv-arch-test/rv64i_m", "rv64gc", "questa")
+    addLockstepTestsByDir(WALLY+"/tests/coverage", "rv64gc", "questa", 0)
+    addLockstepTestsByDir(WALLY+"/tests/riscof/work/wally-riscv-arch-test/rv64i_m", "rv64gc", "questa", 0)
     addTests(derivconfigtests, defaultsim)
 
 # testfloat tests
