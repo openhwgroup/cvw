@@ -1,5 +1,5 @@
 # Jordan Carlin, jcarlin@hmc.edu, August 2024
-# Testfloat vector Makefile for CORE-V-Wally
+# Makefile to generate RISCV and IEEE varaints of Testfloat for CORE-V-Wally
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 # Makefile to build testfloat and softfloat executables for IEEE and RISC-V floating point variants

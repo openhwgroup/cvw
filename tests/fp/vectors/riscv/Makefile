@@ -1,3 +1,7 @@
+# Jordan Carlin, jcarlin@hmc.edu, September 20 2024
+# Makefile to generate RISCV floating point testvectors for CORE-V-Wally
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
 .DELETE_ON_ERROR:
 .SECONDEXPANSION:
 .ONESHELL:
