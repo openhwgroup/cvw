@@ -7,3 +7,7 @@ ieee:
 
 riscv:
 	$(MAKE) -C riscv
+
+clean:
+	$(MAKE) -C ieee clean
+	$(MAKE) -C riscv clean
