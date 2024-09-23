@@ -10,15 +10,15 @@
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -53,95 +53,94 @@ module testbench_fp;
   parameter MAXVECTORS = 8388610;
 
   // FIXME: needs cleaning of unused variables (jes)
-  string                       Tests[];                    // list of tests to be run
-  logic [2:0] 			OpCtrl[];                   // list of op controls
-  logic [2:0] 			Unit[];                     // list of units being tested
-  logic                        WriteInt[];                 // Is being written to integer resgiter
-  logic [2:0] 			Frm[4:0] = {3'b100, 3'b010, 3'b011, 3'b001, 3'b000}; // rounding modes: rne-000, rz-001, ru-011, rd-010, rnm-100
-  logic [1:0] 			Fmt[];                      // list of formats for the other units
+  string       Tests[];                        // list of tests to be run
+  logic [2:0]  OpCtrl[];                       // list of op controls
+  logic [2:0]  Unit[];                         // list of units being tested
+  logic        WriteInt[];                     // Is being written to integer resgiter
+  logic [2:0]  Frm[4:0] = {3'b100, 3'b010, 3'b011, 3'b001, 3'b000}; // rounding modes: rne-000, rz-001, ru-011, rd-010, rnm-100
+  logic [1:0]  Fmt[];                          // list of formats for the other units
 
-  logic                        clk=0;
-  logic [31:0] 		TestNum=0;                  // index for the test
-  logic [31:0] 		OpCtrlNum=0;                // index for OpCtrl
-  logic [31:0] 		errors=0;                   // how many errors
-  logic [31:0] 		VectorNum=0;                // index for test vector
-  logic [31:0] 		FrmNum=0;                   // index for rounding mode
-  logic [P.Q_LEN*4+7:0] 	TestVectors[MAXVECTORS-1:0];     // list of test vectors
+  logic        clk=0;
+  logic [31:0] TestNum=0;                      // index for the test
+  logic [31:0] OpCtrlNum=0;                    // index for OpCtrl
+  logic [31:0] errors=0;                       // how many errors
+  logic [31:0] VectorNum=0;                    // index for test vector
+  logic [31:0] FrmNum=0;                       // index for rounding mode
+  logic [P.Q_LEN*4+7:0]  TestVectors[MAXVECTORS-1:0]; // list of test vectors
 
-  logic [1:0] 			FmtVal;                     // value of the current Fmt
-  logic [2:0] 			UnitVal, OpCtrlVal, FrmVal; // value of the currnet Unit/OpCtrl/FrmVal
-  logic                        WriteIntVal;                // value of the current WriteInt
-  logic [P.Q_LEN-1:0] 		X, Y, Z;                    // inputs read from TestFloat
-  logic [P.FLEN-1:0] 		XPostBox;                   // inputs read from TestFloat
-  logic [P.XLEN-1:0] 		SrcA;                       // integer input
-  logic [P.Q_LEN-1:0] 		Ans;                        // correct answer from TestFloat
-  logic [P.Q_LEN-1:0] 		Res;                        // result from other units
-  logic [4:0] 			AnsFlg;                     // correct flags read from testfloat
-  logic [4:0] 			ResFlg, Flg;                // Result flags
-  logic [P.FMTBITS-1:0] 	ModFmt;                     // format - 10 = half, 00 = single, 01 = double, 11 = quad
-  logic [P.FLEN-1:0] 		FpRes, FpCmpRes;            // Results from each unit
-  logic [P.XLEN-1:0] 		IntRes, CmpRes;             // Results from each unit
-  logic [P.Q_LEN-1:0]     FpResExtended;              // FpRes extended to same length as Ans/Res
-  logic [4:0] 			FmaFlg, CvtFlg, DivFlg;     // Outputed flags
-  logic [4:0] 			CmpFlg;                     // Outputed flags
-  logic                        AnsNaN, ResNaN, NaNGood;
-  logic                        Xs, Ys, Zs;                 // sign of the inputs
-  logic [P.NE-1:0] 		Xe, Ye, Ze;                 // exponent of the inputs
-  logic [P.NF:0] 		Xm, Ym, Zm;                 // mantissas of the inputs
-  logic                        XNaN, YNaN, ZNaN;           // is the input NaN
-  logic                        XSNaN, YSNaN, ZSNaN;        // is the input a signaling NaN
-  logic                        XSubnorm, ZSubnorm;         // is the input denormalized
-  logic                        XInf, YInf, ZInf;           // is the input infinity
-  logic                        XZero, YZero, ZZero;        // is the input zero
-  logic                        XExpMax, YExpMax, ZExpMax;  // is the input's exponent all ones
-  logic [P.CVTLEN-1:0] 	CvtLzcInE;                  // input to the Leading Zero Counter (priority encoder)
-  logic                        IntZero;
-  logic                        CvtResSgnE;
-  logic [P.NE:0] 		CvtCalcExpE;                // the calculated exponent
-  logic [P.LOGCVTLEN-1:0] 	CvtShiftAmtE;               // how much to shift by
-  logic [P.DIVb:0] 		Quot;
-  logic                        CvtResSubnormUfE;
-  logic                        DivStart;
-  logic 			FDivBusyE;
-  logic 			OldFDivBusyE;
-  logic                        reset = 1'b0;
-  logic [$clog2(P.NF+2)-1:0] 	XZeroCnt, YZeroCnt;
+  logic [1:0] FmtVal;                          // value of the current Fmt
+  logic [2:0] UnitVal, OpCtrlVal, FrmVal;      // value of the currnet Unit/OpCtrl/FrmVal
+  logic       WriteIntVal;                     // value of the current WriteInt
+  logic [P.Q_LEN-1:0]  X, Y, Z;                // inputs read from TestFloat
+  logic [P.FLEN-1:0]   XPostBox;               // inputs read from TestFloat
+  logic [P.XLEN-1:0]   SrcA;                   // integer input
+  logic [P.Q_LEN-1:0]  Ans;                    // correct answer from TestFloat
+  logic [P.Q_LEN-1:0]  Res;                    // result from other units
+  logic [4:0] AnsFlg;                          // correct flags read from testfloat
+  logic [4:0] ResFlg, Flg;                     // Result flags
+  logic [P.FMTBITS-1:0] ModFmt;                // format - 10 = half, 00 = single, 01 = double, 11 = quad
+  logic [P.FLEN-1:0]    FpRes, FpCmpRes;       // Results from each unit
+  logic [P.XLEN-1:0]    IntRes, CmpRes;        // Results from each unit
+  logic [P.Q_LEN-1:0]   FpResExtended;         // FpRes extended to same length as Ans/Res
+  logic [4:0] FmaFlg, CvtFlg, DivFlg, CmpFlg;  // Outputed flags
+  logic            AnsNaN, ResNaN, NaNGood;
+  logic            Xs, Ys, Zs;                 // sign of the inputs
+  logic [P.NE-1:0] Xe, Ye, Ze;                 // exponent of the inputs
+  logic [P.NF:0]   Xm, Ym, Zm;                 // mantissas of the inputs
+  logic            XNaN, YNaN, ZNaN;           // is the input NaN
+  logic            XSNaN, YSNaN, ZSNaN;        // is the input a signaling NaN
+  logic            XSubnorm, ZSubnorm;         // is the input denormalized
+  logic            XInf, YInf, ZInf;           // is the input infinity
+  logic            XZero, YZero, ZZero;        // is the input zero
+  logic            XExpMax, YExpMax, ZExpMax;  // is the input's exponent all ones
+  logic [P.CVTLEN-1:0] CvtLzcInE;              // input to the Leading Zero Counter (priority encoder)
+  logic                IntZero;
+  logic                CvtResSgnE;
+  logic [P.NE:0] CvtCalcExpE;                  // the calculated exponent
+  logic [P.LOGCVTLEN-1:0] CvtShiftAmtE;        // how much to shift by
+  logic [P.DIVb:0] Quot;
+  logic CvtResSubnormUfE;
+  logic DivStart;
+  logic FDivBusyE;
+  logic OldFDivBusyE;
+  logic reset = 1'b0;
+  logic [$clog2(P.NF+2)-1:0] XZeroCnt, YZeroCnt;
 
   // in-between FMA signals
-  logic                        Mult;
-  logic                        Ss;
-  logic [P.NE+1:0] 		Pe;
-  logic [P.NE+1:0] 		Se;
-  logic 			ASticky;
-  logic 			KillProd;
+  logic Mult;
+  logic Ss;
+  logic [P.NE+1:0] Pe;
+  logic [P.NE+1:0] Se;
+  logic ASticky;
+  logic KillProd;
   logic [$clog2(P.FMALEN+1)-1:0] SCnt;
-  logic [P.FMALEN-1:0] 		Sm;
-  logic 			InvA;
-  logic 			NegSum;
-  logic 			As;
-  logic 			Ps;
-  logic                        DivSticky;
-  logic                        DivDone;
-  logic                        DivNegSticky;
-  logic [P.NE+1:0] 		DivCalcExp;
-  logic                        divsqrtop;
+  logic [P.FMALEN-1:0] Sm;
+  logic InvA;
+  logic NegSum;
+  logic As;
+  logic Ps;
+  logic DivSticky;
+  logic DivDone;
+  logic DivNegSticky;
+  logic [P.NE+1:0] DivCalcExp;
+  logic            divsqrtop;
 
   // Missing logic vectors fdivsqrt
-  logic [2:0] 			Funct3E;
-  logic [2:0] 			Funct3M;
-  logic 			FlushE;
-  logic 			IFDivStartE;
-  logic 			FDivDoneE;
-  logic [P.NE+1:0] 		UeM;
-  logic [P.DIVb:0] 		UmM;
-  logic [P.XLEN-1:0] 		FIntDivResultM;
-  logic 			ResMatch;                   // Check if result match
-  logic 			FlagMatch;                  // Check if IEEE flags match
-  logic 			CheckNow;                   // Final check
-  logic 			FMAop;                      // Is this a FMA operation?
+  logic [2:0] Funct3E;
+  logic [2:0] Funct3M;
+  logic       FlushE;
+  logic       IFDivStartE;
+  logic       FDivDoneE;
+  logic [P.NE+1:0]   UeM;
+  logic [P.DIVb:0]   UmM;
+  logic [P.XLEN-1:0] FIntDivResultM;
+  logic ResMatch;                   // Check if result match
+  logic FlagMatch;                  // Check if IEEE flags match
+  logic CheckNow;                   // Final check
+  logic FMAop;                      // Is this a FMA operation?
 
-  logic [P.NE-2:0]             BiasE;                              // Bias of exponent
-  logic [P.LOGFLEN-1:0]        NfE;                                // Number of fractional bits
+  logic [P.NE-2:0]      BiasE;      // Bias of exponent
+  logic [P.LOGFLEN-1:0] NfE;        // Number of fractional bits
 
   // FSM for testing each item per clock
   typedef enum logic [2:0] {S0, Start, S2, Done} statetype;
@@ -1040,38 +1039,38 @@ endmodule
 
 
 module readvectors import cvw::*; #(parameter cvw_t P) (
-  input logic 		clk,
-  input logic [P.Q_LEN*4+7:0] 	TestVector,
-  input logic [P.FMTBITS-1:0] ModFmt,
-  input logic [1:0] 		Fmt,
-  input logic [2:0] 		Unit,
-  input logic [31:0] 		VectorNum,
-  input logic [31:0] 		TestNum,
-  input logic [2:0] 		OpCtrl,
-  output logic [P.Q_LEN-1:0] 	Ans,
-  output logic [P.XLEN-1:0] 	SrcA,
-  output logic [4:0] 		AnsFlg,
-  output logic 		Xs, Ys, Zs, // sign bits of XYZ
-  output logic [P.NE-1:0] 	Xe, Ye, Ze, // exponents of XYZ (converted to largest supported precision)
-  output logic [P.NF:0] 	Xm, Ym, Zm, // mantissas of XYZ (converted to largest supported precision)
-  output logic 		XNaN, YNaN, ZNaN, // is XYZ a NaN
-  output logic 		XSNaN, YSNaN, ZSNaN, // is XYZ a signaling NaN
-  output logic 		XSubnorm, ZSubnorm, // is XYZ denormalized
-  output logic 		XZero, YZero, ZZero, // is XYZ zero
-  output logic 		XInf, YInf, ZInf, // is XYZ infinity
-  output logic 		XExpMax,
-  output logic [P.Q_LEN-1:0] 	X, Y, Z,
-  output logic [P.FLEN-1:0]  XPostBox,
-  output logic [P.NE-2:0] BiasE,                              // Bias of exponent
-  output logic [P.LOGFLEN-1:0] NfE                           // Number of fractional bits
+  input  logic clk,
+  input  logic [P.Q_LEN*4+7:0] TestVector,
+  input  logic [P.FMTBITS-1:0] ModFmt,
+  input  logic [1:0]  Fmt,
+  input  logic [2:0]  Unit,
+  input  logic [31:0] VectorNum,
+  input  logic [31:0] TestNum,
+  input  logic [2:0]  OpCtrl,
+  output logic [P.Q_LEN-1:0] Ans,
+  output logic [P.XLEN-1:0]  SrcA,
+  output logic [4:0] AnsFlg,
+  output logic            Xs, Ys, Zs,          // sign bits of XYZ
+  output logic [P.NE-1:0] Xe, Ye, Ze,          // exponents of XYZ (converted to largest supported precision)
+  output logic [P.NF:0]   Xm, Ym, Zm,          // mantissas of XYZ (converted to largest supported precision)
+  output logic            XNaN, YNaN, ZNaN,    // is XYZ a NaN
+  output logic            XSNaN, YSNaN, ZSNaN, // is XYZ a signaling NaN
+  output logic            XSubnorm, ZSubnorm,  // is XYZ denormalized
+  output logic            XZero, YZero, ZZero, // is XYZ zero
+  output logic            XInf, YInf, ZInf,    // is XYZ infinity
+  output logic            XExpMax,
+  output logic [P.Q_LEN-1:0]   X, Y, Z,
+  output logic [P.FLEN-1:0]    XPostBox,
+  output logic [P.NE-2:0]      BiasE,          // Bias of exponent
+  output logic [P.LOGFLEN-1:0] NfE             // Number of fractional bits
 );
 
   localparam Q_LEN = 32'd128;
 
-  logic 					XEn;
-  logic 					YEn;
-  logic 					ZEn;
-  logic 					FPUActive;
+  logic XEn;
+  logic YEn;
+  logic ZEn;
+  logic FPUActive;
 
   // apply test vectors on rising edge of clk
   // Format of vectors Inputs(1/2/3)_AnsFlg
@@ -1212,15 +1211,15 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
                 X = {TestVector[8+P.Q_LEN+P.Q_LEN-1:8+(P.Q_LEN)]};
                 Ans = TestVector[8+(P.Q_LEN-1):8];
               end
-              2'b01:	if (P.D_SUPPORTED) begin // double
+              2'b01: if (P.D_SUPPORTED) begin // double
                 X = {TestVector[8+P.Q_LEN+P.D_LEN-1:8+(P.D_LEN)]};
                 Ans = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
               end
-              2'b00:	begin // single
+              2'b00: begin // single
                 X = {TestVector[8+P.Q_LEN+P.S_LEN-1:8+(P.S_LEN)]};
                 Ans = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
               end
-              2'b10:	begin // half
+              2'b10: begin // half
                 X = {TestVector[8+P.Q_LEN+P.H_LEN-1:8+(P.H_LEN)]};
                 Ans = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
               end
@@ -1232,15 +1231,15 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
                 X = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+P.D_LEN+P.Q_LEN-1:8+(P.Q_LEN)]};
                 Ans = TestVector[8+(P.Q_LEN-1):8];
               end
-              2'b01:	begin // double
+              2'b01: begin // double
                 X = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+P.D_LEN+P.D_LEN-1:8+(P.D_LEN)]};
                 Ans = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
               end
-              2'b00:	begin // single
+              2'b00: begin // single
                 X = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+P.D_LEN+P.S_LEN-1:8+(P.S_LEN)]};
                 Ans = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
               end
-              2'b10:	begin // half
+              2'b10: begin // half
                 X = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+P.D_LEN+P.H_LEN-1:8+(P.H_LEN)]};
                 Ans = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
               end
@@ -1252,15 +1251,15 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
                 X = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+P.S_LEN+P.Q_LEN-1:8+(P.Q_LEN)]};
                 Ans = TestVector[8+(P.Q_LEN-1):8];
               end
-              2'b01:	if (P.D_SUPPORTED) begin // double
+              2'b01: if (P.D_SUPPORTED) begin // double
                 X = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+P.S_LEN+P.D_LEN-1:8+(P.D_LEN)]};
                 Ans = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
               end
-              2'b00:	begin // single
+              2'b00: begin // single
                 X = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+P.S_LEN+P.S_LEN-1:8+(P.S_LEN)]};
                 Ans = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
               end
-              2'b10:	begin // half
+              2'b10: begin // half
                 X = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+P.S_LEN+P.H_LEN-1:8+(P.H_LEN)]};
                 Ans = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
               end
@@ -1272,15 +1271,15 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
                 X = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+P.H_LEN+P.Q_LEN-1:8+(P.Q_LEN)]};
                 Ans = TestVector[8+(P.Q_LEN-1):8];
               end
-              2'b01:	if (P.D_SUPPORTED) begin // double
+              2'b01: if (P.D_SUPPORTED) begin // double
                 X = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+P.H_LEN+P.D_LEN-1:8+(P.D_LEN)]};
                 Ans = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
               end
-              2'b00:	if (P.F_SUPPORTED) begin // single
+              2'b00: if (P.F_SUPPORTED) begin // single
                 X = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+P.H_LEN+P.S_LEN-1:8+(P.S_LEN)]};
                 Ans = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
               end
-              2'b10:	begin // half
+              2'b10: begin // half
                 X = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+P.H_LEN+P.H_LEN-1:8+(P.H_LEN)]};
                 Ans = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
               end
@@ -1297,18 +1296,18 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
                 SrcA = TestVector[8+P.Q_LEN+P.XLEN-1:8+(P.Q_LEN)];
                 Ans = TestVector[8+(P.Q_LEN-1):8];
               end
-              2'b10:	begin // int -> quad
+              2'b10: begin // int -> quad
                 // correctly sign extend the integer depending on if it's a signed/unsigned test
                 X = {P.Q_LEN{1'bx}};
                 SrcA = {{P.XLEN-32{TestVector[8+P.Q_LEN+32-1]}}, TestVector[8+P.Q_LEN+32-1:8+(P.Q_LEN)]};
                 Ans = TestVector[8+(P.Q_LEN-1):8];
               end
-              2'b01:	begin // quad -> long
+              2'b01: begin // quad -> long
                 X = {TestVector[8+P.XLEN+P.Q_LEN-1:8+(P.XLEN)]};
                 SrcA = {P.XLEN{1'bx}};
                 Ans = {{(P.Q_LEN-64){1'b0}}, TestVector[8+(64-1):8]};
               end
-              2'b00:	begin // quad -> int
+              2'b00: begin // quad -> int
                 X = {TestVector[8+32+P.Q_LEN-1:8+(32)]};
                 SrcA = {P.XLEN{1'bx}};
                 Ans = {{(P.Q_LEN-32){TestVector[8+32-1]}},TestVector[8+(32-1):8]};
@@ -1323,18 +1322,18 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
                 SrcA = TestVector[8+P.D_LEN+P.XLEN-1:8+(P.D_LEN)];
                 Ans = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
               end
-              2'b10:	begin // int -> double
+              2'b10: begin // int -> double
                 // correctly sign extend the integer depending on if it's a signed/unsigned test
                 X = {P.Q_LEN{1'bx}};
                 SrcA = {{P.XLEN-32{TestVector[8+P.D_LEN+32-1]}}, TestVector[8+P.D_LEN+32-1:8+(P.D_LEN)]};
                 Ans = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
               end
-              2'b01:	begin // double -> long
+              2'b01: begin // double -> long
                 X = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+P.XLEN+P.D_LEN-1:8+(P.XLEN)]};
                 SrcA = {P.XLEN{1'bx}};
                 Ans = {{(P.Q_LEN-64){1'b0}}, TestVector[8+(64-1):8]};
               end
-              2'b00:	begin // double -> int
+              2'b00: begin // double -> int
                 X = {{P.Q_LEN-P.D_LEN{1'b1}}, TestVector[8+32+P.D_LEN-1:8+(32)]};
                 SrcA = {P.XLEN{1'bx}};
                 Ans = {{P.Q_LEN-32{TestVector[8+32-1]}},TestVector[8+(32-1):8]};
@@ -1349,18 +1348,18 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
                 SrcA = TestVector[8+P.S_LEN+P.XLEN-1:8+(P.S_LEN)];
                 Ans = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
               end
-              2'b10:	begin // int -> single
+              2'b10: begin // int -> single
                 // correctly sign extend the integer depending on if it's a signed/unsigned test
                 X = {P.Q_LEN{1'bx}};
                 SrcA = {{P.XLEN-32{TestVector[8+P.S_LEN+32-1]}}, TestVector[8+P.S_LEN+32-1:8+(P.S_LEN)]};
                 Ans = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
               end
-              2'b01:	begin // single -> long
+              2'b01: begin // single -> long
                 X = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+P.XLEN+P.S_LEN-1:8+(P.XLEN)]};
                 SrcA = {P.XLEN{1'bx}};
                 Ans = {{(P.Q_LEN-64){1'b0}}, TestVector[8+(64-1):8]};
               end
-              2'b00:	begin // single -> int
+              2'b00: begin // single -> int
                 X = {{P.Q_LEN-P.S_LEN{1'b1}}, TestVector[8+32+P.S_LEN-1:8+(32)]};
                 SrcA = {P.XLEN{1'bx}};
                 Ans = {{(P.Q_LEN-32){TestVector[8+32-1]}},TestVector[8+(32-1):8]};
@@ -1375,18 +1374,18 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
                 SrcA = TestVector[8+P.H_LEN+P.XLEN-1:8+(P.H_LEN)];
                 Ans = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
               end
-              2'b10:	begin // int -> half
+              2'b10: begin // int -> half
                 // correctly sign extend the integer depending on if it's a signed/unsigned test
                 X = {P.Q_LEN{1'bx}};
                 SrcA = {{P.XLEN-32{TestVector[8+P.H_LEN+32-1]}}, TestVector[8+P.H_LEN+32-1:8+(P.H_LEN)]};
                 Ans = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
               end
-              2'b01:	begin // half -> long
+              2'b01: begin // half -> long
                 X = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+P.XLEN+P.H_LEN-1:8+(P.XLEN)]};
                 SrcA = {P.XLEN{1'bx}};
                 Ans = {{(P.Q_LEN-64){1'b0}}, TestVector[8+(64-1):8]};
               end
-              2'b00:	begin // half -> int
+              2'b00: begin // half -> int
                 X = {{P.Q_LEN-P.H_LEN{1'b1}}, TestVector[8+32+P.H_LEN-1:8+(32)]};
                 SrcA = {P.XLEN{1'bx}};
                 Ans = {{(P.Q_LEN-32){TestVector[8+32-1]}}, TestVector[8+(32-1):8]};
