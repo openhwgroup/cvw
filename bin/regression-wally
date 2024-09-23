@@ -325,9 +325,9 @@ def addLockstepTestsByDir(dir, config, sim, fcovMode):
 
 def search_log_for_text(text, grepfile):
     """Search through the given log file for text, returning True if it is found or False if it is not"""
-    grepwarn = "grep -H Warning: " + grepfile
+    grepwarn = "grep -i -H Warning: " + grepfile
     os.system(grepwarn)
-    greperr = "grep -H Error: " + grepfile
+    greperr = "grep -i -H Error: " + grepfile
     os.system(greperr)
     grepcmd = "grep -a -e '%s' '%s' > /dev/null" % (text, grepfile)
 #    print("  search_log_for_text invoking %s" % grepcmd)
