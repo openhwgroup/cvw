@@ -35,6 +35,21 @@ module testbench_fp;
 
   `include "parameter-defs.vh"   
 
+   `ifdef VERILATOR
+      import "DPI-C" function string getenvval(input string env_name);
+      string       WALLY_DIR = getenvval("WALLY");
+   `elsif VCS
+      import "DPI-C" function string getenv(input string env_name);
+      string       WALLY_DIR = getenv("WALLY");
+   `else
+      string       WALLY_DIR = "$WALLY";
+   `endif
+
+   string FP_TESTS = {WALLY_DIR, "/tests/fp/vectors"};
+   string pp;
+   if (P.IEEE754) assign pp = {FP_TESTS, "/ieee/"};
+   else assign pp = {FP_TESTS, "/riscv/"};
+
    parameter MAXVECTORS = 8388610;
 
    // FIXME: needs cleaning of unused variables (jes)
@@ -657,8 +672,6 @@ module testbench_fp;
 
    // Read the first test
    initial begin
-      //string testname = {`PATH, Tests[TestNum]}; 
-      static string pp = `PATH;
       string testname;
       string tt0;
       tt0 = $sformatf("%s", Tests[TestNum]);
@@ -1004,7 +1017,7 @@ module testbench_fp;
          // clear the vectors
          for(int i=0; i<MAXVECTORS; i++) TestVectors[i] = '1;
          // read next files
-         $readmemh({`PATH, Tests[TestNum]}, TestVectors);
+         $readmemh({pp, Tests[TestNum]}, TestVectors);
          // set the vector index back to 0
          VectorNum = 0;
          // incemet the operation if all the rounding modes have been tested
