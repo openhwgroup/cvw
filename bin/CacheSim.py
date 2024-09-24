@@ -41,7 +41,6 @@
 # Add -d or --dist to report the distribution of loads, stores, and atomic ops.
 # These distributions may not add up to 100; this is because of flushes or invalidations.
 
-import sys
 import math
 import argparse
 import os
@@ -193,7 +192,7 @@ class Cache:
         return self.__str__()
     
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Simulates a L1 cache.")
     parser.add_argument('numlines', type=int, help="The number of lines per way (a power of 2)", metavar="L")
     parser.add_argument('numways', type=int, help="The number of ways (a power of 2)", metavar='W')
@@ -207,7 +206,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     cache = Cache(args.numlines, args.numways, args.addrlen, args.taglen)
     extfile = os.path.expanduser(args.file)
-    nofails = True
+    mismatches = 0
 
     if args.perf:
         hits = 0
@@ -269,7 +268,7 @@ if __name__ == "__main__":
                     
                     if not result == lninfo[2]:
                         print("Result mismatch at address", lninfo[0]+ ". Wally:", lninfo[2]+", Sim:", result)
-                        nofails = False
+                        mismatches += 1
     if args.dist:
         percent_loads = str(round(100*loads/totalops))
         percent_stores = str(round(100*stores/totalops))
@@ -280,5 +279,9 @@ if __name__ == "__main__":
         ratio = round(hits/misses,3)
         print("There were", hits, "hits and", misses, "misses. The hit/miss ratio was", str(ratio)+".")
     
-    if nofails:
+    if mismatches == 0:
         print("SUCCESS! There were no mismatches between Wally and the sim.")
+    return mismatches
+
+if __name__ == '__main__':
+    exit(main())

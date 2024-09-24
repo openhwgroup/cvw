@@ -162,6 +162,45 @@ test_cases:
 .4byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 .4byte rx_data, 0x000000FF, read32_test     # read rx_data
 
+# Test min sck_div
+
+.4byte sck_div, 0x000000000, write32_test   #set sck_div to 0
+.4byte tx_data, 0xABACADAE, spi_burst_send
+.4byte 0x0, 0x00000003, spi_data_wait
+.4byte rx_data, 0x000000AE, read32_test
+.4byte rx_data, 0x000000AD, read32_test
+.4byte rx_data, 0x000000AC, read32_test
+.4byte rx_data, 0x000000AB, read32_test
+
+# min sck_div, sckmode 01
+
+.4byte sck_mode, 0x00000001, write32_test
+.4byte tx_data, 0xABACADAE, spi_burst_send
+.4byte 0x0, 0x00000003, spi_data_wait
+.4byte rx_data, 0x000000AE, read32_test
+.4byte rx_data, 0x000000AD, read32_test
+.4byte rx_data, 0x000000AC, read32_test
+.4byte rx_data, 0x000000AB, read32_test
+
+#min sck_div, sckmode 10
+.4byte sck_mode, 0x00000002, write32_test
+.4byte tx_data, 0xABACADAE, spi_burst_send
+.4byte 0x0, 0x00000003, spi_data_wait
+.4byte rx_data, 0x000000AE, read32_test
+.4byte rx_data, 0x000000AD, read32_test
+.4byte rx_data, 0x000000AC, read32_test
+.4byte rx_data, 0x000000AB, read32_test
+
+#min sck_div, sckmode 11
+.4byte sck_mode, 0x00000003, write32_test
+.4byte tx_data, 0xABACADAE, spi_burst_send
+.4byte 0x0, 0x00000003, spi_data_wait
+.4byte rx_data, 0x000000AE, read32_test
+.4byte rx_data, 0x000000AD, read32_test
+.4byte rx_data, 0x000000AC, read32_test
+.4byte rx_data, 0x000000AB, read32_test
+
+
 # Test phase
 
 .4byte sck_div, 0x00000003, write32_test    # reset sck_div to 0x03 so only sck_mode is different
@@ -177,6 +216,12 @@ test_cases:
 .4byte tx_data, 0x0000000B, write32_test   # place 8'h11 into tx_data
 .4byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 .4byte rx_data, 0x0000000B, read32_test     # read rx_data
+
+# Test phase polarity
+.4byte sck_mode, 0x00000003, write32_test   # set sck mode to 11
+.4byte tx_data, 0x000000F3, write32_test    # place f3 into tx_data
+.4byte 0x0, 0x00000000, spi_data_wait       # wait for transmission to end
+.4byte rx_data, 0x000000F3, read32_test     # read rx_data
 
 # Test chip select polarity
 

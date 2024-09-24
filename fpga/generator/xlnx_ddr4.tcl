@@ -5,7 +5,7 @@ set partNumber xcvu095-ffva2104-2-e
 set boardName  xilinx.com:vcu108:part0:1.2
 
 
-set ipName xlnx_ddr4
+set ipName ddr4
 
 create_project $ipName . -force -part $partNumber
 set_property board_part $boardName [current_project]

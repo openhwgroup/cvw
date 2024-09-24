@@ -30,20 +30,28 @@ QuestaCodeCoverage: questa/ucdb/rv64gc_arch64i.ucdb
 #	vcover report -recursive questa/ucdb/cov.ucdb > questa/cov/rv64gc_recursive.rpt
 	vcover report -details -threshH 100 -html questa/ucdb/cov.ucdb
 
-QuestaFunctCoverage: ${SIM}/questa/fcov_ucdb/rv64gc_WALLY-COV-add.elf.ucdb 
-	vcover merge -out ${SIM}/questa/fcov_ucdb/fcov.ucdb ${SIM}/questa/fcov_ucdb/rv64gc_WALLY-COV-add.elf.ucdb ${SIM}/questa/fcov_ucdb/rv64gc_WALLY*.ucdb -logfile ${SIM}/questa/fcov_logs/log
+QuestaFunctCoverage: ${SIM}/questa/fcov_ucdb/rv64gc_I_WALLY-COV-add.elf.ucdb 
+	vcover merge -out ${SIM}/questa/fcov_ucdb/fcov.ucdb ${SIM}/questa/fcov_ucdb/rv64gc_I_WALLY-COV-add.elf.ucdb ${SIM}/questa/fcov_ucdb/rv64gc_I_WALLY*.ucdb -logfile ${SIM}/questa/fcov_logs/log
 	vcover report -details -html ${SIM}/questa/fcov_ucdb/fcov.ucdb
 	vcover report ${SIM}/questa/fcov_ucdb/fcov.ucdb -details -cvg > ${SIM}/questa/fcov/fcov.log
 	vcover report ${SIM}/questa/fcov_ucdb/fcov.ucdb -testdetails -cvg > ${SIM}/questa/fcov/fcov.testdetails.log
 	vcover report ${SIM}/questa/fcov_ucdb/fcov.ucdb -details -cvg | egrep "Coverpoint|Covergroup|Cross|TYPE"  > ${SIM}/questa/fcov/fcov.summary.log
 	grep "TOTAL COVERGROUP COVERAGE" ${SIM}/questa/fcov/fcov.log
 
+QuestaFunctCoverageRvvi: ${WALLY}/addins/cvw-arch-verif/work/rv64gc_arch64i.ucdb 
+	vcover merge -out ${SIM}/questa/fcovrvvi_ucdb/fcovrvvi.ucdb ${WALLY}/addins/cvw-arch-verif/work/rv64gc_arch64i.ucdb ${WALLY}/addins/cvw-arch-verif/work/rv64gc_*.ucdb -logfile ${SIM}/questa/fcovrvvi/log
+	vcover report -details -html ${SIM}/questa/fcovrvvi_ucdb/fcovrvvi.ucdb
+	vcover report ${SIM}/questa/fcovrvvi_ucdb/fcovrvvi.ucdb -details -cvg > ${SIM}/questa/fcovrvvi/fcovrvvi.log
+	vcover report ${SIM}/questa/fcovrvvi_ucdb/fcovrvvi.ucdb -testdetails -cvg > ${SIM}/questa/fcovrvvi/fcovrvvi.testdetails.log
+	vcover report ${SIM}/questa/fcovrvvi_ucdb/fcovrvvi.ucdb -details -cvg | egrep "Coverpoint|Covergroup|Cross|TYPE"  > ${SIM}/questa/fcovrvvi/fcovrvvi.summary.log
+	grep "TOTAL COVERGROUP COVERAGE" ${SIM}/questa/fcovrvvi/fcovrvvi.log
+
 imperasdv_cov:
 	touch ${SIM}/seed0.txt
 	echo "0" > ${SIM}/seed0.txt
-#	/opt/riscv/ImperasDV-OpenHW/scripts/cvw/run-elf-cov.bash --verbose --seed 0 --search ${WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m
-#	/opt/riscv/ImperasDV-OpenHW/scripts/cvw/run-elf-cov.bash --elf ${WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/dut/my.elf --seed ${SIM}/seed0.txt --coverdb ${SIM}/cov/rv64gc_arch64i.ucdb --verbose
-#	/opt/riscv/ImperasDV-OpenHW/scripts/cvw/run-elf-cov.bash --elf ${WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/dut/my.elf --seed ${SIM}/seed0.txt --coverdb ${SIM}/questa/riscv.ucdb --verbose
+#	${RISCV}/ImperasDV-OpenHW/scripts/cvw/run-elf-cov.bash --verbose --seed 0 --search ${WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m
+#	${RISCV}/ImperasDV-OpenHW/scripts/cvw/run-elf-cov.bash --elf ${WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/dut/my.elf --seed ${SIM}/seed0.txt --coverdb ${SIM}/cov/rv64gc_arch64i.ucdb --verbose
+#	${RISCV}/ImperasDV-OpenHW/scripts/cvw/run-elf-cov.bash --elf ${WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/dut/my.elf --seed ${SIM}/seed0.txt --coverdb ${SIM}/questa/riscv.ucdb --verbose
 	run-elf-cov.bash --elf ${WALLY}/tests/riscvdv/asm_test/riscv_arithmetic_basic_test_0.elf --seed ${SIM}/questa/seed0.txt --coverdb ${SIM}/questa/riscv.ucdb --verbose
 	vcover report -details -html ${SIM}/questa/riscv.ucdb
 

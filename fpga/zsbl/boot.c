@@ -1,422 +1,230 @@
+///////////////////////////////////////////////////////////////////////
+// boot.c
+//
+// Written: Jacob Pease jacob.pease@okstate.edu 7/22/2024
+//
+// Purpose: Main bootloader entry point
+//
+// 
+//
+// A component of the Wally configurable RISC-V project.
+// 
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
+//
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+//
+// Licensed under the Solderpad Hardware License v 2.1 (the
+// “License”); you may not use this file except in compliance with the
+// License, or, at your option, the Apache License version 2.0. You
+// may obtain a copy of the License at
+//
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work
+// distributed under the License is distributed on an “AS IS” BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+// implied. See the License for the specific language governing
+// permissions and limitations under the License.
+///////////////////////////////////////////////////////////////////////
+
 #include <stddef.h>
 #include "boot.h"
 #include "gpt.h"
-
-/* Card type flags (card_type) */
-#define CT_MMC          0x01            /* MMC ver 3 */
-#define CT_SD1          0x02            /* SD ver 1 */
-#define CT_SD2          0x04            /* SD ver 2 */
-#define CT_SDC          (CT_SD1|CT_SD2) /* SD */
-#define CT_BLOCK        0x08            /* Block addressing */
-
-#define CMD0    (0)             /* GO_IDLE_STATE */
-#define CMD1    (1)             /* SEND_OP_COND */
-#define CMD2    (2)             /* SEND_CID */
-#define CMD3    (3)             /* RELATIVE_ADDR */
-#define CMD4    (4)
-#define CMD5    (5)             /* SLEEP_WAKE (SDC) */
-#define CMD6    (6)             /* SWITCH_FUNC */
-#define CMD7    (7)             /* SELECT */
-#define CMD8    (8)             /* SEND_IF_COND */
-#define CMD9    (9)             /* SEND_CSD */
-#define CMD10   (10)            /* SEND_CID */
-#define CMD11   (11)
-#define CMD12   (12)            /* STOP_TRANSMISSION */
-#define CMD13   (13)
-#define CMD15   (15)
-#define CMD16   (16)            /* SET_BLOCKLEN */
-#define CMD17   (17)            /* READ_SINGLE_BLOCK */
-#define CMD18   (18)            /* READ_MULTIPLE_BLOCK */
-#define CMD19   (19)
-#define CMD20   (20)
-#define CMD23   (23)
-#define CMD24   (24)
-#define CMD25   (25)
-#define CMD27   (27)
-#define CMD28   (28)
-#define CMD29   (29)
-#define CMD30   (30)
-#define CMD32   (32)
-#define CMD33   (33)
-#define CMD38   (38)
-#define CMD42   (42)
-#define CMD55   (55)            /* APP_CMD */
-#define CMD56   (56)
-#define ACMD6   (0x80+6)        /* define the data bus width */
-#define ACMD41  (0x80+41)       /* SEND_OP_COND (ACMD) */
-
-// Capability bits
-#define SDC_CAPABILITY_SD_4BIT  0x0001
-#define SDC_CAPABILITY_SD_RESET 0x0002
-#define SDC_CAPABILITY_ADDR     0xff00
-
-// Control bits
-#define SDC_CONTROL_SD_4BIT     0x0001
-#define SDC_CONTROL_SD_RESET    0x0002
-
-// Card detect bits
-#define SDC_CARD_INSERT_INT_EN  0x0001
-#define SDC_CARD_INSERT_INT_REQ 0x0002
-#define SDC_CARD_REMOVE_INT_EN  0x0004
-#define SDC_CARD_REMOVE_INT_REQ 0x0008
-
-// Command status bits
-#define SDC_CMD_INT_STATUS_CC   0x0001  // Command complete
-#define SDC_CMD_INT_STATUS_EI   0x0002  // Any error
-#define SDC_CMD_INT_STATUS_CTE  0x0004  // Timeout
-#define SDC_CMD_INT_STATUS_CCRC 0x0008  // CRC error
-#define SDC_CMD_INT_STATUS_CIE  0x0010  // Command code check error
-
-// Data status bits
-#define SDC_DAT_INT_STATUS_TRS  0x0001  // Transfer complete
-#define SDC_DAT_INT_STATUS_ERR  0x0002  // Any error
-#define SDC_DAT_INT_STATUS_CTE  0x0004  // Timeout
-#define SDC_DAT_INT_STATUS_CRC  0x0008  // CRC error
-#define SDC_DAT_INT_STATUS_CFE  0x0010  // Data FIFO underrun or overrun
+#include "uart.h"
+#include "spi.h"
+#include "sd.h"
+#include "time.h"
+#include "riscv.h"
+#include "fail.h"
 
 
-#define ERR_EOF             30
-#define ERR_NOT_ELF         31
-#define ERR_ELF_BITS        32
-#define ERR_ELF_ENDIANNESS  33
-#define ERR_CMD_CRC         34
-#define ERR_CMD_CHECK       35
-#define ERR_DATA_CRC        36
-#define ERR_DATA_FIFO       37
-#define ERR_BUF_ALIGNMENT   38
-#define FR_DISK_ERR         39
-#define FR_TIMEOUT          40
-
-struct sdc_regs {
-    volatile uint32_t argument;
-    volatile uint32_t command;
-    volatile uint32_t response1;
-    volatile uint32_t response2;
-    volatile uint32_t response3;
-    volatile uint32_t response4;
-    volatile uint32_t data_timeout;
-    volatile uint32_t control;
-    volatile uint32_t cmd_timeout;
-    volatile uint32_t clock_divider;
-    volatile uint32_t software_reset;
-    volatile uint32_t power_control;
-    volatile uint32_t capability;
-    volatile uint32_t cmd_int_status;
-    volatile uint32_t cmd_int_enable;
-    volatile uint32_t dat_int_status;
-    volatile uint32_t dat_int_enable;
-    volatile uint32_t block_size;
-    volatile uint32_t block_count;
-    volatile uint32_t card_detect;
-    volatile uint32_t res_50;
-    volatile uint32_t res_54;
-    volatile uint32_t res_58;
-    volatile uint32_t res_5c;
-    volatile uint64_t dma_addres;
-};
-
-#define MAX_BLOCK_CNT 0x1000
-
-#define SDC 0x00013000;
-
-// static struct sdc_regs * const regs __attribute__((section(".rodata"))) = (struct sdc_regs *)0x00013000;
-
-// static int errno __attribute__((section(".bss")));
-// static DSTATUS drv_status __attribute__((section(".bss")));
-// static BYTE card_type __attribute__((section(".bss")));
-// static uint32_t response[4] __attribute__((section(".bss")));
-// static int alt_mem __attribute__((section(".bss")));
-
-/*static const char * errno_to_str(void) {
-    switch (errno) {
-    case ERR_EOF: return "Unexpected EOF";
-    case ERR_NOT_ELF: return "Not an ELF file";
-    case ERR_ELF_BITS: return "Wrong ELF word size";
-    case ERR_ELF_ENDIANNESS: return "Wrong ELF endianness";
-    case ERR_CMD_CRC: return "Command CRC error";
-    case ERR_CMD_CHECK: return "Command code check error";
-    case ERR_DATA_CRC: return "Data CRC error";
-    case ERR_DATA_FIFO: return "Data FIFO error";
-    case ERR_BUF_ALIGNMENT: return "Bad buffer alignment";
-    case FR_DISK_ERR: return "Disk error";
-    case FR_TIMEOUT: return "Timeout";
-    }
-    return "Unknown error code";
-    }*/
-
-static void usleep(unsigned us) {
-    uintptr_t cycles0;
-    uintptr_t cycles1;
-    asm volatile ("csrr %0, 0xB00" : "=r" (cycles0));
-    for (;;) {
-        asm volatile ("csrr %0, 0xB00" : "=r" (cycles1));
-        if (cycles1 - cycles0 >= us * 100) break;
-    }
-}
-
-static int sdc_cmd_finish(unsigned cmd, uint32_t * response) {
-  struct sdc_regs * regs = (struct sdc_regs *)SDC;
-  
-    while (1) {
-        unsigned status = regs->cmd_int_status;
-        if (status) {
-            // clear interrupts
-            regs->cmd_int_status = 0;
-            while (regs->software_reset != 0) {}
-            if (status == SDC_CMD_INT_STATUS_CC) {
-                // get response
-                response[0] = regs->response1;
-                response[1] = regs->response2;
-                response[2] = regs->response3;
-                response[3] = regs->response4;
-                return 0;
-            }
-            /* errno = FR_DISK_ERR;
-            if (status & SDC_CMD_INT_STATUS_CTE) errno = FR_TIMEOUT;
-            if (status & SDC_CMD_INT_STATUS_CCRC) errno = ERR_CMD_CRC;
-            if (status & SDC_CMD_INT_STATUS_CIE) errno = ERR_CMD_CHECK;*/
-            break;
-        }
-    }
-    return -1;
-}
-
-static int sdc_data_finish(void) {
-    int status;
-    struct sdc_regs * regs = (struct sdc_regs *)SDC;
-    
-    while ((status = regs->dat_int_status) == 0) {}
-    regs->dat_int_status = 0;
-    while (regs->software_reset != 0) {}
-
-    if (status == SDC_DAT_INT_STATUS_TRS) return 0;
-    /* errno = FR_DISK_ERR;
-    if (status & SDC_DAT_INT_STATUS_CTE) errno = FR_TIMEOUT;
-    if (status & SDC_DAT_INT_STATUS_CRC) errno = ERR_DATA_CRC;
-    if (status & SDC_DAT_INT_STATUS_CFE) errno = ERR_DATA_FIFO;*/
-    return -1;
-}
-
-static int send_data_cmd(unsigned cmd, unsigned arg, void * buf, unsigned blocks, uint32_t * response) {
-  struct sdc_regs * regs = (struct sdc_regs *)SDC;
-  
-  unsigned command = (cmd & 0x3f) << 8;
-    switch (cmd) {
-    case CMD0:
-    case CMD4:
-    case CMD15:
-        // No responce
-        break;
-    case CMD11:
-    case CMD13:
-    case CMD16:
-    case CMD17:
-    case CMD18:
-    case CMD19:
-    case CMD23:
-    case CMD24:
-    case CMD25:
-    case CMD27:
-    case CMD30:
-    case CMD32:
-    case CMD33:
-    case CMD42:
-    case CMD55:
-    case CMD56:
-    case ACMD6:
-        // R1
-        command |= 1; // 48 bits
-        command |= 1 << 3; // resp CRC
-        command |= 1 << 4; // resp OPCODE
-        break;
-    case CMD7:
-    case CMD12:
-    case CMD20:
-    case CMD28:
-    case CMD29:
-    case CMD38:
-        // R1b
-        command |= 1; // 48 bits
-        command |= 1 << 2; // busy
-        command |= 1 << 3; // resp CRC
-        command |= 1 << 4; // resp OPCODE
-        break;
-    case CMD2:
-    case CMD9:
-    case CMD10:
-         // R2
-        command |= 2; // 136 bits
-        command |= 1 << 3; // resp CRC
-        break;
-    case ACMD41:
-        // R3
-        command |= 1; // 48 bits
-        break;
-    case CMD3:
-        // R6
-        command |= 1; // 48 bits
-        command |= 1 << 2; // busy
-        command |= 1 << 3; // resp CRC
-        command |= 1 << 4; // resp OPCODE
-        break;
-    case CMD8:
-        // R7
-        command |= 1; // 48 bits
-        command |= 1 << 3; // resp CRC
-        command |= 1 << 4; // resp OPCODE
-        break;
-    }
-
-    if (blocks) {
-        command |= 1 << 5;
-        if ((intptr_t)buf & 3) {
-          // errno = ERR_BUF_ALIGNMENT;
-            return -1;
-        }
-        regs->dma_addres = (uint64_t)(intptr_t)buf;
-        regs->block_size = 511;
-        regs->block_count = blocks - 1;
-        regs->data_timeout = 0x1FFFFFF;
-    }
-
-    regs->command = command;
-    regs->cmd_timeout = 0xFFFFF;
-    regs->argument = arg;
-
-    if (sdc_cmd_finish(cmd, response) < 0) return -1;
-    if (blocks) return sdc_data_finish();
-
-    return 0;
-}
-
-#define send_cmd(cmd, arg, response) send_data_cmd(cmd, arg, NULL, 0, response)
-
-static BYTE ini_sd(void) {
-  struct sdc_regs * regs = (struct sdc_regs *)SDC;
-    unsigned rca;
-    BYTE card_type;
-    uint32_t response[4];
-
-    /* Reset controller */
-    regs->software_reset = 1;
-    while ((regs->software_reset & 1) == 0) {}
-
-    // This clock divider is meant to initialize the card at
-    // 400kHz
-
-    // 22MHz/400kHz = 55 (base 10) = 0x37 - 0x01 = 0x36
-    regs->clock_divider = 0x36;
-    regs->software_reset = 0;
-    while (regs->software_reset) {}
-    usleep(5000);
-
-    card_type = 0;
-    // drv_status = STA_NOINIT;
-
-    if (regs->capability & SDC_CAPABILITY_SD_RESET) {
-        /* Power cycle SD card */
-        regs->control |= SDC_CONTROL_SD_RESET;
-        usleep(1000000);
-        regs->control &= ~SDC_CONTROL_SD_RESET;
-        usleep(100000);
-    }
-
-    /* Enter Idle state */
-    send_cmd(CMD0, 0, response);
-
-    card_type = CT_SD1;
-    if (send_cmd(CMD8, 0x1AA, response) == 0) {
-        if ((response[0] & 0xfff) != 0x1AA) {
-            // errno = ERR_CMD_CHECK;
-            return -1;
-        }
-        card_type = CT_SD2;
-    }
-
-    /* Wait for leaving idle state (ACMD41 with HCS bit) */
-    while (1) {
-        /* ACMD41, Set Operating Conditions: Host High Capacity & 3.3V */
-      if (send_cmd(CMD55, 0, response) < 0 || send_cmd(ACMD41, 0x40300000, response) < 0) return -1;
-        if (response[0] & (1 << 31)) {
-            if (response[0] & (1 << 30)) card_type |= CT_BLOCK;
-            break;
-        }
-    }
-
-    /* Enter Identification state */
-    if (send_cmd(CMD2, 0, response) < 0) return -1;
-
-    /* Get RCA (Relative Card Address) */
-    rca = 0x1234;
-    if (send_cmd(CMD3, rca << 16, response) < 0) return -1;
-    rca = response[0] >> 16;
-
-    /* Select card */
-    if (send_cmd(CMD7, rca << 16, response) < 0) return -1;
-
-    /* Clock 25MHz */
-    // 22Mhz/2 = 11Mhz
-    regs->clock_divider = 1;
-    usleep(10000);
-
-    /* Bus width 1-bit */
-    regs->control = 0;
-    if (send_cmd(CMD55, rca << 16, response) < 0 || send_cmd(ACMD6, 0, response) < 0) return -1;
-
-    /* Set R/W block length to 512 */
-    if (send_cmd(CMD16, 512, response) < 0) return -1;
-
-    // drv_status &= ~STA_NOINIT;
-    return card_type;
-}
-
-int disk_read(BYTE * buf, LBA_t sector, UINT count, BYTE card_type) {
-
-  /* This is not needed. This has everything to do with the FAT
-     filesystem stuff that I'm not including. All I need to do is
-     initialize the SD card and read from it. Anything in here that is
-     checking for potential errors, I'm going to have to temporarily
-     do without.
-   */
-  // if (!count) return RES_PARERR;
-    /* if (drv_status & STA_NOINIT) return RES_NOTRDY; */
-
-  uint32_t response[4];
-  struct sdc_regs * regs = (struct sdc_regs *)SDC;
-  
-    /* Convert LBA to byte address if needed */
-    if (!(card_type & CT_BLOCK)) sector *= 512;
-    while (count > 0) {
-        UINT bcnt = count > MAX_BLOCK_CNT ? MAX_BLOCK_CNT : count;
-        unsigned bytes = bcnt * 512;
-        if (send_data_cmd(bcnt == 1 ? CMD17 : CMD18, sector, buf, bcnt, response) < 0) return 1;
-        if (bcnt > 1 && send_cmd(CMD12, 0, response) < 0) return 1;
-        sector += (card_type & CT_BLOCK) ? bcnt : bytes;
-        count -= bcnt;
-        buf += bytes;
-    }
-
-    return 0;;
-}
-
-void copyFlash(QWORD address, QWORD * Dst, DWORD numBlocks) {
-  BYTE card_type;
-  int ret = 0;
-  
-  card_type = ini_sd();
-
-  // BYTE * buf = (BYTE *)Dst;
-    
-  // if (disk_read(buf, (LBA_t)address, (UINT)numBlocks, card_type) < 0) /* UART Print function?*/;
-  
-  ret = gpt_load_partitions(card_type);
-}
+// Maximum SD card clock frequency is either 20MHz or half of the
+// system clock
 
 /*
-int main() {
-  ini_sd();
+PSEUDOCODE:
+transmit 8 dummy bytes
+wait for receive fifo to get a byte.
+- as soon as a byte is in the receive fifo
+- process the byte and increment a byte counter.
+when 8 bytes are transferred
+
+
+ */
+
+// crc16 table to reduce byte processing time
+static const uint16_t crctable[256] = {
+  0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7, 
+  0x8108, 0x9129, 0xa14a, 0xb16b, 0xc18c, 0xd1ad, 0xe1ce, 0xf1ef, 
+  0x1231, 0x0210, 0x3273, 0x2252, 0x52b5, 0x4294, 0x72f7, 0x62d6, 
+  0x9339, 0x8318, 0xb37b, 0xa35a, 0xd3bd, 0xc39c, 0xf3ff, 0xe3de, 
+  0x2462, 0x3443, 0x0420, 0x1401, 0x64e6, 0x74c7, 0x44a4, 0x5485, 
+  0xa56a, 0xb54b, 0x8528, 0x9509, 0xe5ee, 0xf5cf, 0xc5ac, 0xd58d, 
+  0x3653, 0x2672, 0x1611, 0x0630, 0x76d7, 0x66f6, 0x5695, 0x46b4, 
+  0xb75b, 0xa77a, 0x9719, 0x8738, 0xf7df, 0xe7fe, 0xd79d, 0xc7bc, 
+  0x48c4, 0x58e5, 0x6886, 0x78a7, 0x0840, 0x1861, 0x2802, 0x3823, 
+  0xc9cc, 0xd9ed, 0xe98e, 0xf9af, 0x8948, 0x9969, 0xa90a, 0xb92b, 
+  0x5af5, 0x4ad4, 0x7ab7, 0x6a96, 0x1a71, 0x0a50, 0x3a33, 0x2a12, 
+  0xdbfd, 0xcbdc, 0xfbbf, 0xeb9e, 0x9b79, 0x8b58, 0xbb3b, 0xab1a, 
+  0x6ca6, 0x7c87, 0x4ce4, 0x5cc5, 0x2c22, 0x3c03, 0x0c60, 0x1c41, 
+  0xedae, 0xfd8f, 0xcdec, 0xddcd, 0xad2a, 0xbd0b, 0x8d68, 0x9d49, 
+  0x7e97, 0x6eb6, 0x5ed5, 0x4ef4, 0x3e13, 0x2e32, 0x1e51, 0x0e70, 
+  0xff9f, 0xefbe, 0xdfdd, 0xcffc, 0xbf1b, 0xaf3a, 0x9f59, 0x8f78, 
+  0x9188, 0x81a9, 0xb1ca, 0xa1eb, 0xd10c, 0xc12d, 0xf14e, 0xe16f, 
+  0x1080, 0x00a1, 0x30c2, 0x20e3, 0x5004, 0x4025, 0x7046, 0x6067, 
+  0x83b9, 0x9398, 0xa3fb, 0xb3da, 0xc33d, 0xd31c, 0xe37f, 0xf35e, 
+  0x02b1, 0x1290, 0x22f3, 0x32d2, 0x4235, 0x5214, 0x6277, 0x7256, 
+  0xb5ea, 0xa5cb, 0x95a8, 0x8589, 0xf56e, 0xe54f, 0xd52c, 0xc50d, 
+  0x34e2, 0x24c3, 0x14a0, 0x0481, 0x7466, 0x6447, 0x5424, 0x4405, 
+  0xa7db, 0xb7fa, 0x8799, 0x97b8, 0xe75f, 0xf77e, 0xc71d, 0xd73c, 
+  0x26d3, 0x36f2, 0x0691, 0x16b0, 0x6657, 0x7676, 0x4615, 0x5634, 
+  0xd94c, 0xc96d, 0xf90e, 0xe92f, 0x99c8, 0x89e9, 0xb98a, 0xa9ab, 
+  0x5844, 0x4865, 0x7806, 0x6827, 0x18c0, 0x08e1, 0x3882, 0x28a3, 
+  0xcb7d, 0xdb5c, 0xeb3f, 0xfb1e, 0x8bf9, 0x9bd8, 0xabbb, 0xbb9a, 
+  0x4a75, 0x5a54, 0x6a37, 0x7a16, 0x0af1, 0x1ad0, 0x2ab3, 0x3a92, 
+  0xfd2e, 0xed0f, 0xdd6c, 0xcd4d, 0xbdaa, 0xad8b, 0x9de8, 0x8dc9, 
+  0x7c26, 0x6c07, 0x5c64, 0x4c45, 0x3ca2, 0x2c83, 0x1ce0, 0x0cc1, 
+  0xef1f, 0xff3e, 0xcf5d, 0xdf7c, 0xaf9b, 0xbfba, 0x8fd9, 0x9ff8, 
+  0x6e17, 0x7e36, 0x4e55, 0x5e74, 0x2e93, 0x3eb2, 0x0ed1, 0x1ef0 
+};
+
+int disk_read(BYTE * buf, LBA_t sector, UINT count) {
+  uint64_t r;
+  UINT i, j;
+  volatile uint8_t *p = buf;
+
+  // Quarter of the Systemclock, divided by the number of bits in a block
+  // equals the number of blocks per second transferred.
+  UINT modulus = SDCCLOCK/(8*512);
+
+  uint8_t crc = 0;
+  crc = crc7(crc, 0x40 | SD_CMD_READ_BLOCK_MULTIPLE);
+  crc = crc7(crc, (sector >> 24) & 0xff);
+  crc = crc7(crc, (sector >> 16) & 0xff);
+  crc = crc7(crc, (sector >> 8) & 0xff);
+  crc = crc7(crc, sector & 0xff);
+  crc = crc | 1;
   
-  
+  if ((r = sd_cmd(18, sector & 0xffffffff, crc) & 0xff) != 0x00) {
+    print_uart("disk_read: CMD18 failed. r = 0x");
+    print_uart_byte(r);
+    print_uart("\r\n");
+    fail();
+    // return -1;
+  }
+
+  print_uart("\r          Blocks loaded: ");
+  print_uart("0");
+  print_uart("/");
+  print_uart_dec(count);
+  // write_reg(SPI_CSMODE, SIFIVE_SPI_CSMODE_MODE_HOLD);
+  // Begin reading blocks
+  for (i = 0; i < count; i++) {
+    uint16_t crc, crc_exp;
+    uint64_t n = 0;
+    uint64_t readCount = 0;
+
+    // Wait for data token
+    while((r = spi_dummy()) != SD_DATA_TOKEN);
+
+    crc = 0;
+    /* n = 512; */
+    /* do { */
+    /*   uint8_t x = spi_dummy(); */
+    /*   *p++ = x; */
+    /*   crc = crc16(crc, x); */
+    /* } while (--n > 0); */
+
+    /* n = 512/8; */
+    /* do { */
+    /*   // Send 8 dummy bytes (fifo should be empty) */
+    /*   for (j = 0; j < 8; j++) { */
+    /*     spi_sendbyte(0xff); */
+    /*   } */
+
+    /*   // Reset counter. Process bytes AS THEY COME IN. */
+    /*   for (j = 0; j < 8; j++) { */
+    /*     while (!(read_reg(SPI_IP) & 2)) {} */
+    /*     uint8_t x = spi_readbyte(); */
+    /*     *p++ = x; */
+    /*     // crc = crc16(crc, x); */
+    /*     crc = ((crc << 8) ^ crctable[x ^ (crc >> 8)]) & 0xffff; */
+    /*   } */
+    /* } while(--n > 0); */
+
+    n = 512;
+    // Initially fill the transmit fifo
+    for (j = 0; j < 8; j++) {
+      spi_sendbyte(0xff);
+    }
+
+    
+    while (n > 0) {
+      // Wait for bytes to be received
+      while (!(read_reg(SPI_IP) & 2)) {}
+      // Read byte
+      uint8_t x = spi_readbyte();
+      // Send another dummy byte
+      if (n > 8) {
+        spi_sendbyte(0xff);
+      }
+      // Place received byte into memory
+      *p++ = x;
+      // Update CRC16 with fast table based method
+      crc = ((crc << 8) ^ crctable[x ^ (crc >> 8)]) & 0xffff;
+      n = n - 1;
+    }
+    
+    // Read CRC16 and check
+    crc_exp = ((uint16_t)spi_dummy() << 8);
+    crc_exp |= spi_dummy();
+
+    if (crc != crc_exp) {
+      print_uart("Stinking CRC16 didn't match on block read.\r\n");
+      print_uart_int(i);
+      print_uart("\r\n");
+      //return -1;
+      fail();
+    }
+
+    if ( (i % modulus) == 0 ) {
+      print_uart("\r          Blocks loaded: ");
+      print_uart_dec(i);
+      print_uart("/");
+      print_uart_dec(count);
+    }
+
+  }
+
+  sd_cmd(SD_CMD_STOP_TRANSMISSION, 0, 0x01);
+
+  print_uart("\r          Blocks loaded: ");
+  print_uart_dec(count);
+  print_uart("/");
+  print_uart_dec(count);
+  print_uart("\r\n");
   return 0;
 }
-*/
+
+// copyFlash: --------------------------------------------------------
+// A lot happens in this function:
+// * The Wally banner is printed
+// * The peripherals are initialized
+void copyFlash(QWORD address, QWORD * Dst, DWORD numBlocks) {
+  int ret = 0;
+
+  // Initialize UART for messages
+  init_uart(SYSTEMCLOCK, 115200);
+  
+  // Print the wally banner
+  print_uart(BANNER);
+
+  /* print_uart("System clock speed: "); */
+  /* print_uart_dec(SYSTEMCLOCK); */
+  /* print_uart("\r\n"); */
+
+  // Intialize the SD card
+  init_sd(SYSTEMCLOCK, SDCCLOCK);
+  
+  ret = gpt_load_partitions();
+}

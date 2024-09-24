@@ -917,7 +917,7 @@ module    sdModel
 	WRITE_DATA: begin
 	   oeDat<=1;
 	   outdly_cnt<=outdly_cnt+1;
-	   datOut <= 4'b1111; // listen... until I tell you otherwise, DAT bus is all high (thanks Ross)
+	   datOut <= 4'b1111; // listen... until I tell you otherwise, DAT bus is all high (thanks Rose)
 	   
 	   
 	   if ( outdly_cnt > `DLY_TO_OUTP) begin // if (outdly_cnt > 47) NAC cycles elapsed

@@ -393,7 +393,7 @@ def ibm_b1(flen, iflen, opcode, ops):
                       qinfinity + qdefaultnan + [qqnan[0], qqnan[1]] + \
                       [qsnan[0], qsnan[1]] + qone
     else:
-        logger.error('Invalid iflen value!')
+        logger.error('Invalid iflen value is ' + iflen)
         sys.exit(1)
 
     # the following creates a cross product for ops number of variables
@@ -4073,7 +4073,7 @@ def ibm_b21(flen, iflen, opcode, ops):
             qinfinity + qdefaultnan + [qqnan[0], qqnan[1]] + \
             [qsnan[0], qsnan[1]]
     else:
-        logger.error('Invalid iflen value!')
+        logger.error('Invalid iflen value 2 ' + iflen)
         sys.exit(1)
 
     # the following creates a cross product for ops number of variables

@@ -1,4 +1,4 @@
-#! /usr/bin/python3
+#!/usr/bin/env python3
 # extract sqrt and float div testfloat vectors
 
 # author: Alessandro Maiuolo

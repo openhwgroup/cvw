@@ -1,10 +1,11 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 import sys, os, subprocess
 
 def main():
+    RISCV = os.environ.get("RISCV")
     maxGoodCount = 400e6 # num instrs that execute sucessfully starting from 0
     currInstrCount = maxGoodCount
-    linuxTestvectors = "/opt/riscv/linux-testvectors"
+    linuxTestvectors = RISCV+"/linux-testvectors"
     if not os.path.exists(linuxTestvectors):
         sys.stderr.write("Error: Linux testvectors not found at "+linuxTestvectors+"\n")
         exit(1)
@@ -22,7 +23,7 @@ def main():
             break
         checkpoint = checkpointList[0]
         logFile = logDir+"checkpoint"+str(checkpoint)+".log"
-        runCommand="{\nvsim -c <<!\ndo wally-batch.do buildroot buildroot /opt/riscv 0 "+str(checkpoint+1)+" "+str(checkpoint)+"\n!\n} | tee "+logFile 
+        runCommand="{\nvsim -c <<!\ndo wally-batch.do buildroot buildroot "+RISCV+" 0 "+str(checkpoint+1)+" "+str(checkpoint)+"\n!\n} | tee "+logFile 
         print(runCommand)
         os.system(runCommand)
         try:

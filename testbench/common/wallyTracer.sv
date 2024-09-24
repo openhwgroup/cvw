@@ -52,7 +52,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   logic [NUMREGS-1:0] 			 rf_wb;
   logic [4:0] 					 rf_a3;
   logic 						 rf_we3;
-  logic [P.XLEN-1:0] 			 frf[32];
+  logic [P.FLEN-1:0] 			 frf[32];
   logic [`NUM_REGS-1:0] 		 frf_wb;
   logic [4:0] 					 frf_a4;
   logic 						 frf_we4;
@@ -169,12 +169,17 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
 	  CSRArray[12'h143] = testbench.dut.core.priv.priv.csr.csrs.csrs.STVAL_REGW;
 	  CSRArray[12'h142] = testbench.dut.core.priv.priv.csr.csrs.csrs.SCAUSE_REGW;
 	  CSRArray[12'h144] = testbench.dut.core.priv.priv.csr.csrm.MIP_REGW & 12'h222 & testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW;
-	  CSRArray[12'h14D] = testbench.dut.core.priv.priv.csr.csrs.csrs.STIMECMP_REGW;
+	  CSRArray[12'h14D] = testbench.dut.core.priv.priv.csr.csrs.csrs.STIMECMP_REGW[P.XLEN-1:0];
 	  // user CSRs
 	  CSRArray[12'h001] = testbench.dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW;
 	  CSRArray[12'h002] = testbench.dut.core.priv.priv.csr.csru.csru.FRM_REGW;
 	  CSRArray[12'h003] = {testbench.dut.core.priv.priv.csr.csru.csru.FRM_REGW, testbench.dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW};
 	
+    if (P.XLEN == 32) begin
+      CSRArray[12'h310] = testbench.dut.core.priv.priv.csr.csrsr.MSTATUSH_REGW;
+      CSRArray[12'h31A] = testbench.dut.core.priv.priv.csr.csrm.MENVCFGH_REGW;
+      CSRArray[12'h15D] = testbench.dut.core.priv.priv.csr.csrs.csrs.STIMECMP_REGW[63:32];
+    end
 	end else begin // hold the old value if the pipeline is stalled.
 
       // PMP CFG 3A0 to 3AF

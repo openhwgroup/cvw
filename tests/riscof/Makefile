@@ -4,11 +4,13 @@ work_dir = ./riscof_work
 work = ./work
 arch_workdir = $(work)/riscv-arch-test
 wally_workdir = $(work)/wally-riscv-arch-test
+nproc = $(shell nproc --ignore=1)
 
 current_dir = $(shell pwd)
 #XLEN    ?= 64
 
 all: root arch32 wally32 arch32e arch64 wally64
+
 wally-riscv-arch-test: root wally64 wally32
 
 root:
@@ -16,9 +18,9 @@ root:
 	mkdir -p $(work)
 	mkdir -p $(arch_workdir)
 	mkdir -p $(wally_workdir)
-	sed 's,{0},$(current_dir),g;s,{1},32gc,g' config.ini > config32.ini
-	sed 's,{0},$(current_dir),g;s,{1},64gc,g' config.ini > config64.ini
-	sed 's,{0},$(current_dir),g;s,{1},32e,g' config.ini > config32e.ini
+	sed 's,{0},$(current_dir),g;s,{1},32gc,g;s,{2},$(nproc),g' config.ini > config32.ini
+	sed 's,{0},$(current_dir),g;s,{1},64gc,g;s,{2},$(nproc),g' config.ini > config64.ini
+	sed 's,{0},$(current_dir),g;s,{1},32e,g;s,{2},$(nproc),g' config.ini > config32e.ini
 
 arch32e:
 	riscof run --work-dir=$(work_dir) --config=config32e.ini --suite=$(arch_dir)/riscv-test-suite/ --env=$(arch_dir)/riscv-test-suite/env --no-browser
@@ -47,7 +49,7 @@ wally64:
 
 quad64:
 	riscof run --work-dir=$(work_dir) --config=config64.ini --suite=$(wally_dir)/riscv-test-suite/rv64i_m/Q/riscv-ctg/tests/ --env=$(wally_dir)/riscv-test-suite/env
-
+	
 #wally32e:
 #	riscof run --work-dir=$(work_dir) --config=config32e.ini --suite=$(wally_dir)/riscv-test-suite/ --env=$(wally_dir)/riscv-test-suite/env --no-browser --no-dut-run
 #	rsync -a $(work_dir)/rv32i_m/ $(wally_workdir)/rv32i_m/ || echo "error suppressed"
@@ -66,3 +68,4 @@ clean:
 	rm -rf $(work_dir)
 	rm -rf $(wally_workdir)
 	rm -rf $(arch_workdir)
+	rm -rf $(submodule_wor_dir)

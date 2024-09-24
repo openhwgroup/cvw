@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 # run_vcs
 # David_Harris@hmc.edu 2 July 2024
@@ -23,10 +23,12 @@ def runfindcmd(cmd):
 parser = argparse.ArgumentParser()
 parser.add_argument("config", help="Configuration file")
 parser.add_argument("testsuite", help="Test suite (or none, when running a single ELF file) ")
+parser.add_argument("--tb", "-t", help="Testbench", choices=["testbench", "testbench_fp"], default="testbench")
 parser.add_argument("--elffile", "-e", help="ELF file name", default="")
 parser.add_argument("--coverage", "-c", help="Code & Functional Coverage", action="store_true")
 parser.add_argument("--fcov", "-f", help="Code & Functional Coverage", action="store_true")
 parser.add_argument("--args", "-a", help="Optional arguments passed to simulator via $value$plusargs", default="")
+parser.add_argument("--params", "-p", help="Optional top-level parameter overrides of the form param=value", default="")
 parser.add_argument("--lockstep", "-l", help="Run ImperasDV lock, step, and compare.", action="store_true")
 # GUI not yet implemented
 #parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true")
@@ -49,7 +51,8 @@ rtlsrc_cmd = "find " + srcdir + ' -name "*.sv" ! -path "' + srcdir + '/generic/m
 rtlsrc_files = runfindcmd(rtlsrc_cmd)
 tbcommon_cmd = 'find ' + tbdir+'/common -name "*.sv" ! -path "' + tbdir+'/common/wallyTracer.sv"'
 tbcommon_files = runfindcmd(tbcommon_cmd)
-RTL_FILES = tbdir+'/testbench.sv ' + str(rtlsrc_files) + ' '  + str(tbcommon_files)
+tb_file = tbdir + "/" + args.tb + ".sv"
+RTL_FILES = tb_file + ' ' + str(rtlsrc_files) + ' '  + str(tbcommon_files)
 
 # Include directories
 INCLUDE_PATH="+incdir+" + cfgdir + "/" + args.config + " +incdir+" + cfgdir + "/deriv/" + args.config + " +incdir+" + cfgdir + "/shared +incdir+$WALLY/tests +incdir+" + tbdir + " +incdir+" + srcdir
@@ -68,10 +71,23 @@ if (args.coverage):
 else:
     COV_OPTIONS = ""
 
+# Write parameter overrides to a file
+f = open(os.path.expandvars(wkdir) + "/param_overrides.txt", "w")
+for param in args.params.split():
+    [param, value] = param.split("=")
+    if "\\'" in value: # for bit values
+        value = value.replace("\\'", "'")
+    else:              # for strings
+        value = "\"" + value + "\""
+    # print("param=" + param + " value=" + value)
+    f.write("assign " + value + " " + args.tb + "/" + param + "\n")
+f.close()
+PARAM_OVERRIDES=" -parameters " + wkdir + "/param_overrides.txt "
+
 # Simulation commands
 OUTPUT="sim_out"
-VCS_CMD="vcs +lint=all,noGCWM,noUI,noSVA-UA,noIDTS,noNS,noULCO,noCAWM-L,noWMIA-L,noSV-PIU,noSTASKW_CO,noSTASKW_CO1,noSTASKW_RMCOF -suppress +warn -sverilog +vc -Mupdate -line -full64 -lca -ntb_opts sensitive_dyn " + INCLUDE_PATH # Disabled Debug flags; add them back for a GUI mode -debug_access+all+reverse  -kdb +vcs+vcdpluson 
-VCS = VCS_CMD + " -Mdir=" + wkdir + " " + srcdir + "/cvw.sv " + LOCKSTEP_OPTIONS + " " + COV_OPTIONS + " " + RTL_FILES + " -o " + wkdir + "/" + OUTPUT + " -work " + wkdir + " -Mlib " + wkdir + " -l " + logdir + "/" + args.config + "_" + args.testsuite + ".log"
+VCS_CMD="vcs +lint=all,noGCWM,noUI,noSVA-UA,noIDTS,noNS,noULCO,noCAWM-L,noWMIA-L,noSV-PIU,noSTASKW_CO,noSTASKW_CO1,noSTASKW_RMCOF -suppress +warn -sverilog +vc -Mupdate -line -full64 -lca -ntb_opts sensitive_dyn " + "-top " + args.tb + PARAM_OVERRIDES + INCLUDE_PATH # Disabled Debug flags; add them back for a GUI mode -debug_access+all+reverse  -kdb +vcs+vcdpluson
+VCS = VCS_CMD + " -Mdir=" + wkdir + " " + srcdir + "/cvw.sv " + LOCKSTEP_OPTIONS + " " + COV_OPTIONS + " " + RTL_FILES + " -o " + wkdir + "/" + OUTPUT + " -work " + wkdir + " -Mlib=" + wkdir + " -l " + logdir + "/" + args.config + "_" + args.testsuite + ".log"
 SIMV_CMD= wkdir + "/" + OUTPUT + " +TEST=" + args.testsuite + " " + args.elffile + " " + args.args + " -no_save " + LOCKSTEP_SIMV 
 
 # Run simulation
@@ -81,4 +97,3 @@ subprocess.run(SIMV_CMD, shell=True)
 if (args.coverage):
     COV_RUN = "urg -dir " + wkdir + "/coverage.vdb -format text -report IndividualCovReport/" + args.config + "_" + args.testsuite
     subprocess.run(COV_RUN, shell=True)
-

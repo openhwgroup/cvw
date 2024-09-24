@@ -148,11 +148,13 @@ module decompress import cvw::*;  #(parameter cvw_t P) (
         5'b01101:                                       LInstrD = {1'b1, immCJ, 5'b00000, 7'b1101111}; // c.j
         5'b01110:                                       LInstrD = {1'b1, immCB[11:5], 5'b00000, rs1p, 3'b000, immCB[4:0], 7'b1100011};    // c.beqz
         5'b01111:                                       LInstrD = {1'b1, immCB[11:5], 5'b00000, rs1p, 3'b001, immCB[4:0], 7'b1100011};    // c.bnez
-        5'b10000: if (rds1 != 5'b0) begin
-                    if (P.XLEN > 32 | ~immSH[5])        LInstrD = {1'b1, 6'b000000, immSH, rds1, 3'b001, rds1, 7'b0010011};               // c.slli; shamt[5] must be 0 in RV32C
-                  end else if (immSH != 0)              LInstrD = {1'b1, 25'b0, 7'b0010011};                                              // c.slli with rd = 0, immm != 0 is a HINT, treated as nop
-        5'b10001: if (P.ZCD_SUPPORTED)
-                    if (rds1 != 5'b0)                   LInstrD = {1'b1, immCILSPD, 5'b00010, 3'b011, rds1, 7'b0000111};                  // c.fldsp
+        5'b10000: if (immSH != 0) begin
+                    if (P.XLEN > 32 | ~immSH[5]) begin                                                                                    // shamt[5] = 1 is reserved in RV32C
+                      if (rds1 != 5'b0)                 LInstrD = {1'b1, 6'b000000, immSH, rds1, 3'b001, rds1, 7'b0010011};               // c.slli
+                      else                              LInstrD = {1'b1, 25'b0, 7'b0010011};                                              // c.slli with rd = 0 is a HINT, treated as nop
+                    end
+                  end else                              LInstrD = {1'b1, 25'b0, 7'b0010011};                                              // c.slli with immm = 0 is a HINT, treated as nop
+        5'b10001: if (P.ZCD_SUPPORTED)                  LInstrD = {1'b1, immCILSPD, 5'b00010, 3'b011, rds1, 7'b0000111};                  // c.fldsp
         5'b10010: if (rds1 != 5'b0)                     LInstrD = {1'b1, immCILSP, 5'b00010, 3'b010, rds1, 7'b0000011};                   // c.lwsp
         5'b10011: if (P.XLEN == 32) begin 
                     if (P.ZCF_SUPPORTED)                LInstrD = {1'b1, immCILSP, 5'b00010, 3'b010, rds1, 7'b0000111};                   // c.flwsp

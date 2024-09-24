@@ -1,4 +1,3 @@
-#BUILDROOT := ${RISCV}/buildroot-test
 BUILDROOT := buildroot
 IMAGES := ${BUILDROOT}/output/images
 WALLY := $(shell dirname $(shell pwd))
@@ -6,6 +5,13 @@ WALLYLINUX := $(shell pwd)
 DIS := ${IMAGES}/disassembly
 BRPACKAGES := $(WALLYLINUX)/buildroot-packages
 BR2023 := $(WALLYLINUX)/buildroot-config-src/buildroot-2023.05.1
+
+# set sudo if needed depending on $RISCV
+ifeq ($(shell mkdir -p $(RISCV)/.test > /dev/null 2>&1 ; echo $$?), 0)
+	SUDO :=
+else
+	SUDO := sudo
+endif
 
 # Buildroot Config Stuff
 WALLYBOARDSRC := $(WALLYLINUX)/buildroot-config-src/wally
@@ -17,7 +23,7 @@ FPGA_AXI_SDC := ${WALLYLINUX}/buildroot-packages/fpga-axi-sdc
 DRIVER := ${PACKAGE_SOURCE}/fpga-axi-sdc.c
 PATCHFILE := $(BRPACKAGES)/package-2023.05.1.patch
 
-# Device tree files 
+# Device tree files
 DTS ?= $(shell find devicetree -type f -regex ".*\.dts" | sort)
 DTB := $(DTS:%.dts=%.dtb)
 DTB := $(foreach name, $(DTB), $(IMAGES)/$(shell basename $(name)))
@@ -27,35 +33,34 @@ BINARIES := fw_jump.elf vmlinux busybox
 OBJDUMPS := $(foreach name, $(BINARIES), $(basename $(name) .elf))
 OBJDUMPS := $(foreach name, $(OBJDUMPS), $(DIS)/$(name).objdump)
 
-.PHONY: all generate disassemble install clean cleanDTB cleanDriver test
+.PHONY: all generate disassemble install clean cleanDTB cleanDriver check_write_permissions
 
-all: clean download Image disassemble install
+all: check_write_permissions clean download Image disassemble install dumptvs
 
-all_nosudo: clean download Image disassemble install_nosudo
+check_write_permissions:
+ifeq ($(SUDO), sudo)
+	@echo "Cannot write to '$(RISCV)'." \
+		"Using sudo (you may be prompted for your password several times throughout the install)"
+endif
+	@$(SUDO) mkdir -p $(RISCV)/.test || \
+		(echo "ERROR: Still unable to write to '$(RISCV)'." >&2 \
+		&& exit 1)
+	@$(SUDO) rm -r $(RISCV)/.test
 
 Image:
-	bash -c "unset LD_LIBRARY_PATH; make -C $(BUILDROOT) --jobs;"
+	bash -c "unset LD_LIBRARY_PATH; $(MAKE) -C $(BUILDROOT)"
 	$(MAKE) generate
+	@echo "Buildroot Image successfully generated."
 
-install:
-	sudo rm -rf $(RISCV)/$(BUILDROOT)
-	sudo mv $(BUILDROOT) $(RISCV)/$(BUILDROOT)
+install: check_write_permissions
+	$(SUDO) rm -rf $(RISCV)/$(BUILDROOT)
+	$(SUDO) mv $(BUILDROOT) $(RISCV)/$(BUILDROOT)
+	@echo "Buildroot successfully installed."
 
-install_nosudo:
-	rm -rf $(RISCV)/$(BUILDROOT)
-	mv $(BUILDROOT) $(RISCV)/$(BUILDROOT)
-
-dumptvs:
-	sudo mkdir -p $(RISCV)/linux-testvectors 
-	cd testvector-generation; sudo ./genInitMem.sh
-
-dumptvs_nosudo:
-	mkdir -p $(RISCV)/linux-testvectors 
+dumptvs: check_write_permissions
+	$(SUDO) mkdir -p $(RISCV)/linux-testvectors
 	cd testvector-generation; ./genInitMem.sh
-
-# Temp rule for debugging
-test:
-	echo $(shell find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/linux-[0-9]+\.[0-9]+\.[0-9]+$$")
+	@echo "Testvectors successfully generated."
 
 generate: $(DTB) $(IMAGES)
 
@@ -68,28 +73,27 @@ $(IMAGES):
 
 $(RISCV):
 	@ echo "ERROR: No $(RISCV) directory. Make sure you have installed the Wally Toolchain."
-	@ echo "this can be done with <WALLY>/bin/wally-tool-chain-install.sh"
+	@ echo "and sourced setup.sh"
 
 # Disassembly rules ---------------------------------------------------
-
-
 disassemble:
 	rm -rf $(BUILDROOT)/output/images/disassembly
 	find  $(BUILDROOT)/output/build/linux-* -maxdepth 1 -name "vmlinux" | xargs  cp -t $(BUILDROOT)/output/images/
 	mkdir -p $(DIS)
-	make -j $(OBJDUMPS)
+	$(MAKE) $(OBJDUMPS)
 	# extract rootfs
 	mkdir -p $(BUILDROOT)/output/images/disassembly/rootfs
-	echo "Ignore error about dev/console when extracting rootfs from rootfs.cpio"
+	@echo "Ignore error about dev/console when extracting rootfs from rootfs.cpio"
 	-cpio -i -D $(BUILDROOT)/output/images/disassembly/rootfs < $(BUILDROOT)/output/images/rootfs.cpio
+	@echo "Disassembly successfully completed."
 
 $(DIS)/%.objdump: $(IMAGES)/%.elf
 	riscv64-unknown-elf-objdump -DS $< >> $@
-	extractFunctionRadix.sh $@
+	$(WALLY)/bin/extractFunctionRadix.sh $@
 
 $(DIS)/%.objdump: $(IMAGES)/%
 	riscv64-unknown-elf-objdump -S $< >> $@
-	extractFunctionRadix.sh $@
+	$(WALLY)/bin/extractFunctionRadix.sh $@
 
 $(IMAGES)/vmlinux:
 	linuxDir=$$(find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/linux-[0-9]+\.[0-9]+\.[0-9]+$$") ;\
@@ -100,10 +104,9 @@ $(IMAGES)/busybox:
 	cp $$busyboxDir/busybox $@ ;\
 
 # Generating new Buildroot directories --------------------------------
-
-# This directive should be run as: make install BUILDROOT=path/to/buildroot
-download: $(BUILDROOT)/package/fpga-axi-sdc $(WALLYBOARD)
+download: $(WALLYBOARD)
 	cp $(WALLYBOARD)/main.config $(BUILDROOT)/.config
+	@echo "Buildroot successfully download."
 
 # CONFIG DEPENDENCIES 2023.05.1 ---------------------------------------
 $(WALLYBOARD): $(BUILDROOT)

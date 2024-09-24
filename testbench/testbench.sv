@@ -33,6 +33,12 @@
     `include "idv/idv.svh"
 `endif
 
+`ifdef RVVI_COVERAGE
+    `include "RISCV_trace_data.svh"
+    `include "rvvicov.svh"
+    `include "wrapper.sv"
+`endif
+
 import cvw::*;
 
 module testbench;
@@ -53,14 +59,14 @@ module testbench;
 
   `ifdef VERILATOR
       import "DPI-C" function string getenvval(input string env_name);
-      string       RISCV_DIR = getenvval("RISCV"); // "/opt/riscv";
+      string       RISCV_DIR = getenvval("RISCV");
       string       WALLY_DIR = getenvval("WALLY"); // ~/cvw typical
   `elsif VCS
       import "DPI-C" function string getenv(input string env_name);
-      string       RISCV_DIR = getenv("RISCV"); // "/opt/riscv";
+      string       RISCV_DIR = getenv("RISCV");
       string       WALLY_DIR = getenv("WALLY"); 
   `else
-      string       RISCV_DIR = "$RISCV"; // "/opt/riscv";
+      string       RISCV_DIR = "$RISCV";
       string       WALLY_DIR = "$WALLY";
   `endif
 
@@ -76,8 +82,7 @@ module testbench;
 
   // DUT signals
   logic [P.AHBW-1:0]    HRDATAEXT;
-  logic                 HREADYEXT, HRESPEXT;
-  logic                 HSELEXTSDC;
+  logic                 HREADYEXT, HRESPEXT; 
   logic [P.PA_BITS-1:0] HADDR;
   logic [P.AHBW-1:0]    HWDATA;
   logic [P.XLEN/8-1:0]  HWSTRB;
@@ -93,7 +98,11 @@ module testbench;
   logic        UARTSin, UARTSout;
   logic        SPIIn, SPIOut;
   logic [3:0]  SPICS;
-  logic        SDCIntr;
+  logic        SPICLK;
+  logic        SDCCmd;
+  logic        SDCIn;
+  logic [3:0]  SDCCS;
+  logic        SDCCLK;        
 
   logic        HREADY;
   logic        HSELEXT;
@@ -136,7 +145,7 @@ module testbench;
                           if (P.ZICSR_SUPPORTED)  tests = {arch64c, arch64cpriv};
                           else                    tests = {arch64c};
         "arch64m":      if (P.M_SUPPORTED)        tests = arch64m;
-        "arch64a_amo":      if (P.A_SUPPORTED | P.ZAAMO_SUPPORTED)        tests = arch64a_amo;
+        "arch64a_amo":      if (P.ZAAMO_SUPPORTED)        tests = arch64a_amo;
         "arch64f":      if (P.F_SUPPORTED)        tests = arch64f;
         "arch64d":      if (P.D_SUPPORTED)        tests = arch64d;  
         "arch64f_fma":  if (P.F_SUPPORTED)        tests = arch64f_fma;
@@ -150,7 +159,7 @@ module testbench;
         "imperas64d":   if (P.D_SUPPORTED)        tests = imperas64d;
         "imperas64m":   if (P.M_SUPPORTED)        tests = imperas64m;
         "wally64q":     if (P.Q_SUPPORTED)        tests = wally64q;
-        "wally64a_lrsc":     if (P.A_SUPPORTED | P.ZALRSC_SUPPORTED)        tests = wally64a_lrsc;
+        "wally64a_lrsc":     if (P.ZALRSC_SUPPORTED)        tests = wally64a_lrsc;
         "imperas64c":   if (P.C_SUPPORTED)        tests = imperas64c;
                         else                      tests = imperas64iNOc;
         "custom":                                 tests = custom;
@@ -189,7 +198,7 @@ module testbench;
                           if (P.ZICSR_SUPPORTED)  tests = {arch32c, arch32cpriv};
                           else                    tests = {arch32c};
         "arch32m":      if (P.M_SUPPORTED)        tests = arch32m;
-        "arch32a_amo":      if (P.A_SUPPORTED | P.ZAAMO_SUPPORTED)  tests = arch32a_amo; 
+        "arch32a_amo":      if (P.ZAAMO_SUPPORTED)  tests = arch32a_amo; 
         "arch32f":      if (P.F_SUPPORTED)        tests = arch32f;
         "arch32d":      if (P.D_SUPPORTED)        tests = arch32d;
         "arch32f_fma":  if (P.F_SUPPORTED)        tests = arch32f_fma;
@@ -201,7 +210,7 @@ module testbench;
         "imperas32i":                             tests = imperas32i;
         "imperas32f":   if (P.F_SUPPORTED)        tests = imperas32f;
         "imperas32m":   if (P.M_SUPPORTED)        tests = imperas32m;
-        "wally32a_lrsc":     if (P.A_SUPPORTED | P.ZALRSC_SUPPORTED)        tests = wally32a_lrsc; 
+        "wally32a_lrsc":     if (P.ZALRSC_SUPPORTED)        tests = wally32a_lrsc; 
         "imperas32c":   if (P.C_SUPPORTED)        tests = imperas32c;
                         else                      tests = imperas32iNOc;
         "wally32i":                               tests = wally32i; 
@@ -372,6 +381,11 @@ module testbench;
         uartoutfile = $fopen(uartoutfilename, "w"); // delete UART output file
         ProgramAddrMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.addr"};
         ProgramLabelMapFile = {RISCV_DIR, "/buildroot/output/images/disassembly/vmlinux.objdump.lab"};
+      end else if(TEST == "fpga") begin
+        bootmemfilename = {WALLY_DIR, "/fpga/src/boot.mem"};
+        memfilename = {WALLY_DIR, "/fpga/src/data.mem"};
+        ProgramAddrMapFile = {WALLY_DIR, "/fpga/zsbl/bin/boot.objdump.addr"};
+        ProgramLabelMapFile = {WALLY_DIR, "/fpga/zsbl/bin/boot.objdump.lab"};
       end else if(ElfFile != "none") begin
         elffilename = ElfFile;
         memfilename = {ElfFile, ".memfile"};
@@ -388,14 +402,6 @@ module testbench;
       // and initialize them to zero (also initilaize them to zero at the start of the next test)
       updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, memfilename, WALLY_DIR, ProgramAddrLabelArray);
     end
-`ifdef VERILATOR // this macro is defined when verilator is used
-  // Simulator Verilator has an issue that the validate logic below slows runtime 110x if it is 
-  // in the posedge clk block rather than a separate posedge Validate block.  
-  // Until it is fixed, provide a silly posedge Validate block to keep Verilator happy.
-  // https://github.com/verilator/verilator/issues/4967
-  end // restored
-  always @(posedge Validate) // added
-`endif
     if(Validate) begin
       if (PrevPCZero) totalerrors = totalerrors + 1; //  error if PC is stuck at zero
       if (TEST == "buildroot")
@@ -448,10 +454,7 @@ module testbench;
 `endif
       end
     end
-`ifndef VERILATOR
-  // Remove this when issue 4967 is resolved and the posedge Validate logic above is removed
-  end 
-`endif
+  end
 
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -497,6 +500,23 @@ module testbench;
           else begin
             $display("Buildroot test requires BOOTROM_SUPPORTED");
             $finish;
+          end
+          $fclose(memFile);
+          memFile = $fopen(memfilename, "rb");
+          if (memFile == 0) begin
+            $display("Error: Could not open file %s", memfilename);
+            $finish;
+          end
+          readResult = $fread(dut.uncoregen.uncore.ram.ram.memory.ram.RAM, memFile);
+          $fclose(memFile);
+        end else if (TEST == "fpga") begin
+          memFile = $fopen(bootmemfilename, "rb");
+          if (memFile == 0) begin
+            $display("Error: Could not open file %s", memfilename);
+            $finish;
+          end
+          if (P.BOOTROM_SUPPORTED) begin
+            readResult = $fread(dut.uncoregen.uncore.bootrom.bootrom.memory.ROM, memFile);
           end
           $fclose(memFile);
           memFile = $fopen(memfilename, "rb");
@@ -585,16 +605,16 @@ module testbench;
     assign SDCDat = sd_dat_reg_t ? sd_dat_reg_o : sd_dat_i;
     assign SDCDatIn = SDCDat;
     -----/\----- EXCLUDED -----/\----- */
-    assign SDCIntr = 1'b0;
   end else begin
-    assign SDCIntr = 1'b0;
+    assign SDCIn = 1'b1;
+    
   end
 
   wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .ExternalStall(RVVIStall), 
-    .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
+    .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT,
     .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
-    .UARTSin, .UARTSout, .SDCIntr, .SPIIn, .SPIOut, .SPICS); 
+    .UARTSin, .UARTSout, .SPIIn, .SPIOut, .SPICS, .SPICLK, .SDCIn, .SDCCmd, .SDCCS, .SDCCLK); 
 
   // generate clock to sequence tests
   always begin
@@ -742,7 +762,7 @@ end
     void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,            "riscv.ovpworld.org"));
     void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME,              "riscv"));
     void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT,           "RV64GCK"));
-    void'(rvviRefConfigSetInt(IDV_CONFIG_MODEL_ADDRESS_BUS_WIDTH,     56));
+    void'(rvviRefConfigSetInt(IDV_CONFIG_MODEL_ADDRESS_BUS_WIDTH,     XLEN==64 ? 56 : 34));
     void'(rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 6));
 
     if(elffilename == "buildroot") filename = "";    
@@ -804,15 +824,25 @@ end
     void'(rvviRefCsrSetVolatile(0, 32'hC02));   // INSTRET
     void'(rvviRefCsrSetVolatile(0, 32'hB02));   // MINSTRET
     void'(rvviRefCsrSetVolatile(0, 32'hC01));   // TIME
-    
+    if (P.XLEN == 32) begin
+      void'(rvviRefCsrSetVolatile(0, 32'hC80));   // CYCLEH
+      void'(rvviRefCsrSetVolatile(0, 32'hB80));   // MCYCLEH
+      void'(rvviRefCsrSetVolatile(0, 32'hC82));   // INSTRETH
+      void'(rvviRefCsrSetVolatile(0, 32'hB82));   // MINSTRETH
+      void'(rvviRefCsrSetVolatile(0, 32'hC81));   // TIMEH 
+    end
     // User HPMCOUNTER3 - HPMCOUNTER31
     for (iter='hC03; iter<='hC1F; iter++) begin
       void'(rvviRefCsrSetVolatile(0, iter));   // HPMCOUNTERx
+      if (P.XLEN == 32) 
+        void'(rvviRefCsrSetVolatile(0, iter+128));   // HPMCOUNTERxH
     end       
     
     // Machine MHPMCOUNTER3 - MHPMCOUNTER31
     for (iter='hB03; iter<='hB1F; iter++) begin
       void'(rvviRefCsrSetVolatile(0, iter));   // MHPMCOUNTERx
+      if (P.XLEN == 32) 
+        void'(rvviRefCsrSetVolatile(0, iter+128));   // MHPMCOUNTERxH
     end       
     
     // cannot predict this register due to latency between
@@ -956,6 +986,12 @@ test_pmp_coverage #(P) pmp_inst(clk);
 `endif
   /* verilator lint_on WIDTHTRUNC */
   /* verilator lint_on WIDTHEXPAND */
+
+`ifdef RVVI_COVERAGE
+    rvviTrace #(.XLEN(P.XLEN), .FLEN(P.FLEN)) rvvi();
+    wallyTracer #(P) wallyTracer(rvvi);
+    wrapper #(P) wrap(clk);
+`endif
 
 endmodule
 

@@ -1,6 +1,7 @@
 #!/bin/bash
 # check for warnings in Verilog code
 # The verilator lint tool is faster and better than Questa so it is best to run this first.
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 export PATH=$PATH:/usr/local/bin/
 verilator=`which verilator`

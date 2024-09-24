@@ -35,7 +35,6 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   input  logic [P.AHBW-1:0]   HRDATAEXT,
   input  logic                HREADYEXT, HRESPEXT,
   output logic                HSELEXT,
-  output logic                HSELEXTSDC, 
   // fpga debug signals
   input  logic                ExternalStall,
   // outputs to external memory, shared with uncore memory
@@ -57,10 +56,14 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   output logic [31:0]         GPIOEN,           // output enables for GPIO
   input  logic                UARTSin,          // UART serial data input
   output logic                UARTSout,         // UART serial data output
-  input  logic                SDCIntr,
   input  logic                SPIIn,            // SPI pins in
   output logic                SPIOut,           // SPI pins out
-  output logic [3:0]          SPICS             // SPI chip select pins                    
+  output logic [3:0]          SPICS,            // SPI chip select pins
+  output logic                SPICLK,           // SPI clock
+  input  logic                SDCIn,            // SDC DATA[0]     to     SPI DI
+  output logic                SDCCmd,           // SDC CMD         from   SPI DO
+  output logic [3:0]          SDCCS,            // SDC Card Detect from   SPI CS
+  output logic                SDCCLK            // SDC Clock       from   SPI Clock
 );
 
   // Uncore signals
@@ -84,12 +87,12 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   if (P.BUS_SUPPORTED) begin : uncoregen // Hack to work around Verilator bug https://github.com/verilator/verilator/issues/4769
     uncore #(P) uncore(.HCLK, .HRESETn, .TIMECLK,
       .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
-      .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT, .HSELEXTSDC,
+      .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT,
       .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOIN, .GPIOOUT, .GPIOEN, .UARTSin, 
-      .UARTSout, .MTIME_CLINT, .SDCIntr, .SPIIn, .SPIOut, .SPICS);
+      .UARTSout, .MTIME_CLINT, .SPIIn, .SPIOut, .SPICS, .SPICLK, .SDCIn, .SDCCmd, .SDCCS, .SDCCLK);
   end else begin
-    assign {HRDATA, HREADY, HRESP, HSELEXT, HSELEXTSDC, MTimerInt, MSwInt, MExtInt, SExtInt,
-            MTIME_CLINT, GPIOOUT, GPIOEN, UARTSout, SPIOut, SPICS} = '0; 
+    assign {HRDATA, HREADY, HRESP, HSELEXT, MTimerInt, MSwInt, MExtInt, SExtInt,
+            MTIME_CLINT, GPIOOUT, GPIOEN, UARTSout, SPIOut, SPICS, SPICLK, SDCCmd, SDCCS, SDCCLK} = '0; 
   end
 
   

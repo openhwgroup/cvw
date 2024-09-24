@@ -17,27 +17,34 @@ OBJECTS		:= $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(OBJECTS))
 
 TARGETDIR	:= bin
 TARGET		:= $(TARGETDIR)/boot
+MEMFILES    := $(TARGETDIR/boot.mem $(TARGETDIR)/data.mem
 ROOT		:= ..
 LIBRARY_DIRS	:= 
 LIBRARY_FILES	:=
 
 MARCH           :=-march=rv64imfdc_zifencei
 MABI            :=-mabi=lp64d
-LINK_FLAGS      :=$(MARCH) $(MABI) -nostartfiles
+LINK_FLAGS      :=$(MARCH) $(MABI) -nostartfiles -L $(RISCV)/riscv64-unknown-elf/lib
 LINKER		:=linker1000.x
+
+# FGPA parameters
+SYSTEMCLOCK   ?= 20000000
+MAXSDCCLOCK   ?=  5000000
+EXT_MEM_BASE  ?= 0x80000000
+EXT_MEM_RANGE ?= 0x10000000
 
 
 AFLAGS =$(MARCH) $(MABI) -W
 # Override directive allows us to prepend other options on the command line
 # e.g. $ make CFLAGS=-g
-override CFLAGS +=$(MARCH) $(MABI) -mcmodel=medany -O2 -g
+override CFLAGS +=$(MARCH) $(MABI) -mcmodel=medany -O2 -g  -DSYSTEMCLOCK=${SYSTEMCLOCK} -DMAXSDCCLOCK=${MAXSDCCLOCK} -DEXT_MEM_BASE=${EXT_MEM_BASE} -DEXT_MEM_RANGE=${EXT_MEM_RANGE}
 AS=riscv64-unknown-elf-as
 CC=riscv64-unknown-elf-gcc
 AR=riscv64-unknown-elf-ar
 
 
 #Default Make
-all: directories  $(TARGET).memfile
+all: directories $(TARGET).memfile
 
 #Remake
 remake: clean all
@@ -48,7 +55,7 @@ directories:
 	@mkdir -p $(BUILDDIR)
 
 clean:
-	rm -rf $(BUILDDIR) $(TARGETDIR) *.memfile *.objdump 
+	rm -rf $(BUILDDIR) $(TARGETDIR) *.memfile *.objdump boot.mem data.mem
 
 
 #Needed for building additional library projects
@@ -112,3 +119,7 @@ $(TARGET).memfile: $(TARGET)
 	extractFunctionRadix.sh $<.objdump
 	mkdir -p ../../imperas-riscv-tests/work/rv64BP/
 	cp -f $(TARGETDIR)/* ../../imperas-riscv-tests/work/rv64BP/
+	@echo 'Splitting memfile.'
+	./splitfile.sh $@
+	mv boot.mem ../src/boot.mem
+	mv data.mem ../src/data.mem

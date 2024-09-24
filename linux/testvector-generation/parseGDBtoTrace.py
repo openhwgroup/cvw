@@ -1,7 +1,7 @@
-#! /usr/bin/python3
+#!/usr/bin/env python3
 import sys, fileinput, re
 
-# Ross Thompson
+# Rose Thompson
 # July 27, 2021
 # Rewrite of the linux trace parser.
 
