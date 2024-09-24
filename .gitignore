@@ -20,18 +20,15 @@ __pycache__/
 /**/obj_dir*
 /**/gmon*
 
-#External repos
-addins/riscv-arch-test/Makefile.include
-addins/riscv-tests/target
-addins/TestFloat-3e/build/Linux-x86_64-GCC/*
-
 # Tests
 tests/riscof/config32.ini
 tests/riscof/config32e.ini
 tests/riscof/config64.ini
 tests/riscof/riscof_work/
 tests/wally-riscv-arch-test/riscv-test-suite/*/I/*/**
-tests/fp/vectors/*.tv
+tests/fp/vectors/**/*.tv
+tests/fp/vectors/**/sed*
+tests/fp/testfloat/*
 tests/fp/combined_IF_vectors/IF_vectors/*.tv
 tests/custom/*/*/
 tests/custom/*/*/*.memfile
