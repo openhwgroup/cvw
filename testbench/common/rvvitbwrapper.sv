@@ -41,7 +41,7 @@ module rvvitbwrapper import cvw::*; #(parameter cvw_t P,
 );
 
   logic        valid;
-  logic [187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)-1:0] rvvi;
+  logic [72+(5*P.XLEN) + MAX_CSRS*(P.XLEN+16)-1:0] rvvi;
 
   localparam TOTAL_CSRS = 36;
   
