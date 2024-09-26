@@ -66,7 +66,9 @@ if(args.testsuite.endswith('.elf') and args.elf == ""): # No --elf argument; che
         print("ELF file not found: " + args.testsuite)
         exit(1)
     
-
+if(args.lockstep and not args.testsuite.endswith('.elf')):
+    print(f"Invalid Options. Cannot run a testsuite, {args.testsuite} with lockstep. Must run a single elf.")
+    exit(1)
 
 # Validate arguments
 if (args.gui or args.ccov or args.fcov or args.fcovimp or args.fcovrvvi or args.lockstep or args.lockstepverbose):
