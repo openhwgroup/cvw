@@ -409,16 +409,16 @@ class TestRunner:
             if "Success" in line:
                 passed_configs.append(line.split(':')[0].strip())
             elif "passed lint" in line:
-                passed_configs.append(line.split(' ')[0].strip())
+                passed_configs.append(f"Lint: {line.split(' ')[0].strip()}")
                 #passed_configs.append(line) # potentially use a space
             elif "failed lint" in line:
-                failed_configs.append(line.split(' ')[0].strip(), "no log file")
+                failed_configs.append([f"Lint: {line.split(' ')[0].strip()}", "No Log File"])
                 #failed_configs.append(line)
 
             elif "Failures detected in output" in line:
                 try:
                     config_name = line.split(':')[0].strip()
-                    log_file = os.path.abspath("logs/"+config_name+".log")
+                    log_file = os.path.abspath(os.path.join("logs", config_name, ".log"))
                     failed_configs.append((config_name, log_file))
                 except:
                     failed_configs.append((config_name, "Log file not found"))
@@ -619,7 +619,7 @@ class TestRunner:
 
         # check if there are any emails
         if not receiver_emails:
-            self.logger.ERROR("No receiver emails provided.")
+            self.logger.error("No receiver emails provided.")
             return
 
         # grab the html file
@@ -777,7 +777,7 @@ def main():
                     passed, failed = test_runner.clean_format_output(input_file = output_location)
                     logger.info(f"{test_name} has been formatted to markdown")
                 except:
-                    logger.ERROR(f"Error occured with formatting {test_name}")
+                    logger.error(f"Error occured with formatting {test_name}")
 
                 logger.info(f"The # of failures are for {test_name}: {len(failed)}")
                 total_number_failures+= len(failed)
@@ -787,15 +787,19 @@ def main():
                 total_number_success += len(passed)
                 total_success.append(passed)
                 test_runner.rewrite_to_markdown(test_name, passed, failed)
+                
+                newlinechar = "\n"
+                logger.info(f"Failed tests: \n{newlinechar.join([x[0] for x in failed])}")
     
         except Exception as e:
-            logger.error("There was an error in running the tests: {e}")
+            logger.error(f"There was an error in running the tests: {e}")
 
     logger.info(f"The total sucesses for all tests ran are: {total_number_success}")
     logger.info(f"The total failures for all tests ran are: {total_number_failures}")
 
     # Copy actual test logs from sim/questa, sim/verilator, sim/vcs
-    test_runner.copy_sim_logs([test_runner.cvw / "sim/questa/logs", test_runner.cvw / "sim/verilator/logs", test_runner.cvw / "sim/vcs/logs"])
+    if not args.tests == "test_lint":
+        test_runner.copy_sim_logs([test_runner.cvw / "sim/questa/logs", test_runner.cvw / "sim/verilator/logs", test_runner.cvw / "sim/vcs/logs"])
 
     #############################################
     #               FORMAT TESTS                #
