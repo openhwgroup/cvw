@@ -31,12 +31,8 @@ ORIGINAL_TESTFLOAT_EXECUTABLES := $(foreach item,${TESTFLOAT_EXECUTABLES},$(pats
 
 all: ieee riscv
 
-ieee riscv: ieee-testfloat #$$@/testfloat/${TESTFLOAT_BUILD_DIR}/testfloat
+ieee riscv: $$@/testfloat/${TESTFLOAT_BUILD_DIR}/testfloat
 
-ieee-testfloat: ieee/testfloat/${TESTFLOAT_BUILD_DIR}/testfloat
-ieee-softfloat: ieee/$(COPIED_SOFTFLOAT_LIB)
-
-# .PRECIOUS: %/testfloat
 %/testfloat/${TESTFLOAT_BUILD_DIR}/testfloat: %/$(COPIED_SOFTFLOAT_LIB)
 	$(MAKE) -C $(TESTFLOAT_ORIGINAL_BUILD_DIR) clean
 	$(MAKE) SOFTFLOAT_DIR=${DIR}/$*/softfloat -C $(TESTFLOAT_ORIGINAL_BUILD_DIR)
@@ -59,6 +55,4 @@ riscv/$(COPIED_SOFTFLOAT_LIB): SPECIALIZE_TYPE = SPECIALIZE_TYPE=RISCV
 	mkdir -p $*/testfloat/${TESTFLOAT_BUILD_DIR}
 
 clean:
-	$(MAKE) -C $(SOFTFLOAT_ORIGINAL_BUILD_DIR) clean
-	$(MAKE) -C $(TESTFLOAT_ORIGINAL_BUILD_DIR) clean
 	rm -rf ieee/* riscv/*
