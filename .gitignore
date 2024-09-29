@@ -28,7 +28,8 @@ tests/riscof/riscof_work/
 tests/wally-riscv-arch-test/riscv-test-suite/*/I/*/**
 tests/fp/vectors/**/*.tv
 tests/fp/vectors/**/sed*
-tests/fp/testfloat/*
+tests/fp/berkeley-float/*
+!tests/fp/berkeley-float/Makefile
 tests/fp/combined_IF_vectors/IF_vectors/*.tv
 tests/custom/*/*/
 tests/custom/*/*/*.memfile

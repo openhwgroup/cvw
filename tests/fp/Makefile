@@ -2,7 +2,8 @@
 # Floating Point Tests Makefile for CORE-V-Wally
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
-TESTFLOATS := testfloat/ieee/testfloat_gen testfloat/riscv/testfloat_gen
+TESTFLOAT := testfloat/build/Linux-x86_64-GCC/testfloat_gen
+TESTFLOATS := berkeley-float/ieee/${TESTFLOAT} berkeley-float/riscv/${TESTFLOAT}
 
 .PHONY: all vectors combined_IF_vectors testfloat clean
 
@@ -18,11 +19,11 @@ combined_IF_vectors: ${WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/M/src ve
 ${TESTFLOATS}: testfloat
 
 testfloat:
-	$(MAKE) -C testfloat
+	$(MAKE) -C berkeley-float
 
 clean:
 	$(MAKE) -C vectors clean
-	$(MAKE) -C testfloat clean
+	$(MAKE) -C berkeley-float clean
 	rm -f ${WALLY}/tests/fp/combined_IF_vectors/IF_vectors/*.tv
 
 ${WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/M/src:

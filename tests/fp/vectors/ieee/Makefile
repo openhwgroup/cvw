@@ -10,8 +10,8 @@
 SHELL := /bin/bash
 
 VECTOR_TYPE := ieee
-TESTFLOAT_DIR := ${WALLY}/tests/fp/testfloat
-TESTFLOAT_GEN := ${TESTFLOAT_DIR}/${VECTOR_TYPE}/testfloat_gen
+TESTFLOAT_DIR := ../../berkeley-float
+TESTFLOAT_GEN := ${TESTFLOAT_DIR}/${VECTOR_TYPE}/testfloat/build/Linux-x86_64-GCC/testfloat_gen
 
 # List of testvectors to generate. Each rounding mode will be generated for each test.
 cvtint := ui32_to_f16 ui32_to_f32 ui32_to_f64 ui32_to_f128 \
