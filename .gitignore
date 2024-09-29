@@ -32,8 +32,6 @@ tests/fp/testfloat/*
 tests/fp/combined_IF_vectors/IF_vectors/*.tv
 tests/custom/*/*/
 tests/custom/*/*/*.memfile
-tests/riscvdv
-tests/functcov
 
 # Linux
 linux/buildroot
@@ -111,9 +109,6 @@ sim/questa/fcovrvvi_logs
 sim/questa/fcovrvvi_ucdb
 sim/questa/fcov_logs
 sim/questa/fcov_ucdb
-sim/questa/functcov_logs
-sim/questa/functcov_ucdbs
-sim/questa/functcov
 sim/questa/riscv.ucdb
 transcript
 vsim.wlf
