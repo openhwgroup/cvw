@@ -1,27 +1,12 @@
-ROOT	:= ..
-SUFFIX	:= work
-ARCHDIR	:= $(ROOT)/tests/riscof
-WALLYDIR:= $(ROOT)/tests/wally-riscv-arch-test
-# IMPERASDIR	:= $(ROOT)/tests/imperas-riscv-tests
-# ALLDIRS := $(ARCHDIR)/$(SUFFIX) $(WALLYDIR)/$(SUFFIX) $(IMPERASDIR)/$(SUFFIX)
-IMPERASDIR	:= $(ROOT)/tests/imperas-riscv-tests
-#ALLDIRS := $(ARCHDIR)/$(SUFFIX) $(WALLYDIR)/$(SUFFIX) 
-ALLDIRS := $(ARCHDIR)/$(SUFFIX)
+WORKDIR	?= $(WALLY)/tests/riscof/work/
 
-ELFFILES	?= $(shell find $(ALLDIRS) -type f -regex ".*\.elf")
-OBJDUMPFILES	?= $(shell find $(ALLDIRS) -type f -regex ".*\.elf.objdump")
+ELFFILES	?= $(shell find $(WORKDIR) -type f -regex ".*\.elf")
+OBJDUMPFILES	?= $(shell find $(WORKDIR) -type f -regex ".*\.elf.objdump")
 MEMFILES ?= $(ELFFILES:.elf=.elf.memfile)
 ADDRFILES ?= $(OBJDUMPFILES:.objdump=.objdump.addr)
 
-print:
-	echo "files in $(ALLDIRS) are $(ELFFILES)."
-	echo "memfiles are $(MEMFILES)"
-
-.PHONY: all wally-sim-files
-all: wally-sim-files
-
-wally-sim-files: $(MEMFILES) $(ADDRFILES) 
-	echo "$@"
+.PHONY: wally-sim-files
+wally-sim-files: $(MEMFILES) $(ADDRFILES)
 
 # notes to self on how this works.
 # The find command locates all of the *.elf files in directory DIR1.  A list of .memfiles and
@@ -36,6 +21,3 @@ wally-sim-files: $(MEMFILES) $(ADDRFILES)
 
 %.elf.objdump.addr: %.elf.objdump
 	extractFunctionRadix.sh $<
-
-.PHONY: clean
-clean:

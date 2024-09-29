@@ -3,10 +3,11 @@
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 SIM = ${WALLY}/sim
+TESTS = ${WALLY}/tests
 
-all: riscoftests memfiles coveragetests deriv
+all: riscoftests coveragetests deriv
 
-wally-riscv-arch-test: wallyriscoftests memfiles
+wally-riscv-arch-test: wallyriscoftests
 
 QuestaCodeCoverage: questa/ucdb/rv64gc_arch64i.ucdb
 	vcover merge -out questa/ucdb/cov.ucdb questa/ucdb/rv64gc_arch64i.ucdb questa/ucdb/rv64gc*.ucdb -logfile questa/cov/log
@@ -44,32 +45,26 @@ riscvdv:
 #	python3 ${WALLY}/addins/riscv-dv/run.py --test ${test_name} --target rv64gc --output tests/riscvdv  --iterations 1 -si questa --iss spike --verbose --cov --seed 0 --steps iss_sim		>> ${SIM}/questa/fcov_logs/${test_name}.log 2>&1
 #	run-elf.bash --seed ${SIM}/questa/seed0.txt --verbose --elf ${WALLY}/tests/riscvdv/asm_test/${test_name}_0.o													>> ${SIM}/questa/fcov_logs/${test_name}.log 2>&1
 
-allclean: clean all
-
-clean:
-	make clean -C ../tests/riscof
-#   make clean -C ../../tests/wally-riscv-arch-test
-#	make allclean -C ../../tests/imperas-riscv-tests
-
 riscoftests:
 # 	Builds riscv-arch-test 64 and 32-bit versions and builds wally-riscv-arch-test 64 and 32-bit versions
-	make -C ../tests/riscof/
+	$(MAKE) -C ${TESTS}/riscof
 
 wallyriscoftests:
-# 	Builds riscv-arch-test 64 and 32-bit versions and builds wally-riscv-arch-test 64 and 32-bit versions
-	make -C ../tests/riscof/ wally-riscv-arch-test
-
-memfiles:
-	make -f makefile-memfile wally-sim-files --jobs
+# 	Builds wally-riscv-arch-test 64 and 32-bit versions
+	$(MAKE) -C ${TESTS}/riscof wally-riscv-arch-test
 
 coveragetests:
-	make -C ../tests/coverage/ --jobs
+	$(MAKE) -C ${TESTS}/coverage
 
 deriv:
 	derivgen.pl
 
 benchmarks:
-	$(MAKE) -C ../benchmarks/embench build
-	$(MAKE) -C ../benchmarks/embench size
-	$(MAKE) -C ../benchmarks/embench modelsim_build_memfile
-	$(MAKE) -C ../benchmarks/coremark
+	$(MAKE) -C ${WALLY}benchmarks/embench build
+	$(MAKE) -C ${WALLY}/benchmarks/embench size
+	$(MAKE) -C ${WALLY}/benchmarks/embench modelsim_build_memfile
+	$(MAKE) -C ${WALLY}/benchmarks/coremark
+
+clean:
+	$(MAKE) clean -C ${TESTS}/riscof
+#   $(MAKE) clean -C ${TESTS}/wally-riscv-arch-test
