@@ -3405,12 +3405,6 @@ string wally32periph[] = '{
   "rv32i_m/privilege/src/WALLY-periph-01.S"
 };
 
-
-string wally32d[] = '{
-  `WALLYTEST,
-  "rv32i_m/D/src/WALLY-fld-01.S"
-};
-
 string fpga[] = '{
   `CUSTOM,
   "NULL"
