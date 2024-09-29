@@ -2,12 +2,16 @@
 # Floating Point Tests Makefile for CORE-V-Wally
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
-TESTFLOAT := testfloat/build/Linux-x86_64-GCC/testfloat_gen
-TESTFLOATS := berkeley-float/ieee/${TESTFLOAT} berkeley-float/riscv/${TESTFLOAT}
+SOFTFLOAT_DIR := ${WALLY}/addins/berkeley-softfloat-3/build/Linux-x86_64-GCC
+TESTFLOAT_DIR := ${WALLY}/addins/berkeley-testfloat-3/build/Linux-x86_64-GCC
 
-.PHONY: all vectors combined_IF_vectors testfloat clean
+.PHONY: all softfloat testfloat vectors combined_IF_vectors clean
 
 all: vectors combined_IF_vectors
+
+softfloat: ${SOFTFLOAT_DIR}/softfloat.a
+
+testfloat: ${TESTFLOAT_DIR}/testfloat
 
 vectors: ${TESTFLOATS}
 	$(MAKE) -C ${WALLY}/tests/fp/vectors
@@ -16,15 +20,17 @@ combined_IF_vectors: ${WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/M/src ve
 	cd ${WALLY}/tests/fp/combined_IF_vectors \
 	&& ./create_IF_vectors.sh
 
-${TESTFLOATS}: testfloat
-
-testfloat:
-	$(MAKE) -C berkeley-float
-
 clean:
-	$(MAKE) -C vectors clean
-	$(MAKE) -C berkeley-float clean
+	$(MAKE) -C ${WALLY}/tests/fp/vectors clean
+	$(MAKE) -C ${SOFTFLOAT_DIR} clean
+	$(MAKE) -C ${TESTFLOAT_DIR} clean
 	rm -f ${WALLY}/tests/fp/combined_IF_vectors/IF_vectors/*.tv
 
 ${WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/M/src:
 	@$(error "riscv-arch-tests must be generated first. Run make from $$WALLY")
+
+${SOFTFLOAT_DIR}/softfloat.a:
+	$(MAKE) SPECIALIZE_TYPE=RISCV -C ${SOFTFLOAT_DIR}
+
+${TESTFLOAT_DIR}/testfloat: ${SOFTFLOAT_DIR}/softfloat.a
+	$(MAKE) -C ${TESTFLOAT_DIR}
