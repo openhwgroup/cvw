@@ -3317,16 +3317,6 @@ string arch32e[] = '{
   "rv32e_m/E/src/xori-01.S"
 };
 
-string wally64i[] = '{
-  `WALLYTEST,
-  "rv64i_m/I/src/WALLY-ADD.S",
-  "rv64i_m/I/src/WALLY-SLT.S",
-  "rv64i_m/I/src/WALLY-SLTU.S",
-  "rv64i_m/I/src/WALLY-SUB.S",
-  "rv64i_m/I/src/WALLY-XOR.S"
-};
-
-
 string wally64priv[] = '{
   `WALLYTEST,
   "rv64i_m/privilege/src/WALLY-minfo-01.S",
@@ -3372,16 +3362,6 @@ string wally64periph[] = '{
   "rv64i_m/privilege/src/WALLY-uart-01.S",
   "rv64i_m/privilege/src/WALLY-spi-01.S"
 };
-
-string wally32i[] = '{
-  `WALLYTEST,
-  "rv32i_m/I/src/WALLY-ADD.S",
-  "rv32i_m/I/src/WALLY-SLT.S",
-  "rv32i_m/I/src/WALLY-SLTU.S",
-  "rv32i_m/I/src/WALLY-SUB.S",
-  "rv32i_m/I/src/WALLY-XOR.S"
-};
-
 
 string wally32priv[] = '{
   `WALLYTEST,
