@@ -26,10 +26,8 @@ tests/riscof/config32e.ini
 tests/riscof/config64.ini
 tests/riscof/riscof_work/
 tests/wally-riscv-arch-test/riscv-test-suite/*/I/*/**
-tests/fp/vectors/**/*.tv
-tests/fp/vectors/**/sed*
-tests/fp/berkeley-float/*
-!tests/fp/berkeley-float/Makefile
+tests/fp/vectors/*.tv
+tests/fp/vectors/sed*
 tests/fp/combined_IF_vectors/IF_vectors/*.tv
 tests/custom/*/*/
 tests/custom/*/*/*.memfile
