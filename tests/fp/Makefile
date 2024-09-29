@@ -26,11 +26,11 @@ clean:
 	$(MAKE) -C ${TESTFLOAT_DIR} clean
 	rm -f ${WALLY}/tests/fp/combined_IF_vectors/IF_vectors/*.tv
 
-${WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/M/src:
-	@$(error "riscv-arch-tests must be generated first. Run make from $$WALLY")
-
 ${SOFTFLOAT_DIR}/softfloat.a:
 	$(MAKE) SPECIALIZE_TYPE=RISCV -C ${SOFTFLOAT_DIR}
 
 ${TESTFLOAT_DIR}/testfloat_gen: ${SOFTFLOAT_DIR}/softfloat.a
 	$(MAKE) -C ${TESTFLOAT_DIR}
+
+${WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/M/src:
+	@$(error "riscv-arch-tests must be generated first. Run make from $$WALLY")
