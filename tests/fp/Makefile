@@ -11,9 +11,9 @@ all: vectors combined_IF_vectors
 
 softfloat: ${SOFTFLOAT_DIR}/softfloat.a
 
-testfloat: ${TESTFLOAT_DIR}/testfloat
+testfloat: ${TESTFLOAT_DIR}/testfloat_gen
 
-vectors: ${TESTFLOATS}
+vectors: testfloat
 	$(MAKE) -C ${WALLY}/tests/fp/vectors
 
 combined_IF_vectors: ${WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/M/src vectors
@@ -32,5 +32,5 @@ ${WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/M/src:
 ${SOFTFLOAT_DIR}/softfloat.a:
 	$(MAKE) SPECIALIZE_TYPE=RISCV -C ${SOFTFLOAT_DIR}
 
-${TESTFLOAT_DIR}/testfloat: ${SOFTFLOAT_DIR}/softfloat.a
+${TESTFLOAT_DIR}/testfloat_gen: ${SOFTFLOAT_DIR}/softfloat.a
 	$(MAKE) -C ${TESTFLOAT_DIR}

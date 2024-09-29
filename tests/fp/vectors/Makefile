@@ -3,15 +3,11 @@
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 .DELETE_ON_ERROR:
-.SECONDEXPANSION:
 .ONESHELL:
-# MAKEFLAGS += --no-print-directory
-
 SHELL := /bin/bash
 
-VECTOR_TYPE := riscv
-TESTFLOAT_DIR := ../../berkeley-float
-TESTFLOAT_GEN := ${TESTFLOAT_DIR}/${VECTOR_TYPE}/testfloat/build/Linux-x86_64-GCC/testfloat_gen
+TESTFLOAT_DIR := ${WALLY}/addins/berkeley-testfloat-3/build/Linux-x86_64-GCC
+TESTFLOAT_GEN := ${TESTFLOAT_DIR}/testfloat_gen
 
 # List of testvectors to generate. Each rounding mode will be generated for each test.
 cvtint := ui32_to_f16 ui32_to_f32 ui32_to_f64 ui32_to_f128 \
@@ -52,6 +48,7 @@ rnm: ROUND_EXT  := rnm
 
 .PHONY: all rne rz ru rd rnm clean
 
+# Generate all test vectors
 all: rne rz ru rd rnm
 
 # Generate test vectors for each rounding mode
@@ -63,15 +60,15 @@ rnm: $(addsuffix _rnm.tv, $(tests))
 
 # Rule to generate individual test vectors
 %.tv: ${TESTFLOAT_GEN}
-	@echo "Creating $(VECTOR_TYPE) $@ vectors"
+	@echo Creating $@ vectors
 	@if [[ "$*" =~ "to" ]] || [[ "$*" =~ "sqrt" ]] ; then level=2 ; else level=1 ; fi
 	@if [[ "$*" =~ "to_i" ]] || [[ "$*" =~ "to_u" ]] ; then exact="-exact" ; else exact="" ; fi
 	${TESTFLOAT_GEN}  -tininessafter -level $$level $$exact -$(ROUND_MODE) $(patsubst %_$(ROUND_EXT).tv, %, $@) > $@
 	@sed -i 's/ /_/g' $@
 
-# Appropriate testfloat_gen must exist
+# Generate TestFloat first if necessary
 ${TESTFLOAT_GEN}:
-	$(MAKE) -C ${TESTFLOAT_DIR} ${VECTOR_TYPE}
+	$(MAKE) -C ${WALLY}/tests/fp testfloat
 
 clean:
 	rm -f *.tv
