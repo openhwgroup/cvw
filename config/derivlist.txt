@@ -880,11 +880,6 @@ deriv fdqh_rv64gc rv64gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
-# IEEE compatible FPU
-
-deriv fdqh_ieee_rv64gc fdqh_rv64gc
-IEEE754     1
-
 #### MORE DIVIDER variants
 
 #### F_only, RK variable

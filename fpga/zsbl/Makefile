@@ -64,7 +64,7 @@ LIBS+=${LIBRARY_DIRS:%=-L%}  ${LIBRARY_FILES:%=-l%}
 INC+=${LIBRARY_DIRS:%=-I%}
 
 ${LIBRARY_DIRS}: 
-	make -C $@ -j 1
+	$(MAKE) -C $@ -j 1
 
 .PHONY: $(LIBRARY_DIRS) $(TARGET)
 endif

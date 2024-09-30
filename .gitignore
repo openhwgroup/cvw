@@ -26,14 +26,12 @@ tests/riscof/config32e.ini
 tests/riscof/config64.ini
 tests/riscof/riscof_work/
 tests/wally-riscv-arch-test/riscv-test-suite/*/I/*/**
-tests/fp/vectors/**/*.tv
-tests/fp/vectors/**/sed*
-tests/fp/testfloat/*
+tests/fp/vectors/*.tv
+tests/fp/vectors/sed*
 tests/fp/combined_IF_vectors/IF_vectors/*.tv
 tests/custom/*/*/
 tests/custom/*/*/*.memfile
-tests/riscvdv
-tests/functcov
+sim/tests/riscvdv
 
 # Linux
 linux/buildroot
@@ -111,9 +109,6 @@ sim/questa/fcovrvvi_logs
 sim/questa/fcovrvvi_ucdb
 sim/questa/fcov_logs
 sim/questa/fcov_ucdb
-sim/questa/functcov_logs
-sim/questa/functcov_ucdbs
-sim/questa/functcov
 sim/questa/riscv.ucdb
 transcript
 vsim.wlf

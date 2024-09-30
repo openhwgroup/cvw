@@ -37,14 +37,14 @@ $(work_dir)/coremark.bare.riscv.elf.memfile: $(work_dir)/coremark.bare.riscv
 	extractFunctionRadix.sh $<.elf.objdump
 
 $(work_dir)/coremark.bare.riscv: $(sources) Makefile
-	make -C $(cmbase) PORT_DIR=$(PORT_DIR) compile RISCV=$(RISCV) XCFLAGS="$(PORT_CFLAGS)"
+	$(MAKE) -C $(cmbase) PORT_DIR=$(PORT_DIR) compile RISCV=$(RISCV) XCFLAGS="$(PORT_CFLAGS)"
 	mkdir -p $(work_dir)
 	mv $(cmbase)/coremark.bare.riscv $(work_dir)
 
 .PHONY: clean
 
 clean:
-	make -C $(cmbase) clean
+	$(MAKE) -C $(cmbase) clean
 	rm -f $(work_dir)/*
 
 

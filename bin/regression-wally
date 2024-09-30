@@ -438,13 +438,12 @@ if (args.testfloat): # for testfloat alone, just run testfloat tests
 if (args.testfloat or args.nightly): # for nightly, run testfloat along with others
     testfloatsim = "questa" # change to Verilator when Issue #707 about testfloat not running Verilator is resolved
     testfloatconfigs = ["fdqh_rv64gc", "fdq_rv64gc", "fdh_rv64gc", "fd_rv64gc", "fh_rv64gc", "f_rv64gc", "fdqh_rv32gc", "f_rv32gc"]
-    testfloatconfigs.append("fdqh_ieee_rv64gc") # run IEEE tests for single config
     for config in testfloatconfigs:
         tests = ["div", "sqrt", "add", "sub", "mul", "cvtint", "cvtfp", "fma", "cmp"]
         if ("f_" in config):
             tests.remove("cvtfp")
         for test in tests:
-            sim_log = WALLY + "/sim/" + testfloatsim + "/logs/"+config+"_"+test+".log" 
+            sim_log = WALLY + "/sim/" + testfloatsim + "/logs/"+config+"_"+test+".log"
             tc = TestCase(
                     name=test,
                     variant=config,
@@ -548,7 +547,6 @@ def main():
     if args.ccov:
        os.system('make QuestaCodeCoverage')
     if args.fcov:
-       #os.system('make QuestaFunctCoverage')
        os.system('make -f '+WALLY+'/addins/cvw-arch-verif/Makefile merge')
     if args.fcovrvvi:
         os.system('make QuestaFunctCoverageRvvi')
