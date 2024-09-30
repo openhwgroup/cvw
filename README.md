@@ -55,7 +55,7 @@ Add the following lines to your `.bashrc` or `.bash_profile` to run the setup sc
 
 Build the tests and run a regression simulation to prove everything is installed.  Building tests will take a while.
 
-	$ make
+	$ make --jobs
 	$ regression-wally
 
 # Toolchain Installation and Configuration (Sys Admin)
