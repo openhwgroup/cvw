@@ -138,8 +138,8 @@ module mmu import cvw::*;  #(parameter cvw_t P,
       2'b11:  DataMisalignedM = |VAdr[2:0];        // ld, sd, fld, fsd
     endcase 
   // When ZiCCLSM_SUPPORTED, misalgined cachable loads and stores are handled in hardware so they do not throw a misaligned fault
-  assign LoadMisalignedFaultM     = DataMisalignedM & ReadNoAmoAccessM & ~(P.ZICCLSM_SUPPORTED & Cacheable); 
-  assign StoreAmoMisalignedFaultM = DataMisalignedM & WriteAccessM & ~(P.ZICCLSM_SUPPORTED & Cacheable); // Store and AMO both assert WriteAccess
+  assign LoadMisalignedFaultM     = DataMisalignedM & ReadNoAmoAccessM & ~(P.ZICCLSM_SUPPORTED & Cacheable) & ~TLBMiss; 
+  assign StoreAmoMisalignedFaultM = DataMisalignedM & WriteAccessM & ~(P.ZICCLSM_SUPPORTED & Cacheable) & ~TLBMiss; // Store and AMO both assert WriteAccess
 
   // Access faults
   // If TLB miss and translating we want to not have faults from the PMA and PMP checkers.
