@@ -2,6 +2,8 @@
 # Floating Point Tests Makefile for CORE-V-Wally
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
+MAKEFLAGS += --output-sync --no-print-directory
+
 SOFTFLOAT_DIR := ${WALLY}/addins/berkeley-softfloat-3/build/Linux-x86_64-GCC
 TESTFLOAT_DIR := ${WALLY}/addins/berkeley-testfloat-3/build/Linux-x86_64-GCC
 

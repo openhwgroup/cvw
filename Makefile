@@ -2,6 +2,8 @@
 # Top-level Makefile for CORE-V-Wally
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
+MAKEFLAGS += --output-sync --no-print-directory
+
 SIM = ${WALLY}/sim
 
 .PHONY: all riscof testfloat combined_IF_vectors zsbl benchmarks coremark embench coverage clean
