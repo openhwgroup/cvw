@@ -223,7 +223,6 @@ module testbench;
         "arch32zknd":    if (P.ZKND_SUPPORTED)    tests = arch32zknd;
         "arch32zkne":    if (P.ZKNE_SUPPORTED)    tests = arch32zkne;
         "arch32zknh":    if (P.ZKNH_SUPPORTED)    tests = arch32zknh;
-        "arch32c_misalign": if (P.C_SUPPORTED)    tests = arch32c_misalign;
       endcase
     end
     if (tests.size() == 0 & ElfFile == "none") begin

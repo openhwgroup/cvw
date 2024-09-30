@@ -397,7 +397,9 @@ string arch64c[] = '{
   "rv64i_m/C/src/csubw-01.S",
   "rv64i_m/C/src/csw-01.S",
   "rv64i_m/C/src/cswsp-01.S",
-  "rv64i_m/C/src/cxor-01.S"
+  "rv64i_m/C/src/cxor-01.S",
+  "rv64i_m/C/src/misalign1-cjalr-01.S",
+  "rv64i_m/C/src/misalign1-cjr-01.S"
 };
 
 string arch64cpriv[] = '{
@@ -3220,11 +3222,7 @@ string arch32c[] = '{
   "rv32i_m/C/src/csub-01.S",
   "rv32i_m/C/src/csw-01.S",
   "rv32i_m/C/src/cswsp-01.S",
-  "rv32i_m/C/src/cxor-01.S"
-};
-
-string arch32c_misalign[] = '{
-  `RISCVARCHTEST,
+  "rv32i_m/C/src/cxor-01.S",
   "rv32i_m/C/src/misalign1-cjalr-01.S",
   "rv32i_m/C/src/misalign1-cjr-01.S"
 };
