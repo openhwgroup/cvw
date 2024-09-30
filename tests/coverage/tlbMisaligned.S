@@ -1,10 +1,9 @@
 ///////////////////////////////////////////
 // tlbGP.S
 //
-// Written: mmendozamanriquez@hmc.edu 4 April 2023
-//          nlimpert@hmc.edu
+// Written: Rose Thompson rose@rosethompson.net
 //
-// Purpose: Create Page tables and access gigapages
+// Purpose: Create a page table with misaligned load and store access.  Checks TLB misses prevent misaligned load/store fault.
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
