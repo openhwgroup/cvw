@@ -32,7 +32,7 @@ jobs:
       - name: make tests
         run: |
               source setup.sh
-              make riscof
+              make riscof --jobs $(nproc --ignore 1)
       - name: regression
         run: |
               source setup.sh
@@ -85,7 +85,7 @@ jobs:
       - name: make tests
         run: |
               source setup.sh
-              make riscof
+              make riscof --jobs $(nproc --ignore 1)
       - name: regression
         run: |
               source setup.sh
@@ -123,7 +123,7 @@ jobs:
       - name: make tests
         run: |
               source setup.sh
-              make riscof
+              make riscof --jobs $(nproc --ignore 1)
       - name: regression
         run: |
               source setup.sh
@@ -170,7 +170,7 @@ jobs:
       - name: make tests
         run: |
               source setup.sh
-              make riscof
+              make riscof --jobs $(nproc --ignore 1)
       - name: regression
         run: |
               source setup.sh
