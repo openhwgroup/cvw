@@ -31,6 +31,7 @@ tests/fp/vectors/sed*
 tests/fp/combined_IF_vectors/IF_vectors/*.tv
 tests/custom/*/*/
 tests/custom/*/*/*.memfile
+sim/tests/riscvdv
 
 # Linux
 linux/buildroot
