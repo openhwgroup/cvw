@@ -92,13 +92,47 @@ typedef struct {
   
 } RequiredRVVI_t; // total size is 241 bits or 30.125 bytes
 
+typedef struct __attribute__((packed)) {
+  uint64_t PC;
+  uint32_t insn;
+  uint64_t Mcycle;
+  uint64_t Minstret;
+  uint8_t Trap : 1;
+  uint8_t PrivilegeMode : 2;
+  uint8_t GPREn : 1;
+  uint8_t FPREn : 1;
+  uint8_t Pad3: 3;
+  uint16_t CSRCount : 12;
+  uint16_t Pad4 : 4;
+  uint8_t GPRReg : 5;
+  uint8_t PadG3 : 3;
+  uint64_t GPRValue;
+  uint8_t FPRReg : 5;
+  uint8_t PadF3 : 3;
+  uint64_t FPRValue;
+  uint16_t CSR0Wen : 12;
+  uint16_t PadC04 : 4;
+  uint64_t CSR0Value;
+  uint16_t CSR1Wen : 12;
+  uint16_t PadC14 : 4;
+  uint64_t CSR1Value;
+  uint16_t CSR2Wen : 12;
+  uint16_t PadC24 : 4;
+  uint64_t CSR2Value;
+  uint16_t CSR3Wen : 12;
+  uint16_t PadC34 : 4;
+  uint64_t CSR3Value;
+  uint16_t CSR4Wen : 12;
+  uint16_t PadC44 : 4;
+  uint64_t CSR4Value;
+} FixedRequiredRVVI_t; // 904 bits
+
 typedef struct {
   uint8_t RegAddress : 5;
   uint64_t RegValue;
 } Reg_t;
 
 void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, RequiredRVVI_t *InstructionData);
-void BitShiftArray(uint8_t *dst, uint8_t *src, uint8_t ShiftAmount, int Length);
 void PrintInstructionData(RequiredRVVI_t *InstructionData);
 int ProcessRvviAll(RequiredRVVI_t *InstructionData);
 void set_gpr(int hart, int reg, uint64_t value);
@@ -345,111 +379,50 @@ void set_fpr(int hart, int reg, uint64_t value){
 }
 
 void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, RequiredRVVI_t *InstructionData){
-  // you know this actually easiser in assembly. :(
-  uint8_t buf2[BUF_SIZ], buf3[BUF_SIZ];
-  uint8_t * buf2ptr, *buf3ptr;
-  buf2ptr = buf2;
-  buf3ptr = buf3;
-  //int PayloadSize = sizeof(RequiredRVVI_t) - 1;
-  int PayloadSize = 30;
-  int Buf2Size = BUF_SIZ - PayloadSize;
-  uint64_t Mcycle, Minstret;
-  uint64_t PC;
-  uint32_t insn;
-  // unforunately the struct appoarch does not work?!?
-  PC = * (uint64_t *) payload;
-  payload += 8;
-  insn = * (uint32_t *) payload;
-  payload += 4;
-  Mcycle = * (uint64_t *) payload;
-  payload += 8;
-  Minstret = * (uint64_t *) payload;
-  payload += 8;
-  // the next 4 bytes contain CSRCount (12), FPRWen(1), GPRWen(1), PrivilegeMode(2), Trap(1)
-  uint32_t RequiredFlags;
-  RequiredFlags = * (uint32_t *) payload;
-  uint8_t Trap, PrivilegeMode, GPRWen, FPRWen;
-  uint16_t CSRCount = 0;
-  uint8_t GPRReg = 0;
-  uint64_t GPRData = 0;
-  uint8_t FPRReg = 0;
-  uint64_t FPRData = 0;
-  uint8_t CSRWen[3] = {0, 0, 0};
-  uint16_t CSRReg[3];
-  uint64_t CSRValue[3];
-  int CSRIndex;
 
-  Trap = RequiredFlags & 0x1;
-  PrivilegeMode = (RequiredFlags >> 1) & 0x3;
-  GPRWen = (RequiredFlags >> 3) & 0x1;
-  FPRWen = (RequiredFlags >> 4) & 0x1;
-  CSRCount = (RequiredFlags >> 5) & 0xFFF;
-  payload += 2;
+  FixedRequiredRVVI_t *FixedInstructionData = (FixedRequiredRVVI_t *) payload;
+  InstructionData->PC = FixedInstructionData->PC;
+  InstructionData->insn = FixedInstructionData->insn;
+  InstructionData->Mcycle = FixedInstructionData->Mcycle;
+  InstructionData->Minstret = FixedInstructionData->Minstret;
+  InstructionData->Trap = FixedInstructionData->Trap;
+  InstructionData->PrivilegeMode = FixedInstructionData->PrivilegeMode;
+  InstructionData->GPREn = FixedInstructionData->GPREn;
+  InstructionData->FPREn = FixedInstructionData->FPREn;
+  InstructionData->CSRCount = FixedInstructionData->CSRCount;
+  InstructionData->GPRReg = FixedInstructionData->GPRReg;
+  InstructionData->GPRValue = FixedInstructionData->GPRValue;
+  InstructionData->FPRReg = FixedInstructionData->FPRReg;
+  InstructionData->FPRValue = FixedInstructionData->FPRValue;
 
-  if(GPRWen || FPRWen || (CSRCount != 0)){
-    // the first bit of payload is the last bit of CSRCount.
-    ssize_t newPayloadSize = payloadsize - 30;
-    BitShiftArray(buf2, payload, 1, newPayloadSize);
-    int index;
-    if(GPRWen){
-      GPRReg = * (uint8_t *) buf2ptr;
-      GPRReg = GPRReg & 0x1F;
-      BitShiftArray(buf3, buf2ptr, 5, newPayloadSize);
-      GPRData = * (uint64_t *) buf3;
-      if(FPRWen){
-	buf3ptr += 8;
-	FPRReg = * (uint8_t *) buf3ptr;
-	BitShiftArray(buf2, buf3ptr, 5, newPayloadSize - 8);
-	FPRReg = FPRReg & 0x1F;
-	FPRData = * (uint64_t *) buf2;
-      }
-    }else if(FPRWen){
-      FPRReg = * (uint8_t *) buf2;
-      FPRReg = FPRReg & 0x1F;
-      BitShiftArray(buf3, buf2, 5, newPayloadSize);
-      FPRData = * (uint64_t *) buf3;
-    }
-    if(GPRWen ^ FPRWen){
-      payload += 8;
-      Buf2Size = payloadsize - 38;
-      BitShiftArray(buf2, payload, 6, Buf2Size);
-    }else if(GPRWen & FPRWen){
-      payload += 17;
-      Buf2Size = payloadsize - 47;
-      BitShiftArray(buf2, payload, 3, Buf2Size);
-    }else{
-      Buf2Size = payloadsize - 30;
-      BitShiftArray(buf2, payload, 1, Buf2Size);
-    }
-    buf2ptr = buf2;
-    for(CSRIndex = 0; CSRIndex < CSRCount; CSRIndex++){
-      CSRReg[CSRIndex] = (*(uint16_t *) buf2ptr) & 0xFFF;
-      Buf2Size -= 1;
-      BitShiftArray(buf3, buf2ptr + 1, 4, Buf2Size);
-      CSRValue[CSRIndex] = (*(uint64_t *) buf3);
-      CSRWen[CSRIndex] = 1;
-      buf2ptr = buf3;
-    }
-  }
-  InstructionData->PC = PC;
-  InstructionData->insn = insn;
-  InstructionData->Mcycle = Mcycle;
-  InstructionData->Minstret = Minstret;
-  InstructionData->Trap = Trap;
-  InstructionData->PrivilegeMode = PrivilegeMode;
-  InstructionData->GPREn = GPRWen;
-  InstructionData->FPREn = FPRWen;
-  InstructionData->CSRCount = CSRCount;
-  InstructionData->GPRReg = GPRReg;
-  InstructionData->GPRValue = GPRData;
-  InstructionData->FPRReg = FPRReg;
-  InstructionData->FPRValue = FPRData;
-  for(CSRIndex = 0; CSRIndex < 3; CSRIndex++){
-    InstructionData->CSRWen[CSRIndex] = CSRWen[CSRIndex];
-    InstructionData->CSRReg[CSRIndex] = CSRReg[CSRIndex];
-    InstructionData->CSRValue[CSRIndex] = CSRValue[CSRIndex];
-  }
-}
+  
+  InstructionData->CSRReg[0] = FixedInstructionData->CSR0Wen;
+  if(InstructionData->CSRReg[0] != 0) InstructionData->CSRWen[0] = 1;
+  else InstructionData->CSRWen[0] = 0;
+  InstructionData->CSRValue[0] = FixedInstructionData->CSR0Value;
+
+  InstructionData->CSRReg[1] = FixedInstructionData->CSR1Wen;
+  if(InstructionData->CSRReg[1] != 0) InstructionData->CSRWen[1] = 1;
+  else InstructionData->CSRWen[1] = 0;
+  InstructionData->CSRValue[1] = FixedInstructionData->CSR1Value;
+
+  InstructionData->CSRReg[2] = FixedInstructionData->CSR2Wen;
+  if(InstructionData->CSRReg[2] != 0) InstructionData->CSRWen[2] = 1;
+  else InstructionData->CSRWen[2] = 0;
+  InstructionData->CSRValue[2] = FixedInstructionData->CSR2Value;
+
+  //InstructionData->CSRReg[3] = FixedInstructionData->CSR3Wen;
+  InstructionData->CSRReg[3] = 0;
+  if(InstructionData->CSRReg[3] != 0) InstructionData->CSRWen[3] = 1;
+  else InstructionData->CSRWen[3] = 0;
+  InstructionData->CSRValue[3] = FixedInstructionData->CSR3Value;
+
+  //InstructionData->CSRReg[4] = FixedInstructionData->CSR4Wen;
+  InstructionData->CSRReg[4] = 0;
+  if(InstructionData->CSRReg[4] != 0) InstructionData->CSRWen[4] = 1;
+  else InstructionData->CSRWen[4] = 0;
+  InstructionData->CSRValue[4] = FixedInstructionData->CSR4Value;
+} 
 
 void PrintInstructionData(RequiredRVVI_t *InstructionData){
   int CSRIndex;
@@ -467,34 +440,4 @@ void PrintInstructionData(RequiredRVVI_t *InstructionData){
     }
   }
   printf("\n");
-}
-
-void BitShiftArray(uint8_t *dst, uint8_t *src, uint8_t ShiftAmount, int Length){
-  // always shift right by ShiftAmount (0 to 7 bit positions).
-  // *** this implemenation is very inefficient. improve later.
-  if(ShiftAmount < 0 || ShiftAmount > 7) return;
-  /* Read the first source byte
-     Read the second source byte
-     Right Shift byte 1 by ShiftAmount
-     Right Rotate byte 2 by ShiftAmount
-     Mask byte 2 by ~(2^ShiftAmount -1)
-     OR together the two bytes to form the final next byte
-
-     repeat this for each byte
-     On the last byte we don't do the last steps
-   */
-  int Index;
-  for(Index = 0; Index < Length - 1; Index++){
-    uint8_t byte1 = src[Index];
-    uint8_t byte2 = src[Index+1];
-    byte1 = byte1 >> ShiftAmount;
-    uint8_t byte2rot = (byte2 << (unsigned) (8 - ShiftAmount)) & 0xff;
-    uint8_t byte1final = byte2rot | byte1;
-    dst[Index] = byte1final;
-  }
-  // fence post
-  // For last one there is only one source byte
-  uint8_t byte1 = src[Length-1];
-  byte1 = byte1 >> ShiftAmount;
-  dst[Length-1] = byte1;
 }

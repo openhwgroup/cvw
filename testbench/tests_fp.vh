@@ -24,6 +24,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+`define PATH "../../tests/fp/vectors/"
 `define ADD_OPCTRL     3'b110
 `define MUL_OPCTRL     3'b100
 `define SUB_OPCTRL     3'b111

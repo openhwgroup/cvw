@@ -32,7 +32,7 @@ module packetizer import cvw::*; #(parameter cvw_t P,
                                    parameter logic [31:0] RVVI_INIT_TIME_OUT = 32'd4,
                                    parameter logic [31:0] RVVI_PACKET_DELAY = 32'd2
 )(
-  input  logic [187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)-1:0] rvvi,
+  input  logic [72+(5*P.XLEN) + MAX_CSRS*(P.XLEN+16)-1:0] rvvi,
   input  logic valid,
   input  logic m_axi_aclk, m_axi_aresetn,
   output logic RVVIStall,
@@ -45,7 +45,9 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   input  logic  		   RvviAxiWready
   );
 
-  localparam TotalFrameLengthBits = 2*48+17+16+187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12);
+  localparam NearTotalFrameLengthBits = 2*48+16+72+(5*P.XLEN) + MAX_CSRS*(P.XLEN+16);
+  localparam WordPadLen = 32 - (NearTotalFrameLengthBits % 32);
+  localparam TotalFrameLengthBits = NearTotalFrameLengthBits + WordPadLen;
   localparam TotalFrameLengthBytes = TotalFrameLengthBits / 8;
 
   logic [9:0]              WordCount;
@@ -56,11 +58,11 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   logic                    WordCountEnable;
   logic [47:0]             SrcMac, DstMac;
   logic [15:0]             EthType, Length;
-  logic [31:0]             Tag;
   logic [TotalFrameLengthBits-1:0] TotalFrame;
   logic [31:0] TotalFrameWords [TotalFrameLengthBytes/4-1:0];
+  logic [WordPadLen-1:0]     WordPad;
 
-  logic [187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)-1:0] rvviDelay;
+  logic [72+(5*P.XLEN) + MAX_CSRS*(P.XLEN+16)-1:0] rvviDelay;
   
   typedef enum              {STATE_RST, STATE_COUNT, STATE_RDY, STATE_WAIT, STATE_TRANS, STATE_TRANS_INSERT_DELAY} statetype;
 (* mark_debug = "true" *)  statetype CurrState, NextState;
@@ -109,7 +111,7 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   counter #(32) framecounter(m_axi_aclk, ~m_axi_aresetn, (RvviAxiWready & RvviAxiWlast), FrameCount);
    
 
-  flopenr #(187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)) rvvireg(m_axi_aclk, ~m_axi_aresetn, valid, rvvi, rvviDelay);
+  flopenr #(72+(5*P.XLEN) + MAX_CSRS*(P.XLEN+16)) rvvireg(m_axi_aclk, ~m_axi_aresetn, valid, rvvi, rvviDelay);
 
 
   counter #(10) WordCounter(m_axi_aclk, WordCountReset, WordCountEnable, WordCount);
@@ -124,12 +126,12 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   end
 
   assign Length = {4'b0, BytesInFrame};
-  assign TotalFrame = {17'b0, rvviDelay, EthType, DstMac, SrcMac};
+  assign WordPad = '0;
+  assign TotalFrame = {WordPad, rvviDelay, EthType, DstMac, SrcMac};
 
   // *** fix me later
   assign DstMac = 48'h8F54_0000_1654; // made something up
   assign SrcMac = 48'h4502_1111_6843;
-  assign Tag = 32'b0;
   assign EthType = 16'h005c;
   
   assign RvviAxiWdata = TotalFrameWords[WordCount[4:0]];

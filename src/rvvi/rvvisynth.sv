@@ -45,7 +45,7 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
   input logic [P.XLEN-1:0]                        GPRValue, FPRValue,
   input var logic [P.XLEN-1:0]                    CSRArray [TOTAL_CSRS-1:0],
   output logic valid,
-  output logic [187+(3*P.XLEN) + MAX_CSRS*(P.XLEN+12)-1:0] rvvi
+  output logic [72+(5*P.XLEN) + MAX_CSRS*(P.XLEN+16)-1:0] rvvi
   );
 
   // pipeline controlls
@@ -65,9 +65,9 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
   logic [MAX_CSRS-1:0]                      EnabledCSRs;
   logic [MAX_CSRS-1:0]                      CSRCountShort;
   logic [11:0]                              CSRCount;
-  logic [177+P.XLEN-1:0]                    Required;
-  logic [10+2*P.XLEN-1:0]                   Registers;
-  logic [MAX_CSRS*(P.XLEN+12)-1:0]          CSRs;
+  logic [56+3*P.XLEN-1:0]                   Required;
+  logic [16+2*P.XLEN-1:0]                   Registers;
+  logic [MAX_CSRS*(P.XLEN+16)-1:0]          CSRs;
      
   assign XLENZeros = '0;
 
@@ -82,10 +82,10 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
   flopenrc #(1)      TrapWReg (clk, reset, 1'b0, ~StallW, TrapM, TrapW);
 
   assign valid  = InstrValidW & ~StallW;
-  assign Required = {CSRCount, FPRWen, GPRWen, PrivilegeModeW, TrapW, Minstret, Mcycle, InstrRawW, PCW};
-  assign Registers = {FPRWen, GPRWen} == 2'b11 ? {FPRValue, FPRAddr, GPRValue, GPRAddr} :
-                     {FPRWen, GPRWen} == 2'b01 ? {XLENZeros, 5'b0, GPRValue, GPRAddr} :
-                     {FPRWen, GPRWen} == 2'b10 ? {XLENZeros, 5'b0, FPRValue, FPRAddr} :
+  assign Required = {4'b0, CSRCount, 3'b0, FPRWen, GPRWen, PrivilegeModeW, TrapW, Minstret, Mcycle, InstrRawW, PCW};
+  assign Registers = {FPRWen, GPRWen} == 2'b11 ? {FPRValue, 3'b0, FPRAddr, GPRValue, 3'b0, GPRAddr} :
+                     {FPRWen, GPRWen} == 2'b01 ? {XLENZeros, 8'b0, GPRValue, 3'b0, GPRAddr} :
+                     {FPRWen, GPRWen} == 2'b10 ? {FPRValue, 3'b0, FPRAddr, XLENZeros, 8'b0} :
                      '0;
 
   /* verilator lint_off UNOPTFLAT */
@@ -116,7 +116,7 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
   for(index = 0; index < MAX_CSRS; index = index + 1) begin
     // step 3b
     csrindextoaddr #(TOTAL_CSRS) csrindextoaddr(CSRWenPriorityMatrix[index], CSRAddr[index]);
-    assign CSRs[(index+1) * (P.XLEN + 12)- 1: index * (P.XLEN + 12)] = {CSRValue[index], CSRAddr[index]};
+    assign CSRs[(index+1) * (P.XLEN + 16)- 1: index * (P.XLEN + 16)] = {CSRValue[index], 4'b0, CSRAddr[index]};
     assign EnabledCSRs[index] = |CSRWenPriorityMatrix[index];
   end
 
