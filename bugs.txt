@@ -1,2 +1,0 @@
-1. [ ] AMO should always generate store faults never load faults.  We are generating both.
-
