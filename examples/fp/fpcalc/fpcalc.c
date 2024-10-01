@@ -249,7 +249,6 @@ __uint128_t parseNum(char *num) {
     } 
   } else {
     opSize = size;
-    //printf ("Operand size is %d\n", opSize);
   }
 
   // Add to handle either input preference                                                                                                                                                        
