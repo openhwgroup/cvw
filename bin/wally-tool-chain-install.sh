@@ -7,6 +7,7 @@
 ## Modified: 22 January 2023
 ## Modified: 23 March 2023
 ## Modified: 30 June 2024, Jordan Carlin jcarlin@hmc.edu
+## Modified: 1 September 2024
 ##
 ## Purpose: Open source tool chain installation script
 ##
@@ -148,11 +149,6 @@ source "$RISCV"/riscv-python/bin/activate # activate python virtual environment
 STATUS="python packages"
 pip install --upgrade pip && pip install -r "$dir"/requirements.txt
 
-# z3 is needed for sail and not availabe from dnf for rhel 8
-if (( RHEL_VERSION == 8 )); then
-    pip install -U z3-solver
-fi
-
 source "$RISCV"/riscv-python/bin/activate # reload python virtual environment
 echo -e "${SUCCESS_COLOR}Python environment successfully configured!${ENDC}"
 
@@ -166,9 +162,7 @@ if (( RHEL_VERSION == 8 )) || (( UBUNTU_VERSION == 20 )); then
         section_header "Installing glib"
         pip install -U meson # Meson is needed to build glib
         cd "$RISCV"
-        wget https://download.gnome.org/sources/glib/2.70/glib-2.70.5.tar.xz
-        tar -xJf glib-2.70.5.tar.xz
-        rm glib-2.70.5.tar.xz
+        curl --location https://download.gnome.org/sources/glib/2.70/glib-2.70.5.tar.xz | tar xJ
         cd glib-2.70.5
         meson setup _build --prefix="$RISCV"
         meson compile -C _build
@@ -185,9 +179,7 @@ if (( RHEL_VERSION == 8 )); then
     if [ ! -e "$RISCV"/include/gmp.h ]; then
         section_header "Installing gmp"
         cd "$RISCV"
-        wget https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz
-        tar -xJf gmp-6.3.0.tar.xz
-        rm gmp-6.3.0.tar.xz
+        curl --location https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz | tar xJ
         cd gmp-6.3.0
         ./configure --prefix="$RISCV"
         make -j "${NUM_THREADS}"
@@ -322,40 +314,20 @@ else
 fi
 
 
-# Install opam from binary disribution on rhel as it is not available from dnf
-# Opam is needed to install the sail compiler
-if [ "$FAMILY" == rhel ]; then
-    section_header "Installing/Updating Opam"
-    STATUS="Opam"
-    export OPAMROOTISOK=1 # Silence warnings about running opam as root
-    cd "$RISCV"
-    mkdir -p opam
-    cd opam
-    wget https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh
-    printf '%s\n' "$RISCV"/bin Y | sh install.sh # the print command provides $RISCV/bin as the installation path when prompted
-    cd "$RISCV"
-    rm -rf opam
-    echo -e "${SUCCESS_COLOR}Opam successfully installed/updated!${ENDC}"
-fi
-
 # Sail Compiler (https://github.com/rems-project/sail)
 # Sail is a formal specification language designed for describing the semantics of an ISA.
 # It is used to generate the RISC-V Sail Model, which is the golden reference model for RISC-V.
 # The Sail Compiler is written in OCaml, which is an object-oriented extension of ML, which in turn
-# is a functional programming language suited to formal verification. The Sail compiler is installed
-# with the opam OCaml package manager. It has so many dependencies that it can be difficult to install,
-# but a binary release of it should be available soon, removing the need to use opam.
+# is a functional programming language suited to formal verification.
 section_header "Installing/Updating Sail Compiler"
 STATUS="Sail Compiler"
-export OPAMROOTISOK=1 # Silence warnings about running opam as root
-export OPAMROOT="$RISCV"/opam
-cd "$RISCV"
-opam init -y --disable-sandboxing --no-setup --compiler=5.1.0
-eval "$(opam config env)"
-opam update -y
-opam upgrade -y
-opam install sail -y
-echo -e "${SUCCESS_COLOR}Sail Compiler successfully installed/updated!${ENDC}"
+if [ ! -e "$RISCV"/bin/sail ]; then
+    cd "$RISCV"
+    curl --location https://github.com/rems-project/sail/releases/latest/download/sail.tar.gz | tar xvz --directory="$RISCV" --strip-components=1
+    echo -e "${SUCCESS_COLOR}Sail Compiler successfully installed/updated!${ENDC}"
+else
+    echo -e "${SUCCESS_COLOR}Sail Compiler already installed.${ENDC}"
+fi
 
 # RISC-V Sail Model (https://github.com/riscv/sail-riscv)
 # The RISC-V Sail Model is the golden reference model for RISC-V. It is written in Sail (described above)
@@ -364,7 +336,6 @@ STATUS="RISC-V Sail Model"
 if git_check "sail-riscv" "https://github.com/riscv/sail-riscv.git" "$RISCV/bin/riscv_sim_RV32"; then
     cd sail-riscv
     git reset --hard && git clean -f && git checkout master && git pull
-    export OPAMCLI=2.0  # Sail is not compatible with opam 2.1 as of 4/16/24
     ARCH=RV64 make -j "${NUM_THREADS}" c_emulator/riscv_sim_RV64  2>&1 | logger sailModel; [ "${PIPESTATUS[0]}" == 0 ]
     ARCH=RV32 make -j "${NUM_THREADS}" c_emulator/riscv_sim_RV32 2>&1 | logger sailModel; [ "${PIPESTATUS[0]}" == 0 ]
     cp -f c_emulator/riscv_sim_RV64 "$RISCV"/bin/riscv_sim_RV64
@@ -372,7 +343,6 @@ if git_check "sail-riscv" "https://github.com/riscv/sail-riscv.git" "$RISCV/bin/
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf sail-riscv
-        rm -rf opam
     fi
     echo -e "${SUCCESS_COLOR}RISC-V Sail Model successfully installed/updated!${ENDC}"
 else
