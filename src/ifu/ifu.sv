@@ -303,7 +303,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   
   // flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawF, nop, InstrRawD);
   // TODO: Test this?!?!?!
-  fetchbuffer #(P) fetchbuff(.clk, .reset, .StallD, .flush(FlushD), .writeData(PostSpillInstrRawF), .readData(InstrRawD), .StallF) // Figure out what TODO with StallF
+  fetchbuffer #(P) fetchbuff(.clk, .reset, .StallD, .flush(FlushD), .writeData(PostSpillInstrRawF), .readData(InstrRawD), .StallF); // Figure out what TODO with StallF
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // PCNextF logic
