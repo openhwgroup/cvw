@@ -224,20 +224,20 @@ __uint128_t strtoul128(char *num, int base) {
 }
 
 __uint128_t parseNum(char *num) {
-  //  uint64_t result;
-  __uint128_t result;
+  __uint128_t result = 0;
 
-  // Ensure input starts with "0x" or "x"
-  if (!(num[0] == '0' && num[1] == 'x') && !(num[0] == 'x')) {
-    printf("Error: Input must start with '0x' or 'x'\n");
-    exit(1);
+  // Ensure input is in correct form
+  if (num[0] == '0' && num[1] == 'x') {
+    num += 2; // Skip "0x"
+  } else if (num[0] == 'x') {
+    num += 1; // Skip "x"
   }
-
-  int size; // size of operands in bytes (2= half, 4=single, 8 = double)
+  
+  int size; // size of operands in bytes (2= half, 4=single, 8 = double)                                                                                                                          
   if (strlen(num) < 8) size = 2;
   else if (strlen(num) < 16) size = 4;
   else if (strlen(num) < 32) size = 8;
-  else if (strlen(num) < 35) size = 16; // *** will need to increase
+  else if (strlen(num) < 35) size = 16; // *** will need to increase                                                                                                                              
   else {
     printf("Error: only half, single, double, or quad precision supported");
     exit(1);
@@ -246,15 +246,9 @@ __uint128_t parseNum(char *num) {
     if (size != opSize) {
       printf("Error: inconsistent operand sizes %d and %d\n", size, opSize);
       exit(1);
-    } 
+    }
   } else {
     opSize = size;
-  }
-
-  // Add to handle either input preference                                                                                                                                                        
-  // Strip the "x" or "0x" prefixes if present                                                                                                                                                    
-  if (num[0] == 'x' || (num[0] == '0' && num[1] == 'x')) {
-    num += (num[0] == 'x') ? 1 : 2;
   }
 
   if (strlen(num) <= 16) {
@@ -302,8 +296,7 @@ char parseRound(char *rnd) {
   }
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     //uint64_t xn, yn, zn;
     __uint128_t xn, yn, zn;
     char op1, op2;
