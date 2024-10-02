@@ -79,5 +79,5 @@ module pmpchecker import cvw::*;  #(parameter cvw_t P) (
   
   assign PMPInstrAccessFaultF     = EnforcePMP & ExecuteAccessF & ~|(X & FirstMatch) ;
   assign PMPStoreAmoAccessFaultM  = (EnforcePMP & WriteAccessM   & ~|(W & FirstMatch))  | PMPCMOAccessFault; // exclusion-tag: immu-pmpstoreamoaccessfault
-  assign PMPLoadAccessFaultM      = EnforcePMP & ReadAccessM    & ~|(R & FirstMatch) ;
+  assign PMPLoadAccessFaultM      = EnforcePMP & ReadAccessM & ~WriteAccessM    & ~|(R & FirstMatch) ;
  endmodule
