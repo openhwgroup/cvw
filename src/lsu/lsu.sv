@@ -282,10 +282,10 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     
     // The DTIM uses untranslated addresses, so it is not compatible with virtual memory.
     mux2 #(P.PA_BITS) DTIMAdrMux(IEUAdrExtE[P.PA_BITS-1:0], IEUAdrExtM[P.PA_BITS-1:0], MemRWM[0], DTIMAdr);
-    assign DTIMMemRWM = SelDTIM & ~IgnoreRequestTLB ? LSURWM : 0;
+    assign DTIMMemRWM = SelDTIM ? LSURWM : 0;
     dtim #(P) dtim(.clk, .reset, .ce(~GatedStallW),
               .MemRWM(DTIMMemRWM),
-              .DTIMAdr, .FlushW, .WriteDataM(LSUWriteDataM), 
+              .DTIMAdr, .FlushW(IgnoreRequest), .WriteDataM(LSUWriteDataM), 
               .ReadDataWordM(DTIMReadDataWordM[P.LLEN-1:0]), .ByteMaskM(ByteMaskM));
   end else
     assign DTIMReadDataWordM = '0;
@@ -331,7 +331,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       
       cache #(.P(P), .PA_BITS(P.PA_BITS), .XLEN(P.XLEN), .LINELEN(P.DCACHE_LINELENINBITS), .NUMSETS(P.DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(P.DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(CACHEWORDLEN), .MUXINTERVAL(P.LLEN), .READ_ONLY_CACHE(0)) dcache(
-        .clk, .reset, .Stall(GatedStallW & ~SelSpillE), .SelBusBeat, .FlushStage(FlushW | IgnoreRequestTLB),
+        .clk, .reset, .Stall(GatedStallW & ~SelSpillE), .SelBusBeat, .FlushStage(IgnoreRequest),
         .CacheRW(CacheRWM), 
         .FlushCache(FlushDCache), .NextSet(IEUAdrExtE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskSpillM), .BeatCount(BeatCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
@@ -346,7 +346,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       assign CacheBusRW = CacheBusRWTemp;
 
       ahbcacheinterface #(.P(P), .BEATSPERLINE(BEATSPERLINE), .AHBWLOGBWPL(AHBWLOGBWPL), .LINELEN(LINELEN),  .LLENPOVERAHBW(LLENPOVERAHBW), .READ_ONLY_CACHE(0)) ahbcacheinterface(
-        .HCLK(clk), .HRESETn(~reset), .Flush(FlushW | IgnoreRequestTLB),
+        .HCLK(clk), .HRESETn(~reset), .Flush(IgnoreRequest),
         .HRDATA, .HWDATA(LSUHWDATA), .HWSTRB(LSUHWSTRB),
         .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HREADY(LSUHREADY),
         .BeatCount, .SelBusBeat, .CacheReadDataWordM(DCacheReadDataWordM[P.LLEN-1:0]), .WriteDataM(LSUWriteDataM),
@@ -361,12 +361,12 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     end else begin : passthrough // No Cache, use simple ahbinterface instad of ahbcacheinterface
       logic [1:0] BusRW;                    // Non-DTIM memory access, ignore cacheableM
       logic [P.XLEN-1:0] FetchBuffer;
-      assign BusRW = (~IgnoreRequestTLB & ~SelDTIM) ? LSURWM : 0;
+      assign BusRW = ~SelDTIM ? LSURWM : 0;
       
       assign LSUHADDR = PAdrM;
       assign LSUHSIZE = LSUFunct3M;
 
-      ahbinterface #(P.XLEN, 1'b1) ahbinterface(.HCLK(clk), .HRESETn(~reset), .Flush(FlushW), .HREADY(LSUHREADY), 
+      ahbinterface #(P.XLEN, 1'b1) ahbinterface(.HCLK(clk), .HRESETn(~reset), .Flush(IgnoreRequest), .HREADY(LSUHREADY), 
         .HRDATA(HRDATA), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HWDATA(LSUHWDATA),
         .HWSTRB(LSUHWSTRB), .BusRW, .BusAtomic(AtomicM[1]), .ByteMask(ByteMaskM[P.XLEN/8-1:0]), .WriteData(LSUWriteDataM[P.XLEN-1:0]),
         .Stall(GatedStallW), .BusStall, .BusCommitted(BusCommittedM), .FetchBuffer(FetchBuffer));
