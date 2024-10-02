@@ -61,6 +61,7 @@ string coverage64gc[] = '{
   "tlbMisaligned",
   "hptwAccessFault",
   "amoAccessFault",
+  "floatmisc",
   "ifuCamlineWrite",
   "dcache1",
   "dcache2",
@@ -3413,9 +3414,7 @@ string fpga[] = '{
 
 string custom[] = '{
   `CUSTOM,
-  "simple",
-  "debug",
-  "cacheTest"
+  "NULL"
 };
 
 string ahb64[] = '{
