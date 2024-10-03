@@ -1,13 +1,37 @@
-module fetchbuffer
-  import cvw::*;
-#(
-    parameter cvw_t P
-) (
-    input  logic        clk, reset,
-    input  logic        StallD, flush,
-    input  logic [31:0] writeData,
-    output logic [31:0] readData,
-    output logic        StallF
+///////////////////////////////////////////
+// fetchbuffer.sv
+//
+// Written: chickson@hmc.edu ; vkrishna@hmc.edu
+// Created: 30 September 2024
+// Modified: 3 October 2024
+//
+// Purpose: Store multiple instructions in a cyclic FIFO
+// 
+// A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
+// 
+// Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
+//
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+//
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
+//
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+module fetchbuffer import cvw::*; #(parameter cvw_t P) (
+	input  logic        clk, reset,
+	input  logic        StallD, flush,
+	input  logic [31:0] writeData,
+	output logic [31:0] readData,
+	output logic        StallF
 );
   localparam [31:0] nop = 32'h00000013;
   logic      [31:0] readf0, readf1, readf2, readMuxed;
