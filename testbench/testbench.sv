@@ -412,7 +412,7 @@ module testbench;
         $fclose(outputFilePointer);
         $display("Embench Benchmark: created output file: %s", outputfile);
       end else if (TEST == "coverage64gc") begin
-        $display("Coverage tests don't get checked");
+        $display("%s ran. Coverage tests don't get checked", tests[test]);
       end else if (ElfFile != "none") begin
         $display("Single Elf file tests are not signatured verified.");
 `ifdef QUESTA
