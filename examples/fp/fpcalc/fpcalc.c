@@ -224,13 +224,20 @@ __uint128_t strtoul128(char *num, int base) {
 }
 
 __uint128_t parseNum(char *num) {
-//  uint64_t result;
-  __uint128_t result;
-  int size; // size of operands in bytes (2= half, 4=single, 8 = double)
+  __uint128_t result = 0;
+
+  // Ensure input is in correct form
+  if (num[0] == '0' && num[1] == 'x') {
+    num += 2; // Skip "0x"
+  } else if (num[0] == 'x') {
+    num += 1; // Skip "x"
+  }
+  
+  int size; // size of operands in bytes (2= half, 4=single, 8 = double)                                                                                                                          
   if (strlen(num) < 8) size = 2;
   else if (strlen(num) < 16) size = 4;
   else if (strlen(num) < 32) size = 8;
-  else if (strlen(num) < 35) size = 16; // *** will need to increase
+  else if (strlen(num) < 35) size = 16; // *** will need to increase                                                                                                                              
   else {
     printf("Error: only half, single, double, or quad precision supported");
     exit(1);
@@ -239,12 +246,32 @@ __uint128_t parseNum(char *num) {
     if (size != opSize) {
       printf("Error: inconsistent operand sizes %d and %d\n", size, opSize);
       exit(1);
-    } 
+    }
   } else {
     opSize = size;
-    //printf ("Operand size is %d\n", opSize);
   }
-  result = (__uint128_t)strtoul128(num, 16);
+
+  if (strlen(num) <= 16) {
+    result = (__uint128_t)strtoull(num, NULL, 16);
+  }
+  else {
+    while (*num) {
+      int value;
+      if (*num >= '0' && *num <= '9')
+        value = *num - '0';
+      else if (*num >= 'a' && *num <= 'f')
+        value = *num - 'a' + 10;
+      else if (*num >= 'A' && *num <= 'F')
+        value = *num - 'A' + 10;
+      else {
+        printf("Error: invalid character in input\n");
+        exit(1);
+      }
+      result = (result << 4) | value;
+      num++;
+    }
+  }
+  
   //printf("Parsed %s as 0x%lx\n", num, result);
   return result;
 }
@@ -269,8 +296,7 @@ char parseRound(char *rnd) {
   }
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     //uint64_t xn, yn, zn;
     __uint128_t xn, yn, zn;
     char op1, op2;
@@ -387,8 +413,10 @@ int main(int argc, char *argv[])
           }
           printF128("X", x); printF128("Y", y); 
           //sprintf(cmd, "0x%016lx %c 0x%016lx", x.v, op1, y.v);
+          printf("0x%016" PRIx64 "_%016" PRIx64 " %c ", x.v[1], x.v[0], op1);
+          printf("0x%016" PRIx64 "_%016" PRIx64 " ", y.v[1], y.v[0]);
           printF128(cmd, r); printFlags();
-          printF128val(r); 
+          // printF128val(r); 
         }
       }
     }

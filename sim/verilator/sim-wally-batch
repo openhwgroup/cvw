@@ -1,1 +1,0 @@
-wsim -s verilator rv64gc arch64i

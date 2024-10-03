@@ -1,2 +1,0 @@
-# recompile coverage tests and run coverage including them
-pushd $WALLY/tests/coverage; make; popd; ./regression-wally -coverage

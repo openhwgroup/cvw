@@ -15,21 +15,21 @@ add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/LSU
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/ieu/c/MDUStallD
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/DivBusyE
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/FDivBusyE
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InstrMisalignedFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InstrAccessFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/IllegalInstrFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/BreakpointFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/LoadMisalignedFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/StoreAmoMisalignedFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/LoadAccessFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/StoreAmoAccessFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/EcallFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InstrPageFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/LoadPageFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/StoreAmoPageFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InterruptM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/HPTWInstrAccessFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/pmd/WFITimeoutM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/InstrMisalignedFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/InstrAccessFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/IllegalInstrFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/BreakpointFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/LoadMisalignedFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/StoreAmoMisalignedFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/LoadAccessFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/StoreAmoAccessFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/EcallFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/InstrPageFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/LoadPageFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/StoreAmoPageFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/InterruptM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/HPTWInstrAccessFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/pmd/WFITimeoutM
 add wave -noupdate -group HDU -group Flush -color Yellow /testbench/dut/core/FlushD
 add wave -noupdate -group HDU -group Flush -color Yellow /testbench/dut/core/FlushE
 add wave -noupdate -group HDU -group Flush -color Yellow /testbench/dut/core/FlushM
@@ -204,12 +204,12 @@ add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/dp/SrcAE
 add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/dp/SrcBE
 add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/dp/ALUResultE
 add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/dp/ResultW
-add wave -noupdate -group {Memory Stage} /testbench/FunctionName/FunctionName/FunctionName
-add wave -noupdate -group {Memory Stage} /testbench/dut/core/InstrValidM
-add wave -noupdate -group {Memory Stage} /testbench/dut/core/PCM
-add wave -noupdate -group {Memory Stage} /testbench/dut/core/InstrM
-add wave -noupdate -group {Memory Stage} /testbench/InstrMName
-add wave -noupdate -group {Memory Stage} /testbench/dut/core/lsu/IEUAdrM
+add wave -noupdate -expand -group {Memory Stage} /testbench/FunctionName/FunctionName/FunctionName
+add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/InstrValidM
+add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/PCM
+add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/InstrM
+add wave -noupdate -expand -group {Memory Stage} /testbench/InstrMName
+add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/lsu/IEUAdrM
 add wave -noupdate -group lsu /testbench/dut/core/lsu/ReadDataM
 add wave -noupdate -group lsu /testbench/dut/core/lsu/WriteDataM
 add wave -noupdate -group lsu /testbench/dut/core/lsu/FWriteDataM
@@ -229,13 +229,8 @@ add wave -noupdate -group lsu -expand -group bus /testbench/dut/core/lsu/LSUHWDA
 add wave -noupdate -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/ahbcacheinterface/CacheBusRW
 add wave -noupdate -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/ahbcacheinterface/CacheBusAck
 add wave -noupdate -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/dcache/CacheBusAdr
-add wave -noupdate -group lsu -group alignment -color Gold /testbench/dut/core/lsu/ziccslm_align/align/CurrState
-add wave -noupdate -group lsu -group alignment /testbench/dut/core/lsu/ziccslm_align/align/MemRWM
-add wave -noupdate -group lsu -group alignment /testbench/dut/core/lsu/ziccslm_align/align/IEUAdrSpillM
 add wave -noupdate -group lsu -group alignment /testbench/dut/core/lsu/ByteMaskM
 add wave -noupdate -group lsu -group alignment /testbench/dut/core/lsu/ByteMaskExtendedM
-add wave -noupdate -group lsu -group alignment /testbench/dut/core/lsu/ziccslm_align/align/SelSpillE
-add wave -noupdate -group lsu -group alignment /testbench/dut/core/lsu/ziccslm_align/align/SelSpillM
 add wave -noupdate -group lsu -group alignment /testbench/dut/core/lsu/ByteMaskSpillM
 add wave -noupdate -group lsu -group alignment /testbench/dut/core/lsu/LSUWriteDataM
 add wave -noupdate -group lsu -group alignment /testbench/dut/core/lsu/LSUWriteDataSpillM
@@ -255,8 +250,8 @@ add wave -noupdate -group lsu -expand -group dcache -group SRAM-update-control /
 add wave -noupdate -group lsu -expand -group dcache -group SRAM-update-control /testbench/dut/core/lsu/bus/dcache/dcache/ClearValid
 add wave -noupdate -group lsu -expand -group dcache -group SRAM-update-control /testbench/dut/core/lsu/bus/dcache/dcache/SetDirty
 add wave -noupdate -group lsu -expand -group dcache -group SRAM-update-control /testbench/dut/core/lsu/bus/dcache/dcache/ClearDirty
-add wave -noupdate -group lsu -expand -group dcache -group {requesting address} /testbench/dut/core/lsu/IEUAdrE
-add wave -noupdate -group lsu -expand -group dcache -group {requesting address} /testbench/dut/core/lsu/bus/dcache/dcache/PAdr
+add wave -noupdate -group lsu -expand -group dcache -expand -group {requesting address} /testbench/dut/core/lsu/IEUAdrE
+add wave -noupdate -group lsu -expand -group dcache -expand -group {requesting address} /testbench/dut/core/lsu/bus/dcache/dcache/PAdr
 add wave -noupdate -group lsu -expand -group dcache -group SRAM-outputs /testbench/dut/core/lsu/bus/dcache/dcache/ReadDataLineWay
 add wave -noupdate -group lsu -expand -group dcache -group SRAM-outputs /testbench/dut/core/lsu/bus/dcache/dcache/ReadDataLineCache
 add wave -noupdate -group lsu -expand -group dcache -group SRAM-outputs /testbench/dut/core/lsu/bus/dcache/dcache/TagWay
@@ -404,28 +399,30 @@ add wave -noupdate -group lsu -group pma /testbench/dut/core/lsu/dmmu/dmmu/PMASt
 add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/PMPInstrAccessFaultF
 add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/PMPLoadAccessFaultM
 add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/PMPStoreAmoAccessFaultM
-add wave -noupdate -group lsu -group ptwalker /testbench/dut/core/lsu/hptw/hptw/SelHPTW
-add wave -noupdate -group lsu -group ptwalker /testbench/dut/core/lsu/hptw/hptw/HPTWStall
-add wave -noupdate -group lsu -group ptwalker /testbench/dut/core/lsu/hptw/hptw/DTLBWalk
-add wave -noupdate -group lsu -group ptwalker -color Gold /testbench/dut/core/lsu/hptw/hptw/WalkerState
-add wave -noupdate -group lsu -group ptwalker /testbench/dut/core/lsu/hptw/hptw/NextWalkerState
-add wave -noupdate -group lsu -group ptwalker /testbench/dut/core/lsu/hptw/hptw/HPTWAdr
-add wave -noupdate -group lsu -group ptwalker /testbench/dut/core/lsu/hptw/hptw/PTE
-add wave -noupdate -group lsu -group ptwalker /testbench/dut/core/lsu/hptw/hptw/NextPageType
-add wave -noupdate -group lsu -group ptwalker /testbench/dut/core/lsu/hptw/hptw/PageType
-add wave -noupdate -group lsu -group ptwalker /testbench/dut/core/lsu/hptw/hptw/ValidNonLeafPTE
-add wave -noupdate -group lsu -group ptwalker -expand -group types /testbench/dut/core/lsu/DTLBMissM
-add wave -noupdate -group lsu -group ptwalker -expand -group types /testbench/dut/core/lsu/hptw/hptw/ITLBWriteF
-add wave -noupdate -group lsu -group ptwalker -expand -group types /testbench/dut/core/lsu/hptw/hptw/DTLBWriteM
-add wave -noupdate -group lsu -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/HPTWFaultM
-add wave -noupdate -group lsu -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/LSUAccessFaultM
-add wave -noupdate -group lsu -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/HPTWInstrAccessFaultF
-add wave -noupdate -group lsu -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/LSULoadAccessFaultM
-add wave -noupdate -group lsu -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/LSUStoreAmoAccessFaultM
-add wave -noupdate -group lsu -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/LoadAccessFaultM
-add wave -noupdate -group lsu -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/StoreAmoAccessFaultM
-add wave -noupdate -group lsu -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/HPTWInstrAccessFault
-add wave -noupdate -group lsu -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/PBMTFaultM
+add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/hptw/hptw/SelHPTW
+add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/hptw/hptw/HPTWStall
+add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/hptw/hptw/DTLBWalk
+add wave -noupdate -group lsu -expand -group ptwalker -color Gold /testbench/dut/core/lsu/hptw/hptw/WalkerState
+add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/hptw/hptw/NextWalkerState
+add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/hptw/hptw/HPTWAdr
+add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/hptw/hptw/PTE
+add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/hptw/hptw/NextPageType
+add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/hptw/hptw/PageType
+add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/hptw/hptw/ValidNonLeafPTE
+add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/hptw/hptw/TranslationVAdr
+add wave -noupdate -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/DTLBMissM
+add wave -noupdate -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/hptw/hptw/DTLBWriteM
+add wave -noupdate -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/hptw/hptw/ITLBMissOrUpdateAF
+add wave -noupdate -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/hptw/hptw/ITLBWriteF
+add wave -noupdate -group lsu -expand -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/HPTWFaultM
+add wave -noupdate -group lsu -expand -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/LSUAccessFaultM
+add wave -noupdate -group lsu -expand -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/HPTWInstrAccessFaultF
+add wave -noupdate -group lsu -expand -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/LSULoadAccessFaultM
+add wave -noupdate -group lsu -expand -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/LSUStoreAmoAccessFaultM
+add wave -noupdate -group lsu -expand -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/LoadAccessFaultM
+add wave -noupdate -group lsu -expand -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/StoreAmoAccessFaultM
+add wave -noupdate -group lsu -expand -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/HPTWInstrAccessFault
+add wave -noupdate -group lsu -expand -group ptwalker -expand -group faults /testbench/dut/core/lsu/hptw/hptw/PBMTFaultM
 add wave -noupdate -group {WriteBack stage} /testbench/InstrW
 add wave -noupdate -group {WriteBack stage} /testbench/InstrWName
 add wave -noupdate -group {WriteBack stage} /testbench/dut/core/priv/priv/pmd/wfiW
@@ -468,88 +465,88 @@ add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HBURST
 add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HPROT
 add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HTRANS
 add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HMASTLOCK
-add wave -noupdate -expand -group uncore /testbench/dut/uncoregen/uncore/HADDR
-add wave -noupdate -expand -group uncore /testbench/dut/uncoregen/uncore/HTRANS
-add wave -noupdate -expand -group uncore /testbench/dut/uncoregen/uncore/HREADY
-add wave -noupdate -expand -group uncore /testbench/dut/uncoregen/uncore/HSELRegions
-add wave -noupdate -expand -group uncore /testbench/dut/uncoregen/uncore/HSELNoneD
-add wave -noupdate -expand -group uncore /testbench/dut/uncoregen/uncore/HSELPLICD
-add wave -noupdate -expand -group uncore /testbench/dut/uncoregen/uncore/HRDATA
-add wave -noupdate -expand -group uncore -group plic /testbench/dut/uncoregen/uncore/plic/plic/UARTIntr
-add wave -noupdate -expand -group uncore -group plic /testbench/dut/uncoregen/uncore/plic/plic/GPIOIntr
-add wave -noupdate -expand -group uncore -group plic /testbench/dut/uncoregen/uncore/plic/plic/MExtInt
-add wave -noupdate -expand -group uncore -group plic /testbench/dut/uncoregen/uncore/plic/plic/SExtInt
-add wave -noupdate -expand -group uncore -group plic /testbench/dut/uncoregen/uncore/plic/plic/Dout
-add wave -noupdate -expand -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/intClaim
-add wave -noupdate -expand -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/intEn
-add wave -noupdate -expand -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/intInProgress
-add wave -noupdate -expand -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/intPending
-add wave -noupdate -expand -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/intPriority
-add wave -noupdate -expand -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/intThreshold
-add wave -noupdate -expand -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/nextIntPending
-add wave -noupdate -expand -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/requests
-add wave -noupdate -expand -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/irqMatrix
-add wave -noupdate -expand -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/priorities_with_irqs
-add wave -noupdate -expand -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/max_priority_with_irqs
-add wave -noupdate -expand -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/irqs_at_max_priority
-add wave -noupdate -expand -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/threshMask
-add wave -noupdate -expand -group uncore -group CLINT /testbench/dut/uncoregen/uncore/clint/clint/MTIME
-add wave -noupdate -expand -group uncore -group CLINT /testbench/dut/uncoregen/uncore/clint/clint/MTIMECMP
-add wave -noupdate -expand -group uncore -group CLINT -expand -group {clint bus} /testbench/dut/uncoregen/uncore/clint/clint/PSEL
-add wave -noupdate -expand -group uncore -group CLINT -expand -group {clint bus} /testbench/dut/uncoregen/uncore/clint/clint/PADDR
-add wave -noupdate -expand -group uncore -group CLINT -expand -group {clint bus} /testbench/dut/uncoregen/uncore/clint/clint/PWDATA
-add wave -noupdate -expand -group uncore -group CLINT -expand -group {clint bus} /testbench/dut/uncoregen/uncore/clint/clint/PSTRB
-add wave -noupdate -expand -group uncore -group CLINT -expand -group {clint bus} /testbench/dut/uncoregen/uncore/clint/clint/PWRITE
-add wave -noupdate -expand -group uncore -group CLINT -expand -group {clint bus} /testbench/dut/uncoregen/uncore/clint/clint/PENABLE
-add wave -noupdate -expand -group uncore -group CLINT -expand -group {clint bus} /testbench/dut/uncoregen/uncore/clint/clint/PRDATA
-add wave -noupdate -expand -group uncore -group CLINT -expand -group {clint bus} /testbench/dut/uncoregen/uncore/clint/clint/PREADY
-add wave -noupdate -expand -group uncore -group uart -expand -group Registers /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/LSR
-add wave -noupdate -expand -group uncore -group uart -expand -group Registers /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/MCR
-add wave -noupdate -expand -group uncore -group uart -expand -group Registers /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/MSR
-add wave -noupdate -expand -group uncore -group uart -expand -group Registers /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/RBR
-add wave -noupdate -expand -group uncore -group uart -expand -group Registers /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/TXHR
-add wave -noupdate -expand -group uncore -group uart -expand -group Registers /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/LCR
-add wave -noupdate -expand -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/intrID
-add wave -noupdate -expand -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/INTR
-add wave -noupdate -expand -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/rxstate
-add wave -noupdate -expand -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/txstate
-add wave -noupdate -expand -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/txbitssent
-add wave -noupdate -expand -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/txbitsexpected
-add wave -noupdate -expand -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/rxbitsreceived
-add wave -noupdate -expand -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/rxbitsexpected
-add wave -noupdate -expand -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/rxdata
-add wave -noupdate -expand -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/rxoverrunerr
-add wave -noupdate -expand -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/rxdataready
-add wave -noupdate -expand -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/rxdataavailintr
-add wave -noupdate -expand -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/RXBR
-add wave -noupdate -expand -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/squashRXerrIP
-add wave -noupdate -expand -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/rxshiftreg
-add wave -noupdate -expand -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/SOUTbit
-add wave -noupdate -expand -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/SINsync
-add wave -noupdate -expand -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/txsr
-add wave -noupdate -expand -group uncore -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncoregen/uncore/uartgen/uart/SIN
-add wave -noupdate -expand -group uncore -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncoregen/uncore/uartgen/uart/SOUT
-add wave -noupdate -expand -group uncore -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncoregen/uncore/uartgen/uart/RTSb
-add wave -noupdate -expand -group uncore -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncoregen/uncore/uartgen/uart/DTRb
-add wave -noupdate -expand -group uncore -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncoregen/uncore/uartgen/uart/OUT1b
-add wave -noupdate -expand -group uncore -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncoregen/uncore/uartgen/uart/OUT2b
-add wave -noupdate -expand -group uncore -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncoregen/uncore/uartgen/uart/DSRb
-add wave -noupdate -expand -group uncore -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncoregen/uncore/uartgen/uart/DCDb
-add wave -noupdate -expand -group uncore -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncoregen/uncore/uartgen/uart/CTSb
-add wave -noupdate -expand -group uncore -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncoregen/uncore/uartgen/uart/TXRDYb
-add wave -noupdate -expand -group uncore -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncoregen/uncore/uartgen/uart/RXRDYb
-add wave -noupdate -expand -group uncore -group GPIO /testbench/dut/uncoregen/uncore/gpio/gpio/GPIOIN
-add wave -noupdate -expand -group uncore -group GPIO /testbench/dut/uncoregen/uncore/gpio/gpio/GPIOOUT
-add wave -noupdate -expand -group uncore -group GPIO /testbench/dut/uncoregen/uncore/gpio/gpio/GPIOEN
-add wave -noupdate -expand -group uncore -group GPIO /testbench/dut/uncoregen/uncore/gpio/gpio/GPIOIntr
-add wave -noupdate -expand -group uncore -group GPIO /testbench/dut/uncoregen/uncore/gpio/gpio/PSEL
-add wave -noupdate -expand -group uncore -group GPIO /testbench/dut/uncoregen/uncore/gpio/gpio/PADDR
-add wave -noupdate -expand -group uncore -group GPIO /testbench/dut/uncoregen/uncore/gpio/gpio/PWRITE
-add wave -noupdate -expand -group uncore -group GPIO /testbench/dut/uncoregen/uncore/gpio/gpio/PRDATA
-add wave -noupdate -expand -group uncore -group GPIO /testbench/dut/uncoregen/uncore/gpio/gpio/PREADY
-add wave -noupdate -expand -group uncore -group GPIO /testbench/dut/uncoregen/uncore/gpio/gpio/PWDATA
-add wave -noupdate -expand -group uncore -group GPIO /testbench/dut/uncoregen/uncore/gpio/gpio/PSTRB
-add wave -noupdate -expand -group uncore -group GPIO /testbench/dut/uncoregen/uncore/gpio/gpio/PENABLE
+add wave -noupdate -group uncore /testbench/dut/uncoregen/uncore/HADDR
+add wave -noupdate -group uncore /testbench/dut/uncoregen/uncore/HTRANS
+add wave -noupdate -group uncore /testbench/dut/uncoregen/uncore/HREADY
+add wave -noupdate -group uncore /testbench/dut/uncoregen/uncore/HSELRegions
+add wave -noupdate -group uncore /testbench/dut/uncoregen/uncore/HSELNoneD
+add wave -noupdate -group uncore /testbench/dut/uncoregen/uncore/HSELPLICD
+add wave -noupdate -group uncore /testbench/dut/uncoregen/uncore/HRDATA
+add wave -noupdate -group uncore -group plic /testbench/dut/uncoregen/uncore/plic/plic/UARTIntr
+add wave -noupdate -group uncore -group plic /testbench/dut/uncoregen/uncore/plic/plic/GPIOIntr
+add wave -noupdate -group uncore -group plic /testbench/dut/uncoregen/uncore/plic/plic/MExtInt
+add wave -noupdate -group uncore -group plic /testbench/dut/uncoregen/uncore/plic/plic/SExtInt
+add wave -noupdate -group uncore -group plic /testbench/dut/uncoregen/uncore/plic/plic/Dout
+add wave -noupdate -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/intClaim
+add wave -noupdate -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/intEn
+add wave -noupdate -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/intInProgress
+add wave -noupdate -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/intPending
+add wave -noupdate -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/intPriority
+add wave -noupdate -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/intThreshold
+add wave -noupdate -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/nextIntPending
+add wave -noupdate -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/requests
+add wave -noupdate -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/irqMatrix
+add wave -noupdate -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/priorities_with_irqs
+add wave -noupdate -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/max_priority_with_irqs
+add wave -noupdate -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/irqs_at_max_priority
+add wave -noupdate -group uncore -group plic -expand -group internals /testbench/dut/uncoregen/uncore/plic/plic/threshMask
+add wave -noupdate -group uncore -group CLINT /testbench/dut/uncoregen/uncore/clint/clint/MTIME
+add wave -noupdate -group uncore -group CLINT /testbench/dut/uncoregen/uncore/clint/clint/MTIMECMP
+add wave -noupdate -group uncore -group CLINT -expand -group {clint bus} /testbench/dut/uncoregen/uncore/clint/clint/PSEL
+add wave -noupdate -group uncore -group CLINT -expand -group {clint bus} /testbench/dut/uncoregen/uncore/clint/clint/PADDR
+add wave -noupdate -group uncore -group CLINT -expand -group {clint bus} /testbench/dut/uncoregen/uncore/clint/clint/PWDATA
+add wave -noupdate -group uncore -group CLINT -expand -group {clint bus} /testbench/dut/uncoregen/uncore/clint/clint/PSTRB
+add wave -noupdate -group uncore -group CLINT -expand -group {clint bus} /testbench/dut/uncoregen/uncore/clint/clint/PWRITE
+add wave -noupdate -group uncore -group CLINT -expand -group {clint bus} /testbench/dut/uncoregen/uncore/clint/clint/PENABLE
+add wave -noupdate -group uncore -group CLINT -expand -group {clint bus} /testbench/dut/uncoregen/uncore/clint/clint/PRDATA
+add wave -noupdate -group uncore -group CLINT -expand -group {clint bus} /testbench/dut/uncoregen/uncore/clint/clint/PREADY
+add wave -noupdate -group uncore -group uart -expand -group Registers /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/LSR
+add wave -noupdate -group uncore -group uart -expand -group Registers /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/MCR
+add wave -noupdate -group uncore -group uart -expand -group Registers /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/MSR
+add wave -noupdate -group uncore -group uart -expand -group Registers /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/RBR
+add wave -noupdate -group uncore -group uart -expand -group Registers /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/TXHR
+add wave -noupdate -group uncore -group uart -expand -group Registers /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/LCR
+add wave -noupdate -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/intrID
+add wave -noupdate -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/INTR
+add wave -noupdate -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/rxstate
+add wave -noupdate -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/txstate
+add wave -noupdate -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/txbitssent
+add wave -noupdate -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/txbitsexpected
+add wave -noupdate -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/rxbitsreceived
+add wave -noupdate -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/rxbitsexpected
+add wave -noupdate -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/rxdata
+add wave -noupdate -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/rxoverrunerr
+add wave -noupdate -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/rxdataready
+add wave -noupdate -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/rxdataavailintr
+add wave -noupdate -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/RXBR
+add wave -noupdate -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/squashRXerrIP
+add wave -noupdate -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/rxshiftreg
+add wave -noupdate -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/SOUTbit
+add wave -noupdate -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/SINsync
+add wave -noupdate -group uncore -group uart /testbench/dut/uncoregen/uncore/uartgen/uart/uartPC/txsr
+add wave -noupdate -group uncore -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncoregen/uncore/uartgen/uart/SIN
+add wave -noupdate -group uncore -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncoregen/uncore/uartgen/uart/SOUT
+add wave -noupdate -group uncore -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncoregen/uncore/uartgen/uart/RTSb
+add wave -noupdate -group uncore -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncoregen/uncore/uartgen/uart/DTRb
+add wave -noupdate -group uncore -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncoregen/uncore/uartgen/uart/OUT1b
+add wave -noupdate -group uncore -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncoregen/uncore/uartgen/uart/OUT2b
+add wave -noupdate -group uncore -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncoregen/uncore/uartgen/uart/DSRb
+add wave -noupdate -group uncore -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncoregen/uncore/uartgen/uart/DCDb
+add wave -noupdate -group uncore -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncoregen/uncore/uartgen/uart/CTSb
+add wave -noupdate -group uncore -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncoregen/uncore/uartgen/uart/TXRDYb
+add wave -noupdate -group uncore -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncoregen/uncore/uartgen/uart/RXRDYb
+add wave -noupdate -group uncore -group GPIO /testbench/dut/uncoregen/uncore/gpio/gpio/GPIOIN
+add wave -noupdate -group uncore -group GPIO /testbench/dut/uncoregen/uncore/gpio/gpio/GPIOOUT
+add wave -noupdate -group uncore -group GPIO /testbench/dut/uncoregen/uncore/gpio/gpio/GPIOEN
+add wave -noupdate -group uncore -group GPIO /testbench/dut/uncoregen/uncore/gpio/gpio/GPIOIntr
+add wave -noupdate -group uncore -group GPIO /testbench/dut/uncoregen/uncore/gpio/gpio/PSEL
+add wave -noupdate -group uncore -group GPIO /testbench/dut/uncoregen/uncore/gpio/gpio/PADDR
+add wave -noupdate -group uncore -group GPIO /testbench/dut/uncoregen/uncore/gpio/gpio/PWRITE
+add wave -noupdate -group uncore -group GPIO /testbench/dut/uncoregen/uncore/gpio/gpio/PRDATA
+add wave -noupdate -group uncore -group GPIO /testbench/dut/uncoregen/uncore/gpio/gpio/PREADY
+add wave -noupdate -group uncore -group GPIO /testbench/dut/uncoregen/uncore/gpio/gpio/PWDATA
+add wave -noupdate -group uncore -group GPIO /testbench/dut/uncoregen/uncore/gpio/gpio/PSTRB
+add wave -noupdate -group uncore -group GPIO /testbench/dut/uncoregen/uncore/gpio/gpio/PENABLE
 add wave -noupdate -group RegFile /testbench/dut/core/ieu/dp/regf/rf
 add wave -noupdate -group RegFile /testbench/dut/core/ieu/dp/regf/a1
 add wave -noupdate -group RegFile /testbench/dut/core/ieu/dp/regf/a2
@@ -654,23 +651,23 @@ add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/STATUS_TW
 add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/PrivilegeModeW
 add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/wfi/WFICount
 add wave -noupdate -group wfi /testbench/dut/core/priv/priv/pmd/WFITimeoutM
-add wave -noupdate -expand -group testbench /testbench/DCacheFlushStart
+add wave -noupdate -group testbench /testbench/DCacheFlushStart
 add wave -noupdate /testbench/dut/core/lsu/hptw/hptw/HPTWLoadPageFault
 add wave -noupdate /testbench/dut/core/lsu/hptw/hptw/HPTWLoadPageFaultDelay
-add wave -noupdate -expand -group spi /testbench/dut/uncoregen/uncore/spi/spi/PCLK
-add wave -noupdate -expand -group spi -expand -group interface /testbench/dut/uncoregen/uncore/spi/spi/SPICLK
-add wave -noupdate -expand -group spi -expand -group interface /testbench/dut/uncoregen/uncore/spi/spi/SPICS
-add wave -noupdate -expand -group spi -expand -group interface /testbench/dut/uncoregen/uncore/spi/spi/SPIOut
-add wave -noupdate -expand -group spi -expand -group interface /testbench/dut/uncoregen/uncore/spi/spi/SPIIn
-add wave -noupdate -expand -group spi /testbench/dut/uncoregen/uncore/spi/spi/ChipSelectMode
-add wave -noupdate -expand -group spi /testbench/dut/uncoregen/uncore/spi/spi/SckMode
+add wave -noupdate -group spi /testbench/dut/uncoregen/uncore/spi/spi/PCLK
+add wave -noupdate -group spi -expand -group interface /testbench/dut/uncoregen/uncore/spi/spi/SPICLK
+add wave -noupdate -group spi -expand -group interface /testbench/dut/uncoregen/uncore/spi/spi/SPICS
+add wave -noupdate -group spi -expand -group interface /testbench/dut/uncoregen/uncore/spi/spi/SPIOut
+add wave -noupdate -group spi -expand -group interface /testbench/dut/uncoregen/uncore/spi/spi/SPIIn
+add wave -noupdate -group spi /testbench/dut/uncoregen/uncore/spi/spi/ChipSelectMode
+add wave -noupdate -group spi /testbench/dut/uncoregen/uncore/spi/spi/SckMode
 add wave -noupdate /testbench/dut/uncoregen/uncore/spi/spi/TransmitShiftRegLoad
 add wave -noupdate /testbench/dut/uncoregen/uncore/spi/spi/ShiftEdge
 add wave -noupdate /testbench/dut/uncoregen/uncore/spi/spi/Active
 add wave -noupdate /testbench/dut/uncoregen/uncore/spi/spi/TransmitData
 add wave -noupdate /testbench/dut/uncoregen/uncore/spi/spi/TransmitShiftReg
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 4} {640 ns} 1} {{Cursor 4} {2400 ns} 1} {{Cursor 3} {214070 ns} 0} {{Cursor 4} {223860 ns} 1}
+WaveRestoreCursors {{Cursor 4} {640 ns} 1} {{Cursor 4} {2400 ns} 1} {{Cursor 3} {1197 ns} 0} {{Cursor 4} {223860 ns} 1}
 quietly wave cursor active 3
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 194
@@ -686,4 +683,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {213740 ns} {214380 ns}
+WaveRestoreZoom {1130 ns} {1230 ns}
