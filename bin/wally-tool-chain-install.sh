@@ -68,7 +68,7 @@ git_check() {
 # Log output to a file and only print lines with keywords
 logger() {
     local log="$RISCV/logs/$1.log"
-    cat < /dev/stdin | tee -a "$log" | (grep -iE --color=never "(\bwarning|\berror|\bfail|\bsuccess|\bstamp)" || true) | (grep -viE --color=never "(_warning|warning_|_error|error_|-warning|warning-|-error|error-|Werror|error\.o|warning flags)" || true)
+    cat < /dev/stdin | tee -a "$log" | (grep -iE --color=never "(\bwarning|\berror|\bfail|\bsuccess|\bstamp|\bdoesn't work)" || true) | (grep -viE --color=never "(_warning|warning_|_error|error_|-warning|warning-|-error|error-|Werror|error\.o|warning flags)" || true)
 }
 
 set -e # break on error
@@ -103,6 +103,13 @@ fi
 # Set environment variables
 export PATH=$PATH:$RISCV/bin:/usr/bin
 export PKG_CONFIG_PATH=$RISCV/lib64/pkgconfig:$RISCV/lib/pkgconfig:$RISCV/share/pkgconfig:$RISCV/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH
+
+# Check for incompatible PATH environment variable before proceeding with installation
+if [[ ":$PATH:" == *::* || ":$PATH:" == *:.:* ]]; then
+    echo -e "${FAIL_COLOR}Error: You seem to have the current working directory in your \$PATH environment variable."
+    echo -e "This won't work. Please update your \$PATH and try again.${ENDC}"
+    exit 1
+fi
 
 # Create installation directory
 mkdir -p "$RISCV"/logs
