@@ -104,6 +104,13 @@ fi
 export PATH=$PATH:$RISCV/bin:/usr/bin
 export PKG_CONFIG_PATH=$RISCV/lib64/pkgconfig:$RISCV/lib/pkgconfig:$RISCV/share/pkgconfig:$RISCV/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH
 
+# Check for incompatible PATH environment variable before proceeding with installation
+if [[ ":$PATH:" == *::* || ":$PATH:" == *:.:* ]]; then
+    echo -e "${FAIL_COLOR}Error: You seem to have the current working directory in your \$PATH environment variable."
+    echo -e "This won't work. Please update your \$PATH and try again.${ENDC}"
+    exit 1
+fi
+
 # Create installation directory
 mkdir -p "$RISCV"/logs
 echo "Running as root: $ROOT"
