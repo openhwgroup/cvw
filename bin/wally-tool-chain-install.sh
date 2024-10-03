@@ -48,6 +48,7 @@ ENDC='\033[0m' # Reset to default color
 error() {
     echo -e "${FAIL_COLOR}Error: $STATUS installation failed"
     echo -e "Error on line ${BASH_LINENO[0]} with command $BASH_COMMAND${ENDC}"
+    echo -e "Please check the log in $RISCV/logs/$STATUS.log for more information."
     exit 1
 }
 
@@ -205,14 +206,14 @@ fi
 # This configuration enables multilib to target many flavors of RISC-V.
 # This book is tested with GCC 13.2.0
 section_header "Installing/Updating RISC-V GNU Toolchain"
-STATUS="RISC-V GNU Toolchain"
+STATUS="riscv-gnu-toolchain"
 cd "$RISCV"
 # Temporarily pin riscv-gnu-toolchain to use GCC 13.2.0. GCC 14 does not work with the Q extension.
 if git_check "riscv-gnu-toolchain" "https://github.com/riscv/riscv-gnu-toolchain" "$RISCV/riscv-gnu-toolchain/stamps/build-gcc-newlib-stage2" "b488ddb"; then
     cd riscv-gnu-toolchain
     git reset --hard && git clean -f && git checkout b488ddb #&& git pull
     ./configure --prefix="${RISCV}" --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
-    make -j "${NUM_THREADS}" 2>&1 | logger riscv-gnu-toolchain; [ "${PIPESTATUS[0]}" == 0 ]
+    make -j "${NUM_THREADS}" 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf riscv-gnu-toolchain
@@ -239,8 +240,8 @@ if git_check "elf2hex" "https://github.com/sifive/elf2hex.git" "$RISCV/bin/riscv
     git reset --hard && git clean -f && git checkout master && git pull
     autoreconf -i
     ./configure --target=riscv64-unknown-elf --prefix="$RISCV"
-    make 2>&1 | logger elf2hex; [ "${PIPESTATUS[0]}" == 0 ]
-    make install 2>&1 | logger elf2hex; [ "${PIPESTATUS[0]}" == 0 ]
+    make 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+    make install 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf elf2hex
@@ -254,15 +255,15 @@ fi
 # QEMU (https://www.qemu.org/docs/master/system/target-riscv.html)
 # QEMU is an open source machine emulator and virtualizer capable of emulating RISC-V
 section_header "Installing/Updating QEMU"
-STATUS="QEMU"
+STATUS="qemu"
 cd "$RISCV"
 if git_check "qemu" "https://github.com/qemu/qemu" "$RISCV/include/qemu-plugin.h"; then
     cd qemu
     git reset --hard && git clean -f && git checkout master && git pull --recurse-submodules -j "${NUM_THREADS}"
     git submodule update --init --recursive
     ./configure --target-list=riscv64-softmmu --prefix="$RISCV"
-    make -j "${NUM_THREADS}" 2>&1 | logger qemu; [ "${PIPESTATUS[0]}" == 0 ]
-    make install 2>&1 | logger qemu; [ "${PIPESTATUS[0]}" == 0 ]
+    make -j "${NUM_THREADS}" 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+    make install 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf qemu
@@ -276,7 +277,7 @@ fi
 # Spike (https://github.com/riscv-software-src/riscv-isa-sim)
 # Spike is a reference model for RISC-V. It is a functional simulator that can be used to run RISC-V programs.
 section_header "Installing/Updating SPIKE"
-STATUS="SPIKE"
+STATUS="spike"
 cd "$RISCV"
 if git_check "riscv-isa-sim" "https://github.com/riscv-software-src/riscv-isa-sim" "$RISCV/lib/pkgconfig/riscv-riscv.pc"; then
     cd riscv-isa-sim
@@ -284,8 +285,8 @@ if git_check "riscv-isa-sim" "https://github.com/riscv-software-src/riscv-isa-si
     mkdir -p build
     cd build
     ../configure --prefix="$RISCV"
-    make -j "${NUM_THREADS}" 2>&1 | logger spike; [ "${PIPESTATUS[0]}" == 0 ]
-    make install 2>&1 | logger spike; [ "${PIPESTATUS[0]}" == 0 ]
+    make -j "${NUM_THREADS}" 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+    make install 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf riscv-isa-sim
@@ -301,7 +302,7 @@ fi
 # It is used for linting and simulation of Wally.
 # Verilator needs to be built from source to get the latest version (Wally needs 5.021 or later).
 section_header "Installing/Updating Verilator"
-STATUS="Verilator"
+STATUS="verilator"
 cd "$RISCV"
 if git_check "verilator" "https://github.com/verilator/verilator" "$RISCV/share/pkgconfig/verilator.pc"; then
     unset VERILATOR_ROOT
@@ -309,8 +310,8 @@ if git_check "verilator" "https://github.com/verilator/verilator" "$RISCV/share/
     git reset --hard && git clean -f && git checkout master && git pull
     autoconf
     ./configure --prefix="$RISCV"
-    make -j "${NUM_THREADS}" 2>&1 | logger verilator; [ "${PIPESTATUS[0]}" == 0 ]
-    make install 2>&1 | logger verilator; [ "${PIPESTATUS[0]}" == 0 ]
+    make -j "${NUM_THREADS}" 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+    make install 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf verilator
@@ -339,12 +340,12 @@ fi
 # RISC-V Sail Model (https://github.com/riscv/sail-riscv)
 # The RISC-V Sail Model is the golden reference model for RISC-V. It is written in Sail (described above)
 section_header "Installing/Updating RISC-V Sail Model"
-STATUS="RISC-V Sail Model"
+STATUS="riscv-sail-model"
 if git_check "sail-riscv" "https://github.com/riscv/sail-riscv.git" "$RISCV/bin/riscv_sim_RV32"; then
     cd sail-riscv
     git reset --hard && git clean -f && git checkout master && git pull
-    ARCH=RV64 make -j "${NUM_THREADS}" c_emulator/riscv_sim_RV64  2>&1 | logger sailModel; [ "${PIPESTATUS[0]}" == 0 ]
-    ARCH=RV32 make -j "${NUM_THREADS}" c_emulator/riscv_sim_RV32 2>&1 | logger sailModel; [ "${PIPESTATUS[0]}" == 0 ]
+    ARCH=RV64 make -j "${NUM_THREADS}" c_emulator/riscv_sim_RV64  2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+    ARCH=RV32 make -j "${NUM_THREADS}" c_emulator/riscv_sim_RV32 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
     cp -f c_emulator/riscv_sim_RV64 "$RISCV"/bin/riscv_sim_RV64
     cp -f c_emulator/riscv_sim_RV32 "$RISCV"/bin/riscv_sim_RV32
     if [ "$clean" ]; then
@@ -376,7 +377,7 @@ fi
 # Buildroot is used to boot a minimal versio of Linux on Wally.
 # Testvectors are generated using QEMU.
 section_header "Installing Buildroot and Creating Linux testvectors"
-STATUS="Buildroot"
+STATUS="buildroot"
 if [ -z "$LD_LIBRARY_PATH" ]; then
     export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$RISCV/riscv64-unknown-elf/lib:$RISCV/lib/x86_64-linux-gnu/
 else
@@ -384,11 +385,11 @@ else
 fi
 cd "$dir"/../linux
 if [ ! -e "$RISCV"/buildroot ]; then
-    make 2>&1 | logger buildroot; [ "${PIPESTATUS[0]}" == 0 ]
+    make 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
     echo -e "${SUCCESS_COLOR}Buildroot successfully installed and Linux testvectors created!${ENDC}"
 elif [ ! -e "$RISCV"/linux-testvectors ]; then
     echo -e "${OK_COLOR}Buildroot already exists, but Linux testvectors are missing. Generating them now.${ENDC}"
-    make dumptvs 2>&1 | logger buildroot; [ "${PIPESTATUS[0]}" == 0 ]
+    make dumptvs 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
     echo -e "${SUCCESS_COLOR}Linux testvectors successfully generated!${ENDC}"
 else
     echo -e "${OK_COLOR}Buildroot and Linux testvectors already exist.${ENDC}"
