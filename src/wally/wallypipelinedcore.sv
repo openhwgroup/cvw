@@ -170,6 +170,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          DCacheStallM, ICacheStallF;
   logic                          wfiM, IntPendingM;
 
+  // Fetch Buffer Stall
+  logic                          FetchBufferStallF;
+
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu #(P) ifu(.clk, .reset,
     .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
@@ -177,7 +180,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .BranchD, .BranchE, .JumpD, .JumpE, .ICacheStallF,
     // Fetch
     .HRDATA, .PCSpillF, .IFUHADDR, 
-    .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUHSIZE, .IFUHREADY, .IFUHWRITE,
+    .IFUStallF, .FetchBufferStallF, .IFUHBURST, .IFUHTRANS, .IFUHSIZE, .IFUHREADY, .IFUHWRITE,
     .ICacheAccess, .ICacheMiss,
     // Execute
     .PCLinkE, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCE, .BPWrongE,  .BPWrongM, 
@@ -274,7 +277,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   hazard #(P) hzu(
     .BPWrongE, .CSRWriteFenceM, .RetM, .TrapM,
     .StructuralStallD,
-    .LSUStallM, .IFUStallF,
+    .LSUStallM, .IFUStallF, .FetchBufferStallF,
     .FPUStallD, .ExternalStall,
     .DivBusyE, .FDivBusyE,
     .wfiM, .IntPendingM,

@@ -95,7 +95,9 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   input  var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0],// PMP address from privileged unit
   output logic                 InstrAccessFaultF,                        // Instruction access fault 
   output logic                 ICacheAccess,                             // Report I$ read to performance counters
-  output logic                 ICacheMiss                                // Report I$ miss to performance counters
+  output logic                 ICacheMiss,                               // Report I$ miss to performance counters
+  // Fetch Buffer
+  output logic FetchBufferStallF                                         // Report Fetch Buffer Stall to Hazard Unit
 );
 
   localparam [31:0]            nop = 32'h00000013;                       // instruction for NOP
@@ -303,7 +305,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   
   // flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawF, nop, InstrRawD);
   // TODO: Test this?!?!?!
-  fetchbuffer #(P) fetchbuff(.clk, .reset, .StallD, .flush(FlushD), .writeData(PostSpillInstrRawF), .readData(InstrRawD), .StallF); // Figure out what TODO with StallF
+  fetchbuffer #(P) fetchbuff(.clk, .reset, .StallD, .FlushD, .writeData(PostSpillInstrRawF), .readData(InstrRawD), .FetchBufferStallF); // Figure out what TODO with StallF
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // PCNextF logic

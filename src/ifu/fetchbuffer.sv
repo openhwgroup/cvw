@@ -28,10 +28,10 @@
 
 module fetchbuffer import cvw::*; #(parameter cvw_t P) (
 	input  logic        clk, reset,
-	input  logic        StallD, flush,
+	input  logic        StallD, FlushD,
 	input  logic [31:0] writeData,
 	output logic [31:0] readData,
-	output logic        StallF
+	output logic        FetchBufferStallF
 );
   localparam [31:0] nop = 32'h00000013;
   logic      [31:0] readf0, readf1, readf2, readMuxed;
@@ -40,19 +40,19 @@ module fetchbuffer import cvw::*; #(parameter cvw_t P) (
 
   assign empty  = |(readPtr & writePtr); // Bitwise and the read&write ptr, and or the bits of the result together
   assign full   = |({writePtr[1:0], writePtr[2]} & readPtr); // Same as above but left rotate writePtr to "add 1"
-  assign StallF = full;
+  assign FetchBufferStallF = full;
 
   // will go in a generate block once this is parameterized
-  flopenr f0 (.clk, .reset(reset | flush), .en(writePtr[0]), .d(writeData), .q(readf0)); 
-  flopenr f1 (.clk, .reset(reset | flush), .en(writePtr[1]), .d(writeData), .q(readf1));
-  flopenr f2 (.clk, .reset(reset | flush), .en(writePtr[2]), .d(writeData), .q(readf2));
+  flopenr #(32) f0 (.clk, .reset(reset | FlushD), .en(writePtr[0]), .d(writeData), .q(readf0)); 
+  flopenr #(32) f1 (.clk, .reset(reset | FlushD), .en(writePtr[1]), .d(writeData), .q(readf1));
+  flopenr #(32) f2 (.clk, .reset(reset | FlushD), .en(writePtr[2]), .d(writeData), .q(readf2));
 
   always_comb begin : readMuxes
     // Mux read data from the three registers
     case (readPtr)
       3'b001:  readMuxed = readf0;
       3'b010:  readMuxed = readf1;
-      3'b001:  readMuxed = readf2;
+      3'b100:  readMuxed = readf2;
       default: readMuxed = nop; // just in case?
     endcase
     // issue nop when appropriate

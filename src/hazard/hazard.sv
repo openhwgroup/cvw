@@ -28,9 +28,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module hazard import cvw::*;  #(parameter cvw_t P) ( 
-  input  logic  BPWrongE, CSRWriteFenceM, RetM, TrapM,   
+  input  logic  BPWrongE, CSRWriteFenceM, RetM, TrapM,
   input  logic  StructuralStallD,
-  input  logic  LSUStallM, IFUStallF,
+  input  logic  LSUStallM, IFUStallF, FetchBufferStallF,
   input  logic  FPUStallD, ExternalStall,
   input  logic  DivBusyE, FDivBusyE,
   input  logic  wfiM, IntPendingM,
@@ -82,7 +82,7 @@ module hazard import cvw::*;  #(parameter cvw_t P) (
   //  The IFU and LSU stall the entire pipeline on a cache miss, bus access, or other long operation.  
   //    The IFU stalls the entire pipeline rather than just Fetch to avoid complications with instructions later in the pipeline causing Exceptions
   //    A trap could be asserted at the start of a IFU/LSU stall, and should flush the memory operation
-  assign StallFCause = 1'b0;
+  assign StallFCause = FetchBufferStallF;
   assign StallDCause = (StructuralStallD | FPUStallD) & ~FlushDCause;
   assign StallECause = (DivBusyE | FDivBusyE) & ~FlushECause; 
   assign StallMCause = WFIStallM & ~FlushMCause;
