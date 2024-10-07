@@ -80,7 +80,6 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   assign InstrValidE    = testbench.dut.core.ieu.c.InstrValidE;
   assign InstrValidM    = testbench.dut.core.ieu.InstrValidM;
   assign InstrRawD      = testbench.dut.core.ifu.InstrRawD;
-  assign PPN_dM         = testbench.dut.core.lsu.dmmu.dmmu.tlb.tlb.PPN; 
   assign PCNextF        = testbench.dut.core.ifu.PCNextF;
   assign PCF            = testbench.dut.core.ifu.PCF;
   assign PCD            = testbench.dut.core.ifu.PCD;
@@ -115,6 +114,8 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   assign PTE_iM         = testbench.dut.core.ifu.immu.immu.PTE;
   assign PTE_dM         = testbench.dut.core.lsu.dmmu.dmmu.PTE;
   assign PPN_iM         = testbench.dut.core.ifu.immu.immu.tlb.tlb.PPN;
+  assign PPN_dM         = testbench.dut.core.lsu.dmmu.dmmu.tlb.tlb.PPN; 
+
   
 
   logic valid;
