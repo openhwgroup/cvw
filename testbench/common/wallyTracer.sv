@@ -80,16 +80,6 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   assign InstrValidE    = testbench.dut.core.ieu.c.InstrValidE;
   assign InstrValidM    = testbench.dut.core.ieu.InstrValidM;
   assign InstrRawD      = testbench.dut.core.ifu.InstrRawD;
-  assign VAdrIM         = testbench.dut.core.ifu.immu.immu.tlb.tlb.VAdr;
-  assign VAdrDM         = testbench.dut.core.lsu.dmmu.dmmu.tlb.tlb.VAdr;
-  assign PAIM           = testbench.dut.core.ifu.immu.immu.PhysicalAddress;
-  assign PADM           = testbench.dut.core.lsu.dmmu.dmmu.PhysicalAddress;
-  assign ReadAccessM    = testbench.dut.core.lsu.dmmu.dmmu.ReadAccessM;
-  assign WriteAccessM   = testbench.dut.core.lsu.dmmu.dmmu.WriteAccessM;
-  assign ExecuteAccessF = testbench.dut.core.ifu.immu.immu.ExecuteAccessF;
-  assign PTE_iM         = testbench.dut.core.ifu.immu.immu.PTE;
-  assign PTE_dM         = testbench.dut.core.lsu.dmmu.dmmu.PTE;
-  assign PPN_iM         = testbench.dut.core.ifu.immu.immu.tlb.tlb.PPN;
   assign PPN_dM         = testbench.dut.core.lsu.dmmu.dmmu.tlb.tlb.PPN; 
   assign PCNextF        = testbench.dut.core.ifu.PCNextF;
   assign PCF            = testbench.dut.core.ifu.PCF;
@@ -113,6 +103,18 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   assign STATUS_UXL     = testbench.dut.core.priv.priv.csr.csrsr.STATUS_UXL;
   assign wfiM           = testbench.dut.core.priv.priv.wfiM;
   assign InterruptM     = testbench.dut.core.priv.priv.InterruptM;
+
+  //FOr VM Verification
+  assign VAdrIM         = testbench.dut.core.ifu.immu.immu.tlb.tlb.VAdr;
+  assign VAdrDM         = testbench.dut.core.lsu.dmmu.dmmu.tlb.tlb.VAdr;
+  assign PAIM           = testbench.dut.core.ifu.immu.immu.PhysicalAddress;
+  assign PADM           = testbench.dut.core.lsu.dmmu.dmmu.PhysicalAddress;
+  assign ReadAccessM    = testbench.dut.core.lsu.dmmu.dmmu.ReadAccessM;
+  assign WriteAccessM   = testbench.dut.core.lsu.dmmu.dmmu.WriteAccessM;
+  assign ExecuteAccessF = testbench.dut.core.ifu.immu.immu.ExecuteAccessF;
+  assign PTE_iM         = testbench.dut.core.ifu.immu.immu.PTE;
+  assign PTE_dM         = testbench.dut.core.lsu.dmmu.dmmu.PTE;
+  assign PPN_iM         = testbench.dut.core.ifu.immu.immu.tlb.tlb.PPN;
   
 
   logic valid;
