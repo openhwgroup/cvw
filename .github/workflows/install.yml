@@ -32,7 +32,7 @@ jobs:
       - name: make tests
         run: |
               source setup.sh
-              make riscof --jobs $(nproc --ignore 1)
+              make riscof
       - name: regression
         run: |
               source setup.sh
