@@ -192,9 +192,9 @@ if {$DEBUG > 0} {
 # suppress spurious warnngs about
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
-set INC_DIRS "+incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared +incdir+${FCRVVI} +incdir+${FCRVVI}/rv32 +incdir+${FCRVVI}/rv64 +incdir+${FCRVVI}/common +incdir+${FCRVVI}"
+set INC_DIRS "+incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared +incdir+${FCRVVI} +incdir+${FCRVVI}/rv32 +incdir+${FCRVVI}/rv64 +incdir+${FCRVVI}/rv64_priv +incdir+${FCRVVI}/common +incdir+${FCRVVI}"
 set SOURCES "${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv ${SRC}/*/*.sv ${SRC}/*/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*/*/*.sv"
-vlog -lint +nowarnRDGN -work ${WKDIR} {*}${INC_DIRS} {*}${FCvlog} {*}${FCdefineCOVER_EXTS} {*}${lockstepvlog} ${FCdefineRVVI_COVERAGE} {*}${SOURCES} -suppress 2244 -suppress 2282 -suppress 2583 -suppress 7063,2596,13286
+vlog -permissive -lint -work ${WKDIR} {*}${INC_DIRS} {*}${FCvlog} {*}${FCdefineCOVER_EXTS} {*}${lockstepvlog} ${FCdefineRVVI_COVERAGE} {*}${SOURCES} -suppress 2282,2583,7053,7063,2596,13286
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
