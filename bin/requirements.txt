@@ -1,8 +1,8 @@
 adjustText>=1.2
 lief>=0.14.1
 Markdown>=3.6
-#matplotlib>=3.9.0
-PyYAML>=5.2
+# matplotlib>=3.9.0
+# PyYAML>=5.2
 riscv-isac @ git+https://github.com/riscv-non-isa/riscv-arch-test/#subdirectory=riscv-isac
 riscof @ git+https://github.com/riscv/riscof.git
 riscv-config>=3.18.3
