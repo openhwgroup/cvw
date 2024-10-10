@@ -142,6 +142,11 @@ for d in ["logs", "wkdir", "cov", "ucdb", "fcov", "fcov_ucdb", "fcovrvvi", "fcov
 
 cd = "cd $WALLY/sim/" +args.sim
 
+# check for unsupported sims
+if (args.tb == "testbench_fp" and args.sim != "questa"):
+    print("Error: testbench_fp presently only supported by Questa, not VCS or Verilator, because of a touchy testbench")
+    exit(1)
+
 # per-simulator launch
 if (args.sim == "questa"):
     if (args.gui) and (args.tb == "testbench"):
