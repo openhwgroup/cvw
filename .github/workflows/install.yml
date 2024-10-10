@@ -171,6 +171,10 @@ jobs:
         run: |
               source setup.sh
               make riscof --jobs $(nproc --ignore 1)
+      - name: check storage
+        run: |
+              df -h
+              du -h --max-depth=1
       - name: regression
         run: |
               source setup.sh
