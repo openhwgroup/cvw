@@ -17,12 +17,6 @@ endif
 WALLYBOARDSRC := $(WALLYLINUX)/buildroot-config-src/wally
 WALLYBOARD := $(BUILDROOT)/board/wally
 
-# Buildroot Package Stuff
-PACKAGE_SOURCE := ${WALLYLINUX}/buildroot-packages/package-source
-FPGA_AXI_SDC := ${WALLYLINUX}/buildroot-packages/fpga-axi-sdc
-DRIVER := ${PACKAGE_SOURCE}/fpga-axi-sdc.c
-PATCHFILE := $(BRPACKAGES)/package-2023.05.1.patch
-
 # Device tree files
 DTS ?= $(shell find devicetree -type f -regex ".*\.dts" | sort)
 DTB := $(DTS:%.dts=%.dtb)
@@ -113,15 +107,6 @@ $(WALLYBOARD): $(BUILDROOT)
 	cp -r $(WALLYBOARDSRC) $(BUILDROOT)/board
 	cp $(BR2023)/main.config $(WALLYBOARD)/main.config
 	cp $(BR2023)/linux.config $(WALLYBOARD)/linux.config
-
-# Buildroot Package ---------------------------------------------------
-$(BUILDROOT)/package/fpga-axi-sdc: $(BUILDROOT) $(PATCHFILE) $(BRPACKAGES)/fpga-axi-sdc
-	cp -r $(BRPACKAGES)/fpga-axi-sdc $(BUILDROOT)/package
-	sed -i 's|FPGA_AXI_SDC_SITE =|FPGA_AXI_SDC_SITE = $(PACKAGE_SOURCE)|1' $(BUILDROOT)/package/fpga-axi-sdc/fpga-axi-sdc.mk
-	cd $(BUILDROOT); if git apply --check $(PATCHFILE) > /dev/null ; then git apply $(PATCHFILE); fi
-
-$(PATCHFILE):
-	cd $(BUILDROOT); git apply $(PATCHFILE)
 
 $(BUILDROOT):
 	git clone https://github.com/buildroot/buildroot.git $@
