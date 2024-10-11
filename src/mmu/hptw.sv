@@ -58,7 +58,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   output logic [1:0]        LSUAtomicM,
   output logic [2:0]        LSUFunct3M,
   output logic [6:0]        LSUFunct7M,
-  output logic              IgnoreRequestTLB,
+  output logic              HPTWFlushW,
   output logic              SelHPTW,
   output logic              HPTWStall,
   input  logic              LSULoadAccessFaultM, LSUStoreAmoAccessFaultM, 
@@ -304,9 +304,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
       default:                                                        NextWalkerState = IDLE; // Should never be reached
     endcase // case (WalkerState)
 
-  assign IgnoreRequestTLB = (WalkerState == IDLE & TLBMissOrUpdateDA) | 
-                            //((WalkerState == L3_RD | WalkerState == L2_RD | WalkerState == L1_RD | WalkerState == L0_RD)  & HPTWFaultM); // HPTWFaultM is hear because the hptw faults are delayed one cycle and we need to prevent the cache/bus from taking the operation. On the next cycle the CPU will trap.
-  (WalkerState != IDLE & HPTWFaultM);
+  assign HPTWFlushW = (WalkerState == IDLE & TLBMissOrUpdateDA) | (WalkerState != IDLE & HPTWFaultM);
   
   assign ResetPTE = reset | (NextWalkerState == IDLE);
   assign SelHPTW = WalkerState != IDLE;
