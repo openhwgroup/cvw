@@ -278,17 +278,20 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
       L3_RD:      if (HPTWFaultM)                                     NextWalkerState = FAULT;
                   else if (DCacheBusStallM)                           NextWalkerState = L3_RD;
                   else                                                NextWalkerState = L2_ADR;
-      L2_ADR:     if (InitialWalkerState == L2_ADR | ValidNonLeafPTE) NextWalkerState = L2_RD; // First access in SV39
+      L2_ADR:     if (HPTWFaultM)                                     NextWalkerState = FAULT;
+                  else if (InitialWalkerState == L2_ADR | ValidNonLeafPTE) NextWalkerState = L2_RD; // First access in SV39
                   else                                                NextWalkerState = LEAF;
       L2_RD:      if (HPTWFaultM)                                     NextWalkerState = FAULT;
                   else if (DCacheBusStallM)                           NextWalkerState = L2_RD;
                   else                                                NextWalkerState = L1_ADR;
-      L1_ADR:     if (InitialWalkerState == L1_ADR | ValidNonLeafPTE) NextWalkerState = L1_RD; // First access in SV32                 
+      L1_ADR:     if  (HPTWFaultM)                                     NextWalkerState = FAULT;
+                  else if (InitialWalkerState == L1_ADR | ValidNonLeafPTE) NextWalkerState = L1_RD; // First access in SV32                 
                   else                                                NextWalkerState = LEAF;  
       L1_RD:      if (HPTWFaultM)                                     NextWalkerState = FAULT;
                   else if (DCacheBusStallM)                           NextWalkerState = L1_RD;
                   else                                                NextWalkerState = L0_ADR;
-      L0_ADR:     if (ValidNonLeafPTE)                                NextWalkerState = L0_RD;
+      L0_ADR:     if (HPTWFaultM)                                     NextWalkerState = FAULT;
+                  else if (ValidNonLeafPTE)                           NextWalkerState = L0_RD;
                   else                                                NextWalkerState = LEAF;
       L0_RD:      if (HPTWFaultM)                                     NextWalkerState = FAULT;
                   else if (DCacheBusStallM)                           NextWalkerState = L0_RD;
@@ -302,8 +305,10 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
     endcase // case (WalkerState)
 
   assign IgnoreRequestTLB = (WalkerState == IDLE & TLBMissOrUpdateDA) | 
-                            ((WalkerState == L3_RD | WalkerState == L2_RD | WalkerState == L1_RD | WalkerState == L0_RD)  & HPTWFaultM); // HPTWFaultM is hear because the hptw faults are delayed one cycle and we need to prevent the cache/bus from taking the operation. On the next cycle the CPU will trap.
-  assign ResetPTE = reset | (WalkerState == IDLE);
+                            //((WalkerState == L3_RD | WalkerState == L2_RD | WalkerState == L1_RD | WalkerState == L0_RD)  & HPTWFaultM); // HPTWFaultM is hear because the hptw faults are delayed one cycle and we need to prevent the cache/bus from taking the operation. On the next cycle the CPU will trap.
+  (WalkerState != IDLE & HPTWFaultM);
+  
+  assign ResetPTE = reset | (NextWalkerState == IDLE);
   assign SelHPTW = WalkerState != IDLE;
   assign HPTWStall = (WalkerState != IDLE & WalkerState != FAULT) | (WalkerState == IDLE & TLBMissOrUpdateDA); 
 
