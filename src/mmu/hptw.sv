@@ -153,7 +153,9 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   assign ValidPTE = Valid & ~(Writable & ~Readable);
   assign ValidLeafPTE = ValidPTE & LeafPTE;
   assign ValidNonLeafPTE = Valid & ~LeafPTE;
-  if(P.XLEN == 64) assign PBMTFaultM = ValidNonLeafPTE & (|PTE[62:61]);
+  //  assign PBMTFaultM = ValidNonLeafPTE & (|PTE[62:61]); // This is delayed one cycle so use ReadDataM instead
+  // It's ok for critical path because PBMTFaultM is only used to enable registers and as input to the FSM.
+  if(P.XLEN == 64) assign PBMTFaultM = ReadDataM[0] & ~(ReadDataM[3] | ReadDataM[2] | ReadDataM[1]) & (|ReadDataM[62:61]) & HPTWRW[1] & ~DCacheBusStallM;
   else assign PBMTFaultM = 1'b0;
 
   if(P.SVADU_SUPPORTED) begin : hptwwrites
@@ -278,20 +280,17 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
       L3_RD:      if (HPTWFaultM)                                     NextWalkerState = FAULT;
                   else if (DCacheBusStallM)                           NextWalkerState = L3_RD;
                   else                                                NextWalkerState = L2_ADR;
-      L2_ADR:     if (HPTWFaultM)                                     NextWalkerState = FAULT;
-                  else if (InitialWalkerState == L2_ADR | ValidNonLeafPTE) NextWalkerState = L2_RD; // First access in SV39
+      L2_ADR:     if (InitialWalkerState == L2_ADR | ValidNonLeafPTE) NextWalkerState = L2_RD; // First access in SV39
                   else                                                NextWalkerState = LEAF;
       L2_RD:      if (HPTWFaultM)                                     NextWalkerState = FAULT;
                   else if (DCacheBusStallM)                           NextWalkerState = L2_RD;
                   else                                                NextWalkerState = L1_ADR;
-      L1_ADR:     if  (HPTWFaultM)                                     NextWalkerState = FAULT;
-                  else if (InitialWalkerState == L1_ADR | ValidNonLeafPTE) NextWalkerState = L1_RD; // First access in SV32                 
+      L1_ADR:     if (InitialWalkerState == L1_ADR | ValidNonLeafPTE) NextWalkerState = L1_RD; // First access in SV32                 
                   else                                                NextWalkerState = LEAF;  
       L1_RD:      if (HPTWFaultM)                                     NextWalkerState = FAULT;
                   else if (DCacheBusStallM)                           NextWalkerState = L1_RD;
                   else                                                NextWalkerState = L0_ADR;
-      L0_ADR:     if (HPTWFaultM)                                     NextWalkerState = FAULT;
-                  else if (ValidNonLeafPTE)                           NextWalkerState = L0_RD;
+      L0_ADR:     if (ValidNonLeafPTE)                                NextWalkerState = L0_RD;
                   else                                                NextWalkerState = LEAF;
       L0_RD:      if (HPTWFaultM)                                     NextWalkerState = FAULT;
                   else if (DCacheBusStallM)                           NextWalkerState = L0_RD;
