@@ -176,6 +176,12 @@ pip install --upgrade pip && pip install -r "$dir"/requirements.txt
 source "$RISCV"/riscv-python/bin/activate # reload python virtual environment
 echo -e "${SUCCESS_COLOR}Python environment successfully configured!${ENDC}"
 
+# Install riscv-isac
+cd $RISCV
+STATUS="riscv-isac"
+git clone https://github.com/riscv-non-isa/riscv-arch-test
+cd riscv-arch-test/riscv-isac
+pip install .
 
 # Extra dependecies needed for older distros that don't have new enough versions available from package manager
 if (( RHEL_VERSION == 8 )) || (( UBUNTU_VERSION == 20 )); then
