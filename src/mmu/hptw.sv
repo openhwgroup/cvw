@@ -300,7 +300,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
       default:                                                        NextWalkerState = IDLE; // Should never be reached
     endcase // case (WalkerState)
 
-  assign IgnoreRequestTLB = (WalkerState == IDLE & TLBMissOrUpdateDA) | (HPTWFaultM); // If hptw request has pmp/a fault suppress bus access.
+  assign IgnoreRequestTLB = (WalkerState == IDLE & TLBMissOrUpdateDA) | (WalkerState != IDLE & HPTWFaultM); // If hptw request has pmp/a fault suppress bus access.
   assign SelHPTW = WalkerState != IDLE;
   assign HPTWStall = (WalkerState != IDLE & WalkerState != FAULT) | (WalkerState == IDLE & TLBMissOrUpdateDA); 
 

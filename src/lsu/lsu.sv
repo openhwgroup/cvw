@@ -342,7 +342,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
         .FetchBuffer, .CacheBusRW(CacheBusRWTemp), 
         .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0), .CMOpM(CacheCMOpM));
 
-      assign DCacheStallM = CacheStall & ~IgnoreRequestTLB;
+      assign DCacheStallM = CacheStall;
       assign CacheBusRW = CacheBusRWTemp;
 
       ahbcacheinterface #(.P(P), .BEATSPERLINE(BEATSPERLINE), .AHBWLOGBWPL(AHBWLOGBWPL), .LINELEN(LINELEN),  .LLENPOVERAHBW(LLENPOVERAHBW), .READ_ONLY_CACHE(0)) ahbcacheinterface(
@@ -386,7 +386,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign {DCacheStallM, DCacheCommittedM} = '0;
   end
 
-  assign LSUBusStallM = BusStall & ~IgnoreRequestTLB;
+  assign LSUBusStallM = BusStall;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Atomic operations
