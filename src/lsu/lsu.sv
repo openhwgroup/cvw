@@ -110,7 +110,6 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
 
   logic                  GatedStallW;                            // Hazard unit StallW gated when SelHPTW = 1
   
-  logic                  BusStall;                               // Bus interface busy with multicycle operation
   logic                  LSUBusStallM;                           // Bus interface busy with multicycle operation masked by IgnoreRequestTLB
   logic                  HPTWStall;                              // HPTW busy with multicycle operation
   logic                  DCacheBusStallM;                        // Cache or bus stall
@@ -309,8 +308,6 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       logic                    CacheableOrFlushCacheM;                           // Memory address is cacheable or operation is a cache flush
       logic [1:0]              CacheRWM;                                         // Cache read (10), write (01), AMO (11)
       logic                    FlushDCache;                                      // Suppress d cache flush if there is an ITLB miss.
-      logic                    CacheStall;
-      logic [1:0]              CacheBusRWTemp;
       logic                    BusCMOZero;
       logic [3:0]              CacheCMOpM;
       logic                    BusAtomic;
@@ -336,14 +333,11 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
         .FlushCache(FlushDCache), .NextSet(IEUAdrExtE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskSpillM), .BeatCount(BeatCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
         .WriteData(LSUWriteDataSpillM), .SelHPTW,
-        .CacheStall, .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
+        .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .CacheCommitted(DCacheCommittedM), 
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(DCacheReadDataWordM), 
-        .FetchBuffer, .CacheBusRW(CacheBusRWTemp), 
+        .FetchBuffer, .CacheBusRW(CacheBusRW), 
         .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0), .CMOpM(CacheCMOpM));
-
-      assign DCacheStallM = CacheStall;
-      assign CacheBusRW = CacheBusRWTemp;
 
       ahbcacheinterface #(.P(P), .BEATSPERLINE(BEATSPERLINE), .AHBWLOGBWPL(AHBWLOGBWPL), .LINELEN(LINELEN),  .LLENPOVERAHBW(LLENPOVERAHBW), .READ_ONLY_CACHE(0)) ahbcacheinterface(
         .HCLK(clk), .HRESETn(~reset), .Flush(IgnoreRequest),
@@ -353,7 +347,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
         .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheBusRW, .BusAtomic, .BusCMOZero, .CacheableOrFlushCacheM,
         .CacheBusAck(DCacheBusAck), .FetchBuffer, .PAdr(PAdrM),
         .Cacheable(CacheableOrFlushCacheM), .BusRW, .Stall(GatedStallW),
-        .BusStall, .BusCommitted(BusCommittedM));
+        .BusStall(LSUBusStallM), .BusCommitted(BusCommittedM));
 
       mux3 #(P.LLEN) UnCachedDataMux(.d0(DCacheReadDataWordSpillM), .d1({LLENPOVERAHBW{FetchBuffer[P.XLEN-1:0]}}),
                                     .d2({{P.LLEN-P.XLEN{1'b0}}, DTIMReadDataWordM[P.XLEN-1:0]}),
@@ -369,7 +363,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       ahbinterface #(P.XLEN, 1'b1) ahbinterface(.HCLK(clk), .HRESETn(~reset), .Flush(IgnoreRequest), .HREADY(LSUHREADY), 
         .HRDATA(HRDATA), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HWDATA(LSUHWDATA),
         .HWSTRB(LSUHWSTRB), .BusRW, .BusAtomic(AtomicM[1]), .ByteMask(ByteMaskM[P.XLEN/8-1:0]), .WriteData(LSUWriteDataM[P.XLEN-1:0]),
-        .Stall(GatedStallW), .BusStall, .BusCommitted(BusCommittedM), .FetchBuffer(FetchBuffer));
+        .Stall(GatedStallW), .BusStall(LSUBusStallM), .BusCommitted(BusCommittedM), .FetchBuffer(FetchBuffer));
 
     // Mux between the 2 sources of read data, 0: Bus, 1: DTIM
       if(P.DTIM_SUPPORTED) mux2 #(P.XLEN) ReadDataMux2(FetchBuffer, DTIMReadDataWordM[P.XLEN-1:0], SelDTIM, ReadDataWordMuxM[P.XLEN-1:0]);
@@ -381,12 +375,10 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign {LSUHWDATA, LSUHADDR, LSUHWRITE, LSUHSIZE, LSUHBURST, LSUHTRANS, LSUHWSTRB} = '0; 
     assign DCacheReadDataWordM = '0;
     assign ReadDataWordMuxM = DTIMReadDataWordM;
-    assign {BusStall, BusCommittedM} = '0;   
+    assign {LSUBusStallM, BusCommittedM} = '0;   
     assign {DCacheMiss, DCacheAccess} = '0;
     assign {DCacheStallM, DCacheCommittedM} = '0;
   end
-
-  assign LSUBusStallM = BusStall;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Atomic operations
