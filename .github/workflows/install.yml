@@ -29,10 +29,18 @@ jobs:
         with:
           name: installation-logs-${{ matrix.os }}
           path: /opt/riscv/logs/
+      - name: check storage
+        run: |
+              df -h
+              du -h --max-depth=1
       - name: make tests
         run: |
               source setup.sh
               make riscof
+      - name: check storage
+        run: |
+              df -h
+              du -h --max-depth=1
       - name: regression
         run: |
               source setup.sh
@@ -82,10 +90,18 @@ jobs:
         with:
           name: installation-logs-${{ env.ARTIFACT_NAME }}
           path: /opt/riscv/logs/
+      - name: check storage
+        run: |
+              df -h
+              du -h --max-depth=1
       - name: make tests
         run: |
               source setup.sh
               make riscof --jobs $(nproc --ignore 1)
+      - name: check storage
+        run: |
+              df -h
+              du -h --max-depth=1
       - name: regression
         run: |
               source setup.sh
