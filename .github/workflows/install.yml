@@ -17,7 +17,7 @@ jobs:
       - name: Clone Necessary Submodules
         run: |
               git config --global --add safe.directory '*'
-              git submodule update --init addins/riscv-arch-test
+              git submodule update --init addins/riscv-arch-test addins/verilog-ethernet
       - name: Free up storage
         run: |
               df -h
@@ -78,7 +78,7 @@ jobs:
       - name: Clone Necessary Submodules
         run: |
               git config --global --add safe.directory '*'
-              git submodule update --init addins/riscv-arch-test
+              git submodule update --init addins/riscv-arch-test addins/verilog-ethernet
       - name: Free up storage
         run: |
               df -h
@@ -124,7 +124,7 @@ jobs:
       - name: Clone Necessary Submodules
         run: |
               git config --global --add safe.directory '*'
-              git submodule update --init addins/riscv-arch-test
+              git submodule update --init addins/riscv-arch-test addins/verilog-ethernet
       - name: Free up storage
         run: |
               df -h
@@ -173,7 +173,7 @@ jobs:
       - name: Clone Necessary Submodules
         run: |
               git config --global --add safe.directory '*'
-              git submodule update --init addins/riscv-arch-test
+              git submodule update --init addins/riscv-arch-test addins/verilog-ethernet
       - name: Free up storage
         run: |
               df -h
