@@ -11,3 +11,6 @@
 `include "RV32Zfh_coverage.svh"
 `include "RV32Zicond_coverage.svh"
 `include "RV32Zca_coverage.svh"
+`include "RV32Zcb_coverage.svh"
+`include "RV32ZcbM_coverage.svh"
+`include "RV32ZcbZbb_coverage.svh"

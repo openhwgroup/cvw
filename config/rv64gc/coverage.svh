@@ -16,3 +16,6 @@
 // `include "RV64Zicbom_coverage.svh"
 `include "RV64Zicond_coverage.svh"
 `include "RV64Zca_coverage.svh"
+`include "RV64Zcb_coverage.svh"
+`include "RV64ZcbM_coverage.svh"
+`include "RV64ZcbZbb_coverage.svh"
