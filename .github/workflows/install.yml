@@ -14,8 +14,8 @@ jobs:
         os: ["ubuntu-20.04", "ubuntu-22.04", "ubuntu-24.04"]
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+      - name: Clone Necessary Submodules
+        run: git submodule update --init addins/riscv-arch-test
       - name: Free up storage
         run: |
               df -h
@@ -73,8 +73,8 @@ jobs:
               dnf install -y sudo git
               dnf install curl -y --allowerasing || true
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+      - name: Clone Necessary Submodules
+        run: git submodule update --init addins/riscv-arch-test
       - name: Fix git ownership
         run: git config --global --add safe.directory '*'
       - name: Free up storage
@@ -119,8 +119,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+      - name: Clone Necessary Submodules
+        run: git submodule update --init addins/riscv-arch-test
       - name: Free up storage
         run: |
               df -h
@@ -166,8 +166,8 @@ jobs:
               name=$(echo -n "${{ matrix.os }}" | sed -e 's/[ \t:\/\\"<>|*?]/-/g' -e 's/--*/-/g')
               echo "ARTIFACT_NAME=$name" >> $GITHUB_ENV
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+      - name: Clone Necessary Submodules
+        run: git submodule update --init addins/riscv-arch-test
       - name: Free up storage
         run: |
               df -h
