@@ -228,22 +228,21 @@ fi
 # This book is tested with GCC 13.2.0
 section_header "Installing/Updating RISC-V GNU Toolchain"
 STATUS="riscv-gnu-toolchain"
-curl --location https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2024.09.03/riscv64-elf-ubuntu-22.04-gcc-nightly-2024.09.03-nightly.tar.gz | tar xvz --directory="$RISCV" --strip-components=1
-# cd "$RISCV"
-# # Temporarily pin riscv-gnu-toolchain to use GCC 13.2.0. GCC 14 does not work with the Q extension.
-# if git_check "riscv-gnu-toolchain" "https://github.com/riscv/riscv-gnu-toolchain" "$RISCV/riscv-gnu-toolchain/stamps/build-gcc-newlib-stage2" "b488ddb"; then
-#     cd riscv-gnu-toolchain
-#     git reset --hard && git clean -f && git checkout b488ddb #&& git pull
-#     ./configure --prefix="${RISCV}" --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
-#     make -j "${NUM_THREADS}" 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
-#     if [ "$clean" ]; then
-#         cd "$RISCV"
-#         rm -rf riscv-gnu-toolchain
-#     fi
-#     echo -e "${SUCCESS_COLOR}RISC-V GNU Toolchain successfully installed/updated!${ENDC}"
-# else
-#     echo -e "${SUCCESS_COLOR}RISC-V GNU Toolchain already up to date.${ENDC}"
-# fi
+cd "$RISCV"
+# Temporarily pin riscv-gnu-toolchain to use GCC 13.2.0. GCC 14 does not work with the Q extension.
+if git_check "riscv-gnu-toolchain" "https://github.com/riscv/riscv-gnu-toolchain" "$RISCV/riscv-gnu-toolchain/stamps/build-gcc-newlib-stage2" "b488ddb"; then
+    cd riscv-gnu-toolchain
+    git reset --hard && git clean -f && git checkout b488ddb #&& git pull
+    ./configure --prefix="${RISCV}" --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
+    make -j "${NUM_THREADS}" 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+    if [ "$clean" ]; then
+        cd "$RISCV"
+        rm -rf riscv-gnu-toolchain
+    fi
+    echo -e "${SUCCESS_COLOR}RISC-V GNU Toolchain successfully installed/updated!${ENDC}"
+else
+    echo -e "${SUCCESS_COLOR}RISC-V GNU Toolchain already up to date.${ENDC}"
+fi
 
 
 # elf2hex (https://github.com/sifive/elf2hex)
