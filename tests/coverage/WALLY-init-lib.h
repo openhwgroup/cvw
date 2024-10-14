@@ -134,9 +134,10 @@ self_loop:
 setmsb:
     li a0, 0x80000000   # 1 in bit 31
     slli a1, a0, 1      # check if register is wider than 31 bits
-    beqz a1, 1f         # yes, a0 has 1 in bit 31
+    beqz a1, setmsbdone # yes, a0 has 1 in bit 31
     slli a0, a0, 16     # no: shift a0 to have 1 inn bit 63
     slli a0, a0, 16     # use two shifts of 16 bits each to be compatible with compiling either RV32 or 64
+setmsbdone:
     ret                 # return to calller
     
 .section .tohost 
