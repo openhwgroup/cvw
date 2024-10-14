@@ -180,7 +180,9 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   if (P.U_SUPPORTED) begin // menvcfg only exists if there is a lower privilege to control
     logic WriteMENVCFGM;
     logic [63:0] MENVCFG_PreWriteValM, MENVCFG_WriteValM;
+    logic [1:0] LegalizedCBIE;
     assign WriteMENVCFGM = CSRMWriteM & (CSRAdrM == MENVCFG);
+    assign LegalizedCBIE = MENVCFG_PreWriteValM[5:4] == 2'b10 ? MENVCFG_REGW[5:4] : MENVCFG_PreWriteValM[5:4]; // Assume WARL for reserved CBIE = 10, keeps old value
     // MENVCFG is always 64 bits even for RV32
     assign MENVCFG_WriteValM = {
       MENVCFG_PreWriteValM[63]  & P.SSTC_SUPPORTED,
@@ -188,7 +190,8 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
       MENVCFG_PreWriteValM[61]  & P.SVADU_SUPPORTED,
       53'b0,
       MENVCFG_PreWriteValM[7]   & P.ZICBOZ_SUPPORTED,
-      MENVCFG_PreWriteValM[6:4] & {3{P.ZICBOM_SUPPORTED}},
+      MENVCFG_PreWriteValM[6]   & P.ZICBOM_SUPPORTED,
+      LegalizedCBIE             & {2{P.ZICBOM_SUPPORTED}},
       3'b0,
       MENVCFG_PreWriteValM[0]   & P.S_SUPPORTED & P.VIRTMEM_SUPPORTED
     };
