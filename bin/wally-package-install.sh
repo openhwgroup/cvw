@@ -46,12 +46,7 @@ fi
 # Generate list of packages to install and package manager commands based on distro
 # Packages are grouped by which tool requires them. If multiple tools need a package, it is included in the first tool only
 if [ "$FAMILY" == rhel ]; then
-    if (( RHEL_VERSION == 8 )); then
-        PYTHON_VERSION=python3.11
-    elif (( RHEL_VERSION >= 9 )); then
-        PYTHON_VERSION=python3.12
-        VERILATOR_PACKAGES+=(perl-doc) # Not availale in rhel8, nice for Verilator
-    fi
+    PYTHON_VERSION=python3.12
     PACKAGE_MANAGER="dnf"
     UPDATE_COMMAND="sudo $PACKAGE_MANAGER update -y"
     GENERAL_PACKAGES+=(which rsync git make cmake "$PYTHON_VERSION" "$PYTHON_VERSION"-pip curl wget tar pkgconf-pkg-config dialog mutt ssmtp)
@@ -60,6 +55,10 @@ if [ "$FAMILY" == rhel ]; then
     SPIKE_PACKAGES+=(dtc boost-regex boost-system)
     VERILATOR_PACKAGES+=(help2man perl clang ccache gperftools numactl mold)
     BUILDROOT_PACKAGES+=(ncurses-base ncurses ncurses-libs ncurses-devel gcc-gfortran cpio) # gcc-gfortran is only needed for compiling spec benchmarks on buildroot linux
+    # Extra packages not availale in rhel8, nice for Verilator
+    if (( RHEL_VERSION >= 9 )); then
+        VERILATOR_PACKAGES+=(perl-doc)
+    fi
     # A newer version of gcc is required for qemu
     OTHER_PACKAGES=(gcc-toolset-13)
 elif [ "$FAMILY" == ubuntu ]; then
