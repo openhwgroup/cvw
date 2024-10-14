@@ -24,7 +24,7 @@ jobs:
               ./.github/cli-space-cleanup.sh
               df -h
       - name: install
-        run: sudo ./bin/wally-tool-chain-install.sh --clean --no-buildroot
+        run: sudo ./bin/wally-tool-chain-install.sh --clean
       - name: Upload installation logs
         uses: actions/upload-artifact@v4
         if: always()
@@ -38,7 +38,7 @@ jobs:
       - name: make tests
         run: |
               source setup.sh
-              make riscof
+              make riscof --jobs $(nproc --ignore 1)
       - name: check storage
         run: |
               df -h
@@ -85,7 +85,7 @@ jobs:
               nsenter -t 1 -m -u -n -i bash -c "$(cat .github/cli-space-cleanup.sh)"
               df -h
       - name: install
-        run: sudo ./bin/wally-tool-chain-install.sh --clean --no-buildroot
+        run: sudo ./bin/wally-tool-chain-install.sh --clean
       - name: Upload installation logs
         uses: actions/upload-artifact@v4
         if: always()
@@ -133,7 +133,7 @@ jobs:
       - name: install packages with sudo
         run: sudo ./bin/wally-package-install.sh
       - name: install
-        run: ./bin/wally-tool-chain-install.sh --clean --no-buildroot
+        run: ./bin/wally-tool-chain-install.sh --clean
       - name: Upload installation logs
         uses: actions/upload-artifact@v4
         if: always()
@@ -180,7 +180,7 @@ jobs:
               ./.github/cli-space-cleanup.sh
               df -h
       - name: install
-        run: sudo ./bin/wally-tool-chain-install.sh --clean --no-buildroot ${{ matrix.path }}
+        run: sudo ./bin/wally-tool-chain-install.sh --clean ${{ matrix.path }}
       - name: Upload instalation logs
         uses: actions/upload-artifact@v4
         if: always()
