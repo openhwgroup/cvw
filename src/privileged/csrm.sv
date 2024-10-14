@@ -171,7 +171,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   flopenr #(P.XLEN) MEPCreg(clk, reset, WriteMEPCM, NextEPCM, MEPC_REGW); 
   flopenr #(P.XLEN) MCAUSEreg(clk, reset, WriteMCAUSEM, {NextCauseM[4], {(P.XLEN-5){1'b0}}, NextCauseM[3:0]}, MCAUSE_REGW);
   flopenr #(P.XLEN) MTVALreg(clk, reset, WriteMTVALM, NextMtvalM, MTVAL_REGW);
-  flopenr #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0], MCOUNTINHIBIT_REGW);
+  flopenr #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, {CSRWriteValM[31:2], 1'b0, CSRWriteValM[0]}, MCOUNTINHIBIT_REGW);
   if (P.U_SUPPORTED) begin: mcounteren // MCOUNTEREN only exists when user mode is supported
     flopenr #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], MCOUNTEREN_REGW);
   end else assign MCOUNTEREN_REGW = '0;

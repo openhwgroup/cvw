@@ -233,6 +233,7 @@ bpredtests = [
 # list of tests not supported by ImperasDV yet that should be waived during lockstep testing
 lockstepwaivers = [
     "WALLY-q-01.S_ref.elf",     # Q extension is not supported by ImperasDV
+    "coverage_tlbMisaligned.elf",  # Issue 976: ImperasDV bug disagrees with Wally related to misaligned pages when PBMT makes page uncachable
     "WALLY-cbom-01.S_ref.elf" #,  # cbom extension is not supported by ImperasDV because there is no cache model in ImperasDV
 ]
 
@@ -542,7 +543,7 @@ def main():
              num_fail+=result.get(timeout=TIMEOUT_DUR)
            except TimeoutError:
              num_fail+=1
-             print(f"{bcolors.FAIL}%s_%s: Timeout - runtime exceeded %d seconds{bcolors.ENDC}" % (config.variant, config.name, TIMEOUT_DUR))
+             print(f"{bcolors.FAIL}%s: Timeout - runtime exceeded %d seconds{bcolors.ENDC}" % (config.cmd, TIMEOUT_DUR))
 
     # Coverage report
     if args.ccov:
