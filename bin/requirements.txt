@@ -9,6 +9,6 @@ riscv-isac @ git+https://github.com/jordancarlin/riscv-arch-test/#subdirectory=r
 scikit-learn>=1.5.0
 scipy>=1.13.0
 setuptools
-Sphinx>=7.3.7
+Sphinx>=7.3.7, ~=7 # QEMU fails to build with Sphinx 8
 sphinx-rtd-theme>=2.0.0
 testresources>=2.0.1
