@@ -77,8 +77,14 @@ trap error ERR # run error handler on error
 STATUS="setup" # keep track of what part of the installation is running for error messages
 
 # Check for clean flag
-if [ "$1" == "--clean" ]; then
+if [ "$1" == "--clean" ] || [ "$2" == "--clean" ]; then
     clean=true
+    shift
+fi
+
+# Check for clean flag
+if [ "$1" == "--no-buildroot" ] || [ "$2" == "--no-buildroot" ]; then
+    no_buidroot=true
     shift
 fi
 
@@ -391,23 +397,27 @@ fi
 # Buildroot and Linux testvectors
 # Buildroot is used to boot a minimal versio of Linux on Wally.
 # Testvectors are generated using QEMU.
-section_header "Installing Buildroot and Creating Linux testvectors"
-STATUS="buildroot"
-if [ -z "$LD_LIBRARY_PATH" ]; then
-    export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$RISCV/riscv64-unknown-elf/lib:$RISCV/lib/x86_64-linux-gnu/
+if [ ! "$no_buidroot" ]; then
+    section_header "Installing Buildroot and Creating Linux testvectors"
+    STATUS="buildroot"
+    if [ -z "$LD_LIBRARY_PATH" ]; then
+        export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$RISCV/riscv64-unknown-elf/lib:$RISCV/lib/x86_64-linux-gnu/
+    else
+        export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$LD_LIBRARY_PATH:$RISCV/riscv64-unknown-elf/lib:$RISCV/lib/x86_64-linux-gnu/
+    fi
+    cd "$dir"/../linux
+    if [ ! -e "$RISCV"/buildroot ]; then
+        make 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+        echo -e "${SUCCESS_COLOR}Buildroot successfully installed and Linux testvectors created!${ENDC}"
+    elif [ ! -e "$RISCV"/linux-testvectors ]; then
+        echo -e "${OK_COLOR}Buildroot already exists, but Linux testvectors are missing. Generating them now.${ENDC}"
+        make dumptvs 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+        echo -e "${SUCCESS_COLOR}Linux testvectors successfully generated!${ENDC}"
+    else
+        echo -e "${OK_COLOR}Buildroot and Linux testvectors already exist.${ENDC}"
+    fi
 else
-    export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$LD_LIBRARY_PATH:$RISCV/riscv64-unknown-elf/lib:$RISCV/lib/x86_64-linux-gnu/
-fi
-cd "$dir"/../linux
-if [ ! -e "$RISCV"/buildroot ]; then
-    make 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
-    echo -e "${SUCCESS_COLOR}Buildroot successfully installed and Linux testvectors created!${ENDC}"
-elif [ ! -e "$RISCV"/linux-testvectors ]; then
-    echo -e "${OK_COLOR}Buildroot already exists, but Linux testvectors are missing. Generating them now.${ENDC}"
-    make dumptvs 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
-    echo -e "${SUCCESS_COLOR}Linux testvectors successfully generated!${ENDC}"
-else
-    echo -e "${OK_COLOR}Buildroot and Linux testvectors already exist.${ENDC}"
+    echo -e "${OK_COLOR}Skipping Buildroot and Linux testvectors.${ENDC}"
 fi
 
 
