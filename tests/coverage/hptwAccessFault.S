@@ -48,7 +48,32 @@ main:
     lw t1, 0(t0)       # this load is a valid virtual address, but the page table will access an invalid address so it should cause a load access fault
     li t1, 0x00008067  # this store is a valid virtual address, but the page table will access an invalid address so it should cause a store access fault
     add t0, t0, t2 
-    sw t1, 0(t0)      
+        sw t1, 0(t0)
+
+        j jumppoint
+
+jumppoint:      
+.align 6 # aligns to cache line size
+        sw t1, 0(t0)
+        sw t1, 4(t0)
+        sw t1, 8(t0)
+        sw t1, 12(t0)
+        sw t1, 16(t0)
+        sw t1, 20(t0)
+        sw t1, 24(t0)
+        sw t1, 28(t0)
+        sw t1, 32(t0)
+        sw t1, 36(t0)
+        sw t1, 40(t0)
+        sw t1, 44(t0)
+        sw t1, 48(t0)
+        sw t1, 52(t0) # this one causes a concurrent I$ miss with HPTW access exception (store access exception)
+        sw t1, 56(t0)
+        lw t3, 0(t0)
+        lw t3, 4(t0)
+        lw t3, 8(t0)
+        lw t3, 12(t0)
+        lw t3, 16(t0)
         
     fence.I
 
