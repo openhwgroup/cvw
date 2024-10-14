@@ -112,11 +112,27 @@ if [[ ":$PATH:" == *::* || ":$PATH:" == *:.:* ]]; then
     exit 1
 fi
 
-# Create installation directory
-mkdir -p "$RISCV"/logs
+# Check available memory
+total_mem=$(grep MemTotal < /proc/meminfo | awk '{print $2}')
+total_mem_gb=$((total_mem / 1024 / 1024))
+
+# Print system information
 echo "Running as root: $ROOT"
 echo "Installation path: $RISCV"
+echo "Number of cores: $(nproc)"
+echo "Total memory: $total_mem_gb GB"
 
+# Reduce number of threads for systems with less than 8 GB of memory
+if ((total_mem < 8400000 )) ; then
+    NUM_THREADS=1
+    echo -e "${WARNING_COLOR}Detected less than or equal to 8 GB of memory. Using a single thread for compiling tools. This may take a while.${ENDC}"
+fi
+
+# Print number of threads
+echo "Using $NUM_THREADS thread(s) for compilation"
+
+# Create installation directory
+mkdir -p "$RISCV"/logs
 
 # Install/update system packages if root. Otherwise, check that packages are already installed.
 STATUS="system packages"
