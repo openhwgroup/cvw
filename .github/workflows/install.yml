@@ -41,8 +41,8 @@ jobs:
               make riscof --jobs $(nproc --ignore 1)
       - name: check storage
         run: |
+              sudo rm -rf /opt/riscv/buildroot/output/build
               df -h
-              du -h --max-depth=1
       - name: regression
         run: |
               source setup.sh
@@ -102,8 +102,8 @@ jobs:
               make riscof --jobs $(nproc --ignore 1)
       - name: check storage
         run: |
+              sudo rm -rf /opt/riscv/buildroot/output/build
               df -h
-              du -h --max-depth=1
       - name: regression
         run: |
               source setup.sh
@@ -144,6 +144,10 @@ jobs:
         run: |
               source setup.sh
               make riscof --jobs $(nproc --ignore 1)
+      - name: check storage
+        run: |
+              sudo rm -rf /opt/riscv/buildroot/output/build
+              df -h
       - name: regression
         run: |
               source setup.sh
@@ -195,8 +199,8 @@ jobs:
               make riscof --jobs $(nproc --ignore 1)
       - name: check storage
         run: |
+              sudo rm -rf ${{ matrix.path }}/buildroot/output/build
               df -h
-              du -h --max-depth=1
       - name: regression
         run: |
               source setup.sh
