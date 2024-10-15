@@ -40,11 +40,6 @@ jobs:
       image: ${{ matrix.image }}
       options: --privileged --mount type=bind,source=/,target=/host --pid=host --entrypoint /bin/bash
     steps:
-      - name: Echo Variables
-        run: |
-              echo ${{ matrix.name }}
-              echo ${{ matrix.os }}
-              echo ${{ matrix.image }}
       - name: Install Dependencies for Red Hat
         if: ${{ matrix.image != null }}
         run: |
@@ -55,17 +50,14 @@ jobs:
         run: |
               git config --global --add safe.directory '*'
               git submodule update --init addins/riscv-arch-test addins/verilog-ethernet
-      - name: Free Up Storage for Ubuntu
-        if: ${{ matrix.image == null }}
+      - name: Free Up Storage
         run: |
               df -h
-              ./.github/cli-space-cleanup.sh
-              df -h
-      - name: Free Up Storage for Red Hat
-        if: ${{ matrix.image != null }}
-        run: |
-              df -h
-              nsenter -t 1 -m -u -n -i bash -c "$(cat .github/cli-space-cleanup.sh)"
+              if [ -z ${{ matrix.image }} ]; then
+                ./.github/cli-space-cleanup.sh
+              else
+                nsenter -t 1 -m -u -n -i bash -c "$(cat .github/cli-space-cleanup.sh)"
+              fi
               df -h
       - name: Install
         run: sudo ./bin/wally-tool-chain-install.sh --clean
