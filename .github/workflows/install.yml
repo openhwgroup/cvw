@@ -40,6 +40,11 @@ jobs:
       image: ${{ matrix.image }}
       options: --privileged --mount type=bind,source=/,target=/host --pid=host --entrypoint /bin/bash
     steps:
+      - name: Echo Variables
+        run: |
+              echo ${{ matrix.name }}
+              echo ${{ matrix.os }}
+              echo ${{ matrix.image }}
       - name: Install Dependencies for Red Hat
         if: ${{ matrix.image != null }}
         run: |
