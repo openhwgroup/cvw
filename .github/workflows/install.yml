@@ -75,7 +75,7 @@ jobs:
                 sudo ./bin/wally-tool-chain-install.sh --clean ${{ matrix.riscv_path }}
               else
                 sudo ./bin/wally-package-install.sh
-                . /bin/wally-tool-chain-install.sh --clean ${{ matrix.riscv_path }}
+                ./bin/wally-tool-chain-install.sh --clean ${{ matrix.riscv_path }}
               fi
       - name: Set Environment Variables
         run: |
