@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 // lsu.sv
 //
-// Written: David_Harris@hmc.edu, ross1728@gmail.com
+// Written: David_Harris@hmc.edu, rose@rosethompson.net
 // Created: 9 January 2021
 // Modified: 11 January 2023 
 //

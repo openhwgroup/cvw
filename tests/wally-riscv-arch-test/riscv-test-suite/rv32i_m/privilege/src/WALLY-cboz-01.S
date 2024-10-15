@@ -3,7 +3,7 @@
 // WALLY-cache-management-tests 
 // invalidate, clean, and flush
 //
-// Author: Rose Thompson <ross1728@gmail.com>
+// Author: Rose Thompson <rose@rosethompson.net>
 //
 // Created 22 August 2023
 //
