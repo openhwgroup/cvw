@@ -47,7 +47,7 @@ if {$board=="ArtyA7"} {
 # read in all other rtl
 add_files [glob -type f  ../src/CopiedFiles_do_not_add_to_repo/*/*.sv ../src/CopiedFiles_do_not_add_to_repo/*/*/*.sv]
 
-set_property include_dirs {../src/CopiedFiles_do_not_add_to_repo/config ../../config/shared ../../addins/ahbsdc/sdc} [current_fileset]
+set_property include_dirs {../src/CopiedFiles_do_not_add_to_repo/config ../../config/shared} [current_fileset]
 
 
 # define top level

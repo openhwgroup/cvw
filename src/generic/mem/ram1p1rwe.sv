@@ -2,7 +2,7 @@
 // ram1p1rwe.sv
 // 1 port sram.
 //
-// Written: avercruysse@hmc.edu (Modified from ram1p1rwbe, by ross1728@gmail.com)
+// Written: avercruysse@hmc.edu (Modified from ram1p1rwbe, by rose@rosethompson.net)
 // Created: 04 April 2023
 //
 // Purpose: ram1p1wre, but without byte-enable. Used for icache data.

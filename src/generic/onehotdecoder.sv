@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // onehotdecoder.sv
 //
-// Written: ross1728@gmail.com July 09, 2021
+// Written: rose@rosethompson.net July 09, 2021
 // Modified: 
 //
 // Purpose: Bin to one hot decoder. Power of 2 only.

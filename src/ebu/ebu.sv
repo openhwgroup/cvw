@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // abhmulticontroller
 //
-// Written: Rose Thompson ross1728@gmail.com
+// Written: Rose Thompson rose@rosethompson.net
 // Created: August 29, 2022
 // Modified: 18 January 2023
 //

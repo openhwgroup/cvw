@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // atomic.sv
 //
-// Written: Rose Thompson ross1728@gmail.com
+// Written: Rose Thompson rose@rosethompson.net
 // Created: 31 January 2022
 // Modified: 18 January 2023
 //

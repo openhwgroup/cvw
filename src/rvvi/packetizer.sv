@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // packetizer.sv
 //
-// Written: Rose Thompson ross1728@gmail.com
+// Written: Rose Thompson rose@rosethompson.net
 // Created: 21 May 2024
 // Modified: 21 May 2024
 //

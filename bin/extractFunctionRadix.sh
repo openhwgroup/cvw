@@ -4,7 +4,7 @@
 ## extractFunctionRadix.sh
 ##
 ## Written: Rose Thompson
-## email: ross1728@gmail.com
+## email: rose@rosethompson.net
 ## Created: March 1, 2021
 ## Modified: March 10, 2021
 ##
