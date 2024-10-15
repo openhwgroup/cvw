@@ -5,106 +5,84 @@ defaults:
     shell: bash
 
 jobs:
-  ubuntu_install:
-    name: Test installation on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+  installation_test:
+    name: Test installation for ${{ matrix.name }}
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-20.04", "ubuntu-22.04", "ubuntu-24.04"]
+        include:
+          # Ubuntu Installations
+          - name: ubuntu-20.04
+            os: ubuntu-20.04
+            container: null
+          - name: ubuntu-22.04
+            os: ubuntu-22.04
+            container: null
+          - name: ubuntu-24.04
+            os: ubuntu-24.04
+            container: null
+          # Red Hat Installations
+          - name: rocky-8
+            os: ubuntu-latest
+            image: rockylinux:8
+          - name: rocky-9
+            os: ubuntu-latest
+            image: rockylinux:9
+          - name: almalinux-8
+            os: ubuntu-latest
+            image: almalinux:8
+          - name: almalinux-9
+            os: ubuntu-latest
+            image: almalinux:9
+
+    runs-on: ${{ matrix.os }}
+    container:
+      image: ${{ matrix.image }}
+      options: --privileged --mount type=bind,source=/,target=/host --pid=host --entrypoint /bin/bash
     steps:
+      - name: Install Dependencies for Red Hat
+        if: ${{ matrix.image }} != null
+        run: |
+            dnf install -y sudo git
+            dnf install curl -y --allowerasing || true
       - uses: actions/checkout@v4
       - name: Clone Necessary Submodules
         run: |
               git config --global --add safe.directory '*'
               git submodule update --init addins/riscv-arch-test addins/verilog-ethernet
-      - name: Free up storage
+      - name: Free Up Storage for Ubuntu
+        if: ${{ matrix.image }} == null
         run: |
               df -h
               ./.github/cli-space-cleanup.sh
               df -h
-      - name: install
-        run: sudo ./bin/wally-tool-chain-install.sh --clean
-      - name: Upload installation logs
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: installation-logs-${{ matrix.os }}
-          path: /opt/riscv/logs/
-      - name: check storage
-        run: |
-              df -h
-              du -h --max-depth=1
-      - name: make tests
-        run: |
-              source setup.sh
-              make riscof --jobs $(nproc --ignore 1)
-      - name: check storage
-        run: |
-              sudo rm -rf /opt/riscv/buildroot/output/build
-              df -h
-      - name: regression
-        run: |
-              source setup.sh
-              regression-wally
-      - name: Upload regression logs
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: regression-logs-${{ matrix.os }}
-          path: ${{ github.workspace }}/sim/verilator/logs/
-
-  rhel_family_install:
-    name: Test installation on ${{ matrix.os }}
-    runs-on: ubuntu-latest
-    container:
-      image: ${{ matrix.os }}
-      options: --privileged --mount type=bind,source=/,target=/host --pid=host --entrypoint /bin/bash
-    strategy:
-      fail-fast: false
-      matrix:
-        os: ["rockylinux:8", "rockylinux:9", "almalinux:8", "almalinux:9"]
-    steps:
-      - name: Unique name for Artifacts
-        id: prep_artifact_name
-        run: |
-              name=$(echo -n "${{ matrix.os }}" | sed -e 's/[ \t:\/\\"<>|*?]/-/g' -e 's/--*/-/g')
-              echo "ARTIFACT_NAME=$name" >> $GITHUB_ENV
-      - name: Install dependencies
-        run: |
-              dnf install -y sudo git
-              dnf install curl -y --allowerasing || true
-      - uses: actions/checkout@v4
-      - name: Clone Necessary Submodules
-        run: |
-              git config --global --add safe.directory '*'
-              git submodule update --init addins/riscv-arch-test addins/verilog-ethernet
-      - name: Free up storage
+      - name: Free Up Storage for Red Hat
+        if: ${{ matrix.image }} != null
         run: |
               df -h
               nsenter -t 1 -m -u -n -i bash -c "$(cat .github/cli-space-cleanup.sh)"
               df -h
-      - name: install
+      - name: Install
         run: sudo ./bin/wally-tool-chain-install.sh --clean
-      - name: Upload installation logs
+      - name: Set Environment Variables
+        run: |
+              source setup.sh
+              echo "RISCV=$RISCV" >> "$GITHUB_ENV"
+      - name: Upload Installation Logs
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: installation-logs-${{ env.ARTIFACT_NAME }}
-          path: /opt/riscv/logs/
-      - name: check storage
-        run: |
-              df -h
-              du -h --max-depth=1
+          name: installation-logs-${{ matrix.name }}
+          path: $RISCV/logs/
       - name: make tests
         run: |
               source setup.sh
               make riscof --jobs $(nproc --ignore 1)
-      - name: check storage
+      - name: Remove Buildroot to Save Space
         run: |
               sudo rm -rf /opt/riscv/buildroot/output/build
               df -h
-      - name: regression
+      - name: Regression
         run: |
               source setup.sh
               regression-wally
@@ -112,7 +90,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: regression-logs-${{ env.ARTIFACT_NAME }}
+          name: regression-logs-${{ matrix.name }}
           path: ${{ github.workspace }}/sim/verilator/logs/
 
 
