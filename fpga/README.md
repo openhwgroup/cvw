@@ -4,9 +4,9 @@ ArtyA7
 vcu108
 vcu118
 
-* Quick Start
+# Quick Start
 
-** build FPGA
+## build FPGA
 
 cd generator
 make <board name>
@@ -14,7 +14,7 @@ make <board name>
 example
 make vcu108
 
-** Make flash card image
+## Make flash card image
 ls /dev/sd* or ls /dev/mmc* to see which flash card devices you have.
 Insert the flash card into the reader and ls /dev/sd* or /dev/mmc* again.  The new device is the one you want to use.  Make sure you select the root device (i.e. /dev/sdb) not the partition (i.e. /dev/sdb1).
 cd $WALLY/linux/sd-card
@@ -26,7 +26,7 @@ example with vcu108, buildroot installed to /opt/riscv/buildroot, and the flash 
 
 Wait until the the script completes then remove the car.
 
-** FPGA setup
+## FPGA setup
 
 For the Arty A7 insert the PMOD daughter board into the right most slot and insert the sd card.
 
@@ -43,7 +43,7 @@ open the design in the current directory WallyFPGA.xpr.
 
 Then click "Open Target" under "PROGRAM AND DEBUG".  Then Program the device.
 
-** Connect to UART
+## Connect to UART
 
 In another terminal ls /dev/ttyUSB*. One of these devices will be the UART connected to Wally. You may have to experiment by the running the following command multiple times.
 
