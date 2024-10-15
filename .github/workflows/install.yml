@@ -41,7 +41,7 @@ jobs:
       options: --privileged --mount type=bind,source=/,target=/host --pid=host --entrypoint /bin/bash
     steps:
       - name: Install Dependencies for Red Hat
-        if: ${{ matrix.image }} != null
+        if: ${{ matrix.image != null }}
         run: |
             dnf install -y sudo git
             dnf install curl -y --allowerasing || true
@@ -51,13 +51,13 @@ jobs:
               git config --global --add safe.directory '*'
               git submodule update --init addins/riscv-arch-test addins/verilog-ethernet
       - name: Free Up Storage for Ubuntu
-        if: ${{ matrix.image }} == null
+        if: ${{ matrix.image == null }}
         run: |
               df -h
               ./.github/cli-space-cleanup.sh
               df -h
       - name: Free Up Storage for Red Hat
-        if: ${{ matrix.image }} != null
+        if: ${{ matrix.image != null }}
         run: |
               df -h
               nsenter -t 1 -m -u -n -i bash -c "$(cat .github/cli-space-cleanup.sh)"
