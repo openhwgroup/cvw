@@ -61,7 +61,6 @@ set CoverageVoptArg ""
 set CoverageVsimArg ""
 
 set FunctCoverage 0
-set FCpriv 0
 set FCvlog ""
 set FCvopt ""
 set FCdefineCOVER_EXTS {}
@@ -102,20 +101,6 @@ if {[lcheck lst "--ccov"]} {
     set ccov 1
     set CoverageVoptArg "+cover=sbecf"
     set CoverageVsimArg "-coverage"
-}
-
-# if --fcovpriv found set flag and remove from list
-if {[lcheck lst "--fcovpriv"]} {
-    set FunctCoverage 1
-    set FCpriv 1
-         set FCvlog "+define+INCLUDE_TRACE2COV \
-                +define+IDV_INCLUDE_TRACE2COV \
-                +define+COVER_BASE_RV32I \
-                +define+COVER_PRIV \
-                +incdir+$env(WALLY)/addins/riscvISACOV/source \
-		"
-
-    set FCvopt "+TRACE2COV_ENABLE=1 +IDV_TRACE2COV=1"
 }
 
 # if --fcovimp found set flag and remove from list
@@ -220,13 +205,8 @@ if { ${GUI} } {
 }
 
 if {$FunctCoverage} {
-    if {$FCpriv} {
-        set UCDB ${WALLY}/sim/questa/fcov_ucdb/${CFG}_${TESTSUITE}.priv.ucdb
-        coverage save -onexit ${UCDB}
-    } else {
-        set UCDB ${WALLY}/sim/questa/fcov_ucdb/${CFG}_${TESTSUITE}.ucdb
-        coverage save -onexit ${UCDB}
-    }
+    set UCDB ${WALLY}/sim/questa/fcov_ucdb/${CFG}_${TESTSUITE}.ucdb
+    coverage save -onexit ${UCDB}
 }
 
 run -all

@@ -366,7 +366,6 @@ defaultsim = "verilator"   # Default simulator for all other tests
 parser = argparse.ArgumentParser()
 parser.add_argument("--ccov", help="Code Coverage", action="store_true")
 parser.add_argument("--fcov", help="Functional Coverage", action="store_true")
-parser.add_argument("--fcovpriv", help="Privilege Functional Coverage", action="store_true")
 parser.add_argument("--nightly", help="Run large nightly regression", action="store_true")
 parser.add_argument("--buildroot", help="Include Buildroot Linux boot test (takes many hours, done along with --nightly)", action="store_true")
 parser.add_argument("--testfloat", help="Include Testfloat floating-point unit tests", action="store_true")
@@ -385,8 +384,6 @@ if (args.ccov):  # only run RV64GC tests in coverage mode
     coverStr = '--ccov'
 elif (args.fcov):  # only run RV64GC tests in lockstep in coverage mode
     coverStr = '--fcov'
-elif (args.fcovpriv):  # only run RV64GC tests in lockstep in coverage mode
-    coverStr = '--fcovpriv'
 else:
    coverStr = ''
 
@@ -415,8 +412,7 @@ if (args.ccov):  # only run RV64GC tests on Questa in code coverage mode
 elif (args.fcov):  # only run RV64GC tests on Questa in lockstep in functional coverage mode
     addLockstepTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/rv32/", "rv32gc", coveragesim, 1)
     addLockstepTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/rv64/", "rv64gc", coveragesim, 1)
-elif (args.fcovpriv):  # only run RV64GC tests on Questa in lockstep in functional coverage mode
-    addLockstepTestsByDir(WALLY+"/tests/riscof/work/wally-riscv-arch-test/rv64i_m/privilege/src/", "rv64gc", coveragesim, 0)
+    #addLockstepTestsByDir(WALLY+"/tests/riscof/work/wally-riscv-arch-test/rv64i_m/privilege/src/", "rv64gc", coveragesim, 0)
 
 else: 
     for sim in sims:
@@ -511,10 +507,7 @@ def main():
         os.system('rm -f questa/cov/*.ucdb')
     elif args.fcov:
         TIMEOUT_DUR = 2*60
-        os.system('rm -f questa/fcov_ucdb/*.elf.ucdb questa/fcov_logs/* questa/fcov/*')
-    elif args.fcovpriv:
-        TIMEOUT_DUR = 2*60
-        os.system('rm -f questa/fcov_ucdb/*.elf.priv.ucdb questa/fcov_logs/* questa/fcov/*')
+        os.system('rm -f questa/fcov_ucdb/* questa/fcov_logs/* questa/fcov/*')
     elif args.buildroot:
         TIMEOUT_DUR = 60*1440 # 1 day
     elif args.testfloat:
@@ -527,7 +520,7 @@ def main():
     # Scale the number of concurrent processes to the number of test cases, but
     # max out at a limited number of concurrent processes to not overwhelm the system
     # right now fcov, ccov, nightly all use Imperas
-    if (args.ccov or args.fcov or args.fcovpriv or args.nightly):
+    if (args.ccov or args.fcov or args.nightly):
         ImperasDVLicenseCount = 8 # limit number of concurrent processes to avoid overloading ImperasDV licenses
     else:
         ImperasDVLicenseCount = 10000 # effectively no license limit for non-lockstep tests
@@ -546,7 +539,7 @@ def main():
     # Coverage report
     if args.ccov:
        os.system('make QuestaCodeCoverage')
-    if args.fcov or args.fcovpriv:
+    if args.fcov:
        os.system('make -f '+WALLY+'/addins/cvw-arch-verif/Makefile merge')
     # Count the number of failures
     if num_fail:
