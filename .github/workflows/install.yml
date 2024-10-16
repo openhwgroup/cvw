@@ -1,3 +1,12 @@
+##################################
+# install.yml
+# jcarlin@hmc.edu October 2024
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+#
+# GitHub Action to test the wally-tool-chain-install.sh script for all supported linux distributions
+# and configurations. Runs weekly and on pull requests that modify the installation scripts.
+##################################
+
 name: Installation
 on:
   workflow_dispatch:
