@@ -137,6 +137,11 @@ jobs:
         run: |
               source setup.sh
               regression-wally
+      - name: Lint Only (for distros with broken Verilator sim)
+        if: ${{ matrix.name == 'ubuntu-20.04' || matrix.name == 'rocky-8' || matrix.name == 'almalinux-8'}}
+        run: |
+              source setup.sh
+              lint-wally
       # Upload regression logs for debugging
       - name: Upload regression logs
         uses: actions/upload-artifact@v4
