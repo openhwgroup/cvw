@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // loggers.sv
 //
-// Written: Rose Thompson ross1728@gmail.com
+// Written: Rose Thompson rose@rosethompson.net
 // Modified: 14 June 2023
 // 
 // Purpose: Log branch instructions, log instruction fetches,

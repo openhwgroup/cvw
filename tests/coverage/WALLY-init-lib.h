@@ -127,6 +127,18 @@ write_tohost:
 
 self_loop:
     j self_loop         # wait
+
+// utility routines
+
+# put a 1 in msb of a0 (position XLEN-1); works for both RV32 and RV64
+setmsb:
+    li a0, 0x80000000   # 1 in bit 31
+    slli a1, a0, 1      # check if register is wider than 31 bits
+    beqz a1, setmsbdone # yes, a0 has 1 in bit 31
+    slli a0, a0, 16     # no: shift a0 to have 1 inn bit 63
+    slli a0, a0, 16     # use two shifts of 16 bits each to be compatible with compiling either RV32 or 64
+setmsbdone:
+    ret                 # return to calller
     
 .section .tohost 
 tohost:                 # write to HTIF
@@ -138,6 +150,9 @@ fromhost:
 begin_signature:
     .fill 6*(XLEN/32),4,0xdeadbeef    # 
 end_signature:
+
+scratch:
+    .fill 4,4,0x0
 
 # Initialize stack with room for 512 bytes
 .bss

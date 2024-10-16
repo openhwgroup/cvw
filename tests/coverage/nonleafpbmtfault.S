@@ -3,8 +3,8 @@
 //
 // Written: Rose Thompson rose@rosethompson.net
 //
-// Purpose: Force the HPTW to walk a page table with invalid addresses so that the pma checker
-// generate access faults.
+// Purpose: Force the HPTW to walk a page table with non-leaf non-zero PBMT bits.  This will generate
+// a load or store/amo page fault based on the original access type.
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -45,35 +45,10 @@ main:
     li t2, 0x1000
     li t0, 0x8000001000 
 
-    lw t1, 0(t0)       # this load is a valid virtual address, but the page table will access an invalid address so it should cause a load access fault
-    li t1, 0x00008067  # this store is a valid virtual address, but the page table will access an invalid address so it should cause a store access fault
+    lw t1, 0(t0)       # valid virtual address, valid physical address, but invalid PBMT in middle of page table.
+    li t1, 0x00008067  
     add t0, t0, t2 
-        sw t1, 0(t0)
-
-        j jumppoint
-
-jumppoint:      
-.align 6 # aligns to cache line size
-        sw t1, 0(t0)
-        sw t1, 4(t0)
-        sw t1, 8(t0)
-        sw t1, 12(t0)
-        sw t1, 16(t0)
-        sw t1, 20(t0)
-        sw t1, 24(t0)
-        sw t1, 28(t0)
-        sw t1, 32(t0)
-        sw t1, 36(t0)
-        sw t1, 40(t0)
-        sw t1, 44(t0)
-        sw t1, 48(t0)
-        sw t1, 52(t0) # this one causes a concurrent I$ miss with HPTW access exception (store access exception)
-        sw t1, 56(t0)
-        lw t3, 0(t0)
-        lw t3, 4(t0)
-        lw t3, 8(t0)
-        lw t3, 12(t0)
-        lw t3, 16(t0)
+    sw t1, 0(t0)      # valid virtual address, valid physical address, but invalid PBMT in middle of page table.
         
     fence.I
 
@@ -86,10 +61,10 @@ finished:
 # Page table situated at 0x80010000
 pagetable: 
     .8byte 0x200044C1 
-    .8byte 0x300044C1  # point to invalid region of physical memory
+    .8byte 0x200044C1  
 
 .align 12
-    .8byte 0x00000040200048C1
+    .8byte 0x40000040200048C1
     .8byte 0x00000000200048C1
     .8byte 0x00000000200048C1
     

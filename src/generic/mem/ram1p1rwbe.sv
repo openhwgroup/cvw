@@ -2,7 +2,7 @@
 // ram1p1r2be.sv
 // 1 port sram with byte enables
 //
-// Written: ross1728@gmail.com
+// Written: rose@rosethompson.net
 // Created: 3 May 2021
 // Modified: 20 January 2023
 //
