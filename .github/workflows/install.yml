@@ -1,7 +1,13 @@
 name: Installation
 on:
   workflow_dispatch:
-  push:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'bin/wally-tool-chain-install.sh'
+      - 'bin/wally-distro-check.sh'
+      - 'wally-package-install.sh'
   schedule:
     - cron: "0 0 * * 3" # Run at 12:00 AM on Wednesdays
 defaults:
