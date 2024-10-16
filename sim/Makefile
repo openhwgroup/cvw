@@ -27,7 +27,7 @@ deriv:
 
 
 
-.PHONY: QuestaCodeCoverage QuestaFunctCoverageRvvi collect_functcov combine_functcov remove_functcov_artifacts riscvdv riscvdv_functcov
+.PHONY: QuestaCodeCoverage collect_functcov combine_functcov remove_functcov_artifacts riscvdv riscvdv_functcov
 
 QuestaCodeCoverage: questa/ucdb/rv64gc_arch64i.ucdb
 	vcover merge -out questa/ucdb/cov.ucdb questa/ucdb/rv64gc_arch64i.ucdb questa/ucdb/rv64gc*.ucdb -logfile questa/cov/log
@@ -50,14 +50,6 @@ QuestaCodeCoverage: questa/ucdb/rv64gc_arch64i.ucdb
 #	vcover report -below 100 questa/ucdb/cov.ucdb > questa/cov/rv64gc_coverage.rpt
 #	vcover report -recursive questa/ucdb/cov.ucdb > questa/cov/rv64gc_recursive.rpt
 	vcover report -details -threshH 100 -html questa/ucdb/cov.ucdb
-
-QuestaFunctCoverageRvvi: ${WALLY}/addins/cvw-arch-verif/work/rv64gc_arch64i.ucdb 
-	vcover merge -out ${SIM}/questa/fcovrvvi_ucdb/fcovrvvi.ucdb ${WALLY}/addins/cvw-arch-verif/work/rv64gc_arch64i.ucdb ${WALLY}/addins/cvw-arch-verif/work/rv64gc_*.ucdb -logfile ${SIM}/questa/fcovrvvi/log
-	vcover report -details -html ${SIM}/questa/fcovrvvi_ucdb/fcovrvvi.ucdb
-	vcover report ${SIM}/questa/fcovrvvi_ucdb/fcovrvvi.ucdb -details -cvg > ${SIM}/questa/fcovrvvi/fcovrvvi.log
-	vcover report ${SIM}/questa/fcovrvvi_ucdb/fcovrvvi.ucdb -testdetails -cvg > ${SIM}/questa/fcovrvvi/fcovrvvi.testdetails.log
-	vcover report ${SIM}/questa/fcovrvvi_ucdb/fcovrvvi.ucdb -details -cvg | egrep "Coverpoint|Covergroup|Cross|TYPE"  > ${SIM}/questa/fcovrvvi/fcovrvvi.summary.log
-	grep "TOTAL COVERGROUP COVERAGE" ${SIM}/questa/fcovrvvi/fcovrvvi.log
 
 collect_functcov: remove_functcov_artifacts riscvdv_functcov combine_functcov
 

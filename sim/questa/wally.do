@@ -51,8 +51,6 @@ if [file exists ${WKDIR}] {
     vdel -lib ${WKDIR} -all
 }
 vlib ${WKDIR}
-# Create directory for functional coverage data
-mkdir -p ${FCRVVI}
 
 set PlusArgs ""
 set ParamArgs ""
@@ -62,10 +60,8 @@ set ccov 0
 set CoverageVoptArg ""
 set CoverageVsimArg ""
 
-set FuncCovRVVI 0
-set FCdefineRVVI_COVERAGE ""
-
 set FunctCoverage 0
+set FCpriv 0
 set FCvlog ""
 set FCvopt ""
 set FCdefineCOVER_EXTS {}
@@ -108,10 +104,18 @@ if {[lcheck lst "--ccov"]} {
     set CoverageVsimArg "-coverage"
 }
 
-# if --fcovrvvi found set flag and remove from list
-if {[lcheck lst "--fcovrvvi"]} {
-    set FuncCovRVVI 1
-    set FCdefineRVVI_COVERAGE "+define+RVVI_COVERAGE"
+# if --fcovpriv found set flag and remove from list
+if {[lcheck lst "--fcovpriv"]} {
+    set FunctCoverage 1
+    set FCpriv 1
+         set FCvlog "+define+INCLUDE_TRACE2COV \
+                +define+IDV_INCLUDE_TRACE2COV \
+                +define+COVER_BASE_RV32I \
+                +define+COVER_PRIV \
+                +incdir+$env(WALLY)/addins/riscvISACOV/source \
+		"
+
+    set FCvopt "+TRACE2COV_ENABLE=1 +IDV_TRACE2COV=1"
 }
 
 # if --fcovimp found set flag and remove from list
@@ -138,11 +142,12 @@ if {[lcheck lst "--fcovimp"]} {
 if {[lcheck lst "--fcov"]} {
     set FunctCoverage 1
     # COVER_BASE_RV32I is just needed to keep riscvISACOV happy, but no longer affects tests
-    set FCvlog "+define+INCLUDE_TRACE2COV \
+         set FCvlog "+define+INCLUDE_TRACE2COV \
                 +define+IDV_INCLUDE_TRACE2COV \
                 +define+COVER_BASE_RV32I \
                 +incdir+$env(WALLY)/addins/riscvISACOV/source \
 		"
+   
     set FCvopt "+TRACE2COV_ENABLE=1 +IDV_TRACE2COV=1"
 
 }
@@ -181,7 +186,6 @@ if {$DEBUG > 0} {
     echo "GUI = $GUI"
     echo "ccov = $ccov"
     echo "lockstep = $lockstep"
-    echo "FuncCovRVVI = $FuncCovRVVI"
     echo "FunctCoverage = $FunctCoverage"
     echo "remaining list = $lst"
     echo "Extra +args = $PlusArgs"
@@ -192,9 +196,9 @@ if {$DEBUG > 0} {
 # suppress spurious warnngs about
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
-set INC_DIRS "+incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared +incdir+${FCRVVI} +incdir+${FCRVVI}/rv32 +incdir+${FCRVVI}/rv64 +incdir+${FCRVVI}/rv64_priv +incdir+${FCRVVI}/common +incdir+${FCRVVI}"
+set INC_DIRS "+incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared +incdir+${FCRVVI} +incdir+${FCRVVI}/rv32 +incdir+${FCRVVI}/rv64 +incdir+${FCRVVI}/rv64_priv +incdir+${FCRVVI}/common"
 set SOURCES "${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv ${SRC}/*/*.sv ${SRC}/*/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*/*/*.sv"
-vlog -permissive -lint -work ${WKDIR} {*}${INC_DIRS} {*}${FCvlog} {*}${FCdefineCOVER_EXTS} {*}${lockstepvlog} ${FCdefineRVVI_COVERAGE} {*}${SOURCES} -suppress 2282,2583,7053,7063,2596,13286
+vlog -permissive -lint -work ${WKDIR} {*}${INC_DIRS} {*}${FCvlog} {*}${FCdefineCOVER_EXTS} {*}${lockstepvlog} {*}${SOURCES} -suppress 2282,2583,7053,7063,2596,13286
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
@@ -216,13 +220,13 @@ if { ${GUI} } {
 }
 
 if {$FunctCoverage} {
-    set UCDB ${WALLY}/sim/questa/fcov_ucdb/${CFG}_${TESTSUITE}.ucdb
-    coverage save -onexit ${UCDB}
-}
-
-if {$FuncCovRVVI} {
-    set UCDB ${WALLY}/addins/cvw-arch-verif/work/${CFG}_${TESTSUITE}.ucdb
-    coverage save -onexit ${UCDB}
+    if {$FCpriv} {
+        set UCDB ${WALLY}/sim/questa/fcov_ucdb/${CFG}_${TESTSUITE}.priv.ucdb
+        coverage save -onexit ${UCDB}
+    } else {
+        set UCDB ${WALLY}/sim/questa/fcov_ucdb/${CFG}_${TESTSUITE}.ucdb
+        coverage save -onexit ${UCDB}
+    }
 }
 
 run -all
