@@ -17,7 +17,7 @@
 .vscode/
 __pycache__/
 **/work*
-!.github/workflows/*
+!.github/*
 /**/obj_dir*
 /**/gmon*
 
