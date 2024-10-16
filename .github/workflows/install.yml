@@ -142,7 +142,7 @@ jobs:
         run: |
               source setup.sh
               lint-wally
-              wsim rv32i arch32i --sim verilator
+              wsim rv32i arch32i --sim verilator | tee $WALLY/sim/verilator/logs/rv32i_arch32i.log
       # Upload regression logs for debugging
       - name: Upload regression logs
         uses: actions/upload-artifact@v4
