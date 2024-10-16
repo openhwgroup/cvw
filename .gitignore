@@ -14,7 +14,7 @@
 *.list
 
 # General directories to ignore
-!.github/
+!.github/workflows/*
 .vscode/
 __pycache__/
 **/work*
