@@ -1,9 +1,12 @@
 name: Installation
-on: [workflow_dispatch, push]
+on:
+  workflow_dispatch:
+  push:
+  schedule:
+    - cron: "0 0 * * 3" # Run at 12:00 AM on Wednesdays
 defaults:
   run:
     shell: bash
-
 jobs:
   installation_test:
     name: Test installation for ${{ matrix.name }}
