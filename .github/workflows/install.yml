@@ -89,7 +89,7 @@ jobs:
         if: always()
         with:
           name: installation-logs-${{ matrix.name }}
-          path: $RISCV/logs/
+          path: ${{ env.RISCV }}/logs/
       - name: make tests
         run: |
               source setup.sh
