@@ -1,0 +1,146 @@
+##################################
+# install.yml
+# jcarlin@hmc.edu October 2024
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+#
+# GitHub Action to test the wally-tool-chain-install.sh script for all supported linux distributions
+# and configurations. Runs weekly and on pull requests that modify the installation scripts.
+##################################
+
+name: Installation
+
+# Run on PR that modifies the installation scripts, weekly, or manually
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'bin/wally-tool-chain-install.sh'
+      - 'bin/wally-distro-check.sh'
+      - 'wally-package-install.sh'
+  schedule:
+    - cron: "0 7 * * 3" # Run at 12:00 AM Pacific Time on Wednesdays
+
+# Use bash shell with extra GitHub Actions options for all jobs
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  installation_test:
+    name: Test installation for ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Ubuntu Installations
+          - name: ubuntu-20.04
+            os: ubuntu-20.04
+            container: null
+          - name: ubuntu-22.04
+            os: ubuntu-22.04
+            container: null
+          - name: ubuntu-24.04
+            os: ubuntu-24.04
+            container: null
+          # Red Hat Installations
+          - name: rocky-8
+            os: ubuntu-latest
+            image: rockylinux:8
+          - name: rocky-9
+            os: ubuntu-latest
+            image: rockylinux:9
+          - name: almalinux-8
+            os: ubuntu-latest
+            image: almalinux:8
+          - name: almalinux-9
+            os: ubuntu-latest
+            image: almalinux:9
+          # User level installation
+          - name: user-install
+            os: ubuntu-latest
+            image: null
+            user: true
+          # Custom location installation
+          - name: custom-install
+            os: ubuntu-latest
+            image: null
+            riscv_path: /home/riscv
+
+    # run on selected version of ubuntu or on ubuntu-latest with docker image
+    runs-on: ${{ matrix.os }}
+    container:
+      image: ${{ matrix.image }}
+      options: --privileged --mount type=bind,source=/,target=/host --pid=host --entrypoint /bin/bash # Allow for connection with host
+
+    steps:
+      # Docker images need git installed or the checkout action fails
+      - name: Install Dependencies for Red Hat
+        if: ${{ matrix.image != null }}
+        run: |
+            dnf install -y sudo git
+            dnf install curl -y --allowerasing || true
+      # Only clone submodules needed for standard tests/regression to save space
+      - uses: actions/checkout@v4
+      - name: Clone Necessary Submodules
+        run: |
+              git config --global --add safe.directory '*'
+              git submodule update --init addins/riscv-arch-test addins/verilog-ethernet
+      # Free up space on the host machine, either from the container or the host
+      - name: Free Up Storage
+        run: |
+              df -h
+              if [ -z ${{ matrix.image }} ]; then
+                ./.github/cli-space-cleanup.sh
+              else
+                nsenter -t 1 -m -u -n -i bash -c "$(cat .github/cli-space-cleanup.sh)"
+              fi
+              df -h
+      # Run main tool chain installation script, either as a user or system wide
+      - name: Install
+        run: |
+              if [ -z ${{ matrix.user }} ]; then
+                sudo ./bin/wally-tool-chain-install.sh --clean ${{ matrix.riscv_path }}
+              else
+                sudo ./bin/wally-package-install.sh
+                ./bin/wally-tool-chain-install.sh --clean ${{ matrix.riscv_path }}
+              fi
+      # Set environment variables for the rest of the job
+      - name: Set Environment Variables
+        run: |
+              if [ ! -z ${{ matrix.riscv_path }} ]; then
+                sed -i 's,exit 1,export RISCV=${{ matrix.riscv_path }},g' setup.sh
+              fi
+              source setup.sh
+              echo "RISCV=$RISCV" >> "$GITHUB_ENV"
+      # Upload installation logs for debugging
+      - name: Upload Installation Logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: installation-logs-${{ matrix.name }}
+          path: ${{ env.RISCV }}/logs/
+      # Make riscof only as that is the only testsuite used by standard regression
+      - name: make tests
+        run: |
+              source setup.sh
+              make riscof --jobs $(nproc --ignore 1)
+      # Only the linux-testvectors are needed, so remove the rest of the buildroot to save space
+      - name: Remove Buildroot to Save Space
+        run: |
+              sudo rm -rf $RISCV/buildroot/output/build
+              df -h
+      # Run standard regression, skipping distros that are known to be broken with Verilator
+      - name: Regression
+        if: ${{ matrix.name != 'ubuntu-20.04' && matrix.name != 'rocky-8' && matrix.name != 'almalinux-8'}}
+        run: |
+              source setup.sh
+              regression-wally
+      # Upload regression logs for debugging
+      - name: Upload regression logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: regression-logs-${{ matrix.name }}
+          path: ${{ github.workspace }}/sim/verilator/logs/

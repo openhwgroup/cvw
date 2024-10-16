@@ -20,14 +20,11 @@
 	branch = dev
 [submodule "addins/branch-predictor-simulator"]
 	path = addins/branch-predictor-simulator
-	url = https://github.com/ross144/branch-predictor-simulator
-[submodule "addins/ahbsdc"]
-	path = addins/ahbsdc
-	url = https://github.com/JacobPease/ahbsdc.git
+	url = https://github.com/rosethompson/branch-predictor-simulator
 [submodule "addins/verilog-ethernet"]
 	sparseCheckout = true
 	path = addins/verilog-ethernet
-	url = https://github.com/ross144/verilog-ethernet.git
+	url = https://github.com/rosethompson/verilog-ethernet.git
 [submodule "cvw-arch-verif"]
 	path = addins/cvw-arch-verif
 	url = https://github.com/openhwgroup/cvw-arch-verif

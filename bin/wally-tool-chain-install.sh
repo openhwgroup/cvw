@@ -2,7 +2,7 @@
 ###########################################
 ## Tool chain install script.
 ##
-## Written: Rose Thompson ross1728@gmail.com
+## Written: Rose Thompson rose@rosethompson.net
 ## Created: 18 January 2023
 ## Modified: 22 January 2023
 ## Modified: 23 March 2023
@@ -77,8 +77,14 @@ trap error ERR # run error handler on error
 STATUS="setup" # keep track of what part of the installation is running for error messages
 
 # Check for clean flag
-if [ "$1" == "--clean" ]; then
+if [ "$1" == "--clean" ] || [ "$2" == "--clean" ]; then
     clean=true
+    shift
+fi
+
+# Check for clean flag
+if [ "$1" == "--no-buildroot" ] || [ "$2" == "--no-buildroot" ]; then
+    no_buidroot=true
     shift
 fi
 
@@ -112,11 +118,27 @@ if [[ ":$PATH:" == *::* || ":$PATH:" == *:.:* ]]; then
     exit 1
 fi
 
-# Create installation directory
-mkdir -p "$RISCV"/logs
+# Check available memory
+total_mem=$(grep MemTotal < /proc/meminfo | awk '{print $2}')
+total_mem_gb=$((total_mem / 1024 / 1024))
+
+# Print system information
 echo "Running as root: $ROOT"
 echo "Installation path: $RISCV"
+echo "Number of cores: $(nproc)"
+echo "Total memory: $total_mem_gb GB"
 
+# Reduce number of threads for systems with less than 8 GB of memory
+if ((total_mem < 8400000 )) ; then
+    NUM_THREADS=1
+    echo -e "${WARNING_COLOR}Detected less than or equal to 8 GB of memory. Using a single thread for compiling tools. This may take a while.${ENDC}"
+fi
+
+# Print number of threads
+echo "Using $NUM_THREADS thread(s) for compilation"
+
+# Create installation directory
+mkdir -p "$RISCV"/logs
 
 # Install/update system packages if root. Otherwise, check that packages are already installed.
 STATUS="system packages"
@@ -155,11 +177,10 @@ source "$RISCV"/riscv-python/bin/activate # activate python virtual environment
 # Install python packages, including RISCOF (https://github.com/riscv-software-src/riscof.git)
 # RISCOF is a RISC-V compliance test framework that is used to run the RISC-V Arch Tests.
 STATUS="python packages"
-pip install --upgrade pip && pip install -r "$dir"/requirements.txt
+pip install --upgrade pip && pip install --upgrade -r "$dir"/requirements.txt
 
 source "$RISCV"/riscv-python/bin/activate # reload python virtual environment
 echo -e "${SUCCESS_COLOR}Python environment successfully configured!${ENDC}"
-
 
 # Extra dependecies needed for older distros that don't have new enough versions available from package manager
 if (( RHEL_VERSION == 8 )) || (( UBUNTU_VERSION == 20 )); then
@@ -376,23 +397,27 @@ fi
 # Buildroot and Linux testvectors
 # Buildroot is used to boot a minimal versio of Linux on Wally.
 # Testvectors are generated using QEMU.
-section_header "Installing Buildroot and Creating Linux testvectors"
-STATUS="buildroot"
-if [ -z "$LD_LIBRARY_PATH" ]; then
-    export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$RISCV/riscv64-unknown-elf/lib:$RISCV/lib/x86_64-linux-gnu/
+if [ ! "$no_buidroot" ]; then
+    section_header "Installing Buildroot and Creating Linux testvectors"
+    STATUS="buildroot"
+    if [ -z "$LD_LIBRARY_PATH" ]; then
+        export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$RISCV/riscv64-unknown-elf/lib:$RISCV/lib/x86_64-linux-gnu/
+    else
+        export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$LD_LIBRARY_PATH:$RISCV/riscv64-unknown-elf/lib:$RISCV/lib/x86_64-linux-gnu/
+    fi
+    cd "$dir"/../linux
+    if [ ! -e "$RISCV"/buildroot ]; then
+        make 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+        echo -e "${SUCCESS_COLOR}Buildroot successfully installed and Linux testvectors created!${ENDC}"
+    elif [ ! -e "$RISCV"/linux-testvectors ]; then
+        echo -e "${OK_COLOR}Buildroot already exists, but Linux testvectors are missing. Generating them now.${ENDC}"
+        make dumptvs 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+        echo -e "${SUCCESS_COLOR}Linux testvectors successfully generated!${ENDC}"
+    else
+        echo -e "${OK_COLOR}Buildroot and Linux testvectors already exist.${ENDC}"
+    fi
 else
-    export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$LD_LIBRARY_PATH:$RISCV/riscv64-unknown-elf/lib:$RISCV/lib/x86_64-linux-gnu/
-fi
-cd "$dir"/../linux
-if [ ! -e "$RISCV"/buildroot ]; then
-    make 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
-    echo -e "${SUCCESS_COLOR}Buildroot successfully installed and Linux testvectors created!${ENDC}"
-elif [ ! -e "$RISCV"/linux-testvectors ]; then
-    echo -e "${OK_COLOR}Buildroot already exists, but Linux testvectors are missing. Generating them now.${ENDC}"
-    make dumptvs 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
-    echo -e "${SUCCESS_COLOR}Linux testvectors successfully generated!${ENDC}"
-else
-    echo -e "${OK_COLOR}Buildroot and Linux testvectors already exist.${ENDC}"
+    echo -e "${OK_COLOR}Skipping Buildroot and Linux testvectors.${ENDC}"
 fi
 
 

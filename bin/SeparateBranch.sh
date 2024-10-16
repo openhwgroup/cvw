@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ###########################################
-## Written: ross1728@gmail.com
+## Written: rose@rosethompson.net
 ## Created: 12 March 2023
 ## Modified: 
 ##

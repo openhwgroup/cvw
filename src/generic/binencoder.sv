@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // binencoder.sv
 //
-// Written: ross1728@gmail.com November 14, 2022
+// Written: rose@rosethompson.net November 14, 2022
 //
 // Purpose: one-hot to binary encoding.
 //
