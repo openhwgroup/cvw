@@ -84,7 +84,7 @@ from pathlib import Path
 class FolderManager:
     """A class for managing folders and repository cloning."""
 
-    def __init__(self):
+    def __init__(self, basedir):
         """
         Initialize the FolderManager instance.
 
@@ -92,8 +92,12 @@ class FolderManager:
             base_dir (str): The base directory where folders will be managed and repository will be cloned.
         """
         env_extract_var = 'WALLY'
-        self.base_dir = os.environ.get(env_extract_var)
-        self.base_parent_dir = os.path.dirname(self.base_dir)
+        if os.environ.get(env_extract_var):
+            self.base_dir = os.environ.get(env_extract_var)
+            self.base_parent_dir = os.path.dirname(self.base_dir)
+        else:
+            self.base_dir = basedir
+            self.base_parent_dir = os.path.dirname(self.base_dir)
 
         # logger.info(f"Base directory: {self.base_dir}")
         # logger.info(f"Parent Base directory: {self.base_parent_dir}")
@@ -313,7 +317,7 @@ class TestRunner:
             self.logger.error(f"Error making the tests. Target: {target}")
             return False
             
-    def run_tests(self, test_type=None, test_name=None, test_extension=None):
+    def run_tests(self, test_type=None, test_name=None, test_extensions=None):
         """
         Run a script through the terminal and save the output to a file.
 
@@ -329,12 +333,12 @@ class TestRunner:
         output_file = self.log_dir.joinpath(f"{test_name}-output.log")
         os.chdir(self.sim_dir)
 
-        if test_extension:
-            command = [test_type, test_name, test_extension]
-            self.logger.info(f"Command used to run tests: {test_type} {test_name} {test_extension}")
+        if test_extensions:
+            command = [test_type, test_name] + test_extensions
+            self.logger.info(f"Command used to run tests in directory {self.sim_dir}: {test_type} {test_name} {' '.join(test_extensions)}")
         else:
             command = [test_type, test_name]
-            self.logger.info(f"Command used to run tests: {test_type} {test_name}")
+            self.logger.info(f"Command used to run tests in directory {self.sim_dir}: {test_type} {test_name}")
 
 
         # Execute the command using subprocess and save the output into a file
@@ -348,10 +352,10 @@ class TestRunner:
             self.logger.error("There was an error in running the tests in the run_tests function: {e}")
         # Check if the command executed successfuly
         if result.returncode or result.returncode == 0:
-            self.logger.info(f"Test ran successfuly. Test type: {test_type}, test name: {test_name}, test extention: {test_extension}")
+            self.logger.info(f"Test ran successfuly. Test type: {test_type}, test name: {test_name}, test extension: {' '.join(test_extensions)}")
             return True, output_file
         else:
-            self.logger.error(f"Error making test. Test type: {test_type}, test name: {test_name}, test extention: {test_extension}")
+            self.logger.error(f"Error making test. Test type: {test_type}, test name: {test_name}, test extension: {' '.join(test_extensions)}")
             return False, output_file
 
 
@@ -535,7 +539,7 @@ class TestRunner:
             md_file.write(f"\n**Total failed tests: {total_number_failures}**")
             for (test_item, item) in zip(test_list, failed_tests):
                 md_file.write(f"\n\n### {test_item[1]} test")
-                md_file.write(f"\n**Command used:** {test_item[0]} {test_item[1]} {test_item[2]}\n\n")
+                md_file.write(f"\n**Command used:** {test_item[0]} {test_item[1]} {' '.join(test_item[2])}\n\n")
                 md_file.write(f"**Failed Tests:**\n")
 
                 
@@ -558,7 +562,7 @@ class TestRunner:
             md_file.write(f"\n**Total successful tests: {total_number_success}**")
             for (test_item, item) in zip(test_list, passed_tests):
                 md_file.write(f"\n\n### {test_item[1]} test")
-                md_file.write(f"\n**Command used:** {test_item[0]} {test_item[1]} {test_item[2]}\n\n")
+                md_file.write(f"\n**Command used:** {test_item[0]} {test_item[1]} {' '.join(test_item[2])}\n\n")
                 md_file.write(f"\n**Successful Tests:**\n")
 
                 
@@ -682,7 +686,7 @@ def main():
     log_file_path = log_path.joinpath("nightly_build.log")
     previous_cvw_path = Path.home().joinpath(args.path,f"{yesterday}/cvw")
     # creates the object
-    folder_manager = FolderManager()
+    folder_manager = FolderManager(basedir=args.path)
 
     # setting the path on where to clone new repositories of cvw
     folder_manager.create_folders([cvw_path, results_path, log_path])
@@ -691,14 +695,18 @@ def main():
     folder_manager.clone_repository(cvw_path, args.repository)
 
     # Define tests that we can run
+    #
+    # flags are a list
+    if (args.tests == "all"):
+        test_list = [["python", "./regression-wally", ["--nightly", "--buildroot"]]]
     if (args.tests == "nightly"):
-        test_list = [["python", "regression-wally", "--nightly --buildroot"]]
-    elif (args.tests == "test"):
-        test_list = [["python", "regression-wally", ""]]
-    elif (args.tests == "test_lint"):
-        test_list = [["bash", "lint-wally", "-nightly"]]
+        test_list = [["python", "./regression-wally", ["--nightly"]]]
+    elif (args.tests == "regression"):
+        test_list = [["python", "./regression-wally", []]]
+    elif (args.tests == "lint"):
+        test_list = [["bash", "./lint-wally", ["--nightly"]]]
     else:
-        print(f"Error: Invalid test '"+args.test+"' specified")
+        print(f"Error: Invalid test {args.tests} specified")
         raise SystemExit
 
     #############################################
@@ -765,9 +773,9 @@ def main():
     total_failures = []
     total_success = []
 
-    for test_type, test_name, test_extension in test_list:
+    for test_type, test_name, test_extensions in test_list:
         
-        check, output_location = test_runner.run_tests(test_type=test_type, test_name=test_name, test_extension=test_extension)
+        check, output_location = test_runner.run_tests(test_type=test_type, test_name=test_name, test_extensions=test_extensions)
         try:
             if check: # this checks if the test actually ran successfuly
                 output_log_list.append(output_location)
