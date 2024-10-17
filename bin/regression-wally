@@ -339,14 +339,15 @@ def run_test_case(config):
     grepfile = config.grepfile
     cmd = config.cmd
     os.chdir(regressionDir)
-    # print("  run_test_case invoking %s" % cmd)
+    # print("  run_test_case invoking %s" % cmd, flush=True)
     os.system(cmd)
     if search_log_for_text(config.grepstr, grepfile):
-#        print(f"{bcolors.OKGREEN}%s_%s: Success{bcolors.ENDC}" % (config.variant, config.name))
-        print(f"{bcolors.OKGREEN}%s: Success{bcolors.ENDC}" % (config.cmd))
+        # Flush is needed to flush output to stdout when running in multiprocessing Pool
+#        print(f"{bcolors.OKGREEN}%s_%s: Success{bcolors.ENDC}" % (config.variant, config.name), flush=True)
+        print(f"{bcolors.OKGREEN}%s: Success{bcolors.ENDC}" % (config.cmd), flush=True) 
         return 0
     else:
-        print(f"{bcolors.FAIL}%s: Failures detected in output{bcolors.ENDC}" % (config.cmd))
+        print(f"{bcolors.FAIL}%s: Failures detected in output{bcolors.ENDC}" % (config.cmd), flush=True)
         print("  Check %s" % grepfile)
         return 1
 
