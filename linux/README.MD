@@ -12,7 +12,9 @@
 
 In order to generate the Linux and boot stage binaries compatible with Wally, Buildroot is used for cross-compilation.
 
-To set up a Buildroot directory, configuration files for Buildroot, Linux, and Busybox must be copied into the correct locations inside the main Buildroot directory. Buildroot and device tree binaries must be generated as well. This can all be done automatically using the Makefile inside Wally's Linux subdirectory (this one). To install a new buildroot directory, build the Buildroot binaries, generate the device tree binaries, generate test-vectors for simulation, and install the buildroot package needed to build the SD card driver for Linux, run:
+To set up a Buildroot directory, configuration files for Buildroot, Linux, and Busybox must be copied into the correct locations inside the main Buildroot directory. Buildroot and device tree binaries must be generated as well.
+
+This can all be done automatically using the Makefile inside Wally's Linux subdirectory (this one). The main Wally installation script (`bin/wally-tool-chain-install.sh`) runs this by default, so buildroot is likely already setup. Otherwise, to install a new buildroot directory, build the Buildroot binaries, generate the device tree binaries, and generate testvectors for simulation run:
 
 ```bash
 $ make
@@ -22,7 +24,7 @@ This installs to the `$RISCV` directory. Buildroot itself is installed to `$RISC
 
 Optionally, you can override the `BUILDROOT` variable to install a different buildroot source directory.
 
-```
+```bash
 $ make install BUILDROOT=<path/to/buildroot>
 ```
 
