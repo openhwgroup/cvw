@@ -29,7 +29,6 @@ parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true"
 parser.add_argument("--ccov", "-c", help="Code Coverage", action="store_true")
 parser.add_argument("--fcovimp", "-f2", help="Functional Coverage with Imperas licensed riscvISACOV, implies lockstep", action="store_true")
 parser.add_argument("--fcov", "-f", help="Functional Coverage with cvw-arch-verif, implies lockstep", action="store_true")
-parser.add_argument("--fcovrvvi", "-fr", help="Functional Coverage RVVI", action="store_true")
 parser.add_argument("--args", "-a", help="Optional arguments passed to simulator via $value$plusargs", default="")
 parser.add_argument("--params", "-p", help="Optional top-level parameter overrides of the form param=value", default="")
 parser.add_argument("--vcd", "-v", help="Generate testbench.vcd", action="store_true")
@@ -71,7 +70,7 @@ if(args.lockstep and not args.testsuite.endswith('.elf')):
     exit(1)
 
 # Validate arguments
-if (args.gui or args.ccov or args.fcov or args.fcovimp or args.fcovrvvi or args.lockstep or args.lockstepverbose):
+if (args.gui or args.ccov or args.fcov or args.fcovimp or args.lockstep or args.lockstepverbose):
     if args.sim not in ["questa", "vcs"]:
         print("Option only supported for Questa and VCS")
         exit(1)
@@ -129,12 +128,10 @@ if (args.fcov):
     flags += " --fcov"
 if (args.fcovimp):
     flags += " --fcovimp"
-if (args.fcovrvvi):
-    flags += "--fcovrvvi"
 
 #  create the output sub-directories.
 regressionDir = WALLY + '/sim/'
-for d in ["logs", "wkdir", "cov", "ucdb", "fcov", "fcov_ucdb", "fcovrvvi", "fcovrvvi_ucdb"]:
+for d in ["logs", "wkdir", "cov", "ucdb", "fcov", "fcov_ucdb"]:
     try:
         os.mkdir(regressionDir+args.sim+"/"+d)
     except:
