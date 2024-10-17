@@ -16,17 +16,17 @@ Wally is presently at Technology Readiness Level 4, passing the RISC-V compatibi
 
 New users may wish to do the following setup to access the server via a GUI and use a text editor.
 
-- Git started with Git configuration and authentication: B.1  (replace with your name and email)
+- Git started with Git configuration and authentication: C.1  (replace with your name and email)
 	```bash
 	$ git config --global user.name "Ben Bitdiddle"
 	$ git config --global user.email "ben_bitdiddle@wally.edu"
 	$ git config --global pull.rebase false
 	```
-- Optional: Download and install x2go - A.1.1
-- Optional: Download and install VSCode - A.4.2
+- Optional: Download and install x2go - B.1.1
+- Optional: Download and install VSCode - B.4.2
 - Optional: Make sure you can log into your server via x2go and via a terminal
 	- Terminal on Mac, cmd on Windows, xterm on Linux
-	- See A.1 about ssh -Y login from a terminal
+	- See B.1 about ssh -Y login from a terminal
 
 Then fork and clone the repo, source setup, make the tests and run regression
 
