@@ -137,10 +137,11 @@ jobs:
         run: |
               source setup.sh
               regression-wally
-      - name: Lint Only (for distros with broken Verilator sim)
+      - name: Lint + wsim Test Only (for distros with broken Verilator sim)
         if: ${{ matrix.name == 'ubuntu-20.04' || matrix.name == 'rocky-8' || matrix.name == 'almalinux-8'}}
         run: |
               source setup.sh
+              mkdir -p $WALLY/sim/verilator/logs/
               lint-wally
               wsim rv32i arch32i --sim verilator | tee $WALLY/sim/verilator/logs/rv32i_arch32i.log
       # Upload regression logs for debugging
