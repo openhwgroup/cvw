@@ -66,7 +66,11 @@ This section describes the open source toolchain installation.
 ### Compatibility
 The current version of the toolchain has been tested on Ubuntu (versions 20.04 LTS, 22.04 LTS, and 24.04 LTS) and on Red Hat/Rocky/AlmaLinux (versions 8 and 9).
 
-NOTE: Ubuntu 22.04LTS is incompatible with Synopsys Design Compiler.
+> [!WARNING]
+> Ubuntu 22.04LTS is incompatible with Synopsys Design Compiler.
+
+> [!WARNING]
+> Verilator currently fails to simulate correctly on Ubuntu 20.04 LTS and Red Hat/Rocky/AlmaLinux 8.
 
 ### Overview
 The toolchain installation script installs the following tools:
@@ -75,7 +79,6 @@ The toolchain installation script installs the following tools:
 - [QEMU](https://www.qemu.org/docs/master/system/target-riscv.html): emulator
 - [Spike](https://github.com/riscv-software-src/riscv-isa-sim): functional RISC-V model
 - [Verilator](https://github.com/verilator/verilator): open-source Verilog simulator
-	- NOTE: Verilator does not currently work reliably for simulating Wally on Ubuntu 20.04 LTS and Red Hat 8
 - [RISC-V Sail Model](https://github.com/riscv/sail-riscv): golden reference model for RISC-V
 - [OSU Skywater 130 cell library](https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12): standard cell library
 - [RISCOF](https://github.com/riscv-software-src/riscof.git): RISC-V compliance test framework
