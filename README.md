@@ -1,3 +1,4 @@
+![Installation CI](https://github.com/jordancarlin/cvw/actions/workflows/install.yml/badge.svg?branch=main)
 # core-v-wally
 
 Wally is a 5-stage pipelined processor configurable to support all the standard RISC-V options, including RV32/64, A, B, C, D, F, M, Q, and Zk* extensions, virtual memory, PMP, and the various privileged modes and CSRs. It provides optional caches, branch prediction, and standard RISC-V peripherals (CLINT, PLIC, UART, GPIO).   Wally is written in SystemVerilog.  It passes the [RISC-V Arch Tests](https://github.com/riscv-non-isa/riscv-arch-test) and boots Linux on an FPGA.  Configurations range from a minimal RV32E core to a fully featured RV64GC application processor with all of the RVA22S64 profile extensions. Wally is part of the OpenHWGroup family of robust open RISC-V cores.
