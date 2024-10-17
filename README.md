@@ -83,7 +83,7 @@ The toolchain installation script installs the following tools:
 - [OSU Skywater 130 cell library](https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12): standard cell library
 - [RISCOF](https://github.com/riscv-software-src/riscof.git): RISC-V compliance test framework
 
-Additionally, Buildroot Linux is built for Wally and linux test-vectors are generated for simulation. See the [Linux README](linux/README.md) for more details.
+Additionally, Buildroot Linux is built for Wally and linux test-vectors are generated for simulation. See the [Linux README](linux/README.md) for more details. This can be skipped using the `--no-buildroot` flag.
 
 ### Installation
 
