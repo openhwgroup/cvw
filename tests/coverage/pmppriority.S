@@ -1,15 +1,15 @@
-# pmppriority test cases
-# Kevin Wan kewan@hmc.edu 4/27/2023
-# want memory ranges to match:
-# 1. only the most significant address and none of the lower ones,
-# 2. the most significant address and ANY of the lower ones.
+// pmppriority test cases
+// Kevin Wan kewan@hmc.edu 4/27/2023
+// want memory ranges to match:
+// 1. only the most significant address and none of the lower ones,
+// 2. the most significant address and ANY of the lower ones.
 
 
 
 #include "WALLY-init-lib.h"
 main:
 
-    li t1, 0x21FFFFFF # start at 0x8000000 with a range of 1000000. Address format is set to NAPOT in pmpcfg.
+    li t1, 0x21FFFFFF // start at 0x8000000 with a range of 1000000. Address format is set to NAPOT in pmpcfg.
     csrw pmpaddr0, t1
     csrw pmpaddr1, t1
     csrw pmpaddr2, t1
@@ -30,7 +30,7 @@ main:
 
 
     li t0, 0x1F
-    csrw pmpcfg0, t0 #set to XWR and NAPOT
+    csrw pmpcfg0, t0 //set to XWR and NAPOT
     sw zero, 0(sp)
 
     li t0, 0x1F00

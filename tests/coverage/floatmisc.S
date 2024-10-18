@@ -1,7 +1,7 @@
-# debug.S
-# David_Harris@hmc.edu 4 February 2023
-# Small code snippets for the purpose of debugging issues
-# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+// debug.S
+// David_Harris@hmc.edu 4 February 2023
+// Small code snippets for the purpose of debugging issues
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 .global rvtest_entry_point
 rvtest_entry_point:

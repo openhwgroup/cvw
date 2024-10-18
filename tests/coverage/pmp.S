@@ -1,8 +1,8 @@
-##########################################
-# /content/sample_data/PMPConfigregs.S
-# Kevin Box, kbox@hmc.edu
-# Created 2023-04-09 23:20:54.863039
-##########################################
+///////////////////////////////////////////
+// /content/sample_data/PMPConfigregs.S
+// Kevin Box, kbox@hmc.edu
+// Created 2023-04-09 23:20:54.863039
+///////////////////////////////////////////
 
 
 
@@ -11,10 +11,10 @@
 
 main:
 
-###########################################################################################################/
-# BEGIN Configuration and Testing Starting at Register: 0
-#
-# Configuration
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BEGIN Configuration and Testing Starting at Register: 0
+//
+// Configuration
 
   # | Reg   | pmpaddr     | pmpcfg    | L | A    | X | W | R | Comments
   # |0      | 0x2000003f  | 0x83      | 1 | 00   | 0 | 1 | 1 | 0
@@ -107,16 +107,16 @@ li t4, 1733894653101739012
 csrw pmpcfg2, t4
 
 
-# Testing
+// Testing
 
-# END Configuration and Testing Starting at Register: 0
-###########################################################################################################/
+// END Configuration and Testing Starting at Register: 0
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-###########################################################################################################/
-# BEGIN Configuration and Testing Starting at Register: 1
-#
-# Configuration
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BEGIN Configuration and Testing Starting at Register: 1
+//
+// Configuration
 
   # | Reg   | pmpaddr     | pmpcfg    | L | A    | X | W | R | Comments
   # |1      | 0x2000003f  | 0x83      | 1 | 00   | 0 | 1 | 1 | 0
@@ -209,16 +209,16 @@ li t4, 1155173425015948313
 csrw pmpcfg2, t4
 
 
-# Testing
+// Testing
 
-# END Configuration and Testing Starting at Register: 1
-###########################################################################################################/
+// END Configuration and Testing Starting at Register: 1
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-###########################################################################################################/
-# BEGIN Configuration and Testing Starting at Register: 2
-#
-# Configuration
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BEGIN Configuration and Testing Starting at Register: 2
+//
+// Configuration
 
   # | Reg   | pmpaddr     | pmpcfg    | L | A    | X | W | R | Comments
   # |2      | 0x2000003f  | 0x83      | 1 | 00   | 0 | 1 | 1 | 0
@@ -311,16 +311,16 @@ li t4, 576491624729942289
 csrw pmpcfg2, t4
 
 
-# Testing
+// Testing
 
-# END Configuration and Testing Starting at Register: 2
-###########################################################################################################/
+// END Configuration and Testing Starting at Register: 2
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-###########################################################################################################/
-# BEGIN Configuration and Testing Starting at Register: 3
-#
-# Configuration
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BEGIN Configuration and Testing Starting at Register: 3
+//
+// Configuration
 
   # | Reg   | pmpaddr     | pmpcfg    | L | A    | X | W | R | Comments
   # |3      | 0x2000003f  | 0x83      | 1 | 00   | 0 | 1 | 1 | 0
@@ -413,16 +413,16 @@ li t4, 7903341188813065
 csrw pmpcfg2, t4
 
 
-# Testing
+// Testing
 
-# END Configuration and Testing Starting at Register: 3
-###########################################################################################################/
+// END Configuration and Testing Starting at Register: 3
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-###########################################################################################################/
-# BEGIN Configuration and Testing Starting at Register: 4
-#
-# Configuration
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BEGIN Configuration and Testing Starting at Register: 4
+//
+// Configuration
 
   # | Reg   | pmpaddr     | pmpcfg    | L | A    | X | W | R | Comments
   # |4      | 0x2000003f  | 0x83      | 1 | 00   | 0 | 1 | 1 | 0
@@ -515,16 +515,16 @@ li t4, 2023255344336144641
 csrw pmpcfg2, t4
 
 
-# Testing
+// Testing
 
-# END Configuration and Testing Starting at Register: 4
-###########################################################################################################/
+// END Configuration and Testing Starting at Register: 4
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-###########################################################################################################/
-# BEGIN Configuration and Testing Starting at Register: 5
-#
-# Configuration
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BEGIN Configuration and Testing Starting at Register: 5
+//
+// Configuration
 
   # | Reg   | pmpaddr     | pmpcfg    | L | A    | X | W | R | Comments
   # |5      | 0x2000003f  | 0x83      | 1 | 00   | 0 | 1 | 1 | 0
@@ -617,16 +617,16 @@ li t4, 1444534086185583003
 csrw pmpcfg2, t4
 
 
-# Testing
+// Testing
 
-# END Configuration and Testing Starting at Register: 5
-###########################################################################################################/
+// END Configuration and Testing Starting at Register: 5
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-###########################################################################################################/
-# BEGIN Configuration and Testing Starting at Register: 6
-#
-# Configuration
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BEGIN Configuration and Testing Starting at Register: 6
+//
+// Configuration
 
   # | Reg   | pmpaddr     | pmpcfg    | L | A    | X | W | R | Comments
   # |6      | 0x2000003f  | 0x83      | 1 | 00   | 0 | 1 | 1 | 0
@@ -719,16 +719,16 @@ li t4, 865844589318216595
 csrw pmpcfg2, t4
 
 
-# Testing
+// Testing
 
-# END Configuration and Testing Starting at Register: 6
-###########################################################################################################/
+// END Configuration and Testing Starting at Register: 6
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-###########################################################################################################/
-# BEGIN Configuration and Testing Starting at Register: 7
-#
-# Configuration
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BEGIN Configuration and Testing Starting at Register: 7
+//
+// Configuration
 
   # | Reg   | pmpaddr     | pmpcfg    | L | A    | X | W | R | Comments
   # |7      | 0x2000003f  | 0x83      | 1 | 00   | 0 | 1 | 1 | 0
@@ -821,16 +821,16 @@ li t4, 295285980948829067
 csrw pmpcfg2, t4
 
 
-# Testing
+// Testing
 
-# END Configuration and Testing Starting at Register: 7
-###########################################################################################################/
+// END Configuration and Testing Starting at Register: 7
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-###########################################################################################################/
-# BEGIN Configuration and Testing Starting at Register: 8
-#
-# Configuration
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BEGIN Configuration and Testing Starting at Register: 8
+//
+// Configuration
 
   # | Reg   | pmpaddr     | pmpcfg    | L | A    | X | W | R | Comments
   # |8      | 0x2000003f  | 0x83      | 1 | 00   | 0 | 1 | 1 | 0
@@ -923,16 +923,16 @@ li t4, 1806234828062034819
 csrw pmpcfg2, t4
 
 
-# Testing
+// Testing
 
-# END Configuration and Testing Starting at Register: 8
-###########################################################################################################/
+// END Configuration and Testing Starting at Register: 8
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-###########################################################################################################/
-# BEGIN Configuration and Testing Starting at Register: 9
-#
-# Configuration
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BEGIN Configuration and Testing Starting at Register: 9
+//
+// Configuration
 
   # | Reg   | pmpaddr     | pmpcfg    | L | A    | X | W | R | Comments
   # |9      | 0x2000003f  | 0x83      | 1 | 00   | 0 | 1 | 1 | 0
@@ -1025,16 +1025,16 @@ li t4, 1227514141142123288
 csrw pmpcfg2, t4
 
 
-# Testing
+// Testing
 
-# END Configuration and Testing Starting at Register: 9
-###########################################################################################################/
+// END Configuration and Testing Starting at Register: 9
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-###########################################################################################################/
-# BEGIN Configuration and Testing Starting at Register: 10
-#
-# Configuration
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BEGIN Configuration and Testing Starting at Register: 10
+//
+// Configuration
 
   # | Reg   | pmpaddr     | pmpcfg    | L | A    | X | W | R | Comments
   # |10     | 0x2000003f  | 0x83      | 1 | 00   | 0 | 1 | 1 | 0
@@ -1127,16 +1127,16 @@ li t4, 648970879321184272
 csrw pmpcfg2, t4
 
 
-# Testing
+// Testing
 
-# END Configuration and Testing Starting at Register: 10
-###########################################################################################################/
+// END Configuration and Testing Starting at Register: 10
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-###########################################################################################################/
-# BEGIN Configuration and Testing Starting at Register: 11
-#
-# Configuration
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BEGIN Configuration and Testing Starting at Register: 11
+//
+// Configuration
 
   # | Reg   | pmpaddr     | pmpcfg    | L | A    | X | W | R | Comments
   # |11     | 0x2000003f  | 0x83      | 1 | 00   | 0 | 1 | 1 | 0
@@ -1229,16 +1229,16 @@ li t4, 115848442837209096
 csrw pmpcfg2, t4
 
 
-# Testing
+// Testing
 
-# END Configuration and Testing Starting at Register: 11
-###########################################################################################################/
+// END Configuration and Testing Starting at Register: 11
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-###########################################################################################################/
-# BEGIN Configuration and Testing Starting at Register: 12
-#
-# Configuration
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BEGIN Configuration and Testing Starting at Register: 12
+//
+// Configuration
 
   # | Reg   | pmpaddr     | pmpcfg    | L | A    | X | W | R | Comments
   # |12     | 0x2000003f  | 0x83      | 1 | 00   | 0 | 1 | 1 | 0
@@ -1331,16 +1331,16 @@ li t4, 11210457292615976960
 csrw pmpcfg2, t4
 
 
-# Testing
+// Testing
 
-# END Configuration and Testing Starting at Register: 12
-###########################################################################################################/
+// END Configuration and Testing Starting at Register: 12
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-###########################################################################################################/
-# BEGIN Configuration and Testing Starting at Register: 13
-#
-# Configuration
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BEGIN Configuration and Testing Starting at Register: 13
+//
+// Configuration
 
   # | Reg   | pmpaddr     | pmpcfg    | L | A    | X | W | R | Comments
   # |13     | 0x2000003f  | 0x83      | 1 | 00   | 0 | 1 | 1 | 0
@@ -1433,16 +1433,16 @@ li t4, 10631735484709601308
 csrw pmpcfg2, t4
 
 
-# Testing
+// Testing
 
-# END Configuration and Testing Starting at Register: 13
-###########################################################################################################/
+// END Configuration and Testing Starting at Register: 13
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-###########################################################################################################/
-# BEGIN Configuration and Testing Starting at Register: 14
-#
-# Configuration
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BEGIN Configuration and Testing Starting at Register: 14
+//
+// Configuration
 
   # | Reg   | pmpaddr     | pmpcfg    | L | A    | X | W | R | Comments
   # |14     | 0x2000003f  | 0x83      | 1 | 00   | 0 | 1 | 1 | 0
@@ -1535,16 +1535,16 @@ li t4, 10052905250353847316
 csrw pmpcfg2, t4
 
 
-# Testing
+// Testing
 
-# END Configuration and Testing Starting at Register: 14
-###########################################################################################################/
+// END Configuration and Testing Starting at Register: 14
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-###########################################################################################################/
-# BEGIN Configuration and Testing Starting at Register: 15
-#
-# Configuration
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BEGIN Configuration and Testing Starting at Register: 15
+//
+// Configuration
 
   # | Reg   | pmpaddr     | pmpcfg    | L | A    | X | W | R | Comments
   # |15     | 0x2000003f  | 0x83      | 1 | 00   | 0 | 1 | 1 | 0
@@ -1637,10 +1637,10 @@ li t4, 9446317844957238284
 csrw pmpcfg2, t4
 
 
-# Testing
+// Testing
 
-# END Configuration and Testing Starting at Register: 15
-###########################################################################################################/
+// END Configuration and Testing Starting at Register: 15
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
     j done

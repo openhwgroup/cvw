@@ -1,30 +1,30 @@
-##########################################
-# tlbMisaligned.S
-#
-# Written: Rose Thompson rose@rosethompson.net
-#
-# Purpose: Create a page table with misaligned load and store access.  Checks TLB misses prevent misaligned load/store fault.
-#
-# A component of the CORE-V-WALLY configurable RISC-V project.
-# https://github.com/openhwgroup/cvw
-#
-# Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
-#
-# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
-#
-# Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
-# except in compliance with the License, or, at your option, the Apache License version 2.0. You
-# may obtain a copy of the License at
-#
-# https://solderpad.org/licenses/SHL-2.1/
-#
-# Unless required by applicable law or agreed to in writing, any work distributed under the
-# License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
-# either express or implied. See the License for the specific language governing permissions
-# and limitations under the License.
-##############################################################################################
+///////////////////////////////////////////
+// tlbMisaligned.S
+//
+// Written: Rose Thompson rose@rosethompson.net
+//
+// Purpose: Create a page table with misaligned load and store access.  Checks TLB misses prevent misaligned load/store fault.
+//
+// A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
+//
+// Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
+//
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+//
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
+// may obtain a copy of the License at
+//
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
+// and limitations under the License.
+////////////////////////////////////////////////////////////////////////////////////////////////
 
-# load code to initalize stack, handle interrupts, terminate
+// load code to initalize stack, handle interrupts, terminate
 
 #include "WALLY-init-lib.h"
 
@@ -46,8 +46,8 @@ main:
     ecall
     li t5, 0
     li t2, 0x1000
-    li t0, 0x1000 # go to first gigapage
-    li t4, 0x40000000 # put this outside the loop.
+    li t0, 0x1000 // go to first gigapage
+    li t4, 0x40000000 // put this outside the loop.
 
     lw t1, 1(t0) # load a misaligned aligned cached address
     li t1, 0x00008067 #load in jalr
@@ -79,7 +79,7 @@ pagetable:
 
 .align 12
     .8byte 0x0000000020004CC1
-    #.8byte 0x00000200800CF# ADD IN THE MEGAPAGE should 3 nibbles of zeros be removed?
+    //.8byte 0x00000200800CF// ADD IN THE MEGAPAGE should 3 nibbles of zeros be removed?
 
 .align 12
     #80000000

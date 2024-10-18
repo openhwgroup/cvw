@@ -1,4 +1,4 @@
-# fround.s
+// fround.s
 
 #include "WALLY-init-lib.h"
 

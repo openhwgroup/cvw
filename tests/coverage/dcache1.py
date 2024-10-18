@@ -44,7 +44,7 @@ def wl(line="", comment=None, fname=test_name):
                           ".align" in line or
                           "# include" in line) else True
         indent = 6 if instr else 0
-        comment = "# " + comment if comment is not None else ""
+        comment = "// " + comment if comment is not None else ""
         to_write = " " * indent + line + comment + "\n"
         f.write(to_write)
 

@@ -1,6 +1,6 @@
-# pmpcbo.S
-# David_Harris@hmc.edu 1/21/24
-# Cover PMP checks of cache management instructions
+// pmpcbo.S
+// David_Harris@hmc.edu 1/21/24
+// Cover PMP checks of cache management instructions
 
 #include "WALLY-init-lib.h"
 main:

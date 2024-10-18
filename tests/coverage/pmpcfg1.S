@@ -1,9 +1,9 @@
-# another set of pmpcfg tests. A new file is made because pmpcfg register fields are
-# locked forever after writing 1 to the lock bit for the first time.
+// another set of pmpcfg tests. A new file is made because pmpcfg register fields are
+// locked forever after writing 1 to the lock bit for the first time.
 
-# Kevin Wan, kewan@hmc.edu, 4/13/2023
-# This set tests locking the pmpXcfg fields in descending order again, without setting the TOR bits.
-# for the other part of the tests, see pmpcfg.S
+// Kevin Wan, kewan@hmc.edu, 4/13/2023
+// This set tests locking the pmpXcfg fields in descending order again, without setting the TOR bits.
+// for the other part of the tests, see pmpcfg.S
 
 #include "WALLY-init-lib.h"
 main:

@@ -1,32 +1,32 @@
-##########################################
-# WALLY-init-lib.h
-#
-# Written: David_Harris@hmc.edu 21 March 2023
-#
-# Purpose: Initialize stack, handle interrupts, terminate test case
-#
-# A component of the CORE-V-WALLY configurable RISC-V project.
-# https://github.com/openhwgroup/cvw
-#
-# Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
-#
-# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
-#
-# Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
-# except in compliance with the License, or, at your option, the Apache License version 2.0. You
-# may obtain a copy of the License at
-#
-# https://solderpad.org/licenses/SHL-2.1/
-#
-# Unless required by applicable law or agreed to in writing, any work distributed under the
-# License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
-# either express or implied. See the License for the specific language governing permissions
-# and limitations under the License.
-##############################################################################################
+///////////////////////////////////////////
+// WALLY-init-lib.h
+//
+// Written: David_Harris@hmc.edu 21 March 2023
+//
+// Purpose: Initialize stack, handle interrupts, terminate test case
+//
+// A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
+//
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
+//
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+//
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
+// may obtain a copy of the License at
+//
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
+// and limitations under the License.
+////////////////////////////////////////////////////////////////////////////////////////////////
 
-# load code to initalize stack, handle interrupts, terminate
-# The PMP tests are sensitive to the exact addresses in this code, so unfortunately
-# modifying anything breaks those tests.
+// load code to initalize stack, handle interrupts, terminate
+// The PMP tests are sensitive to the exact addresses in this code, so unfortunately
+// modifying anything breaks those tests.
 
 .section .text.init
 .global rvtest_entry_point
@@ -128,7 +128,7 @@ write_tohost:
 self_loop:
     j self_loop         # wait
 
-# utility routines
+// utility routines
 
 # put a 1 in msb of a0 (position XLEN-1); works for both RV32 and RV64
 setmsb:

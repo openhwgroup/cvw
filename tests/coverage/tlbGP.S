@@ -1,31 +1,31 @@
-##########################################
-# tlbGP.S
-#
-# Written: mmendozamanriquez@hmc.edu 4 April 2023
-#          nlimpert@hmc.edu
-#
-# Purpose: Create Page tables and access gigapages
-#
-# A component of the CORE-V-WALLY configurable RISC-V project.
-# https://github.com/openhwgroup/cvw
-#
-# Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
-#
-# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
-#
-# Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
-# except in compliance with the License, or, at your option, the Apache License version 2.0. You
-# may obtain a copy of the License at
-#
-# https://solderpad.org/licenses/SHL-2.1/
-#
-# Unless required by applicable law or agreed to in writing, any work distributed under the
-# License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
-# either express or implied. See the License for the specific language governing permissions
-# and limitations under the License.
-##############################################################################################
+///////////////////////////////////////////
+// tlbGP.S
+//
+// Written: mmendozamanriquez@hmc.edu 4 April 2023
+//          nlimpert@hmc.edu
+//
+// Purpose: Create Page tables and access gigapages
+//
+// A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
+//
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
+//
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+//
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
+// may obtain a copy of the License at
+//
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
+// and limitations under the License.
+////////////////////////////////////////////////////////////////////////////////////////////////
 
-# load code to initalize stack, handle interrupts, terminate
+// load code to initalize stack, handle interrupts, terminate
 
 #include "WALLY-init-lib.h"
 
@@ -41,8 +41,8 @@ main:
     li a0, 1
     ecall
     li t5, 0
-    li t0, 0xC0200000 # go to first gigapage
-    li t4, 0x40000000 # put this outside the loop.
+    li t0, 0xC0200000 // go to first gigapage
+    li t4, 0x40000000 // put this outside the loop.
     li t2, 0      # i = 0
     li t3, 64     # Max amount of Loops = 16
 
@@ -67,7 +67,7 @@ pagetable:
     .8byte 0x200044C1
 
 .align 12
-    .8byte 0x000000CF  #8000 0000
+    .8byte 0x000000CF  //8000 0000
     .8byte 0x100000CF
     .8byte 0x200000CF
     .8byte 0x200000CF
