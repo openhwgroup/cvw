@@ -7,7 +7,7 @@ SRCEXT 		:= \([$(CEXT)$(AEXT)$(SEXT)]\|$(CPPEXT)\)
 #PROGS = $(patsubst %.S,%,$(SRCS))
 SRCDIR = .
 SRCEXT = S
-SOURCES		?= amoAccessFault.S # $(shell find $(SRCDIR) -type f -regex ".*\.$(SRCEXT)" | sort)
+SOURCES		?= $(shell find $(SRCDIR) -type f -regex ".*\.$(SRCEXT)" | sort)
 OBJEXT = elf
 OBJECTS		:= $(SOURCES:.$(SEXT)=.$(OBJEXT))
 
@@ -17,11 +17,9 @@ elf.o.objdump: %.elf
 
 # Change many things if bit width isn't 64
 %.elf: $(SRCDIR)/%.$(SEXT) WALLY-init-lib.h Makefile
-# riscv64-unknown-elf-gcc -E -Wall -g -o $*.s -march=rv64gqc_zfa_zba_zbb_zbc_zbs_zfh_zicboz_zicbop_zicbom_zbkb_zbkx_zknd_zkne_zknh -mabi=lp64 -mcmodel=medany -nostartfiles -T../../examples/link/link.ld $<
-# riscv64-unknown-elf-as -g -o WALLY-init-lib.o -march=rv64gqc_zfa_zba_zbb_zbc_zbs_zfh_zicboz_zicbop_zicbom_zbkb_zbkx_zknd_zkne_zknh -mabi=lp64 WALLY-init-lib.h
-	riscv64-unknown-elf-as -g -o $*.o -march=rv64gqc_zfa_zba_zbb_zbc_zbs_zfh_zicboz_zicbop_zicbom_zbkb_zbkx_zknd_zkne_zknh -mabi=lp64 $<
-# riscv64-unknown-elf-gcc -g -o $@ -march=rv64gqc_zfa_zba_zbb_zbc_zbs_zfh_zicboz_zicbop_zicbom_zbkb_zbkx_zknd_zkne_zknh -mabi=lp64 -mcmodel=medany -nostartfiles -T../../examples/link/link.ld $*.o
-	riscv64-unknown-elf-gcc -g -o $@ -march=rv64gqc_zfa_zba_zbb_zbc_zbs_zfh_zicboz_zicbop_zicbom_zbkb_zbkx_zknd_zkne_zknh -mabi=lp64 -mcmodel=medany -nostartfiles -T../../examples/link/link.ld $*.o
+	riscv64-unknown-elf-gcc -E -Wall -g -o $*.s -march=rv64gqc_zfa_zba_zbb_zbc_zbs_zfh_zicboz_zicbop_zicbom_zbkb_zbkx_zknd_zkne_zknh -mabi=lp64 -mcmodel=medany -nostartfiles -T../../examples/link/link.ld $<
+	riscv64-unknown-elf-as -g -o $*.o -march=rv64gqc_zfa_zba_zbb_zbc_zbs_zfh_zicboz_zicbop_zicbom_zbkb_zbkx_zknd_zkne_zknh -mabi=lp64 $*.s
+	riscv64-unknown-elf-gcc -g -o $@ -mabi=lp64 -mcmodel=medany -nostartfiles -T../../examples/link/link.ld $*.o
 	riscv64-unknown-elf-objdump -S -D $@ > $@.objdump
 	riscv64-unknown-elf-elf2hex --bit-width 64 --input $@ --output $@.memfile
 	extractFunctionRadix.sh $@.objdump
