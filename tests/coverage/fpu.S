@@ -1,30 +1,30 @@
-///////////////////////////////////////////
-// fpu.S
-//
-// Written: David_Harris@hmc.edu 28 March 2023
-//
-// Purpose: Test coverage for FPU
-//
-// A component of the CORE-V-WALLY configurable RISC-V project.
-// https://github.com/openhwgroup/cvw
-// 
-// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
-//
-// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
-//
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
-// may obtain a copy of the License at
-//
-// https://solderpad.org/licenses/SHL-2.1/
-//
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
-// and limitations under the License.
-////////////////////////////////////////////////////////////////////////////////////////////////
+##########################################
+# fpu.S
+#
+# Written: David_Harris@hmc.edu 28 March 2023
+#
+# Purpose: Test coverage for FPU
+#
+# A component of the CORE-V-WALLY configurable RISC-V project.
+# https://github.com/openhwgroup/cvw
+#
+# Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
+#
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+#
+# Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+# except in compliance with the License, or, at your option, the Apache License version 2.0. You
+# may obtain a copy of the License at
+#
+# https://solderpad.org/licenses/SHL-2.1/
+#
+# Unless required by applicable law or agreed to in writing, any work distributed under the
+# License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+# either express or implied. See the License for the specific language governing permissions
+# and limitations under the License.
+##############################################################################################
 
-// load code to initalize stack, handle interrupts, terminate
+# load code to initalize stack, handle interrupts, terminate
 #include "WALLY-init-lib.h"
 
 main:
@@ -48,9 +48,9 @@ main:
     fcvt.h.q fs1, fs0
     fcvt.s.q fs1, fs0
     # round for now because these tests are excluded from Zfa until rounding is implemented
-    fround.s fs1, fs0       
+    fround.s fs1, fs0
     froundnx.s fs1, fs0
-    fround.d fs1, fs0       
+    fround.d fs1, fs0
     froundnx.d fs1, fs0
     fround.h fs1, fs0
     froundnx.h fs1, fs0
@@ -120,9 +120,9 @@ main:
     fcvt.s.l ft0, t0
     fcvt.s.lu ft0, t0
 
-    // Tests verfying that half and quad floating point convertion instructions are not supported by rv64gc
-    # fcvt.h.d ft3, ft0 // Somehow this instruction is taking the route on line 124
-                      // idea: enable the Q extension for this to work properly? A: Q and halfs not supported in rv64gc
+    # Tests verfying that half and quad floating point convertion instructions are not supported by rv64gc
+    # fcvt.h.d ft3, ft0 # Somehow this instruction is taking the route on line 124
+                      # idea: enable the Q extension for this to work properly? A: Q and halfs not supported in rv64gc
     # fcvt.h.w ft3, a0
     # fcvt.w.h a0, ft0
     # fcvt.q.w ft3, a0
@@ -131,12 +131,12 @@ main:
 
     # half-precision NaN boxing
     la t0, TestData3
-    fld ft2, 0(t0)          // bad NaN-boxed number
-    fmadd.h ft1, ft2, ft2, ft2 // Test NaN boxing
-    fmadd.s ft1, ft2, ft2, ft2 // Test NaN boxing
+    fld ft2, 0(t0)          # bad NaN-boxed number
+    fmadd.h ft1, ft2, ft2, ft2 # Test NaN boxing
+    fmadd.s ft1, ft2, ft2, ft2 # Test NaN boxing
 
-    // fdivsqrt: test busy->idle transition caused by a FlushE while divider is busy (when interrupt arrives)
-    // This code doesn't actually trigger a busy->idle transition because the pending timer interrupt doesn't occur until the division finishes.
+    # fdivsqrt: test busy->idle transition caused by a FlushE while divider is busy (when interrupt arrives)
+    # This code doesn't actually trigger a busy->idle transition because the pending timer interrupt doesn't occur until the division finishes.
     li t0, 0x3F812345 # random value slightly bigger than 1
     li t1, 0x3F823456
     fmv.w.x ft0, t0  # move int to fp register
@@ -146,7 +146,7 @@ main:
     sd t0, 0(t1)
     csrsi mstatus, 0b1000   # enable interrupts with mstatus.MIE
     li t1, 0x0200bff8   # read MTIME in CLINT
-    ld t0, 0(t1)        
+    ld t0, 0(t1)
     addi t0, t0, 11
     li t1, 0x02004000   # MTIMECMP in CLINT
     sd t0, 0(t1)        # write mtime+10 to cause interrupt soon  This is very touchy timing and is sensitive to cache line fetch latency
@@ -155,44 +155,44 @@ main:
     csrci mstatus, 0b1000   # disable interrupts with mstatus.MIE
 
     # Completing branch coverage in fctrl.sv
-    .word 0x38007553    // Testing the all False case for 119 - funct7 under, op = 101 0011
-    .word 0x40000053    // Line 145 All False Test case - illegal instruction?
-    .word 0xd0400053    // Line 156 All False Test case - illegal instruction?
-    .word 0xc0400053    // Line 162 All False Test case - illegal instruction?
-    .word 0xd2400053    // Line 168 All False Test case - illegal instruction?
-    .word 0xc2400053    // Line 174 All False Test case - illegal instruction?
+    .word 0x38007553    # Testing the all False case for 119 - funct7 under, op = 101 0011
+    .word 0x40000053    # Line 145 All False Test case - illegal instruction?
+    .word 0xd0400053    # Line 156 All False Test case - illegal instruction?
+    .word 0xc0400053    # Line 162 All False Test case - illegal instruction?
+    .word 0xd2400053    # Line 168 All False Test case - illegal instruction?
+    .word 0xc2400053    # Line 174 All False Test case - illegal instruction?
 
     # Increasing conditional coverage in fctrl.sv
-    .word 0xc5000007    // Attempting to toggle (Op7 != 7) to 0 on line 97 in fctrl, not sure what instruction this works out to
-    .word 0xe0101053    // toggling (Rs2D == 0) to 0 on line 139 in fctrl. Illegal Intsr (like fclass but incorrect rs2)
-    .word 0xe0100053    // toggling (Rs2D == 0) to 0 on line 141 in fctrl. Illegal Intsr (like fmv but incorrect rs2)
-    .word 0x40D00053    // toggling (Rs2D[4:2] == 0) to 0 on line 145 in fctrl. 
-    .word 0x40300053    // toggling SupportFmt2 to 0 on line 145 in fctrl.
-    .word 0x42100053    // toggling (Rs2D[1:0] != 1) to 0 on line 147 in fctrl. Illegal Instr
-    .word 0xf0100053    // toggling (Rs2D == 0) to 0 on line 143 in fctrl. Illegal Instr
+    .word 0xc5000007    # Attempting to toggle (Op7 != 7) to 0 on line 97 in fctrl, not sure what instruction this works out to
+    .word 0xe0101053    # toggling (Rs2D == 0) to 0 on line 139 in fctrl. Illegal Intsr (like fclass but incorrect rs2)
+    .word 0xe0100053    # toggling (Rs2D == 0) to 0 on line 141 in fctrl. Illegal Intsr (like fmv but incorrect rs2)
+    .word 0x40D00053    # toggling (Rs2D[4:2] == 0) to 0 on line 145 in fctrl.
+    .word 0x40300053    # toggling SupportFmt2 to 0 on line 145 in fctrl.
+    .word 0x42100053    # toggling (Rs2D[1:0] != 1) to 0 on line 147 in fctrl. Illegal Instr
+    .word 0xf0100053    # toggling (Rs2D == 0) to 0 on line 143 in fctrl. Illegal Instr
 
     # Test illegal instructions are detected
-    .word 0x00000007 // illegal floating-point load (bad Funct3)
-    .word 0x00000027 // illegal floating-point store (bad Funct3)
-    .word 0x58F00053 // illegal fsqrt (bad Rs2D)
-    .word 0x20007053 // illegal fsgnj (bad Funct3)
-    .word 0x28007053 // illegal fmin/max (bad Funct3)
-    .word 0xA0007053 // illegal fcmp (bad Funct3)
-    .word 0xE0007053 // illegal fclass/fmv (bad Funct3)
-    .word 0xF0007053 // illegal fmv (bad Funct3)
-    .word 0x43007053 // illegal fcvt.d.* (bad Rs2D)
-    .word 0x42207053 // illegal fcvt.d.* (bad Rs2D[1])
-    .word 0xD5F00053 // illegal fcvt.h.* (bad Rs2D)
-    .word 0xC5F00053 // illegal fcvt.*.h (bad Rs2D)
-    .word 0x04000043 // illegal fmadd.h (h not supported)
-    .word 0xC2800053 // illegal fcvtmod.w.d with rm rne
-    .word 0xF0101053 // illegal fli with Funct3D not 0
-    .word 0xF0400053 // illegal fli with Rs2D not 1
-    .word 0x44200053 // illegal instruction for f.cvt.h.h
+    .word 0x00000007 # illegal floating-point load (bad Funct3)
+    .word 0x00000027 # illegal floating-point store (bad Funct3)
+    .word 0x58F00053 # illegal fsqrt (bad Rs2D)
+    .word 0x20007053 # illegal fsgnj (bad Funct3)
+    .word 0x28007053 # illegal fmin/max (bad Funct3)
+    .word 0xA0007053 # illegal fcmp (bad Funct3)
+    .word 0xE0007053 # illegal fclass/fmv (bad Funct3)
+    .word 0xF0007053 # illegal fmv (bad Funct3)
+    .word 0x43007053 # illegal fcvt.d.* (bad Rs2D)
+    .word 0x42207053 # illegal fcvt.d.* (bad Rs2D[1])
+    .word 0xD5F00053 # illegal fcvt.h.* (bad Rs2D)
+    .word 0xC5F00053 # illegal fcvt.*.h (bad Rs2D)
+    .word 0x04000043 # illegal fmadd.h (h not supported)
+    .word 0xC2800053 # illegal fcvtmod.w.d with rm rne
+    .word 0xF0101053 # illegal fli with Funct3D not 0
+    .word 0xF0400053 # illegal fli with Rs2D not 1
+    .word 0x44200053 # illegal instruction for f.cvt.h.h
 
-    // Test divide by zero with rounding mode toward zero
+    # Test divide by zero with rounding mode toward zero
     li t0, 1
-    csrw frm, t0    // set rounding mode = 1
+    csrw frm, t0    # set rounding mode = 1
     li t0, 0x3f800000
     fcvt.s.w ft1, t0
     fcvt.s.w ft2, zero
