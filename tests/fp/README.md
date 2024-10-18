@@ -1,7 +1,7 @@
-james.stine@okstate.edu 14 Jan 2022
+james.stine@okstate.edu 14 Jan 2022\
 jcarlin@hmc.edu Sept 2024
 
-## TestFloat for CVW
+# TestFloat for CVW
 
 The CVW floating point unit is tested using testvectors from the Berkeley TestFloat suite, written originally by John Hauser.
 
@@ -9,7 +9,7 @@ TestFloat and SoftFloat can be found as submodules in the addins directory, and 
 - TestFloat:  https://github.com/ucb-bar/berkeley-testfloat-3
 - SoftFloat:  https://github.com/ucb-bar/berkeley-softfloat-3
 
-### Compiling SoftFloat/TestFloat and Generating Testvectors
+## Compiling SoftFloat/TestFloat and Generating Testvectors
 
 The entire testvector generation process can be performed by running make in this directory.
 
@@ -17,7 +17,7 @@ The entire testvector generation process can be performed by running make in thi
 make --jobs
 ```
 
-This compiles SoftFloat for an x86_64 environment in its build/Linux-x86_64-GCC directory using the `SPECIALIZE_TYPE=RISCV` flag to get RISC-V behavior. TestFloat is then compiled in its build/Linux-x86_64-GCC directory using this SoftFloat library.
+This compiles SoftFloat for an x86_64 environment in its `build/Linux-x86_64-GCC` directory using the `SPECIALIZE_TYPE=RISCV` flag to get RISC-V behavior. TestFloat is then compiled in its `build/Linux-x86_64-GCC` directory using this SoftFloat library.
 
 The Makefile in the vectors subdirectory of this directory is then called to  generate testvectors for each rounding mode and operation. It also puts an underscore between each vector instead of a space to allow SystemVerilog `$readmemh` to read correctly.
 
@@ -25,7 +25,7 @@ Testvectors for the combined integer floating-point divider are also generated.
 
 Although not needed, a `case.sh` script is included to change the case of the hex output.  This is for those that do not like to see hexadecimal capitalized :P.
 
-### Running TestFloat Vectors on Wally
+## Running TestFloat Vectors on Wally
 
 TestFloat is run using the standard Wally simulation commands.
 
@@ -40,15 +40,15 @@ wsim <config> <test> --tb testbench_fp
 ```
 The choices for `<test>` are as follows:
 
->cvtint - test integer conversion unit (fcvtint)
-cvtfp  - test floating-point conversion unit (fcvtfp)
-cmp    - test comparison unit's LT, LE, EQ opperations (fcmp)
-add    - test addition
-fma    - test fma
-mul    - test mult with fma
-sub    - test subtraction
-div    - test division
-sqrt   - test square root
+    cvtint - test integer conversion unit (fcvtint)
+    cvtfp  - test floating-point conversion unit (fcvtfp)
+    cmp    - test comparison unit's LT, LE, EQ opperations (fcmp)
+    add    - test addition
+    fma    - test fma
+    mul    - test mult with fma
+    sub    - test subtraction
+    div    - test division
+    sqrt   - test square root
 
 Any config that includes floating point support can be used. Each test will test all its vectors for all precisions supported by the given config.
 
