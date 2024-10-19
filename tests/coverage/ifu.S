@@ -7,20 +7,20 @@
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -37,7 +37,7 @@ main:
                         // binary version 0000 0000 0000 0000 0010 0000 0000 0000
     mv s0, sp
     c.fld fs0, 0(s0)    // Previously uncovered instructions
-    c.fsd fs0, 0(s0)    
+    c.fsd fs0, 0(s0)
     .hword 0x2002      // c.fldsp fs0, 0
     .hword 0xA002      // c.fsdsp fs0, 0
     .hword 0x9C41      // line 134 Illegal compressed instruction
@@ -72,9 +72,9 @@ main:
     .hword 0x9C71      // c.zext.w s0
     # c.not s0         // exercise c.not
     .hword 0x9C75      // c.not s0
-    
+
     .hword 0x9C7D      // Reserved instruction from line 187 with op = 01, Instr[15:10] = 100111, Instr[6:5] = 11, and 0's everywhere else
-    
+
     # exercise all the cache ways
     j way0code
 
@@ -100,6 +100,6 @@ way3code:
 .align 12
 way00code:
     ret
-    
-   
+
+
     j done

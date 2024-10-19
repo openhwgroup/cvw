@@ -8,20 +8,20 @@
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -39,20 +39,20 @@ main:
     # sfence.vma x0, x0
 
     # switch to supervisor mode
-    li a0, 1   
+    li a0, 1
     ecall
     li t5, 0
     li t2, 0x1000
-    li t0, 0x8000001000 
+    li t0, 0x8000001000
 
     lw t1, 0(t0)       # this load is a valid virtual address, but the page table will access an invalid address so it should cause a load access fault
     li t1, 0x00008067  # this store is a valid virtual address, but the page table will access an invalid address so it should cause a store access fault
-    add t0, t0, t2 
+    add t0, t0, t2
         sw t1, 0(t0)
 
         j jumppoint
 
-jumppoint:      
+jumppoint:
 .align 6 # aligns to cache line size
         sw t1, 0(t0)
         sw t1, 4(t0)
@@ -74,7 +74,7 @@ jumppoint:
         lw t3, 8(t0)
         lw t3, 12(t0)
         lw t3, 16(t0)
-        
+
     fence.I
 
 finished:
@@ -84,15 +84,15 @@ finished:
 
 .align 16
 # Page table situated at 0x80010000
-pagetable: 
-    .8byte 0x200044C1 
+pagetable:
+    .8byte 0x200044C1
     .8byte 0x300044C1  # point to invalid region of physical memory
 
 .align 12
     .8byte 0x00000040200048C1
     .8byte 0x00000000200048C1
     .8byte 0x00000000200048C1
-    
+
 
 .align 12
     .8byte 0x0000000020004CC1
@@ -138,7 +138,7 @@ pagetable:
     .8byte 0x200074CF
     .8byte 0x200078CF
     .8byte 0x20007CCF
-    
+
     .8byte 0x200080CF
     .8byte 0x200084CF
     .8byte 0x200088CF
