@@ -68,7 +68,16 @@ git_check() {
 
     # Clone repo if it doesn't exist
     if [[ ! -e $repo ]]; then
-        git clone "$url"
+        for ((i=1; i<=5; i++)); do
+            git clone "$url" && break
+            echo -e "${WARNING_COLOR}Failed to clone $repo. Retrying.${ENDC}"
+            rm -rf "$repo"
+            sleep $i
+        done
+        if [[ ! -e $repo ]]; then
+            echo -e "${ERROR_COLOR}Failed to clone $repo after 5 attempts. Exiting.${ENDC}"
+            exit 1
+        fi
     fi
 
     # Get the current HEAD commit hash and the remote branch commit hash
@@ -79,10 +88,9 @@ git_check() {
 
     # Check if the git repository is not up to date or the specified file does not exist
     if [[ "$local_head" != "$remote_head" ]]; then
-        echo "$repo is not up to date"
+        echo "$repo is not up to date. Updating now."
         true
     elif [[ ! -e $check ]]; then
-        echo "$check does not exist"
         true
     else
         false
