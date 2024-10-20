@@ -219,7 +219,9 @@ if (( RHEL_VERSION == 8 )) || (( UBUNTU_VERSION == 20 )); then
         section_header "Installing glib"
         pip install -U meson # Meson is needed to build glib
         cd "$RISCV"
-        curl --location https://download.gnome.org/sources/glib/2.70/glib-2.70.5.tar.xz | tar xJ
+        wget --retry-connrefused --retry-on-host-error https://download.gnome.org/sources/glib/2.70/glib-2.70.5.tar.xz
+        tar -xJf glib-2.70.5.tar.xz
+        rm -f glib-2.70.5.tar.xz
         cd glib-2.70.5
         meson setup _build --prefix="$RISCV"
         meson compile -C _build
@@ -236,7 +238,9 @@ if (( RHEL_VERSION == 8 )); then
     if [ ! -e "$RISCV"/include/gmp.h ]; then
         section_header "Installing gmp"
         cd "$RISCV"
-        curl --location https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz | tar xJ
+        wget --retry-connrefused --retry-on-host-error https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz
+        tar -xJf gmp-6.3.0.tar.xz
+        rm -f gmp-6.3.0.tar.xz
         cd gmp-6.3.0
         ./configure --prefix="$RISCV"
         make -j "${NUM_THREADS}"
@@ -380,7 +384,9 @@ section_header "Installing/Updating Sail Compiler"
 STATUS="Sail Compiler"
 if [ ! -e "$RISCV"/bin/sail ]; then
     cd "$RISCV"
-    curl --location https://github.com/rems-project/sail/releases/latest/download/sail.tar.gz | tar xvz --directory="$RISCV" --strip-components=1
+    wget --retry-connrefused --retry-on-host-error --output-document=sail.tar.gz https://github.com/rems-project/sail/releases/latest/download/sail.tar.gz
+    tar xz --directory="$RISCV" --strip-components=1 -f sail.tar.gz
+    rm -f sail.tar.gz
     echo -e "${SUCCESS_COLOR}Sail Compiler successfully installed/updated!${ENDC}"
 else
     echo -e "${SUCCESS_COLOR}Sail Compiler already installed.${ENDC}"
@@ -456,8 +462,8 @@ section_header "Downloading Site Setup Script"
 STATUS="site-setup scripts"
 cd "$RISCV"
 if [ ! -e "${RISCV}"/site-setup.sh ]; then
-    wget https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.sh
-    wget https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.csh
+    wget --retry-connrefused --retry-on-host-error https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.sh
+    wget --retry-connrefused --retry-on-host-error https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.csh
     echo -e "${SUCCESS_COLOR}Site setup script successfully downloaded!${ENDC}"
     echo -e "${WARNING_COLOR}Make sure to edit the environment variables in $RISCV/site-setup.sh (or .csh) to point to your installation of EDA tools and licensce files.${ENDC}"
 else
