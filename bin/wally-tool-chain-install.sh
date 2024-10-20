@@ -147,9 +147,7 @@ fi
 export PATH=$PATH:$RISCV/bin:/usr/bin
 export PKG_CONFIG_PATH=$RISCV/lib64/pkgconfig:$RISCV/lib/pkgconfig:$RISCV/share/pkgconfig:$RISCV/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH
 
-if (( RHEL_VERSION == 8 )); then
-    retry_on_host_error=""
-else
+if (( RHEL_VERSION != 8 )); then
     retry_on_host_error="--retry-on-host-error"
 fi
 
