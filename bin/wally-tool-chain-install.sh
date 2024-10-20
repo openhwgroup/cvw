@@ -91,8 +91,13 @@ git_check() {
 
 # Log output to a file and only print lines with keywords
 logger() {
-    local log="$RISCV/logs/$1.log"
-    cat < /dev/stdin | tee -a "$log" | (grep -iE --color=never "(\bwarning|\berror|\bfail|\bsuccess|\bstamp|\bdoesn't work)" || true) | (grep -viE --color=never "(_warning|warning_|_error|error_|-warning|warning-|-error|error-|Werror|error\.o|warning flags)" || true)
+    local log_file="$RISCV/logs/$1.log"
+    local keyword_pattern="(\bwarning|\berror|\bfail|\bsuccess|\bstamp|\bdoesn't work)"
+    local exclude_pattern="(_warning|warning_|_error|error_|-warning|warning-|-error|error-|Werror|error\.o|warning flags)"
+
+    cat < /dev/stdin | tee -a "$log_file" | \
+    (grep -iE --color=never "$keyword_pattern" || true) | \
+    (grep -viE --color=never "$exclude_pattern" || true)
 }
 
 set -e # break on error
