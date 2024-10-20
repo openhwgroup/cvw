@@ -48,7 +48,9 @@ ENDC='\033[0m' # Reset to default color
 error() {
     echo -e "${FAIL_COLOR}Error: $STATUS installation failed"
     echo -e "Error on line ${BASH_LINENO[0]} with command $BASH_COMMAND${ENDC}"
-    echo -e "Please check the log in $RISCV/logs/$STATUS.log for more information."
+    if [ -e "$RISCV/logs/$STATUS.log" ]; then
+        echo -e "Please check the log in $RISCV/logs/$STATUS.log for more information."
+    fi
     exit 1
 }
 
