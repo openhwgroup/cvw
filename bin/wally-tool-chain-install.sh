@@ -271,7 +271,7 @@ STATUS="riscv-gnu-toolchain"
 cd "$RISCV"
 # Temporarily pin riscv-gnu-toolchain to use GCC 13.2.0. GCC 14 does not work with the Q extension.
 if git_check "riscv-gnu-toolchain" "https://github.com/riscv/riscv-gnu-toolchain" "$RISCV/riscv-gnu-toolchain/stamps/build-gcc-newlib-stage2"; then
-    cd riscv-gnu-toolchain
+    cd "$RISCV"/riscv-gnu-toolchain
     git reset --hard && git clean -f && git checkout master && git pull
     ./configure --prefix="${RISCV}" --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
     make -j "${NUM_THREADS}" 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
@@ -297,7 +297,7 @@ STATUS="elf2hex"
 cd "$RISCV"
 export PATH=$RISCV/bin:$PATH
 if git_check "elf2hex" "https://github.com/sifive/elf2hex.git" "$RISCV/bin/riscv64-unknown-elf-elf2bin"; then
-    cd elf2hex
+    cd "$RISCV"/elf2hex
     git reset --hard && git clean -f && git checkout master && git pull
     autoreconf -i
     ./configure --target=riscv64-unknown-elf --prefix="$RISCV"
@@ -319,7 +319,7 @@ section_header "Installing/Updating QEMU"
 STATUS="qemu"
 cd "$RISCV"
 if git_check "qemu" "https://github.com/qemu/qemu" "$RISCV/include/qemu-plugin.h"; then
-    cd qemu
+    cd "$RISCV"/qemu
     git reset --hard && git clean -f && git checkout master && git pull --recurse-submodules -j "${NUM_THREADS}"
     git submodule update --init --recursive
     ./configure --target-list=riscv64-softmmu --prefix="$RISCV"
@@ -341,7 +341,7 @@ section_header "Installing/Updating SPIKE"
 STATUS="spike"
 cd "$RISCV"
 if git_check "riscv-isa-sim" "https://github.com/riscv-software-src/riscv-isa-sim" "$RISCV/lib/pkgconfig/riscv-riscv.pc"; then
-    cd riscv-isa-sim
+    cd "$RISCV"/riscv-isa-sim
     git reset --hard && git clean -f && git checkout master && git pull
     mkdir -p build
     cd build
@@ -367,7 +367,7 @@ STATUS="verilator"
 cd "$RISCV"
 if git_check "verilator" "https://github.com/verilator/verilator" "$RISCV/share/pkgconfig/verilator.pc"; then
     unset VERILATOR_ROOT
-    cd verilator
+    cd "$RISCV"/verilator
     git reset --hard && git clean -f && git checkout master && git pull
     autoconf
     ./configure --prefix="$RISCV"
@@ -405,7 +405,7 @@ fi
 section_header "Installing/Updating RISC-V Sail Model"
 STATUS="riscv-sail-model"
 if git_check "sail-riscv" "https://github.com/riscv/sail-riscv.git" "$RISCV/bin/riscv_sim_RV32"; then
-    cd sail-riscv
+    cd "$RISCV"/sail-riscv
     git reset --hard && git clean -f && git checkout master && git pull
     ARCH=RV64 make -j "${NUM_THREADS}" c_emulator/riscv_sim_RV64  2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
     ARCH=RV32 make -j "${NUM_THREADS}" c_emulator/riscv_sim_RV32 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
@@ -428,7 +428,7 @@ STATUS="OSU Skywater 130 cell library"
 mkdir -p "$RISCV"/cad/lib
 cd "$RISCV"/cad/lib
 if git_check "sky130_osu_sc_t12" "https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12" "$RISCV/cad/lib/sky130_osu_sc_t12" "main"; then
-    cd sky130_osu_sc_t12
+    cd "$RISCV"/sky130_osu_sc_t12
     git reset --hard && git clean -f && git checkout main && git pull
     echo -e "${SUCCESS_COLOR}OSU Skywater library successfully installed!${ENDC}"
 else
