@@ -55,16 +55,37 @@ error() {
 }
 
 # Check if a git repository exists, is up to date, and has been installed
-# Clones the repository if it doesn't exist
+# clones the repository if it doesn't exist
+# $1: repo name
+# $2: repo url to clone from
+# $3: file to check if already installed
+# $4: upstream branch, optional, default is master
 git_check() {
     local repo=$1
     local url=$2
     local check=$3
     local branch="${4:-master}"
-    if [[ ((! -e $repo) && ($(git clone "$url") || true)) || ($(cd "$repo"; git fetch; git rev-parse HEAD) != $(cd "$repo"; git rev-parse origin/"$branch")) || (! -e $check) ]]; then
-        return 0
+
+    # Clone repo if it doesn't exist
+    if [[ ! -e $repo ]]; then
+        git clone "$url"
+    fi
+
+    # Get the current HEAD commit hash and the remote branch commit hash
+    cd "$repo"
+    git fetch
+    local local_head=$(git rev-parse HEAD)
+    local remote_head=$(git rev-parse origin/"$branch")
+
+    # Check if the git repository is not up to date or the specified file does not exist
+    if [[ "$local_head" != "$remote_head" ]]; then
+        echo "$repo is not up to date"
+        true
+    elif [[ ! -e $check ]]; then
+        echo "$check does not exist"
+        true
     else
-        return 1
+        false
     fi
 }
 
