@@ -65,7 +65,7 @@ dumptvs: check_write_permissions check_environment
 
 generate: $(DTB) $(IMAGES)
 
-$(IMAGES)/%.dtb: check_environment ./devicetree/%.dts
+$(IMAGES)/%.dtb: ./devicetree/%.dts
 	dtc -I dts -O dtb $< > $@
 
 $(IMAGES):
