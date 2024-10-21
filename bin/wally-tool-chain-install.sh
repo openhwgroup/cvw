@@ -231,7 +231,7 @@ if (( RHEL_VERSION == 8 )) || (( UBUNTU_VERSION == 20 )); then
         section_header "Installing glib"
         pip install -U meson # Meson is needed to build glib
         cd "$RISCV"
-        wget --retry-connrefused "$retry_on_host_error" https://download.gnome.org/sources/glib/2.70/glib-2.70.5.tar.xz
+        wget -nv --retry-connrefused $retry_on_host_error https://download.gnome.org/sources/glib/2.70/glib-2.70.5.tar.xz
         tar -xJf glib-2.70.5.tar.xz
         rm -f glib-2.70.5.tar.xz
         cd glib-2.70.5
@@ -250,7 +250,7 @@ if (( RHEL_VERSION == 8 )); then
     if [ ! -e "$RISCV"/include/gmp.h ]; then
         section_header "Installing gmp"
         cd "$RISCV"
-        wget --retry-connrefused "$retry_on_host_error" https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz
+        wget -nv --retry-connrefused $retry_on_host_error https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz
         tar -xJf gmp-6.3.0.tar.xz
         rm -f gmp-6.3.0.tar.xz
         cd gmp-6.3.0
@@ -396,7 +396,7 @@ section_header "Installing/Updating Sail Compiler"
 STATUS="Sail Compiler"
 if [ ! -e "$RISCV"/bin/sail ]; then
     cd "$RISCV"
-    wget --retry-connrefused "$retry_on_host_error" --output-document=sail.tar.gz https://github.com/rems-project/sail/releases/latest/download/sail.tar.gz
+    wget -nv --retry-connrefused $retry_on_host_error --output-document=sail.tar.gz https://github.com/rems-project/sail/releases/latest/download/sail.tar.gz
     tar xz --directory="$RISCV" --strip-components=1 -f sail.tar.gz
     rm -f sail.tar.gz
     echo -e "${SUCCESS_COLOR}Sail Compiler successfully installed/updated!${ENDC}"
@@ -474,8 +474,8 @@ section_header "Downloading Site Setup Script"
 STATUS="site-setup scripts"
 cd "$RISCV"
 if [ ! -e "${RISCV}"/site-setup.sh ]; then
-    wget --retry-connrefused "$retry_on_host_error" https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.sh
-    wget --retry-connrefused "$retry_on_host_error" https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.csh
+    wget -nv --retry-connrefused $retry_on_host_error https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.sh
+    wget -nv --retry-connrefused $retry_on_host_error https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.csh
     echo -e "${SUCCESS_COLOR}Site setup script successfully downloaded!${ENDC}"
     echo -e "${WARNING_COLOR}Make sure to edit the environment variables in $RISCV/site-setup.sh (or .csh) to point to your installation of EDA tools and licensce files.${ENDC}"
 else
