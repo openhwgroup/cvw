@@ -72,7 +72,7 @@ jobs:
             os: ubuntu-latest
             image: null
             user: true
-            riscv_path: $HOME/riscv
+            riscv_path: $HOME/riscv-toolchain
 
     # run on selected version of ubuntu or on ubuntu-latest with docker image
     runs-on: ${{ matrix.os }}
