@@ -236,8 +236,8 @@ if (( RHEL_VERSION == 8 )) || (( UBUNTU_VERSION == 20 )); then
         rm -f glib-2.70.5.tar.xz
         cd glib-2.70.5
         meson setup _build --prefix="$RISCV"
-        meson compile -C _build
-        meson install -C _build
+        meson compile -C _build -j "${NUM_THREADS}" 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+        meson install -C _build 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
         cd "$RISCV"
         rm -rf glib-2.70.5
         echo -e "${SUCCESS_COLOR}glib successfully installed!${ENDC}"
@@ -255,8 +255,8 @@ if (( RHEL_VERSION == 8 )); then
         rm -f gmp-6.3.0.tar.xz
         cd gmp-6.3.0
         ./configure --prefix="$RISCV"
-        make -j "${NUM_THREADS}"
-        make install
+        make -j "${NUM_THREADS}" 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+        make install 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
         cd "$RISCV"
         rm -rf gmp-6.3.0
         echo -e "${SUCCESS_COLOR}gmp successfully installed!${ENDC}"
