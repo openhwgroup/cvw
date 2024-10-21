@@ -221,8 +221,8 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
                 SPI_DELAY0:  Dout <= {8'b0, Delay0[15:8], 8'b0, Delay0[7:0]};
                 SPI_DELAY1:  Dout <= {8'b0, Delay1[15:8], 8'b0, Delay1[7:0]};
                 SPI_FMT:     Dout <= {12'b0, Format[4:1], 13'b0, Format[0], 2'b0};
-                SPI_TXDATA:  Dout <= {23'b0, TransmitFIFOWriteFull, 8'b0};
-                SPI_RXDATA:  Dout <= {23'b0, ReceiveFIFOReadEmpty, ReceiveData[7:0]};
+                SPI_TXDATA:  Dout <= {TransmitFIFOWriteFull, 23'b0, 8'b0};
+                SPI_RXDATA:  Dout <= {ReceiveFIFOReadEmpty, 23'b0, ReceiveData[7:0]};
                 SPI_TXMARK:  Dout <= {29'b0, TransmitWatermark};
                 SPI_RXMARK:  Dout <= {29'b0, ReceiveWatermark};
                 SPI_IE:      Dout <= {30'b0, InterruptEnable};
