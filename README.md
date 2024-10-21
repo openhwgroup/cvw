@@ -1,4 +1,4 @@
-![Installation CI](https://github.com/jordancarlin/cvw/actions/workflows/install.yml/badge.svg?branch=main)
+![Installation CI](https://github.com/openhwgroup/cvw/actions/workflows/install.yml/badge.svg?branch=main)
 
 # core-v-wally
 
