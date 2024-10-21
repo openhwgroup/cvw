@@ -114,6 +114,7 @@ jobs:
               fi
       # Set environment variables for the rest of the job
       - name: Set Environment Variables
+        if: always()
         run: |
               if [ ! -z ${{ matrix.riscv_path }} ]; then
                 sed -i 's,exit 1,export RISCV=${{ matrix.riscv_path }},g' setup.sh
