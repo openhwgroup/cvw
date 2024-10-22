@@ -27,9 +27,16 @@ BINARIES := fw_jump.elf vmlinux busybox
 OBJDUMPS := $(foreach name, $(BINARIES), $(basename $(name) .elf))
 OBJDUMPS := $(foreach name, $(OBJDUMPS), $(DIS)/$(name).objdump)
 
-.PHONY: all generate disassemble install clean cleanDTB cleanDriver check_write_permissions
+.PHONY: all generate disassemble install clean cleanDTB check_write_permissions check_environment
 
-all: check_write_permissions clean download Image disassemble install dumptvs
+all: check_environment check_write_permissions clean download Image disassemble install dumptvs
+
+check_environment: $(RISCV)
+ifeq ($(findstring :$(RISCV)/lib:,:$(LD_LIBRARY_PATH):),)
+	@(echo "ERROR: Your environment variables are not set correctly." >&2 \
+	&& echo "Make sure to source setup.sh or install buildroot using the wally-tool-chain-install.sh script." >&2 \
+	&& exit 1)
+endif
 
 check_write_permissions:
 ifeq ($(SUDO), sudo)
@@ -41,17 +48,17 @@ endif
 		&& exit 1)
 	@$(SUDO) rm -r $(RISCV)/.test
 
-Image:
+Image: check_environment
 	bash -c "unset LD_LIBRARY_PATH; $(MAKE) -C $(BUILDROOT)"
 	$(MAKE) generate
 	@echo "Buildroot Image successfully generated."
 
-install: check_write_permissions
+install: check_write_permissions check_environment
 	$(SUDO) rm -rf $(RISCV)/$(BUILDROOT)
 	$(SUDO) mv $(BUILDROOT) $(RISCV)/$(BUILDROOT)
 	@echo "Buildroot successfully installed."
 
-dumptvs: check_write_permissions
+dumptvs: check_write_permissions check_environment
 	$(SUDO) mkdir -p $(RISCV)/linux-testvectors
 	cd testvector-generation; ./genInitMem.sh
 	@echo "Testvectors successfully generated."
@@ -70,7 +77,7 @@ $(RISCV):
 	@ echo "and sourced setup.sh"
 
 # Disassembly rules ---------------------------------------------------
-disassemble:
+disassemble: check_environment
 	rm -rf $(BUILDROOT)/output/images/disassembly
 	find  $(BUILDROOT)/output/build/linux-* -maxdepth 1 -name "vmlinux" | xargs  cp -t $(BUILDROOT)/output/images/
 	mkdir -p $(DIS)
@@ -113,9 +120,6 @@ $(BUILDROOT):
 	cd $@; git checkout 2023.05.x
 
 # ---------------------------------------------------------------------
-
-cleanDriver:
-	rm -f $(DRIVER)
 
 cleanDTB:
 	rm -f $(IMAGES)/*.dtb

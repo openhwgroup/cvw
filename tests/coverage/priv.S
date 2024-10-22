@@ -7,20 +7,20 @@
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -33,26 +33,26 @@ main:
     csrw sepc, t1
     sret
 sretdone:
-    addi t2, x0, 42 
+    addi t2, x0, 42
 
     # switch to user mode
-    li a0, 0   
+    li a0, 0
     ecall
     sret #should be treated as illegal instruction
     mret #mret in user mode and should be illegal
 
     # switch to supervisor mode
-    li a0, 1   
+    li a0, 1
     ecall
 
     # Test read to stimecmp fails when MCOUNTEREN_TM is not set
     li t1, -3
     csrw stimecmp, t1
-    csrr t0, stimecmp 
+    csrr t0, stimecmp
 
 
     # satp write with mstatus.TVM = 1
-    bseti t0, zero, 20 
+    bseti t0, zero, 20
     csrs mstatus, t0
     csrw satp, zero
 
@@ -62,7 +62,7 @@ sretdone:
     ecall # starts in M-mode
     li t1, -3
     csrw stimecmp, t1 # sets stimecmp to large value to prevent it from interrupting immediately
-    li t0, 2 
+    li t0, 2
     csrs mstatus, t0 # enables sie
     li t0, 32
     csrs sie, t0 # enables sie.stie
@@ -111,7 +111,7 @@ sretdone:
     csrw fcsr, t0
 
     # switch to supervisor mode
-    li a0, 1   
+    li a0, 1
     ecall
 
     # Test write to STVAL, SCAUSE, SEPC, and STIMECMP CSRs
@@ -125,8 +125,8 @@ sretdone:
 
 
     # Switch to machine mode
-    li a0, 3   
-    ecall 
+    li a0, 3
+    ecall
 
     # Write to MCOUNTINHIBIT CSR
     csrw mcountinhibit, t0
@@ -149,7 +149,7 @@ sretdone:
     csrw 2828, t0
     csrw 2829, t0
     csrw 2830, t0
-    csrw 2831, t0  
+    csrw 2831, t0
     csrw 2832, t0
     csrw 2833, t0
     csrw 2834, t0
@@ -165,7 +165,7 @@ sretdone:
     csrw 2844, t0
     csrw 2845, t0
     csrw 2846, t0
-    csrw 2847, t0      
+    csrw 2847, t0
 
     # Testing the HPMCOUNTERM performance counter: reading
     csrr t0, 2817
@@ -181,7 +181,7 @@ sretdone:
     csrw 958, t0
 
 
-    # Testing writes to MTVAL, MCAUSE    
+    # Testing writes to MTVAL, MCAUSE
     li t0, 0
     csrw mtval, t0
     csrw mcause, t0
@@ -195,7 +195,7 @@ sretdone:
     # Test writes to floating point CSRs
     csrw frm, t0
     csrw fflags, t0
-    
+
     # CSRC MCOUNTEREN Register
     # Go to machine mode
     li a0, 3
@@ -228,7 +228,7 @@ sretdone:
     li a0, 0
     ecall
     #set status TVM to 0 by writing to bit 20 of mstatus as 0
-    #bseti t0, zero, 20 
+    #bseti t0, zero, 20
     sfence.vma zero, zero
 
     # Go to supervisor mode
@@ -241,7 +241,7 @@ sretdone:
     ecall
 
     # Write to satp when status.TVM is 1 from machine mode
-    bseti t0, zero, 20 
+    bseti t0, zero, 20
     csrs mstatus, t0
 
     csrw satp, t0
@@ -315,15 +315,12 @@ sretdone:
     ecall               # enter machine mode
     bseti t0, zero, 17
     csrs mstatus, t0    # set MPRV
-    li t1, 0x00001800   
+    li t1, 0x00001800
     csrs mstatus, t1    # set MPP=3
     la t1, finished
-    csrr t0, mepc       
+    csrr t0, mepc
     csrw mepc, t1       # set mepc for mret to jump to
     mret
 
 
 finished: j done
-
-
-

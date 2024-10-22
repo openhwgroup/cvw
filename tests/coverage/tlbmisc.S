@@ -7,20 +7,20 @@
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -38,21 +38,21 @@ main:
     # store ret instruction in case we jump to an address mapping to 80000000
     li t0, 0x80000000
     li t5, 0x8082 # return instruction opcode
-    sw t5, 0(t0)    
+    sw t5, 0(t0)
     fence.i
 
-    # Test not being able to write illegal SATP mode 
-    li t5, 0xA000000000080010  
+    # Test not being able to write illegal SATP mode
+    li t5, 0xA000000000080010
     csrw satp, t5
 
     # Page table root address at 0x80010000; SV48
-    li t5, 0x9000000000080010  
+    li t5, 0x9000000000080010
     csrw satp, t5
 
     # sfence.vma x0, x0
 
     # switch to supervisor mode
-    li a0, 1   
+    li a0, 1
     ecall
 
     # Instruction fetch from misaligned pages
@@ -65,27 +65,27 @@ main:
     jalr ra, t0 # jump to misaligned megapage
     li t0, 0x7FFFFFFF80000000
 
-    
+
     jalr ra, t0 # jump to page with UpperBitsUnequal
     li t0, 0x0000000080C00000
     jalr ra, t0 # jump to page with bad reserved bits 60:54 in PTE
-    
-    # test with ENVCFG_ADUE = 1: switch to machine mode, set ADUE, access page with A=0, clear ADUE, 
+
+    # test with ENVCFG_ADUE = 1: switch to machine mode, set ADUE, access page with A=0, clear ADUE,
     li a0, 3
     ecall       # switch to machine mode
     li t0, 1
-    slli t0, t0, 61 
+    slli t0, t0, 61
     csrs menvcfg, t0 # set menvcfg.ADUE
-    li a0, 1    
+    li a0, 1
     ecall       # switch back to supervisor mode
     li t0, 0x0000000080E00000
     jalr ra, t0 # jump to page without accessed bit yet set
     li a0, 3
     ecall       # switch to machine mode
     li t0, 1
-    slli t0, t0, 61 
+    slli t0, t0, 61
     csrc menvcfg, t0 # clear menvcfg.ADUE
-    li a0, 1    
+    li a0, 1
     ecall       # switch back to supervisor mode
 
      # exercise malformed PBMT pages
@@ -147,9 +147,9 @@ ConcurrentICacheMissDTLBMiss:
 
     # jump to address for TLB miss to trigger HPTW to make access with DisableTranslation = 1, Translate = 0
     li t0, 0x80805000
-    jalr ra, t0         
+    jalr ra, t0
     li t0, 0x80807000 # again, triggering setting access bit
-    jalr ra, t0         
+    jalr ra, t0
 
     # atomic access to uncachable memory
     #li t0, 0x80806000
@@ -168,7 +168,7 @@ ConcurrentICacheMissDTLBMiss:
     jalr ra, t0      # jump to page to exercise ITLB with PBMT !=0 when ENVCFG_PMTE=0
 
     # Load and AMO operation on page table entry that causes access fault
-    li t0, 0x81000000 
+    li t0, 0x81000000
     lw t1, 0(t0)
     sfence.vma
     amoadd.w t0, t0, 0(t0)
@@ -190,7 +190,7 @@ ConcurrentICacheMissDTLBMiss:
     lw t1, 0(t0)
 
     # AMO operation on page table entry that causes page fault due to malformed PBMT
-    li t0, 0x81200000 
+    li t0, 0x81200000
     jalr t0          # Attempt to fetch instruction from address causing faulty page walk
     lw t1, 0(t0)
     sfence.vma
@@ -198,10 +198,10 @@ ConcurrentICacheMissDTLBMiss:
 
     # point top-level page table to an illegal address and verify it faults
     li t0, 0x9000000000070000 # trap handler at non-existing memory location
-    csrw satp, t0 # should cause trap 
+    csrw satp, t0 # should cause trap
     sfence.vma
     nop
- 
+
 
     # change back to default trap handler after checking everything that might cause an instruction page fault
     jal changetodefaulthandler
@@ -263,7 +263,7 @@ ConcurrentICacheMissDTLBMiss:
     ecall
 
 
-   
+
 
     # wrap up
     li a0, 3 # switch back to machine mode because code at 0x80000000 may not have clean page table entry
@@ -274,7 +274,7 @@ backandforth:
     ret
 
 changetoipfhandler:
-    li a0, 3    
+    li a0, 3
     ecall       # switch to machine mode
     la a0, ipf_handler
     csrw mtvec, a0 # point to new handler
@@ -283,7 +283,7 @@ changetoipfhandler:
     ret
 
 changetodefaulthandler:
-    li a0, 3    
+    li a0, 3
     ecall       # switch to machine mode
     la a0, trap_handler
     csrw mtvec, a0 # point to new handler
@@ -301,8 +301,8 @@ ipf_handler:
     csrrw tp, mscratch, tp  # swap MSCRATCH and tp
     sd t0, 0(tp)        # Save t0 and t1 on the stack
     sd t1, -8(tp)
-    li t5, 0x9000000000080010  
-    csrw satp, t5       # make sure we are pointing to the root page table 
+    li t5, 0x9000000000080010
+    csrw satp, t5       # make sure we are pointing to the root page table
     csrr t0, mcause     # Check the cause
     li t1, 8            # is it an ecall trap?
     andi t0, t0, 0xFC   # if CAUSE = 8, 9, or 11
@@ -329,7 +329,7 @@ fixsatptraphandler:
 
 .align 16
 # root Page table situated at 0x80010000
-pagetable: 
+pagetable:
     .8byte 0x200044C1  # VA 0x00000000-0x7F_FFFFFFFF: PTE at 0x80011000 C1 dirty, accessed, valid
     .8byte 0x00000000000010CF # misaligned terapage at 0x80_00000000
     .8byte 0x00000000000000CF # access fault terapage at 0x100_00000000
@@ -345,9 +345,9 @@ pagetable:
     .8byte 0x0
     .8byte 0x0
     .8byte 0x0
-SpecialPage:    
+SpecialPage:
     .8byte 0x00000000200000CF   # 0x2_0000_0000 1GiB page1
- 
+
 
 # Next page table at 0x80012000 for gigapage at 0x80000000
 .align 12
@@ -429,7 +429,7 @@ SpecialPage:
     .8byte 0x80000000200060CF
     .8byte 0x80000000200060CF
     .8byte 0x80000000200060CF
-    
+
     .8byte 0x800000002000A0CF
     .8byte 0x800000002000A0CF
     .8byte 0x800000002000A0CF
@@ -475,4 +475,3 @@ SpecialPage:
     .8byte 0x00000000200000CF   # valid rwx for VA 80805000  for covering ITLB translate
     .8byte 0x20000000200000CF   # PBMT=1    for VA 80806000  for covering ITLB BadPBMT
     .8byte 0x000000002000000F   # valid rwx for VA 80807000  for covering UpdateDA
-

@@ -9,20 +9,20 @@
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -36,13 +36,13 @@ main:
     slli t5, t5, 62
     csrs menvcfg, t5
     # Page table root address at 0x80010000; SV48
-    li t5, 0x9000000000080010  
+    li t5, 0x9000000000080010
     csrw satp, t5
 
     # sfence.vma x0, x0
 
     # switch to supervisor mode
-    li a0, 1   
+    li a0, 1
     ecall
 
     li t4, 0x200000   # address step size
@@ -90,7 +90,7 @@ finished:
     jr a1
 
 changetoipfhandler:
-    li a0, 3    
+    li a0, 3
     ecall       # switch to machine mode
     la a0, ipf_handler
     csrw mtvec, a0 # point to new handler
@@ -99,7 +99,7 @@ changetoipfhandler:
     ret
 
 changetodefaulthandler:
-    li a0, 3    
+    li a0, 3
     ecall       # switch to machine mode
     la a0, trap_handler
     csrw mtvec, a0 # point to new handler
@@ -137,7 +137,7 @@ ipf:
 
 .align 16
 # root Page table situated at 0x80010000
-pagetable: 
+pagetable:
     .8byte 0x200044C1 // old page table was 200040 which just pointed to itself! wrong
 
 # next page table at 0x80011000
@@ -146,7 +146,7 @@ pagetable:
     .8byte 0x00000000200058C1 # gigapage at 0x40000000 used for non-NAPOT with PPN bit 3 set
     .8byte 0x00000000200048C1 # gigapage at 0x80000000 used for testing NAPOT huge pages
     .8byte 0x00000000200050C1 # gigapage at 0xC0000000 mapped to ill-formed NAPOT with wrong PPN
-    
+
 
 # Next page table at 0x80012000 for gigapage at 0x80000000
 .align 12
@@ -231,7 +231,7 @@ pagetable:
     .8byte 0x80000000200060CF
     .8byte 0x80000000200060CF
     .8byte 0x80000000200060CF
-    
+
     .8byte 0x800000002000A0CF
     .8byte 0x800000002000A0CF
     .8byte 0x800000002000A0CF
@@ -437,4 +437,3 @@ pagetable:
     .8byte 0x00000000200060CF
     .8byte 0x000000002000A0CF
     .8byte 0x000000002000E0CF
-
