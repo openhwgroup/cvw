@@ -59,6 +59,21 @@
 #--override cpu/instret_undefined=T
 #--override cpu/hpmcounter_undefined=T
 
+# context registers not implemented
+--override cpu/scontext_undefined=T
+--override cpu/mcontext_undefined=T
+--override no_pseudo_inst=T # For code coverage, don't produce pseudoinstructions
+
+
+# mcause and scause only have 4 lsbs of code and 1 msb of interrupt flag
+#--override cpu/ecode_mask=0x8000000F  # for RV32
+--override cpu/ecode_mask=0x800000000000000F # for RV64
+
+# Debug mode not yet supported
+--override cpu/debug_mode=none
+
+
+
 --override cpu/reset_address=0x80000000
 
 --override cpu/unaligned=F  # Zicclsm (should be true)

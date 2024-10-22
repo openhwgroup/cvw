@@ -5,18 +5,22 @@
 // This file is needed in the config subdirectory for each config supporting coverage.
 // It defines which extensions are enabled for that config.
 
+// Unprivileged extensions
 `include "RV64I_coverage.svh"
 `include "RV64M_coverage.svh"
 `include "RV64F_coverage.svh"
 `include "RV64Zfh_coverage.svh"
 `include "RV64VM_coverage.svh"
-`include "RV64VM_PMP_coverage.svh"
-`include "RV64CBO_VM_coverage.svh"
-`include "RV64CBO_PMP_coverage.svh"
-`include "RV64Zicbom_coverage.svh"
 `include "RV64Zicond_coverage.svh"
 `include "RV64Zca_coverage.svh"
 `include "RV64Zcb_coverage.svh"
 `include "RV64ZcbM_coverage.svh"
 `include "RV64ZcbZbb_coverage.svh"
 `include "RV64ZcbZba_coverage.svh"
+
+// Privileged extensions
+`include "ZicsrM_coverage.svh"
+// `include "RV64VM_PMP_coverage.svh"
+// `include "RV64CBO_VM_coverage.svh"
+// `include "RV64CBO_PMP_coverage.svh"
+// `include "RV64Zicbom_coverage.svh"

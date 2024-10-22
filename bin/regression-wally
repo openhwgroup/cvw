@@ -507,7 +507,7 @@ def main():
         TIMEOUT_DUR = 20*60 # seconds
         os.system('rm -f questa/cov/*.ucdb')
     elif args.fcov:
-        TIMEOUT_DUR = 2*60
+        TIMEOUT_DUR = 8*60
         os.system('rm -f questa/fcov_ucdb/* questa/fcov_logs/* questa/fcov/*')
     elif args.buildroot:
         TIMEOUT_DUR = 60*1440 # 1 day
