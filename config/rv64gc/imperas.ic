@@ -60,6 +60,7 @@
 # context registers not implemented
 --override cpu/scontext_undefined=T
 --override cpu/mcontext_undefined=T
+--override no_pseudo_inst=T # For code coverage, don't produce pseudoinstructions
 
 # nonratified mnosie register not implemented
 --override cpu/mnoise_undefined=T
