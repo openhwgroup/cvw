@@ -410,7 +410,7 @@ class TestRunner:
             # Remove ANSI escape codes
             line = re.sub(r'\x1b\[[0-9;]*[mGK]', '', lines[index])  
             
-            if "Success" in line:
+            if "Success" in line: # test succeeds
                 passed_configs.append(line.split(':')[0].strip())
             elif "passed lint" in line:
                 passed_configs.append(f"Lint: {line.split(' ')[0].strip()}")
@@ -419,13 +419,21 @@ class TestRunner:
                 failed_configs.append([f"Lint: {line.split(' ')[0].strip()}", "No Log File"])
                 #failed_configs.append(line)
 
-            elif "Failures detected in output" in line:
+            elif "Failures detected in output" in line: # Text explicitly fails
                 try:
                     config_name = line.split(':')[0].strip()
                     log_file = os.path.abspath(os.path.join("logs", config_name, ".log"))
                     failed_configs.append((config_name, log_file))
                 except:
                     failed_configs.append((config_name, "Log file not found"))
+
+            elif "Timeout" in line: # Test times out
+                try:
+                    config_name = line.split(':')[0].strip()
+                    log_file = os.path.abspath("logs/"+config_name+".log")
+                    failed_configs.append((f"Timeout: {config_name}", log_file))
+                except:
+                    failed_configs.append((f"Timeout: {config_name}", "No Log File"))
             
 
             index += 1
@@ -664,7 +672,7 @@ def main():
 
     parser.add_argument('--path',default = "nightly", help='specify the path for where the nightly repositories will be cloned ex: "nightly-runs')
     parser.add_argument('--repository',default = "https://github.com/openhwgroup/cvw", help='specify which github repository you want to clone')
-    parser.add_argument('--target', default = "all", help='types of tests you can make are: all, wally-riscv-arch-test, no')
+    parser.add_argument('--target', default = "--jobs", help='types of tests you can make are: all, wally-riscv-arch-test, no')
     parser.add_argument('--tests', default = "nightly", help='types of tests you can run are: nightly, test, test_lint')
     parser.add_argument('--send_email',default = "", nargs="+", help='What emails to send test results to. Example: "[email1],[email2],..."')
 
@@ -699,7 +707,7 @@ def main():
     # flags are a list
     if (args.tests == "all"):
         test_list = [["python", "./regression-wally", ["--nightly", "--buildroot"]]]
-    if (args.tests == "nightly"):
+    elif (args.tests == "nightly"):
         test_list = [["python", "./regression-wally", ["--nightly"]]]
     elif (args.tests == "regression"):
         test_list = [["python", "./regression-wally", []]]
@@ -755,11 +763,12 @@ def main():
 
     if args.target != "no":
         test_runner.execute_makefile(target = args.target, makefile_path=test_runner.cvw)
-    if args.target == "all":
-        # Compile Linux for local testing
-        test_runner.set_env_var("RISCV",str(test_runner.cvw))
-        linux_path = test_runner.cvw / "linux"
-        test_runner.execute_makefile(target = "all", makefile_path=linux_path)
+    # TODO: remove vestigial code if no longer wanted
+    # if args.target == "all":
+    #     # Compile Linux for local testing
+    #     test_runner.set_env_var("RISCV",str(test_runner.cvw))
+    #     linux_path = test_runner.cvw / "linux"
+    #     test_runner.execute_makefile(target = "all", makefile_path=linux_path)
 
     #############################################
     #               RUN TESTS                   #
