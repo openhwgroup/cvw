@@ -97,7 +97,7 @@ class FolderManager:
             self.base_parent_dir = os.path.dirname(self.base_dir)
         else:
             self.base_dir = basedir
-            self.base_parent_dir = os.path.dirname(self.base_dir)
+            self.base_parent_dir = self.base_dir
 
         # logger.info(f"Base directory: {self.base_dir}")
         # logger.info(f"Parent Base directory: {self.base_parent_dir}")
