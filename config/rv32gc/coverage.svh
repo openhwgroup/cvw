@@ -8,6 +8,8 @@
 `include "RV32I_coverage.svh"
 `include "RV32M_coverage.svh"
 `include "RV32F_coverage.svh"
+`include "RV32D_coverage.svh"
+`include "RV32ZfhD_coverage.svh"
 `include "RV32Zfh_coverage.svh"
 `include "RV32Zicond_coverage.svh"
 `include "RV32Zca_coverage.svh"
