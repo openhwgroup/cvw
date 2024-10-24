@@ -534,6 +534,7 @@ def main():
            try:
              num_fail+=result.get(timeout=TIMEOUT_DUR)
            except TimeoutError:
+             pool.terminate()
              num_fail+=1
              print(f"{bcolors.FAIL}%s: Timeout - runtime exceeded %d seconds{bcolors.ENDC}" % (config.cmd, TIMEOUT_DUR))
 
