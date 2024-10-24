@@ -9,6 +9,8 @@
 `include "RV64I_coverage.svh"
 `include "RV64M_coverage.svh"
 `include "RV64F_coverage.svh"
+`include "RV64D_coverage.svh"
+`include "RV64ZfhD_coverage.svh"
 `include "RV64Zfh_coverage.svh"
 `include "RV64VM_coverage.svh"
 `include "RV64Zicond_coverage.svh"
