@@ -84,7 +84,7 @@ from pathlib import Path
 class FolderManager:
     """A class for managing folders and repository cloning."""
 
-    def __init__(self):
+    def __init__(self, basedir):
         """
         Initialize the FolderManager instance.
 
@@ -92,8 +92,12 @@ class FolderManager:
             base_dir (str): The base directory where folders will be managed and repository will be cloned.
         """
         env_extract_var = 'WALLY'
-        self.base_dir = os.environ.get(env_extract_var)
-        self.base_parent_dir = os.path.dirname(self.base_dir)
+        if os.environ.get(env_extract_var):
+            self.base_dir = os.environ.get(env_extract_var)
+            self.base_parent_dir = os.path.dirname(self.base_dir)
+        else:
+            self.base_dir = basedir
+            self.base_parent_dir = self.base_dir
 
         # logger.info(f"Base directory: {self.base_dir}")
         # logger.info(f"Parent Base directory: {self.base_parent_dir}")
@@ -313,7 +317,7 @@ class TestRunner:
             self.logger.error(f"Error making the tests. Target: {target}")
             return False
             
-    def run_tests(self, test_type=None, test_name=None, test_extension=None):
+    def run_tests(self, test_type=None, test_name=None, test_extensions=None):
         """
         Run a script through the terminal and save the output to a file.
 
@@ -329,12 +333,12 @@ class TestRunner:
         output_file = self.log_dir.joinpath(f"{test_name}-output.log")
         os.chdir(self.sim_dir)
 
-        if test_extension:
-            command = [test_type, test_name, test_extension]
-            self.logger.info(f"Command used to run tests: {test_type} {test_name} {test_extension}")
+        if test_extensions:
+            command = [test_type, test_name] + test_extensions
+            self.logger.info(f"Command used to run tests in directory {self.sim_dir}: {test_type} {test_name} {' '.join(test_extensions)}")
         else:
             command = [test_type, test_name]
-            self.logger.info(f"Command used to run tests: {test_type} {test_name}")
+            self.logger.info(f"Command used to run tests in directory {self.sim_dir}: {test_type} {test_name}")
 
 
         # Execute the command using subprocess and save the output into a file
@@ -348,10 +352,10 @@ class TestRunner:
             self.logger.error("There was an error in running the tests in the run_tests function: {e}")
         # Check if the command executed successfuly
         if result.returncode or result.returncode == 0:
-            self.logger.info(f"Test ran successfuly. Test type: {test_type}, test name: {test_name}, test extention: {test_extension}")
+            self.logger.info(f"Test ran successfuly. Test type: {test_type}, test name: {test_name}, test extension: {' '.join(test_extensions)}")
             return True, output_file
         else:
-            self.logger.error(f"Error making test. Test type: {test_type}, test name: {test_name}, test extention: {test_extension}")
+            self.logger.error(f"Error making test. Test type: {test_type}, test name: {test_name}, test extension: {' '.join(test_extensions)}")
             return False, output_file
 
 
@@ -406,22 +410,30 @@ class TestRunner:
             # Remove ANSI escape codes
             line = re.sub(r'\x1b\[[0-9;]*[mGK]', '', lines[index])  
             
-            if "Success" in line:
+            if "Success" in line: # test succeeds
                 passed_configs.append(line.split(':')[0].strip())
             elif "passed lint" in line:
-                passed_configs.append(line.split(' ')[0].strip())
+                passed_configs.append(f"Lint: {line.split(' ')[0].strip()}")
                 #passed_configs.append(line) # potentially use a space
             elif "failed lint" in line:
-                failed_configs.append(line.split(' ')[0].strip(), "no log file")
+                failed_configs.append([f"Lint: {line.split(' ')[0].strip()}", "No Log File"])
                 #failed_configs.append(line)
 
-            elif "Failures detected in output" in line:
+            elif "Failures detected in output" in line: # Text explicitly fails
                 try:
                     config_name = line.split(':')[0].strip()
-                    log_file = os.path.abspath("logs/"+config_name+".log")
+                    log_file = os.path.abspath(os.path.join("logs", config_name, ".log"))
                     failed_configs.append((config_name, log_file))
                 except:
                     failed_configs.append((config_name, "Log file not found"))
+
+            elif "Timeout" in line: # Test times out
+                try:
+                    config_name = line.split(':')[0].strip()
+                    log_file = os.path.abspath("logs/"+config_name+".log")
+                    failed_configs.append((f"Timeout: {config_name}", log_file))
+                except:
+                    failed_configs.append((f"Timeout: {config_name}", "No Log File"))
             
 
             index += 1
@@ -535,7 +547,7 @@ class TestRunner:
             md_file.write(f"\n**Total failed tests: {total_number_failures}**")
             for (test_item, item) in zip(test_list, failed_tests):
                 md_file.write(f"\n\n### {test_item[1]} test")
-                md_file.write(f"\n**Command used:** {test_item[0]} {test_item[1]} {test_item[2]}\n\n")
+                md_file.write(f"\n**Command used:** {test_item[0]} {test_item[1]} {' '.join(test_item[2])}\n\n")
                 md_file.write(f"**Failed Tests:**\n")
 
                 
@@ -558,7 +570,7 @@ class TestRunner:
             md_file.write(f"\n**Total successful tests: {total_number_success}**")
             for (test_item, item) in zip(test_list, passed_tests):
                 md_file.write(f"\n\n### {test_item[1]} test")
-                md_file.write(f"\n**Command used:** {test_item[0]} {test_item[1]} {test_item[2]}\n\n")
+                md_file.write(f"\n**Command used:** {test_item[0]} {test_item[1]} {' '.join(test_item[2])}\n\n")
                 md_file.write(f"\n**Successful Tests:**\n")
 
                 
@@ -619,7 +631,7 @@ class TestRunner:
 
         # check if there are any emails
         if not receiver_emails:
-            self.logger.ERROR("No receiver emails provided.")
+            self.logger.error("No receiver emails provided.")
             return
 
         # grab the html file
@@ -660,7 +672,7 @@ def main():
 
     parser.add_argument('--path',default = "nightly", help='specify the path for where the nightly repositories will be cloned ex: "nightly-runs')
     parser.add_argument('--repository',default = "https://github.com/openhwgroup/cvw", help='specify which github repository you want to clone')
-    parser.add_argument('--target', default = "all", help='types of tests you can make are: all, wally-riscv-arch-test, no')
+    parser.add_argument('--target', default = "--jobs", help='types of tests you can make are: all, wally-riscv-arch-test, no')
     parser.add_argument('--tests', default = "nightly", help='types of tests you can run are: nightly, test, test_lint')
     parser.add_argument('--send_email',default = "", nargs="+", help='What emails to send test results to. Example: "[email1],[email2],..."')
 
@@ -682,7 +694,7 @@ def main():
     log_file_path = log_path.joinpath("nightly_build.log")
     previous_cvw_path = Path.home().joinpath(args.path,f"{yesterday}/cvw")
     # creates the object
-    folder_manager = FolderManager()
+    folder_manager = FolderManager(basedir=args.path)
 
     # setting the path on where to clone new repositories of cvw
     folder_manager.create_folders([cvw_path, results_path, log_path])
@@ -691,14 +703,18 @@ def main():
     folder_manager.clone_repository(cvw_path, args.repository)
 
     # Define tests that we can run
-    if (args.tests == "nightly"):
-        test_list = [["python", "regression-wally", "--nightly --buildroot"]]
-    elif (args.tests == "test"):
-        test_list = [["python", "regression-wally", ""]]
-    elif (args.tests == "test_lint"):
-        test_list = [["bash", "lint-wally", "-nightly"]]
+    #
+    # flags are a list
+    if (args.tests == "all"):
+        test_list = [["python", "./regression-wally", ["--nightly", "--buildroot"]]]
+    elif (args.tests == "nightly"):
+        test_list = [["python", "./regression-wally", ["--nightly"]]]
+    elif (args.tests == "regression"):
+        test_list = [["python", "./regression-wally", []]]
+    elif (args.tests == "lint"):
+        test_list = [["bash", "./lint-wally", ["--nightly"]]]
     else:
-        print(f"Error: Invalid test '"+args.test+"' specified")
+        print(f"Error: Invalid test {args.tests} specified")
         raise SystemExit
 
     #############################################
@@ -747,12 +763,12 @@ def main():
 
     if args.target != "no":
         test_runner.execute_makefile(target = args.target, makefile_path=test_runner.cvw)
-    if args.target == "all":
-        # Compile Linux for local testing
-        test_runner.set_env_var("RISCV",str(test_runner.cvw))
-        linux_path = test_runner.cvw / "linux"
-        test_runner.execute_makefile(target = "all_nosudo", makefile_path=linux_path)
-        test_runner.execute_makefile(target = "dumptvs_nosudo", makefile_path=linux_path)
+    # TODO: remove vestigial code if no longer wanted
+    # if args.target == "all":
+    #     # Compile Linux for local testing
+    #     test_runner.set_env_var("RISCV",str(test_runner.cvw))
+    #     linux_path = test_runner.cvw / "linux"
+    #     test_runner.execute_makefile(target = "all", makefile_path=linux_path)
 
     #############################################
     #               RUN TESTS                   #
@@ -766,9 +782,9 @@ def main():
     total_failures = []
     total_success = []
 
-    for test_type, test_name, test_extension in test_list:
+    for test_type, test_name, test_extensions in test_list:
         
-        check, output_location = test_runner.run_tests(test_type=test_type, test_name=test_name, test_extension=test_extension)
+        check, output_location = test_runner.run_tests(test_type=test_type, test_name=test_name, test_extensions=test_extensions)
         try:
             if check: # this checks if the test actually ran successfuly
                 output_log_list.append(output_location)
@@ -778,7 +794,7 @@ def main():
                     passed, failed = test_runner.clean_format_output(input_file = output_location)
                     logger.info(f"{test_name} has been formatted to markdown")
                 except:
-                    logger.ERROR(f"Error occured with formatting {test_name}")
+                    logger.error(f"Error occured with formatting {test_name}")
 
                 logger.info(f"The # of failures are for {test_name}: {len(failed)}")
                 total_number_failures+= len(failed)
@@ -788,15 +804,19 @@ def main():
                 total_number_success += len(passed)
                 total_success.append(passed)
                 test_runner.rewrite_to_markdown(test_name, passed, failed)
+                
+                newlinechar = "\n"
+                logger.info(f"Failed tests: \n{newlinechar.join([x[0] for x in failed])}")
     
         except Exception as e:
-            logger.error("There was an error in running the tests: {e}")
+            logger.error(f"There was an error in running the tests: {e}")
 
     logger.info(f"The total sucesses for all tests ran are: {total_number_success}")
     logger.info(f"The total failures for all tests ran are: {total_number_failures}")
 
-    # Copy actual test logs from sim/questa, sim/verilator
-    test_runner.copy_sim_logs([test_runner.cvw / "sim/questa/logs", test_runner.cvw / "sim/verilator/logs"])
+    # Copy actual test logs from sim/questa, sim/verilator, sim/vcs
+    if not args.tests == "test_lint":
+        test_runner.copy_sim_logs([test_runner.cvw / "sim/questa/logs", test_runner.cvw / "sim/verilator/logs", test_runner.cvw / "sim/vcs/logs"])
 
     #############################################
     #               FORMAT TESTS                #
