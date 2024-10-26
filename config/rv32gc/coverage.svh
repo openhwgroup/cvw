@@ -5,6 +5,7 @@
 // This file is needed in the config subdirectory for each config supporting coverage.
 // It defines which extensions are enabled for that config.
 
+// Unprivileged extensions
 `include "RV32I_coverage.svh"
 `include "RV32M_coverage.svh"
 `include "RV32F_coverage.svh"
@@ -16,3 +17,6 @@
 `include "RV32Zcb_coverage.svh"
 `include "RV32ZcbM_coverage.svh"
 `include "RV32ZcbZbb_coverage.svh"
+
+// Privileged extensions
+`include "ZicsrM_coverage.svh"
