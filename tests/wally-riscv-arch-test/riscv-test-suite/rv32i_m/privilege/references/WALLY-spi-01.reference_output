@@ -32,59 +32,59 @@
 
 00000003
 
-00000074
+00000074    # spi_burst_send
 
-00000063
+00000063    # spi_burst_send
 
-00000052
+00000052    # spi_burst_send
 
-00000041
+00000041    # spi_burst_send
 
-000000A1
-
-00000003
-
-000000B2
-
-00000001
-
-000000C3
-
-000000D4
+000000A1    # spi_burst_send
 
 00000003
 
-000000A4
+000000B2    # spi_burst_send
 
 00000001
 
-000000B4
+000000C3    # spi_burst_send
 
-000000A5
+000000D4    # spi_burst_send
 
-000000B5
+00000003
 
-000000C5
+000000A4    # tx_data write test
 
-000000D5
+00000001
 
-000000A7
+000000B4    # tx_data write test
 
-000000B7
+000000A5    # spi_burst_send    
 
-000000C7
+000000B5    # spi_burst_send
+
+000000C5    # spi_burst_send
+
+000000D5    # spi_burst_send
+
+000000A7    # spi_burst_send
+
+000000B7    # spi_burst_send
+
+000000C7    # spi_burst_send
 
 00000002
 
-000000D7
+000000D7    # spi_burst_send
 
 00000000
 
 00000011 #basic read write
 
-000000FF
+000000FF    # first test sck_div
 
-000000AE
+000000AE    # min sck_div first spi_burst_send
 
 000000AD
 
