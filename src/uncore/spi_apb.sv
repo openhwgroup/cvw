@@ -234,9 +234,9 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     // SPI enable generation, where SCLK = PCLK/(2*(SckDiv + 1))
     // Asserts SCLKenable at the rising and falling edge of SCLK by counting from 0 to SckDiv
     // Active at 2x SCLK frequency to account for implicit half cycle delays and actions on both clock edges depending on phase
-    // When SckDiv is 0, count doesn't work and SCLKenable is simply PCLK
+    // When SckDiv is 0, count doesn't work and SCLKenable is simply PCLK  *** dh 10/26/24: this logic is seriously broken.  SCLK is not scaled to PCLK/(2*(SckDiv + 1)).  SCLKenableEarly doesn't work right for SckDiv=0
     assign ZeroDiv = ~|(SckDiv[10:0]);
-    assign SCLKenable = ZeroDiv ? PCLK : (DivCounter == SckDiv);
+    assign SCLKenable = ZeroDiv ? 1 : (DivCounter == SckDiv);
     assign SCLKenableEarly = ((DivCounter + 12'b1) == SckDiv);
     always_ff @(posedge PCLK)
         if (~PRESETn) DivCounter <= '0;
