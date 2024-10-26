@@ -536,17 +536,16 @@ def main():
     else:
         ImperasDVLicenseCount = 10000 # effectively no license limit for non-lockstep tests
     with Pool(processes=min(len(configs),multiprocessing.cpu_count(), ImperasDVLicenseCount)) as pool:
-       num_fail = 0
-       results = {}
-       for config in configs:
-           results[config] = pool.apply_async(run_test_case,(config,))
-       for (config,result) in results.items():
-           try:
-             num_fail+=result.get(timeout=TIMEOUT_DUR)
-           except TimeoutError:
-             pool.terminate()
-             num_fail+=1
-             print(f"{bcolors.FAIL}%s: Timeout - runtime exceeded %d seconds{bcolors.ENDC}" % (config.cmd, TIMEOUT_DUR))
+        num_fail = 0
+        results = {}
+        for config in configs:
+            results[config] = pool.apply_async(run_test_case,(config,args.dryrun,))
+        for (config,result) in results.items():
+            try:
+                num_fail+=result.get(timeout=TIMEOUT_DUR)
+            except TimeoutError:
+                num_fail+=1
+                print(f"{bcolors.FAIL}%s: Timeout - runtime exceeded %d seconds{bcolors.ENDC}" % (config.cmd, TIMEOUT_DUR))
 
     # Coverage report
     if args.ccov:
