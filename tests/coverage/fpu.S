@@ -7,20 +7,20 @@
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -48,9 +48,9 @@ main:
     fcvt.h.q fs1, fs0
     fcvt.s.q fs1, fs0
     # round for now because these tests are excluded from Zfa until rounding is implemented
-    fround.s fs1, fs0       
+    fround.s fs1, fs0
     froundnx.s fs1, fs0
-    fround.d fs1, fs0       
+    fround.d fs1, fs0
     froundnx.d fs1, fs0
     fround.h fs1, fs0
     froundnx.h fs1, fs0
@@ -146,7 +146,7 @@ main:
     sd t0, 0(t1)
     csrsi mstatus, 0b1000   # enable interrupts with mstatus.MIE
     li t1, 0x0200bff8   # read MTIME in CLINT
-    ld t0, 0(t1)        
+    ld t0, 0(t1)
     addi t0, t0, 11
     li t1, 0x02004000   # MTIMECMP in CLINT
     sd t0, 0(t1)        # write mtime+10 to cause interrupt soon  This is very touchy timing and is sensitive to cache line fetch latency
@@ -166,7 +166,7 @@ main:
     .word 0xc5000007    // Attempting to toggle (Op7 != 7) to 0 on line 97 in fctrl, not sure what instruction this works out to
     .word 0xe0101053    // toggling (Rs2D == 0) to 0 on line 139 in fctrl. Illegal Intsr (like fclass but incorrect rs2)
     .word 0xe0100053    // toggling (Rs2D == 0) to 0 on line 141 in fctrl. Illegal Intsr (like fmv but incorrect rs2)
-    .word 0x40D00053    // toggling (Rs2D[4:2] == 0) to 0 on line 145 in fctrl. 
+    .word 0x40D00053    // toggling (Rs2D[4:2] == 0) to 0 on line 145 in fctrl.
     .word 0x40300053    // toggling SupportFmt2 to 0 on line 145 in fctrl.
     .word 0x42100053    // toggling (Rs2D[1:0] != 1) to 0 on line 147 in fctrl. Illegal Instr
     .word 0xf0100053    // toggling (Rs2D == 0) to 0 on line 143 in fctrl. Illegal Instr

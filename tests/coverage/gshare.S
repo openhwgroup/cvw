@@ -8,20 +8,20 @@
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -41,7 +41,7 @@ main:
         jal ra, global_hist_2_space_test
         jal ra, global_hist_1_space_test
         jal ra, global_hist_0_space_test
-        
+
         fence.I
 
 finished:
@@ -100,7 +100,7 @@ oneLoopTest5:
 	# instruction
 	addi t3, t3, 1
 	bne t3, t4, oneLoopTest5     # this branch toggles between taken and not taken.
-        
+
 	ret
 
 .section .text
@@ -116,10 +116,10 @@ loop_6:
 	# instruction
 	addi t3, t3, 1
 	addi t3, t3, 1
-	addi t3, t3, 1		
-	addi t3, t3, 1		
-	addi t3, t3, 1		
-	addi t3, t3, 1		
+	addi t3, t3, 1
+	addi t3, t3, 1
+	addi t3, t3, 1
+	addi t3, t3, 1
 	beqz t4, zero_6     # this branch toggles between taken and not taken.
 	li t4, 0
 	j one_6
@@ -129,12 +129,12 @@ zero_6:
 	addi t3, t3, 1
 	addi t3, t3, 1
 	add t1, t1, t4
-	
+
 one_6:
-	addi t3, t3, 1		
-	addi t3, t3, 1		
-	addi t3, t3, 1		
-	addi t3, t3, 1		
+	addi t3, t3, 1
+	addi t3, t3, 1
+	addi t3, t3, 1
+	addi t3, t3, 1
 	addi t2, t2, -1
 	bnez t2, loop_6
 
@@ -153,8 +153,8 @@ loop_4:
 	# instruction
 	addi t3, t3, 1
 	addi t3, t3, 1
-	addi t3, t3, 1		
-	addi t3, t3, 1		
+	addi t3, t3, 1
+	addi t3, t3, 1
 	beqz t4, zero_4     # this branch toggles between taken and not taken.
 	li t4, 0
 	j one_4
@@ -162,9 +162,9 @@ zero_4:
 	li t4, 1
 	addi t3, t3, 1
 	add t1, t1, t4
-	
+
 one_4:
-	addi t3, t3, 1		
+	addi t3, t3, 1
 	addi t2, t2, -1
 	bnez t2, loop_4
 
@@ -183,8 +183,8 @@ loop_3:
 	# instruction
 	addi t3, t3, 1
 	addi t3, t3, 1
-	addi t3, t3, 1		
-	addi t3, t3, 1		
+	addi t3, t3, 1
+	addi t3, t3, 1
 	beqz t4, zero_3     # this branch toggles between taken and not taken.
 	li t4, 0
 	j one_3
@@ -192,9 +192,9 @@ zero_3:
 	li t4, 1
 	addi t3, t3, 1
 	add t1, t1, t4
-	
+
 one_3:
-	addi t3, t3, 1		
+	addi t3, t3, 1
 	addi t2, t2, -1
 	bnez t2, loop_3
 
@@ -220,7 +220,7 @@ loop_2:
 zero_2:
 	li t4, 1
 	add t1, t1, t4
-	
+
 one_2:
 	addi t2, t2, -1
 	bnez t2, loop_2
@@ -245,13 +245,13 @@ loop_1:
 zero_1:
 	li t4, 1
 	add t1, t1, t4
-	
+
 one_1:
 	addi t2, t2, -1
 	bnez t2, loop_1
 
 	ret
-	
+
 .section .text
 .globl global_hist_0_space_test
 .type global_hist_0_space_test, @function
@@ -269,10 +269,9 @@ loop_0:
 zero_0:
 	li t4, 1
 	add t1, t1, t4
-	
+
 one_0:
 	addi t2, t2, -1
 	bnez t2, loop_0
 
 	ret
-	

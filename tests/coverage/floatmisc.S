@@ -6,7 +6,7 @@
 .global rvtest_entry_point
 rvtest_entry_point:
     lui t0, 0x02            # turn on Floating point and XS
-    csrs mstatus, t0                 
+    csrs mstatus, t0
 
     la a6, begin_signature
     la a7, rvtest_data
@@ -53,9 +53,9 @@ write_tohost:
 
 self_loop:
     j self_loop         # wait
-    
+
 .align 6
-.section .tohost 
+.section .tohost
 tohost:                 # write to HTIF
     .dword 0
 fromhost:
@@ -75,7 +75,7 @@ rvtest_data:
 
 .EQU XLEN,64
 begin_signature:
-    .fill 8*(XLEN/32),4,0xdeadbeef    # 
+    .fill 8*(XLEN/32),4,0xdeadbeef    #
 end_signature:
 
 # Initialize stack with room for 512 bytes

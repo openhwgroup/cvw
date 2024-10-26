@@ -9,20 +9,20 @@
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -34,7 +34,7 @@
 # run-elf.bash find this in project description
 main:
     # Page table root address at 0x80010000
-    li t5, 0x9000000000080080 // try making asid = 0. 
+    li t5, 0x9000000000080080 // try making asid = 0.
     csrw satp, t5
 
     # switch to supervisor mode
@@ -82,9 +82,9 @@ nASID:   #swap to different address space -> jump to each address
 .data
 .align 19
 # level 3 Page table situated at 0x8008 0000, should point to 8008,1000
-pagetable: 
+pagetable:
     .8byte 0x200204C1
-    
+
 .align 12 // level 2 page table, contains direction to a gigapageg
     .8byte 0x0
     .8byte 0x0
@@ -179,7 +179,3 @@ pagetable:
     .8byte 0x200084EF
     .8byte 0x200088EF
     .8byte 0x20008CEF
-
-
-
-    
