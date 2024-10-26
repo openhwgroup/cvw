@@ -334,22 +334,29 @@ def search_log_for_text(text, grepfile):
 #    print("  search_log_for_text invoking %s" % grepcmd)
     return os.system(grepcmd) == 0
 
-def run_test_case(config):
-    """Run the given test case, and return 0 if the test suceeds and 1 if it fails"""
+def run_test_case(config, dryrun: bool = False):
+    """
+    Run the given test case, and return 0 if the test suceeds and 1 if it fails
+    
+    Do not execute commands if dryrun
+    """
     grepfile = config.grepfile
     cmd = config.cmd
     os.chdir(regressionDir)
-    # print("  run_test_case invoking %s" % cmd, flush=True)
-    os.system(cmd)
-    if search_log_for_text(config.grepstr, grepfile):
-        # Flush is needed to flush output to stdout when running in multiprocessing Pool
-#        print(f"{bcolors.OKGREEN}%s_%s: Success{bcolors.ENDC}" % (config.variant, config.name), flush=True)
-        print(f"{bcolors.OKGREEN}%s: Success{bcolors.ENDC}" % (config.cmd), flush=True) 
+    if dryrun:
+        print(f"Executing {cmd}", flush=True)
         return 0
     else:
-        print(f"{bcolors.FAIL}%s: Failures detected in output{bcolors.ENDC}" % (config.cmd), flush=True)
-        print("  Check %s" % grepfile)
-        return 1
+        os.system(cmd)
+        if search_log_for_text(config.grepstr, grepfile):
+            # Flush is needed to flush output to stdout when running in multiprocessing Pool
+    #        print(f"{bcolors.OKGREEN}%s_%s: Success{bcolors.ENDC}" % (config.variant, config.name), flush=True)
+            print(f"{bcolors.OKGREEN}%s: Success{bcolors.ENDC}" % (config.cmd), flush=True) 
+            return 0
+        else:
+            print(f"{bcolors.FAIL}%s: Failures detected in output{bcolors.ENDC}" % (config.cmd), flush=True)
+            print("  Check %s" % grepfile)
+            return 1
 
 ##################################
 # Main body
@@ -363,6 +370,7 @@ os.chdir(regressionDir)
 coveragesim = "questa"  # Questa is required for code/functional coverage
 #defaultsim = "questa"   # Default simulator for all other tests; change to Verilator when flow is ready
 defaultsim = "verilator"   # Default simulator for all other tests
+buildrootbootsim = "questa"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--ccov", help="Code Coverage", action="store_true")
@@ -371,6 +379,7 @@ parser.add_argument("--nightly", help="Run large nightly regression", action="st
 parser.add_argument("--buildroot", help="Include Buildroot Linux boot test (takes many hours, done along with --nightly)", action="store_true")
 parser.add_argument("--testfloat", help="Include Testfloat floating-point unit tests", action="store_true")
 parser.add_argument("--fp", help="Include floating-point tests in coverage (slower runtime)", action="store_true")
+parser.add_argument("--dryrun", help="Print commands invoked to console without running regression", action="store_true")
 args = parser.parse_args()
 
 if (args.nightly):
@@ -404,7 +413,7 @@ configs = [
 # run full buildroot boot simulation (slow) if buildroot flag is set.  Start it early to overlap with other tests
 if (args.buildroot):
     # addTests(tests_buildrootboot, defaultsim) # non-lockstep with Verilator runs in about 2 hours
-    addTests(tests_buildrootbootlockstep, "questa") # lockstep with Questa and ImperasDV runs overnight
+    addTests(tests_buildrootbootlockstep, buildrootbootsim) # lockstep with Questa and ImperasDV runs overnight
 
 if (args.ccov):  # only run RV64GC tests on Questa in code coverage mode
     addTests(tests64gc_nofp, coveragesim)
@@ -417,7 +426,7 @@ elif (args.fcov):  # only run RV64GC tests on Questa in lockstep in functional c
 
 else: 
     for sim in sims:
-        if (not (args.buildroot and sim == defaultsim)):  # skip short buildroot sim if running long one
+        if (not (args.buildroot and sim == buildrootbootsim)):  # skip short buildroot sim if running long one
             addTests(tests_buildrootshort, sim)
         addTests(tests, sim)
         addTests(tests64gc_nofp, sim)
@@ -428,6 +437,7 @@ if (args.nightly):
     addLockstepTestsByDir(WALLY+"/tests/coverage", "rv64gc", "questa", 0)
     addLockstepTestsByDir(WALLY+"/tests/riscof/work/wally-riscv-arch-test/rv64i_m", "rv64gc", "questa", 0)
     addTests(derivconfigtests, defaultsim)
+    addTests(bpredtests, defaultsim)
 
 # testfloat tests
 if (args.testfloat): # for testfloat alone, just run testfloat tests
@@ -526,22 +536,22 @@ def main():
     else:
         ImperasDVLicenseCount = 10000 # effectively no license limit for non-lockstep tests
     with Pool(processes=min(len(configs),multiprocessing.cpu_count(), ImperasDVLicenseCount)) as pool:
-       num_fail = 0
-       results = {}
-       for config in configs:
-           results[config] = pool.apply_async(run_test_case,(config,))
-       for (config,result) in results.items():
-           try:
-             num_fail+=result.get(timeout=TIMEOUT_DUR)
-           except TimeoutError:
-             num_fail+=1
-             print(f"{bcolors.FAIL}%s: Timeout - runtime exceeded %d seconds{bcolors.ENDC}" % (config.cmd, TIMEOUT_DUR))
+        num_fail = 0
+        results = {}
+        for config in configs:
+            results[config] = pool.apply_async(run_test_case,(config,args.dryrun,))
+        for (config,result) in results.items():
+            try:
+                num_fail+=result.get(timeout=TIMEOUT_DUR)
+            except TimeoutError:
+                num_fail+=1
+                print(f"{bcolors.FAIL}%s: Timeout - runtime exceeded %d seconds{bcolors.ENDC}" % (config.cmd, TIMEOUT_DUR))
 
     # Coverage report
     if args.ccov:
-       os.system('make QuestaCodeCoverage')
+        os.system('make QuestaCodeCoverage')
     if args.fcov:
-       os.system('make -f '+WALLY+'/addins/cvw-arch-verif/Makefile merge')
+        os.system('make -f '+WALLY+'/addins/cvw-arch-verif/Makefile merge')
     # Count the number of failures
     if num_fail:
         print(f"{bcolors.FAIL}Regression failed with %s failed configurations{bcolors.ENDC}" % num_fail)
