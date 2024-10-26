@@ -12,7 +12,6 @@
 `include "RV64D_coverage.svh"
 `include "RV64ZfhD_coverage.svh"
 `include "RV64Zfh_coverage.svh"
-`include "RV64VM_coverage.svh"
 `include "RV64Zicond_coverage.svh"
 `include "RV64Zca_coverage.svh"
 `include "RV64Zcb_coverage.svh"
@@ -21,6 +20,7 @@
 `include "RV64ZcbZba_coverage.svh"
 
 // Privileged extensions
+`include "RV64VM_coverage.svh"
 `include "ZicsrM_coverage.svh"
 // `include "RV64VM_PMP_coverage.svh"
 // `include "RV64CBO_VM_coverage.svh"
