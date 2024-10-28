@@ -8,7 +8,6 @@
 //          See RISC-V Privileged Mode Specification 20190608 3.1.10-11
 // 
 // Documentation: RISC-V System on Chip Design
-//    MHPMEVENT is not supported
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -66,7 +65,8 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   localparam MTIME            = 12'hB01;               // this is a memory-mapped register; no such CSR exists, and access should faul;
   localparam MHPMCOUNTERHBASE = 12'hB80;
   localparam MTIMEH           = 12'hB81;               // this is a memory-mapped register; no such CSR exists, and access should fault
-  localparam MHPMEVENTBASE    = 12'h320;
+  localparam MHPMEVENTBASE    = 12'h323;
+  localparam MHPMEVENTLAST    = 12'h33F;
   localparam HPMCOUNTERBASE   = 12'hC00;
   localparam HPMCOUNTERHBASE  = 12'hC80;
   localparam TIME             = 12'hC01;
@@ -156,37 +156,41 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
     if (PrivilegeModeW == P.M_MODE | 
         MCOUNTEREN_REGW[CounterNumM] & (!P.S_SUPPORTED | PrivilegeModeW == P.S_MODE | SCOUNTEREN_REGW[CounterNumM])) begin
       IllegalCSRCAccessM = 1'b0;
-      if (P.XLEN==64) begin // 64-bit counter reads
-        // Veri lator doesn't realize this only occurs for XLEN=64
-        /* verilator lint_off WIDTH */  
-        if      (CSRAdrM == TIME & ~CSRWriteM)  CSRCReadValM = MTIME_CLINT; // TIME register is a shadow of the memory-mapped MTIME from the CLINT
-        /* verilator lint_on WIDTH */  
-        else if (CSRAdrM >= MHPMCOUNTERBASE & CSRAdrM < MHPMCOUNTERBASE+P.COUNTERS & CSRAdrM != MTIME) 
-                 CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
-        else if (CSRAdrM >= HPMCOUNTERBASE  & CSRAdrM  < HPMCOUNTERBASE+P.COUNTERS & ~CSRWriteM)  // read-only
-                 CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
-        else begin
+      if (CSRAdrM >= MHPMEVENTBASE & CSRAdrM <= MHPMEVENTLAST) begin
+        CSRCReadValM = '0; // mphmevent[3:31] tied to read-only zero
+      end else begin
+        if (P.XLEN==64) begin // 64-bit counter reads
+          // Veri lator doesn't realize this only occurs for XLEN=64
+          /* verilator lint_off WIDTH */  
+          if      (CSRAdrM == TIME & ~CSRWriteM)  CSRCReadValM = MTIME_CLINT; // TIME register is a shadow of the memory-mapped MTIME from the CLINT
+          /* verilator lint_on WIDTH */  
+          else if (CSRAdrM >= MHPMCOUNTERBASE & CSRAdrM < MHPMCOUNTERBASE+P.COUNTERS & CSRAdrM != MTIME) 
+                  CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
+          else if (CSRAdrM >= HPMCOUNTERBASE  & CSRAdrM  < HPMCOUNTERBASE+P.COUNTERS & ~CSRWriteM)  // read-only
+                  CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
+          else begin
+              CSRCReadValM = '0;
+              IllegalCSRCAccessM = 1'b1;  // requested CSR doesn't exist
+          end
+        end else begin // 32-bit counter reads
+          // Veril ator doesn't realize this only occurs for XLEN=32
+          /* verilator lint_off WIDTH */  
+          if      (CSRAdrM == TIME & ~CSRWriteM)  CSRCReadValM = MTIME_CLINT[31:0];// TIME register is a shadow of the memory-mapped MTIME from the CLINT
+          else if (CSRAdrM == TIMEH & ~CSRWriteM) CSRCReadValM = MTIME_CLINT[63:32];
+          /* verilator lint_on WIDTH */  
+          else if (CSRAdrM >= MHPMCOUNTERBASE  & CSRAdrM < MHPMCOUNTERBASE+P.COUNTERS & CSRAdrM != MTIME)   
+                  CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
+          else if (CSRAdrM >= HPMCOUNTERBASE   & CSRAdrM < HPMCOUNTERBASE+P.COUNTERS  & ~CSRWriteM)    // read-only
+                  CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
+          else if (CSRAdrM >= MHPMCOUNTERHBASE & CSRAdrM < MHPMCOUNTERHBASE+P.COUNTERS & CSRAdrM != MTIMEH)  
+                  CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
+          else if (CSRAdrM >= HPMCOUNTERHBASE  & CSRAdrM < HPMCOUNTERHBASE+P.COUNTERS  & ~CSRWriteM)   // read-only
+                  CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
+          else begin
             CSRCReadValM = '0;
-            IllegalCSRCAccessM = 1'b1;  // requested CSR doesn't exist
+            IllegalCSRCAccessM = 1'b1; // requested CSR doesn't exist
+          end            
         end
-      end else begin // 32-bit counter reads
-        // Veril ator doesn't realize this only occurs for XLEN=32
-        /* verilator lint_off WIDTH */  
-        if      (CSRAdrM == TIME & ~CSRWriteM)  CSRCReadValM = MTIME_CLINT[31:0];// TIME register is a shadow of the memory-mapped MTIME from the CLINT
-        else if (CSRAdrM == TIMEH & ~CSRWriteM) CSRCReadValM = MTIME_CLINT[63:32];
-        /* verilator lint_on WIDTH */  
-        else if (CSRAdrM >= MHPMCOUNTERBASE  & CSRAdrM < MHPMCOUNTERBASE+P.COUNTERS & CSRAdrM != MTIME)   
-                 CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
-        else if (CSRAdrM >= HPMCOUNTERBASE   & CSRAdrM < HPMCOUNTERBASE+P.COUNTERS  & ~CSRWriteM)    // read-only
-                 CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
-        else if (CSRAdrM >= MHPMCOUNTERHBASE & CSRAdrM < MHPMCOUNTERHBASE+P.COUNTERS & CSRAdrM != MTIMEH)  
-                 CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
-        else if (CSRAdrM >= HPMCOUNTERHBASE  & CSRAdrM < HPMCOUNTERHBASE+P.COUNTERS  & ~CSRWriteM)   // read-only
-                 CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
-        else begin
-          CSRCReadValM = '0;
-          IllegalCSRCAccessM = 1'b1; // requested CSR doesn't exist
-        end            
       end
     end else begin 
       CSRCReadValM = '0;

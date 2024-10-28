@@ -67,6 +67,12 @@ jobs:
             os: ubuntu-latest
             image: null
             riscv_path: /home/riscv
+          # Custom location user level installation
+          - name: custom-user-install
+            os: ubuntu-latest
+            image: null
+            user: true
+            riscv_path: $HOME/riscv-toolchain
 
     # run on selected version of ubuntu or on ubuntu-latest with docker image
     runs-on: ${{ matrix.os }}
@@ -108,6 +114,7 @@ jobs:
               fi
       # Set environment variables for the rest of the job
       - name: Set Environment Variables
+        if: always()
         run: |
               if [ ! -z ${{ matrix.riscv_path }} ]; then
                 sed -i 's,exit 1,export RISCV=${{ matrix.riscv_path }},g' setup.sh
@@ -121,11 +128,11 @@ jobs:
         with:
           name: installation-logs-${{ matrix.name }}
           path: ${{ env.RISCV }}/logs/
-      # Make riscof only as that is the only testsuite used by standard regression
+      # Make riscof and zsbl only as that is the only testsuite used by standard regression
       - name: make tests
         run: |
               source setup.sh
-              make riscof --jobs $(nproc --ignore 1)
+              make riscof zsbl --jobs $(nproc --ignore 1)
       # Only the linux-testvectors are needed, so remove the rest of the buildroot to save space
       - name: Remove Buildroot to Save Space
         run: |
@@ -137,6 +144,13 @@ jobs:
         run: |
               source setup.sh
               regression-wally
+      - name: Lint + wsim Test Only (for distros with broken Verilator sim)
+        if: ${{ matrix.name == 'ubuntu-20.04' || matrix.name == 'rocky-8' || matrix.name == 'almalinux-8'}}
+        run: |
+              source setup.sh
+              mkdir -p $WALLY/sim/verilator/logs/
+              lint-wally
+              wsim rv32i arch32i --sim verilator | tee $WALLY/sim/verilator/logs/rv32i_arch32i.log
       # Upload regression logs for debugging
       - name: Upload regression logs
         uses: actions/upload-artifact@v4
