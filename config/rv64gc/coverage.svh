@@ -9,7 +9,7 @@
 `include "RV64M_coverage.svh"
 `include "RV64F_coverage.svh"
 `include "RV64Zfh_coverage.svh"
-`include "RV64VM_coverage.svh"
+`include "VM_coverage.svh"
 `include "RV64VM_PMP_coverage.svh"
 `include "RV64CBO_VM_coverage.svh"
 `include "RV64CBO_PMP_coverage.svh"
