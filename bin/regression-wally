@@ -437,7 +437,7 @@ if (args.nightly):
     addLockstepTestsByDir(WALLY+"/tests/coverage", "rv64gc", lockstepsim, 0)
     addLockstepTestsByDir(WALLY+"/tests/riscof/work/wally-riscv-arch-test/rv64i_m", "rv64gc", lockstepsim, 0)
     addTests(derivconfigtests, defaultsim)
-    addTests(bpredtests, defaultsim)
+    # addTests(bpredtests, defaultsim) # This is currently broken in regression due to something related to the new wsim script.
 
 # testfloat tests
 if (args.testfloat): # for testfloat alone, just run testfloat tests
@@ -546,6 +546,7 @@ def main():
             except TimeoutError:
                 num_fail+=1
                 print(f"{bcolors.FAIL}%s: Timeout - runtime exceeded %d seconds{bcolors.ENDC}" % (config.cmd, TIMEOUT_DUR))
+                pool.terminate()
 
     # Coverage report
     if args.ccov:
