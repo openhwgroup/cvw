@@ -370,7 +370,7 @@ os.chdir(regressionDir)
 coveragesim = "questa"  # Questa is required for code/functional coverage
 #defaultsim = "questa"   # Default simulator for all other tests; change to Verilator when flow is ready
 defaultsim = "verilator"   # Default simulator for all other tests
-buildrootbootsim = "questa"
+lockstepsim = "questa"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--ccov", help="Code Coverage", action="store_true")
@@ -413,7 +413,7 @@ configs = [
 # run full buildroot boot simulation (slow) if buildroot flag is set.  Start it early to overlap with other tests
 if (args.buildroot):
     # addTests(tests_buildrootboot, defaultsim) # non-lockstep with Verilator runs in about 2 hours
-    addTests(tests_buildrootbootlockstep, buildrootbootsim) # lockstep with Questa and ImperasDV runs overnight
+    addTests(tests_buildrootbootlockstep, lockstepsim) # lockstep with Questa and ImperasDV runs overnight
 
 if (args.ccov):  # only run RV64GC tests on Questa in code coverage mode
     addTests(tests64gc_nofp, coveragesim)
@@ -426,7 +426,7 @@ elif (args.fcov):  # only run RV64GC tests on Questa in lockstep in functional c
 
 else: 
     for sim in sims:
-        if (not (args.buildroot and sim == buildrootbootsim)):  # skip short buildroot sim if running long one
+        if (not (args.buildroot and sim == lockstepsim)):  # skip short buildroot sim if running long one
             addTests(tests_buildrootshort, sim)
         addTests(tests, sim)
         addTests(tests64gc_nofp, sim)
@@ -434,8 +434,8 @@ else:
 
 # run derivative configurations and lockstep tests in nightly regression
 if (args.nightly):
-    addLockstepTestsByDir(WALLY+"/tests/coverage", "rv64gc", "questa", 0)
-    addLockstepTestsByDir(WALLY+"/tests/riscof/work/wally-riscv-arch-test/rv64i_m", "rv64gc", "questa", 0)
+    addLockstepTestsByDir(WALLY+"/tests/coverage", "rv64gc", lockstepsim, 0)
+    addLockstepTestsByDir(WALLY+"/tests/riscof/work/wally-riscv-arch-test/rv64i_m", "rv64gc", lockstepsim, 0)
     addTests(derivconfigtests, defaultsim)
     addTests(bpredtests, defaultsim)
 
