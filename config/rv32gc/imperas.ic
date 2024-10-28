@@ -59,9 +59,16 @@
 #--override cpu/instret_undefined=T
 #--override cpu/hpmcounter_undefined=T
 
-# context registers not implemented
---override cpu/scontext_undefined=T
---override cpu/mcontext_undefined=T
+## context registers not implemented
+#--override cpu/scontext_undefined=True
+#--override cpu/mcontext_undefined=True
+
+# Disable all features that might want mseccfg or CSRs 7a0-7af
+--override cpu/Smepmp_version=none
+--override cpu/Smmpm=none
+#--override cpu/Zicfilp=F
+--override cpu/trigger_num=0 # disable CSRs 7a0-7a8
+
 --override no_pseudo_inst=T # For code coverage, don't produce pseudoinstructions
 
 
