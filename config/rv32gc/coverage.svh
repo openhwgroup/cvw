@@ -22,4 +22,3 @@
 
 // Privileged extensions
 `include "ZicsrM_coverage.svh"
-`include "VM_coverage.svh"
