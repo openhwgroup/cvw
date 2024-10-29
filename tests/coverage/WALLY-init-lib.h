@@ -28,6 +28,12 @@
 // The PMP tests are sensitive to the exact addresses in this code, so unfortunately
 // modifying anything breaks those tests.
 
+// Provides simple firmware services through ecall.  Place argument in a0 and issue ecall:
+//  0: change to user mode
+//  1: change to supervisor mode
+//  3: change to machine mode
+//  4: terminate program
+
 .section .text.init
 .global rvtest_entry_point
 

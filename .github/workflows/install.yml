@@ -67,6 +67,12 @@ jobs:
             os: ubuntu-latest
             image: null
             riscv_path: /home/riscv
+          # Custom location user level installation
+          - name: custom-user-install
+            os: ubuntu-latest
+            image: null
+            user: true
+            riscv_path: $HOME/riscv-toolchain
 
     # run on selected version of ubuntu or on ubuntu-latest with docker image
     runs-on: ${{ matrix.os }}
@@ -108,6 +114,7 @@ jobs:
               fi
       # Set environment variables for the rest of the job
       - name: Set Environment Variables
+        if: always()
         run: |
               if [ ! -z ${{ matrix.riscv_path }} ]; then
                 sed -i 's,exit 1,export RISCV=${{ matrix.riscv_path }},g' setup.sh

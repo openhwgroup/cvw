@@ -540,7 +540,6 @@ module testbench;
     always @(posedge clk) begin
       if (LoadMem) begin
         $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.ram.RAM);
-        $display("Read memfile %s", memfilename);
       end
       if (CopyRAM) begin
         LogXLEN = (1 + P.XLEN/32); // 2 for rv32 and 3 for rv64
