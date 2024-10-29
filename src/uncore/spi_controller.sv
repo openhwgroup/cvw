@@ -28,21 +28,33 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-module spi_controller (
+module spi_controller (                                            
   input logic        PCLK,
   input logic        PRESETn,
+
+  // Start Transmission
   input logic        TransmitStart,
+  input logic        ResetSCLKenable,        
+
+  // Registers
   input logic [11:0] SckDiv,
   input logic [1:0]  SckMode,
   input logic [1:0]  CSMode,
-  input logic [15:0]  Delay0,
-  input logic [15:0]  Delay1,
-  input logic [7:0]  txFIFORead,
+  input logic [15:0] Delay0,
+  input logic [15:0] Delay1,
+
+  // Is the Transmit FIFO Empty?
   input logic        txFIFOReadEmpty,
-  output logic       SPICLK,
-  output logic       SPIOUT,
-  output logic       CS
+
+  // Control signals
+  output logic       SCLKenable,
+  output logic       ShiftEdge,
+  output logic       SampleEdge,
+  output logic       EndOfFrame,
+  output logic       EndOfFrameDelay, 
+  output logic       Transmitting,
+  output logic       InactiveState,
+  output logic       SPICLK
 );
   
   // CSMode Stuff
@@ -55,36 +67,32 @@ module spi_controller (
   
   // SCLKenable stuff
   logic [11:0]       DivCounter;
-  logic              SCLKenable;
-  logic              SCLKenableEarly;
-  logic              SCLKenableLate;
-  logic              EdgeTiming;
+  // logic              SCLKenable;
+  // logic              SCLKenableEarly;
   logic              ZeroDiv;
-  logic              Clock0;
-  logic              Clock1;
   logic              SCK; // SUPER IMPORTANT, THIS CAN'T BE THE SAME AS SPICLK!
   
 
   // Shift and Sample Edges
   logic PreShiftEdge;
   logic PreSampleEdge;
-  logic ShiftEdge;
-  logic SampleEdge;
+  // logic ShiftEdge;
+  // logic SampleEdge;
 
   // Frame stuff
   logic [2:0] BitNum;
   logic       LastBit;
-  logic       EndOfFrame;
-  logic       EndOfFrameDelay;
+  //logic       EndOfFrame;
+  //logic       EndOfFrameDelay;
   logic       PhaseOneOffset;
 
   // Transmit Stuff
   logic       ContinueTransmit;       
 
   // SPIOUT Stuff
-  logic       TransmitLoad;
+  // logic       TransmitLoad;
   logic [7:0] TransmitReg;
-  logic       Transmitting;
+  //logic       Transmitting;
   logic       EndTransmission;
 
   logic       HoldMode;
@@ -135,13 +143,9 @@ module spi_controller (
   // SampleEdge. This makes sure that SPICLK is an output of a register
   // and it properly synchronizes signals.
   
-  assign SCLKenableLate = DivCounter > SckDiv;
   assign SCLKenable = DivCounter == SckDiv;
-  assign SCLKenableEarly = (DivCounter + 1'b1) == SckDiv;
+  // assign SCLKenableEarly = (DivCounter + 1'b1) == SckDiv;
   assign LastBit = BitNum == 3'd7;
-  assign EdgeTiming = SckDiv > 12'b0 ? SCLKenableEarly : SCLKenable;
-
-  //assign SPICLK = Clock0;
 
   assign ContinueTransmit = ~txFIFOReadEmpty & EndOfFrame;
   assign EndTransmission = txFIFOReadEmpty & EndOfFrameDelay;
@@ -196,7 +200,7 @@ module spi_controller (
       end
       
       // Reset divider 
-      if (SCLKenable | TransmitStart) begin
+      if (SCLKenable | TransmitStart | ResetSCLKenable) begin
         DivCounter <= 12'b0;
       end else begin
         DivCounter = DivCounter + 12'd1;
@@ -242,8 +246,8 @@ module spi_controller (
   // typedef enum logic [2:0] {INACTIVE, CSSCK, TRANSMIT, SCKCS, HOLD, INTERCS, INTERXFR} statetype;
   // statetype CurrState, NextState;
 
-  assign HoldMode = CSMode == 2'b10;
-  assign TransmitLoad = TransmitStart | (EndOfFrameDelay & ~txFIFOReadEmpty);
+  assign HoldMode = CSMode == HOLDMODE;
+  // assign TransmitLoad = TransmitStart | (EndOfFrameDelay & ~txFIFOReadEmpty);
 
   always_ff @(posedge PCLK) begin
     if (~PRESETn) begin
@@ -255,61 +259,43 @@ module spi_controller (
   
   always_comb begin
     case (CurrState)  
-      INACTIVE: begin // INACTIVE case --------------------------------
-        if (TransmitStart) begin
-          if (~HasCSSCK) begin
-            NextState = TRANSMIT;
-          end else begin
-            NextState = CSSCK;  
-          end
-        end else begin
-          NextState = INACTIVE;
-        end
-      end 
-      CSSCK: begin // DELAY0 case -------------------------------------
-        if (EndOfCSSCK) begin
-          NextState = TRANSMIT;  
-        end
-      end
+      INACTIVE: if (TransmitStart)
+                  if (~HasCSSCK) NextState = TRANSMIT;
+                  else NextState = CSSCK;
+                else NextState = INACTIVE; 
+      CSSCK: if (EndOfCSSCK) NextState = TRANSMIT;
+             else NextState = CSSCK;
       TRANSMIT: begin // TRANSMIT case --------------------------------
         case(CSMode)
           AUTOMODE: begin  
-            if (EndTransmission) begin
-              NextState = INACTIVE;
-            end else if (ContinueTransmit) begin
-              NextState = SCKCS;
-            end
+            if (EndTransmission) NextState = INACTIVE;
+            else if (ContinueTransmit) NextState = SCKCS;
           end
           HOLDMODE: begin  
-            if (EndTransmission) begin
-              NextState = HOLD;  
-            end else if (ContinueTransmit) begin
-              if (HasINTERXFR) NextState = INTERXFR;
-            end
+            if (EndTransmission) NextState = HOLD;  
+            else if (ContinueTransmit & HasINTERXFR) NextState = INTERXFR;
+            else NextState = TRANSMIT;
           end
           OFFMODE: begin
               
           end
-                
         endcase
       end
       SCKCS: begin // SCKCS case --------------------------------------
-        if (EndOfSCKCS) begin
-          if (EndTransmission) begin
+        if (EndOfSCKCS) 
+          if (EndTransmission)
             if (CSMode == AUTOMODE) NextState = INACTIVE;
             else if (CSMode == HOLDMODE) NextState = HOLD;
-          end else if (ContinueTransmit) begin
+          else if (ContinueTransmit)
             if (HasINTERCS) NextState = INTERCS;
             else NextState = TRANSMIT;
-          end
-        end
       end
       HOLD: begin // HOLD mode case -----------------------------------
         if (CSMode == AUTOMODE) begin
           NextState = INACTIVE;
         end else if (TransmitStart) begin // If FIFO is written to, start again.
           NextState = TRANSMIT;
-        end
+        end else NextState = HOLD;
       end
       INTERCS: begin // INTERCS case ----------------------------------
         if (EndOfINTERCS) begin
@@ -330,19 +316,6 @@ module spi_controller (
 
   assign Transmitting = CurrState == TRANSMIT;
   assign DelayIsNext = (NextState == CSSCK | NextState == SCKCS | NextState == INTERCS | NextState == INTERXFR);
-
-  // 
-  always_ff @(posedge PCLK) begin
-    if (~PRESETn) begin
-      TransmitReg <= 8'b0;
-    end else if (TransmitLoad) begin
-      TransmitReg <= txFIFORead;
-    end else if (ShiftEdge) begin
-      TransmitReg <= {TransmitReg[6:0], TransmitReg[0]};
-    end
-  end
-
-  assign SPIOUT = TransmitReg[7];
-  assign CS = CurrState == INACTIVE | CurrState == INTERCS;
+  assign InactiveState = CurrState == INACTIVE | CurrState == INTERCS;
   
 endmodule
