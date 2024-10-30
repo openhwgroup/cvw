@@ -292,11 +292,11 @@ class TestRunner:
             output_file = self.log_dir.joinpath(f"make-{target}-output.log")
         else: output_file = self.log_dir.joinpath(f"make-output.log")
 
-        command = ["make", "-j6"]
-
-        # Add target to the command if specified
-        if target:
-            command.append(target)
+        # Execute make with target and cores/2
+        if target: 
+            command = ["make", target, "--jobs=$(($(nproc)/2))"]
+        else:
+            command = ["make", "--jobs=$(($(nproc)/2))"]
 
         self.logger.info(f"Command used in directory {makefile_location}: {' '.join(command)}")
 
@@ -305,7 +305,7 @@ class TestRunner:
             formatted_datetime = self.current_datetime.strftime("%Y-%m-%d %H:%M:%S")
             f.write(formatted_datetime)
             f.write("\n\n")
-            result = subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, text=True)
+            result = subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, text=True, shell=True)
         
         # Execute the command using a subprocess and not save the output
         #result = subprocess.run(command, text=True)
