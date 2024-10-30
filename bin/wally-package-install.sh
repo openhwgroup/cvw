@@ -128,8 +128,8 @@ else
     # Vivado looks for ncurses5 libraries, but Ubuntu 24.04 only has ncurses6
     # Create symbolic links to the ncurses6 libraries to fool Vivado
     if (( UBUNTU_VERSION >= 24 )); then
-        ln -vsf /lib/x86_64-linux-gnu/libncurses.so.6 /lib/x86_64-linux-gnu/libncurses.so.5
-        ln -vsf /lib/x86_64-linux-gnu/libtinfo.so.6 /lib/x86_64-linux-gnu/libntinfo.so.5
+        sudo ln -vsf /lib/x86_64-linux-gnu/libncurses.so.6 /lib/x86_64-linux-gnu/libncurses.so.5
+        sudo ln -vsf /lib/x86_64-linux-gnu/libtinfo.so.6 /lib/x86_64-linux-gnu/libntinfo.so.5
     fi
 
     echo -e "${SUCCESS_COLOR}Packages successfully installed.${ENDC}"
