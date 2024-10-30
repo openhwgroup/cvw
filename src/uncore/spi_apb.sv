@@ -231,17 +231,22 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
   always_ff @(posedge PCLK)
     if (~PRESETn) begin
       TransmitFIFOWriteIncrement <= 1'b0;
-      TransmitFIFOReadIncrement <= 1'b0;
     end else begin
       TransmitFIFOWriteIncrement <= (Memwrite & (Entry == SPI_TXDATA) & ~TransmitFIFOWriteFull);
-      TransmitFIFOReadIncrement <= TransmitLoad;
     end
+
+  always_ff @(posedge PCLK)
+    if (~PRESETn) begin
+      TransmitFIFOReadIncrement <= 1'b0;
+    end else if (SCLKenable) begin
+      TransmitFIFOReadIncrement <= TransmitLoad;
+  end
 
   // Setup TransmitStart state machine
   always_ff @(posedge PCLK) begin
     if (~PRESETn) begin
       CurrState <= READY;
-    end else if (SCLKenable) begin
+    end else begin
       CurrState <= NextState;
     end
   end
@@ -273,9 +278,14 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
   always_ff @(posedge PCLK)
     if (~PRESETn) begin
       ReceiveFIFOReadIncrement <= 1'b0;
-      ReceiveFIFOWriteInc <= 1'b0;
     end else begin
       ReceiveFIFOReadIncrement <= ((Entry == SPI_RXDATA) & ~ReceiveFIFOReadEmpty & PSEL & ~ReceiveFIFOReadIncrement);
+    end
+
+  always_ff @(posedge PCLK)
+    if (~PRESETn) begin
+      ReceiveFIFOWriteInc <= 1'b0;
+    end else if (SCLKenable) begin
       ReceiveFIFOWriteInc <= EndOfFrameDelay;
     end
 
