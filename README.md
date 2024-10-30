@@ -184,7 +184,7 @@ The Synopsys Installer automatically installs all downloaded product files into 
 ```
 
 > [!Note]
-> Although most parts of Wally, including the Questa simulator, will work on most modern Linux platforms, as of 2022, the Synopsys CAD tools for SoC design are only supported on RedHat Enterprise Linux 7.4 or 8 or SUSE Linux Enterprise Server (SLES) 12 or 15. Moreover, the RISC-V formal specification (sail-riscv) does not build gracefully on RHEL7.
+> Although most parts of Wally, including the Questa simulator, will work on most modern Linux platforms, as of 2024, the Synopsys CAD tools for SoC design are only supported on Red Hat Enterprise Linux (or AlmaLinux/Rocky) 8.4+ or 9.1+ or SUSE Linux Enterprise Server (SLES) 15.
 
 The Verilog simulation has been tested with Siemens Questa/ModelSim. This package is available to universities worldwide as part of the Design Verification Bundle through the Siemens Academic Partner Program members for $990/year.
 
