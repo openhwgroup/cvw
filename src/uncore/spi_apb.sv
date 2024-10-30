@@ -89,6 +89,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
 
   logic        ResetSCLKenable;
   logic        TransmitStart;
+  logic        TransmitStartD;
 
   // Transmit Start State Machine Variables
   typedef enum logic [1:0] {READY, START, WAIT} txState;
@@ -215,7 +216,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
   
   spi_controller controller(PCLK, PRESETn,
                             // Transmit Signals
-                            TransmitStart, ResetSCLKenable,
+                            TransmitStart, TransmitStartD, ResetSCLKenable,
                             // Register Inputs
                             SckDiv, SckMode, ChipSelectMode, Delay0, Delay1,
                             // txFIFO stuff
@@ -239,7 +240,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     if (~PRESETn) begin
       TransmitFIFOReadIncrement <= 1'b0;
     end else if (SCLKenable) begin
-      TransmitFIFOReadIncrement <= TransmitLoad;
+      TransmitFIFOReadIncrement <= TransmitStartD | (EndOfFrameDelay & ~TransmitFIFOReadEmpty) ;
   end
 
   // Setup TransmitStart state machine
@@ -254,7 +255,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
   // State machine for starting transmissions
   always_comb begin
     case (CurrState)
-      READY: if (~TransmitFIFOReadEmpty) NextState = START;
+      READY: if (~TransmitFIFOReadEmpty & ~Transmitting) NextState = START;
              else NextState = READY;
       START: NextState = WAIT;
       WAIT: if (TransmitFIFOReadEmpty & ~Transmitting) NextState = READY;
@@ -263,6 +264,10 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
   end
 
   assign TransmitStart = (CurrState == START);
+  always_ff @(posedge PCLK)
+    if (~PRESETn) TransmitStartD <= 1'b0;
+    else if (TransmitStart) TransmitStartD <= 1'b1;
+    else if (SCLKenable) TransmitStartD <= 1'b0;
   
   spi_fifo #(3,8) txFIFO(PCLK, 1'b1, SCLKenable, PRESETn,
                          TransmitFIFOWriteIncrement, TransmitFIFOReadIncrement,
