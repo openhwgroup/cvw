@@ -34,7 +34,8 @@ module spi_controller (
 
   // Start Transmission
   input logic        TransmitStart,
-  input logic        ResetSCLKenable,        
+  input logic        TransmitStartD,
+  input logic        ResetSCLKenable, 
 
   // Registers
   input logic [11:0] SckDiv,
@@ -168,25 +169,25 @@ module spi_controller (
         SCK <= ~SCK;
       end
       
-      if ((CurrState == CSSCK) & SCK) begin
+      if ((CurrState == CSSCK) & SCK & SCLKenable) begin
         CSSCKCounter <= CSSCKCounter + 8'd1;
-      end else begin
+      end else if (SCLKenable) begin
         CSSCKCounter <= 8'd0;
       end
       
-      if ((CurrState == SCKCS) & SCK) begin
+      if ((CurrState == SCKCS) & SCK & SCLKenable) begin
         SCKCSCounter <= SCKCSCounter + 8'd1;
-      end else begin
+      end else if (SCLKenable) begin
         SCKCSCounter <= 8'd0;
       end
       
-      if ((CurrState == INTERCS) & SCK) begin
+      if ((CurrState == INTERCS) & SCK & SCLKenable) begin
         INTERCSCounter <= INTERCSCounter + 8'd1;
       end else begin
         INTERCSCounter <= 8'd0;
       end
       
-      if ((CurrState == INTERXFR) & SCK) begin
+      if ((CurrState == INTERXFR) & SCK & SCLKenable) begin
         INTERXFRCounter <= INTERXFRCounter + 8'd1;
       end else begin
         INTERXFRCounter <= 8'd0;
@@ -259,7 +260,7 @@ module spi_controller (
   
   always_comb begin
     case (CurrState)  
-      INACTIVE: if (TransmitStart)
+      INACTIVE: if (TransmitStartD)
                   if (~HasCSSCK) NextState = TRANSMIT;
                   else NextState = CSSCK;
                 else NextState = INACTIVE; 
@@ -293,7 +294,7 @@ module spi_controller (
       HOLD: begin // HOLD mode case -----------------------------------
         if (CSMode == AUTOMODE) begin
           NextState = INACTIVE;
-        end else if (TransmitStart) begin // If FIFO is written to, start again.
+        end else if (TransmitStartD) begin // If FIFO is written to, start again.
           NextState = TRANSMIT;
         end else NextState = HOLD;
       end
