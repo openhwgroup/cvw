@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // rvvi daemon
 //
-// Written: Rose Thomposn ross1728@gmail.com
+// Written: Rose Thomposn rose@rosethompson.net
 // Created: 31 May 2024
 // Modified: 31 May 2024
 //

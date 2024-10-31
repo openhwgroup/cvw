@@ -128,13 +128,16 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
   else 
     assign STimerInt = 1'b0;
 
+  logic [1:0] LegalizedCBIE;
+  assign LegalizedCBIE = CSRWriteValM[5:4] == 2'b10 ? SENVCFG_REGW[5:4] : CSRWriteValM[5:4]; // Assume WARL for reserved CBIE = 10, keeps old value
   assign SENVCFG_WriteValM = {
     {(P.XLEN-8){1'b0}},
     CSRWriteValM[7]   & P.ZICBOZ_SUPPORTED,
-    CSRWriteValM[6:4] & {3{P.ZICBOM_SUPPORTED}},
+    CSRWriteValM[6]   & P.ZICBOM_SUPPORTED,
+    LegalizedCBIE     & {2{P.ZICBOM_SUPPORTED}},
     3'b0,
     CSRWriteValM[0]   & P.VIRTMEM_SUPPORTED
-  };
+  }; 
 
   flopenr #(P.XLEN) SENVCFGreg(clk, reset, WriteSENVCFGM, SENVCFG_WriteValM, SENVCFG_REGW);
     

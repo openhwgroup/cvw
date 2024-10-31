@@ -2,7 +2,7 @@
 ###########################################
 ## Tool chain install script.
 ##
-## Written: Rose Thompson ross1728@gmail.com
+## Written: Rose Thompson rose@rosethompson.net
 ## Created: 18 January 2023
 ## Modified: 22 January 2023
 ## Modified: 23 March 2023
@@ -48,28 +48,64 @@ ENDC='\033[0m' # Reset to default color
 error() {
     echo -e "${FAIL_COLOR}Error: $STATUS installation failed"
     echo -e "Error on line ${BASH_LINENO[0]} with command $BASH_COMMAND${ENDC}"
-    echo -e "Please check the log in $RISCV/logs/$STATUS.log for more information."
+    if [ -e "$RISCV/logs/$STATUS.log" ]; then
+        echo -e "Please check the log in $RISCV/logs/$STATUS.log for more information."
+    fi
     exit 1
 }
 
 # Check if a git repository exists, is up to date, and has been installed
-# Clones the repository if it doesn't exist
+# clones the repository if it doesn't exist
+# $1: repo name
+# $2: repo url to clone from
+# $3: file to check if already installed
+# $4: upstream branch, optional, default is master
 git_check() {
     local repo=$1
     local url=$2
     local check=$3
     local branch="${4:-master}"
-    if [[ ((! -e $repo) && ($(git clone "$url") || true)) || ($(cd "$repo"; git fetch; git rev-parse HEAD) != $(cd "$repo"; git rev-parse origin/"$branch")) || (! -e $check) ]]; then
-        return 0
+
+    # Clone repo if it doesn't exist
+    if [[ ! -e $repo ]]; then
+        for ((i=1; i<=5; i++)); do
+            git clone "$url" && break
+            echo -e "${WARNING_COLOR}Failed to clone $repo. Retrying.${ENDC}"
+            rm -rf "$repo"
+            sleep $i
+        done
+        if [[ ! -e $repo ]]; then
+            echo -e "${ERROR_COLOR}Failed to clone $repo after 5 attempts. Exiting.${ENDC}"
+            exit 1
+        fi
+    fi
+
+    # Get the current HEAD commit hash and the remote branch commit hash
+    cd "$repo"
+    git fetch
+    local local_head=$(git rev-parse HEAD)
+    local remote_head=$(git rev-parse origin/"$branch")
+
+    # Check if the git repository is not up to date or the specified file does not exist
+    if [[ "$local_head" != "$remote_head" ]]; then
+        echo "$repo is not up to date. Updating now."
+        true
+    elif [[ ! -e $check ]]; then
+        true
     else
-        return 1
+        false
     fi
 }
 
 # Log output to a file and only print lines with keywords
 logger() {
-    local log="$RISCV/logs/$1.log"
-    cat < /dev/stdin | tee -a "$log" | (grep -iE --color=never "(\bwarning|\berror|\bfail|\bsuccess|\bstamp|\bdoesn't work)" || true) | (grep -viE --color=never "(_warning|warning_|_error|error_|-warning|warning-|-error|error-|Werror|error\.o|warning flags)" || true)
+    local log_file="$RISCV/logs/$1.log"
+    local keyword_pattern="(\bwarning|\berror|\bfail|\bsuccess|\bstamp|\bdoesn't work)"
+    local exclude_pattern="(_warning|warning_|_error|error_|-warning|warning-|-error|error-|Werror|error\.o|warning flags)"
+
+    cat < /dev/stdin | tee -a "$log_file" | \
+    (grep -iE --color=never "$keyword_pattern" || true) | \
+    (grep -viE --color=never "$exclude_pattern" || true)
 }
 
 set -e # break on error
@@ -77,8 +113,14 @@ trap error ERR # run error handler on error
 STATUS="setup" # keep track of what part of the installation is running for error messages
 
 # Check for clean flag
-if [ "$1" == "--clean" ]; then
+if [ "$1" == "--clean" ] || [ "$2" == "--clean" ]; then
     clean=true
+    shift
+fi
+
+# Check for clean flag
+if [ "$1" == "--no-buildroot" ] || [ "$2" == "--no-buildroot" ]; then
+    no_buidroot=true
     shift
 fi
 
@@ -105,6 +147,10 @@ fi
 export PATH=$PATH:$RISCV/bin:/usr/bin
 export PKG_CONFIG_PATH=$RISCV/lib64/pkgconfig:$RISCV/lib/pkgconfig:$RISCV/share/pkgconfig:$RISCV/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH
 
+if (( RHEL_VERSION != 8 )); then
+    retry_on_host_error="--retry-on-host-error"
+fi
+
 # Check for incompatible PATH environment variable before proceeding with installation
 if [[ ":$PATH:" == *::* || ":$PATH:" == *:.:* ]]; then
     echo -e "${FAIL_COLOR}Error: You seem to have the current working directory in your \$PATH environment variable."
@@ -112,11 +158,27 @@ if [[ ":$PATH:" == *::* || ":$PATH:" == *:.:* ]]; then
     exit 1
 fi
 
-# Create installation directory
-mkdir -p "$RISCV"/logs
+# Check available memory
+total_mem=$(grep MemTotal < /proc/meminfo | awk '{print $2}')
+total_mem_gb=$((total_mem / 1024 / 1024))
+
+# Print system information
 echo "Running as root: $ROOT"
 echo "Installation path: $RISCV"
+echo "Number of cores: $(nproc)"
+echo "Total memory: $total_mem_gb GB"
 
+# Reduce number of threads for systems with less than 8 GB of memory
+if ((total_mem < 8400000 )) ; then
+    NUM_THREADS=1
+    echo -e "${WARNING_COLOR}Detected less than or equal to 8 GB of memory. Using a single thread for compiling tools. This may take a while.${ENDC}"
+fi
+
+# Print number of threads
+echo "Using $NUM_THREADS thread(s) for compilation"
+
+# Create installation directory
+mkdir -p "$RISCV"/logs
 
 # Install/update system packages if root. Otherwise, check that packages are already installed.
 STATUS="system packages"
@@ -155,11 +217,10 @@ source "$RISCV"/riscv-python/bin/activate # activate python virtual environment
 # Install python packages, including RISCOF (https://github.com/riscv-software-src/riscof.git)
 # RISCOF is a RISC-V compliance test framework that is used to run the RISC-V Arch Tests.
 STATUS="python packages"
-pip install --upgrade pip && pip install -r "$dir"/requirements.txt
+pip install --upgrade pip && pip install --upgrade -r "$dir"/requirements.txt
 
 source "$RISCV"/riscv-python/bin/activate # reload python virtual environment
 echo -e "${SUCCESS_COLOR}Python environment successfully configured!${ENDC}"
-
 
 # Extra dependecies needed for older distros that don't have new enough versions available from package manager
 if (( RHEL_VERSION == 8 )) || (( UBUNTU_VERSION == 20 )); then
@@ -170,11 +231,13 @@ if (( RHEL_VERSION == 8 )) || (( UBUNTU_VERSION == 20 )); then
         section_header "Installing glib"
         pip install -U meson # Meson is needed to build glib
         cd "$RISCV"
-        curl --location https://download.gnome.org/sources/glib/2.70/glib-2.70.5.tar.xz | tar xJ
+        wget -nv --retry-connrefused $retry_on_host_error https://download.gnome.org/sources/glib/2.70/glib-2.70.5.tar.xz
+        tar -xJf glib-2.70.5.tar.xz
+        rm -f glib-2.70.5.tar.xz
         cd glib-2.70.5
         meson setup _build --prefix="$RISCV"
-        meson compile -C _build
-        meson install -C _build
+        meson compile -C _build -j "${NUM_THREADS}" 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+        meson install -C _build 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
         cd "$RISCV"
         rm -rf glib-2.70.5
         echo -e "${SUCCESS_COLOR}glib successfully installed!${ENDC}"
@@ -187,11 +250,13 @@ if (( RHEL_VERSION == 8 )); then
     if [ ! -e "$RISCV"/include/gmp.h ]; then
         section_header "Installing gmp"
         cd "$RISCV"
-        curl --location https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz | tar xJ
+        wget -nv --retry-connrefused $retry_on_host_error https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz
+        tar -xJf gmp-6.3.0.tar.xz
+        rm -f gmp-6.3.0.tar.xz
         cd gmp-6.3.0
         ./configure --prefix="$RISCV"
-        make -j "${NUM_THREADS}"
-        make install
+        make -j "${NUM_THREADS}" 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+        make install 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
         cd "$RISCV"
         rm -rf gmp-6.3.0
         echo -e "${SUCCESS_COLOR}gmp successfully installed!${ENDC}"
@@ -209,9 +274,9 @@ section_header "Installing/Updating RISC-V GNU Toolchain"
 STATUS="riscv-gnu-toolchain"
 cd "$RISCV"
 # Temporarily pin riscv-gnu-toolchain to use GCC 13.2.0. GCC 14 does not work with the Q extension.
-if git_check "riscv-gnu-toolchain" "https://github.com/riscv/riscv-gnu-toolchain" "$RISCV/riscv-gnu-toolchain/stamps/build-gcc-newlib-stage2" "b488ddb"; then
-    cd riscv-gnu-toolchain
-    git reset --hard && git clean -f && git checkout b488ddb #&& git pull
+if git_check "riscv-gnu-toolchain" "https://github.com/riscv/riscv-gnu-toolchain" "$RISCV/riscv-gnu-toolchain/stamps/build-gcc-newlib-stage2"; then
+    cd "$RISCV"/riscv-gnu-toolchain
+    git reset --hard && git clean -f && git checkout master && git pull
     ./configure --prefix="${RISCV}" --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
     make -j "${NUM_THREADS}" 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
     if [ "$clean" ]; then
@@ -236,7 +301,7 @@ STATUS="elf2hex"
 cd "$RISCV"
 export PATH=$RISCV/bin:$PATH
 if git_check "elf2hex" "https://github.com/sifive/elf2hex.git" "$RISCV/bin/riscv64-unknown-elf-elf2bin"; then
-    cd elf2hex
+    cd "$RISCV"/elf2hex
     git reset --hard && git clean -f && git checkout master && git pull
     autoreconf -i
     ./configure --target=riscv64-unknown-elf --prefix="$RISCV"
@@ -258,7 +323,7 @@ section_header "Installing/Updating QEMU"
 STATUS="qemu"
 cd "$RISCV"
 if git_check "qemu" "https://github.com/qemu/qemu" "$RISCV/include/qemu-plugin.h"; then
-    cd qemu
+    cd "$RISCV"/qemu
     git reset --hard && git clean -f && git checkout master && git pull --recurse-submodules -j "${NUM_THREADS}"
     git submodule update --init --recursive
     ./configure --target-list=riscv64-softmmu --prefix="$RISCV"
@@ -280,7 +345,7 @@ section_header "Installing/Updating SPIKE"
 STATUS="spike"
 cd "$RISCV"
 if git_check "riscv-isa-sim" "https://github.com/riscv-software-src/riscv-isa-sim" "$RISCV/lib/pkgconfig/riscv-riscv.pc"; then
-    cd riscv-isa-sim
+    cd "$RISCV"/riscv-isa-sim
     git reset --hard && git clean -f && git checkout master && git pull
     mkdir -p build
     cd build
@@ -306,7 +371,7 @@ STATUS="verilator"
 cd "$RISCV"
 if git_check "verilator" "https://github.com/verilator/verilator" "$RISCV/share/pkgconfig/verilator.pc"; then
     unset VERILATOR_ROOT
-    cd verilator
+    cd "$RISCV"/verilator
     git reset --hard && git clean -f && git checkout master && git pull
     autoconf
     ./configure --prefix="$RISCV"
@@ -331,7 +396,9 @@ section_header "Installing/Updating Sail Compiler"
 STATUS="Sail Compiler"
 if [ ! -e "$RISCV"/bin/sail ]; then
     cd "$RISCV"
-    curl --location https://github.com/rems-project/sail/releases/latest/download/sail.tar.gz | tar xvz --directory="$RISCV" --strip-components=1
+    wget -nv --retry-connrefused $retry_on_host_error --output-document=sail.tar.gz https://github.com/rems-project/sail/releases/latest/download/sail.tar.gz
+    tar xz --directory="$RISCV" --strip-components=1 -f sail.tar.gz
+    rm -f sail.tar.gz
     echo -e "${SUCCESS_COLOR}Sail Compiler successfully installed/updated!${ENDC}"
 else
     echo -e "${SUCCESS_COLOR}Sail Compiler already installed.${ENDC}"
@@ -342,7 +409,7 @@ fi
 section_header "Installing/Updating RISC-V Sail Model"
 STATUS="riscv-sail-model"
 if git_check "sail-riscv" "https://github.com/riscv/sail-riscv.git" "$RISCV/bin/riscv_sim_RV32"; then
-    cd sail-riscv
+    cd "$RISCV"/sail-riscv
     git reset --hard && git clean -f && git checkout master && git pull
     ARCH=RV64 make -j "${NUM_THREADS}" c_emulator/riscv_sim_RV64  2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
     ARCH=RV32 make -j "${NUM_THREADS}" c_emulator/riscv_sim_RV32 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
@@ -365,7 +432,7 @@ STATUS="OSU Skywater 130 cell library"
 mkdir -p "$RISCV"/cad/lib
 cd "$RISCV"/cad/lib
 if git_check "sky130_osu_sc_t12" "https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12" "$RISCV/cad/lib/sky130_osu_sc_t12" "main"; then
-    cd sky130_osu_sc_t12
+    cd "$RISCV"/sky130_osu_sc_t12
     git reset --hard && git clean -f && git checkout main && git pull
     echo -e "${SUCCESS_COLOR}OSU Skywater library successfully installed!${ENDC}"
 else
@@ -376,23 +443,27 @@ fi
 # Buildroot and Linux testvectors
 # Buildroot is used to boot a minimal versio of Linux on Wally.
 # Testvectors are generated using QEMU.
-section_header "Installing Buildroot and Creating Linux testvectors"
-STATUS="buildroot"
-if [ -z "$LD_LIBRARY_PATH" ]; then
-    export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$RISCV/riscv64-unknown-elf/lib:$RISCV/lib/x86_64-linux-gnu/
+if [ ! "$no_buidroot" ]; then
+    section_header "Installing Buildroot and Creating Linux testvectors"
+    STATUS="buildroot"
+    if [ -z "$LD_LIBRARY_PATH" ]; then
+        export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$RISCV/riscv64-unknown-elf/lib:$RISCV/lib/x86_64-linux-gnu/
+    else
+        export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$LD_LIBRARY_PATH:$RISCV/riscv64-unknown-elf/lib:$RISCV/lib/x86_64-linux-gnu/
+    fi
+    cd "$dir"/../linux
+    if [ ! -e "$RISCV"/buildroot ]; then
+        make 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+        echo -e "${SUCCESS_COLOR}Buildroot successfully installed and Linux testvectors created!${ENDC}"
+    elif [ ! -e "$RISCV"/linux-testvectors ]; then
+        echo -e "${OK_COLOR}Buildroot already exists, but Linux testvectors are missing. Generating them now.${ENDC}"
+        make dumptvs 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+        echo -e "${SUCCESS_COLOR}Linux testvectors successfully generated!${ENDC}"
+    else
+        echo -e "${OK_COLOR}Buildroot and Linux testvectors already exist.${ENDC}"
+    fi
 else
-    export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$LD_LIBRARY_PATH:$RISCV/riscv64-unknown-elf/lib:$RISCV/lib/x86_64-linux-gnu/
-fi
-cd "$dir"/../linux
-if [ ! -e "$RISCV"/buildroot ]; then
-    make 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
-    echo -e "${SUCCESS_COLOR}Buildroot successfully installed and Linux testvectors created!${ENDC}"
-elif [ ! -e "$RISCV"/linux-testvectors ]; then
-    echo -e "${OK_COLOR}Buildroot already exists, but Linux testvectors are missing. Generating them now.${ENDC}"
-    make dumptvs 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
-    echo -e "${SUCCESS_COLOR}Linux testvectors successfully generated!${ENDC}"
-else
-    echo -e "${OK_COLOR}Buildroot and Linux testvectors already exist.${ENDC}"
+    echo -e "${OK_COLOR}Skipping Buildroot and Linux testvectors.${ENDC}"
 fi
 
 
@@ -403,8 +474,8 @@ section_header "Downloading Site Setup Script"
 STATUS="site-setup scripts"
 cd "$RISCV"
 if [ ! -e "${RISCV}"/site-setup.sh ]; then
-    wget https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.sh
-    wget https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.csh
+    wget -nv --retry-connrefused $retry_on_host_error https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.sh
+    wget -nv --retry-connrefused $retry_on_host_error https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.csh
     echo -e "${SUCCESS_COLOR}Site setup script successfully downloaded!${ENDC}"
     echo -e "${WARNING_COLOR}Make sure to edit the environment variables in $RISCV/site-setup.sh (or .csh) to point to your installation of EDA tools and licensce files.${ENDC}"
 else

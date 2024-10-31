@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // RASPredictor.sv
 //
-// Written: Rose Thomposn ross1728@gmail.com
+// Written: Rose Thomposn rose@rosethompson.net
 // Created: 15 February 2021
 // Modified: 25 January 2023
 //

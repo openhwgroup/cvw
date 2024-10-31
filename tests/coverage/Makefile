@@ -1,35 +1,43 @@
-CEXT		:= c
-CPPEXT		:= cpp
-AEXT		:= s
-SEXT		:= S
-SRCEXT 		:= \([$(CEXT)$(AEXT)$(SEXT)]\|$(CPPEXT)\)
-#SRCS = $(wildcard *.S)
-#PROGS = $(patsubst %.S,%,$(SRCS))
-SRCDIR = .
-SRCEXT = S
+# Disable builtin rules because they are a shorter (but incorrect) path that Make will use by default
+MAKEFLAGS += --no-builtin-rules
+SRCDIR    := .
+SRCEXT    := S
+AEXT      := s
+OBJEXT    := o
+EXEEXT    := elf
 SOURCES		?= $(shell find $(SRCDIR) -type f -regex ".*\.$(SRCEXT)" | sort)
-OBJEXT = elf
-OBJECTS		:= $(SOURCES:.$(SEXT)=.$(OBJEXT))
+ELFS   		:= $(SOURCES:.$(SRCEXT)=.$(EXEEXT))
+OBJDUMPS  := $(addsuffix .objdump, $(ELFS))
+MEMFILES  := $(addsuffix .memfile, $(ELFS))
 
-all: $(OBJECTS)
+all: $(OBJDUMPS) $(MEMFILES)
 
+# Create dissassembly
 %.elf.objdump: %.elf
+	riscv64-unknown-elf-objdump -S -D $< > $@
+	extractFunctionRadix.sh $@
 
-# Change many things if bit width isn't 64
-%.elf: $(SRCDIR)/%.$(SEXT) WALLY-init-lib.h Makefile
-	riscv64-unknown-elf-gcc -g -o $@ -march=rv64gqc_zfa_zba_zbb_zbc_zbs_zfh_zicboz_zicbop_zicbom_zbkb_zbkx_zknd_zkne_zknh -mabi=lp64 -mcmodel=medany \
-	    -nostartfiles -T../../examples/link/link.ld $<
-	riscv64-unknown-elf-objdump -S -D $@ > $@.objdump
-	riscv64-unknown-elf-elf2hex --bit-width 64 --input $@ --output $@.memfile
-	extractFunctionRadix.sh $@.objdump
-    
-sim: %.elf
+# Create memfile
+%.elf.memfile: %.elf
+	riscv64-unknown-elf-elf2hex --bit-width 64 --input $< --output $@
+
+# Link object file to create executable
+.PRECIOUS: %.$(EXEEXT)
+%.$(EXEEXT): %.$(OBJEXT)
+	riscv64-unknown-elf-gcc -g -o $@ -mcmodel=medany -nostartfiles -T../../examples/link/link.ld $*.o
+
+# Assemble into object files
+%.$(OBJEXT): %.$(AEXT)
+	riscv64-unknown-elf-as -g -o $@ -march=rv64gqc_zfa_zba_zbb_zbc_zbs_zfh_zicboz_zicbop_zicbom_zbkb_zbkx_zknd_zkne_zknh -mabi=lp64 $<
+
+# Preprocess assembly files
+%.$(AEXT): %.$(SRCEXT) WALLY-init-lib.h
+	riscv64-unknown-elf-gcc -E -g -o $@ $<
+
+sim: %.$(EXEEXT)
 	spike +signature=%.signature.output +signature-granularity=8 %.elf
 	diff --ignore-case %.signature.output %.reference_output || exit
 	echo "Signature matches! Success!"
 
 clean:
-	rm -f *.elf *.objdump *.signature.output *.addr *.lab *.memfile
-
-
-
+	rm -f *.elf *.objdump *.signature.output *.addr *.lab *.memfile *.o *.s

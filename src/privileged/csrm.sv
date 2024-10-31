@@ -171,7 +171,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   flopenr #(P.XLEN) MEPCreg(clk, reset, WriteMEPCM, NextEPCM, MEPC_REGW); 
   flopenr #(P.XLEN) MCAUSEreg(clk, reset, WriteMCAUSEM, {NextCauseM[4], {(P.XLEN-5){1'b0}}, NextCauseM[3:0]}, MCAUSE_REGW);
   flopenr #(P.XLEN) MTVALreg(clk, reset, WriteMTVALM, NextMtvalM, MTVAL_REGW);
-  flopenr #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0], MCOUNTINHIBIT_REGW);
+  flopenr #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, {CSRWriteValM[31:2], 1'b0, CSRWriteValM[0]}, MCOUNTINHIBIT_REGW);
   if (P.U_SUPPORTED) begin: mcounteren // MCOUNTEREN only exists when user mode is supported
     flopenr #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], MCOUNTEREN_REGW);
   end else assign MCOUNTEREN_REGW = '0;
@@ -180,7 +180,9 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   if (P.U_SUPPORTED) begin // menvcfg only exists if there is a lower privilege to control
     logic WriteMENVCFGM;
     logic [63:0] MENVCFG_PreWriteValM, MENVCFG_WriteValM;
+    logic [1:0] LegalizedCBIE;
     assign WriteMENVCFGM = CSRMWriteM & (CSRAdrM == MENVCFG);
+    assign LegalizedCBIE = MENVCFG_PreWriteValM[5:4] == 2'b10 ? MENVCFG_REGW[5:4] : MENVCFG_PreWriteValM[5:4]; // Assume WARL for reserved CBIE = 10, keeps old value
     // MENVCFG is always 64 bits even for RV32
     assign MENVCFG_WriteValM = {
       MENVCFG_PreWriteValM[63]  & P.SSTC_SUPPORTED,
@@ -188,7 +190,8 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
       MENVCFG_PreWriteValM[61]  & P.SVADU_SUPPORTED,
       53'b0,
       MENVCFG_PreWriteValM[7]   & P.ZICBOZ_SUPPORTED,
-      MENVCFG_PreWriteValM[6:4] & {3{P.ZICBOM_SUPPORTED}},
+      MENVCFG_PreWriteValM[6]   & P.ZICBOM_SUPPORTED,
+      LegalizedCBIE             & {2{P.ZICBOM_SUPPORTED}},
       3'b0,
       MENVCFG_PreWriteValM[0]   & P.S_SUPPORTED & P.VIRTMEM_SUPPORTED
     };

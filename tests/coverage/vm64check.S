@@ -7,27 +7,27 @@
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Cover IMMU vm64check block by jumping to illegal virtual addresses
 // Need a nonstandard trap handler to deal with returns from theses jumps
 //    assign eq_46_38 = &(VAdr[46:38]) | ~|(VAdr[46:38]);
- //   assign eq_63_47 = &(VAdr[63:47]) | ~|(VAdr[63:47]); 
+ //   assign eq_63_47 = &(VAdr[63:47]) | ~|(VAdr[63:47]);
  //   assign UpperBitsUnequal = SV39Mode ? ~(eq_63_47 & eq_46_38) : ~eq_63_47;
 
 .section .text.init
@@ -41,9 +41,9 @@ rvtest_entry_point:
     csrw mtvec, t0      # Initialize MTVEC to trap_handler
     # set up PMP so user and supervisor mode can access full address space
     csrw pmpcfg0, 0xF   # configure PMP0 to TOR RWX
-    li t0, 0xFFFFFFFF   
+    li t0, 0xFFFFFFFF
     csrw pmpaddr0, t0   # configure PMP0 top of range to 0xFFFFFFFF to allow all 32-bit addresses
-    
+
     # SATP in non-39 mode
     csrw satp, zero
 
@@ -118,8 +118,8 @@ self_loop:
 trap_handler:
     csrw mepc, ra       # return to address in ra
     mret
-    
-.section .tohost 
+
+.section .tohost
 tohost:                 # write to HTIF
     .dword 0
 fromhost:
@@ -146,7 +146,7 @@ topofstack:
     lw t1, 0(t0)
     li t1, 0x0000010080000000
     lw t1, 0(t0)
-   li t0, 0x8000000000000000 
+   li t0, 0x8000000000000000
    csrw satp, t0   # SV39 mode
     li t0, 0x0000000080000000
     lw t1, 0(t0)
@@ -158,7 +158,7 @@ topofstack:
     lw t1, 0(t0)
     li t1, 0x0000010080000000
     lw t1, 0(t0)
-   li t0, 0x9000000000000000 
+   li t0, 0x9000000000000000
    csrw satp, t0   # SV48 mode
     li t0, 0x0000000080000000
     lw t1, 0(t0)
@@ -170,5 +170,5 @@ topofstack:
     lw t1, 0(t0)
     li t1, 0x0000010080000000
     lw t1, 0(t0)
-   li t0, 0x0000000000000000 
+   li t0, 0x0000000000000000
    csrw satp, t0   # disable virtual memory

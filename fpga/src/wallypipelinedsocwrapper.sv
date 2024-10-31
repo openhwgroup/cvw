@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // wallypipelinedsocwrapper.sv
 //
-// Written: Rose Thompson ross1728@gmail.com 16 June 2023
+// Written: Rose Thompson rose@rosethompson.net 16 June 2023
 // Modified: 
 //
 // Purpose: A wrapper to set parameters.  Vivado cannot set the top level parameters because it only supports verilog,

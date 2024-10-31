@@ -1,9 +1,10 @@
 ///////////////////////////////////////////
-// tlbMisaligned.S
+// hptwAccessFault.S
 //
 // Written: Rose Thompson rose@rosethompson.net
 //
-// Purpose: Create a page table with misaligned load and store access.  Checks TLB misses prevent misaligned load/store fault.
+// Purpose: Force the HPTW to walk a page table with non-leaf non-zero PBMT bits.  This will generate
+// a load or store/amo page fault based on the original access type.
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -30,10 +31,6 @@
 
 # run-elf.bash find this in project description
 main:
-    li t5, 0x1
-    slli t5, t5, 62
-    ori t5, t5, 0xF0
-    csrs menvcfg, t5  # menvcfg.PBMTE = 1, CBZE, CBCFE, CBIE all 1
 
     # Page table root address at 0x80010000
     li t5, 0x9000000000080010
@@ -46,18 +43,12 @@ main:
     ecall
     li t5, 0
     li t2, 0x1000
-    li t0, 0x1000 // go to first gigapage
-    li t4, 0x40000000 // put this outside the loop.
+    li t0, 0x8000001000
 
-    lw t1, 1(t0) # load a misaligned aligned cached address
-    li t1, 0x00008067 #load in jalr
-    add t0, t0, t2 # go to the next page
-    sw t1, 1(t0) # store to another misaligned cached address.
-
-    add t0, t0, t2 # go to the next page
-    lw t1, 1(t0) # load a misaligned aligned uncached address should fault
-    add t0, t0, t2 # go to the next page
-    sw t1, 1(t0) # store to another misaligned uncached address should falt.
+    lw t1, 0(t0)       # valid virtual address, valid physical address, but invalid PBMT in middle of page table.
+    li t1, 0x00008067
+    add t0, t0, t2
+    sw t1, 0(t0)      # valid virtual address, valid physical address, but invalid PBMT in middle of page table.
 
     fence.I
 
@@ -70,25 +61,25 @@ finished:
 # Page table situated at 0x80010000
 pagetable:
     .8byte 0x200044C1
+    .8byte 0x200044C1
 
 .align 12
-    .8byte 0x00000000200048C1
+    .8byte 0x40000040200048C1
     .8byte 0x00000000200048C1
     .8byte 0x00000000200048C1
 
 
 .align 12
     .8byte 0x0000000020004CC1
-    //.8byte 0x00000200800CF// ADD IN THE MEGAPAGE should 3 nibbles of zeros be removed?
 
 .align 12
     #80000000
     .8byte 0x200000CF
-    .8byte 0x200004CF  # first page
-    .8byte 0x200008CF  # second page
-    .8byte 0x2000000020000CCF  # 3rd page
+    .8byte 0x200004CF
+    .8byte 0x200008CF
+    .8byte 0x20000CCF
 
-    .8byte 0x20000000200010CF  # 4th page
+    .8byte 0x200010CF
     .8byte 0x200014CF
     .8byte 0x200018CF
     .8byte 0x20001CCF

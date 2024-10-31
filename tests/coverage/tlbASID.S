@@ -9,20 +9,20 @@
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -35,19 +35,19 @@
 # run-elf.bash find this in project description
 main:
     # Page table root address at 0x80010000
-    li t5, 0x9000000000080080 // try making asid = 0. 
+    li t5, 0x9000000000080080 // try making asid = 0.
     csrw satp, t5
 
     # sfence.vma x0, x0
 
     # switch to supervisor mode
-    li a0, 1   
+    li a0, 1
     ecall
 
     li t0, 0xC0000000
 
     li t2, 0            # i = 0
-    li t5, 0            # j = 0 // now use as a counter for new asid loop 
+    li t5, 0            # j = 0 // now use as a counter for new asid loop
     li t3, 32           # Max amount of Loops = 32
 
 loop: bge t2, t3, finished   # exit loop if i >= loops
@@ -56,7 +56,7 @@ loop: bge t2, t3, finished   # exit loop if i >= loops
     sw t1, 0(t0)
     fence.I
     jalr t0
-    li t5, 0x9001000000080080 // try making asid = 1 
+    li t5, 0x9001000000080080 // try making asid = 1
     csrw satp, t5
     jalr t0
     li t5, 0x9000000000080080 // try making asid = 0
@@ -65,16 +65,16 @@ loop: bge t2, t3, finished   # exit loop if i >= loops
     add t0, t0, t4
     addi t2, t2, 1
     j loop
-    
+
 finished:
     j done
 
 .data
 .align 19
 # level 3 Page table situated at 0x8008 0000, should point to 8008,1000
-pagetable: 
+pagetable:
     .8byte 0x200204C1
-    
+
 .align 12 // level 2 page table, contains direction to a gigapage
     .8byte 0x0
     .8byte 0x0
@@ -129,5 +129,3 @@ pagetable:
     .8byte 0x200084CF
     .8byte 0x200088CF
     .8byte 0x20008CCF
-
-    

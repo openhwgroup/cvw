@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // triggergen.sv
 //
-// Written: Rose Thompson ross1728@gmail.com
+// Written: Rose Thompson rose@rosethompson.net
 // Created: June 26, 2024
 // Modified: June 26, 2024
 //
