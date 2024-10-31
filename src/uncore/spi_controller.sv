@@ -148,7 +148,8 @@ module spi_controller (
   // assign SCLKenableEarly = (DivCounter + 1'b1) == SckDiv;
   assign LastBit = BitNum == 3'd7;
 
-  assign ContinueTransmit = ~txFIFOReadEmpty & EndOfFrame;
+  //assign EndOfFrame = SCLKenable & LastBit & Transmitting;
+  assign ContinueTransmit = ~txFIFOReadEmpty & EndOfFrameDelay;
   assign EndTransmission = txFIFOReadEmpty & EndOfFrameDelay;
   
   always_ff @(posedge PCLK) begin
@@ -183,13 +184,13 @@ module spi_controller (
       
       if ((CurrState == INTERCS) & SCK & SCLKenable) begin
         INTERCSCounter <= INTERCSCounter + 8'd1;
-      end else begin
+      end else if (SCLKenable) begin
         INTERCSCounter <= 8'd0;
       end
       
       if ((CurrState == INTERXFR) & SCK & SCLKenable) begin
         INTERXFRCounter <= INTERXFRCounter + 8'd1;
-      end else begin
+      end else if (SCLKenable) begin
         INTERXFRCounter <= 8'd0;
       end
       
@@ -239,7 +240,7 @@ module spi_controller (
     end else begin
       ShiftEdge <= ((SckMode[1] ^ SckMode[0] ^ SPICLK) & SCLKenable & ~LastBit & Transmitting) & PhaseOneOffset;
       PhaseOneOffset <= PhaseOneOffset == 0 ? Transmitting & SCLKenable : PhaseOneOffset;
-      SampleEdge <= (SckMode[1] ^ SckMode[0] ^ ~SPICLK) & SCLKenable & Transmitting;
+      SampleEdge <= (SckMode[1] ^ SckMode[0] ^ ~SPICLK) & SCLKenable & Transmitting & ~DelayIsNext;
       EndOfFrameDelay <= (SckMode[1] ^ SckMode[0] ^ SPICLK) & SCLKenable & LastBit & Transmitting;
     end
   end
@@ -284,12 +285,13 @@ module spi_controller (
       end
       SCKCS: begin // SCKCS case --------------------------------------
         if (EndOfSCKCS) 
-          if (EndTransmission)
+          if (txFIFOReadEmpty) begin
             if (CSMode == AUTOMODE) NextState = INACTIVE;
             else if (CSMode == HOLDMODE) NextState = HOLD;
-          else if (ContinueTransmit)
+          end else if (~txFIFOReadEmpty) begin
             if (HasINTERCS) NextState = INTERCS;
             else NextState = TRANSMIT;
+          end
       end
       HOLD: begin // HOLD mode case -----------------------------------
         if (CSMode == AUTOMODE) begin
