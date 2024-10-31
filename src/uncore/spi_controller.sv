@@ -296,6 +296,7 @@ module spi_controller (
           AUTOMODE: begin  
             if (EndTransmission) NextState = INACTIVE;
             else if (EndOfFrameDelay) NextState = SCKCS;
+            else NextState = TRANSMIT;
           end
           HOLDMODE: begin  
             if (EndTransmission) NextState = HOLD;  
@@ -307,6 +308,7 @@ module spi_controller (
             else if (ContinueTransmit & HasINTERXFR) NextState = INTERXFR;
             else NextState = TRANSMIT;
           end
+          default: NextState = TRANSMIT;
         endcase
       end
       SCKCS: begin // SCKCS case --------------------------------------
@@ -318,6 +320,8 @@ module spi_controller (
             if (HasINTERCS) NextState = INTERCS;
             else NextState = TRANSMIT;
           end
+        end else begin
+          NextState = SCKCS;
         end
       end
       HOLD: begin // HOLD mode case -----------------------------------
@@ -331,11 +335,15 @@ module spi_controller (
         if (EndOfINTERCS) begin
           if (HasCSSCK) NextState = CSSCK;
           else NextState = TRANSMIT;
+        end else begin
+          NextState = INTERCS;  
         end
       end
       INTERXFR: begin // INTERXFR case --------------------------------
         if (EndOfINTERXFR) begin
           NextState = TRANSMIT;
+        end else begin
+          NextState = INTERXFR;  
         end
       end
       default: begin
