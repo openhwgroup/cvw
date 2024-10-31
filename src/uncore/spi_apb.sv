@@ -86,6 +86,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
   logic        EndOfFrameDelay;
   logic        Transmitting;
   logic        InactiveState;
+  logic [3:0]  FrameLength;  
 
   logic        ResetSCLKenable;
   logic        TransmitStart;
@@ -213,12 +214,13 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
   // SPI Controller module -------------------------------------------
   // This module controls state and timing signals that drive the rest of this module
   assign ResetSCLKenable = Memwrite & (Entry == SPI_SCKDIV);
+  assign FrameLength = Format[4:1];
   
   spi_controller controller(PCLK, PRESETn,
                             // Transmit Signals
                             TransmitStart, TransmitStartD, ResetSCLKenable,
                             // Register Inputs
-                            SckDiv, SckMode, ChipSelectMode, Delay0, Delay1,
+                            SckDiv, SckMode, ChipSelectMode, Delay0, Delay1, FrameLength,
                             // txFIFO stuff
                             TransmitFIFOReadEmpty,
                             // Timing
@@ -243,6 +245,19 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
       TransmitFIFOReadIncrement <= TransmitStartD | (EndOfFrameDelay & ~TransmitFIFOReadEmpty) ;
   end
 
+  // Check whether TransmitReg has been loaded.
+  // We use this signal to prevent returning to the Ready state for TransmitStart
+  logic TransmitRegLoaded;
+  always_ff @(posedge PCLK) begin
+    if (~PRESETn) begin
+      TransmitRegLoaded <= 1'b0;
+    end else if (TransmitLoad) begin
+      TransmitRegLoaded <= 1'b1;
+    end else if (ShiftEdge | EndOfFrameDelay) begin
+      TransmitRegLoaded <= 1'b0;  
+    end
+  end
+
   // Setup TransmitStart state machine
   always_ff @(posedge PCLK) begin
     if (~PRESETn) begin
@@ -251,14 +266,14 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
       CurrState <= NextState;
     end
   end
-
+  
   // State machine for starting transmissions
   always_comb begin
     case (CurrState)
       READY: if (~TransmitFIFOReadEmpty & ~Transmitting) NextState = START;
              else NextState = READY;
       START: NextState = WAIT;
-      WAIT: if (TransmitFIFOReadEmpty & ~Transmitting) NextState = READY;
+      WAIT: if (TransmitFIFOReadEmpty & ~Transmitting & ~TransmitRegLoaded) NextState = READY;
             else NextState = WAIT;
     endcase
   end

@@ -43,6 +43,7 @@ module spi_controller (
   input logic [1:0]  CSMode,
   input logic [15:0] Delay0,
   input logic [15:0] Delay1,
+  input logic [3:0]  FrameLength,
 
   // Is the Transmit FIFO Empty?
   input logic        txFIFOReadEmpty,
@@ -146,7 +147,7 @@ module spi_controller (
   
   assign SCLKenable = DivCounter == SckDiv;
   // assign SCLKenableEarly = (DivCounter + 1'b1) == SckDiv;
-  assign LastBit = BitNum == 3'd7;
+  assign LastBit = (BitNum == FrameLength - 4'b1);
 
   //assign EndOfFrame = SCLKenable & LastBit & Transmitting;
   assign ContinueTransmit = ~txFIFOReadEmpty & EndOfFrameDelay;
@@ -161,6 +162,10 @@ module spi_controller (
       PreShiftEdge <= 0;
       PreSampleEdge <= 0;
       EndOfFrame <= 0;
+      CSSCKCounter <= 0;
+      SCKCSCounter <= 0;
+      INTERCSCounter <= 0;
+      INTERXFRCounter <= 0;
     end else begin
       // TODO: Consolidate into one delay counter since none of the
       // delays happen at the same time?
@@ -172,25 +177,25 @@ module spi_controller (
       
       if ((CurrState == CSSCK) & SCK & SCLKenable) begin
         CSSCKCounter <= CSSCKCounter + 8'd1;
-      end else if (SCLKenable) begin
+      end else if (SCLKenable & EndOfCSSCK) begin
         CSSCKCounter <= 8'd0;
       end
       
       if ((CurrState == SCKCS) & SCK & SCLKenable) begin
         SCKCSCounter <= SCKCSCounter + 8'd1;
-      end else if (SCLKenable) begin
+      end else if (SCLKenable & EndOfSCKCS) begin
         SCKCSCounter <= 8'd0;
       end
       
       if ((CurrState == INTERCS) & SCK & SCLKenable) begin
         INTERCSCounter <= INTERCSCounter + 8'd1;
-      end else if (SCLKenable) begin
+      end else if (SCLKenable & EndOfINTERCS) begin
         INTERCSCounter <= 8'd0;
       end
       
       if ((CurrState == INTERXFR) & SCK & SCLKenable) begin
         INTERXFRCounter <= INTERXFRCounter + 8'd1;
-      end else if (SCLKenable) begin
+      end else if (SCLKenable & EndOfINTERXFR) begin
         INTERXFRCounter <= 8'd0;
       end
       
@@ -239,7 +244,7 @@ module spi_controller (
       EndOfFrameDelay <= 0;
     end else begin
       ShiftEdge <= ((SckMode[1] ^ SckMode[0] ^ SPICLK) & SCLKenable & ~LastBit & Transmitting) & PhaseOneOffset;
-      PhaseOneOffset <= PhaseOneOffset == 0 ? Transmitting & SCLKenable : PhaseOneOffset;
+      PhaseOneOffset <= PhaseOneOffset == 0 ? Transmitting & SCLKenable : ~EndOfFrameDelay;
       SampleEdge <= (SckMode[1] ^ SckMode[0] ^ ~SPICLK) & SCLKenable & Transmitting & ~DelayIsNext;
       EndOfFrameDelay <= (SckMode[1] ^ SckMode[0] ^ SPICLK) & SCLKenable & LastBit & Transmitting;
     end
@@ -251,6 +256,23 @@ module spi_controller (
   assign HoldMode = CSMode == HOLDMODE;
   // assign TransmitLoad = TransmitStart | (EndOfFrameDelay & ~txFIFOReadEmpty);
 
+  logic ContinueTransmitD;
+  logic NextEndDelay;
+  logic CurrentEndDelay;
+
+  assign NextEndDelay = NextState == SCKCS | NextState == INTERCS | NextState == INTERXFR;
+  assign CurrentEndDelay = CurrState == SCKCS | CurrState == INTERCS | CurrState == INTERXFR;
+  
+  always_ff @(posedge PCLK) begin
+    if (~PRESETn) begin
+      ContinueTransmitD <= 1'b0;
+    end else if (NextEndDelay & ~CurrentEndDelay) begin
+      ContinueTransmitD <= ContinueTransmit;
+    end else if (EndOfSCKCS & SCLKenable) begin
+      ContinueTransmitD <= 1'b0;  
+    end
+  end
+  
   always_ff @(posedge PCLK) begin
     if (~PRESETn) begin
       CurrState <= INACTIVE;
@@ -261,17 +283,19 @@ module spi_controller (
   
   always_comb begin
     case (CurrState)  
-      INACTIVE: if (TransmitStartD)
+      INACTIVE: if (TransmitStartD) begin
                   if (~HasCSSCK) NextState = TRANSMIT;
                   else NextState = CSSCK;
-                else NextState = INACTIVE; 
+                end else begin
+                  NextState = INACTIVE;
+                end
       CSSCK: if (EndOfCSSCK) NextState = TRANSMIT;
              else NextState = CSSCK;
       TRANSMIT: begin // TRANSMIT case --------------------------------
         case(CSMode)
           AUTOMODE: begin  
             if (EndTransmission) NextState = INACTIVE;
-            else if (ContinueTransmit) NextState = SCKCS;
+            else if (EndOfFrameDelay) NextState = SCKCS;
           end
           HOLDMODE: begin  
             if (EndTransmission) NextState = HOLD;  
@@ -279,19 +303,22 @@ module spi_controller (
             else NextState = TRANSMIT;
           end
           OFFMODE: begin
-              
+            if (EndTransmission) NextState = INACTIVE;
+            else if (ContinueTransmit & HasINTERXFR) NextState = INTERXFR;
+            else NextState = TRANSMIT;
           end
         endcase
       end
       SCKCS: begin // SCKCS case --------------------------------------
-        if (EndOfSCKCS) 
-          if (txFIFOReadEmpty) begin
+        if (EndOfSCKCS) begin
+          if (~ContinueTransmitD) begin
             if (CSMode == AUTOMODE) NextState = INACTIVE;
             else if (CSMode == HOLDMODE) NextState = HOLD;
-          end else if (~txFIFOReadEmpty) begin
+          end else begin
             if (HasINTERCS) NextState = INTERCS;
             else NextState = TRANSMIT;
           end
+        end
       end
       HOLD: begin // HOLD mode case -----------------------------------
         if (CSMode == AUTOMODE) begin
