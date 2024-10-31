@@ -337,8 +337,9 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
   
   // Receive shift register
   always_ff @(posedge PCLK)
-    if(~PRESETn)  ReceiveShiftReg <= 8'b0;
-    else if (SampleEdge) begin
+    if(~PRESETn) begin
+      ReceiveShiftReg <= 8'b0;
+    end else if (SampleEdge) begin
       if (~Transmitting) ReceiveShiftReg <= 8'b0;
       else               ReceiveShiftReg <= {ReceiveShiftReg[6:0], ShiftIn};
     end

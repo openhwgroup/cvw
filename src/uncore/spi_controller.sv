@@ -82,7 +82,7 @@ module spi_controller (
   // logic SampleEdge;
 
   // Frame stuff
-  logic [2:0] BitNum;
+  logic [3:0] BitNum;
   logic       LastBit;
   //logic       EndOfFrame;
   //logic       EndOfFrameDelay;
@@ -158,7 +158,7 @@ module spi_controller (
       DivCounter <= 12'b0;
       SPICLK <= SckMode[1];
       SCK <= 0;
-      BitNum <= 3'h0;
+      BitNum <= 4'h0;
       PreShiftEdge <= 0;
       PreSampleEdge <= 0;
       EndOfFrame <= 0;
@@ -210,7 +210,7 @@ module spi_controller (
       if (SCLKenable | TransmitStart | ResetSCLKenable) begin
         DivCounter <= 12'b0;
       end else begin
-        DivCounter = DivCounter + 12'd1;
+        DivCounter <= DivCounter + 12'd1;
       end
       
       // EndOfFrame controller
@@ -226,9 +226,9 @@ module spi_controller (
       
       // Increment BitNum
       if (ShiftEdge & Transmitting) begin
-        BitNum <= BitNum + 3'd1;
+        BitNum <= BitNum + 4'd1;
       end else if (EndOfFrameDelay) begin
-        BitNum <= 3'b0;  
+        BitNum <= 4'b0;  
       end
     end
   end
