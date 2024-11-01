@@ -191,7 +191,6 @@ set_property port_width 1 [get_debug_ports u_ila_0/probe33]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe33]
 connect_debug_port u_ila_0/probe33 [get_nets [list {wallypipelinedsoc/uncoregen.uncore/sdc.sdc/TransmitFIFOReadEmpty} ]]  
 
-
 # the debug hub has issues with the clocks from the mmcm so lets give up an connect to the 100Mhz input clock.
 #connect_debug_port dbg_hub/clk [get_nets default_100mhz_clk]
 connect_debug_port dbg_hub/clk [get_nets CPUCLK]
