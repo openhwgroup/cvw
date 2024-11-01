@@ -72,7 +72,8 @@ string coverage64gc[] = '{
   "pmpcfg2",
   "pmppriority",
   "pmpcbo",
-  "pmpadrdecs"
+  "pmpadrdecs",
+  "btbthrash"
 };
 
 string buildroot[] = '{
