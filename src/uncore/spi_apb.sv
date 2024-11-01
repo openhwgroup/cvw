@@ -273,7 +273,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
       READY: if (~TransmitFIFOReadEmpty & ~Transmitting) NextState = START;
              else NextState = READY;
       START: NextState = WAIT;
-      WAIT: if (TransmitFIFOReadEmpty & ~Transmitting & ~TransmitRegLoaded) NextState = READY;
+      WAIT: if (/*TransmitFIFOReadEmpty &*/ ~Transmitting & ~TransmitRegLoaded) NextState = READY;
             else NextState = WAIT;
       default: NextState = READY;
     endcase
