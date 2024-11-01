@@ -288,33 +288,34 @@ class TestRunner:
         makefile_location = self.cvw.joinpath(makefile_path)
         os.chdir(makefile_location)
 
-        output_file = self.log_dir.joinpath(f"make-{target}-output.log")
+        if target: 
+            output_file = self.log_dir.joinpath(f"make-{target}-output.log")
+        else: output_file = self.log_dir.joinpath(f"make-output.log")
 
-        command = ["make"]
-
-        # Add target to the command if specified
-        if target:
-            command.append(target)
-            self.logger.info(f"Command used in directory {makefile_location}: {command[0]} {command[1]}")
+        # Execute make with target and cores/2
+        if target: 
+            command = ["make", target, "--jobs=$(($(nproc)/2))"]
         else:
-            self.logger.info(f"Command used in directory {makefile_location}: {command[0]}")
+            command = ["make", "--jobs=$(($(nproc)/2))"]
+
+        self.logger.info(f"Command used in directory {makefile_location}: {' '.join(command)}")
 
         # Execute the command using subprocess and save the output into a file
         with open(output_file, "w") as f:
             formatted_datetime = self.current_datetime.strftime("%Y-%m-%d %H:%M:%S")
             f.write(formatted_datetime)
             f.write("\n\n")
-            result = subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, text=True)
+            result = subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, text=True, shell=True)
         
         # Execute the command using a subprocess and not save the output
         #result = subprocess.run(command, text=True)
 
         # Check the result
         if result.returncode == 0:
-            self.logger.info(f"Tests have been made with target: {target}")
+            self.logger.info(f"Tests have been made with target: {' '.join(command)}")
             return True
         else:
-            self.logger.error(f"Error making the tests. Target: {target}")
+            self.logger.error(f"Error making the tests. Command: {' '.join(command)}")
             return False
             
     def run_tests(self, test_type=None, test_name=None, test_extensions=None):
@@ -422,7 +423,7 @@ class TestRunner:
             elif "Failures detected in output" in line: # Text explicitly fails
                 try:
                     config_name = line.split(':')[0].strip()
-                    log_file = os.path.abspath(os.path.join("logs", config_name, ".log"))
+                    log_file = os.path.abspath(os.path.join("logs", config_name))
                     failed_configs.append((config_name, log_file))
                 except:
                     failed_configs.append((config_name, "Log file not found"))
@@ -672,7 +673,7 @@ def main():
 
     parser.add_argument('--path',default = "nightly", help='specify the path for where the nightly repositories will be cloned ex: "nightly-runs')
     parser.add_argument('--repository',default = "https://github.com/openhwgroup/cvw", help='specify which github repository you want to clone')
-    parser.add_argument('--target', default = "--jobs", help='types of tests you can make are: all, wally-riscv-arch-test, no')
+    parser.add_argument('--target', default = "", help='types of tests you can make are: all, wally-riscv-arch-test, no')
     parser.add_argument('--tests', default = "nightly", help='types of tests you can run are: nightly, test, test_lint')
     parser.add_argument('--send_email',default = "", nargs="+", help='What emails to send test results to. Example: "[email1],[email2],..."')
 
