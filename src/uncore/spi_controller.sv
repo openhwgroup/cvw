@@ -80,6 +80,9 @@ module spi_controller (
   logic PreSampleEdge;
   // logic ShiftEdge;
   // logic SampleEdge;
+  logic ShiftEdgePulse;
+  logic SampleEdgePulse;
+  logic EndOfFramePulse;
 
   // Frame stuff
   logic [3:0] BitNum;
@@ -220,6 +223,7 @@ module spi_controller (
       //   EndOfFrame <= 1'b0;  
       // end
 
+      // TODO: Rename EndOfFrameDelay to EndOfFrame and remove this logic
       if (~TransmitStart) begin
         EndOfFrame <= (SckMode[1] ^ SckMode[0] ^ SPICLK) & SCLKenable & LastBit & Transmitting;
       end
@@ -236,35 +240,39 @@ module spi_controller (
   // Delay ShiftEdge and SampleEdge by a half PCLK period
   // Aligned EXACTLY ON THE MIDDLE of the leading and trailing edges.
   // Sweeeeeeeeeet...
+
+  assign ShiftEdgePulse = SCLKenable & ~LastBit & Transmitting;
+  assign SampleEdgePulse = SCLKenable & Transmitting & ~DelayIsNext;
+  assign EndOfFramePulse = SCLKenable & LastBit & Transmitting;
+  
   always_ff @(posedge ~PCLK) begin
     if (~PRESETn | TransmitStart) begin
       ShiftEdge <= 0;
       PhaseOneOffset <= 0;
       SampleEdge <= 0;
       EndOfFrameDelay <= 0;
-    end else begin
-      case(SckMode)
+      end else begin
+        PhaseOneOffset <= (PhaseOneOffset == 0) ? Transmitting & SCLKenable : ~EndOfFrameDelay;
+        case(SckMode)
         2'b00: begin
-          ShiftEdge <= SPICLK & SCLKenable & ~LastBit & Transmitting;
-          SampleEdge <= ~SPICLK & SCLKenable & Transmitting & ~DelayIsNext;
-          EndOfFrameDelay <= SPICLK & SCLKenable & LastBit & Transmitting;
+          ShiftEdge <= SPICLK & ShiftEdgePulse;
+          SampleEdge <= ~SPICLK & SampleEdgePulse;
+          EndOfFrameDelay <= SPICLK & EndOfFramePulse;
         end
         2'b01: begin
-          ShiftEdge <= ~SPICLK & SCLKenable & ~LastBit & Transmitting & PhaseOneOffset;
-          SampleEdge <= SPICLK & SCLKenable & Transmitting & ~DelayIsNext;
-          EndOfFrameDelay <= ~SPICLK & SCLKenable & LastBit & Transmitting;
-          PhaseOneOffset <= (PhaseOneOffset == 0) ? Transmitting & SCLKenable : ~EndOfFrameDelay;
+          ShiftEdge <= ~SPICLK & ShiftEdgePulse & PhaseOneOffset;
+          SampleEdge <= SPICLK & SampleEdgePulse;
+          EndOfFrameDelay <= ~SPICLK & EndOfFramePulse;
         end
         2'b10: begin
-          ShiftEdge <= ~SPICLK & SCLKenable & ~LastBit & Transmitting;
-          SampleEdge <= SPICLK & SCLKenable & Transmitting & ~DelayIsNext;
-          EndOfFrameDelay <= ~SPICLK & SCLKenable & LastBit & Transmitting;
+          ShiftEdge <= ~SPICLK & ShiftEdgePulse;
+          SampleEdge <= SPICLK & SampleEdgePulse;
+          EndOfFrameDelay <= ~SPICLK & EndOfFramePulse;
         end
         2'b11: begin
-          ShiftEdge <= SPICLK & SCLKenable & ~LastBit & Transmitting & PhaseOneOffset;
-          SampleEdge <= ~SPICLK & SCLKenable & Transmitting & ~DelayIsNext;
-          EndOfFrameDelay <= SPICLK & SCLKenable & LastBit & Transmitting;
-          PhaseOneOffset <= (PhaseOneOffset == 0) ? Transmitting & SCLKenable : ~EndOfFrameDelay;
+          ShiftEdge <= SPICLK & ShiftEdgePulse & PhaseOneOffset;
+          SampleEdge <= ~SPICLK & SampleEdgePulse;
+          EndOfFrameDelay <= SPICLK & EndOfFramePulse;
         end
       // ShiftEdge <= ((SckMode[1] ^ SckMode[0] ^ SPICLK) & SCLKenable & ~LastBit & Transmitting) & PhaseOneOffset;
       // PhaseOneOffset <= PhaseOneOffset == 0 ? Transmitting & SCLKenable : ~EndOfFrameDelay;
