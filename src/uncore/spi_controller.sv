@@ -243,10 +243,34 @@ module spi_controller (
       SampleEdge <= 0;
       EndOfFrameDelay <= 0;
     end else begin
-      ShiftEdge <= ((SckMode[1] ^ SckMode[0] ^ SPICLK) & SCLKenable & ~LastBit & Transmitting) & PhaseOneOffset;
-      PhaseOneOffset <= PhaseOneOffset == 0 ? Transmitting & SCLKenable : ~EndOfFrameDelay;
-      SampleEdge <= (SckMode[1] ^ SckMode[0] ^ ~SPICLK) & SCLKenable & Transmitting & ~DelayIsNext;
-      EndOfFrameDelay <= (SckMode[1] ^ SckMode[0] ^ SPICLK) & SCLKenable & LastBit & Transmitting;
+      case(SckMode)
+        2'b00: begin
+          ShiftEdge <= SPICLK & SCLKenable & ~LastBit & Transmitting;
+          SampleEdge <= ~SPICLK & SCLKenable & Transmitting & ~DelayIsNext;
+          EndOfFrameDelay <= SPICLK & SCLKenable & LastBit & Transmitting;
+        end
+        2'b01: begin
+          ShiftEdge <= ~SPICLK & SCLKenable & ~LastBit & Transmitting & PhaseOneOffset;
+          SampleEdge <= SPICLK & SCLKenable & Transmitting & ~DelayIsNext;
+          EndOfFrameDelay <= ~SPICLK & SCLKenable & LastBit & Transmitting;
+          PhaseOneOffset <= (PhaseOneOffset == 0) ? Transmitting & SCLKenable : ~EndOfFrameDelay;
+        end
+        2'b10: begin
+          ShiftEdge <= ~SPICLK & SCLKenable & ~LastBit & Transmitting;
+          SampleEdge <= SPICLK & SCLKenable & Transmitting & ~DelayIsNext;
+          EndOfFrameDelay <= ~SPICLK & SCLKenable & LastBit & Transmitting;
+        end
+        2'b11: begin
+          ShiftEdge <= SPICLK & SCLKenable & ~LastBit & Transmitting & PhaseOneOffset;
+          SampleEdge <= ~SPICLK & SCLKenable & Transmitting & ~DelayIsNext;
+          EndOfFrameDelay <= SPICLK & SCLKenable & LastBit & Transmitting;
+          PhaseOneOffset <= (PhaseOneOffset == 0) ? Transmitting & SCLKenable : ~EndOfFrameDelay;
+        end
+      // ShiftEdge <= ((SckMode[1] ^ SckMode[0] ^ SPICLK) & SCLKenable & ~LastBit & Transmitting) & PhaseOneOffset;
+      // PhaseOneOffset <= PhaseOneOffset == 0 ? Transmitting & SCLKenable : ~EndOfFrameDelay;
+      // SampleEdge <= (SckMode[1] ^ SckMode[0] ^ ~SPICLK) & SCLKenable & Transmitting & ~DelayIsNext;
+        // EndOfFrameDelay <= (SckMode[1] ^ SckMode[0] ^ SPICLK) & SCLKenable & LastBit & Transmitting;
+      endcase
     end
   end
 
@@ -314,8 +338,9 @@ module spi_controller (
       SCKCS: begin // SCKCS case --------------------------------------
         if (EndOfSCKCS) begin
           if (~ContinueTransmitD) begin
-            if (CSMode == AUTOMODE) NextState = INACTIVE;
-            else if (CSMode == HOLDMODE) NextState = HOLD;
+            // if (CSMode == AUTOMODE) NextState = INACTIVE;
+            if (CSMode == HOLDMODE) NextState = HOLD;
+            else NextState = INACTIVE;
           end else begin
             if (HasINTERCS) NextState = INTERCS;
             else NextState = TRANSMIT;
