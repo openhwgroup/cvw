@@ -553,7 +553,7 @@ test_cases:
 # Test transmit watermark interrupt (triggers when entries in tx FIFO < tx watermark) without external enables
 
 SETUP_PLIC
-
+.4byte fmt, 0x00080000, write32_test        # reset format register
 .4byte delay1, 0x0000001, write32_test      # reset delay1 register
 .4byte cs_mode, 0x00000000, write32_test    # reset cs_mode
 .4byte tx_mark, 0x00000001, write32_test    # set transmit watermark to 1 (any entry turns mark off)

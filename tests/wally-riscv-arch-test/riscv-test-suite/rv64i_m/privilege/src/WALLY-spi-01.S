@@ -564,7 +564,7 @@ test_cases:
 # Test transmit watermark interrupt (triggers when entries in tx FIFO < tx watermark) without external enables
 
 SETUP_PLIC
-
+.8byte fmt, 0x00080000, write32_test        # reset format register
 .8byte delay1, 0x0000001, write32_test      # reset delay1 register
 .8byte cs_mode, 0x00000000, write32_test    # reset cs_mode
 .8byte sck_div, 0x00000100, write32_test    # lower SPI clock rate so reads are done at correct time when ICACHE not supported
