@@ -1,7 +1,9 @@
 ///////////////////////////////////////////
 // spi_apb.sv
 //
-// Written: Naiche Whyte-Aguayo nwhyteaguayo@g.hmc.edu 11/16/2022
+// Written: Naiche Whyte-Aguayo nwhyteaguayo@g.hmc.edu
+//          Jacob Pease jacobpease@protonmail.com (October 29th, 2024)
+// Created: November 16th, 2022
 //
 // Purpose: SPI peripheral
 //
@@ -13,7 +15,7 @@
 // 
 // A component of the Wally configurable RISC-V project.
 // 
-// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
