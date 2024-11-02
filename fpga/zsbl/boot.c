@@ -135,45 +135,45 @@ int disk_read(BYTE * buf, LBA_t sector, UINT count) {
     /*   crc = crc16(crc, x); */
     /* } while (--n > 0); */
 
-    /* n = 512/8; */
-    /* do { */
-    /*   // Send 8 dummy bytes (fifo should be empty) */
-    /*   for (j = 0; j < 8; j++) { */
-    /*     spi_sendbyte(0xff); */
-    /*   } */
-
-    /*   // Reset counter. Process bytes AS THEY COME IN. */
-    /*   for (j = 0; j < 8; j++) { */
-    /*     while (!(read_reg(SPI_IP) & 2)) {} */
-    /*     uint8_t x = spi_readbyte(); */
-    /*     *p++ = x; */
-    /*     // crc = crc16(crc, x); */
-    /*     crc = ((crc << 8) ^ crctable[x ^ (crc >> 8)]) & 0xffff; */
-    /*   } */
-    /* } while(--n > 0); */
-
-    n = 512;
-    // Initially fill the transmit fifo
-    for (j = 0; j < 8; j++) {
-      spi_sendbyte(0xff);
-    }
-
-    
-    while (n > 0) {
-      // Wait for bytes to be received
-      while (!(read_reg(SPI_IP) & 2)) {}
-      // Read byte
-      uint8_t x = spi_readbyte();
-      // Send another dummy byte
-      if (n > 8) {
+    n = 512/8;
+    do {
+      // Send 8 dummy bytes (fifo should be empty)
+      for (j = 0; j < 8; j++) {
         spi_sendbyte(0xff);
       }
-      // Place received byte into memory
-      *p++ = x;
-      // Update CRC16 with fast table based method
-      crc = ((crc << 8) ^ crctable[x ^ (crc >> 8)]) & 0xffff;
-      n = n - 1;
-    }
+
+      // Reset counter. Process bytes AS THEY COME IN.
+      for (j = 0; j < 8; j++) {
+        while (!(read_reg(SPI_IP) & 2)) {}
+        uint8_t x = spi_readbyte();
+        *p++ = x;
+        // crc = crc16(crc, x);
+        crc = ((crc << 8) ^ crctable[x ^ (crc >> 8)]) & 0xffff;
+      }
+    } while(--n > 0);
+
+    /* n = 512; */
+    /* // Initially fill the transmit fifo */
+    /* for (j = 0; j < 8; j++) { */
+    /*   spi_sendbyte(0xff); */
+    /* } */
+
+    
+    /* while (n > 0) { */
+    /*   // Wait for bytes to be received */
+    /*   while (!(read_reg(SPI_IP) & 2)) {} */
+    /*   // Read byte */
+    /*   uint8_t x = spi_readbyte(); */
+    /*   // Send another dummy byte */
+    /*   if (n > 8) { */
+    /*     spi_sendbyte(0xff); */
+    /*   } */
+    /*   // Place received byte into memory */
+    /*   *p++ = x; */
+    /*   // Update CRC16 with fast table based method */
+    /*   crc = ((crc << 8) ^ crctable[x ^ (crc >> 8)]) & 0xffff; */
+    /*   n = n - 1; */
+    /* } */
     
     // Read CRC16 and check
     crc_exp = ((uint16_t)spi_dummy() << 8);
