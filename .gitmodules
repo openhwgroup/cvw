@@ -25,9 +25,10 @@
 	sparseCheckout = true
 	path = addins/verilog-ethernet
 	url = https://github.com/rosethompson/verilog-ethernet.git
-[submodule "cvw-arch-verif"]
+[submodule "addins/cvw-arch-verif"]
 	path = addins/cvw-arch-verif
 	url = https://github.com/openhwgroup/cvw-arch-verif
+	ignore = dirty
 [submodule "addins/riscvISACOV"]
 	path = addins/riscvISACOV
 	url = https://github.com/riscv-verification/riscvISACOV.git
