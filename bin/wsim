@@ -90,7 +90,7 @@ else: EnableLog = 0
 prefix = ""
 if (args.lockstep or args.lockstepverbose or args.fcov or args.fcovimp):
     if (args.sim == "questa" or args.sim == "vcs"):
-        prefix = "IMPERAS_TOOLS=" + WALLY + "/config/"+args.config+"/imperas.ic"
+        prefix = "IMPERAS_TOOLS=" + os.path.join(WALLY, "config", args.config, "imperas.ic")
         if not os.path.isfile(prefix): # If config is a derivative, look for imperas.ic in derivative configs
             prefix = "IMPERAS_TOOLS=" + os.path.join(WALLY, "config", "deriv", args.config, "imperas.ic")
 # Force Questa to use 64-bit mode, sometimes it defaults to 32-bit even on 64-bit machines
