@@ -45,7 +45,7 @@ module spi_controller (
   input logic [3:0]  FrameLength,
 
   // Is the Transmit FIFO Empty?
-  input logic        txFIFOReadEmpty,
+  input logic        TransmitFIFOEmpty,
 
   // Control signals
   output logic       SCLKenable,
@@ -140,8 +140,8 @@ module spi_controller (
   // Active at 2x SCLK frequency to account for implicit half cycle delays and actions on both clock edges depending on phase
   assign SCLKenable = DivCounter == SckDiv;
 
-  assign ContinueTransmit = ~txFIFOReadEmpty & EndOfFrame;
-  assign EndTransmission = txFIFOReadEmpty & EndOfFrame;
+  assign ContinueTransmit = ~TransmitFIFOEmpty & EndOfFrame;
+  assign EndTransmission = TransmitFIFOEmpty & EndOfFrame;
   
   always_ff @(posedge PCLK) begin
     if (~PRESETn) begin

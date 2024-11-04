@@ -19,6 +19,10 @@ module spi_fifo #(parameter M=3, N=8)(                 // 2^M entries of N bits 
     logic [M:0] rptrnext, wptrnext;
     logic [M-1:0] raddr;
     logic [M-1:0] waddr;
+
+  logic [M-1:0] numVals;
+  
+  assign numVals = waddr - raddr;
  
     assign rdata = mem[raddr];
     always_ff @(posedge PCLK)
