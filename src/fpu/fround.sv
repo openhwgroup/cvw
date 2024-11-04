@@ -126,7 +126,7 @@ module fround import cvw::*;  #(parameter cvw_t P) (
       3'b001:  RoundUp = 0;               // RZ
       3'b010:  RoundUp = Xs & (Rp | Tp);  // RN
       3'b011:  RoundUp = ~Xs & (Rp | Tp); // RP
-      3'b101:  RoundUp = Rp;              // RNTA
+      3'b100:  RoundUp = Rp;              // RNTA
       default: RoundUp = 0;               // should never happen
     endcase
 
