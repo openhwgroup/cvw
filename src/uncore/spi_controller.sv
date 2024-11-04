@@ -33,7 +33,7 @@ module spi_controller (
 
   // Start Transmission
   input logic        TransmitStart,
-  input logic        TransmitStartD,
+  input logic        TransmitRegLoaded,
   input logic        ResetSCLKenable, 
 
   // Registers
@@ -84,7 +84,7 @@ module spi_controller (
   // Transmit Stuff
   logic       ContinueTransmit;       
   logic       EndTransmission;
-  logic       ContinueTransmitD; // TODO: Could be replaced by TransmitRegLoaded?
+  // logic       TransmitRegLoaded; // TODO: Could be replaced by TransmitRegLoaded?
   logic       NextEndDelay;
   logic       CurrentEndDelay;
 
@@ -151,8 +151,7 @@ module spi_controller (
       BitNum <= 4'h0;
       DelayCounter <= 0;
     end else begin
-      // TODO: Consolidate into one delay counter since none of the
-      // delays happen at the same time?
+      // SCK logic for delay times  
       if (TransmitStart) begin
         SCK <= 0;
       end else if (SCLKenable) begin
@@ -242,17 +241,6 @@ module spi_controller (
   // Logic for continuing to transmit through Delay states after end of frame
   assign NextEndDelay = NextState == SCKCS | NextState == INTERCS | NextState == INTERXFR;
   assign CurrentEndDelay = CurrState == SCKCS | CurrState == INTERCS | CurrState == INTERXFR;
-
-  //
-  always_ff @(posedge PCLK) begin
-    if (~PRESETn) begin
-      ContinueTransmitD <= 1'b0;
-    end else if (NextEndDelay & ~CurrentEndDelay) begin
-      ContinueTransmitD <= ContinueTransmit;
-    end else if (EndOfSCKCS & SCLKenable) begin
-      ContinueTransmitD <= 1'b0;  
-    end
-  end
   
   always_ff @(posedge PCLK) begin
     if (~PRESETn) begin
@@ -264,7 +252,7 @@ module spi_controller (
   
   always_comb begin
     case (CurrState)  
-      INACTIVE: if (TransmitStartD) begin
+      INACTIVE: if (TransmitRegLoaded) begin
                   if (~HasCSSCK) NextState = TRANSMIT;
                   else NextState = CSSCK;
                 end else begin
@@ -294,7 +282,7 @@ module spi_controller (
       end
       SCKCS: begin // SCKCS case --------------------------------------
         if (EndOfSCKCS) begin
-          if (~ContinueTransmitD) begin
+          if (~TransmitRegLoaded) begin
             // if (CSMode == AUTOMODE) NextState = INACTIVE;
             if (CSMode == HOLDMODE) NextState = HOLD;
             else NextState = INACTIVE;
@@ -309,7 +297,7 @@ module spi_controller (
       HOLD: begin // HOLD mode case -----------------------------------
         if (CSMode == AUTOMODE) begin
           NextState = INACTIVE;
-        end else if (TransmitStartD) begin // If FIFO is written to, start again.
+        end else if (TransmitRegLoaded) begin // If FIFO is written to, start again.
           NextState = TRANSMIT;
         end else NextState = HOLD;
       end

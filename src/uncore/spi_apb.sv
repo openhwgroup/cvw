@@ -48,7 +48,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
   output logic                SPICLK
 );
 
-    // register map
+  // register map
   localparam SPI_SCKDIV =  8'h00;
   localparam SPI_SCKMODE = 8'h04;
   localparam SPI_CSID =    8'h10;
@@ -89,7 +89,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
   logic        InactiveState;
   logic [3:0]  FrameLength;  
 
-  // 
+  // Starting Transmission and restarting SCLKenable
   logic        ResetSCLKenable;
   logic        TransmitStart;
   logic        TransmitStartD;
@@ -98,15 +98,16 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
   typedef enum logic [1:0] {READY, START, WAIT} txState;
   txState CurrState, NextState;
   
-  // FIFO FSM signals
-  // Watermark signals - TransmitReadMark = ip[0], ReceiveWriteMark = ip[1]
-  logic        TransmitWriteMark, TransmitReadMark, ReceiveWriteMark, ReceiveReadMark; 
+  // FIFO Watermark signals - TransmitReadMark = ip[0], ReceiveWriteMark = ip[1]
+  logic        TransmitWriteMark, TransmitReadMark, ReceiveWriteMark, ReceiveReadMark;
+
+  // Transmit FIFO Signals
   logic        TransmitFIFOFull, TransmitFIFOEmpty;
   logic        TransmitFIFOWriteInc;
   logic        TransmitFIFOReadInc;                // Increments Tx FIFO read ptr 1 cycle after Tx FIFO is read
   logic [7:0]  TransmitReadData;
 
-  // 
+  // ReceiveFIFO Signals
   logic        ReceiveFIFOWriteInc;
   logic        ReceiveFIFOReadInc;
   logic        ReceiveFIFOFull, ReceiveFIFOEmpty;
@@ -137,7 +138,6 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
   // APB access
   assign Entry = {PADDR[7:2],2'b00};  //  32-bit word-aligned accesses
   assign Memwrite = PWRITE & PENABLE & PSEL;  // Only write in access phase
-  // assign PREADY = Entry == SPI_TXDATA | Entry == SPI_RXDATA | Entry == SPI_IP;
   assign PREADY = 1'b1;
   
   // Account for subword read/write circuitry
@@ -164,7 +164,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
       InterruptEnable <= 2'b0;
       InterruptPending <= 2'b0;
     end else begin // writes
-            /* verilator lint_off CASEINCOMPLETE */
+      /* verilator lint_off CASEINCOMPLETE */
       if (Memwrite)
         case(Entry) // flop to sample inputs
           SPI_SCKDIV:  SckDiv <= Din[11:0];
@@ -217,7 +217,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
   
   spi_controller controller(PCLK, PRESETn,
                             // Transmit Signals
-                            TransmitStart, TransmitStartD, ResetSCLKenable,
+                            TransmitStart, TransmitRegLoaded, ResetSCLKenable,
                             // Register Inputs
                             SckDiv, SckMode, ChipSelectMode, Delay0, Delay1, FrameLength,
                             // txFIFO stuff
@@ -230,23 +230,17 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
                             SPICLK);
   
   // Transmit FIFO ---------------------------------------------------
-  
+
   // txFIFO write increment logic
-  always_ff @(posedge PCLK)
-    if (~PRESETn) begin
-      TransmitFIFOWriteInc <= 1'b0;
-    end else begin
-      TransmitFIFOWriteInc <= (Memwrite & (Entry == SPI_TXDATA) & ~TransmitFIFOFull);
-    end
+  flopr #(1) txwincreg(PCLK, ~PRESETn,
+                       (Memwrite & (Entry == SPI_TXDATA) & ~TransmitFIFOFull),
+                       TransmitFIFOWriteInc);
 
   // txFIFO read increment logic
-  always_ff @(posedge PCLK)
-    if (~PRESETn) begin
-      TransmitFIFOReadInc <= 1'b0;
-    end else if (SCLKenable) begin
-      TransmitFIFOReadInc <= TransmitStartD | (EndOfFrame & ~TransmitFIFOEmpty) ;
-  end
-
+  flopenr #(1) txrincreg(PCLK, ~PRESETn, SCLKenable,
+                         TransmitStartD | (EndOfFrame & ~TransmitFIFOEmpty),                  
+                         TransmitFIFOReadInc);
+  
   // Check whether TransmitReg has been loaded.
   // We use this signal to prevent returning to the Ready state for TransmitStart
   always_ff @(posedge PCLK) begin
@@ -258,15 +252,11 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
       TransmitRegLoaded <= 1'b0;  
     end
   end
-
+  
   // Setup TransmitStart state machine
-  always_ff @(posedge PCLK) begin
-    if (~PRESETn) begin
-      CurrState <= READY;
-    end else begin
-      CurrState <= NextState;
-    end
-  end
+  always_ff @(posedge PCLK)
+    if (~PRESETn) CurrState <= READY;
+    else          CurrState <= NextState;
   
   // State machine for starting transmissions
   always_comb begin
@@ -280,12 +270,14 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     endcase
   end
 
+  // Delayed TransmitStart signal for incrementing tx read point.
   assign TransmitStart = (CurrState == START);
   always_ff @(posedge PCLK)
     if (~PRESETn) TransmitStartD <= 1'b0;
     else if (TransmitStart) TransmitStartD <= 1'b1;
     else if (SCLKenable) TransmitStartD <= 1'b0;
-  
+
+  // Transmit FIFO
   spi_fifo #(3,8) txFIFO(PCLK, 1'b1, SCLKenable, PRESETn,
                          TransmitFIFOWriteInc, TransmitFIFOReadInc,
                          TransmitData[7:0],
@@ -296,20 +288,17 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
                          TransmitWriteMark, TransmitReadMark);
 
   // Receive FIFO ----------------------------------------------------
-  always_ff @(posedge PCLK)
-    if (~PRESETn) begin
-      ReceiveFIFOReadInc <= 1'b0;
-    end else begin
-      ReceiveFIFOReadInc <= ((Entry == SPI_RXDATA) & ~ReceiveFIFOEmpty & PSEL & ~ReceiveFIFOReadInc);
-    end
 
-  always_ff @(posedge PCLK)
-    if (~PRESETn) begin
-      ReceiveFIFOWriteInc <= 1'b0;
-    end else if (SCLKenable) begin
-      ReceiveFIFOWriteInc <= EndOfFrame;
-    end
-  
+  // Receive FIFO Read Increment register
+  flopr #(1) rxfiforincreg(PCLK, ~PRESETn,
+                           ((Entry == SPI_RXDATA) & ~ReceiveFIFOEmpty & PSEL & ~ReceiveFIFOReadInc),
+                           ReceiveFIFOReadInc);
+
+  // Receive FIFO Write Increment register
+  flopenr #(1) rxfifowincreg(PCLK, ~PRESETn, SCLKenable,
+                             EndOfFrame, ReceiveFIFOWriteInc);
+
+  // Receive FIFO
   spi_fifo #(3,8) rxFIFO(PCLK, SCLKenable, 1'b1, PRESETn,
                          ReceiveFIFOWriteInc, ReceiveFIFOReadInc,
                          ReceiveShiftRegEndian, ReceiveWatermark[2:0],
@@ -319,6 +308,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
                          ReceiveFIFOEmpty,
                          ReceiveWriteMark, ReceiveReadMark);
 
+  // Shift Registers --------------------------------------------------
   // Transmit shift register
   assign TransmitLoad = TransmitStart | (EndOfFrame & ~TransmitFIFOEmpty);
   assign TransmitDataEndian = Format[0] ? {<<{TransmitReadData[7:0]}} : TransmitReadData[7:0];
@@ -340,12 +330,11 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     if(~PRESETn) begin
       ReceiveShiftReg <= 8'b0;
     end else if (SampleEdge) begin
-      if (~Transmitting) ReceiveShiftReg <= 8'b0;
-      else               ReceiveShiftReg <= {ReceiveShiftReg[6:0], ShiftIn};
+      ReceiveShiftReg <= {ReceiveShiftReg[6:0], ShiftIn};
     end
 
   // Aligns received data and reverses if little-endian
-  assign LeftShiftAmount = 4'h8 - Format[4:1];
+  assign LeftShiftAmount = 4'h8 - FrameLength;
   assign ASR = ReceiveShiftReg << LeftShiftAmount[2:0];
   assign ReceiveShiftRegEndian = Format[0] ? {<<{ASR[7:0]}} : ASR[7:0];
 
