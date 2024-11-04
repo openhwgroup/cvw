@@ -74,6 +74,9 @@ typedef struct packed {
   logic         DCACHE_SUPPORTED;
   logic         ICACHE_SUPPORTED;
 
+  // Fetch Buffer Configuration
+  logic         FETCHBUFFER_SUPPORTED;
+
 // TLB configuration.  Entries should be a power of 2
   int           ITLB_ENTRIES;
   int           DTLB_ENTRIES;
