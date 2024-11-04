@@ -31,7 +31,7 @@ arch%: config$$*.ini | $(work_dir) $(arch_workdir)
 # Generate wally-riscv-arch-test targets
 wally%: config$$*.ini | $(work_dir) $(wally_workdir)
 	riscof run --work-dir=$(work_dir)/$@ --config=$< --suite=$(wally_dir)/riscv-test-suite/ --env=$(wally_dir)/riscv-test-suite/env --no-browser --no-dut-run
-	$(MAKE) -f makefile-memfile WORKDIR=$(work_dir)/$@
+	$(MAKE) -f makefile-memfile --jobs WORKDIR=$(work_dir)/$@
 	rsync -a $(work_dir)/$@/rv*/* $(wally_workdir)/rv$(patsubst %64,%64i,$(patsubst %32,%32i,$*))_m || echo "error suppressed"
 
 quad64: config64.ini $(wally_dir)/riscv-test-suite/rv64i_m/Q/riscv-ctg/tests | $(work_dir)
