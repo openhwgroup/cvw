@@ -33,7 +33,7 @@ module spi_controller (
 
   // Start Transmission
   input logic        TransmitStart,
-  input logic        TransmitStartD,
+  input logic        TransmitRegLoaded,
   input logic        ResetSCLKenable, 
 
   // Registers
@@ -45,14 +45,13 @@ module spi_controller (
   input logic [3:0]  FrameLength,
 
   // Is the Transmit FIFO Empty?
-  input logic        txFIFOReadEmpty,
+  input logic        TransmitFIFOEmpty,
 
   // Control signals
   output logic       SCLKenable,
   output logic       ShiftEdge,
   output logic       SampleEdge,
-  output logic       EndOfFrame,
-  output logic       EndOfFrameDelay, 
+  output logic       EndOfFrame, 
   output logic       Transmitting,
   output logic       InactiveState,
   output logic       SPICLK
@@ -63,43 +62,31 @@ module spi_controller (
   localparam         AUTOMODE = 2'b00;
   localparam         OFFMODE = 2'b11;         
 
+  // FSM States
   typedef enum       logic [2:0] {INACTIVE, CSSCK, TRANSMIT, SCKCS, HOLD, INTERCS, INTERXFR} statetype;
   statetype CurrState, NextState;
   
   // SCLKenable stuff
   logic [11:0]       DivCounter;
-  // logic              SCLKenable;
-  // logic              SCLKenableEarly;
-  logic              ZeroDiv;
-  logic              SCK; // SUPER IMPORTANT, THIS CAN'T BE THE SAME AS SPICLK!
-  
+  logic              SCK;
 
   // Shift and Sample Edges
-  logic PreShiftEdge;
-  logic PreSampleEdge;
-  // logic ShiftEdge;
-  // logic SampleEdge;
+  logic EdgePulse;
   logic ShiftEdgePulse;
   logic SampleEdgePulse;
   logic EndOfFramePulse;
+  logic PhaseOneOffset;
 
   // Frame stuff
   logic [3:0] BitNum;
   logic       LastBit;
-  //logic       EndOfFrame;
-  //logic       EndOfFrameDelay;
-  logic       PhaseOneOffset;
 
   // Transmit Stuff
   logic       ContinueTransmit;       
-
-  // SPIOUT Stuff
-  // logic       TransmitLoad;
-  logic [7:0] TransmitReg;
-  //logic       Transmitting;
   logic       EndTransmission;
-
-  logic       HoldMode;
+  // logic       TransmitRegLoaded; // TODO: Could be replaced by TransmitRegLoaded?
+  logic       NextEndDelay;
+  logic       CurrentEndDelay;
 
   // Delay Stuff
   logic [7:0] cssck;
@@ -116,13 +103,12 @@ module spi_controller (
   logic       EndOfSCKCS;
   logic       EndOfINTERCS;
   logic       EndOfINTERXFR;
+  logic       EndOfDelay;       
   
-  logic [7:0] CSSCKCounter;
-  logic [7:0] SCKCSCounter;
-  logic [7:0] INTERCSCounter;
-  logic [7:0] INTERXFRCounter;
+  logic [7:0] DelayCounter;
 
   logic       DelayIsNext;
+  logic       DelayState;       
 
   // Convenient Delay Reg Names
   assign cssck = Delay0[7:0];
@@ -137,23 +123,25 @@ module spi_controller (
   assign HasINTERXFR = interxfr > 8'b0;
 
   // Have we hit full delay for any of the delays?
-  assign EndOfCSSCK = CSSCKCounter == cssck;
-  assign EndOfSCKCS = SCKCSCounter == sckcs;
-  assign EndOfINTERCS = INTERCSCounter == intercs;
-  assign EndOfINTERXFR = INTERXFRCounter == interxfr;
+  assign EndOfCSSCK = (DelayCounter == cssck) & (CurrState == CSSCK);
+  assign EndOfSCKCS = (DelayCounter == sckcs) & (CurrState == SCKCS);
+  assign EndOfINTERCS = (DelayCounter == intercs) & (CurrState == INTERCS);
+  assign EndOfINTERXFR = (DelayCounter == interxfr) & (CurrState == INTERXFR);
+
+  assign EndOfDelay = EndOfCSSCK | EndOfSCKCS | EndOfINTERCS | EndOfINTERXFR;
   
   // Clock Signal Stuff -----------------------------------------------
   // I'm going to handle all clock stuff here, including ShiftEdge and
   // SampleEdge. This makes sure that SPICLK is an output of a register
   // and it properly synchronizes signals.
-  
-  assign SCLKenable = DivCounter == SckDiv;
-  // assign SCLKenableEarly = (DivCounter + 1'b1) == SckDiv;
-  assign LastBit = (BitNum == FrameLength - 4'b1);
 
-  //assign EndOfFrame = SCLKenable & LastBit & Transmitting;
-  assign ContinueTransmit = ~txFIFOReadEmpty & EndOfFrameDelay;
-  assign EndTransmission = txFIFOReadEmpty & EndOfFrameDelay;
+  // SPI enable generation, where SCLK = PCLK/(2*(SckDiv + 1))
+  // Asserts SCLKenable at the rising and falling edge of SCLK by counting from 0 to SckDiv
+  // Active at 2x SCLK frequency to account for implicit half cycle delays and actions on both clock edges depending on phase
+  assign SCLKenable = DivCounter == SckDiv;
+
+  assign ContinueTransmit = ~TransmitFIFOEmpty & EndOfFrame;
+  assign EndTransmission = TransmitFIFOEmpty & EndOfFrame;
   
   always_ff @(posedge PCLK) begin
     if (~PRESETn) begin
@@ -161,44 +149,20 @@ module spi_controller (
       SPICLK <= SckMode[1];
       SCK <= 0;
       BitNum <= 4'h0;
-      PreShiftEdge <= 0;
-      PreSampleEdge <= 0;
-      EndOfFrame <= 0;
-      CSSCKCounter <= 0;
-      SCKCSCounter <= 0;
-      INTERCSCounter <= 0;
-      INTERXFRCounter <= 0;
+      DelayCounter <= 0;
     end else begin
-      // TODO: Consolidate into one delay counter since none of the
-      // delays happen at the same time?
+      // SCK logic for delay times  
       if (TransmitStart) begin
         SCK <= 0;
       end else if (SCLKenable) begin
         SCK <= ~SCK;
       end
-      
-      if ((CurrState == CSSCK) & SCK & SCLKenable) begin
-        CSSCKCounter <= CSSCKCounter + 8'd1;
-      end else if (SCLKenable & EndOfCSSCK) begin
-        CSSCKCounter <= 8'd0;
-      end
-      
-      if ((CurrState == SCKCS) & SCK & SCLKenable) begin
-        SCKCSCounter <= SCKCSCounter + 8'd1;
-      end else if (SCLKenable & EndOfSCKCS) begin
-        SCKCSCounter <= 8'd0;
-      end
-      
-      if ((CurrState == INTERCS) & SCK & SCLKenable) begin
-        INTERCSCounter <= INTERCSCounter + 8'd1;
-      end else if (SCLKenable & EndOfINTERCS) begin
-        INTERCSCounter <= 8'd0;
-      end
-      
-      if ((CurrState == INTERXFR) & SCK & SCLKenable) begin
-        INTERXFRCounter <= INTERXFRCounter + 8'd1;
-      end else if (SCLKenable & EndOfINTERXFR) begin
-        INTERXFRCounter <= 8'd0;
+
+      // Counter for all four delay types
+      if (DelayState & SCK & SCLKenable) begin
+        DelayCounter <= DelayCounter + 8'd1;
+      end else if (SCLKenable & EndOfDelay) begin
+        DelayCounter <= 8'd0;
       end
       
       // SPICLK Logic
@@ -215,94 +179,68 @@ module spi_controller (
         DivCounter <= DivCounter + 12'd1;
       end
       
-      // EndOfFrame controller
-      // if (SckDiv > 0 ? SCLKenableEarly & LastBit & SPICLK : LastBit & ~SPICLK) begin
-      //   EndOfFrame <= 1'b1;
-      // end else begin
-      //   EndOfFrame <= 1'b0;  
-      // end
-
-      // TODO: Rename EndOfFrameDelay to EndOfFrame and remove this logic
-      if (~TransmitStart) begin
-        EndOfFrame <= (SckMode[1] ^ SckMode[0] ^ SPICLK) & SCLKenable & LastBit & Transmitting;
-      end
-      
       // Increment BitNum
       if (ShiftEdge & Transmitting) begin
         BitNum <= BitNum + 4'd1;
-      end else if (EndOfFrameDelay) begin
+      end else if (EndOfFrame) begin
         BitNum <= 4'b0;  
       end
     end
   end
 
+  // The very last bit in a frame of any length.
+  assign LastBit = (BitNum == FrameLength - 4'b1);
+  
+  // Any SCLKenable pulse aligns with leading or trailing edge during
+  // Transmission. We can use this signal as the basis for ShiftEdge
+  // and SampleEdge.
+  assign EdgePulse = SCLKenable & Transmitting;
+
+  // Possible pulses for all edge types. Combined with SPICLK to get
+  // edges for different phase and polarity modes.
+  assign ShiftEdgePulse = EdgePulse & ~LastBit;
+  assign SampleEdgePulse = EdgePulse & ~DelayIsNext;
+  assign EndOfFramePulse = EdgePulse & LastBit;
+
   // Delay ShiftEdge and SampleEdge by a half PCLK period
   // Aligned EXACTLY ON THE MIDDLE of the leading and trailing edges.
   // Sweeeeeeeeeet...
-
-  assign ShiftEdgePulse = SCLKenable & ~LastBit & Transmitting;
-  assign SampleEdgePulse = SCLKenable & Transmitting & ~DelayIsNext;
-  assign EndOfFramePulse = SCLKenable & LastBit & Transmitting;
-  
   always_ff @(posedge ~PCLK) begin
     if (~PRESETn | TransmitStart) begin
       ShiftEdge <= 0;
       PhaseOneOffset <= 0;
       SampleEdge <= 0;
-      EndOfFrameDelay <= 0;
+      EndOfFrame <= 0;
       end else begin
-        PhaseOneOffset <= (PhaseOneOffset == 0) ? Transmitting & SCLKenable : ~EndOfFrameDelay;
+        PhaseOneOffset <= (PhaseOneOffset == 0) ? Transmitting & SCLKenable : ~EndOfFrame;
         case(SckMode)
         2'b00: begin
           ShiftEdge <= SPICLK & ShiftEdgePulse;
           SampleEdge <= ~SPICLK & SampleEdgePulse;
-          EndOfFrameDelay <= SPICLK & EndOfFramePulse;
+          EndOfFrame <= SPICLK & EndOfFramePulse;
         end
         2'b01: begin
           ShiftEdge <= ~SPICLK & ShiftEdgePulse & PhaseOneOffset;
           SampleEdge <= SPICLK & SampleEdgePulse;
-          EndOfFrameDelay <= ~SPICLK & EndOfFramePulse;
+          EndOfFrame <= ~SPICLK & EndOfFramePulse;
         end
         2'b10: begin
           ShiftEdge <= ~SPICLK & ShiftEdgePulse;
           SampleEdge <= SPICLK & SampleEdgePulse;
-          EndOfFrameDelay <= ~SPICLK & EndOfFramePulse;
+          EndOfFrame <= ~SPICLK & EndOfFramePulse;
         end
         2'b11: begin
           ShiftEdge <= SPICLK & ShiftEdgePulse & PhaseOneOffset;
           SampleEdge <= ~SPICLK & SampleEdgePulse;
-          EndOfFrameDelay <= SPICLK & EndOfFramePulse;
+          EndOfFrame <= SPICLK & EndOfFramePulse;
         end
-      // ShiftEdge <= ((SckMode[1] ^ SckMode[0] ^ SPICLK) & SCLKenable & ~LastBit & Transmitting) & PhaseOneOffset;
-      // PhaseOneOffset <= PhaseOneOffset == 0 ? Transmitting & SCLKenable : ~EndOfFrameDelay;
-      // SampleEdge <= (SckMode[1] ^ SckMode[0] ^ ~SPICLK) & SCLKenable & Transmitting & ~DelayIsNext;
-        // EndOfFrameDelay <= (SckMode[1] ^ SckMode[0] ^ SPICLK) & SCLKenable & LastBit & Transmitting;
       endcase
     end
   end
 
-  // typedef enum logic [2:0] {INACTIVE, CSSCK, TRANSMIT, SCKCS, HOLD, INTERCS, INTERXFR} statetype;
-  // statetype CurrState, NextState;
-
-  assign HoldMode = CSMode == HOLDMODE;
-  // assign TransmitLoad = TransmitStart | (EndOfFrameDelay & ~txFIFOReadEmpty);
-
-  logic ContinueTransmitD;
-  logic NextEndDelay;
-  logic CurrentEndDelay;
-
+  // Logic for continuing to transmit through Delay states after end of frame
   assign NextEndDelay = NextState == SCKCS | NextState == INTERCS | NextState == INTERXFR;
   assign CurrentEndDelay = CurrState == SCKCS | CurrState == INTERCS | CurrState == INTERXFR;
-  
-  always_ff @(posedge PCLK) begin
-    if (~PRESETn) begin
-      ContinueTransmitD <= 1'b0;
-    end else if (NextEndDelay & ~CurrentEndDelay) begin
-      ContinueTransmitD <= ContinueTransmit;
-    end else if (EndOfSCKCS & SCLKenable) begin
-      ContinueTransmitD <= 1'b0;  
-    end
-  end
   
   always_ff @(posedge PCLK) begin
     if (~PRESETn) begin
@@ -314,7 +252,7 @@ module spi_controller (
   
   always_comb begin
     case (CurrState)  
-      INACTIVE: if (TransmitStartD) begin
+      INACTIVE: if (TransmitRegLoaded) begin
                   if (~HasCSSCK) NextState = TRANSMIT;
                   else NextState = CSSCK;
                 end else begin
@@ -326,7 +264,7 @@ module spi_controller (
         case(CSMode)
           AUTOMODE: begin  
             if (EndTransmission) NextState = INACTIVE;
-            else if (EndOfFrameDelay) NextState = SCKCS;
+            else if (EndOfFrame) NextState = SCKCS;
             else NextState = TRANSMIT;
           end
           HOLDMODE: begin  
@@ -344,7 +282,7 @@ module spi_controller (
       end
       SCKCS: begin // SCKCS case --------------------------------------
         if (EndOfSCKCS) begin
-          if (~ContinueTransmitD) begin
+          if (~TransmitRegLoaded) begin
             // if (CSMode == AUTOMODE) NextState = INACTIVE;
             if (CSMode == HOLDMODE) NextState = HOLD;
             else NextState = INACTIVE;
@@ -359,7 +297,7 @@ module spi_controller (
       HOLD: begin // HOLD mode case -----------------------------------
         if (CSMode == AUTOMODE) begin
           NextState = INACTIVE;
-        end else if (TransmitStartD) begin // If FIFO is written to, start again.
+        end else if (TransmitRegLoaded) begin // If FIFO is written to, start again.
           NextState = TRANSMIT;
         end else NextState = HOLD;
       end
@@ -386,6 +324,7 @@ module spi_controller (
 
   assign Transmitting = CurrState == TRANSMIT;
   assign DelayIsNext = (NextState == CSSCK | NextState == SCKCS | NextState == INTERCS | NextState == INTERXFR);
+  assign DelayState = (CurrState == CSSCK | CurrState == SCKCS | CurrState == INTERCS | CurrState == INTERXFR);
   assign InactiveState = CurrState == INACTIVE | CurrState == INTERCS;
   
 endmodule
