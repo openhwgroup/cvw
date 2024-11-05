@@ -261,9 +261,6 @@ class TestRunner:
         cvw = folder.joinpath("cvw")
         self.logger.info(f"cvw is: {cvw}")
 
-        # set the WALLY environmental variable to the new repository
-        os.environ["WALLY"] = str(cvw)
-
         self.cvw = cvw
         self.sim_dir = cvw.joinpath("bin")
         self.base_parent_dir = folder
@@ -292,11 +289,11 @@ class TestRunner:
             output_file = self.log_dir.joinpath(f"make-{target}-output.log")
         else: output_file = self.log_dir.joinpath(f"make-output.log")
 
-        # Execute make with target and cores/2
+        # Source setup script and execute make with target and cores/2
         if target: 
-            command = ["make", target, "--jobs=$(($(nproc)/2))"]
+            command = [f"source {os.path.join(self.cvw, 'setup.sh')} > /dev/null && make {target} --jobs=$(($(nproc)/2))"]
         else:
-            command = ["make", "--jobs=$(($(nproc)/2))"]
+            command = [f"source {os.path.join(self.cvw, 'setup.sh')} > /dev/null && make --jobs=$(($(nproc)/2))"]
 
         self.logger.info(f"Command used in directory {makefile_location}: {' '.join(command)}")
 
@@ -305,7 +302,7 @@ class TestRunner:
             formatted_datetime = self.current_datetime.strftime("%Y-%m-%d %H:%M:%S")
             f.write(formatted_datetime)
             f.write("\n\n")
-            result = subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, text=True, shell=True)
+            result = subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, text=True, shell=True, executable="/bin/bash")
         
         # Execute the command using a subprocess and not save the output
         #result = subprocess.run(command, text=True)
@@ -334,12 +331,16 @@ class TestRunner:
         output_file = self.log_dir.joinpath(f"{test_name}-output.log")
         os.chdir(self.sim_dir)
 
+        # Source setup script and delete output from log on whatever test command gets run
+        command = f"source {os.path.join(self.cvw, 'setup.sh')} > /dev/null && "
+
         if test_extensions:
-            command = [test_type, test_name] + test_extensions
+            commandext = [test_type, test_name] + test_extensions
             self.logger.info(f"Command used to run tests in directory {self.sim_dir}: {test_type} {test_name} {' '.join(test_extensions)}")
         else:
-            command = [test_type, test_name]
+            commandext = [test_type, test_name]
             self.logger.info(f"Command used to run tests in directory {self.sim_dir}: {test_type} {test_name}")
+        command += " ".join(commandext)
 
 
         # Execute the command using subprocess and save the output into a file
@@ -348,15 +349,15 @@ class TestRunner:
                 formatted_datetime = self.current_datetime.strftime("%Y-%m-%d %H:%M:%S")
                 f.write(formatted_datetime)
                 f.write("\n\n")
-                result = subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, text=True)
+                result = subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, text=True, shell=True, executable="/bin/bash")
         except Exception as e:
-            self.logger.error("There was an error in running the tests in the run_tests function: {e}")
+            self.logger.error(f"There was an error in running the tests in the run_tests function: {e}")
         # Check if the command executed successfuly
         if result.returncode or result.returncode == 0:
-            self.logger.info(f"Test ran successfuly. Test type: {test_type}, test name: {test_name}, test extension: {' '.join(test_extensions)}")
+            self.logger.info(f"Test ran successfuly. Test name: {test_name}, test extension: {' '.join(test_extensions)}")
             return True, output_file
         else:
-            self.logger.error(f"Error making test. Test type: {test_type}, test name: {test_name}, test extension: {' '.join(test_extensions)}")
+            self.logger.error(f"Error making test. Test name: {test_name}, test extension: {' '.join(test_extensions)}")
             return False, output_file
 
 
