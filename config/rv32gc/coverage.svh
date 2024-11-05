@@ -37,3 +37,5 @@
 
 // Privileged extensions
 `include "ZicsrM_coverage.svh"
+`include "RV32VM_coverage.svh"
+`include "RV32VM_PMP_coverage.svh"
