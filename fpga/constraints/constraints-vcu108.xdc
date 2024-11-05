@@ -95,9 +95,8 @@ set_input_delay -clock [get_clocks SPISDCClock] -max 5.0 [get_ports {SDCWP}]
 set_input_delay -clock [get_clocks SPISDCClock] -min -5.0 [get_ports {SDCWP}]
 set_output_delay -clock [get_clocks SPISDCClock] -max 5.0 [get_ports {SDCCmd}]
 set_output_delay -clock [get_clocks SPISDCClock] -min -5.0 [get_ports {SDCCmd}]
-#create_generated_clock -name SPISDCClockOut -multiply_by 1 -source [get_pins sdcclkoddr/C] [get_ports SDCCLK]
-set_clock_latency -source -max 3.0 [get_ports SDCCLK]
-#set_output_delay -clock [get_clocks SPISDCClock] 0.000 [get_ports SDCCLK]
+set_output_delay -clock [get_clocks SPISDCClock] -max 2.000 [get_ports SDCCLK]
+set_output_delay -clock [get_clocks SPISDCClock] -min -2.000 [get_ports SDCCLK]
 
 
 set_property -dict {PACKAGE_PIN BC14 IOSTANDARD LVCMOS18 PULLUP true} [get_ports {SDCCS}]
