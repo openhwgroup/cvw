@@ -258,7 +258,7 @@ test_cases:
 .8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 .8byte rx_data, 0x00000011, read32_test     # read rx_data
 
-# =========== Test delay0 register ===========
+# =========== Test delay0 register (mode auto)===========
 
 # Test cs-sck delay of 0 with sck phase = 0 (implicit half cycle delay)
 
@@ -320,11 +320,87 @@ test_cases:
 .8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 .8byte rx_data, 0x00000015, read32_test     # read rx_data
 
+# SCKCS Delay of 0, SCKMODE 10
+.8byte sck_mode, 0x00000002, write32_test    #set sckmode to 10
+.8byte delay0, 0x00000001, write32_test    # set sckcs delay to 0
+.8byte tx_data, 0x00000010, write32_test    # place 10 into tx_data
+.8byte 0x0, 0x00000000, spi_data_wait       #wait for transmission
+.8byte rx_data, 0x00000010, read32_test     # reade rx_data
+
+# Arbitrary SCKCS delay, SCKMODE 10
+.8byte delay0, 0x00050001, write32_test    # set sckcs delay to 5
+.8byte tx_data, 0x00000010, write32_test    # place 10 into tx_data
+.8byte 0x0, 0x00000000, spi_data_wait       #wait for transmission
+.8byte rx_data, 0x00000010, read32_test     # reade rx_data
+
+# Long SCKCS delay, SCKMODE 10
+.8byte delay0, 0x00A50001, write32_test    # set sckcs delay to 0
+.8byte tx_data, 0x00000010, write32_test    # place 10 into tx_data
+.8byte 0x0, 0x00000000, spi_data_wait       #wait for transmission
+.8byte rx_data, 0x00000010, read32_test     # reade rx_data
+
+# CSSCK Delay 0, SCKMODE 10
+.8byte delay0, 0x00010000, write32_test    # set sckcs delay to 0
+.8byte tx_data, 0x00000010, write32_test    # place 10 into tx_data
+.8byte 0x0, 0x00000000, spi_data_wait       #wait for transmission
+.8byte rx_data, 0x00000010, read32_test     # reade rx_data
+
+# Arbitrary CSSCK delay, SCKMODE 10
+.8byte delay0, 0x00010005, write32_test    # set sckcs delay to 0
+.8byte tx_data, 0x00000010, write32_test    # place 10 into tx_data
+.8byte 0x0, 0x00000000, spi_data_wait       #wait for transmission
+.8byte rx_data, 0x00000010, read32_test     # reade rx_data
+
+# Long CSSCK delay, SCKMODE 10
+.8byte delay0, 0x000100A5, write32_test    # set sckcs delay to 0
+.8byte tx_data, 0x00000010, write32_test    # place 10 into tx_data
+.8byte 0x0, 0x00000000, spi_data_wait       #wait for transmission
+.8byte rx_data, 0x00000010, read32_test     # reade rx_data
+
+
+
+# SCKCS Delay of 0, SCKMODE 11
+.8byte sck_mode, 0x00000003, write32_test
+.8byte delay0, 0x00000001, write32_test    # set sckcs delay to 0
+.8byte tx_data, 0x00000011, write32_test    # place 10 into tx_data
+.8byte 0x0, 0x00000000, spi_data_wait       #wait for transmission
+.8byte rx_data, 0x00000011, read32_test     # reade rx_data
+
+# Arbitrary SCKCS delay, SCKMODE 11
+.8byte delay0, 0x00050001, write32_test    # set sckcs delay to 0
+.8byte tx_data, 0x00000011, write32_test    # place 10 into tx_data
+.8byte 0x0, 0x00000000, spi_data_wait       #wait for transmission
+.8byte rx_data, 0x00000011, read32_test     # reade rx_data
+
+# Long SCKCS delay, SCKMODE 11
+.8byte delay0, 0x00A50001, write32_test    # set sckcs delay to 0
+.8byte tx_data, 0x00000011, write32_test    # place 10 into tx_data
+.8byte 0x0, 0x00000000, spi_data_wait       #wait for transmission
+.8byte rx_data, 0x00000011, read32_test     # reade rx_data
+
+# CSSCK Delay 0, SCKMODE 11
+.8byte delay0, 0x00010000, write32_test    # set sckcs delay to 0
+.8byte tx_data, 0x00000011, write32_test    # place 10 into tx_data
+.8byte 0x0, 0x00000000, spi_data_wait       #wait for transmission
+.8byte rx_data, 0x00000011, read32_test     # reade rx_data
+
+# Arbitrary CSSCK delay, SCKMODE 11
+.8byte delay0, 0x00010005, write32_test    # set sckcs delay to 0
+.8byte tx_data, 0x00000011, write32_test    # place 10 into tx_data
+.8byte 0x0, 0x00000000, spi_data_wait       #wait for transmission
+.8byte rx_data, 0x00000011, read32_test     # reade rx_data
+
+# Long CSSCK delay, SCKMODE 11
+.8byte delay0, 0x000100A5, write32_test    # set sckcs delay to 0
+.8byte tx_data, 0x00000011, write32_test    # place 10 into tx_data
+.8byte 0x0, 0x00000000, spi_data_wait       #wait for transmission
+.8byte rx_data, 0x00000011, read32_test     # reade rx_data
+
 # =========== Test delay1 register ===========
 
 # Test inter cs delay 
 
-
+.8byte sck_mode, 0x00000000, write32_test   #reset sck_mode
 .8byte delay0, 0x00010001, write32_test     # reset delay0 register
 .8byte delay1, 0x00000005, write32_test     # set inter_cs delay to 5
 .8byte rx_mark, 0x0000003, write32_test     # preset rx watermark b/c of hardware interlock
