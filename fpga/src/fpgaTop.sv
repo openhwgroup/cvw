@@ -216,11 +216,8 @@ module fpgaTop
                     .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
                     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), 
                     .GPIOIN, .GPIOOUT, .GPIOEN,
-                    .UARTSin, .UARTSout, .SDCIn, .SDCCmd, .SDCCS(SDCCSin), .SDCCLK(SDCCLKInternal), .ExternalStall(RVVIStall));
+                    .UARTSin, .UARTSout, .SDCIn, .SDCCmd, .SDCCS(SDCCSin), .SDCCLK(SDCCLK), .ExternalStall(RVVIStall));
 
-  // *** these are different for different fpga ugh.
-  ODDRE1 sdcclkoddr(.Q(SDCCLK), .C(SDCCLKInternal), .D1('0),
-	     .D2(1'b1), .SR('0));
 
   // ahb lite to axi bridge
   ahbaxibridge ahbaxibridge
