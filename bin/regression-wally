@@ -539,7 +539,7 @@ def main():
        num_fail = 0
        results = {}
        for config in configs:
-           results[config] = pool.apply_async(run_test_case,(config,))
+           results[config] = pool.apply_async(run_test_case,(config, args.dryrun))
        for (config,result) in results.items():
            try:
              num_fail+=result.get(timeout=TIMEOUT_DUR)
