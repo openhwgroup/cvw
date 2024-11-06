@@ -28,7 +28,7 @@ all: $(OBJDUMPS) $(MEMFILES)
 
 # Assemble into object files
 %.$(OBJEXT): %.$(AEXT)
-	riscv64-unknown-elf-as -g -o $@ -march=rv64gqc_zfa_zba_zbb_zbc_zbs_zfh_zicboz_zicbop_zicbom_zbkb_zbkx_zknd_zkne_zknh -mabi=lp64 $<
+	riscv64-unknown-elf-as -g -o $@ -march=rv64gqc_zcb_zfa_zba_zbb_zbc_zbs_zfh_zicboz_zicbop_zicbom_zbkb_zbkx_zknd_zkne_zknh_svinval -mabi=lp64 $<
 
 # Preprocess assembly files
 %.$(AEXT): %.$(SRCEXT) WALLY-init-lib.h
