@@ -38,6 +38,9 @@ main:
     csrrw t1, menvcfg, t0
     csrrw t2, senvcfg, t0
 
+    # Test writing to TIME CSR
+    csrw time, zero
+
     # testing FIOM with different privilege modes
     # setting environment config (to both 1 and 0) in each privilege mode
     csrsi menvcfg, 1
