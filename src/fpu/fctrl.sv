@@ -248,9 +248,9 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
                       // coverage off
                       // Not covered in testing because rv64gc is not RV64Q or RV32D
                       7'b1011001: if (P.ZFA_SUPPORTED & P.XLEN == 32 & P.D_SUPPORTED & Funct3D == 3'b000) 
-                                                  ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0_0_0; // fmvp.d.x  (Zfa) 
+                                                  ControlsD = `FCTRLW'b1_0_00_00_011_0_0_0_1_0; // fmvp.d.x  (Zfa) 
                       7'b1011011: if (P.ZFA_SUPPORTED & P.XLEN == 64 & P.Q_SUPPORTED & Funct3D == 3'b000) 
-                                                  ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0_0_0; // fmvp.q.x  (Zfa)
+                                                  ControlsD = `FCTRLW'b1_0_00_00_011_0_0_0_1_0; // fmvp.q.x  (Zfa)
                       // coverage on
                    endcase
       endcase
