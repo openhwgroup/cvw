@@ -93,6 +93,7 @@ module spi_controller (
   logic [7:0] sckcs;
   logic [7:0] intercs;
   logic [7:0] interxfr;
+  logic       Phase;
   
   logic       HasCSSCK;
   logic       HasSCKCS;
@@ -142,6 +143,7 @@ module spi_controller (
 
   assign ContinueTransmit = ~TransmitFIFOEmpty & EndOfFrame;
   assign EndTransmission = TransmitFIFOEmpty & EndOfFrame;
+  assign Phase = SckMode[0];
   
   always_ff @(posedge PCLK) begin
     if (~PRESETn) begin
@@ -166,10 +168,12 @@ module spi_controller (
       end
       
       // SPICLK Logic
+      
       if (TransmitStart) begin
         SPICLK <= SckMode[1];
-      end else if (SCLKenable & Transmitting) begin
-        SPICLK <= (~EndTransmission & ~DelayIsNext) ? ~SPICLK : SckMode[1];
+      end else if (SCLKenable) begin
+        if (Phase & (NextState == TRANSMIT)) SPICLK <= (~EndTransmission & ~DelayIsNext) ? ~SPICLK : SckMode[1];
+        else if (Transmitting) SPICLK <= (~EndTransmission & ~DelayIsNext) ? ~SPICLK : SckMode[1];
       end
       
       // Reset divider 
