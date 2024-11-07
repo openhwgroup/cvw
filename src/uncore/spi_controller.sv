@@ -162,7 +162,7 @@ module spi_controller (
       // Counter for all four delay types
       if (DelayState & SCK & SCLKenable) begin
         DelayCounter <= DelayCounter + 8'd1;
-      end else if (SCLKenable & EndOfDelay) begin
+      end else if ((SCLKenable & EndOfDelay) | Transmitting) begin
         DelayCounter <= 8'd0;
       end
       
@@ -255,13 +255,13 @@ module spi_controller (
             else NextState = TRANSMIT;
           end
           HOLDMODE: begin  
-            if (EndTransmission) NextState = HOLD;  
-            else if (ContinueTransmit & HasINTERXFR) NextState = INTERXFR;
+            if (EndOfFrame & HasINTERXFR) NextState = INTERXFR;
+            else if (EndTransmission) NextState = HOLD;
             else NextState = TRANSMIT;
           end
           OFFMODE: begin
-            if (EndTransmission) NextState = INACTIVE;
-            else if (ContinueTransmit & HasINTERXFR) NextState = INTERXFR;
+            if (EndOfFrame & HasINTERXFR) NextState = INTERXFR;
+            else if (EndTransmission) NextState = HOLD;
             else NextState = TRANSMIT;
           end
           default: NextState = TRANSMIT;
@@ -269,14 +269,7 @@ module spi_controller (
       end
       SCKCS: begin // SCKCS case --------------------------------------
         if (EndOfSCKCS) begin
-          if (~TransmitRegLoaded) begin
-            // if (CSMode == AUTOMODE) NextState = INACTIVE;
-            if (CSMode == HOLDMODE) NextState = HOLD;
-            else NextState = INACTIVE;
-          end else begin
-            if (HasINTERCS) NextState = INTERCS;
-            else NextState = TRANSMIT;
-          end
+          NextState = INTERCS;
         end else begin
           NextState = SCKCS;
         end
@@ -290,15 +283,18 @@ module spi_controller (
       end
       INTERCS: begin // INTERCS case ----------------------------------
         if (EndOfINTERCS) begin
-          if (HasCSSCK) NextState = CSSCK;
-          else NextState = TRANSMIT;
+          if (TransmitRegLoaded) begin
+            if (HasCSSCK) NextState = CSSCK;
+            else NextState = TRANSMIT;
+          end else NextState = INACTIVE;
         end else begin
           NextState = INTERCS;  
         end
       end
       INTERXFR: begin // INTERXFR case --------------------------------
         if (EndOfINTERXFR) begin
-          NextState = TRANSMIT;
+          if (TransmitRegLoaded)  NextState = TRANSMIT;
+          else NextState = HOLD;
         end else begin
           NextState = INTERXFR;  
         end
