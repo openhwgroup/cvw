@@ -263,8 +263,9 @@ module spi_controller (
       TRANSMIT: begin // TRANSMIT case --------------------------------
         case(CSMode)
           AUTOMODE: begin  
-            if (EndTransmission) NextState = INACTIVE;
-            else if (EndOfFrame) NextState = SCKCS;
+            if (EndTransmission & ~HasSCKCS) NextState = INACTIVE;
+            else if (EndOfFrame & HasSCKCS) NextState = SCKCS;
+            else if (EndOfFrame & ~HasSCKCS) NextState = INTERCS;
             else NextState = TRANSMIT;
           end
           HOLDMODE: begin  
