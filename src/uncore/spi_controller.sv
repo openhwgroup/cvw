@@ -75,7 +75,6 @@ module spi_controller (
   logic ShiftEdgePulse;
   logic SampleEdgePulse;
   logic EndOfFramePulse;
-  logic PhaseOneOffset;
 
   // Frame stuff
   logic [3:0] BitNum;
@@ -212,35 +211,18 @@ module spi_controller (
   always_ff @(posedge ~PCLK) begin
     if (~PRESETn | TransmitStart) begin
       ShiftEdge <= 0;
-      PhaseOneOffset <= 0;
       SampleEdge <= 0;
       EndOfFrame <= 0;
-      end else begin
-        PhaseOneOffset <= (PhaseOneOffset == 0) ? Transmitting & SCLKenable : ~EndOfFrame;
-        case(SckMode)
-        2'b00: begin
-          ShiftEdge <= SPICLK & ShiftEdgePulse;
-          SampleEdge <= ~SPICLK & SampleEdgePulse;
-          EndOfFrame <= SPICLK & EndOfFramePulse;
-        end
-        2'b01: begin
-          ShiftEdge <= ~SPICLK & ShiftEdgePulse & PhaseOneOffset;
-          SampleEdge <= SPICLK & SampleEdgePulse;
-          EndOfFrame <= ~SPICLK & EndOfFramePulse;
-        end
-        2'b10: begin
+      end else if (^SckMode) begin
           ShiftEdge <= ~SPICLK & ShiftEdgePulse;
           SampleEdge <= SPICLK & SampleEdgePulse;
           EndOfFrame <= ~SPICLK & EndOfFramePulse;
-        end
-        2'b11: begin
-          ShiftEdge <= SPICLK & ShiftEdgePulse & PhaseOneOffset;
+      end else begin 
+          ShiftEdge <= SPICLK & ShiftEdgePulse;
           SampleEdge <= ~SPICLK & SampleEdgePulse;
           EndOfFrame <= SPICLK & EndOfFramePulse;
-        end
-      endcase
-    end
-  end
+      end 
+    end 
 
   // Logic for continuing to transmit through Delay states after end of frame
   assign NextEndDelay = NextState == SCKCS | NextState == INTERCS | NextState == INTERXFR;
