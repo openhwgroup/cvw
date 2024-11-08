@@ -316,11 +316,87 @@ test_cases:
 .4byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 .4byte rx_data, 0x00000015, read32_test     # read rx_data
 
+# SCKCS Delay of 0, SCKMODE 10
+.4byte sck_mode, 0x00000002, write32_test    #set sckmode to 10
+.4byte delay0, 0x00000001, write32_test    # set sckcs delay to 0
+.4byte tx_data, 0x00000010, write32_test    # place 10 into tx_data
+.4byte 0x0, 0x00000000, spi_data_wait       #wait for transmission
+.4byte rx_data, 0x00000010, read32_test     # reade rx_data
+
+# Arbitrary SCKCS delay, SCKMODE 10
+.4byte delay0, 0x00050001, write32_test    # set sckcs delay to 5
+.4byte tx_data, 0x00000010, write32_test    # place 10 into tx_data
+.4byte 0x0, 0x00000000, spi_data_wait       #wait for transmission
+.4byte rx_data, 0x00000010, read32_test     # reade rx_data
+
+# Long SCKCS delay, SCKMODE 10
+.4byte delay0, 0x00A50001, write32_test    # set sckcs delay to 0
+.4byte tx_data, 0x00000010, write32_test    # place 10 into tx_data
+.4byte 0x0, 0x00000000, spi_data_wait       #wait for transmission
+.4byte rx_data, 0x00000010, read32_test     # reade rx_data
+
+# CSSCK Delay 0, SCKMODE 10
+.4byte delay0, 0x00010000, write32_test    # set sckcs delay to 0
+.4byte tx_data, 0x00000010, write32_test    # place 10 into tx_data
+.4byte 0x0, 0x00000000, spi_data_wait       #wait for transmission
+.4byte rx_data, 0x00000010, read32_test     # reade rx_data
+
+# Arbitrary CSSCK delay, SCKMODE 10
+.4byte delay0, 0x00010005, write32_test    # set sckcs delay to 0
+.4byte tx_data, 0x00000010, write32_test    # place 10 into tx_data
+.4byte 0x0, 0x00000000, spi_data_wait       #wait for transmission
+.4byte rx_data, 0x00000010, read32_test     # reade rx_data
+
+# Long CSSCK delay, SCKMODE 10
+.4byte delay0, 0x000100A5, write32_test    # set sckcs delay to 0
+.4byte tx_data, 0x00000010, write32_test    # place 10 into tx_data
+.4byte 0x0, 0x00000000, spi_data_wait       #wait for transmission
+.4byte rx_data, 0x00000010, read32_test     # reade rx_data
+
+
+
+# SCKCS Delay of 0, SCKMODE 11
+.4byte sck_mode, 0x00000003, write32_test
+.4byte delay0, 0x00000001, write32_test    # set sckcs delay to 0
+.4byte tx_data, 0x00000011, write32_test    # place 10 into tx_data
+.4byte 0x0, 0x00000000, spi_data_wait       #wait for transmission
+.4byte rx_data, 0x00000011, read32_test     # reade rx_data
+
+# Arbitrary SCKCS delay, SCKMODE 11
+.4byte delay0, 0x00050001, write32_test    # set sckcs delay to 0
+.4byte tx_data, 0x00000011, write32_test    # place 10 into tx_data
+.4byte 0x0, 0x00000000, spi_data_wait       #wait for transmission
+.4byte rx_data, 0x00000011, read32_test     # reade rx_data
+
+# Long SCKCS delay, SCKMODE 11
+.4byte delay0, 0x00A50001, write32_test    # set sckcs delay to 0
+.4byte tx_data, 0x00000011, write32_test    # place 10 into tx_data
+.4byte 0x0, 0x00000000, spi_data_wait       #wait for transmission
+.4byte rx_data, 0x00000011, read32_test     # reade rx_data
+
+# CSSCK Delay 0, SCKMODE 11
+.4byte delay0, 0x00010000, write32_test    # set sckcs delay to 0
+.4byte tx_data, 0x00000011, write32_test    # place 10 into tx_data
+.4byte 0x0, 0x00000000, spi_data_wait       #wait for transmission
+.4byte rx_data, 0x00000011, read32_test     # reade rx_data
+
+# Arbitrary CSSCK delay, SCKMODE 11
+.4byte delay0, 0x00010005, write32_test    # set sckcs delay to 0
+.4byte tx_data, 0x00000011, write32_test    # place 10 into tx_data
+.4byte 0x0, 0x00000000, spi_data_wait       #wait for transmission
+.4byte rx_data, 0x00000011, read32_test     # reade rx_data
+
+# Long CSSCK delay, SCKMODE 11
+.4byte delay0, 0x000100A5, write32_test    # set sckcs delay to 0
+.4byte tx_data, 0x00000011, write32_test    # place 10 into tx_data
+.4byte 0x0, 0x00000000, spi_data_wait       #wait for transmission
+.4byte rx_data, 0x00000011, read32_test     # reade rx_data
+
 # =========== Test delay1 register ===========
 
 # Test inter cs delay 
 
-
+.4byte sck_mode, 0x00000000, write32_test   #reset sck_mode
 .4byte delay0, 0x00010001, write32_test     # reset delay0 register
 .4byte delay1, 0x00000005, write32_test     # set inter_cs delay to 5
 .4byte rx_mark, 0x0000003, write32_test     # preset rx watermark b/c of hardware interlock
@@ -547,108 +623,13 @@ test_cases:
 #.4byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 #.4byte rx_data, 0x000000F0, read32_test     # read rx_data
 
-#=========== Test Hardware Interlock   ================
-
-# interlock in base case 
-
-.4byte fmt, 0x00080000, write32_test        # reset fmt register
-.4byte rx_mark, 0x0000001, write32_test     # preset rx watermark b/c of hardware interlock
-.4byte tx_data, 0x00000062, write32_test    # initiate transmission
-.4byte sck_mode, 0x00000002, write32_test   # flip polarity during transmission
-.4byte tx_data, 0x00000026, write32_test   # transmit second frame w/ control register updated
-.4byte 0x0, 0x00000001, spi_data_wait
-.4byte rx_data, 0x00000062, read32_test
-.4byte rx_data, 0x00000026, read32_test    # clear rx fifo
-.4byte sck_mode, 0x00000000, write32_test   # reset polarity
-
-# interlock in case where cs_mode is auto, but there is minimal intercs delay
-
-.4byte delay0, 0x00000001, write32_test     # set sck-cs delay to 0, with sck.pha 0 there is 0 delay
-.4byte tx_data, 0x000000D2, write32_test    # initiate transmission
-.4byte sck_mode, 0x00000002, write32_test   # flip sck polarity
-.4byte tx_data, 0x0000002D, write32_test    # transmit second frame
-.4byte 0x0, 0x00000001, spi_data_wait
-.4byte rx_data, 0x000000D2, read32_test
-.4byte rx_data, 0x0000002D, read32_test    # clear rx fifo
-.4byte sck_mode, 0x00000000, write32_test   # reset polarity
-
-# interlock in case where cs_mode = hold, 0 intercs delay
-.4byte delay0, 0x00010001, write32_test     # reset delay0
-.4byte sck_mode, 0x00000000, write32_test   # reset polarity
-.4byte cs_mode, 0x00000002, write32_test    # set cs_mode to hold
-.4byte tx_data, 0x15263748, spi_burst_send  # place 4 frames into tx fifo
-.4byte sck_mode, 0x00000002, write32_test   # flip polarity (should change 2 second frame)
-.4byte 0x0, 0x00000001, spi_data_wait       # wait for second transmission to end
-.4byte rx_mark, 0x0000003, write32_test     # preset rx watermark b/c of hardware interlock
-.4byte sck_mode, 0x00000000, write32_test   # flip polarity again
-.4byte 0x0, 0x00000003, spi_data_wait       # wait for final frame
-.4byte rx_data, 0x00000048, read32_test
-.4byte rx_data, 0x00000037, read32_test
-.4byte rx_data, 0x00000026, read32_test
-.4byte rx_data, 0x00000015, read32_test    #clear rx fifo
-
-# interlock in case where cs_mode = hold, intercs delay
-
-.4byte sck_mode, 0x00000000, write32_test   # reset polarity
-.4byte delay1, 0x00010001, write32_test     # set intercs delay to 1
-.4byte rx_mark, 0x0000001, write32_test     # preset rx watermark b/c of hardware interlock
-.4byte tx_data, 0x51627384, spi_burst_send  # place 4 frames into tx fifo
-.4byte sck_mode, 0x00000002, write32_test   # flip polarity (should change 2 second frame)
-.4byte 0x0, 0x00000001, spi_data_wait       # wait for second transmission to end
-.4byte rx_mark, 0x0000003, write32_test     # preset rx watermark b/c of hardware interlock
-.4byte sck_mode, 0x00000000, write32_test   # flip polarity again
-.4byte 0x0, 0x00000003, spi_data_wait       # wait for final frame
-.4byte rx_data, 0x00000084, read32_test
-.4byte rx_data, 0x00000073, read32_test
-.4byte rx_data, 0x00000062, read32_test
-.4byte rx_data, 0x00000051, read32_test    #clear rx fifo
-
-# repeat previous set of tests with cs_mode = off
-
-.4byte cs_mode, 0x00000003, write32_test    # set cs_mode to hold
-.4byte rx_mark, 0x0000001, write32_test     # preset rx watermark b/c of hardware interlock
-.4byte tx_data, 0x13243546, spi_burst_send  # place 4 frames into tx fifo
-.4byte sck_mode, 0x00000002, write32_test   # flip polarity (should change 2 second frame)
-.4byte 0x0, 0x00000001, spi_data_wait       # wait for second transmission to end
-.4byte rx_mark, 0x0000003, write32_test     # preset rx watermark b/c of hardware interlock
-.4byte sck_mode, 0x00000000, write32_test   # flip polarity again
-.4byte 0x0, 0x00000003, spi_data_wait       # wait for final frame
-.4byte rx_data, 0x00000046, read32_test
-.4byte rx_data, 0x00000035, read32_test
-.4byte rx_data, 0x00000024, read32_test
-.4byte rx_data, 0x00000013, read32_test    #clear rx fifo
-
-# interlock in case where cs_mode = hold, intercs delay
-
-.4byte sck_mode, 0x00000000, write32_test   # reset polarity
-.4byte delay1, 0x00000000, write32_test     # set intercs delay to 0
-.4byte rx_mark, 0x0000001, write32_test     # preset rx watermark b/c of hardware interlock
-.4byte tx_data, 0x31425364, spi_burst_send  # place 4 frames into tx fifo
-.4byte sck_mode, 0x00000002, write32_test   # flip polarity (should change 2 second frame)
-.4byte 0x0, 0x00000001, spi_data_wait       # wait for second transmission to end
-.4byte rx_mark, 0x0000003, write32_test     # preset rx watermark b/c of hardware interlock
-.4byte sck_mode, 0x00000000, write32_test   # flip polarity again
-.4byte 0x0, 0x00000003, spi_data_wait       # wait for final frame
-.4byte rx_data, 0x00000064, read32_test
-.4byte rx_data, 0x00000053, read32_test
-.4byte rx_data, 0x00000042, read32_test
-.4byte rx_data, 0x00000031, read32_test    #clear rx fifo
-
-
-
-
-
-
-
-
-
 
 # =========== Test watermark interrupts ===========
 
 # Test transmit watermark interrupt (triggers when entries in tx FIFO < tx watermark) without external enables
 
 SETUP_PLIC
-
+.4byte fmt, 0x00080000, write32_test        # reset format register
 .4byte delay1, 0x0000001, write32_test      # reset delay1 register
 .4byte cs_mode, 0x00000000, write32_test    # reset cs_mode
 .4byte tx_mark, 0x00000001, write32_test    # set transmit watermark to 1 (any entry turns mark off)

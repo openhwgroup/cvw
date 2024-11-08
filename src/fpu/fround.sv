@@ -76,7 +76,7 @@ module fround import cvw::*;  #(parameter cvw_t P) (
   assign Eeqm1 = ($signed(E) == -1);
 
   // Logic for nonnegative mask and rounding bits
-  assign IMask = {1'b1, {P.NF{1'b0}}} >>> E; /// if E > Nf, this produces all 0s instead of all 1s.  Hence exact handling is needed below.
+  assign IMask = $signed({1'b1, {P.NF{1'b0}}}) >>> E; /// if E > Nf, this produces all 0s instead of all 1s.  Hence exact handling is needed below.
   assign Tmasknonneg = ~IMask >>> 1'b1;
   assign HotE = IMask & ~(IMask << 1'b1);
   assign HotEP1 = HotE >> 1'b1;
@@ -126,7 +126,7 @@ module fround import cvw::*;  #(parameter cvw_t P) (
       3'b001:  RoundUp = 0;               // RZ
       3'b010:  RoundUp = Xs & (Rp | Tp);  // RN
       3'b011:  RoundUp = ~Xs & (Rp | Tp); // RP
-      3'b101:  RoundUp = Rp;              // RNTA
+      3'b100:  RoundUp = Rp;              // RNTA
       default: RoundUp = 0;               // should never happen
     endcase
 

@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // btb.sv
 //
-// Written: Rose Thompson ross1728@gmail.com
+// Written: Rose Thompson rose@rosethompson.net
 // Created: February 15, 2021
 // Modified: 24 January 2023 
 //

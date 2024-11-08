@@ -60,6 +60,7 @@ string coverage64gc[] = '{
   "tlbTP",
   "tlbMisaligned",
   "hptwAccessFault",
+  "nonleafpbmtfault",
   "amoAccessFault",
   "floatmisc",
   "ifuCamlineWrite",
@@ -71,7 +72,8 @@ string coverage64gc[] = '{
   "pmpcfg2",
   "pmppriority",
   "pmpcbo",
-  "pmpadrdecs"
+  "pmpadrdecs",
+  "btbthrash"
 };
 
 string buildroot[] = '{

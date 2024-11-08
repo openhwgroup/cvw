@@ -17,12 +17,6 @@ endif
 WALLYBOARDSRC := $(WALLYLINUX)/buildroot-config-src/wally
 WALLYBOARD := $(BUILDROOT)/board/wally
 
-# Buildroot Package Stuff
-PACKAGE_SOURCE := ${WALLYLINUX}/buildroot-packages/package-source
-FPGA_AXI_SDC := ${WALLYLINUX}/buildroot-packages/fpga-axi-sdc
-DRIVER := ${PACKAGE_SOURCE}/fpga-axi-sdc.c
-PATCHFILE := $(BRPACKAGES)/package-2023.05.1.patch
-
 # Device tree files
 DTS ?= $(shell find devicetree -type f -regex ".*\.dts" | sort)
 DTB := $(DTS:%.dts=%.dtb)
@@ -33,9 +27,16 @@ BINARIES := fw_jump.elf vmlinux busybox
 OBJDUMPS := $(foreach name, $(BINARIES), $(basename $(name) .elf))
 OBJDUMPS := $(foreach name, $(OBJDUMPS), $(DIS)/$(name).objdump)
 
-.PHONY: all generate disassemble install clean cleanDTB cleanDriver check_write_permissions
+.PHONY: all generate disassemble install clean cleanDTB check_write_permissions check_environment
 
-all: check_write_permissions clean download Image disassemble install dumptvs
+all: check_environment check_write_permissions clean download Image disassemble install dumptvs
+
+check_environment: $(RISCV)
+ifeq ($(findstring :$(RISCV)/lib:,:$(LD_LIBRARY_PATH):),)
+	@(echo "ERROR: Your environment variables are not set correctly." >&2 \
+	&& echo "Make sure to source setup.sh or install buildroot using the wally-tool-chain-install.sh script." >&2 \
+	&& exit 1)
+endif
 
 check_write_permissions:
 ifeq ($(SUDO), sudo)
@@ -47,17 +48,17 @@ endif
 		&& exit 1)
 	@$(SUDO) rm -r $(RISCV)/.test
 
-Image:
+Image: check_environment
 	bash -c "unset LD_LIBRARY_PATH; $(MAKE) -C $(BUILDROOT)"
 	$(MAKE) generate
 	@echo "Buildroot Image successfully generated."
 
-install: check_write_permissions
+install: check_write_permissions check_environment
 	$(SUDO) rm -rf $(RISCV)/$(BUILDROOT)
 	$(SUDO) mv $(BUILDROOT) $(RISCV)/$(BUILDROOT)
 	@echo "Buildroot successfully installed."
 
-dumptvs: check_write_permissions
+dumptvs: check_write_permissions check_environment
 	$(SUDO) mkdir -p $(RISCV)/linux-testvectors
 	cd testvector-generation; ./genInitMem.sh
 	@echo "Testvectors successfully generated."
@@ -76,7 +77,7 @@ $(RISCV):
 	@ echo "and sourced setup.sh"
 
 # Disassembly rules ---------------------------------------------------
-disassemble:
+disassemble: check_environment
 	rm -rf $(BUILDROOT)/output/images/disassembly
 	find  $(BUILDROOT)/output/build/linux-* -maxdepth 1 -name "vmlinux" | xargs  cp -t $(BUILDROOT)/output/images/
 	mkdir -p $(DIS)
@@ -114,23 +115,11 @@ $(WALLYBOARD): $(BUILDROOT)
 	cp $(BR2023)/main.config $(WALLYBOARD)/main.config
 	cp $(BR2023)/linux.config $(WALLYBOARD)/linux.config
 
-# Buildroot Package ---------------------------------------------------
-$(BUILDROOT)/package/fpga-axi-sdc: $(BUILDROOT) $(PATCHFILE) $(BRPACKAGES)/fpga-axi-sdc
-	cp -r $(BRPACKAGES)/fpga-axi-sdc $(BUILDROOT)/package
-	sed -i 's|FPGA_AXI_SDC_SITE =|FPGA_AXI_SDC_SITE = $(PACKAGE_SOURCE)|1' $(BUILDROOT)/package/fpga-axi-sdc/fpga-axi-sdc.mk
-	cd $(BUILDROOT); if git apply --check $(PATCHFILE) > /dev/null ; then git apply $(PATCHFILE); fi
-
-$(PATCHFILE):
-	cd $(BUILDROOT); git apply $(PATCHFILE)
-
 $(BUILDROOT):
 	git clone https://github.com/buildroot/buildroot.git $@
 	cd $@; git checkout 2023.05.x
 
 # ---------------------------------------------------------------------
-
-cleanDriver:
-	rm -f $(DRIVER)
 
 cleanDTB:
 	rm -f $(IMAGES)/*.dtb

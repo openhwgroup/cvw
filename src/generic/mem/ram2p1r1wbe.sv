@@ -2,7 +2,7 @@
 // ram2p1r1wbe.sv
 // 2 port sram.
 //
-// Written: ross1728@gmail.com May 3, 2021
+// Written: rose@rosethompson.net May 3, 2021
 //          Two port SRAM 1 read port and 1 write port.
 //          When clk rises Addr and LineWriteData are sampled.
 //          Following the clk edge read data is output from the sampled Addr.

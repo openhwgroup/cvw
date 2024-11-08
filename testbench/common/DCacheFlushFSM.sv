@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // DCacheFlushFSM.sv
 //
-// Written: David Harris David_Harris@hmc.edu and Rose Thompson ross1728@gmail.com
+// Written: David Harris David_Harris@hmc.edu and Rose Thompson rose@rosethompson.net
 // Modified: 14 June 2023
 //
 // Purpose: The L1 data cache and any feature L2 or high cache will not necessary writeback all dirty

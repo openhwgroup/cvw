@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // fpgaTop.sv
 //
-// Written: ross1728@gmail.com November 17, 2021
+// Written: rose@rosethompson.net November 17, 2021
 // Modified: 
 //
 // Purpose: This is a top level for the fpga's implementation of wally.

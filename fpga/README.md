@@ -1,46 +1,71 @@
-The FPGA currently only targets the VCU118 board.
+Wally supports the following boards
 
-* Build Process
+1. ArtyA7
+2. vcu108
+3. vcu118 (Do not recommend.)
 
+# Quick Start
+
+## Build FPGA
+
+```bash
 cd generator
-make 
+make <board name>
+```
 
-* Description
+Example:
+```bash
+make vcu108
+```
 
-The generator makefile creates 4 IP blocks; proc_sys_reset, ddr4,
-axi_clock_converter, and ahblite_axi_bridge.  Then it reads in the 4 IP blocks
-and builds wally.  fpga/src/fpgaTop.v is the top level which instanciates
-wallypipelinedsoc.sv and the 4 IP blocks.  The FPGA include and ILA (In logic
-analyzer) which provides the current instruction PCM, instrM, etc along with
-a large number of debuging signals.
+## Make flash card image
+`ls /dev/sd*` or `ls /dev/mmc*` to see which flash card devices you have.
+Insert the flash card into the reader and `ls /dev/sd*` or `/dev/mmc*` again.  The new device is the one you want to use.  Make sure you select the root device (i.e. `/dev/sdb`) not the partition (i.e. `/dev/sdb1`).
 
-* Programming the flash card
-You'll need to write the linux image to the flash card.  Use the convert2bin.py 
-script in linux-testgen/linux-testvectors/ [*** moved?] to convert the ram.txt 
-file from QEMU's preload to generate the binary.  Then to copy
- sudo dd if=ram.bin of=<path to flash card>.
+```bash
+cd $WALLY/linux/sd-card
+```
 
-* Loading the FPGA
+This following script requires root.
 
-After the build process is complete about 2 hrs on an i9-7900x. Launch vivado's
-gui and open the WallyFPGA.xpr project file.  Open the hardware manager under
-program and debug. Open target and then program with the bit file.
+```bash
+./flash-sd.sh -b <path to buildroot> -d <path to compiled device tree file> <flash card device>
+```
 
-* Test Run
+Example with vcu108, buildroot installed to `/opt/riscv/buildroot`, and the flash card is device `/dev/sdc`
 
-Once the FPGA is programed the 3 MSB LEDs in the upper right corner provide
-status of the reset and ddr4 calibration.  LED 7 should always be lit.
-LED 6 will light if the DDR4 is not calibrated.  LED 6 will be lit once
-wally begins running.
+```bash
+./flash-sd.sh -b /opt/riscv/buildroot -d /opt/riscv/buildroot/output/images/wally-vcu108.dtb /dev/sdc
+```
 
-Next the bootloader program will copy the flash card into the DDR4 memory.
-When this done the lower 5 LEDs will blink 5 times and then try to boot
-the program loaded in the DDR4 memory at physical address 0x8000_0000.
+Wait until the the script completes then remove the card.
 
-* Connecting uart
-You'll need to connect both usb cables.  The first connects the FPGA programer
-while the connect connects UART.  UART is configured to use 57600 baud with 
-no parity, 8 data bits, and 1 stop bit.  sudo screen /dev/ttyUSB1 57600 should
-let you view the com port.
+## FPGA setup
 
+For the Arty A7 insert the PMOD daughter board into the right most slot and insert the sd card.
+
+For the VCU108 and VCU118 boards insert the PMOD daughter board into the only PMOD slot on the right side of the boards.
+
+Power on the boards. For Arty A7 just plug in the USB connector. For the VCU boards make sure the power supply is connected and the two usb cables are connected. Flip on the switch.
+The VCU118's on board UART converter does not work. Use a spark fun FTDI usb to UART adapter and plug into the mail PMOD on the right side of the board.  Also the level sifters on the
+VCU118 do not work correctly with the digilent sd PMOD board.  We have a custom board which works instead.
+
+```bash
+cd $WALLY/fpga/generator
+vivado &
+```
+
+Open the design in the current directory `WallyFPGA.xpr`.
+
+Then click "Open Target" under "PROGRAM AND DEBUG".  Then Program the device.
+
+## Connect to UART
+
+In another terminal `ls /dev/ttyUSB*`. One of these devices will be the UART connected to Wally. You may have to experiment by the running the following command multiple times.
+
+```bash
+screen /dev/ttyUSB1 115200
+```
+
+Swap out the `USB1` for `USB0` or `USB1` as needed.
 

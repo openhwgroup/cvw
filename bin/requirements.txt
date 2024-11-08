@@ -3,12 +3,12 @@ lief>=0.14.1
 Markdown>=3.6
 matplotlib>=3.9.0
 PyYAML>=5.2
-riscv-isac @ git+https://github.com/riscv-software-src/riscv-isac@dev
 riscof @ git+https://github.com/riscv/riscof.git
 riscv-config>=3.18.3
-riscv-isac>=0.18.0
+riscv-isac @ git+https://github.com/riscv-non-isa/riscv-arch-test/#subdirectory=riscv-isac
 scikit-learn>=1.5.0
 scipy>=1.13.0
-Sphinx>=7.3.7
+setuptools
+Sphinx~=7.3.7 # QEMU fails to build with Sphinx 8
 sphinx-rtd-theme>=2.0.0
 testresources>=2.0.1

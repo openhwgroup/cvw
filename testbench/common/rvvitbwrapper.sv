@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // loggers.sv
 //
-// Written: Rose Thompson ross1728@gmail.com
+// Written: Rose Thompson rose@rosethompson.net
 // Modified: 24 July 2024
 // 
 // Purpose: Wraps all the synthesizable rvvi hardware into a single module for the testbench.
