@@ -324,8 +324,7 @@ STATUS="qemu"
 cd "$RISCV"
 if git_check "qemu" "https://github.com/qemu/qemu" "$RISCV/include/qemu-plugin.h"; then
     cd "$RISCV"/qemu
-    git reset --hard && git clean -f && git checkout master && git pull --recurse-submodules -j "${NUM_THREADS}"
-    git submodule update --init --recursive
+    git reset --hard && git clean -f && git checkout master && git pull
     ./configure --target-list=riscv64-softmmu --prefix="$RISCV"
     make -j "${NUM_THREADS}" 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
     make install 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
