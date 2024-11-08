@@ -70,6 +70,9 @@
 # For code coverage, don't produce pseudoinstructions
 --override no_pseudo_inst=T 
 
+# Show "c." with compressed instructions 
+--override show_c_prefix=T
+
 # nonratified mnosie register not implemented
 --override cpu/mnoise_undefined=T
 
