@@ -109,7 +109,6 @@ module spi_controller (
 
   logic       DelayIsNext;
   logic       DelayState;       
-
   // Convenient Delay Reg Names
   assign cssck = Delay0[7:0];
   assign sckcs = Delay0[15:8];
@@ -153,7 +152,7 @@ module spi_controller (
       DelayCounter <= 0;
     end else begin
       // SCK logic for delay times  
-      if (TransmitStart) begin
+      if (TransmitStart & ~DelayState) begin
         SCK <= 0;
       end else if (SCLKenable) begin
         SCK <= ~SCK;
@@ -168,7 +167,7 @@ module spi_controller (
       
       // SPICLK Logic
       
-      if (TransmitStart) begin
+      if (TransmitStart & ~DelayState) begin
         SPICLK <= SckMode[1];
       end else if (SCLKenable) begin
         if (Phase & (NextState == TRANSMIT)) SPICLK <= (~EndTransmission & ~DelayIsNext) ? ~SPICLK : SckMode[1];
@@ -176,7 +175,7 @@ module spi_controller (
       end
       
       // Reset divider 
-      if (SCLKenable | TransmitStart | ResetSCLKenable) begin
+      if (SCLKenable | (TransmitStart & ~DelayState) | ResetSCLKenable) begin
         DivCounter <= 12'b0;
       end else begin
         DivCounter <= DivCounter + 12'd1;
