@@ -304,8 +304,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   assign GatedStallD = StallD & ~SelSpillNextF;
 
   // flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawF, nop, InstrRawD);
-  // TODO: Test this?!?!?!
-  fetchbuffer #(P) fetchbuff(.clk, .reset, .StallF, .StallD, .FlushD, .WriteData(PostSpillInstrRawF), .ReadData(InstrRawD), .FetchBufferStallF); // Figure out what TODO with StallF
+  fetchbuffer #(P) fetchbuff(.clk, .reset, .StallF, .StallD, .FlushD, .WriteData(PostSpillInstrRawF), .ReadData(InstrRawD), .FetchBufferStallF);
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // PCNextF logic

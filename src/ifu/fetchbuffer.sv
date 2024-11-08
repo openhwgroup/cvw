@@ -47,19 +47,6 @@ module fetchbuffer import cvw::*; #(parameter cvw_t P) (
   flopenl #(32) f1 (.clk, .load(reset | FlushD), .en(WritePtr[1]), .d(WriteData), .val(nop), .q(Readf1));
   flopenl #(32) f2 (.clk, .load(reset | FlushD), .en(WritePtr[2]), .d(WriteData), .val(nop), .q(Readf2));
 
-  // always_comb begin : readMuxes
-  //   // Mux read data from the three registers
-  //   case (ReadPtr)
-  //     3'b001:  ReadFetchBuffer = Readf0;
-  //     3'b010:  ReadFetchBuffer = Readf1;
-  //     3'b100:  ReadFetchBuffer = Readf2;
-  //     default: ReadFetchBuffer = nop; // just in case?
-  //   endcase
-  //   // issue nop when appropriate
-  //   ReadData = Empty ? nop : ReadFetchBuffer;
-  // end
-
-
   // Fetch buffer entries anded with read ptr for AO Muxing
   logic [31:0] DaoArr [2:0];
   //     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Make parameterizable
