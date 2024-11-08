@@ -71,6 +71,7 @@
 
 --override no_pseudo_inst=T # For code coverage, don't produce pseudoinstructions
 
+--override show_c_prefix=T  # Show "c." with compressed instructions
 
 # mcause and scause only have 4 lsbs of code and 1 msb of interrupt flag
 #--override cpu/ecode_mask=0x8000000F  # for RV32
