@@ -6,35 +6,35 @@
 //
 // Purpose: Instruction Fetch Unit
 //           PC, branch prediction, instruction cache
-// 
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module ifu import cvw::*;  #(parameter cvw_t P) (
   input  logic                 clk, reset,
   input  logic                 StallF, StallD, StallE, StallM, StallW,
-  input  logic                 FlushD, FlushE, FlushM, FlushW, 
+  input  logic                 FlushD, FlushE, FlushM, FlushW,
   output logic                 IFUStallF,                                // IFU stalsl pipeline during a multicycle operation
   // Command from CPU
   input  logic                 InvalidateICacheM,                        // Clears all instruction cache valid bits
   input  logic                 CSRWriteFenceM,                           // CSR write or fence instruction, PCNextF = the next valid PC (typically PCE)
-  input  logic                 InstrValidD, InstrValidE, 
+  input  logic                 InstrValidD, InstrValidE,
   input  logic                 BranchD, BranchE,
   input  logic                 JumpD, JumpE,
   // Bus interface
@@ -74,7 +74,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   // Faults
   input  logic                 IllegalBaseInstrD,                        // Illegal non-compressed instruction
   input  logic                 IllegalFPUInstrD,                         // Illegal FP instruction
-  output logic                 InstrPageFaultF,                          // Instruction page fault 
+  output logic                 InstrPageFaultF,                          // Instruction page fault
   output logic                 IllegalIEUFPUInstrD,                      // Illegal instruction including compressed & FP
   output logic                 InstrMisalignedFaultM,                    // Branch target not aligned to 4 bytes if no compressed allowed (2 bytes if allowed)
   // mmu management
@@ -83,7 +83,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   input  logic [1:0]           PageType,                                 // Hardware page table walker (HPTW) writes PageType to ITLB
   input  logic                 ITLBWriteF,                               // Writes PTE and PageType to ITLB
   input  logic [P.XLEN-1:0]    SATP_REGW,                                // Location of the root page table and page table configuration
-  input  logic                 STATUS_MXR,                               // Status CSR: make executable page readable 
+  input  logic                 STATUS_MXR,                               // Status CSR: make executable page readable
   input  logic                 STATUS_SUM,                               // Status CSR: Supervisor access to user memory
   input  logic                 STATUS_MPRV,                              // Status CSR: modify machine privilege
   input  logic [1:0]           STATUS_MPP,                               // Status CSR: previous machine privilege level
@@ -93,7 +93,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   output logic                 ITLBMissOrUpdateAF,                       // ITLB miss causes HPTW (hardware pagetable walker) walk or update access bit
   input  var logic [7:0]       PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0],     // PMP configuration from privileged unit
   input  var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0],// PMP address from privileged unit
-  output logic                 InstrAccessFaultF,                        // Instruction access fault 
+  output logic                 InstrAccessFaultF,                        // Instruction access fault
   output logic                 ICacheAccess,                             // Report I$ read to performance counters
   output logic                 ICacheMiss,                               // Report I$ miss to performance counters
   // Fetch Buffer
@@ -106,7 +106,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]           PCNextF;                                  // Next PCF, selected from Branch predictor, Privilege, or PC+2/4
   logic [P.XLEN-1:0]           PC1NextF;                                 // Branch predictor next PCF
   logic [P.XLEN-1:0]           PC2NextF;                                 // Selected PC between branch prediction and next valid PC if CSRWriteFence
-  logic [P.XLEN-1:0]           UnalignedPCNextF;                         // The next PCF, but not aligned to 2 bytes. 
+  logic [P.XLEN-1:0]           UnalignedPCNextF;                         // The next PCF, but not aligned to 2 bytes.
   logic                        BranchMisalignedFaultE;                   // Branch target not aligned to 4 bytes if no compressed allowed (2 bytes if allowed)
   logic [P.XLEN-1:0]           PCPlus2or4F;                              // PCF + 2 (CompressedF) or PCF + 4 (Non-compressed)
   logic [P.XLEN-1:0]           PCSpillNextF;                             // Next PCF after possible + 2 to handle spill
@@ -115,7 +115,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]           NextValidPCE;                             // The PC of the next valid instruction in the pipeline after  csr write or fence
   logic [P.XLEN-1:0]           PCF;                                      // Fetch stage instruction address
   logic [P.PA_BITS-1:0]        PCPF;                                     // Physical address after address translation
-  logic [P.XLEN+1:0]           PCFExt;                                
+  logic [P.XLEN+1:0]           PCFExt;
 
   logic [31:0]                 IROMInstrF;                               // Instruction from the IROM
   logic [31:0]                 ICacheInstrF;                             // Instruction from the I$
@@ -124,7 +124,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   logic [31:0]                 PostSpillInstrRawF;                       // Fetch instruction after merge two halves of spill
   logic [31:0]                 InstrRawD;                                // Non-decompressed instruction in the Decode stage
   logic                        IllegalIEUInstrD;                         // IEU Instruction (regular or compressed) is not good
-  
+
   logic [1:0]                  IFURWF;                                   // IFU alreays read IFURWF = 10
   logic [31:0]                 InstrE;                                   // Instruction in the Execution stage
   logic [31:0]                 NextInstrD, NextInstrE;                   // Instruction into the next stage after possible stage flush
@@ -143,7 +143,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   logic [31:0]                 ShiftUncachedInstr;
   logic 		       ITLBMissF;
   logic 		       InstrUpdateAF;                            // ITLB hit needs to update dirty or access bits
-    
+
   assign PCFExt = {2'b00, PCSpillF};
 
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -151,7 +151,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   if(P.ZCA_SUPPORTED) begin : Spill
-    spill #(P) spill(.clk, .reset, .StallF, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF,  .CacheableF, 
+    spill #(P) spill(.clk, .reset, .StallF, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF,  .CacheableF,
       .IFUCacheBusStallF, .ITLBMissOrUpdateAF, .PCSpillNextF, .PCSpillF, .SelSpillNextF, .PostSpillInstrRawF, .CompressedF);
   end else begin : NoSpill
     assign PCSpillNextF = PCNextF;
@@ -170,9 +170,9 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     ///////////////////////////////////////////
     // sets ITLBFlush to pulse for one cycle of the sfence.vma instruction
     // In this instr we want to flush the tlb and then do a pagetable walk to update the itlb and continue the program.
-    // But we're still in the stalled sfence instruction, so if itlbflushf == sfencevmaM, tlbflush would never drop and 
-    // the tlbwrite would never take place after the pagetable walk. by adding in ~StallMQ, we are able to drop itlbflush 
-    // after a cycle AND pulse it for another cycle on any further back-to-back sfences. 
+    // But we're still in the stalled sfence instruction, so if itlbflushf == sfencevmaM, tlbflush would never drop and
+    // the tlbwrite would never take place after the pagetable walk. by adding in ~StallMQ, we are able to drop itlbflush
+    // after a cycle AND pulse it for another cycle on any further back-to-back sfences.
     logic StallMQ, TLBFlush;
     flopr #(1) StallMReg(.clk, .reset, .d(StallM), .q(StallMQ));
     assign TLBFlush = sfencevmaM & ~StallMQ;
@@ -196,7 +196,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
          .AtomicAccessM(1'b0),.ExecuteAccessF(1'b1), .WriteAccessM(1'b0), .ReadAccessM(1'b0),
          .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
 
-     assign ITLBMissOrUpdateAF = ITLBMissF | (P.SVADU_SUPPORTED & InstrUpdateAF);  
+     assign ITLBMissOrUpdateAF = ITLBMissF | (P.SVADU_SUPPORTED & InstrUpdateAF);
   end else begin
     assign {ITLBMissF, InstrAccessFaultF, InstrPageFaultF, InstrUpdateAF} = '0;
     assign PCPF = PCFExt[P.PA_BITS-1:0];
@@ -206,9 +206,9 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   end
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
-  // Memory 
+  // Memory
   ////////////////////////////////////////////////////////////////////////////////////////////////
-  
+
   // CommittedM tells the CPU's privileged unit the current instruction
   // in the memory stage is a memory operaton and that memory operation is either completed
   // or is partially executed. Partially completed memory operations need to prevent an interrupts.
@@ -229,13 +229,13 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   if (P.BUS_SUPPORTED) begin : bus
     localparam   BEATSPERLINE = P.ICACHE_SUPPORTED ? P.ICACHE_LINELENINBITS/P.AHBW : 1;
     localparam   AHBWLOGBWPL = P.ICACHE_SUPPORTED ? $clog2(BEATSPERLINE) : 1;
-    
+
     if(P.ICACHE_SUPPORTED) begin : icache
       localparam            LLENPOVERAHBW = P.LLEN / P.AHBW; // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
       logic [P.PA_BITS-1:0] ICacheBusAdr;
       logic                 ICacheBusAck;
       logic [1:0]           CacheBusRW, BusRW, CacheRWF;
-      
+
       assign BusRW = ~ITLBMissF & ~CacheableF & ~SelIROM ? IFURWF : '0;
       assign CacheRWF = ~ITLBMissF & CacheableF & ~SelIROM ? IFURWF : '0;
       cache #(.P(P), .PA_BITS(P.PA_BITS), .XLEN(P.XLEN), .LINELEN(P.ICACHE_LINELENINBITS),
@@ -243,7 +243,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
               .NUMWAYS(P.ICACHE_NUMWAYS), .LOGBWPL(AHBWLOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .READ_ONLY_CACHE(1))
       icache(.clk, .reset, .FlushStage(FlushD), .Stall(GatedStallD),
              .FetchBuffer, .CacheBusAck(ICacheBusAck),
-             .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), 
+             .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF),
              .CacheBusRW,
              .ReadDataWord(ICacheInstrF),
              .SelHPTW('0),
@@ -254,9 +254,9 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
              .FlushCache('0),
              .NextSet(PCSpillNextF[11:0]),
              .PAdr(PCPF),
-             .CacheCommitted(CacheCommittedF), .InvalidateCache(InvalidateICacheM), .CMOpM('0)); 
+             .CacheCommitted(CacheCommittedF), .InvalidateCache(InvalidateICacheM), .CMOpM('0));
 
-      ahbcacheinterface #(P, BEATSPERLINE, AHBWLOGBWPL, LINELEN, LLENPOVERAHBW, 1) 
+      ahbcacheinterface #(P, BEATSPERLINE, AHBWLOGBWPL, LINELEN, LLENPOVERAHBW, 1)
       ahbcacheinterface(.HCLK(clk), .HRESETn(~reset),
             .HRDATA,
             .Flush(FlushD), .CacheBusRW, .BusCMOZero(1'b0), .HSIZE(IFUHSIZE), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS), .HWSTRB(),
@@ -275,7 +275,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       assign BusRW = ~ITLBMissF & ~SelIROM ? IFURWF : 0;
       assign IFUHSIZE = 3'b010;
 
-      ahbinterface #(P.XLEN, 1'b0) ahbinterface(.HCLK(clk), .Flush(FlushD), .HRESETn(~reset), .HREADY(IFUHREADY), 
+      ahbinterface #(P.XLEN, 1'b0) ahbinterface(.HCLK(clk), .Flush(FlushD), .HRESETn(~reset), .HREADY(IFUHREADY),
         .HRDATA(HRDATA), .HTRANS(IFUHTRANS), .HWRITE(IFUHWRITE), .HWDATA(),
         .HWSTRB(), .BusRW, .BusAtomic('0), .ByteMask(), .WriteData('0),
         .Stall(GatedStallD), .BusStall, .BusCommitted(BusCommittedF), .FetchBuffer(FetchBuffer));
@@ -288,24 +288,23 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     end
 
     // mux between the alignments of uncached reads.
-    if(P.XLEN == 64) mux4 #(32) UncachedShiftInstrMux(FetchBuffer[32-1:0], FetchBuffer[48-1:16], 
+    if(P.XLEN == 64) mux4 #(32) UncachedShiftInstrMux(FetchBuffer[32-1:0], FetchBuffer[48-1:16],
                                                       FetchBuffer[64-1:32], {16'b0, FetchBuffer[64-1:48]},
                                                       PCSpillF[2:1], ShiftUncachedInstr);
     else mux2 #(32) UncachedShiftInstrMux(FetchBuffer[32-1:0], {16'b0, FetchBuffer[32-1:16]}, PCSpillF[1], ShiftUncachedInstr);
   end else begin : nobus // block: bus
-    assign {IFUHADDR, IFUHWRITE, IFUHSIZE, IFUHBURST, IFUHTRANS, 
-            BusStall, CacheCommittedF, BusCommittedF, FetchBuffer} = '0;   
+    assign {IFUHADDR, IFUHWRITE, IFUHSIZE, IFUHBURST, IFUHTRANS,
+            BusStall, CacheCommittedF, BusCommittedF, FetchBuffer} = '0;
     assign {ICacheStallF, ICacheMiss, ICacheAccess} = '0;
     assign InstrRawF = IROMInstrF;
   end
-  
+
   assign IFUCacheBusStallF = ICacheStallF | BusStall;
   assign IFUStallF = IFUCacheBusStallF | SelSpillNextF;
   assign GatedStallD = StallD & ~SelSpillNextF;
-  
+
   // flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawF, nop, InstrRawD);
-  // TODO: Test this?!?!?!
-  fetchbuffer #(P) fetchbuff(.clk, .reset, .StallD, .FlushD, .WriteData(PostSpillInstrRawF), .ReadData(InstrRawD), .FetchBufferStallF); // Figure out what TODO with StallF
+  fetchbuffer #(P) fetchbuff(.clk, .reset, .StallF, .StallD, .FlushD, .WriteData(PostSpillInstrRawF), .ReadData(InstrRawD), .FetchBufferStallF);
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // PCNextF logic
@@ -324,11 +323,11 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   assign PCPlus4F = PCF[P.XLEN-1:2] + 1; // add 4 to PC
 
   if (P.ZCA_SUPPORTED) begin: pcadd
-    // choose PC+2 or PC+4 based on CompressedF, which arrives later. 
+    // choose PC+2 or PC+4 based on CompressedF, which arrives later.
     // Speeds up critical path as compared to selecting adder input based on CompressedF
     always_comb
       if (CompressedF) // add 2
-        if (PCF[1]) PCPlus2or4F = {PCPlus4F, 2'b00}; 
+        if (PCF[1]) PCPlus2or4F = {PCPlus4F, 2'b00};
         else        PCPlus2or4F = {PCF[P.XLEN-1:2], 2'b10};
       else          PCPlus2or4F = {PCPlus4F, PCF[1:0]}; // add 4
   end else begin: pcadd
@@ -341,21 +340,21 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   if (P.BPRED_SUPPORTED) begin : bpred
     bpred #(P) bpred(.clk, .reset,
                 .StallF, .StallD, .StallE, .StallM, .StallW,
-                .FlushD, .FlushE, .FlushM, .FlushW, .InstrValidD, .InstrValidE, 
+                .FlushD, .FlushE, .FlushM, .FlushW, .InstrValidD, .InstrValidE,
                 .BranchD, .BranchE, .JumpD, .JumpE,
                 .InstrD, .PCNextF, .PCPlus2or4F, .PC1NextF, .PCE, .PCM, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCF, .NextValidPCE,
                 .PCD, .PCLinkE, .IClassM, .BPWrongE, .PostSpillInstrRawF, .BPWrongM,
                 .BPDirWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM);
 
   end else begin : bpred
-    mux2 #(P.XLEN) pcmux1(.d0(PCPlus2or4F), .d1(IEUAdrE), .s(PCSrcE), .y(PC1NextF));    
+    mux2 #(P.XLEN) pcmux1(.d0(PCPlus2or4F), .d1(IEUAdrE), .s(PCSrcE), .y(PC1NextF));
     logic BranchM, JumpM, BranchW, JumpW;
     logic CallD, CallE, CallM, CallW;
     logic ReturnD, ReturnE, ReturnM, ReturnW;
     assign BPWrongE = PCSrcE;
-    icpred #(P, 0) icpred(.clk, .reset, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, 
+    icpred #(P, 0) icpred(.clk, .reset, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM,
       .PostSpillInstrRawF, .InstrD, .BranchD, .BranchE, .JumpD, .JumpE, .BranchM, .BranchW, .JumpM, .JumpW,
-      .CallD, .CallE, .CallM, .CallW, .ReturnD, .ReturnE, .ReturnM, .ReturnW, 
+      .CallD, .CallE, .CallM, .CallW, .ReturnD, .ReturnE, .ReturnM, .ReturnW,
       .BTBCallF(1'b0), .BTBReturnF(1'b0), .BTBJumpF(1'b0),
       .BTBBranchF(1'b0), .BPCallF(), .BPReturnF(), .BPJumpF(), .BPBranchF(), .IClassWrongM,
       .BPReturnWrongD());
@@ -365,19 +364,19 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     assign BTAWrongM = BPWrongM;
     assign IClassM = {CallM, ReturnM, JumpM, BranchM};
     assign NextValidPCE = PCE;
-  end      
+  end
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Decode stage pipeline register and compressed instruction decoding.
   ////////////////////////////////////////////////////////////////////////////////////////////////
-  
+
   // Decode stage pipeline register and logic
   flopenrc #(P.XLEN) PCDReg(clk, reset, FlushD, ~StallD, PCF, PCD);
-   
+
   // expand 16-bit compressed instructions to 32 bits
   if (P.ZCA_SUPPORTED) begin: decomp
     logic IllegalCompInstrD;
-    decompress #(P) decomp(.InstrRawD, .InstrD, .IllegalCompInstrD); 
+    decompress #(P) decomp(.InstrRawD, .InstrD, .IllegalCompInstrD);
     assign IllegalIEUInstrD = IllegalBaseInstrD | IllegalCompInstrD; // illegal if bad 32 or 16-bit instr
   end else begin: decomp
     assign InstrD = InstrRawD;
@@ -390,7 +389,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   // instruction address misalignment is generated by the target of control flow instructions, not
   // the fetch itself.
   // xret and Traps both cannot produce instruction misaligned.
-  // xret: mepc is an MXLEN-bit read/write register formatted as shown in Figure 3.21. 
+  // xret: mepc is an MXLEN-bit read/write register formatted as shown in Figure 3.21.
   // The low bit of mepc (mepc[0]) is always zero. On implementations that support
   // only IALIGN=32, the two low bits (mepc[1:0]) are always zero.
   // Spec 3.1.14
@@ -409,10 +408,10 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     flopenr #(32)     InstrMReg(clk, reset, ~StallM, NextInstrE, InstrM);
   end else assign InstrM = '0;
   // PCM is only needed with CSRs or branch prediction
-  if (P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED) 
+  if (P.ZICSR_SUPPORTED | P.BPRED_SUPPORTED)
     flopenr #(P.XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
-  else assign PCM = '0; 
-  
+  else assign PCM = '0;
+
   // If compressed instructions are supported, increment PCLink by 2 or 4 for a jal.  Otherwise, just by 4
   if (P.ZCA_SUPPORTED) begin
     logic CompressedD;  // instruction is compressed
@@ -423,14 +422,14 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     assign CompressedE = 1'b0;
     assign PCLinkE = PCE + 'd4;
   end
- 
+
   // pipeline original compressed instruction in case it is needed for MTVAL on an illegal instruction exception
   if (P.ZICSR_SUPPORTED & P.ZCA_SUPPORTED | 1) begin
     logic CompressedM; // instruction is compressed
     flopenrc #(16) InstrRawEReg(clk, reset, FlushE, ~StallE, InstrRawD[15:0], InstrRawE);
     flopenrc #(16) InstrRawMReg(clk, reset, FlushM, ~StallM, InstrRawE, InstrRawM);
     flopenrc #(1)  CompressedMReg(clk, reset, FlushM, ~StallM, CompressedE, CompressedM);
-    mux2     #(32) InstrOrigMux(InstrM, {16'b0, InstrRawM}, CompressedM, InstrOrigM); 
+    mux2     #(32) InstrOrigMux(InstrM, {16'b0, InstrRawM}, CompressedM, InstrOrigM);
   end else
     assign InstrOrigM = InstrM;
 

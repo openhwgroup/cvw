@@ -6,29 +6,29 @@
 // Modified: 3 October 2024
 //
 // Purpose: Store multiple instructions in a cyclic FIFO
-// 
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fetchbuffer import cvw::*; #(parameter cvw_t P) (
 	input  logic        clk, reset,
-	input  logic        StallD, FlushD,
+	input  logic        StallF, StallD, FlushD,
 	input  logic [31:0] WriteData,
 	output logic [31:0] ReadData,
 	output logic        FetchBufferStallF
@@ -43,22 +43,9 @@ module fetchbuffer import cvw::*; #(parameter cvw_t P) (
   assign FetchBufferStallF = Full;
 
   // will go in a generate block once this is parameterized
-  flopenr #(32) f0 (.clk, .reset(reset | FlushD), .en(WritePtr[0]), .d(WriteData), .q(Readf0));
-  flopenr #(32) f1 (.clk, .reset(reset | FlushD), .en(WritePtr[1]), .d(WriteData), .q(Readf1));
-  flopenr #(32) f2 (.clk, .reset(reset | FlushD), .en(WritePtr[2]), .d(WriteData), .q(Readf2));
-
-  // always_comb begin : readMuxes
-  //   // Mux read data from the three registers
-  //   case (ReadPtr)
-  //     3'b001:  ReadFetchBuffer = Readf0;
-  //     3'b010:  ReadFetchBuffer = Readf1;
-  //     3'b100:  ReadFetchBuffer = Readf2;
-  //     default: ReadFetchBuffer = nop; // just in case?
-  //   endcase
-  //   // issue nop when appropriate
-  //   ReadData = Empty ? nop : ReadFetchBuffer;
-  // end
-
+  flopenl #(32) f0 (.clk, .load(reset | FlushD), .en(WritePtr[0]), .d(WriteData), .val(nop), .q(Readf0));
+  flopenl #(32) f1 (.clk, .load(reset | FlushD), .en(WritePtr[1]), .d(WriteData), .val(nop), .q(Readf1));
+  flopenl #(32) f2 (.clk, .load(reset | FlushD), .en(WritePtr[2]), .d(WriteData), .val(nop), .q(Readf2));
 
   // Fetch buffer entries anded with read ptr for AO Muxing
   logic [31:0] DaoArr [2:0];
@@ -77,7 +64,7 @@ module fetchbuffer import cvw::*; #(parameter cvw_t P) (
       WritePtr <= 3'b001;
       ReadPtr  <= 3'b001;
     end else begin
-      WritePtr <= ~Full ? {WritePtr[1:0], WritePtr[2]} : WritePtr;
+      WritePtr <= ~(Full | StallF) ? {WritePtr[1:0], WritePtr[2]} : WritePtr;
       ReadPtr <= ~(StallD | Empty) ? {ReadPtr[1:0], ReadPtr[2]} : ReadPtr;
     end
   end
