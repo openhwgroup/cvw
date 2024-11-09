@@ -14,9 +14,6 @@
 `include "RV32Zbb_coverage.svh"
 `include "RV32Zbc_coverage.svh"
 `include "RV32Zbs_coverage.svh"
-`include "RV32Zbkb_coverage.svh"
-`include "RV32Zbkc_coverage.svh"
-`include "RV32Zbkx_coverage.svh"
 `include "RV32ZfaF_coverage.svh"
 `include "RV32ZfaD_coverage.svh"
 `include "RV32ZfaZfh_coverage.svh"
@@ -29,11 +26,6 @@
 `include "RV32ZcbZbb_coverage.svh"
 `include "RV32Zcf_coverage.svh"
 `include "RV32Zcd_coverage.svh"
-`include "RV32Zaamo_coverage.svh"
-`include "RV32Zalrsc_coverage.svh"
-`include "RV32Zknd_coverage.svh"
-`include "RV32Zkne_coverage.svh"
-`include "RV32Zknh_coverage.svh"
 
 // Privileged extensions
 `include "ZicsrM_coverage.svh"

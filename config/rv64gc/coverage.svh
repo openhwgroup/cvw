@@ -14,9 +14,6 @@
 `include "RV64Zbb_coverage.svh"
 `include "RV64Zbc_coverage.svh"
 `include "RV64Zbs_coverage.svh"
-`include "RV64Zbkb_coverage.svh"
-`include "RV64Zbkc_coverage.svh"
-`include "RV64Zbkx_coverage.svh"
 `include "RV64ZfaF_coverage.svh"
 `include "RV32ZfaD_coverage.svh"
 `include "RV32ZfaZfh_coverage.svh"
@@ -29,12 +26,6 @@
 `include "RV64ZcbZbb_coverage.svh"
 `include "RV64ZcbZba_coverage.svh"
 `include "RV64Zcd_coverage.svh"
-`include "RV64Zaamo_coverage.svh"
-`include "RV64Zalrsc_coverage.svh"
-`include "RV64Zknd_coverage.svh"
-`include "RV64Zkne_coverage.svh"
-`include "RV64Zknh_coverage.svh"
-
 
 
 
