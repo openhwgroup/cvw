@@ -46,9 +46,8 @@ echo "Launching QEMU in replay mode!"
 -ex "q"
 
 echo "Changing Endianness"
-make fixBinMem
-./fixBinMem "$rawRamFile" "$ramFile"
-./fixBinMem "$rawBootmemFile" "$bootmemFile"
+objcopy --reverse-bytes=8 -F binary "$rawRamFile" "$ramFile"
+objcopy --reverse-bytes=8 -F binary "$rawBootmemFile" "$bootmemFile"
 rm -f "$rawRamFile" "$rawBootmemFile" "$rawUntrimmedBootmemFile"
 
 echo "genInitMem.sh completed!"
