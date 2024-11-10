@@ -46,6 +46,10 @@ echo "Launching QEMU in replay mode!"
 -ex "q"
 
 echo "Changing Endianness"
+# Extend files to 8 byte multiple
+truncate -s %8 "$rawRamFile"
+truncate -s %8 "$rawBootmemFile"
+# Reverse bytes
 objcopy --reverse-bytes=8 -F binary "$rawRamFile" "$ramFile"
 objcopy --reverse-bytes=8 -F binary "$rawBootmemFile" "$bootmemFile"
 rm -f "$rawRamFile" "$rawBootmemFile" "$rawUntrimmedBootmemFile"
