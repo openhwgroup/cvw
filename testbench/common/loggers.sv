@@ -210,6 +210,10 @@ module loggers import cvw::*; #(parameter cvw_t P,
                          dut.core.lsu.LSUAtomicM[1] ? "A" :
                          dut.core.lsu.bus.dcache.CacheRWM == 2'b10 ? "R" : 
                          dut.core.lsu.bus.dcache.CacheRWM == 2'b01 ? "W" :
+                         dut.core.lsu.bus.dcache.dcache.CMOpM == 4'b1000 ? "Z" :   // cmo.zero
+                         dut.core.lsu.bus.dcache.dcache.CMOpM == 4'b0001 ? "V" :   // cmo.inval should just clear the valid and dirty bits
+                         dut.core.lsu.bus.dcache.dcache.CMOpM == 4'b0010 ? "C" :   // cmo.clean should act like a read in terms of the lru, but clears the dirty bit
+                         dut.core.lsu.bus.dcache.dcache.CMOpM == 4'b0100 ? "L" :   // cmo.flush should just clear and the valid and drity bits
                          "NULL";
     end
 
