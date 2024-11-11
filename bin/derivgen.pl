@@ -88,6 +88,18 @@ foreach my $key (@derivnames) {
     open(my $unmod, $configunmod) or die "Could not open file '$configunmod' $!";
     open(my $fh, '>>', $config) or die "Could not open file '$config' $!";
 
+    # Create symlink to imperas.ic for deriv buildroot
+    if ($key eq "buildroot") {
+        my $baseimperas_ic = "$ENV{WALLY}/config/$basederiv{$key}/imperas.ic";
+        if (! -e $baseimperas_ic) {
+            my $baseimperas_ic = "$ENV{WALLY}/config/deriv/$basederiv{$key}/config.vh";
+        }
+        if (-e $baseimperas_ic) { # If imperas.ic exists for base derivative, create hardlink to it
+            my $imperas_ic = "$dir/imperas.ic";
+            system("ln -T $baseimperas_ic $imperas_ic");
+        }
+    }
+
     my $datestring = localtime();
     my %hit = ();
     print $fh "// Config $key automatically derived from $basederiv{$key} on $datestring using derivgen.pl\n";

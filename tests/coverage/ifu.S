@@ -43,35 +43,23 @@ main:
     .hword 0x9C41      // line 134 Illegal compressed instruction
 
     # Zcb coverage tests
-    # could restore assembly language versions when GCC supports Zcb
     mv s0, sp
-    #c.lbu s1, 0(s0)   // exercise c.lbu
-    .hword 0x8004      // c.lbu s1, 0(s0)
-    #c.lh s1, 0(s0)    // exercise c.lh
-    .hword 0x8444      // c.lh s1, 0(s0)
-    #c.lhu s1, 0(s0)   // exercise c.lhu
-    .hword 0x8404      // c.lhu s1, 0(s0)
-    #c.sb s1, 0(s0)    // exercise c.sb
-    .hword 0x8804      // c.sb s1, 0(s0)
-    #c.sh s1, 0(s0)    // exercise c.sh
-    .hword 0x8C04      // c.sh s1, 0(s0)
+    c.lbu s1, 0(s0)   // exercise c.lbu
+    c.lh s1, 0(s0)    // exercise c.lh
+    c.lhu s1, 0(s0)   // exercise c.lhu
+    c.sb s1, 0(s0)    // exercise c.sb
+    c.sh s1, 0(s0)    // exercise c.sh
 
     .hword 0x8C44      // Illegal compressed instruction with op = 00, Instr[15:10] = 100011, Instr[6] = 1 and 0's everywhere else. Line 119 illegal instruction
     .hword 0x9C00      // Illegal compressed instruction with op = 00, Instr[15:10] = 100111, and 0's everywhere else. Line 119 illegal instruction
 
     li s0, 0xFF
-    # c.zext.b s0      // exercise c.zext.b
-    .hword 0x9C61      // c.zext.b s0
-    # c.sext.b s0      // exercise c.sext.b
-    .hword 0x9C65      // c.sext.b s0
-    # c.zext.h s0      // exercise c.zext.h
-    .hword 0x9C69      // c.zext.h s0
-    # c.sext.h s0      // exercise c.sext.h
-    .hword 0x9C6D      // c.sext.h s0
-    # c.zext.w s0      // exercise c.zext.w
-    .hword 0x9C71      // c.zext.w s0
-    # c.not s0         // exercise c.not
-    .hword 0x9C75      // c.not s0
+    c.zext.b s0      // exercise c.zext.b
+    c.sext.b s0      // exercise c.sext.b
+    c.zext.h s0      // exercise c.zext.h
+    c.sext.h s0      // exercise c.sext.h
+    c.zext.w s0      // exercise c.zext.w
+    c.not s0         // exercise c.not
 
     .hword 0x9C7D      // Reserved instruction from line 187 with op = 01, Instr[15:10] = 100111, Instr[6:5] = 11, and 0's everywhere else
 

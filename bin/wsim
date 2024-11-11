@@ -65,7 +65,7 @@ if(args.testsuite.endswith('.elf') and args.elf == ""): # No --elf argument; che
         print("ELF file not found: " + args.testsuite)
         exit(1)
 
-if(args.lockstep and not args.testsuite.endswith('.elf')):
+if(args.lockstep and not args.testsuite.endswith('.elf') and not args.testsuite == "buildroot"):
     print(f"Invalid Options. Cannot run a testsuite, {args.testsuite} with lockstep. Must run a single elf.")
     exit(1)
 
@@ -90,7 +90,10 @@ else: EnableLog = 0
 prefix = ""
 if (args.lockstep or args.lockstepverbose or args.fcov or args.fcovimp):
     if (args.sim == "questa" or args.sim == "vcs"):
-        prefix = "IMPERAS_TOOLS=" + WALLY + "/config/"+args.config+"/imperas.ic"
+        imperasicPath = os.path.join(WALLY, "config", args.config, "imperas.ic")
+        if not os.path.isfile(imperasicPath): # If config is a derivative, look for imperas.ic in derivative configs
+            imperasicPath = os.path.join(WALLY, "config", "deriv", args.config, "imperas.ic")
+        prefix = "IMPERAS_TOOLS=" + imperasicPath
 # Force Questa to use 64-bit mode, sometimes it defaults to 32-bit even on 64-bit machines
 if (args.sim == "questa"):
     prefix = "MTI_VCO_MODE=64 " + prefix

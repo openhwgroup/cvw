@@ -304,7 +304,7 @@ sretdone:
     li a0, 3
     ecall
     # exercise sfence.inval.ir instruction
-    .word 0x18100073
+    sfence.inval.ir
 
     # exercise sret with rs1 not 0
     .word 0x102F8073
