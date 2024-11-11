@@ -303,7 +303,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   assign IFUStallF = IFUCacheBusStallF | SelSpillNextF;
   assign GatedStallD = StallD & ~SelSpillNextF;
 
-  if (P.FETCHBUFFER_SUPPORTED) begin : fetchbuffer
+  if (P.FETCHBUFFER_ENTRIES != 0) begin : fetchbuffer
     fetchbuffer #(P) fetchbuff(.clk, .reset, .StallF, .StallD, .FlushD, .WriteData(PostSpillInstrRawF), .ReadData(InstrRawD), .FetchBufferStallF);
   end else begin
     flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawF, nop, InstrRawD);

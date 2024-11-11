@@ -117,7 +117,7 @@ localparam logic VECTORED_INTERRUPTS_SUPPORTED = 0;
 localparam logic BIGENDIAN_SUPPORTED = 0;
 
 // Fetch buffer configuration
-localparam logic FETCHBUFFER_SUPPORTED = 0;
+localparam FETCHBUFFER_ENTRIES =32'd0;
 
 // TLB configuration.  Entries should be a power of 2
 localparam ITLB_ENTRIES = 32'd0;
