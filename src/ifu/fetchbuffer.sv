@@ -34,38 +34,35 @@ module fetchbuffer import cvw::*; #(parameter cvw_t P) (
 	output logic        FetchBufferStallF
 );
   localparam [31:0] nop = 32'h00000013;
-  logic      [31:0] Readf0, Readf1, Readf2, ReadFetchBuffer;
-  logic      [2:0]  ReadPtr, WritePtr;
+  logic      [31:0] ReadReg [P.FETCHBUFFER_ENTRIES-1:0];
+  logic      [31:0] ReadFetchBuffer;
+  logic      [P.FETCHBUFFER_ENTRIES-1:0]  ReadPtr, WritePtr;
   logic             Empty, Full;
 
   assign Empty  = |(ReadPtr & WritePtr); // Bitwise and the read&write ptr, and or the bits of the result together
-  assign Full   = |({WritePtr[1:0], WritePtr[2]} & ReadPtr); // Same as above but left rotate WritePtr to "add 1"
+  assign Full   = |({WritePtr[P.FETCHBUFFER_ENTRIES-2:0], WritePtr[P.FETCHBUFFER_ENTRIES-1]} & ReadPtr); // Same as above but left rotate WritePtr to "add 1"
   assign FetchBufferStallF = Full;
 
-  // will go in a generate block once this is parameterized
-  flopenl #(32) f0 (.clk, .load(reset | FlushD), .en(WritePtr[0]), .d(WriteData), .val(nop), .q(Readf0));
-  flopenl #(32) f1 (.clk, .load(reset | FlushD), .en(WritePtr[1]), .d(WriteData), .val(nop), .q(Readf1));
-  flopenl #(32) f2 (.clk, .load(reset | FlushD), .en(WritePtr[2]), .d(WriteData), .val(nop), .q(Readf2));
+  flopenl #(32) fbEntries[P.FETCHBUFFER_ENTRIES-1:0] (.clk, .load(reset | FlushD), .en(WritePtr), .d(WriteData), .val(nop), .q(ReadReg));
 
   // Fetch buffer entries anded with read ptr for AO Muxing
-  logic [31:0] DaoArr [2:0];
-  //     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Make parameterizable
-  assign DaoArr[0] = ReadPtr[0] ? Readf0 : '0;
-  assign DaoArr[1] = ReadPtr[1] ? Readf1 : '0;
-  assign DaoArr[2] = ReadPtr[2] ? Readf2 : '0;
+  logic [31:0] DaoArr [P.FETCHBUFFER_ENTRIES-1:0];
 
-  or_rows #(3, 32) ReadFBAOMux(.a(DaoArr), .y(ReadFetchBuffer));
-  //        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Make parameterizable
+  for (genvar i = 0; i < P.FETCHBUFFER_ENTRIES; i++) begin
+    assign DaoArr[i] = ReadPtr[i] ? ReadReg[i] : '0;
+  end
+
+  or_rows #(P.FETCHBUFFER_ENTRIES, 32) ReadFBAOMux(.a(DaoArr), .y(ReadFetchBuffer));
 
   assign ReadData = Empty ? nop : ReadFetchBuffer;
 
   always_ff @(posedge clk) begin : shiftRegister
     if (reset) begin
-      WritePtr <= 3'b001;
-      ReadPtr  <= 3'b001;
+      WritePtr <= {{P.FETCHBUFFER_ENTRIES-1{1'b0}}, 1'b1};
+      ReadPtr  <= {{P.FETCHBUFFER_ENTRIES-1{1'b0}}, 1'b1};
     end else begin
-      WritePtr <= ~(Full | StallF) ? {WritePtr[1:0], WritePtr[2]} : WritePtr;
-      ReadPtr <= ~(StallD | Empty) ? {ReadPtr[1:0], ReadPtr[2]} : ReadPtr;
+      WritePtr <= ~(Full | StallF) ? {WritePtr[P.FETCHBUFFER_ENTRIES-2:0], WritePtr[P.FETCHBUFFER_ENTRIES-1]} : WritePtr;
+      ReadPtr <= ~(StallD | Empty) ? {ReadPtr[P.FETCHBUFFER_ENTRIES-2:0], ReadPtr[P.FETCHBUFFER_ENTRIES-1]} : ReadPtr;
     end
   end
 endmodule
