@@ -54,7 +54,8 @@ tests64gc = ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m", "ar
              "arch64zbkb", "arch64zbkc", "arch64zbkx", "arch64zknd", "arch64zkne", "arch64zknh",
              "arch64zba",  "arch64zbb",  "arch64zbc", "arch64zbs"]
 # arch64i is the most interesting case.  Uncomment line below to run just that case
-# tests64gc = ["arch64i"]
+#tests64gc = ["arch64i"]
+tests64gc = ["coverage64gc"]
 
 cachetypes = ["ICache", "DCache"]
 simdir = os.path.expandvars("$WALLY/sim")
@@ -63,10 +64,11 @@ def main():
     parser = argparse.ArgumentParser(description="Runs the cache simulator on all rv64gc test suites")
     parser.add_argument('-p', "--perf", action='store_true', help="Report hit/miss ratio")
     parser.add_argument('-d', "--dist", action='store_true', help="Report distribution of operations")
-    parser.add_argument('-s', "--sim", help="Simulator", choices=["questa", "verilator", "vcs"], default="verilator")
+    parser.add_argument('-s', "--sim", help="Simulator", choices=["questa", "verilator", "vcs"], default="questa")
     args = parser.parse_args()
     simargs = "I_CACHE_ADDR_LOGGER=1\\\'b1 D_CACHE_ADDR_LOGGER=1\\\'b1"
     testcmd = "wsim --sim " + args.sim + " rv64gc {} --params \"" + simargs + "\" > /dev/null"
+    #cachecmd = "CacheSim.py 64 4 56 44 -f {} --verbose"
     cachecmd = "CacheSim.py 64 4 56 44 -f {}"
     mismatches = 0
 
