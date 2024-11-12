@@ -75,7 +75,6 @@ module spi_controller (
   logic ShiftEdgePulse;
   logic SampleEdgePulse;
   logic EndOfFramePulse;
-  logic PhaseOneOffset;
 
   // Frame stuff
   logic [3:0] BitNum;
@@ -93,6 +92,7 @@ module spi_controller (
   logic [7:0] sckcs;
   logic [7:0] intercs;
   logic [7:0] interxfr;
+  logic       Phase;
   
   logic       HasCSSCK;
   logic       HasSCKCS;
@@ -109,7 +109,6 @@ module spi_controller (
 
   logic       DelayIsNext;
   logic       DelayState;       
-
   // Convenient Delay Reg Names
   assign cssck = Delay0[7:0];
   assign sckcs = Delay0[15:8];
@@ -142,6 +141,7 @@ module spi_controller (
 
   assign ContinueTransmit = ~TransmitFIFOEmpty & EndOfFrame;
   assign EndTransmission = TransmitFIFOEmpty & EndOfFrame;
+  assign Phase = SckMode[0];
   
   always_ff @(posedge PCLK) begin
     if (~PRESETn) begin
@@ -152,7 +152,7 @@ module spi_controller (
       DelayCounter <= 0;
     end else begin
       // SCK logic for delay times  
-      if (TransmitStart) begin
+      if (TransmitStart & ~DelayState) begin
         SCK <= 0;
       end else if (SCLKenable) begin
         SCK <= ~SCK;
@@ -161,19 +161,21 @@ module spi_controller (
       // Counter for all four delay types
       if (DelayState & SCK & SCLKenable) begin
         DelayCounter <= DelayCounter + 8'd1;
-      end else if (SCLKenable & EndOfDelay) begin
+      end else if ((SCLKenable & EndOfDelay) | Transmitting) begin
         DelayCounter <= 8'd0;
       end
       
       // SPICLK Logic
-      if (TransmitStart) begin
+      
+      if (TransmitStart & ~DelayState) begin
         SPICLK <= SckMode[1];
-      end else if (SCLKenable & Transmitting) begin
-        SPICLK <= (~EndTransmission & ~DelayIsNext) ? ~SPICLK : SckMode[1];
+      end else if (SCLKenable) begin
+        if (Phase & (NextState == TRANSMIT)) SPICLK <= (~EndTransmission & ~DelayIsNext) ? ~SPICLK : SckMode[1];
+        else if (Transmitting) SPICLK <= (~EndTransmission & ~DelayIsNext) ? ~SPICLK : SckMode[1];
       end
       
       // Reset divider 
-      if (SCLKenable | TransmitStart | ResetSCLKenable) begin
+      if (SCLKenable | (TransmitStart & ~DelayState) | ResetSCLKenable) begin
         DivCounter <= 12'b0;
       end else begin
         DivCounter <= DivCounter + 12'd1;
@@ -208,35 +210,18 @@ module spi_controller (
   always_ff @(posedge ~PCLK) begin
     if (~PRESETn | TransmitStart) begin
       ShiftEdge <= 0;
-      PhaseOneOffset <= 0;
       SampleEdge <= 0;
       EndOfFrame <= 0;
-      end else begin
-        PhaseOneOffset <= (PhaseOneOffset == 0) ? Transmitting & SCLKenable : ~EndOfFrame;
-        case(SckMode)
-        2'b00: begin
-          ShiftEdge <= SPICLK & ShiftEdgePulse;
-          SampleEdge <= ~SPICLK & SampleEdgePulse;
-          EndOfFrame <= SPICLK & EndOfFramePulse;
-        end
-        2'b01: begin
-          ShiftEdge <= ~SPICLK & ShiftEdgePulse & PhaseOneOffset;
-          SampleEdge <= SPICLK & SampleEdgePulse;
-          EndOfFrame <= ~SPICLK & EndOfFramePulse;
-        end
-        2'b10: begin
+      end else if (^SckMode) begin
           ShiftEdge <= ~SPICLK & ShiftEdgePulse;
           SampleEdge <= SPICLK & SampleEdgePulse;
           EndOfFrame <= ~SPICLK & EndOfFramePulse;
-        end
-        2'b11: begin
-          ShiftEdge <= SPICLK & ShiftEdgePulse & PhaseOneOffset;
+      end else begin 
+          ShiftEdge <= SPICLK & ShiftEdgePulse;
           SampleEdge <= ~SPICLK & SampleEdgePulse;
           EndOfFrame <= SPICLK & EndOfFramePulse;
-        end
-      endcase
-    end
-  end
+      end 
+    end 
 
   // Logic for continuing to transmit through Delay states after end of frame
   assign NextEndDelay = NextState == SCKCS | NextState == INTERCS | NextState == INTERXFR;
@@ -263,18 +248,19 @@ module spi_controller (
       TRANSMIT: begin // TRANSMIT case --------------------------------
         case(CSMode)
           AUTOMODE: begin  
-            if (EndTransmission) NextState = INACTIVE;
-            else if (EndOfFrame) NextState = SCKCS;
+            if (EndTransmission & ~HasSCKCS) NextState = INACTIVE;
+            else if (EndOfFrame & HasSCKCS) NextState = SCKCS;
+            else if (EndOfFrame & ~HasSCKCS) NextState = INTERCS;
             else NextState = TRANSMIT;
           end
           HOLDMODE: begin  
-            if (EndTransmission) NextState = HOLD;  
-            else if (ContinueTransmit & HasINTERXFR) NextState = INTERXFR;
+            if (EndOfFrame & HasINTERXFR) NextState = INTERXFR;
+            else if (EndTransmission) NextState = HOLD;
             else NextState = TRANSMIT;
           end
           OFFMODE: begin
-            if (EndTransmission) NextState = INACTIVE;
-            else if (ContinueTransmit & HasINTERXFR) NextState = INTERXFR;
+            if (EndOfFrame & HasINTERXFR) NextState = INTERXFR;
+            else if (EndTransmission) NextState = HOLD;
             else NextState = TRANSMIT;
           end
           default: NextState = TRANSMIT;
@@ -282,14 +268,7 @@ module spi_controller (
       end
       SCKCS: begin // SCKCS case --------------------------------------
         if (EndOfSCKCS) begin
-          if (~TransmitRegLoaded) begin
-            // if (CSMode == AUTOMODE) NextState = INACTIVE;
-            if (CSMode == HOLDMODE) NextState = HOLD;
-            else NextState = INACTIVE;
-          end else begin
-            if (HasINTERCS) NextState = INTERCS;
-            else NextState = TRANSMIT;
-          end
+          NextState = INTERCS;
         end else begin
           NextState = SCKCS;
         end
@@ -303,15 +282,18 @@ module spi_controller (
       end
       INTERCS: begin // INTERCS case ----------------------------------
         if (EndOfINTERCS) begin
-          if (HasCSSCK) NextState = CSSCK;
-          else NextState = TRANSMIT;
+          if (TransmitRegLoaded) begin
+            if (HasCSSCK) NextState = CSSCK;
+            else NextState = TRANSMIT;
+          end else NextState = INACTIVE;
         end else begin
           NextState = INTERCS;  
         end
       end
       INTERXFR: begin // INTERXFR case --------------------------------
         if (EndOfINTERXFR) begin
-          NextState = TRANSMIT;
+          if (TransmitRegLoaded)  NextState = TRANSMIT;
+          else NextState = HOLD;
         end else begin
           NextState = INTERXFR;  
         end

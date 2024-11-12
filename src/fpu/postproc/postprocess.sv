@@ -46,14 +46,14 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   input logic  [P.NE+1:0]                  FmaSe,               // the sum's exponent
   input logic  [P.FMALEN-1:0]              FmaSm,               // the positive sum
   input logic                              FmaASticky,          // sticky bit that is calculated during alignment
-  input logic  [$clog2(P.FMALEN+1)-1:0]      FmaSCnt,             // the normalization shift count
+  input logic  [$clog2(P.FMALEN+1)-1:0]    FmaSCnt,             // the normalization shift count
   //divide signals
   input logic                              DivSticky,           // divider sticky bit
   input logic  [P.NE+1:0]                  DivUe,               // divsqrt exponent
   input logic  [P.DIVb:0]                  DivUm,               // divsqrt significand
   // conversion signals
   input logic                              CvtCs,               // the result's sign
-  input logic  [P.NE:0]                    CvtCe,               // the calculated expoent
+  input logic  [P.NE:0]                    CvtCe,               // the calculated exponent
   input logic                              CvtResSubnormUf,     // the convert result is subnormal or underflows
   input logic  [P.LOGCVTLEN-1:0]           CvtShiftAmt,         // how much to shift by
   input logic                              ToInt,               // is fp->int (since it's writting to the integer register)

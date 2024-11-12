@@ -6,7 +6,7 @@ SHELL := /bin/bash
 .PHONY: profile run questa clean
 
 # verilator configurations
-OPT=
+OPT=--assert
 PARAMS?=--no-trace-top
 NONPROF?=--stats
 VERILATOR_DIR=${WALLY}/sim/verilator
