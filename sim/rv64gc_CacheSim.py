@@ -55,7 +55,7 @@ tests64gc = ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m", "ar
              "arch64zba",  "arch64zbb",  "arch64zbc", "arch64zbs"]
 # arch64i is the most interesting case.  Uncomment line below to run just that case
 #tests64gc = ["arch64i"]
-tests64gc = ["coverage64gc"]
+#tests64gc = ["coverage64gc"]
 
 cachetypes = ["ICache", "DCache"]
 simdir = os.path.expandvars("$WALLY/sim")

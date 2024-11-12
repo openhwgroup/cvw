@@ -88,11 +88,21 @@ class Cache:
     # invalidate this specific line
     def cboinvalidate(self, addr):
         tag, setnum, _ = self.splitaddr(addr)
+        #print(f"In cboinvalidate addr is {addr:x} Set is {setnum}")
         for waynum in range(self.numways):
             line = self.ways[waynum][setnum]
             if line.tag == tag and line.valid:
                 line.dirty = 0
-    
+                line.valid = 0
+
+    def cboclean(self, addr):
+        tag, setnum, _ = self.splitaddr(addr)
+        #print(f"In cboinvalidate addr is {addr:x} Set is {setnum}")
+        for waynum in range(self.numways):
+            line = self.ways[waynum][setnum]
+            if line.tag == tag and line.valid:
+                line.dirty = 0
+                
     # invalidates the cache by setting all valid bits to False
     def invalidate(self):
         for way in self.ways:
@@ -121,6 +131,8 @@ class Cache:
 
         # check our ways to see if we have a hit
         #print(f"addr is {addr:x} Set is {setnum}")
+        if clean:
+            print("This was a cbo.clean")
         for waynum in range(self.numways):
             line = self.ways[waynum][setnum]
             if line.tag == tag and line.valid:
@@ -253,14 +265,20 @@ def main():
                     cache.invalidate()
                     if args.verbose:
                         print("I")
-                elif lninfo[1] == 'C' or lninfo[1] == 'L':
-                    cache.cboinvalidate()
+                elif lninfo[1] == 'V' or lninfo[1] == 'L':
+                    addr = int(lninfo[0], 16)
+                    cache.cboinvalidate(addr)
+                    if args.verbose:
+                        print(lninfo[1]);
+                elif lninfo[1] == 'C':
+                    addr = int(lninfo[0], 16)
+                    cache.cboclean(addr)
                     if args.verbose:
                         print("C");
                 else:
                     addr = int(lninfo[0], 16)
                     iswrite = lninfo[1] == 'W' or lninfo[1] == 'A' or lninfo[1] == 'Z'
-                    iscboclean = lninfo[1] == 'C'
+                    iscboclean = False
                     result = cache.cacheaccess(addr, iswrite, iscboclean)
                     
                     if args.verbose:

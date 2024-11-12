@@ -217,7 +217,8 @@ module loggers import cvw::*; #(parameter cvw_t P,
                          "NULL";
     end
 
-    assign Enabled = (dut.core.lsu.bus.dcache.dcache.cachefsm.LRUWriteEn | AccessTypeString == "Z" | AccessTypeString == "C" | AccessTypeString == "L") &
+    assign Enabled = (dut.core.lsu.bus.dcache.dcache.cachefsm.LRUWriteEn | AccessTypeString == "Z" | 
+                      ((AccessTypeString == "C" | AccessTypeString == "L") & dut.core.lsu.bus.dcache.dcache.cachefsm.CacheStall == 0)) &
                      ~dut.core.lsu.bus.dcache.dcache.cachefsm.FlushStage &
                      dut.core.lsu.dmmu.dmmu.pmachecker.Cacheable &
                      dut.core.lsu.bus.dcache.dcache.cachefsm.CacheEn &
