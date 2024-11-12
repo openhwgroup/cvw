@@ -81,6 +81,7 @@ main:
     .word 0xFF00302F  // illegal Atomic instruction
     .word 0xFF00402F  // illegal Atomic instruction
     .word 0x00000873  // illegal CSR instruction
+    .word 0x31bf1f93  // illegal aes64ksli1 instruction
 
     # Illegal CMO instructions because envcfg is 0 and system is in user Mode
     li a0, 0

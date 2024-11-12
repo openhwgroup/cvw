@@ -276,7 +276,7 @@ cd "$RISCV"
 # Temporarily pin riscv-gnu-toolchain to use GCC 13.2.0. GCC 14 does not work with the Q extension.
 if git_check "riscv-gnu-toolchain" "https://github.com/riscv/riscv-gnu-toolchain" "$RISCV/riscv-gnu-toolchain/stamps/build-gcc-newlib-stage2"; then
     cd "$RISCV"/riscv-gnu-toolchain
-    git reset --hard && git clean -f && git checkout master && git pull
+    git reset --hard && git clean -f && git checkout master && git pull && git submodule update
     ./configure --prefix="${RISCV}" --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
     make -j "${NUM_THREADS}" 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
     if [ "$clean" ]; then
@@ -324,8 +324,7 @@ STATUS="qemu"
 cd "$RISCV"
 if git_check "qemu" "https://github.com/qemu/qemu" "$RISCV/include/qemu-plugin.h"; then
     cd "$RISCV"/qemu
-    git reset --hard && git clean -f && git checkout master && git pull --recurse-submodules -j "${NUM_THREADS}"
-    git submodule update --init --recursive
+    git reset --hard && git clean -f && git checkout master && git pull
     ./configure --target-list=riscv64-softmmu --prefix="$RISCV"
     make -j "${NUM_THREADS}" 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
     make install 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
