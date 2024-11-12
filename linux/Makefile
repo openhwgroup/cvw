@@ -60,7 +60,7 @@ install: check_write_permissions check_environment
 
 dumptvs: check_write_permissions check_environment
 	$(SUDO) mkdir -p $(RISCV)/linux-testvectors
-	cd testvector-generation; ./genInitMem.sh
+	./genInitMem.sh
 	@echo "Testvectors successfully generated."
 
 generate: $(DTB) $(IMAGES)
