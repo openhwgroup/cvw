@@ -94,7 +94,7 @@ class Cache:
                 line.dirty = 0
                 line.valid = 0
 
-    def cboclean(self, addr, invalidate):
+    def cbo(self, addr, invalidate):
         tag, setnum, _ = self.splitaddr(addr)
         for waynum in range(self.numways):
             line = self.ways[waynum][setnum]
@@ -263,7 +263,7 @@ def main():
                 elif lninfo[1] == 'V' or lninfo[1] == 'L' or lninfo[1] == 'C':
                     addr = int(lninfo[0], 16)
                     IsCBOClean = lninfo[1] != 'C'
-                    cache.cboclean(addr, IsCBOClean)
+                    cache.cbo(addr, IsCBOClean)
                     if args.verbose:
                         print(lninfo[1]);
                 else:
