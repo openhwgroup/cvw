@@ -686,8 +686,8 @@ add wave -noupdate -expand -group {Dcache logger} -color Pink /testbench/loggers
 add wave -noupdate /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/LRUWriteEn
 add wave -noupdate /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/FlushStage
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 4} {95120 ns} 1} {{Cursor 4} {95125 ns} 0} {{Cursor 3} {11250 ns} 1} {{Cursor 5} {17034 ns} 1}
-quietly wave cursor active 2
+WaveRestoreCursors {{Cursor 4} {89834 ns} 1} {{Cursor 4} {79055 ns} 1} {{Cursor 3} {89604 ns} 0}
+quietly wave cursor active 3
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 194
 configure wave -justifyvalue left
@@ -702,4 +702,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {95018 ns} {95228 ns}
+WaveRestoreZoom {89564 ns} {89776 ns}
