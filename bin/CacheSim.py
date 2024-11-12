@@ -88,20 +88,19 @@ class Cache:
     # invalidate this specific line
     def cboinvalidate(self, addr):
         tag, setnum, _ = self.splitaddr(addr)
-        #print(f"In cboinvalidate addr is {addr:x} Set is {setnum}")
         for waynum in range(self.numways):
             line = self.ways[waynum][setnum]
             if line.tag == tag and line.valid:
                 line.dirty = 0
                 line.valid = 0
 
-    def cboclean(self, addr):
+    def cboclean(self, addr, invalidate):
         tag, setnum, _ = self.splitaddr(addr)
-        #print(f"In cboclean addr is {addr:x} Set is {setnum}")
         for waynum in range(self.numways):
             line = self.ways[waynum][setnum]
             if line.tag == tag and line.valid:
                 line.dirty = 0
+                if invalidate: line.valid = 0
                 
     # invalidates the cache by setting all valid bits to False
     def invalidate(self):
@@ -126,17 +125,14 @@ class Cache:
     # performs a cache access with the given address.
     # returns a character representing the outcome:
     # H/M/E/D - hit, miss, eviction, or eviction with writeback
-    def cacheaccess(self, addr, write=False, clean=False):
+    def cacheaccess(self, addr, write=False):
         tag, setnum, _ = self.splitaddr(addr)
 
         # check our ways to see if we have a hit
-        #print(f"addr is {addr:x} Set is {setnum}")
-        #if clean:
-        #    print("This was a cbo.clean")
         for waynum in range(self.numways):
             line = self.ways[waynum][setnum]
             if line.tag == tag and line.valid:
-                line.dirty = 0 if clean else line.dirty or write
+                line.dirty = line.dirty or write
                 self.update_pLRU(waynum, setnum)
                 return 'H'
 
@@ -153,7 +149,6 @@ class Cache:
         
         # we need to evict. Select a victim and overwrite.
         victim = self.getvictimway(setnum)
-        #print(f"addr is {addr:x} Victim is {victim} Set is {setnum}")
         line = self.ways[victim][setnum]
         prevdirty = line.dirty
         line.tag = tag
@@ -265,21 +260,16 @@ def main():
                     cache.invalidate()
                     if args.verbose:
                         print("I")
-                elif lninfo[1] == 'V' or lninfo[1] == 'L':
+                elif lninfo[1] == 'V' or lninfo[1] == 'L' or lninfo[1] == 'C':
                     addr = int(lninfo[0], 16)
-                    cache.cboinvalidate(addr)
+                    IsCBOClean = lninfo[1] != 'C'
+                    cache.cboclean(addr, IsCBOClean)
                     if args.verbose:
                         print(lninfo[1]);
-                elif lninfo[1] == 'C':
-                    addr = int(lninfo[0], 16)
-                    cache.cboclean(addr)
-                    if args.verbose:
-                        print("C");
                 else:
                     addr = int(lninfo[0], 16)
                     iswrite = lninfo[1] == 'W' or lninfo[1] == 'A' or lninfo[1] == 'Z'
-                    iscboclean = False
-                    result = cache.cacheaccess(addr, iswrite, iscboclean)
+                    result = cache.cacheaccess(addr, iswrite)
                     
                     if args.verbose:
                         tag, setnum, offset = cache.splitaddr(addr)
