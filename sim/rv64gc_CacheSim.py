@@ -49,8 +49,8 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-tests64gc = ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m", "arch64zcb",
-             "arch64zifencei", "arch64zicond", "arch64a_amo", "wally64a_lrsc", "wally64periph", "wally64priv",
+tests64gc = ["coverage64gc", "wally64priv", "arch64i", "arch64priv", "arch64c",  "arch64m", "arch64zcb",
+             "arch64zifencei", "arch64zicond", "arch64a_amo", "wally64a_lrsc", "wally64periph", 
              "arch64zbkb", "arch64zbkc", "arch64zbkx", "arch64zknd", "arch64zkne", "arch64zknh",
              "arch64zba",  "arch64zbb",  "arch64zbc", "arch64zbs"]
 # arch64i is the most interesting case.  Uncomment line below to run just that case
