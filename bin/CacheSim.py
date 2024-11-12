@@ -97,7 +97,7 @@ class Cache:
 
     def cboclean(self, addr):
         tag, setnum, _ = self.splitaddr(addr)
-        #print(f"In cboinvalidate addr is {addr:x} Set is {setnum}")
+        #print(f"In cboclean addr is {addr:x} Set is {setnum}")
         for waynum in range(self.numways):
             line = self.ways[waynum][setnum]
             if line.tag == tag and line.valid:
@@ -131,8 +131,8 @@ class Cache:
 
         # check our ways to see if we have a hit
         #print(f"addr is {addr:x} Set is {setnum}")
-        if clean:
-            print("This was a cbo.clean")
+        #if clean:
+        #    print("This was a cbo.clean")
         for waynum in range(self.numways):
             line = self.ways[waynum][setnum]
             if line.tag == tag and line.valid:
