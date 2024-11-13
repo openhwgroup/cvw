@@ -46,7 +46,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
   // performance counter logging 
   logic        BeginSample;
   logic StartSample, EndSample;
-  if((PrintHPMCounters || BPRED_LOGGER) && P.ZICNTR_SUPPORTED) begin : HPMCSample
+  if((PrintHPMCounters | BPRED_LOGGER) & P.ZICNTR_SUPPORTED) begin : HPMCSample
     integer           HPMCindex;
     logic             StartSampleFirst;
     logic             StartSampleDelayed, BeginDelayed;
@@ -93,15 +93,6 @@ module loggers import cvw::*; #(parameter cvw_t P,
         StartSampleFirst = reset;
         EndSampleFirst = '0;
       end
-
-    // this code needs to be with embench and coremark but not the else condition
-/* -----\/----- EXCLUDED -----\/-----
-    if (TEST == "embench" | TEST == "coremark") begin
-      assign EndSample = EndSampleFirst & ~ EndSampleDelayed;
-    end else begin
-      assign EndSample = DCacheFlushStart & ~DCacheFlushDone;
-    end
- -----/\----- EXCLUDED -----/\----- */
 
     flopr #(1) EndSampleReg(clk, reset, EndSampleFirst, EndSampleDelayed);
     always_comb
