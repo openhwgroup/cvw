@@ -46,12 +46,13 @@ module loggers import cvw::*; #(parameter cvw_t P,
   // performance counter logging 
   logic        BeginSample;
   logic StartSample, EndSample;
-  if((PrintHPMCounters || BPRED_LOGGER) && P.ZICNTR_SUPPORTED) begin : HPMCSample
+  if((PrintHPMCounters | BPRED_LOGGER) & P.ZICNTR_SUPPORTED) begin : HPMCSample
     integer           HPMCindex;
     logic             StartSampleFirst;
     logic             StartSampleDelayed, BeginDelayed;
     logic             EndSampleFirst;
     logic [P.XLEN-1:0] InitialHPMCOUNTERH[P.COUNTERS-1:0];
+    logic              EndSampleDelayed;
 
     string  HPMCnames[] = '{"Mcycle",
                             "------",
@@ -80,6 +81,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
                             "Divide Cycles"
                           };
 
+
     always_comb
       if (TEST == "embench") begin  
         StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_trigger";
@@ -92,14 +94,13 @@ module loggers import cvw::*; #(parameter cvw_t P,
         EndSampleFirst = '0;
       end
 
-    // this code needs to be with embench and coremark but not the else condition
-    if (TEST == "embench" | TEST == "coremark") begin
-      logic EndSampleDelayed;
-      flopr #(1) EndSampleReg(clk, reset, EndSampleFirst, EndSampleDelayed);
-      assign EndSample = EndSampleFirst & ~ EndSampleDelayed;
-    end else begin
-      assign EndSample = DCacheFlushStart & ~DCacheFlushDone;
-    end
+    flopr #(1) EndSampleReg(clk, reset, EndSampleFirst, EndSampleDelayed);
+    always_comb
+      if (TEST == "embench" | TEST == "coremark") begin
+        EndSample = EndSampleFirst & ~ EndSampleDelayed;
+      end else begin
+        EndSample = DCacheFlushStart & ~DCacheFlushDone;
+      end
     
   /*
     if(TEST == "embench") begin
