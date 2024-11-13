@@ -85,15 +85,7 @@ class Cache:
             for line in way:
                 line.dirty = False
 
-    # invalidate this specific line
-    def cboinvalidate(self, addr):
-        tag, setnum, _ = self.splitaddr(addr)
-        for waynum in range(self.numways):
-            line = self.ways[waynum][setnum]
-            if line.tag == tag and line.valid:
-                line.dirty = 0
-                line.valid = 0
-
+    # access a cbo type instruction
     def cbo(self, addr, invalidate):
         tag, setnum, _ = self.splitaddr(addr)
         for waynum in range(self.numways):
