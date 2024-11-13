@@ -75,9 +75,9 @@ module cache import cvw::*; #(parameter cvw_t P,
   logic                          SelAdrData;
   logic                          SelAdrTag;
   logic [1:0]                    AdrSelMuxSelData;
-  logic [1:0]                    AdrSelMuxSelTag, AdrSelMuxSelTag2;
+  logic [1:0]                    AdrSelMuxSelTag, AdrSelMuxSelLRU;
   logic [SETLEN-1:0]             CacheSetData;
-  logic [SETLEN-1:0]             CacheSetTag, CacheSetTag2;
+  logic [SETLEN-1:0]             CacheSetTag, CacheSetLRU;
   logic [LINELEN-1:0]            LineWriteData;
   logic                          ClearDirty, SetDirty, SetValid, ClearValid;
   logic [LINELEN-1:0]            ReadDataLineWay [NUMWAYS-1:0];
@@ -117,9 +117,9 @@ module cache import cvw::*; #(parameter cvw_t P,
   mux3 #(SETLEN) AdrSelMuxTag(NextSet[SETTOP-1:OFFSETLEN], PAdr[SETTOP-1:OFFSETLEN], FlushAdr,
     AdrSelMuxSelTag, CacheSetTag);
 
-  assign AdrSelMuxSelTag2 = {FlushCache, ((SelAdrTag | SelHPTW | Stall) & ~((READ_ONLY_CACHE == 1) & FlushStage))};
-  mux3 #(SETLEN) AdrSelMuxTag2(NextSet[SETTOP-1:OFFSETLEN], PAdr[SETTOP-1:OFFSETLEN], FlushAdr,
-    AdrSelMuxSelTag2, CacheSetTag2);
+  assign AdrSelMuxSelLRU = {FlushCache, ((SelAdrTag | SelHPTW | Stall) & ~((READ_ONLY_CACHE == 1) & FlushStage))};
+  mux3 #(SETLEN) AdrSelMuxLRU(NextSet[SETTOP-1:OFFSETLEN], PAdr[SETTOP-1:OFFSETLEN], FlushAdr,
+    AdrSelMuxSelLRU, CacheSetLRU);
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(P, PA_BITS, XLEN, NUMSETS, LINELEN, TAGLEN, OFFSETLEN, SETLEN, READ_ONLY_CACHE) CacheWays[NUMWAYS-1:0](
@@ -130,7 +130,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   // Select victim way for associative caches
   if(NUMWAYS > 1) begin:vict
     cacheLRU #(NUMWAYS, SETLEN, OFFSETLEN, NUMSETS) cacheLRU(
-      .clk, .reset, .FlushStage, .CacheEn, .HitWay, .ValidWay, .VictimWay, .CacheSetTag(CacheSetTag2), .LRUWriteEn,
+      .clk, .reset, .FlushStage, .CacheEn, .HitWay, .ValidWay, .VictimWay, .CacheSetLRU, .LRUWriteEn,
       .SetValid, .PAdr(PAdr[SETTOP-1:OFFSETLEN]), .InvalidateCache);
   end else 
     assign VictimWay = 1'b1; // one hot.
