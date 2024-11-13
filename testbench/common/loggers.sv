@@ -50,8 +50,9 @@ module loggers import cvw::*; #(parameter cvw_t P,
     integer           HPMCindex;
     logic             StartSampleFirst;
     logic             StartSampleDelayed, BeginDelayed;
-    logic             EndSampleFirst, EndSampleDelayed;
+    logic             EndSampleFirst;
     logic [P.XLEN-1:0] InitialHPMCOUNTERH[P.COUNTERS-1:0];
+    logic              EndSampleDelayed;
 
     string  HPMCnames[] = '{"Mcycle",
                             "------",
@@ -80,6 +81,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
                             "Divide Cycles"
                           };
 
+
     always_comb
       if (TEST == "embench") begin  
         StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_trigger";
@@ -89,9 +91,17 @@ module loggers import cvw::*; #(parameter cvw_t P,
         EndSampleFirst = FunctionName.FunctionName.FunctionName == "stop_time";
       end else begin
         StartSampleFirst = reset;
-        EndSample = DCacheFlushStart & ~DCacheFlushDone;
+        EndSampleFirst = '0;
       end
 
+    flopr #(1) EndSampleReg(clk, reset, EndSampleFirst, EndSampleDelayed);
+    always_comb
+      if (TEST == "embench" | TEST == "coremark") begin
+        EndSample = EndSampleFirst & ~ EndSampleDelayed;
+      end else begin
+        EndSample = DCacheFlushStart & ~DCacheFlushDone;
+      end
+    
   /*
     if(TEST == "embench") begin
       // embench runs warmup then runs start_trigger
@@ -132,8 +142,6 @@ module loggers import cvw::*; #(parameter cvw_t P,
 
     flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
     assign StartSample = StartSampleFirst & ~StartSampleDelayed;
-    flopr #(1) EndSampleReg(clk, reset, EndSampleFirst, EndSampleDelayed);
-    assign EndSample = EndSampleFirst & ~ EndSampleDelayed;
     flop #(1) BeginReg(clk, StartSampleFirst, BeginDelayed); // ** is this redundant with StartSampleReg?
     assign BeginSample = StartSampleFirst & ~BeginDelayed;
 
