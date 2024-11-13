@@ -84,7 +84,16 @@ class Cache:
         for way in self.ways:
             for line in way:
                 line.dirty = False
-    
+
+    # access a cbo type instruction
+    def cbo(self, addr, invalidate):
+        tag, setnum, _ = self.splitaddr(addr)
+        for waynum in range(self.numways):
+            line = self.ways[waynum][setnum]
+            if line.tag == tag and line.valid:
+                line.dirty = 0
+                if invalidate: line.valid = 0
+                
     # invalidates the cache by setting all valid bits to False
     def invalidate(self):
         for way in self.ways:
@@ -243,9 +252,15 @@ def main():
                     cache.invalidate()
                     if args.verbose:
                         print("I")
+                elif lninfo[1] == 'V' or lninfo[1] == 'L' or lninfo[1] == 'C':
+                    addr = int(lninfo[0], 16)
+                    IsCBOClean = lninfo[1] != 'C'
+                    cache.cbo(addr, IsCBOClean)
+                    if args.verbose:
+                        print(lninfo[1]);
                 else:
                     addr = int(lninfo[0], 16)
-                    iswrite = lninfo[1] == 'W' or lninfo[1] == 'A'
+                    iswrite = lninfo[1] == 'W' or lninfo[1] == 'A' or lninfo[1] == 'Z'
                     result = cache.cacheaccess(addr, iswrite)
                     
                     if args.verbose:
