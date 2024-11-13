@@ -65,7 +65,7 @@ def main():
     parser = argparse.ArgumentParser(description="Runs the cache simulator on all rv64gc test suites")
     parser.add_argument('-p', "--perf", action='store_true', help="Report hit/miss ratio")
     parser.add_argument('-d', "--dist", action='store_true', help="Report distribution of operations")
-    parser.add_argument('-s', "--sim", help="Simulator", choices=["questa", "verilator", "vcs"], default="questa")
+    parser.add_argument('-s', "--sim", help="Simulator", choices=["questa", "verilator", "vcs"], default="verilator")
     args = parser.parse_args()
     simargs = "I_CACHE_ADDR_LOGGER=1\\\'b1 D_CACHE_ADDR_LOGGER=1\\\'b1"
     testcmd = "wsim --sim " + args.sim + " rv64gc {} --params \"" + simargs + "\" > /dev/null"
