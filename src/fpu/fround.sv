@@ -147,6 +147,6 @@ module fround import cvw::*;  #(parameter cvw_t P) (
 
   // Flags
   assign FRoundNV = XSNaN;                               // invalid if input is signaling NaN
-  assign FRoundNX = ZfaFRoundNX & ~EgeNf & (Rp | Tp);    // Inexact if Round or Sticky bit set for FRoundNX instruction
+  assign FRoundNX = ZfaFRoundNX & ~EgeNf & (Rp | Tp) & ~XNaN;    // Inexact if Round or Sticky bit set for FRoundNX instruction
 
 endmodule
