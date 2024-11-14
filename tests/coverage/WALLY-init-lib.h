@@ -77,7 +77,7 @@ trap_handler:
 
 interrupt:              # must be a timer interrupt
     li t0, -1           # set mtimecmp to biggest number so it doesnt interrupt again
-    li t1, 0x02004000   # MTIMECMP in CLIN
+    li t1, 0x02004000   # MTIMECMP in CLINT
     sd t0, 0(t1)
     csrw stimecmp, t0   # sets stimecmp to big number so it doesnt interrupt
     li t0, 32
