@@ -319,7 +319,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   // Initially connecting the writeback stage signals, but may need to use M stage
   // and gate on ~FlushW.
 
-  assign valid  = InstrValidW & ~StallW & ~reset;
+  assign valid  = ((InstrValidW | TrapW) & ~StallW) & ~reset;
   assign rvvi.clk = clk;
   assign rvvi.valid[0][0]    = valid;
   assign rvvi.order[0][0]    = CSRArray[12'hB02];  // TODO: IMPERAS Should be event order
@@ -546,7 +546,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   end
   
   always_ff @(posedge clk) begin
-	if(rvvi.valid[0][0]) begin
+	if(valid) begin
       if(`STD_LOG) begin
         $fwrite(file, "%016x, %08x, %s\t\t", rvvi.pc_rdata[0][0], rvvi.insn[0][0], instrWName);
         for(index2 = 0; index2 < `NUM_REGS; index2 += 1) begin
