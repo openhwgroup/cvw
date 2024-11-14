@@ -179,9 +179,9 @@ set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe30]
 connect_debug_port u_ila_0/probe30 [get_nets [list {wallypipelinedsoc/uncoregen.uncore/sdc.sdc/TransmitRegLoaded}]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe31]
+set_property port_width 4 [get_debug_ports u_ila_0/probe31]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe31]
-connect_debug_port u_ila_0/probe31 [get_nets [list {wallypipelinedsoc/uncoregen.uncore/sdc.sdc/controller/PhaseOneOffset}]]
+connect_debug_port u_ila_0/probe31 [get_nets [list {wallypipelinedsoc/uncoregen.uncore/sdc.sdc/rxFIFO/rptrnext[0]} {wallypipelinedsoc/uncoregen.uncore/sdc.sdc/rxFIFO/rptrnext[1]} {wallypipelinedsoc/uncoregen.uncore/sdc.sdc/rxFIFO/rptrnext[2]} {wallypipelinedsoc/uncoregen.uncore/sdc.sdc/rxFIFO/rptrnext[3]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe32]
@@ -254,10 +254,6 @@ set_property port_width 4 [get_debug_ports u_ila_0/probe45]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe45]
 connect_debug_port u_ila_0/probe45 [get_nets [list {wallypipelinedsoc/uncoregen.uncore/sdc.sdc/rxFIFO/wptr[0]} {wallypipelinedsoc/uncoregen.uncore/sdc.sdc/rxFIFO/wptr[1]} {wallypipelinedsoc/uncoregen.uncore/sdc.sdc/rxFIFO/wptr[2]} {wallypipelinedsoc/uncoregen.uncore/sdc.sdc/rxFIFO/wptr[3]} ]]
 
-create_debug_port u_ila_0 probe
-set_property port_width 4 [get_debug_ports u_ila_0/probe46]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe46]
-connect_debug_port u_ila_0/probe46 [get_nets [list {wallypipelinedsoc/uncoregen.uncore/sdc.sdc/rxFIFO/rptrnext[0]} {wallypipelinedsoc/uncoregen.uncore/sdc.sdc/rxFIFO/rptrnext[1]} {wallypipelinedsoc/uncoregen.uncore/sdc.sdc/rxFIFO/rptrnext[2]} {wallypipelinedsoc/uncoregen.uncore/sdc.sdc/rxFIFO/rptrnext[3]} ]]
 
 
 
