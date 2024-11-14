@@ -124,11 +124,13 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
     if(valid) begin 
       // machine CSRs    
       // PMPCFG  space is 0-15 3a0 - 3af
+      int inc = P.XLEN == 32 ? 4 : 8;
       int i, i4, i8, csrid;
       logic [P.XLEN-1:0] pmp;
-      for (i=0; i<P.PMP_ENTRIES; i+=8) begin
+
+      for (i=0; i<P.PMP_ENTRIES; i+=inc) begin
         i4 = i / 4;
-        i8 = (i / 8) * 8;
+        i8 = (i / inc) * inc;
         pmp = 0;
         pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i8+0] << 0;
         pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i8+1] << 8;
