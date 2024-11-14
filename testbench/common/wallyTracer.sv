@@ -525,6 +525,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   end
 
 
+
   // M-mode trap CSRs
   assign rvvi.csr_wb[0][0][12'h300] = CSR_W[12'h300];
   assign rvvi.csr_wb[0][0][12'h302] = CSR_W[12'h302];
@@ -590,7 +591,6 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
     assign rvvi.csr_wb[0][0][12'h757] = CSR_W[12'h757];
     assign rvvi.csr_wb[0][0][12'h15D] = CSR_W[12'h15D];
   end
-
 
 
 
@@ -660,7 +660,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
     assign rvvi.csr[0][0][12'h15D] = CSRArray[12'h15D];
   end
 
-  
+
   // PMP CFG 3A0 to 3AF
   for(index='h3A0; index<='h3AF; index++) begin
     assign CSR_W[index] = (CSRArrayOld[index] != CSRArray[index]) ? 1 : 0;
@@ -735,11 +735,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
         end
       end
     end
-  end
     if(HaltW) $finish;
   end
-
-
-
 endmodule
 
