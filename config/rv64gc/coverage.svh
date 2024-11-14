@@ -26,6 +26,7 @@
 `include "RV64ZcbZbb_coverage.svh"
 `include "RV64ZcbZba_coverage.svh"
 `include "RV64Zcd_coverage.svh"
+`include "RV64Zicsr_coverage.svh"
 
 // Privileged extensions
 `include "RV64VM_coverage.svh"
