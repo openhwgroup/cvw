@@ -175,7 +175,11 @@ module cacheway import cvw::*; #(parameter cvw_t P,
       //if (reset) DirtyBits <= {NUMSETS{1'b0}}; 
       if(CacheEn) begin
         Dirty <= DirtyBits[CacheSetTag];
-        if((SetDirtyWay | ClearDirtyWay) & ~FlushStage) DirtyBits[CacheSetData] <= SetDirtyWay; // exclusion-tag: cache UpdateDirty
+        if((SetDirtyWay | ClearDirtyWay) & ~FlushStage) begin
+          DirtyBits[CacheSetData] <= SetDirtyWay; // exclusion-tag: cache UpdateDirty
+          if (CacheSetData == CacheSetTag) Dirty <= SetDirtyWay;
+          else Dirty <= DirtyBits[CacheSetTag];
+        end
       end
     end
   end else assign Dirty = 1'b0;

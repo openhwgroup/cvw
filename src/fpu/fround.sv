@@ -146,7 +146,8 @@ module fround import cvw::*;  #(parameter cvw_t P) (
   packoutput #(P) packoutput(W, Fmt, FRound); // pack and NaN-box based on selected format.
 
   // Flags
-  assign FRoundNV = XSNaN;                               // invalid if input is signaling NaN
-  assign FRoundNX = ZfaFRoundNX & ~EgeNf & (Rp | Tp);    // Inexact if Round or Sticky bit set for FRoundNX instruction
+  assign FRoundNV = XSNaN;                                       // invalid if input is signaling NaN
+  assign FRoundNX = ZfaFRoundNX & ~EgeNf & (Rp | Tp) & ~XNaN;    // Inexact if Round or Sticky bit set for FRoundNX instruction
+                                                                 // Note: NX must not be raised if input is invalid
 
 endmodule
