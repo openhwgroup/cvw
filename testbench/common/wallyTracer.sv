@@ -158,7 +158,6 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
       end
       
 	  CSRArray[12'h300] = testbench.dut.core.priv.priv.csr.csrm.MSTATUS_REGW;
-	  CSRArray[12'h310] = testbench.dut.core.priv.priv.csr.csrm.MSTATUSH_REGW;
 	  CSRArray[12'h305] = testbench.dut.core.priv.priv.csr.csrm.MTVEC_REGW;
 	  CSRArray[12'h341] = testbench.dut.core.priv.priv.csr.csrm.MEPC_REGW;
 	  CSRArray[12'h306] = testbench.dut.core.priv.priv.csr.csrm.MCOUNTEREN_REGW;
@@ -215,7 +214,6 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
           CSRArray[csrid] = CSRArrayOld[csrid];
 
 	  CSRArray[12'h300] = CSRArrayOld[12'h300];
-	  CSRArray[12'h310] = CSRArrayOld[12'h310];
 	  CSRArray[12'h305] = CSRArrayOld[12'h305];
 	  CSRArray[12'h341] = CSRArrayOld[12'h341];
 	  CSRArray[12'h306] = CSRArrayOld[12'h306];
@@ -255,6 +253,11 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
 	  CSRArray[12'h001] = CSRArrayOld[12'h001];
 	  CSRArray[12'h002] = CSRArrayOld[12'h002];
 	  CSRArray[12'h003] = CSRArrayOld[12'h003];
+    if (P.XLEN == 32) begin
+      CSRArray[12'h310] = CSRArrayOld[12'h310];
+      CSRArray[12'h31A] = CSRArrayOld[12'h31A];
+      CSRArray[12'h15D] = CSRArrayOld[12'h15D];
+    end
 	end	  
   end
 
@@ -347,7 +350,6 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   integer index4;
   always_ff @(posedge clk) begin
     CSRArrayOld[12'h300] = CSRArray[12'h300];
-    CSRArrayOld[12'h310] = CSRArray[12'h310];
     CSRArrayOld[12'h305] = CSRArray[12'h305];
     CSRArrayOld[12'h341] = CSRArray[12'h341];
     CSRArrayOld[12'h306] = CSRArray[12'h306];
@@ -387,6 +389,11 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
     CSRArrayOld[12'h001] = CSRArray[12'h001];
     CSRArrayOld[12'h002] = CSRArray[12'h002];
     CSRArrayOld[12'h003] = CSRArray[12'h003];
+    if (P.XLEN == 32) begin
+      CSRArrayOld[12'h310] = CSRArray[12'h310];
+      CSRArrayOld[12'h31A] = CSRArray[12'h31A];
+      CSRArrayOld[12'h15D] = CSRArray[12'h15D];
+    end
     
     // PMP CFG 3A0 to 3AF
     for(index4='h3A0; index4<='h3AF; index4++)
@@ -399,7 +406,6 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   
   // check for csr value change.
   assign CSR_W[12'h300] = (CSRArrayOld[12'h300] != CSRArray[12'h300]) ? 1 : 0;
-  assign CSR_W[12'h310] = (CSRArrayOld[12'h310] != CSRArray[12'h310]) ? 1 : 0;
   assign CSR_W[12'h305] = (CSRArrayOld[12'h305] != CSRArray[12'h305]) ? 1 : 0;
   assign CSR_W[12'h341] = (CSRArrayOld[12'h341] != CSRArray[12'h341]) ? 1 : 0;
   assign CSR_W[12'h306] = (CSRArrayOld[12'h306] != CSRArray[12'h306]) ? 1 : 0;
@@ -436,9 +442,13 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   assign CSR_W[12'h001] = (CSRArrayOld[12'h001] != CSRArray[12'h001]) ? 1 : 0;
   assign CSR_W[12'h002] = (CSRArrayOld[12'h002] != CSRArray[12'h002]) ? 1 : 0;
   assign CSR_W[12'h003] = (CSRArrayOld[12'h003] != CSRArray[12'h003]) ? 1 : 0;
+  if (P.XLEN == 32) begin
+    assign CSR_W[12'h310] = (CSRArrayOld[12'h310] != CSRArray[12'h310]) ? 1 : 0;
+    assign CSR_W[12'h31A] = (CSRArrayOld[12'h31A] != CSRArray[12'h31A]) ? 1 : 0;
+    assign CSR_W[12'h15D] = (CSRArrayOld[12'h15D] != CSRArray[12'h15D]) ? 1 : 0;
+  end
   
   assign rvvi.csr_wb[0][0][12'h300] = CSR_W[12'h300];
-  assign rvvi.csr_wb[0][0][12'h310] = CSR_W[12'h310];
   assign rvvi.csr_wb[0][0][12'h305] = CSR_W[12'h305];
   assign rvvi.csr_wb[0][0][12'h341] = CSR_W[12'h341];
   assign rvvi.csr_wb[0][0][12'h306] = CSR_W[12'h306];
@@ -475,9 +485,13 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   assign rvvi.csr_wb[0][0][12'h001] = CSR_W[12'h001];
   assign rvvi.csr_wb[0][0][12'h002] = CSR_W[12'h002];
   assign rvvi.csr_wb[0][0][12'h003] = CSR_W[12'h003];
+  if (P.XLEN == 32) begin
+    assign rvvi.csr_wb[0][0][12'h310] = CSR_W[12'h310];
+    assign rvvi.csr_wb[0][0][12'h31A] = CSR_W[12'h31A];
+    assign rvvi.csr_wb[0][0][12'h15D] = CSR_W[12'h15D];
+  end
 
   assign rvvi.csr[0][0][12'h300]    = CSRArray[12'h300];
-  assign rvvi.csr[0][0][12'h310]    = CSRArray[12'h310];
   assign rvvi.csr[0][0][12'h305]    = CSRArray[12'h305];
   assign rvvi.csr[0][0][12'h341]    = CSRArray[12'h341];
   assign rvvi.csr[0][0][12'h306]    = CSRArray[12'h306];
@@ -514,6 +528,11 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   assign rvvi.csr[0][0][12'h001]    = CSRArray[12'h001];
   assign rvvi.csr[0][0][12'h002]    = CSRArray[12'h002];
   assign rvvi.csr[0][0][12'h003]    = CSRArray[12'h003];
+  if (P.XLEN == 32) begin
+    assign rvvi.csr[0][0][12'h310] = CSRArray[12'h310];
+    assign rvvi.csr[0][0][12'h31A] = CSRArray[12'h31A];
+    assign rvvi.csr[0][0][12'h15D] = CSRArray[12'h15D];
+  end
   
   // PMP CFG 3A0 to 3AF
   for(index='h3A0; index<='h3AF; index++) begin
