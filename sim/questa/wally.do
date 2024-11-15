@@ -103,26 +103,6 @@ if {[lcheck lst "--ccov"]} {
     set CoverageVsimArg "-coverage"
 }
 
-# if --fcovimp found set flag and remove from list
-if {[lcheck lst "--fcovimp"]} {
-    set FunctCoverage 1
-    set FCvlog "+define+INCLUDE_TRACE2COV \
-                +define+IDV_INCLUDE_TRACE2COV \
-                +define+COVER_BASE_RV64I \
-                +define+COVER_LEVEL_DV_PR_EXT \
-                +incdir+${IMPERAS_HOME}/ImpProprietary/source/host/riscvISACOV/source"
-    set FCvopt "+TRACE2COV_ENABLE=1 +IDV_TRACE2COV=1"
-    # Uncomment various cover statements below to control which extensions get functional coverage
-    lappend FCdefineCOVER_EXTS "+define+COVER_RV64I"
-    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64M"
-    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64A"
-    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64F"
-    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64D"
-    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64ZICSR"
-    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64C"
-
-}
-
 # if --fcov found set flag and remove from list
 if {[lcheck lst "--fcov"]} {
     set FunctCoverage 1

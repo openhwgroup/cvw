@@ -27,7 +27,6 @@ parser.add_argument("--sim", "-s", help="Simulator", choices=["questa", "verilat
 parser.add_argument("--tb", "-t", help="Testbench", choices=["testbench", "testbench_fp"], default="testbench")
 parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true")
 parser.add_argument("--ccov", "-c", help="Code Coverage", action="store_true")
-parser.add_argument("--fcovimp", "-f2", help="Functional Coverage with Imperas licensed riscvISACOV, implies lockstep", action="store_true")
 parser.add_argument("--fcov", "-f", help="Functional Coverage with cvw-arch-verif, implies lockstep", action="store_true")
 parser.add_argument("--args", "-a", help="Optional arguments passed to simulator via $value$plusargs", default="")
 parser.add_argument("--params", "-p", help="Optional top-level parameter overrides of the form param=value", default="")
@@ -70,7 +69,7 @@ if(args.lockstep and not args.testsuite.endswith('.elf') and not args.testsuite 
     exit(1)
 
 # Validate arguments
-if (args.gui or args.ccov or args.fcov or args.fcovimp or args.lockstep or args.lockstepverbose):
+if (args.gui or args.ccov or args.fcov or args.lockstep or args.lockstepverbose):
     if args.sim not in ["questa", "vcs"]:
         print("Option only supported for Questa and VCS")
         exit(1)
@@ -88,7 +87,7 @@ if (args.tb == "testbench_fp"):
 if(int(args.locksteplog) >= 1): EnableLog = 1
 else: EnableLog = 0
 prefix = ""
-if (args.lockstep or args.lockstepverbose or args.fcov or args.fcovimp):
+if (args.lockstep or args.lockstepverbose or args.fcov):
     if (args.sim == "questa" or args.sim == "vcs"):
         imperasicPath = os.path.join(WALLY, "config", args.config, "imperas.ic")
         if not os.path.isfile(imperasicPath): # If config is a derivative, look for imperas.ic in derivative configs
@@ -101,12 +100,6 @@ if (args.sim == "questa"):
 if (args.lockstep or args.lockstepverbose):
     if(args.locksteplog != 0): ImperasPlusArgs = " +IDV_TRACE2LOG=" + str(EnableLog) + " +IDV_TRACE2LOG_AFTER=" + str(args.locksteplog)
     else: ImperasPlusArgs = ""
-    if(args.fcovimp):
-        CovEnableStr = "1" if int(args.covlog) > 0  else "0"
-        if(args.covlog >= 1): EnableLog = 1
-        else: EnableLog = 0
-        ImperasPlusArgs = " +IDV_TRACE2COV=" + str(EnableLog) + " +TRACE2LOG_AFTER=" + str(args.covlog) + " +TRACE2COV_ENABLE=" + CovEnableStr
-        suffix = ""
     if(args.fcov):
         CovEnableStr = "1" if int(args.covlog) > 0  else "0";
         if(args.covlog >= 1): EnableLog = 1
@@ -130,8 +123,6 @@ if (args.ccov):
     flags += " --ccov"
 if (args.fcov):
     flags += " --fcov"
-if (args.fcovimp):
-    flags += " --fcovimp"
 
 #  create the output sub-directories.
 regressionDir = WALLY + '/sim/'
