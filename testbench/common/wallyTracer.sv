@@ -115,21 +115,21 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   assign PPN_dM         = testbench.dut.core.lsu.dmmu.dmmu.tlb.tlb.PPN; 
 
   logic valid;
-  int csrid;
-
+  
   always_comb begin
     // Since we are detected the CSR change by comparing the old value we need to
     // ensure the CSR is detected when the pipeline's Writeback stage is not
     // stalled.  If it is stalled we want CSRArray to hold the old value.
     if(valid) begin 
       // PMPCFG CSRs (space is 0-15 3a0 - 3af)
-      int inc = P.XLEN == 32 ? 4 : 8;
+      localparam inc = P.XLEN == 32 ? 4 : 8;
       int i, i4, i8, csrid;
       logic [P.XLEN-1:0] pmp;
 
       for (i=0; i<P.PMP_ENTRIES; i+=inc) begin
         i4 = i / 4;
         i8 = (i / inc) * inc;
+        csrid = 12'h3A0 + i4;
         pmp = 0;
         pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i8+0] << 0;
         pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i8+1] << 8;
@@ -140,15 +140,13 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
         pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i8+6] << 48;
         pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i8+7] << 56;
         
-        csrid = 12'h3A0 + i4;
         CSRArray[csrid] = pmp;
       end
 
       // PMPADDR CSRs (space is 0-63 3b0 - 3ef)
       for (i=0; i<P.PMP_ENTRIES; i++) begin
+        csrid = 12'h3B0 + i;;
         pmp = testbench.dut.core.priv.priv.csr.csrm.PMPADDR_ARRAY_REGW[i];
-        
-        csrid = 12'h3B0 + i;
         CSRArray[csrid] = pmp;
       end
 
@@ -219,6 +217,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
       end
     end else begin // hold the old value if the pipeline is stalled.
       // PMP CFG 3A0 to 3AF
+      int csrid;
       for(csrid='h3A0; csrid<='h3AF; csrid++)
         CSRArray[csrid] = CSRArrayOld[csrid];
       
@@ -382,6 +381,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   // record previous csr value.
   integer index4;
   always_ff @(posedge clk) begin
+    int csrid;
     // PMP CFG 3A0 to 3AF
     for(csrid='h3A0; csrid<='h3AF; csrid++)
       CSRArrayOld[csrid] = CSRArray[csrid];
