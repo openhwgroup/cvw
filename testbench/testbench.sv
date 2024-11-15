@@ -33,12 +33,6 @@
     `include "idv/idv.svh"
 `endif
 
-`ifdef RVVI_COVERAGE
-    `include "RISCV_trace_data.svh"
-    `include "rvvicov.svh"
-    `include "wrapper.sv"
-`endif
-
 import cvw::*;
 
 module testbench;
@@ -972,12 +966,6 @@ test_pmp_coverage #(P) pmp_inst(clk);
 `endif
   /* verilator lint_on WIDTHTRUNC */
   /* verilator lint_on WIDTHEXPAND */
-
-`ifdef RVVI_COVERAGE
-    rvviTrace #(.XLEN(P.XLEN), .FLEN(P.FLEN)) rvvi();
-    wallyTracer #(P) wallyTracer(rvvi);
-    wrapper #(P) wrap(clk);
-`endif
 
 endmodule
 
