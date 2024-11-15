@@ -24,7 +24,7 @@
 `define NUM_CSRS 4096
 
 `define STD_LOG 1
-`define PRINT_PC_INSTR 0
+`define PRINT_PC_INSTR 1
 `define PRINT_MOST 0
 `define PRINT_ALL 0
 `define PRINT_CSRS 0
@@ -325,9 +325,9 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   // pipeline to writeback stage
   flopenrc #(32)    InstrRawEReg (clk, reset, FlushE, ~StallE, InstrRawD, InstrRawE);
   flopenrc #(32)    InstrRawMReg (clk, reset, FlushM, ~StallM, InstrRawE, InstrRawM);
-  flopenrc #(32)    InstrRawWReg (clk, reset, FlushW, ~StallW, InstrRawM, InstrRawW);
-  flopenrc #(P.XLEN)PCWReg       (clk, reset, FlushW, ~StallW, PCM, PCW);
-  flopenrc #(1)     InstrValidMReg (clk, reset, FlushW, ~StallW, InstrValidM, InstrValidW);
+  flopenrc #(32)    InstrRawWReg (clk, reset, FlushW & ~TrapM, ~StallW, InstrRawM, InstrRawW);
+  flopenrc #(P.XLEN)PCWReg       (clk, reset, FlushW & ~TrapM, ~StallW, PCM, PCW);
+  flopenrc #(1)     InstrValidMReg (clk, reset, FlushW & ~TrapM, ~StallW, InstrValidM, InstrValidW);
   flopenrc #(1)     TrapWReg (clk, reset, 1'b0, ~StallW, TrapM, TrapW);
   flopenrc #(1)     InterruptWReg (clk, reset, 1'b0, ~StallW, InterruptM, InterruptW);
   flopenrc #(1)     HaltWReg (clk, reset, 1'b0, ~StallW, HaltM, HaltW);
@@ -346,6 +346,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   flopenrc #(P.PPN_BITS) PPN_dWReg (clk, reset, FlushW, ~StallW, PPN_dM, PPN_dW);
   flopenrc #(1)  ReadAccessWReg    (clk, reset, FlushW, ~StallW, ReadAccessM, ReadAccessW);
   flopenrc #(1)  WriteAccessWReg   (clk, reset, FlushW, ~StallW, WriteAccessM, WriteAccessW);
+  // *** what is this used for?
   flopenrc #(1)  ExecuteAccessDReg (clk, reset, FlushE, ~StallE, ExecuteAccessF, ExecuteAccessD);
   flopenrc #(1)  ExecuteAccessEReg (clk, reset, FlushE, ~StallE, ExecuteAccessD, ExecuteAccessE);
   flopenrc #(1)  ExecuteAccessMReg (clk, reset, FlushM, ~StallM, ExecuteAccessE, ExecuteAccessM);
@@ -712,26 +713,26 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
         end
       end
       $fwrite(file, "\n");
-    end
-    if(`PRINT_PC_INSTR & !(`PRINT_ALL | `PRINT_MOST))
-      $display("order = %08d, PC = %08x, insn = %08x", rvvi.order[0][0], rvvi.pc_rdata[0][0], rvvi.insn[0][0]);
-    else if(`PRINT_MOST & !`PRINT_ALL)
-      $display("order = %08d, PC = %010x, insn = %08x, trap = %1d, halt = %1d, intr = %1d, mode = %1x, ixl = %1x, pc_wdata = %010x, x%02d = %016x, f%02d = %016x, csr%03x = %016x", 
-               rvvi.order[0][0], rvvi.pc_rdata[0][0], rvvi.insn[0][0], rvvi.trap[0][0], rvvi.halt[0][0], rvvi.intr[0][0], rvvi.mode[0][0], rvvi.ixl[0][0], rvvi.pc_wdata[0][0], rf_a3, rvvi.x_wdata[0][0][rf_a3], frf_a4, rvvi.f_wdata[0][0][frf_a4], CSRAdrW, rvvi.csr[0][0][CSRAdrW]);
-    else if(`PRINT_ALL) begin
-      $display("order = %08d, PC = %08x, insn = %08x, trap = %1d, halt = %1d, intr = %1d, mode = %1x, ixl = %1x, pc_wdata = %08x", 
-               rvvi.order[0][0], rvvi.pc_rdata[0][0], rvvi.insn[0][0], rvvi.trap[0][0], rvvi.halt[0][0], rvvi.intr[0][0], rvvi.mode[0][0], rvvi.ixl[0][0], rvvi.pc_wdata[0][0]);
-      for(index2 = 0; index2 < `NUM_REGS; index2 += 1) begin
-        $display("x%02d = %08x", index2, rvvi.x_wdata[0][0][index2]);
+      if(`PRINT_PC_INSTR & !(`PRINT_ALL | `PRINT_MOST))
+        $display("order = %08d, PC = %08x, insn = %08x", rvvi.order[0][0], rvvi.pc_rdata[0][0], rvvi.insn[0][0]);
+      else if(`PRINT_MOST & !`PRINT_ALL)
+        $display("order = %08d, PC = %010x, insn = %08x, trap = %1d, halt = %1d, intr = %1d, mode = %1x, ixl = %1x, pc_wdata = %010x, x%02d = %016x, f%02d = %016x, csr%03x = %016x", 
+                 rvvi.order[0][0], rvvi.pc_rdata[0][0], rvvi.insn[0][0], rvvi.trap[0][0], rvvi.halt[0][0], rvvi.intr[0][0], rvvi.mode[0][0], rvvi.ixl[0][0], rvvi.pc_wdata[0][0], rf_a3, rvvi.x_wdata[0][0][rf_a3], frf_a4, rvvi.f_wdata[0][0][frf_a4], CSRAdrW, rvvi.csr[0][0][CSRAdrW]);
+      else if(`PRINT_ALL) begin
+        $display("order = %08d, PC = %08x, insn = %08x, trap = %1d, halt = %1d, intr = %1d, mode = %1x, ixl = %1x, pc_wdata = %08x", 
+                 rvvi.order[0][0], rvvi.pc_rdata[0][0], rvvi.insn[0][0], rvvi.trap[0][0], rvvi.halt[0][0], rvvi.intr[0][0], rvvi.mode[0][0], rvvi.ixl[0][0], rvvi.pc_wdata[0][0]);
+        for(index2 = 0; index2 < `NUM_REGS; index2 += 1) begin
+          $display("x%02d = %08x", index2, rvvi.x_wdata[0][0][index2]);
+        end
+        for(index2 = 0; index2 < `NUM_REGS; index2 += 1) begin
+          $display("f%02d = %08x", index2, rvvi.f_wdata[0][0][index2]);
+        end
       end
-      for(index2 = 0; index2 < `NUM_REGS; index2 += 1) begin
-        $display("f%02d = %08x", index2, rvvi.f_wdata[0][0][index2]);
-      end
-    end
-    if (`PRINT_CSRS) begin
-      for(index2 = 0; index2 < `NUM_CSRS; index2 += 1) begin
-        if(CSR_W[index2]) begin
-          $display("%t: CSR %03x = %x", $time(), index2, CSRArray[index2]);
+      if (`PRINT_CSRS) begin
+        for(index2 = 0; index2 < `NUM_CSRS; index2 += 1) begin
+          if(CSR_W[index2]) begin
+            $display("%t: CSR %03x = %x", $time(), index2, CSRArray[index2]);
+          end
         end
       end
     end
