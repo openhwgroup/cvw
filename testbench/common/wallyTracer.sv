@@ -24,7 +24,7 @@
 `define NUM_CSRS 4096
 
 `define STD_LOG 1
-`define PRINT_PC_INSTR 1
+`define PRINT_PC_INSTR 0
 `define PRINT_MOST 0
 `define PRINT_ALL 0
 `define PRINT_CSRS 0
