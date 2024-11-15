@@ -105,9 +105,6 @@ sim/questa/wkdir
 sim/questa/ucdb
 sim/questa/cov
 sim/questa/fcov
-sim/questa/fcovrvvi
-sim/questa/fcovrvvi_logs
-sim/questa/fcovrvvi_ucdb
 sim/questa/fcov_logs
 sim/questa/fcov_ucdb
 sim/questa/riscv.ucdb
