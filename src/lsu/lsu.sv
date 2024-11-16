@@ -121,11 +121,9 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic                  DCacheCommittedM;                       // D$ memory operation started, delay interrupts
 
   logic [P.LLEN-1:0]     DTIMReadDataWordM;                      // DTIM read data
-  /* verilator lint_off WIDTHEXPAND */  
   logic [MLEN-1:0]       DCacheReadDataWordM;                    // D$ read data
   logic [MLEN-1:0]       LSUWriteDataSpillM;                     // Final write data
   logic [MLEN/8-1:0]     ByteMaskSpillM;                         // Selects which bytes within a word to write
-  /* verilator lint_on WIDTHEXPAND */
   logic [P.LLEN-1:0]     DCacheReadDataWordSpillM;               // D$ read data
   logic [P.LLEN-1:0]     ReadDataWordMuxM;                       // DTIM or D$ read data
   logic [P.LLEN-1:0]     LittleEndianReadDataWordM;              // Endian-swapped read data

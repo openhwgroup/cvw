@@ -95,11 +95,7 @@ localparam cvw_t P = '{
   PLIC_SPI_ID :        PLIC_SPI_ID,
   PLIC_SDC_ID :        PLIC_SDC_ID,
   BPRED_SUPPORTED :        BPRED_SUPPORTED,
-                       /* verilator lint_off ENUMVALUE */
-                       // *** definitely need to fix this.
-                       // it thinks we are casting from the enum type to BPRED_TYPE.
   BPRED_TYPE :        BPRED_TYPE,
-                       /* verilator lint_on ENUMVALUE */
   BPRED_SIZE :        BPRED_SIZE,
   BPRED_NUM_LHR : BPRED_NUM_LHR,                       
   BTB_SIZE :        BTB_SIZE,
