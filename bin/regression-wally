@@ -301,7 +301,8 @@ def addLockstepTestsByDir(dir, config, sim, fcovMode):
         for dirpath, dirnames, filenames in os.walk(os.path.abspath(dir)):
             for file in filenames:
                 # fcov lockstep only runs on WALLY-COV-ALL.elf files; other lockstep runs on all files
-                if (file.endswith(".elf") and fcovMode == 0 or file.endswith("ALL.elf") and fcovMode == 1):
+                if ((file.endswith(".elf") and (fcovMode == 0 or "tests/priv" in dir)) or 
+                    (file.endswith("ALL.elf") and fcovMode == 1)):
                     fullfile = os.path.join(dirpath, file)
                     fields = fullfile.rsplit('/', 3)
                     if (fields[2] == "ref"):
@@ -419,9 +420,11 @@ if (args.ccov):  # only run RV64GC tests on Questa in code coverage mode
     addTests(tests64gc_nofp, coveragesim)
     if (args.fp):
         addTests(tests64gc_fp, coveragesim)
-elif (args.fcov):  # only run RV64GC tests on Questa in lockstep in functional coverage mode
+elif (args.fcov):  # run tests in lockstep in functional coverage mode
     addLockstepTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/rv32/", "rv32gc", coveragesim, 1)
     addLockstepTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/rv64/", "rv64gc", coveragesim, 1)
+    addLockstepTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/priv/rv32/", "rv32gc", coveragesim, 1)
+    addLockstepTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/priv/rv64/", "rv64gc", coveragesim, 1)
     #addLockstepTestsByDir(WALLY+"/tests/riscof/work/wally-riscv-arch-test/rv64i_m/privilege/src/", "rv64gc", coveragesim, 0)
 
 else: 
