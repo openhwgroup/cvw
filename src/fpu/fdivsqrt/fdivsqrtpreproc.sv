@@ -136,7 +136,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     // calculate right shift amount RightShiftX to complete in discrete number of steps
     if (P.RK > 1) begin // more than 1 bit per cycle
       logic [$clog2(P.RK)-1:0] RightShiftX;
-      /* verilator lint_offf WIDTH */
+      /* verilator lint_off WIDTH */
       assign RightShiftX = P.RK - 1 - ((IntResultBitsE - 1) % P.RK); // Right shift amount
       assign DivXShifted = DivX >> RightShiftX;                     // shift X by up to R*K-1 to complete in n steps
       /* verilator lint_on WIDTH */

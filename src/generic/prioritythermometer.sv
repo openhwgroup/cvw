@@ -39,11 +39,9 @@ module prioritythermometer #(parameter N = 8) (
   //  Rather than linear.
 
   // create thermometer code mask
-  /* verilator lint_off UNOPTFLAT */
   genvar i;
   assign y[0] = ~a[0];
   for (i=1; i<N; i++) begin:therm
     assign y[i] = y[i-1] & ~a[i];
   end
-  /* verilator lint_on UNOPTFLAT */
 endmodule

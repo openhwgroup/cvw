@@ -115,9 +115,9 @@ module fround import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////
 
   // Exact logic
-  // verilator lint_off WIDTHEXPAND
+  /* verilator lint_off WIDTHEXPAND */
   assign EgeNf = (E >= Nf) & Xe[P.NE-1]; // Check if E >= Nf.  Also check that Xe is positive to avoid wraparound problems
-  // verilator lint_on WIDTHEXPAND
+  /* verilator lint_on WIDTHEXPAND */
 
   // Rounding logic: determine whether to round up in magnitude
   always_comb begin
