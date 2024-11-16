@@ -114,7 +114,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
   
   /* verilator lint_off UNDRIVEN */
   logic [2:0]  TransmitWriteWatermarkLevel, ReceiveReadWatermarkLevel; // unused generic FIFO outputs
-  /* verilator lint_off UNDRIVEN */
+  /* verilator lint_on UNDRIVEN */
   logic [7:0]  ReceiveShiftRegEndian;              // Reverses ReceiveShiftReg if Format[2] set (little endian transmission)
 
   // Shift reg signals
@@ -180,7 +180,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
           SPI_RXMARK:  ReceiveWatermark <= Din[2:0];
           SPI_IE:      InterruptEnable <= Din[1:0];
         endcase
-      /* verilator lint_off CASEINCOMPLETE */
+      /* verilator lint_on CASEINCOMPLETE */
       
       // According to FU540 spec: Once interrupt is pending, it will remain set until number 
       // of entries in tx/rx fifo is strictly more/less than tx/rxmark
