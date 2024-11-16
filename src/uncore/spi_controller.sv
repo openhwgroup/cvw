@@ -75,6 +75,7 @@ module spi_controller (
   logic ShiftEdgePulse;
   logic SampleEdgePulse;
   logic EndOfFramePulse;
+  logic InvertClock;
 
   // Frame stuff
   logic [3:0] BitNum;
@@ -107,8 +108,8 @@ module spi_controller (
   
   logic [7:0] DelayCounter;
 
-  logic       DelayIsNext;
-  logic       DelayState;       
+  logic       DelayState;
+  
   // Convenient Delay Reg Names
   assign cssck = Delay0[7:0];
   assign sckcs = Delay0[15:8];
@@ -130,10 +131,6 @@ module spi_controller (
   assign EndOfDelay = EndOfCSSCK | EndOfSCKCS | EndOfINTERCS | EndOfINTERXFR;
   
   // Clock Signal Stuff -----------------------------------------------
-  // I'm going to handle all clock stuff here, including ShiftEdge and
-  // SampleEdge. This makes sure that SPICLK is an output of a register
-  // and it properly synchronizes signals.
-
   // SPI enable generation, where SCLK = PCLK/(2*(SckDiv + 1))
   // Asserts SCLKenable at the rising and falling edge of SCLK by counting from 0 to SckDiv
   // Active at 2x SCLK frequency to account for implicit half cycle delays and actions on both clock edges depending on phase
@@ -166,12 +163,14 @@ module spi_controller (
       end
       
       // SPICLK Logic
-      
+      // We only want to trigger the clock during Transmission.
+      // If Phase == 1, then we want to trigger as soon as NextState == TRANSMIT
+      // Otherwise, only trigger the clock when the CurrState is TRANSMIT.
+      // We never want to trigger the clock if the NextState is NOT TRANSMIT
       if (TransmitStart & ~DelayState) begin
         SPICLK <= SckMode[1];
-      end else if (SCLKenable) begin
-        if (Phase & (NextState == TRANSMIT)) SPICLK <= (~EndTransmission & ~DelayIsNext) ? ~SPICLK : SckMode[1];
-        else if (Transmitting) SPICLK <= (~EndTransmission & ~DelayIsNext) ? ~SPICLK : SckMode[1];
+        end else if (SCLKenable) begin
+        SPICLK <= (NextState == TRANSMIT) & (~Phase & Transmitting | Phase) ? ~SPICLK : SckMode[1];
       end
       
       // Reset divider 
@@ -201,32 +200,25 @@ module spi_controller (
   // Possible pulses for all edge types. Combined with SPICLK to get
   // edges for different phase and polarity modes.
   assign ShiftEdgePulse = EdgePulse & ~LastBit;
-  assign SampleEdgePulse = EdgePulse & ~DelayIsNext;
+  assign SampleEdgePulse = EdgePulse & (NextState == TRANSMIT);
   assign EndOfFramePulse = EdgePulse & LastBit;
 
   // Delay ShiftEdge and SampleEdge by a half PCLK period
   // Aligned EXACTLY ON THE MIDDLE of the leading and trailing edges.
   // Sweeeeeeeeeet...
+  assign InvertClock = ^SckMode;
   always_ff @(posedge ~PCLK) begin
     if (~PRESETn | TransmitStart) begin
       ShiftEdge <= 0;
       SampleEdge <= 0;
       EndOfFrame <= 0;
-      end else if (^SckMode) begin
-          ShiftEdge <= ~SPICLK & ShiftEdgePulse;
-          SampleEdge <= SPICLK & SampleEdgePulse;
-          EndOfFrame <= ~SPICLK & EndOfFramePulse;
-      end else begin 
-          ShiftEdge <= SPICLK & ShiftEdgePulse;
-          SampleEdge <= ~SPICLK & SampleEdgePulse;
-          EndOfFrame <= SPICLK & EndOfFramePulse;
-      end 
+    end else begin 
+      ShiftEdge <= (InvertClock ^ SPICLK) & ShiftEdgePulse;
+      SampleEdge <= (InvertClock ^ ~SPICLK) & SampleEdgePulse;
+      EndOfFrame <= (InvertClock ^ SPICLK) & EndOfFramePulse;
     end 
+  end 
 
-  // Logic for continuing to transmit through Delay states after end of frame
-  assign NextEndDelay = NextState == SCKCS | NextState == INTERCS | NextState == INTERXFR;
-  assign CurrentEndDelay = CurrState == SCKCS | CurrState == INTERCS | CurrState == INTERXFR;
-  
   always_ff @(posedge PCLK) begin
     if (~PRESETn) begin
       CurrState <= INACTIVE;
@@ -305,7 +297,6 @@ module spi_controller (
   end
 
   assign Transmitting = CurrState == TRANSMIT;
-  assign DelayIsNext = (NextState == CSSCK | NextState == SCKCS | NextState == INTERCS | NextState == INTERXFR);
   assign DelayState = (CurrState == CSSCK | CurrState == SCKCS | CurrState == INTERCS | CurrState == INTERXFR);
   assign InactiveState = CurrState == INACTIVE | CurrState == INTERCS;
   
