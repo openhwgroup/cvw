@@ -28,8 +28,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module cachefsm import cvw::*; #(parameter cvw_t P,
-                                 parameter READ_ONLY_CACHE = 0) (
+module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   input  logic       clk,
   input  logic       reset,
   // hazard and privilege unit
