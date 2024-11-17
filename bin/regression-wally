@@ -552,7 +552,7 @@ def main():
     if args.ccov:
         os.system('make QuestaCodeCoverage')
     if args.fcov:
-        os.system('make -f '+WALLY+'/addins/cvw-arch-verif/Makefile merge')
+        os.system('make -C '+WALLY+'/addins/cvw-arch-verif merge')
     # Count the number of failures
     if num_fail:
         print(f"{bcolors.FAIL}Regression failed with %s failed configurations{bcolors.ENDC}" % num_fail)
