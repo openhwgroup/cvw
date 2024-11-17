@@ -35,30 +35,24 @@ WRITE_READ_CSR mie, 0xFFF // Enable interrupts from all sources
 
 // Code copied from test library to cause m time interrupt, with time loop replaced with wfi.
 
-li x28, 0x60          // Desired offset from the present time
-mv a3, x28            // copy value in to know to stop waiting for interrupt after this many cycles
-la x29, 0x02004000    // MTIMECMP register in CLINT
-la x30, 0x0200BFF8    // MTIME register in CLINT
-lw x7, 0(x30)         // low word of MTIME
-lw x31, 4(x30)         // high word of MTIME
-add x28, x7, x28       // add desired offset to the current time
-bgtu x28, x7, nowrap  // check new time exceeds current time (no wraparound)
-addi x31, x31, 1       // if wrap, increment most significant word
-sw x31,4(x29)          // store into most significant word of MTIMECMP
+    li x28, 0x60          // Desired offset from the present time
+    mv a3, x28            // copy value in to know to stop waiting for interrupt after this many cycles
+    la x29, 0x02004000    // MTIMECMP register in CLINT
+    la x30, 0x0200BFF8    // MTIME register in CLINT
+    ld x7, 0(x30)         // read MTIME
+    add x28, x7, x28      // add offset
+    sw x28, 0(x29)        // MTIMECMP = MTIME + offset
 
-nowrap:
-    sw x28, 0(x29)         // store into least significant word of MTIMECMP
+    auipc ra, 0x0
+    addi ra, ra, 0xC // load address after wfi into ra so we return to the right place after handling the time interrupt
 
-auipc ra, 0x0
-addi ra, ra, 0xC // load address after wfi into ra so we return to the right place after handling the time interrupt
+    wfi // test wfi until trap goes off
 
-wfi // test wfi until trap goes off
-
-li x28, 0x600d111 // magic number "good 111" to write to output after interrupt goes off.
-// this tests whether wfi is a nop or not since we should get the output for the interrupt before this one
-sd x28, 0(x6)
-addi x6, x6, 8
-addi x16, x16, 8
+    li x28, 0x600d111 // magic number "good 111" to write to output after interrupt goes off.
+    // this tests whether wfi is a nop or not since we should get the output for the interrupt before this one
+    sd x28, 0(x6)
+    addi x6, x6, 8
+    addi x16, x16, 8
 
 END_TESTS
 
