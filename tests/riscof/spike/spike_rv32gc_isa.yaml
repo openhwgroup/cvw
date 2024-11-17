@@ -26,4 +26,4 @@ hart0:
               legal:
                 - extensions[25:0] bitmask [0x000112D, 0x0000000]
               wr_illegal:
-                - Unchangedcd 
+                - Unchanged
