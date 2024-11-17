@@ -27,7 +27,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module hazard import cvw::*;  #(parameter cvw_t P) ( 
+module hazard ( 
   input  logic  BPWrongE, CSRWriteFenceM, RetM, TrapM,   
   input  logic  StructuralStallD,
   input  logic  LSUStallM, IFUStallF,

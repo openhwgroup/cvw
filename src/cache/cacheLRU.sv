@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module cacheLRU
-  #(parameter NUMWAYS = 4, SETLEN = 9, OFFSETLEN = 5, NUMSETS = 128) (
+  #(parameter NUMWAYS = 4, SETLEN = 9, NUMSETS = 128) (
   input  logic                clk, 
   input  logic                reset,
   input  logic                FlushStage,
