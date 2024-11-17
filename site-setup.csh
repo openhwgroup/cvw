@@ -49,7 +49,7 @@ setenv SPIKE_PATH $RISCV/bin										# Change this for your path to riscv-isa-s
 setenv IDV $RISCV/ImperasDV-OpenHW
 if ($?IDV) then
     # echo "Imperas exists"
-    setenv IMPERAS_HOME $IDV/Imperas
+    setenv IMPERAS_HOME $IDV
     setenv IMPERAS_PERSONALITY CPUMAN_DV_ASYNC
     setenv ROOTDIR ~/
     source ${IMPERAS_HOME}/bin/setup.sh
