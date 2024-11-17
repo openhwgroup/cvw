@@ -30,7 +30,7 @@ for config in ${configs[@]}; do
     if !($verilator --lint-only --quiet --top-module wallywrapper \
          "-I$basepath/config/shared" "-I$basepath/config/$config" "-I$basepath/config/deriv/$config" \
          $basepath/src/cvw.sv $basepath/testbench/wallywrapper.sv $basepath/src/*/*.sv $basepath/src/*/*/*.sv \
-         -Wall -Wno-UNUSEDSIGNAL -Wno-UNUSEDPARAM -Wno-VARHIDDEN -Wno-GENUNNAMED -Wno-PINCONNECTEMPTY); then
+         -Wall -Wno-UNUSEDSIGNAL -Wno-VARHIDDEN -Wno-GENUNNAMED -Wno-PINCONNECTEMPTY); then
         if [ "$1" == "-nightly" ]; then
             echo -e "${RED}$config failed lint${NC}"
             fails=$((fails+1))

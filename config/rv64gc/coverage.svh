@@ -34,6 +34,7 @@
 `include "RV64VM_coverage.svh"
 `include "ZicsrM_coverage.svh"
 `include "ZicsrF_coverage.svh"
+`include "ZicsrU_coverage.svh"
 // `include "RV64VM_PMP_coverage.svh"
 // `include "RV64CBO_VM_coverage.svh"
 // `include "RV64CBO_PMP_coverage.svh"

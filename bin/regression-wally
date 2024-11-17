@@ -439,6 +439,7 @@ else:
 if (args.nightly):
     addLockstepTestsByDir(WALLY+"/tests/coverage", "rv64gc", lockstepsim, 0)
     addLockstepTestsByDir(WALLY+"/tests/riscof/work/wally-riscv-arch-test/rv64i_m", "rv64gc", lockstepsim, 0)
+    addLockstepTestsByDir(WALLY+"/tests/riscof/work/wally-riscv-arch-test/rv32i_m", "rv32gc", lockstepsim, 0)
     addTests(derivconfigtests, defaultsim)
     # addTests(bpredtests, defaultsim) # This is currently broken in regression due to something related to the new wsim script.
 

@@ -236,7 +236,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       
       assign BusRW = ~ITLBMissF & ~CacheableF & ~SelIROM ? IFURWF : '0;
       assign CacheRWF = ~ITLBMissF & CacheableF & ~SelIROM ? IFURWF : '0;
-      cache #(.P(P), .PA_BITS(P.PA_BITS), .XLEN(P.XLEN), .LINELEN(P.ICACHE_LINELENINBITS),
+      cache #(.P(P), .PA_BITS(P.PA_BITS), .LINELEN(P.ICACHE_LINELENINBITS),
               .NUMSETS(P.ICACHE_WAYSIZEINBYTES*8/P.ICACHE_LINELENINBITS),
               .NUMWAYS(P.ICACHE_NUMWAYS), .LOGBWPL(AHBWLOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .READ_ONLY_CACHE(1))
       icache(.clk, .reset, .FlushStage(FlushD), .Stall(GatedStallD),
