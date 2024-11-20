@@ -237,7 +237,7 @@ __uint128_t parseNum(char *num) {
   if (strlen(num) < 8) size = 2;
   else if (strlen(num) < 16) size = 4;
   else if (strlen(num) < 32) size = 8;
-  else if (strlen(num) < 35) size = 16; // *** will need to increase                                                                                                                              
+  else if (strlen(num) < 35) size = 16;                                                                                                                          
   else {
     printf("Error: only half, single, double, or quad precision supported");
     exit(1);
