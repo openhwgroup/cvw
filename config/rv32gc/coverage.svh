@@ -37,3 +37,6 @@
 `include "ZicsrU_coverage.svh"
 `include "RV32VM_coverage.svh"
 `include "RV32VM_PMP_coverage.svh"
+`include "EndianU_coverage.svh"
+`include "EndianM_coverage.svh"
+`include "EndianS_coverage.svh"
