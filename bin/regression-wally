@@ -536,7 +536,7 @@ def main():
     # max out at a limited number of concurrent processes to not overwhelm the system
     # right now fcov, ccov, nightly all use Imperas
     if (args.ccov or args.fcov or args.nightly):
-        ImperasDVLicenseCount = 8 # limit number of concurrent processes to avoid overloading ImperasDV licenses
+        ImperasDVLicenseCount = 16 # limit number of concurrent processes to avoid overloading ImperasDV licenses
     else:
         ImperasDVLicenseCount = 10000 # effectively no license limit for non-lockstep tests
     with Pool(processes=min(len(configs),multiprocessing.cpu_count(), ImperasDVLicenseCount)) as pool:
