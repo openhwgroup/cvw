@@ -202,12 +202,13 @@ Startups can expect to spend more than $1 million on CAD tools to get a chip to 
 # Adding Cron Job for nightly builds
 
 If you want to add a cronjob you can do the following:
-1) Set up the email client `mutt` for your distribution
+1) Set up the email client `mutt` to send emails through the command line
 2) Enter `crontab -e` into a terminal
-3) add this code to test building CVW and then running `regression-wally --nightly` at 9:30 PM each day
+3) add this code to test cloning CVW, making CVW's tests, then running `regression-wally --nightly --buildroot` every day at 21:30 in your local time
 ```bash
-30 21 * * * bash -l -c "source ~/PATH/TO/CVW/setup.sh; PATH_TO_CVW/cvw/bin/wrapper_nightly_runs.sh --path {PATH_TO_TEST_LOCATION} --target all --tests nightly --send_email harris@hmc.edu,kaitlin.verilog@gmail.com"
+30 21 * * * curl -L https://raw.githubusercontent.com/openhwgroup/cvw/refs/heads/main/bin/nightly_build.py | python - --path {PATH_FOR_NIGHTLY_RUNS} --target all --tests all --send_email harris@hmc.edu,rose@rosethompson.net
 ```
+This utility will take up approximately 100 GB on your hard drive. You can also run the script directly from `bin/nightly_build.py`.
 
 # Example wsim commands
 
