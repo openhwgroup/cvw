@@ -8,6 +8,10 @@
 // Define XLEN, used in covergroups
 `define XLEN64 1
 
+// Define relevant addresses
+`define CLINT_BASE 64'h02000000
+`define ACCESS_FAULT_ADDRESS 64'h00000000
+
 // Unprivileged extensions
 `include "RV64I_coverage.svh"
 `include "RV64M_coverage.svh"
@@ -36,6 +40,7 @@
 `include "ZicsrM_coverage.svh"
 `include "ZicsrF_coverage.svh"
 `include "ZicsrU_coverage.svh"
+`include "ExceptionM_coverage.svh"
 // `include "RV64VM_PMP_coverage.svh"
 // `include "RV64CBO_VM_coverage.svh"
 // `include "RV64CBO_PMP_coverage.svh"
