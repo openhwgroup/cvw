@@ -50,6 +50,11 @@ main:
     c.sb s1, 0(s0)    // exercise c.sb
     c.sh s1, 0(s0)    // exercise c.sh
 
+    .hword 0x2005      // line 110
+    .hword 0x6101      // line 114
+    .hword 0x6201      // line 115
+    .hword 0x0202      // Illegal compressed instruction with op = 10, Instr[15:13] = 000, c.slli x4, 0. Line 151 illegal instruction
+    .hword 0x4002      // Illegal compressed instruction with op = 10, Instr[15:13] = 010, c.lwsp zero, 0. Line 158 illegal instruction
     .hword 0x8C44      // Illegal compressed instruction with op = 00, Instr[15:10] = 100011, Instr[6] = 1 and 0's everywhere else. Line 119 illegal instruction
     .hword 0x9C00      // Illegal compressed instruction with op = 00, Instr[15:10] = 100111, and 0's everywhere else. Line 119 illegal instruction
 
