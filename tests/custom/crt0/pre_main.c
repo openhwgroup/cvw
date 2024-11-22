@@ -2,6 +2,8 @@
 
 #include "pcnt_driver.h"
 
+extern int main(int argc, char *argv[]);
+
 int pre_main(int argc, char *argv[]) {
   long int bpmp0, brcnt0, bpmp1, brcnt1;
   long int bpmp_diff, brcnt_diff;
