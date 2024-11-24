@@ -38,7 +38,7 @@ jobs:
           - name: ubuntu-20.04
             os: ubuntu-20.04
             container: null
-            regresssionFail: true
+            regressionFail: true
           - name: ubuntu-22.04
             os: ubuntu-22.04
             container: null
