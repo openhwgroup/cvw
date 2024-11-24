@@ -263,6 +263,15 @@ if (( RHEL_VERSION == 8 )); then
     fi
 fi
 
+# Mold needed for Verilator
+if (( UBUNTU_VERSION == 20 )); then
+    STATUS="mold"
+    if [ ! -e "$RISCV"/bin/mold ]; then
+        section_header "Installing mold"
+        cd "$RISCV"
+        wget -nv --retry-connrefused $retry_on_host_error https://github.com/rui314/mold/releases/download/v2.34.1/mold-2.34.1-x86_64-linux.tar.gz
+    fi
+fi
 
 # RISC-V GNU Toolchain (https://github.com/riscv-collab/riscv-gnu-toolchain)
 # The RISC-V GNU Toolchain includes the GNU Compiler Collection (gcc), GNU Binutils, Newlib,

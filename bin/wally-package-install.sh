@@ -64,16 +64,15 @@ if [ "$FAMILY" == rhel ]; then
 elif [[ "$FAMILY" == ubuntu || "$FAMILY" == debian ]]; then
     if (( UBUNTU_VERSION >= 24 )); then
         PYTHON_VERSION=python3.12
-        VERILATOR_PACKAGES+=(mold) # Not availale in Ubuntu 20.04, nice for Verilator
     elif (( UBUNTU_VERSION >= 22 )); then
         PYTHON_VERSION=python3.11
-        VERILATOR_PACKAGES+=(mold) # Not availale in Ubuntu 20.04, nice for Verilator
     elif (( UBUNTU_VERSION >= 20 )); then
         PYTHON_VERSION=python3.9
         OTHER_PACKAGES+=(gcc-10 g++-10 cpp-10) # Newer version of gcc needed for Verilator
     elif (( DEBIAN_VERSION >= 12 )); then
         PYTHON_VERSION=python3.11
-        VERILATOR_PACKAGES+=(mold) # Not availale in Ubuntu 20.04, nice for Verilator
+    if (( UBUNTU_VERSION != 20 )); then
+        VERILATOR_PACKAGES+=(mold) # Not availale in Ubuntu 20.04, binary will be downloaded instead
     fi
     PACKAGE_MANAGER="DEBIAN_FRONTEND=noninteractive apt-get"
     UPDATE_COMMAND="sudo $PACKAGE_MANAGER update -y && sudo $PACKAGE_MANAGER upgrade -y --with-new-pkgs"
