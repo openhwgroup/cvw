@@ -91,8 +91,8 @@ elif [[ "$ID" == debian || "$ID_LIKE" == *debian* ]]; then
             "is $PRETTY_NAME. The regular Debian install will be attempted, but there may be issues."
     fi
     export DEBIAN_VERSION="$VERSION_ID"
-    if (( DEBIAN_VERSION < 12 )); then
-        printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally install script has only been tested with Debian version 12. You have version $VERSION."
+    if (( DEBIAN_VERSION < 11 )); then
+        printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally install script has only been tested with Debian versions 11 and 12. You have version $VERSION."
         exit 1
     fi
 else

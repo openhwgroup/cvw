@@ -71,8 +71,12 @@ elif [[ "$FAMILY" == ubuntu || "$FAMILY" == debian ]]; then
         OTHER_PACKAGES+=(gcc-10 g++-10 cpp-10) # Newer version of gcc needed for Verilator
     elif (( DEBIAN_VERSION >= 12 )); then
         PYTHON_VERSION=python3.11
-    if (( UBUNTU_VERSION != 20 )); then
-        VERILATOR_PACKAGES+=(mold) # Not availale in Ubuntu 20.04, binary will be downloaded instead
+    elif (( DEBIAN_VERSION >= 11 )); then
+        PYTHON_VERSION=python3.9
+    fi
+    # Mold not available in older distros for Verilator, will download binary instead
+    if (( UBUNTU_VERSION != 20 && DEBIAN_VERSION != 11 )); then
+        VERILATOR_PACKAGES+=(mold)
     fi
     PACKAGE_MANAGER="DEBIAN_FRONTEND=noninteractive apt-get"
     UPDATE_COMMAND="sudo $PACKAGE_MANAGER update -y && sudo $PACKAGE_MANAGER upgrade -y --with-new-pkgs"
