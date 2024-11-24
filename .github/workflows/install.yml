@@ -50,6 +50,10 @@ jobs:
             os: ubuntu-latest
             image: debian:12
             imageFamily: debian
+          - name: debian-11
+            os: ubuntu-latest
+            image: debian:11
+            imageFamily: debian
           # Red Hat Installations
           - name: rocky-8
             os: ubuntu-latest
