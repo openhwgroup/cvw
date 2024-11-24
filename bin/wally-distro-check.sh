@@ -96,7 +96,7 @@ elif [[ "$ID" == debian || "$ID_LIKE" == *debian* ]]; then
         exit 1
     fi
 else
-    printf "${FAIL_COLOR}%s%s%s\n${ENDC}" "The Wally install script is currently only compatible with Ubuntu and Red Hat family " \
+    printf "${FAIL_COLOR}%s%s%s\n${ENDC}" "The Wally install script is currently only compatible with Ubuntu, Debian, and Red Hat family " \
         "(RHEL, Rocky Linux, or AlmaLinux) distros. Your detected distro is $PRETTY_NAME. You may try manually running the " \
         "commands in this script, but it is likely that some will need to be altered."
     exit 1
