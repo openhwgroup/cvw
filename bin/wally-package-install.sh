@@ -80,7 +80,7 @@ elif [[ "$FAMILY" == ubuntu || "$FAMILY" == debian ]]; then
     fi
     PACKAGE_MANAGER="DEBIAN_FRONTEND=noninteractive apt-get"
     UPDATE_COMMAND="sudo $PACKAGE_MANAGER update -y && sudo $PACKAGE_MANAGER upgrade -y --with-new-pkgs"
-    GENERAL_PACKAGES+=(rsync git make cmake "$PYTHON_VERSION" python3-pip "$PYTHON_VERSION"-venv curl wget tar pkg-config dialog mutt ssmtp)
+    GENERAL_PACKAGES+=(rsync git make cmake "$PYTHON_VERSION" python3-pip "$PYTHON_VERSION"-venv curl wget tar unzip pkg-config dialog mutt ssmtp)
     GNU_PACKAGES+=(autoconf automake autotools-dev libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat1-dev ninja-build libglib2.0-dev libslirp-dev)
     QEMU_PACKAGES+=(libfdt-dev libpixman-1-dev)
     SPIKE_PACKAGES+=(device-tree-compiler libboost-regex-dev libboost-system-dev)
