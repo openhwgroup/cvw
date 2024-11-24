@@ -269,7 +269,12 @@ if (( UBUNTU_VERSION == 20  || DEBIAN_VERSION == 11 )); then
     if [ ! -e "$RISCV"/bin/mold ]; then
         section_header "Installing mold"
         cd "$RISCV"
-        wget -nv --retry-connrefused $retry_on_host_error https://github.com/rui314/mold/releases/download/v2.34.1/mold-2.34.1-x86_64-linux.tar.gz
+        wget -nv --retry-connrefused $retry_on_host_error --output-document=mold.tar.gz https://github.com/rui314/mold/releases/download/v2.34.1/mold-2.34.1-x86_64-linux.tar.gz
+        tar xz --directory="$RISCV" --strip-components=1 -f mold.tar.gz
+        rm -f mold.tar.gz
+        echo -e "${SUCCESS_COLOR}Mold successfully installed/updated!${ENDC}"
+    else
+        echo -e "${SUCCESS_COLOR}Mold already installed.${ENDC}"
     fi
 fi
 
