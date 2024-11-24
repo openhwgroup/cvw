@@ -45,61 +45,77 @@ fi
 
 # Packages are grouped by which tool requires them. If multiple tools need a package, it is included in the first tool only
 # Packages that are constant across distros
-GENERAL_PACKAGES+=(rsync git make cmake curl wget tar unzip bzip2 dialog mutt ssmtp)
-GNU_PACKAGES+=(autoconf automake gawk bison flex texinfo gperf libtool ninja-build patchutils bc gcc)
+GENERAL_PACKAGES+=(rsync git make cmake curl wget tar unzip bzip2 dialog mutt)
+GNU_PACKAGES+=(autoconf automake gawk bison flex texinfo gperf libtool patchutils bc gcc)
 VERILATOR_PACKAGES+=(help2man perl clang ccache numactl)
-BUILDROOT_PACKAGES+=(ncurses-base cpio)
+BUILDROOT_PACKAGES+=(cpio)
 
 # Distro specific packages and package manager
-if [ "$FAMILY" == rhel ]; then
-    PYTHON_VERSION=python3.12
-    PACKAGE_MANAGER="dnf -y"
-    UPDATE_COMMAND="sudo $PACKAGE_MANAGER update"
-    GENERAL_PACKAGES+=(which "$PYTHON_VERSION" "$PYTHON_VERSION"-pip pkgconf-pkg-config gcc-c++)
-    GNU_PACKAGES+=(libmpc-devel mpfr-devel gmp-devel zlib-devel expat-devel libslirp-devel)
-    QEMU_PACKAGES+=(glib2-devel libfdt-devel pixman-devel)
-    SPIKE_PACKAGES+=(dtc boost-regex boost-system)
-    VVERILATOR_PACKAGES+=(gperftools mold)
-    BUILDROOT_PACKAGES+=(ncurses ncurses-libs ncurses-devel gcc-gfortran) # gcc-gfortran is only needed for compiling spec benchmarks on buildroot linux
-    # Extra packages not availale in rhel8, nice for Verilator
-    if (( RHEL_VERSION >= 9 )); then
-        VERILATOR_PACKAGES+=(perl-doc)
-    fi
-    # A newer version of gcc is required for qemu
-    OTHER_PACKAGES=(gcc-toolset-13)
-elif [[ "$FAMILY" == ubuntu || "$FAMILY" == debian ]]; then
-    if (( UBUNTU_VERSION >= 24 )); then
+case "$FAMILY" in
+    rhel)
         PYTHON_VERSION=python3.12
-    elif (( UBUNTU_VERSION >= 22 )); then
-        PYTHON_VERSION=python3.11
-    elif (( UBUNTU_VERSION >= 20 )); then
-        PYTHON_VERSION=python3.9
-        OTHER_PACKAGES+=(gcc-10 g++-10 cpp-10) # Newer version of gcc needed for Verilator
-    elif (( DEBIAN_VERSION >= 12 )); then
-        PYTHON_VERSION=python3.11
-    elif (( DEBIAN_VERSION >= 11 )); then
-        PYTHON_VERSION=python3.9
-    fi
-    # Mold not available in older distros for Verilator, will download binary instead
-    if (( UBUNTU_VERSION != 20 && DEBIAN_VERSION != 11 )); then
-        VERILATOR_PACKAGES+=(mold)
-    fi
-    PACKAGE_MANAGER="DEBIAN_FRONTEND=noninteractive apt-get -y"
-    UPDATE_COMMAND="sudo $PACKAGE_MANAGER update && sudo $PACKAGE_MANAGER upgrade --with-new-pkgs"
-    GENERAL_PACKAGES+=("$PYTHON_VERSION" python3-pip "$PYTHON_VERSION"-venv pkg-config g++)
-    GNU_PACKAGES+=(autotools-dev libmpc-dev libmpfr-dev libgmp-dev build-essential zlib1g-dev libexpat1-dev libglib2.0-dev libslirp-dev)
-    QEMU_PACKAGES+=(libfdt-dev libpixman-1-dev)
-    SPIKE_PACKAGES+=(device-tree-compiler libboost-regex-dev libboost-system-dev)
-    VERILATOR_PACKAGES+=(libunwind-dev libgoogle-perftools-dev perl-doc libfl2 libfl-dev zlib1g)
-    BUILDROOT_PACKAGES+=(ncurses-bin libncurses-dev gfortran) # gfortran is only needed for compiling spec benchmarks on buildroot linux
-    VIVADO_PACKAGES+=(libncurses*) # Vivado hangs on the third stage of installation without this
-fi
+        PACKAGE_MANAGER="dnf -y"
+        UPDATE_COMMAND="sudo $PACKAGE_MANAGER update"
+        GENERAL_PACKAGES+=(which "$PYTHON_VERSION" "$PYTHON_VERSION"-pip pkgconf-pkg-config gcc-c++ ssmtp)
+        GNU_PACKAGES+=(libmpc-devel mpfr-devel gmp-devel zlib-devel expat-devel libslirp-devel ninja-build)
+        QEMU_PACKAGES+=(glib2-devel libfdt-devel pixman-devel)
+        SPIKE_PACKAGES+=(dtc boost-regex boost-system)
+        VERILATOR_PACKAGES+=(gperftools mold)
+        BUILDROOT_PACKAGES+=(ncurses ncurses-base ncurses-libs ncurses-devel gcc-gfortran) # gcc-gfortran is only needed for compiling spec benchmarks on buildroot linux
+        # Extra packages not availale in rhel8, nice for Verilator
+        if (( RHEL_VERSION >= 9 )); then
+            VERILATOR_PACKAGES+=(perl-doc)
+        fi
+        # A newer version of gcc is required for qemu
+        OTHER_PACKAGES+=(gcc-toolset-13)
+        ;;
+    ubuntu | debian)
+        if (( UBUNTU_VERSION >= 24 )); then
+            PYTHON_VERSION=python3.12
+        elif (( UBUNTU_VERSION >= 22 )); then
+            PYTHON_VERSION=python3.11
+        elif (( UBUNTU_VERSION >= 20 )); then
+            PYTHON_VERSION=python3.9
+            OTHER_PACKAGES+=(gcc-10 g++-10 cpp-10) # Newer version of gcc needed for Verilator
+        elif (( DEBIAN_VERSION >= 12 )); then
+            PYTHON_VERSION=python3.11
+        elif (( DEBIAN_VERSION >= 11 )); then
+            PYTHON_VERSION=python3.9
+        fi
+        # Mold not available in older distros for Verilator, will download binary instead
+        if (( UBUNTU_VERSION != 20 && DEBIAN_VERSION != 11 )); then
+            VERILATOR_PACKAGES+=(mold)
+        fi
+        PACKAGE_MANAGER="DEBIAN_FRONTEND=noninteractive apt-get -y"
+        UPDATE_COMMAND="sudo $PACKAGE_MANAGER update && sudo $PACKAGE_MANAGER upgrade --with-new-pkgs"
+        GENERAL_PACKAGES+=("$PYTHON_VERSION" python3-pip "$PYTHON_VERSION"-venv pkg-config g++ ssmtp)
+        GNU_PACKAGES+=(autotools-dev libmpc-dev libmpfr-dev libgmp-dev build-essential ninja-build zlib1g-dev libexpat1-dev libglib2.0-dev libslirp-dev)
+        QEMU_PACKAGES+=(libfdt-dev libpixman-1-dev)
+        SPIKE_PACKAGES+=(device-tree-compiler libboost-regex-dev libboost-system-dev)
+        VERILATOR_PACKAGES+=(libunwind-dev libgoogle-perftools-dev perl-doc libfl2 libfl-dev zlib1g)
+        BUILDROOT_PACKAGES+=(ncurses-base ncurses-bin libncurses-dev gfortran) # gfortran is only needed for compiling spec benchmarks on buildroot linux
+        VIVADO_PACKAGES+=(libncurses*) # Vivado hangs on the third stage of installation without this
+        ;;
+    suse)
+        PYTHON_VERSION=python3.12
+        PYTHON_VERSION_PACKAGE=python312
+        PACKAGE_MANAGER="zypper -n"
+        UPDATE_COMMAND="sudo $PACKAGE_MANAGER update"
+        GENERAL_PACKAGES+=("$PYTHON_VERSION_PACKAGE" "$PYTHON_VERSION_PACKAGE"-pip pkg-config)
+        GNU_PACKAGES+=(mpc-devel mpfr-devel gmp-devel zlib-devel libexpat-devel libslirp-devel ninja)
+        QEMU_PACKAGES+=(glib2-devel libpixman-1-0-devel) # maybe also need qemu itself?
+        SPIKE_PACKAGES+=(dtc libboost_regex1_75_0-devel libboost_system1_75_0-devel)
+        VERILATOR_PACKAGES+=(gperftools perl-doc)
+        BUILDROOT_PACKAGES+=(ncurses-utils ncurses-devel ncurses5-devel gcc-fortran) # gcc-fortran is only needed for compiling spec benchmarks on buildroot linux
+        OTHER_PACKAGES+=(gcc14 gcc14-c++ cpp14) # Newer version of gcc needed for many tools. Default is gcc7
+        ;;
+esac
 
 
 # Check if required packages are installed or install/update them depending on passed flag.
 if [ "${1}" == "--check" ]; then
     section_header "Checking Dependencies from Package Manager"
-    if [ "$FAMILY" == rhel ]; then
+    if [[ "$FAMILY" == rhel || "$FAMILY" == suse ]]; then
         for pack in "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${OTHER_PACKAGES[@]}"; do
             rpm -q "$pack" > /dev/null || (echo -e "${FAIL_COLOR}Missing packages detected (${WARNING_COLOR}$pack${FAIL_COLOR}). Run as root to auto-install or run wally-package-install.sh first.${ENDC}" && exit 1)
         done

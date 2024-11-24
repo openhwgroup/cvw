@@ -77,6 +77,8 @@ fi
 # Use newer gcc version for older distros
 if [ -e /opt/rh/gcc-toolset-13/enable ]; then
     source /opt/rh/gcc-toolset-13/enable # Red Hat Family
+elif [ -e $RISCV/gcc-14 ]; then
+    export PATH=$RISCV/gcc-14/bin:$PATH  # SUSE Family
 elif [ -e $RISCV/gcc-10 ]; then
     export PATH=$RISCV/gcc-10/bin:$PATH  # Ubuntu 20.04 LTS
 fi
