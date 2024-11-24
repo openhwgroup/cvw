@@ -118,7 +118,7 @@ if [ "$1" == "--clean" ] || [ "$2" == "--clean" ]; then
     shift
 fi
 
-# Check for clean flag
+# Check for no-buildroot flag
 if [ "$1" == "--no-buildroot" ] || [ "$2" == "--no-buildroot" ]; then
     no_buidroot=true
     shift
@@ -269,11 +269,10 @@ fi
 # and the GNU Debugger Project (gdb). It is a collection of tools used to compile RISC-V programs.
 # To install GCC from source can take hours to compile.
 # This configuration enables multilib to target many flavors of RISC-V.
-# This book is tested with GCC 13.2.0
+# This book is tested with GCC 13.2.0 and 14.2.0.
 section_header "Installing/Updating RISC-V GNU Toolchain"
 STATUS="riscv-gnu-toolchain"
 cd "$RISCV"
-# Temporarily pin riscv-gnu-toolchain to use GCC 13.2.0. GCC 14 does not work with the Q extension.
 if git_check "riscv-gnu-toolchain" "https://github.com/riscv/riscv-gnu-toolchain" "$RISCV/riscv-gnu-toolchain/stamps/build-gcc-newlib-stage2"; then
     cd "$RISCV"/riscv-gnu-toolchain
     git reset --hard && git clean -f && git checkout master && git pull && git submodule update
