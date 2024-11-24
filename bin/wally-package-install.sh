@@ -61,7 +61,7 @@ if [ "$FAMILY" == rhel ]; then
     fi
     # A newer version of gcc is required for qemu
     OTHER_PACKAGES=(gcc-toolset-13)
-elif [ "$FAMILY" == ubuntu ]; then
+elif [[ "$FAMILY" == ubuntu || "$FAMILY" == debian ]]; then
     if (( UBUNTU_VERSION >= 24 )); then
         PYTHON_VERSION=python3.12
         VERILATOR_PACKAGES+=(mold) # Not availale in Ubuntu 20.04, nice for Verilator
@@ -71,11 +71,14 @@ elif [ "$FAMILY" == ubuntu ]; then
     elif (( UBUNTU_VERSION >= 20 )); then
         PYTHON_VERSION=python3.9
         OTHER_PACKAGES+=(gcc-10 g++-10 cpp-10) # Newer version of gcc needed for Verilator
+    elif (( DEBIAN_VERSION >= 12 )); then
+        PYTHON_VERSION=python3.11
+        VERILATOR_PACKAGES+=(mold) # Not availale in Ubuntu 20.04, nice for Verilator
     fi
     PACKAGE_MANAGER="DEBIAN_FRONTEND=noninteractive apt-get"
     UPDATE_COMMAND="sudo $PACKAGE_MANAGER update -y && sudo $PACKAGE_MANAGER upgrade -y --with-new-pkgs"
     GENERAL_PACKAGES+=(rsync git make cmake "$PYTHON_VERSION" python3-pip "$PYTHON_VERSION"-venv curl wget tar pkg-config dialog mutt ssmtp)
-    GNU_PACKAGES+=(autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat1-dev ninja-build libglib2.0-dev libslirp-dev)
+    GNU_PACKAGES+=(autoconf automake autotools-dev libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat1-dev ninja-build libglib2.0-dev libslirp-dev)
     QEMU_PACKAGES+=(libfdt-dev libpixman-1-dev)
     SPIKE_PACKAGES+=(device-tree-compiler libboost-regex-dev libboost-system-dev)
     VERILATOR_PACKAGES+=(help2man perl g++ clang ccache libunwind-dev libgoogle-perftools-dev numactl perl-doc libfl2 libfl-dev zlib1g)
