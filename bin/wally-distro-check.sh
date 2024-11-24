@@ -65,38 +65,38 @@ fi
 if [[ "$ID" == rhel || "$ID_LIKE" == *rhel* ]]; then
     export FAMILY=rhel
     if [ "$ID" != rhel ] && [ "$ID" != rocky ] && [ "$ID" != almalinux ]; then
-        printf "${WARNING_COLOR}%s%s\n${ENDC}" "For Red Hat family distros, the Wally install script has only been tested on RHEL, Rocky Linux," \
+        printf "${WARNING_COLOR}%s%s\n${ENDC}" "For Red Hat family distros, the Wally installation script has only been tested on RHEL, Rocky Linux," \
             " and AlmaLinux. Your distro is $PRETTY_NAME. The regular Red Hat install will be attempted, but there may be issues."
     fi
     export RHEL_VERSION="${VERSION_ID:0:1}"
     if (( RHEL_VERSION < 8 )); then
-        printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally install script is only compatible with versions 8 and 9 of RHEL, Rocky Linux, and AlmaLinux. You have version $VERSION."
+        printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally installation script is only compatible with versions 8 and 9 of RHEL, Rocky Linux, and AlmaLinux. You have version $VERSION."
         exit 1
     fi
 elif [[ "$ID" == ubuntu || "$ID_LIKE" == *ubuntu* ]]; then
     export FAMILY=ubuntu
     if [ "$ID" != ubuntu ]; then
-        printf "${WARNING_COLOR}%s\n${ENDC}" "For Ubuntu family distros, the Wally install script has only been tested on standard Ubuntu. Your distro " \
+        printf "${WARNING_COLOR}%s%s\n${ENDC}" "For Ubuntu family distros, the Wally installation script has only been tested on standard Ubuntu. Your distro " \
             "is $PRETTY_NAME. The regular Ubuntu install will be attempted, but there may be issues."
     fi
     export UBUNTU_VERSION="${VERSION_ID:0:2}"
     if (( UBUNTU_VERSION < 20 )); then
-        printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally install script has only been tested with Ubuntu versions 20.04 LTS, 22.04 LTS, and 24.04 LTS. You have version $VERSION."
+        printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally installation script has only been tested with Ubuntu versions 20.04 LTS, 22.04 LTS, and 24.04 LTS. You have version $VERSION."
         exit 1
     fi
 elif [[ "$ID" == debian || "$ID_LIKE" == *debian* ]]; then
     export FAMILY=debian
     if [ "$ID" != debian ]; then
-        printf "${WARNING_COLOR}%s\n${ENDC}" "For Debian family distros, the Wally install script has only been tested on standard Debian (and Ubuntu). Your distro " \
+        printf "${WARNING_COLOR}%s%s\n${ENDC}" "For Debian family distros, the Wally installation script has only been tested on standard Debian (and Ubuntu). Your distro " \
             "is $PRETTY_NAME. The regular Debian install will be attempted, but there may be issues."
     fi
     export DEBIAN_VERSION="$VERSION_ID"
     if (( DEBIAN_VERSION < 11 )); then
-        printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally install script has only been tested with Debian versions 11 and 12. You have version $VERSION."
+        printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally installation script has only been tested with Debian versions 11 and 12. You have version $VERSION."
         exit 1
     fi
 else
-    printf "${FAIL_COLOR}%s%s%s\n${ENDC}" "The Wally install script is currently only compatible with Ubuntu, Debian, and Red Hat family " \
+    printf "${FAIL_COLOR}%s%s%s\n${ENDC}" "The Wally installation script is currently only compatible with Ubuntu, Debian, and Red Hat family " \
         "(RHEL, Rocky Linux, or AlmaLinux) distros. Your detected distro is $PRETTY_NAME. You may try manually running the " \
         "commands in this script, but it is likely that some will need to be altered."
     exit 1
