@@ -9,7 +9,6 @@
 `define XLEN32 1
 
 // Define relevant addresses
-`define CLINT_BASE 64'h02000000
 `define ACCESS_FAULT_ADDRESS 32'h0000
 
 // Unprivileged extensions
