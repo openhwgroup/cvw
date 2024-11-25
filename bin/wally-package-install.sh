@@ -43,43 +43,55 @@ if [ -z "$FAMILY" ]; then
 fi
 
 
-# Generate list of packages to install and package manager commands based on distro
 # Packages are grouped by which tool requires them. If multiple tools need a package, it is included in the first tool only
+# Packages that are constant across distros
+GENERAL_PACKAGES+=(rsync git make cmake curl wget tar unzip bzip2 dialog mutt ssmtp)
+GNU_PACKAGES+=(autoconf automake gawk bison flex texinfo gperf libtool ninja-build patchutils bc gcc)
+VERILATOR_PACKAGES+=(help2man perl clang ccache numactl)
+BUILDROOT_PACKAGES+=(ncurses-base cpio)
+
+# Distro specific packages and package manager
 if [ "$FAMILY" == rhel ]; then
     PYTHON_VERSION=python3.12
-    PACKAGE_MANAGER="dnf"
-    UPDATE_COMMAND="sudo $PACKAGE_MANAGER update -y"
-    GENERAL_PACKAGES+=(which rsync git make cmake "$PYTHON_VERSION" "$PYTHON_VERSION"-pip curl wget tar pkgconf-pkg-config dialog mutt ssmtp)
-    GNU_PACKAGES+=(autoconf automake  libmpc-devel mpfr-devel gmp-devel gawk bison flex texinfo gperf libtool patchutils bc gcc gcc-c++ zlib-devel expat-devel libslirp-devel)
-    QEMU_PACKAGES+=(glib2-devel libfdt-devel pixman-devel bzip2 ninja-build)
+    PACKAGE_MANAGER="dnf -y"
+    UPDATE_COMMAND="sudo $PACKAGE_MANAGER update"
+    GENERAL_PACKAGES+=(which "$PYTHON_VERSION" "$PYTHON_VERSION"-pip pkgconf-pkg-config gcc-c++)
+    GNU_PACKAGES+=(libmpc-devel mpfr-devel gmp-devel zlib-devel expat-devel libslirp-devel)
+    QEMU_PACKAGES+=(glib2-devel libfdt-devel pixman-devel)
     SPIKE_PACKAGES+=(dtc boost-regex boost-system)
-    VERILATOR_PACKAGES+=(help2man perl clang ccache gperftools numactl mold)
-    BUILDROOT_PACKAGES+=(ncurses-base ncurses ncurses-libs ncurses-devel gcc-gfortran cpio) # gcc-gfortran is only needed for compiling spec benchmarks on buildroot linux
+    VVERILATOR_PACKAGES+=(gperftools mold)
+    BUILDROOT_PACKAGES+=(ncurses ncurses-libs ncurses-devel gcc-gfortran) # gcc-gfortran is only needed for compiling spec benchmarks on buildroot linux
     # Extra packages not availale in rhel8, nice for Verilator
     if (( RHEL_VERSION >= 9 )); then
         VERILATOR_PACKAGES+=(perl-doc)
     fi
     # A newer version of gcc is required for qemu
     OTHER_PACKAGES=(gcc-toolset-13)
-elif [ "$FAMILY" == ubuntu ]; then
+elif [[ "$FAMILY" == ubuntu || "$FAMILY" == debian ]]; then
     if (( UBUNTU_VERSION >= 24 )); then
         PYTHON_VERSION=python3.12
-        VERILATOR_PACKAGES+=(mold) # Not availale in Ubuntu 20.04, nice for Verilator
     elif (( UBUNTU_VERSION >= 22 )); then
         PYTHON_VERSION=python3.11
-        VERILATOR_PACKAGES+=(mold) # Not availale in Ubuntu 20.04, nice for Verilator
     elif (( UBUNTU_VERSION >= 20 )); then
         PYTHON_VERSION=python3.9
         OTHER_PACKAGES+=(gcc-10 g++-10 cpp-10) # Newer version of gcc needed for Verilator
+    elif (( DEBIAN_VERSION >= 12 )); then
+        PYTHON_VERSION=python3.11
+    elif (( DEBIAN_VERSION >= 11 )); then
+        PYTHON_VERSION=python3.9
     fi
-    PACKAGE_MANAGER="DEBIAN_FRONTEND=noninteractive apt-get"
-    UPDATE_COMMAND="sudo $PACKAGE_MANAGER update -y && sudo $PACKAGE_MANAGER upgrade -y --with-new-pkgs"
-    GENERAL_PACKAGES+=(rsync git make cmake "$PYTHON_VERSION" python3-pip "$PYTHON_VERSION"-venv curl wget tar pkg-config dialog mutt ssmtp)
-    GNU_PACKAGES+=(autoconf automake autotools-dev curl libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex texinfo gperf libtool patchutils bc zlib1g-dev libexpat1-dev ninja-build libglib2.0-dev libslirp-dev)
+    # Mold not available in older distros for Verilator, will download binary instead
+    if (( UBUNTU_VERSION != 20 && DEBIAN_VERSION != 11 )); then
+        VERILATOR_PACKAGES+=(mold)
+    fi
+    PACKAGE_MANAGER="DEBIAN_FRONTEND=noninteractive apt-get -y"
+    UPDATE_COMMAND="sudo $PACKAGE_MANAGER update && sudo $PACKAGE_MANAGER upgrade --with-new-pkgs"
+    GENERAL_PACKAGES+=("$PYTHON_VERSION" python3-pip "$PYTHON_VERSION"-venv pkg-config g++)
+    GNU_PACKAGES+=(autotools-dev libmpc-dev libmpfr-dev libgmp-dev build-essential zlib1g-dev libexpat1-dev libglib2.0-dev libslirp-dev)
     QEMU_PACKAGES+=(libfdt-dev libpixman-1-dev)
     SPIKE_PACKAGES+=(device-tree-compiler libboost-regex-dev libboost-system-dev)
-    VERILATOR_PACKAGES+=(help2man perl g++ clang ccache libunwind-dev libgoogle-perftools-dev numactl perl-doc libfl2 libfl-dev zlib1g)
-    BUILDROOT_PACKAGES+=(ncurses-base ncurses-bin libncurses-dev gfortran cpio) # gfortran is only needed for compiling spec benchmarks on buildroot linux
+    VERILATOR_PACKAGES+=(libunwind-dev libgoogle-perftools-dev perl-doc libfl2 libfl-dev zlib1g)
+    BUILDROOT_PACKAGES+=(ncurses-bin libncurses-dev gfortran) # gfortran is only needed for compiling spec benchmarks on buildroot linux
     VIVADO_PACKAGES+=(libncurses*) # Vivado hangs on the third stage of installation without this
 fi
 
@@ -91,7 +103,7 @@ if [ "${1}" == "--check" ]; then
         for pack in "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${OTHER_PACKAGES[@]}"; do
             rpm -q "$pack" > /dev/null || (echo -e "${FAIL_COLOR}Missing packages detected (${WARNING_COLOR}$pack${FAIL_COLOR}). Run as root to auto-install or run wally-package-install.sh first.${ENDC}" && exit 1)
         done
-    elif [ "$FAMILY" == ubuntu ]; then
+    elif [[ "$FAMILY" == ubuntu || "$FAMILY" == debian ]]; then
         for pack in "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${OTHER_PACKAGES[@]}"; do
             dpkg -l "$pack" | grep "ii" > /dev/null || (echo -e "${FAIL_COLOR}Missing packages detected (${WARNING_COLOR}$pack${FAIL_COLOR}). Run as root to auto-install or run wally-package-install.sh first." && exit 1)
         done
@@ -122,7 +134,7 @@ else
     # Update and Upgrade tools
     eval "$UPDATE_COMMAND"
     # Install packages listed above using appropriate package manager
-    sudo $PACKAGE_MANAGER install -y "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${OTHER_PACKAGES[@]}" "${VIVADO_PACKAGES[@]}"
+    sudo $PACKAGE_MANAGER install "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${OTHER_PACKAGES[@]}" "${VIVADO_PACKAGES[@]}"
 
     # Post install steps
     # Vivado looks for ncurses5 libraries, but Ubuntu 24.04 only has ncurses6

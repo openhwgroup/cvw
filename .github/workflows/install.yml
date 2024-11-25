@@ -38,25 +38,41 @@ jobs:
           - name: ubuntu-20.04
             os: ubuntu-20.04
             container: null
+            regressionFail: true
           - name: ubuntu-22.04
             os: ubuntu-22.04
             container: null
           - name: ubuntu-24.04
             os: ubuntu-24.04
             container: null
+          # Debian Installations
+          - name: debian-12
+            os: ubuntu-latest
+            image: debian:12
+            imageFamily: debian
+          - name: debian-11
+            os: ubuntu-latest
+            image: debian:11
+            imageFamily: debian
           # Red Hat Installations
           - name: rocky-8
             os: ubuntu-latest
             image: rockylinux:8
+            imageFamily: redhat
+            regressionFail: true
           - name: rocky-9
             os: ubuntu-latest
             image: rockylinux:9
+            imageFamily: redhat
           - name: almalinux-8
             os: ubuntu-latest
             image: almalinux:8
+            imageFamily: redhat
+            regressionFail: true
           - name: almalinux-9
             os: ubuntu-latest
             image: almalinux:9
+            imageFamily: redhat
           # User level installation
           - name: user-install
             os: ubuntu-latest
@@ -82,11 +98,16 @@ jobs:
 
     steps:
       # Docker images need git installed or the checkout action fails
-      - name: Install Dependencies for Red Hat
+      - name: Install Dependencies for Container Image
         if: ${{ matrix.image != null }}
         run: |
-            dnf install -y sudo git
-            dnf install curl -y --allowerasing || true
+            if [ ${{ matrix.imageFamily }} == "debian" ]; then
+              apt-get update
+              apt-get install -y sudo git
+            elif [ ${{ matrix.imageFamily }} == "redhat" ]; then
+              dnf install -y sudo git
+              dnf install curl -y --allowerasing || true
+            fi
       # Only clone submodules needed for standard tests/regression to save space
       - uses: actions/checkout@v4
       - name: Clone Necessary Submodules
@@ -140,12 +161,12 @@ jobs:
               df -h
       # Run standard regression, skipping distros that are known to be broken with Verilator
       - name: Regression
-        if: ${{ matrix.name != 'ubuntu-20.04' && matrix.name != 'rocky-8' && matrix.name != 'almalinux-8'}}
+        if: ${{ matrix.regressionFail != true }}
         run: |
               source setup.sh
               regression-wally
       - name: Lint + wsim Test Only (for distros with broken Verilator sim)
-        if: ${{ matrix.name == 'ubuntu-20.04' || matrix.name == 'rocky-8' || matrix.name == 'almalinux-8'}}
+        if: ${{ matrix.regressionFail == true }}
         run: |
               source setup.sh
               mkdir -p $WALLY/sim/verilator/logs/
