@@ -8,6 +8,10 @@
 // Define XLEN, used in covergroups
 `define XLEN64 1
 
+// Define relevant addresses
+`define ACCESS_FAULT_ADDRESS 64'h00000000
+`define CLINT_BASE 64'h02000000
+
 // Unprivileged extensions
 `include "RV64I_coverage.svh"
 `include "RV64M_coverage.svh"
@@ -39,6 +43,7 @@
 `include "EndianU_coverage.svh"
 `include "EndianM_coverage.svh"
 `include "EndianS_coverage.svh"
+`include "ExceptionsM_coverage.svh"
 // `include "RV64VM_PMP_coverage.svh"
 // `include "RV64CBO_VM_coverage.svh"
 // `include "RV64CBO_PMP_coverage.svh"
