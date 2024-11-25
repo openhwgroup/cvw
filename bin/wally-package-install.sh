@@ -107,7 +107,7 @@ case "$FAMILY" in
         SPIKE_PACKAGES+=(dtc libboost_regex1_75_0-devel libboost_system1_75_0-devel)
         VERILATOR_PACKAGES+=(gperftools perl-doc)
         BUILDROOT_PACKAGES+=(ncurses-utils ncurses-devel ncurses5-devel gcc-fortran) # gcc-fortran is only needed for compiling spec benchmarks on buildroot linux
-        OTHER_PACKAGES+=(gcc14 gcc14-c++ cpp14) # Newer version of gcc needed for many tools. Default is gcc7
+        OTHER_PACKAGES+=(gcc13 gcc13-c++ cpp13) # Newer version of gcc needed for many tools. Default is gcc7
         ;;
 esac
 

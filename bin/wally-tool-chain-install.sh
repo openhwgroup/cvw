@@ -192,11 +192,11 @@ fi
 if [ "$FAMILY" == rhel ]; then
     source /opt/rh/gcc-toolset-13/enable
 elif [ "$FAMILY" == suse ]; then
-    mkdir -p "$RISCV"/gcc-14/bin
+    mkdir -p "$RISCV"/gcc-13/bin
     for f in gcc cpp g++ gcc-ar gcc-nm gcc-ranlib gcov gcov-dump gcov-tool lto-dump; do
-        ln -vsf /usr/bin/$f-14 "$RISCV"/gcc-14/bin/$f
+        ln -vsf /usr/bin/$f-13 "$RISCV"/gcc-13/bin/$f
     done
-    export PATH="$RISCV"/gcc-14/bin:$PATH
+    export PATH="$RISCV"/gcc-13/bin:$PATH
 elif (( UBUNTU_VERSION == 20 )); then
     mkdir -p "$RISCV"/gcc-10/bin
     for f in gcc cpp g++ gcc-ar gcc-nm gcc-ranlib gcov gcov-dump gcov-tool lto-dump; do
