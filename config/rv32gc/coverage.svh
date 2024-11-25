@@ -10,6 +10,7 @@
 
 // Define relevant addresses
 `define ACCESS_FAULT_ADDRESS 32'h0000
+`define CLINT_BASE 64'h02000000
 
 // Unprivileged extensions
 `include "RV32I_coverage.svh"
