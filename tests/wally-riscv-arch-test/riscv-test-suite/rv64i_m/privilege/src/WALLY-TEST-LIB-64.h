@@ -136,8 +136,8 @@ cause_m_time_interrupt:
     add t3, t2, t3       // add desired offset to the current time
     bgtu t3, t2, nowrap_m  // check new time exceeds current time (no wraparound)
     addi t6, t6, 1       // if wrap, increment most significant word
-    sw t6,4(t4)          // store into most significant word of MTIMECMP
 nowrap_m:
+    sw t6,4(t4)          // store into most significant word of MTIMECMP
     sw t3, 0(t4)         // store into least significant word of MTIMECMP
 time_loop_m:
     addi a3, a3, -1

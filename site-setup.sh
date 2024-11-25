@@ -66,7 +66,7 @@ export SPIKE_PATH=$RISCV/bin										# Copy this as it is
 export IDV=$RISCV/ImperasDV-OpenHW
 if [ -e "$IDV" ]; then
     # echo "Imperas exists"
-    export IMPERAS_HOME=$IDV/Imperas
+    export IMPERAS_HOME=$IDV
     export IMPERAS_PERSONALITY=CPUMAN_DV_ASYNC
     export ROOTDIR=~/
     source "${IMPERAS_HOME}"/bin/setup.sh
