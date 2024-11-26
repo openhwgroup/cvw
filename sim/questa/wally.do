@@ -110,9 +110,8 @@ if {[lcheck lst "--fcov"]} {
          set FCvlog "+define+INCLUDE_TRACE2COV \
                 +define+IDV_INCLUDE_TRACE2COV \
                 +define+COVER_BASE_RV32I \
-                +incdir+$env(WALLY)/addins/riscvISACOV/source \
+                +incdir+$env(WALLY)/addins/cvw-arch-verif/riscvISACOV/source \
 		"
-   
     set FCvopt "+TRACE2COV_ENABLE=1 +IDV_TRACE2COV=1"
 
 }
