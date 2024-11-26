@@ -26,9 +26,6 @@
 	path = addins/cvw-arch-verif
 	url = https://github.com/openhwgroup/cvw-arch-verif
 	ignore = dirty
-[submodule "addins/riscvISACOV"]
-	path = addins/riscvISACOV
-	url = https://github.com/riscv-verification/riscvISACOV.git
 [submodule "addins/berkeley-softfloat-3"]
 	path = addins/berkeley-softfloat-3
 	url = https://github.com/ucb-bar/berkeley-softfloat-3.git
