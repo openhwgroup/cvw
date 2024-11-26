@@ -73,6 +73,11 @@ jobs:
             os: ubuntu-latest
             image: almalinux:9
             imageFamily: redhat
+          # SUSE Installations
+          - name: opensuse-15.6
+            os: ubuntu-latest
+            image: opensuse/leap:15.6
+            imageFamily: suse
           # User level installation
           - name: user-install
             os: ubuntu-latest
@@ -107,6 +112,8 @@ jobs:
             elif [ ${{ matrix.imageFamily }} == "redhat" ]; then
               dnf install -y sudo git
               dnf install curl -y --allowerasing || true
+            elif [ ${{ matrix.imageFamily }} == "suse" ]; then
+              zypper install -y sudo git
             fi
       # Only clone submodules needed for standard tests/regression to save space
       - uses: actions/checkout@v4

@@ -71,7 +71,7 @@ Then fork and clone the repo, source setup, make the tests and run regression
 > This section describes the open source toolchain installation.
 
 ### Compatibility
-The current version of the toolchain has been tested on Ubuntu (versions 20.04 LTS, 22.04 LTS, and 24.04 LTS), Debian (versions 11 and 12), and Red Hat/Rocky/AlmaLinux (versions 8 and 9). Only the latest minor release of each major version is tested.
+The current version of the toolchain has been tested on Ubuntu (versions 20.04 LTS, 22.04 LTS, and 24.04 LTS), Debian (versions 11 and 12), Red Hat/Rocky/AlmaLinux (versions 8 and 9), and OpenSUSE (version 15.6). Only the latest minor release of each major version is tested.
 
 > [!WARNING]
 > - Ubuntu 22.04LTS is incompatible with Synopsys Design Compiler.
