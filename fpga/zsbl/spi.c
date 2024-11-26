@@ -31,7 +31,7 @@
 
 uint8_t spi_txrx(uint8_t byte) {
   spi_sendbyte(byte);
-  waittx();
+  waitrx();
   return spi_readbyte();
 }
 
