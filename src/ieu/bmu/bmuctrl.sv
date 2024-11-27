@@ -152,12 +152,13 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
         endcase
     end
     if (P.ZBB_SUPPORTED | P.ZBS_SUPPORTED) // rv32i/64i shift instructions need BMU ALUSelect when BMU shifter is used
-      casez({OpD, Funct7D, Funct3D})
-        17'b0110011_0?0000?_?01: BMUControlsD = `BMUCTRLW'b001_0000_0000_1_0_0_0_1_0_0_0_0_0;  // sra, srl, sll
-        17'b0010011_0?0000?_?01: BMUControlsD = `BMUCTRLW'b001_0000_0000_1_1_0_0_1_0_0_0_0_0;  // srai, srli, slli
-        17'b0111011_0?0000?_?01: BMUControlsD = `BMUCTRLW'b001_0000_0000_1_0_1_0_1_0_0_0_0_0;  // sraw, srlw, sllw
-        17'b0011011_0?0000?_?01: BMUControlsD = `BMUCTRLW'b001_0000_0000_1_1_1_0_1_0_0_0_0_0;  // sraiw, srliw, slliw
-      endcase
+      if (P.XLEN == 64 | !Funct7D[0]) // rv32i shifts cannot shift by more than 31
+        casez({OpD, Funct7D, Funct3D})
+          17'b0110011_0?0000?_?01: BMUControlsD = `BMUCTRLW'b001_0000_0000_1_0_0_0_1_0_0_0_0_0;  // sra, srl, sll
+          17'b0010011_0?0000?_?01: BMUControlsD = `BMUCTRLW'b001_0000_0000_1_1_0_0_1_0_0_0_0_0;  // srai, srli, slli
+          17'b0111011_0?0000?_?01: BMUControlsD = `BMUCTRLW'b001_0000_0000_1_0_1_0_1_0_0_0_0_0;  // sraw, srlw, sllw
+          17'b0011011_0?0000?_?01: BMUControlsD = `BMUCTRLW'b001_0000_0000_1_1_1_0_1_0_0_0_0_0;  // sraiw, srliw, slliw
+        endcase
     
     if (P.ZBKB_SUPPORTED) begin // ZBKB Bitmanip
       casez({OpD,Funct7D, Funct3D})
