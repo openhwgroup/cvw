@@ -38,7 +38,7 @@ GOTO_S_MODE 0x0, 0x0
 # should result in an illegal instruction for the write and read, respectively
 
 # High-bit versions storing the upper 32 bits of some CSRs for RV32
-WRITE_READ_CSR mstatush 0x111  # not supported in rv32
+WRITE_READ_CSR mstatush 0x111
 WRITE_READ_CSR menvcfgh 0x111
 WRITE_READ_CSR mseccfgh 0x111
 WRITE_READ_CSR pmpcfg1 0x111
