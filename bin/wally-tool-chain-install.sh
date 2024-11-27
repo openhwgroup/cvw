@@ -191,6 +191,12 @@ fi
 # Enable newer version of gcc for older distros (required for QEMU/Verilator)
 if [ "$FAMILY" == rhel ]; then
     source /opt/rh/gcc-toolset-13/enable
+elif [ "$FAMILY" == suse ]; then
+    mkdir -p "$RISCV"/gcc-13/bin
+    for f in gcc cpp g++ gcc-ar gcc-nm gcc-ranlib gcov gcov-dump gcov-tool lto-dump; do
+        ln -vsf /usr/bin/$f-13 "$RISCV"/gcc-13/bin/$f
+    done
+    export PATH="$RISCV"/gcc-13/bin:$PATH
 elif (( UBUNTU_VERSION == 20 )); then
     mkdir -p "$RISCV"/gcc-10/bin
     for f in gcc cpp g++ gcc-ar gcc-nm gcc-ranlib gcov gcov-dump gcov-tool lto-dump; do
@@ -264,7 +270,7 @@ if (( RHEL_VERSION == 8 )); then
 fi
 
 # Mold needed for Verilator
-if (( UBUNTU_VERSION == 20  || DEBIAN_VERSION == 11 )); then
+if (( UBUNTU_VERSION == 20  || DEBIAN_VERSION == 11 )) || [ "$FAMILY" == suse ]; then
     STATUS="mold"
     if [ ! -e "$RISCV"/bin/mold ]; then
         section_header "Installing mold"

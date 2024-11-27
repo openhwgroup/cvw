@@ -95,6 +95,17 @@ elif [[ "$ID" == debian || "$ID_LIKE" == *debian* ]]; then
         printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally installation script has only been tested with Debian versions 11 and 12. You have version $VERSION."
         exit 1
     fi
+elif [[ "$ID" == opensuse-leap || "$ID" == sles || "$ID_LIKE" == *suse* ]]; then
+    export FAMILY=suse
+    if [[ "$ID" != opensuse-leap && "$ID" != sles  ]]; then
+        printf "${WARNING_COLOR}%s%s\n${ENDC}" "For SUSE family distros, the Wally installation script has only been tested on OpenSUSE Leap and SLES. Your distro " \
+            "is $PRETTY_NAME. The regular SUSE install will be attempted, but there may be issues. If you are using OpenSUSE Tumbleweed, the version check will fail."
+    fi
+    export SUSE_VERSION="${VERSION_ID//.}"
+    if (( SUSE_VERSION < 156 )); then
+        printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally installation script has only been tested with SUSE version 15.6. You have version $VERSION."
+        exit 1
+    fi
 else
     printf "${FAIL_COLOR}%s%s%s\n${ENDC}" "The Wally installation script is currently only compatible with Ubuntu, Debian, SUSE, and Red Hat family " \
         "(RHEL, Rocky Linux, or AlmaLinux) distros. Your detected distro is $PRETTY_NAME. You may try manually running the " \
