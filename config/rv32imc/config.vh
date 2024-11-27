@@ -147,7 +147,6 @@ localparam WFI_TIMEOUT_BIT = 32'd16;
 // Peripheral Physical Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
-// *** each of these is `PA_BITS wide. is this paramaterizable INSIDE the config file?
 localparam logic DTIM_SUPPORTED = 1;
 localparam logic [63:0] DTIM_BASE        = 64'h80000000;
 localparam logic [63:0] DTIM_RANGE       = 64'h007FFFFF;

@@ -32,18 +32,15 @@ TRAP_HANDLER m
 
 # Test 5.2.3.6: Test that all the machine mode CSR's are innaccessible for reads and writes in S mode.
 
-# *** several of these appear not to be implemented in the assembler? 
-# I get "assembler messages: error: unkown CSR" with many of them.
-
 GOTO_S_MODE 0x0, 0x0
 
 # Attempt to write 0x111 to each of these CSRs and read the value back
 # should result in an illegal instruction for the write and read, respectively
 
 # High-bit versions storing the upper 32 bits of some CSRs for RV32
-# WRITE_READ_CSR mstatush 0x111 # *** these appear not to be implemented in GCC
-# WRITE_READ_CSR menvcfgh 0x111
-# WRITE_READ_CSR mseccfgh 0x111
+WRITE_READ_CSR mstatush 0x111
+WRITE_READ_CSR menvcfgh 0x111
+WRITE_READ_CSR mseccfgh 0x111
 WRITE_READ_CSR pmpcfg1 0x111
 WRITE_READ_CSR pmpcfg3 0x111
 WRITE_READ_CSR mcycleh 0x111
