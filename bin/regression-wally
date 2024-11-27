@@ -397,6 +397,7 @@ parser.add_argument("--nightly", help="Run large nightly regression", action="st
 parser.add_argument("--buildroot", help="Include Buildroot Linux boot test (takes many hours, done along with --nightly)", action="store_true")
 parser.add_argument("--testfloat", help="Include Testfloat floating-point unit tests", action="store_true")
 parser.add_argument("--fp", help="Include floating-point tests in coverage (slower runtime)", action="store_true") # Currently not used
+parser.add_argument("--breker", help="Run Breker tests", action="store_true")
 parser.add_argument("--dryrun", help="Print commands invoked to console without running regression", action="store_true")
 args = parser.parse_args()
 
@@ -441,7 +442,8 @@ elif (args.fcov):  # run tests in lockstep in functional coverage mode
     addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/rv64/", "rv64gc", coveragesim)
     addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/priv/rv32/", "rv32gc", coveragesim)
     addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/priv/rv64/", "rv64gc", coveragesim)
-
+# elif (args.breker):
+#     addLockstepTestsByDir(WALLY+"/tests/breker/work", "breker", coveragesim, 0)
 else: 
     for sim in sims:
         if (not (args.buildroot and sim == lockstepsim)):  # skip short buildroot sim if running long one

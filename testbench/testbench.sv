@@ -45,6 +45,13 @@ module testbench;
   parameter D_CACHE_ADDR_LOGGER=0;
   parameter RVVI_SYNTH_SUPPORTED=0;
 
+  `ifdef USE_TREK_DV
+    event trek_start;
+    always @(testbench.trek_start) begin
+      trek_uvm_pkg::trek_uvm_events::do_backdoor_init();
+    end
+  `endif
+
   `ifdef USE_IMPERAS_DV
     import idvPkg::*;
     import rvviApiPkg::*;
@@ -518,6 +525,10 @@ module testbench;
           end else begin
             $fclose(uncoreMemFile);
             $readmemh(memfilename, dut.uncoregen.uncore.ram.ram.memory.ram.RAM);
+            `ifdef USE_TREK_DV
+              -> trek_start;
+              $display("starting Trek....");
+            `endif
           end
         end
         if (TEST == "embench") $display("Read memfile %s", memfilename);

@@ -37,6 +37,7 @@ onerror {quit -f}
 # Initialize variables
 set CFG ${1}
 set TESTSUITE ${2}
+set TESTSUITE_NO_ELF [file rootname ${TESTSUITE}]
 set TESTBENCH ${3}
 set WKDIR wkdir/${CFG}_${TESTSUITE}
 set WALLY $::env(WALLY)
@@ -62,11 +63,17 @@ set CoverageVsimArg ""
 
 set FunctCoverage 0
 set FCvlog ""
-set FCvopt ""
+set FCvsim ""
 set FCdefineCOVER_EXTS {}
+
+set breker 0
+set brekervlog ""
+set brekervopt ""
+set brekervsim ""
 
 set lockstep 0
 set lockstepvlog ""
+
 set SVLib ""
 
 set GUI 0
@@ -107,13 +114,11 @@ if {[lcheck lst "--ccov"]} {
 if {[lcheck lst "--fcov"]} {
     set FunctCoverage 1
     # COVER_BASE_RV32I is just needed to keep riscvISACOV happy, but no longer affects tests
-         set FCvlog "+define+INCLUDE_TRACE2COV \
+    set FCvlog "+define+INCLUDE_TRACE2COV \
                 +define+IDV_INCLUDE_TRACE2COV \
                 +define+COVER_BASE_RV32I \
-                +incdir+$env(WALLY)/addins/cvw-arch-verif/riscvISACOV/source \
-		"
-    set FCvopt "+TRACE2COV_ENABLE=1 +IDV_TRACE2COV=1"
-
+                +incdir+$env(WALLY)/addins/cvw-arch-verif/riscvISACOV/source"
+    set FCvsim "+TRACE2COV_ENABLE=1 +IDV_TRACE2COV=1"
 }
 
 # if --lockstep or --fcov found set flag and remove from list
@@ -124,7 +129,20 @@ if {[lcheck lst "--lockstep"] || $FunctCoverage == 1} {
                       +incdir+${IMPERAS_HOME}/ImpProprietary/include/host \
                       ${IMPERAS_HOME}/ImpPublic/source/host/rvvi/*.sv \
                       ${IMPERAS_HOME}/ImpProprietary/source/host/idv/*.sv"
-    set SVLib "-sv_lib ${IMPERAS_HOME}/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model"
+    set SVLib " -sv_lib ${IMPERAS_HOME}/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model "
+}
+
+# if --breker found set flag and remove from list
+if {[lcheck lst "--breker"]} {
+    set breker 1
+    set BREKER_HOME $::env(BREKER_HOME)
+    set brekervlog "+define+USE_TREK_DV \
+                    +incdir+${WALLY}/testbench/trek_files \
+                    ${WALLY}/testbench/trek_files/uvm_output/trek_uvm_pkg.sv"
+    set brekervopt "${WKDIR}.trek_uvm"
+    # may need to change this path
+    set brekervsim "+TREK_TBX_FILE=${WALLY}/tests/breker/work/${TESTSUITE_NO_ELF}/${TESTSUITE_NO_ELF}.tbx"
+    append SVLib " -sv_lib ${BREKER_HOME}/linux64/lib/libtrek "
 }
 
 # Set PlusArgs passed using the --args flag
@@ -151,6 +169,7 @@ if {$DEBUG > 0} {
     echo "ccov = $ccov"
     echo "lockstep = $lockstep"
     echo "FunctCoverage = $FunctCoverage"
+    echo "Breker = $breker"
     echo "remaining list = $lst"
     echo "Extra +args = $PlusArgs"
     echo "Extra -args = $ExpandedParamArgs"
@@ -162,13 +181,13 @@ if {$DEBUG > 0} {
 # because vsim will run vopt
 set INC_DIRS "+incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared +incdir+${FCRVVI} +incdir+${FCRVVI}/rv32 +incdir+${FCRVVI}/rv64 +incdir+${FCRVVI}/rv64_priv +incdir+${FCRVVI}/priv +incdir+${FCRVVI}/rv32_priv +incdir+${FCRVVI}/common +incdir+${FCRVVI}"
 set SOURCES "${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv ${SRC}/*/*.sv ${SRC}/*/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*/*/*.sv"
-vlog -permissive -lint -work ${WKDIR} {*}${INC_DIRS} {*}${FCvlog} {*}${FCdefineCOVER_EXTS} {*}${lockstepvlog} {*}${SOURCES} -suppress 2282,2583,7053,7063,2596,13286
+vlog -permissive -lint -work ${WKDIR} {*}${INC_DIRS} {*}${FCvlog} {*}${FCdefineCOVER_EXTS} {*}${lockstepvlog} {*}${brekervlog} {*}${SOURCES} -suppress 2282,2583,7053,7063,2596,13286
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} {*}${ExpandedParamArgs} -o testbenchopt ${CoverageVoptArg}
+vopt $accFlag ${WKDIR}.${TESTBENCH} ${brekervopt} -work ${WKDIR} {*}${ExpandedParamArgs} -o testbenchopt ${CoverageVoptArg}
 
-vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} {*}${PlusArgs} -fatal 7 {*}${SVLib} {*}${FCvopt} -suppress 3829 ${CoverageVsimArg}
+vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} {*}${PlusArgs} -fatal 7 {*}${SVLib} {*}${FCvsim} {*}${brekervsim} -suppress 3829 ${CoverageVsimArg}
 
 # power add generates the logging necessary for saif generation.
 # power add -r /dut/core/*
