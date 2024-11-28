@@ -152,12 +152,17 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
         endcase
     end
     if (P.ZBB_SUPPORTED | P.ZBS_SUPPORTED) // rv32i/64i shift instructions need BMU ALUSelect when BMU shifter is used
-      if (P.XLEN == 64 | !Funct7D[0]) // rv32i shifts cannot shift by more than 31
+      if (P.XLEN == 64 | !Funct7D[0]) 
         casez({OpD, Funct7D, Funct3D})
-          17'b0110011_0?0000?_?01: BMUControlsD = `BMUCTRLW'b001_0000_0000_1_0_0_0_1_0_0_0_0_0;  // sra, srl, sll
-          17'b0010011_0?0000?_?01: BMUControlsD = `BMUCTRLW'b001_0000_0000_1_1_0_0_1_0_0_0_0_0;  // srai, srli, slli
-          17'b0111011_0?0000?_?01: BMUControlsD = `BMUCTRLW'b001_0000_0000_1_0_1_0_1_0_0_0_0_0;  // sraw, srlw, sllw
-          17'b0011011_0?0000?_?01: BMUControlsD = `BMUCTRLW'b001_0000_0000_1_1_1_0_1_0_0_0_0_0;  // sraiw, srliw, slliw
+          // rv32i shifts cannot shift by more than 31.  w-type shifts only supported in RV64
+          17'b0110011_000000?_001: if (P.XLEN == 64 | !Funct7D[0]) BMUControlsD = `BMUCTRLW'b001_0000_0000_1_0_0_0_1_0_0_0_0_0;  // sll
+          17'b0110011_0?0000?_101: if (P.XLEN == 64 | !Funct7D[0]) BMUControlsD = `BMUCTRLW'b001_0000_0000_1_0_0_0_1_0_0_0_0_0;  // sra, srl
+          17'b0010011_000000?_001: if (P.XLEN == 64 | !Funct7D[0]) BMUControlsD = `BMUCTRLW'b001_0000_0000_1_1_0_0_1_0_0_0_0_0;  // slli
+          17'b0010011_0?0000?_101: if (P.XLEN == 64 | !Funct7D[0]) BMUControlsD = `BMUCTRLW'b001_0000_0000_1_1_0_0_1_0_0_0_0_0;  // srai, srli
+          17'b0111011_0000000_001: if (P.XLEN == 64) BMUControlsD = `BMUCTRLW'b001_0000_0000_1_0_1_0_1_0_0_0_0_0;  // sllw
+          17'b0111011_0?00000_101: if (P.XLEN == 64) BMUControlsD = `BMUCTRLW'b001_0000_0000_1_0_1_0_1_0_0_0_0_0;  // sraw, srlw
+          17'b0011011_0000000_001: if (P.XLEN == 64) BMUControlsD = `BMUCTRLW'b001_0000_0000_1_1_1_0_1_0_0_0_0_0;  // slliw
+          17'b0011011_0?00000_101: if (P.XLEN == 64) BMUControlsD = `BMUCTRLW'b001_0000_0000_1_1_1_0_1_0_0_0_0_0;  // sraiw, srliw
         endcase
     
     if (P.ZBKB_SUPPORTED) begin // ZBKB Bitmanip
