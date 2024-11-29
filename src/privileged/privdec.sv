@@ -59,7 +59,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   
   // svinval instructions
   // any svinval instruction is treated as sfence.vma on Wally
-  assign sinvalvmaM =     (InstrM[31:25] == 7'b0001001);
+  assign sinvalvmaM =     (InstrM[31:25] ==  7'b0001011);
   assign sfencewinvalM  = (InstrM[31:20] == 12'b000110000000) & rs1zeroM;
   assign sfenceinvalirM = (InstrM[31:20] == 12'b000110000001) & rs1zeroM;
   assign invalM =         P.SVINVAL_SUPPORTED & (sinvalvmaM | sfencewinvalM | sfenceinvalirM); 
