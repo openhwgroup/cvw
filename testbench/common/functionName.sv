@@ -70,7 +70,7 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
 
     begin
       if ( pc == 0 ) begin
-	// *** want to  keep the old value for mid and minval
+	// want to  keep the old value for mid and minval
 	mid = 0;
 	return;
       end

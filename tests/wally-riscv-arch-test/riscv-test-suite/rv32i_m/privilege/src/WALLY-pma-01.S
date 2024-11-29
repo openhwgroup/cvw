@@ -66,7 +66,7 @@ test_cases:
 # ---------------------------------------------------------------------------------------------
 
 # =========== test 12.3.2.1 PMAs: Memory Access Size, Type protection test ===========
-# Tests memory load, store, and execute permissions based on table 12.3 in the *** riscv book, copied below
+# Tests memory load, store, and execute permissions
 
 # | Region | Base Address | Read widths | R   | W   | X   | Cacheable | Idempotent | Atomic |
 # | ROM    | 0x1000       | Any         | YES | NO  | YES | YES       | NO         | NO     |

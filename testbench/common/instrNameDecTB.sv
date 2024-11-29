@@ -219,6 +219,10 @@ module instrNameDecTB(
                        else if (imm == 258) name = "SRET";
                        else if (imm == 770) name = "MRET";
                        else if (funct7 == 9) name = "SFENCE.VMA";
+                       else if (funct7 == 11) name = "SINVAL.VMA";
+                       else if (funct7 == 12 & rs2 == 0) name = "SFENCE.W.INVAL";
+                       else if (funct7 == 12 & rs2 == 1) name = "SFENCE.INVAL.IR";
+                       else if (imm == 259) name = "WFI";
                        else if (imm == 261) name = "WFI";
                        else              name = "ILLEGAL";
       10'b1110011_001: name = "CSRRW";
