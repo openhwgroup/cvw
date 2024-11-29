@@ -73,7 +73,7 @@
 # Show "c." with compressed instructions 
 --override show_c_prefix=T
 
-# nonratified mnosie register not implemented
+# nonratified mnoise register not implemented
 --override cpu/mnoise_undefined=T
 
 # mcause and scause only have 4 lsbs of code and 1 msb of interrupt flag
@@ -85,8 +85,6 @@
 
 # Zkr entropy source and seed register not supported.
 --override cpu/Zkr=F
-
-
 
 --override cpu/reset_address=0x80000000
 
