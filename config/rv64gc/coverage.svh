@@ -44,6 +44,7 @@
 `include "EndianM_coverage.svh"
 `include "EndianS_coverage.svh"
 `include "ExceptionsM_coverage.svh"
+`include "ExceptionsZc_coverage.svh"
 // `include "RV64VM_PMP_coverage.svh"
 // `include "RV64CBO_VM_coverage.svh"
 // `include "RV64CBO_PMP_coverage.svh"

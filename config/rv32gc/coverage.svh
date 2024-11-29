@@ -45,3 +45,4 @@
 `include "EndianM_coverage.svh"
 `include "EndianS_coverage.svh"
 `include "ExceptionsM_coverage.svh"
+`include "ExceptionsZc_coverage.svh"
