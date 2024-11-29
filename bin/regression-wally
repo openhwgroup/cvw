@@ -34,7 +34,7 @@ tests = [
                     "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "arch32zfh", "arch32zfh_fma", 
                     "arch32zfh_divsqrt", "arch32zfaf", "arch32zfad", "wally32a_lrsc", "wally32priv", "wally32periph", "arch32zcb",
                     "arch32zbkb", "arch32zbkc", "arch32zbkx", "arch32zknd", "arch32zkne", "arch32zknh"]], 
-         ["rv64i", ["arch64i"]]
+        ["rv64i", ["arch64i"]]
         ]
 
 # Separate test for short buildroot run through OpenSBI UART output
@@ -265,8 +265,8 @@ class bcolors:
 def addTests(tests, sim):
     sim_logdir = WALLY+ "/sim/" + sim + "/logs/"
     for test in tests:
-        config = test[0];
-        suites = test[1];
+        config = test[0]
+        suites = test[1]
         if (len(test) >= 3):
             args = " --args " + " ".join(test[2])
         else:
@@ -401,9 +401,8 @@ parser.add_argument("--dryrun", help="Print commands invoked to console without 
 args = parser.parse_args()
 
 if (args.nightly):
-    nightMode = "--nightly";
+    nightMode = "--nightly"
     sims = ["questa", "verilator", "vcs"] # exercise all simulators; can omit a sim if no license is available
-#    sims = ["questa", "verilator"] # exercise all simulators; can omit a sim if no license is available
 else:
     nightMode = ""
     sims = [defaultsim]
@@ -413,7 +412,7 @@ if (args.ccov):  # only run RV64GC tests in coverage mode
 elif (args.fcov):  # only run RV64GC tests in lockstep in coverage mode
     coverStr = '--fcov'
 else:
-   coverStr = ''
+    coverStr = ''
 
 
 # Run Lint
@@ -556,17 +555,17 @@ def main():
     else:
         ImperasDVLicenseCount = 10000 # effectively no license limit for non-lockstep tests
     with Pool(processes=min(len(configs),multiprocessing.cpu_count(), ImperasDVLicenseCount)) as pool:
-       num_fail = 0
-       results = {}
-       for config in configs:
-           results[config] = pool.apply_async(run_test_case,(config, args.dryrun))
-       for (config,result) in results.items():
-           try:
-             num_fail+=result.get(timeout=TIMEOUT_DUR)
-           except TimeoutError:
-             pool.terminate()
-             num_fail+=1
-             print(f"{bcolors.FAIL}%s: Timeout - runtime exceeded %d seconds{bcolors.ENDC}" % (config.cmd, TIMEOUT_DUR))
+        num_fail = 0
+        results = {}
+        for config in configs:
+            results[config] = pool.apply_async(run_test_case,(config, args.dryrun))
+        for (config,result) in results.items():
+            try:
+                num_fail+=result.get(timeout=TIMEOUT_DUR)
+            except TimeoutError:
+                pool.terminate()
+                num_fail+=1
+                print(f"{bcolors.FAIL}%s: Timeout - runtime exceeded %d seconds{bcolors.ENDC}" % (config.cmd, TIMEOUT_DUR))
 
     # Coverage report
     if args.ccov:
