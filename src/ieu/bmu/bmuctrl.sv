@@ -119,13 +119,11 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
     if (P.ZBC_SUPPORTED)
       casez({OpD, Funct7D, Funct3D})
         17'b0110011_0000101_010: BMUControlsD = `BMUCTRLW'b000_0011_0001_1_0_0_0_1_0_0_0_0_0;  // clmulr
-        17'b0110011_0000101_0??: BMUControlsD = `BMUCTRLW'b000_0011_0000_1_0_0_0_1_0_0_0_0_0;  // clmul/clmulh
+        17'b0110011_0000101_0?1: BMUControlsD = `BMUCTRLW'b000_0011_0000_1_0_0_0_1_0_0_0_0_0;  // clmul/clmulh
       endcase
     if (P.ZBKC_SUPPORTED) begin   
       casez({OpD, Funct7D, Funct3D})
-        17'b0110011_0000101_0??: BMUControlsD = `BMUCTRLW'b000_0011_0000_1_0_0_0_1_0_0_0_0_0;  // clmul/clmulh
-        //  17'b0110011_0000101_001: BMUControlsD = `BMUCTRLW'b000_0011_0000_1_0_0_0_1_0_0_0_0_0;  // clmul
-        // 17'b0110011_0000101_011: BMUControlsD = `BMUCTRLW'b000_0011_0001_1_0_0_0_1_0_0_0_0_0;  // clmulh
+        17'b0110011_0000101_0?1: BMUControlsD = `BMUCTRLW'b000_0011_0000_1_0_0_0_1_0_0_0_0_0;  // clmul/clmulh
       endcase
     end
 
