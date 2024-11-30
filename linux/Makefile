@@ -89,11 +89,11 @@ disassemble: check_environment
 	@echo "Disassembly successfully completed."
 
 $(DIS)/%.objdump: $(IMAGES)/%.elf
-	riscv64-unknown-elf-objdump -DS $< >> $@
+	riscv64-unknown-elf-objdump -Mno-aliases -DS $< >> $@
 	$(WALLY)/bin/extractFunctionRadix.sh $@
 
 $(DIS)/%.objdump: $(IMAGES)/%
-	riscv64-unknown-elf-objdump -S $< >> $@
+	riscv64-unknown-elf-objdump -Mno-aliases -S $< >> $@
 	$(WALLY)/bin/extractFunctionRadix.sh $@
 
 $(IMAGES)/vmlinux:

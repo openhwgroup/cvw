@@ -5,7 +5,7 @@
 embench_dir = ../../addins/embench-iot
 ARCH=rv32imac_zicsr
 
-all: build 
+all: build
 run: build size sim
 
 allClean: clean all
@@ -16,19 +16,19 @@ buildsize: build_speedopt_size build_sizeopt_size
 
 # uses the build_all.py python file to build the tests in addins/embench-iot/bd_speed/ optimized for speed and size
 build_speedopt_speed:
-	$(embench_dir)/build_all.py --builddir=bd_speedopt_speed --arch riscv32 --chip generic --board rv32wallyverilog --ldflags="-nostartfiles ../../../config/riscv32/boards/rv32wallyverilog/startup/crt0.S -march=$(ARCH)" --cflags="-O2 -nostartfiles -march=$(ARCH)" 
-	# remove files not used in embench1.0  When changing to 2.0, restore these files		
+	$(embench_dir)/build_all.py --builddir=bd_speedopt_speed --arch riscv32 --chip generic --board rv32wallyverilog --ldflags="-nostartfiles ../../../config/riscv32/boards/rv32wallyverilog/startup/crt0.S -march=$(ARCH)" --cflags="-O2 -nostartfiles -march=$(ARCH)"
+	# remove files not used in embench1.0  When changing to 2.0, restore these files
 	#rm -rf $(embench_dir)/bd_speedopt_speed/src/md5sum
 	#rm -rf $(embench_dir)/bd_speedopt_speed/src/tarfind
-	#rm -rf $(embench_dir)/bd_speedopt_speed/src/primecount	
+	#rm -rf $(embench_dir)/bd_speedopt_speed/src/primecount
 	find $(embench_dir)/bd_speedopt_speed/ -type f ! -name "*.*" | while read f; do cp "$$f" "$$f.elf"; done
 
 build_sizeopt_speed:
-	$(embench_dir)/build_all.py --builddir=bd_sizeopt_speed --arch riscv32 --chip generic --board rv32wallyverilog --ldflags="-nostartfiles ../../../config/riscv32/boards/rv32wallyverilog/startup/crt0.S -march=$(ARCH)" --cflags="-Os -nostartfiles -march=$(ARCH)" 
-	# remove files not used in embench1.0  When changing to 2.0, restore these files		
+	$(embench_dir)/build_all.py --builddir=bd_sizeopt_speed --arch riscv32 --chip generic --board rv32wallyverilog --ldflags="-nostartfiles ../../../config/riscv32/boards/rv32wallyverilog/startup/crt0.S -march=$(ARCH)" --cflags="-Os -nostartfiles -march=$(ARCH)"
+	# remove files not used in embench1.0  When changing to 2.0, restore these files
 	#rm -rf $(embench_dir)/bd_sizeopt_speed/src/md5sum
 	#rm -rf $(embench_dir)/bd_sizeopt_speed/src/tarfind
-	#rm -rf $(embench_dir)/bd_sizeopt_speed/src/primecount	
+	#rm -rf $(embench_dir)/bd_sizeopt_speed/src/primecount
 	find $(embench_dir)/bd_sizeopt_speed/ -type f ! -name "*.*" | while read f; do cp "$$f" "$$f.elf"; done
 
 # uses the build_all.py python file to build the tests in addins/embench-iot/bd_speed/ optimized for speed and size
@@ -50,7 +50,7 @@ sim_run:
 
 # builds the objdump based on the compiled c elf files
 objdump:
-	find $(embench_dir)/bd_*_speed/ -type f -name "*.elf" | while read f; do riscv64-unknown-elf-objdump -S -D "$$f" > "$$f.objdump"; done
+	find $(embench_dir)/bd_*_speed/ -type f -name "*.elf" | while read f; do riscv64-unknown-elf-objdump -Mno-aliases -S -D "$$f" > "$$f.objdump"; done
 
 # build memfiles, objdump.lab and objdump.addr files
 sim_build_memfile: objdump
@@ -68,16 +68,16 @@ spike_run:
 
 # python wrapper to present results of embench size benchmark
 size: buildsize
-	$(embench_dir)/benchmark_size.py --builddir=bd_speedopt_size --json-output > wallySpeedOpt_size.json 
-	$(embench_dir)/benchmark_size.py --builddir=bd_sizeopt_size --json-output > wallySizeOpt_size.json 
+	$(embench_dir)/benchmark_size.py --builddir=bd_speedopt_size --json-output > wallySpeedOpt_size.json
+	$(embench_dir)/benchmark_size.py --builddir=bd_sizeopt_size --json-output > wallySizeOpt_size.json
 
 # python wrapper to present results of embench speed benchmark
 speed:
-	$(embench_dir)/benchmark_speed.py --builddir=bd_sizeopt_speed --target-module run_wally --cpu-mhz=1 --json-output > wallySizeOpt_speed.json 
-	$(embench_dir)/benchmark_speed.py --builddir=bd_speedopt_speed --target-module run_wally --cpu-mhz=1 --json-output > wallySpeedOpt_speed.json 
+	$(embench_dir)/benchmark_speed.py --builddir=bd_sizeopt_speed --target-module run_wally --cpu-mhz=1 --json-output > wallySizeOpt_speed.json
+	$(embench_dir)/benchmark_speed.py --builddir=bd_speedopt_speed --target-module run_wally --cpu-mhz=1 --json-output > wallySpeedOpt_speed.json
 
 # deletes all files
-clean: 
+clean:
 	rm -rf $(embench_dir)/bd_*_speed/
 	rm -rf $(embench_dir)/bd_*_size/
 

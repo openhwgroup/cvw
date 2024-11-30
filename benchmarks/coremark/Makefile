@@ -23,7 +23,7 @@ PORT_CFLAGS = -g -mabi=$(ABI) -march=$(ARCH) -static -falign-functions=16 \
 	-fno-delete-null-pointer-checks -fno-rename-registers --param=loop-max-datarefs-for-datadeps=0 \
 	-funroll-all-loops --param=uninlined-function-insns=8 -fno-tree-vrp -fwrapv -fipa-pta \
 	-nostdlib -nostartfiles -ffreestanding -mstrict-align \
-	-DTOTAL_DATA_SIZE=2000 -DMAIN_HAS_NOARGC=1 -DPERFORMANCE_RUN=1 -DITERATIONS=10 -DXLEN=$(XLEN) 
+	-DTOTAL_DATA_SIZE=2000 -DMAIN_HAS_NOARGC=1 -DPERFORMANCE_RUN=1 -DITERATIONS=10 -DXLEN=$(XLEN)
 
 all: $(work_dir)/coremark.bare.riscv.elf.memfile
 
@@ -32,7 +32,7 @@ run: $(work_dir)/coremark.bare.riscv.elf.memfile
 	time wsim ${CONFIG} coremark 2>&1 | tee $(work_dir)/coremark.sim.log
 
 $(work_dir)/coremark.bare.riscv.elf.memfile: $(work_dir)/coremark.bare.riscv
-	riscv64-unknown-elf-objdump -D $< > $<.elf.objdump
+	riscv64-unknown-elf-objdump -Mno-aliases -D $< > $<.elf.objdump
 	riscv64-unknown-elf-elf2hex --bit-width $(XLEN) --input $< --output $@
 	extractFunctionRadix.sh $<.elf.objdump
 

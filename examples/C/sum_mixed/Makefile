@@ -1,8 +1,8 @@
 TARGET = sum_mixed
 
 $(TARGET).objdump: $(TARGET)
-	riscv64-unknown-elf-objdump -S -D $(TARGET) > $(TARGET).objdump
-    
+	riscv64-unknown-elf-objdump -Mno-aliases -S -D $(TARGET) > $(TARGET).objdump
+
 $(TARGET): $(TARGET).c Makefile
 	riscv64-unknown-elf-gcc -o $(TARGET) -g -O\
 	  -march=rv64gc -mabi=lp64d -mcmodel=medany \
@@ -16,12 +16,12 @@ $(TARGET): $(TARGET).c Makefile
 #  -march=rv64gc -mabi=lp64d =mcmodel=medany generates code for RV64GC with doubles and long/ptrs = 64 bits
 #  -static forces static linking (no dynamic shared libraries on bare metal)
 #  -lm links the math library if necessary (when #include math.h)
-#  -nostdlib avoids inserting standard startup files and default libraries 
+#  -nostdlib avoids inserting standard startup files and default libraries
 #     because we are using crt.s on bare metal
-#  -fno-tree-loop-distribute-patterns turns replacing loops with memcpy/memset in the std library 
+#  -fno-tree-loop-distribute-patterns turns replacing loops with memcpy/memset in the std library
 #  -T specifies the linker file
 #  -I specifies the include path (e.g. for util.h)
-#  The last line defines the C files to compile.  
+#  The last line defines the C files to compile.
 #    crt.S is needed as our startup file to initialize the processor
 #    syscalls.c implements printf through the HTIF for Spike
 # other flags from riscv-tests makefiles that don't seem to be important

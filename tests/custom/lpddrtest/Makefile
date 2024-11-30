@@ -11,7 +11,7 @@ LINK_FLAGS      :=$(MARCH) $(MABI) -nostartfiles -Wl,-Map=$(TARGET).map -L $(RIS
 
 CFLAGS =$(MARCH) $(MABI) -Wa,-alhs -Wa,-L -mcmodel=medany  -mstrict-align -O2
 CC=riscv64-unknown-elf-gcc
-DA=riscv64-unknown-elf-objdump -d
+DA=riscv64-unknown-elf-objdump -Mno-aliases -d
 
 
 include $(ROOT)/makefile.inc

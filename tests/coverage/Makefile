@@ -14,7 +14,7 @@ all: $(OBJDUMPS) $(MEMFILES)
 
 # Create dissassembly
 %.elf.objdump: %.elf
-	riscv64-unknown-elf-objdump -S -D $< > $@
+	riscv64-unknown-elf-objdump -Mno-aliases -S -D $< > $@
 	extractFunctionRadix.sh $@
 
 # Create memfile
