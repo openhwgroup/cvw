@@ -15,6 +15,44 @@
 extern volatile uint64_t tohost;
 extern volatile uint64_t fromhost;
 
+/////////////////////////////
+// Start of code added for Wally
+//   Use UART rather than syscall host interface for printing
+//////////////////////////////
+
+#include <stdint.h>
+
+void uartInit(void) {
+  volatile uint8_t *UART_LCR = (uint8_t*)0x10000003;
+	*UART_LCR = 0b0000011; // 8-bit characters, 1 stop bit, no parity
+}
+
+void uartSend(char c) {
+  volatile uint8_t *UART_THR = (uint8_t*)0x10000000;
+  volatile uint8_t *UART_LSR = (uint8_t*)0x10000005;
+
+	while (!(*UART_LSR & (1<<5))); // wait for THRE (trans hold reg empty)
+	*UART_THR = c;
+}
+
+char uartReceive(void) {
+  volatile uint8_t *UART_RBR = (uint8_t*)0x10000000;
+  volatile uint8_t *UART_LSR = (uint8_t*)0x10000005;
+
+	while (!(*UART_LSR & (1<<0))); // wait for DR (Data Ready)
+	return *UART_RBR;
+}
+
+char uartPutStr(const char *str) {
+    while (*str) {
+        uartSend(*str++);
+    }
+}
+
+/////////////////////////////
+// End of code added for Wally
+//////////////////////////////
+
 static uintptr_t syscall(uintptr_t which, uint64_t arg0, uint64_t arg1, uint64_t arg2)
 {
   volatile uint64_t magic_mem[8] __attribute__((aligned(64)));
@@ -76,7 +114,19 @@ void abort()
 
 void printstr(const char* s)
 {
-  syscall(SYS_write, 1, (uintptr_t)s, strlen(s));
+  // david_harris@hmc.edu 11/30/24 switch to printing via UART rather than syscall
+  // This works on both Spike and Wally simulations
+  //syscall(SYS_write, 1, (uintptr_t)s, strlen(s));
+  uartPutStr(s);
+}
+
+// Added 30 November 2024 David_Harris@hmc.edu
+// The compiler encountering printf with a pure string argument tries to invoke puts
+// rather than the usual printf, so puts must be defined.
+int puts(const char* s)
+{
+  printstr(s);
+  return 0;
 }
 
 void __attribute__((weak)) thread_entry(int cid, int nc)
@@ -107,6 +157,7 @@ void _init(int cid, int nc)
 {
   init_tls();
   thread_entry(cid, nc);
+  uartInit(); // added 11/30/2024 David_Harris@hmc.edu for printing via UART
 
   // only single-threaded programs should ever get here.
   int ret = main(0, 0);
@@ -125,6 +176,11 @@ void _init(int cid, int nc)
 #undef putchar
 int putchar(int ch)
 {
+  // David_Harris@hmc.edu 11/30/2024
+  // Replaced syscall with uartSend
+  uartSend(ch);
+ 
+  /*
   static __thread char buf[64] __attribute__((aligned(64)));
   static __thread int buflen = 0;
 
@@ -134,7 +190,7 @@ int putchar(int ch)
   {
     syscall(SYS_write, 1, (uintptr_t)buf, buflen);
     buflen = 0;
-  }
+  } */
 
   return 0;
 }
