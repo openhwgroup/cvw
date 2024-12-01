@@ -20,7 +20,7 @@ WALLY = os.environ.get('WALLY')
 def parseArgs():
     parser = argparse.ArgumentParser()
     parser.add_argument("config", help="Configuration file")
-    parser.add_argument("testsuite", help="Test suite or path to .elf file")
+    parser.add_argument("testsuite", nargs="?", help="Test suite or path to .elf file")
     parser.add_argument("--elf", "-e", help="ELF File name; use if name does not end in .elf", default="")
     parser.add_argument("--sim", "-s", help="Simulator", choices=["questa", "verilator", "vcs"], default="questa")
     parser.add_argument("--tb", "-t", help="Testbench", choices=["testbench", "testbench_fp"], default="testbench")
@@ -36,6 +36,20 @@ def parseArgs():
     parser.add_argument("--covlog", "-d", help="Log coverage after n instructions.", default=0)
     parser.add_argument("--rvvi", "-r", help="Simulate rvvi hardware interface and ethernet.", action="store_true")
     return parser.parse_args()
+
+def validateArgs(args):
+    if not args.testsuite and not args.elf:
+        print("Error: Missing test suite or ELF file")
+        exit(1)
+    if(args.lockstep and not args.testsuite.endswith('.elf') and not args.testsuite == "buildroot"):
+        print(f"Invalid Options. Cannot run a testsuite, {args.testsuite} with lockstep. Must run a single elf.")
+        exit(1)
+    elif (args.gui or args.ccov or args.fcov or args.lockstep or args.lockstepverbose) and args.sim not in ["questa", "vcs"]:
+        print("Option only supported for Questa and VCS")
+        exit(1)
+    elif (args.tb == "testbench_fp" and args.sim != "questa"):
+        print("Error: testbench_fp presently only supported by Questa, not VCS or Verilator, because of a touchy testbench")
+        exit(1)
 
 def elfFileCheck(args):
     ElfFile = ""
@@ -61,17 +75,6 @@ def elfFileCheck(args):
             print(f"ELF file not found: {args.testsuite}")
             exit(1)
     return ElfFile
-
-def validateArgs(args):
-    if(args.lockstep and not args.testsuite.endswith('.elf') and not args.testsuite == "buildroot"):
-        print(f"Invalid Options. Cannot run a testsuite, {args.testsuite} with lockstep. Must run a single elf.")
-        exit(1)
-    elif (args.gui or args.ccov or args.fcov or args.lockstep or args.lockstepverbose) and args.sim not in ["questa", "vcs"]:
-        print("Option only supported for Questa and VCS")
-        exit(1)
-    elif (args.tb == "testbench_fp" and args.sim != "questa"):
-        print("Error: testbench_fp presently only supported by Questa, not VCS or Verilator, because of a touchy testbench")
-        exit(1)
 
 def prepSim(args, ElfFile):
     flags = ""
@@ -169,9 +172,9 @@ def runVCS(args, flags, prefix):
 
 if __name__ == "__main__":
     args = parseArgs()
+    validateArgs(args)
     print(f"Config={args.config} tests={args.testsuite} sim={args.sim} gui={args.gui} args='{args.args} params='{args.params}'")
     ElfFile = elfFileCheck(args)
-    validateArgs(args)
     flags, prefix = prepSim(args, ElfFile)
     createDirs(args)
     exit(runSim(args, flags, prefix))
