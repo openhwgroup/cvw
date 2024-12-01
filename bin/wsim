@@ -64,15 +64,20 @@ if(args.testsuite.endswith('.elf') and args.elf == ""): # No --elf argument; che
         print("ELF file not found: " + args.testsuite)
         exit(1)
 
+if (ElfFile != ""):
+    args.args += " " + ElfFile
+
 if(args.lockstep and not args.testsuite.endswith('.elf') and not args.testsuite == "buildroot"):
     print(f"Invalid Options. Cannot run a testsuite, {args.testsuite} with lockstep. Must run a single elf.")
     exit(1)
 
 # Validate arguments
-if (args.gui or args.ccov or args.fcov or args.lockstep or args.lockstepverbose):
-    if args.sim not in ["questa", "vcs"]:
-        print("Option only supported for Questa and VCS")
-        exit(1)
+if (args.gui or args.ccov or args.fcov or args.lockstep or args.lockstepverbose) and args.sim not in ["questa", "vcs"]:
+    print("Option only supported for Questa and VCS")
+    exit(1)
+elif (args.tb == "testbench_fp" and args.sim != "questa"):
+    print("Error: testbench_fp presently only supported by Questa, not VCS or Verilator, because of a touchy testbench")
+    exit(1)
 
 if (args.vcd):
     args.args += " -DMAKEVCD=1"
@@ -88,14 +93,10 @@ if(int(args.locksteplog) >= 1): EnableLog = 1
 else: EnableLog = 0
 prefix = ""
 if (args.lockstep or args.lockstepverbose or args.fcov):
-    if (args.sim == "questa" or args.sim == "vcs"):
-        imperasicPath = os.path.join(WALLY, "config", args.config, "imperas.ic")
-        if not os.path.isfile(imperasicPath): # If config is a derivative, look for imperas.ic in derivative configs
-            imperasicPath = os.path.join(WALLY, "config", "deriv", args.config, "imperas.ic")
-        prefix = "IMPERAS_TOOLS=" + imperasicPath
-# Force Questa to use 64-bit mode, sometimes it defaults to 32-bit even on 64-bit machines
-if (args.sim == "questa"):
-    prefix = "MTI_VCO_MODE=64 " + prefix
+    imperasicPath = os.path.join(WALLY, "config", args.config, "imperas.ic")
+    if not os.path.isfile(imperasicPath): # If config is a derivative, look for imperas.ic in derivative configs
+        imperasicPath = os.path.join(WALLY, "config", "deriv", args.config, "imperas.ic")
+    prefix = "IMPERAS_TOOLS=" + imperasicPath
 
 if (args.lockstep or args.lockstepverbose):
     if(args.locksteplog != 0): ImperasPlusArgs = " +IDV_TRACE2LOG=" + str(EnableLog) + " +IDV_TRACE2LOG_AFTER=" + str(args.locksteplog)
@@ -134,17 +135,12 @@ for d in ["logs", "wkdir", "cov", "ucdb", "fcov", "fcov_ucdb"]:
 
 cd = "cd $WALLY/sim/" +args.sim
 
-# check for unsupported sims
-if (args.tb == "testbench_fp" and args.sim != "questa"):
-    print("Error: testbench_fp presently only supported by Questa, not VCS or Verilator, because of a touchy testbench")
-    exit(1)
-
 # per-simulator launch
 if (args.sim == "questa"):
+    # Force Questa to use 64-bit mode, sometimes it defaults to 32-bit even on 64-bit machines
+    prefix = "MTI_VCO_MODE=64 " + prefix
     if (args.gui) and (args.tb == "testbench"):
         args.params += "DEBUG=1"
-    if (ElfFile != ""):
-        args.args += " " + ElfFile
     if (args.args != ""):
         args.args = " --args \\\"" + args.args + "\\\""
     if (args.params != ""):
@@ -158,11 +154,9 @@ if (args.sim == "questa"):
     print("Running Questa with command: " + cmd)
     os.system(cmd)
 elif (args.sim == "verilator"):
-    # PWD=${WALLY}/sim CONFIG=rv64gc TESTSUITE=arch64i
     print(f"Running Verilator on {args.config} {args.testsuite}")
     os.system(f"/usr/bin/make -C {regressionDir}/verilator WALLYCONF={args.config} TEST={args.testsuite} TESTBENCH={args.tb} PLUS_ARGS=\"{args.args}\" PARAM_ARGS=\"{args.params}\"")
 elif (args.sim == "vcs"):
-    print("wsim params: " + args.params)
     print(f"Running VCS on " + args.config + " " + args.testsuite)
     # if (args.gui):
     #     flags += " --gui"
@@ -174,9 +168,6 @@ elif (args.sim == "vcs"):
         vcsparams = ""
     else:
         vcsparams = " --params \"" + args.params + "\" "
-    print("VCS params: " + vcsparams)
-    if (ElfFile != ""):
-        ElfFile = " --elffile " + ElfFile
-    cmd = cd + "; " + prefix + " ./run_vcs " + args.config + " " + args.testsuite + " " + " --tb " + args.tb + " " + vcsargs + vcsparams + ElfFile + " " + flags
+    cmd = cd + "; " + prefix + " ./run_vcs " + args.config + " " + args.testsuite + " " + " --tb " + args.tb + " " + vcsargs + vcsparams + " " + flags
     print(cmd)
     os.system(cmd)
