@@ -1,5 +1,6 @@
 // hello.c
 // David_Harris@hmc.edu 30 November 2024
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 // Hello World program illustrating compiled C code printing via the UART
 // The Wally team has modified the Berkeley syscalls.c (in examples/C/common)
@@ -10,7 +11,8 @@
 // such that using \n\r for new lines works best.
 
 // compile with make
-// simulate with: wsim rv64gc hello.elf --sim verilator
+// simulate Wally with: wsim rv64gc hello.elf --sim verilator
+// simulate in Spike with: spike hello.elf
 
 #include <stdio.h>  
 
