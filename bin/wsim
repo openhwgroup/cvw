@@ -64,6 +64,9 @@ if(args.testsuite.endswith('.elf') and args.elf == ""): # No --elf argument; che
         print("ELF file not found: " + args.testsuite)
         exit(1)
 
+if (ElfFile != ""):
+    args.args += " " + ElfFile
+
 if(args.lockstep and not args.testsuite.endswith('.elf') and not args.testsuite == "buildroot"):
     print(f"Invalid Options. Cannot run a testsuite, {args.testsuite} with lockstep. Must run a single elf.")
     exit(1)
@@ -143,8 +146,6 @@ if (args.tb == "testbench_fp" and args.sim != "questa"):
 if (args.sim == "questa"):
     if (args.gui) and (args.tb == "testbench"):
         args.params += "DEBUG=1"
-    if (ElfFile != ""):
-        args.args += " " + ElfFile
     if (args.args != ""):
         args.args = " --args \\\"" + args.args + "\\\""
     if (args.params != ""):
@@ -162,7 +163,6 @@ elif (args.sim == "verilator"):
     print(f"Running Verilator on {args.config} {args.testsuite}")
     os.system(f"/usr/bin/make -C {regressionDir}/verilator WALLYCONF={args.config} TEST={args.testsuite} TESTBENCH={args.tb} PLUS_ARGS=\"{args.args}\" PARAM_ARGS=\"{args.params}\"")
 elif (args.sim == "vcs"):
-    print("wsim params: " + args.params)
     print(f"Running VCS on " + args.config + " " + args.testsuite)
     # if (args.gui):
     #     flags += " --gui"
@@ -174,9 +174,6 @@ elif (args.sim == "vcs"):
         vcsparams = ""
     else:
         vcsparams = " --params \"" + args.params + "\" "
-    print("VCS params: " + vcsparams)
-    if (ElfFile != ""):
-        ElfFile = " --elffile " + ElfFile
-    cmd = cd + "; " + prefix + " ./run_vcs " + args.config + " " + args.testsuite + " " + " --tb " + args.tb + " " + vcsargs + vcsparams + ElfFile + " " + flags
+    cmd = cd + "; " + prefix + " ./run_vcs " + args.config + " " + args.testsuite + " " + " --tb " + args.tb + " " + vcsargs + vcsparams + " " + flags
     print(cmd)
     os.system(cmd)

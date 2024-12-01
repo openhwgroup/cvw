@@ -24,7 +24,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument("config", help="Configuration file")
 parser.add_argument("testsuite", help="Test suite (or none, when running a single ELF file) ")
 parser.add_argument("--tb", "-t", help="Testbench", choices=["testbench", "testbench_fp"], default="testbench")
-parser.add_argument("--elffile", "-e", help="ELF file name", default="")
 parser.add_argument("--coverage", "-c", help="Code & Functional Coverage", action="store_true")
 parser.add_argument("--fcov", "-f", help="Code & Functional Coverage", action="store_true")
 parser.add_argument("--args", "-a", help="Optional arguments passed to simulator via $value$plusargs", default="")
@@ -33,7 +32,7 @@ parser.add_argument("--lockstep", "-l", help="Run ImperasDV lock, step, and comp
 # GUI not yet implemented
 #parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true")
 args = parser.parse_args()
-print("run_vcs Config=" + args.config + " tests=" + args.testsuite + " elffile=" + args.elffile + " lockstep=" + str(args.lockstep) + " args='" + args.args + "'")
+print("run_vcs Config=" + args.config + " tests=" + args.testsuite + " lockstep=" + str(args.lockstep) + " args='" + args.args + "' params='" + args.params + "'")
 
 cfgdir = "$WALLY/config"
 srcdir = "$WALLY/src"
@@ -88,7 +87,7 @@ PARAM_OVERRIDES=" -parameters " + wkdir + "/param_overrides.txt "
 OUTPUT="sim_out"
 VCS_CMD="vcs +lint=all,noGCWM,noUI,noSVA-UA,noIDTS,noNS,noULCO,noCAWM-L,noWMIA-L,noSV-PIU,noSTASKW_CO,noSTASKW_CO1,noSTASKW_RMCOF -suppress +warn -sverilog +vc -Mupdate -line -full64 -lca -ntb_opts sensitive_dyn " + "-top " + args.tb + PARAM_OVERRIDES + INCLUDE_PATH # Disabled Debug flags; add them back for a GUI mode -debug_access+all+reverse  -kdb +vcs+vcdpluson
 VCS = VCS_CMD + " -Mdir=" + wkdir + " " + srcdir + "/cvw.sv " + LOCKSTEP_OPTIONS + " " + COV_OPTIONS + " " + RTL_FILES + " -o " + wkdir + "/" + OUTPUT + " -work " + wkdir + " -Mlib=" + wkdir + " -l " + logdir + "/" + args.config + "_" + args.testsuite + ".log"
-SIMV_CMD= wkdir + "/" + OUTPUT + " +TEST=" + args.testsuite + " " + args.elffile + " " + args.args + " -no_save " + LOCKSTEP_SIMV 
+SIMV_CMD= wkdir + "/" + OUTPUT + " +TEST=" + args.testsuite + " " + args.args + " -no_save " + LOCKSTEP_SIMV
 
 # Run simulation
 print("Executing: " + str(VCS) )
