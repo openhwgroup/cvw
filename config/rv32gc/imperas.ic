@@ -10,7 +10,7 @@
 
 # Core settings
 --variant RV32GCK # for RV32GC
---override cpu/priv_version=1.12 
+--override cpu/priv_version=1.12
 --override cpu/user_version=20191213
 # arch
 --override cpu/mimpid=0x100
@@ -20,7 +20,7 @@
 --override refRoot/cpu/envcfg_mask=1   # dh 1/26/24 this should be deleted when ImperasDV is updated to allow envcfg.FIOM to be written
 
 # bit manipulation
---override cpu/add_Extensions=B 
+--override cpu/add_Extensions=B
 --override cpu/bitmanip_version=1.0.0
 --override cpu/misa_B_Zba_Zbb_Zbs=T
 
@@ -70,9 +70,9 @@
 --override cpu/trigger_num=0 # disable CSRs 7a0-7a8
 
 # For code coverage, don't produce pseudoinstructions
---override no_pseudo_inst=T 
+--override no_pseudo_inst=T
 
-# Show "c." with compressed instructions 
+# Show "c." with compressed instructions
 --override show_c_prefix=T
 
 # nonratified mnoise register not implemented
@@ -87,6 +87,10 @@
 
 # Zkr entropy source and seed register not supported.
 --override cpu/Zkr=F
+
+# ShangMi Crypto not supported
+--override cpu/Zksed=F
+--override cpu/Zksh=F
 
 --override cpu/reset_address=0x80000000
 
@@ -107,7 +111,7 @@
 # mstatus.FS is set dirty on any write to a FPR, or when a fp operation signals an exception
 --override cpu/mstatus_fs_mode=write_1
 
-# PMA Settings 
+# PMA Settings
 # 'r': read access allowed
 # 'w': write access allowed
 # 'x': execute access allowed
