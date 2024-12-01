@@ -83,7 +83,7 @@ def prepSim(args, ElfFile):
     if args.rvvi:
         args.params += " RVVI_SYNTH_SUPPORTED=1 "
     if args.tb == "testbench_fp":
-        args.params += f" TEST=\" {args.testsuite} \" "
+        args.params += f' TEST="{args.testsuite}" '
     if ElfFile != "":
         args.args += f" {ElfFile}"
     if args.ccov:
@@ -108,7 +108,7 @@ def lockstepSetup(args):
             if not os.path.isfile(imperasicPath):
                 print("Error: imperas.ic not found")
                 exit(1)
-        prefix += f"IMPERAS_TOOLS= {imperasicPath}"
+        prefix += f"IMPERAS_TOOLS={imperasicPath}"
 
     if (args.lockstep or args.lockstepverbose):
         if(args.locksteplog != 0): ImperasPlusArgs = f" +IDV_TRACE2LOG={EnableLog} +IDV_TRACE2LOG_AFTER={args.locksteplog}"
@@ -142,30 +142,30 @@ def runQuesta(args, flags, prefix):
     if (args.gui) and (args.tb == "testbench"):
         args.params += "DEBUG=1"
     if (args.args != ""):
-        args.args = f" --args \\\"{args.args}\\\""
+        args.args = f' --args \\"{args.args}\\"'
     if (args.params != ""):
-        args.params = f" --params \\\"{args.params}\\\""
+        args.params = f' --params \\"{args.params}\\"'
     # Questa cannot accept more than 9 arguments.  fcov implies lockstep
     cmd = f"do wally.do {args.config} {args.testsuite} {args.tb} {args.args} {args.params} {flags}"
     if (args.gui):  # launch Questa with GUI; add +acc to keep variables accessible
-        cmd = f"cd $WALLY/sim/questa; {prefix} vsim -do \" {cmd}  +acc\""
+        cmd = f'cd $WALLY/sim/questa; {prefix} vsim -do "{cmd}  +acc"'
     else: # launch Questa in batch mode
-        cmd = f"cd $WALLY/sim/questa; {prefix} vsim -c -do \" {cmd} \""
+        cmd = f'cd $WALLY/sim/questa; {prefix} vsim -c -do "{cmd}"'
     print(f"Running Questa with command: {cmd}")
     os.system(cmd)
 
 def runVerilator(args, flags, prefix):
     print(f"Running Verilator on {args.config} {args.testsuite}")
-    os.system(f"/usr/bin/make -C {WALLY}/sim/verilator WALLYCONF={args.config} TEST={args.testsuite} TESTBENCH={args.tb} PLUS_ARGS=\"{args.args}\" PARAM_ARGS=\"{args.params}\"")
+    os.system(f'/usr/bin/make -C {WALLY}/sim/verilator WALLYCONF={args.config} TEST={args.testsuite} TESTBENCH={args.tb} PLUS_ARGS="{args.args}" PARAM_ARGS="{args.params}"')
 
 def runVCS(args, flags, prefix):
     print(f"Running VCS on {args.config} {args.testsuite}")
     # if (args.gui):
     #     flags += " --gui"
     if (args.args != ""):
-        args.args = f" --args \"{args.args}\" "
+        args.args = f' --args "{args.args}" '
     if (args.params != ""):
-        args.params = f" --params \"{args.params}\" "
+        args.params = f' --params "{args.params}" '
     cmd = f"cd $WALLY/sim/vcs; {prefix} ./run_vcs {args.config} {args.testsuite} --tb {args.tb} {args.args} {args.params} {flags}"
     print(cmd)
     os.system(cmd)
