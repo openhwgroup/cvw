@@ -78,7 +78,7 @@ def elfFileCheck(args):
 def prepSim(args, ElfFile):
     flags = ""
     if args.vcd:
-        args.args += " -DMAKEVCD=1"
+        args.params += " MAKE_VCD=1 "
     if args.rvvi:
         args.params += " RVVI_SYNTH_SUPPORTED=1 "
     if args.tb == "testbench_fp":
