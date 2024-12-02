@@ -156,7 +156,7 @@ def runQuesta(args, flags, prefix):
 
 def runVerilator(args, flags, prefix):
     print(f"Running Verilator on {args.config} {args.testsuite}")
-    os.system(f'/usr/bin/make -C {WALLY}/sim/verilator WALLYCONF={args.config} TEST={args.testsuite} TESTBENCH={args.tb} PLUS_ARGS="{args.args}" PARAM_ARGS="{args.params}"')
+    os.system(f'make -C {WALLY}/sim/verilator WALLYCONF={args.config} TEST={args.testsuite} TESTBENCH={args.tb} PLUS_ARGS="{args.args}" PARAM_ARGS="{args.params}"')
 
 def runVCS(args, flags, prefix):
     print(f"Running VCS on {args.config} {args.testsuite}")
