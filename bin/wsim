@@ -31,7 +31,6 @@ def parseArgs():
     parser.add_argument("--params", "-p", help="Optional top-level parameter overrides of the form param=value", default="")
     parser.add_argument("--vcd", "-v", help="Generate testbench.vcd", action="store_true")
     parser.add_argument("--lockstep", "-l", help="Run ImperasDV lock, step, and compare.", action="store_true")
-    parser.add_argument("--locksteplog", "-b", help="Retired instruction number to be begin logging.", default=0)
     parser.add_argument("--lockstepverbose", "-lv", help="Run ImperasDV lock, step, and compare with tracing enabled", action="store_true")
     parser.add_argument("--covlog", "-d", help="Log coverage after n instructions.", default=0)
     parser.add_argument("--rvvi", "-r", help="Simulate rvvi hardware interface and ethernet.", action="store_true")
@@ -99,8 +98,6 @@ def lockstepSetup(args):
     suffix = ""
     ImperasPlusArgs = ""
 
-    if(int(args.locksteplog) >= 1): EnableLog = 1
-    else: EnableLog = 0
     if (args.lockstep or args.lockstepverbose or args.fcov):
         imperasicPath = os.path.join(WALLY, "config", args.config, "imperas.ic")
         if not os.path.isfile(imperasicPath): # If config is a derivative, look for imperas.ic in derivative configs
@@ -111,7 +108,6 @@ def lockstepSetup(args):
         prefix += f"IMPERAS_TOOLS={imperasicPath}"
 
     if (args.lockstep or args.lockstepverbose):
-        if(args.locksteplog != 0): ImperasPlusArgs = f" +IDV_TRACE2LOG={EnableLog} +IDV_TRACE2LOG_AFTER={args.locksteplog}"
         if(args.fcov):
             CovEnableStr = "1" if int(args.covlog) > 0  else "0"
             if(args.covlog >= 1): EnableLog = 1
