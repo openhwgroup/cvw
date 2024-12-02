@@ -5,39 +5,29 @@ wally/wallypipelinedcore.sv: logic                 InstrM
 lsu/lsu.sv: logic        IEUAdrM
 lsu/lsu.sv: logic       MemRWM
 mmu/hptw.sv: logic	   SATP_REGW
-uncore/uncore.sv: logic SDCCmd
-uncore/uncore.sv: logic SDCCLK
-uncore/uncore.sv: logic SDCIn
-uncore/uncore.sv: logic SDCCS
-uncore/spi_apb.sv: logic InterruptPending
-uncore/spi_apb.sv: logic TransmitFIFOWriteInc
-uncore/spi_apb.sv: logic TransmitFIFOEmpty
-uncore/spi_apb.sv: logic TransmitFIFOReadInc
-uncore/spi_apb.sv: logic TransmitLoad
-uncore/spi_apb.sv: logic ShiftEdge
-uncore/spi_apb.sv: logic SampleEdge
-uncore/spi_apb.sv: logic  ReceiveShiftReg
-uncore/spi_apb.sv: logic TransmitReg
-uncore/spi_apb.sv: logic ShiftIn
-uncore/spi_apb.sv: logic EndOfFrame
-uncore/spi_apb.sv: logic TransmitRegLoaded
-uncore/spi_apb.sv: logic TransmitData
-uncore/spi_apb.sv: logic ReceiveFIFOWriteInc
-uncore/spi_apb.sv: logic ReceiveFIFOReadInc
-uncore/spi_apb.sv: logic ReceiveShiftRegEndian
-uncore/spi_apb.sv: logic ReceiveWatermark
-uncore/spi_apb.sv: logic ReceiveReadWatermarkLevel
-uncore/spi_apb.sv: logic ReceiveData
-uncore/spi_apb.sv: logic ReceiveFIFOFull
-uncore/spi_apb.sv: logic ReceiveFIFOEmpty
-uncore/spi_controller.sv: logic  SCLKenable
-uncore/spi_controller.sv: statetype  CurrState
-uncore/spi_controller.sv: statetype  NextState
-uncore/spi_controller.sv: logic BitNum
-uncore/spi_controller.sv: logic ContinueTransmit
-uncore/spi_controller.sv: logic PhaseOneOffset
-uncore/spi_controller.sv: logic SPICLK
-uncore/spi_fifo.sv: logic rptr
-uncore/spi_fifo.sv: logic rptrnext
-uncore/spi_fifo.sv: logic raddr
-uncore/spi_fifo.sv: logic waddr
+uncore/uartPC16550D.sv : logic MCR
+uncore/uartPC16550D.sv : logic FCR
+uncore/uartPC16550D.sv : logic MSR
+uncore/uartPC16550D.sv : logic DTRb
+uncore/uartPC16550D.sv : logic INTR
+uncore/uartPC16550D.sv : logic RXRDYb
+uncore/uartPC16550D.sv : logic TXRDYb
+uncore/uartPC16550D.sv : logic RXerrIP
+uncore/uartPC16550D.sv : logic IER
+uncore/uartPC16550D.sv : logic LSR
+uncore/uartPC16550D.sv : logic SCR
+uncore/uartPC16550D.sv : statetype txstate
+uncore/uartPC16550D.sv : logic RBR
+uncore/uartPC16550D.sv : logic rxparityerr
+uncore/uartPC16550D.sv : logic LCR
+uncore/uartPC16550D.sv : logic intrID
+uncore/uartPC16550D.sv : logic rxdataavailintr
+uncore/uartPC16550D.sv : logic fifoenabled
+uncore/uartPC16550D.sv : logic rxfifoentries
+uncore/uartPC16550D.sv : logic txsrfull
+uncore/uartPC16550D.sv : logic txhrfull
+uncore/uartPC16550D.sv : logic txfifofull
+uncore/uartPC16550D.sv : logic txfifotail
+uncore/uartPC16550D.sv : logic txfifohead
+uncore/uartPC16550D.sv : logic rxfifotriggered
+uncore/uartPC16550D.sv : logic rxdataready
