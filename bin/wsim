@@ -85,6 +85,8 @@ def prepSim(args, ElfFile):
         args.params += f' TEST="{args.testsuite}" '
     if ElfFile != "":
         args.args += f" {ElfFile}"
+    if args.gui and args.tb == "testbench":
+        args.params += " DEBUG=1 "
     if args.ccov:
         flags += " --ccov"
     if args.fcov:
@@ -135,8 +137,6 @@ def runSim(args, flags, prefix):
 def runQuesta(args, flags, prefix):
     # Force Questa to use 64-bit mode, sometimes it defaults to 32-bit even on 64-bit machines
     prefix = "MTI_VCO_MODE=64 " + prefix
-    if (args.gui) and (args.tb == "testbench"):
-        args.params += "DEBUG=1"
     if (args.args != ""):
         args.args = f' --args \\"{args.args}\\"'
     if (args.params != ""):
