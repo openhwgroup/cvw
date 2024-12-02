@@ -41,8 +41,8 @@ def validateArgs(args):
     if not args.testsuite and not args.elf:
         print("Error: Missing test suite or ELF file")
         exit(1)
-    if(args.lockstep and not args.testsuite.endswith('.elf') and not args.testsuite == "buildroot"):
-        print(f"Invalid Options. Cannot run a testsuite, {args.testsuite} with lockstep. Must run a single elf.")
+    if args.lockstep and not args.testsuite.endswith('.elf') and args.testsuite != "buildroot" :
+        print(f"Invalid Options. Cannot run a testsuite, {args.testsuite} with lockstep. Must run a single elf or buildroot.")
         exit(1)
     elif (args.gui or args.ccov or args.fcov or args.lockstep or args.lockstepverbose) and args.sim not in ["questa", "vcs"]:
         print("Option only supported for Questa and VCS")
