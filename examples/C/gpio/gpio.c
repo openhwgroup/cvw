@@ -4,7 +4,7 @@
 
 // General-Purpose I/O (GPIO) example program illustrating compiled C code
 // compile with make
-// simulate with: wsim rv64gc hello.elf --sim verilator
+// simulate with: wsim rv64gc --elf hello.elf --sim verilator
 
 #include <stdio.h>  
 #include "gpiolib.h"
