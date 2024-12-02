@@ -10,6 +10,10 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "coremark"
+      - dependency-name: "embench-iot"
+      - dependency-name: "verilog-ethernet"
   # Update actions in the GitHub Actions workflow files
   - package-ecosystem: "github-actions"
     directory: "/"
