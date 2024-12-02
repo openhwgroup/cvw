@@ -11,8 +11,8 @@
 // such that using \n\r for new lines works best.
 
 // compile with make
-// simulate Wally with: wsim rv64gc hello.elf --sim verilator
-// simulate in Spike with: spike hello.elf
+// simulate Wally with: wsim rv64gc --elf hello --sim verilator
+// simulate in Spike with: spike hello
 
 #include <stdio.h>  
 

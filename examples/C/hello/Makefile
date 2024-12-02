@@ -2,7 +2,6 @@ TARGET = hello
 
 $(TARGET).objdump: $(TARGET)
 	riscv64-unknown-elf-objdump -S -D $(TARGET) > $(TARGET).objdump
-	cp $(TARGET) $(TARGET).elf
     
 $(TARGET): $(TARGET).c Makefile
 	riscv64-unknown-elf-gcc -o $(TARGET) -gdwarf-2 -O\
@@ -30,4 +29,4 @@ $(TARGET): $(TARGET).c Makefile
 #     -fno-common -fno-builtin-printf -nostartfiles -lgcc \
 
 clean:
-	rm -f $(TARGET) $(TARGET).objdump
+	rm -f $(TARGET) $(TARGET).objdump* $(TARGET).memfile
