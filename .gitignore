@@ -153,6 +153,8 @@ examples/C/mcmodel/mcmodel_medany
 examples/C/mcmodel/mcmodel_medlow
 examples/C/sum/sum
 examples/C/sum_mixed/sum_mixed
+examples/C/hello/hello
+examples/C/gpio/gpio
 examples/asm/sumtest/sumtest
 examples/asm/example/example
 examples/asm/trap/trap
