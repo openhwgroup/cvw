@@ -291,7 +291,7 @@ def addTests(tests, sim):
             configs.append(tc)
 
 
-def addTestsByDir(dir, config, sim, lockstepMode=0):
+def addTestsByDir(dir, config, sim, lockstepMode=0, brekerMode=0):
     if os.path.isdir(dir):
         sim_logdir = WALLY+ "/sim/" + sim + "/logs/"
         if coverStr == "--fcov": # use --fcov in place of --lockstep
@@ -311,6 +311,10 @@ def addTestsByDir(dir, config, sim, lockstepMode=0):
         elif lockstepMode:
             cmdPrefix="wsim --lockstep --sim " + sim + " " + config
             gs="Mismatches            : 0"
+            fileEnd = ".elf"
+        elif brekerMode:
+            cmdPrefix="wsim --sim " + sim + " " + config
+            gs="# trek: info: summary: Test PASSED"
             fileEnd = ".elf"
         else:
             cmdPrefix="wsim --sim " + sim + " " + config
@@ -442,8 +446,8 @@ elif (args.fcov):  # run tests in lockstep in functional coverage mode
     addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/rv64/", "rv64gc", coveragesim)
     addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/priv/rv32/", "rv32gc", coveragesim)
     addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/priv/rv64/", "rv64gc", coveragesim)
-# elif (args.breker):
-#     addLockstepTestsByDir(WALLY+"/tests/breker/work", "breker", coveragesim, 0)
+elif (args.breker):
+    addTestsByDir(WALLY+"/tests/breker/work", "breker", "questa", brekerMode=1)
 else: 
     for sim in sims:
         if (not (args.buildroot and sim == lockstepsim)):  # skip short buildroot sim if running long one
@@ -454,9 +458,9 @@ else:
 
 # run derivative configurations and lockstep tests in nightly regression
 if (args.nightly):
-    addTestsByDir(WALLY+"/tests/coverage", "rv64gc", lockstepsim, 1)
-    addTestsByDir(WALLY+"/tests/riscof/work/wally-riscv-arch-test/rv64i_m", "rv64gc", lockstepsim, 1)
-    addTestsByDir(WALLY+"/tests/riscof/work/wally-riscv-arch-test/rv32i_m", "rv32gc", lockstepsim, 1)
+    addTestsByDir(WALLY+"/tests/coverage", "rv64gc", lockstepsim, lockstepMode=1)
+    addTestsByDir(WALLY+"/tests/riscof/work/wally-riscv-arch-test/rv64i_m", "rv64gc", lockstepsim, lockstepMode=1)
+    addTestsByDir(WALLY+"/tests/riscof/work/wally-riscv-arch-test/rv32i_m", "rv32gc", lockstepsim, lockstepMode=1)
     addTests(derivconfigtests, defaultsim)
     # addTests(bpredtests, defaultsim) # This is currently broken in regression due to something related to the new wsim script.
 

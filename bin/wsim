@@ -67,7 +67,9 @@ def elfFileCheck(args):
             # extract the elf name from the path to be the test suite
             fields = args.testsuite.rsplit('/', 3)
             # if the name is just ref.elf in a deep path (riscv-arch-test/wally-riscv-arch-test), then use the directory name as the test suite to make it unique; otherwise work directory will have duplicates.
-            if (len(fields) > 3):
+            if ("breker" in args.testsuite):
+                args.testsuite = fields[-1]
+            elif (len(fields) > 3):
                 if (fields[2] == "ref"):
                     args.testsuite = f"{fields[1]}_{fields[3]}"
                 else:

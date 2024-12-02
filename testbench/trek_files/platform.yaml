@@ -100,7 +100,7 @@ trek:
         doc: >-
           Detail settings when mailbox type is `single`
         init_type:
-          value: static
+          value: backdoor #static
           doc: >-
             Strategy to use for mailbox memory initialization.
             Options are:
@@ -108,13 +108,13 @@ trek:
               - backdoor
               - frontdoor
         c2t_base:
-          value: 0x1000
+          value: 0x83000000
           doc: >-
             Fixed base address of C to trekbox mailbox region.
             Allow 64 bytes per processor.
             Used for init_type of `backdoor` and `frontdoor` only.
         t2c_base:
-          value: 0x2000
+          value: 0x83001000
           doc: >-
             Fixed base address of trekbox to C mailbox region.
             Allow 64 bytes per processor.
