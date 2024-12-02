@@ -91,6 +91,8 @@ def prepSim(args, ElfFile):
         flags += " --ccov"
     if args.fcov:
         flags += " --fcov"
+    if args.gui:
+        flags += " --gui"
     prefix, suffix = lockstepSetup(args)
     flags += suffix
     return flags, prefix
@@ -143,10 +145,7 @@ def runQuesta(args, flags, prefix):
         args.params = f' --params \\"{args.params}\\"'
     # Questa cannot accept more than 9 arguments.  fcov implies lockstep
     cmd = f"do wally.do {args.config} {args.testsuite} {args.tb} {args.args} {args.params} {flags}"
-    if (args.gui):  # launch Questa with GUI; add +acc to keep variables accessible
-        cmd = f'cd $WALLY/sim/questa; {prefix} vsim -do "{cmd}  +acc"'
-    else: # launch Questa in batch mode
-        cmd = f'cd $WALLY/sim/questa; {prefix} vsim -c -do "{cmd}"'
+    cmd = f'cd $WALLY/sim/questa; {prefix} vsim {"-c" if not args.gui else ""} -do "{cmd}"'
     print(f"Running Questa with command: {cmd}")
     os.system(cmd)
 
@@ -156,8 +155,6 @@ def runVerilator(args, flags, prefix):
 
 def runVCS(args, flags, prefix):
     print(f"Running VCS on {args.config} {args.testsuite}")
-    # if (args.gui):
-    #     flags += " --gui"
     if (args.args != ""):
         args.args = f' --args "{args.args}" '
     if (args.params != ""):
