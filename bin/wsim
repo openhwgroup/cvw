@@ -76,6 +76,7 @@ def elfFileCheck(args):
 
 def prepSim(args, ElfFile):
     flags = ""
+    prefix = ""
     if args.vcd:
         args.params += " MAKE_VCD=1 "
     if args.rvvi:
@@ -92,33 +93,22 @@ def prepSim(args, ElfFile):
         flags += " --fcov"
     if args.gui:
         flags += " --gui"
-    prefix, suffix = lockstepSetup(args)
-    flags += suffix
+    if args.lockstep or args.lockstepverbose:
+        flags += " --lockstep"
+    if args.lockstep or args.lockstepverbose or args.fcov:
+        prefix = lockstepSetup(args)
     return flags, prefix
 
 def lockstepSetup(args):
-    prefix = ""
-    suffix = ""
-    ImperasPlusArgs = ""
-
-    if (args.lockstep or args.lockstepverbose or args.fcov):
-        imperasicPath = os.path.join(WALLY, "config", args.config, "imperas.ic")
-        if not os.path.isfile(imperasicPath): # If config is a derivative, look for imperas.ic in derivative configs
-            imperasicPath = os.path.join(WALLY, "config", "deriv", args.config, "imperas.ic")
-            if not os.path.isfile(imperasicPath):
-                print("Error: imperas.ic not found")
-                exit(1)
-        prefix += f"IMPERAS_TOOLS={imperasicPath}"
-
-    if (args.lockstep or args.lockstepverbose):
-        if(args.fcov):
-            ImperasPlusArgs = f" +IDV_TRACE2COV={0} +TRACE2LOG_AFTER={0} +TRACE2COV_ENABLE={0}"
-        else:
-            suffix = "--lockstep"
-        if(args.lockstepverbose):
-            prefix += f":{WALLY}/sim/imperas-verbose.ic"
-    args.args += ImperasPlusArgs
-    return prefix, suffix
+    imperasicVerbosePath = os.path.join(WALLY, "sim", "imperas-verbose.ic")
+    imperasicPath = os.path.join(WALLY, "config", args.config, "imperas.ic")
+    if not os.path.isfile(imperasicPath): # If config is a derivative, look for imperas.ic in derivative configs
+        imperasicPath = os.path.join(WALLY, "config", "deriv", args.config, "imperas.ic")
+        if not os.path.isfile(imperasicPath):
+            print("Error: imperas.ic not found")
+            exit(1)
+    prefix = f"IMPERAS_TOOLS={imperasicPath}{f':{imperasicVerbosePath}' if args.lockstepverbose else ''} "
+    return prefix
 
 def createDirs(args):
     for d in ["logs", "wkdir", "cov", "ucdb", "fcov", "fcov_ucdb"]:
