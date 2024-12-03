@@ -122,8 +122,8 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   assign PTE_dM         = testbench.dut.core.lsu.dmmu.dmmu.PTE;
   assign PPN_iM         = testbench.dut.core.ifu.immu.immu.tlb.tlb.PPN;
   assign PPN_dM         = testbench.dut.core.lsu.dmmu.dmmu.tlb.tlb.PPN; 
-  assign PageType_iM    = testbench.dut.core.lsu.PageType;
-  assign PageType_dM    = testbench.dut.core.lsu.PageType;
+  assign PageType_iM    = testbench.dut.core.lsu.dmmu.dmmu.PageTypeWriteVal;
+  assign PageType_dM    = testbench.dut.core.ifu.immu.immu.PageTypeWriteVal;
 
   logic valid;
   
@@ -362,8 +362,8 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   flopenrc #(P.XLEN)     VAdrDWReg (clk, reset, FlushW, ~StallW, VAdrDM, VAdrDW);
   flopenrc #(P.PA_BITS)    PAIWReg (clk, reset, FlushW, ~StallW, PAIM, PAIW);
   flopenrc #(P.PA_BITS)    PADWReg (clk, reset, FlushW, ~StallW, PADM, PADW);
-  flopenrc #(P.XLEN)     PTE_iWReg (clk, reset, FlushW, StallW, PTE_iM, PTE_iW);
-  flopenrc #(P.XLEN)     PTE_dWReg (clk, reset, FlushW, StallW, PTE_dM, PTE_dW);
+  flopenrc #(P.XLEN)     PTE_iWReg (clk, reset, FlushW, ~StallW, PTE_iM, PTE_iW);
+  flopenrc #(P.XLEN)     PTE_dWReg (clk, reset, FlushW, ~StallW, PTE_dM, PTE_dW);
   flopenrc #(P.PPN_BITS) PPN_iWReg (clk, reset, FlushW, ~StallW, PPN_iM, PPN_iW);
   flopenrc #(P.PPN_BITS) PPN_dWReg (clk, reset, FlushW, ~StallW, PPN_dM, PPN_dW);
   flopenrc #(2)     PageType_iWReg (clk, reset, FlushW, ~StallW, PageType_iM, PageType_iW);
