@@ -110,9 +110,9 @@ def lockstepSetup(args):
     prefix = f"IMPERAS_TOOLS={imperasicPath}{f':{imperasicVerbosePath}' if args.lockstepverbose else ''} "
     return prefix
 
-def createDirs(args):
+def createDirs(sim):
     for d in ["logs", "wkdir", "cov", "ucdb", "fcov", "fcov_ucdb"]:
-        os.makedirs(os.path.join(WALLY, "sim", args.sim, d), exist_ok=True)
+        os.makedirs(os.path.join(WALLY, "sim", sim, d), exist_ok=True)
 
 def runSim(args, flags, prefix):
     if (args.sim == "questa"):
@@ -155,5 +155,5 @@ if __name__ == "__main__":
     print(f"Config={args.config} tests={args.testsuite} sim={args.sim} gui={args.gui} args='{args.args}' params='{args.params}'")
     ElfFile = elfFileCheck(args)
     flags, prefix = prepSim(args, ElfFile)
-    createDirs(args)
+    createDirs(args.sim)
     exit(runSim(args, flags, prefix))
