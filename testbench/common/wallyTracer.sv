@@ -122,8 +122,8 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   assign PTE_dM         = testbench.dut.core.lsu.dmmu.dmmu.PTE;
   assign PPN_iM         = testbench.dut.core.ifu.immu.immu.tlb.tlb.PPN;
   assign PPN_dM         = testbench.dut.core.lsu.dmmu.dmmu.tlb.tlb.PPN; 
-  assign PageType_iM    = testbench.dut.core.lsu.dmmu.dmmu.PageTypeWriteVal;
-  assign PageType_dM    = testbench.dut.core.ifu.immu.immu.PageTypeWriteVal;
+  assign PageType_iM    = testbench.dut.core.ifu.immu.immu.PageTypeWriteVal;
+  assign PageType_dM    = testbench.dut.core.lsu.dmmu.dmmu.PageTypeWriteVal;
 
   logic valid;
   
