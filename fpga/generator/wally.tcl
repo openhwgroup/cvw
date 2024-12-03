@@ -98,7 +98,7 @@ write_verilog -force -mode funcsim sim/syn-funcsim.v
 if {$board=="ArtyA7"} {
     #source ../constraints/small-debug.xdc
     #source ../constraints/small-debug-rvvi.xdc
-    source ../constraints/small-debug-uart.xdc
+    source ../constraints/small-debug-wfi.xdc
 } else {
     #source ../constraints/vcu-small-debug.xdc
     #source ../constraints/small-debug.xdc
