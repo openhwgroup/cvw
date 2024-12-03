@@ -69,6 +69,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   logic [(P.XLEN-1):0]     PTE_iM,PTE_dM,PTE_iW,PTE_dW;
   logic [(P.PA_BITS-1):0]  PAIM,PADM,PAIW,PADW;
   logic [(P.PPN_BITS-1):0] PPN_iM,PPN_dM,PPN_iW,PPN_dW;
+  logic [1:0]              PageType_iM, PageType_iW, PageType_dM, PageType_dW;
   logic ReadAccessM,WriteAccessM,ReadAccessW,WriteAccessW;
   logic ExecuteAccessF,ExecuteAccessD,ExecuteAccessE,ExecuteAccessM,ExecuteAccessW;
 
@@ -121,6 +122,8 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   assign PTE_dM         = testbench.dut.core.lsu.dmmu.dmmu.PTE;
   assign PPN_iM         = testbench.dut.core.ifu.immu.immu.tlb.tlb.PPN;
   assign PPN_dM         = testbench.dut.core.lsu.dmmu.dmmu.tlb.tlb.PPN; 
+  assign PageType_iM    = testbench.dut.core.lsu.PageType;
+  assign PageType_dM    = testbench.dut.core.lsu.PageType;
 
   logic valid;
   
@@ -359,10 +362,12 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   flopenrc #(P.XLEN)     VAdrDWReg (clk, reset, FlushW, ~StallW, VAdrDM, VAdrDW);
   flopenrc #(P.PA_BITS)    PAIWReg (clk, reset, FlushW, ~StallW, PAIM, PAIW);
   flopenrc #(P.PA_BITS)    PADWReg (clk, reset, FlushW, ~StallW, PADM, PADW);
-  flopenrc #(P.XLEN)     PTE_iWReg (clk, reset, FlushW, ~StallW, PTE_iM, PTE_iW);
-  flopenrc #(P.XLEN)     PTE_dWReg (clk, reset, FlushW, ~StallW, PTE_dM, PTE_dW);
+  flopenrc #(P.XLEN)     PTE_iWReg (clk, reset, FlushW, StallW, PTE_iM, PTE_iW);
+  flopenrc #(P.XLEN)     PTE_dWReg (clk, reset, FlushW, StallW, PTE_dM, PTE_dW);
   flopenrc #(P.PPN_BITS) PPN_iWReg (clk, reset, FlushW, ~StallW, PPN_iM, PPN_iW);
   flopenrc #(P.PPN_BITS) PPN_dWReg (clk, reset, FlushW, ~StallW, PPN_dM, PPN_dW);
+  flopenrc #(2)     PageType_iWReg (clk, reset, FlushW, ~StallW, PageType_iM, PageType_iW);
+  flopenrc #(2)     PageType_dWReg (clk, reset, FlushW, ~StallW, PageType_dM, PageType_dW);
   flopenrc #(1)  ReadAccessWReg    (clk, reset, FlushW, ~StallW, ReadAccessM, ReadAccessW);
   flopenrc #(1)  WriteAccessWReg   (clk, reset, FlushW, ~StallW, WriteAccessM, WriteAccessW);
   // *** what is this used for?
