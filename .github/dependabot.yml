@@ -11,9 +11,9 @@ updates:
     schedule:
       interval: "weekly"
     ignore:
-      - dependency-name: "coremark"
-      - dependency-name: "embench-iot"
-      - dependency-name: "verilog-ethernet"
+      - dependency-name: "addins/coremark"
+      - dependency-name: "addins/embench-iot"
+      - dependency-name: "addins/verilog-ethernet"
   # Update actions in the GitHub Actions workflow files
   - package-ecosystem: "github-actions"
     directory: "/"
