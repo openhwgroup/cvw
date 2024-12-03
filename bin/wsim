@@ -32,7 +32,6 @@ def parseArgs():
     parser.add_argument("--vcd", "-v", help="Generate testbench.vcd", action="store_true")
     parser.add_argument("--lockstep", "-l", help="Run ImperasDV lock, step, and compare.", action="store_true")
     parser.add_argument("--lockstepverbose", "-lv", help="Run ImperasDV lock, step, and compare with tracing enabled", action="store_true")
-    parser.add_argument("--covlog", "-d", help="Log coverage after n instructions.", default=0)
     parser.add_argument("--rvvi", "-r", help="Simulate rvvi hardware interface and ethernet.", action="store_true")
     return parser.parse_args()
 
@@ -113,10 +112,7 @@ def lockstepSetup(args):
 
     if (args.lockstep or args.lockstepverbose):
         if(args.fcov):
-            CovEnableStr = "1" if int(args.covlog) > 0  else "0"
-            if(args.covlog >= 1): EnableLog = 1
-            else: EnableLog = 0
-            ImperasPlusArgs = f" +IDV_TRACE2COV={EnableLog} +TRACE2LOG_AFTER={args.covlog} +TRACE2COV_ENABLE={CovEnableStr}"
+            ImperasPlusArgs = f" +IDV_TRACE2COV={0} +TRACE2LOG_AFTER={0} +TRACE2COV_ENABLE={0}"
         else:
             suffix = "--lockstep"
         if(args.lockstepverbose):
