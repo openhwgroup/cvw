@@ -360,23 +360,28 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   flopenrc #(1)     CSRWriteWReg (clk, reset, FlushW, ~StallW, CSRWriteM, CSRWriteW);
 
   //for VM Verification
-  flopenrc #(P.XLEN)     VAdrIWReg (clk, reset, FlushW, ~StallW, VAdrIM, VAdrIW);
-  flopenrc #(P.XLEN)     VAdrDWReg (clk, reset, FlushW, ~StallW, VAdrDM, VAdrDW);
-  flopenrc #(P.PA_BITS)    PAIWReg (clk, reset, FlushW, ~StallW, PAIM, PAIW);
-  flopenrc #(P.PA_BITS)    PADWReg (clk, reset, FlushW, ~StallW, PADM, PADW);
-  flopenrc #(P.XLEN)     PTE_iWReg (clk, reset, FlushW, ~GatedStallW, PTE_iM, PTE_iW);
-  flopenrc #(P.XLEN)     PTE_dWReg (clk, reset, FlushW, ~GatedStallW, PTE_dM, PTE_dW);
-  flopenrc #(2)     PageType_iWReg (clk, reset, FlushW, ~GatedStallW, PageType_iM, PageType_iW);
-  flopenrc #(2)     PageType_dWReg (clk, reset, FlushW, ~GatedStallW, PageType_dM, PageType_dW);
-  flopenrc #(P.PPN_BITS) PPN_iWReg (clk, reset, FlushW, ~GatedStallW, PPN_iM, PPN_iW);
-  flopenrc #(P.PPN_BITS) PPN_dWReg (clk, reset, FlushW, ~GatedStallW, PPN_dM, PPN_dW);
-  flopenrc #(1)  ReadAccessWReg    (clk, reset, FlushW, ~GatedStallW, ReadAccessM, ReadAccessW);
-  flopenrc #(1)  WriteAccessWReg   (clk, reset, FlushW, ~GatedStallW, WriteAccessM, WriteAccessW);
-  // *** what is this used for?
-  flopenrc #(1)  ExecuteAccessDReg (clk, reset, FlushE, ~StallD, ExecuteAccessF, ExecuteAccessD);
-  flopenrc #(1)  ExecuteAccessEReg (clk, reset, FlushE, ~StallE, ExecuteAccessD, ExecuteAccessE);
-  flopenrc #(1)  ExecuteAccessMReg (clk, reset, FlushM, ~StallM, ExecuteAccessE, ExecuteAccessM);
-  flopenrc #(1)  ExecuteAccessWReg (clk, reset, FlushW, ~StallW, ExecuteAccessM, ExecuteAccessW);
+  flopenrc #(P.XLEN)     VAdrIWReg (clk, reset, FlushW, ~StallW, VAdrIM, VAdrIW); //Virtual Address for IMMU
+  flopenrc #(P.XLEN)     VAdrDWReg (clk, reset, FlushW, ~StallW, VAdrDM, VAdrDW); //Virtual Address for DMMU
+
+  flopenrc #(P.PA_BITS)    PAIWReg (clk, reset, FlushW, ~StallW, PAIM, PAIW); //Physical Address for IMMU
+  flopenrc #(P.PA_BITS)    PADWReg (clk, reset, FlushW, ~StallW, PADM, PADW); //Physical Address for DMMU
+
+  flopenrc #(P.XLEN)     PTE_iWReg (clk, reset, FlushW, ~GatedStallW, PTE_iM, PTE_iW); //PTE for IMMU
+  flopenrc #(P.XLEN)     PTE_dWReg (clk, reset, FlushW, ~GatedStallW, PTE_dM, PTE_dW); //PTE for DMMU
+
+  flopenrc #(2)     PageType_iWReg (clk, reset, FlushW, ~GatedStallW, PageType_iM, PageType_iW); //Page Type (kilo, mega, giga, tera) from IMMU
+  flopenrc #(2)     PageType_dWReg (clk, reset, FlushW, ~GatedStallW, PageType_dM, PageType_dW); //Page Type (kilo, mega, giga, tera) from DMMU
+
+  flopenrc #(P.PPN_BITS) PPN_iWReg (clk, reset, FlushW, ~GatedStallW, PPN_iM, PPN_iW); //Physical Page Number for IMMU
+  flopenrc #(P.PPN_BITS) PPN_dWReg (clk, reset, FlushW, ~GatedStallW, PPN_dM, PPN_dW); //Physical Page Number for DMMU
+
+  flopenrc #(1)  ReadAccessWReg    (clk, reset, FlushW, ~GatedStallW, ReadAccessM, ReadAccessW); //LoadAccess
+  flopenrc #(1)  WriteAccessWReg   (clk, reset, FlushW, ~GatedStallW, WriteAccessM, WriteAccessW); //StoreAccess
+
+  flopenrc #(1)  ExecuteAccessDReg (clk, reset, FlushE, ~StallD, ExecuteAccessF, ExecuteAccessD); //Instruction Fetch Access
+  flopenrc #(1)  ExecuteAccessEReg (clk, reset, FlushE, ~StallE, ExecuteAccessD, ExecuteAccessE); //Instruction Fetch Access
+  flopenrc #(1)  ExecuteAccessMReg (clk, reset, FlushM, ~StallM, ExecuteAccessE, ExecuteAccessM); //Instruction Fetch Access
+  flopenrc #(1)  ExecuteAccessWReg (clk, reset, FlushW, ~StallW, ExecuteAccessM, ExecuteAccessW); //Instruction Fetch Access
 
   // Initially connecting the writeback stage signals, but may need to use M stage
   // and gate on ~FlushW.
