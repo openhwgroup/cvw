@@ -174,15 +174,11 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
           SPI_CSMODE:  ChipSelectMode <= Din[1:0];
           SPI_DELAY0:  Delay0 <= {Din[23:16], Din[7:0]};
           SPI_DELAY1:  Delay1 <= {Din[23:16], Din[7:0]};
-          SPI_FMT:     Format <= {Din[19:16], Din[2]};                    
+          SPI_FMT:     Format <= {Din[19:16], Din[2]};
+          SPI_TXDATA:  if (~TransmitFIFOFull) TransmitData[7:0] <= Din[7:0];
           SPI_TXMARK:  TransmitWatermark <= Din[2:0];
           SPI_RXMARK:  ReceiveWatermark <= Din[2:0];
           SPI_IE:      InterruptEnable <= Din[1:0];
-        endcase
-
-      if (Memwrite)
-        case(Entry)
-          SPI_TXDATA:  if (~TransmitFIFOFull) TransmitData[7:0] <= Din[7:0];
         endcase
       /* verilator lint_on CASEINCOMPLETE */
       
