@@ -87,7 +87,7 @@ def prepSim(args, ElfFile):
     if args.tb == "testbench_fp":
         paramsList.append(f'TEST="{args.testsuite}"')
     if ElfFile:
-        argsList.append += f"{ElfFile}"
+        argsList.append(f"{ElfFile}")
     if args.gui and args.tb == "testbench":
         paramsList.append("DEBUG=1")
     if args.ccov:
