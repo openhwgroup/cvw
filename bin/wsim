@@ -43,7 +43,7 @@ def validateArgs(args):
     if args.lockstep and not args.testsuite.endswith('.elf') and args.testsuite != "buildroot":
         print(f"Invalid Options. Cannot run a testsuite, {args.testsuite} with lockstep. Must run a single elf or buildroot.")
         sys.exit(1)
-    elif (args.gui or args.ccov or args.fcov or args.lockstep or args.lockstepverbose) and args.sim not in ["questa", "vcs"]:
+    elif any([args.gui, args.ccov, args.fcov, args.lockstep, args.lockstepverbose]) and args.sim not in ["questa", "vcs"]:
         print("Option only supported for Questa and VCS")
         sys.exit(1)
     elif (args.tb == "testbench_fp" and args.sim != "questa"):
@@ -125,7 +125,7 @@ def runSim(args, flags, prefix):
     if args.sim == "questa":
         runQuesta(args, flags, prefix)
     elif args.sim == "verilator":
-        runVerilator(args, flags, prefix)
+        runVerilator(args)
     elif args.sim == "vcs":
         runVCS(args, flags, prefix)
 
@@ -142,7 +142,7 @@ def runQuesta(args, flags, prefix):
     print(f"Running Questa with command: {cmd}")
     os.system(cmd)
 
-def runVerilator(args, flags, prefix):
+def runVerilator(args):
     print(f"Running Verilator on {args.config} {args.testsuite}")
     os.system(f'make -C {WALLY}/sim/verilator WALLYCONF={args.config} TEST={args.testsuite} TESTBENCH={args.tb} PLUS_ARGS="{args.args}" PARAM_ARGS="{args.params}"')
 
