@@ -39,7 +39,7 @@ def validateArgs(args):
     if not args.testsuite and not args.elf:
         print("Error: Missing test suite or ELF file")
         exit(1)
-    if args.lockstep and not args.testsuite.endswith('.elf') and args.testsuite != "buildroot" :
+    if args.lockstep and not args.testsuite.endswith('.elf') and args.testsuite != "buildroot":
         print(f"Invalid Options. Cannot run a testsuite, {args.testsuite} with lockstep. Must run a single elf or buildroot.")
         exit(1)
     elif (args.gui or args.ccov or args.fcov or args.lockstep or args.lockstepverbose) and args.sim not in ["questa", "vcs"]:
@@ -75,28 +75,34 @@ def elfFileCheck(args):
     return ElfFile
 
 def prepSim(args, ElfFile):
-    flags = ""
     prefix = ""
+    params = []
+    args = []
+    flags = []
     if args.vcd:
-        args.params += " MAKE_VCD=1 "
+        params.append("MAKE_VCD=1")
     if args.rvvi:
-        args.params += " RVVI_SYNTH_SUPPORTED=1 "
+        params.append("RVVI_SYNTH_SUPPORTED=1")
     if args.tb == "testbench_fp":
-        args.params += f' TEST="{args.testsuite}" '
-    if ElfFile != "":
-        args.args += f" {ElfFile}"
+        params.append(f'TEST="{args.testsuite}"')
+    if ElfFile:
+        args.append += f"{ElfFile}"
     if args.gui and args.tb == "testbench":
-        args.params += " DEBUG=1 "
+        params.append("DEBUG=1")
     if args.ccov:
-        flags += " --ccov"
+        flags.append("--ccov")
     if args.fcov:
-        flags += " --fcov"
+        flags.append("--fcov")
     if args.gui:
-        flags += " --gui"
+        flags.append("--gui")
     if args.lockstep or args.lockstepverbose:
-        flags += " --lockstep"
+        flags.append("--lockstep")
     if args.lockstep or args.lockstepverbose or args.fcov:
         prefix = lockstepSetup(args)
+    # Combine into a single string
+    args.args += " ".join(args)
+    args.params += " ".join(params)
+    flags = " ".join(flags)
     return flags, prefix
 
 def lockstepSetup(args):
@@ -107,7 +113,7 @@ def lockstepSetup(args):
         if not os.path.isfile(imperasicPath):
             print("Error: imperas.ic not found")
             exit(1)
-    prefix = f"IMPERAS_TOOLS={imperasicPath}{f':{imperasicVerbosePath}' if args.lockstepverbose else ''} "
+    prefix = f"IMPERAS_TOOLS={imperasicPath}{f':{imperasicVerbosePath}' if args.lockstepverbose else ''}"
     return prefix
 
 def createDirs(sim):
@@ -126,9 +132,9 @@ def runQuesta(args, flags, prefix):
     # Force Questa to use 64-bit mode, sometimes it defaults to 32-bit even on 64-bit machines
     prefix = "MTI_VCO_MODE=64 " + prefix
     if (args.args != ""):
-        args.args = f' --args \\"{args.args}\\"'
+        args.args = fr'--args \"{args.args}\"'
     if (args.params != ""):
-        args.params = f' --params \\"{args.params}\\"'
+        args.params = fr'--params \"{args.params}\"'
     # Questa cannot accept more than 9 arguments.  fcov implies lockstep
     cmd = f"do wally.do {args.config} {args.testsuite} {args.tb} {args.args} {args.params} {flags}"
     cmd = f'cd $WALLY/sim/questa; {prefix} vsim {"-c" if not args.gui else ""} -do "{cmd}"'
@@ -142,9 +148,9 @@ def runVerilator(args, flags, prefix):
 def runVCS(args, flags, prefix):
     print(f"Running VCS on {args.config} {args.testsuite}")
     if (args.args != ""):
-        args.args = f' --args "{args.args}" '
+        args.args = f'--args "{args.args}"'
     if (args.params != ""):
-        args.params = f' --params "{args.params}" '
+        args.params = f'--params "{args.params}"'
     cmd = f"cd $WALLY/sim/vcs; {prefix} ./run_vcs {args.config} {args.testsuite} --tb {args.tb} {args.args} {args.params} {flags}"
     print(cmd)
     os.system(cmd)
