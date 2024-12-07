@@ -156,11 +156,14 @@ def runVCS(args, flags, prefix):
     print(cmd)
     os.system(cmd)
 
-if __name__ == "__main__":
-    args = parseArgs()
+def main(args):
     validateArgs(args)
     print(f"Config={args.config} tests={args.testsuite} sim={args.sim} gui={args.gui} args='{args.args}' params='{args.params}'")
     ElfFile = elfFileCheck(args)
     flags, prefix = prepSim(args, ElfFile)
     createDirs(args.sim)
     sys.exit(runSim(args, flags, prefix))
+
+if __name__ == "__main__":
+    args = parseArgs()
+    main(args)
