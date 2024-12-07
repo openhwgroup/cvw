@@ -121,19 +121,19 @@ def createDirs(sim):
         os.makedirs(os.path.join(WALLY, "sim", sim, d), exist_ok=True)
 
 def runSim(args, flags, prefix):
-    if (args.sim == "questa"):
+    if args.sim == "questa":
         runQuesta(args, flags, prefix)
-    elif (args.sim == "verilator"):
+    elif args.sim == "verilator":
         runVerilator(args, flags, prefix)
-    elif (args.sim == "vcs"):
+    elif args.sim == "vcs":
         runVCS(args, flags, prefix)
 
 def runQuesta(args, flags, prefix):
     # Force Questa to use 64-bit mode, sometimes it defaults to 32-bit even on 64-bit machines
     prefix = "MTI_VCO_MODE=64 " + prefix
-    if (args.args != ""):
+    if args.args != "":
         args.args = fr'--args \"{args.args}\"'
-    if (args.params != ""):
+    if args.params != "":
         args.params = fr'--params \"{args.params}\"'
     # Questa cannot accept more than 9 arguments.  fcov implies lockstep
     cmd = f"do wally.do {args.config} {args.testsuite} {args.tb} {args.args} {args.params} {flags}"
