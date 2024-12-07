@@ -76,33 +76,33 @@ def elfFileCheck(args):
 
 def prepSim(args, ElfFile):
     prefix = ""
-    params = []
-    args = []
-    flags = []
+    paramsList = []
+    argsList = []
+    flagsList = []
     if args.vcd:
-        params.append("MAKE_VCD=1")
+        paramsList.append("MAKE_VCD=1")
     if args.rvvi:
-        params.append("RVVI_SYNTH_SUPPORTED=1")
+        paramsList.append("RVVI_SYNTH_SUPPORTED=1")
     if args.tb == "testbench_fp":
-        params.append(f'TEST="{args.testsuite}"')
+        paramsList.append(f'TEST="{args.testsuite}"')
     if ElfFile:
-        args.append += f"{ElfFile}"
+        argsList.append += f"{ElfFile}"
     if args.gui and args.tb == "testbench":
-        params.append("DEBUG=1")
+        paramsList.append("DEBUG=1")
     if args.ccov:
-        flags.append("--ccov")
+        flagsList.append("--ccov")
     if args.fcov:
-        flags.append("--fcov")
+        flagsList.append("--fcov")
     if args.gui:
-        flags.append("--gui")
+        flagsList.append("--gui")
     if args.lockstep or args.lockstepverbose:
-        flags.append("--lockstep")
+        flagsList.append("--lockstep")
     if args.lockstep or args.lockstepverbose or args.fcov:
         prefix = lockstepSetup(args)
     # Combine into a single string
-    args.args += " ".join(args)
-    args.params += " ".join(params)
-    flags = " ".join(flags)
+    args.args += " ".join(argsList)
+    args.params += " ".join(paramsList)
+    flags = " ".join(flagsList)
     return flags, prefix
 
 def lockstepSetup(args):
