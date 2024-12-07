@@ -40,7 +40,6 @@ set TESTSUITE ${2}
 set TESTBENCH ${3}
 set WKDIR wkdir/${CFG}_${TESTSUITE}
 set WALLY $::env(WALLY)
-set IMPERAS_HOME $::env(IMPERAS_HOME)
 set CONFIG ${WALLY}/config
 set SRC ${WALLY}/src
 set TB ${WALLY}/testbench
@@ -118,6 +117,7 @@ if {[lcheck lst "--fcov"]} {
 
 # if --lockstep or --fcov found set flag and remove from list
 if {[lcheck lst "--lockstep"] || $FunctCoverage == 1} {
+    set IMPERAS_HOME $::env(IMPERAS_HOME)
     set lockstep 1
     set lockstepvlog "+define+USE_IMPERAS_DV \
                       +incdir+${IMPERAS_HOME}/ImpPublic/include/host \
