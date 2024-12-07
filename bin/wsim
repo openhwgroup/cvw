@@ -13,6 +13,7 @@
 
 import argparse
 import os
+import sys
 
 # Global variable
 WALLY = os.environ.get('WALLY')
@@ -38,16 +39,16 @@ def parseArgs():
 def validateArgs(args):
     if not args.testsuite and not args.elf:
         print("Error: Missing test suite or ELF file")
-        exit(1)
+        sys.exit(1)
     if args.lockstep and not args.testsuite.endswith('.elf') and args.testsuite != "buildroot":
         print(f"Invalid Options. Cannot run a testsuite, {args.testsuite} with lockstep. Must run a single elf or buildroot.")
-        exit(1)
+        sys.exit(1)
     elif (args.gui or args.ccov or args.fcov or args.lockstep or args.lockstepverbose) and args.sim not in ["questa", "vcs"]:
         print("Option only supported for Questa and VCS")
-        exit(1)
+        sys.exit(1)
     elif (args.tb == "testbench_fp" and args.sim != "questa"):
         print("Error: testbench_fp presently only supported by Questa, not VCS or Verilator, because of a touchy testbench")
-        exit(1)
+        sys.exit(1)
 
 def elfFileCheck(args):
     ElfFile = ""
@@ -55,23 +56,23 @@ def elfFileCheck(args):
         ElfFile = f"+ElfFile={os.path.abspath(args.elf)}"
     elif args.elf != "":
         print(f"ELF file not found: {args.elf}")
-        exit(1)
+        sys.exit(1)
     elif args.testsuite.endswith('.elf'): # No --elf argument; check if testsuite has a .elf extension and use that instead
         if os.path.isfile(args.testsuite):
             ElfFile = f"+ElfFile={os.path.abspath(args.testsuite)}"
             # extract the elf name from the path to be the test suite
             fields = args.testsuite.rsplit('/', 3)
             # if the name is just ref.elf in a deep path (riscv-arch-test/wally-riscv-arch-test), then use the directory name as the test suite to make it unique; otherwise work directory will have duplicates.
-            if (len(fields) > 3):
-                if (fields[2] == "ref"):
+            if len(fields) > 3:
+                if fields[2] == "ref":
                     args.testsuite = f"{fields[1]}_{fields[3]}"
                 else:
                     args.testsuite = f"{fields[2]}_{fields[3]}"
-            elif ('/' in args.testsuite):
+            elif '/' in args.testsuite:
                 args.testsuite=args.testsuite.rsplit('/', 1)[1] # strip off path if present
         else:
             print(f"ELF file not found: {args.testsuite}")
-            exit(1)
+            sys.exit(1)
     return ElfFile
 
 def prepSim(args, ElfFile):
@@ -112,7 +113,7 @@ def lockstepSetup(args):
         imperasicPath = os.path.join(WALLY, "config", "deriv", args.config, "imperas.ic")
         if not os.path.isfile(imperasicPath):
             print("Error: imperas.ic not found")
-            exit(1)
+            sys.exit(1)
     prefix = f"IMPERAS_TOOLS={imperasicPath}{f':{imperasicVerbosePath}' if args.lockstepverbose else ''}"
     return prefix
 
@@ -147,9 +148,9 @@ def runVerilator(args, flags, prefix):
 
 def runVCS(args, flags, prefix):
     print(f"Running VCS on {args.config} {args.testsuite}")
-    if (args.args != ""):
+    if args.args != "":
         args.args = f'--args "{args.args}"'
-    if (args.params != ""):
+    if args.params != "":
         args.params = f'--params "{args.params}"'
     cmd = f"cd $WALLY/sim/vcs; {prefix} ./run_vcs {args.config} {args.testsuite} --tb {args.tb} {args.args} {args.params} {flags}"
     print(cmd)
@@ -162,4 +163,4 @@ if __name__ == "__main__":
     ElfFile = elfFileCheck(args)
     flags, prefix = prepSim(args, ElfFile)
     createDirs(args.sim)
-    exit(runSim(args, flags, prefix))
+    sys.exit(runSim(args, flags, prefix))
