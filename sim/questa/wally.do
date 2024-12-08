@@ -54,6 +54,7 @@ vlib ${WKDIR}
 set PlusArgs ""
 set ParamArgs ""
 set ExpandedParamArgs {}
+set DefineArgs ""
 
 set ccov 0
 set CoverageVoptArg ""
@@ -62,7 +63,6 @@ set CoverageVsimArg ""
 set FunctCoverage 0
 set FCvlog ""
 set FCvopt ""
-set FCdefineCOVER_EXTS {}
 
 set lockstep 0
 set lockstepvlog ""
@@ -106,13 +106,11 @@ if {[lcheck lst "--ccov"]} {
 if {[lcheck lst "--fcov"]} {
     set FunctCoverage 1
     # COVER_BASE_RV32I is just needed to keep riscvISACOV happy, but no longer affects tests
-         set FCvlog "+define+INCLUDE_TRACE2COV \
+    set FCvlog "+define+INCLUDE_TRACE2COV \
                 +define+IDV_INCLUDE_TRACE2COV \
                 +define+COVER_BASE_RV32I \
-                +incdir+$env(WALLY)/addins/cvw-arch-verif/riscvISACOV/source \
-		"
+                +incdir+$env(WALLY)/addins/cvw-arch-verif/riscvISACOV/source"
     set FCvopt "+TRACE2COV_ENABLE=1 +IDV_TRACE2COV=1"
-
 }
 
 # if --lockstep or --fcov found set flag and remove from list
@@ -145,6 +143,13 @@ if {$ParamArgsIndex >= 0} {
     set lst [lreplace $lst $ParamArgsIndex [expr {$ParamArgsIndex + 1}]]
 }
 
+# Set +define macros passed using the --define flag
+set DefineArgsIndex [lsearch -exact $lst "--define"]
+if {$DefineArgsIndex >= 0} {
+    set DefineArgs [lindex $lst [expr {$DefineArgsIndex + 1}]]
+    set lst [lreplace $lst $DefineArgsIndex [expr {$DefineArgsIndex + 1}]]
+}
+
 # Debug print statements
 if {$DEBUG > 0} {
     echo "GUI = $GUI"
@@ -153,7 +158,8 @@ if {$DEBUG > 0} {
     echo "FunctCoverage = $FunctCoverage"
     echo "remaining list = $lst"
     echo "Extra +args = $PlusArgs"
-    echo "Extra -args = $ExpandedParamArgs"
+    echo "Extra params = $ExpandedParamArgs"
+    echo "Extra defines = $DefineArgs"
 }
 
 # compile source files
@@ -162,7 +168,7 @@ if {$DEBUG > 0} {
 # because vsim will run vopt
 set INC_DIRS "+incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared +incdir+${FCRVVI} +incdir+${FCRVVI}/rv32 +incdir+${FCRVVI}/rv64 +incdir+${FCRVVI}/rv64_priv +incdir+${FCRVVI}/priv +incdir+${FCRVVI}/rv32_priv +incdir+${FCRVVI}/common +incdir+${FCRVVI}"
 set SOURCES "${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv ${SRC}/*/*.sv ${SRC}/*/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*/*/*.sv"
-vlog -permissive -lint -work ${WKDIR} {*}${INC_DIRS} {*}${FCvlog} {*}${FCdefineCOVER_EXTS} {*}${lockstepvlog} {*}${SOURCES} -suppress 2282,2583,7053,7063,2596,13286
+vlog -permissive -lint -work ${WKDIR} {*}${INC_DIRS} {*}{$DefineArgs} {*}${FCvlog} {*}${lockstepvlog} {*}${SOURCES} -suppress 2282,2583,7053,7063,2596,13286
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
