@@ -2,6 +2,7 @@
 
 # run_vcs
 # David_Harris@hmc.edu 2 July 2024
+# Modified Jordan Carlin jcarlin@hmc.edu Dec 9 2024
 # Run VCS on a given file, passing appropriate flags
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
@@ -33,7 +34,7 @@ parser.add_argument("--lockstep", "-l", help="Run ImperasDV lock, step, and comp
 # GUI not yet implemented
 #parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true")
 args = parser.parse_args()
-print("run_vcs Config=" + args.config + " tests=" + args.testsuite + " lockstep=" + str(args.lockstep) + " args='" + args.args + "' params='" + args.params + "'" + " define='" + args.define + "'")
+print(f"run_vcs Config={args.config} tests={args.testsuite} lockstep={args.lockstep} args='{args.args}' params='{args.params}' define='{args.define}'")
 
 cfgdir = "$WALLY/config"
 srcdir = "$WALLY/src"
@@ -42,20 +43,20 @@ wkdir = "$WALLY/sim/vcs/wkdir/" + args.config + "_" + args.testsuite
 covdir = "$WALLY/sim/vcs/cov/" + args.config + "_" + args.testsuite
 logdir = "$WALLY/sim/vcs/logs"
 
-os.system("mkdir -p " + wkdir)
-os.system("mkdir -p " + covdir)
-os.system("mkdir -p " + logdir)
+os.makedirs(wkdir, exist_ok=True)
+os.makedirs(covdir, exist_ok=True)
+os.makedirs(logdir, exist_ok=True)
 
 # Find RTL source files
-rtlsrc_cmd = "find " + srcdir + ' -name "*.sv" ! -path "' + srcdir + '/generic/mem/rom1p1r_128x64.sv" ! -path "' + srcdir + '/generic/mem/ram2p1r1wbe_128x64.sv" ! -path "' + srcdir + '/generic/mem/rom1p1r_128x32.sv" ! -path "' + srcdir + '/generic/mem/ram2p1r1wbe_2048x64.sv"'
+rtlsrc_cmd = f'find {srcdir} -name "*.sv" ! -path "{srcdir}/generic/mem/rom1p1r_128x64.sv" ! -path "{srcdir}/generic/mem/ram2p1r1wbe_128x64.sv" ! -path "{srcdir}/generic/mem/rom1p1r_128x32.sv" ! -path "{srcdir}/generic/mem/ram2p1r1wbe_2048x64.sv"'
 rtlsrc_files = runfindcmd(rtlsrc_cmd)
-tbcommon_cmd = 'find ' + tbdir+'/common -name "*.sv" ! -path "' + tbdir+'/common/wallyTracer.sv"'
+tbcommon_cmd = f'find {tbdir}/common -name "*.sv" ! -path "{tbdir}/common/wallyTracer.sv"'
 tbcommon_files = runfindcmd(tbcommon_cmd)
-tb_file = tbdir + "/" + args.tb + ".sv"
-RTL_FILES = tb_file + ' ' + str(rtlsrc_files) + ' '  + str(tbcommon_files)
+tb_file = f'{tbdir}/{args.tb}.sv'
+RTL_FILES = f"{tb_file} {rtlsrc_files} {tbcommon_files}"
 
 # Include directories
-INCLUDE_PATH="+incdir+" + cfgdir + "/" + args.config + " +incdir+" + cfgdir + "/deriv/" + args.config + " +incdir+" + cfgdir + "/shared +incdir+$WALLY/tests +incdir+" + tbdir + " +incdir+" + srcdir
+INCLUDE_PATH=f"+incdir+{cfgdir}/{args.config} +incdir+{cfgdir}/deriv/{args.config} +incdir+{cfgdir}/shared +incdir+$WALLY/tests +incdir+{tbdir} +incdir+{srcdir}"
 
 # lockstep mode
 if (args.lockstep):
@@ -67,7 +68,7 @@ else:
 
 # coverage mode
 if (args.ccov):
-    COV_OPTIONS = "-cm line+cond+branch+fsm+tgl -cm_log " + wkdir + "/coverage.log -cm_dir " + wkdir + "/coverage"
+    COV_OPTIONS = f"-cm line+cond+branch+fsm+tgl -cm_log {wkdir}/coverage.log -cm_dir {wkdir}/coverage"
 else:
     COV_OPTIONS = ""
 
@@ -75,25 +76,24 @@ else:
 f = open(os.path.expandvars(wkdir) + "/param_overrides.txt", "w")
 for param in args.params.split():
     [param, value] = param.split("=")
-    if "\\'" in value: # for bit values
-        value = value.replace("\\'", "'")
+    if fr"\'" in value: # for bit values
+        value = value.replace(rf"\'", "'")
     else:              # for strings
-        value = "\"" + value + "\""
-    # print("param=" + param + " value=" + value)
-    f.write("assign " + value + " " + args.tb + "/" + param + "\n")
+        value = f'"{value}"'
+    f.write(f"assign {value} {args.tb}/{param}\n")
 f.close()
-PARAM_OVERRIDES=" -parameters " + wkdir + "/param_overrides.txt "
+PARAM_OVERRIDES=f" -parameters {wkdir}/param_overrides.txt "
 
 # Simulation commands
 OUTPUT="sim_out"
-VCS_CMD="vcs +lint=all,noGCWM,noUI,noSVA-UA,noIDTS,noNS,noULCO,noCAWM-L,noWMIA-L,noSV-PIU,noSTASKW_CO,noSTASKW_CO1,noSTASKW_RMCOF -suppress +warn -sverilog +vc -Mupdate -line -full64 -lca -ntb_opts sensitive_dyn " + "-top " + args.tb + " " + args.define + " " + PARAM_OVERRIDES + INCLUDE_PATH # Disabled Debug flags; add them back for a GUI mode -debug_access+all+reverse  -kdb +vcs+vcdpluson
-VCS = VCS_CMD + " -Mdir=" + wkdir + " " + srcdir + "/cvw.sv " + LOCKSTEP_OPTIONS + " " + COV_OPTIONS + " " + RTL_FILES + " -o " + wkdir + "/" + OUTPUT + " -work " + wkdir + " -Mlib=" + wkdir + " -l " + logdir + "/" + args.config + "_" + args.testsuite + ".log"
-SIMV_CMD= wkdir + "/" + OUTPUT + " +TEST=" + args.testsuite + " " + args.args + " -no_save " + LOCKSTEP_SIMV
+VCS_CMD=f"vcs +lint=all,noGCWM,noUI,noSVA-UA,noIDTS,noNS,noULCO,noCAWM-L,noWMIA-L,noSV-PIU,noSTASKW_CO,noSTASKW_CO1,noSTASKW_RMCOF -suppress +warn -sverilog +vc -Mupdate -line -full64 -lca -ntb_opts sensitive_dyn -top {args.tb} {args.define} {PARAM_OVERRIDES} {INCLUDE_PATH}" # Disabled Debug flags; add them back for a GUI mode -debug_access+all+reverse  -kdb +vcs+vcdpluson
+VCS = f'{VCS_CMD} -Mdir={wkdir} {srcdir}/cvw.sv {LOCKSTEP_OPTIONS} {COV_OPTIONS} {RTL_FILES} -o {wkdir}/{OUTPUT} -work {wkdir} -Mlib={wkdir} -l {logdir}/{args.config}_{args.testsuite}.log'
+SIMV_CMD= f'wkdir/{OUTPUT} +TEST={args.testsuite} {args.args} -no_save {LOCKSTEP_SIMV}'
 
 # Run simulation
-print("Executing: " + str(VCS) )
+print(f"Executing: {VCS}")
 subprocess.run(VCS, shell=True)
 subprocess.run(SIMV_CMD, shell=True)
 if (args.ccov):
-    COV_RUN = "urg -dir " + wkdir + "/coverage.vdb -format text -report IndividualCovReport/" + args.config + "_" + args.testsuite
+    COV_RUN = f"urg -dir {wkdir}/coverage.vdb -format text -report IndividualCovReport/{args.config}_{args.testsuite}"
     subprocess.run(COV_RUN, shell=True)
