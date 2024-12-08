@@ -40,6 +40,7 @@ module testbench;
   /* verilator lint_off WIDTHEXPAND */
   parameter DEBUG=0;
   parameter PrintHPMCounters=0;
+  parameter STD_LOG=1;
   parameter BPRED_LOGGER=0;
   parameter I_CACHE_ADDR_LOGGER=0;
   parameter D_CACHE_ADDR_LOGGER=0;
@@ -710,7 +711,7 @@ end
 `ifdef USE_IMPERAS_DV
 
   rvviTrace #(.XLEN(P.XLEN), .FLEN(P.FLEN)) rvvi();
-  wallyTracer #(P) wallyTracer(rvvi);
+  wallyTracer #(P, STD_LOG) wallyTracer(rvvi);
 
   trace2log idv_trace2log(rvvi);
   trace2cov idv_trace2cov(rvvi);
