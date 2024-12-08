@@ -30,6 +30,7 @@ def parseArgs():
     parser.add_argument("--fcov", "-f", help="Functional Coverage with cvw-arch-verif, implies lockstep", action="store_true")
     parser.add_argument("--args", "-a", help="Optional arguments passed to simulator via $value$plusargs", default="")
     parser.add_argument("--params", "-p", help="Optional top-level parameter overrides of the form param=value", default="")
+    parser.add_argument("--define", "-d", help="Optional define macros passed to simulator", default="")
     parser.add_argument("--vcd", "-v", help="Generate testbench.vcd", action="store_true")
     parser.add_argument("--lockstep", "-l", help="Run ImperasDV lock, step, and compare.", action="store_true")
     parser.add_argument("--lockstepverbose", "-lv", help="Run ImperasDV lock, step, and compare with tracing enabled", action="store_true")
@@ -136,6 +137,8 @@ def runQuesta(args, flags, prefix):
         args.args = fr'--args \"{args.args}\"'
     if args.params != "":
         args.params = fr'--params \"{args.params}\"'
+    if args.define != "":
+        args.define = fr'--define \"{args.define}\"'
     # Questa cannot accept more than 9 arguments.  fcov implies lockstep
     cmd = f"do wally.do {args.config} {args.testsuite} {args.tb} {args.args} {args.params} {flags}"
     cmd = f'cd $WALLY/sim/questa; {prefix} vsim {"-c" if not args.gui else ""} -do "{cmd}"'
@@ -144,7 +147,7 @@ def runQuesta(args, flags, prefix):
 
 def runVerilator(args):
     print(f"Running Verilator on {args.config} {args.testsuite}")
-    os.system(f'make -C {WALLY}/sim/verilator WALLYCONF={args.config} TEST={args.testsuite} TESTBENCH={args.tb} PLUS_ARGS="{args.args}" PARAM_ARGS="{args.params}"')
+    os.system(f'make -C {WALLY}/sim/verilator WALLYCONF={args.config} TEST={args.testsuite} TESTBENCH={args.tb} PLUS_ARGS="{args.args}" PARAM_ARGS="{args.params}" DEFINE_ARGS="{args.define}"')
 
 def runVCS(args, flags, prefix):
     print(f"Running VCS on {args.config} {args.testsuite}")
@@ -152,6 +155,8 @@ def runVCS(args, flags, prefix):
         args.args = f'--args "{args.args}"'
     if args.params != "":
         args.params = f'--params "{args.params}"'
+    if args.define != "":
+        args.define = f'--define "{args.define}"'
     cmd = f"cd $WALLY/sim/vcs; {prefix} ./run_vcs {args.config} {args.testsuite} --tb {args.tb} {args.args} {args.params} {flags}"
     print(cmd)
     os.system(cmd)
