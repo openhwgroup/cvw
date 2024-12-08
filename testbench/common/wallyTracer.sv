@@ -23,14 +23,13 @@
 `define NUM_REGS 32
 `define NUM_CSRS 4096
 
-`define STD_LOG 1
 `define PRINT_PC_INSTR 0
 `define PRINT_MOST 0
 `define PRINT_ALL 0
 `define PRINT_CSRS 0
 
 
-module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
+module wallyTracer import cvw::*; #(parameter cvw_t P, parameter STD_LOG=1) (rvviTrace rvvi);
 
   localparam NUMREGS = P.E_SUPPORTED ? 16 : 32;
   
@@ -715,7 +714,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   string  instrWName;
   int     file;
   string  LogFile;
-  if(`STD_LOG) begin
+  if(STD_LOG) begin
     instrNameDecTB NameDecoder(rvvi.insn[0][0], instrWName);
     initial begin
       LogFile = "logs/boottrace.log";
@@ -725,7 +724,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   
   always_ff @(posedge clk) begin
 	if(valid) begin
-      if(`STD_LOG) begin
+      if(STD_LOG) begin
         $fwrite(file, "%016x, %08x, %s\t\t", rvvi.pc_rdata[0][0], rvvi.insn[0][0], instrWName);
         for(index2 = 0; index2 < `NUM_REGS; index2 += 1) begin
           if(rvvi.x_wb[0][0][index2]) begin

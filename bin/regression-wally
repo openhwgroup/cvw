@@ -50,7 +50,7 @@ tests_buildrootboot = [
     ]
 
 tests_buildrootbootlockstep = [
-                    ["buildroot", ["buildroot"], [f"+INSTR_LIMIT=600000000 --lockstep"], # boot entire buildroot Linux to login prompt
+                    ["buildroot", ["buildroot"], {'args': [f"+INSTR_LIMIT=600000000 --lockstep"], 'params': ["STD_LOG=0"]}, # boot entire buildroot Linux to login prompt
                         "WallyHostname login: ", "buildroot_uart.out"]
     ]
 
