@@ -28,11 +28,12 @@ parser.add_argument("--ccov", "-c", help="Code Coverage", action="store_true")
 parser.add_argument("--fcov", "-f", help="Functional Coverage", action="store_true")
 parser.add_argument("--args", "-a", help="Optional arguments passed to simulator via $value$plusargs", default="")
 parser.add_argument("--params", "-p", help="Optional top-level parameter overrides of the form param=value", default="")
+parser.add_argument("--define", "-d", help="Optional define macros passed to simulator", default="")
 parser.add_argument("--lockstep", "-l", help="Run ImperasDV lock, step, and compare.", action="store_true")
 # GUI not yet implemented
 #parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true")
 args = parser.parse_args()
-print("run_vcs Config=" + args.config + " tests=" + args.testsuite + " lockstep=" + str(args.lockstep) + " args='" + args.args + "' params='" + args.params + "'")
+print("run_vcs Config=" + args.config + " tests=" + args.testsuite + " lockstep=" + str(args.lockstep) + " args='" + args.args + "' params='" + args.params + "'" + " define='" + args.define + "'")
 
 cfgdir = "$WALLY/config"
 srcdir = "$WALLY/src"
@@ -85,7 +86,7 @@ PARAM_OVERRIDES=" -parameters " + wkdir + "/param_overrides.txt "
 
 # Simulation commands
 OUTPUT="sim_out"
-VCS_CMD="vcs +lint=all,noGCWM,noUI,noSVA-UA,noIDTS,noNS,noULCO,noCAWM-L,noWMIA-L,noSV-PIU,noSTASKW_CO,noSTASKW_CO1,noSTASKW_RMCOF -suppress +warn -sverilog +vc -Mupdate -line -full64 -lca -ntb_opts sensitive_dyn " + "-top " + args.tb + PARAM_OVERRIDES + INCLUDE_PATH # Disabled Debug flags; add them back for a GUI mode -debug_access+all+reverse  -kdb +vcs+vcdpluson
+VCS_CMD="vcs +lint=all,noGCWM,noUI,noSVA-UA,noIDTS,noNS,noULCO,noCAWM-L,noWMIA-L,noSV-PIU,noSTASKW_CO,noSTASKW_CO1,noSTASKW_RMCOF -suppress +warn -sverilog +vc -Mupdate -line -full64 -lca -ntb_opts sensitive_dyn " + "-top " + args.tb + " " + args.define + " " + PARAM_OVERRIDES + INCLUDE_PATH # Disabled Debug flags; add them back for a GUI mode -debug_access+all+reverse  -kdb +vcs+vcdpluson
 VCS = VCS_CMD + " -Mdir=" + wkdir + " " + srcdir + "/cvw.sv " + LOCKSTEP_OPTIONS + " " + COV_OPTIONS + " " + RTL_FILES + " -o " + wkdir + "/" + OUTPUT + " -work " + wkdir + " -Mlib=" + wkdir + " -l " + logdir + "/" + args.config + "_" + args.testsuite + ".log"
 SIMV_CMD= wkdir + "/" + OUTPUT + " +TEST=" + args.testsuite + " " + args.args + " -no_save " + LOCKSTEP_SIMV
 
