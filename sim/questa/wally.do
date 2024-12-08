@@ -62,7 +62,6 @@ set CoverageVsimArg ""
 
 set FunctCoverage 0
 set FCvlog ""
-set FCvopt ""
 
 set lockstep 0
 set lockstepvlog ""
@@ -105,20 +104,14 @@ if {[lcheck lst "--ccov"]} {
 # if --fcov found set flag and remove from list
 if {[lcheck lst "--fcov"]} {
     set FunctCoverage 1
-    # COVER_BASE_RV32I is just needed to keep riscvISACOV happy, but no longer affects tests
-    set FCvlog "+define+INCLUDE_TRACE2COV \
-                +define+IDV_INCLUDE_TRACE2COV \
-                +define+COVER_BASE_RV32I \
-                +incdir+$env(WALLY)/addins/cvw-arch-verif/riscvISACOV/source"
-    set FCvopt "+TRACE2COV_ENABLE=1 +IDV_TRACE2COV=1"
+    set FCvlog "+incdir+$env(WALLY)/addins/cvw-arch-verif/riscvISACOV/source"
 }
 
 # if --lockstep or --fcov found set flag and remove from list
 if {[lcheck lst "--lockstep"] || $FunctCoverage == 1} {
     set IMPERAS_HOME $::env(IMPERAS_HOME)
     set lockstep 1
-    set lockstepvlog "+define+USE_IMPERAS_DV \
-                      +incdir+${IMPERAS_HOME}/ImpPublic/include/host \
+    set lockstepvlog "+incdir+${IMPERAS_HOME}/ImpPublic/include/host \
                       +incdir+${IMPERAS_HOME}/ImpProprietary/include/host \
                       ${IMPERAS_HOME}/ImpPublic/source/host/rvvi/*.sv \
                       ${IMPERAS_HOME}/ImpProprietary/source/host/idv/*.sv"
@@ -174,7 +167,7 @@ vlog -permissive -lint -work ${WKDIR} {*}${INC_DIRS} {*}{$DefineArgs} {*}${FCvlo
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} {*}${ExpandedParamArgs} -o testbenchopt ${CoverageVoptArg}
 
-vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} {*}${PlusArgs} -fatal 7 {*}${SVLib} {*}${FCvopt} -suppress 3829 ${CoverageVsimArg}
+vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} {*}${PlusArgs} -fatal 7 {*}${SVLib} -suppress 3829 ${CoverageVsimArg}
 
 # power add generates the logging necessary for saif generation.
 # power add -r /dut/core/*

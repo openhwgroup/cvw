@@ -81,6 +81,7 @@ def prepSim(args, ElfFile):
     paramsList = []
     argsList = []
     flagsList = []
+    defineList = []
     if args.vcd:
         paramsList.append("MAKE_VCD=1")
     if args.rvvi:
@@ -95,15 +96,19 @@ def prepSim(args, ElfFile):
         flagsList.append("--ccov")
     if args.fcov:
         flagsList.append("--fcov")
+        defineList.append("+define+INCLUDE_TRACE2COV", "+define+IDV_INCLUDE_TRACE2COV", "+define+COVER_BASE_RV32I") # COVER_BASE_RV32I is just needed to keep riscvISACOV happy, but does not affect tests
+        argsList.append("+TRACE2COV_ENABLE=1", "+IDV_TRACE2COV=1")
     if args.gui:
         flagsList.append("--gui")
     if args.lockstep or args.lockstepverbose:
         flagsList.append("--lockstep")
     if args.lockstep or args.lockstepverbose or args.fcov:
         prefix = lockstepSetup(args)
+        defineList.append("+define+USE_IMPERAS_DV")
     # Combine into a single string
     args.args += " ".join(argsList)
     args.params += " ".join(paramsList)
+    args.define += " ".join(defineList)
     flags = " ".join(flagsList)
     return flags, prefix
 
@@ -140,7 +145,7 @@ def runQuesta(args, flags, prefix):
     if args.define != "":
         args.define = fr'--define \"{args.define}\"'
     # Questa cannot accept more than 9 arguments.  fcov implies lockstep
-    cmd = f"do wally.do {args.config} {args.testsuite} {args.tb} {args.args} {args.params} {flags}"
+    cmd = f"do wally.do {args.config} {args.testsuite} {args.tb} {args.args} {args.params} {args.define} {flags}"
     cmd = f'cd $WALLY/sim/questa; {prefix} vsim {"-c" if not args.gui else ""} -do "{cmd}"'
     print(f"Running Questa with command: {cmd}")
     os.system(cmd)
@@ -157,13 +162,13 @@ def runVCS(args, flags, prefix):
         args.params = f'--params "{args.params}"'
     if args.define != "":
         args.define = f'--define "{args.define}"'
-    cmd = f"cd $WALLY/sim/vcs; {prefix} ./run_vcs {args.config} {args.testsuite} --tb {args.tb} {args.args} {args.params} {flags}"
+    cmd = f"cd $WALLY/sim/vcs; {prefix} ./run_vcs {args.config} {args.testsuite} --tb {args.tb} {args.args} {args.params} {args.define} {flags}"
     print(cmd)
     os.system(cmd)
 
 def main(args):
     validateArgs(args)
-    print(f"Config={args.config} tests={args.testsuite} sim={args.sim} gui={args.gui} args='{args.args}' params='{args.params}'")
+    print(f"Config={args.config} tests={args.testsuite} sim={args.sim} gui={args.gui} args='{args.args}' params='{args.params}' define='{args.define}'")
     ElfFile = elfFileCheck(args)
     flags, prefix = prepSim(args, ElfFile)
     createDirs(args.sim)
