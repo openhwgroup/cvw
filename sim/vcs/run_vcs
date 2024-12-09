@@ -53,7 +53,7 @@ def createDirs(args):
 def generateFileList():
     rtlsrc_cmd = f'find {srcdir} -name "*.sv" ! -path "{srcdir}/generic/mem/rom1p1r_128x64.sv" ! -path "{srcdir}/generic/mem/ram2p1r1wbe_128x64.sv" ! -path "{srcdir}/generic/mem/rom1p1r_128x32.sv" ! -path "{srcdir}/generic/mem/ram2p1r1wbe_2048x64.sv"'
     rtlsrc_files = runFindCommand(rtlsrc_cmd)
-    tbcommon_cmd = f'find {tbdir}/common -name "*.sv" ! -path "{tbdir}/common/wallyTracer.sv"'
+    tbcommon_cmd = f'find {tbdir}/common -name "*.sv"'
     tbcommon_files = runFindCommand(tbcommon_cmd)
     tb_file = f'{tbdir}/{args.tb}.sv'
     return f"{tb_file} {rtlsrc_files} {tbcommon_files}"
@@ -65,8 +65,7 @@ def processArgs(wkdir, args):
         compileOptions.extend(["+incdir+$IMPERAS_HOME/ImpPublic/include/host",
                                 "+incdir+$IMPERAS_HOME/ImpProprietary/include/host",
                                 "$IMPERAS_HOME/ImpPublic/source/host/rvvi/*.sv",
-                                "$IMPERAS_HOME/ImpProprietary/source/host/idv/*.sv",
-                                f"{tbdir}/common/wallyTracer.sv"])
+                                "$IMPERAS_HOME/ImpProprietary/source/host/idv/*.sv"])
         simvOptions.append("-sv_lib $IMPERAS_HOME/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model")
     if args.ccov:
         compileOptions.extend(["-cm line+cond+branch+fsm+tgl", f"-cm_log {wkdir}/coverage.log", f"-cm_dir {wkdir}/coverage"])
@@ -112,7 +111,7 @@ def main(args):
     wkdir, covdir = createDirs(args)
     rtlFiles = generateFileList()
     compileOptions, simvOptions = processArgs(wkdir, args)
-    vcsCMD, simvCMD = setupCommands(wkdir, rtlFiles, compileOptions, simvOptions)
+    vcsCMD, simvCMD = setupCommands(wkdir, rtlFiles, compileOptions, simvOptions, args)
     runVCS(wkdir, vcsCMD, simvCMD)
 
 if __name__ == "__main__":
