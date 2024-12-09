@@ -60,7 +60,8 @@ Then fork and clone the repo, source setup, make the tests and run regression
 	```
 
 9. Try compiling the HelloWally program and simulating it on the SystemVerilog with Verilator and on the Spike simulator.
-	``` cd examples/C/hello
+	```
+	$ cd examples/C/hello
 	$ make
 	$ wsim --sim verilator rv64gc --elf hello
 	Hello Wally!
