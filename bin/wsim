@@ -96,8 +96,8 @@ def prepSim(args, ElfFile):
         flagsList.append("--ccov")
     if args.fcov:
         flagsList.append("--fcov")
-        defineList.append("+define+INCLUDE_TRACE2COV", "+define+IDV_INCLUDE_TRACE2COV", "+define+COVER_BASE_RV32I") # COVER_BASE_RV32I is just needed to keep riscvISACOV happy, but does not affect tests
-        argsList.append("+TRACE2COV_ENABLE=1", "+IDV_TRACE2COV=1")
+        defineList.extend(["+define+INCLUDE_TRACE2COV", "+define+IDV_INCLUDE_TRACE2COV", "+define+COVER_BASE_RV32I"]) # COVER_BASE_RV32I is just needed to keep riscvISACOV happy, but does not affect tests
+        argsList.extend(["+TRACE2COV_ENABLE=1", "+IDV_TRACE2COV=1"])
     if args.gui:
         flagsList.append("--gui")
     if args.lockstep or args.lockstepverbose:
