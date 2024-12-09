@@ -104,7 +104,10 @@ if {[lcheck lst "--ccov"]} {
 # if --fcov found set flag and remove from list
 if {[lcheck lst "--fcov"]} {
     set FunctCoverage 1
-    set FCvlog "+incdir+$env(WALLY)/addins/cvw-arch-verif/riscvISACOV/source"
+    set FCvlog "+incdir+$env(WALLY)/addins/cvw-arch-verif/riscvISACOV/source \
+                +incdir+${FCRVVI}/rv32 +incdir+${FCRVVI}/rv64 \
+                +incdir+${FCRVVI}/priv +incdir+${FCRVVI}/rv64_priv +incdir+${FCRVVI}/rv32_priv \
+                +incdir+${FCRVVI}/common +incdir+${FCRVVI}"
 }
 
 # if --lockstep or --fcov found set flag and remove from list
@@ -159,7 +162,7 @@ if {$DEBUG > 0} {
 # suppress spurious warnngs about
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
-set INC_DIRS "+incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared +incdir+${FCRVVI} +incdir+${FCRVVI}/rv32 +incdir+${FCRVVI}/rv64 +incdir+${FCRVVI}/rv64_priv +incdir+${FCRVVI}/priv +incdir+${FCRVVI}/rv32_priv +incdir+${FCRVVI}/common +incdir+${FCRVVI}"
+set INC_DIRS "+incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared"
 set SOURCES "${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv ${SRC}/*/*.sv ${SRC}/*/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*/*/*.sv"
 vlog -permissive -lint -work ${WKDIR} {*}${INC_DIRS} {*}${DefineArgs} {*}${FCvlog} {*}${lockstepvlog} {*}${SOURCES} -suppress 2282,2583,7053,7063,2596,13286
 
