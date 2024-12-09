@@ -13,6 +13,7 @@ VERILATOR_DIR=${WALLY}/sim/verilator
 SOURCE=${WALLY}/config/shared/*.vh ${WALLY}/config/${WALLYCONF} ${WALLY}/config/deriv/${WALLYCONF} ${WALLY}/src/cvw.sv ${WALLY}/testbench/*.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
 PLUS_ARGS=
 PARAM_ARGS=
+DEFINE_ARGS=
 EXPANDED_PARAM_ARGS:=$(patsubst %,-G%,$(PARAM_ARGS))
 
 WALLYCONF?=rv64gc
@@ -63,6 +64,7 @@ $(WORKDIR)/V${TESTBENCH}: $(DEPENDENCIES)
 	--top-module ${TESTBENCH}  --relative-includes \
 	$(INCLUDE_PATH) \
 	${WRAPPER} \
+	${DEFINE_ARGS} \
 	${EXPANDED_PARAM_ARGS} \
 	$(SOURCES)
 
@@ -75,6 +77,7 @@ obj_dir_profiling/V${TESTBENCH}_$(WALLYCONF): $(DEPENDENCIES)
 	--top-module ${TESTBENCH}  --relative-includes \
 	$(INCLUDE_PATH) \
 	${WRAPPER} \
+	${DEFINE_ARGS} \
 	${EXPANDED_PARAM_ARGS} \
 	$(SOURCES)
 
