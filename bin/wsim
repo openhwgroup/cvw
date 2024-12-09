@@ -13,6 +13,7 @@
 
 import argparse
 import os
+import sys
 
 # Global variable
 WALLY = os.environ.get('WALLY')
@@ -31,28 +32,26 @@ def parseArgs():
     parser.add_argument("--params", "-p", help="Optional top-level parameter overrides of the form param=value", default="")
     parser.add_argument("--vcd", "-v", help="Generate testbench.vcd", action="store_true")
     parser.add_argument("--lockstep", "-l", help="Run ImperasDV lock, step, and compare.", action="store_true")
-    parser.add_argument("--locksteplog", "-b", help="Retired instruction number to be begin logging.", default=0)
     parser.add_argument("--lockstepverbose", "-lv", help="Run ImperasDV lock, step, and compare with tracing enabled", action="store_true")
-    parser.add_argument("--covlog", "-d", help="Log coverage after n instructions.", default=0)
     parser.add_argument("--rvvi", "-r", help="Simulate rvvi hardware interface and ethernet.", action="store_true")
     return parser.parse_args()
 
 def validateArgs(args):
     if not args.testsuite and not args.elf:
         print("Error: Missing test suite or ELF file")
-        exit(1)
-    if args.lockstep and not args.testsuite.endswith('.elf') and args.testsuite != "buildroot" :
-        print(f"Invalid Options. Cannot run a testsuite, {args.testsuite} with lockstep. Must run a single elf or buildroot.")
-        exit(1)
-    elif (args.gui or args.ccov or args.fcov or args.lockstep or args.lockstepverbose) and args.sim not in ["questa", "vcs"]:
+        sys.exit(1)
+    if any([args.lockstep, args.lockstepverbose, args.fcov]) and not (args.testsuite.endswith('.elf') or args.elf) and args.testsuite != "buildroot":
+        print(f"Invalid Options. Cannot run a testsuite, {args.testsuite} with lockstep or fcov. Must run a single elf or buildroot.")
+        sys.exit(1)
+    elif any([args.gui, args.ccov, args.fcov, args.lockstep, args.lockstepverbose]) and args.sim not in ["questa", "vcs"]:
         print("Option only supported for Questa and VCS")
-        exit(1)
+        sys.exit(1)
     elif (args.tb == "testbench_fp" and args.sim != "questa"):
         print("Error: testbench_fp presently only supported by Questa, not VCS or Verilator, because of a touchy testbench")
-        exit(1)
+        sys.exit(1)
     elif ("breker" in args.elf or "breker" in args.testsuite) and args.sim != "questa":
         print("Error: Breker tests currently only supported by Questa")
-        exit(1)
+        sys.exit(1)
 
 def elfFileCheck(args):
     ElfFile = ""
@@ -60,128 +59,118 @@ def elfFileCheck(args):
         ElfFile = f"+ElfFile={os.path.abspath(args.elf)}"
     elif args.elf != "":
         print(f"ELF file not found: {args.elf}")
-        exit(1)
+        sys.exit(1)
     elif args.testsuite.endswith('.elf'): # No --elf argument; check if testsuite has a .elf extension and use that instead
         if os.path.isfile(args.testsuite):
             ElfFile = f"+ElfFile={os.path.abspath(args.testsuite)}"
             # extract the elf name from the path to be the test suite
             fields = args.testsuite.rsplit('/', 3)
             # if the name is just ref.elf in a deep path (riscv-arch-test/wally-riscv-arch-test), then use the directory name as the test suite to make it unique; otherwise work directory will have duplicates.
-            if ("breker" in args.testsuite):
+            if "breker" in args.testsuite:
                 args.testsuite = fields[-1]
-            elif (len(fields) > 3):
-                if (fields[2] == "ref"):
+            elif len(fields) > 3:
+                if fields[2] == "ref":
                     args.testsuite = f"{fields[1]}_{fields[3]}"
                 else:
                     args.testsuite = f"{fields[2]}_{fields[3]}"
-            elif ('/' in args.testsuite):
+            elif '/' in args.testsuite:
                 args.testsuite=args.testsuite.rsplit('/', 1)[1] # strip off path if present
         else:
             print(f"ELF file not found: {args.testsuite}")
-            exit(1)
+            sys.exit(1)
     return ElfFile
 
 def prepSim(args, ElfFile):
-    flags = ""
+    prefix = ""
+    paramsList = []
+    argsList = []
+    flagsList = []
     if args.vcd:
-        args.args += " -DMAKEVCD=1"
+        paramsList.append("MAKE_VCD=1")
     if args.rvvi:
-        args.params += " RVVI_SYNTH_SUPPORTED=1 "
+        paramsList.append("RVVI_SYNTH_SUPPORTED=1")
     if args.tb == "testbench_fp":
-        args.params += f' TEST="{args.testsuite}" '
-    if ElfFile != "":
-        args.args += f" {ElfFile}"
+        paramsList.append(f'TEST="{args.testsuite}"')
+    if ElfFile:
+        argsList.append(f"{ElfFile}")
+    if args.gui and args.tb == "testbench":
+        paramsList.append("DEBUG=1")
     if args.ccov:
-        flags += " --ccov"
+        flagsList.append("--ccov")
     if args.fcov:
-        flags += " --fcov"
+        flagsList.append("--fcov")
+    if args.gui:
+        flagsList.append("--gui")
+    if args.lockstep or args.lockstepverbose:
+        flagsList.append("--lockstep")
+    if args.lockstep or args.lockstepverbose or args.fcov:
+        prefix = lockstepSetup(args)
     if "breker" in ElfFile:
-        flags += " --breker"
-    prefix, suffix = lockstepSetup(args)
-    flags += suffix
+        flagsList.append("--breker")
+    # Combine into a single string
+    args.args += " ".join(argsList)
+    args.params += " ".join(paramsList)
+    flags = " ".join(flagsList)
     return flags, prefix
 
 def lockstepSetup(args):
-    prefix = ""
-    suffix = ""
-    ImperasPlusArgs = ""
+    imperasicVerbosePath = os.path.join(WALLY, "sim", "imperas-verbose.ic")
+    imperasicPath = os.path.join(WALLY, "config", args.config, "imperas.ic")
+    if not os.path.isfile(imperasicPath): # If config is a derivative, look for imperas.ic in derivative configs
+        imperasicPath = os.path.join(WALLY, "config", "deriv", args.config, "imperas.ic")
+        if not os.path.isfile(imperasicPath):
+            print("Error: imperas.ic not found")
+            sys.exit(1)
+    prefix = f"IMPERAS_TOOLS={imperasicPath}{f':{imperasicVerbosePath}' if args.lockstepverbose else ''}"
+    return prefix
 
-    if(int(args.locksteplog) >= 1): EnableLog = 1
-    else: EnableLog = 0
-    if (args.lockstep or args.lockstepverbose or args.fcov):
-        imperasicPath = os.path.join(WALLY, "config", args.config, "imperas.ic")
-        if not os.path.isfile(imperasicPath): # If config is a derivative, look for imperas.ic in derivative configs
-            imperasicPath = os.path.join(WALLY, "config", "deriv", args.config, "imperas.ic")
-            if not os.path.isfile(imperasicPath):
-                print("Error: imperas.ic not found")
-                exit(1)
-        prefix += f"IMPERAS_TOOLS={imperasicPath}"
-
-    if (args.lockstep or args.lockstepverbose):
-        if(args.locksteplog != 0): ImperasPlusArgs = f" +IDV_TRACE2LOG={EnableLog} +IDV_TRACE2LOG_AFTER={args.locksteplog}"
-        if(args.fcov):
-            CovEnableStr = "1" if int(args.covlog) > 0  else "0"
-            if(args.covlog >= 1): EnableLog = 1
-            else: EnableLog = 0
-            ImperasPlusArgs = f" +IDV_TRACE2COV={EnableLog} +TRACE2LOG_AFTER={args.covlog} +TRACE2COV_ENABLE={CovEnableStr}"
-        else:
-            suffix = "--lockstep"
-        if(args.lockstepverbose):
-            prefix += f":{WALLY}/sim/imperas-verbose.ic"
-    args.args += ImperasPlusArgs
-    return prefix, suffix
-
-def createDirs(args):
+def createDirs(sim):
     for d in ["logs", "wkdir", "cov", "ucdb", "fcov", "fcov_ucdb"]:
-        os.makedirs(os.path.join(WALLY, "sim", args.sim, d), exist_ok=True)
+        os.makedirs(os.path.join(WALLY, "sim", sim, d), exist_ok=True)
 
 def runSim(args, flags, prefix):
-    if (args.sim == "questa"):
+    if args.sim == "questa":
         runQuesta(args, flags, prefix)
-    elif (args.sim == "verilator"):
-        runVerilator(args, flags, prefix)
-    elif (args.sim == "vcs"):
+    elif args.sim == "verilator":
+        runVerilator(args)
+    elif args.sim == "vcs":
         runVCS(args, flags, prefix)
 
 def runQuesta(args, flags, prefix):
     # Force Questa to use 64-bit mode, sometimes it defaults to 32-bit even on 64-bit machines
     prefix = "MTI_VCO_MODE=64 " + prefix
-    if (args.gui) and (args.tb == "testbench"):
-        args.params += "DEBUG=1"
-    if (args.args != ""):
-        args.args = f' --args \\"{args.args}\\"'
-    if (args.params != ""):
-        args.params = f' --params \\"{args.params}\\"'
+    if args.args != "":
+        args.args = fr'--args \"{args.args}\"'
+    if args.params != "":
+        args.params = fr'--params \"{args.params}\"'
     # Questa cannot accept more than 9 arguments.  fcov implies lockstep
     cmd = f"do wally.do {args.config} {args.testsuite} {args.tb} {args.args} {args.params} {flags}"
-    if (args.gui):  # launch Questa with GUI; add +acc to keep variables accessible
-        cmd = f'cd $WALLY/sim/questa; {prefix} vsim -do "{cmd}  +acc"'
-    else: # launch Questa in batch mode
-        cmd = f'cd $WALLY/sim/questa; {prefix} vsim -c -do "{cmd}"'
+    cmd = f'cd $WALLY/sim/questa; {prefix} vsim {"-c" if not args.gui else ""} -do "{cmd}"'
     print(f"Running Questa with command: {cmd}")
     os.system(cmd)
 
-def runVerilator(args, flags, prefix):
+def runVerilator(args):
     print(f"Running Verilator on {args.config} {args.testsuite}")
     os.system(f'make -C {WALLY}/sim/verilator WALLYCONF={args.config} TEST={args.testsuite} TESTBENCH={args.tb} PLUS_ARGS="{args.args}" PARAM_ARGS="{args.params}"')
 
 def runVCS(args, flags, prefix):
     print(f"Running VCS on {args.config} {args.testsuite}")
-    # if (args.gui):
-    #     flags += " --gui"
-    if (args.args != ""):
-        args.args = f' --args "{args.args}" '
-    if (args.params != ""):
-        args.params = f' --params "{args.params}" '
+    if args.args != "":
+        args.args = f'--args "{args.args}"'
+    if args.params != "":
+        args.params = f'--params "{args.params}"'
     cmd = f"cd $WALLY/sim/vcs; {prefix} ./run_vcs {args.config} {args.testsuite} --tb {args.tb} {args.args} {args.params} {flags}"
     print(cmd)
     os.system(cmd)
 
-if __name__ == "__main__":
-    args = parseArgs()
+def main(args):
     validateArgs(args)
     print(f"Config={args.config} tests={args.testsuite} sim={args.sim} gui={args.gui} args='{args.args}' params='{args.params}'")
     ElfFile = elfFileCheck(args)
     flags, prefix = prepSim(args, ElfFile)
-    createDirs(args)
-    exit(runSim(args, flags, prefix))
+    createDirs(args.sim)
+    sys.exit(runSim(args, flags, prefix))
+
+if __name__ == "__main__":
+    args = parseArgs()
+    main(args)

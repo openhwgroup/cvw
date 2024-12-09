@@ -24,8 +24,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("config", help="Configuration file")
 parser.add_argument("testsuite", help="Test suite (or none, when running a single ELF file) ")
 parser.add_argument("--tb", "-t", help="Testbench", choices=["testbench", "testbench_fp"], default="testbench")
-parser.add_argument("--coverage", "-c", help="Code & Functional Coverage", action="store_true")
-parser.add_argument("--fcov", "-f", help="Code & Functional Coverage", action="store_true")
+parser.add_argument("--ccov", "-c", help="Code Coverage", action="store_true")
+parser.add_argument("--fcov", "-f", help="Functional Coverage", action="store_true")
 parser.add_argument("--args", "-a", help="Optional arguments passed to simulator via $value$plusargs", default="")
 parser.add_argument("--params", "-p", help="Optional top-level parameter overrides of the form param=value", default="")
 parser.add_argument("--lockstep", "-l", help="Run ImperasDV lock, step, and compare.", action="store_true")
@@ -65,7 +65,7 @@ else:
     LOCKSTEP_SIMV = ""
 
 # coverage mode
-if (args.coverage):
+if (args.ccov):
     COV_OPTIONS = "-cm line+cond+branch+fsm+tgl -cm_log " + wkdir + "/coverage.log -cm_dir " + wkdir + "/coverage"
 else:
     COV_OPTIONS = ""
@@ -93,6 +93,6 @@ SIMV_CMD= wkdir + "/" + OUTPUT + " +TEST=" + args.testsuite + " " + args.args + 
 print("Executing: " + str(VCS) )
 subprocess.run(VCS, shell=True)
 subprocess.run(SIMV_CMD, shell=True)
-if (args.coverage):
+if (args.ccov):
     COV_RUN = "urg -dir " + wkdir + "/coverage.vdb -format text -report IndividualCovReport/" + args.config + "_" + args.testsuite
     subprocess.run(COV_RUN, shell=True)

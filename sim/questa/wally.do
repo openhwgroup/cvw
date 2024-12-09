@@ -8,7 +8,7 @@
 #
 # Takes 1:10 to run RV64IC tests using gui
 
-# Usage: do wally.do <config> <testcases> <testbench> [--ccov] [--fcov] [+acc] [--args "any number of +value"] [--params "any number of VAR=VAL parameter overrides"]
+# Usage: do wally.do <config> <testcases> <testbench> [--ccov] [--fcov] [--gui] [--args "any number of +value"] [--params "any number of VAR=VAL parameter overrides"]
 # Example: do wally.do rv64gc arch64i testbench
 
 # Use this wally.do file to run this example.
@@ -41,7 +41,6 @@ set TESTSUITE_NO_ELF [file rootname ${TESTSUITE}]
 set TESTBENCH ${3}
 set WKDIR wkdir/${CFG}_${TESTSUITE}
 set WALLY $::env(WALLY)
-set IMPERAS_HOME $::env(IMPERAS_HOME)
 set CONFIG ${WALLY}/config
 set SRC ${WALLY}/src
 set TB ${WALLY}/testbench
@@ -98,7 +97,7 @@ echo "number of args = $argc"
 echo "lst = $lst"
 
 # if +acc found set flag and remove from list
-if {[lcheck lst "+acc"]} {
+if {[lcheck lst "--gui"]} {
     set GUI 1
     set accFlag "+acc"
 }
@@ -123,6 +122,7 @@ if {[lcheck lst "--fcov"]} {
 
 # if --lockstep or --fcov found set flag and remove from list
 if {[lcheck lst "--lockstep"] || $FunctCoverage == 1} {
+    set IMPERAS_HOME $::env(IMPERAS_HOME)
     set lockstep 1
     set lockstepvlog "+define+USE_IMPERAS_DV \
                       +incdir+${IMPERAS_HOME}/ImpPublic/include/host \
