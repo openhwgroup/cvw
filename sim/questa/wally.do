@@ -140,7 +140,6 @@ if {[lcheck lst "--breker"]} {
                     +incdir+${WALLY}/testbench/trek_files \
                     ${WALLY}/testbench/trek_files/uvm_output/trek_uvm_pkg.sv"
     set brekervopt "${WKDIR}.trek_uvm"
-    # may need to change this path
     set brekervsim "+TREK_TBX_FILE=${WALLY}/tests/breker/work/${TESTSUITE_NO_ELF}/${TESTSUITE_NO_ELF}.tbx"
     append SVLib " -sv_lib ${BREKER_HOME}/linux64/lib/libtrek "
 }
