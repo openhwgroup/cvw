@@ -76,10 +76,28 @@ if [[ "$ID" == rhel || "$ID_LIKE" == *rhel* ]]; then
 elif [[ "$ID" == ubuntu || "$ID_LIKE" == *ubuntu* ]]; then
     export FAMILY=ubuntu
     if [ "$ID" != ubuntu ]; then
-        printf "${WARNING_COLOR}%s%s\n${ENDC}" "For Ubuntu family distros, the Wally installation script has only been tested on standard Ubuntu. Your distro " \
+        printf "${WARNING_COLOR}%s%s\n${ENDC}" "For Ubuntu family distros, the Wally installation script is only tested on standard Ubuntu. Your distro " \
             "is $PRETTY_NAME. The regular Ubuntu install will be attempted, but there may be issues."
+        # Ubuntu derivates may use different version numbers. Attempt to derive version from Ubuntu codename
+        case "$UBUNTU_CODENAME" in
+            noble)
+                export UBUNTU_VERSION=24
+                ;;
+            jammy)
+                export UBUNTU_VERSION=22
+                ;;
+            focal)
+                export UBUNTU_VERSION=20
+                ;;
+            *)
+                printf "${FAIL_COLOR}%s\n${ENDC}" "Unable to determine which base Ubuntu version you are using."
+                exit 1
+                ;;
+        esac
+        echo "Detected Ubuntu derivative baesd on Ubuntu $UBUNTU_VERSION.04."
+    else
+        export UBUNTU_VERSION="${VERSION_ID:0:2}"
     fi
-    export UBUNTU_VERSION="${VERSION_ID:0:2}"
     if (( UBUNTU_VERSION < 20 )); then
         printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally installation script has only been tested with Ubuntu versions 20.04 LTS, 22.04 LTS, and 24.04 LTS. You have version $VERSION."
         exit 1
