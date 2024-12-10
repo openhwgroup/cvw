@@ -30,6 +30,7 @@ def parseArgs():
     parser.add_argument("--fcov", "-f", help="Functional Coverage with cvw-arch-verif, implies lockstep", action="store_true")
     parser.add_argument("--args", "-a", help="Optional arguments passed to simulator via $value$plusargs", default="")
     parser.add_argument("--params", "-p", help="Optional top-level parameter overrides of the form param=value", default="")
+    parser.add_argument("--define", "-d", help="Optional define macros passed to simulator", default="")
     parser.add_argument("--vcd", "-v", help="Generate testbench.vcd", action="store_true")
     parser.add_argument("--lockstep", "-l", help="Run ImperasDV lock, step, and compare.", action="store_true")
     parser.add_argument("--lockstepverbose", "-lv", help="Run ImperasDV lock, step, and compare with tracing enabled", action="store_true")
@@ -57,7 +58,7 @@ def elfFileCheck(args):
     ElfFile = ""
     if os.path.isfile(args.elf):
         ElfFile = f"+ElfFile={os.path.abspath(args.elf)}"
-    elif args.elf != "":
+    elif args.elf:
         print(f"ELF file not found: {args.elf}")
         sys.exit(1)
     elif args.testsuite.endswith('.elf'): # No --elf argument; check if testsuite has a .elf extension and use that instead
@@ -85,6 +86,7 @@ def prepSim(args, ElfFile):
     paramsList = []
     argsList = []
     flagsList = []
+    defineList = []
     if args.vcd:
         paramsList.append("MAKE_VCD=1")
     if args.rvvi:
@@ -99,17 +101,21 @@ def prepSim(args, ElfFile):
         flagsList.append("--ccov")
     if args.fcov:
         flagsList.append("--fcov")
+        defineList.extend(["+define+INCLUDE_TRACE2COV", "+define+IDV_INCLUDE_TRACE2COV", "+define+COVER_BASE_RV32I"]) # COVER_BASE_RV32I is just needed to keep riscvISACOV happy, but does not affect tests
+        argsList.extend(["+TRACE2COV_ENABLE=1", "+IDV_TRACE2COV=1"])
     if args.gui:
         flagsList.append("--gui")
     if args.lockstep or args.lockstepverbose:
         flagsList.append("--lockstep")
     if args.lockstep or args.lockstepverbose or args.fcov:
         prefix = lockstepSetup(args)
+        defineList.append("+define+USE_IMPERAS_DV")
     if "breker" in ElfFile:
         flagsList.append("--breker")
     # Combine into a single string
     args.args += " ".join(argsList)
     args.params += " ".join(paramsList)
+    args.define += " ".join(defineList)
     flags = " ".join(flagsList)
     return flags, prefix
 
@@ -139,33 +145,37 @@ def runSim(args, flags, prefix):
 def runQuesta(args, flags, prefix):
     # Force Questa to use 64-bit mode, sometimes it defaults to 32-bit even on 64-bit machines
     prefix = "MTI_VCO_MODE=64 " + prefix
-    if args.args != "":
+    if args.args:
         args.args = fr'--args \"{args.args}\"'
-    if args.params != "":
+    if args.params:
         args.params = fr'--params \"{args.params}\"'
+    if args.define:
+        args.define = fr'--define \"{args.define}\"'
     # Questa cannot accept more than 9 arguments.  fcov implies lockstep
-    cmd = f"do wally.do {args.config} {args.testsuite} {args.tb} {args.args} {args.params} {flags}"
+    cmd = f"do wally.do {args.config} {args.testsuite} {args.tb} {args.args} {args.params} {args.define} {flags}"
     cmd = f'cd $WALLY/sim/questa; {prefix} vsim {"-c" if not args.gui else ""} -do "{cmd}"'
     print(f"Running Questa with command: {cmd}")
     os.system(cmd)
 
 def runVerilator(args):
     print(f"Running Verilator on {args.config} {args.testsuite}")
-    os.system(f'make -C {WALLY}/sim/verilator WALLYCONF={args.config} TEST={args.testsuite} TESTBENCH={args.tb} PLUS_ARGS="{args.args}" PARAM_ARGS="{args.params}"')
+    os.system(f'make -C {WALLY}/sim/verilator WALLYCONF={args.config} TEST={args.testsuite} TESTBENCH={args.tb} PLUS_ARGS="{args.args}" PARAM_ARGS="{args.params}" DEFINE_ARGS="{args.define}"')
 
 def runVCS(args, flags, prefix):
     print(f"Running VCS on {args.config} {args.testsuite}")
-    if args.args != "":
+    if args.args:
         args.args = f'--args "{args.args}"'
-    if args.params != "":
+    if args.params:
         args.params = f'--params "{args.params}"'
-    cmd = f"cd $WALLY/sim/vcs; {prefix} ./run_vcs {args.config} {args.testsuite} --tb {args.tb} {args.args} {args.params} {flags}"
+    if args.define:
+        args.define = f'--define "{args.define}"'
+    cmd = f"cd $WALLY/sim/vcs; {prefix} ./run_vcs {args.config} {args.testsuite} --tb {args.tb} {args.args} {args.params} {args.define} {flags}"
     print(cmd)
     os.system(cmd)
 
 def main(args):
     validateArgs(args)
-    print(f"Config={args.config} tests={args.testsuite} sim={args.sim} gui={args.gui} args='{args.args}' params='{args.params}'")
+    print(f"Config={args.config} tests={args.testsuite} sim={args.sim} gui={args.gui} args='{args.args}' params='{args.params}' define='{args.define}'")
     ElfFile = elfFileCheck(args)
     flags, prefix = prepSim(args, ElfFile)
     createDirs(args.sim)
