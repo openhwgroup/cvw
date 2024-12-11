@@ -9,21 +9,17 @@ CUSTOMER_YAML    := $(TREKFILES)/customer.yaml
 TREKSVIP_YAML    := $(BREKER_HOME)/examples/tutorials/svip/treksvip/yaml/treksvip.yaml
 CONSTRAINT_FILES := $(shell find $(CONSTRAINTS_DIR) -type f)
 TREKEXE_FLAGS    += --seed 0x # free (0x) or lock (0x1) the seed used for test generation
-TREKSVIP = source $(TREKFILES)/breker-setup.sh && treksvip -p $(PLATFORM_YAML) -p $(TREKSVIP_YAML) $(TREKEXE_FLAGS)
-
-EXAMPLES_LIB = $(WALLY)/examples/C/common
-
-# -nostdlib -static -lm -fno-tree-loop-distribute-patterns
+TREKSVIP         := source $(TREKFILES)/breker-setup.sh && treksvip -p $(PLATFORM_YAML) -p $(TREKSVIP_YAML) $(TREKEXE_FLAGS)
 
 # Compilation paths and variables
-MARCH        :=-march=rv64gc_zcb_zfa_zba_zbb_zbc_zbs_zfh_zicboz_zicbop_zicbom_zbkb_zbkx_zknd_zkne_zknh_svinval 
-MABI         :=-mabi=lp64d
-LINKER       := $(EXAMPLES_LIB)/test.ld
-# $(WALLY)/tests/custom/linker8000-0000.x
-LINK_FLAGS   := -nostartfiles
-CFLAGS 		   := -Wa,-alhs -Wa,-L -mcmodel=medany -Og -DSINGLE_CPU 
-CRT0_DIR     := $(WALLY)/tests/custom/crt0
-WIDTH        := 64
+START_LIB_DIR := $(WALLY)/examples/C/common
+START_LIB     := $(START_LIB_DIR)/crt.S $(START_LIB_DIR)/syscalls.c
+MARCH         :=-march=rv64gc_zcb_zfa_zba_zbb_zbc_zbs_zfh_zicboz_zicbop_zicbom_zbkb_zbkx_zknd_zkne_zknh_svinval 
+MABI          :=-mabi=lp64d
+LINKER        := $(START_LIB_DIR)/test.ld
+LINK_FLAGS    := -nostartfiles
+CFLAGS 		    := -Wa,-alhs -Wa,-L -mcmodel=medany -Og -DSINGLE_CPU 
+WIDTH         := 64
 
 # Find all constraint files and generate tests for each one
 TESTS = $(patsubst $(CONSTRAINTS_DIR)/%.yaml,$(TESTDIR)/%,$(CONSTRAINT_FILES))
@@ -37,9 +33,8 @@ $(TESTDIR)/%: $(CONSTRAINTS_DIR)/%.yaml | $(TESTDIR)
 
 # Compile c code
 .PRECIOUS: %.elf
-%.elf: %.c $(CRT0_DIR)/libcrt0.a
-	riscv64-unknown-elf-gcc $(MARCH) $(MABI) $(CFLAGS) $(LINK_FLAGS) -g -o $@ $< -T $(LINKER) -I$(EXAMPLES_LIB) $(EXAMPLES_LIB)/crt.S $(EXAMPLES_LIB)/syscalls.c> /dev/null
-# riscv64-unknown-elf-gcc $(MARCH) $(MABI) $(CFLAGS) $(LINK_FLAGS) -g -o $@ $< -L$(CRT0_DIR) -lcrt0 -T $(LINKER) > /dev/null
+%.elf: %.c 
+	riscv64-unknown-elf-gcc $(MARCH) $(MABI) $(CFLAGS) $(LINK_FLAGS) -T$(LINKER) -I$(START_LIB_DIR) $(START_LIB) -g -o $@ $< > /dev/null
 
 # Convert elf to hex
 %.elf.memfile: %.elf
@@ -48,12 +43,8 @@ $(TESTDIR)/%: $(CONSTRAINTS_DIR)/%.yaml | $(TESTDIR)
 	extractFunctionRadix.sh $<.objdump
 
 # View the model graph TODO: What does this do? Move to another makefile?
-%.view_graph:%
-	$(TREKSVIP) -p ../tests/test_$^.yaml -p $(CUSTOMER_YAML) -t pss_top.entry
-
-# Library needed for C code
-$(CRT0_DIR)/libcrt0.a:
-	make -C $(CRT0_DIR)
+%.view_graph: $(CONSTRAINTS_DIR)/%.yaml
+	$(TREKSVIP) -p $(CONSTRAINTS_DIR)/$^.yaml -p $(CUSTOMER_YAML) -t pss_top.entry
 
 $(TESTDIR):
 	mkdir -p $(TESTDIR)

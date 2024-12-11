@@ -700,7 +700,6 @@ module testbench;
   always @(posedge clk) begin
   //  if (reset) PrevPCZero <= 0;
   //  else if (dut.core.InstrValidM) PrevPCZero <= (FunctionName.PCM == 0 & dut.core.ifu.InstrM == 0);
-    // $display("PCE: %0h IEUAdrM: %0h Label (tohost): %0h instruction: %s", dut.core.ifu.PCE, dut.core.lsu.IEUAdrM, ProgramAddrLabelArray["tohost"], InstrMName);
     TestComplete <= ((InstrM == 32'h6f) & dut.core.InstrValidM ) |
 		   ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"] & dut.core.lsu.IEUAdrM != 0) & InstrMName == "SW"); // |
     //   (FunctionName.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.InstrValidM & PrevPCZero));

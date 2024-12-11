@@ -37,7 +37,6 @@ onerror {quit -f}
 # Initialize variables
 set CFG ${1}
 set TESTSUITE ${2}
-set TESTSUITE_NO_ELF [file rootname ${TESTSUITE}]
 set TESTBENCH ${3}
 set WKDIR wkdir/${CFG}_${TESTSUITE}
 set WALLY $::env(WALLY)
@@ -67,7 +66,6 @@ set FCvlog ""
 set breker 0
 set brekervlog ""
 set brekervopt ""
-set brekervsim ""
 
 set lockstep 0
 set lockstepvlog ""
@@ -188,7 +186,7 @@ vlog -permissive -lint -work ${WKDIR} {*}${INC_DIRS} {*}${DefineArgs} {*}${FCvlo
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 vopt $accFlag ${WKDIR}.${TESTBENCH} ${brekervopt} -work ${WKDIR} {*}${ExpandedParamArgs} -o testbenchopt ${CoverageVoptArg}
 
-vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} {*}${PlusArgs} -fatal 7 {*}${SVLib} {*}${brekervsim} -suppress 3829 ${CoverageVsimArg}
+vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} {*}${PlusArgs} -fatal 7 {*}${SVLib} -suppress 3829 ${CoverageVsimArg}
 
 # power add generates the logging necessary for saif generation.
 # power add -r /dut/core/*
