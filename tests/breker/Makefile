@@ -11,10 +11,15 @@ CONSTRAINT_FILES := $(shell find $(CONSTRAINTS_DIR) -type f)
 TREKEXE_FLAGS    += --seed 0x # free (0x) or lock (0x1) the seed used for test generation
 TREKSVIP = source $(TREKFILES)/breker-setup.sh && treksvip -p $(PLATFORM_YAML) -p $(TREKSVIP_YAML) $(TREKEXE_FLAGS)
 
+EXAMPLES_LIB = $(WALLY)/examples/C/common
+
+# -nostdlib -static -lm -fno-tree-loop-distribute-patterns
+
 # Compilation paths and variables
 MARCH        :=-march=rv64gc_zcb_zfa_zba_zbb_zbc_zbs_zfh_zicboz_zicbop_zicbom_zbkb_zbkx_zknd_zkne_zknh_svinval 
 MABI         :=-mabi=lp64d
-LINKER       := $(WALLY)/tests/custom/linker8000-0000.x
+LINKER       := $(EXAMPLES_LIB)/test.ld
+# $(WALLY)/tests/custom/linker8000-0000.x
 LINK_FLAGS   := -nostartfiles
 CFLAGS 		   := -Wa,-alhs -Wa,-L -mcmodel=medany -Og -DSINGLE_CPU 
 CRT0_DIR     := $(WALLY)/tests/custom/crt0
@@ -33,7 +38,8 @@ $(TESTDIR)/%: $(CONSTRAINTS_DIR)/%.yaml | $(TESTDIR)
 # Compile c code
 .PRECIOUS: %.elf
 %.elf: %.c $(CRT0_DIR)/libcrt0.a
-	riscv64-unknown-elf-gcc $(MARCH) $(MABI) $(CFLAGS) $(LINK_FLAGS) -g -o $@ $< -L$(CRT0_DIR) -lcrt0 -T $(LINKER) > /dev/null
+	riscv64-unknown-elf-gcc $(MARCH) $(MABI) $(CFLAGS) $(LINK_FLAGS) -g -o $@ $< -T $(LINKER) -I$(EXAMPLES_LIB) $(EXAMPLES_LIB)/crt.S $(EXAMPLES_LIB)/syscalls.c> /dev/null
+# riscv64-unknown-elf-gcc $(MARCH) $(MABI) $(CFLAGS) $(LINK_FLAGS) -g -o $@ $< -L$(CRT0_DIR) -lcrt0 -T $(LINKER) > /dev/null
 
 # Convert elf to hex
 %.elf.memfile: %.elf

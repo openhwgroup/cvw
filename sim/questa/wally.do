@@ -132,11 +132,9 @@ if {[lcheck lst "--lockstep"] || $FunctCoverage == 1} {
 if {[lcheck lst "--breker"]} {
     set breker 1
     set BREKER_HOME $::env(BREKER_HOME)
-    set brekervlog "+define+USE_TREK_DV \
-                    +incdir+${WALLY}/testbench/trek_files \
+    set brekervlog "+incdir+${WALLY}/testbench/trek_files \
                     ${WALLY}/testbench/trek_files/uvm_output/trek_uvm_pkg.sv"
     set brekervopt "${WKDIR}.trek_uvm"
-    set brekervsim "+TREK_TBX_FILE=${WALLY}/tests/breker/work/${TESTSUITE_NO_ELF}/${TESTSUITE_NO_ELF}.tbx"
     append SVLib " -sv_lib ${BREKER_HOME}/linux64/lib/libtrek "
 }
 

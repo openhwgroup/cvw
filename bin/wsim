@@ -111,7 +111,10 @@ def prepSim(args, ElfFile):
         prefix = lockstepSetup(args)
         defineList.append("+define+USE_IMPERAS_DV")
     if "breker" in ElfFile:
+        ElfFileNoExtension = os.path.splitext(args.testsuite)[0]
         flagsList.append("--breker")
+        defineList.append("+define+USE_TREK_DV")
+        argsList.append(f"+TREK_TBX_FILE={WALLY}/tests/breker/work/{ElfFileNoExtension}/{ElfFileNoExtension}.tbx")
     # Combine into a single string
     args.args += " ".join(argsList)
     args.params += " ".join(paramsList)

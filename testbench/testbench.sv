@@ -419,7 +419,11 @@ module testbench;
       end else if (TEST == "coverage64gc") begin
         $display("%s ran. Coverage tests don't get checked", tests[test]);
       end else if (ElfFile != "none") begin
-        $display("Single Elf file tests are not signatured verified.");
+        `ifdef USE_TREK_DV
+          $display("Breker test is done.");
+        `else
+          $display("Single Elf file tests are not signatured verified.");
+        `endif
 `ifdef QUESTA
         $stop;  // if this is changed to $finish for Questa, wally-batch.do does not go to the next step to run coverage, and wally.do terminates without allowing GUI debug
 `else
@@ -696,6 +700,7 @@ module testbench;
   always @(posedge clk) begin
   //  if (reset) PrevPCZero <= 0;
   //  else if (dut.core.InstrValidM) PrevPCZero <= (FunctionName.PCM == 0 & dut.core.ifu.InstrM == 0);
+    // $display("PCE: %0h IEUAdrM: %0h Label (tohost): %0h instruction: %s", dut.core.ifu.PCE, dut.core.lsu.IEUAdrM, ProgramAddrLabelArray["tohost"], InstrMName);
     TestComplete <= ((InstrM == 32'h6f) & dut.core.InstrValidM ) |
 		   ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"] & dut.core.lsu.IEUAdrM != 0) & InstrMName == "SW"); // |
     //   (FunctionName.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.InstrValidM & PrevPCZero));
