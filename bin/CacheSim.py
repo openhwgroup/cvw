@@ -16,19 +16,19 @@
 ##
 ## SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 ##
-## Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-## except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+## Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+## except in compliance with the License, or, at your option, the Apache License version 2.0. You
 ## may obtain a copy of the License at
 ##
 ## https:##solderpad.org/licenses/SHL-2.1/
 ##
-## Unless required by applicable law or agreed to in writing, any work distributed under the 
-## License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-## either express or implied. See the License for the specific language governing permissions 
+## Unless required by applicable law or agreed to in writing, any work distributed under the
+## License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+## either express or implied. See the License for the specific language governing permissions
 ## and limitations under the License.
 ################################################################################################
 
-# how to invoke this simulator: 
+# how to invoke this simulator:
 # CacheSim.py <number of lines> <number of ways> <length of physical address> <length of tag> -f <log file> (-v)
 # so the default invocation for rv64gc is 'CacheSim.py 64 4 56 44 -f <log file>'
 # the log files to run this simulator on can be generated from testbench.sv
@@ -37,25 +37,26 @@
 # This helps avoid unexpected logger behavior.
 # With verbose mode off, the simulator only reports mismatches between its and Wally's behavior.
 # With verbose mode on, the simulator logs each access into the cache.
-# Add -p or --perf to report the hit/miss ratio. 
+# Add -p or --perf to report the hit/miss ratio.
 # Add -d or --dist to report the distribution of loads, stores, and atomic ops.
 # These distributions may not add up to 100; this is because of flushes or invalidations.
 
 import math
 import argparse
 import os
+import sys
 
 class CacheLine:
     def __init__(self):
         self.tag = 0
         self.valid = False
         self.dirty = False
-    
+
     def __str__(self):
         string = "(V: " + str(self.valid) + ", D: " + str(self.dirty)
         string +=  ", Tag: " + str(hex(self.tag)) + ")"
         return string
-    
+
     def __repr__(self):
         return self.__str__()
 
@@ -72,13 +73,13 @@ class Cache:
         self.ways = []
         for i in range(numways):
             self.ways.append([])
-            for j in range(numsets):
+            for _ in range(numsets):
                 self.ways[i].append(CacheLine())
-        
+
         self.pLRU = []
         for i in range(self.numsets):
             self.pLRU.append([0]*(self.numways-1))
-    
+
     # flushes the cache by setting all dirty bits to False
     def flush(self):
         for way in self.ways:
@@ -92,20 +93,21 @@ class Cache:
             line = self.ways[waynum][setnum]
             if line.tag == tag and line.valid:
                 line.dirty = 0
-                if invalidate: line.valid = 0
-                
+                if invalidate:
+                    line.valid = 0
+
     # invalidates the cache by setting all valid bits to False
     def invalidate(self):
         for way in self.ways:
             for line in way:
                 line.valid = False
-    
+
     # resets the pLRU to a fresh 2-D array of 0s
     def clear_pLRU(self):
         self.pLRU = []
-        for i in range(self.numsets):
+        for _ in range(self.numsets):
             self.pLRU.append([0]*(self.numways-1))
-    
+
     # splits the given address into tag, set, and offset
     def splitaddr(self, addr):
         # no need for offset in the sim, but it's here for debug
@@ -113,7 +115,7 @@ class Cache:
         setnum = (addr >> self.offsetlen) & int('1'*self.setlen, 2)
         offset = addr & int('1'*self.offsetlen, 2)
         return tag, setnum, offset
-    
+
     # performs a cache access with the given address.
     # returns a character representing the outcome:
     # H/M/E/D - hit, miss, eviction, or eviction with writeback
@@ -138,7 +140,7 @@ class Cache:
                 line.dirty = write
                 self.update_pLRU(waynum, setnum)
                 return 'M'
-        
+
         # we need to evict. Select a victim and overwrite.
         victim = self.getvictimway(setnum)
         line = self.ways[victim][setnum]
@@ -154,14 +156,14 @@ class Cache:
     def update_pLRU(self, waynum, setnum):
         if self.numways == 1:
             return
-        
+
         tree = self.pLRU[setnum]
         bottomrow = (self.numways - 1)//2
         index = (waynum // 2) + bottomrow
-        tree[index] = int(not (waynum % 2))
+        tree[index] = int(not waynum % 2)
         while index > 0:
             parent = (index-1) // 2
-            tree[parent] = index % 2 
+            tree[parent] = index % 2
             index = parent
 
     # uses the psuedo-LRU tree to select
@@ -170,7 +172,7 @@ class Cache:
     def getvictimway(self, setnum):
         if self.numways == 1:
             return 0
-        
+
         tree = self.pLRU[setnum]
         index = 0
         bottomrow = (self.numways - 1) // 2 #first index on the bottom row of the tree
@@ -180,14 +182,14 @@ class Cache:
                 index = index*2 + 1
             else: #tree[index] == 1
                 # Go to the right child
-                index = index*2 + 2     
-        
+                index = index*2 + 2
+
         victim = (index - bottomrow)*2
         if tree[index] == 1:
             victim += 1
-        
+
         return victim
-    
+
     def __str__(self):
         string = ""
         for i in range(self.numways):
@@ -199,9 +201,9 @@ class Cache:
 
     def __repr__(self):
         return self.__str__()
-    
 
-def main():
+
+def parseArgs():
     parser = argparse.ArgumentParser(description="Simulates a L1 cache.")
     parser.add_argument('numlines', type=int, help="The number of lines per way (a power of 2)", metavar="L")
     parser.add_argument('numways', type=int, help="The number of ways (a power of 2)", metavar='W')
@@ -211,8 +213,9 @@ def main():
     parser.add_argument('-v', "--verbose", action='store_true', help="verbose/full-trace mode")
     parser.add_argument('-p', "--perf", action='store_true', help="Report hit/miss ratio")
     parser.add_argument('-d', "--dist", action='store_true', help="Report distribution of operations")
+    return parser.parse_args()
 
-    args = parser.parse_args()
+def main(args):
     cache = Cache(args.numlines, args.numways, args.addrlen, args.taglen)
     extfile = os.path.expanduser(args.file)
     mismatches = 0
@@ -227,7 +230,7 @@ def main():
         atoms = 0
         totalops = 0
 
-    with open(extfile, "r") as f:
+    with open(extfile, "r", encoding="utf-8") as f:
         for ln in f:
             ln = ln.strip()
             lninfo = ln.split()
@@ -239,11 +242,11 @@ def main():
                     cache.clear_pLRU()
                     if args.verbose:
                         print("New Test")
-                        
+
             else:
                 if args.dist:
                     totalops += 1
-                
+
                 if lninfo[1] == 'F':
                     cache.flush()
                     if args.verbose:
@@ -257,22 +260,22 @@ def main():
                     IsCBOClean = lninfo[1] != 'C'
                     cache.cbo(addr, IsCBOClean)
                     if args.verbose:
-                        print(lninfo[1]);
+                        print(lninfo[1])
                 else:
                     addr = int(lninfo[0], 16)
                     iswrite = lninfo[1] == 'W' or lninfo[1] == 'A' or lninfo[1] == 'Z'
                     result = cache.cacheaccess(addr, iswrite)
-                    
+
                     if args.verbose:
                         tag, setnum, offset = cache.splitaddr(addr)
                         print(hex(addr), hex(tag), hex(setnum), hex(offset), lninfo[2], result)
-                    
+
                     if args.perf:
                         if result == 'H':
                             hits += 1
                         else:
                             misses += 1
-                    
+
                     if args.dist:
                         if lninfo[1] == 'R':
                             loads += 1
@@ -280,7 +283,7 @@ def main():
                             stores += 1
                         elif lninfo[1] == 'A':
                             atoms += 1
-                    
+
                     if not result == lninfo[2]:
                         print("Result mismatch at address", lninfo[0]+ ". Wally:", lninfo[2]+", Sim:", result)
                         mismatches += 1
@@ -289,14 +292,15 @@ def main():
         percent_stores = str(round(100*stores/totalops))
         percent_atoms = str(round(100*atoms/totalops))
         print("This log had", percent_loads+"% loads,", percent_stores+"% stores, and", percent_atoms+"% atomic operations.")
-    
+
     if args.perf:
         ratio = round(hits/misses,3)
         print("There were", hits, "hits and", misses, "misses. The hit/miss ratio was", str(ratio)+".")
-    
+
     if mismatches == 0:
         print("SUCCESS! There were no mismatches between Wally and the sim.")
     return mismatches
 
 if __name__ == '__main__':
-    exit(main())
+    args = parseArgs()
+    sys.exit(main(args))
