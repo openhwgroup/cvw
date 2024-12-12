@@ -44,6 +44,7 @@ module testbench;
   parameter I_CACHE_ADDR_LOGGER=0;
   parameter D_CACHE_ADDR_LOGGER=0;
   parameter RVVI_SYNTH_SUPPORTED=0;
+  parameter MAKE_VCD=0;
 
   `ifdef USE_IMPERAS_DV
     import idvPkg::*;
@@ -230,10 +231,10 @@ module testbench;
       end
       $finish;
     end
-`ifdef MAKEVCD
-    $dumpfile("testbench.vcd");
-    $dumpvars;
-`endif
+    if (MAKE_VCD) begin
+      $dumpfile("testbench.vcd");
+      $dumpvars;
+    end
   end // initial begin
 
   // Model the testbench as an fsm.

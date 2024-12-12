@@ -3,12 +3,12 @@
 #
 # Modification by Oklahoma State University & Harvey Mudd College
 # Use with Testbench
-# James Stine, 2008; David Harris 2021
+# James Stine, 2008; David Harris 2021; Jordan Carlin 2024
 # Go Cowboys!!!!!!
 #
 # Takes 1:10 to run RV64IC tests using gui
 
-# Usage: do wally.do <config> <testcases> <testbench> [--ccov] [--fcov] [+acc] [--args "any number of +value"] [--params "any number of VAR=VAL parameter overrides"]
+# Usage: do wally.do <config> <testcases> <testbench> [--ccov] [--fcov] [--gui] [--args "any number of +value"] [--params "any number of VAR=VAL parameter overrides"]
 # Example: do wally.do rv64gc arch64i testbench
 
 # Use this wally.do file to run this example.
@@ -40,7 +40,6 @@ set TESTSUITE ${2}
 set TESTBENCH ${3}
 set WKDIR wkdir/${CFG}_${TESTSUITE}
 set WALLY $::env(WALLY)
-set IMPERAS_HOME $::env(IMPERAS_HOME)
 set CONFIG ${WALLY}/config
 set SRC ${WALLY}/src
 set TB ${WALLY}/testbench
@@ -55,6 +54,7 @@ vlib ${WKDIR}
 set PlusArgs ""
 set ParamArgs ""
 set ExpandedParamArgs {}
+set DefineArgs ""
 
 set ccov 0
 set CoverageVoptArg ""
@@ -62,8 +62,6 @@ set CoverageVsimArg ""
 
 set FunctCoverage 0
 set FCvlog ""
-set FCvopt ""
-set FCdefineCOVER_EXTS {}
 
 set lockstep 0
 set lockstepvlog ""
@@ -91,7 +89,7 @@ echo "number of args = $argc"
 echo "lst = $lst"
 
 # if +acc found set flag and remove from list
-if {[lcheck lst "+acc"]} {
+if {[lcheck lst "--gui"]} {
     set GUI 1
     set accFlag "+acc"
 }
@@ -106,21 +104,17 @@ if {[lcheck lst "--ccov"]} {
 # if --fcov found set flag and remove from list
 if {[lcheck lst "--fcov"]} {
     set FunctCoverage 1
-    # COVER_BASE_RV32I is just needed to keep riscvISACOV happy, but no longer affects tests
-         set FCvlog "+define+INCLUDE_TRACE2COV \
-                +define+IDV_INCLUDE_TRACE2COV \
-                +define+COVER_BASE_RV32I \
-                +incdir+$env(WALLY)/addins/cvw-arch-verif/riscvISACOV/source \
-		"
-    set FCvopt "+TRACE2COV_ENABLE=1 +IDV_TRACE2COV=1"
-
+    set FCvlog "+incdir+$env(WALLY)/addins/cvw-arch-verif/riscvISACOV/source \
+                +incdir+${FCRVVI}/unpriv \
+                +incdir+${FCRVVI}/priv +incdir+${FCRVVI}/rv64_priv +incdir+${FCRVVI}/rv32_priv \
+                +incdir+${FCRVVI}/common +incdir+${FCRVVI}"
 }
 
 # if --lockstep or --fcov found set flag and remove from list
 if {[lcheck lst "--lockstep"] || $FunctCoverage == 1} {
+    set IMPERAS_HOME $::env(IMPERAS_HOME)
     set lockstep 1
-    set lockstepvlog "+define+USE_IMPERAS_DV \
-                      +incdir+${IMPERAS_HOME}/ImpPublic/include/host \
+    set lockstepvlog "+incdir+${IMPERAS_HOME}/ImpPublic/include/host \
                       +incdir+${IMPERAS_HOME}/ImpProprietary/include/host \
                       ${IMPERAS_HOME}/ImpPublic/source/host/rvvi/*.sv \
                       ${IMPERAS_HOME}/ImpProprietary/source/host/idv/*.sv"
@@ -145,6 +139,13 @@ if {$ParamArgsIndex >= 0} {
     set lst [lreplace $lst $ParamArgsIndex [expr {$ParamArgsIndex + 1}]]
 }
 
+# Set +define macros passed using the --define flag
+set DefineArgsIndex [lsearch -exact $lst "--define"]
+if {$DefineArgsIndex >= 0} {
+    set DefineArgs [lindex $lst [expr {$DefineArgsIndex + 1}]]
+    set lst [lreplace $lst $DefineArgsIndex [expr {$DefineArgsIndex + 1}]]
+}
+
 # Debug print statements
 if {$DEBUG > 0} {
     echo "GUI = $GUI"
@@ -153,22 +154,23 @@ if {$DEBUG > 0} {
     echo "FunctCoverage = $FunctCoverage"
     echo "remaining list = $lst"
     echo "Extra +args = $PlusArgs"
-    echo "Extra -args = $ExpandedParamArgs"
+    echo "Extra params = $ExpandedParamArgs"
+    echo "Extra defines = $DefineArgs"
 }
 
 # compile source files
 # suppress spurious warnngs about
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
-set INC_DIRS "+incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared +incdir+${FCRVVI} +incdir+${FCRVVI}/unpriv +incdir+${FCRVVI}/rv64_priv +incdir+${FCRVVI}/priv +incdir+${FCRVVI}/rv32_priv +incdir+${FCRVVI}/common +incdir+${FCRVVI}"
+set INC_DIRS "+incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared"
 set SOURCES "${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv ${SRC}/*/*.sv ${SRC}/*/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*/*/*.sv"
-vlog -permissive -lint -work ${WKDIR} {*}${INC_DIRS} {*}${FCvlog} {*}${FCdefineCOVER_EXTS} {*}${lockstepvlog} {*}${SOURCES} -suppress 2282,2583,7053,7063,2596,13286
+vlog -permissive -lint -work ${WKDIR} {*}${INC_DIRS} {*}${DefineArgs} {*}${FCvlog} {*}${lockstepvlog} {*}${SOURCES} -suppress 2282,2583,7053,7063,2596,13286
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} {*}${ExpandedParamArgs} -o testbenchopt ${CoverageVoptArg}
 
-vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} {*}${PlusArgs} -fatal 7 {*}${SVLib} {*}${FCvopt} -suppress 3829 ${CoverageVsimArg}
+vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} {*}${PlusArgs} -fatal 7 {*}${SVLib} -suppress 3829 ${CoverageVsimArg}
 
 # power add generates the logging necessary for saif generation.
 # power add -r /dut/core/*

@@ -12,6 +12,7 @@
 *.map
 *.elf*
 *.list
+*.memfile
 
 # General directories to ignore
 .vscode/
