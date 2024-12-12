@@ -41,7 +41,7 @@ To run synthesis results for all flavors of the recurrence unit, go to `cvw/synt
 3) `git checkout divremsqrt`
 4) `source ./setup.sh`
 5) `make`
-6) `/sim/regression-wally -intdiv`
+6) `/bin/regression-wally-intdiv -intdiv`
 
 
 # core-v-wally
