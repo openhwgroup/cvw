@@ -22,24 +22,24 @@ from multiprocessing import Pool, TimeoutError
 ##################################
 
 # The tests are a list with one element for each configuration
-# The element consists of the configuration name, a list of test suites to run, 
+# The element consists of the configuration name, a list of test suites to run,
 # optionally a string to pass to the simulator, and optionally a nonstandard grep string to check for success
 
 tests = [
         ["rv32e", ["arch32e"]],
         ["rv32i", ["arch32i"]],
         ["rv32imc", ["arch32i", "arch32c", "arch32m", "wally32periph"]],
-        ["rv32gc", ["arch32f", "arch32d", "arch32f_fma", "arch32d_fma", "arch32f_divsqrt", "arch32d_divsqrt", 
-                    "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32a_amo", "arch32zifencei", "arch32zicond", 
-                    "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "arch32zfh", "arch32zfh_fma", 
+        ["rv32gc", ["arch32f", "arch32d", "arch32f_fma", "arch32d_fma", "arch32f_divsqrt", "arch32d_divsqrt",
+                    "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32a_amo", "arch32zifencei", "arch32zicond",
+                    "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "arch32zfh", "arch32zfh_fma",
                     "arch32zfh_divsqrt", "arch32zfaf", "arch32zfad", "wally32a_lrsc", "wally32priv", "wally32periph", "arch32zcb",
-                    "arch32zbkb", "arch32zbkc", "arch32zbkx", "arch32zknd", "arch32zkne", "arch32zknh"]], 
+                    "arch32zbkb", "arch32zbkc", "arch32zbkx", "arch32zknd", "arch32zkne", "arch32zknh"]],
         ["rv64i", ["arch64i"]]
         ]
 
 # Separate test for short buildroot run through OpenSBI UART output
 tests_buildrootshort = [
-                    ["buildroot", ["buildroot"], [f"+INSTR_LIMIT=1400000"], # Instruction limit gets to first OpenSBI UART output  
+                    ["buildroot", ["buildroot"], [f"+INSTR_LIMIT=1400000"], # Instruction limit gets to first OpenSBI UART output
                         "OpenSBI v", "buildroot_uart.out"]
     ]
 
@@ -58,15 +58,15 @@ tests_buildrootbootlockstep = [
 # Separate out floating-point tests for RV64 to speed up coverage
 tests64gc_nofp = [
         ["rv64gc", ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m", "arch64zcb",
-                    "arch64zifencei", "arch64zicond", "arch64a_amo", "wally64a_lrsc", "wally64periph", "wally64priv", 
+                    "arch64zifencei", "arch64zicond", "arch64a_amo", "wally64a_lrsc", "wally64periph", "wally64priv",
                     "arch64zbkb", "arch64zbkc", "arch64zbkx", "arch64zknd", "arch64zkne", "arch64zknh",
                     "arch64zba",  "arch64zbb",  "arch64zbc", "arch64zbs"]] # add when working:  "arch64zicboz"
     ]
 
 tests64gc_fp = [
-        ["rv64gc", ["arch64f", "arch64d", "arch64zfh", 
-                    "arch64f_fma", "arch64d_fma", "arch64zfh_fma", 
-                    "arch64f_divsqrt", "arch64d_divsqrt", "arch64zfh_divsqrt", 
+        ["rv64gc", ["arch64f", "arch64d", "arch64zfh",
+                    "arch64f_fma", "arch64d_fma", "arch64zfh_fma",
+                    "arch64f_divsqrt", "arch64d_divsqrt", "arch64zfh_divsqrt",
                     "arch64zfaf", "arch64zfad"]]
     ]
 
@@ -165,7 +165,7 @@ derivconfigtests = [
         ["div_4_2_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
         ["div_4_2i_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
         ["div_4_4_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
-        ["div_4_4i_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]], 
+        ["div_4_4i_rv64gc", ["arch64f_divsqrt", "arch64d_divsqrt", "arch64m"]],
 
         # fpu permutations
         ["f_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32zfaf"]],
@@ -174,26 +174,26 @@ derivconfigtests = [
         ["fdq_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32i", "arch32zfaf", "arch32zfad"]],
         ["fdqh_rv32gc", ["arch32f", "arch32f_divsqrt", "arch32f_fma", "arch32d", "arch32d_divsqrt", "arch32d_fma", "arch32zfh", "arch32zfh_divsqrt", "arch32i", "arch32zfaf", "arch32zfad"]],
         ["f_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64zfaf"]],
-        ["fh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64zfh", "arch64zfh_divsqrt", "arch64zfaf"]], 
+        ["fh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64zfh", "arch64zfh_divsqrt", "arch64zfaf"]],
         ["fdh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64zfh", "arch64zfh_divsqrt", "arch64zfaf", "arch64zfad"]],
         ["fdq_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64i", "arch64zfaf", "arch64zfad"]],
         ["fdqh_rv64gc", ["arch64f", "arch64f_divsqrt", "arch64f_fma", "arch64d", "arch64d_divsqrt", "arch64d_fma", "arch64zfh", "arch64zfh_divsqrt", "arch64i",  "arch64zfaf", "arch64zfad"]], # "wally64q" when Q is supported again in riscof config file
     ]
 
 bpredtests = [
-    
+
         ["nobpred_rv32gc", ["rv32i"]],
         ["bpred_TWOBIT_6_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
         ["bpred_TWOBIT_8_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_TWOBIT_10_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],        
+        ["bpred_TWOBIT_10_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
         ["bpred_TWOBIT_12_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_TWOBIT_14_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],        
+        ["bpred_TWOBIT_14_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
         ["bpred_TWOBIT_16_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
         ["bpred_TWOBIT_6_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
         ["bpred_TWOBIT_8_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_TWOBIT_10_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],        
+        ["bpred_TWOBIT_10_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
         ["bpred_TWOBIT_12_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_TWOBIT_14_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],        
+        ["bpred_TWOBIT_14_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
         ["bpred_TWOBIT_16_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
 
         ["bpred_GSHARE_6_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
@@ -355,7 +355,7 @@ def search_log_for_text(text, grepfile):
 def run_test_case(config, dryrun: bool = False):
     """
     Run the given test case, and return 0 if the test suceeds and 1 if it fails
-    
+
     Do not execute commands if dryrun
     """
     grepfile = config.grepfile
@@ -369,7 +369,7 @@ def run_test_case(config, dryrun: bool = False):
         if search_log_for_text(config.grepstr, grepfile):
             # Flush is needed to flush output to stdout when running in multiprocessing Pool
     #        print(f"{bcolors.OKGREEN}%s_%s: Success{bcolors.ENDC}" % (config.variant, config.name), flush=True)
-            print(f"{bcolors.OKGREEN}%s: Success{bcolors.ENDC}" % (config.cmd), flush=True) 
+            print(f"{bcolors.OKGREEN}%s: Success{bcolors.ENDC}" % (config.cmd), flush=True)
             return 0
         else:
             print(f"{bcolors.FAIL}%s: Failures detected in output{bcolors.ENDC}" % (config.cmd), flush=True)
@@ -442,7 +442,7 @@ elif (args.fcov):  # run tests in lockstep in functional coverage mode
     addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/priv/rv32/", "rv32gc", coveragesim)
     addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/priv/rv64/", "rv64gc", coveragesim)
 
-else: 
+else:
     for sim in sims:
         if (not (args.buildroot and sim == lockstepsim)):  # skip short buildroot sim if running long one
             addTests(tests_buildrootshort, sim)
@@ -526,7 +526,7 @@ def main():
     global configs, args
     os.chdir(regressionDir)
     dirs = ["questa/logs", "questa/wkdir", "verilator/logs", "verilator/wkdir", "vcs/logs", "vcs/wkdir"]
-    for d in dirs: 
+    for d in dirs:
         try:
             os.system('rm -rf %s' % d)
             os.mkdir(d)
