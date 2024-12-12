@@ -447,7 +447,7 @@ if (intdiv):
     ]
     for config in intdivconfigs:
         # fdivremsqrt test case
-        name = "div_drsu"
+        name = "fdivremsqrt"
         logname = WALLY + "/sim/" + testfloatsim + "/logs/"+config+"_"+name+".log" 
         fdivremsqrttestcase = TestCase(
             name=name,
