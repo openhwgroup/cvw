@@ -7,8 +7,9 @@
 
 import argparse
 import os
+import sys
 import multiprocessing
-from multiprocessing import Pool, TimeoutError
+from multiprocessing import Pool, TimeoutError as MPTimeoutError
 TIMEOUT_DUR = 60  # 1` minute
 
 class bcolors:
@@ -28,7 +29,7 @@ def search_log_for_mismatches(logfile):
     os.system(grepwarn)
     greperr = "grep -H Error: " + logfile
     os.system(greperr)
-    grepcmd = "grep -a -e 'Mismatches            : 0' '%s' > /dev/null" % logfile
+    grepcmd = f"grep -a -e 'Mismatches            : 0' '{logfile}' > /dev/null"
 #    print("  search_log_for_text invoking %s" % grepcmd)
     return os.system(grepcmd) == 0
 
@@ -36,7 +37,7 @@ def run_test_case(elf):
     """Run the given test case, and return 0 if the test suceeds and 1 if it fails"""
     WALLY = os.environ.get('WALLY')
     fields = elf.rsplit('/', 3)
-    if (fields[2] == "ref"):
+    if fields[2] == "ref":
         shortelf = fields[1] + "_" + fields[3]
     else:
         shortelf = fields[2] + "_" + fields[3]
@@ -48,13 +49,13 @@ def run_test_case(elf):
     if search_log_for_mismatches(logfile):
         print(f"{bcolors.OKGREEN}%s: Success{bcolors.ENDC}" % (cmd))
         return 0
-    elif("WALLY-cbom-01" in elf):
+    elif "WALLY-cbom-01" in elf:
         # Remove this when CBO instructions are modeled in ImperasDV
         print(f"{bcolors.OKCYAN}%s: Expected mismatch because ImperasDV does not yet model cache for CBO instructions {bcolors.ENDC}" % (cmd))
         return 0
     else:
         print(f"{bcolors.FAIL}%s: Failures detected in output{bcolors.ENDC}" % (cmd))
-        print("  Check %s" % logfile)
+        print(f"  Check {logfile}")
         return 1
 
 ##################################
@@ -74,7 +75,7 @@ args = parser.parse_args()
 # find all ELF files in directory
 
 ElfList = []
-if (os.path.isdir(args.dir)):
+if os.path.isdir(args.dir):
     DirectorMode = 1
     for dirpath, dirnames, filenames in os.walk(os.path.abspath(args.dir)):
         for file in filenames:
@@ -82,7 +83,7 @@ if (os.path.isdir(args.dir)):
                 ElfList.append(os.path.join(dirpath, file))
 else:
     print(args.dir + " is not a directory")
-    exit(1)
+    sys.exit(1)
 #print(ElfList)
 
 # spawn parallel wsim jobs for each ELF file
@@ -96,12 +97,11 @@ with Pool(processes=min(len(ElfList),multiprocessing.cpu_count(), ImperasDVLicen
     for (elf,result) in results.items():
         try:
             num_fail+=result.get(timeout=TIMEOUT_DUR)
-        except TimeoutError:
+        except MPTimeoutError:
             num_fail+=1
             print(f"{bcolors.FAIL}%s: Timeout - runtime exceeded %d seconds{bcolors.ENDC}" % (elf, TIMEOUT_DUR))
 
-if (num_fail == 0):
+if num_fail == 0:
     print(f"{bcolors.OKGREEN}SUCCESS! All tests ran without failures{bcolors.ENDC}")
 else:
     print(f"{bcolors.FAIL}Completed %d tests with %d failures{bcolors.ENDC}" % (len(ElfList), num_fail))
-
