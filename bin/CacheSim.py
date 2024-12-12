@@ -53,8 +53,8 @@ class CacheLine:
         self.dirty = False
 
     def __str__(self):
-        string = "(V: " + str(self.valid) + ", D: " + str(self.dirty)
-        string +=  ", Tag: " + str(hex(self.tag)) + ")"
+        string = f"(V: {self.valid}, D: {self.dirty}"
+        string += f", Tag: {hex(self.tag)})"
         return string
 
     def __repr__(self):
@@ -193,9 +193,9 @@ class Cache:
     def __str__(self):
         string = ""
         for i in range(self.numways):
-            string += "Way " + str(i) + ": "
+            string += f"Way {i}: "
             for line in self.ways[i]:
-                string += str(line) + ", "
+                string += f"{line}, "
             string += "\n\n"
         return string
 
@@ -285,13 +285,13 @@ def main(args):
                             atoms += 1
 
                     if not result == lninfo[2]:
-                        print("Result mismatch at address", lninfo[0]+ ". Wally:", lninfo[2]+", Sim:", result)
+                        print(f"Result mismatch at address {lninfo[0]}. Wally: {lninfo[2]}, Sim: {result}")
                         mismatches += 1
     if args.dist:
         percent_loads = str(round(100*loads/totalops))
         percent_stores = str(round(100*stores/totalops))
         percent_atoms = str(round(100*atoms/totalops))
-        print("This log had", percent_loads+"% loads,", percent_stores+"% stores, and", percent_atoms+"% atomic operations.")
+        print(f"This log had {percent_loads}% loads, {percent_stores}% stores, and {percent_atoms}% atomic operations.")
 
     if args.perf:
         ratio = round(hits/misses,3)

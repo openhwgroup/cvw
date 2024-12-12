@@ -264,21 +264,21 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 def addTests(tests, sim):
-    sim_logdir = WALLY+ "/sim/" + sim + "/logs/"
+    sim_logdir = f"{WALLY}/sim/{sim}/logs/"
     for test in tests:
         config = test[0]
         suites = test[1]
         if len(test) >= 3:
-            args = " --args " + " ".join(test[2])
+            args = f" --args {test[2]}"
         else:
             args = ""
         if len(test) >= 4:
             gs = test[3]
         else:
             gs = "All tests ran without failures"
-        cmdPrefix="wsim --sim " + sim + " " + coverStr + " " + config
+        cmdPrefix=f"wsim --sim {sim} {coverStr} {config}"
         for t in suites:
-            sim_log = sim_logdir + config + "_" + t + ".log"
+            sim_log = f"{sim_logdir}{config}_{t}.log"
             if len(test) >= 5:
                 grepfile = sim_logdir + test[4]
             else:
@@ -286,7 +286,7 @@ def addTests(tests, sim):
             tc = TestCase(
                     name=t,
                     variant=config,
-                    cmd=cmdPrefix + " " + t + args + " > " + sim_log,
+                    cmd=f"{cmdPrefix} {t} {args} > {sim_log}",
                     grepstr=gs,
                     grepfile = grepfile)
             configs.append(tc)
@@ -294,27 +294,27 @@ def addTests(tests, sim):
 
 def addTestsByDir(testDir, config, sim, lockstepMode=0):
     if os.path.isdir(testDir):
-        sim_logdir = WALLY+ "/sim/" + sim + "/logs/"
+        sim_logdir = f"{WALLY}/sim/{sim}/logs/"
         if coverStr == "--fcov": # use --fcov in place of --lockstep
-            cmdPrefix="wsim --sim " + sim + " " + coverStr + " " + config
+            cmdPrefix=f"wsim --sim {sim} {coverStr} {config}"
             gs="Mismatches            : 0"
             if ("cvw-arch-verif/tests" in testDir and not "priv" in testDir):
                 fileEnd = "ALL.elf"
             else:
                 fileEnd = ".elf"
         elif coverStr == "--ccov":
-            cmdPrefix="wsim --sim " + sim + " " + coverStr + " " + config
+            cmdPrefix=f"wsim --sim {sim} {coverStr} {config}"
             gs="Single Elf file tests are not signatured verified."
             if ("cvw-arch-verif/tests" in testDir and not "priv" in testDir):
                 fileEnd = "ALL.elf"
             else:
                 fileEnd = ".elf"
         elif lockstepMode:
-            cmdPrefix="wsim --lockstep --sim " + sim + " " + config
+            cmdPrefix=f"wsim --lockstep --sim {sim} {config}"
             gs="Mismatches            : 0"
             fileEnd = ".elf"
         else:
-            cmdPrefix="wsim --sim " + sim + " " + config
+            cmdPrefix=f"wsim --sim {sim} {config}"
             gs="Single Elf file tests are not signatured verified."
             fileEnd = ".elf"
         for dirpath, _, filenames in os.walk(os.path.abspath(testDir)):
@@ -324,29 +324,29 @@ def addTestsByDir(testDir, config, sim, lockstepMode=0):
                     fullfile = os.path.join(dirpath, file)
                     fields = fullfile.rsplit('/', 3)
                     if fields[2] == "ref":
-                        shortelf = fields[1] + "_" + fields[3]
+                        shortelf = f"{fields[1]}_{fields[3]}"
                     else:
-                        shortelf = fields[2] + "_" + fields[3]
+                        shortelf = f"{fields[2]}_{fields[3]}"
                     if shortelf in lockstepwaivers: # skip tests that itch bugs in ImperasDV
                         print(f"{bcolors.WARNING}Skipping waived test {shortelf}{bcolors.ENDC}")
                         continue
-                    sim_log = sim_logdir + config + "_" + shortelf + ".log"
+                    sim_log = f"{sim_logdir}{config}_{shortelf}.log"
                     tc = TestCase(
                             name=file,
                             variant=config,
-                            cmd=cmdPrefix + " " + fullfile + " > " + sim_log,
+                            cmd=f"{cmdPrefix} {fullfile} > {sim_log}",
                             grepstr=gs,
                             grepfile = sim_log)
                     configs.append(tc)
     else:
-        print("Error: Directory not found: " + testDir)
+        print(f"Error: Directory not found: {testDir}")
         sys.exit(1)
 
 def search_log_for_text(text, grepfile):
     """Search through the given log file for text, returning True if it is found or False if it is not"""
-    grepwarn = "grep -i -H Warning: " + grepfile
+    grepwarn = f"grep -i -H Warning: {grepfile}"
     os.system(grepwarn)
-    greperr = "grep -i -H Error: " + grepfile
+    greperr = f"grep -i -H Error: {grepfile}"
     os.system(greperr)
     grepcmd = f"grep -a -e '{text}' '{grepfile}' > /dev/null"
     return os.system(grepcmd) == 0
@@ -367,10 +367,10 @@ def run_test_case(config, dryrun: bool = False):
         os.system(cmd)
         if search_log_for_text(config.grepstr, grepfile):
             # Flush is needed to flush output to stdout when running in multiprocessing Pool
-            print(f"{bcolors.OKGREEN}%s: Success{bcolors.ENDC}" % (config.cmd), flush=True)
+            print(f"{bcolors.OKGREEN}{config.cmd}: Success{bcolors.ENDC}", flush=True)
             return 0
         else:
-            print(f"{bcolors.FAIL}%s: Failures detected in output{bcolors.ENDC}" % (config.cmd), flush=True)
+            print(f"{bcolors.FAIL}{config.cmd}: Failures detected in output{bcolors.ENDC}", flush=True)
             print(f"  Check {grepfile}", flush=True)
             return 1
 
@@ -418,9 +418,9 @@ configs = [
     TestCase(
         name="lints",
         variant="all",
-        cmd="lint-wally " + nightMode + " | tee " + WALLY + "/sim/verilator/logs/all_lints.log",
+        cmd=f"lint-wally {nightMode} | tee {WALLY}/sim/verilator/logs/all_lints.log",
         grepstr="lints run with no errors or warnings",
-        grepfile = WALLY + "/sim/verilator/logs/all_lints.log")
+        grepfile = f"{WALLY}/sim/verilator/logs/all_lints.log")
     ]
 
 
@@ -467,11 +467,11 @@ if (args.testfloat or args.nightly): # for nightly, run testfloat along with oth
         if "f_" in config:
             tests.remove("cvtfp")
         for test in tests:
-            sim_log = WALLY + "/sim/" + testfloatsim + "/logs/"+config+"_"+test+".log"
+            sim_log = f"{WALLY}/sim/{testfloatsim}/logs/{config}_{test}.log"
             tc = TestCase(
                     name=test,
                     variant=config,
-                    cmd="wsim --tb testbench_fp --sim " + testfloatsim + " " + config + " " + test + " > " + sim_log,
+                    cmd=f"wsim --tb testbench_fp --sim {testfloatsim} {config} {test} > {sim_log}",
                     grepstr="All Tests completed with          0 errors",
                     grepfile = sim_log)
             configs.append(tc)
@@ -509,13 +509,13 @@ if (args.testfloat or args.nightly): # for nightly, run testfloat along with oth
         if "f_" in config:
             tests.remove("cvtfp")
         for test in tests:
-            sim_log = WALLY + "/sim/questa/logs/"+config+"_"+test+".log"
+            sim_log = f"{WALLY}/sim/{testfloatsim}/logs/{config}_{test}.log"
             tc = TestCase(
                     name=test,
                     variant=config,
-                    cmd="wsim --tb testbench_fp " + config + " " + test + " > " + sim_log,
+                    cmd=f"wsim --tb testbench_fp --sim {testfloatsim} {config} {test} > {sim_log}",
                     grepstr="All Tests completed with          0 errors",
-                    grepfile = WALLY + "/sim/questa/logs/"+config+"_"+test+".log")
+                    grepfile = f"{WALLY}/sim/{testfloatsim}/logs/{config}_{test}.log")
             configs.append(tc)
 
 
@@ -560,7 +560,7 @@ def main():
             except MPTimeoutError:
                 pool.terminate()
                 num_fail+=1
-                print(f"{bcolors.FAIL}%s: Timeout - runtime exceeded %d seconds{bcolors.ENDC}" % (config.cmd, TIMEOUT_DUR))
+                print(f"{bcolors.FAIL}{config.cmd}: Timeout - runtime exceeded {TIMEOUT_DUR} seconds{bcolors.ENDC}")
 
     # Coverage report
     if args.ccov:
@@ -569,7 +569,7 @@ def main():
         os.system('make -C '+WALLY+'/addins/cvw-arch-verif merge')
     # Count the number of failures
     if num_fail:
-        print(f"{bcolors.FAIL}Regression failed with %s failed configurations{bcolors.ENDC}" % num_fail)
+        print(f"{bcolors.FAIL}Regression failed with {num_fail} failed configurations{bcolors.ENDC}")
     else:
         print(f"{bcolors.OKGREEN}SUCCESS! All tests ran without failures{bcolors.ENDC}")
     return num_fail

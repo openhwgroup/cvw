@@ -30,7 +30,6 @@ def search_log_for_mismatches(logfile):
     greperr = "grep -H Error: " + logfile
     os.system(greperr)
     grepcmd = f"grep -a -e 'Mismatches            : 0' '{logfile}' > /dev/null"
-#    print("  search_log_for_text invoking %s" % grepcmd)
     return os.system(grepcmd) == 0
 
 def run_test_case(elf):
@@ -47,14 +46,14 @@ def run_test_case(elf):
 #    print("cmd = " + cmd)
     os.system(cmd)
     if search_log_for_mismatches(logfile):
-        print(f"{bcolors.OKGREEN}%s: Success{bcolors.ENDC}" % (cmd))
+        print(f"{bcolors.OKGREEN}{cmd}: Success{bcolors.ENDC}")
         return 0
     elif "WALLY-cbom-01" in elf:
         # Remove this when CBO instructions are modeled in ImperasDV
-        print(f"{bcolors.OKCYAN}%s: Expected mismatch because ImperasDV does not yet model cache for CBO instructions {bcolors.ENDC}" % (cmd))
+        print(f"{bcolors.OKCYAN}{cmd}: Expected mismatch because ImperasDV does not yet model cache for CBO instructions {bcolors.ENDC}")
         return 0
     else:
-        print(f"{bcolors.FAIL}%s: Failures detected in output{bcolors.ENDC}" % (cmd))
+        print(f"{bcolors.FAIL}{cmd}: Failures detected in output{bcolors.ENDC}")
         print(f"  Check {logfile}")
         return 1
 
@@ -99,9 +98,9 @@ with Pool(processes=min(len(ElfList),multiprocessing.cpu_count(), ImperasDVLicen
             num_fail+=result.get(timeout=TIMEOUT_DUR)
         except MPTimeoutError:
             num_fail+=1
-            print(f"{bcolors.FAIL}%s: Timeout - runtime exceeded %d seconds{bcolors.ENDC}" % (elf, TIMEOUT_DUR))
+            print(f"{bcolors.FAIL}{elf}: Timeout - runtime exceeded {TIMEOUT_DUR} seconds{bcolors.ENDC}")
 
 if num_fail == 0:
     print(f"{bcolors.OKGREEN}SUCCESS! All tests ran without failures{bcolors.ENDC}")
 else:
-    print(f"{bcolors.FAIL}Completed %d tests with %d failures{bcolors.ENDC}" % (len(ElfList), num_fail))
+    print(f"{bcolors.FAIL}Completed {len(ElfList)} tests with {num_fail} failures{bcolors.ENDC}")
