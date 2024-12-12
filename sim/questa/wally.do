@@ -3,7 +3,7 @@
 #
 # Modification by Oklahoma State University & Harvey Mudd College
 # Use with Testbench
-# James Stine, 2008; David Harris 2021
+# James Stine, 2008; David Harris 2021; Jordan Carlin 2024
 # Go Cowboys!!!!!!
 #
 # Takes 1:10 to run RV64IC tests using gui
