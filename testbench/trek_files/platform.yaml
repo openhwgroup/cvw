@@ -55,7 +55,7 @@ trek:
           doc: >-
             Name of the memory region
         base:
-          value: 0x82000000
+          value: 0x83000000
           doc: >-
             Base address of memory region.
             Ignored for `static` initialized memory
@@ -108,13 +108,13 @@ trek:
               - backdoor
               - frontdoor
         c2t_base:
-          value: 0x83000000
+          value: 0x82000000
           doc: >-
             Fixed base address of C to trekbox mailbox region.
             Allow 64 bytes per processor.
             Used for init_type of `backdoor` and `frontdoor` only.
         t2c_base:
-          value: 0x83001000
+          value: 0x82001000
           doc: >-
             Fixed base address of trekbox to C mailbox region.
             Allow 64 bytes per processor.
