@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-import sys, fileinput
+import sys
+import fileinput
 
 address = 0
 

@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-import os,sys,subprocess
+import os
+import sys
+import subprocess
 from datetime import datetime, timezone, timedelta
 
 if not os.path.isfile(sys.path[0]+'/slack-webhook-url.txt'):
