@@ -68,7 +68,7 @@ In summary, this Python script facilitates the automation of nightly regression 
 
 import os
 import shutil
-from datetime import datetime, timedelta
+from datetime import datetime
 import time
 import re
 import markdown
@@ -76,9 +76,6 @@ import subprocess
 import argparse
 import logging
 from pathlib import Path
-
-
-
 
 
 class FolderManager:
@@ -115,9 +112,6 @@ class FolderManager:
         """
         
         for folder in folders:
-            folder_path = os.path.join(self.base_parent_dir, folder)
-            # if not os.path.exists(folder_path):
-            #     os.makedirs(folder_path)
             if not os.path.exists(folder):
                 os.makedirs(folder)
 
@@ -171,7 +165,6 @@ class FolderManager:
         Returns:
             None
         """
-        todays_date = datetime.now().strftime("%Y-%m-%d")
         cvw = folder.joinpath("cvw")
         tmp_folder = os.path.join(cvw, "tmp") # temprorary files will be stored in here
         if not cvw.exists():
@@ -287,7 +280,7 @@ class TestRunner:
 
         if target: 
             output_file = self.log_dir.joinpath(f"make-{target}-output.log")
-        else: output_file = self.log_dir.joinpath(f"make-output.log")
+        else: output_file = self.log_dir.joinpath("make-output.log")
 
         # Source setup script and execute make with target and cores/2
         if target: 
@@ -461,7 +454,6 @@ class TestRunner:
             None
         """
         # Implement markdown rewriting logic here
-        timestamp = datetime.now().strftime("%Y-%m-%d")
 
         # output_directory = self.base_parent_dir.joinpath("results")
         os.chdir(self.results_dir)
@@ -470,7 +462,7 @@ class TestRunner:
         
 
         with open(output_file, 'w') as md_file:
-       
+
             # Title
             md_file.write(f"\n\n# Regression Test Results - {self.todays_date}\n\n")
             #md_file.write(f"\n\n<div class=\"regression\">\n# Regression Test Results - {timestamp}\n</div>\n\n")
@@ -485,7 +477,7 @@ class TestRunner:
                 md_file.write("\n")
             else:
                 md_file.write("## Failed Configurations\n")
-                md_file.write(f"No Failures\n")
+                md_file.write("No Failures\n")
             
             md_file.write("\n## Passed Configurations\n")
             for config in passed_configs:
@@ -545,18 +537,18 @@ class TestRunner:
             md_file.write(f"**Total Failures: {total_number_failures}**\n")
 
             # Failed Tests
-            md_file.write(f"\n\n## Failed Tests")
+            md_file.write("\n\n## Failed Tests")
             md_file.write(f"\n**Total failed tests: {total_number_failures}**")
             for (test_item, item) in zip(test_list, failed_tests):
                 md_file.write(f"\n\n### {test_item[1]} test")
                 md_file.write(f"\n**Command used:** {test_item[0]} {test_item[1]} {' '.join(test_item[2])}\n\n")
-                md_file.write(f"**Failed Tests:**\n")
+                md_file.write("**Failed Tests:**\n")
 
                 
 
                 if len(item) == 0:
                     md_file.write("\n")
-                    md_file.write(f"* <span class=\"no-failure\" style=\"color: green;\">No failures</span>\n")
+                    md_file.write("* <span class=\"no-failure\" style=\"color: green;\">No failures</span>\n")
                     md_file.write("\n")
                 else:
                     for failed_test in item:
@@ -568,18 +560,18 @@ class TestRunner:
                         md_file.write("\n")
             # Successful Tests
 
-            md_file.write(f"\n\n## Successful Tests")
+            md_file.write("\n\n## Successful Tests")
             md_file.write(f"\n**Total successful tests: {total_number_success}**")
             for (test_item, item) in zip(test_list, passed_tests):
                 md_file.write(f"\n\n### {test_item[1]} test")
                 md_file.write(f"\n**Command used:** {test_item[0]} {test_item[1]} {' '.join(test_item[2])}\n\n")
-                md_file.write(f"\n**Successful Tests:**\n")
+                md_file.write("\n**Successful Tests:**\n")
 
                 
 
                 if len(item) == 0:
                     md_file.write("\n")
-                    md_file.write(f"* <span class=\"no-successes\" style=\"color: red;\">No successes</span>\n")
+                    md_file.write("* <span class=\"no-successes\" style=\"color: red;\">No successes</span>\n")
                     md_file.write("\n")
                 else:
                     for passed_tests in item:
@@ -614,7 +606,7 @@ class TestRunner:
             html_file.write(html_content)
         
         self.logger.info("Converting markdown file to html file.")
- 
+
     def send_email(self, receiver_emails=None, subject="Nightly Regression Test"):
         """
         Send email with HTML content. 
@@ -688,13 +680,10 @@ def main():
 
     # file paths for where the results and repos will be saved: repos and results can be changed to whatever
     today = datetime.now().strftime("%Y-%m-%d")
-    yesterday_dt = datetime.now() - timedelta(days=1)
-    yesterday = yesterday_dt.strftime("%Y-%m-%d")
     cvw_path = Path.home().joinpath(args.path, today)
     results_path = Path.home().joinpath(args.path, today, "results")
     log_path = Path.home().joinpath(args.path, today, "logs")
     log_file_path = log_path.joinpath("nightly_build.log")
-    previous_cvw_path = Path.home().joinpath(args.path,f"{yesterday}/cvw")
     # creates the object
     folder_manager = FolderManager(basedir=args.path)
 
@@ -765,12 +754,6 @@ def main():
 
     if args.target != "no":
         test_runner.execute_makefile(target = args.target, makefile_path=test_runner.cvw)
-    # TODO: remove vestigial code if no longer wanted
-    # if args.target == "all":
-    #     # Compile Linux for local testing
-    #     test_runner.set_env_var("RISCV",str(test_runner.cvw))
-    #     linux_path = test_runner.cvw / "linux"
-    #     test_runner.execute_makefile(target = "all", makefile_path=linux_path)
 
     #############################################
     #               RUN TESTS                   #
