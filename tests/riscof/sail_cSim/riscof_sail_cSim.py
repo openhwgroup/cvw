@@ -1,17 +1,10 @@
 import os
 import re
 import shutil
-import subprocess
-import shlex
 import logging
-import random
-import string
-from string import Template
 
 import riscof.utils as utils
 from riscof.pluginTemplate import pluginTemplate
-import riscof.constants as constants
-from riscv_isac.isac import isac
 
 logger = logging.getLogger()
 
@@ -72,11 +65,11 @@ class sail_cSim(pluginTemplate):
             self.sailargs += "--enable-zcb"
         if "Q" in ispec["ISA"]:
             self.isa += 'q'
-        objdump = "riscv64-unknown-elf-objdump".format(self.xlen)
+        objdump = "riscv64-unknown-elf-objdump"
         if shutil.which(objdump) is None:
             logger.error(objdump+": executable not found. Please check environment setup.")
             raise SystemExit(1)
-        compiler = "riscv64-unknown-elf-gcc".format(self.xlen)
+        compiler = "riscv64-unknown-elf-gcc"
         if shutil.which(compiler) is None:
             logger.error(compiler+": executable not found. Please check environment setup.")
             raise SystemExit(1)

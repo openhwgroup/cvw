@@ -256,7 +256,7 @@ def ReportAsText(benchmarkDict):
     if(args.summary):
         mean = benchmarkDict['Mean']
         print('Mean')
-        for (name, typ, entries. size, val) in mean:
+        for (name, typ, entries, size, val) in mean:
             sys.stdout.write('%s %s %0.2f\n' % (name, entries if not args.size else size, val if not args.invert else 100 - val))
         
     if(not args.summary):
