@@ -15,7 +15,7 @@ import os
 parser = argparse.ArgumentParser()
 
 parser.add_argument("DESIGN")
-parser.add_argument("HDLPATH");
+parser.add_argument("HDLPATH")
 
 args=parser.parse_args()
 

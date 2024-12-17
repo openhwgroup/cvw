@@ -298,14 +298,14 @@ def addTestsByDir(testDir, config, sim, lockstepMode=0):
         if coverStr == "--fcov": # use --fcov in place of --lockstep
             cmdPrefix=f"wsim --sim {sim} {coverStr} {config}"
             gs="Mismatches            : 0"
-            if ("cvw-arch-verif/tests" in testDir and not "priv" in testDir):
+            if ("cvw-arch-verif/tests" in testDir and "priv" not in testDir):
                 fileEnd = "ALL.elf"
             else:
                 fileEnd = ".elf"
         elif coverStr == "--ccov":
             cmdPrefix=f"wsim --sim {sim} {coverStr} {config}"
             gs="Single Elf file tests are not signatured verified."
-            if ("cvw-arch-verif/tests" in testDir and not "priv" in testDir):
+            if ("cvw-arch-verif/tests" in testDir and "priv" not in testDir):
                 fileEnd = "ALL.elf"
             else:
                 fileEnd = ".elf"

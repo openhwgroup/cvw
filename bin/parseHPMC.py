@@ -329,7 +329,7 @@ def ReportAsGraph(benchmarkDict, bar, FileName):
         # group the parameterizations by the common typ.
         sequencies = {}
         for (name, typ, entries, size, value) in benchmarkDict['Mean']:
-            if not typ in sequencies:
+            if typ not in sequencies:
                 sequencies[typ] = [(entries if not args.size else int(size/8), value)]
             else:
                 sequencies[typ].append((entries if not args.size else int(size/8) ,value))
