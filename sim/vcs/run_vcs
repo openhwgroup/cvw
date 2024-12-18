@@ -24,7 +24,7 @@ def runFindCommand(cmd):
     res = subprocess.check_output(cmd, shell=True, )
     res = str(res)
     res = res.replace("\\n", " ")  # replace newline with space
-    res = res.replace("\'", "")  # strip off quotation marks
+    res = res.replace("'", "")  # strip off quotation marks
     res = res[1:] # strip off leading b from byte string
     return res
 
@@ -81,13 +81,10 @@ def processArgs(wkdir, args):
 
 def setupParamOverrides(wkdir, args):
     paramOverrideFile = os.path.join(wkdir, "param_overrides.txt")
-    with open(paramOverrideFile, "w", encoding="utf-8") as f:
+    with open(paramOverrideFile, "w") as f:
         for param in args.params.split():
             [param, value] = param.split("=")
-            if r"\'" in value: # for bit values
-                value = value.replace(r"\'", "'")
-            else:  # for strings
-                value = f'"{value}"'
+            value = value.replace("\\'", "'") if "\\'" in value else f'"{value}"' # transform quotes/bit indicators
             f.write(f"assign {value} {args.tb}/{param}\n")
     return f" -parameters {wkdir}/param_overrides.txt "
 

@@ -7,10 +7,7 @@ import argparse
 
 def runSynth(config, mod, tech, freq, maxopt, usesram):
     global pool
-    if (usesram):
-            prefix = "syn_sram_"
-    else:
-            prefix = "syn_"
+    prefix = "syn_sram_" if usesram else "syn_"
     cfg = prefix + config
     command = f"make synth DESIGN=wallypipelinedcore CONFIG={cfg} MOD={mod} TECH={tech} DRIVE=FLOP FREQ={freq} MAXOPT={maxopt} USESRAM={usesram} MAXCORES=1"
     pool.map(mask, [command])

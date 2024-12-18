@@ -473,7 +473,7 @@ class TestRunner:
             if failed_configs:
                 md_file.write("## Failed Configurations\n\n")
                 for config, log_file in failed_configs:
-                    md_file.write(f"- <span class=\"failure\" style=\"color: red;\">{config}</span> ({log_file})\n")
+                    md_file.write(f'- <span class="failure" style="color: red;">{config}</span> ({log_file})\n')
                 md_file.write("\n")
             else:
                 md_file.write("## Failed Configurations\n")
@@ -481,7 +481,7 @@ class TestRunner:
             
             md_file.write("\n## Passed Configurations\n")
             for config in passed_configs:
-                md_file.write(f"- <span class=\"success\" style=\"color: green;\">{config}</span>\n")
+                md_file.write(f'- <span class="success" style="color: green;">{config}</span>\n')
 
         self.logger.info("writing test outputs to markdown")
 
@@ -526,7 +526,7 @@ class TestRunner:
                 md_file.write("\n")
             except subprocess.CalledProcessError as e:
                 # Handle if the command fails
-                md_file.write(f"Failed to identify host and Operating System information: {str(e)}")
+                md_file.write(f"Failed to identify host and Operating System information: {e!s}")
             
             # Which tests did we run
             md_file.write(f"\n**Tests made:** `make {test_type}`\n")
@@ -548,7 +548,7 @@ class TestRunner:
 
                 if len(item) == 0:
                     md_file.write("\n")
-                    md_file.write("* <span class=\"no-failure\" style=\"color: green;\">No failures</span>\n")
+                    md_file.write('* <span class="no-failure" style="color: green;">No failures</span>\n')
                     md_file.write("\n")
                 else:
                     for failed_test in item:
@@ -556,7 +556,7 @@ class TestRunner:
                         log_file = failed_test[1]
 
                         md_file.write("\n")
-                        md_file.write(f"* <span class=\"failure\" style=\"color: red;\">{config}</span> ({log_file})\n")
+                        md_file.write(f'* <span class="failure" style="color: red;">{config}</span> ({log_file})\n')
                         md_file.write("\n")
             # Successful Tests
 
@@ -571,14 +571,14 @@ class TestRunner:
 
                 if len(item) == 0:
                     md_file.write("\n")
-                    md_file.write("* <span class=\"no-successes\" style=\"color: red;\">No successes</span>\n")
+                    md_file.write('* <span class="no-successes" style="color: red;">No successes</span>\n')
                     md_file.write("\n")
                 else:
                     for passed_tests in item:
                         config = passed_tests
                         
                         md_file.write("\n")
-                        md_file.write(f"* <span class=\"success\" style=\"color: green;\">{config}</span>\n")
+                        md_file.write(f'* <span class="success" style="color: green;">{config}</span>\n')
                         md_file.write("\n")
                     
         self.logger.info("Combining markdown files")
@@ -800,7 +800,7 @@ def main():
     logger.info(f"The total failures for all tests ran are: {total_number_failures}")
 
     # Copy actual test logs from sim/questa, sim/verilator, sim/vcs
-    if not args.tests == "test_lint":
+    if args.tests != 'test_lint':
         test_runner.copy_sim_logs([test_runner.cvw / "sim/questa/logs", test_runner.cvw / "sim/verilator/logs", test_runner.cvw / "sim/vcs/logs"])
 
     #############################################

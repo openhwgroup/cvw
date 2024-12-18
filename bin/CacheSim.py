@@ -284,7 +284,7 @@ def main(args):
                         elif lninfo[1] == 'A':
                             atoms += 1
 
-                    if not result == lninfo[2]:
+                    if result != lninfo[2]:
                         print(f"Result mismatch at address {lninfo[0]}. Wally: {lninfo[2]}, Sim: {result}")
                         mismatches += 1
     if args.dist:

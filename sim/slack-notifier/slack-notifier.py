@@ -13,8 +13,8 @@ if not os.path.isfile(sys.path[0]+'/slack-webhook-url.txt'):
     print('Tutorial for slack webhook urls: https://bit.ly/BenSlackNotifier')
     print('==============================================================')
 else:
-    urlFile = open(sys.path[0]+'/slack-webhook-url.txt')
-    url = urlFile.readline().strip('\n')
+    with open(sys.path[0]+'/slack-webhook-url.txt') as urlFile:
+        url = urlFile.readline().strip('\n')
 
     # Traverse 3 parents up the process tree
     result = subprocess.check_output('ps -o ppid -p $PPID',shell=True)
@@ -25,7 +25,7 @@ else:
     result = subprocess.check_output('ps -o cmd -p '+PPID3,shell=True)
     cmdName = str(result).split('\\n')[1]
     # Get current time
-    timezone_offset = -8.0  # Pacific Standard Time (UTC−08:00)
+    timezone_offset = -8.0  # Pacific Standard Time (UTC-08:00)
     tzinfo = timezone(timedelta(hours=timezone_offset))
     time = datetime.now(tzinfo).strftime('%I:%M %p')
     # Send message

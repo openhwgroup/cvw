@@ -46,14 +46,14 @@ def ParseBranchListFile(path):
     is formated in row columns.  Each row is a trace with the file, branch predictor type, and the parameters.
     parameters can be any number and depend on the predictor type. Returns a list of lists.'''
     lst = []
-    BranchList = open(path)
-    for line in BranchList:
-        tokens = line.split()
-        predictorLog = os.path.dirname(path) + '/' + tokens[0]
-        predictorType = tokens[1]
-        predictorParams = tokens[2::]
-        lst.append([predictorLog, predictorType, predictorParams])
-        #print(predictorLog, predictorType, predictorParams)
+    with open(path) as BranchList:
+        for line in BranchList:
+            tokens = line.split()
+            predictorLog = os.path.dirname(path) + '/' + tokens[0]
+            predictorType = tokens[1]
+            predictorParams = tokens[2::]
+            lst.append([predictorLog, predictorType, predictorParams])
+            #print(predictorLog, predictorType, predictorParams)
     return lst
     
 def ProcessFile(fileName):
@@ -62,22 +62,22 @@ def ProcessFile(fileName):
     # 1 find lines with Read memfile and extract test name
     # 2 parse counters into a list of (name, value) tuples (dictionary maybe?)
     benchmarks = []
-    transcript = open(fileName)
     HPMClist = { }
     testName = ''
-    for line in transcript.readlines():
-        lineToken = line.split()
-        if(len(lineToken) > 3 and lineToken[1] == 'Read' and lineToken[2] == 'memfile'):
-            opt = lineToken[3].split('/')[-4]
-            testName = lineToken[3].split('/')[-1].split('.')[0]
-            HPMClist = { }
-        elif(len(lineToken) > 4 and lineToken[1][0:3] == 'Cnt'):
-            countToken = line.split('=')[1].split()
-            value = int(countToken[0]) if countToken[0] != 'x' else 0
-            name = ' '.join(countToken[1:])
-            HPMClist[name] = value
-        elif ('is done' in line):
-            benchmarks.append((testName, opt, HPMClist))
+    with open(fileName) as transcript:
+        for line in transcript.readlines():
+            lineToken = line.split()
+            if(len(lineToken) > 3 and lineToken[1] == 'Read' and lineToken[2] == 'memfile'):
+                opt = lineToken[3].split('/')[-4]
+                testName = lineToken[3].split('/')[-1].split('.')[0]
+                HPMClist = { }
+            elif(len(lineToken) > 4 and lineToken[1][0:3] == 'Cnt'):
+                countToken = line.split('=')[1].split()
+                value = int(countToken[0]) if countToken[0] != 'x' else 0
+                name = ' '.join(countToken[1:])
+                HPMClist[name] = value
+            elif ('is done' in line):
+                benchmarks.append((testName, opt, HPMClist))
     return benchmarks
 
 

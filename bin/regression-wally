@@ -268,21 +268,12 @@ def addTests(tests, sim):
     for test in tests:
         config = test[0]
         suites = test[1]
-        if len(test) >= 3:
-            args = f" --args {test[2]}"
-        else:
-            args = ""
-        if len(test) >= 4:
-            gs = test[3]
-        else:
-            gs = "All tests ran without failures"
+        args = f" --args {test[2]}" if len(test) >= 3 else ""
+        gs = test[3] if len(test) >= 4 else "All tests ran without failures"
         cmdPrefix=f"wsim --sim {sim} {coverStr} {config}"
         for t in suites:
             sim_log = f"{sim_logdir}{config}_{t}.log"
-            if len(test) >= 5:
-                grepfile = sim_logdir + test[4]
-            else:
-                grepfile = sim_log
+            grepfile = sim_logdir + test[4] if len(test) >= 5 else sim_log
             tc = TestCase(
                     name=t,
                     variant=config,
@@ -535,9 +526,7 @@ def main():
         os.system('rm -f questa/fcov_ucdb/* questa/fcov_logs/* questa/fcov/*')
     elif args.buildroot:
         TIMEOUT_DUR = 60*1440 # 1 day
-    elif args.testfloat:
-        TIMEOUT_DUR = 30*60 # seconds
-    elif args.nightly:
+    elif args.testfloat or args.nightly:
         TIMEOUT_DUR = 30*60 # seconds
     else:
         TIMEOUT_DUR = 10*60 # seconds
@@ -545,10 +534,7 @@ def main():
     # Scale the number of concurrent processes to the number of test cases, but
     # max out at a limited number of concurrent processes to not overwhelm the system
     # right now fcov, ccov, nightly all use Imperas
-    if (args.ccov or args.fcov or args.nightly):
-        ImperasDVLicenseCount = 16 # limit number of concurrent processes to avoid overloading ImperasDV licenses
-    else:
-        ImperasDVLicenseCount = 10000 # effectively no license limit for non-lockstep tests
+    ImperasDVLicenseCount = 16 if args.ccov or args.fcov or args.nightly else 10000
     with Pool(processes=min(len(configs),multiprocessing.cpu_count(), ImperasDVLicenseCount)) as pool:
         num_fail = 0
         results = {}

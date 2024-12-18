@@ -40,9 +40,9 @@ mem_addr = mem_start_addr
 
 def wl(line="", comment=None, fname=test_name):
     with open(fname, "a") as f:
-        instr = False if (":" in line or
-                          ".align" in line or
-                          "# include" in line) else True
+        instr = not (":" in line or 
+                     ".align" in line or 
+                     "# include" in line)
         indent = 6 if instr else 0
         comment = "// " + comment if comment is not None else ""
         to_write = " " * indent + line + comment + "\n"

@@ -30,12 +30,8 @@ def tabulate_arch_sweep(directory):
             file = case+"_"+arch+".json"
             file_path = os.path.join(directory, file)
             lines = []
-            try:
-                f = open(file_path)
+            with open(file_path) as f:
                 lines = f.readlines()
-            except:
-                f.close()
-                #print(file_path+" does not exist")
             for line in lines:
                 #print("File: "+file+" Line: "+line)
                 #p = re.compile('".*" : .*,')
