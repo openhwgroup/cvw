@@ -8,7 +8,7 @@
 #
 # Takes 1:10 to run RV64IC tests using gui
 
-# Usage: do wally.do <config> <testcases> <testbench> [--ccov] [--fcov] [--gui] [--args "any number of +value"] [--params "any number of VAR=VAL parameter overrides"]
+# Usage: do wally.do <config> <testcases> <testbench> [--ccov] [--fcov] [--gui] [--args "any number of +value"] [--params "any number of VAR=VAL parameter overrides"] [--define "any number of +define+VAR=VAL"]
 # Example: do wally.do rv64gc arch64i testbench
 
 # Use this wally.do file to run this example.
@@ -72,20 +72,23 @@ set accFlag ""
 
 # Need to be able to pass arguments to vopt.  Unforunately argv does not work because
 # it takes on different values if vsim and the do file are called from the command line or
-# if the do file is called from questa sim directly.  This chunk of code uses the $4 through $n
-# variables and compacts into a single list for passing to vopt.
-set from 4
-set step 1
+# if the do file is called from questa sim directly.  This chunk of code uses the $n variables
+# and compacts them into a single list for passing to vopt. Shift is used to move the arguments
+# through the list.
 set lst {}
+echo "number of args = $argc"
 
-for {set i 0} true {incr i} {
-    set x [expr {$i*$step + $from}]
-    if {$x > $argc} break
-    set arg [expr "$$x"]
-    lappend lst $arg
+# Shift off the first three arguments (config, testcases, testbench)
+shift
+shift
+shift
+
+# Copy the remaining arguments into a list
+while {$argc > 0} {
+    lappend lst [expr "\$1"]
+    shift
 }
 
-echo "number of args = $argc"
 echo "lst = $lst"
 
 # if +acc found set flag and remove from list
