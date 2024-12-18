@@ -13,15 +13,15 @@ from multiprocessing import Pool, TimeoutError as MPTimeoutError
 TIMEOUT_DUR = 60  # 1` minute
 
 class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+    HEADER = "\033[95m"
+    OKBLUE = "\033[94m"
+    OKCYAN = "\033[96m"
+    OKGREEN = "\033[92m"
+    WARNING = "\033[93m"
+    FAIL = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
 
 def search_log_for_mismatches(logfile):
     """Search through the given log file for text, returning True if it is found or False if it is not"""
@@ -34,16 +34,16 @@ def search_log_for_mismatches(logfile):
 
 def run_test_case(elf):
     """Run the given test case, and return 0 if the test suceeds and 1 if it fails"""
-    WALLY = os.environ.get('WALLY')
-    fields = elf.rsplit('/', 3)
+    WALLY = os.environ.get("WALLY")
+    fields = elf.rsplit("/", 3)
     if fields[2] == "ref":
         shortelf = fields[1] + "_" + fields[3]
     else:
         shortelf = fields[2] + "_" + fields[3]
-#    shortelf = fields[1] + "_" + fields[2]
+    #    shortelf = fields[1] + "_" + fields[2]
     logfile = WALLY + "/sim/" + args.sim + "/logs/" + shortelf + ".log"
-    cmd = "wsim " + args.config + " " + shortelf + " --elf " + elf + " --sim " + args.sim + " --lockstep > " + logfile   # add coveerage flags if necessary
-#    print("cmd = " + cmd)
+    cmd = "wsim " + args.config + " " + shortelf + " --elf " + elf + " --sim " + args.sim + " --lockstep > " + logfile  # add coveerage flags if necessary
+    #    print("cmd = " + cmd)
     os.system(cmd)
     if search_log_for_mismatches(logfile):
         print(f"{bcolors.OKGREEN}{cmd}: Success{bcolors.ENDC}")
@@ -78,26 +78,25 @@ if os.path.isdir(args.dir):
     DirectorMode = 1
     for dirpath, dirnames, filenames in os.walk(os.path.abspath(args.dir)):
         for file in filenames:
-            if (file.endswith("elf") and not file.endswith(args.exclude)):
+            if file.endswith("elf") and not file.endswith(args.exclude):
                 ElfList.append(os.path.join(dirpath, file))
 else:
     print(args.dir + " is not a directory")
     sys.exit(1)
-#print(ElfList)
 
 # spawn parallel wsim jobs for each ELF file
 
 ImperasDVLicenseCount = 8
-with Pool(processes=min(len(ElfList),multiprocessing.cpu_count(), ImperasDVLicenseCount)) as pool:
+with Pool(processes=min(len(ElfList), multiprocessing.cpu_count(), ImperasDVLicenseCount)) as pool:
     num_fail = 0
     results = {}
     for elf in ElfList:
-        results[elf] = pool.apply_async(run_test_case,(elf,))
-    for (elf,result) in results.items():
+        results[elf] = pool.apply_async(run_test_case, (elf,))
+    for elf, result in results.items():
         try:
-            num_fail+=result.get(timeout=TIMEOUT_DUR)
+            num_fail += result.get(timeout=TIMEOUT_DUR)
         except MPTimeoutError:
-            num_fail+=1
+            num_fail += 1
             print(f"{bcolors.FAIL}{elf}: Timeout - runtime exceeded {TIMEOUT_DUR} seconds{bcolors.ENDC}")
 
 if num_fail == 0:

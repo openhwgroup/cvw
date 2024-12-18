@@ -12,7 +12,7 @@ import subprocess
 import sys
 
 # Global variables
-WALLY  = os.environ.get('WALLY')
+WALLY  = os.environ.get("WALLY")
 simdir = f"{WALLY}/sim/vcs"
 cfgdir = f"{WALLY}/config"
 srcdir = f"{WALLY}/src"
@@ -21,7 +21,7 @@ logdir = f"{simdir}/logs"
 
 # run a Linux command and return the result as a string in a form that VCS can use
 def runFindCommand(cmd):
-    res = subprocess.check_output(cmd, shell=True, )
+    res = subprocess.check_output(cmd, shell=True)
     res = str(res)
     res = res.replace("\\n", " ")  # replace newline with space
     res = res.replace("'", "")  # strip off quotation marks
@@ -55,7 +55,7 @@ def generateFileList(testbench):
     rtlsrc_files = runFindCommand(rtlsrc_cmd)
     tbcommon_cmd = f'find {tbdir}/common -name "*.sv"'
     tbcommon_files = runFindCommand(tbcommon_cmd)
-    tb_file = f'{tbdir}/{testbench}.sv'
+    tb_file = f"{tbdir}/{testbench}.sv"
     return f"{tb_file} {rtlsrc_files} {tbcommon_files}"
 
 def processArgs(wkdir, args):
@@ -76,7 +76,7 @@ def processArgs(wkdir, args):
     # if args.gui:
     #     compileOptions.append("-debug_access+all+reverse -kdb +vcs+vcdpluson")
     compileOptions = " ".join(compileOptions)
-    simvOptions =  " ".join(simvOptions)
+    simvOptions = " ".join(simvOptions)
     return compileOptions, simvOptions
 
 def setupParamOverrides(wkdir, args):
@@ -89,7 +89,7 @@ def setupParamOverrides(wkdir, args):
     return f" -parameters {wkdir}/param_overrides.txt "
 
 def setupCommands(wkdir, rtlFiles, compileOptions, simvOptions, args):
-    includePath=f"+incdir+{cfgdir}/{args.config} +incdir+{cfgdir}/deriv/{args.config} +incdir+{cfgdir}/shared +incdir+$WALLY/tests +incdir+{tbdir} +incdir+{srcdir}"
+    includePath = f"+incdir+{cfgdir}/{args.config} +incdir+{cfgdir}/deriv/{args.config} +incdir+{cfgdir}/shared +incdir+$WALLY/tests +incdir+{tbdir} +incdir+{srcdir}"
     vcsStandardFlags = "+lint=all,noGCWM,noUI,noSVA-UA,noIDTS,noNS,noULCO,noCAWM-L,noWMIA-L,noSV-PIU,noSTASKW_CO,noSTASKW_CO1,noSTASKW_RMCOF -suppress +warn -sverilog +vc -Mupdate -line -full64 -lca -ntb_opts sensitive_dyn"
     vcsCMD = f"vcs {vcsStandardFlags} -top {args.tb} {compileOptions} -Mdir={wkdir} {includePath} {srcdir}/cvw.sv {rtlFiles} -o {wkdir}/sim_out -work {wkdir} -Mlib={wkdir} -l {logdir}/{args.config}_{args.testsuite}.log"
     simvCMD = f"{wkdir}/sim_out +TEST={args.testsuite} {args.args} -no_save {simvOptions}"

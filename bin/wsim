@@ -16,7 +16,7 @@ import os
 import sys
 
 # Global variable
-WALLY = os.environ.get('WALLY')
+WALLY = os.environ.get("WALLY")
 
 def parseArgs():
     parser = argparse.ArgumentParser()
@@ -41,13 +41,13 @@ def validateArgs(args):
     if not args.testsuite and not args.elf:
         print("Error: Missing test suite or ELF file")
         sys.exit(1)
-    if any([args.lockstep, args.lockstepverbose, args.fcov]) and not (args.testsuite.endswith('.elf') or args.elf) and args.testsuite != "buildroot":
+    if any([args.lockstep, args.lockstepverbose, args.fcov]) and not (args.testsuite.endswith(".elf") or args.elf) and args.testsuite != "buildroot":
         print(f"Invalid Options. Cannot run a testsuite, {args.testsuite} with lockstep or fcov. Must run a single elf or buildroot.")
         sys.exit(1)
     elif any([args.gui, args.ccov, args.fcov, args.lockstep, args.lockstepverbose]) and args.sim not in ["questa", "vcs"]:
         print("Option only supported for Questa and VCS")
         sys.exit(1)
-    elif (args.tb == "testbench_fp" and args.sim != "questa"):
+    elif args.tb == "testbench_fp" and args.sim != "questa":
         print("Error: testbench_fp presently only supported by Questa, not VCS or Verilator, because of a touchy testbench")
         sys.exit(1)
 
@@ -58,19 +58,19 @@ def elfFileCheck(args):
     elif args.elf:
         print(f"ELF file not found: {args.elf}")
         sys.exit(1)
-    elif args.testsuite.endswith('.elf'): # No --elf argument; check if testsuite has a .elf extension and use that instead
+    elif args.testsuite.endswith(".elf"): # No --elf argument; check if testsuite has a .elf extension and use that instead
         if os.path.isfile(args.testsuite):
             ElfFile = f"+ElfFile={os.path.abspath(args.testsuite)}"
             # extract the elf name from the path to be the test suite
-            fields = args.testsuite.rsplit('/', 3)
+            fields = args.testsuite.rsplit("/", 3)
             # if the name is just ref.elf in a deep path (riscv-arch-test/wally-riscv-arch-test), then use the directory name as the test suite to make it unique; otherwise work directory will have duplicates.
             if len(fields) > 3:
                 if fields[2] == "ref":
                     args.testsuite = f"{fields[1]}_{fields[3]}"
                 else:
                     args.testsuite = f"{fields[2]}_{fields[3]}"
-            elif '/' in args.testsuite:
-                args.testsuite=args.testsuite.rsplit('/', 1)[1] # strip off path if present
+            elif "/" in args.testsuite:
+                args.testsuite = args.testsuite.rsplit("/", 1)[1] # strip off path if present
         else:
             print(f"ELF file not found: {args.testsuite}")
             sys.exit(1)
