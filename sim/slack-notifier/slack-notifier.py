@@ -13,7 +13,7 @@ if not os.path.isfile(sys.path[0]+'/slack-webhook-url.txt'):
     print('Tutorial for slack webhook urls: https://bit.ly/BenSlackNotifier')
     print('==============================================================')
 else:
-    urlFile = open(sys.path[0]+'/slack-webhook-url.txt','r')
+    urlFile = open(sys.path[0]+'/slack-webhook-url.txt')
     url = urlFile.readline().strip('\n')
 
     # Traverse 3 parents up the process tree

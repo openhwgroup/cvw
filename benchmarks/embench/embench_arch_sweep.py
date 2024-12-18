@@ -31,7 +31,7 @@ def tabulate_arch_sweep(directory):
             file_path = os.path.join(directory, file)
             lines = []
             try:
-                f = open(file_path, "r")
+                f = open(file_path)
                 lines = f.readlines()
             except:
                 f.close()

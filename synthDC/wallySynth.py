@@ -12,7 +12,7 @@ def runSynth(config, mod, tech, freq, maxopt, usesram):
     else:
             prefix = "syn_"
     cfg = prefix + config
-    command = "make synth DESIGN=wallypipelinedcore CONFIG={} MOD={} TECH={} DRIVE=FLOP FREQ={} MAXOPT={} USESRAM={} MAXCORES=1".format(cfg, mod, tech, freq, maxopt, usesram)
+    command = f"make synth DESIGN=wallypipelinedcore CONFIG={cfg} MOD={mod} TECH={tech} DRIVE=FLOP FREQ={freq} MAXOPT={maxopt} USESRAM={usesram} MAXCORES=1"
     pool.map(mask, [command])
 
 def mask(command):

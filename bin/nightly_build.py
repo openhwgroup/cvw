@@ -391,7 +391,7 @@ class TestRunner:
         # Implement cleaning and formatting logic here
 
         # Open up the file with only read permissions
-        with open(input_file, 'r') as input_file:
+        with open(input_file) as input_file:
             uncleaned_output = input_file.read()
 
         # use something like this function to detect pass and fail
@@ -598,7 +598,7 @@ class TestRunner:
         # Implement markdown to HTML conversion logic here
         os.chdir(self.results_dir)
 
-        with open(markdown_file, 'r') as md_file:
+        with open(markdown_file) as md_file:
             md_content = md_file.read()
             html_content = markdown.markdown(md_content)
         
@@ -632,7 +632,7 @@ class TestRunner:
         os.chdir(self.results_dir)
         html_file = "results.html"
 
-        with open(html_file, 'r') as html_file:
+        with open(html_file) as html_file:
                 body = html_file.read()
 
         try:

@@ -70,7 +70,7 @@ def synthsintocsv():
             writer.writerow([width, config, mod, tech, freq, delay, area])
     file.close()
 
-	
+
 def synthsfromcsv(filename):
     Synth = namedtuple("Synth", "width config mod tech freq delay area")
     with open(filename, newline='') as csvfile:
@@ -186,7 +186,7 @@ def plotFeatures(tech, width, config):
     plt.title(titlestr)
     plt.savefig(final_directory + '/features_'+titlestr+'.png')
 
-	
+
 def plotConfigs(tech, mod=''):
     delays, areas, labels = ([] for i in range(3))
     freq = techdict[tech].targfreq
@@ -227,7 +227,7 @@ def normAreaDelay(mod=''):
     ax.legend(handles = fullLeg, loc='upper left')
     plt.savefig(final_directory + '/normAreaDelay.png')
 
-	
+
 def addFO4axis(fig, ax, tech):
     fo4 = techdict[tech].fo4
 

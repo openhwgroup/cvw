@@ -27,8 +27,8 @@ round_dict = {
 
 print("creating testfloat div test vectors")
 
-source_dir = "{}/tests/fp/vectors/".format(wally)
-dest_dir = "{}/tests/fp/combined_IF_vectors/IF_vectors/".format(wally)
+source_dir = f"{wally}/tests/fp/vectors/"
+dest_dir = f"{wally}/tests/fp/combined_IF_vectors/IF_vectors/"
 all_vectors = os.listdir(source_dir)
 
 div_vectors = [v for v in all_vectors if "div" in v]
@@ -42,13 +42,13 @@ for vector in div_vectors:
     # use name to create our new tv
     dest_file = open(dest_dir + "cvw_" + vector, 'a')
     # open vector
-    src_file = open(source_dir + vector,'r')
+    src_file = open(source_dir + vector)
     # for each test in the vector
     for i in src_file.readlines():
         translation = "" # this stores the test that we are currently working on
         [input_1, input_2, answer, flags] = i.split("_") # separate inputs, answer, and flags
         # put it all together, strip nec for removing \n on the end of the flags
-        translation = "{}_{}_{}_{}_{}_{}".format(operation, ext_bits(input_1), ext_bits(input_2), ext_bits(answer), flags.strip(), rounding_mode)
+        translation = f"{operation}_{ext_bits(input_1)}_{ext_bits(input_2)}_{ext_bits(answer)}_{flags.strip()}_{rounding_mode}"
         dest_file.write(translation + "\n")
     dest_file.close()
     src_file.close()
@@ -67,7 +67,7 @@ for vector in sqrt_vectors:
     # use name to create our new tv
     dest_file = open(dest_dir + "cvw_" + vector, 'a')
     # open vector
-    src_file = open(source_dir + vector,'r')
+    src_file = open(source_dir + vector)
     # for each test in the vector
     for i in src_file.readlines():
         translation = "" # this stores the test that we are currently working on

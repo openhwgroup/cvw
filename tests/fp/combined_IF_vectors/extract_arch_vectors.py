@@ -60,9 +60,9 @@ class Config:
 def create_vectors(my_config):
     suite_folder_num = my_config.bits
     if my_config.bits == 64 and my_config.letter == "F": suite_folder_num = 32
-    source_dir1 = "{}/addins/riscv-arch-test/riscv-test-suite/rv{}i_m/{}/src/".format(wally, suite_folder_num, my_config.letter)
-    source_dir2 = "{}/tests/riscof/work/riscv-arch-test/rv{}i_m/{}/src/".format(wally, my_config.bits, my_config.letter)
-    dest_dir = "{}/tests/fp/combined_IF_vectors/IF_vectors/".format(wally)
+    source_dir1 = f"{wally}/addins/riscv-arch-test/riscv-test-suite/rv{suite_folder_num}i_m/{my_config.letter}/src/"
+    source_dir2 = f"{wally}/tests/riscof/work/riscv-arch-test/rv{my_config.bits}i_m/{my_config.letter}/src/"
+    dest_dir = f"{wally}/tests/fp/combined_IF_vectors/IF_vectors/"
     all_vectors1 = os.listdir(source_dir1)
 
     filt_vectors1 = [v for v in all_vectors1 if my_config.filt in v]
@@ -77,10 +77,10 @@ def create_vectors(my_config):
         rounding_mode = "X"
         flags = "XX"
         # use name to create our new tv
-        dest_file = open("{}cvw_{}_{}.tv".format(dest_dir, my_config.bits, vector1[:-2]), 'w')
+        dest_file = open(f"{dest_dir}cvw_{my_config.bits}_{vector1[:-2]}.tv", 'w')
         # open vectors
-        src_file1 = open(source_dir1 + vector1,'r')
-        src_file2 = open(source_dir2 + vector2,'r')
+        src_file1 = open(source_dir1 + vector1)
+        src_file2 = open(source_dir2 + vector2)
         # for each test in the vector
         reading = True
         src_file2.readline() #skip first bc junk
@@ -133,7 +133,7 @@ def create_vectors(my_config):
                             done = True
                     # put it all together
                     if not done:
-                        translation = "{}_{}_{}_{}_{}_{}".format(operation, ext_bits(op1val), ext_bits(op2val), ext_bits(answer.strip()), flags, rounding_mode)
+                        translation = f"{operation}_{ext_bits(op1val)}_{ext_bits(op2val)}_{ext_bits(answer.strip())}_{flags}_{rounding_mode}"
                         dest_file.write(translation + "\n")
                 else:
                     # print("read false")
@@ -182,7 +182,7 @@ def create_vectors(my_config):
                     flags = "XX"
                     # put it all together
                     if not done:
-                        translation = "{}_{}_{}_{}_{}_{}".format(operation, ext_bits(op1val), ext_bits(op2val), ext_bits(answer.strip()), flags.strip(), rounding_mode)
+                        translation = f"{operation}_{ext_bits(op1val)}_{ext_bits(op2val)}_{ext_bits(answer.strip())}_{flags.strip()}_{rounding_mode}"
                         dest_file.write(translation + "\n")
                 else:
                     # print("read false")
@@ -230,7 +230,7 @@ def create_vectors(my_config):
                     flags = "XX"
                     # put it all together
                     if not done:
-                        translation = "{}_{}_{}_{}_{}_{}".format(operation, ext_bits(op1val), ext_bits(op2val), ext_bits(answer.strip()), flags.strip(), rounding_mode)
+                        translation = f"{operation}_{ext_bits(op1val)}_{ext_bits(op2val)}_{ext_bits(answer.strip())}_{flags.strip()}_{rounding_mode}"
                         dest_file.write(translation + "\n")
                 else:
                     # print("read false")
@@ -279,7 +279,7 @@ def create_vectors(my_config):
                     
                     # put it all together
                     if not done:
-                        translation = "{}_{}_{}_{}_{}_{}".format(operation, ext_bits(op1val), ext_bits(op2val), ext_bits(answer.strip()), flags, rounding_mode)
+                        translation = f"{operation}_{ext_bits(op1val)}_{ext_bits(op2val)}_{ext_bits(answer.strip())}_{flags}_{rounding_mode}"
                         dest_file.write(translation + "\n")
                 else:
                     # print("read false")

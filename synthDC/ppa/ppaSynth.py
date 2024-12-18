@@ -11,7 +11,7 @@ from multiprocessing import Pool
 from ppaAnalyze import synthsfromcsv
 
 def runCommand(module, width, tech, freq):
-    command = "make synth DESIGN={} WIDTH={} TECH={} DRIVE=INV FREQ={} MAXOPT=1 MAXCORES=1".format(module, width, tech, freq)
+    command = f"make synth DESIGN={module} WIDTH={width} TECH={tech} DRIVE=INV FREQ={freq} MAXOPT=1 MAXCORES=1"
     subprocess.call(command, shell=True)
 
 def deleteRedundant(synthsToRun):
@@ -71,28 +71,28 @@ def allCombos(widths, modules, techs, freqs):
 if __name__ == '__main__':
     
     ##### Run specific syntheses for a specific frequency
-	widths = [8, 16, 32, 64, 128] 
-	modules = ['mul', 'adder', 'shifter', 'flop', 'comparator', 'binencoder', 'csa', 'mux2', 'mux4', 'mux8']
-	techs = ['sky90', 'sky130', 'tsmc28', 'tsmc28psyn']
-	freqs = [5000]
-	synthsToRun = allCombos(widths, modules, techs, freqs)
+    widths = [8, 16, 32, 64, 128] 
+    modules = ['mul', 'adder', 'shifter', 'flop', 'comparator', 'binencoder', 'csa', 'mux2', 'mux4', 'mux8']
+    techs = ['sky90', 'sky130', 'tsmc28', 'tsmc28psyn']
+    freqs = [5000]
+    synthsToRun = allCombos(widths, modules, techs, freqs)
     
     ##### Run a sweep based on best delay found in existing syntheses
-	module = 'adder'
-	width = 32
-	tech = 'tsmc28psyn'
-	synthsToRun = freqSweep(module, width, tech)
+    module = 'adder'
+    width = 32
+    tech = 'tsmc28psyn'
+    synthsToRun = freqSweep(module, width, tech)
 
     ##### Run a sweep for multiple modules/widths based on best delay found in existing syntheses
-	modules = ['adder']
+    modules = ['adder']
 #	widths = [8, 16, 32, 64, 128]
-	widths = [32]
-	tech = 'sky130'
-	synthsToRun = freqModuleSweep(widths, modules, tech)	
+    widths = [32]
+    tech = 'sky130'
+    synthsToRun = freqModuleSweep(widths, modules, tech)	
         
     ##### Only do syntheses for which a run doesn't already exist
-	synthsToRun = filterRedundant(synthsToRun)	
-	pool = Pool(processes=25)
+    synthsToRun = filterRedundant(synthsToRun)	
+    pool = Pool(processes=25)
 
 pool.starmap(runCommand, synthsToRun)
 pool.close()

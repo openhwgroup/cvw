@@ -129,7 +129,7 @@ def getVals(tech, module, var, freq=None, width=None):
     works at a specified target frequency or if none is given, uses the synthesis with the best achievable delay for each width
     """
 
-    if width != None:
+    if width is not None:
         widthsToGet = width
     else:
         widthsToGet = widths
@@ -137,7 +137,7 @@ def getVals(tech, module, var, freq=None, width=None):
     metric = []
     widthL = []
 
-    if freq != None:
+    if freq is not None:
         for oneSynth in allSynths:
             if (
                 (oneSynth.freq == freq)
@@ -182,7 +182,7 @@ def csvOfBest(filename):
                             m = oneSynth.delay
                             best = oneSynth
 
-                if (best != None) & (best not in bestSynths):
+                if (best is not None) & (best not in bestSynths):
                     bestSynths += [best]
 
     file = open(filename, "w")
@@ -237,7 +237,7 @@ def genLegend(fits, coefs, r2=None, spec=None, ale=False):
 
     eq = eq[3:]  # chop off leading ' + '
 
-    if (r2 == None) or (spec == None):
+    if (r2 is None) or (spec is None):
         return eq
     else:
         legend_elements = [lines.Line2D([0], [0], color=spec.color, label=eq)]
@@ -339,7 +339,7 @@ def oneMetricPlot(
         ax.add_artist(ax.legend(handles=fullLeg, loc=legLoc))
         titleStr = (
             "  (target  " + str(freq) + "MHz)"
-            if freq != None
+            if freq is not None
             else " (best achievable delay)"
         )
         ax.set_title(module + titleStr)
@@ -719,7 +719,7 @@ def plotPPA(mod, freq=None, norm=True, aleOpt=False):
             else:
                 axs[i, j].legend(handles=leg, handlelength=1.5)
 
-    titleStr = "  (target  " + str(freq) + "MHz)" if freq != None else ""
+    titleStr = f"  (target {freq} MHz)" if freq is not None else ""
     plt.suptitle(mod + titleStr)
     plt.tight_layout(pad=0.05, w_pad=1, h_pad=0.5, rect=(0, 0, 1, 0.97))
 

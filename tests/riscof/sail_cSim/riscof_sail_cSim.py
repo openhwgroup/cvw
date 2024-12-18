@@ -107,9 +107,9 @@ class sail_cSim(pluginTemplate):
             if ('NO_SAIL=True' in testentry['macros']):
                 # if the tests can't run on SAIL we copy the reference output to the src directory
                 reference_output = re.sub("/src/","/references/", re.sub(".S",".reference_output", test))
-                execute += 'cut -c-{0:g} {1} > {2}'.format(8, reference_output, sig_file) #use cut to remove comments when copying
+                execute += f'cut -c-{8:g} {reference_output} > {sig_file}' #use cut to remove comments when copying
             else:
-                execute += self.sail_exe[self.xlen] + ' -z268435455 -i --trace=step  ' + self.sailargs + ' --test-signature={0} {1} > {2}.log 2>&1;'.format(sig_file, elf, test_name)
+                execute += self.sail_exe[self.xlen] + ' -z268435455 -i --trace=step  ' + self.sailargs + f' --test-signature={sig_file} {elf} > {test_name}.log 2>&1;'
 
             cov_str = ' '
             for label in testentry['coverage_labels']:
@@ -117,10 +117,10 @@ class sail_cSim(pluginTemplate):
 
             if cgf_file is not None:
                 coverage_cmd = 'riscv_isac --verbose info coverage -d \
-                        -t {0}.log --parser-name c_sail -o coverage.rpt  \
+                        -t {}.log --parser-name c_sail -o coverage.rpt  \
                         --sig-label begin_signature  end_signature \
                         --test-label rvtest_code_begin rvtest_code_end \
-                        -e ref.elf -c {1} -x{2} {3};'.format(\
+                        -e ref.elf -c {} -x{} {};'.format(\
                         test_name, ' -c '.join(cgf_file), self.xlen, cov_str)
             else:
                 coverage_cmd = ''

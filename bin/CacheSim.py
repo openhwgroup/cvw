@@ -230,7 +230,7 @@ def main(args):
         atoms = 0
         totalops = 0
 
-    with open(extfile, "r", encoding="utf-8") as f:
+    with open(extfile) as f:
         for ln in f:
             ln = ln.strip()
             lninfo = ln.split()

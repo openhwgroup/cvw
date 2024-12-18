@@ -186,22 +186,22 @@ class spike(pluginTemplate):
 #          cmd = self.compile_cmd.format(testentry['isa'].lower().replace('zicsr', ' ', 2), self.xlen, test, elf, compile_macros)
           cmd = self.compile_cmd.format(testentry['isa'].lower(), self.xlen, test, elf, compile_macros)
 
-	  # if the user wants to disable running the tests and only compile the tests, then
-	  # the "else" clause is executed below assigning the sim command to simple no action
-	  # echo statement.
+      # if the user wants to disable running the tests and only compile the tests, then
+      # the "else" clause is executed below assigning the sim command to simple no action
+      # echo statement.
           if self.target_run:
             # set up the simulation command. Template is for spike. Please change.
             if ('NO_SAIL=True' in testentry['macros']):
                 # if the tests can't run on SAIL we copy the reference output to the src directory
                 reference_output = re.sub("/src/","/references/", re.sub(".S",".reference_output", test))
-                simcmd = 'cut -c-{0:g} {1} > {2}'.format(8, reference_output, sig_file) #use cut to remove comments when copying
+                simcmd = f'cut -c-{8:g} {reference_output} > {sig_file}' #use cut to remove comments when copying
             else:
-                simcmd = self.dut_exe + ' --isa={0} +signature={1} +signature-granularity=4 {2}'.format(self.isa, sig_file, elf)
+                simcmd = self.dut_exe + f' --isa={self.isa} +signature={sig_file} +signature-granularity=4 {elf}'
           else:
             simcmd = 'echo "NO RUN"'
 
           # concatenate all commands that need to be executed within a make-target.
-          execute = '@cd {0}; {1}; {2};'.format(testentry['work_dir'], cmd, simcmd)
+          execute = '@cd {}; {}; {};'.format(testentry['work_dir'], cmd, simcmd)
 
           # create a target. The makeutil will create a target with the name "TARGET<num>" where num
           # starts from 0 and increments automatically for each new target that is added
