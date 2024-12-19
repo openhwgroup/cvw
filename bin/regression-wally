@@ -35,7 +35,7 @@ lockstepsim = "questa"
 # The element consists of the configuration name, a list of test suites to run,
 # optionally a string to pass to the simulator, and optionally a nonstandard grep string to check for success
 
-tests = [
+standard_tests = [
         ["rv32e", ["arch32e"]],
         ["rv32i", ["arch32i"]],
         ["rv32imc", ["arch32i", "arch32c", "arch32m", "wally32periph"]],
@@ -44,22 +44,12 @@ tests = [
                     "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "arch32zfh", "arch32zfh_fma",
                     "arch32zfh_divsqrt", "arch32zfaf", "arch32zfad", "wally32a_lrsc", "wally32priv", "wally32periph", "arch32zcb",
                     "arch32zbkb", "arch32zbkc", "arch32zbkx", "arch32zknd", "arch32zkne", "arch32zknh"]],
-        ["rv64i", ["arch64i"]]
-        ]
-
-tests64gc_fp = [
-        ["rv64gc", ["arch64f", "arch64d", "arch64zfh",
-                    "arch64f_fma", "arch64d_fma", "arch64zfh_fma",
-                    "arch64f_divsqrt", "arch64d_divsqrt", "arch64zfh_divsqrt",
-                    "arch64zfaf", "arch64zfad"]]
-    ]
-
-# Separate out floating-point tests for RV64 to speed up coverage
-tests64gc_nofp = [
-        ["rv64gc", ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m", "arch64zcb",
-                    "arch64zifencei", "arch64zicond", "arch64a_amo", "wally64a_lrsc", "wally64periph", "wally64priv",
-                    "arch64zbkb", "arch64zbkc", "arch64zbkx", "arch64zknd", "arch64zkne", "arch64zknh",
-                    "arch64zba",  "arch64zbb",  "arch64zbc", "arch64zbs"]] # add when working:  "arch64zicboz"
+        ["rv64i", ["arch64i"]],
+        ["rv64gc", ["arch64f", "arch64d", "arch64zfh", "arch64f_fma", "arch64d_fma", "arch64zfh_fma", "arch64f_divsqrt",
+                    "arch64d_divsqrt", "arch64zfh_divsqrt", "arch64zfaf", "arch64zfad", "coverage64gc", "arch64i", "arch64priv",
+                    "arch64c",  "arch64m", "arch64zcb", "arch64zifencei", "arch64zicond", "arch64a_amo", "wally64a_lrsc",
+                    "wally64periph", "wally64priv", "arch64zbkb", "arch64zbkc", "arch64zbkx", "arch64zknd", "arch64zkne", "arch64zknh",
+                    "arch64zba",  "arch64zbb",  "arch64zbc", "arch64zbs"]], # add when working:  "arch64zicboz"
     ]
 
 # Separate test for short buildroot run through OpenSBI UART output
@@ -297,6 +287,7 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+
 def addTests(testList, sim, coverStr, configs):
     sim_logdir = f"{WALLY}/sim/{sim}/logs/"
     for test in testList:
@@ -349,7 +340,6 @@ def addTestsByDir(testDir, config, sim, coverStr, configs, lockstepMode=0):
                 configs.append(tc)
 
 def search_log_for_text(text, grepfile):
-    """Search through the given log file for text, returning True if it is found or False if it is not"""
     grepwarn = f"grep -i -H Warning: {grepfile}"
     os.system(grepwarn)
     greperr = f"grep -i -H Error: {grepfile}"
@@ -358,14 +348,8 @@ def search_log_for_text(text, grepfile):
     return os.system(grepcmd) == 0
 
 def run_test_case(config, dryrun: bool = False):
-    """
-    Run the given test case, and return 0 if the test suceeds and 1 if it fails
-
-    Do not execute commands if dryrun
-    """
     grepfile = config.grepfile
     cmd = config.cmd
-    os.chdir(regressionDir)
     if dryrun:
         print(f"Executing {cmd}", flush=True)
         return 0
@@ -373,12 +357,13 @@ def run_test_case(config, dryrun: bool = False):
         os.system(cmd)
         if search_log_for_text(config.grepstr, grepfile):
             # Flush is needed to flush output to stdout when running in multiprocessing Pool
-            print(f"{bcolors.OKGREEN}{config.cmd}: Success{bcolors.ENDC}", flush=True)
+            print(f"{bcolors.OKGREEN}{cmd}: Success{bcolors.ENDC}", flush=True)
             return 0
         else:
-            print(f"{bcolors.FAIL}{config.cmd}: Failures detected in output{bcolors.ENDC}", flush=True)
+            print(f"{bcolors.FAIL}{cmd}: Failures detected in output{bcolors.ENDC}", flush=True)
             print(f"  Check {grepfile}", flush=True)
             return 1
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -391,21 +376,32 @@ def parse_args():
     parser.add_argument("--dryrun", help="Print commands invoked to console without running regression", action="store_true")
     return parser.parse_args()
 
+
 def process_args(args):
+    coverStr = ""
+    nightMode = ""
+    sims = [defaultsim]
+
     if args.nightly:
         nightMode = "--nightly"
         sims = ["questa", "verilator", "vcs"] # exercise all simulators; can omit a sim if no license is available
-    else:
-        nightMode = ""
-        sims = [defaultsim]
 
     if args.ccov:
         coverStr = "--ccov"
+        TIMEOUT_DUR = 20*60 # seconds
+        os.system('rm -f questa/ucdb/* questa/cov/*')
     elif args.fcov:
         coverStr = "--fcov"
+        TIMEOUT_DUR = 8*60
+        os.system('rm -f questa/fcov_ucdb/* questa/fcov_logs/* questa/fcov/*')
+    elif args.buildroot:
+        TIMEOUT_DUR = 60*1440 # 1 day
+    elif args.testfloat or args.nightly:
+        TIMEOUT_DUR = 30*60 # seconds
     else:
-        coverStr = ""
-    return nightMode, sims, coverStr
+        TIMEOUT_DUR = 10*60 # seconds
+
+    return nightMode, sims, coverStr, TIMEOUT_DUR
 
 
 def selectTests(nightMode, args, sims, coverStr):
@@ -437,9 +433,7 @@ def selectTests(nightMode, args, sims, coverStr):
         for sim in sims:
             if not (args.buildroot and sim == lockstepsim):  # skip short buildroot sim if running long one
                 addTests(tests_buildrootshort, sim, coverStr, configs)
-            addTests(tests, sim, coverStr, configs)
-            addTests(tests64gc_nofp, sim, coverStr, configs)
-            addTests(tests64gc_fp, sim, coverStr, configs)
+            addTests(standard_tests, sim, coverStr, configs)
 
     # run derivative configurations and lockstep tests in nightly regression
     if args.nightly:
@@ -485,29 +479,17 @@ def selectTests(nightMode, args, sims, coverStr):
     return configs
 
 
+def makeDirs(sims):
+    for sim in sims:
+        dirs = [f"{regressionDir}/{sim}/wkdir", f"{regressionDir}/{sim}/logs"]
+        for d in dirs:
+            os.system(f'rm -rf {d}')
+            os.makedirs(d, exist_ok=True)
+
+
 def main(args):
-    """Run the tests and count the failures"""
-    nightMode, sims, coverStr = process_args(args)
+    nightMode, sims, coverStr, TIMEOUT_DUR = process_args(args)
     configs = selectTests(nightMode, args, sims, coverStr)
-
-    os.chdir(regressionDir)
-    dirs = ["questa/logs", "questa/wkdir", "verilator/logs", "verilator/wkdir", "vcs/logs", "vcs/wkdir"]
-    for d in dirs:
-        os.system(f'rm -rf {d}')
-        os.makedirs(d, exist_ok=True)
-    if args.ccov:
-        TIMEOUT_DUR = 20*60 # seconds
-        os.system('rm -f questa/ucdb/* questa/cov/*')
-    elif args.fcov:
-        TIMEOUT_DUR = 8*60
-        os.system('rm -f questa/fcov_ucdb/* questa/fcov_logs/* questa/fcov/*')
-    elif args.buildroot:
-        TIMEOUT_DUR = 60*1440 # 1 day
-    elif args.testfloat or args.nightly:
-        TIMEOUT_DUR = 30*60 # seconds
-    else:
-        TIMEOUT_DUR = 10*60 # seconds
-
     # Scale the number of concurrent processes to the number of test cases, but
     # max out at a limited number of concurrent processes to not overwhelm the system
     # right now fcov, ccov, nightly all use Imperas
@@ -522,14 +504,15 @@ def main(args):
                 num_fail+=result.get(timeout=TIMEOUT_DUR)
             except MPTimeoutError:
                 pool.terminate()
+                pool.join()
                 num_fail+=1
                 print(f"{bcolors.FAIL}{config.cmd}: Timeout - runtime exceeded {TIMEOUT_DUR} seconds{bcolors.ENDC}")
 
     # Coverage report
     if args.ccov:
-        os.system('make QuestaCodeCoverage')
+        os.system(f"make -C {regressionDir}/QuestaCodeCoverage")
     if args.fcov:
-        os.system('make -C '+WALLY+'/addins/cvw-arch-verif merge')
+        os.system(f"make -C {WALLY}/addins/cvw-arch-verif merge")
     # Count the number of failures
     if num_fail:
         print(f"{bcolors.FAIL}Regression failed with {num_fail} failed configurations{bcolors.ENDC}")
