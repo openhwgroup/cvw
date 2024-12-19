@@ -1,0 +1,263 @@
+trek:
+  platform_config:
+    doc: >-
+      Testbench platform specific configuration.
+    processors:
+      doc: >-
+        Information about available processors.
+      processor_count:
+        value: 1
+        doc: >-
+          How many processors can be used by the generated test case
+      sw_threads_per_processor:
+        value: 2
+        doc: >-
+          How many software threads to put on each processor
+    tlm_generic_ports:
+      doc: >-
+        Information about available tlm_generic_payload ports
+      port_count:
+        value: 0
+        doc: >-
+          How many tlm ports to use for memory operations
+      threads_per_port:
+        value: 4
+        doc: >-
+          How many threads to put on each tlm port
+      debug:
+        value: 1
+        doc: >-
+          Turn on for verbose tlm port messages
+    memories:
+      doc: >-
+        Information about memory regions that can be used by the generated test case.
+      defaults:
+        doc: >-
+          Default values for all memories
+        natural_alignment:
+          value: 1
+          doc: >-
+            Should all memory addresses be naturally aligned (up to 8 byte alignment)
+        init_type:
+          value: frontdoor
+          doc: >-
+            Strategy to use for memory initialization.
+            Options are:
+              - static
+              - backdoor
+              - frontdoor
+      memory:
+        doc: >-
+          Define a memory region.
+          Multiple memory regions may be defined in this section.
+        name:
+          value: ddr0
+          doc: >-
+            Name of the memory region
+        base:
+          value: 0x83000000
+          doc: >-
+            Base address of memory region.
+            Ignored for `static` initialized memory
+        size:
+          value: 0x100000
+          doc: >-
+            Size of memory region in bytes.
+        init_type:
+          value: backdoor #frontdoor
+          doc: >-
+            Strategy to use for memory initialization.
+            Options are:
+              - static
+              - backdoor
+              - frontdoor
+    caches:
+      doc: >-
+        parameters related to cache architecture
+      cache_line_size:
+        value: 64
+        doc: >-
+          Size of a cache line in bytes
+      llc_cache_size:
+        value: 0x200000
+        doc: >-
+          size of last level cache in bytes
+      llc_cache_ways:
+        value: 8
+        doc: >-
+          number of ways in the last level cache
+    mailbox:
+      doc: >-
+        Configure memory mailbox usage
+      type:
+        value: single
+        doc: >-
+          Configure mailbox type.
+          Options are:
+            - single: for use by TrekBox with backdoor access
+            - queue: for use in post-silicon post-process flow
+      single:
+        doc: >-
+          Detail settings when mailbox type is `single`
+        init_type:
+          value: backdoor #static
+          doc: >-
+            Strategy to use for mailbox memory initialization.
+            Options are:
+              - static
+              - backdoor
+              - frontdoor
+        c2t_base:
+          value: 0x82000000
+          doc: >-
+            Fixed base address of C to trekbox mailbox region.
+            Allow 64 bytes per processor.
+            Used for init_type of `backdoor` and `frontdoor` only.
+        t2c_base:
+          value: 0x82001000
+          doc: >-
+            Fixed base address of trekbox to C mailbox region.
+            Allow 64 bytes per processor.
+            Used for init_type of `backdoor` and `frontdoor` only.
+        cacheable:
+          value: 1
+          doc: >-
+            Set this parameter to 1 to do a cache flush after every mailbox
+            write.
+      queue:
+        doc: >-
+          Detail settings when mailbox type is `queue`
+        length:
+          value: 1000
+          doc: >-
+            Max number of messages that can be stored in the queue mailbox.
+            Longer tests may need a larger queue.
+        debug:
+          value: 0
+          doc: >-
+            If this flag is set to 1, messages will be printed directly to the
+            console instead of being queued in memory.
+    stdio:
+      doc: >-
+        Is the <stdio> standard library available for use by the generated test.
+      available:
+        value: 0
+        doc: >-
+          Set this value to 0 of the <stdio> library is not available in
+          your system.
+      use_lock:
+        value: 1
+        doc: >-
+          Calls to <stdio> console print messages will be mutex locked unless
+          this flag is set to 0.
+    header:
+      doc: >-
+        Verbatim code that will be put into the header section of the test.
+      value: |-
+
+    declaration:
+      doc: >-
+        Verbatim code that will be put into the declaration section of the test.
+      value: |-
+        extern void tohost_exit(int status);
+
+        #undef trek_exit
+        #define trek_exit(status) tohost_exit(status);
+
+        int main(void)
+        {
+          return trek_main();
+        }
+
+  mmu:  # Trek can generate code to program page/translation tables
+        # that you MAY want to use with your SDV generated C files.
+        # Here, you have some control over that process.
+
+    va_bits: 39  # How many bits are used for virtual addresses
+                 #
+                 # For aarch64, the value here is used to determine the
+                 # "initial lookup level" (as detailed in Table D5-13).
+                 # This must correlate to TCR_EL3.T0SZ!
+                 #
+                 # For riscv64, only 39, 48, and 57 are supported
+                 # corresponding to "Sv39", "Sv48", and "Sv57".
+                 #
+                 # default: 39  [from T0SZ=64-39=25(0x19)]
+
+    memory_map:  # A *MAP* of all memory regions, excluding the
+                 # memory_resources in your platformConfig.h file.
+                 #
+                 # Each map entry should be a unique name.
+                 #
+                 # Mandatory submap pairs:
+                 #     normal: *true*/false  (false = "device"/"io" memory)
+                 #      begin: starting address
+                 #        end: ending address
+                 #
+                 # Optional submap pairs:
+                 #   readable: *true*/false
+                 #  writeable: *true*/false
+                 # executable: true/*false*
+                 #  cacheable: *true*/false  (*false* for device)
+                 #  share_type (aarch64 only): *inner-shareable*,
+                 #                  outer-shareable, non-shareable
+                 #
+                 # Note that memory_resources will use all defaults.
+                 #
+                 # Note that "normal: false" (device-memory) change defaults
+                 #   to "cacheable = false", and on arch64 it implies
+                 #   share_type = non-shareable, and alloc_type = no-allocate
+
+      UART0:
+        type:       device
+        begin:      0x10000000
+        end:        0x10000fff
+
+      code:
+        type:       normal
+        begin:      0x80000000
+        end:        0x807fffff
+        executable: true
+
+      stack:
+        type:       normal
+        begin:      0x87000000
+        end:        0x87ffffff
+
+
+    aarch64:  # Customizations that are only valid for aarch64.
+
+        TCR_EL3: 0x80923519  # Should Trek to program the TCR_TL3 register? If
+                             # so, put the value here. If not, comment out
+                             # this option.
+                             # NOTE: T0SZ should correlate to va_bits above!
+                             # default: -no default-
+
+        allocate_type: read-write-allocate  # Default allocate_type.
+                                            # read-allocate, write-allocate,
+                                            # *read-write-allocate*, no-allocate
+
+        cache_type: write-back-nontransient  # non-cacheable,
+                                             # write-through-transient,
+                                             # write-back-transient,
+                                             # write-through-non-transient,
+                                             # *write-back-non-transient*
+
+        device_type: nGnRnE # *nGnRnE*, nGnRE, nGRE, GRE
+
+        share_type: inner-shareable # non-shareable
+                                    # inner-shareable
+                                    # outer-shareable
+
+    riscv64:  # Customizations that are only valid for riscv64.
+
+        Svnapot: false  # If standard extension "Svnapot" is implemented, and
+                        # when you are using Sv39, you might set this to "true"
+                        # to allow PTE bit[63] "N" to be set when appropriate.
+                        # default: false
+
+        Svpbmt: true   # If standard extension "Svpbmt" is implemented, and
+                       # when you are using Sv39, you might set this to "true"
+                       # to allow cacheable/device information to flow into
+                       # bits[62:61] "PBMT" as appropriate.
+                       # default: false
