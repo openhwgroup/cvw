@@ -18,7 +18,7 @@ MARCH         :=-march=rv64gc_zcb_zfa_zba_zbb_zbc_zbs_zfh_zicboz_zicbop_zicbom_z
 MABI          :=-mabi=lp64d
 LINKER        := $(START_LIB_DIR)/test.ld
 LINK_FLAGS    := -nostartfiles
-CFLAGS 		    := -Wa,-alhs -Wa,-L -mcmodel=medany -Og -DSINGLE_CPU 
+CFLAGS        := -Wa,-alhs -Wa,-L -mcmodel=medany -Og -DSINGLE_CPU
 WIDTH         := 64
 
 # Find all constraint files and generate tests for each one

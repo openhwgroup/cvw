@@ -50,7 +50,7 @@ def validateArgs(args):
     elif (args.tb == "testbench_fp" and args.sim != "questa"):
         print("Error: testbench_fp presently only supported by Questa, not VCS or Verilator, because of a touchy testbench")
         sys.exit(1)
-    elif ("breker" in args.elf or "breker" in args.testsuite) and args.sim != "questa":
+    elif (args.config == "breker" and args.sim != "questa"):
         print("Error: Breker tests currently only supported by Questa")
         sys.exit(1)
 

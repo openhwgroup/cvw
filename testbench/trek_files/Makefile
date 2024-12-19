@@ -1,4 +1,4 @@
-SHELL 					 := /bin/bash
+SHELL            := /bin/bash
 TREKFILES        := $(WALLY)/testbench/trek_files
 PLATFORM_YAML    := $(TREKFILES)/platform.yaml
 TREKSVIP_YAML    := $(BREKER_HOME)/examples/tutorials/svip/treksvip/yaml/treksvip.yaml
