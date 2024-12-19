@@ -1,4 +1,4 @@
-shell := /bin/bash
+SHELL := /bin/bash
 
 # Breker/Trek paths and variables
 TESTDIR          := $(WALLY)/tests/breker/work
