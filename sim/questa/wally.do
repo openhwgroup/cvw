@@ -130,6 +130,7 @@ if {[lcheck lst "--lockstep"] || $FunctCoverage == 1} {
 }
 
 # if --breker found set flag and remove from list
+# Requires a license for the breker tool. See tests/breker/README.md for details
 if {[lcheck lst "--breker"]} {
     set breker 1
     set BREKER_HOME $::env(BREKER_HOME)

@@ -110,7 +110,7 @@ def prepSim(args, ElfFile):
     if args.lockstep or args.lockstepverbose or args.fcov:
         prefix = lockstepSetup(args)
         defineList.append("+define+USE_IMPERAS_DV")
-    if args.config == "breker":
+    if args.config == "breker": # Requires a license for the breker tool. See tests/breker/README.md for details
         ElfFileNoExtension = os.path.splitext(ElfFile)[0]
         flagsList.append("--breker")
         defineList.append("+define+USE_TREK_DV")

@@ -1432,6 +1432,8 @@ UART_SUPPORTED      0
 PLIC_SUPPORTED      0
 SPI_SUPPORTED       0
 
+# Breker tests require a different memory configuration
+# See tests/breker/README.md for details on the testsuite
 derive breker rv64gc
 EXT_MEM_SUPPORTED   1
 EXT_MEM_BASE        64'h90000000
