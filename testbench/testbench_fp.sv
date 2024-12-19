@@ -131,7 +131,7 @@ module testbench_fp;
    logic      IntDivE;                    // Is Integer operation on FPU?
 
    // FSM for testing each item per clock
-   typedef enum logic [2:0] {S0, Start, S2, Done} statetype;
+   typedef enum logic [2:0] {S0, S1, Start, S2, Done} statetype;
    statetype state, nextstate;   
    
    ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -1052,6 +1052,10 @@ module testbench_fp;
       case (state)
         S0: begin
            DivStart = 1'b0;
+           nextstate = S1;
+        end
+        S1: begin
+           DivStart = 1'b0;
            nextstate = Start;
         end
         Start: begin
@@ -1199,7 +1203,7 @@ module testbench_fp;
          errors += 1;
          $display("\nError in %s", Tests[TestNum]);
          $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);	 
-         $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Expected: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
+         $display("inputs: %h %h %h\nSrcA: %h\nSrcB: %h\n Res: %h %h\n Expected: %h %h", X, Y, Z, SrcA, SrcB, Res, ResFlg, Ans, AnsFlg);
          $stop;
       end
       
