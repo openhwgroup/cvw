@@ -308,16 +308,21 @@ def addTests(testList, sim, coverStr, configs):
             configs.append(tc)
 
 
-def addTestsByDir(testDir, config, sim, coverStr, configs, lockstepMode=0):
+def addTestsByDir(testDir, config, sim, coverStr, configs, lockstepMode=0, brekerMode=0):
     if not os.path.isdir(testDir):
         print(f"Error: Directory not found: {testDir}")
         sys.exit(1)
 
     sim_logdir = f"{WALLY}/sim/{sim}/logs/"
     cmdPrefix = f"wsim --sim {sim} {coverStr} {'--lockstep' if lockstepMode else ''} {config}"
-    gs = "Mismatches            : 0" if lockstepMode or coverStr == "--fcov" else "Single Elf file tests are not signatured verified."
     # fcov/ccov lockstep only runs on WALLY-COV-ALL.elf files; other lockstep runs on all files
     fileEnd = "ALL.elf" if "cvw-arch-verif/tests" in testDir and "priv" not in testDir and (coverStr == "--fcov" or coverStr == "--ccov") else ".elf"
+    if lockstepMode or coverStr == "--fcov":
+        gs = "Mismatches            : 0"
+    elif brekerMode:
+        gs="# trek: info: summary: Test PASSED"
+    else:
+        gs = "Single Elf file tests are not signatured verified."
     for dirpath, _, filenames in os.walk(os.path.abspath(testDir)):
         for file in filenames:
             if file.endswith(fileEnd):
@@ -373,6 +378,7 @@ def parse_args():
     parser.add_argument("--buildroot", help="Include Buildroot Linux boot test (takes many hours, done along with --nightly)", action="store_true")
     parser.add_argument("--testfloat", help="Include Testfloat floating-point unit tests", action="store_true")
     parser.add_argument("--fp", help="Include floating-point tests in coverage (slower runtime)", action="store_true") # Currently not used
+    parser.add_argument("--breker", help="Run Breker tests", action="store_true")
     parser.add_argument("--dryrun", help="Print commands invoked to console without running regression", action="store_true")
     return parser.parse_args()
 
@@ -429,6 +435,8 @@ def selectTests(nightMode, args, sims, coverStr):
         addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/rv64/", "rv64gc", coveragesim, coverStr, configs)
         addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/priv/rv32/", "rv32gc", coveragesim, coverStr, configs)
         addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/priv/rv64/", "rv64gc", coveragesim, coverStr, configs)
+    elif (args.breker):
+        addTestsByDir(WALLY+"/tests/breker/work", "breker", "questa", coverStr, configs, brekerMode=1)
     else:
         for sim in sims:
             if not (args.buildroot and sim == lockstepsim):  # skip short buildroot sim if running long one
@@ -437,9 +445,9 @@ def selectTests(nightMode, args, sims, coverStr):
 
     # run derivative configurations and lockstep tests in nightly regression
     if args.nightly:
-        addTestsByDir(WALLY+"/tests/coverage", "rv64gc", lockstepsim, 1, coverStr, configs)
-        addTestsByDir(WALLY+"/tests/riscof/work/wally-riscv-arch-test/rv64i_m", "rv64gc", lockstepsim, coverStr, configs, 1)
-        addTestsByDir(WALLY+"/tests/riscof/work/wally-riscv-arch-test/rv32i_m", "rv32gc", lockstepsim, coverStr, configs, 1)
+        addTestsByDir(WALLY+"/tests/coverage", "rv64gc", lockstepsim, coverStr, configs, lockstepMode=1)
+        addTestsByDir(WALLY+"/tests/riscof/work/wally-riscv-arch-test/rv64i_m", "rv64gc", lockstepsim, coverStr, configs, lockstepMode=1)
+        addTestsByDir(WALLY+"/tests/riscof/work/wally-riscv-arch-test/rv32i_m", "rv32gc", lockstepsim, coverStr, configs, lockstepMode=1)
         addTests(derivconfigtests, defaultsim, coverStr, configs)
         # addTests(bpredtests, defaultsim) # This is currently broken in regression due to something related to the new wsim script.
 

@@ -50,21 +50,26 @@ def validateArgs(args):
     elif args.tb == "testbench_fp" and args.sim != "questa":
         print("Error: testbench_fp presently only supported by Questa, not VCS or Verilator, because of a touchy testbench")
         sys.exit(1)
+    elif (args.config == "breker" and args.sim != "questa"):
+        print("Error: Breker tests currently only supported by Questa")
+        sys.exit(1)
 
 def elfFileCheck(args):
     ElfFile = ""
     if os.path.isfile(args.elf):
-        ElfFile = f"+ElfFile={os.path.abspath(args.elf)}"
+        ElfFile = os.path.abspath(args.elf)
     elif args.elf:
         print(f"ELF file not found: {args.elf}")
         sys.exit(1)
     elif args.testsuite.endswith(".elf"): # No --elf argument; check if testsuite has a .elf extension and use that instead
         if os.path.isfile(args.testsuite):
-            ElfFile = f"+ElfFile={os.path.abspath(args.testsuite)}"
+            ElfFile = os.path.abspath(args.testsuite)
             # extract the elf name from the path to be the test suite
             fields = args.testsuite.rsplit("/", 3)
             # if the name is just ref.elf in a deep path (riscv-arch-test/wally-riscv-arch-test), then use the directory name as the test suite to make it unique; otherwise work directory will have duplicates.
-            if len(fields) > 3:
+            if "breker" in args.testsuite:
+                args.testsuite = fields[-1]
+            elif len(fields) > 3:
                 if fields[2] == "ref":
                     args.testsuite = f"{fields[1]}_{fields[3]}"
                 else:
@@ -89,7 +94,7 @@ def prepSim(args, ElfFile):
     if args.tb == "testbench_fp":
         paramsList.append(f'TEST="{args.testsuite}"')
     if ElfFile:
-        argsList.append(f"{ElfFile}")
+        argsList.append(f"+ElfFile={ElfFile}")
     if args.gui and args.tb == "testbench":
         paramsList.append("DEBUG=1")
     if args.ccov:
@@ -105,6 +110,11 @@ def prepSim(args, ElfFile):
     if args.lockstep or args.lockstepverbose or args.fcov:
         prefix = lockstepSetup(args)
         defineList.append("+define+USE_IMPERAS_DV")
+    if args.config == "breker":
+        ElfFileNoExtension = os.path.splitext(ElfFile)[0]
+        flagsList.append("--breker")
+        defineList.append("+define+USE_TREK_DV")
+        argsList.append(f"+TREK_TBX_FILE={ElfFileNoExtension}.tbx")
     # Combine into a single string
     args.args += " ".join(argsList)
     args.params += " ".join(paramsList)
