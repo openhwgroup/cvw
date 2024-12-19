@@ -46,6 +46,7 @@ module testbench;
   parameter RVVI_SYNTH_SUPPORTED=0;
   parameter MAKE_VCD=0;
 
+  // TREK Requires a license for the Breker tool. See tests/breker/README.md for details
   `ifdef USE_TREK_DV
     event trek_start;
     always @(testbench.trek_start) begin
