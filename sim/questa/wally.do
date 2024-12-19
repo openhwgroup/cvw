@@ -3,12 +3,12 @@
 #
 # Modification by Oklahoma State University & Harvey Mudd College
 # Use with Testbench
-# James Stine, 2008; David Harris 2021
+# James Stine, 2008; David Harris 2021; Jordan Carlin 2024
 # Go Cowboys!!!!!!
 #
 # Takes 1:10 to run RV64IC tests using gui
 
-# Usage: do wally.do <config> <testcases> <testbench> [--ccov] [--fcov] [--gui] [--args "any number of +value"] [--params "any number of VAR=VAL parameter overrides"]
+# Usage: do wally.do <config> <testcases> <testbench> [--ccov] [--fcov] [--gui] [--args "any number of +value"] [--params "any number of VAR=VAL parameter overrides"] [--define "any number of +define+VAR=VAL"]
 # Example: do wally.do rv64gc arch64i testbench
 
 # Use this wally.do file to run this example.
@@ -77,20 +77,23 @@ set accFlag ""
 
 # Need to be able to pass arguments to vopt.  Unforunately argv does not work because
 # it takes on different values if vsim and the do file are called from the command line or
-# if the do file is called from questa sim directly.  This chunk of code uses the $4 through $n
-# variables and compacts into a single list for passing to vopt.
-set from 4
-set step 1
+# if the do file is called from questa sim directly.  This chunk of code uses the $n variables
+# and compacts them into a single list for passing to vopt. Shift is used to move the arguments
+# through the list.
 set lst {}
+echo "number of args = $argc"
 
-for {set i 0} true {incr i} {
-    set x [expr {$i*$step + $from}]
-    if {$x > $argc} break
-    set arg [expr "$$x"]
-    lappend lst $arg
+# Shift off the first three arguments (config, testcases, testbench)
+shift
+shift
+shift
+
+# Copy the remaining arguments into a list
+while {$argc > 0} {
+    lappend lst [expr "\$1"]
+    shift
 }
 
-echo "number of args = $argc"
 echo "lst = $lst"
 
 # if +acc found set flag and remove from list
@@ -109,10 +112,10 @@ if {[lcheck lst "--ccov"]} {
 # if --fcov found set flag and remove from list
 if {[lcheck lst "--fcov"]} {
     set FunctCoverage 1
-    set FCvlog "+incdir+$env(WALLY)/addins/cvw-arch-verif/riscvISACOV/source \
-                +incdir+${FCRVVI}/rv32 +incdir+${FCRVVI}/rv64 \
+    set FCvlog "+incdir+${FCRVVI}/unpriv \
                 +incdir+${FCRVVI}/priv +incdir+${FCRVVI}/rv64_priv +incdir+${FCRVVI}/rv32_priv \
-                +incdir+${FCRVVI}/common +incdir+${FCRVVI}"
+                +incdir+${FCRVVI}/common +incdir+${FCRVVI} \
+                +incdir+$env(WALLY)/addins/cvw-arch-verif/riscvISACOV/source"
 }
 
 # if --lockstep or --fcov found set flag and remove from list
@@ -180,7 +183,7 @@ if {$DEBUG > 0} {
 # because vsim will run vopt
 set INC_DIRS "+incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared"
 set SOURCES "${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv ${SRC}/*/*.sv ${SRC}/*/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*/*/*.sv"
-vlog -permissive -lint -work ${WKDIR} {*}${INC_DIRS} {*}${DefineArgs} {*}${FCvlog} {*}${lockstepvlog} {*}${brekervlog} {*}${SOURCES} -suppress 2282,2583,7053,7063,2596,13286
+vlog -permissive -lint -work ${WKDIR} {*}${INC_DIRS} {*}${FCvlog} {*}${DefineArgs} {*}${lockstepvlog} {*}${brekervlog} {*}${SOURCES} -suppress 2282,2583,7053,7063,2596,13286
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals

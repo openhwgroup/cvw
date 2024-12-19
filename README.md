@@ -227,26 +227,28 @@ This utility will take up approximately 100 GB on your hard drive. You can also 
 
 wsim runs one of multiple simulators, Questa, VCS, or Verilator using a specific configuration and either a suite of tests or a specific elf file.
 The general syntax is
-`wsim <config> <suite or elf file or directory> [--options]`
+`wsim <config> <suite or elf file> [--options]`
 
 Parameters and options:
 
 ```
 -h, --help                                                   show this help message and exit
+--elf ELF, -e ELF                                            ELF File name; use if name does not end in .elf
 --sim {questa,verilator,vcs}, -s {questa,verilator,vcs}      Simulator
 --tb {testbench,testbench_fp}, -t {testbench,testbench_fp}   Testbench
 --gui, -g                                                    Simulate with GUI
---coverage, -c                                               Code & Functional Coverage
---fcov, -f                                                   Code & Functional Coverage
+--ccov, -c                                                   Code Coverage
+--fcov, -f                                                   Functional Coverage with cvw-arch-verif, implies lockstep
 --args ARGS, -a ARGS                                         Optional arguments passed to simulator via $value$plusargs
+--params PARAMS, -p PARAMS            			 								 Optional top-level parameter overrides of the form param=value
+--define DEFINE, -d DEFINE            											 Optional define macros passed to simulator
 --vcd, -v                                                    Generate testbench.vcd
 --lockstep, -l                                               Run ImperasDV lock, step, and compare.
---locksteplog LOCKSTEPLOG, -b LOCKSTEPLOG                    Retired instruction number to be begin logging.
---covlog COVLOG, -d COVLOG                                   Log coverage after n instructions.
---elfext ELFEXT, -e ELFEXT                                   When searching for elf files only includes ones which end in this extension
+--lockstepverbose, -lv                                       Run ImperasDV lock, step, and compare with tracing enabled
+--rvvi, -r                                                   Simulate rvvi hardware interface and ethernet.
 ```
 
-Run basic test with questa
+Run basic test with Questa
 
 ```bash
 wsim rv64gc arch64i
@@ -258,26 +260,26 @@ Run Questa with gui
 wsim rv64gc wally64priv --gui
 ```
 
-Run lockstep against ImperasDV with a single elf file in the gui.  Lockstep requires single elf.
+Run basic test with Verilator
 
 ```bash
-wsim rv64gc ../../tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/ref/ref.elf --lockstep --gui
+wsim rv32i arch32i --sim verilator
 ```
 
-Run lockstep against ImperasDV with a single elf file.  Compute coverage.
+Run lockstep against ImperasDV with a single elf file in the gui. Lockstep requires single elf.
 
 ```bash
-wsim rv64gc ../../tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/ref/ref.elf --lockstep --coverage
+wsim rv64gc $WALLY/tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/ref/ref.elf --lockstep --gui
 ```
 
-Run lockstep against ImperasDV with directory file.
+Run lockstep against ImperasDV with a single elf file. Collect functional coverage.
 
 ```bash
-wsim rv64gc ../../tests/riscof/work/riscv-arch-test/rv64i_m/I/src/ --lockstep
+wsim rv64gc $WALLY/addins/cvw-arch-verif/tests/rv64/Zicsr/WALLY-COV-ALL.elf --fcov
 ```
 
-Run lockstep against ImperasDV with directory file and specify specific extension.
+Run Linux boot simulation in lock step between Wally and ImperasDV
 
 ```bash
-wsim rv64gc ../../tests/riscof/work/riscv-arch-test/rv64i_m/I/src/ --lockstep --elfext ref.elf
+wsim buildroot buildroot --args +INSTR_LIMIT=600000000 --lockstep
 ```
