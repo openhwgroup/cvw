@@ -39,6 +39,11 @@ coverage:
 cvw-arch-verif:
 	$(MAKE) -C ${WALLY}/addins/cvw-arch-verif
 
+# Requires a license for the Breker tool. See tests/breker/README.md for details
+breker:
+	$(MAKE) -C ${WALLY}/testbench/trek_files
+	$(MAKE) -C ${WALLY}/tests/breker
+
 clean:
 	$(MAKE) clean -C sim
 	$(MAKE) clean -C ${WALLY}/tests/fp
