@@ -45,6 +45,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   logic                  InstrValidM, InstrValidW;
   logic                  StallE, StallM, StallW;
   logic                  GatedStallW;
+  logic                  SelHPTW;
   logic                  FlushD, FlushE, FlushM, FlushW;
   logic                  TrapM, TrapW;
   logic                  HaltM, HaltW;
@@ -66,11 +67,11 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   logic                  InterruptM, InterruptW;
 
   //For VM Verification
-  logic [(P.XLEN-1):0]     VAdrIM,VAdrDM,VAdrIW,VAdrDW;
-  logic [(P.XLEN-1):0]     PTE_iM,PTE_dM,PTE_iW,PTE_dW;
-  logic [(P.PA_BITS-1):0]  PAIM,PADM,PAIW,PADW;
-  logic [(P.PPN_BITS-1):0] PPN_iM,PPN_dM,PPN_iW,PPN_dW;
-  logic [1:0]              PageType_iM, PageType_iW, PageType_dM, PageType_dW;
+  logic [(P.XLEN-1):0]     VAdr_iF,VAdr_iD,VAdr_iE,VAdr_iM,VAdr_iW,VAdr_dM,VAdr_dW;
+  logic [(P.XLEN-1):0]     PTE_iF,PTE_iD,PTE_iE,PTE_iM,PTE_iW,PTE_dM,PTE_dW;
+  logic [(P.PA_BITS-1):0]  PA_iF,PA_iD,PA_iE,PA_iM,PA_iW,PA_dM,PA_dW;
+  logic [(P.PPN_BITS-1):0] PPN_iF,PPN_iD,PPN_iE,PPN_iM,PPN_iW,PPN_dM,PPN_dW;
+  logic [1:0]              PageType_iF, PageType_iD, PageType_iE, PageType_iM, PageType_iW, PageType_dM, PageType_dW;
   logic ReadAccessM,WriteAccessM,ReadAccessW,WriteAccessW;
   logic ExecuteAccessF,ExecuteAccessD,ExecuteAccessE,ExecuteAccessM,ExecuteAccessW;
 
@@ -91,7 +92,8 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   assign StallE         = testbench.dut.core.StallE;
   assign StallM         = testbench.dut.core.StallM;
   assign StallW         = testbench.dut.core.StallW;
-  assign GatedStallW         = testbench.dut.core.lsu.GatedStallW;
+  assign GatedStallW    = testbench.dut.core.lsu.GatedStallW;
+  assign SelHPTW        = testbench.dut.core.lsu.hptw.hptw.SelHPTW;
   assign FlushD         = testbench.dut.core.FlushD;
   assign FlushE         = testbench.dut.core.FlushE;
   assign FlushM         = testbench.dut.core.FlushM;
@@ -113,18 +115,18 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   end
 
   //For VM Verification
-  assign VAdrIM         = testbench.dut.core.ifu.immu.immu.tlb.tlb.VAdr;
-  assign VAdrDM         = testbench.dut.core.lsu.dmmu.dmmu.tlb.tlb.VAdr;
-  assign PAIM           = testbench.dut.core.ifu.immu.immu.PhysicalAddress;
-  assign PADM           = testbench.dut.core.lsu.dmmu.dmmu.PhysicalAddress;
+  assign VAdr_iF         = testbench.dut.core.ifu.immu.immu.tlb.tlb.VAdr;
+  assign VAdr_dM         = testbench.dut.core.lsu.dmmu.dmmu.tlb.tlb.VAdr;
+  assign PA_iF           = testbench.dut.core.ifu.immu.immu.PhysicalAddress;
+  assign PA_dM           = testbench.dut.core.lsu.dmmu.dmmu.PhysicalAddress;
   assign ReadAccessM    = testbench.dut.core.lsu.dmmu.dmmu.ReadAccessM;
   assign WriteAccessM   = testbench.dut.core.lsu.dmmu.dmmu.WriteAccessM;
   assign ExecuteAccessF = testbench.dut.core.ifu.immu.immu.ExecuteAccessF;
-  assign PTE_iM         = testbench.dut.core.ifu.immu.immu.PTE;
+  assign PTE_iF         = testbench.dut.core.ifu.immu.immu.PTE;
   assign PTE_dM         = testbench.dut.core.lsu.dmmu.dmmu.PTE;
-  assign PPN_iM         = testbench.dut.core.ifu.immu.immu.tlb.tlb.PPN;
+  assign PPN_iF         = testbench.dut.core.ifu.immu.immu.tlb.tlb.PPN;
   assign PPN_dM         = testbench.dut.core.lsu.dmmu.dmmu.tlb.tlb.PPN; 
-  assign PageType_iM    = testbench.dut.core.ifu.immu.immu.PageTypeWriteVal;
+  assign PageType_iF    = testbench.dut.core.ifu.immu.immu.PageTypeWriteVal;
   assign PageType_dM    = testbench.dut.core.lsu.dmmu.dmmu.PageTypeWriteVal;
 
   logic valid;
@@ -360,28 +362,43 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   flopenrc #(1)     CSRWriteWReg (clk, reset, FlushW, ~StallW, CSRWriteM, CSRWriteW);
 
   //for VM Verification
-  flopenrc #(P.XLEN)     VAdrIWReg (clk, reset, FlushW, ~StallW, VAdrIM, VAdrIW); //Virtual Address for IMMU
-  flopenrc #(P.XLEN)     VAdrDWReg (clk, reset, FlushW, ~StallW, VAdrDM, VAdrDW); //Virtual Address for DMMU
+  flopenrc #(P.XLEN)     VAdr_iDReg (clk, reset, 1'b0, SelHPTW, VAdr_iF, VAdr_iD); //Virtual Address for IMMU
+  flopenrc #(P.XLEN)     VAdr_iEReg (clk, reset, 1'b0, ~StallE, VAdr_iD, VAdr_iE); //Virtual Address for IMMU
+  flopenrc #(P.XLEN)     VAdr_iMReg (clk, reset, 1'b0, ~StallM, VAdr_iE, VAdr_iM); //Virtual Address for IMMU
+  flopenrc #(P.XLEN)     VAdr_iWReg (clk, reset, 1'b0, SelHPTW, VAdr_iM, VAdr_iW); //Virtual Address for IMMU  
+  flopenrc #(P.XLEN)     VAdr_dWReg (clk, reset, 1'b0, SelHPTW, VAdr_dM, VAdr_dW); //Virtual Address for DMMU
 
-  flopenrc #(P.PA_BITS)    PAIWReg (clk, reset, FlushW, ~StallW, PAIM, PAIW); //Physical Address for IMMU
-  flopenrc #(P.PA_BITS)    PADWReg (clk, reset, FlushW, ~StallW, PADM, PADW); //Physical Address for DMMU
+  flopenrc #(P.PA_BITS)  PA_iDReg (clk, reset, 1'b0, SelHPTW, PA_iF, PA_iD); //Physical Address for IMMU
+  flopenrc #(P.PA_BITS)  PA_iEReg (clk, reset, 1'b0, ~StallE, PA_iD, PA_iE); //Physical Address for IMMU
+  flopenrc #(P.PA_BITS)  PA_iMReg (clk, reset, 1'b0, ~StallM, PA_iE, PA_iM); //Physical Address for IMMU
+  flopenrc #(P.PA_BITS)  PA_iWReg (clk, reset, 1'b0, SelHPTW, PA_iM, PA_iW); //Physical Address for IMMU  
+  flopenrc #(P.PA_BITS)  PA_dWReg (clk, reset, 1'b0, SelHPTW, PA_dM, PA_dW); //Physical Address for DMMU
 
-  flopenrc #(P.XLEN)     PTE_iWReg (clk, reset, FlushW, ~GatedStallW, PTE_iM, PTE_iW); //PTE for IMMU
-  flopenrc #(P.XLEN)     PTE_dWReg (clk, reset, FlushW, ~GatedStallW, PTE_dM, PTE_dW); //PTE for DMMU
+  flopenrc #(P.XLEN)     PTE_iDReg (clk, reset, 1'b0, SelHPTW, PTE_iF, PTE_iD); //PTE for IMMU
+  flopenrc #(P.XLEN)     PTE_iEReg (clk, reset, 1'b0, ~StallE, PTE_iD, PTE_iE); //PTE for IMMU
+  flopenrc #(P.XLEN)     PTE_iMReg (clk, reset, 1'b0, ~StallM, PTE_iE, PTE_iM); //PTE for IMMU
+  flopenrc #(P.XLEN)     PTE_iWReg (clk, reset, 1'b0, SelHPTW, PTE_iM, PTE_iW); //PTE for IMMU
+  flopenrc #(P.XLEN)     PTE_dWReg (clk, reset, 1'b0, SelHPTW, PTE_dM, PTE_dW); //PTE for DMMU
 
-  flopenrc #(2)     PageType_iWReg (clk, reset, FlushW, ~GatedStallW, PageType_iM, PageType_iW); //Page Type (kilo, mega, giga, tera) from IMMU
-  flopenrc #(2)     PageType_dWReg (clk, reset, FlushW, ~GatedStallW, PageType_dM, PageType_dW); //Page Type (kilo, mega, giga, tera) from DMMU
+  flopenrc #(2)     PageType_iDReg (clk, reset, 1'b0, SelHPTW, PageType_iF, PageType_iD); //PageType (kilo, mega, giga, tera) from IMMU
+  flopenrc #(2)     PageType_iEReg (clk, reset, 1'b0, ~StallE, PageType_iD, PageType_iE); //PageType (kilo, mega, giga, tera) from IMMU
+  flopenrc #(2)     PageType_iMReg (clk, reset, 1'b0, ~StallM, PageType_iE, PageType_iM); //PageType (kilo, mega, giga, tera) from IMMU
+  flopenrc #(2)     PageType_iWReg (clk, reset, 1'b0, SelHPTW, PageType_iM, PageType_iW); //PageType (kilo, mega, giga, tera) from IMMU
+  flopenrc #(2)     PageType_dWReg (clk, reset, 1'b0, SelHPTW, PageType_dM, PageType_dW); //PageType (kilo, mega, giga, tera) from DMMU
 
-  flopenrc #(P.PPN_BITS) PPN_iWReg (clk, reset, FlushW, ~GatedStallW, PPN_iM, PPN_iW); //Physical Page Number for IMMU
-  flopenrc #(P.PPN_BITS) PPN_dWReg (clk, reset, FlushW, ~GatedStallW, PPN_dM, PPN_dW); //Physical Page Number for DMMU
+  flopenrc #(P.PPN_BITS) PPN_iDReg (clk, reset, 1'b0, ~StallD, PPN_iF, PPN_iD); //Physical Page Number for IMMU
+  flopenrc #(P.PPN_BITS) PPN_iEReg (clk, reset, 1'b0, ~StallE, PPN_iD, PPN_iE); //Physical Page Number for IMMU
+  flopenrc #(P.PPN_BITS) PPN_iMReg (clk, reset, 1'b0, ~StallM, PPN_iE, PPN_iM); //Physical Page Number for IMMU
+  flopenrc #(P.PPN_BITS) PPN_iWReg (clk, reset, 1'b0, ~StallW, PPN_iM, PPN_iW); //Physical Page Number for IMMU
+  flopenrc #(P.PPN_BITS) PPN_dWReg (clk, reset, 1'b0, ~StallW, PPN_dM, PPN_dW); //Physical Page Number for DMMU
 
-  flopenrc #(1)  ReadAccessWReg    (clk, reset, FlushW, ~GatedStallW, ReadAccessM, ReadAccessW); //LoadAccess
-  flopenrc #(1)  WriteAccessWReg   (clk, reset, FlushW, ~GatedStallW, WriteAccessM, WriteAccessW); //StoreAccess
+  flopenrc #(1)  ReadAccessWReg    (clk, reset, 1'b0, ~GatedStallW, ReadAccessM, ReadAccessW);   //LoadAccess
+  flopenrc #(1)  WriteAccessWReg   (clk, reset, 1'b0, ~GatedStallW, WriteAccessM, WriteAccessW); //StoreAccess
 
-  flopenrc #(1)  ExecuteAccessDReg (clk, reset, FlushE, ~StallD, ExecuteAccessF, ExecuteAccessD); //Instruction Fetch Access
-  flopenrc #(1)  ExecuteAccessEReg (clk, reset, FlushE, ~StallE, ExecuteAccessD, ExecuteAccessE); //Instruction Fetch Access
-  flopenrc #(1)  ExecuteAccessMReg (clk, reset, FlushM, ~StallM, ExecuteAccessE, ExecuteAccessM); //Instruction Fetch Access
-  flopenrc #(1)  ExecuteAccessWReg (clk, reset, FlushW, ~StallW, ExecuteAccessM, ExecuteAccessW); //Instruction Fetch Access
+  flopenrc #(1)  ExecuteAccessDReg (clk, reset, 1'b0, ~StallD, ExecuteAccessF, ExecuteAccessD); //Instruction Fetch Access
+  flopenrc #(1)  ExecuteAccessEReg (clk, reset, 1'b0, ~StallE, ExecuteAccessD, ExecuteAccessE); //Instruction Fetch Access
+  flopenrc #(1)  ExecuteAccessMReg (clk, reset, 1'b0, ~StallM, ExecuteAccessE, ExecuteAccessM); //Instruction Fetch Access
+  flopenrc #(1)  ExecuteAccessWReg (clk, reset, 1'b0, ~StallW, ExecuteAccessM, ExecuteAccessW); //Instruction Fetch Access
 
   // Initially connecting the writeback stage signals, but may need to use M stage
   // and gate on ~FlushW.
