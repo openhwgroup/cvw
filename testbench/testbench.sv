@@ -44,6 +44,15 @@ module testbench;
   parameter I_CACHE_ADDR_LOGGER=0;
   parameter D_CACHE_ADDR_LOGGER=0;
   parameter RVVI_SYNTH_SUPPORTED=0;
+  parameter MAKE_VCD=0;
+
+  // TREK Requires a license for the Breker tool. See tests/breker/README.md for details
+  `ifdef USE_TREK_DV
+    event trek_start;
+    always @(testbench.trek_start) begin
+      trek_uvm_pkg::trek_uvm_events::do_backdoor_init();
+    end
+  `endif
 
   `ifdef USE_IMPERAS_DV
     import idvPkg::*;
@@ -230,10 +239,10 @@ module testbench;
       end
       $finish;
     end
-`ifdef MAKEVCD
-    $dumpfile("testbench.vcd");
-    $dumpvars;
-`endif
+    if (MAKE_VCD) begin
+      $dumpfile("testbench.vcd");
+      $dumpvars;
+    end
   end // initial begin
 
   // Model the testbench as an fsm.
@@ -411,7 +420,11 @@ module testbench;
       end else if (TEST == "coverage64gc") begin
         $display("%s ran. Coverage tests don't get checked", tests[test]);
       end else if (ElfFile != "none") begin
-        $display("Single Elf file tests are not signatured verified.");
+        `ifdef USE_TREK_DV
+          $display("Breker test is done.");
+        `else
+          $display("Single Elf file tests are not signatured verified.");
+        `endif
 `ifdef QUESTA
         $stop;  // if this is changed to $finish for Questa, wally-batch.do does not go to the next step to run coverage, and wally.do terminates without allowing GUI debug
 `else
@@ -518,6 +531,10 @@ module testbench;
           end else begin
             $fclose(uncoreMemFile);
             $readmemh(memfilename, dut.uncoregen.uncore.ram.ram.memory.ram.RAM);
+            `ifdef USE_TREK_DV
+              -> trek_start;
+              $display("starting Trek....");
+            `endif
           end
         end
         if (TEST == "embench") $display("Read memfile %s", memfilename);

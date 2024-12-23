@@ -1,0 +1,58 @@
+# Constraint file to generate simple hello world test that checks the
+# initialized values for a few memory locations.
+
+# This constraint file disable all features other than the
+trek:
+  svip:
+    global:
+      scenarios:
+        scenario_count:
+          # reduce number of scenarios
+          value: 2
+      memory_allocation:
+        memory_sets:
+          block_size:
+            # force 4 byte operation
+            min: 4
+            max: 4
+          block_count:
+            # force a single memory block
+            min: 1
+            max: 1
+    riscv:
+      extensions:
+        # disable hypervisor extension
+        # if your system does not support this feature
+        h_hypervisor:
+          value: 0
+    coherency:
+      cacheline_states:
+        scenario_length:
+          # minimize scenario length
+          min: 1
+          max: 1
+  weights:
+
+    # turn of SoC level Dekker and Atomics tests
+    pss_top.soc: 0
+
+    # turn off RV64 opcode tests
+    pss_top.rv64.rv64Ops: 0
+
+    # turn off memory workload tests
+    # pss_top.workload.entry: 0
+
+    # turn of various cache state tests
+    pss_top.readOnly.entry: 0
+    pss_top.writeOnly.entry: 0
+    pss_top.writeRead.entry: 0
+    pss_top.readWrite.entry: 0
+    pss_top.moesiStates.entry: 0
+    pss_top.tilelinkStates.entry: 0
+
+    # turn of micro loop feature
+    pss_top.microLoops.microLoopScn: 0
+
+    # turn off MMU Tests
+    pss_top.rvMmu.rvMmuOp: 0
+

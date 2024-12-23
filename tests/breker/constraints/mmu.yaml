@@ -1,0 +1,72 @@
+trek:
+  svip:
+    global:
+      scenarios:
+        scenario_count:
+          # primary control for length of test
+          value: 10
+    riscv:
+      extensions:
+        # disable hypervisor extension by setting value to 0
+        # if your system does not support this feature
+        h_hypervisor:
+          value: 0
+
+  weights:
+    # disable testing of Sv57: Page-Based 57-bit Virtual-Memory System
+    # if your system does not support this feature
+    pss_top.rvMmu.rvMmuOp.RvMmuOp::satpModeSv57: 0
+
+    # qemu-riscv64 does not ignore writes to WARL bits in hgatp
+    # Comment out the next line unless your design has this issue
+    # pss_top.rvMmu.rvMmuOp.RvMmuOp::writeHgatpWarl : 0
+
+
+    # turn off MMU Tests
+    # pss_top.rvMmu.rvMmuOp: 0
+
+    # turn off rvMmu Self-modifying-code (SMC) scenarios
+    # pss_top.rvMmu.rvMmuOp.RvMmuOp::doExec: 0
+
+    # turn off rvMmuOp page fault cases
+    # pss_top.rvMmu.rvMmuOp.RvMmuOp::leafPteAClrErr: 0
+    # pss_top.rvMmu.rvMmuOp.RvMmuOp::leafPteD1ClrErr: 0
+    # pss_top.rvMmu.rvMmuOp.RvMmuOp::leafPteR1ClrErr: 0
+    # pss_top.rvMmu.rvMmuOp.RvMmuOp::leafPteU0SetErr: 0
+    # pss_top.rvMmu.rvMmuOp.RvMmuOp::leafPteU1ClrErr: 0
+    # pss_top.rvMmu.rvMmuOp.RvMmuOp::leafPteVClrErr: 0
+    # pss_top.rvMmu.rvMmuOp.RvMmuOp::leafPteW1ClrErr: 0
+    # pss_top.rvMmu.rvMmuOp.RvMmuOp::leafPteX1ClrErr: 0
+    # pss_top.rvMmu.rvMmuOp.RvMmuOp::nonLeafPteASetErr: 0
+    # pss_top.rvMmu.rvMmuOp.RvMmuOp::nonLeafPteDSetErr: 0
+    # pss_top.rvMmu.rvMmuOp.RvMmuOp::nonLeafPteUSetErr: 0
+    # pss_top.rvMmu.rvMmuOp.RvMmuOp::nonLeafPteVClrErr: 0
+
+    # turn of SoC level Dekker and Atomics tests
+    pss_top.soc: 0
+
+
+    # turn off RV64 opcode tests
+    pss_top.rv64.rv64Ops: 0
+
+    # turn off software interrupts
+    pss_top.rvMswi.rvMswiOp: 0
+
+
+    # turn off all coherency tests
+    pss_top.coherency: 0
+
+    # turn off coherency memory workload tests
+    # pss_top.workload.entry: 0
+
+    # turn of various coherency cache state tests
+    # pss_top.readOnly.entry: 0
+    # pss_top.writeOnly.entry: 0
+    # pss_top.writeRead.entry: 0
+    # pss_top.readWrite.entry: 0
+    # pss_top.moesiStates.entry: 0
+    # pss_top.tilelinkStates.entry: 0
+
+    # turn of coherency micro loop feature
+    # these scenarios take a while to run
+    # pss_top.microLoops.microLoopScn: 0
