@@ -362,29 +362,29 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   flopenrc #(1)     CSRWriteWReg (clk, reset, FlushW, ~StallW, CSRWriteM, CSRWriteW);
 
   //for VM Verification
-  flopenrc #(P.XLEN)     IVAdrDReg (clk, reset, 1'b0, SelHPTW, IVAdrF, IVAdrD); //Virtual Address for IMMU
+  flopenrc #(P.XLEN)     IVAdrDReg (clk, reset, 1'b0, SelHPTW, IVAdrF, IVAdrD); //Virtual Address for IMMU // *** RT: possible bug SelHPTW probably should be ~StallD
   flopenrc #(P.XLEN)     IVAdrEReg (clk, reset, 1'b0, ~StallE, IVAdrD, IVAdrE); //Virtual Address for IMMU
   flopenrc #(P.XLEN)     IVAdrMReg (clk, reset, 1'b0, ~StallM, IVAdrE, IVAdrM); //Virtual Address for IMMU
-  flopenrc #(P.XLEN)     IVAdrWReg (clk, reset, 1'b0, SelHPTW, IVAdrM, IVAdrW); //Virtual Address for IMMU  
-  flopenrc #(P.XLEN)     DVAdrWReg (clk, reset, 1'b0, SelHPTW, DVAdrM, DVAdrW); //Virtual Address for DMMU
+  flopenrc #(P.XLEN)     IVAdrWReg (clk, reset, 1'b0, SelHPTW, IVAdrM, IVAdrW); //Virtual Address for IMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
+  flopenrc #(P.XLEN)     DVAdrWReg (clk, reset, 1'b0, SelHPTW, DVAdrM, DVAdrW); //Virtual Address for DMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
 
-  flopenrc #(P.PA_BITS)  IPADReg (clk, reset, 1'b0, SelHPTW, IPAF, IPAD); //Physical Address for IMMU
+  flopenrc #(P.PA_BITS)  IPADReg (clk, reset, 1'b0, SelHPTW, IPAF, IPAD); //Physical Address for IMMU // *** RT: possible bug SelHPTW probably should be ~StallD
   flopenrc #(P.PA_BITS)  IPAEReg (clk, reset, 1'b0, ~StallE, IPAD, IPAE); //Physical Address for IMMU
   flopenrc #(P.PA_BITS)  IPAMReg (clk, reset, 1'b0, ~StallM, IPAE, IPAM); //Physical Address for IMMU
-  flopenrc #(P.PA_BITS)  IPAWReg (clk, reset, 1'b0, SelHPTW, IPAM, IPAW); //Physical Address for IMMU  
-  flopenrc #(P.PA_BITS)  DPAWReg (clk, reset, 1'b0, SelHPTW, DPAM, DPAW); //Physical Address for DMMU
+  flopenrc #(P.PA_BITS)  IPAWReg (clk, reset, 1'b0, SelHPTW, IPAM, IPAW); //Physical Address for IMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
+  flopenrc #(P.PA_BITS)  DPAWReg (clk, reset, 1'b0, SelHPTW, DPAM, DPAW); //Physical Address for DMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
 
-  flopenrc #(P.XLEN)     IPTEDReg (clk, reset, 1'b0, SelHPTW, IPTEF, IPTED); //PTE for IMMU
+  flopenrc #(P.XLEN)     IPTEDReg (clk, reset, 1'b0, SelHPTW, IPTEF, IPTED); //PTE for IMMU // *** RT: possible bug SelHPTW probably should be ~StallD
   flopenrc #(P.XLEN)     IPTEEReg (clk, reset, 1'b0, ~StallE, IPTED, IPTEE); //PTE for IMMU
   flopenrc #(P.XLEN)     IPTEMReg (clk, reset, 1'b0, ~StallM, IPTEE, IPTEM); //PTE for IMMU
-  flopenrc #(P.XLEN)     IPTEWReg (clk, reset, 1'b0, SelHPTW, IPTEM, IPTEW); //PTE for IMMU
-  flopenrc #(P.XLEN)     DPTEWReg (clk, reset, 1'b0, SelHPTW, DPTEM, DPTEW); //PTE for DMMU
+  flopenrc #(P.XLEN)     IPTEWReg (clk, reset, 1'b0, SelHPTW, IPTEM, IPTEW); //PTE for IMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
+  flopenrc #(P.XLEN)     DPTEWReg (clk, reset, 1'b0, SelHPTW, DPTEM, DPTEW); //PTE for DMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
 
-  flopenrc #(2)     IPageTypeDReg (clk, reset, 1'b0, SelHPTW, IPageTypeF, IPageTypeD); //PageType (kilo, mega, giga, tera) from IMMU
+  flopenrc #(2)     IPageTypeDReg (clk, reset, 1'b0, SelHPTW, IPageTypeF, IPageTypeD); //PageType (kilo, mega, giga, tera) from IMMU // *** RT: possible bug SelHPTW probably should be ~StallD
   flopenrc #(2)     IPageTypeEReg (clk, reset, 1'b0, ~StallE, IPageTypeD, IPageTypeE); //PageType (kilo, mega, giga, tera) from IMMU
   flopenrc #(2)     IPageTypeMReg (clk, reset, 1'b0, ~StallM, IPageTypeE, IPageTypeM); //PageType (kilo, mega, giga, tera) from IMMU
-  flopenrc #(2)     IPageTypeWReg (clk, reset, 1'b0, SelHPTW, IPageTypeM, IPageTypeW); //PageType (kilo, mega, giga, tera) from IMMU
-  flopenrc #(2)     DPageTypeWReg (clk, reset, 1'b0, SelHPTW, DPageTypeM, DPageTypeW); //PageType (kilo, mega, giga, tera) from DMMU
+  flopenrc #(2)     IPageTypeWReg (clk, reset, 1'b0, SelHPTW, IPageTypeM, IPageTypeW); //PageType (kilo, mega, giga, tera) from IMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
+  flopenrc #(2)     DPageTypeWReg (clk, reset, 1'b0, SelHPTW, DPageTypeM, DPageTypeW); //PageType (kilo, mega, giga, tera) from DMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
 
   flopenrc #(P.PPN_BITS) IPPNDReg (clk, reset, 1'b0, ~StallD, IPPNF, IPPND); //Physical Page Number for IMMU
   flopenrc #(P.PPN_BITS) IPPNEReg (clk, reset, 1'b0, ~StallE, IPPND, IPPNE); //Physical Page Number for IMMU
