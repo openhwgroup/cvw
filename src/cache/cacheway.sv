@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module cacheway import cvw::*; #(parameter cvw_t P, 
-                  parameter PA_BITS, XLEN, NUMSETS=512, LINELEN = 256, TAGLEN = 26,
+                  parameter PA_BITS, NUMSETS=512, LINELEN = 256, TAGLEN = 26,
                   OFFSETLEN = 5, INDEXLEN = 9, READ_ONLY_CACHE = 0) (
   input  logic                        clk,
   input  logic                        reset,
@@ -56,12 +56,6 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   output logic                        HitDirtyWay,    // The hit way is dirty
   output logic                        DirtyWay   ,    // The selected way is dirty
   output logic [TAGLEN-1:0]           TagWay);        // This way's tag if valid
-
-  localparam                          WORDSPERLINE = LINELEN/XLEN;
-  localparam                          BYTESPERLINE = LINELEN/8;
-  localparam                          LOGWPL = $clog2(WORDSPERLINE);
-  localparam                          LOGXLENBYTES = $clog2(XLEN/8);
-  localparam                          BYTESPERWORD = XLEN/8;
 
   logic [NUMSETS-1:0]                ValidBits;
   logic [NUMSETS-1:0]                DirtyBits;
@@ -131,7 +125,6 @@ module cacheway import cvw::*; #(parameter cvw_t P,
 
   localparam           NUMSRAM = LINELEN/P.CACHE_SRAMLEN;
   localparam           SRAMLENINBYTES = P.CACHE_SRAMLEN/8;
-  localparam           LOGNUMSRAM = $clog2(NUMSRAM);
   
   for(words = 0; words < NUMSRAM; words++) begin: word
     if (READ_ONLY_CACHE) begin:wordram // no byte-enable needed for i$.
@@ -175,7 +168,11 @@ module cacheway import cvw::*; #(parameter cvw_t P,
       //if (reset) DirtyBits <= {NUMSETS{1'b0}}; 
       if(CacheEn) begin
         Dirty <= DirtyBits[CacheSetTag];
-        if((SetDirtyWay | ClearDirtyWay) & ~FlushStage) DirtyBits[CacheSetData] <= SetDirtyWay; // exclusion-tag: cache UpdateDirty
+        if((SetDirtyWay | ClearDirtyWay) & ~FlushStage) begin
+          DirtyBits[CacheSetData] <= SetDirtyWay; // exclusion-tag: cache UpdateDirty
+          if (CacheSetData == CacheSetTag) Dirty <= SetDirtyWay;
+          else Dirty <= DirtyBits[CacheSetTag];
+        end
       end
     end
   end else assign Dirty = 1'b0;

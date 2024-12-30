@@ -49,12 +49,14 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-tests64gc = ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m", "arch64zcb",
-             "arch64zifencei", "arch64zicond", "arch64a_amo", "wally64a_lrsc", "wally64periph", "wally64priv",
+tests64gc = ["coverage64gc", "wally64priv", "arch64i", "arch64priv", "arch64c",  "arch64m", "arch64zcb",
+             "arch64zifencei", "arch64zicond", "arch64a_amo", "wally64a_lrsc", "wally64periph", 
              "arch64zbkb", "arch64zbkc", "arch64zbkx", "arch64zknd", "arch64zkne", "arch64zknh",
              "arch64zba",  "arch64zbb",  "arch64zbc", "arch64zbs"]
 # arch64i is the most interesting case.  Uncomment line below to run just that case
-# tests64gc = ["arch64i"]
+#tests64gc = ["arch64i"]
+#tests64gc = ["coverage64gc"]
+#tests64gc = ["wally64priv"]
 
 cachetypes = ["ICache", "DCache"]
 simdir = os.path.expandvars("$WALLY/sim")
@@ -67,6 +69,7 @@ def main():
     args = parser.parse_args()
     simargs = "I_CACHE_ADDR_LOGGER=1\\\'b1 D_CACHE_ADDR_LOGGER=1\\\'b1"
     testcmd = "wsim --sim " + args.sim + " rv64gc {} --params \"" + simargs + "\" > /dev/null"
+    #cachecmd = "CacheSim.py 64 4 56 44 -f {} --verbose"
     cachecmd = "CacheSim.py 64 4 56 44 -f {}"
     mismatches = 0
 

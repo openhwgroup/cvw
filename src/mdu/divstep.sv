@@ -27,8 +27,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* verilator lint_off UNOPTFLAT */
-
 module divstep #(parameter XLEN) (
   input  logic [XLEN-1:0] W,     // Residual in
   input  logic [XLEN-1:0] XQ,    // bits of dividend X and quotient Q in
@@ -46,5 +44,3 @@ module divstep #(parameter XLEN) (
   assign qi = ~qib;
   mux2 #(XLEN) wrestoremux(WShift, WPrime, qi, WOut); // if quotient is zero, restore W
 endmodule
-
-/* verilator lint_on UNOPTFLAT */

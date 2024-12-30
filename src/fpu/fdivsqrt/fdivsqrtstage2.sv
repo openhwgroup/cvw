@@ -28,7 +28,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-/* verilator lint_off UNOPTFLAT */
 module fdivsqrtstage2 import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.DIVb+3:0] D, DBar,        // Q4.DIVb
   input  logic [P.DIVb:0]   U, UM,          // U1.DIVb
@@ -40,7 +39,6 @@ module fdivsqrtstage2 import cvw::*;  #(parameter cvw_t P) (
   output logic [P.DIVb:0]   UNext, UMNext,  // U1.DIVb
   output logic [P.DIVb+3:0] WSNext, WCNext  // Q4.DIVb
 );
- /* verilator lint_on UNOPTFLAT */
 
   logic [P.DIVb+3:0]        Dsel;     // Q4.DIVb
   logic                     up, uz;

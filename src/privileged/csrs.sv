@@ -67,8 +67,6 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
   localparam STIMECMPH  = 12'h15D;
   localparam SATP       = 12'h180;
   // Constants
-  localparam ZERO         = {(P.XLEN){1'b0}};
-  localparam SEDELEG_MASK = ~(ZERO | {{P.XLEN-3{1'b0}}, 3'b111} << 9);
 
   logic                    WriteSTVECM;
   logic                    WriteSSCRATCHM, WriteSEPCM;

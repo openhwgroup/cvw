@@ -121,11 +121,9 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic                  DCacheCommittedM;                       // D$ memory operation started, delay interrupts
 
   logic [P.LLEN-1:0]     DTIMReadDataWordM;                      // DTIM read data
-  /* verilator lint_off WIDTHEXPAND */  
   logic [MLEN-1:0]       DCacheReadDataWordM;                    // D$ read data
   logic [MLEN-1:0]       LSUWriteDataSpillM;                     // Final write data
   logic [MLEN/8-1:0]     ByteMaskSpillM;                         // Selects which bytes within a word to write
-  /* verilator lint_on WIDTHEXPAND */
   logic [P.LLEN-1:0]     DCacheReadDataWordSpillM;               // D$ read data
   logic [P.LLEN-1:0]     ReadDataWordMuxM;                       // DTIM or D$ read data
   logic [P.LLEN-1:0]     LittleEndianReadDataWordM;              // Endian-swapped read data
@@ -326,7 +324,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       assign CacheRWM = (CacheableM & ~SelDTIM) ? LSURWM : '0;
       assign FlushDCache = FlushDCacheM & ~(SelHPTW);
       
-      cache #(.P(P), .PA_BITS(P.PA_BITS), .XLEN(P.XLEN), .LINELEN(P.DCACHE_LINELENINBITS), .NUMSETS(P.DCACHE_WAYSIZEINBYTES*8/LINELEN),
+      cache #(.P(P), .PA_BITS(P.PA_BITS), .LINELEN(P.DCACHE_LINELENINBITS), .NUMSETS(P.DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(P.DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(CACHEWORDLEN), .MUXINTERVAL(P.LLEN), .READ_ONLY_CACHE(0)) dcache(
         .clk, .reset, .Stall(GatedStallW & ~SelSpillE), .SelBusBeat, .FlushStage(LSUFlushW),
         .CacheRW(CacheRWM), 

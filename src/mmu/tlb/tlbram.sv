@@ -51,6 +51,6 @@ module tlbram import cvw::*;  #(parameter cvw_t P,
   or_rows #(TLB_ENTRIES, P.XLEN) PTEOr(RamRead, PageTableEntry);
 
   // Rename the bits read from the TLB RAM
-  assign PTEAccessBits = {PageTableEntry[P.XLEN-1:P.XLEN-4] & {4{P.XLEN == 64}}, PageTableEntry[7:0]}; // for RV64 include N and PBMT bits and OR of reserved bitss
+  assign PTEAccessBits = {PageTableEntry[P.XLEN-1:P.XLEN-4] & {4{P.XLEN == 64}}, PageTableEntry[7:0]}; // for RV64 include N and PBMT bits and OR of reserved bits
   assign PPN = PageTableEntry[P.PPN_BITS+9:10];
 endmodule

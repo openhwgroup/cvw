@@ -29,7 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module cache import cvw::*; #(parameter cvw_t P,
-                              parameter PA_BITS, XLEN, LINELEN,  NUMSETS,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTERVAL, READ_ONLY_CACHE) (
+                              parameter PA_BITS, LINELEN,  NUMSETS,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTERVAL, READ_ONLY_CACHE) (
   input  logic                   clk,
   input  logic                   reset,
   input  logic                   Stall,             // Stall the cache, preventing new accesses. In-flight access finished but does not return to READY
@@ -66,18 +66,14 @@ module cache import cvw::*; #(parameter cvw_t P,
   localparam                     SETLEN = $clog2(NUMSETS);          // Number of set bits
   localparam                     SETTOP = SETLEN+OFFSETLEN;          // Number of set plus offset bits
   localparam                     TAGLEN = PA_BITS - SETTOP;          // Number of tag bits
-  localparam                     CACHEWORDSPERLINE = LINELEN/WORDLEN;// Number of words in cache line
-  localparam                     LOGCWPL = $clog2(CACHEWORDSPERLINE);// Log2 of ^
   localparam                     FLUSHADRTHRESHOLD = NUMSETS - 1;   // Used to determine when flush is complete
-  localparam                     LOGLLENBYTES = $clog2(WORDLEN/8);   // Number of bits to address a word
-
 
   logic                          SelAdrData;
   logic                          SelAdrTag;
   logic [1:0]                    AdrSelMuxSelData;
-  logic [1:0]                    AdrSelMuxSelTag;
+  logic [1:0]                    AdrSelMuxSelTag, AdrSelMuxSelLRU;
   logic [SETLEN-1:0]             CacheSetData;
-  logic [SETLEN-1:0]             CacheSetTag;
+  logic [SETLEN-1:0]             CacheSetTag, CacheSetLRU;
   logic [LINELEN-1:0]            LineWriteData;
   logic                          ClearDirty, SetDirty, SetValid, ClearValid;
   logic [LINELEN-1:0]            ReadDataLineWay [NUMWAYS-1:0];
@@ -117,16 +113,20 @@ module cache import cvw::*; #(parameter cvw_t P,
   mux3 #(SETLEN) AdrSelMuxTag(NextSet[SETTOP-1:OFFSETLEN], PAdr[SETTOP-1:OFFSETLEN], FlushAdr,
     AdrSelMuxSelTag, CacheSetTag);
 
+  assign AdrSelMuxSelLRU = {FlushCache, ((SelAdrTag | SelHPTW | Stall) & ~((READ_ONLY_CACHE == 1) & FlushStage))};
+  mux3 #(SETLEN) AdrSelMuxLRU(NextSet[SETTOP-1:OFFSETLEN], PAdr[SETTOP-1:OFFSETLEN], FlushAdr,
+    AdrSelMuxSelLRU, CacheSetLRU);
+
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
-  cacheway #(P, PA_BITS, XLEN, NUMSETS, LINELEN, TAGLEN, OFFSETLEN, SETLEN, READ_ONLY_CACHE) CacheWays[NUMWAYS-1:0](
+  cacheway #(P, PA_BITS, NUMSETS, LINELEN, TAGLEN, OFFSETLEN, SETLEN, READ_ONLY_CACHE) CacheWays[NUMWAYS-1:0](
     .clk, .reset, .CacheEn, .CacheSetData, .CacheSetTag, .PAdr, .LineWriteData, .LineByteMask, .SelVictim,
     .SetValid, .ClearValid, .SetDirty, .ClearDirty, .VictimWay,
     .FlushWay, .FlushCache, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .HitDirtyWay, .TagWay, .FlushStage, .InvalidateCache);
 
   // Select victim way for associative caches
   if(NUMWAYS > 1) begin:vict
-    cacheLRU #(NUMWAYS, SETLEN, OFFSETLEN, NUMSETS) cacheLRU(
-      .clk, .reset, .FlushStage, .CacheEn, .HitWay, .ValidWay, .VictimWay, .CacheSetTag, .LRUWriteEn,
+    cacheLRU #(NUMWAYS, SETLEN, NUMSETS) cacheLRU(
+      .clk, .reset, .FlushStage, .CacheEn, .HitWay, .ValidWay, .VictimWay, .CacheSetLRU, .LRUWriteEn,
       .SetValid, .PAdr(PAdr[SETTOP-1:OFFSETLEN]), .InvalidateCache);
   end else 
     assign VictimWay = 1'b1; // one hot.
@@ -168,11 +168,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   if(!READ_ONLY_CACHE) begin:WriteSelLogic
     logic [LINELEN/8-1:0]          DemuxedByteMask, FetchBufferByteSel;
 
-    // Adjust byte mask from word to cache line
-
-    localparam                     CACHEMUXINVERALPERLINE = LINELEN/MUXINTERVAL;// Number of words in cache line
-    localparam                     LOGMIPL = $clog2(CACHEMUXINVERALPERLINE);// Log2 of ^
-    
+    // Adjust byte mask from word to cache line    
     logic [LINELEN/8-1:0]          BlankByteMask;
     assign BlankByteMask[WORDLEN/8-1:0] = ByteMask;
     assign BlankByteMask[LINELEN/8-1:WORDLEN/8] = 0;
@@ -227,7 +223,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   // Cache FSM
   /////////////////////////////////////////////////////////////////////////////////////////////
   
-  cachefsm #(P, READ_ONLY_CACHE) cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
+  cachefsm #(READ_ONLY_CACHE) cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
     .FlushStage, .CacheRW, .Stall,
     .Hit, .LineDirty, .HitLineDirty, .CacheStall, .CacheCommitted, 
     .CacheMiss, .CacheAccess, .SelAdrData, .SelAdrTag, .SelVictim,

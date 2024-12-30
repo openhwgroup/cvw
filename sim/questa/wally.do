@@ -3,12 +3,12 @@
 #
 # Modification by Oklahoma State University & Harvey Mudd College
 # Use with Testbench
-# James Stine, 2008; David Harris 2021
+# James Stine, 2008; David Harris 2021; Jordan Carlin 2024
 # Go Cowboys!!!!!!
 #
 # Takes 1:10 to run RV64IC tests using gui
 
-# Usage: do wally.do <config> <testcases> <testbench> [--ccov] [--fcov] [+acc] [--args "any number of +value"] [--params "any number of VAR=VAL parameter overrides"]
+# Usage: do wally.do <config> <testcases> <testbench> [--ccov] [--fcov] [--gui] [--args "any number of +value"] [--params "any number of VAR=VAL parameter overrides"] [--define "any number of +define+VAR=VAL"]
 # Example: do wally.do rv64gc arch64i testbench
 
 # Use this wally.do file to run this example.
@@ -40,7 +40,6 @@ set TESTSUITE ${2}
 set TESTBENCH ${3}
 set WKDIR wkdir/${CFG}_${TESTSUITE}
 set WALLY $::env(WALLY)
-set IMPERAS_HOME $::env(IMPERAS_HOME)
 set CONFIG ${WALLY}/config
 set SRC ${WALLY}/src
 set TB ${WALLY}/testbench
@@ -55,6 +54,7 @@ vlib ${WKDIR}
 set PlusArgs ""
 set ParamArgs ""
 set ExpandedParamArgs {}
+set DefineArgs ""
 
 set ccov 0
 set CoverageVoptArg ""
@@ -62,11 +62,14 @@ set CoverageVsimArg ""
 
 set FunctCoverage 0
 set FCvlog ""
-set FCvopt ""
-set FCdefineCOVER_EXTS {}
+
+set breker 0
+set brekervlog ""
+set brekervopt ""
 
 set lockstep 0
 set lockstepvlog ""
+
 set SVLib ""
 
 set GUI 0
@@ -74,24 +77,27 @@ set accFlag ""
 
 # Need to be able to pass arguments to vopt.  Unforunately argv does not work because
 # it takes on different values if vsim and the do file are called from the command line or
-# if the do file is called from questa sim directly.  This chunk of code uses the $4 through $n
-# variables and compacts into a single list for passing to vopt.
-set from 4
-set step 1
+# if the do file is called from questa sim directly.  This chunk of code uses the $n variables
+# and compacts them into a single list for passing to vopt. Shift is used to move the arguments
+# through the list.
 set lst {}
+echo "number of args = $argc"
 
-for {set i 0} true {incr i} {
-    set x [expr {$i*$step + $from}]
-    if {$x > $argc} break
-    set arg [expr "$$x"]
-    lappend lst $arg
+# Shift off the first three arguments (config, testcases, testbench)
+shift
+shift
+shift
+
+# Copy the remaining arguments into a list
+while {$argc > 0} {
+    lappend lst [expr "\$1"]
+    shift
 }
 
-echo "number of args = $argc"
 echo "lst = $lst"
 
 # if +acc found set flag and remove from list
-if {[lcheck lst "+acc"]} {
+if {[lcheck lst "--gui"]} {
     set GUI 1
     set accFlag "+acc"
 }
@@ -103,49 +109,35 @@ if {[lcheck lst "--ccov"]} {
     set CoverageVsimArg "-coverage"
 }
 
-# if --fcovimp found set flag and remove from list
-if {[lcheck lst "--fcovimp"]} {
-    set FunctCoverage 1
-    set FCvlog "+define+INCLUDE_TRACE2COV \
-                +define+IDV_INCLUDE_TRACE2COV \
-                +define+COVER_BASE_RV64I \
-                +define+COVER_LEVEL_DV_PR_EXT \
-                +incdir+${IMPERAS_HOME}/ImpProprietary/source/host/riscvISACOV/source"
-    set FCvopt "+TRACE2COV_ENABLE=1 +IDV_TRACE2COV=1"
-    # Uncomment various cover statements below to control which extensions get functional coverage
-    lappend FCdefineCOVER_EXTS "+define+COVER_RV64I"
-    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64M"
-    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64A"
-    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64F"
-    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64D"
-    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64ZICSR"
-    #lappend FCdefineCOVER_EXTS "+define+COVER_RV64C"
-
-}
-
 # if --fcov found set flag and remove from list
 if {[lcheck lst "--fcov"]} {
     set FunctCoverage 1
-    # COVER_BASE_RV32I is just needed to keep riscvISACOV happy, but no longer affects tests
-         set FCvlog "+define+INCLUDE_TRACE2COV \
-                +define+IDV_INCLUDE_TRACE2COV \
-                +define+COVER_BASE_RV32I \
-                +incdir+$env(WALLY)/addins/riscvISACOV/source \
-		"
-   
-    set FCvopt "+TRACE2COV_ENABLE=1 +IDV_TRACE2COV=1"
-
+    set FCvlog "+incdir+${FCRVVI}/unpriv \
+                +incdir+${FCRVVI}/priv +incdir+${FCRVVI}/rv64_priv +incdir+${FCRVVI}/rv32_priv \
+                +incdir+${FCRVVI}/common +incdir+${FCRVVI} \
+                +incdir+$env(WALLY)/addins/cvw-arch-verif/riscvISACOV/source"
 }
 
 # if --lockstep or --fcov found set flag and remove from list
 if {[lcheck lst "--lockstep"] || $FunctCoverage == 1} {
+    set IMPERAS_HOME $::env(IMPERAS_HOME)
     set lockstep 1
-    set lockstepvlog "+define+USE_IMPERAS_DV \
-                      +incdir+${IMPERAS_HOME}/ImpPublic/include/host \
+    set lockstepvlog "+incdir+${IMPERAS_HOME}/ImpPublic/include/host \
                       +incdir+${IMPERAS_HOME}/ImpProprietary/include/host \
                       ${IMPERAS_HOME}/ImpPublic/source/host/rvvi/*.sv \
                       ${IMPERAS_HOME}/ImpProprietary/source/host/idv/*.sv"
-    set SVLib "-sv_lib ${IMPERAS_HOME}/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model"
+    set SVLib " -sv_lib ${IMPERAS_HOME}/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model "
+}
+
+# if --breker found set flag and remove from list
+# Requires a license for the breker tool. See tests/breker/README.md for details
+if {[lcheck lst "--breker"]} {
+    set breker 1
+    set BREKER_HOME $::env(BREKER_HOME)
+    set brekervlog "+incdir+${WALLY}/testbench/trek_files \
+                    ${WALLY}/testbench/trek_files/uvm_output/trek_uvm_pkg.sv"
+    set brekervopt "${WKDIR}.trek_uvm"
+    append SVLib " -sv_lib ${BREKER_HOME}/linux64/lib/libtrek "
 }
 
 # Set PlusArgs passed using the --args flag
@@ -166,30 +158,39 @@ if {$ParamArgsIndex >= 0} {
     set lst [lreplace $lst $ParamArgsIndex [expr {$ParamArgsIndex + 1}]]
 }
 
+# Set +define macros passed using the --define flag
+set DefineArgsIndex [lsearch -exact $lst "--define"]
+if {$DefineArgsIndex >= 0} {
+    set DefineArgs [lindex $lst [expr {$DefineArgsIndex + 1}]]
+    set lst [lreplace $lst $DefineArgsIndex [expr {$DefineArgsIndex + 1}]]
+}
+
 # Debug print statements
 if {$DEBUG > 0} {
     echo "GUI = $GUI"
     echo "ccov = $ccov"
     echo "lockstep = $lockstep"
     echo "FunctCoverage = $FunctCoverage"
+    echo "Breker = $breker"
     echo "remaining list = $lst"
     echo "Extra +args = $PlusArgs"
-    echo "Extra -args = $ExpandedParamArgs"
+    echo "Extra params = $ExpandedParamArgs"
+    echo "Extra defines = $DefineArgs"
 }
 
 # compile source files
 # suppress spurious warnngs about
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
-set INC_DIRS "+incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared +incdir+${FCRVVI} +incdir+${FCRVVI}/rv32 +incdir+${FCRVVI}/rv64 +incdir+${FCRVVI}/rv64_priv +incdir+${FCRVVI}/priv +incdir+${FCRVVI}/rv32_priv +incdir+${FCRVVI}/common +incdir+${FCRVVI}"
+set INC_DIRS "+incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared"
 set SOURCES "${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv ${SRC}/*/*.sv ${SRC}/*/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*/*/*.sv"
-vlog -permissive -lint -work ${WKDIR} {*}${INC_DIRS} {*}${FCvlog} {*}${FCdefineCOVER_EXTS} {*}${lockstepvlog} {*}${SOURCES} -suppress 2282,2583,7053,7063,2596,13286
+vlog -permissive -lint -work ${WKDIR} {*}${INC_DIRS} {*}${FCvlog} {*}${DefineArgs} {*}${lockstepvlog} {*}${brekervlog} {*}${SOURCES} -suppress 2282,2583,7053,7063,2596,13286,2605,2250
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} {*}${ExpandedParamArgs} -o testbenchopt ${CoverageVoptArg}
+vopt $accFlag ${WKDIR}.${TESTBENCH} ${brekervopt} -work ${WKDIR} {*}${ExpandedParamArgs} -o testbenchopt ${CoverageVoptArg}
 
-vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} {*}${PlusArgs} -fatal 7 {*}${SVLib} {*}${FCvopt} -suppress 3829 ${CoverageVsimArg}
+vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} {*}${PlusArgs} -fatal 7 {*}${SVLib} -suppress 3829 ${CoverageVsimArg}
 
 # power add generates the logging necessary for saif generation.
 # power add -r /dut/core/*

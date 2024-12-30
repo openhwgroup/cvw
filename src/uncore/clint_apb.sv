@@ -115,7 +115,7 @@ module clint_apb import cvw::*;  #(parameter cvw_t P) (
     always_ff @(posedge PCLK) 
       if (~PRESETn) begin
         MSIP <= 1'b0;
-        MTIMECMP <= '0;
+        MTIMECMP <= 64'hFFFFFFFFFFFFFFFF; // Spec says MTIMECMP is not reset, but we reset to maximum value to prevent spurious timer interrupts
       end else if (memwrite) begin
         if (entry == 16'h0000) MSIP <= PWDATA[0];
         if (entry == 16'h4000) 

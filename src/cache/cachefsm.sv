@@ -28,8 +28,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module cachefsm import cvw::*; #(parameter cvw_t P,
-                                 parameter READ_ONLY_CACHE = 0) (
+module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   input  logic       clk,
   input  logic       reset,
   // hazard and privilege unit
@@ -155,7 +154,8 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   assign SetValid = CurrState == STATE_WRITE_LINE | 
                     (CurrState == STATE_ACCESS & CMOZeroNoEviction) |
                     (CurrState == STATE_WRITEBACK & CacheBusAck & CMOpM[3]); 
-  assign ClearValid = (CurrState == STATE_ACCESS & CMOpM[0]) |
+  assign ClearValid = (CurrState == STATE_ACCESS & (CMOpM[0] | (CMOpM[2] & ~HitLineDirty))) |
+  //assign ClearValid = (CurrState == STATE_ACCESS & (CMOpM[0])) |
                       (CurrState == STATE_WRITEBACK & CMOpM[2] & CacheBusAck);
   assign LRUWriteEn = (((CurrState == STATE_ACCESS & (AnyHit | CMOZeroNoEviction)) |
                        (CurrState == STATE_WRITE_LINE)) & ~FlushStage) |

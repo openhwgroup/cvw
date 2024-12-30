@@ -29,14 +29,14 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module cacheLRU
-  #(parameter NUMWAYS = 4, SETLEN = 9, OFFSETLEN = 5, NUMSETS = 128) (
+  #(parameter NUMWAYS = 4, SETLEN = 9, NUMSETS = 128) (
   input  logic                clk, 
   input  logic                reset,
   input  logic                FlushStage,
   input  logic                CacheEn,         // Enable the cache memory arrays.  Disable hold read data constant
   input  logic [NUMWAYS-1:0]  HitWay,          // Which way is valid and matches PAdr's tag
   input  logic [NUMWAYS-1:0]  ValidWay,        // Which ways for a particular set are valid, ignores tag
-  input  logic [SETLEN-1:0]   CacheSetTag,     // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
+  input  logic [SETLEN-1:0]   CacheSetLRU,     // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
   input  logic [SETLEN-1:0]   PAdr,            // Physical address 
   input  logic                LRUWriteEn,      // Update the LRU state
   input  logic                SetValid,        // Set the dirty bit in the selected way and set
@@ -142,8 +142,8 @@ module cacheLRU
     else if (CacheEn & LRUWriteEn) LRUMemory[PAdr] <= NextLRU;
 
   // LRU read path with write forwarding
-  assign ReadLRU = LRUMemory[CacheSetTag];
-  assign ForwardLRU = LRUWriteEn & (PAdr == CacheSetTag);
+  assign ReadLRU = LRUMemory[CacheSetLRU];
+  assign ForwardLRU = LRUWriteEn & (PAdr == CacheSetLRU);
   mux2 #(NUMWAYS-1) ReadLRUmux(ReadLRU, NextLRU, ForwardLRU, BypassedLRU);
   flop #(NUMWAYS-1) CurrLRUReg(clk, BypassedLRU, CurrLRU);
 endmodule

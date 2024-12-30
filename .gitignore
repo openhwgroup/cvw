@@ -12,6 +12,7 @@
 *.map
 *.elf*
 *.list
+*.memfile
 
 # General directories to ignore
 .vscode/
@@ -33,6 +34,7 @@ tests/fp/combined_IF_vectors/IF_vectors/*.tv
 tests/custom/*/*/
 tests/custom/*/*/*.memfile
 sim/tests/riscvdv
+testbench/trek_files/uvm_output
 
 # Linux
 linux/buildroot
@@ -105,9 +107,6 @@ sim/questa/wkdir
 sim/questa/ucdb
 sim/questa/cov
 sim/questa/fcov
-sim/questa/fcovrvvi
-sim/questa/fcovrvvi_logs
-sim/questa/fcovrvvi_ucdb
 sim/questa/fcov_logs
 sim/questa/fcov_ucdb
 sim/questa/riscv.ucdb
@@ -156,6 +155,8 @@ examples/C/mcmodel/mcmodel_medany
 examples/C/mcmodel/mcmodel_medlow
 examples/C/sum/sum
 examples/C/sum_mixed/sum_mixed
+examples/C/hello/hello
+examples/C/gpio/gpio
 examples/asm/sumtest/sumtest
 examples/asm/example/example
 examples/asm/trap/trap

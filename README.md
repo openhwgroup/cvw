@@ -59,7 +59,19 @@ Then fork and clone the repo, source setup, make the tests and run regression
 	fi
 	```
 
-9. Build the tests and run a regression simulation to prove everything is installed.  Building tests may take a while.
+9. Try compiling the HelloWally program and simulating it on the SystemVerilog with Verilator and on the Spike simulator.
+	```
+	$ cd examples/C/hello
+	$ make
+	$ wsim --sim verilator rv64gc --elf hello
+	Hello Wally!
+	0 1 2 3 4 5 6 7 8 9 
+	$ spike hello
+	Hello Wally!
+	0 1 2 3 4 5 6 7 8 9 
+	```
+
+10. Build the tests and run a regression simulation to prove everything is installed.  Building tests may take a while.
 
 	```bash
 	$ make --jobs
@@ -71,7 +83,8 @@ Then fork and clone the repo, source setup, make the tests and run regression
 > This section describes the open source toolchain installation.
 
 ### Compatibility
-The current version of the toolchain has been tested on Ubuntu (versions 20.04 LTS, 22.04 LTS, and 24.04 LTS) and on Red Hat/Rocky/AlmaLinux (versions 8 and 9).
+The current version of the toolchain has been tested on Ubuntu (versions 20.04 LTS, 22.04 LTS, and 24.04 LTS), Debian (versions 11 and 12), Red Hat/Rocky/AlmaLinux (versions 8 and 9),
+and SUSE version 15.6. Only the latest minor release of each major version is tested.
 
 > [!WARNING]
 > - Ubuntu 22.04LTS is incompatible with Synopsys Design Compiler.
@@ -135,11 +148,17 @@ export VCS_HOME=..                  # Change this for your path to Synopsys VCS
 
 Electronic Design Automation (EDA) tools are vital to implementations of System on Chip architectures as well as validating different designs.   Open-source and commercial tools exist for multiple strategies and although the one can spend a lifetime using combinations of different tools, only a small subset of tools is utilized for this text.  The tools are chosen because of their ease in access as well as their repeatability for accomplishing many of the tasks utilized to design Wally.  It is anticipated that additional tools may be documented later after this is text is published to improve use and access.
 
-Siemens Questa is the primary tool utilized for simulating and validating Wally.    For logic synthesis, you will need Synopsys Design Compiler.  Questa and Design Compiler are commercial tools that require an educational or commercial license.
+Verilator is an open-source Verilog simulator.  It is fast and free.  Run Wally on the riscv-arch-test suite using Verilator with:
+
+```
+regression-wally
+```
+
+Running code or functional coverage simulations or lock-step presently require commercial tools.  Siemens Questa is the primary tool utilized for simulating and validating Wally. Synopsys VCS also can run regression-wally and lock-step simulation.  For logic synthesis, you will need Synopsys Design Compiler.  Questa and Design Compiler are commercial tools that require an educational or commercial license.
 
 Note: Some EDA tools utilize `LM_LICENSE_FILE` for their environmental variable to point to their license server.  Some operating systems may also utilize `MGLS_LICENSE_FILE` instead, therefore, it is important to read the user manual on the preferred environmental variable required to point to a user’s license file.  Although there are different mechanisms to allow licenses to work, many companies commonly utilize the FlexLM (i.e., Flex-enabled) license server manager that runs off a node locked license.
 
-Although most EDA tools are Linux-friendly, they tend to have issues when not installed on recommended OS flavors.  Both Red Hat Enterprise Linux and SUSE Linux products typically tend to be recommended for installing commercial-based EDA tools and are recommended for utilizing complex simulation and architecture exploration.  Questa can also be installed on Microsoft Windows as well as Mac OS with a Virtual Machine such as Parallels.
+Although most EDA tools are Linux-friendly, they tend to have issues when not installed on recommended OS flavors.  Red Hat Enterprise Linux (and its free Rocky clone) and SUSE Linux products  typically tend to be recommended for installing commercial-based EDA tools and are recommended for utilizing complex simulation and architecture exploration.  
 
 ### Siemens Questa
 
@@ -196,37 +215,40 @@ Startups can expect to spend more than $1 million on CAD tools to get a chip to 
 # Adding Cron Job for nightly builds
 
 If you want to add a cronjob you can do the following:
-1) Set up the email client `mutt` for your distribution
+1) Set up the email client `mutt` to send emails through the command line
 2) Enter `crontab -e` into a terminal
-3) add this code to test building CVW and then running `regression-wally --nightly` at 9:30 PM each day
+3) add this code to test cloning CVW, making CVW's tests, then running `regression-wally --nightly --buildroot` every day at 21:30 in your local time
 ```bash
-30 21 * * * bash -l -c "source ~/PATH/TO/CVW/setup.sh; PATH_TO_CVW/cvw/bin/wrapper_nightly_runs.sh --path {PATH_TO_TEST_LOCATION} --target all --tests nightly --send_email harris@hmc.edu,kaitlin.verilog@gmail.com"
+30 21 * * * curl -L https://raw.githubusercontent.com/openhwgroup/cvw/refs/heads/main/bin/nightly_build.py | python - --path {PATH_FOR_NIGHTLY_RUNS} --target all --tests all --send_email harris@hmc.edu,rose@rosethompson.net
 ```
+This utility will take up approximately 100 GB on your hard drive. You can also run the script directly from `bin/nightly_build.py`.
 
 # Example wsim commands
 
 wsim runs one of multiple simulators, Questa, VCS, or Verilator using a specific configuration and either a suite of tests or a specific elf file.
 The general syntax is
-`wsim <config> <suite or elf file or directory> [--options]`
+`wsim <config> <suite or elf file> [--options]`
 
 Parameters and options:
 
 ```
 -h, --help                                                   show this help message and exit
+--elf ELF, -e ELF                                            ELF File name; use if name does not end in .elf
 --sim {questa,verilator,vcs}, -s {questa,verilator,vcs}      Simulator
 --tb {testbench,testbench_fp}, -t {testbench,testbench_fp}   Testbench
 --gui, -g                                                    Simulate with GUI
---coverage, -c                                               Code & Functional Coverage
---fcov, -f                                                   Code & Functional Coverage
+--ccov, -c                                                   Code Coverage
+--fcov, -f                                                   Functional Coverage with cvw-arch-verif, implies lockstep
 --args ARGS, -a ARGS                                         Optional arguments passed to simulator via $value$plusargs
+--params PARAMS, -p PARAMS            			 								 Optional top-level parameter overrides of the form param=value
+--define DEFINE, -d DEFINE            											 Optional define macros passed to simulator
 --vcd, -v                                                    Generate testbench.vcd
 --lockstep, -l                                               Run ImperasDV lock, step, and compare.
---locksteplog LOCKSTEPLOG, -b LOCKSTEPLOG                    Retired instruction number to be begin logging.
---covlog COVLOG, -d COVLOG                                   Log coverage after n instructions.
---elfext ELFEXT, -e ELFEXT                                   When searching for elf files only includes ones which end in this extension
+--lockstepverbose, -lv                                       Run ImperasDV lock, step, and compare with tracing enabled
+--rvvi, -r                                                   Simulate rvvi hardware interface and ethernet.
 ```
 
-Run basic test with questa
+Run basic test with Questa
 
 ```bash
 wsim rv64gc arch64i
@@ -238,26 +260,26 @@ Run Questa with gui
 wsim rv64gc wally64priv --gui
 ```
 
-Run lockstep against ImperasDV with a single elf file in the gui.  Lockstep requires single elf.
+Run basic test with Verilator
 
 ```bash
-wsim rv64gc ../../tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/ref/ref.elf --lockstep --gui
+wsim rv32i arch32i --sim verilator
 ```
 
-Run lockstep against ImperasDV with a single elf file.  Compute coverage.
+Run lockstep against ImperasDV with a single elf file in the gui. Lockstep requires single elf.
 
 ```bash
-wsim rv64gc ../../tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/ref/ref.elf --lockstep --coverage
+wsim rv64gc $WALLY/tests/riscof/work/riscv-arch-test/rv64i_m/I/src/add-01.S/ref/ref.elf --lockstep --gui
 ```
 
-Run lockstep against ImperasDV with directory file.
+Run lockstep against ImperasDV with a single elf file. Collect functional coverage.
 
 ```bash
-wsim rv64gc ../../tests/riscof/work/riscv-arch-test/rv64i_m/I/src/ --lockstep
+wsim rv64gc $WALLY/addins/cvw-arch-verif/tests/rv64/Zicsr/WALLY-COV-ALL.elf --fcov
 ```
 
-Run lockstep against ImperasDV with directory file and specify specific extension.
+Run Linux boot simulation in lock step between Wally and ImperasDV
 
 ```bash
-wsim rv64gc ../../tests/riscof/work/riscv-arch-test/rv64i_m/I/src/ --lockstep --elfext ref.elf
+wsim buildroot buildroot --args +INSTR_LIMIT=600000000 --lockstep
 ```

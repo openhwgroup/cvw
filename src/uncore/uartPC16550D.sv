@@ -335,10 +335,10 @@ module uartPC16550D #(parameter UART_PRESCALE) (
     end
 
   assign rxfifoempty = (rxfifohead == rxfifotail);
-  // verilator lint_off WIDTH
+  /* verilator lint_off WIDTH */
   assign rxfifoentries = (rxfifohead >= rxfifotail) ? (rxfifohead-rxfifotail) : 
                          (rxfifohead + 16 - rxfifotail);
-  // verilator lint_on WIDTH
+  /* verilator lint_on WIDTH */
   assign rxfifotriggered = rxfifoentries >= rxfifotriggerlevel;
   assign rxfifotimeout = rxtimeoutcnt == {rxbitsexpected, 6'b0}; // time out after 4 character periods; probably not right yet
   //assign rxfifotimeout = 0; // disabled pending fix

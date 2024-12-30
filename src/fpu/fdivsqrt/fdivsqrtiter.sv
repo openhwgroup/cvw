@@ -38,7 +38,6 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
   output logic [P.DIVb+3:0] FirstWS, FirstWC       // Q4.DIVb
 );
 
-  /* verilator lint_off UNOPTFLAT */
   logic [P.DIVb+3:0]      WSNext[P.DIVCOPIES-1:0]; // Q4.DIVb
   logic [P.DIVb+3:0]      WCNext[P.DIVCOPIES-1:0]; // Q4.DIVb
   logic [P.DIVb+3:0]      WS[P.DIVCOPIES:0];       // Q4.DIVb
@@ -56,7 +55,6 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
   logic [P.DIVb+1:0]      NextC;                   // Q2.DIVb
   logic [P.DIVb:0]        UMux, UMMux;             // U1.DIVb
   logic [P.DIVb:0]        initU, initUM;           // U1.DIVb
-  /* verilator lint_on UNOPTFLAT */
 
   // Top Muxes and Registers
   // When start is asserted, the inputs are loaded into the divider.

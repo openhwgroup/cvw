@@ -39,7 +39,7 @@ module ramxdetector #(parameter XLEN, LLEN) (
     /* verilator lint_off WIDTHXZEXPAND */
     if (MemReadM & ~LSULoadAccessFaultM & (ReadDataM === 'bx)) begin
       /* verilator lint_on WIDTHXZEXPAND */
-      $display("WARNING: Attempting to read from unitialized RAM.  Processor may go haywire if it uses x value. But this is normal in WALLY-mmu tests.");
+      $display("WARNING: Attempting to read from unitialized RAM.  Processor may go haywire if it uses x value. But this is normal in WALLY-mmu and ExceptionInstr tests.");
       $display("  PCM = %x InstrM = %x (%s), IEUAdrM = %x", PCM, InstrM, InstrMName, IEUAdrM);
       //$stop;
     end
