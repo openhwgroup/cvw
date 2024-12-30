@@ -29,8 +29,8 @@ deriv:
 
 .PHONY: QuestaCodeCoverage collect_functcov combine_functcov remove_functcov_artifacts riscvdv riscvdv_functcov
 
-QuestaCodeCoverage: questa/ucdb/rv64gc_arch64i.ucdb
-	vcover merge -out questa/ucdb/cov.ucdb questa/ucdb/rv64gc_arch64i.ucdb questa/ucdb/rv64gc*.ucdb -logfile questa/cov/log
+QuestaCodeCoverage:
+	vcover merge -out questa/ucdb/cov.ucdb questa/ucdb/rv64gc*.ucdb -logfile questa/cov/log
 #	vcover merge -out questa/ucdb/cov.ucdb questa/ucdb/rv64gc_arch64i.ucdb questa/ucdb/rv64gc*.ucdb questa/ucdb/buildroot_buildroot.ucdb riscv.ucdb -logfile questa/cov/log
 	vcover report -details questa/ucdb/cov.ucdb > questa/cov/rv64gc_coverage_details.rpt
 	vcover report questa/ucdb/cov.ucdb -details -instance=/core/ebu. > questa/cov/rv64gc_coverage_ebu.rpt

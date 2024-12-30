@@ -204,7 +204,6 @@ add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/dp/SrcAE
 add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/dp/SrcBE
 add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/dp/ALUResultE
 add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/dp/ResultW
-add wave -noupdate -expand -group {Memory Stage} /testbench/FunctionName/FunctionName/FunctionName
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/InstrValidM
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/PCM
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/InstrM
@@ -583,31 +582,31 @@ add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/csrs/csrs/STIME
 add wave -noupdate -group CSRs -group {user mode} /testbench/dut/core/priv/priv/csr/csru/csru/FRM_REGW
 add wave -noupdate -group CSRs -group {user mode} /testbench/dut/core/priv/priv/csr/csru/csru/FFLAGS_REGW
 add wave -noupdate -group CSRs -group {user mode} /testbench/dut/core/priv/priv/csr/csru/csru/STATUS_FS
-add wave -noupdate -group CSRs -group {Performance Counters} -label MCYCLE -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[0]}
-add wave -noupdate -group CSRs -group {Performance Counters} -label MINSTRET -radix hexadecimal {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[2]}
-add wave -noupdate -group CSRs -group {Performance Counters} -expand -group BP -label Branch -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[3]}
-add wave -noupdate -group CSRs -group {Performance Counters} -expand -group BP -label {BP Dir Wrong} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[7]}
-add wave -noupdate -group CSRs -group {Performance Counters} -expand -group BP -label {Jump (Not Return)} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[4]}
-add wave -noupdate -group CSRs -group {Performance Counters} -expand -group BP -label Return -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[5]}
-add wave -noupdate -group CSRs -group {Performance Counters} -expand -group BP -label {BP Wrong} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[6]}
-add wave -noupdate -group CSRs -group {Performance Counters} -expand -group BP -label {BTA Wrong} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[8]}
-add wave -noupdate -group CSRs -group {Performance Counters} -expand -group BP -label {RAS Wrong} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[9]}
-add wave -noupdate -group CSRs -group {Performance Counters} -expand -group BP -label {BP CLASS WRONG} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[10]}
-add wave -noupdate -group CSRs -group {Performance Counters} -group ICACHE -label {I Cache Access} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[16]}
-add wave -noupdate -group CSRs -group {Performance Counters} -group ICACHE -label {I Cache Miss} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[17]}
-add wave -noupdate -group CSRs -group {Performance Counters} -group ICACHE -label {I Cache Miss Cycles} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[18]}
-add wave -noupdate -group CSRs -group {Performance Counters} -group DCACHE -label {Load Stall} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[11]}
-add wave -noupdate -group CSRs -group {Performance Counters} -group DCACHE -label {Store Stall} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[12]}
-add wave -noupdate -group CSRs -group {Performance Counters} -group DCACHE -label {DCACHE MISS} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[14]}
-add wave -noupdate -group CSRs -group {Performance Counters} -group DCACHE -label {DCACHE ACCESS} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[13]}
-add wave -noupdate -group CSRs -group {Performance Counters} -group DCACHE -label {D Cache Miss Cycles} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[15]}
-add wave -noupdate -group CSRs -group {Performance Counters} -group Privileged -label {CSR Write} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[19]}
-add wave -noupdate -group CSRs -group {Performance Counters} -group Privileged -label Fence.I {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[20]}
-add wave -noupdate -group CSRs -group {Performance Counters} -group Privileged -label sfence.VMA {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[21]}
-add wave -noupdate -group CSRs -group {Performance Counters} -group Privileged -label Interrupt {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[22]}
-add wave -noupdate -group CSRs -group {Performance Counters} -group Privileged -label Exception {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[23]}
-add wave -noupdate -group CSRs -group {Performance Counters} -label {FDiv or IDiv Cycles} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[24]}
-add wave -noupdate -group CSRs -group {Performance Counters} /testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW
+add wave -noupdate -group CSRs -expand -group {Performance Counters} -label MCYCLE -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[0]}
+add wave -noupdate -group CSRs -expand -group {Performance Counters} -label MINSTRET -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[2]}
+add wave -noupdate -group CSRs -expand -group {Performance Counters} -expand -group BP -label Branch -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[3]}
+add wave -noupdate -group CSRs -expand -group {Performance Counters} -expand -group BP -label {BP Dir Wrong} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[7]}
+add wave -noupdate -group CSRs -expand -group {Performance Counters} -expand -group BP -label {Jump (Not Return)} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[4]}
+add wave -noupdate -group CSRs -expand -group {Performance Counters} -expand -group BP -label Return -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[5]}
+add wave -noupdate -group CSRs -expand -group {Performance Counters} -expand -group BP -label {BP Wrong} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[6]}
+add wave -noupdate -group CSRs -expand -group {Performance Counters} -expand -group BP -label {BTA Wrong} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[8]}
+add wave -noupdate -group CSRs -expand -group {Performance Counters} -expand -group BP -label {RAS Wrong} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[9]}
+add wave -noupdate -group CSRs -expand -group {Performance Counters} -expand -group BP -label {BP CLASS WRONG} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[10]}
+add wave -noupdate -group CSRs -expand -group {Performance Counters} -group ICACHE -label {I Cache Access} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[16]}
+add wave -noupdate -group CSRs -expand -group {Performance Counters} -group ICACHE -label {I Cache Miss} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[17]}
+add wave -noupdate -group CSRs -expand -group {Performance Counters} -group ICACHE -label {I Cache Miss Cycles} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[18]}
+add wave -noupdate -group CSRs -expand -group {Performance Counters} -group DCACHE -label {Load Stall} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[11]}
+add wave -noupdate -group CSRs -expand -group {Performance Counters} -group DCACHE -label {Store Stall} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[12]}
+add wave -noupdate -group CSRs -expand -group {Performance Counters} -group DCACHE -label {DCACHE MISS} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[14]}
+add wave -noupdate -group CSRs -expand -group {Performance Counters} -group DCACHE -label {DCACHE ACCESS} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[13]}
+add wave -noupdate -group CSRs -expand -group {Performance Counters} -group DCACHE -label {D Cache Miss Cycles} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[15]}
+add wave -noupdate -group CSRs -expand -group {Performance Counters} -group Privileged -label {CSR Write} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[19]}
+add wave -noupdate -group CSRs -expand -group {Performance Counters} -group Privileged -label Fence.I {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[20]}
+add wave -noupdate -group CSRs -expand -group {Performance Counters} -group Privileged -label sfence.VMA {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[21]}
+add wave -noupdate -group CSRs -expand -group {Performance Counters} -group Privileged -label Interrupt {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[22]}
+add wave -noupdate -group CSRs -expand -group {Performance Counters} -group Privileged -label Exception {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[23]}
+add wave -noupdate -group CSRs -expand -group {Performance Counters} -label {FDiv or IDiv Cycles} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[24]}
+add wave -noupdate -group CSRs -expand -group {Performance Counters} /testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW
 add wave -noupdate -group alu /testbench/dut/core/ieu/dp/alu/A
 add wave -noupdate -group alu /testbench/dut/core/ieu/dp/alu/B
 add wave -noupdate -group alu /testbench/dut/core/ieu/dp/alu/ALUResult
@@ -659,9 +658,7 @@ add wave -noupdate -group spi -expand -group interface /testbench/dut/uncoregen/
 add wave -noupdate -group spi -expand -group interface /testbench/dut/uncoregen/uncore/spi/spi/SPIIn
 add wave -noupdate -group spi /testbench/dut/uncoregen/uncore/spi/spi/ChipSelectMode
 add wave -noupdate -group spi /testbench/dut/uncoregen/uncore/spi/spi/SckMode
-add wave -noupdate /testbench/dut/uncoregen/uncore/spi/spi/TransmitShiftRegLoad
 add wave -noupdate /testbench/dut/uncoregen/uncore/spi/spi/ShiftEdge
-add wave -noupdate /testbench/dut/uncoregen/uncore/spi/spi/Active
 add wave -noupdate /testbench/dut/uncoregen/uncore/spi/spi/TransmitData
 add wave -noupdate /testbench/dut/uncoregen/uncore/spi/spi/TransmitShiftReg
 add wave -noupdate -expand -group {fetch buffer} /testbench/dut/core/ifu/fetchbuff/StallD

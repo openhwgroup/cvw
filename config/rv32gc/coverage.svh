@@ -5,25 +5,54 @@
 // This file is needed in the config subdirectory for each config supporting coverage.
 // It defines which extensions are enabled for that config.
 
+// Define XLEN, used in covergroups
+`define XLEN32 1
+
+// Define relevant addresses
+`define ACCESS_FAULT_ADDRESS 32'h0000
+`define CLINT_BASE 64'h02000000
+
 // Unprivileged extensions
-`include "RV32I_coverage.svh"
-`include "RV32M_coverage.svh"
-`include "RV32F_coverage.svh"
-`include "RV32D_coverage.svh"
-`include "RV32ZfaF_coverage.svh"
-`include "RV32ZfaD_coverage.svh"
-`include "RV32ZfaZfh_coverage.svh"
-`include "RV32ZfhD_coverage.svh"
-`include "RV32Zfh_coverage.svh"
-`include "RV32Zicond_coverage.svh"
-`include "RV32Zca_coverage.svh"
-`include "RV32Zcb_coverage.svh"
-`include "RV32ZcbM_coverage.svh"
-`include "RV32ZcbZbb_coverage.svh"
-`include "RV32Zcf_coverage.svh"
-`include "RV32Zcd_coverage.svh"
+`include "I_coverage.svh"
+`include "M_coverage.svh"
+`include "F_coverage.svh"
+`include "D_coverage.svh"
+`include "Zba_coverage.svh"
+`include "Zbb_coverage.svh"
+`include "Zbc_coverage.svh"
+`include "Zbs_coverage.svh"
+`include "ZfaF_coverage.svh"
+`include "ZfaD_coverage.svh"
+`include "ZfaZfh_coverage.svh"
+`include "Zfh_coverage.svh"
+`include "ZfhD_coverage.svh"
+// Note: Zfhmin is a subset of Zfh, so usually only one or the other would be used.  When Zfhmin and D are supported, ZfhD should also be enabled
+`include "Zfhmin_coverage.svh"
+`include "Zicond_coverage.svh"
+`include "Zca_coverage.svh"
+`include "Zcb_coverage.svh"
+`include "ZcbM_coverage.svh"
+`include "ZcbZbb_coverage.svh"
+`include "Zcf_coverage.svh"
+`include "Zcd_coverage.svh"
+`include "Zicsr_coverage.svh"
+`include "Zbkb_coverage.svh"
+`include "Zbkc_coverage.svh"
+`include "Zbkx_coverage.svh"
+`include "Zknd_coverage.svh"
+`include "Zkne_coverage.svh"
+`include "Zknh_coverage.svh"
+`include "Zaamo_coverage.svh"
+`include "Zalrsc_coverage.svh"
 
 // Privileged extensions
 `include "ZicsrM_coverage.svh"
+`include "ZicsrF_coverage.svh"
+`include "ZicsrU_coverage.svh"
 `include "RV32VM_coverage.svh"
 `include "RV32VM_PMP_coverage.svh"
+`include "EndianU_coverage.svh"
+`include "EndianM_coverage.svh"
+`include "EndianS_coverage.svh"
+`include "ExceptionsM_coverage.svh"
+`include "ExceptionsZc_coverage.svh"

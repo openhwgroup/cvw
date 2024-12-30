@@ -52,7 +52,7 @@ class sail_cSim(pluginTemplate):
         ispec = utils.load_yaml(isa_yaml)['hart0']
         self.xlen = ('64' if 64 in ispec['supported_xlen'] else '32')
         self.isa = 'rv' + self.xlen
-        self.sailargs = ' '
+        self.sailargs = ' --pmp-count=16 --pmp-grain=0 ' # Hardcode pmp-count and pmp-grain for now. Make configurable later once Sail has easier configuration
         self.compile_cmd = self.compile_cmd+' -mabi='+('lp64 ' if 64 in ispec['supported_xlen'] else ('ilp32e ' if "E" in ispec["ISA"] else 'ilp32 '))
         if "I" in ispec["ISA"]:
             self.isa += 'i'
@@ -103,7 +103,6 @@ class sail_cSim(pluginTemplate):
 
             execute = "@cd "+testentry['work_dir']+";"
 
-#            cmd = self.compile_cmd.format(testentry['isa'].lower().replace('zicsr', ' ', 1), self.xlen) + ' ' + test + ' -o ' + elf
             cmd = self.compile_cmd.format(testentry['isa'].lower(), self.xlen) + ' ' + test + ' -o ' + elf
             compile_cmd = cmd + ' -D' + " -D".join(testentry['macros'])
             execute+=compile_cmd+";"
@@ -117,8 +116,7 @@ class sail_cSim(pluginTemplate):
                 reference_output = re.sub("/src/","/references/", re.sub(".S",".reference_output", test))
                 execute += 'cut -c-{0:g} {1} > {2}'.format(8, reference_output, sig_file) #use cut to remove comments when copying
             else:
-                execute += self.sail_exe[self.xlen] + ' -z268435455 -i ' + self.sailargs + ' --test-signature={0} {1} > {2}.log 2>&1;'.format(sig_file, elf, test_name)
-#                execute += self.sail_exe[self.xlen] + ' -z268435455 -i --test-signature={0} {1} > {2}.log 2>&1;'.format(sig_file, elf, test_name)
+                execute += self.sail_exe[self.xlen] + ' -z268435455 -i --trace=step  ' + self.sailargs + ' --test-signature={0} {1} > {2}.log 2>&1;'.format(sig_file, elf, test_name)
 
             cov_str = ' '
             for label in testentry['coverage_labels']:

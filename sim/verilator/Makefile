@@ -13,22 +13,23 @@ VERILATOR_DIR=${WALLY}/sim/verilator
 SOURCE=${WALLY}/config/shared/*.vh ${WALLY}/config/${WALLYCONF} ${WALLY}/config/deriv/${WALLYCONF} ${WALLY}/src/cvw.sv ${WALLY}/testbench/*.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
 PLUS_ARGS=
 PARAM_ARGS=
+DEFINE_ARGS=
 EXPANDED_PARAM_ARGS:=$(patsubst %,-G%,$(PARAM_ARGS))
 
 WALLYCONF?=rv64gc
 TEST?=arch64i
-TESTBENCH?=testbench 	
+TESTBENCH?=testbench
 
 # constants
 # assume WALLY variable is correctly configured in the shell environment
-WORKING_DIR=${WALLY}/sim/verilator
-TARGET=$(WORKING_DIR)/target
 # INCLUDE_PATH are pathes that Verilator should search for files it needs
 INCLUDE_PATH="-I${WALLY}/config/shared" "-I${WALLY}/config/$(WALLYCONF)" "-I${WALLY}/config/deriv/$(WALLYCONF)"
 # SOURCES are source files
 SOURCES=${WALLY}/src/cvw.sv ${WALLY}/testbench/${TESTBENCH}.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*/*/*.sv
 # DEPENDENCIES are configuration files and source files, which leads to recompilation of executables
 DEPENDENCIES=${WALLY}/config/shared/*.vh $(SOURCES)
+
+WORKDIR = $(VERILATOR_DIR)/wkdir/$(WALLYCONF)_$(TEST)
 
 # regular testbench requires a wrapper defining getenvval
 ifeq ($(TESTBENCH), testbench)
@@ -41,9 +42,9 @@ endif
 
 default: run
 
-run: wkdir/$(WALLYCONF)_$(TEST)/V${TESTBENCH}
+run: $(WORKDIR)/V${TESTBENCH}
 	mkdir -p $(VERILATOR_DIR)/logs
-	wkdir/$(WALLYCONF)_$(TEST)/V${TESTBENCH} ${ARGTEST} $(PLUS_ARGS)
+	$(WORKDIR)/V${TESTBENCH} ${ARGTEST} $(PLUS_ARGS)
 
 profile: obj_dir_profiling/V${TESTBENCH}_$(WALLYCONF)
 	$(VERILATOR_DIR)/obj_dir_profiling/V${TESTBENCH}_$(WALLYCONF) ${ARGTEST}
@@ -54,15 +55,16 @@ profile: obj_dir_profiling/V${TESTBENCH}_$(WALLYCONF)
 	mv gmon_$(WALLYCONF)* $(VERILATOR_DIR)/logs_profiling
 	echo "Please check $(VERILATOR_DIR)/logs_profiling/gmon_$(WALLYCONF)* for logs and output files."
 
-wkdir/$(WALLYCONF)_$(TEST)/V${TESTBENCH}: $(DEPENDENCIES)
-	mkdir -p wkdir/$(WALLYCONF)_$(TEST)
+$(WORKDIR)/V${TESTBENCH}: $(DEPENDENCIES)
+	mkdir -p $(WORKDIR)
 	verilator \
-	--Mdir wkdir/$(WALLYCONF)_$(TEST) -o V${TESTBENCH} \
+	--Mdir $(WORKDIR) -o V${TESTBENCH} \
 	--binary --trace \
 	$(OPT) $(PARAMS) $(NONPROF) \
 	--top-module ${TESTBENCH}  --relative-includes \
 	$(INCLUDE_PATH) \
 	${WRAPPER} \
+	${DEFINE_ARGS} \
 	${EXPANDED_PARAM_ARGS} \
 	$(SOURCES)
 
@@ -75,6 +77,7 @@ obj_dir_profiling/V${TESTBENCH}_$(WALLYCONF): $(DEPENDENCIES)
 	--top-module ${TESTBENCH}  --relative-includes \
 	$(INCLUDE_PATH) \
 	${WRAPPER} \
+	${DEFINE_ARGS} \
 	${EXPANDED_PARAM_ARGS} \
 	$(SOURCES)
 

@@ -181,8 +181,8 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign Funct7ZeroD      = (Funct7D == 7'b0000000); // most R-type instructions
     assign Funct7b5D        = (Funct7D == 7'b0100000); // srai, sub
     assign FunctCZeroD      = (Funct3D == 3'b101 | Funct3D == 3'b111) & (Funct7D == 7'b0000111) & P.ZICOND_SUPPORTED; // czero.eqz or czero.nez
-    assign Funct7ShiftZeroD = (P.XLEN==64) ? (Funct7D[6:1] == 6'b000000) : Funct7ZeroD;
-    assign Funct7Shiftb5D   = (P.XLEN==64) ? (Funct7D[6:1] == 6'b010000) : Funct7b5D;
+    assign Funct7ShiftZeroD = (P.XLEN==64 & ~OpD[3]) ? (Funct7D[6:1] == 6'b000000) : Funct7ZeroD; // 64-bit logical shifts allowed on XLEN=64, non-W
+    assign Funct7Shiftb5D   = (P.XLEN==64 & ~OpD[3]) ? (Funct7D[6:1] == 6'b010000) : Funct7b5D;   // 64-bit arithmetic shifts allowed on XLEN=64, non-W
     assign IShiftD          = (Funct3D == 3'b001 & Funct7ShiftZeroD) | (Funct3D == 3'b101 & (Funct7ShiftZeroD | Funct7Shiftb5D)); // slli, srli, srai, or w forms
     assign INoShiftD        = ((Funct3D != 3'b001) & (Funct3D != 3'b101));
     assign IFunctD          = IShiftD | INoShiftD;
@@ -300,7 +300,6 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   // Squash control signals if coming from an illegal compressed instruction
   // On RV32E, can't write to upper 16 registers.  Checking reads to upper 16 is more costly so disregard them.
   assign IllegalERegAdrD = P.E_SUPPORTED & P.ZICSR_SUPPORTED & ControlsD[`CTRLW-1] & InstrD[11]; 
-  //assign IllegalBaseInstrD = 1'b0;
   assign {BaseRegWriteD, PreImmSrcD, ALUSrcAD, BaseALUSrcBD, MemRWD,
           ResultSrcD, BranchD, ALUOpD, JumpD, ALUResultSrcD, BaseW64D, CSRReadD, 
           PrivilegedD, FenceXD, MDUD, AtomicD, CMOD, unused} = IllegalIEUFPUInstrD ? `CTRLW'b0 : ControlsD;

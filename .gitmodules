@@ -8,9 +8,6 @@
 [submodule "addins/coremark"]
 	path = addins/coremark
 	url = https://github.com/eembc/coremark
-[submodule "addins/FreeRTOS-Kernel"]
-	path = addins/FreeRTOS-Kernel
-	url = https://github.com/FreeRTOS/FreeRTOS-Kernel.git
 [submodule "addins/vivado-boards"]
 	path = addins/vivado-boards
 	url = https://github.com/Digilent/vivado-boards/
@@ -29,9 +26,6 @@
 	path = addins/cvw-arch-verif
 	url = https://github.com/openhwgroup/cvw-arch-verif
 	ignore = dirty
-[submodule "addins/riscvISACOV"]
-	path = addins/riscvISACOV
-	url = https://github.com/riscv-verification/riscvISACOV.git
 [submodule "addins/berkeley-softfloat-3"]
 	path = addins/berkeley-softfloat-3
 	url = https://github.com/ucb-bar/berkeley-softfloat-3.git

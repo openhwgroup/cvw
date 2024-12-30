@@ -1,0 +1,32 @@
+##################################################
+#
+# For info on creating trigger state machines:
+#   1) In the main Vivado menu bar, select
+#      Window > Language Templates
+#   2) In the Templates window, select
+#      Debug > Trigger State Machine
+#   3) Refer to the entry 'Info' for an overview
+#      of the trigger state machine language.
+#
+# More information can be found in this document:
+#
+#   Vivado Design Suite User Guide: Programming
+#   and Debugging (UG908)
+#
+##################################################
+state state_reset:
+    if(wallypipelinedsoc/uncoregen.uncore/plic.plic/intInProgress == 12'h200) then
+        goto state_1;
+    else
+        goto state_reset;
+    endif
+    
+state state_1:
+    if(wallypipelinedsoc/uncoregen.uncore/plic.plic/intInProgress == 12'h000) then
+        goto state_trigger;
+    else
+        goto state_1;
+    endif
+    
+state state_trigger:
+    trigger;

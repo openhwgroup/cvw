@@ -2,98 +2,118 @@
 
 # run_vcs
 # David_Harris@hmc.edu 2 July 2024
+# Modified Jordan Carlin jcarlin@hmc.edu Dec 9 2024
 # Run VCS on a given file, passing appropriate flags
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
-
 
 import argparse
 import os
 import subprocess
+import sys
+
+# Global variables
+WALLY  = os.environ.get('WALLY')
+simdir = f"{WALLY}/sim/vcs"
+cfgdir = f"{WALLY}/config"
+srcdir = f"{WALLY}/src"
+tbdir  = f"{WALLY}/testbench"
+logdir = f"{simdir}/logs"
 
 # run a Linux command and return the result as a string in a form that VCS can use
-def runfindcmd(cmd):
-#    print("Executing: " + str(cmd) )
-    res = subprocess.check_output(cmd, shell=True)
+def runFindCommand(cmd):
+    res = subprocess.check_output(cmd, shell=True, )
     res = str(res)
     res = res.replace("\\n", " ")  # replace newline with space
     res = res.replace("\'", "")  # strip off quotation marks
     res = res[1:] # strip off leading b from byte string
     return res
 
-parser = argparse.ArgumentParser()
-parser.add_argument("config", help="Configuration file")
-parser.add_argument("testsuite", help="Test suite (or none, when running a single ELF file) ")
-parser.add_argument("--tb", "-t", help="Testbench", choices=["testbench", "testbench_fp"], default="testbench")
-parser.add_argument("--elffile", "-e", help="ELF file name", default="")
-parser.add_argument("--coverage", "-c", help="Code & Functional Coverage", action="store_true")
-parser.add_argument("--fcov", "-f", help="Code & Functional Coverage", action="store_true")
-parser.add_argument("--args", "-a", help="Optional arguments passed to simulator via $value$plusargs", default="")
-parser.add_argument("--params", "-p", help="Optional top-level parameter overrides of the form param=value", default="")
-parser.add_argument("--lockstep", "-l", help="Run ImperasDV lock, step, and compare.", action="store_true")
-# GUI not yet implemented
-#parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true")
-args = parser.parse_args()
-print("run_vcs Config=" + args.config + " tests=" + args.testsuite + " elffile=" + args.elffile + " lockstep=" + str(args.lockstep) + " args='" + args.args + "'")
+def parseArgs():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("config", help="Configuration file")
+    parser.add_argument("testsuite", help="Test suite (or none, when running a single ELF file) ")
+    parser.add_argument("--tb", "-t", help="Testbench", choices=["testbench", "testbench_fp"], default="testbench")
+    parser.add_argument("--ccov", "-c", help="Code Coverage", action="store_true")
+    parser.add_argument("--fcov", "-f", help="Functional Coverage", action="store_true")
+    parser.add_argument("--args", "-a", help="Optional arguments passed to simulator via $value$plusargs", default="")
+    parser.add_argument("--params", "-p", help="Optional top-level parameter overrides of the form param=value", default="")
+    parser.add_argument("--define", "-d", help="Optional define macros passed to simulator", default="")
+    parser.add_argument("--lockstep", "-l", help="Run ImperasDV lock, step, and compare.", action="store_true")
+    #parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true") # GUI not yet implemented
+    return parser.parse_args()
 
-cfgdir = "$WALLY/config"
-srcdir = "$WALLY/src"
-tbdir = "$WALLY/testbench"
-wkdir = "$WALLY/sim/vcs/wkdir/" + args.config + "_" + args.testsuite
-covdir = "$WALLY/sim/vcs/cov/" + args.config + "_" + args.testsuite
-logdir = "$WALLY/sim/vcs/logs"
+def createDirs(args):
+    wkdir  = f"{simdir}/wkdir/{args.config}_{args.testsuite}"
+    covdir = f"{simdir}/cov/{args.config}_{args.testsuite}"
+    os.makedirs(wkdir, exist_ok=True)
+    os.makedirs(covdir, exist_ok=True)
+    os.makedirs(logdir, exist_ok=True)
+    return wkdir, covdir
 
-os.system("mkdir -p " + wkdir)
-os.system("mkdir -p " + covdir)
-os.system("mkdir -p " + logdir)
+def generateFileList():
+    rtlsrc_cmd = f'find {srcdir} -name "*.sv" ! -path "{srcdir}/generic/mem/rom1p1r_128x64.sv" ! -path "{srcdir}/generic/mem/ram2p1r1wbe_128x64.sv" ! -path "{srcdir}/generic/mem/rom1p1r_128x32.sv" ! -path "{srcdir}/generic/mem/ram2p1r1wbe_2048x64.sv"'
+    rtlsrc_files = runFindCommand(rtlsrc_cmd)
+    tbcommon_cmd = f'find {tbdir}/common -name "*.sv"'
+    tbcommon_files = runFindCommand(tbcommon_cmd)
+    tb_file = f'{tbdir}/{args.tb}.sv'
+    return f"{tb_file} {rtlsrc_files} {tbcommon_files}"
 
-# Find RTL source files
-rtlsrc_cmd = "find " + srcdir + ' -name "*.sv" ! -path "' + srcdir + '/generic/mem/rom1p1r_128x64.sv" ! -path "' + srcdir + '/generic/mem/ram2p1r1wbe_128x64.sv" ! -path "' + srcdir + '/generic/mem/rom1p1r_128x32.sv" ! -path "' + srcdir + '/generic/mem/ram2p1r1wbe_2048x64.sv"'
-rtlsrc_files = runfindcmd(rtlsrc_cmd)
-tbcommon_cmd = 'find ' + tbdir+'/common -name "*.sv" ! -path "' + tbdir+'/common/wallyTracer.sv"'
-tbcommon_files = runfindcmd(tbcommon_cmd)
-tb_file = tbdir + "/" + args.tb + ".sv"
-RTL_FILES = tb_file + ' ' + str(rtlsrc_files) + ' '  + str(tbcommon_files)
+def processArgs(wkdir, args):
+    compileOptions = []
+    simvOptions = []
+    if args.lockstep:
+        compileOptions.extend(["+incdir+$IMPERAS_HOME/ImpPublic/include/host",
+                                "+incdir+$IMPERAS_HOME/ImpProprietary/include/host",
+                                "$IMPERAS_HOME/ImpPublic/source/host/rvvi/*.sv",
+                                "$IMPERAS_HOME/ImpProprietary/source/host/idv/*.sv"])
+        simvOptions.append("-sv_lib $IMPERAS_HOME/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model")
+    if args.ccov:
+        compileOptions.extend(["-cm line+cond+branch+fsm+tgl", f"-cm_log {wkdir}/coverage.log", f"-cm_dir {wkdir}/coverage"])
+    if args.params:
+        compileOptions.append(setupParamOverrides(wkdir, args))
+    if args.define:
+        compileOptions.append(args.define)
+    # if args.gui:
+    #     compileOptions.append("-debug_access+all+reverse -kdb +vcs+vcdpluson")
+    compileOptions = " ".join(compileOptions)
+    simvOptions =  " ".join(simvOptions)
+    return compileOptions, simvOptions
 
-# Include directories
-INCLUDE_PATH="+incdir+" + cfgdir + "/" + args.config + " +incdir+" + cfgdir + "/deriv/" + args.config + " +incdir+" + cfgdir + "/shared +incdir+$WALLY/tests +incdir+" + tbdir + " +incdir+" + srcdir
+def setupParamOverrides(wkdir, args):
+    paramOverrideFile = os.path.join(wkdir, "param_overrides.txt")
+    with open(paramOverrideFile, "w") as f:
+        for param in args.params.split():
+            [param, value] = param.split("=")
+            if fr"\'" in value: # for bit values
+                value = value.replace(fr"\'", "'")
+            else:  # for strings
+                value = f'"{value}"'
+            f.write(f"assign {value} {args.tb}/{param}\n")
+    return f" -parameters {wkdir}/param_overrides.txt "
 
-# lockstep mode
-if (args.lockstep):
-    LOCKSTEP_OPTIONS = " +define+USE_IMPERAS_DV +incdir+$IMPERAS_HOME/ImpPublic/include/host  +incdir+$IMPERAS_HOME/ImpProprietary/include/host  $IMPERAS_HOME/ImpPublic/source/host/rvvi/*.sv $IMPERAS_HOME/ImpProprietary/source/host/idv/*.sv " + tbdir + "/common/wallyTracer.sv"
-    LOCKSTEP_SIMV = "-sv_lib $IMPERAS_HOME/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model"
-else:
-    LOCKSTEP_OPTIONS = ""
-    LOCKSTEP_SIMV = ""
+def setupCommands(wkdir, rtlFiles, compileOptions, simvOptions, args):
+    includePath=f"+incdir+{cfgdir}/{args.config} +incdir+{cfgdir}/deriv/{args.config} +incdir+{cfgdir}/shared +incdir+$WALLY/tests +incdir+{tbdir} +incdir+{srcdir}"
+    vcsStandardFlags = "+lint=all,noGCWM,noUI,noSVA-UA,noIDTS,noNS,noULCO,noCAWM-L,noWMIA-L,noSV-PIU,noSTASKW_CO,noSTASKW_CO1,noSTASKW_RMCOF -suppress +warn -sverilog +vc -Mupdate -line -full64 -lca -ntb_opts sensitive_dyn"
+    vcsCMD = f"vcs {vcsStandardFlags} -top {args.tb} {compileOptions} -Mdir={wkdir} {includePath} {srcdir}/cvw.sv {rtlFiles} -o {wkdir}/sim_out -work {wkdir} -Mlib={wkdir} -l {logdir}/{args.config}_{args.testsuite}.log"
+    simvCMD = f"{wkdir}/sim_out +TEST={args.testsuite} {args.args} -no_save {simvOptions}"
+    return vcsCMD, simvCMD
 
-# coverage mode
-if (args.coverage):
-    COV_OPTIONS = "-cm line+cond+branch+fsm+tgl -cm_log " + wkdir + "/coverage.log -cm_dir " + wkdir + "/coverage"
-else:
-    COV_OPTIONS = ""
+def runVCS(wkdir, vcsCMD, simvCMD):
+    print(f"Executing: {vcsCMD}")
+    subprocess.run(vcsCMD, shell=True)
+    subprocess.run(simvCMD, shell=True)
+    if (args.ccov):
+        COV_RUN = f"urg -dir {wkdir}/coverage.vdb -format text -report IndividualCovReport/{args.config}_{args.testsuite}"
+        subprocess.run(COV_RUN, shell=True)
 
-# Write parameter overrides to a file
-f = open(os.path.expandvars(wkdir) + "/param_overrides.txt", "w")
-for param in args.params.split():
-    [param, value] = param.split("=")
-    if "\\'" in value: # for bit values
-        value = value.replace("\\'", "'")
-    else:              # for strings
-        value = "\"" + value + "\""
-    # print("param=" + param + " value=" + value)
-    f.write("assign " + value + " " + args.tb + "/" + param + "\n")
-f.close()
-PARAM_OVERRIDES=" -parameters " + wkdir + "/param_overrides.txt "
+def main(args):
+    print(f"run_vcs Config={args.config} tests={args.testsuite} lockstep={args.lockstep} args='{args.args}' params='{args.params}' define='{args.define}'")
+    wkdir, covdir = createDirs(args)
+    rtlFiles = generateFileList()
+    compileOptions, simvOptions = processArgs(wkdir, args)
+    vcsCMD, simvCMD = setupCommands(wkdir, rtlFiles, compileOptions, simvOptions, args)
+    runVCS(wkdir, vcsCMD, simvCMD)
 
-# Simulation commands
-OUTPUT="sim_out"
-VCS_CMD="vcs +lint=all,noGCWM,noUI,noSVA-UA,noIDTS,noNS,noULCO,noCAWM-L,noWMIA-L,noSV-PIU,noSTASKW_CO,noSTASKW_CO1,noSTASKW_RMCOF -suppress +warn -sverilog +vc -Mupdate -line -full64 -lca -ntb_opts sensitive_dyn " + "-top " + args.tb + PARAM_OVERRIDES + INCLUDE_PATH # Disabled Debug flags; add them back for a GUI mode -debug_access+all+reverse  -kdb +vcs+vcdpluson
-VCS = VCS_CMD + " -Mdir=" + wkdir + " " + srcdir + "/cvw.sv " + LOCKSTEP_OPTIONS + " " + COV_OPTIONS + " " + RTL_FILES + " -o " + wkdir + "/" + OUTPUT + " -work " + wkdir + " -Mlib=" + wkdir + " -l " + logdir + "/" + args.config + "_" + args.testsuite + ".log"
-SIMV_CMD= wkdir + "/" + OUTPUT + " +TEST=" + args.testsuite + " " + args.elffile + " " + args.args + " -no_save " + LOCKSTEP_SIMV 
-
-# Run simulation
-print("Executing: " + str(VCS) )
-subprocess.run(VCS, shell=True)
-subprocess.run(SIMV_CMD, shell=True)
-if (args.coverage):
-    COV_RUN = "urg -dir " + wkdir + "/coverage.vdb -format text -report IndividualCovReport/" + args.config + "_" + args.testsuite
-    subprocess.run(COV_RUN, shell=True)
+if __name__ == "__main__":
+    args = parseArgs()
+    sys.exit(main(args))

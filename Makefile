@@ -6,9 +6,9 @@ MAKEFLAGS += --output-sync --no-print-directory
 
 SIM = ${WALLY}/sim
 
-.PHONY: all riscof testfloat combined_IF_vectors zsbl benchmarks coremark embench coverage clean
+.PHONY: all riscof testfloat combined_IF_vectors zsbl benchmarks coremark embench coverage cvw-arch-verif clean
 
-all: riscof	testfloat combined_IF_vectors zsbl coverage # benchmarks
+all: riscof	testfloat combined_IF_vectors zsbl coverage cvw-arch-verif # benchmarks
 
 # riscof builds the riscv-arch-test and wally-riscv-arch-test suites
 riscof:
@@ -36,6 +36,15 @@ embench:
 coverage:
 	$(MAKE) -C tests/coverage
 
+cvw-arch-verif:
+	$(MAKE) -C ${WALLY}/addins/cvw-arch-verif
+
+# Requires a license for the Breker tool. See tests/breker/README.md for details
+breker:
+	$(MAKE) -C ${WALLY}/testbench/trek_files
+	$(MAKE) -C ${WALLY}/tests/breker
+
 clean:
 	$(MAKE) clean -C sim
 	$(MAKE) clean -C ${WALLY}/tests/fp
+	$(MAKE) clean -C ${WALLY}/addins/cvw-arch-verif

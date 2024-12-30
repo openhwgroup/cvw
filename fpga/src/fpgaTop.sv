@@ -182,7 +182,6 @@ module fpgaTop
   logic [511 : 0]  dbg_bus;
 
   logic		   CLK208;
-  logic		   SDCCLKInternal;
 
   assign GPIOIN = {25'b0, SDCCD, SDCWP, 2'b0, GPI};
   assign GPO = GPIOOUT[4:0];
@@ -216,11 +215,8 @@ module fpgaTop
                     .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
                     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), 
                     .GPIOIN, .GPIOOUT, .GPIOEN,
-                    .UARTSin, .UARTSout, .SDCIn, .SDCCmd, .SDCCS(SDCCSin), .SDCCLK(SDCCLKInternal), .ExternalStall(RVVIStall));
+                    .UARTSin, .UARTSout, .SDCIn, .SDCCmd, .SDCCS(SDCCSin), .SDCCLK, .ExternalStall(RVVIStall));
 
-  // *** these are different for different fpga ugh.
-  ODDRE1 sdcclkoddr(.Q(SDCCLK), .C(SDCCLKInternal), .D1('0),
-	     .D2(1'b1), .SR('0));
 
   // ahb lite to axi bridge
   ahbaxibridge ahbaxibridge

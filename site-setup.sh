@@ -15,6 +15,7 @@ export IMPERASD_LICENSE_FILE=27020@zircon.eng.hmc.edu               # Change thi
 export QUESTA_HOME=/cad/mentor/questa_sim-2023.4/questasim          # Change this for your path to Questa, excluding bin
 export DC_HOME=/cad/synopsys/SYN                                    # Change this for your path to Synopsys DC, excluding bin
 export VCS_HOME=/cad/synopsys/vcs/U-2023.03-SP2-4                   # Change this for your path to Synopsys VCS, excluding bin
+export BREKER_HOME=/cad/breker/trek5-2.1.10b-GCC6_el7               # Change this for your path to Breker Trek
 
 # Tools
 # Questa and Synopsys
@@ -66,7 +67,7 @@ export SPIKE_PATH=$RISCV/bin										# Copy this as it is
 export IDV=$RISCV/ImperasDV-OpenHW
 if [ -e "$IDV" ]; then
     # echo "Imperas exists"
-    export IMPERAS_HOME=$IDV/Imperas
+    export IMPERAS_HOME=$IDV
     export IMPERAS_PERSONALITY=CPUMAN_DV_ASYNC
     export ROOTDIR=~/
     source "${IMPERAS_HOME}"/bin/setup.sh
@@ -77,6 +78,8 @@ fi
 # Use newer gcc version for older distros
 if [ -e /opt/rh/gcc-toolset-13/enable ]; then
     source /opt/rh/gcc-toolset-13/enable # Red Hat Family
+elif [ -e $RISCV/gcc-13 ]; then
+    export PATH=$RISCV/gcc-13/bin:$PATH  # SUSE Family
 elif [ -e $RISCV/gcc-10 ]; then
     export PATH=$RISCV/gcc-10/bin:$PATH  # Ubuntu 20.04 LTS
 fi

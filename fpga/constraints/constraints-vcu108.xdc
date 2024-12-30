@@ -83,7 +83,7 @@ set_input_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 2.000 [get_port
 ##### SD Card I/O #####
 
 # create the generated SPICLK
-create_generated_clock -name SPISDCClock -source [get_pins ddr4/addn_ui_clkout1] -multiply_by 1 -divide_by 1 [get_pins wallypipelinedsoc/uncoregen.uncore/spi.spi/SPICLK]
+create_generated_clock -name SPISDCClock -source [get_pins ddr4/addn_ui_clkout1] -multiply_by 1 -divide_by 1 [get_pins wallypipelinedsoc/uncoregen.uncore/sdc.sdc/SPICLK]
 
 set_output_delay -clock [get_clocks SPISDCClock] -max 5.0 [get_ports {SDCCS}]
 set_output_delay -clock [get_clocks SPISDCClock] -min -5.0 [get_ports {SDCCS}]
@@ -95,8 +95,8 @@ set_input_delay -clock [get_clocks SPISDCClock] -max 5.0 [get_ports {SDCWP}]
 set_input_delay -clock [get_clocks SPISDCClock] -min -5.0 [get_ports {SDCWP}]
 set_output_delay -clock [get_clocks SPISDCClock] -max 5.0 [get_ports {SDCCmd}]
 set_output_delay -clock [get_clocks SPISDCClock] -min -5.0 [get_ports {SDCCmd}]
-create_generated_clock -name SPISDCClockOut -multiply_by 1 -source [get_pins sdcclkoddr/C] [get_ports SDCCLK]
-set_clock_latency -source -max 3.0 [get_ports SDCCLK]
+set_output_delay -clock [get_clocks SPISDCClock] -max 2.000 [get_ports SDCCLK]
+set_output_delay -clock [get_clocks SPISDCClock] -min -2.000 [get_ports SDCCLK]
 
 
 set_property -dict {PACKAGE_PIN BC14 IOSTANDARD LVCMOS18 PULLUP true} [get_ports {SDCCS}]

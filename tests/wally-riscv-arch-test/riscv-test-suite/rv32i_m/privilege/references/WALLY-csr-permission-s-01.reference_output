@@ -1,4 +1,13 @@
 0000000b # Test 5.2.3.6: ecall from going to S mode from M mode
+00000002 # S mode write to mstatush with illegal instruction
+00000002 # S mode read from mstatush with illegal instruction
+00000bad
+00000002 # S mode write to menvcfgh with illegal instruction
+00000002 # S mode read from menvcfgh with illegal instruction
+00000bad
+00000002 # S mode write to mseccfgh with illegal instruction
+00000002 # S mode read from mseccfgh with illegal instruction
+00000bad
 00000002 # S mode write to pmpcfg1 with illegal instruction
 00000002 # S mode read from pmpcfg1 with illegal instruction
 00000bad

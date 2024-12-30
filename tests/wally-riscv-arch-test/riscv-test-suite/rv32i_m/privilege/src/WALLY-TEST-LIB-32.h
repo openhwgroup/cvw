@@ -117,7 +117,7 @@ cause_store_acc:
     ret
 
 cause_ecall:
-    // *** ASSUMES you have already gone to the mode you need to call this from.
+    // ASSUMES you have already gone to the mode you need to call this from.
     ecall
     ret
 
@@ -133,8 +133,8 @@ cause_m_time_interrupt:
     add t3, t2, t3       // add desired offset to the current time
     bgtu t3, t2, nowrap_m  // check new time exceeds current time (no wraparound)
     addi t6, t6, 1       // if wrap, increment most significant word
-    sw t6,4(t4)          // store into most significant word of MTIMECMP
 nowrap_m:
+    sw t6,4(t4)          // store into most significant word of MTIMECMP
     sw t3, 0(t4)         // store into least significant word of MTIMECMP
 time_loop_m:
     addi a3, a3, -1
@@ -319,7 +319,7 @@ end_trap_triggers:
 .align 6
 trap_handler_\MODE\():
     j trap_unvectored_\MODE\() // for the unvectored implimentation: jump past this table of addresses into the actual handler
-    // *** ASSUMES that a cause value of 0 for an interrupt is unimplemented
+    // ASSUMES that a cause value of 0 for an interrupt is unimplemented
     // otherwise, a vectored interrupt handler should jump to trap_handler_\MODE\() + 4 * Interrupt cause code
     // No matter the value of VECTORED, exceptions (not interrupts) are handled in an unvecotred way
     j s_soft_vector_\MODE\()    // 1: instruction access fault // the zero spot is taken up by the instruction to skip this table.
@@ -337,7 +337,7 @@ trap_handler_\MODE\():
 
 trap_unvectored_\MODE\():
     csrrw sp, \MODE\()scratch, sp // swap sp and scratch so we can use the scratch stack in the trap hanler without messing up sp's value or the stack itself.
-    // *** NOTE: this means that nested traps will be screwed up but they shouldn't happen in any of these tests
+    // NOTE: this means that nested traps will be screwed up but they shouldn't happen in any of these tests
 
 trap_stack_saved_\MODE\(): // jump here after handling vectored interupt since we already switch sp and scratch there
     // save registers on stack before using
@@ -707,7 +707,7 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
 .endm
 
 .macro READ32 ADDR
-    // Attempt read at ADDR. Write the value read out to the output *** Consider adding specific test for reading a non known value
+    // Attempt read at ADDR. Write the value read out to the output. Consider adding specific test for reading a non known value
     // Success outputs:
     //      value read out from ADDR
     // Fault outputs:
@@ -751,7 +751,6 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
 //      0x9: test called from S mode
 //      0xB: test called from M mode
 // they generally do not fault or cause issues as long as these modes are enabled 
-// *** add functionality to check if modes are enabled before jumping? maybe cause a fault if not?
 
 .macro GOTO_M_MODE RETURN_VPN=0x0 RETURN_PAGETYPE=0x0
     li a0, 2 // determine trap handler behavior (go to machine mode)
@@ -807,7 +806,7 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     //      value read back out from CSR after writing
     // Fault outputs:
     //      The previous CSR value before write attempt
-    //      *** Most likely 0x2, the mcause for illegal instruction if we don't have write or read access
+    //      Most likely 0x2, the mcause for illegal instruction if we don't have write or read access
     li t5, 0xbad // load bad value to be overwritten by csrr
     li t4, \VAL
     csrw \CSR\(), t4

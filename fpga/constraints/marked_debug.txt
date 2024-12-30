@@ -5,22 +5,36 @@ wally/wallypipelinedcore.sv: logic                 InstrM
 lsu/lsu.sv: logic        IEUAdrM
 lsu/lsu.sv: logic       MemRWM
 mmu/hptw.sv: logic	   SATP_REGW
-uncore/spi_apb.sv: logic ShiftIn
-uncore/spi_apb.sv: logic  ReceiveShiftReg
-uncore/spi_apb.sv: logic  SCLKenable
-uncore/spi_apb.sv: logic  SampleEdge
-uncore/spi_apb.sv: logic  Active
-uncore/spi_apb.sv: statetype state
-uncore/spi_apb.sv: typedef rsrstatetype
-uncore/spi_apb.sv: logic SPICLK
-uncore/spi_apb.sv: logic SPIOut
-uncore/spi_apb.sv: logic SPICS
-uncore/spi_apb.sv: logic SckMode
-uncore/spi_apb.sv: logic SckDiv
-uncore/spi_apb.sv: logic ShiftEdge
-uncore/spi_apb.sv: logic TransmitShiftRegLoad
-uncore/spi_apb.sv: logic TransmitShiftReg
-uncore/spi_apb.sv: logic TransmitData
-uncore/spi_apb.sv: logic ReceiveData
-uncore/spi_apb.sv: logic ReceiveShiftRegEndian
-uncore/spi_apb.sv: logic ASR
+uncore/uartPC16550D.sv : logic MCR
+uncore/uartPC16550D.sv : logic FCR
+uncore/uartPC16550D.sv : logic MSR
+uncore/uartPC16550D.sv : logic DTRb
+uncore/uartPC16550D.sv : logic INTR
+uncore/uartPC16550D.sv : logic RXRDYb
+uncore/uartPC16550D.sv : logic TXRDYb
+uncore/uartPC16550D.sv : logic RXerrIP
+uncore/uartPC16550D.sv : logic IER
+uncore/uartPC16550D.sv : logic LSR
+uncore/uartPC16550D.sv : logic SCR
+uncore/uartPC16550D.sv : statetype txstate
+uncore/uartPC16550D.sv : logic RBR
+uncore/uartPC16550D.sv : logic rxparityerr
+uncore/uartPC16550D.sv : logic LCR
+uncore/uartPC16550D.sv : logic intrID
+uncore/uartPC16550D.sv : logic rxdataavailintr
+uncore/uartPC16550D.sv : logic fifoenabled
+uncore/uartPC16550D.sv : logic rxfifoentries
+uncore/uartPC16550D.sv : logic txsrfull
+uncore/uartPC16550D.sv : logic txhrfull
+uncore/uartPC16550D.sv : logic txfifofull
+uncore/uartPC16550D.sv : logic txfifotail
+uncore/uartPC16550D.sv : logic txfifohead
+uncore/uartPC16550D.sv : logic rxfifotriggered
+uncore/uartPC16550D.sv : logic rxdataready
+privileged/privdec.sv : logic wfiM
+privileged/privdec.sv : logic wfiW
+privileged/privdec.sv : logic WFITimeoutM
+uncore/plic_apb.sv : logic requests
+uncore/plic_apb.sv : logic intInProgress
+uncore/plic_apb.sv : logic intPending
+uncore/plic_apb.sv : logic intClaim

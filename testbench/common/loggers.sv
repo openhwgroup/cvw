@@ -50,8 +50,9 @@ module loggers import cvw::*; #(parameter cvw_t P,
     integer           HPMCindex;
     logic             StartSampleFirst;
     logic             StartSampleDelayed, BeginDelayed;
-    logic             EndSampleFirst, EndSampleDelayed;
+    logic             EndSampleFirst;
     logic [P.XLEN-1:0] InitialHPMCOUNTERH[P.COUNTERS-1:0];
+    logic              EndSampleDelayed;
 
     string  HPMCnames[] = '{"Mcycle",
                             "------",
@@ -80,6 +81,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
                             "Divide Cycles"
                           };
 
+
     always_comb
       if (TEST == "embench") begin  
         StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_trigger";
@@ -89,9 +91,17 @@ module loggers import cvw::*; #(parameter cvw_t P,
         EndSampleFirst = FunctionName.FunctionName.FunctionName == "stop_time";
       end else begin
         StartSampleFirst = reset;
-        EndSample = DCacheFlushStart & ~DCacheFlushDone;
+        EndSampleFirst = '0;
       end
 
+    flopr #(1) EndSampleReg(clk, reset, EndSampleFirst, EndSampleDelayed);
+    always_comb
+      if (TEST == "embench" | TEST == "coremark") begin
+        EndSample = EndSampleFirst & ~ EndSampleDelayed;
+      end else begin
+        EndSample = DCacheFlushStart & ~DCacheFlushDone;
+      end
+    
   /*
     if(TEST == "embench") begin
       // embench runs warmup then runs start_trigger
@@ -132,8 +142,6 @@ module loggers import cvw::*; #(parameter cvw_t P,
 
     flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
     assign StartSample = StartSampleFirst & ~StartSampleDelayed;
-    flopr #(1) EndSampleReg(clk, reset, EndSampleFirst, EndSampleDelayed);
-    assign EndSample = EndSampleFirst & ~ EndSampleDelayed;
     flop #(1) BeginReg(clk, StartSampleFirst, BeginDelayed); // ** is this redundant with StartSampleReg?
     assign BeginSample = StartSampleFirst & ~BeginDelayed;
 
@@ -210,10 +218,16 @@ module loggers import cvw::*; #(parameter cvw_t P,
                          dut.core.lsu.LSUAtomicM[1] ? "A" :
                          dut.core.lsu.bus.dcache.CacheRWM == 2'b10 ? "R" : 
                          dut.core.lsu.bus.dcache.CacheRWM == 2'b01 ? "W" :
+                         dut.core.lsu.bus.dcache.dcache.CMOpM == 4'b1000 ? "Z" :   // cbo.zero
+                         dut.core.lsu.bus.dcache.dcache.CMOpM == 4'b0001 ? "V" :   // cbo.inval should just clear the valid and dirty bits
+                         dut.core.lsu.bus.dcache.dcache.CMOpM == 4'b0010 ? "C" :   // cbo.clean should act like a read in terms of the lru, but clears the dirty bit
+                         dut.core.lsu.bus.dcache.dcache.CMOpM == 4'b0100 ? "L" :   // cbo.flush should just clear and the valid and drity bits
                          "NULL";
     end
 
-    assign Enabled = dut.core.lsu.bus.dcache.dcache.cachefsm.LRUWriteEn &
+    assign Enabled = (dut.core.lsu.bus.dcache.dcache.cachefsm.LRUWriteEn |
+                      // don't include cbo.zero as it uses LRUWriteEn to update the LRU and would be double counted.
+                      ((AccessTypeString == "C" | AccessTypeString == "L" | AccessTypeString == "V") & ~dut.core.lsu.bus.dcache.dcache.cachefsm.CacheStall)) &
                      ~dut.core.lsu.bus.dcache.dcache.cachefsm.FlushStage &
                      dut.core.lsu.dmmu.dmmu.pmachecker.Cacheable &
                      dut.core.lsu.bus.dcache.dcache.cachefsm.CacheEn &
