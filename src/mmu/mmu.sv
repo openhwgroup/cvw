@@ -118,7 +118,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   if (P.PMP_ENTRIES > 0) begin : pmp
     pmpchecker #(P) pmpchecker(.PhysicalAddress, .PrivilegeModeW,
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
-      .ExecuteAccessF, .WriteAccessM, .ReadAccessM, .CMOpM, 
+      .ExecuteAccessF, .WriteAccessM, .ReadAccessM, .Size, .CMOpM, 
       .PMPInstrAccessFaultF, .PMPLoadAccessFaultM, .PMPStoreAmoAccessFaultM);
   end else begin
     assign PMPInstrAccessFaultF     = 1'b0;
@@ -131,7 +131,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
 
   // Misaligned faults
   always_comb // exclusion-tag: immu-wordaccess
-    case(Size[1:0]) 
+    case(Size) 
       2'b00:  DataMisalignedM = 1'b0;              // lb, sb, lbu
       2'b01:  DataMisalignedM = VAdr[0];           // lh, sh, lhu
       2'b10:  DataMisalignedM = VAdr[1] | VAdr[0]; // lw, sw, flw, fsw, lwu
