@@ -85,8 +85,6 @@ module pmpchecker import cvw::*;  #(parameter cvw_t P) (
   or_rows #(P.PMP_ENTRIES, P.PA_BITS) PTEOr(PMPTop, MatchingPMPTop);
 
   // Matching PMP entry must match all bytes of an access, or the access fails (Priv Spec 3.7.1.3)
-  // *** not fully implemented
-  // *** check R=0,W=1 WARL is enforced
   // First find the size of the access in terms of the offset to the most significant byte
   always_comb
     case (Size)
@@ -95,6 +93,7 @@ module pmpchecker import cvw::*;  #(parameter cvw_t P) (
       2'b10: SizeBytesMinus1 = 3'd3;
       2'b11: SizeBytesMinus1 = 3'd7;
     endcase
+  // Then find the top of the access and see if it is beyond the top of the region
   assign PhysicalAddressTop = PhysicalAddress + {{P.PA_BITS-3{1'b0}}, SizeBytesMinus1}; // top of the access range
   assign TooBig = PhysicalAddressTop > MatchingPMPTop; // check if the access goes beyond the top of the PMP region
 
@@ -104,7 +103,7 @@ module pmpchecker import cvw::*;  #(parameter cvw_t P) (
   assign PMPCBOMAccessFault     = EnforcePMP & (|CMOpM[2:0]) & ~MatchingR ; // checking R is sufficient because W implies R in PMP  // exclusion-tag: immu-pmpcbom
   assign PMPCBOZAccessFault     = EnforcePMP & CMOpM[3] & ~MatchingW ;          // exclusion-tag: immu-pmpcboz
   assign PMPCMOAccessFault      = PMPCBOZAccessFault | PMPCBOMAccessFault;              // exclusion-tag: immu-pmpcboaccess
-  
+
   assign PMPInstrAccessFaultF     = EnforcePMP & ExecuteAccessF & ~MatchingX ;
   assign PMPStoreAmoAccessFaultM  = (EnforcePMP & WriteAccessM & ~MatchingW)  | PMPCMOAccessFault; // exclusion-tag: immu-pmpstoreamoaccessfault
   assign PMPLoadAccessFaultM      = EnforcePMP & ReadAccessM & ~WriteAccessM & ~MatchingR;
