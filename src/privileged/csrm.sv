@@ -103,6 +103,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   // when compressed instructions are supported, there can't be misaligned instructions
   localparam MEDELEG_MASK  = P.ZCA_SUPPORTED ? 16'hB3FE : 16'hB3FF;
   localparam MIDELEG_MASK  = 12'h222; // we choose to not make machine interrupts delegable
+  localparam PMPCFG_MASK = 8'h9F; // bits 6:5 are WARL 00
 
  // There are PMP_ENTRIES = 0, 16, or 64 PMPADDR registers, each of which has its own flop
   genvar i;
@@ -134,7 +135,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
 
       assign CSRPMPWRLegalizedWriteValM[i] = {(CSRPMPWriteValM[i][1] & CSRPMPWriteValM[i][0]), CSRPMPWriteValM[i][0]}; // legalize WR fields (reserved 10 written as 00)
       assign CSRPMPLegalizedWriteValM[i] = {CSRPMPWriteValM[i][7], 2'b00, CSRPMPWriteValM[i][4:2], CSRPMPWRLegalizedWriteValM[i]};
-      flopenr #(8) PMPCFGreg(clk, reset, WritePMPCFGM[i], CSRPMPWriteValM[i], PMPCFG_ARRAY_REGW[i]);
+      flopenr #(8) PMPCFGreg(clk, reset, WritePMPCFGM[i], CSRPMPWriteValM[i] & PMPCFG_MASK, PMPCFG_ARRAY_REGW[i]);
     end
   end
 
