@@ -194,6 +194,7 @@ string arch32pmp[] = '{
   "rv32i_m/pmp32/src/pmp-TOR-X.S"
 };
 
+// Tests commented out pending riscv-arch-test issue #588
 string arch64pmp[] = '{
   `RISCVARCHTEST,
   "rv64i_m/pmp64/src/pmp64-CFG-reg.S",
@@ -217,7 +218,7 @@ string arch64pmp[] = '{
   "rv64i_m/pmp64/src/pmp64-NAPOT-RW-priority-level-2.S",
   "rv64i_m/pmp64/src/pmp64-NAPOT-RW-priority.S",
   "rv64i_m/pmp64/src/pmp64-NAPOT-RW.S",
-  "rv64i_m/pmp64/src/pmp64-NAPOT-RWX.S",
+  // "rv64i_m/pmp64/src/pmp64-NAPOT-RWX.S",
   "rv64i_m/pmp64/src/pmp64-NAPOT-RX-priority-level-2.S",
   "rv64i_m/pmp64/src/pmp64-NAPOT-RX-priority.S",
   "rv64i_m/pmp64/src/pmp64-NAPOT-RX.S",
@@ -230,7 +231,7 @@ string arch64pmp[] = '{
   "rv64i_m/pmp64/src/pmp64-TOR-RW-priority-level-2..S",
   "rv64i_m/pmp64/src/pmp64-TOR-RW-priority.S",
   "rv64i_m/pmp64/src/pmp64-TOR-RW.S",
-  "rv64i_m/pmp64/src/pmp64-TOR-RWX.S",
+  // "rv64i_m/pmp64/src/pmp64-TOR-RWX.S",
   "rv64i_m/pmp64/src/pmp64-TOR-RX-priority-level-2.S",
   "rv64i_m/pmp64/src/pmp64-TOR-RX-priority.S",
   "rv64i_m/pmp64/src/pmp64-TOR-RX.S",
