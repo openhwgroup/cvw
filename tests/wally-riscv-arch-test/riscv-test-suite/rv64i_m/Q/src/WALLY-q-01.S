@@ -2,7 +2,7 @@
 // ../wally-riscv-arch-test/riscv-test-suite/rv64i_m/I/src/WALLY-ADD.S
 // David_Harris@hmc.edu & Rose Thompson
 // Created 07 March 2024 
-// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-25 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //

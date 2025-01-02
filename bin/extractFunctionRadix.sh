@@ -13,7 +13,7 @@
 ##                  When a the PCE is greater than or equal to the function's starting address, the label will be associated with this address.
 ##          File 2: .lab: A sorted list of funciton labels. The names of functions.  Modelsim will display these names rather than the function address.
 ## 
-## Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
+## Copyright (C) 2021-25 Harvey Mudd College & Oklahoma State University
 ##
 ## SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 ##
