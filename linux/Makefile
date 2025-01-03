@@ -106,13 +106,13 @@ $(IMAGES)/busybox:
 
 # Generating new Buildroot directories --------------------------------
 download: $(WALLYBOARD)
-	cp $(WALLYBOARD)/main.config $(BUILDROOT)/.config
+	cd $(BUILDROOT) && make wally_defconfig
 	@echo "Buildroot successfully download."
 
 # CONFIG DEPENDENCIES 2023.05.1 ---------------------------------------
 $(WALLYBOARD): $(BUILDROOT)
 	cp -r $(WALLYBOARDSRC) $(BUILDROOT)/board
-	cp $(BR2023)/main.config $(WALLYBOARD)/main.config
+	cp $(WALLYBOARDSRC)/wally_defconfig $(BUILDROOT)/configs/wally_defconfig
 	cp $(BR2023)/linux.config $(WALLYBOARD)/linux.config
 
 $(BUILDROOT):
