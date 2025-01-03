@@ -113,7 +113,6 @@ download: $(WALLYBOARD)
 $(WALLYBOARD): $(BUILDROOT)
 	cp -r $(WALLYBOARDSRC) $(BUILDROOT)/board
 	cp $(WALLYBOARDSRC)/wally_defconfig $(BUILDROOT)/configs/wally_defconfig
-	cp $(BR2023)/linux.config $(WALLYBOARD)/linux.config
 
 $(BUILDROOT):
 	git clone https://github.com/buildroot/buildroot.git $@
