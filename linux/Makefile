@@ -109,7 +109,7 @@ download: $(BUILDROOT)
 
 $(BUILDROOT):
 	git clone https://github.com/buildroot/buildroot.git $@
-	cd $@; git checkout 2023.11.x
+	cd $@; git checkout 2024.05.x
 
 # ---------------------------------------------------------------------
 
