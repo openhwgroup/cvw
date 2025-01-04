@@ -104,12 +104,12 @@ $(IMAGES)/busybox:
 
 # Generating new Buildroot directories --------------------------------
 download: $(BUILDROOT)
-	cd $(BUILDROOT) && make wally_defconfig BR2_EXTERNAL=$(BR2_EXTERNAL_TREE)
+	cd $(BUILDROOT) && $(MAKE) wally_defconfig BR2_EXTERNAL=$(BR2_EXTERNAL_TREE)
 	@echo "Buildroot successfully download."
 
 $(BUILDROOT):
 	git clone https://github.com/buildroot/buildroot.git $@
-	cd $@; git checkout 2023.05.x
+	cd $@; git checkout 2023.11.x
 
 # ---------------------------------------------------------------------
 
