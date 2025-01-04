@@ -1,19 +1,11 @@
 BUILDROOT := buildroot
 IMAGES := ${BUILDROOT}/output/images
-WALLY := $(shell dirname $(shell pwd))
-WALLYLINUX := $(shell pwd)
+WALLYLINUX := $(WALLY)/linux
 DIS := ${IMAGES}/disassembly
-BRPACKAGES := $(WALLYLINUX)/buildroot-packages
+BR2_EXTERNAL_TREE := $(WALLYLINUX)/br2-external-tree
 
 # set sudo if needed depending on $RISCV
-ifeq ($(shell mkdir -p $(RISCV)/.test > /dev/null 2>&1 ; echo $$?), 0)
-	SUDO :=
-else
-	SUDO := sudo
-endif
-
-# Buildroot Config Stuff
-BR2_EXTERNAL_TREE := $(WALLYLINUX)/br2-external-tree
+SUDO := $(shell mkdir -p $(RISCV)/.test > /dev/null 2>&1 || echo sudo)
 
 # Device tree files
 DTS ?= $(shell find devicetree -type f -regex ".*\.dts" | sort)
