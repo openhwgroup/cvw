@@ -104,7 +104,7 @@ $(IMAGES)/busybox:
 
 # Generating new Buildroot directories --------------------------------
 download: $(BUILDROOT)
-	cd $(BUILDROOT) && $(MAKE) wally_defconfig BR2_EXTERNAL=$(BR2_EXTERNAL_TREE)
+	$(MAKE) -C $(BUILDROOT) wally_defconfig BR2_EXTERNAL=$(BR2_EXTERNAL_TREE)
 	@echo "Buildroot successfully download."
 
 $(BUILDROOT):
