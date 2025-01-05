@@ -136,7 +136,7 @@ jobs:
         run: |
               if [ ! -z ${{ matrix.image }} ]; then
                 ./bin/wally-tool-chain-install.sh --clean ${{ matrix.riscv_path }}
-              else if [ -z ${{ matrix.user }} ]; then
+              elif [ -z ${{ matrix.user }} ]; then
                 sudo ./bin/wally-tool-chain-install.sh --clean ${{ matrix.riscv_path }}
               else
                 sudo ./bin/wally-package-install.sh
