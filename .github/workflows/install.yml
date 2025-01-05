@@ -166,7 +166,7 @@ jobs:
       # Only the linux-testvectors are needed, so remove the rest of the buildroot to save space
       - name: Remove Buildroot to Save Space
         run: |
-              sudo rm -rf $RISCV/buildroot/output/build
+              rm -rf $RISCV/buildroot/output/build || sudo rm -rf $RISCV/buildroot/output/build
               df -h
       # Run standard regression, skipping distros that are known to be broken with Verilator
       - name: Regression
