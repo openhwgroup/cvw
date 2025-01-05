@@ -150,7 +150,7 @@ else
     # Update and Upgrade tools
     eval "$UPDATE_COMMAND"
     # Install packages listed above using appropriate package manager
-    $PACKAGE_MANAGER install "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${OTHER_PACKAGES[@]}" "${VIVADO_PACKAGES[@]}"
+    eval $PACKAGE_MANAGER install "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${OTHER_PACKAGES[@]}" "${VIVADO_PACKAGES[@]}"
 
     # Post install steps
     # Vivado looks for ncurses5 libraries, but Ubuntu 24.04 only has ncurses6
