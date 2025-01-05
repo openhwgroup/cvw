@@ -55,7 +55,7 @@ case "$FAMILY" in
     rhel)
         PYTHON_VERSION=python3.12
         PACKAGE_MANAGER="dnf -y"
-        UPDATE_COMMAND="sudo $PACKAGE_MANAGER update"
+        UPDATE_COMMAND="$PACKAGE_MANAGER update"
         GENERAL_PACKAGES+=(which "$PYTHON_VERSION" "$PYTHON_VERSION"-pip pkgconf-pkg-config gcc-c++ ssmtp)
         GNU_PACKAGES+=(libmpc-devel mpfr-devel gmp-devel zlib-devel expat-devel libslirp-devel ninja-build)
         QEMU_PACKAGES+=(glib2-devel libfdt-devel pixman-devel)
@@ -87,7 +87,7 @@ case "$FAMILY" in
             VERILATOR_PACKAGES+=(mold)
         fi
         PACKAGE_MANAGER="DEBIAN_FRONTEND=noninteractive apt-get -y"
-        UPDATE_COMMAND="sudo $PACKAGE_MANAGER update && sudo $PACKAGE_MANAGER upgrade --with-new-pkgs"
+        UPDATE_COMMAND="$PACKAGE_MANAGER update && $PACKAGE_MANAGER upgrade --with-new-pkgs"
         GENERAL_PACKAGES+=("$PYTHON_VERSION" python3-pip "$PYTHON_VERSION"-venv pkg-config g++ ssmtp)
         GNU_PACKAGES+=(autotools-dev libmpc-dev libmpfr-dev libgmp-dev build-essential ninja-build zlib1g-dev libexpat1-dev libglib2.0-dev libslirp-dev)
         QEMU_PACKAGES+=(libfdt-dev libpixman-1-dev)
@@ -100,7 +100,7 @@ case "$FAMILY" in
         PYTHON_VERSION=python3.12
         PYTHON_VERSION_PACKAGE=python312
         PACKAGE_MANAGER="zypper -n"
-        UPDATE_COMMAND="sudo $PACKAGE_MANAGER update"
+        UPDATE_COMMAND="$PACKAGE_MANAGER update"
         GENERAL_PACKAGES+=("$PYTHON_VERSION_PACKAGE" "$PYTHON_VERSION_PACKAGE"-pip pkg-config)
         GNU_PACKAGES+=(mpc-devel mpfr-devel gmp-devel zlib-devel libexpat-devel libslirp-devel ninja)
         QEMU_PACKAGES+=(glib2-devel libpixman-1-0-devel) # maybe also need qemu itself?
@@ -132,32 +132,32 @@ else
     section_header "Installing/Updating Dependencies from Package Manager"
     # Enable extra repos necessary for rhel
     if [ "$FAMILY" == rhel ]; then
-        sudo dnf install -y dnf-plugins-core
-        sudo dnf group install -y "Development Tools"
+        dnf install -y dnf-plugins-core
+        dnf group install -y "Development Tools"
         if [ "$ID" == rhel ]; then
-            sudo subscription-manager repos --enable "codeready-builder-for-rhel-$RHEL_VERSION-$(arch)-rpms"
-            sudo dnf install -y "https://dl.fedoraproject.org/pub/epel/epel-release-latest-$RHEL_VERSION.noarch.rpm"
+            subscription-manager repos --enable "codeready-builder-for-rhel-$RHEL_VERSION-$(arch)-rpms"
+            dnf install -y "https://dl.fedoraproject.org/pub/epel/epel-release-latest-$RHEL_VERSION.noarch.rpm"
         else # RHEL clone
             if (( RHEL_VERSION == 8 )); then
-                sudo dnf config-manager -y --set-enabled powertools
+                dnf config-manager -y --set-enabled powertools
             else # Version 9
-                sudo dnf config-manager -y --set-enabled crb
+                dnf config-manager -y --set-enabled crb
             fi
-            sudo dnf install -y epel-release
+            dnf install -y epel-release
         fi
     fi
 
     # Update and Upgrade tools
     eval "$UPDATE_COMMAND"
     # Install packages listed above using appropriate package manager
-    sudo $PACKAGE_MANAGER install "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${OTHER_PACKAGES[@]}" "${VIVADO_PACKAGES[@]}"
+    $PACKAGE_MANAGER install "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${OTHER_PACKAGES[@]}" "${VIVADO_PACKAGES[@]}"
 
     # Post install steps
     # Vivado looks for ncurses5 libraries, but Ubuntu 24.04 only has ncurses6
     # Create symbolic links to the ncurses6 libraries to fool Vivado
     if (( UBUNTU_VERSION >= 24 )); then
-        sudo ln -vsf /lib/x86_64-linux-gnu/libncurses.so.6 /lib/x86_64-linux-gnu/libncurses.so.5
-        sudo ln -vsf /lib/x86_64-linux-gnu/libtinfo.so.6 /lib/x86_64-linux-gnu/libntinfo.so.5
+        ln -vsf /lib/x86_64-linux-gnu/libncurses.so.6 /lib/x86_64-linux-gnu/libncurses.so.5
+        ln -vsf /lib/x86_64-linux-gnu/libtinfo.so.6 /lib/x86_64-linux-gnu/libntinfo.so.5
     fi
 
     echo -e "${SUCCESS_COLOR}Packages successfully installed.${ENDC}"
