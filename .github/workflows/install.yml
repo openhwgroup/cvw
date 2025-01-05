@@ -108,12 +108,12 @@ jobs:
         run: |
             if [ ${{ matrix.imageFamily }} == "debian" ]; then
               apt-get update
-              apt-get install -y sudo git
+              apt-get install -y git
             elif [ ${{ matrix.imageFamily }} == "redhat" ]; then
-              dnf install -y sudo git
+              dnf install -y git
               dnf install curl -y --allowerasing || true
             elif [ ${{ matrix.imageFamily }} == "suse" ]; then
-              zypper install -y sudo git
+              zypper install -y git
             fi
       # Only clone submodules needed for standard tests/regression to save space
       - uses: actions/checkout@v4
@@ -134,7 +134,9 @@ jobs:
       # Run main tool chain installation script, either as a user or system wide
       - name: Install
         run: |
-              if [ -z ${{ matrix.user }} ]; then
+              if [ ! -z ${{ matrix.image }} ]; then
+                ./bin/wally-tool-chain-install.sh --clean ${{ matrix.riscv_path }}
+              else if [ -z ${{ matrix.user }} ]; then
                 sudo ./bin/wally-tool-chain-install.sh --clean ${{ matrix.riscv_path }}
               else
                 sudo ./bin/wally-package-install.sh
