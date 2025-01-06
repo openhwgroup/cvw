@@ -63,8 +63,13 @@ set CoverageVsimArg ""
 set FunctCoverage 0
 set FCvlog ""
 
+set breker 0
+set brekervlog ""
+set brekervopt ""
+
 set lockstep 0
 set lockstepvlog ""
+
 set SVLib ""
 
 set GUI 0
@@ -121,7 +126,18 @@ if {[lcheck lst "--lockstep"] || $FunctCoverage == 1} {
                       +incdir+${IMPERAS_HOME}/ImpProprietary/include/host \
                       ${IMPERAS_HOME}/ImpPublic/source/host/rvvi/*.sv \
                       ${IMPERAS_HOME}/ImpProprietary/source/host/idv/*.sv"
-    set SVLib "-sv_lib ${IMPERAS_HOME}/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model"
+    set SVLib " -sv_lib ${IMPERAS_HOME}/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model "
+}
+
+# if --breker found set flag and remove from list
+# Requires a license for the breker tool. See tests/breker/README.md for details
+if {[lcheck lst "--breker"]} {
+    set breker 1
+    set BREKER_HOME $::env(BREKER_HOME)
+    set brekervlog "+incdir+${WALLY}/testbench/trek_files \
+                    ${WALLY}/testbench/trek_files/uvm_output/trek_uvm_pkg.sv"
+    set brekervopt "${WKDIR}.trek_uvm"
+    append SVLib " -sv_lib ${BREKER_HOME}/linux64/lib/libtrek "
 }
 
 # Set PlusArgs passed using the --args flag
@@ -155,6 +171,7 @@ if {$DEBUG > 0} {
     echo "ccov = $ccov"
     echo "lockstep = $lockstep"
     echo "FunctCoverage = $FunctCoverage"
+    echo "Breker = $breker"
     echo "remaining list = $lst"
     echo "Extra +args = $PlusArgs"
     echo "Extra params = $ExpandedParamArgs"
@@ -167,11 +184,11 @@ if {$DEBUG > 0} {
 # because vsim will run vopt
 set INC_DIRS "+incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared"
 set SOURCES "${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv ${SRC}/*/*.sv ${SRC}/*/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*/*/*.sv"
-vlog -permissive -lint -work ${WKDIR} {*}${INC_DIRS} {*}${FCvlog} {*}${DefineArgs} {*}${lockstepvlog} {*}${SOURCES} -suppress 2282,2583,7053,7063,2596,13286
+vlog -permissive -lint -work ${WKDIR} {*}${INC_DIRS} {*}${FCvlog} {*}${DefineArgs} {*}${lockstepvlog} {*}${brekervlog} {*}${SOURCES} -suppress 2282,2583,7053,7063,2596,13286,2605,2250
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-vopt $accFlag wkdir/${CFG}_${TESTSUITE}.${TESTBENCH} -work ${WKDIR} {*}${ExpandedParamArgs} -o testbenchopt ${CoverageVoptArg}
+vopt $accFlag ${WKDIR}.${TESTBENCH} ${brekervopt} -work ${WKDIR} {*}${ExpandedParamArgs} -o testbenchopt ${CoverageVoptArg}
 
 vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} {*}${PlusArgs} -fatal 7 {*}${SVLib} -suppress 3829 ${CoverageVsimArg}
 
