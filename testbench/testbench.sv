@@ -145,7 +145,9 @@ module testbench;
         "arch64i":                                tests = arch64i;
         "arch64priv":                             tests = arch64priv;
         "arch64c":      if (P.ZCA_SUPPORTED)
-                          if (P.ZICSR_SUPPORTED)  tests = {arch64c, arch64cpriv};
+                          if (P.ZICSR_SUPPORTED)  
+                            if (P.ZCD_SUPPORTED)  tests = {arch64c, arch64cpriv, arch64zcd};
+                            else                  tests = {arch64c, arch64cpriv};
                           else                    tests = {arch64c};
         "arch64m":      if (P.M_SUPPORTED)        tests = arch64m;
         "arch64a_amo":      if (P.ZAAMO_SUPPORTED)        tests = arch64a_amo;
@@ -172,7 +174,9 @@ module testbench;
         "arch64zbs":     if (P.ZBS_SUPPORTED)     tests = arch64zbs;
         "arch64zicboz":  if (P.ZICBOZ_SUPPORTED)  tests = arch64zicboz;
         "arch64zcb":     if (P.ZCB_SUPPORTED)     tests = arch64zcb;
-        "arch64zfh":     if (P.ZFH_SUPPORTED)     tests = arch64zfh;
+        "arch64zfh":     if (P.ZFH_SUPPORTED)     
+                           if (P.D_SUPPORTED)     tests = {arch64zfh, arch64zfh_d};
+                           else                   tests = arch64zfh;
         "arch64zfh_fma": if (P.ZFH_SUPPORTED)     tests = arch64zfh_fma;
         "arch64zfh_divsqrt":     if (P.ZFH_SUPPORTED)     tests = arch64zfh_divsqrt;
         "arch64zfaf":    if (P.ZFA_SUPPORTED)     tests = arch64zfaf;
@@ -192,7 +196,11 @@ module testbench;
         "arch32i":                                tests = arch32i;
         "arch32priv":                             tests = arch32priv;
         "arch32c":      if (P.C_SUPPORTED)
-                          if (P.ZICSR_SUPPORTED)  tests = {arch32c, arch32cpriv};
+                          if (P.ZICSR_SUPPORTED)  
+                            if (P.ZCF_SUPPORTED)  
+                              if (P.ZCD_SUPPORTED)  tests = {arch32c, arch32cpriv, arch32zcf, arch32zcd};
+                              else                tests = {arch32c, arch32cpriv, arch32zcf};
+                            else                  tests = {arch32c, arch32cpriv};
                           else                    tests = {arch32c};
         "arch32m":      if (P.M_SUPPORTED)        tests = arch32m;
         "arch32a_amo":      if (P.ZAAMO_SUPPORTED)  tests = arch32a_amo;
@@ -216,7 +224,9 @@ module testbench;
         "arch32zbs":     if (P.ZBS_SUPPORTED)     tests = arch32zbs;
         "arch32zicboz":  if (P.ZICBOZ_SUPPORTED)  tests = arch32zicboz;
         "arch32zcb":     if (P.ZCB_SUPPORTED)     tests = arch32zcb;
-        "arch32zfh":     if (P.ZFH_SUPPORTED)     tests = arch32zfh;
+        "arch32zfh":     if (P.ZFH_SUPPORTED)     
+                           if (P.D_SUPPORTED)     tests = {arch32zfh, arch32zfh_d};
+                           else                   tests = arch32zfh;
         "arch32zfh_fma": if (P.ZFH_SUPPORTED)     tests = arch32zfh_fma;
         "arch32zfh_divsqrt":     if (P.ZFH_SUPPORTED)     tests = arch32zfh_divsqrt;
         "arch32zfaf":    if (P.ZFA_SUPPORTED)     tests = arch32zfaf;

@@ -194,6 +194,7 @@ string arch32pmp[] = '{
   "rv32i_m/pmp32/src/pmp-TOR-X.S"
 };
 
+// Tests commented out pending riscv-arch-test issue #588
 string arch64pmp[] = '{
   `RISCVARCHTEST,
   "rv64i_m/pmp64/src/pmp64-CFG-reg.S",
@@ -217,7 +218,7 @@ string arch64pmp[] = '{
   "rv64i_m/pmp64/src/pmp64-NAPOT-RW-priority-level-2.S",
   "rv64i_m/pmp64/src/pmp64-NAPOT-RW-priority.S",
   "rv64i_m/pmp64/src/pmp64-NAPOT-RW.S",
-  "rv64i_m/pmp64/src/pmp64-NAPOT-RWX.S",
+  // "rv64i_m/pmp64/src/pmp64-NAPOT-RWX.S",
   "rv64i_m/pmp64/src/pmp64-NAPOT-RX-priority-level-2.S",
   "rv64i_m/pmp64/src/pmp64-NAPOT-RX-priority.S",
   "rv64i_m/pmp64/src/pmp64-NAPOT-RX.S",
@@ -230,7 +231,7 @@ string arch64pmp[] = '{
   "rv64i_m/pmp64/src/pmp64-TOR-RW-priority-level-2..S",
   "rv64i_m/pmp64/src/pmp64-TOR-RW-priority.S",
   "rv64i_m/pmp64/src/pmp64-TOR-RW.S",
-  "rv64i_m/pmp64/src/pmp64-TOR-RWX.S",
+  // "rv64i_m/pmp64/src/pmp64-TOR-RWX.S",
   "rv64i_m/pmp64/src/pmp64-TOR-RX-priority-level-2.S",
   "rv64i_m/pmp64/src/pmp64-TOR-RX-priority.S",
   "rv64i_m/pmp64/src/pmp64-TOR-RX.S",
@@ -241,22 +242,30 @@ string arch64pmp[] = '{
 
 string arch32vm_sv32[] = '{
   `RISCVARCHTEST,
+  "rv32i_m/vm_sv32/src/mstatus_tvm_test.S",
   "rv32i_m/vm_sv32/src/pmp_check_on_pa_S_mode.S",
   "rv32i_m/vm_sv32/src/pmp_check_on_pa_U_mode.S",
   "rv32i_m/vm_sv32/src/pmp_check_on_pte_S_mode.S",
   "rv32i_m/vm_sv32/src/pmp_check_on_pte_U_mode.S",
+  "rv32i_m/vm_sv32/src/satp_access_tests.S",
   "rv32i_m/vm_sv32/src/vm_A_and_D_S_mode.S",
   "rv32i_m/vm_sv32/src/vm_A_and_D_U_mode.S",
   "rv32i_m/vm_sv32/src/vm_invalid_pte_S_mode.S",
   "rv32i_m/vm_sv32/src/vm_invalid_pte_U_mode.S",
   "rv32i_m/vm_sv32/src/vm_misaligned_S_mode.S",
   "rv32i_m/vm_sv32/src/vm_misaligned_U_mode.S",
+  "rv32i_m/vm_sv32/src/vm_mprv_S_mode.S",
+  "rv32i_m/vm_sv32/src/vm_mprv_U_mode.S",
+  "rv32i_m/vm_sv32/src/vm_mprv_U_set_sum_set_S_mode.S",
+  "rv32i_m/vm_sv32/src/vm_mprv_U_set_sum_unset_S_mode.S",
   "rv32i_m/vm_sv32/src/vm_mxr_S_mode.S",
   "rv32i_m/vm_sv32/src/vm_mxr_U_mode.S",
   "rv32i_m/vm_sv32/src/vm_nleaf_pte_level0_S_mode.S",
   "rv32i_m/vm_sv32/src/vm_nleaf_pte_level0_U_mode.S",
-  "rv32i_m/vm_sv32/src/vm_reserved_pte_S_mode.S",
-  "rv32i_m/vm_sv32/src/vm_reserved_pte_U_mode.S",
+  "rv32i_m/vm_sv32/src/vm_reserved_rsw_pte_S_mode.S",
+  "rv32i_m/vm_sv32/src/vm_reserved_rsw_pte_U_mode.S",
+  "rv32i_m/vm_sv32/src/vm_reserved_rwx_pte_S_mode.S",
+  "rv32i_m/vm_sv32/src/vm_reserved_rwx_pte_U_mode.S",
   "rv32i_m/vm_sv32/src/vm_sum_set_S_mode.S",
   "rv32i_m/vm_sv32/src/vm_sum_unset_S_mode.S",
   "rv32i_m/vm_sv32/src/vm_U_Bit_set_U_mode.S",
@@ -526,6 +535,15 @@ string arch64c[] = '{
 string arch64cpriv[] = '{
   // `RISCVARCHTEST,
   "rv64i_m/C/src/cebreak-01.S"
+};
+
+// Tests commented out pending riscv-arch-test issue #590
+string arch64zcd[] = '{
+  // `RISCVARCHTEST,
+  "rv64i_m/D_Zcd/src/c.fld-01.S",
+  "rv64i_m/D_Zcd/src/c.fldsp-01.S",
+  "rv64i_m/D_Zcd/src/c.fsd-01.S",
+  "rv64i_m/D_Zcd/src/c.fsdsp-01.S"
 };
 
 string arch64i[] = '{
@@ -1000,10 +1018,23 @@ string arch64zfh[] = '{
   "rv64i_m/Zfh/src/fadd_b7-01.S",
   "rv64i_m/Zfh/src/fadd_b8-01.S",
   "rv64i_m/Zfh/src/fclass_b1-01.S",
+  "rv64i_m/Zfh/src/fcvt.h.s_b1-01.S",
+  "rv64i_m/Zfh/src/fcvt.h.s_b22-01.S",
+  "rv64i_m/Zfh/src/fcvt.h.s_b23-01.S",
+  "rv64i_m/Zfh/src/fcvt.h.s_b24-01.S",
+  "rv64i_m/Zfh/src/fcvt.h.s_b27-01.S",
+  "rv64i_m/Zfh/src/fcvt.h.s_b28-01.S",
+  "rv64i_m/Zfh/src/fcvt.h.s_b29-01.S",
   "rv64i_m/Zfh/src/fcvt.h.w_b25-01.S",
   "rv64i_m/Zfh/src/fcvt.h.w_b26-01.S",
   "rv64i_m/Zfh/src/fcvt.h.wu_b25-01.S",
   "rv64i_m/Zfh/src/fcvt.h.wu_b26-01.S",
+  "rv64i_m/Zfh/src/fcvt.s.h_b22-01.S",
+  "rv64i_m/Zfh/src/fcvt.s.h_b23-01.S",
+  "rv64i_m/Zfh/src/fcvt.s.h_b24-01.S",
+  "rv64i_m/Zfh/src/fcvt.s.h_b27-01.S",
+  "rv64i_m/Zfh/src/fcvt.s.h_b28-01.S",
+  "rv64i_m/Zfh/src/fcvt.s.h_b29-01.S",
   "rv64i_m/Zfh/src/fcvt.w.h_b1-01.S",
   "rv64i_m/Zfh/src/fcvt.w.h_b22-01.S",
   "rv64i_m/Zfh/src/fcvt.w.h_b23-01.S",
@@ -1130,7 +1161,23 @@ string arch64zfh[] = '{
   "rv64i_m/Zfh/src/fnmsub_b8-01.S"
 };
 
-
+string arch64zfh_d[] = '{
+  // `RISCVARCHTEST,
+  "rv64i_m/Zfh/src/fcvt.d.h_b1-01.S",
+  "rv64i_m/Zfh/src/fcvt.d.h_b22-01.S",
+  "rv64i_m/Zfh/src/fcvt.d.h_b23-01.S",
+  "rv64i_m/Zfh/src/fcvt.d.h_b24-01.S",
+  "rv64i_m/Zfh/src/fcvt.d.h_b27-01.S",
+  "rv64i_m/Zfh/src/fcvt.d.h_b28-01.S",
+  "rv64i_m/Zfh/src/fcvt.d.h_b29-01.S",
+  "rv64i_m/Zfh/src/fcvt.h.d_b1-01.S",
+  "rv64i_m/Zfh/src/fcvt.h.d_b22-01.S",
+  "rv64i_m/Zfh/src/fcvt.h.d_b23-01.S",
+  "rv64i_m/Zfh/src/fcvt.h.d_b24-01.S",
+  "rv64i_m/Zfh/src/fcvt.h.d_b27-01.S",
+  "rv64i_m/Zfh/src/fcvt.h.d_b28-01.S",
+  "rv64i_m/Zfh/src/fcvt.h.d_b29-01.S"
+};
 
 string arch64d_fma[] = '{
   `RISCVARCHTEST,
@@ -2413,10 +2460,23 @@ string arch32zfh[] = '{
   "rv32i_m/Zfh/src/fadd_b7-01.S",
   "rv32i_m/Zfh/src/fadd_b8-01.S",
   "rv32i_m/Zfh/src/fclass_b1-01.S",
+  "rv32i_m/Zfh/src/fcvt.h.s_b1-01.S",
+  "rv32i_m/Zfh/src/fcvt.h.s_b22-01.S",
+  "rv32i_m/Zfh/src/fcvt.h.s_b23-01.S",
+  "rv32i_m/Zfh/src/fcvt.h.s_b24-01.S",
+  "rv32i_m/Zfh/src/fcvt.h.s_b27-01.S",
+  "rv32i_m/Zfh/src/fcvt.h.s_b28-01.S",
+  "rv32i_m/Zfh/src/fcvt.h.s_b29-01.S",
   "rv32i_m/Zfh/src/fcvt.h.w_b25-01.S",
   "rv32i_m/Zfh/src/fcvt.h.w_b26-01.S",
   "rv32i_m/Zfh/src/fcvt.h.wu_b25-01.S",
   "rv32i_m/Zfh/src/fcvt.h.wu_b26-01.S",
+  "rv32i_m/Zfh/src/fcvt.s.h_b22-01.S",
+  "rv32i_m/Zfh/src/fcvt.s.h_b23-01.S",
+  "rv32i_m/Zfh/src/fcvt.s.h_b24-01.S",
+  "rv32i_m/Zfh/src/fcvt.s.h_b27-01.S",
+  "rv32i_m/Zfh/src/fcvt.s.h_b28-01.S",
+  "rv32i_m/Zfh/src/fcvt.s.h_b29-01.S",
   "rv32i_m/Zfh/src/fcvt.w.h_b1-01.S",
   "rv32i_m/Zfh/src/fcvt.w.h_b22-01.S",
   "rv32i_m/Zfh/src/fcvt.w.h_b23-01.S",
@@ -2523,6 +2583,24 @@ string arch32zfh[] = '{
   "rv32i_m/Zfh/src/fnmsub_b6-01.S",
   "rv32i_m/Zfh/src/fnmsub_b7-01.S",
   "rv32i_m/Zfh/src/fnmsub_b8-01.S"
+};
+
+string arch32zfh_d[] = '{
+  // `RISCVARCHTEST,
+  "rv32i_m/Zfh/src/fcvt.d.h_b1-01.S",
+  "rv32i_m/Zfh/src/fcvt.d.h_b22-01.S",
+  "rv32i_m/Zfh/src/fcvt.d.h_b23-01.S",
+  "rv32i_m/Zfh/src/fcvt.d.h_b24-01.S",
+  "rv32i_m/Zfh/src/fcvt.d.h_b27-01.S",
+  "rv32i_m/Zfh/src/fcvt.d.h_b28-01.S",
+  "rv32i_m/Zfh/src/fcvt.d.h_b29-01.S",
+  "rv32i_m/Zfh/src/fcvt.h.d_b1-01.S",
+  "rv32i_m/Zfh/src/fcvt.h.d_b22-01.S",
+  "rv32i_m/Zfh/src/fcvt.h.d_b23-01.S",
+  "rv32i_m/Zfh/src/fcvt.h.d_b24-01.S",
+  "rv32i_m/Zfh/src/fcvt.h.d_b27-01.S",
+  "rv32i_m/Zfh/src/fcvt.h.d_b28-01.S",
+  "rv32i_m/Zfh/src/fcvt.h.d_b29-01.S"
 };
 
 string arch32zfaf[] = '{
@@ -3353,6 +3431,23 @@ string arch32cpriv[] = '{
   "rv32i_m/C/src/cebreak-01.S"
 };
 
+// Tests commented out pending riscv-arch-test issue #590
+string arch32zcf[] = '{
+  // `RISCVARCHTEST,
+  // "rv32i_m/F_Zcf/src/c.flw-01.S",
+  // "rv32i_m/F_Zcf/src/c.flwsp-01.S",
+  // "rv32i_m/F_Zcf/src/c.fsw-01.S",
+  "rv32i_m/F_Zcf/src/c.fswsp-01.S"
+};
+
+// Tests commented out pending riscv-arch-test issue #590
+string arch32zcd[] = '{
+  // `RISCVARCHTEST,
+  "rv32i_m/D_Zcd/src/c.fld-01.S",
+  // "rv32i_m/D_Zcd/src/c.fldsp-01.S",
+  "rv32i_m/D_Zcd/src/c.fsd-01.S",
+  "rv32i_m/D_Zcd/src/c.fsdsp-01.S"
+};
 
 string arch32i[] = '{
   `RISCVARCHTEST,
