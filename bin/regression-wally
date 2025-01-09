@@ -438,14 +438,14 @@ if (args.buildroot):
     addTests(tests_buildrootbootlockstep, lockstepsim) # lockstep with Questa and ImperasDV runs overnight
 
 if (args.ccov):  # only run RV64GC tests on Questa in code coverage mode
-    addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/rv64/", "rv64gc", coveragesim)
-    addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/priv/rv64/", "rv64gc", coveragesim)
+    addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/lockstep/rv64/", "rv64gc", coveragesim)
+    addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/lockstep/priv/rv64/", "rv64gc", coveragesim)
     addTestsByDir(WALLY+"/tests/coverage/", "rv64gc", coveragesim)
 elif (args.fcov):  # run tests in lockstep in functional coverage mode
-    addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/rv32/", "rv32gc", coveragesim)
-    addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/rv64/", "rv64gc", coveragesim)
-    addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/priv/rv32/", "rv32gc", coveragesim)
-    addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/priv/rv64/", "rv64gc", coveragesim)
+    addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/lockstep/rv32/", "rv32gc", coveragesim)
+    addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/lockstep/rv64/", "rv64gc", coveragesim)
+    addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/lockstep/priv/rv32/", "rv32gc", coveragesim)
+    addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/lockstep/priv/rv64/", "rv64gc", coveragesim)
 elif (args.breker):
     addTestsByDir(WALLY+"/tests/breker/work", "breker", "questa", brekerMode=1)
 else: 
