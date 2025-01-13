@@ -19,7 +19,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module instrTrackerTB(
+module instrTrackerTB #(parameter XLEN) (
   input  logic            clk, reset, FlushE,
   input  logic [31:0]     InstrF, InstrD,
   input  logic [31:0]     InstrE, InstrM,
@@ -30,9 +30,9 @@ module instrTrackerTB(
   // stage Instr to Writeback for visualization
   // flopr  #(32) InstrWReg(clk, reset, InstrM, InstrW);
 
-  instrNameDecTB fdec(InstrF, InstrFName);
-  instrNameDecTB ddec(InstrD, InstrDName);
-  instrNameDecTB edec(InstrE, InstrEName);
-  instrNameDecTB mdec(InstrM, InstrMName);
-  instrNameDecTB wdec(InstrW, InstrWName);
+  instrNameDecTB #(XLEN) fdec(InstrF, InstrFName);
+  instrNameDecTB #(XLEN) ddec(InstrD, InstrDName);
+  instrNameDecTB #(XLEN) edec(InstrE, InstrEName);
+  instrNameDecTB #(XLEN) mdec(InstrM, InstrMName);
+  instrNameDecTB #(XLEN) wdec(InstrW, InstrWName);
 endmodule
