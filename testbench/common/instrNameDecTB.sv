@@ -35,7 +35,7 @@ module instrNameDecTB #(parameter XLEN) (
   logic [11:0] imm;
   logic [4:0] rs2, rd, CRrs2;
   logic [1:0] compressedOp;
-  logic [2:0] compressed15_10;
+  logic [5:0] compressed15_10;
 
 
   assign op = instr[6:0];
