@@ -126,6 +126,8 @@ fi
 
 # Determine script directory to locate related scripts
 dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WALLY=$(dirname "$dir")
+export WALLY
 
 # Get Linux distro and version
 source "${dir}"/wally-distro-check.sh
