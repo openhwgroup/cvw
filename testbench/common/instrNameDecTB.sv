@@ -58,7 +58,8 @@ module instrNameDecTB #(parameter XLEN) (
     case (compressedOp)
       2'b00:
         casez (compressed15_10)
-          6'b000???: if (instr[12:7] != 8'b0) name = "C.ADDI4SPN";
+          6'b000???: if (instr[12:5] != 8'b0) name = "C.ADDI4SPN";
+                     else if(compressed15_10 == 6'b000000 & op == 7'b0000000 & funct3 == 3'b000) name = "BAD";
           6'b010???: name = "C.LW";
           6'b110???: name = "C.SW";
           6'b011???: if (XLEN == 32'd32) name = "C.FLW";
@@ -72,16 +73,15 @@ module instrNameDecTB #(parameter XLEN) (
           6'b100011: if (funct1 == 1'b0) name = "C.SH";
           6'b001???: name = "C.FLD";
           6'b101???: name = "C.FSD";
-          6'b000000: if(op == 7'b0000000 & funct3 == 3'b000) name = "BAD";
           default: name = "ILLEGAL";
         endcase
       2'b01:
         casez (compressed15_10)
-          6'b000000: if (rd == 5'b00000 & instr[6:2] == 5'b00000) name = "C.NOP";
-          6'b000???: if (rd != 5'b00000 & instr[6:2] != 5'b00000) name = "C.ADDI";
+          6'b000???: if (instr[12:10] == 3'b0 & rd == 5'b00000 & instr[6:2] == 5'b00000) name = "C.NOP";
+                     else if (rd != 5'b00000 & instr[6:2] != 5'b00000) name = "C.ADDI";
           6'b010???: if (rd != 5'b00000) name = "C.LI";
           6'b011???: if (rd != 5'b00000 & rd != 5'b00010 & instr[6:2] != 5'b00000) name = "C.LUI";
-          6'b011???: if (rd == 5'b00010 & instr[6:2] != 5'b00000) name = "C.ADDI16SP";
+                     else if (rd == 5'b00010 & instr[6:2] != 5'b00000) name = "C.ADDI16SP";
           6'b100?00: name = "C.SRLI";
           6'b100?01: name = "C.SRAI";
           6'b100?10: name = "C.ANDI";
@@ -96,13 +96,13 @@ module instrNameDecTB #(parameter XLEN) (
                      else if (XLEN == 32'd64 & rd != 5'b00000) name = "C.ADDIW";
           6'b100111: if (XLEN == 32'd64 & funct2 == 2'b00) name = "C.SUBW";
                      else if (XLEN == 32'd64 & funct2 == 2'b01) name = "C.ADDW";
-          6'b100111: if (funct5 == 5'b11000) name = "C.ZEXT.B";
-                      else if (funct5 == 5'b11001) name = "C.SEXT.B";
-                      else if (funct5 == 5'b11010) name = "C.ZEXT.H";
-                      else if (funct5 == 5'b11011) name = "C.SEXT.H";
-                      else if (funct5 == 5'b11101) name = "C.NOT";
-                      else if (funct2 == 2'b10) name = "C.MUL";
-                      else if (funct5 == 5'b11100) name = "C.ZEXT.W";
+                     else if (funct5 == 5'b11000) name = "C.ZEXT.B";
+                     else if (funct5 == 5'b11001) name = "C.SEXT.B";
+                     else if (funct5 == 5'b11010) name = "C.ZEXT.H";
+                     else if (funct5 == 5'b11011) name = "C.SEXT.H";
+                     else if (funct5 == 5'b11101) name = "C.NOT";
+                     else if (funct2 == 2'b10) name = "C.MUL";
+                     else if (funct5 == 5'b11100) name = "C.ZEXT.W";
           default: name = "ILLEGAL";
         endcase
       2'b10:
@@ -110,10 +110,10 @@ module instrNameDecTB #(parameter XLEN) (
           6'b000???: if (rd != 5'b00000) name = "C.SLLI";
           6'b010???: if (rd != 5'b00000) name = "C.LWSP";
           6'b1000??: if (rd != 5'b00000 & CRrs2 == 5'b00000 ) name = "C.JR";
-          6'b1000??: if (rd != 5'b00000 & CRrs2 != 5'b00000 ) name = "C.MV";
+                     else if (rd != 5'b00000 & CRrs2 != 5'b00000 ) name = "C.MV";
           6'b1001??: if (rd == 5'b00000 & CRrs2 == 5'b00000 ) name = "C.EBREAK";
-          6'b1001??: if (rd != 5'b00000 & CRrs2 == 5'b00000 ) name = "C.JALR";
-          6'b1001??: if (rd != 5'b00000 & CRrs2 != 5'b00000 ) name = "C.ADD";
+                     else if (rd != 5'b00000 & CRrs2 == 5'b00000 ) name = "C.JALR";
+                     else if (rd != 5'b00000 & CRrs2 != 5'b00000 ) name = "C.ADD";
           6'b110???: name = "C.SWSP";
           6'b011???: if (XLEN == 32'd32) name = "C.FLWSP";
                      else if (rd != 5'b00000) name = "C.LDSP";
