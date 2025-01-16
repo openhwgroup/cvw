@@ -233,7 +233,6 @@ bpredtests = [
 # list of tests not supported by ImperasDV yet that should be waived during lockstep testing
 lockstepwaivers = [
     "WALLY-q-01.S_ref.elf",     # Q extension is not supported by ImperasDV
-    "coverage_tlbMisaligned.elf",  # Issue 976: ImperasDV bug disagrees with Wally related to misaligned pages when PBMT makes page uncachable
     "WALLY-cbom-01.S_ref.elf" #,  # cbom extension is not supported by ImperasDV because there is no cache model in ImperasDV
 ]
 
