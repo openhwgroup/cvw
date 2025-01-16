@@ -669,7 +669,7 @@ module testbench;
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [31:0] InstrW;
   flopenr #(32)    InstrWReg(clk, reset, ~dut.core.ieu.dp.StallW,  InstrM, InstrW);
-  instrTrackerTB it(clk, reset, dut.core.ieu.dp.FlushE,
+  instrTrackerTB #(P.XLEN) it(clk, reset, dut.core.ieu.dp.FlushE,
                 dut.core.ifu.InstrRawF[31:0],
                 dut.core.ifu.InstrD, dut.core.ifu.InstrE,
                 InstrM,  InstrW,

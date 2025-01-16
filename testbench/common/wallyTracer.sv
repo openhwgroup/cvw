@@ -733,7 +733,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   int     file;
   string  LogFile;
   if(`STD_LOG) begin
-    instrNameDecTB NameDecoder(rvvi.insn[0][0], instrWName);
+    instrNameDecTB #(P.XLEN) NameDecoder(rvvi.insn[0][0], instrWName);
     initial begin
       LogFile = "logs/boottrace.log";
       file = $fopen(LogFile, "w");
