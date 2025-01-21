@@ -1,25 +1,26 @@
+# .SECONDEXPANSION:
+
 BUILDROOT := buildroot
 IMAGES := ${BUILDROOT}/output/images
 WALLYLINUX := $(WALLY)/linux
 DIS := ${IMAGES}/disassembly
 BR2_EXTERNAL_TREE := $(WALLYLINUX)/br2-external-tree
+LINUX_TEST_VECTORS := $(RISCV)/linux-testvectors
 
 # set sudo if needed depending on $RISCV
 SUDO := $(shell mkdir -p $(RISCV)/.test > /dev/null 2>&1 || echo sudo)
 
 # Device tree files
-DTS ?= $(shell find devicetree -type f -regex ".*\.dts" | sort)
-DTB := $(DTS:%.dts=%.dtb)
-DTB := $(foreach name, $(DTB), $(IMAGES)/$(shell basename $(name)))
+DTS ?= $(wildcard devicetree/*.dts)
+DTB := $(foreach name, $(DTS:%.dts=%.dtb), $(IMAGES)/$(notdir $(name)))
 
 # Disassembly stuff
 BINARIES := fw_jump.elf vmlinux busybox
-OBJDUMPS := $(foreach name, $(BINARIES), $(basename $(name) .elf))
-OBJDUMPS := $(foreach name, $(OBJDUMPS), $(DIS)/$(name).objdump)
+OBJDUMPS := $(foreach name, $(basename $(BINARIES) .elf), $(DIS)/$(name).objdump)
 
-.PHONY: all generate disassemble install clean cleanDTB check_write_permissions check_environment
+.PHONY: all check_environment check_write_permissions config Image disassemble generate install dumptvs clean cleanDTB
 
-all: check_environment check_write_permissions clean download Image disassemble install dumptvs
+all: check_write_permissions clean config Image disassemble install dumptvs
 
 check_environment: $(RISCV)
 ifeq ($(findstring :$(RISCV)/lib:,:$(LD_LIBRARY_PATH):),)
@@ -28,7 +29,7 @@ ifeq ($(findstring :$(RISCV)/lib:,:$(LD_LIBRARY_PATH):),)
 	&& exit 1)
 endif
 
-check_write_permissions:
+check_write_permissions: check_environment
 ifeq ($(SUDO), sudo)
 	@echo "Cannot write to '$(RISCV)'." \
 		"Using sudo (you may be prompted for your password several times throughout the install)"
@@ -38,24 +39,44 @@ endif
 		&& exit 1)
 	@$(SUDO) rm -r $(RISCV)/.test
 
-Image: check_environment
+Image: check_environment $(BUILDROOT)
 	bash -c "unset LD_LIBRARY_PATH; $(MAKE) -C $(BUILDROOT)"
-	$(MAKE) generate
+# $(MAKE) generate
 	@echo "Buildroot Image successfully generated."
 
-install: check_write_permissions check_environment
+install: check_write_permissions
 	$(SUDO) rm -rf $(RISCV)/$(BUILDROOT)
 	$(SUDO) mv $(BUILDROOT) $(RISCV)/$(BUILDROOT)
 	@echo "Buildroot successfully installed."
 
-dumptvs: check_write_permissions check_environment
-	$(SUDO) mkdir -p $(RISCV)/linux-testvectors
-	./genInitMem.sh
-	@echo "Testvectors successfully generated."
+TCP_PORT=1235
+RAW_RAM_FILE=${LINUX_TEST_VECTORS}/ramGDB.bin
+RAM_FILE=${LINUX_TEST_VECTORS}/ram.bin
+RAW_BOOTMEM_FILE=${LINUX_TEST_VECTORS}/bootmemGDB.bin
+BOOTMEM_FILE=${LINUX_TEST_VECTORS}/bootmem.bin
+
+MEM_FILES=${RAM_FILE} ${BOOTMEM_FILE}
+
+dumptvs: check_write_permissions ${MEM_FILES}
+
+${LINUX_TEST_VECTORS}/%.bin: ${LINUX_TEST_VECTORS}/%GDB.bin
+	truncate -s %8 $^ # Extend file to 8 byte multiple
+	objcopy --reverse-bytes=8 -F binary $^ $@ # Reverse bytes
+
+${LINUX_TEST_VECTORS}/%GDB.bin: | $(LINUX_TEST_VECTORS)
+	${WALLYLINUX}/qemuBoot.sh --gdb ${TCP_PORT} &
+	riscv64-unknown-elf-gdb -batch \
+		-ex "target remote :${TCP_PORT}" \
+		-ex "maintenance packet Qqemu.PhyMemMode:1" \
+		-ex "printf \"Creating ${RAW_BOOTMEM_FILE}\n\"" \
+		-ex "dump binary memory ${RAW_BOOTMEM_FILE} 0x1000 0x1fff" \
+		-ex "printf \"Creating ${RAW_RAM_FILE}\n\"" \
+		-ex "dump binary memory ${RAW_RAM_FILE} 0x80000000 0x8fffffff" \
+		-ex "kill" \
 
 generate: $(DTB) $(IMAGES)
 
-$(IMAGES)/%.dtb: ./devicetree/%.dts
+$(IMAGES)/%.dtb: ${WALLYLINUX}/devicetree/%.dts
 	dtc -I dts -O dtb $< > $@
 
 $(IMAGES):
@@ -68,42 +89,40 @@ $(RISCV):
 
 # Disassembly rules ---------------------------------------------------
 disassemble: check_environment
-	rm -rf $(BUILDROOT)/output/images/disassembly
-	find  $(BUILDROOT)/output/build/linux-* -maxdepth 1 -name "vmlinux" | xargs  cp -t $(BUILDROOT)/output/images/
-	mkdir -p $(DIS)
-	$(MAKE) $(OBJDUMPS)
-	# extract rootfs
-	mkdir -p $(BUILDROOT)/output/images/disassembly/rootfs
-	@echo "Ignore error about dev/console when extracting rootfs from rootfs.cpio"
-	-cpio -i -D $(BUILDROOT)/output/images/disassembly/rootfs < $(BUILDROOT)/output/images/rootfs.cpio
-	@echo "Disassembly successfully completed."
+	cp $(BUILDROOT)/output/build/linux-*/vmlinux $(IMAGES)
+	$(MAKE) $(OBJDUMPS) $(DIS)/rootfs
 
-$(DIS)/%.objdump: $(IMAGES)/%.elf
+$(DIS)/rootfs: $(IMAGES)/rootfs.cpio
+	@echo "Ignore error about dev/console when extracting rootfs from rootfs.cpio"
+	mkdir -p $(DIS)/rootfs
+	-cpio -i -D $(DIS)/rootfs < $(IMAGES)rootfs.cpio
+
+$(DIS)/%.objdump: $(IMAGES)/%.elf | $(DIS)
 	riscv64-unknown-elf-objdump -DS $< >> $@
 	$(WALLY)/bin/extractFunctionRadix.sh $@
 
-$(DIS)/%.objdump: $(IMAGES)/%
+$(DIS)/%.objdump: $(IMAGES)/% | $(DIS)
 	riscv64-unknown-elf-objdump -S $< >> $@
 	$(WALLY)/bin/extractFunctionRadix.sh $@
 
 $(IMAGES)/vmlinux:
-	linuxDir=$$(find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/linux-[0-9]+\.[0-9]+\.[0-9]+$$") ;\
-	cp $$linuxDir/vmlinux $@ ;\
+	cp $(BUILDROOT)/output/build/linux-*/vmlinux $@
 
 $(IMAGES)/busybox:
-	busyboxDir=$$(find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/busybox-[0-9]+\.[0-9]+\.[0-9]+$$") ;\
-	cp $$busyboxDir/busybox $@ ;\
+	cp $(BUILDROOT)/output/build/busybox-*/busybox $@
 
-# Generating new Buildroot directories --------------------------------
-download: $(BUILDROOT)
+config: $(BUILDROOT) $(BR2_EXTERNAL_TREE)/configs/wally_defconfig
 	$(MAKE) -C $(BUILDROOT) wally_defconfig BR2_EXTERNAL=$(BR2_EXTERNAL_TREE)
-	@echo "Buildroot successfully download."
 
 $(BUILDROOT):
 	git clone https://github.com/buildroot/buildroot.git $@
 	cd $@; git checkout 2024.11.x
 
-# ---------------------------------------------------------------------
+$(LINUX_TEST_VECTORS):
+	$(SUDO) mkdir -p $@
+
+$(DIS):
+	mkdir -p $@
 
 cleanDTB:
 	rm -f $(IMAGES)/*.dtb
