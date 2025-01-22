@@ -61,6 +61,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   logic                           TLBAccess;
   logic                           ImproperPrivilege;
   logic                           BadPBMT, BadNAPOT, BadReserved;
+  logic                           ReservedRW;
   logic                           InvalidAccess;
   logic                           PreUpdateDA, PrePageFault;
 
@@ -88,6 +89,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   assign BadPBMT = ((PTE_PBMT != 0) & ~(P.SVPBMT_SUPPORTED & ENVCFG_PBMTE)) | PTE_PBMT == 3; // PBMT must be zero if not supported; value of 3 is reserved
   assign BadNAPOT = PTE_N & (~P.SVNAPOT_SUPPORTED | ~NAPOT4);              // N must be be 0 if CVNAPOT is not supported or not 64 KiB contiguous region
   assign BadReserved = PTE_RESERVED;                                       // Reserved bits must be zero
+  assign ReservedRW = PTE_W & ~PTE_R;                                      // page fault on reserved encoding with R=0, W=1 per Privileged Spec 10.3.1
  
   // Check whether the access is allowed, page faulting if not.
   if (ITLB == 1) begin:itlb // Instruction TLB fault checking
@@ -95,9 +97,9 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
     // only execute non-user mode pages.
     assign ImproperPrivilege = ((PrivilegeModeW == P.U_MODE) & ~PTE_U) | ((PrivilegeModeW == P.S_MODE) & PTE_U);
     assign PreUpdateDA = ~PTE_A;
-    assign InvalidAccess = ~PTE_X;
+    assign InvalidAccess = ~PTE_X | ReservedRW;
  end else begin:dtlb // Data TLB fault checking
-    logic InvalidRead, InvalidWrite, ReservedEncoding;
+    logic InvalidRead, InvalidWrite;
     logic InvalidCBOM, InvalidCBOZ;
 
     // User mode may only load/store from user mode pages, and supervisor mode
@@ -112,8 +114,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
     assign InvalidWrite = WriteAccess & ~PTE_W;
     assign InvalidCBOM = (|CMOpM[2:0]) & (~PTE_R & (~STATUS_MXR | ~PTE_X));
     assign InvalidCBOZ = CMOpM[3] & ~PTE_W;
-    assign ReservedEncoding = PTE_W & ~PTE_R; // fault on reserved encoding with R=0, W=1 to match ImperasDV behavior
-    assign InvalidAccess = InvalidRead | InvalidWrite | InvalidCBOM | InvalidCBOZ | ReservedEncoding;
+    assign InvalidAccess = InvalidRead | InvalidWrite | InvalidCBOM | InvalidCBOZ | ReservedRW;
     assign PreUpdateDA = ~PTE_A | WriteAccess & ~PTE_D;
   end
 

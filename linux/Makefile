@@ -1,21 +1,11 @@
 BUILDROOT := buildroot
 IMAGES := ${BUILDROOT}/output/images
-WALLY := $(shell dirname $(shell pwd))
-WALLYLINUX := $(shell pwd)
+WALLYLINUX := $(WALLY)/linux
 DIS := ${IMAGES}/disassembly
-BRPACKAGES := $(WALLYLINUX)/buildroot-packages
-BR2023 := $(WALLYLINUX)/buildroot-config-src/buildroot-2023.05.1
+BR2_EXTERNAL_TREE := $(WALLYLINUX)/br2-external-tree
 
 # set sudo if needed depending on $RISCV
-ifeq ($(shell mkdir -p $(RISCV)/.test > /dev/null 2>&1 ; echo $$?), 0)
-	SUDO :=
-else
-	SUDO := sudo
-endif
-
-# Buildroot Config Stuff
-WALLYBOARDSRC := $(WALLYLINUX)/buildroot-config-src/wally
-WALLYBOARD := $(BUILDROOT)/board/wally
+SUDO := $(shell mkdir -p $(RISCV)/.test > /dev/null 2>&1 || echo sudo)
 
 # Device tree files
 DTS ?= $(shell find devicetree -type f -regex ".*\.dts" | sort)
@@ -105,19 +95,13 @@ $(IMAGES)/busybox:
 	cp $$busyboxDir/busybox $@ ;\
 
 # Generating new Buildroot directories --------------------------------
-download: $(WALLYBOARD)
-	cp $(WALLYBOARD)/main.config $(BUILDROOT)/.config
+download: $(BUILDROOT)
+	$(MAKE) -C $(BUILDROOT) wally_defconfig BR2_EXTERNAL=$(BR2_EXTERNAL_TREE)
 	@echo "Buildroot successfully download."
-
-# CONFIG DEPENDENCIES 2023.05.1 ---------------------------------------
-$(WALLYBOARD): $(BUILDROOT)
-	cp -r $(WALLYBOARDSRC) $(BUILDROOT)/board
-	cp $(BR2023)/main.config $(WALLYBOARD)/main.config
-	cp $(BR2023)/linux.config $(WALLYBOARD)/linux.config
 
 $(BUILDROOT):
 	git clone https://github.com/buildroot/buildroot.git $@
-	cd $@; git checkout 2023.05.x
+	cd $@; git checkout 2024.11.x
 
 # ---------------------------------------------------------------------
 

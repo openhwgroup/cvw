@@ -29,7 +29,7 @@ echo "Launching QEMU in replay mode!"
 (qemu-system-riscv64 \
 -M virt -m 256M -dtb "$DEVICE_TREE" \
 -nographic \
--bios "$imageDir"/fw_jump.elf -kernel "$imageDir"/Image -append "root=/dev/vda ro" -initrd "$imageDir"/rootfs.cpio \
+-bios "$imageDir"/fw_jump.bin -kernel "$imageDir"/Image -append "root=/dev/vda ro" -initrd "$imageDir"/rootfs.cpio \
 -gdb tcp::$tcpPort -S) \
 & riscv64-unknown-elf-gdb --quiet \
 -ex "set pagination off" \

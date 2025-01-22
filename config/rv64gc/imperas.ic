@@ -39,6 +39,7 @@
 
 # 64 KiB continuous huge pages supported
 --override cpu/Svpbmt=T
+--override cpu/aligned_uncached_PBMT=T # when PBMT designates a page as uncachable, require aligned accesses
 --override cpu/Svnapot_page_mask=65536
 
 # SV39 and SV48 supported
