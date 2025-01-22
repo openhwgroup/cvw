@@ -6,6 +6,7 @@ BR2_EXTERNAL_TREE := $(WALLYLINUX)/br2-external-tree
 LINUX_TESTVECTORS := $(RISCV)/linux-testvectors
 
 BUILDROOT_OUTPUTS := Image fw_jump.bin fw_jump.elf rootfs.cpio vmlinux busybox
+BUILDROOT_OUTPUTS := $(foreach name, $(BUILDROOT_OUTPUTS), $(IMAGE_DIR)/$(name))
 
 # Device tree files
 DTS ?= $(wildcard devicetree/*.dts)
@@ -51,7 +52,7 @@ build: $(BUILDROOT_OUTPUTS) devicetrees
 
 # Build buildroot itself
 # LD_LIBRARY_PATH must be unset to avoid conflicts between the host and cross compiler
-$(BUILDROOT_OUTPUTS): check_environment $(BUILDROOT)
+$(BUILDROOT_OUTPUTS) $(IMAGE_DIR): check_environment $(BUILDROOT)
 	bash -c "unset LD_LIBRARY_PATH; $(MAKE) -C $(BUILDROOT)"
 
 # Install buildroot to $RISCV
@@ -82,7 +83,7 @@ ${LINUX_TESTVECTORS}/%GDB.bin: | $(LINUX_TESTVECTORS)
 
 # Generate device tree binaries
 devicetrees: $(DTB)
-$(IMAGE_DIR)/%.dtb: ${WALLYLINUX}/devicetree/%.dts
+$(IMAGE_DIR)/%.dtb: ${WALLYLINUX}/devicetree/%.dts | $(IMAGE_DIR)
 	dtc -I dts -O dtb $< > $@
 
 # Create disassembly files
@@ -94,9 +95,13 @@ $(DISASSEMBLY_DIR)/rootfs: $(IMAGE_DIR)/rootfs.cpio
 	-cpio -id -D $(DISASSEMBLY_DIR)/rootfs -F $(IMAGE_DIR)rootfs.cpio
 
 # Disassemble binaries
-objdump_flags = $(if $(findstring .elf,$<),-SD,-S) # Add -D flag for .elf files
 $(DISASSEMBLY_DIR)/%.objdump: $(IMAGE_DIR)/% | $(DISASSEMBLY_DIR)
-	riscv64-unknown-elf-objdump $(objdump_flags) $< >> $@
+	riscv64-unknown-elf-objdump -S $< >> $@
+	$(WALLY)/bin/extractFunctionRadix.sh $@
+
+# Disassemble binaries ending in .elf
+$(DISASSEMBLY_DIR)/%.objdump: $(IMAGE_DIR)/%.elf | $(DISASSEMBLY_DIR)
+	riscv64-unknown-elf-objdump -SD $< >> $@
 	$(WALLY)/bin/extractFunctionRadix.sh $@
 
 # Load wally buildroot configuration

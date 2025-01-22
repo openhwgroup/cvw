@@ -10,6 +10,7 @@ BR2_GNU_MIRROR="http://ftpmirror.gnu.org"
 BR2_ENABLE_DEBUG=y
 BR2_DEBUG_3=y
 # BR2_STRIP_strip is not set
+BR2_PER_PACKAGE_DIRECTORIES=y
 # BR2_PIC_PIE is not set
 BR2_SSP_NONE=y
 BR2_RELRO_NONE=y
