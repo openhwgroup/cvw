@@ -91,8 +91,7 @@ disassemble: check_environment $(OBJDUMPS) $(DISASSEMBLY_DIR)/rootfs
 # Extract rootfs
 $(DISASSEMBLY_DIR)/rootfs: $(IMAGE_DIR)/rootfs.cpio
 	@echo "Ignore error about dev/console when extracting rootfs from rootfs.cpio"
-	mkdir -p $(DISASSEMBLY_DIR)/rootfs
-	-cpio -i -D $(DISASSEMBLY_DIR)/rootfs -F $(IMAGE_DIR)rootfs.cpio
+	-cpio -id -D $(DISASSEMBLY_DIR)/rootfs -F $(IMAGE_DIR)rootfs.cpio
 
 # Disassemble binaries
 objdump_flags = $(if $(findstring .elf,$<),-SD,-S) # Add -D flag for .elf files
