@@ -55,9 +55,9 @@ collect_functcov: remove_functcov_artifacts riscvdv_functcov combine_functcov
 
 riscvdv_functcov:
 	mkdir -p ${SIM}/questa/fcov_logs
-	mkdir -p ${SIM}/questa/fcov_ucdbs
+	mkdir -p ${SIM}/questa/fcov_ucdb
 	rm -rf ${SIM}/questa/fcov_logs/*
-	rm -rf ${SIM}/questa/fcov_ucdbs/*
+	rm -rf ${SIM}/questa/fcov_ucdb/*
 	$(MAKE) riscvdv test_name=riscv_arithmetic_basic_test				    >> ${SIM}/questa/fcov.log 2>&1
 	$(MAKE) riscvdv test_name=riscv_amo_test						          	>> ${SIM}/questa/fcov.log 2>&1
 	$(MAKE) riscvdv test_name=riscv_ebreak_debug_mode_test			    >> ${SIM}/questa/fcov.log 2>&1
@@ -109,7 +109,7 @@ combine_functcov:
 	grep "Total Coverage By Instance" ${SIM}/questa/fcov/fcov.log
 
 remove_functcov_artifacts:
-	rm -rf ${SIM}/questa/riscv.ucdb ${SIM}/questa/fcov.log ${SIM}/questa/covhtmlreport/ ${SIM}/questa/fcov_logs/ ${SIM}/questa/fcov_ucdbs/ ${SIM}/questa/fcov/
+	rm -rf ${SIM}/questa/riscv.ucdb ${SIM}/questa/fcov.log ${SIM}/questa/covhtmlreport/ ${SIM}/questa/fcov_logs/ ${SIM}/questa/fcov_ucdb/ ${SIM}/questa/fcov/
 
 benchmarks:
 	$(MAKE) -C ${WALLY}benchmarks/embench build
