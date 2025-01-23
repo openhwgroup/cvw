@@ -13,6 +13,7 @@
 #
 ##################################
 import sys
+import shutil
 import os
 import argparse
 import multiprocessing
@@ -21,10 +22,12 @@ from multiprocessing import Pool, TimeoutError as MPTimeoutError
 
 # Globals
 WALLY = os.environ.get('WALLY')
-regressionDir = WALLY + '/sim'
+regressionDir = f'{WALLY}/sim'
+archVerifDir = f'{WALLY}/addins/cvw-arch-verif'
 coveragesim = "questa"     # Questa is required for code/functional coverage
 defaultsim = "verilator"   # Default simulator for all other tests
 lockstepsim = "questa"
+testfloatsim = "questa"    # change to Verilator when Issue #707 about testfloat not running Verilator is resolved
 
 
 ##################################
@@ -54,18 +57,18 @@ standard_tests = [
 
 # Separate test for short buildroot run through OpenSBI UART output
 tests_buildrootshort = [
-                    ["buildroot", ["buildroot"], ["+INSTR_LIMIT=1400000"], # Instruction limit gets to first OpenSBI UART output
+                    ["buildroot", ["buildroot"], "--args +INSTR_LIMIT=1400000", # Instruction limit gets to first OpenSBI UART output
                         "OpenSBI v", "buildroot_uart.out"]
     ]
 
 # Separate test for full buildroot run
 tests_buildrootboot = [
-                    ["buildroot", ["buildroot"], ["+INSTR_LIMIT=600000000"], # boot entire buildroot Linux to login prompt
+                    ["buildroot", ["buildroot"], "--args +INSTR_LIMIT=600000000", # boot entire buildroot Linux to login prompt
                         "WallyHostname login: ", "buildroot_uart.out"]
     ]
 
 tests_buildrootbootlockstep = [
-                    ["buildroot", ["buildroot"], ["+INSTR_LIMIT=600000000 --lockstep"], # boot entire buildroot Linux to login prompt
+                    ["buildroot", ["buildroot"], "--args +INSTR_LIMIT=600000000 --lockstep", # boot entire buildroot Linux to login prompt
                         "WallyHostname login: ", "buildroot_uart.out"]
     ]
 
@@ -288,11 +291,11 @@ class bcolors:
 
 
 def addTests(testList, sim, coverStr, configs):
-    sim_logdir = f"{WALLY}/sim/{sim}/logs/"
+    sim_logdir = f"{regressionDir}/{sim}/logs/"
     for test in testList:
         config = test[0]
         suites = test[1]
-        args = f" --args {test[2]}" if len(test) >= 3 else ""
+        flags = f"{test[2]}" if len(test) >= 3 else ""
         gs = test[3] if len(test) >= 4 else "All tests ran without failures"
         cmdPrefix=f"wsim --sim {sim} {coverStr} {config}"
         for t in suites:
@@ -301,7 +304,7 @@ def addTests(testList, sim, coverStr, configs):
             tc = TestCase(
                     name=t,
                     variant=config,
-                    cmd=f"{cmdPrefix} {t} {args} > {sim_log}",
+                    cmd=f"{cmdPrefix} {t} {flags} > {sim_log}",
                     grepstr=gs,
                     grepfile = grepfile)
             configs.append(tc)
@@ -312,9 +315,9 @@ def addTestsByDir(testDir, config, sim, coverStr, configs, lockstepMode=0, breke
         print(f"Error: Directory not found: {testDir}")
         sys.exit(1)
 
-    sim_logdir = f"{WALLY}/sim/{sim}/logs/"
+    sim_logdir = f"{regressionDir}/{sim}/logs/"
     cmdPrefix = f"wsim --sim {sim} {coverStr} {'--lockstep' if lockstepMode else ''} {config}"
-    # fcov/ccov lockstep only runs on WALLY-COV-ALL.elf files; other lockstep runs on all files
+    # fcov/ccov only runs on WALLY-COV-ALL.elf files; other lockstep runs on all files
     fileEnd = "ALL.elf" if "cvw-arch-verif/tests" in testDir and "priv" not in testDir and (coverStr == "--fcov" or coverStr == "--ccov") else ".elf"
     if lockstepMode or coverStr == "--fcov":
         gs = "Mismatches            : 0"
@@ -344,12 +347,14 @@ def addTestsByDir(testDir, config, sim, coverStr, configs, lockstepMode=0, breke
                 configs.append(tc)
 
 def search_log_for_text(text, grepfile):
-    grepwarn = f"grep -i -H Warning: {grepfile}"
-    os.system(grepwarn)
-    greperr = f"grep -i -H Error: {grepfile}"
-    os.system(greperr)
-    grepcmd = f"grep -a -e '{text}' '{grepfile}' > /dev/null"
-    return os.system(grepcmd) == 0
+    with open(grepfile, errors="ignore") as file:
+        content = file.readlines()
+        for line in content:
+            if "warning:" in line.lower():
+                print(f"{bcolors.WARNING}{line.strip()}{bcolors.ENDC}")
+            if "error:" in line.lower():
+                print(f"{bcolors.FAIL}{line.strip()}{bcolors.ENDC}")
+        return any(text in line for line in content)
 
 def run_test_case(config, dryrun: bool = False):
     grepfile = config.grepfile
@@ -384,21 +389,19 @@ def parse_args():
 
 def process_args(args):
     coverStr = ""
-    nightMode = ""
-    sims = [defaultsim]
-
-    if args.nightly:
-        nightMode = "--nightly"
-        sims = ["questa", "verilator", "vcs"] # exercise all simulators; can omit a sim if no license is available
-
+    # exercise all simulators in nightly; can omit a sim if no license is available
+    sims = ["questa", "verilator", "vcs"] if args.nightly else [defaultsim]
     if args.ccov:
         coverStr = "--ccov"
         TIMEOUT_DUR = 20*60 # seconds
-        os.system('rm -f questa/ucdb/* questa/cov/*')
+        for d in ["ucdb", "cov"]:
+            shutil.rmtree(f"{regressionDir}/questa/{d}", ignore_errors=True)
+            os.makedirs(f"{regressionDir}/questa/{d}", exist_ok=True)
     elif args.fcov:
         coverStr = "--fcov"
         TIMEOUT_DUR = 8*60
-        os.system('rm -f questa/fcov_ucdb/* questa/fcov_logs/* questa/fcov/*')
+        shutil.rmtree(f"{regressionDir}/questa/fcov_ucdb", ignore_errors=True)
+        os.makedirs(f"{regressionDir}/questa/fcov_ucdb", exist_ok=True)
     elif args.buildroot:
         TIMEOUT_DUR = 60*1440 # 1 day
     elif args.testfloat or args.nightly:
@@ -406,18 +409,18 @@ def process_args(args):
     else:
         TIMEOUT_DUR = 10*60 # seconds
 
-    return nightMode, sims, coverStr, TIMEOUT_DUR
+    return sims, coverStr, TIMEOUT_DUR
 
 
-def selectTests(nightMode, args, sims, coverStr):
+def selectTests(args, sims, coverStr):
     # Run Lint
     configs = [
         TestCase(
             name="lints",
             variant="all",
-            cmd=f"lint-wally {nightMode} | tee {WALLY}/sim/verilator/logs/all_lints.log",
+            cmd=f"lint-wally {'--nightly' if args.nightly else ''} | tee {regressionDir}/verilator/logs/all_lints.log",
             grepstr="lints run with no errors or warnings",
-            grepfile = f"{WALLY}/sim/verilator/logs/all_lints.log")
+            grepfile = f"{regressionDir}/verilator/logs/all_lints.log")
         ]
 
     # run full buildroot boot simulation (slow) if buildroot flag is set.  Start it early to overlap with other tests
@@ -426,17 +429,17 @@ def selectTests(nightMode, args, sims, coverStr):
         addTests(tests_buildrootbootlockstep, lockstepsim, coverStr, configs) # lockstep with Questa and ImperasDV runs overnight
 
     if args.ccov:  # only run RV64GC tests on Questa in code coverage mode
-        addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/lockstep/rv64/", "rv64gc", coveragesim, coverStr, configs)
-        addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/lockstep/priv/rv64/", "rv64gc", coveragesim, coverStr, configs)
+        addTestsByDir(f"{archVerifDir}/tests/lockstep/rv64/", "rv64gc", coveragesim, coverStr, configs)
+        addTestsByDir(f"{archVerifDir}/tests/lockstep/priv/rv64/", "rv64gc", coveragesim, coverStr, configs)
         addTestsByDir(WALLY+"/tests/coverage/", "rv64gc", coveragesim, coverStr, configs)
     elif args.fcov:  # run tests in lockstep in functional coverage mode
-        addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/lockstep/rv32/", "rv32gc", coveragesim, coverStr, configs)
-        addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/lockstep/rv64/", "rv64gc", coveragesim, coverStr, configs)
-        addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/lockstep/priv/rv32/", "rv32gc", coveragesim, coverStr, configs)
-        addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/lockstep/priv/rv64/", "rv64gc", coveragesim, coverStr, configs)
-    elif (args.breker):
+        addTestsByDir(f"{archVerifDir}/tests/lockstep/rv32/", "rv32gc", coveragesim, coverStr, configs)
+        addTestsByDir(f"{archVerifDir}/tests/lockstep/rv64/", "rv64gc", coveragesim, coverStr, configs)
+        addTestsByDir(f"{archVerifDir}/tests/lockstep/priv/rv32/", "rv32gc", coveragesim, coverStr, configs)
+        addTestsByDir(f"{archVerifDir}/tests/lockstep/priv/rv64/", "rv64gc", coveragesim, coverStr, configs)
+    elif args.breker:
         addTestsByDir(WALLY+"/tests/breker/work", "breker", "questa", coverStr, configs, brekerMode=1)
-    else:
+    elif not args.testfloat:
         for sim in sims:
             if not (args.buildroot and sim == lockstepsim):  # skip short buildroot sim if running long one
                 addTests(tests_buildrootshort, sim, coverStr, configs)
@@ -451,17 +454,14 @@ def selectTests(nightMode, args, sims, coverStr):
         # addTests(bpredtests, defaultsim) # This is currently broken in regression due to something related to the new wsim script.
 
     # testfloat tests
-    if args.testfloat: # for testfloat alone, just run testfloat tests
-        configs = []
     if (args.testfloat or args.nightly): # for nightly, run testfloat along with others
-        testfloatsim = "questa" # change to Verilator when Issue #707 about testfloat not running Verilator is resolved
         testfloatconfigs = ["fdqh_rv64gc", "fdq_rv64gc", "fdh_rv64gc", "fd_rv64gc", "fh_rv64gc", "f_rv64gc", "fdqh_rv32gc", "f_rv32gc"]
         for config in testfloatconfigs:
             tests = ["div", "sqrt", "add", "sub", "mul", "cvtint", "cvtfp", "fma", "cmp"]
             if "f_" in config:
                 tests.remove("cvtfp")
             for test in tests:
-                sim_log = f"{WALLY}/sim/{testfloatsim}/logs/{config}_{test}.log"
+                sim_log = f"{regressionDir}/{testfloatsim}/logs/{config}_{test}.log"
                 tc = TestCase(
                         name=test,
                         variant=config,
@@ -475,13 +475,13 @@ def selectTests(nightMode, args, sims, coverStr):
             if "f_" in config:
                 tests.remove("cvtfp")
             for test in tests:
-                sim_log = f"{WALLY}/sim/{testfloatsim}/logs/{config}_{test}.log"
+                sim_log = f"{regressionDir}/{testfloatsim}/logs/{config}_{test}.log"
                 tc = TestCase(
                         name=test,
                         variant=config,
                         cmd=f"wsim --tb testbench_fp --sim {testfloatsim} {config} {test} > {sim_log}",
                         grepstr="All Tests completed with          0 errors",
-                        grepfile = f"{WALLY}/sim/{testfloatsim}/logs/{config}_{test}.log")
+                        grepfile = sim_log)
                 configs.append(tc)
     return configs
 
@@ -490,17 +490,17 @@ def makeDirs(sims):
     for sim in sims:
         dirs = [f"{regressionDir}/{sim}/wkdir", f"{regressionDir}/{sim}/logs"]
         for d in dirs:
-            os.system(f'rm -rf {d}')
+            shutil.rmtree(d)
             os.makedirs(d, exist_ok=True)
 
 
 def main(args):
-    nightMode, sims, coverStr, TIMEOUT_DUR = process_args(args)
-    configs = selectTests(nightMode, args, sims, coverStr)
+    sims, coverStr, TIMEOUT_DUR = process_args(args)
+    configs = selectTests(args, sims, coverStr)
     # Scale the number of concurrent processes to the number of test cases, but
     # max out at a limited number of concurrent processes to not overwhelm the system
-    # right now fcov, ccov, nightly all use Imperas
-    ImperasDVLicenseCount = 16 if args.ccov or args.fcov or args.nightly else 10000
+    # right now fcov and nightly use Imperas
+    ImperasDVLicenseCount = 16 if args.fcov or args.nightly else 10000
     with Pool(processes=min(len(configs),multiprocessing.cpu_count(), ImperasDVLicenseCount)) as pool:
         num_fail = 0
         results = {}
@@ -519,7 +519,7 @@ def main(args):
     if args.ccov:
         os.system(f"make -C {regressionDir}/QuestaCodeCoverage")
     if args.fcov:
-        os.system(f"make -C {WALLY}/addins/cvw-arch-verif merge")
+        os.system(f"make -C {archVerifDir} merge")
     # Count the number of failures
     if num_fail:
         print(f"{bcolors.FAIL}Regression failed with {num_fail} failed configurations{bcolors.ENDC}")
