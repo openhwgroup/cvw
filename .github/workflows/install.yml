@@ -19,6 +19,7 @@ on:
       - 'bin/wally-tool-chain-install.sh'
       - 'bin/wally-distro-check.sh'
       - 'bin/wally-package-install.sh'
+      - '.github/workflows/install.yml'
   schedule:
     - cron: "0 7 * * 3" # Run at 12:00 AM Pacific Time on Wednesdays
 
@@ -108,12 +109,12 @@ jobs:
         run: |
             if [ ${{ matrix.imageFamily }} == "debian" ]; then
               apt-get update
-              apt-get install -y sudo git
+              apt-get install -y git
             elif [ ${{ matrix.imageFamily }} == "redhat" ]; then
-              dnf install -y sudo git
+              dnf install -y git
               dnf install curl -y --allowerasing || true
             elif [ ${{ matrix.imageFamily }} == "suse" ]; then
-              zypper install -y sudo git
+              zypper install -y git
             fi
       # Only clone submodules needed for standard tests/regression to save space
       - uses: actions/checkout@v4
@@ -134,7 +135,9 @@ jobs:
       # Run main tool chain installation script, either as a user or system wide
       - name: Install
         run: |
-              if [ -z ${{ matrix.user }} ]; then
+              if [ ! -z ${{ matrix.image }} ]; then
+                ./bin/wally-tool-chain-install.sh --clean ${{ matrix.riscv_path }}
+              elif [ -z ${{ matrix.user }} ]; then
                 sudo ./bin/wally-tool-chain-install.sh --clean ${{ matrix.riscv_path }}
               else
                 sudo ./bin/wally-package-install.sh
@@ -164,7 +167,7 @@ jobs:
       # Only the linux-testvectors are needed, so remove the rest of the buildroot to save space
       - name: Remove Buildroot to Save Space
         run: |
-              sudo rm -rf $RISCV/buildroot/output/build
+              rm -rf $RISCV/buildroot/output/build || sudo rm -rf $RISCV/buildroot/output/build
               df -h
       # Run standard regression, skipping distros that are known to be broken with Verilator
       - name: Regression

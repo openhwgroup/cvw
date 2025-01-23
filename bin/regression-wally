@@ -257,9 +257,8 @@ testfloatdivconfigs = [
 
 # list of tests not supported by ImperasDV yet that should be waived during lockstep testing
 lockstepwaivers = [
-    "WALLY-q-01.S_ref.elf",        # Q extension is not supported by ImperasDV
-    "coverage_tlbMisaligned.elf",  # Issue 976: ImperasDV bug disagrees with Wally related to misaligned pages when PBMT makes page uncachable
-    "WALLY-cbom-01.S_ref.elf",     # cbom extension is not supported by ImperasDV because there is no cache model in ImperasDV
+    "WALLY-q-01.S_ref.elf",     # Q extension is not supported by ImperasDV
+    "WALLY-cbom-01.S_ref.elf" #,  # cbom extension is not supported by ImperasDV because there is no cache model in ImperasDV
 ]
 
 ##################################
@@ -427,14 +426,14 @@ def selectTests(nightMode, args, sims, coverStr):
         addTests(tests_buildrootbootlockstep, lockstepsim, coverStr, configs) # lockstep with Questa and ImperasDV runs overnight
 
     if args.ccov:  # only run RV64GC tests on Questa in code coverage mode
-        addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/rv64/", "rv64gc", coveragesim, coverStr, configs)
-        addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/priv/rv64/", "rv64gc", coveragesim, coverStr, configs)
+        addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/lockstep/rv64/", "rv64gc", coveragesim, coverStr, configs)
+        addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/lockstep/priv/rv64/", "rv64gc", coveragesim, coverStr, configs)
         addTestsByDir(WALLY+"/tests/coverage/", "rv64gc", coveragesim, coverStr, configs)
     elif args.fcov:  # run tests in lockstep in functional coverage mode
-        addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/rv32/", "rv32gc", coveragesim, coverStr, configs)
-        addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/rv64/", "rv64gc", coveragesim, coverStr, configs)
-        addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/priv/rv32/", "rv32gc", coveragesim, coverStr, configs)
-        addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/priv/rv64/", "rv64gc", coveragesim, coverStr, configs)
+        addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/lockstep/rv32/", "rv32gc", coveragesim, coverStr, configs)
+        addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/lockstep/rv64/", "rv64gc", coveragesim, coverStr, configs)
+        addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/lockstep/priv/rv32/", "rv32gc", coveragesim, coverStr, configs)
+        addTestsByDir(WALLY+"/addins/cvw-arch-verif/tests/lockstep/priv/rv64/", "rv64gc", coveragesim, coverStr, configs)
     elif (args.breker):
         addTestsByDir(WALLY+"/tests/breker/work", "breker", "questa", coverStr, configs, brekerMode=1)
     else:
