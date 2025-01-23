@@ -39,7 +39,7 @@ tests = [
 
 # Separate test for short buildroot run through OpenSBI UART output
 tests_buildrootshort = [
-                    ["buildroot", ["buildroot"], [f"+INSTR_LIMIT=1400000"], # Instruction limit gets to first OpenSBI UART output  
+                    ["buildroot", ["buildroot"], [f"+INSTR_LIMIT=1600000"], # Instruction limit gets to first OpenSBI UART output  
                         "OpenSBI v", "buildroot_uart.out"]
     ]
 
