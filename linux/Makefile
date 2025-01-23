@@ -28,7 +28,7 @@ BOOTMEM_FILE     := ${LINUX_TESTVECTORS}/bootmem.bin
 all: check_write_permissions clean config build disassemble install dumptvs
 
 # Check if the environment variables are set correctly
-check_environment: $(RISCV)
+check_environment: $(RISCV) $(WALLY)
 ifeq ($(findstring :$(RISCV)/lib:,:$(LD_LIBRARY_PATH):),)
 	@(echo "ERROR: Your environment variables are not set correctly." >&2 \
 	&& echo "Make sure to source setup.sh or install buildroot using the wally-tool-chain-install.sh script." >&2 \
@@ -132,3 +132,7 @@ clean:
 $(RISCV):
 	@ echo "ERROR: No $(RISCV) directory. Make sure you have installed the Wally Toolchain."
 	@ echo "and sourced setup.sh"
+
+# Check if the WALLY environment variable is set
+$(WALLY):
+	@ echo "ERROR: $$WALLY is not set. Make sure you have sourced setup.sh"
