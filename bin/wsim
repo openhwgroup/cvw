@@ -116,9 +116,9 @@ def prepSim(args, ElfFile):
         defineList.append("+define+USE_TREK_DV")
         argsList.append(f"+TREK_TBX_FILE={ElfFileNoExtension}.tbx")
     # Combine into a single string
-    args.args += " ".join(argsList)
-    args.params += " ".join(paramsList)
-    args.define += " ".join(defineList)
+    args.args += " " + " ".join(argsList)
+    args.params += " " + " ".join(paramsList)
+    args.define += " " + " ".join(defineList)
     flags = " ".join(flagsList)
     return flags, prefix
 
