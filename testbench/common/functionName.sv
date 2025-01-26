@@ -23,7 +23,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module FunctionName import cvw::*; #(parameter cvw_t P) (
+module functionName import cvw::*; #(parameter cvw_t P) (
   input logic reset,
   input logic clk,
   input string ProgramAddrMapFile,
