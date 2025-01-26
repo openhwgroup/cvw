@@ -153,18 +153,20 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
                                   endcase
                       7'b11100??: if (Funct3D == 3'b001 & Rs2D == 5'b00000)          
                                                 ControlsD = `FCTRLW'b0_1_10_00_000_0_0_0_0_0; // fclass
-                                  else if (Funct3D == 3'b000 & Rs2D == 5'b00000) 
-                                                ControlsD = `FCTRLW'b0_1_11_00_000_0_0_0_0_0; // fmv.x.w/d/h/q  fp to int register
-                                  else if (P.ZFA_SUPPORTED & P.XLEN == 32 & P.D_SUPPORTED & Funct7D[1:0] == 2'b01 & Funct3D == 3'b000 & Rs2D == 5'b00001) 
-                                                  ControlsD = `FCTRLW'b0_1_11_00_000_0_0_0_1_0; // fmvh.x.d  (Zfa) 
+                                  else if (Funct3D == 3'b000 & Rs2D == 5'b00000) begin
+                                    if (Fmt[1:0] == 2'b00 | Fmt[1:0] == 2'b10 | (P.XLEN == 64 & Fmt[1:0] == 2'b01)) 
+                                                ControlsD = `FCTRLW'b0_1_11_00_000_0_0_0_0_0; // fmv.x.w/d/h  fp to int register (double only in RV64)
+                                  end else if (P.ZFA_SUPPORTED & P.XLEN == 32 & P.D_SUPPORTED & Funct7D[1:0] == 2'b01 & Funct3D == 3'b000 & Rs2D == 5'b00001) 
+                                                ControlsD = `FCTRLW'b0_1_11_00_000_0_0_0_1_0; // fmvh.x.d  (Zfa) 
                                   //  Q not supported in RV64GC
                                   // coverage off   
                                   else if (P.ZFA_SUPPORTED & P.XLEN == 64 & P.Q_SUPPORTED & Funct7D[1:0] == 2'b11 & Funct3D == 3'b000 & Rs2D == 5'b00001) 
-                                                  ControlsD = `FCTRLW'b0_1_11_00_000_0_0_0_1_0; // fmvh.x.q  (Zfa)
+                                                ControlsD = `FCTRLW'b0_1_11_00_000_0_0_0_1_0; // fmvh.x.q  (Zfa)
                                   // coverage on
-                      7'b11110??: if (Funct3D == 3'b000 & Rs2D == 5'b00000) 
-                                                ControlsD = `FCTRLW'b1_0_00_00_011_0_0_0_0_0; // fmv.w/d/h/q.x  int to fp reg
-                                  else if (P.ZFA_SUPPORTED & Funct3D == 3'b000 & Rs2D == 5'b00001) 
+                      7'b11110??: if (Funct3D == 3'b000 & Rs2D == 5'b00000) begin
+                                    if (Fmt[1:0] == 2'b00 | Fmt[1:0] == 2'b10 | (P.XLEN == 64 & Fmt[1:0] == 2'b01)) 
+                                                ControlsD = `FCTRLW'b1_0_00_00_011_0_0_0_0_0; // fmv.w/d/h.x  int to fp reg (double only in RV64)
+                                  end else if (P.ZFA_SUPPORTED & Funct3D == 3'b000 & Rs2D == 5'b00001) 
                                                 ControlsD = `FCTRLW'b1_0_00_00_111_0_0_0_1_0; // fli  (Zfa)
                       7'b0100000: if (Rs2D[4:2] == 3'b000 & SupportedFmt2 & Rs2D[1:0] != 2'b00)
                                                 ControlsD = `FCTRLW'b1_0_01_00_000_0_0_0_0_0; // fcvt.s.(d/q/h)
@@ -196,54 +198,54 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
                       7'b1101000: case(Rs2D)
                                     5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0_0_0; // fcvt.s.w   w->s
                                     5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0_0_0; // fcvt.s.wu wu->s
-                                    5'b00010:    ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0_0_0; // fcvt.s.l   l->s
-                                    5'b00011:    ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0_0_0; // fcvt.s.lu lu->s
+                                    5'b00010:    if (P.XLEN == 64) ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0_0_0; // fcvt.s.l   l->s
+                                    5'b00011:    if (P.XLEN == 64) ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0_0_0; // fcvt.s.lu lu->s
                                   endcase
                       7'b1100000: case(Rs2D)
                                     5'b00000:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1_0_0; // fcvt.w.s   s->w
                                     5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1_0_0; // fcvt.wu.s  s->wu
-                                    5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1_0_0; // fcvt.l.s   s->l
-                                    5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1_0_0; // fcvt.lu.s  s->lu
+                                    5'b00010:    if (P.XLEN == 64) ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1_0_0; // fcvt.l.s   s->l
+                                    5'b00011:    if (P.XLEN == 64) ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1_0_0; // fcvt.lu.s  s->lu
                                   endcase
                       7'b1101001: case(Rs2D)
                                     5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0_0_0; // fcvt.d.w   w->d
                                     5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0_0_0; // fcvt.d.wu wu->d
-                                    5'b00010:    ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0_0_0; // fcvt.d.l   l->d
-                                    5'b00011:    ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0_0_0; // fcvt.d.lu lu->d
+                                    5'b00010:    if (P.XLEN == 64) ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0_0_0; // fcvt.d.l   l->d
+                                    5'b00011:    if (P.XLEN == 64) ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0_0_0; // fcvt.d.lu lu->d
                                   endcase
                       7'b1100001: case(Rs2D)
                                     5'b00000:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1_0_0; // fcvt.w.d   d->w
                                     5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1_0_0; // fcvt.wu.d  d->wu
-                                    5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1_0_0; // fcvt.l.d   d->l
-                                    5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1_0_0; // fcvt.lu.d  d->lu
+                                    5'b00010:    if (P.XLEN == 64) ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1_0_0; // fcvt.l.d   d->l
+                                    5'b00011:    if (P.XLEN == 64) ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1_0_0; // fcvt.lu.d  d->lu
                                     5'b01000: if (P.ZFA_SUPPORTED & P.D_SUPPORTED & Funct3D == 3'b001) 
                                                  ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1_1_0; // fcvtmod.w.d (Zfa)
                                   endcase
                       7'b1101010: case(Rs2D)
                                     5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0_0_0; // fcvt.h.w   w->h
                                     5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0_0_0; // fcvt.h.wu wu->h
-                                    5'b00010:    ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0_0_0; // fcvt.h.l   l->h
-                                    5'b00011:    ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0_0_0; // fcvt.h.lu lu->h
+                                    5'b00010:    if (P.XLEN == 64) ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0_0_0; // fcvt.h.l   l->h
+                                    5'b00011:    if (P.XLEN == 64) ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0_0_0; // fcvt.h.lu lu->h
                                   endcase
                       7'b1100010: case(Rs2D)
                                     5'b00000:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1_0_0; // fcvt.w.h   h->w
                                     5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1_0_0; // fcvt.wu.h  h->wu
-                                    5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1_0_0; // fcvt.l.h   h->l
-                                    5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1_0_0; // fcvt.lu.h  h->lu
+                                    5'b00010:    if (P.XLEN == 64) ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1_0_0; // fcvt.l.h   h->l
+                                    5'b00011:    if (P.XLEN == 64) ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1_0_0; // fcvt.lu.h  h->lu
                                   endcase
                       // Not covered in testing because rv64gc does not support quad precision
                       // coverage off
                       7'b1101011: case(Rs2D)
                                     5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0_0_0; // fcvt.q.w   w->q
                                     5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0_0_0; // fcvt.q.wu wu->q
-                                    5'b00010:    ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0_0_0; // fcvt.q.l   l->q
-                                    5'b00011:    ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0_0_0; // fcvt.q.lu lu->q
+                                    5'b00010:    if (P.XLEN == 64) ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0_0_0; // fcvt.q.l   l->q
+                                    5'b00011:    if (P.XLEN == 64) ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0_0_0; // fcvt.q.lu lu->q
                                   endcase
                       7'b1100011: case(Rs2D)
                                     5'b00000:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1_0_0; // fcvt.w.q   q->w
                                     5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1_0_0; // fcvt.wu.q  q->wu
-                                    5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1_0_0; // fcvt.l.q   q->l
-                                    5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1_0_0; // fcvt.lu.q  q->lu
+                                    5'b00010:    if (P.XLEN == 64) ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1_0_0; // fcvt.l.q   q->l
+                                    5'b00011:    if (P.XLEN == 64) ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1_0_0; // fcvt.lu.q  q->lu
                                   endcase
                       // coverage off
                       // Not covered in testing because rv64gc is not RV64Q or RV32D

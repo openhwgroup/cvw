@@ -19,6 +19,7 @@ on:
       - 'bin/wally-tool-chain-install.sh'
       - 'bin/wally-distro-check.sh'
       - 'bin/wally-package-install.sh'
+      - '.github/workflows/install.yml'
   schedule:
     - cron: "0 7 * * 3" # Run at 12:00 AM Pacific Time on Wednesdays
 
@@ -38,25 +39,46 @@ jobs:
           - name: ubuntu-20.04
             os: ubuntu-20.04
             container: null
+            regressionFail: true
           - name: ubuntu-22.04
             os: ubuntu-22.04
             container: null
           - name: ubuntu-24.04
             os: ubuntu-24.04
             container: null
+          # Debian Installations
+          - name: debian-12
+            os: ubuntu-latest
+            image: debian:12
+            imageFamily: debian
+          - name: debian-11
+            os: ubuntu-latest
+            image: debian:11
+            imageFamily: debian
           # Red Hat Installations
           - name: rocky-8
             os: ubuntu-latest
             image: rockylinux:8
+            imageFamily: redhat
+            regressionFail: true
           - name: rocky-9
             os: ubuntu-latest
             image: rockylinux:9
+            imageFamily: redhat
           - name: almalinux-8
             os: ubuntu-latest
             image: almalinux:8
+            imageFamily: redhat
+            regressionFail: true
           - name: almalinux-9
             os: ubuntu-latest
             image: almalinux:9
+            imageFamily: redhat
+          # SUSE Installations
+          - name: opensuse-15.6
+            os: ubuntu-latest
+            image: opensuse/leap:15.6
+            imageFamily: suse
           # User level installation
           - name: user-install
             os: ubuntu-latest
@@ -82,11 +104,18 @@ jobs:
 
     steps:
       # Docker images need git installed or the checkout action fails
-      - name: Install Dependencies for Red Hat
+      - name: Install Dependencies for Container Image
         if: ${{ matrix.image != null }}
         run: |
-            dnf install -y sudo git
-            dnf install curl -y --allowerasing || true
+            if [ ${{ matrix.imageFamily }} == "debian" ]; then
+              apt-get update
+              apt-get install -y git
+            elif [ ${{ matrix.imageFamily }} == "redhat" ]; then
+              dnf install -y git
+              dnf install curl -y --allowerasing || true
+            elif [ ${{ matrix.imageFamily }} == "suse" ]; then
+              zypper install -y git
+            fi
       # Only clone submodules needed for standard tests/regression to save space
       - uses: actions/checkout@v4
       - name: Clone Necessary Submodules
@@ -106,7 +135,9 @@ jobs:
       # Run main tool chain installation script, either as a user or system wide
       - name: Install
         run: |
-              if [ -z ${{ matrix.user }} ]; then
+              if [ ! -z ${{ matrix.image }} ]; then
+                ./bin/wally-tool-chain-install.sh --clean ${{ matrix.riscv_path }}
+              elif [ -z ${{ matrix.user }} ]; then
                 sudo ./bin/wally-tool-chain-install.sh --clean ${{ matrix.riscv_path }}
               else
                 sudo ./bin/wally-package-install.sh
@@ -136,16 +167,16 @@ jobs:
       # Only the linux-testvectors are needed, so remove the rest of the buildroot to save space
       - name: Remove Buildroot to Save Space
         run: |
-              sudo rm -rf $RISCV/buildroot/output/build
+              rm -rf $RISCV/buildroot/output/build || sudo rm -rf $RISCV/buildroot/output/build
               df -h
       # Run standard regression, skipping distros that are known to be broken with Verilator
       - name: Regression
-        if: ${{ matrix.name != 'ubuntu-20.04' && matrix.name != 'rocky-8' && matrix.name != 'almalinux-8'}}
+        if: ${{ matrix.regressionFail != true }}
         run: |
               source setup.sh
               regression-wally
       - name: Lint + wsim Test Only (for distros with broken Verilator sim)
-        if: ${{ matrix.name == 'ubuntu-20.04' || matrix.name == 'rocky-8' || matrix.name == 'almalinux-8'}}
+        if: ${{ matrix.regressionFail == true }}
         run: |
               source setup.sh
               mkdir -p $WALLY/sim/verilator/logs/

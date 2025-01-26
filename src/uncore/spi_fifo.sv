@@ -26,7 +26,7 @@ module spi_fifo #(parameter M=3, N=8)(                 // 2^M entries of N bits 
  
     assign rdata = mem[raddr];
     always_ff @(posedge PCLK)
-        if (winc & ~wfull) mem[waddr] <= wdata;
+        if (winc & wen & ~wfull) mem[waddr] <= wdata;
 
     // write and read are enabled 
     always_ff @(posedge PCLK)

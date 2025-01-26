@@ -31,7 +31,7 @@
 localparam XLEN = 32'd32;
 
 // IEEE 754 compliance
-localparam IEEE754 = 0;
+localparam logic IEEE754 = 0;
 
 // RISC-V configuration per specification
 // Base instruction set (defaults to I if E is not supported)
@@ -147,7 +147,6 @@ localparam WFI_TIMEOUT_BIT = 32'd16;
 // Peripheral Physical Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
-// *** each of these is `PA_BITS wide. is this paramaterizable INSIDE the config file?
 localparam logic DTIM_SUPPORTED = 1;
 localparam logic [63:0] DTIM_BASE        = 64'h80000000;
 localparam logic [63:0] DTIM_RANGE       = 64'h007FFFFF;
@@ -157,11 +156,11 @@ localparam logic [63:0] IROM_RANGE       = 64'h007FFFFF;
 localparam logic BOOTROM_SUPPORTED = 0;
 localparam logic [63:0] BOOTROM_BASE     = 64'h00001000;
 localparam logic [63:0] BOOTROM_RANGE    = 64'h00000FFF;
-localparam BOOTROM_PRELOAD = 1'b0;
+localparam logic BOOTROM_PRELOAD = 1'b0;
 localparam logic UNCORE_RAM_SUPPORTED = 0;
 localparam logic [63:0] UNCORE_RAM_BASE  = 64'h80000000;
 localparam logic [63:0] UNCORE_RAM_RANGE = 64'h07FFFFFF;
-localparam UNCORE_RAM_PRELOAD = 1'b0;
+localparam logic UNCORE_RAM_PRELOAD = 1'b0;
 localparam logic EXT_MEM_SUPPORTED = 0;
 localparam logic [63:0] EXT_MEM_BASE     = 64'h80000000;
 localparam logic [63:0] EXT_MEM_RANGE    = 64'h07FFFFFF;
@@ -179,7 +178,7 @@ localparam logic [63:0] PLIC_BASE        = 64'h0C000000;
 localparam logic [63:0] PLIC_RANGE       = 64'h03FFFFFF;
 localparam logic SDC_SUPPORTED = 0;
 localparam logic [63:0] SDC_BASE         = 64'h00013000;
-localparam logic [63:0] SDC_RANGE        = 64'h0000007F;
+localparam logic [63:0] SDC_RANGE        = 64'h00000FFF;
 localparam logic SPI_SUPPORTED = 1;
 localparam logic [63:0] SPI_BASE         = 64'h10040000;
 localparam logic [63:0] SPI_RANGE        = 64'h00000FFF;

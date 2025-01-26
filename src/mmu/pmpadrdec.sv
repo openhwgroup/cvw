@@ -35,9 +35,11 @@ module pmpadrdec import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.PA_BITS-1:0]  PhysicalAddress,
   input  logic [7:0]            PMPCfg,
   input  logic [P.PA_BITS-3:0]  PMPAdr,
+  input  logic                  FirstMatch,
   input  logic                  PAgePMPAdrIn,
   output logic                  PAgePMPAdrOut,
   output logic                  Match, 
+  output logic [P.PA_BITS-1:0]  PMPTop,
   output logic                  L, X, W, R
 );
   
@@ -50,7 +52,8 @@ module pmpadrdec import cvw::*;  #(parameter cvw_t P) (
   logic                         PAltPMPAdr;
   logic [P.PA_BITS-1:0]         CurrentAdrFull;
   logic [1:0]                   AdrMode;
-
+  logic [P.PA_BITS-1:0]         PMPTop1;
+ 
   assign AdrMode = PMPCfg[4:3];
 
   // The two lsb of the physical address don't matter for this checking.
@@ -71,20 +74,22 @@ module pmpadrdec import cvw::*;  #(parameter cvw_t P) (
   assign NAMask[P.PA_BITS-1:2] = (PMPAdr + {{(P.PA_BITS-3){1'b0}}, (AdrMode == NAPOT)}) ^ PMPAdr;
   // form a mask where the bottom k bits are 1, corresponding to a size of 2^k bytes for this memory region. 
   // This assumes we're using at least an NA4 region, but works for any size NAPOT region.
-  assign NABase = {(PMPAdr & ~NAMask[P.PA_BITS-1:2]), 2'b00}; // base physical address of the pmp. 
-  
+  assign NABase = {(PMPAdr & ~NAMask[P.PA_BITS-1:2]), 2'b00}; // base physical address of the pmp region
   assign NAMatch = &((NABase ~^ PhysicalAddress) | NAMask); // check if upper bits of base address match, ignore lower bits correspoonding to inside the memory range
 
+  // finally pick the appropriate match for the access type
   assign Match = (AdrMode == TOR) ? TORMatch : 
                  (AdrMode == NA4 | AdrMode == NAPOT) ? NAMatch :
                  1'b0;
 
+  // Report top of region for first matching region
+  assign PMPTop1 = {PMPAdr,2'b00} | NAMask; // top of the pmp region.  All 1s in the lower bits.  Used to check the address doesn't pass the top
+  assign PMPTop = FirstMatch ? PMPTop1 : '0; // AND portion of distributed AND-OR mux (OR portion in pmpchhecker)
+
+  // PMP should match but fail if the size is too big (8-byte accesses spanning to TOR or NA4 region)
   assign L = PMPCfg[7];
   assign X = PMPCfg[2];
   assign W = PMPCfg[1];
   assign R = PMPCfg[0];
 
-  // known bug: The size of the access is not yet checked.  For example, if an NA4 entry matches 0xC-0xF and the system
-  // attempts an 8-byte access to 0x8, the access should fail (see page 60 of privileged specification 20211203). This
-  // implementation will not detect the failure.
- endmodule
+endmodule
