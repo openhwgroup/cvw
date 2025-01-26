@@ -38,7 +38,7 @@ import cvw::*;
 module testbench;
   /* verilator lint_off WIDTHTRUNC */
   /* verilator lint_off WIDTHEXPAND */
-  parameter DEBUG=1;
+  parameter DEBUG=0;
   parameter PrintHPMCounters=0;
   parameter BPRED_LOGGER=0;
   parameter I_CACHE_ADDR_LOGGER=0;
