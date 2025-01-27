@@ -428,13 +428,13 @@ fi
 # The RISC-V Sail Model is the golden reference model for RISC-V. It is written in Sail (described above)
 section_header "Installing/Updating RISC-V Sail Model"
 STATUS="riscv-sail-model"
-if git_check "sail-riscv" "https://github.com/riscv/sail-riscv.git" "$RISCV/bin/riscv_sim_RV32"; then
+if git_check "sail-riscv" "https://github.com/riscv/sail-riscv.git" "$RISCV/bin/riscv_sim_rv32d"; then
     cd "$RISCV"/sail-riscv
-    git reset --hard && git clean -f && git checkout master && git pull
-    ARCH=RV64 make -j "${NUM_THREADS}" c_emulator/riscv_sim_RV64  2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
-    ARCH=RV32 make -j "${NUM_THREADS}" c_emulator/riscv_sim_RV32 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
-    cp -f c_emulator/riscv_sim_RV64 "$RISCV"/bin/riscv_sim_RV64
-    cp -f c_emulator/riscv_sim_RV32 "$RISCV"/bin/riscv_sim_RV32
+    git reset --hard && git clean -f && git checkout master && git pull && rm -rf build
+    cmake -S . -B build -DCMAKE_RELEASE_TYPE=RelWithDebInfo -GNinja 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+    cmake --build build 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+    cp -f build/c_emulator/riscv_sim_rv64d "$RISCV"/bin/riscv_sim_rv64d
+    cp -f build/c_emulator/riscv_sim_rv32d "$RISCV"/bin/riscv_sim_rv32d
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf sail-riscv
