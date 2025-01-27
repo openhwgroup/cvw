@@ -84,11 +84,11 @@ module loggers import cvw::*; #(parameter cvw_t P,
 
     always_comb
       if (TEST == "embench") begin  
-        StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_trigger";
-        EndSampleFirst = FunctionName.FunctionName.FunctionName == "stop_trigger";
+        StartSampleFirst = functionName.functionName.FunctionName == "start_trigger";
+        EndSampleFirst = functionName.functionName.FunctionName == "stop_trigger";
       end else if (TEST == "coremark") begin
-        StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_time";
-        EndSampleFirst = FunctionName.FunctionName.FunctionName == "stop_time";
+        StartSampleFirst = functionName.functionName.FunctionName == "start_time";
+        EndSampleFirst = functionName.functionName.FunctionName == "stop_time";
       end else begin
         StartSampleFirst = reset;
         EndSampleFirst = '0;
@@ -106,22 +106,22 @@ module loggers import cvw::*; #(parameter cvw_t P,
     if(TEST == "embench") begin
       // embench runs warmup then runs start_trigger
       // embench end with stop_trigger.
-      //assign StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_trigger";
+      //assign StartSampleFirst = functionName.functionName.FunctionName == "start_trigger";
       //flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
       //assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
 
-      //assign EndSampleFirst = FunctionName.FunctionName.FunctionName == "stop_trigger";
+      //assign EndSampleFirst = functionName.functionName.FunctionName == "stop_trigger";
       flopr #(1) EndSampleReg(clk, reset, EndSampleFirst, EndSampleDelayed);
       assign EndSample = EndSampleFirst & ~ EndSampleDelayed;
 
     end else if(TEST == "coremark") begin
       // embench runs warmup then runs start_trigger
 	    // embench end with stop_trigger.
-      //assign StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_time";
+      //assign StartSampleFirst = functionName.functionName.FunctionName == "start_time";
       //flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
       //assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
 
-      //assign EndSampleFirst = FunctionName.FunctionName.FunctionName == "stop_time";
+      //assign EndSampleFirst = functionName.functionName.FunctionName == "stop_time";
       flopr #(1) EndSampleReg(clk, reset, EndSampleFirst, EndSampleDelayed);
       assign EndSample = EndSampleFirst & ~ EndSampleDelayed;
 

@@ -53,7 +53,7 @@ add wave -noupdate -group {Execution Stage} /testbench/dut/core/ifu/PCE
 add wave -noupdate -group {Execution Stage} /testbench/dut/core/ifu/InstrE
 add wave -noupdate -group {Execution Stage} /testbench/InstrEName
 add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/c/InstrValidE
-add wave -noupdate -group {Execution Stage} /testbench/FunctionName/FunctionName/FunctionName
+add wave -noupdate -group {Execution Stage} /testbench/functionName/functionName/FunctionName
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/PCM
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/InstrM
 add wave -noupdate -expand -group {Memory Stage} /testbench/InstrMName
