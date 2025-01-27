@@ -297,14 +297,14 @@ def addTests(testList, sim, coverStr, configs):
         suites = test[1]
         flags = f"{test[2]}" if len(test) >= 3 else ""
         gs = test[3] if len(test) >= 4 else "All tests ran without failures"
-        cmdPrefix=f"wsim --sim {sim} {coverStr} {config}"
+        cmdPrefix=f"wsim --sim {sim} {coverStr} {flags} {config}"
         for t in suites:
             sim_log = f"{sim_logdir}{config}_{t}.log"
             grepfile = sim_logdir + test[4] if len(test) >= 5 else sim_log
             tc = TestCase(
                     name=t,
                     variant=config,
-                    cmd=f"{cmdPrefix} {t} {flags} > {sim_log}",
+                    cmd=f"{cmdPrefix} {t} > {sim_log}",
                     grepstr=gs,
                     grepfile = grepfile)
             configs.append(tc)
@@ -456,22 +456,11 @@ def selectTests(args, sims, coverStr):
     # testfloat tests
     if (args.testfloat or args.nightly): # for nightly, run testfloat along with others
         testfloatconfigs = ["fdqh_rv64gc", "fdq_rv64gc", "fdh_rv64gc", "fd_rv64gc", "fh_rv64gc", "f_rv64gc", "fdqh_rv32gc", "f_rv32gc"]
-        for config in testfloatconfigs:
-            tests = ["div", "sqrt", "add", "sub", "mul", "cvtint", "cvtfp", "fma", "cmp"]
-            if "f_" in config:
-                tests.remove("cvtfp")
-            for test in tests:
-                sim_log = f"{regressionDir}/{testfloatsim}/logs/{config}_{test}.log"
-                tc = TestCase(
-                        name=test,
-                        variant=config,
-                        cmd=f"wsim --tb testbench_fp --sim {testfloatsim} {config} {test} > {sim_log}",
-                        grepstr="All Tests completed with          0 errors",
-                        grepfile = sim_log)
-                configs.append(tc)
-        for config in testfloatdivconfigs:
-            # div test case
-            tests = ["div", "sqrt", "cvtint", "cvtfp"]
+        for config in testfloatconfigs + testfloatdivconfigs:
+            if config in testfloatconfigs:
+                tests = ["div", "sqrt", "add", "sub", "mul", "cvtint", "cvtfp", "fma", "cmp"]
+            else:
+                tests = ["div", "sqrt", "cvtint", "cvtfp"]
             if "f_" in config:
                 tests.remove("cvtfp")
             for test in tests:
