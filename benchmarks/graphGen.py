@@ -10,7 +10,7 @@ from plotly.subplots import make_subplots
 
 debug = True
 
-def loadCoremark():
+def loadCoremark(coremarkData):
     """loads the coremark data dictionary"""
     coremarkPath = "riscv-coremark/work/coremark.sim.log"
     
@@ -93,7 +93,7 @@ def main():
     embenchSpeedOpt_SpeedData = {}
     embenchSizeOpt_SizeData = {}
     embenchSpeedOpt_SizeData = {}
-    # coremarkData = loadCoremark()
+    coremarkData = loadCoremark(coremarkData)
     embenchSpeedOpt_SpeedData = loadEmbench("embench/wallySpeedOpt_speed.json", embenchSpeedOpt_SpeedData)
     embenchSizeOpt_SpeedData = loadEmbench("embench/wallySizeOpt_speed.json", embenchSizeOpt_SpeedData)
     embenchSpeedOpt_SizeData = loadEmbench("embench/wallySpeedOpt_size.json", embenchSpeedOpt_SizeData)

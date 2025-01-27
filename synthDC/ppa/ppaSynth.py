@@ -19,7 +19,7 @@ def deleteRedundant(synthsToRun):
     synthStr = "rm -rf runs/{}_{}_rv32e_{}_{}_*"
     for synth in synthsToRun:   
         bashCommand = synthStr.format(*synth)
-        outputCPL = subprocess.check_output(['bash','-c', bashCommand])
+        subprocess.check_output(['bash','-c', bashCommand])
 
 def freqSweep(module, width, tech):
     synthsToRun = []

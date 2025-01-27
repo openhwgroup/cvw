@@ -275,7 +275,7 @@ def BarGraph(seriesDict, xlabelList, BenchPerRow, FileName, IncludeLegend):
     # the space between groups is 1
     EffectiveNumInGroup = NumberInGroup + 2
     barWidth = 1 / EffectiveNumInGroup
-    fig = plt.subplots(figsize = (EffectiveNumInGroup*BenchPerRow/8, 4))
+    _ = plt.subplots(figsize = (EffectiveNumInGroup*BenchPerRow/8, 4))
     colors = ['blue', 'blue', 'blue', 'blue', 'blue', 'blue', 'black', 'black', 'black', 'black', 'black', 'black']
     for name in seriesDict:
         values = seriesDict[name]
@@ -322,7 +322,6 @@ def ReportAsGraph(benchmarkDict, bar, FileName):
     if(args.summary):
         markers = ['x', '.', '+', '*', '^', 'o', ',', 's']
         colors = ['blue', 'black', 'gray', 'dodgerblue', 'lightsteelblue', 'turquoise', 'black', 'blue']
-        temp = benchmarkDict['Mean']
 
         # the benchmarkDict['Mean'] contains sequencies of results for multiple
         # branch predictors with various parameterizations
@@ -378,10 +377,10 @@ def ReportAsGraph(benchmarkDict, bar, FileName):
 
     if(not args.summary):
         NumBenchmarks = len(benchmarkDict)
-        NumBenchmarksSqrt = math.sqrt(NumBenchmarks)
-        isSquare = math.isclose(NumBenchmarksSqrt, round(NumBenchmarksSqrt))
-        numCol = math.floor(NumBenchmarksSqrt)
-        numRow = numCol + (0 if isSquare else 1)
+        # NumBenchmarksSqrt = math.sqrt(NumBenchmarks)
+        # isSquare = math.isclose(NumBenchmarksSqrt, round(NumBenchmarksSqrt))
+        # numCol = math.floor(NumBenchmarksSqrt)
+        # numRow = numCol + (0 if isSquare else 1)
         index = 1
         BenchPerRow = 5
 
