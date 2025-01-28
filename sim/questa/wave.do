@@ -46,11 +46,20 @@ add wave -noupdate -expand -group HDU -group interrupts /testbench/dut/core/priv
 add wave -noupdate -expand -group HDU -group interrupts /testbench/dut/core/priv/priv/trap/InstrValidM
 add wave -noupdate -expand -group HDU -group interrupts /testbench/dut/core/priv/priv/trap/ValidIntsM
 add wave -noupdate -expand -group HDU -group interrupts /testbench/dut/core/hzu/WFIInterruptedM
-add wave -noupdate /testbench/dut/core/hzu/BPWrongE
-add wave -noupdate -expand -label {Contributors: BPWrongE} -group {Contributors: sim:/testbench/dut/core/hzu/BPWrongE} /testbench/dut/core/ifu/bpred/bpred/InstrValidD
-add wave -noupdate -expand -label {Contributors: BPWrongE} -group {Contributors: sim:/testbench/dut/core/hzu/BPWrongE} /testbench/dut/core/ifu/bpred/bpred/InstrValidE
-add wave -noupdate -expand -label {Contributors: BPWrongE} -group {Contributors: sim:/testbench/dut/core/hzu/BPWrongE} /testbench/dut/core/ifu/bpred/bpred/PCCorrectE
-add wave -noupdate -expand -label {Contributors: BPWrongE} -group {Contributors: sim:/testbench/dut/core/hzu/BPWrongE} /testbench/dut/core/ifu/bpred/bpred/PCD
+add wave -noupdate /testbench/dut/core/StallW
+add wave -noupdate -expand -label {Contributors: StallW} -group {Contributors: sim:/testbench/dut/core/StallW} /testbench/dut/core/hzu/StallWCause
+add wave -noupdate /testbench/dut/core/hzu/StallWCause
+add wave -noupdate -expand -label {Contributors: StallWCause} -group {Contributors: sim:/testbench/dut/core/hzu/StallWCause} /testbench/dut/core/hzu/ExternalStall
+add wave -noupdate -expand -label {Contributors: StallWCause} -group {Contributors: sim:/testbench/dut/core/hzu/StallWCause} /testbench/dut/core/hzu/FlushDCause
+add wave -noupdate -expand -label {Contributors: StallWCause} -group {Contributors: sim:/testbench/dut/core/hzu/StallWCause} /testbench/dut/core/hzu/FlushWCause
+add wave -noupdate -expand -label {Contributors: StallWCause} -group {Contributors: sim:/testbench/dut/core/hzu/StallWCause} /testbench/dut/core/hzu/IFUStallF
+add wave -noupdate -expand -label {Contributors: StallWCause} -group {Contributors: sim:/testbench/dut/core/hzu/StallWCause} /testbench/dut/core/hzu/LSUStallM
+add wave -noupdate /testbench/dut/core/hzu/IFUStallF
+add wave -noupdate -expand -label {Contributors: IFUStallF} -group {Contributors: sim:/testbench/dut/core/hzu/IFUStallF} /testbench/dut/core/ifu/IFUCacheBusStallF
+add wave -noupdate -expand -label {Contributors: IFUStallF} -group {Contributors: sim:/testbench/dut/core/hzu/IFUStallF} /testbench/dut/core/ifu/SelSpillNextF
+add wave -noupdate /testbench/dut/core/ifu/IFUCacheBusStallF
+add wave -noupdate -expand -label {Contributors: IFUCacheBusStallF} -group {Contributors: sim:/testbench/dut/core/ifu/IFUCacheBusStallF} /testbench/dut/core/ifu/BusStall
+add wave -noupdate -expand -label {Contributors: IFUCacheBusStallF} -group {Contributors: sim:/testbench/dut/core/ifu/IFUCacheBusStallF} /testbench/dut/core/ifu/ICacheStallF
 add wave -noupdate -expand -group {instruction pipeline} /testbench/InstrFName
 add wave -noupdate -expand -group {instruction pipeline} /testbench/dut/core/ifu/PostSpillInstrRawF
 add wave -noupdate -expand -group {instruction pipeline} /testbench/dut/core/ifu/InstrD
@@ -79,24 +88,24 @@ add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCNextF
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCF
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCSpillNextF
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCSpillF
-add wave -noupdate -expand -group ifu -group Bpred -divider {class check}
-add wave -noupdate -expand -group ifu /testbench/dut/core/ifu/InstrRawF
-add wave -noupdate -expand -group ifu /testbench/dut/core/ifu/PostSpillInstrRawF
-add wave -noupdate -expand -group ifu /testbench/dut/core/ifu/IFUStallF
-add wave -noupdate -expand -group ifu -group Spill /testbench/dut/core/ifu/Spill/spill/CurrState
-add wave -noupdate -expand -group ifu -group Spill -expand -group takespill /testbench/dut/core/ifu/Spill/spill/SpillF
-add wave -noupdate -expand -group ifu -group Spill -expand -group takespill /testbench/dut/core/ifu/Spill/spill/IFUCacheBusStallF
-add wave -noupdate -expand -group ifu -group Spill -expand -group takespill /testbench/dut/core/ifu/Spill/spill/ITLBMissOrUpdateAF
-add wave -noupdate -expand -group ifu -group Spill -expand -group takespill /testbench/dut/core/ifu/Spill/spill/TakeSpillF
-add wave -noupdate -expand -group ifu -group icache /testbench/dut/core/ifu/ITLBMissF
-add wave -noupdate -expand -group ifu -group icache /testbench/dut/core/ifu/PCNextF
-add wave -noupdate -expand -group ifu -group icache /testbench/dut/core/ifu/PCPF
-add wave -noupdate -expand -group ifu -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/ICacheStallF
-add wave -noupdate -expand -group ifu -group itlb /testbench/dut/core/ifu/immu/immu/TLBWrite
-add wave -noupdate -expand -group ifu -group itlb /testbench/dut/core/ifu/ITLBMissF
-add wave -noupdate -expand -group ifu -group itlb /testbench/dut/core/ifu/immu/immu/VAdr
-add wave -noupdate -expand -group ifu -group itlb /testbench/dut/core/ifu/immu/immu/PhysicalAddress
-add wave -noupdate -expand -group ifu -group itlb /testbench/dut/core/ifu/immu/immu/InstrPageFaultF
+add wave -noupdate -group ifu -group Bpred -divider {class check}
+add wave -noupdate -group ifu /testbench/dut/core/ifu/InstrRawF
+add wave -noupdate -group ifu /testbench/dut/core/ifu/PostSpillInstrRawF
+add wave -noupdate -group ifu /testbench/dut/core/ifu/IFUStallF
+add wave -noupdate -group ifu -group Spill /testbench/dut/core/ifu/Spill/spill/CurrState
+add wave -noupdate -group ifu -group Spill -expand -group takespill /testbench/dut/core/ifu/Spill/spill/SpillF
+add wave -noupdate -group ifu -group Spill -expand -group takespill /testbench/dut/core/ifu/Spill/spill/IFUCacheBusStallF
+add wave -noupdate -group ifu -group Spill -expand -group takespill /testbench/dut/core/ifu/Spill/spill/ITLBMissOrUpdateAF
+add wave -noupdate -group ifu -group Spill -expand -group takespill /testbench/dut/core/ifu/Spill/spill/TakeSpillF
+add wave -noupdate -group ifu -group icache /testbench/dut/core/ifu/ITLBMissF
+add wave -noupdate -group ifu -group icache /testbench/dut/core/ifu/PCNextF
+add wave -noupdate -group ifu -group icache /testbench/dut/core/ifu/PCPF
+add wave -noupdate -group ifu -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/ICacheStallF
+add wave -noupdate -group ifu -group itlb /testbench/dut/core/ifu/immu/immu/TLBWrite
+add wave -noupdate -group ifu -group itlb /testbench/dut/core/ifu/ITLBMissF
+add wave -noupdate -group ifu -group itlb /testbench/dut/core/ifu/immu/immu/VAdr
+add wave -noupdate -group ifu -group itlb /testbench/dut/core/ifu/immu/immu/PhysicalAddress
+add wave -noupdate -group ifu -group itlb /testbench/dut/core/ifu/immu/immu/InstrPageFaultF
 add wave -noupdate -group {Decode Stage} /testbench/dut/core/ifu/PCD
 add wave -noupdate -group {Decode Stage} /testbench/dut/core/ifu/InstrD
 add wave -noupdate -group {Decode Stage} /testbench/InstrDName
@@ -113,11 +122,11 @@ add wave -noupdate -expand -group {Execution Stage} /testbench/dut/core/ieu/dp/S
 add wave -noupdate -expand -group {Execution Stage} /testbench/dut/core/ieu/dp/SrcBE
 add wave -noupdate -expand -group {Execution Stage} /testbench/dut/core/ieu/dp/ALUResultE
 add wave -noupdate -expand -group {Execution Stage} /testbench/dut/core/ieu/dp/ResultW
-add wave -noupdate -group {Memory Stage} /testbench/dut/core/InstrValidM
-add wave -noupdate -group {Memory Stage} /testbench/dut/core/PCM
-add wave -noupdate -group {Memory Stage} /testbench/dut/core/InstrM
-add wave -noupdate -group {Memory Stage} /testbench/InstrMName
-add wave -noupdate -group {Memory Stage} /testbench/dut/core/lsu/IEUAdrM
+add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/InstrValidM
+add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/PCM
+add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/InstrM
+add wave -noupdate -expand -group {Memory Stage} /testbench/InstrMName
+add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/lsu/IEUAdrM
 add wave -noupdate -group lsu /testbench/dut/core/lsu/ReadDataM
 add wave -noupdate -group lsu /testbench/dut/core/lsu/WriteDataM
 add wave -noupdate -group lsu /testbench/dut/core/lsu/FWriteDataM
@@ -151,9 +160,9 @@ add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/PMPIn
 add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/PMPLoadAccessFaultM
 add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/PMPStoreAmoAccessFaultM
 add wave -noupdate -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/DTLBMissM
-add wave -noupdate -group {WriteBack stage} /testbench/InstrW
-add wave -noupdate -group {WriteBack stage} /testbench/InstrWName
-add wave -noupdate -group {WriteBack stage} /testbench/dut/core/priv/priv/pmd/wfiW
+add wave -noupdate -expand -group {WriteBack stage} /testbench/InstrW
+add wave -noupdate -expand -group {WriteBack stage} /testbench/InstrWName
+add wave -noupdate -expand -group {WriteBack stage} /testbench/dut/core/priv/priv/pmd/wfiW
 add wave -noupdate -group AHB -group multicontroller /testbench/dut/core/ebu/ebu/IFUReq
 add wave -noupdate -group AHB -group multicontroller /testbench/dut/core/ebu/ebu/LSUReq
 add wave -noupdate -group AHB -group multicontroller /testbench/dut/core/ebu/ebu/IFUSave
@@ -378,12 +387,15 @@ add wave -noupdate /testbench/dut/uncoregen/uncore/spi/spi/TransmitData
 add wave -noupdate -expand -group FetchBuffer -label {FB[2]} {/testbench/dut/core/ifu/fetchbuffer/fetchbuff/fbEntries[2]/q}
 add wave -noupdate -expand -group FetchBuffer -label {FB[1]} {/testbench/dut/core/ifu/fetchbuffer/fetchbuff/fbEntries[1]/q}
 add wave -noupdate -expand -group FetchBuffer -label {FB[0]} {/testbench/dut/core/ifu/fetchbuffer/fetchbuff/fbEntries[0]/q}
-add wave -noupdate /testbench/dut/core/ifu/fetchbuffer/fetchbuff/WritePtr
-add wave -noupdate /testbench/dut/core/ifu/fetchbuffer/fetchbuff/ReadPtr
-add wave -noupdate /testbench/dut/core/ifu/fetchbuffer/fetchbuff/FetchBufferStallF
+add wave -noupdate -expand -group FetchBuffer /testbench/dut/core/ifu/fetchbuffer/fetchbuff/WritePtr
+add wave -noupdate -expand -group FetchBuffer /testbench/dut/core/ifu/fetchbuffer/fetchbuff/ReadPtr
+add wave -noupdate -expand -group FetchBuffer /testbench/dut/core/ifu/fetchbuffer/fetchbuff/FetchBufferStallF
+add wave -noupdate -expand -group FetchBuffer -label {PCFB[2]} {/testbench/dut/core/ifu/fetchbuffer/PCFetchBuffer/fbEntries[2]/q}
+add wave -noupdate -expand -group FetchBuffer -label {PCFB[1]} {/testbench/dut/core/ifu/fetchbuffer/PCFetchBuffer/fbEntries[1]/q}
+add wave -noupdate -expand -group FetchBuffer -label {PCFB[0]} {/testbench/dut/core/ifu/fetchbuffer/PCFetchBuffer/fbEntries[0]/q}
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 5} {2680 ns} 1} {{Cursor 6} {2690 ns} 0}
-quietly wave cursor active 2
+WaveRestoreCursors {{potential optimization} {2680 ns} 1} {{WHY IFU STALL?} {7010 ns} 1}
+quietly wave cursor active 1
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 194
 configure wave -justifyvalue left
