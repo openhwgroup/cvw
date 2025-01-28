@@ -304,10 +304,13 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   assign GatedStallD = StallD & ~SelSpillNextF;
 
   if (P.FETCHBUFFER_ENTRIES != 0) begin : fetchbuffer
-    fetchbuffer #(P) fetchbuff(.clk, .reset, .StallF, .StallD, .FlushD, .WriteData(PostSpillInstrRawF), .ReadData(InstrRawD), .FetchBufferStallF);
+    fetchbuffer #(P) fetchbuff(.clk, .reset, .StallF, .StallD, .FlushD, .nop, .WriteData(PostSpillInstrRawF), .ReadData(InstrRawD), .FetchBufferStallF);
+    logic PCFetchBufferStallD;
+    fetchbuffer #(P, P.XLEN) PCFetchBuffer(.clk, .reset, .StallF, .StallD, .FlushD, .nop({{1'b1},{(P.XLEN-1){1'b0}}}), .WriteData(PCF), .ReadData(PCD), .FetchBufferStallF(PCFetchBufferStallD));
   end else begin
     flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawF, nop, InstrRawD);
     assign FetchBufferStallF = '0;
+    flopenrc #(P.XLEN) PCDReg(clk, reset, FlushD, ~StallD, PCF, PCD);
   end
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -375,7 +378,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
   // Decode stage pipeline register and logic
-  flopenrc #(P.XLEN) PCDReg(clk, reset, FlushD, ~StallD, PCF, PCD);
+
 
   // expand 16-bit compressed instructions to 32 bits
   if (P.ZCA_SUPPORTED) begin: decomp
