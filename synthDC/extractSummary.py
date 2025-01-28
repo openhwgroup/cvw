@@ -27,50 +27,46 @@ def synthsintocsv():
     specReg = re.compile('[a-zA-Z0-9]+')
     metricReg = re.compile('-?\d+\.\d+[e]?[-+]?\d*')
 
-    file = open("Summary.csv", "w")
-    writer = csv.writer(file)
-    writer.writerow(['Width', 'Config', 'Mod', 'Tech', 'Target Freq', 'Delay', 'Area'])
+    with open("Summary.csv", "w") as file:
+        writer = csv.writer(file)
+        writer.writerow(['Width', 'Config', 'Mod', 'Tech', 'Target Freq', 'Delay', 'Area'])
 
-    for oneSynth in allSynths:
-        descrip = specReg.findall(oneSynth)
-#        print("From " + oneSynth + " Find ")
-#        for d in descrip:
-#            print(d)
-        if (descrip[3] == "sram"):
-            base = 4
-        else:
-            base = 3
-        width = descrip[base][:4]
-        config = descrip[base][4:]
-        if descrip[base+1][-2:] == 'nm':
-            mod = ''
-        else:
-            mod = descrip[base+1]
-            descrip = descrip[1:]
-        tech = descrip[base+1][:-2]
-        freq = descrip[base+2]
-#        print(width, config, mod, tech, freq)
-        metrics = []
-        for phrase in ['Path Slack', 'Design Area']:
-            bashCommand = 'grep "{}" '+ oneSynth[2:]+'/reports/*qor*'
-            bashCommand = bashCommand.format(phrase)
-#            print(bashCommand)
-            try: 
-                output = subprocess.check_output(['bash','-c', bashCommand])
-                nums = metricReg.findall(str(output))
-                nums = [float(m) for m in nums]
-                metrics += nums
-            except: 
-                print(width + config + tech + '_' + freq + " doesn't have reports")
-        if metrics == []:
-            pass
-        else:
-            delay = 1000/int(freq) - metrics[0]
-            area = metrics[1]
-            writer.writerow([width, config, mod, tech, freq, delay, area])
-    file.close()
+        for oneSynth in allSynths:
+            descrip = specReg.findall(oneSynth)
+    #        print("From " + oneSynth + " Find ")
+    #        for d in descrip:
+    #            print(d)
+            base = 4 if descrip[3] == "sram" else 3
+            width = descrip[base][:4]
+            config = descrip[base][4:]
+            if descrip[base+1][-2:] == 'nm':
+                mod = ''
+            else:
+                mod = descrip[base+1]
+                descrip = descrip[1:]
+            tech = descrip[base+1][:-2]
+            freq = descrip[base+2]
+    #        print(width, config, mod, tech, freq)
+            metrics = []
+            for phrase in ['Path Slack', 'Design Area']:
+                bashCommand = 'grep "{}" '+ oneSynth[2:]+'/reports/*qor*'
+                bashCommand = bashCommand.format(phrase)
+    #            print(bashCommand)
+                try: 
+                    output = subprocess.check_output(['bash','-c', bashCommand])
+                    nums = metricReg.findall(str(output))
+                    nums = [float(m) for m in nums]
+                    metrics += nums
+                except: 
+                    print(width + config + tech + '_' + freq + " doesn't have reports")
+            if metrics == []:
+                pass
+            else:
+                delay = 1000/int(freq) - metrics[0]
+                area = metrics[1]
+                writer.writerow([width, config, mod, tech, freq, delay, area])
 
-	
+
 def synthsfromcsv(filename):
     Synth = namedtuple("Synth", "width config mod tech freq delay area")
     with open(filename, newline='') as csvfile:
@@ -93,7 +89,7 @@ def freqPlot(tech, width, config):
 
     freqsL, delaysL, areasL = ([[], []] for i in range(3))
     for oneSynth in allSynths:
-        if (width == oneSynth.width) & (config == oneSynth.config) & (tech == oneSynth.tech) & ('orig' == oneSynth.mod):
+        if (width == oneSynth.width) & (config == oneSynth.config) & (tech == oneSynth.tech) & (oneSynth.mod == 'orig'):
             ind = (1000/oneSynth.delay < (0.95*oneSynth.freq)) # when delay is within target clock period
             freqsL[ind] += [oneSynth.freq]
             delaysL[ind] += [oneSynth.delay]
@@ -101,10 +97,7 @@ def freqPlot(tech, width, config):
     
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
     allFreqs = list(flatten(freqsL))
-    if allFreqs != []:
-        median = np.median(allFreqs)
-    else:
-        median = 0
+    median = np.median(allFreqs) if allFreqs != [] else 0
 
     for ind in [0,1]:
         areas = areasL[ind]
@@ -169,11 +162,10 @@ def plotFeatures(tech, width, config):
     delays, areas, labels = ([] for i in range(3))
     freq = techdict[tech].targfreq
     for oneSynth in allSynths:
-        if (tech == oneSynth.tech) & (freq == oneSynth.freq):
-            if (oneSynth.config == config) & (width == oneSynth.width):
-                delays += [oneSynth.delay]
-                areas += [oneSynth.area]
-                labels += [oneSynth.mod]
+        if (tech == oneSynth.tech) & (freq == oneSynth.freq) & (oneSynth.config == config) & (width == oneSynth.width):
+            delays += [oneSynth.delay]
+            areas += [oneSynth.area]
+            labels += [oneSynth.mod]
 
     if (delays == []):
         print("No delays found for tech ", tech, " freq ", freq, ". Did you set --sky130freq, --sky90freq and --tsmcfreq?\n")
@@ -186,7 +178,7 @@ def plotFeatures(tech, width, config):
     plt.title(titlestr)
     plt.savefig(final_directory + '/features_'+titlestr+'.png')
 
-	
+
 def plotConfigs(tech, mod=''):
     delays, areas, labels = ([] for i in range(3))
     freq = techdict[tech].targfreq
@@ -227,7 +219,7 @@ def normAreaDelay(mod=''):
     ax.legend(handles = fullLeg, loc='upper left')
     plt.savefig(final_directory + '/normAreaDelay.png')
 
-	
+
 def addFO4axis(fig, ax, tech):
     fo4 = techdict[tech].fo4
 
@@ -282,4 +274,4 @@ if __name__ == '__main__':
     plotConfigs('sky130', mod='orig')
     plotConfigs('tsmc28psyn', mod='orig')
     normAreaDelay(mod='orig')
-    os.system("./extractArea.pl");
+    os.system("./extractArea.pl")

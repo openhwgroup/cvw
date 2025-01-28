@@ -65,10 +65,7 @@ with open(resultfile, mode='w', newline='') as csvfile:
 
     # Loop through each architecture and run the make commands
     for arch in arch_list:
-        if(str in arch):
-            xlen_value='32'
-        else:
-            xlen_value='64'
+        xlen_value = "32" if str in arch else "64"
         os.system("make clean")
         make_all = f"make all XLEN={xlen_value} ARCH={arch}"
         os.system(make_all)

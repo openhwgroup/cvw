@@ -30,12 +30,8 @@ def tabulate_arch_sweep(directory):
             file = case+"_"+arch+".json"
             file_path = os.path.join(directory, file)
             lines = []
-            try:
-                f = open(file_path, "r")
+            with open(file_path) as f:
                 lines = f.readlines()
-            except:
-                f.close()
-                #print(file_path+" does not exist")
             for line in lines:
                 #print("File: "+file+" Line: "+line)
                 #p = re.compile('".*" : .*,')
@@ -43,8 +39,8 @@ def tabulate_arch_sweep(directory):
                 match = re.search(p, line)
                 if match:
                     prog = match.group(1)
-                    result = match.group(2);
-                    d[arch][prog] = result;
+                    result = match.group(2)
+                    d[arch][prog] = result
                     #print(match.group(1)+" " + match.group(2))
             f.close()
         for arch in [""] + archs:
@@ -53,7 +49,7 @@ def tabulate_arch_sweep(directory):
         for prog in d[archs[0]]:
             print(prog, end="\t")
             for arch in archs:
-                entry = d[arch].get(prog, "n/a");
+                entry = d[arch].get(prog, "n/a")
                 print (entry, end="\t")
             print("")
         print("New geo mean", end="\t")

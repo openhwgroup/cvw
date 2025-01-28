@@ -10,13 +10,13 @@ from plotly.subplots import make_subplots
 
 debug = True
 
-def loadCoremark():
+def loadCoremark(coremarkData):
     """loads the coremark data dictionary"""
     coremarkPath = "riscv-coremark/work/coremark.sim.log"
     
     keywordlist = ["CoreMark 1.0", "CoreMark Size", "MTIME", "MINSTRET", "Branches Miss Predictions", "BTB Misses"]
     for keyword in keywordlist:
-        bashInst = "cat " + coremarkPath + " | grep \"" + keyword +  "\" | cut -d \':\' -f 2 | cut -d \" \" -f 2 | tail -1"
+        bashInst = "cat " + coremarkPath + ' | grep "' + keyword +  "\" | cut -d ':' -f 2 | cut -d \" \" -f 2 | tail -1"
         result = subprocess.run(bashInst, stdout=subprocess.PIPE, shell=True)
         if (debug): print(result)
         coremarkData[keyword] = int(result.stdout)
@@ -25,8 +25,8 @@ def loadCoremark():
 
 def loadEmbench(embenchPath, embenchData):
     """loads the embench data dictionary"""
-    f = open(embenchPath)
-    embenchData = json.load(f)
+    with open(embenchPath) as f:
+        embenchData = json.load(f)
     if (debug): print(embenchData)
     return embenchData
 
@@ -93,7 +93,7 @@ def main():
     embenchSpeedOpt_SpeedData = {}
     embenchSizeOpt_SizeData = {}
     embenchSpeedOpt_SizeData = {}
-    # coremarkData = loadCoremark()
+    coremarkData = loadCoremark(coremarkData)
     embenchSpeedOpt_SpeedData = loadEmbench("embench/wallySpeedOpt_speed.json", embenchSpeedOpt_SpeedData)
     embenchSizeOpt_SpeedData = loadEmbench("embench/wallySizeOpt_speed.json", embenchSizeOpt_SpeedData)
     embenchSpeedOpt_SizeData = loadEmbench("embench/wallySpeedOpt_size.json", embenchSpeedOpt_SizeData)
