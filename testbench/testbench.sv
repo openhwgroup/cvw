@@ -731,16 +731,21 @@ module testbench;
     end
 end
 
+// RVVI trace for functional coverage and lockstep
+`ifdef ENABLE_RVVI_TRACE
+  rvviTrace #(.XLEN(P.XLEN), .FLEN(P.FLEN)) rvvi();
+  wallyTracer #(P) wallyTracer(rvvi);
+`endif
+
+// Functional coverage
+`ifdef INCLUDE_TRACE2COV
+  trace2cov idv_trace2cov(rvvi); // needed for fcov as of now
+`endif
+
   ////////////////////////////////////////////////////////////////////////////////
   // ImperasDV Co-simulator hooks
   ////////////////////////////////////////////////////////////////////////////////
 `ifdef USE_IMPERAS_DV
-
-  rvviTrace #(.XLEN(P.XLEN), .FLEN(P.FLEN)) rvvi();
-  wallyTracer #(P) wallyTracer(rvvi);
-
-  trace2log idv_trace2log(rvvi);
-  trace2cov idv_trace2cov(rvvi);
 
   // enabling of comparison types
   trace2api #(.CMP_PC      (1),
@@ -750,6 +755,8 @@ end
               .CMP_VR      (0),
               .CMP_CSR     (1)
               ) idv_trace2api(rvvi);
+
+  // trace2log idv_trace2log(rvvi); // currently not used
 
   string filename;
   initial begin
