@@ -479,12 +479,13 @@ def makeDirs(sims):
     for sim in sims:
         dirs = [f"{regressionDir}/{sim}/wkdir", f"{regressionDir}/{sim}/logs"]
         for d in dirs:
-            shutil.rmtree(d)
+            shutil.rmtree(d, ignore_errors=True)
             os.makedirs(d, exist_ok=True)
 
 
 def main(args):
     sims, coverStr, TIMEOUT_DUR = process_args(args)
+    makeDirs(sims)
     configs = selectTests(args, sims, coverStr)
     # Scale the number of concurrent processes to the number of test cases, but
     # max out at a limited number of concurrent processes to not overwhelm the system
