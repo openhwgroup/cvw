@@ -54,7 +54,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   logic [4:0]            rf_a3;
   logic                  rf_we3;
   logic [P.FLEN-1:0]     frf[32];
-  logic [NUM_REGS-1:0]   frf_wb;
+  logic [31:0]           frf_wb;
   logic [4:0]            frf_a4;
   logic                  frf_we4;
   logic [P.XLEN-1:0]     CSRArray [4095:0];
@@ -314,7 +314,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   genvar index;
   assign rf[0] = 0;
   for(index = 1; index < NUM_REGS; index += 1) 
-  assign rf[index] = testbench.dut.core.ieu.dp.regf.rf[index];
+    assign rf[index] = testbench.dut.core.ieu.dp.regf.rf[index];
 
   assign rf_a3  = testbench.dut.core.ieu.dp.regf.a3;
   assign rf_we3 = testbench.dut.core.ieu.dp.regf.we3;
@@ -328,12 +328,12 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   if (P.F_SUPPORTED) begin
     assign frf_a4  = testbench.dut.core.fpu.fpu.fregfile.a4;
     assign frf_we4 = testbench.dut.core.fpu.fpu.fregfile.we4;
-    for(index = 0; index < NUM_REGS; index += 1) 
+    for(index = 0; index < 32; index += 1) 
       assign frf[index] = testbench.dut.core.fpu.fpu.fregfile.rf[index];
   end else begin
     assign frf_a4  = '0;
     assign frf_we4 = 0;
-    for(index = 0; index < NUM_REGS; index += 1) 
+    for(index = 0; index < 32; index += 1) 
       assign frf[index] = '0;
   end
   
@@ -422,6 +422,8 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   for(index = 0; index < NUM_REGS; index += 1) begin
     assign rvvi.x_wdata[0][0][index] = rf[index];
     assign rvvi.x_wb[0][0][index]    = rf_wb[index];
+  end
+  for(index = 0; index < 32; index += 1) begin
     assign rvvi.f_wdata[0][0][index] = frf[index];
     assign rvvi.f_wb[0][0][index]    = frf_wb[index];
   end
@@ -749,7 +751,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
           end
         end
       end
-      for(index2 = 0; index2 < NUM_REGS; index2 += 1) begin
+      for(index2 = 0; index2 < 32; index2 += 1) begin
         if(rvvi.f_wb[0][0][index2]) begin
           $fwrite(file, "frf[%02d] = %016x ", index2, rvvi.f_wdata[0][0][index2]);
         end
@@ -771,7 +773,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
         for(index2 = 0; index2 < NUM_REGS; index2 += 1) begin
           $display("x%02d = %08x", index2, rvvi.x_wdata[0][0][index2]);
         end
-        for(index2 = 0; index2 < NUM_REGS; index2 += 1) begin
+        for(index2 = 0; index2 < 32; index2 += 1) begin
           $display("f%02d = %08x", index2, rvvi.f_wdata[0][0][index2]);
         end
       end
