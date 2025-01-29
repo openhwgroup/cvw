@@ -2,6 +2,8 @@
 // wallyTracer.sv
 //
 // A component of the Wally configurable RISC-V project.
+// Implements a RISC-V Verification Interface (RVVI)
+// to support functional coverage and lockstep simulation.
 // 
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
@@ -19,9 +21,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-`define NUM_REGS 32
-`define NUM_CSRS 4096
 
 `define STD_LOG 0
 `define PRINT_PC_INSTR 0
@@ -44,7 +43,8 @@
 
 module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
 
-  localparam NUMREGS = P.E_SUPPORTED ? 16 : 32;
+  localparam NUM_REGS = P.E_SUPPORTED ? 16 : 32;
+  localparam NUM_CSRS = 4096;
   
   // wally specific signals
   logic                  reset;
@@ -62,17 +62,17 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   logic                  TrapM, TrapW;
   logic                  HaltM, HaltW;
   logic [1:0]            PrivilegeModeW;
-  logic [P.XLEN-1:0]     rf[NUMREGS];
-  logic [NUMREGS-1:0]    rf_wb;
+  logic [P.XLEN-1:0]     rf[NUM_REGS];
+  logic [NUM_REGS-1:0]   rf_wb;
   logic [4:0]            rf_a3;
   logic                  rf_we3;
   logic [P.FLEN-1:0]     frf[32];
-  logic [`NUM_REGS-1:0]  frf_wb;
+  logic [31:0]           frf_wb;
   logic [4:0]            frf_a4;
   logic                  frf_we4;
   logic [P.XLEN-1:0]     CSRArray [4095:0];
   logic [P.XLEN-1:0]     CSRArrayOld [4095:0];
-  logic [`NUM_CSRS-1:0]  CSR_W;
+  logic [NUM_CSRS-1:0]  CSR_W;
   logic                  CSRWriteM, CSRWriteW;
   logic [11:0]           CSRAdrM, CSRAdrW;
   logic                  wfiM;
@@ -284,38 +284,40 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
     assign rvvi.csr[0][0][index] = CSRArray[index];  
   end
 
+  // Integer register file
   assign rf[0] = 0;
-  for(index = 1; index < NUMREGS; index += 1) 
-  assign rf[index] = testbench.dut.core.ieu.dp.regf.rf[index];
+  for(index = 1; index < NUM_REGS; index += 1) 
+    assign rf[index] = testbench.dut.core.ieu.dp.regf.rf[index];
 
   assign rf_a3  = testbench.dut.core.ieu.dp.regf.a3;
   assign rf_we3 = testbench.dut.core.ieu.dp.regf.we3;
-  
+
   always_comb begin
     rf_wb <= 0;
     if(rf_we3)
       rf_wb[rf_a3] <= 1'b1;
   end
 
+  // Floating-point register file
   if (P.F_SUPPORTED) begin
     assign frf_a4  = testbench.dut.core.fpu.fpu.fregfile.a4;
     assign frf_we4 = testbench.dut.core.fpu.fpu.fregfile.we4;
-    for(index = 0; index < NUMREGS; index += 1) 
+    for(index = 0; index < 32; index += 1) 
       assign frf[index] = testbench.dut.core.fpu.fpu.fregfile.rf[index];
   end else begin
     assign frf_a4  = '0;
     assign frf_we4 = 0;
-    for(index = 0; index < NUMREGS; index += 1) 
+    for(index = 0; index < 32; index += 1) 
       assign frf[index] = '0;
   end
-  
-  
+
   always_comb begin
     frf_wb <= 0;
     if(frf_we4)
       frf_wb[frf_a4] <= 1'b1;
   end
 
+  // CSR writes
   assign CSRAdrM  = testbench.dut.core.priv.priv.csr.CSRAdrM;
   assign CSRWriteM = testbench.dut.core.priv.priv.csr.CSRWriteM;
   
@@ -391,9 +393,11 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
                                ~FlushE ? PCD :
                                ~FlushD ? PCF : PCNextF;
 
-  for(index = 0; index < `NUM_REGS; index += 1) begin
+  for(index = 0; index < NUM_REGS; index += 1) begin
     assign rvvi.x_wdata[0][0][index] = rf[index];
     assign rvvi.x_wb[0][0][index]    = rf_wb[index];
+  end
+  for(index = 0; index < 32; index += 1) begin
     assign rvvi.f_wdata[0][0][index] = frf[index];
     assign rvvi.f_wb[0][0][index]    = frf_wb[index];
   end
@@ -418,18 +422,18 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
 	if(valid) begin
       if(`STD_LOG) begin
         $fwrite(file, "%016x, %08x, %s\t\t", rvvi.pc_rdata[0][0], rvvi.insn[0][0], instrWName);
-        for(index2 = 0; index2 < `NUM_REGS; index2 += 1) begin
+        for(index2 = 0; index2 < NUM_REGS; index2 += 1) begin
           if(rvvi.x_wb[0][0][index2]) begin
             $fwrite(file, "rf[%02d] = %016x ", index2, rvvi.x_wdata[0][0][index2]);
           end
         end
       end
-      for(index2 = 0; index2 < `NUM_REGS; index2 += 1) begin
+      for(index2 = 0; index2 < 32; index2 += 1) begin
         if(rvvi.f_wb[0][0][index2]) begin
           $fwrite(file, "frf[%02d] = %016x ", index2, rvvi.f_wdata[0][0][index2]);
         end
       end
-      for(index2 = 0; index2 < `NUM_CSRS; index2 += 1) begin
+      for(index2 = 0; index2 < NUM_CSRS; index2 += 1) begin
         if(rvvi.csr_wb[0][0][index2]) begin
           $fwrite(file, "csr[%03x] = %016x ", index2, rvvi.csr[0][0][index2]);
         end
@@ -443,15 +447,15 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
       else if(`PRINT_ALL) begin
         $display("order = %08d, PC = %08x, insn = %08x, trap = %1d, halt = %1d, intr = %1d, mode = %1x, ixl = %1x, pc_wdata = %08x", 
                  rvvi.order[0][0], rvvi.pc_rdata[0][0], rvvi.insn[0][0], rvvi.trap[0][0], rvvi.halt[0][0], rvvi.intr[0][0], rvvi.mode[0][0], rvvi.ixl[0][0], rvvi.pc_wdata[0][0]);
-        for(index2 = 0; index2 < `NUM_REGS; index2 += 1) begin
+        for(index2 = 0; index2 < NUM_REGS; index2 += 1) begin
           $display("x%02d = %08x", index2, rvvi.x_wdata[0][0][index2]);
         end
-        for(index2 = 0; index2 < `NUM_REGS; index2 += 1) begin
+        for(index2 = 0; index2 < 32; index2 += 1) begin
           $display("f%02d = %08x", index2, rvvi.f_wdata[0][0][index2]);
         end
       end
       if (`PRINT_CSRS) begin
-        for(index2 = 0; index2 < `NUM_CSRS; index2 += 1) begin
+        for(index2 = 0; index2 < NUM_CSRS; index2 += 1) begin
           if(CSR_W[index2]) begin
             $display("%t: CSR %03x = %x", $time(), index2, CSRArray[index2]);
           end
