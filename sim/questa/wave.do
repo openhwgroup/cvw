@@ -1,27 +1,6 @@
 onerror {resume}
 quietly virtual signal -install /testbench/dut/core/ifu/bpred/bpred { /testbench/dut/core/ifu/bpred/bpred/PostSpillInstrRawF[11:7]} rd
 quietly WaveActivateNextPane {} 0
-add wave -position insertpoint sim:/testbench/wallyTracer/PCF
-add wave -position insertpoint sim:/testbench/wallyTracer/PCD
-add wave -position insertpoint sim:/testbench/wallyTracer/PCE
-add wave -position insertpoint sim:/testbench/wallyTracer/PCM
-add wave -position insertpoint sim:/testbench/wallyTracer/PCW
-add wave -position insertpoint sim:/testbench/wallyTracer/GatedStallW
-add wave -position insertpoint sim:/testbench/dut/core/lsu/hptw/hptw/SelHPTW
-add wave -position insertpoint sim:/testbench/wallyTracer/StallM
-add wave -position insertpoint sim:/testbench/wallyTracer/StallW
-add wave -position insertpoint sim:/testbench/wallyTracer/FlushW
-add wave -position insertpoint sim:/testbench/wallyTracer/PTE_iF
-add wave -position insertpoint sim:/testbench/wallyTracer/PTE_iD
-add wave -position insertpoint sim:/testbench/wallyTracer/PTE_iE
-add wave -position insertpoint sim:/testbench/wallyTracer/PTE_iM
-add wave -position insertpoint sim:/testbench/wallyTracer/PTE_iW
-add wave -position insertpoint sim:/testbench/wallyTracer/PageType_iM
-add wave -position insertpoint sim:/testbench/wallyTracer/PageType_iW
-add wave -position insertpoint sim:/testbench/wallyTracer/ExecuteAccessM
-add wave -position insertpoint sim:/testbench/wallyTracer/ExecuteAccessW
-add wave -position insertpoint sim:/testbench/rvvi/valid
-add wave -position insertpoint sim:/testbench/rvvi/csr[0][0][834]
 add wave -noupdate /testbench/clk
 add wave -noupdate /testbench/reset
 add wave -noupdate /testbench/memfilename
