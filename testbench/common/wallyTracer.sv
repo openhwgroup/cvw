@@ -29,6 +29,18 @@
 `define PRINT_ALL 0
 `define PRINT_CSRS 0
 
+// Since we are detecting the CSR change by comparing the old value, we need to
+// ensure the CSR is detected when the pipeline's Writeback stage is not
+// stalled.  If it is stalled we want CSRArray to hold the old value.
+`define CONNECT_CSR(addr, val) \
+  always_comb \
+    if (valid) CSRArray[addr] = val; \
+    else CSRArray[addr] = CSRArrayOld[addr]; \
+  always_ff @(posedge clk) \
+    CSRArrayOld[addr] = CSRArray[addr]; \
+  assign CSR_W[addr] = (CSRArrayOld[addr] != CSRArray[addr]) ? 1 : 0; \
+  assign rvvi.csr_wb[0][0][addr] = CSR_W[addr]; \
+  assign rvvi.csr[0][0][addr]    = CSRArray[addr];
 
 module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
 
@@ -65,6 +77,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   logic [11:0]           CSRAdrM, CSRAdrW;
   logic                  wfiM;
   logic                  InterruptM, InterruptW;
+  logic                  valid;
 
   //For VM Verification
   logic [(P.XLEN-1):0]     IVAdrF,IVAdrD,IVAdrE,IVAdrM,IVAdrW,DVAdrM,DVAdrW;
@@ -129,32 +142,97 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   assign IPageTypeF    = testbench.dut.core.ifu.immu.immu.PageTypeWriteVal;
   assign DPageTypeM    = testbench.dut.core.lsu.dmmu.dmmu.PageTypeWriteVal;
 
-  logic valid;
-  
+  // CSR connections
   if (P.ZICSR_SUPPORTED) begin
+    // M-mode trap CSRs
+    `CONNECT_CSR(12'h300, testbench.dut.core.priv.priv.csr.csrm.MSTATUS_REGW);
+    `CONNECT_CSR(12'h302, testbench.dut.core.priv.priv.csr.csrm.MEDELEG_REGW);
+    `CONNECT_CSR(12'h303, testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW);
+    `CONNECT_CSR(12'h304, testbench.dut.core.priv.priv.csr.csrm.MIE_REGW);
+    `CONNECT_CSR(12'h305, testbench.dut.core.priv.priv.csr.csrm.MTVEC_REGW);
+    `CONNECT_CSR(12'h340, testbench.dut.core.priv.priv.csr.csrm.MSCRATCH_REGW);
+    `CONNECT_CSR(12'h341, testbench.dut.core.priv.priv.csr.csrm.MEPC_REGW);
+    `CONNECT_CSR(12'h342, testbench.dut.core.priv.priv.csr.csrm.MCAUSE_REGW);
+    `CONNECT_CSR(12'h343, testbench.dut.core.priv.priv.csr.csrm.MTVAL_REGW);
+    `CONNECT_CSR(12'h344, testbench.dut.core.priv.priv.csr.csrm.MIP_REGW);
+
+    // S-mode trap CSRs
+    `CONNECT_CSR(12'h100, testbench.dut.core.priv.priv.csr.csrs.csrs.SSTATUS_REGW);
+    `CONNECT_CSR(12'h104, testbench.dut.core.priv.priv.csr.csrm.MIE_REGW & 12'h222);
+    `CONNECT_CSR(12'h105, testbench.dut.core.priv.priv.csr.csrs.csrs.STVEC_REGW);
+    `CONNECT_CSR(12'h140, testbench.dut.core.priv.priv.csr.csrs.csrs.SSCRATCH_REGW);
+    `CONNECT_CSR(12'h141, testbench.dut.core.priv.priv.csr.csrs.csrs.SEPC_REGW);
+    `CONNECT_CSR(12'h142, testbench.dut.core.priv.priv.csr.csrs.csrs.SCAUSE_REGW);
+    `CONNECT_CSR(12'h143, testbench.dut.core.priv.priv.csr.csrs.csrs.STVAL_REGW);
+    `CONNECT_CSR(12'h144, testbench.dut.core.priv.priv.csr.csrm.MIP_REGW & 12'h222 & testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW);
+
+    // Virtual Memory CSRs
+    `CONNECT_CSR(12'h180, testbench.dut.core.priv.priv.csr.csrs.csrs.SATP_REGW);
+
+    // Floating-Point CSRs
+    `CONNECT_CSR(12'h001, testbench.dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW);
+    `CONNECT_CSR(12'h002, testbench.dut.core.priv.priv.csr.csru.csru.FRM_REGW);
+    `CONNECT_CSR(12'h003, {testbench.dut.core.priv.priv.csr.csru.csru.FRM_REGW, testbench.dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW});
+
+    // Counters / Performance Monitoring CSRs
+    `CONNECT_CSR(12'h306, testbench.dut.core.priv.priv.csr.csrm.MCOUNTEREN_REGW);
+    `CONNECT_CSR(12'h106, testbench.dut.core.priv.priv.csr.csrs.csrs.SCOUNTEREN_REGW);
+    `CONNECT_CSR(12'h320, testbench.dut.core.priv.priv.csr.csrm.MCOUNTINHIBIT_REGW);
+    // mhpmevent3-31 not connected (232-33F)
+    `CONNECT_CSR(12'hB00, testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[0]); // MCYCLE
+    `CONNECT_CSR(12'hB02, testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2]); // MINSTRET
+    // mhpmcounter3-31 not connected (B03-B1F)
+    // cycle, time, instret not connected (C00-C02)
+    // hpmcounter3-31 not connected (C03-C1F)
+
+    // Machine Information Registers and Configuration CSRs
+    `CONNECT_CSR(12'h301, testbench.dut.core.priv.priv.csr.csrm.MISA_REGW);
+    `CONNECT_CSR(12'h30A, testbench.dut.core.priv.priv.csr.csrm.MENVCFG_REGW);
+    `CONNECT_CSR(12'h10A, testbench.dut.core.priv.priv.csr.csrs.csrs.SENVCFG_REGW);
+    `CONNECT_CSR(12'h747, 0); // mseccfg
+    `CONNECT_CSR(12'hF11, 0); //mvendorid
+    `CONNECT_CSR(12'hF12, 0); // marchid
+    `CONNECT_CSR(12'hF13, {{P.XLEN-12{1'b0}}, 12'h100}); // mimpid
+    `CONNECT_CSR(12'hF14, testbench.dut.core.priv.priv.csr.csrm.MHARTID_REGW);
+    `CONNECT_CSR(12'hF15, 0); //mconfigptr
+
+    // Sstc CSRs
+    `CONNECT_CSR(12'h14D, testbench.dut.core.priv.priv.csr.csrs.csrs.STIMECMP_REGW[P.XLEN-1:0]);
+    
+    // Zkr CSRs
+    // seed not connected (015)
+
+    // extra CSRs for RV32
+    if (P.XLEN == 32) begin
+      `CONNECT_CSR(12'h310, testbench.dut.core.priv.priv.csr.csrsr.MSTATUSH_REGW);
+      `CONNECT_CSR(12'h31A, testbench.dut.core.priv.priv.csr.csrm.MENVCFGH_REGW);
+      `CONNECT_CSR(12'h757, 0); // mseccfgh
+      `CONNECT_CSR(12'h15D, testbench.dut.core.priv.priv.csr.csrs.csrs.STIMECMP_REGW[63:32]);
+    end
+  end
+
+
+// PMP CSRs
+  if (P.PMP_ENTRIES > 0) begin
     always_comb begin
-      // Since we are detected the CSR change by comparing the old value we need to
-      // ensure the CSR is detected when the pipeline's Writeback stage is not
-      // stalled.  If it is stalled we want CSRArray to hold the old value.
       if(valid) begin 
         // PMPCFG CSRs (space is 0-15 3a0 - 3af)
         localparam inc = P.XLEN == 32 ? 4 : 8;
-        int i, i4, i8, csrid;
+        int i, i4, csrid;
         logic [P.XLEN-1:0] pmp;
 
         for (i=0; i<P.PMP_ENTRIES; i+=inc) begin
           i4 = i / 4;
-          i8 = (i / inc) * inc;
           csrid = 12'h3A0 + i4;
           pmp = 0;
-          pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i8+0] << 0;
-          pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i8+1] << 8;
-          pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i8+2] << 16;
-          pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i8+3] << 24;
-          pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i8+4] << 32;
-          pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i8+5] << 40;
-          pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i8+6] << 48;
-          pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i8+7] << 56;
+          pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i+0] << 0;
+          pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i+1] << 8;
+          pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i+2] << 16;
+          pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i+3] << 24;
+          pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i+4] << 32;
+          pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i+5] << 40;
+          pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i+6] << 48;
+          pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i+7] << 56;
           
           CSRArray[csrid] = pmp;
         end
@@ -166,71 +244,6 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
           CSRArray[csrid] = pmp;
         end
 
-        // M-mode trap CSRs
-        CSRArray[12'h300] = testbench.dut.core.priv.priv.csr.csrm.MSTATUS_REGW;
-        CSRArray[12'h302] = testbench.dut.core.priv.priv.csr.csrm.MEDELEG_REGW;
-        CSRArray[12'h303] = testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW;
-        CSRArray[12'h304] = testbench.dut.core.priv.priv.csr.csrm.MIE_REGW;
-        CSRArray[12'h305] = testbench.dut.core.priv.priv.csr.csrm.MTVEC_REGW;
-        CSRArray[12'h340] = testbench.dut.core.priv.priv.csr.csrm.MSCRATCH_REGW;
-        CSRArray[12'h341] = testbench.dut.core.priv.priv.csr.csrm.MEPC_REGW;
-        CSRArray[12'h342] = testbench.dut.core.priv.priv.csr.csrm.MCAUSE_REGW;
-        CSRArray[12'h343] = testbench.dut.core.priv.priv.csr.csrm.MTVAL_REGW;
-        CSRArray[12'h344] = testbench.dut.core.priv.priv.csr.csrm.MIP_REGW;
-        
-        // S-mode trap CSRs
-        CSRArray[12'h100] = testbench.dut.core.priv.priv.csr.csrs.csrs.SSTATUS_REGW;
-        CSRArray[12'h104] = testbench.dut.core.priv.priv.csr.csrm.MIE_REGW & 12'h222;
-        CSRArray[12'h105] = testbench.dut.core.priv.priv.csr.csrs.csrs.STVEC_REGW;
-        CSRArray[12'h140] = testbench.dut.core.priv.priv.csr.csrs.csrs.SSCRATCH_REGW;
-        CSRArray[12'h141] = testbench.dut.core.priv.priv.csr.csrs.csrs.SEPC_REGW;
-        CSRArray[12'h142] = testbench.dut.core.priv.priv.csr.csrs.csrs.SCAUSE_REGW;
-        CSRArray[12'h143] = testbench.dut.core.priv.priv.csr.csrs.csrs.STVAL_REGW;
-        CSRArray[12'h144] = testbench.dut.core.priv.priv.csr.csrm.MIP_REGW & 12'h222 & testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW;
-
-        // Virtual Memory CSRs
-        CSRArray[12'h180] = testbench.dut.core.priv.priv.csr.csrs.csrs.SATP_REGW;
-
-        // Floating-Point CSRs
-        CSRArray[12'h001] = testbench.dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW;
-        CSRArray[12'h002] = testbench.dut.core.priv.priv.csr.csru.csru.FRM_REGW;
-        CSRArray[12'h003] = {testbench.dut.core.priv.priv.csr.csru.csru.FRM_REGW, testbench.dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW};
-
-        // Counters / Performance Monitoring CSRs
-        CSRArray[12'h306] = testbench.dut.core.priv.priv.csr.csrm.MCOUNTEREN_REGW;
-        CSRArray[12'h106] = testbench.dut.core.priv.priv.csr.csrs.csrs.SCOUNTEREN_REGW;
-        CSRArray[12'h320] = testbench.dut.core.priv.priv.csr.csrm.MCOUNTINHIBIT_REGW;
-        // mhpmevent3-31 not connected (232-33F)
-        CSRArray[12'hB00] = testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[0]; // MCYCLE
-        CSRArray[12'hB02] = testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2]; // MINSTRET
-        // mhpmcounter3-31 not connected (B03-B1F)
-        // cycle, time, instret not connected (C00-C02)
-        // hpmcounter3-31 not connected (C03-C1F)
-
-        // Machine Information Registers and Configuration CSRs
-        CSRArray[12'h301] = testbench.dut.core.priv.priv.csr.csrm.MISA_REGW;
-        CSRArray[12'h30A] = testbench.dut.core.priv.priv.csr.csrm.MENVCFG_REGW;
-        CSRArray[12'h10A] = testbench.dut.core.priv.priv.csr.csrs.csrs.SENVCFG_REGW;
-        CSRArray[12'h747] = 0; // mseccfg
-        CSRArray[12'hF11] = 0; //mvendorid
-        CSRArray[12'hF12] = 0; // marchid
-        CSRArray[12'hF13] = {{P.XLEN-12{1'b0}}, 12'h100}; // mimpid
-        CSRArray[12'hF14] = testbench.dut.core.priv.priv.csr.csrm.MHARTID_REGW;
-        CSRArray[12'hF15] = 0; //mconfigptr
-
-        // Sstc CSRs
-        CSRArray[12'h14D] = testbench.dut.core.priv.priv.csr.csrs.csrs.STIMECMP_REGW[P.XLEN-1:0];
-        
-        // Zkr CSRs
-        // seed not connected (015)
-
-        // extra CSRs for RV32
-        if (P.XLEN == 32) begin
-          CSRArray[12'h310] = testbench.dut.core.priv.priv.csr.csrsr.MSTATUSH_REGW;
-          CSRArray[12'h31A] = testbench.dut.core.priv.priv.csr.csrm.MENVCFGH_REGW;
-          CSRArray[12'h757] = 0; // mseccfgh
-          CSRArray[12'h15D] = testbench.dut.core.priv.priv.csr.csrs.csrs.STIMECMP_REGW[63:32];
-        end
       end else begin // hold the old value if the pipeline is stalled.
         // PMP CFG 3A0 to 3AF
         int csrid;
@@ -240,79 +253,37 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
         // PMP ADDR 3B0 to 3EF
         for(csrid='h3B0; csrid<='h3EF; csrid++)
           CSRArray[csrid] = CSRArrayOld[csrid];
-
-        // M-mode trap CSRs
-        CSRArray[12'h300] = CSRArrayOld[12'h300];
-        CSRArray[12'h302] = CSRArrayOld[12'h302];
-        CSRArray[12'h303] = CSRArrayOld[12'h303];
-        CSRArray[12'h304] = CSRArrayOld[12'h304];
-        CSRArray[12'h305] = CSRArrayOld[12'h305];
-        CSRArray[12'h340] = CSRArrayOld[12'h340];
-        CSRArray[12'h341] = CSRArrayOld[12'h341];
-        CSRArray[12'h342] = CSRArrayOld[12'h342];
-        CSRArray[12'h343] = CSRArrayOld[12'h343];
-        CSRArray[12'h344] = CSRArrayOld[12'h344];
-
-        // S-mode trap CSRs
-        CSRArray[12'h100] = CSRArrayOld[12'h100];
-        CSRArray[12'h104] = CSRArrayOld[12'h104];
-        CSRArray[12'h105] = CSRArrayOld[12'h105];
-        CSRArray[12'h140] = CSRArrayOld[12'h140];
-        CSRArray[12'h141] = CSRArrayOld[12'h141];
-        CSRArray[12'h142] = CSRArrayOld[12'h142];
-        CSRArray[12'h143] = CSRArrayOld[12'h143];
-        CSRArray[12'h144] = CSRArrayOld[12'h144];
-
-        // Virtual Memory CSRs
-        CSRArray[12'h180] = CSRArrayOld[12'h180] ;
-
-        // Floating-Point CSRs
-        CSRArray[12'h001] = CSRArrayOld[12'h001];
-        CSRArray[12'h002] = CSRArrayOld[12'h002];
-        CSRArray[12'h003] = CSRArrayOld[12'h003];
-
-        // Counters / Performance Monitoring CSRs
-        CSRArray[12'h306] = CSRArrayOld[12'h306];
-        CSRArray[12'h106] = CSRArrayOld[12'h106];
-        CSRArray[12'h320] = CSRArrayOld[12'h320];
-        // mhpmevent3-31 not connected (232-33F)
-        CSRArray[12'hB00] = CSRArrayOld[12'hB00];
-        CSRArray[12'hB02] = CSRArrayOld[12'hB02];
-        // mhpmcounter3-31 not connected (B03-B1F)
-        // cycle, time, instret not connected (C00-C02)
-        // hpmcounter3-31 not connected (C03-C1F)
-
-        // Machine Information Registers and Configuration CSRs
-        CSRArray[12'h301] = CSRArrayOld[12'h301];
-        CSRArray[12'h30A] = CSRArrayOld[12'h30A];
-        CSRArray[12'h10A] = CSRArrayOld[12'h10A];
-        CSRArray[12'h747] = CSRArrayOld[12'h747];
-        CSRArray[12'hF11] = CSRArrayOld[12'hF11];
-        CSRArray[12'hF12] = CSRArrayOld[12'hF12];
-        CSRArray[12'hF13] = CSRArrayOld[12'hF13];
-        CSRArray[12'hF14] = CSRArrayOld[12'hF14];
-        CSRArray[12'hF15] = CSRArrayOld[12'hF15];
-
-        // Sstc CSRs
-        CSRArray[12'h14D] = CSRArrayOld[12'h14D];
-        
-        // Zkr CSRs
-        // seed not connected (015)
-
-        // extra CSRs for RV32
-        if (P.XLEN == 32) begin
-          CSRArray[12'h310] = CSRArrayOld[12'h310];
-          CSRArray[12'h31A] = CSRArrayOld[12'h31A];
-          CSRArray[12'h757] = CSRArrayOld[12'h757];
-          CSRArray[12'h15D] = CSRArrayOld[12'h15D];
-        end
       end    
     end
-  end else begin
-    // no CSRArray
   end
 
+  // record previous csr value.
+  always_ff @(posedge clk) begin
+    int csrid;
+    // PMP CFG 3A0 to 3AF
+    for(csrid='h3A0; csrid<='h3AF; csrid++)
+      CSRArrayOld[csrid] = CSRArray[csrid];
+    
+    // PMP ADDR 3B0 to 3EF
+    for(csrid='h3B0; csrid<='h3EF; csrid++)
+      CSRArrayOld[csrid] = CSRArray[csrid];
+  end
+
+  // PMP CFG 3A0 to 3AF
   genvar index;
+  for(index='h3A0; index<='h3AF; index++) begin
+    assign CSR_W[index] = (CSRArrayOld[index] != CSRArray[index]) ? 1 : 0;
+    assign rvvi.csr_wb[0][0][index] = CSR_W[index];
+    assign rvvi.csr[0][0][index] = CSRArray[index];  
+  end
+
+  // PMP ADDR 3B0 to 3EF
+  for(index='h3B0; index<='h3EF; index++) begin
+    assign CSR_W[index] = (CSRArrayOld[index] != CSRArray[index]) ? 1 : 0;
+    assign rvvi.csr_wb[0][0][index] = CSR_W[index];
+    assign rvvi.csr[0][0][index] = CSRArray[index];  
+  end
+
   assign rf[0] = 0;
   for(index = 1; index < NUMREGS; index += 1) 
   assign rf[index] = testbench.dut.core.ieu.dp.regf.rf[index];
@@ -427,303 +398,6 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
     assign rvvi.f_wb[0][0][index]    = frf_wb[index];
   end
 
-  // record previous csr value.
-  integer index4;
-  always_ff @(posedge clk) begin
-    int csrid;
-    // PMP CFG 3A0 to 3AF
-    for(csrid='h3A0; csrid<='h3AF; csrid++)
-      CSRArrayOld[csrid] = CSRArray[csrid];
-    
-    // PMP ADDR 3B0 to 3EF
-    for(csrid='h3B0; csrid<='h3EF; csrid++)
-      CSRArrayOld[csrid] = CSRArray[csrid];
-
-    // M-mode trap CSRs
-    CSRArrayOld[12'h300] = CSRArray[12'h300];
-    CSRArrayOld[12'h302] = CSRArray[12'h302];
-    CSRArrayOld[12'h303] = CSRArray[12'h303];
-    CSRArrayOld[12'h304] = CSRArray[12'h304];
-    CSRArrayOld[12'h305] = CSRArray[12'h305];
-    CSRArrayOld[12'h340] = CSRArray[12'h340];
-    CSRArrayOld[12'h341] = CSRArray[12'h341];
-    CSRArrayOld[12'h342] = CSRArray[12'h342];
-    CSRArrayOld[12'h343] = CSRArray[12'h343];
-    CSRArrayOld[12'h344] = CSRArray[12'h344];
-
-    // S-mode trap CSRs
-    CSRArrayOld[12'h100] = CSRArray[12'h100];
-    CSRArrayOld[12'h104] = CSRArray[12'h104];
-    CSRArrayOld[12'h105] = CSRArray[12'h105];
-    CSRArrayOld[12'h140] = CSRArray[12'h140];
-    CSRArrayOld[12'h141] = CSRArray[12'h141];
-    CSRArrayOld[12'h142] = CSRArray[12'h142];
-    CSRArrayOld[12'h143] = CSRArray[12'h143];
-    CSRArrayOld[12'h144] = CSRArray[12'h144];
-
-    // Virtual Memory CSRs
-    CSRArrayOld[12'h180] = CSRArray[12'h180] ;
-
-    // Floating-Point CSRs
-    CSRArrayOld[12'h001] = CSRArray[12'h001];
-    CSRArrayOld[12'h002] = CSRArray[12'h002];
-    CSRArrayOld[12'h003] = CSRArray[12'h003];
-
-    // Counters / Performance Monitoring CSRs
-    CSRArrayOld[12'h306] = CSRArray[12'h306];
-    CSRArrayOld[12'h106] = CSRArray[12'h106];
-    CSRArrayOld[12'h320] = CSRArray[12'h320];
-    // mhpmevent3-31 not connected (232-33F)
-    CSRArrayOld[12'hB00] = CSRArray[12'hB00];
-    CSRArrayOld[12'hB02] = CSRArray[12'hB02];
-    // mhpmcounter3-31 not connected (B03-B1F)
-    // cycle, time, instret not connected (C00-C02)
-    // hpmcounter3-31 not connected (C03-C1F)
-
-    // Machine Information Registers and Configuration CSRs
-    CSRArrayOld[12'h301] = CSRArray[12'h301];
-    CSRArrayOld[12'h30A] = CSRArray[12'h30A];
-    CSRArrayOld[12'h10A] = CSRArray[12'h10A];
-    CSRArrayOld[12'h747] = CSRArray[12'h747];
-    CSRArrayOld[12'hF11] = CSRArray[12'hF11];
-    CSRArrayOld[12'hF12] = CSRArray[12'hF12];
-    CSRArrayOld[12'hF13] = CSRArray[12'hF13];
-    CSRArrayOld[12'hF14] = CSRArray[12'hF14];
-    CSRArrayOld[12'hF15] = CSRArray[12'hF15];
-
-    // Sstc CSRs
-    CSRArrayOld[12'h14D] = CSRArray[12'h14D];
-    
-    // Zkr CSRs
-    // seed not connected (015)
-
-    // extra CSRs for RV32
-    if (P.XLEN == 32) begin
-      CSRArrayOld[12'h310] = CSRArray[12'h310];
-      CSRArrayOld[12'h31A] = CSRArray[12'h31A];
-      CSRArrayOld[12'h757] = CSRArray[12'h757];
-      CSRArrayOld[12'h15D] = CSRArray[12'h15D];
-    end
-  end
-  
-  // check for csr value change.
-  // M-mode trap CSRs
-  assign CSR_W[12'h300] = (CSRArrayOld[12'h300] != CSRArray[12'h300]) ? 1 : 0;
-  assign CSR_W[12'h302] = (CSRArrayOld[12'h302] != CSRArray[12'h302]) ? 1 : 0;
-  assign CSR_W[12'h303] = (CSRArrayOld[12'h303] != CSRArray[12'h303]) ? 1 : 0;
-  assign CSR_W[12'h304] = (CSRArrayOld[12'h304] != CSRArray[12'h304]) ? 1 : 0;
-  assign CSR_W[12'h305] = (CSRArrayOld[12'h305] != CSRArray[12'h305]) ? 1 : 0;
-  assign CSR_W[12'h340] = (CSRArrayOld[12'h340] != CSRArray[12'h340]) ? 1 : 0;
-  assign CSR_W[12'h341] = (CSRArrayOld[12'h341] != CSRArray[12'h341]) ? 1 : 0;
-  assign CSR_W[12'h342] = (CSRArrayOld[12'h342] != CSRArray[12'h342]) ? 1 : 0;
-  assign CSR_W[12'h343] = (CSRArrayOld[12'h343] != CSRArray[12'h343]) ? 1 : 0;
-  assign CSR_W[12'h344] = (CSRArrayOld[12'h344] != CSRArray[12'h344]) ? 1 : 0;
-
-  // S-mode trap CSRs
-  assign CSR_W[12'h100] = (CSRArrayOld[12'h100] != CSRArray[12'h100]) ? 1 : 0;
-  assign CSR_W[12'h104] = (CSRArrayOld[12'h104] != CSRArray[12'h104]) ? 1 : 0;
-  assign CSR_W[12'h105] = (CSRArrayOld[12'h105] != CSRArray[12'h105]) ? 1 : 0;
-  assign CSR_W[12'h140] = (CSRArrayOld[12'h140] != CSRArray[12'h140]) ? 1 : 0;
-  assign CSR_W[12'h141] = (CSRArrayOld[12'h141] != CSRArray[12'h141]) ? 1 : 0;
-  assign CSR_W[12'h142] = (CSRArrayOld[12'h142] != CSRArray[12'h142]) ? 1 : 0;
-  assign CSR_W[12'h143] = (CSRArrayOld[12'h143] != CSRArray[12'h143]) ? 1 : 0;
-  assign CSR_W[12'h144] = (CSRArrayOld[12'h144] != CSRArray[12'h144]) ? 1 : 0;
-
-  // Virtual Memory CSRs
-  assign CSR_W[12'h180] = (CSRArrayOld[12'h180] != CSRArray[12'h180]) ? 1 : 0;
-
-  // Floating-Point CSRs
-  assign CSR_W[12'h001] = (CSRArrayOld[12'h001] != CSRArray[12'h001]) ? 1 : 0;
-  assign CSR_W[12'h002] = (CSRArrayOld[12'h002] != CSRArray[12'h002]) ? 1 : 0;
-  assign CSR_W[12'h003] = (CSRArrayOld[12'h003] != CSRArray[12'h003]) ? 1 : 0;
-
-  // Counters / Performance Monitoring CSRs
-  assign CSR_W[12'h306] = (CSRArrayOld[12'h306] != CSRArray[12'h306]) ? 1 : 0;
-  assign CSR_W[12'h106] = (CSRArrayOld[12'h106] != CSRArray[12'h106]) ? 1 : 0;
-  assign CSR_W[12'h320] = (CSRArrayOld[12'h320] != CSRArray[12'h320]) ? 1 : 0;
-  // mhpmevent3-31 not connected (232-33F)
-  assign CSR_W[12'hB00] = (CSRArrayOld[12'hB00] != CSRArray[12'hB00]) ? 1 : 0;
-  assign CSR_W[12'hB02] = (CSRArrayOld[12'hB02] != CSRArray[12'hB02]) ? 1 : 0;
-  // mhpmcounter3-31 not connected (B03-B1F)
-  // cycle, time, instret not connected (C00-C02)
-  // hpmcounter3-31 not connected (C03-C1F)
-
-  // Machine Information Registers and Configuration CSRs
-  assign CSR_W[12'h301] = (CSRArrayOld[12'h301] != CSRArray[12'h301]) ? 1 : 0;
-  assign CSR_W[12'h30A] = (CSRArrayOld[12'h30A] != CSRArray[12'h30A]) ? 1 : 0;
-  assign CSR_W[12'h10A] = (CSRArrayOld[12'h10A] != CSRArray[12'h10A]) ? 1 : 0;
-  assign CSR_W[12'h747] = (CSRArrayOld[12'h747] != CSRArray[12'h747]) ? 1 : 0;
-  assign CSR_W[12'hF11] = (CSRArrayOld[12'hF11] != CSRArray[12'hF11]) ? 1 : 0;
-  assign CSR_W[12'hF12] = (CSRArrayOld[12'hF12] != CSRArray[12'hF12]) ? 1 : 0;
-  assign CSR_W[12'hF13] = (CSRArrayOld[12'hF13] != CSRArray[12'hF13]) ? 1 : 0;
-  assign CSR_W[12'hF14] = (CSRArrayOld[12'hF14] != CSRArray[12'hF14]) ? 1 : 0;
-  assign CSR_W[12'hF15] = (CSRArrayOld[12'hF15] != CSRArray[12'hF15]) ? 1 : 0;
-
-  // Sstc CSRs
-  assign CSR_W[12'h14D] = (CSRArrayOld[12'h14D] != CSRArray[12'h14D]) ? 1 : 0;
-  
-  // Zkr CSRs
-  // seed not connected (015)
-
-  // extra CSRs for RV32
-  if (P.XLEN == 32) begin
-    assign CSR_W[12'h310] = (CSRArrayOld[12'h310] != CSRArray[12'h310]) ? 1 : 0;
-    assign CSR_W[12'h31A] = (CSRArrayOld[12'h31A] != CSRArray[12'h31A]) ? 1 : 0;
-    assign CSR_W[12'h757] = (CSRArrayOld[12'h757] != CSRArray[12'h757]) ? 1 : 0;
-    assign CSR_W[12'h15D] = (CSRArrayOld[12'h15D] != CSRArray[12'h15D]) ? 1 : 0;
-  end
-
-
-
-  // M-mode trap CSRs
-  assign rvvi.csr_wb[0][0][12'h300] = CSR_W[12'h300];
-  assign rvvi.csr_wb[0][0][12'h302] = CSR_W[12'h302];
-  assign rvvi.csr_wb[0][0][12'h303] = CSR_W[12'h303];
-  assign rvvi.csr_wb[0][0][12'h304] = CSR_W[12'h304];
-  assign rvvi.csr_wb[0][0][12'h305] = CSR_W[12'h305];
-  assign rvvi.csr_wb[0][0][12'h340] = CSR_W[12'h340];
-  assign rvvi.csr_wb[0][0][12'h341] = CSR_W[12'h341];
-  assign rvvi.csr_wb[0][0][12'h342] = CSR_W[12'h342];
-  assign rvvi.csr_wb[0][0][12'h343] = CSR_W[12'h343];
-  assign rvvi.csr_wb[0][0][12'h344] = CSR_W[12'h344];
-
-  // S-mode trap CSRs
-  assign rvvi.csr_wb[0][0][12'h100] = CSR_W[12'h100];
-  assign rvvi.csr_wb[0][0][12'h104] = CSR_W[12'h104];
-  assign rvvi.csr_wb[0][0][12'h105] = CSR_W[12'h105];
-  assign rvvi.csr_wb[0][0][12'h140] = CSR_W[12'h140];
-  assign rvvi.csr_wb[0][0][12'h141] = CSR_W[12'h141];
-  assign rvvi.csr_wb[0][0][12'h142] = CSR_W[12'h142];
-  assign rvvi.csr_wb[0][0][12'h143] = CSR_W[12'h143];
-  assign rvvi.csr_wb[0][0][12'h144] = CSR_W[12'h144];
-
-  // Virtual Memory CSRs
-  assign rvvi.csr_wb[0][0][12'h180] = CSR_W[12'h180];
-
-  // Floating-Point CSRs
-  assign rvvi.csr_wb[0][0][12'h001] = CSR_W[12'h001];
-  assign rvvi.csr_wb[0][0][12'h002] = CSR_W[12'h002];
-  assign rvvi.csr_wb[0][0][12'h003] = CSR_W[12'h003];
-
-  // Counters / Performance Monitoring CSRs
-  assign rvvi.csr_wb[0][0][12'h306] = CSR_W[12'h306];
-  assign rvvi.csr_wb[0][0][12'h106] = CSR_W[12'h106];
-  assign rvvi.csr_wb[0][0][12'h320] = CSR_W[12'h320];
-  // mhpmevent3-31 not connected (232-33F)
-  assign rvvi.csr_wb[0][0][12'hB00] = CSR_W[12'hB00];
-  assign rvvi.csr_wb[0][0][12'hB02] = CSR_W[12'hB02];
-  // mhpmcounter3-31 not connected (B03-B1F)
-  // cycle, time, instret not connected (C00-C02)
-  // hpmcounter3-31 not connected (C03-C1F)
-
-  // Machine Information Registers and Configuration CSRs
-  assign rvvi.csr_wb[0][0][12'h301] = CSR_W[12'h301];
-  assign rvvi.csr_wb[0][0][12'h30A] = CSR_W[12'h30A];
-  assign rvvi.csr_wb[0][0][12'h10A] = CSR_W[12'h10A];
-  assign rvvi.csr_wb[0][0][12'h747] = CSR_W[12'h747];
-  assign rvvi.csr_wb[0][0][12'hF11] = CSR_W[12'hF11];
-  assign rvvi.csr_wb[0][0][12'hF12] = CSR_W[12'hF12];
-  assign rvvi.csr_wb[0][0][12'hF13] = CSR_W[12'hF13];
-  assign rvvi.csr_wb[0][0][12'hF14] = CSR_W[12'hF14];
-  assign rvvi.csr_wb[0][0][12'hF15] = CSR_W[12'hF15];
-
-  // Sstc CSRs
-  assign rvvi.csr_wb[0][0][12'h14D] = CSR_W[12'h14D];
-  
-  // Zkr CSRs
-  // seed not connected (015)
-
-  // extra CSRs for RV32
-  if (P.XLEN == 32) begin
-    assign rvvi.csr_wb[0][0][12'h310] = CSR_W[12'h310];
-    assign rvvi.csr_wb[0][0][12'h31A] = CSR_W[12'h31A];
-    assign rvvi.csr_wb[0][0][12'h757] = CSR_W[12'h757];
-    assign rvvi.csr_wb[0][0][12'h15D] = CSR_W[12'h15D];
-  end
-
-
-
-// M-mode trap CSRs
-  assign rvvi.csr[0][0][12'h300] = CSRArray[12'h300];
-  assign rvvi.csr[0][0][12'h302] = CSRArray[12'h302];
-  assign rvvi.csr[0][0][12'h303] = CSRArray[12'h303];
-  assign rvvi.csr[0][0][12'h304] = CSRArray[12'h304];
-  assign rvvi.csr[0][0][12'h305] = CSRArray[12'h305];
-  assign rvvi.csr[0][0][12'h340] = CSRArray[12'h340];
-  assign rvvi.csr[0][0][12'h341] = CSRArray[12'h341];
-  assign rvvi.csr[0][0][12'h342] = CSRArray[12'h342];
-  assign rvvi.csr[0][0][12'h343] = CSRArray[12'h343];
-  assign rvvi.csr[0][0][12'h344] = CSRArray[12'h344];
-
-  // S-mode trap CSRs
-  assign rvvi.csr[0][0][12'h100] = CSRArray[12'h100];
-  assign rvvi.csr[0][0][12'h104] = CSRArray[12'h104];
-  assign rvvi.csr[0][0][12'h105] = CSRArray[12'h105];
-  assign rvvi.csr[0][0][12'h140] = CSRArray[12'h140];
-  assign rvvi.csr[0][0][12'h141] = CSRArray[12'h141];
-  assign rvvi.csr[0][0][12'h142] = CSRArray[12'h142];
-  assign rvvi.csr[0][0][12'h143] = CSRArray[12'h143];
-  assign rvvi.csr[0][0][12'h144] = CSRArray[12'h144];
-
-  // Virtual Memory CSRs
-  assign rvvi.csr[0][0][12'h180] = CSRArray[12'h180];
-
-  // Floating-Point CSRs
-  assign rvvi.csr[0][0][12'h001] = CSRArray[12'h001];
-  assign rvvi.csr[0][0][12'h002] = CSRArray[12'h002];
-  assign rvvi.csr[0][0][12'h003] = CSRArray[12'h003];
-
-  // Counters / Performance Monitoring CSRs
-  assign rvvi.csr[0][0][12'h306] = CSRArray[12'h306];
-  assign rvvi.csr[0][0][12'h106] = CSRArray[12'h106];
-  assign rvvi.csr[0][0][12'h320] = CSRArray[12'h320];
-  // mhpmevent3-31 not connected (232-33F)
-  assign rvvi.csr[0][0][12'hB00] = CSRArray[12'hB00];
-  assign rvvi.csr[0][0][12'hB02] = CSRArray[12'hB02];
-  // mhpmcounter3-31 not connected (B03-B1F)
-  // cycle, time, instret not connected (C00-C02)
-  // hpmcounter3-31 not connected (C03-C1F)
-
-  // Machine Information Registers and Configuration CSRs
-  assign rvvi.csr[0][0][12'h301] = CSRArray[12'h301];
-  assign rvvi.csr[0][0][12'h30A] = CSRArray[12'h30A];
-  assign rvvi.csr[0][0][12'h10A] = CSRArray[12'h10A];
-  assign rvvi.csr[0][0][12'h747] = CSRArray[12'h747];
-  assign rvvi.csr[0][0][12'hF11] = CSRArray[12'hF11];
-  assign rvvi.csr[0][0][12'hF12] = CSRArray[12'hF12];
-  assign rvvi.csr[0][0][12'hF13] = CSRArray[12'hF13];
-  assign rvvi.csr[0][0][12'hF14] = CSRArray[12'hF14];
-  assign rvvi.csr[0][0][12'hF15] = CSRArray[12'hF15];
-
-  // Sstc CSRs
-  assign rvvi.csr[0][0][12'h14D] = CSRArray[12'h14D];
-  
-  // Zkr CSRs
-  // seed not connected (015)
-
-  // extra CSRs for RV32
-  if (P.XLEN == 32) begin
-    assign rvvi.csr[0][0][12'h310] = CSRArray[12'h310];
-    assign rvvi.csr[0][0][12'h31A] = CSRArray[12'h31A];
-    assign rvvi.csr[0][0][12'h757] = CSRArray[12'h757];
-    assign rvvi.csr[0][0][12'h15D] = CSRArray[12'h15D];
-  end
-
-
-  // PMP CFG 3A0 to 3AF
-  for(index='h3A0; index<='h3AF; index++) begin
-    assign CSR_W[index] = (CSRArrayOld[index] != CSRArray[index]) ? 1 : 0;
-    assign rvvi.csr_wb[0][0][index] = CSR_W[index];
-    assign rvvi.csr[0][0][index] = CSRArray[index];  
-  end
-
-  // PMP ADDR 3B0 to 3EF
-  for(index='h3B0; index<='h3EF; index++) begin
-    assign CSR_W[index] = (CSRArrayOld[index] != CSRArray[index]) ? 1 : 0;
-    assign rvvi.csr_wb[0][0][index] = CSR_W[index];
-    assign rvvi.csr[0][0][index] = CSRArray[index];  
-  end
-
   // *** implementation only cancel? so sc does not clear?
   assign rvvi.lrsc_cancel[0][0] = 0;
 
@@ -787,4 +461,3 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
     if(HaltW) $finish;
   end
 endmodule
-
