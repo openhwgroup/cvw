@@ -50,49 +50,48 @@ def synthsintocsv():
     specReg = re.compile("[a-zA-Z0-9]+")
     metricReg = re.compile("-?\d+\.\d+[e]?[-+]?\d*")
 
-    file = open("ppaData.csv", "w")
-    writer = csv.writer(file)
-    writer.writerow(
-        [
-            "Module",
-            "Tech",
-            "Width",
-            "Target Freq",
-            "Delay",
-            "Area",
-            "L Power (nW)",
-            "D energy (nJ)",
-        ]
-    )
+    with open("ppaData.csv", "w") as file:
+        writer = csv.writer(file)
+        writer.writerow(
+            [
+                "Module",
+                "Tech",
+                "Width",
+                "Target Freq",
+                "Delay",
+                "Area",
+                "L Power (nW)",
+                "D energy (nJ)",
+            ]
+        )
 
-    for oneSynth in allSynths:
-        module, width, risc, tech, freq = specReg.findall(oneSynth)[1:6]
-        tech = tech[:-2]  
-        metrics = []
-        for phrase in [["Path Slack", "qor"], ["Design Area", "qor"], ["100", "power"]]:
-            bashCommand = 'grep "{}" ' + oneSynth[2:] + "/reports/*{}*"
-            bashCommand = bashCommand.format(*phrase)
-            try:
-                output = subprocess.check_output(["bash", "-c", bashCommand])
-            except:
-                print(module + width + tech + freq + " doesn't have reports")
-                print("Consider running cleanup() first")
-            nums = metricReg.findall(str(output))
-            nums = [float(m) for m in nums]
-            metrics += nums
-        delay = 1000 / int(freq) - metrics[0]
-        area = metrics[1]
-        lpower = metrics[4]
-        tpower = (metrics[2] + metrics[3] + metrics[4]*.000001)
-        denergy = (
-            (tpower) / int(freq) * 1000
-        )  # (switching + internal powers)*delay, more practical units for regression coefs
+        for oneSynth in allSynths:
+            module, width, risc, tech, freq = specReg.findall(oneSynth)[1:6]
+            tech = tech[:-2]  
+            metrics = []
+            for phrase in [["Path Slack", "qor"], ["Design Area", "qor"], ["100", "power"]]:
+                bashCommand = 'grep "{}" ' + oneSynth[2:] + "/reports/*{}*"
+                bashCommand = bashCommand.format(*phrase)
+                try:
+                    output = subprocess.check_output(["bash", "-c", bashCommand])
+                except:
+                    print(module + width + tech + freq + " doesn't have reports")
+                    print("Consider running cleanup() first")
+                nums = metricReg.findall(str(output))
+                nums = [float(m) for m in nums]
+                metrics += nums
+            delay = 1000 / int(freq) - metrics[0]
+            area = metrics[1]
+            lpower = metrics[4]
+            tpower = (metrics[2] + metrics[3] + metrics[4]*.000001)
+            denergy = (
+                (tpower) / int(freq) * 1000
+            )  # (switching + internal powers)*delay, more practical units for regression coefs
 
-        if "flop" in module:  # since two flops in each module
-            [area, lpower, denergy] = [n / 2 for n in [area, lpower, denergy]]
+            if "flop" in module:  # since two flops in each module
+                [area, lpower, denergy] = [n / 2 for n in [area, lpower, denergy]]
 
-        writer.writerow([module, tech, width, freq, delay, area, lpower, denergy])
-    file.close()
+            writer.writerow([module, tech, width, freq, delay, area, lpower, denergy])
 
 
 def cleanup():
@@ -129,15 +128,12 @@ def getVals(tech, module, var, freq=None, width=None):
     works at a specified target frequency or if none is given, uses the synthesis with the best achievable delay for each width
     """
 
-    if width != None:
-        widthsToGet = width
-    else:
-        widthsToGet = widths
+    widthsToGet = width if width is not None else widths
 
     metric = []
     widthL = []
 
-    if freq != None:
+    if freq is not None:
         for oneSynth in allSynths:
             if (
                 (oneSynth.freq == freq)
@@ -171,37 +167,30 @@ def csvOfBest(filename):
                 m = np.Inf  # large number to start
                 best = None
                 for oneSynth in allSynths:  # best achievable, rightmost green
-                    if (
-                        (oneSynth.width == w)
-                        & (oneSynth.tech == tech)
-                        & (oneSynth.module == mod)
-                    ):
-                        if (oneSynth.delay < m) & (
-                            1000 / oneSynth.delay > oneSynth.freq
-                        ):
+                    if (oneSynth.width == w) & (oneSynth.tech == tech) & (oneSynth.module == mod):
+                        if (oneSynth.delay < m) & (1000 / oneSynth.delay > oneSynth.freq):
                             m = oneSynth.delay
                             best = oneSynth
 
-                if (best != None) & (best not in bestSynths):
+                if (best is not None) & (best not in bestSynths):
                     bestSynths += [best]
 
-    file = open(filename, "w")
-    writer = csv.writer(file)
-    writer.writerow(
-        [
-            "Module",
-            "Tech",
-            "Width",
-            "Target Freq",
-            "Delay",
-            "Area",
-            "L Power (nW)",
-            "D energy (nJ)",
-        ]
-    )
-    for synth in bestSynths:
-        writer.writerow(list(synth))
-    file.close()
+    with open(filename, "w") as file:
+        writer = csv.writer(file)
+        writer.writerow(
+            [
+                "Module",
+                "Tech",
+                "Width",
+                "Target Freq",
+                "Delay",
+                "Area",
+                "L Power (nW)",
+                "D energy (nJ)",
+            ]
+        )
+        for synth in bestSynths:
+            writer.writerow(list(synth))
     return bestSynths
 
 
@@ -229,7 +218,7 @@ def genLegend(fits, coefs, r2=None, spec=None, ale=False):
     eq = ""
     ind = 0
 
-    for k in eqDict.keys():
+    for k in eqDict:
         if k in fits:
             if str(coefsr[ind]) != "0":
                 eq += " + " + coefsr[ind] + eqDict[k]
@@ -237,7 +226,7 @@ def genLegend(fits, coefs, r2=None, spec=None, ale=False):
 
     eq = eq[3:]  # chop off leading ' + '
 
-    if (r2 == None) or (spec == None):
+    if (r2 is None) or (spec is None):
         return eq
     else:
         legend_elements = [lines.Line2D([0], [0], color=spec.color, label=eq)]
@@ -277,10 +266,7 @@ def oneMetricPlot(
     modFit = fitDict[module]
     fits = modFit[ale]
 
-    if freq:
-        ls = "--"
-    else:
-        ls = "-"
+    ls = "--" if freq else "-"
 
     for spec in techSpecs:
         # print(f"Searching for module of spec {spec} and module {module} and var {var}")
@@ -339,7 +325,7 @@ def oneMetricPlot(
         ax.add_artist(ax.legend(handles=fullLeg, loc=legLoc))
         titleStr = (
             "  (target  " + str(freq) + "MHz)"
-            if freq != None
+            if freq is not None
             else " (best achievable delay)"
         )
         ax.set_title(module + titleStr)
@@ -403,72 +389,16 @@ def makeCoefTable():
     """writes CSV with each line containing the coefficients for a regression fit
     to a particular combination of module, metric (including both techs, normalized)
     """
-    file = open("ppaFitting.csv", "w")
-    writer = csv.writer(file)
-    writer.writerow(
-        ["Module", "Metric", "Target", "1", "N", "N^2", "log2(N)", "Nlog2(N)", "R^2"]
-    )
+    with open("ppaFitting.csv", "w") as file:
+        writer = csv.writer(file)
+        writer.writerow(
+            ["Module", "Metric", "Target", "1", "N", "N^2", "log2(N)", "Nlog2(N)", "R^2"]
+        )
 
-    for module in modules:
-        for freq in [10, None]:
-            target = "easy" if freq else "hard"
-            for var in ["delay", "area", "lpower", "denergy"]:
-                ale = var != "delay"
-                metL = []
-                modFit = fitDict[module]
-                fits = modFit[ale]
-
-                for spec in techSpecs:
-                    metric = getVals(spec.tech, module, var, freq=freq)
-                    techdict = spec._asdict()
-                    norm = techdict[var]
-                    metL += [m / norm for m in metric]
-
-                xp, pred, coefs, r2 = regress(widths * 2, metL, fits, ale)
-                coefs = np.ndarray.tolist(coefs)
-                coefsToWrite = [None] * 5
-                fitTerms = "clsgn"
-                ind = 0
-                for i in range(len(fitTerms)):
-                    if fitTerms[i] in fits:
-                        coefsToWrite[i] = coefs[ind]
-                        ind += 1
-                row = [module, var, target] + coefsToWrite + [r2]
-                writer.writerow(row)
-
-    file.close()
-
-
-def sigfig(num, figs):
-    return "{:g}".format(float("{:.{p}g}".format(num, p=figs)))
-
-
-def makeEqTable():
-    """writes CSV with each line containing the equations for fits for each metric
-    to a particular module (including both techs, normalized)
-    """
-    file = open("ppaEquations.csv", "w")
-    writer = csv.writer(file)
-    writer.writerow(
-        [
-            "Element",
-            "Best delay",
-            "Fast area",
-            "Fast leakage",
-            "Fast energy",
-            "Small area",
-            "Small leakage",
-            "Small energy",
-        ]
-    )
-
-    for module in modules:
-        eqs = []
-        for freq in [None, 10]:
-            for var in ["delay", "area", "lpower", "denergy"]:
-                if (var == "delay") and (freq == 10):
-                    pass
-                else:
+        for module in modules:
+            for freq in [10, None]:
+                target = "easy" if freq else "hard"
+                for var in ["delay", "area", "lpower", "denergy"]:
                     ale = var != "delay"
                     metL = []
                     modFit = fitDict[module]
@@ -482,12 +412,63 @@ def makeEqTable():
 
                     xp, pred, coefs, r2 = regress(widths * 2, metL, fits, ale)
                     coefs = np.ndarray.tolist(coefs)
-                    eqs += [genLegend(fits, coefs, ale=ale)]
-        row = [module] + eqs
-        writer.writerow(row)
+                    coefsToWrite = [None] * 5
+                    fitTerms = "clsgn"
+                    ind = 0
+                    for i in range(len(fitTerms)):
+                        if fitTerms[i] in fits:
+                            coefsToWrite[i] = coefs[ind]
+                            ind += 1
+                    row = [module, var, target] + coefsToWrite + [r2]
+                    writer.writerow(row)
 
-    file.close()
 
+def sigfig(num, figs):
+    return "{:g}".format(float("{:.{p}g}".format(num, p=figs)))
+
+
+def makeEqTable():
+    """writes CSV with each line containing the equations for fits for each metric
+    to a particular module (including both techs, normalized)
+    """
+    with open("ppaEquations.csv", "w") as file:
+        writer = csv.writer(file)
+        writer.writerow(
+            [
+                "Element",
+                "Best delay",
+                "Fast area",
+                "Fast leakage",
+                "Fast energy",
+                "Small area",
+                "Small leakage",
+                "Small energy",
+            ]
+        )
+
+        for module in modules:
+            eqs = []
+            for freq in [None, 10]:
+                for var in ["delay", "area", "lpower", "denergy"]:
+                    if (var == "delay") and (freq == 10):
+                        pass
+                    else:
+                        ale = var != "delay"
+                        metL = []
+                        modFit = fitDict[module]
+                        fits = modFit[ale]
+
+                        for spec in techSpecs:
+                            metric = getVals(spec.tech, module, var, freq=freq)
+                            techdict = spec._asdict()
+                            norm = techdict[var]
+                            metL += [m / norm for m in metric]
+
+                        xp, pred, coefs, r2 = regress(widths * 2, metL, fits, ale)
+                        coefs = np.ndarray.tolist(coefs)
+                        eqs += [genLegend(fits, coefs, ale=ale)]
+            row = [module] + eqs
+            writer.writerow(row)
 
 def genFuncs(fits="clsgn"):
     """helper function for regress()
@@ -719,7 +700,7 @@ def plotPPA(mod, freq=None, norm=True, aleOpt=False):
             else:
                 axs[i, j].legend(handles=leg, handlelength=1.5)
 
-    titleStr = "  (target  " + str(freq) + "MHz)" if freq != None else ""
+    titleStr = f"  (target {freq} MHz)" if freq is not None else ""
     plt.suptitle(mod + titleStr)
     plt.tight_layout(pad=0.05, w_pad=1, h_pad=0.5, rect=(0, 0, 1, 0.97))
 
@@ -819,10 +800,7 @@ def stdDevError():
                 norm = techdict[var]
                 metL += [m / norm for m in metric]
 
-            if ale:
-                ws = [w / normAddWidth for w in widths]
-            else:
-                ws = widths
+            ws = [w / normAddWidth for w in widths] if ale else widths
             ws = ws * 2
             mat = []
             for w in ws:
@@ -896,7 +874,7 @@ if __name__ == "__main__":
         "flop": ["c", "l", "l"],
         "binencoder": ["cg", "l", "l"],
     }
-    fitDict.update(dict.fromkeys(["mux2", "mux4", "mux8"], ["cg", "l", "l"]))
+    fitDict.update({key: ["cg", "l", "l"] for key in ["mux2", "mux4", "mux8"]})
 
     TechSpec = namedtuple("TechSpec", "tech color shape delay area lpower denergy")
     # FO4 delay information information

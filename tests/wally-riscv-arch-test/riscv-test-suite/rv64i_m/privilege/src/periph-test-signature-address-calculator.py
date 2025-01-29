@@ -17,7 +17,7 @@ if __name__ == "__main__":
         line_num = int(sig_adr / 4) + 1
         offset = sig_adr & 0x3F
         test_num = int((sig_adr-offset)/int("40",16))
-        print("IntrNum 0x{:02X}".format(test_num))
-        print("Offset 0x{:02X}".format(offset))
+        print(f"IntrNum 0x{test_num:02X}")
+        print(f"Offset 0x{offset:02X}")
         print("LineNum "+str(line_num))
    

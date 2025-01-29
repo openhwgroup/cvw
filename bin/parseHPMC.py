@@ -46,14 +46,14 @@ def ParseBranchListFile(path):
     is formated in row columns.  Each row is a trace with the file, branch predictor type, and the parameters.
     parameters can be any number and depend on the predictor type. Returns a list of lists.'''
     lst = []
-    BranchList = open(path, 'r')
-    for line in BranchList:
-        tokens = line.split()
-        predictorLog = os.path.dirname(path) + '/' + tokens[0]
-        predictorType = tokens[1]
-        predictorParams = tokens[2::]
-        lst.append([predictorLog, predictorType, predictorParams])
-        #print(predictorLog, predictorType, predictorParams)
+    with open(path) as BranchList:
+        for line in BranchList:
+            tokens = line.split()
+            predictorLog = os.path.dirname(path) + '/' + tokens[0]
+            predictorType = tokens[1]
+            predictorParams = tokens[2::]
+            lst.append([predictorLog, predictorType, predictorParams])
+            #print(predictorLog, predictorType, predictorParams)
     return lst
     
 def ProcessFile(fileName):
@@ -62,22 +62,22 @@ def ProcessFile(fileName):
     # 1 find lines with Read memfile and extract test name
     # 2 parse counters into a list of (name, value) tuples (dictionary maybe?)
     benchmarks = []
-    transcript = open(fileName, 'r')
     HPMClist = { }
     testName = ''
-    for line in transcript.readlines():
-        lineToken = line.split()
-        if(len(lineToken) > 3 and lineToken[1] == 'Read' and lineToken[2] == 'memfile'):
-            opt = lineToken[3].split('/')[-4]
-            testName = lineToken[3].split('/')[-1].split('.')[0]
-            HPMClist = { }
-        elif(len(lineToken) > 4 and lineToken[1][0:3] == 'Cnt'):
-            countToken = line.split('=')[1].split()
-            value = int(countToken[0]) if countToken[0] != 'x' else 0
-            name = ' '.join(countToken[1:])
-            HPMClist[name] = value
-        elif ('is done' in line):
-            benchmarks.append((testName, opt, HPMClist))
+    with open(fileName) as transcript:
+        for line in transcript.readlines():
+            lineToken = line.split()
+            if(len(lineToken) > 3 and lineToken[1] == 'Read' and lineToken[2] == 'memfile'):
+                opt = lineToken[3].split('/')[-4]
+                testName = lineToken[3].split('/')[-1].split('.')[0]
+                HPMClist = { }
+            elif(len(lineToken) > 4 and lineToken[1][0:3] == 'Cnt'):
+                countToken = line.split('=')[1].split()
+                value = int(countToken[0]) if countToken[0] != 'x' else 0
+                name = ' '.join(countToken[1:])
+                HPMClist[name] = value
+            elif ('is done' in line):
+                benchmarks.append((testName, opt, HPMClist))
     return benchmarks
 
 
@@ -227,13 +227,13 @@ def ReportAsTable(benchmarkDict):
 
     sys.stdout.write('benchmark\t\t')
     for name in FirstLine:
-        if(len(name) < 8): sys.stdout.write('%s\t\t' % name)
-        else: sys.stdout.write('%s\t' % name)        
+        if(len(name) < 8): sys.stdout.write(f'{name}\t\t')
+        else: sys.stdout.write(f'{name}\t')        
     sys.stdout.write('\n')
     sys.stdout.write('size\t\t\t')
     for size in SecondLine:
-        if(len(str(size)) < 8): sys.stdout.write('%d\t\t' % size)
-        else: sys.stdout.write('%d\t' % size)        
+        if(len(str(size)) < 8): sys.stdout.write(f'{size}\t\t')
+        else: sys.stdout.write(f'{size}\t')        
     sys.stdout.write('\n')
 
     if(args.summary):
@@ -245,9 +245,9 @@ def ReportAsTable(benchmarkDict):
     if(not args.summary):
         for benchmark in benchmarkDict:
             length = len(benchmark)
-            if(length < 8): sys.stdout.write('%s\t\t\t' % benchmark)
-            elif(length < 16): sys.stdout.write('%s\t\t' % benchmark)
-            else: sys.stdout.write('%s\t' % benchmark)
+            if(length < 8): sys.stdout.write(f'{benchmark}\t\t\t')
+            elif(length < 16): sys.stdout.write(f'{benchmark}\t\t')
+            else: sys.stdout.write(f'{benchmark}\t')
             for (name, typ, entries, size, val) in benchmarkDict[benchmark]:
                 sys.stdout.write('%0.2f\t\t' % (val if not args.invert else 100 -val))
             sys.stdout.write('\n')
@@ -256,14 +256,14 @@ def ReportAsText(benchmarkDict):
     if(args.summary):
         mean = benchmarkDict['Mean']
         print('Mean')
-        for (name, typ, entries. size, val) in mean:
-            sys.stdout.write('%s %s %0.2f\n' % (name, entries if not args.size else size, val if not args.invert else 100 - val))
+        for (name, typ, entries, size, val) in mean:
+            sys.stdout.write(f'{name} {entries if not args.size else size} {val if not args.invert else 100 - val:0.2f}\n')
         
     if(not args.summary):
         for benchmark in benchmarkDict:
             print(benchmark)
             for (name, type, entries, size, val) in benchmarkDict[benchmark]:
-                sys.stdout.write('%s %s %0.2f\n' % (name, entries if not args.size else size, val if not args.invert else 100 - val))
+                sys.stdout.write(f'{name} {entries if not args.size else size} {val if not args.invert else 100 - val:0.2f}\n')
 
 def Inversion(lst):
     return [x if not args.invert else 100 - x for x in lst]
@@ -275,7 +275,7 @@ def BarGraph(seriesDict, xlabelList, BenchPerRow, FileName, IncludeLegend):
     # the space between groups is 1
     EffectiveNumInGroup = NumberInGroup + 2
     barWidth = 1 / EffectiveNumInGroup
-    fig = plt.subplots(figsize = (EffectiveNumInGroup*BenchPerRow/8, 4))
+    _ = plt.subplots(figsize = (EffectiveNumInGroup*BenchPerRow/8, 4))
     colors = ['blue', 'blue', 'blue', 'blue', 'blue', 'blue', 'black', 'black', 'black', 'black', 'black', 'black']
     for name in seriesDict:
         values = seriesDict[name]
@@ -322,14 +322,13 @@ def ReportAsGraph(benchmarkDict, bar, FileName):
     if(args.summary):
         markers = ['x', '.', '+', '*', '^', 'o', ',', 's']
         colors = ['blue', 'black', 'gray', 'dodgerblue', 'lightsteelblue', 'turquoise', 'black', 'blue']
-        temp = benchmarkDict['Mean']
 
         # the benchmarkDict['Mean'] contains sequencies of results for multiple
         # branch predictors with various parameterizations
         # group the parameterizations by the common typ.
         sequencies = {}
         for (name, typ, entries, size, value) in benchmarkDict['Mean']:
-            if not typ in sequencies:
+            if typ not in sequencies:
                 sequencies[typ] = [(entries if not args.size else int(size/8), value)]
             else:
                 sequencies[typ].append((entries if not args.size else int(size/8) ,value))
@@ -354,7 +353,7 @@ def ReportAsGraph(benchmarkDict, bar, FileName):
         axes.set_xticks(xdata)
         axes.set_xticklabels(xdata)
         axes.grid(color='b', alpha=0.5, linestyle='dashed', linewidth=0.5)
-        if(FileName == None): plt.show()
+        if FileName is None: plt.show()
         else: plt.savefig(FileName)        
 
     # if(not args.summary):
@@ -378,10 +377,10 @@ def ReportAsGraph(benchmarkDict, bar, FileName):
 
     if(not args.summary):
         NumBenchmarks = len(benchmarkDict)
-        NumBenchmarksSqrt = math.sqrt(NumBenchmarks)
-        isSquare = math.isclose(NumBenchmarksSqrt, round(NumBenchmarksSqrt))
-        numCol = math.floor(NumBenchmarksSqrt)
-        numRow = numCol + (0 if isSquare else 1)
+        # NumBenchmarksSqrt = math.sqrt(NumBenchmarks)
+        # isSquare = math.isclose(NumBenchmarksSqrt, round(NumBenchmarksSqrt))
+        # numCol = math.floor(NumBenchmarksSqrt)
+        # numRow = numCol + (0 if isSquare else 1)
         index = 1
         BenchPerRow = 5
 
@@ -414,7 +413,7 @@ def ReportAsGraph(benchmarkDict, bar, FileName):
         # on each piece.
         for row in range(0, math.ceil(NumBenchmarks / BenchPerRow)):
             (xlabelListTrunk, seriesDictTrunk) = SelectPartition(xlabelListBig, seriesDictBig, row, BenchPerRow)
-            FileName = 'barSegment%d.svg' % row
+            FileName = f'barSegment{row}.svg'
             groupLen = len(xlabelListTrunk)
             BarGraph(seriesDictTrunk, xlabelListTrunk, groupLen, FileName, (row == 0))
 
