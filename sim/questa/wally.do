@@ -120,8 +120,8 @@ if {[lcheck lst "--fcov"]} {
                 +incdir+$env(WALLY)/addins/cvw-arch-verif/riscvISACOV/source \
                 +incdir+${IMPERAS_HOME}/ImpPublic/include/host \
                 +incdir+${IMPERAS_HOME}/ImpProprietary/include/host \
-                -f ${IMPERAS_HOME}/ImpPublic/source/host/rvvi/rvvi.f \
-                -f ${IMPERAS_HOME}/ImpProprietary/source/host/idv/idv.f"
+                ${IMPERAS_HOME}/ImpPublic/source/host/rvvi/*.sv \
+                ${IMPERAS_HOME}/ImpProprietary/source/host/idv/*.sv"
     set SVLib " -sv_lib ${IMPERAS_HOME}/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model "
 }
 
@@ -131,8 +131,8 @@ if {[lcheck lst "--lockstep"]} {
     set lockstep 1
     set lockstepvlog "+incdir+${IMPERAS_HOME}/ImpPublic/include/host \
                       +incdir+${IMPERAS_HOME}/ImpProprietary/include/host \
-                      -f ${IMPERAS_HOME}/ImpPublic/source/host/rvvi/rvvi.f \
-                      -f ${IMPERAS_HOME}/ImpProprietary/source/host/idv/idv.f"
+                      ${IMPERAS_HOME}/ImpPublic/source/host/rvvi/*.sv \
+                      ${IMPERAS_HOME}/ImpProprietary/source/host/idv/*.sv"
     set SVLib " -sv_lib ${IMPERAS_HOME}/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model "
 }
 
