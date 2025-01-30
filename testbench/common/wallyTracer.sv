@@ -207,82 +207,32 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
     end
   end
 
-
-// PMP CSRs
   if (P.PMP_ENTRIES > 0) begin
-    always_comb begin
-      if(valid) begin 
-        // PMPCFG CSRs (space is 0-15 3a0 - 3af)
-        localparam inc = P.XLEN == 32 ? 4 : 8;
-        int i, i4, csrid;
-        logic [P.XLEN-1:0] pmp;
-
-        for (i=0; i<P.PMP_ENTRIES; i+=inc) begin
-          i4 = i / 4;
-          csrid = 12'h3A0 + i4;
-          pmp = 0;
-          pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i+0] << 0;
-          pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i+1] << 8;
-          pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i+2] << 16;
-          pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i+3] << 24;
-          pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i+4] << 32;
-          pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i+5] << 40;
-          pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i+6] << 48;
-          pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i+7] << 56;
-          
-          CSRArray[csrid] = pmp;
-        end
-
-        // PMPADDR CSRs (space is 0-63 3b0 - 3ef)
-        for (i=0; i<P.PMP_ENTRIES; i++) begin
-          csrid = 12'h3B0 + i;;
-          pmp = testbench.dut.core.priv.priv.csr.csrm.PMPADDR_ARRAY_REGW[i];
-          CSRArray[csrid] = pmp;
-        end
-
-      end else begin // hold the old value if the pipeline is stalled.
-        // PMP CFG 3A0 to 3AF
-        int csrid;
-        for(csrid='h3A0; csrid<='h3AF; csrid++)
-          CSRArray[csrid] = CSRArrayOld[csrid];
-        
-        // PMP ADDR 3B0 to 3EF
-        for(csrid='h3B0; csrid<='h3EF; csrid++)
-          CSRArray[csrid] = CSRArrayOld[csrid];
-      end    
+    localparam inc = P.XLEN == 32 ? 4 : 8;
+    // PMPCFG CSRs (space is 0-15 3a0 - 3af)
+    for (genvar pmpCfgID = 0; pmpCfgID < P.PMP_ENTRIES; pmpCfgID += inc) begin
+      logic [P.XLEN-1:0] pmp;
+      localparam int i4 = pmpCfgID / 4;
+      assign pmp = {testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[pmpCfgID+7],
+                    testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[pmpCfgID+6],
+                    testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[pmpCfgID+5],
+                    testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[pmpCfgID+4],
+                    testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[pmpCfgID+3],
+                    testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[pmpCfgID+2],
+                    testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[pmpCfgID+1],
+                    testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[pmpCfgID+0]};
+      `CONNECT_CSR(PMPCFG``i4, 12'h3A0 + i4, pmp);
     end
-  end
 
-  // record previous csr value.
-  always_ff @(posedge clk) begin
-    int csrid;
-    // PMP CFG 3A0 to 3AF
-    for(csrid='h3A0; csrid<='h3AF; csrid++)
-      CSRArrayOld[csrid] = CSRArray[csrid];
-    
-    // PMP ADDR 3B0 to 3EF
-    for(csrid='h3B0; csrid<='h3EF; csrid++)
-      CSRArrayOld[csrid] = CSRArray[csrid];
-  end
-
-  // PMP CFG 3A0 to 3AF
-  genvar index;
-  for(index='h3A0; index<='h3AF; index++) begin
-    assign CSR_W[index] = (CSRArrayOld[index] != CSRArray[index]) ? 1 : 0;
-    assign rvvi.csr_wb[0][0][index] = CSR_W[index];
-    assign rvvi.csr[0][0][index] = CSRArray[index];  
-  end
-
-  // PMP ADDR 3B0 to 3EF
-  for(index='h3B0; index<='h3EF; index++) begin
-    assign CSR_W[index] = (CSRArrayOld[index] != CSRArray[index]) ? 1 : 0;
-    assign rvvi.csr_wb[0][0][index] = CSR_W[index];
-    assign rvvi.csr[0][0][index] = CSRArray[index];  
+  // PMPADDR CSRs 3B0 to 3EF
+    for(genvar pmpAddrID = 0; pmpAddrID < P.PMP_ENTRIES; pmpAddrID++) begin
+      `CONNECT_CSR(PMPADDR``pmpAddrID, 12'h3B0 + pmpAddrID, testbench.dut.core.priv.priv.csr.csrm.PMPADDR_ARRAY_REGW[pmpAddrID]);
+    end
   end
 
   // Integer register file
   assign rf[0] = 0;
-  for(index = 1; index < NUM_REGS; index += 1) 
+  for(genvar index = 1; index < NUM_REGS; index += 1) 
     assign rf[index] = testbench.dut.core.ieu.dp.regf.rf[index];
 
   assign rf_a3  = testbench.dut.core.ieu.dp.regf.a3;
@@ -298,12 +248,12 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   if (P.F_SUPPORTED) begin
     assign frf_a4  = testbench.dut.core.fpu.fpu.fregfile.a4;
     assign frf_we4 = testbench.dut.core.fpu.fpu.fregfile.we4;
-    for(index = 0; index < 32; index += 1) 
+    for(genvar index = 0; index < 32; index += 1) 
       assign frf[index] = testbench.dut.core.fpu.fpu.fregfile.rf[index];
   end else begin
     assign frf_a4  = '0;
     assign frf_we4 = 0;
-    for(index = 0; index < 32; index += 1) 
+    for(genvar index = 0; index < 32; index += 1) 
       assign frf[index] = '0;
   end
 
@@ -389,11 +339,11 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
                                ~FlushE ? PCD :
                                ~FlushD ? PCF : PCNextF;
 
-  for(index = 0; index < NUM_REGS; index += 1) begin
+  for(genvar index = 0; index < NUM_REGS; index += 1) begin
     assign rvvi.x_wdata[0][0][index] = rf[index];
     assign rvvi.x_wb[0][0][index]    = rf_wb[index];
   end
-  for(index = 0; index < 32; index += 1) begin
+  for(genvar index = 0; index < 32; index += 1) begin
     assign rvvi.f_wdata[0][0][index] = frf[index];
     assign rvvi.f_wb[0][0][index]    = frf_wb[index];
   end
