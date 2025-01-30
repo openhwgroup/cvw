@@ -154,7 +154,11 @@ trek:
       doc: >-
         Verbatim code that will be put into the header section of the test.
       value: |-
-
+        // enable mtimer  interrupts 
+        #define TREK_MTIME_BASE     (0x0200bff8)
+        #define TREK_MTIMECMP_BASE  (0x02004000)
+        #define TREK_MSWI_BASE      (0x02000000)
+        #define TREK_MTIMECMP_DELAY  0x1000
     declaration:
       doc: >-
         Verbatim code that will be put into the declaration section of the test.
