@@ -431,7 +431,7 @@ STATUS="riscv-sail-model"
 if git_check "sail-riscv" "https://github.com/riscv/sail-riscv.git" "$RISCV/bin/riscv_sim_rv32d"; then
     cd "$RISCV"/sail-riscv
     git reset --hard && git clean -f && git checkout master && git pull
-    cmake -S . -B build -DCMAKE_RELEASE_TYPE=RelWithDebInfo -GNinja 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+    cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -GNinja 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
     cmake --build build 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
     cp -f build/c_emulator/riscv_sim_rv64d "$RISCV"/bin/riscv_sim_rv64d
     cp -f build/c_emulator/riscv_sim_rv32d "$RISCV"/bin/riscv_sim_rv32d
