@@ -30,11 +30,12 @@
 // Since we are detecting the CSR change by comparing the old value, we need to
 // ensure the CSR is detected when the pipeline's Writeback stage is not
 // stalled.  If it is stalled we want to hold the old value.
-`define CONNECT_CSR(addr, val) \
+`define CONNECT_CSR(name, addr, val) \
+  logic [P.XLEN-1:0] prev_csr_``name; \
   always_ff @(posedge clk) \
-    CSRArrayOld[addr] = rvvi.csr[0][0][addr]; \
-  assign rvvi.csr_wb[0][0][addr] = (rvvi.csr[0][0][addr] != CSRArrayOld[addr]); \
-  assign rvvi.csr[0][0][addr] = valid ? val : CSRArrayOld[addr];
+    prev_csr_``name <= rvvi.csr[0][0][addr]; \
+  assign rvvi.csr_wb[0][0][addr] = (rvvi.csr[0][0][addr] != prev_csr_``name); \
+  assign rvvi.csr[0][0][addr] = valid ? val : prev_csr_``name;
 
 module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
 
@@ -140,69 +141,69 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   // CSR connections
   if (P.ZICSR_SUPPORTED) begin
     // M-mode trap CSRs
-    `CONNECT_CSR(12'h300, testbench.dut.core.priv.priv.csr.csrm.MSTATUS_REGW);
-    `CONNECT_CSR(12'h302, testbench.dut.core.priv.priv.csr.csrm.MEDELEG_REGW);
-    `CONNECT_CSR(12'h303, testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW);
-    `CONNECT_CSR(12'h304, testbench.dut.core.priv.priv.csr.csrm.MIE_REGW);
-    `CONNECT_CSR(12'h305, testbench.dut.core.priv.priv.csr.csrm.MTVEC_REGW);
-    `CONNECT_CSR(12'h340, testbench.dut.core.priv.priv.csr.csrm.MSCRATCH_REGW);
-    `CONNECT_CSR(12'h341, testbench.dut.core.priv.priv.csr.csrm.MEPC_REGW);
-    `CONNECT_CSR(12'h342, testbench.dut.core.priv.priv.csr.csrm.MCAUSE_REGW);
-    `CONNECT_CSR(12'h343, testbench.dut.core.priv.priv.csr.csrm.MTVAL_REGW);
-    `CONNECT_CSR(12'h344, testbench.dut.core.priv.priv.csr.csrm.MIP_REGW);
+    `CONNECT_CSR(MSTATUS, 12'h300, testbench.dut.core.priv.priv.csr.csrm.MSTATUS_REGW);
+    `CONNECT_CSR(MEDELEG, 12'h302, testbench.dut.core.priv.priv.csr.csrm.MEDELEG_REGW);
+    `CONNECT_CSR(MIDELEG, 12'h303, testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW);
+    `CONNECT_CSR(MIE, 12'h304, testbench.dut.core.priv.priv.csr.csrm.MIE_REGW);
+    `CONNECT_CSR(MTVEC, 12'h305, testbench.dut.core.priv.priv.csr.csrm.MTVEC_REGW);
+    `CONNECT_CSR(MSCRATCH, 12'h340, testbench.dut.core.priv.priv.csr.csrm.MSCRATCH_REGW);
+    `CONNECT_CSR(MEPC, 12'h341, testbench.dut.core.priv.priv.csr.csrm.MEPC_REGW);
+    `CONNECT_CSR(MCAUSE, 12'h342, testbench.dut.core.priv.priv.csr.csrm.MCAUSE_REGW);
+    `CONNECT_CSR(MTVAL, 12'h343, testbench.dut.core.priv.priv.csr.csrm.MTVAL_REGW);
+    `CONNECT_CSR(MIP, 12'h344, testbench.dut.core.priv.priv.csr.csrm.MIP_REGW);
 
     // S-mode trap CSRs
-    `CONNECT_CSR(12'h100, testbench.dut.core.priv.priv.csr.csrs.csrs.SSTATUS_REGW);
-    `CONNECT_CSR(12'h104, testbench.dut.core.priv.priv.csr.csrm.MIE_REGW & 12'h222);
-    `CONNECT_CSR(12'h105, testbench.dut.core.priv.priv.csr.csrs.csrs.STVEC_REGW);
-    `CONNECT_CSR(12'h140, testbench.dut.core.priv.priv.csr.csrs.csrs.SSCRATCH_REGW);
-    `CONNECT_CSR(12'h141, testbench.dut.core.priv.priv.csr.csrs.csrs.SEPC_REGW);
-    `CONNECT_CSR(12'h142, testbench.dut.core.priv.priv.csr.csrs.csrs.SCAUSE_REGW);
-    `CONNECT_CSR(12'h143, testbench.dut.core.priv.priv.csr.csrs.csrs.STVAL_REGW);
-    `CONNECT_CSR(12'h144, testbench.dut.core.priv.priv.csr.csrm.MIP_REGW & 12'h222 & testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW);
+    `CONNECT_CSR(SSTATUS, 12'h100, testbench.dut.core.priv.priv.csr.csrs.csrs.SSTATUS_REGW);
+    `CONNECT_CSR(SIE, 12'h104, testbench.dut.core.priv.priv.csr.csrm.MIE_REGW & 12'h222);
+    `CONNECT_CSR(STVEC, 12'h105, testbench.dut.core.priv.priv.csr.csrs.csrs.STVEC_REGW);
+    `CONNECT_CSR(SSCRATCH, 12'h140, testbench.dut.core.priv.priv.csr.csrs.csrs.SSCRATCH_REGW);
+    `CONNECT_CSR(SEPC, 12'h141, testbench.dut.core.priv.priv.csr.csrs.csrs.SEPC_REGW);
+    `CONNECT_CSR(SCAUSE, 12'h142, testbench.dut.core.priv.priv.csr.csrs.csrs.SCAUSE_REGW);
+    `CONNECT_CSR(STVAL, 12'h143, testbench.dut.core.priv.priv.csr.csrs.csrs.STVAL_REGW);
+    `CONNECT_CSR(SIP, 12'h144, testbench.dut.core.priv.priv.csr.csrm.MIP_REGW & 12'h222 & testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW);
 
     // Virtual Memory CSRs
-    `CONNECT_CSR(12'h180, testbench.dut.core.priv.priv.csr.csrs.csrs.SATP_REGW);
+    `CONNECT_CSR(SATP, 12'h180, testbench.dut.core.priv.priv.csr.csrs.csrs.SATP_REGW);
 
     // Floating-Point CSRs
-    `CONNECT_CSR(12'h001, testbench.dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW);
-    `CONNECT_CSR(12'h002, testbench.dut.core.priv.priv.csr.csru.csru.FRM_REGW);
-    `CONNECT_CSR(12'h003, {testbench.dut.core.priv.priv.csr.csru.csru.FRM_REGW, testbench.dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW});
+    `CONNECT_CSR(FFLAGS, 12'h001, testbench.dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW);
+    `CONNECT_CSR(FRM, 12'h002, testbench.dut.core.priv.priv.csr.csru.csru.FRM_REGW);
+    `CONNECT_CSR(FCSR, 12'h003, {testbench.dut.core.priv.priv.csr.csru.csru.FRM_REGW, testbench.dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW});
 
     // Counters / Performance Monitoring CSRs
-    `CONNECT_CSR(12'h306, testbench.dut.core.priv.priv.csr.csrm.MCOUNTEREN_REGW);
-    `CONNECT_CSR(12'h106, testbench.dut.core.priv.priv.csr.csrs.csrs.SCOUNTEREN_REGW);
-    `CONNECT_CSR(12'h320, testbench.dut.core.priv.priv.csr.csrm.MCOUNTINHIBIT_REGW);
+    `CONNECT_CSR(MCOUNTEREN, 12'h306, testbench.dut.core.priv.priv.csr.csrm.MCOUNTEREN_REGW);
+    `CONNECT_CSR(SCOUNTEREN, 12'h106, testbench.dut.core.priv.priv.csr.csrs.csrs.SCOUNTEREN_REGW);
+    `CONNECT_CSR(MCOUNTINHIBIT, 12'h320, testbench.dut.core.priv.priv.csr.csrm.MCOUNTINHIBIT_REGW);
     // mhpmevent3-31 not connected (232-33F)
-    `CONNECT_CSR(12'hB00, testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[0]); // MCYCLE
-    `CONNECT_CSR(12'hB02, testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2]); // MINSTRET
+    `CONNECT_CSR(MCYCLE, 12'hB00, testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[0]); // MCYCLE
+    `CONNECT_CSR(MINSTRET, 12'hB02, testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2]); // MINSTRET
     // mhpmcounter3-31 not connected (B03-B1F)
     // cycle, time, instret not connected (C00-C02)
     // hpmcounter3-31 not connected (C03-C1F)
 
     // Machine Information Registers and Configuration CSRs
-    `CONNECT_CSR(12'h301, testbench.dut.core.priv.priv.csr.csrm.MISA_REGW);
-    `CONNECT_CSR(12'h30A, testbench.dut.core.priv.priv.csr.csrm.MENVCFG_REGW);
-    `CONNECT_CSR(12'h10A, testbench.dut.core.priv.priv.csr.csrs.csrs.SENVCFG_REGW);
-    `CONNECT_CSR(12'h747, 0); // mseccfg
-    `CONNECT_CSR(12'hF11, 0); //mvendorid
-    `CONNECT_CSR(12'hF12, 0); // marchid
-    `CONNECT_CSR(12'hF13, {{P.XLEN-12{1'b0}}, 12'h100}); // mimpid
-    `CONNECT_CSR(12'hF14, testbench.dut.core.priv.priv.csr.csrm.MHARTID_REGW);
-    `CONNECT_CSR(12'hF15, 0); //mconfigptr
+    `CONNECT_CSR(MISA, 12'h301, testbench.dut.core.priv.priv.csr.csrm.MISA_REGW);
+    `CONNECT_CSR(MENVCFG, 12'h30A, testbench.dut.core.priv.priv.csr.csrm.MENVCFG_REGW);
+    `CONNECT_CSR(SENVCFG, 12'h10A, testbench.dut.core.priv.priv.csr.csrs.csrs.SENVCFG_REGW);
+    `CONNECT_CSR(MSECCFG, 12'h747, 0); // mseccfg
+    `CONNECT_CSR(MVENDORID, 12'hF11, 0); //mvendorid
+    `CONNECT_CSR(MARCHID, 12'hF12, 0); // marchid
+    `CONNECT_CSR(MIMPID, 12'hF13, {{P.XLEN-12{1'b0}}, 12'h100}); // mimpid
+    `CONNECT_CSR(MHARTID, 12'hF14, testbench.dut.core.priv.priv.csr.csrm.MHARTID_REGW);
+    `CONNECT_CSR(MCONFIGPTR, 12'hF15, 0); //mconfigptr
 
     // Sstc CSRs
-    `CONNECT_CSR(12'h14D, testbench.dut.core.priv.priv.csr.csrs.csrs.STIMECMP_REGW[P.XLEN-1:0]);
+    `CONNECT_CSR(STIMECMP, 12'h14D, testbench.dut.core.priv.priv.csr.csrs.csrs.STIMECMP_REGW[P.XLEN-1:0]);
     
     // Zkr CSRs
     // seed not connected (015)
 
     // extra CSRs for RV32
     if (P.XLEN == 32) begin
-      `CONNECT_CSR(12'h310, testbench.dut.core.priv.priv.csr.csrsr.MSTATUSH_REGW);
-      `CONNECT_CSR(12'h31A, testbench.dut.core.priv.priv.csr.csrm.MENVCFGH_REGW);
-      `CONNECT_CSR(12'h757, 0); // mseccfgh
-      `CONNECT_CSR(12'h15D, testbench.dut.core.priv.priv.csr.csrs.csrs.STIMECMP_REGW[63:32]);
+      `CONNECT_CSR(MSTATUSH, 12'h310, testbench.dut.core.priv.priv.csr.csrsr.MSTATUSH_REGW);
+      `CONNECT_CSR(MENVCFGH, 12'h31A, testbench.dut.core.priv.priv.csr.csrm.MENVCFGH_REGW);
+      `CONNECT_CSR(MSECCFGH, 12'h757, 0); // mseccfgh
+      `CONNECT_CSR(STIMECMPH, 12'h15D, testbench.dut.core.priv.priv.csr.csrs.csrs.STIMECMP_REGW[63:32]);
     end
   end
 
@@ -374,7 +375,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   assign valid  = ((InstrValidW | TrapW) & ~StallW) & ~reset;
   assign rvvi.clk = clk;
   assign rvvi.valid[0][0]    = valid;
-  assign rvvi.order[0][0]    = CSRArray[12'hB02];  // TODO: IMPERAS Should be event order
+  assign rvvi.order[0][0]    = rvvi.csr[0][0][12'hB02];  // TODO: IMPERAS Should be event order
   assign rvvi.insn[0][0]     = InstrRawW;
   assign rvvi.pc_rdata[0][0] = PCW;
   assign rvvi.trap[0][0]     = TrapW;
@@ -414,7 +415,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   end
   
   always_ff @(posedge clk) begin
-	if(valid) begin
+  if(valid) begin
       if(`STD_LOG) begin
         $fwrite(file, "%016x, %08x, %s\t\t", rvvi.pc_rdata[0][0], rvvi.insn[0][0], instrWName);
         for(index2 = 0; index2 < NUM_REGS; index2 += 1) begin
@@ -451,8 +452,8 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
       end
       if (`PRINT_CSRS) begin
         for(index2 = 0; index2 < NUM_CSRS; index2 += 1) begin
-          if(CSR_W[index2]) begin
-            $display("%t: CSR %03x = %x", $time(), index2, CSRArray[index2]);
+          if((rvvi.csr[0][0][index2] != CSRArrayOld[index2])) begin
+            $display("%t: CSR %03x = %x", $time(), index2, rvvi.csr[0][0][index2]);
           end
         end
       end
