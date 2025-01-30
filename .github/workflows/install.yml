@@ -127,9 +127,11 @@ jobs:
         run: |
               df -h
               if [ -z ${{ matrix.image }} ]; then
-                ./.github/cli-space-cleanup.sh
+                ./.github/scripts/cli-space-cleanup.sh
+                ./.github/scripts/cli-create-lvm.sh
               else
-                nsenter -t 1 -m -u -n -i bash -c "$(cat .github/cli-space-cleanup.sh)"
+                nsenter -t 1 -m -u -n -i bash -c "$(cat .github/scripts/cli-space-cleanup.sh)"
+                nsenter -t 1 -m -u -n -i bash -c "$(cat .github/scripts/cli-create-lvm.sh)"
               fi
               df -h
       # Run main tool chain installation script, either as a user or system wide
@@ -159,16 +161,16 @@ jobs:
         with:
           name: installation-logs-${{ matrix.name }}
           path: ${{ env.RISCV }}/logs/
+      # Only the linux-testvectors are needed, so remove the rest of the buildroot to save space
+      - name: Remove Buildroot to Save Space
+        run: |
+            rm -rf $RISCV/buildroot/ || sudo rm -rf $RISCV/
+            df -h
       # Make riscof and zsbl only as that is the only testsuite used by standard regression
       - name: make tests
         run: |
               source setup.sh
               make riscof zsbl --jobs $(nproc --ignore 1)
-      # Only the linux-testvectors are needed, so remove the rest of the buildroot to save space
-      - name: Remove Buildroot to Save Space
-        run: |
-              rm -rf $RISCV/buildroot/output/build || sudo rm -rf $RISCV/buildroot/output/build
-              df -h
       # Run standard regression, skipping distros that are known to be broken with Verilator
       - name: Regression
         if: ${{ matrix.regressionFail != true }}
