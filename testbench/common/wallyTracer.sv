@@ -66,9 +66,6 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   logic [31:0]           frf_wb;
   logic [4:0]            frf_a4;
   logic                  frf_we4;
-  logic [P.XLEN-1:0]     CSRArray [4095:0];
-  logic [P.XLEN-1:0]     CSRArrayOld [4095:0];
-  logic [NUM_CSRS-1:0]  CSR_W;
   logic                  CSRWriteM, CSRWriteW;
   logic [11:0]           CSRAdrM, CSRAdrW;
   logic                  wfiM;
@@ -400,13 +397,14 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
           $display("f%02d = %08x", index2, rvvi.f_wdata[0][0][index2]);
         end
       end
-      if (`PRINT_CSRS) begin
-        for(index2 = 0; index2 < NUM_CSRS; index2 += 1) begin
-          if((rvvi.csr[0][0][index2] != CSRArrayOld[index2])) begin
-            $display("%t: CSR %03x = %x", $time(), index2, rvvi.csr[0][0][index2]);
-          end
-        end
-      end
+      // Need to figure out how to print values on change if they are not in a large array
+      // if (`PRINT_CSRS) begin
+      //   for(index2 = 0; index2 < NUM_CSRS; index2 += 1) begin
+      //     if((rvvi.csr[0][0][index2] != CSRArrayOld[index2])) begin
+      //       $display("%t: CSR %03x = %x", $time(), index2, rvvi.csr[0][0][index2]);
+      //     end
+      //   end
+      // end
     end
     if(HaltW) $finish;
   end
