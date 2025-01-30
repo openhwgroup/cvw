@@ -128,10 +128,10 @@ jobs:
               df -h
               if [ -z ${{ matrix.image }} ]; then
                 ./.github/scripts/cli-space-cleanup.sh
-                ./.github/scripts/cli-create-lvm.sh
+                #./.github/scripts/cli-create-lvm.sh
               else
                 nsenter -t 1 -m -u -n -i bash -c "$(cat .github/scripts/cli-space-cleanup.sh)"
-                nsenter -t 1 -m -u -n -i bash -c "$(cat .github/scripts/cli-create-lvm.sh)"
+                #nsenter -t 1 -m -u -n -i bash -c "$(cat .github/scripts/cli-create-lvm.sh)"
               fi
               df -h
       # Run main tool chain installation script, either as a user or system wide
@@ -162,9 +162,11 @@ jobs:
           name: installation-logs-${{ matrix.name }}
           path: ${{ env.RISCV }}/logs/
       # Only the linux-testvectors are needed, so remove the rest of the buildroot to save space
-      - name: Remove Buildroot to Save Space
+      # Logs have already been uploaded so they can be removed
+      - name: Clean up installation
         run: |
-            rm -rf $RISCV/buildroot/ || sudo rm -rf $RISCV/
+            rm -rf $RISCV/buildroot/ || sudo rm -rf $RISCV/buildroot/
+            rm -rf $RISCV/logs || sudo rm -rf $RISCV/logs
             df -h
       # Make riscof and zsbl only as that is the only testsuite used by standard regression
       - name: make tests
