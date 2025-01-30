@@ -21,7 +21,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-
 `define STD_LOG 0
 `define PRINT_PC_INSTR 0
 `define PRINT_MOST 0
@@ -30,16 +29,12 @@
 
 // Since we are detecting the CSR change by comparing the old value, we need to
 // ensure the CSR is detected when the pipeline's Writeback stage is not
-// stalled.  If it is stalled we want CSRArray to hold the old value.
+// stalled.  If it is stalled we want to hold the old value.
 `define CONNECT_CSR(addr, val) \
-  always_comb \
-    if (valid) CSRArray[addr] = val; \
-    else CSRArray[addr] = CSRArrayOld[addr]; \
   always_ff @(posedge clk) \
-    CSRArrayOld[addr] = CSRArray[addr]; \
-  assign CSR_W[addr] = (CSRArrayOld[addr] != CSRArray[addr]) ? 1 : 0; \
-  assign rvvi.csr_wb[0][0][addr] = CSR_W[addr]; \
-  assign rvvi.csr[0][0][addr]    = CSRArray[addr];
+    CSRArrayOld[addr] = rvvi.csr[0][0][addr]; \
+  assign rvvi.csr_wb[0][0][addr] = (rvvi.csr[0][0][addr] != CSRArrayOld[addr]); \
+  assign rvvi.csr[0][0][addr] = valid ? val : CSRArrayOld[addr];
 
 module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
 
