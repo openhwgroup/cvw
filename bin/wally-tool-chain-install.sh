@@ -126,6 +126,8 @@ fi
 
 # Determine script directory to locate related scripts
 dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WALLY=$(dirname "$dir")
+export WALLY
 
 # Get Linux distro and version
 source "${dir}"/wally-distro-check.sh
@@ -471,7 +473,7 @@ if [ ! "$no_buidroot" ]; then
     fi
     cd "$dir"/../linux
     if [ ! -e "$RISCV"/buildroot ]; then
-        make 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+        FORCE_UNSAFE_CONFIGURE=1 make 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ] # FORCE_UNSAFE_CONFIGURE is needed to allow buildroot to compile when run as root
         echo -e "${SUCCESS_COLOR}Buildroot successfully installed and Linux testvectors created!${ENDC}"
     elif [ ! -e "$RISCV"/linux-testvectors ]; then
         echo -e "${OK_COLOR}Buildroot already exists, but Linux testvectors are missing. Generating them now.${ENDC}"
