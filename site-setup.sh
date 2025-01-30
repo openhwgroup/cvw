@@ -15,7 +15,7 @@ export IMPERASD_LICENSE_FILE=27020@zircon.eng.hmc.edu               # Change thi
 export QUESTA_HOME=/cad/mentor/questa_sim-2023.4/questasim          # Change this for your path to Questa, excluding bin
 export DC_HOME=/cad/synopsys/SYN                                    # Change this for your path to Synopsys DC, excluding bin
 export VCS_HOME=/cad/synopsys/vcs/U-2023.03-SP2-4                   # Change this for your path to Synopsys VCS, excluding bin
-export BREKER_HOME=/cad/breker/trek5-2.1.10b-GCC6_el7               # Change this for your path to Breker Trek
+export BREKER_HOME=/cad/breker/trek5-2.1.11-GCC6_el7                # Change this for your path to Breker Trek
 
 # Tools
 # Questa and Synopsys
