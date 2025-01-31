@@ -128,10 +128,8 @@ jobs:
               df -h
               if [ -z ${{ matrix.image }} ]; then
                 ./.github/scripts/cli-space-cleanup.sh
-                #./.github/scripts/cli-create-lvm.sh
               else
                 nsenter -t 1 -m -u -n -i bash -c "$(cat .github/scripts/cli-space-cleanup.sh)"
-                #nsenter -t 1 -m -u -n -i bash -c "$(cat .github/scripts/cli-create-lvm.sh)"
               fi
               df -h
       # Run main tool chain installation script, either as a user or system wide
