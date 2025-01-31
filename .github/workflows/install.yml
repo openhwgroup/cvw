@@ -37,14 +37,14 @@ jobs:
         include:
           # Ubuntu Installations
           - name: ubuntu-20.04
-            container: ubuntu:20.04
+            image: ubuntu:20.04
             imageFamily: debian
             regressionFail: true
           - name: ubuntu-22.04
-            container: ubuntu:22.04
+            image: ubuntu:22.04
             imageFamily: debian
           - name: ubuntu-24.04
-            container: ubuntu:24.04
+            image: ubuntu:24.04
             imageFamily: debian
           # Debian Installations
           - name: debian-12
