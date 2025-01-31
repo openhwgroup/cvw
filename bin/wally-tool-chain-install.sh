@@ -286,6 +286,21 @@ if (( UBUNTU_VERSION == 20  || DEBIAN_VERSION == 11 )) || [ "$FAMILY" == suse ];
     fi
 fi
 
+# Newer version of CMake needed to build sail-riscv model (at least 3.20)
+if (( UBUNTU_VERSION == 20  || DEBIAN_VERSION == 11 )); then
+    STATUS="cmake"
+    if [ ! -e "$RISCV"/bin/cmake ]; then
+        section_header "Installing cmake"
+        cd "$RISCV"
+        wget -nv --retry-connrefused $retry_on_host_error --output-document=cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v3.31.5/cmake-3.31.5-linux-x86_64.tar.gz
+        tar xz --directory="$RISCV" --strip-components=1 -f cmake.tar.gz
+        rm -f cmake.tar.gz
+        echo -e "${SUCCESS_COLOR}CMake successfully installed/updated!${ENDC}"
+    else
+        echo -e "${SUCCESS_COLOR}CMake already installed.${ENDC}"
+    fi
+fi
+
 # RISC-V GNU Toolchain (https://github.com/riscv-collab/riscv-gnu-toolchain)
 # The RISC-V GNU Toolchain includes the GNU Compiler Collection (gcc), GNU Binutils, Newlib,
 # and the GNU Debugger Project (gdb). It is a collection of tools used to compile RISC-V programs.
