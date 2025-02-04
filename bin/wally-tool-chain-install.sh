@@ -8,13 +8,14 @@
 ## Modified: 23 March 2023
 ## Modified: 30 June 2024, Jordan Carlin jcarlin@hmc.edu
 ## Modified: 1 September 2024
+## Modified: 3 February 2025 - Deprecate Ubuntu 20.04
 ##
 ## Purpose: Open source tool chain installation script
 ##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
 ## https://github.com/openhwgroup/cvw
 ##
-## Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
+## Copyright (C) 2021-25 Harvey Mudd College & Oklahoma State University
 ##
 ## SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 ##
@@ -199,12 +200,6 @@ elif [ "$FAMILY" == suse ]; then
         ln -vsf /usr/bin/$f-13 "$RISCV"/gcc-13/bin/$f
     done
     export PATH="$RISCV"/gcc-13/bin:$PATH
-elif (( UBUNTU_VERSION == 20 )); then
-    mkdir -p "$RISCV"/gcc-10/bin
-    for f in gcc cpp g++ gcc-ar gcc-nm gcc-ranlib gcov gcov-dump gcov-tool lto-dump; do
-        ln -vsf /usr/bin/$f-10 "$RISCV"/gcc-10/bin/$f
-    done
-    export PATH="$RISCV"/gcc-10/bin:$PATH
 fi
 
 
@@ -231,7 +226,7 @@ source "$RISCV"/riscv-python/bin/activate # reload python virtual environment
 echo -e "${SUCCESS_COLOR}Python environment successfully configured!${ENDC}"
 
 # Extra dependecies needed for older distros that don't have new enough versions available from package manager
-if (( RHEL_VERSION == 8 )) || (( UBUNTU_VERSION == 20 )); then
+if (( RHEL_VERSION == 8 )); then
     # Newer versin of glib required for QEMU.
     # Anything newer than this won't build on red hat 8
     STATUS="glib"
@@ -272,7 +267,7 @@ if (( RHEL_VERSION == 8 )); then
 fi
 
 # Mold needed for Verilator
-if (( UBUNTU_VERSION == 20  || DEBIAN_VERSION == 11 )) || [ "$FAMILY" == suse ]; then
+if (( DEBIAN_VERSION == 11 )) || [ "$FAMILY" == suse ]; then
     STATUS="mold"
     if [ ! -e "$RISCV"/bin/mold ]; then
         section_header "Installing mold"
@@ -287,7 +282,7 @@ if (( UBUNTU_VERSION == 20  || DEBIAN_VERSION == 11 )) || [ "$FAMILY" == suse ];
 fi
 
 # Newer version of CMake needed to build sail-riscv model (at least 3.20)
-if (( UBUNTU_VERSION == 20  || DEBIAN_VERSION == 11 )); then
+if (( DEBIAN_VERSION == 11 )); then
     STATUS="cmake"
     if [ ! -e "$RISCV"/bin/cmake ]; then
         section_header "Installing cmake"
