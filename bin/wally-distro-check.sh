@@ -4,7 +4,7 @@
 ##
 ## Written: Jordan Carlin, jcarlin@hmc.edu
 ## Created: 30 June 2024
-## Modified:
+## Modified: 3 February 2025 - Deprecate Ubuntu 20.04
 ##
 ## Purpose: Check for compatible Linux distibution and set variables accordingly
 ##
@@ -98,8 +98,12 @@ elif [[ "$ID" == ubuntu || "$ID_LIKE" == *ubuntu* ]]; then
     else
         export UBUNTU_VERSION="${VERSION_ID:0:2}"
     fi
-    if (( UBUNTU_VERSION < 20 )); then
-        printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally installation script has only been tested with Ubuntu versions 20.04 LTS, 22.04 LTS, and 24.04 LTS. You have version $VERSION."
+    if (( UBUNTU_VERSION < 22 )); then
+        printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally installation script is only compatible with Ubuntu versions 22.04 LTS and 24.04 LTS. You have version $VERSION."
+        if (( UBUNTU_VERSION == 20 )); then
+            printf "${WARNING_COLOR}%s%s\n${ENDC}" "Support for Ubuntu 20.04 was removed after commit b38900c07baab2576d3f62cf1d2e4a729e8a37e5. " \
+                "You may try insalling using that version, but there will likely be issues (known issues include an incompatible version of git)."
+        fi
         exit 1
     fi
 elif [[ "$ID" == debian || "$ID_LIKE" == *debian* ]]; then
@@ -110,7 +114,7 @@ elif [[ "$ID" == debian || "$ID_LIKE" == *debian* ]]; then
     fi
     export DEBIAN_VERSION="$VERSION_ID"
     if (( DEBIAN_VERSION < 11 )); then
-        printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally installation script has only been tested with Debian versions 11 and 12. You have version $VERSION."
+        printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally installation script is only compatible with Debian versions 11 and 12. You have version $VERSION."
         exit 1
     fi
 elif [[ "$ID" == opensuse-leap || "$ID" == sles || "$ID_LIKE" == *suse* ]]; then

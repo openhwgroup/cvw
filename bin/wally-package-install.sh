@@ -4,7 +4,7 @@
 ##
 ## Written: Jordan Carlin, jcarlin@hmc.edu
 ## Created: 30 June 2024
-## Modified:
+## Modified: 3 February 2025 - Deprecate Ubuntu 20.04
 ##
 ## Purpose: Package manager installation for open source tool chain installation script
 ##
@@ -74,16 +74,13 @@ case "$FAMILY" in
             PYTHON_VERSION=python3.12
         elif (( UBUNTU_VERSION >= 22 )); then
             PYTHON_VERSION=python3.11
-        elif (( UBUNTU_VERSION >= 20 )); then
-            PYTHON_VERSION=python3.9
-            OTHER_PACKAGES+=(gcc-10 g++-10 cpp-10) # Newer version of gcc needed for Verilator
         elif (( DEBIAN_VERSION >= 12 )); then
             PYTHON_VERSION=python3.11
         elif (( DEBIAN_VERSION >= 11 )); then
             PYTHON_VERSION=python3.9
         fi
         # Mold not available in older distros for Verilator, will download binary instead
-        if (( UBUNTU_VERSION != 20 && DEBIAN_VERSION != 11 )); then
+        if (( DEBIAN_VERSION != 11 )); then
             VERILATOR_PACKAGES+=(mold)
         fi
         PACKAGE_MANAGER="DEBIAN_FRONTEND=noninteractive apt-get -y"
