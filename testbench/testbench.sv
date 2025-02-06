@@ -738,8 +738,8 @@ end
 `endif
 
 // Functional coverage
-`ifdef INCLUDE_TRACE2COV
-  trace2cov idv_trace2cov(rvvi); // needed for fcov as of now
+`ifdef FCOV
+  trace2riscvISACOV trace2riscvISACOV(rvvi);
 `endif
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -755,8 +755,6 @@ end
               .CMP_VR      (0),
               .CMP_CSR     (1)
               ) idv_trace2api(rvvi);
-
-  // trace2log idv_trace2log(rvvi); // currently not used
 
   string filename;
   initial begin

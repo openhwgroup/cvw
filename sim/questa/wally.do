@@ -113,16 +113,11 @@ if {[lcheck lst "--ccov"]} {
 if {[lcheck lst "--fcov"]} {
     set IMPERAS_HOME $::env(IMPERAS_HOME)
     set FunctCoverage 1
-    # ImpProprietary is needed for trace2cov for now
     set FCvlog "+incdir+${FCRVVI}/unpriv \
                 +incdir+${FCRVVI}/priv +incdir+${FCRVVI}/rv64_priv +incdir+${FCRVVI}/rv32_priv \
                 +incdir+${FCRVVI}/common +incdir+${FCRVVI} \
                 +incdir+$env(WALLY)/addins/cvw-arch-verif/riscvISACOV/source \
-                +incdir+${IMPERAS_HOME}/ImpPublic/include/host \
-                +incdir+${IMPERAS_HOME}/ImpProprietary/include/host \
-                ${IMPERAS_HOME}/ImpPublic/source/host/rvvi/*.sv \
-                ${IMPERAS_HOME}/ImpProprietary/source/host/idv/*.sv"
-    set SVLib " -sv_lib ${IMPERAS_HOME}/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model "
+                ${FCRVVI}/*.sv"
 }
 
 # if --lockstep found set flag and remove from list

@@ -320,7 +320,7 @@ def addTestsByDir(testDir, config, sim, coverStr, configs, lockstepMode=0, breke
     # fcov/ccov only runs on WALLY-COV-ALL.elf files; other lockstep runs on all files
     fileEnd = "ALL.elf" if "cvw-arch-verif/tests" in testDir and "priv" not in testDir and (coverStr == "--fcov" or coverStr == "--ccov") else ".elf"
     if lockstepMode or coverStr == "--fcov":
-        gs = "Mismatches            : 0"
+        gs = "** Note: $finish"
     elif brekerMode:
         gs="# trek: info: summary: Test PASSED"
     else:

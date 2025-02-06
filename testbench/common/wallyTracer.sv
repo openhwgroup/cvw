@@ -742,6 +742,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   end
   
   always_ff @(posedge clk) begin
+  $display("wallyTracer: %b", rvvi.insn[0][0]);
 	if(valid) begin
       if(`STD_LOG) begin
         $fwrite(file, "%016x, %08x, %s\t\t", rvvi.pc_rdata[0][0], rvvi.insn[0][0], instrWName);
