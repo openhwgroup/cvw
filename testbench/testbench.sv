@@ -28,6 +28,7 @@
 `include "config.vh"
 `include "tests.vh"
 `include "BranchPredictorType.vh"
+// `include "RV32VM_coverage copy.sv"
 
 `ifdef USE_IMPERAS_DV
     `include "idv/idv.svh"
@@ -292,7 +293,8 @@ module testbench;
     # 100;
     TestBenchReset = 1'b0;
   end
-
+   mcount u_mcounteren_checker (
+    );
   always_ff @(posedge clk)
     if (TestBenchReset) CurrState <= STATE_TESTBENCH_RESET;
     else CurrState <= NextState;
@@ -750,6 +752,8 @@ end
               .CMP_VR      (0),
               .CMP_CSR     (1)
               ) idv_trace2api(rvvi);
+
+  `include "RV_Assertions.sv"
 
   string filename;
   initial begin
