@@ -67,8 +67,8 @@ def main():
     parser.add_argument('-d', "--dist", action='store_true', help="Report distribution of operations")
     parser.add_argument('-s', "--sim", help="Simulator", choices=["questa", "verilator", "vcs"], default="verilator")
     args = parser.parse_args()
-    simargs = "I_CACHE_ADDR_LOGGER=1\\\'b1 D_CACHE_ADDR_LOGGER=1\\\'b1"
-    testcmd = "wsim --sim " + args.sim + " rv64gc {} --params \"" + simargs + "\" > /dev/null"
+    simargs = "I_CACHE_ADDR_LOGGER=1\\'b1 D_CACHE_ADDR_LOGGER=1\\'b1"
+    testcmd = "wsim --sim " + args.sim + ' rv64gc {} --params "' + simargs + '" > /dev/null'
     #cachecmd = "CacheSim.py 64 4 56 44 -f {} --verbose"
     cachecmd = "CacheSim.py 64 4 56 44 -f {}"
     mismatches = 0

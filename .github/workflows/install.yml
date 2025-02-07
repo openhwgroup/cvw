@@ -37,67 +37,57 @@ jobs:
         include:
           # Ubuntu Installations
           - name: ubuntu-20.04
-            os: ubuntu-20.04
-            container: null
+            image: ubuntu:20.04
+            imageFamily: debian
             regressionFail: true
           - name: ubuntu-22.04
-            os: ubuntu-22.04
-            container: null
+            image: ubuntu:22.04
+            imageFamily: debian
           - name: ubuntu-24.04
-            os: ubuntu-24.04
-            container: null
+            image: ubuntu:24.04
+            imageFamily: debian
           # Debian Installations
           - name: debian-12
-            os: ubuntu-latest
             image: debian:12
             imageFamily: debian
           - name: debian-11
-            os: ubuntu-latest
             image: debian:11
             imageFamily: debian
           # Red Hat Installations
           - name: rocky-8
-            os: ubuntu-latest
             image: rockylinux:8
             imageFamily: redhat
             regressionFail: true
           - name: rocky-9
-            os: ubuntu-latest
             image: rockylinux:9
             imageFamily: redhat
           - name: almalinux-8
-            os: ubuntu-latest
             image: almalinux:8
             imageFamily: redhat
             regressionFail: true
           - name: almalinux-9
-            os: ubuntu-latest
             image: almalinux:9
             imageFamily: redhat
           # SUSE Installations
           - name: opensuse-15.6
-            os: ubuntu-latest
             image: opensuse/leap:15.6
             imageFamily: suse
           # User level installation
           - name: user-install
-            os: ubuntu-latest
             image: null
             user: true
           # Custom location installation
           - name: custom-install
-            os: ubuntu-latest
             image: null
             riscv_path: /home/riscv
           # Custom location user level installation
           - name: custom-user-install
-            os: ubuntu-latest
             image: null
             user: true
             riscv_path: $HOME/riscv-toolchain
 
     # run on selected version of ubuntu or on ubuntu-latest with docker image
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     container:
       image: ${{ matrix.image }}
       options: --privileged --mount type=bind,source=/,target=/host --pid=host --entrypoint /bin/bash # Allow for connection with host
@@ -127,9 +117,9 @@ jobs:
         run: |
               df -h
               if [ -z ${{ matrix.image }} ]; then
-                ./.github/cli-space-cleanup.sh
+                ./.github/scripts/cli-space-cleanup.sh
               else
-                nsenter -t 1 -m -u -n -i bash -c "$(cat .github/cli-space-cleanup.sh)"
+                nsenter -t 1 -m -u -n -i bash -c "$(cat .github/scripts/cli-space-cleanup.sh)"
               fi
               df -h
       # Run main tool chain installation script, either as a user or system wide
@@ -159,16 +149,18 @@ jobs:
         with:
           name: installation-logs-${{ matrix.name }}
           path: ${{ env.RISCV }}/logs/
+      # Only the linux-testvectors are needed, so remove the rest of the buildroot to save space
+      # Logs have already been uploaded so they can be removed
+      - name: Clean up installation
+        run: |
+            rm -rf $RISCV/buildroot/ || sudo rm -rf $RISCV/buildroot/
+            rm -rf $RISCV/logs || sudo rm -rf $RISCV/logs
+            df -h
       # Make riscof and zsbl only as that is the only testsuite used by standard regression
       - name: make tests
         run: |
               source setup.sh
               make riscof zsbl --jobs $(nproc --ignore 1)
-      # Only the linux-testvectors are needed, so remove the rest of the buildroot to save space
-      - name: Remove Buildroot to Save Space
-        run: |
-              rm -rf $RISCV/buildroot/output/build || sudo rm -rf $RISCV/buildroot/output/build
-              df -h
       # Run standard regression, skipping distros that are known to be broken with Verilator
       - name: Regression
         if: ${{ matrix.regressionFail != true }}

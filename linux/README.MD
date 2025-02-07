@@ -35,7 +35,7 @@ The device tree files for the various FPGAs Wally supports, as well as QEMU's de
 They are built automatically using the main `make` command. To build the device tree binaries (.dtb) from the device tree sources (.dts) separately, we can build all of them at once using:
 
 ```bash
-$ make generate # optionally override BUILDROOT
+$ make devicetrees # optionally override BUILDROOT
 ```
 
 The .dts files will end up in the `<BUILDROOT>/output/images` folder of your chosen buildroot directory.

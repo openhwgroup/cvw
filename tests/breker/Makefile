@@ -14,7 +14,7 @@ TREKSVIP         := source $(TREKFILES)/breker-setup.sh && treksvip -p $(PLATFOR
 # Compilation paths and variables
 START_LIB_DIR := $(WALLY)/examples/C/common
 START_LIB     := $(START_LIB_DIR)/crt.S $(START_LIB_DIR)/syscalls.c
-MARCH         :=-march=rv64gc_zcb_zfa_zba_zbb_zbc_zbs_zfh_zicboz_zicbop_zicbom_zbkb_zbkx_zknd_zkne_zknh_svinval 
+MARCH         :=-march=rv64gc_zcb_zfa_zba_zbb_zbc_zbs_zfh_zicboz_zicbop_zicbom_zicond_zbkb_zbkx_zknd_zkne_zknh_svinval
 MABI          :=-mabi=lp64d
 LINKER        := $(START_LIB_DIR)/test.ld
 LINK_FLAGS    := -nostartfiles

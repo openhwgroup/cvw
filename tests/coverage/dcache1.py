@@ -40,9 +40,9 @@ mem_addr = mem_start_addr
 
 def wl(line="", comment=None, fname=test_name):
     with open(fname, "a") as f:
-        instr = False if (":" in line or
-                          ".align" in line or
-                          "# include" in line) else True
+        instr = not (":" in line or 
+                     ".align" in line or 
+                     "# include" in line)
         indent = 6 if instr else 0
         comment = "// " + comment if comment is not None else ""
         to_write = " " * indent + line + comment + "\n"
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     for i in range(dcache_num_ways):
         wl(comment=f"start way test #{i+1}")
         wl(f'li t0, {hex(mem_addr)}')
-        wl(f'.align 6')                # start at i$ set boundary. 6 lsb bits are zero.
+        wl('.align 6')                # start at i$ set boundary. 6 lsb bits are zero.
         wl(comment=f"i$ boundary, way test #{i+1}")
         write_repro_instrs()
         mem_addr += dcache_way_size_in_bytes  # so that we excercise a new D$ way.
