@@ -58,3 +58,8 @@
 `include "EndianS_coverage.svh"
 `include "ExceptionsM_coverage.svh"
 `include "ExceptionsZc_coverage.svh"
+`include "ZicntrU_coverage.svh"
+`include "ZicntrS_coverage.svh"
+`include "ZicntrM_coverage.svh"
+`include "ZfaZfhD_coverage.svh"
+`include "ZfhminD_coverage.svh"
