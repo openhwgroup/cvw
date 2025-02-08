@@ -131,6 +131,7 @@ void genMulTests(uint16_t *e, uint16_t *f, int sgn, char *testName, char *desc, 
 
 int main()
 {
+    if (system("mkdir -p work") != 0) exit(1); // create work directory if it doesn't exist
     softfloatInit(); // configure softfloat modes
  
     // Test cases: multiplication
