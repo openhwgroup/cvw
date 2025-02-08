@@ -168,3 +168,8 @@ config/deriv
 sim/slack-notifier/slack-webhook-url.txt
 docs/docker/buildroot-config-src
 docs/docker/testvector-generation
+examples/C/fmul
+examples/exercises/fma16/fma16.sv
+examples/exercises/fma16/fma16_testgen
+examples/exercises/fma16/sol 
+examples/exercises/riscvsoc_solutions
