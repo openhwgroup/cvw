@@ -756,8 +756,6 @@ end
               .CMP_CSR     (1)
               ) idv_trace2api(rvvi);
 
-  `include "RV_Assertions.sv"
-
   string filename;
   initial begin
     // imperasDV requires the elffile be defined at the begining of the simulation.

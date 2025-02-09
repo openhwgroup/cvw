@@ -28,4 +28,7 @@ module trace2riscvISACOV(rvviTrace rvvi);
       $display("0x%h: %s", rvvi.insn[0][0], disass);
     end
   end
+
+  // Check assertion coverage
+  `include "RV_Assertions.sv"
 endmodule
