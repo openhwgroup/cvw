@@ -6,60 +6,61 @@
 // It defines which extensions are enabled for that config.
 
 // Define XLEN, used in covergroups
-`define XLEN32 1
+`define XLEN32
 
 // Define relevant addresses
 `define ACCESS_FAULT_ADDRESS 32'h0000
 `define CLINT_BASE 64'h02000000
 
 // Unprivileged extensions
-`include "I_coverage.svh"
-`include "M_coverage.svh"
-`include "F_coverage.svh"
-`include "D_coverage.svh"
-`include "Zba_coverage.svh"
-`include "Zbb_coverage.svh"
-`include "Zbc_coverage.svh"
-`include "Zbs_coverage.svh"
-`include "ZfaF_coverage.svh"
-`include "ZfaD_coverage.svh"
-`include "ZfaZfh_coverage.svh"
-`include "Zfh_coverage.svh"
-`include "ZfhD_coverage.svh"
+`define I_COVERAGE
+`define M_COVERAGE
+`define F_COVERAGE
+`define D_COVERAGE
+`define ZBA_COVERAGE
+`define ZBB_COVERAGE
+`define ZBC_COVERAGE
+`define ZBS_COVERAGE
+`define ZFA_F_COVERAGE
+`define ZFA_D_COVERAGE
+`define ZFA_ZFH_COVERAGE
+`define ZFA_ZFH_D_COVERAGE
+`define ZFH_COVERAGE
+`define ZFH_D_COVERAGE
 // Note: Zfhmin is a subset of Zfh, so usually only one or the other would be used.  When Zfhmin and D are supported, ZfhD should also be enabled
-`include "Zfhmin_coverage.svh"
+`define ZFHMIN_coverage
+`define ZFHMIN_D_COVERAGE
 // Note: Zmmul is a subset of M, so usually only one or the other would be used.
-`include "Zmmul_coverage.svh"
-`include "Zicond_coverage.svh"
-`include "Zca_coverage.svh"
-`include "Zcb_coverage.svh"
-`include "ZcbM_coverage.svh"
-`include "ZcbZbb_coverage.svh"
-`include "Zcf_coverage.svh"
-`include "Zcd_coverage.svh"
-`include "Zicsr_coverage.svh"
-`include "Zbkb_coverage.svh"
-`include "Zbkc_coverage.svh"
-`include "Zbkx_coverage.svh"
-`include "Zknd_coverage.svh"
-`include "Zkne_coverage.svh"
-`include "Zknh_coverage.svh"
-`include "Zaamo_coverage.svh"
-`include "Zalrsc_coverage.svh"
+`define ZMMUL_COVERAGE
+`define ZICOND_COVERAGE
+`define ZCA_COVERAGE
+`define ZCB_COVERAGE
+`define ZCB_M_COVERAGE
+`define ZCB_ZBB_COVERAGE
+`define ZCB_ZBA_COVERAGE
+`define ZCF_COVERAGE
+`define ZCD_COVERAGE
+`define ZICSR_COVERAGE
+`define ZBKB_COVERAGE
+`define ZBKC_COVERAGE
+`define ZBKX_COVERAGE
+`define ZKND_COVERAGE
+`define ZKNE_COVERAGE
+`define ZKNH_COVERAGE
+`define ZAAMO_COVERAGE
+`define ZALRSC_COVERAGE
 
 // Privileged extensions
-`include "ZicsrM_coverage.svh"
-`include "ZicsrF_coverage.svh"
-`include "ZicsrU_coverage.svh"
-`include "RV32VM_coverage.svh"
-`include "RV32VM_PMP_coverage.svh"
-`include "EndianU_coverage.svh"
-`include "EndianM_coverage.svh"
-`include "EndianS_coverage.svh"
-`include "ExceptionsM_coverage.svh"
-`include "ExceptionsZc_coverage.svh"
-`include "ZicntrU_coverage.svh"
-`include "ZicntrS_coverage.svh"
-`include "ZicntrM_coverage.svh"
-`include "ZfaZfhD_coverage.svh"
-`include "ZfhminD_coverage.svh"
+`define RV32VM_COVERAGE
+`define RV32VM_PMP_coverage
+`define ZICSRM_COVERAGE
+`define ZICSRF_COVERAGE
+`define ZICSRU_COVERAGE
+`define ENDIANU_COVERAGE
+`define ENDIANS_COVERAGE
+`define ENDIANM_COVERAGE
+`define EXCEPTIONSM_COVERAGE
+`define EXCEPTIONSZC_COVERAGE
+`define ZICNTRU_COVERAGE
+`define ZICNTRS_COVERAGE
+`define ZICNTRM_COVERAGE
