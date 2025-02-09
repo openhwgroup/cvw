@@ -37,7 +37,6 @@
 `define ZCB_COVERAGE
 `define ZCB_M_COVERAGE
 `define ZCB_ZBB_COVERAGE
-`define ZCB_ZBA_COVERAGE
 `define ZCF_COVERAGE
 `define ZCD_COVERAGE
 `define ZICSR_COVERAGE
