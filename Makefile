@@ -8,7 +8,7 @@ SIM = ${WALLY}/sim
 
 .PHONY: all riscof testfloat combined_IF_vectors zsbl benchmarks coremark embench coverage cvw-arch-verif clean
 
-all: riscof	testfloat combined_IF_vectors zsbl coverage cvw-arch-verif # benchmarks
+all: riscof	testfloat combined_IF_vectors zsbl coverage # cvw-arch-verif benchmarks
 
 # riscof builds the riscv-arch-test and wally-riscv-arch-test suites
 riscof:

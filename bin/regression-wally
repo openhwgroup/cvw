@@ -318,16 +318,19 @@ def addTestsByDir(testDir, config, sim, coverStr, configs, lockstepMode=0, breke
     sim_logdir = f"{regressionDir}/{sim}/logs/"
     cmdPrefix = f"wsim --sim {sim} {coverStr} {'--lockstep' if lockstepMode else ''} {config}"
     # fcov/ccov only runs on WALLY-COV-ALL.elf files; other lockstep runs on all files
-    fileEnd = "ALL.elf" if "cvw-arch-verif/tests" in testDir and "priv" not in testDir and (coverStr == "--fcov" or coverStr == "--ccov") else ".elf"
-    if lockstepMode or coverStr == "--fcov":
-        gs = "** Note: $finish"
+    fileStart = "WALLY-COV-ALL" if "cvw-arch-verif/tests" in testDir and "priv" not in testDir else ""
+    fileEnd = ".elf"
+    if lockstepMode:
+        gs = "Mismatches            : 0"
     elif brekerMode:
         gs="# trek: info: summary: Test PASSED"
+    elif coverStr == "--fcov":
+        gs = "Functional coverage test complete."
     else:
         gs = "Single Elf file tests are not signatured verified."
     for dirpath, _, filenames in os.walk(os.path.abspath(testDir)):
         for file in filenames:
-            if file.endswith(fileEnd):
+            if file.endswith(fileEnd) and file.startswith(fileStart):
                 fullfile = os.path.join(dirpath, file)
                 fields = fullfile.rsplit('/', 3)
                 if fields[2] == "ref":
