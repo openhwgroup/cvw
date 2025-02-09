@@ -1,34 +1,43 @@
-BUILDROOT := buildroot
-IMAGES := ${BUILDROOT}/output/images
-WALLYLINUX := $(WALLY)/linux
-DIS := ${IMAGES}/disassembly
+BUILDROOT         := buildroot
+IMAGE_DIR         := ${BUILDROOT}/output/images
+DISASSEMBLY_DIR   := ${IMAGE_DIR}/disassembly
+WALLYLINUX        := $(WALLY)/linux
 BR2_EXTERNAL_TREE := $(WALLYLINUX)/br2-external-tree
+LINUX_TESTVECTORS := $(RISCV)/linux-testvectors
 
-# set sudo if needed depending on $RISCV
-SUDO := $(shell mkdir -p $(RISCV)/.test > /dev/null 2>&1 || echo sudo)
+BUILDROOT_OUTPUTS := Image fw_jump.bin fw_jump.elf rootfs.cpio vmlinux busybox
+BUILDROOT_OUTPUTS := $(foreach name, $(BUILDROOT_OUTPUTS), $(IMAGE_DIR)/$(name))
 
 # Device tree files
-DTS ?= $(shell find devicetree -type f -regex ".*\.dts" | sort)
-DTB := $(DTS:%.dts=%.dtb)
-DTB := $(foreach name, $(DTB), $(IMAGES)/$(shell basename $(name)))
+DTS ?= $(wildcard devicetree/*.dts)
+DTB := $(foreach name, $(DTS:%.dts=%.dtb), $(IMAGE_DIR)/$(notdir $(name)))
 
-# Disassembly stuff
+# Disassembly files
 BINARIES := fw_jump.elf vmlinux busybox
-OBJDUMPS := $(foreach name, $(BINARIES), $(basename $(name) .elf))
-OBJDUMPS := $(foreach name, $(OBJDUMPS), $(DIS)/$(name).objdump)
+OBJDUMPS := $(foreach name, $(basename $(BINARIES) .elf), $(DISASSEMBLY_DIR)/$(name).objdump)
 
-.PHONY: all generate disassemble install clean cleanDTB check_write_permissions check_environment
+# Testvector files
+RAW_RAM_FILE     := ${LINUX_TESTVECTORS}/ramGDB.bin
+RAM_FILE         := ${LINUX_TESTVECTORS}/ram.bin
+RAW_BOOTMEM_FILE := ${LINUX_TESTVECTORS}/bootmemGDB.bin
+BOOTMEM_FILE     := ${LINUX_TESTVECTORS}/bootmem.bin
 
-all: check_environment check_write_permissions clean download Image disassemble install dumptvs
+.PHONY: all check_environment check_write_permissions config build disassemble devicetrees install dumptvs clean cleanDTB
 
-check_environment: $(RISCV)
+# Default target
+all: check_write_permissions clean config build disassemble install dumptvs
+
+# Check if the environment variables are set correctly
+check_environment: $(RISCV) $(WALLY)
 ifeq ($(findstring :$(RISCV)/lib:,:$(LD_LIBRARY_PATH):),)
 	@(echo "ERROR: Your environment variables are not set correctly." >&2 \
 	&& echo "Make sure to source setup.sh or install buildroot using the wally-tool-chain-install.sh script." >&2 \
 	&& exit 1)
 endif
 
-check_write_permissions:
+# Check if the user has write permissions to the RISCV directory, potentially using sudo
+SUDO := $(shell mkdir -p $(RISCV)/.test > /dev/null 2>&1 || echo sudo)
+check_write_permissions: check_environment
 ifeq ($(SUDO), sudo)
 	@echo "Cannot write to '$(RISCV)'." \
 		"Using sudo (you may be prompted for your password several times throughout the install)"
@@ -38,75 +47,92 @@ endif
 		&& exit 1)
 	@$(SUDO) rm -r $(RISCV)/.test
 
-Image: check_environment
-	bash -c "unset LD_LIBRARY_PATH; $(MAKE) -C $(BUILDROOT)"
-	$(MAKE) generate
-	@echo "Buildroot Image successfully generated."
+# Build buildroot and device tree binaries
+build: $(BUILDROOT_OUTPUTS) devicetrees
 
-install: check_write_permissions check_environment
+# Build buildroot itself
+# LD_LIBRARY_PATH must be unset to avoid conflicts between the host and cross compiler
+$(BUILDROOT_OUTPUTS) $(IMAGE_DIR): check_environment $(BUILDROOT)
+	bash -c "unset LD_LIBRARY_PATH; $(MAKE) -C $(BUILDROOT)"
+
+# Install buildroot to $RISCV
+install: check_write_permissions
 	$(SUDO) rm -rf $(RISCV)/$(BUILDROOT)
 	$(SUDO) mv $(BUILDROOT) $(RISCV)/$(BUILDROOT)
-	@echo "Buildroot successfully installed."
 
-dumptvs: check_write_permissions check_environment
-	$(SUDO) mkdir -p $(RISCV)/linux-testvectors
-	./genInitMem.sh
-	@echo "Testvectors successfully generated."
+# Generate linux boot testvectors
+dumptvs: ${RAM_FILE} ${BOOTMEM_FILE}
 
-generate: $(DTB) $(IMAGES)
+# Format QEMU memory dumps for use as testvectors
+${LINUX_TESTVECTORS}/%.bin: ${LINUX_TESTVECTORS}/%GDB.bin
+	truncate -s %8 $^ # Extend file to 8 byte multiple
+	objcopy --reverse-bytes=8 -F binary $^ $@ # Reverse bytes
 
-$(IMAGES)/%.dtb: ./devicetree/%.dts
+# Generate memory dumps from QEMU buildroot boot
+TCP_PORT := 1235
+${LINUX_TESTVECTORS}/%GDB.bin: | $(LINUX_TESTVECTORS)
+	${WALLYLINUX}/qemuBoot.sh --gdb ${TCP_PORT} &
+	riscv64-unknown-elf-gdb -batch \
+		-ex "target remote :${TCP_PORT}" \
+		-ex "maintenance packet Qqemu.PhyMemMode:1" \
+		-ex "printf \"Creating ${RAW_BOOTMEM_FILE}\n\"" \
+		-ex "dump binary memory ${RAW_BOOTMEM_FILE} 0x1000 0x1fff" \
+		-ex "printf \"Creating ${RAW_RAM_FILE}\n\"" \
+		-ex "dump binary memory ${RAW_RAM_FILE} 0x80000000 0x8fffffff" \
+		-ex "kill"
+
+# Generate device tree binaries
+devicetrees: $(DTB)
+$(IMAGE_DIR)/%.dtb: ${WALLYLINUX}/devicetree/%.dts | $(IMAGE_DIR)
 	dtc -I dts -O dtb $< > $@
 
-$(IMAGES):
-	@ echo "No output/images directory in buildroot."
-	@ echo "Run make --jobs in buildroot directory before generating device tree binaries."; exit 1
+# Create disassembly files
+disassemble: check_environment $(OBJDUMPS) $(DISASSEMBLY_DIR)/rootfs
 
-$(RISCV):
-	@ echo "ERROR: No $(RISCV) directory. Make sure you have installed the Wally Toolchain."
-	@ echo "and sourced setup.sh"
-
-# Disassembly rules ---------------------------------------------------
-disassemble: check_environment
-	rm -rf $(BUILDROOT)/output/images/disassembly
-	find  $(BUILDROOT)/output/build/linux-* -maxdepth 1 -name "vmlinux" | xargs  cp -t $(BUILDROOT)/output/images/
-	mkdir -p $(DIS)
-	$(MAKE) $(OBJDUMPS)
-	# extract rootfs
-	mkdir -p $(BUILDROOT)/output/images/disassembly/rootfs
+# Extract rootfs
+$(DISASSEMBLY_DIR)/rootfs: $(IMAGE_DIR)/rootfs.cpio
 	@echo "Ignore error about dev/console when extracting rootfs from rootfs.cpio"
-	-cpio -i -D $(BUILDROOT)/output/images/disassembly/rootfs < $(BUILDROOT)/output/images/rootfs.cpio
-	@echo "Disassembly successfully completed."
+	-cpio -id -D $(DISASSEMBLY_DIR)/rootfs -F $(IMAGE_DIR)/rootfs.cpio
 
-$(DIS)/%.objdump: $(IMAGES)/%.elf
-	riscv64-unknown-elf-objdump -DS $< >> $@
-	$(WALLY)/bin/extractFunctionRadix.sh $@
-
-$(DIS)/%.objdump: $(IMAGES)/%
+# Disassemble binaries
+$(DISASSEMBLY_DIR)/%.objdump: $(IMAGE_DIR)/% | $(DISASSEMBLY_DIR)
 	riscv64-unknown-elf-objdump -S $< >> $@
 	$(WALLY)/bin/extractFunctionRadix.sh $@
 
-$(IMAGES)/vmlinux:
-	linuxDir=$$(find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/linux-[0-9]+\.[0-9]+\.[0-9]+$$") ;\
-	cp $$linuxDir/vmlinux $@ ;\
+# Disassemble binaries ending in .elf
+$(DISASSEMBLY_DIR)/%.objdump: $(IMAGE_DIR)/%.elf | $(DISASSEMBLY_DIR)
+	riscv64-unknown-elf-objdump -SD $< >> $@
+	$(WALLY)/bin/extractFunctionRadix.sh $@
 
-$(IMAGES)/busybox:
-	busyboxDir=$$(find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/busybox-[0-9]+\.[0-9]+\.[0-9]+$$") ;\
-	cp $$busyboxDir/busybox $@ ;\
-
-# Generating new Buildroot directories --------------------------------
-download: $(BUILDROOT)
+# Load wally buildroot configuration
+config: $(BUILDROOT) $(BR2_EXTERNAL_TREE)/configs/wally_defconfig
 	$(MAKE) -C $(BUILDROOT) wally_defconfig BR2_EXTERNAL=$(BR2_EXTERNAL_TREE)
-	@echo "Buildroot successfully download."
 
+# Clone buildroot and checkout the correct version
 $(BUILDROOT):
 	git clone https://github.com/buildroot/buildroot.git $@
 	cd $@; git checkout 2024.11.x
 
-# ---------------------------------------------------------------------
+# Create directories
+$(LINUX_TESTVECTORS): check_write_permissions
+	$(SUDO) mkdir -p $@
 
+$(DISASSEMBLY_DIR):
+	mkdir -p $@
+
+# Remove device tree binaries
 cleanDTB:
-	rm -f $(IMAGES)/*.dtb
+	rm -f $(IMAGE_DIR)/*.dtb
 
+# Remove buildroot directory
 clean:
 	rm -rf $(BUILDROOT)
+
+# Check if the RISCV environment variable is set
+$(RISCV):
+	@ echo "ERROR: No $(RISCV) directory. Make sure you have installed the Wally Toolchain."
+	@ echo "and sourced setup.sh"
+
+# Check if the WALLY environment variable is set
+$(WALLY):
+	@ echo "ERROR: $$WALLY is not set. Make sure you have sourced setup.sh"
