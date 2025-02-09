@@ -149,6 +149,7 @@ fi
 export PATH=$PATH:$RISCV/bin:/usr/bin
 export PKG_CONFIG_PATH=$RISCV/lib64/pkgconfig:$RISCV/lib/pkgconfig:$RISCV/share/pkgconfig:$RISCV/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH
 
+# wget retry on host error flag not available with older wget on RHEL 8
 if (( RHEL_VERSION != 8 )); then
     retry_on_host_error="--retry-on-host-error"
 fi
@@ -188,6 +189,11 @@ if [ "$ROOT" == true ]; then
     source "${dir}"/wally-package-install.sh
 else
     source "${dir}"/wally-package-install.sh --check
+fi
+
+# Older version of git defaults to protocol version incompatible with riscv-gnu-toolchain
+if (( UBUNTU_VERSION == 20 )); then
+    git config --global protocol.version 2
 fi
 
 # Enable newer version of gcc for older distros (required for QEMU/Verilator)
