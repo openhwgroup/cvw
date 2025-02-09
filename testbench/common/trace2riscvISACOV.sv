@@ -19,7 +19,9 @@ module trace2riscvISACOV(rvviTrace rvvi);
   // If RVVI accepts more than one instruction or hart, iterate over all of them in the
   // correct order of retirement (TODO: multiple instructions/harts not implemented)
   always_ff @(posedge rvvi.clk) begin
-    riscvISACOV.sample(rvvi.trap[0][0], 0, 0, {$sformatf("%h ", rvvi.insn[0][0]), disass});
-    $display("trace2riscvISACOV: sample taken for instruction %h: %s", rvvi.insn[0][0], disass);
+    if (rvvi.valid[0][0] == 1) begin
+      riscvISACOV.sample(rvvi.trap[0][0], 0, 0, {$sformatf("%h ", rvvi.insn[0][0]), disass});
+      $display("trace2riscvISACOV: sample taken for instruction %h: %s", rvvi.insn[0][0], disass);
+    end
   end
 endmodule
