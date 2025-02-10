@@ -111,13 +111,8 @@ if {[lcheck lst "--ccov"]} {
 
 # if --fcov found set flag and remove from list
 if {[lcheck lst "--fcov"]} {
-    set IMPERAS_HOME $::env(IMPERAS_HOME)
     set FunctCoverage 1
-    set FCvlog "+incdir+${FCRVVI}/unpriv \
-                +incdir+${FCRVVI}/priv +incdir+${FCRVVI}/rv64_priv +incdir+${FCRVVI}/rv32_priv \
-                +incdir+${FCRVVI}/common +incdir+${FCRVVI} \
-                +incdir+$env(WALLY)/addins/cvw-arch-verif/riscvISACOV/source \
-                ${FCRVVI}/*.sv"
+    set FCvlog "-f ${FCRVVI}/cvw-arch-verif.f"
 }
 
 # if --lockstep found set flag and remove from list
