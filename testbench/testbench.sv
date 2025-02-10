@@ -741,7 +741,7 @@ end
 
 // Functional coverage
 `ifdef FCOV
-  trace2riscvISACOV trace2riscvISACOV(rvvi);
+  cvw_arch_verif cvw_arch_verif(rvvi);
 `endif
 
   ////////////////////////////////////////////////////////////////////////////////
