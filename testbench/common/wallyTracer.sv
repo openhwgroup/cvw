@@ -786,7 +786,14 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
         end
       end
     end
-    if(HaltW) $finish;
+    if(HaltW) begin
+      $display("Functional coverage test complete.");
+`ifdef QUESTA
+      $stop;  // if this is changed to $finish for Questa, wally.do does not go to the next step to run coverage and terminates without allowing GUI debug
+`else
+      $finish;
+`endif
+    end
   end
 endmodule
 

@@ -432,6 +432,8 @@ module testbench;
       end else if (ElfFile != "none") begin
         `ifdef USE_TREK_DV
           $display("Breker test is done.");
+        `elsif FCOV
+          $display("Functional coverage test complete.");
         `else
           $display("Single Elf file tests are not signatured verified.");
         `endif
