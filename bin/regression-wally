@@ -393,19 +393,24 @@ def process_args(args):
     # exercise all simulators in nightly; can omit a sim if no license is available
     sims = ["questa", "verilator", "vcs"] if args.nightly else [defaultsim]
     if args.ccov:
+        sims = [coveragesim]
         coverStr = "--ccov"
         TIMEOUT_DUR = 20*60 # seconds
         for d in ["ucdb", "cov"]:
             shutil.rmtree(f"{regressionDir}/questa/{d}", ignore_errors=True)
             os.makedirs(f"{regressionDir}/questa/{d}", exist_ok=True)
     elif args.fcov:
+        sims = [coveragesim]
         coverStr = "--fcov"
         TIMEOUT_DUR = 8*60
         shutil.rmtree(f"{regressionDir}/questa/fcov_ucdb", ignore_errors=True)
         os.makedirs(f"{regressionDir}/questa/fcov_ucdb", exist_ok=True)
     elif args.buildroot:
         TIMEOUT_DUR = 60*1440 # 1 day
-    elif args.testfloat or args.nightly:
+    elif args.testfloat:
+        sims = [testfloatsim]
+        TIMEOUT_DUR = 30*60 # seconds
+    elif args.nightly:
         TIMEOUT_DUR = 30*60 # seconds
     else:
         TIMEOUT_DUR = 10*60 # seconds
