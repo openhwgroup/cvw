@@ -145,7 +145,9 @@ module testbench;
         "arch64i":                                tests = arch64i;
         "arch64priv":                             tests = arch64priv;
         "arch64c":      if (P.ZCA_SUPPORTED)
-                          if (P.ZICSR_SUPPORTED)  tests = {arch64c, arch64cpriv};
+                          if (P.ZICSR_SUPPORTED)  
+                            if (P.ZCD_SUPPORTED)  tests = {arch64c, arch64cpriv, arch64zcd};
+                            else                  tests = {arch64c, arch64cpriv};
                           else                    tests = {arch64c};
         "arch64m":      if (P.M_SUPPORTED)        tests = arch64m;
         "arch64a_amo":      if (P.ZAAMO_SUPPORTED)        tests = arch64a_amo;
@@ -172,7 +174,9 @@ module testbench;
         "arch64zbs":     if (P.ZBS_SUPPORTED)     tests = arch64zbs;
         "arch64zicboz":  if (P.ZICBOZ_SUPPORTED)  tests = arch64zicboz;
         "arch64zcb":     if (P.ZCB_SUPPORTED)     tests = arch64zcb;
-        "arch64zfh":     if (P.ZFH_SUPPORTED)     tests = arch64zfh;
+        "arch64zfh":     if (P.ZFH_SUPPORTED)     
+                           if (P.D_SUPPORTED)     tests = {arch64zfh, arch64zfh_d};
+                           else                   tests = arch64zfh;
         "arch64zfh_fma": if (P.ZFH_SUPPORTED)     tests = arch64zfh_fma;
         "arch64zfh_divsqrt":     if (P.ZFH_SUPPORTED)     tests = arch64zfh_divsqrt;
         "arch64zfaf":    if (P.ZFA_SUPPORTED)     tests = arch64zfaf;
@@ -192,7 +196,11 @@ module testbench;
         "arch32i":                                tests = arch32i;
         "arch32priv":                             tests = arch32priv;
         "arch32c":      if (P.C_SUPPORTED)
-                          if (P.ZICSR_SUPPORTED)  tests = {arch32c, arch32cpriv};
+                          if (P.ZICSR_SUPPORTED)  
+                            if (P.ZCF_SUPPORTED)  
+                              if (P.ZCD_SUPPORTED)  tests = {arch32c, arch32cpriv, arch32zcf, arch32zcd};
+                              else                tests = {arch32c, arch32cpriv, arch32zcf};
+                            else                  tests = {arch32c, arch32cpriv};
                           else                    tests = {arch32c};
         "arch32m":      if (P.M_SUPPORTED)        tests = arch32m;
         "arch32a_amo":      if (P.ZAAMO_SUPPORTED)  tests = arch32a_amo;
@@ -216,7 +224,9 @@ module testbench;
         "arch32zbs":     if (P.ZBS_SUPPORTED)     tests = arch32zbs;
         "arch32zicboz":  if (P.ZICBOZ_SUPPORTED)  tests = arch32zicboz;
         "arch32zcb":     if (P.ZCB_SUPPORTED)     tests = arch32zcb;
-        "arch32zfh":     if (P.ZFH_SUPPORTED)     tests = arch32zfh;
+        "arch32zfh":     if (P.ZFH_SUPPORTED)     
+                           if (P.D_SUPPORTED)     tests = {arch32zfh, arch32zfh_d};
+                           else                   tests = arch32zfh;
         "arch32zfh_fma": if (P.ZFH_SUPPORTED)     tests = arch32zfh_fma;
         "arch32zfh_divsqrt":     if (P.ZFH_SUPPORTED)     tests = arch32zfh_divsqrt;
         "arch32zfaf":    if (P.ZFA_SUPPORTED)     tests = arch32zfaf;
@@ -659,7 +669,7 @@ module testbench;
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [31:0] InstrW;
   flopenr #(32)    InstrWReg(clk, reset, ~dut.core.ieu.dp.StallW,  InstrM, InstrW);
-  instrTrackerTB it(clk, reset, dut.core.ieu.dp.FlushE,
+  instrTrackerTB #(P.XLEN) it(clk, reset, dut.core.ieu.dp.FlushE,
                 dut.core.ifu.InstrRawF[31:0],
                 dut.core.ifu.InstrD, dut.core.ifu.InstrE,
                 InstrM,  InstrW,
@@ -674,8 +684,8 @@ module testbench;
     loggers (clk, reset, DCacheFlushStart, DCacheFlushDone, memfilename, TEST);
 
   // track the current function or global label
-  if (DEBUG > 0 | ((PrintHPMCounters | BPRED_LOGGER) & P.ZICNTR_SUPPORTED)) begin : FunctionName
-    FunctionName #(P) FunctionName(.reset(reset_ext | TestBenchReset),
+  if (DEBUG > 0 | ((PrintHPMCounters | BPRED_LOGGER) & P.ZICNTR_SUPPORTED)) begin : functionName
+    functionName #(P) functionName(.reset(reset_ext | TestBenchReset),
 			      .clk(clk), .ProgramAddrMapFile(ProgramAddrMapFile), .ProgramLabelMapFile(ProgramLabelMapFile));
   end
 
@@ -700,11 +710,11 @@ module testbench;
 
   always @(posedge clk) begin
   //  if (reset) PrevPCZero <= 0;
-  //  else if (dut.core.InstrValidM) PrevPCZero <= (FunctionName.PCM == 0 & dut.core.ifu.InstrM == 0);
+  //  else if (dut.core.InstrValidM) PrevPCZero <= (functionName.PCM == 0 & dut.core.ifu.InstrM == 0);
     TestComplete <= ((InstrM == 32'h6f) & dut.core.InstrValidM ) |
 		   ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"] & dut.core.lsu.IEUAdrM != 0) & InstrMName == "SW"); // |
-    //   (FunctionName.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.InstrValidM & PrevPCZero));
-   // if (FunctionName.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.InstrValidM & PrevPCZero)
+    //   (functionName.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.InstrValidM & PrevPCZero));
+   // if (functionName.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.InstrValidM & PrevPCZero)
     //  $error("Program fetched illegal instruction 0x00000000 from address 0x00000000 twice in a row.  Usually due to fault with no fault handler.");
   end
 
@@ -740,6 +750,8 @@ end
               .CMP_VR      (0),
               .CMP_CSR     (1)
               ) idv_trace2api(rvvi);
+
+  `include "RV_Assertions.sv"
 
   string filename;
   initial begin

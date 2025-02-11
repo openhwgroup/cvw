@@ -28,6 +28,8 @@
 `include "ZfhD_coverage.svh"
 // Note: Zfhmin is a subset of Zfh, so usually only one or the other would be used.  When Zfhmin and D are supported, ZfhD should also be enabled
 `include "Zfhmin_coverage.svh"
+// Note: Zmmul is a subset of M, so usually only one or the other would be used.
+`include "Zmmul_coverage.svh"
 `include "Zicond_coverage.svh"
 `include "Zca_coverage.svh"
 `include "Zcb_coverage.svh"
@@ -56,3 +58,8 @@
 `include "EndianS_coverage.svh"
 `include "ExceptionsM_coverage.svh"
 `include "ExceptionsZc_coverage.svh"
+`include "ZicntrU_coverage.svh"
+`include "ZicntrS_coverage.svh"
+`include "ZicntrM_coverage.svh"
+`include "ZfaZfhD_coverage.svh"
+`include "ZfhminD_coverage.svh"

@@ -15,7 +15,7 @@
 
 	memory@80000000 {
 		device_type = "memory";
-	        reg = <0x00 0x80000000 0x00 0x10000000>;
+		reg = <0x00 0x80000000 0x00 0x10000000>;
 	};
 
 	cpus {
@@ -30,8 +30,10 @@
 			reg = <0x00>;
 			status = "okay";
 			compatible = "riscv";
-			riscv,isa = "rv64imafdcsu";
-                        riscv,isa-extensions = "svadu";
+			riscv,isa-base = "rv64i";
+			riscv,isa-extensions = "i", "m", "a", "f", "d", "c", "sstc", "svade", "svadu", "svinval", "svnapot", "svpbmt", "zba", "zbb", "zbc", "zbs", "zca", "zcb", "zcd", "zfa", "zfh", "zkn", "zkt", "zicbom", "zicboz", "zicntr", "zicond", "zicsr", "zifencei", "zihpm";
+			riscv,cboz-block-size = <64>;
+			riscv,cbom-block-size = <64>;
 			mmu-type = "riscv,sv48";
 
 			interrupt-controller {

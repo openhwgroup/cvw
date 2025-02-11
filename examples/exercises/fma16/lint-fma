@@ -1,0 +1,12 @@
+#!/bin/bash
+# check for warnings in Verilog code
+# The verilator lint tool is faster and better than Questa so it is best to run this first.
+verilator=`which verilator`
+
+basepath=$(dirname $0)/..
+if ($verilator --lint-only --top-module fma16 fma16.sv); then
+    echo "fma16 passed lint"
+else
+    echo "fma16 failed lint"
+fi
+

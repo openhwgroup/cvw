@@ -12,7 +12,7 @@ import subprocess
 import sys
 
 # Global variables
-WALLY  = os.environ.get('WALLY')
+WALLY  = os.environ.get("WALLY")
 simdir = f"{WALLY}/sim/vcs"
 cfgdir = f"{WALLY}/config"
 srcdir = f"{WALLY}/src"
@@ -21,10 +21,10 @@ logdir = f"{simdir}/logs"
 
 # run a Linux command and return the result as a string in a form that VCS can use
 def runFindCommand(cmd):
-    res = subprocess.check_output(cmd, shell=True, )
+    res = subprocess.check_output(cmd, shell=True)
     res = str(res)
     res = res.replace("\\n", " ")  # replace newline with space
-    res = res.replace("\'", "")  # strip off quotation marks
+    res = res.replace("'", "")  # strip off quotation marks
     res = res[1:] # strip off leading b from byte string
     return res
 
@@ -42,20 +42,20 @@ def parseArgs():
     #parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true") # GUI not yet implemented
     return parser.parse_args()
 
-def createDirs(args):
-    wkdir  = f"{simdir}/wkdir/{args.config}_{args.testsuite}"
-    covdir = f"{simdir}/cov/{args.config}_{args.testsuite}"
+def createDirs(config, testsuite):
+    wkdir  = f"{simdir}/wkdir/{config}_{testsuite}"
+    covdir = f"{simdir}/cov/{config}_{testsuite}"
     os.makedirs(wkdir, exist_ok=True)
     os.makedirs(covdir, exist_ok=True)
     os.makedirs(logdir, exist_ok=True)
-    return wkdir, covdir
+    return wkdir
 
-def generateFileList():
+def generateFileList(testbench):
     rtlsrc_cmd = f'find {srcdir} -name "*.sv" ! -path "{srcdir}/generic/mem/rom1p1r_128x64.sv" ! -path "{srcdir}/generic/mem/ram2p1r1wbe_128x64.sv" ! -path "{srcdir}/generic/mem/rom1p1r_128x32.sv" ! -path "{srcdir}/generic/mem/ram2p1r1wbe_2048x64.sv"'
     rtlsrc_files = runFindCommand(rtlsrc_cmd)
     tbcommon_cmd = f'find {tbdir}/common -name "*.sv"'
     tbcommon_files = runFindCommand(tbcommon_cmd)
-    tb_file = f'{tbdir}/{args.tb}.sv'
+    tb_file = f"{tbdir}/{testbench}.sv"
     return f"{tb_file} {rtlsrc_files} {tbcommon_files}"
 
 def processArgs(wkdir, args):
@@ -76,7 +76,7 @@ def processArgs(wkdir, args):
     # if args.gui:
     #     compileOptions.append("-debug_access+all+reverse -kdb +vcs+vcdpluson")
     compileOptions = " ".join(compileOptions)
-    simvOptions =  " ".join(simvOptions)
+    simvOptions = " ".join(simvOptions)
     return compileOptions, simvOptions
 
 def setupParamOverrides(wkdir, args):
@@ -84,35 +84,35 @@ def setupParamOverrides(wkdir, args):
     with open(paramOverrideFile, "w") as f:
         for param in args.params.split():
             [param, value] = param.split("=")
-            if fr"\'" in value: # for bit values
-                value = value.replace(fr"\'", "'")
-            else:  # for strings
-                value = f'"{value}"'
+            value = value.replace("\\'", "'") if "\\'" in value else f'"{value}"' # transform quotes/bit indicators
             f.write(f"assign {value} {args.tb}/{param}\n")
     return f" -parameters {wkdir}/param_overrides.txt "
 
 def setupCommands(wkdir, rtlFiles, compileOptions, simvOptions, args):
-    includePath=f"+incdir+{cfgdir}/{args.config} +incdir+{cfgdir}/deriv/{args.config} +incdir+{cfgdir}/shared +incdir+$WALLY/tests +incdir+{tbdir} +incdir+{srcdir}"
+    includePath = f"+incdir+{cfgdir}/{args.config} +incdir+{cfgdir}/deriv/{args.config} +incdir+{cfgdir}/shared +incdir+$WALLY/tests +incdir+{tbdir} +incdir+{srcdir}"
     vcsStandardFlags = "+lint=all,noGCWM,noUI,noSVA-UA,noIDTS,noNS,noULCO,noCAWM-L,noWMIA-L,noSV-PIU,noSTASKW_CO,noSTASKW_CO1,noSTASKW_RMCOF -suppress +warn -sverilog +vc -Mupdate -line -full64 -lca -ntb_opts sensitive_dyn"
     vcsCMD = f"vcs {vcsStandardFlags} -top {args.tb} {compileOptions} -Mdir={wkdir} {includePath} {srcdir}/cvw.sv {rtlFiles} -o {wkdir}/sim_out -work {wkdir} -Mlib={wkdir} -l {logdir}/{args.config}_{args.testsuite}.log"
     simvCMD = f"{wkdir}/sim_out +TEST={args.testsuite} {args.args} -no_save {simvOptions}"
     return vcsCMD, simvCMD
 
-def runVCS(wkdir, vcsCMD, simvCMD):
+def runVCS(vcsCMD, simvCMD):
     print(f"Executing: {vcsCMD}")
-    subprocess.run(vcsCMD, shell=True)
-    subprocess.run(simvCMD, shell=True)
-    if (args.ccov):
-        COV_RUN = f"urg -dir {wkdir}/coverage.vdb -format text -report IndividualCovReport/{args.config}_{args.testsuite}"
-        subprocess.run(COV_RUN, shell=True)
+    subprocess.run(vcsCMD, shell=True, check=True)
+    subprocess.run(simvCMD, shell=True, check=True)
+
+def runCoverage(wkdir, config, testsuite):
+    COV_RUN = f"urg -dir {wkdir}/coverage.vdb -format text -report IndividualCovReport/{config}_{testsuite}"
+    subprocess.run(COV_RUN, shell=True, check=True)
 
 def main(args):
     print(f"run_vcs Config={args.config} tests={args.testsuite} lockstep={args.lockstep} args='{args.args}' params='{args.params}' define='{args.define}'")
-    wkdir, covdir = createDirs(args)
-    rtlFiles = generateFileList()
+    wkdir = createDirs(args.config, args.testsuite)
+    rtlFiles = generateFileList(args.tb)
     compileOptions, simvOptions = processArgs(wkdir, args)
     vcsCMD, simvCMD = setupCommands(wkdir, rtlFiles, compileOptions, simvOptions, args)
-    runVCS(wkdir, vcsCMD, simvCMD)
+    runVCS(vcsCMD, simvCMD)
+    if args.ccov:
+        runCoverage(wkdir, args.config, args.testsuite)
 
 if __name__ == "__main__":
     args = parseArgs()
