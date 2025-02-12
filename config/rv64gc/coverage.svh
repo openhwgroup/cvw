@@ -28,7 +28,7 @@
 `define ZFH_COVERAGE
 `define ZFH_D_COVERAGE
 // Note: Zfhmin is a subset of Zfh, so usually only one or the other would be used.  When Zfhmin and D are supported, ZfhD should also be enabled
-`define ZFHMIN_coverage
+`define ZFHMIN_COVERAGE
 `define ZFHMIN_D_COVERAGE
 // Note: Zmmul is a subset of M, so usually only one or the other would be used.
 `define ZMMUL_COVERAGE
