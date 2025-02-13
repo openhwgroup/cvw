@@ -742,7 +742,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   end
   
   always_ff @(posedge clk) begin
-	if(valid) begin
+    if(valid) begin
       if(`STD_LOG) begin
         $fwrite(file, "%016x, %08x, %s\t\t", rvvi.pc_rdata[0][0], rvvi.insn[0][0], instrWName);
         for(index2 = 0; index2 < NUM_REGS; index2 += 1) begin
@@ -785,7 +785,16 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
         end
       end
     end
-    if(HaltW) $finish;
+    if(HaltW) begin
+`ifdef FCOV
+      $display("Functional coverage test complete.");
+`endif
+`ifdef QUESTA
+      $stop;  // if this is changed to $finish for Questa, wally.do does not go to the next step to run coverage and terminates without allowing GUI debug
+`else
+      $finish;
+`endif
+    end
   end
 endmodule
 
