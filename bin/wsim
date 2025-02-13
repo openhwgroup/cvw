@@ -101,13 +101,13 @@ def prepSim(args, ElfFile):
         flagsList.append("--ccov")
     if args.fcov:
         flagsList.append("--fcov")
-        defineList.extend(["+define+ENABLE_RVVI_TRACE", "+define+FCOV"])
+        defineList.append("+define+FCOV")
     if args.gui:
         flagsList.append("--gui")
     if args.lockstep or args.lockstepverbose:
         flagsList.append("--lockstep")
         prefix = lockstepSetup(args)
-        defineList.extend(["+define+USE_IMPERAS_DV", "+define+ENABLE_RVVI_TRACE"])
+        defineList.append("+define+USE_IMPERAS_DV")
     if args.config == "breker": # Requires a license for the breker tool. See tests/breker/README.md for details
         ElfFileNoExtension = os.path.splitext(ElfFile)[0]
         flagsList.append("--breker")

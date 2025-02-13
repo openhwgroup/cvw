@@ -58,6 +58,11 @@ module testbench;
     import idvPkg::*;
     import rvviApiPkg::*;
     import idvApiPkg::*;
+    `define ENABLE_RVVI_TRACE
+  `endif
+
+  `ifdef FCOV
+    `define ENABLE_RVVI_TRACE
   `endif
 
   `ifdef VERILATOR
