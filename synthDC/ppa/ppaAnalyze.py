@@ -48,7 +48,7 @@ def synthsintocsv():
     allSynths = output.decode("utf-8").split("\n")[:-1]
 
     specReg = re.compile("[a-zA-Z0-9]+")
-    metricReg = re.compile("-?\d+\.\d+[e]?[-+]?\d*")
+    metricReg = re.compile(r"-?\d+\.\d+[e]?[-+]?\d*")
 
     with open("ppaData.csv", "w") as file:
         writer = csv.writer(file)

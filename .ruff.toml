@@ -14,8 +14,7 @@ select = [
   "E4",   # imports
   "E7",   # various improvements
   "E9",   # error
-  "W1",   # tabs used instead of spaces
-  "W292", # no newline at end of file
+  "W",    # various warnings
   "UP",   # Upgraded version available in newer Python
   "EXE",  # Executable file shebangs
   "Q003", # Avoidable escaped quotes
@@ -26,6 +25,8 @@ select = [
 ignore = [
   "E701", "E702",   # multiple statements on one line
   "E722",           # do not use bare 'except'
-  "E74",            # ambiguous name
+  "E741",           # ambiguous variable name
   "RUF005",         # iterable unpacking in list
+  "W291",           # trailing whitespace
+  "W293",           # blank line contains whitespace
 ]
