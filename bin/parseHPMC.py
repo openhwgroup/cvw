@@ -26,13 +26,13 @@
 ## and limitations under the License.
 ################################################################################################
 
+import argparse
+import math
 import os
 import sys
-import matplotlib.pyplot as plt
-import math
-import numpy as np
-import argparse
 
+import matplotlib.pyplot as plt
+import numpy as np
 
 RefDataBP = [('twobitCModel6', 'twobitCModel', 64, 128, 10.0060297551637), ('twobitCModel8', 'twobitCModel', 256, 512, 8.4320392215602), ('twobitCModel10', 'twobitCModel', 1024, 2048, 7.29493318805151),
            ('twobitCModel12', 'twobitCModel', 4096, 8192, 6.84739616147794), ('twobitCModel14', 'twobitCModel', 16384, 32768, 5.68432926870082), ('twobitCModel16', 'twobitCModel', 65536, 131072, 5.68432926870082),

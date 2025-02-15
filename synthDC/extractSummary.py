@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 # Madeleine Masser-Frye (mmmasserfrye@hmc.edu) 06/2022
-from collections import namedtuple
-import re
+import argparse
 import csv
+import os
+import re
 import subprocess
-from matplotlib.cbook import flatten
-import matplotlib.pyplot as plt
+from collections import namedtuple
+
 import matplotlib.lines as lines
+import matplotlib.pyplot as plt
 import numpy as np
 from adjustText import adjust_text
-from ppa.ppaAnalyze import noOutliers
 from matplotlib import ticker
-import argparse
-import os
+from matplotlib.cbook import flatten
+from ppa.ppaAnalyze import noOutliers
 
 
 def synthsintocsv():

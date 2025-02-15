@@ -1,7 +1,7 @@
+import logging
 import os
 import re
 import shutil
-import logging
 
 import riscof.utils as utils
 from riscof.pluginTemplate import pluginTemplate

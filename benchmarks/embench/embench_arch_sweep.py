@@ -5,10 +5,10 @@
 
 # Run embench on a variety of architectures and collate results
 
-import os
-from datetime import datetime
-import re
 import collections
+import os
+import re
+from datetime import datetime
 
 archs = ["rv32i_zicsr", "rv32im_zicsr", "rv32imc_zicsr", "rv32imc_zba_zbb_zbc_zbs_zicsr", "rv32imafdc_zba_zbb_zbc_zbs_zicsr"]
 

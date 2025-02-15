@@ -29,9 +29,10 @@
 ###########################################################################################
 
 
+import csv
 import os
 import re
-import csv
+
 # list of architectures to run. 
 arch_list = [
     "rv32i_zicsr",
