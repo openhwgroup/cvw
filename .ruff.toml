@@ -14,10 +14,13 @@ select = [
   "W",    # warnings (pycodestyle)
   "I",    # Import related rules (isort)
   "UP",   # Upgraded version available in newer Python
+  "B",    # bugbear rules
+  "A",    # shadow builtins
   "EXE",  # Executable file shebangs
   "Q003", # Avoidable escaped quotes
   "Q004", # Unnecessary esacpe character
   "RUF",  # Ruff specific rules
+
 ]
 
 ignore = [
@@ -27,5 +30,6 @@ ignore = [
   "E741",           # ambiguous variable name
   "W291",           # trailing whitespace
   "W293",           # blank line contains whitespace
+  "B007",           # loop control variable not used
   "RUF005",         # iterable unpacking in list
 ]

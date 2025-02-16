@@ -262,7 +262,7 @@ def ReportAsText(benchmarkDict):
     if(not args.summary):
         for benchmark in benchmarkDict:
             print(benchmark)
-            for (name, type, entries, size, val) in benchmarkDict[benchmark]:
+            for (name, prefixName, entries, size, val) in benchmarkDict[benchmark]:
                 sys.stdout.write(f'{name} {entries if not args.size else size} {val if not args.invert else 100 - val:0.2f}\n')
 
 def Inversion(lst):
