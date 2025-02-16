@@ -250,6 +250,9 @@ string arch32vm_sv32[] = '{
   "rv32i_m/vm_sv32/src/satp_access_tests.S",
   "rv32i_m/vm_sv32/src/vm_A_and_D_S_mode.S",
   "rv32i_m/vm_sv32/src/vm_A_and_D_U_mode.S",
+  "rv32i_m/vm_sv32/src/vm_U_Bit_set_U_mode.S",
+  "rv32i_m/vm_sv32/src/vm_U_Bit_unset_S_mode.S",
+  "rv32i_m/vm_sv32/src/vm_U_Bit_unset_U_mode.S",
   "rv32i_m/vm_sv32/src/vm_invalid_pte_S_mode.S",
   "rv32i_m/vm_sv32/src/vm_invalid_pte_U_mode.S",
   "rv32i_m/vm_sv32/src/vm_misaligned_S_mode.S",
@@ -267,10 +270,7 @@ string arch32vm_sv32[] = '{
   "rv32i_m/vm_sv32/src/vm_reserved_rwx_pte_S_mode.S",
   "rv32i_m/vm_sv32/src/vm_reserved_rwx_pte_U_mode.S",
   "rv32i_m/vm_sv32/src/vm_sum_set_S_mode.S",
-  "rv32i_m/vm_sv32/src/vm_sum_unset_S_mode.S",
-  "rv32i_m/vm_sv32/src/vm_U_Bit_set_U_mode.S",
-  "rv32i_m/vm_sv32/src/vm_U_Bit_unset_S_mode.S",
-  "rv32i_m/vm_sv32/src/vm_U_Bit_unset_U_mode.S"
+  "rv32i_m/vm_sv32/src/vm_sum_unset_S_mode.S"
 };
 
 string arch64priv[] = '{
