@@ -401,7 +401,7 @@ def process_args(args):
         for d in ["ucdb", "cov"]:
             shutil.rmtree(f"{regressionDir}/questa/{d}", ignore_errors=True)
             os.makedirs(f"{regressionDir}/questa/{d}", exist_ok=True)
-    elif args.fcov:
+    elif args.fcov or args.breker:
         sims = [coveragesim]
         coverStr = "--fcov"
         TIMEOUT_DUR = 8*60
@@ -516,7 +516,7 @@ def main(args):
     # Coverage report
     if args.ccov:
         os.system(f"make -C {regressionDir}/QuestaCodeCoverage")
-    if args.fcov:
+    if args.fcov or args.breker:
         os.system(f"make -C {archVerifDir} merge")
     # Count the number of failures
     if num_fail:
