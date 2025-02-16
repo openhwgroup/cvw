@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-import sys
 import re
+import sys
+
 
 def usage():
     print("Usage: ./renumber.py <input xdc file> <output xdc file>")

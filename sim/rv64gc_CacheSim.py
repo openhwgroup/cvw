@@ -28,8 +28,8 @@
 ## either express or implied. See the License for the specific language governing permissions
 ## and limitations under the License.
 ################################################################################################
-import os
 import argparse
+import os
 import subprocess
 
 # NOTE: make sure testbench.sv has the ICache and DCache loggers enabled!
