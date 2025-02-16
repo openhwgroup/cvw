@@ -20,7 +20,6 @@ select = [
   "Q003", # Avoidable escaped quotes
   "Q004", # Unnecessary esacpe character
   "RUF",  # Ruff specific rules
-
 ]
 
 ignore = [
@@ -31,5 +30,6 @@ ignore = [
   "W291",           # trailing whitespace
   "W293",           # blank line contains whitespace
   "B007",           # loop control variable not used
+  "B9",             # overly opinionated rules
   "RUF005",         # iterable unpacking in list
 ]
