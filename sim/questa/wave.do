@@ -418,13 +418,15 @@ add wave -noupdate -expand -group FetchBuffer -label {FB[1]} {/testbench/dut/cor
 add wave -noupdate -expand -group FetchBuffer -label {FB[0]} {/testbench/dut/core/ifu/fetchbuffer/fetchbuff/fbEntries[0]/q}
 add wave -noupdate -expand -group FetchBuffer /testbench/dut/core/ifu/fetchbuffer/fetchbuff/WritePtr
 add wave -noupdate -expand -group FetchBuffer /testbench/dut/core/ifu/fetchbuffer/fetchbuff/ReadPtr
+add wave -noupdate -expand -group FetchBuffer /testbench/dut/core/ifu/fetchbuffer/fetchbuff/fbEnable
+add wave -noupdate -expand -group FetchBuffer /testbench/dut/core/ifu/fetchbuffer/fetchbuff/RisingFBStallF
 add wave -noupdate -expand -group FetchBuffer /testbench/dut/core/ifu/fetchbuffer/fetchbuff/FetchBufferStallF
 add wave -noupdate -expand -group FetchBuffer -label {PCFB[2]} {/testbench/dut/core/ifu/fetchbuffer/PCFetchBuffer/fbEntries[2]/q}
 add wave -noupdate -expand -group FetchBuffer -label {PCFB[1]} {/testbench/dut/core/ifu/fetchbuffer/PCFetchBuffer/fbEntries[1]/q}
 add wave -noupdate -expand -group FetchBuffer -label {PCFB[0]} {/testbench/dut/core/ifu/fetchbuffer/PCFetchBuffer/fbEntries[0]/q}
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{potential optimization} {2680 ns} 1} {{WHY IFU STALL?} {7010 ns} 1} {{Cursor 3} {7010 ns} 1} {{Cursor 4} {2518 ns} 0}
-quietly wave cursor active 4
+WaveRestoreCursors {{potential optimization} {2680 ns} 1} {{WHY IFU STALL?} {7010 ns} 1} {{pc logic failure} {2520 ns} 1}
+quietly wave cursor active 3
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 194
 configure wave -justifyvalue left
@@ -439,4 +441,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {2468 ns} {2577 ns}
+WaveRestoreZoom {0 ns} {66 ns}
