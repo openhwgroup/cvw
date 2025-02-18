@@ -6,6 +6,7 @@
 # date created: 3-29-2023
 
 import os
+
 wally = os.popen('echo $WALLY').read().strip()
 # print(wally)
 

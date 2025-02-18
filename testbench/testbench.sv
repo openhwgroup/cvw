@@ -58,6 +58,11 @@ module testbench;
     import idvPkg::*;
     import rvviApiPkg::*;
     import idvApiPkg::*;
+    `define ENABLE_RVVI_TRACE
+  `endif
+
+  `ifdef FCOV
+    `define ENABLE_RVVI_TRACE
   `endif
 
   `ifdef VERILATOR
@@ -432,6 +437,8 @@ module testbench;
       end else if (ElfFile != "none") begin
         `ifdef USE_TREK_DV
           $display("Breker test is done.");
+        `elsif FCOV
+          $display("Functional coverage test complete.");
         `else
           $display("Single Elf file tests are not signatured verified.");
         `endif
@@ -731,16 +738,21 @@ module testbench;
     end
 end
 
+// RVVI trace for functional coverage and lockstep
+`ifdef ENABLE_RVVI_TRACE
+  rvviTrace #(.XLEN(P.XLEN), .FLEN(P.FLEN)) rvvi();
+  wallyTracer #(P) wallyTracer(rvvi);
+`endif
+
+// Functional coverage
+`ifdef FCOV
+  cvw_arch_verif cvw_arch_verif(rvvi);
+`endif
+
   ////////////////////////////////////////////////////////////////////////////////
   // ImperasDV Co-simulator hooks
   ////////////////////////////////////////////////////////////////////////////////
 `ifdef USE_IMPERAS_DV
-
-  rvviTrace #(.XLEN(P.XLEN), .FLEN(P.FLEN)) rvvi();
-  wallyTracer #(P) wallyTracer(rvvi);
-
-  trace2log idv_trace2log(rvvi);
-  trace2cov idv_trace2cov(rvvi);
 
   // enabling of comparison types
   trace2api #(.CMP_PC      (1),
@@ -750,8 +762,6 @@ end
               .CMP_VR      (0),
               .CMP_CSR     (1)
               ) idv_trace2api(rvvi);
-
-  `include "RV_Assertions.sv"
 
   string filename;
   initial begin

@@ -6,10 +6,12 @@
 
 
 import argparse
+import multiprocessing
 import os
 import sys
-import multiprocessing
-from multiprocessing import Pool, TimeoutError as MPTimeoutError
+from multiprocessing import Pool
+from multiprocessing import TimeoutError as MPTimeoutError
+
 TIMEOUT_DUR = 60  # 1` minute
 
 class bcolors:

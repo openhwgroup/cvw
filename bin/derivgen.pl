@@ -100,6 +100,18 @@ foreach my $key (@derivnames) {
         }
     }
 
+    # Create symlink to coverage.svh for deriv breker
+    if ($key eq "breker") {
+        my $basecoverage_svh = "$ENV{WALLY}/config/$basederiv{$key}/coverage.svh";
+        if (! -e $basecoverage_svh) {
+            my $basecoverage_svh = "$ENV{WALLY}/config/deriv/$basederiv{$key}/coverage.svh";
+        }
+        if (-e $basecoverage_svh) { # If imperas.ic exists for base derivative, create hardlink to it
+            my $coverage_svh = "$dir/coverage.svh";
+            system("ln -T $basecoverage_svh $coverage_svh");
+        }
+    }
+
     my $datestring = localtime();
     my %hit = ();
     print $fh "// Config $key automatically derived from $basederiv{$key} on $datestring using derivgen.pl\n";

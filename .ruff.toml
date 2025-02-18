@@ -9,14 +9,13 @@ line-length=250
 
 [lint]
 select = [
-  "F",    # various basic rules
-  "E101", # indentation contains mixed spaces and tabs
-  "E4",   # imports
-  "E7",   # various improvements
-  "E9",   # error
-  "W1",   # tabs used instead of spaces
-  "W292", # no newline at end of file
+  "F",    # various basic rules (pyflakes)
+  "E",    # errors (pycodestyle)
+  "W",    # warnings (pycodestyle)
+  "I",    # Import related rules (isort)
   "UP",   # Upgraded version available in newer Python
+  "B",    # bugbear rules
+  "A",    # shadow builtins
   "EXE",  # Executable file shebangs
   "Q003", # Avoidable escaped quotes
   "Q004", # Unnecessary esacpe character
@@ -24,8 +23,13 @@ select = [
 ]
 
 ignore = [
+  "E501",           # line too long
   "E701", "E702",   # multiple statements on one line
   "E722",           # do not use bare 'except'
-  "E74",            # ambiguous name
+  "E741",           # ambiguous variable name
+  "W291",           # trailing whitespace
+  "W293",           # blank line contains whitespace
+  "B007",           # loop control variable not used
+  "B9",             # overly opinionated rules
   "RUF005",         # iterable unpacking in list
 ]
