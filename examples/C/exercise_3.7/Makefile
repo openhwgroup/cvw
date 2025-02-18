@@ -1,4 +1,4 @@
-TARGET = exercise_3.7
+TARGET = exercise_3.8
 
 $(TARGET).objdump: $(TARGET)
 	riscv64-unknown-elf-objdump -S -D $(TARGET) > $(TARGET).objdump

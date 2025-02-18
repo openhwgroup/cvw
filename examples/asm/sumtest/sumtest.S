@@ -30,7 +30,7 @@ fromhost:
 
 .data
 N:
-    .dword 4
+    .dword 4 // can change to 8 for exercise 3.4
 
 .EQU XLEN,64
 begin_signature:
