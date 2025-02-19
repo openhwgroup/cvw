@@ -5,10 +5,12 @@
 # James Stine james.stine@okstate.edu 15 October 2023
 #
 
-import subprocess
 import re
+import subprocess
 from multiprocessing import Pool
+
 from ppaAnalyze import synthsfromcsv
+
 
 def runCommand(module, width, tech, freq):
     command = f"make synth DESIGN={module} WIDTH={width} TECH={tech} DRIVE=INV FREQ={freq} MAXOPT=1 MAXCORES=1"

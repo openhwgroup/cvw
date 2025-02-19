@@ -66,16 +66,17 @@ Conclusion:
 In summary, this Python script facilitates the automation of nightly regression builds, providing comprehensive reporting and email notification capabilities to ensure effective communication and monitoring of regression test results.
 """
 
-import os
-import shutil
-from datetime import datetime
-import time
-import re
-import markdown
-import subprocess
 import argparse
 import logging
+import os
+import re
+import shutil
+import subprocess
+import time
+from datetime import datetime
 from pathlib import Path
+
+import markdown
 
 
 class FolderManager:
