@@ -734,15 +734,18 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
     assign rvvi.csr[0][0][index] = CSRArray[index];  
   end
 
+`ifdef FCOV
   // Interrupts
   assign rvvi.m_ext_intr[0][0] = MExtInt;
   assign rvvi.s_ext_intr[0][0] = SExtInt;
   assign rvvi.m_timer_intr[0][0] = MTimerInt;
   assign rvvi.m_soft_intr[0][0] = MSwInt;
+`endif
 
   // *** implementation only cancel? so sc does not clear?
   assign rvvi.lrsc_cancel[0][0] = 0;
 
+`ifdef FCOV
   // Virtual Memory signals for verification
   assign rvvi.virt_adr_i[0][0]         = IVAdrW;
   assign rvvi.virt_adr_d[0][0]         = DVAdrW;
@@ -757,6 +760,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   assign rvvi.ppn_d[0][0]         = DPPNW;
   assign rvvi.page_type_i[0][0]    = IPageTypeW;
   assign rvvi.page_type_d[0][0]    = DPageTypeW;
+`endif
 
   integer index2;
 
