@@ -44,8 +44,9 @@
 // Privileged extensions
 `define RV64VM_COVERAGE
 `define ZICSRM_COVERAGE
-`define ZICSRF_COVERAGE
+`define ZICSRS_COVERAGE
 `define ZICSRU_COVERAGE
+`define ZICSRF_COVERAGE
 `define ENDIANU_COVERAGE
 `define ENDIANS_COVERAGE
 `define ENDIANM_COVERAGE
