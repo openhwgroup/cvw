@@ -17,6 +17,12 @@ typedef union sp {
 // lists of tests, terminated with 0x8000
 uint16_t easyExponents[] = {15, 0x8000};
 uint16_t easyFracts[] = {0, 0x200, 0x8000}; // 1.0 and 1.1
+uint16_t medExponents[] = {23, 8, 0x8000};
+uint16_t medFracts[] = {0x100, 0x080, 0x020, 0x8000}; // 1.01, 1.001, and 1.00001
+uint16_t hardExponents[] = {31, 0, 0x8000};
+uint16_t hardFracts[] = {0, 0x3FF, 0x008, 0x002, 0x001, 0x8000}; // will hit special cases
+uint16_t specialExponents[] = {30, 1, 12, 24, 0x8000};
+uint16_t specialFracts[] = {0, 0x200, 0x051, 0x001, 0x3FE, 0x3FF, 0x8000}; // will hit more special cases and some random cases
 
 void softfloatInit(void) {
     softfloat_roundingMode = softfloat_round_minMag; 
@@ -77,7 +83,7 @@ void genCase(FILE *fptr, float16_t x, float16_t y, float16_t z, int mul, int add
     float16_t resultmag = result;
     resultmag.v &= 0x7FFF; // take absolute value
     if (f16_lt(resultmag, smallest) && (resultmag.v != 0x0000)) fprintf (fptr, "// skip denorm: ");
-    if ((softfloat_exceptionFlags) >> 1 % 2) fprintf(fptr, "// skip underflow: ");
+    if ((softfloat_exceptionFlags >> 1) % 2) fprintf(fptr, "// skip underflow: ");
 
     // skip special cases if requested
     if (resultmag.v == 0x0000 && !zeroAllowed) fprintf(fptr, "// skip zero: ");
@@ -129,6 +135,62 @@ void genMulTests(uint16_t *e, uint16_t *f, int sgn, char *testName, char *desc, 
     fclose(fptr);
 }
 
+void genAddTests(uint16_t *e, uint16_t *f, int sgn, char *testName, char *desc, int roundingMode, int zeroAllowed, int infAllowed, int nanAllowed) {
+    int i, j, k, numCases;
+    float16_t x, y, z;
+    float16_t cases[100000];
+    FILE *fptr;
+    char fn[80];
+ 
+    sprintf(fn, "work/%s.tv", testName);
+    if ((fptr = fopen(fn, "w")) == 0) {
+        printf("Error opening to write file %s.  Does directory exist?\n", fn);
+        exit(1);
+    }
+    prepTests(e, f, testName, desc, cases, fptr, &numCases);
+    z.v = 0x0000;
+    for (i=0; i < numCases; i++) { 
+        x.v = cases[i].v;
+        for (j=0; j<numCases; j++) {
+            y.v = cases[j].v;
+            for (k=0; k<=sgn; k++) {
+                y.v ^= (k<<15);
+                genCase(fptr, x, y, z, 0, 1, 0, 1, roundingMode, zeroAllowed, infAllowed, nanAllowed);
+            }
+        }
+    }
+    fclose(fptr);
+}
+
+void genMATests(uint16_t *e, uint16_t *f, int sgn, char *testName, char *desc, int roundingMode, int zeroAllowed, int infAllowed, int nanAllowed) {
+    int i, j, k, numCases;
+    float16_t x, y, z;
+    float16_t cases[100000];
+    FILE *fptr;
+    char fn[80];
+ 
+    sprintf(fn, "work/%s.tv", testName);
+    if ((fptr = fopen(fn, "w")) == 0) {
+        printf("Error opening to write file %s.  Does directory exist?\n", fn);
+        exit(1);
+    }
+    prepTests(e, f, testName, desc, cases, fptr, &numCases);
+    z.v = 0x0000;
+    for (i=0; i < numCases; i++) { 
+        x.v = cases[i].v;
+        for (j=0; j<numCases; j++) {
+            y.v = cases[j].v;
+            for (k=0; k<=sgn; k++) {
+                y.v ^= (k<<15);
+                genCase(fptr, x, y, z, 1, 1, 0, 0, roundingMode, zeroAllowed, infAllowed, nanAllowed);
+            }
+        }
+    }
+    fclose(fptr);
+}
+
+
+
 int main()
 {
     if (system("mkdir -p work") != 0) exit(1); // create work directory if it doesn't exist
@@ -142,6 +204,24 @@ int main()
     genMulTests(easyExponents, easyFracts, 0, "fmul_0_rne", "// Multiply with exponent of 0, significand of 1.0 and 1.1, RNE", 1, 0, 0, 0); */
 
     // Add your cases here
-  
+    genMulTests(medExponents, medFracts, 0, "fmul_1", "// Multiply with exponent of 8 and -7, significand of 1.01, 1.001, and 1.00001, RZ", 0, 0, 0, 0);
+    genMulTests(medExponents, medFracts, 1, "fmul_2", "// Multiply negative with exponent of 8 and -7, significand of 1.01, 1.001, and 1.00001, RZ", 0, 0, 0, 0);
+
+    genAddTests(easyExponents, easyFracts, 0, "fadd_0", "// Add with exponent of 8 and -7, significand of 1.0 and 1.1, RZ", 0, 0, 0, 0);
+    genAddTests(medExponents, medFracts, 0, "fadd_1", "// Add with exponent of 8 and -7, significand of 1.01, 1.001, and 1.00001, RZ", 0, 0, 0, 0);
+    genAddTests(medExponents, medFracts, 1, "fadd_2", "// Add negative with exponent of 8 and -7, significand of 1.01, 1.001, and 1.00001, RZ", 0, 0, 0, 0);
+
+    genMATests(easyExponents, easyFracts, 0, "fma_0", "// Multiply and add with exponent of 8 and -7, significand of 1.0 and 1.1, RZ", 0, 0, 0, 0);
+    genMATests(medExponents, medFracts, 0, "fma_1", "// Multiply and add with exponent of 8 and -7, significand of 1.01, 1.001, and 1.00001, RZ", 0, 0, 0, 0);
+    genMATests(medExponents, medFracts, 1, "fma_2", "// Multiply and add negative with exponent of 8 and -7, significand of 1.01, 1.001, and 1.00001, RZ", 0, 0, 0, 0);
+
+    genMATests(hardExponents, hardFracts, 1, "fma_special_rz", "// Multiply and add negative with exponent of 16 and -15, significand to hit special cases: zero inputs, NaN, etc, RZ", 0, 1, 1, 1);
+    genMATests(hardExponents, hardFracts, 1, "fma_special_rne", "// Multiply and add negative with exponent of 16 and -15, significand to hit special cases: zero inputs, NaN, etc, RNE", 1, 1, 1, 1);
+    genMATests(hardExponents, hardFracts, 1, "fma_special_rp", "// Multiply and add negative with exponent of 16 and -15, significand to hit special cases: zero inputs, NaN, etc, RP", 2, 1, 1, 1);
+    genMATests(hardExponents, hardFracts, 1, "fma_special_rn", "// Multiply and add negative with exponent of 16 and -15, significand to hit special cases: zero inputs, NaN, etc, RN", 3, 1, 1, 1);
+    
+    genMATests(specialExponents, specialFracts, 1, "fma_extra_0", "// Multiply and add negative with random exponent, significand to hit more special cases, RZ", 0, 1, 1, 1);
+    genMATests(specialExponents, specialFracts, 1, "fma_extra_1", "// Multiply and add negative with random exponent, significand to hit more special cases, RZ", 0, 1, 1, 1);
+
     return 0;
 }
