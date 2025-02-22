@@ -481,6 +481,8 @@ def selectTests(args, sims, coverStr):
 
 
 def makeDirs(sims):
+    # Always need verilator directories for lint
+    if "verilator" not in sims: sims.append("verilator")
     for sim in sims:
         dirs = [f"{regressionDir}/{sim}/wkdir", f"{regressionDir}/{sim}/logs"]
         for d in dirs:
