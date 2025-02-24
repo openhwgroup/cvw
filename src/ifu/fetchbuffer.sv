@@ -73,9 +73,6 @@ module fetchbuffer
       .q(ReadReg)
   );
 
-  // Fetch buffer entries anded with read ptr for AO Muxing
-  logic [WIDTH-1:0] DaoArr[P.FETCHBUFFER_ENTRIES-1:0];
-
   for (genvar i = 0; i < P.FETCHBUFFER_ENTRIES; i++) begin
     assign DaoArr[i] = ReadPtr[i] ? ReadReg[i] : '0;
   end

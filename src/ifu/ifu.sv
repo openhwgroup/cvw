@@ -385,7 +385,6 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
 
   // Decode stage pipeline register and logic
 
-
   // expand 16-bit compressed instructions to 32 bits
   if (P.ZCA_SUPPORTED) begin: decomp
     logic IllegalCompInstrD;

@@ -97,8 +97,6 @@ module hazard (
   //  The IFU and LSU stall the entire pipeline on a cache miss, bus access, or other long operation.
   //    The IFU stalls the entire pipeline rather than just Fetch to avoid complications with instructions later in the pipeline causing Exceptions
   //    A trap could be asserted at the start of a IFU/LSU stall, and should flush the memory operation
-
-
   assign StallFBF = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause);
   assign StallFCause = StallFBF | FetchBufferStallF;
   assign StallDCause = (StructuralStallD | FPUStallD) & ~FlushDCause; // TODO: add stall if empty fetch buffer
