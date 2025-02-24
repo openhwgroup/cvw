@@ -1,17 +1,10 @@
 import os
 import re
 import shutil
-import subprocess
-import shlex
 import logging
-import random
-import string
-from string import Template
 
 import riscof.utils as utils
 from riscof.pluginTemplate import pluginTemplate
-import riscof.constants as constants
-from riscv_isac.isac import isac
 
 logger = logging.getLogger()
 
@@ -28,8 +21,8 @@ class sail_cSim(pluginTemplate):
             raise SystemExit(1)
         self.num_jobs = str(config['jobs'] if 'jobs' in config else 1)
         self.pluginpath = os.path.abspath(config['pluginpath'])
-        self.sail_exe = { '32' : os.path.join(config['PATH'] if 'PATH' in config else "","riscv_sim_RV32"),
-                '64' : os.path.join(config['PATH'] if 'PATH' in config else "","riscv_sim_RV64")}
+        self.sail_exe = { '32' : os.path.join(config['PATH'] if 'PATH' in config else "","riscv_sim_rv32d"),
+                '64' : os.path.join(config['PATH'] if 'PATH' in config else "","riscv_sim_rv64d")}
         self.isa_spec = os.path.abspath(config['ispec']) if 'ispec' in config else ''
         self.platform_spec = os.path.abspath(config['pspec']) if 'ispec' in config else ''
         self.make = config['make'] if 'make' in config else 'make'
@@ -72,11 +65,11 @@ class sail_cSim(pluginTemplate):
             self.sailargs += "--enable-zcb"
         if "Q" in ispec["ISA"]:
             self.isa += 'q'
-        objdump = "riscv64-unknown-elf-objdump".format(self.xlen)
+        objdump = "riscv64-unknown-elf-objdump"
         if shutil.which(objdump) is None:
             logger.error(objdump+": executable not found. Please check environment setup.")
             raise SystemExit(1)
-        compiler = "riscv64-unknown-elf-gcc".format(self.xlen)
+        compiler = "riscv64-unknown-elf-gcc"
         if shutil.which(compiler) is None:
             logger.error(compiler+": executable not found. Please check environment setup.")
             raise SystemExit(1)
@@ -114,9 +107,9 @@ class sail_cSim(pluginTemplate):
             if ('NO_SAIL=True' in testentry['macros']):
                 # if the tests can't run on SAIL we copy the reference output to the src directory
                 reference_output = re.sub("/src/","/references/", re.sub(".S",".reference_output", test))
-                execute += 'cut -c-{0:g} {1} > {2}'.format(8, reference_output, sig_file) #use cut to remove comments when copying
+                execute += f'cut -c-{8:g} {reference_output} > {sig_file}' #use cut to remove comments when copying
             else:
-                execute += self.sail_exe[self.xlen] + ' -z268435455 -i --trace=step  ' + self.sailargs + ' --test-signature={0} {1} > {2}.log 2>&1;'.format(sig_file, elf, test_name)
+                execute += self.sail_exe[self.xlen] + ' -z268435455 -i --trace=step  ' + self.sailargs + f' --test-signature={sig_file} {elf} > {test_name}.log 2>&1;'
 
             cov_str = ' '
             for label in testentry['coverage_labels']:
@@ -124,10 +117,10 @@ class sail_cSim(pluginTemplate):
 
             if cgf_file is not None:
                 coverage_cmd = 'riscv_isac --verbose info coverage -d \
-                        -t {0}.log --parser-name c_sail -o coverage.rpt  \
+                        -t {}.log --parser-name c_sail -o coverage.rpt  \
                         --sig-label begin_signature  end_signature \
                         --test-label rvtest_code_begin rvtest_code_end \
-                        -e ref.elf -c {1} -x{2} {3};'.format(\
+                        -e ref.elf -c {} -x{} {};'.format(\
                         test_name, ' -c '.join(cgf_file), self.xlen, cov_str)
             else:
                 coverage_cmd = ''

@@ -28,25 +28,40 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module hazard (
-  input  logic  BPWrongE, CSRWriteFenceM, RetM, TrapM,
-  input  logic  StructuralStallD,
-  input  logic  LSUStallM, IFUStallF, FetchBufferStallF,
-  input  logic  FPUStallD, ExternalStall,
-  input  logic  DivBusyE, FDivBusyE,
-  input  logic  wfiM, IntPendingM,
-  // Stall & flush outputs
-  output logic StallF, StallD, StallE, StallM, StallW,
-  output logic FlushD, FlushE, FlushM, FlushW
+    input  logic BPWrongE,
+    CSRWriteFenceM,
+    RetM,
+    TrapM,
+    input  logic StructuralStallD,
+    input  logic LSUStallM,
+    IFUStallF,
+    FetchBufferStallF,
+    input  logic FPUStallD,
+    ExternalStall,
+    input  logic DivBusyE,
+    FDivBusyE,
+    input  logic wfiM,
+    IntPendingM,
+    // Stall & flush outputs
+    output logic StallF, StallFBF,
+    StallD,
+    StallE,
+    StallM,
+    StallW,
+    output logic FlushD,
+    FlushE,
+    FlushM,
+    FlushW
 );
 
-  logic                                       StallFCause, StallDCause, StallECause, StallMCause, StallWCause;
-  logic                                       LatestUnstalledD, LatestUnstalledE, LatestUnstalledM, LatestUnstalledW;
-  logic                                       FlushDCause, FlushECause, FlushMCause, FlushWCause;
+  logic StallFCause, StallDCause, StallECause, StallMCause, StallWCause;
+  logic LatestUnstalledD, LatestUnstalledE, LatestUnstalledM, LatestUnstalledW;
+  logic FlushDCause, FlushECause, FlushMCause, FlushWCause;
 
   logic WFIStallM, WFIInterruptedM;
 
   // WFI logic
-  assign WFIStallM = wfiM & ~IntPendingM;         // WFI waiting for an interrupt or timeout
+  assign WFIStallM = wfiM & ~IntPendingM;  // WFI waiting for an interrupt or timeout
   assign WFIInterruptedM = wfiM & IntPendingM;    // WFI detects a pending interrupt.  Retire WFI; trap if interrupt is enabled.
 
   // stalls and flushes
@@ -70,7 +85,7 @@ module hazard (
   //   However, an active division operation resides in the Execute stage, and when the BP incorrectly mispredicts the divide as a taken branch, the divde must still complete
   // When a WFI is interrupted and causes a trap, it flushes the rest of the pipeline but not the W stage, because the WFI needs to commit
   assign FlushDCause = TrapM | RetM | CSRWriteFenceM | BPWrongE;
-  assign FlushECause = TrapM | RetM | CSRWriteFenceM |(BPWrongE & ~(DivBusyE | FDivBusyE));
+  assign FlushECause = TrapM | RetM | CSRWriteFenceM | (BPWrongE & ~(DivBusyE | FDivBusyE));
   assign FlushMCause = TrapM | RetM | CSRWriteFenceM;
   assign FlushWCause = TrapM & ~WFIInterruptedM;
 
@@ -82,8 +97,9 @@ module hazard (
   //  The IFU and LSU stall the entire pipeline on a cache miss, bus access, or other long operation.
   //    The IFU stalls the entire pipeline rather than just Fetch to avoid complications with instructions later in the pipeline causing Exceptions
   //    A trap could be asserted at the start of a IFU/LSU stall, and should flush the memory operation
-  assign StallFCause = FetchBufferStallF; // | (IFUStallF & ~FlushDCause);
-  assign StallDCause = (StructuralStallD | FPUStallD) & ~FlushDCause;
+  assign StallFBF = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause);
+  assign StallFCause = StallFBF | FetchBufferStallF;
+  assign StallDCause = (StructuralStallD | FPUStallD) & ~FlushDCause; // TODO: add stall if empty fetch buffer
   assign StallECause = (DivBusyE | FDivBusyE) & ~FlushECause;
   assign StallMCause = WFIStallM & ~FlushMCause;
   // Need to gate IFUStallF when the equivalent FlushFCause = FlushDCause = 1.
@@ -93,7 +109,7 @@ module hazard (
 
   // Stall each stage for cause or if the next stage is stalled
   // coverage off: StallFCause is always 0
-  assign StallF = StallFCause | StallD;
+  assign StallF = StallFCause;
   // coverage on
   assign StallD = StallDCause | StallE;
   assign StallE = StallECause | StallM;

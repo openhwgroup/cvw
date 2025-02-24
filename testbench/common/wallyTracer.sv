@@ -2,6 +2,8 @@
 // wallyTracer.sv
 //
 // A component of the Wally configurable RISC-V project.
+// Implements a RISC-V Verification Interface (RVVI)
+// to support functional coverage and lockstep simulation.
 // 
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
@@ -20,19 +22,16 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-`define NUM_REGS 32
-`define NUM_CSRS 4096
-
 `define STD_LOG 0
 `define PRINT_PC_INSTR 0
 `define PRINT_MOST 0
 `define PRINT_ALL 0
 `define PRINT_CSRS 0
 
-
 module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
 
-  localparam NUMREGS = P.E_SUPPORTED ? 16 : 32;
+  localparam NUM_REGS = P.E_SUPPORTED ? 16 : 32;
+  localparam NUM_CSRS = 4096;
   
   // wally specific signals
   logic                  reset;
@@ -50,17 +49,17 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   logic                  TrapM, TrapW;
   logic                  HaltM, HaltW;
   logic [1:0]            PrivilegeModeW;
-  logic [P.XLEN-1:0]     rf[NUMREGS];
-  logic [NUMREGS-1:0]    rf_wb;
+  logic [P.XLEN-1:0]     rf[NUM_REGS];
+  logic [NUM_REGS-1:0]   rf_wb;
   logic [4:0]            rf_a3;
   logic                  rf_we3;
   logic [P.FLEN-1:0]     frf[32];
-  logic [`NUM_REGS-1:0]  frf_wb;
+  logic [31:0]           frf_wb;
   logic [4:0]            frf_a4;
   logic                  frf_we4;
   logic [P.XLEN-1:0]     CSRArray [4095:0];
   logic [P.XLEN-1:0]     CSRArrayOld [4095:0];
-  logic [`NUM_CSRS-1:0]  CSR_W;
+  logic [NUM_CSRS-1:0]  CSR_W;
   logic                  CSRWriteM, CSRWriteW;
   logic [11:0]           CSRAdrM, CSRAdrW;
   logic                  wfiM;
@@ -314,8 +313,8 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
 
   genvar index;
   assign rf[0] = 0;
-  for(index = 1; index < NUMREGS; index += 1) 
-  assign rf[index] = testbench.dut.core.ieu.dp.regf.rf[index];
+  for(index = 1; index < NUM_REGS; index += 1) 
+    assign rf[index] = testbench.dut.core.ieu.dp.regf.rf[index];
 
   assign rf_a3  = testbench.dut.core.ieu.dp.regf.a3;
   assign rf_we3 = testbench.dut.core.ieu.dp.regf.we3;
@@ -329,12 +328,12 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   if (P.F_SUPPORTED) begin
     assign frf_a4  = testbench.dut.core.fpu.fpu.fregfile.a4;
     assign frf_we4 = testbench.dut.core.fpu.fpu.fregfile.we4;
-    for(index = 0; index < NUMREGS; index += 1) 
+    for(index = 0; index < 32; index += 1) 
       assign frf[index] = testbench.dut.core.fpu.fpu.fregfile.rf[index];
   end else begin
     assign frf_a4  = '0;
     assign frf_we4 = 0;
-    for(index = 0; index < NUMREGS; index += 1) 
+    for(index = 0; index < 32; index += 1) 
       assign frf[index] = '0;
   end
   
@@ -364,25 +363,25 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   //for VM Verification
   flopenrc #(P.XLEN)     IVAdrDReg (clk, reset, 1'b0, SelHPTW, IVAdrF, IVAdrD); //Virtual Address for IMMU // *** RT: possible bug SelHPTW probably should be ~StallD
   flopenrc #(P.XLEN)     IVAdrEReg (clk, reset, 1'b0, ~StallE, IVAdrD, IVAdrE); //Virtual Address for IMMU
-  flopenrc #(P.XLEN)     IVAdrMReg (clk, reset, 1'b0, ~StallM, IVAdrE, IVAdrM); //Virtual Address for IMMU
+  flopenrc #(P.XLEN)     IVAdrMReg (clk, reset, 1'b0, ~(StallM & ~SelHPTW), IVAdrE, IVAdrM); //Virtual Address for IMMU
   flopenrc #(P.XLEN)     IVAdrWReg (clk, reset, 1'b0, SelHPTW, IVAdrM, IVAdrW); //Virtual Address for IMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
   flopenrc #(P.XLEN)     DVAdrWReg (clk, reset, 1'b0, SelHPTW, DVAdrM, DVAdrW); //Virtual Address for DMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
 
   flopenrc #(P.PA_BITS)  IPADReg (clk, reset, 1'b0, SelHPTW, IPAF, IPAD); //Physical Address for IMMU // *** RT: possible bug SelHPTW probably should be ~StallD
   flopenrc #(P.PA_BITS)  IPAEReg (clk, reset, 1'b0, ~StallE, IPAD, IPAE); //Physical Address for IMMU
-  flopenrc #(P.PA_BITS)  IPAMReg (clk, reset, 1'b0, ~StallM, IPAE, IPAM); //Physical Address for IMMU
+  flopenrc #(P.PA_BITS)  IPAMReg (clk, reset, 1'b0, ~(StallM & ~SelHPTW), IPAE, IPAM); //Physical Address for IMMU
   flopenrc #(P.PA_BITS)  IPAWReg (clk, reset, 1'b0, SelHPTW, IPAM, IPAW); //Physical Address for IMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
   flopenrc #(P.PA_BITS)  DPAWReg (clk, reset, 1'b0, SelHPTW, DPAM, DPAW); //Physical Address for DMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
 
   flopenrc #(P.XLEN)     IPTEDReg (clk, reset, 1'b0, SelHPTW, IPTEF, IPTED); //PTE for IMMU // *** RT: possible bug SelHPTW probably should be ~StallD
   flopenrc #(P.XLEN)     IPTEEReg (clk, reset, 1'b0, ~StallE, IPTED, IPTEE); //PTE for IMMU
-  flopenrc #(P.XLEN)     IPTEMReg (clk, reset, 1'b0, ~StallM, IPTEE, IPTEM); //PTE for IMMU
+  flopenrc #(P.XLEN)     IPTEMReg (clk, reset, 1'b0, ~(StallM & ~SelHPTW), IPTEE, IPTEM); //PTE for IMMU
   flopenrc #(P.XLEN)     IPTEWReg (clk, reset, 1'b0, SelHPTW, IPTEM, IPTEW); //PTE for IMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
   flopenrc #(P.XLEN)     DPTEWReg (clk, reset, 1'b0, SelHPTW, DPTEM, DPTEW); //PTE for DMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
 
   flopenrc #(2)     IPageTypeDReg (clk, reset, 1'b0, SelHPTW, IPageTypeF, IPageTypeD); //PageType (kilo, mega, giga, tera) from IMMU // *** RT: possible bug SelHPTW probably should be ~StallD
   flopenrc #(2)     IPageTypeEReg (clk, reset, 1'b0, ~StallE, IPageTypeD, IPageTypeE); //PageType (kilo, mega, giga, tera) from IMMU
-  flopenrc #(2)     IPageTypeMReg (clk, reset, 1'b0, ~StallM, IPageTypeE, IPageTypeM); //PageType (kilo, mega, giga, tera) from IMMU
+  flopenrc #(2)     IPageTypeMReg (clk, reset, 1'b0, ~(StallM & ~SelHPTW), IPageTypeE, IPageTypeM); //PageType (kilo, mega, giga, tera) from IMMU
   flopenrc #(2)     IPageTypeWReg (clk, reset, 1'b0, SelHPTW, IPageTypeM, IPageTypeW); //PageType (kilo, mega, giga, tera) from IMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
   flopenrc #(2)     DPageTypeWReg (clk, reset, 1'b0, SelHPTW, DPageTypeM, DPageTypeW); //PageType (kilo, mega, giga, tera) from DMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
 
@@ -420,9 +419,11 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
                                ~FlushE ? PCD :
                                ~FlushD ? PCF : PCNextF;
 
-  for(index = 0; index < `NUM_REGS; index += 1) begin
+  for(index = 0; index < NUM_REGS; index += 1) begin
     assign rvvi.x_wdata[0][0][index] = rf[index];
     assign rvvi.x_wb[0][0][index]    = rf_wb[index];
+  end
+  for(index = 0; index < 32; index += 1) begin
     assign rvvi.f_wdata[0][0][index] = frf[index];
     assign rvvi.f_wb[0][0][index]    = frf_wb[index];
   end
@@ -744,18 +745,18 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
 	if(valid) begin
       if(`STD_LOG) begin
         $fwrite(file, "%016x, %08x, %s\t\t", rvvi.pc_rdata[0][0], rvvi.insn[0][0], instrWName);
-        for(index2 = 0; index2 < `NUM_REGS; index2 += 1) begin
+        for(index2 = 0; index2 < NUM_REGS; index2 += 1) begin
           if(rvvi.x_wb[0][0][index2]) begin
             $fwrite(file, "rf[%02d] = %016x ", index2, rvvi.x_wdata[0][0][index2]);
           end
         end
       end
-      for(index2 = 0; index2 < `NUM_REGS; index2 += 1) begin
+      for(index2 = 0; index2 < 32; index2 += 1) begin
         if(rvvi.f_wb[0][0][index2]) begin
           $fwrite(file, "frf[%02d] = %016x ", index2, rvvi.f_wdata[0][0][index2]);
         end
       end
-      for(index2 = 0; index2 < `NUM_CSRS; index2 += 1) begin
+      for(index2 = 0; index2 < NUM_CSRS; index2 += 1) begin
         if(rvvi.csr_wb[0][0][index2]) begin
           $fwrite(file, "csr[%03x] = %016x ", index2, rvvi.csr[0][0][index2]);
         end
@@ -769,15 +770,15 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
       else if(`PRINT_ALL) begin
         $display("order = %08d, PC = %08x, insn = %08x, trap = %1d, halt = %1d, intr = %1d, mode = %1x, ixl = %1x, pc_wdata = %08x", 
                  rvvi.order[0][0], rvvi.pc_rdata[0][0], rvvi.insn[0][0], rvvi.trap[0][0], rvvi.halt[0][0], rvvi.intr[0][0], rvvi.mode[0][0], rvvi.ixl[0][0], rvvi.pc_wdata[0][0]);
-        for(index2 = 0; index2 < `NUM_REGS; index2 += 1) begin
+        for(index2 = 0; index2 < NUM_REGS; index2 += 1) begin
           $display("x%02d = %08x", index2, rvvi.x_wdata[0][0][index2]);
         end
-        for(index2 = 0; index2 < `NUM_REGS; index2 += 1) begin
+        for(index2 = 0; index2 < 32; index2 += 1) begin
           $display("f%02d = %08x", index2, rvvi.f_wdata[0][0][index2]);
         end
       end
       if (`PRINT_CSRS) begin
-        for(index2 = 0; index2 < `NUM_CSRS; index2 += 1) begin
+        for(index2 = 0; index2 < NUM_CSRS; index2 += 1) begin
           if(CSR_W[index2]) begin
             $display("%t: CSR %03x = %x", $time(), index2, CSRArray[index2]);
           end

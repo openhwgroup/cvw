@@ -212,7 +212,7 @@ localparam PLIC_SPI_ID = 32'd6;
 localparam PLIC_SDC_ID = 32'd9;
 
 // Branch prediction
-localparam logic BPRED_SUPPORTED = 1;
+localparam logic BPRED_SUPPORTED = 0;
 localparam BPRED_TYPE = `BP_GSHARE; // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BASIC, BP_TWOBIT
 localparam BPRED_SIZE = 32'd10;
 localparam BPRED_NUM_LHR = 32'd6;

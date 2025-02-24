@@ -28,7 +28,7 @@
 
 module ifu import cvw::*;  #(parameter cvw_t P) (
   input  logic                 clk, reset,
-  input  logic                 StallF, StallD, StallE, StallM, StallW,
+  input  logic                 StallF, StallD, StallE, StallM, StallW, StallFBF,
   input  logic                 FlushD, FlushE, FlushM, FlushW,
   output logic                 IFUStallF,                                // IFU stalsl pipeline during a multicycle operation
   // Command from CPU
@@ -303,11 +303,17 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   assign IFUStallF = IFUCacheBusStallF | SelSpillNextF;
   assign GatedStallD = StallD & ~SelSpillNextF;
 
+  logic NoStallPCF;
   if (P.FETCHBUFFER_ENTRIES != 0) begin : fetchbuffer
-    fetchbuffer #(P) fetchbuff(.clk, .reset, .StallF, .StallD, .FlushD, .WriteData(PostSpillInstrRawF), .ReadData(InstrRawD), .FetchBufferStallF);
+    fetchbuffer #(P) fetchbuff(.clk, .reset, .StallF, .StallD, .FlushD, .nop, .WriteData(PostSpillInstrRawF), .ReadData(InstrRawD), .FetchBufferStallF, .RisingFBStallF());
+    logic PCFetchBufferStallD, FetchBufferStallFDelay;
+    flop #(1) flop1 (clk, FetchBufferStallF, FetchBufferStallFDelay);
+    assign NoStallPCF = ~FetchBufferStallFDelay & FetchBufferStallF;
+    fetchbuffer #(P, P.XLEN) PCFetchBuffer(.clk, .reset, .StallF, .StallD, .FlushD, .nop({{1'b1},{(P.XLEN-1){1'b0}}}), .WriteData(PCF), .ReadData(PCD), .FetchBufferStallF(PCFetchBufferStallD), .RisingFBStallF());
   end else begin
     flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawF, nop, InstrRawD);
     assign FetchBufferStallF = '0;
+    flopenrc #(P.XLEN) PCDReg(clk, reset, FlushD, ~StallD, PCF, PCD);
   end
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -320,7 +326,10 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
 
   mux3 #(P.XLEN) pcmux3(PC2NextF, EPCM, TrapVectorM, {TrapM, RetM}, UnalignedPCNextF);
   mux2 #(P.XLEN) pcresetmux({UnalignedPCNextF[P.XLEN-1:1], 1'b0}, P.RESET_VECTOR[P.XLEN-1:0], reset, PCNextF);
-  flopen #(P.XLEN) pcreg(clk, ~StallF | reset, PCNextF, PCF);
+  logic PCEnable;
+  assign PCEnable = ~StallF | reset | NoStallPCF;
+  // assign PCEnable = ~StallF | reset;
+  flopen #(P.XLEN) pcreg(clk, PCEnable, PCNextF, PCF); //* make this NoStallPCF
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32
@@ -375,7 +384,6 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
   // Decode stage pipeline register and logic
-  flopenrc #(P.XLEN) PCDReg(clk, reset, FlushD, ~StallD, PCF, PCD);
 
   // expand 16-bit compressed instructions to 32 bits
   if (P.ZCA_SUPPORTED) begin: decomp

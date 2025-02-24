@@ -161,6 +161,12 @@ examples/asm/sumtest/sumtest
 examples/asm/example/example
 examples/asm/trap/trap
 examples/asm/etc/pause
+examples/C/fmul
+examples/exercises/fma16/fma16.sv
+examples/exercises/fma16/fma16_testgen
+examples/exercises/fma16/sol 
+examples/exercises/riscvsoc_solutions
+
 
 # Other
 external

@@ -26,42 +26,70 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module fetchbuffer import cvw::*; #(parameter cvw_t P) (
-	input  logic        clk, reset,
-	input  logic        StallF, StallD, FlushD,
-	input  logic [31:0] WriteData,
-	output logic [31:0] ReadData,
-	output logic        FetchBufferStallF
+module fetchbuffer
+  import cvw::*;
+#(
+    parameter cvw_t P,
+    parameter WIDTH = 32
+) (
+    input  logic             clk,
+    reset,
+    input  logic             StallF,
+    StallD,
+    FlushD,
+    input  logic [WIDTH-1:0] nop,
+    input  logic [WIDTH-1:0] WriteData,
+    output logic [WIDTH-1:0] ReadData,
+    output logic             FetchBufferStallF,
+    output logic             RisingFBStallF
 );
-  localparam [31:0] nop = 32'h00000013;
-  logic      [31:0] ReadReg [P.FETCHBUFFER_ENTRIES-1:0];
-  logic      [31:0] ReadFetchBuffer;
-  logic      [P.FETCHBUFFER_ENTRIES-1:0]  ReadPtr, WritePtr;
-  logic             Empty, Full;
+  logic [WIDTH-1:0] ReadReg         [P.FETCHBUFFER_ENTRIES-1:0];
+  logic [WIDTH-1:0] ReadFetchBuffer;
+  logic [P.FETCHBUFFER_ENTRIES-1:0] ReadPtr, WritePtr;
+  logic Empty, Full;
 
   assign Empty  = |(ReadPtr & WritePtr); // Bitwise and the read&write ptr, and or the bits of the result together
   assign Full   = |({WritePtr[P.FETCHBUFFER_ENTRIES-2:0], WritePtr[P.FETCHBUFFER_ENTRIES-1]} & ReadPtr); // Same as above but left rotate WritePtr to "add 1"
   assign FetchBufferStallF = Full;
 
-  flopenl #(32) fbEntries[P.FETCHBUFFER_ENTRIES-1:0] (.clk, .load(reset | FlushD), .en(WritePtr), .d(WriteData), .val(nop), .q(ReadReg));
+  logic [2:0] fbEnable;
 
-  // Fetch buffer entries anded with read ptr for AO Muxing
-  logic [31:0] DaoArr [P.FETCHBUFFER_ENTRIES-1:0];
+  logic fbEnable;
+  logic FetchBufferStallFDelay;
+  assign RisingFBStallF = ~FetchBufferStallFDelay & FetchBufferStallF;
+
+  flop #(1) flop1 (
+      clk,
+      FetchBufferStallF,
+      FetchBufferStallFDelay
+  );
+  assign fbEnable = WritePtr & {3{(~Full | RisingFBStallF)}};
+  flopenl #(WIDTH) fbEntries[P.FETCHBUFFER_ENTRIES-1:0] (
+      .clk,
+      .load(reset | FlushD),
+      .en(fbEnable),
+      .d(WriteData),
+      .val(nop),
+      .q(ReadReg)
+  );
 
   for (genvar i = 0; i < P.FETCHBUFFER_ENTRIES; i++) begin
     assign DaoArr[i] = ReadPtr[i] ? ReadReg[i] : '0;
   end
 
-  or_rows #(P.FETCHBUFFER_ENTRIES, 32) ReadFBAOMux(.a(DaoArr), .y(ReadFetchBuffer));
+  or_rows #(P.FETCHBUFFER_ENTRIES, WIDTH) ReadFBAOMux (
+      .a(DaoArr),
+      .y(ReadFetchBuffer)
+  );
 
   assign ReadData = Empty ? nop : ReadFetchBuffer;
 
   always_ff @(posedge clk) begin : shiftRegister
     if (reset) begin
-      WritePtr <= {{P.FETCHBUFFER_ENTRIES-1{1'b0}}, 1'b1};
-      ReadPtr  <= {{P.FETCHBUFFER_ENTRIES-1{1'b0}}, 1'b1};
+      WritePtr <= {{P.FETCHBUFFER_ENTRIES - 1{1'b0}}, 1'b1};
+      ReadPtr  <= {{P.FETCHBUFFER_ENTRIES - 1{1'b0}}, 1'b1};
     end else begin
-      WritePtr <= ~(Full | StallF) ? {WritePtr[P.FETCHBUFFER_ENTRIES-2:0], WritePtr[P.FETCHBUFFER_ENTRIES-1]} : WritePtr;
+      WritePtr <= ~(Full | StallF)? {WritePtr[P.FETCHBUFFER_ENTRIES-2:0], WritePtr[P.FETCHBUFFER_ENTRIES-1]} : WritePtr;
       ReadPtr <= ~(StallD | Empty) ? {ReadPtr[P.FETCHBUFFER_ENTRIES-2:0], ReadPtr[P.FETCHBUFFER_ENTRIES-1]} : ReadPtr;
     end
   end

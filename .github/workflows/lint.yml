@@ -1,0 +1,36 @@
+name: Lint
+
+on:
+  push:
+    paths:
+      - '**/*.py'
+      - 'bin/*'
+      - 'sim/vcs/run_vcs'
+      - '.ruff.toml'
+      - '!addins/*'
+      - '!tests/wally-riscv-arch-test/riscv-test-suite/rv64i_m/Q/*'
+      - '!tests/fp/quad/fpdatasetgen.py'
+  pull_request:
+    paths:
+      - '**/*.py'
+      - 'bin/*'
+      - 'sim/vcs/run_vcs'
+      - '.ruff.toml'
+      - '!addins/*'
+      - '!tests/wally-riscv-arch-test/riscv-test-suite/rv64i_m/Q/*'
+      - '!tests/fp/quad/fpdatasetgen.py'
+
+jobs:
+  lint:
+    name: Python ${{matrix.version}} lint
+    strategy:
+      matrix:
+        version: [39, 312] # Test on oldest and newest verions used in wally-package-install.sh
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set Python version
+      run: sed -i '/^target-version/c\target-version = "py${{matrix.version}}"' .ruff.toml
+    - name: Run ruff
+      uses: astral-sh/ruff-action@v3
