@@ -127,7 +127,6 @@ add wave -noupdate -group ifu -expand -group icache -expand -group lru /testbenc
 add wave -noupdate -group ifu -expand -group icache -expand -group lru /testbench/dut/core/ifu/bus/icache/icache/vict/cacheLRU/LRUMemory
 add wave -noupdate -group ifu -expand -group icache /testbench/dut/core/ifu/bus/icache/icache/SelAdrTag
 add wave -noupdate -group ifu -expand -group icache /testbench/dut/core/ifu/bus/icache/icache/AdrSelMuxSelTag
-add wave -noupdate -group ifu -expand -group icache /testbench/dut/core/ifu/bus/icache/icache/vict/cacheLRU/CacheSetTag
 add wave -noupdate -group ifu -expand -group icache /testbench/dut/core/ifu/bus/icache/icache/vict/cacheLRU/PAdr
 add wave -noupdate -group ifu -expand -group icache -group way3 {/testbench/dut/core/ifu/bus/icache/icache/CacheWays[3]/SelectedWriteWordEn}
 add wave -noupdate -group ifu -expand -group icache -group way3 -label tag {/testbench/dut/core/ifu/bus/icache/icache/CacheWays[3]/CacheTagMem/ram/RAM}
@@ -674,15 +673,8 @@ add wave -noupdate -group spi /testbench/dut/uncoregen/uncore/spi/spi/ChipSelect
 add wave -noupdate -group spi /testbench/dut/uncoregen/uncore/spi/spi/SckMode
 add wave -noupdate /testbench/dut/uncoregen/uncore/spi/spi/ShiftEdge
 add wave -noupdate /testbench/dut/uncoregen/uncore/spi/spi/TransmitData
-add wave -noupdate /testbench/loggers/ICacheLogger/HitMissString
-add wave -noupdate /testbench/loggers/ICacheLogger/Enable
 add wave -noupdate /testbench/dut/core/ifu/bus/icache/icache/cachefsm/CacheEn
 add wave -noupdate /testbench/dut/core/ifu/bus/icache/icache/cachefsm/FlushStage
-add wave -noupdate -expand -group {Dcache logger} /testbench/loggers/DCacheLogger/HitMissString
-add wave -noupdate -expand -group {Dcache logger} /testbench/loggers/DCacheLogger/AccessTypeString
-add wave -noupdate -expand -group {Dcache logger} /testbench/loggers/DCacheLogger/resetD
-add wave -noupdate -expand -group {Dcache logger} /testbench/loggers/DCacheLogger/resetEdge
-add wave -noupdate -expand -group {Dcache logger} -color Pink /testbench/loggers/DCacheLogger/Enabled
 add wave -noupdate /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/LRUWriteEn
 add wave -noupdate /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/FlushStage
 TreeUpdate [SetDefaultTree]
