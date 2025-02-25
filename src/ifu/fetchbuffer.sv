@@ -26,25 +26,17 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module fetchbuffer
-  import cvw::*;
-#(
-    parameter cvw_t P,
-    parameter WIDTH = 32
-) (
-    input  logic             clk,
-    reset,
-    input  logic             StallF,
-    StallD,
-    FlushD,
-    input  logic [WIDTH-1:0] nop,
-    input  logic [WIDTH-1:0] WriteData,
-    output logic [WIDTH-1:0] ReadData,
-    output logic             FetchBufferStallF,
-    output logic             RisingFBStallF
+module fetchbuffer import cvw::*; #(parameter cvw_t P, parameter WIDTH = 32) (
+    input  logic                      clk,  reset,
+    input  logic                      StallF, StallD, FlushD,
+    input  logic [WIDTH-1:0]          nop,
+    input  logic [P.XLEN + WIDTH-1:0] WriteData,
+    output logic [P.XLEN + WIDTH-1:0] ReadData,
+    output logic                      FetchBufferStallF,
+    output logic                      RisingFBStallF
 );
-  logic [WIDTH-1:0] ReadReg         [P.FETCHBUFFER_ENTRIES-1:0];
-  logic [WIDTH-1:0] ReadFetchBuffer;
+  logic [P.XLEN + WIDTH-1:0] ReadReg         [P.FETCHBUFFER_ENTRIES-1:0];
+  logic [P.XLEN + WIDTH-1:0] ReadFetchBuffer;
   logic [P.FETCHBUFFER_ENTRIES-1:0] ReadPtr, WritePtr;
   logic Empty, Full;
 
@@ -52,37 +44,24 @@ module fetchbuffer
   assign Full   = |({WritePtr[P.FETCHBUFFER_ENTRIES-2:0], WritePtr[P.FETCHBUFFER_ENTRIES-1]} & ReadPtr); // Same as above but left rotate WritePtr to "add 1"
   assign FetchBufferStallF = Full;
 
-  logic [2:0] fbEnable;
+  logic [P.FETCHBUFFER_ENTRIES-1:0] fbEnable;
 
-  logic fbEnable;
   logic FetchBufferStallFDelay;
   assign RisingFBStallF = ~FetchBufferStallFDelay & FetchBufferStallF;
 
-  flop #(1) flop1 (
-      clk,
-      FetchBufferStallF,
-      FetchBufferStallFDelay
-  );
-  assign fbEnable = WritePtr & {3{(~Full | RisingFBStallF)}};
-  flopenl #(WIDTH) fbEntries[P.FETCHBUFFER_ENTRIES-1:0] (
-      .clk,
-      .load(reset | FlushD),
-      .en(fbEnable),
-      .d(WriteData),
-      .val(nop),
-      .q(ReadReg)
-  );
+  flop #(1) flop1 (clk, FetchBufferStallF, FetchBufferStallFDelay);
+  assign fbEnable = WritePtr & {P.FETCHBUFFER_ENTRIES{(~Full | RisingFBStallF)}};
+  flopenl #(P.XLEN + WIDTH) fbEntries[P.FETCHBUFFER_ENTRIES-1:0] (.clk, .load(reset | FlushD), .en(fbEnable), .d(WriteData), .val({{P.XLEN{1'b0}}, nop}), .q(ReadReg));
+
+  logic [P.XLEN + WIDTH-1:0] DaoArr [P.FETCHBUFFER_ENTRIES - 1:0];
 
   for (genvar i = 0; i < P.FETCHBUFFER_ENTRIES; i++) begin
     assign DaoArr[i] = ReadPtr[i] ? ReadReg[i] : '0;
   end
 
-  or_rows #(P.FETCHBUFFER_ENTRIES, WIDTH) ReadFBAOMux (
-      .a(DaoArr),
-      .y(ReadFetchBuffer)
-  );
+  or_rows #(P.FETCHBUFFER_ENTRIES, P.XLEN + WIDTH) ReadFBAOMux (.a(DaoArr), .y(ReadFetchBuffer));
 
-  assign ReadData = Empty ? nop : ReadFetchBuffer;
+  assign ReadData = Empty ? {{P.XLEN{1'b0}}, nop} : ReadFetchBuffer;
 
   always_ff @(posedge clk) begin : shiftRegister
     if (reset) begin
