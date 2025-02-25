@@ -305,15 +305,16 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
 
   logic NoStallPCF;
   if (P.FETCHBUFFER_ENTRIES != 0) begin : fetchbuffer
-    fetchbuffer #(P) fetchbuff(.clk, .reset, .StallF, .StallD, .FlushD, .nop, .WriteData(PostSpillInstrRawF), .ReadData(InstrRawD), .FetchBufferStallF, .RisingFBStallF());
+    fetchbuffer #(P) fetchbuff(.clk, .reset, .StallF, .StallD, .FlushD, .nop, .WriteData({PCF, PostSpillInstrRawF}), .ReadData({PCD, InstrRawD}), .FetchBufferStallF, .RisingFBStallF());
     logic PCFetchBufferStallD, FetchBufferStallFDelay;
     flop #(1) flop1 (clk, FetchBufferStallF, FetchBufferStallFDelay);
     assign NoStallPCF = ~FetchBufferStallFDelay & FetchBufferStallF;
-    fetchbuffer #(P, P.XLEN) PCFetchBuffer(.clk, .reset, .StallF, .StallD, .FlushD, .nop({{1'b1},{(P.XLEN-1){1'b0}}}), .WriteData(PCF), .ReadData(PCD), .FetchBufferStallF(PCFetchBufferStallD), .RisingFBStallF());
+    // fetchbuffer #(P, P.XLEN) PCFetchBuffer(.clk, .reset, .StallF, .StallD, .FlushD, .nop({{1'b1},{(P.XLEN-1){1'b0}}}), .WriteData(PCF), .ReadData(PCD), .FetchBufferStallF(PCFetchBufferStallD), .RisingFBStallF());
   end else begin
     flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawF, nop, InstrRawD);
     assign FetchBufferStallF = '0;
     flopenrc #(P.XLEN) PCDReg(clk, reset, FlushD, ~StallD, PCF, PCD);
+    assign NoStallPCF = '0;
   end
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
