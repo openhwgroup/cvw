@@ -69,17 +69,17 @@ finished:
 .align 16
 # Page table situated at 0x80010000
 pagetable:
-    .8byte 0x200044C1
+    .8byte 0x20004401
 
 .align 12
-    .8byte 0x00000000200048C1
-    .8byte 0x00000000200048C1
-    .8byte 0x00000000200048C1
+    .8byte 0x0000000020004801
+    .8byte 0x0000000020004801
+    .8byte 0x0000000020004801
 
 
 .align 12
-    .8byte 0x0000000020004CC1
-    //.8byte 0x00000200800CF// ADD IN THE MEGAPAGE should 3 nibbles of zeros be removed?
+    .8byte 0x0000000020004C01
+    //.8byte 0x000002008000F// ADD IN THE MEGAPAGE should 3 nibbles of zeros be removed?
 
 .align 12
     #80000000
