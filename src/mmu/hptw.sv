@@ -104,18 +104,21 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   logic                     HPTWAccessFaultDelay;
   logic                     TakeHPTWFault;
   logic                     PBMTFaultM;
+  logic                     DAUFaultM;
+  logic                     PBMTOrDAUFaultM;
   logic                     HPTWFaultM;
   logic                     ResetPTE;
   
   // map hptw access faults onto either the original LSU load/store fault or instruction access fault
   assign LSUAccessFaultM         = LSULoadAccessFaultM | LSUStoreAmoAccessFaultM;
-  assign HPTWFaultM              = LSUAccessFaultM | PBMTFaultM;
+  assign PBMTOrDAUFaultM         = PBMTFaultM | DAUFaultM;
+  assign HPTWFaultM              = LSUAccessFaultM | PBMTOrDAUFaultM;
   assign HPTWLoadAccessFault     = LSUAccessFaultM & DTLBWalk & MemRWM[1] & ~MemRWM[0];  
   assign HPTWStoreAmoAccessFault = LSUAccessFaultM & DTLBWalk & MemRWM[0];
   assign HPTWInstrAccessFault    = LSUAccessFaultM & ~DTLBWalk;
-  assign HPTWLoadPageFault       = PBMTFaultM & DTLBWalk & MemRWM[1] & ~MemRWM[0];
-  assign HPTWStoreAmoPageFault   = PBMTFaultM & DTLBWalk & MemRWM[0];   
-  assign HPTWInstrPageFault      = PBMTFaultM & ~DTLBWalk;
+  assign HPTWLoadPageFault       = PBMTOrDAUFaultM & DTLBWalk & MemRWM[1] & ~MemRWM[0];
+  assign HPTWStoreAmoPageFault   = PBMTOrDAUFaultM & DTLBWalk & MemRWM[0];
+  assign HPTWInstrPageFault      = PBMTOrDAUFaultM & ~DTLBWalk;
 
   flopr #(6) HPTWAccesFaultReg(clk, reset, {HPTWLoadAccessFault, HPTWStoreAmoAccessFault, HPTWInstrAccessFault, 
                                             HPTWLoadPageFault, HPTWStoreAmoPageFault, HPTWInstrPageFault},
@@ -155,6 +158,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   assign ValidNonLeafPTE = Valid & ~LeafPTE;
   if(P.XLEN == 64) assign PBMTFaultM = ValidNonLeafPTE & (|PTE[62:61]);
   else assign PBMTFaultM = 1'b0;
+  assign DAUFaultM = ValidNonLeafPTE & (|PTE[7:6] | PTE[4]);
 
   if(P.SVADU_SUPPORTED) begin : hptwwrites
     logic                 ReadAccess, WriteAccess;
