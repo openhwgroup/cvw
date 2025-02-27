@@ -77,7 +77,7 @@ void genCase(FILE *fptr, float16_t x, float16_t y, float16_t z, int mul, int add
     float16_t resultmag = result;
     resultmag.v &= 0x7FFF; // take absolute value
     if (f16_lt(resultmag, smallest) && (resultmag.v != 0x0000)) fprintf (fptr, "// skip denorm: ");
-    if ((softfloat_exceptionFlags) >> 1 % 2) fprintf(fptr, "// skip underflow: ");
+    if ((softfloat_exceptionFlags >> 1) % 2) fprintf(fptr, "// skip underflow: ");
 
     // skip special cases if requested
     if (resultmag.v == 0x0000 && !zeroAllowed) fprintf(fptr, "// skip zero: ");

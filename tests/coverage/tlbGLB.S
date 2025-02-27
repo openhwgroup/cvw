@@ -83,16 +83,16 @@ nASID:   #swap to different address space -> jump to each address
 .align 19
 # level 3 Page table situated at 0x8008 0000, should point to 8008,1000
 pagetable:
-    .8byte 0x200204C1
+    .8byte 0x20020401
 
 .align 12 // level 2 page table, contains direction to a gigapageg
     .8byte 0x0
     .8byte 0x0
     .8byte 0x200000EF // gigapage that starts at 8000 0000 goes to C000 0000
-    .8byte 0x200208E1 // pointer to next page table entry at 8008 2000
+    .8byte 0x20020821 // pointer to next page table entry at 8008 2000
 
 .align 12 // level 1 page table, points to level 0 page table
-    .8byte 0x20020CE1
+    .8byte 0x20020C21
 
 .align 12 // level 0 page table, points to address C000 0000 // FOR NOW ALL OF THESE GO TO 8 instead of C cause they start with 2
     .8byte 0x200000EF // access xC000 0000
