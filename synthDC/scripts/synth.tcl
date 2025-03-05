@@ -14,6 +14,8 @@ suppress_message {VER-281}
 suppress_message {VER-173} 
  # Unsupported system task '$warn'
 suppress_message {VER-274}
+# Disable Warning:  Little argument or return value checking implemented for system task or function '$readmemh'. (VER-209)
+suppress_message {VER-209}
 
 # Enable Multicore
 set_host_options -max_cores $::env(MAXCORES)
