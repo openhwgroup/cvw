@@ -138,7 +138,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
     end
   end
 
-  localparam MISA_26 = (P.MISA) & 32'h03ffffff;
+  localparam MISA_26 = $unsigned(P.MISA) & 32'h03ffffff;
 
   // MISA is hardwired.  Spec says it could be written to disable features, but this is not supported by Wally
   assign MISA_REGW = {(P.XLEN == 32 ? 2'b01 : 2'b10), {(P.XLEN-28){1'b0}}, MISA_26[25:0]};
@@ -221,9 +221,9 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
     entry = '0;
     CSRMReadValM = '0;
     IllegalCSRMAccessM = !(P.S_SUPPORTED) & (CSRAdrM == MEDELEG | CSRAdrM == MIDELEG); // trap on DELEG register access when no S or N-mode
-    if (CSRAdrM >= PMPADDR0 & CSRAdrM < PMPADDR0 + P.PMP_ENTRIES) // reading a PMP entry
+    if ($unsigned(CSRAdrM) >= PMPADDR0 & $unsigned(CSRAdrM) < PMPADDR0 + P.PMP_ENTRIES) // reading a PMP entry
       CSRMReadValM = {{(P.XLEN-(P.PA_BITS-2)){1'b0}}, PMPADDR_ARRAY_REGW[CSRAdrM - PMPADDR0]};
-    else if (CSRAdrM >= PMPCFG0 & CSRAdrM < PMPCFG0 + P.PMP_ENTRIES/4 & (P.XLEN==32 | CSRAdrM[0] == 0)) begin
+    else if ($unsigned(CSRAdrM) >= PMPCFG0 & $unsigned(CSRAdrM) < PMPCFG0 + P.PMP_ENTRIES/4 & (P.XLEN==32 | CSRAdrM[0] == 0)) begin
       // only odd-numbered PMPCFG entries exist in RV64
       if (P.XLEN==64) begin
         entry = ({CSRAdrM[11:1], 1'b0} - PMPCFG0)*4; // disregard odd entries in RV64
