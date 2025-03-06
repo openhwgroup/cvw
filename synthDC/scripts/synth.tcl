@@ -14,6 +14,8 @@ suppress_message {VER-281}
 suppress_message {VER-173} 
  # Unsupported system task '$warn'
 suppress_message {VER-274}
+# Disable Warning:  Little argument or return value checking implemented for system task or function '$readmemh'. (VER-209)
+suppress_message {VER-209}
 
 # Enable Multicore
 set_host_options -max_cores $::env(MAXCORES)
@@ -331,7 +333,7 @@ redirect -append $filename { report_timing -capacitance -transition_time -nets -
 redirect -append $filename { echo "\n\n\n//// Critical paths through ebu (ahblite) ////\n\n\n" }
 redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ebu/*} -nworst 1 } 
 redirect -append $filename { echo "\n\n\n//// Critical paths through mdu ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu/*} -nworst 1 } 
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu.mdu/*} -nworst 1 } 
 redirect -append $filename { echo "\n\n\n//// Critical paths through hzu ////\n\n\n" }
 redirect -append $filename { report_timing -capacitance -transition_time -nets -through {hzu/*} -nworst 1 } 
 redirect -append $filename { echo "\n\n\n//// Critical paths through priv ////\n\n\n" }
@@ -341,27 +343,27 @@ redirect -append $filename { report_timing -capacitance -transition_time -nets -
 
 set filename [format "%s%s" $outputDir  "/reports/mdu_timing.rep"]
 redirect -append $filename { echo "\n\n\n//// Critical paths through entire mdu ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu/*} -nworst 1 }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu.mdu/*} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical paths through multiply unit ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu/genblk1.mul/*} -nworst 1 }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu.mdu/genblk1.mul/*} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical paths through redundant multiplier ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu/genblk1.mul/bigmul/*} -nworst 1 }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu.mdu/genblk1.mul/bigmul/*} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical path through ProdM (mul output) ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu/genblk1.ProdM} -nworst 1 }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu.mdu/genblk1.ProdM} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical path through PP0E (mul partial product) ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu/genblk1.mul/PP0E} -nworst 1 }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu.mdu/genblk1.mul/PP0E} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical paths through divide unit ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu/genblk1.div/*} -nworst 1 }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu.mdu/genblk1.div/*} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical path through QuotM (div output) ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu/genblk1.QuotM} -nworst 1 }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu.mdu/genblk1.QuotM} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical path through RemM (div output) ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu/genblk1.RemM} -nworst 1 }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu.mdu/genblk1.RemM} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical path through div/WNextE ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu/genblk1.div/WNextE} -nworst 1 }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu.mdu/genblk1.div/WNextE} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical path through div/XQNextE ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu/genblk1.div/XQNextE} -nworst 1 }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu.mdu/genblk1.div/XQNextE} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical path through div/DAbsBE ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu/genblk1.div/DAbsBE} -nworst 1 }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu.mdu/genblk1.div/DAbsBE} -nworst 1 }
 
 # set filename [format "%s%s%s%s" $outputDir  "/reports/fpu_timing.rep"]
 # redirect $filename { echo "\n\n\n//// Critical paths through fma ////\n\n\n" }
