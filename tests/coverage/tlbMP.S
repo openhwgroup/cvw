@@ -29,7 +29,6 @@
 
 #include "WALLY-init-lib.h"
 
-# run-elf.bash find this in project description
 main:
     # Page table root address at 0x80010000
     li t5, 0x9000000000080010
@@ -64,12 +63,12 @@ finished:
 .align 16
 # Page table situated at 0x80010000
 pagetable:
-    .8byte 0x200044C1
+    .8byte 0x20004401
 
 .align 12
-    .8byte 0x00000000200048C1
-    .8byte 0x00000000200048C1
-    .8byte 0x00000000200048C1
+    .8byte 0x0000000020004801
+    .8byte 0x0000000020004801
+    .8byte 0x0000000020004801
 
 
 .align 12 // megapages starting at 8000 0000 going to 8480 0000  (32*2 MiB beyond that)
@@ -154,7 +153,7 @@ pagetable:
     .8byte 0x20F000CF
     .8byte 0x20F800CF
 
-    .8byte 0x20004CC1
+    .8byte 0x20004C01
      // Kilopage entry, for addresses from 8400, 0000 to 841F, FFFF
                       // point to ...
 

@@ -85,17 +85,17 @@ finished:
 .align 16
 # Page table situated at 0x80010000
 pagetable:
-    .8byte 0x200044C1
-    .8byte 0x300044C1  # point to invalid region of physical memory
+    .8byte 0x20004401
+    .8byte 0x30004401  # point to invalid region of physical memory
 
 .align 12
-    .8byte 0x00000040200048C1
-    .8byte 0x00000000200048C1
-    .8byte 0x00000000200048C1
+    .8byte 0x0000004020004801
+    .8byte 0x0000000020004801
+    .8byte 0x0000000020004801
 
 
 .align 12
-    .8byte 0x0000000020004CC1
+    .8byte 0x0000000020004C01
 
 .align 12
     #80000000

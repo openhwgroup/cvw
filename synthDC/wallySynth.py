@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # Madeleine Masser-Frye mmasserfrye@hmc.edu 1/2023
 
+import argparse
 import subprocess
 from multiprocessing import Pool
-import argparse
+
 
 def runSynth(config, mod, tech, freq, maxopt, usesram):
     global pool

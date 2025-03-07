@@ -27,7 +27,7 @@ def parseArgs():
     parser.add_argument("--tb", "-t", help="Testbench", choices=["testbench", "testbench_fp"], default="testbench")
     parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true")
     parser.add_argument("--ccov", "-c", help="Code Coverage", action="store_true")
-    parser.add_argument("--fcov", "-f", help="Functional Coverage with cvw-arch-verif, implies lockstep", action="store_true")
+    parser.add_argument("--fcov", "-f", help="Functional Coverage with cvw-arch-verif", action="store_true")
     parser.add_argument("--args", "-a", help="Optional arguments passed to simulator via $value$plusargs", default="")
     parser.add_argument("--params", "-p", help="Optional top-level parameter overrides of the form param=value", default="")
     parser.add_argument("--define", "-d", help="Optional define macros passed to simulator", default="")
@@ -41,8 +41,8 @@ def validateArgs(args):
     if not args.testsuite and not args.elf:
         print("Error: Missing test suite or ELF file")
         sys.exit(1)
-    if any([args.lockstep, args.lockstepverbose, args.fcov]) and not (args.testsuite.endswith(".elf") or args.elf) and args.testsuite != "buildroot":
-        print(f"Invalid Options. Cannot run a testsuite, {args.testsuite} with lockstep or fcov. Must run a single elf or buildroot.")
+    if (args.lockstep or args.lockstepverbose) and not (args.testsuite.endswith(".elf") or args.elf) and args.testsuite != "buildroot":
+        print(f"Invalid Options. Cannot run a testsuite, {args.testsuite} with lockstep. Must run a single elf or buildroot.")
         sys.exit(1)
     elif any([args.gui, args.ccov, args.fcov, args.lockstep, args.lockstepverbose]) and args.sim not in ["questa", "vcs"]:
         print("Option only supported for Questa and VCS")
@@ -101,13 +101,11 @@ def prepSim(args, ElfFile):
         flagsList.append("--ccov")
     if args.fcov:
         flagsList.append("--fcov")
-        defineList.extend(["+define+INCLUDE_TRACE2COV", "+define+IDV_INCLUDE_TRACE2COV", "+define+COVER_BASE_RV32I"]) # COVER_BASE_RV32I is just needed to keep riscvISACOV happy, but does not affect tests
-        argsList.extend(["+TRACE2COV_ENABLE=1", "+IDV_TRACE2COV=1"])
+        defineList.append("+define+FCOV")
     if args.gui:
         flagsList.append("--gui")
     if args.lockstep or args.lockstepverbose:
         flagsList.append("--lockstep")
-    if args.lockstep or args.lockstepverbose or args.fcov:
         prefix = lockstepSetup(args)
         defineList.append("+define+USE_IMPERAS_DV")
     if args.config == "breker": # Requires a license for the breker tool. See tests/breker/README.md for details
@@ -154,7 +152,6 @@ def runQuesta(args, flags, prefix):
         args.params = fr'--params \"{args.params}\"'
     if args.define:
         args.define = fr'--define \"{args.define}\"'
-    # fcov implies lockstep
     cmd = f"do wally.do {args.config} {args.testsuite} {args.tb} {args.args} {args.params} {args.define} {flags}"
     cmd = f'cd $WALLY/sim/questa; {prefix} vsim {"-c" if not args.gui else ""} -do "{cmd}"'
     print(f"Running Questa with command: {cmd}")

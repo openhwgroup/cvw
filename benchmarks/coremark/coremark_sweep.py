@@ -29,9 +29,10 @@
 ###########################################################################################
 
 
+import csv
 import os
 import re
-import csv
+
 # list of architectures to run. 
 arch_list = [
     "rv32i_zicsr",
@@ -47,7 +48,6 @@ arch_list = [
     "rv64gc",
     "rv64gc_zba_zbb_zbs"
 ]
-str="32" 
         
 # Define regular expressions to match the desired fields
 mt_regex = r"Elapsed MTIME: (\d+).*?Elapsed MINSTRET: (\d+).*?COREMARK/MHz Score: [\d,]+ / [\d,]+ = (\d+\.\d+).*?CPI: \d+ / \d+ = (\d+\.\d+).*?Load Stalls (\d+).*?Store Stalls (\d+).*?D-Cache Accesses (\d+).*?D-Cache Misses (\d+).*?I-Cache Accesses (\d+).*?I-Cache Misses (\d+).*?Branches (\d+).*?Branches Miss Predictions (\d+).*?BTB Misses (\d+).*?Jump and JR (\d+).*?RAS Wrong (\d+).*?Returns (\d+).*?BP Class Wrong (\d+)"
@@ -65,7 +65,7 @@ with open(resultfile, mode='w', newline='') as csvfile:
 
     # Loop through each architecture and run the make commands
     for arch in arch_list:
-        xlen_value = "32" if str in arch else "64"
+        xlen_value = "32" if "32" in arch else "64"
         os.system("make clean")
         make_all = f"make all XLEN={xlen_value} ARCH={arch}"
         os.system(make_all)

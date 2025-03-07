@@ -41,10 +41,11 @@
 # Add -d or --dist to report the distribution of loads, stores, and atomic ops.
 # These distributions may not add up to 100; this is because of flushes or invalidations.
 
-import math
 import argparse
+import math
 import os
 import sys
+
 
 class CacheLine:
     def __init__(self):

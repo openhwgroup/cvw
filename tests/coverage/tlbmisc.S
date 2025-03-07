@@ -330,17 +330,17 @@ fixsatptraphandler:
 .align 16
 # root Page table situated at 0x80010000
 pagetable:
-    .8byte 0x200044C1  # VA 0x00000000-0x7F_FFFFFFFF: PTE at 0x80011000 C1 dirty, accessed, valid
+    .8byte 0x20004401  # VA 0x00000000-0x7F_FFFFFFFF: PTE at 0x80011000 01 valid
     .8byte 0x00000000000010CF # misaligned terapage at 0x80_00000000
     .8byte 0x00000000000000CF # access fault terapage at 0x100_00000000
-    .8byte 0x40000000200044C1 # Bad PBMT at VA 0x180_0000000
+    .8byte 0x4000000020004401 # Bad PBMT at VA 0x180_0000000
 
 # next page table at 0x80011000
 .align 12
     .8byte 0x00000000000010CF # misaligned gigapage at 0x00000000
-    .8byte 0x00000000200058C1 # PTE for pages at 0x40000000 pointing to 0x80150000
-    .8byte 0x00000000200048C1 # gigapage at 0x80000000 pointing to 0x80120000
-    .8byte 0x00000000000000C1 # gigapage at VA 0xC0000000 causes access fault
+    .8byte 0x0000000020005801 # PTE for pages at 0x40000000 pointing to 0x80150000
+    .8byte 0x0000000020004801 # gigapage at 0x80000000 pointing to 0x80120000
+    .8byte 0x0000000000000001 # gigapage at VA 0xC0000000 causes access fault
     .8byte 0x0
     .8byte 0x0
     .8byte 0x0
@@ -351,16 +351,16 @@ SpecialPage:
 
 # Next page table at 0x80012000 for gigapage at 0x80000000
 .align 12
-    .8byte 0x0000000020004CC1  # for VA starting at 80000000 (pointer to NAPOT 64 KiB pages Page table at 80013000)
+    .8byte 0x0000000020004C01  # for VA starting at 80000000 (pointer to NAPOT 64 KiB pages Page table at 80013000)
     .8byte 0x0000000020014CCF  # for VA starting at 80200000 (misaligned megapage)
-    .8byte 0x00000000200050C1  # for VA starting at 80400000 (bad PBMT pages page table at 0x80014000)
-    .8byte 0x4000000020004CC1  # for VA starting at 80600000 (bad entry: nonleaf PTE can't have PBMT != 0)
-    .8byte 0x00000000200054C1  # for VA starting at 80800000 (testing rwx permissiosn with cbom/cboz . page table at 0x80015000)
-    .8byte 0x0000000020004CC1  # for VA starting at 80A00000 (pointer to NAPOT 64 KiB pages like at 80000000.  page table at 0x80013000)
+    .8byte 0x0000000020005001  # for VA starting at 80400000 (bad PBMT pages page table at 0x80014000)
+    .8byte 0x4000000020004C01  # for VA starting at 80600000 (bad entry: nonleaf PTE can't have PBMT != 0)
+    .8byte 0x0000000020005401  # for VA starting at 80800000 (testing rwx permissiosn with cbom/cboz . page table at 0x80015000)
+    .8byte 0x0000000020004C01  # for VA starting at 80A00000 (pointer to NAPOT 64 KiB pages like at 80000000.  page table at 0x80013000)
     .8byte 0x0F00000020004CCF  # for VA starting at 80C00000 (bad reserved field in bits 60:54)
     .8byte 0x000000002000000F  # for VA starting at 80E00000 (megapage not dirty or accessed)
-    .8byte 0x0000000000004CC1  # for VA starting at 81000000 (nonleaf pointing to unimplemented memory causes access fault)
-    .8byte 0x4000000020004CC1  # for VA starting at 81200000 (nonleaf with PBMT nonzero causes page fault)
+    .8byte 0x0000000000004C01  # for VA starting at 81000000 (nonleaf pointing to unimplemented memory causes access fault)
+    .8byte 0x4000000020004C01  # for VA starting at 81200000 (nonleaf with PBMT nonzero causes page fault)
     .8byte 0x00000000000000CF  # for VA starting at 81400000 (megapage with access fault)
     .8byte 0x0000000020004CC1
     .8byte 0x0000000020004CC1

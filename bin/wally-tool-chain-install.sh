@@ -99,7 +99,7 @@ git_check() {
 
 # Log output to a file and only print lines with keywords
 logger() {
-    local log_file="$RISCV/logs/$1.log"
+    local log_file="$RISCV/logs/$STATUS.log"
     local keyword_pattern="(\bwarning|\berror|\bfail|\bsuccess|\bstamp|\bdoesn't work)"
     local exclude_pattern="(_warning|warning_|_error|error_|-warning|warning-|-error|error-|Werror|error\.o|warning flags)"
 
@@ -126,6 +126,8 @@ fi
 
 # Determine script directory to locate related scripts
 dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WALLY=$(dirname "$dir")
+export WALLY
 
 # Get Linux distro and version
 source "${dir}"/wally-distro-check.sh
@@ -147,6 +149,7 @@ fi
 export PATH=$PATH:$RISCV/bin:/usr/bin
 export PKG_CONFIG_PATH=$RISCV/lib64/pkgconfig:$RISCV/lib/pkgconfig:$RISCV/share/pkgconfig:$RISCV/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH
 
+# wget retry on host error flag not available with older wget on RHEL 8
 if (( RHEL_VERSION != 8 )); then
     retry_on_host_error="--retry-on-host-error"
 fi
@@ -181,11 +184,16 @@ echo "Using $NUM_THREADS thread(s) for compilation"
 mkdir -p "$RISCV"/logs
 
 # Install/update system packages if root. Otherwise, check that packages are already installed.
-STATUS="system packages"
+STATUS="system_packages"
 if [ "$ROOT" == true ]; then
     source "${dir}"/wally-package-install.sh
 else
     source "${dir}"/wally-package-install.sh --check
+fi
+
+# Older version of git defaults to protocol version incompatible with riscv-gnu-toolchain
+if (( UBUNTU_VERSION == 20 )); then
+    git config --global protocol.version 2
 fi
 
 # Enable newer version of gcc for older distros (required for QEMU/Verilator)
@@ -209,7 +217,7 @@ fi
 # Create python virtual environment so the python command targets desired version of python
 # and installed packages are isolated from the rest of the system.
 section_header "Setting up Python Environment"
-STATUS="python virtual environment"
+STATUS="python_virtual_environment"
 cd "$RISCV"
 if [ ! -e "$RISCV"/riscv-python/bin/activate ]; then
     "$PYTHON_VERSION" -m venv riscv-python --prompt cvw
@@ -242,8 +250,8 @@ if (( RHEL_VERSION == 8 )) || (( UBUNTU_VERSION == 20 )); then
         rm -f glib-2.70.5.tar.xz
         cd glib-2.70.5
         meson setup _build --prefix="$RISCV"
-        meson compile -C _build -j "${NUM_THREADS}" 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
-        meson install -C _build 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+        meson compile -C _build -j "${NUM_THREADS}" 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
+        meson install -C _build 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
         cd "$RISCV"
         rm -rf glib-2.70.5
         echo -e "${SUCCESS_COLOR}glib successfully installed!${ENDC}"
@@ -261,8 +269,8 @@ if (( RHEL_VERSION == 8 )); then
         rm -f gmp-6.3.0.tar.xz
         cd gmp-6.3.0
         ./configure --prefix="$RISCV"
-        make -j "${NUM_THREADS}" 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
-        make install 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+        make -j "${NUM_THREADS}" 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
+        make install 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
         cd "$RISCV"
         rm -rf gmp-6.3.0
         echo -e "${SUCCESS_COLOR}gmp successfully installed!${ENDC}"
@@ -284,6 +292,21 @@ if (( UBUNTU_VERSION == 20  || DEBIAN_VERSION == 11 )) || [ "$FAMILY" == suse ];
     fi
 fi
 
+# Newer version of CMake needed to build sail-riscv model (at least 3.20)
+if (( UBUNTU_VERSION == 20  || DEBIAN_VERSION == 11 )); then
+    STATUS="cmake"
+    if [ ! -e "$RISCV"/bin/cmake ]; then
+        section_header "Installing cmake"
+        cd "$RISCV"
+        wget -nv --retry-connrefused $retry_on_host_error --output-document=cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v3.31.5/cmake-3.31.5-linux-x86_64.tar.gz
+        tar xz --directory="$RISCV" --strip-components=1 -f cmake.tar.gz
+        rm -f cmake.tar.gz
+        echo -e "${SUCCESS_COLOR}CMake successfully installed/updated!${ENDC}"
+    else
+        echo -e "${SUCCESS_COLOR}CMake already installed.${ENDC}"
+    fi
+fi
+
 # RISC-V GNU Toolchain (https://github.com/riscv-collab/riscv-gnu-toolchain)
 # The RISC-V GNU Toolchain includes the GNU Compiler Collection (gcc), GNU Binutils, Newlib,
 # and the GNU Debugger Project (gdb). It is a collection of tools used to compile RISC-V programs.
@@ -296,8 +319,11 @@ cd "$RISCV"
 if git_check "riscv-gnu-toolchain" "https://github.com/riscv/riscv-gnu-toolchain" "$RISCV/riscv-gnu-toolchain/stamps/build-gcc-newlib-stage2"; then
     cd "$RISCV"/riscv-gnu-toolchain
     git reset --hard && git clean -f && git checkout master && git pull && git submodule update
+    # sed commands needed to fix broken shallow cloning of submodules
+    sed -i '/shallow = true/d' .gitmodules
+    sed -i 's/--depth 1//g' Makefile.in
     ./configure --prefix="${RISCV}" --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
-    make -j "${NUM_THREADS}" 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+    make -j "${NUM_THREADS}" 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf riscv-gnu-toolchain
@@ -324,8 +350,8 @@ if git_check "elf2hex" "https://github.com/sifive/elf2hex.git" "$RISCV/bin/riscv
     git reset --hard && git clean -f && git checkout master && git pull
     autoreconf -i
     ./configure --target=riscv64-unknown-elf --prefix="$RISCV"
-    make 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
-    make install 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+    make 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
+    make install 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf elf2hex
@@ -345,8 +371,8 @@ if git_check "qemu" "https://github.com/qemu/qemu" "$RISCV/include/qemu-plugin.h
     cd "$RISCV"/qemu
     git reset --hard && git clean -f && git checkout master && git pull
     ./configure --target-list=riscv64-softmmu --prefix="$RISCV"
-    make -j "${NUM_THREADS}" 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
-    make install 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+    make -j "${NUM_THREADS}" 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
+    make install 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf qemu
@@ -368,8 +394,8 @@ if git_check "riscv-isa-sim" "https://github.com/riscv-software-src/riscv-isa-si
     mkdir -p build
     cd build
     ../configure --prefix="$RISCV"
-    make -j "${NUM_THREADS}" 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
-    make install 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+    make -j "${NUM_THREADS}" 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
+    make install 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf riscv-isa-sim
@@ -393,8 +419,8 @@ if git_check "verilator" "https://github.com/verilator/verilator" "$RISCV/share/
     git reset --hard && git clean -f && git checkout master && git pull
     autoconf
     ./configure --prefix="$RISCV"
-    make -j "${NUM_THREADS}" 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
-    make install 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+    make -j "${NUM_THREADS}" 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
+    make install 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf verilator
@@ -411,7 +437,7 @@ fi
 # The Sail Compiler is written in OCaml, which is an object-oriented extension of ML, which in turn
 # is a functional programming language suited to formal verification.
 section_header "Installing/Updating Sail Compiler"
-STATUS="Sail Compiler"
+STATUS="sail_compiler"
 if [ ! -e "$RISCV"/bin/sail ]; then
     cd "$RISCV"
     wget -nv --retry-connrefused $retry_on_host_error --output-document=sail.tar.gz https://github.com/rems-project/sail/releases/latest/download/sail.tar.gz
@@ -426,13 +452,12 @@ fi
 # The RISC-V Sail Model is the golden reference model for RISC-V. It is written in Sail (described above)
 section_header "Installing/Updating RISC-V Sail Model"
 STATUS="riscv-sail-model"
-if git_check "sail-riscv" "https://github.com/riscv/sail-riscv.git" "$RISCV/bin/riscv_sim_RV32"; then
+if git_check "sail-riscv" "https://github.com/riscv/sail-riscv.git" "$RISCV/bin/riscv_sim_rv32d"; then
     cd "$RISCV"/sail-riscv
     git reset --hard && git clean -f && git checkout master && git pull
-    ARCH=RV64 make -j "${NUM_THREADS}" c_emulator/riscv_sim_RV64  2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
-    ARCH=RV32 make -j "${NUM_THREADS}" c_emulator/riscv_sim_RV32 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
-    cp -f c_emulator/riscv_sim_RV64 "$RISCV"/bin/riscv_sim_RV64
-    cp -f c_emulator/riscv_sim_RV32 "$RISCV"/bin/riscv_sim_RV32
+    cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="$RISCV" -GNinja 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
+    cmake --build build 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
+    cmake --install build 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf sail-riscv
@@ -446,7 +471,7 @@ fi
 # OSU Skywater 130 cell library (https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12)
 # The OSU Skywater 130 cell library is a standard cell library that is used to synthesize Wally.
 section_header "Installing/Updating OSU Skywater 130 cell library"
-STATUS="OSU Skywater 130 cell library"
+STATUS="osu_skywater_130_cell_library"
 mkdir -p "$RISCV"/cad/lib
 cd "$RISCV"/cad/lib
 if git_check "sky130_osu_sc_t12" "https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12" "$RISCV/cad/lib/sky130_osu_sc_t12" "main"; then
@@ -471,11 +496,11 @@ if [ ! "$no_buidroot" ]; then
     fi
     cd "$dir"/../linux
     if [ ! -e "$RISCV"/buildroot ]; then
-        make 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+        FORCE_UNSAFE_CONFIGURE=1 make 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ] # FORCE_UNSAFE_CONFIGURE is needed to allow buildroot to compile when run as root
         echo -e "${SUCCESS_COLOR}Buildroot successfully installed and Linux testvectors created!${ENDC}"
     elif [ ! -e "$RISCV"/linux-testvectors ]; then
         echo -e "${OK_COLOR}Buildroot already exists, but Linux testvectors are missing. Generating them now.${ENDC}"
-        make dumptvs 2>&1 | logger $STATUS; [ "${PIPESTATUS[0]}" == 0 ]
+        make dumptvs 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
         echo -e "${SUCCESS_COLOR}Linux testvectors successfully generated!${ENDC}"
     else
         echo -e "${OK_COLOR}Buildroot and Linux testvectors already exist.${ENDC}"
@@ -489,7 +514,7 @@ fi
 # The site-setup script is used to set up the environment for the RISC-V tools and EDA tools by setting
 # the PATH and other environment variables. It also sources the Python virtual environment.
 section_header "Downloading Site Setup Script"
-STATUS="site-setup scripts"
+STATUS="site-setup_scripts"
 cd "$RISCV"
 if [ ! -e "${RISCV}"/site-setup.sh ]; then
     wget -nv --retry-connrefused $retry_on_host_error https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.sh

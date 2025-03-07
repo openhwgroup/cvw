@@ -167,56 +167,56 @@ label1:
 .align 16
 # root Page table situated at 0x80010000
 pagetable:
-    .8byte 0x200044C1  # 0x00000000-0x80_00000000: PTE at 0x80011000 C1 dirty, accessed, valid
-    .8byte 0x00000000000010CF # misaligned terapage at 0x80_00000000
+    .8byte 0x20004401  # 0x00000000-0x80_00000000: PTE at 0x80011000 01 valid
+    .8byte 0x000000000000100F # misaligned terapage at 0x80_00000000
 
 # next page table at 0x80011000
 .align 12
-    .8byte 0x00000000000010CF # misaligned gigapage at 0x00000000
-    .8byte 0x00000000200058C1 # PTE for pages at 0x40000000
-    .8byte 0x00000000200048C1 # gigapage at 0x80000000 pointing to 0x80120000
+    .8byte 0x000000000000100F # misaligned gigapage at 0x00000000
+    .8byte 0x0000000020005801 # PTE for pages at 0x40000000
+    .8byte 0x0000000020004801 # gigapage at 0x80000000 pointing to 0x80120000
 
 
 # Next page table at 0x80012000 for gigapage at 0x80000000
 .align 12
-    .8byte 0x0000000020004CC1  # for VA starting at 80000000 (pointer to NAPOT 64 KiB pages)
-    .8byte 0x0000000020014CCF  # for VA starting at 80200000 (misaligned megapage)
-    .8byte 0x00000000200050C1  # for VA starting at 80400000 (bad PBMT pages)
-    .8byte 0x4000000020004CC1  # for VA starting at 80600000 (bad entry: nonleaf PTE can't have PBMT != 0)
-    .8byte 0x00000000200054C1  # for VA starting at 80800000 (testing rwx permissiosn with cbom/cboz)
-    .8byte 0x00000000200058C1  # for VA starting at 80A00000 (pointer to NAPOT 64 KiB pages like at 80000000)
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
-    .8byte 0x0000000020004CC1
+    .8byte 0x0000000020004C01  # for VA starting at 80000000 (pointer to NAPOT 64 KiB pages)
+    .8byte 0x0000000020014C0F  # for VA starting at 80200000 (misaligned megapage)
+    .8byte 0x0000000020005001  # for VA starting at 80400000 (bad PBMT pages)
+    .8byte 0x4000000020004C01  # for VA starting at 80600000 (bad entry: nonleaf PTE can't have PBMT != 0)
+    .8byte 0x0000000020005401  # for VA starting at 80800000 (testing rwx permissiosn with cbom/cboz)
+    .8byte 0x0000000020005801  # for VA starting at 80A00000 (pointer to NAPOT 64 KiB pages like at 80000000)
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
+    .8byte 0x0000000020004C01
 
 # Leaf page table at 0x80013000 with NAPOT pages
 .align 12

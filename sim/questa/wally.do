@@ -112,21 +112,20 @@ if {[lcheck lst "--ccov"]} {
 # if --fcov found set flag and remove from list
 if {[lcheck lst "--fcov"]} {
     set FunctCoverage 1
-    set FCvlog "+incdir+${FCRVVI}/unpriv \
-                +incdir+${FCRVVI}/priv +incdir+${FCRVVI}/rv64_priv +incdir+${FCRVVI}/rv32_priv \
-                +incdir+${FCRVVI}/common +incdir+${FCRVVI} \
-                +incdir+$env(WALLY)/addins/cvw-arch-verif/riscvISACOV/source"
+    set FCvlog "-f ${FCRVVI}/cvw-arch-verif.f"
 }
 
-# if --lockstep or --fcov found set flag and remove from list
-if {[lcheck lst "--lockstep"] || $FunctCoverage == 1} {
+# if --lockstep found set flag and remove from list
+if {[lcheck lst "--lockstep"]} {
     set IMPERAS_HOME $::env(IMPERAS_HOME)
     set lockstep 1
+    set SVLib " -sv_lib ${IMPERAS_HOME}/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model "
     set lockstepvlog "+incdir+${IMPERAS_HOME}/ImpPublic/include/host \
                       +incdir+${IMPERAS_HOME}/ImpProprietary/include/host \
-                      ${IMPERAS_HOME}/ImpPublic/source/host/rvvi/*.sv \
+                      ${IMPERAS_HOME}/ImpPublic/source/host/rvvi/rvviApiPkg.sv \
                       ${IMPERAS_HOME}/ImpProprietary/source/host/idv/*.sv"
-    set SVLib " -sv_lib ${IMPERAS_HOME}/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model "
+    # only add standard rvviTrace interface if not using the custom one from cvw-arch-verif
+    if {!$FunctCoverage} {append lockstepvlog " ${IMPERAS_HOME}/ImpPublic/source/host/rvvi/rvviTrace.sv"}
 }
 
 # if --breker found set flag and remove from list
@@ -184,7 +183,7 @@ if {$DEBUG > 0} {
 # because vsim will run vopt
 set INC_DIRS "+incdir+${CONFIG}/${CFG} +incdir+${CONFIG}/deriv/${CFG} +incdir+${CONFIG}/shared"
 set SOURCES "${SRC}/cvw.sv ${TB}/${TESTBENCH}.sv ${TB}/common/*.sv ${SRC}/*/*.sv ${SRC}/*/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*.sv ${WALLY}/addins/verilog-ethernet/*/*/*/*.sv"
-vlog -permissive -lint -work ${WKDIR} {*}${INC_DIRS} {*}${FCvlog} {*}${DefineArgs} {*}${lockstepvlog} {*}${brekervlog} {*}${SOURCES} -suppress 2282,2583,7053,7063,2596,13286,2605,2250
+vlog -permissive -lint -work ${WKDIR} {*}${INC_DIRS} {*}${DefineArgs} {*}${lockstepvlog} {*}${FCvlog} {*}${brekervlog} {*}${SOURCES} -suppress 2282,2583,7053,7063,2596,13286,2605,2250
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals

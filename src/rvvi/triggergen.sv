@@ -35,7 +35,7 @@ module triggergen import cvw::*; (
   input logic RvviAxiRvalid,
   output logic IlaTrigger);
 
-  typedef enum              {STATE_RST, STATE_COMPARE, STATE_MISMATCH, STATE_TRIGGER, STATE_TRIGGER_DONE} statetype;
+  typedef enum logic[2:0] {STATE_RST, STATE_COMPARE, STATE_MISMATCH, STATE_TRIGGER, STATE_TRIGGER_DONE} statetype;
 (* mark_debug = "true" *)  statetype CurrState, NextState;
 
   logic [31:0] 	    mem [4:0];

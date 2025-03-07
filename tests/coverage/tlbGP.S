@@ -64,7 +64,7 @@ finished:
 .align 16
 # Page table situated at 0x80010000
 pagetable:
-    .8byte 0x200044C1
+    .8byte 0x20004401
 
 .align 12
     .8byte 0x000000CF  //8000 0000

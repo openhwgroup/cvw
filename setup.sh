@@ -33,6 +33,13 @@ echo \$WALLY set to "${WALLY}"
 # utility functions in Wally repository
 export PATH=$WALLY/bin:$PATH
 
+# Setup cvw-arch-verif paths
+if [ -e "${WALLY}"/addins/cvw-arch-verif/setup.sh ]; then
+    source "${WALLY}"/addins/cvw-arch-verif/setup.sh
+else
+    echo "setup.sh not found in \$WALLY/addins/cvw-arch-verif directory. Make sure you cloned the submodules."
+fi
+
 # Verilator needs a larger core file size to simulate CORE-V Wally
 ulimit -c 300000
 
@@ -41,6 +48,7 @@ if [ -e "${RISCV}"/site-setup.sh ]; then
     source "${RISCV}"/site-setup.sh
 else
     echo "site-setup.sh not found in \$RISCV directory. Rerun wally-toolchain-install.sh to automatically download it."
+    exit 1
 fi
 
 echo "setup done"

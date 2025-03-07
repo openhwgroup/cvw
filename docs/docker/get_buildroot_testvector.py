@@ -1,5 +1,5 @@
-import shutil
 import os
+import shutil
 
 # if WALLY is defined, then get it
 WALLY_HOME = os.getenv("WALLY")

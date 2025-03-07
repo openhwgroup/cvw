@@ -70,6 +70,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   logic [11:0]           CSRAdrM, CSRAdrW;
   logic                  wfiM;
   logic                  InterruptM, InterruptW;
+  logic                  MExtInt, SExtInt, MTimerInt, MSwInt;
   logic                  valid;
 
   //For VM Verification
@@ -112,12 +113,20 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
     assign STATUS_UXL     = testbench.dut.core.priv.priv.csr.csrsr.STATUS_UXL;
     assign wfiM           = testbench.dut.core.priv.priv.wfiM;
     assign InterruptM     = testbench.dut.core.priv.priv.InterruptM;
+    assign MExtInt        = testbench.dut.MExtInt;
+    assign SExtInt        = testbench.dut.SExtInt;
+    assign MTimerInt      = testbench.dut.MTimerInt;
+    assign MSwInt         = testbench.dut.MSwInt;
   end else begin
     assign PrivilegeModeW = 2'b11;
     assign STATUS_SXL     = 0;
     assign STATUS_UXL     = 0;
     assign wfiM           = 0;
     assign InterruptM     = 0;
+    assign MExtInt        = 0;
+    assign SExtInt        = 0;
+    assign MTimerInt      = 0;
+    assign MSwInt         = 0;
   end
 
   //For VM Verification
@@ -294,25 +303,25 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   //for VM Verification
   flopenrc #(P.XLEN)     IVAdrDReg (clk, reset, 1'b0, SelHPTW, IVAdrF, IVAdrD); //Virtual Address for IMMU // *** RT: possible bug SelHPTW probably should be ~StallD
   flopenrc #(P.XLEN)     IVAdrEReg (clk, reset, 1'b0, ~StallE, IVAdrD, IVAdrE); //Virtual Address for IMMU
-  flopenrc #(P.XLEN)     IVAdrMReg (clk, reset, 1'b0, ~StallM, IVAdrE, IVAdrM); //Virtual Address for IMMU
+  flopenrc #(P.XLEN)     IVAdrMReg (clk, reset, 1'b0, ~(StallM & ~SelHPTW), IVAdrE, IVAdrM); //Virtual Address for IMMU
   flopenrc #(P.XLEN)     IVAdrWReg (clk, reset, 1'b0, SelHPTW, IVAdrM, IVAdrW); //Virtual Address for IMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
   flopenrc #(P.XLEN)     DVAdrWReg (clk, reset, 1'b0, SelHPTW, DVAdrM, DVAdrW); //Virtual Address for DMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
 
   flopenrc #(P.PA_BITS)  IPADReg (clk, reset, 1'b0, SelHPTW, IPAF, IPAD); //Physical Address for IMMU // *** RT: possible bug SelHPTW probably should be ~StallD
   flopenrc #(P.PA_BITS)  IPAEReg (clk, reset, 1'b0, ~StallE, IPAD, IPAE); //Physical Address for IMMU
-  flopenrc #(P.PA_BITS)  IPAMReg (clk, reset, 1'b0, ~StallM, IPAE, IPAM); //Physical Address for IMMU
+  flopenrc #(P.PA_BITS)  IPAMReg (clk, reset, 1'b0, ~(StallM & ~SelHPTW), IPAE, IPAM); //Physical Address for IMMU
   flopenrc #(P.PA_BITS)  IPAWReg (clk, reset, 1'b0, SelHPTW, IPAM, IPAW); //Physical Address for IMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
   flopenrc #(P.PA_BITS)  DPAWReg (clk, reset, 1'b0, SelHPTW, DPAM, DPAW); //Physical Address for DMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
 
   flopenrc #(P.XLEN)     IPTEDReg (clk, reset, 1'b0, SelHPTW, IPTEF, IPTED); //PTE for IMMU // *** RT: possible bug SelHPTW probably should be ~StallD
   flopenrc #(P.XLEN)     IPTEEReg (clk, reset, 1'b0, ~StallE, IPTED, IPTEE); //PTE for IMMU
-  flopenrc #(P.XLEN)     IPTEMReg (clk, reset, 1'b0, ~StallM, IPTEE, IPTEM); //PTE for IMMU
+  flopenrc #(P.XLEN)     IPTEMReg (clk, reset, 1'b0, ~(StallM & ~SelHPTW), IPTEE, IPTEM); //PTE for IMMU
   flopenrc #(P.XLEN)     IPTEWReg (clk, reset, 1'b0, SelHPTW, IPTEM, IPTEW); //PTE for IMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
   flopenrc #(P.XLEN)     DPTEWReg (clk, reset, 1'b0, SelHPTW, DPTEM, DPTEW); //PTE for DMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
 
   flopenrc #(2)     IPageTypeDReg (clk, reset, 1'b0, SelHPTW, IPageTypeF, IPageTypeD); //PageType (kilo, mega, giga, tera) from IMMU // *** RT: possible bug SelHPTW probably should be ~StallD
   flopenrc #(2)     IPageTypeEReg (clk, reset, 1'b0, ~StallE, IPageTypeD, IPageTypeE); //PageType (kilo, mega, giga, tera) from IMMU
-  flopenrc #(2)     IPageTypeMReg (clk, reset, 1'b0, ~StallM, IPageTypeE, IPageTypeM); //PageType (kilo, mega, giga, tera) from IMMU
+  flopenrc #(2)     IPageTypeMReg (clk, reset, 1'b0, ~(StallM & ~SelHPTW), IPageTypeE, IPageTypeM); //PageType (kilo, mega, giga, tera) from IMMU
   flopenrc #(2)     IPageTypeWReg (clk, reset, 1'b0, SelHPTW, IPageTypeM, IPageTypeW); //PageType (kilo, mega, giga, tera) from IMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
   flopenrc #(2)     DPageTypeWReg (clk, reset, 1'b0, SelHPTW, DPageTypeM, DPageTypeW); //PageType (kilo, mega, giga, tera) from DMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
 
@@ -359,8 +368,33 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
     assign rvvi.f_wb[0][0][index]    = frf_wb[index];
   end
 
+`ifdef FCOV
+  // Interrupts
+  assign rvvi.m_ext_intr[0][0] = MExtInt;
+  assign rvvi.s_ext_intr[0][0] = SExtInt;
+  assign rvvi.m_timer_intr[0][0] = MTimerInt;
+  assign rvvi.m_soft_intr[0][0] = MSwInt;
+`endif
+
   // *** implementation only cancel? so sc does not clear?
   assign rvvi.lrsc_cancel[0][0] = 0;
+
+`ifdef FCOV
+  // Virtual Memory signals for verification
+  assign rvvi.virt_adr_i[0][0]         = IVAdrW;
+  assign rvvi.virt_adr_d[0][0]         = DVAdrW;
+  assign rvvi.phys_adr_i[0][0]           = IPAW;
+  assign rvvi.phys_adr_d[0][0]           = DPAW;
+  assign rvvi.read_access[0][0]    = ReadAccessW;
+  assign rvvi.write_access[0][0]   = WriteAccessW;
+  assign rvvi.execute_access[0][0] = ExecuteAccessW;
+  assign rvvi.pte_i[0][0]         = IPTEW;
+  assign rvvi.pte_d[0][0]         = DPTEW;
+  assign rvvi.ppn_i[0][0]         = IPPNW;
+  assign rvvi.ppn_d[0][0]         = DPPNW;
+  assign rvvi.page_type_i[0][0]    = IPageTypeW;
+  assign rvvi.page_type_d[0][0]    = DPageTypeW;
+`endif
 
   integer index2;
 
@@ -376,7 +410,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   end
   
   always_ff @(posedge clk) begin
-  if(valid) begin
+    if(valid) begin
       if(`STD_LOG) begin
         $fwrite(file, "%016x, %08x, %s\t\t", rvvi.pc_rdata[0][0], rvvi.insn[0][0], instrWName);
         for(index2 = 0; index2 < NUM_REGS; index2 += 1) begin
@@ -420,6 +454,15 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
       //   end
       // end
     end
-    if(HaltW) $finish;
+    if(HaltW) begin
+`ifdef FCOV
+      $display("Functional coverage test complete.");
+`endif
+`ifdef QUESTA
+      $stop;  // if this is changed to $finish for Questa, wally.do does not go to the next step to run coverage and terminates without allowing GUI debug
+`else
+      $finish;
+`endif
+    end
   end
 endmodule

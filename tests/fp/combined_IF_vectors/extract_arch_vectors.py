@@ -6,6 +6,7 @@
 
 # extract all arch test vectors
 import os
+
 wally = os.popen('echo $WALLY').read().strip()
 
 def ext_bits(my_string):

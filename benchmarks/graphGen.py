@@ -2,9 +2,10 @@
 # Daniel Torres 2022
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
+import json
 import subprocess
 import sys
-import json
+
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 

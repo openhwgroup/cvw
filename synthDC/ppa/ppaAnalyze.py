@@ -5,18 +5,19 @@
 # James Stine james.stine@okstate.edu 15 October 2023
 #
 
-import scipy.optimize as opt
-import subprocess
 import csv
-import re
-from matplotlib.cbook import flatten
-import matplotlib.pyplot as plt
-import matplotlib.lines as lines
-import matplotlib as mpl
-import numpy as np
-from collections import namedtuple
-import sklearn.metrics as skm  # depricated, will need to replace with scikit-learn
 import os
+import re
+import subprocess
+from collections import namedtuple
+
+import matplotlib as mpl
+import matplotlib.lines as lines
+import matplotlib.pyplot as plt
+import numpy as np
+import scipy.optimize as opt
+import sklearn.metrics as skm  # depricated, will need to replace with scikit-learn
+from matplotlib.cbook import flatten
 
 
 def synthsfromcsv(filename):
@@ -48,7 +49,7 @@ def synthsintocsv():
     allSynths = output.decode("utf-8").split("\n")[:-1]
 
     specReg = re.compile("[a-zA-Z0-9]+")
-    metricReg = re.compile("-?\d+\.\d+[e]?[-+]?\d*")
+    metricReg = re.compile(r"-?\d+\.\d+[e]?[-+]?\d*")
 
     with open("ppaData.csv", "w") as file:
         writer = csv.writer(file)
