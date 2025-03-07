@@ -100,7 +100,6 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   assign StallM         = testbench.dut.core.StallM;
   assign StallW         = testbench.dut.core.StallW;
   assign GatedStallW    = testbench.dut.core.lsu.GatedStallW;
-  assign SelHPTW        = testbench.dut.core.lsu.hptw.hptw.SelHPTW;
   assign FlushD         = testbench.dut.core.FlushD;
   assign FlushE         = testbench.dut.core.FlushE;
   assign FlushM         = testbench.dut.core.FlushM;
@@ -130,19 +129,38 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   end
 
   //For VM Verification
-  assign IVAdrF         = testbench.dut.core.ifu.immu.immu.tlb.tlb.VAdr;
-  assign DVAdrM         = testbench.dut.core.lsu.dmmu.dmmu.tlb.tlb.VAdr;
-  assign IPAF           = testbench.dut.core.ifu.immu.immu.PhysicalAddress;
-  assign DPAM           = testbench.dut.core.lsu.dmmu.dmmu.PhysicalAddress;
-  assign ReadAccessM    = testbench.dut.core.lsu.dmmu.dmmu.ReadAccessM;
-  assign WriteAccessM   = testbench.dut.core.lsu.dmmu.dmmu.WriteAccessM;
-  assign ExecuteAccessF = testbench.dut.core.ifu.immu.immu.ExecuteAccessF;
-  assign IPTEF          = testbench.dut.core.ifu.immu.immu.PTE;
-  assign DPTEM          = testbench.dut.core.lsu.dmmu.dmmu.PTE;
-  assign IPPNF          = testbench.dut.core.ifu.immu.immu.tlb.tlb.PPN;
-  assign DPPNM          = testbench.dut.core.lsu.dmmu.dmmu.tlb.tlb.PPN; 
-  assign IPageTypeF     = testbench.dut.core.ifu.immu.immu.PageTypeWriteVal;
-  assign DPageTypeM     = testbench.dut.core.lsu.dmmu.dmmu.PageTypeWriteVal;
+  if (P.VIRTMEM_SUPPORTED) begin
+    assign SelHPTW        = testbench.dut.core.lsu.hptw.hptw.SelHPTW;
+    assign IVAdrF         = testbench.dut.core.ifu.immu.immu.tlb.tlb.VAdr;
+    assign DVAdrM         = testbench.dut.core.lsu.dmmu.dmmu.tlb.tlb.VAdr;
+    assign IPAF           = testbench.dut.core.ifu.immu.immu.PhysicalAddress;
+    assign DPAM           = testbench.dut.core.lsu.dmmu.dmmu.PhysicalAddress;
+    assign ReadAccessM    = testbench.dut.core.lsu.dmmu.dmmu.ReadAccessM;
+    assign WriteAccessM   = testbench.dut.core.lsu.dmmu.dmmu.WriteAccessM;
+    assign ExecuteAccessF = testbench.dut.core.ifu.immu.immu.ExecuteAccessF;
+    assign IPTEF          = testbench.dut.core.ifu.immu.immu.PTE;
+    assign DPTEM          = testbench.dut.core.lsu.dmmu.dmmu.PTE;
+    assign IPPNF          = testbench.dut.core.ifu.immu.immu.tlb.tlb.PPN;
+    assign DPPNM          = testbench.dut.core.lsu.dmmu.dmmu.tlb.tlb.PPN; 
+    assign IPageTypeF     = testbench.dut.core.ifu.immu.immu.PageTypeWriteVal;
+    assign DPageTypeM     = testbench.dut.core.lsu.dmmu.dmmu.PageTypeWriteVal;
+  end else begin
+    assign SelHPTW        = 1'b0;
+    assign IVAdrF         = 0;
+    assign DVAdrM         = 0;
+    assign IPAF           = 0;
+    assign DPAM           = 0;
+    assign ReadAccessM    = 0;
+    assign WriteAccessM   = 0;
+    assign ExecuteAccessF = 0;
+    assign IPTEF          = 0;
+    assign DPTEM          = 0;
+    assign IPPNF          = 0;
+    assign DPPNM          = 0;
+    assign IPageTypeF     = 0;
+    assign DPageTypeM     = 0;
+  end
+
 
   // CSR connections
   if (P.ZICSR_SUPPORTED) begin
