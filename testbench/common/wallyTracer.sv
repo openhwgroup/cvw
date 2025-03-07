@@ -250,15 +250,18 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
     // PMPCFG CSRs (space is 0-15 3a0 - 3af)
     for (genvar pmpCfgID = 0; pmpCfgID < P.PMP_ENTRIES; pmpCfgID += inc) begin
       logic [P.XLEN-1:0] pmp;
+      logic [31:0]       pmpLow;
       localparam int i4 = pmpCfgID / 4;
-      assign pmp = {testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[pmpCfgID+7],
+      assign pmpLow = {testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[pmpCfgID+3],
+                      testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[pmpCfgID+2],
+                      testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[pmpCfgID+1],
+                      testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[pmpCfgID+0]};
+      assign pmp = (P.XLEN == 32) ? pmpLow : 
+                    {testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[pmpCfgID+7],
                     testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[pmpCfgID+6],
                     testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[pmpCfgID+5],
                     testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[pmpCfgID+4],
-                    testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[pmpCfgID+3],
-                    testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[pmpCfgID+2],
-                    testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[pmpCfgID+1],
-                    testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[pmpCfgID+0]};
+                    pmpLow};
       `CONNECT_CSR(PMPCFG``i4, 12'h3A0 + i4, pmp);
     end
 
