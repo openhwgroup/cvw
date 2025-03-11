@@ -514,7 +514,7 @@ def main(args):
 
     # Coverage report
     if args.ccov:
-        os.system(f"make -C {regressionDir}/QuestaCodeCoverage")
+        os.system(f"make -C {regressionDir} QuestaCodeCoverage")
     if args.fcov or args.breker:
         os.system(f"make -C {archVerifDir} merge")
     # Count the number of failures

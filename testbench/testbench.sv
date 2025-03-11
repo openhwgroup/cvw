@@ -758,7 +758,7 @@ end
   trace2api #(.CMP_PC      (1),
               .CMP_INS     (1),
               .CMP_GPR     (1),
-              .CMP_FPR     (1),
+              .CMP_FPR     (P.F_SUPPORTED),
               .CMP_VR      (0),
               .CMP_CSR     (1)
               ) idv_trace2api(rvvi);
@@ -892,13 +892,6 @@ end
     end
     if (P.SPI_SUPPORTED) begin
       void'(rvviRefMemorySetVolatile(P.SPI_BASE, (P.SPI_BASE + P.SPI_RANGE)));
-    end
-
-    if(P.XLEN==32) begin
-      void'(rvviRefCsrSetVolatile(0, 32'hC80));   // CYCLEH
-      void'(rvviRefCsrSetVolatile(0, 32'hB80));   // MCYCLEH
-      void'(rvviRefCsrSetVolatile(0, 32'hC82));   // INSTRETH
-      void'(rvviRefCsrSetVolatile(0, 32'hB82));   // MINSTRETH
     end
 
     void'(rvviRefCsrSetVolatile(0, 32'h104));   // SIE - Temporary!!!!
