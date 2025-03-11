@@ -438,15 +438,11 @@ fi
 # is a functional programming language suited to formal verification.
 section_header "Installing/Updating Sail Compiler"
 STATUS="sail_compiler"
-if [ ! -e "$RISCV"/bin/sail ]; then
-    cd "$RISCV"
-    wget -nv --retry-connrefused $retry_on_host_error --output-document=sail.tar.gz https://github.com/rems-project/sail/releases/latest/download/sail.tar.gz
-    tar xz --directory="$RISCV" --strip-components=1 -f sail.tar.gz
-    rm -f sail.tar.gz
-    echo -e "${SUCCESS_COLOR}Sail Compiler successfully installed/updated!${ENDC}"
-else
-    echo -e "${SUCCESS_COLOR}Sail Compiler already installed.${ENDC}"
-fi
+cd "$RISCV"
+wget -nv --retry-connrefused $retry_on_host_error --output-document=sail.tar.gz https://github.com/rems-project/sail/releases/latest/download/sail.tar.gz
+tar xz --directory="$RISCV" --strip-components=1 -f sail.tar.gz
+rm -f sail.tar.gz
+echo -e "${SUCCESS_COLOR}Sail Compiler successfully installed/updated!${ENDC}"
 
 # RISC-V Sail Model (https://github.com/riscv/sail-riscv)
 # The RISC-V Sail Model is the golden reference model for RISC-V. It is written in Sail (described above)
