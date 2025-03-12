@@ -693,7 +693,7 @@ module testbench;
   // track the current function or global label
   if (DEBUG > 0 | ((PrintHPMCounters | BPRED_LOGGER) & P.ZICNTR_SUPPORTED)) begin : functionName
     functionName #(P) functionName(.reset(reset_ext | TestBenchReset),
-			      .clk(clk), .ProgramAddrMapFile(ProgramAddrMapFile), .ProgramLabelMapFile(ProgramLabelMapFile));
+            .clk(clk), .ProgramAddrMapFile(ProgramAddrMapFile), .ProgramLabelMapFile(ProgramLabelMapFile));
   end
 
   // Append UART output to file for tests
@@ -758,9 +758,9 @@ end
   trace2api #(.CMP_PC      (1),
               .CMP_INS     (1),
               .CMP_GPR     (1),
-              .CMP_FPR     (1),
+              .CMP_FPR     (P.F_SUPPORTED),
               .CMP_VR      (0),
-              .CMP_CSR     (1)
+              .CMP_CSR     (P.ZICSR_SUPPORTED)
               ) idv_trace2api(rvvi);
 
   string filename;
@@ -892,13 +892,6 @@ end
     end
     if (P.SPI_SUPPORTED) begin
       void'(rvviRefMemorySetVolatile(P.SPI_BASE, (P.SPI_BASE + P.SPI_RANGE)));
-    end
-
-    if(P.XLEN==32) begin
-      void'(rvviRefCsrSetVolatile(0, 32'hC80));   // CYCLEH
-      void'(rvviRefCsrSetVolatile(0, 32'hB80));   // MCYCLEH
-      void'(rvviRefCsrSetVolatile(0, 32'hC82));   // INSTRETH
-      void'(rvviRefCsrSetVolatile(0, 32'hB82));   // MINSTRETH
     end
 
     void'(rvviRefCsrSetVolatile(0, 32'h104));   // SIE - Temporary!!!!
