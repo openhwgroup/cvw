@@ -2688,13 +2688,21 @@ string arch64zfad[] = '{
   "rv64i_m/D_Zfa/src/fcvtmod.w.d_b29-01.S",
   "rv64i_m/D_Zfa/src/fleq_b1-01.S",
   "rv64i_m/D_Zfa/src/fleq_b19-01.S",
+  "rv64i_m/D_Zfa/src/fleq.d_b1-01.S",
+  "rv64i_m/D_Zfa/src/fleq.d_b19-01.S",
   "rv64i_m/D_Zfa/src/fli.d-01.S",
   "rv64i_m/D_Zfa/src/fltq_b1-01.S",
   "rv64i_m/D_Zfa/src/fltq_b19-01.S",
+  "rv64i_m/D_Zfa/src/fltq.d_b1-01.S",
+  "rv64i_m/D_Zfa/src/fltq.d_b19-01.S",
   "rv64i_m/D_Zfa/src/fminm_b1-01.S",
   "rv64i_m/D_Zfa/src/fminm_b19-01.S",
+  "rv64i_m/D_Zfa/src/fminm.d_b1-01.S",
+  "rv64i_m/D_Zfa/src/fminm.d_b19-01.S",
   "rv64i_m/D_Zfa/src/fmaxm_b1-01.S",
-  "rv64i_m/D_Zfa/src/fmaxm_b19-01.S"
+  "rv64i_m/D_Zfa/src/fmaxm_b19-01.S",
+  "rv64i_m/D_Zfa/src/fmaxm.d_b1-01.S",
+  "rv64i_m/D_Zfa/src/fmaxm.d_b19-01.S"
 };
 
 string arch32d_fma[] = '{
