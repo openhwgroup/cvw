@@ -693,7 +693,7 @@ module testbench;
   // track the current function or global label
   if (DEBUG > 0 | ((PrintHPMCounters | BPRED_LOGGER) & P.ZICNTR_SUPPORTED)) begin : functionName
     functionName #(P) functionName(.reset(reset_ext | TestBenchReset),
-			      .clk(clk), .ProgramAddrMapFile(ProgramAddrMapFile), .ProgramLabelMapFile(ProgramLabelMapFile));
+            .clk(clk), .ProgramAddrMapFile(ProgramAddrMapFile), .ProgramLabelMapFile(ProgramLabelMapFile));
   end
 
   // Append UART output to file for tests
@@ -760,7 +760,7 @@ end
               .CMP_GPR     (1),
               .CMP_FPR     (P.F_SUPPORTED),
               .CMP_VR      (0),
-              .CMP_CSR     (1)
+              .CMP_CSR     (P.ZICSR_SUPPORTED)
               ) idv_trace2api(rvvi);
 
   string filename;
