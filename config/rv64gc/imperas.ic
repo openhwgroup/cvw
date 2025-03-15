@@ -94,7 +94,6 @@
 --override cpu/reset_address=0x80000000
 
 --override cpu/unaligned=T  # Zicclsm (should be true)
---override cpu/ignore_non_leaf_DAU=1
 --override cpu/wfi_is_nop=T
 --override cpu/misa_Extensions_mask=0x0 # MISA not writable
 --override cpu/Sstc=T
