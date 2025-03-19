@@ -106,8 +106,8 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
   always_comb
     if      (CSRWriteValM[12:11] == P.U_MODE & P.U_SUPPORTED) STATUS_MPP_NEXT = P.U_MODE;
     else if (CSRWriteValM[12:11] == P.S_MODE & P.S_SUPPORTED) STATUS_MPP_NEXT = P.S_MODE;
-    else if (CSRWriteValM[12:11] == 2'b10)                    STATUS_MPP_NEXT = STATUS_MPP; // do not change MPP when trying to write reserved 10
-    else                                                      STATUS_MPP_NEXT = P.M_MODE;
+    else if (CSRWriteValM[12:11] == P.M_MODE)                 STATUS_MPP_NEXT = P.M_MODE;
+    else                                                      STATUS_MPP_NEXT = STATUS_MPP; // do not change MPP when trying to write reserved 10 or unsupported mode
 
   ///////////////////////////////////////////
   // Endianness logic Privileged Spec 3.1.6.4
