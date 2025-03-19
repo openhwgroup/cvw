@@ -406,7 +406,7 @@ def process_args(args):
         shutil.rmtree(f"{regressionDir}/questa/fcov_ucdb", ignore_errors=True)
         os.makedirs(f"{regressionDir}/questa/fcov_ucdb", exist_ok=True)
     elif args.buildroot:
-        TIMEOUT_DUR = 60*1440 # 1 day
+        TIMEOUT_DUR = 60*2880 # 2 days
     elif args.testfloat:
         sims = [testfloatsim]
         TIMEOUT_DUR = 30*60 # seconds
