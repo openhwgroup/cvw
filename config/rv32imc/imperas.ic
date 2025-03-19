@@ -18,11 +18,11 @@
 --override cpu/marchid=0x24
 --override refRoot/cpu/tvec_align=64
 
-# No virtual memory
---override cpu/Sv_modes=1
+# No Supervisor mode
+--override cpu/sub_Extensions="S"
 
-# mstatus.FS read-only 0
---override cpu/mstatus_FS_zero=T
+# Zifencei extension not implemented
+--override cpu/Zifencei=F
 
 # Little endian only
 --override cpu/endianFixed=T
