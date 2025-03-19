@@ -841,36 +841,46 @@ end
     end
 
     // Volatile CSRs
-    void'(rvviRefCsrSetVolatile(0, 32'hC00));   // CYCLE
-    void'(rvviRefCsrSetVolatile(0, 32'hB00));   // MCYCLE
-    void'(rvviRefCsrSetVolatile(0, 32'hC02));   // INSTRET
-    void'(rvviRefCsrSetVolatile(0, 32'hB02));   // MINSTRET
-    void'(rvviRefCsrSetVolatile(0, 32'hC01));   // TIME
-    if (P.XLEN == 32) begin
-      void'(rvviRefCsrSetVolatile(0, 32'hC80));   // CYCLEH
-      void'(rvviRefCsrSetVolatile(0, 32'hB80));   // MCYCLEH
-      void'(rvviRefCsrSetVolatile(0, 32'hC82));   // INSTRETH
-      void'(rvviRefCsrSetVolatile(0, 32'hB82));   // MINSTRETH
-      void'(rvviRefCsrSetVolatile(0, 32'hC81));   // TIMEH
-    end
-    // User HPMCOUNTER3 - HPMCOUNTER31
-    for (iter='hC03; iter<='hC1F; iter++) begin
-      void'(rvviRefCsrSetVolatile(0, iter));   // HPMCOUNTERx
-      if (P.XLEN == 32)
-        void'(rvviRefCsrSetVolatile(0, iter+128));   // HPMCOUNTERxH
-    end
+    // Counter CSRs
+    if (P.ZICNTR_SUPPORTED) begin
+      void'(rvviRefCsrSetVolatile(0, 32'hC00));   // CYCLE
+      void'(rvviRefCsrSetVolatile(0, 32'hB00));   // MCYCLE
+      void'(rvviRefCsrSetVolatile(0, 32'hC02));   // INSTRET
+      void'(rvviRefCsrSetVolatile(0, 32'hB02));   // MINSTRET
+      void'(rvviRefCsrSetVolatile(0, 32'hC01));   // TIME
+      if (P.XLEN == 32) begin
+        void'(rvviRefCsrSetVolatile(0, 32'hC80));   // CYCLEH
+        void'(rvviRefCsrSetVolatile(0, 32'hB80));   // MCYCLEH
+        void'(rvviRefCsrSetVolatile(0, 32'hC82));   // INSTRETH
+        void'(rvviRefCsrSetVolatile(0, 32'hB82));   // MINSTRETH
+        void'(rvviRefCsrSetVolatile(0, 32'hC81));   // TIMEH
+      end
+      // HPM counters
+      if (P.ZIHPM_SUPPORTED) begin
+        // User HPMCOUNTER3 - HPMCOUNTER31
+        if (P.U_SUPPORTED) begin
+          for (iter='hC03; iter<='hC1F; iter++) begin
+            void'(rvviRefCsrSetVolatile(0, iter));   // HPMCOUNTERx
+            if (P.XLEN == 32)
+              void'(rvviRefCsrSetVolatile(0, iter+128));   // HPMCOUNTERxH
+          end
+        end
 
-    // Machine MHPMCOUNTER3 - MHPMCOUNTER31
-    for (iter='hB03; iter<='hB1F; iter++) begin
-      void'(rvviRefCsrSetVolatile(0, iter));   // MHPMCOUNTERx
-      if (P.XLEN == 32)
-        void'(rvviRefCsrSetVolatile(0, iter+128));   // MHPMCOUNTERxH
+        // Machine MHPMCOUNTER3 - MHPMCOUNTER31
+        for (iter='hB03; iter<='hB1F; iter++) begin
+          void'(rvviRefCsrSetVolatile(0, iter));   // MHPMCOUNTERx
+          if (P.XLEN == 32)
+            void'(rvviRefCsrSetVolatile(0, iter+128));   // MHPMCOUNTERxH
+        end
+      end
     end
 
     // cannot predict this register due to latency between
     // pending and taken
     void'(rvviRefCsrSetVolatile(0, 32'h344));   // MIP
-    void'(rvviRefCsrSetVolatile(0, 32'h144));   // SIP
+    if (P.S_SUPPORTED) begin
+      void'(rvviRefCsrSetVolatile(0, 32'h144));   // SIP
+    end
 
     // Privileges for PMA are set in the imperas.ic
     // volatile (IO) regions are defined here
@@ -893,18 +903,17 @@ end
     if (P.SPI_SUPPORTED) begin
       void'(rvviRefMemorySetVolatile(P.SPI_BASE, (P.SPI_BASE + P.SPI_RANGE)));
     end
-
-    void'(rvviRefCsrSetVolatile(0, 32'h104));   // SIE - Temporary!!!!
-
   end
 
   if (P.ZICSR_SUPPORTED) begin
     always @(dut.core.priv.priv.csr.csri.MIP_REGW[7])   void'(rvvi.net_push("MTimerInterrupt",    dut.core.priv.priv.csr.csri.MIP_REGW[7]));
     always @(dut.core.priv.priv.csr.csri.MIP_REGW[11])  void'(rvvi.net_push("MExternalInterrupt", dut.core.priv.priv.csr.csri.MIP_REGW[11]));
-    always @(dut.core.priv.priv.csr.csri.MIP_REGW[9])   void'(rvvi.net_push("SExternalInterrupt", dut.core.priv.priv.csr.csri.MIP_REGW[9]));
     always @(dut.core.priv.priv.csr.csri.MIP_REGW[3])   void'(rvvi.net_push("MSWInterrupt",       dut.core.priv.priv.csr.csri.MIP_REGW[3]));
-    always @(dut.core.priv.priv.csr.csri.MIP_REGW[1])   void'(rvvi.net_push("SSWInterrupt",       dut.core.priv.priv.csr.csri.MIP_REGW[1]));
-    always @(dut.core.priv.priv.csr.csri.MIP_REGW[5])   void'(rvvi.net_push("STimerInterrupt",    dut.core.priv.priv.csr.csri.MIP_REGW[5]));
+    if (P.S_SUPPORTED) begin
+      always @(dut.core.priv.priv.csr.csri.MIP_REGW[5])   void'(rvvi.net_push("STimerInterrupt",    dut.core.priv.priv.csr.csri.MIP_REGW[5]));
+      always @(dut.core.priv.priv.csr.csri.MIP_REGW[9])   void'(rvvi.net_push("SExternalInterrupt", dut.core.priv.priv.csr.csri.MIP_REGW[9]));
+      always @(dut.core.priv.priv.csr.csri.MIP_REGW[1])   void'(rvvi.net_push("SSWInterrupt",       dut.core.priv.priv.csr.csri.MIP_REGW[1]));
+    end
   end
 
   final begin
