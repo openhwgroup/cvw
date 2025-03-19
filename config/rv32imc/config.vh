@@ -38,7 +38,7 @@ localparam logic IEEE754 = 0;
 localparam logic E_SUPPORTED = 0;
 
 // Integer instruction set extensions
-localparam logic ZIFENCEI_SUPPORTED = 1; // Instruction-Fetch fence
+localparam logic ZIFENCEI_SUPPORTED = 0; // Instruction-Fetch fence
 localparam logic ZICSR_SUPPORTED    = 1; // CSR Instructions
 localparam logic ZICCLSM_SUPPORTED  = 0; // Misaligned loads/stores
 localparam logic ZICOND_SUPPORTED   = 0; // Integer conditional operations
@@ -85,7 +85,7 @@ localparam logic ZFH_SUPPORTED = 0;
 localparam logic ZFA_SUPPORTED = 0;
 
 // privilege modes
-localparam logic S_SUPPORTED = 1; // Supervisor mode
+localparam logic S_SUPPORTED = 0; // Supervisor mode
 localparam logic U_SUPPORTED = 1; // User mode
 
 // Supervisor level extensions
