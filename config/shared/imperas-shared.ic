@@ -1,0 +1,32 @@
+# imperas.ic
+# Standard initialization file for ImperasDV lock step simulation
+# jcarlin@hmc.edu 19 March 2025
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+# Spec versions
+--override cpu/priv_version=1.12
+--override cpu/user_version=20191213
+
+# arch
+--override cpu/mimpid=0x100
+--override cpu/mvendorid=0x602
+--override cpu/marchid=0x24
+--override refRoot/cpu/tvec_align=64
+
+# MISA not writable
+--override cpu/misa_Extensions_mask=0x0
+
+# disable CSRs 7a0-7a8
+--override cpu/trigger_num=0
+
+# Reset address
+--override cpu/reset_address=0x80000000
+
+# For code coverage, don't produce pseudoinstructions
+--override no_pseudo_inst=T
+
+# Show "c." with compressed instructions
+--override show_c_prefix=T
+
+# Store simulator output to logfile
+--output imperas.log

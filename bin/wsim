@@ -121,6 +121,7 @@ def prepSim(args, ElfFile):
     return flags, prefix
 
 def lockstepSetup(args):
+    imperasicSharedPath = os.path.join(WALLY, "config", "shared", "imperas-shared.ic")
     imperasicVerbosePath = os.path.join(WALLY, "sim", "imperas-verbose.ic")
     imperasicPath = os.path.join(WALLY, "config", args.config, "imperas.ic")
     if not os.path.isfile(imperasicPath): # If config is a derivative, look for imperas.ic in derivative configs
@@ -128,7 +129,7 @@ def lockstepSetup(args):
         if not os.path.isfile(imperasicPath):
             print("Error: imperas.ic not found")
             sys.exit(1)
-    prefix = f"IMPERAS_TOOLS={imperasicPath}{f':{imperasicVerbosePath}' if args.lockstepverbose else ''}"
+    prefix = f"IMPERAS_TOOLS={imperasicSharedPath}:{imperasicPath}{f':{imperasicVerbosePath}' if args.lockstepverbose else ''}"
     return prefix
 
 def createDirs(sim):
