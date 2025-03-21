@@ -402,7 +402,7 @@ def process_args(args):
     elif args.fcov or args.breker:
         sims = [coveragesim]
         coverStr = "--fcov"
-        TIMEOUT_DUR = 8*60
+        TIMEOUT_DUR = 30*60
         shutil.rmtree(f"{regressionDir}/questa/fcov_ucdb", ignore_errors=True)
         os.makedirs(f"{regressionDir}/questa/fcov_ucdb", exist_ok=True)
     elif args.buildroot:
