@@ -13,7 +13,7 @@ trek:
           value: 0
 
   # uncomment the `weights:` line below if any entries under `weights:` need to be enabled
-  # weights:
+  weights:
     # disable testing of Sv57: Page-Based 57-bit Virtual-Memory System
     # if your system does not support this feature
     pss_top.rvMmu.rvMmuOp.RvMmuOp::satpModeSv57: 0
