@@ -56,4 +56,4 @@ $(TESTDIR):
 	mkdir -p $(TESTDIR)
 
 clean:
-	rm -rf $(TESTS)
+	rm -rf $(TESTDIR)/*
