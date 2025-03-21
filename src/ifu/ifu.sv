@@ -379,7 +379,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     assign InstrD = InstrRawD;
     assign IllegalIEUInstrD = IllegalBaseInstrD;
   end
-  assign IllegalIEUFPUInstrD = IllegalIEUInstrD & IllegalFPUInstrD;
+  assign IllegalIEUFPUInstrD = IllegalIEUInstrD & (IllegalFPUInstrD | !P.F_SUPPORTED);
 
   // Misaligned PC logic
   // Instruction address misalignment only from br/jal(r) instructions.
