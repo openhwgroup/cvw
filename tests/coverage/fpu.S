@@ -154,6 +154,15 @@ main:
     fdiv.s ft2, ft1, ft0 # should get interrupted, triggering a flush
     csrci mstatus, 0b1000   # disable interrupts with mstatus.MIE
 
+    // fcrtl: unsupported rm with dyn rounding
+    csrrwi t0, frm, 0b111  # save previous rm, set frm csr to 111 (unsupported)
+    fadd.s f0, f0, f0, dyn # try to use unsupported rounding mode in csr
+    csrrwi x0, frm, 0b110  # set frm csr to 110 (unsupported)
+    fadd.s f0, f0, f0, dyn # try to use unsupported rounding mode in csr
+    csrrwi x0, frm, 0b101  # set frm csr to 101 (unsupported)
+    fadd.s f0, f0, f0, dyn # try to use unsupported rounding mode in csr
+    csrrw  x0, frm, t0     # restore previous rm
+
     # Completing branch coverage in fctrl.sv
     .word 0x38007553    // Testing the all False case for 119 - funct7 under, op = 101 0011
     .word 0x40000053    // Line 145 All False Test case - illegal instruction?
