@@ -4,7 +4,7 @@ trek:
       scenarios:
         scenario_count:
           # primary control for length of test
-          value: 10
+          value: 50
     riscv:
       extensions:
         # disable hypervisor extension by setting value to 0

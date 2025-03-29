@@ -3,10 +3,9 @@
 # The verilator lint tool is faster and better than Questa so it is best to run this first.
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
-export PATH=$PATH:/usr/local/bin/
-verilator=`which verilator`
+verilator=$(which verilator)
 
-basepath=$(dirname $0)/..
+basepath=$(dirname "$0")/..
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
@@ -14,7 +13,7 @@ fails=0
 
 if [ "$1" == "--nightly" ]; then
     configs=(rv32e rv64gc rv32gc rv32imc rv32i rv64i) 
-    derivconfigs=`ls $WALLY/config/deriv`
+    derivconfigs=$(ls "$WALLY"/config/deriv)
     for entry in $derivconfigs
     do
         if [[ $entry != *"syn_sram"* ]]; then  # ignore syn_sram* configs that contain undefined module
@@ -27,7 +26,7 @@ fi
 
 for config in ${configs[@]}; do
 #    echo "$config linting..."
-    if !($verilator --lint-only --quiet --top-module wallywrapper \
+    if ! ($verilator --lint-only --quiet --top-module wallywrapper \
          "-I$basepath/config/shared" "-I$basepath/config/$config" "-I$basepath/config/deriv/$config" \
          $basepath/src/cvw.sv $basepath/testbench/wallywrapper.sv $basepath/src/*/*.sv $basepath/src/*/*/*.sv \
          -Wall -Wno-UNUSEDSIGNAL -Wno-VARHIDDEN -Wno-GENUNNAMED -Wno-PINCONNECTEMPTY); then
@@ -43,10 +42,10 @@ for config in ${configs[@]}; do
     fi
 done
 if [ $fails -gt 0 ]; then
-    echo -e "${RED}Linting failed for $fails of ${#configs[@]} configurations"
+    echo -e "${RED}Linting failed for $fails of ${#configs[@]} configurations${NC}"
     exit 1
 fi
-echo -e "${GREEN}All ${#configs[@]} lints run with no errors or warnings"
+echo -e "${GREEN}All ${#configs[@]} lints run with no errors or warnings${NC}"
 
 # --lint-only just runs lint rather than trying to compile and simulate
 # -I points to the include directory where files such as `include config.vh  are found
