@@ -253,6 +253,9 @@ string arch32vm_sv32[] = '{
   "rv32i_m/vm_sv32/src/vm_U_Bit_set_U_mode.S",
   "rv32i_m/vm_sv32/src/vm_U_Bit_unset_S_mode.S",
   "rv32i_m/vm_sv32/src/vm_U_Bit_unset_U_mode.S",
+  "rv32i_m/vm_sv32/src/vm_VA_all_ones_S_mode.S",
+  "rv32i_m/vm_sv32/src/vm_global_pte_S_mode.S",
+  "rv32i_m/vm_sv32/src/vm_global_pte_U_mode.S",
   "rv32i_m/vm_sv32/src/vm_invalid_pte_S_mode.S",
   "rv32i_m/vm_sv32/src/vm_invalid_pte_U_mode.S",
   "rv32i_m/vm_sv32/src/vm_misaligned_S_mode.S",
@@ -261,6 +264,9 @@ string arch32vm_sv32[] = '{
   "rv32i_m/vm_sv32/src/vm_mprv_U_mode.S",
   "rv32i_m/vm_sv32/src/vm_mprv_U_set_sum_set_S_mode.S",
   "rv32i_m/vm_sv32/src/vm_mprv_U_set_sum_unset_S_mode.S",
+  "rv32i_m/vm_sv32/src/vm_mprv_bare_mode.S",
+  // "rv32i_m/vm_sv32/src/vm_mstatus_sbe_set_S_mode.S", TODO: Reenable when Sail big endian support is merged
+  // "rv32i_m/vm_sv32/src/vm_mstatus_sbe_set_sum_set_S_mode.S",
   "rv32i_m/vm_sv32/src/vm_mxr_S_mode.S",
   "rv32i_m/vm_sv32/src/vm_mxr_U_mode.S",
   "rv32i_m/vm_sv32/src/vm_nleaf_pte_level0_S_mode.S",
@@ -270,6 +276,7 @@ string arch32vm_sv32[] = '{
   "rv32i_m/vm_sv32/src/vm_reserved_rwx_pte_S_mode.S",
   "rv32i_m/vm_sv32/src/vm_reserved_rwx_pte_U_mode.S",
   "rv32i_m/vm_sv32/src/vm_sum_set_S_mode.S",
+  "rv32i_m/vm_sv32/src/vm_sum_set_U_Bit_unset_S_mode.S",
   "rv32i_m/vm_sv32/src/vm_sum_unset_S_mode.S"
 };
 
