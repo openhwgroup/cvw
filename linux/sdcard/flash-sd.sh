@@ -184,16 +184,16 @@ if [[ $REPLY =~ ^[Yy]$ ]] ; then
     sleep 3
 
     echo -e "$NAME Copying binaries into their partitions."
-    DD_FLAGS="bs=4k iflag=direct,fullblock oflag=direct conv=fsync status=progress"
+    DD_FLAGS="bs=4k iflag=direct,fullblock oflag=dsync conv=fsync status=progress"
 
     echo -e "$NAME Copying device tree"
-    sudo dd if=$DEVICE_TREE of="$SDCARD""$PART_PREFIX"1 $DD_FLAGS
+    sudo dd if=$DEVICE_TREE of="$SDCARD""$PART_PREFIX"1 $DD_FLAGS && sync
 
     echo -e "$NAME Copying OpenSBI"
-    sudo dd if=$FW_JUMP of="$SDCARD""$PART_PREFIX"2 $DD_FLAGS
+    sudo dd if=$FW_JUMP of="$SDCARD""$PART_PREFIX"2 $DD_FLAGS && sync
 
     echo -e "$NAME Copying Kernel"
-    sudo dd if=$LINUX_KERNEL of="$SDCARD""$PART_PREFIX"3 $DD_FLAGS
+    sudo dd if=$LINUX_KERNEL of="$SDCARD""$PART_PREFIX"3 $DD_FLAGS && sync
 
     sudo mkfs.ext4 -E lazy_itable_init=0,lazy_journal_init=0 "$SDCARD""$PART_PREFIX"4
     sudo fsck -fv "$SDCARD""$PART_PREFIX"4
