@@ -379,6 +379,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ccov", help="Code Coverage", action="store_true")
     parser.add_argument("--fcov", help="Functional Coverage", action="store_true")
+    parser.add_argument("--fcov-act", help="Functional Coverage from riscv-arch-test tests", action="store_true")
     parser.add_argument("--nightly", help="Run large nightly regression", action="store_true")
     parser.add_argument("--buildroot", help="Include Buildroot Linux boot test (takes many hours, done along with --nightly)", action="store_true")
     parser.add_argument("--testfloat", help="Include Testfloat floating-point unit tests", action="store_true")
@@ -399,7 +400,7 @@ def process_args(args):
         for d in ["ucdb", "cov"]:
             shutil.rmtree(f"{regressionDir}/questa/{d}", ignore_errors=True)
             os.makedirs(f"{regressionDir}/questa/{d}", exist_ok=True)
-    elif args.fcov or args.breker:
+    elif args.fcov or args.fcov_act or args.breker:
         sims = [coveragesim]
         coverStr = "--fcov"
         TIMEOUT_DUR = 30*60
@@ -451,6 +452,9 @@ def selectTests(args, sims, coverStr):
         addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/vm_sv32", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
         # addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/pmp32", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1) TODO: Add when working in lockstep
         # addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/pmp64", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1) TODO: Add when working in lockstep
+    elif args.fcov_act:
+        addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
+        addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
     elif args.breker:
         addTestsByDir(WALLY+"/tests/breker/work", "breker", "questa", coverStr, configs, brekerMode=1)
     elif not args.testfloat:
@@ -505,7 +509,7 @@ def main(args):
     # Scale the number of concurrent processes to the number of test cases, but
     # max out at a limited number of concurrent processes to not overwhelm the system
     # right now fcov and nightly use Imperas
-    ImperasDVLicenseCount = 16 if args.fcov or args.nightly else 10000
+    ImperasDVLicenseCount = 16 if args.fcov or args.fcov_act or args.nightly else 10000
     with Pool(processes=min(len(configs),multiprocessing.cpu_count(), ImperasDVLicenseCount)) as pool:
         num_fail = 0
         results = {}
@@ -523,7 +527,7 @@ def main(args):
     # Coverage report
     if args.ccov:
         os.system(f"make -C {regressionDir} QuestaCodeCoverage")
-    if args.fcov or args.breker:
+    if args.fcov or args.fcov_act or args.breker:
         os.system(f"make -C {archVerifDir} merge")
     # Count the number of failures
     if num_fail:
