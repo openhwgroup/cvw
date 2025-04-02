@@ -101,13 +101,19 @@ module hazard (
   assign StallW = StallWCause;
 
   // detect the first stage that is not stalled
+  // coverage off
+  // StallD = StallF so LatestUnstalledD is necessarily 0
   assign LatestUnstalledD = ~StallD & StallF;
+  // coverage on 
   assign LatestUnstalledE = ~StallE & StallD;
   assign LatestUnstalledM = ~StallM & StallE;
   assign LatestUnstalledW = ~StallW & StallM;
   
   // Each stage flushes if the previous stage is the last one stalled (for cause) or the system has reason to flush
+  // coverage off
+  // LatestUnstalledD is always 0
   assign FlushD = LatestUnstalledD | FlushDCause; 
+  // coverage on
   assign FlushE = LatestUnstalledE | FlushECause;
   assign FlushM = LatestUnstalledM | FlushMCause;
   assign FlushW = LatestUnstalledW | FlushWCause;
