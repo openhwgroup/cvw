@@ -179,7 +179,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
     // S-mode trap CSRs
     if (P.S_SUPPORTED) begin
       `CONNECT_CSR(SSTATUS, 12'h100, testbench.dut.core.priv.priv.csr.csrs.csrs.SSTATUS_REGW);
-      `CONNECT_CSR(SIE, 12'h104, testbench.dut.core.priv.priv.csr.csrm.MIE_REGW & 12'h222);
+      `CONNECT_CSR(SIE, 12'h104, testbench.dut.core.priv.priv.csr.csrm.MIE_REGW & 12'h222 & testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW);
       `CONNECT_CSR(STVEC, 12'h105, testbench.dut.core.priv.priv.csr.csrs.csrs.STVEC_REGW);
       `CONNECT_CSR(SSCRATCH, 12'h140, testbench.dut.core.priv.priv.csr.csrs.csrs.SSCRATCH_REGW);
       `CONNECT_CSR(SEPC, 12'h141, testbench.dut.core.priv.priv.csr.csrs.csrs.SEPC_REGW);
@@ -220,7 +220,6 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
     // Machine Information Registers and Configuration CSRs
     `CONNECT_CSR(MISA, 12'h301, testbench.dut.core.priv.priv.csr.csrm.MISA_REGW);
     `CONNECT_CSR(MENVCFG, 12'h30A, testbench.dut.core.priv.priv.csr.csrm.MENVCFG_REGW);
-    `CONNECT_CSR(SENVCFG, 12'h10A, testbench.dut.core.priv.priv.csr.csrs.csrs.SENVCFG_REGW);
     `CONNECT_CSR(MSECCFG, 12'h747, 0); // mseccfg
     `CONNECT_CSR(MVENDORID, 12'hF11, 0); //mvendorid
     `CONNECT_CSR(MARCHID, 12'hF12, 0); // marchid
@@ -228,20 +227,27 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
     `CONNECT_CSR(MHARTID, 12'hF14, testbench.dut.core.priv.priv.csr.csrm.MHARTID_REGW);
     `CONNECT_CSR(MCONFIGPTR, 12'hF15, 0); //mconfigptr
 
+    // Supervisor Information Registers and Configuration CSRs
+    if (P.S_SUPPORTED) begin
+      `CONNECT_CSR(SENVCFG, 12'h10A, testbench.dut.core.priv.priv.csr.csrs.csrs.SENVCFG_REGW);
+    end
+
     // Sstc CSRs
     if (P.SSTC_SUPPORTED) begin
       `CONNECT_CSR(STIMECMP, 12'h14D, testbench.dut.core.priv.priv.csr.csrs.csrs.STIMECMP_REGW[P.XLEN-1:0]);
+      if (P.XLEN == 32) begin
+        `CONNECT_CSR(STIMECMPH, 12'h15D, testbench.dut.core.priv.priv.csr.csrs.csrs.STIMECMP_REGW[63:32]);
+      end
     end
     
     // Zkr CSRs
     // seed not connected (015)
 
-    // extra CSRs for RV32
+    // extra M mode CSRs for RV32
     if (P.XLEN == 32) begin
       `CONNECT_CSR(MSTATUSH, 12'h310, testbench.dut.core.priv.priv.csr.csrsr.MSTATUSH_REGW);
       `CONNECT_CSR(MENVCFGH, 12'h31A, testbench.dut.core.priv.priv.csr.csrm.MENVCFGH_REGW);
       `CONNECT_CSR(MSECCFGH, 12'h757, 0); // mseccfgh
-      `CONNECT_CSR(STIMECMPH, 12'h15D, testbench.dut.core.priv.priv.csr.csrs.csrs.STIMECMP_REGW[63:32]);
     end
   end
 

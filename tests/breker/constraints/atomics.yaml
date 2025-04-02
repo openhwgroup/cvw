@@ -1,27 +1,5 @@
 trek:
-  svip:
-    global:
-      scenarios:
-        scenario_count:
-          # primary control for length of test
-          value: 10
-    riscv:
-      extensions:
-        # disable hypervisor extension by setting value to 0
-        # if your system does not support this feature
-        h_hypervisor:
-          value: 0
-
   weights:
-    # disable testing of Sv57: Page-Based 57-bit Virtual-Memory System
-    # if your system does not support this feature
-    # pss_top.rvMmu.rvMmuOp.RvMmuOp::satpModeSv57: 0
-
-    # qemu-riscv64 does not ignore writes to WARL bits in hgatp
-    # Comment out the next line unless your design has this issue
-    # pss_top.rvMmu.rvMmuOp.RvMmuOp::writeHgatpWarl : 0
-
-
     # turn off MMU Tests
     pss_top.rvMmu.rvMmuOp: 0
 

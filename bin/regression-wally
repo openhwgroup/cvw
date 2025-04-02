@@ -42,7 +42,7 @@ testfloatsim = "questa"    # change to Verilator when Issue #707 about testfloat
 standard_tests = [
         ["rv32e", ["arch32e"]],
         ["rv32i", ["arch32i"]],
-        ["rv32imc", ["arch32i", "arch32c", "arch32m", "wally32periph"]],
+        ["rv32imc", ["arch32i", "arch32c", "arch32m"]], # add when issue #1321 is fixed: "wally32periph"
         ["rv32gc", ["arch32f", "arch32d", "arch32f_fma", "arch32d_fma", "arch32f_divsqrt", "arch32d_divsqrt",
                     "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32a_amo", "arch32zifencei", "arch32zicond",
                     "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "arch32zfh", "arch32zfh_fma",
@@ -319,7 +319,7 @@ def addTestsByDir(testDir, config, sim, coverStr, configs, lockstepMode=0, breke
     sim_logdir = f"{regressionDir}/{sim}/logs/"
     cmdPrefix = f"wsim --sim {sim} {coverStr} {'--lockstep' if lockstepMode else ''} {config}"
     # fcov/ccov only runs on WALLY-COV-ALL.elf files; other lockstep runs on all files
-    fileStart = "WALLY-COV-ALL" if "cvw-arch-verif/tests" in testDir and "priv" not in testDir else ""
+    fileStart = "WALLY-COV-ALL" if "cvw-arch-verif/tests" in testDir and "priv" not in testDir else "ref" if "riscv-arch-test" in testDir else ""
     fileEnd = ".elf"
     if lockstepMode:
         gs = "Mismatches            : 0"
@@ -379,6 +379,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--ccov", help="Code Coverage", action="store_true")
     parser.add_argument("--fcov", help="Functional Coverage", action="store_true")
+    parser.add_argument("--fcov-act", help="Functional Coverage from riscv-arch-test tests", action="store_true")
     parser.add_argument("--nightly", help="Run large nightly regression", action="store_true")
     parser.add_argument("--buildroot", help="Include Buildroot Linux boot test (takes many hours, done along with --nightly)", action="store_true")
     parser.add_argument("--testfloat", help="Include Testfloat floating-point unit tests", action="store_true")
@@ -399,14 +400,14 @@ def process_args(args):
         for d in ["ucdb", "cov"]:
             shutil.rmtree(f"{regressionDir}/questa/{d}", ignore_errors=True)
             os.makedirs(f"{regressionDir}/questa/{d}", exist_ok=True)
-    elif args.fcov or args.breker:
+    elif args.fcov or args.fcov_act or args.breker:
         sims = [coveragesim]
         coverStr = "--fcov"
-        TIMEOUT_DUR = 8*60
+        TIMEOUT_DUR = 30*60
         shutil.rmtree(f"{regressionDir}/questa/fcov_ucdb", ignore_errors=True)
         os.makedirs(f"{regressionDir}/questa/fcov_ucdb", exist_ok=True)
     elif args.buildroot:
-        TIMEOUT_DUR = 60*1440 # 1 day
+        TIMEOUT_DUR = 60*2880 # 2 days
     elif args.testfloat:
         sims = [testfloatsim]
         TIMEOUT_DUR = 30*60 # seconds
@@ -438,11 +439,22 @@ def selectTests(args, sims, coverStr):
         addTestsByDir(f"{archVerifDir}/tests/lockstep/rv64/", "rv64gc", coveragesim, coverStr, configs)
         addTestsByDir(f"{archVerifDir}/tests/lockstep/priv/rv64/", "rv64gc", coveragesim, coverStr, configs)
         addTestsByDir(WALLY+"/tests/coverage/", "rv64gc", coveragesim, coverStr, configs)
+        # Extra tests from riscv-arch-test that should be run as part of the functional coverage suite
+        addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/vm_sv32", "rv32gc", coveragesim, coverStr, configs)
+        addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/pmp32", "rv32gc", coveragesim, coverStr, configs)
+        addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/pmp64", "rv64gc", coveragesim, coverStr, configs)
     elif args.fcov:  # run tests in lockstep in functional coverage mode
         addTestsByDir(f"{archVerifDir}/tests/lockstep/rv32/", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
         addTestsByDir(f"{archVerifDir}/tests/lockstep/rv64/", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
         addTestsByDir(f"{archVerifDir}/tests/lockstep/priv/rv32/", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
         addTestsByDir(f"{archVerifDir}/tests/lockstep/priv/rv64/", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
+        # Extra tests from riscv-arch-test that should be run as part of the functional coverage suite
+        addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/vm_sv32", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
+        # addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/pmp32", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1) TODO: Add when working in lockstep
+        # addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/pmp64", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1) TODO: Add when working in lockstep
+    elif args.fcov_act:
+        addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
+        addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
     elif args.breker:
         addTestsByDir(WALLY+"/tests/breker/work", "breker", "questa", coverStr, configs, brekerMode=1)
     elif not args.testfloat:
@@ -497,7 +509,7 @@ def main(args):
     # Scale the number of concurrent processes to the number of test cases, but
     # max out at a limited number of concurrent processes to not overwhelm the system
     # right now fcov and nightly use Imperas
-    ImperasDVLicenseCount = 16 if args.fcov or args.nightly else 10000
+    ImperasDVLicenseCount = 16 if args.fcov or args.fcov_act or args.nightly else 10000
     with Pool(processes=min(len(configs),multiprocessing.cpu_count(), ImperasDVLicenseCount)) as pool:
         num_fail = 0
         results = {}
@@ -515,7 +527,7 @@ def main(args):
     # Coverage report
     if args.ccov:
         os.system(f"make -C {regressionDir} QuestaCodeCoverage")
-    if args.fcov or args.breker:
+    if args.fcov or args.fcov_act or args.breker:
         os.system(f"make -C {archVerifDir} merge")
     # Count the number of failures
     if num_fail:

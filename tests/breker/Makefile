@@ -10,7 +10,7 @@ CONSTRAINTS_DIR  := $(WALLY)/tests/breker/constraints
 PLATFORM_YAML    := $(TREKFILES)/platform.yaml
 CUSTOMER_YAML    := $(TREKFILES)/customer.yaml
 TREKSVIP_YAML    := $(BREKER_HOME)/examples/tutorials/svip/treksvip/yaml/treksvip.yaml
-CONSTRAINT_FILES := $(shell find $(CONSTRAINTS_DIR) -type f)
+CONSTRAINT_FILES := $(wildcard $(CONSTRAINTS_DIR)/*.yaml)
 TREKEXE_FLAGS    += --seed 0x # free (0x) or lock (0x1) the seed used for test generation
 TREKSVIP         := source $(TREKFILES)/breker-setup.sh && treksvip -p $(PLATFORM_YAML) -p $(TREKSVIP_YAML) $(TREKEXE_FLAGS)
 
@@ -56,4 +56,4 @@ $(TESTDIR):
 	mkdir -p $(TESTDIR)
 
 clean:
-	rm -rf $(TESTS)
+	rm -rf $(TESTDIR)/*

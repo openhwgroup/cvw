@@ -1,33 +1,15 @@
 # imperas.ic
-# Initialization file for ImperasDV lock step simulation
+# Initialization file for rv64gc ImperasDV lock step simulation
 # David_Harris@hmc.edu 15 August 2024
+# jcarlin@hmc.edu 19 March 2025
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
-#--mpdconsole
-#--gdbconsole
-#--showoverrides
-#--showcommands
+# Base configuration
+--variant RV64GCK # for RV64GC
 
-# Core settings
---override cpu/priv_version=1.12
---override cpu/user_version=20191213
-# arch
---override cpu/mimpid=0x100
---override cpu/mvendorid=0x602
---override cpu/marchid=0x24
---override refRoot/cpu/tvec_align=64
---override refRoot/cpu/envcfg_mask=1   # dh 1/26/24 this should be deleted when ImperasDV is updated to allow envcfg.FIOM to be written
-
-# bit manipulation
+# Bit manipulation
 --override cpu/add_Extensions=B
---override cpu/bitmanip_version=1.0.0
 --override cpu/misa_B_Zba_Zbb_Zbs=T
-
-# More extensions
---override cpu/Zcb=T
---override cpu/Zicond=T
---override cpu/Zfh=T
---override cpu/Zfa=T
 
 # Cache block operations
 --override cpu/Zicbom=T
@@ -37,78 +19,36 @@
 --override cmoz_bytes=64   # Zic64b
 --override lr_sc_grain=8   # Za64rs requires <=64; we use native word size
 
-# 64 KiB continuous huge pages supported
+# Virtual memory
+--override cpu/Sv_modes=768 # SV39 and SV48 supported
+--override cpu/Svadu=T # Enable SVADU hardware update of A/D bits when menvcfg.ADUE=1
+--override cpu/Svinval=T
 --override cpu/Svpbmt=T
 --override cpu/aligned_uncached_PBMT=T # when PBMT designates a page as uncachable, require aligned accesses
---override cpu/Svnapot_page_mask=65536
+--override cpu/Svnapot_page_mask=65536 # 64 KiB continuous huge pages supported
 
-# SV39 and SV48 supported
---override cpu/Sv_modes=768
+# Crypto extensions
+--override cpu/Zkr=F # Zkr entropy source and seed register not supported.
+--override cpu/Zksed=F # ShangMi Crypto not supported
+--override cpu/Zksh=F # ShangMi Crypto not supported
+--override cpu/mnoise_undefined=T # nonratified mnoise register not implemented
 
---override cpu/Svinval=T
-
-
-#  clarify
-#--override refRoot/cpu/mtvec_sext=F
-
---override cpu/tval_ii_code=T
-
-#--override cpu/time_undefined=T
-#--override cpu/cycle_undefined=T
-#--override cpu/instret_undefined=T
-#--override cpu/hpmcounter_undefined=T
-
-# context registers not implemented
-#--override cpu/scontext_undefined=True
-#--override cpu/mcontext_undefined=True
-
-# Disable all features that might want mseccfg or CSRs 7a0-7af
---override cpu/Smepmp_version=none
---override cpu/Smmpm=none
-#--override cpu/Zicfilp=F
---override cpu/trigger_num=0 # disable CSRs 7a0-7a8
-
-# For code coverage, don't produce pseudoinstructions
---override no_pseudo_inst=T
-
-# Show "c." with compressed instructions
---override show_c_prefix=T
-
-# nonratified mnoise register not implemented
---override cpu/mnoise_undefined=T
-
-# mcause and scause only have 4 lsbs of code and 1 msb of interrupt flag
-#--override cpu/ecode_mask=0x8000000F  # for RV32
---override cpu/ecode_mask=0x800000000000000F # for RV64
-
-# Debug mode not yet supported
---override cpu/debug_mode=none
-
-# Zkr entropy source and seed register not supported.
---override cpu/Zkr=F
-
-# ShangMi Crypto not supported
---override cpu/Zksed=F
---override cpu/Zksh=F
-
---override cpu/reset_address=0x80000000
-
---override cpu/unaligned=T  # Zicclsm (should be true)
---override cpu/ignore_non_leaf_DAU=1
---override cpu/wfi_is_nop=T
---override cpu/misa_Extensions_mask=0x0 # MISA not writable
+# Miscellaneous extensions
+--override cpu/Zicond=T
+--override cpu/Zfh=T
+--override cpu/Zfa=T
+--override cpu/Zcb=T
 --override cpu/Sstc=T
 
-# Enable SVADU hardware update of A/D bits when menvcfg.ADUE=1
---override cpu/Svadu=T
-#--override cpu/updatePTEA=F
-#--override cpu/updatePTED=F
+# mcause and scause only have 4 lsbs of code and 1 msb of interrupt flag
+--override cpu/ecode_mask=0x800000000000000F # for RV64
 
+# Misaligned access (Zicclsm) is supported
+--override cpu/unaligned=T
+
+# PMP Configuration
 --override cpu/PMP_registers=16
 --override cpu/PMP_undefined=T
-
-# mstatus.FS is set dirty on any write to a FPR, or when a fp operation signals an exception
---override cpu/mstatus_fs_mode=write_1
 
 # PMA Settings
 # 'r': read access allowed
@@ -135,11 +75,3 @@
 --callcommand refRoot/cpu/setPMA -lo 0x0010060000 -hi 0x00100600FF -attributes " rw-aA- --4- " # GPIO
 --callcommand refRoot/cpu/setPMA -lo 0x0010040000 -hi 0x0010040FFF -attributes " rw-aA- --4- " # SPI
 --callcommand refRoot/cpu/setPMA -lo 0x0080000000 -hi 0x008FFFFFFF -attributes " rwx--- 1248 " # UNCORE_RAM
-
-# Enable the Imperas instruction coverage
-#-extlib    refRoot/cpu/cv=imperas.com/intercept/riscvInstructionCoverage/1.0
-#-override  refRoot/cpu/cv/cover=basic
-#-override  refRoot/cpu/cv/extensions=RV32I
-
-# Store simulator output to logfile
---output imperas.log
