@@ -55,6 +55,9 @@ coverage exclude -scope /dut/core/fpu/fpu/postprocess/flags -linerange [GetLineN
 coverage exclude -scope /dut/core/fpu/fpu/postprocess/flags -linerange [GetLineNum ${SRC}/fpu/postproc/flags.sv "assign Underflow"] -item e 1 -fecexprrow 22
 # Convert int to fp will never underflow
 coverage exclude -scope /dut/core/fpu/fpu/postprocess/cvtshiftcalc -linerange [GetLineNum ${SRC}/fpu/postproc/cvtshiftcalc.sv "assign CvtResUf"] -item e 1 -fecexprrow 4
+# without Q support, the FMT field is guaranteed to be 00, 01, or 10 
+coverage exclude -scope /dut/core/fpu/fpu/fctrl -linerange [GetLineNum ${SRC}/fpu/fctrl.sv "fmv int to fp"] -item 1 3 5
+coverage exclude -scope /dut/core/fpu/fpu/fctrl -linerange [GetLineNum ${SRC}/fpu/fctrl.sv "fmv fp to int"] -item 1 3 5
 
 ##################
 # Cache Exclusions
