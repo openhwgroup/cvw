@@ -411,6 +411,7 @@ coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmp/pmpchecker/pmp/pmpadrdecs[0]
 
 # StallD always equals StallF so LatestUnstalledD is always 0
 coverage exclude -scope /dut/core/hzu -linerange [GetLineNum ${SRC}/hazard/hazard.sv "StallD always equals StallF"] -item 1 4
+coverage exclude -scope /dut/core/hzu -linerange [GetLineNum ${SRC}/hazard/hazard.sv "coverage tag: LatestUnstalledD always 0"] -item e 1 -fecexprrow 2
 
 ####################
 # Privileged
