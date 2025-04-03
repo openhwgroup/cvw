@@ -80,4 +80,15 @@ main:
       sd zero, 0(t0)
       .word 0x00000013
       .word 0x00000013
+
+# test flushing
+      li t0, 0x80100000
+      cbo.flush (t0)
+      li t0, 0x80101000
+      cbo.flush (t0)
+      li t0, 0x80102000
+      cbo.flush (t0)
+      li t0, 0x80103000
+      cbo.flush (t0)
+
       j done
