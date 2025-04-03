@@ -154,7 +154,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
                       7'b11100??: if (Funct3D == 3'b001 & Rs2D == 5'b00000)          
                                                 ControlsD = `FCTRLW'b0_1_10_00_000_0_0_0_0_0; // fclass
                                   else if (Funct3D == 3'b000 & Rs2D == 5'b00000) begin
-                                    if (Fmt[1:0] == 2'b00 | Fmt[1:0] == 2'b10 | (P.XLEN == 64 & Fmt[1:0] == 2'b01)) 
+                                    if (Fmt[1:0] == 2'b00 | Fmt[1:0] == 2'b10 | (P.XLEN == 64 & Fmt[1:0] == 2'b01)) // coverage-tag: fmv fp to int
                                                 ControlsD = `FCTRLW'b0_1_11_00_000_0_0_0_0_0; // fmv.x.w/d/h  fp to int register (double only in RV64)
                                   end else if (P.ZFA_SUPPORTED & P.XLEN == 32 & P.D_SUPPORTED & Funct7D[1:0] == 2'b01 & Funct3D == 3'b000 & Rs2D == 5'b00001) 
                                                 ControlsD = `FCTRLW'b0_1_11_00_000_0_0_0_1_0; // fmvh.x.d  (Zfa) 
@@ -164,7 +164,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
                                                 ControlsD = `FCTRLW'b0_1_11_00_000_0_0_0_1_0; // fmvh.x.q  (Zfa)
                                   // coverage on
                       7'b11110??: if (Funct3D == 3'b000 & Rs2D == 5'b00000) begin
-                                    if (Fmt[1:0] == 2'b00 | Fmt[1:0] == 2'b10 | (P.XLEN == 64 & Fmt[1:0] == 2'b01)) 
+                                    if (Fmt[1:0] == 2'b00 | Fmt[1:0] == 2'b10 | (P.XLEN == 64 & Fmt[1:0] == 2'b01))  // coverage-tag: fmv int to fp
                                                 ControlsD = `FCTRLW'b1_0_00_00_011_0_0_0_0_0; // fmv.w/d/h.x  int to fp reg (double only in RV64)
                                   end else if (P.ZFA_SUPPORTED & Funct3D == 3'b000 & Rs2D == 5'b00001) 
                                                 ControlsD = `FCTRLW'b1_0_00_00_111_0_0_0_1_0; // fli  (Zfa)

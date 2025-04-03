@@ -55,6 +55,9 @@ coverage exclude -scope /dut/core/fpu/fpu/postprocess/flags -linerange [GetLineN
 coverage exclude -scope /dut/core/fpu/fpu/postprocess/flags -linerange [GetLineNum ${SRC}/fpu/postproc/flags.sv "assign Underflow"] -item e 1 -fecexprrow 22
 # Convert int to fp will never underflow
 coverage exclude -scope /dut/core/fpu/fpu/postprocess/cvtshiftcalc -linerange [GetLineNum ${SRC}/fpu/postproc/cvtshiftcalc.sv "assign CvtResUf"] -item e 1 -fecexprrow 4
+# without Q support, the FMT field is guaranteed to be 00, 01, or 10 
+coverage exclude -scope /dut/core/fpu/fpu/fctrl -linerange [GetLineNum ${SRC}/fpu/fctrl.sv "fmv int to fp"] -item 1 3 5
+coverage exclude -scope /dut/core/fpu/fpu/fctrl -linerange [GetLineNum ${SRC}/fpu/fctrl.sv "fmv fp to int"] -item 1 3 5
 
 ##################
 # Cache Exclusions
@@ -405,6 +408,10 @@ coverage exclude -srcfile priorityonehot.sv
 # Excluding pmpadrdecs[0] coverage case for PAgePMPAdrIn being hardwired to 1
 coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker/pmp/pmpadrdecs[0] -linerange [GetLineNum ${SRC}/mmu/pmpadrdec.sv "exclusion-tag: PAgePMPAdrIn"] -item e 1 -fecexprrow 1
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmp/pmpchecker/pmp/pmpadrdecs[0] -linerange [GetLineNum ${SRC}/mmu/pmpadrdec.sv "exclusion-tag: PAgePMPAdrIn"] -item e 1 -fecexprrow 1
+
+# StallD always equals StallF so LatestUnstalledD is always 0
+coverage exclude -scope /dut/core/hzu -linerange [GetLineNum ${SRC}/hazard/hazard.sv "StallD always equals StallF"] -item 1 4
+coverage exclude -scope /dut/core/hzu -linerange [GetLineNum ${SRC}/hazard/hazard.sv "coverage tag: LatestUnstalledD always 0"] -item e 1 -fecexprrow 2
 
 ####################
 # Privileged
