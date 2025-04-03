@@ -409,6 +409,9 @@ coverage exclude -srcfile priorityonehot.sv
 coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker/pmp/pmpadrdecs[0] -linerange [GetLineNum ${SRC}/mmu/pmpadrdec.sv "exclusion-tag: PAgePMPAdrIn"] -item e 1 -fecexprrow 1
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmp/pmpchecker/pmp/pmpadrdecs[0] -linerange [GetLineNum ${SRC}/mmu/pmpadrdec.sv "exclusion-tag: PAgePMPAdrIn"] -item e 1 -fecexprrow 1
 
+# StallD always equals StallF so LatestUnstalledD is always 0
+coverage exclude -scope /dut/core/hzu -linerange [GetLineNum ${SRC}/hazard/hazard.sv "StallD always equals StallF"] -item 1 4
+
 ####################
 # Privileged
 ####################

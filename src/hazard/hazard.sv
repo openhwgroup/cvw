@@ -101,10 +101,8 @@ module hazard (
   assign StallW = StallWCause;
 
   // detect the first stage that is not stalled
-  // coverage off
-  // StallD = StallF so LatestUnstalledD is necessarily 0
-  assign LatestUnstalledD = ~StallD & StallF;
-  // coverage on 
+
+  assign LatestUnstalledD = ~StallD & StallF; // coverage tag: StallD always equals StallF
   assign LatestUnstalledE = ~StallE & StallD;
   assign LatestUnstalledM = ~StallM & StallE;
   assign LatestUnstalledW = ~StallW & StallM;
