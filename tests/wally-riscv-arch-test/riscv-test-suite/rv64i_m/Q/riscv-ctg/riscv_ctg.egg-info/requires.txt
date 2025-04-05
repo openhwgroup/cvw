@@ -1,5 +1,0 @@
-click
-colorlog
-python-constraint
-riscv_isac>=0.14.0
-ruamel.yaml>=0.16.0

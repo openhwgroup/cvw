@@ -1,3 +1,0 @@
-[console_scripts]
-riscv_ctg = riscv_ctg.main:cli
-
