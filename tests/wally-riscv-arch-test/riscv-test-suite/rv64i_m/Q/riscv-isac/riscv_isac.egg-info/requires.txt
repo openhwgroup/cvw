@@ -1,8 +1,0 @@
-click
-colorlog
-gitpython
-pyelftools==0.26
-pytablewriter
-pytest
-pyyaml
-ruamel.yaml>=0.16.0

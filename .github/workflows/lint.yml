@@ -8,8 +8,6 @@ on:
       - 'sim/vcs/run_vcs'
       - '.ruff.toml'
       - '!addins/*'
-      - '!tests/wally-riscv-arch-test/riscv-test-suite/rv64i_m/Q/*'
-      - '!tests/fp/quad/fpdatasetgen.py'
   pull_request:
     paths:
       - '**/*.py'
@@ -17,8 +15,6 @@ on:
       - 'sim/vcs/run_vcs'
       - '.ruff.toml'
       - '!addins/*'
-      - '!tests/wally-riscv-arch-test/riscv-test-suite/rv64i_m/Q/*'
-      - '!tests/fp/quad/fpdatasetgen.py'
 
 jobs:
   lint:
