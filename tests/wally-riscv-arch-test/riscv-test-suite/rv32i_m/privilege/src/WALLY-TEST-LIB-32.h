@@ -89,7 +89,7 @@ cause_instr_access:
     ret
 
 cause_illegal_instr:
-    .word 0x00000000 // 32 bit zero is an illegal instruction
+    .insn 0x00000000 // 32 bit zero is an illegal instruction
     ret
 
 cause_breakpnt:
