@@ -102,8 +102,11 @@ module align import cvw::*;  #(parameter cvw_t P) (
       3'b010: AccessByteOffsetM = {{OFFSET_LEN-2{1'b0}}, IEUAdrM[1:0]}; // word access
       3'b011: if(P.LLEN >= 64) AccessByteOffsetM = {{OFFSET_LEN-3{1'b0}}, IEUAdrM[2:0]}; // double access
               else             AccessByteOffsetM = '0;                                    // shouldn't happen
+      // coverage off
+      // RV64GC doesn't support Q
       3'b100: if(P.LLEN == 128) AccessByteOffsetM = IEUAdrM[OFFSET_LEN-1:0]; // quad access
               else              AccessByteOffsetM = IEUAdrM[OFFSET_LEN-1:0];
+      // coverage on
       default: AccessByteOffsetM = '0;                                        // shouldn't happen
     endcase
     case (Funct3M[1:0]) 
