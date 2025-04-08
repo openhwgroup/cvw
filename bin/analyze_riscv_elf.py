@@ -31,10 +31,10 @@
 ## and limitations under the License.
 ################################################################################################
 
-from collections import Counter
+import re
 import subprocess
 import sys
-import re
+from collections import Counter
 
 def disassemble_elf(elf_path):
     try:
