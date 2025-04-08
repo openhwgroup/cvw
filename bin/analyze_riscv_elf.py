@@ -36,6 +36,7 @@ import subprocess
 import sys
 from collections import Counter
 
+
 def disassemble_elf(elf_path):
     try:
         result = subprocess.run(
