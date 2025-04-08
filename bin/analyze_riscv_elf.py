@@ -34,7 +34,6 @@
 import re
 import subprocess
 import sys
-import os
 from collections import Counter
 
 def disassemble_elf(elf_path):
