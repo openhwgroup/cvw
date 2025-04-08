@@ -10,7 +10,7 @@
 ##          along with their frequency. The script disassembles the ELF using
 ##          riscv64-unknown-elf-objdump, filters real instructions (excluding
 ##          pseudo-ops and section headers), and displays a histogram of 
-##          instruction use.Simulate a L1 D$ or I$ for comparison with Wally
+##          instruction use.
 ##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
 ## https://github.com/openhwgroup/cvw
