@@ -27,6 +27,7 @@
 
 import sys
 
+
 def usage():
   print("Usage: ./probes list_of_probes outfile")
 
@@ -55,19 +56,19 @@ def convertLine(x):
   return tuple(temp)
 
 def probeBits( probe ):
-  str = ''
+  string = ''
 
   if (probe[1] > 1):
     for i in range(probe[1]):
       if i != (probe[1]-1):
-        str = str + f"{{{probe[0]}[{i}]}} "
+        string = string + f"{{{probe[0]}[{i}]}} "
       else:
-        str = str + f"{{{probe[0]}[{i}]}} "
+        string = string + f"{{{probe[0]}[{i}]}} "
 
   else:
-    str = f'{{{probe[0]}}}'
+    string = f'{{{probe[0]}}}'
 
-  return str
+  return string
 
 def printProbe( probe, i ):
   bits = probeBits(probe)

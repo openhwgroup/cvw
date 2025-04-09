@@ -1,6 +1,5 @@
 # Lint all .py files and extra python scripts without extensions
-include = ["*.py", "bin/wsim", "bin/regression-wally", "bin/iterelf", "sim/vcs/run_vcs"]
-exclude = ["addins/*", "tests/fp/quad/fpdatasetgen.py"]
+exclude = ["addins/*"]
 
 # Target oldest version of Python used (Python 3.9 for Ubuntu 20.04 LTS)
 target-version = "py39"
