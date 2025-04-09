@@ -2,6 +2,7 @@ adjustText>=1.2
 lief>=0.14.1
 Markdown>=3.6
 matplotlib>=3.9.0
+pre-commit>=4.0.0
 PyYAML>=5.2
 riscof @ git+https://github.com/riscv/riscof.git
 riscv-config>=3.18.3
