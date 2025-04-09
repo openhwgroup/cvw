@@ -51,4 +51,9 @@ else
     exit 1
 fi
 
+if [ ! -e "${WALLY}/.git/hooks/pre-commit" ]; then
+    echo "Installing pre-commit hooks"
+    pre-commit install
+fi
+
 echo "setup done"

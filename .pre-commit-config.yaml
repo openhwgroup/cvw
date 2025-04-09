@@ -1,0 +1,41 @@
+# .pre-commit-config.yaml
+# jcarlin@hmc.edu 8 April 2025
+# Pre-commit hook configuration file for CVW
+
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+exclude: addins/
+minimum_pre_commit_version: "4.0.0"
+repos:
+  # Standard pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-docstring-first
+      # - id: check-executables-have-shebangs
+      # - id: check-shebang-scripts-are-executable
+      - id: check-symlinks
+        exclude: bin/sim_bp # symlink to compiled executable
+      - id: requirements-txt-fixer
+        files: requirements.txt
+      # - id: end-of-file-fixer
+      # - id: trailing-whitespace
+      #   args: [--markdown-linebreak-ext=md]
+      - id: check-merge-conflict
+        args: ["--assume-in-merge"]
+        exclude: \.adoc$ # sections titles Level 6 "=======" get flagged otherwise
+      - id: check-json
+      - id: check-toml
+      - id: check-yaml
+
+  # Ruff python linter
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.4
+    hooks:
+      # Run the linter.
+      - id: ruff
+        args: [ --fix ]

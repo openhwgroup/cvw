@@ -26,11 +26,12 @@
 
 import sys
 
+
 def usage():
-	print("Usage: ./probes name width probenum")
+  print("Usage: ./probes name width probenum")
 
 def header():
-	return """create_debug_core u_ila_0 ila
+  return """create_debug_core u_ila_0 ila
 
 set_property C_DATA_DEPTH 16384 [get_debug_cores u_ila_0]
 set_property C_TRIGIN_EN false [get_debug_cores u_ila_0]
@@ -49,49 +50,47 @@ endgroup
 connect_debug_port u_ila_0/clk [get_nets [list xlnx_ddr4_c0/inst/u_ddr4_infrastructure/addn_ui_clkout1 ]]"""
 
 def convertLine(x):
-	temp = x.split()
-	temp[1] = int(temp[1])
-	return tuple(temp)
+  temp = x.split()
+  temp[1] = int(temp[1])
+  return tuple(temp)
 
 def probeBits( probe ):
-	str = ''
+  string = ''
 
-	if (probe[1] > 1):
-		for i in range(probe[1]):
-			if i != (probe[1]-1):
-				str = str + f"{{{probe[0]}[{i}]}} "
-			else:
-				str = str + f"{{{probe[0]}[{i}]}} "
+  if (probe[1] > 1):
+    for i in range(probe[1]):
+      if i != (probe[1]-1):
+        string = string + f"{{{probe[0]}[{i}]}} "
+      else:
+        string = string + f"{{{probe[0]}[{i}]}} "
 
-	else:
-		str = f'{{{probe[0]}}}'
+  else:
+    string = f'{{{probe[0]}}}'
 
-	return str
+  return string
 
 def printProbe( probe, i ):
-	bits = probeBits(probe)
+  bits = probeBits(probe)
 
-	return (
-	    f'create_debug_port u_ila_0 probe\n'
-	    f'set_property port_width {probe[1]} [get_debug_ports u_ila_0/probe{i}]\n'
-	    f'set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe{i}]\n'
-	    f'connect_debug_port u_ila_0/probe{i} [get_nets [list {bits}]]\n\n'
-	)
+  return (
+      f'create_debug_port u_ila_0 probe\n'
+      f'set_property port_width {probe[1]} [get_debug_ports u_ila_0/probe{i}]\n'
+      f'set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe{i}]\n'
+      f'connect_debug_port u_ila_0/probe{i} [get_nets [list {bits}]]\n\n'
+  )
 
 def main(args):
-	if (len(args) != 3):
-		usage()
+  if (len(args) != 3):
+    usage()
 
-	name = args[0]
-	width = int(args[1])
-	probeNum = int(args[2])
+  name = args[0]
+  width = int(args[1])
+  probeNum = int(args[2])
 
 
-	probe = (name, width)
+  probe = (name, width)
 
-	print(printProbe(probe, probeNum))
+  print(printProbe(probe, probeNum))
 
 if __name__ == '__main__':
-	main(sys.argv[1:])
-
-	
+  main(sys.argv[1:])

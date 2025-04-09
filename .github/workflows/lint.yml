@@ -18,15 +18,18 @@ on:
 
 jobs:
   lint:
-    name: Python ${{matrix.version}} lint
+    name: Lint (Python ${{matrix.version}})
     strategy:
       matrix:
         version: [39, 312] # Test on oldest and newest verions used in wally-package-install.sh
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+
     - name: Set Python version
       run: sed -i '/^target-version/c\target-version = "py${{matrix.version}}"' .ruff.toml
-    - name: Run ruff
-      uses: astral-sh/ruff-action@v3
+
+    - name: Ensure pre-commit checks pass
+      run: python3 -m pip install pre-commit && pre-commit run --all-files --show-diff-on-failure --color=always
