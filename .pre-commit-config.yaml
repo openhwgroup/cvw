@@ -8,6 +8,7 @@
 # See https://pre-commit.com/hooks.html for more hooks
 minimum_pre_commit_version: "4.0.0"
 repos:
+  # Standard pre-commit hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
@@ -29,3 +30,11 @@ repos:
       - id: check-json
       - id: check-toml
       - id: check-yaml
+
+  # Ruff python linter
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.4
+    hooks:
+      # Run the linter.
+      - id: ruff
+        args: [ --fix ]
