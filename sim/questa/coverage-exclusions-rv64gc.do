@@ -63,17 +63,17 @@ coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtiter/iterations[0]/st
 coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtiter/iterations[1]/stage/fdivsqrtstage/uslc4 -linerange [GetLineNum ${SRC}/fpu/fdivsqrt/fdivsqrtuslc4cmp.sv "assign sqrtspecial"] -item e 1 -fecexprrow 6
 coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtiter/iterations[2]/stage/fdivsqrtstage/uslc4 -linerange [GetLineNum ${SRC}/fpu/fdivsqrt/fdivsqrtuslc4cmp.sv "assign sqrtspecial"] -item e 1 -fecexprrow 1 2 4 6
 coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtiter/iterations[3]/stage/fdivsqrtstage/uslc4 -linerange [GetLineNum ${SRC}/fpu/fdivsqrt/fdivsqrtuslc4cmp.sv "assign sqrtspecial"] -item e 1 -fecexprrow 1 2 4 6
-
+# outside of iterations 1 and 0, (j0 | j1) is always 0 so sqrtspecial is always 0
+# need to exclude scenarios where sqrtspecial is 1 for the ternary operators that assign mk2, mk1, mk0, and mkm1
 coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtiter/iterations[2]/stage/fdivsqrtstage/uslc4 -linerange [GetLineNum ${SRC}/fpu/fdivsqrt/fdivsqrtuslc4cmp.sv "assign mk2"]  -item b 1
 coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtiter/iterations[2]/stage/fdivsqrtstage/uslc4 -linerange [GetLineNum ${SRC}/fpu/fdivsqrt/fdivsqrtuslc4cmp.sv "assign mk1"]  -item b 1
 coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtiter/iterations[2]/stage/fdivsqrtstage/uslc4 -linerange [GetLineNum ${SRC}/fpu/fdivsqrt/fdivsqrtuslc4cmp.sv "assign mk0"]  -item b 1
 coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtiter/iterations[2]/stage/fdivsqrtstage/uslc4 -linerange [GetLineNum ${SRC}/fpu/fdivsqrt/fdivsqrtuslc4cmp.sv "assign mkm1"] -item b 1
-
 coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtiter/iterations[3]/stage/fdivsqrtstage/uslc4 -linerange [GetLineNum ${SRC}/fpu/fdivsqrt/fdivsqrtuslc4cmp.sv "assign mk2"]  -item b 1
 coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtiter/iterations[3]/stage/fdivsqrtstage/uslc4 -linerange [GetLineNum ${SRC}/fpu/fdivsqrt/fdivsqrtuslc4cmp.sv "assign mk1"]  -item b 1
 coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtiter/iterations[3]/stage/fdivsqrtstage/uslc4 -linerange [GetLineNum ${SRC}/fpu/fdivsqrt/fdivsqrtuslc4cmp.sv "assign mk0"]  -item b 1
 coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtiter/iterations[3]/stage/fdivsqrtstage/uslc4 -linerange [GetLineNum ${SRC}/fpu/fdivsqrt/fdivsqrtuslc4cmp.sv "assign mkm1"] -item b 1
-
+# outside of iteration 0, j0 is always 0 so the ternary operator that assigns mkj1 cannot be fully covered
 coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtiter/iterations[3]/stage/fdivsqrtstage/uslc4 -linerange [GetLineNum ${SRC}/fpu/fdivsqrt/fdivsqrtuslc4cmp.sv "assign mkj1"] -item b 1
 coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtiter/iterations[2]/stage/fdivsqrtstage/uslc4 -linerange [GetLineNum ${SRC}/fpu/fdivsqrt/fdivsqrtuslc4cmp.sv "assign mkj1"] -item b 1
 coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtiter/iterations[1]/stage/fdivsqrtstage/uslc4 -linerange [GetLineNum ${SRC}/fpu/fdivsqrt/fdivsqrtuslc4cmp.sv "assign mkj1"] -item b 1
