@@ -51,6 +51,8 @@ module csru import cvw::*;  #(parameter cvw_t P) (
   logic                     WriteFFLAGSM;
   
   // Write enables
+  // Explicitly checking STATUS_FS != 0 is redundant since the instruction traps otherwise, 
+  // causing CSRWriteM to go low, but it is left here for safety
   assign WriteFRMM    = CSRUWriteM & (STATUS_FS != 2'b00) & (CSRAdrM == FRM | CSRAdrM == FCSR);
   assign WriteFFLAGSM = CSRUWriteM & (STATUS_FS != 2'b00) & (CSRAdrM == FFLAGS | CSRAdrM == FCSR);
 
