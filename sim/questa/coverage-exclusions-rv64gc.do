@@ -439,6 +439,12 @@ coverage exclude -scope /dut/core/hzu -linerange [GetLineNum ${SRC}/hazard/hazar
 # Instruction Misaligned never asserted because compresssed instructions are accepted
 coverage exclude -scope /dut/core/priv/priv/trap -linerange [GetLineNum ${SRC}/privileged/trap.sv "assign ExceptionM"] -item e 1 -fecexprrow 2
 
+# Attempting to access fflags, frm, fcsr with mstatus.FS = 0 traps, so checking for (STATUS_FS != 2'b00)
+# before enabling writes to these CSRs is redundant and uncoverable
+coverage exclude -scope /dut/core/priv/priv/csr/csru/csru -linerange [GetLineNum ${SRC}/privileged/csru.sv "assign WriteFRMM"] -item e 1 -fecexprrow 3
+coverage exclude -scope /dut/core/priv/priv/csr/csru/csru -linerange [GetLineNum ${SRC}/privileged/csru.sv "assign WriteFFLAGSM"] -item e 1 -fecexprrow 3
+
+
 ####################
 # EBU
 ####################
