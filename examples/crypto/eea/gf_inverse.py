@@ -67,8 +67,8 @@ def gf_inverse(a, modulus):
 if __name__ == "__main__":
     import sys
     if len(sys.argv) != 3:
-        print("Usage: python gf_inverse_parametric.py <value> <modulus>")
-        print("Example: python gf_inverse_parametric.py 0x53 0x11B")
+        print("Usage: python gf_inverse.py <value> <modulus>")
+        print("Example: python gf_inverse.py 0x53 0x11B")
         sys.exit(1)
 
     value = int(sys.argv[1], 0)
