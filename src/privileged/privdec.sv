@@ -72,7 +72,7 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   assign ebreakM =    PrivilegedM & (InstrM[31:20] == 12'b000000000001) & rs1zeroM;
   assign wfiM =       PrivilegedM & (InstrM[31:20] == 12'b000100000101) & rs1zeroM;
   assign sfencevmaM = PrivilegedM & (InstrM[31:25] ==  7'b0001001 | invalM) & 
-                      (PrivilegeModeW == P.M_MODE | (PrivilegeModeW == P.S_MODE & ~STATUS_TVM)); 
+                      (PrivilegeModeW == P.M_MODE | (PrivilegeModeW == P.S_MODE & ~STATUS_TVM)) & P.VIRTMEM_SUPPORTED; 
 
   ///////////////////////////////////////////
   // WFI timeout Privileged Spec 3.1.6.5
