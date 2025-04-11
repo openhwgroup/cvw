@@ -168,7 +168,7 @@ module decompress import cvw::*;  #(parameter cvw_t P) (
                   else
                     if (rs2 == 5'b00000) begin
                       if (rds1 == 5'b00000)             LInstrD = {1'b1, 12'b1, 5'b00000, 3'b000, 5'b00000, 7'b1110011};                  // c.ebreak
-                      else if (rds1 != 5'b0)            LInstrD = {1'b1, 12'b0, rds1, 3'b000, 5'b00001, 7'b1100111};                      // c.jalr
+                      else                              LInstrD = {1'b1, 12'b0, rds1, 3'b000, 5'b00001, 7'b1100111};                      // c.jalr
                     end else
                       if (rds1 != 0)                    LInstrD = {1'b1, 7'b0000000, rs2, rds1, 3'b000, rds1, 7'b0110011};                // c.add
                       else                              LInstrD = {1'b1, 25'b0, 7'b0010011};                                              // c.add with rd = 0 is a HINT, treated as nop, even if it is a C.NTL
