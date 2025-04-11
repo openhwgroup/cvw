@@ -164,7 +164,7 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
           STATUS_MPIE <= STATUS_MIE;
           STATUS_MIE  <= 1'b0;
           STATUS_MPP  <= PrivilegeModeW;
-        end else begin // supervisor mode
+        end else if (P.S_SUPPORTED) begin // supervisor mode
           STATUS_SPIE <= STATUS_SIE;
           STATUS_SIE  <= 1'b0;
           STATUS_SPP  <= PrivilegeModeW[0];
@@ -184,7 +184,7 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
         STATUS_TW_INT   <= CSRWriteValM[21];
         STATUS_TVM_INT  <= CSRWriteValM[20];
         STATUS_MXR_INT  <= CSRWriteValM[19];
-        STATUS_SUM_INT  <= CSRWriteValM[18];
+        STATUS_SUM_INT  <= P.VIRTMEM_SUPPORTED & CSRWriteValM[18];
         STATUS_MPRV_INT <= CSRWriteValM[17];
         STATUS_FS_INT   <= CSRWriteValM[14:13];
         STATUS_MPP      <= STATUS_MPP_NEXT;
@@ -204,7 +204,7 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
       // coverage on
       end else if (WriteSSTATUSM) begin // write a subset of the STATUS bits
         STATUS_MXR_INT  <= CSRWriteValM[19];
-        STATUS_SUM_INT  <= CSRWriteValM[18];
+        STATUS_SUM_INT  <= P.VIRTMEM_SUPPORTED & CSRWriteValM[18];
         STATUS_FS_INT   <= CSRWriteValM[14:13];
         STATUS_SPP      <= P.S_SUPPORTED & CSRWriteValM[8];
         STATUS_SPIE     <= P.S_SUPPORTED & CSRWriteValM[5];
