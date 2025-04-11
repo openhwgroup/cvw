@@ -2,9 +2,12 @@ Extended Euclidean Algorithm
 
 EEA Cycle Estimates
 
-Main loop body: 25
-swap_and_negate: 22
-gf_degree: 10
+Main loop body: 25 (N times)
+swap_and_negate: 22 (S times)
+gf_degree: 10 (twice per loop)
+Number of Loops: N
+
+\ext{Total Cycles} = N \times (25 + 2 \times 10) + S \times 22
 
 Pseuo-Code
 
