@@ -1,8 +1,6 @@
-//
-// gf_inverse.py
-// Extended Euclidean Algorithm
-// james.stine@okstate.edu 8 April 2025
-//
+# gf_inverse.py
+# Extended Euclidean Algorithm
+# james.stine@okstate.edu 8 April 2025
 
 def gf_mul(a, b, modulus):
     result = 0
