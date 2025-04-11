@@ -274,9 +274,7 @@ set line [GetLineNum ${SRC}/mmu/mmu.sv "ExecuteAccessF \\| ReadAccessM"]
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 1,3,4
 set line [GetLineNum ${SRC}/mmu/mmu.sv "ReadAccessM & ~WriteAccessM"] 
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 2-4
-set line [GetLineNum ${SRC}/mmu/mmu.sv "assign AmoAccessM"] 
-coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1
-set line [GetLineNum ${SRC}/mmu/mmu.sv "assign AmoMisalignedCausesAccessFaultM"] 
+set line [GetLineNum ${SRC}/mmu/mmu.sv "assign AtomicMisalignedCausesAccessFaultM"] 
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1
 set line [GetLineNum ${SRC}/mmu/mmu.sv "DataMisalignedM & WriteAccessM"] 
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 1,2,4
