@@ -5,7 +5,7 @@ FFFFFFFF # stimecmp readback
 00000000 # mtval of faulting instruction address (0x0)
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000002 # mcause from an Illegal instruction
-00000000 # mtval of faulting instruction (0x0)
+FFFFFFFF # mtval of faulting instruction (0x11111111)
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000003 # mcause from Breakpoint
 80000168 # mtval of breakpoint instruction adress
@@ -61,7 +61,7 @@ FFFFFFFF # stimecmp readback
 00000000 # mtval of faulting instruction address (0x0)
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000002 # mcause from an Illegal instruction
-00000000 # mtval of faulting instruction (0x0)
+FFFFFFFF # stval of faulting instruction (0xFFFFFFFF)
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000003 # mcause from Breakpoint
 80000168 # mtval of breakpoint instruction adress

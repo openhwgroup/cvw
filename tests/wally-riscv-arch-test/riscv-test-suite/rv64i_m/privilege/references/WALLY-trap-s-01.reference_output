@@ -8,13 +8,13 @@
 00000000 # skipping instruction address fault since they're impossible with compressed instrs enabled
 00000001 # scause from an instruction access fault
 00000000
-00000000 # stval of faulting instruction address (0x0)
+00000000 # stval of faulting instruction address (0x00000000)
 00000000
 00000800 # masked out mstatus.mpp = 1, mstatus.MPIE = 0, and mstatus.MIE = 0
 00000000
 00000002 # scause from an Illegal instruction
 00000000
-00000000 # stval of faulting instruction (0x0)
+FFFFFFFF # stval of faulting instruction (0xFFFFFFFF)
 00000000
 00000800 # masked out mstatus.mpp = 1, mstatus.MPIE = 0, and mstatus.MIE = 0
 00000000
@@ -116,7 +116,7 @@
 00000000
 00000002 # scause from an Illegal instruction
 00000000
-00000000 # stval of faulting instruction (0x0)
+FFFFFFFF # stval of faulting instruction (0xFFFFFFFF)
 00000000
 00000120 # masked out sstatus.SPP = 1, sstatus.SPIE = 1, and sstatus.SIE = 0
 00000000
