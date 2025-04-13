@@ -346,6 +346,11 @@ coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLi
 coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLineNum ${SRC}/mmu/pmpchecker.sv "exclusion-tag: immu-pmpcboz"] 
 coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLineNum ${SRC}/mmu/pmpchecker.sv "exclusion-tag: immu-pmpcboaccess"] 
 
+# IMMU PMP only makes 4-byte accesses
+coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLineNum ${SRC}/mmu/pmpchecker.sv "SizeBytesMinus1 = 3'd0"]  -item bs 1
+coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLineNum ${SRC}/mmu/pmpchecker.sv "SizeBytesMinus1 = 3'd1"]  -item bs 1
+coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLineNum ${SRC}/mmu/pmpchecker.sv "SizeBytesMinus1 = 3'd7"]  -item bs 1
+
 # No irom
 set line [GetLineNum ${SRC}/ifu/ifu.sv "~ITLBMissF & ~CacheableF & ~SelIROM"] 
 coverage exclude -scope /dut/core/ifu -linerange $line-$line -item c 1 -feccondrow 6
