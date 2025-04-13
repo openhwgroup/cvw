@@ -1,6 +1,6 @@
 ///////////////////////////////////////////
-// WALLY-PERIPH.S
-// 64 bit version
+// WALLY-PERIPH-S.S
+// 324 bit version including SEIP tests that require supervisor mode
 //
 // Ben Bracker (bbracker@hmc.edu)
 //
@@ -24,7 +24,6 @@
 #include "arch_test.h"
 
 RVTEST_ISA("RV32I_Zicsr")
-// this test is blocked, it won't build or run. To unblock it remove the check ISA:=regex(BLOCKED); 
 RVTEST_CASE(0,"//check ISA:=regex(.*32.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;def NO_SAIL=True",periph)
 
 .section .text.init
