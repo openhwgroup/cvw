@@ -225,9 +225,6 @@ main_code: #####
     # load address of trap handler
     la t0, trap_handler
     csrrw x0, mtvec, t0
-    # delegate all external interrupts to machine mode
-    li t0, 0xD00
-    csrrc x0, mideleg, t0
     # set MIE
     li t0, 0x8
     csrrs x0, mstatus, t0
