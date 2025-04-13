@@ -82,16 +82,16 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
 
   // extract values to write to upper status register on 64/32-bit access
   if (P.XLEN==64) begin:upperstatus
-    assign nextMBE = CSRWriteValM[37] & P.BIGENDIAN_SUPPORTED;
-    assign nextSBE = CSRWriteValM[36] & P.S_SUPPORTED & P.BIGENDIAN_SUPPORTED;
+    assign nextMBE = P.BIGENDIAN_SUPPORTED & CSRWriteValM[37];
+    assign nextSBE = P.S_SUPPORTED & P.BIGENDIAN_SUPPORTED & CSRWriteValM[36];
   end else begin:upperstatus
-    assign nextMBE = STATUS_MBE;
-    assign nextSBE = STATUS_SBE;
+    assign nextMBE = P.BIGENDIAN_SUPPORTED & STATUS_MBE;
+    assign nextSBE = P.S_SUPPORTED & P.BIGENDIAN_SUPPORTED & STATUS_SBE;
   end
 
   // hardwired STATUS bits
   assign STATUS_TSR  = P.S_SUPPORTED & STATUS_TSR_INT; // override reigster with 0 if supervisor mode not supported
-  assign STATUS_TW   = (P.S_SUPPORTED | P.U_SUPPORTED) & STATUS_TW_INT; // override register with 0 if only machine mode supported
+  assign STATUS_TW   = P.U_SUPPORTED & STATUS_TW_INT; // override register with 0 if only machine mode supported
   assign STATUS_TVM  = P.S_SUPPORTED & STATUS_TVM_INT; // override reigster with 0 if supervisor mode not supported
   assign STATUS_MXR  = P.S_SUPPORTED & STATUS_MXR_INT; // override reigster with 0 if supervisor mode not supported
   // SXL and UXL bits only matter for RV64.  Set to 10 for RV64 if mode is supported, or 0 if not
@@ -151,7 +151,7 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
       STATUS_SPIE     <= 1'b0; 
       STATUS_MIE      <= 1'b0; 
       STATUS_SIE      <= 1'b0; 
-      STATUS_MBE      <=1'b 0;
+      STATUS_MBE      <= 1'b0;
       STATUS_SBE      <= 1'b0;
       STATUS_UBE      <= 1'b0;
     end else if (~StallW) begin
@@ -164,7 +164,7 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
           STATUS_MPIE <= STATUS_MIE;
           STATUS_MIE  <= 1'b0;
           STATUS_MPP  <= PrivilegeModeW;
-        end else begin // supervisor mode
+        end else if (P.S_SUPPORTED) begin // supervisor mode
           STATUS_SPIE <= STATUS_SIE;
           STATUS_SIE  <= 1'b0;
           STATUS_SPP  <= PrivilegeModeW[0];
@@ -174,18 +174,18 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
         STATUS_MPIE     <= 1'b1; // 
         STATUS_MPP      <= P.U_SUPPORTED ? P.U_MODE : P.M_MODE; // set MPP to lowest supported privilege level
         STATUS_MPRV_INT <= STATUS_MPRV_INT & (STATUS_MPP == P.M_MODE); // page 21 of privileged spec.
-      end else if (sretM) begin
+      end else if (sretM & P.S_SUPPORTED) begin
         STATUS_SIE      <= STATUS_SPIE; // restore global interrupt enable
         STATUS_SPIE     <= P.S_SUPPORTED; 
         STATUS_SPP      <= 1'b0; // set SPP to lowest supported privilege level to catch bugs
         STATUS_MPRV_INT <= 1'b0; // always clear MPRV
       end else if (WriteMSTATUSM) begin
-        STATUS_TSR_INT  <= CSRWriteValM[22];
-        STATUS_TW_INT   <= CSRWriteValM[21];
-        STATUS_TVM_INT  <= CSRWriteValM[20];
-        STATUS_MXR_INT  <= CSRWriteValM[19];
-        STATUS_SUM_INT  <= CSRWriteValM[18];
-        STATUS_MPRV_INT <= CSRWriteValM[17];
+        STATUS_TSR_INT  <= P.S_SUPPORTED & CSRWriteValM[22];
+        STATUS_TW_INT   <= P.U_SUPPORTED & CSRWriteValM[21];
+        STATUS_TVM_INT  <= P.S_SUPPORTED & CSRWriteValM[20];
+        STATUS_MXR_INT  <= P.S_SUPPORTED & CSRWriteValM[19];
+        STATUS_SUM_INT  <= P.VIRTMEM_SUPPORTED & CSRWriteValM[18];
+        STATUS_MPRV_INT <= P.U_SUPPORTED & CSRWriteValM[17];
         STATUS_FS_INT   <= CSRWriteValM[14:13];
         STATUS_MPP      <= STATUS_MPP_NEXT;
         STATUS_SPP      <= P.S_SUPPORTED & CSRWriteValM[8];
@@ -193,23 +193,23 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
         STATUS_SPIE     <= P.S_SUPPORTED & CSRWriteValM[5];
         STATUS_MIE      <= CSRWriteValM[3];
         STATUS_SIE      <= P.S_SUPPORTED & CSRWriteValM[1];
-        STATUS_UBE      <= CSRWriteValM[6]  & P.U_SUPPORTED & P.BIGENDIAN_SUPPORTED;
+        STATUS_UBE      <= P.U_SUPPORTED & P.BIGENDIAN_SUPPORTED & CSRWriteValM[6];
         STATUS_MBE      <= nextMBE;
         STATUS_SBE      <= nextSBE;
       // coverage off
       // MSTATUSH only exists in 32-bit configurations, will not be hit on rv64gc
-      end else if (WriteMSTATUSHM) begin
-        STATUS_MBE      <= CSRWriteValM[5] & P.BIGENDIAN_SUPPORTED;
-        STATUS_SBE      <= CSRWriteValM[4] & P.S_SUPPORTED & P.BIGENDIAN_SUPPORTED;
+      end else if ((P.XLEN == 32) & WriteMSTATUSHM) begin
+        STATUS_MBE      <= P.BIGENDIAN_SUPPORTED & CSRWriteValM[5];
+        STATUS_SBE      <= P.S_SUPPORTED & P.BIGENDIAN_SUPPORTED & CSRWriteValM[4];
       // coverage on
-      end else if (WriteSSTATUSM) begin // write a subset of the STATUS bits
-        STATUS_MXR_INT  <= CSRWriteValM[19];
-        STATUS_SUM_INT  <= CSRWriteValM[18];
+      end else if (P.S_SUPPORTED & WriteSSTATUSM) begin // write a subset of the STATUS bits
+        STATUS_MXR_INT  <= P.S_SUPPORTED & CSRWriteValM[19];
+        STATUS_SUM_INT  <= P.VIRTMEM_SUPPORTED & CSRWriteValM[18];
         STATUS_FS_INT   <= CSRWriteValM[14:13];
         STATUS_SPP      <= P.S_SUPPORTED & CSRWriteValM[8];
         STATUS_SPIE     <= P.S_SUPPORTED & CSRWriteValM[5];
         STATUS_SIE      <= P.S_SUPPORTED & CSRWriteValM[1];
-        STATUS_UBE      <= CSRWriteValM[6] & P.U_SUPPORTED & P.BIGENDIAN_SUPPORTED;
+        STATUS_UBE      <= P.U_SUPPORTED & P.BIGENDIAN_SUPPORTED & CSRWriteValM[6];
       end else if (FRegWriteM | WriteFRMM | SetOrWriteFFLAGSM) STATUS_FS_INT <= 2'b11; 
     end
 endmodule
