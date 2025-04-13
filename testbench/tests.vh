@@ -3584,6 +3584,7 @@ string wally32priv[] = '{
   "rv32i_m/privilege/src/WALLY-endianness-01.S",
   "rv32i_m/privilege/src/WALLY-satp-invalid-01.S",
   // These peripherals are here instead of wally32periph because they don't work on rv32imc, which lacks a PMP register to configure
+  "rv32i_m/privilege/src/WALLY-periph-s-01.S",
   "rv32i_m/privilege/src/WALLY-gpio-01.S",
   "rv32i_m/privilege/src/WALLY-clint-01.S",
   "rv32i_m/privilege/src/WALLY-uart-01.S",
