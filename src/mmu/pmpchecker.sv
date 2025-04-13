@@ -66,6 +66,7 @@ module pmpchecker import cvw::*;  #(parameter cvw_t P) (
   if (P.PMP_ENTRIES > 0) begin: pmp // prevent complaints about array of no elements when PMP_ENTRIES = 0
     pmpadrdec #(P) pmpadrdecs[P.PMP_ENTRIES-1:0](
       .PhysicalAddress, 
+      .Size,
       .PMPCfg(PMPCFG_ARRAY_REGW),
       .PMPAdr(PMPADDR_ARRAY_REGW),
       .FirstMatch,

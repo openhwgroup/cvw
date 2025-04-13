@@ -194,7 +194,6 @@ string arch32pmp[] = '{
   "rv32i_m/pmp32/src/pmp-TOR-X.S"
 };
 
-// Tests commented out pending riscv-arch-test issue #588
 string arch64pmp[] = '{
   `RISCVARCHTEST,
   "rv64i_m/pmp/src/pmp64-CSR-ALL-MODES.S",
@@ -203,10 +202,10 @@ string arch64pmp[] = '{
   "rv64i_m/pmp/src/pmp64-NA4-U.S",
   "rv64i_m/pmp/src/pmp64-NAPOT-M.S",
   "rv64i_m/pmp/src/pmp64-NAPOT-S.S",
-  "rv64i_m/pmp/src/pmp64-NAPOT-U.S"
-  // "rv64i_m/pmp/src/pmp64-TOR-M.S", TODO: Reenable when Wally top of PMP region bug is fixed
-  // "rv64i_m/pmp/src/pmp64-TOR-S.S",
-  // "rv64i_m/pmp/src/pmp64-TOR-U.S"
+  "rv64i_m/pmp/src/pmp64-NAPOT-U.S",
+  "rv64i_m/pmp/src/pmp64-TOR-M.S",
+  "rv64i_m/pmp/src/pmp64-TOR-S.S",
+  "rv64i_m/pmp/src/pmp64-TOR-U.S"
 };
 
 string arch32vm_sv32[] = '{

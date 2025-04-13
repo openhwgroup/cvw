@@ -33,6 +33,7 @@
 
 module pmpadrdec import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.PA_BITS-1:0]  PhysicalAddress,
+  input  logic [1:0]            Size,
   input  logic [7:0]            PMPCfg,
   input  logic [P.PA_BITS-3:0]  PMPAdr,
   input  logic                  FirstMatch,
@@ -52,7 +53,7 @@ module pmpadrdec import cvw::*;  #(parameter cvw_t P) (
   logic                         PAltPMPAdr;
   logic [P.PA_BITS-1:0]         CurrentAdrFull;
   logic [1:0]                   AdrMode;
-  logic [P.PA_BITS-1:0]         PMPTop1;
+  logic [P.PA_BITS-1:0]         PMPTop1, PMPTopTOR, PMPTopNaturallyAligned;
  
   assign AdrMode = PMPCfg[4:3];
 
@@ -83,10 +84,12 @@ module pmpadrdec import cvw::*;  #(parameter cvw_t P) (
                  1'b0;
 
   // Report top of region for first matching region
-  assign PMPTop1 = {PMPAdr,2'b00} | NAMask; // top of the pmp region.  All 1s in the lower bits.  Used to check the address doesn't pass the top
+  // PMP should match but fail if the size is too big (8-byte accesses spanning to TOR or NA4 region)
+  assign PMPTopTOR = {PMPAdr-1,  2'b11}; // TOR goes to (pmpaddr << 2) - 1
+  assign PMPTopNaturallyAligned = {PMPAdr,2'b00} | NAMask; // top of the pmp region for NA4 and NAPOT.  All 1s in the lower bits.  Used to check the address doesn't pass the top
+  assign PMPTop1 = (AdrMode == TOR) ? PMPTopTOR : PMPTopNaturallyAligned;
   assign PMPTop = FirstMatch ? PMPTop1 : '0; // AND portion of distributed AND-OR mux (OR portion in pmpchhecker)
 
-  // PMP should match but fail if the size is too big (8-byte accesses spanning to TOR or NA4 region)
   assign L = PMPCfg[7];
   assign X = PMPCfg[2];
   assign W = PMPCfg[1];
