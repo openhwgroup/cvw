@@ -34,7 +34,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   input  logic [1:0]               STATUS_MPP,
   input  logic                     ENVCFG_PBMTE,       // Page-based memory types enabled
   input  logic                     ENVCFG_ADUE,        // HPTW A/D Update enable
-  input  logic [1:0]               PrivilegeModeW,     // Current privilege level of the processeor
+  input  logic [1:0]               EffectivePrivilegeModeW,   // Current privilege level of the processeor, accounting for mstatus.MPRV
   input  logic                     ReadAccess, WriteAccess,
   input  logic [3:0]               CMOpM,
   input  logic                     DisableTranslation,
@@ -53,8 +53,6 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
 );
 
   // Sections of the page table entry
-  logic [1:0]                     EffectivePrivilegeMode;
-
   logic [1:0]                     PTE_PBMT;
   logic                           PTE_RESERVED, PTE_D, PTE_A, PTE_U, PTE_X, PTE_W, PTE_R, PTE_V; // Useful PTE Control Bits
   logic                           UpperBitsUnequal;
@@ -66,8 +64,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   logic                           PreUpdateDA, PrePageFault;
 
   // Grab the sv mode from SATP and determine whether translation should occur
-  assign EffectivePrivilegeMode = (ITLB == 1) ? PrivilegeModeW : (STATUS_MPRV ? STATUS_MPP : PrivilegeModeW); // DTLB uses MPP mode when MPRV is 1
-  assign Translate = (SATP_MODE != P.NO_TRANSLATE[P.SVMODE_BITS-1:0]) & (EffectivePrivilegeMode != P.M_MODE) & ~DisableTranslation; 
+  assign Translate = (SATP_MODE != P.NO_TRANSLATE[P.SVMODE_BITS-1:0]) & (EffectivePrivilegeModeW != P.M_MODE) & ~DisableTranslation; 
 
   // Determine whether TLB is being used
   assign TLBAccess = ReadAccess | WriteAccess | (|CMOpM);
@@ -95,7 +92,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   if (ITLB == 1) begin:itlb // Instruction TLB fault checking
     // User mode may only execute user mode pages, and supervisor mode may
     // only execute non-user mode pages.
-    assign ImproperPrivilege = ((PrivilegeModeW == P.U_MODE) & ~PTE_U) | ((PrivilegeModeW == P.S_MODE) & PTE_U);
+    assign ImproperPrivilege = ((EffectivePrivilegeModeW == P.U_MODE) & ~PTE_U) | ((EffectivePrivilegeModeW == P.S_MODE) & PTE_U);
     assign PreUpdateDA = ~PTE_A;
     assign InvalidAccess = ~PTE_X | ReservedRW;
  end else begin:dtlb // Data TLB fault checking
@@ -104,8 +101,8 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
 
     // User mode may only load/store from user mode pages, and supervisor mode
     // may only access user mode pages when STATUS_SUM is low.
-    assign ImproperPrivilege = ((EffectivePrivilegeMode == P.U_MODE) & ~PTE_U) |
-      ((EffectivePrivilegeMode == P.S_MODE) & PTE_U & ~STATUS_SUM);
+    assign ImproperPrivilege = ((EffectivePrivilegeModeW == P.U_MODE) & ~PTE_U) |
+      ((EffectivePrivilegeModeW == P.S_MODE) & PTE_U & ~STATUS_SUM);
     // Check for read error. Reads are invalid when the page is not readable
     // (and executable pages are not readable) or when the page is neither
     // readable nor executable (and executable pages are readable).
