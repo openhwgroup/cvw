@@ -260,7 +260,7 @@ string arch64priv[] = '{
   "rv64i_m/privilege/src/misalign-bltu-01.S",
   "rv64i_m/privilege/src/misalign-bne-01.S",
   "rv64i_m/privilege/src/misalign-jal-01.S"
-  // removed because rv64gc supports Zicclsm
+  // commented out for now because rv64gc supports Zicclsm, but Sail does not yet.  Restore when Sail supports Zicclsm.
   /* -----\/----- EXCLUDED -----\/-----
   "rv64i_m/privilege/src/misalign-ld-01.S",
   "rv64i_m/privilege/src/misalign-lh-01.S",
