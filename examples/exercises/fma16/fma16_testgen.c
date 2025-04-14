@@ -42,16 +42,22 @@ void genCase(FILE *fptr, float16_t x, float16_t y, float16_t z, int mul, int add
     char calc[80], flags[80];
     float32_t x32, y32, z32, r32;
     float xf, yf, zf, rf;
+    float16_t x2, z2;
     float16_t smallest;
 
     if (!mul) y.v = 0x3C00; // force y to 1 to avoid multiply
     if (!add) z.v = 0x0000; // force z to 0 to avoid add
-    if (negp) x.v ^= 0x8000; // flip sign of x to negate p
-    if (negz) z.v ^= 0x8000; // flip sign of z to negate z
+
+    // Negated versions of x and z are used in the mulAdd call where necessary
+    x2 = x;
+    z2 = z;
+    if (negp) x2.v ^= 0x8000; // flip sign of x to negate p
+    if (negz) z2.v ^= 0x8000; // flip sign of z to negate z
+
     op = roundingMode << 4 | mul<<3 | add<<2 | negp<<1 | negz;
 //    printf("op = %02x rm %d mul %d add %d negp %d negz %d\n", op, roundingMode, mul, add, negp, negz);
     softfloat_exceptionFlags = 0; // clear exceptions
-    result = f16_mulAdd(x, y, z); // call SoftFloat to compute expected result
+    result = f16_mulAdd(x2, y, z2); // call SoftFloat to compute expected result
 
     // Extract expected flags from SoftFloat
     sprintf(flags, "NV: %d OF: %d UF: %d NX: %d", 

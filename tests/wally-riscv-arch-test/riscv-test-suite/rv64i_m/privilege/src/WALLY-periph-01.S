@@ -24,7 +24,6 @@
 #include "arch_test.h"
 
 RVTEST_ISA("RV64I_Zicsr")
-// this test is blocked, it won't build or run. To unblock it remove the check ISA:=regex(BLOCKED); 
 RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;def NO_SAIL=True",periph)
 
 .section .text.init
@@ -225,9 +224,6 @@ main_code: #####
     # load address of trap handler
     la t0, trap_handler
     csrrw x0, mtvec, t0
-    # delegate all external interrupts to machine mode
-    li t0, 0xD00
-    csrrc x0, mideleg, t0
     # set MIE
     li t0, 0x8
     csrrs x0, mstatus, t0
