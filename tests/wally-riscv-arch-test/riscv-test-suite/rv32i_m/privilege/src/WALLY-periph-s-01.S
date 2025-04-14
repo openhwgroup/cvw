@@ -1,6 +1,6 @@
 ///////////////////////////////////////////
 // WALLY-PERIPH-S.S
-// 324 bit version including SEIP tests that require supervisor mode
+// 32 bit version including SEIP tests that require supervisor mode
 //
 // Ben Bracker (bbracker@hmc.edu)
 //
