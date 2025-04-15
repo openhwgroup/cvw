@@ -184,52 +184,52 @@ derivconfigtests = [
     ]
 
 bpredtests = [
-        ["nobpred_rv32gc", ["rv32i"]],
-        ["bpred_TWOBIT_6_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_TWOBIT_8_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_TWOBIT_10_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_TWOBIT_12_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_TWOBIT_14_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_TWOBIT_16_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_TWOBIT_6_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_TWOBIT_8_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_TWOBIT_10_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_TWOBIT_12_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_TWOBIT_14_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_TWOBIT_16_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["nobpred_rv32gc", ["arch32i"]],
+        ["bpred_TWOBIT_6_16_10_0_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_TWOBIT_8_16_10_0_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_TWOBIT_10_16_10_0_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_TWOBIT_12_16_10_0_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_TWOBIT_14_16_10_0_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_TWOBIT_16_16_10_0_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_TWOBIT_6_16_10_1_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_TWOBIT_8_16_10_1_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_TWOBIT_10_16_10_1_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_TWOBIT_12_16_10_1_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_TWOBIT_14_16_10_1_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_TWOBIT_16_16_10_1_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
 
-        ["bpred_GSHARE_6_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_6_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_8_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_8_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_12_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_12_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_14_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_14_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_16_16_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_16_16_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_6_16_10_0_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_6_16_10_1_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_8_16_10_0_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_8_16_10_1_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_10_16_10_0_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_10_16_10_1_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_12_16_10_0_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_12_16_10_1_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_14_16_10_0_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_14_16_10_1_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_16_16_10_0_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_16_16_10_1_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
 
         # btb
-        ["bpred_GSHARE_10_16_6_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_16_6_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_16_8_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_16_8_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_16_12_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_16_12_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
+        ["bpred_GSHARE_10_16_6_0_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_10_16_6_1_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_10_16_8_0_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_10_16_8_1_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_10_16_12_0_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_10_16_12_1_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
 
         # ras
-        ["bpred_GSHARE_10_2_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_2_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_3_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_3_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_4_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_4_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_6_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_6_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_10_10_0_rv32gc", ["embench"], "-GPrintHPMCounters=1"],
-        ["bpred_GSHARE_10_10_10_1_rv32gc", ["embench"], "-GPrintHPMCounters=1"]
+        ["bpred_GSHARE_10_2_10_0_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_10_2_10_1_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_10_3_10_0_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_10_3_10_1_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_10_4_10_0_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_10_4_10_1_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_10_6_10_0_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_10_6_10_1_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_10_10_10_0_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
+        ["bpred_GSHARE_10_10_10_1_rv32gc", ["embench"], "--params \"PrintHPMCounters=1\\'b1\""],
 ]
 
 testfloatdivconfigs = [
@@ -383,6 +383,7 @@ def parse_args():
     parser.add_argument("--nightly", help="Run large nightly regression", action="store_true")
     parser.add_argument("--buildroot", help="Include Buildroot Linux boot test (takes many hours, done along with --nightly)", action="store_true")
     parser.add_argument("--testfloat", help="Include Testfloat floating-point unit tests", action="store_true")
+    parser.add_argument("--branch", help="Run branch predictor accuracy tests", action="store_true")
     parser.add_argument("--fp", help="Include floating-point tests in coverage (slower runtime)", action="store_true") # Currently not used
     parser.add_argument("--breker", help="Run Breker tests", action="store_true") # Requires a license for the breker tool. See tests/breker/README.md for details
     parser.add_argument("--dryrun", help="Print commands invoked to console without running regression", action="store_true")
@@ -411,6 +412,9 @@ def process_args(args):
     elif args.testfloat:
         sims = [testfloatsim]
         TIMEOUT_DUR = 30*60 # seconds
+    elif args.branch:
+        sims = [coveragesim]
+        TIMEOUT_DUR = 120*60 # seconds
     elif args.nightly:
         TIMEOUT_DUR = 30*60 # seconds
     else:
@@ -434,8 +438,8 @@ def selectTests(args, sims, coverStr):
     if args.buildroot:
         # addTests(tests_buildrootboot, defaultsim) # non-lockstep with Verilator runs in about 2 hours
         addTests(tests_buildrootbootlockstep, lockstepsim, coverStr, configs) # lockstep with Questa and ImperasDV runs overnight
-
-    if args.ccov:  # only run RV64GC tests on Questa in code coverage mode
+    # only run RV64GC tests on in code coverage mode
+    if args.ccov:
         addTestsByDir(f"{archVerifDir}/tests/lockstep/rv64/", "rv64gc", coveragesim, coverStr, configs)
         addTestsByDir(f"{archVerifDir}/tests/lockstep/priv/rv64/", "rv64gc", coveragesim, coverStr, configs)
         addTestsByDir(WALLY+"/tests/coverage/", "rv64gc", coveragesim, coverStr, configs)
@@ -443,7 +447,8 @@ def selectTests(args, sims, coverStr):
         addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/pmp", "rv64gc", coveragesim, coverStr, configs)
         addTestsByDir(f"{WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m/privilege", "rv64gc", coveragesim, coverStr, configs)
         # addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/F", "rv64gc", coveragesim, coverStr, configs) # doesn't help fdivsqrt coverage 4/3/2025
-    elif args.fcov:  # run tests in lockstep in functional coverage mode
+    # run tests in lockstep in functional coverage mode
+    if args.fcov:
         addTestsByDir(f"{archVerifDir}/tests/lockstep/rv32/", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
         addTestsByDir(f"{archVerifDir}/tests/lockstep/rv64/", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
         addTestsByDir(f"{archVerifDir}/tests/lockstep/priv/rv32/", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
@@ -452,17 +457,22 @@ def selectTests(args, sims, coverStr):
         addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/vm_sv32", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
         # addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/pmp32", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1) TODO: Add when working in lockstep
         # addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/pmp", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1) TODO: Add when working in lockstep
-    elif args.fcov_act:
+    # run riscv-arch-test tests in functional coverage mode
+    if args.fcov_act:
         addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
         addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
-    elif args.breker:
+    # run branch predictor tests
+    if args.branch:
+        addTests(bpredtests, defaultsim, coverStr, configs)
+    # run Breker tests (requires a license for the breker tool)
+    if args.breker:
         addTestsByDir(WALLY+"/tests/breker/work", "breker", "questa", coverStr, configs, brekerMode=1)
-    elif not args.testfloat:
+    # standard tests
+    if not (args.testfloat or args.branch):
         for sim in sims:
             if not (args.buildroot and sim == lockstepsim):  # skip short buildroot sim if running long one
                 addTests(tests_buildrootshort, sim, coverStr, configs)
             addTests(standard_tests, sim, coverStr, configs)
-
     # run derivative configurations and lockstep tests in nightly regression
     if args.nightly:
         addTestsByDir(WALLY+"/tests/coverage", "rv64gc", lockstepsim, coverStr, configs, lockstepMode=1)
@@ -470,7 +480,6 @@ def selectTests(args, sims, coverStr):
         addTestsByDir(WALLY+"/tests/riscof/work/wally-riscv-arch-test/rv32i_m", "rv32gc", lockstepsim, coverStr, configs, lockstepMode=1)
         addTests(derivconfigtests, defaultsim, coverStr, configs)
         # addTests(bpredtests, defaultsim) # This is currently broken in regression due to something related to the new wsim script.
-
     # testfloat tests
     if (args.testfloat or args.nightly): # for nightly, run testfloat along with others
         testfloatconfigs = ["fdqh_rv64gc", "fdq_rv64gc", "fdh_rv64gc", "fd_rv64gc", "fh_rv64gc", "f_rv64gc", "fdqh_rv32gc", "f_rv32gc"]
