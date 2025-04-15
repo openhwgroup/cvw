@@ -26,114 +26,99 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fetchbuffer import cvw::*;  #(parameter cvw_t P) (
-  input logic                 clk, reset,
-  input logic                 disableRead, disableWrite,
-  input logic   [P.XLEN-1:0]  PCF, // PC of the instruction
-  input logic   [P.XLEN-1:0]  PCCacheF, // Address of the instruction
-  input logic   [P.LINELEN-1:0]       fetchData, // Data fetched from memory
-  output logic                empty, full,
-  output logic                FetchBufferStallD,
-  output logic  [31:0]        InstrD, // Instruction to be decoded
-  output logic  [P.XLEN-1:0]  PCD // PC of the instruction to be decoded
+  input  logic                    clk, reset,
+  input  logic                    DisableRead, DisableWrite,
+  input  logic  [P.XLEN-1:0]      PCF,          // PC of the instruction
+  input  logic  [P.XLEN-1:0]      PCCacheF,     // Address of the instruction
+  input  logic  [P.ICACHE_LINELENINBITS-1:0]   FetchData,    // Data fetched from memory
+  output logic                    Empty, Full,
+  output logic                    FetchBufferStallD,
+  output logic  [31:0]            InstrD,       // Instruction to be decoded
+  output logic  [P.XLEN-1:0]      PCD           // PC of the instruction to be decoded
 );
+  localparam ENTRY_INDEX_BITS = $clog2(P.ICACHE_LINELENINBITS/8);
+  localparam TAG_BITS = P.XLEN - ENTRY_INDEX_BITS;
+  localparam nop = 32'h00000013;
 
-  logic readPtr, writePtr;
-  logic prevReadPtr; // used to invalidate old cacheline
-  logic spill;
-  logic [5:0] PCF_6; // used to get the last 6 bits of PCF
+  logic ReadPtr, WritePtr
+  logic PrevReadPtr; // used to invalidate old cacheline
+  // TODO: Check if we still need PrevReadPtr
+  logic Spill;
+  logic InstrMissing;
 
-  logic valid [1:0];
-  logic [P.XLEN-1-6:0] PCTag [1:0];
-  logic [P.LINELEN-1:0] data [1:0];
+  logic [P.XLEN-1:ENTRY_INDEX_BITS] PCFTag;
+  logic [ENTRY_INDEX_BITS-1:0] EntryIndex; // used to get the last 6 bits of PCF
 
-  assign writePtr = ~readPtr;
-  assign full = valid[0] & valid[1];
-  assign FetchBufferStallD = empty | (spill & ~full);
-  assign PCF_6 = PCF[5:0];
+  logic                 Valid [1:0];
+  logic [TAG_BITS-1:0]  PCTag [1:0];
+  logic [P.ICACHE_LINELENINBITS-1:0] Data [1:0];
 
-  always_comb begin : readPtrLogic
-    if (reset) begin
-      readPtr = 1'b1;
-      empty = 1'b1;
-    end else if (disableRead) begin
-      readPtr = readPtr;
-      empty = empty;
-    end else if (PCF[P.XLEN-1:6] == PCTag[0]) begin
-      readPtr = 1'b0;
-      empty = 1'b0;
-    end else if (PCF[P.XLEN-1:6] == PCTag[1]) begin
-      readPtr = 1'b1;
-      empty = 1'b0;
-    end else begin
-      readPtr = readPtr;
-      empty = 1'b1; // think this was an easier way to handle empty, but should be checked
-    end
-  end
+  assign {PCFTag, EntryIndex} = PCF;
 
-  always_ff @( posedge clk ) begin : readPtrFsm
-    if (reset) prevReadPtr <= 1'b1;
-    else prevReadPtr <= readPtr;
-  end
+  assign WritePtr = ~ReadPtr;
+  assign Full = Valid[0] & Valid[1];
+  assign Empty = ~Valid[0] & ~Valid[1];
+  assign InstrMissing = ~((PCFTag == PCTag[0]) | (PCFTag == PCTag[1]))
+  assign FetchBufferStallD = Empty | (Spill & ~Full) | InstrMissing;
+
+
+  // Don't care if it tag doesn't match either, as InstrMissing will be 1
+  assign ReadPtr = (PCFTag == PCTag[1]) ? 1'b1 : 1'b0;
+
+  flopr #(1) PrevReadPtrReg (clk, reset, ReadPtr, PrevReadPtr);
 
 
   // The priority for writing is:
-  // 1. If the buffer is empty, write the new data
-  // 2. If the buffer is not empty, check if the new data isn't already in the buffer
-  // 3. If the new data is not in the buffer, always write to writePtr
-  // 4. If the new data is already in the buffer, check readPtr to invalidate the old data
-  always_ff @( posedge clk ) begin : writeLogic
-    if (reset) valid <= 2'b0;
-    else if (~disableWrite & empty) begin
-      valid[writePtr] <= 1'b1;
-      PCTag[writePtr] <= PCCacheF[P.XLEN-1:6];
-      data[writePtr] <= fetchData;
-    end else if (~disableWrite & (prevReadPtr != readPtr)) 
-      valid[prevReadPtr] <= 1'b0;
-    else begin
-      valid[writePtr] <= valid[writePtr];
-      PCTag[writePtr] <= PCTag[writePtr];
-      data[writePtr] <= data[writePtr];
-    end
-  end
+  // 1. If the buffer is Empty, write the new Data
+  // 2. If the buffer is not Empty, check if the new Data isn't already in the buffer
+  // 3. If the new Data is not in the buffer, always write to WritePtr
+  // 4. If the new Data is already in the buffer, check ReadPtr to invalidate the old Data
+  always_ff @( posedge clk )
+    if (reset) Valid <= 2'b0;
+    else if (~DisableWrite & (~Full | InstrMissing)) begin
+      Valid[WritePtr] <= 1'b1;
+      PCTag[WritePtr] <= PCCacheF[P.XLEN-1:ENTRY_INDEX_BITS];
+      Data[WritePtr] <= FetchData;
+    end else if (~DisableWrite & (PrevReadPtr != ReadPtr)) 
+      Valid[PrevReadPtr] <= 1'b0;
+    // TODO: Check if we need to keep the old data in the buffer
+    // else begin
+    //   Valid <= Valid;
+    //   PCTag <= PCTag;
+    //   Data <= Data;
+    // end
 
   // Decode Logic:
-  always_ff @( posedge clk ) begin : decodeLogic
+  always_ff @( posedge clk )
     if (reset) begin
-      InstrD <= 32'b0;
-      PCD <= P.XLEN'b0;
-      spill <= 1'b0;
-    end else if (disableRead) begin
+      InstrD <= nop;
+      PCD <= PCF;
+      Spill <= 1'b0;
+    end else if (DisableRead | Empty) begin
       InstrD <= InstrD;
       PCD <= PCD;
-      spill <= spill;
-    end else if (empty) begin
-      InstrD <= 32'b0;
-      PCD <= P.XLEN'b0;
-      spill <= 1'b0;
+      Spill <= Spill;
     end else begin
       PCD <= PCF;
-      
-      // spill logic
-      if (PCF_6 == (P.LINELEN/8-2)) begin 
-        if (PCTag[~readPtr] == PCTag[readPtr]+1) begin 
-          // next cacheline holds the spill
-          spill <= 1'b0;
-          InstrD <= {data[~readPtr][15:0], data[readPtr][P.LINELEN-1:P.LINELEN-16]};
-        end else if (data[readPtr][P.LINELEN-15:P.LINELEN-16] == 2'b11) begin 
-          // next cacheline doesn't hold spill but instruction is compressed so doesn't spill over
-          spill <= 1'b0;
-          InstrD <= {16'b0, data[readPtr][P.LINELEN-1:P.LINELEN-16]};
+      // Spill logic
+      if (EntryIndex[ENTRY_INDEX_BITS-1:1] == '1) begin 
+        if (Full) begin 
+          // next cacheline holds the Spill
+          Spill <= 1'b0;
+          InstrD <= {Data[~ReadPtr][15:0], Data[ReadPtr][P.ICACHE_LINELENINBITS-1:P.ICACHE_LINELENINBITS-16]};
+        end else if (Data[ReadPtr][P.ICACHE_LINELENINBITS-15:P.ICACHE_LINELENINBITS-16] != 2'b11) begin 
+          // next cacheline doesn't hold Spill but instruction is compressed so doesn't Spill over
+          Spill <= 1'b0;
+          InstrD <= {16'b0, Data[ReadPtr][P.ICACHE_LINELENINBITS-1:P.ICACHE_LINELENINBITS-16]};
         end else begin
-          // next cacheline doesn't hold spill, but it is needed as the instruction is not compressed
-          spill <= 1'b1;
-          InstrD <= P.XLEN'b0;
+          // next cacheline doesn't hold Spill, but it is needed as the instruction is not compressed
+          Spill <= 1'b1;
+          InstrD <= InstrD;
         end
-      end
-      else begin
+      end else begin
         // fetch instruction from the cacheline as needed
-        spill <= 1'b0;
-        InstrD <= data[readPtr][PCF_6*8 + 31:PCF_6*8];
+        Spill <= 1'b0;
+        InstrD <= Data[ReadPtr][EntryIndex*8 + 31:EntryIndex*8];
       end
     end
-  end
 endmodule
