@@ -309,6 +309,9 @@ sretdone:
     # exercise sret with rs1 not 0
     .word 0x102F8073
 
+    # illegal ebreak with nonzero rs1
+    .word 0x00110073
+
 
     # cover mret when mpp = 3 and mprv = 1
     li a0, 3
