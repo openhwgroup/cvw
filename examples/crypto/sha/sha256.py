@@ -3,6 +3,8 @@
 # james.stine@okstate.edu 5 Sept 2024
 # used for ecen2233 at Oklahoma State University
 
+import hashlib
+
 # SHA256 Constants (See FIPS 180 4.2.2)
 K = [
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
@@ -14,6 +16,37 @@ K = [
     0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
     0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
 ]
+
+def sigma0(num: int):
+    num = (ror(num, 7) ^ ror(num, 18) ^ (num >> 3))
+    return num
+
+
+def sigma1(num: int):
+    num = (ror(num, 17) ^ ror(num, 19) ^ (num >> 10))
+    return num
+
+
+def Sigma0(num: int):
+    num = (ror(num, 2) ^ ror(num, 13) ^ ror(num, 22))
+    return num
+
+
+def Sigma1(num: int):
+    num = (ror(num, 6) ^ ror(num, 11) ^ ror(num, 25))
+    return num
+
+
+def ch(x: int, y: int, z: int):
+    return (x & y) ^ (~x & z)
+
+
+def maj(x: int, y: int, z: int):
+    return (x & y) ^ (x & z) ^ (y & z)
+
+
+def ror(num: int, shift: int, size: int = 32):
+    return (num >> shift) | (num << size - shift)
 
 
 def generate_hash(message: bytearray) -> bytearray:
@@ -73,7 +106,7 @@ def generate_hash(message: bytearray) -> bytearray:
                 schedule = ((term1 + term2 + term3 + term4) %
                             2**32).to_bytes(4, 'big')
                 message_schedule.append(schedule)
-                print("W_" + str(t) + "= " +
+                print("W_" + str(t) + " = " +
                       hex(int.from_bytes(message_schedule[t], 'big')))
 
         assert len(message_schedule) == 64
@@ -134,37 +167,8 @@ def generate_hash(message: bytearray) -> bytearray:
             (h6).to_bytes(4, 'big') + (h7).to_bytes(4, 'big'))
 
 
-def sigma0(num: int):
-    num = (ror(num, 7) ^ ror(num, 18) ^ (num >> 3))
-    return num
-
-
-def sigma1(num: int):
-    num = (ror(num, 17) ^ ror(num, 19) ^ (num >> 10))
-    return num
-
-
-def Sigma0(num: int):
-    num = (ror(num, 2) ^ ror(num, 13) ^ ror(num, 22))
-    return num
-
-
-def Sigma1(num: int):
-    num = (ror(num, 6) ^ ror(num, 11) ^ ror(num, 25))
-    return num
-
-
-def ch(x: int, y: int, z: int):
-    return (x & y) ^ (~x & z)
-
-
-def maj(x: int, y: int, z: int):
-    return (x & y) ^ (x & z) ^ (y & z)
-
-
-def ror(num: int, shift: int, size: int = 32):
-    return (num >> shift) | (num << size - shift)
-
-
 if __name__ == "__main__":
-    print(generate_hash("Go Wally!").hex())
+    msg = "Go Wally!"
+    digest = generate_hash(msg)
+    print(f"Computed SHA-256: {digest.hex()}")
+    print(f"Expected SHA-256: {hashlib.sha256(msg.encode()).hexdigest()}")

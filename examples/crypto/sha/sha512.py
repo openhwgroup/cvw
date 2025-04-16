@@ -3,6 +3,8 @@
 # james.stine@okstate.edu
 # used for ecen2233 at Oklahoma State University
 
+import hashlib
+
 K = [
     0x428a2f98d728ae22, 0x7137449123ef65cd, 0xb5c0fbcfec4d3b2f,
     0xe9b5dba58189dbbc, 0x3956c25bf348b538, 0x59f111f1b605d019,
@@ -43,7 +45,25 @@ H_INIT = [
 def ror(x, n, size=64):
     return ((x >> n) | (x << (size - n))) & ((1 << size) - 1)
 
-def generate_sha512_verbose(message: bytearray) -> bytearray:
+def Sigma0(x):
+    return ror(x, 28) ^ ror(x, 34) ^ ror(x, 39)
+
+def Sigma1(x):
+    return ror(x, 14) ^ ror(x, 18) ^ ror(x, 41)
+
+def sigma0(x):
+    return ror(x, 1) ^ ror(x, 8) ^ (x >> 7)
+
+def sigma1(x):
+    return ror(x, 19) ^ ror(x, 61) ^ (x >> 6)
+
+def ch(x, y, z):
+    return (x & y) ^ (~x & z)
+
+def maj(x, y, z):
+    return (x & y) ^ (x & z) ^ (y & z)
+
+def generate_hash(message: bytearray) -> bytearray:
     if isinstance(message, str):
         message = bytearray(message, 'ascii')
     elif isinstance(message, bytes):
@@ -65,8 +85,8 @@ def generate_sha512_verbose(message: bytearray) -> bytearray:
         W = [int.from_bytes(block[i:i+8], 'big') for i in range(0, 128, 8)]
 
         for t in range(16, 80):
-            s0 = ror(W[t-15], 1) ^ ror(W[t-15], 8) ^ (W[t-15] >> 7)
-            s1 = ror(W[t-2], 19) ^ ror(W[t-2], 61) ^ (W[t-2] >> 6)
+            s0 = sigma0(W[t-15])
+            s1 = sigma1(W[t-2])
             W.append((W[t-16] + s0 + W[t-7] + s1) % (1 << 64))
 
         for t in range(80):
@@ -85,12 +105,8 @@ def generate_sha512_verbose(message: bytearray) -> bytearray:
         print("-------------")
 
         for t in range(80):
-            S1 = ror(e, 14) ^ ror(e, 18) ^ ror(e, 41)
-            ch_ = (e & f) ^ (~e & g)
-            temp1 = (h_ + S1 + ch_ + K[t] + W[t]) % (1 << 64)
-            S0 = ror(a, 28) ^ ror(a, 34) ^ ror(a, 39)
-            maj_ = (a & b) ^ (a & c) ^ (b & c)
-            temp2 = (S0 + maj_) % (1 << 64)
+            temp1 = (h_ + Sigma1(e) + ch(e, f, g) + K[t] + W[t]) % (1 << 64)
+            temp2 = (Sigma0(a) + maj(a, b, c)) % (1 << 64)
 
             h_, g, f, e, d, c, b, a = (
                 g, f, e, (d + temp1) % (1 << 64),
@@ -112,8 +128,9 @@ def generate_sha512_verbose(message: bytearray) -> bytearray:
 
     return b''.join(x.to_bytes(8, 'big') for x in h)
 
-
 if __name__ == "__main__":
     msg = "Go Wally!"
-    digest = generate_sha512_verbose(msg)
-    print(digest.hex())
+    digest = generate_hash(msg)
+    print(f"Computed SHA-512: {digest.hex()}")
+    print(f"Expected SHA-512: {hashlib.sha512(msg.encode()).hexdigest()}")
+
