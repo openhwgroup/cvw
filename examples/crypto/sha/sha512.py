@@ -5,6 +5,7 @@
 
 import hashlib
 
+# SHA512 Constants (See FIPS 180 4.2.3)
 K = [
     0x428a2f98d728ae22, 0x7137449123ef65cd, 0xb5c0fbcfec4d3b2f,
     0xe9b5dba58189dbbc, 0x3956c25bf348b538, 0x59f111f1b605d019,
@@ -35,6 +36,7 @@ K = [
     0x5fcb6fab3ad6faec, 0x6c44198c4a475817
 ]
 
+# SHA512 Initial Hash (See FIPS 180 5.3.5)
 H_INIT = [
     0x6a09e667f3bcc908, 0xbb67ae8584caa73b,
     0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
@@ -42,26 +44,34 @@ H_INIT = [
     0x1f83d9abfb41bd6b, 0x5be0cd19137e2179
 ]
 
+
 def ror(x, n, size=64):
     return ((x >> n) | (x << (size - n))) & ((1 << size) - 1)
+
 
 def Sigma0(x):
     return ror(x, 28) ^ ror(x, 34) ^ ror(x, 39)
 
+
 def Sigma1(x):
     return ror(x, 14) ^ ror(x, 18) ^ ror(x, 41)
+
 
 def sigma0(x):
     return ror(x, 1) ^ ror(x, 8) ^ (x >> 7)
 
+
 def sigma1(x):
     return ror(x, 19) ^ ror(x, 61) ^ (x >> 6)
+
 
 def ch(x, y, z):
     return (x & y) ^ (~x & z)
 
+
 def maj(x, y, z):
     return (x & y) ^ (x & z) ^ (y & z)
+
 
 def generate_hash(message: bytearray) -> bytearray:
     if isinstance(message, str):
@@ -81,6 +91,7 @@ def generate_hash(message: bytearray) -> bytearray:
 
     h = H_INIT.copy()
 
+    # SHA-512 Hash Computation (See FIPS 180 6.4.1)
     for block in blocks:
         W = [int.from_bytes(block[i:i+8], 'big') for i in range(0, 128, 8)]
 
@@ -133,4 +144,3 @@ if __name__ == "__main__":
     digest = generate_hash(msg)
     print(f"Computed SHA-512: {digest.hex()}")
     print(f"Expected SHA-512: {hashlib.sha512(msg.encode()).hexdigest()}")
-

@@ -74,7 +74,7 @@ def generate_hash(message: bytearray) -> bytearray:
     for i in range(0, len(message), 64):  # 64 bytes is 512 bits
         blocks.append(message[i:i+64])
 
-    # Setting Initial Hash Value
+    # Setting Initial Hash Value (See FIPS 180 5.3.3)
     h0 = 0x6a09e667
     h1 = 0xbb67ae85
     h2 = 0x3c6ef372
@@ -126,7 +126,6 @@ def generate_hash(message: bytearray) -> bytearray:
         print("-------------")
 
         # Compression Function (See FIPS 180 6.2.2)
-        # Iterate for t=0 to 63 (main computation)
         for t in range(64):
             # addition module 2^{32}
             t1 = ((h + Sigma1(e) + ch(e, f, g) + K[t] +
