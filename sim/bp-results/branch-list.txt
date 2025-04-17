@@ -1,36 +1,12 @@
-../logs/rv32gc_gshare6.log gshare 6
-../logs/rv32gc_gshare8.log gshare 8
-../logs/rv32gc_gshare10.log gshare 10
-../logs/rv32gc_gshare12.log gshare 12
-../logs/rv32gc_gshare14.log gshare 14
-../logs/rv32gc_gshare16.log gshare 16
-../logs/rv32gc_twobit6.log twobit 6
-../logs/rv32gc_twobit8.log twobit 8
-../logs/rv32gc_twobit10.log twobit 10
-../logs/rv32gc_twobit12.log twobit 12
-../logs/rv32gc_twobit14.log twobit 14
-../logs/rv32gc_twobit16.log twobit 16
-../logs/rv32gc_global6.log global 6
-../logs/rv32gc_global8.log global 8
-../logs/rv32gc_global10.log global 10
-../logs/rv32gc_global12.log global 12
-../logs/rv32gc_global14.log global 14
-../logs/rv32gc_global16.log global 16
-../logs/rv32gc_10local_basic6.log local 10 6
-../logs/rv32gc_10local_basic8.log local 10 8
-../logs/rv32gc_10local_basic10.log local 10 10
-../logs/rv32gc_10local_basic12.log local 10 12
-../logs/rv32gc_10local_basic14.log local 10 14
-../logs/rv32gc_10local_basic16.log local 10 16
-../logs/rv32gc_4local_basic6.log local 4 6
-../logs/rv32gc_4local_basic8.log local 4 8
-../logs/rv32gc_4local_basic10.log local 4 10
-../logs/rv32gc_4local_basic12.log local 4 12
-../logs/rv32gc_4local_basic14.log local 4 14
-../logs/rv32gc_4local_basic16.log local 4 16
-../logs/rv32gc_8local_basic6.log local 8 6
-../logs/rv32gc_8local_basic8.log local 8 8
-../logs/rv32gc_8local_basic10.log local 8 10
-../logs/rv32gc_8local_basic12.log local 8 12
-../logs/rv32gc_8local_basic14.log local 8 14
-../logs/rv32gc_8local_basic16.log local 8 16
+bpred_GSHARE_6_16_10_1_rv32gc_embench.log gshare 6
+bpred_GSHARE_8_16_10_1_rv32gc_embench.log gshare 8
+bpred_GSHARE_10_16_10_1_rv32gc_embench.log gshare 10
+bpred_GSHARE_12_16_10_1_rv32gc_embench.log gshare 12
+bpred_GSHARE_14_16_10_1_rv32gc_embench.log gshare 14
+bpred_GSHARE_16_16_10_1_rv32gc_embench.log gshare 16
+bpred_TWOBIT_6_16_10_1_rv32gc_embench.log twobit 6
+bpred_TWOBIT_8_16_10_1_rv32gc_embench.log twobit 8
+bpred_TWOBIT_10_16_10_1_rv32gc_embench.log twobit 10
+bpred_TWOBIT_12_16_10_1_rv32gc_embench.log twobit 12
+bpred_TWOBIT_14_16_10_1_rv32gc_embench.log twobit 14
+bpred_TWOBIT_16_16_10_1_rv32gc_embench.log twobit 16

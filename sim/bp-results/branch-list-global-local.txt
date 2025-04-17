@@ -1,0 +1,25 @@
+TODO: These names likely need to be updated
+rv32gc_global6.log global 6
+rv32gc_global8.log global 8
+rv32gc_global10.log global 10
+rv32gc_global12.log global 12
+rv32gc_global14.log global 14
+rv32gc_global16.log global 16
+rv32gc_10local_basic6.log local 10 6
+rv32gc_10local_basic8.log local 10 8
+rv32gc_10local_basic10.log local 10 10
+rv32gc_10local_basic12.log local 10 12
+rv32gc_10local_basic14.log local 10 14
+rv32gc_10local_basic16.log local 10 16
+rv32gc_4local_basic6.log local 4 6
+rv32gc_4local_basic8.log local 4 8
+rv32gc_4local_basic10.log local 4 10
+rv32gc_4local_basic12.log local 4 12
+rv32gc_4local_basic14.log local 4 14
+rv32gc_4local_basic16.log local 4 16
+rv32gc_8local_basic6.log local 8 6
+rv32gc_8local_basic8.log local 8 8
+rv32gc_8local_basic10.log local 8 10
+rv32gc_8local_basic12.log local 8 12
+rv32gc_8local_basic14.log local 8 14
+rv32gc_8local_basic16.log local 8 16
