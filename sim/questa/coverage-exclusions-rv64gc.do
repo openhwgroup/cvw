@@ -346,6 +346,11 @@ coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLi
 coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLineNum ${SRC}/mmu/pmpchecker.sv "exclusion-tag: immu-pmpcboz"] 
 coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLineNum ${SRC}/mmu/pmpchecker.sv "exclusion-tag: immu-pmpcboaccess"] 
 
+# IMMU PMP only makes 4-byte accesses
+coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLineNum ${SRC}/mmu/pmpchecker.sv "SizeBytesMinus1 = 3'd0"]  -item bs 1
+coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLineNum ${SRC}/mmu/pmpchecker.sv "SizeBytesMinus1 = 3'd1"]  -item bs 1
+coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange [GetLineNum ${SRC}/mmu/pmpchecker.sv "SizeBytesMinus1 = 3'd7"]  -item bs 1
+
 # No irom
 set line [GetLineNum ${SRC}/ifu/ifu.sv "~ITLBMissF & ~CacheableF & ~SelIROM"] 
 coverage exclude -scope /dut/core/ifu -linerange $line-$line -item c 1 -feccondrow 6
@@ -442,6 +447,15 @@ coverage exclude -scope /dut/core/priv/priv/trap -linerange [GetLineNum ${SRC}/p
 coverage exclude -scope /dut/core/priv/priv/csr/csru/csru -linerange [GetLineNum ${SRC}/privileged/csru.sv "assign WriteFRMM"] -item e 1 -fecexprrow 3
 coverage exclude -scope /dut/core/priv/priv/csr/csru/csru -linerange [GetLineNum ${SRC}/privileged/csru.sv "assign WriteFFLAGSM"] -item e 1 -fecexprrow 3
 
+# Attempted writes to the nonextistant MTIME register trap, so WriteHPMCOUNTERM cannot be set for that address (0xb01)
+coverage exclude -scope /dut/core/priv/priv/csr/counters/counters/cntr[1] -linerange [GetLineNum ${SRC}/privileged/csrc.sv "MTIME traps"] -item e 1 -fecexprrow 2 4
+coverage exclude -scope /dut/core/priv/priv/csr/counters/counters/cntr[1] -linerange [GetLineNum ${SRC}/privileged/csrc.sv "assign NextHPMCOUNTERM"] -item b 1
+
+# attempting to write stimecmp with STCE=0 traps, causing CSRSWriteM to go low 
+coverage exclude -scope /dut/core/priv/priv/csr/csrs/csrs -linerange [GetLineNum ${SRC}/privileged/csrs.sv "assign WriteSTIMECMPM"] -item e 1 -fecexprrow 5
+
+# mode != m_mode and TVM = 1 causes a trap, causing CSRSWriteM to go low
+coverage exclude -scope /dut/core/priv/priv/csr/csrs/csrs -linerange [GetLineNum ${SRC}/privileged/csrs.sv "assign WriteSATPM"] -item e 1 -fecexprrow 5 8
 
 ####################
 # EBU

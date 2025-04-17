@@ -129,7 +129,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   
   // Counter update and write logic
   for (i = 0; $unsigned(i) < P.COUNTERS; i = i+1) begin:cntr
-      assign WriteHPMCOUNTERM[i] = CSRMWriteM & (CSRAdrM == MHPMCOUNTERBASE + i);
+      assign WriteHPMCOUNTERM[i] = CSRMWriteM & (CSRAdrM == MHPMCOUNTERBASE + i); // coverage tag: MTIME traps
       assign NextHPMCOUNTERM[i][P.XLEN-1:0] = WriteHPMCOUNTERM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][P.XLEN-1:0];
       always_ff @(posedge clk) //, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
         if (reset) HPMCOUNTER_REGW[i][P.XLEN-1:0] <= '0;

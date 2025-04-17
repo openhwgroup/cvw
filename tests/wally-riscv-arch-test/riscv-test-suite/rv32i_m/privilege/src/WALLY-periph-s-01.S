@@ -1,6 +1,6 @@
 ///////////////////////////////////////////
-// WALLY-PERIPH.S
-// 32 bit version
+// WALLY-PERIPH-S.S
+// 32 bit version including SEIP tests that require supervisor mode
 //
 // Ben Bracker (bbracker@hmc.edu)
 //
@@ -224,6 +224,9 @@ main_code: #####
     # load address of trap handler
     la t0, trap_handler
     csrrw x0, mtvec, t0
+    # delegate all external interrupts to machine mode
+    li t0, 0xD00
+    csrrc x0, mideleg, t0
     # set MIE
     li t0, 0x8
     csrrs x0, mstatus, t0
@@ -799,9 +802,96 @@ Intr03BEEF1A:
     1: bne t1,a0,1b
     li a0, 0
 
-    # PLIC Context 1 not in periph because it is unavailable without S mode in rv32imc
-    # See WALLY-periph-S for a version that does test PLIC context 1
+    ####################################################
+    ##### Test 4 - Signs of Life on PLIC Context 1 #####
+    ####################################################
+    li a1, 0x04beef00 # group ID 
+    # clear MEIE (good to turn off while configuring peripherals)
+    li t0, 0x800
+    csrrc x0, mie, t0
+    # ========== Configure PLIC ==========
+    # priority threshold = 0
+    li t0, 0xC200000
+    li t1, 0
+    sw t1, 0(t0)
+    # source 3 (GPIO) priority = 6
+    li t0, 0xC000000
+    li t1, 6
+    sw t1, 0x0C(t0)
+    # source 0xA (UART) priority = 7
+    li t1, 7
+    sw t1, 0x28(t0)
+    # disable sources 3,0xA on context 0
+    li t0, 0x0C002000
+    li t1, 0 
+    sw t1, 0(t0)
+    # enable sources 3,0xA on context 1
+    li t0, 0x0C002080
+    li t1, 0b10000001000  
+    sw t1, 0(t0)
+    # ========== Configure UART ==========
+    # MCR: Loop = 1
+    li t0, 0x10000000
+    li t1, 0b10000
+    sb t1, 4(t0)
+    # LCR: Use 8 data bits plus odd parity bit
+    li t1, 0b00001011
+    sb t1, 3(t0)
+    # IER: Enable Received Data Available Interrupt
+    li t1, 0x01
+    sb t1, 1(t0)
+    # ========== Configure GPIO ==========
+    # raise all input_en
+    li t0, 0x10060000
+    li t1, 0xFFFFFFFF
+    sw t1, 0x04(t0)
+    # raise all output_en
+    sw t1, 0x08(t0)
+    # raise all rise_en
+    sw t1, 0x18(t0)
+    # ========== Execute Test ==========
+    # set MEIE and SEIE
+    li t0, 0xA00
+    csrrs x0, mie, t0
+Intr04BEEF1B:
+    # UART TX 'e'
+    li t0, 0x10000000
+    li t1, 'e'
+    sb t1, 0(t0)
+    # wait to finish
+    li t1, 0b00010000
+    1: bne t1,a0,1b
+    li a0, 0
+Intr04BEEF1C:
+    # GPIO raise pin 19
+    li t0, 0x10060000
+    li t1, 0x00080000
+    sw t1, 0x0C(t0)
+    # wait to finish
+    li t1, 0b00001000
+    1: bne t1,a0,1b
+    li a0, 0
+    # Now let's go bonkers and trigger both!
+Intr04BEEF1D:
+    # TX 'n'
+    li t0, 0x10000000
+    li t1, 'n'
+    sb t1, 0(t0)
+Intr04BEEF1E:
+    # GPIO lower pin 19 raise pin 0
+    li t0, 0x10060000
+    li t1, 0x00000001
+    sw t1, 0x0C(t0)
+    # wait to finish
+    li t1, 0b00011000
+    1: bne t1,a0,1b
+    li a0, 0
+    # ---------------------------------------------------------------------------------------------
 
+//terminate_test:
+//    li a0, 2 // Trap handler behavior (go to machine mode)
+//    ecall //  writes mcause to the output.
+//    csrw mtvec, x4  // restore original trap handler to halt program
 
 RVTEST_CODE_END
 RVMODEL_HALT

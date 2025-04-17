@@ -32,7 +32,7 @@
 
 module pmpchecker import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.PA_BITS-1:0]     PhysicalAddress,  
-  input  logic [1:0]               PrivilegeModeW,
+  input  logic [1:0]               EffectivePrivilegeModeW,
   // ModelSim has a switch -svinputport which controls whether input ports
   // are nets (wires) or vars by default. The default setting of this switch is
   // `relaxed`, which means that signals are nets if and only if they are
@@ -66,6 +66,7 @@ module pmpchecker import cvw::*;  #(parameter cvw_t P) (
   if (P.PMP_ENTRIES > 0) begin: pmp // prevent complaints about array of no elements when PMP_ENTRIES = 0
     pmpadrdec #(P) pmpadrdecs[P.PMP_ENTRIES-1:0](
       .PhysicalAddress, 
+      .Size,
       .PMPCfg(PMPCFG_ARRAY_REGW),
       .PMPAdr(PMPADDR_ARRAY_REGW),
       .FirstMatch,
@@ -97,8 +98,8 @@ module pmpchecker import cvw::*;  #(parameter cvw_t P) (
   assign PhysicalAddressTop = PhysicalAddress + {{P.PA_BITS-3{1'b0}}, SizeBytesMinus1}; // top of the access range
   assign TooBig = PhysicalAddressTop > MatchingPMPTop; // check if the access goes beyond the top of the PMP region
 
-  // Only enforce PMP checking for S and U modes or in Machine mode when L bit is set in selected region
-  assign EnforcePMP = (PrivilegeModeW != P.M_MODE) | MatchingL;
+  // Only enforce PMP checking for effective S and U modes (accounting for mstatus.MPRV) or in Machine mode when L bit is set in selected region
+  assign EnforcePMP = (EffectivePrivilegeModeW != P.M_MODE) | MatchingL;
 
   assign PMPCBOMAccessFault     = EnforcePMP & (|CMOpM[2:0]) & ~MatchingR ; // checking R is sufficient because W implies R in PMP  // exclusion-tag: immu-pmpcbom
   assign PMPCBOZAccessFault     = EnforcePMP & CMOpM[3] & ~MatchingW ;          // exclusion-tag: immu-pmpcboz
