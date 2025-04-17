@@ -52,8 +52,10 @@ else
 fi
 
 if [ ! -e "${WALLY}/.git/hooks/pre-commit" ]; then
+    pushd "${WALLY}" || exit 1
     echo "Installing pre-commit hooks"
     pre-commit install
+    popd || exit
 fi
 
 echo "setup done"
