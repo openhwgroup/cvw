@@ -298,6 +298,18 @@ sretdone:
 
     wfi
 
+    ///////////////////
+    // writing user level CSR in u mode
+    ///////////////////
+    li a0, 3
+    ecall               # enter machine mode
+    # set mstatus.FS to 01 to enable fp
+    li t0,0x4000
+    csrs mstatus, t0
+    li a0, 0
+    ecall               # enter user mode
+    li t0, 5
+    csrw frm, t0
 
 
     # Test uncovered privdec instructions

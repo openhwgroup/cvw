@@ -451,6 +451,12 @@ coverage exclude -scope /dut/core/priv/priv/csr/csru/csru -linerange [GetLineNum
 coverage exclude -scope /dut/core/priv/priv/csr/counters/counters/cntr[1] -linerange [GetLineNum ${SRC}/privileged/csrc.sv "MTIME traps"] -item e 1 -fecexprrow 2 4
 coverage exclude -scope /dut/core/priv/priv/csr/counters/counters/cntr[1] -linerange [GetLineNum ${SRC}/privileged/csrc.sv "assign NextHPMCOUNTERM"] -item b 1
 
+# attempting to write stimecmp with STCE=0 traps, causing CSRSWriteM to go low 
+coverage exclude -scope /dut/core/priv/priv/csr/csrs/csrs -linerange [GetLineNum ${SRC}/privileged/csrs.sv "assign WriteSTIMECMPM"] -item e 1 -fecexprrow 5
+
+# mode != m_mode and TVM = 1 causes a trap, causing CSRSWriteM to go low
+coverage exclude -scope /dut/core/priv/priv/csr/csrs/csrs -linerange [GetLineNum ${SRC}/privileged/csrs.sv "assign WriteSATPM"] -item e 1 -fecexprrow 5 8
+
 ####################
 # EBU
 ####################
