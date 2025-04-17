@@ -41,6 +41,7 @@ main:
     .hword 0x2002      // c.fldsp fs0, 0
     .hword 0xA002      // c.fsdsp fs0, 0
     .hword 0x9C41      // line 134 Illegal compressed instruction
+    .hword 0x8002      // c.jr with nonzero rs1/rd
 
     # Zcb coverage tests
     mv s0, sp
