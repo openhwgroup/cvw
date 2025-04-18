@@ -319,7 +319,8 @@ def addTestsByDir(testDir, config, sim, coverStr, configs, lockstepMode=0, breke
     sim_logdir = f"{regressionDir}/{sim}/logs/"
     cmdPrefix = f"wsim --sim {sim} {coverStr} {'--lockstep' if lockstepMode else ''} {config}"
     # fcov/ccov only runs on WALLY-COV-ALL.elf files; other lockstep runs on all files
-    fileStart = "WALLY-COV-ALL" if "cvw-arch-verif/tests" in testDir and "priv" not in testDir else "ref" if "riscv-arch-test" in testDir else ""
+    # fileStart = "WALLY-COV-ALL" if "cvw-arch-verif/tests" in testDir and "priv" not in testDir else "ref" if "riscv-arch-test" in testDir else ""
+    fileStart = "ref" if "riscv-arch-test" in testDir else ""
     fileEnd = ".elf"
     if lockstepMode:
         gs = "Mismatches            : 0"
@@ -453,8 +454,8 @@ def selectTests(args, sims, coverStr):
         # addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/pmp32", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1) TODO: Add when working in lockstep
         # addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/pmp", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1) TODO: Add when working in lockstep
     elif args.fcov_act:
-        addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
-        addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
+        addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/I", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
+        addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/I", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
     elif args.breker:
         addTestsByDir(WALLY+"/tests/breker/work", "breker", "questa", coverStr, configs, brekerMode=1)
     elif not args.testfloat:
