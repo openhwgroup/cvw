@@ -89,6 +89,8 @@ def prepSim(args, ElfFile):
     defineList = []
     if args.vcd:
         paramsList.append("MAKE_VCD=1")
+        if args.sim == "questa":
+            flagsList.append("--vcd")
     if args.rvvi:
         paramsList.append("RVVI_SYNTH_SUPPORTED=1")
     if args.tb == "testbench_fp":

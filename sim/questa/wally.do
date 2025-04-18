@@ -96,9 +96,15 @@ while {$argc > 0} {
 
 echo "lst = $lst"
 
-# if +acc found set flag and remove from list
+# if --gui found set flag and remove from list
 if {[lcheck lst "--gui"]} {
     set GUI 1
+    set accFlag "+acc"
+}
+
+# if --vcd found set flag and remove from list
+if {[lcheck lst "--vcd"]} {
+    set VCD 1
     set accFlag "+acc"
 }
 
