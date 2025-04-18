@@ -33,8 +33,8 @@ def parseArgs():
     parser.add_argument("config", help="Configuration file")
     parser.add_argument("testsuite", help="Test suite (or none, when running a single ELF file) ")
     parser.add_argument("--tb", "-t", help="Testbench", choices=["testbench", "testbench_fp"], default="testbench")
-    parser.add_argument("--ccov", "-c", help="Code Coverage", action="store_true")
-    parser.add_argument("--fcov", "-f", help="Functional Coverage", action="store_true")
+    # parser.add_argument("--ccov", "-c", help="Code Coverage", action="store_true") # Not yet implemented
+    # parser.add_argument("--fcov", "-f", help="Functional Coverage", action="store_true") # Not yet implemented
     parser.add_argument("--args", "-a", help="Optional arguments passed to simulator via $value$plusargs", default="")
     parser.add_argument("--params", "-p", help="Optional top-level parameter overrides of the form param=value", default="")
     parser.add_argument("--define", "-d", help="Optional define macros passed to simulator", default="")
@@ -67,8 +67,8 @@ def processArgs(wkdir, args):
                                 "$IMPERAS_HOME/ImpPublic/source/host/rvvi/*.sv",
                                 "$IMPERAS_HOME/ImpProprietary/source/host/idv/*.sv"])
         simvOptions.append("-sv_lib $IMPERAS_HOME/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model")
-    if args.ccov:
-        compileOptions.extend(["-cm line+cond+branch+fsm+tgl", f"-cm_log {wkdir}/coverage.log", f"-cm_dir {wkdir}/coverage"])
+    # if args.ccov:
+    #     compileOptions.extend(["-cm line+cond+branch+fsm+tgl", f"-cm_log {wkdir}/coverage.log", f"-cm_dir {wkdir}/coverage"])
     if args.params:
         compileOptions.append(setupParamOverrides(wkdir, args))
     if args.define:
@@ -111,8 +111,8 @@ def main(args):
     compileOptions, simvOptions = processArgs(wkdir, args)
     vcsCMD, simvCMD = setupCommands(wkdir, rtlFiles, compileOptions, simvOptions, args)
     runVCS(vcsCMD, simvCMD)
-    if args.ccov:
-        runCoverage(wkdir, args.config, args.testsuite)
+    # if args.ccov:
+    #     runCoverage(wkdir, args.config, args.testsuite)
 
 if __name__ == "__main__":
     args = parseArgs()
