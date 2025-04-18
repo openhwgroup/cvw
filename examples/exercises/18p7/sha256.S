@@ -13,6 +13,19 @@ _start:
     lw a6, 24(t0)
     lw a7, 28(t0)
 
+    # Store initial state in signature
+    la s11, begin_signature
+    sw a0, 0(s11)	
+    sw a1, 4(s11)
+    sw a2, 8(s11)
+    sw a3, 12(s11)
+    sw a4, 16(s11)	
+    sw a5, 20(s11)
+    sw a6, 24(s11)
+    sw a7, 28(s11)	
+    addi s11, s11, 32
+    csrr s8, instret   				# count instructions at beginning
+	
     # Load padded message into W[0..15]
     la s0, M
     la s1, W
@@ -120,6 +133,17 @@ sha_round:
     add a6, a6, s8
     add a7, a7, s9
 
+    # Store result in signature
+    sw a0, 0(s11)	
+    sw a1, 4(s11)
+    sw a2, 8(s11)
+    sw a3, 12(s11)
+    sw a4, 16(s11)	
+    sw a5, 20(s11)
+    sw a6, 24(s11)
+    sw a7, 28(s11)	
+    addi s11, s11, 32
+	
 # Finalize
 done:
     csrr s9, instret       			# Read instruction count
@@ -145,7 +169,7 @@ fromhost:
 
 .EQU XLEN,32
 begin_signature:
-    .fill (4*2+1)*(XLEN/32),4,0xdeadbeef
+    .fill (8*2+5)*(XLEN/32),4,0xdeadbeef
 end_signature:
 
 # Initial SHA-256 hash values
