@@ -1,12 +1,13 @@
-../logs/rv32gc_gshare6.log gshare 6
-../logs/rv32gc_gshare8.log gshare 8
-../logs/rv32gc_gshare10.log gshare 10
-../logs/rv32gc_gshare12.log gshare 12
-../logs/rv32gc_gshare14.log gshare 14
-../logs/rv32gc_gshare16.log gshare 16
-../logs/rv32gc_8local_basic6.log local 8 6
-../logs/rv32gc_8local_basic8.log local 8 8
-../logs/rv32gc_8local_basic10.log local 8 10
-../logs/rv32gc_8local_basic12.log local 8 12
-../logs/rv32gc_8local_basic14.log local 8 14
-../logs/rv32gc_8local_basic16.log local 8 16
+TODO: These names likely need to be updated
+rv32gc_gshare6.log gshare 6
+rv32gc_gshare8.log gshare 8
+rv32gc_gshare10.log gshare 10
+rv32gc_gshare12.log gshare 12
+rv32gc_gshare14.log gshare 14
+rv32gc_gshare16.log gshare 16
+rv32gc_8local_basic6.log local 8 6
+rv32gc_8local_basic8.log local 8 8
+rv32gc_8local_basic10.log local 8 10
+rv32gc_8local_basic12.log local 8 12
+rv32gc_8local_basic14.log local 8 14
+rv32gc_8local_basic16.log local 8 16

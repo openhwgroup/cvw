@@ -44,8 +44,14 @@ def validateArgs(args):
     if (args.lockstep or args.lockstepverbose) and not ((args.testsuite and args.testsuite.endswith(".elf")) or args.elf) and args.testsuite != "buildroot":
         print(f"Invalid Options. Cannot run a testsuite, {args.testsuite} with lockstep. Must run a single elf or buildroot.")
         sys.exit(1)
-    elif any([args.gui, args.ccov, args.fcov, args.lockstep, args.lockstepverbose]) and args.sim not in ["questa", "vcs"]:
-        print("Option only supported for Questa and VCS")
+    elif args.gui and args.sim != "questa":
+        print("GUI only supported by Questa")
+        sys.exit(1)
+    elif any([args.gui, args.ccov, args.fcov]) and args.sim != "questa":
+        print("Coverage only supported by Questa")
+        sys.exit(1)
+    elif any([args.lockstep, args.lockstepverbose]) and args.sim not in ["questa", "vcs"]:
+        print("Lockstep only supported by Questa and VCS")
         sys.exit(1)
     elif args.tb == "testbench_fp" and args.sim != "questa":
         print("Error: testbench_fp presently only supported by Questa, not VCS or Verilator, because of a touchy testbench")
@@ -89,6 +95,8 @@ def prepSim(args, ElfFile):
     defineList = []
     if args.vcd:
         paramsList.append("MAKE_VCD=1")
+        if args.sim == "questa":
+            flagsList.append("--vcd")
     if args.rvvi:
         paramsList.append("RVVI_SYNTH_SUPPORTED=1")
     if args.tb == "testbench_fp":

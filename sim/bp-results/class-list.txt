@@ -1,6 +1,6 @@
-../logs/bpred_GSHARE_16_16_6_1_rv32gc_embench.log btb 6
-../logs/bpred_GSHARE_16_16_8_1_rv32gc_embench.log btb 8
-../logs/bpred_GSHARE_16_16_10_1_rv32gc_embench.log btb 10
-../logs/bpred_GSHARE_16_16_12_1_rv32gc_embench.log btb 12
-../logs/bpred_GSHARE_16_16_14_1_rv32gc_embench.log btb 14
-../logs/bpred_GSHARE_16_16_16_1_rv32gc_embench.log btb 16
+bpred_GSHARE_10_16_6_1_rv32gc_embench.log btb 6
+bpred_GSHARE_10_16_8_1_rv32gc_embench.log btb 8
+bpred_GSHARE_10_16_10_1_rv32gc_embench.log btb 10
+bpred_GSHARE_10_16_12_1_rv32gc_embench.log btb 12
+bpred_GSHARE_10_16_14_1_rv32gc_embench.log btb 14
+bpred_GSHARE_10_16_16_1_rv32gc_embench.log btb 16

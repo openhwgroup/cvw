@@ -31,20 +31,32 @@ main:
         li t0, 0x80100770
         sd zero, 0(t0)
         sd zero, 1(t0)
+        lr.d t1, (t0)
+        addi t0, t0, 1
+        sc.d t2, t1, (t0)
 
         // way 1
         li t0, 0x80101770
         sd zero, 0(t0)
         sd zero, 1(t0)
+        lr.d t1, (t0)
+        addi t0, t0, 1
+        sc.d t2, t1, (t0)
 
         // way 2
         li t0, 0x80102770
         sd zero, 0(t0)
         sd zero, 1(t0)
+        lr.d t1, (t0)
+        addi t0, t0, 1
+        sc.d t2, t1, (t0)
 
         // way 3
         li t0, 0x80103770
         sd zero, 0(t0)
         sd zero, 1(t0)
+        lr.d t1, (t0)
+        addi t0, t0, 1
+        sc.d t2, t1, (t0)
 
         j done

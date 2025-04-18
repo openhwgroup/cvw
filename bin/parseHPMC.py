@@ -34,6 +34,8 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 
+WALLY = os.environ.get('WALLY')
+
 RefDataBP = [('twobitCModel6', 'twobitCModel', 64, 128, 10.0060297551637), ('twobitCModel8', 'twobitCModel', 256, 512, 8.4320392215602), ('twobitCModel10', 'twobitCModel', 1024, 2048, 7.29493318805151),
            ('twobitCModel12', 'twobitCModel', 4096, 8192, 6.84739616147794), ('twobitCModel14', 'twobitCModel', 16384, 32768, 5.68432926870082), ('twobitCModel16', 'twobitCModel', 65536, 131072, 5.68432926870082),
            ('gshareCModel6', 'gshareCModel', 64, 128, 11.4737703417701), ('gshareCModel8', 'gshareCModel', 256, 512, 8.52341470761974), ('gshareCModel10', 'gshareCModel', 1024, 2048, 6.32975690693015),
@@ -49,7 +51,7 @@ def ParseBranchListFile(path):
     with open(path) as BranchList:
         for line in BranchList:
             tokens = line.split()
-            predictorLog = os.path.dirname(path) + '/' + tokens[0]
+            predictorLog = f"{WALLY}/sim/{args.sim}/logs/{tokens[0]}"
             predictorType = tokens[1]
             predictorParams = tokens[2::]
             lst.append([predictorLog, predictorType, predictorParams])
@@ -64,14 +66,17 @@ def ProcessFile(fileName):
     benchmarks = []
     HPMClist = { }
     testName = ''
+    opt = ''
     with open(fileName) as transcript:
         for line in transcript.readlines():
             lineToken = line.split()
-            if(len(lineToken) > 3 and lineToken[1] == 'Read' and lineToken[2] == 'memfile'):
-                opt = lineToken[3].split('/')[-4]
-                testName = lineToken[3].split('/')[-1].split('.')[0]
+            if (args.sim == "questa") & (lineToken[0] == "#"):
+                lineToken = lineToken[1:] # Questa uses a leading # for each line, other simulators do not
+            if(len(lineToken) > 2 and lineToken[0] == 'Read' and lineToken[1] == 'memfile'):
+                opt = lineToken[2].split('/')[-4]
+                testName = lineToken[2].split('/')[-1].split('.')[0]
                 HPMClist = { }
-            elif(len(lineToken) > 4 and lineToken[1][0:3] == 'Cnt'):
+            elif(len(lineToken) > 3 and lineToken[0][0:3] == 'Cnt'):
                 countToken = line.split('=')[1].split()
                 value = int(countToken[0]) if countToken[0] != 'x' else 0
                 name = ' '.join(countToken[1:])
@@ -440,6 +445,7 @@ displayMode.add_argument('--table', action='store_const', help='Display in text 
 displayMode.add_argument('--gui', action='store_const', help='Display in text format only.', default=False, const=True)
 displayMode.add_argument('--debug', action='store_const', help='Display in text format only.', default=False, const=True)
 parser.add_argument('sources', nargs=1, help='File lists the input Questa transcripts to process.')
+parser.add_argument('sim', choices=["questa", "verilator", "vcs"], help='Simulator that was used to generate logs. This is used to find the files specified in the sources file.')
 parser.add_argument('FileName', metavar='FileName', type=str, nargs='?', help='output graph to file <name>.png If not included outputs to screen.', default=None)
 
 args = parser.parse_args()

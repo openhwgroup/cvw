@@ -3,7 +3,7 @@
 ###########################################
 ## Written: rose@rosethompson.net
 ## Created: 12 March 2023
-## Modified: 
+## Modified: 15 April 2025 jcarlin@hmc.edu
 ##
 ## Purpose: Converts a single branch.log containing multiple benchmark branch outcomes into
 ##          separate files, one for each program.
@@ -31,27 +31,26 @@
 ################################################################################################
 
 File="$1"
-TrainLineNumbers=`cat $File | grep -n "TRAIN" | awk -NF ':' '{print $1}'`
-BeginLineNumbers=`cat $File | grep -n "BEGIN" | awk -NF ':' '{print $1}'`
-Name=`cat $File | grep -n "BEGIN" | awk -NF '/' '{print $6_$4}'`
-EndLineNumbers=`cat $File | grep -n "END" | awk -NF ':' '{print $1}'`
-echo $Name
-echo $BeginLineNumbers
-echo $EndLineNumbers
+TrainLineNumbers=$(grep -n "TRAIN" "$File" | awk -NF ':' '{print $1}')
+Name=$(grep -n "BEGIN" "$File" | awk -NF '/' '{print $7_$5}')
+EndLineNumbers=$(grep -n "END" "$File" | awk -NF ':' '{print $1}')
 
-NameArray=($Name)
-TrainLineNumberArray=($TrainLineNumbers)
-BeginLineNumberArray=($BeginLineNumbers)
-EndLineNumberArray=($EndLineNumbers)
+echo Name: "$Name"
+echo TrainLineNumbers: "$TrainLineNumbers"
+echo EndLineNumbers: "$EndLineNumbers"
+
+mapfile -t NameArray <<< "$Name"
+mapfile -t TrainLineNumberArray <<< "$TrainLineNumbers"
+mapfile -t EndLineNumberArray <<< "$EndLineNumbers"
 
 OutputPath=${File%%.*}
-mkdir -p $OutputPath
+mkdir -p "$OutputPath"
 Length=${#EndLineNumberArray[@]}
 for i in $(seq 0 1 $((Length-1)))
 do
     CurrName=${NameArray[$i]}
     CurrTrain=$((${TrainLineNumberArray[$i]}+1))
     CurrEnd=$((${EndLineNumberArray[$i]}-1))
-    echo $CurrName, $CurrTrain, $CurrEnd
-    sed -n "${CurrTrain},${CurrEnd}p" $File > $OutputPath/${CurrName}_${File}
+    echo "${CurrName}", "${CurrTrain}", "${CurrEnd}"
+    sed -n "${CurrTrain},${CurrEnd}p" "$File" > "${OutputPath}/${CurrName}_${File}"
 done

@@ -1,5 +1,5 @@
-../logs/bpred_GSHARE_10_3_10_0_rv32gc_embench.log ras 3
-../logs/bpred_GSHARE_10_4_10_0_rv32gc_embench.log ras 4
-../logs/bpred_GSHARE_10_6_10_0_rv32gc_embench.log ras 6
-../logs/bpred_GSHARE_10_10_10_0_rv32gc_embench.log ras 10
-../logs/bpred_GSHARE_10_16_10_0_rv32gc_embench.log ras 16
+bpred_GSHARE_10_3_10_0_rv32gc_embench.log ras 3
+bpred_GSHARE_10_4_10_0_rv32gc_embench.log ras 4
+bpred_GSHARE_10_6_10_0_rv32gc_embench.log ras 6
+bpred_GSHARE_10_10_10_0_rv32gc_embench.log ras 10
+bpred_GSHARE_10_16_10_0_rv32gc_embench.log ras 16
