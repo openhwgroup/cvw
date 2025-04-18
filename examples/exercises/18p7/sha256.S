@@ -17,6 +17,7 @@ _start:
     la s0, M
     la s1, W
     li t1, 0
+
 load_loop:
     lw t2, 0(s0)
     sw t2, 0(s1)
@@ -29,6 +30,7 @@ load_loop:
     # Compute W[16..63]
     la s1, W
     li t1, 16
+
 gen_loop:
     slli t2, t1, 2
     add t3, s1, t2
@@ -61,33 +63,37 @@ gen_loop:
     mv s8, a6
     mv s9, a7
 
-    li t0, 0           # round counter
+    li t0, 0           				# round counter
     la t1, K
     la t2, W
 
+# Compression Function
+# T1 = SUM1(e) + Ch(e,f,g) + K[i] + W[i]
+# T2 = SUM0(a) + Maj(a,b,c)
+	
 sha_round:
     slli t3, t0, 2
     add t4, t1, t3
-    lw t5, 0(t4)       # K[t]
+    lw t5, 0(t4)       				# K[t]
 
     add t4, t2, t3
-    lw t6, 0(t4)       # W[t]
+    lw t6, 0(t4)       				# W[t]
 
     sha256sum1 a0, s6
     xor a1, s6, s7
     and a1, a1, s8
-    xor a1, a1, s7     # Ch
+    xor a1, a1, s7     				# Ch
 
     add a2, a0, a1
     add a2, a2, t5
-    add a2, a2, t6     # T1
+    add a2, a2, t6     				# T1
 
     sha256sum0 a3, s2
     xor a4, s2, s3
     and a4, a4, s4
-    xor a4, a4, s3     # Maj
+    xor a4, a4, s3     				# Maj
 
-    add a5, a3, a4     # T2
+    add a5, a3, a4     				# T2
 
     # Rotate working vars
     mv a6, s9
@@ -113,7 +119,6 @@ sha_round:
     add a5, a5, s7
     add a6, a6, s8
     add a7, a7, s9
-
 
 # Finalize
 done:
