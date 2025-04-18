@@ -327,8 +327,7 @@ def addTestsByDir(testDir, config, sim, coverStr, configs, lockstepMode=0, breke
 
     sim_logdir = f"{regressionDir}/{sim}/logs/"
     cmdPrefix = f"wsim --sim {sim} {coverStr} {'--lockstep' if lockstepMode else ''} {config}"
-    # fcov/ccov only runs on WALLY-COV-ALL.elf files; other lockstep runs on all files
-    fileStart = "WALLY-COV-ALL" if "cvw-arch-verif/tests" in testDir and "priv" not in testDir else "ref" if "riscv-arch-test" in testDir else ""
+    fileStart = "ref" if "riscv-arch-test" in testDir else ""
     fileEnd = ".elf"
     if lockstepMode:
         gs = "Mismatches            : 0"
@@ -476,7 +475,7 @@ def selectTests(args, sims, coverStr):
     if args.breker:
         addTestsByDir(WALLY+"/tests/breker/work", "breker", "questa", coverStr, configs, brekerMode=1)
     # standard tests
-    if not (args.testfloat or args.branch):
+    if not(args.testfloat or args.ccov or args.fcov or args.fcov_act or args.branch or args.breker):
         for sim in sims:
             if not (args.buildroot and sim == lockstepsim):  # skip short buildroot sim if running long one
                 addTests(tests_buildrootshort, sim, coverStr, configs)
