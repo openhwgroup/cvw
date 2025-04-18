@@ -28,6 +28,7 @@ _start:
     sw a6, 8(s11)
     sw a7, 12(s11)
     addi s11, s11, 16
+    csrr s8, instret   				# count instructions at beginning
 	
     # XOR state with round key
     xor a4, a4, t0
@@ -135,16 +136,14 @@ final_round:
 
 # Finalize
 done:
-    mv a0, a4              # Return first word of ciphertext
-    andi a0, a0, 0xFF      # Mask to 8 bits
-    csrr s9, instret       # Read instruction count
-    # Note: If you want to calculate instructions executed, you need to
-    # save the initial instret value and subtract it here.
-
+    csrr s9, instret       			# Read instruction count
+    sub s9, s9, s8	        		# get number of #instructions executed	
+    sw s9, 0(s11)	
+	
 write_tohost:
     la t1, tohost
-    li t0, 1               # Success code
-    sw t0, 0(t1)           # Send success code
+    li t0, 1               			# Success code
+    sw t0, 0(t1)           			# Send success code
 
 self_loop:
     j self_loop
@@ -160,12 +159,14 @@ fromhost:
 
 .EQU XLEN,32
 begin_signature:
-    .fill 4*2*(XLEN/32),4,0xdeadbeef
+    .fill (4*2+1)*(XLEN/32),4,0xdeadbeef
 end_signature:
 
+# FIPS 197 Example Appendix A AES-128 (stored little endian)
 plaintext:
     .word 0xa8f64332, 0x8d305a88, 0xa2983131, 0x340737e0
-	
+
+# Key Expansion Example Appendix B AES-128
 key_schedule:
     .word 0x16157e2b, 0xa6d2ae28, 0x8815f7ab, 0x3c4fcf09  # Round 0
     .word 0x17fefaa0, 0xb12c5488, 0x3939a323, 0x05766c2a  # Round 1
