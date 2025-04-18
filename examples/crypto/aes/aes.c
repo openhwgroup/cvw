@@ -312,7 +312,7 @@ void aes_main(unsigned char *state, unsigned char *expandedKey, int nbrRounds) {
   for (int i = 1; i < nbrRounds; i++) {
     createRoundKey(expandedKey + 16 * i, roundKey);
     printState(state);
-    aes_cipher(state, roundKey);  // includes printState calls inside if in debug mode                    
+    aes_cipher(state, roundKey);  
   }
 
   // Final round (no MixColumns)                                                                          
@@ -354,13 +354,11 @@ char aes_encrypt(unsigned char *input, unsigned char *output,
       block[row + 4 * col] = input[4 * row + col];
     }
   }
-
+  
   // Expand the key                                                                                       
   KeyExpansion(expandedKey, key, size, expandedKeySize);
-
   // Encrypt the block                                                                                    
   aes_main(block, expandedKey, nbrRounds);
-
   // Map block back to output (column-major to row-major)                                                 
   for (int row = 0; row < 4; row++) {
     for (int col = 0; col < 4; col++) {
@@ -566,7 +564,7 @@ int main(int argc, char *argv[]) {
 
   printf("Implementation of AES algorithm in C\n");
   printf("\nCipher Key (hex format):\n");
-  for (i = 0; i < 32; i++) {
+  for (i = 0; i < 16; i++) {
     printf("%2.2x%c", key[i], ((i + 1) % 16) ? ' ' : '\n');
   }
 
@@ -577,8 +575,6 @@ int main(int argc, char *argv[]) {
   }
 
   printf("\nPlaintext (hex format):\n");
-  printState(plaintext);
-
   // AES Encryption
   aes_encrypt(plaintext, ciphertext, key, size);  
   printf("\nCiphertext (hex format):\n");
