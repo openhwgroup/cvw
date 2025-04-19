@@ -6,9 +6,6 @@
 #include <stdio.h>  
 #include <stdlib.h> 
 
-// Define VERBOSE to enable printing
-#define VERBOSE 1
-
 enum errorCode {
     SUCCESS = 0,
     ERROR_AES_UNKNOWN_KEYSIZE,
@@ -623,10 +620,10 @@ int main(int argc, char *argv[]) {
   // AES Decryption
   aes_decrypt(ciphertext, decryptedtext, key, size);
   #if VERBOSE
-  printf("\nDecrypted text (hex format):\n");
-  for (i = 0; i < 16; i++) {
-    printf("%2.2x%c", decryptedtext[i], ((i + 1) % 16) ? ' ' : '\n');
-  }
+    printf("\nDecrypted text (hex format):\n");
+    for (i = 0; i < 16; i++) {
+      printf("%2.2x%c", decryptedtext[i], ((i + 1) % 16) ? ' ' : '\n');
+    }
   #endif
 
   return 0;

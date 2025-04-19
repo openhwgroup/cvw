@@ -1,13 +1,17 @@
 CC = gcc
 CFLAGS = -g
+VERBOSE ?= 0
+CFLAGS += -DVERBOSE=$(VERBOSE)
 
-all: aes
+TARGET = aes
 
-aes:	aes.c
-	$(CC) $(CFLAGS) aes.c -o aes
+# Always rebuild if VERBOSE changes
+.PHONY: all clean $(TARGET)
+
+all: $(TARGET)
+
+$(TARGET): aes.c
+	$(CC) $(CFLAGS) -o $@ $<
 
 clean:
-	rm -rf aes
-	rm -f *~
-
-.PHONY: all clean
+	rm -f $(TARGET) *~
