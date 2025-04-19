@@ -156,6 +156,16 @@ ConcurrentICacheMissDTLBMiss:
     #sd zero, 0(t0)
     #amoadd.w t1, t0, (t0)
 
+    # Access page with R=0 W = 1
+    li t0, 0x80804000
+    li t1, 0x8067 # ret
+    sw t1, 0(t0) # have something to return from
+    jalr ra, t0
+
+    # Good PBMT with menvcfg.PBMT = 1, 
+    li t0, 0x80806000
+    jalr ra, t0
+
     # Good PBMT with menvcfg.PBMTE = 0
     li a0, 3
     ecall   # switch to machine mode
