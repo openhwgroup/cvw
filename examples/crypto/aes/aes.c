@@ -6,6 +6,9 @@
 #include <stdio.h>  
 #include <stdlib.h> 
 
+// Define VERBOSE to enable printing
+#define VERBOSE 1
+
 enum errorCode {
     SUCCESS = 0,
     ERROR_AES_UNKNOWN_KEYSIZE,
@@ -278,13 +281,25 @@ void mixColumn(unsigned char *column) {
 // transformations on the state (Section 5.1 of FIPS 197) - outputs hex after each step                   
 void aes_cipher(unsigned char *state, unsigned char *roundKey) {
   subBytes(state);
+  #if VERBOSE
   printState(state);
+  #endif
+  
   shiftRows(state);
+  #if VERBOSE
   printState(state);
+  #endif
+  
   mixColumns(state);
+  #if VERBOSE
   printState(state);
+  #endif
+  
   addRoundKey(state, roundKey);
-  printf("\n");  // Optional: for spacing                                                                 
+  #if VERBOSE
+  printf("\n");  // Optional: for spacing
+  #endif
+  
 }
 
 void createRoundKey(unsigned char *expandedKey, unsigned char *roundKey) {
@@ -302,26 +317,40 @@ void aes_main(unsigned char *state, unsigned char *expandedKey, int nbrRounds) {
 
   // Initial round key                                                                                    
   createRoundKey(expandedKey, roundKey);
+  #if VERBOSE
   printState(state);
   printf("\n");
+  #endif
 
   addRoundKey(state, roundKey);
 
   for (int i = 1; i < nbrRounds; i++) {
     createRoundKey(expandedKey + 16 * i, roundKey);
+    #if VERBOSE
     printState(state);
+    #endif
     aes_cipher(state, roundKey);  
   }
-
-  // Final round (no MixColumns)                                                                          
+  // Final round (no MixColumns)
+  #if VERBOSE
   printState(state);
+  #endif
+  
   createRoundKey(expandedKey + 16 * nbrRounds, roundKey);
   subBytes(state);
+  #if VERBOSE
   printState(state);
+  #endif
+  
   shiftRows(state);
+  #if VERBOSE
   printState(state);
+  #endif
+  
   addRoundKey(state, roundKey);
+  #if VERBOSE
   printState(state);
+  #endif
 }
 
 char aes_encrypt(unsigned char *input, unsigned char *output,
@@ -560,36 +589,45 @@ int main(int argc, char *argv[]) {
   unsigned char decryptedtext[16];
   int i;
 
-  printf("Implementation of AES algorithm in C\n");
+  #if VERBOSE
   printf("\nCipher Key (hex format):\n");
   for (i = 0; i < 16; i++) {
     printf("%2.2x%c", key[i], ((i + 1) % 16) ? ' ' : '\n');
   }
+  #endif
 
   KeyExpansion(expandedKey, key, size, expandedKeySize);
+  #if VERBOSE
   printf("\nExpanded Key (hex format):\n");
   for (i = 0; i < expandedKeySize; i++) {
     printf("%2.2x%c", expandedKey[i], ((i + 1) % 16) ? ' ' : '\n');
   }
+  #endif
 
-  printf("\nPlaintext (hex format):\n");
+  #if VERBOSE
+  printf("\nPlaintext (hex format):\n");  
   for (i = 0; i < 16; i++) {
     printf("%2.2x%c", plaintext[i], ((i + 1) % 16) ? ' ' : '\n');
   }
+  #endif
   
   // AES Encryption
   aes_encrypt(plaintext, ciphertext, key, size);  
+  #if VERBOSE
   printf("\nCiphertext (hex format):\n");
   for (i = 0; i < 16; i++) {
     printf("%02x%c", ciphertext[i], ((i + 1) % 16) ? ' ' : '\n');
   }
+  #endif
     
   // AES Decryption
   aes_decrypt(ciphertext, decryptedtext, key, size);
+  #if VERBOSE
   printf("\nDecrypted text (hex format):\n");
   for (i = 0; i < 16; i++) {
     printf("%2.2x%c", decryptedtext[i], ((i + 1) % 16) ? ' ' : '\n');
   }
+  #endif
 
   return 0;
 }
