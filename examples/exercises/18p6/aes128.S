@@ -22,12 +22,6 @@ _start:
     lw t2, 8(a2)
     lw t3, 12(a2)
 
-    # DEBUG
-    sw a4, 0(s11)
-    sw a5, 4(s11)
-    sw a6, 8(s11)
-    sw a7, 12(s11)
-    addi s11, s11, 16
     csrr s8, instret   				# count instructions at beginning
 	
     # XOR state with round key
@@ -159,7 +153,7 @@ fromhost:
 
 .EQU XLEN,32
 begin_signature:
-    .fill (4*2+1)*(XLEN/32),4,0xdeadbeef
+    .fill (4+1)*(XLEN/32),4,0xdeadbeef
 end_signature:
 
 # FIPS 197 Example Appendix A AES-128 (stored little endian)
