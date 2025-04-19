@@ -94,10 +94,10 @@ sha_round:
     and a1, s6, s7      			# a1 = x & y
     not a2, s6          			# a2 = ~x
     and a2, a2, s8     	 			# a2 = ~x & z
-    xor a1, a1, a2      			# Ch = a1 = (x & y) ^ (~x & z)
+    xor a1, a1, a2      			
     add a2, a0, a1
     add a2, a2, s9
-    add a2, a2, t5
+    add a2, a2, t5				# Ch = a1 = (x & y) ^ (~x & z) (4 instructions)
     add a2, a2, t6     				# T1 = h + SUM1(e) + Ch(e,f,g) + K[i] + W[i]
 				
     sha256sum0 a3, s2				# Sum0 transformation
@@ -105,7 +105,7 @@ sha_round:
     and a5, s2, s4                              # a5 = a & c
     xor a4, a4, a5                              # a4 = (a & b) ^ (a & c)
     and a5, s3, s4                              # a5 = b & c
-    xor a4, a4, a5                              # a4 = Maj(a, b, c)
+    xor a4, a4, a5                              # a4 = Maj(a, b, c) (5 instructions)
     add a5, a3, a4     				# T2 = SUM0(a) + Maj(a,b,c)	
 
     # Compression Function Shift
@@ -118,7 +118,7 @@ sha_round:
     mv s3, s2					# b
     add s2, a2, a5				# a = T1+T2
 
-    addi t0, t0, 1
+    addi t0, t0, 1				# Modify branch ctr for t
     li a7, 64
     blt t0, a7, sha_round
 
