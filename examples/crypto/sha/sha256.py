@@ -1,7 +1,6 @@
 # sha256.py
 # Secure Hash Algorithm - SHA-256
 # james.stine@okstate.edu 5 Sept 2024
-# used for ecen2233 at Oklahoma State University
 
 import hashlib
 
@@ -90,12 +89,10 @@ def generate_hash(message: bytearray) -> bytearray:
         message_schedule = []
         for t in range(0, 64):
             if t <= 15:
-                # adds the t'th 32 bit word of the block,
-                # starting from leftmost word
                 # 4 bytes at a time
                 message_schedule.append(bytes(message_block[t*4:(t*4)+4]))
-                print("W_" + str(t) + " = " +
-                      hex(int.from_bytes(message_schedule[t], 'big')))
+                word = int.from_bytes(message_schedule[t], 'big')
+                print(f"W_{t:02} = 0x{word:08x}")
             else:
                 term1 = sigma1(int.from_bytes(message_schedule[t-2], 'big'))
                 term2 = int.from_bytes(message_schedule[t-7], 'big')

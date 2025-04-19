@@ -1,7 +1,6 @@
 # sha512.py
 # Secure Hash Algorithm - SHA-512
 # james.stine@okstate.edu
-# used for ecen2233 at Oklahoma State University
 
 import hashlib
 
@@ -101,7 +100,7 @@ def generate_hash(message: bytearray) -> bytearray:
             W.append((W[t-16] + s0 + W[t-7] + s1) % (1 << 64))
 
         for t in range(80):
-            print(f"W_{t:02} = {W[t]:#018x}")
+            print(f"W_{t:02} = 0x{W[t] & 0xFFFFFFFF:08x}")
 
         a, b, c, d, e, f, g, h_ = h
         print("-------------\nInitial working variables:")
