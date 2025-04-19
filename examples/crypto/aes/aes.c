@@ -110,11 +110,9 @@ char aes_decrypt(unsigned char *input, unsigned char *output, unsigned char *key
 
 // Helper function to print AES state
 void printState(const unsigned char *state) {
-  for (int row = 0; row < 4; row++) {
-    for (int col = 0; col < 4; col++) {
-      int i = row * 4 + col;  // row-major index
-      printf("%02x ", state[i]);
-    }
+  for (int col = 0; col < 4; col++) {
+    printf("%02x %02x %02x %02x ",
+           state[col], state[col + 4], state[col + 8], state[col + 12]);
   }
   printf("\n");
 }
@@ -575,15 +573,23 @@ int main(int argc, char *argv[]) {
   }
 
   printf("\nPlaintext (hex format):\n");
+  for (i = 0; i < 16; i++) {
+    printf("%2.2x%c", plaintext[i], ((i + 1) % 16) ? ' ' : '\n');
+  }
+  
   // AES Encryption
   aes_encrypt(plaintext, ciphertext, key, size);  
   printf("\nCiphertext (hex format):\n");
-  printState(ciphertext);
+  for (i = 0; i < 16; i++) {
+    printf("%02x%c", ciphertext[i], ((i + 1) % 16) ? ' ' : '\n');
+  }
     
   // AES Decryption
   aes_decrypt(ciphertext, decryptedtext, key, size);
   printf("\nDecrypted text (hex format):\n");
-  printState(decryptedtext);
+  for (i = 0; i < 16; i++) {
+    printf("%2.2x%c", decryptedtext[i], ((i + 1) % 16) ? ' ' : '\n');
+  }
 
   return 0;
 }
