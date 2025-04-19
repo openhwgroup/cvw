@@ -620,10 +620,10 @@ int main(int argc, char *argv[]) {
   // AES Decryption
   aes_decrypt(ciphertext, decryptedtext, key, size);
   #if VERBOSE
-    printf("\nDecrypted text (hex format):\n");
-    for (i = 0; i < 16; i++) {
-      printf("%2.2x%c", decryptedtext[i], ((i + 1) % 16) ? ' ' : '\n');
-    }
+  printf("\nDecrypted text (hex format):\n");
+  for (i = 0; i < 16; i++) {
+    printf("%2.2x%c", decryptedtext[i], ((i + 1) % 16) ? ' ' : '\n');
+  }  
   #endif
 
   return 0;
