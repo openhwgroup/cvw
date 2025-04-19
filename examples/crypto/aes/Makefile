@@ -5,7 +5,7 @@ CFLAGS += -DVERBOSE=$(VERBOSE)
 
 RISCV_CC = riscv64-unknown-elf-gcc
 RISCV_OBJDUMP = riscv64-unknown-elf-objdump
-RISCV_CFLAGS = -g -DVERBOSE=$(VERBOSE) -march=rv32gc -mabi=ilp32 -mcmodel=medany \
+RISCV_CFLAGS = -g -DVERBOSE=0 -march=rv32gc -mabi=ilp32 -mcmodel=medany \
                -nostartfiles -T../../link/link.ld
 
 TARGET = aes
