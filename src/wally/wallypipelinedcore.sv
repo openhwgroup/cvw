@@ -51,6 +51,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          StallF, StallD, StallE, StallM, StallW;
   logic                          FlushD, FlushE, FlushM, FlushW;
   logic                          TrapM, RetM;
+  logic                          InstrBufferFull, InstrBufferStallD;
 
   //  signals that must connect through DP
   logic                          IntDivE, W64E;
@@ -173,6 +174,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu #(P) ifu(.clk, .reset,
     .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+    .InstrBufferFull, .InstrBufferStallD,
     .InstrValidE, .InstrValidD,
     .BranchD, .BranchE, .JumpD, .JumpE, .ICacheStallF,
     // Fetch
