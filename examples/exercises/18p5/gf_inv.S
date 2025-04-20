@@ -6,7 +6,7 @@
 .global rvtest_entry_point
 rvtest_entry_point:
 	
-    li a0, 0x32        # Input value to invert in GF(2^8)
+    li a0, 0x43        # Input value to invert in GF(2^8)
     li t0, 0x11B       # Modulus: irreducible poly x^8 + x^4 + x^3 + x + 1
 
     # Initialize Extended Euclidean variables: a*x+b*y=gcd(a,b)
