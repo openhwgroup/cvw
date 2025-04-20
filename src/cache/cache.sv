@@ -38,14 +38,15 @@ module cache import cvw::*; #(parameter cvw_t P,
   input  logic [1:0]             CacheRW,           // [1] Read, [0] Write 
   input  logic                   FlushCache,        // Flush all dirty lines back to memory
   input  logic                   InvalidateCache,   // Clear all valid bits
-  input  logic [3:0]             CMOpM,              // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
+  input  logic [3:0]             CMOpM,             // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
   input  logic [11:0]            NextSet,           // Virtual address, but we only use the lower 12 bits.
   input  logic [PA_BITS-1:0]     PAdr,              // Physical address
   input  logic [(WORDLEN-1)/8:0] ByteMask,          // Which bytes to write (D$ only)
-  input  logic [WORDLEN-1:0]     WriteData,    // Data to write to cache (D$ only)
+  input  logic [WORDLEN-1:0]     WriteData,         // Data to write to cache (D$ only)
   output logic                   CacheCommitted,    // Cache has started bus operation that shouldn't be interrupted
   output logic                   CacheStall,        // Cache stalls pipeline during multicycle operation
   output logic [WORDLEN-1:0]     ReadDataWord,      // Word read from cache (goes to CPU and bus)
+  output logic [LINELEN-1:0]     ReadDataLine,      // Line read from cache (goes to bus)
   // to performance counters to cpu
   output logic                   CacheMiss,         // Cache miss
   output logic                   CacheAccess,       // Cache access
@@ -90,7 +91,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   logic                          FlushWayCntEn;
   logic                          SelWriteback;
   logic                          LRUWriteEn;
-  logic [LINELEN-1:0]            ReadDataLine, ReadDataLineCache;
+  logic [LINELEN-1:0]            ReadDataLineCache;
   logic                          SelFetchBuffer;
   logic                          CacheEn;
   logic                          SelVictim;
@@ -153,8 +154,12 @@ module cache import cvw::*; #(parameter cvw_t P,
   mux2 #(LINELEN) EarlyReturnMux(ReadDataLineCache, FetchBuffer, SelFetchBuffer, ReadDataLine);
 
   // Select word from cache line
-  subcachelineread #(LINELEN, WORDLEN, MUXINTERVAL) subcachelineread(
-    .PAdr(WordOffsetAddr), .ReadDataLine, .ReadDataWord);
+  if(!P.INSTR_BUFFER_SUPPORTED)
+    subcachelineread #(LINELEN, WORDLEN, MUXINTERVAL) subcachelineread(
+      .PAdr(WordOffsetAddr), .ReadDataLine, .ReadDataWord);
+  else begin
+    assign ReadDataWord = 0;
+  end
   
   // Bus address for fetch, writeback, or flush writeback
   mux3 #(PA_BITS) CacheBusAdrMux(.d0({PAdr[PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
