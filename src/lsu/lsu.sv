@@ -333,7 +333,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
         .WriteData(LSUWriteDataSpillM), .SelHPTW,
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .CacheCommitted(DCacheCommittedM), 
-        .CacheBusAdr(DCacheBusAdr), .ReadDataWord(DCacheReadDataWordM), 
+        .CacheBusAdr(DCacheBusAdr), .ReadDataWord(DCacheReadDataWordM), .ReadDataLine(),
         .FetchBuffer, .CacheBusRW(CacheBusRW), 
         .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0), .CMOpM(CacheCMOpM));
 
