@@ -132,7 +132,6 @@ final_round:
 done:
     csrr s9, instret       			# Read instruction count
     sub s9, s9, s8	        		# get number of #instructions executed	
-    sw s9, 0(s11)	
 	
 write_tohost:
     la t1, tohost
@@ -153,7 +152,7 @@ fromhost:
 
 .EQU XLEN,32
 begin_signature:
-    .fill (4+1)*(XLEN/32),4,0xdeadbeef
+    .fill (4)*(XLEN/32),4,0xdeadbeef
 end_signature:
 
 # FIPS 197 Example Appendix A AES-128 (stored little endian)
