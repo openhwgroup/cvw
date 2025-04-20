@@ -112,6 +112,7 @@ localparam logic SVADU_SUPPORTED   = 0;
 localparam logic BUS_SUPPORTED = 1;
 localparam logic DCACHE_SUPPORTED = 0;
 localparam logic ICACHE_SUPPORTED = 0;
+localparam logic INSTR_BUFFER_SUPPORTED = 0;
 localparam logic VIRTMEM_SUPPORTED = 0;
 localparam logic VECTORED_INTERRUPTS_SUPPORTED = 0;
 localparam logic BIGENDIAN_SUPPORTED = 0;
