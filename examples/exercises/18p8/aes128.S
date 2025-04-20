@@ -24,7 +24,7 @@ _start:
 	
     # Initialize loop counter and max rounds 
     li s4, 1
-    li s5, 2
+    li s5, 10
     addi a2, a2, 16
 
 enc_loop:
