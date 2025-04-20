@@ -118,6 +118,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   logic [31:0]                 IROMInstrF;                               // Instruction from the IROM
   logic [31:0]                 ICacheInstrF;                             // Instruction from the I$
   logic [31:0]                 InstrRawF;                                // Instruction from the IROM, I$, or bus
+  logic [P.ICACHE_LINELENINBITS-1:0] ReadDataLine;                       // I$ Cacheline
   logic                        CompressedF, CompressedE;                 // The fetched instruction is compressed
   logic [31:0]                 PostSpillInstrRawF;                       // Fetch instruction after merge two halves of spill
   logic [31:0]                 InstrRawD;                                // Non-decompressed instruction in the Decode stage
@@ -244,6 +245,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
              .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), 
              .CacheBusRW,
              .ReadDataWord(ICacheInstrF),
+             .ReadDataLine,
              .SelHPTW('0),
              .CacheMiss(ICacheMiss), .CacheAccess(ICacheAccess),
              .ByteMask('0), .BeatCount('0), .SelBusBeat('0),
