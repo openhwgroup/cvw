@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -g
-VERBOSE ?= 0
+VERBOSE ?= 1
 CFLAGS += -DVERBOSE=$(VERBOSE)
 
 RISCV_CC = riscv64-unknown-elf-gcc

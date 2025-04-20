@@ -4,12 +4,10 @@
 // james.stine@okstate.edu e 11 November 2024
 // 
 #include <stdio.h>  
-#include <stdlib.h> 
 
 enum errorCode {
     SUCCESS = 0,
-    ERROR_AES_UNKNOWN_KEYSIZE,
-    ERROR_MEMORY_ALLOCATION_FAILED,
+    ERROR_AES_UNKNOWN_KEYSIZE
 };
 
 // Implementation: S-Box
@@ -84,6 +82,7 @@ enum keySize {
   SIZE_32 = 32
 };
 
+// main Function Prototypes
 void KeySchedule(unsigned char *word, int iteration);
 unsigned char getRconValue(unsigned char num);
 // AES Encryption Function Prototypes
@@ -108,7 +107,7 @@ void aes_invRound(unsigned char *state, unsigned char *roundKey);
 void aes_invCipher(unsigned char *state, unsigned char *expandedKey, int nbrRounds);
 char aes_decrypt(unsigned char *input, unsigned char *output, unsigned char *key, enum keySize size);
 
-// Helper function to print AES state
+// Helper function to print AES state based on VERBOSE
 void printState(const unsigned char *state) {
   for (int col = 0; col < 4; col++) {
     printf("%02x %02x %02x %02x ",
@@ -138,12 +137,9 @@ unsigned char getRconValue(unsigned char num) {
   return Rcon[num];
 }
 
+// Key Schedule: RotWord → SubWord → XOR with Rcon
 void KeySchedule(unsigned char *word, int iteration) {
   int i;
-
-  // Key Schedule: RotWord → SubWord → XOR with Rcon                                                      
-  // used during key expansion to transform the input word before XORing it with a                        
-  // word from earlier in the expanded key array.                                                         
 
   // rotate the 32-bit word 8 bits to the left                                                            
   rotate(word);
@@ -160,7 +156,6 @@ void KeySchedule(unsigned char *word, int iteration) {
 void KeyExpansion(unsigned char *expandedKey, unsigned char *key,
                   enum keySize size, size_t expandedKeySize) {
 
-  // current expanded keySize, in bytes                                                                   
   int currentSize = 0;
   int rconIteration = 1;
   int i;
@@ -274,7 +269,7 @@ void mixColumn(unsigned char *column) {
   column[3] = b[3] ^ a[2] ^ a[1] ^ gfmul(a[0], 3);
 }
 
-// The rounds in the specifcation of CIPHER() are composed of the following 4 byte-oriented               
+// The rounds in the specifcation of aes_cipher() are composed of the following 4 byte-oriented               
 // transformations on the state (Section 5.1 of FIPS 197) - outputs hex after each step                   
 void aes_cipher(unsigned char *state, unsigned char *roundKey) {
   subBytes(state);
@@ -355,7 +350,6 @@ char aes_encrypt(unsigned char *input, unsigned char *output,
   int nbrRounds;
   int expandedKeySize;
   unsigned char block[16];
-  unsigned char *expandedKey = NULL;
 
   // Determine number of rounds based on key size                                                         
   switch (size) {
@@ -366,11 +360,7 @@ char aes_encrypt(unsigned char *input, unsigned char *output,
   }
 
   expandedKeySize = 16 * (nbrRounds + 1);
-
-  expandedKey = (unsigned char *)malloc(expandedKeySize);
-  if (expandedKey == NULL) {
-    return ERROR_MEMORY_ALLOCATION_FAILED;
-  }
+  unsigned char expandedKey[expandedKeySize];
 
   // Map input (row-major to column-major for AES)                                                        
   for (int row = 0; row < 4; row++) {
@@ -390,8 +380,6 @@ char aes_encrypt(unsigned char *input, unsigned char *output,
     }
   }
 
-  // de-allocate memory for expandedKey                                                                   
-  free(expandedKey);
   return SUCCESS;
 }
 
@@ -505,7 +493,6 @@ char aes_decrypt(unsigned char *input, unsigned char *output,
   int nbrRounds;
   int expandedKeySize;
   unsigned char block[16];
-  unsigned char *expandedKey = NULL;
 
   // Determine the number of rounds based on key size                                                     
   switch (size) {
@@ -516,11 +503,7 @@ char aes_decrypt(unsigned char *input, unsigned char *output,
   }
 
   expandedKeySize = 16 * (nbrRounds + 1);
-
-  expandedKey = (unsigned char *)malloc(expandedKeySize);
-  if (expandedKey == NULL) {
-    return ERROR_MEMORY_ALLOCATION_FAILED;
-  }
+  unsigned char expandedKey[expandedKeySize];
 
   // Transpose input (column-major block for AES)                                                         
   for (int row = 0; row < 4; row++) {
@@ -542,8 +525,6 @@ char aes_decrypt(unsigned char *input, unsigned char *output,
     }
   }
 
-  // de-allocate memory for expandedKey                                                                   
-  free(expandedKey);
   return SUCCESS;
 }
 
@@ -562,7 +543,7 @@ int main(int argc, char *argv[]) {
   //| AES-256   | 128 bits   | 14     | 4         | 60         | 240        | 16        |
   //+-----------+------------+--------+-----------+------------+------------+-----------+
   
-  // the expanded keySize to store full set of round keys
+  // the expanded keySize to store full set of round keys (change according to table)
   int expandedKeySize = 176;
 
   // the cipher key size defined on Line 81 (change for different AES key)
@@ -580,9 +561,7 @@ int main(int argc, char *argv[]) {
   unsigned char plaintext[16] = {0x32, 0x43, 0xf6, 0xa8, 0x88, 0x5a, 0x30, 0x8d,
                                  0x31, 0x31, 0x98, 0xa2, 0xe0, 0x37, 0x07, 0x34};
   
-  // the ciphertext
   unsigned char ciphertext[16];
-  // the decrypted text
   unsigned char decryptedtext[16];
   int i;
 
