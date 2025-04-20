@@ -25,14 +25,14 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module fetchbuffer import cvw::*;  #(parameter cvw_t P) (
+module instructionbuffer import cvw::*;  #(parameter cvw_t P) (
   input  logic                    clk, reset,
   input  logic                    DisableRead, DisableWrite,
   input  logic  [P.XLEN-1:0]      PCF,          // PC of the instruction
   input  logic  [P.XLEN-1:0]      PCCacheF,     // Address of the instruction
   input  logic  [P.ICACHE_LINELENINBITS-1:0]   FetchData,    // Data fetched from memory
-  output logic                    Empty, Full,
-  output logic                    FetchBufferStallD,
+  output logic                    InstrBufferEmpty, InstrBufferFull,
+  output logic                    InstrBufferStallD,
   output logic  [31:0]            InstrD,       // Instruction to be decoded
   output logic  [P.XLEN-1:0]      PCD           // PC of the instruction to be decoded
 );
@@ -40,7 +40,7 @@ module fetchbuffer import cvw::*;  #(parameter cvw_t P) (
   localparam TAG_BITS = P.XLEN - ENTRY_INDEX_BITS;
   localparam nop = 32'h00000013;
 
-  logic ReadPtr, WritePtr
+  logic ReadPtr, WritePtr;
   logic PrevReadPtr; // used to invalidate old cacheline
   // TODO: Check if we still need PrevReadPtr
   logic Spill;
@@ -56,10 +56,10 @@ module fetchbuffer import cvw::*;  #(parameter cvw_t P) (
   assign {PCFTag, EntryIndex} = PCF;
 
   assign WritePtr = ~ReadPtr;
-  assign Full = Valid[0] & Valid[1];
-  assign Empty = ~Valid[0] & ~Valid[1];
-  assign InstrMissing = ~((PCFTag == PCTag[0]) | (PCFTag == PCTag[1]))
-  assign FetchBufferStallD = Empty | (Spill & ~Full) | InstrMissing;
+  assign InstrBufferFull = Valid[0] & Valid[1];
+  assign InstrBufferEmpty = ~Valid[0] & ~Valid[1];
+  assign InstrMissing = ~((PCFTag == PCTag[0]) | (PCFTag == PCTag[1]));
+  assign InstrBufferStallD = InstrBufferEmpty | (Spill & ~InstrBufferFull) | InstrMissing;
 
 
   // Don't care if it tag doesn't match either, as InstrMissing will be 1
@@ -74,8 +74,10 @@ module fetchbuffer import cvw::*;  #(parameter cvw_t P) (
   // 3. If the new Data is not in the buffer, always write to WritePtr
   // 4. If the new Data is already in the buffer, check ReadPtr to invalidate the old Data
   always_ff @( posedge clk )
-    if (reset) Valid <= 2'b0;
-    else if (~DisableWrite & (~Full | InstrMissing)) begin
+    if (reset) begin 
+      Valid[0] <= 0;
+      Valid[1] <= 0;
+    end else if (~DisableWrite & (~InstrBufferFull | InstrMissing)) begin
       Valid[WritePtr] <= 1'b1;
       PCTag[WritePtr] <= PCCacheF[P.XLEN-1:ENTRY_INDEX_BITS];
       Data[WritePtr] <= FetchData;
@@ -94,7 +96,7 @@ module fetchbuffer import cvw::*;  #(parameter cvw_t P) (
       InstrD <= nop;
       PCD <= PCF;
       Spill <= 1'b0;
-    end else if (DisableRead | Empty) begin
+    end else if (DisableRead | InstrBufferEmpty) begin
       InstrD <= InstrD;
       PCD <= PCD;
       Spill <= Spill;
@@ -102,7 +104,7 @@ module fetchbuffer import cvw::*;  #(parameter cvw_t P) (
       PCD <= PCF;
       // Spill logic
       if (EntryIndex[ENTRY_INDEX_BITS-1:1] == '1) begin 
-        if (Full) begin 
+        if (InstrBufferFull) begin 
           // next cacheline holds the Spill
           Spill <= 1'b0;
           InstrD <= {Data[~ReadPtr][15:0], Data[ReadPtr][P.ICACHE_LINELENINBITS-1:P.ICACHE_LINELENINBITS-16]};
@@ -118,7 +120,7 @@ module fetchbuffer import cvw::*;  #(parameter cvw_t P) (
       end else begin
         // fetch instruction from the cacheline as needed
         Spill <= 1'b0;
-        InstrD <= Data[ReadPtr][EntryIndex*8 + 31:EntryIndex*8];
+        InstrD <= Data[ReadPtr][EntryIndex*8 +: 32];
       end
     end
 endmodule
