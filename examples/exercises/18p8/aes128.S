@@ -7,71 +7,58 @@ _start:
     la a1, plaintext
     la a2, key_schedule
 
-    # Load plaintext into state registers (a4, a5, a6, a7)
-    lw a4, 0(a1)
-    lw a5, 4(a1)
-    lw a6, 8(a1)
-    lw a7, 12(a1)
-
-    # Pack into 64-bit state blocks
-    # a4:a5 -> s0, a6:a7 -> s1
-    slli s0, a4, 32
-    srli s2, a5, 0
-    or s0, s0, s2
-    slli s1, a6, 32
-    srli s2, a7, 0
-    or s1, s1, s2
+    # Load plaintext into state registers (s0, s1)
+    ld s0, 0(a1)
+    ld s1, 8(a1)
+    # Load plaintext into state registers (s0, s1)	
+    ld s2, 0(a2)
+    ld s3, 8(a2)	
 	
     # Store initial state in signature
     la s11, begin_signature
 
-    lw s2, 0(a2)				# Round 0: AddRoundKey
-    lw s3, 4(a2)
-    slli s4, s2, 32
-    srli s5, s3, 0
-    or s2, s4, s5  				# roundkey0 = s2
-
-    lw s3, 8(a2)
-    lw s4, 12(a2)
-    slli s5, s3, 32
-    srli s6, s4, 0
-    or s3, s5, s6  				# roundkey1 = s3
-	
     csrr s8, instret   				# count instructions at beginning
 
     xor s0, s0, s2   				# state0 ^= roundkey0
     xor s1, s1, s3   				# state1 ^= roundkey1
 	
-    # Initialize loop counter and max rounds
-    li t4, 1
-    li t5, 10
+    # Initialize loop counter and max rounds 
+    li s4, 1
+    li s5, 2
     addi a2, a2, 16
 
 enc_loop:
     bge s4, s5, final_round
 
     # Load next round key pair into s2/s3
-    lw s2, 0(a2)
-    lw s3, 4(a2)
-    slli s6, s2, 32
-    srli s7, s3, 0
-    or s2, s6, s7
+    ld s2, 0(a2)
+    ld s3, 8(a2)
 
-    lw s3, 8(a2)
-    lw s4, 12(a2)
-    slli s6, s3, 32
-    srli s7, s4, 0
-    or s3, s6, s7
-
-    # Perform AES round using aes64esm
-    aes64esm s0, s0, s2
-    aes64esm s1, s1, s3
+    aes64esm s0, s0, s3
+    aes64esm s1, s1, s2
 
     addi a2, a2, 16
     addi s4, s4, 1
     j enc_loop
 
 final_round:
+
+   # Load final round key
+    ld s2, 0(a2)
+    ld s3, 8(a2)
+
+    # Final AES round without MixColumns
+    aes64es s0, s0, s2
+    aes64es s1, s1, s3
+
+    # DEBUG
+    sd a4, 0(s11)	
+    sd a5, 4(s11)
+    addi s11, s11, 16	
+
+    # Store ciphertext
+    sd a4, 0(a0)
+    sd a5, 8(a0)
 	
 # Finalize
 done:
@@ -94,30 +81,30 @@ fromhost:
     .dword 0
 
 .data
-.align 4
+.align 3
 
 .EQU XLEN,64
 begin_signature:
-    .fill (4+1)*(XLEN/32),4,0xdeadbeef
+    .fill (16)*(XLEN/32),4,0xdeadbeef
 end_signature:
 
 # FIPS 197 Example Appendix A AES-128 (stored little endian)
 plaintext:
-    .word 0xa8f64332, 0x8d305a88, 0xa2983131, 0x340737e0
+  .dword 0x8d305a88a8f64332, 0x340737e0a2983131
 
 # Key Expansion Example Appendix B AES-128
 key_schedule:
-    .word 0x16157e2b, 0xa6d2ae28, 0x8815f7ab, 0x3c4fcf09  # Round 0
-    .word 0x17fefaa0, 0xb12c5488, 0x3939a323, 0x05766c2a  # Round 1
-    .word 0xf295c2f2, 0x43b9967a, 0x7a803559, 0x7ff65973  # Round 2
-    .word 0x7d47803d, 0x3efe1647, 0x447e231e, 0x3b887a6d  # Round 3
-    .word 0x41a544ef, 0x7f5b52a8, 0x3b2571b6, 0x00ad0bdb  # Round 4
-    .word 0xf8c6d1d4, 0x879d837c, 0xbcb8f2ca, 0xbc15f911  # Round 5
-    .word 0x7aa3886d, 0xfd3e0b11, 0x4186f9db, 0xfd9300ca  # Round 6
-    .word 0x0ef7544e, 0xf3c95f5f, 0xb24fa684, 0x4fdca64e  # Round 7
-    .word 0x2173d2ea, 0xd2ba8db5, 0x60f52b31, 0x2f298d7f  # Round 8
-    .word 0xf36677ac, 0x21dcfa19, 0x4129d128, 0x6e005c57  # Round 9
-    .word 0xa8f914d0, 0x8925eec9, 0xc80c3fe1, 0xa60c63b6  # Round 10
+    .dword 0xa6d2ae2816157e2b, 0x3c4fcf098815f7ab  # Round 0
+    .dword 0xb12c548817fefaa0, 0x05766c2a3939a323  # Round 1
+    .dword 0x43b9967af295c2f2, 0x7ff659737a803559  # Round 2
+    .dword 0x3efe16477d47803d, 0x3b887a6d447e231e  # Round 3
+    .dword 0x7f5b52a841a544ef, 0x00ad0bdb3b2571b6  # Round 4
+    .dword 0x879d837cf8c6d1d4, 0xbc15f911bcb8f2ca  # Round 5
+    .dword 0xfd3e0b117aa3886d, 0xfd9300ca4186f9db  # Round 6
+    .dword 0xf3c95f5f0ef7544e, 0x4fdca64eb24fa684  # Round 7
+    .dword 0xd2ba8db52173d2ea, 0x2f298d7f60f52b31  # Round 8
+    .dword 0x21dcfa19f36677ac, 0x6e005c574129d128  # Round 9
+    .dword 0x8925eec9a8f914d0, 0xa60c63b6c80c3fe1  # Round 10
 
 ciphertext:
     .space 16
