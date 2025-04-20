@@ -1,12 +1,12 @@
 CC = gcc
 CFLAGS = -g
-VERBOSE ?= 1
-CFLAGS += -DVERBOSE=$(VERBOSE)
 
 RISCV_CC = riscv64-unknown-elf-gcc
 RISCV_OBJDUMP = riscv64-unknown-elf-objdump
-RISCV_CFLAGS = -g -DVERBOSE=0 -march=rv32gc -mabi=ilp32 -mcmodel=medany \
-               -nostartfiles -T../../link/link.ld
+COMMON_DIR = ../../C/common
+RISCV_CFLAGS = -gdwarf-2 -march=rv64gc -mabi=lp64d -mcmodel=medany \
+		-nostdlib -static -lm -fno-tree-loop-distribute-patterns \
+		-nostartfiles -T$(COMMON_DIR)/test.ld -I$(COMMON_DIR)
 
 TARGET = aes
 
@@ -20,11 +20,7 @@ $(TARGET): $(TARGET).c
 
 # RISC-V ELF build
 $(TARGET).elf: $(TARGET).c Makefile
-	$(RISCV_CC) $(RISCV_CFLAGS) -o $@ $<
-
-# RISC-V objdump
-$(TARGET).objdump: $(TARGET).elf
-	$(RISCV_OBJDUMP) -D -M no-aliases $< > $@
+	$(RISCV_CC) $(RISCV_CFLAGS) -o $@.elf aes.c $(COMMON_DIR)/crt.S $(COMMON_DIR)/syscalls.c
 
 clean:
 	rm -f $(TARGET) $(TARGET).elf $(TARGET).objdump *~

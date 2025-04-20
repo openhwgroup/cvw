@@ -1,9 +1,11 @@
 //
-// aes.c 
+// aes_riscv.c 
 // Based on and enhanced work by https://github.com/m3y54m/aes-in-c.git
 // james.stine@okstate.edu e 11 November 2024
 // 
-#include <stdio.h>  
+
+#include <stdio.h>
+#include "util.h"   // supports verify
 
 enum errorCode {
     SUCCESS = 0,
@@ -106,15 +108,6 @@ void invMixColumn(unsigned char *column);
 void aes_invRound(unsigned char *state, unsigned char *roundKey);
 void aes_invCipher(unsigned char *state, unsigned char *expandedKey, int nbrRounds);
 char aes_decrypt(unsigned char *input, unsigned char *output, unsigned char *key, enum keySize size);
-
-// Helper function to print AES state
-void printState(const unsigned char *state) {
-  for (int col = 0; col < 4; col++) {
-    printf("%02x %02x %02x %02x ",
-           state[col], state[col + 4], state[col + 8], state[col + 12]);
-  }
-  printf("\n");
-}
 
 unsigned char getSBoxValue(unsigned char num) {
   return sbox[num];
@@ -272,16 +265,12 @@ void mixColumn(unsigned char *column) {
 // transformations on the state (Section 5.1 of FIPS 197) - outputs hex after each step                   
 void aes_cipher(unsigned char *state, unsigned char *roundKey) {
   subBytes(state);
-  printState(state);
   
   shiftRows(state);
-  printState(state);
   
   mixColumns(state);
-  printState(state);
   
   addRoundKey(state, roundKey);
-  printf("\n");  
 }
 
 void createRoundKey(unsigned char *expandedKey, unsigned char *roundKey) {
@@ -299,27 +288,17 @@ void aes_main(unsigned char *state, unsigned char *expandedKey, int nbrRounds) {
 
   // Initial round key                                                                                    
   createRoundKey(expandedKey, roundKey);
-  printState(state);
-  printf("\n");
   addRoundKey(state, roundKey);
 
   for (int i = 1; i < nbrRounds; i++) {
     createRoundKey(expandedKey + 16 * i, roundKey);
-    printState(state);
     aes_cipher(state, roundKey);  
   }
   // Final round (no MixColumns)
-  printState(state);
-  
   createRoundKey(expandedKey + 16 * nbrRounds, roundKey);
   subBytes(state);
-  printState(state);
-  
   shiftRows(state);
-  printState(state);
-  
   addRoundKey(state, roundKey);
-  printState(state);
 }
 
 char aes_encrypt(unsigned char *input, unsigned char *output,
@@ -542,35 +521,10 @@ int main(int argc, char *argv[]) {
   unsigned char decryptedtext[16];
   int i;
 
-  printf("\nCipher Key (hex format):\n");
-  for (i = 0; i < 16; i++) {
-    printf("%2.2x%c", key[i], ((i + 1) % 16) ? ' ' : '\n');
-  }
-
   KeyExpansion(expandedKey, key, size, expandedKeySize);
-  printf("\nExpanded Key (hex format):\n");
-  for (i = 0; i < expandedKeySize; i++) {
-    printf("%2.2x%c", expandedKey[i], ((i + 1) % 16) ? ' ' : '\n');
-  }
-
-  printf("\nPlaintext (hex format):\n");  
-  for (i = 0; i < 16; i++) {
-    printf("%2.2x%c", plaintext[i], ((i + 1) % 16) ? ' ' : '\n');
-  }
-  
   // AES Encryption
   aes_encrypt(plaintext, ciphertext, key, size);  
-  printf("\nCiphertext (hex format):\n");
-  for (i = 0; i < 16; i++) {
-    printf("%02x%c", ciphertext[i], ((i + 1) % 16) ? ' ' : '\n');
-  }
-    
   // AES Decryption
   aes_decrypt(ciphertext, decryptedtext, key, size);
-  printf("\nDecrypted text (hex format):\n");
-  for (i = 0; i < 16; i++) {
-    printf("%2.2x%c", decryptedtext[i], ((i + 1) % 16) ? ' ' : '\n');
-  }  
-
   return 0;
 }
