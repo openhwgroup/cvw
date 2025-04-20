@@ -20,7 +20,7 @@ $(TARGET): $(TARGET).c
 
 # RISC-V ELF build
 $(TARGET).elf: $(TARGET).c Makefile
-	$(RISCV_CC) $(RISCV_CFLAGS) -o $@.elf aes.c $(COMMON_DIR)/crt.S $(COMMON_DIR)/syscalls.c
+	$(RISCV_CC) $(RISCV_CFLAGS) -o $@ aes.c $(COMMON_DIR)/crt.S $(COMMON_DIR)/syscalls.c
 
 clean:
 	rm -f $(TARGET) $(TARGET).elf $(TARGET).objdump *~
