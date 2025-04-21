@@ -1,0 +1,127 @@
+
+# Search Paths
+set CURRENT_DIR  [exec pwd]
+set search_path [list "./" ]
+
+set tech $::env(TECH)
+
+if { [info exists ::env(RISCV)] } {
+  set timing_lib $::env(RISCV)/cad/lib
+} else {
+  set timing_lib ../addins   
+}
+
+if {$tech == "sky130"} {
+    set s8lib $timing_lib/sky130_osu_sc_t12/12T_ms/lib
+    lappend search_path $s8lib
+} elseif {$tech == "sky90"} {
+    set s9lib $timing_lib/sky90/sky90_sc/V1.7.4/lib
+    lappend search_path $s9lib
+} elseif {$tech == "tsmc28"} {
+    set s10lib $SYN_pdk/TSMCHOME/digital/Front_End/timing_power_noise/NLDM/tcbn28hpcplusbwp30p140_180a
+    lappend search_path $s10lib
+} elseif {$tech == "tsmc28psyn"} {
+    set s10lib $SYN_pdk/TSMCHOME/digital/Front_End/timing_power_noise/NLDM/tcbn28hpcplusbwp30p140_180a
+    lappend search_path $s10lib
+    set TLUPLUS true
+    set mw_logic1_net VDD
+    set mw_logic0_net VSS
+    set CAPTABLE $SYN_TLU/1p8m/
+    set MW_REFERENCE_LIBRARY $SYN_MW
+    set MW_TECH_FILE tcbn28hpcplusbwp30p140
+    set MIN_TLU_FILE $CAPTABLE/crn28hpc+_1p08m+ut-alrdl_5x1z1u_rcbest.tluplus
+    set MAX_TLU_FILE $CAPTABLE/crn28hpc+_1p08m+ut-alrdl_5x1z1u_rcworst.tluplus
+    set PRS_MAP_FILE $MW_REFERENCE_LIBRARY/astro_layername.map
+}
+
+# Synthetic libraries
+set synthetic_library   [list dw_foundation.sldb]
+
+# Set standard cell libraries
+set target_library [list]
+
+#lappend target_library scc9gena_tt_1.2v_25C.db
+if {$tech == "sky130"} {
+    lappend target_library $s8lib/sky130_osu_sc_12T_ms_TT_1P8_25C.ccs.db
+} elseif {$tech == "sky90"} {
+    lappend target_library $s9lib/scc9gena_tt_1.2v_25C.db
+} elseif {$tech == "tsmc28"} {
+    lappend target_library $s10lib/tcbn28hpcplusbwp30p140tt0p9v25c.db
+} elseif {$tech == "tsmc28psyn"} {
+    set mw_reference_library [list ]    
+    lappend target_library $s10lib/tcbn28hpcplusbwp30p140tt0p9v25c.db
+    lappend mw_reference_library $MW_REFERENCE_LIBRARY/tcbn28hpcplusbwp30p140    
+}
+
+# Set up DesignWare cache read and write directories to speed up compile.
+set cache_write  ~
+set cache_read   $cache_write
+
+# Tell DC where to look for files
+lappend search_path ./scripts
+lappend search_path ./hdl
+lappend search_path ./mapped
+if {($tech == "tsmc28psyn")} {
+    lappend target_library $SYN_memory/ts1n28hpcpsvtb64x128m4sw_180a/NLDM/ts1n28hpcpsvtb64x128m4sw_tt0p9v25c.db
+    lappend target_library $SYN_memory/ts1n28hpcpsvtb64x44m4sw_180a/NLDM/ts1n28hpcpsvtb64x44m4sw_tt0p9v25c.db
+    lappend target_library $SYN_memory/tsdn28hpcpa1024x68m4mw_130a/NLDM/tsdn28hpcpa1024x68m4mw_tt0p9v25c.db
+    lappend target_library $SYN_memory/tsdn28hpcpa64x32m4mw_130a/NLDM/tsdn28hpcpa64x32m4mw_tt0p9v25c.db
+    lappend mw_reference_library $MW_REFERENCE_LIBRARY/ts1n28hpcpsvtb64x44m4sw
+    lappend mw_reference_library $MW_REFERENCE_LIBRARY/ts1n28hpcpsvtb64x128m4sw
+    lappend mw_reference_library $MW_REFERENCE_LIBRARY/tsdn28hpcpa1024x68m4mw
+    lappend mw_reference_library $MW_REFERENCE_LIBRARY/tsdn28hpcpa64x32m4mw
+}
+
+# Set Link Library
+set link_library "$target_library $synthetic_library"
+
+# Set up User Information
+set company "Detect-o-rama"
+set user    "Ben Bitdiddle"
+
+# Alias
+alias ra report_area
+alias rt report_timing
+alias rc {report_constraint -all_violators}
+
+alias sf set_flatten
+alias ss set_structure
+alias rco report_compile_options
+alias cs compile -scan
+alias csi compile -scan -incr -map high
+
+alias h history
+history keep 100
+alias all_gone {remove_design -designs}
+ 
+alias page_on {set sh_enable_page_mode true}
+alias page_off {set sh_enable_page_mode false}
+
+# specify directory for intermediate files from analyze
+define_design_lib DEFAULT -path ./analyzed
+ 
+# suppress Driving cell warning
+suppress_message {UID-401}
+
+########### Source Useful Tcl Procedures ###########
+
+foreach _file [glob -nocomplain ./tcl_procs/*.tcl] {
+  source $_file
+}
+
+############# Enable line editing in 2004.12 ###########
+
+set sh_enable_line_editing true
+
+############# Setup the view utility ###########
+
+proc view {args} {
+    redirect tmpfile1212 {uplevel $args}
+    # Without redirect, exec echos the PID of the new process to the screen
+    redirect /dev/null {exec ./tcl_procs/view.tk tmpfile1212 "$args" &}
+}
+
+alias vrt {view report_timing -nosplit}
+alias vrtm {view report_timing -nosplit -delay min}
+alias vman {view man}
+
