@@ -14,13 +14,8 @@ TARGET = aes
 
 all: $(TARGET) $(TARGET).elf $(TARGET).objdump
 
-# Native build
 $(TARGET): $(TARGET).c
 	$(CC) $(CFLAGS) -o $@ $<
-
-# RISC-V ELF build
-$(TARGET).elf: $(TARGET).c Makefile
-	$(RISCV_CC) $(RISCV_CFLAGS) -o $@ aes.c $(COMMON_DIR)/crt.S $(COMMON_DIR)/syscalls.c
 
 clean:
 	rm -f $(TARGET) $(TARGET).elf $(TARGET).objdump *~
