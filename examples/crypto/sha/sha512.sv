@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // sha512.sv
 //
-// Written: james.stine@okstate.edu
+// Written: james.stine@okstate.edu/emelia.kravchuk@okstate.edu
 // Created: 16 October 2024
 //
 // Purpose: SHA-512 Module

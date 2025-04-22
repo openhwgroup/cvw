@@ -1,6 +1,7 @@
 # sha512.py
 # Secure Hash Algorithm - SHA-512
 # james.stine@okstate.edu
+# emelia.kravchuk@okstate.edu
 
 import hashlib
 
