@@ -1,6 +1,3 @@
-// gf_inv.S
-// james.stine@okstate.edu 9 April 2025
-	
 .text
 	
 .global rvtest_entry_point
