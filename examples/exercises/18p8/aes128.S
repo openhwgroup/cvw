@@ -111,12 +111,6 @@ key_schedule:
     .dword 0x21dcfa19f36677ac, 0x6e005c574129d128  # Round 9
     .dword 0x8925eec9a8f914d0, 0xa60c63b6c80c3fe1  # Round 10
 
-val0: .dword 0x193de3bea0f4e22b  # Value for s0
-val1: .dword 0x9ac68d2ae9f84808  # Value for s1
-val2: .dword 0xb12c548817fefaa0  # Value for s2
-val3: .dword 0x05766c2a3939a323  # Value for s3
-
-	
 ciphertext:
     .space 16
 
