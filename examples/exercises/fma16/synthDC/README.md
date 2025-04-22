@@ -14,6 +14,7 @@ make synth FREQ=500
 - `FREQ`
   - Frequency in MHz.  Default is 500
   - The target standard cell library.  The default is sky130.
++- `TECH`
 	- Options:
     - sky90: skywater 90nm TT 25C
     - sky130: skywater 130nm TT 25C
