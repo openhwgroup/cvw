@@ -7,13 +7,13 @@ _start:
     la a1, plaintext
     la a2, key_schedule
 
-    # Load plaintext into state registers (s0, s1)
+    # Load plaintext
     ld s0, 0(a1)
     ld s1, 8(a1)
-    # Load plaintext into state registers (s0, s1)	
+    # Load plaintext
     ld s2, 0(a2)
     ld s3, 8(a2)	
-	
+
     # Store initial state in signature
     la s11, begin_signature
 
@@ -34,8 +34,11 @@ enc_loop:
     ld s2, 0(a2)
     ld s3, 8(a2)
 
-    aes64esm s0, s0, s3
-    aes64esm s1, s1, s2
+    aes64esm t2, s0, s1
+    aes64esm t3, s1, s0
+
+    xor s0, t2, s2
+    xor s1, t3, s3
 
     addi a2, a2, 16
     addi s4, s4, 1
@@ -48,12 +51,15 @@ final_round:
     ld s3, 8(a2)
 
     # Final AES round without MixColumns
-    aes64es s0, s0, s2
-    aes64es s1, s1, s3
+    aes64es t2, s0, s1
+    aes64es t3, s1, s0
+
+    xor s0, t2, s2
+    xor s1, t3, s3
 
     # DEBUG
-    sd a4, 0(s11)	
-    sd a5, 4(s11)
+    sd s0, 0(s11)	
+    sd s1, 8(s11)
     addi s11, s11, 16	
 
     # Store ciphertext
@@ -64,7 +70,7 @@ final_round:
 done:
     csrr s9, instret       			# Read instruction count
     sub s9, s9, s8	        		# get number of #instructions executed	
-    sw s9, 0(s11)	
+    sd s9, 0(s11)	
 	
 write_tohost:
     la a0, tohost
@@ -85,7 +91,7 @@ fromhost:
 
 .EQU XLEN,64
 begin_signature:
-    .fill (16)*(XLEN/32),4,0xdeadbeef
+    .fill (2+1)*(XLEN/32),4,0xdeadbeef
 end_signature:
 
 # FIPS 197 Example Appendix A AES-128 (stored little endian)
@@ -106,6 +112,12 @@ key_schedule:
     .dword 0x21dcfa19f36677ac, 0x6e005c574129d128  # Round 9
     .dword 0x8925eec9a8f914d0, 0xa60c63b6c80c3fe1  # Round 10
 
+val0: .dword 0x193de3bea0f4e22b  # Value for s0
+val1: .dword 0x9ac68d2ae9f84808  # Value for s1
+val2: .dword 0xb12c548817fefaa0  # Value for s2
+val3: .dword 0x05766c2a3939a323  # Value for s3
+
+	
 ciphertext:
     .space 16
 
