@@ -1,7 +1,6 @@
 .section .text
 .global _start
 
-# Elaborated routines based on https://github.com/riscv/riscv-crypto	
 _start:
     la a0, ciphertext
     la a1, plaintext
