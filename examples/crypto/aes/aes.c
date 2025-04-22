@@ -1,8 +1,9 @@
 //
 // aes.c 
 // Based on and enhanced work by https://github.com/m3y54m/aes-in-c.git
-// james.stine@okstate.edu e 11 November 2024
+// james.stine@okstate.edu 11 November 2024
 // 
+
 #include <stdio.h>  
 
 enum errorCode {
@@ -49,9 +50,6 @@ unsigned char rsbox[256] =
    0xa0, 0xe0, 0x3b, 0x4d, 0xae, 0x2a, 0xf5, 0xb0, 0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61,  // E
    0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26, 0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d}; // F
 
-// Implementation: Rotate
-void rotate(unsigned char *word);
-
 // Implementation: Rcon
 unsigned char Rcon[255] = {
   0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8,
@@ -85,6 +83,7 @@ enum keySize {
 // main Function Prototypes
 void KeySchedule(unsigned char *word, int iteration);
 unsigned char getRconValue(unsigned char num);
+void rotate(unsigned char *word);
 // AES Encryption Function Prototypes
 void subBytes(unsigned char *state);
 void shiftRows(unsigned char *state);
