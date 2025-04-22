@@ -1,7 +1,7 @@
 TARGET = sha256
 
 $(TARGET).objdump: $(TARGET)
-	riscv64-unknown-elf-objdump -Dls $(TARGET) > $(TARGET).objdump
+	riscv64-unknown-elf-objdump -D $(TARGET) > $(TARGET).objdump
     
 $(TARGET): $(TARGET).S Makefile
 	riscv64-unknown-elf-gcc -g -o $(TARGET) -march=rv32gc_zk -mabi=ilp32 -mcmodel=medany \
