@@ -74,7 +74,7 @@ Then fork and clone the repo, source setup, make the tests and run regression
 10. Build the tests and run a regression simulation to prove everything is installed.  Building tests may take a while.
 
 	```bash
-	$ make --jobs
+	$ cd ~/cvw && make --jobs
 	$ regression-wally
 	```
 
