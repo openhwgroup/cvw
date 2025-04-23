@@ -71,7 +71,7 @@ Then fork and clone the repo, source setup, make the tests and run regression
 	0 1 2 3 4 5 6 7 8 9 
 	```
 
-10. Build the tests and run a regression simulation to prove everything is installed.  Building tests may take a while.
+10. Build the tests from the cvw directory and run a regression simulation to prove everything is installed.  Building tests may take a while.
 
 	```bash
 	$ cd ~/cvw && make --jobs
