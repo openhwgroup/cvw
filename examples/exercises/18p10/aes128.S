@@ -3,20 +3,26 @@
 
 _start:
     la sp, topofstack   			# Initialize stack pointer
-    la s0, key
-    la s1, key_schedule
+    la s4, key
+    la a0, ciphertext
+    la a1, plaintext
+
+    # Load plaintext
+    ld s0, 0(a1)
+    ld s1, 8(a1)
 
     # Copy initial 128-bit key into key_schedule
-    ld s2, 0(s0)              			# First 64 bits
-    ld s3, 8(s0)              			# Second 64 bits
-    sd s2, 0(s1)
-    sd s3, 8(s1)
+    ld s2, 0(s4)              			# First 64 bits - {w3, w2}
+    ld s3, 8(s4)              			# Second 64 bits - {w1, w0}
 	
     # Store initial state in signature
     la s11, begin_signature
-    csrr s8, instret  				# count instructions at beginning
+    csrr s8, instret  				    # count instructions at beginning
     addi sp, sp, -8           			# Allocate 8 bytes on the stack
     sd s8,  0(sp)            			# Save instreg on the stack	
+
+    xor s0, s0, s2   				    # state0 ^= roundkey0
+    xor s1, s1, s3   				    # state1 ^= roundkey1
 	
     # Set round counter (i = 1)
     li s4, 1                  			# round index (1-based)
@@ -25,30 +31,20 @@ _start:
     # key_ptr points to start of last written round key
     addi s6, s1, 16           			# move to next write location
 
-key_exp_loop:
-    bgt s4, s5, key_exp_done
-
-    # Load previous round key (2 words)
-    ld s7, -16(s6)     				# W[i-3], W[i-4] 64-bit
-    ld s8, -8(s6)      				# W[i-1], W[i-2] 64-bit
+enc_loop:
+    bge s4, s5, final_round
 
     # Extract high 32 bits from s8 (last word of previous round key)
-    srli s9, s8, 32   
+    srli s9, s3, 32   
 
-    # Perform RotWord on s9
-    and s10, s9, 0xff
-    slli s10, s10, 24
-    srli s11, s9, 8
-    or s9, s10, s11 
-
-    # SubWord(s9): apply S-box to each byte
-    and a0, s9, 0xff   				# byte0
-    srli a1, s9, 8
+    # SubWord(s9): apply RotWord and S-box to each byte
+    srli a0, s9, 8
+    and a0, a0, 0xff   				# byte0
+    srli a1, s9, 16
     and a1, a1, 0xff   				# byte1
-    srli a2, s9, 16
+    srli a2, s9, 24
     and a2, a2, 0xff   				# byte2
-    srli a3, s9, 24
-    and a3, a3, 0xff   				# byte3
+    and a3, s9, 0xff   				# byte3
 
     # Lookup each byte in S-box table
     la a4, sbox
@@ -76,75 +72,80 @@ key_exp_loop:
     xor s9, s9, a6     				# SubWord result ^= Rcon
 
     # Reconstruct new words
-    xor s10, s7, s9      
-    slli a0, s10, 32
-    xor s10, s10, a0
-    srli a1, s10, 32
-    xor s11, s8, a1     
-    slli a2, s11, 32
-    xor s11, s11, a2
+    xor s2, s2, s9                 
+    slli a0, s2, 32                
+    xor s2, s2, a0                
+    srli a1, s2, 32                
+    xor s3, s3, a1                 
+    slli a2, s3, 32    
+    xor s3, s3, a2                
 
-    # Store new round key (128-bit) in key_exchange
-    sd s10, 0(s6)
-    sd s11, 8(s6)
+    ####################################################
+    # Middle AES Round
+    aes64esm t0, s0, s1
+    aes64esm t1, s1, s0
 
-    addi s6, s6, 16      			# Move to next key location
-    addi s4, s4, 1
-    j key_exp_loop
-
-key_exp_done:	
-
-    la a0, ciphertext
-    la a1, plaintext
-    la a2, key_schedule
-
-    # Load plaintext
-    ld s0, 0(a1)
-    ld s1, 8(a1)
-    # Load plaintext
-    ld s2, 0(a2)
-    ld s3, 8(a2)	
-
-    # Store initial state in signature
-    la s11, begin_signature
-	
-    xor s0, s0, s2   				# state0 ^= roundkey0
-    xor s1, s1, s3   				# state1 ^= roundkey1
-	
-    # Initialize loop counter and max rounds 
-    li s4, 1
-    li s5, 10
-    addi a2, a2, 16
-
-enc_loop:
-    bge s4, s5, final_round
-
-    # Load next round key pair into s2/s3
-    ld s2, 0(a2)
-    ld s3, 8(a2)
-
-    aes64esm t2, s0, s1
-    aes64esm t3, s1, s0
-
-    xor s0, t2, s2
-    xor s1, t3, s3
+    xor s0, t0, s2
+    xor s1, t1, s3
 
     addi a2, a2, 16
     addi s4, s4, 1
     j enc_loop
 
 final_round:
+    # Extract high 32 bits from s8 (last word of previous round key)
+    srli s9, s3, 32   
 
-   # Load final round key
-    ld s2, 0(a2)
-    ld s3, 8(a2)
+    # SubWord(s9): apply RotWord and S-box to each byte
+    srli a0, s9, 8
+    and a0, a0, 0xff   				# byte0
+    srli a1, s9, 16
+    and a1, a1, 0xff   				# byte1
+    srli a2, s9, 24
+    and a2, a2, 0xff   				# byte2
+    and a3, s9, 0xff   				# byte3
 
+    # Lookup each byte in S-box table
+    la a4, sbox
+    add a5, a4, a0
+    lbu a0, 0(a5)
+    add a5, a4, a1
+    lbu a1, 0(a5)
+    add a5, a4, a2
+    lbu a2, 0(a5)
+    add a5, a4, a3
+    lbu a3, 0(a5)
+
+    # Recombine bytes into a word
+    slli a1, a1, 8
+    or a0, a0, a1
+    slli a2, a2, 16
+    or a0, a0, a2
+    slli a3, a3, 24
+    or s9, a0, a3
+
+    # Rcon XOR
+    la a5, rcon
+    add a5, a5, s4
+    lbu a6, -1(a5)     				# rcon[s4-1]
+    xor s9, s9, a6     				# SubWord result ^= Rcon
+
+    # Reconstruct new words
+    xor s2, s2, s9                 
+    slli a0, s2, 32                
+    xor s2, s2, a0                
+    srli a1, s2, 32                
+    xor s3, s3, a1                 
+    slli a2, s3, 32    
+    xor s3, s3, a2    
+
+    #########################################################
     # Final AES round without MixColumns
-    aes64es t2, s0, s1
-    aes64es t3, s1, s0
+    aes64es t0, s0, s1
+    aes64es t1, s1, s0
 
-    xor s0, t2, s2
-    xor s1, t3, s3
+    xor s0, t0, s2
+    xor s1, t1, s3
 
     # Store HTIF
     sd s0, 0(s11)	
@@ -190,10 +191,7 @@ plaintext:
 
 key:
   .dword 0xa6d2ae2816157e2b, 0x3c4fcf098815f7ab  
-	
-key_schedule:	
-    .space 176
-	
+
 rcon:
     .byte 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36
 	
