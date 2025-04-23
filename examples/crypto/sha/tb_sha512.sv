@@ -43,7 +43,6 @@ module stimulus;
    // Size of [583:0] is size of vector in file:  72 + 512 = 584 bits
    logic [583:0] testvectors[511:0];
      
-   
    integer 	 handle3;
    integer 	 desc3;
    integer 	 i;  
