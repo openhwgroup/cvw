@@ -611,7 +611,7 @@ ext_interrupt_\MODE\():
     // lists what to do on each exception (not interrupts)
     // unexpected exceptions should cause segfaults for easy detection
     // Expected exceptions should increment the EPC to the next instruction and return
-
+.data
     .align 2 // aligns this data table to an 4 byte boundary
 exception_vector_table_\MODE\():
     .4byte addr_misaligned_\MODE\()      // 0: instruction address misaligned
@@ -652,6 +652,7 @@ trap_return_pagetype_table_\MODE\():
     .4byte 0xC  // 0: kilopage has 12 offset bits
     .4byte 0x16 // 1: megapage has 22 offset bits
 
+.section .text.init
 trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler and continue with the test
 .endm
 
