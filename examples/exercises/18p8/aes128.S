@@ -56,7 +56,7 @@ final_round:
     xor s0, t2, s2
     xor s1, t3, s3
 
-    # DEBUG
+    # Print out through HTIF
     sd s0, 0(s11)	
     sd s1, 8(s11)
     addi s11, s11, 16	
@@ -97,19 +97,22 @@ end_signature:
 plaintext:
   .dword 0x8d305a88a8f64332, 0x340737e0a2983131
 
+key:
+  .dword 0xa6d2ae2816157e2b, 0x3c4fcf098815f7ab  
+	
 # Key Expansion Example Appendix B AES-128
 key_schedule:
-    .dword 0xa6d2ae2816157e2b, 0x3c4fcf098815f7ab  # Round 0
-    .dword 0xb12c548817fefaa0, 0x05766c2a3939a323  # Round 1
-    .dword 0x43b9967af295c2f2, 0x7ff659737a803559  # Round 2
-    .dword 0x3efe16477d47803d, 0x3b887a6d447e231e  # Round 3
-    .dword 0x7f5b52a841a544ef, 0x00ad0bdb3b2571b6  # Round 4
-    .dword 0x879d837cf8c6d1d4, 0xbc15f911bcb8f2ca  # Round 5
-    .dword 0xfd3e0b117aa3886d, 0xfd9300ca4186f9db  # Round 6
-    .dword 0xf3c95f5f0ef7544e, 0x4fdca64eb24fa684  # Round 7
-    .dword 0xd2ba8db52173d2ea, 0x2f298d7f60f52b31  # Round 8
-    .dword 0x21dcfa19f36677ac, 0x6e005c574129d128  # Round 9
-    .dword 0x8925eec9a8f914d0, 0xa60c63b6c80c3fe1  # Round 10
+  .dword 0xa6d2ae2816157e2b, 0x3c4fcf098815f7ab  # Round 0
+  .dword 0xb12c548817fefaa0, 0x05766c2a3939a323  # Round 1
+  .dword 0x43b9967af295c2f2, 0x7ff659737a803559  # Round 2
+  .dword 0x3efe16477d47803d, 0x3b887a6d447e231e  # Round 3
+  .dword 0x7f5b52a841a544ef, 0x00ad0bdb3b2571b6  # Round 4
+  .dword 0x879d837cf8c6d1d4, 0xbc15f911bcb8f2ca  # Round 5
+  .dword 0xfd3e0b117aa3886d, 0xfd9300ca4186f9db  # Round 6
+  .dword 0xf3c95f5f0ef7544e, 0x4fdca64eb24fa684  # Round 7
+  .dword 0xd2ba8db52173d2ea, 0x2f298d7f60f52b31  # Round 8
+  .dword 0x21dcfa19f36677ac, 0x6e005c574129d128  # Round 9
+  .dword 0x8925eec9a8f914d0, 0xa60c63b6c80c3fe1  # Round 10
 
 ciphertext:
     .space 16
