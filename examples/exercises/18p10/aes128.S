@@ -17,12 +17,12 @@ _start:
 	
     # Store initial state in signature
     la s11, begin_signature
-    csrr s8, instret  				    # count instructions at beginning
+    csrr s8, instret  				# count instructions at beginning
     addi sp, sp, -8           			# Allocate 8 bytes on the stack
     sd s8,  0(sp)            			# Save instreg on the stack	
 
-    xor s0, s0, s2   				    # state0 ^= roundkey0
-    xor s1, s1, s3   				    # state1 ^= roundkey1
+    xor s0, s0, s2   				# state0 ^= roundkey0
+    xor s1, s1, s3   				# state1 ^= roundkey1
 	
     # Set round counter (i = 1)
     li s4, 1                  			# round index (1-based)
