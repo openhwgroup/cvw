@@ -165,6 +165,8 @@ examples/C/fmul
 examples/exercises/fma16/fma16.sv
 examples/exercises/fma16/fma16_testgen
 examples/exercises/fma16/sol 
+examples/exercises/fma16/synthDC/alib-52
+examples/exercises/fma16/synthDC/default.svf
 examples/exercises/riscvsoc_solutions
 
 
@@ -174,3 +176,5 @@ config/deriv
 sim/slack-notifier/slack-webhook-url.txt
 docs/docker/buildroot-config-src
 docs/docker/testvector-generation
+
+
