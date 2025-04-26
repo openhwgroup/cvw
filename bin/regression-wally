@@ -536,7 +536,7 @@ def selectTests(args, sims, coverStr):
         f"|| (echo 'EMBENCH_TEST_FAILED: Values did not match expected metrics' >> $WALLY/benchmarks/embench/run.log && exit 1)"
     ),
         
-            grepstr="SUCCESS", # not sure what keyword to put here
+            grepstr="EMBENCH_TEST_PASSED", # not sure what keyword to put here --> could also put success which comes from the simulation
             grepfile=os.path.expandvars("$WALLY/benchmarks/embench/run.log")
         )
         configs.append(embench_test)
