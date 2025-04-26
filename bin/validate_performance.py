@@ -9,6 +9,7 @@ coremarkDir = f'{WALLY}/benchmarks/coremark/coremark_results.csv'
 coremarkDir_expected = f'{WALLY}/benchmarks/coremark/expected_coremark_results.csv'
 embenchDir = f'{WALLY}/benchmarks/embench'
 
+# NOTE: This script is not used in this branch's implementation, however it is kept here for reference
 
 def create_expected_results_json():
     # Create a dictionary to hold the expected results
@@ -151,23 +152,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-# do we only want to trigger with nightly - yes
-# is there a reason we only care about the 3.38 from the rv32im_zicsr_zba_zbb_zbs arch - most complete
-# how do i know if the two testss that produce the results i scrape from are running - just running these default
-    # cd $WALLY/benchmarks/coremark
-    # ./coremark_sweep.py
-
-    # cd $WALLY/benchmarks/embench
-    # make run
-
-# automatically push to github if better results?
-
-# coremark sweep -  creates the csv of values fro diff arch
-# embench benchmark - creates the 4 json files for speed/size
-
-# check if there are differences between runs of coremark sweep on the csv --> done
-# need to standardize timoeout duration between performance flag and nightly
-# need to make syre it is failing when different 
-# need to check if i need to validate more values in this file (maybe do a diff for the csv) --> done this part (more to come in future liekly)
