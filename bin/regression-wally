@@ -395,6 +395,8 @@ def parse_args():
     parser.add_argument("--fp", help="Include floating-point tests in coverage (slower runtime)", action="store_true") # Currently not used
     parser.add_argument("--breker", help="Run Breker tests", action="store_true") # Requires a license for the breker tool. See tests/breker/README.md for details
     parser.add_argument("--dryrun", help="Print commands invoked to console without running regression", action="store_true")
+
+    parser.add_argument("--performance", help="Check for performance changes or discrepencies in embench and coremark", action="store_true")
     return parser.parse_args()
 
 
@@ -415,7 +417,7 @@ def process_args(args):
         TIMEOUT_DUR = 30*60
         shutil.rmtree(f"{regressionDir}/questa/fcov_ucdb", ignore_errors=True)
         os.makedirs(f"{regressionDir}/questa/fcov_ucdb", exist_ok=True)
-    elif args.buildroot:
+    elif args.buildroot or args.performance: # TODO: fix timing on this bc performance shodl also be limit on nightly
         TIMEOUT_DUR = 60*3600 # 2.5 days
     elif args.testfloat:
         sims = [testfloatsim]
@@ -423,7 +425,7 @@ def process_args(args):
     elif args.branch:
         TIMEOUT_DUR = 120*60 # seconds
     elif args.nightly:
-        TIMEOUT_DUR = 30*60 # seconds
+        TIMEOUT_DUR = 5*3600 # seconds # NOTE: changed this to 5 hours for nightly regression
     else:
         TIMEOUT_DUR = 10*60 # seconds
 
@@ -505,6 +507,41 @@ def selectTests(args, sims, coverStr):
                         grepstr="All Tests completed with          0 errors",
                         grepfile = sim_log)
                 configs.append(tc)
+
+    if (args.performance or args.nightly):
+        # RUNNING THE EMBENCH TEST
+        embench_test = TestCase(
+            name="embench",
+            variant="rv32gc",  # is this the correct variant here? or rv32imac_zicsr
+            cmd="cd $WALLY/benchmarks/embench && make run | tee run.log", # do we want to pipe result out?  | tee run.log
+            grepstr="SUCCESS", # not sure what keyword to put here
+            grepfile=os.path.expandvars("$WALLY/benchmarks/embench/run.log")
+        )
+        configs.append(embench_test)
+
+        validation_log = f"{WALLY}/bin/logs/validation.log"
+        os.makedirs(os.path.dirname(validation_log), exist_ok=True)
+
+        validate_test_dir = f"{WALLY}/bin/validate_performance.py"
+        coremark_sweep_test_dir = f"{WALLY}/benchmarks/coremark/coremark_sweep.py"
+
+        # Remove './' since you're using full paths
+        # Ensure the log file exists before writing (with `touch`)
+        # Also chain commands properly and safely
+        performance_test = TestCase(
+            name="validate_performance",
+            variant="performance check",
+            cmd=(
+                f"touch {validation_log} && "
+                f"python3 {coremark_sweep_test_dir} && "
+                f"python3 {validate_test_dir} | tee {validation_log}"
+            ),
+            grepstr="Validation Tests completed with 0 errors",  # adjust if message differs
+            grepfile=validation_log
+        )
+
+        configs.append(performance_test)
+
     return configs
 
 

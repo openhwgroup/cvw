@@ -1,0 +1,23 @@
+{
+    "coremark": {
+        "coremark/mhz": 3.38
+    },
+    "embench_rv32imc": {
+        "wallySizeOpt_size": {
+            "size geometric mean": 1.04,
+            "size geometric standard deviation": 1.26
+        },
+        "wallySizeOpt_speed": {
+            "size geometric mean": 1.07,
+            "size geometric standard deviation": 1.51
+        },
+        "wallySpeedOpt_size": {
+            "size geometric mean": 1.21,
+            "size geometric standard deviation": 1.28
+        },
+        "wallySpeedOpt_speed": {
+            "size geometric mean": 1.15,
+            "size geometric standard deviation": 1.61
+        }
+    }
+}
