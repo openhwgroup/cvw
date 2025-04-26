@@ -518,15 +518,13 @@ def selectTests(args, sims, coverStr):
         )
         configs.append(embench_test)
 
+        # RUNNING THE COREMARK TEST
         validation_log = f"{WALLY}/bin/logs/validation.log"
         os.makedirs(os.path.dirname(validation_log), exist_ok=True)
 
         validate_test_dir = f"{WALLY}/bin/validate_performance.py"
         coremark_sweep_test_dir = f"{WALLY}/benchmarks/coremark/coremark_sweep.py"
-
-        # Remove './' since you're using full paths
-        # Ensure the log file exists before writing (with `touch`)
-        # Also chain commands properly and safely
+       
         performance_test = TestCase(
             name="validate_performance",
             variant="performance check",
