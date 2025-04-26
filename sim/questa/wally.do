@@ -195,7 +195,8 @@ vlog -permissive -lint -work ${WKDIR} {*}${INC_DIRS} {*}${DefineArgs} {*}${locks
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 vopt $accFlag ${WKDIR}.${TESTBENCH} ${brekervopt} -work ${WKDIR} {*}${ExpandedParamArgs} -o testbenchopt ${CoverageVoptArg}
 
-vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} {*}${PlusArgs} -fatal 7 {*}${SVLib} -suppress 3829 ${CoverageVsimArg}
+vsim -lib ${WKDIR} testbenchopt +TEST=${TESTSUITE} {*}${PlusArgs} -fatal 7 {*}${SVLib} -suppress 3829 ${CoverageVsimArg} 
+# +IDV_TRACE2LOG=1  (add this to vsim command to enable ImperasDV RVVI trace logging)
 
 # power add generates the logging necessary for saif generation.
 # power add -r /dut/core/*
