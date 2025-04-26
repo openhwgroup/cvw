@@ -372,8 +372,12 @@ def run_test_case(config, dryrun: bool = False):
         print(f"Executing {cmd}", flush=True)
         return 0
     else:
-        os.system(cmd)
-        if search_log_for_text(config.grepstr, grepfile):
+        ret_code = os.system(cmd)
+        if ret_code != 0:
+            print(f"{bcolors.FAIL}{cmd}: Failed to execute{bcolors.ENDC}", flush=True)
+            print(f"  Check {grepfile} for more details.", flush=True)
+            return 1
+        elif search_log_for_text(config.grepstr, grepfile):
             # Flush is needed to flush output to stdout when running in multiprocessing Pool
             print(f"{bcolors.OKGREEN}{cmd}: Success{bcolors.ENDC}", flush=True)
             return 0
@@ -509,10 +513,29 @@ def selectTests(args, sims, coverStr):
 
     if (args.performance or args.nightly):
         # RUNNING THE EMBENCH TEST
+        json_dir_1 = f"{WALLY}/benchmarks/embench/wallySizeOpt_size.json"
+        json_dir_2 = f"{WALLY}/benchmarks/embench/wallySizeOpt_speed.json"
+        json_dir_3 = f"{WALLY}/benchmarks/embench/wallySpeedOpt_size.json"
+        json_dir_4 = f"{WALLY}/benchmarks/embench/wallySpeedOpt_speed.json"
+
         embench_test = TestCase(
             name="embench",
             variant="rv32gc",  # is this the correct variant here? or rv32imac_zicsr
-            cmd="cd $WALLY/benchmarks/embench && make run | tee run.log", # do we want to pipe result out?  | tee run.log
+            cmd=(
+        f"touch $WALLY/benchmarks/embench/run.log && ("
+        f"cd $WALLY/benchmarks/embench && make run | tee run.log && "
+        f"grep -q 'size geometric mean.*1.04' {json_dir_1} && "
+        f"grep -q 'size geometric standard deviation.*1.26' {json_dir_1} && "
+        f"grep -q 'speed geometric mean.*1.07' {json_dir_2} && "
+        f"grep -q 'speed geometric standard deviation.*1.51' {json_dir_2} && "
+        f"grep -q 'size geometric mean.*1.21' {json_dir_3} && "
+        f"grep -q 'size geometric standard deviation.*1.28' {json_dir_3} && "
+        f"grep -q 'speed geometric mean.*1.15' {json_dir_4} && "
+        f"grep -q 'speed geometric standard deviation.*1.61' {json_dir_4}"
+        f") && echo 'EMBENCH_TEST_PASSED' >> $WALLY/benchmarks/embench/run.log "
+        f"|| (echo 'EMBENCH_TEST_FAILED: Values did not match expected metrics' >> $WALLY/benchmarks/embench/run.log && exit 1)"
+    ),
+        
             grepstr="SUCCESS", # not sure what keyword to put here
             grepfile=os.path.expandvars("$WALLY/benchmarks/embench/run.log")
         )
@@ -522,16 +545,24 @@ def selectTests(args, sims, coverStr):
         validation_log = f"{WALLY}/bin/logs/validation.log"
         os.makedirs(os.path.dirname(validation_log), exist_ok=True)
 
-        validate_test_dir = f"{WALLY}/bin/validate_performance.py"
         coremark_sweep_test_dir = f"{WALLY}/benchmarks/coremark/coremark_sweep.py"
-       
+
+        actual_coremark_values_csv = f"{WALLY}/benchmarks/coremark/coremark_results.csv"
+        expected_coremark_values_csv = f"{WALLY}/benchmarks/coremark/expected_coremark_results.csv"
+
         performance_test = TestCase(
             name="validate_performance",
             variant="performance check",
             cmd=(
+                "set -e && "
                 f"touch {validation_log} && "
                 f"python3 {coremark_sweep_test_dir} && "
-                f"python3 {validate_test_dir} | tee {validation_log}"
+                f"if diff -q {actual_coremark_values_csv} {expected_coremark_values_csv}; then "
+                f"  echo 'Coremark Validation Tests completed with 0 errors' | tee {validation_log}; "
+                f"else "
+                f"  echo 'ERROR: CSV files differ' | tee {validation_log}; "
+                f"  exit 1; "
+                f"fi"
             ),
             grepstr="Validation Tests completed with 0 errors",  # adjust if message differs
             grepfile=validation_log
