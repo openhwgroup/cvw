@@ -520,7 +520,7 @@ def selectTests(args, sims, coverStr):
 
         embench_test = TestCase(
             name="embench",
-            variant="rv32gc",  # is this the correct variant here? or rv32imac_zicsr
+            variant="rv32gc",  # is this the correct variant here? or rv32imac_zicsr 
             cmd=(
         f"touch $WALLY/benchmarks/embench/run.log && ("
         f"cd $WALLY/benchmarks/embench && make run | tee run.log && "
