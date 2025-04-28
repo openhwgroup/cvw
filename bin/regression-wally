@@ -395,7 +395,7 @@ def parse_args():
     parser.add_argument("--breker", help="Run Breker tests", action="store_true") # Requires a license for the breker tool. See tests/breker/README.md for details
     parser.add_argument("--dryrun", help="Print commands invoked to console without running regression", action="store_true")
 
-    parser.add_argument("--performance", help="Check for performance changes or discrepencies in embench and coremark", action="store_true")
+    parser.add_argument("--performance", help="Check for performance changes or discrepancies in embench and coremark", action="store_true")
     return parser.parse_args()
 
 
@@ -416,15 +416,15 @@ def process_args(args):
         TIMEOUT_DUR = 30*60
         shutil.rmtree(f"{regressionDir}/questa/fcov_ucdb", ignore_errors=True)
         os.makedirs(f"{regressionDir}/questa/fcov_ucdb", exist_ok=True)
-    elif args.buildroot or args.performance: # TODO: fix timing on this bc performance shodl also be limit on nightly
+    elif args.buildroot:
         TIMEOUT_DUR = 60*3600 # 2.5 days
     elif args.testfloat:
         sims = [testfloatsim]
         TIMEOUT_DUR = 30*60 # seconds
     elif args.branch:
         TIMEOUT_DUR = 120*60 # seconds
-    elif args.nightly:
-        TIMEOUT_DUR = 5*3600 # seconds # NOTE: changed this to 5 hours for nightly regression
+    elif args.nightly or args.performance:
+        TIMEOUT_DUR = 5*3600 # seconds
     else:
         TIMEOUT_DUR = 10*60 # seconds
 
@@ -519,13 +519,15 @@ def selectTests(args, sims, coverStr):
         configs.append(embench_test)
 
         # RUNNING THE COREMARK TEST
-        validation_log = f"{WALLY}/bin/logs/validation.log"
+        
+        validation_log = f"{regressionDir}/{sim}/logs/validation.log"
+        # Create the directory if it doesn't exist
         os.makedirs(os.path.dirname(validation_log), exist_ok=True)
 
         validate_test_dir = f"{WALLY}/bin/validate_performance.py"
         coremark_sweep_test_dir = f"{WALLY}/benchmarks/coremark/coremark_sweep.py"
        
-        performance_test = TestCase(
+        coremark_test = TestCase(
             name="validate_performance",
             variant="performance check",
             cmd=(
@@ -537,7 +539,7 @@ def selectTests(args, sims, coverStr):
             grepfile=validation_log
         )
 
-        configs.append(performance_test)
+        configs.append(coremark_test)
 
     return configs
 
