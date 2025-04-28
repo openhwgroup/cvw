@@ -278,7 +278,7 @@ lockstepwaivers = [
 # Data Types & Functions
 ##################################
 
-TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr', 'grepfile'])
+TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr', 'grepfile', 'diffcommand', 'simlog'])
 # name:     the name of this test configuration (used in printing human-readable
 #           output and picking logfile names)
 # cmd:      the command to run to test (should include the logfile as '{}', and
@@ -287,7 +287,10 @@ TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr', 'grepfil
 #           grep finds that string in the logfile (is used by grep, so it may
 #           be any pattern grep accepts, see `man 1 grep` for more info).
 # grepfile:  a string containing the location of the file to be searched for output
-
+# diffcommand:  the command to run, if enabled, to check the output of the CoreMark benchmark
+#           against the expected output. The command should write to the
+#           validation log file. If None, no diff command is run.
+# simlog:  the name of the logfile to be used for this test.
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -316,7 +319,9 @@ def addTests(testList, sim, coverStr, configs):
                     variant=config,
                     cmd=f"{cmdPrefix} {t} > {sim_log}",
                     grepstr=gs,
-                    grepfile = grepfile)
+                    grepfile = grepfile,
+                    diffcommand=None,
+                    simlog=sim_log)
             configs.append(tc)
 
 
@@ -352,7 +357,9 @@ def addTestsByDir(testDir, config, sim, coverStr, configs, lockstepMode=0, breke
                         variant=config,
                         cmd=f"{cmdPrefix} {fullfile} > {sim_log}",
                         grepstr=gs,
-                        grepfile = sim_log)
+                        grepfile = sim_log,
+                        diffcommand=None,
+                        simlog=sim_log)
                 configs.append(tc)
 
 def search_log_for_text(text, grepfile):
@@ -368,6 +375,7 @@ def search_log_for_text(text, grepfile):
 def run_test_case(config, dryrun: bool = False):
     grepfile = config.grepfile
     cmd = config.cmd
+    diffcommand = config.diffcommand
     if dryrun:
         print(f"Executing {cmd}", flush=True)
         return 0
@@ -377,6 +385,20 @@ def run_test_case(config, dryrun: bool = False):
             print(f"{bcolors.FAIL}{cmd}: Failed to execute{bcolors.ENDC}", flush=True)
             print(f"  Check {grepfile} for more details.", flush=True)
             return 1
+        elif diffcommand:
+            sim_log = config.simlog
+            check_ret_code = os.system(diffcommand)
+            with open(sim_log, 'a') as f:
+                if check_ret_code == 0:
+                    # Success message
+                    print(f"{bcolors.OKGREEN}{cmd}: Success{bcolors.ENDC}", flush=True)
+                    f.write("Coremark Validation Tests completed with 0 errors\n")  # Write success message to the log
+                    return 0
+                else:
+                    # Failure message
+                    print(f"{bcolors.FAIL}{cmd}: Failures detected in output: there is a difference in the coremark csv files. Check {sim_log}.{bcolors.ENDC}", flush=True)
+                    f.write("ERROR: There is a difference in the coremark CSV files\n")  # Write failure message to the log
+                    return 1
         elif search_log_for_text(config.grepstr, grepfile):
             # Flush is needed to flush output to stdout when running in multiprocessing Pool
             print(f"{bcolors.OKGREEN}{cmd}: Success{bcolors.ENDC}", flush=True)
@@ -399,7 +421,7 @@ def parse_args():
     parser.add_argument("--breker", help="Run Breker tests", action="store_true") # Requires a license for the breker tool. See tests/breker/README.md for details
     parser.add_argument("--dryrun", help="Print commands invoked to console without running regression", action="store_true")
 
-    parser.add_argument("--performance", help="Check for performance changes or discrepencies in embench and coremark", action="store_true")
+    parser.add_argument("--performance", help="Check for performance changes or discrepancies in embench and coremark", action="store_true")
     return parser.parse_args()
 
 
@@ -420,15 +442,15 @@ def process_args(args):
         TIMEOUT_DUR = 30*60
         shutil.rmtree(f"{regressionDir}/questa/fcov_ucdb", ignore_errors=True)
         os.makedirs(f"{regressionDir}/questa/fcov_ucdb", exist_ok=True)
-    elif args.buildroot or args.performance: # TODO: fix timing on this bc performance shodl also be limit on nightly
+    elif args.buildroot:
         TIMEOUT_DUR = 60*3600 # 2.5 days
     elif args.testfloat:
         sims = [testfloatsim]
         TIMEOUT_DUR = 30*60 # seconds
     elif args.branch:
         TIMEOUT_DUR = 120*60 # seconds
-    elif args.nightly:
-        TIMEOUT_DUR = 5*3600 # seconds # NOTE: changed this to 5 hours for nightly regression
+    elif args.nightly or args.performance:
+        TIMEOUT_DUR = 5*3600 # seconds
     else:
         TIMEOUT_DUR = 10*60 # seconds
 
@@ -443,7 +465,9 @@ def selectTests(args, sims, coverStr):
             variant="all",
             cmd=f"lint-wally {'--nightly' if args.nightly else ''} | tee {regressionDir}/verilator/logs/all_lints.log",
             grepstr="lints run with no errors or warnings",
-            grepfile = f"{regressionDir}/verilator/logs/all_lints.log")
+            grepfile = f"{regressionDir}/verilator/logs/all_lints.log",
+            diffcommand=None,
+            simlog=f"{regressionDir}/verilator/logs/all_lints.log"),
         ]
 
     # run full buildroot boot simulation (slow) if buildroot flag is set.  Start it early to overlap with other tests
@@ -508,15 +532,17 @@ def selectTests(args, sims, coverStr):
                         variant=config,
                         cmd=f"wsim --tb testbench_fp --sim {testfloatsim} {config} {test} > {sim_log}",
                         grepstr="All Tests completed with          0 errors",
-                        grepfile = sim_log)
+                        grepfile = sim_log,
+                        diffcommand=None,
+                        simlog=sim_log)
                 configs.append(tc)
 
     if (args.performance or args.nightly):
         # RUNNING THE EMBENCH TEST
-        json_dir_1 = f"{WALLY}/benchmarks/embench/wallySizeOpt_size.json"
-        json_dir_2 = f"{WALLY}/benchmarks/embench/wallySizeOpt_speed.json"
-        json_dir_3 = f"{WALLY}/benchmarks/embench/wallySpeedOpt_size.json"
-        json_dir_4 = f"{WALLY}/benchmarks/embench/wallySpeedOpt_speed.json"
+        wallySizeOpt_size_json = f"{WALLY}/benchmarks/embench/wallySizeOpt_size.json"
+        wallySizeOpt_speed_json = f"{WALLY}/benchmarks/embench/wallySizeOpt_speed.json"
+        wallySpeedOpt_size_json = f"{WALLY}/benchmarks/embench/wallySpeedOpt_size.json"
+        wallySpeedOpt_speed_json = f"{WALLY}/benchmarks/embench/wallySpeedOpt_speed.json"
 
         embench_test = TestCase(
             name="embench",
@@ -524,51 +550,48 @@ def selectTests(args, sims, coverStr):
             cmd=(
         f"touch $WALLY/benchmarks/embench/run.log && ("
         f"cd $WALLY/benchmarks/embench && make run | tee run.log && "
-        f"grep -q 'size geometric mean.*1.04' {json_dir_1} && "
-        f"grep -q 'size geometric standard deviation.*1.26' {json_dir_1} && "
-        f"grep -q 'speed geometric mean.*1.07' {json_dir_2} && "
-        f"grep -q 'speed geometric standard deviation.*1.51' {json_dir_2} && "
-        f"grep -q 'size geometric mean.*1.21' {json_dir_3} && "
-        f"grep -q 'size geometric standard deviation.*1.28' {json_dir_3} && "
-        f"grep -q 'speed geometric mean.*1.15' {json_dir_4} && "
-        f"grep -q 'speed geometric standard deviation.*1.61' {json_dir_4}"
+        f"grep -q 'size geometric mean.*1.04' {wallySizeOpt_size_json} && "
+        f"grep -q 'size geometric standard deviation.*1.26' {wallySizeOpt_size_json} && "
+        f"grep -q 'speed geometric mean.*1.07' {wallySizeOpt_speed_json} && "
+        f"grep -q 'speed geometric standard deviation.*1.51' {wallySizeOpt_speed_json} && "
+        f"grep -q 'size geometric mean.*1.21' {wallySpeedOpt_size_json} && "
+        f"grep -q 'size geometric standard deviation.*1.28' {wallySpeedOpt_size_json} && "
+        f"grep -q 'speed geometric mean.*1.15' {wallySpeedOpt_speed_json} && "
+        f"grep -q 'speed geometric standard deviation.*1.61' {wallySpeedOpt_speed_json}"
         f") && echo 'EMBENCH_TEST_PASSED' >> $WALLY/benchmarks/embench/run.log "
         f"|| (echo 'EMBENCH_TEST_FAILED: Values did not match expected metrics' >> $WALLY/benchmarks/embench/run.log && exit 1)"
     ),
         
-            grepstr="EMBENCH_TEST_PASSED", # not sure what keyword to put here --> could also put success which comes from the simulation
-            grepfile=os.path.expandvars("$WALLY/benchmarks/embench/run.log")
+            grepstr="EMBENCH_TEST_PASSED", # make sure this matches the grep string in the command
+            grepfile=os.path.expandvars("$WALLY/benchmarks/embench/run.log"),
+            diffcommand=None,
+            simlog=os.path.expandvars("$WALLY/benchmarks/embench/run.log")
         )
         configs.append(embench_test)
 
         # RUNNING THE COREMARK TEST
-        validation_log = f"{WALLY}/bin/logs/validation.log"
-        os.makedirs(os.path.dirname(validation_log), exist_ok=True)
+        sim_log = f"{regressionDir}/{defaultsim}/logs/validation.log"
+        # Create the directory if it doesn't exist
+        os.makedirs(os.path.dirname(sim_log), exist_ok=True)
+
+        # Clear the file contents for a fresh start
+        with open(sim_log, 'w') as f:
+            f.write('')  # clears the file
 
         coremark_sweep_test_dir = f"{WALLY}/benchmarks/coremark/coremark_sweep.py"
-
         actual_coremark_values_csv = f"{WALLY}/benchmarks/coremark/coremark_results.csv"
         expected_coremark_values_csv = f"{WALLY}/benchmarks/coremark/expected_coremark_results.csv"
-
-        performance_test = TestCase(
-            name="validate_performance",
-            variant="performance check",
-            cmd=(
-                "set -e && "
-                f"touch {validation_log} && "
-                f"python3 {coremark_sweep_test_dir} && "
-                f"if diff -q {actual_coremark_values_csv} {expected_coremark_values_csv}; then "
-                f"  echo 'Coremark Validation Tests completed with 0 errors' | tee {validation_log}; "
-                f"else "
-                f"  echo 'ERROR: CSV files differ' | tee {validation_log}; "
-                f"  exit 1; "
-                f"fi"
-            ),
-            grepstr="Validation Tests completed with 0 errors",  # adjust if message differs
-            grepfile=validation_log
+        coremark_test = TestCase(
+            name="validate_coremark_sweep",
+            variant="coremark check",
+            cmd=(f"python3 {coremark_sweep_test_dir}"),
+            grepstr=None,
+            grepfile=None,
+            diffcommand=f"diff -q {actual_coremark_values_csv} {expected_coremark_values_csv}",
+            simlog=sim_log
         )
 
-        configs.append(performance_test)
+        configs.append(coremark_test)
 
     return configs
 
