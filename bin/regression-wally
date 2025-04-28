@@ -5,6 +5,7 @@
 # David_Harris@Hmc.edu 25 January 2021
 # Modified by Jarred Allen <jaallen@g.hmc.edu> and many others
 # jcarlin@hmc.edu December 2024
+# sanarayanan@hmc.edu April 2025
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 #
 # Run a regression with multiple configurations in parallel and exit with
