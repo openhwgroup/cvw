@@ -12,7 +12,7 @@ NC='\033[0m' # No Color
 fails=0
 
 if [ "$1" == "--nightly" ]; then
-    configs=(rv32e rv64gc rv32gc rv32imc rv32i rv64i) 
+    configs=(rv32e rv32imc rv64gc rv32gc rv32i rv64i) 
     derivconfigs=$(ls "$WALLY"/config/deriv)
     for entry in $derivconfigs
     do
@@ -21,7 +21,7 @@ if [ "$1" == "--nightly" ]; then
         fi
     done
 else
-    configs=(rv32e rv64gc rv32gc rv32imc rv32i rv64i fdqh_rv64gc)
+    configs=(rv32e rv32imc rv32gc rv32i rv64i rv64gc fdqh_rv64gc)
 fi
 
 for config in ${configs[@]}; do
@@ -34,7 +34,7 @@ for config in ${configs[@]}; do
             echo -e "${RED}$config failed lint${NC}"
             fails=$((fails+1))
         else
-            echo -e "${RED}$config fails with lint errors or warnings"
+            echo -e "${RED}$config fails with lint errors or warnings${NC}"
             exit 1
         fi
     else
