@@ -43,7 +43,7 @@ sim: sim_build_memfile sim_run speed
 
 # launches sim to simulate tests on wally
 sim_run:
-	wsim rv32gc embench --params "BPRED_LOGGER=1\'b1" 
+	wsim --sim verilator rv32gc embench --params "BPRED_LOGGER=1\'b1" 
 
 # builds the objdump based on the compiled c elf files
 objdump:
