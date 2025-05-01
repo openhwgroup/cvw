@@ -31,10 +31,11 @@ module instructionbuffer import cvw::*;  #(parameter cvw_t P) (
   input  logic  [P.XLEN-1:0]      PCF,          // PC of the instruction
   input  logic  [P.XLEN-1:0]      PCCacheF,     // Address of the instruction
   input  logic  [P.ICACHE_LINELENINBITS-1:0]   FetchData,    // Data fetched from memory
-  output logic                    InstrBufferEmpty, InstrBufferFull,
+  output logic                    InstrBufferEmpty, InstrBufferStallF,
   output logic                    InstrBufferStallD,
-  output logic  [31:0]            InstrD,       // Instruction to be decoded
-  output logic  [P.XLEN-1:0]      PCD           // PC of the instruction to be decoded
+  output logic  [P.XLEN-1:0]      PCD,           // PC of the instruction to be decoded
+  output logic  [31:0]            InstrF, InstrD,       // Instruction to be decoded
+  output logic                    CompressedF
 );
   localparam ENTRY_INDEX_BITS = $clog2(P.ICACHE_LINELENINBITS/8);
   localparam TAG_BITS = P.XLEN - ENTRY_INDEX_BITS;
@@ -56,10 +57,10 @@ module instructionbuffer import cvw::*;  #(parameter cvw_t P) (
   assign {PCFTag, EntryIndex} = PCF;
 
   assign WritePtr = ~ReadPtr;
-  assign InstrBufferFull = Valid[0] & Valid[1];
+  assign InstrBufferStallF = Valid[0] & Valid[1];
   assign InstrBufferEmpty = ~Valid[0] & ~Valid[1];
   assign InstrMissing = ~((PCFTag == PCTag[0]) | (PCFTag == PCTag[1]));
-  assign InstrBufferStallD = InstrBufferEmpty | (Spill & ~InstrBufferFull) | InstrMissing;
+  assign InstrBufferStallD = InstrBufferEmpty | (Spill & ~InstrBufferStallF) | InstrMissing;
 
 
   // Don't care if it tag doesn't match either, as InstrMissing will be 1
@@ -77,7 +78,7 @@ module instructionbuffer import cvw::*;  #(parameter cvw_t P) (
     if (reset) begin 
       Valid[0] <= 0;
       Valid[1] <= 0;
-    end else if (~DisableWrite & (~InstrBufferFull | InstrMissing)) begin
+    end else if (~DisableWrite & (~InstrBufferStallF | InstrMissing)) begin
       Valid[WritePtr] <= 1'b1;
       PCTag[WritePtr] <= PCCacheF[P.XLEN-1:ENTRY_INDEX_BITS];
       Data[WritePtr] <= FetchData;
@@ -91,36 +92,29 @@ module instructionbuffer import cvw::*;  #(parameter cvw_t P) (
     // end
 
   // Decode Logic:
-  always_ff @( posedge clk )
-    if (reset) begin
-      InstrD <= nop;
-      PCD <= PCF;
-      Spill <= 1'b0;
-    end else if (DisableRead | InstrBufferEmpty) begin
-      InstrD <= InstrD;
-      PCD <= PCD;
-      Spill <= Spill;
-    end else begin
-      PCD <= PCF;
-      // Spill logic
-      if (EntryIndex[ENTRY_INDEX_BITS-1:1] == '1) begin 
-        if (InstrBufferFull) begin 
-          // next cacheline holds the Spill
-          Spill <= 1'b0;
-          InstrD <= {Data[~ReadPtr][15:0], Data[ReadPtr][P.ICACHE_LINELENINBITS-1:P.ICACHE_LINELENINBITS-16]};
-        end else if (Data[ReadPtr][P.ICACHE_LINELENINBITS-15:P.ICACHE_LINELENINBITS-16] != 2'b11) begin 
-          // next cacheline doesn't hold Spill but instruction is compressed so doesn't Spill over
-          Spill <= 1'b0;
-          InstrD <= {16'b0, Data[ReadPtr][P.ICACHE_LINELENINBITS-1:P.ICACHE_LINELENINBITS-16]};
-        end else begin
-          // next cacheline doesn't hold Spill, but it is needed as the instruction is not compressed
-          Spill <= 1'b1;
-          InstrD <= InstrD;
-        end
+  always_comb
+    if (EntryIndex[ENTRY_INDEX_BITS-1:1] == '1) begin
+      if (InstrBufferStallF) begin
+        // next cacheline holds the Spill
+        Spill = 1'b0;
+        InstrF = {Data[~ReadPtr][15:0], Data[ReadPtr][P.ICACHE_LINELENINBITS-1:P.ICACHE_LINELENINBITS-16]};
+      end else if (Data[ReadPtr][P.ICACHE_LINELENINBITS-15:P.ICACHE_LINELENINBITS-16] != 2'b11) begin 
+        // next cacheline doesn't hold Spill but instruction is compressed so doesn't Spill over
+        Spill = 1'b0;
+        InstrF = {16'b0, Data[ReadPtr][P.ICACHE_LINELENINBITS-1:P.ICACHE_LINELENINBITS-16]};
       end else begin
-        // fetch instruction from the cacheline as needed
-        Spill <= 1'b0;
-        InstrD <= Data[ReadPtr][EntryIndex*8 +: 32];
+        // next cacheline doesn't hold Spill, but it is needed as the instruction is not compressed
+        Spill = 1'b1;
+        InstrF = nop;
       end
+    end else begin
+      // fetch instruction from the cacheline as needed
+      Spill = 1'b0;
+      InstrF = Data[ReadPtr][EntryIndex*8 +: 32];
     end
+
+  flopen #(P.XLEN) pcreg(clk, ~DisableRead | InstrBufferEmpty | reset | ~  Spill, PCF, PCD);
+  flopen #(32) instrreg(clk, ~DisableRead | InstrBufferEmpty | reset | ~Spill, InstrF, InstrD);
+
+  assign CompressedF = ~(&InstrF[1:0]);
 endmodule

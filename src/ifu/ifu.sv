@@ -31,7 +31,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   input  logic                 StallF, StallD, StallE, StallM, StallW,
   input  logic                 FlushD, FlushE, FlushM, FlushW, 
   output logic                 IFUStallF,                                // IFU stalsl pipeline during a multicycle operation
-  output logic                 InstrBufferFull, InstrBufferStallD,
+  output logic                 InstrBufferStallF, InstrBufferStallD,
   // Command from CPU
   input  logic                 InvalidateICacheM,                        // Clears all instruction cache valid bits
   input  logic                 CSRWriteFenceM,                           // CSR write or fence instruction, PCNextF = the next valid PC (typically PCE)
@@ -160,11 +160,15 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   if(P.ZCA_SUPPORTED & !P.INSTR_BUFFER_SUPPORTED) begin : Spill
     spill #(P) spill(.clk, .reset, .StallF, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF,  .CacheableF, 
       .IFUCacheBusStallF, .ITLBMissOrUpdateAF, .PCSpillNextF, .PCSpillF, .SelSpillNextF, .PostSpillInstrRawF, .CompressedF);
+  end else if (P.INSTR_BUFFER_SUPPORTED) begin
+    assign PCSpillNextF = PCNextF;
+    assign PCSpillF = PCF;
+    assign SelSpillNextF = '0;
   end else begin : NoSpill
     assign PCSpillNextF = PCNextF;
     assign PCSpillF = PCF;
     assign PostSpillInstrRawF = InstrRawF;
-    assign {SelSpillNextF, CompressedF} = '0;
+    assign {SelSpillNextF} = '0;
   end
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -277,18 +281,20 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       
       if(P.INSTR_BUFFER_SUPPORTED) begin
         assign InstrRawF = 0;
-        
+
         mux2 #(P.XLEN) pccachemux(PCF+({32'b0, P.ICACHE_LINELENINBITS} / 32), PC2NextF, InstrBufferEmpty, PCPreCacheF); // check branch signal
         mux3 #(P.XLEN) pccachemux2(PCPreCacheF, EPCM, TrapVectorM, {TrapM, RetM}, PCPreCache2F);
         mux2 #(P.XLEN) pccacheresetmux({PCPreCache2F[P.XLEN-1:1], 1'b0}, P.RESET_VECTOR[P.XLEN-1:0], reset, PCCacheF);
 
         instructionbuffer #(P) instrbuff(.clk, .reset, .DisableRead(StallD), //TODO: Verify DisableRead and DisableWrite
-        .DisableWrite(StallF), .PCF, .PCCacheF(PCNextF), .FetchData(ReadDataLine),  // TODO: PCCacheF needs to be created
-        .InstrBufferEmpty, .InstrBufferFull, .InstrBufferStallD, .InstrD(InstrRawD), .PCD);
+        .DisableWrite(StallF), .PCF, .PCCacheF, .FetchData(ReadDataLine),  // TODO: PCCacheF needs to be created
+        .InstrBufferEmpty, .InstrBufferStallF, .InstrBufferStallD, .PCD, 
+        .InstrF(PostSpillInstrRawF), .InstrD(InstrRawD), .CompressedF);
       end else begin
         mux3 #(32) UnCachedDataMux(.d0(ICacheInstrF), .d1(ShiftUncachedInstr), .d2(IROMInstrF),
                                    .s({SelIROM, ~CacheableF}), .y(InstrRawF[31:0]));
-        assign {InstrBufferEmpty, InstrBufferFull, InstrBufferStallD} = 0;
+        assign {InstrBufferEmpty, InstrBufferStallF, InstrBufferStallD} = 0;
+        flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawF, nop, InstrRawD);
       end
     end else begin : passthrough
       assign IFUHADDR = PCPF;
@@ -305,7 +311,8 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       if(P.IROM_SUPPORTED) mux2 #(32) UnCachedDataMux2(ShiftUncachedInstr, IROMInstrF, SelIROM, InstrRawF);
       else assign InstrRawF = ShiftUncachedInstr;
       assign IFUHBURST = 3'b0;
-      assign {ICacheMiss, ICacheAccess, ICacheStallF, ReadDataLine, InstrBufferEmpty, InstrBufferFull, InstrBufferStallD} = '0;
+      assign {ICacheMiss, ICacheAccess, ICacheStallF, ReadDataLine, InstrBufferEmpty, InstrBufferStallF, InstrBufferStallD} = '0;
+      flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawF, nop, InstrRawD);
     end
 
     // mux between the alignments of uncached reads.
@@ -316,15 +323,15 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   end else begin : nobus // block: bus
     assign {IFUHADDR, IFUHWRITE, IFUHSIZE, IFUHBURST, IFUHTRANS, 
             BusStall, CacheCommittedF, BusCommittedF, FetchBuffer} = '0;   
-    assign {ICacheStallF, ICacheMiss, ICacheAccess, ReadDataLine} = '0;
+    assign {ICacheStallF, ICacheMiss, ICacheAccess, ReadDataLine, InstrBufferStallF, InstrBufferStallD} = '0;
     assign InstrRawF = IROMInstrF;
+    flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawF, nop, InstrRawD);
   end
   
   assign IFUCacheBusStallF = ICacheStallF | BusStall;
   assign IFUStallF = IFUCacheBusStallF | SelSpillNextF;
   assign GatedStallD = StallD & ~SelSpillNextF;
   
-  flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawF, nop, InstrRawD);
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // PCNextF logic
@@ -335,7 +342,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   else assign PC2NextF = PC1NextF;
 
   mux3 #(P.XLEN) pcmux3(PC2NextF, EPCM, TrapVectorM, {TrapM, RetM}, UnalignedPCNextF);
-  mux2 #(P.XLEN) pcresetmux({UnalignedPCNextF[P.XLEN-1:1], 1'b0}, P.RESET_VECTOR[P.XLEN-1:0], reset, PCNextF);
+  mux2 #(P.XLEN) pcresetmux({UnalignedPCNextF[P.XLEN-1:1], 1'b0}, P.RESET_VECTOR[P.XLEN-1:0], reset, PCNextF);  
   flopen #(P.XLEN) pcreg(clk, ~StallF | reset, PCNextF, PCF);
 
   // pcadder

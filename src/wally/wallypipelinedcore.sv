@@ -51,7 +51,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          StallF, StallD, StallE, StallM, StallW;
   logic                          FlushD, FlushE, FlushM, FlushW;
   logic                          TrapM, RetM;
-  logic                          InstrBufferFull, InstrBufferStallD;
+  logic                          InstrBufferStallF, InstrBufferStallD;
 
   //  signals that must connect through DP
   logic                          IntDivE, W64E;
@@ -174,7 +174,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu #(P) ifu(.clk, .reset,
     .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
-    .InstrBufferFull, .InstrBufferStallD,
+    .InstrBufferStallF, .InstrBufferStallD,
     .InstrValidE, .InstrValidD,
     .BranchD, .BranchE, .JumpD, .JumpE, .ICacheStallF,
     // Fetch
@@ -273,10 +273,10 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   end
 
   // global stall and flush control  
-  hazard hzu(
+  hazard #(P) hzu (
     .BPWrongE, .CSRWriteFenceM, .RetM, .TrapM,
     .StructuralStallD,
-    .LSUStallM, .IFUStallF,
+    .LSUStallM, .IFUStallF, .InstrBufferStallF, .InstrBufferStallD,
     .FPUStallD, .ExternalStall,
     .DivBusyE, .FDivBusyE,
     .wfiM, .IntPendingM,

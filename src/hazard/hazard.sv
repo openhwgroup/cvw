@@ -2,53 +2,53 @@
 // hazard.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
-// Modified: 
+// Modified:
 //
 // Purpose: Determine stalls and flushes
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module hazard ( 
-  input  logic  BPWrongE, CSRWriteFenceM, RetM, TrapM,   
-  input  logic  StructuralStallD,
-  input  logic  LSUStallM, IFUStallF,
-  input  logic  FPUStallD, ExternalStall,
-  input  logic  DivBusyE, FDivBusyE,
-  input  logic  wfiM, IntPendingM,
-  // Stall & flush outputs
-  output logic StallF, StallD, StallE, StallM, StallW,
-  output logic FlushD, FlushE, FlushM, FlushW
+module hazard import cvw::*; #(parameter cvw_t P) (
+    input  logic BPWrongE, CSRWriteFenceM, RetM, TrapM,
+    input  logic StructuralStallD,
+    input  logic LSUStallM, IFUStallF, InstrBufferStallF, InstrBufferStallD,
+    input  logic FPUStallD, ExternalStall,
+    input  logic DivBusyE, FDivBusyE,
+    input  logic wfiM, IntPendingM,
+    // Stall & flush outputs
+    output logic StallF, StallD, StallE, StallM, StallW,
+    output logic FlushD, FlushE, FlushM, FlushW
 );
 
-  logic                                       StallFCause, StallDCause, StallECause, StallMCause, StallWCause;
-  logic                                       LatestUnstalledD, LatestUnstalledE, LatestUnstalledM, LatestUnstalledW;
-  logic                                       FlushDCause, FlushECause, FlushMCause, FlushWCause;
+  logic          StallFCause, StallDCause, StallECause, StallMCause, StallWCause;
+  logic          LatestUnstalledD, LatestUnstalledE, LatestUnstalledM, LatestUnstalledW;
+  logic          FlushDCause, FlushECause, FlushMCause, FlushWCause;
 
   logic WFIStallM, WFIInterruptedM;
 
   // WFI logic
-  assign WFIStallM = wfiM & ~IntPendingM;         // WFI waiting for an interrupt or timeout
+  assign WFIStallM = wfiM & ~IntPendingM;  // WFI waiting for an interrupt or timeout
   assign WFIInterruptedM = wfiM & IntPendingM;    // WFI detects a pending interrupt.  Retire WFI; trap if interrupt is enabled.
-  
+
   // stalls and flushes
   // loads: stall for one cycle if the subsequent instruction depends on the load
   // branches and jumps: flush the next two instructions if the branch is taken in EXE
@@ -62,7 +62,7 @@ module hazard (
   // If any stages are stalled, the first stage that isn't stalled must flush.
 
   // Flush causes
-  // Traps (TrapM) flush the entire pipeline.  
+  // Traps (TrapM) flush the entire pipeline.
   //   However, breakpoint and ecall traps must finish the writeback stage (commit their results) because these instructions complete before trapping.
   // Trap returns (RetM) also flush the entire pipeline after the RetM (all stages except W) because all the subsequent instructions must be discarded.
   // Similarly, CSR writes and fences flush all subsequent instructions and refetch them in light of the new operating modes and cache/TLB contents
@@ -70,21 +70,90 @@ module hazard (
   //   However, an active division operation resides in the Execute stage, and when the BP incorrectly mispredicts the divide as a taken branch, the divde must still complete
   // When a WFI is interrupted and causes a trap, it flushes the rest of the pipeline but not the W stage, because the WFI needs to commit
   assign FlushDCause = TrapM | RetM | CSRWriteFenceM | BPWrongE;
-  assign FlushECause = TrapM | RetM | CSRWriteFenceM |(BPWrongE & ~(DivBusyE | FDivBusyE));
+  assign FlushECause = TrapM | RetM | CSRWriteFenceM | (BPWrongE & ~(DivBusyE | FDivBusyE));
   assign FlushMCause = TrapM | RetM | CSRWriteFenceM;
   assign FlushWCause = TrapM & ~WFIInterruptedM;
 
   // Stall causes
   //  Most data depenency stalls are identified in the decode stage
   //  Division stalls in the execute stage
-  //  Flushing any stage has priority over the corresponding stage stall.  
+  //  Flushing any stage has priority over the corresponding stage stall.
   //    Even if the register gave clear priority over enable, various FSMs still need to disable the stall, so it's best to gate the stall here with flush
-  //  The IFU and LSU stall the entire pipeline on a cache miss, bus access, or other long operation.  
+  //  The IFU and LSU stall the entire pipeline on a cache miss, bus access, or other long operation.
   //    The IFU stalls the entire pipeline rather than just Fetch to avoid complications with instructions later in the pipeline causing Exceptions
   //    A trap could be asserted at the start of a IFU/LSU stall, and should flush the memory operation
-  assign StallFCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause) | ExternalStall;
-  assign StallDCause = (StructuralStallD | FPUStallD) & ~FlushDCause;
-  assign StallECause = (DivBusyE | FDivBusyE) & ~FlushECause; 
+  if (P.INSTR_BUFFER_SUPPORTED == 0) begin
+    assign StallFCause = 1'b0;
+    assign StallDCause = (StructuralStallD | FPUStallD) & ~FlushDCause;
+    assign StallECause = (DivBusyE | FDivBusyE) & ~FlushECause; 
+    assign StallMCause = WFIStallM & ~FlushMCause;
+    // Need to gate IFUStallF when the equivalent FlushFCause = FlushDCause = 1.
+    // assign StallWCause = ((IFUStallF & ~FlushDCause) | LSUStallM) & ~FlushWCause;
+    // Because FlushWCause is a strict subset of FlushDCause, FlushWCause is factored out.
+    assign StallWCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause) | ExternalStall;
+
+    // Stall each stage for cause or if the next stage is stalled
+    // coverage off: StallFCause is always 0
+    assign StallF = StallFCause | StallD;
+    // coverage on
+    assign StallD = StallDCause | StallE;
+    assign StallE = StallECause | StallM;
+    assign StallM = StallMCause | StallW;
+    assign StallW = StallWCause;
+  end else begin
+    // // Stall if the FB is full, or the HPTW is busy 
+    // // Maybe should be (LSUStallM & ~FlushWCause & ~<I$ miss signal>) ???
+    // // so that fetch is only stalled when BOTH I$ misses and HPTW is busy
+    // assign StallFCause = InstrBufferStallF | (LSUStallM & ~FlushWCause) | ExternalStall; 
+
+    // assign StallDCause = (StructuralStallD | FPUStallD) & ~FlushDCause;
+    // assign StallECause = (DivBusyE | FDivBusyE) & ~FlushECause;
+    // assign StallMCause = WFIStallM & ~FlushMCause;
+    // assign StallWCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause) | ExternalStall; 
+
+    // assign StallFBF = IFUStallF  | ExternalStall;
+    // assign StallF   = StallFCause; 
+    // // breaking stall propagation continuity
+    // assign StallD   = StallDCause | StallE;
+    // assign StallE   = StallECause | StallM;
+    // assign StallM   = StallMCause | StallW;
+    // assign StallW   = StallWCause;
+
+    assign StallFCause = InstrBufferStallF | (LSUStallM & ~FlushWCause) | ExternalStall;
+    // assign StallFCause = ((StructuralStallD | FPUStallD) & ~FlushDCause) | ((DivBusyE | FDivBusyE) & ~FlushECause) | (WFIStallM & ~FlushMCause) | ((IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause) | ExternalStall);
+    assign StallDCause = (StructuralStallD | FPUStallD) & ~FlushDCause;
+    assign StallECause = (DivBusyE | FDivBusyE) & ~FlushECause; 
+    assign StallMCause = WFIStallM & ~FlushMCause;
+    // Need to gate IFUStallF when the equivalent FlushFCause = FlushDCause = 1.
+    // assign StallWCause = ((IFUStallF & ~FlushDCause) | LSUStallM) & ~FlushWCause;
+    // Because FlushWCause is a strict subset of FlushDCause, FlushWCause is factored out.
+    assign StallWCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause) | ExternalStall; // REVISIT Move all but ext stall to M ?
+
+    // Stall each stage for cause or if the next stage is stalled
+    // coverage off: StallFCause is always 0
+    assign StallF = StallFCause;
+    // coverage on
+    assign StallD   = StallDCause | StallE;
+    assign StallE   = StallECause | StallM;
+    assign StallM   = StallMCause | StallW;
+    assign StallW   = StallWCause;
+    // assign StallFBF = IFUStallF | ((DivBusyE | FDivBusyE) & ~FlushECause);
+  end
+  /*
+  if (P.FETCHBUFFER_ENTRIES != 0) begin
+    assign StallFBF = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause);
+    assign StallFCause = InstrBufferStallF;
+    assign StallDCause = (StructuralStallD | FPUStallD) & ~FlushDCause; // TODO: add stall if empty fetch buffer
+    assign StallF = StallFCause | StallD;
+  end else begin
+    assign StallFBF = 1'b0;
+    assign StallFCause = 1'b0;
+    assign StallDCause = (StructuralStallD | FPUStallD) & ~FlushDCause;
+    // coverage off: StallFCause is always 0
+    assign StallF = StallFCause | StallD;
+    // coverage on
+  end
+  assign StallECause = (DivBusyE | FDivBusyE) & ~FlushECause;
   assign StallMCause = WFIStallM & ~FlushMCause;
   // Need to gate IFUStallF when the equivalent FlushFCause = FlushDCause = 1.
   // assign StallWCause = ((IFUStallF & ~FlushDCause) | LSUStallM) & ~FlushWCause;
@@ -92,22 +161,21 @@ module hazard (
   assign StallWCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause) | ExternalStall;
 
   // Stall each stage for cause or if the next stage is stalled
-  // coverage off: StallFCause is always 0
-  assign StallF = StallFCause;
-  // coverage on
+  //     StallF dependant on Fetch buffer support, see above
   assign StallD = StallDCause | StallE;
   assign StallE = StallECause | StallM;
   assign StallM = StallMCause | StallW;
   assign StallW = StallWCause;
+*/
 
   // detect the first stage that is not stalled
-  assign LatestUnstalledD = ~StallD & StallF;
+  assign LatestUnstalledD = 0;
   assign LatestUnstalledE = ~StallE & StallD;
   assign LatestUnstalledM = ~StallM & StallE;
   assign LatestUnstalledW = ~StallW & StallM;
-  
+
   // Each stage flushes if the previous stage is the last one stalled (for cause) or the system has reason to flush
-  assign FlushD = LatestUnstalledD | FlushDCause; 
+  assign FlushD = LatestUnstalledD | FlushDCause;
   assign FlushE = LatestUnstalledE | FlushECause;
   assign FlushM = LatestUnstalledM | FlushMCause;
   assign FlushW = LatestUnstalledW | FlushWCause;
