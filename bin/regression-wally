@@ -548,7 +548,7 @@ def selectTests(args, sims, coverStr):
         # As of now, we are only benchmarking rv32imc for embench performance
         embench_expected_values = embench_expected["embench_rv32imc"]
 
-        # Extracting the actual values from the JSON file
+        # Extracting the JSON file names embench stores the results in
         wallySizeOpt_size_json = f"{WALLY}/benchmarks/embench/wallySizeOpt_size.json"
         wallySizeOpt_speed_json = f"{WALLY}/benchmarks/embench/wallySizeOpt_speed.json"
         wallySpeedOpt_size_json = f"{WALLY}/benchmarks/embench/wallySpeedOpt_size.json"
@@ -562,31 +562,55 @@ def selectTests(args, sims, coverStr):
             wallySpeedOpt_speed_json: embench_expected_values["wallySpeedOpt_speed"]
         }
 
-        # Dynamically generate the grep commands - checks for geometric (mean|std. dev.)
+        # Dynamically generate the grep commands
+        logfile_path = os.path.expandvars("$WALLY/benchmarks/embench/run.log")
         grep_commands = []
+        grep_commands.append("mismatch_detected=0")  # Initialize flag before the checks
+        # Iterate over the file_to_expectations to build the grep commands
         for filepath, checks in file_to_expectations.items():
             for key, expected_value in checks.items():
-                grep_commands.append(f"grep -q '{key}.*{expected_value}' {filepath}")
+                mismatch_message = f"MISMATCH: {key} != {expected_value} in {filepath}"
+                # If the mismatch is found, set mismatch_detected to 1
+                grep_commands.append(
+                    f"grep -q '{key}.*{expected_value}' {filepath} || "
+                    f'{{ echo "{mismatch_message}" >> {logfile_path}; '
+                    f"mismatch_detected=1; }}"
+                )
 
-        # Join all grep commands with "&&" so that all need to pass
-        grep_cmds_combined = " && ".join(grep_commands)
+        # Join all grep commands with newlines
+        grep_cmds_combined = "\n".join(grep_commands)
 
+        # Wrap in full shell block
+        full_check_block = f"{grep_cmds_combined}\n"
+
+        # Final check: if mismatch_detected is 1, fail the test and log the failure message
+        final_check_block = (
+            f"if [ $mismatch_detected -eq 1 ]; then\n"
+            f"  echo 'EMBENCH_TEST_FAILED: Values did not match expected metrics' >> {logfile_path};\n"
+            f"  exit 1;\n"
+            f"else\n"
+            f"  echo 'EMBENCH_TEST_PASSED' >> {logfile_path};\n"
+            f"fi"
+        )
+
+        # Combine everything into the embench_test command
         embench_test = TestCase(
             name="embench",
             variant="rv32gc",
             cmd=(
-                f"touch $WALLY/benchmarks/embench/run.log && ("
+                f"touch {logfile_path} && "
                 f"cd $WALLY/benchmarks/embench && make run | tee run.log && "
-                f"{grep_cmds_combined}"
-                f") && echo 'EMBENCH_TEST_PASSED' >> $WALLY/benchmarks/embench/run.log "
-                f"|| (echo 'EMBENCH_TEST_FAILED: Values did not match expected metrics' >> $WALLY/benchmarks/embench/run.log && exit 1)"
+                f"{full_check_block}\n"  # Runs all grep checks
+                f"{final_check_block}"  # Final check for mismatch_detected and the result
             ),
-            grepstr="EMBENCH_TEST_PASSED", # make sure this matches the grep string in the command
-            grepfile=os.path.expandvars("$WALLY/benchmarks/embench/run.log"),
+            grepstr="EMBENCH_TEST_PASSED",  # Ensure this matches the success message
+            grepfile=logfile_path,
             altcommand=None,
-            simlog=os.path.expandvars("$WALLY/benchmarks/embench/run.log")
-        )
+            simlog=logfile_path
+            )
+
         configs.append(embench_test)
+
 
         # RUNNING THE COREMARK TEST
         sim_log = f"{regressionDir}/{defaultsim}/logs/validation.log"
@@ -606,7 +630,7 @@ def selectTests(args, sims, coverStr):
             cmd=(f"python3 {coremark_sweep_test_dir}"),
             grepstr=None,
             grepfile=None,
-            altcommand=f"diff -q {actual_coremark_values_csv} {expected_coremark_values_csv}",
+            altcommand=f"diff -u {actual_coremark_values_csv} {expected_coremark_values_csv} >> {sim_log}",
             simlog=sim_log
         )
 
