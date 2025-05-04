@@ -174,6 +174,7 @@ ConcurrentICacheMissDTLBMiss:
     csrc menvcfg, t5  # menvcfg.PBMTE = 0
     li a0, 1
     ecall   # switch back to supervisor mode
+    sfence.vma  # synchronize TLB after changing menvcfg.PBMTE
     li t0, 0x80806000
     jalr ra, t0      # jump to page to exercise ITLB with PBMT !=0 when ENVCFG_PMTE=0
 
