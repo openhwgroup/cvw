@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // ebu.S
 //
-// Written: David_Harris@hmc.edu 21 January 2024
+// Written: Rose Thompson rose@rosethompson.net 4/29/2025
 //
 // Purpose: Test coverage for EBU
 //
