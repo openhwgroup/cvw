@@ -65,13 +65,13 @@ spike_run:
 
 # python wrapper to present results of embench size benchmark
 size: buildsize
-	$(embench_dir)/benchmark_size.py --builddir=bd_speedopt_size --json-output > wallySpeedOpt_size.json 
-	$(embench_dir)/benchmark_size.py --builddir=bd_sizeopt_size --json-output > wallySizeOpt_size.json 
+	$(embench_dir)/benchmark_size.py --builddir=bd_speedopt_size --json-output > actual_embench_results/wallySpeedOpt_size.json 
+	$(embench_dir)/benchmark_size.py --builddir=bd_sizeopt_size --json-output > actual_embench_results/wallySizeOpt_size.json 
 
 # python wrapper to present results of embench speed benchmark
 speed:
-	$(embench_dir)/benchmark_speed.py --builddir=bd_sizeopt_speed --target-module run_wally --cpu-mhz=1 --json-output > wallySizeOpt_speed.json 
-	$(embench_dir)/benchmark_speed.py --builddir=bd_speedopt_speed --target-module run_wally --cpu-mhz=1 --json-output > wallySpeedOpt_speed.json 
+	$(embench_dir)/benchmark_speed.py --builddir=bd_sizeopt_speed --target-module run_wally --cpu-mhz=1 --json-output > actual_embench_results/wallySizeOpt_speed.json 
+	$(embench_dir)/benchmark_speed.py --builddir=bd_speedopt_speed --target-module run_wally --cpu-mhz=1 --json-output > actual_embench_results/wallySpeedOpt_speed.json 
 
 # deletes all files
 clean: 
