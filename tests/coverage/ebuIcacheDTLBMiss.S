@@ -80,10 +80,80 @@ main:
 
     li a0, 0x80000000
     li a1, 0x81000000
+    la a2, pagetableL1Target
+    addi a2, a2, 0x40        # address of last level of the page table which needs to be removed from the data cache
     j label1
 
 .align  6   # start on multiple of 64 bytes / 16 instruction cache line
 label1:
+    addi t2, t3, 0x100  # occupy part of cache line
+    sfence.vma          # flush tlb
+    lw t0, 0x234(a0)        # load to get an entry in the DTLB accessing top-level PTE
+    addi t2, t3, 0x103  # occupy part of cache line
+    addi t2, t3, 0x104  # occupy part of cache line
+    addi t2, t3, 0x105  # occupy part of cache line
+    addi t2, t3, 0x106  # occupy part of cache line
+    lw t0, 0x234(a1)        # trigger DTLB miss
+    addi t2, t3, 0x107  # occupy part of cache line
+    addi t2, t3, 0x108  # occupy part of cache line
+    addi t2, t3, 0x109  # occupy part of cache line
+    addi t2, t3, 0x10A  # occupy part of cache line
+    addi t2, t3, 0x10C  # occupy part of cache line
+    addi t2, t3, 0x10D  # occupy part of cache line
+    addi t2, t3, 0x10E  # occupy part of cache line
+    cbo.inval (a2)
+
+    addi t2, t3, 0x100  # occupy part of cache line
+    sfence.vma          # flush tlb
+    lw t0, 0x234(a0)        # load to get an entry in the DTLB accessing top-level PTE
+    addi t2, t3, 0x103  # occupy part of cache line
+    addi t2, t3, 0x104  # occupy part of cache line
+    addi t2, t3, 0x105  # occupy part of cache line
+    addi t2, t3, 0x106  # occupy part of cache line
+    addi t2, t3, 0x107  # occupy part of cache line
+    lw t0, 0x234(a1)        # trigger DTLB miss
+    addi t2, t3, 0x108  # occupy part of cache line
+    addi t2, t3, 0x109  # occupy part of cache line
+    addi t2, t3, 0x10A  # occupy part of cache line
+    addi t2, t3, 0x10C  # occupy part of cache line
+    addi t2, t3, 0x10D  # occupy part of cache line
+    addi t2, t3, 0x10E  # occupy part of cache line
+    cbo.inval (a2)
+
+    addi t2, t3, 0x100  # occupy part of cache line
+    sfence.vma          # flush tlb
+    lw t0, 0x234(a0)        # load to get an entry in the DTLB accessing top-level PTE
+    addi t2, t3, 0x103  # occupy part of cache line
+    addi t2, t3, 0x104  # occupy part of cache line
+    addi t2, t3, 0x105  # occupy part of cache line
+    addi t2, t3, 0x106  # occupy part of cache line
+    addi t2, t3, 0x107  # occupy part of cache line
+    addi t2, t3, 0x108  # occupy part of cache line
+    lw t0, 0x234(a1)        # trigger DTLB miss
+    addi t2, t3, 0x109  # occupy part of cache line
+    addi t2, t3, 0x10A  # occupy part of cache line
+    addi t2, t3, 0x10C  # occupy part of cache line
+    addi t2, t3, 0x10D  # occupy part of cache line
+    addi t2, t3, 0x10E  # occupy part of cache line
+    cbo.inval (a2)
+
+    addi t2, t3, 0x100  # occupy part of cache line
+    sfence.vma          # flush tlb
+    lw t0, 0x234(a0)        # load to get an entry in the DTLB accessing top-level PTE
+    addi t2, t3, 0x103  # occupy part of cache line
+    addi t2, t3, 0x104  # occupy part of cache line
+    addi t2, t3, 0x105  # occupy part of cache line
+    addi t2, t3, 0x106  # occupy part of cache line
+    addi t2, t3, 0x107  # occupy part of cache line
+    addi t2, t3, 0x108  # occupy part of cache line
+    addi t2, t3, 0x109  # occupy part of cache line
+    lw t0, 0x234(a1)        # trigger DTLB miss
+    addi t2, t3, 0x10A  # occupy part of cache line
+    addi t2, t3, 0x10C  # occupy part of cache line
+    addi t2, t3, 0x10D  # occupy part of cache line
+    addi t2, t3, 0x10E  # occupy part of cache line
+    cbo.inval (a2)
+
     addi t2, t3, 0x100  # occupy part of cache line
     sfence.vma          # flush tlb
     lw t0, 0x234(a0)        # load to get an entry in the DTLB accessing top-level PTE
@@ -99,8 +169,95 @@ label1:
     addi t2, t3, 0x10C  # occupy part of cache line
     addi t2, t3, 0x10D  # occupy part of cache line
     addi t2, t3, 0x10E  # occupy part of cache line
-    addi t2, t3, 0x10F  # occupy part of cache line
+    cbo.inval (a2)
 
+    addi t2, t3, 0x100  # occupy part of cache line
+    sfence.vma          # flush tlb
+    lw t0, 0x234(a0)        # load to get an entry in the DTLB accessing top-level PTE
+    addi t2, t3, 0x103  # occupy part of cache line
+    addi t2, t3, 0x104  # occupy part of cache line
+    addi t2, t3, 0x105  # occupy part of cache line
+    addi t2, t3, 0x106  # occupy part of cache line
+    addi t2, t3, 0x107  # occupy part of cache line
+    addi t2, t3, 0x108  # occupy part of cache line
+    addi t2, t3, 0x109  # occupy part of cache line
+    addi t2, t3, 0x10A  # occupy part of cache line
+    addi t2, t3, 0x10C  # occupy part of cache line
+    lw t0, 0x234(a1)        # trigger DTLB miss
+    addi t2, t3, 0x10D  # occupy part of cache line
+    addi t2, t3, 0x10E  # occupy part of cache line
+    cbo.inval (a2)
+
+    addi t2, t3, 0x100  # occupy part of cache line
+    sfence.vma          # flush tlb
+    lw t0, 0x234(a0)        # load to get an entry in the DTLB accessing top-level PTE
+    addi t2, t3, 0x103  # occupy part of cache line
+    addi t2, t3, 0x104  # occupy part of cache line
+    addi t2, t3, 0x105  # occupy part of cache line
+    addi t2, t3, 0x106  # occupy part of cache line
+    addi t2, t3, 0x107  # occupy part of cache line
+    addi t2, t3, 0x108  # occupy part of cache line
+    addi t2, t3, 0x109  # occupy part of cache line
+    addi t2, t3, 0x10A  # occupy part of cache line
+    addi t2, t3, 0x10C  # occupy part of cache line
+    addi t2, t3, 0x10D  # occupy part of cache line
+    lw t0, 0x234(a1)        # trigger DTLB miss
+    addi t2, t3, 0x10E  # occupy part of cache line
+    cbo.inval (a2)
+        
+    addi t2, t3, 0x100  # occupy part of cache line
+    sfence.vma          # flush tlb
+    lw t0, 0x234(a0)        # load to get an entry in the DTLB accessing top-level PTE
+    addi t2, t3, 0x103  # occupy part of cache line
+    addi t2, t3, 0x104  # occupy part of cache line
+    addi t2, t3, 0x105  # occupy part of cache line
+    addi t2, t3, 0x106  # occupy part of cache line
+    addi t2, t3, 0x107  # occupy part of cache line
+    addi t2, t3, 0x108  # occupy part of cache line
+    addi t2, t3, 0x109  # occupy part of cache line
+    addi t2, t3, 0x10A  # occupy part of cache line
+    addi t2, t3, 0x10C  # occupy part of cache line
+    addi t2, t3, 0x10D  # occupy part of cache line
+    addi t2, t3, 0x10E  # occupy part of cache line
+    lw t0, 0x234(a1)        # trigger DTLB miss
+    cbo.inval (a2)
+
+    addi t2, t3, 0x100  # occupy part of cache line
+    sfence.vma          # flush tlb
+    lw t0, 0x234(a0)        # load to get an entry in the DTLB accessing top-level PTE
+    addi t2, t3, 0x103  # occupy part of cache line
+    addi t2, t3, 0x104  # occupy part of cache line
+    addi t2, t3, 0x105  # occupy part of cache line
+    addi t2, t3, 0x106  # occupy part of cache line
+    addi t2, t3, 0x107  # occupy part of cache line
+    addi t2, t3, 0x108  # occupy part of cache line
+    addi t2, t3, 0x109  # occupy part of cache line
+    addi t2, t3, 0x10A  # occupy part of cache line
+    addi t2, t3, 0x10C  # occupy part of cache line
+    addi t2, t3, 0x10D  # occupy part of cache line
+    addi t2, t3, 0x10E  # occupy part of cache line
+    addi t2, t3, 0x10F  # occupy part of cache line
+    lw t0, 0x234(a1)        # trigger DTLB miss
+    cbo.inval (a2)
+
+    addi t2, t3, 0x100  # occupy part of cache line
+    sfence.vma          # flush tlb
+    lw t0, 0x234(a0)        # load to get an entry in the DTLB accessing top-level PTE
+    addi t2, t3, 0x103  # occupy part of cache line
+    addi t2, t3, 0x104  # occupy part of cache line
+    addi t2, t3, 0x105  # occupy part of cache line
+    addi t2, t3, 0x106  # occupy part of cache line
+    addi t2, t3, 0x107  # occupy part of cache line
+    addi t2, t3, 0x108  # occupy part of cache line
+    addi t2, t3, 0x109  # occupy part of cache line
+    addi t2, t3, 0x10A  # occupy part of cache line
+    addi t2, t3, 0x10C  # occupy part of cache line
+    addi t2, t3, 0x10D  # occupy part of cache line
+    addi t2, t3, 0x10E  # occupy part of cache line
+    addi t2, t3, 0x10F  # occupy part of cache line
+    addi t2, t3, 0x110  # occupy part of cache line
+    lw t0, 0x234(a1)        # trigger DTLB miss
+    cbo.inval (a2)
 
     # wrap up
     li a0, 3 # switch back to machine mode because code at 0x80000000 may not have clean page table entry
@@ -126,6 +283,7 @@ pagetable:
 
 # Next page table at 0x80012000 for gigapage at 0x80000000
 .align 12
+pagetableL1Target:
     .8byte 0x00000000200000CF  # megapage
     .8byte 0x0000000020014C0F  # for VA starting at 80200000 (misaligned megapage)
     .8byte 0x0000000020005001  # for VA starting at 80400000 (bad PBMT pages)
