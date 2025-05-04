@@ -607,7 +607,6 @@ def selectTests(args, sims, coverStr):
             simlog=sim_log,
             altcommand=f"diff -u {actual_coremark_values_csv} {expected_coremark_values_csv} >> {sim_log}"
         )
-
         configs.append(coremark_test)
 
     return configs
