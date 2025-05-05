@@ -138,6 +138,10 @@ localparam logic IDIV_ON_FPU = 1;
 // Legal number of PMP entries are 0, 16, or 64
 localparam PMP_ENTRIES = 32'd16;
 
+// grain size should be a full cache line to avoid problems with accesses within a cache line
+// that span grain boundaries but are handled without a spill
+localparam PMP_G = 32'd4;  //e.g. 4 for 64-byte grains (512-bit cache lines)
+
 // Address space
 localparam logic [63:0] RESET_VECTOR = 64'h0000000080000000;
 

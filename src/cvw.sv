@@ -95,6 +95,7 @@ typedef struct packed {
 
 // Legal number of PMP entries are 0, 16, or 64
   int           PMP_ENTRIES;
+  int           PMP_G; // grain 
 
 // Address space
   logic [63:0]  RESET_VECTOR;
