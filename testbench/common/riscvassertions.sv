@@ -21,10 +21,12 @@
 
 module riscvassertions import cvw::*; #(parameter cvw_t P);
   initial begin
+    //$display("PMPG = %d LLEN = %d !ZCA = %b PMPENTRIES = %d !ICS = %b", P.PMP_G, P.ICACHE_LINELENINBITS, !P.ZCA_SUPPORTED, P.PMP_ENTRIES, !P.ICACHE_SUPPORTED);
     assert (P.PMP_ENTRIES == 0 | P.PMP_ENTRIES==16 | P.PMP_ENTRIES==64) else $fatal(1, "Illegal number of PMP entries: PMP_ENTRIES must be 0, 16, or 64");
-    assert (P.PMP_G > 0 | P.XLEN == 32) else $fatal(1, "RV64 requires PMP_G at least 1 to avoid checking for 8-byte accesses to 4-byte region");
-    assert (P.PMP_G >= $clog2(P.DCACHE_LINELENINBITS)-2 | !P.ZICCLSM_SUPPORTED | P.PMP_ENTRIES == 0) else $fatal(1, "Systems that support misaligned data with PMP must have grain size of at least one cache line so accesses that span grains will also cause spills");
-    assert (P.PMP_G >= $clog2(P.ICACHE_LINELENINBITS)-2 | !P.ZCA_SUPPORTED | P.PMP_ENTRIES == 0 | !P.ICACHE_SUPPORTED) else $fatal(1, "Systems that support compressed instructions with PMP must have grain size of at least one cache line so fetches that span grains will also cause spills");
+    assert (P.PMP_G > 0 | P.XLEN == 32 | P.PMP_ENTRIES == 0) else $fatal(1, "RV64 requires PMP_G at least 1 to avoid checking for 8-byte accesses to 4-byte region");
+    assert ((P.PMP_G >= $clog2(P.DCACHE_LINELENINBITS/8)-2) | !P.ZICCLSM_SUPPORTED | P.PMP_ENTRIES == 0) else $fatal(1, "Systems that support misaligned data with PMP must have grain size of at least one cache line so accesses that span grains will also cause spills");
+    assert ((P.PMP_G >= $clog2(P.ICACHE_LINELENINBITS/8)-2) | !P.ZCA_SUPPORTED | (P.PMP_ENTRIES == 0) | !P.ICACHE_SUPPORTED) else $fatal(1, "Systems that support compressed instructions with PMP must have grain size of at least one cache line so fetches that span grains will also cause spills");
+    assert (P.PMP_G < P.PA_BITS-2 | P.PMP_ENTRIES == 0) else $fatal(1, "PMP granularity must be less than the number of physical address bits");
     assert (P.IDIV_BITSPERCYCLE == 1 | P.IDIV_BITSPERCYCLE==2 | P.IDIV_BITSPERCYCLE==4) else $fatal(1, "Illegal number of divider bits/cycle: IDIV_BITSPERCYCLE must be 1, 2, or 4");
     assert (P.F_SUPPORTED | !P.D_SUPPORTED) else $fatal(1, "Can't support double fp (D) without supporting float (F)");
     assert (P.D_SUPPORTED | !P.Q_SUPPORTED) else $fatal(1, "Can't support quad fp (Q) without supporting double (D)");
