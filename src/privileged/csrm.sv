@@ -232,8 +232,8 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
       pmpaddr = {{(P.XLEN-(P.PA_BITS-2)){1'b0}}, PMPADDR_ARRAY_REGW[CSRAdrM - PMPADDR0]}; // raw value in PMP registers
       if (P.PMP_G > 0) begin // bottom bits read as 0/1 depending on mode
         napot = PMPCFG_ARRAY_REGW[CSRAdrM - PMPADDR0][4]; // read from corresponding pmpcfg register, indicating NAPOT mode
-        if ((P.PMP_G > 1) & napot)  pmpaddr = {pmpaddr[P.XLEN-1:Gm1],     {Gm1    {1'b1}}}; // in NAPOT, bottom G-1 bits read as all 1s
-        else if (!napot)            pmpaddr = {pmpaddr[P.XLEN-1:P.PMP_G], {P.PMP_G{1'b0}}}; // in TOR/OFF, bottom G bits read as 0s
+        if (napot) pmpaddr = {pmpaddr[P.XLEN-1:Gm1],     {Gm1    {1'b1}}}; // in NAPOT, bottom G-1 bits read as all 1s
+        else       pmpaddr = {pmpaddr[P.XLEN-1:P.PMP_G], {P.PMP_G{1'b0}}}; // in TOR/OFF, bottom G bits read as 0s
       end
       CSRMReadValM = pmpaddr;
     end else if ($unsigned(CSRAdrM) >= PMPCFG0 & $unsigned(CSRAdrM) < PMPCFG0 + P.PMP_ENTRIES/4 & (P.XLEN==32 | CSRAdrM[0] == 0)) begin
