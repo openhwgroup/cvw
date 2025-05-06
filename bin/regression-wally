@@ -574,6 +574,22 @@ def selectTests(args, sims, coverStr):
         )
         configs.append(coremark_test)
 
+
+        # RUNNING THE CACHE TESTS FOR RV64GC
+        cache_log_path = f"{regressionDir}/{defaultsim}/logs/cache.log"
+        cache_test = TestCase(
+            name="cache",
+            variant="rv64gc",
+            cmd=(
+                f"cd $WALLY/sim && "
+                f"./rv64gc_CacheSim.py -p > {cache_log_path} 2>&1 && "
+                f"echo SUCCESS, no failures detected in the cache output >> {cache_log_path} || echo FAILURE, failures detected in the cache output >> {cache_log_path}"
+            ),
+            grepstr="SUCCESS, no failures detected in the cache output",
+            grepfile=cache_log_path
+        )
+        configs.append(cache_test)
+
     return configs
 
 
