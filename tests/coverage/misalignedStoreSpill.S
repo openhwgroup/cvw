@@ -52,20 +52,20 @@ main:
 
 .align  6   # start on multiple of 64 bytes / 16 instruction cache line
 label1:
+        # test 1
     li t0, 0xdeadbeef01234567
     sfence.vma          # flush tlb
     sd t0, 0x0(a0)        # load to get an entry in the DTLB accessing top-level PTE
+
+        # test 2
     li a1, 4096
     add a0, a0, a1
     sd t0, 0(a0)        # cause a store page fault to the second half of the access. mtval should be updated to the address of the second half.
-        
-
 
     # wrap up
     li a0, 3 # switch back to machine mode because code at 0x80000000 may not have clean page table entry
     ecall
     j done
-
 
 
 .data
@@ -80,7 +80,7 @@ pagetable:
 .align 12
     .8byte 0x000000000000100F # misaligned gigapage at 0x00000000
     .8byte 0x0000000020005801 # PTE for pages at 0x40000000
-    .8byte 0x0000000020004801 # gigapage at 0x80000000 pointing to 0x80120000
+    .8byte 0x0000000020004801 #  
 
 
 # Next page table at 0x80012000 for gigapage at 0x80000000
@@ -152,18 +152,18 @@ pagetable:
     .8byte 0x80000000200060CF
     .8byte 0x80000000200060CF
 
-    .8byte 0x80000000200060CF
-    .8byte 0x80000000200060CF
-    .8byte 0x80000000200060CF
-    .8byte 0x80000000200060CF
-
-    .8byte 0x80000000200060CF
+    .8byte 0x80000000200060CF    # A
     .8byte 0x80000000200060CF
     .8byte 0x80000000200060CF
     .8byte 0x80000000200060CF
 
     .8byte 0x80000000200060CF
     .8byte 0x80000000200060CF
+    .8byte 0x80000000200060CF
+    .8byte 0x80000000200060CF
+
+    .8byte 0x80000000200060CF   # e0
+    .8byte 0x00000000200060CF   # e8
     .8byte 0x80000000200060CF
     .8byte 0x80000000200060CF
 
