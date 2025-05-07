@@ -55,6 +55,10 @@ label1:
     li t0, 0xdeadbeef01234567
     sfence.vma          # flush tlb
     sd t0, 0x0(a0)        # load to get an entry in the DTLB accessing top-level PTE
+    li a1, 4096
+    add a0, a0, a1
+    sd t0, 0(a0)        # cause a store page fault to the second half of the access. mtval should be updated to the address of the second half.
+        
 
 
     # wrap up
@@ -125,7 +129,7 @@ pagetable:
     #80000000
     .8byte 0x00000000200020CF
     .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
+    .8byte 0x0000000000000000 # this is in invalid so that the second half of the access causes a fault
     .8byte 0x00000000200020CF
 
     .8byte 0x00000000200020CF
