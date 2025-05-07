@@ -80,7 +80,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
 
   /* verilator lint_off WIDTHEXPAND */
-  assign IEUAdrIncrementM = IEUAdrM + LLENINBYTES;
+  assign IEUAdrIncrementM = {IEUAdrM[P.XLEN-1:OFFSET_LEN], {{OFFSET_LEN}{1'b0}}} + LLENINBYTES;
   /* verilator lint_on WIDTHEXPAND */
   mux2 #(P.XLEN) ieuadrspillemux(.d0(IEUAdrE), .d1(IEUAdrIncrementM), .s(SelSpillE), .y(IEUAdrSpillE));
   mux2 #(P.XLEN) ieuadrspillmmux(.d0(IEUAdrM), .d1(IEUAdrIncrementM), .s(SelSpillM), .y(IEUAdrSpillM));
