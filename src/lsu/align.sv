@@ -52,6 +52,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
   output logic [P.XLEN-1:0]       IEUAdrSpillE, // The next PCF for one of the two memory addresses of the spill
   output logic [P.XLEN-1:0]       IEUAdrSpillM, // IEUAdrM for one of the two memory addresses of the spill
+  output logic [P.XLEN-1:0]       IEUAdrxTvalM, // IEUAdrM or spilled and aligned to next page
   output logic                    SelSpillE, // During the transition between the two spill operations, the IFU should stall the pipeline
   output logic [P.LLEN-1:0]       DCacheReadDataWordSpillM, // The final 32 bit instruction after merging the two spilled fetches into 1 instruction
   output logic                    SpillStallM);
@@ -80,10 +81,13 @@ module align import cvw::*;  #(parameter cvw_t P) (
 
 
   /* verilator lint_off WIDTHEXPAND */
+  //assign IEUAdrIncrementM = {IEUAdrM[P.XLEN-1:OFFSET_LEN], {{OFFSET_LEN}{1'b0}}} + LLENINBYTES;
   assign IEUAdrIncrementM = IEUAdrM + LLENINBYTES;
   /* verilator lint_on WIDTHEXPAND */
   mux2 #(P.XLEN) ieuadrspillemux(.d0(IEUAdrE), .d1(IEUAdrIncrementM), .s(SelSpillE), .y(IEUAdrSpillE));
   mux2 #(P.XLEN) ieuadrspillmmux(.d0(IEUAdrM), .d1(IEUAdrIncrementM), .s(SelSpillM), .y(IEUAdrSpillM));
+  //assign IEUAdrxTvalM = {IEUAdrSpillM[P.XLEN-1:OFFSET_LEN], {{OFFSET_LEN}{1'b0}}};
+  mux2 #(P.XLEN) ieuadrxtvalmmux(.d0(IEUAdrM), .d1({IEUAdrIncrementM[P.XLEN-1:OFFSET_LEN], {{OFFSET_LEN}{1'b0}}}), .s(SelSpillM), .y(IEUAdrxTvalM));
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // Detect spill
@@ -148,7 +152,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   flopenr #(P.LLEN) SpillDataReg(clk, reset, SpillSaveM, DCacheReadDataWordM[P.LLEN-1:0], ReadDataWordFirstHalfM);
 
   // merge together
-  mux2 #(2*P.LLEN) postspillmux(DCacheReadDataWordM, {DCacheReadDataWordM[P.LLEN-1:0], ReadDataWordFirstHalfM}, SelSpillM, ReadDataWordSpillAllM);
+  mux2 #(2*P.LLEN) postspillmux(DCacheReadDataWordM, {DCacheReadDataWordM[P.LLEN-1:0], ReadDataWordFirstHalfM}, SelSpillM & ~SelHPTW, ReadDataWordSpillAllM);
 
 
   // shifter (4:1 mux for 32 bit, 8:1 mux for 64 bit)

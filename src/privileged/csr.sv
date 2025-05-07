@@ -36,7 +36,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic [31:0]              InstrM,                    // current instruction
   input  logic [31:0]              InstrOrigM,                // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction MTVAL
   input  logic [P.XLEN-1:0]        PCM,                       // program counter, next PC going to trap/return logic
-  input  logic [P.XLEN-1:0]        SrcAM, IEUAdrM,            // SrcA and memory address from IEU
+  input  logic [P.XLEN-1:0]        SrcAM, IEUAdrxTvalM,       // SrcA and memory address from IEU
   input  logic                     CSRReadM, CSRWriteM,       // read or write CSR
   input  logic                     TrapM,                     // trap is occurring
   input  logic                     mretM, sretM,              // return instruction
@@ -142,7 +142,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     else case (CauseM)
       12, 1, 3:               NextFaultMtvalM = PCM;  // Instruction page/access faults, breakpoint
       2:                      NextFaultMtvalM = {{(P.XLEN-32){1'b0}}, InstrOrigM}; // Illegal instruction fault 
-      0, 4, 6, 13, 15, 5, 7:  NextFaultMtvalM = IEUAdrM; // Instruction misaligned, Load/Store Misaligned/page/access faults
+      0, 4, 6, 13, 15, 5, 7:  NextFaultMtvalM = IEUAdrxTvalM; // Instruction misaligned, Load/Store Misaligned/page/access faults
       default:                NextFaultMtvalM = '0; // Ecall, interrupts
     endcase
 
