@@ -37,7 +37,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] SrcAM,                                          // GPR register to write
   input  logic [31:0]       InstrM,                                         // Instruction
   input  logic [31:0]       InstrOrigM,                                     // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction MTVAL
-  input  logic [P.XLEN-1:0] IEUAdrM,                                        // address from IEU
+  input  logic [P.XLEN-1:0] IEUAdrSpillM,                                        // address from IEU
   input  logic [P.XLEN-1:0] PCM,                                            // program counter
   // control signals                                                       
   input  logic              InstrValidM,                                    // Current instruction is valid (not flushed)
@@ -133,7 +133,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
 
   // Control and Status Registers
   csr #(P) csr(.clk, .reset, .FlushM, .FlushW, .StallE, .StallM, .StallW,
-    .InstrM, .InstrOrigM, .PCM, .SrcAM, .IEUAdrM, 
+    .InstrM, .InstrOrigM, .PCM, .SrcAM, .IEUAdrSpillM, 
     .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
     .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
