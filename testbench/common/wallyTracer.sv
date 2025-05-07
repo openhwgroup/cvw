@@ -81,6 +81,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   logic [1:0]              IPageTypeF, IPageTypeD, IPageTypeE, IPageTypeM, IPageTypeW, DPageTypeM, DPageTypeW;
   logic                    ReadAccessM,WriteAccessM,ReadAccessW,WriteAccessW;
   logic                    ExecuteAccessF,ExecuteAccessD,ExecuteAccessE,ExecuteAccessM,ExecuteAccessW;
+  logic [P.XLEN-1:0]       order;
 
   assign clk = testbench.dut.clk;
   //  assign InstrValidF = testbench.dut.core.ieu.InstrValidF;  // not needed yet
@@ -375,10 +376,16 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   // Initially connecting the writeback stage signals, but may need to use M stage
   // and gate on ~FlushW.
 
+
+  // count the number of valid instructions to provide ordering to RVVI tracer
+  always @(posedge clk)
+    if (reset) order <= 0;
+    else if (valid) order <= order + 1;
+
   assign valid  = ((InstrValidW | TrapW) & ~StallW) & ~reset;
   assign rvvi.clk = clk;
   assign rvvi.valid[0][0]    = valid;
-  assign rvvi.order[0][0]    = rvvi.csr[0][0][12'hB02];  // TODO: IMPERAS Should be event order
+  assign rvvi.order[0][0]    = order; 
   assign rvvi.insn[0][0]     = InstrRawW;
   assign rvvi.pc_rdata[0][0] = PCW;
   assign rvvi.trap[0][0]     = TrapW;

@@ -28,8 +28,7 @@ PORT_CFLAGS = -g -mabi=$(ABI) -march=$(ARCH) -static -falign-functions=16 \
 all: $(work_dir)/coremark.bare.riscv.elf.memfile
 
 run: $(work_dir)/coremark.bare.riscv.elf.memfile
-#	time wsim rv$(XLEN)gc coremark --sim verilator 2>&1 | tee $(work_dir)/coremark.sim.log
-	time wsim ${CONFIG} coremark 2>&1 | tee $(work_dir)/coremark.sim.log
+	time wsim --sim verilator ${CONFIG} coremark 2>&1 | tee $(work_dir)/coremark.sim.log
 
 $(work_dir)/coremark.bare.riscv.elf.memfile: $(work_dir)/coremark.bare.riscv
 	riscv64-unknown-elf-objdump -D $< > $<.elf.objdump

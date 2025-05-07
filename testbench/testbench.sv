@@ -716,13 +716,15 @@ module testbench;
 
 
   always @(posedge clk) begin
-  //  if (reset) PrevPCZero <= 0;
-  //  else if (dut.core.InstrValidM) PrevPCZero <= (functionName.PCM == 0 & dut.core.ifu.InstrM == 0);
     TestComplete <= ((InstrM == 32'h6f) & dut.core.InstrValidM ) |
 		   ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"] & dut.core.lsu.IEUAdrM != 0) & InstrMName == "SW"); // |
     //   (functionName.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.InstrValidM & PrevPCZero));
-   // if (functionName.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.InstrValidM & PrevPCZero)
-    //  $error("Program fetched illegal instruction 0x00000000 from address 0x00000000 twice in a row.  Usually due to fault with no fault handler.");
+    if (reset) PrevPCZero <= 0;
+    else if (dut.core.InstrValidM) PrevPCZero <= (dut.core.PCM == 0 & dut.core.ifu.InstrM == 0);
+    if (dut.core.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.InstrValidM & PrevPCZero) begin
+      $error("Program fetched illegal instruction 0x00000000 from address 0x00000000 twice in a row.  Usually due to fault with no fault handler.");
+      $fatal(1);
+    end
   end
 
   DCacheFlushFSM #(P) DCacheFlushFSM(.clk, .start(DCacheFlushStart), .done(DCacheFlushDone));
@@ -762,6 +764,7 @@ end
               .CMP_VR      (0),
               .CMP_CSR     (P.ZICSR_SUPPORTED)
               ) idv_trace2api(rvvi);
+  trace2log idv_trace2log(rvvi); // enable Imperas tracer
 
   string filename;
   initial begin
