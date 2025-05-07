@@ -57,7 +57,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   input  logic                    BigEndianM,                           // Swap byte order to big endian
   input  logic                    sfencevmaM,                           // Virtual memory address fence, invalidate TLB entries
   output logic                    DCacheStallM,                         // D$ busy with multicycle operation
-  output logic [P.XLEN-1:0]       IEUAdrSpillM,                         // IEUAdrM, but could be spilled onto the next cacheline or virtual page.
+  output logic [P.XLEN-1:0]       IEUAdrxTvalM,                         // IEUAdrM, but could be spilled onto the next cacheline or virtual page.
   // fpu
   input  logic [P.FLEN-1:0]       FWriteDataM,                          // Write data from FPU
   input  logic                    FpLoadStoreM,                         // Selects FPU as store for write data
@@ -160,11 +160,12 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(P.XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
   if(MISALIGN_SUPPORT) begin : ziccslm_align
     logic [P.XLEN-1:0] IEUAdrSpillE;
+    logic [P.XLEN-1:0] IEUAdrSpillM;
     align #(P) align(.clk, .reset, .StallM, .FlushM, .IEUAdrE, .IEUAdrM, .Funct3M, .FpLoadStoreM, 
                      .MemRWM,
                      .DCacheReadDataWordM, .CacheBusHPWTStall, .SelHPTW,
                      .ByteMaskM, .ByteMaskExtendedM, .LSUWriteDataM, .ByteMaskSpillM, .LSUWriteDataSpillM,
-                     .IEUAdrSpillE, .IEUAdrSpillM, .SelSpillE, .DCacheReadDataWordSpillM, .SpillStallM);
+                     .IEUAdrSpillE, .IEUAdrSpillM, .IEUAdrxTvalM, .SelSpillE, .DCacheReadDataWordSpillM, .SpillStallM);
     assign IEUAdrExtM = {2'b00, IEUAdrSpillM}; 
     assign IEUAdrExtE = {2'b00, IEUAdrSpillE};
   end else begin : no_ziccslm_align
@@ -176,7 +177,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign LSUWriteDataSpillM = LSUWriteDataM;
     assign MemRWSpillM = MemRWM;
     assign {SpillStallM} = 1'b0;
-    assign IEUAdrSpillM = IEUAdrM;
+    assign IEUAdrxTvalM = IEUAdrM;
   end
 
     if(P.ZICBOZ_SUPPORTED) begin : cboz
