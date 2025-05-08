@@ -55,7 +55,7 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
   input  logic                 Int64,             // is the integer 64 bits
   input  logic                 Signed,            // is the integer signed
   input  logic                 Zfa,               // Zfa conversion operation: fcvtmod.w.d
-  input  logic [P.NE:0]        CvtCe,             // the calculated expoent for cvt
+  input  logic [P.NE:0]        CvtCe,             // the calculated exponent for cvt
   input  logic                 IntInvalid,        // integer invalid flag to choose the result
   input  logic                 CvtResUf,          // does the convert result underflow
   input  logic [P.XLEN+1:0]    CvtNegRes,         // the possibly negated of the integer result
@@ -240,7 +240,7 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
           endcase
   end
 
-  // determine if you shoould kill the res - Cvt
+  // determine if you should kill the res - Cvt
   //      - do so if the res underflows, is zero (the exp doesnt calculate correctly). or the integer input is 0
   //      - dont set to zero if fp input is zero but not using the fp input
   //      - dont set to zero if int input is zero but not using the int input
@@ -334,7 +334,7 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
     end  
    
   // fcvtmod.w.d logic
-  // fcvtmod.w.d is like fcvt.w.d excep thtat it takes bits [31:0] and sign extends the rest,
+  // fcvtmod.w.d is like fcvt.w.d excep that it takes bits [31:0] and sign extends the rest,
   // and converts +/-inf and NaN to zero.
 
   if (P.ZFA_SUPPORTED & P.D_SUPPORTED) // fcvtmod.w.d support
@@ -358,7 +358,7 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
   //      - if the input underflows
   //          - if rounding and signed operation and negative input, output -1
   //          - otherwise output a rounded 0
-  //      - otherwise output the normal res (trmined and sign extended if nessisary)
+  //      - otherwise output the normal res (trmined and sign extended if necessary)
   always_comb
     if(SelCvtOfRes)         FCvtIntRes = OfIntRes2; 
     else if(CvtCe[P.NE]) 

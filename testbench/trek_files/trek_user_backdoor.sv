@@ -84,7 +84,7 @@ bit  trek_is_event_addr;
 //                          (`RAM_PATH.n_we == 1'b0));
 //end
 
-// Design specifc: one stage delayed so write has a time to settle
+// Design specific: one stage delayed so write has a time to settle
 //always @(posedge trek_c2t_mbox_event) begin: read_all_mailboxes
 always @(posedge testbench.clk) begin: read_all_mailboxes
   trek_poll_mbox();

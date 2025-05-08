@@ -53,7 +53,7 @@ module ahbcacheinterface import cvw::*; #(
   input  logic [P.PA_BITS-1:0]  CacheBusAdr,            // Address of cache line
   input  logic [P.LLEN-1:0]     CacheReadDataWordM,     // One word of cache line during a writeback
   input  logic                CacheableOrFlushCacheM, // Memory operation is cacheable or flushing D$
-  input  logic                Cacheable,              // Memory operation is cachable
+  input  logic                Cacheable,              // Memory operation is cacheable
   input  logic [1:0]          CacheBusRW,             // Cache bus operation, 01: writeback, 10: fetch
   output logic                CacheBusAck,            // Handshake to $ indicating bus transaction completed
   output logic [LINELEN-1:0]  FetchBuffer,            // Register to hold beats of cache line as the arrive from bus

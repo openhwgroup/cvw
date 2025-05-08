@@ -141,7 +141,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   
   logic                  DTLBMissM;                              // DTLB miss causes HPTW walk
   logic                  DTLBWriteM;                             // Writes PTE and PageType to DTLB
-  logic                  LSULoadAccessFaultM;                    // Load acces fault
+  logic                  LSULoadAccessFaultM;                    // Load access fault
   logic                  LSUStoreAmoAccessFaultM;                // Store access fault
   logic                  HPTWFlushW;                             // HPTW needs to flush operation
   logic                  LSUFlushW;                              // HPTW or hazard unit flushes operation
@@ -300,7 +300,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       logic [P.PA_BITS-1:0]    DCacheBusAdr;                                     // Cacheline address to fetch or writeback.
       logic [AHBWLOGBWPL-1:0]  BeatCount;                                        // Position within a cacheline.  ahbcacheinterface to cache
       logic                    DCacheBusAck;                                     // ahbcacheinterface completed fetch or writeback
-      logic                    SelBusBeat;                                       // ahbcacheinterface selects postion in cacheline with BeatCount
+      logic                    SelBusBeat;                                       // ahbcacheinterface selects position in cacheline with BeatCount
       logic [1:0]              CacheBusRW;                                       // Cache sends request to ahbcacheinterface
       logic [1:0]              BusRW;                                            // Uncached bus memory access
       logic                    CacheableOrFlushCacheM;                           // Memory address is cacheable or operation is a cache flush
@@ -350,7 +350,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       mux3 #(P.LLEN) UnCachedDataMux(.d0(DCacheReadDataWordSpillM), .d1({LLENPOVERAHBW{FetchBuffer[P.XLEN-1:0]}}),
                                     .d2({{P.LLEN-P.XLEN{1'b0}}, DTIMReadDataWordM[P.XLEN-1:0]}),
                                     .s({SelDTIM, ~(CacheableOrFlushCacheM)}), .y(ReadDataWordMuxM));
-    end else begin : passthrough // No Cache, use simple ahbinterface instad of ahbcacheinterface
+    end else begin : passthrough // No Cache, use simple ahbinterface instead of ahbcacheinterface
       logic [1:0] BusRW;                    // Non-DTIM memory access, ignore cacheableM
       logic [P.XLEN-1:0] FetchBuffer;
       assign BusRW = ~SelDTIM ? LSURWM : 0;

@@ -5,7 +5,7 @@
 //           David_Harris@Hmc.edu switched to one-hot output
 //
 // Purpose: Priority circuit producing a thermometer code output.
-//          with 1's in all the least signficant bits of the output
+//          with 1's in all the least significant bits of the output
 //          until the column where the least significant 1 occurs in the input.
 //
 //  Example:  msb           lsb

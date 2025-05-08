@@ -21,7 +21,7 @@ jobs:
     name: Lint (Python ${{matrix.version}})
     strategy:
       matrix:
-        version: [39, 312] # Test on oldest and newest verions used in wally-package-install.sh
+        version: [39, 312] # Test on oldest and newest versions used in wally-package-install.sh
     runs-on: ubuntu-latest
 
     steps:

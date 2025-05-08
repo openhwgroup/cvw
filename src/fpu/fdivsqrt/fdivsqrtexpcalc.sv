@@ -4,7 +4,7 @@
 // Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu
 // Modified:13 January 2022
 //
-// Purpose: Exponent caclulation for divide and square root
+// Purpose: Exponent calculation for divide and square root
 // 
 // Documentation: RISC-V System on Chip Design
 //

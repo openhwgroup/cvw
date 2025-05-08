@@ -60,7 +60,7 @@ module ram_ahb import cvw::*;  #(parameter cvw_t P,
   flopenr #(1) memwritereg(HCLK, ~HRESETn, HREADY, memwrite, memwriteD); 
   flopenr #(P.PA_BITS)   haddrreg(HCLK, ~HRESETn, HREADY, HADDR, HADDRD);
 
-  // Stall on a read after a write because the RAM can't take both adddresses on the same cycle
+  // Stall on a read after a write because the RAM can't take both addresses on the same cycle
   assign nextHREADYRam = (~(memwriteD & memread)) & ~DelayReady;
   flopr #(1) readyreg(HCLK, ~HRESETn, nextHREADYRam, HREADYRam);
 

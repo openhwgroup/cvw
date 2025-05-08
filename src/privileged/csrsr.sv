@@ -90,14 +90,14 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
   end
 
   // hardwired STATUS bits
-  assign STATUS_TSR  = P.S_SUPPORTED & STATUS_TSR_INT; // override reigster with 0 if supervisor mode not supported
+  assign STATUS_TSR  = P.S_SUPPORTED & STATUS_TSR_INT; // override register with 0 if supervisor mode not supported
   assign STATUS_TW   = P.U_SUPPORTED & STATUS_TW_INT; // override register with 0 if only machine mode supported
-  assign STATUS_TVM  = P.S_SUPPORTED & STATUS_TVM_INT; // override reigster with 0 if supervisor mode not supported
-  assign STATUS_MXR  = P.S_SUPPORTED & STATUS_MXR_INT; // override reigster with 0 if supervisor mode not supported
+  assign STATUS_TVM  = P.S_SUPPORTED & STATUS_TVM_INT; // override register with 0 if supervisor mode not supported
+  assign STATUS_MXR  = P.S_SUPPORTED & STATUS_MXR_INT; // override register with 0 if supervisor mode not supported
   // SXL and UXL bits only matter for RV64.  Set to 10 for RV64 if mode is supported, or 0 if not
   assign STATUS_SXL  = P.S_SUPPORTED ? 2'b10 : 2'b00; // 10 if supervisor mode supported
   assign STATUS_UXL  = P.U_SUPPORTED ? 2'b10 : 2'b00; // 10 if user mode supported
-  assign STATUS_SUM  = P.S_SUPPORTED & P.VIRTMEM_SUPPORTED & STATUS_SUM_INT; // override reigster with 0 if supervisor mode not supported
+  assign STATUS_SUM  = P.S_SUPPORTED & P.VIRTMEM_SUPPORTED & STATUS_SUM_INT; // override register with 0 if supervisor mode not supported
   assign STATUS_MPRV = P.U_SUPPORTED & STATUS_MPRV_INT; // override with 0 if user mode not supported
   assign STATUS_FS   = P.F_SUPPORTED ? STATUS_FS_INT : 2'b00; // off if no FP
   assign STATUS_SD   = (STATUS_FS == 2'b11) | (STATUS_XS == 2'b11); // dirty state logic

@@ -47,7 +47,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   input  logic                 TLBFlush,           // Invalidate all TLB entries
   output logic [P.PA_BITS-1:0] PhysicalAddress,    // PAdr when no translation, or translated VAdr (TLBPAdr) when there is translation
   output logic                 TLBMiss,            // Miss TLB
-  output logic                 Cacheable,          // PMA indicates memory address is cachable
+  output logic                 Cacheable,          // PMA indicates memory address is cacheable
   output logic                 Idempotent,         // PMA indicates memory address is idempotent
   output logic                 SelTIM,             // Select a tightly integrated memory
   // Faults
@@ -105,8 +105,8 @@ module mmu import cvw::*;  #(parameter cvw_t P,
     assign TLBPAdr      = '0;
   end
 
-  // If translation is occuring, select translated physical address from TLB
-  // the lower 12 bits are the page offset. These are never changed from the orginal
+  // If translation is occurring, select translated physical address from TLB
+  // the lower 12 bits are the page offset. These are never changed from the original
   // non translated address.
   mux2 #(P.PA_BITS-12) addressmux(VAdr[P.PA_BITS-1:12], TLBPAdr[P.PA_BITS-1:12], Translate, PhysicalAddress[P.PA_BITS-1:12]);
   assign PhysicalAddress[11:0] = VAdr[11:0];
@@ -141,7 +141,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
       2'b10:  DataMisalignedM = VAdr[1] | VAdr[0]; // lw, sw, flw, fsw, lwu
       2'b11:  DataMisalignedM = |VAdr[2:0];        // ld, sd, fld, fsd
     endcase 
-  // When ZiCCLSM_SUPPORTED, misalgined cachable loads and stores are handled in hardware so they do not throw a misaligned fault
+  // When ZiCCLSM_SUPPORTED, misalgined cacheable loads and stores are handled in hardware so they do not throw a misaligned fault
   assign LoadMisalignedFaultM     = DataMisalignedM & ReadNoAmoAccessM & ~(P.ZICCLSM_SUPPORTED & Cacheable) & ~TLBMiss; 
   assign StoreAmoMisalignedFaultM = DataMisalignedM & WriteAccessM & ~(P.ZICCLSM_SUPPORTED & Cacheable) & ~TLBMiss; // Store and AMO both assert WriteAccess
 

@@ -88,7 +88,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     assign AsE = AE[P.XLEN-1] & SignedDivE;
     assign BsE = BE[P.XLEN-1] & SignedDivE; 
 
-    // Force integer inputs to be postiive
+    // Force integer inputs to be positive
     mux2 #(P.XLEN) posamux(AE, -AE, AsE, PosA);
     mux2 #(P.XLEN) posbmux(BE, -BE, BsE, PosB);
 
@@ -165,7 +165,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   // Then multiply by R is left shift by r (1 or 2 for radix 2 or 4)
   // This is optimized in hardware by first right shifting by 0 or 1 bit (instead of 1 or 2), then left shifting by (r-1), then subtracting 2 or 4
   // Subtracting 2 is equivalent to adding 1110.  Subtracting 4 is equivalent to adding 1100.  Prepend leading 1s to do a free subtraction.
-  // This also means only one extra fractional bit is needed becaue we never shift right by more than 1.
+  // This also means only one extra fractional bit is needed because we never shift right by more than 1.
   // Radix      Exponent odd          Exponent Even
   // 2          x-2 = 2(x/2 - 1)      x/2 - 2 = 2(x/4 - 1)
   // 4          2(x)-4 = 4(x/2 - 1))  2(x/2)-4 = 4(x/4 - 1)
@@ -194,7 +194,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   mux2 #(P.DIVb+4) prexmux(DivX, SqrtX, SqrtE, PreShiftX);                    
 
   //////////////////////////////////////////////////////
-  // Selet integer or floating-point operands
+  // Select integer or floating-point operands
   //////////////////////////////////////////////////////
 
   if (P.IDIV_ON_FPU) begin
@@ -203,7 +203,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     assign X = PreShiftX;
   end
 
-  // Divisior register
+  // Divisor register
   flopen #(P.DIVb+4) dreg(clk, IFDivStartE, {3'b000, Dnorm}, D);
  
   // Floating-point exponent

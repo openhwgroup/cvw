@@ -54,7 +54,7 @@ test_cases:
 
 # =========== test 11.3.1.1 Page Table Translation ===========
 
-# test 11.3.1.1.1 write page tables / entries to phyiscal memory
+# test 11.3.1.1.1 write page tables / entries to physical memory
 # sv39 page table (See Figure 12.12***):
 # Level 2 page table, situated at 0x8000D000
 .8byte 0x000000008000D000, 0x0000000020004C01, write64_test# points to level 1 page table A
@@ -92,7 +92,7 @@ test_cases:
 
 # test 11.3.1.1.2 write values to Paddrs in each page
 # each of these values is used for 11.3.1.1.3 and some other tests, specified in the comments.
-# when a test is supposed to fault, nothing is written into where it'll be reading/executing since it shuold fault before getting there.
+# when a test is supposed to fault, nothing is written into where it'll be reading/executing since it should fault before getting there.
 .8byte 0x80200AB0, 0x0000DEADBEEF0000, write64_test# 11.3.1.1.4 and 11.3.1.4.1
 .8byte 0x800FFAB8, 0x0880DEADBEEF0055, write64_test# 11.3.1.1.4
 .8byte 0x80200AC0, 0x0990DEADBEEF0033, write64_test# 11.3.1.3.2

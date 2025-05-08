@@ -7,7 +7,7 @@
 00000000 # mtval for mtime interrupt (0x0)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
-00000000 # Note here that we atempt to cause an interrupt after zeroing status.mie, but it shouldn't fire.
+00000000 # Note here that we attempt to cause an interrupt after zeroing status.mie, but it shouldn't fire.
 0000000b # mcause for ecall from terminating tests in M mode
 00000000
 00000000 # mtval of ecall (*** defined to be zero for now)
