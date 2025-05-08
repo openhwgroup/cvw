@@ -24,7 +24,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-// load code to initalize stack, handle interrupts, terminate
+// load code to initialize stack, handle interrupts, terminate
 #include "WALLY-init-lib.h"
 
 main:
@@ -140,6 +140,6 @@ jump23:
 
         addi x31, x31, -1
         bne x31, x0, jump1
-finsihed:       
+finished:       
     j done
 

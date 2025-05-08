@@ -48,7 +48,7 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
   output logic [72+(5*P.XLEN) + MAX_CSRS*(P.XLEN+16)-1:0] rvvi
   );
 
-  // pipeline controlls
+  // pipeline controls
 
   // required
   logic [P.XLEN-1:0]                        PCW;

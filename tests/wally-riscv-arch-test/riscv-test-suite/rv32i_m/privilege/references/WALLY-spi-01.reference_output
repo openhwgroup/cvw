@@ -270,9 +270,9 @@
 
 00000022 #clear 1 frame from rx fifo
 
-00000000 # read recieve ip
+00000000 # read receive ip
 
-00000002 #read recieve ip
+00000002 #read receive ip
 
 00000000 #read mip
 

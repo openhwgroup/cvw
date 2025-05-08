@@ -75,7 +75,7 @@ set SVLib ""
 set GUI 0
 set accFlag ""
 
-# Need to be able to pass arguments to vopt.  Unforunately argv does not work because
+# Need to be able to pass arguments to vopt.  Unfortunately argv does not work because
 # it takes on different values if vsim and the do file are called from the command line or
 # if the do file is called from questa sim directly.  This chunk of code uses the $n variables
 # and compacts them into a single list for passing to vopt. Shift is used to move the arguments

@@ -24,7 +24,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-// load code to initalize stack, handle interrupts, terminate
+// load code to initialize stack, handle interrupts, terminate
 
 #include "WALLY-init-lib.h"
 
@@ -174,6 +174,7 @@ ConcurrentICacheMissDTLBMiss:
     csrc menvcfg, t5  # menvcfg.PBMTE = 0
     li a0, 1
     ecall   # switch back to supervisor mode
+    sfence.vma  # synchronize TLB after changing menvcfg.PBMTE
     li t0, 0x80806000
     jalr ra, t0      # jump to page to exercise ITLB with PBMT !=0 when ENVCFG_PMTE=0
 
@@ -365,7 +366,7 @@ SpecialPage:
     .8byte 0x0000000020014CCF  # for VA starting at 80200000 (misaligned megapage)
     .8byte 0x0000000020005001  # for VA starting at 80400000 (bad PBMT pages page table at 0x80014000)
     .8byte 0x4000000020004C01  # for VA starting at 80600000 (bad entry: nonleaf PTE can't have PBMT != 0)
-    .8byte 0x0000000020005401  # for VA starting at 80800000 (testing rwx permissiosn with cbom/cboz . page table at 0x80015000)
+    .8byte 0x0000000020005401  # for VA starting at 80800000 (testing rwx permissions with cbom/cboz . page table at 0x80015000)
     .8byte 0x0000000020004C01  # for VA starting at 80A00000 (pointer to NAPOT 64 KiB pages like at 80000000.  page table at 0x80013000)
     .8byte 0x0F00000020004CCF  # for VA starting at 80C00000 (bad reserved field in bits 60:54)
     .8byte 0x000000002000000F  # for VA starting at 80E00000 (megapage not dirty or accessed)

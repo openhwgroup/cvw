@@ -30,12 +30,12 @@
 module cvtshiftcalc import cvw::*;  #(parameter cvw_t P) (
   input  logic                     XZero,              // is the input zero?
   input  logic                     ToInt,              // to integer conversion?
-  input  logic                     IntToFp,            // interger to floating point conversion?
+  input  logic                     IntToFp,            // integer to floating point conversion?
   input  logic [P.FMTBITS-1:0]     OutFmt,             // output format
-  input  logic [P.NE:0]            CvtCe,              // the calculated expoent
+  input  logic [P.NE:0]            CvtCe,              // the calculated exponent
   input  logic [P.NF:0]            Xm,                 // input mantissas
   input  logic [P.CVTLEN-1:0]      CvtLzcIn,           // input to the Leading Zero Counter (without msb)
-  input  logic                     CvtResSubnormUf,    // is the conversion result subnormal or underlows
+  input  logic                     CvtResSubnormUf,    // is the conversion result subnormal or underflows
   output logic                     CvtResUf,           // does the cvt result unerflow
   output logic [P.CVTLEN+P.NF:0]   CvtShiftIn          // number to be shifted
 );
@@ -51,12 +51,12 @@ module cvtshiftcalc import cvw::*;  #(parameter cvw_t P) (
   //          |  P.XLEN  zeros |     mantissa      | 0's if necessary |
   //                          .
   //          Other problems:
-  //              - if shifting to the right (neg CalcExp) then don't a 1 in the round bit (to prevent an incorrect plus 1 later durring rounding)
+  //              - if shifting to the right (neg CalcExp) then don't a 1 in the round bit (to prevent an incorrect plus 1 later during rounding)
   //              - we do however want to keep the one in the sticky bit so set one of bits in the sticky bit area to 1
   //                  - ex: for the case 0010000.... (double)
   //      ??? -> fp:
   //          - if result is subnormal or underflowed then we want to shift right i.e. shift right then shift left:
-  //              |  P.NF-1  zeros   |     mantissa      | 0's if nessisary | 
+  //              |  P.NF-1  zeros   |     mantissa      | 0's if necessary | 
   //              .
   //          - otherwise:
   //              |      LzcInM      |  0's if necessary | 

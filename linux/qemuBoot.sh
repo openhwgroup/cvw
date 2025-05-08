@@ -38,5 +38,5 @@ qemu-system-riscv64 \
 	-kernel "$IMAGES"/Image \
 	-initrd "$IMAGES"/rootfs.cpio \
 	-dtb "$IMAGES"/wally-virt.dtb \
-	-cpu rva22s64,zicond=true,zfa=true,zfh=true,zcb=true,zbc=true,zkn=true,sstc=true,svadu=true,svnapot=true \
+	-cpu rva22s64,zicond=true,zfa=true,zfh=true,zcb=true,zbc=true,zkn=true,sstc=true,svadu=true,svnapot=true,pmp=on,debug=off \
 	$GDB_FLAG

@@ -167,7 +167,7 @@ class FolderManager:
             None
         """
         cvw = folder.joinpath("cvw")
-        tmp_folder = os.path.join(cvw, "tmp") # temprorary files will be stored in here
+        tmp_folder = os.path.join(cvw, "tmp") # temporary files will be stored in here
         if not cvw.exists():
             os.system(f"git clone --recurse-submodules {repo_url} {cvw}")
             os.makedirs(tmp_folder)
@@ -196,7 +196,7 @@ class TestRunner:
             folder: the "nightly-runs/repos/"
 
         Returns:
-            bool: True if the script is copied successfuly, False otherwise.
+            bool: True if the script is copied successfully, False otherwise.
         """
         # Get today's date in YYYY-MM-DD format
         self.todays_date = datetime.now().strftime("%Y-%m-%d")
@@ -346,9 +346,9 @@ class TestRunner:
                 result = subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, text=True, shell=True, executable="/bin/bash")
         except Exception as e:
             self.logger.error(f"There was an error in running the tests in the run_tests function: {e}")
-        # Check if the command executed successfuly
+        # Check if the command executed successfully
         if result.returncode or result.returncode == 0:
-            self.logger.info(f"Test ran successfuly. Test name: {test_name}, test extension: {' '.join(test_extensions)}")
+            self.logger.info(f"Test ran successfully. Test name: {test_name}, test extension: {' '.join(test_extensions)}")
             return True, output_file
         else:
             self.logger.error(f"Error making test. Test name: {test_name}, test extension: {' '.join(test_extensions)}")
@@ -763,7 +763,7 @@ def main():
 
     output_log_list = [] # a list where the output markdown file locations will be saved to
     total_number_failures = 0  # an integer where the total number failures from all of the tests will be collected
-    total_number_success = 0    # an integer where the total number of sucess will be collected
+    total_number_success = 0    # an integer where the total number of successes will be collected
 
     total_failures = []
     total_success = []
@@ -772,21 +772,21 @@ def main():
         
         check, output_location = test_runner.run_tests(test_type=test_type, test_name=test_name, test_extensions=test_extensions)
         try:
-            if check: # this checks if the test actually ran successfuly
+            if check: # this checks if the test actually ran successfully
                 output_log_list.append(output_location)
-                logger.info(f"{test_name} ran successfuly. Output location: {output_location}")
+                logger.info(f"{test_name} ran successfully. Output location: {output_location}")
                 # format tests to markdown
                 try:
                     passed, failed = test_runner.clean_format_output(input_file = output_location)
                     logger.info(f"{test_name} has been formatted to markdown")
                 except:
-                    logger.error(f"Error occured with formatting {test_name}")
+                    logger.error(f"Error occurred with formatting {test_name}")
 
                 logger.info(f"The # of failures are for {test_name}: {len(failed)}")
                 total_number_failures+= len(failed)
                 total_failures.append(failed)
 
-                logger.info(f"The # of sucesses are for {test_name}: {len(passed)}")
+                logger.info(f"The # of successes are for {test_name}: {len(passed)}")
                 total_number_success += len(passed)
                 total_success.append(passed)
                 test_runner.rewrite_to_markdown(test_name, passed, failed)
@@ -797,7 +797,7 @@ def main():
         except Exception as e:
             logger.error(f"There was an error in running the tests: {e}")
 
-    logger.info(f"The total sucesses for all tests ran are: {total_number_success}")
+    logger.info(f"The total successes for all tests ran are: {total_number_success}")
     logger.info(f"The total failures for all tests ran are: {total_number_failures}")
 
     # Copy actual test logs from sim/questa, sim/verilator, sim/vcs

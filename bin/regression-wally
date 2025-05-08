@@ -5,6 +5,7 @@
 # David_Harris@Hmc.edu 25 January 2021
 # Modified by Jarred Allen <jaallen@g.hmc.edu> and many others
 # jcarlin@hmc.edu December 2024
+# sanarayanan@hmc.edu April 2025
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 #
 # Run a regression with multiple configurations in parallel and exit with
@@ -278,7 +279,7 @@ lockstepwaivers = [
 # Data Types & Functions
 ##################################
 
-TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr', 'grepfile'])
+TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr', 'grepfile', 'altcommand'], defaults=[None]) # applies the None default to altcommand
 # name:     the name of this test configuration (used in printing human-readable
 #           output and picking logfile names)
 # cmd:      the command to run to test (should include the logfile as '{}', and
@@ -287,7 +288,8 @@ TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr', 'grepfil
 #           grep finds that string in the logfile (is used by grep, so it may
 #           be any pattern grep accepts, see `man 1 grep` for more info).
 # grepfile:  a string containing the location of the file to be searched for output
-
+# altcommand:  the command, if enabled, performs a validation check other than grep 
+#           on the log files. None by default, and if specified the command will be run
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -368,12 +370,31 @@ def search_log_for_text(text, grepfile):
 def run_test_case(config, dryrun: bool = False):
     grepfile = config.grepfile
     cmd = config.cmd
+    altcommand = config.altcommand
     if dryrun:
         print(f"Executing {cmd}", flush=True)
         return 0
     else:
-        os.system(cmd)
-        if search_log_for_text(config.grepstr, grepfile):
+        ret_code = os.system(cmd)
+        if ret_code != 0:
+            print(f"{bcolors.FAIL}{cmd}: Execution failed{bcolors.ENDC}", flush=True)
+            print(f"  Check {grepfile} for more details.", flush=True)
+            return 1
+        elif altcommand:
+            sim_log = config.grepfile
+            check_ret_code = os.system(altcommand)
+            with open(sim_log, 'a') as f:
+                if check_ret_code == 0:
+                    # Success message
+                    print(f"{bcolors.OKGREEN}{cmd}: Success{bcolors.ENDC}", flush=True)
+                    f.write("Validation Tests completed with 0 errors\n")  # Write success message to the log
+                    return 0
+                else:
+                    # Failure message
+                    print(f"{bcolors.FAIL}{cmd}: Failures detected in output. Check {sim_log}.{bcolors.ENDC}", flush=True)
+                    f.write("ERROR: There is a difference detected in the output\n")  # Write failure message to the log
+                    return 1
+        elif search_log_for_text(config.grepstr, grepfile):
             # Flush is needed to flush output to stdout when running in multiprocessing Pool
             print(f"{bcolors.OKGREEN}{cmd}: Success{bcolors.ENDC}", flush=True)
             return 0
@@ -394,6 +415,7 @@ def parse_args():
     parser.add_argument("--branch", help="Run branch predictor accuracy tests", action="store_true")
     parser.add_argument("--breker", help="Run Breker tests", action="store_true") # Requires a license for the breker tool. See tests/breker/README.md for details
     parser.add_argument("--dryrun", help="Print commands invoked to console without running regression", action="store_true")
+    parser.add_argument("--performance", help="Check for performance changes or discrepancies in embench and coremark", action="store_true")
     return parser.parse_args()
 
 
@@ -421,8 +443,8 @@ def process_args(args):
         TIMEOUT_DUR = 30*60 # seconds
     elif args.branch:
         TIMEOUT_DUR = 120*60 # seconds
-    elif args.nightly:
-        TIMEOUT_DUR = 30*60 # seconds
+    elif args.nightly or args.performance:
+        TIMEOUT_DUR = 60*60 # seconds
     else:
         TIMEOUT_DUR = 10*60 # seconds
 
@@ -446,13 +468,12 @@ def selectTests(args, sims, coverStr):
         addTests(tests_buildrootbootlockstep, lockstepsim, coverStr, configs) # lockstep with Questa and ImperasDV runs overnight
     # only run RV64GC tests on in code coverage mode
     if args.ccov:
-        addTestsByDir(f"{archVerifDir}/tests/rv64/", "rv64gc", coveragesim, coverStr, configs)
-        addTestsByDir(f"{archVerifDir}/tests/priv/rv64/", "rv64gc", coveragesim, coverStr, configs) # doesn't help coverage much dh 4/12/25
-        addTestsByDir(WALLY+"/tests/coverage/", "rv64gc", coveragesim, coverStr, configs)
+        addTestsByDir(f"{archVerifDir}/tests/rv64/", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
+        addTestsByDir(f"{archVerifDir}/tests/priv/rv64/", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1) # doesn't help coverage much dh 4/12/25
+        addTestsByDir(WALLY+"/tests/coverage/", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
         # Extra tests from riscv-arch-test that should be run as part of the functional coverage suite
-        addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/pmp", "rv64gc", coveragesim, coverStr, configs)
-        addTestsByDir(f"{WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m/privilege", "rv64gc", coveragesim, coverStr, configs)
-        # addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/F", "rv64gc", coveragesim, coverStr, configs) # doesn't help fdivsqrt coverage 4/3/2025
+        addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/pmp", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
+        addTestsByDir(f"{WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m/privilege", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
     # run tests in lockstep in functional coverage mode
     if args.fcov or args.nightly:
         addTestsByDir(f"{archVerifDir}/tests/rv32/", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
@@ -504,6 +525,55 @@ def selectTests(args, sims, coverStr):
                         grepstr="All Tests completed with          0 errors",
                         grepfile = sim_log)
                 configs.append(tc)
+
+    if (args.performance or args.nightly):
+        # RUNNING THE EMBENCH TEST
+        actual_embench_directory = f"{WALLY}/benchmarks/embench/actual_embench_results/"
+        expected_embench_directory = f"{WALLY}/benchmarks/embench/expected_embench_results/"
+        embench_logfile_path = os.path.expandvars("$WALLY/benchmarks/embench/run.log")
+        # Create the file if it doesn't exist
+        with open(embench_logfile_path, 'w'):
+            pass
+        
+        # Combine everything into the embench_test command
+        # finds any differences between the two embench directories and appends them to the log file
+        embench_test = TestCase(
+            name="embench",
+            variant="rv32gc",
+            cmd=(
+                f"cd $WALLY/benchmarks/embench && "
+                f"make run >> {embench_logfile_path} 2>&1"
+            ),
+            grepstr=None,
+            grepfile=embench_logfile_path,
+            altcommand=f"diff -ru {actual_embench_directory} {expected_embench_directory} >> {embench_logfile_path}"
+        )
+        configs.append(embench_test)
+
+
+        # RUNNING THE COREMARK TEST
+        sim_log = f"{regressionDir}/{defaultsim}/logs/validation.log"
+        coremark_logfile_path = os.path.expandvars(sim_log)
+        # Create the directory (and file) if it doesn't exist
+        os.makedirs(os.path.dirname(coremark_logfile_path), exist_ok=True)
+        with open(coremark_logfile_path, 'w'):
+            pass
+
+        coremark_sweep_test_file = f"{WALLY}/benchmarks/coremark/coremark_sweep.py"
+        actual_coremark_values_csv = f"{WALLY}/benchmarks/coremark/coremark_results.csv"
+        expected_coremark_values_csv = f"{WALLY}/benchmarks/coremark/expected_coremark_results.csv"
+
+        # calculates the difference between the coremark expected outcomes and appends them to the log file
+        coremark_test = TestCase(
+            name="validate_coremark_sweep",
+            variant="coremark check",
+            cmd=(f"python3 {coremark_sweep_test_file}"),
+            grepstr=None,
+            grepfile=coremark_logfile_path,
+            altcommand=f"diff -u {actual_coremark_values_csv} {expected_coremark_values_csv} >> {coremark_logfile_path}"
+        )
+        configs.append(coremark_test)
+
     return configs
 
 
