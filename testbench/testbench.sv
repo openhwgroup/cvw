@@ -715,13 +715,16 @@ module testbench;
   // 3. or PC is stuck at 0
 
 
+  logic [P.XLEN-1:0] PCM;
+  // PCM is not valid for configurations without ZICSR or branch predictor
+  flopenr #(P.XLEN) PCMReg(clk, reset, ~dut.core.StallM, dut.core.PCE, PCM);
   always @(posedge clk) begin
     TestComplete <= ((InstrM == 32'h6f) & dut.core.InstrValidM ) |
 		   ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"] & dut.core.lsu.IEUAdrM != 0) & InstrMName == "SW"); // |
     //   (functionName.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.InstrValidM & PrevPCZero));
     if (reset) PrevPCZero <= 0;
-    else if (dut.core.InstrValidM) PrevPCZero <= (dut.core.PCM == 0 & dut.core.ifu.InstrM == 0);
-    if (dut.core.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.InstrValidM & PrevPCZero) begin
+    else if (dut.core.InstrValidM) PrevPCZero <= (PCM == 0 & dut.core.ifu.InstrM == 0);
+    if (PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.InstrValidM & PrevPCZero) begin
       $error("Program fetched illegal instruction 0x00000000 from address 0x00000000 twice in a row.  Usually due to fault with no fault handler.");
       $fatal(1);
     end
