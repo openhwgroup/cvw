@@ -24,7 +24,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-// load code to initalize stack, handle interrupts, terminate
+// load code to initialize stack, handle interrupts, terminate
 
 #include "WALLY-init-lib.h"
 
@@ -57,7 +57,7 @@ main:
     add t0, t0, t2 # go to the next page
     lw t1, 1(t0) # load a misaligned aligned uncached address should fault
     add t0, t0, t2 # go to the next page
-    sw t1, 1(t0) # store to another misaligned uncached address should falt.
+    sw t1, 1(t0) # store to another misaligned uncached address should fault.
 
     fence.I
 

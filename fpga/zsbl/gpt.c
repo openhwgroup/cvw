@@ -51,7 +51,7 @@ int gpt_load_partitions() {
   BYTE lba2_buf[512];
   ret = disk_read(lba2_buf, (LBA_t)lba1->partition_entries_lba, 1);
 
-  // Load parition entries for the relevant boot partitions.
+  // Load partition entries for the relevant boot partitions.
   partition_entries_t *fdt = (partition_entries_t *)(lba2_buf);
   partition_entries_t *opensbi = (partition_entries_t *)(lba2_buf + 128);
   partition_entries_t *kernel = (partition_entries_t *)(lba2_buf + 256);

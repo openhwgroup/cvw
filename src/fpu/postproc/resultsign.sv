@@ -30,7 +30,7 @@
 module resultsign(
   input  logic [2:0]  Frm,        // rounding mode
   input  logic        FmaOp,      // is the operation an Fma
-  input  logic        Mult,       // is the fma operation multipy
+  input  logic        Mult,       // is the fma operation multiply
   input  logic        ZInf,       // is Z infinity
   input  logic        InfIn,      // are any of the inputs infinity
   input  logic        FmaSZero,   // is the fma sum zero
@@ -48,12 +48,12 @@ module resultsign(
 
   // determine the sign for a result of 0
   //  The IEEE754-2019 standard specifies: 
-  //      - the sign of an exact zero sum (with operands of diffrent signs) should be positive unless rounding toward negative infinity
+  //      - the sign of an exact zero sum (with operands of different signs) should be positive unless rounding toward negative infinity
   //      - when the exact result of an FMA operation is non-zero, but is zero due to rounding, use the sign of the exact result
   //      - if x = +0 or -0 then x+x=x and x-(-x)=x 
   //      - the sign of a product is the exclisive or or the opperand's signs
   //  Zero sign will only be selected if:
-  //      - P=Z and a cancelation occurs - exact zero
+  //      - P=Z and a cancellation occurs - exact zero
   //      - Z is zero and P is zero - exact zero
   //      - P is killed and Z is zero - Psgn
   //      - Z is killed and P is zero - impossible

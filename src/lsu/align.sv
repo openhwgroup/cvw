@@ -6,7 +6,7 @@
 // Modified: 26 October 2023
 //
 // Purpose: This module implements native alignment support for the Zicclsm extension
-//          It is simlar to the IFU's spill module and probably could be merged together with 
+//          It is similar to the IFU's spill module and probably could be merged together with 
 //          some effort.
 //
 // Documentation: RISC-V System on Chip Design
@@ -98,7 +98,7 @@ module align import cvw::*;  #(parameter cvw_t P) (
   // 2) offset
   // 3) access location within the cacheline
   
-  // compute misalignement
+  // compute misalignment
   always_comb begin
     case (Funct3M & {FpLoadStoreM, 2'b11}) 
       3'b000: AccessByteOffsetM = '0; // byte access

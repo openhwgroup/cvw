@@ -7,7 +7,7 @@
 //
 // Purpose: SPI peripheral
 //
-// SPI module is written to the specifications described in FU540-C000-v1.0. At the top level, it is consists of synchronous 8 byte transmit and recieve FIFOs connected to shift registers. 
+// SPI module is written to the specifications described in FU540-C000-v1.0. At the top level, it is consists of synchronous 8 byte transmit and receive FIFOs connected to shift registers. 
 // The FIFOs are connected to WALLY by an apb control register interface, which includes various control registers for modifying the SPI transmission along with registers for writing
 // to the transmit FIFO and reading from the receive FIFO. The transmissions themselves are then controlled by a finite state machine. The SPI module uses 4 tristate pins for SPI input/output, 
 // along with a 4 bit Chip Select signal, a clock signal, and an interrupt signal to WALLY.

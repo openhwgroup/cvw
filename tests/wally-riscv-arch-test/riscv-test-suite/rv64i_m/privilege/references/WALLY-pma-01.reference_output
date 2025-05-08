@@ -16,7 +16,7 @@ ffffffff
 00000000
 00000bad
 00000000
-00000002 # read 32 bits success in PLIC (confriming 32 bit write)
+00000002 # read 32 bits success in PLIC (confirming 32 bit write)
 00000000
 00000007 # write 16 bits with access fault in PLIC
 00000000

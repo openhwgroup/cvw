@@ -195,9 +195,9 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
 
   // Address Decoder Delay (figure 4-2 in spec)
   // The select for HREADY needs to be based on the address phase address.  If the device 
-  // takes more than 1 cycle to repsond it needs to hold on to the old select until the
-  // device is ready.  Hense this register must be selectively enabled by HREADY.
-  // However on reset None must be seleted.
+  // takes more than 1 cycle to respond it needs to hold on to the old select until the
+  // device is ready.  Hence this register must be selectively enabled by HREADY.
+  // However on reset None must be selected.
   flopenl #(12) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions, 12'b1, 
     {HSELSPID, HSELSDCD, HSELPLICD, HSELUARTD, HSELGPIOD, HSELCLINTD,
       HSELRamD, HSELBootRomD, HSELEXTD, HSELIROMD, HSELDTIMD, HSELNoneD});

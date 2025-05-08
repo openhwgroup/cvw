@@ -71,7 +71,7 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
     // Calculate the actual match value based on the input vpn and the page type.
     // For example, a megapage in SV32 only cares about VPN[1], so VPN[0]
     // should automatically match.
-    assign Match0 = (Query0 == Key0) | (PageType[0]); // least signifcant section
+    assign Match0 = (Query0 == Key0) | (PageType[0]); // least significant section
     assign Match1 = (Query1 == Key1);
 
     assign Match = Match0 & Match1 & MatchASID & Valid;

@@ -23,7 +23,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Usiing global `define statements isn't ideal in a large SystemVerilog system because
+// Using global `define statements isn't ideal in a large SystemVerilog system because
 // of the risk of `define name conflicts across different subsystems.
 // Instead, CORE-V-Wally loads the appropriate configuration one time and places it in a package
 // that is referenced by all Wally modules but not by other subsystems.

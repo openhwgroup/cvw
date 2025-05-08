@@ -27,7 +27,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-// load code to initalize stack, handle interrupts, terminate
+// load code to initialize stack, handle interrupts, terminate
 
 #include "WALLY-init-lib.h"
 
@@ -43,7 +43,7 @@ main:
 
     li t5, 0            # j = 0, run nASID only once
     li t3, 32                       //Max amount of Loops = 32
-    li t4, 0x1000                   //offset between addressses.
+    li t4, 0x1000                   //offset between addresses.
     li t1, 0x00008067               //load in jalr x0 x1 0 instruction to be stored
 
 setup:
