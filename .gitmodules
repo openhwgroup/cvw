@@ -33,3 +33,6 @@
 	path = addins/berkeley-testfloat-3
 	url = https://github.com/ucb-bar/berkeley-testfloat-3
 	ignore = untracked
+[submodule "addins/cvw-riscv-arch-test"]
+	path = addins/cvw-riscv-arch-test
+	url = https://github.com/jordancarlin/riscv-arch-test
