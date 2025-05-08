@@ -4,7 +4,7 @@
 // Written:  6/23/2021 me@KatherineParry.com, David_Harris@hmc.edu
 // Modified: 
 //
-// Purpose: FMA alginment shift
+// Purpose: FMA alignment shift
 // 
 // Documentation: RISC-V System on Chip Design
 //
@@ -32,7 +32,7 @@ module fmaalign import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.NF:0]        Zm,                  // significand in U(0.NF) format]
   input  logic                 XZero, YZero, ZZero, // is the input zero
   output logic [P.FMALEN-1:0]  Am,                  // addend aligned for addition in U(NF+5.2NF+1)
-  output logic                 ASticky,             // Sticky bit calculated from the aliged addend
+  output logic                 ASticky,             // Sticky bit calculated from the aligned addend
   output logic                 KillProd             // should the product be set to zero
 );
 
@@ -51,7 +51,7 @@ module fmaalign import cvw::*;  #(parameter cvw_t P) (
   // This could have been done using Pe, but ACnt is on the critical path so we replicate logic for speed
   assign ACnt = {2'b0, Xe} + {2'b0, Ye} - {2'b0, (P.NE)'(P.BIAS)} + (P.NE+2)'(P.NF+3) - {2'b0, Ze};
 
-  // Default Addition with only inital left shift
+  // Default Addition with only initial left shift
   // extra bit at end and beginning so the correct guard bit is calculated when subtracting
   //  |   54'b0    |  106'b(product)  | 2'b0 |
   //  | addnend    |

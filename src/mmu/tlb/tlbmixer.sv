@@ -63,7 +63,7 @@ module tlbmixer import cvw::*;  #(parameter cvw_t P) (
 
   // In Svnapot, when N=1, use bottom bits of VPN for contiugous translations
   if (P.SVNAPOT_SUPPORTED) begin
-    // 64 KiB contiguous NAPOT translations suported
+    // 64 KiB contiguous NAPOT translations supported
     logic [3:0] PPNMixedBot;
     mux2 #(4) napotmux(PPNMixed[3:0], VPN[3:0], PTE_N, PPNMixedBot);
     assign PPNMixed2 = {PPNMixed[P.PPN_BITS-1:4], PPNMixedBot};

@@ -6,7 +6,7 @@
 ## Created: 30 June 2024
 ## Modified:
 ##
-## Purpose: Check for compatible Linux distibution and set variables accordingly
+## Purpose: Check for compatible Linux distribution and set variables accordingly
 ##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
 ## https://github.com/openhwgroup/cvw

@@ -37,7 +37,7 @@
 // up to 63 sources supported; in the future, allow up to 1023 sources
 
 `define C 2
-// number of conexts
+// number of contexts
 // hardcoded to 2 contexts for now; later upgrade to arbitrary (up to 15872) contexts
 
 module plic_apb import cvw::*;  #(parameter cvw_t P) (
@@ -195,7 +195,7 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
       end
     end
 
-    // which prority levels have one or more active requests?
+    // which priority levels have one or more active requests?
     assign priorities_with_irqs[ctx][7:1] = {
       |irqMatrix[ctx][7],
       |irqMatrix[ctx][6],

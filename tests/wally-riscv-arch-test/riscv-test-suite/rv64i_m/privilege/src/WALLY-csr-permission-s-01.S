@@ -30,10 +30,10 @@ INIT_TESTS
 
 TRAP_HANDLER m
 
-# Test 5.2.3.6: Test that all the machine mode CSR's are innaccessible for reads and writes in S mode.
+# Test 5.2.3.6: Test that all the machine mode CSR's are inaccessible for reads and writes in S mode.
 
 # *** several of these appear not to be implemented in the assembler? 
-# I get "assembler messages: error: unkown CSR" with many of them.
+# I get "assembler messages: error: unknown CSR" with many of them.
 
 GOTO_S_MODE 0x0, 0x0
 

@@ -38,7 +38,7 @@ class spike(pluginTemplate):
         # Path to the directory where this python file is located. Collect it from the config.ini
         self.pluginpath=os.path.abspath(config['pluginpath'])
 
-        # Collect the paths to the  riscv-config absed ISA and platform yaml files. One can choose
+        # Collect the paths to the  riscv-config based ISA and platform yaml files. One can choose
         # to hardcode these here itself instead of picking it from the config.ini file.
         self.isa_spec = os.path.abspath(config['ispec'])
         self.platform_spec = os.path.abspath(config['pspec'])
@@ -154,7 +154,7 @@ class spike(pluginTemplate):
       # function earlier
       make.makeCommand = 'make -j' + self.num_jobs
 
-      # we will iterate over each entry in the testList. Each entry node will be refered to by the
+      # we will iterate over each entry in the testList. Each entry node will be referred to by the
       # variable testname.
       for testname in testList:
 

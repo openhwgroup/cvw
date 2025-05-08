@@ -31,7 +31,7 @@ INIT_TESTS
 TRAP_HANDLER m
 // Test 5.3.2.2: Machine ISA register test
 
-// Misa is a specific case *** so I don't want to add a whole test case for reading nonzero but unkown value CSRs.
+// Misa is a specific case *** so I don't want to add a whole test case for reading nonzero but unknown value CSRs.
 csrr x30, misa // should not cause a fault in machine mode. *** not writing to output because MISA is different for different configs.
 li x7, 0x111 // success value for read of nonzero misa 
 bnez x30, misa_nonzero

@@ -54,7 +54,7 @@ test_cases:
 
 # =========== test 11.3.1.1 Page Table Translation ===========
 
-# test 11.3.1.1.1 write page tables / entries to phyiscal memory
+# test 11.3.1.1.1 write page tables / entries to physical memory
 # sv32 Page table (See Figure 12.12***):
 # Level 1 page table, situated at 0x8000D000
 .4byte 0x8000D000, 0x20004C01, write32_test  # points to level 0 page table A
@@ -180,7 +180,7 @@ test_cases:
 .4byte 0x3020, 0xBEEF0770, read32_test # Read success when A=0 and SVADU is enabled
 
 # test 11.3.1.3.7(b) Dirty flag == 0
-.4byte 0x4658, 0xBEEF0AA0, write32_test # write successs when D=0 and SVADU is enabled
+.4byte 0x4658, 0xBEEF0AA0, write32_test # write success when D=0 and SVADU is enabled
 .4byte 0x4658, 0xBEEF0AA0, read32_test # read success when D=0
 
 # =========== test 11.3.1.4 SATP Register ===========

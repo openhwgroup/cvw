@@ -34,7 +34,7 @@ module fmashiftcalc import cvw::*;  #(parameter cvw_t P) (
   input  logic [$clog2(P.FMALEN+1)-1:0] FmaSCnt,             // normalization shift count
   output logic [P.NE+1:0]               NormSumExp,          // exponent of the normalized sum not taking into account Subnormal or zero results
   output logic                          FmaSZero,            // is the sum zero
-  output logic                          FmaPreResultSubnorm, // is the result subnormal - calculated before LZA corection
+  output logic                          FmaPreResultSubnorm, // is the result subnormal - calculated before LZA correction
   output logic [$clog2(P.FMALEN+1)-1:0] FmaShiftAmt          // normalization shift count
 );
   logic [P.NE+1:0]                      PreNormSumExp;       // the exponent of the normalized sum with the P.FLEN bias

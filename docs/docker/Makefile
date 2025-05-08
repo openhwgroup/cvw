@@ -1,7 +1,7 @@
 QUESTA_HOME?=/cad/mentor/questa_sim-2023.4
 CVW_GIT?=""
 
-commanline:
+commandline:
 	podman run -it --rm \
 	-v cvw_temp:/home/cad/cvw \
 	-v $(QUESTA_HOME):/cad/mentor/questa_sim-xxxx.x_x \

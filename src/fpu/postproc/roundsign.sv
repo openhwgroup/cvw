@@ -44,7 +44,7 @@ module roundsign(
   // calculate divsqrt sign
   assign Qs = Xs^(Ys&~Sqrt);
 
-  // Select sign for rounding calulation
+  // Select sign for rounding calculation
   assign Ms = (FmaSs&FmaOp) | (CvtCs&CvtOp) | (Qs&DivOp);
 
 endmodule

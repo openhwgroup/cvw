@@ -3,7 +3,7 @@
 //
 // Written: tfleming@hmc.edu & jtorrey@hmc.edu 7 April 2021
 // Modified: Teo Ene 15 Apr 2021:
-//              Temporarily removed paramterized priority encoder for non-parameterized one
+//              Temporarily removed parameterized priority encoder for non-parameterized one
 //              To get synthesis working quickly
 //           Kmacsaigoren@hmc.edu 28 May 2021:
 //              Added working version of parameterized priority encoder. 

@@ -49,7 +49,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0]    PCSpillF,                                 // PCF with possible + 2 to handle spill to HPTW
   // Execute
   output logic [P.XLEN-1:0]    PCLinkE,                                  // The address following the branch instruction. (AKA Fall through address)
-  input  logic                 PCSrcE,                                   // Executation stage branch is taken
+  input  logic                 PCSrcE,                                   // Execution stage branch is taken
   input  logic [P.XLEN-1:0]    IEUAdrE,                                  // The branch/jump target address
   input  logic [P.XLEN-1:0]    IEUAdrM,                                  // The branch/jump target address
   output logic [P.XLEN-1:0]    PCE,                                      // Execution stage instruction address
@@ -79,7 +79,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   output logic                 IllegalIEUFPUInstrD,                      // Illegal instruction including compressed & FP
   output logic                 InstrMisalignedFaultM,                    // Branch target not aligned to 4 bytes if no compressed allowed (2 bytes if allowed)
   // mmu management
-  input  logic [1:0]           PrivilegeModeW,                           // Priviledge mode in Writeback stage
+  input  logic [1:0]           PrivilegeModeW,                           // Privilege mode in Writeback stage
   input  logic [P.XLEN-1:0]    PTE,                                      // Hardware page table walker (HPTW) writes Page table entry (PTE) to ITLB
   input  logic [1:0]           PageType,                                 // Hardware page table walker (HPTW) writes PageType to ITLB
   input  logic                 ITLBWriteF,                               // Writes PTE and PageType to ITLB
@@ -219,7 +219,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   ////////////////////////////////////////////////////////////////////////////////////////////////
   
   // CommittedM tells the CPU's privileged unit the current instruction
-  // in the memory stage is a memory operaton and that memory operation is either completed
+  // in the memory stage is a memory operation and that memory operation is either completed
   // or is partially executed. Partially completed memory operations need to prevent an interrupts.
   // There is not a clean way to restore back to a partial executed instruction.  CommiteedM will
   // delay the interrupt until the LSU is in a clean state.

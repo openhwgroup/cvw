@@ -264,7 +264,7 @@ module testbench;
   // Do this in parts so it easier to verify
   // part 1: build a version which echos the same behavior as the below code, but does not drive anything
   // part 2: drive some of the controls
-  // part 3: drive all logic and remove old inital and always @ negedge clk block
+  // part 3: drive all logic and remove old initial and always @ negedge clk block
 
   typedef enum logic [3:0]{STATE_TESTBENCH_RESET,
                            STATE_INIT_TEST,
@@ -407,7 +407,7 @@ module testbench;
       end
       // declare memory labels that interest us, the updateProgramAddrLabelArray task will find
       // the addr of each label and fill the array. To expand, add more elements to this array
-      // and initialize them to zero (also initilaize them to zero at the start of the next test)
+      // and initialize them to zero (also initialize them to zero at the start of the next test)
       updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, memfilename, WALLY_DIR, ProgramAddrLabelArray);
     end
     if(Validate) begin
@@ -682,7 +682,7 @@ module testbench;
                 InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
-  // watch for problems such as lockup, reading unitialized memory, bad configs
+  // watch for problems such as lockup, reading uninitialized memory, bad configs
   watchdog #(P.XLEN, 1000000) watchdog(.clk, .reset, .TEST);  // check if PCW is stuck
   ramxdetector #(P.XLEN, P.LLEN) ramxdetector(clk, dut.core.lsu.MemRWM[1], dut.core.lsu.LSULoadAccessFaultM, dut.core.lsu.ReadDataM,
                                       dut.core.ifu.PCM, InstrM, dut.core.lsu.IEUAdrM, InstrMName);
@@ -768,7 +768,7 @@ end
 
   string filename;
   initial begin
-    // imperasDV requires the elffile be defined at the begining of the simulation.
+    // imperasDV requires the elffile be defined at the beginning of the simulation.
     int iter;
     longint x64;
     int     x32[2];
