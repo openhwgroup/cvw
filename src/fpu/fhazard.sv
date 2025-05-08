@@ -28,10 +28,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fhazard(
-  input  logic [4:0]  Adr1D, Adr2D, Adr3D,                // read data adresses
-  input  logic [4:0]  Adr1E, Adr2E, Adr3E,                // read data adresses
+  input  logic [4:0]  Adr1D, Adr2D, Adr3D,                // read data addresses
+  input  logic [4:0]  Adr1E, Adr2E, Adr3E,                // read data addresses
   input  logic        FRegWriteE, FRegWriteM, FRegWriteW, // is the fp register being written to
-  input  logic [4:0]  RdE, RdM, RdW,                      // the adress being written to
+  input  logic [4:0]  RdE, RdM, RdW,                      // the address being written to
   input  logic [1:0]  FResSelM,                           // the result being selected
   input  logic        XEnD, YEnD, ZEnD,                   // are the inputs needed
   output logic        FPUStallD,                          // stall the decode stage

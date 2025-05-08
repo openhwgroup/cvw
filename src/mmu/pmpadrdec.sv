@@ -75,11 +75,19 @@ module pmpadrdec import cvw::*;  #(parameter cvw_t P) (
 
   assign PMPAdrNAPOTGrain = {PMPAdr[P.PA_BITS-3:Gm1], {Gm1{1'b1}}}; // in NAPOT, if G >= 2, bottom G-1 bits read as all 1s
   assign NAMask[1:0] = {2'b11};
+  
+  // assign NAMask[P.PA_BITS-1:2] = (PMPAdr + {{(P.PA_BITS-3){1'b0}}, (AdrMode == NAPOT)}) ^ PMPAdr;
   assign NAMask[P.PA_BITS-1:2] = (PMPAdrNAPOTGrain + {{(P.PA_BITS-3){1'b0}}, (AdrMode == NAPOT)}) ^ PMPAdrNAPOTGrain;
   // form a mask where the bottom k bits are 1, corresponding to a size of 2^k bytes for this memory region. 
   // This assumes we're using at least an NA4 region, but works for any size NAPOT region.
+
+
+/* in progress, fix soon dh 5/8/25
   assign NABase = {(PMPAdrNAPOTGrain & ~NAMask[P.PA_BITS-1:2]), 2'b00}; // base physical address of the pmp region
   assign NAMatch = &((NABase ~^ PhysicalAddress) | NAMask); // check if upper bits of base address match, ignore lower bits correspoonding to inside the memory range
+*/
+  assign NABase = {(PMPAdr & ~NAMask[P.PA_BITS-1:2]), 2'b00}; // base physical address of the pmp region
+  assign NAMatch = &((NABase ~^ PhysicalAddress) | NAMask); // check if upper bits of base address match, ignore lower bits corresponding to inside the memory range
 
   // finally pick the appropriate match for the access type
   assign Match = (AdrMode == TOR) ? TORMatch : 

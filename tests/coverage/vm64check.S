@@ -25,7 +25,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Cover IMMU vm64check block by jumping to illegal virtual addresses
-// Need a nonstandard trap handler to deal with returns from theses jumps
+// Need a nonstandard trap handler to deal with returns from these jumps
 //    assign eq_46_38 = &(VAdr[46:38]) | ~|(VAdr[46:38]);
  //   assign eq_63_47 = &(VAdr[63:47]) | ~|(VAdr[63:47]);
  //   assign UpperBitsUnequal = SV39Mode ? ~(eq_63_47 & eq_46_38) : ~eq_63_47;

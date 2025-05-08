@@ -37,7 +37,7 @@ module aes64ks1i(
    logic [31:0] 		     rcon, rs1Rotate;
    
    rconlut32 rc(round, rcon);                             // Get rcon value from lookup table
-   assign rs1Rotate = {rs1[39:32], rs1[63:40]};           // Get rotated value fo ruse in tmp2
+   assign rs1Rotate = {rs1[39:32], rs1[63:40]};           // Get rotated value for use in tmp2
    assign finalround = (round == 4'b1010);                // round 10 is the last one 
    assign SboxKIn = finalround ? rs1[63:32] : rs1Rotate;  // Don't rotate on the last round
 

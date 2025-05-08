@@ -1,4 +1,4 @@
-# Consistant Build of Toolchain for Wally
+# Consistent Build of Toolchain for Wally
 
 `Dockerfile.*` contains a ~~multi-stage~~ build for all the toolchains that are required for Wally's open-source features.
 
@@ -69,7 +69,7 @@ Files at this folder can help you to build/fetch environment you need to run wal
 Here are some common use cases, it will **provides you an environment with RISC-V toolchains** that required by this project:
 
 ```shell
-# By default, we assume that you have cloned the cvw respository and running the script at relative path `docs/docker`
+# By default, we assume that you have cloned the cvw repository and running the script at relative path `docs/docker`
 
 # For HMC students, /opt/riscv is available and nothing needs to be built
 TOOLCHAINS_MOUNT=/opt/riscv QUESTA=/cad/mentor/questa_sim-2023.4 ./start.sh
@@ -265,7 +265,7 @@ There are at least two ways to solve this problem:
 
 There are stages in the old Dockerfile:
 
-- debian-based package installtion
+- debian-based package installation
     - apt package
     - python3 package
 - user and its group configuration

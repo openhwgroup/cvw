@@ -693,7 +693,7 @@ Intr03BEEF13:
     li t1, 0b00010000
     1: bne t1,a0,1b
     li a0, 0
-    # ========== Received Data Available Intrrupt (ERBFI) & Loop Mode ==========
+    # ========== Received Data Available Interrupt (ERBFI) & Loop Mode ==========
     # Clear SCR
     sb x0, 7(t0)
 Intr03BEEF14:

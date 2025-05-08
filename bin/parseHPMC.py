@@ -45,7 +45,7 @@ RefDataBTB = [('BTBCModel6', 'BTBCModel', 64, 128, 1.51480272475844), ('BTBCMode
 
 def ParseBranchListFile(path):
     '''Take the path to the list of Questa Sim log files containing the performance counters outputs.  File
-    is formated in row columns.  Each row is a trace with the file, branch predictor type, and the parameters.
+    is formatted in row columns.  Each row is a trace with the file, branch predictor type, and the parameters.
     parameters can be any number and depend on the predictor type. Returns a list of lists.'''
     lst = []
     with open(path) as BranchList:
@@ -59,7 +59,7 @@ def ParseBranchListFile(path):
     return lst
     
 def ProcessFile(fileName):
-    '''Extract preformance counters from a modelsim log.  Outputs a list of tuples for each test/benchmark.
+    '''Extract performance counters from a modelsim log.  Outputs a list of tuples for each test/benchmark.
     The tuple contains the test name, optimization characteristics, and dictionary of performance counters.'''
     # 1 find lines with Read memfile and extract test name
     # 2 parse counters into a list of (name, value) tuples (dictionary maybe?)
@@ -328,23 +328,23 @@ def ReportAsGraph(benchmarkDict, bar, FileName):
         markers = ['x', '.', '+', '*', '^', 'o', ',', 's']
         colors = ['blue', 'black', 'gray', 'dodgerblue', 'lightsteelblue', 'turquoise', 'black', 'blue']
 
-        # the benchmarkDict['Mean'] contains sequencies of results for multiple
+        # the benchmarkDict['Mean'] contains sequences of results for multiple
         # branch predictors with various parameterizations
         # group the parameterizations by the common typ.
-        sequencies = {}
+        sequences = {}
         for (name, typ, entries, size, value) in benchmarkDict['Mean']:
-            if typ not in sequencies:
-                sequencies[typ] = [(entries if not args.size else int(size/8), value)]
+            if typ not in sequences:
+                sequences[typ] = [(entries if not args.size else int(size/8), value)]
             else:
-                sequencies[typ].append((entries if not args.size else int(size/8) ,value))
+                sequences[typ].append((entries if not args.size else int(size/8) ,value))
         # then graph the common typ as a single line+scatter plot
         # finally repeat for all typs of branch predictors and overlay
         fig, axes = plt.subplots()
         index = 0
         if(args.invert): plt.title(titlesInvert[ReportPredictorType])
         else: plt.title(titles[ReportPredictorType])
-        for branchPredName in sequencies:
-            data = sequencies[branchPredName]
+        for branchPredName in sequences:
+            data = sequences[branchPredName]
             (xdata, ydata) = zip(*data) 
             if args.invert: ydata = [100 - x for x in ydata]
             axes.plot(xdata, ydata, color=colors[index])

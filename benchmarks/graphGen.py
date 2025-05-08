@@ -95,10 +95,10 @@ def main():
     embenchSizeOpt_SizeData = {}
     embenchSpeedOpt_SizeData = {}
     coremarkData = loadCoremark(coremarkData)
-    embenchSpeedOpt_SpeedData = loadEmbench("embench/wallySpeedOpt_speed.json", embenchSpeedOpt_SpeedData)
-    embenchSizeOpt_SpeedData = loadEmbench("embench/wallySizeOpt_speed.json", embenchSizeOpt_SpeedData)
-    embenchSpeedOpt_SizeData = loadEmbench("embench/wallySpeedOpt_size.json", embenchSpeedOpt_SizeData)
-    embenchSizeOpt_SizeData = loadEmbench("embench/wallySizeOpt_size.json", embenchSizeOpt_SizeData)
+    embenchSpeedOpt_SpeedData = loadEmbench("embench/actual_embench_results/wallySpeedOpt_speed.json", embenchSpeedOpt_SpeedData)
+    embenchSizeOpt_SpeedData = loadEmbench("embench/actual_embench_results/wallySizeOpt_speed.json", embenchSizeOpt_SpeedData)
+    embenchSpeedOpt_SizeData = loadEmbench("embench/actual_embench_results/wallySpeedOpt_size.json", embenchSpeedOpt_SizeData)
+    embenchSizeOpt_SizeData = loadEmbench("embench/actual_embench_results/wallySizeOpt_size.json", embenchSizeOpt_SizeData)
 
     graphEmbench(embenchSpeedOpt_SpeedData, embenchSizeOpt_SpeedData, embenchSpeedOpt_SizeData, embenchSizeOpt_SizeData)
 

@@ -78,8 +78,8 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   logic [2:0]                  OpCtrlE, OpCtrlM;                   // Select which operation to do in each component
   logic [1:0]                  FResSelE, FResSelM, FResSelW;       // Select one of the results that finish in the memory stage
   logic [1:0]                  PostProcSelE, PostProcSelM;         // select result in the post processing unit
-  logic [4:0]                  Adr1D, Adr2D, Adr3D;                // register adresses of each input
-  logic [4:0]                  Adr1E, Adr2E, Adr3E;                // register adresses of each input
+  logic [4:0]                  Adr1D, Adr2D, Adr3D;                // register addresses of each input
+  logic [4:0]                  Adr1E, Adr2E, Adr3E;                // register addresses of each input
   logic                        XEnD, YEnD, ZEnD;                   // X, Y, Z inputs used for current operation
   logic                        XEnE, YEnE, ZEnE;                   // X, Y, Z inputs used for current operation
   logic                        FRegWriteE;                         // Write floating-point register
@@ -129,7 +129,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   logic [$clog2(P.FMALEN+1)-1:0] SCntE, SCntM;                       // LZA sum leading zero count
   
   // Cvt Signals
-  logic [P.NE:0]               CeE, CeM;                           // convert intermediate expoent
+  logic [P.NE:0]               CeE, CeM;                           // convert intermediate exponent
   logic [P.LOGCVTLEN-1:0]      CvtShiftAmtE, CvtShiftAmtM;         // how much to shift by
   logic                        CvtResSubnormUfE, CvtResSubnormUfM; // does the result underflow or is subnormal
   logic                        CsE, CsM;                           // convert result sign

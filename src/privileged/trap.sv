@@ -48,7 +48,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   output logic [3:0]           CauseM                                           // trap cause
 );
 
-  logic                        MIntGlobalEnM, SIntGlobalEnM;                    // Global interupt enables
+  logic                        MIntGlobalEnM, SIntGlobalEnM;                    // Global interrupt enables
   logic                        Committed;                                       // LSU or IFU has committed to a bus operation that can't be interrupted
   logic                        BothInstrAccessFaultM, BothInstrPageFaultM;      // instruction or HPTW ITLB fill caused an Instruction Access Fault
   logic [11:0]                 PendingIntsM, ValidIntsM, EnabledIntsM;          // interrupts are pending, valid, or enabled

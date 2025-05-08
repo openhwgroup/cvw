@@ -54,7 +54,7 @@ test_cases:
 
 # =========== test 11.3.1.1 Page Table Translation ===========
 
-# test 11.3.1.1.1 write page tables / entries to phyiscal memory
+# test 11.3.1.1.1 write page tables / entries to physical memory
 # sv32 Page table (See Figure 12.12***):
 # Level 1 page table, situated at 0x8000D000
 .4byte 0x8000D000, 0x20004C01, write32_test  # points to level 0 page table A

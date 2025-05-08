@@ -35,8 +35,8 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
   input  logic        ALUOpD,                  // Regular ALU Operation
   output logic        BRegWriteD,              // Indicates if it is a R type B instruction in Decode Stage
   output logic        BALUSrcBD,               // Indicates if it is an I/IW (non auipc) type B instruction in Decode Stage
-  output logic        BW64D,                   // Indiciates if it is a W type B instruction in Decode Stage
-  output logic        BUW64D,                  // Indiciates if it is a .uw type B instruction in Decode Stage
+  output logic        BW64D,                   // Indicates if it is a W type B instruction in Decode Stage
+  output logic        BUW64D,                  // Indicates if it is a .uw type B instruction in Decode Stage
   output logic        BSubArithD,              // TRUE if ext, clr, andn, orn, xnor instruction in Decode Stage
   output logic        IllegalBitmanipInstrD,   // Indicates if it is unrecognized B instruction in Decode Stage
   // Execute stage control signals             

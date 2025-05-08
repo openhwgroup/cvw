@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // ram1p1rwbe_64x22.sv
 //
-// Written: james.stine@okstate.edu 2 Feburary 2023
+// Written: james.stine@okstate.edu 2 February 2023
 // Modified: 
 //
 // Purpose: RAM wrapper for instantiating RAM IP

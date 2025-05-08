@@ -50,7 +50,7 @@
 00000000
 00000bad
 00000000
-00000111 # execute sucess when X=1
+00000111 # execute success when X=1
 00000000
 00000009 # ecall from terminating tests in S mode
 00000000

@@ -273,7 +273,7 @@ void mixColumn(unsigned char *column) {
   column[3] = b[3] ^ a[2] ^ a[1] ^ gfmul(a[0], 3);
 }
 
-// The rounds in the specifcation of CIPHER() are composed of the following 4 byte-oriented
+// The rounds in the specification of CIPHER() are composed of the following 4 byte-oriented
 // transformations on the state (Section 5.1 of FIPS 197) - outputs hex after each step
 void aes_cipher(unsigned char *state, unsigned char *roundKey) {
   subBytes(state);

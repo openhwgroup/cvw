@@ -55,7 +55,7 @@ module bpred import cvw::*;  #(parameter cvw_t P) (
   input  logic             InstrValidD, InstrValidE,
   input  logic             BranchD, BranchE,
   input  logic             JumpD, JumpE,
-  input  logic             PCSrcE,                    // Executation stage branch is taken
+  input  logic             PCSrcE,                    // Execution stage branch is taken
   input  logic [P.XLEN-1:0] IEUAdrE,                   // The branch/jump target address
   input  logic [P.XLEN-1:0] IEUAdrM,                   // The branch/jump target address
   input  logic [P.XLEN-1:0] PCLinkE,                   // The address following the branch instruction. (AKA Fall through address)
@@ -188,7 +188,7 @@ module bpred import cvw::*;  #(parameter cvw_t P) (
   mux2 #(P.XLEN) pccorrectemux(PCLinkE, IEUAdrE, PCSrcE, PCCorrectE);
   
   // If the fence/csrw was predicted as a taken branch then we select PCF, rather than PCE.
-  // Effectively this is PCM+4 or the non-existant PCLinkM
+  // Effectively this is PCM+4 or the non-existent PCLinkM
   if(`INSTR_CLASS_PRED) mux2 #(P.XLEN) pcmuxBPWrongInvalidateFlush(PCE, PCF, BPWrongM, NextValidPCE);
   else  assign NextValidPCE = PCE;
 
