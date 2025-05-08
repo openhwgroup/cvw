@@ -57,8 +57,8 @@ module divshiftcalc import cvw::*;  #(parameter cvw_t P) (
   //  00000000.xxxxxxx... << NF               Exp = DivUe+1
   //  00000000x.xxxxxx... << NF               Exp = DivUe (extra shift done afterwards)
   //  00000000xx.xxxxx... << 1?               Exp = DivUe-1 (determined after)
-  // inital Left shift amount  = NF
-  // shift one more if the it's a minimally redundent radix 4 - one entire cycle needed for integer bit
+  // initial Left shift amount  = NF
+  // shift one more if the it's a minimally redundant radix 4 - one entire cycle needed for integer bit
   assign NormShift = (P.LOGNORMSHIFTSZ)'(P.NF);
 
   // if the shift amount is negative then don't shift (keep sticky bit)

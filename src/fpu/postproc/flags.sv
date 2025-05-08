@@ -47,7 +47,7 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   input  logic                 IntToFp,                // convert integer to floating point
   input  logic                 Int64,                  // convert to 64 bit integer
   input  logic                 Signed,                 // convert to a signed integer
-  input  logic [P.NE:0]        CvtCe,                  // the calculated expoent - Cvt
+  input  logic [P.NE:0]        CvtCe,                  // the calculated exponent - Cvt
   input  logic [1:0]           CvtNegResMsbs,          // the negative integer result's most significant bits
   // divsqrt
   input  logic                 DivOp,                  // conversion operation?
@@ -70,7 +70,7 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   logic                        FmaInvalid;             // integer invalid flag
   logic                        DivInvalid;             // integer invalid flag
   logic                        Underflow;              // Underflow flag
-  logic                        ResExpGteMax;           // is the result greater than or equal to the maximum floating point expoent
+  logic                        ResExpGteMax;           // is the result greater than or equal to the maximum floating point exponent
   logic                        ShiftGtIntSz;           // is the shift greater than the the integer size (use Re to account for possible rounding "shift")
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -81,7 +81,7 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   // the shift amount is greater than the integers size (for cvt to int)
   // ShiftGtIntSz calculation:  
   //      a left shift of intlen+1 is still in range but any more than that is an overflow
-  //              inital: |      64 0's         |    XLEN     |
+  //             initial: |      64 0's         |    XLEN     |
   //                      |      64 0's         |    XLEN     | << 64
   //                      |      XLEN           |    00000... |
   //      65 = ...0 0 0 0   0 1 0 0   0 0 0 1
@@ -89,8 +89,8 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   //      33 = ...0 0 0 0   0 0 1 0   0 0 0 1
   //          |     or      | |     or      |
   //      larger or equal if:
-  //          - any of the bits after the most significan 1 is one
-  //          - the most signifcant in 65 or 33 is still a one in the number and
+  //          - any of the bits after the most significant 1 is one
+  //          - the most significant in 65 or 33 is still a one in the number and
   //            one of the later bits is one
   if (P.FPSIZES == 1) begin
       assign ResExpGteMax = &FullRe[P.NE-1:0] | FullRe[P.NE];
@@ -121,7 +121,7 @@ module flags import cvw::*;  #(parameter cvw_t P) (
           assign ShiftGtIntSz = (|FullRe[P.Q_NE:7]|(FullRe[6]&~Int64)) | ((|FullRe[4:0]|(FullRe[5]&Int64))&((FullRe[5]&~Int64) | FullRe[6]&Int64));
   end
   
-  // calulate overflow flag:
+  // calculate overflow flag:
   //                 if the result is greater than or equal to the max exponent(not taking into account sign)
   //                 |           and the exponent isn't negative
   //                 |           |                   if the input isnt infinity or NaN
@@ -146,8 +146,8 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   // Inexact
   ///////////////////////////////////////////////////////////////////////////////
 
-  // Set Inexact flag if the result is diffrent from what would be outputed given infinite precision
-  //      - Don't set the underflow flag if an underflowed res isn't outputed
+  // Set Inexact flag if the result is different from what would be outputted given infinite precision
+  //      - Don't set the underflow flag if an underflowed res isn't outputted
   assign FpInexact = (Sticky|Guard|Overflow|Round)&~(InfIn|NaNIn|DivByZero|Invalid);
   
   //                  if the res is too small to be represented and not 0

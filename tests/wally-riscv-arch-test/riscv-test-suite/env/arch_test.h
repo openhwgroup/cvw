@@ -271,7 +271,7 @@
 #define MPP_SMODE (1<<MPP_LSB)
 //define sizes
 #define actual_tramp_sz ((XLEN + 3* NUM_SPECD_INTCAUSES + 5) * 4)     // 5 is added ops before common entry pt
-#define tramp_sz        ((actual_tramp_sz+4) & -8)                    // round up to keep aligment for sv area alloc
+#define tramp_sz        ((actual_tramp_sz+4) & -8)                    // round up to keep alignment for sv area alloc
 #define ptr_sv_sz       (16*8)
 #define reg_sv_sz       ( 8*REGWIDTH)
 #define sv_area_sz      (tramp_sz + ptr_sv_sz + reg_sv_sz)           // force dblword alignment
@@ -354,7 +354,7 @@
   .set absimm,  ((immx^(-BIT(immx,XLEN-1)))&MASK) /* cvt to posnum to simplify code */  ;\
   .set cry,     (BIT(immx, IMMSGN))                                             ;\
   .set imm12,   (SEXT_IMM(immx))                                                ;\
-/***************** used in code that gnerates bitmasks                  */      ;\
+/***************** used in code that generates bitmasks                 */      ;\
   .set even,    (1-BIT(imm, 0)) /* imm has at least 1 trailing zero     */      ;\
   .set cryh,    (BIT(immx, IMMSGN+32))                                          ;\
 /******** loop finding rising/falling edge fm LSB-MSB given even operand ****/  ;\
@@ -409,7 +409,7 @@
   .elseif ((immx==imme)&&((absimmsh>>IMMSGN)==0))/* fits 12b after shift? */    ;\
         li      reg, imm12sh            /* <= 12bit, will be simple li    */    ;\
         slli    reg, reg, edge1         /* add trailing zeros             */    ;\
-  .elseif ((immx==imme)&&(((absimmsh>>WDSGN)+crysh)==0)) /* fits 32 <<shft? */  ;\
+  .elseif ((immx==imme)&&(((absimmsh>>WDSGN)+crysh)==0)) /* fits 32 <<shift?*/  ;\
         lui     reg, ((immxsh>>IMMSZ)+crysh)&LIMMMSK /* <=32b, use lui/addi */  ;\
     .if   ((imm12sh&IMMMSK)!=0)         /* but skip this if low bits ==0  */    ;\
         addi    reg, reg, imm12sh                                               ;\
@@ -1082,9 +1082,9 @@ rvtest_\__MODE__\()prolog_done:
   /**********************************************************************/
   /**** This is the entry point for all x-modetraps, vectored or not.****/
   /**** xtvec should either point here, or trampoline code does and  ****/
-  /**** trampoline code was copied to whereever xtvec pointed to.    ****/
+  /**** trampoline code was copied to wherever xtvec pointed to.     ****/
   /**** At entry, xscratch will contain a pointer to a scratch area. ****/
-  /**** This is an array of branches at 4B intevals that spreads out ****/
+  /**** This is an array of branches at 4B intervals that spreads out ****/
   /**** to an array of 12B xhandler stubs for specd int causes, and  ****/
   /**** to a return for anything above that (which causes a mismatch)****/
   /**********************************************************************/
@@ -1171,7 +1171,7 @@ spcl_\__MODE__\()2mmode_test:
         slli    T3, T5, 1                       // remove MSB, cause<<1
         addi    T3, T3, -(IRQ_M_TIMER)<<1       // is cause (w/o MSB) an extint or larger? ( (cause<<1) > (8<<1) )?
         bgez    T3, \__MODE__\()trap_sig_sv     // yes, keep std length
-        li      T2, 3*REGWIDTH                  // no,  its a timer or swint, overrride preinc to 3*regsz
+        li      T2, 3*REGWIDTH                  // no,  its a timer or swint, override preinc to 3*regsz
         j       \__MODE__\()trap_sig_sv
 
  /**********************************************************************/
@@ -1635,7 +1635,7 @@ excpt_\__MODE__\()hndlr_tbl:            // handler code should only touch T2..T6
 
 \__MODE__\()clr_Mext_int:               // inT11 default to just return after saving IntID in T3
         RVMODEL_CLR_MEXT_INT
-        SREG    T3, 3*REGWIDTH(T1)      // save 4rd sig value, (intID)
+        SREG    T3, 3*REGWIDTH(T1)      // save 4th sig value, (intID)
         j       resto_\__MODE__\()rtn
 
 //------------- SMode----------------
@@ -1649,7 +1649,7 @@ excpt_\__MODE__\()hndlr_tbl:            // handler code should only touch T2..T6
 
 \__MODE__\()clr_Sext_int:               // int 9 default to just return after saving IntID in T3
         RVMODEL_CLR_SEXT_INT
-        SREG    T3, 3*REGWIDTH(T1)      // save 4rd sig value, (intID)
+        SREG    T3, 3*REGWIDTH(T1)      // save 4th sig value, (intID)
         j       resto_\__MODE__\()rtn
 
 //------------- VSmode----------------
@@ -1663,7 +1663,7 @@ excpt_\__MODE__\()hndlr_tbl:            // handler code should only touch T2..T6
 
 \__MODE__\()clr_Vext_int:               // int 8 default to just return after saving IntID in T3
         RVMODEL_CLR_VEXT_INT
-        SREG    T3, 3*REGWIDTH(T1)      // save 4rd sig value, (intID)
+        SREG    T3, 3*REGWIDTH(T1)      // save 4th sig value, (intID)
         j       resto_\__MODE__\()rtn
 
 .ifc \__MODE__ , M
@@ -1791,7 +1791,7 @@ rvtest_\__MODE__\()end:
 /*******************************************************************************/
 /**** This macro defines per/mode save areas for mmode for each mode        ****/
 /**** note that it is the code area, not the data area, and                 ****/
-/**** must be mulitple of 8B, so multiple instantiations stay aligned       ****/
+/**** must be multiple of 8B, so multiple instantiations stay aligned       ****/
 /**** This is preceded by the current signature pointer, (@Mtrpreg_sv -64?  ****/
 /*******************************************************************************/
 .macro RVTEST_TRAP_SAVEAREA __MODE__

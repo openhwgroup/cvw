@@ -30,7 +30,7 @@ INIT_TESTS
 
 TRAP_HANDLER m
 
-# Test 5.2.3.6: Test that all the machine mode CSR's are innaccessible for reads and writes in R mode.
+# Test 5.2.3.6: Test that all the machine mode CSR's are inaccessible for reads and writes in R mode.
 
 GOTO_U_MODE 0x0, 0x0
 

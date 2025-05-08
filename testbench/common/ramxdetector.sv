@@ -4,7 +4,7 @@
 // Written: David_Harris@hmc.edu
 // Modified: 2 July 2023
 //
-// Purpose: Detects if the processor is attempting to read unitialized RAM
+// Purpose: Detects if the processor is attempting to read uninitialized RAM
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -39,7 +39,7 @@ module ramxdetector #(parameter XLEN, LLEN) (
     /* verilator lint_off WIDTHXZEXPAND */
     if (MemReadM & ~LSULoadAccessFaultM & (ReadDataM === 'bx)) begin
       /* verilator lint_on WIDTHXZEXPAND */
-      $display("WARNING: Attempting to read from unitialized RAM.  Processor may go haywire if it uses x value. But this is normal in WALLY-mmu and ExceptionInstr tests.");
+      $display("WARNING: Attempting to read from uninitialized RAM.  Processor may go haywire if it uses x value. But this is normal in WALLY-mmu and ExceptionInstr tests.");
       $display("  PCM = %x InstrM = %x (%s), IEUAdrM = %x", PCM, InstrM, InstrMName, IEUAdrM);
       //$stop;
     end

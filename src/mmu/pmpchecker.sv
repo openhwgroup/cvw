@@ -75,7 +75,7 @@ module pmpchecker import cvw::*;  #(parameter cvw_t P) (
       .Match, .PMPTop, .L, .X, .W, .R);
   end
 
-  priorityonehot #(P.PMP_ENTRIES) pmppriority(.a(Match), .y(FirstMatch)); // combine the match signal from all the adress decoders to find the first one that matches.
+  priorityonehot #(P.PMP_ENTRIES) pmppriority(.a(Match), .y(FirstMatch)); // combine the match signal from all the address decoders to find the first one that matches.
 
   // Distributed AND-OR mux to select the first matching results
   // If the access does not match all bytes of the PMP region, it is too big and the matches are disabled

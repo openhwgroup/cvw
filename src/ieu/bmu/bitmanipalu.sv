@@ -55,7 +55,7 @@ module bitmanipalu import cvw::*; #(parameter cvw_t P) (
   logic [P.XLEN-1:0]        MaskB;                   // BitMask of B
   logic [P.XLEN-1:0]        RevA;                    // Bit-reversed A
   logic                     Mask;                    // Indicates if it is ZBS instruction
-  logic                     PreShift;                // Inidicates if it is sh1add, sh2add, sh3add instruction
+  logic                     PreShift;                // Indicates if it is sh1add, sh2add, sh3add instruction
   logic [1:0]               PreShiftAmt;             // Amount to Pre-Shift A 
   logic [P.XLEN-1:0]        CondZextA;               // A Conditional Extend Intermediary Signal
   logic [P.XLEN-1:0]        ABMU, BBMU;              // Gated data inputs to reduce BMU activity

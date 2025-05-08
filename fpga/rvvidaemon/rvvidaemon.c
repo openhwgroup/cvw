@@ -169,7 +169,7 @@ int main(int argc, char **argv){
   if (ioctl(sockfd, SIOCGIFINDEX, &ifopts) < 0)
     perror("SIOCGIFINDEX");
   
-  /* Allow the socket to be reused - incase connection is closed prematurely */
+  /* Allow the socket to be reused - in case connection is closed prematurely */
   if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &sockopt, sizeof sockopt) == -1) {
     perror("setsockopt");
     close(sockfd);

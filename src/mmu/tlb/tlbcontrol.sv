@@ -115,7 +115,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
     assign PreUpdateDA = ~PTE_A | WriteAccess & ~PTE_D;
   end
 
-  // Determine wheter to update DA bits.  With SVADU, it is done in hardware
+  // Determine whether to update DA bits.  With SVADU, it is done in hardware
   assign UpdateDA = P.SVADU_SUPPORTED & PreUpdateDA & Translate & TLBHit & ~TLBPageFault & ENVCFG_ADUE;
 
   // Determine whether page fault occurs

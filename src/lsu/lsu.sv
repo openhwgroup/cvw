@@ -57,6 +57,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   input  logic                    BigEndianM,                           // Swap byte order to big endian
   input  logic                    sfencevmaM,                           // Virtual memory address fence, invalidate TLB entries
   output logic                    DCacheStallM,                         // D$ busy with multicycle operation
+  output logic [P.XLEN-1:0]       IEUAdrxTvalM,                         // IEUAdrM, but could be spilled onto the next cacheline or virtual page.
   // fpu
   input  logic [P.FLEN-1:0]       FWriteDataM,                          // Write data from FPU
   input  logic                    FpLoadStoreM,                         // Selects FPU as store for write data
@@ -141,7 +142,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   
   logic                  DTLBMissM;                              // DTLB miss causes HPTW walk
   logic                  DTLBWriteM;                             // Writes PTE and PageType to DTLB
-  logic                  LSULoadAccessFaultM;                    // Load acces fault
+  logic                  LSULoadAccessFaultM;                    // Load access fault
   logic                  LSUStoreAmoAccessFaultM;                // Store access fault
   logic                  HPTWFlushW;                             // HPTW needs to flush operation
   logic                  LSUFlushW;                              // HPTW or hazard unit flushes operation
@@ -158,12 +159,13 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
 
   flopenrc #(P.XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
   if(MISALIGN_SUPPORT) begin : ziccslm_align
-    logic [P.XLEN-1:0] IEUAdrSpillE, IEUAdrSpillM;
+    logic [P.XLEN-1:0] IEUAdrSpillE;
+    logic [P.XLEN-1:0] IEUAdrSpillM;
     align #(P) align(.clk, .reset, .StallM, .FlushM, .IEUAdrE, .IEUAdrM, .Funct3M, .FpLoadStoreM, 
                      .MemRWM,
                      .DCacheReadDataWordM, .CacheBusHPWTStall, .SelHPTW,
                      .ByteMaskM, .ByteMaskExtendedM, .LSUWriteDataM, .ByteMaskSpillM, .LSUWriteDataSpillM,
-                     .IEUAdrSpillE, .IEUAdrSpillM, .SelSpillE, .DCacheReadDataWordSpillM, .SpillStallM);
+                     .IEUAdrSpillE, .IEUAdrSpillM, .IEUAdrxTvalM, .SelSpillE, .DCacheReadDataWordSpillM, .SpillStallM);
     assign IEUAdrExtM = {2'b00, IEUAdrSpillM}; 
     assign IEUAdrExtE = {2'b00, IEUAdrSpillE};
   end else begin : no_ziccslm_align
@@ -175,6 +177,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign LSUWriteDataSpillM = LSUWriteDataM;
     assign MemRWSpillM = MemRWM;
     assign {SpillStallM} = 1'b0;
+    assign IEUAdrxTvalM = IEUAdrM;
   end
 
     if(P.ZICBOZ_SUPPORTED) begin : cboz
@@ -300,7 +303,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       logic [P.PA_BITS-1:0]    DCacheBusAdr;                                     // Cacheline address to fetch or writeback.
       logic [AHBWLOGBWPL-1:0]  BeatCount;                                        // Position within a cacheline.  ahbcacheinterface to cache
       logic                    DCacheBusAck;                                     // ahbcacheinterface completed fetch or writeback
-      logic                    SelBusBeat;                                       // ahbcacheinterface selects postion in cacheline with BeatCount
+      logic                    SelBusBeat;                                       // ahbcacheinterface selects position in cacheline with BeatCount
       logic [1:0]              CacheBusRW;                                       // Cache sends request to ahbcacheinterface
       logic [1:0]              BusRW;                                            // Uncached bus memory access
       logic                    CacheableOrFlushCacheM;                           // Memory address is cacheable or operation is a cache flush
@@ -350,7 +353,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       mux3 #(P.LLEN) UnCachedDataMux(.d0(DCacheReadDataWordSpillM), .d1({LLENPOVERAHBW{FetchBuffer[P.XLEN-1:0]}}),
                                     .d2({{P.LLEN-P.XLEN{1'b0}}, DTIMReadDataWordM[P.XLEN-1:0]}),
                                     .s({SelDTIM, ~(CacheableOrFlushCacheM)}), .y(ReadDataWordMuxM));
-    end else begin : passthrough // No Cache, use simple ahbinterface instad of ahbcacheinterface
+    end else begin : passthrough // No Cache, use simple ahbinterface instead of ahbcacheinterface
       logic [1:0] BusRW;                    // Non-DTIM memory access, ignore cacheableM
       logic [P.XLEN-1:0] FetchBuffer;
       assign BusRW = ~SelDTIM ? LSURWM : 0;

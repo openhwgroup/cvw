@@ -54,7 +54,7 @@ module testbench_fp;
   logic [P.Q_LEN*4+7:0]  TestVectors[MAXVECTORS-1:0]; // list of test vectors
 
   logic [1:0] FmtVal;                          // value of the current Fmt
-  logic [2:0] UnitVal, OpCtrlVal, FrmVal;      // value of the currnet Unit/OpCtrl/FrmVal
+  logic [2:0] UnitVal, OpCtrlVal, FrmVal;      // value of the current Unit/OpCtrl/FrmVal
   logic       WriteIntVal;                     // value of the current WriteInt
   logic [P.Q_LEN-1:0]  X, Y, Z;                // inputs read from TestFloat
   logic [P.FLEN-1:0]   XPostBox;               // inputs read from TestFloat
@@ -67,7 +67,7 @@ module testbench_fp;
   logic [P.FLEN-1:0]    FpRes, FpCmpRes;       // Results from each unit
   logic [P.XLEN-1:0]    IntRes, CmpRes;        // Results from each unit
   logic [P.Q_LEN-1:0]   FpResExtended;         // FpRes extended to same length as Ans/Res
-  logic [4:0] FmaFlg, CvtFlg, DivFlg, CmpFlg;  // Outputed flags
+  logic [4:0] FmaFlg, CvtFlg, DivFlg, CmpFlg;  // Outputted flags
   logic            AnsNaN, ResNaN, NaNGood;
   logic            Xs, Ys, Zs;                 // sign of the inputs
   logic [P.NE-1:0] Xe, Ye, Ze;                 // exponent of the inputs
@@ -141,10 +141,10 @@ module testbench_fp;
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
 
-  // select tests relevent to the specified configuration
+  // select tests relevant to the specified configuration
   //    cvtint - test integer conversion unit (fcvtint)
   //    cvtfp  - test floating-point conversion unit (fcvtfp)
-  //    cmp    - test comparison unit's LT, LE, EQ opperations (fcmp)
+  //    cmp    - test comparison unit's LT, LE, EQ operations (fcmp)
   //    add    - test addition
   //    sub    - test subtraction
   //    div    - test division
@@ -157,7 +157,7 @@ module testbench_fp;
     // $display("This simulation for TEST is %s", TEST);
     // $display("This simulation for TEST is of the operand size of %s", TEST_SIZE);
 
-    if (P.Q_SUPPORTED & (TEST_SIZE == "QP" | TEST_SIZE == "all")) begin // if Quad percision is supported
+    if (P.Q_SUPPORTED & (TEST_SIZE == "QP" | TEST_SIZE == "all")) begin // if Quad precision is supported
       if (TEST === "cvtint" | TEST === "all") begin  // if testing integer conversion
         // add the 128-bit cvtint tests to the to-be-tested list
         Tests = {Tests, f128rv32cvtint};
@@ -359,7 +359,7 @@ module testbench_fp;
           end
         end
       end
-      if (TEST === "cmp" | TEST === "all") begin // if comparisions are being tested
+      if (TEST === "cmp" | TEST === "all") begin // if comparisons are being tested
         // add the correct tests/op-ctrls/unit/fmt to their lists
         Tests = {Tests, f64cmp};
         OpCtrl = {OpCtrl, `EQ_OPCTRL, `LE_OPCTRL, `LT_OPCTRL};
@@ -470,7 +470,7 @@ module testbench_fp;
           end
         end
       end
-      if (TEST === "cmp" | TEST === "all") begin // if comparision is being tested
+      if (TEST === "cmp" | TEST === "all") begin // if comparison is being tested
         // add the correct tests/op-ctrls/unit/fmt to their lists
         Tests = {Tests, f32cmp};
         OpCtrl = {OpCtrl, `EQ_OPCTRL, `LE_OPCTRL, `LT_OPCTRL};
@@ -563,7 +563,7 @@ module testbench_fp;
           end
         end
       end
-      if (TEST === "cmp" | TEST === "all") begin // if comparisions are being tested
+      if (TEST === "cmp" | TEST === "all") begin // if comparisons are being tested
         // add the correct tests/op-ctrls/unit/fmt to their lists
         Tests = {Tests, f16cmp};
         OpCtrl = {OpCtrl, `EQ_OPCTRL, `LE_OPCTRL, `LT_OPCTRL};
@@ -904,8 +904,8 @@ module testbench_fp;
   // check results on falling edge of clk
   always @(negedge clk) begin
     // check if the NaN value is good. IEEE754-2019 sections 6.3 and 6.2.3 specify:
-    //    - the sign of the NaN does not matter for the opperations being tested
-    //    - when 2 or more NaNs are inputed the NaN that is propigated doesn't matter
+    //    - the sign of the NaN does not matter for the operations being tested
+    //    - when 2 or more NaNs are inputted the NaN that is propagated doesn't matter
     if (UnitVal !== `CVTFPUNIT & UnitVal !== `CVTINTUNIT)
       case (FmtVal)
         2'b11: NaNGood = (((P.IEEE754==0)&AnsNaN&(Res === {1'b0, {P.Q_NE+1{1'b1}}, {P.Q_NF-1{1'b0}}})) |
@@ -1275,7 +1275,7 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
       `CVTINTUNIT:
         case (Fmt)
           2'b11: begin // quad
-            // {is the integer a long, is the opperation to an integer}
+            // {is the integer a long, is the operation to an integer}
             casez ({OpCtrl[2:1]})
               2'b11: begin // long -> quad
                 X = {P.Q_LEN{1'bx}};
@@ -1327,7 +1327,7 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
             endcase
           end
           2'b00: if (P.F_SUPPORTED) begin // single
-            // {is the integer a long, is the opperation to an integer}
+            // {is the integer a long, is the operation to an integer}
             casez ({OpCtrl[2:1]})
               2'b11: begin // long -> single
                 X = {P.Q_LEN{1'bx}};
@@ -1353,7 +1353,7 @@ module readvectors import cvw::*; #(parameter cvw_t P) (
             endcase
           end
           2'b10: begin // half
-            // {is the integer a long, is the opperation to an integer}
+            // {is the integer a long, is the operation to an integer}
             casez ({OpCtrl[2:1]})
               2'b11: begin // long -> half
                 X = {P.Q_LEN{1'bx}};
