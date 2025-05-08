@@ -12,7 +12,7 @@ MEMFILES  := $(addsuffix .memfile, $(ELFS))
 
 all: $(OBJDUMPS) $(MEMFILES)
 
-# Create dissassembly
+# Create disassembly
 %.elf.objdump: %.elf
 	riscv64-unknown-elf-objdump -S -D $< > $@
 	extractFunctionRadix.sh $@

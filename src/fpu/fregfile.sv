@@ -30,7 +30,7 @@
 module fregfile #(parameter FLEN) (
   input logic              clk, reset,
   input logic              we4,             // write enable
-  input logic [4:0]        a1, a2, a3, a4,  // adresses
+  input logic [4:0]        a1, a2, a3, a4,  // addresses
   input logic [FLEN-1:0]   wd4,             // write data
   output logic [FLEN-1:0]  rd1, rd2, rd3    // read data
 );

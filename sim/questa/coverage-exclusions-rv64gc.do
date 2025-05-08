@@ -197,7 +197,7 @@ coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$lin
 set line [GetLineNum ${SRC}/mmu/pmachecker.sv "exclusion-tag: unused-tim"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4
-set line [GetLineNum ${SRC}/mmu/pmachecker.sv "exclusion-tag: unused-cachable"]
+set line [GetLineNum ${SRC}/mmu/pmachecker.sv "exclusion-tag: unused-cacheable"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2
 set line [GetLineNum ${SRC}/mmu/pmachecker.sv "exclusion-tag: unused-idempotent"]
@@ -440,7 +440,7 @@ coverage exclude -scope /dut/core/hzu -linerange [GetLineNum ${SRC}/hazard/hazar
 # Privileged
 ####################
 
-# Instruction Misaligned never asserted because compresssed instructions are accepted
+# Instruction Misaligned never asserted because compressed instructions are accepted
 coverage exclude -scope /dut/core/priv/priv/trap -linerange [GetLineNum ${SRC}/privileged/trap.sv "assign ExceptionM"] -item e 1 -fecexprrow 2
 
 # Attempting to access fflags, frm, fcsr with mstatus.FS = 0 traps, so checking for (STATUS_FS != 2'b00)

@@ -78,7 +78,7 @@ module div import cvw::*;  #(parameter cvw_t P) (
     assign DinE = ForwardedSrcBE;      
     end   
 
-  // Extract sign bits and check fo division by zero
+  // Extract sign bits and check for division by zero
   assign SignDE = DivSignedE & DinE[P.XLEN-1]; 
   assign SignXE = DivSignedE & XinE[P.XLEN-1];
   assign NegQE = SignDE ^ SignXE;

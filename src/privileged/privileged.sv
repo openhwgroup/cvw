@@ -51,7 +51,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic              DCacheStallM,                                   // D cache stalled
   input  logic              BPDirWrongM,                                // branch predictor guessed wrong direction
   input  logic              BTAWrongM,                                      // branch predictor guessed wrong target
-  input  logic              RASPredPCWrongM,                                // return adddress stack guessed wrong target
+  input  logic              RASPredPCWrongM,                                // return address stack guessed wrong target
   input  logic              IClassWrongM,                                   // branch predictor guessed wrong instruction class
   input  logic              BPWrongM,                                       // branch predictor is wrong
   input  logic [3:0]        IClassM,                                    // actual instruction class
@@ -113,7 +113,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   logic [11:0]              MIP_REGW, MIE_REGW;                             // interrupt pending and enable bits
   logic [1:0]               NextPrivilegeModeM;                             // next privilege mode based on trap or return
   logic                     DelegateM;                                      // trap should be delegated
-  logic                     InterruptM;                                     // interrupt occuring
+  logic                     InterruptM;                                     // interrupt occurring
   logic                     ExceptionM;                                     // Memory stage instruction caused a fault
   logic                     HPTWInstrAccessFaultM;                          // Hardware page table access fault while fetching instruction PTE
   logic                     HPTWInstrPageFaultM;                            // Hardware page table page fault while fetching instruction PTE

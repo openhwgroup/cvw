@@ -62,7 +62,7 @@ case "$FAMILY" in
         SPIKE_PACKAGES+=(dtc boost-regex boost-system)
         VERILATOR_PACKAGES+=(gperftools mold)
         BUILDROOT_PACKAGES+=(ncurses ncurses-base ncurses-libs ncurses-devel gcc-gfortran) # gcc-gfortran is only needed for compiling spec benchmarks on buildroot linux
-        # Extra packages not availale in rhel8, nice for Verilator
+        # Extra packages not available in rhel8, nice for Verilator
         if (( RHEL_VERSION >= 9 )); then
             VERILATOR_PACKAGES+=(perl-doc)
         fi

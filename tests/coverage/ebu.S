@@ -24,7 +24,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-// load code to initalize stack, handle interrupts, terminate
+// load code to initialize stack, handle interrupts, terminate
 
 #include "WALLY-init-lib.h"
 
@@ -183,7 +183,7 @@ pagetable:
     .8byte 0x0000000020014C0F  # for VA starting at 80200000 (misaligned megapage)
     .8byte 0x0000000020005001  # for VA starting at 80400000 (bad PBMT pages)
     .8byte 0x4000000020004C01  # for VA starting at 80600000 (bad entry: nonleaf PTE can't have PBMT != 0)
-    .8byte 0x0000000020005401  # for VA starting at 80800000 (testing rwx permissiosn with cbom/cboz)
+    .8byte 0x0000000020005401  # for VA starting at 80800000 (testing rwx permissions with cbom/cboz)
     .8byte 0x0000000020005801  # for VA starting at 80A00000 (pointer to NAPOT 64 KiB pages like at 80000000)
     .8byte 0x0000000020004C01
     .8byte 0x0000000020004C01

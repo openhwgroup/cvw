@@ -33,7 +33,7 @@ int main(void) {
         int tmp = Y[i];
         printf("Y[%d] = %d\n", i, tmp);
     }
-    // verifyDouble doesn't work exaclty because of rounding, so check for almost equal
+    // verifyDouble doesn't work exactly because of rounding, so check for almost equal
     for (int i=0; i<15; i++) {
         if (fabs(Y[i] - Yexpected[i]) > 1e-10) {
             return 1;

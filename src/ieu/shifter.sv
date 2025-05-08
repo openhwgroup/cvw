@@ -60,7 +60,7 @@ module shifter import cvw::*; #(parameter cvw_t P) (
     if (P.ZBB_SUPPORTED | P.ZBKB_SUPPORTED) begin: rotfunnel64 // rv64 shifter with rotates
       // shifter rotate source select mux
       logic [P.XLEN-1:0]   RotA;                          // rotate source
-      mux2 #(P.XLEN) rotmux(A, {A[31:0], A[31:0]}, W64, RotA); // W64 rotatons
+      mux2 #(P.XLEN) rotmux(A, {A[31:0], A[31:0]}, W64, RotA); // W64 rotations
       always_comb  // funnel mux
         case ({Right, Rotate})
           2'b00: Z = {A64[63:0],{63'b0}};

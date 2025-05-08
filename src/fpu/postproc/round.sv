@@ -40,13 +40,13 @@ module round import cvw::*;  #(parameter cvw_t P) (
   // divsqrt
   input  logic                     DivOp,              // is a division operation being done
   input  logic                     DivSticky,          // divsqrt sticky bit
-  input  logic [P.NE+1:0]          Ue,                 // the divsqrt calculated expoent
+  input  logic [P.NE+1:0]          Ue,                 // the divsqrt calculated exponent
   // cvt
   input  logic                     CvtOp,              // is a convert operation being done
   input  logic                     ToInt,              // is the cvt op a cvt to integer
   input  logic                     CvtResSubnormUf,    // is the cvt result subnormal or underflow
   input  logic                     CvtResUf,           // does the cvt result underflow
-  input  logic [P.NE:0]            CvtCe,              // the cvt calculated expoent
+  input  logic [P.NE:0]            CvtCe,              // the cvt calculated exponent
   // outputs
   output logic [P.NE+1:0]          Me,                 // normalied fraction
   output logic                     UfPlus1,            // do you add one to the result if given an unbounded exponent
@@ -172,7 +172,7 @@ module round import cvw::*;  #(parameter cvw_t P) (
                                                 (|Mf[P.NORMSHIFTSZ-P.XLEN-2:P.NORMSHIFTSZ-P.Q_NF-1]&(~(OutFmt==P.Q_FMT)|IntRes)) |
                                                 (|Mf[P.NORMSHIFTSZ-P.Q_NF-2:0]);
       // 3: NF   > NF1  > XLEN
-      // The extra XLEN bit will be ored later when caculating the final sticky bit - the ufplus1 not needed for integer
+      // The extra XLEN bit will be ored later when calculating the final sticky bit - the ufplus1 not needed for integer
       if (XLENPOS == 3) assign NormSticky = (|Mf[P.NORMSHIFTSZ-P.H_NF-2:P.NORMSHIFTSZ-P.S_NF-1]&FpRes&(OutFmt==P.H_FMT)) |
                                                 (|Mf[P.NORMSHIFTSZ-P.S_NF-2:P.NORMSHIFTSZ-P.XLEN-1]&FpRes&((OutFmt==P.S_FMT)|(OutFmt==P.H_FMT))) |
                                                 (|Mf[P.NORMSHIFTSZ-P.XLEN-2:P.NORMSHIFTSZ-P.D_NF-1]&((OutFmt==P.S_FMT)|(OutFmt==P.H_FMT)|IntRes)) |

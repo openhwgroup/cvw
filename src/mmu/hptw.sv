@@ -200,8 +200,8 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
     assign InvalidOp = DTLBWalk ? (InvalidRead | InvalidWrite) : ~Executable;
     assign OtherPageFault = ImproperPrivilege | InvalidOp | UpperBitsUnequalD | Misaligned | ~Valid;
 
-    // hptw needs to know if there is a Dirty or Access fault occuring on this
-    // memory access.  If there is the PTE needs to be updated seting Access
+    // hptw needs to know if there is a Dirty or Access fault occurring on this
+    // memory access.  If there is the PTE needs to be updated setting Access
     // and possibly also Dirty.  Dirty is set if the operation is a store/amo.
     // However any other fault should not cause the update, and updates are in software when ENVCFG_ADUE = 0
     assign HPTWUpdateDA = ValidLeafPTE & (~Accessed | SetDirty) & ENVCFG_ADUE & ~OtherPageFault;   
@@ -316,7 +316,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   // HTPW address/data/control muxing
 
   // Once the walk is done and it is time to update the TLB we need to switch back 
-  // to the orignal data virtual address.
+  // to the original data virtual address.
   assign SelHPTWAdr = SelHPTW & ~(DTLBWriteM | ITLBWriteF);
 
   // multiplex the outputs to LSU

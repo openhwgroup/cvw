@@ -24,7 +24,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-// load code to initalize stack, handle interrupts, terminate
+// load code to initialize stack, handle interrupts, terminate
 #include "WALLY-init-lib.h"
 
 main:
@@ -97,7 +97,7 @@ main:
     csrw menvcfg, x1
     csrw senvcfg, x1
     li a0, 0
-    ecall # swtich to user mode
+    ecall # switch to user mode
     cbo.inval (x2)
     cbo.clean (x3)
     cbo.flush (x1)

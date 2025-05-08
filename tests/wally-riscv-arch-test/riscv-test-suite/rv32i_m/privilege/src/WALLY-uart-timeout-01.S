@@ -87,7 +87,7 @@ TEST_STACK_AND_DATA
 
         // in your isa
         // first claim the plic's uart interrupt by reading the claim register corresponding to 10 on context 0.
-        // then you'll read all entires in the fifo. 
+        // then you'll read all entries in the fifo. 
         // then you'll write the completed plic register to 10 on context 0.
         // claim and completed have the same address.
         // then you'll return by mret.

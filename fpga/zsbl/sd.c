@@ -93,7 +93,7 @@ uint64_t sd_cmd(uint8_t cmd, uint32_t arg, uint8_t crc) {
   }
 
   // Make interrupt pending after response fifo receives the correct
-  // response length.  Probably unecessary so let's wait and see what
+  // response length.  Probably unnecessary so let's wait and see what
   // happens.
   // write_reg(SPI_RXMARK, response_len);
 

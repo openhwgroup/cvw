@@ -33,7 +33,7 @@ if __name__ == '__main__':
     parser.add_argument("-f", "--featuresweep", action='store_true', help = "Synthesize wally with features turned off progressively to visualize critical path")
 
     parser.add_argument("-v", "--version", choices=allConfigs, help = "Configuration of wally")
-    parser.add_argument("-t", "--targetfreq", type=int, help = "Target frequncy")
+    parser.add_argument("-t", "--targetfreq", type=int, help = "Target frequency")
     parser.add_argument("-e", "--tech", choices=techs, help = "Technology")
     parser.add_argument("-o", "--maxopt", action='store_true', help = "Turn on MAXOPT")
     parser.add_argument("-r", "--usesram", action='store_true', help = "Use SRAM modules")

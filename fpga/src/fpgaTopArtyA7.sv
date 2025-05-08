@@ -223,7 +223,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
   // the ddr3 mig7 requires 2 input clocks 
   // 1. sys clock which is 167 MHz = ddr3 clock / 4
   // 2. a second clock which is 200 MHz
-  // Wally requires a slower clock.  At this point I don't know what speed the atrix 7 will run so I'm initially targetting 25Mhz.
+  // Wally requires a slower clock.  At this point I don't know what speed the atrix 7 will run so I'm initially targeting 25Mhz.
   // the mig will output a clock at 1/4 the sys clock or 41Mhz which might work with wally so we may be able to simplify the logic a lot.
   mmcm mmcm(.clk_out1(clk167),
                      .clk_out2(clk200),
@@ -486,7 +486,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
     localparam [31:0] RVVI_INIT_TIME_OUT = 32'd100000000;
     localparam [31:0] RVVI_PACKET_DELAY = 32'd400;
     
-    // pipeline controlls
+    // pipeline controls
     logic                                             StallE, StallM, StallW, FlushE, FlushM, FlushW;
     // required
     logic [P.XLEN-1:0]                                PCM;
