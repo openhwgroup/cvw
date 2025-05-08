@@ -484,10 +484,10 @@ def selectTests(args, sims, coverStr):
         addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/vm_sv32", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
         # addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/pmp32", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1) TODO: Add when working in lockstep
         # addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/pmp", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1) TODO: Add when working in lockstep
-    # run riscv-arch-test tests in functional coverage mode
+    # run cvw-riscv-arch-test tests in functional coverage mode
     if args.fcov_act:
-        addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
-        addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
+        addTestsByDir(f"{WALLY}/tests/riscof/work/cvw-riscv-arch-test/rv32i", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
+        addTestsByDir(f"{WALLY}/tests/riscof/work/cvw-riscv-arch-test/rv64i", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
     # run branch predictor tests
     if args.branch:
         addTests(bpredtests, defaultsim, coverStr, configs)

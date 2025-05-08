@@ -830,14 +830,14 @@ def main():
     #############################################
     #   DELETE REPOSITORY OF PREVIOUS NIGHTLYS  #
     #############################################
-    threshold = time.time() - 86400*1
+    threshold = time.time() - 86400*7 # 1 week
 
     for log_dir in os.listdir(args.path):
         try:
             cvw_dir = os.path.join(args.path,log_dir,"cvw")
             cvw_mtime = os.stat(cvw_dir).st_mtime
             if cvw_mtime < threshold:
-                    logger.info(f"Found {cvw_dir} older than 1 day, removing")
+                    logger.info(f"Found {cvw_dir} older than 1 week, removing")
                     shutil.rmtree(cvw_dir)
         except Exception as e:
             if os.path.exists(cvw_dir):
