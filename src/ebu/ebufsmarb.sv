@@ -70,7 +70,7 @@ module ebufsmarb (
     case (CurrState) 
       IDLE:      if (both)                                      NextState = ARBITRATE; 
                  else                                           NextState = IDLE;
-      ARBITRATE: if (HREADY & FinalBeatD & ~(LSUReq & IFUReq))  NextState = IDLE;
+      ARBITRATE: if (HREADY & FinalBeatD & ~both)               NextState = IDLE;
                  else                                           NextState = ARBITRATE;
       default:                                                  NextState = IDLE;
     endcase
@@ -80,7 +80,7 @@ module ebufsmarb (
   // Controller 0 (IFU)
   assign IFUSave = CurrState == IDLE & both;
   assign IFURestore = CurrState == ARBITRATE;
-  assign IFUDisable = CurrState == ARBITRATE;
+  assign IFUDisable = IFURestore;
   assign IFUSelect = (NextState == ARBITRATE) ? 1'b0 : IFUReq;
   // Controller 1 (LSU)
   // When both the IFU and LSU request at the same time, the FSM will go into the arbitrate state.
@@ -89,7 +89,8 @@ module ebufsmarb (
   // This is necessary because the pipeline is stalled for the entire duration of both transactions,
   // and the LSU memory request will stil be active.
   flopr #(1) ifureqreg(HCLK, ~HRESETn, IFUReq, IFUReqDelay);
-  assign LSUDisable = (CurrState == ARBITRATE) ? 1'b0 : (IFUReqDelay & ~(HREADY & FinalBeatD));
+  //assign LSUDisable = (CurrState != ARBITRATE) & (IFUReqDelay & ~(HREADY & FinalBeatD));
+  assign LSUDisable = (CurrState != ARBITRATE) & IFUReqDelay;
   assign LSUSelect = (NextState == ARBITRATE) ? 1'b1: LSUReq;
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
