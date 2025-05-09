@@ -145,6 +145,13 @@ ConcurrentICacheMissDTLBMiss:
     sw t1, 0(t0)    # write to page
     jalr ra, t0     # jump to page
 
+    sfence.vma
+
+    li t0, 0x18000000000
+    lw t1, 0(t0)    # read from page
+    sw t1, 0(t0)    # write to page
+    jalr ra, t0     # jump to page
+
     # jump to address for TLB miss to trigger HPTW to make access with DisableTranslation = 1, Translate = 0
     li t0, 0x80805000
     jalr ra, t0
@@ -264,6 +271,10 @@ ConcurrentICacheMissDTLBMiss:
     cbo.zero (t0)
     cbo.clean (t0)
 
+    # attempt read from read disabled, execute enabled PTE with MXR set
+    li t0, 0x81600000
+    lw t1, 0(t0)    # read from page
+
     # clear mstatus.MXR
     li a0, 3
     ecall
@@ -344,7 +355,7 @@ pagetable:
     .8byte 0x20004401  # VA 0x00000000-0x7F_FFFFFFFF: PTE at 0x80011000 01 valid
     .8byte 0x00000000000010CF # misaligned terapage at 0x80_00000000
     .8byte 0x00000000000000CF # access fault terapage at 0x100_00000000
-    .8byte 0x4000000020004401 # Bad PBMT at VA 0x180_0000000
+    .8byte 0x4000000020004401 # Bad PBMT at VA 0x180_00000000
 
 # next page table at 0x80011000
 .align 12
@@ -373,7 +384,7 @@ SpecialPage:
     .8byte 0x0000000000004C01  # for VA starting at 81000000 (nonleaf pointing to unimplemented memory causes access fault)
     .8byte 0x4000000020004C01  # for VA starting at 81200000 (nonleaf with PBMT nonzero causes page fault)
     .8byte 0x00000000000000CF  # for VA starting at 81400000 (megapage with access fault)
-    .8byte 0x0000000020004CC1
+    .8byte 0x0000000020004C09  # for VA starting at 81600000 (executable and not readable)
     .8byte 0x0000000020004CC1
     .8byte 0x0000000020004CC1
     .8byte 0x0000000020004CC1
