@@ -64,6 +64,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   output logic [31:0]          InstrM,                                   // The decoded instruction in Memory stage
   output logic [31:0]          InstrOrigM,                               // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction MTVAL
   output logic [P.XLEN-1:0]    PCM,                                      // Memory stage instruction address
+  output logic [P.XLEN-1:0]    PCSpillM,                                 // Memory stage instruction address
   // branch predictor
   output logic [3:0]           IClassM,                              // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
   output logic                 BPDirWrongM,                          // Prediction direction is wrong
@@ -149,13 +150,23 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   if(P.ZCA_SUPPORTED) begin : Spill
+    logic [P.XLEN-1:0] PCSpillD, PCSpillE;
+    logic [P.XLEN-1:0] PCIncrM;
+    logic              SelSpillF, SelSpillD, SelSpillE, SelSpillM;
     spill #(P) spill(.clk, .reset, .StallF, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF,  .CacheableF, 
-      .IFUCacheBusStallF, .ITLBMissOrUpdateAF, .PCSpillNextF, .PCSpillF, .SelSpillNextF, .PostSpillInstrRawF, .CompressedF);
+      .IFUCacheBusStallF, .ITLBMissOrUpdateAF, .PCSpillNextF, .PCSpillF, .SelSpillNextF, .SelSpillF, .PostSpillInstrRawF, .CompressedF);
+    flopenr #(1) SpillDReg(clk, reset, ~StallD, SelSpillF, SelSpillD);
+    flopenr #(1) SpillEReg(clk, reset, ~StallE, SelSpillD, SelSpillE);
+    flopenr #(1) SpillMReg(clk, reset, ~StallM, SelSpillE, SelSpillM);
+    assign PCIncrM = PCM + 'd2;
+    mux2 #(P.XLEN) pcspillmmux(PCM, PCIncrM, SelSpillM, PCSpillM);
+
   end else begin : NoSpill
     assign PCSpillNextF = PCNextF;
     assign PCSpillF = PCF;
     assign PostSpillInstrRawF = InstrRawF;
     assign {SelSpillNextF, CompressedF} = '0;
+    assign PCSpillM = PCM;
   end
 
   ////////////////////////////////////////////////////////////////////////////////////////////////

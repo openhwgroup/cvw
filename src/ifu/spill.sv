@@ -44,6 +44,7 @@ module spill import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0] PCSpillNextF,      // The next PCF for one of the two memory addresses of the spill
   output logic [P.XLEN-1:0] PCSpillF,          // PCF for one of the two memory addresses of the spill
   output logic              SelSpillNextF,     // During the transition between the two spill operations, the IFU should stall the pipeline
+  output logic              SelSpillF,         // Select incremented PC on a spill
   output logic [31:0]       PostSpillInstrRawF,// The final 32 bit instruction after merging the two spilled fetches into 1 instruction
   output logic              CompressedF);      // The fetched instruction is compressed
 
@@ -54,7 +55,6 @@ module spill import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0] PCPlus2NextF, PCPlus2F;         
   logic              TakeSpillF;
   logic              SpillF;
-  logic              SelSpillF;
   logic              SpillSaveF;
   logic [15:0]       InstrFirstHalfF;
   logic              EarlyCompressedF;
