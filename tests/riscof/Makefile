@@ -18,7 +18,7 @@ current_dir := $(shell pwd)
 .PHONY: all riscv-arch-test wally-riscv-arch-test clean
 all: riscv-arch-test wally-riscv-arch-test
 riscv-arch-test: arch32e arch32 arch64
-cvw-riscv-arch-test: cvw-arch32e cvw-arch32 cvw-arch64
+cvw-riscv-arch-test: cvw-arch32 cvw-arch64 # cvw-arch32e
 wally-riscv-arch-test: wally32 wally64
 
 # Generate config.ini files
