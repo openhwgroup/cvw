@@ -63,7 +63,7 @@ RVTEST_CODE_BEGIN
 
 .endm
 
-// Code to trigger traps goes here so we have consistent mtvals for instruction adresses
+// Code to trigger traps goes here so we have consistent mtvals for instruction addresses
 // Even if more tests are added.  
 .macro CAUSE_TRAP_TRIGGERS
 j end_trap_triggers
@@ -81,10 +81,10 @@ cause_instr_addr_misaligned:
     ret
 
 cause_instr_access:
-    sw ra, -4(sp) // push the return adress ontot the stack
+    sw ra, -4(sp) // push the return address ontot the stack
     addi sp, sp, -4
     jalr zero // cause instruction access trap (address zero is an address with no memory)
-    lw ra, 0(sp) // pop return adress back from the stack
+    lw ra, 0(sp) // pop return address back from the stack
     addi sp, sp, 4
     ret
 
@@ -270,7 +270,7 @@ end_trap_triggers:
 .if (\MODE\() == m)
     csrrw tp, \MODE\()tvec, ra  // tp reserved for "default" trap handler address that needs to be restored before halting this test.
 .else
-    csrw \MODE\()tvec, ra // we only neet save the machine trap handler and this if statement ensures it isn't overwritten
+    csrw \MODE\()tvec, ra // we only need save the machine trap handler and this if statement ensures it isn't overwritten
 .endif
 
     li a0, 0
@@ -307,8 +307,8 @@ end_trap_triggers:
     //       0x0 : defaults to next instruction on the same page the trap was called on.
     //
     //   a2 (x12): 
-    //       Pagetype of the current address VPN before changing privilge mode
-    //       Used so that we can know how many bits of the adress are the offset.
+    //       Pagetype of the current address VPN before changing privilege mode
+    //       Used so that we can know how many bits of the address are the offset.
     //       Ignored if a1 == 0x0
     //       0: Kilopage
     //       1: Megapage
@@ -318,7 +318,7 @@ end_trap_triggers:
 
 .align 6
 trap_handler_\MODE\():
-    j trap_unvectored_\MODE\() // for the unvectored implimentation: jump past this table of addresses into the actual handler
+    j trap_unvectored_\MODE\() // for the unvectored implementation: jump past this table of addresses into the actual handler
     // ASSUMES that a cause value of 0 for an interrupt is unimplemented
     // otherwise, a vectored interrupt handler should jump to trap_handler_\MODE\() + 4 * Interrupt cause code
     // No matter the value of VECTORED, exceptions (not interrupts) are handled in an unvecotred way
@@ -336,10 +336,10 @@ trap_handler_\MODE\():
     // 12 through >=16 are reserved or designated for platform use
 
 trap_unvectored_\MODE\():
-    csrrw sp, \MODE\()scratch, sp // swap sp and scratch so we can use the scratch stack in the trap hanler without messing up sp's value or the stack itself.
+    csrrw sp, \MODE\()scratch, sp // swap sp and scratch so we can use the scratch stack in the trap handler without messing up sp's value or the stack itself.
     // NOTE: this means that nested traps will be screwed up but they shouldn't happen in any of these tests
 
-trap_stack_saved_\MODE\(): // jump here after handling vectored interupt since we already switch sp and scratch there
+trap_stack_saved_\MODE\(): // jump here after handling vectored interrupt since we already switch sp and scratch there
     // save registers on stack before using
     sw ra, -4(sp)       
     sw t0, -8(sp)
@@ -505,37 +505,37 @@ breakpt_\MODE\():
 // note: does not mess up any registers, saves and restores them to the stack instead.
 
 s_soft_vector_\MODE\():
-    csrrw sp, \MODE\()scratch, sp // swap sp and scratch so we can use the scratch stack in the trap hanler without messing up sp's value or the stack itself.
+    csrrw sp, \MODE\()scratch, sp // swap sp and scratch so we can use the scratch stack in the trap handler without messing up sp's value or the stack itself.
     sw t0, -4(sp) // put t0 on the scratch stack before messing with it
     li t0, 0x7EC01 // write 0x7ec01 (for "VEC"tored and 01 for the interrupt code)
     j vectored_int_end_\MODE\()
 
 m_soft_vector_\MODE\():
-    csrrw sp, \MODE\()scratch, sp // swap sp and scratch so we can use the scratch stack in the trap hanler without messing up sp's value or the stack itself.
+    csrrw sp, \MODE\()scratch, sp // swap sp and scratch so we can use the scratch stack in the trap handler without messing up sp's value or the stack itself.
     sw t0, -4(sp) // put t0 on the scratch stack before messing with it
     li t0, 0x7EC03 // write 0x7ec03 (for "VEC"tored and 03 for the interrupt code)
     j vectored_int_end_\MODE\()
 
 s_time_vector_\MODE\():
-    csrrw sp, \MODE\()scratch, sp // swap sp and scratch so we can use the scratch stack in the trap hanler without messing up sp's value or the stack itself.
+    csrrw sp, \MODE\()scratch, sp // swap sp and scratch so we can use the scratch stack in the trap handler without messing up sp's value or the stack itself.
     sw t0, -4(sp) // put t0 on the scratch stack before messing with it
     li t0, 0x7EC05 // write 0x7ec05 (for "VEC"tored and 05 for the interrupt code)
     j vectored_int_end_\MODE\()
 
 m_time_vector_\MODE\():
-    csrrw sp, \MODE\()scratch, sp // swap sp and scratch so we can use the scratch stack in the trap hanler without messing up sp's value or the stack itself.
+    csrrw sp, \MODE\()scratch, sp // swap sp and scratch so we can use the scratch stack in the trap handler without messing up sp's value or the stack itself.
     sw t0, -4(sp) // put t0 on the scratch stack before messing with it
     li t0, 0x7EC07 // write 0x7ec07 (for "VEC"tored and 07 for the interrupt code)
     j vectored_int_end_\MODE\()
 
 s_ext_vector_\MODE\():
-    csrrw sp, \MODE\()scratch, sp // swap sp and scratch so we can use the scratch stack in the trap hanler without messing up sp's value or the stack itself.
+    csrrw sp, \MODE\()scratch, sp // swap sp and scratch so we can use the scratch stack in the trap handler without messing up sp's value or the stack itself.
     sw t0, -4(sp) // put t0 on the scratch stack before messing with it
     li t0, 0x7EC09 // write 0x7ec09 (for "VEC"tored and 08 for the interrupt code)
     j vectored_int_end_\MODE\()
 
 m_ext_vector_\MODE\():
-    csrrw sp, \MODE\()scratch, sp // swap sp and scratch so we can use the scratch stack in the trap hanler without messing up sp's value or the stack itself.
+    csrrw sp, \MODE\()scratch, sp // swap sp and scratch so we can use the scratch stack in the trap handler without messing up sp's value or the stack itself.
     sw t0, -4(sp) // put t0 on the scratch stack before messing with it
     li t0, 0x7EC0B // write 0x7ec0B (for "VEC"tored and 0B for the interrupt code)
     j vectored_int_end_\MODE\()
@@ -668,11 +668,11 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
 //   read32_test        : Read 32 bitsfrom address                  : 0x4, 0x5, or 0xd, then 0xbad              : readvalue in hex
 //   read16_test        : Read 16 bitsfrom address                  : 0x4, 0x5, or 0xd, then 0xbad              : readvalue in hex
 //   read08_test        : Read 8 bitsfrom address                   : 0x4, 0x5, or 0xd, then 0xbad              : readvalue in hex
-//   executable_test    : test executable on virtual page           : 0x0, 0x1, or 0xc, then 0xbad              : value of t2 modified by exectuion code (usually 0x111)
+//   executable_test    : test executable on virtual page           : 0x0, 0x1, or 0xc, then 0xbad              : value of t2 modified by execution code (usually 0x111)
 //   terminate_test     : terminate tests                           : mcause value for fault                    : from M 0xb, from S 0x9, from U 0x8  
 //   goto_baremetal     : satp.MODE = bare metal                    : None                                      : None 
 //   goto_sv32          : satp.MODE = sv32                          : None                                      : None 
-//   goto_m_mode        : go to mahcine mode                        : mcause value for fault                    : from M 0xb, from S 0x9, from U 0x8  
+//   goto_m_mode        : go to machine mode                        : mcause value for fault                    : from M 0xb, from S 0x9, from U 0x8  
 //   goto_s_mode        : go to supervisor mode                     : mcause value for fault                    : from M 0xb, from S 0x9, from U 0x8
 //   goto_u_mode        : go to user mode                           : mcause value for fault                    : from M 0xb, from S 0x9, from U 0x8 
 //   write_read_csr     : write to specified CSR                    : old CSR value, 0x2, depending on perms    : value written to CSR
@@ -823,7 +823,7 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     //      0x2, then
     //      0x11 *** consider changing to something more meaningful
     // Fault outputs:
-    //      0xBAD *** consider changing this one as well. in general, do we need the branching if it hould cause an illegal instruction fault? 
+    //      0xBAD *** consider changing this one as well. in general, do we need the branching if it should cause an illegal instruction fault? 
     csrr t4, \CSR
     csrwi \CSR\(), 0xA // Attempt to write a 'random' value to the CSR
     csrr t5, \CSR
@@ -840,7 +840,7 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
 
 .macro EXECUTE_AT_ADDRESS ADDR
     // Execute the code already written to ADDR, returning the value in t2. 
-    // *** Note: this test itself doesn't write the code to ADDR because it might be callled at a point where we dont have write access to ADDR
+    // *** Note: this test itself doesn't write the code to ADDR because it might be called at a point where we dont have write access to ADDR
     // Assumes the code modifies t2, usually to become 0x111. 
     // Sample code:  0x11100393 (li t2, 0x111), 0x00008067 (ret)
     // Success outputs:
@@ -939,13 +939,13 @@ test_loop:
 //   read32_test         : Read 32 bits from address                  : 0xd, 0xbad             : readvalue in hex
 //   read16_test         : Read 16 bits from address                  : 0xd, 0xbad             : readvalue in hex
 //   read08_test         : Read 8 bits from address                   : 0xd, 0xbad             : readvalue in hex
-//   executable_test     : test executable on virtual page           : 0xc, 0xbad             : value of t2 modified by exectuion code (usually 0x111)
+//   executable_test     : test executable on virtual page           : 0xc, 0xbad             : value of t2 modified by execution code (usually 0x111)
 //   terminate_test      : terminate tests                           : mcause value for fault : from M 0xb, from S 0x9, from U 0x8  
 //   goto_baremetal      : satp.MODE = bare metal                    : None                   : None 
 //   goto_sv39           : satp.MODE = sv39                          : None                   : None 
 //   goto_sv48           : satp.MODE = sv48                          : None                   : None
 //   write_mxr_sum       : write sstatus.[19:18] = MXR, SUM bits     : None                   : None
-//   goto_m_mode         : go to mahcine mode                        : mcause value for fault : from M 0xb, from S 0x9, from U 0x8  
+//   goto_m_mode         : go to machine mode                        : mcause value for fault : from M 0xb, from S 0x9, from U 0x8  
 //   goto_s_mode         : go to supervisor mode                     : mcause value for fault : from M 0xb, from S 0x9, from U 0x8
 //   goto_u_mode         : go to user mode                           : mcause value for fault : from M 0xb, from S 0x9, from U 0x8 
 //   write_pmpcfg_x      : Write one of the pmpcfg csr's             : mstatuses?, 0xD        : readback of pmpcfg value

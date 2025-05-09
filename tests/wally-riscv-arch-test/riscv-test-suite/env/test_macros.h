@@ -7,7 +7,7 @@
     Arguments:
     _PAR: Register containing Physical Address
     _PR: Register containing Permissions for Leaf PTE. 
-        (Note: No-leaf PTE (if-any) has only valid permssion (pte.v) set)
+        (Note: No-leaf PTE (if-any) has only valid permission (pte.v) set)
     _TR0, _TR1, _TR2: Temporary registers used and modified by function
     VA: Virtual address 
     level: Level at which PTE would be setup

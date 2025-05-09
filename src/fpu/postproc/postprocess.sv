@@ -56,7 +56,7 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   input logic  [P.NE:0]                    CvtCe,               // the calculated exponent
   input logic                              CvtResSubnormUf,     // the convert result is subnormal or underflows
   input logic  [P.LOGCVTLEN-1:0]           CvtShiftAmt,         // how much to shift by
-  input logic                              ToInt,               // is fp->int (since it's writting to the integer register)
+  input logic                              ToInt,               // is fp->int (since it's writing to the integer register)
   input logic                              Zfa,                 // Zfa operation (fcvtmod.w.d)
   input logic  [P.CVTLEN-1:0]              CvtLzcIn,            // input to the Leading Zero Counter (without msb)
   input logic                              IntZero,             // is the integer input zero
@@ -77,7 +77,7 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   logic                        UfPlus1;              // do you add one (for determining underflow flag)
   logic [P.LOGNORMSHIFTSZ-1:0] ShiftAmt;             // normalization shift amount
   logic [P.NORMSHIFTSZ-1:0]    ShiftIn;              // input to normalization shift
-  logic [P.NORMSHIFTSZ-1:0]    Shifted;              // the ouput of the normalized shifter (before shift correction)
+  logic [P.NORMSHIFTSZ-1:0]    Shifted;              // the output of the normalized shifter (before shift correction)
   logic                        Plus1;                // add one to the final result?
   logic                        Overflow;             // overflow flag used to select results
   logic                        Invalid;              // invalid flag used to select results
@@ -87,14 +87,14 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   logic [P.NE+1:0]             FmaMe;                // exponent of the normalized sum
   logic                        FmaSZero;             // is the sum zero
   logic [P.NE+1:0]             NormSumExp;           // exponent of the normalized sum not taking into account Subnormal or zero results
-  logic                        FmaPreResultSubnorm;  // is the result subnormal - calculated before LZA corection
+  logic                        FmaPreResultSubnorm;  // is the result subnormal - calculated before LZA correction
   logic [$clog2(P.FMALEN+1)-1:0] FmaShiftAmt;          // normalization shift amount for fma
   // division signals
-  logic [P.LOGNORMSHIFTSZ-1:0] DivShiftAmt;          // divsqrt shif amount
-  logic [P.NE+1:0]             Ue;                   // divsqrt corrected exponent after corretion shift
+  logic [P.LOGNORMSHIFTSZ-1:0] DivShiftAmt;          // divsqrt shift amount
+  logic [P.NE+1:0]             Ue;                   // divsqrt corrected exponent after correction shift
   logic                        DivByZero;            // divide by zero flag
   logic                        DivResSubnorm;        // is the divsqrt result subnormal
-  logic                        DivSubnormShiftPos;   // is the divsqrt subnorm shift amout positive (not underflowed)
+  logic                        DivSubnormShiftPos;   // is the divsqrt subnorm shift amount positive (not underflowed)
   // conversion signals
   logic [P.CVTLEN+P.NF:0]      CvtShiftIn;           // number to be shifted for converter
   logic [1:0]                  CvtNegResMsbs;        // most significant bits of possibly negated int result
@@ -107,7 +107,7 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   logic                        Int64;                // is the integer 64 bits?
   logic                        Signed;               // is the operation with a signed integer?
   logic                        IntToFp;              // is the operation an int->fp conversion?
-  logic                        CvtOp;                // convertion operation
+  logic                        CvtOp;                // conversion operation
   logic                        FmaOp;                // fma operation
   logic                        DivOp;                // divider operation
   logic                        InfIn;                // are any of the inputs infinity
@@ -187,7 +187,7 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   // round to infinity
   // round to nearest max magnitude
 
-  // calulate result sign used in rounding unit
+  // calculate result sign used in rounding unit
   roundsign roundsign(.FmaOp, .DivOp, .CvtOp, .Sqrt, .FmaSs, .Xs, .Ys, .CvtCs, .Ms);
 
   round #(P) round(.OutFmt, .Frm, .FmaASticky, .Plus1, .PostProcSel, .CvtCe, .Ue,

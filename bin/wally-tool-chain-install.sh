@@ -236,9 +236,9 @@ pip install --upgrade pip && pip install --upgrade -r "$dir"/requirements.txt
 source "$RISCV"/riscv-python/bin/activate # reload python virtual environment
 echo -e "${SUCCESS_COLOR}Python environment successfully configured!${ENDC}"
 
-# Extra dependecies needed for older distros that don't have new enough versions available from package manager
+# Extra dependencies needed for older distros that don't have new enough versions available from package manager
 if (( RHEL_VERSION == 8 )) || (( UBUNTU_VERSION == 20 )); then
-    # Newer versin of glib required for QEMU.
+    # Newer version of glib required for QEMU.
     # Anything newer than this won't build on red hat 8
     STATUS="glib"
     if [ ! -e "$RISCV"/include/glib-2.0 ]; then
@@ -480,7 +480,7 @@ fi
 
 
 # Buildroot and Linux testvectors
-# Buildroot is used to boot a minimal versio of Linux on Wally.
+# Buildroot is used to boot a minimal version of Linux on Wally.
 # Testvectors are generated using QEMU.
 if [ ! "$no_buidroot" ]; then
     section_header "Installing Buildroot and Creating Linux testvectors"

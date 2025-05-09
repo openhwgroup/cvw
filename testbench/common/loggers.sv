@@ -127,8 +127,8 @@ module loggers import cvw::*; #(parameter cvw_t P,
       assign EndSample = EndSampleFirst & ~ EndSampleDelayed;
 
     end else begin
-      // default start condiction is reset
-      // default end condiction is end of test (DCacheFlushDone)
+      // default start condition is reset
+      // default end condition is end of test (DCacheFlushDone)
       //assign StartSampleFirst = reset;
       //flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
       //assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
@@ -222,7 +222,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
                          dut.core.lsu.bus.dcache.dcache.CMOpM == 4'b1000 ? "Z" :   // cbo.zero
                          dut.core.lsu.bus.dcache.dcache.CMOpM == 4'b0001 ? "V" :   // cbo.inval should just clear the valid and dirty bits
                          dut.core.lsu.bus.dcache.dcache.CMOpM == 4'b0010 ? "C" :   // cbo.clean should act like a read in terms of the lru, but clears the dirty bit
-                         dut.core.lsu.bus.dcache.dcache.CMOpM == 4'b0100 ? "L" :   // cbo.flush should just clear and the valid and drity bits
+                         dut.core.lsu.bus.dcache.dcache.CMOpM == 4'b0100 ? "L" :   // cbo.flush should just clear and the valid and dirty bits
                          "NULL";
     end
 

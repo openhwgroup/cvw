@@ -91,7 +91,7 @@ module ebu import cvw::*;  #(parameter cvw_t P) (
   assign HRESETn = ~reset;
 
   // if two requests come in at once pick one to select and save the others Address phase
-  // inputs.  Abritration scheme is LSU always goes first.
+  // inputs.  Arbitration scheme is LSU always goes first.
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // input stages and muxing for IFU and LSU

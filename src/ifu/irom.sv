@@ -40,7 +40,7 @@ module irom import cvw::*;  #(parameter cvw_t P) (
   logic [31:0]       RawIROMInstrF;
   logic [2:1]        AdrD;
 
-  // preload IROM with the FPGA bootloader by default so that it syntehsizes to something, avoiding having the IEU optimized away because instructions are all 0
+  // preload IROM with the FPGA bootloader by default so that it synthesizes to something, avoiding having the IEU optimized away because instructions are all 0
   // the testbench replaces these dummy contents with the actual program of interest during simulation
   rom1p1r #(ADDR_WDITH, P.XLEN, 1) rom(.clk, .ce, .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(IROMInstrFFull));
   if (P.XLEN == 32) assign RawIROMInstrF = IROMInstrFFull;
@@ -50,7 +50,7 @@ module irom import cvw::*;  #(parameter cvw_t P) (
     flopen #(1) AdrReg2(clk, ce, Adr[2], AdrD[2]);
     assign RawIROMInstrF = AdrD[2] ? IROMInstrFFull[63:32] : IROMInstrFFull[31:0];
   end
-  // If the memory addres is aligned to 2 bytes return the upper 2 bytes in the lower 2 bytes.
+  // If the memory address is aligned to 2 bytes return the upper 2 bytes in the lower 2 bytes.
   // The spill logic will handle merging the two together.
   if (P.ZCA_SUPPORTED) begin
     flopen #(1) AdrReg1(clk, ce, Adr[1], AdrD[1]);

@@ -250,11 +250,11 @@ set verilogout_no_tri true
 set verilogout_equation false
 
 # setting to generate output files
-set write_v    1        ;# generates structual netlist
+set write_v    1        ;# generates structural netlist
 set write_sdc  1	;# generates synopsys design constraint file for p&r
 set write_ddc  1	;# compiler file in ddc format
 set write_sdf  1	;# sdf file for backannotated timing sim
-set write_pow  1 	;# genrates estimated power report
+set write_pow  1 	;# generates estimated power report
 set write_rep  1	;# generates estimated area and timing report
 set write_cst  1        ;# generate report of constraints
 set write_hier 1        ;# generate hierarchy report

@@ -42,7 +42,7 @@ The choices for `<test>` are as follows:
 
     cvtint - test integer conversion unit (fcvtint)
     cvtfp  - test floating-point conversion unit (fcvtfp)
-    cmp    - test comparison unit's LT, LE, EQ opperations (fcmp)
+    cmp    - test comparison unit's LT, LE, EQ operations (fcmp)
     add    - test addition
     fma    - test fma
     mul    - test mult with fma

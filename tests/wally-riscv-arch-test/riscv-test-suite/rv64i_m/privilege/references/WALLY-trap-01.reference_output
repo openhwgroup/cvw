@@ -19,7 +19,7 @@ FFFFFFFF # mtval of faulting instruction (0xFFFFFFFF)
 00000000
 00000003 # mcause from Breakpoint
 00000000
-80000458 # mtval of breakpoint instruction adress (0x80000458)
+80000458 # mtval of breakpoint instruction address (0x80000458)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
@@ -31,7 +31,7 @@ FFFFFFFF # mtval of faulting instruction (0xFFFFFFFF)
 00000000
 00000005 # mcause from load access
 00000000
-00000000 # mtval of accessed adress (0x0)
+00000000 # mtval of accessed address (0x0)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
@@ -131,7 +131,7 @@ FFFFFFFF # mtval of faulting instruction (0xFFFFFFFF)
 00000000
 00000003 # mcause from Breakpoint
 00000000
-80000458 # mtval of breakpoint instruction adress (0x80000458)
+80000458 # mtval of breakpoint instruction address (0x80000458)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
@@ -143,7 +143,7 @@ FFFFFFFF # mtval of faulting instruction (0xFFFFFFFF)
 00000000
 00000005 # mcause from load access
 00000000
-00000000 # mtval of accessed adress (0x0)
+00000000 # mtval of accessed address (0x0)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000

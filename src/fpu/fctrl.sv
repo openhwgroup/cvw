@@ -60,8 +60,8 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   // register control signals
   output logic                 FRegWriteE, FRegWriteM, FRegWriteW, // FP register write enable
   output logic                 FWriteIntE, FWriteIntM,             // Write to integer register
-  output logic [4:0]           Adr1D, Adr2D, Adr3D,                // adresses of each input
-  output logic [4:0]           Adr1E, Adr2E, Adr3E,                // adresses of each input
+  output logic [4:0]           Adr1D, Adr2D, Adr3D,                // addresses of each input
+  output logic [4:0]           Adr1E, Adr2E, Adr3E,                // addresses of each input
   // other control signals
   output logic                 IllegalFPUInstrD,                   // Is the instruction an illegal fpu instruction
   output logic                 FDivStartE, IDivStartE              // Start division or squareroot
@@ -355,12 +355,12 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   //        01 - negate sign
   //        10 - xor sign
 
-  // rename input adresses for readability
+  // rename input addresses for readability
   assign Adr1D = InstrD[19:15];
   assign Adr2D = InstrD[24:20];
   assign Adr3D = InstrD[31:27];
  
-  // D/E pipleine register
+  // D/E pipeline register
   flopenrc #(`FCTRLW+2+P.FMTBITS) DECtrlReg3(clk, reset, FlushE, ~StallE, 
               {FRegWriteD, PostProcSelD, FResSelD, FrmD, FmtD, OpCtrlD, FWriteIntD, FCvtIntD, ZfaD, ZfaFRoundNXD, ~IllegalFPUInstrD},
               {FRegWriteE, PostProcSelE, FResSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, FCvtIntE, ZfaE, ZfaFRoundNXE, FPUActiveE});
@@ -372,7 +372,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   if (P.M_SUPPORTED & P.IDIV_ON_FPU) assign IDivStartE = IntDivE;
   else                               assign IDivStartE = 1'b0; 
 
-  // E/M pipleine register
+  // E/M pipeline register
   flopenrc #(14+int'(P.FMTBITS)) EMCtrlReg (clk, reset, FlushM, ~StallM,
               {FRegWriteE, FResSelE, PostProcSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, FCvtIntE, ZfaE},
               {FRegWriteM, FResSelM, PostProcSelM, FrmM, FmtM, OpCtrlM, FWriteIntM, FCvtIntM, ZfaM});
@@ -380,7 +380,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   // renameing for readability
   assign FpLoadStoreM = FResSelM[1];
 
-  // M/W pipleine register
+  // M/W pipeline register
   flopenrc #(4)  MWCtrlReg(clk, reset, FlushW, ~StallW,
           {FRegWriteM, FResSelM, FCvtIntM},
           {FRegWriteW, FResSelW, FCvtIntW});

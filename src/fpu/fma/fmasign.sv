@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fmasign(    
-  input  logic [2:0]  OpCtrl,     // operation contol
+  input  logic [2:0]  OpCtrl,     // operation control
   input  logic        Xs, Ys, Zs, // sign of the inputs
   output logic        Ps,         // the product's sign - takes operation into account
   output logic        As,         // aligned addend sign used in fma - takes operation into account

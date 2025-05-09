@@ -4,13 +4,13 @@
 // Written: David_Harris@hmc.edu 21 January 2021
 // Modified: 
 //
-// Purpose: Universial Asynchronous Receiver/ Transmitter with FIFOs
+// Purpose: Universal Asynchronous Receiver/ Transmitter with FIFOs
 //          Emulates interface of Texas Instruments PC16550D
 //          https://media.digikey.com/pdf/Data%20Sheets/Texas%20Instruments%20PDFs/PC16550D.pdf
 //          Compatible with UART in Imperas Virtio model
 //
 //  Compatible with most of PC16550D with the following known exceptions:
-//   Generates 2 rather than 1.5 stop bits when 5-bit word length is slected and LCR[2] = 1
+//   Generates 2 rather than 1.5 stop bits when 5-bit word length is selected and LCR[2] = 1
 //   Timeout not yet implemented
 // 
 // Documentation: RISC-V System on Chip Design
@@ -71,7 +71,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
   logic [3:0]  IER, MSR;
   logic [4:0]  MCR;
 
-  // Syncrhonized and delayed UART signals
+  // Synchronized and delayed UART signals
   logic        SINd, DSRbd, DCDbd, CTSbd, RIbd;
   logic        SINsync, DSRbsync, DCDbsync, CTSbsync, RIbsync;
   logic        DSRb2, DCDb2, CTSb2, RIb2;
@@ -88,7 +88,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
   logic [3:0]                   rxbitsreceived, txbitssent;
   statetype rxstate, txstate;
 
-  // shift registrs and FIFOs
+  // shift registers and FIFOs
   logic [9:0]                   rxshiftreg;
   logic [10:0]                  rxfifo[15:0];
   logic [7:0]                   txfifo[15:0];
@@ -137,7 +137,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
   always_ff @(posedge PCLK) begin
     {SINd, DSRbd, DCDbd, CTSbd, RIbd} <= {SIN, DSRb, DCDb, CTSb, RIb};
     {SINsync, DSRbsync, DCDbsync, CTSbsync, RIbsync} <= loop ? {SOUTbit, ~MCR[0], ~MCR[3], ~MCR[1], ~MCR[2]} : 
-                            {SINd, DSRbd, DCDbd, CTSbd, RIbd}; // syncrhonized signals, handle loopback testing
+                            {SINd, DSRbd, DCDbd, CTSbd, RIbd}; // synchronized signals, handle loopback testing
     {DSRb2, DCDb2, CTSb2, RIb2} <= {DSRbsync, DCDbsync, CTSbsync, RIbsync}; // for detecting state changes
   end
 
@@ -171,7 +171,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
       end
 
       // Line Status Register (8.6.3)
-      // Ben 6/9/21 I don't like how this is a register. A lot of the individual bits have clocked components, so this just adds unecessary delay.
+      // Ben 6/9/21 I don't like how this is a register. A lot of the individual bits have clocked components, so this just adds unnecessary delay.
       if (~MEMWb & (A == UART_LSR))
         LSR[6:1] <= Din[6:1]; // recommended only for test, see 8.6.3
       else begin
@@ -203,7 +203,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
       case (A)
         UART_DLL_RBR: if (DLAB) Dout = DLL; else Dout = RBR[7:0];
         UART_DLM_IER: if (DLAB) Dout = DLM; else Dout = {4'b0, IER[3:0]};
-        UART_IIR: Dout = {{2{fifoenabled}}, 2'b00, intrID[2:0], ~intrpending}; // Read only Interupt Ident Register
+        UART_IIR: Dout = {{2{fifoenabled}}, 2'b00, intrID[2:0], ~intrpending}; // Read only Interrupt Ident Register
         UART_LCR: Dout = LCR;
         UART_MCR: Dout = {3'b000, MCR};
         UART_LSR: Dout = LSR;
@@ -472,7 +472,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
   // pointer indicates where the next write goes and not the location of the
   // current head, the head and tail pointer being equal imply two different
   // things.  First it could mean the fifo is empty and second it could mean
-  // the fifo is full.  To differenciate we need to know which pointer moved
+  // the fifo is full.  To differentiate we need to know which pointer moved
   // to cause them to be equal.  If the head pointer moved then it is full.
   // If the tail pointer moved then it is empty.  it resets to empty so
   // if reset with the tail pointer indicating the last update.

@@ -62,7 +62,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   output logic       ClearDirty,        // Clear the dirty bit in the selected way and set
   output logic       SelWriteback,      // Overrides cached tag check to select a specific way and set for writeback
   output logic       LRUWriteEn,        // Update the LRU state
-  output logic       SelVictim,         // Overides HitWay Tag matching.  Selects selects the victim tag/data regardless of hit
+  output logic       SelVictim,         // Overrides HitWay Tag matching.  Selects selects the victim tag/data regardless of hit
   output logic       FlushAdrCntEn,     // Enable the counter for Flush Adr
   output logic       FlushWayCntEn,     // Enable the way counter during a flush
   output logic       FlushCntRst,       // Reset both flush counters
@@ -83,7 +83,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
                            STATE_FETCH,
                            STATE_WRITEBACK,
                            STATE_WRITE_LINE,
-                           STATE_ADDRESS_SETUP,  // required for back to back reads. structural hazard on writting SRAM
+                           STATE_ADDRESS_SETUP,  // required for back to back reads. structural hazard on writing SRAM
                            // flush cache 
                            STATE_FLUSH,
                            STATE_FLUSH_WRITEBACK
@@ -165,7 +165,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
                     (CurrState == STATE_WRITE_LINE & (CacheRW[0])) |
                     (CurrState == STATE_WRITEBACK & (CMOpM[3] & CacheBusAck));                    
   assign ClearDirty = (CurrState == STATE_WRITE_LINE & ~(CacheRW[0])) |   // exclusion-tag: icache ClearDirty
-                      (CurrState == STATE_FLUSH & LineDirty) | // This is wrong in a multicore snoop cache protocal.  Dirty must be cleared concurrently and atomically with writeback.  For single core cannot clear after writeback on bus ack and change flushadr.  Clears the wrong set.
+                      (CurrState == STATE_FLUSH & LineDirty) | // This is wrong in a multicore snoop cache protocol.  Dirty must be cleared concurrently and atomically with writeback.  For single core cannot clear after writeback on bus ack and change flushadr.  Clears the wrong set.
   // Flush and eviction controls
                       CurrState == STATE_WRITEBACK & (CMOpM[1] | CMOpM[2]) & CacheBusAck;
   assign SelVictim = (CurrState == STATE_WRITEBACK & ((~CacheBusAck & ~(CMOpM[1] | CMOpM[2])) | (CacheBusAck & CMOpM[3]))) |

@@ -515,10 +515,10 @@ def selectTests(args, sims, coverStr):
         addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/vm_sv32", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
         # addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/pmp32", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1) TODO: Add when working in lockstep
         # addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/pmp", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1) TODO: Add when working in lockstep
-    # run riscv-arch-test tests in functional coverage mode
+    # run cvw-riscv-arch-test tests in functional coverage mode
     if args.fcov_act:
-        addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
-        addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
+        addTestsByDir(f"{WALLY}/tests/riscof/work/cvw-riscv-arch-test/rv32i", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
+        addTestsByDir(f"{WALLY}/tests/riscof/work/cvw-riscv-arch-test/rv64i", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
     # run branch predictor tests
     if args.branch:
         addTests(bpredtests, defaultsim, coverStr, configs)
@@ -559,25 +559,18 @@ def selectTests(args, sims, coverStr):
 
     if (args.benchmark or args.nightly):
         # RUNNING THE EMBENCH TEST
-        actual_embench_directory = f"{WALLY}/benchmarks/embench/actual_embench_results/"
-        expected_embench_directory = f"{WALLY}/benchmarks/embench/expected_embench_results/"
-        embench_logfile_path = os.path.expandvars("$WALLY/benchmarks/embench/run.log")
-        # Create the file if it doesn't exist
-        with open(embench_logfile_path, 'w'):
-            pass
-        
-        # Combine everything into the embench_test command
+        embench_dir = f"{WALLY}/benchmarks/embench/"
+        actual_embench_directory = f"{embench_dir}/actual_embench_results/"
+        expected_embench_directory = f"{embench_dir}/expected_embench_results/"
+        embench_logfile_path = f"{embench_dir}/run.log"
         # finds any differences between the two embench directories and appends them to the log file
         embench_test = TestCase(
             name="embench",
             variant="rv32gc",
-            cmd=(
-                f"cd $WALLY/benchmarks/embench && "
-                f"make run >> {embench_logfile_path} 2>&1"
-            ),
+            cmd=(f"make -C {WALLY}/benchmarks/embench run > {embench_logfile_path}"),
             grepstr=None,
             grepfile=embench_logfile_path,
-            altcommand=f"diff -ru {actual_embench_directory} {expected_embench_directory} >> {embench_logfile_path}"
+            altcommand=f"diff -ru {actual_embench_directory} {expected_embench_directory} > {embench_logfile_path}"
         )
         configs.append(embench_test)
 

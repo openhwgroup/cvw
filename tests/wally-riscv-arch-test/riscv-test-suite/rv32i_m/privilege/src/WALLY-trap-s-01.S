@@ -68,7 +68,7 @@ li a3, 0x40
 jal cause_m_ext_interrupt
 
 // Now delegate all traps to S mode and attempt them again, ensuring they now go to the S mode trap handler
-// We can tell which one becuase the different trap handler modes write different bits of the status register 
+// We can tell which one because the different trap handler modes write different bits of the status register 
 // to the output when EXT_SIGNATURE is on.
 
 GOTO_M_MODE // so we can write the delegate registers

@@ -34,8 +34,8 @@ csrw mtvec, t4 // set the new trap handler to do the pre behavior first.
 
 GOTO_S_MODE // go to S mode to attempt to turn on virtual memory
 
-la ra, post_satp // load the address after the failing adress into ra so it doesn't get confused
-GOTO_SV39 0x0, 0x0 // attempt to turn on virtual memory with satp pointing to an invlaid address. Should cause invalid instruction exception
+la ra, post_satp // load the address after the failing address into ra so it doesn't get confused
+GOTO_SV39 0x0, 0x0 // attempt to turn on virtual memory with satp pointing to an invalid address. Should cause invalid instruction exception
 
 post_satp:
     j test_end

@@ -94,7 +94,7 @@ for(my $i=0; $i<=$#ARGV; $i++) {
 #                if (/^\s*(\S\S\S\S\S\S\S\S):\s+(.*)/) { # changed to \t 30 Oct 2021 dmh to fix parsing issue in d_fmadd_b17
                 if (/^\s*(\S\S\S\S\S\S\S\S):\s+(.*)/) {
                     $address = &fixadr($1);
-    #		        print "addresss $address maxaddress $maxaddress\n";
+    #		        print "address $address maxaddress $maxaddress\n";
                     if ($address > $maxaddress) { $maxaddress = $address; }
                     #print "test $address $1 $2\n";
                     my $lineorig = $2;
@@ -157,7 +157,7 @@ for(my $i=0; $i<=$#ARGV; $i++) {
 print("\n");
 
 sub emitData {
-    # print the data portion of the ELF into a memroy file, including 0s for empty stuff
+    # print the data portion of the ELF into a memory file, including 0s for empty stuff
     # deal with endianness
     my $address = shift;
     my $payload = shift;

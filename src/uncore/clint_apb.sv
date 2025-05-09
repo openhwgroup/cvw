@@ -215,7 +215,7 @@ module timereg  import cvw::*;  #(parameter cvw_t P) (
         done       <= ack_stored & ~ack;
       end
 
-    // synchronize the reset and reqest into the TIMECLK domain
+    // synchronize the reset and request into the TIMECLK domain
     sync resetsync(TIMECLK, PRESETn, resetn_sync);
     sync rsync(TIMECLK, req, req_sync);
     // synchronize the acknowledge back to the PCLK domain to indicate the request was handled and can be lowered

@@ -8,10 +8,10 @@
 ## Created: March 1, 2021
 ## Modified: March 10, 2021
 ##
-## Purpose: Processes all compiled object files into 2 types of files which assist in debuging applications.
+## Purpose: Processes all compiled object files into 2 types of files which assist in debugging applications.
 ##          File 1: .addr: A sorted list of function starting addresses. 
 ##                  When a the PCE is greater than or equal to the function's starting address, the label will be associated with this address.
-##          File 2: .lab: A sorted list of funciton labels. The names of functions.  Modelsim will display these names rather than the function address.
+##          File 2: .lab: A sorted list of function labels. The names of functions.  Modelsim will display these names rather than the function address.
 ## 
 ## Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 ##

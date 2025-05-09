@@ -30,7 +30,7 @@ INIT_TESTS
 
 TRAP_HANDLER m
 
-// Test 5.3.2.4: testing that accesses to sub-word memory acceses not on a word boundary go 
+// Test 5.3.2.4: testing that accesses to sub-word memory accesses not on a word boundary go 
 // correctly with the relevant status bit indicating endianness for each mode. 
 // do this by going to each mode with and testing loads with the big endian bit on and off work correctly
 

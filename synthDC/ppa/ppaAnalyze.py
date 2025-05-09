@@ -16,7 +16,7 @@ import matplotlib.lines as lines
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.optimize as opt
-import sklearn.metrics as skm  # depricated, will need to replace with scikit-learn
+import sklearn.metrics as skm  # deprecated, will need to replace with scikit-learn
 from matplotlib.cbook import flatten
 
 

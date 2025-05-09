@@ -57,7 +57,7 @@ def write_repro_instrs():
         if i == 12:
             wl('sd zero, 0(t0)') # D$ write to set PCM = PCF + 8 for proper alignment (stallD will happen).
         elif i == 13:
-            # the store in question happens here, at adresses 0x34, 0x74
+            # the store in question happens here, at addresses 0x34, 0x74
             wl('sd zero, 0(t0)') # it should hit this time
         else:
             # can't be a NOP or anything else that is encoded as compressed.
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     wl('#include "WALLY-init-lib.h"')
     wl('main:')
 
-    # excercise all 4 D$ ways. If they're not all full, it uses the first empty.
+    # exercise all 4 D$ ways. If they're not all full, it uses the first empty.
     # So we are sure all 4 ways are exercised.
     for i in range(dcache_num_ways):
         wl(comment=f"start way test #{i+1}")
@@ -81,6 +81,6 @@ if __name__ == "__main__":
         wl('.align 6')                # start at i$ set boundary. 6 lsb bits are zero.
         wl(comment=f"i$ boundary, way test #{i+1}")
         write_repro_instrs()
-        mem_addr += dcache_way_size_in_bytes  # so that we excercise a new D$ way.
+        mem_addr += dcache_way_size_in_bytes  # so that we exercise a new D$ way.
 
     wl("j done")

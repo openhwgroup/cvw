@@ -32,10 +32,10 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.NF:0]           Xm,           // input's fraction
   input  logic [P.XLEN-1:0]       Int,          // integer input - from IEU
   input  logic [2:0]              OpCtrl,       // choose which operation (look below for values)
-  input  logic                    ToInt,        // is fp->int (since it's writting to the integer register)
+  input  logic                    ToInt,        // is fp->int (since it's writing to the integer register)
   input  logic                    XZero,        // is the input zero
   input  logic [P.FMTBITS-1:0]    Fmt,          // the input's precision (11=quad 01=double 00=single 10=half)
-  output logic [P.NE:0]           Ce,           // the calculated expoent
+  output logic [P.NE:0]           Ce,           // the calculated exponent
   output logic [P.LOGCVTLEN-1:0]  ShiftAmt,     // how much to shift by
   output logic                    ResSubnormUf, // does the result underflow or is subnormal
   output logic                    Cs,           // the result's sign
@@ -64,7 +64,7 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
   logic [P.CVTLEN:0]              LzcInFull;    // input to the Leading Zero Counter (priority encoder)
   logic [P.LOGCVTLEN-1:0]         LeadingZeros; // output from the LZC
 
-  // seperate OpCtrl for code readability
+  // separate OpCtrl for code readability
   assign Signed =  OpCtrl[0];
   assign Int64 =   OpCtrl[1];
   assign IntToFp = OpCtrl[2];
@@ -80,7 +80,7 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////////////////////////////////////
   // negation
   ///////////////////////////////////////////////////////////////////////////
-  // 1) negate the input if the input is a negative singed integer
+  // 1) negate the input if the input is a negative signed integer
   // 2) trim the input to the proper size (kill the 32 most significant zeroes if needed)
 
   assign PosInt = Cs ? -Int : Int;
@@ -150,20 +150,20 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
   //          - XExp - Largest bias + new bias - (LeadingZeros+1)
   //                                          only do ^ if the input was subnormal
   //              - convert the expoenent to the final preciaion (Exp - oldBias + newBias)
-  //              - correct the expoent when there is a normalization shift ( + LeadingZeros+1) 
+  //              - correct the exponent when there is a normalization shift ( + LeadingZeros+1) 
   //              - the plus 1 is built into the leading zeros by counting the leading zeroes in the mantissa rather than the fraction
   //      fp -> int : XExp - Largest Bias + 1 - (LeadingZeros+1)
-  //          |  P.XLEN  zeros |     Mantissa      | 0's if nessisary | << CalcExp
+  //          |  P.XLEN  zeros |     Mantissa      | 0's if necessary | << CalcExp
   //          process:
   //              - start
-  //                  |  P.XLEN  zeros     |     Mantissa      | 0's if nessisary |
+  //                  |  P.XLEN  zeros     |     Mantissa      | 0's if necessary |
   //
   //              - shift left 1 (1)
-  //                  | P.XLEN-1 zeros |bit|     frac      | 0's if nessisary |
+  //                  | P.XLEN-1 zeros |bit|     frac      | 0's if necessary |
   //                                      . <- binary point
   //
   //              - shift left till unbiased exponent is 0 (XExp - Largest Bias)
-  //                  |  0's |     Mantissa      |      0's if nessisary     |
+  //                  |  0's |     Mantissa      |      0's if necessary     |
   //                  |     keep        |
   //
   //              - if the input is subnormal then we dont shift... so the  "- LeadingZeros" is just leftovers from other options
@@ -199,7 +199,7 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
   //          - shift left by NF-1+CalcExp - to shift till the biased expoenent is 0
   //      ??? -> fp: 
   //          - shift left by LeadingZeros - to shift till the result is normalized
-  //              - only shift fp -> fp if the intital value is subnormal
+  //              - only shift fp -> fp if the initial value is subnormal
   //                  - this is a problem because the input to the lzc was the fraction rather than the mantissa
   //                  - rather have a few and-gates than an extra bit in the priority encoder???
   always_comb

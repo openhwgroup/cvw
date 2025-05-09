@@ -93,9 +93,9 @@ module functionName import cvw::*; #(parameter cvw_t P) (
 	end	  
       end // while (left <= right)
       // if the element pc is now found, right and left will be equal at this point.
-      // we need to check if pc is less than the array at left or greather.
+      // we need to check if pc is less than the array at left or greater.
       // if it is less than pc, then we select left as the index.
-      // if it is greather we want 1 less than left.
+      // if it is greater we want 1 less than left.
       if (array[left] < pc) begin
 	minval = array[left];
 	mid = left;      
@@ -120,7 +120,7 @@ module functionName import cvw::*; #(parameter cvw_t P) (
 //  initial begin
   always @ (negedge reset) begin
 
-    // cannot readmemh directoy to a dynmaic array. Sad times :(
+    // cannot readmemh directly to a dynamic array. Sad times :(
     // Let's initialize a static array with FFFF_FFFF for all addresses.
     // Then we can readmemh and finally copy to the dynamic array.
     
