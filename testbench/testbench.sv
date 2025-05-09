@@ -286,19 +286,19 @@ module testbench;
   logic        ResetCntRst;
   logic        CopyRAM;
 
-  string  suitename, signame, elffilename, memfilename, bootmemfilename, uartoutfilename, pathname;
+  string  sim_log_prefix, signame, elffilename, memfilename, bootmemfilename, uartoutfilename, pathname;
   integer begin_signature_addr, end_signature_addr, signature_size;
   integer uartoutfile;
 
 
   assign ResetThreshold = 3'd5;
 
-  // Check if suitename is passed as a command-line argument
+  // Check if sim_log_prefix is passed as a command-line argument
     // Inside an initial block
   initial begin
-      // Check if suitename is passed as a command-line argument
-      if (!$value$plusargs("suitename=%s", suitename)) begin
-          suitename = "";  // Assign default value if not passed
+      // Check if sim_log_prefix is passed as a command-line argument
+      if (!$value$plusargs("sim_log_prefix=%s", sim_log_prefix)) begin
+          sim_log_prefix = "";  // Assign default value if not passed
       end
   end
 
@@ -698,7 +698,7 @@ module testbench;
                                       dut.core.ifu.PCM, InstrM, dut.core.lsu.IEUAdrM, InstrMName);
   riscvassertions #(P) riscvassertions();  // check assertions for a legal configuration
   loggers #(P, PrintHPMCounters, I_CACHE_ADDR_LOGGER, D_CACHE_ADDR_LOGGER, BPRED_LOGGER)
-    loggers (clk, reset, DCacheFlushStart, DCacheFlushDone, memfilename, suitename, TEST);
+    loggers (clk, reset, DCacheFlushStart, DCacheFlushDone, memfilename, sim_log_prefix, TEST);
 
   // track the current function or global label
   if (DEBUG > 0 | ((PrintHPMCounters | BPRED_LOGGER) & P.ZICNTR_SUPPORTED)) begin : functionName

@@ -13,7 +13,6 @@
 # output.
 #
 ##################################
-# figure out why the diff in coremark is nort wokring,get cache stuff in its own log (use sim_log),simplify the commands,
 import argparse
 import multiprocessing
 import os
@@ -278,21 +277,16 @@ lockstepwaivers = [
 ]
 
 # tests for cache simulations on a rv64gc derived config - cache_rv64gc
-tests64gc_cache = [["cache_rv64gc", 
+tests64gc_cache = [
+    ["cache_rv64gc", 
     ["coverage64gc", "wally64priv", "arch64i", "arch64priv", "arch64c",  "arch64m", "arch64zcb",
-             "arch64zifencei", "arch64zicond", "arch64a_amo", "wally64a_lrsc", "wally64periph", 
-              "arch64zbkb", "arch64zbkc", "arch64zbkx", "arch64zknd", "arch64zkne", "arch64zknh",
-             "arch64zba",  "arch64zbb",  "arch64zbc", "arch64zbs"],
-    '--args \'+suitename={}_\' --params "I_CACHE_ADDR_LOGGER=1\\\'b1 D_CACHE_ADDR_LOGGER=1\\\'b1"',
-    "SUCCESS"]]
-
-# tests64gc = [["rv64gc",  
-#              ["coverage64gc", "wally64priv", "arch64i", "arch64priv", "arch64c",  "arch64m", "arch64zcb",
-#              "arch64zifencei", "arch64zicond", "arch64a_amo", "wally64a_lrsc", "wally64periph", 
-#              "arch64zbkb", "arch64zbkc", "arch64zbkx", "arch64zknd", "arch64zkne", "arch64zknh",
-#              "arch64zba",  "arch64zbb",  "arch64zbc", "arch64zbs"], 
-#              "--params \"I_CACHE_ADDR_LOGGER=1\\'b1 D_CACHE_ADDR_LOGGER=1\\'b1\"",
-#              "SUCCESS"]]
+    "arch64zifencei", "arch64zicond", "arch64a_amo", "wally64a_lrsc", "wally64periph", 
+    "arch64zbkb", "arch64zbkc", "arch64zbkx", "arch64zknd", "arch64zkne", "arch64zknh",
+    "arch64zba",  "arch64zbb",  "arch64zbc", "arch64zbs"],
+    '--args \'+sim_log_prefix={}_\' --params "I_CACHE_ADDR_LOGGER=1\\\'b1 D_CACHE_ADDR_LOGGER=1\\\'b1"',
+    "SUCCESS! There were no mismatches between Wally and the sim."
+    ]
+]
              
 
 ##################################
@@ -329,11 +323,7 @@ def addTests(testList, sim, coverStr, configs, altcommand=None):
         suites = test[1]
         flags = f"{test[2]}" if len(test) >= 3 else ""
         gs = test[3] if len(test) >= 4 else "All tests ran without failures"
-        # # cmdPrefix=f"wsim --sim {sim} {coverStr} {flags} {config}"
-        # # cmdPrefix = "wsim --sim verilator --params \"LOG_DIR='\"/sim/verilator/wkdir/'\" I_CACHE_ADDR_LOGGER=1 D_CACHE_ADDR_LOGGER=1\" rv64gc"
-        # cmdPrefix = 'wsim --sim verilator --args "+memfilename=/path/to/file.hex" --params "I_CACHE_ADDR_LOGGER=1\'b1 D_CACHE_ADDR_LOGGER=1\'b1" rv64gc'
         cmdPrefix=f"wsim --sim {sim} {coverStr} {flags} {config}"
-        
         for t in suites:
             sim_log_prefix = f"{sim_logdir}{config}_{t}"
             sim_log = f"{sim_log_prefix}.log"
@@ -482,9 +472,6 @@ def process_args(args):
 def selectTests(args, sims, coverStr):
     # Run Lint
     configs = [
-
-        ]
-    configs = [
         TestCase(
             name="lints",
             variant="all",
@@ -570,29 +557,23 @@ def selectTests(args, sims, coverStr):
             cmd=(f"make -C {WALLY}/benchmarks/embench run > {embench_logfile_path}"),
             grepstr=None,
             grepfile=embench_logfile_path,
-            altcommand=f"diff -ru {actual_embench_directory} {expected_embench_directory} > {embench_logfile_path}"
+            altcommand=f"diff -ru {actual_embench_directory} {expected_embench_directory} >> {embench_logfile_path}"
         )
         configs.append(embench_test)
 
 
         # RUNNING THE COREMARK TEST
-        sim_log = f"{regressionDir}/{defaultsim}/logs/validation.log"
-        coremark_logfile_path = os.path.expandvars(sim_log)
-        # Create the directory (and file) if it doesn't exist
-        os.makedirs(os.path.dirname(coremark_logfile_path), exist_ok=True)
-        with open(coremark_logfile_path, 'w'):
-            pass
-
-        benchmark_dir = f"{WALLY}/benchmarks/coremark/"
-        coremark_sweep_test_file = f"{benchmark_dir}coremark_sweep.py"
-        actual_coremark_values_csv = f"{benchmark_dir}coremark_results.csv"
-        expected_coremark_values_csv = f"{benchmark_dir}expected_coremark_results.csv"
+        coremark_logfile_path = f"{regressionDir}/{defaultsim}/logs/validation.log"
+        coremark_dir = f"{WALLY}/benchmarks/coremark/"
+        coremark_sweep_test_file = f"{coremark_dir}coremark_sweep.py"
+        actual_coremark_values_csv = f"{coremark_dir}coremark_results.csv"
+        expected_coremark_values_csv = f"{coremark_dir}expected_coremark_results.csv"
 
         # calculates the difference between the coremark expected outcomes and appends them to the log file
         coremark_test = TestCase(
             name="validate_coremark_sweep",
             variant="coremark check",
-            cmd=(f"python3 {coremark_sweep_test_file} >> {coremark_logfile_path} 2>&1"),
+            cmd=(f"python3 {coremark_sweep_test_file} > {coremark_logfile_path} 2>&1"),
             grepstr=None,
             grepfile=coremark_logfile_path,
             altcommand=f"diff -u {actual_coremark_values_csv} {expected_coremark_values_csv} >> {coremark_logfile_path}  2>&1"

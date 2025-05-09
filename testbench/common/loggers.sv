@@ -40,7 +40,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
 //  input logic StartSample,
 //  input logic EndSample,
   input string memfilename,
-  input string suitename,
+  input string sim_log_prefix,
   input string TEST
   );
   
@@ -181,9 +181,9 @@ module loggers import cvw::*; #(parameter cvw_t P,
     assign InvalEdge = dut.core.ifu.InvalidateICacheM & ~InvalDelayed;
 
     initial begin
-      LogFile = {suitename, "ICache.log"};
+      LogFile = {sim_log_prefix, "ICache.log"};
       file = $fopen(LogFile, "w");
-      $fwrite(file, "BEGIN %s\n", suitename);
+      $fwrite(file, "BEGIN %s\n", sim_log_prefix);
     end
     string AccessTypeString, HitMissString;
     always @(*) begin
@@ -235,9 +235,9 @@ module loggers import cvw::*; #(parameter cvw_t P,
                      (AccessTypeString != "NULL");
 
     initial begin
-      LogFile = {suitename, "DCache.log"};  // Otherwise prepend the directory
+      LogFile = {sim_log_prefix, "DCache.log"};  // Otherwise prepend the directory
       file = $fopen(LogFile, "w");
-      $fwrite(file, "BEGIN %s\n", suitename);
+      $fwrite(file, "BEGIN %s\n", sim_log_prefix);
     end
     always @(posedge clk) begin
       if(resetEdge) $fwrite(file, "TRAIN\n");
