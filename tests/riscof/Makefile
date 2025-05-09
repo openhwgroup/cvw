@@ -37,6 +37,7 @@ cvw-arch%: config$$*.ini | $(work_dir) $(cvw_arch_workdir)
 	riscof run --work-dir=$(work_dir)/$@ --config=$< --suite=$(cvw_arch_dir)/riscv-test-suite/ --env=$(cvw_arch_dir)/riscv-test-suite/env --no-browser
 	$(MAKE) -f makefile-memfile WORKDIR=$(work_dir)/$@ BITWIDTH=$(patsubst %32e,%32,$*)
 	rsync -a $(work_dir)/$@/rv*/* $(cvw_arch_workdir)/rv$(patsubst %64,%64i,$(patsubst %32,%32i,$*)) || echo "error suppressed"
+	${CVW_ARCH_VERIF}/bin/trace-coverreport.py $(cvw_arch_workdir)/rv$(patsubst %64,%64i,$(patsubst %32,%32i,$*))
 
 # Generate wally-riscv-arch-test targets
 wally%: config$$*.ini | $(work_dir) $(wally_workdir)
