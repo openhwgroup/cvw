@@ -46,7 +46,6 @@ class sail_cSim(pluginTemplate):
         ispec = utils.load_yaml(isa_yaml)['hart0']
         self.xlen = ('64' if 64 in ispec['supported_xlen'] else '32')
         self.isa = 'rv' + self.xlen
-        self.sailargs = ' --pmp-count=16 --pmp-grain=0 ' # Hardcode pmp-count and pmp-grain for now. Make configurable later once Sail has easier configuration
         self.compile_cmd = self.compile_cmd+' -mabi='+('lp64 ' if 64 in ispec['supported_xlen'] else ('ilp32e ' if "E" in ispec["ISA"] else 'ilp32 '))
         if "I" in ispec["ISA"]:
             self.isa += 'i'
@@ -62,8 +61,6 @@ class sail_cSim(pluginTemplate):
             self.isa += 'f'
         if "D" in ispec["ISA"]:
             self.isa += 'd'
-        if "Zcb" in ispec["ISA"]:   # for some strange reason, Sail requires a command line argument to enable Zcb
-            self.sailargs += "--enable-zcb"
         if "Q" in ispec["ISA"]:
             self.isa += 'q'
         objdump = "riscv64-unknown-elf-objdump"
@@ -117,7 +114,7 @@ class sail_cSim(pluginTemplate):
                 reference_output = re.sub("/src/","/references/", re.sub(".S",".reference_output", test))
                 execute += f'cut -c-{8:g} {reference_output} > {sig_file}' #use cut to remove comments when copying
             else:
-                execute += self.sail_exe[self.xlen] + ' -z268435455 -i --trace=step  ' + self.sailargs + f' --test-signature={sig_file} {elf} > {test_name}.log 2>&1;'
+                execute += self.sail_exe[self.xlen] + f' --trace=step --test-signature={sig_file} {elf} > {test_name}.log 2>&1;'
 
                 # Coverage
                 # Generate trace from sail log
