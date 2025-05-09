@@ -116,6 +116,11 @@ class sail_cSim(pluginTemplate):
                 trace_command = f'{cvw_arch_verif_dir}/bin/sail-parse.py {test_name}.log {test_name}.trace;'
                 execute += trace_command
 
+                # Generate ucdb coverage file
+                questa_do_file = f'{cvw_arch_verif_dir}/bin/cvw-arch-verif.do'
+                coverage_command = f'vsim -c -do "do {questa_do_file} {test_dir} {test_name} {cvw_arch_verif_dir}/fcov";'
+                execute += coverage_command
+
 
             # TODO: generate trace from sail log, send into questa to gen ucdb, both dumped in test specific dir
 
