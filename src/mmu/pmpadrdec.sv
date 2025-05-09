@@ -76,7 +76,7 @@ module pmpadrdec import cvw::*;  #(parameter cvw_t P) (
   // form a mask where the bottom k bits are 1, corresponding to a size of 2^k bytes for this memory region. 
   // This assumes we're using at least an NA4 region, but works for any size NAPOT region.
   assign NABase = {(PMPAdr & ~NAMask[P.PA_BITS-1:2]), 2'b00}; // base physical address of the pmp region
-  assign NAMatch = &((NABase ~^ PhysicalAddress) | NAMask); // check if upper bits of base address match, ignore lower bits correspoonding to inside the memory range
+  assign NAMatch = &((NABase ~^ PhysicalAddress) | NAMask); // check if upper bits of base address match, ignore lower bits corresponding to inside the memory range
 
   // finally pick the appropriate match for the access type
   assign Match = (AdrMode == TOR) ? TORMatch : 

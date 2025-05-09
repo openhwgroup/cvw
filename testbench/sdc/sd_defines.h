@@ -49,7 +49,7 @@
 `endif
 
 //SD-Clock Defines ---------
-//Use bus clock or a seperate clock
+//Use bus clock or a separate clock
 `define SDC_CLK_BUS_CLK
 //`define SDC_CLK_SEP
 

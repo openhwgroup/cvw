@@ -35,7 +35,7 @@ def search_log_for_mismatches(logfile):
     return os.system(grepcmd) == 0
 
 def run_test_case(elf):
-    """Run the given test case, and return 0 if the test suceeds and 1 if it fails"""
+    """Run the given test case, and return 0 if the test succeeds and 1 if it fails"""
     WALLY = os.environ.get("WALLY")
     fields = elf.rsplit("/", 3)
     if fields[2] == "ref":
@@ -70,7 +70,7 @@ parser.add_argument("--config", help="Configuration", default="rv64gc")
 parser.add_argument("--sim", "-s", help="Simulator", choices=["questa", "vcs"], default="questa")
 parser.add_argument("--coverage", "-c", help="Code & Functional Coverage", action="store_true")
 parser.add_argument("--fcov", "-f", help="Code & Functional Coverage", action="store_true")
-parser.add_argument("--exclude", help="Exclude files with this sufix", default="my.elf")
+parser.add_argument("--exclude", help="Exclude files with this suffix", default="my.elf")
 args = parser.parse_args()
 
 # find all ELF files in directory

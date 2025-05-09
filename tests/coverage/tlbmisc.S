@@ -24,7 +24,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-// load code to initalize stack, handle interrupts, terminate
+// load code to initialize stack, handle interrupts, terminate
 
 #include "WALLY-init-lib.h"
 
@@ -145,6 +145,13 @@ ConcurrentICacheMissDTLBMiss:
     sw t1, 0(t0)    # write to page
     jalr ra, t0     # jump to page
 
+    sfence.vma
+
+    li t0, 0x18000000000
+    lw t1, 0(t0)    # read from page
+    sw t1, 0(t0)    # write to page
+    jalr ra, t0     # jump to page
+
     # jump to address for TLB miss to trigger HPTW to make access with DisableTranslation = 1, Translate = 0
     li t0, 0x80805000
     jalr ra, t0
@@ -174,6 +181,7 @@ ConcurrentICacheMissDTLBMiss:
     csrc menvcfg, t5  # menvcfg.PBMTE = 0
     li a0, 1
     ecall   # switch back to supervisor mode
+    sfence.vma  # synchronize TLB after changing menvcfg.PBMTE
     li t0, 0x80806000
     jalr ra, t0      # jump to page to exercise ITLB with PBMT !=0 when ENVCFG_PMTE=0
 
@@ -263,6 +271,10 @@ ConcurrentICacheMissDTLBMiss:
     cbo.zero (t0)
     cbo.clean (t0)
 
+    # attempt read from read disabled, execute enabled PTE with MXR set
+    li t0, 0x81600000
+    lw t1, 0(t0)    # read from page
+
     # clear mstatus.MXR
     li a0, 3
     ecall
@@ -343,7 +355,7 @@ pagetable:
     .8byte 0x20004401  # VA 0x00000000-0x7F_FFFFFFFF: PTE at 0x80011000 01 valid
     .8byte 0x00000000000010CF # misaligned terapage at 0x80_00000000
     .8byte 0x00000000000000CF # access fault terapage at 0x100_00000000
-    .8byte 0x4000000020004401 # Bad PBMT at VA 0x180_0000000
+    .8byte 0x4000000020004401 # Bad PBMT at VA 0x180_00000000
 
 # next page table at 0x80011000
 .align 12
@@ -365,14 +377,14 @@ SpecialPage:
     .8byte 0x0000000020014CCF  # for VA starting at 80200000 (misaligned megapage)
     .8byte 0x0000000020005001  # for VA starting at 80400000 (bad PBMT pages page table at 0x80014000)
     .8byte 0x4000000020004C01  # for VA starting at 80600000 (bad entry: nonleaf PTE can't have PBMT != 0)
-    .8byte 0x0000000020005401  # for VA starting at 80800000 (testing rwx permissiosn with cbom/cboz . page table at 0x80015000)
+    .8byte 0x0000000020005401  # for VA starting at 80800000 (testing rwx permissions with cbom/cboz . page table at 0x80015000)
     .8byte 0x0000000020004C01  # for VA starting at 80A00000 (pointer to NAPOT 64 KiB pages like at 80000000.  page table at 0x80013000)
     .8byte 0x0F00000020004CCF  # for VA starting at 80C00000 (bad reserved field in bits 60:54)
     .8byte 0x000000002000000F  # for VA starting at 80E00000 (megapage not dirty or accessed)
     .8byte 0x0000000000004C01  # for VA starting at 81000000 (nonleaf pointing to unimplemented memory causes access fault)
     .8byte 0x4000000020004C01  # for VA starting at 81200000 (nonleaf with PBMT nonzero causes page fault)
     .8byte 0x00000000000000CF  # for VA starting at 81400000 (megapage with access fault)
-    .8byte 0x0000000020004CC1
+    .8byte 0x0000000020004C09  # for VA starting at 81600000 (executable and not readable)
     .8byte 0x0000000020004CC1
     .8byte 0x0000000020004CC1
     .8byte 0x0000000020004CC1

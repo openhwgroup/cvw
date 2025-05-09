@@ -258,7 +258,7 @@ test_cases:
 
 # Test cs-sck delay of 0 with sck phase = 0 (implicit half cycle delay)
 
-.4byte cs_mode, 0x00000000, write32_test    # reset cs_mode to auto, all cs and sck mode settings should be defualt
+.4byte cs_mode, 0x00000000, write32_test    # reset cs_mode to auto, all cs and sck mode settings should be default
 .4byte delay0, 0x00010000, write32_test     # set cs-sck delay to 0
 .4byte tx_data, 0x00000020, write32_test   # place 8'h11 into tx_data
 .4byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
@@ -635,23 +635,23 @@ SETUP_PLIC
 .4byte tx_mark, 0x00000001, write32_test    # set transmit watermark to 1 (any entry turns mark off)
 .4byte sck_div, 0x00000100, write32_test    # lower SPI clock rate so read32_tests trigger at correct times
 #.4byte ie, 0x00000000, write32_test         # enable transmit interrupt
-.4byte ip, 0x00000001, read32_test          # tx watermark interupt should be pending
+.4byte ip, 0x00000001, read32_test          # tx watermark interrupt should be pending
 .4byte 0x0, 0x00000000, readmip_test
 .4byte tx_data, 0x55443322, spi_burst_send    # place 4 entries in transmit fifo
-.4byte ip, 0x00000000, read32_test          # tx watermark interupt should be off 125
+.4byte ip, 0x00000000, read32_test          # tx watermark interrupt should be off 125
 .4byte 0x0, 0x00000003, spi_data_wait           # wait for transmission to end
 
-# test recieve watermark interrupt (triggers when entries in rx FIFO > rx watermark)
+# test receive watermark interrupt (triggers when entries in rx FIFO > rx watermark)
 
 .4byte tx_mark, 0x00000000, write32_test      # set tx_mark to 0
 .4byte rx_data, 0x00000022, read32_test       # clear one entry from rx FIFO
-.4byte rx_mark, 0x00000003, write32_test      # set recieve watermark to 3
+.4byte rx_mark, 0x00000003, write32_test      # set receive watermark to 3
 #.4byte ie, 0x0000002, write32_test          # enable receive interrupts
 .4byte ip, 0x00000000, read32_test          # rx interrupts should be low (rx FIFO has 3 entries)
-.4byte rx_mark, 0x00000002, write32_test    # set recieve watermark to 2
-.4byte ip, 0x00000002, read32_test          # recieve interrupt should be high
+.4byte rx_mark, 0x00000002, write32_test    # set receive watermark to 2
+.4byte ip, 0x00000002, read32_test          # receive interrupt should be high
 .4byte 0x0, 0x00000000, readmip_test
-.4byte rx_data, 0x00000033, read32_test     # clear one more entry from recieve FIFO (2 entries)
+.4byte rx_data, 0x00000033, read32_test     # clear one more entry from receive FIFO (2 entries)
 .4byte ip, 0x00000000, read32_test          # receive interrupt should be low
 .4byte rx_data, 0x00000044, read32_test
 .4byte rx_data, 0x00000055, read32_test     # clear rx fifo
@@ -659,25 +659,25 @@ SETUP_PLIC
 
 .4byte tx_mark, 0x00000001, write32_test    # set transmit watermark to 0
 .4byte ie, 0x00000001, write32_test         # enable transmit interrupt
-.4byte ip, 0x00000001, read32_test          # tx watermark interupt should be pending
+.4byte ip, 0x00000001, read32_test          # tx watermark interrupt should be pending
 .4byte 0x0, 0x00000800, readmip_test
 .4byte ie, 0x00000000, write32_test      # disable tx intr
 .4byte tx_data, 0x55443322, spi_burst_send    # place 4 entries in transmit fifo
 .4byte 0x0, 0x00000003, spi_data_wait           # wait for transmission to end
 
-# test recieve watermark interrupt (triggers when entries in rx FIFO > rx watermark)
+# test receive watermark interrupt (triggers when entries in rx FIFO > rx watermark)
 
 .4byte tx_mark, 0x00000000, write32_test
 .4byte 0x0, 0x00000000, claim_m_plic_interrupts
 .4byte rx_data, 0x00000022, read32_test       # clear one entry from rx FIFO
-.4byte rx_mark, 0x00000003, write32_test      # set recieve watermark to 3
+.4byte rx_mark, 0x00000003, write32_test      # set receive watermark to 3
 .4byte ie, 0x0000002, write32_test          # enable receive interrupts
 .4byte ip, 0x00000000, read32_test          # rx interrupts should be low (rx FIFO has 3 entries)
 .4byte 0x0, 0x00000000, readmip_test
-.4byte rx_mark, 0x00000002, write32_test    # set recieve watermark to 2
-.4byte ip, 0x00000002, read32_test          # recieve interrupt should be high
+.4byte rx_mark, 0x00000002, write32_test    # set receive watermark to 2
+.4byte ip, 0x00000002, read32_test          # receive interrupt should be high
 .4byte 0x0, 0x00000800, readmip_test
-.4byte rx_data, 0x00000033, read32_test     # clear one more entry from recieve FIFO (2 entries)
+.4byte rx_data, 0x00000033, read32_test     # clear one more entry from receive FIFO (2 entries)
 .4byte 0x0, 0x00000000, claim_m_plic_interrupts
 .4byte ip, 0x00000000, read32_test          # receive interrupt should be low
 .4byte 0x0, 0x00000000, readmip_test

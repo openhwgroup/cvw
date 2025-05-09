@@ -33,6 +33,13 @@ import csv
 import os
 import re
 
+WALLY = os.environ.get("WALLY")
+
+# Set working directory to where the Makefile is
+coremark_dir = os.path.join(WALLY, "benchmarks/coremark")
+os.chdir(coremark_dir)
+
+
 # list of architectures to run. 
 arch_list = [
     "rv32i_zicsr",
@@ -54,7 +61,8 @@ mt_regex = r"Elapsed MTIME: (\d+).*?Elapsed MINSTRET: (\d+).*?COREMARK/MHz Score
 #cpi_regex = r"CPI: \d+ / \d+ = (\d+\.\d+)"
 #cmhz_regex = r"COREMARK/MHz Score: [\d,]+ / [\d,]+ = (\d+\.\d+)"
 # Open a CSV file to write the results
-resultfile = 'coremark_results.csv'
+resultfile = os.path.join(coremark_dir, 'coremark_results.csv')
+# resultfile = 'coremark_results.csv'
 with open(resultfile, mode='w', newline='') as csvfile:
     fieldnames = ['Architecture', 'CM / MHz','CPI','MTIME','MINSTRET','Load Stalls','Store Stalls','D$ Accesses',
                     'D$ Misses','I$ Accesses','I$ Misses','Branches','Branch Mispredicts','BTB Misses',

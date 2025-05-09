@@ -158,7 +158,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        MatchDE;                        // Match between a source register in Decode stage and destination register in Execute stage
   logic        FCvtIntStallD, MDUStallD, CSRRdStallD; // Stall due to conversion, load, multiply/divide, CSR read 
   logic        FunctCZeroD;                    // Funct7 and Funct3 indicate czero.* (not including Op check)
-  logic        BUW64D;                         // Indiciates if it is a .uw type B instruction in Decode Stage
+  logic        BUW64D;                         // Indicates if it is a .uw type B instruction in Decode Stage
   
   // Extract fields
   assign OpD     = InstrD[6:0];
@@ -401,7 +401,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     IFUPrefetchD = 1'b0;
     LSUPrefetchD = 1'b0;
     ImmSrcD = PreImmSrcD;
-    if (P.ZICBOP_SUPPORTED & (InstrD[14:0] == 15'b110_00000_0010011)) begin // ori with destiation x0 is hint for Prefetch
+    if (P.ZICBOP_SUPPORTED & (InstrD[14:0] == 15'b110_00000_0010011)) begin // ori with destination x0 is hint for Prefetch
       /* verilator lint_off CASEINCOMPLETE */
       case (Rs2D) // which type of prefectch?  Note: prefetch.r and .w are handled the same in Wally 
         5'b00000: IFUPrefetchD = 1'b1; // prefetch.i

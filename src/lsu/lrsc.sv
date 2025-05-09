@@ -36,7 +36,7 @@ module lrsc import cvw::*;  #(parameter cvw_t P) (
   input  logic                 MemReadM,   // Memory read
   input  logic [1:0]           PreLSURWM,  // Memory operation from the HPTW or IEU [1]: read, [0]: write
   output logic [1:0]           LSURWM,     // Memory operation after potential squash of SC
-  input  logic [1:0]           LSUAtomicM, // Atomic memory operaiton
+  input  logic [1:0]           LSUAtomicM, // Atomic memory operation
   input  logic [P.PA_BITS-1:0] PAdrM,      // Physical memory address 
   output logic                 SquashSCW   // Squash the store conditional by not allowing rf write
 );

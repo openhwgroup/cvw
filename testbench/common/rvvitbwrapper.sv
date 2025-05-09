@@ -45,7 +45,7 @@ module rvvitbwrapper import cvw::*; #(parameter cvw_t P,
 
   localparam TOTAL_CSRS = 36;
   
-  // pipeline controlls
+  // pipeline controls
   logic                                             StallE, StallM, StallW, FlushE, FlushM, FlushW;
   // required
   logic [P.XLEN-1:0]                                PCM;

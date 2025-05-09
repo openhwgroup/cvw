@@ -88,10 +88,10 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
         end else 
           PostBox = In;
 
-      // choose sign bit depending on format - 1=larger precsion 0=smaller precision
+      // choose sign bit depending on format - 1=larger precision 0=smaller precision
       assign Sgn = Fmt ? In[P.FLEN-1] : (BadNaNBox ? 0 : In[P.LEN1-1]); // improperly boxed NaNs are treated as positive
 
-      // extract the fraction, add trailing zeroes to the mantissa if nessisary
+      // extract the fraction, add trailing zeroes to the mantissa if necessary
       assign Frac = Fmt ? In[P.NF-1:0] : {In[P.NF1-1:0], (P.NF-P.NF1)'(0)};
 
       // is the exponent non-zero
@@ -105,14 +105,14 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
       // dexp = 0bdd dbbb bbbb 
       // also need to take into account possible zero/Subnorm/inf/NaN values
 
-      // extract the exponent, converting the smaller exponent into the larger precision if nessisary
+      // extract the exponent, converting the smaller exponent into the larger precision if necessary
       //      - if the original precision had a Subnormal number convert the exponent value 1
       assign Exp = Fmt ? {In[P.FLEN-2:P.NF+1], In[P.NF]|~ExpNonZero} : {In[P.LEN1-2], {P.NE-P.NE1{~In[P.LEN1-2]}}, In[P.LEN1-3:P.NF1+1], In[P.NF1]|~ExpNonZero}; 
 
       // is the exponent all 1's
       assign ExpMax = Fmt ? &In[P.FLEN-2:P.NF] : &In[P.LEN1-2:P.NF1];
   
-  end else if (P.FPSIZES == 3) begin       // three floating point precsions supported
+  end else if (P.FPSIZES == 3) begin       // three floating point precisions supported
 
       // largest format | larger format  | smallest format
       //---------------------------------------------------
@@ -171,8 +171,8 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
       always_comb
           case (Fmt)
               P.FMT:   ExpNonZero = |In[P.FLEN-2:P.NF];   // if input is largest precision (P.FLEN - ie quad or double)
-              P.FMT1:  ExpNonZero = |In[P.LEN1-2:P.NF1];  // if input is larger precsion (P.LEN1 - double or single)
-              P.FMT2:  ExpNonZero = |In[P.LEN2-2:P.NF2];  // if input is smallest precsion (P.LEN2 - single or half)
+              P.FMT1:  ExpNonZero = |In[P.LEN1-2:P.NF1];  // if input is larger precision (P.LEN1 - double or single)
+              P.FMT2:  ExpNonZero = |In[P.LEN2-2:P.NF2];  // if input is smallest precision (P.LEN2 - single or half)
               default: ExpNonZero = 1'bx; 
           endcase
           
@@ -269,7 +269,7 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
       // dexp = 0bdd dbbb bbbb 
       // also need to take into account possible zero/Subnorm/inf/NaN values
       
-      // convert the double precsion exponent into quad precsion
+      // convert the double precision exponent into quad precision
       // 1 is added to the exponent if the input is zero or subnormal
       always_comb
           case (Fmt)
@@ -294,7 +294,7 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
   assign FracZero = ~|Frac & ~BadNaNBox; // is the fraction zero?
   assign Man = {ExpNonZero, Frac}; // add the assumed one (or zero if Subnormal or zero) to create the significand
   assign NaN = ((ExpMax & ~FracZero)|BadNaNBox)&En; // is the input a NaN?
-  assign SNaN = NaN&~Frac[P.NF-1]&~BadNaNBox; // is the input a singnaling NaN?
+  assign SNaN = NaN&~Frac[P.NF-1]&~BadNaNBox; // is the input a signaling NaN?
   assign Inf = ExpMax & FracZero & En; // is the input infinity?
   assign Zero = ~ExpNonZero & FracZero; // is the input zero?
   assign Subnorm = ~ExpNonZero & ~FracZero & ~BadNaNBox; // is the input subnormal
