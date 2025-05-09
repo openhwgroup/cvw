@@ -25,6 +25,7 @@ class sail_cSim(pluginTemplate):
                 '64' : os.path.join(config['PATH'] if 'PATH' in config else "","riscv_sim_rv64d")}
         self.isa_spec = os.path.abspath(config['ispec']) if 'ispec' in config else ''
         self.platform_spec = os.path.abspath(config['pspec']) if 'ispec' in config else ''
+        # self.coverage_file = os.path.abspath(config['coverage']) if 'coverage' in config else ''
         self.make = config['make'] if 'make' in config else 'make'
         logger.debug("SAIL CSim plugin initialised using the following configuration.")
         for entry in config:
@@ -86,6 +87,13 @@ class sail_cSim(pluginTemplate):
             os.remove(self.work_dir+ "/Makefile." + self.name[:-1])
         make = utils.makeUtil(makefilePath=os.path.join(self.work_dir, "Makefile." + self.name[:-1]))
         make.makeCommand = self.make + ' -j' + self.num_jobs
+
+        # TODO: This bit is temporary until riscof properly copies over the coverage file
+        self.coverage_file = f"{self.pluginpath}/../spike/coverage_rv{self.xlen}gc.svh"
+        # Copy coverage file to wkdir
+        cov_copy_command = f'cp {self.coverage_file} {self.work_dir}/coverage.svh;'
+        os.system(cov_copy_command)
+
         for file in testList:
             testentry = testList[file]
             test = testentry['test_path']
@@ -111,6 +119,7 @@ class sail_cSim(pluginTemplate):
             else:
                 execute += self.sail_exe[self.xlen] + ' -z268435455 -i --trace=step  ' + self.sailargs + f' --test-signature={sig_file} {elf} > {test_name}.log 2>&1;'
 
+                # Coverage
                 # Generate trace from sail log
                 cvw_arch_verif_dir = os.getenv('CVW_ARCH_VERIF') # TODO: update this to not depend on env var
                 trace_command = f'{cvw_arch_verif_dir}/bin/sail-parse.py {test_name}.log {test_name}.trace;'
@@ -118,11 +127,8 @@ class sail_cSim(pluginTemplate):
 
                 # Generate ucdb coverage file
                 questa_do_file = f'{cvw_arch_verif_dir}/bin/cvw-arch-verif.do'
-                coverage_command = f'vsim -c -do "do {questa_do_file} {test_dir} {test_name} {cvw_arch_verif_dir}/fcov";'
+                coverage_command = f'vsim -c -do "do {questa_do_file} {test_dir} {test_name} {cvw_arch_verif_dir}/fcov {self.work_dir}";'
                 execute += coverage_command
-
-
-            # TODO: generate trace from sail log, send into questa to gen ucdb, both dumped in test specific dir
 
             make.add_target(execute)
 #        make.execute_all(self.work_dir)
