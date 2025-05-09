@@ -271,6 +271,10 @@ ConcurrentICacheMissDTLBMiss:
     cbo.zero (t0)
     cbo.clean (t0)
 
+    # attempt read from read disabled, execute enabled PTE with MXR set
+    li t0, 0x81600000
+    lw t1, 0(t0)    # read from page
+
     # clear mstatus.MXR
     li a0, 3
     ecall
@@ -380,7 +384,7 @@ SpecialPage:
     .8byte 0x0000000000004C01  # for VA starting at 81000000 (nonleaf pointing to unimplemented memory causes access fault)
     .8byte 0x4000000020004C01  # for VA starting at 81200000 (nonleaf with PBMT nonzero causes page fault)
     .8byte 0x00000000000000CF  # for VA starting at 81400000 (megapage with access fault)
-    .8byte 0x0000000020004CC1
+    .8byte 0x0000000020004C09  # for VA starting at 81600000 (executable and not readable)
     .8byte 0x0000000020004CC1
     .8byte 0x0000000020004CC1
     .8byte 0x0000000020004CC1
