@@ -13,10 +13,12 @@
 # output.
 #
 ##################################
+# figure out why the diff in coremark is nort wokring,get cache stuff in its own log (use sim_log),simplify the commands,
 import argparse
 import multiprocessing
 import os
 import shutil
+import subprocess
 import sys
 from collections import namedtuple
 from multiprocessing import Pool
@@ -275,6 +277,24 @@ lockstepwaivers = [
     "WALLY-cbom-01.S_ref.elf", #,  # cbom extension is not supported by ImperasDV because there is no cache model in ImperasDV
 ]
 
+# tests for cache simulations on a rv64gc derived config - cache_rv64gc
+tests64gc_cache = [["cache_rv64gc", 
+    ["coverage64gc", "wally64priv", "arch64i", "arch64priv", "arch64c",  "arch64m", "arch64zcb",
+             "arch64zifencei", "arch64zicond", "arch64a_amo", "wally64a_lrsc", "wally64periph", 
+              "arch64zbkb", "arch64zbkc", "arch64zbkx", "arch64zknd", "arch64zkne", "arch64zknh",
+             "arch64zba",  "arch64zbb",  "arch64zbc", "arch64zbs"],
+    '--args \'+suitename={}_\' --params "I_CACHE_ADDR_LOGGER=1\\\'b1 D_CACHE_ADDR_LOGGER=1\\\'b1"',
+    "SUCCESS"]]
+
+# tests64gc = [["rv64gc",  
+#              ["coverage64gc", "wally64priv", "arch64i", "arch64priv", "arch64c",  "arch64m", "arch64zcb",
+#              "arch64zifencei", "arch64zicond", "arch64a_amo", "wally64a_lrsc", "wally64periph", 
+#              "arch64zbkb", "arch64zbkc", "arch64zbkx", "arch64zknd", "arch64zkne", "arch64zknh",
+#              "arch64zba",  "arch64zbb",  "arch64zbc", "arch64zbs"], 
+#              "--params \"I_CACHE_ADDR_LOGGER=1\\'b1 D_CACHE_ADDR_LOGGER=1\\'b1\"",
+#              "SUCCESS"]]
+             
+
 ##################################
 # Data Types & Functions
 ##################################
@@ -302,23 +322,30 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-def addTests(testList, sim, coverStr, configs):
+def addTests(testList, sim, coverStr, configs, altcommand=None):
     sim_logdir = f"{regressionDir}/{sim}/logs/"
     for test in testList:
         config = test[0]
         suites = test[1]
         flags = f"{test[2]}" if len(test) >= 3 else ""
         gs = test[3] if len(test) >= 4 else "All tests ran without failures"
+        # # cmdPrefix=f"wsim --sim {sim} {coverStr} {flags} {config}"
+        # # cmdPrefix = "wsim --sim verilator --params \"LOG_DIR='\"/sim/verilator/wkdir/'\" I_CACHE_ADDR_LOGGER=1 D_CACHE_ADDR_LOGGER=1\" rv64gc"
+        # cmdPrefix = 'wsim --sim verilator --args "+memfilename=/path/to/file.hex" --params "I_CACHE_ADDR_LOGGER=1\'b1 D_CACHE_ADDR_LOGGER=1\'b1" rv64gc'
         cmdPrefix=f"wsim --sim {sim} {coverStr} {flags} {config}"
+        
         for t in suites:
-            sim_log = f"{sim_logdir}{config}_{t}.log"
+            sim_log_prefix = f"{sim_logdir}{config}_{t}"
+            sim_log = f"{sim_log_prefix}.log"
             grepfile = sim_logdir + test[4] if len(test) >= 5 else sim_log
+            newCmdPrefix = cmdPrefix.format(f"{sim_log_prefix}")
             tc = TestCase(
                     name=t,
                     variant=config,
-                    cmd=f"{cmdPrefix} {t} > {sim_log}",
+                    cmd=f"{newCmdPrefix} {t} > {sim_log}",
                     grepstr=gs,
-                    grepfile = grepfile)
+                    grepfile = grepfile,
+                    altcommand = altcommand.format(sim_log_prefix, sim_log_prefix, sim_log) if altcommand else None)
             configs.append(tc)
 
 
@@ -382,9 +409,9 @@ def run_test_case(config, dryrun: bool = False):
             return 1
         elif altcommand:
             sim_log = config.grepfile
-            check_ret_code = os.system(altcommand)
+            check_ret_code = subprocess.run(altcommand, shell=True)
             with open(sim_log, 'a') as f:
-                if check_ret_code == 0:
+                if check_ret_code.returncode == 0:
                     # Success message
                     print(f"{bcolors.OKGREEN}{cmd}: Success{bcolors.ENDC}", flush=True)
                     f.write("Validation Tests completed with 0 errors\n")  # Write success message to the log
@@ -415,7 +442,8 @@ def parse_args():
     parser.add_argument("--branch", help="Run branch predictor accuracy tests", action="store_true")
     parser.add_argument("--breker", help="Run Breker tests", action="store_true") # Requires a license for the breker tool. See tests/breker/README.md for details
     parser.add_argument("--dryrun", help="Print commands invoked to console without running regression", action="store_true")
-    parser.add_argument("--performance", help="Check for performance changes or discrepancies in embench and coremark", action="store_true")
+    parser.add_argument("--benchmark", help="Check for performance changes or discrepancies in embench and coremark", action="store_true")
+    parser.add_argument("--cache", help="Run cache performance accuracy tests", action="store_true")
     return parser.parse_args()
 
 
@@ -441,9 +469,9 @@ def process_args(args):
     elif args.testfloat:
         sims = [testfloatsim]
         TIMEOUT_DUR = 30*60 # seconds
-    elif args.branch:
+    elif args.branch or args.cache:
         TIMEOUT_DUR = 120*60 # seconds
-    elif args.nightly or args.performance:
+    elif args.nightly or args.benchmark:
         TIMEOUT_DUR = 60*60 # seconds
     else:
         TIMEOUT_DUR = 10*60 # seconds
@@ -453,6 +481,9 @@ def process_args(args):
 
 def selectTests(args, sims, coverStr):
     # Run Lint
+    configs = [
+
+        ]
     configs = [
         TestCase(
             name="lints",
@@ -526,7 +557,7 @@ def selectTests(args, sims, coverStr):
                         grepfile = sim_log)
                 configs.append(tc)
 
-    if (args.performance or args.nightly):
+    if (args.benchmark or args.nightly):
         # RUNNING THE EMBENCH TEST
         actual_embench_directory = f"{WALLY}/benchmarks/embench/actual_embench_results/"
         expected_embench_directory = f"{WALLY}/benchmarks/embench/expected_embench_results/"
@@ -559,36 +590,27 @@ def selectTests(args, sims, coverStr):
         with open(coremark_logfile_path, 'w'):
             pass
 
-        coremark_sweep_test_file = f"{WALLY}/benchmarks/coremark/coremark_sweep.py"
-        actual_coremark_values_csv = f"{WALLY}/benchmarks/coremark/coremark_results.csv"
-        expected_coremark_values_csv = f"{WALLY}/benchmarks/coremark/expected_coremark_results.csv"
+        benchmark_dir = f"{WALLY}/benchmarks/coremark/"
+        coremark_sweep_test_file = f"{benchmark_dir}coremark_sweep.py"
+        actual_coremark_values_csv = f"{benchmark_dir}coremark_results.csv"
+        expected_coremark_values_csv = f"{benchmark_dir}expected_coremark_results.csv"
 
         # calculates the difference between the coremark expected outcomes and appends them to the log file
         coremark_test = TestCase(
             name="validate_coremark_sweep",
             variant="coremark check",
-            cmd=(f"python3 {coremark_sweep_test_file}"),
+            cmd=(f"python3 {coremark_sweep_test_file} >> {coremark_logfile_path} 2>&1"),
             grepstr=None,
             grepfile=coremark_logfile_path,
-            altcommand=f"diff -u {actual_coremark_values_csv} {expected_coremark_values_csv} >> {coremark_logfile_path}"
+            altcommand=f"diff -u {actual_coremark_values_csv} {expected_coremark_values_csv} >> {coremark_logfile_path}  2>&1"
         )
         configs.append(coremark_test)
 
-
+    if (args.cache or args.nightly):
         # RUNNING THE CACHE TESTS FOR RV64GC
-        cache_log_path = f"{regressionDir}/{defaultsim}/logs/cache.log"
-        cache_test = TestCase(
-            name="cache",
-            variant="rv64gc",
-            cmd=(
-                f"cd $WALLY/sim && "
-                f"./rv64gc_CacheSim.py -p > {cache_log_path} 2>&1 && "
-                f"echo SUCCESS, no failures detected in the cache output >> {cache_log_path} || echo FAILURE, failures detected in the cache output >> {cache_log_path}"
-            ),
-            grepstr="SUCCESS, no failures detected in the cache output",
-            grepfile=cache_log_path
-        )
-        configs.append(cache_test)
+        cachecmd = "CacheSim.py 64 4 56 44 -f "
+        altcommand = ("( " + cachecmd + "{}_ICache.log -p && " + cachecmd + "{}_DCache.log -p ) >> {} 2>&1")
+        addTests(tests64gc_cache, defaultsim, coverStr, configs, altcommand)
 
     return configs
 
