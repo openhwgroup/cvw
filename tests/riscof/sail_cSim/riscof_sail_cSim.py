@@ -111,22 +111,13 @@ class sail_cSim(pluginTemplate):
             else:
                 execute += self.sail_exe[self.xlen] + ' -z268435455 -i --trace=step  ' + self.sailargs + f' --test-signature={sig_file} {elf} > {test_name}.log 2>&1;'
 
-            cov_str = ' '
-            for label in testentry['coverage_labels']:
-                cov_str+=' -l '+label
-
-            if cgf_file is not None:
-                coverage_cmd = 'riscv_isac --verbose info coverage -d \
-                        -t {}.log --parser-name c_sail -o coverage.rpt  \
-                        --sig-label begin_signature  end_signature \
-                        --test-label rvtest_code_begin rvtest_code_end \
-                        -e ref.elf -c {} -x{} {};'.format(\
-                        test_name, ' -c '.join(cgf_file), self.xlen, cov_str)
-            else:
-                coverage_cmd = ''
+                # Generate trace from sail log
+                cvw_arch_verif_dir = os.getenv('CVW_ARCH_VERIF') # TODO: update this to not depend on env var
+                trace_command = f'{cvw_arch_verif_dir}/bin/sail-parse.py {test_name}.log {test_name}.trace;'
+                execute += trace_command
 
 
-            execute+=coverage_cmd
+            # TODO: generate trace from sail log, send into questa to gen ucdb, both dumped in test specific dir
 
             make.add_target(execute)
 #        make.execute_all(self.work_dir)
