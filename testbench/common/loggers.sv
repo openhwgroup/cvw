@@ -3,6 +3,7 @@
 //
 // Written: Rose Thompson rose@rosethompson.net
 // Modified: 14 June 2023
+// Modified by sanarayanan@hmc.edu, May 2025
 // 
 // Purpose: Log branch instructions, log instruction fetches,
 //          log I$ misses, log data memory accesses, log D$ misses, and
@@ -40,6 +41,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
 //  input logic StartSample,
 //  input logic EndSample,
   input string memfilename,
+  input string sim_log_prefix,
   input string TEST
   );
   
@@ -180,7 +182,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
     assign InvalEdge = dut.core.ifu.InvalidateICacheM & ~InvalDelayed;
 
     initial begin
-      LogFile = "ICache.log";
+      LogFile = {sim_log_prefix, "ICache.log"}; // Prepend the directory
       file = $fopen(LogFile, "w");
       $fwrite(file, "BEGIN %s\n", memfilename);
     end
@@ -234,7 +236,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
                      (AccessTypeString != "NULL");
 
     initial begin
-      LogFile = "DCache.log";
+      LogFile = {sim_log_prefix, "DCache.log"};  // Prepend the directory
       file = $fopen(LogFile, "w");
       $fwrite(file, "BEGIN %s\n", memfilename);
     end
