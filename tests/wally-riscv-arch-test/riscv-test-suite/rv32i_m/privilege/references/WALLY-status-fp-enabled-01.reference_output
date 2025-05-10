@@ -1,6 +1,0 @@
-00002000 # read SD = 0, FS = 01
-80006000 # read SD = 1, FS = 11
-00004000 # read written SD = 1, FS = 10
-80006000 # read SD = 1, FS = 11
-00000002 # mcause from attempting fmv with status.FS cleared
-0000000b # mcause from M mode ecall from test termination
