@@ -114,7 +114,7 @@ class sail_cSim(pluginTemplate):
                 reference_output = re.sub("/src/","/references/", re.sub(".S",".reference_output", test))
                 execute += f'cut -c-{8:g} {reference_output} > {sig_file}' #use cut to remove comments when copying
             else:
-                execute += self.sail_exe[self.xlen] + f' --config {self.pluginpath}/{"rv64gc.json" if self.xlen == 64 else "rv32gc.json"} --trace=step --test-signature={sig_file} {elf} > {test_name}.log 2>&1;'
+                execute += self.sail_exe[self.xlen] + f' --config {self.pluginpath}/rv{self.xlen}gc.json --trace=step --test-signature={sig_file} {elf} > {test_name}.log 2>&1;'
 
                 # Coverage
                 if (os.environ.get('COLLECT_COVERAGE') == "true"): # TODO: update this to take a proper flag from riscof, not use env vars
