@@ -117,15 +117,16 @@ class sail_cSim(pluginTemplate):
                 execute += self.sail_exe[self.xlen] + f' --config {self.pluginpath}/{"rv64gc.json" if self.xlen == 64 else "rv32gc.json"} --trace=step --test-signature={sig_file} {elf} > {test_name}.log 2>&1;'
 
                 # Coverage
-                # Generate trace from sail log
-                cvw_arch_verif_dir = os.getenv('CVW_ARCH_VERIF') # TODO: update this to not depend on env var
-                trace_command = f'{cvw_arch_verif_dir}/bin/sail-parse.py {test_name}.log {test_name}.trace;'
-                execute += trace_command
+                if (os.environ.get('COLLECT_COVERAGE') == "true"): # TODO: update this to take a proper flag from riscof, not use env vars
+                    # Generate trace from sail log
+                    cvw_arch_verif_dir = os.getenv('CVW_ARCH_VERIF') # TODO: update this to not depend on env var
+                    trace_command = f'{cvw_arch_verif_dir}/bin/sail-parse.py {test_name}.log {test_name}.trace;'
+                    execute += trace_command
 
-                # Generate ucdb coverage file
-                questa_do_file = f'{cvw_arch_verif_dir}/bin/cvw-arch-verif.do'
-                coverage_command = f'vsim -c -do "do {questa_do_file} {test_dir} {test_name} {cvw_arch_verif_dir}/fcov {self.work_dir}";'
-                execute += coverage_command
+                    # Generate ucdb coverage file
+                    questa_do_file = f'{cvw_arch_verif_dir}/bin/cvw-arch-verif.do'
+                    coverage_command = f'vsim -c -do "do {questa_do_file} {test_dir} {test_name} {cvw_arch_verif_dir}/fcov {self.work_dir}";'
+                    execute += coverage_command
 
             make.add_target(execute)
 #        make.execute_all(self.work_dir)
