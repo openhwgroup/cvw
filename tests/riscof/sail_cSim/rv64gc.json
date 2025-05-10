@@ -24,9 +24,9 @@
     }
   },
   "platform": {
-    "vendorid": 0,
-    "archid": 0,
-    "impid": 0,
+    "vendorid": 1538,
+    "archid": 36,
+    "impid": 256,
     "hartid": 0,
     "reset_vector": 4096,
     "cache_block_size_exp": 6,
@@ -56,7 +56,7 @@
       "supported": true
     },
     "V": {
-      "supported": true,
+      "supported": false,
       "vlen_exp": 9,
       "elen_exp": 6,
       "vl_use_ceil": false
@@ -89,7 +89,7 @@
       "supported": true
     },
     "Zimop": {
-      "supported": true
+      "supported": false
     },
     "Zmmul": {
       "supported": false
@@ -98,7 +98,7 @@
       "supported": false
     },
     "Zabha": {
-      "supported": true
+      "supported": false
     },
     "Zalrsc": {
       "supported": false
@@ -119,7 +119,7 @@
       "supported": true
     },
     "Zcf": {
-      "supported": true
+      "supported": false
     },
     "Zcd": {
       "supported": true
@@ -128,7 +128,7 @@
       "supported": true
     },
     "Zcmop": {
-      "supported": true
+      "supported": false
     },
     "Zba": {
       "supported": false
@@ -161,40 +161,40 @@
       "supported": true
     },
     "Zkr": {
-      "supported": true
+      "supported": false
     },
     "Zksed": {
-      "supported": true
+      "supported": false
     },
     "Zksh": {
-      "supported": true
+      "supported": false
     },
     "Zhinx": {
       "supported": false
     },
     "Zvbb": {
-      "supported": true
+      "supported": false
     },
     "Zvkb": {
       "supported": false
     },
     "Zvbc": {
-      "supported": true
+      "supported": false
     },
     "Zvknha": {
-      "supported": true
+      "supported": false
     },
     "Zvknhb": {
-      "supported": true
+      "supported": false
     },
     "Zvksh": {
-      "supported": true
+      "supported": false
     },
     "Sscofpmf": {
-      "supported": true
+      "supported": false
     },
     "Smcntrpmf": {
-      "supported": true
+      "supported": false
     },
     "Sstc": {
       "supported": true
@@ -206,7 +206,7 @@
       "supported": true
     },
     "Sv32": {
-      "supported": true
+      "supported": false
     },
     "Sv39": {
       "supported": true
@@ -215,7 +215,7 @@
       "supported": true
     },
     "Sv57": {
-      "supported": true
+      "supported": false
     }
   }
 }
