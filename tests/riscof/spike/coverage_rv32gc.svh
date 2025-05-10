@@ -1,0 +1,1 @@
+../../../config/rv32gc/coverage.svh

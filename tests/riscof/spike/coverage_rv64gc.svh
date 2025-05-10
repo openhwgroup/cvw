@@ -1,0 +1,1 @@
+../../../config/rv64gc/coverage.svh

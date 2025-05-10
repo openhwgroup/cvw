@@ -260,17 +260,15 @@ string arch64priv[] = '{
   "rv64i_m/privilege/src/misalign-bltu-01.S",
   "rv64i_m/privilege/src/misalign-bne-01.S",
   "rv64i_m/privilege/src/misalign-jal-01.S"
-  // commented out for now because rv64gc supports Zicclsm, but Sail does not yet.  Restore when Sail supports Zicclsm.
-  /* -----\/----- EXCLUDED -----\/-----
-  "rv64i_m/privilege/src/misalign-ld-01.S",
-  "rv64i_m/privilege/src/misalign-lh-01.S",
-  "rv64i_m/privilege/src/misalign-lhu-01.S",
-  "rv64i_m/privilege/src/misalign-lw-01.S",
-  "rv64i_m/privilege/src/misalign-lwu-01.S",
-  "rv64i_m/privilege/src/misalign-sd-01.S",
-  "rv64i_m/privilege/src/misalign-sh-01.S",
-  "rv64i_m/privilege/src/misalign-sw-01.S"
-  -----/\----- EXCLUDED -----/\----- */
+  // TODO: Sail misaligned is turned on but these still mismatch. Need to investigate
+  // "rv64i_m/privilege/src/misalign-ld-01.S",
+  // "rv64i_m/privilege/src/misalign-lh-01.S",
+  // "rv64i_m/privilege/src/misalign-lhu-01.S",
+  // "rv64i_m/privilege/src/misalign-lw-01.S",
+  // "rv64i_m/privilege/src/misalign-lwu-01.S",
+  // "rv64i_m/privilege/src/misalign-sd-01.S",
+  // "rv64i_m/privilege/src/misalign-sh-01.S",
+  // "rv64i_m/privilege/src/misalign-sw-01.S"
 };
 
 string arch64zifencei[] = '{
