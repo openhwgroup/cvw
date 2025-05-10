@@ -330,7 +330,7 @@ def addTests(testList, sim, coverStr, configs):
             sim_log_prefix = f"{sim_logdir}{config}_{t}"
             sim_log = f"{sim_log_prefix}.log"
             grepfile = sim_logdir + test[4] if (len(test) >= 5 and test[4] is not None) else sim_log
-            altcommand = test[5] if (len(test) >= 6 and test[5] is not None) else None
+            altcommand = test[5].format(sim_log_prefix, sim_log_prefix, sim_log) if (len(test) >= 6 and test[5] is not None) else None
             newCmdPrefix = cmdPrefix.format(sim_log_prefix)
             tc = TestCase(
                     name=t,
@@ -338,7 +338,7 @@ def addTests(testList, sim, coverStr, configs):
                     cmd=f"{newCmdPrefix} {t} > {sim_log}",
                     grepstr=gs,
                     grepfile = grepfile,
-                    altcommand = altcommand.format(sim_log_prefix, sim_log_prefix, sim_log) if altcommand else None)
+                    altcommand = altcommand)
             configs.append(tc)
 
 

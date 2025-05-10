@@ -86,7 +86,7 @@ module testbench;
   logic        ResetMem;
 
   // Variables that can be overwritten with $value$plusargs at start of simulation
-  string       TEST, ElfFile;
+  string       TEST, ElfFile, sim_log_prefix;
   integer      INSTR_LIMIT;
 
   // DUT signals
@@ -291,7 +291,7 @@ module testbench;
   logic        ResetCntRst;
   logic        CopyRAM;
 
-  string  sim_log_prefix, signame, elffilename, memfilename, bootmemfilename, uartoutfilename, pathname;
+  string  signame, elffilename, memfilename, bootmemfilename, uartoutfilename, pathname;
   integer begin_signature_addr, end_signature_addr, signature_size;
   integer uartoutfile;
 
