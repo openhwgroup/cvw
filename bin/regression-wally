@@ -284,7 +284,9 @@ tests64gc_cache = [
     "arch64zbkb", "arch64zbkc", "arch64zbkx", "arch64zknd", "arch64zkne", "arch64zknh",
     "arch64zba",  "arch64zbb",  "arch64zbc", "arch64zbs"],
     '--args \'+sim_log_prefix={}_\' --params "I_CACHE_ADDR_LOGGER=1\\\'b1 D_CACHE_ADDR_LOGGER=1\\\'b1"',
-    "SUCCESS! There were no mismatches between Wally and the sim."
+    "SUCCESS! There were no mismatches between Wally and the sim.",
+    None,
+    "(CacheSim.py 64 4 56 44 -f {}_ICache.log -p && CacheSim.py 64 4 56 44 -f {}_DCache.log -p) >> {}"
     ]
 ]
              
@@ -316,19 +318,20 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-def addTests(testList, sim, coverStr, configs, altcommand=None):
+def addTests(testList, sim, coverStr, configs):
     sim_logdir = f"{regressionDir}/{sim}/logs/"
     for test in testList:
         config = test[0]
         suites = test[1]
         flags = f"{test[2]}" if len(test) >= 3 else ""
-        gs = test[3] if len(test) >= 4 else "All tests ran without failures"
+        gs = test[3] if (len(test) >= 4 and test[3] is not None) else "All tests ran without failures"
         cmdPrefix=f"wsim --sim {sim} {coverStr} {flags} {config}"
         for t in suites:
             sim_log_prefix = f"{sim_logdir}{config}_{t}"
             sim_log = f"{sim_log_prefix}.log"
-            grepfile = sim_logdir + test[4] if len(test) >= 5 else sim_log
-            newCmdPrefix = cmdPrefix.format(f"{sim_log_prefix}")
+            grepfile = sim_logdir + test[4] if (len(test) >= 5 and test[4] is not None) else sim_log
+            altcommand = test[5] if (len(test) >= 6 and test[5] is not None) else None
+            newCmdPrefix = cmdPrefix.format(sim_log_prefix)
             tc = TestCase(
                     name=t,
                     variant=config,
@@ -433,7 +436,7 @@ def parse_args():
     parser.add_argument("--breker", help="Run Breker tests", action="store_true") # Requires a license for the breker tool. See tests/breker/README.md for details
     parser.add_argument("--dryrun", help="Print commands invoked to console without running regression", action="store_true")
     parser.add_argument("--benchmark", help="Check for performance changes or discrepancies in embench and coremark", action="store_true")
-    parser.add_argument("--cache", help="Run cache performance accuracy tests", action="store_true")
+    parser.add_argument("--cache", help="Run cache performance validation tests", action="store_true")
     return parser.parse_args()
 
 
@@ -582,9 +585,7 @@ def selectTests(args, sims, coverStr):
 
     if (args.cache or args.nightly):
         # RUNNING THE CACHE TESTS FOR RV64GC
-        cachecmd = "CacheSim.py 64 4 56 44 -f "
-        altcommand = ("( " + cachecmd + "{}_ICache.log -p && " + cachecmd + "{}_DCache.log -p ) >> {} 2>&1")
-        addTests(tests64gc_cache, defaultsim, coverStr, configs, altcommand)
+        addTests(tests64gc_cache, defaultsim, coverStr, configs)
 
     return configs
 

@@ -2,6 +2,7 @@
 // testbench.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
+//// Modified by sanarayanan@hmc.edu, May 2025
 // Modified:
 //
 // Purpose: Wally Testbench and helper modules
@@ -141,6 +142,10 @@ module testbench;
       ElfFile = "none";
     if (!$value$plusargs("INSTR_LIMIT=%d", INSTR_LIMIT))
       INSTR_LIMIT = 0;
+    // Check if sim_log_prefix is passed as a command-line argument
+    if (!$value$plusargs("sim_log_prefix=%s", sim_log_prefix)) begin
+        sim_log_prefix = "";  // Assign default value if not passed
+    end
     //$display("TEST = %s ElfFile = %s", TEST, ElfFile);
 
     // pick tests based on modes supported
@@ -292,15 +297,6 @@ module testbench;
 
 
   assign ResetThreshold = 3'd5;
-
-  // Check if sim_log_prefix is passed as a command-line argument
-    // Inside an initial block
-  initial begin
-      // Check if sim_log_prefix is passed as a command-line argument
-      if (!$value$plusargs("sim_log_prefix=%s", sim_log_prefix)) begin
-          sim_log_prefix = "";  // Assign default value if not passed
-      end
-  end
 
   initial begin
     TestBenchReset = 1'b1;
