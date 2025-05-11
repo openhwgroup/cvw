@@ -64,10 +64,10 @@ main:
     li t0, 0x80200000
     jalr ra, t0 # jump to misaligned megapage
     li t0, 0x7FFFFFFF80000000
-
-
     jalr ra, t0 # jump to page with UpperBitsUnequal
-    li t0, 0x0000000080C00000
+    li t0, 0x8000000080C00000
+    jalr ra, t0 
+    li t0, 0x000000080C00000
     jalr ra, t0 # jump to page with bad reserved bits 60:54 in PTE
 
     # test with ENVCFG_ADUE = 1: switch to machine mode, set ADUE, access page with A=0, clear ADUE,
