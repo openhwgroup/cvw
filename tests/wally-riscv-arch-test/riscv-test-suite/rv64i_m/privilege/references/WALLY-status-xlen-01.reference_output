@@ -1,4 +1,0 @@
-00000000 # Test *** Number : Read out SXL, UXL of mstatus as 2 and 2 for 64 bit systems
-0000000a
-0000000b # ecall from ending tests in M mode
-00000000

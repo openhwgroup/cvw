@@ -2,6 +2,7 @@
 // testbench.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
+//// Modified by sanarayanan@hmc.edu, May 2025
 // Modified:
 //
 // Purpose: Wally Testbench and helper modules
@@ -85,7 +86,7 @@ module testbench;
   logic        ResetMem;
 
   // Variables that can be overwritten with $value$plusargs at start of simulation
-  string       TEST, ElfFile;
+  string       TEST, ElfFile, sim_log_prefix;
   integer      INSTR_LIMIT;
 
   // DUT signals
@@ -141,6 +142,10 @@ module testbench;
       ElfFile = "none";
     if (!$value$plusargs("INSTR_LIMIT=%d", INSTR_LIMIT))
       INSTR_LIMIT = 0;
+    // Check if sim_log_prefix is passed as a command-line argument
+    if (!$value$plusargs("sim_log_prefix=%s", sim_log_prefix)) begin
+        sim_log_prefix = "";  // Assign default value if not passed
+    end
     //$display("TEST = %s ElfFile = %s", TEST, ElfFile);
 
     // pick tests based on modes supported
@@ -289,6 +294,7 @@ module testbench;
   string  signame, elffilename, memfilename, bootmemfilename, uartoutfilename, pathname;
   integer begin_signature_addr, end_signature_addr, signature_size;
   integer uartoutfile;
+
 
   assign ResetThreshold = 3'd5;
 
@@ -688,7 +694,7 @@ module testbench;
                                       dut.core.ifu.PCM, InstrM, dut.core.lsu.IEUAdrM, InstrMName);
   riscvassertions #(P) riscvassertions();  // check assertions for a legal configuration
   loggers #(P, PrintHPMCounters, I_CACHE_ADDR_LOGGER, D_CACHE_ADDR_LOGGER, BPRED_LOGGER)
-    loggers (clk, reset, DCacheFlushStart, DCacheFlushDone, memfilename, TEST);
+    loggers (clk, reset, DCacheFlushStart, DCacheFlushDone, memfilename, sim_log_prefix, TEST);
 
   // track the current function or global label
   if (DEBUG > 0 | ((PrintHPMCounters | BPRED_LOGGER) & P.ZICNTR_SUPPORTED)) begin : functionName
