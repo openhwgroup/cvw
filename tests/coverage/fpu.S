@@ -214,6 +214,9 @@ TestData2:
 .int 0xbf800000 #FP -1.0
 .int 0x7fa00000 #SNaN
 .int 0x3fffffff #OverFlow Test
+# workaround for binutils 2.44 bug with displaying 6 byte instructions (https://sourceware.org/pipermail/binutils/2025-February/139413.html)
+.word 0x0000
+.align 3
 TestData3:
 .dword 0xABCD543212345678 # NaN box test
 DivTestData:
