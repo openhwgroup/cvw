@@ -106,8 +106,8 @@ combine_functcov:
 	vcover report -details -html ${SIM}/questa/fcov_ucdb/fcov.ucdb
 	vcover report ${SIM}/questa/fcov_ucdb/fcov.ucdb -details -cvg > ${SIM}/questa/fcov/fcov.log
 	vcover report ${SIM}/questa/fcov_ucdb/fcov.ucdb -testdetails -cvg > ${SIM}/questa/fcov/fcov.testdetails.log
-#	vcover report ${SIM}/questa/fcov/fcov.ucdb -details -cvg -below 100 | egrep "Coverpoint|Covergroup|Cross" | grep -v Metric > ${SIM}/questa/fcov/fcov.ucdb.summary.log
-	vcover report ${SIM}/questa/fcov_ucdb/fcov.ucdb -details -cvg | egrep "Coverpoint|Covergroup|Cross|TYPE"  > ${SIM}/questa/fcov/fcov.summary.log
+#	vcover report ${SIM}/questa/fcov/fcov.ucdb -details -cvg -below 100 | grep -E "Coverpoint|Covergroup|Cross" | grep -v Metric > ${SIM}/questa/fcov/fcov.ucdb.summary.log
+	vcover report ${SIM}/questa/fcov_ucdb/fcov.ucdb -details -cvg | grep -E "Coverpoint|Covergroup|Cross|TYPE"  > ${SIM}/questa/fcov/fcov.summary.log
 	grep "Total Coverage By Instance" ${SIM}/questa/fcov/fcov.log
 
 remove_functcov_artifacts:
