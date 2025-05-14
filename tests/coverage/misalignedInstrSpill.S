@@ -26,7 +26,7 @@
 
 // load code to initalize stack, handle interrupts, terminate
 
-#include "WALLY-init-lib.h"
+#include "WALLY-init-lib-misalignedSpill.h"
 
 # run-elf.bash find this in project description
 main:
