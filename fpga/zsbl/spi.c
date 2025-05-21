@@ -64,7 +64,7 @@ void spi_set_clock(uint32_t clkin, uint32_t clkout) {
 }
 
 // Initialize Sifive FU540 based SPI Controller
-void spi_init(uint32_t clkin) {
+void spi_init() {
   // Enable interrupts
   write_reg(SPI_IE, 0x3);
 

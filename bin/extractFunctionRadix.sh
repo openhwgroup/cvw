@@ -38,7 +38,7 @@ function processProgram {
 
     # when size = 16 => 64 bit
     # when size = 8 => 32 bit
-    local listOfAddr=`egrep -i "^[0-9a-f]{$size} <[0-9a-zA-Z_]+>" $objDumpFile`
+    local listOfAddr=$(grep -E -i "^[0-9a-f]{$size} <[0-9a-zA-Z_]+>" $objDumpFile)
 
     # skip if the wrong bit width.
     if [ -z "$listOfAddr" ]; then
@@ -46,16 +46,16 @@ function processProgram {
     fi
 
     # parse out the addresses and the labels
-    local addresses=`echo "$listOfAddr" | awk '{print $1}'`
-    local labels=`echo "$listOfAddr" | awk '{print  "\""$2"\"", "-color \"SpringGreen\","}' | tr -d '<>:'`
-    local labelsName=`echo "$listOfAddr" | awk '{print  ""$2""}' | tr -d '<>:'`
+    local addresses=$(echo "$listOfAddr" | awk '{print $1}')
+    local labels=$(echo "$listOfAddr" | awk '{print  "\""$2"\"", "-color \"SpringGreen\","}' | tr -d '<>:')
+    local labelsName=$(echo "$listOfAddr" | awk '{print  ""$2""}' | tr -d '<>:')
 
     # output per program function address list
     echo "$addresses" > $objDumpFile.addr
     echo "$labelsName" > $objDumpFile.lab    
 
     # need to add some formatting to each line
-    local numLines=`echo "$listOfAddr" | wc -l`
+    local numLines=$(echo "$listOfAddr" | wc -l)
 
     return 0
 }
