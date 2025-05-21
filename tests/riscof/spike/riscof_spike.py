@@ -196,7 +196,7 @@ class spike(pluginTemplate):
                 reference_output = re.sub("/src/","/references/", re.sub(".S",".reference_output", test))
                 simcmd = f'cut -c-{8:g} {reference_output} > {sig_file}' #use cut to remove comments when copying
             else:
-                simcmd = self.dut_exe + f' --isa={self.isa} +signature={sig_file} +signature-granularity=4 {elf}'
+                simcmd = self.dut_exe + f' {"--misaligned" if self.xlen == "64" else ""} --isa={self.isa} +signature={sig_file} +signature-granularity=4 {elf}'
           else:
             simcmd = 'echo "NO RUN"'
 

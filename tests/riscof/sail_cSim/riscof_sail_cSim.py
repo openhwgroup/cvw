@@ -25,6 +25,7 @@ class sail_cSim(pluginTemplate):
                 '64' : os.path.join(config['PATH'] if 'PATH' in config else "","riscv_sim_rv64d")}
         self.isa_spec = os.path.abspath(config['ispec']) if 'ispec' in config else ''
         self.platform_spec = os.path.abspath(config['pspec']) if 'ispec' in config else ''
+        # self.coverage_file = os.path.abspath(config['coverage']) if 'coverage' in config else ''
         self.make = config['make'] if 'make' in config else 'make'
         logger.debug("SAIL CSim plugin initialised using the following configuration.")
         for entry in config:
@@ -45,7 +46,6 @@ class sail_cSim(pluginTemplate):
         ispec = utils.load_yaml(isa_yaml)['hart0']
         self.xlen = ('64' if 64 in ispec['supported_xlen'] else '32')
         self.isa = 'rv' + self.xlen
-        self.sailargs = ' --pmp-count=16 --pmp-grain=0 ' # Hardcode pmp-count and pmp-grain for now. Make configurable later once Sail has easier configuration
         self.compile_cmd = self.compile_cmd+' -mabi='+('lp64 ' if 64 in ispec['supported_xlen'] else ('ilp32e ' if "E" in ispec["ISA"] else 'ilp32 '))
         if "I" in ispec["ISA"]:
             self.isa += 'i'
@@ -61,8 +61,6 @@ class sail_cSim(pluginTemplate):
             self.isa += 'f'
         if "D" in ispec["ISA"]:
             self.isa += 'd'
-        if "Zcb" in ispec["ISA"]:   # for some strange reason, Sail requires a command line argument to enable Zcb
-            self.sailargs += "--enable-zcb"
         if "Q" in ispec["ISA"]:
             self.isa += 'q'
         objdump = "riscv64-unknown-elf-objdump"
@@ -86,6 +84,13 @@ class sail_cSim(pluginTemplate):
             os.remove(self.work_dir+ "/Makefile." + self.name[:-1])
         make = utils.makeUtil(makefilePath=os.path.join(self.work_dir, "Makefile." + self.name[:-1]))
         make.makeCommand = self.make + ' -j' + self.num_jobs
+
+        # TODO: This bit is temporary until riscof properly copies over the coverage file
+        self.coverage_file = f"{self.pluginpath}/../spike/coverage_rv{self.xlen}gc.svh"
+        # Copy coverage file to wkdir
+        cov_copy_command = f'cp {self.coverage_file} {self.work_dir}/coverage.svh;'
+        os.system(cov_copy_command)
+
         for file in testList:
             testentry = testList[file]
             test = testentry['test_path']
@@ -109,24 +114,19 @@ class sail_cSim(pluginTemplate):
                 reference_output = re.sub("/src/","/references/", re.sub(".S",".reference_output", test))
                 execute += f'cut -c-{8:g} {reference_output} > {sig_file}' #use cut to remove comments when copying
             else:
-                execute += self.sail_exe[self.xlen] + ' -z268435455 -i --trace=step  ' + self.sailargs + f' --test-signature={sig_file} {elf} > {test_name}.log 2>&1;'
+                execute += self.sail_exe[self.xlen] + f' --config {self.pluginpath}/rv{self.xlen}gc.json --trace=step --test-signature={sig_file} {elf} > {test_name}.log 2>&1;'
 
-            cov_str = ' '
-            for label in testentry['coverage_labels']:
-                cov_str+=' -l '+label
+                # Coverage
+                if (os.environ.get('COLLECT_COVERAGE') == "true"): # TODO: update this to take a proper flag from riscof, not use env vars
+                    # Generate trace from sail log
+                    cvw_arch_verif_dir = os.getenv('CVW_ARCH_VERIF') # TODO: update this to not depend on env var
+                    trace_command = f'{cvw_arch_verif_dir}/bin/sail-parse.py {test_name}.log {test_name}.trace;'
+                    execute += trace_command
 
-            if cgf_file is not None:
-                coverage_cmd = 'riscv_isac --verbose info coverage -d \
-                        -t {}.log --parser-name c_sail -o coverage.rpt  \
-                        --sig-label begin_signature  end_signature \
-                        --test-label rvtest_code_begin rvtest_code_end \
-                        -e ref.elf -c {} -x{} {};'.format(\
-                        test_name, ' -c '.join(cgf_file), self.xlen, cov_str)
-            else:
-                coverage_cmd = ''
-
-
-            execute+=coverage_cmd
+                    # Generate ucdb coverage file
+                    questa_do_file = f'{cvw_arch_verif_dir}/bin/cvw-arch-verif.do'
+                    coverage_command = f'vsim -c -do "do {questa_do_file} {test_dir} {test_name} {cvw_arch_verif_dir}/fcov {self.work_dir}";'
+                    execute += coverage_command
 
             make.add_target(execute)
 #        make.execute_all(self.work_dir)

@@ -1,2 +1,0 @@
-00000111 # Test 5.3.2.2: successful read of nonzero misa
-0000000b # ecall from terminating tests in machine mode
