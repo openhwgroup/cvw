@@ -39,11 +39,11 @@ module trickbox_apb import cvw::*;  #(parameter cvw_t P, NUM_HARTS = 1) (
   output logic [P.XLEN-1:0]   PRDATA,
   output logic                PREADY,
   input  logic [63:0]         MTIME_IN,
-  input  logic [NUM_HARTS-1:0] MTIP_IN, MSIP_IN, MEIP_IN, SEIP_IN,
-  input  logic [P.XLEN-1:0]   HGEIP_IN[NUM_HARTS-1:0],
+  input  logic [NUM_HARTS-1:0] MTIP_IN, MSIP_IN, SSIP_IN, MEIP_IN, SEIP_IN,
+  input  var logic [P.XLEN-1:0]   HGEIP_IN[NUM_HARTS-1:0],
   output logic [63:0]         MTIME_OUT, 
   output logic [NUM_HARTS-1:0] MTIP_OUT, MSIP_OUT, SSIP_OUT, MEIP_OUT, SEIP_OUT,
-  output logic [P.XLEN-1:0]   HGEIP_OUT[NUM_HARTS-1:0],
+  output var logic  [P.XLEN-1:0]   HGEIP_OUT[NUM_HARTS-1:0],
   output logic [P.XLEN-1:0]   TOHOST_OUT
 );
 
@@ -62,7 +62,7 @@ module trickbox_apb import cvw::*;  #(parameter cvw_t P, NUM_HARTS = 1) (
   logic [9:0]                 hart;                   // which hart is being accessed
   logic                       memwrite;
   logic [63:0]                RD;
-  integer                     i, j;
+  genvar                      i;
   
   assign memwrite = PWRITE & PENABLE & PSEL;  // only write in access phase
   assign PREADY   = 1'b1;                     // CLINT never takes >1 cycle to respond
@@ -100,19 +100,12 @@ module trickbox_apb import cvw::*;  #(parameter cvw_t P, NUM_HARTS = 1) (
       SSIP <= '0;
       MEIP <= '0;
       SEIP <= '0;
-      for (i=0;i<NUM_HARTS;i++) begin
-        MTIMECMP[i] <= 64'hFFFFFFFFFFFFFFFF; // Spec says MTIMECMP is not reset, but we reset to maximum value to prevent spurious timer interrupts
-        HGEIP[i] <= '0;
-      end
       TOHOST <= '0;
-      COM1 <= '0;
       TRICKEN <= '0;
     end else if (memwrite) begin
       case (PADDR[15:13])
         3'b000: MSIP[hart] <= PWDATA[0];
         3'b001: SSIP[hart] <= PWDATA[0];
-        3'b010: if (P.XLEN == 64) MTIMECMP[hart] <= PWDATA; // 64-bit write
-                else MTIMECMP[hart][PADDR[2]*32 +: 32] <= PWDATA; // 32-bit write
         3'b011: MEIP[hart] <= PWDATA[0];
         3'b100: SEIP[hart] <= PWDATA[0];
         3'b101: case (hart) 
@@ -120,9 +113,22 @@ module trickbox_apb import cvw::*;  #(parameter cvw_t P, NUM_HARTS = 1) (
           10'b0000000001: $display("%c", PWDATA[7:0]); // COM1 prints to simulation console.  Eventually allow it to be redirected to a UART, and provide a busy bit.
           10'b0000000010: TRICKEN <= PWDATA[7:0];
         endcase
-        3'b110: HGEIP[hart] <= PWDATA; 
       endcase
     end
+    // generate loop write circuits for MTIMECMP and HGEIP
+    for (i=0; i<NUM_HARTS; i++) 
+      always_ff @(posedge PCLK) 
+        if (~PRESETn) begin
+          MTIMECMP[i] <= 64'hFFFFFFFFFFFFFFFF; // Spec says MTIMECMP is not reset, but we reset to maximum value to prevent spurious timer interrupts
+          HGEIP[i] <= 0;
+        end else if (memwrite & (hart == i)) begin
+          if (PADDR[15:13] == 3'b010) begin
+            if (P.XLEN == 64) MTIMECMP[hart] <= PWDATA; // 64-bit write
+                  else MTIMECMP[hart][PADDR[2]*32 +: 32] <= PWDATA; // 32-bit write
+          end else if (PADDR[15:13] == 3'b110) begin
+            HGEIP[hart] <= PWDATA;
+          end
+        end 
 
   // mtime register
   always_ff @(posedge PCLK) 
@@ -146,11 +152,12 @@ module trickbox_apb import cvw::*;  #(parameter cvw_t P, NUM_HARTS = 1) (
     SEIP_OUT = TRICKEN[3] ? SEIP : SEIP_IN;
     MTIP_OUT = TRICKEN[4] ? MTIP : MTIP_IN;
     MTIME_OUT = TRICKEN[5] ? MTIME : MTIME_IN;
-    for (i=0;i<NUM_HARTS;i++)
-      HGEIP_OUT[i] = TRICKEN[6] ? HGEIP[i] : HGEIP_IN[i];
     TOHOST_OUT = TRICKEN[7] ? TOHOST : '0;
     // NO COM1
   end
+
+  for (i=0; i<NUM_HARTS;i++) 
+    assign HGEIP_OUT[i] = TRICKEN[6] ? HGEIP[i] : HGEIP_IN[i];
 
 endmodule
 
