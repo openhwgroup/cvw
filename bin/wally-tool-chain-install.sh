@@ -409,11 +409,17 @@ fi
 # Verilator needs to be built from source to get the latest version (Wally needs 5.021 or later).
 section_header "Installing/Updating Verilator"
 STATUS="verilator"
+if [ "$UBUNTU_VERSION" == 20 ] || [ "$DEBIAN_VERSION" == 11 ]; then
+    # On Ubuntu 20 and Debian 11, the last version of Verilator that build successfully is 5.036.
+    export VERILATOR_VERSION="5.036"
+else
+    export VERILATOR_VERSION="master"
+fi
 cd "$RISCV"
 if git_check "verilator" "https://github.com/verilator/verilator" "$RISCV/share/pkgconfig/verilator.pc"; then
     unset VERILATOR_ROOT
     cd "$RISCV"/verilator
-    git reset --hard && git clean -f && git checkout master && git pull
+    git reset --hard && git clean -f && git checkout "$VERILATOR_VERSION" && (git pull || true)
     autoconf
     ./configure --prefix="$RISCV"
     make -j "${NUM_THREADS}" 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
