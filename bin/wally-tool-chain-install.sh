@@ -319,9 +319,6 @@ cd "$RISCV"
 if git_check "riscv-gnu-toolchain" "https://github.com/riscv/riscv-gnu-toolchain" "$RISCV/riscv-gnu-toolchain/stamps/build-gcc-newlib-stage2"; then
     cd "$RISCV"/riscv-gnu-toolchain
     git reset --hard && git clean -f && git checkout master && git pull && git submodule update
-    # sed commands needed to fix broken shallow cloning of submodules
-    sed -i '/shallow = true/d' .gitmodules
-    sed -i 's/--depth 1//g' Makefile.in
     ./configure --prefix="${RISCV}" --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
     make -j "${NUM_THREADS}" 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
     if [ "$clean" ]; then
@@ -412,11 +409,17 @@ fi
 # Verilator needs to be built from source to get the latest version (Wally needs 5.021 or later).
 section_header "Installing/Updating Verilator"
 STATUS="verilator"
+if [ "$UBUNTU_VERSION" == 20 ] || [ "$DEBIAN_VERSION" == 11 ]; then
+    # On Ubuntu 20 and Debian 11, the last version of Verilator that build successfully is 5.036.
+    export VERILATOR_VERSION="5.036"
+else
+    export VERILATOR_VERSION="master"
+fi
 cd "$RISCV"
 if git_check "verilator" "https://github.com/verilator/verilator" "$RISCV/share/pkgconfig/verilator.pc"; then
     unset VERILATOR_ROOT
     cd "$RISCV"/verilator
-    git reset --hard && git clean -f && git checkout master && git pull
+    git reset --hard && git clean -f && git checkout "$VERILATOR_VERSION" && (git pull || true)
     autoconf
     ./configure --prefix="$RISCV"
     make -j "${NUM_THREADS}" 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
