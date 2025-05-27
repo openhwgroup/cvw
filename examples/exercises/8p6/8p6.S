@@ -96,7 +96,7 @@ mulloop:
     beqz t2, muldone        # done if y == 0
     andi t4, t2, 1          # t4 = y % 2
     beqz t4, skipadd        # don't increment p if y%2 == 0
-    add t3, t3, t1          # otherwise p = p + x0
+    add t3, t3, t1          # otherwise p = p + x
 skipadd:
     srli t2, t2, 1          # y = y >> 1
     slli t1, t1, 1          # x = x << 1
