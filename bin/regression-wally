@@ -317,7 +317,6 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-
 def addTests(testList, sim, coverStr, configs):
     sim_logdir = f"{regressionDir}/{sim}/logs/"
     for test in testList:

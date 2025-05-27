@@ -117,8 +117,8 @@ test_cases:
 .4byte 0x80100010, 0x600DAA, read32_test # read correct value out
 
 # test read and write fault on region with no access
-.4byte 0x80100208, 0x600D15, write32_test # Write fault on no-access range (PMP6)
-.4byte 0x80100208, 0x600D15, read32_test # read fault on no-access range (PMP6)
+.4byte 0x80100208, 0x600D17, write32_test # Write fault on no-access range (PMP4)
+.4byte 0x80100208, 0x600D17, read32_test # read fault on no-access range (PMP4)
 
 # test jalr to region with X=0 causes access fault
 .4byte 0x80100020, 0xbad, executable_test # execute fault on no-execute range (PMP2)

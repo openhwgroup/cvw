@@ -30,6 +30,6 @@ hart0:
               - Unchanged
   PMP:
     implemented: True
-    pmp-grain: 0
+    pmp-grain: 4
     pmp-count: 16
     pmp-writable: 12
