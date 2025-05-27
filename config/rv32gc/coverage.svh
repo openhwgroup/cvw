@@ -17,6 +17,10 @@
 `define M_COVERAGE
 `define F_COVERAGE
 `define D_COVERAGE
+`define VX8_COVERAGE
+`define VX16_COVERAGE
+`define VX32_COVERAGE
+`define VX64_COVERAGE
 `define ZBA_COVERAGE
 `define ZBB_COVERAGE
 `define ZBC_COVERAGE

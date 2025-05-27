@@ -1,11 +1,11 @@
 hart_ids: [0]
 hart0:
-  ISA: RV32IMAFDCSUZicsr_Zicond_Zifencei_Zfa_Zfh_Zca_Zcb_Zcd_Zcf_Zba_Zbb_Zbc_Zbkb_Zbkc_Zbkx_Zbs_Zknd_Zkne_Zknh
+  ISA: RV32IMAFDCVSUZicsr_Zicond_Zifencei_Zfa_Zfh_Zca_Zcb_Zcd_Zcf_Zba_Zbb_Zbc_Zbkb_Zbkc_Zbkx_Zbs_Zknd_Zkne_Zknh
   physical_addr_sz: 32
   User_Spec_Version: '2.3'
   supported_xlen: [32]
   misa:
-    reset-val: 0x4014112D
+    reset-val: 0x4034112D
     rv32:
       accessible: true
       mxl:
@@ -23,7 +23,7 @@ hart0:
           warl:
             dependency_fields: []
             legal:
-              - extensions[25:0] bitmask [0x014112D, 0x0000000]
+              - extensions[25:0] bitmask [0x034112D, 0x0000000]
             wr_illegal:
               - Unchanged
   PMP:
@@ -31,3 +31,4 @@ hart0:
     pmp-grain: 0
     pmp-count: 16
     pmp-writable: 12
+
