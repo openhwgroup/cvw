@@ -63,6 +63,8 @@ class sail_cSim(pluginTemplate):
             self.isa += 'd'
         if "Q" in ispec["ISA"]:
             self.isa += 'q'
+        if "V" in ispec["ISA"]:
+            self.isa += 'v'
         objdump = "riscv64-unknown-elf-objdump"
         if shutil.which(objdump) is None:
             logger.error(objdump+": executable not found. Please check environment setup.")
