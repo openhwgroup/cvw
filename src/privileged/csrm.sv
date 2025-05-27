@@ -46,14 +46,15 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   output logic [15:0]              MEDELEG_REGW,
   output logic [11:0]              MIDELEG_REGW,
   /* verilator lint_off UNDRIVEN */ // PMP registers are only used when PMP_ENTRIES > 0
+  output var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0],
   output var logic [7:0]           PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0],
-  output var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW [P.PMP_ENTRIES-1:0],
   /* verilator lint_on UNDRIVEN */
   output logic                     WriteMSTATUSM, WriteMSTATUSHM,
   output logic                     IllegalCSRMAccessM, IllegalCSRMWriteReadonlyM,
   output logic [63:0]              MENVCFG_REGW
 );
 
+  logic [P.PA_BITS-3:0]            PMPADDR_ARRAY_PREGRAIN_REGW[P.PMP_ENTRIES-1:0];
   logic [P.XLEN-1:0]               MISA_REGW, MHARTID_REGW;
   logic [P.XLEN-1:0]               MSCRATCH_REGW, MTVAL_REGW, MCAUSE_REGW;
   logic [P.XLEN-1:0]               MENVCFGH_REGW;
@@ -113,9 +114,9 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
     logic [7:0]               CSRPMPWriteValM[P.PMP_ENTRIES-1:0];
     logic [7:0]               CSRPMPLegalizedWriteValM[P.PMP_ENTRIES-1:0];
     logic [1:0]               CSRPMPWRLegalizedWriteValM[P.PMP_ENTRIES-1:0]; 
-    logic                     CSRPMPA0LegalizedWriteValM[P.PMP_ENTRIES-1:0];
+    logic [1:0]               CSRPMPALegalizedWriteValM[P.PMP_ENTRIES-1:0]; 
     logic [P.PMP_ENTRIES-1:0] ADDRLocked, CFGLocked;
-    for(i=0; i<P.PMP_ENTRIES; i++) begin
+    for(i=0; i<P.PMP_ENTRIES; i++) begin:pmp
       // when the lock bit is set, don't allow writes to the PMPCFG or PMPADDR
       // also, when the lock bit of the next entry is set and the next entry is TOR, don't allow writes to this entry PMPADDR
       assign CFGLocked[i] = PMPCFG_ARRAY_REGW[i][7];
@@ -125,7 +126,8 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
         assign ADDRLocked[i] = PMPCFG_ARRAY_REGW[i][7] | (PMPCFG_ARRAY_REGW[i+1][7] & PMPCFG_ARRAY_REGW[i+1][4:3] == 2'b01);
 
       assign WritePMPADDRM[i] = (CSRMWriteM & (CSRAdrM == (PMPADDR0+i))) & ~ADDRLocked[i];
-      flopenr #(P.PA_BITS-2) PMPADDRreg(clk, reset, WritePMPADDRM[i], CSRWriteValM[P.PA_BITS-3:0], PMPADDR_ARRAY_REGW[i]);
+      // PMPADDR_ARRAY_PREGRAIN_REGW flip-flops hold all the bits even though all but G-1 lsbs can be controlled by PMP mode and granularity
+      flopenr #(P.PA_BITS-2) PMPADDRreg(clk, reset, WritePMPADDRM[i], CSRWriteValM[P.PA_BITS-3:0], PMPADDR_ARRAY_PREGRAIN_REGW[i]);
       if (P.XLEN==64) begin
         assign WritePMPCFGM[i] = (CSRMWriteM & (CSRAdrM == (PMPCFG0+2*(i/8)))) & ~CFGLocked[i];
         assign CSRPMPWriteValM[i] = CSRWriteValM[(i%8)*8+7:(i%8)*8];
@@ -134,9 +136,9 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
         assign CSRPMPWriteValM[i] = CSRWriteValM[(i%4)*8+7:(i%4)*8];
       end
 
+      assign CSRPMPALegalizedWriteValM[i] = ((P.PMP_G > 0) & (CSRPMPWriteValM[i][4:3] == 2'b10)) ? PMPCFG_ARRAY_REGW[i][4:3] : CSRPMPWriteValM[i][4:3]; // WARL A field keeps its old value when attempting to write unselectable NA4 mode
       assign CSRPMPWRLegalizedWriteValM[i] = {(CSRPMPWriteValM[i][1] & CSRPMPWriteValM[i][0]), CSRPMPWriteValM[i][0]}; // legalize WR fields (reserved 10 written as 00)
-      assign CSRPMPA0LegalizedWriteValM[i] = (P.PMP_G > 0) & CSRPMPWriteValM[i][4] | CSRPMPWriteValM[i][3]; // if G > 0, when trying to write A = NA4 (10), actually write A = NAPOT (11)
-      assign CSRPMPLegalizedWriteValM[i] = {CSRPMPWriteValM[i][7], 2'b00, CSRPMPWriteValM[i][4], CSRPMPA0LegalizedWriteValM[i], CSRPMPWriteValM[i][2], CSRPMPWRLegalizedWriteValM[i]};
+      assign CSRPMPLegalizedWriteValM[i] = {CSRPMPWriteValM[i][7], 2'b00, CSRPMPALegalizedWriteValM[i], CSRPMPWriteValM[i][2], CSRPMPWRLegalizedWriteValM[i]};
       flopenr #(8) PMPCFGreg(clk, reset, WritePMPCFGM[i], CSRPMPLegalizedWriteValM[i], PMPCFG_ARRAY_REGW[i]);
     end
   end
@@ -217,26 +219,25 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
     assign MENVCFGH_REGW = '0;
   end
 
+  // Grain alignment for PMPADDR read values.
+  for(i=0; i<P.PMP_ENTRIES; i++) 
+    always_comb begin
+      logic [P.XLEN-1:0] pmpaddr;
+      pmpaddr = {{(P.XLEN-(P.PA_BITS-2)){1'b0}}, PMPADDR_ARRAY_PREGRAIN_REGW[i]}; // raw value in PMP registers
+      if (PMPCFG_ARRAY_REGW[i][4]) PMPADDR_ARRAY_REGW[i] = {pmpaddr[P.PA_BITS-3:Gm1],     {Gm1    {1'b1}}}; // in NAPOT, bottom G-1 bits read as all 1s
+      else                         PMPADDR_ARRAY_REGW[i] = {pmpaddr[P.PA_BITS-3:P.PMP_G], {P.PMP_G{1'b0}}}; // in TOR/OFF, bottom G bits read as 0s
+    end
+
   // Read machine mode CSRs
   // verilator lint_off WIDTH
   logic [5:0] entry;
-  logic [P.XLEN-1:0] pmpaddr; // correct for grain size and PMP mode
-  logic napot;
   always_comb begin
     entry = '0;
     CSRMReadValM = '0;
-    pmpaddr = '0;
-    napot = 0;
     IllegalCSRMAccessM = !(P.S_SUPPORTED) & (CSRAdrM == MEDELEG | CSRAdrM == MIDELEG); // trap on DELEG register access when no S or N-mode
-    if ($unsigned(CSRAdrM) >= PMPADDR0 & $unsigned(CSRAdrM) < PMPADDR0 + P.PMP_ENTRIES) begin // reading a PMP entry
-      pmpaddr = {{(P.XLEN-(P.PA_BITS-2)){1'b0}}, PMPADDR_ARRAY_REGW[CSRAdrM - PMPADDR0]}; // raw value in PMP registers
-      if (P.PMP_G > 0) begin // bottom bits read as 0/1 depending on mode
-        napot = PMPCFG_ARRAY_REGW[CSRAdrM - PMPADDR0][4]; // read from corresponding pmpcfg register, indicating NAPOT mode
-        if (napot) pmpaddr = {pmpaddr[P.XLEN-1:Gm1],     {Gm1    {1'b1}}}; // in NAPOT, bottom G-1 bits read as all 1s
-        else       pmpaddr = {pmpaddr[P.XLEN-1:P.PMP_G], {P.PMP_G{1'b0}}}; // in TOR/OFF, bottom G bits read as 0s
-      end
-      CSRMReadValM = pmpaddr;
-    end else if ($unsigned(CSRAdrM) >= PMPCFG0 & $unsigned(CSRAdrM) < PMPCFG0 + P.PMP_ENTRIES/4 & (P.XLEN==32 | CSRAdrM[0] == 0)) begin
+    if ($unsigned(CSRAdrM) >= PMPADDR0 & $unsigned(CSRAdrM) < PMPADDR0 + P.PMP_ENTRIES) 
+      CSRMReadValM = {{(P.XLEN-(P.PA_BITS-2)){1'b0}}, PMPADDR_ARRAY_REGW[CSRAdrM - PMPADDR0]}; // read PMPADDR entry with lsbs aligned to grain based on NAPOT vs. TOR
+    else if ($unsigned(CSRAdrM) >= PMPCFG0 & $unsigned(CSRAdrM) < PMPCFG0 + P.PMP_ENTRIES/4 & (P.XLEN==32 | CSRAdrM[0] == 0)) begin
       // only odd-numbered PMPCFG entries exist in RV64
       if (P.XLEN==64) begin
         entry = ({CSRAdrM[11:1], 1'b0} - PMPCFG0)*4; // disregard odd entries in RV64

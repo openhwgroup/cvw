@@ -96,6 +96,9 @@ module pmpchecker import cvw::*;  #(parameter cvw_t P) (
     endcase
   // Then find the top of the access and see if it is beyond the top of the region
   assign PhysicalAddressTop = PhysicalAddress + {{P.PA_BITS-3{1'b0}}, SizeBytesMinus1}; // top of the access range
+  // DH 5/27/25 *** TooBig should never occur because granularity is a line size, and anything wrapping line should be decomposed into multiple accesses.
+  // Therefore, it should be possilbe to remove TooBig and all the logic that depends on it
+  // including PhysicalAddressTop, SizeBytesMinus1, and the pmpadrdecs PMPTop output, which is expensive
   assign TooBig = PhysicalAddressTop > MatchingPMPTop; // check if the access goes beyond the top of the PMP region
 
   // Only enforce PMP checking for effective S and U modes (accounting for mstatus.MPRV) or in Machine mode when L bit is set in selected region
