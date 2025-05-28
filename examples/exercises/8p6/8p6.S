@@ -60,7 +60,7 @@ trap_handler:
 
     # check if instruction is mul (op = 0110011, funct3 = 000, funct7 = 0000001)
     csrr t0, mtval          # fetch instruction that caused trap
-    andi t1, t0, 127        # get op field (instr[7:0])
+    andi t1, t0, 127        # get op field (instr[6:0])
     xori t1, t1, 0b0110011  # set to 0 if op is 0110011
     srli t2, t0, 12         # get funct3 field (instr[14:12])
     andi t2, t2, 7          # mask off other bits.  Should be 0 if funct3 = 000
@@ -96,7 +96,7 @@ mulloop:
     beqz t2, muldone        # done if y == 0
     andi t4, t2, 1          # t4 = y % 2
     beqz t4, skipadd        # don't increment p if y%2 == 0
-    add t3, t3, t1          # otherwise p = p + x0
+    add t3, t3, t1          # otherwise p = p + x
 skipadd:
     srli t2, t2, 1          # y = y >> 1
     slli t1, t1, 1          # x = x << 1
