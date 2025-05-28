@@ -18,7 +18,13 @@ current_dir := $(shell pwd)
 .PHONY: all riscv-arch-test wally-riscv-arch-test clean
 all: riscv-arch-test wally-riscv-arch-test
 riscv-arch-test: arch32e arch32 arch64
-cvw-riscv-arch-test: cvw-arch32 cvw-arch64 # cvw-arch32e
+
+cvw-riscv-arch-test: # cvw-arch32e
+	rm -rf $(cvw_arch_workdir)
+	rm -rf $(WALLY)/addins/cvw-arch-verif/work/*
+	$(MAKE) cvw-arch32
+	$(MAKE) cvw-arch64
+
 wally-riscv-arch-test: wally32 wally64
 
 # Generate config.ini files
@@ -51,6 +57,7 @@ clean:
 	rm -rf $(wally_workdir)
 	rm -rf $(arch_workdir)
 	rm -rf $(cvw_arch_workdir)
+	rm -rf $(WALLY)/addins/cvw-arch-verif/work/*
 
 $(work_dir) $(arch_workdir) $(wally_workdir) $(cvw_arch_workdir):
 	mkdir -p $@
