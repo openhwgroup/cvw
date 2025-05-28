@@ -56,7 +56,7 @@
       "supported": true
     },
     "V": {
-      "supported": false,
+      "supported": true,
       "vlen_exp": 9,
       "elen_exp": 6,
       "vl_use_ceil": false
@@ -82,6 +82,9 @@
     "Zicntr": {
       "supported": true
     },
+    "Zicsr": {
+      "supported": true
+    },
     "Zifencei": {
       "supported": true
     },
@@ -102,6 +105,15 @@
     },
     "Zalrsc": {
       "supported": false
+    },
+    "Zawrs": {
+      "supported": false,
+      "nto": {
+        "is_nop": false
+      },
+      "sto": {
+        "is_nop": false
+      }
     },
     "Zfa": {
       "supported": true
@@ -181,6 +193,9 @@
     "Zvbc": {
       "supported": false
     },
+    "Zvkned": {
+      "supported": false
+    },
     "Zvknha": {
       "supported": false
     },
@@ -203,7 +218,8 @@
       "supported": true
     },
     "Svbare": {
-      "supported": true
+      "supported": true,
+      "sfence_vma_illegal_if_svbare_only": true
     },
     "Sv32": {
       "supported": false

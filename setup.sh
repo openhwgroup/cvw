@@ -54,7 +54,7 @@ ulimit -c 300000
 if [ -e "${RISCV}"/site-setup.sh ]; then
     source "${RISCV}"/site-setup.sh
 else
-    echo -e "${ERROR_COLOR}site-setup.sh not found in \$RISCV directory. Rerun wally-toolchain-install.sh to automatically download it.${ENDC}"
+    echo -e "${FAIL_COLOR}site-setup.sh not found in \$RISCV directory. Rerun wally-toolchain-install.sh to automatically download it.${ENDC}"
     return 1
 fi
 
