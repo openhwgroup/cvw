@@ -1,15 +1,15 @@
 ///////////////////////////////////////////
-// fpgaTop.sv
+// fpgaTopGenesys2.sv
 //
-// Written: rose@rosethompson.net November 17, 2021
+// Written: rose@rosethompson.net 30 May 2025
 // Modified: 
 //
 // Purpose: This is a top level for the fpga's implementation of wally.
-//          Instantiates wallysoc, ddr4, abh lite to axi converters, pll, etc
+//          Instantiates wallysoc, ddr3, abh lite to axi converters, pll, etc
 // 
 // A component of the Wally configurable RISC-V project.
 // 
-// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2025 Harvey Mudd College & Oklahoma State University
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
 // files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, 
