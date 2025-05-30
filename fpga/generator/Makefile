@@ -28,8 +28,8 @@ vcu108: FPGA_VCU
 genesys2: export XILINX_PART := xc7k325tffg900-2
 genesys2: export XILINX_BOARD := digilentinc.com:genesys2:part0:1.1
 genesys2: export board := genesys2
-genesys2: export SYSTEMCLOCK := 25000000
-genesys2: export MAXSDCCLOCK  := 12500000
+genesys2: export SYSTEMCLOCK := 40000000
+genesys2: export MAXSDCCLOCK  := 10000000
 genesys2: FPGA_GENESYS2
 
 # variables computed from config
