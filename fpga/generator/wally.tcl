@@ -39,11 +39,7 @@ import_ip IP/sysrst.srcs/sources_1/ip/sysrst/sysrst.xci
 import_ip IP/ahbaxibridge.srcs/sources_1/ip/ahbaxibridge/ahbaxibridge.xci
 import_ip IP/clkconverter.srcs/sources_1/ip/clkconverter/clkconverter.xci
 
-# *** merge these first two ifs
-if {$board=="ArtyA7"} {
-    import_ip IP/ddr3.srcs/sources_1/ip/ddr3/ddr3.xci
-    import_ip IP/mmcm.srcs/sources_1/ip/mmcm/mmcm.xci
-} elseif {$board=="genesys2"} {
+if {$board=="ArtyA7" || $board=="genesys2"} {
     import_ip IP/ddr3.srcs/sources_1/ip/ddr3/ddr3.xci
     import_ip IP/mmcm.srcs/sources_1/ip/mmcm/mmcm.xci
 } else {
@@ -71,11 +67,7 @@ report_compile_order -constraints > reports/compile_order.rpt
 #synth_design -rtl -name rtl_1  -flatten_hierarchy none
 
 # apply timing constraint after elaboration
-# *** also merge these if/else
-if {$board=="ArtyA7"} {
-    add_files -fileset constrs_1 -norecurse ../constraints/constraints-$board.xdc
-    set_property PROCESSING_ORDER NORMAL [get_files  ../constraints/constraints-$board.xdc]
-} elseif {$board=="genesys2"} {
+if {$board=="ArtyA7" || $board=="genesys2"} {
     add_files -fileset constrs_1 -norecurse ../constraints/constraints-$board.xdc
     set_property PROCESSING_ORDER NORMAL [get_files  ../constraints/constraints-$board.xdc]
 } else {
