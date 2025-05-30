@@ -2,7 +2,7 @@ dst := IP
 
 all: ArtyA7
 
-.PHONY: ArtyA7 vcu118 vcu108
+.PHONY: ArtyA7 vcu118 vcu108 genesys2
 
 ArtyA7: export XILINX_PART := xc7a100tcsg324-1
 ArtyA7: export XILINX_BOARD := digilentinc.com:arty-a7-100:part0:1.1
@@ -25,6 +25,13 @@ vcu108: export SYSTEMCLOCK := 50000000
 vcu108: export MAXSDCCLOCK  := 12500000
 vcu108: FPGA_VCU
 
+genesys2: export XILINX_PART := xc7k325tffg900-2
+genesys2: export XILINX_BOARD := digilentinc.com:genesys2:part0:1.1
+genesys2: export board := genesys2
+genesys2: export SYSTEMCLOCK := 40000000
+genesys2: export MAXSDCCLOCK  := 10000000
+genesys2: FPGA_GENESYS2
+
 # variables computed from config
 EXT_MEM_BASE = $(shell grep 'EXT_MEM_BASE' ../../config/deriv/fpga$(board)/config.vh | sed 's/.*=.*h\([[:alnum:]]*\);/0x\1/g')
 
@@ -35,6 +42,9 @@ EXT_MEM_RANGE = $(shell grep 'EXT_MEM_RANGE' ../../config/deriv/fpga$(board)/con
 FPGA_Arty: PreProcessFiles IP_Arty zsbl
 	vivado -mode tcl -source wally.tcl 2>&1 | tee wally.log
 FPGA_VCU: PreProcessFiles IP_VCU zsbl
+	vivado -mode tcl -source wally.tcl 2>&1 | tee wally.log
+
+FPGA_GENESYS2: PreProcessFiles IP_GENESYS2 zsbl
 	vivado -mode tcl -source wally.tcl 2>&1 | tee wally.log
 
 # Generate IP Blocks
@@ -49,11 +59,20 @@ IP_Arty: $(dst)/sysrst.log \
 	$(dst)/clkconverter.log \
 	$(dst)/ahbaxibridge.log
 
+IP_GENESYS2: $(dst)/sysrst.log \
+	MEM_GENESYS2 \
+	$(dst)/mmcm-genesys2.log \
+	$(dst)/clkconverter.log \
+	$(dst)/ahbaxibridge.log
+
 # Generate Memory IP Blocks
 .PHONY: MEM_VCU MEM_Arty
 MEM_VCU:
 	$(MAKE) $(dst)/ddr4-$(board).log
 MEM_Arty:
+	$(MAKE) $(dst)/ddr3-$(board).log
+
+MEM_GENESYS2:
 	$(MAKE) $(dst)/ddr3-$(board).log
 
 # Copy files and make necessary modifications
