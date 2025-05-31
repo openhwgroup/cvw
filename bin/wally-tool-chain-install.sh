@@ -82,7 +82,7 @@ source "$WALLY"/bin/installation/riscv-gnu-toolchain-install.sh
 # For example, if Python version 2.x is in your path, it won’t install correctly.
 # Also, be sure riscv64-unknown-elf-objcopy shows up in your path in $RISCV/riscv-gnu-toolchain/bin
 # at the time of compilation, or elf2hex won’t work properly.
-source "$WALLY"/bin/installation/elf2hex-install.sh
+# source "$WALLY"/bin/installation/elf2hex-install.sh
 
 
 # QEMU (https://www.qemu.org/docs/master/system/target-riscv.html)
@@ -92,14 +92,14 @@ source "$WALLY"/bin/installation/qemu-install.sh
 
 # Spike (https://github.com/riscv-software-src/riscv-isa-sim)
 # Spike is a reference model for RISC-V. It is a functional simulator that can be used to run RISC-V programs.
-source "$WALLY"/bin/installation/spike-install.sh
+# source "$WALLY"/bin/installation/spike-install.sh
 
 
 # Verilator (https://github.com/verilator/verilator)
 # Verilator is a fast open-source Verilog simulator that compiles synthesizable Verilog code into C++ code.
 # It is used for linting and simulation of Wally.
 # Verilator needs to be built from source to get the latest version (Wally needs 5.021 or later).
-source "$WALLY"/bin/installation/verilator-install.sh
+# source "$WALLY"/bin/installation/verilator-install.sh
 
 
 # RISC-V Sail Model (https://github.com/riscv/sail-riscv)
@@ -108,12 +108,12 @@ source "$WALLY"/bin/installation/verilator-install.sh
 # It is used to generate the RISC-V Sail Model, which is the golden reference model for RISC-V.
 # The Sail Compiler is written in OCaml, which is an object-oriented extension of ML, which in turn
 # is a functional programming language suited to formal verification.
-source "$WALLY"/bin/installation/sail-install.sh
+# source "$WALLY"/bin/installation/sail-install.sh
 
 
 # OSU Skywater 130 cell library (https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12)
 # The OSU Skywater 130 cell library is a standard cell library that is used to synthesize Wally.
-source "$WALLY"/bin/installation/skywater-lib-install.sh
+# source "$WALLY"/bin/installation/skywater-lib-install.sh
 
 
 # Buildroot and Linux testvectors
