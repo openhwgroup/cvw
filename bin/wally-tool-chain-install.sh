@@ -27,6 +27,10 @@
 ## and limitations under the License.
 ################################################################################################
 
+# NOTE: All scripts are sourced instead of executed so that environment variables and functions are shared properly.
+
+set -e # break on error
+
 # Determine script directory to locate related scripts
 dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WALLY=$(dirname "$dir")
@@ -48,7 +52,7 @@ fi
 # and installed packages are isolated from the rest of the system. Also installs python packages,
 # including RISCOF (https://github.com/riscv-software-src/riscof.git)
 # RISCOF is a RISC-V compliance test framework that is used to run the RISC-V Arch Tests.
-"$WALLY"/bin/installation/python-setup.sh
+source "$WALLY"/bin/installation/python-setup.sh
 
 
 # Activate tools (python virtual environment and possibly newer version of gcc)
@@ -59,7 +63,7 @@ source "${WALLY}"/bin/installation/activate-tools.sh
 # Anything newer than this won't build on red hat 8
 # Used for all installed tools becuase mixing glib versions can cause issues.
 if (( RHEL_VERSION == 8 )) || (( UBUNTU_VERSION == 20 )); then
-    "$WALLY"/bin/installation/glib-installation.sh
+    source "$WALLY"/bin/installation/glib-installation.sh
 fi
 
 
@@ -69,7 +73,7 @@ fi
 # To install GCC from source can take hours to compile.
 # This configuration enables multilib to target many flavors of RISC-V.
 # This book is tested with GCC 13.2.0 and 14.2.0.
-"$WALLY"/bin/installation/riscv-gnu-toolchain-install.sh
+source "$WALLY"/bin/installation/riscv-gnu-toolchain-install.sh
 
 
 # elf2hex (https://github.com/sifive/elf2hex)
@@ -79,24 +83,24 @@ fi
 # For example, if Python version 2.x is in your path, it won’t install correctly.
 # Also, be sure riscv64-unknown-elf-objcopy shows up in your path in $RISCV/riscv-gnu-toolchain/bin
 # at the time of compilation, or elf2hex won’t work properly.
-"$WALLY"/bin/installation/elf2hex-install.sh
+source "$WALLY"/bin/installation/elf2hex-install.sh
 
 
 # QEMU (https://www.qemu.org/docs/master/system/target-riscv.html)
 # QEMU is an open source machine emulator and virtualizer capable of emulating RISC-V
-"$WALLY"/bin/installation/qemu-install.sh
+source "$WALLY"/bin/installation/qemu-install.sh
 
 
 # Spike (https://github.com/riscv-software-src/riscv-isa-sim)
 # Spike is a reference model for RISC-V. It is a functional simulator that can be used to run RISC-V programs.
-"$WALLY"/bin/installation/spike-install.sh
+source "$WALLY"/bin/installation/spike-install.sh
 
 
 # Verilator (https://github.com/verilator/verilator)
 # Verilator is a fast open-source Verilog simulator that compiles synthesizable Verilog code into C++ code.
 # It is used for linting and simulation of Wally.
 # Verilator needs to be built from source to get the latest version (Wally needs 5.021 or later).
-"$WALLY"/bin/installation/verilator-install.sh
+source "$WALLY"/bin/installation/verilator-install.sh
 
 
 # RISC-V Sail Model (https://github.com/riscv/sail-riscv)
@@ -105,18 +109,18 @@ fi
 # It is used to generate the RISC-V Sail Model, which is the golden reference model for RISC-V.
 # The Sail Compiler is written in OCaml, which is an object-oriented extension of ML, which in turn
 # is a functional programming language suited to formal verification.
-"$WALLY"/bin/installation/sail-install.sh
+source "$WALLY"/bin/installation/sail-install.sh
 
 
 # OSU Skywater 130 cell library (https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12)
 # The OSU Skywater 130 cell library is a standard cell library that is used to synthesize Wally.
-"$WALLY"/bin/installation/skywater-lib-install.sh
+source "$WALLY"/bin/installation/skywater-lib-install.sh
 
 
 # Buildroot and Linux testvectors
 # Buildroot is used to boot a minimal version of Linux on Wally.
 # Testvectors are generated using QEMU.
-"$WALLY"/bin/installation/buildroot-install.sh
+source "$WALLY"/bin/installation/buildroot-install.sh
 
 
 # Download site-setup scripts
