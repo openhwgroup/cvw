@@ -134,12 +134,13 @@ fi
 
 ### Configure installation ###
 # Check flags
-clean=false
-no_buidroot=false
+# 0 = true, 1 = false for bash
+clean=1
+no_buidroot=1
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        -c|--clean) clean=true ;;
-        --no-buildroot) no_buidroot=true ;;
+        -c|--clean) clean=0 ;;
+        --no-buildroot) no_buidroot=0 ;;
         --no-args) ;; # Ignore this flag, workaround for sourcing this script in other scripts
         -h|--help)
             echo -e "Usage: $0 [\$RISCV] [options]"

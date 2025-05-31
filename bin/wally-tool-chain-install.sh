@@ -119,10 +119,10 @@ source "$WALLY"/bin/installation/skywater-lib-install.sh
 # Buildroot and Linux testvectors
 # Buildroot is used to boot a minimal version of Linux on Wally.
 # Testvectors are generated using QEMU.
-if [ "$no_buidroot" != true ]; then
-    source "$WALLY"/bin/installation/buildroot-install.sh
-else
+if [ "$no_buidroot" ]; then
     echo -e "${OK_COLOR}Skipping Buildroot and Linux testvectors.${ENDC}"
+else
+    source "$WALLY"/bin/installation/buildroot-install.sh
 fi
 
 
@@ -136,7 +136,7 @@ if [ ! -e "${RISCV}"/site-setup.sh ]; then
     wget -nv --retry-connrefused $retry_on_host_error https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.sh
     wget -nv --retry-connrefused $retry_on_host_error https://raw.githubusercontent.com/openhwgroup/cvw/main/site-setup.csh
     echo -e "${SUCCESS_COLOR}Site setup script successfully downloaded!${ENDC}"
-    echo -e "${WARNING_COLOR}Make sure to edit the environment variables in $RISCV/site-setup.sh (or .csh) to point to your installation of EDA tools and licensce files.${ENDC}"
+    echo -e "${WARNING_COLOR}Make sure to edit the environment variables in $RISCV/site-setup.sh (or .csh) to point to your installation of EDA tools and license files.${ENDC}"
 else
     echo -e "${OK_COLOR}Site setup script already exists. Not checking for updates to avoid overwritng modifications."
     echo -e "You may need to manually update it if there were changes upstream.${ENDC}"
