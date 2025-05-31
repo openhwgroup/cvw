@@ -173,7 +173,7 @@ fi
 
 # Set environment variables
 export PATH=$RISCV/bin:$PATH:/usr/bin
-export PKG_CONFIG_PATH=$RISCV/lib64/pkgconfig:$RISCV/lib/pkgconfig:$RISCV/share/pkgconfig:$RISCV/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH
+export PKG_CONFIG_PATH=$RISCV/lib64/pkgconfig:$RISCV/lib/pkgconfig:$RISCV/share/pkgconfig:$RISCV/lib/x86_64-linux-gnu/pkgconfig${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}}
 
 # Check for incompatible PATH environment variable before proceeding with installation
 if [[ ":$PATH:" == *::* || ":$PATH:" == *:.:* ]]; then

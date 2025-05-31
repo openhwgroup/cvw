@@ -41,11 +41,7 @@ fi
 # Testvectors are generated using QEMU.
 section_header "Installing Buildroot and Creating Linux testvectors"
 STATUS="buildroot"
-if [ -z "$LD_LIBRARY_PATH" ]; then
-    export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$RISCV/riscv64-unknown-elf/lib:$RISCV/lib/x86_64-linux-gnu/
-else
-    export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$LD_LIBRARY_PATH:$RISCV/riscv64-unknown-elf/lib:$RISCV/lib/x86_64-linux-gnu/
-fi
+export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}:$RISCV/riscv64-unknown-elf/lib:$RISCV/lib/x86_64-linux-gnu
 cd "$WALLY"/linux
 if [ ! -e "$RISCV"/buildroot ]; then
     FORCE_UNSAFE_CONFIGURE=1 make 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ] # FORCE_UNSAFE_CONFIGURE is needed to allow buildroot to compile when run as root
