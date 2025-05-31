@@ -47,11 +47,16 @@ fi
 # is a functional programming language suited to formal verification.
 section_header "Installing/Updating Sail Compiler"
 STATUS="sail_compiler"
-cd "$RISCV"
-wget -nv --retry-connrefused $retry_on_host_error --output-document=sail.tar.gz "https://github.com/rems-project/sail/releases/download/$SAIL_COMPILER_VERSION-linux-binary/sail.tar.gz"
-tar xz --directory="$RISCV" --strip-components=1 -f sail.tar.gz
-rm -f sail.tar.gz
-echo -e "${SUCCESS_COLOR}Sail Compiler successfully installed/updated!${ENDC}"
+if check_tool_version $SAIL_COMPILER_VERSION; then
+    cd "$RISCV"
+    wget -nv --retry-connrefused $retry_on_host_error --output-document=sail.tar.gz "https://github.com/rems-project/sail/releases/download/$SAIL_COMPILER_VERSION-linux-binary/sail.tar.gz"
+    tar xz --directory="$RISCV" --strip-components=1 -f sail.tar.gz
+    rm -f sail.tar.gz
+    echo "$SAIL_COMPILER_VERSION" > "$RISCV"/versions/$STATUS.version # Record installed version
+    echo -e "${SUCCESS_COLOR}Sail Compiler successfully installed/updated!${ENDC}"
+else
+    echo -e "${SUCCESS_COLOR}Sail Compiler already installed.${ENDC}"
+fi
 
 # Newer version of CMake needed to build sail-riscv model (at least 3.20)
 if (( UBUNTU_VERSION == 20  || DEBIAN_VERSION == 11 )); then
