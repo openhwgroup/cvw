@@ -32,7 +32,7 @@ if [ -z "$FAMILY" ]; then
     dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     WALLY="$(dirname $(dirname "$dir"))"
     export WALLY
-    source "${dir}"/../wally-environment-check.sh "--no-args"
+    source "${dir}"/../wally-environment-check.sh
 fi
 
 # OSU Skywater 130 cell library (https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12)
