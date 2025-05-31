@@ -27,6 +27,8 @@
 ## and limitations under the License.
 ################################################################################################
 
+set -e # break on error
+
 ## Helper functions
 # Error handler
 error() {

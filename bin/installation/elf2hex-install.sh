@@ -29,6 +29,7 @@
 
 ELF2HEX_VERSION=f28a3103c06131ed3895052b1341daf4ca0b1c9c # Last commit as of May 30, 2025
 
+set -e # break on error
 # If run standalone, check environment. Otherwise, use info from main install script
 if [ -z "$FAMILY" ]; then
     dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

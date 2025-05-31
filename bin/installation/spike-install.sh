@@ -29,6 +29,7 @@
 
 SPIKE_VERSION=4c870d063dbbaeb4dc7007fe5c2a1bf8b00a767e # Last commit as of May 30, 2025
 
+set -e # break on error
 # If run standalone, check environment. Otherwise, use info from main install script
 if [ -z "$FAMILY" ]; then
     dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

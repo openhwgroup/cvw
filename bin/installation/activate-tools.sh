@@ -27,6 +27,7 @@
 ## and limitations under the License.
 ################################################################################################
 
+set -e # break on error
 # If run standalone, check environment. Otherwise, use info from main install script
 if [ -z "$FAMILY" ]; then
     dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

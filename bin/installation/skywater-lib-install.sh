@@ -29,6 +29,7 @@
 
 SKYWATER_LIB_VERSION=ac90ef0c622a9377a16b5218d9da3ac4169eeaaf # Last commit as of May 30, 2025
 
+set -e # break on error
 # If run standalone, check environment. Otherwise, use info from main install script
 if [ -z "$FAMILY" ]; then
     dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

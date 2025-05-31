@@ -31,6 +31,7 @@ SAIL_COMPILER_VERSION=0.19 # Last release as of May 30, 2025
 CMAKE_VERSION=3.31.5 # Only used for distros with a system CMake that is too old (< 3.20)
 RISCV_SAIL_MODEL_VERSION=a214c522a2f98dc3b1f381169d0b1a27bbe0acd8 # Last commit as of May 29, 2025
 
+set -e # break on error
 # If run standalone, check environment. Otherwise, use info from main install script
 if [ -z "$FAMILY" ]; then
     dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
