@@ -40,7 +40,6 @@ export WALLY
 source "${dir}"/wally-environment-check.sh
 
 # Install/update system packages if root. Otherwise, check that packages are already installed.
-STATUS="system_packages"
 if [ "$ROOT" == true ]; then
     source "${dir}"/wally-package-install.sh
 else
@@ -120,7 +119,11 @@ source "$WALLY"/bin/installation/skywater-lib-install.sh
 # Buildroot and Linux testvectors
 # Buildroot is used to boot a minimal version of Linux on Wally.
 # Testvectors are generated using QEMU.
-source "$WALLY"/bin/installation/buildroot-install.sh
+if [ "$no_buidroot" != true ]; then
+    source "$WALLY"/bin/installation/buildroot-install.sh
+else
+    echo -e "${OK_COLOR}Skipping Buildroot and Linux testvectors.${ENDC}"
+fi
 
 
 # Download site-setup scripts
