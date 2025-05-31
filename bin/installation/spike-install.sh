@@ -27,6 +27,8 @@
 ## and limitations under the License.
 ################################################################################################
 
+SPIKE_VERSION=4c870d063dbbaeb4dc7007fe5c2a1bf8b00a767e # Last commit as of May 30, 2025
+
 # If run standalone, check environment. Otherwise, use info from main install script
 if [ -z "$FAMILY" ]; then
     dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -40,9 +42,9 @@ fi
 section_header "Installing/Updating SPIKE"
 STATUS="spike"
 cd "$RISCV"
-if git_check "riscv-isa-sim" "https://github.com/riscv-software-src/riscv-isa-sim" "$RISCV/lib/pkgconfig/riscv-riscv.pc"; then
+if check_tool_version $SPIKE_VERSION; then
+    git_checkout "riscv-isa-sim" "https://github.com/riscv-software-src/riscv-isa-sim" "$SPIKE_VERSION"
     cd "$RISCV"/riscv-isa-sim
-    git reset --hard && git clean -f && git checkout master && git pull
     mkdir -p build
     cd build
     ../configure --prefix="$RISCV"
@@ -52,6 +54,7 @@ if git_check "riscv-isa-sim" "https://github.com/riscv-software-src/riscv-isa-si
         cd "$RISCV"
         rm -rf riscv-isa-sim
     fi
+    echo "$SPIKE_VERSION" > "$RISCV"/versions/$STATUS.version # Record installed version
     echo -e "${SUCCESS_COLOR}Spike successfully installed/updated!${ENDC}"
 else
     echo -e "${SUCCESS_COLOR}Spike already up to date.${ENDC}"

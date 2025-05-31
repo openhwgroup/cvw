@@ -38,22 +38,33 @@ error() {
     exit 1
 }
 
-# Check if a git repository exists, is up to date, and has been installed
-# clones the repository if it doesn't exist
+# Check if the specificed version of a tool is installed
+# $1: required version
+# Tool inferred from $STATUS variable
+check_tool_version() {
+    local required_version="$1"
+    local version_file="$RISCV/versions/$STATUS.version"
+    if [ -f "$version_file" ] && [ "$(cat "$version_file")" = "$required_version" ]
+    then
+        return 1  # Tool is up-to-date
+    else
+        return 0  # Tool needs installation or update
+    fi
+}
+
+# Checkout specified version of a git repository
 # $1: repo name
 # $2: repo url to clone from
-# $3: file to check if already installed
-# $4: upstream branch, optional, default is master
-git_check() {
+# $3: version to checkout (commit hash or tag)
+git_checkout() {
     local repo=$1
     local url=$2
-    local check=$3
-    local branch="${4:-master}"
+    local version=$3
 
     # Clone repo if it doesn't exist
     if [[ ! -e $repo ]]; then
         for ((i=1; i<=5; i++)); do
-            git clone "$url" && break
+            git clone "$url" "$repo" && break
             echo -e "${WARNING_COLOR}Failed to clone $repo. Retrying.${ENDC}"
             rm -rf "$repo"
             sleep $i
@@ -64,21 +75,13 @@ git_check() {
         fi
     fi
 
-    # Get the current HEAD commit hash and the remote branch commit hash
+    # Update the repository
     cd "$repo"
-    git fetch
-    local local_head=$(git rev-parse HEAD)
-    local remote_head=$(git rev-parse origin/"$branch")
+    git fetch --all
 
-    # Check if the git repository is not up to date or the specified file does not exist
-    if [[ "$local_head" != "$remote_head" ]]; then
-        echo "$repo is not up to date. Updating now."
-        true
-    elif [[ ! -e $check ]]; then
-        true
-    else
-        false
-    fi
+    # Checkout the specified version
+    git reset --hard "$version"
+    git clean -f && git submodule update
 }
 
 # Log output to a file and only print lines with keywords

@@ -27,6 +27,8 @@
 ## and limitations under the License.
 ################################################################################################
 
+VERILATOR_VERSION=v5.036 # Last release as of May 30, 2025
+
 # If run standalone, check environment. Otherwise, use info from main install script
 if [ -z "$FAMILY" ]; then
     dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -56,17 +58,11 @@ fi
 # Verilator needs to be built from source to get the latest version (Wally needs 5.021 or later).
 section_header "Installing/Updating Verilator"
 STATUS="verilator"
-if [ "$UBUNTU_VERSION" == 20 ] || [ "$DEBIAN_VERSION" == 11 ]; then
-    # On Ubuntu 20 and Debian 11, the last version of Verilator that build successfully is 5.036.
-    export VERILATOR_VERSION="5.036"
-else
-    export VERILATOR_VERSION="master"
-fi
 cd "$RISCV"
-if git_check "verilator" "https://github.com/verilator/verilator" "$RISCV/share/pkgconfig/verilator.pc"; then
+if check_tool_version $VERILATOR_VERSION; then
+    git_checkout "verilator" "https://github.com/verilator/verilator" "$VERILATOR_VERSION"
     unset VERILATOR_ROOT
     cd "$RISCV"/verilator
-    git reset --hard && git clean -f && git checkout "$VERILATOR_VERSION" && (git pull || true)
     autoconf
     ./configure --prefix="$RISCV"
     make -j "${NUM_THREADS}" 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
@@ -75,6 +71,7 @@ if git_check "verilator" "https://github.com/verilator/verilator" "$RISCV/share/
         cd "$RISCV"
         rm -rf verilator
     fi
+    echo "$VERILATOR_VERSION" > "$RISCV"/versions/$STATUS.version # Record installed version
     echo -e "${SUCCESS_COLOR}Verilator successfully installed/updated!${ENDC}"
 else
     echo -e "${SUCCESS_COLOR}Verilator already up to date.${ENDC}"

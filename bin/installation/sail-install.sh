@@ -27,6 +27,10 @@
 ## and limitations under the License.
 ################################################################################################
 
+SAIL_COMPILER_VERSION=0.19 # Last release as of May 30, 2025
+CMAKE_VERSION=3.31.5 # Only used for distros with a system CMake that is too old (< 3.20)
+RISCV_SAIL_MODEL_VERSION=a214c522a2f98dc3b1f381169d0b1a27bbe0acd8 # Last commit as of May 29, 2025
+
 # If run standalone, check environment. Otherwise, use info from main install script
 if [ -z "$FAMILY" ]; then
     dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -43,7 +47,7 @@ fi
 section_header "Installing/Updating Sail Compiler"
 STATUS="sail_compiler"
 cd "$RISCV"
-wget -nv --retry-connrefused $retry_on_host_error --output-document=sail.tar.gz https://github.com/rems-project/sail/releases/latest/download/sail.tar.gz
+wget -nv --retry-connrefused $retry_on_host_error --output-document=sail.tar.gz "https://github.com/rems-project/sail/releases/download/$SAIL_COMPILER_VERSION-linux-binary/sail.tar.gz"
 tar xz --directory="$RISCV" --strip-components=1 -f sail.tar.gz
 rm -f sail.tar.gz
 echo -e "${SUCCESS_COLOR}Sail Compiler successfully installed/updated!${ENDC}"
@@ -51,10 +55,10 @@ echo -e "${SUCCESS_COLOR}Sail Compiler successfully installed/updated!${ENDC}"
 # Newer version of CMake needed to build sail-riscv model (at least 3.20)
 if (( UBUNTU_VERSION == 20  || DEBIAN_VERSION == 11 )); then
     STATUS="cmake"
-    if [ ! -e "$RISCV"/bin/cmake ]; then
-        section_header "Installing cmake"
+    if [ ! -e "$RISCV"/bin/cmake ] || [ "$("$RISCV"/bin/cmake --version | head -n1 | sed 's/cmake version //')" != "$CMAKE_VERSION" ]; then
+        section_header "Installing CMake"
         cd "$RISCV"
-        wget -nv --retry-connrefused $retry_on_host_error --output-document=cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v3.31.5/cmake-3.31.5-linux-x86_64.tar.gz
+        wget -nv --retry-connrefused $retry_on_host_error --output-document=cmake.tar.gz "https://github.com/Kitware/CMake/releases/download/v$CMAKE_VERSION/cmake-$CMAKE_VERSION-linux-x86_64.tar.gz"
         tar xz --directory="$RISCV" --strip-components=1 -f cmake.tar.gz
         rm -f cmake.tar.gz
         echo -e "${SUCCESS_COLOR}CMake successfully installed/updated!${ENDC}"
@@ -64,6 +68,7 @@ if (( UBUNTU_VERSION == 20  || DEBIAN_VERSION == 11 )); then
 fi
 
 # Newer version of gmp needed for sail-riscv model on RHEL 8
+# sail-riscv will download and build gmp if told to do so, so no need to install it manually.
 if (( RHEL_VERSION == 8 )); then
     DOWNLOAD_GMP=TRUE
 else
@@ -74,9 +79,9 @@ fi
 # The RISC-V Sail Model is the golden reference model for RISC-V. It is written in Sail (described above)
 section_header "Installing/Updating RISC-V Sail Model"
 STATUS="riscv-sail-model"
-if git_check "sail-riscv" "https://github.com/riscv/sail-riscv.git" "$RISCV/bin/riscv_sim_rv32d"; then
+if check_tool_version $RISCV_SAIL_MODEL_VERSION; then
+    git_checkout "sail-riscv" "https://github.com/riscv/sail-riscv.git" "$RISCV_SAIL_MODEL_VERSION"
     cd "$RISCV"/sail-riscv
-    git reset --hard && git clean -f && git checkout master && git pull
     cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="$RISCV" -DDOWNLOAD_GMP="$DOWNLOAD_GMP" -GNinja 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
     cmake --build build 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
     cmake --install build 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
@@ -84,6 +89,7 @@ if git_check "sail-riscv" "https://github.com/riscv/sail-riscv.git" "$RISCV/bin/
         cd "$RISCV"
         rm -rf sail-riscv
     fi
+    echo "$RISCV_SAIL_MODEL_VERSION" > "$RISCV"/versions/$STATUS.version # Record installed version
     echo -e "${SUCCESS_COLOR}RISC-V Sail Model successfully installed/updated!${ENDC}"
 else
     echo -e "${SUCCESS_COLOR}RISC-V Sail Model already up to date.${ENDC}"

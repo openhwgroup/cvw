@@ -27,6 +27,8 @@
 ## and limitations under the License.
 ################################################################################################
 
+QEMU_VERSION=v10.0.2 # Last release as of May 30, 2025
+
 # If run standalone, check environment. Otherwise, use info from main install script
 if [ -z "$FAMILY" ]; then
     dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -40,9 +42,9 @@ fi
 section_header "Installing/Updating QEMU"
 STATUS="qemu"
 cd "$RISCV"
-if git_check "qemu" "https://github.com/qemu/qemu" "$RISCV/include/qemu-plugin.h"; then
+if check_tool_version $QEMU_VERSION; then
+    git_checkout "qemu" "https://github.com/qemu/qemu" "$QEMU_VERSION"
     cd "$RISCV"/qemu
-    git reset --hard && git clean -f && git checkout master && git pull
     ./configure --target-list=riscv64-softmmu --prefix="$RISCV"
     make -j "${NUM_THREADS}" 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
     make install 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
@@ -50,6 +52,7 @@ if git_check "qemu" "https://github.com/qemu/qemu" "$RISCV/include/qemu-plugin.h
         cd "$RISCV"
         rm -rf qemu
     fi
+    echo "$QEMU_VERSION" > "$RISCV"/versions/$STATUS.version # Record installed version
     echo -e "${SUCCESS_COLOR}QEMU successfully installed/updated!${ENDC}"
 else
     echo -e "${SUCCESS_COLOR}QEMU already up to date.${ENDC}"

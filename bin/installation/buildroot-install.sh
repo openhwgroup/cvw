@@ -55,4 +55,5 @@ elif [ ! -e "$RISCV"/linux-testvectors ]; then
     echo -e "${SUCCESS_COLOR}Linux testvectors successfully generated!${ENDC}"
 else
     echo -e "${OK_COLOR}Buildroot and Linux testvectors already exist.${ENDC}"
+    echo -e "${WARNING_COLOR}Buildroot is not updated automatically. If you want to install a newer version, delete the existing $RISCV/buildroot directory and rerun this script.${ENDC}"
 fi

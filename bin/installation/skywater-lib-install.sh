@@ -27,6 +27,8 @@
 ## and limitations under the License.
 ################################################################################################
 
+SKYWATER_LIB_VERSION=ac90ef0c622a9377a16b5218d9da3ac4169eeaaf # Last commit as of May 30, 2025
+
 # If run standalone, check environment. Otherwise, use info from main install script
 if [ -z "$FAMILY" ]; then
     dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -41,9 +43,9 @@ section_header "Installing/Updating OSU Skywater 130 cell library"
 STATUS="osu_skywater_130_cell_library"
 mkdir -p "$RISCV"/cad/lib
 cd "$RISCV"/cad/lib
-if git_check "sky130_osu_sc_t12" "https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12" "$RISCV/cad/lib/sky130_osu_sc_t12" "main"; then
-    cd "$RISCV"/sky130_osu_sc_t12
-    git reset --hard && git clean -f && git checkout main && git pull
+if check_tool_version $SKYWATER_LIB_VERSION; then
+    git_checkout "sky130_osu_sc_t12" "https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12" "$SKYWATER_LIB_VERSION"
+    echo "$SKYWATER_LIB_VERSION" > "$RISCV"/versions/$STATUS.version
     echo -e "${SUCCESS_COLOR}OSU Skywater library successfully installed!${ENDC}"
 else
     echo -e "${SUCCESS_COLOR}OSU Skywater library already up to date.${ENDC}"

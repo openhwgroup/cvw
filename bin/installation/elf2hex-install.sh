@@ -27,6 +27,8 @@
 ## and limitations under the License.
 ################################################################################################
 
+ELF2HEX_VERSION=f28a3103c06131ed3895052b1341daf4ca0b1c9c # Last commit as of May 30, 2025
+
 # If run standalone, check environment. Otherwise, use info from main install script
 if [ -z "$FAMILY" ]; then
     dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -45,9 +47,9 @@ fi
 section_header "Installing/Updating elf2hex"
 STATUS="elf2hex"
 cd "$RISCV"
-if git_check "elf2hex" "https://github.com/sifive/elf2hex.git" "$RISCV/bin/riscv64-unknown-elf-elf2bin"; then
+if check_tool_version $ELF2HEX_VERSION; then
+    git_checkout "elf2hex" "https://github.com/sifive/elf2hex.git" "$ELF2HEX_VERSION"
     cd "$RISCV"/elf2hex
-    git reset --hard && git clean -f && git checkout master && git pull
     autoreconf -i
     ./configure --target=riscv64-unknown-elf --prefix="$RISCV"
     make 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
@@ -56,6 +58,7 @@ if git_check "elf2hex" "https://github.com/sifive/elf2hex.git" "$RISCV/bin/riscv
         cd "$RISCV"
         rm -rf elf2hex
     fi
+    echo "$ELF2HEX_VERSION" > "$RISCV"/versions/$STATUS.version # Record installed version
     echo -e "${SUCCESS_COLOR}elf2hex successfully installed/updated!${ENDC}"
 else
     echo -e "${SUCCESS_COLOR}elf2hex already up to date.${ENDC}"

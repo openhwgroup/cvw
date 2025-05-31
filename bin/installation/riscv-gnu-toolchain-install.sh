@@ -27,6 +27,8 @@
 ## and limitations under the License.
 ################################################################################################
 
+RISCV_GNU_TOOLCHAIN_VERSION=23863c2ca74e6c050f0c97e7af61f5f1776aadd1 # Last commit with GCC 14.2.0
+
 # If run standalone, check environment. Otherwise, use info from main install script
 if [ -z "$FAMILY" ]; then
     dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -44,15 +46,16 @@ fi
 section_header "Installing/Updating RISC-V GNU Toolchain"
 STATUS="riscv-gnu-toolchain"
 cd "$RISCV"
-if git_check "riscv-gnu-toolchain" "https://github.com/riscv/riscv-gnu-toolchain" "$RISCV/riscv-gnu-toolchain/stamps/build-gcc-newlib-stage2"; then
+if check_tool_version $RISCV_GNU_TOOLCHAIN_VERSION; then
+    git_checkout "riscv-gnu-toolchain" "https://github.com/riscv/riscv-gnu-toolchain" "$RISCV_GNU_TOOLCHAIN_VERSION"
     cd "$RISCV"/riscv-gnu-toolchain
-    git reset --hard && git clean -f && git checkout master && git pull && git submodule update
     ./configure --prefix="${RISCV}" --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
     make -j "${NUM_THREADS}" 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
     if [ "$clean" ]; then
         cd "$RISCV"
         rm -rf riscv-gnu-toolchain
     fi
+    echo "$RISCV_GNU_TOOLCHAIN_VERSION" > "$RISCV"/versions/$STATUS.version # Record installed version
     echo -e "${SUCCESS_COLOR}RISC-V GNU Toolchain successfully installed/updated!${ENDC}"
 else
     echo -e "${SUCCESS_COLOR}RISC-V GNU Toolchain already up to date.${ENDC}"
