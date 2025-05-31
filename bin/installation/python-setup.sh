@@ -58,6 +58,6 @@ source "$RISCV"/riscv-python/bin/activate # activate python virtual environment
 # Install python packages, including RISCOF (https://github.com/riscv-software-src/riscof.git)
 # RISCOF is a RISC-V compliance test framework that is used to run the RISC-V Arch Tests.
 STATUS="python packages"
-pip install --upgrade pip && pip install --upgrade -r "$WALLY"/bin/requirements.txt
+pip --require-virtualenv install --upgrade pip && pip --require-virtualenv install --upgrade -r "$WALLY"/bin/requirements.txt
 
 echo -e "${SUCCESS_COLOR}Python environment successfully configured!${ENDC}"

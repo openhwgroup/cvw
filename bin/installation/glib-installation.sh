@@ -41,7 +41,7 @@ fi
 STATUS="glib"
 if [ ! -e "$RISCV"/include/glib-2.0 ]; then
     section_header "Installing glib"
-    pip install -U meson # Meson is needed to build glib
+    pip --require-virtualenv install -U meson # Meson is needed to build glib
     cd "$RISCV"
     wget -nv --retry-connrefused $retry_on_host_error https://download.gnome.org/sources/glib/2.70/glib-2.70.5.tar.xz
     tar -xJf glib-2.70.5.tar.xz
