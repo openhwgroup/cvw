@@ -51,7 +51,7 @@ if check_tool_version $SPIKE_VERSION; then
     ../configure --prefix="$RISCV"
     make -j "${NUM_THREADS}" 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
     make install 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
-    if [ "$clean" ]; then
+    if [ "$clean" = true ]; then
         cd "$RISCV"
         rm -rf riscv-isa-sim
     fi

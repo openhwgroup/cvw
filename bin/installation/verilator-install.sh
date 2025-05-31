@@ -68,7 +68,7 @@ if check_tool_version $VERILATOR_VERSION; then
     ./configure --prefix="$RISCV"
     make -j "${NUM_THREADS}" 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
     make install 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
-    if [ "$clean" ]; then
+    if [ "$clean" = true ]; then
         cd "$RISCV"
         rm -rf verilator
     fi
@@ -77,4 +77,3 @@ if check_tool_version $VERILATOR_VERSION; then
 else
     echo -e "${SUCCESS_COLOR}Verilator already up to date.${ENDC}"
 fi
-

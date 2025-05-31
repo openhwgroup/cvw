@@ -49,7 +49,7 @@ if check_tool_version $QEMU_VERSION; then
     ./configure --target-list=riscv64-softmmu --prefix="$RISCV"
     make -j "${NUM_THREADS}" 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
     make install 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
-    if [ "$clean" ]; then
+    if [ "$clean" = true ]; then
         cd "$RISCV"
         rm -rf qemu
     fi

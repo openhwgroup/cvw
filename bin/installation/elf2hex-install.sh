@@ -55,7 +55,7 @@ if check_tool_version $ELF2HEX_VERSION; then
     ./configure --target=riscv64-unknown-elf --prefix="$RISCV"
     make 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
     make install 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
-    if [ "$clean" ]; then
+    if [ "$clean" = true ]; then
         cd "$RISCV"
         rm -rf elf2hex
     fi

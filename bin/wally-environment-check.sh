@@ -39,6 +39,11 @@ WARNING_COLOR='\033[93m'
 FAIL_COLOR='\033[91m'
 ENDC='\033[0m' # Reset to default color
 
+if [ -z "$WALLY" ]; then
+    dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    WALLY="$(dirname "$dir")"
+    export WALLY
+fi
 
 ### Common functions and error handling ###
 source "$WALLY"/bin/installation/wally-installation-helper-functions.sh
@@ -134,13 +139,12 @@ fi
 
 ### Configure installation ###
 # Check flags
-# 0 = true, 1 = false for bash
-clean=1
-no_buidroot=1
+clean=false
+no_buildroot=false
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        -c|--clean) clean=0 ;;
-        --no-buildroot) no_buidroot=0 ;;
+        -c|--clean) clean=true ;;
+        --no-buildroot) no_buildroot=true ;;
         --no-args) ;; # Ignore this flag, workaround for sourcing this script in other scripts
         -h|--help)
             echo -e "Usage: $0 [\$RISCV] [options]"

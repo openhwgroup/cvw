@@ -119,7 +119,7 @@ source "$WALLY"/bin/installation/skywater-lib-install.sh
 # Buildroot and Linux testvectors
 # Buildroot is used to boot a minimal version of Linux on Wally.
 # Testvectors are generated using QEMU.
-if [ "$no_buidroot" ]; then
+if [ "$no_buildroot" = true ]; then
     echo -e "${OK_COLOR}Skipping Buildroot and Linux testvectors.${ENDC}"
 else
     source "$WALLY"/bin/installation/buildroot-install.sh

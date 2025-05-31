@@ -91,7 +91,7 @@ if check_tool_version $RISCV_SAIL_MODEL_VERSION; then
     cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX="$RISCV" -DDOWNLOAD_GMP="$DOWNLOAD_GMP" -GNinja 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
     cmake --build build 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
     cmake --install build 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
-    if [ "$clean" ]; then
+    if [ "$clean" = true ]; then
         cd "$RISCV"
         rm -rf sail-riscv
     fi
