@@ -27,6 +27,11 @@
 ## and limitations under the License.
 ################################################################################################
 
+# NOTE: These three tools need to be kept in sync. Update all versions simultaneously.
+export RISCOF_VERSION=be84132874963e001c14d846a140a3edd9c9d48f # Last commit as May 31, 2025
+export RISCV_CONFIG_VERSION=54171f205be802f9f8e0b1cf4156a6cc826fb467 # Last commit as of May 31, 2025
+export RISCV_ISAC_VERSION=450de2eabfe4fcdfdf54135b5ab2dbb1d94805f8 # Last commit as of May 31, 2025 (commit hash of riscv-arch-test repo)
+
 set -e # break on error
 # If run standalone, check environment. Otherwise, use info from main install script
 if [ -z "$FAMILY" ]; then
@@ -53,6 +58,6 @@ source "$RISCV"/riscv-python/bin/activate # activate python virtual environment
 # Install python packages, including RISCOF (https://github.com/riscv-software-src/riscof.git)
 # RISCOF is a RISC-V compliance test framework that is used to run the RISC-V Arch Tests.
 STATUS="python packages"
-pip install --upgrade pip && pip install --upgrade -r "$dir"/requirements.txt
+pip install --upgrade pip && pip install --upgrade -r "$WALLY"/bin/requirements.txt
 
 echo -e "${SUCCESS_COLOR}Python environment successfully configured!${ENDC}"
