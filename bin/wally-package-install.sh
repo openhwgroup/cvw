@@ -4,7 +4,7 @@
 ##
 ## Written: Jordan Carlin, jcarlin@hmc.edu
 ## Created: 30 June 2024
-## Modified:
+## Modified: May 30 2025
 ##
 ## Purpose: Package manager installation for open source tool chain installation script
 ##
@@ -29,21 +29,16 @@
 
 set -e # break on error
 
-# Colors
-BOLD='\033[1m'
-SECTION_COLOR='\033[95m'$BOLD
-SUCCESS_COLOR='\033[92m'
-FAIL_COLOR='\033[91m'
-ENDC='\033[0m' # Reset to default color
-
-# If run standalone, determine distro information. Otherwise, use info from main install script
+# If run standalone, check environment. Otherwise, use info from main install script
 if [ -z "$FAMILY" ]; then
     dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    source "${dir}"/wally-distro-check.sh
+    WALLY="$(dirname "$dir")"
+    export WALLY
+    source "${dir}"/wally-environment-check.sh "--no-args"
 fi
 
 
-# Packages are grouped by which tool requires them. If multiple tools need a package, it is included in the first tool only
+# Packages are grouped by which tool requires them. If multiple tools need a package, it is included in each tool's list.
 # Packages that are constant across distros
 GENERAL_PACKAGES+=(rsync git make cmake curl wget tar unzip bzip2 dialog mutt)
 GNU_PACKAGES+=(autoconf automake gawk bison flex texinfo gperf libtool patchutils bc gcc)
@@ -67,7 +62,7 @@ case "$FAMILY" in
             VERILATOR_PACKAGES+=(perl-doc)
         fi
         # A newer version of gcc is required for qemu
-        OTHER_PACKAGES+=(gcc-toolset-13)
+        GENERAL_PACKAGES+=(gcc-toolset-13)
         ;;
     ubuntu | debian)
         if (( UBUNTU_VERSION >= 24 )); then
@@ -76,7 +71,7 @@ case "$FAMILY" in
             PYTHON_VERSION=python3.11
         elif (( UBUNTU_VERSION >= 20 )); then
             PYTHON_VERSION=python3.9
-            OTHER_PACKAGES+=(gcc-10 g++-10 cpp-10) # Newer version of gcc needed for Verilator
+            GENERAL_PACKAGES+=(gcc-10 g++-10 cpp-10) # Newer version of gcc needed for Verilator
         elif (( DEBIAN_VERSION >= 12 )); then
             PYTHON_VERSION=python3.11
         elif (( DEBIAN_VERSION >= 11 )); then
@@ -107,7 +102,7 @@ case "$FAMILY" in
         SPIKE_PACKAGES+=(dtc libboost_regex1_75_0-devel libboost_system1_75_0-devel)
         VERILATOR_PACKAGES+=(gperftools perl-doc)
         BUILDROOT_PACKAGES+=(ncurses-utils ncurses-devel ncurses5-devel gcc-fortran) # gcc-fortran is only needed for compiling spec benchmarks on buildroot linux
-        OTHER_PACKAGES+=(gcc13 gcc13-c++ cpp13) # Newer version of gcc needed for many tools. Default is gcc7
+        GENERAL_PACKAGES+=(gcc13 gcc13-c++ cpp13) # Newer version of gcc needed for many tools. Default is gcc7
         ;;
 esac
 
@@ -116,18 +111,18 @@ esac
 if [ "${1}" == "--check" ]; then
     section_header "Checking Dependencies from Package Manager"
     if [[ "$FAMILY" == rhel || "$FAMILY" == suse ]]; then
-        for pack in "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${OTHER_PACKAGES[@]}"; do
+        for pack in "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}"; do
             rpm -q "$pack" > /dev/null || (echo -e "${FAIL_COLOR}Missing packages detected (${WARNING_COLOR}$pack${FAIL_COLOR}). Run as root to auto-install or run wally-package-install.sh first.${ENDC}" && exit 1)
         done
     elif [[ "$FAMILY" == ubuntu || "$FAMILY" == debian ]]; then
-        for pack in "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${OTHER_PACKAGES[@]}"; do
+        for pack in "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}"; do
             dpkg -l "$pack" | grep "ii" > /dev/null || (echo -e "${FAIL_COLOR}Missing packages detected (${WARNING_COLOR}$pack${FAIL_COLOR}). Run as root to auto-install or run wally-package-install.sh first." && exit 1)
         done
     fi
     echo -e "${OK_COLOR}All required packages detected.${ENDC}"
 else
     # Check if root, otherwise exit with error message
-    [ "${EUID:=$(id -u)}" -ne 0 ] && echo -e "\n${FAIL_COLOR}Must be run as root${ENDC}" && exit 1
+    [ "$ROOT" == false ] && echo -e "\n${FAIL_COLOR}Must be run as root${ENDC}" && exit 1
 
     section_header "Installing/Updating Dependencies from Package Manager"
     # Enable extra repos necessary for rhel
@@ -150,7 +145,7 @@ else
     # Update and Upgrade tools
     eval "$UPDATE_COMMAND"
     # Install packages listed above using appropriate package manager
-    eval $PACKAGE_MANAGER install "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${OTHER_PACKAGES[@]}" "${VIVADO_PACKAGES[@]}"
+    eval $PACKAGE_MANAGER install "${GENERAL_PACKAGES[@]}" "${GNU_PACKAGES[@]}" "${QEMU_PACKAGES[@]}" "${SPIKE_PACKAGES[@]}" "${VERILATOR_PACKAGES[@]}" "${BUILDROOT_PACKAGES[@]}" "${VIVADO_PACKAGES[@]}"
 
     # Post install steps
     # Vivado looks for ncurses5 libraries, but Ubuntu 24.04 only has ncurses6

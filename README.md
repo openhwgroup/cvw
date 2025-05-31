@@ -118,16 +118,16 @@ If a user-level installation is desired, the script can instead be run by any us
 $ sudo $WALLY/bin/wally-package-install.sh
 ```
 
-In either case, the installation directory can be overridden by passing the desired directory as the last argument to the installation script. For example,
+In either case, the installation directory can be overridden by passing the desired directory as an argument to the installation script. For example,
 
 ```bash
 $ sudo $WALLY/bin/wally-tool-chain-install.sh /home/riscv
 ```
 
-See `wally-tool-chain-install.sh` for a detailed description of each component, or to issue the commands one at a time to install on the command line.
+See `wally-tool-chain-install.sh` and the scripts in the `$WALLY/bin/installation` directory for a detailed description of each component, or to issue the commands one at a time to install on the command line.
 
 > [!NOTE]
-> The complete installation process requires ~55 GB of free space. If the `--clean` flag is passed to the installation script then the final consumed space is only ~26 GB, but upgrading the tools will reinstall everything from scratch.
+> The complete installation process requires ~55 GB of free space. If the `--clean` flag is passed to the installation script then the final consumed space is only ~26 GB. The `--clean` flag removes source files and build directories.
 
 ### Configuration
 `$WALLY/setup.sh` sources `$RISCV/site-setup.sh`. If the toolchain was installed in either of the default locations (`/opt/riscv` or `~/riscv`), `$RISCV` will automatically be set to the correct path when `setup.sh` is run. If a custom installation directory was used, then `$WALLY/setup.sh` must be modified to set the correct path.
