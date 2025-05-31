@@ -17,8 +17,9 @@ on:
       - main
     paths:
       - 'bin/wally-tool-chain-install.sh'
-      - 'bin/wally-distro-check.sh'
+      - 'bin/wally-environment-check.sh'
       - 'bin/wally-package-install.sh'
+      - 'bin/installation/*'
       - '.github/workflows/install.yml'
   schedule:
     - cron: "0 7 * * 3" # Run at 12:00 AM Pacific Time on Wednesdays
