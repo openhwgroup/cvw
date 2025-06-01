@@ -42,10 +42,11 @@ fi
 
 # Packages are grouped by which tool requires them. If multiple tools need a package, it is included in each tool's list.
 # Packages that are constant across distros
-GENERAL_PACKAGES+=(rsync git make cmake curl wget tar unzip bzip2 dialog mutt)
-GNU_PACKAGES+=(autoconf automake gawk bison flex texinfo gperf libtool patchutils bc gcc)
-VERILATOR_PACKAGES+=(help2man perl clang ccache numactl)
-BUILDROOT_PACKAGES+=(cpio)
+GENERAL_PACKAGES+=(rsync git curl wget tar unzip gzip bzip2 gcc make dialog mutt) # TODO: check what needs dialog
+GNU_PACKAGES+=(autoconf automake gawk bison flex texinfo gperf libtool patchutils bc)
+VERILATOR_PACKAGES+=(autoconf flex bison help2man perl ccache numactl)
+SAIL_PACKAGES+=(cmake)
+BUILDROOT_PACKAGES+=(patchutils perl cpio bc)
 
 # Distro specific packages and package manager
 case "$FAMILY" in
@@ -54,10 +55,11 @@ case "$FAMILY" in
         PACKAGE_MANAGER="dnf -y"
         UPDATE_COMMAND="$PACKAGE_MANAGER update"
         GENERAL_PACKAGES+=(which "$PYTHON_VERSION" "$PYTHON_VERSION"-pip pkgconf-pkg-config gcc-c++ ssmtp)
-        GNU_PACKAGES+=(libmpc-devel mpfr-devel gmp-devel zlib-devel expat-devel libslirp-devel ninja-build)
-        QEMU_PACKAGES+=(glib2-devel libfdt-devel pixman-devel)
-        SPIKE_PACKAGES+=(dtc boost-regex boost-system)
-        VERILATOR_PACKAGES+=(gperftools mold)
+        GNU_PACKAGES+=(libmpc-devel mpfr-devel gmp-devel zlib-devel expat-devel glib2-devel libslirp-devel)
+        QEMU_PACKAGES+=(glib2-devel libfdt-devel pixman-devel zlib-devel ninja-build)
+        SPIKE_PACKAGES+=(dtc) # compiling Spike with boost fails on RHEL
+        VERILATOR_PACKAGES+=(zlib-devel gperftools-devel mold)
+        SAIL_PACKAGES+=(ninja-build gmp-devel)
         BUILDROOT_PACKAGES+=(ncurses ncurses-base ncurses-libs ncurses-devel gcc-gfortran) # gcc-gfortran is only needed for compiling spec benchmarks on buildroot linux
         # Extra packages not available in rhel8, nice for Verilator
         if (( RHEL_VERSION >= 9 )); then
@@ -85,24 +87,26 @@ case "$FAMILY" in
         fi
         PACKAGE_MANAGER="DEBIAN_FRONTEND=noninteractive apt-get -y"
         UPDATE_COMMAND="$PACKAGE_MANAGER update && $PACKAGE_MANAGER upgrade --with-new-pkgs"
-        GENERAL_PACKAGES+=("$PYTHON_VERSION" python3-pip "$PYTHON_VERSION"-venv pkg-config g++ ssmtp)
-        GNU_PACKAGES+=(autotools-dev libmpc-dev libmpfr-dev libgmp-dev build-essential ninja-build zlib1g-dev libexpat1-dev libglib2.0-dev libslirp-dev)
-        QEMU_PACKAGES+=(libfdt-dev libpixman-1-dev)
+        GENERAL_PACKAGES+=("$PYTHON_VERSION" python3-pip "$PYTHON_VERSION"-venv pkg-config build-essential g++ ssmtp)
+        GNU_PACKAGES+=(autotools-dev libmpc-dev libmpfr-dev libgmp-dev zlib1g-dev libexpat1-dev libglib2.0-dev libslirp-dev)
+        QEMU_PACKAGES+=(libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev ninja-build)
         SPIKE_PACKAGES+=(device-tree-compiler libboost-regex-dev libboost-system-dev)
-        VERILATOR_PACKAGES+=(libunwind-dev libgoogle-perftools-dev perl-doc libfl2 libfl-dev zlib1g)
+        VERILATOR_PACKAGES+=(libfl2 libfl-dev zlib1g-dev libunwind-dev libgoogle-perftools-dev perl-doc)
+        SAIL_PACKAGES+=(ninja-build libgmp-dev)
         BUILDROOT_PACKAGES+=(ncurses-base ncurses-bin libncurses-dev gfortran) # gfortran is only needed for compiling spec benchmarks on buildroot linux
         VIVADO_PACKAGES+=(libncurses*) # Vivado hangs on the third stage of installation without this
         ;;
-    suse)
+    suse) 
         PYTHON_VERSION=python3.12
         PYTHON_VERSION_PACKAGE=python312
         PACKAGE_MANAGER="zypper -n"
         UPDATE_COMMAND="$PACKAGE_MANAGER update"
         GENERAL_PACKAGES+=("$PYTHON_VERSION_PACKAGE" "$PYTHON_VERSION_PACKAGE"-pip pkg-config)
-        GNU_PACKAGES+=(mpc-devel mpfr-devel gmp-devel zlib-devel libexpat-devel libslirp-devel ninja)
-        QEMU_PACKAGES+=(glib2-devel libpixman-1-0-devel) # maybe also need qemu itself?
+        GNU_PACKAGES+=(mpc-devel mpfr-devel gmp-devel zlib-devel libexpat-devel glib2-devel libslirp-devel)
+        QEMU_PACKAGES+=(glib2-devel libfdt-devel libpixman-1-0-devel zlib-devel ninja)
         SPIKE_PACKAGES+=(dtc libboost_regex1_75_0-devel libboost_system1_75_0-devel)
-        VERILATOR_PACKAGES+=(gperftools perl-doc)
+        VERILATOR_PACKAGES+=(libfl2 libfl-dev zlib-devel gperftools-devel perl-doc)
+        SAIL_PACKAGES+=(ninja gmp-devel)
         BUILDROOT_PACKAGES+=(ncurses-utils ncurses-devel ncurses5-devel gcc-fortran) # gcc-fortran is only needed for compiling spec benchmarks on buildroot linux
         GENERAL_PACKAGES+=(gcc13 gcc13-c++ cpp13) # Newer version of gcc needed for many tools. Default is gcc7
         ;;
