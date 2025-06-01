@@ -40,20 +40,17 @@ module pmpadrdec import cvw::*;  #(parameter cvw_t P) (
   input  logic                  PAgePMPAdrIn,
   output logic                  PAgePMPAdrOut,
   output logic                  Match, 
-  output logic [P.PA_BITS-1:0]  PMPTop,
   output logic                  L, X, W, R
 );
   
   // define PMP addressing mode codes
   localparam                    TOR   = 2'b01;
-  localparam                    NA4   = 2'b10;
   localparam                    NAPOT = 2'b11;
 
   logic                         TORMatch, NAMatch;
   logic                         PAltPMPAdr;
    logic [P.PA_BITS-1:0]        PMPAdrFull;
   logic [1:0]                   AdrMode;
-  logic [P.PA_BITS-1:0]         PMPTop1, PMPTopTOR, PMPTopNaturallyAligned;
  
   assign AdrMode = PMPCfg[4:3];
 
@@ -78,15 +75,8 @@ module pmpadrdec import cvw::*;  #(parameter cvw_t P) (
 
   // finally pick the appropriate match for the access type
   assign Match = (AdrMode == TOR) ? TORMatch : 
-                 (AdrMode == NA4 | AdrMode == NAPOT) ? NAMatch :
+                 (AdrMode[1]) ? NAMatch : // NA4 or NAPOT
                  1'b0; // OFF never matches
-
-  // Report top of region for first matching region
-  // PMP should match but fail if the size is too big (8-byte accesses spanning to TOR or NA4 region)
-  assign PMPTopTOR = {PMPAdr-1,  2'b11}; // TOR goes to (pmpaddr << 2) - 1
-  assign PMPTopNaturallyAligned = PMPAdrFull | NAMask; // top of the pmp region for NA4 and NAPOT.  All 1s in the lower bits.  Used to check the address doesn't pass the top
-  assign PMPTop1 = (AdrMode == TOR) ? PMPTopTOR : PMPTopNaturallyAligned;
-  assign PMPTop = FirstMatch ? PMPTop1 : '0; // AND portion of distributed AND-OR mux (OR portion in pmpchhecker)
 
   assign L = PMPCfg[7];
   assign X = PMPCfg[2];
