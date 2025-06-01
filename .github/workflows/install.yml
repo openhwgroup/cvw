@@ -103,6 +103,7 @@ jobs:
               apt-get install -y git
             elif [ ${{ matrix.imageFamily }} == "redhat" ]; then
               dnf install -y git
+              # Red Hat images come with curl-minimal, which breaks the installation script. This replaces it with regular curl.
               dnf install curl -y --allowerasing || true
             elif [ ${{ matrix.imageFamily }} == "suse" ]; then
               zypper install -y git
@@ -150,10 +151,18 @@ jobs:
         with:
           name: installation-logs-${{ matrix.name }}
           path: ${{ env.RISCV }}/logs/
+      - name: Upload Buildroot Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: buildroot-artifacts-${{ matrix.name }}
+          path: ${{ env.RISCV }}/buildroot/output/images/
       # Only the linux-testvectors are needed, so remove the rest of the buildroot to save space
       # Logs have already been uploaded so they can be removed
       - name: Clean up installation
+        if: always()
         run: |
+            df -h
             rm -rf $RISCV/buildroot/ || sudo rm -rf $RISCV/buildroot/
             rm -rf $RISCV/logs || sudo rm -rf $RISCV/logs
             df -h
