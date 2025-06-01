@@ -43,12 +43,19 @@ fi
 # Note: The exe2hex utility that comes with Spike doesn’t work for our purposes because it doesn’t
 # handle programs that start at 0x80000000. The SiFive version above is touchy to install.
 # For example, if Python version 2.x is in your path, it won’t install correctly.
-# Also, be sure riscv64-unknown-elf-objcopy shows up in your path in $RISCV/riscv-gnu-toolchain/bin
+# Also, be sure riscv64-unknown-elf-objcopy shows up in your path in $RISCV/bin
 # at the time of compilation, or elf2hex won’t work properly.
 section_header "Installing/Updating elf2hex"
 STATUS="elf2hex"
 cd "$RISCV"
 if check_tool_version $ELF2HEX_VERSION; then
+    # Verify riscv64-unknown-elf-objcopy is available
+    if ! command -v riscv64-unknown-elf-objcopy >/dev/null 2>&1; then
+        echo -e "${FAIL_COLOR}ERROR: riscv64-unknown-elf-objcopy not found in \$PATH.${ENDC}"
+        echo -e "${FAIL_COLOR}Run wally-tool-chain-install.sh or riscv-gnu-toolchain-install.sh before installing elf2hex.${ENDC}"
+        exit 1
+    fi
+
     git_checkout "elf2hex" "https://github.com/sifive/elf2hex.git" "$ELF2HEX_VERSION"
     cd "$RISCV"/elf2hex
     autoreconf -i
