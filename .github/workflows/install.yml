@@ -156,7 +156,7 @@ jobs:
         if: always()
         with:
           name: buildroot-artifacts-${{ matrix.name }}
-          path: ${{ env.RISCV }}/buildroot/output/images/
+          path: ${{ github.workspace }}/buildroot/output/images/
       # Only the linux-testvectors are needed, so remove the rest of the buildroot to save space
       # Logs have already been uploaded so they can be removed
       - name: Clean up installation
