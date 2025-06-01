@@ -48,7 +48,6 @@ module pmpadrdec import cvw::*;  #(parameter cvw_t P) (
   localparam                    TOR   = 2'b01;
   localparam                    NA4   = 2'b10;
   localparam                    NAPOT = 2'b11;
-  localparam Gm1 = P.PMP_G > 0 ? P.PMP_G - 1 : 0; // max(G-1, 0)
 
   logic                         TORMatch, NAMatch;
   logic                         PAltPMPAdr;
