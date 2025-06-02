@@ -32,6 +32,7 @@
 // Note: Zmmul is a subset of M, so usually only one or the other would be used.
 `define ZMMUL_COVERAGE
 `define ZICOND_COVERAGE
+`define ZIFENCEI_COVERAGE
 `define ZCA_COVERAGE
 `define ZCB_COVERAGE
 `define ZCD_COVERAGE
@@ -60,7 +61,7 @@
 `define EXCEPTIONSM_COVERAGE
 `define EXCEPTIONSS_COVERAGE
 `define EXCEPTIONSU_COVERAGE
-`define EXCEPTIONSV_COVERAGE
+//`define EXCEPTIONSV_COVERAGE
 `define EXCEPTIONSF_COVERAGE
 `define EXCEPTIONSZC_COVERAGE
 `define EXCEPTIONSVM_COVERAGE
