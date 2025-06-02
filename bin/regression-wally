@@ -488,12 +488,11 @@ def selectTests(args, sims, coverStr):
         addTests(tests_buildrootbootlockstep, lockstepsim, coverStr, configs) # lockstep with Questa and ImperasDV runs overnight
     # only run RV64GC tests on in code coverage mode
     if args.ccov:
-        addTestsByDir(f"{archVerifDir}/tests/rv64/", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
         addTestsByDir(f"{archVerifDir}/tests/priv/rv64/", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1) # doesn't help coverage much dh 4/12/25
-        addTestsByDir(WALLY+"/tests/coverage/", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
-        # Extra tests from riscv-arch-test that should be run as part of the functional coverage suite
         addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/pmp", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
         addTestsByDir(f"{WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m/privilege", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
+        addTestsByDir(f"{archVerifDir}/tests/rv64/", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
+        addTestsByDir(WALLY+"/tests/coverage/", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
     # run tests in lockstep in functional coverage mode
     if args.fcov or args.nightly:
         addTestsByDir(f"{archVerifDir}/tests/rv32/", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
