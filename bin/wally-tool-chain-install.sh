@@ -65,6 +65,61 @@ if (( RHEL_VERSION == 8 )) || (( UBUNTU_VERSION == 20 )); then
     source "$WALLY"/bin/installation/glib-installation.sh
 fi
 
+
+# RISC-V GNU Toolchain (https://github.com/riscv-collab/riscv-gnu-toolchain)
+# The RISC-V GNU Toolchain includes the GNU Compiler Collection (gcc), GNU Binutils, Newlib,
+# and the GNU Debugger Project (gdb). It is a collection of tools used to compile RISC-V programs.
+# To install GCC from source can take hours to compile.
+source "$WALLY"/bin/installation/riscv-gnu-toolchain-install.sh
+
+
+# elf2hex (https://github.com/sifive/elf2hex)
+# The elf2hex utility to converts executable files into hexadecimal files for Verilog simulation.
+# Note: The exe2hex utility that comes with Spike doesn’t work for our purposes because it doesn’t
+# handle programs that start at 0x80000000.
+source "$WALLY"/bin/installation/elf2hex-install.sh
+
+
+# QEMU (https://www.qemu.org/docs/master/system/target-riscv.html)
+# QEMU is an open source machine emulator and virtualizer capable of emulating RISC-V
+source "$WALLY"/bin/installation/qemu-install.sh
+
+
+# Spike (https://github.com/riscv-software-src/riscv-isa-sim)
+# Spike is a reference model for RISC-V. It is a functional simulator that can be used to run RISC-V programs.
+source "$WALLY"/bin/installation/spike-install.sh
+
+
+# RISC-V Sail Model (https://github.com/riscv/sail-riscv)
+# The RISC-V Sail Model is the golden reference model for RISC-V. It is written in Sail.
+# Sail is a formal specification language designed for describing the semantics of an ISA.
+# It is used to generate the RISC-V Sail Model, which is the golden reference model for RISC-V.
+# The Sail Compiler is written in OCaml, which is an object-oriented extension of ML, which in turn
+# is a functional programming language suited to formal verification.
+source "$WALLY"/bin/installation/sail-install.sh
+
+
+# Verilator (https://github.com/verilator/verilator)
+# Verilator is a fast open-source Verilog simulator that compiles synthesizable Verilog code into C++ code.
+# It is used for linting and simulation of Wally.
+source "$WALLY"/bin/installation/verilator-install.sh
+
+
+# OSU Skywater 130 cell library (https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12)
+# The OSU Skywater 130 cell library is a standard cell library that is used to synthesize Wally.
+source "$WALLY"/bin/installation/skywater-lib-install.sh
+
+
+# Buildroot and Linux testvectors
+# Buildroot is used to boot a minimal version of Linux on Wally.
+# Testvectors are generated using QEMU.
+if [ "$no_buildroot" = true ]; then
+    echo -e "${OK_COLOR}Skipping Buildroot and Linux testvectors.${ENDC}"
+else
+    source "$WALLY"/bin/installation/buildroot-install.sh
+fi
+
+
 # Download site-setup scripts
 # The site-setup script is used to set up the environment for the RISC-V tools and EDA tools by setting
 # the PATH and other environment variables. It also sources the Python virtual environment.
@@ -79,65 +134,6 @@ if [ ! -e "${RISCV}"/site-setup.sh ]; then
 else
     echo -e "${OK_COLOR}Site setup script already exists. Not checking for updates to avoid overwritng modifications."
     echo -e "You may need to manually update it if there were changes upstream.${ENDC}"
-fi
-
-# RISC-V GNU Toolchain (https://github.com/riscv-collab/riscv-gnu-toolchain)
-# The RISC-V GNU Toolchain includes the GNU Compiler Collection (gcc), GNU Binutils, Newlib,
-# and the GNU Debugger Project (gdb). It is a collection of tools used to compile RISC-V programs.
-# To install GCC from source can take hours to compile.
-# This configuration enables multilib to target many flavors of RISC-V.
-# This book is tested with GCC 13.2.0 and 14.2.0.
-source "$WALLY"/bin/installation/riscv-gnu-toolchain-install.sh
-
-
-# elf2hex (https://github.com/sifive/elf2hex)
-# The elf2hex utility to converts executable files into hexadecimal files for Verilog simulation.
-# Note: The exe2hex utility that comes with Spike doesn’t work for our purposes because it doesn’t
-# handle programs that start at 0x80000000. The SiFive version above is touchy to install.
-# For example, if Python version 2.x is in your path, it won’t install correctly.
-# Also, be sure riscv64-unknown-elf-objcopy shows up in your path in $RISCV/riscv-gnu-toolchain/bin
-# at the time of compilation, or elf2hex won’t work properly.
-# source "$WALLY"/bin/installation/elf2hex-install.sh
-
-
-# QEMU (https://www.qemu.org/docs/master/system/target-riscv.html)
-# QEMU is an open source machine emulator and virtualizer capable of emulating RISC-V
-source "$WALLY"/bin/installation/qemu-install.sh
-
-
-# Spike (https://github.com/riscv-software-src/riscv-isa-sim)
-# Spike is a reference model for RISC-V. It is a functional simulator that can be used to run RISC-V programs.
-# source "$WALLY"/bin/installation/spike-install.sh
-
-
-# Verilator (https://github.com/verilator/verilator)
-# Verilator is a fast open-source Verilog simulator that compiles synthesizable Verilog code into C++ code.
-# It is used for linting and simulation of Wally.
-# Verilator needs to be built from source to get the latest version (Wally needs 5.021 or later).
-# source "$WALLY"/bin/installation/verilator-install.sh
-
-
-# RISC-V Sail Model (https://github.com/riscv/sail-riscv)
-# The RISC-V Sail Model is the golden reference model for RISC-V. It is written in Sail.
-# Sail is a formal specification language designed for describing the semantics of an ISA.
-# It is used to generate the RISC-V Sail Model, which is the golden reference model for RISC-V.
-# The Sail Compiler is written in OCaml, which is an object-oriented extension of ML, which in turn
-# is a functional programming language suited to formal verification.
-# source "$WALLY"/bin/installation/sail-install.sh
-
-
-# OSU Skywater 130 cell library (https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12)
-# The OSU Skywater 130 cell library is a standard cell library that is used to synthesize Wally.
-# source "$WALLY"/bin/installation/skywater-lib-install.sh
-
-
-# Buildroot and Linux testvectors
-# Buildroot is used to boot a minimal version of Linux on Wally.
-# Testvectors are generated using QEMU.
-if [ "$no_buildroot" = true ]; then
-    echo -e "${OK_COLOR}Skipping Buildroot and Linux testvectors.${ENDC}"
-else
-    source "$WALLY"/bin/installation/buildroot-install.sh
 fi
 
 echo -e "${SUCCESS_COLOR}${BOLD}\n\nWALLY INSTALLATION SUCCESSFUL!!!\n\n${ENDC}"
