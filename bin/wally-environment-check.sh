@@ -141,11 +141,12 @@ fi
 # Check flags
 clean=false
 no_buildroot=false
+packages_only=false
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         -c|--clean) clean=true ;;
         --no-buildroot) no_buildroot=true ;;
-        --no-args) ;; # Ignore this flag, workaround for sourcing this script in other scripts
+        --packages-only) packages_only=true;;
         -h|--help)
             echo -e "Usage: $0 [\$RISCV] [options]"
             echo -e "${BOLD}Options:${ENDC}"
@@ -161,50 +162,54 @@ done
 # Check if root
 ROOT=$( [ "${EUID:=$(id -u)}" == 0 ] && echo true || echo false);
 
-# Set installation directory based on execution privileges
-# If the script is run as root, the default installation path is /opt/riscv
-# If the script is run as a user, the default installation path is ~/riscv
-# The installation path can be overridden with a positional argument passed to the script.
-if [ "$ROOT" == true ]; then
-    export RISCV="${RISCV:-/opt/riscv}"
-else
-    export RISCV="${RISCV:-$HOME/riscv}"
-fi
-
-# Set environment variables
-export PATH=$RISCV/bin:$PATH:/usr/bin
-export PKG_CONFIG_PATH=$RISCV/lib64/pkgconfig:$RISCV/lib/pkgconfig:$RISCV/share/pkgconfig:$RISCV/lib/x86_64-linux-gnu/pkgconfig${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}}
-
-# Check for incompatible PATH environment variable before proceeding with installation
-if [[ ":$PATH:" == *::* || ":$PATH:" == *:.:* ]]; then
-    echo -e "${FAIL_COLOR}Error: You seem to have the current working directory in your \$PATH environment variable."
-    echo -e "This won't work. Please update your \$PATH and try again.${ENDC}"
-    exit 1
-fi
-
-# Increasing NUM_THREADS will speed up parallel compilation of the tools
-NUM_THREADS=$(nproc --ignore 1) # One less than the total number of threads
-
-# Check available memory
-total_mem=$(grep MemTotal < /proc/meminfo | awk '{print $2}')
-total_mem_gb=$((total_mem / 1024 / 1024))
-
-# Reduce number of threads for systems with less than 8 GB of memory
-if ((total_mem < 8400000 )) ; then
-    NUM_THREADS=1
-    echo -e "${WARNING_COLOR}Detected less than or equal to 8 GB of memory. Using a single thread for compiling tools. This may take a while.${ENDC}"
-fi
-
-# Create installation directory
-mkdir -p "$RISCV"/logs
-mkdir -p "$RISCV"/versions
-
 ### Print system information ###
 echo -e "${OK_COLOR}${UNDERLINE}Detected information${ENDC}"
 echo "Distribution: $PRETTY_NAME"
 echo "Version: $VERSION"
 echo "Running as root: $ROOT"
-echo "Installation path: $RISCV"
-echo "Number of cores: $(nproc)"
-echo "Total memory: $total_mem_gb GB"
-echo "Using $NUM_THREADS thread(s) for compilation"
+
+if [ $packages_only != true ]; then 
+    # Set installation directory based on execution privileges
+    # If the script is run as root, the default installation path is /opt/riscv
+    # If the script is run as a user, the default installation path is ~/riscv
+    # The installation path can be overridden with a positional argument passed to the script.
+    if [ "$ROOT" == true ]; then
+        export RISCV="${RISCV:-/opt/riscv}"
+    else
+        export RISCV="${RISCV:-$HOME/riscv}"
+    fi
+
+    # Set environment variables
+    export PATH=$RISCV/bin:$PATH:/usr/bin
+    export PKG_CONFIG_PATH=$RISCV/lib64/pkgconfig:$RISCV/lib/pkgconfig:$RISCV/share/pkgconfig:$RISCV/lib/x86_64-linux-gnu/pkgconfig${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}}
+
+    # Check for incompatible PATH environment variable before proceeding with installation
+    if [[ ":$PATH:" == *::* || ":$PATH:" == *:.:* ]]; then
+        echo -e "${FAIL_COLOR}Error: You seem to have the current working directory in your \$PATH environment variable."
+        echo -e "This won't work. Please update your \$PATH and try again.${ENDC}"
+        exit 1
+    fi
+
+    # Increasing NUM_THREADS will speed up parallel compilation of the tools
+    NUM_THREADS=$(nproc --ignore 1) # One less than the total number of threads
+
+    # Check available memory
+    total_mem=$(grep MemTotal < /proc/meminfo | awk '{print $2}')
+    total_mem_gb=$((total_mem / 1024 / 1024))
+
+    # Reduce number of threads for systems with less than 8 GB of memory
+    if ((total_mem < 8400000 )) ; then
+        NUM_THREADS=1
+        echo -e "${WARNING_COLOR}Detected less than or equal to 8 GB of memory. Using a single thread for compiling tools. This may take a while.${ENDC}"
+    fi
+
+    # Create installation directory
+    mkdir -p "$RISCV"/logs
+    mkdir -p "$RISCV"/versions
+
+    # Print more system information
+    echo "Installation path: $RISCV"
+    echo "Number of cores: $(nproc)"
+    echo "Total memory: $total_mem_gb GB"
+    echo "Using $NUM_THREADS thread(s) for compilation"
+fi

@@ -149,7 +149,7 @@ jobs:
       # Update setup.sh if using a custom $RISCV path
       - name: Update setup.sh
         if: ${{ matrix.riscv_path != null }}
-        run: sed -i 's,/opt/riscv,${{ matrix.riscv_path }},g' setup.sh
+        run: sed -i 's,~/riscv,${{ matrix.riscv_path }},g' setup.sh
       # Upload installation logs for debugging
       - name: Upload Installation Logs
         uses: actions/upload-artifact@v4
@@ -168,7 +168,7 @@ jobs:
       - name: make tests
         run: |
               source setup.sh
-              make riscof zsbl deriv --jobs $(nproc --ignore 1)
+              make riscof zsbl deriv coverage --jobs $(nproc --ignore 1)
       # Run standard regression, skipping distros that are known to be broken with Verilator
       - name: Regression
         if: ${{ matrix.regressionFail != true }}
