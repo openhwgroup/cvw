@@ -113,7 +113,7 @@ jobs:
       - name: Clone Necessary Submodules
         run: |
               git config --global --add safe.directory '*'
-              git submodule update --init addins/riscv-arch-test addins/verilog-ethernet
+              git submodule update --init addins/riscv-arch-test addins/cvw-arch-verif addins/verilog-ethernet
       # Free up space on the host machine, either from the container or the host
       - name: Free Up Storage
         run: |
@@ -124,6 +124,17 @@ jobs:
                 nsenter -t 1 -m -u -n -i bash -c "$(cat .github/scripts/cli-space-cleanup.sh)"
               fi
               df -h
+      # Set $RISCV so log files can be found and uploaded
+      - name: Set RISCV Environment Variable
+        run: |
+              if [ ! -z ${{ matrix.riscv_path }} ]; then
+                export RISCV=${{ matrix.riscv_path }}
+              elif [ ! -z ${{ matrix.user }} ]; then
+                export RISCV=$HOME/riscv
+              else
+                export RISCV=/opt/riscv
+              fi
+              echo "RISCV=${RISCV}" >> $GITHUB_ENV
       # Run main tool chain installation script, either as a user or system wide
       - name: Install
         run: |
@@ -135,15 +146,10 @@ jobs:
                 sudo ./bin/wally-package-install.sh
                 ./bin/wally-tool-chain-install.sh --clean ${{ matrix.riscv_path }}
               fi
-      # Set environment variables for the rest of the job
-      - name: Set Environment Variables
-        if: always()
-        run: |
-              if [ ! -z ${{ matrix.riscv_path }} ]; then
-                sed -i 's,exit 1,export RISCV=${{ matrix.riscv_path }},g' setup.sh
-              fi
-              source setup.sh
-              echo "RISCV=$RISCV" >> "$GITHUB_ENV"
+      # Update setup.sh if using a custom $RISCV path
+      - name: Update setup.sh
+        if: ${{ matrix.riscv_path != null }}
+        run: sed -i 's,/opt/riscv,${{ matrix.riscv_path }},g' setup.sh
       # Upload installation logs for debugging
       - name: Upload Installation Logs
         uses: actions/upload-artifact@v4
@@ -162,7 +168,7 @@ jobs:
       - name: make tests
         run: |
               source setup.sh
-              make riscof zsbl --jobs $(nproc --ignore 1)
+              make riscof zsbl deriv --jobs $(nproc --ignore 1)
       # Run standard regression, skipping distros that are known to be broken with Verilator
       - name: Regression
         if: ${{ matrix.regressionFail != true }}
