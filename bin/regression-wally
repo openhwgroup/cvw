@@ -507,8 +507,6 @@ def selectTests(args, sims, coverStr):
         # addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/pmp", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1) TODO: Add when working in lockstep
     # run cvw-riscv-arch-test tests in functional coverage mode
     if args.fcov_act:
-        os.makedirs(f"{WALLY}/tests/riscof/work/cvw-riscv-arch-test/rv32i", exist_ok=True)
-        os.makedirs(f"{WALLY}/tests/riscof/work/cvw-riscv-arch-test/rv64i", exist_ok=True)
         addTestsByDir(f"{WALLY}/tests/riscof/work/cvw-riscv-arch-test/rv32i", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
         addTestsByDir(f"{WALLY}/tests/riscof/work/cvw-riscv-arch-test/rv64i", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
     # run branch predictor tests
