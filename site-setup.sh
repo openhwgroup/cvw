@@ -39,12 +39,7 @@ export SYN_memory=/home/jstine/WallyMem/rv64gc/
 #export osumemory=/import/yukari1/pdk/TSMC/WallyMem/rv64gc/
 
 # GCC
-if [ -z "$LD_LIBRARY_PATH" ]; then
-    export LD_LIBRARY_PATH=$RISCV/riscv64-unknown-elf/lib
-else
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$RISCV/riscv64-unknown-elf/lib
-fi
-
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH:+${LD_LIBRARY_PATH}:}$RISCV/riscv64-unknown-elf/lib
 # RISC-V Tools
 export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$LD_LIBRARY_PATH:$RISCV/lib/x86_64-linux-gnu/
 export PATH=$PATH:$RISCV/bin
