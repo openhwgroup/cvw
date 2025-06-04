@@ -7,7 +7,7 @@ $(TARGET).elf: $(TARGET).S Makefile
 	riscv64-unknown-elf-gcc -g -o $(TARGET) -march=rv32im_zicsr -mabi=ilp32 -mcmodel=medany \
 	    -nostartfiles -T../../link/link.ld $(TARGET).S -o $(TARGET).elf
 
-# simulate in lockstep with ImperasDV
+# simulate in Spike
 sim: $(TARGET).elf.objdump
 	wsim rv32gc 8p9.elf --lockstepverbose > log
 

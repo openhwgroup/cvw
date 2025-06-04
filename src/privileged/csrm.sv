@@ -224,7 +224,7 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
     always_comb begin
       logic [P.XLEN-1:0] pmpaddr;
       pmpaddr = {{(P.XLEN-(P.PA_BITS-2)){1'b0}}, PMPADDR_ARRAY_PREGRAIN_REGW[i]}; // raw value in PMP registers
-      if (PMPCFG_ARRAY_REGW[i][4]) PMPADDR_ARRAY_REGW[i] = {pmpaddr[P.PA_BITS-3:Gm1],     {Gm1    {1'b1}}}; // in NAPOT, bottom G-1 bits read as all 1s
+      if (PMPCFG_ARRAY_REGW[i][4]) PMPADDR_ARRAY_REGW[i] = {pmpaddr[P.PA_BITS-3:Gm1],     {Gm1    {1'b1}}}; // in NAPOT/NA4, bottom G-1 bits read as all 1s (but no bits affected for NA4)
       else                         PMPADDR_ARRAY_REGW[i] = {pmpaddr[P.PA_BITS-3:P.PMP_G], {P.PMP_G{1'b0}}}; // in TOR/OFF, bottom G bits read as 0s
     end
 

@@ -28,23 +28,23 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module trickbox_apb import cvw::*;  #(parameter cvw_t P, NUM_HARTS = 1) (
+module trickbox_apb import cvw::*;  #(parameter XLEN = 64, NUM_HARTS = 1) (
   input  logic                PCLK, PRESETn,
   input  logic                PSEL,
   input  logic [15:0]         PADDR, 
-  input  logic [P.XLEN-1:0]   PWDATA,
-  input  logic [P.XLEN/8-1:0] PSTRB,
+  input  logic [XLEN-1:0]     PWDATA,
+  input  logic [XLEN/8-1:0]   PSTRB,
   input  logic                PWRITE,
   input  logic                PENABLE,
-  output logic [P.XLEN-1:0]   PRDATA,
+  output logic [XLEN-1:0]     PRDATA,
   output logic                PREADY,
   input  logic [63:0]         MTIME_IN,
   input  logic [NUM_HARTS-1:0] MTIP_IN, MSIP_IN, SSIP_IN, MEIP_IN, SEIP_IN,
-  input  var logic [P.XLEN-1:0]   HGEIP_IN[NUM_HARTS-1:0],
+  input  var logic [XLEN-1:0] HGEIP_IN[NUM_HARTS-1:0],
   output logic [63:0]         MTIME_OUT, 
   output logic [NUM_HARTS-1:0] MTIP_OUT, MSIP_OUT, SSIP_OUT, MEIP_OUT, SEIP_OUT,
-  output var logic  [P.XLEN-1:0]   HGEIP_OUT[NUM_HARTS-1:0],
-  output logic [P.XLEN-1:0]   TOHOST_OUT
+  output var logic  [XLEN-1:0] HGEIP_OUT[NUM_HARTS-1:0],
+  output logic [XLEN-1:0]     TOHOST_OUT
 );
 
   // register map
@@ -56,8 +56,8 @@ module trickbox_apb import cvw::*;  #(parameter cvw_t P, NUM_HARTS = 1) (
   logic [7:0]                 TRICKEN;
   logic [63:0]                MTIME;
   logic [NUM_HARTS-1:0]       MTIP, MSIP, SSIP, MEIP, SEIP;
-  logic [P.XLEN-1:0]          TOHOST;
-  logic [P.XLEN-1:0]          HGEIP[NUM_HARTS-1:0];
+  logic [XLEN-1:0]            TOHOST;
+  logic [XLEN-1:0]            HGEIP[NUM_HARTS-1:0];
   logic [15:0]                entry;
   logic [9:0]                 hart;                   // which hart is being accessed
   logic                       memwrite;
@@ -82,16 +82,16 @@ module trickbox_apb import cvw::*;  #(parameter cvw_t P, NUM_HARTS = 1) (
         10'b0000000001: RD <= '0; // Reading COM1 has no effect; busy bit not yet implemented.  Later add busy bit
         10'b0000000010: RD <= {56'b0, TRICKEN};
         10'b1111111111: RD <= MTIME;
-        default: RD = '0;
+        default: RD <= '0;
       endcase
-      3'b110: RD = HGEIP[hart];
-      default: RD = '0;
+      3'b110: RD <= HGEIP[hart];
+      default: RD <= '0;
     endcase
   end
 
   // word aligned reads
-  if (P.XLEN == 64) assign PRDATA = RD;
-  else              assign PRDATA = RD[PADDR[2]*32 +: 32]; // 32-bit register access to upper or lower half
+  if (XLEN == 64) assign PRDATA = RD;
+  else            assign PRDATA = RD[PADDR[2]*32 +: 32]; // 32-bit register access to upper or lower half
   
   // write circuitry
   always_ff @(posedge PCLK)
@@ -123,8 +123,8 @@ module trickbox_apb import cvw::*;  #(parameter cvw_t P, NUM_HARTS = 1) (
           HGEIP[i] <= 0;
         end else if (memwrite & (hart == i)) begin
           if (PADDR[15:13] == 3'b010) begin
-            if (P.XLEN == 64) MTIMECMP[hart] <= PWDATA; // 64-bit write
-                  else MTIMECMP[hart][PADDR[2]*32 +: 32] <= PWDATA; // 32-bit write
+            if (XLEN == 64) MTIMECMP[hart] <= PWDATA; // 64-bit write
+            else            MTIMECMP[hart][PADDR[2]*32 +: 32] <= PWDATA; // 32-bit write
           end else if (PADDR[15:13] == 3'b110) begin
             HGEIP[hart] <= PWDATA;
           end
@@ -134,11 +134,10 @@ module trickbox_apb import cvw::*;  #(parameter cvw_t P, NUM_HARTS = 1) (
   always_ff @(posedge PCLK) 
     if (~PRESETn) begin
       MTIME <= '0;
-      // MTIMECMP is not reset
     end else if (memwrite & (PADDR[15:13] == 3'b101 && hart == 10'b1111111111)) begin
-      if (P.XLEN == 64) MTIME <= PWDATA; // 64-bit write
-      else MTIME <= MTIME[PADDR[2]*32 +: 32]; // 32-bit write
-    end else MTIME <= MTIME + 1; 
+      if (XLEN == 64) MTIME <= PWDATA; // 64-bit write
+      else            MTIME <= MTIME[PADDR[2]*32 +: 32]; // 32-bit write
+    end else          MTIME <= MTIME + 1; 
 
   // timer interrupt when MTIME >= MTIMECMP (unsigned)
   for (i=0;i<NUM_HARTS;i++) 

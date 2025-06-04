@@ -49,17 +49,13 @@ module pmpadrdec import cvw::*;  #(parameter cvw_t P) (
 
   logic                         TORMatch, NAMatch;
   logic                         PAltPMPAdr;
-   logic [P.PA_BITS-1:0]        PMPAdrFull;
   logic [1:0]                   AdrMode;
  
   assign AdrMode = PMPCfg[4:3];
 
-  // Bottom two bits of PMPAdr are 00
-  assign PMPAdrFull  = {PMPAdr,  2'b00};
-
   // Top-of-range (TOR)
   // Append two implicit trailing 0's to PMPAdr value
-  assign PAltPMPAdr = {1'b0, PhysicalAddress} < {1'b0, PMPAdrFull}; // unsigned comparison
+  assign PAltPMPAdr = {1'b0, PhysicalAddress} < {1'b0, PMPAdr, 2'b00}; // unsigned comparison
   assign PAgePMPAdrOut = ~PAltPMPAdr;
   assign TORMatch = PAgePMPAdrIn & PAltPMPAdr; // exclusion-tag: PAgePMPAdrIn
 
