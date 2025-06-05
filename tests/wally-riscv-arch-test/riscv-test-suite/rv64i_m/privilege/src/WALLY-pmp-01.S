@@ -71,7 +71,7 @@ test_cases:
 .8byte 0xF, 0x2FFFFFFF, write_pmpaddr_15 # | 15    | 0x2FFFFFFF  | 1F        | 0 | NAPOT | 1 | 1 | 1 | Main mem 80000000-FFFFFFFF RWX|
 
 # write pmpcfg regs with the information in the table above. this should also write the value of these registers to the output.
-.8byte 0x0, 0x0018900C0009001F, write_pmpcfg_0 # write pmpcfg0, output 0x0018900C0009001F
+.8byte 0x0, 0x0018900C0009001F, write_pmpcfg_0 # write pmpcfg0, output 0x0018980C0009001F because NA4 writes as NAPOT
 .8byte 0x2, 0x1F00000000000000, write_pmpcfg_2 # write pmpcfg2, output 0x1F00000000000000
 
 # write known values to memory where W=0. This should be possible since we're in machine mode.

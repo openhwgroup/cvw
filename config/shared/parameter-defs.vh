@@ -48,6 +48,7 @@ localparam cvw_t P = '{
   IDIV_BITSPERCYCLE :        IDIV_BITSPERCYCLE,
   IDIV_ON_FPU :        IDIV_ON_FPU,
   PMP_ENTRIES :        PMP_ENTRIES,
+  PMP_G :               PMP_G,
   RESET_VECTOR :        RESET_VECTOR,
   WFI_TIMEOUT_BIT :        WFI_TIMEOUT_BIT,
   DTIM_SUPPORTED :        DTIM_SUPPORTED,

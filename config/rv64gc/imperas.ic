@@ -48,7 +48,9 @@
 
 # PMP Configuration
 --override cpu/PMP_registers=16
---override cpu/PMP_undefined=T
+--override cpu/PMP_grain=4   # 64-byte grains to match cache line width
+--override cpu/PMP_decompose=T  # unaligned accesses are decomposed into separate aligned accesses
+--override cpu/PMP_undefined=T # access to unimplemented PMP registers cause illegal instruction exception
 
 # PMA Settings
 # 'r': read access allowed

@@ -22,13 +22,17 @@
 module riscvassertions import cvw::*; #(parameter cvw_t P);
   initial begin
     assert (P.PMP_ENTRIES == 0 | P.PMP_ENTRIES==16 | P.PMP_ENTRIES==64) else $fatal(1, "Illegal number of PMP entries: PMP_ENTRIES must be 0, 16, or 64");
-    assert (P.S_SUPPORTED | P.VIRTMEM_SUPPORTED == 0) else $fatal(1, "Virtual memory requires S mode support");
+    assert (P.PMP_G > 0 | P.XLEN == 32 | P.PMP_ENTRIES == 0) else $fatal(1, "RV64 requires PMP_G at least 1 to avoid checking for 8-byte accesses to 4-byte region");
+    assert ((P.PMP_G >= $clog2(P.DCACHE_LINELENINBITS/8)-2) | !P.ZICCLSM_SUPPORTED | P.PMP_ENTRIES == 0) else $fatal(1, "Systems that support misaligned data with PMP must have grain size of at least one cache line so accesses that span grains will also cause spills");
+    assert ((P.PMP_G >= $clog2(P.ICACHE_LINELENINBITS/8)-2) | !P.ZCA_SUPPORTED | (P.PMP_ENTRIES == 0) | !P.ICACHE_SUPPORTED) else $fatal(1, "Systems that support compressed instructions with PMP must have grain size of at least one cache line so fetches that span grains will also cause spills");
+    assert (P.PMP_G < P.PA_BITS-2 | P.PMP_ENTRIES == 0) else $fatal(1, "PMP granularity must be less than the number of physical address bits");
     assert (P.IDIV_BITSPERCYCLE == 1 | P.IDIV_BITSPERCYCLE==2 | P.IDIV_BITSPERCYCLE==4) else $fatal(1, "Illegal number of divider bits/cycle: IDIV_BITSPERCYCLE must be 1, 2, or 4");
-    assert (P.F_SUPPORTED | ~P.D_SUPPORTED) else $fatal(1, "Can't support double fp (D) without supporting float (F)");
-    assert (P.D_SUPPORTED | ~P.Q_SUPPORTED) else $fatal(1, "Can't support quad fp (Q) without supporting double (D)");
-    assert (P.F_SUPPORTED | ~P.ZFH_SUPPORTED) else $fatal(1, "Can't support half-precision fp (ZFH) without supporting float (F)");
-    assert (P.DCACHE_SUPPORTED | ~P.F_SUPPORTED | P.FLEN <= P.XLEN) else $fatal(1, "Data cache required to support FLEN > XLEN because AHB/DTIM bus width is XLEN");
+    assert (P.F_SUPPORTED | !P.D_SUPPORTED) else $fatal(1, "Can't support double fp (D) without supporting float (F)");
+    assert (P.D_SUPPORTED | !P.Q_SUPPORTED) else $fatal(1, "Can't support quad fp (Q) without supporting double (D)");
+    assert (P.F_SUPPORTED | !P.ZFH_SUPPORTED) else $fatal(1, "Can't support half-precision fp (ZFH) without supporting float (F)");
+    assert (P.DCACHE_SUPPORTED | !P.F_SUPPORTED | P.FLEN <= P.XLEN) else $fatal(1, "Data cache required to support FLEN > XLEN because AHB/DTIM bus width is XLEN");
     assert (P.I_SUPPORTED ^ P.E_SUPPORTED) else $fatal(1, "Exactly one of I and E must be supported");
+    assert (P.S_SUPPORTED | P.VIRTMEM_SUPPORTED == 0) else $fatal(1, "Virtual memory requires S mode support");
     assert (P.DCACHE_WAYSIZEINBYTES <= 4096 | (!P.DCACHE_SUPPORTED) | P.VIRTMEM_SUPPORTED == 0) else $fatal(1, "DCACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and virtual memory is enabled (to prevent aliasing)");
     assert (P.DCACHE_LINELENINBITS >= 128 | (!P.DCACHE_SUPPORTED)) else $fatal(1, "DCACHE_LINELENINBITS must be at least 128 when caches are enabled");
     assert (P.DCACHE_LINELENINBITS < P.DCACHE_WAYSIZEINBYTES*8) else $fatal(1, "DCACHE_LINELENINBITS must be smaller than way size");
