@@ -83,7 +83,7 @@ git_checkout() {
 
     # Checkout the specified version
     git reset --hard "$version"
-    git clean -f && git submodule update
+    git clean -fdx && git submodule update
 }
 
 # Log output to a file and only print lines with keywords
