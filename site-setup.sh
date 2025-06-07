@@ -73,7 +73,7 @@ fi
 
 # Use newer gcc version for older distros
 if [ -e /opt/rh/gcc-toolset-13/enable ]; then
-    source /opt/rh/gcc-toolset-13/enable # Red Hat Family
+    source /opt/rh/gcc-toolset-13/enable # Red Hat Family 8 and 9
 elif [ -e "$RISCV"/gcc-13 ]; then
     export PATH=$RISCV/gcc-13/bin:$PATH  # SUSE Family
 elif [ -e "$RISCV"/gcc-10 ]; then

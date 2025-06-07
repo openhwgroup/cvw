@@ -70,7 +70,7 @@ if [[ "$ID" == rhel || "$ID_LIKE" == *rhel* ]]; then
     fi
     export RHEL_VERSION="${VERSION_ID:0:1}"
     if (( RHEL_VERSION < 8 )); then
-        printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally installation script is only compatible with versions 8 and 9 of RHEL, Rocky Linux, and AlmaLinux. You have version $VERSION."
+        printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally installation script is only compatible with versions 8, 9, and 10 of RHEL, Rocky Linux, and AlmaLinux. You have version $VERSION."
         exit 1
     fi
 elif [[ "$ID" == ubuntu || "$ID_LIKE" == *ubuntu* ]]; then
