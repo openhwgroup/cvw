@@ -1,4 +1,5 @@
 # Jordan Carlin, jcarlin@hmc.edu, August 2024
+# Modified, james.stine@okstate.edu 6 June 20255
 # Floating Point Tests Makefile for CORE-V-Wally
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
@@ -18,9 +19,13 @@ testfloat: ${TESTFLOAT_DIR}/testfloat_gen
 vectors: testfloat
 	$(MAKE) -C ${WALLY}/tests/fp/vectors
 
-combined_IF_vectors: ${WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/M/src vectors
-	cd ${WALLY}/tests/fp/combined_IF_vectors \
-	&& ./create_IF_vectors.sh
+combined_IF_vectors: vectors
+	@if [ -d "${WALLY}/tests/riscof/work/riscv-arch-test/rv32i_m/M/src" ]; then \
+		echo "Generating IF vectors..."; \
+		cd ${WALLY}/tests/fp/combined_IF_vectors && ./create_IF_vectors.sh; \
+	else \
+		echo "SKIPPED: riscv-arch-tests not found — Run make from $$WALLY."; \
+	fi
 
 clean:
 	$(MAKE) -C ${WALLY}/tests/fp/vectors clean
