@@ -62,12 +62,19 @@ jobs:
           - name: rocky-9
             image: rockylinux:9
             imageFamily: redhat
+          # Add when rocky 10 is released
+          # - name: rocky-10
+          #   image: rockylinux:10
+          #   imageFamily: redhat
           - name: almalinux-8
             image: almalinux:8
             imageFamily: redhat
             regressionFail: true
           - name: almalinux-9
             image: almalinux:9
+            imageFamily: redhat
+          - name: almalinux-10
+            image: almalinux:10
             imageFamily: redhat
           # SUSE Installations
           - name: opensuse-15.6
