@@ -17,7 +17,7 @@
 --override cpu/Zicboz=T
 --override cmomp_bytes=64  # Zic64b
 --override cmoz_bytes=64   # Zic64b
---override lr_sc_grain=4   # Za64rs requires <=64; we use native word size
+--override lr_sc_grain=0   # Za64rs requires <=64; we use native word size
 
 # Virtual memory
 --override cpu/Sv_modes=3 # SV32 supported
