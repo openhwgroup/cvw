@@ -62,10 +62,9 @@ jobs:
           - name: rocky-9
             image: rockylinux:9
             imageFamily: redhat
-          # Add when rocky 10 is released
-          # - name: rocky-10
-          #   image: rockylinux:10
-          #   imageFamily: redhat
+          - name: rocky-10
+            image: rockylinux:10
+            imageFamily: redhat
           - name: almalinux-8
             image: almalinux:8
             imageFamily: redhat
