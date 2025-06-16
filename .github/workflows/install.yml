@@ -56,14 +56,14 @@ jobs:
             imageFamily: debian
           # Red Hat Installations
           - name: rocky-8
-            image: rockylinux:8
+            image: rockylinux/rockylinux:8
             imageFamily: redhat
             regressionFail: true
           - name: rocky-9
-            image: rockylinux:9
+            image: rockylinux/rockylinux:9
             imageFamily: redhat
           - name: rocky-10
-            image: rockylinux:10
+            image: rockylinux/rockylinux:10
             imageFamily: redhat
           - name: almalinux-8
             image: almalinux:8
