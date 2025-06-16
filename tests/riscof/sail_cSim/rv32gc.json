@@ -10,7 +10,7 @@
   },
   "memory": {
     "pmp": {
-      "grain": 4,
+      "grain": 0,
       "count": 16
     },
     "misaligned": {
