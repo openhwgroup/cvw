@@ -35,7 +35,7 @@ TEMPLATE_PRJ="$WALLY/bin/cvw.prj"
 
 # Clean out the lint-synopsys directory (if it exists)
 if [ -d "$CUR_DIR/lint-spyglass-reports" ]; then
-    echo "Cleaning lint-spyglass directory..."
+    echo "Cleaning lint-spyglass-reports directory..."
     rm -rf "$CUR_DIR/lint-spyglass-reports"/*
 fi
 
