@@ -1,0 +1,32 @@
+#
+# Synopsys SpyGlass Lint Flow
+# james.stine@okstate.edu 11 June 2025
+#
+
+# Sets directory for output reports
+set_option projectwdir lint-spyglass-reports/
+set_option language_mode mixed
+set_option designread_enable_synthesis no
+set_option designread_disable_flatten no
+set_option active_methodology $SPYGLASS_HOME/GuideWare/latest/block/rtl_handoff
+set_option enableSV12 yes
+set_option handlememory yes
+set_option top wallywrapper
+set_parameter handle_large_bus yes
+
+# Include DIR
+set_option incdir $WALLY/config/WALLYVER
+set_option incdir $WALLY/config/shared
+
+# main CVW
+read_file -type verilog $WALLY/src/cvw.sv
+read_file -type verilog $WALLY/testbench/wallywrapper.sv
+read_file -type awl $WALLY/bin/waivers.tcl
+
+# generic read of Wally src files
+read_file -type verilog $WALLY/src/*/*
+read_file -type verilog $WALLY/src/*/*/*
+
+current_methodology $SPYGLASS_HOME/GuideWare/latest/block/rtl_handoff
+
+
