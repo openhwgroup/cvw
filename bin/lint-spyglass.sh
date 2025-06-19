@@ -26,17 +26,17 @@ fi
 GOAL="lint/lint_rtl"
 
 # List of configurations (add configurations for linting)
-configs=(rv32e)
+configs=(rv32e rv32i rv64i rv64gc)
 
 # Set current dir to make sure it writes to the current dir
 CUR_DIR=$(pwd)
 
 # Base project file for Spyglass
-TEMPLATE_PRJ="$WALLY/bin/cvw.prj"
+TEMPLATE_PRJ="$WALLY/synthDC/spyglass/cvw.prj"
 
 # Clean out the lint-synopsys directory (if it exists)
 if [ -d "$CUR_DIR/lint-spyglass-reports" ]; then
-    echo "Cleaning lint-spyglass-reports directory..."
+    echo "Cleaning lint-spyglass directory..."
     rm -rf "$CUR_DIR/lint-spyglass-reports"/*
 fi
 
@@ -50,7 +50,7 @@ for config in "${configs[@]}"; do
     # Also replaces path for Tcl so can incorporate everything correctly
     sed -e "s|\$WALLY|$WALLY|g" \
 	-e "s|WALLYVER|$config|g" \
-	-e "s|read_file -type awl waivers.tcl|read_file -type awl $WALLY/bin/waivers.tcl|g" \
+	-e "s|read_file -type awl waivers.tcl|read_file -type awl $WALLY/synthDC/spyglass/waivers.tcl|g" \
 	-e "s|set_option projectwdir lint-spyglass/|set_option projectwdir ${CUR_DIR}/lint-spyglass/|g" \
 	"$TEMPLATE_PRJ" > "$CONFIG_PRJ"
 
