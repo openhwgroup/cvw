@@ -27,6 +27,9 @@ export BREKER_HOME=/cad/breker/TREK                                 # Change thi
 # Tools
 # Questa and Synopsys
 export PATH=$QUESTA_HOME/bin:$DC_HOME/bin:$VCS_HOME/bin:$PATH
+# Synopsys Spyglass
+export SPYGLASS_HOME=/cad/synopsys/spyglass/W-2024.09-SP2-2/SPYGLASS_HOME
+export SNPSLMD_QUEUE=1
 
 # Environmental variables for SoC
 export SYN_pdk=/proj/models/tsmc28/libraries/28nmtsmc/tcbn28hpcplusbwp30p140_190a/

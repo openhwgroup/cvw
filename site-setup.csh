@@ -15,6 +15,9 @@ setenv VCSPATH /cad/synopsys/vcs/U-2023.03-SP2-4/bin              # Change this 
 extend PATH $QUESTAPATH
 extend PATH $SNPSPATH
 extend PATH $VCSPATH
+# Synopsys Spyglass
+setenv SPYGLASS_HOME /cad/synopsys/spyglass/W-2024.09-SP2-2/SPYGLASS_HOME
+setenv SNPSLMD_QUEUE 1
 
 # GCC
 if ( ! $?LD_LIBRARY_PATH ) then
