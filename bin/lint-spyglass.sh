@@ -3,6 +3,7 @@
 ###############################################################################
 # Script Name: lint_spyglass.sh
 # Author: james.stine@okstate.edu 11 June 2025
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 # Description:
 #   This script automates the running of Synopsys SpyGlass linting for
 #   various Wally RISC-V configurations. It substitutes the WALLYVER value

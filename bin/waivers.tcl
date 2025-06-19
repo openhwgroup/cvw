@@ -1,6 +1,7 @@
 #
 # Synopsys SpyGlass Lint Waivers
 # james.stine@okstate.edu 11 June 2025
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 #
 
 # Add waivers that are not neededed to be checked
