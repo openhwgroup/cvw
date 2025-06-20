@@ -4,11 +4,13 @@
 
 # License servers and commercial CAD tool paths
 # Must edit these based on your local environment.  Ask your sysadmin.
-setenv MGLS_LICENSE_FILE 27002@zircon.eng.hmc.edu                 # Change this to your Siemens license server
-setenv SNPSLMD_LICENSE_FILE 27020@zircon.eng.hmc.edu              # Change this to your Synopsys license server
-setenv QUESTAPATH /cad/mentor/questa_sim-2022.4_2/questasim/bin   # Change this for your path to Questa
-setenv SNPSPATH /cad/synopsys/SYN/bin                             # Change this for your path to Design Compiler
-setenv VCSPATH /cad/synopsys/vcs/U-2023.03-SP2-4/bin              # Change this for your path to Synopsys VCS
+setenv MGLS_LICENSE_FILE 27002@zircon.eng.hmc.edu                         # Change this to your Siemens license server
+setenv SNPSLMD_LICENSE_FILE 27020@zircon.eng.hmc.edu                      # Change this to your Synopsys license server
+setenv QUESTAPATH /cad/mentor/questa_sim-2022.4_2/questasim/bin           # Change this for your path to Questa
+setenv SNPSPATH /cad/synopsys/SYN/bin                                     # Change this for your path to Design Compiler
+setenv VCSPATH /cad/synopsys/vcs/U-2023.03-SP2-4/bin                      # Change this for your path to Synopsys VCS
+setenv SPYGLASS_HOME /cad/synopsys/spyglass/W-2024.09-SP2-2/SPYGLASS_HOME # Change this for your path to Synopsys Spyglass
+
 
 # Tools
 # Questa and Synopsys
@@ -16,7 +18,6 @@ extend PATH $QUESTAPATH
 extend PATH $SNPSPATH
 extend PATH $VCSPATH
 # Synopsys Spyglass
-setenv SPYGLASS_HOME /cad/synopsys/spyglass/W-2024.09-SP2-2/SPYGLASS_HOME
 setenv SNPSLMD_QUEUE 1
 
 # GCC
