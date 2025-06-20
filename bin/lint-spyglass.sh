@@ -5,68 +5,81 @@
 # Author: james.stine@okstate.edu 11 June 2025
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 # Description:
-#   This script automates the running of Synopsys SpyGlass linting for
-#   various Wally RISC-V configurations. It substitutes the WALLYVER value
-#   in the base project file and runs SpyGlass for a specified lint goal.
-#
-#   - Cleans out the lint-synopsys directory (if it exists)
-#   - Accepts one configurable linting goal
-#   - Iterates over multiple Wally configurations
-#   - Generates temporary .prj files for each run
+#   Automates Synopsys SpyGlass linting for Wally RISC-V configurations.
+#   Supports command-line options for custom goals and configs.
 ###############################################################################
 
-# Check or set WALLY environment variable
+# Check WALLY environment
 if [ -z "$WALLY" ]; then
     echo "Error: WALLY environment variable is not set."
-    echo "Please make sure you source your setup before running this script."
+    echo "Please source your setup before running this script."
     exit 1
 fi
 
-# OPTIONAL: choose one of: lint/lint_rtl or lint/lint_rtl_enhanced
+# === Defaults ===
 GOAL="lint/lint_rtl"
+DEFAULT_CONFIGS=(rv32e rv64gc rv32gc rv32imc rv32i rv64i)
+CONFIGS=()
 
-# List of configurations (add configurations for linting)
-configs=(rv32e rv32i rv64i rv64gc)
+# === Parse command-line options ===
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -g|--goal)
+            GOAL="$2"
+            shift 2
+            ;;
+        -c|--configs)
+            IFS=',' read -r -a CONFIGS <<< "$2"
+            shift 2
+            ;;
+        -h|--help)
+            echo "Usage: $0 [-g lint_goal] [-c config1,config2,...]"
+            echo "  -g, --goal      Linting goal (e.g., lint/lint_rtl or lint/lint_rtl_enhanced)"
+            echo "  -c, --configs   Comma-separated list of configs to run (e.g., rv32e,rv64gc)"
+            echo "Defaults: goal=$GOAL, configs=${DEFAULT_CONFIGS[*]}"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            exit 1
+            ;;
+    esac
+done
 
-# Set current dir to make sure it writes to the current dir
-CUR_DIR=$(pwd)
-
-# Base project file for Spyglass
-TEMPLATE_PRJ="$WALLY/synthDC/spyglass/cvw.prj"
-
-# Clean out the lint-synopsys directory (if it exists)
-if [ -d "$CUR_DIR/lint-spyglass-reports" ]; then
-    echo "Cleaning lint-spyglass-reports directory..."
-    rm -rf "$CUR_DIR/lint-spyglass-reports"/*
+# Use default configs if none provided
+if [ ${#CONFIGS[@]} -eq 0 ]; then
+    CONFIGS=("${DEFAULT_CONFIGS[@]}")
 fi
 
-for config in "${configs[@]}"; do
+# Spyglass work directories/files
+SPYGLASS_DIR="$WALLY/synthDC/spyglass"
+TEMPLATE_PRJ="$SPYGLASS_DIR/cvw.prj"
+
+# Clean output directory
+echo "Cleaning lint-spyglass-reports directory..."
+rm -rf "$SPYGLASS_DIR/lint-spyglass-reports"
+
+# Iterate configs
+for config in "${CONFIGS[@]}"; do
     echo "Processing configuration: $config"
+    CONFIG_PRJ="$SPYGLASS_DIR/cvw_${config}.prj"
 
-    # Output project file
-    CONFIG_PRJ="$CUR_DIR/cvw_${config}.prj"
-
-    # Replace WALLYVER with current config and save to new .prj
-    # Also replaces path for Tcl so can incorporate everything correctly
+    # Replace placeholders in template
     sed -e "s|\$WALLY|$WALLY|g" \
-	-e "s|WALLYVER|$config|g" \
-	-e "s|read_file -type awl waivers.tcl|read_file -type awl $WALLY/synthDC/spyglass/waivers.tcl|g" \
-	-e "s|set_option projectwdir lint-spyglass/|set_option projectwdir ${CUR_DIR}/lint-spyglass/|g" \
-	"$TEMPLATE_PRJ" > "$CONFIG_PRJ"
+        -e "s|WALLYVER|$config|g" \
+        -e "s|read_file -type awl waivers.tcl|read_file -type awl $SPYGLASS_DIR/waivers.tcl|g" \
+        -e "s|set_option projectwdir lint-spyglass/|set_option projectwdir ${SPYGLASS_DIR}/lint-spyglass/|g" \
+        "$TEMPLATE_PRJ" > "$CONFIG_PRJ"
 
-    # Run spyglass using the generated project file 
-    echo "Running spyglass for: $config"
+    # Run SpyGlass
+    echo "Running spyglass for: $config with goal: $GOAL"
     spyglass -project "$CONFIG_PRJ" -goal "$GOAL" -batch
 
-    # Optional: handle errors
     if [ $? -ne 0 ]; then
         echo "Error running spyglass for configuration: $config"
     else
         echo "Completed: $config"
     fi
 
-    # Optional: uncomment the line below to keep each prj after each run
     rm "$CONFIG_PRJ"
-    
 done
-

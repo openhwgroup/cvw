@@ -5,7 +5,7 @@
 #
 
 # Sets directory for output reports
-set_option projectwdir lint-spyglass-reports/
+set_option projectwdir $WALLY/synthDC/spyglass/lint-spyglass-reports/
 set_option language_mode mixed
 set_option designread_enable_synthesis no
 set_option designread_disable_flatten no
