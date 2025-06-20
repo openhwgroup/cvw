@@ -14,5 +14,5 @@ proc GetLineNum {fname target} {
      }
     close $f
     return -code error \
-         "target string not found"
+         [append "target string not found " $target " not found by GetLineNum.do for coverage exclusion in " $fname]
 }

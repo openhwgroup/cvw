@@ -32,6 +32,11 @@ main:
     bseti t0, zero, 14  # turn on FPU
     csrs mstatus, t0
 
+    # fsqrt with Y = 0 to check divby0 flags
+    fcvt.s.w f0, zero
+    fli.s f1, 1
+    fsqrt.s f2, f1
+
     #Pull denormalized FP number from memory and pass it to fclass.S for coverage
     la t0, TestData1
     flw ft0, 0(t0)

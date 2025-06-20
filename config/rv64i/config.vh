@@ -137,6 +137,7 @@ localparam logic IDIV_ON_FPU = 0;
 
 // Legal number of PMP entries are 0, 16, or 64
 localparam PMP_ENTRIES = 32'd0;
+localparam PMP_G = 32'b0; // grain of 8 bytes is supported for uncached RV64
 
 // Address space
 localparam logic [63:0] RESET_VECTOR = 64'h0000000080000000;

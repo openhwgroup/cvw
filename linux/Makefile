@@ -100,8 +100,10 @@ $(DISASSEMBLY_DIR)/%.objdump: $(IMAGE_DIR)/% | $(DISASSEMBLY_DIR)
 	$(WALLY)/bin/extractFunctionRadix.sh $@
 
 # Disassemble binaries ending in .elf
+# Add -D flag back to disassemble all sections (instead of just code sections)
+# once objdump bug is fixed and the pinned version of the toolchain is updated.
 $(DISASSEMBLY_DIR)/%.objdump: $(IMAGE_DIR)/%.elf | $(DISASSEMBLY_DIR)
-	riscv64-unknown-elf-objdump -SD $< >> $@
+	riscv64-unknown-elf-objdump -S $< >> $@
 	$(WALLY)/bin/extractFunctionRadix.sh $@
 
 # Load wally buildroot configuration

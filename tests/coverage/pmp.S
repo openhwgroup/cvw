@@ -17,7 +17,7 @@ main:
 // Configuration
 
   # | Reg   | pmpaddr     | pmpcfg    | L | A    | X | W | R | Comments
-  # |0      | 0x2000003f  | 0x83      | 1 | 00   | 0 | 1 | 1 | 0
+  # |0      | 0x20000040  | 0x83      | 1 | 00   | 0 | 1 | 1 | 0
   # |1      | 0x2000007f  | 0x8b      | 1 | 01   | 0 | 1 | 1 | 1
   # |2      | 0x200000be  | 0x93      | 1 | 10   | 0 | 1 | 1 | 2
   # |3      | 0x2000011e  | 0x9b      | 1 | 11   | 0 | 1 | 1 | 3
@@ -34,7 +34,10 @@ main:
   # |14     | 0x200003be  | 0x10      | 0 | 10   | 0 | 0 | 0 | 14
   # |15     | 0x2000041e  | 0x18      | 0 | 11   | 0 | 0 | 0 | 15
  # configure the pmp address of register 0 in mode 0
-li t5, 536870975
+ # changed from 2000003F to 20000040 5/22/25 david_harris@hmc.edu 
+ # to prevent access fault to trap handler when grain size is large
+ # may result in lower coverage.
+li t5, 0x20000040
 csrw pmpaddr0, t5
 
  # configure the pmp address of register 1 in mode 1
@@ -101,6 +104,7 @@ csrw pmpaddr15, t5
   # write pmpcfg0, output 0x191109019b938b83
 li t4, 1806234828062034819
 csrw pmpcfg0, t4
+csrr t5, pmpcfg0
 
   # write pmpcfg2, output 0x181008001c140c04
 li t4, 1733894653101739012
@@ -921,6 +925,7 @@ csrw pmpcfg0, t4
   # write pmpcfg2, output 0x191109019b938b83
 li t4, 1806234828062034819
 csrw pmpcfg2, t4
+
 
 
 // Testing
