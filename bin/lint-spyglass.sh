@@ -53,33 +53,24 @@ fi
 
 # Spyglass work directories/files
 SPYGLASS_DIR="$WALLY/synthDC/spyglass"
-TEMPLATE_PRJ="$SPYGLASS_DIR/cvw.prj"
-
-# Clean output directory
-echo "Cleaning lint-spyglass-reports directory..."
-rm -rf "$SPYGLASS_DIR/lint-spyglass-reports"
+SPYGLASS_PRJ="$SPYGLASS_DIR/cvw.prj"
 
 # Iterate configs
+errors=0
 for config in "${CONFIGS[@]}"; do
-    echo "Processing configuration: $config"
-    CONFIG_PRJ="$SPYGLASS_DIR/cvw_${config}.prj"
-
-    # Replace placeholders in template
-    sed -e "s|\$WALLY|$WALLY|g" \
-        -e "s|WALLYVER|$config|g" \
-        -e "s|read_file -type awl waivers.tcl|read_file -type awl $SPYGLASS_DIR/waivers.tcl|g" \
-        -e "s|set_option projectwdir lint-spyglass/|set_option projectwdir ${SPYGLASS_DIR}/lint-spyglass/|g" \
-        "$TEMPLATE_PRJ" > "$CONFIG_PRJ"
+    # Clean output directory
+    rm -rf "$SPYGLASS_DIR/lint-spyglass-reports/$config"
 
     # Run SpyGlass
     echo "Running spyglass for: $config with goal: $GOAL"
-    spyglass -project "$CONFIG_PRJ" -goal "$GOAL" -batch
+    WALLY_CONFIG=$config spyglass -project "$SPYGLASS_PRJ" -goal "$GOAL" -batch
 
     if [ $? -ne 0 ]; then
         echo "Error running spyglass for configuration: $config"
+        errors=$((errors + 1))
     else
         echo "Completed: $config"
     fi
-
-    rm "$CONFIG_PRJ"
 done
+
+exit $errors
