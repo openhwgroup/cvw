@@ -31,7 +31,7 @@
 module privdec import cvw::*;  #(parameter cvw_t P) (
   input  logic         clk, reset,
   input  logic         StallW, FlushW, 
-  input  logic [31:15] InstrM,                              // privileged instruction function field
+  input  logic [31:7 ] InstrM,                              // privileged instruction function field
   input  logic         PrivilegedM,                         // is this a privileged instruction (from IEU controller)
   input  logic         IllegalIEUFPUInstrM,                 // Not a legal IEU instruction
   input  logic         IllegalCSRAccessM,                   // Not a legal CSR access
@@ -43,26 +43,31 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   output logic         wfiM, wfiW, sfencevmaM               // wfi / sfence.vma / sinval.vma instructions
 );
 
-  logic                rs1zeroM;                            // rs1 field = 0
+  logic                rs1zeroM, rdzeroM;                   // rs1 / rd field = 0
   logic                IllegalPrivilegedInstrM;             // privileged instruction isn't a legal one or in legal mode
   logic                WFITimeoutM;                         // WFI reaches timeout threshold
   logic                ebreakM, ecallM;                     // ebreak / ecall instructions
   logic                sinvalvmaM;                          // sinval.vma
+  logic                presfencevmaM;                       // sfence.vma before checking privilege mode
   logic                sfencewinvalM, sfenceinvalirM;       // sfence.w.inval, sfence.inval.ir
-  logic                invalM;                              // any of the svinval instructions
+  logic                vmaM;                                // sfence.vma or sinval.vma
+  logic                fenceinvalM;                         // sfence.w.inval or sfence.inval.ir
 
   ///////////////////////////////////////////
   // Decode privileged instructions
   ///////////////////////////////////////////
 
   assign rs1zeroM =    InstrM[19:15] == 5'b0;
+  assign rdzeroM  =    InstrM[11:7]  == 5'b0;
   
   // svinval instructions
   // any svinval instruction is treated as sfence.vma on Wally
-  assign sinvalvmaM =     (InstrM[31:25] ==  7'b0001011);
-  assign sfencewinvalM  = (InstrM[31:20] == 12'b000110000000) & rs1zeroM;
-  assign sfenceinvalirM = (InstrM[31:20] == 12'b000110000001) & rs1zeroM;
-  assign invalM =         P.SVINVAL_SUPPORTED & (sinvalvmaM | sfencewinvalM | sfenceinvalirM); 
+  assign sinvalvmaM     = (InstrM[31:25] ==  7'b0001011)                 & rdzeroM;
+  assign sfencewinvalM  = (InstrM[31:20] == 12'b000110000000) & rs1zeroM & rdzeroM;
+  assign sfenceinvalirM = (InstrM[31:20] == 12'b000110000001) & rs1zeroM & rdzeroM;
+  assign presfencevmaM  = (InstrM[31:25] ==  7'b0001001)                 & rdzeroM;
+  assign vmaM           =  presfencevmaM | (sinvalvmaM & P.SVINVAL_SUPPORTED);      // sfence.vma or sinval.vma
+  assign fenceinvalM    = (sfencewinvalM | sfenceinvalirM) & P.SVINVAL_SUPPORTED;   // sfence.w.inval or sfence.inval.ir
 
   assign sretM =      PrivilegedM & (InstrM[31:20] == 12'b000100000010) & rs1zeroM & P.S_SUPPORTED & 
                       (PrivilegeModeW == P.M_MODE | PrivilegeModeW == P.S_MODE & ~STATUS_TSR); 
@@ -71,8 +76,11 @@ module privdec import cvw::*;  #(parameter cvw_t P) (
   assign ecallM =     PrivilegedM & (InstrM[31:20] == 12'b000000000000) & rs1zeroM;
   assign ebreakM =    PrivilegedM & (InstrM[31:20] == 12'b000000000001) & rs1zeroM;
   assign wfiM =       PrivilegedM & (InstrM[31:20] == 12'b000100000101) & rs1zeroM;
-  assign sfencevmaM = PrivilegedM & (InstrM[31:25] ==  7'b0001001 | invalM) & 
-                      (PrivilegeModeW == P.M_MODE | (PrivilegeModeW == P.S_MODE & ~STATUS_TVM)) & P.VIRTMEM_SUPPORTED; 
+
+  // all of sinval.vma, sfence.w.inval, sfence.inval.ir are treated as sfence.vma
+  assign sfencevmaM = PrivilegedM & P.VIRTMEM_SUPPORTED & 
+                      ((PrivilegeModeW == P.M_MODE & (vmaM | fenceinvalM)) |
+                       (PrivilegeModeW == P.S_MODE & (vmaM & ~STATUS_TVM  | fenceinvalM))); // sfence.w.inval & sfence.inval.ir not affected by TVM
 
   ///////////////////////////////////////////
   // WFI timeout Privileged Spec 3.1.6.5

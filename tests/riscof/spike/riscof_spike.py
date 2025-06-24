@@ -143,6 +143,12 @@ class spike(pluginTemplate):
       #TODO: The following assumes you are using the riscv-gcc toolchain. If
       #      not please change appropriately
       self.compile_cmd = self.compile_cmd+' -mabi='+('lp64 ' if 64 in ispec['supported_xlen'] else ('ilp32e ' if "E" in ispec["ISA"] else 'ilp32 '))
+      if 'pmp-grain' in ispec['PMP']:
+          # if the PMP granularity is specified in the isa yaml, then we use that value
+          # convert from G to bytes: g = 2^(G+2) bytes
+          self.granularity = pow(2, ispec['PMP']['pmp-grain']+2)
+      else:
+        self.granularity = 4  # default granularity is 4 bytes 
 
     def runTests(self, testList):
 
@@ -198,7 +204,7 @@ class spike(pluginTemplate):
                 reference_output = re.sub("/src/","/references/", re.sub(".S",".reference_output", test))
                 simcmd = f'cut -c-{8:g} {reference_output} > {sig_file}' #use cut to remove comments when copying
             else:
-                simcmd = self.dut_exe + f' {"--misaligned" if self.xlen == "64" else ""} --isa={self.isa} +signature={sig_file} +signature-granularity=4 {elf}'
+                simcmd = self.dut_exe + f' {"--misaligned" if self.xlen == "64" else ""} --isa={self.isa} --pmpgranularity={self.granularity} +signature={sig_file} +signature-granularity=4 {elf}'
           else:
             simcmd = 'echo "NO RUN"'
 

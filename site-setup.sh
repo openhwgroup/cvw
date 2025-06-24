@@ -23,10 +23,13 @@ export QUESTA_HOME=/cad/mentor/QUESTA                               # Change thi
 export DC_HOME=/cad/synopsys/SYN                                    # Change this for your path to Synopsys DC, excluding bin
 export VCS_HOME=/cad/synopsys/VCS                                   # Change this for your path to Synopsys VCS, excluding bin
 export BREKER_HOME=/cad/breker/TREK                                 # Change this for your path to Breker Trek
+export SPYGLASS_HOME=/cad/synopsys/SPYGLASS_HOME                    # Change this for your path to Synopsys Spyglass
 
 # Tools
 # Questa and Synopsys
-export PATH=$QUESTA_HOME/bin:$DC_HOME/bin:$VCS_HOME/bin:$PATH
+export PATH=$QUESTA_HOME/bin:$DC_HOME/bin:$VCS_HOME/bin:$SPYGLASS_HOME/bin:$PATH
+# Synopsys Spyglass
+export SNPSLMD_QUEUE=1
 
 # Environmental variables for SoC
 export SYN_pdk=/proj/models/tsmc28/libraries/28nmtsmc/tcbn28hpcplusbwp30p140_190a/
@@ -39,12 +42,7 @@ export SYN_memory=/home/jstine/WallyMem/rv64gc/
 #export osumemory=/import/yukari1/pdk/TSMC/WallyMem/rv64gc/
 
 # GCC
-if [ -z "$LD_LIBRARY_PATH" ]; then
-    export LD_LIBRARY_PATH=$RISCV/riscv64-unknown-elf/lib
-else
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$RISCV/riscv64-unknown-elf/lib
-fi
-
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH:+${LD_LIBRARY_PATH}:}$RISCV/riscv64-unknown-elf/lib
 # RISC-V Tools
 export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$LD_LIBRARY_PATH:$RISCV/lib/x86_64-linux-gnu/
 export PATH=$PATH:$RISCV/bin

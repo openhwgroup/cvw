@@ -4,9 +4,9 @@ Markdown>=3.6
 matplotlib>=3.9.0
 pre-commit>=4.0.0
 PyYAML>=5.2
-riscof @ git+https://github.com/riscv/riscof.git
-riscv-config @ git+https://github.com/riscv-software-src/riscv-config
-riscv-isac @ git+https://github.com/riscv-non-isa/riscv-arch-test/#subdirectory=riscv-isac
+riscof @ git+https://github.com/riscv/riscof.git@${RISCOF_VERSION} # version set in python-setup.sh
+riscv-config @ git+https://github.com/riscv-software-src/riscv-config.git@${RISCV_CONFIG_VERSION} # version set in python-setup.sh
+riscv-isac @ git+https://github.com/riscv-non-isa/riscv-arch-test.git@${RISCV_ISAC_VERSION}#subdirectory=riscv-isac # version set in python-setup.sh
 scikit-learn>=1.5.0
 scipy>=1.13.0
 setuptools

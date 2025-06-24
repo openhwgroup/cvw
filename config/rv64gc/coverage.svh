@@ -17,10 +17,10 @@
 `define M_COVERAGE
 `define F_COVERAGE
 `define D_COVERAGE
-//`define VX8_COVERAGE
-//`define VX16_COVERAGE
-//`define VX32_COVERAGE
-//`define VX64_COVERAGE
+// `define VX8_COVERAGE
+// `define VX16_COVERAGE
+// `define VX32_COVERAGE
+// `define VX64_COVERAGE
 `define ZBA_COVERAGE
 `define ZBB_COVERAGE
 `define ZBC_COVERAGE
@@ -32,6 +32,7 @@
 // Note: Zmmul is a subset of M, so usually only one or the other would be used.
 `define ZMMUL_COVERAGE
 `define ZICOND_COVERAGE
+`define ZIFENCEI_COVERAGE
 `define ZCA_COVERAGE
 `define ZCB_COVERAGE
 `define ZCD_COVERAGE
@@ -56,10 +57,12 @@
 `define ENDIANU_COVERAGE
 `define ENDIANS_COVERAGE
 `define ENDIANM_COVERAGE
+`define ENDIANZALRSC_COVERAGE
+`define ENDIANZAAMO_COVERAGE
 `define EXCEPTIONSM_COVERAGE
 `define EXCEPTIONSS_COVERAGE
 `define EXCEPTIONSU_COVERAGE
-// `define EXCEPTIONSV_COVERAGE
+//`define EXCEPTIONSV_COVERAGE
 `define EXCEPTIONSF_COVERAGE
 `define EXCEPTIONSZC_COVERAGE
 `define EXCEPTIONSVM_COVERAGE

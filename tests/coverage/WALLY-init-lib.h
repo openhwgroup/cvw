@@ -39,6 +39,11 @@ rvtest_entry_point:
     csrw mtvec, t0      # Initialize MTVEC to trap_handler
     csrw mideleg, zero  # Don't delegate interrupts
     csrw medeleg, zero  # Don't delegate exceptions
+    # The following three lines are needed to initalize the timer for Spike to run correctly,
+    # but are not necessary for Wally to run lockstep.
+    # Unfortunately, they throw off the program addresses for tests/coverage/pmp.S,
+    # causing it to fail.  Ideally, pmp.S would become more robust or be replaced by
+    # functional coverage tests, and these three lines will be restored.
 #    li t0, -1           # set mtimecmp to biggest number so it doesnt interrupt again
 #    li t1, 0x02004000   # MTIMECMP in CLINT
 #    sd t0, 0(t1)      
