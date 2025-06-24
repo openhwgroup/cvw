@@ -46,6 +46,7 @@
 `define ZKNH_COVERAGE
 `define ZAAMO_COVERAGE
 `define ZALRSC_COVERAGE
+`define ZIFENCEI_COVERAGE
 
 // Privileged extensions
 `define RV32VM_COVERAGE
