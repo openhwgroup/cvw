@@ -27,7 +27,7 @@
 ## and limitations under the License.
 ################################################################################################
 
-SAIL_COMPILER_VERSION=0.19 # Last release as of May 30, 2025
+SAIL_COMPILER_VERSION=0.19.1 # Last release as of June 26, 2025
 CMAKE_VERSION=3.31.5 # Only used for distros with a system CMake that is too old (< 3.20)
 RISCV_SAIL_MODEL_VERSION=8fb697b # Last commit as of June 26, 2025
 
