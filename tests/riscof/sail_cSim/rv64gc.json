@@ -174,13 +174,20 @@
       "supported": true
     },
     "Zkr": {
-      "supported": false
+      "supported": false,
+      "sseed_reset_value": false,
+      "useed_reset_value": false,
+      "sseed_read_only_zero": false,
+      "useed_read_only_zero": false
     },
     "Zksed": {
       "supported": false
     },
     "Zksh": {
       "supported": false
+    },
+    "Zkt": {
+      "supported": true
     },
     "Zhinx": {
       "supported": false
@@ -209,7 +216,13 @@
     "Zvknhb": {
       "supported": false
     },
+    "Zvksed": {
+      "supported": false
+    },
     "Zvksh": {
+      "supported": true
+    },
+    "Zvkt": {
       "supported": false
     },
     "Sscofpmf": {
