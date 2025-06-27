@@ -27,9 +27,9 @@
 ## and limitations under the License.
 ################################################################################################
 
-SAIL_COMPILER_VERSION=0.19 # Last release as of May 30, 2025
+SAIL_COMPILER_VERSION=0.19.1 # Last release as of June 26, 2025
 CMAKE_VERSION=3.31.5 # Only used for distros with a system CMake that is too old (< 3.20)
-RISCV_SAIL_MODEL_VERSION=3dc7e1c6dd957ba9a0520331270eb4c52dcd33a8 # Last commit as of June 6, 2025
+RISCV_SAIL_MODEL_VERSION=f4a94a3a3eceae6da1360b335c8ad755735e2ec4 # Last commit as of June 26, 2025
 
 set -e # break on error
 # If run standalone, check environment. Otherwise, use info from main install script
@@ -47,8 +47,8 @@ fi
 # is a functional programming language suited to formal verification.
 section_header "Installing/Updating Sail Compiler"
 STATUS="sail_compiler"
+cd "$RISCV"
 if check_tool_version $SAIL_COMPILER_VERSION; then
-    cd "$RISCV"
     wget -nv --retry-connrefused $retry_on_host_error --output-document=sail.tar.gz "https://github.com/rems-project/sail/releases/download/$SAIL_COMPILER_VERSION-linux-binary/sail.tar.gz"
     tar xz --directory="$RISCV" --strip-components=1 -f sail.tar.gz
     rm -f sail.tar.gz
@@ -85,6 +85,7 @@ fi
 # The RISC-V Sail Model is the golden reference model for RISC-V. It is written in Sail (described above)
 section_header "Installing/Updating RISC-V Sail Model"
 STATUS="riscv-sail-model"
+cd "$RISCV"
 if check_tool_version $RISCV_SAIL_MODEL_VERSION; then
     git_checkout "sail-riscv" "https://github.com/riscv/sail-riscv.git" "$RISCV_SAIL_MODEL_VERSION"
     cd "$RISCV"/sail-riscv
