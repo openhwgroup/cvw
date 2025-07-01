@@ -1,0 +1,34 @@
+#
+# Synopsys SpyGlass Lint Flow
+# james.stine@okstate.edu 11 June 2025
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+#
+
+set WALLY $::env(WALLY)
+set WALLY_CONFIG $::env(WALLY_CONFIG)
+
+# Sets directory for output reports
+set_option projectwdir ${WALLY}/synthDC/spyglass/lint-spyglass-reports/${WALLY_CONFIG}
+set_option language_mode mixed
+set_option designread_enable_synthesis no
+set_option designread_disable_flatten no
+set_option active_methodology $SPYGLASS_HOME/GuideWare/latest/block/rtl_handoff
+set_option enableSV12 yes
+set_option handlememory yes
+set_option top wallywrapper
+set_parameter handle_large_bus yes
+
+# Include DIR
+set_option incdir ${WALLY}/config/${WALLY_CONFIG}
+set_option incdir ${WALLY}/config/shared
+
+# main CVW
+read_file -type verilog ${WALLY}/src/cvw.sv
+read_file -type verilog ${WALLY}/testbench/wallywrapper.sv
+read_file -type awl ${WALLY}/synthDC/spyglass/waivers.tcl
+
+# generic read of Wally src files
+read_file -type verilog ${WALLY}/src/*/*
+read_file -type verilog ${WALLY}/src/*/*/*
+
+current_methodology $SPYGLASS_HOME/GuideWare/latest/block/rtl_handoff
