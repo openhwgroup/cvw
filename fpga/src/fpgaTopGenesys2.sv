@@ -31,7 +31,6 @@ import cvw::*;
 module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
   (input logic         default_200mhz_clk_p,
    input logic	       default_200mhz_clk_n,
-   input logic	       resetn,
    input logic	       south_reset,
 
    // GPIO signals
@@ -358,7 +357,7 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
      .s_axi_rready(m_axi_rready),
 
      .m_axi_aclk(BUSCLK),
-     .m_axi_aresetn(resetn),
+     .m_axi_aresetn(~south_reset),
      .m_axi_awid(BUS_axi_awid),
      .m_axi_awlen(BUS_axi_awlen),
      .m_axi_awsize(BUS_axi_awsize),
@@ -424,8 +423,8 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
 
      .ui_clk(BUSCLK),
      .ui_clk_sync_rst(ui_clk_sync_rst),
-     .aresetn(resetn),
-     .sys_rst(resetn),    // omg. this is active low?!?!?? 
+     .aresetn(~south_reset),
+     .sys_rst(~south_reset),    // omg. this is active low?!?!?? 
      .mmcm_locked(mmcm_locked),
 
      .app_sr_req(1'b0),  // reserved command
