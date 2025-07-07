@@ -1,22 +1,29 @@
 #!/bin/csh
 
 # site-setup.csh
+# System Admin should install this into $RISCV/site-setup.csh
+# It is automatically placed in the $RISCV directory by wally-toolchain-install.sh
+# $RISCV is typically /opt/riscv or ~/riscv
+# System Admin must update the licenses and paths for localization.
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 # License servers and commercial CAD tool paths
 # Must edit these based on your local environment.  Ask your sysadmin.
 setenv MGLS_LICENSE_FILE 27002@zircon.eng.hmc.edu                         # Change this to your Siemens license server
 setenv SNPSLMD_LICENSE_FILE 27020@zircon.eng.hmc.edu                      # Change this to your Synopsys license server
-setenv QUESTAPATH /cad/mentor/questa_sim-2022.4_2/questasim/bin           # Change this for your path to Questa
-setenv SNPSPATH /cad/synopsys/SYN/bin                                     # Change this for your path to Design Compiler
-setenv VCSPATH /cad/synopsys/vcs/U-2023.03-SP2-4/bin                      # Change this for your path to Synopsys VCS
-setenv SPYGLASS_HOME /cad/synopsys/spyglass/W-2024.09-SP2-2/SPYGLASS_HOME # Change this for your path to Synopsys Spyglass
+setenv QUESTAPATH /cad/mentor/QUESTA/bin                                  # Change this for your path to Questa
+setenv DCPATH /cad/synopsys/SYN/bin                                       # Change this for your path to Design Compiler
+setenv VCSPATH /cad/synopsys/VCS/bin                                      # Change this for your path to Synopsys VCS
+setenv BREKER_HOME /cad/breker/TREK                                       # Change this for your path to Breker Trek
+setenv SPYGLASS_HOME /cad/synopsys/SPYGLASS_HOME                          # Change this for your path to Synopsys Spyglass
 
 
 # Tools
 # Questa and Synopsys
 extend PATH $QUESTAPATH
-extend PATH $SNPSPATH
+extend PATH $DCPATH
 extend PATH $VCSPATH
+extend PATH $SPYGLASS_HOME/bin
 # Synopsys Spyglass
 setenv SNPSLMD_QUEUE 1
 
@@ -62,6 +69,8 @@ if ($?IDV) then
 endif
 
 # Use newer gcc version for older distros
-if ( -e $RISCV/gcc-10 ) then
-    prepend PATH \$RISCV/gcc-10/bin # Ubuntu 20.04 LTS
+if ( -e $RISCV/gcc-13 ) then
+    prepend PATH $RISCV/gcc-13/bin # SUSE Family
+elseif ( -e $RISCV/gcc-10 ) then
+    prepend PATH $RISCV/gcc-10/bin # Ubuntu 20.04 LTS
 endif

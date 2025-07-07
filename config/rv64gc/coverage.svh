@@ -17,10 +17,10 @@
 `define M_COVERAGE
 `define F_COVERAGE
 `define D_COVERAGE
-`define VX8_COVERAGE
-`define VX16_COVERAGE
-`define VX32_COVERAGE
-`define VX64_COVERAGE
+// `define VX8_COVERAGE
+// `define VX16_COVERAGE
+// `define VX32_COVERAGE
+// `define VX64_COVERAGE
 `define ZBA_COVERAGE
 `define ZBB_COVERAGE
 `define ZBC_COVERAGE
@@ -45,6 +45,7 @@
 `define ZKNH_COVERAGE
 `define ZAAMO_COVERAGE
 `define ZALRSC_COVERAGE
+`define ZIFENCEI_COVERAGE
 
 // Privileged extensions
 `define RV64VM_COVERAGE
@@ -78,7 +79,7 @@
 `define INTERRUPTSSSTC_COVERAGE
 `define SSSTRICTS_COVERAGE
 `define SSSTRICTM_COVERAGE
-`define SSSTRICTV_COVERAGE
+// `define SSSTRICTV_COVERAGE
 
 // `define RV64VM_PMP_COVERAGE
 // `define RV64CBO_VM_COVERAGE

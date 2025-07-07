@@ -20,6 +20,7 @@ fi
 GOAL="lint/lint_rtl"
 DEFAULT_CONFIGS=(rv32e rv64gc rv32gc rv32imc rv32i rv64i)
 CONFIGS=()
+BATCH_FLAG="-batch"
 
 # === Parse command-line options ===
 while [[ $# -gt 0 ]]; do
@@ -32,10 +33,15 @@ while [[ $# -gt 0 ]]; do
             IFS=',' read -r -a CONFIGS <<< "$2"
             shift 2
             ;;
+        --gui)
+            BATCH_FLAG=""
+            shift
+            ;;
         -h|--help)
-            echo "Usage: $0 [-g lint_goal] [-c config1,config2,...]"
+            echo "Usage: $0 [-g lint_goal] [-c config1,config2,...] [--gui]"
             echo "  -g, --goal      Linting goal (e.g., lint/lint_rtl or lint/lint_rtl_enhanced)"
             echo "  -c, --configs   Comma-separated list of configs to run (e.g., rv32e,rv64gc)"
+            echo "  --gui           Run SpyGlass with Verdi GUI"
             echo "Defaults: goal=$GOAL, configs=${DEFAULT_CONFIGS[*]}"
             exit 0
             ;;
@@ -51,35 +57,31 @@ if [ ${#CONFIGS[@]} -eq 0 ]; then
     CONFIGS=("${DEFAULT_CONFIGS[@]}")
 fi
 
+# For GUI mode, warn if multiple configs are specified
+if [ -z "$BATCH_FLAG" ] && [ ${#CONFIGS[@]} -gt 1 ]; then
+    echo "Warning: Multiple configurations selected. GUI will open for each configuration sequentially."
+fi
+
 # Spyglass work directories/files
 SPYGLASS_DIR="$WALLY/synthDC/spyglass"
-TEMPLATE_PRJ="$SPYGLASS_DIR/cvw.prj"
-
-# Clean output directory
-echo "Cleaning lint-spyglass-reports directory..."
-rm -rf "$SPYGLASS_DIR/lint-spyglass-reports"
+SPYGLASS_PRJ="$SPYGLASS_DIR/cvw.prj"
 
 # Iterate configs
+errors=0
 for config in "${CONFIGS[@]}"; do
-    echo "Processing configuration: $config"
-    CONFIG_PRJ="$SPYGLASS_DIR/cvw_${config}.prj"
-
-    # Replace placeholders in template
-    sed -e "s|\$WALLY|$WALLY|g" \
-        -e "s|WALLYVER|$config|g" \
-        -e "s|read_file -type awl waivers.tcl|read_file -type awl $SPYGLASS_DIR/waivers.tcl|g" \
-        -e "s|set_option projectwdir lint-spyglass/|set_option projectwdir ${SPYGLASS_DIR}/lint-spyglass/|g" \
-        "$TEMPLATE_PRJ" > "$CONFIG_PRJ"
+    # Clean output directory
+    rm -rf "$SPYGLASS_DIR/lint-spyglass-reports/$config"
 
     # Run SpyGlass
     echo "Running spyglass for: $config with goal: $GOAL"
-    spyglass -project "$CONFIG_PRJ" -goal "$GOAL" -batch
+    WALLY_CONFIG=$config spyglass -project "$SPYGLASS_PRJ" -goal "$GOAL" $BATCH_FLAG
 
     if [ $? -ne 0 ]; then
         echo "Error running spyglass for configuration: $config"
+        errors=$((errors + 1))
     else
         echo "Completed: $config"
     fi
-
-    rm "$CONFIG_PRJ"
 done
+
+exit $errors
