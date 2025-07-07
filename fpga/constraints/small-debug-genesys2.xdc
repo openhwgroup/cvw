@@ -3,7 +3,7 @@ create_debug_core u_ila_0 ila
 
 
 
-set_property C_DATA_DEPTH 16384 [get_debug_cores u_ila_0]
+set_property C_DATA_DEPTH 8192 [get_debug_cores u_ila_0]
 set_property C_TRIGIN_EN false [get_debug_cores u_ila_0]
 set_property C_TRIGOUT_EN false [get_debug_cores u_ila_0]
 set_property C_ADV_TRIGGER false [get_debug_cores u_ila_0]
@@ -104,7 +104,7 @@ set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe16]
 connect_debug_port u_ila_0/probe16 [get_nets [list {wallypipelinedsoc/uncoregen.uncore/plic.plic/priorities_with_irqs[0]_54[1]} {wallypipelinedsoc/uncoregen.uncore/plic.plic/priorities_with_irqs[0]_54[2]} {wallypipelinedsoc/uncoregen.uncore/plic.plic/priorities_with_irqs[0]_54[3]} {wallypipelinedsoc/uncoregen.uncore/plic.plic/priorities_with_irqs[0]_54[4]} {wallypipelinedsoc/uncoregen.uncore/plic.plic/priorities_with_irqs[0]_54[5]} {wallypipelinedsoc/uncoregen.uncore/plic.plic/priorities_with_irqs[0]_54[6]} {wallypipelinedsoc/uncoregen.uncore/plic.plic/priorities_with_irqs[0]_54[7]} ]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 8 [get_debug_ports u_ila_0/probe17]
+set_property port_width 7 [get_debug_ports u_ila_0/probe17]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe17]
 connect_debug_port u_ila_0/probe17 [get_nets [list {wallypipelinedsoc/uncoregen.uncore/plic.plic/priorities_with_irqs[1]_55[1]} {wallypipelinedsoc/uncoregen.uncore/plic.plic/priorities_with_irqs[1]_55[2]} {wallypipelinedsoc/uncoregen.uncore/plic.plic/priorities_with_irqs[1]_55[3]} {wallypipelinedsoc/uncoregen.uncore/plic.plic/priorities_with_irqs[1]_55[4]} {wallypipelinedsoc/uncoregen.uncore/plic.plic/priorities_with_irqs[1]_55[5]} {wallypipelinedsoc/uncoregen.uncore/plic.plic/priorities_with_irqs[1]_55[6]} {wallypipelinedsoc/uncoregen.uncore/plic.plic/priorities_with_irqs[1]_55[7]} ]]
 
