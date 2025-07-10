@@ -79,6 +79,7 @@ synthDC/wallyplots/
 synthDC/runArchive
 synthDC/hdl
 synthDC/Summary.csv
+synthDC/spyglass/lint-spyglass-reports
 
 # Benchmarks
 benchmarks/embench/wally*.json

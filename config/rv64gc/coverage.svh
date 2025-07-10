@@ -8,6 +8,20 @@
 // Define XLEN, used in covergroups
 `define XLEN64
 
+// PMP Grain (G)
+// Set G as needed (e.g., 0, 1, 2, ...)
+`define G 4
+
+// Uncomment below if G = 0
+// `define G_IS_0
+
+// PMP mode selection
+`define PMP_16     // Choose between PMP_16 or PMP_64 or None
+
+// Base addresses specific for PMP
+`define RAM_BASE_ADDR       32'h80000000  // PMP Region starts at RAM_BASE_ADDR + LARGEST_PROGRAM 
+`define LARGEST_PROGRAM     32'h00001000
+
 // Define relevant addresses
 `define ACCESS_FAULT_ADDRESS 64'h00000000
 `define CLINT_BASE 64'h02000000
@@ -17,10 +31,10 @@
 `define M_COVERAGE
 `define F_COVERAGE
 `define D_COVERAGE
-`define VX8_COVERAGE
-`define VX16_COVERAGE
-`define VX32_COVERAGE
-`define VX64_COVERAGE
+// `define VX8_COVERAGE
+// `define VX16_COVERAGE
+// `define VX32_COVERAGE
+// `define VX64_COVERAGE
 `define ZBA_COVERAGE
 `define ZBB_COVERAGE
 `define ZBC_COVERAGE
@@ -45,6 +59,7 @@
 `define ZKNH_COVERAGE
 `define ZAAMO_COVERAGE
 `define ZALRSC_COVERAGE
+`define ZIFENCEI_COVERAGE
 
 // Privileged extensions
 `define RV64VM_COVERAGE
@@ -78,7 +93,7 @@
 `define INTERRUPTSSSTC_COVERAGE
 `define SSSTRICTS_COVERAGE
 `define SSSTRICTM_COVERAGE
-`define SSSTRICTV_COVERAGE
+// `define SSSTRICTV_COVERAGE
 
 // `define RV64VM_PMP_COVERAGE
 // `define RV64CBO_VM_COVERAGE
