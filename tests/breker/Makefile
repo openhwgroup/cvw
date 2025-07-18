@@ -22,7 +22,6 @@ MABI          :=-mabi=lp64d
 LINKER        := $(START_LIB_DIR)/test.ld
 LINK_FLAGS    := -nostartfiles
 CFLAGS        := -Wa,-alhs -Wa,-L -mcmodel=medany -Og -DSINGLE_CPU
-WIDTH         := 64
 
 # Find all constraint files and generate NUM_TESTS tests for each one
 TESTS = $(foreach yaml,$(CONSTRAINT_FILES),$(foreach n,$(shell seq 1 $(NUM_TESTS)),$(patsubst $(CONSTRAINTS_DIR)/%.yaml,$(TESTDIR)/%_$(n),$(yaml))))
@@ -45,8 +44,6 @@ $(TESTDIR)/%.elf: $(TESTDIR)/%.c
 # Convert elf to hex
 $(TESTDIR)/%.elf.objdump: $(TESTDIR)/%.elf
 	riscv64-unknown-elf-objdump -D $< > $@
-# riscv64-unknown-elf-elf2hex --bit-width $(WIDTH) --input $< --output $@
-# extractFunctionRadix.sh $<.objdump
 
 # View the model graph TODO: What does this do? Move to another makefile?
 %.view_graph: $(CONSTRAINTS_DIR)/%.yaml
