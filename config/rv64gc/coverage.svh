@@ -7,7 +7,7 @@
 
 // Define XLEN, used in covergroups
 `define XLEN64
-`define VLEN64
+`define VLEN512
 
 // PMP Grain (G)
 // Set G as needed (e.g., 0, 1, 2, ...)
@@ -69,6 +69,7 @@
 `define ZICSRU_COVERAGE
 `define ZICSRF_COVERAGE
 `define ZICSRV_COVERAGE
+`define ZICSRVF_COVERAGE
 `define ZICSRHV_COVERAGE
 `define ENDIANU_COVERAGE
 `define ENDIANS_COVERAGE
