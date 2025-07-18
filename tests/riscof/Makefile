@@ -32,7 +32,7 @@ config%.ini: config.ini
 	sed 's,{0},$(current_dir),g;s,{1},$(patsubst %64,%64gc,$(patsubst %32,%32gc,$*)),g;s,{2},$(nproc),g' config.ini > $@
 
 # Generate riscv-arch-test targets
-arch%: config$$*.ini | $(work_dir) $(arch_workdir)
+arch%: config$$*.ini | $(work_dir) $(arch_workdir) 
 	riscof run --work-dir=$(work_dir)/$@ --config=$< --suite=$(arch_dir)/riscv-test-suite/ --env=$(arch_dir)/riscv-test-suite/env --no-browser
 	$(MAKE) -f makefile-memfile WORKDIR=$(work_dir)/$@ BITWIDTH=$(patsubst %32e,%32,$*)
 	rsync -a $(work_dir)/$@/rv*/* $(arch_workdir)/rv$(patsubst %64,%64i,$(patsubst %32,%32i,$*))_m || echo "error suppressed"
@@ -46,6 +46,23 @@ cvw-arch%: config$$*.ini | $(work_dir) $(cvw_arch_workdir)
 	rsync -a $(work_dir)/$@/privileged/* $(cvw_arch_workdir)/rv$(patsubst %64,%64i,$(patsubst %32,%32i,$*)) || echo "error suppressed"
 	${CVW_ARCH_VERIF}/bin/trace-coverreport.py $(cvw_arch_workdir)/rv$(patsubst %64,%64i,$(patsubst %32,%32i,$*))
 
+cvw-arch-no-report%: config$$*.ini | $(work_dir) $(cvw_arch_workdir)
+	export COLLECT_COVERAGE=true; riscof run --work-dir=$(work_dir)/$@ --config=$< --suite=$(cvw_arch_dir)/riscv-test-suite/ --env=$(cvw_arch_dir)/riscv-test-suite/env --no-browser
+	$(MAKE) -f makefile-memfile WORKDIR=$(work_dir)/$@ BITWIDTH=$(patsubst %32e,%32,$*)
+	rsync -a $(work_dir)/$@/rv*/* $(cvw_arch_workdir)/rv$(patsubst %64,%64i,$(patsubst %32,%32i,$*)) || echo "error suppressed"
+
+clean-cvw-arch:
+	rm -rf $(WALLY)/addins/cvw-arch-verif/work/*
+
+clean-riscof-else-ucdb%:
+	rm -f config??*.ini
+	rm -rf $(work_dir)
+	@if [ -e ./work/cvw-riscv-arch-test/rv$(patsubst %64,%64i,$(patsubst %32,%32i,$*)) ]; then \
+		find $(cvw_arch_workdir)/rv$(patsubst %64,%64i,$(patsubst %32,%32i,$*)) -type f ! -name '*.ucdb' -exec rm -f {} +; \
+	fi
+
+coverreport%:
+	${CVW_ARCH_VERIF}/bin/trace-coverreport.py $(cvw_arch_workdir)/rv$(patsubst %64,%64i,$(patsubst %32,%32i,$*))
 
 # Generate wally-riscv-arch-test targets
 wally%: config$$*.ini | $(work_dir) $(wally_workdir)
