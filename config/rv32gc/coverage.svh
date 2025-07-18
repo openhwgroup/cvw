@@ -7,6 +7,7 @@
 
 // Define XLEN, used in covergroups
 `define XLEN32
+`define VLEN512
 
 // PMP Grain (G)
 // Set G as needed (e.g., 0, 1, 2, ...)
@@ -31,10 +32,10 @@
 `define M_COVERAGE
 `define F_COVERAGE
 `define D_COVERAGE
-// `define VX8_COVERAGE
-// `define VX16_COVERAGE
-// `define VX32_COVERAGE
-// `define VX64_COVERAGE
+`define VX8_COVERAGE
+`define VX16_COVERAGE
+`define VX32_COVERAGE
+`define VX64_COVERAGE
 `define ZBA_COVERAGE
 `define ZBB_COVERAGE
 `define ZBC_COVERAGE
@@ -71,6 +72,8 @@
 `define ZICSRU_COVERAGE
 `define ZICSRF_COVERAGE
 `define ZICSRV_COVERAGE
+`define ZICSRVF_COVERAGE
+`define ZICSRHV_COVERAGE
 `define ENDIANU_COVERAGE
 `define ENDIANS_COVERAGE
 `define ENDIANM_COVERAGE
@@ -79,7 +82,8 @@
 `define EXCEPTIONSM_COVERAGE
 `define EXCEPTIONSS_COVERAGE
 `define EXCEPTIONSU_COVERAGE
-//`define EXCEPTIONSV_COVERAGE
+`define EXCEPTIONSV_COVERAGE
+`define EXCEPTIONSHV_COVERAGE
 `define EXCEPTIONSF_COVERAGE
 `define EXCEPTIONSZC_COVERAGE
 `define EXCEPTIONSZAAMO_COVERAGE

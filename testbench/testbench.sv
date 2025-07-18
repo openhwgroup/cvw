@@ -692,7 +692,8 @@ module testbench;
   watchdog #(P.XLEN, 1000000) watchdog(.clk, .reset, .TEST);  // check if PCW is stuck
   ramxdetector #(P.XLEN, P.LLEN) ramxdetector(clk, dut.core.lsu.MemRWM[1], dut.core.lsu.LSULoadAccessFaultM, dut.core.lsu.ReadDataM,
                                       dut.core.ifu.PCM, InstrM, dut.core.lsu.IEUAdrM, InstrMName);
-  riscvassertions #(P) riscvassertions();  // check assertions for a legal configuration
+  riscvassertions       #(P) riscvassertions();     // check assertions for a legal architectural configuration
+  riscvassertions_wally #(P) riscvassertions_wally();  // check assertions for a legal microarchitectural configuration
   loggers #(P, PrintHPMCounters, I_CACHE_ADDR_LOGGER, D_CACHE_ADDR_LOGGER, BPRED_LOGGER)
     loggers (clk, reset, DCacheFlushStart, DCacheFlushDone, memfilename, sim_log_prefix, TEST);
 
