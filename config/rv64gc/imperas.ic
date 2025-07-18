@@ -45,6 +45,10 @@
 
 # Misaligned access (Zicclsm) is supported
 --override cpu/unaligned=T
+--override cpu/unaligned_low_pri=T
+
+# Timeout
+--override cpu/TW_time_limit=65536
 
 # PMP Configuration
 --override cpu/PMP_registers=16
