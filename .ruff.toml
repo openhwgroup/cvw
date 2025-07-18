@@ -1,5 +1,16 @@
 # Lint all .py files and extra python scripts without extensions
-exclude = ["addins/*"]
+extend-exclude = [
+  "addins/berkeley-softfloat-3/**",
+  "addins/berkeley-testfloat-3/**", 
+  "addins/branch-predictor-simulator/**",
+  "addins/coremark/**",
+  "addins/embench-iot/**",
+  "addins/riscv-arch-test/**",
+  "addins/cvw-riscv-arch-test/**",
+  "addins/riscv-dv/**",
+  "addins/verilog-ethernet/**",
+  "addins/vivado-boards/**"
+]
 
 # Target oldest version of Python used (Python 3.9 for Ubuntu 20.04 LTS)
 target-version = "py39"
