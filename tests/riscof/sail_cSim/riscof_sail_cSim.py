@@ -128,6 +128,7 @@ class sail_cSim(pluginTemplate):
                     # Generate ucdb coverage file
                     questa_do_file = f'{cvw_arch_verif_dir}/bin/cvw-arch-verif.do'
                     coverage_command = f'vsim -c -do "do {questa_do_file} {test_dir} {test_name} {cvw_arch_verif_dir}/fcov {self.work_dir}";'
+                    print(coverage_command)
                     execute += coverage_command
 
             make.add_target(execute)
