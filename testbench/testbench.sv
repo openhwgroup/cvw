@@ -919,12 +919,17 @@ end
   end
 
   if (P.ZICSR_SUPPORTED) begin
-    always @(dut.core.priv.priv.trap.ValidIntsM[7])   void'(rvvi.net_push("MTimerInterrupt",    dut.core.priv.priv.trap.ValidIntsM[7]));
-    always @(dut.core.priv.priv.trap.ValidIntsM[11])  void'(rvvi.net_push("MExternalInterrupt", dut.core.priv.priv.trap.ValidIntsM[11]));
-    always @(dut.core.priv.priv.trap.ValidIntsM[3])   void'(rvvi.net_push("MSWInterrupt",       dut.core.priv.priv.trap.ValidIntsM[3]));
-    always @(dut.core.priv.priv.trap.ValidIntsM[5])   void'(rvvi.net_push("STimerInterrupt",    dut.core.priv.priv.trap.ValidIntsM[5]));
-    always @(dut.core.priv.priv.trap.ValidIntsM[9])   void'(rvvi.net_push("SExternalInterrupt", dut.core.priv.priv.trap.ValidIntsM[9]));
-    always @(dut.core.priv.priv.trap.ValidIntsM[1])   void'(rvvi.net_push("SSWInterrupt",       dut.core.priv.priv.trap.ValidIntsM[1])); 
+    always @(dut.core.priv.priv.csr.csri.MIP_REGW[7])   void'(rvvi.net_push("MTimerInterrupt",    dut.core.priv.priv.csr.csri.MIP_REGW[7]));
+    always @(dut.core.priv.priv.csr.csri.MIP_REGW[11])  void'(rvvi.net_push("MExternalInterrupt", dut.core.priv.priv.csr.csri.MIP_REGW[11]));
+    always @(dut.core.priv.priv.csr.csri.MIP_REGW[3])   void'(rvvi.net_push("MSWInterrupt",       dut.core.priv.priv.csr.csri.MIP_REGW[3]));
+    if (P.S_SUPPORTED) begin
+      always @(dut.core.priv.priv.csr.csri.MIP_REGW[5])   void'(rvvi.net_push("STimerInterrupt",    dut.core.priv.priv.csr.csri.MIP_REGW[5]));
+      always @(dut.core.priv.priv.csr.csri.MIP_REGW[9])   void'(rvvi.net_push("SExternalInterrupt", dut.core.priv.priv.csr.csri.MIP_REGW[9]));
+      // when ImperasDV is updated, restore the MIP-based logic commented out below and remove the ValidIntsM-based logic
+      // See Fixed https://github.com/openhwgroup/cvw-arch-verif/issues/670
+      //always @(dut.core.priv.priv.csr.csri.MIP_REGW[1])   void'(rvvi.net_push("SSWInterrupt",       dut.core.priv.priv.csr.csri.MIP_REGW[1]));
+      always @(dut.core.priv.priv.trap.ValidIntsM[1])   void'(rvvi.net_push("SSWInterrupt",       dut.core.priv.priv.trap.ValidIntsM[1])); // dh 6/29/25 temporarily use ValidInts until Synopsys fixes level sensitive  https://github.com/openhwgroup/cvw-arch-verif/issues/670
+    end
   end
 
   final begin
