@@ -115,6 +115,9 @@ sim/questa/riscv.ucdb
 transcript
 vsim.wlf
 wlft*
+qrun*
+simv
+*.ucdb
 
 # VCS
 sim/vcs/logs
@@ -144,6 +147,7 @@ examples/verilog/fulladder/simprofile_dir/
 examples/verilog/fulladder/simv.daidir/
 examples/verilog/fulladder/ucli.key
 examples/verilog/fulladder/verdi_config_file
+examples/verilog/fulladder/fulladder_coverage_details.rpt
 examples/fp/softfloat_demo/softfloat_demo
 examples/fp/softfloat_demo/softfloat_demoDP
 examples/fp/softfloat_demo/softfloat_demoQP
