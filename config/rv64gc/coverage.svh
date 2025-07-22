@@ -36,6 +36,9 @@
 `define VX16_COVERAGE
 `define VX32_COVERAGE
 `define VX64_COVERAGE
+`define VF64_COVERAGE
+`define VF32_COVERAGE
+`define VF16_COVERAGE
 `define ZBA_COVERAGE
 `define ZBB_COVERAGE
 `define ZBC_COVERAGE
