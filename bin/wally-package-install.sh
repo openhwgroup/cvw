@@ -45,7 +45,7 @@ fi
 GENERAL_PACKAGES+=(rsync git curl wget tar unzip gzip bzip2 gcc make dialog mutt) # TODO: check what needs dialog
 GNU_PACKAGES+=(autoconf automake gawk bison flex texinfo gperf libtool patchutils bc)
 SAIL_PACKAGES+=(cmake)
-VERILATOR_PACKAGES+=(autoconf flex bison help2man perl ccache numactl)
+VERILATOR_PACKAGES+=(autoconf flex bison help2man perl ccache numactl gtkwave) # gtkwave is not needed for verilator, but useful for viewing waveforms
 BUILDROOT_PACKAGES+=(patchutils perl cpio bc)
 
 # Distro specific packages and package manager
