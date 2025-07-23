@@ -81,7 +81,13 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   logic [1:0]              IPageTypeF, IPageTypeD, IPageTypeE, IPageTypeM, IPageTypeW, DPageTypeM, DPageTypeW;
   logic                    ReadAccessM,WriteAccessM,ReadAccessW,WriteAccessW;
   logic                    ExecuteAccessF,ExecuteAccessD,ExecuteAccessE,ExecuteAccessM,ExecuteAccessW;
-  logic [P.XLEN-1:0]       order;
+  logic [P.XLEN-1:0]	   order;
+  logic [P.XLEN-1:0]	   IVAdrHPTWF;
+  logic [P.PA_BITS-1:0]	   IPAHPTWF;
+  logic [P.XLEN-1:0]	   IPTEHPTWF;
+  logic [1:0]		   IPageTypeHPTWF;
+  logic [P.PPN_BITS-1:0]   IPPNHPTWF;
+  logic			   ExecuteAccessHPTWF;
 
   assign clk = testbench.dut.clk;
   //  assign InstrValidF = testbench.dut.core.ieu.InstrValidF;  // not needed yet
@@ -335,31 +341,39 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   flopenrc #(1)     CSRWriteWReg (clk, reset, FlushW, ~StallW, CSRWriteM, CSRWriteW);
 
   //for VM Verification
-  flopenrc #(P.XLEN)     IVAdrDReg (clk, reset, 1'b0, SelHPTW, IVAdrF, IVAdrD); //Virtual Address for IMMU // *** RT: possible bug SelHPTW probably should be ~StallD
+  // The first register saves the itlb state after a HPTW.
+  // The rest pipeline to Writeback stage.
+  // Registers only used after HPTW.
+  flopenrc #(P.XLEN)     IVAdrFReg (clk, reset, 1'b0, SelHPTW, IVAdrF, IVAdrHPTWF); //Virtual Address for IMMU // *** RT: possible bug SelHPTW probably should be ~StallD
+  flopenrc #(P.XLEN)     IVAdrDReg (clk, reset, 1'b0, ~StallD, IVAdrHPTWF, IVAdrD); //Virtual Address for IMMU // *** RT: possible bug SelHPTW probably should be ~StallD
   flopenrc #(P.XLEN)     IVAdrEReg (clk, reset, 1'b0, ~StallE, IVAdrD, IVAdrE); //Virtual Address for IMMU
-  flopenrc #(P.XLEN)     IVAdrMReg (clk, reset, 1'b0, ~(StallM & ~SelHPTW), IVAdrE, IVAdrM); //Virtual Address for IMMU
-  flopenrc #(P.XLEN)     IVAdrWReg (clk, reset, 1'b0, SelHPTW, IVAdrM, IVAdrW); //Virtual Address for IMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
+  flopenrc #(P.XLEN)     IVAdrMReg (clk, reset, 1'b0, ~StallM, IVAdrE, IVAdrM); //Virtual Address for IMMU
+  flopenrc #(P.XLEN)     IVAdrWReg (clk, reset, 1'b0, ~StallW, IVAdrM, IVAdrW); //Virtual Address for IMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
   flopenrc #(P.XLEN)     DVAdrWReg (clk, reset, 1'b0, SelHPTW, DVAdrM, DVAdrW); //Virtual Address for DMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
 
-  flopenrc #(P.PA_BITS)  IPADReg (clk, reset, 1'b0, SelHPTW, IPAF, IPAD); //Physical Address for IMMU // *** RT: possible bug SelHPTW probably should be ~StallD
+  flopenrc #(P.PA_BITS)  IPAFReg (clk, reset, 1'b0, SelHPTW, IPAF, IPAHPTWF); //Physical Address for IMMU // *** RT: possible bug SelHPTW probably should be ~StallD
+  flopenrc #(P.PA_BITS)  IPADReg (clk, reset, 1'b0, ~StallD, IPAHPTWF, IPAD); //Physical Address for IMMU // *** RT: possible bug SelHPTW probably should be ~StallD
   flopenrc #(P.PA_BITS)  IPAEReg (clk, reset, 1'b0, ~StallE, IPAD, IPAE); //Physical Address for IMMU
-  flopenrc #(P.PA_BITS)  IPAMReg (clk, reset, 1'b0, ~(StallM & ~SelHPTW), IPAE, IPAM); //Physical Address for IMMU
-  flopenrc #(P.PA_BITS)  IPAWReg (clk, reset, 1'b0, SelHPTW, IPAM, IPAW); //Physical Address for IMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
+  flopenrc #(P.PA_BITS)  IPAMReg (clk, reset, 1'b0, ~StallM, IPAE, IPAM); //Physical Address for IMMU
+  flopenrc #(P.PA_BITS)  IPAWReg (clk, reset, 1'b0, ~StallW, IPAM, IPAW); //Physical Address for IMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
   flopenrc #(P.PA_BITS)  DPAWReg (clk, reset, 1'b0, SelHPTW, DPAM, DPAW); //Physical Address for DMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
 
-  flopenrc #(P.XLEN)     IPTEDReg (clk, reset, 1'b0, SelHPTW, IPTEF, IPTED); //PTE for IMMU // *** RT: possible bug SelHPTW probably should be ~StallD
+  flopenrc #(P.XLEN)     IPTEFReg (clk, reset, 1'b0, SelHPTW, IPTEF, IPTEHPTWF); //PTE for IMMU // *** RT: possible bug SelHPTW probably should be ~StallD
+  flopenrc #(P.XLEN)     IPTEDReg (clk, reset, 1'b0, ~StallD, IPTEHPTWF, IPTED); //PTE for IMMU // *** RT: possible bug SelHPTW probably should be ~StallD
   flopenrc #(P.XLEN)     IPTEEReg (clk, reset, 1'b0, ~StallE, IPTED, IPTEE); //PTE for IMMU
-  flopenrc #(P.XLEN)     IPTEMReg (clk, reset, 1'b0, ~(StallM & ~SelHPTW), IPTEE, IPTEM); //PTE for IMMU
-  flopenrc #(P.XLEN)     IPTEWReg (clk, reset, 1'b0, SelHPTW, IPTEM, IPTEW); //PTE for IMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
+  flopenrc #(P.XLEN)     IPTEMReg (clk, reset, 1'b0, ~StallM, IPTEE, IPTEM); //PTE for IMMU
+  flopenrc #(P.XLEN)     IPTEWReg (clk, reset, 1'b0, ~StallW, IPTEM, IPTEW); //PTE for IMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
   flopenrc #(P.XLEN)     DPTEWReg (clk, reset, 1'b0, SelHPTW, DPTEM, DPTEW); //PTE for DMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
 
-  flopenrc #(2)     IPageTypeDReg (clk, reset, 1'b0, SelHPTW, IPageTypeF, IPageTypeD); //PageType (kilo, mega, giga, tera) from IMMU // *** RT: possible bug SelHPTW probably should be ~StallD
+  flopenrc #(2)     IPageTypeFReg (clk, reset, 1'b0, SelHPTW, IPageTypeF, IPageTypeHPTWF); //PageType (kilo, mega, giga, tera) from IMMU // *** RT: possible bug SelHPTW probably should be ~StallD  
+  flopenrc #(2)     IPageTypeDReg (clk, reset, 1'b0, ~StallD, IPageTypeHPTWF, IPageTypeD); //PageType (kilo, mega, giga, tera) from IMMU // *** RT: possible bug SelHPTW probably should be ~StallD
   flopenrc #(2)     IPageTypeEReg (clk, reset, 1'b0, ~StallE, IPageTypeD, IPageTypeE); //PageType (kilo, mega, giga, tera) from IMMU
-  flopenrc #(2)     IPageTypeMReg (clk, reset, 1'b0, ~(StallM & ~SelHPTW), IPageTypeE, IPageTypeM); //PageType (kilo, mega, giga, tera) from IMMU
-  flopenrc #(2)     IPageTypeWReg (clk, reset, 1'b0, SelHPTW, IPageTypeM, IPageTypeW); //PageType (kilo, mega, giga, tera) from IMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
+  flopenrc #(2)     IPageTypeMReg (clk, reset, 1'b0, ~StallM, IPageTypeE, IPageTypeM); //PageType (kilo, mega, giga, tera) from IMMU
+  flopenrc #(2)     IPageTypeWReg (clk, reset, 1'b0, ~StallW, IPageTypeM, IPageTypeW); //PageType (kilo, mega, giga, tera) from IMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
   flopenrc #(2)     DPageTypeWReg (clk, reset, 1'b0, SelHPTW, DPageTypeM, DPageTypeW); //PageType (kilo, mega, giga, tera) from DMMU // *** RT: possible bug SelHPTW probably should be ~GatedStallW
 
-  flopenrc #(P.PPN_BITS) IPPNDReg (clk, reset, 1'b0, ~StallD, IPPNF, IPPND); //Physical Page Number for IMMU
+  flopenrc #(P.PPN_BITS) IPPNFReg (clk, reset, 1'b0, SelHPTW, IPPNF, IPPNHPTWF); //Physical Page Number for IMMU
+  flopenrc #(P.PPN_BITS) IPPNDReg (clk, reset, 1'b0, ~StallD, IPPNHPTWF, IPPND); //Physical Page Number for IMMU
   flopenrc #(P.PPN_BITS) IPPNEReg (clk, reset, 1'b0, ~StallE, IPPND, IPPNE); //Physical Page Number for IMMU
   flopenrc #(P.PPN_BITS) IPPNMReg (clk, reset, 1'b0, ~StallM, IPPNE, IPPNM); //Physical Page Number for IMMU
   flopenrc #(P.PPN_BITS) IPPNWReg (clk, reset, 1'b0, ~StallW, IPPNM, IPPNW); //Physical Page Number for IMMU
@@ -368,7 +382,8 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   flopenrc #(1)  ReadAccessWReg    (clk, reset, 1'b0, ~GatedStallW, ReadAccessM, ReadAccessW);   //LoadAccess
   flopenrc #(1)  WriteAccessWReg   (clk, reset, 1'b0, ~GatedStallW, WriteAccessM, WriteAccessW); //StoreAccess
 
-  flopenrc #(1)  ExecuteAccessDReg (clk, reset, 1'b0, ~StallD, ExecuteAccessF, ExecuteAccessD); //Instruction Fetch Access
+  flopenrc #(1)  ExecuteAccessFReg (clk, reset, 1'b0, SelHPTW, ExecuteAccessF, ExecuteAccessHPTWF); //Instruction Fetch Access
+  flopenrc #(1)  ExecuteAccessDReg (clk, reset, 1'b0, ~StallD, ExecuteAccessHPTWF, ExecuteAccessD); //Instruction Fetch Access
   flopenrc #(1)  ExecuteAccessEReg (clk, reset, 1'b0, ~StallE, ExecuteAccessD, ExecuteAccessE); //Instruction Fetch Access
   flopenrc #(1)  ExecuteAccessMReg (clk, reset, 1'b0, ~StallM, ExecuteAccessE, ExecuteAccessM); //Instruction Fetch Access
   flopenrc #(1)  ExecuteAccessWReg (clk, reset, 1'b0, ~StallW, ExecuteAccessM, ExecuteAccessW); //Instruction Fetch Access
