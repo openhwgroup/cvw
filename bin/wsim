@@ -64,27 +64,28 @@ def elfFileCheck(args):
     ElfFile = ""
     if os.path.isfile(args.elf):
         ElfFile = os.path.abspath(args.elf)
+        args.testsuite = args.elf  # Use the ELF file as the test suite name
     elif args.elf:
         print(f"ELF file not found: {args.elf}")
         sys.exit(1)
     elif args.testsuite.endswith(".elf"): # No --elf argument; check if testsuite has a .elf extension and use that instead
         if os.path.isfile(args.testsuite):
             ElfFile = os.path.abspath(args.testsuite)
-            # extract the elf name from the path to be the test suite
-            fields = args.testsuite.rsplit("/", 3)
-            # if the name is just ref.elf in a deep path (riscv-arch-test/wally-riscv-arch-test), then use the directory name as the test suite to make it unique; otherwise work directory will have duplicates.
-            if "breker" in args.testsuite:
-                args.testsuite = fields[-1]
-            elif len(fields) > 3:
-                if fields[2] == "ref":
-                    args.testsuite = f"{fields[1]}_{fields[3]}"
-                else:
-                    args.testsuite = f"{fields[2]}_{fields[3]}"
-            elif "/" in args.testsuite:
-                args.testsuite = args.testsuite.rsplit("/", 1)[1] # strip off path if present
         else:
             print(f"ELF file not found: {args.testsuite}")
             sys.exit(1)
+    # Extract the elf name from the path to be the test suite
+    fields = args.testsuite.rsplit("/", 3)
+    # If the name is just ref.elf in a deep path (riscv-arch-test/wally-riscv-arch-test), then use the directory name as the test suite to make it unique; otherwise work directory will have duplicates.
+    if "breker" in args.testsuite:
+        args.testsuite = fields[-1]
+    elif len(fields) > 3:
+        if fields[2] == "ref":
+            args.testsuite = f"{fields[1]}_{fields[3]}"
+        else:
+            args.testsuite = f"{fields[2]}_{fields[3]}"
+    elif "/" in args.testsuite:
+        args.testsuite = args.testsuite.rsplit("/", 1)[1] # strip off path if present
     return ElfFile
 
 def prepSim(args, ElfFile):
