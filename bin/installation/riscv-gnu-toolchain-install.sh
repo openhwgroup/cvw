@@ -6,7 +6,7 @@
 ## Created: May 30 2025
 ## Modified: 
 ##
-## Purpose: QEMU installation script
+## Purpose: RISC-V GNU Toolchain installation script
 ##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
 ## https://github.com/openhwgroup/cvw

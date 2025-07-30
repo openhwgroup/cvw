@@ -6,7 +6,7 @@
 ## Created: May 30 2025
 ## Modified: 
 ##
-## Purpose: QEMU installation script
+## Purpose: Sail installation script
 ##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
 ## https://github.com/openhwgroup/cvw
@@ -29,7 +29,7 @@
 
 SAIL_COMPILER_VERSION=0.19.1 # Last release as of June 26, 2025
 CMAKE_VERSION=3.31.5 # Only used for distros with a system CMake that is too old (< 3.20)
-RISCV_SAIL_MODEL_VERSION=f4a94a3a3eceae6da1360b335c8ad755735e2ec4 # Last commit as of June 26, 2025
+RISCV_SAIL_MODEL_VERSION=964277c8fca367e22917421c07ec9c35304782c8 # Last commit as of July 29, 2025
 
 set -e # break on error
 # If run standalone, check environment. Otherwise, use info from main install script

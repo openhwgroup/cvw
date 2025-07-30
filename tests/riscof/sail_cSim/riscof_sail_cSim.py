@@ -21,8 +21,8 @@ class sail_cSim(pluginTemplate):
             raise SystemExit(1)
         self.num_jobs = str(config['jobs'] if 'jobs' in config else 1)
         self.pluginpath = os.path.abspath(config['pluginpath'])
-        self.sail_exe = { '32' : os.path.join(config['PATH'] if 'PATH' in config else "","riscv_sim_rv32d"),
-                '64' : os.path.join(config['PATH'] if 'PATH' in config else "","riscv_sim_rv64d")}
+        self.sail_exe = { '32' : os.path.join(config['PATH'] if 'PATH' in config else "","sail_riscv_sim"),
+                '64' : os.path.join(config['PATH'] if 'PATH' in config else "","sail_riscv_sim")}
         self.isa_spec = os.path.abspath(config['ispec']) if 'ispec' in config else ''
         self.platform_spec = os.path.abspath(config['pspec']) if 'ispec' in config else ''
         # self.coverage_file = os.path.abspath(config['coverage']) if 'coverage' in config else ''
@@ -116,7 +116,7 @@ class sail_cSim(pluginTemplate):
                 reference_output = re.sub("/src/","/references/", re.sub(".S",".reference_output", test))
                 execute += f'cut -c-{8:g} {reference_output} > {sig_file}' #use cut to remove comments when copying
             else:
-                execute += self.sail_exe[self.xlen] + f' --config {self.pluginpath}/rv{self.xlen}gc.json --trace=step --test-signature={sig_file} {elf} > {test_name}.log 2>&1;'
+                execute += self.sail_exe[self.xlen] + f' --config {self.pluginpath}/rv{self.xlen}gc.json --trace-all --test-signature={sig_file} {elf} > {test_name}.log 2>&1;'
 
                 # Coverage
                 if (os.environ.get('COLLECT_COVERAGE') == "true"): # TODO: update this to take a proper flag from riscof, not use env vars
