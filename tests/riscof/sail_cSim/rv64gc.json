@@ -1,5 +1,7 @@
 {
+  "$schema": "/opt/riscv/share/sail-riscv/sail_riscv_config_schema.json",
   "base": {
+    "xlen": 64,
     "writable_misa": false,
     "writable_fiom": true,
     "writable_hpm_counters": {
@@ -11,7 +13,10 @@
   "memory": {
     "pmp": {
       "grain": 0,
-      "count": 16
+      "count": 16,
+      "tor_supported": true,
+      "na4_supported": true,
+      "napot_supported": true
     },
     "misaligned": {
       "supported": true,
@@ -53,7 +58,10 @@
     "A": {
       "supported": true
     },
-    "FD": {
+    "F": {
+      "supported": true
+    },
+    "D": {
       "supported": true
     },
     "V": {
@@ -102,6 +110,9 @@
       "supported": false
     },
     "Zabha": {
+      "supported": false
+    },
+    "Zacas": {
       "supported": false
     },
     "Zalrsc": {
