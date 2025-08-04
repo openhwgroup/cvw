@@ -56,9 +56,6 @@ def validateArgs(args):
     elif args.tb == "testbench_fp" and args.sim != "questa":
         print("Error: testbench_fp presently only supported by Questa, not VCS or Verilator, because of a touchy testbench")
         sys.exit(1)
-    elif (args.config == "breker" and args.sim != "questa"):
-        print("Error: Breker tests currently only supported by Questa")
-        sys.exit(1)
 
 def elfFileCheck(args):
     ElfFile = ""
@@ -115,13 +112,15 @@ def prepSim(args, ElfFile):
         flagsList.append("--gui")
     if args.lockstep or args.lockstepverbose:
         flagsList.append("--lockstep")
-        prefix = lockstepSetup(args)
+        prefix += lockstepSetup(args)
         defineList.append("+define+USE_IMPERAS_DV")
-    if args.config == "breker": # Requires a license for the breker tool. See tests/breker/README.md for details
+    if args.config == "breker" and args.sim != "verilator": # Requires a license for the breker tool. See tests/breker/README.md for details
         ElfFileNoExtension = os.path.splitext(ElfFile)[0]
         flagsList.append("--breker")
         defineList.append("+define+USE_TREK_DV")
         argsList.append(f"+TREK_TBX_FILE={ElfFileNoExtension}.tbx")
+        if "WALLY_UVM_PKG" not in os.environ:
+            prefix += f"WALLY_UVM_PKG={WALLY}/testbench/trek_files/uvm_output/trek_uvm_pkg.sv"
     # Combine into a single string
     args.args += " " + " ".join(argsList)
     args.params += " " + " ".join(paramsList)
