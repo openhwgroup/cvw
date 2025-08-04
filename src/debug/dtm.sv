@@ -29,7 +29,7 @@
 
 `include "debug.vh"
 module dtm(
-    input logic clk, rstn,
+    input logic clk, rst,
     // JTAG Interface
     input logic  tck, tms, tdi,
     output logic tdo,
@@ -37,24 +37,66 @@ module dtm(
     // Signals go here. neorv32 defines two packed structs.
     output dmi_t dmi
 );
-    logic reset, enable, select; 
+    logic resetn, enable, select; 
     logic ShiftIR, ClockIR, UpdateIR;
     logic ShiftDR, ClockDR, UpdateDR;
+    logic [`INSTWIDTH-1:0] currentInst;
 
+    // Select outputs
+    logic tdo_dr, tdo_ir, tdo_mux;
+
+    // Synchronizer signals
+    logic tck_sync, tms_sync, tdi_sync;
+    
+    // Synchronizing tck, tms, and tdi
+    synchronizer tck_synchronizer (clk, tck, tck_sync);
+    synchronizer tms_synchronizer (clk, tms, tms_sync);
+    synchronizer tdi_synchronizer (clk, tdi, tdi_sync);
+    
     // Temporarily tying trstn to rstn. This isn't the way JTAG
     // recommends doing it, but the debug spec and neorv32 seem to
     // imply it's ok to do so.
     tap_controller controller(
-        tck, rstn, tms, tdi, tdo,
-        reset, enable, select,
+        tck_sync, rst, tms_sync, tdi_sync, tdo,
+        resetn, enable, select,
         ShiftIR, ClockIR, UpdateIR,
         ShiftDR, ClockDR, UpdateDR
     );
 
+    inst_reg instructionreg (
+        tdi_sync, resetn,
+        ClockIR, UpdateIR, ShiftIR,
+        tdo_ir,
+        currentInst
+    );
+
+    // tdr = Test Data Register
+    data_reg tdr (
+        tck_sync, tdi_sync, resetn,
+        currentInst,
+        ClockDR, UpdateDR, ShiftDR,
+        tdo_dr
+    );
+
+    // Choose output of tdo 
+    always_comb begin
+        case(select)
+            1'b0: tdo_mux = tdo_ir;
+            1'b1: tdo_mux = tdo_dr;
+        endcase
+    end
+
+    // Dr. Harris suggests the output is flopped.
+    // Otto's original implementation is combinational.
+    // NeoRV32 is flopped.
+    flop #(1) tdo_ff (~tck_sync, tdo_mux, tdo);
+
     // Instruction Block
     // - Instruction Register
-    // - Instruction Decoder
+    // - Instruction Decoder?
 
+    
+    
     // Test Data Registers
     // - Boundary Scan Register
     //   * According to the DM spec, this doesn't exist here. Can
