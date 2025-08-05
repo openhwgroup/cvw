@@ -31,20 +31,20 @@
 
 module data_reg #(parameter INSTWIDTH = 5) (
     input logic                 tck, tdi, resetn,
-    input logic [INSTWIDTH-1:0] currentInst,                                          
-    input logic                 ClockDR, UpdateDR, ShiftDR,
+    input logic [INSTWIDTH-1:0] currentInst, 
+    input logic                 ShiftDR, ClockDR, UpdateDR,
+    input dtmcs_t               dtmcs_next,
+    output dtmcs_t              dtmcs,
+    input dmi_t                 dmi_next,
+    output dmi_t                dmi,                                        
     output logic                tdo
 );
     logic tdo_idcode;
-
-    dtmcs_t dtmcs;
     logic tdo_dtmcs;
-
     logic tdo_dmi;
-    
     logic tdo_bypass;
 
-    ID Code
+    // ID Code
     idreg #(32) idcode(
         tck, tdi, resetn,
         32'h1002AC05,
@@ -52,39 +52,30 @@ module data_reg #(parameter INSTWIDTH = 5) (
         tdo_idcode
     );
 
-    // always @(posedge ClockDR, negedge resetn) begin
-    //     if (~resetn) begin
-    //         dtmcs.reserved0 <= '0;
-    //         dtmcs.errinfo <= 4;
-    //         dtmcs.dtmhardreset <= 0;
-    //         dtmcs.dtmreset <= 0;
-    //         dtmcs.reserved1 <= 1;
-    //         dtmcs.idle <= 0;
-    //         dtmcs.dmistat <= 0;
-    //         dtmcs.abits <= `ABITS;
-    //         dmtcs.version <= 1;
-    //     end else begin // if (~resetn)
-            
-    //     end
-    // end
-    
-
     // DTMCS
-    internalreg #(32) dtmcs(
+    internalreg #(32) dtmcsreg(
         tck, tdi, resetn,
-        
+        dtmcs_next,
+        `DTMCS_RESET,
+        ShiftDR, ClockDR,
+        dtmcs,
+        tdo_dtmcs
     );
 
     // DMI
-    internalreg #(`DMIWIDTH) dmireg(
+    internalreg #(`DMI_WIDTH) dmireg(
         tck, tdi, resetn,
-        
+        dmi_next,
+        {(`DMI_WIDTH){0}},
+        ShiftDR, ClockDR,
+        dmi,
+        tdo_dmi
     );
     
     // BYPASS
-    always @(posedge tck, negedge resetn) begin
+    always_ff @(posedge tck, negedge resetn) begin
         if (~resetn) tdo_bypass <= 0;
-        else if (currentInst == DTMINST.BYPASS) tdo_bypass <= tdi;
+        else if (currentInst == BYPASS) tdo_bypass <= tdi;
     end
 
     // Mux data register output based on current instruction

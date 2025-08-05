@@ -8,19 +8,18 @@
   
 module inst_reg #(parameter ADRWIDTH=5) (
     input logic  tdi,
-    input logic  resetn, ClockIR, UpdateIR, ShiftIR,
+    input logic  resetn, ShiftIR, ClockIR, UpdateIR,
     output logic tdo,
     output logic [ADRWIDTH-1:0] instreg
     //output logic bypass
 );
     logic [ADRWIDTH-1:0] shiftreg;
-    //logic [ADRWIDTH-1:0] instreg;
     
-    always @(posedge ClockDR)
-      shiftreg <= ShiftDR ? {tdi, shiftreg[ADRWIDTH-1:1]} : DTMINST.IDCODE;
+    always @(posedge ClockIR)
+      shiftreg <= ShiftIR ? {tdi, shiftreg[ADRWIDTH-1:1]} : IDCODE;
 
-    always @(posedge UpdateDR, negedge resetn)
-      if (~resetn) instreg <= DTMINST.BYPASS;
+    always @(posedge UpdateIR, negedge resetn)
+      if (~resetn) instreg <= BYPASS;
       else instreg <= shiftreg;
 
     assign tdo = shiftreg[0];

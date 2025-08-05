@@ -1,12 +1,12 @@
 ///////////////////////////////////////////
-// bsr.sv
+// internalreg.sv
 //
 // Written: Jacob Pease jacobpease@protonmail.com,
 //          James E. Stine james.stine@okstate.edu
 // Created: August 4th, 2025
 // Modified: 
 //
-// Purpose: Boundary Scan Register with load on reset
+// Purpose: Internal Data Register
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -27,27 +27,23 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-module bsr #(parameter WIDTH=8) (
-    // Primary Inputs
+module internalreg #(parameter WIDTH = 8) (
+    input logic              tck, tdi, resetn,
     input logic [WIDTH-1:0]  DataIn,
-    input logic              ScanIn,
-    // Control Signals
-    input logic              ShiftDR, ClockDR, UpdateDR, Mode,
-    // Outputs
-    output logic [WIDTH-1:0] Qout,
-    output logic             ScanOut
+    input logic [WIDTH-1:0]  val,
+    input logic              ShiftDR, ClockDR,
+    output logic [WIDTH-1:0] y,
+    output logic             tdo
 );
-    logic [WIDTH-1:0] shiftreg;
-    logic [WIDTH-1:0] y;
-    
-    always @(posedge ClockDR)
-      shiftreg <= ShiftDR ? {ScanIn, shiftreg[WIDTH-1:1]} : DataIn;
+    // logic [WIDTH-1:0] shiftreg;
+    always @(posedge ClockDR) begin
+        if (~resetn) begin
+            y <= val;
+        end else begin
+            y <= ShiftDR ? {tdi, y[WIDTH-1:1]} : DataIn;
+        end
+    end
 
-    always @(posedge UpdateDR)
-      y <= shiftreg;
+    assign tdo = y[0];
     
-    assign Qout = Mode ? y : DataIn;
-    assign ScanOut = shiftreg[0];
-endmodule // bsr
-
+endmodule

@@ -33,17 +33,17 @@ module tap_controller(
 	        SELECT_DR        : State <= tms ? SELECT_IR : CAPTURE_DR;
 	        CAPTURE_DR       : State <= tms ? EXIT1_DR : SHIFT_DR;
 	        SHIFT_DR         : State <= tms ? EXIT1_DR : SHIFT_DR;
-	        Exit1DR          : State <= tms ? UPDATE_DR : PAUSE_DR;
-	        PauseDR          : State <= tms ? EXIT2_DR : PAUSE_DR;
-	        Exit2DR          : State <= tms ? UPDATE_DR : SHIFT_DR;
-	        UpdateDR         : State <= tms ? SELECT_DR : RUN_TEST_IDLE;
+	        EXIT1_DR          : State <= tms ? UPDATE_DR : PAUSE_DR;
+	        PAUSE_DR          : State <= tms ? EXIT2_DR : PAUSE_DR;
+	        EXIT2_DR          : State <= tms ? UPDATE_DR : SHIFT_DR;
+	        UPDATE_DR         : State <= tms ? SELECT_DR : RUN_TEST_IDLE;
 	        SELECT_IR        : State <= tms ? TEST_LOGIC_RESET : CAPTURE_IR;
-	        CaptureIR        : State <= tms ? EXIT1_IR : SHIFT_IR;
+	        CAPTURE_IR        : State <= tms ? EXIT1_IR : SHIFT_IR;
 	        SHIFT_IR         : State <= tms ? EXIT1_IR : SHIFT_IR;
-	        Exit1IR          : State <= tms ? UPDATE_IR : PAUSE_IR;
-	        PauseIR          : State <= tms ? EXIT2_IR : PAUSE_IR;
-	        Exit2IR          : State <= tms ? UPDATE_IR : SHIFT_IR;
-	        UpdateIR         : State <= tms ? SELECT_DR : RUN_TEST_IDLE;
+	        EXIT1_IR          : State <= tms ? UPDATE_IR : PAUSE_IR;
+	        PAUSE_IR          : State <= tms ? EXIT2_IR : PAUSE_IR;
+	        EXIT2_IR          : State <= tms ? UPDATE_IR : SHIFT_IR;
+	        UPDATE_IR         : State <= tms ? SELECT_DR : RUN_TEST_IDLE;
 	    endcase // case (State)
     end // always @ (posedge tck)
 
@@ -72,6 +72,6 @@ module tap_controller(
           ShiftIR <= (State == SHIFT_IR);
           ShiftDR <= (State == SHIFT_DR);
           reset <= ~(State == TEST_LOGIC_RESET);
-          enable <= (State == SHIFT_IR) | (state == SHIFT_DR);
+          enable <= (State == SHIFT_IR) | (State == SHIFT_DR);
       end // else: !if(~trst)
 endmodule
