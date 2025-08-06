@@ -110,7 +110,7 @@ module tap_controller(
    assign UpdateIR = tck & (State == UPDATE_IR);
    assign UpdateDR = tck & (State == UPDATE_DR);
    
-   // This signal is present in the IEEE 1149.1-2001 spec (may not be needed)
+   // signal present in the IEEE 1149.1-2001 spec Figure 6-5 (may not be needed) 
    assign select = State[3];
    
    always @(negedge tck, negedge trst)
