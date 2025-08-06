@@ -58,23 +58,24 @@ module tap_controller(
    //   TLReset        | 0xF      | 1111    |    1     | Special state
    // -----------------------------------------------------------------------------
     typedef enum logic [3:0] {
-        EXIT2_DR         = 4'h0,
-	EXIT1_DR         = 4'h1,
-	SHIFT_DR         = 4'h2,
-	PAUSE_DR         = 4'h3,
-	SELECT_IR        = 4'h4,
-	UPDATE_DR        = 4'h5,
-	CAPTURE_DR       = 4'h6,
-	SELECT_DR        = 4'h7,
-	EXIT2_IR         = 4'h8,
-	EXIT1_IR         = 4'h9,
-	SHIFT_IR         = 4'hA,
-	PAUSE_IR         = 4'hB,
-	RUN_TEST_IDLE    = 4'hC,
-	UPDATE_IR        = 4'hD,
-	CAPTURE_IR       = 4'hE,
-	TEST_LOGIC_RESET = 4'hF
-	} State;
+			      EXIT2_DR         = 4'h0,
+			      EXIT1_DR         = 4'h1,
+			      SHIFT_DR         = 4'h2,
+			      PAUSE_DR         = 4'h3,
+			      SELECT_IR        = 4'h4,
+			      UPDATE_DR        = 4'h5,
+			      CAPTURE_DR       = 4'h6,
+			      SELECT_DR        = 4'h7,
+			      EXIT2_IR         = 4'h8,
+			      EXIT1_IR         = 4'h9,
+			      SHIFT_IR         = 4'hA,
+			      PAUSE_IR         = 4'hB,
+			      RUN_TEST_IDLE    = 4'hC,
+			      UPDATE_IR        = 4'hD,
+			      CAPTURE_IR       = 4'hE,
+			      TEST_LOGIC_RESET = 4'hF
+			      } statetype;
+   statetype State;   
 
     always @(posedge tck) begin
         if (~trst) State <= TEST_LOGIC_RESET; 
