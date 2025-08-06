@@ -1,3 +1,30 @@
+///////////////////////////////////////////
+// tap_controller.sv
+//
+// Written: james.stine@okstate.edu, jacob.pease@okstate.edu 28 July 2025
+// Modified: 
+//
+// Purpose: IEEE 1149.1 tap controller
+// 
+// A component of the CORE-V-WALLY configurable RISC-V project.
+// https://github.com/openhwgroup/cvw
+// 
+// Copyright (C) 2021-25 Harvey Mudd College & Oklahoma State University
+//
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+//
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
+//
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
+////////////////////////////////////////////////////////////////////////////////////////////////
+
 module tap_controller(
     input  logic tck, trst, tms, tdi,
     output logic tdo,
@@ -5,24 +32,48 @@ module tap_controller(
     output logic ShiftIR, ClockIR, UpdateIR,
     output logic ShiftDR, ClockDR, UpdateDR
 );
-    // IEEE 1149.1-2001 Table 6-3
-    enum logic [3:0] {
+
+
+   // -----------------------------------------------------------------------------
+   // TAP Controller States (IEEE 1149.1 Table 6-3)
+   // State[3] distinguishes between DR path (0) and IR path / special (1)
+   //
+   //   State Name     | Encoding | Binary  | State[3] | Path Type
+   // -----------------+----------+---------+----------+------------------------
+   //   Exit2DR        | 0x0      | 0000    |    0     | DR path
+   //   Exit1DR        | 0x1      | 0001    |    0     | DR path
+   //   ShiftDR        | 0x2      | 0010    |    0     | DR path
+   //   PauseDR        | 0x3      | 0011    |    0     | DR path
+   //   SelectIR       | 0x4      | 0100    |    0     | DR path -> IR select
+   //   UpdateDR       | 0x5      | 0101    |    0     | DR path
+   //   CaptureDR      | 0x6      | 0110    |    0     | DR path
+   //   SelectDR       | 0x7      | 0111    |    0     | DR path
+   //   Exit2IR        | 0x8      | 1000    |    1     | IR path
+   //   Exit1IR        | 0x9      | 1001    |    1     | IR path
+   //   ShiftIR        | 0xA      | 1010    |    1     | IR path
+   //   PauseIR        | 0xB      | 1011    |    1     | IR path
+   //   RunTestIdle    | 0xC      | 1100    |    1     | IR path
+   //   UpdateIR       | 0xD      | 1101    |    1     | IR path
+   //   CaptureIR      | 0xE      | 1110    |    1     | IR path
+   //   TLReset        | 0xF      | 1111    |    1     | Special state
+   // -----------------------------------------------------------------------------
+    typedef enum logic [3:0] {
         EXIT2_DR         = 4'h0,
-		EXIT1_DR         = 4'h1,
-		SHIFT_DR         = 4'h2,
-		PAUSE_DR         = 4'h3,
-		SELECT_IR        = 4'h4,
-		UPDATE_DR        = 4'h5,
-		CAPTURE_DR       = 4'h6,
-		SELECT_DR        = 4'h7,
-		EXIT2_IR         = 4'h8,
-		EXIT1_IR         = 4'h9,
-		SHIFT_IR         = 4'hA,
-		PAUSE_IR         = 4'hB,
-		RUN_TEST_IDLE    = 4'hC,
-		UPDATE_IR        = 4'hD,
-		CAPTURE_IR       = 4'hE,
-		TEST_LOGIC_RESET = 4'hF
+	EXIT1_DR         = 4'h1,
+	SHIFT_DR         = 4'h2,
+	PAUSE_DR         = 4'h3,
+	SELECT_IR        = 4'h4,
+	UPDATE_DR        = 4'h5,
+	CAPTURE_DR       = 4'h6,
+	SELECT_DR        = 4'h7,
+	EXIT2_IR         = 4'h8,
+	EXIT1_IR         = 4'h9,
+	SHIFT_IR         = 4'hA,
+	PAUSE_IR         = 4'hB,
+	RUN_TEST_IDLE    = 4'hC,
+	UPDATE_IR        = 4'hD,
+	CAPTURE_IR       = 4'hE,
+	TEST_LOGIC_RESET = 4'hF
 	} State;
 
     always @(posedge tck) begin
@@ -74,4 +125,5 @@ module tap_controller(
           reset <= ~(State == TEST_LOGIC_RESET);
           enable <= (State == SHIFT_IR) | (State == SHIFT_DR);
       end // else: !if(~trst)
-endmodule
+endmodule // tap_controller
+
