@@ -57,8 +57,7 @@ module tap_controller(
    //   CaptureIR      | 0xE      | 1110    |    1     | IR path
    //   TLReset        | 0xF      | 1111    |    1     | Special state
    // -----------------------------------------------------------------------------
-    typedef enum logic [3:0] {
-			      EXIT2_DR         = 4'h0,
+    typedef enum logic [3:0] {EXIT2_DR         = 4'h0,
 			      EXIT1_DR         = 4'h1,
 			      SHIFT_DR         = 4'h2,
 			      PAUSE_DR         = 4'h3,
@@ -85,19 +84,19 @@ module tap_controller(
 	        SELECT_DR        : State <= tms ? SELECT_IR : CAPTURE_DR;
 	        CAPTURE_DR       : State <= tms ? EXIT1_DR : SHIFT_DR;
 	        SHIFT_DR         : State <= tms ? EXIT1_DR : SHIFT_DR;
-	        EXIT1_DR          : State <= tms ? UPDATE_DR : PAUSE_DR;
-	        PAUSE_DR          : State <= tms ? EXIT2_DR : PAUSE_DR;
-	        EXIT2_DR          : State <= tms ? UPDATE_DR : SHIFT_DR;
-	        UPDATE_DR         : State <= tms ? SELECT_DR : RUN_TEST_IDLE;
+	        EXIT1_DR         : State <= tms ? UPDATE_DR : PAUSE_DR;
+	        PAUSE_DR         : State <= tms ? EXIT2_DR : PAUSE_DR;
+	        EXIT2_DR         : State <= tms ? UPDATE_DR : SHIFT_DR;
+	        UPDATE_DR        : State <= tms ? SELECT_DR : RUN_TEST_IDLE;
 	        SELECT_IR        : State <= tms ? TEST_LOGIC_RESET : CAPTURE_IR;
-	        CAPTURE_IR        : State <= tms ? EXIT1_IR : SHIFT_IR;
+	        CAPTURE_IR       : State <= tms ? EXIT1_IR : SHIFT_IR;
 	        SHIFT_IR         : State <= tms ? EXIT1_IR : SHIFT_IR;
-	        EXIT1_IR          : State <= tms ? UPDATE_IR : PAUSE_IR;
-	        PAUSE_IR          : State <= tms ? EXIT2_IR : PAUSE_IR;
-	        EXIT2_IR          : State <= tms ? UPDATE_IR : SHIFT_IR;
-	        UPDATE_IR         : State <= tms ? SELECT_DR : RUN_TEST_IDLE;
-	    endcase // case (State)
-    end // always @ (posedge tck)
+	        EXIT1_IR         : State <= tms ? UPDATE_IR : PAUSE_IR;
+	        PAUSE_IR         : State <= tms ? EXIT2_IR : PAUSE_IR;
+	        EXIT2_IR         : State <= tms ? UPDATE_IR : SHIFT_IR;
+	        UPDATE_IR        : State <= tms ? SELECT_DR : RUN_TEST_IDLE;
+	    endcase 
+    end 
 
    // The following assignments and flops are based completely on the
    // IEEE 1149.1-2001 spec.
