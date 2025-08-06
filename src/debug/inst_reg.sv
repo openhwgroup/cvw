@@ -13,17 +13,16 @@ module inst_reg #(parameter ADRWIDTH=5) (
     output logic [ADRWIDTH-1:0] instreg
     //output logic bypass
 );
-    logic [ADRWIDTH-1:0] shiftreg;
-    
-    always @(posedge ClockIR)
-      shiftreg <= ShiftIR ? {tdi, shiftreg[ADRWIDTH-1:1]} : IDCODE;
-
-    always @(posedge UpdateIR, negedge resetn)
-      if (~resetn) instreg <= BYPASS;
-      else instreg <= shiftreg;
-
-    assign tdo = shiftreg[0];
-
-    //assign bypass = (instreg == DTMINST.BYPASS);
-
+   logic [ADRWIDTH-1:0] 	shiftreg;
+   
+   always @(posedge ClockIR)
+     shiftreg <= ShiftIR ? {tdi, shiftreg[ADRWIDTH-1:1]} : IDCODE;
+   
+   always @(posedge UpdateIR, negedge resetn)
+     if (~resetn) instreg <= BYPASS;
+     else instreg <= shiftreg;
+   
+   assign tdo = shiftreg[0];
+   
+   //assign bypass = (instreg == DTMINST.BYPASS);
 endmodule

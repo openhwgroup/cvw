@@ -39,54 +39,47 @@ module data_reg #(parameter INSTWIDTH = 5) (
     output dmi_t                dmi,                                        
     output logic                tdo
 );
-    logic tdo_idcode;
-    logic tdo_dtmcs;
-    logic tdo_dmi;
-    logic tdo_bypass;
-
-    // ID Code
-    idreg #(32) idcode(
-        tck, tdi, resetn,
-        32'h1002AC05,
-        ShiftDR, ClockDR,
-        tdo_idcode
-    );
-
-    // DTMCS
-    internalreg #(32) dtmcsreg(
-        tck, tdi, resetn,
-        dtmcs_next,
-        `DTMCS_RESET,
-        ShiftDR, ClockDR,
-        dtmcs,
-        tdo_dtmcs
-    );
+   logic 			tdo_idcode;
+   logic 			tdo_dtmcs;
+   logic 			tdo_dmi;
+   logic 			tdo_bypass;
+   
+   // ID Code
+   idreg #(32) idcode(tck, tdi, resetn,
+		      32'h1002AC05,
+		      ShiftDR, ClockDR,
+		      tdo_idcode);
+   
+   // DTMCS
+   internalreg #(32) dtmcsreg(tck, tdi, resetn,
+			      dtmcs_next,
+			      `DTMCS_RESET,
+			      ShiftDR, ClockDR,
+			      dtmcs,
+			      tdo_dtmcs);
 
     // DMI
-    internalreg #(`DMI_WIDTH) dmireg(
-        tck, tdi, resetn,
-        dmi_next,
-        {(`DMI_WIDTH){0}},
-        ShiftDR, ClockDR,
-        dmi,
-        tdo_dmi
-    );
-    
+   internalreg #(`DMI_WIDTH) dmireg(tck, tdi, resetn,
+				    dmi_next,
+				    {(`DMI_WIDTH){0}},
+				    ShiftDR, ClockDR,
+				    dmi,
+				    tdo_dmi);
+   
     // BYPASS
-    always_ff @(posedge tck, negedge resetn) begin
-        if (~resetn) tdo_bypass <= 0;
-        else if (currentInst == BYPASS) tdo_bypass <= tdi;
-    end
-
-    // Mux data register output based on current instruction
-    always_comb begin
-        case (currentInst)
-            DTMINST.IDCODE : tdo = tdo_idcode;
-            DTMINST.DTMCS  : tdo = tdo_dtmcs;
-            DTMINST.DMI    : tdo = tdo_dmi;
-            DTMINST.BYPASS : tdo = tdo_bypass;
-            default        : tdo = tdo_bypass; // Bypass instruction 11111 and 00000
-        endcase
-    end
-
+   always_ff @(posedge tck, negedge resetn) begin
+      if (~resetn) tdo_bypass <= 0;
+      else if (currentInst == BYPASS) tdo_bypass <= tdi;
+   end
+   
+   // Mux data register output based on current instruction
+   always_comb begin
+      case (currentInst)
+        DTMINST.IDCODE : tdo = tdo_idcode;
+        DTMINST.DTMCS  : tdo = tdo_dtmcs;
+        DTMINST.DMI    : tdo = tdo_dmi;
+        DTMINST.BYPASS : tdo = tdo_bypass;
+        default        : tdo = tdo_bypass; // Bypass instruction 11111 and 00000
+      endcase
+   end   
 endmodule

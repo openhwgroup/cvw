@@ -38,168 +38,159 @@ module dtm(
     output dmi_t dmi_req,
     input dmi_rsp_t dmi_rsp
 );
-    // Tap Controller stuff
-    logic resetn, enable, select; 
-    logic ShiftIR, ClockIR, UpdateIR;
-    logic ShiftDR, ClockDR, UpdateDR;
-
-    // Instruction Register
-    logic [`INSTWIDTH-1:0] currentInst;
-
-    // Select outputs
-    logic tdo_dr, tdo_ir, tdo_mux, tdo_delayed;
-
-    // Synchronizer signals
-    logic tck_sync, tms_sync, tdi_sync;
-    
-    // Synchronizing tck, tms, and tdi
-    synchronizer tck_synchronizer (clk, tck, tck_sync);
-    synchronizer tms_synchronizer (clk, tms, tms_sync);
-    synchronizer tdi_synchronizer (clk, tdi, tdi_sync);
-
-    // Edge detecting UpdateDR. Avoids cases where UpdateDR is still
-    // high for multiple clock cycles.
-    logic [1:0] UpdateDRSamples;
-    logic UpdateDRValid;
-    
-    // Test Data Register Stuff
-    dtmcs_t dtmcs, dtmcs_next;
-    dmi_t dmi_next, dmi_next_reg;
-    // logic [1:0] DMIStat;
-
-    // Debug Module Interface Control
-    logic UpdateDMI;
-    logic UpdateDTMCS;
-    logic DMIHardReset;
-    logic DMIReset;
-
-    logic Sticky;
-
-    enum logic {IDLE, BUSY} DMIState;
-    
-    // Temporarily tying trstn to rstn. This isn't the way JTAG
-    // recommends doing it, but the debug spec and neorv32 seem to
-    // imply it's ok to do so.
-    tap_controller controller(
-        tck_sync, rst, tms_sync, tdi_sync, tdo,
-        resetn, enable, select,
-        ShiftIR, ClockIR, UpdateIR,
-        ShiftDR, ClockDR, UpdateDR
-    );
-
-    inst_reg instructionreg (
-        tdi_sync, resetn,
-        ShiftIR, ClockIR, UpdateIR,
-        tdo_ir,
-        currentInst
-    );
+   // Tap Controller stuff
+   logic  resetn, enable, select; 
+   logic  ShiftIR, ClockIR, UpdateIR;
+   logic  ShiftDR, ClockDR, UpdateDR;
+   
+   // Instruction Register
+   logic [`INSTWIDTH-1:0] currentInst;
+   
+   // Select outputs
+   logic 		  tdo_dr, tdo_ir, tdo_mux, tdo_delayed;
+   
+   // Synchronizer signals
+   logic 		  tck_sync, tms_sync, tdi_sync;
+   
+   // Synchronizing tck, tms, and tdi
+   synchronizer tck_synchronizer (clk, tck, tck_sync);
+   synchronizer tms_synchronizer (clk, tms, tms_sync);
+   synchronizer tdi_synchronizer (clk, tdi, tdi_sync);
+   
+   // Edge detecting UpdateDR. Avoids cases where UpdateDR is still
+   // high for multiple clock cycles.
+   logic [1:0] 		  UpdateDRSamples;
+   logic 		  UpdateDRValid;
+   
+   // Test Data Register Stuff
+   dtmcs_t dtmcs, dtmcs_next;
+   dmi_t dmi_next, dmi_next_reg;
+   // logic [1:0] DMIStat;
+   
+   // Debug Module Interface Control
+   logic 		  UpdateDMI;
+   logic 		  UpdateDTMCS;
+   logic 		  DMIHardReset;
+   logic 		  DMIReset;
+   
+   logic 		  Sticky;
+   
+   enum 		  logic {IDLE, BUSY} DMIState;
+   
+   // Temporarily tying trstn to rstn. This isn't the way JTAG
+   // recommends doing it, but the debug spec and neorv32 seem to
+   // imply it's ok to do so.
+   tap_controller controller(tck_sync, rst, tms_sync, tdi_sync, tdo,
+			     resetn, enable, select,
+			     ShiftIR, ClockIR, UpdateIR,
+			     ShiftDR, ClockDR, UpdateDR);
+   
+    inst_reg instructionreg (tdi_sync, resetn,
+			     ShiftIR, ClockIR, UpdateIR,
+			     tdo_ir,
+			     currentInst);
 
     // tdr = Test Data Register
-    data_reg tdr (
-        tck_sync, tdi_sync, resetn,
-        currentInst,
-        ShiftDR, ClockDR, UpdateDR,
-        dtmcs_next,
-        dtmcs,
-        dmi_next,
-        dmi,
-        tdo_dr
-    );
+    data_reg tdr (tck_sync, tdi_sync, resetn,
+		  currentInst,
+		  ShiftDR, ClockDR, UpdateDR,
+		  dtmcs_next,
+		  dtmcs,
+		  dmi_next,
+		  dmi,
+		  tdo_dr);
 
-    // Choose output of tdo 
-    always_comb begin
-        case(select)
-            1'b0: tdo_mux = tdo_dr;
-            1'b1: tdo_mux = tdo_ir;
-        endcase
-    end
-
-    // Dr. Harris suggests the output is flopped.
-    // Otto's original implementation is combinational.
-    // NeoRV32 is flopped.
-    flop #(1) tdo_ff (~tck_sync, tdo_mux, tdo_delayed);
-    
-    // Tristate the output so it can be driven elsewhere. This is
-    // present in both Matthew Otto's implementation and Dr. Harris',
-    // but not NeoRV32.
-    assign tdo = enable ? tdo_delayed : 1'bz;
-
-    // Instruction Block
-    // - Instruction Register
-    // - Instruction Decoder?
+   // Choose output of tdo 
+   always_comb begin
+      case(select)
+        1'b0: tdo_mux = tdo_dr;
+        1'b1: tdo_mux = tdo_ir;
+      endcase
+   end
    
-    always_ff @(posedge clk) begin
-        if (rst) begin
-            UpdateDRSamples <= 2'b0;
-        end else begin
-            if (UpdateDR) UpdateDRSamples[0] <= 1;
-            else UpdateDRSamples[0] <= 0;
-            UpdateDRSamples[1] <= UpdateDRSamples[0];
-        end
-    end
-
-    assign UpdateDRValid = (UpdateDRSamples == 2'b01);
-    
-    assign UpdateDTMCS = UpdateDRValid & (currentInst == DTMINST.DTMCS);
-    assign UpdateDMI = UpdateDRValid & (currentInst == DTMINST.DMIREG);
-    
-
-    // DTMCS
-    always_ff @(posedge clk) begin
-        if (rst | ~resetn | DTMHardReset) begin
-            DTMHardReset <= 0;
-            DMIReset <= 0;
-        end else if (UpdateDTMCS) begin
-            DMIReset <= dtmcs.dmireset;
-            DTMHardReset <= dtmcs.dtmhardreset;
-        end else if (DMIReset) begin
-            DMIReset <= 0;
-        end
-    end // always_ff @ (posedge clk)
-
-    assign dtmcs_next = {11'b0, 3'd4, 4'b0, dmi_next.op, `ABITS, 4'b1};
-    
-    // Sticky error
-    always_ff @(posedge clk) begin
-        if (DMIReset == 1 | DTMHardReset == 1) begin
-            Sticky <= 0;
-        end else if ((DMIState == BUSY) & (UpdateDMI)) begin
-            Stick <= 1;
-        end
-    end
-
-    // DMI
-    always_ff @(posedge clk) begin
-        if (rst | ~resetn | DTMHardReset) begin
-            DMIState <= IDLE;
-        end else begin
-            case(DMIState)
-                IDLE: begin
-                    if (UpdateDMI) begin
-                        dmi_req.addr <= dmi.addr;
-                        dmi_req.data <= dmi.data;
-                        if ((dmi.op == DMIOPW.RD) | (dmi.op == DMIOPW.WR)) begin
-                            dmi_req.op <= dmi.op;
-                            DMIState <= BUSY;
-                        end
-                    end
-                end
-              
-                BUSY: begin
-                    if (dmi_rsp.ack) begin
-                        dmi_next_reg.data <= dmi_rsp.data;
-                        dmi_next_reg.op <= dmi_rsp.op;
-                        DMIState <= IDLE;
-                    end
-                end
-              
-                default: DMIState <= IDLE;
-            endcase
-        end
-    end // always_ff @ (posedge clk)
-
-    assign dmi_next.addr = dmi_req.addr;
-    assign dmi_next.data = dmi_next_reg.data;
-    assign dmi_next.op = Sticky ? dmi_next_reg.op : 2'b11;
-    
+   // Dr. Harris suggests the output is flopped.
+   // Otto's original implementation is combinational.
+   // NeoRV32 is flopped.
+   flop #(1) tdo_ff (~tck_sync, tdo_mux, tdo_delayed);
+   
+   // Tristate the output so it can be driven elsewhere. This is
+   // present in both Matthew Otto's implementation and Dr. Harris',
+   // but not NeoRV32.
+   assign tdo = enable ? tdo_delayed : 1'bz;
+   
+   // Instruction Block
+   // - Instruction Register
+   // - Instruction Decoder?
+   
+   always_ff @(posedge clk) begin
+      if (rst) begin
+         UpdateDRSamples <= 2'b0;
+      end else begin
+         if (UpdateDR) UpdateDRSamples[0] <= 1;
+         else UpdateDRSamples[0] <= 0;
+         UpdateDRSamples[1] <= UpdateDRSamples[0];
+      end
+   end
+   
+   assign UpdateDRValid = (UpdateDRSamples == 2'b01);
+   
+   assign UpdateDTMCS = UpdateDRValid & (currentInst == DTMINST.DTMCS);
+   assign UpdateDMI = UpdateDRValid & (currentInst == DTMINST.DMIREG);
+   
+   
+   // DTMCS
+   always_ff @(posedge clk) begin
+      if (rst | ~resetn | DTMHardReset) begin
+         DTMHardReset <= 0;
+         DMIReset <= 0;
+      end else if (UpdateDTMCS) begin
+         DMIReset <= dtmcs.dmireset;
+         DTMHardReset <= dtmcs.dtmhardreset;
+      end else if (DMIReset) begin
+         DMIReset <= 0;
+      end
+   end // always_ff @ (posedge clk)
+   
+   assign dtmcs_next = {11'b0, 3'd4, 4'b0, dmi_next.op, `ABITS, 4'b1};
+   
+   // Sticky error
+   always_ff @(posedge clk) begin
+      if (DMIReset == 1 | DTMHardReset == 1) begin
+         Sticky <= 0;
+      end else if ((DMIState == BUSY) & (UpdateDMI)) begin
+         Stick <= 1;
+      end
+   end
+   
+   // DMI
+   always_ff @(posedge clk) begin
+      if (rst | ~resetn | DTMHardReset) begin
+         DMIState <= IDLE;
+      end else begin
+         case(DMIState)
+           IDLE: begin
+              if (UpdateDMI) begin
+                 dmi_req.addr <= dmi.addr;
+                 dmi_req.data <= dmi.data;
+                 if ((dmi.op == DMIOPW.RD) | (dmi.op == DMIOPW.WR)) begin
+                    dmi_req.op <= dmi.op;
+                    DMIState <= BUSY;
+                 end
+              end
+           end           
+           BUSY: begin
+              if (dmi_rsp.ack) begin
+                 dmi_next_reg.data <= dmi_rsp.data;
+                 dmi_next_reg.op <= dmi_rsp.op;
+                 DMIState <= IDLE;
+              end
+           end              
+           default: DMIState <= IDLE;
+         endcase
+      end
+   end // always_ff @ (posedge clk)
+   
+   assign dmi_next.addr = dmi_req.addr;
+   assign dmi_next.data = dmi_next_reg.data;
+   assign dmi_next.op = Sticky ? dmi_next_reg.op : 2'b11;   
 endmodule

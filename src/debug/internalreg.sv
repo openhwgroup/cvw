@@ -35,15 +35,14 @@ module internalreg #(parameter WIDTH = 8) (
     output logic [WIDTH-1:0] y,
     output logic             tdo
 );
-    // logic [WIDTH-1:0] shiftreg;
-    always @(posedge ClockDR) begin
-        if (~resetn) begin
-            y <= val;
-        end else begin
-            y <= ShiftDR ? {tdi, y[WIDTH-1:1]} : DataIn;
-        end
-    end
-
-    assign tdo = y[0];
-    
+   // logic [WIDTH-1:0] shiftreg;
+   always @(posedge ClockDR) begin
+      if (~resetn) begin
+         y <= val;
+      end else begin
+         y <= ShiftDR ? {tdi, y[WIDTH-1:1]} : DataIn;
+      end
+   end
+   
+   assign tdo = y[0];    
 endmodule
