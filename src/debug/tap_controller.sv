@@ -98,32 +98,31 @@ module tap_controller(
 	    endcase // case (State)
     end // always @ (posedge tck)
 
-    // The following assignments and flops are based completely on the
-    // IEEE 1149.1-2001 spec.
-    
-    // Instruction Register and Test Data Register should be clocked
-    // on their respective CAPTURE and SHIFT states
-    assign ClockIR = tck | ~(State == CAPTURE_IR) | ~(State == SHIFT_IR);
-    assign ClockDR = tck | ~(State == CAPTURE_DR) | ~(State == SHIFT_DR);
-
-    assign UpdateIR = tck & (State == UPDATE_IR);
-    assign UpdateDR = tck & (State == UPDATE_DR);
-
-    // This signal is present in the IEEE 1149.1-2001 spec, but is not
-    // present in Dr. Harris' implementation
-    assign select = State[3];
-
-    always @(negedge tck, negedge trst)
-      if (~trst) begin
-          ShiftIR <= 0;
-          ShiftDR <= 0;
-          reset <= 0;
-          enable <= 0;
-      end else begin
-          ShiftIR <= (State == SHIFT_IR);
-          ShiftDR <= (State == SHIFT_DR);
-          reset <= ~(State == TEST_LOGIC_RESET);
-          enable <= (State == SHIFT_IR) | (State == SHIFT_DR);
-      end // else: !if(~trst)
-endmodule // tap_controller
+   // The following assignments and flops are based completely on the
+   // IEEE 1149.1-2001 spec.
+   
+   // Instruction Register and Test Data Register should be clocked
+   // on their respective CAPTURE and SHIFT states
+   assign ClockIR = tck | ~(State == CAPTURE_IR) | ~(State == SHIFT_IR);
+   assign ClockDR = tck | ~(State == CAPTURE_DR) | ~(State == SHIFT_DR);
+   
+   assign UpdateIR = tck & (State == UPDATE_IR);
+   assign UpdateDR = tck & (State == UPDATE_DR);
+   
+   // This signal is present in the IEEE 1149.1-2001 spec (may not be needed)
+   assign select = State[3];
+   
+   always @(negedge tck, negedge trst)
+     if (~trst) begin
+        ShiftIR <= 0;
+        ShiftDR <= 0;
+        reset <= 0;
+        enable <= 0;
+     end else begin
+        ShiftIR <= (State == SHIFT_IR);
+        ShiftDR <= (State == SHIFT_DR);
+        reset <= ~(State == TEST_LOGIC_RESET);
+        enable <= (State == SHIFT_IR) | (State == SHIFT_DR);
+     end // else: !if(~trst)
+endmodule 
 
