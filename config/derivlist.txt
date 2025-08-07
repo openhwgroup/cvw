@@ -1451,6 +1451,7 @@ EXT_MEM_BASE        64'h90000000
 derive rv32breker rv32gc
 EXT_MEM_SUPPORTED   1
 EXT_MEM_BASE        64'h90000000
+ZICCLSM_SUPPORTED 1
 
 # New rv64gc config for cache simulation purposes
 # Ensures we do not override the rv64gc wkdir/logs/etc between cache and regular runs
