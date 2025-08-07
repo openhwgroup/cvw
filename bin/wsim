@@ -114,13 +114,13 @@ def prepSim(args, ElfFile):
         flagsList.append("--lockstep")
         prefix += lockstepSetup(args)
         defineList.append("+define+USE_IMPERAS_DV")
-    if args.config == "breker" and args.sim != "verilator": # Requires a license for the breker tool. See tests/breker/README.md for details
+    if "breker" in args.config and args.sim != "verilator": # Requires a license for the breker tool. See tests/breker/README.md for details
         ElfFileNoExtension = os.path.splitext(ElfFile)[0]
         flagsList.append("--breker")
         defineList.append("+define+USE_TREK_DV")
         argsList.append(f"+TREK_TBX_FILE={ElfFileNoExtension}.tbx")
         if "WALLY_UVM_PKG" not in os.environ:
-            prefix += f"WALLY_UVM_PKG={WALLY}/testbench/trek_files/uvm_output/trek_uvm_pkg.sv"
+            prefix += f"WALLY_UVM_PKG={WALLY}/testbench/trek_files/{'rv64' if args.config == 'rv64breker' else 'rv32'}/uvm_output/trek_uvm_pkg.sv"
     # Combine into a single string
     args.args += " " + " ".join(argsList)
     args.params += " " + " ".join(paramsList)
