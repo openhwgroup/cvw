@@ -39,28 +39,24 @@ module data_reg #(parameter INSTWIDTH = 5) (
     output dmi_t                dmi,                                        
     output logic                tdo
 );
-    logic tdo_idcode;
-    logic tdo_dtmcs;
-    logic tdo_dmi;
-    logic tdo_bypass;
-
-    // ID Code
-    idreg #(32) idcode(
-        tck, tdi, resetn,
-        32'h1002AC05,
-        ShiftDR, ClockDR,
-        tdo_idcode
-    );
-
-    // DTMCS
-    internalreg #(32) dtmcsreg(
-        tck, tdi, resetn,
-        dtmcs_next,
-        `DTMCS_RESET,
-        ShiftDR, ClockDR,
-        dtmcs,
-        tdo_dtmcs
-    );
+   logic 			tdo_idcode;
+   logic 			tdo_dtmcs;
+   logic 			tdo_dmi;
+   logic 			tdo_bypass;
+   
+   // ID Code
+   idreg #(32) idcode(tck, tdi, resetn,
+		      32'h1002AC05,
+		      ShiftDR, ClockDR,
+		      tdo_idcode);
+   
+   // DTMCS
+   internalreg #(32) dtmcsreg(tck, tdi, resetn,
+			      dtmcs_next,
+			      `DTMCS_RESET,
+			      ShiftDR, ClockDR,
+			      dtmcs,
+			      tdo_dtmcs);
 
     // DMI
     internalreg #(`DMI_WIDTH) dmireg(
@@ -88,5 +84,4 @@ module data_reg #(parameter INSTWIDTH = 5) (
             default        : tdo = tdo_bypass; // Bypass instruction 11111 and 00000
         endcase
     end
-
 endmodule

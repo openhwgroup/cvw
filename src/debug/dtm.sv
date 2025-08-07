@@ -95,39 +95,23 @@ module dtm(
     );
 
     // tdr = Test Data Register
-    data_reg tdr (
-        tck_sync, tdi_sync, resetn,
-        currentInst,
-        ShiftDR, ClockDR, UpdateDR,
-        dtmcs_next,
-        dtmcs,
-        dmi_next,
-        dmi,
-        tdo_dr
-    );
+    data_reg tdr (tck_sync, tdi_sync, resetn,
+		  currentInst,
+		  ShiftDR, ClockDR, UpdateDR,
+		  dtmcs_next,
+		  dtmcs,
+		  dmi_next,
+		  dmi,
+		  tdo_dr);
 
-    // Choose output of tdo 
-    always_comb begin
-        case(select)
-            1'b0: tdo_mux = tdo_dr;
-            1'b1: tdo_mux = tdo_ir;
-        endcase
-    end
+   // Choose output of tdo 
+   always_comb begin
+      case(select)
+        1'b0: tdo_mux = tdo_dr;
+        1'b1: tdo_mux = tdo_ir;
+      endcase
+   end
 
-    // Dr. Harris suggests the output is flopped.
-    // Otto's original implementation is combinational.
-    // NeoRV32 is flopped.
-    flop #(1) tdo_ff (~tck_sync, tdo_mux, tdo_delayed);
-    
-    // Tristate the output so it can be driven elsewhere. This is
-    // present in both Matthew Otto's implementation and Dr. Harris',
-    // but not NeoRV32.
-    assign tdo = enable ? tdo_delayed : 1'bz;
-
-    // Instruction Block
-    // - Instruction Register
-    // - Instruction Decoder?
-   
     always_ff @(posedge clk) begin
         if (rst) begin
             UpdateDRSamples <= 2'b0;
