@@ -64,13 +64,13 @@ module dtm(
     
     // Test Data Register Stuff
     dtmcs_t dtmcs, dtmcs_next;
-    dmi_t dmi_next, dmi_next_reg;
+    dmi_t dmi_next, dmi_next_reg, dmi;
     // logic [1:0] DMIStat;
 
     // Debug Module Interface Control
     logic UpdateDMI;
     logic UpdateDTMCS;
-    logic DMIHardReset;
+    logic DTMHardReset;
     logic DMIReset;
 
     logic Sticky;
@@ -140,8 +140,8 @@ module dtm(
 
     assign UpdateDRValid = (UpdateDRSamples == 2'b01);
     
-    assign UpdateDTMCS = UpdateDRValid & (currentInst == DTMINST.DTMCS);
-    assign UpdateDMI = UpdateDRValid & (currentInst == DTMINST.DMIREG);
+    assign UpdateDTMCS = UpdateDRValid & (currentInst == DTMCS);
+    assign UpdateDMI = UpdateDRValid & (currentInst == DMIREG);
     
 
     // DTMCS
@@ -164,7 +164,7 @@ module dtm(
         if (DMIReset == 1 | DTMHardReset == 1) begin
             Sticky <= 0;
         end else if ((DMIState == BUSY) & (UpdateDMI)) begin
-            Stick <= 1;
+            Sticky <= 1;
         end
     end
 
@@ -178,7 +178,7 @@ module dtm(
                     if (UpdateDMI) begin
                         dmi_req.addr <= dmi.addr;
                         dmi_req.data <= dmi.data;
-                        if ((dmi.op == DMIOPW.RD) | (dmi.op == DMIOPW.WR)) begin
+                        if ((dmi.op == RD) | (dmi.op == WR)) begin
                             dmi_req.op <= dmi.op;
                             DMIState <= BUSY;
                         end

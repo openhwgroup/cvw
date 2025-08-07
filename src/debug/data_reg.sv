@@ -66,7 +66,7 @@ module data_reg #(parameter INSTWIDTH = 5) (
     internalreg #(`DMI_WIDTH) dmireg(
         tck, tdi, resetn,
         dmi_next,
-        {(`DMI_WIDTH){0}},
+        {(34 + `ABITS){1'b0}},
         ShiftDR, ClockDR,
         dmi,
         tdo_dmi
@@ -81,10 +81,10 @@ module data_reg #(parameter INSTWIDTH = 5) (
     // Mux data register output based on current instruction
     always_comb begin
         case (currentInst)
-            DTMINST.IDCODE : tdo = tdo_idcode;
-            DTMINST.DTMCS  : tdo = tdo_dtmcs;
-            DTMINST.DMI    : tdo = tdo_dmi;
-            DTMINST.BYPASS : tdo = tdo_bypass;
+            IDCODE : tdo = tdo_idcode;
+            DTMCS  : tdo = tdo_dtmcs;
+            DMIREG    : tdo = tdo_dmi;
+            BYPASS : tdo = tdo_bypass;
             default        : tdo = tdo_bypass; // Bypass instruction 11111 and 00000
         endcase
     end

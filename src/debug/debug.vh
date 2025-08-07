@@ -10,11 +10,11 @@
 
 // DTM Control and Status register fields
 typedef struct packed {
-    logic [10:0] reserved0 = '0; // all 0s
-    logic [2:0] errinfo = 4;
-    logic       dtmhardreset = 0;
-    logic       dmireset = 0;
-    logic reserved1 = '0;       // single 0
+    logic [10:0] reserved0;   // all 0s
+    logic [2:0] errinfo;
+    logic       dtmhardreset;
+    logic       dmireset;
+    logic       reserved1;    // single 0
     logic [2:0] idle;
     logic [1:0] dmistat;
     logic [5:0] abits;
@@ -28,6 +28,13 @@ typedef struct packed {
     logic [1:0]  op;
 } dmi_t;
 
+// Debug Module Interface fields
+typedef struct packed {
+    logic [31:0] data;
+    logic [1:0] op;
+    logic ack;
+} dmi_rsp_t;
+
 // Currently implemented instructions for the Debug Transport Module.
 typedef enum logic [4:0] {
     BYPASS = 5'b11111,
@@ -36,8 +43,13 @@ typedef enum logic [4:0] {
     DMIREG = 5'b10001
 } DTMINST;
 
-`define DTMCS_RESET 32'h
-`define DMI_WIDTH `ABITS + 32 + 2
-`define DMI_RESET `DMI_WIDTH'h
+typedef enum logic [1:0] {
+    NOP = 2'b00,
+    RD  = 2'b01,
+    WR  = 2'b10
+} DMIOPW;
 
+`define DTMCS_RESET {11'b0, 3'd4, 0, 0, 0, 0, 0, `ABITS, 4'b1}
+`define DMI_WIDTH `ABITS + 32 + 2
+// `define DMI_RESET `DMI_WIDTH'h
 `endif
