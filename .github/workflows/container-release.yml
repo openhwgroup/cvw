@@ -1,5 +1,4 @@
-name: buildah-build-devel
-on:
+name: Container Release
 #   schedule:
 #     - cron: "19 19 * * 0" # 19:19 UTC every Sunday
   push:
@@ -11,7 +10,7 @@ on:
       publish:
         description: "Publish to the container registry"
         required: true
-        default: false
+        default: true
         type: boolean
 
 env:
