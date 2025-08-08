@@ -62,7 +62,7 @@ jobs:
         id: build-builder
         uses: redhat-actions/buildah-build@v2
         with:
-          context: ./containers
+          context: .
           image: wally
           tags: |
             ${{ env.CONTAINER_VERSION }}-builder
@@ -81,7 +81,7 @@ jobs:
         id: build-devel
         uses: redhat-actions/buildah-build@v2
         with:
-          context: ./containers
+          context: .
           image: wally
           tags: ${{ env.CONTAINER_VERSION }}-devel ${{ env.CONTAINER_VERSION }}-devel-${{ env.PODMAN_ARCH }}
           layers: true
@@ -91,23 +91,6 @@ jobs:
             CONTAINER_IMAGE_REGISTRY_REMOTE=${{ env.REGISTRY }}
           extra-args: |
             --target wally-devel
-          containerfiles: |
-            ./containers/wally-devel/Dockerfile
-
-      - name: Build runtime container image
-        id: build-runtime
-        uses: redhat-actions/buildah-build@v2
-        with:
-          context: ./containers
-          image: wally
-          tags: ${{ env.CONTAINER_VERSION }}-runtime ${{ env.CONTAINER_VERSION }}-runtime-${{ env.PODMAN_ARCH }}
-          layers: true
-          oci: true
-          build-args: |
-            CONTAINER_VERSION=${{ env.CONTAINER_VERSION }}
-            CONTAINER_IMAGE_REGISTRY_REMOTE=${{ env.REGISTRY }}
-          extra-args: |
-            --target wally-runtime
           containerfiles: |
             ./containers/wally-devel/Dockerfile
 
