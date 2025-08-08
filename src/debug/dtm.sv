@@ -184,6 +184,7 @@ module dtm(
               
                 BUSY: begin
                     if (dmi_rsp.ack) begin
+                        dmi_req.op <= NOP;
                         dmi_next_reg.data <= dmi_rsp.data;
                         dmi_next_reg.op <= dmi_rsp.op;
                         DMIState <= IDLE;
