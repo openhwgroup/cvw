@@ -1,0 +1,197 @@
+name: buildah-build-devel
+on:
+#   schedule:
+#     - cron: "19 19 * * 0" # 19:19 UTC every Sunday
+  push:
+    paths:
+      - containers/wally-devel/**
+      - .github/workflows/container-release.yml # Self-trigger
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish to the container registry"
+        required: true
+        default: false
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io/doganulus
+  IMAGE_NAME: wally
+  PODMAN_ARCH: amd64
+  PLATFORM: linux-amd64
+  CONTAINER_VERSION: latest
+  CONTAINER_LATEST_VERSION: latest
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  buildah-build:
+    name: Build container images
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.os }}
+      cancel-in-progress: true
+
+    steps:
+      - name: Install container tools
+        run: sudo apt-get install podman buildah jq
+
+      - name: Prepare environment variables
+        run: |
+          echo "PODMAN_ARCH=$(podman info --format='{{.Host.Arch}}')" >> $GITHUB_ENV
+          echo "PLATFORM=$(podman info --format='{{.Version.OsArch}}' | sed 's/\//-/g')" >> $GITHUB_ENV
+          echo "CONTAINER_VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the GitHub Container registry
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build builder container image
+        id: build-builder
+        uses: redhat-actions/buildah-build@v2
+        with:
+          context: ./containers
+          image: wally
+          tags: |
+            ${{ env.CONTAINER_VERSION }}-builder
+            ${{ env.CONTAINER_VERSION }}-builder-${{ env.PODMAN_ARCH }}
+          layers: true
+          oci: true
+          build-args: |
+            CONTAINER_VERSION=${{ env.CONTAINER_VERSION }}
+            CONTAINER_IMAGE_REGISTRY_REMOTE=${{ env.REGISTRY }}
+          extra-args: |
+            --target wally-builder
+          containerfiles: |
+            ./containers/wally-devel/Dockerfile
+
+      - name: Build devel container image
+        id: build-devel
+        uses: redhat-actions/buildah-build@v2
+        with:
+          context: ./containers
+          image: wally
+          tags: ${{ env.CONTAINER_VERSION }}-devel ${{ env.CONTAINER_VERSION }}-devel-${{ env.PODMAN_ARCH }}
+          layers: true
+          oci: true
+          build-args: |
+            CONTAINER_VERSION=${{ env.CONTAINER_VERSION }}
+            CONTAINER_IMAGE_REGISTRY_REMOTE=${{ env.REGISTRY }}
+          extra-args: |
+            --target wally-devel
+          containerfiles: |
+            ./containers/wally-devel/Dockerfile
+
+      - name: Build runtime container image
+        id: build-runtime
+        uses: redhat-actions/buildah-build@v2
+        with:
+          context: ./containers
+          image: wally
+          tags: ${{ env.CONTAINER_VERSION }}-runtime ${{ env.CONTAINER_VERSION }}-runtime-${{ env.PODMAN_ARCH }}
+          layers: true
+          oci: true
+          build-args: |
+            CONTAINER_VERSION=${{ env.CONTAINER_VERSION }}
+            CONTAINER_IMAGE_REGISTRY_REMOTE=${{ env.REGISTRY }}
+          extra-args: |
+            --target wally-runtime
+          containerfiles: |
+            ./containers/wally-devel/Dockerfile
+
+      - name: Push to GitHub Container Repository
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.publish
+        id: push-builder-ghcr
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          image: ${{ steps.build-builder.outputs.image }}
+          tags: ${{ env.CONTAINER_VERSION }}-builder-${{ env.PODMAN_ARCH }}
+          digestfile: ${{ runner.temp }}/digest-wally-builder-${{ env.CONTAINER_VERSION }}-${{ env.PLATFORM }}
+
+      - name: Push to GitHub Container Repository
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.publish
+        id: push-devel-ghcr
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          image: ${{ steps.build-devel.outputs.image }}
+          tags: ${{ env.CONTAINER_VERSION }}-devel-${{ env.PODMAN_ARCH }}
+          digestfile: ${{ runner.temp }}/digest-wally-devel-${{ env.CONTAINER_VERSION }}-${{ env.PLATFORM }}
+
+      - name: Upload digests
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: digest-wally-${{ env.CONTAINER_VERSION }}-${{ env.PLATFORM }}
+          path: ${{ runner.temp }}/digest-*
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0 # no compression
+
+  buildah-merge:
+    name: Merge container images
+    runs-on: ubuntu-24.04
+    needs: buildah-build
+    if: always() && github.event_name == 'workflow_dispatch' && github.event.inputs.publish
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digest-*
+          merge-multiple: true
+
+      - name: Log in to the GitHub Container registry
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare environment variables
+        run: |
+          if [ "${{ env.CONTAINER_VERSION }}" == "latest" ]; then
+            echo "CONTAINER_VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
+          fi
+          echo "CONTAINER_LATEST_VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
+
+      - name: Create and push manifest list for wally-builder
+        run: |
+          MANIFEST=wally-builder
+          FULL_IMAGE_NAME=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          buildah manifest create $MANIFEST
+          for digest in ${{ runner.temp }}/digests/digest-wally-builder-*; do
+            echo "Adding $(cat $digest)"
+            buildah manifest add $MANIFEST $FULL_IMAGE_NAME@$(cat $digest)
+          done
+          buildah manifest push --all $MANIFEST docker://$FULL_IMAGE_NAME:${{ env.CONTAINER_VERSION }}-builder
+          if [ "${{ env.CONTAINER_VERSION }}" == "${{ env.CONTAINER_LATEST_VERSION }}" ]; then
+            buildah manifest push --all $MANIFEST docker://$FULL_IMAGE_NAME:latest-builder
+          fi
+
+      - name: Create and push manifest list for wally-devel
+        run: |
+          MANIFEST=wally-devel
+          FULL_IMAGE_NAME=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          buildah manifest create $MANIFEST
+          for digest in ${{ runner.temp }}/digests/digest-wally-devel-*; do
+            echo "Adding $(cat $digest)"
+            buildah manifest add $MANIFEST $FULL_IMAGE_NAME@$(cat $digest)
+          done
+          buildah manifest push --all $MANIFEST docker://$FULL_IMAGE_NAME:${{ env.CONTAINER_VERSION }}-devel
+          if [ "${{ env.CONTAINER_VERSION }}" == "${{ env.CONTAINER_LATEST_VERSION }}" ]; then
+            buildah manifest push --all $MANIFEST docker://$FULL_IMAGE_NAME:latest-devel
+          fi
