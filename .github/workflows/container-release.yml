@@ -113,7 +113,7 @@ jobs:
           digestfile: ${{ runner.temp }}/digest-wally-devel-${{ env.CONTAINER_VERSION }}-${{ env.PLATFORM }}
 
       - name: Upload digests
-        if: github.ref == 'refs/heads/main'
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.publish
         uses: actions/upload-artifact@v4
         with:
           name: digest-wally-${{ env.CONTAINER_VERSION }}-${{ env.PLATFORM }}

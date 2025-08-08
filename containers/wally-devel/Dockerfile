@@ -28,8 +28,7 @@ RUN --mount=type=bind,source=./bin,target=/wally/bin \
     bash "$WALLY/bin/installation/qemu-install.sh" --clean && \
     bash "$WALLY/bin/installation/spike-install.sh" --clean && \
     # bash "$WALLY/bin/installation/sail-install.sh" --clean && \
-    bash "$WALLY/bin/installation/verilator-install.sh" --clean && \
-    cd .. && rm -rf cvw
+    bash "$WALLY/bin/installation/verilator-install.sh" --clean
 
 FROM wally-builder as wally-devel
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
