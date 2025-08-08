@@ -1,5 +1,5 @@
 ARG CONTAINER_VERSION=latest
-ARG CONTAINER_BASE_IMAGE=docker.io/library/ubuntu:24.04
+ARG CONTAINER_BASE_IMAGE=docker.io/library/debian:12
 
 ARG CONTAINER_IMAGE_REGISTRY=localhost
 ARG CONTAINER_IMAGE_REGISTRY_REMOTE=${CONTAINER_IMAGE_REGISTRY}
@@ -12,11 +12,24 @@ ARG CONTAINER_DEVEL_IMAGE=${CONTAINER_IMAGE_NAME_FULL}:${CONTAINER_IMAGE_VERSION
 FROM ${CONTAINER_BASE_IMAGE} as wally-builder
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
-RUN --mount=type=bind,source=./bin,target=/cbuild/bin \
-    bash /cbuild/bin/wally-package-install.sh
+RUN --mount=type=bind,source=./bin,target=/wally/bin \
+    bash /wally/bin/wally-package-install.sh && \
+    apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
-RUN --mount=type=bind,source=./bin,target=/cbuild/bin \
-    bash /cbuild/bin/wally-tool-chain-install.sh
+RUN --mount=type=bind,source=./bin,target=/wally/bin \
+    export WALLY=/wally && \
+    export RISCV=/opt/riscv && \
+    bash "$WALLY/bin/installation/riscv-gnu-toolchain-install.sh" --clean
+
+RUN --mount=type=bind,source=./bin,target=/wally/bin \
+    export WALLY=/wally && \
+    export RISCV=/opt/riscv && \
+    bash "$WALLY/bin/installation/elf2hex-install.sh" --clean && \
+    bash "$WALLY/bin/installation/qemu-install.sh" --clean && \
+    bash "$WALLY/bin/installation/spike-install.sh" --clean && \
+    # bash "$WALLY/bin/installation/sail-install.sh" --clean && \
+    bash "$WALLY/bin/installation/verilator-install.sh" --clean && \
+    cd .. && rm -rf cvw
 
 FROM wally-builder as wally-devel
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
