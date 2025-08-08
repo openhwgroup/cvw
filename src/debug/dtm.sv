@@ -144,11 +144,20 @@ module dtm(
         end
     end // always_ff @ (posedge clk)
 
-    assign dtmcs_next = {11'b0, 3'd4, 4'b0, dmi_next.op, `ABITS, 4'b1};
+    //assign dtmcs_next = {11'b0, 3'd4, 4'b0, dmi_next.op, `ABITS, 4'b1};
+    assign dtmcs_next.reserved0 = 11'b0;
+    assign dtmcs_next.errinfo = 3'd4;
+    assign dtmcs_next.dtmhardreset = DTMHardReset;
+    assign dtmcs_next.dmireset = DMIReset;
+    assign dtmcs_next.reserved1 = 1'b0;
+    assign dtmcs_next.idle = 3'd0;
+    assign dtmcs_next.dmistat = dmi_next.op;
+    assign dtmcs_next.abits = `ABITS;
+    assign dtmcs_next.version = 4'b1;
     
     // Sticky error
     always_ff @(posedge clk) begin
-        if (DMIReset == 1 | DTMHardReset == 1) begin
+        if (rst | ~resetn | DMIReset == 1 | DTMHardReset == 1) begin
             Sticky <= 0;
         end else if ((DMIState == BUSY) & (UpdateDMI)) begin
             Sticky <= 1;
@@ -158,6 +167,7 @@ module dtm(
     // DMI
     always_ff @(posedge clk) begin
         if (rst | ~resetn | DTMHardReset) begin
+            dmi_next_reg.op <= NOP;
             DMIState <= IDLE;
         end else begin
             case(DMIState)
@@ -187,6 +197,6 @@ module dtm(
 
     assign dmi_next.addr = dmi_req.addr;
     assign dmi_next.data = dmi_next_reg.data;
-    assign dmi_next.op = Sticky ? dmi_next_reg.op : 2'b11;
+    assign dmi_next.op = Sticky ? 2'b11 : dmi_next_reg.op;
     
 endmodule
