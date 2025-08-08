@@ -1,7 +1,5 @@
 name: Container Release
 on:
-#   schedule:
-#     - cron: "19 19 * * 0" # 19:19 UTC every Sunday
   push:
     paths:
       - containers/wally-devel/**
@@ -10,8 +8,8 @@ on:
     inputs:
       publish:
         description: "Publish to the container registry"
-        required: true
-        default: false
+        required: false
+        default: true
         type: boolean
 
 env:
