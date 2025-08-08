@@ -81,7 +81,7 @@ module dtm(
     // recommends doing it, but the debug spec and neorv32 seem to
     // imply it's ok to do so.
     tap_controller controller(
-        tck_sync, rst, tms_sync, tdi_sync, tdo,
+        tck_sync, rst, tms_sync, tdi_sync,
         resetn, enable, select,
         ShiftIR, ClockIR, UpdateIR,
         ShiftDR, ClockDR, UpdateDR
@@ -111,6 +111,9 @@ module dtm(
         1'b1: tdo_mux = tdo_ir;
       endcase
    end
+
+    flop #(1) tdo_ff (~tck_sync, tdo_mux, tdo_delayed);
+    assign tdo = enable ? tdo_delayed : 1'bz;
 
     always_ff @(posedge clk) begin
         if (rst) begin

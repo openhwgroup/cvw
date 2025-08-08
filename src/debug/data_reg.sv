@@ -45,13 +45,13 @@ module data_reg #(parameter INSTWIDTH = 5) (
    logic 			tdo_bypass;
    
    // ID Code
-   idreg #(32) idcode(tck, tdi, resetn,
+   idreg #(32) idcode(tck, tdi, ~resetn,
 		      32'h1002AC05,
 		      ShiftDR, ClockDR,
 		      tdo_idcode);
    
    // DTMCS
-   internalreg #(32) dtmcsreg(tck, tdi, resetn,
+   internalreg #(32) dtmcsreg(tck, tdi, ~resetn,
 			      dtmcs_next,
 			      `DTMCS_RESET,
 			      ShiftDR, ClockDR,
@@ -60,7 +60,7 @@ module data_reg #(parameter INSTWIDTH = 5) (
 
     // DMI
     internalreg #(`DMI_WIDTH) dmireg(
-        tck, tdi, resetn,
+        tck, tdi, ~resetn,
         dmi_next,
         {(34 + `ABITS){1'b0}},
         ShiftDR, ClockDR,

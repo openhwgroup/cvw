@@ -27,7 +27,6 @@
 
 module tap_controller(
     input  logic tck, trst, tms, tdi,
-    output logic tdo,
     output logic reset, enable, select,
     output logic ShiftIR, ClockIR, UpdateIR,
     output logic ShiftDR, ClockDR, UpdateDR
@@ -78,7 +77,7 @@ module tap_controller(
    statetype State;   
 
     always @(posedge tck) begin
-        if (~trst) State <= TEST_LOGIC_RESET; 
+        if (trst) State <= TEST_LOGIC_RESET; 
         else case (State)
 	        TEST_LOGIC_RESET : State <= tms ? TEST_LOGIC_RESET : RUN_TEST_IDLE;
 	        RUN_TEST_IDLE    : State <= tms ? SELECT_DR : RUN_TEST_IDLE;
@@ -96,6 +95,7 @@ module tap_controller(
 	        PAUSE_IR         : State <= tms ? EXIT2_IR : PAUSE_IR;
 	        EXIT2_IR         : State <= tms ? UPDATE_IR : SHIFT_IR;
 	        UPDATE_IR        : State <= tms ? SELECT_DR : RUN_TEST_IDLE;
+            default          : State <= TEST_LOGIC_RESET;
 	    endcase 
     end 
 
@@ -104,8 +104,8 @@ module tap_controller(
    
    // Instruction Register and Test Data Register should be clocked
    // on their respective CAPTURE and SHIFT states
-   assign ClockIR = tck | ~(State == CAPTURE_IR) | ~(State == SHIFT_IR);
-   assign ClockDR = tck | ~(State == CAPTURE_DR) | ~(State == SHIFT_DR);
+   assign ClockIR = tck | ~((State == CAPTURE_IR) | (State == SHIFT_IR));
+   assign ClockDR = tck | ~((State == CAPTURE_DR) | (State == SHIFT_DR));
    
    assign UpdateIR = tck & (State == UPDATE_IR);
    assign UpdateDR = tck & (State == UPDATE_DR);
@@ -114,7 +114,7 @@ module tap_controller(
    assign select = State[3];
    
    always @(negedge tck, negedge trst)
-     if (~trst) begin
+     if (trst) begin
         ShiftIR <= 0;
         ShiftDR <= 0;
         reset <= 0;
