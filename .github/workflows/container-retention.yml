@@ -1,0 +1,24 @@
+name: wally-image-retention
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 12 * * 0"
+
+permissions:
+  contents: read
+  packages: write
+  
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    name: Github Container Registry Retention Policy
+    steps:
+      - name: Clean up untagged images
+        uses: snok/container-retention-policy@v3.0.0
+        with:
+          account: openhwgroup
+          token: ${{ secrets.GITHUB_TOKEN }}
+          image-names: "wally"
+          tag-selection: untagged
+          cut-off: 1h
+          dry-run: false
