@@ -39,6 +39,7 @@ def parseArgs():
     parser.add_argument("--params", "-p", help="Optional top-level parameter overrides of the form param=value", default="")
     parser.add_argument("--define", "-d", help="Optional define macros passed to simulator", default="")
     parser.add_argument("--lockstep", "-l", help="Run ImperasDV lock, step, and compare.", action="store_true")
+    parser.add_argument("--breker", "-b", help="Run Breker test", action="store_true")
     #parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true") # GUI not yet implemented
     return parser.parse_args()
 
@@ -67,6 +68,15 @@ def processArgs(wkdir, args):
                                 "$IMPERAS_HOME/ImpPublic/source/host/rvvi/*.sv",
                                 "$IMPERAS_HOME/ImpProprietary/source/host/idv/*.sv"])
         simvOptions.append("-sv_lib $IMPERAS_HOME/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model")
+    if args.breker:
+        BREKER_HOME = os.environ.get("BREKER_HOME")
+        WALLY_UVM_PKG = os.environ.get('WALLY_UVM_PKG')
+        compileOptions.extend([f"+incdir+{WALLY}/testbench/trek_files",
+                               f"+incdir+{os.path.dirname(WALLY_UVM_PKG)}",
+                                " -ntb_opts uvm",
+                               f"{WALLY_UVM_PKG}",
+                               "-top trek_uvm",])
+        simvOptions.append(f"-sv_lib {BREKER_HOME}/linux64/lib/libtrek")
     # if args.ccov:
     #     compileOptions.extend(["-cm line+cond+branch+fsm+tgl", f"-cm_log {wkdir}/coverage.log", f"-cm_dir {wkdir}/coverage"])
     if args.params:
