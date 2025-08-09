@@ -34,7 +34,7 @@ tests/fp/combined_IF_vectors/IF_vectors/*.tv
 tests/custom/*/*/
 tests/custom/*/*/*.memfile
 sim/tests/riscvdv
-testbench/trek_files/uvm_output
+testbench/trek_files/*/uvm_output
 
 # Linux
 linux/buildroot
