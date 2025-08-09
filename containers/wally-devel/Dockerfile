@@ -31,21 +31,11 @@ RUN --mount=type=bind,source=./bin,target=${WALLY_SOURCE_DIR}/bin \
     --mount=type=bind,source=./linux,target=${WALLY_SOURCE_DIR}/linux \
     bash "${WALLY_SOURCE_DIR}/bin/wally-tool-chain-install.sh" --clean --no-buildroot
 
+COPY --chmod=755 ./containers/wally-devel/container-setup.sh /etc/wally/container-setup.sh
+
+ENV WALLY_CORE_DUMP_SIZE=300000
+ENV WALLY_PYTHON_VENV_DIR=${RISCV_INSTALL_PREFIX}/riscv-python
+ENV WALLY_PYTHON_EXECUTABLE=${WALLY_PYTHON_VENV_DIR}/bin/python
+
 FROM ${WALLY_CONTAINER_BUILDER_IMAGE} as wally-devel
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
-
-ENV PATH="${RISCV_INSTALL_PREFIX}/bin${PATH:+:${PATH}}"
-ENV CPATH="${RISCV_INSTALL_PREFIX}/include${CPATH:+:${CPATH}}"
-ENV LD_LIBRARY_PATH="\
-        ${RISCV_INSTALL_PREFIX}/lib\
-        :${RISCV_INSTALL_PREFIX}/lib64\
-        ${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
-ENV PKG_CONFIG_PATH="\
-        ${RISCV_INSTALL_PREFIX}/lib/pkgconfig\
-        :${RISCV_INSTALL_PREFIX}/lib64/pkgconfig\
-        :${RISCV_INSTALL_PREFIX}/share/pkgconfig\
-        ${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}}"
-
-RUN ${WALLY_PYTHON_EXECUTABLE} -m pip install --no-cache-dir \
-        reuse \
-        pre-commit 
