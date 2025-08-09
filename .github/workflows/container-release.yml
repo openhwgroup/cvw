@@ -2,6 +2,10 @@ name: Container Release
 on:
   push:
     paths:
+      - bin/wally-tool-chain-install.sh
+      - bin/wally-environment-check.sh
+      - bin/wally-package-install.sh
+      - bin/installation/**
       - containers/wally-devel/**
       - .github/workflows/container-release.yml # Self-trigger
   workflow_dispatch:
@@ -9,13 +13,13 @@ on:
       publish:
         description: "Publish to the container registry"
         required: false
-        default: true
+        default: false
         type: boolean
 
 env:
   REGISTRY: ghcr.io/doganulus
   IMAGE_NAME: wally
-  PODMAN_ARCH: amd64
+  HOSTARCH: amd64
   PLATFORM: linux-amd64
   CONTAINER_VERSION: latest
   CONTAINER_LATEST_VERSION: latest
@@ -42,7 +46,7 @@ jobs:
 
       - name: Prepare environment variables
         run: |
-          echo "PODMAN_ARCH=$(podman info --format='{{.Host.Arch}}')" >> $GITHUB_ENV
+          echo "HOSTARCH=$(podman info --format='{{.Host.Arch}}')" >> $GITHUB_ENV
           echo "PLATFORM=$(podman info --format='{{.Version.OsArch}}' | sed 's/\//-/g')" >> $GITHUB_ENV
           echo "CONTAINER_VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
 
@@ -64,7 +68,7 @@ jobs:
           image: wally
           tags: |
             ${{ env.CONTAINER_VERSION }}-builder
-            ${{ env.CONTAINER_VERSION }}-builder-${{ env.PODMAN_ARCH }}
+            ${{ env.CONTAINER_VERSION }}-builder-${{ env.HOSTARCH }}
           layers: true
           oci: true
           build-args: |
@@ -81,7 +85,7 @@ jobs:
         with:
           context: .
           image: wally
-          tags: ${{ env.CONTAINER_VERSION }}-devel ${{ env.CONTAINER_VERSION }}-devel-${{ env.PODMAN_ARCH }}
+          tags: ${{ env.CONTAINER_VERSION }}-devel ${{ env.CONTAINER_VERSION }}-devel-${{ env.HOSTARCH }}
           layers: true
           oci: true
           build-args: |
@@ -99,7 +103,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           image: ${{ steps.build-builder.outputs.image }}
-          tags: ${{ env.CONTAINER_VERSION }}-builder-${{ env.PODMAN_ARCH }}
+          tags: ${{ env.CONTAINER_VERSION }}-builder-${{ env.HOSTARCH }}
           digestfile: ${{ runner.temp }}/digest-wally-builder-${{ env.CONTAINER_VERSION }}-${{ env.PLATFORM }}
 
       - name: Push to GitHub Container Repository
@@ -109,7 +113,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           image: ${{ steps.build-devel.outputs.image }}
-          tags: ${{ env.CONTAINER_VERSION }}-devel-${{ env.PODMAN_ARCH }}
+          tags: ${{ env.CONTAINER_VERSION }}-devel-${{ env.HOSTARCH }}
           digestfile: ${{ runner.temp }}/digest-wally-devel-${{ env.CONTAINER_VERSION }}-${{ env.PLATFORM }}
 
       - name: Upload digests
