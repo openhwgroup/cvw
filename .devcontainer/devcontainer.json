@@ -1,0 +1,11 @@
+{
+  "name": "Dev Container",
+  "image":  "ghcr.io/openhwgroup/wally:latest",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        /* Add some extensions here */
+      ]
+    }
+  }
+}
