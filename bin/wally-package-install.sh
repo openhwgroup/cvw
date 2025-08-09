@@ -42,7 +42,7 @@ fi
 
 # Packages are grouped by which tool requires them. If multiple tools need a package, it is included in each tool's list.
 # Packages that are constant across distros
-GENERAL_PACKAGES+=(rsync git curl wget tar unzip gzip bzip2 gcc make dialog mutt) # TODO: check what needs dialog
+GENERAL_PACKAGES+=(rsync git wget tar unzip gzip bzip2 gcc make dialog mutt) # TODO: check what needs dialog
 GNU_PACKAGES+=(autoconf automake gawk bison flex texinfo gperf libtool patchutils bc)
 SAIL_PACKAGES+=(cmake)
 VERILATOR_PACKAGES+=(autoconf flex bison help2man perl ccache numactl gtkwave) # gtkwave is not needed for verilator, but useful for viewing waveforms
@@ -87,7 +87,7 @@ case "$FAMILY" in
         fi
         PACKAGE_MANAGER="DEBIAN_FRONTEND=noninteractive apt-get -y"
         UPDATE_COMMAND="$PACKAGE_MANAGER update && $PACKAGE_MANAGER upgrade --with-new-pkgs"
-        GENERAL_PACKAGES+=("$PYTHON_VERSION" python3-pip "$PYTHON_VERSION"-venv pkg-config build-essential g++ ssmtp)
+        GENERAL_PACKAGES+=(curl "$PYTHON_VERSION" python3-pip "$PYTHON_VERSION"-venv pkg-config build-essential g++ ssmtp)
         GNU_PACKAGES+=(autotools-dev libmpc-dev libmpfr-dev libgmp-dev zlib1g-dev libexpat1-dev libglib2.0-dev libslirp-dev)
         QEMU_PACKAGES+=(libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev ninja-build)
         SPIKE_PACKAGES+=(device-tree-compiler libboost-regex-dev libboost-system-dev)
@@ -101,7 +101,7 @@ case "$FAMILY" in
         PYTHON_VERSION_PACKAGE=python312
         PACKAGE_MANAGER="zypper -n"
         UPDATE_COMMAND="$PACKAGE_MANAGER update"
-        GENERAL_PACKAGES+=("$PYTHON_VERSION_PACKAGE" "$PYTHON_VERSION_PACKAGE"-pip pkg-config)
+        GENERAL_PACKAGES+=(curl "$PYTHON_VERSION_PACKAGE" "$PYTHON_VERSION_PACKAGE"-pip pkg-config)
         GNU_PACKAGES+=(mpc-devel mpfr-devel gmp-devel zlib-devel libexpat-devel glib2-devel libslirp-devel)
         QEMU_PACKAGES+=(glib2-devel libfdt-devel libpixman-1-0-devel zlib-devel ninja)
         SPIKE_PACKAGES+=(dtc libboost_regex1_75_0-devel libboost_system1_75_0-devel)
