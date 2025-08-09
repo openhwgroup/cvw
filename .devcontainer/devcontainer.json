@@ -1,11 +1,13 @@
 {
-  "name": "Dev Container",
-  "image":  "ghcr.io/openhwgroup/wally:latest",
+  "name": "Wally",
+  "image":  "ghcr.io/openhwgroup/wally:latest-devel",
+  "containerEnv": {
+    "WALLY": "${containerWorkspaceFolder}"
+  },
   "customizations": {
     "vscode": {
-      "extensions": [
-        /* Add some extensions here */
-      ]
+      "extensions": []
     }
-  }
+  },
+  "postStartCommand": "/etc/wally/container-setup.sh"
 }
