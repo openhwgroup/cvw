@@ -109,8 +109,6 @@ jobs:
               apt-get install -y git
             elif [ ${{ matrix.imageFamily }} == "redhat" ]; then
               dnf install -y git
-              # Red Hat images come with curl-minimal, which breaks the installation script. This replaces it with regular curl.
-              dnf install curl -y --allowerasing || true
             elif [ ${{ matrix.imageFamily }} == "suse" ]; then
               zypper install -y git
             fi

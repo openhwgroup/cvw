@@ -18,20 +18,23 @@
 // array that we can read and write.
 //
 function automatic void trek_backdoor_read64(
-    input longint unsigned address,
-   output longint unsigned data,
-    input     int unsigned debug = 1);
+    input  longint unsigned address,
+    output longint unsigned data,
+    input      int unsigned debug = 1);
 
-  //bit [15:0] offset = (address-`RAM_BASE_ADDR) >> 2;
   bit [31:0] offset = ((address-`RAM_BASE_ADDR)/(testbench.P.XLEN/8));
   if (address[1:0] != 2'b00) begin: misaligned
     $display("%t trek_backdoor_read64: Misaligned address", $time);
     $finish();
   end
-  
-  //data[63:32] = `RAM_PATH[offset + 0];
-  //data[31: 0] = `RAM_PATH[offset + 1];
-  data[63:0] = `RAM_PATH.RAM[offset + 0];
+
+  if (testbench.P.XLEN == 32) begin
+    data[31: 0] = `RAM_PATH.RAM[offset + 0];
+    data[63:32] = `RAM_PATH.RAM[offset + 1];
+  end else begin
+    data[63:0] = `RAM_PATH.RAM[offset + 0];
+  end
+
 if (data != 0)
   $display("%t trek_backdoor_read64: Read 64'h%016h from address 64'h%016h",
            $time, data, address);
@@ -50,11 +53,14 @@ function automatic void trek_backdoor_write64(
     $display("%t trek_backdoor_write64: Misaligned address", $time);
     $finish();
   end
-  //`RAM_PATH[offset + 0] = data[63:32];
-  //`RAM_PATH[offset + 1] = data[31: 0];
-  `RAM_PATH.RAM[offset + 0] = data[63:0];
-  //$display("%t trek_backdoor_write64: Wrote 64'h%016h to address 64'h%016h",
-           //$time, data, address);
+  if (testbench.P.XLEN == 32) begin
+    `RAM_PATH.RAM[offset + 0] = data[31: 0];
+    `RAM_PATH.RAM[offset + 1] = data[63:32];
+  end else begin
+    `RAM_PATH.RAM[offset + 0] = data[63:0];
+  end
+  // $display("%t trek_backdoor_write64: Wrote 64'h%016h to address 64'h%016h",
+  //          $time, data, address);
 endfunction: trek_backdoor_write64
 
 

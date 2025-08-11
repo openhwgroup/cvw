@@ -1,3 +1,7 @@
+# Makefile to create .memfile, .objdump.addr, and .objdump.lab from an ELF
+# jcarlin@hmc.edu 7 Jul 2025
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
 WORKDIR	?= $(WALLY)/tests/riscof/work/
 
 ELFFILES	?= $(shell find $(WORKDIR) -type f -regex ".*\.elf")
@@ -8,15 +12,10 @@ ADDRFILES ?= $(OBJDUMPFILES:.objdump=.objdump.addr)
 .PHONY: wally-sim-files
 wally-sim-files: $(MEMFILES) $(ADDRFILES)
 
-# notes to self on how this works.
-# The find command locates all of the *.elf files in directory DIR1.  A list of .memfiles and
-# .addr files are generated from the .elf.  These are used as targets.
-# % is a wildcard in a make target which is then referenced as % in the depenecies and $*
-# in the recipe.
-# because elf2hex requires a bit width we use findstring to figure out if the compiled directory
-# is XLEN=64 or 32. This is hacky and will likely break in the future.
-# the .addr is a separate target so make can split into more jobs and more parallelism.
-%.elf.memfile: BITWIDTH ?= $(if $(findstring rv64,$*),64,32)
+BITWIDTH = $(if $(findstring ELF32, $(shell riscv64-unknown-elf-readelf -h $<)),32, \
+	         $(if $(findstring ELF64, $(shell riscv64-unknown-elf-readelf -h $<)),64, \
+					 $(error "Unknown bit width (XLEN) for $<")))
+
 %.elf.memfile: %.elf
 	riscv64-unknown-elf-elf2hex --bit-width $(BITWIDTH) --input $< --output $@
 

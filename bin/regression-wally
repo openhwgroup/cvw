@@ -512,9 +512,9 @@ def selectTests(args, sims, coverStr):
         addTests(bpredtests, defaultsim, coverStr, configs)
     # run Breker tests (requires a license for the breker tool)
     if args.breker:
-        addTestsByDir(WALLY+"/tests/breker/work", "breker", "questa", coverStr, configs, brekerMode=1)
+        addTestsByDir(WALLY+"/tests/breker/work", "rv64breker", "questa", coverStr, configs, brekerMode=1)
     # standard tests
-    if not(args.testfloat or args.ccov or args.fcov or args.fcov_act or args.branch or args.breker):
+    if not(args.testfloat or args.ccov or args.fcov or args.fcov_act or args.cache or args.branch or args.benchmark or args.breker):
         for sim in sims:
             if not (args.buildroot and sim == lockstepsim):  # skip short buildroot sim if running long one
                 addTests(tests_buildrootshort, sim, coverStr, configs)

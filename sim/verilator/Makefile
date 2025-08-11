@@ -3,14 +3,13 @@
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 SHELL := /bin/bash
-.PHONY: profile run questa clean
+.PHONY: profile run clean
 
 # verilator configurations
 OPT=--assert
 PARAMS?=--no-trace-top
 NONPROF?=--stats
 VERILATOR_DIR=${WALLY}/sim/verilator
-SOURCE=${WALLY}/config/shared/*.vh ${WALLY}/config/${WALLYCONF} ${WALLY}/config/deriv/${WALLYCONF} ${WALLY}/src/cvw.sv ${WALLY}/testbench/*.sv ${WALLY}/testbench/common/*.sv ${WALLY}/src/*/*.sv ${WALLY}/src/*/*/*.sv
 PLUS_ARGS=
 PARAM_ARGS=
 DEFINE_ARGS=

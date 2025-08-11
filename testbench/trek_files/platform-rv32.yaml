@@ -5,6 +5,20 @@ trek:
     processors:
       doc: >-
         Information about available processors.
+      processor_arch:
+        value: riscv32
+        doc: >-
+          What processor architecture is being tested.
+          Options are:
+            - riscv64
+            - riscv32
+      processor_endianness:
+        value: little
+        doc: >-
+          Endianness of processor.
+          Options are:
+            - little
+            - big
       processor_count:
         value: 1
         doc: >-

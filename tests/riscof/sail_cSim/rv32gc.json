@@ -1,5 +1,7 @@
 {
+  "$schema": "/opt/riscv/share/sail-riscv/sail_riscv_config_schema.json",
   "base": {
+    "xlen": 32,
     "writable_misa": false,
     "writable_fiom": true,
     "writable_hpm_counters": {
@@ -11,7 +13,10 @@
   "memory": {
     "pmp": {
       "grain": 0,
-      "count": 16
+      "count": 16,
+      "tor_supported": true,
+      "na4_supported": true,
+      "napot_supported": true
     },
     "misaligned": {
       "supported": false,
@@ -53,7 +58,10 @@
     "A": {
       "supported": true
     },
-    "FD": {
+    "F": {
+      "supported": true
+    },
+    "D": {
       "supported": true
     },
     "V": {
@@ -102,6 +110,9 @@
       "supported": false
     },
     "Zabha": {
+      "supported": false
+    },
+    "Zacas": {
       "supported": false
     },
     "Zalrsc": {
@@ -174,13 +185,20 @@
       "supported": true
     },
     "Zkr": {
-      "supported": false
+      "supported": false,
+      "sseed_reset_value": false,
+      "useed_reset_value": false,
+      "sseed_read_only_zero": false,
+      "useed_read_only_zero": false
     },
     "Zksed": {
       "supported": false
     },
     "Zksh": {
       "supported": false
+    },
+    "Zkt": {
+      "supported": true
     },
     "Zhinx": {
       "supported": false
@@ -209,7 +227,13 @@
     "Zvknhb": {
       "supported": false
     },
+    "Zvksed": {
+      "supported": false
+    },
     "Zvksh": {
+      "supported": true
+    },
+    "Zvkt": {
       "supported": false
     },
     "Sscofpmf": {
