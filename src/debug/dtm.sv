@@ -89,11 +89,14 @@ module dtm
    // Temporarily tying trstn to rstn. This isn't the way JTAG
    // recommends doing it, but the debug spec and neorv32 seem to
    // imply it's ok to do so.
-   tap_controller controller(tck_sync, rst, tms_sync, tdi_sync,
-			     resetn, enable, select,
-			     ShiftIR, ClockIR, UpdateIR,
-			     ShiftDR, ClockDR, UpdateDR);
 
+   // think maybe we should not do it this way despite debug spec (jes)
+   
+   tap_controller controller (tck_sync, rst, tms_sync, tdi_sync,
+			      resetn, enable, select,
+			      ShiftIR, ClockIR, UpdateIR,
+			      ShiftDR, ClockDR, UpdateDR);
+   
     inst_reg instructionreg (tdi_sync, resetn,
 			     ShiftIR, ClockIR, UpdateIR,
 			     tdo_ir, currentInst);
