@@ -25,12 +25,20 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module tap_controller(
-    input  logic tck, trst, tms, tdi,
-    output logic reset, enable, select,
-    output logic ShiftIR, ClockIR, UpdateIR,
-    output logic ShiftDR, ClockDR, UpdateDR
-);
+module tap_controller
+  (input  logic tck, 
+   input logic 	trst, 
+   input logic 	tms, 
+   input logic 	tdi,
+   output logic reset, 
+   output logic enable, 
+   output logic select,
+   output logic ShiftIR, 
+   output logic ClockIR, 
+   output logic UpdateIR,
+   output logic ShiftDR, 
+   output logic ClockDR, 
+   output logic UpdateDR);
 
 
    // -----------------------------------------------------------------------------
@@ -74,6 +82,7 @@ module tap_controller(
 		CAPTURE_IR       = 4'hE,
 		TEST_LOGIC_RESET = 4'hF
 	} statetype;
+   
    statetype State;   
 
     always @(posedge tck) begin

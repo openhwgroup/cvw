@@ -27,14 +27,17 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module internalreg #(parameter WIDTH = 8) (
-    input logic              tck, tdi, resetn,
+module internalreg #(parameter WIDTH = 8) 
+   (input logic              tck, 
+    input logic 	     tdi, 
+    input logic 	     resetn,
     input logic [WIDTH-1:0]  DataIn,
     input logic [WIDTH-1:0]  val,
-    input logic              ShiftDR, ClockDR,
+    input logic 	     ShiftDR, 
+    input logic 	     ClockDR,
     output logic [WIDTH-1:0] y,
-    output logic             tdo
-);
+    output logic 	     tdo);
+   
    // logic [WIDTH-1:0] shiftreg;
    always @(posedge ClockDR) begin
       if (~resetn) begin
