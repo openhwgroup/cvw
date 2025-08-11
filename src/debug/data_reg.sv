@@ -29,16 +29,18 @@
 
 `include "debug.vh"
 
-module data_reg #(parameter INSTWIDTH = 5) (
-    input logic                 tck, tdi, resetn,
+module data_reg #(parameter INSTWIDTH = 5) 
+   (input logic 		tck, 
+    input logic 		tdi, 
+    input logic 		resetn,
     input logic [INSTWIDTH-1:0] currentInst, 
-    input logic                 ShiftDR, ClockDR, UpdateDR,
-    input dtmcs_t               dtmcs_next,
-    output dtmcs_t              dtmcs,
-    input dmi_t                 dmi_next,
-    output dmi_t                dmi,                                        
-    output logic                tdo
-);
+    input logic 		ShiftDR, ClockDR, UpdateDR,
+    input 			dtmcs_t dtmcs_next,
+    output 			dtmcs_t dtmcs,
+    input 			dmi_t dmi_next,
+    output 			dmi_t dmi, 
+    output logic 		tdo);
+   
    logic 			tdo_idcode;
    logic 			tdo_dtmcs;
    logic 			tdo_dmi;

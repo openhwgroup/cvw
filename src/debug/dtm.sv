@@ -28,81 +28,82 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "debug.vh"
-module dtm(
-    input logic clk, rst,
-    // JTAG Interface
-    input logic  tck, tms, tdi,
-    output logic tdo,
-    // debug module interface (DMI)
-    // Signals go here. neorv32 defines two packed structs.
-    output dmi_t dmi_req,
-    input dmi_rsp_t dmi_rsp
-);
+module dtm
+  (input logic  clk, 
+   input logic 	rst,
+   // JTAG Interface
+   input logic 	tck, 
+   input logic 	tms, 
+   input logic 	tdi,
+   output logic tdo,
+   // debug module interface (DMI)
+   // Signals go here. neorv32 defines two packed structs.
+   output 	dmi_t dmi_req,
+   input 	dmi_rsp_t dmi_rsp);
+   
     // Tap Controller stuff
-    logic resetn, enable, select; 
-    logic ShiftIR, ClockIR, UpdateIR;
-    logic ShiftDR, ClockDR, UpdateDR;
+   logic 	resetn; 
+   logic 	enable;
+   logic 	select; 
+   logic 	ShiftIR;
+   logic 	ClockIR;
+   logic 	UpdateIR;
+   logic 	ShiftDR;
+   logic 	ClockDR;
+   logic 	UpdateDR;
 
-    // Instruction Register
-    logic [`INSTWIDTH-1:0] currentInst;
+   // Instruction Register
+   logic [`INSTWIDTH-1:0] currentInst;
+   
+   // Select outputs
+   logic 		  tdo_dr, tdo_ir, tdo_mux, tdo_delayed;
+   
+   // Synchronizer signals
+   logic 		  tck_sync, tms_sync, tdi_sync;
+   
+   // Synchronizing tck, tms, and tdi
+   synchronizer tck_synchronizer (clk, tck, tck_sync);
+   synchronizer tms_synchronizer (clk, tms, tms_sync);
+   synchronizer tdi_synchronizer (clk, tdi, tdi_sync);
+   
+   // Edge detecting UpdateDR. Avoids cases where UpdateDR is still
+   // high for multiple clock cycles.
+   logic [1:0] 		  UpdateDRSamples;
+   logic 		  UpdateDRValid;
+   
+   // Test Data Register Stuff
+   dtmcs_t dtmcs, dtmcs_next;
+   dmi_t dmi_next, dmi_next_reg, dmi;
+   // logic [1:0] DMIStat;
+   
+   // Debug Module Interface Control
+   logic 		  UpdateDMI;
+   logic 		  UpdateDTMCS;
+   logic 		  DTMHardReset;
+   logic 		  DMIReset;
+   
+   logic 		  Sticky;
+   
+   enum 		  logic {IDLE, BUSY} DMIState;
+   
+   // Temporarily tying trstn to rstn. This isn't the way JTAG
+   // recommends doing it, but the debug spec and neorv32 seem to
+   // imply it's ok to do so.
+   tap_controller controller(tck_sync, rst, tms_sync, tdi_sync,
+			     resetn, enable, select,
+			     ShiftIR, ClockIR, UpdateIR,
+			     ShiftDR, ClockDR, UpdateDR);
 
-    // Select outputs
-    logic tdo_dr, tdo_ir, tdo_mux, tdo_delayed;
-
-    // Synchronizer signals
-    logic tck_sync, tms_sync, tdi_sync;
-    
-    // Synchronizing tck, tms, and tdi
-    synchronizer tck_synchronizer (clk, tck, tck_sync);
-    synchronizer tms_synchronizer (clk, tms, tms_sync);
-    synchronizer tdi_synchronizer (clk, tdi, tdi_sync);
-
-    // Edge detecting UpdateDR. Avoids cases where UpdateDR is still
-    // high for multiple clock cycles.
-    logic [1:0] UpdateDRSamples;
-    logic UpdateDRValid;
-    
-    // Test Data Register Stuff
-    dtmcs_t dtmcs, dtmcs_next;
-    dmi_t dmi_next, dmi_next_reg, dmi;
-    // logic [1:0] DMIStat;
-
-    // Debug Module Interface Control
-    logic UpdateDMI;
-    logic UpdateDTMCS;
-    logic DTMHardReset;
-    logic DMIReset;
-
-    logic Sticky;
-
-    enum logic {IDLE, BUSY} DMIState;
-    
-    // Temporarily tying trstn to rstn. This isn't the way JTAG
-    // recommends doing it, but the debug spec and neorv32 seem to
-    // imply it's ok to do so.
-    tap_controller controller(
-        tck_sync, rst, tms_sync, tdi_sync,
-        resetn, enable, select,
-        ShiftIR, ClockIR, UpdateIR,
-        ShiftDR, ClockDR, UpdateDR
-    );
-
-    inst_reg instructionreg (
-        tdi_sync, resetn,
-        ShiftIR, ClockIR, UpdateIR,
-        tdo_ir,
-        currentInst
-    );
+    inst_reg instructionreg (tdi_sync, resetn,
+			     ShiftIR, ClockIR, UpdateIR,
+			     tdo_ir, currentInst);
 
     // tdr = Test Data Register
     data_reg tdr (tck_sync, tdi_sync, resetn,
 		  currentInst,
 		  ShiftDR, ClockDR, UpdateDR,
-		  dtmcs_next,
-		  dtmcs,
-		  dmi_next,
-		  dmi,
-		  tdo_dr);
+		  dtmcs_next, dtmcs,
+		  dmi_next, dmi, tdo_dr);
 
    // Choose output of tdo 
    always_comb begin
