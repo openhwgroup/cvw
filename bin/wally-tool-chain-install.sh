@@ -107,8 +107,11 @@ source "$WALLY"/bin/installation/verilator-install.sh
 
 # OSU Skywater 130 cell library (https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12)
 # The OSU Skywater 130 cell library is a standard cell library that is used to synthesize Wally.
-source "$WALLY"/bin/installation/skywater-lib-install.sh
-
+if [ "$no_skywater" = true ]; then
+    echo -e "${OK_COLOR}Skipping OSU Skywater 130 cell library installation.${ENDC}"
+else
+    source "$WALLY"/bin/installation/skywater-lib-install.sh
+fi
 
 # Buildroot and Linux testvectors
 # Buildroot is used to boot a minimal version of Linux on Wally.

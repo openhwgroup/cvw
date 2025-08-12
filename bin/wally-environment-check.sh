@@ -160,12 +160,14 @@ while [[ "$#" -gt 0 ]]; do
     case $1 in
         -c|--clean) clean=true ;;
         --no-buildroot) no_buildroot=true ;;
+        --no-skywater) no_skywater=true ;;
         --packages-only) packages_only=true;;
         -h|--help)
             echo -e "Usage: $0 [\$RISCV] [options]"
             echo -e "${BOLD}Options:${ENDC}"
             echo -e "  -c, --clean          Remove build directories after installation"
             echo -e "  --no-buildroot       Skip installing Buildroot and Linux testvectors"
+            echo -e "  --no-skywater        Skip installing Skywater PDK"
             echo -e "  \$RISCV              Directory to install RISC-V tools (default: /opt/riscv as root, $HOME/riscv otherwise)"
             exit 0 ;;
         *) RISCV="$1" ;;

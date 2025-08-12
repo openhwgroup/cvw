@@ -29,7 +29,7 @@ RUN --mount=type=bind,source=./bin,target=${WALLY_SOURCE_DIR}/bin \
 
 RUN --mount=type=bind,source=./bin,target=${WALLY_SOURCE_DIR}/bin \
     --mount=type=bind,source=./linux,target=${WALLY_SOURCE_DIR}/linux \
-    bash "${WALLY_SOURCE_DIR}/bin/wally-tool-chain-install.sh" --clean --no-buildroot
+    bash "${WALLY_SOURCE_DIR}/bin/wally-tool-chain-install.sh" --clean --no-buildroot --no-skywater
 
 COPY --chmod=755 ./containers/wally-devel/container-setup.sh /etc/wally/container-setup.sh
 
