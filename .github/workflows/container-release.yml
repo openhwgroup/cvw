@@ -44,9 +44,7 @@ jobs:
 
     steps:
       - name: Install container tools
-        run: |
-          sudo apt-get install podman buildah jq
-          mkdir -p $TMPDIR
+        run: sudo apt-get install podman buildah jq
 
       - name: Maximize build space
         uses: easimon/maximize-build-space@v10
@@ -58,6 +56,8 @@ jobs:
           remove-codeql: "true"
           remove-docker-images: "true"
           build-mount-path: ${{ env.CONTAINERS_ROOT }} # The remaining space only for container build
+          
+      - run: mkdir -p $TMPDIR
 
       - name: Prepare environment variables
         run: |
