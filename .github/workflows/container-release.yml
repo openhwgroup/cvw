@@ -23,6 +23,8 @@ env:
   PLATFORM: linux-amd64
   CONTAINER_VERSION: latest
   CONTAINER_LATEST_VERSION: latest
+  CONTAINERS_ROOT: /home/runner/.local/share/containers
+  TMPDIR: /home/runner/.local/share/containers/tmp
 
 permissions:
   contents: read
@@ -43,6 +45,17 @@ jobs:
     steps:
       - name: Install container tools
         run: sudo apt-get install podman buildah jq
+
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@v10
+        with:
+          root-reserve-mb: 2048 # Reserve disk space for repository
+          remove-dotnet: "true"
+          remove-android: "true"
+          remove-haskell: "true"
+          remove-codeql: "true"
+          remove-docker-images: "true"
+          build-mount-path: ${{ env.CONTAINERS_ROOT }} # The remaining space only for container build
 
       - name: Prepare environment variables
         run: |
