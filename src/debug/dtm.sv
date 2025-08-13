@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "debug.vh"
-module dtm
-  (input logic  clk, 
+module dtm (
+   input logic  clk, 
    input logic 	rst,
    // JTAG Interface
    input logic 	tck, 
