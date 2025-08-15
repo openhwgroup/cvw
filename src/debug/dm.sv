@@ -6,7 +6,7 @@
 // Created: August 12th, 2025
 // Modified: 
 //
-// Purpose: The Debug Module
+// Purpose: The Debug Module (DM)
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
@@ -30,7 +30,8 @@
 `include "debug.vh"
 
 module dm(
-   input logic  clk, rst,
+   input logic  clk;
+   input logic  rst,
           
    // Currently implementing NeoRV32 signals. Subject to change if I
    // prefer a different DMI.
@@ -128,12 +129,7 @@ module dm(
    //    logic [2:0]  cmderr;
    //    logic [3:0]  reserved2;
    //    logic [3:0]  datacount;
-   // } AbstractCS_t;
-
-   
-   
-
-   
+   // } AbstractCS_t;      
    
    // Need to implement registers. But first, I need a state machine
    // to handle the DMI requests. If it reads, I want to supply the
@@ -142,9 +138,8 @@ module dm(
 
    // enum logic {IDLE, GRANTED} DMIState;
 
-
    assign InitRequest = (dmi_req.op == RD) | (dmi_req.op == WR);
-   always @(posedge clk) begin
+   always_ff @(posedge clk) begin
       if (rst) begin
          dmi_rsp.ack <= 1'b0;
       end else if (InitRequest) begin
@@ -154,7 +149,7 @@ module dm(
       end
    end
    
-   always @(posedge clk) begin
+   always_ff @(posedge clk) begin
       if (rst) begin
          DMControl <= '0;
          DMStatus <= {24'b0, 1'b1, 1'b0, 1'b1, 1'b0, 4'b11};
