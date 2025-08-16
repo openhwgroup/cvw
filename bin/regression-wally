@@ -55,7 +55,7 @@ standard_tests = [
                     "arch64d_divsqrt", "arch64zfh_divsqrt", "arch64zfaf", "arch64zfad", "coverage64gc", "arch64i", "arch64priv",
                     "arch64c",  "arch64m", "arch64zcb", "arch64zifencei", "arch64zicond", "arch64a_amo", "wally64a_lrsc",
                     "wally64periph", "wally64priv", "arch64zbkb", "arch64zbkc", "arch64zbkx", "arch64zknd", "arch64zkne", "arch64zknh",
-                    "arch64zba",  "arch64zbb",  "arch64zbc", "arch64zbs", "arch64pmp"]], # add when working:  "arch64zicboz"
+                    "arch64zba",  "arch64zbb",  "arch64zbc", "arch64zbs"]], # add when working: "arch64pmp" "arch64zicboz"
     ]
 
 # Separate test for short buildroot run through OpenSBI UART output
