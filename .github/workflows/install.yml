@@ -56,11 +56,14 @@ jobs:
             imageFamily: debian
           # Red Hat Installations
           - name: rocky-8
-            image: rockylinux:8
+            image: rockylinux/rockylinux:8
             imageFamily: redhat
             regressionFail: true
           - name: rocky-9
-            image: rockylinux:9
+            image: rockylinux/rockylinux:9
+            imageFamily: redhat
+          - name: rocky-10
+            image: rockylinux/rockylinux:10
             imageFamily: redhat
           - name: almalinux-8
             image: almalinux:8
@@ -68,6 +71,9 @@ jobs:
             regressionFail: true
           - name: almalinux-9
             image: almalinux:9
+            imageFamily: redhat
+          - name: almalinux-10
+            image: almalinux:10
             imageFamily: redhat
           # SUSE Installations
           - name: opensuse-15.6
