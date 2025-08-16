@@ -30,7 +30,7 @@
 `include "debug.vh"
 
 module dm(
-   input logic  clk;
+   input logic  clk,
    input logic  rst,
           
    // Currently implementing NeoRV32 signals. Subject to change if I
@@ -41,10 +41,12 @@ module dm(
    // CPU Signals
    output logic NDMReset,
    output logic HaltReq,
-   output logic ResumeReq
+   output logic ResumeReq,
+   input logic  DebugMode
 );
 
-   localparam DATA0 = 7'h04;
+   /*
+      localparam DATA0 = 7'h04;
    localparam DATA1 = 7'h05;
    localparam DATA2 = 7'h06; 
    localparam DATA3 = 7'h07; 
@@ -64,6 +66,30 @@ module dm(
    localparam COMMAND  = 7'h17;
    localparam ABSTRACTCS = 7'h16;
    localparam ABSTRACTAUTO = 7'h18;
+   */
+
+   typedef enum logic [6:0] {
+      DATA0 = 7'h04,       
+      DATA1 = 7'h05,       
+      DATA2 = 7'h06,       
+      DATA3 = 7'h07,       
+      DATA4 = 7'h08,       
+      DATA5 = 7'h09,       
+      DATA6 = 7'h0a,       
+      DATA7 = 7'h0b,       
+      DATA8 = 7'h0c,       
+      DATA9 = 7'h0d,       
+      DATA10 = 7'h0e,      
+      DATA11 = 7'h0f,      
+      DMCONTROL = 7'h10,   
+      DMSTATUS = 7'h11,    
+      HARTINFO = 7'h12,    
+      HALTSUM0 = 7'h40,    
+      HALTSUM1 = 7'h13,                           
+      COMMAND  = 7'h17,    
+      ABSTRACTCS = 7'h16,  
+      ABSTRACTAUTO = 7'h18                       
+   } DMADDR;
 
    logic      InitRequest;
            
@@ -78,6 +104,9 @@ module dm(
    logic [31:0] Command;
    logic [31:0] AbstractAuto;
 
+   // DMControl fields
+   logic        resethaltreq;
+   
    // typedef struct packed {
    //    logic haltreq;
    //    logic resumereq;
@@ -129,7 +158,11 @@ module dm(
    //    logic [2:0]  cmderr;
    //    logic [3:0]  reserved2;
    //    logic [3:0]  datacount;
-   // } AbstractCS_t;      
+   // } AbstractCS_t;
+
+   // Abstract Commands:
+   // 0: Access Register Command
+   // 1: 
    
    // Need to implement registers. But first, I need a state machine
    // to handle the DMI requests. If it reads, I want to supply the
@@ -162,6 +195,7 @@ module dm(
                DATA2: dmi_rsp.data <= Data[2];
                DATA3: dmi_rsp.data <= Data[3];
                DATA4: dmi_rsp.data <= Data[4];
+               DATA5: dmi_rsp.data <= Data[5];
               
                DMCONTROL: begin
                   dmi_rsp.data[31] <= 1'b0;
@@ -182,13 +216,50 @@ module dm(
                DATA2: Data[2] <= dmi_req.data;
                DATA3: Data[3] <= dmi_req.data;
                DATA4: Data[4] <= dmi_req.data;
+               DATA5: Data[5] <= dmi_req.data;
                DMCONTROL: DMControl <= dmi_req.data;
                COMMAND: Command <= dmi_req.data;
                ABSTRACTCS: AbstractCS <= dmi_req.data;
-               endcase
+            endcase
          end
       end
+   end // always_ff @ (posedge clk)
+
+   assign HaltReq = DMControl[31];
+   assign resethaltreq = 1'b0;
+   
+   // enum logic {IDLE, RUNNING} CommandState;
+
+   enum logic [1:0] {RUNNING, HALTING, HALTED, RESUMING} HaltState;
+   
+   always_ff @(posedge clk) begin
+      if (rst) begin
+         if (resethaltreq) HaltState <= HALTED;
+         else HaltState <= RUNNING;
+      end else begin
+         case(HaltState)
+            RUNNING: begin
+               if (HaltReq) HaltState <= HALTING;
+            end
+
+            HALTING: begin
+               if (DebugMode) HaltState <= HALTED;
+            end
+
+            HALTED: begin
+               if (ResumeReq) HaltState <= RESUMING;
+            end
+
+            RESUMING: begin
+               if (~DebugMode) HaltState <= RUNNING;
+            end
+           
+            default: HaltState <= RUNNING;
+         endcase
+      end
    end
+
+   
    
    // always @(posedge clk) begin
    //    if (rst) begin
