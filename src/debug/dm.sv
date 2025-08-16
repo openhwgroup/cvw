@@ -217,7 +217,10 @@ module dm(
                DATA3: Data[3] <= dmi_req.data;
                DATA4: Data[4] <= dmi_req.data;
                DATA5: Data[5] <= dmi_req.data;
-               DMCONTROL: DMControl <= dmi_req.data;
+               DMCONTROL: begin
+                  if (HaltReq) DMControl <= {dmi_req.data[31], 1'b0, dmi_req.data[29:0]};
+                  else DMControl <= dmi_req.data;
+               end
                COMMAND: Command <= dmi_req.data;
                ABSTRACTCS: AbstractCS <= dmi_req.data;
             endcase
@@ -226,6 +229,7 @@ module dm(
    end // always_ff @ (posedge clk)
 
    assign HaltReq = DMControl[31];
+   assign ResumeReq = DMControl[30];
    assign resethaltreq = 1'b0;
    
    // enum logic {IDLE, RUNNING} CommandState;
