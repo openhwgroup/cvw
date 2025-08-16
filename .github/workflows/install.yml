@@ -107,7 +107,7 @@ jobs:
               zypper install -y git
             fi
       # Only clone submodules needed for standard tests/regression to save space
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Clone Necessary Submodules
         run: |
               git config --global --add safe.directory '*'
