@@ -110,7 +110,7 @@ elif [[ "$ID" == debian || "$ID_LIKE" == *debian* ]]; then
     fi
     export DEBIAN_VERSION="$VERSION_ID"
     if (( DEBIAN_VERSION < 11 )); then
-        printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally installation script has only been tested with Debian versions 11 and 12. You have version $VERSION."
+        printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally installation script has only been tested with Debian versions 11, 12, and 13. You have version $VERSION."
         exit 1
     fi
 elif [[ "$ID" == opensuse-leap || "$ID" == sles || "$ID_LIKE" == *suse* ]]; then
