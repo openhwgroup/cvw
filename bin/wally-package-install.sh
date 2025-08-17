@@ -54,7 +54,7 @@ case "$FAMILY" in
         PYTHON_VERSION=python3.12
         PACKAGE_MANAGER="dnf -y"
         UPDATE_COMMAND="$PACKAGE_MANAGER update"
-        GENERAL_PACKAGES+=(which "$PYTHON_VERSION" "$PYTHON_VERSION"-pip pkgconf-pkg-config gcc-c++ ssmtp)
+        GENERAL_PACKAGES+=(which "$PYTHON_VERSION" "$PYTHON_VERSION"-pip pkgconf-pkg-config gcc-c++)
         GNU_PACKAGES+=(libmpc-devel mpfr-devel gmp-devel zlib-devel expat-devel glib2-devel libslirp-devel)
         QEMU_PACKAGES+=(glib2-devel libfdt-devel pixman-devel zlib-devel ninja-build)
         SPIKE_PACKAGES+=(dtc) # compiling Spike with boost fails on RHEL
@@ -65,8 +65,10 @@ case "$FAMILY" in
         if (( RHEL_VERSION >= 9 )); then
             VERILATOR_PACKAGES+=(perl-doc)
         fi
-        # A newer version of gcc is required for qemu
-        GENERAL_PACKAGES+=(gcc-toolset-13)
+        if (( RHEL_VERSION < 10)); then
+            GENERAL_PACKAGES+=(ssmtp) # ssmtp is no longer available in RHEL 10 EPEL
+            GENERAL_PACKAGES+=(gcc-toolset-13) # A newer version of gcc is required for qemu
+        fi
         ;;
     ubuntu | debian)
         if (( UBUNTU_VERSION >= 24 )); then
@@ -143,7 +145,7 @@ else
         else # RHEL clone
             if (( RHEL_VERSION == 8 )); then
                 dnf config-manager -y --set-enabled powertools
-            else # Version 9
+            else # Version >= 9
                 dnf config-manager -y --set-enabled crb
             fi
             dnf install -y epel-release

@@ -46,7 +46,7 @@ else
 fi
 
 # Enable newer version of gcc for older distros (required for QEMU/Verilator)
-if [ "$FAMILY" == rhel ]; then
+if [ "$FAMILY" == rhel ] && (( RHEL_VERSION < 10 )); then
     if [ -e /opt/rh/gcc-toolset-13/enable ]; then
         source /opt/rh/gcc-toolset-13/enable
     else

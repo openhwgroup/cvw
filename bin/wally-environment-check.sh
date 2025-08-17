@@ -68,13 +68,13 @@ if [[ "$ID" == rhel || "$ID_LIKE" == *rhel* ]]; then
         printf "${WARNING_COLOR}%s%s\n${ENDC}" "For Red Hat family distros, the Wally installation script has only been tested on RHEL, Rocky Linux," \
             " and AlmaLinux. Your distro is $PRETTY_NAME. The regular Red Hat install will be attempted, but there may be issues."
     fi
-    export RHEL_VERSION="${VERSION_ID:0:1}"
+    export RHEL_VERSION="${VERSION_ID%%.*}" # Get major version number
     if (( RHEL_VERSION < 8 )); then
-        printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally installation script is only compatible with versions 8 and 9 of RHEL, Rocky Linux, and AlmaLinux. You have version $VERSION. Please upgrade to a supported version."
+        printf "${FAIL_COLOR}%s\n${ENDC}" "The Wally installation script is only compatible with versions 8, 9, and 10 of RHEL, Rocky Linux, and AlmaLinux. You have version $VERSION. Please upgrade to a supported version."
         exit 1
     fi
-    if (( RHEL_VERSION > 9 )); then
-        printf "${WARNING_COLOR}%s\n${ENDC}" "The Wally installation script has only been tested with Red Hat family versions 8 and 9. You have a newer version ($VERSION). The installation for Red Hat 9 will be attempted, but there may be issues."
+    if (( RHEL_VERSION > 10 )); then
+        printf "${WARNING_COLOR}%s\n${ENDC}" "The Wally installation script has only been tested with Red Hat family versions 8, 9, and 10. You have a newer version ($VERSION). The installation for Red Hat 10 will be attempted, but there may be issues."
     fi
 elif [[ "$ID" == ubuntu || "$ID_LIKE" == *ubuntu* ]]; then
     export FAMILY=ubuntu
