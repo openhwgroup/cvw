@@ -90,24 +90,22 @@ module dtm (
    // recommends doing it, but the debug spec and neorv32 seem to
    // imply it's ok to do so.
 
-   // think maybe we should not do it this way despite debug spec (jes)
-   
    tap_controller controller (tck_sync, rst, tms_sync, tdi_sync,
 			      resetn, enable, select,
 			      ShiftIR, ClockIR, UpdateIR,
 			      ShiftDR, ClockDR, UpdateDR);
    
-    inst_reg instructionreg (tdi_sync, resetn,
-			     ShiftIR, ClockIR, UpdateIR,
-			     tdo_ir, currentInst);
+   inst_reg instructionreg (tdi_sync, resetn,
+			    ShiftIR, ClockIR, UpdateIR,
+			    tdo_ir, currentInst);
 
-    // tdr = Test Data Register
-    data_reg tdr (tck_sync, tdi_sync, resetn,
-		  currentInst,
-		  ShiftDR, ClockDR, UpdateDR,
-		  dtmcs_next, dtmcs,
-		  dmi_next, dmi, tdo_dr);
-
+   // tdr = Test Data Register
+   data_reg tdr (tck_sync, tdi_sync, resetn,
+		 currentInst,
+		 ShiftDR, ClockDR, UpdateDR,
+		 dtmcs_next, dtmcs,
+		 dmi_next, dmi, tdo_dr);
+   
    // Choose output of tdo 
    always_comb begin
       case(select)

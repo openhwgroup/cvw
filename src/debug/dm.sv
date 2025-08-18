@@ -42,31 +42,31 @@ module dm(
    output logic NDMReset,
    output logic HaltReq,
    output logic ResumeReq,
-   input logic  DebugMode
+   input  logic DebugMode
 );
 
    /*
-      localparam DATA0 = 7'h04;
-   localparam DATA1 = 7'h05;
-   localparam DATA2 = 7'h06; 
-   localparam DATA3 = 7'h07; 
-   localparam DATA4 = 7'h08; 
-   localparam DATA5 = 7'h09; 
-   localparam DATA6 = 7'h0a; 
-   localparam DATA7 = 7'h0b; 
-   localparam DATA8 = 7'h0c; 
-   localparam DATA9 = 7'h0d; 
-   localparam DATA10 = 7'h0e;           
-   localparam DATA11 = 7'h0f;
-   localparam DMCONTROL = 7'h10;
-   localparam DMSTATUS = 7'h11;
-   localparam HARTINFO = 7'h12;
-   localparam HALTSUM0 = 7'h40;
-   localparam HALTSUM1 = 7'h13;
-   localparam COMMAND  = 7'h17;
-   localparam ABSTRACTCS = 7'h16;
-   localparam ABSTRACTAUTO = 7'h18;
-   */
+    localparam DATA0 = 7'h04;
+    localparam DATA1 = 7'h05;
+    localparam DATA2 = 7'h06; 
+    localparam DATA3 = 7'h07; 
+    localparam DATA4 = 7'h08; 
+    localparam DATA5 = 7'h09; 
+    localparam DATA6 = 7'h0a; 
+    localparam DATA7 = 7'h0b; 
+    localparam DATA8 = 7'h0c; 
+    localparam DATA9 = 7'h0d; 
+    localparam DATA10 = 7'h0e;           
+    localparam DATA11 = 7'h0f;
+    localparam DMCONTROL = 7'h10;
+    localparam DMSTATUS = 7'h11;
+    localparam HARTINFO = 7'h12;
+    localparam HALTSUM0 = 7'h40;
+    localparam HALTSUM1 = 7'h13;
+    localparam COMMAND  = 7'h17;
+    localparam ABSTRACTCS = 7'h16;
+    localparam ABSTRACTAUTO = 7'h18;
+    */
 
    typedef enum logic [6:0] {
       DATA0 = 7'h04,       
@@ -192,42 +192,40 @@ module dm(
             case(dmi_req.addr[6:0])
                DATA0: dmi_rsp.data <= Data[0];
                DATA1: dmi_rsp.data <= Data[1];
-              
+               
                DMCONTROL: begin
                   dmi_rsp.data[31] <= 1'b0;
                   dmi_rsp.data[30:0] <= DMControl[30:0];
                end
-              
+               
                DMSTATUS: dmi_rsp.data <= DMStatus;
                HARTINFO: dmi_rsp.data <= HartInfo;
                HALTSUM0: dmi_rsp.data <= HaltSum0;
                default: dmi_rsp.data <= 32'b0;
             endcase // case (dmi_req.addr[6:0])
          end // if (dmi_rsp.op == RD)
-
+	      
          if (dmi_req.op == WR) begin
             case(dmi_req.addr[6:0])
                DATA0: Data[0] <= dmi_req.data;
                DATA1: Data[1] <= dmi_req.data;
-
+               
                DMCONTROL: begin
                   if (HaltReq) DMControl <= {dmi_req.data[31], 1'b0, dmi_req.data[29:0]};
                   else DMControl <= dmi_req.data;
                end
-              
+               
                COMMAND: Command <= dmi_req.data;
                ABSTRACTCS: AbstractCS <= dmi_req.data;
             endcase
          end
       end
-   end // always_ff @ (posedge clk)
-
+   end 
+   
    assign HaltReq = DMControl[31];
    assign ResumeReq = DMControl[30];
    assign resethaltreq = 1'b0;
    
-   // enum logic {IDLE, RUNNING} CommandState;
-
    enum logic [1:0] {RUNNING, HALTING, HALTED, RESUMING} HaltState;
    
    always_ff @(posedge clk) begin
@@ -236,35 +234,33 @@ module dm(
          else HaltState <= RUNNING;
       end else begin
          case(HaltState)
-            RUNNING: begin
-               if (HaltReq) HaltState <= HALTING;
-            end
-
-            HALTING: begin
-               if (DebugMode) HaltState <= HALTED;
-            end
-
-            HALTED: begin
-               if (ResumeReq) HaltState <= RESUMING;
-            end
-
-            RESUMING: begin
-               if (~DebugMode) HaltState <= RUNNING;
-            end
+           RUNNING: begin
+              if (HaltReq) HaltState <= HALTING;
+           end
+	   
+           HALTING: begin
+              if (DebugMode) HaltState <= HALTED;
+           end
+	   
+           HALTED: begin
+              if (ResumeReq) HaltState <= RESUMING;
+           end
+	   
+           RESUMING: begin
+              if (~DebugMode) HaltState <= RUNNING;
+           end
            
-            default: HaltState <= RUNNING;
+           default: HaltState <= RUNNING;
          endcase
       end
    end
-
-   
    
    // always @(posedge clk) begin
    //    if (rst) begin
    //       DMIState <= 0;
    //       dmi_rsp.data <= '0;
    //       dmi_rsp.ack <= 0;
-
+   
    //       // Register resets
    //       DMControl <= {};
    //       // Should work. We'll see. 
