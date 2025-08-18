@@ -78,6 +78,8 @@ case "$FAMILY" in
         elif (( UBUNTU_VERSION >= 20 )); then
             PYTHON_VERSION=python3.9
             GENERAL_PACKAGES+=(gcc-10 g++-10 cpp-10) # Newer version of gcc needed for Verilator
+        elif (( DEBIAN_VERSION >= 13 )); then
+            PYTHON_VERSION=python3.13
         elif (( DEBIAN_VERSION >= 12 )); then
             PYTHON_VERSION=python3.11
         elif (( DEBIAN_VERSION >= 11 )); then
