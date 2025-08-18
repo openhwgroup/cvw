@@ -192,10 +192,6 @@ module dm(
             case(dmi_req.addr[6:0])
                DATA0: dmi_rsp.data <= Data[0];
                DATA1: dmi_rsp.data <= Data[1];
-               DATA2: dmi_rsp.data <= Data[2];
-               DATA3: dmi_rsp.data <= Data[3];
-               DATA4: dmi_rsp.data <= Data[4];
-               DATA5: dmi_rsp.data <= Data[5];
               
                DMCONTROL: begin
                   dmi_rsp.data[31] <= 1'b0;
@@ -213,14 +209,12 @@ module dm(
             case(dmi_req.addr[6:0])
                DATA0: Data[0] <= dmi_req.data;
                DATA1: Data[1] <= dmi_req.data;
-               DATA2: Data[2] <= dmi_req.data;
-               DATA3: Data[3] <= dmi_req.data;
-               DATA4: Data[4] <= dmi_req.data;
-               DATA5: Data[5] <= dmi_req.data;
+
                DMCONTROL: begin
                   if (HaltReq) DMControl <= {dmi_req.data[31], 1'b0, dmi_req.data[29:0]};
                   else DMControl <= dmi_req.data;
                end
+              
                COMMAND: Command <= dmi_req.data;
                ABSTRACTCS: AbstractCS <= dmi_req.data;
             endcase
