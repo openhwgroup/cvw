@@ -205,7 +205,8 @@ module dm(
    assign resethaltreq = 1'b0;
    
    enum logic [1:0] {RUNNING, HALTING, HALTED, RESUMING} HaltState;
-   
+
+   // see Figure 2 Debug Specification (2/21/25)
    always_ff @(posedge clk) begin
       if (rst) begin
          if (resethaltreq) HaltState <= HALTED;
@@ -214,20 +215,16 @@ module dm(
          case(HaltState)
            RUNNING: begin
               if (HaltReq) HaltState <= HALTING;
-           end
-	   
+           end	   
            HALTING: begin
               if (DebugMode) HaltState <= HALTED;
-           end
-	   
+           end	   
            HALTED: begin
               if (ResumeReq) HaltState <= RESUMING;
-           end
-	   
+           end	   
            RESUMING: begin
               if (~DebugMode) HaltState <= RUNNING;
-           end
-           
+           end           
            default: HaltState <= RUNNING;
          endcase
       end
