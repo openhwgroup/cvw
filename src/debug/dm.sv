@@ -45,29 +45,6 @@ module dm(
    input  logic DebugMode
 );
 
-   /*
-    localparam DATA0 = 7'h04;
-    localparam DATA1 = 7'h05;
-    localparam DATA2 = 7'h06; 
-    localparam DATA3 = 7'h07; 
-    localparam DATA4 = 7'h08; 
-    localparam DATA5 = 7'h09; 
-    localparam DATA6 = 7'h0a; 
-    localparam DATA7 = 7'h0b; 
-    localparam DATA8 = 7'h0c; 
-    localparam DATA9 = 7'h0d; 
-    localparam DATA10 = 7'h0e;           
-    localparam DATA11 = 7'h0f;
-    localparam DMCONTROL = 7'h10;
-    localparam DMSTATUS = 7'h11;
-    localparam HARTINFO = 7'h12;
-    localparam HALTSUM0 = 7'h40;
-    localparam HALTSUM1 = 7'h13;
-    localparam COMMAND  = 7'h17;
-    localparam ABSTRACTCS = 7'h16;
-    localparam ABSTRACTAUTO = 7'h18;
-    */
-
    typedef enum logic [6:0] {
       DATA0 = 7'h04,       
       DATA1 = 7'h05,       
@@ -181,7 +158,8 @@ module dm(
          dmi_rsp.ack <= 1'b0;
       end
    end
-   
+
+   // Abstract Read/Write
    always_ff @(posedge clk) begin
       if (rst) begin
          DMControl <= '0;
