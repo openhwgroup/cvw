@@ -36,9 +36,3 @@
 [submodule "addins/cvw-riscv-arch-test"]
 	path = addins/cvw-riscv-arch-test
 	url = https://github.com/jordancarlin/riscv-arch-test
-[submodule "addins/riscv-unified-db"]
-	path = addins/riscv-unified-db
-	url = https://github.com/riscv-software-src/riscv-unified-db
-[submodule "addins/riscv-isa-manual"]
-	path = addins/riscv-isa-manual
-	url = https://github.com/davidharrishmc/riscv-isa-manual
