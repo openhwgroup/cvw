@@ -38,7 +38,7 @@ module dtm (
    output logic tdo,
    // debug module interface (DMI)
    // Signals go here. neorv32 defines two packed structs.
-   output 	dmi_t dmi_req,
+   output 	dmi_req_t dmi_req,
    input 	dmi_rsp_t dmi_rsp);
    
     // Tap Controller stuff
@@ -170,6 +170,8 @@ module dtm (
     always_ff @(posedge clk) begin
         if (rst | ~resetn | DTMHardReset) begin
             dmi_next_reg.op <= NOP;
+           dmi_req.ready <= 1'b1;
+           dmi_req.valid <= 1'b0;
             DMIState <= IDLE;
         end else begin
             case(DMIState)
@@ -179,14 +181,16 @@ module dtm (
                         dmi_req.data <= dmi.data;
                         if ((dmi.op == RD) | (dmi.op == WR)) begin
                             dmi_req.op <= dmi.op;
+                           dmi_req.valid <= 1'b1;
                             DMIState <= BUSY;
                         end
                     end
                 end
               
                 BUSY: begin
-                    if (dmi_rsp.ack) begin
+                    if (dmi_rsp.valid) begin
                         dmi_req.op <= NOP;
+                       dmi_req.valid <= 1'b0;
                         dmi_next_reg.data <= dmi_rsp.data;
                         dmi_next_reg.op <= dmi_rsp.op;
                         DMIState <= IDLE;
