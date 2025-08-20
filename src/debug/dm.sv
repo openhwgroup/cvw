@@ -219,6 +219,7 @@ module dm(
          DMStatus <= {24'b0, 1'b1, 1'b0, 1'b1, 1'b0, 4'b11};
          Data = '{default: '0};
          dmi_rsp.ready <= 1'b1;
+         dmi_rsp.op <= 2'b0;
       end else begin
          // Reads
          if ((dmi_req.op == RD) & dmi_req.valid) begin
@@ -263,7 +264,7 @@ module dm(
             endcase            
          end
 
-         if (StartCommand & Command[17]) begin
+         if (StartCommand & ~Command[17]) begin
             Data[0] <= RegIn;
          end
       end
