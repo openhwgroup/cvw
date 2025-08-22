@@ -174,7 +174,8 @@ module dm(
    
    // Abstract Commands:
    // 0: Access Register Command
-   // 1: 
+   // 1: Quick Access
+   // 2: Access Memory Command
    
    // Need to implement registers. But first, I need a state machine
    // to handle the DMI requests. If it reads, I want to supply the
@@ -233,6 +234,8 @@ module dm(
                end
                
                DMSTATUS: dmi_rsp.data <= DMStatus;
+
+              
                HARTINFO: dmi_rsp.data <= HartInfo;
                HALTSUM0: dmi_rsp.data <= HaltSum0;
                ABSTRACTCS: dmi_rsp.data <= AbstractCS;
@@ -270,8 +273,6 @@ module dm(
       end
    end
    
-   
-
    // --------------------------------------------------------------------------
    // Halt FSM
    // --------------------------------------------------------------------------
@@ -340,93 +341,13 @@ module dm(
             default: AbstractState <= IDLE;
          endcase
       end
-   end // always_ff @ (posedge clk)
-
+   end
+   
    assign aarsize = Command[22:20];
    assign StartCommand = dmi_req.valid & dmi_rsp.ready & (dmi_req.addr == COMMAND);
    assign DebugControl = StartCommand;
    assign RegAddr = Command[4:0];
    assign DebugRegWrite = Command[16] & dmi_rsp.valid;
    assign RegOut = Data[0]; // Needs to expand with 64 bit numbers
-
-   // Another FSM for managing Abstract Access commands (cmdtype == 0)
-   // always_ff @(posedge clk) begin
-   //    if (rst) begin
-   //       StartCommand <= 1'b0;
-   //    end else begin
-   //       if (dmi_req.addr == COMMAND & (AbstractState == IDLE) ) begin
-   //          StartCommand <= 1'b1;
-   //       end else begin
-   //          cmderr = 3'b1;
-   //       end
-   // end
-   
-   /*
-    if (command read register)
-      address regfile
-      store data on clock edge.
-      
-    
-    
-    
-    
-    
-    
-    */
-   
-   
-   
-   // always @(posedge clk) begin
-   //    if (rst) begin
-   //       DMIState <= 0;
-   //       dmi_rsp.data <= '0;
-   //       dmi_rsp.ack <= 0;
-   
-   //       // Register resets
-   //       DMControl <= {};
-   //       // Should work. We'll see. 
-   //       // https://electronics.stackexchange.com/questions/520746/understanding-verilog-default-1
-   //       Data = '{default: '0};
-   //    end else begin
-   //       case(DMIState)
-   //          IDLE: begin
-   //             if (dmi_req.op == RD | dmi_req.op == WR) begin
-   //                dmi_rsp.ack <= 1'b1;
-   //                DMIState <= GRANTED;
-   //             end
-
-   //             if (dmi_req.op == RD) begin
-   //                case(dmi_req.addr)
-   //                   // Abstract Data Registers
-   //                   7'h04: dmi_rsp.data <= Data[0];
-   //                   7'h10: dmi_rsp.data <= DMControl;
-   //                   7'h11: dmi_rsp.data <= DMStatus;
-   //                   7'h12: dmi_rsp.data <= HartInfo;
-   //                   7'h13: dmi_rsp.data <= HaltSum0;
-   //                   default: dmi_rsp.data <= '0;
-   //                endcase
-   //             end // if (dmi_req.op == RD)
-
-   //             if (dmi_req.op == WR) begin
-   //                 case(dmi_req.addr)
-   //                   // Abstract Data Registers
-   //                   7'h04: Data[0] <= dmi_req.data; // Needs to be conditional
-   //                   7'h10: DMControl <= dmi_req.data;
-   //                   7'h11: DMStatus <= dmi_req.data;
-   //                   7'h12: HartInfo <= dmi_req.data;
-   //                   7'h13: HaltSum0 <= dmi_req.data;
-   //                   default: ;
-   //                endcase
-   //             end
-   //          end
-
-   //          GRANTED: begin
-   //             dmi_rsp.ack <= 1'b0;
-   //             DMIState <= IDLE;
-   //          end
-   //          default: DMIState <= IDLE;
-   //       endcase
-   //    end
-   // end
    
 endmodule
