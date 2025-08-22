@@ -59,15 +59,16 @@ module dtm (
    logic 		  tdo_dr, tdo_ir, tdo_mux, tdo_delayed;
    
    // Synchronizer signals
-   logic 		  tck_sync, tms_sync, tdi_sync;
+   //logic 		  tck_sync, tms_sync, tdi_sync;
    
    // Synchronizing tck, tms, and tdi
-   synchronizer tck_synchronizer (clk, tck, tck_sync);
-   synchronizer tms_synchronizer (clk, tms, tms_sync);
-   synchronizer tdi_synchronizer (clk, tdi, tdi_sync);
+   // synchronizer tck_synchronizer (clk, tck, tck_sync);
+   // synchronizer tms_synchronizer (clk, tms, tms_sync);
+   // synchronizer tdi_synchronizer (clk, tdi, tdi_sync);
    
    // Edge detecting UpdateDR. Avoids cases where UpdateDR is still
    // high for multiple clock cycles.
+   logic UpdateDRSync;
    logic [1:0] 		  UpdateDRSamples;
    logic 		  UpdateDRValid;
    
@@ -89,17 +90,17 @@ module dtm (
    // Temporarily tying trstn to rstn. This isn't the way JTAG
    // recommends doing it, but the debug spec and neorv32 seem to
    // imply it's ok to do so.
-   tap_controller controller (tck_sync, rst, tms_sync, tdi_sync,
+   tap_controller controller (tck, rst, tms, tdi,
 			      resetn, enable, select,
 			      ShiftIR, ClockIR, UpdateIR,
 			      ShiftDR, ClockDR, UpdateDR);
    
-   inst_reg instructionreg (tdi_sync, resetn,
+   inst_reg instructionreg (tdi, resetn,
 			    ShiftIR, ClockIR, UpdateIR,
 			    tdo_ir, currentInst);
 
    // tdr = Test Data Register
-   data_reg tdr (tck_sync, tdi_sync, resetn,
+   data_reg tdr (tck, tdi, resetn,
 		 currentInst,
 		 ShiftDR, ClockDR, UpdateDR,
 		 dtmcs_next, dtmcs,
@@ -113,14 +114,16 @@ module dtm (
       endcase
    end
 
-    flop #(1) tdo_ff (~tck_sync, tdo_mux, tdo_delayed);
+    flop #(1) tdo_ff (~tck, tdo_mux, tdo_delayed);
     assign tdo = enable ? tdo_delayed : 1'bz;
 
+   synchronizer updatesync (clk, UpdateDR, UpdateDRSync);
+   
     always_ff @(posedge clk) begin
         if (rst) begin
             UpdateDRSamples <= 2'b0;
         end else begin
-            if (UpdateDR) UpdateDRSamples[0] <= 1;
+            if (UpdateDRSync) UpdateDRSamples[0] <= 1;
             else UpdateDRSamples[0] <= 0;
             UpdateDRSamples[1] <= UpdateDRSamples[0];
         end

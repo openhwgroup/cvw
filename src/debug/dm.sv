@@ -163,6 +163,30 @@ module dm(
    //    logic    regno;
    // } AbstractReg;
 
+   // DMStatus Signals
+   // logic ndmresetpending;
+   // logic stickyunavail;
+   // logic impebreak;
+   // logic reserved1;
+   // logic allhavereset;
+   // logic anyhavereset;
+   // logic allresumeack;
+   // logic anyresumeack;
+   // logic allnonexistent;
+   // logic anynonexistent;
+   // logic allunavail;
+   // logic anyunavail;
+   logic allrunning;
+   logic anyrunning;
+   logic allhalted;
+   logic anyhalted;
+   // logic authenticated;
+   // logic authbusy;
+   // logic hasresethaltreq;
+   // logic confstrptrvalid;
+   // logic [3:0] version;
+
+   
    // Abstract Register signals
    logic [7:0]  cmdtype;
    logic [2:0]  aarsize;
@@ -221,6 +245,7 @@ module dm(
          Data = '{default: '0};
          dmi_rsp.ready <= 1'b1;
          dmi_rsp.op <= 2'b0;
+         AbstractCS <= 32'h0000_0001;
       end else begin
          // Reads
          if ((dmi_req.op == RD) & dmi_req.valid) begin
@@ -250,8 +275,8 @@ module dm(
                DATA1: Data[1] <= dmi_req.data;
                
                DMCONTROL: begin
-                  if (HaltReq) DMControl <= {dmi_req.data[31], 1'b0, dmi_req.data[29:0]};
-                  else DMControl <= dmi_req.data;
+                  if (HaltReq) DMControl <= {dmi_req.data[31], 1'b0, dmi_req.data[29], 25'b0, dmi_req.data[3:0]};
+                  else DMControl <= {dmi_req.data[31:29], 25'b0, dmi_req.data[3:0]};
                end
                
                COMMAND: begin 
@@ -270,6 +295,15 @@ module dm(
          if (StartCommand & ~Command[17]) begin
             Data[0] <= RegIn;
          end
+
+         if (HaltReq | ResumeReq) begin
+            DMStatus[31:12] <= DMStatus[31:12];
+            DMStatus[11] <= allrunning;
+            DMStatus[10] <= anyrunning;
+            DMStatus[9] <= allhalted;
+            DMStatus[8] <= anyhalted;
+            DMStatus[7:0] <= DMStatus[7:0];
+         end
       end
    end
 
@@ -281,31 +315,44 @@ module dm(
    assign ResumeReq = DMControl[30];
    assign resethaltreq = 1'b0;
    
-   enum logic [1:0] {RUNNING, HALTING, HALTED, RESUMING} HaltState;
+   typedef enum logic [1:0] {RUNNING, HALTING, HALTED, RESUMING} HaltState;
+   HaltState CurrHaltState;
+   HaltState NextHaltState;
 
+   
    // see Figure 2 Debug Specification (2/21/25)
    always_ff @(posedge clk) begin
       if (rst) begin
-         if (resethaltreq) HaltState <= HALTED;
-         else HaltState <= RUNNING;
+         if (resethaltreq) CurrHaltState <= HALTED;
+         else CurrHaltState <= RUNNING;
       end else begin
-         case(HaltState)
-           RUNNING: begin
-              if (HaltReq) HaltState <= HALTING;
-           end	   
-           HALTING: begin
-              if (DebugMode) HaltState <= HALTED;
-           end	   
-           HALTED: begin
-              if (ResumeReq) HaltState <= RESUMING;
-           end	   
-           RESUMING: begin
-              if (~DebugMode) HaltState <= RUNNING;
-           end           
-           default: HaltState <= RUNNING;
-         endcase
+         CurrHaltState <= NextHaltState;
       end
    end
+
+   always_comb begin
+      case(CurrHaltState)
+         RUNNING: begin
+            if (HaltReq) NextHaltState = HALTING;
+         end	   
+         HALTING: begin
+            if (DebugMode) NextHaltState = HALTED;
+         end	   
+         HALTED: begin
+            if (ResumeReq) NextHaltState = RESUMING;
+         end	   
+         RESUMING: begin
+            if (~DebugMode) NextHaltState = RUNNING;
+         end           
+         default: NextHaltState = RUNNING;
+      endcase
+   end
+
+   assign allresumeack = NextHaltState == RUNNING;
+   assign anyresumeack = NextHaltState == RUNNING;
+   assign allhalted = NextHaltState == HALTED;
+   assign anyhalted = NextHaltState == HALTED;
+   
 
    // --------------------------------------------------------------------------
    // Abstract Command FSM
