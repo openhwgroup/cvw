@@ -272,7 +272,7 @@ module dm(
          end
       end
    end
-   
+
    // --------------------------------------------------------------------------
    // Halt FSM
    // --------------------------------------------------------------------------
@@ -349,5 +349,5 @@ module dm(
    assign RegAddr = Command[4:0];
    assign DebugRegWrite = Command[16] & dmi_rsp.valid;
    assign RegOut = Data[0]; // Needs to expand with 64 bit numbers
-   
+
 endmodule
