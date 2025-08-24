@@ -203,6 +203,23 @@ module dm(
    // value of the Debug CSR on the next cycle. If it's a write, that
    // should also take effect on the next cycle.
 
+   // The DM must, I believe (jes) :
+   // 1.) Handle DMI requests (read/write operations) to access Debug CSRs and abstract commands.
+   // 2.) Respond to read requests by supplying the requested register value.
+   // 3.) Apply write operations to update registers, typically taking effect in a predictable manner (e.g., on the next clock cycle).
+   // 4.) Manage the state of the debug process, including hart control (e.g., halting, resuming, or resetting harts).
+
+   // Some FSM thoughts (jes)
+   // A simple state machine might have states like:
+   // * Idle: Waiting for dmi_en to assert.
+   // * Decode: Decode dmi_addr and dmi_op.
+   // * Read Response: Fetch and output register data on the next cycle.
+   // * Write Update: Update the register with dmi_data on the next cycle.
+   // * Complete: Assert dmi_resp to signal completion.
+   // Consider adding an Error State for handling invalid requests (e.g., accessing a non-existent register).
+   // If the DM supports abstract commands (e.g., for accessing hart registers or memory), we may need 
+   // additional states to manage the command execution pipeline, as these can take multiple cycles. - could be wrong here
+
    // enum logic {IDLE, GRANTED} DMIState;
 
    // --------------------------------------------------------------------------
