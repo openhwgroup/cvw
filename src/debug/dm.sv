@@ -91,7 +91,6 @@ module dm(
    // DMControl fields
    logic        resethaltreq;
 
-
    // AbstractCS fields
    logic [4:0] progbufsize;  
    logic        busy;        
@@ -185,7 +184,6 @@ module dm(
    // logic hasresethaltreq;
    // logic confstrptrvalid;
    // logic [3:0] version;
-
    
    // Abstract Register signals
    logic [7:0]  cmdtype;
@@ -193,8 +191,7 @@ module dm(
    logic        aarpostincrement;
 
    logic StartCommand;
-   logic NextValid;
-   
+   logic NextValid;   
    
    // Abstract Commands:
    // 0: Access Register Command
@@ -259,14 +256,13 @@ module dm(
                end
                
                DMSTATUS: dmi_rsp.data <= DMStatus;
-
               
                HARTINFO: dmi_rsp.data <= HartInfo;
                HALTSUM0: dmi_rsp.data <= HaltSum0;
                ABSTRACTCS: dmi_rsp.data <= AbstractCS;
                default: dmi_rsp.data <= 32'b0;
-            endcase // case (dmi_req.addr[6:0])
-         end // if (dmi_rsp.op == RD)
+            endcase 
+         end 
 
          // Writes
          if ((dmi_req.op == WR) & dmi_req.valid) begin
@@ -283,12 +279,12 @@ module dm(
                   Command <= dmi_req.data;
                end
               
-               ABSTRACTCS: begin 
-                  AbstractCS <= {AbstractCS[31:12],
-                                 dmi_req.data[11], // Relaxedpriv
-                                 dmi_req.data[8] == 1'b1 ? 3'b0 : AbstractCS[10:8], // cmderr -> R/W1C
+              ABSTRACTCS: begin 
+                 AbstractCS <= {AbstractCS[31:12],
+                                dmi_req.data[11], // Relaxedpriv
+                                dmi_req.data[8] == 1'b1 ? 3'b0 : AbstractCS[10:8], // cmderr -> R/W1C
                                  AbstractCS[7:0]}; // Only relaxedpriv and cmderr are writeable
-               end
+              end
             endcase            
          end
 
@@ -318,7 +314,6 @@ module dm(
    typedef enum logic [1:0] {RUNNING, HALTING, HALTED, RESUMING} HaltState;
    HaltState CurrHaltState;
    HaltState NextHaltState;
-
    
    // see Figure 2 Debug Specification (2/21/25)
    always_ff @(posedge clk) begin
@@ -351,8 +346,7 @@ module dm(
    assign allresumeack = NextHaltState == RUNNING;
    assign anyresumeack = NextHaltState == RUNNING;
    assign allhalted = NextHaltState == HALTED;
-   assign anyhalted = NextHaltState == HALTED;
-   
+   assign anyhalted = NextHaltState == HALTED;   
 
    // --------------------------------------------------------------------------
    // Abstract Command FSM
@@ -396,5 +390,4 @@ module dm(
    assign RegAddr = Command[4:0];
    assign DebugRegWrite = Command[16] & dmi_rsp.valid;
    assign RegOut = Data[0]; // Needs to expand with 64 bit numbers
-
 endmodule
