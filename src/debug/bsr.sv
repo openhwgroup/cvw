@@ -27,7 +27,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-
 module bsr #(parameter WIDTH=8) (
     // Primary Inputs
     input logic [WIDTH-1:0]  DataIn,
