@@ -81,12 +81,22 @@ module dm(
    logic [31:0] DMControl;
    logic [31:0] DMStatus;
    logic [31:0] DMCSR2;
-   logic [31:0] Data [11:0]; // Abstract Data Registers
+   logic [31:0] Data [1:0]; // Abstract Data Registers
    logic [31:0] HartInfo;
    logic [31:0] HaltSum0;
    logic [31:0] AbstractCS;
    logic [31:0] Command;
    logic [31:0] AbstractAuto;
+
+   logic [31:0] NextDMControl;
+   logic [31:0] NextDMStatus;
+   logic [31:0] NextDMCSR2;
+   logic [31:0] NextData [1:0];
+   logic [31:0] NextHartInfo;
+   logic [31:0] NextHaltSum0;
+   logic [31:0] NextAbstractCS;
+   logic [31:0] NextCommand;
+   logic [31:0] NextAbstractAuto;
 
    // DMControl fields
    logic        resethaltreq;
@@ -170,8 +180,8 @@ module dm(
    // logic reserved1;
    // logic allhavereset;
    // logic anyhavereset;
-   // logic allresumeack;
-   // logic anyresumeack;
+   logic allresumeack;
+   logic anyresumeack;
    // logic allnonexistent;
    // logic anynonexistent;
    // logic allunavail;
@@ -225,15 +235,15 @@ module dm(
    always_comb begin
       if ((dmi_req.op == RD) & dmi_req.valid) begin
          NextValid = 1'b1;
-      end
-
-      if ((dmi_req.op == WR) & dmi_req.valid) begin
+      end else if ((dmi_req.op == WR) & dmi_req.valid) begin
          case(dmi_req.addr[6:0])
             COMMAND: begin
                NextValid = DebugMode & StartCommand;
             end
             default: NextValid = 1'b1;
          endcase
+      end else begin
+         NextValid = 1'b0;
       end    
    end
   
@@ -241,7 +251,7 @@ module dm(
       if (rst) begin
          DMControl <= '0;
          Command <= '0;
-         DMStatus <= {24'b0, 1'b1, 1'b0, 1'b1, 1'b0, 4'b11};
+         DMStatus <= {14'b0, 2'b11, 8'b0, 1'b1, 1'b0, 1'b0, 1'b0, 4'b11}; // ResumeAck's start high
          Data = '{default: '0};
          dmi_rsp.ready <= 1'b1;
          dmi_rsp.op <= 2'b0;
@@ -258,12 +268,19 @@ module dm(
                   dmi_rsp.data[30:0] <= DMControl[30:0];
                end
                
-               DMSTATUS: dmi_rsp.data <= DMStatus;
+               DMSTATUS: begin
+                  // Might need a separate always_comb for every register.
+                  dmi_rsp.data <= {DMStatus[31:18],
+                                   allrunning, allrunning, // Shouldn't be necessary, check FIXME
+                                   DMStatus[15:12],
+                                   allrunning, anyrunning, allhalted, anyhalted,
+                                   DMStatus[7:0]};
+               end
 
               
                HARTINFO: dmi_rsp.data <= HartInfo;
                HALTSUM0: dmi_rsp.data <= HaltSum0;
-               ABSTRACTCS: dmi_rsp.data <= AbstractCS;
+               ABSTRACTCS: dmi_rsp.data <= {AbstractCS[31:11], cmderr, AbstractCS[7:0]};
                default: dmi_rsp.data <= 32'b0;
             endcase // case (dmi_req.addr[6:0])
          end // if (dmi_rsp.op == RD)
@@ -275,8 +292,17 @@ module dm(
                DATA1: Data[1] <= dmi_req.data;
                
                DMCONTROL: begin
-                  if (HaltReq) DMControl <= {dmi_req.data[31], 1'b0, dmi_req.data[29], 25'b0, dmi_req.data[3:0]};
-                  else DMControl <= {dmi_req.data[31:29], 25'b0, dmi_req.data[3:0]};
+                  if (HaltReq) begin 
+                     DMControl <= {dmi_req.data[31], 1'b0, dmi_req.data[29], 25'b0, dmi_req.data[3:0]};
+                  end else begin
+                     DMControl <= {dmi_req.data[31:29], 25'b0, dmi_req.data[3:0]};
+                     
+                     // Force AllResumeACK and AnyResumeACK low if
+                     // we're writing to ResumeReq p. 28. There will
+                     // always be at least 1 cycle of latency after
+                     // receving the ResumeReq
+                     if (dmi_req.data[30]) DMStatus <= {DMStatus[31:18], 2'b0, DMStatus[15:0]};
+                  end
                end
                
                COMMAND: begin 
@@ -286,7 +312,7 @@ module dm(
                ABSTRACTCS: begin 
                   AbstractCS <= {AbstractCS[31:12],
                                  dmi_req.data[11], // Relaxedpriv
-                                 dmi_req.data[8] == 1'b1 ? 3'b0 : AbstractCS[10:8], // cmderr -> R/W1C
+                                 dmi_req.data[8] == 1'b1 ? 3'b0 : AbstractCS[10:8], // -> R/W1C
                                  AbstractCS[7:0]}; // Only relaxedpriv and cmderr are writeable
                end
             endcase            
@@ -296,16 +322,36 @@ module dm(
             Data[0] <= RegIn;
          end
 
-         if (HaltReq | ResumeReq) begin
-            DMStatus[31:12] <= DMStatus[31:12];
-            DMStatus[11] <= allrunning;
-            DMStatus[10] <= anyrunning;
-            DMStatus[9] <= allhalted;
-            DMStatus[8] <= anyhalted;
-            DMStatus[7:0] <= DMStatus[7:0];
-         end
+         // if (ResumeReq) begin
+         //    DMStatus[31] <= 1'b1; // This is seen by OpenOCD
+         //    DMStatus[17] <= allrunning; // These are not - Vivado Synthesis issue? FIXME
+         //    DMStatus[16] <= allrunning;
+         // end
+
+         
       end
    end
+
+   
+
+    // always_ff @(posedge clk) begin
+    //   if (rst) begin
+    //      DMControl <= '0;
+    //      Command <= '0;
+    //      DMStatus <= {14'b0, 2'b11, 8'b0, 1'b1, 1'b0, 1'b0, 1'b0, 4'b11}; // ResumeAck's start high
+    //      Data = '{default: '0};
+    //      dmi_rsp.ready <= 1'b1;
+    //      dmi_rsp.op <= 2'b0;
+    //      AbstractCS <= 32'h0000_0001;
+    //   end else begin
+    //      DMStatus <= NextDMStatus;
+    //      DMControl <= NextDMControl;
+    //      Data[0] <= NextData[0];
+    //      Data[1] <= NextData[1];
+    //      AbstractCS <= NextAbstractCS;
+    //      Command <= NextCommand;
+    //   end
+    // end
 
    // --------------------------------------------------------------------------
    // Halt FSM
@@ -334,24 +380,28 @@ module dm(
       case(CurrHaltState)
          RUNNING: begin
             if (HaltReq) NextHaltState = HALTING;
+            else NextHaltState = RUNNING;
          end	   
          HALTING: begin
             if (DebugMode) NextHaltState = HALTED;
+            else NextHaltState = HALTING;
          end	   
          HALTED: begin
             if (ResumeReq) NextHaltState = RESUMING;
+            else NextHaltState = HALTED;
          end	   
          RESUMING: begin
             if (~DebugMode) NextHaltState = RUNNING;
+            else NextHaltState = RESUMING;
          end           
          default: NextHaltState = RUNNING;
       endcase
    end
 
-   assign allresumeack = NextHaltState == RUNNING;
-   assign anyresumeack = NextHaltState == RUNNING;
-   assign allhalted = NextHaltState == HALTED;
-   assign anyhalted = NextHaltState == HALTED;
+   assign allrunning = NextHaltState == RUNNING | CurrHaltState == RUNNING;
+   assign anyrunning = NextHaltState == RUNNING | CurrHaltState == RUNNING;
+   assign allhalted = NextHaltState == HALTED | CurrHaltState == HALTED;
+   assign anyhalted = NextHaltState == HALTED | CurrHaltState == HALTED;
    
 
    // --------------------------------------------------------------------------
@@ -397,4 +447,11 @@ module dm(
    assign DebugRegWrite = Command[16] & dmi_rsp.valid;
    assign RegOut = Data[0]; // Needs to expand with 64 bit numbers
 
+   //assign cmderr = 3'd2;
+   
+   always_comb begin
+      cmderr = 3'd2;
+      if (~|Command[4:0] | Command[4:0] == 5'd0 | aarsize != 3'd3 | aarsize != 3'd4) cmderr = 3'd0;
+   end
+   
 endmodule

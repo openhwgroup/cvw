@@ -82,8 +82,8 @@ module data_reg #(parameter INSTWIDTH = 5)
             IDCODE  : tdo = tdo_idcode;
             DTMCS   : tdo = tdo_dtmcs;
             DMIREG  : tdo = tdo_dmi;
-            BYPASS  : tdo = tdo_bypass;
-            default : tdo = tdo_bypass; // Bypass instruction 11111 and 00000
+            BYPASS  : tdo = tdo_idcode;
+            default : tdo = tdo_idcode; // Bypass instruction 11111 and 00000
         endcase
     end
 endmodule
