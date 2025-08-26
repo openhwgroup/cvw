@@ -452,7 +452,7 @@ module dm(
    end
    
    assign aarsize = Command[22:20];
-   assign StartCommand = dmi_req.valid & dmi_rsp.ready & (dmi_req.addr == COMMAND);
+   assign StartCommand = dmi_req.valid & dmi_rsp.ready & (dmi_req.addr == COMMAND) & ~|cmderr;
    assign DebugControl = StartCommand;
    assign RegAddr = Command[4:0];
    assign DebugRegWrite = Command[16] & dmi_rsp.valid;
@@ -461,7 +461,7 @@ module dm(
    //assign cmderr = 3'd2;
    
    always_comb begin
-      cmderr = 3'd2;
-      if (~|Command[4:0] | Command[4:0] == 5'd0 | aarsize != 3'd3 | aarsize != 3'd4) cmderr = 3'd0;
+      if ((~|Command[15:5] | Command[4:0] == 5'd0) & aarsize != 3'd3 & aarsize != 3'd4) cmderr = 3'd0;
+      else cmderr = 3'd2;
    end 
 endmodule
