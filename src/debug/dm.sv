@@ -101,7 +101,6 @@ module dm(
    // DMControl fields
    logic        resethaltreq;
 
-
    // AbstractCS fields
    logic [4:0] progbufsize;  
    logic        busy;        
@@ -195,7 +194,6 @@ module dm(
    // logic hasresethaltreq;
    // logic confstrptrvalid;
    // logic [3:0] version;
-
    
    // Abstract Register signals
    logic [7:0]  cmdtype;
@@ -203,8 +201,7 @@ module dm(
    logic        aarpostincrement;
 
    logic StartCommand;
-   logic NextValid;
-   
+   logic NextValid;   
    
    // Abstract Commands:
    // 0: Access Register Command
@@ -215,6 +212,23 @@ module dm(
    // to handle the DMI requests. If it reads, I want to supply the
    // value of the Debug CSR on the next cycle. If it's a write, that
    // should also take effect on the next cycle.
+
+   // The DM must, I believe (jes) :
+   // 1.) Handle DMI requests (read/write operations) to access Debug CSRs and abstract commands.
+   // 2.) Respond to read requests by supplying the requested register value.
+   // 3.) Apply write operations to update registers, typically taking effect in a predictable manner (e.g., on the next clock cycle).
+   // 4.) Manage the state of the debug process, including hart control (e.g., halting, resuming, or resetting harts).
+
+   // Some FSM thoughts (jes)
+   // A simple state machine might have states like:
+   // * Idle: Waiting for dmi_en to assert.
+   // * Decode: Decode dmi_addr and dmi_op.
+   // * Read Response: Fetch and output register data on the next cycle.
+   // * Write Update: Update the register with dmi_data on the next cycle.
+   // * Complete: Assert dmi_resp to signal completion.
+   // Consider adding an Error State for handling invalid requests (e.g., accessing a non-existent register).
+   // If the DM supports abstract commands (e.g., for accessing hart registers or memory), we may need 
+   // additional states to manage the command execution pipeline, as these can take multiple cycles. - could be wrong here
 
    // enum logic {IDLE, GRANTED} DMIState;
 
@@ -267,7 +281,7 @@ module dm(
                   dmi_rsp.data[31] <= 1'b0;
                   dmi_rsp.data[30:0] <= DMControl[30:0];
                end
-               
+              
                DMSTATUS: begin
                   // Might need a separate always_comb for every register.
                   dmi_rsp.data <= {DMStatus[31:18],
@@ -276,14 +290,13 @@ module dm(
                                    allrunning, anyrunning, allhalted, anyhalted,
                                    DMStatus[7:0]};
                end
-
               
                HARTINFO: dmi_rsp.data <= HartInfo;
                HALTSUM0: dmi_rsp.data <= HaltSum0;
                ABSTRACTCS: dmi_rsp.data <= {AbstractCS[31:11], cmderr, AbstractCS[7:0]};
                default: dmi_rsp.data <= 32'b0;
-            endcase // case (dmi_req.addr[6:0])
-         end // if (dmi_rsp.op == RD)
+            endcase 
+         end 
 
          // Writes
          if ((dmi_req.op == WR) & dmi_req.valid) begin
@@ -309,12 +322,12 @@ module dm(
                   Command <= dmi_req.data;
                end
               
-               ABSTRACTCS: begin 
-                  AbstractCS <= {AbstractCS[31:12],
-                                 dmi_req.data[11], // Relaxedpriv
-                                 dmi_req.data[8] == 1'b1 ? 3'b0 : AbstractCS[10:8], // -> R/W1C
+              ABSTRACTCS: begin 
+                 AbstractCS <= {AbstractCS[31:12],
+                                dmi_req.data[11], // Relaxedpriv
+                                dmi_req.data[8] == 1'b1 ? 3'b0 : AbstractCS[10:8], // cmderr -> R/W1C
                                  AbstractCS[7:0]}; // Only relaxedpriv and cmderr are writeable
-               end
+              end
             endcase            
          end
 
@@ -364,7 +377,6 @@ module dm(
    typedef enum logic [1:0] {RUNNING, HALTING, HALTED, RESUMING} HaltState;
    HaltState CurrHaltState;
    HaltState NextHaltState;
-
    
    // see Figure 2 Debug Specification (2/21/25)
    always_ff @(posedge clk) begin
@@ -397,12 +409,11 @@ module dm(
          default: NextHaltState = RUNNING;
       endcase
    end
-
+                                 
    assign allrunning = NextHaltState == RUNNING | CurrHaltState == RUNNING;
    assign anyrunning = NextHaltState == RUNNING | CurrHaltState == RUNNING;
    assign allhalted = NextHaltState == HALTED | CurrHaltState == HALTED;
    assign anyhalted = NextHaltState == HALTED | CurrHaltState == HALTED;
-   
 
    // --------------------------------------------------------------------------
    // Abstract Command FSM
@@ -452,6 +463,5 @@ module dm(
    always_comb begin
       cmderr = 3'd2;
       if (~|Command[4:0] | Command[4:0] == 5'd0 | aarsize != 3'd3 | aarsize != 3'd4) cmderr = 3'd0;
-   end
-   
+   end 
 endmodule
