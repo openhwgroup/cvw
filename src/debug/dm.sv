@@ -450,6 +450,8 @@ module dm(
          endcase
       end
    end
+
+   logic ValidCommand;
    
    assign aarsize = Command[22:20];
    assign StartCommand = dmi_req.valid & dmi_rsp.ready & (dmi_req.addr == COMMAND) & ~|cmderr;
@@ -459,9 +461,26 @@ module dm(
    assign RegOut = Data[0]; // Needs to expand with 64 bit numbers
 
    //assign cmderr = 3'd2;
+
+   // Refer to Debug Specification pg. 19 for register ranges.
+   always_comb begin
+      case(Command[15:0])
+         16'b0001_0000_000x_xxxx: ValidCommand = 1; // GPRs
+         16'h0300: ValidCommand = 1; // mstatus
+         16'h0301: ValidCommand = 1; // misa
+         16'h0305: ValidCommand = 1; // mtvec
+         16'h0341: ValidCommand = 1; // mepc
+         16'h0342: ValidCommand = 1; // mcause
+         16'h0343: ValidCommand = 1; // mtval
+         16'h07B0: ValidCommand = 1; // dcsr
+         16'h07B1: ValidCommand = 1; // dpc
+         16'h07B2: ValidCommand = 1; // dscratch0
+         default: ValidCommand = 0;
+      endcase
+   end
    
    always_comb begin
-      if ((~|Command[15:5] | Command[4:0] == 5'd0) & aarsize != 3'd3 & aarsize != 3'd4) cmderr = 3'd0;
+      if (ValidCommand & aarsize != 3'd3 & aarsize != 3'd4) cmderr = 3'd0;
       else cmderr = 3'd2;
    end 
 endmodule
