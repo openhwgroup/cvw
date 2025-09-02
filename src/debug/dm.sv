@@ -44,11 +44,12 @@ module dm(
    output logic        ResumeReq,
    input logic         DebugMode,
    output logic        DebugControl,
+   output logic        CSRDebugEnable,
    
    // Reading and Writing Registers
    input logic [31:0]  RegIn,
    output logic [31:0] RegOut,
-   output logic [4:0]  RegAddr,
+   output logic [11:0]  RegAddr,
    output logic        DebugRegWrite
 );
 
@@ -268,6 +269,7 @@ module dm(
          DMStatus <= {14'b0, 2'b11, 8'b0, 1'b1, 1'b0, 1'b0, 1'b0, 4'b11}; // ResumeAck's start high
          Data = '{default: '0};
          dmi_rsp.ready <= 1'b1;
+         dmi_rsp.data <= '0;
          dmi_rsp.op <= 2'b0;
          AbstractCS <= 32'h0000_0001;
       end else begin
@@ -328,6 +330,7 @@ module dm(
                                 dmi_req.data[8] == 1'b1 ? 3'b0 : AbstractCS[10:8], // cmderr -> R/W1C
                                  AbstractCS[7:0]}; // Only relaxedpriv and cmderr are writeable
               end
+              default: ;
             endcase            
          end
 
@@ -456,26 +459,54 @@ module dm(
    assign aarsize = Command[22:20];
    assign StartCommand = dmi_req.valid & dmi_rsp.ready & (dmi_req.addr == COMMAND) & ~|cmderr;
    assign DebugControl = StartCommand;
-   assign RegAddr = Command[4:0];
+   assign RegAddr = Command[11:0];
    assign DebugRegWrite = Command[16] & dmi_rsp.valid;
    assign RegOut = Data[0]; // Needs to expand with 64 bit numbers
 
    //assign cmderr = 3'd2;
 
    // Refer to Debug Specification pg. 19 for register ranges.
+   // always_comb begin
+   //    case(Command[15:0])
+   //       16'b0001_0000_000x_xxxx: ValidCommand = 1; // GPRs
+   //       16'h0300: ValidCommand = 1; // mstatus
+   //       16'h0301: ValidCommand = 1; // misa
+   //       16'h0305: ValidCommand = 1; // mtvec
+   //       16'h0341: ValidCommand = 1; // mepc
+   //       16'h0342: ValidCommand = 1; // mcause
+   //       16'h0343: ValidCommand = 1; // mtval
+   //       16'h07B0: ValidCommand = 1; // dcsr
+   //       16'h07B1: ValidCommand = 1; // dpc
+   //       16'h07B2: ValidCommand = 1; // dscratch0
+   //       default: ValidCommand = 0;
+   //    endcase
+   // end
+
    always_comb begin
       case(Command[15:0])
-         16'b0001_0000_000x_xxxx: ValidCommand = 1; // GPRs
-         16'h0300: ValidCommand = 1; // mstatus
-         16'h0301: ValidCommand = 1; // misa
-         16'h0305: ValidCommand = 1; // mtvec
-         16'h0341: ValidCommand = 1; // mepc
-         16'h0342: ValidCommand = 1; // mcause
-         16'h0343: ValidCommand = 1; // mtval
-         16'h07B0: ValidCommand = 1; // dcsr
-         16'h07B1: ValidCommand = 1; // dpc
-         16'h07B2: ValidCommand = 1; // dscratch0
-         default: ValidCommand = 0;
+         16'b0001_0000_000x_xxxx: begin // GPRs
+            ValidCommand = 1;
+            CSRDebugEnable = 0;
+         end
+        
+         16'h0300, 16'h0301, 16'h0305,
+         16'h0341, 16'h0342, 16'h0343,
+         16'h07B0, 16'h07B1, 16'h07B2: begin // 
+            ValidCommand = 1; // mstatus
+            CSRDebugEnable = 1;
+         end
+         // 16'h0301: ValidCommand = 1; // misa
+         // 16'h0305: ValidCommand = 1; // mtvec
+         // 16'h0341: ValidCommand = 1; // mepc
+         // 16'h0342: ValidCommand = 1; // mcause
+         // 16'h0343: ValidCommand = 1; // mtval
+         // 16'h07B0: ValidCommand = 1; // dcsr
+         // 16'h07B1: ValidCommand = 1; // dpc
+         // 16'h07B2: ValidCommand = 1; // dscratch0
+         default: begin 
+            ValidCommand = 0;
+            CSRDebugEnable = 0;
+         end
       endcase
    end
    

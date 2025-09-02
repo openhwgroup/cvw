@@ -186,6 +186,8 @@ module dtm (
                            dmi_req.valid <= 1'b1;
                             DMIState <= BUSY;
                         end
+                    end else begin
+                       DMIState <= IDLE;
                     end
                 end
               
@@ -196,6 +198,8 @@ module dtm (
                         dmi_next_reg.data <= dmi_rsp.data;
                         dmi_next_reg.op <= dmi_rsp.op;
                         DMIState <= IDLE;
+                    end else begin
+                       DMIState <= BUSY;
                     end
                 end
               

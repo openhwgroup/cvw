@@ -58,7 +58,7 @@ typedef enum logic [1:0] {
    WR  = 2'b10
 } DMIOPW;
 
-`define DTMCS_RESET {11'b0, 3'd4, 8'b0, 6'd`ABITS, 4'b1}
+`define DTMCS_RESET {11'b0, 3'd4, 6'd0, 2'b0, 6'd`ABITS, 4'b1}
 `define DMI_WIDTH `ABITS + 32 + 2
 // `define DMI_RESET `DMI_WIDTH'h
 `endif
