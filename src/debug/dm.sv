@@ -253,7 +253,7 @@ module dm(
       end else if ((dmi_req.op == WR) & dmi_req.valid) begin
          case(dmi_req.addr[6:0])
             COMMAND: begin
-               NextValid = DebugMode & StartCommand;
+               NextValid = DebugMode;
             end
             default: NextValid = 1'b1;
          endcase
