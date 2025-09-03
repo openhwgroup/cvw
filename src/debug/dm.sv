@@ -251,12 +251,13 @@ module dm(
       if ((dmi_req.op == RD) & dmi_req.valid) begin
          NextValid = 1'b1;
       end else if ((dmi_req.op == WR) & dmi_req.valid) begin
-         case(dmi_req.addr[6:0])
-            COMMAND: begin
-               NextValid = DebugMode;
-            end
-            default: NextValid = 1'b1;
-         endcase
+         NextValid = 1'b1;
+         // case(dmi_req.addr[6:0])
+         //    COMMAND: begin
+         //       NextValid = DebugMode;
+         //    end
+         //    default: NextValid = 1'b1;
+         // endcase
       end else begin
          NextValid = 1'b0;
       end    
@@ -295,7 +296,7 @@ module dm(
               
                HARTINFO: dmi_rsp.data <= HartInfo;
                HALTSUM0: dmi_rsp.data <= HaltSum0;
-               ABSTRACTCS: dmi_rsp.data <= {AbstractCS[31:11], cmderr, AbstractCS[7:0]};
+               ABSTRACTCS: dmi_rsp.data <= {AbstractCS[31:11], AbstractCS[10:8] == 3'b0 ? cmderr : AbstractCS[10:8], AbstractCS[7:0]};
                default: dmi_rsp.data <= 32'b0;
             endcase 
          end 
@@ -334,17 +335,9 @@ module dm(
             endcase            
          end
 
-         if (StartCommand & ~Command[17]) begin
+         if (StartCommand & ~Command[16]) begin // 
             Data[0] <= RegIn;
          end
-
-         // if (ResumeReq) begin
-         //    DMStatus[31] <= 1'b1; // This is seen by OpenOCD
-         //    DMStatus[17] <= allrunning; // These are not - Vivado Synthesis issue? FIXME
-         //    DMStatus[16] <= allrunning;
-         // end
-
-         
       end
    end
 
@@ -484,7 +477,14 @@ module dm(
 
    always_comb begin
       case(Command[15:0])
-         16'b0001_0000_000x_xxxx: begin // GPRs
+         16'h1000, 16'h1001, 16'h1002, 16'h1003,
+         16'h1004, 16'h1005, 16'h1006, 16'h1007,
+         16'h1008, 16'h1009, 16'h100a, 16'h100b,
+         16'h100c, 16'h100d, 16'h100e, 16'h100f,
+         16'h1010, 16'h1011, 16'h1012, 16'h1013,
+         16'h1014, 16'h1015, 16'h1016, 16'h1017,
+         16'h1018, 16'h1019, 16'h101a, 16'h101b,
+         16'h101c, 16'h101d, 16'h101e, 16'h101f: begin // GPRs
             ValidCommand = 1;
             CSRDebugEnable = 0;
          end
@@ -511,7 +511,8 @@ module dm(
    end
    
    always_comb begin
-      if (ValidCommand & aarsize != 3'd3 & aarsize != 3'd4) cmderr = 3'd0;
-      else cmderr = 3'd2;
+      if (aarsize != 3'd2) cmderr = 3'd2;
+      else if (~ValidCommand) cmderr = 3'd3;
+      else cmderr = 3'd0;
    end 
 endmodule
