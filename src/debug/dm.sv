@@ -268,6 +268,7 @@ module dm(
          DMControl <= '0;
          Command <= '0;
          DMStatus <= {14'b0, 2'b11, 8'b0, 1'b1, 1'b0, 1'b0, 1'b0, 4'b11}; // ResumeAck's start high
+         HartInfo <= '0;
          Data = '{default: '0};
          dmi_rsp.ready <= 1'b1;
          dmi_rsp.data <= '0;
@@ -511,7 +512,7 @@ module dm(
    end
    
    always_comb begin
-      if (aarsize != 3'd2) cmderr = 3'd2;
+      if (aarsize != 3'd2 || aarsize != 3'd0) cmderr = 3'd2;
       else if (~ValidCommand) cmderr = 3'd3;
       else cmderr = 3'd0;
    end 
