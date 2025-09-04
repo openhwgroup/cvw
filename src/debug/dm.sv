@@ -512,7 +512,7 @@ module dm(
    end
    
    always_comb begin
-      if (aarsize != 3'd2 || aarsize != 3'd0) cmderr = 3'd2;
+      if (aarsize != 3'd2 && aarsize != 3'd0) cmderr = 3'd2;
       else if (~ValidCommand) cmderr = 3'd3;
       else cmderr = 3'd0;
    end 
