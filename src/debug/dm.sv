@@ -204,6 +204,9 @@ module dm(
    logic [2:0]  nextaarsize;
    logic        aarpostincrement;
 
+   logic        ReadRequest;
+   logic        WriteRequest;
+   
    logic StartCommand;
    logic NextValid;   
    
@@ -240,6 +243,9 @@ module dm(
    // DMI Interface with Registers
    // --------------------------------------------------------------------------
    assign InitRequest = ((dmi_req.op == RD) | (dmi_req.op == WR)) & dmi_req.valid;
+   assign ReadRequest = dmi_req.op == RD & dmi_req.valid;
+   assign WriteRequest = dmi_req.op == WR & dmi_req.valid;
+   
    always_ff @(posedge clk) begin
       if (rst) begin
          dmi_rsp.valid <= 1'b0;
@@ -264,117 +270,137 @@ module dm(
          NextValid = 1'b0;
       end    
    end
-  
+
+   // Reading Registers
    always_ff @(posedge clk) begin
       if (rst) begin
-         DMControl <= '0;
-         Command <= '0;
-         DMStatus <= {14'b0, 2'b11, 8'b0, 1'b1, 1'b0, 1'b0, 1'b0, 4'b11}; // ResumeAck's start high
-         HartInfo <= '0;
-         Data = '{default: '0};
+         // DMControl <= '0;
+         // Command <= '0;
+         // HartInfo <= '0;
+         // Data = '{default: '0};
          dmi_rsp.ready <= 1'b1;
          dmi_rsp.data <= '0;
          dmi_rsp.op <= 2'b0;
-         AbstractCS <= 32'h0000_0001;
-      end else begin
-         // Reads
-         if ((dmi_req.op == RD) & dmi_req.valid) begin
-            case(dmi_req.addr[6:0])
-               DATA0: dmi_rsp.data <= Data0;
-               DATA1: dmi_rsp.data <= Data1;
-               
-               DMCONTROL: begin
-                  dmi_rsp.data[31] <= 1'b0;
-                  dmi_rsp.data[30:0] <= DMControl[30:0];
-               end
-              
-               DMSTATUS: begin
-                  // Might need a separate always_comb for every register.
-                  dmi_rsp.data <= {DMStatus[31:18],
-                                   allrunning, allrunning, // Shouldn't be necessary, check FIXME
-                                   DMStatus[15:12],
-                                   allrunning, anyrunning, allhalted, anyhalted,
-                                   DMStatus[7:0]};
-               end
-              
-               HARTINFO: dmi_rsp.data <= HartInfo;
-               HALTSUM0: dmi_rsp.data <= HaltSum0;
-               ABSTRACTCS: dmi_rsp.data <= AbstractCS;
-               default: dmi_rsp.data <= 32'b0;
-            endcase 
-         end 
+         // AbstractCS <= 32'h0000_0001;
+      end else if (ReadRequest) begin
+         case(dmi_req.addr[6:0])
+            DATA0: dmi_rsp.data <= Data0;
+            //DATA1: dmi_rsp.data <= Data[1];
+            
+            DMCONTROL: begin
+               dmi_rsp.data[31] <= 1'b0;
+               dmi_rsp.data[30:0] <= DMControl[30:0];
+            end
+            
+            DMSTATUS: begin
+               // Might need a separate always_comb for every register.
+               dmi_rsp.data <= {DMStatus[31:18],
+                                allrunning, allrunning, // Shouldn't be necessary, check FIXME
+                                DMStatus[15:12],
+                                allrunning, anyrunning, allhalted, anyhalted,
+                                DMStatus[7:0]};
+            end
+            
+            HARTINFO: dmi_rsp.data <= HartInfo;
+            HALTSUM0: dmi_rsp.data <= HaltSum0;
+            ABSTRACTCS: dmi_rsp.data <= AbstractCS;
+            default: dmi_rsp.data <= 32'b0;
+         endcase 
+      end
+   end
 
-         // Writes
-         if ((dmi_req.op == WR) & dmi_req.valid) begin
-            case(dmi_req.addr[6:0])
-               DATA0: Data0 <= dmi_req.data;
-               DATA1: Data1 <= dmi_req.data;
-               
-               DMCONTROL: begin
-                  if (HaltReq) begin 
-                     DMControl <= {dmi_req.data[31], 1'b0, dmi_req.data[29], 25'b0, dmi_req.data[3:0]};
-                  end else begin
-                     DMControl <= {dmi_req.data[31:29], 25'b0, dmi_req.data[3:0]};
-                     
-                     // Force AllResumeACK and AnyResumeACK low if
-                     // we're writing to ResumeReq p. 28. There will
-                     // always be at least 1 cycle of latency after
-                     // receving the ResumeReq
-                     if (dmi_req.data[30]) DMStatus <= {DMStatus[31:18], 2'b0, DMStatus[15:0]};
-                  end
-               end
-               
-               COMMAND: begin 
-                  Command <= dmi_req.data;
-
-                  // ISSUE: cmderr is now based on incoming request data. If it
-                  // changes to something else, cmderr changes and doesn't get
-                  // clocked into AbstractCS. AbstractCS must change on when
-                  // Commands are incoming, not only on reads.
-                  AbstractCS <= {AbstractCS[31:11], AbstractCS[10:8] == 3'b0 ? cmderr : AbstractCS[10:8], AbstractCS[7:0]};
-               end
-              
-              ABSTRACTCS: begin 
-                 AbstractCS <= {AbstractCS[31:12],
-                                dmi_req.data[11], // Relaxedpriv
-                                dmi_req.data[8] == 1'b1 ? 3'b0 : AbstractCS[10:8], // cmderr -> R/W1C
-                                 AbstractCS[7:0]}; // Only relaxedpriv and cmderr are writeable
-              end
-              default: ;
-            endcase            
+   // ----------------------------------------------------------------
+   // Writes to registers
+   // ----------------------------------------------------------------
+   /*
+    These contain complicated enable logic. Conditions that happen based
+    on state can cause these to change outside of DMI transactions.
+    
+    In order to not confuse synthesis, these are placed in their own
+    behavioral blocks. The enable logic is now clear for all of these
+    registers.
+    */
+   
+   // DMControl
+   always_ff @(posedge clk) begin
+      if (rst) begin
+         DMControl <= '0;
+      end else if (WriteRequest & (dmi_req.addr == DMCONTROL)) begin
+         DMControl <= DMControl;
+         if (HaltReq) begin 
+            DMControl <= {dmi_req.data[31], 1'b0, dmi_req.data[29], 25'b0, dmi_req.data[3:0]};
+         end else begin
+            DMControl <= {dmi_req.data[31:29], 25'b0, dmi_req.data[3:0]};
          end
+      end
+   end
 
-         // ISSUE: cmderr is now based on incoming request data. If it
-         // changes to something else, cmderr changes and doesn't get
-         // clocked into AbstractCS. AbstractCS must change on when
-         // Commands are incoming, not only on reads.
-         
-         if (StartCommand & ~Command[16]) begin // 
+   // DMStatus
+   // This doesn't get updated on writes to DMStatus because it's a read only register.
+   always_ff @(posedge clk) begin
+      if (rst) begin
+         DMStatus <= {14'b0, 2'b11, 8'b0, 1'b1, 1'b0, 1'b0, 1'b0, 4'b11}; // ResumeAck's start high
+      end else if (WriteRequest & (dmi_req.addr == DMCONTROL)) begin
+         // Force AllResumeACK and AnyResumeACK low if
+         // we're writing to ResumeReq p. 28. There will
+         // always be at least 1 cycle of latency after
+         // receving the ResumeReq
+         if (dmi_req.data[30]) DMStatus <= {DMStatus[31:18], 2'b0, DMStatus[15:0]};
+      end
+   end
+
+   logic ReadRegister;
+   assign ReadRegister = StartCommand & ~Command[16];
+   
+   // Data[0]
+   always_ff @(posedge clk) begin
+      if (rst) begin
+         Data0 <= '0;
+      end else begin
+         Data0 <= Data0;
+         if (WriteRequest & (dmi_req.addr == DATA0)) begin
+            Data0 <= dmi_req.data;
+         end else if (ReadRegister) begin
             Data0 <= RegIn;
          end
       end
    end
 
-   
+   // Command
+   always_ff @(posedge clk) begin
+      if (rst) begin
+         Command <= '0;
+      end else if (WriteRequest & (dmi_req.addr == COMMAND)) begin
+         Command <= dmi_req.data;
+      end
+   end
 
-    // always_ff @(posedge clk) begin
-    //   if (rst) begin
-    //      DMControl <= '0;
-    //      Command <= '0;
-    //      DMStatus <= {14'b0, 2'b11, 8'b0, 1'b1, 1'b0, 1'b0, 1'b0, 4'b11}; // ResumeAck's start high
-    //      Data = '{default: '0};
-    //      dmi_rsp.ready <= 1'b1;
-    //      dmi_rsp.op <= 2'b0;
-    //      AbstractCS <= 32'h0000_0001;
-    //   end else begin
-    //      DMStatus <= NextDMStatus;
-    //      DMControl <= NextDMControl;
-    //      Data[0] <= NextData[0];
-    //      Data[1] <= NextData[1];
-    //      AbstractCS <= NextAbstractCS;
-    //      Command <= NextCommand;
-    //   end
-    // end
+   // AbstractCS
+   always_ff @(posedge clk) begin
+      if (rst) begin
+         AbstractCS <= 32'h0000_0001;
+      end else if (WriteRequest & (dmi_req.addr == ABSTRACTCS)) begin
+         AbstractCS <= {AbstractCS[31:12],
+                        dmi_req.data[11], // Relaxedpriv
+                        dmi_req.data[8] == 1'b1 ? 3'b0 : AbstractCS[10:8], // cmderr -> R/W1C
+                        AbstractCS[7:0]}; // Only relaxedpriv and cmderr are writeable
+      end else if (WriteRequest & (dmi_req.addr == COMMAND)) begin
+         // ISSUE: cmderr is now based on incoming request data. If it
+         // changes to something else, cmderr changes and doesn't get
+         // clocked into AbstractCS. AbstractCS must change on when
+         // Commands are incoming, not only on reads.
+         AbstractCS <= {AbstractCS[31:11], AbstractCS[10:8] == 3'b0 ? cmderr : AbstractCS[10:8], AbstractCS[7:0]};
+      end
+   end
+
+   // HartInfo - UNIMPLEMENTED - Returns all zeros
+   always_ff @(posedge clk) begin
+      if (rst) begin
+         HartInfo <= '0;
+      end else if (WriteRequest & (dmi_req.addr == HARTINFO)) begin
+         HartInfo <= '0;
+      end
+   end
 
    // --------------------------------------------------------------------------
    // Halt FSM
@@ -483,35 +509,7 @@ module dm(
       end
    end
 
-   //assign cmderr = 3'd2;
-
-   // Refer to Debug Specification pg. 19 for register ranges.
-   // always_comb begin
-   //    case(Command[15:0])
-   //       16'b0001_0000_000x_xxxx: ValidCommand = 1; // GPRs
-   //       16'h0300: ValidCommand = 1; // mstatus
-   //       16'h0301: ValidCommand = 1; // misa
-   //       16'h0305: ValidCommand = 1; // mtvec
-   //       16'h0341: ValidCommand = 1; // mepc
-   //       16'h0342: ValidCommand = 1; // mcause
-   //       16'h0343: ValidCommand = 1; // mtval
-   //       16'h07B0: ValidCommand = 1; // dcsr
-   //       16'h07B1: ValidCommand = 1; // dpc
-   //       16'h07B2: ValidCommand = 1; // dscratch0
-   //       default: ValidCommand = 0;
-   //    endcase
-   // end
-
-   // 16'h0301: ValidCommand = 1; // misa
-   // 16'h0305: ValidCommand = 1; // mtvec
-   // 16'h0341: ValidCommand = 1; // mepc
-   // 16'h0342: ValidCommand = 1; // mcause
-   // 16'h0343: ValidCommand = 1; // mtval
-   // 16'h07B0: ValidCommand = 1; // dcsr
-   // 16'h07B1: ValidCommand = 1; // dpc
-   // 16'h07B2: ValidCommand = 1; // dscratch0
-   // Check if the incoming command is a valid command. Next cmderr should change accordingly.
-   
+   // Refer to Debug Specification pg. 19 for register ranges.   
    always_comb begin
       if (dmi_req.addr == COMMAND) begin
          case(dmi_req.data[15:0])
