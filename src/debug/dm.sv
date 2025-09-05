@@ -83,6 +83,8 @@ module dm(
    logic [31:0] DMStatus;
    logic [31:0] DMCSR2;
    logic [31:0] Data [1:0]; // Abstract Data Registers
+   logic [31:0] Data0;
+   logic [31:0] Data1;
    logic [31:0] HartInfo;
    logic [31:0] HaltSum0;
    logic [31:0] AbstractCS;
@@ -199,6 +201,7 @@ module dm(
    // Abstract Register signals
    logic [7:0]  cmdtype;
    logic [2:0]  aarsize;
+   logic [2:0]  nextaarsize;
    logic        aarpostincrement;
 
    logic StartCommand;
@@ -251,13 +254,12 @@ module dm(
       if ((dmi_req.op == RD) & dmi_req.valid) begin
          NextValid = 1'b1;
       end else if ((dmi_req.op == WR) & dmi_req.valid) begin
-         NextValid = 1'b1;
-         // case(dmi_req.addr[6:0])
-         //    COMMAND: begin
-         //       NextValid = DebugMode;
-         //    end
-         //    default: NextValid = 1'b1;
-         // endcase
+         case(dmi_req.addr[6:0])
+            COMMAND: begin
+               NextValid = ~|AbstractCS[10:8] ? StartCommand : 1'b1;
+            end
+            default: NextValid = 1'b1;
+         endcase
       end else begin
          NextValid = 1'b0;
       end    
@@ -278,8 +280,8 @@ module dm(
          // Reads
          if ((dmi_req.op == RD) & dmi_req.valid) begin
             case(dmi_req.addr[6:0])
-               DATA0: dmi_rsp.data <= Data[0];
-               DATA1: dmi_rsp.data <= Data[1];
+               DATA0: dmi_rsp.data <= Data0;
+               DATA1: dmi_rsp.data <= Data1;
                
                DMCONTROL: begin
                   dmi_rsp.data[31] <= 1'b0;
@@ -297,7 +299,7 @@ module dm(
               
                HARTINFO: dmi_rsp.data <= HartInfo;
                HALTSUM0: dmi_rsp.data <= HaltSum0;
-               ABSTRACTCS: dmi_rsp.data <= {AbstractCS[31:11], AbstractCS[10:8] == 3'b0 ? cmderr : AbstractCS[10:8], AbstractCS[7:0]};
+               ABSTRACTCS: dmi_rsp.data <= AbstractCS;
                default: dmi_rsp.data <= 32'b0;
             endcase 
          end 
@@ -305,8 +307,8 @@ module dm(
          // Writes
          if ((dmi_req.op == WR) & dmi_req.valid) begin
             case(dmi_req.addr[6:0])
-               DATA0: Data[0] <= dmi_req.data;
-               DATA1: Data[1] <= dmi_req.data;
+               DATA0: Data0 <= dmi_req.data;
+               DATA1: Data1 <= dmi_req.data;
                
                DMCONTROL: begin
                   if (HaltReq) begin 
@@ -324,6 +326,12 @@ module dm(
                
                COMMAND: begin 
                   Command <= dmi_req.data;
+
+                  // ISSUE: cmderr is now based on incoming request data. If it
+                  // changes to something else, cmderr changes and doesn't get
+                  // clocked into AbstractCS. AbstractCS must change on when
+                  // Commands are incoming, not only on reads.
+                  AbstractCS <= {AbstractCS[31:11], AbstractCS[10:8] == 3'b0 ? cmderr : AbstractCS[10:8], AbstractCS[7:0]};
                end
               
               ABSTRACTCS: begin 
@@ -336,8 +344,13 @@ module dm(
             endcase            
          end
 
+         // ISSUE: cmderr is now based on incoming request data. If it
+         // changes to something else, cmderr changes and doesn't get
+         // clocked into AbstractCS. AbstractCS must change on when
+         // Commands are incoming, not only on reads.
+         
          if (StartCommand & ~Command[16]) begin // 
-            Data[0] <= RegIn;
+            Data0 <= RegIn;
          end
       end
    end
@@ -449,13 +462,26 @@ module dm(
    end
 
    logic ValidCommand;
+   logic NextCSRDebugEnable;
    
    assign aarsize = Command[22:20];
-   assign StartCommand = dmi_req.valid & dmi_rsp.ready & (dmi_req.addr == COMMAND) & ~|cmderr;
+   // assign StartCommand = dmi_req.valid & dmi_rsp.ready & (dmi_req.addr == COMMAND) & ~|cmderr;
    assign DebugControl = StartCommand;
-   assign RegAddr = Command[11:0];
-   assign DebugRegWrite = Command[16] & dmi_rsp.valid;
-   assign RegOut = Data[0]; // Needs to expand with 64 bit numbers
+   //assign RegAddr = Command[11:0];
+   assign DebugRegWrite = Command[16] & StartCommand;
+   assign RegOut = Data0; // Needs to expand with 64 bit numbers
+
+   always_ff @(posedge clk) begin
+      if (rst) begin
+         StartCommand <= 0;
+         RegAddr <= '0;
+         CSRDebugEnable <= 0;
+      end else begin
+         StartCommand <= dmi_req.valid & dmi_rsp.ready & (dmi_req.addr == COMMAND) & ~|cmderr;
+         RegAddr <= dmi_req.data[11:0];
+         CSRDebugEnable <= NextCSRDebugEnable;
+      end
+   end
 
    //assign cmderr = 3'd2;
 
@@ -476,44 +502,52 @@ module dm(
    //    endcase
    // end
 
-   always_comb begin
-      case(Command[15:0])
-         16'h1000, 16'h1001, 16'h1002, 16'h1003,
-         16'h1004, 16'h1005, 16'h1006, 16'h1007,
-         16'h1008, 16'h1009, 16'h100a, 16'h100b,
-         16'h100c, 16'h100d, 16'h100e, 16'h100f,
-         16'h1010, 16'h1011, 16'h1012, 16'h1013,
-         16'h1014, 16'h1015, 16'h1016, 16'h1017,
-         16'h1018, 16'h1019, 16'h101a, 16'h101b,
-         16'h101c, 16'h101d, 16'h101e, 16'h101f: begin // GPRs
-            ValidCommand = 1;
-            CSRDebugEnable = 0;
-         end
-        
-         16'h0300, 16'h0301, 16'h0305,
-         16'h0341, 16'h0342, 16'h0343,
-         16'h07B0, 16'h07B1, 16'h07B2: begin // 
-            ValidCommand = 1; // mstatus
-            CSRDebugEnable = 1;
-         end
-         // 16'h0301: ValidCommand = 1; // misa
-         // 16'h0305: ValidCommand = 1; // mtvec
-         // 16'h0341: ValidCommand = 1; // mepc
-         // 16'h0342: ValidCommand = 1; // mcause
-         // 16'h0343: ValidCommand = 1; // mtval
-         // 16'h07B0: ValidCommand = 1; // dcsr
-         // 16'h07B1: ValidCommand = 1; // dpc
-         // 16'h07B2: ValidCommand = 1; // dscratch0
-         default: begin 
-            ValidCommand = 0;
-            CSRDebugEnable = 0;
-         end
-      endcase
-   end
+   // 16'h0301: ValidCommand = 1; // misa
+   // 16'h0305: ValidCommand = 1; // mtvec
+   // 16'h0341: ValidCommand = 1; // mepc
+   // 16'h0342: ValidCommand = 1; // mcause
+   // 16'h0343: ValidCommand = 1; // mtval
+   // 16'h07B0: ValidCommand = 1; // dcsr
+   // 16'h07B1: ValidCommand = 1; // dpc
+   // 16'h07B2: ValidCommand = 1; // dscratch0
+   // Check if the incoming command is a valid command. Next cmderr should change accordingly.
    
    always_comb begin
-      if (aarsize != 3'd2 && aarsize != 3'd0) cmderr = 3'd2;
-      else if (~ValidCommand) cmderr = 3'd3;
+      if (dmi_req.addr == COMMAND) begin
+         case(dmi_req.data[15:0])
+            16'h1000, 16'h1001, 16'h1002, 16'h1003,
+               16'h1004, 16'h1005, 16'h1006, 16'h1007,
+               16'h1008, 16'h1009, 16'h100a, 16'h100b,
+               16'h100c, 16'h100d, 16'h100e, 16'h100f,
+               16'h1010, 16'h1011, 16'h1012, 16'h1013,
+               16'h1014, 16'h1015, 16'h1016, 16'h1017,
+               16'h1018, 16'h1019, 16'h101a, 16'h101b,
+               16'h101c, 16'h101d, 16'h101e, 16'h101f: begin // GPRs
+                  ValidCommand = 1;
+                  NextCSRDebugEnable = 0;
+               end
+        
+            16'h0300, 16'h0301, 16'h0305,
+               16'h0341, 16'h0342, 16'h0343,
+               16'h07B0, 16'h07B1, 16'h07B2: begin // CSRs
+                  ValidCommand = 1;
+                  NextCSRDebugEnable = 1;
+               end
+            default: begin 
+               ValidCommand = 0;
+               NextCSRDebugEnable = 0;
+            end
+         endcase
+      end else begin
+         ValidCommand = 0;
+         NextCSRDebugEnable = 0;
+      end
+   end
+
+   assign nextaarsize = dmi_req.data[22:20];  
+   always_comb begin
+      if (ValidCommand & nextaarsize != 3'd2 & nextaarsize != 3'd0) cmderr = 3'd2;
+      else if (~ValidCommand & nextaarsize == 3'd2) cmderr = 3'd3;
       else cmderr = 3'd0;
    end 
 endmodule
