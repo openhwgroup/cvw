@@ -509,39 +509,36 @@ module dm(
       end
    end
 
-   // Refer to Debug Specification pg. 19 for register ranges.   
+   // Refer to Debug Specification pg. 19 for register ranges.
    always_comb begin
-      if (dmi_req.addr == COMMAND) begin
-         case(dmi_req.data[15:0])
-            16'h1000, 16'h1001, 16'h1002, 16'h1003,
-               16'h1004, 16'h1005, 16'h1006, 16'h1007,
-               16'h1008, 16'h1009, 16'h100a, 16'h100b,
-               16'h100c, 16'h100d, 16'h100e, 16'h100f,
-               16'h1010, 16'h1011, 16'h1012, 16'h1013,
-               16'h1014, 16'h1015, 16'h1016, 16'h1017,
-               16'h1018, 16'h1019, 16'h101a, 16'h101b,
-               16'h101c, 16'h101d, 16'h101e, 16'h101f: begin // GPRs
-                  ValidCommand = 1;
-                  NextCSRDebugEnable = 0;
-               end
-        
-            16'h0300, 16'h0301, 16'h0305,
-               16'h0341, 16'h0342, 16'h0343,
-               16'h07B0, 16'h07B1, 16'h07B2: begin // CSRs
-                  ValidCommand = 1;
-                  NextCSRDebugEnable = 1;
-               end
-            default: begin 
-               ValidCommand = 0;
-               NextCSRDebugEnable = 0;
-            end
-         endcase
-      end else begin
-         ValidCommand = 0;
-         NextCSRDebugEnable = 0;
+      // safe defaults
+      ValidCommand        = 0;
+      NextCSRDebugEnable  = 0;
+      
+      if (dmi_req.addr == COMMAND) begin	 
+	 // ---- CSRs: 0x0000–0x0FFF ----
+	 if ((dmi_req.data[15:0] >= 16'h0000) && (dmi_req.data[15:0] <= 16'h0FFF)) begin
+	    ValidCommand        = 1;
+	    NextCSRDebugEnable  = 1;
+	    
+	    // ---- GPRs: 0x1000–0x101F ----
+	 end else if ((dmi_req.data[15:0] >= 16'h1000) && (dmi_req.data[15:0] <= 16'h101F)) begin
+	    ValidCommand        = 1;
+	    NextCSRDebugEnable  = 0;
+	    
+	    // ---- FPRs: 0x1020–0x103F ----
+	 end else if ((dmi_req.data[15:0] >= 16'h1020) && (dmi_req.data[15:0] <= 16'h103F)) begin
+	    ValidCommand        = 1;
+	    NextCSRDebugEnable  = 0;
+	    
+	    // ---- Default ----
+	 end else begin
+	    ValidCommand        = 0;
+	    NextCSRDebugEnable  = 0;
+	 end
       end
-   end
-
+   end 
+   
    assign nextaarsize = dmi_req.data[22:20];  
    always_comb begin
       if (ValidCommand & nextaarsize != 3'd2 & nextaarsize != 3'd0) cmderr = 3'd2;
