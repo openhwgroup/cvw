@@ -46,6 +46,7 @@ module dtm (
    logic 	enable;
    logic 	select; 
    logic 	ShiftIR;
+   logic    CaptureIR;
    logic 	ClockIR;
    logic 	UpdateIR;
    logic 	ShiftDR;
@@ -92,11 +93,11 @@ module dtm (
    // imply it's ok to do so.
    tap_controller controller (tck, rst, tms, tdi,
 			      resetn, enable, select,
-			      ShiftIR, ClockIR, UpdateIR,
+			      ShiftIR, CaptureIR, ClockIR, UpdateIR,
 			      ShiftDR, ClockDR, UpdateDR);
    
-   inst_reg instructionreg (tdi, resetn,
-			    ShiftIR, ClockIR, UpdateIR,
+   inst_reg instructionreg (tck, tdi, resetn,
+			    ShiftIR, CaptureIR, ClockIR, UpdateIR,
 			    tdo_ir, currentInst);
 
    // tdr = Test Data Register
@@ -109,48 +110,47 @@ module dtm (
    // Choose output of tdo 
    always_comb begin
       case(select)
-        1'b0: tdo_mux = tdo_dr;
+         1'b0: tdo_mux = tdo_dr;
         1'b1: tdo_mux = tdo_ir;
       endcase
    end
 
-    flop #(1) tdo_ff (~tck, tdo_mux, tdo_delayed);
-    assign tdo = enable ? tdo_delayed : 1'bz;
+   flop #(1) tdo_ff (~tck, tdo_mux, tdo_delayed);
+   assign tdo = enable ? tdo_delayed : 1'bz;
 
    synchronizer updatesync (clk, UpdateDR, UpdateDRSync);
    
-    always_ff @(posedge clk) begin
-        if (rst) begin
-            UpdateDRSamples <= 2'b0;
-        end else begin
-            if (UpdateDRSync) UpdateDRSamples[0] <= 1;
-            else UpdateDRSamples[0] <= 0;
-            UpdateDRSamples[1] <= UpdateDRSamples[0];
-        end
-    end
+   always_ff @(posedge clk) begin
+      if (rst) begin
+         UpdateDRSamples <= 2'b0;
+      end else begin
+         if (UpdateDRSync) UpdateDRSamples[0] <= 1;
+         else UpdateDRSamples[0] <= 0;
+         UpdateDRSamples[1] <= UpdateDRSamples[0];
+      end
+   end
 
-    assign UpdateDRValid = (UpdateDRSamples == 2'b01);
+   assign UpdateDRValid = (UpdateDRSamples == 2'b01);
     
-    assign UpdateDTMCS = UpdateDRValid & (currentInst == DTMCS);
-    assign UpdateDMI = UpdateDRValid & (currentInst == DMIREG);
-    
+   assign UpdateDTMCS = UpdateDRValid & (currentInst == DTMCS);
+   assign UpdateDMI = UpdateDRValid & (currentInst == DMIREG);
 
-    // DTMCS
-    always_ff @(posedge clk) begin
-        if (rst | ~resetn | DTMHardReset) begin
-            DTMHardReset <= 0;
-            DMIReset <= 0;
-        end else if (UpdateDTMCS) begin
-            DMIReset <= dtmcs.dmireset;
-            DTMHardReset <= dtmcs.dtmhardreset;
-        end else if (DMIReset) begin
-            DMIReset <= 0;
-        end
-    end // always_ff @ (posedge clk)
-
-    //assign dtmcs_next = {11'b0, 3'd4, 4'b0, dmi_next.op, `ABITS, 4'b1};
-    assign dtmcs_next.reserved0 = 11'b0;
-    assign dtmcs_next.errinfo = 3'd4;
+   // DTMCS
+   always_ff @(posedge clk) begin
+      if (rst | ~resetn | DTMHardReset) begin
+         DTMHardReset <= 0;
+         DMIReset <= 0;
+      end else if (UpdateDTMCS) begin
+         DMIReset <= dtmcs.dmireset;
+         DTMHardReset <= dtmcs.dtmhardreset;
+      end else if (DMIReset) begin
+         DMIReset <= 0;
+      end
+   end // always_ff @ (posedge clk)
+   
+   //assign dtmcs_next = {11'b0, 3'd4, 4'b0, dmi_next.op, `ABITS, 4'b1};
+   assign dtmcs_next.reserved0 = 11'b0;
+   assign dtmcs_next.errinfo = 3'd4;
     assign dtmcs_next.dtmhardreset = DTMHardReset;
     assign dtmcs_next.dmireset = DMIReset;
     assign dtmcs_next.reserved1 = 1'b0;

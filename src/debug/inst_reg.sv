@@ -36,20 +36,25 @@
 `include "debug.vh"
   
 module inst_reg #(parameter ADRWIDTH=5) (
-    input logic  tdi,
-    input logic  resetn, ShiftIR, ClockIR, UpdateIR,
-    output logic tdo,
+   input logic tck,
+    input logic                 tdi,
+    input logic                 resetn, ShiftIR, CaptureIR, ClockIR, UpdateIR,
+    output logic                tdo,
     output logic [ADRWIDTH-1:0] instreg
     //output logic bypass
 );
    logic [ADRWIDTH-1:0] 	shiftreg;
    
-   always @(posedge ClockIR)
-     shiftreg <= ShiftIR ? {tdi, shiftreg[ADRWIDTH-1:1]} : IDCODE;
-   
-   always @(posedge UpdateIR, negedge resetn)
+   always @(posedge tck)
+     if (CaptureIR) begin
+        shiftreg <= IDCODE;
+     end else if (ShiftIR) begin
+        shiftreg <= {tdi, shiftreg[ADRWIDTH-1:1]};
+     end
+        
+   always @(posedge tck, negedge resetn)
      if (~resetn) instreg <= BYPASS;
-     else instreg <= shiftreg;
+     else if (UpdateIR) instreg <= shiftreg;
    
    assign tdo = shiftreg[0];
    

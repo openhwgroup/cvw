@@ -36,10 +36,10 @@ module idreg #(parameter WIDTH = 8) (
    logic [WIDTH-1:0] 	    y;
    
    // logic [WIDTH-1:0] shiftreg;
-   always @(posedge ClockDR, negedge resetn) begin
+   always @(posedge tck, negedge resetn) begin
       if (~resetn) begin
          y <= val;
-      end else begin
+      end else if (ClockDR) begin
          y <= ShiftDR ? {tdi, y[WIDTH-1:1]} : val;
       end
    end

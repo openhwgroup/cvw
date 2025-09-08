@@ -33,7 +33,8 @@ module tap_controller
    output logic reset, 
    output logic enable, 
    output logic select,
-   output logic ShiftIR, 
+   output logic ShiftIR,
+   output logic CaptureIR,
    output logic ClockIR, 
    output logic UpdateIR,
    output logic ShiftDR, 
@@ -83,7 +84,7 @@ module tap_controller
 		TEST_LOGIC_RESET = 4'hF
 	} statetype;
    
-   statetype State;   
+   statetype State, NextState;   
 
     always @(posedge tck, posedge trst) begin
         if (trst) State <= TEST_LOGIC_RESET; 
@@ -113,22 +114,27 @@ module tap_controller
    
    // Instruction Register and Test Data Register should be clocked
    // on their respective CAPTURE and SHIFT states
-   assign ClockIR = tck | ~((State == CAPTURE_IR) | (State == SHIFT_IR));
-   assign ClockDR = tck | ~((State == CAPTURE_DR) | (State == SHIFT_DR));
+   //assign ClockIR = tck | ~((State == CAPTURE_IR) | (State == SHIFT_IR));
+   assign ClockIR = (State == CAPTURE_IR) | (State == SHIFT_IR);
+   // assign ClockDR = tck | ~((State == CAPTURE_DR) | (State == SHIFT_DR));
+   // assign CaptureIR = (State == CAPTURE_IR);
+   assign ClockDR = (State == CAPTURE_DR) | (State == SHIFT_DR);
    
-   assign UpdateIR = tck & (State == UPDATE_IR);
-   assign UpdateDR = tck & (State == UPDATE_DR);
+   assign UpdateIR = (State == UPDATE_IR);
+   assign UpdateDR = (State == UPDATE_DR);
    
    // signal present in the IEEE 1149.1-2001 spec Figure 6-5 (may not be needed) 
    assign select = State[3];
    
    always @(negedge tck, posedge trst)
      if (trst) begin
+        CaptureIR <= 0;
         ShiftIR <= 0;
         ShiftDR <= 0;
         reset <= 0;
         enable <= 0;
      end else begin
+        CaptureIR <= (State == CaptureIR);
         ShiftIR <= (State == SHIFT_IR);
         ShiftDR <= (State == SHIFT_DR);
         reset <= ~(State == TEST_LOGIC_RESET);
