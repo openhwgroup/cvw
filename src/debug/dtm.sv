@@ -51,16 +51,16 @@ module dtm (
    logic 	UpdateDR;
 
    // Instruction Register
-   logic [`INSTWIDTH-1:0] currentInst;
+   logic [`INSTWIDTH-1:0]  currentInst;
    
    // Select outputs
-   logic 		  tdo_dr, tdo_ir, tdo_mux, tdo_delayed;
+   logic 		   tdo_dr, tdo_ir, tdo_mux, tdo_delayed;
    
    // Edge detecting UpdateDR. Avoids cases where UpdateDR is still
    // high for multiple clock cycles.
-   logic 		  UpdateDRSync;
-   logic [1:0] 		  UpdateDRSamples;
-   logic 		  UpdateDRValid;
+   logic 		   UpdateDRSync;
+   logic [1:0] 		   UpdateDRSamples;
+   logic 		   UpdateDRValid;
    
    // Test Data Register Stuff
    dtmcs_t dtmcs, dtmcs_next;
@@ -68,14 +68,12 @@ module dtm (
    // logic [1:0] DMIStat;
    
    // Debug Module Interface Control
-   logic 		  UpdateDMI;
-   logic 		  UpdateDTMCS;
-   logic 		  DTMHardReset;
-   logic 		  DMIReset;
-   
-   logic 		  Sticky;
-   
-   enum 		  logic {IDLE, BUSY} DMIState;
+   logic 		   UpdateDMI;
+   logic 		   UpdateDTMCS;
+   logic 		   DTMHardReset;
+   logic 		   DMIReset;   
+   logic 		   Sticky;   
+   enum logic {IDLE, BUSY} DMIState;
    
    // Temporarily tying trstn to rstn. This isn't the way JTAG
    // recommends doing it, but the debug spec and neorv32 seem to
@@ -102,6 +100,7 @@ module dtm (
       endcase
    end
 
+   // FIXME: may be problematic (investigate)
    flop #(1) tdo_ff (~tck, tdo_mux, tdo_delayed);
    assign tdo = enable ? tdo_delayed : 1'bz;
    // The JTAG-side of the DTM runs on TCK, while the Debug Module
