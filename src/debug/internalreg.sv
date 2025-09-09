@@ -38,7 +38,6 @@ module internalreg #(parameter WIDTH = 8)
     output logic [WIDTH-1:0] y,
     output logic 	     tdo);
    
-   // logic [WIDTH-1:0] shiftreg;
    always @(posedge tck) begin
       if (~resetn) begin
          y <= val;
