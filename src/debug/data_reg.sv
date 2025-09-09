@@ -47,43 +47,30 @@ module data_reg #(parameter INSTWIDTH = 5)
    logic 			tdo_bypass;
    
    // ID Code
-   idreg #(32) idcode(tck, tdi, resetn,
-		      32'h1002AC05,
-		      ShiftDR, ClockDR,
-		      tdo_idcode);
+   idreg #(32) idcode(tck, tdi, resetn, 32'h1002AC05, ShiftDR, ClockDR, tdo_idcode);
    
    // DTMCS
-   internalreg #(32) dtmcsreg(tck, tdi, resetn,
-			      dtmcs_next,
-			      `DTMCS_RESET,
-			      ShiftDR, ClockDR,
-			      dtmcs,
-			      tdo_dtmcs);
-
-    // DMI
-    internalreg #(`DMI_WIDTH) dmireg(
-        tck, tdi, resetn,
-        dmi_next,
-        {(34 + `ABITS){1'b0}},
-        ShiftDR, ClockDR,
-        dmi,
-        tdo_dmi
-    );
-    
-    // BYPASS
-    always_ff @(posedge tck, negedge resetn) begin
-        if (~resetn) tdo_bypass <= 0;
-        else if (currentInst == BYPASS) tdo_bypass <= tdi;
-    end
-
-    // Mux data register output based on current instruction
-    always_comb begin
-        case (currentInst)
-            IDCODE  : tdo = tdo_idcode;
-            DTMCS   : tdo = tdo_dtmcs;
-            DMIREG  : tdo = tdo_dmi;
-            BYPASS  : tdo = tdo_idcode;
-            default : tdo = tdo_idcode; // Bypass instruction 11111 and 00000
-        endcase
-    end
+   internalreg #(32) dtmcsreg(tck, tdi, resetn, dtmcs_next, `DTMCS_RESET,
+			      ShiftDR, ClockDR, dtmcs, tdo_dtmcs);
+   
+   // DMI
+   internalreg #(`DMI_WIDTH) dmireg(tck, tdi, resetn, dmi_next, {(34 + `ABITS){1'b0}},
+				    ShiftDR, ClockDR, dmi, tdo_dmi);
+   
+   // BYPASS
+   always_ff @(posedge tck, negedge resetn) begin
+      if (~resetn) tdo_bypass <= 0;
+      else if (currentInst == BYPASS) tdo_bypass <= tdi;
+   end
+   
+   // Mux data register output based on current instruction
+   always_comb begin
+      case (currentInst)
+        IDCODE  : tdo = tdo_idcode;
+        DTMCS   : tdo = tdo_dtmcs;
+        DMIREG  : tdo = tdo_dmi;
+        BYPASS  : tdo = tdo_idcode;
+        default : tdo = tdo_idcode; // Bypass instruction 11111 and 00000
+      endcase
+   end
 endmodule
