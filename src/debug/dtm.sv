@@ -43,7 +43,7 @@ module dtm (
    logic 	enable;
    logic 	select; 
    logic 	ShiftIR;
-   logic    CaptureIR;
+   logic 	CaptureIR;
    logic 	ClockIR;
    logic 	UpdateIR;
    logic 	ShiftDR;
@@ -58,7 +58,7 @@ module dtm (
    
    // Edge detecting UpdateDR. Avoids cases where UpdateDR is still
    // high for multiple clock cycles.
-   logic UpdateDRSync;
+   logic 		  UpdateDRSync;
    logic [1:0] 		  UpdateDRSamples;
    logic 		  UpdateDRValid;
    
@@ -97,7 +97,7 @@ module dtm (
    // Choose output of tdo 
    always_comb begin
       case(select)
-         1'b0: tdo_mux = tdo_dr;
+        1'b0: tdo_mux = tdo_dr;
         1'b1: tdo_mux = tdo_ir;
       endcase
    end
@@ -134,7 +134,7 @@ module dtm (
       end else if (DMIReset) begin
          DMIReset <= 0;
       end
-   end // always_ff @ (posedge clk)
+   end 
    
    //assign dtmcs_next = {11'b0, 3'd4, 4'b0, dmi_next.op, `ABITS, 4'b1};
    assign dtmcs_next.reserved0 = 11'b0;
@@ -192,7 +192,7 @@ module dtm (
            default: DMIState <= IDLE;
          endcase
       end
-   end // always_ff @ (posedge clk)
+   end 
    
    assign dmi_next.addr = dmi_req.addr;
    assign dmi_next.data = dmi_next_reg.data;
