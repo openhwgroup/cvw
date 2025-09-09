@@ -28,12 +28,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module bsr #(parameter WIDTH=8) (
-    // Primary Inputs
     input logic [WIDTH-1:0]  DataIn,
     input logic              ScanIn,
-    // Control Signals
     input logic              ShiftDR, ClockDR, UpdateDR, Mode,
-    // Outputs
     output logic [WIDTH-1:0] Qout,
     output logic             ScanOut
 );
