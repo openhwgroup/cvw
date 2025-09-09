@@ -31,13 +31,11 @@
 module dtm (
    input logic  clk, 
    input logic 	rst,
-   // JTAG Interface
    input logic 	tck, 
    input logic 	tms, 
    input logic 	tdi,
    output logic tdo,
    // debug module interface (DMI)
-   // Signals go here. neorv32 defines two packed structs.
    output 	dmi_req_t dmi_req,
    input 	dmi_rsp_t dmi_rsp);
    
@@ -58,14 +56,6 @@ module dtm (
    
    // Select outputs
    logic 		  tdo_dr, tdo_ir, tdo_mux, tdo_delayed;
-   
-   // Synchronizer signals
-   //logic 		  tck_sync, tms_sync, tdi_sync;
-   
-   // Synchronizing tck, tms, and tdi
-   // synchronizer tck_synchronizer (clk, tck, tck_sync);
-   // synchronizer tms_synchronizer (clk, tms, tms_sync);
-   // synchronizer tdi_synchronizer (clk, tdi, tdi_sync);
    
    // Edge detecting UpdateDR. Avoids cases where UpdateDR is still
    // high for multiple clock cycles.
@@ -117,7 +107,9 @@ module dtm (
 
    flop #(1) tdo_ff (~tck, tdo_mux, tdo_delayed);
    assign tdo = enable ? tdo_delayed : 1'bz;
-
+   // The JTAG-side of the DTM runs on TCK, while the Debug Module
+   // (DM) and DMI bus live on your system clock, we need a clean
+   // clock-domain crossing (CDC) between them.   
    synchronizer updatesync (clk, UpdateDR, UpdateDRSync);
    
    always_ff @(posedge clk) begin
@@ -130,8 +122,7 @@ module dtm (
       end
    end
 
-   assign UpdateDRValid = (UpdateDRSamples == 2'b01);
-    
+   assign UpdateDRValid = (UpdateDRSamples == 2'b01);    
    assign UpdateDTMCS = UpdateDRValid & (currentInst == DTMCS);
    assign UpdateDMI = UpdateDRValid & (currentInst == DMIREG);
 
@@ -151,65 +142,63 @@ module dtm (
    //assign dtmcs_next = {11'b0, 3'd4, 4'b0, dmi_next.op, `ABITS, 4'b1};
    assign dtmcs_next.reserved0 = 11'b0;
    assign dtmcs_next.errinfo = 3'd4;
-    assign dtmcs_next.dtmhardreset = DTMHardReset;
-    assign dtmcs_next.dmireset = DMIReset;
-    assign dtmcs_next.reserved1 = 1'b0;
-    assign dtmcs_next.idle = 3'd0;
-    assign dtmcs_next.dmistat = dmi_next.op;
-    assign dtmcs_next.abits = `ABITS;
-    assign dtmcs_next.version = 4'b1;
-    
-    // Sticky error
-    always_ff @(posedge clk) begin
-        if (rst | ~resetn | DMIReset == 1 | DTMHardReset == 1) begin
-            Sticky <= 0;
-        end else if ((DMIState == BUSY) & (UpdateDMI)) begin
-            Sticky <= 1;
-        end
-    end
-
-    // DMI
-    always_ff @(posedge clk) begin
-        if (rst | ~resetn | DTMHardReset) begin
-            dmi_next_reg.op <= NOP;
-           dmi_req.ready <= 1'b1;
-           dmi_req.valid <= 1'b0;
-            DMIState <= IDLE;
-        end else begin
-            case(DMIState)
-                IDLE: begin
-                    if (UpdateDMI) begin
-                        dmi_req.addr <= dmi.addr;
-                        dmi_req.data <= dmi.data;
-                        if ((dmi.op == RD) | (dmi.op == WR)) begin
-                            dmi_req.op <= dmi.op;
-                           dmi_req.valid <= 1'b1;
-                            DMIState <= BUSY;
-                        end
-                    end else begin
-                       DMIState <= IDLE;
-                    end
-                end
-              
-                BUSY: begin
-                    if (dmi_rsp.valid) begin
-                        dmi_req.op <= NOP;
-                       dmi_req.valid <= 1'b0;
-                        dmi_next_reg.data <= dmi_rsp.data;
-                        dmi_next_reg.op <= dmi_rsp.op;
-                        DMIState <= IDLE;
-                    end else begin
-                       DMIState <= BUSY;
-                    end
-                end
-              
-                default: DMIState <= IDLE;
-            endcase
-        end
-    end // always_ff @ (posedge clk)
-
-    assign dmi_next.addr = dmi_req.addr;
-    assign dmi_next.data = dmi_next_reg.data;
-    assign dmi_next.op = Sticky ? 2'b11 : dmi_next_reg.op;
-    
+   assign dtmcs_next.dtmhardreset = DTMHardReset;
+   assign dtmcs_next.dmireset = DMIReset;
+   assign dtmcs_next.reserved1 = 1'b0;
+   assign dtmcs_next.idle = 3'd0;
+   assign dtmcs_next.dmistat = dmi_next.op;
+   assign dtmcs_next.abits = `ABITS;
+   assign dtmcs_next.version = 4'b1;
+   
+   // Sticky error
+   always_ff @(posedge clk) begin
+      if (rst | ~resetn | DMIReset == 1 | DTMHardReset == 1) begin
+         Sticky <= 0;
+      end else if ((DMIState == BUSY) & (UpdateDMI)) begin
+         Sticky <= 1;
+      end
+   end
+   
+   // DMI
+   always_ff @(posedge clk) begin
+      if (rst | ~resetn | DTMHardReset) begin
+         dmi_next_reg.op <= NOP;
+         dmi_req.ready <= 1'b1;
+         dmi_req.valid <= 1'b0;
+         DMIState <= IDLE;
+      end else begin
+         case(DMIState)
+           IDLE: begin
+              if (UpdateDMI) begin
+                 dmi_req.addr <= dmi.addr;
+                 dmi_req.data <= dmi.data;
+                 if ((dmi.op == RD) | (dmi.op == WR)) begin
+                    dmi_req.op <= dmi.op;
+                    dmi_req.valid <= 1'b1;
+                    DMIState <= BUSY;
+                 end
+              end else begin
+                 DMIState <= IDLE;
+              end
+           end           
+           BUSY: begin
+              if (dmi_rsp.valid) begin
+                 dmi_req.op <= NOP;
+                 dmi_req.valid <= 1'b0;
+                 dmi_next_reg.data <= dmi_rsp.data;
+                 dmi_next_reg.op <= dmi_rsp.op;
+                 DMIState <= IDLE;
+              end else begin
+                 DMIState <= BUSY;
+              end
+           end           
+           default: DMIState <= IDLE;
+         endcase
+      end
+   end // always_ff @ (posedge clk)
+   
+   assign dmi_next.addr = dmi_req.addr;
+   assign dmi_next.data = dmi_next_reg.data;
+   assign dmi_next.op = Sticky ? 2'b11 : dmi_next_reg.op;
+   
 endmodule
