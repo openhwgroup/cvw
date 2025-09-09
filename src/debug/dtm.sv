@@ -35,7 +35,6 @@ module dtm (
    input logic 	tms, 
    input logic 	tdi,
    output logic tdo,
-   // debug module interface (DMI)
    output 	dmi_req_t dmi_req,
    input 	dmi_rsp_t dmi_rsp);
    
