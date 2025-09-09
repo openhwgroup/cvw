@@ -84,17 +84,15 @@ module dtm (
 			      resetn, enable, select,
 			      ShiftIR, CaptureIR, ClockIR, UpdateIR,
 			      ShiftDR, ClockDR, UpdateDR);
-   
+
+   // IR
    inst_reg instructionreg (tck, tdi, resetn,
 			    ShiftIR, CaptureIR, ClockIR, UpdateIR,
 			    tdo_ir, currentInst);
 
    // tdr = Test Data Register
-   data_reg tdr (tck, tdi, resetn,
-		 currentInst,
-		 ShiftDR, ClockDR, UpdateDR,
-		 dtmcs_next, dtmcs,
-		 dmi_next, dmi, tdo_dr);
+   data_reg tdr (tck, tdi, resetn, currentInst, ShiftDR, ClockDR, UpdateDR,
+		 dtmcs_next, dtmcs, dmi_next, dmi, tdo_dr);
    
    // Choose output of tdo 
    always_comb begin
@@ -107,7 +105,7 @@ module dtm (
    flop #(1) tdo_ff (~tck, tdo_mux, tdo_delayed);
    assign tdo = enable ? tdo_delayed : 1'bz;
    // The JTAG-side of the DTM runs on TCK, while the Debug Module
-   // (DM) and DMI bus live on your system clock, we need a clean
+   // (DM) and DMI bus live on our system clock, we need a clean
    // clock-domain crossing (CDC) between them.   
    synchronizer updatesync (clk, UpdateDR, UpdateDRSync);
    
