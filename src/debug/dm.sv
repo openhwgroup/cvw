@@ -30,26 +30,26 @@
 `include "debug.vh"
 
 module dm(
-   input logic         clk,
-   input logic         rst,
+   input logic 	       clk,
+   input logic 	       rst,
           
    // Currently implementing NeoRV32 signals. Subject to change if I
    // prefer a different DMI.
-   input               dmi_req_t dmi_req,
-   output              dmi_rsp_t dmi_rsp,
+   input 	       dmi_req_t dmi_req,
+   output 	       dmi_rsp_t dmi_rsp,
    
    // CPU Signals
    output logic        NDMReset,
    output logic        HaltReq,
    output logic        ResumeReq,
-   input logic         DebugMode,
+   input logic 	       DebugMode,
    output logic        DebugControl,
    output logic        CSRDebugEnable,
    
    // Reading and Writing Registers
    input logic [31:0]  RegIn,
    output logic [31:0] RegOut,
-   output logic [11:0]  RegAddr,
+   output logic [11:0] RegAddr,
    output logic        DebugRegWrite
 );
 
