@@ -67,6 +67,7 @@
 
 // Privileged extensions
 `define RV64VM_COVERAGE
+`define RV64PMP_COVERAGE
 `define ZICSRM_COVERAGE
 `define ZICSRS_COVERAGE
 `define ZICSRU_COVERAGE
