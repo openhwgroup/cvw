@@ -200,7 +200,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       .WriteDataM(WriteDataZM), .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
       .IEUAdrExtM, .PTE, .IHWriteDataM, .PageType, .PreLSURWM, .LSUAtomicM,
       .IHAdrM, .HPTWStall, .SelHPTW, 
-      .HPTWFlushW, .LSULoadAccessFaultM, .LSUStoreAmoAccessFaultM, 
+      .HPTWFlushW, .CMOpM, .LSULoadAccessFaultM, .LSUStoreAmoAccessFaultM, 
       .LoadAccessFaultM, .StoreAmoAccessFaultM, .HPTWInstrAccessFaultF,
       .LoadPageFaultM, .StoreAmoPageFaultM, .LSULoadPageFaultM, .LSUStoreAmoPageFaultM, .HPTWInstrPageFaultF
 );
@@ -248,7 +248,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       .StoreAmoAccessFaultM(LSUStoreAmoAccessFaultM), .InstrPageFaultF(), .LoadPageFaultM(LSULoadPageFaultM), 
       .StoreAmoPageFaultM(LSUStoreAmoPageFaultM),
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
-      .UpdateDA(DataUpdateDAM), .CMOpM(CMOpM),
+      .UpdateDA(DataUpdateDAM), .CMOpM(CMOpM), .SelHPTW,
       .AtomicAccessM(|LSUAtomicM), .ExecuteAccessF(1'b0), 
       .WriteAccessM, .ReadAccessM(PreLSURWM[1]),
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);

@@ -57,6 +57,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   output logic                 LoadMisalignedFaultM, StoreAmoMisalignedFaultM,            // misaligned fault sources
   // PMA checker signals
   input  logic [3:0]           CMOpM,                                                     // Cache management instructions
+  input  logic                 SelHPTW,
   input  logic                 AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,  // access type
   input var logic [7:0]        PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0],                      // PMP configuration
   input var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0]                   // PMP addresses
@@ -153,7 +154,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   // If TLB miss and translating we want to not have faults from the PMA and PMP checkers.
   assign InstrAccessFaultF    = (PMAInstrAccessFaultF    | PMPInstrAccessFaultF)    & ~TLBMiss;
   assign LoadAccessFaultM     = (PMALoadAccessFaultM     | PMPLoadAccessFaultM     | AtomicMisalignedCausesAccessFaultM & ReadNoAmoAccessM)     & ~TLBMiss;
-  assign StoreAmoAccessFaultM = (PMAStoreAmoAccessFaultM | PMPStoreAmoAccessFaultM | AtomicMisalignedCausesAccessFaultM & WriteAccessM) & ~TLBMiss;
+  assign StoreAmoAccessFaultM = (PMAStoreAmoAccessFaultM | PMPStoreAmoAccessFaultM | AtomicMisalignedCausesAccessFaultM & WriteAccessM) & ~TLBMiss & ~(SelHPTW & (|CMOpM));
 
   // Specify which type of page fault is occurring
   assign InstrPageFaultF    = TLBPageFault & ExecuteAccessF;

@@ -61,6 +61,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   output logic              HPTWFlushW,
   output logic              SelHPTW,
   output logic              HPTWStall,
+  input  logic [3:0]        CMOpM,
   input  logic              LSULoadAccessFaultM, LSUStoreAmoAccessFaultM, 
   input  logic              LSULoadPageFaultM, LSUStoreAmoPageFaultM, 
   output logic              LoadAccessFaultM, StoreAmoAccessFaultM, HPTWInstrAccessFaultF,
@@ -113,10 +114,10 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   assign PBMTOrDAUFaultM         = PBMTFaultM | DAUFaultM;
   assign HPTWFaultM              = LSUAccessFaultM | PBMTOrDAUFaultM;
   assign HPTWLoadAccessFault     = LSUAccessFaultM & DTLBWalk & MemRWM[1] & ~MemRWM[0];  
-  assign HPTWStoreAmoAccessFault = LSUAccessFaultM & DTLBWalk & MemRWM[0];
+  assign HPTWStoreAmoAccessFault = LSUAccessFaultM & DTLBWalk & (MemRWM[0] | (|CMOpM));
   assign HPTWInstrAccessFault    = LSUAccessFaultM & ~DTLBWalk;
   assign HPTWLoadPageFault       = PBMTOrDAUFaultM & DTLBWalk & MemRWM[1] & ~MemRWM[0];
-  assign HPTWStoreAmoPageFault   = PBMTOrDAUFaultM & DTLBWalk & MemRWM[0];
+  assign HPTWStoreAmoPageFault   = PBMTOrDAUFaultM & DTLBWalk & (MemRWM[0] | (|CMOpM));
   assign HPTWInstrPageFault      = PBMTOrDAUFaultM & ~DTLBWalk;
 
   flopr #(6) HPTWAccesFaultReg(clk, reset, {HPTWLoadAccessFault, HPTWStoreAmoAccessFault, HPTWInstrAccessFault, 
