@@ -21,12 +21,12 @@ jobs:
     name: Lint (Python ${{matrix.version}})
     strategy:
       matrix:
-        version: [39, 312] # Test on oldest and newest versions used in wally-package-install.sh
+        version: [39, 313] # Test on oldest and newest versions used in wally-package-install.sh
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Set Python version
       run: sed -i '/^target-version/c\target-version = "py${{matrix.version}}"' .ruff.toml

@@ -42,7 +42,7 @@ fi
 
 # Packages are grouped by which tool requires them. If multiple tools need a package, it is included in each tool's list.
 # Packages that are constant across distros
-GENERAL_PACKAGES+=(rsync git curl wget tar unzip gzip bzip2 gcc make dialog mutt) # TODO: check what needs dialog
+GENERAL_PACKAGES+=(rsync git wget tar unzip gzip bzip2 gcc make dialog mutt) # TODO: check what needs dialog
 GNU_PACKAGES+=(autoconf automake gawk bison flex texinfo gperf libtool patchutils bc)
 SAIL_PACKAGES+=(cmake)
 VERILATOR_PACKAGES+=(autoconf flex bison help2man perl ccache numactl gtkwave) # gtkwave is not needed for verilator, but useful for viewing waveforms
@@ -54,7 +54,7 @@ case "$FAMILY" in
         PYTHON_VERSION=python3.12
         PACKAGE_MANAGER="dnf -y"
         UPDATE_COMMAND="$PACKAGE_MANAGER update"
-        GENERAL_PACKAGES+=(which "$PYTHON_VERSION" "$PYTHON_VERSION"-pip pkgconf-pkg-config gcc-c++ ssmtp)
+        GENERAL_PACKAGES+=(which "$PYTHON_VERSION" "$PYTHON_VERSION"-pip pkgconf-pkg-config gcc-c++)
         GNU_PACKAGES+=(libmpc-devel mpfr-devel gmp-devel zlib-devel expat-devel glib2-devel libslirp-devel)
         QEMU_PACKAGES+=(glib2-devel libfdt-devel pixman-devel zlib-devel ninja-build)
         SPIKE_PACKAGES+=(dtc) # compiling Spike with boost fails on RHEL
@@ -65,8 +65,10 @@ case "$FAMILY" in
         if (( RHEL_VERSION >= 9 )); then
             VERILATOR_PACKAGES+=(perl-doc)
         fi
-        # A newer version of gcc is required for qemu
-        GENERAL_PACKAGES+=(gcc-toolset-13)
+        if (( RHEL_VERSION < 10)); then
+            GENERAL_PACKAGES+=(ssmtp) # ssmtp is no longer available in RHEL 10 EPEL
+            GENERAL_PACKAGES+=(gcc-toolset-13) # A newer version of gcc is required for qemu
+        fi
         ;;
     ubuntu | debian)
         if (( UBUNTU_VERSION >= 24 )); then
@@ -76,6 +78,8 @@ case "$FAMILY" in
         elif (( UBUNTU_VERSION >= 20 )); then
             PYTHON_VERSION=python3.9
             GENERAL_PACKAGES+=(gcc-10 g++-10 cpp-10) # Newer version of gcc needed for Verilator
+        elif (( DEBIAN_VERSION >= 13 )); then
+            PYTHON_VERSION=python3.13
         elif (( DEBIAN_VERSION >= 12 )); then
             PYTHON_VERSION=python3.11
         elif (( DEBIAN_VERSION >= 11 )); then
@@ -87,7 +91,7 @@ case "$FAMILY" in
         fi
         PACKAGE_MANAGER="DEBIAN_FRONTEND=noninteractive apt-get -y"
         UPDATE_COMMAND="$PACKAGE_MANAGER update && $PACKAGE_MANAGER upgrade --with-new-pkgs"
-        GENERAL_PACKAGES+=("$PYTHON_VERSION" python3-pip "$PYTHON_VERSION"-venv pkg-config build-essential g++ ssmtp)
+        GENERAL_PACKAGES+=(curl "$PYTHON_VERSION" python3-pip "$PYTHON_VERSION"-venv pkg-config build-essential g++ ssmtp)
         GNU_PACKAGES+=(autotools-dev libmpc-dev libmpfr-dev libgmp-dev zlib1g-dev libexpat1-dev libglib2.0-dev libslirp-dev)
         QEMU_PACKAGES+=(libglib2.0-dev libfdt-dev libpixman-1-dev zlib1g-dev ninja-build)
         SPIKE_PACKAGES+=(device-tree-compiler libboost-regex-dev libboost-system-dev)
@@ -101,7 +105,7 @@ case "$FAMILY" in
         PYTHON_VERSION_PACKAGE=python312
         PACKAGE_MANAGER="zypper -n"
         UPDATE_COMMAND="$PACKAGE_MANAGER update"
-        GENERAL_PACKAGES+=("$PYTHON_VERSION_PACKAGE" "$PYTHON_VERSION_PACKAGE"-pip pkg-config)
+        GENERAL_PACKAGES+=(which curl "$PYTHON_VERSION_PACKAGE" "$PYTHON_VERSION_PACKAGE"-pip pkg-config)
         GNU_PACKAGES+=(mpc-devel mpfr-devel gmp-devel zlib-devel libexpat-devel glib2-devel libslirp-devel)
         QEMU_PACKAGES+=(glib2-devel libfdt-devel libpixman-1-0-devel zlib-devel ninja)
         SPIKE_PACKAGES+=(dtc libboost_regex1_75_0-devel libboost_system1_75_0-devel)
@@ -141,7 +145,7 @@ else
         else # RHEL clone
             if (( RHEL_VERSION == 8 )); then
                 dnf config-manager -y --set-enabled powertools
-            else # Version 9
+            else # Version >= 9
                 dnf config-manager -y --set-enabled crb
             fi
             dnf install -y epel-release

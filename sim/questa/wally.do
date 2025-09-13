@@ -140,7 +140,7 @@ if {[lcheck lst "--breker"]} {
     set breker 1
     set BREKER_HOME $::env(BREKER_HOME)
     set brekervlog "+incdir+${WALLY}/testbench/trek_files \
-                    ${WALLY}/testbench/trek_files/uvm_output/trek_uvm_pkg.sv"
+                    $::env(WALLY_UVM_PKG)"
     set brekervopt "${WKDIR}.trek_uvm"
     append SVLib " -sv_lib ${BREKER_HOME}/linux64/lib/libtrek "
 }
