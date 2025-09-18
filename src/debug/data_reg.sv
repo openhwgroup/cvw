@@ -27,50 +27,58 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "debug.vh"
+// `include "debug.vh"
 
-module data_reg #(parameter INSTWIDTH = 5) 
-   (input logic 		tck, 
-    input logic 		tdi, 
-    input logic 		resetn,
-    input logic [INSTWIDTH-1:0] currentInst, 
-    input logic 		ShiftDR, ClockDR, UpdateDR,
-    input 			dtmcs_t dtmcs_next,
-    output 			dtmcs_t dtmcs,
-    input 			dmi_t dmi_next,
-    output 			dmi_t dmi, 
-    output logic 		tdo);
+module data_reg #(parameter INSTWIDTH = 5, parameter ABITS = 6'd7) (
+  input logic                     tck, 
+  input logic                     tdi, 
+  input logic                     resetn,
+  input logic [INSTWIDTH-1:0]     currentInst, 
+  input logic                     ShiftDR, ClockDR, UpdateDR,
+  input logic [31:0]              dtmcs_next,
+  output logic [31:0]             dtmcs,
+  input logic [ABITS + 34 - 1:0]  dmi_next,
+  output logic [ABITS + 34 - 1:0] dmi, 
+  output logic                    tdo
+);
    
-   logic 			tdo_idcode;
-   logic 			tdo_dtmcs;
-   logic 			tdo_dmi;
-   logic 			tdo_bypass;
+  logic 			tdo_idcode;
+  logic 			tdo_dtmcs;
+  logic 			tdo_dmi;
+  logic 			tdo_bypass;
+
+  typedef enum logic [4:0] {
+    BYPASS = 5'b11111,
+    IDCODE = 5'b00001,
+    DTMCS  = 5'b10000,
+    DMIREG = 5'b10001
+  } DTMINST;
    
-   // ID Code
-   idreg #(32) idcode(tck, tdi, resetn, 32'h1002AC05, ShiftDR, ClockDR, tdo_idcode);
+  // ID Code
+  idreg #(32) idcode(tck, tdi, resetn, 32'h1002AC05, ShiftDR, ClockDR, tdo_idcode);
    
-   // DTMCS
-   internalreg #(32) dtmcsreg(tck, tdi, resetn, dtmcs_next, `DTMCS_RESET,
-			      ShiftDR, ClockDR, dtmcs, tdo_dtmcs);
+  // DTMCS
+  internalreg #(32) dtmcsreg(tck, tdi, resetn, dtmcs_next, {11'b0, 3'd4, 6'd0, 2'b0, ABITS, 4'b1},
+  ShiftDR, ClockDR, dtmcs, tdo_dtmcs);
    
-   // DMI
-   internalreg #(`DMI_WIDTH) dmireg(tck, tdi, resetn, dmi_next, {(34 + `ABITS){1'b0}},
-				    ShiftDR, ClockDR, dmi, tdo_dmi);
+  // DMI
+  internalreg #(ABITS + 34) dmireg(tck, tdi, resetn, dmi_next, {(ABITS + 34){1'b0}},
+  ShiftDR, ClockDR, dmi, tdo_dmi);
    
-   // BYPASS
-   always_ff @(posedge tck, negedge resetn) begin
-      if (~resetn) tdo_bypass <= 0;
-      else if (currentInst == BYPASS) tdo_bypass <= tdi;
-   end
+  // BYPASS
+  always_ff @(posedge tck, negedge resetn) begin
+    if (~resetn) tdo_bypass <= 0;
+    else if (currentInst == BYPASS) tdo_bypass <= tdi;
+  end
    
-   // Mux data register output based on current instruction
-   always_comb begin
-      case (currentInst)
-        IDCODE  : tdo = tdo_idcode;
-        DTMCS   : tdo = tdo_dtmcs;
-        DMIREG  : tdo = tdo_dmi;
-        BYPASS  : tdo = tdo_idcode;
-        default : tdo = tdo_idcode; // Bypass instruction 11111 and 00000
-      endcase
-   end
+  // Mux data register output based on current instruction
+  always_comb begin
+    case (currentInst)
+      IDCODE  : tdo = tdo_idcode;
+      DTMCS   : tdo = tdo_dtmcs;
+      DMIREG  : tdo = tdo_dmi;
+      BYPASS  : tdo = tdo_idcode;
+      default : tdo = tdo_idcode; // Bypass instruction 11111 and 00000
+    endcase
+  end
 endmodule

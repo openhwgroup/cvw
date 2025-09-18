@@ -227,4 +227,7 @@ localparam DIVCOPIES = 32'd2;
 // Memory synthesis configuration
 localparam logic USE_SRAM = 0;
 
+// Debug
+localparam DEBUG_SUPPORTED = 0;
+
 `include "config-shared.vh"

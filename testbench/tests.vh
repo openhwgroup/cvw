@@ -3614,3 +3614,13 @@ string ahb32[] = '{
   `RISCVARCHTEST,
   "rv32i_m/F/src/fadd_b11-01.S"
 };
+
+string debug32[] = '{
+  `CUSTOM,
+  "NULL"
+};
+
+string debug64[] = '{
+  `CUSTOM,
+  "NULL"
+};

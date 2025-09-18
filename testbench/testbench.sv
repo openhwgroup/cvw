@@ -89,6 +89,9 @@ module testbench;
   string       TEST, ElfFile, sim_log_prefix;
   integer      INSTR_LIMIT;
 
+  // Debugger signals
+  logic        tck, tms, tdi, tdo;
+  
   // DUT signals
   logic [P.AHBW-1:0]    HRDATAEXT;
   logic                 HREADYEXT, HRESPEXT;
@@ -199,6 +202,7 @@ module testbench;
         "arch64zkne":    if (P.ZKNE_SUPPORTED)    tests = arch64zkne;
         "arch64zknh":    if (P.ZKNH_SUPPORTED)    tests = arch64zknh;
         "arch64pmp":     if (P.PMP_ENTRIES > 0)   tests = arch64pmp;
+        "debug64":       if (P.DEBUG_SUPPORTED)   tests = debug64;
       endcase
     end else begin // RV32
       case (TEST)
@@ -249,6 +253,7 @@ module testbench;
         "arch32zknh":    if (P.ZKNH_SUPPORTED)    tests = arch32zknh;
         "arch32pmp":     if (P.PMP_ENTRIES > 0)   tests = arch32pmp;
         "arch32vm_sv32": if (P.VIRTMEM_SUPPORTED) tests = arch32vm_sv32;
+        "debug32":       if (P.DEBUG_SUPPORTED)   tests = debug32;
       endcase
     end
     if (tests.size() == 0 & ElfFile == "none") begin
@@ -633,11 +638,21 @@ module testbench;
 
   end
 
+  if (P.DEBUG_SUPPORTED) begin
+    debugger #(P) debugger(.clk, .reset, .tck, .tms, .tdi, .tdo);
+  end else begin
+    assign tck = 1;
+    assign tdi = 0;
+    assign tms = 0;
+    assign tdo = 0;
+  end
+        
   wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .ExternalStall(RVVIStall),
     .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT,
     .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
-    .UARTSin, .UARTSout, .SPIIn, .SPIOut, .SPICS, .SPICLK, .SDCIn, .SDCCmd, .SDCCS, .SDCCLK);
+    .UARTSin, .UARTSout, .SPIIn, .SPIOut, .SPICS, .SPICLK, .SDCIn, .SDCCmd, .SDCCS, .SDCCLK,
+    .tck, .tms, .tdi, .tdo);
 
   // generate clock to sequence tests
   always begin

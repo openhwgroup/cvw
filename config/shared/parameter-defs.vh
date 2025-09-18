@@ -197,6 +197,8 @@ localparam cvw_t P = '{
   DURLEN      : DURLEN,
   DIVb        : DIVb,
   DIVBLEN     : DIVBLEN,
-  INTDIVb     : INTDIVb
+  INTDIVb     : INTDIVb,
+  DEBUG_SUPPORTED : DEBUG_SUPPORTED,
+  ABITS : ABITS,
+  DTM_INSTR_WIDTH : DTM_INSTR_WIDTH
 };
-

@@ -33,7 +33,7 @@
 // `define DTMCS 5'b10000
 // `define DMIREG 5'b10001
 
-`include "debug.vh"
+// `include "debug.vh"
   
 module inst_reg #(parameter ADRWIDTH=5) (
    input logic tck,
@@ -47,13 +47,13 @@ module inst_reg #(parameter ADRWIDTH=5) (
    
    always @(posedge tck)
      if (CaptureIR) begin
-        shiftreg <= IDCODE;
+       shiftreg <= {{(ADRWIDTH - 1){1'b0}},1'b1}; // temporarily set to idcode
      end else if (ShiftIR) begin
         shiftreg <= {tdi, shiftreg[ADRWIDTH-1:1]};
      end
         
    always @(posedge tck, negedge resetn)
-     if (~resetn) instreg <= BYPASS;
+     if (~resetn) instreg <= {(ADRWIDTH){1'b1}}; 
      else if (UpdateIR) instreg <= shiftreg;
    
    assign tdo = shiftreg[0];
