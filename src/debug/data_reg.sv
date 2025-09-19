@@ -47,6 +47,12 @@ module data_reg #(parameter INSTWIDTH = 5, parameter ABITS = 6'd7) (
   logic 			tdo_dmi;
   logic 			tdo_bypass;
 
+  // CV-Wally marchid is 0x24
+  // https://github.com/riscv/riscv-isa-manual/blob/main/marchid.md
+  // OpenHW JEDEC 0x1002ac05 (mfg: 0x602 (Open HW Group), part: 0x002a, ver: 0x1)
+  logic [31:0]                  IDCODE;
+   
+
   typedef enum logic [4:0] {
     BYPASS = 5'b11111,
     IDCODE = 5'b00001,
@@ -55,7 +61,7 @@ module data_reg #(parameter INSTWIDTH = 5, parameter ABITS = 6'd7) (
   } DTMINST;
    
   // ID Code
-  idreg #(32) idcode(tck, tdi, resetn, 32'h1002AC05, ShiftDR, ClockDR, tdo_idcode);
+  idreg #(32) idcode(tck, tdi, resetn, IDCODE, ShiftDR, ClockDR, tdo_idcode);
    
   // DTMCS
   internalreg #(32) dtmcsreg(tck, tdi, resetn, dtmcs_next, {11'b0, 3'd4, 6'd0, 2'b0, ABITS, 4'b1},
