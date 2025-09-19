@@ -211,7 +211,7 @@ module dtm import cvw::*; #(parameter cvw_t P) (
             //dmi_req.addr <= dmi.addr;
             //dmi_req.data <= dmi.data;
             DMIADDR <= dmi[P.ABITS+34:34];
-            if ((dmi.op == RD) | (dmi.op == WR)) begin
+            if ((dmi[1:0] == RD) | (dmi[1:0] == WR)) begin
               //dmi_req.op <= dmi.op;
               //dmi_req.valid <= 1'b1;
               DMIOP <= dmi[1:0];
