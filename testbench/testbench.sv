@@ -644,7 +644,7 @@ module testbench;
     assign tck = 1;
     assign tdi = 0;
     assign tms = 0;
-    assign tdo = 0;
+    //assign tdo = 0;
   end
         
   wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .ExternalStall(RVVIStall),
