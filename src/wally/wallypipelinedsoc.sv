@@ -93,8 +93,8 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                       DebugMode;        
   logic                       DebugControl;     
   logic                       CSRDebugEnable;
-  logic [31:0]                DebugRegRDATA;      
-  logic [31:0]                DebugRegWDATA;      
+  logic [P.XLEN-1:0]          DebugRegRDATA;      
+  logic [P.XLEN-1:0]          DebugRegWDATA;      
   logic [11:0]                DebugRegAddr;     
   logic                       DebugRegWrite;
   
@@ -106,7 +106,9 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   wallypipelinedcore #(P) core(.clk, .reset,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
-    .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .ExternalStall
+    .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .ExternalStall,
+    .DebugMode, .HaltReq, .ResumeReq, .DebugControl, .CSRDebugEnable,
+    .DebugRegRDATA, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite
    );
 
   // instantiate uncore if a bus interface exists
@@ -132,6 +134,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
       .DebugRegRDATA, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite);
   end else begin
     assign tdo = 1'bz;
+    assign CSRDebugEnable = 0;
     assign DebugRegWDATA = '0;
     assign DebugRegAddr = '0;
     assign DebugRegWrite = 0;

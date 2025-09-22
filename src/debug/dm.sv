@@ -28,8 +28,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module dm(
-  input logic         clk,
-  input logic         reset,
+  input  logic              clk,
+  input  logic              reset,
   
   // Currently implementing NeoRV32 signals. Subject to change if I
   // prefer a different DMI.
@@ -37,31 +37,31 @@ module dm(
   // output              dmi_rsp_t dmi_rsp,
   
   // CPU Signals
-  output logic        NDMReset,
-  output logic        HaltReq,
-  output logic        ResumeReq,
-  input logic         DebugMode,
-  output logic        DebugControl,
-  output logic        CSRDebugEnable,
+  output logic              NDMReset,
+  output logic              HaltReq,
+  output logic              ResumeReq,
+  input  logic              DebugMode,
+  output logic              DebugControl,
+  output logic              CSRDebugEnable,
 
   // DMI REQUEST
-  input logic [6:0]  DMIADDR,
-  input logic [31:0] DMIDATA,
-  input logic [1:0]  DMIOP,
-  input logic        DMIREADY,
-  input logic        DMIVALID,
+  input  logic [6:0]         DMIADDR,
+  input  logic [31:0]        DMIDATA,
+  input  logic [1:0]         DMIOP,
+  input  logic               DMIREADY,
+  input  logic               DMIVALID,
 
   // DMI RESPONSE
-  output logic [31:0]  DMIRSPDATA,
-  output logic [1:0]   DMIRSPOP,
-  output logic         DMIRSPREADY,
-  output logic         DMIRSPVALID,
+  output logic [31:0]       DMIRSPDATA,
+  output logic [1:0]        DMIRSPOP,
+  output logic              DMIRSPREADY,
+  output logic              DMIRSPVALID,
   
   // Reading and Writing Registers
-  input  logic [31:0] DebugRegRDATA,
-  output logic [31:0] DebugRegWDATA,
-  output logic [11:0] DebugRegAddr,
-  output logic        DebugRegWrite
+  input  logic [P.XLEN-1:0] DebugRegRDATA,
+  output logic [P.XLEN-1:0] DebugRegWDATA,
+  output logic [11:0]       DebugRegAddr,
+  output logic              DebugRegWrite
 );
 
   typedef enum logic [6:0] {
@@ -381,7 +381,23 @@ module dm(
       if (WriteRequest & (DMIADDR == DATA0)) begin
         Data0 <= DMIDATA;
       end else if (ReadRegister) begin
-        Data0 <= DebugRegRDATA;
+        Data0 <= DebugRegRDATA[31:0];
+      end
+    end
+  end
+
+  // Data[1] -- only need this for 
+  if (P.XLEN == 64) begin
+    always_ff @(posedge clk) begin
+      if (reset) begin
+        Data1 <= '0;
+      end else begin
+        Data1 <= Data0;
+        if (WriteRequest & (DMIADDR == DATA1)) begin
+          Data1 <= DMIDATA;
+        end else if (ReadRegister) begin
+          Data1 <= DebugRegRDATA[63:32];
+        end
       end
     end
   end
@@ -515,7 +531,13 @@ module dm(
   assign DebugControl = StartCommand;
   //assign DebugRegAddr = Command[11:0];
   assign DebugRegWrite = Command[16] & StartCommand;
-  assign DebugRegWDATA = Data0; // Needs to expand with 64 bit numbers
+
+  // Covering both 32 bit and 64 bit architectures.
+  if (P.XLEN == 64) begin
+    assign DebugRegWDATA = aarsize == 3'd2 ? {32'h0, Data0} : {Data1, Data0};
+  end else begin
+    assign DebugRegWDATA = Data0;
+  end 
 
   always_ff @(posedge clk) begin
     if (reset) begin

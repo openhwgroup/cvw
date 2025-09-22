@@ -76,7 +76,8 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic [63:0]       MTIME_CLINT,                                    // timer value from CLINT
   input  logic [4:0]        SetFflagsM,                                     // set FCSR flags from FPU
   input  logic              SelHPTW,                                        // HPTW in use.  Causes system to use S-mode endianness for accesses
-  // CSR outputs                                                           
+  // CSR outputs
+  output logic [P.XLEN-1:0] CSRReadValM,                                                         
   output logic [P.XLEN-1:0] CSRReadValW,                                    // Value read from CSR
   output logic [1:0]        PrivilegeModeW,                                 // current privilege mode
   output logic [P.XLEN-1:0] SATP_REGW,                                      // supervisor address translation register
@@ -97,7 +98,15 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic              InvalidateICacheM,                              // fence instruction
   output logic              BigEndianM,                                     // Use big endian in current privilege mode
   // Fault outputs                                                         
-  output logic              wfiM, IntPendingM                               // Stall in Memory stage for WFI until interrupt pending or timeout
+  output logic              wfiM, IntPendingM,                              // Stall in Memory stage for WFI until interrupt pending or timeout
+  // Debug Mode
+  output logic              DebugMode,
+  input  logic              HaltReq, ResumeReq,
+  input  logic              DebugControl, CSRDebugEnable,
+  // output logic [P.XLEN-1:0] DebugCSRRDATA,
+  input  logic [P.XLEN-1:0] DebugRegWDATA,
+  input  logic [11:0]       DebugRegAddr,
+  input  logic              DebugRegWrite
 );                                                                         
                                                                            
   logic [3:0]               CauseM;                                         // trap cause
@@ -148,7 +157,9 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .SATP_REGW, .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
     .SetFflagsM, .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE,
     .EPCM, .TrapVectorM,
-    .CSRReadValW, .IllegalCSRAccessM, .BigEndianM);
+    .CSRReadValM, .CSRReadValW, .IllegalCSRAccessM, .BigEndianM,
+    .DebugMode, .HaltReq, .ResumeReq, .DebugControl, .CSRDebugEnable, .DebugRegWDATA,
+    .DebugRegAddr, .DebugRegWrite);
 
   // pipeline early-arriving trap sources
   privpiperegs ppr(.clk, .reset, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,

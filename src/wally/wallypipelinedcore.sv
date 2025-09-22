@@ -45,7 +45,15 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    output logic [3:0]            HPROT,
    output logic [1:0]            HTRANS,
    output logic                  HMASTLOCK,
-   input  logic                  ExternalStall
+   input  logic                  ExternalStall,
+   output logic                  DebugMode,
+   input  logic                  HaltReq, ResumeReq,
+   input  logic                  DebugControl,
+   input  logic                  CSRDebugEnable,
+   output logic [P.XLEN-1:0]     DebugRegRDATA,
+   input  logic [P.XLEN-1:0]     DebugRegWDATA,
+   input  logic [11:0]           DebugRegAddr,
+   input  logic                  DebugRegWrite
 );
 
   logic                          StallF, StallD, StallE, StallM, StallW;
@@ -63,7 +71,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic [31:0]                   InstrM, InstrOrigM;
   logic [P.XLEN-1:0]             PCSpillF, PCE, PCLinkE;
   logic [P.XLEN-1:0]             PCM, PCSpillM;
-  logic [P.XLEN-1:0]             CSRReadValW, MDUResultW;
+  logic [P.XLEN-1:0]             CSRReadValM, CSRReadValW, MDUResultW;
   logic [P.XLEN-1:0]             EPCM, TrapVectorM;
   logic [1:0]                    MemRWE;
   logic [1:0]                    MemRWM;
@@ -171,6 +179,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          DCacheStallM, ICacheStallF;
   logic                          wfiM, IntPendingM;
 
+  // Debug Signals
+  logic [P.XLEN-1:0]             DebugIEURDATA;
+
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu #(P) ifu(.clk, .reset,
     .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
@@ -217,7 +228,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
      // hazards
      .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
      .StructuralStallD, .LoadStallD, .StoreStallD, .PCSrcE,
-     .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .InvalidateICacheM); 
+     .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .InvalidateICacheM,
+     .DebugControl, .DebugIEURDATA, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite
+  ); 
 
   lsu #(P) lsu(
     .clk, .reset, .StallM, .FlushM, .StallW, .FlushW,
@@ -290,7 +303,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .clk, .reset,
       .FlushD, .FlushE, .FlushM, .FlushW, .StallD, .StallE, .StallM, .StallW,
       .CSRReadM, .CSRWriteM, .SrcAM, .PCM, .PCSpillM, 
-      .InstrM, .InstrOrigM, .CSRReadValW, .EPCM, .TrapVectorM,
+      .InstrM, .InstrOrigM, .CSRReadValM, .CSRReadValW, .EPCM, .TrapVectorM,
       .RetM, .TrapM, .sfencevmaM, .InvalidateICacheM, .DCacheStallM, .ICacheStallF,
       .InstrValidM, .CommittedM, .CommittedF,
       .FRegWriteM, .LoadStallD, .StoreStallD,
@@ -306,14 +319,16 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .PrivilegeModeW, .SATP_REGW,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS, 
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
-      .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM);
+      .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM,
+      .DebugMode, .HaltReq, .ResumeReq, .DebugControl, .CSRDebugEnable,
+      .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite);
   end else begin
     assign {CSRReadValW, PrivilegeModeW, 
             SATP_REGW, STATUS_MXR, STATUS_SUM, STATUS_MPRV, STATUS_MPP, STATUS_FS, FRM_REGW,
             // PMPCFG_ARRAY_REGW, PMPADDR_ARRAY_REGW, 
             ENVCFG_CBE, ENVCFG_PBMTE, ENVCFG_ADUE, 
             EPCM, TrapVectorM, RetM, TrapM,
-            sfencevmaM, BigEndianM, wfiM, IntPendingM} = '0;
+            sfencevmaM, BigEndianM, wfiM, IntPendingM, DebugMode} = '0;
   end
 
   // multiply/divide unit
@@ -357,6 +372,12 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     assign {FPUStallD, FWriteIntE, FCvtIntE, FIntResM, FCvtIntW, FRegWriteM,
             IllegalFPUInstrD, SetFflagsM, FpLoadStoreM,
             FWriteDataM, FCvtIntResW, FIntDivResultW, FDivBusyE} = '0;
+  end
+
+  if (P.DEBUG_SUPPORTED) begin
+    mux2 #(P.XLEN) debugregmux(DebugIEURDATA, CSRReadValM, CSRDebugEnable, DebugRegRDATA);
+  end else begin
+    assign DebugRegRDATA = '0;
   end
   
 endmodule

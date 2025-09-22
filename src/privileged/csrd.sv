@@ -29,12 +29,14 @@
 
 module csrd import cvw::*;  #(parameter cvw_t P) (
   input logic               clk, reset,
+  input logic               HaltReq, ResumeReq,
   input logic               CSRDWriteM,
   input logic [P.XLEN-1:0]  CSRWriteValM,
   input logic [11:0]        CSRAdrM,
   output logic [P.XLEN-1:0] CSRDReadValM,
   output logic              DebugMode,
-  output logic [P.XLEN-1:0] NextEPCM
+  input logic [P.XLEN-1:0]  NextEPCM,
+  output logic              IllegalCSRDAccessM
 );
 
   localparam DCSR = 12'h7B0;
@@ -43,14 +45,14 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   localparam DSCRATCH1 = 12'h7B3;
 
   // Halting states
-  typedef enum 	       logic {RUNNING, HALTED} dbg_state_e;
+  typedef enum logic {RUNNING, HALTED} dbg_state_e;
   dbg_state_e state, state_n;
 
   logic NextHalt;
 
   // Write Enables
   logic      WriteDCSR;
-  logic      WrtieDPC;
+  logic      WriteDPC;
   logic      WriteCause;
 
   // WriteVals
@@ -79,7 +81,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   logic       mprven;    // See note...
   logic       nmip;      // Non-maskable interrupt. Tying to 0
   logic       step;      // Need to implement this. How to track 1 instruction completing?
-  logic [1:0] prv;       // Privilege Mode at halt. Set to change mode when resumed.
+  logic [1:0] prv;       // Privilege Mode at halt. Set so mode changes when resumed.
 
   // Need this for
   logic [2:0] NextCause;     // Cause of halt
@@ -129,23 +131,31 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   assign ebreakm = DCSR_REGW[15];
   assign ebreaks = DCSR_REGW[13];
   assign ebreaku = DCSR_REGW[12];
-  assign stepie = DSCR_REGW[11];
+  assign stepie = DCSR_REGW[11];
   assign cause = DCSR_REGW[8:6];
   assign step = DCSR_REGW[2];
   assign prv = DCSR_REGW[1:0];
 
   // CSR Reads
   always_comb begin
-    case (CSRAdrM)
-      DCSR: begin
-        CSRDReadValM = {debugver, 1'b0, extcause, 4'd0, cetrig, pelp, ebreakvs, ebreakvu,
-                        ebreakm, 1'b0, ebreaks, ebreaku, stepie, stopcount, stoptime,
-                        cause, v, mprven, nmip, step, prv};
-      end
-      
-      DPC: CSRDReadValM = DPC_REGW;
-      default: CSRDReadValM = '0;
-    endcase
+    if (DebugMode == 0) begin // Debug Spec p. 
+      IllegalCSRDAccessM = 1'b1;
+      CSRDReadValM = '0;
+    end else begin
+      IllegalCSRDAccessM = 1'b0;
+      case (CSRAdrM)
+        DCSR: begin
+          CSRDReadValM = {debugver, 1'b0, extcause, 4'd0, cetrig, pelp, ebreakvs, ebreakvu,
+                          ebreakm, 1'b0, ebreaks, ebreaku, stepie, stopcount, stoptime,
+                          cause, v, mprven, nmip, step, prv};
+        end
+        DPC: CSRDReadValM = DPC_REGW;
+        default:  begin
+          CSRDReadValM = '0;
+          IllegalCSRDAccessM = 1'b1;
+        end
+      endcase
+    end
   end
   
   ////////////////////////////////////////////////////////////////////
