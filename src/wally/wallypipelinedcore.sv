@@ -293,6 +293,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .FPUStallD, .ExternalStall,
     .DivBusyE, .FDivBusyE,
     .wfiM, .IntPendingM,
+    .DebugMode,
     // Stall & flush outputs
     .StallF, .StallD, .StallE, .StallM, .StallW,
     .FlushD, .FlushE, .FlushM, .FlushW);    
