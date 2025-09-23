@@ -128,92 +128,13 @@ module dm(
   logic [2:0]  cmderr;      
   logic [3:0]  datacount;   
    
-  // typedef struct packed {
-  //    logic haltreq;
-  //    logic resumereq;
-  //    logic hartreset;
-  //    logic ackhavereset;
-  //    logic ackunavail;
-  //    logic hasel;
-  //    logic [9:0] hartsello;
-  //    logic [9:0] hartselhi;
-  //    logic       setkeepalive;
-  //    logic       clrkeepalive;
-  //    logic       setresethaltreq;
-  //    logic       clrresethaltreq;
-  //    logic ndmreset;
-  //    logic dmactive;
-  // } DMControl_t;
-   
-  // typedef struct packed {
-  //    logic [31:25] reserved0;
-  //    logic ndmresetpending;
-  //    logic stickyunavail;
-  //    logic impebreak;
-  //    logic reserved1;
-  //    logic allhavereset;
-  //    logic anyhavereset;
-  //    logic allresumeack;
-  //    logic anyresumeack;
-  //    logic allnonexistent;
-  //    logic anynonexistent;
-  //    logic allunavail;
-  //    logic anyunavail;
-  //    logic allrunning;
-  //    logic anyrunning;
-  //    logic allhalted;
-  //    logic anyhalted;
-  //    logic authenticated;
-  //    logic authbusy;
-  //    logic hasresethaltreq;
-  //    logic confstrptrvalid;
-  //    logic [3:0] version;
-  // } DMStatus_t;
-
-  // typedef struct packed {
-  //    logic [2:0] reserved0;
-  //    logic [4:0] progbufsize;
-  //    logic [10:0] reserved1;
-  //    logic        busy;
-  //    logic        relaxedpriv;
-  //    logic [2:0]  cmderr;
-  //    logic [3:0]  reserved2;
-  //    logic [3:0]  datacount;
-  // } AbstractCS_t;
-
-  // typedef struct packed {
-  //    logic [7:0] cmdtype;
-  //    logic reserved0;
-  //    logic [2:0] aarsize;
-  //    logic    aarpostincrement;
-  //    logic    postexec;
-  //    logic    transfer;
-  //    logic    write;
-  //    logic    regno;
-  // } AbstractReg;
-
-  // DMStatus Signals
-  // logic ndmresetpending;
-  // logic stickyunavail;
-  // logic impebreak;
-  // logic reserved1;
-  // logic allhavereset;
-  // logic anyhavereset;
   logic allresumeack;
   logic anyresumeack;
-  // logic allnonexistent;
-  // logic anynonexistent;
-  // logic allunavail;
-  // logic anyunavail;
+
   logic allrunning;
   logic anyrunning;
   logic allhalted;
   logic anyhalted;
-  // logic authenticated;
-  // logic authbusy;
-  // logic hasresethaltreq;
-  // logic confstrptrvalid;
-  // logic [3:0] version;
    
   // Abstract Register signals
   logic [7:0]  cmdtype;
@@ -231,28 +152,6 @@ module dm(
   // 0: Access Register Command
   // 1: Quick Access
   // 2: Access Memory Command
-   
-  // Need to implement registers. But fireset, I need a state machine
-  // to handle the DMI requests. If it reads, I want to supply the
-  // value of the Debug CSR on the next cycle. If it's a write, that
-  // should also take effect on the next cycle.
-
-  // The DM must, I believe (jes) :
-  // 1.) Handle DMI requests (read/write operations) to access Debug CSRs and abstract commands.
-  // 2.) Respond to read requests by supplying the requested register value.
-  // 3.) Apply write operations to update registers, typically taking effect in a predictable manner (e.g., on the next clock cycle).
-  // 4.) Manage the state of the debug process, including hart control (e.g., halting, resuming, or resetting harts).
-
-  // Some FSM thoughts (jes)
-  // A simple state machine might have states like:
-  // * Idle: Waiting for dmi_en to assert.
-  // * Decode: Decode dmi_addr and dmi_op.
-  // * Read Response: Fetch and output register data on the next cycle.
-  // * Write Update: Update the register with dmi_data on the next cycle.
-  // * Complete: Assert dmi_resp to signal completion.
-  // Consider adding an Error State for handling invalid requests (e.g., accessing a non-existent register).
-  // If the DM supports abstract commands (e.g., for accessing hart registers or memory), we may need 
-  // additional states to manage the command execution pipeline, as these can take multiple cycles. - could be wrong here
 
   // enum logic {IDLE, GRANTED} DMIState;
 
