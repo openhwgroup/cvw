@@ -202,7 +202,7 @@ module testbench;
         "arch64zkne":    if (P.ZKNE_SUPPORTED)    tests = arch64zkne;
         "arch64zknh":    if (P.ZKNH_SUPPORTED)    tests = arch64zknh;
         "arch64pmp":     if (P.PMP_ENTRIES > 0)   tests = arch64pmp;
-        "debug64":       if (P.DEBUG_SUPPORTED)   tests = debug64;
+        "wally64debug":       if (P.DEBUG_SUPPORTED)   tests = wally64debug;
       endcase
     end else begin // RV32
       case (TEST)
@@ -253,7 +253,7 @@ module testbench;
         "arch32zknh":    if (P.ZKNH_SUPPORTED)    tests = arch32zknh;
         "arch32pmp":     if (P.PMP_ENTRIES > 0)   tests = arch32pmp;
         "arch32vm_sv32": if (P.VIRTMEM_SUPPORTED) tests = arch32vm_sv32;
-        "debug32":       if (P.DEBUG_SUPPORTED)   tests = debug32;
+        "wally32debug":       if (P.DEBUG_SUPPORTED)   tests = wally32debug;
       endcase
     end
     if (tests.size() == 0 & ElfFile == "none") begin

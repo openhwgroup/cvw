@@ -107,8 +107,8 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   
   // Debug Spec muxing of regfile inputs
   if (P.DEBUG_SUPPORTED) begin
-    mux2 #(5) rfreadaddrmux (Rs1D, DebugRegAddr, DebugControl, Rs1);
-    mux2 #(5) rfwriteaddrmux (RdW, DebugRegAddr, DebugControl, Rd);
+    mux2 #(5) rfreadaddrmux (Rs1D, DebugRegAddr[4:0], DebugControl, Rs1);
+    mux2 #(5) rfwriteaddrmux (RdW, DebugRegAddr[4:0], DebugControl, Rd);
     mux2 #(P.XLEN) rfwdatamux (ResultW, DebugRegWDATA, DebugControl, Result);
     assign RegWrite = RegWriteW | DebugRegWrite;
   end else begin

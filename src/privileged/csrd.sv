@@ -60,7 +60,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0] DPCWriteValM;
     
   // Register Outputs
-  logic [31:0]       DCSR_REGW;
+  //logic [31:0]       DCSR_REGW;
   logic [P.XLEN-1:0] DPC_REGW;
 
   // DCSR Fields
@@ -82,6 +82,11 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   logic       nmip;      // Non-maskable interrupt. Tying to 0
   logic       step;      // Need to implement this. How to track 1 instruction completing?
   logic [1:0] prv;       // Privilege Mode at halt. Set so mode changes when resumed.
+
+  localparam dcsrwidth = ($bits(ebreakm) + $bits(ebreaks) + $bits(ebreaku) +
+    $bits(stepie) + $bits(cause) + $bits(step) + $bits(prv));
+
+  logic [dcsrwidth-1:0]       DCSR_REGW;
 
   // Need this for
   logic [2:0] NextCause;     // Cause of halt
@@ -114,9 +119,6 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   assign DCSRWriteValM = CSRDWriteM ?
                          {CSRWriteValM[15], CSRWriteValM[13], CSRWriteValM[12], CSRWriteValM[11], CSRWriteValM[8:6], CSRWriteValM[2], CSRWriteValM[1:0]} :
                          {ebreakm, ebreaks, ebreaku, stepie, cause, step, prv};
-  
-  localparam dcsrwidth = ($bits(ebreakm) + $bits(ebreaks) + $bits(ebreaku) +
-    $bits(stepie) + $bits(cause) + $bits(step) + $bits(prv));
 
   ////////////////////////////////////////////////////////////////////
   // CSRs
@@ -128,11 +130,11 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   
   flopenr #(P.XLEN) DPCreg(clk, reset, WriteDPC, NextEPCM, DPC_REGW);
 
-  assign ebreakm = DCSR_REGW[15];
-  assign ebreaks = DCSR_REGW[13];
-  assign ebreaku = DCSR_REGW[12];
-  assign stepie = DCSR_REGW[11];
-  assign cause = DCSR_REGW[8:6];
+  assign ebreakm = DCSR_REGW[dcsrwidth - 1];
+  assign ebreaks = DCSR_REGW[dcsrwidth - 2];
+  assign ebreaku = DCSR_REGW[dcsrwidth - 3];
+  assign stepie = DCSR_REGW[dcsrwidth - 4];
+  assign cause = DCSR_REGW[dcsrwidth-5:dcsrwidth-7];
   assign step = DCSR_REGW[2];
   assign prv = DCSR_REGW[1:0];
 

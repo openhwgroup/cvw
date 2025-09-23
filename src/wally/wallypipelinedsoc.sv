@@ -128,7 +128,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
       .DMIADDR, .DMIDATA, .DMIOP, .DMIREADY, .DMIVALID,
       .DMIRSPDATA, .DMIRSPOP, .DMIRSPREADY, .DMIRSPVALID);
     
-    dm dm(.clk, .reset, .NDMReset, .HaltReq, .ResumeReq, .DebugMode, .DebugControl, .CSRDebugEnable,
+    dm #(P) dm(.clk, .reset, .NDMReset, .HaltReq, .ResumeReq, .DebugMode, .DebugControl, .CSRDebugEnable,
       .DMIADDR, .DMIDATA, .DMIOP, .DMIREADY, .DMIVALID,
       .DMIRSPDATA, .DMIRSPOP, .DMIRSPREADY, .DMIRSPVALID,
       .DebugRegRDATA, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite);

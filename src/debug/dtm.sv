@@ -210,7 +210,8 @@ module dtm import cvw::*; #(parameter cvw_t P) (
           if (UpdateDMI) begin
             //dmi_req.addr <= dmi.addr;
             //dmi_req.data <= dmi.data;
-            DMIADDR <= dmi[P.ABITS+34:34];
+            DMIADDR <= dmi[P.ABITS+34-1:34];
+            DMIDATA <= dmi[33:2];
             if ((dmi[1:0] == RD) | (dmi[1:0] == WR)) begin
               //dmi_req.op <= dmi.op;
               //dmi_req.valid <= 1'b1;
@@ -229,7 +230,7 @@ module dtm import cvw::*; #(parameter cvw_t P) (
             //dmi_next_reg.data <= dmi_rsp.data;
             //dmi_next_reg.op <= dmi_rsp.op;
             DMIOP <= NOP;
-            DMIVALID <= 1'b1;
+            DMIVALID <= 1'b0;
             DMINextReg[33:2] <= DMIRSPDATA;
             DMINextReg[1:0] <= DMIRSPOP;
             DMIState <= IDLE;

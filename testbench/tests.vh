@@ -3615,12 +3615,14 @@ string ahb32[] = '{
   "rv32i_m/F/src/fadd_b11-01.S"
 };
 
-string debug32[] = '{
-  `CUSTOM,
-  "NULL"
+string wally32debug[] = '{
+  `WALLYTEST,
+  "rv32i_m/privilege/src/WALLY-spi-01.S"
+  // "NULL"
 };
 
-string debug64[] = '{
-  `CUSTOM,
+string wally64debug[] = '{
+  `WALLYTEST,
+  "rv64i_m/privilege/src/WALLY-mmu-sv39-svadu-svnapot-svpbmt-01.S",  // run this if SVADU_SUPPORTED = 1
   "NULL"
 };

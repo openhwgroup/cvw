@@ -134,7 +134,7 @@ module tap_controller
         reset <= 0;
         enable <= 0;
      end else begin
-        CaptureIR <= (State == CaptureIR);
+        CaptureIR <= (State == CAPTURE_IR);
         ShiftIR <= (State == SHIFT_IR);
         ShiftDR <= (State == SHIFT_DR);
         reset <= ~(State == TEST_LOGIC_RESET);

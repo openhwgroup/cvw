@@ -27,7 +27,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module dm(
+module dm import cvw::*; #(parameter cvw_t P) (
   input  logic              clk,
   input  logic              reset,
   
