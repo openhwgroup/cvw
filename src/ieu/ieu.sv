@@ -80,7 +80,9 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   output logic              CSRReadM, CSRWriteM, PrivilegedM,// CSR read, CSR write, is privileged instruction
   output logic              CSRWriteFenceM,                   // CSR write or fence instruction needs to flush subsequent instructions
   // Debug abstract register r/w signals
+  input  logic              DebugMode,
   input  logic              DebugControl,
+  input  logic              GPRDebugEnable,
   output logic [P.XLEN-1:0] DebugIEURDATA,
   input  logic [P.XLEN-1:0] DebugRegWDATA,
   input  logic [11:0]       DebugRegAddr,
@@ -133,6 +135,6 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
     .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataM, .FCvtIntW,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .SquashSCW, .ResultSrcW, .ReadDataW, .FCvtIntResW,
     .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW,
-    .DebugControl, .DebugIEURDATA, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite);
+    .DebugMode, .DebugControl, .GPRDebugEnable, .DebugIEURDATA, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite);
   
 endmodule

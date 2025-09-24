@@ -180,7 +180,7 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
       write_instr(5'b00001);
       this.idcode.read();
       assert(this.idcode.result == 32'h1002AC05) $display("Received IDCODE");
-      else $display("IDCODE was corrupted.");
+      else $display("IDCODE was corrupted: 0x%0h", this.idcode.result);
 
       // Reading DTMCS value
       write_instr(5'b10000);
@@ -278,7 +278,11 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
          
       while (!$feof(file)) begin
         if ($fgets(line, file)) begin
-          items = split(line, " "); 
+          // Allow comments and whitespace
+          if (line[0] == "#" | line[0] == " " | line[0] == "\n") begin
+            continue;
+          end
+          items = split(line, " ");
           this.testvectors.push_back({items[2].substr(1, 2).atohex(), items[1].atohex(), op_decode(items[0], 0)});
           this.expected_outputs.push_back({items[6].substr(1, 2).atohex(), items[5].atohex(), op_decode(items[4], 1)});
         end
@@ -320,7 +324,7 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
     debugger.get_testvectors("../../tests/debug/testvectors.mem");
     
     forever begin
-      @(posedge reset);
+      @(negedge reset);
       debugger.initialize();
       debugger.run_testvectors();
     end

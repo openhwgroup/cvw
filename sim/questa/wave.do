@@ -677,6 +677,38 @@ add wave -noupdate /testbench/dut/core/ifu/bus/icache/icache/cachefsm/CacheEn
 add wave -noupdate /testbench/dut/core/ifu/bus/icache/icache/cachefsm/FlushStage
 add wave -noupdate /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/LRUWriteEn
 add wave -noupdate /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/FlushStage
+add wave -noupdate -group Debug -expand -group jtag /testbench/dut/debug/dtm/tck
+add wave -noupdate -group Debug -expand -group jtag /testbench/dut/debug/dtm/tms
+add wave -noupdate -group Debug -expand -group jtag /testbench/dut/debug/dtm/tdi
+add wave -noupdate -group Debug -expand -group jtag /testbench/dut/debug/dtm/tdo
+add wave -noupdate -group Debug -expand -group dtm /testbench/dut/debug/dtm/DMIADDR
+add wave -noupdate -group Debug -expand -group dtm /testbench/dut/debug/dtm/DMIDATA
+add wave -noupdate -group Debug -expand -group dtm /testbench/dut/debug/dtm/DMIOP
+add wave -noupdate -group Debug -expand -group dtm /testbench/dut/debug/dtm/DMIREADY
+add wave -noupdate -group Debug -expand -group dtm /testbench/dut/debug/dtm/DMIVALID
+add wave -noupdate -group Debug -expand -group dtm -group {registers} /testbench/dut/debug/dtm/currentInst
+add wave -noupdate -group Debug -expand -group dtm -group {registers} /testbench/dut/debug/dtm/dmi
+add wave -noupdate -group Debug -expand -group dtm -group {registers} /testbench/dut/debug/dtm/dtmcs
+add wave -noupdate -group Debug -expand -group dm /testbench/dut/debug/dm/DMIRSPDATA
+add wave -noupdate -group Debug -expand -group dm /testbench/dut/debug/dm/DMIRSPOP
+add wave -noupdate -group Debug -expand -group dm /testbench/dut/debug/dm/DMIRSPREADY
+add wave -noupdate -group Debug -expand -group dm /testbench/dut/debug/dm/DMIRSPVALID
+add wave -noupdate -group Debug -expand -group dm -group {Debug Registers} /testbench/dut/debug/dm/DMControl
+add wave -noupdate -group Debug -expand -group dm -group {Debug Registers} /testbench/dut/debug/dm/DMStatus
+add wave -noupdate -group Debug -expand -group dm -group {Debug Registers} /testbench/dut/debug/dm/Data0
+add wave -noupdate -group Debug -expand -group dm -group {Debug Registers} /testbench/dut/debug/dm/Data1
+add wave -noupdate -group Debug -expand -group dm -group {Debug Registers} /testbench/dut/debug/dm/AbstractCS
+add wave -noupdate -group Debug -expand -group dm -group {Debug Registers} /testbench/dut/debug/dm/Command
+add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/cause
+add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/HaltReq
+add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/ResumeReq
+add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/DebugMode
+add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/ResumeReq
+add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/DPC_REGW
+
+
+
+
 TreeUpdate [SetDefaultTree]
 WaveRestoreCursors {{Cursor 4} {89834 ns} 1} {{Cursor 4} {79055 ns} 1} {{Cursor 3} {89604 ns} 0}
 quietly wave cursor active 3

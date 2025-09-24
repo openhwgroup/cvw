@@ -35,7 +35,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   input logic [11:0]        CSRAdrM,
   output logic [P.XLEN-1:0] CSRDReadValM,
   output logic              DebugMode,
-  input logic [P.XLEN-1:0]  NextEPCM,
+  input logic [P.XLEN-1:0]  PCM,
   output logic              IllegalCSRDAccessM
 );
 
@@ -128,7 +128,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
     {ebreakm, ebreaks, ebreaku, stepie, cause, step, prv},
     DCSR_REGW);
   
-  flopenr #(P.XLEN) DPCreg(clk, reset, WriteDPC, NextEPCM, DPC_REGW);
+  flopenr #(P.XLEN) DPCreg(clk, reset, WriteDPC, PCM, DPC_REGW);
 
   assign ebreakm = DCSR_REGW[dcsrwidth - 1];
   assign ebreaks = DCSR_REGW[dcsrwidth - 2];

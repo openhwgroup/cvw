@@ -42,6 +42,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   output logic              ResumeReq,
   input  logic              DebugMode,
   output logic              DebugControl,
+  output logic              GPRDebugEnable,
   output logic              CSRDebugEnable,
 
   // DMI REQUEST
@@ -424,6 +425,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
 
   logic ValidCommand;
   logic NextCSRDebugEnable;
+  logic NextGPRDebugEnable;
    
   assign aarsize = Command[22:20];
   // assign StartCommand = DMIVALID & DMIRSPREADY & (DMIADDR == COMMAND) & ~|cmderr;
@@ -446,6 +448,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
     end else begin
       StartCommand <= DMIVALID & DMIRSPREADY & (DMIADDR == COMMAND) & ~|cmderr;
       DebugRegAddr <= DMIDATA[11:0];
+      GPRDebugEnable <= NextGPRDebugEnable;
       CSRDebugEnable <= NextCSRDebugEnable;
     end
   end
@@ -463,6 +466,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
           16'h1018, 16'h1019, 16'h101a, 16'h101b,
           16'h101c, 16'h101d, 16'h101e, 16'h101f: begin // GPRs
             ValidCommand = 1;
+            NextGPRDebugEnable = 1;
             NextCSRDebugEnable = 0;
           end
 
@@ -470,15 +474,18 @@ module dm import cvw::*; #(parameter cvw_t P) (
           16'h0341, 16'h0342, 16'h0343,
           16'h07B0, 16'h07B1, 16'h07B2: begin // CSRs
             ValidCommand = 1;
+            NextGPRDebugEnable = 0;
             NextCSRDebugEnable = 1;
           end
         default: begin 
           ValidCommand = 0;
+          NextGPRDebugEnable = 0;
           NextCSRDebugEnable = 0;
         end
       endcase
     end else begin
       ValidCommand = 0;
+      NextGPRDebugEnable = 0;
       NextCSRDebugEnable = 0;
     end
   end

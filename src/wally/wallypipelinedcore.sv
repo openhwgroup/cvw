@@ -49,6 +49,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    output logic                  DebugMode,
    input  logic                  HaltReq, ResumeReq,
    input  logic                  DebugControl,
+   input  logic                  GPRDebugEnable,
    input  logic                  CSRDebugEnable,
    output logic [P.XLEN-1:0]     DebugRegRDATA,
    input  logic [P.XLEN-1:0]     DebugRegWDATA,
@@ -229,7 +230,8 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
      .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
      .StructuralStallD, .LoadStallD, .StoreStallD, .PCSrcE,
      .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .InvalidateICacheM,
-     .DebugControl, .DebugIEURDATA, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite
+     .DebugMode, .DebugControl, .GPRDebugEnable, 
+     .DebugIEURDATA, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite
   ); 
 
   lsu #(P) lsu(

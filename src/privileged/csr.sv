@@ -303,10 +303,10 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign IllegalCSRCAccessM = 1'b1; // counters aren't enabled
   end
 
-  if (P.DEBUG_SUPPORTED) begin : csrd
+  if (P.DEBUG_SUPPORTED) begin : debug
     csrd #(P) csrd(.clk, .reset, .HaltReq, .ResumeReq,
       .CSRDWriteM, .CSRWriteValM, .CSRAdrM, .CSRDReadValM, 
-      .DebugMode, .NextEPCM, .IllegalCSRDAccessM);
+      .DebugMode, .PCM, .IllegalCSRDAccessM);
   end else begin
     assign DebugMode = 1'b0;
     assign CSRDReadValM = '0;

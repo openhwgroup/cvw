@@ -74,7 +74,9 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] FIntDivResultW,          // FPU's integer divide result
   input  logic [4:0]        RdW,                     // Destination register
   // Debug abstract register r/w signals
+  input  logic              DebugMode,
   input  logic              DebugControl,
+  input  logic              GPRDebugEnable,
   output logic [P.XLEN-1:0] DebugIEURDATA,
   input  logic [P.XLEN-1:0] DebugRegWDATA,
   input  logic [11:0]       DebugRegAddr,
@@ -107,10 +109,10 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   
   // Debug Spec muxing of regfile inputs
   if (P.DEBUG_SUPPORTED) begin
-    mux2 #(5) rfreadaddrmux (Rs1D, DebugRegAddr[4:0], DebugControl, Rs1);
-    mux2 #(5) rfwriteaddrmux (RdW, DebugRegAddr[4:0], DebugControl, Rd);
-    mux2 #(P.XLEN) rfwdatamux (ResultW, DebugRegWDATA, DebugControl, Result);
-    assign RegWrite = RegWriteW | DebugRegWrite;
+    mux2 #(5) rfreadaddrmux (Rs1D, DebugRegAddr[4:0], DebugControl & GPRDebugEnable, Rs1);
+    mux2 #(5) rfwriteaddrmux (RdW, DebugRegAddr[4:0], DebugControl & GPRDebugEnable, Rd);
+    mux2 #(P.XLEN) rfwdatamux (ResultW, DebugRegWDATA, DebugControl & GPRDebugEnable, Result);
+    assign RegWrite = DebugMode ? DebugRegWrite & GPRDebugEnable : RegWriteW;
   end else begin
     assign Rs1 = Rs1D;
     assign Rd = RdW;
