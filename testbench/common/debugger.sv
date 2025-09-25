@@ -1,3 +1,45 @@
+///////////////////////////////////////////
+// debuggers.sv
+//
+// Written: Jacob Pease jacob.pease@okstate.edu, James Stine james.stine@okstate.edu
+// Modified: 
+//
+// Purpose:
+//   Testbench JTAG driver that emulates a RISC-V debugger to exercise the
+//   Debug Transport/Module (DTM/DM) via IR/DR scans and DMI transactions.
+// Key functions:
+//   - Bit-bangs JTAG (TCK/TMS/TDI) and samples TDO with a programmable TCK period.
+//   - write_instr(): shifts JTAG instructions (IR) into the DTM.
+//   - JTAG_DR class: generic DR read/write (parameterized width).
+//   - DMI class (41-bit): convenience tasks to read/write DM registers
+//       (dmcontrol, dmstatus, abstractcs, command, data0).
+//   - Debugger class: higher-level flows to initialize DTM, enable DM,
+//       halt/resume the hart, issue abstract commands, read GPRs/CSRs,
+//       and print/verify results.
+//   - Testvector harness: parses vectors from a file, drives DMI sequences,
+//       and checks responses against expected (pass/fail reporting).
+// Operation:
+//   On reset deassertion, initializes JTAG/DTM, then runs the testvectors
+//   in a loop, comparing FPGA/simulation results and reporting mismatches.
+// 
+// A component of the Wally configurable RISC-V project.
+// 
+// Copyright (C) 2025 Harvey Mudd College & Oklahoma State University
+//
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+//
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
+//
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
+////////////////////////////////////////////////////////////////////////////////////////////////
+
 module debugger import cvw::*;  #(parameter cvw_t P)(
   input logic clk, reset,
   output logic tck, tms, tdi,
@@ -9,7 +51,7 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
   string red     = "\033[1;31m"; // Red text
   string green   = "\033[1;32m"; // Green text
   string yellow  = "\033[1;33m"; // Yellow text
-  string normal  = "\033[0m";  // Reset to default
+  string normal  = "\033[0m";    // Reset to default
   string bold    = "\033[1m";
 
   enum logic {RUN, WAIT} debugger_state;
