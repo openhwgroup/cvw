@@ -114,10 +114,7 @@ module tap_controller
    
    // Instruction Register and Test Data Register should be clocked
    // on their respective CAPTURE and SHIFT states
-   //assign ClockIR = tck | ~((State == CAPTURE_IR) | (State == SHIFT_IR));
    assign ClockIR = (State == CAPTURE_IR) | (State == SHIFT_IR);
-   // assign ClockDR = tck | ~((State == CAPTURE_DR) | (State == SHIFT_DR));
-   // assign CaptureIR = (State == CAPTURE_IR);
    assign ClockDR = (State == CAPTURE_DR) | (State == SHIFT_DR);
    
    assign UpdateIR = (State == UPDATE_IR);
