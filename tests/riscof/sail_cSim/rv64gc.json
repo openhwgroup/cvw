@@ -12,7 +12,7 @@
   },
   "memory": {
     "pmp": {
-      "grain": 0,
+      "grain": 4,
       "count": 16,
       "tor_supported": true,
       "na4_supported": true,
