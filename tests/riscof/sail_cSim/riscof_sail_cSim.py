@@ -36,7 +36,7 @@ class sail_cSim(pluginTemplate):
         self.suite = suite
         self.work_dir = work_dir
         self.objdump_cmd = 'riscv64-unknown-elf-objdump -D {0} > {2};'
-        self.compile_cmd = 'riscv64-unknown-elf-gcc -march={0} \
+        self.compile_cmd = 'riscv64-unknown-elf-gcc -march={0} -Wl,--no-warn-rwx-segments \
          -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles\
          -T '+self.pluginpath+'/env/link.ld\
          -I '+self.pluginpath+'/env/\
@@ -109,7 +109,7 @@ class sail_cSim(pluginTemplate):
 
             execute += self.objdump_cmd.format(elf, self.xlen, 'ref.elf.objdump')
             sig_file = os.path.join(test_dir, self.name[:-1] + ".signature")
-            
+
             # Check if the tests can be run on SAIL
             if ('NO_SAIL=True' in testentry['macros']):
                 # if the tests can't run on SAIL we copy the reference output to the src directory
