@@ -112,7 +112,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
     assign InvalidCBOM = (|CMOpM[2:0]) & (~PTE_R & (~STATUS_MXR | ~PTE_X));
     assign InvalidCBOZ = CMOpM[3] & ~PTE_W;
     assign InvalidAccess = InvalidRead | InvalidWrite | InvalidCBOM | InvalidCBOZ | ReservedRW;
-    assign PreUpdateDA = ~PTE_A | WriteAccess & ~PTE_D;
+    assign PreUpdateDA = ~PTE_A | (WriteAccess | CMOpM[3]) & ~PTE_D;
   end
 
   // Determine whether to update DA bits.  With SVADU, it is done in hardware
