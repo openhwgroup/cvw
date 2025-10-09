@@ -116,7 +116,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   // Check physical memory accesses
   ///////////////////////////////////////////
 
-  pmachecker #(P) pmachecker(.PhysicalAddress, .Size, .CMOpM, 
+  pmachecker #(P) pmachecker(.PhysicalAddress, .Size, .CMOpM, .SelHPTW, 
     .AtomicAccessM, .ExecuteAccessF, .WriteAccessM, .ReadAccessM, .PBMemoryType,
     .Cacheable, .Idempotent, .SelTIM, 
     .PMAInstrAccessFaultF, .PMALoadAccessFaultM, .PMAStoreAmoAccessFaultM);
@@ -124,7 +124,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   if (P.PMP_ENTRIES > 0) begin : pmp
     pmpchecker #(P) pmpchecker(.PhysicalAddress, .EffectivePrivilegeModeW,
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
-      .ExecuteAccessF, .WriteAccessM, .ReadAccessM, .Size, .CMOpM, 
+      .ExecuteAccessF, .WriteAccessM, .ReadAccessM, .Size, .CMOpM, .SelHPTW, 
       .PMPInstrAccessFaultF, .PMPLoadAccessFaultM, .PMPStoreAmoAccessFaultM);
   end else begin
     assign PMPInstrAccessFaultF     = 1'b0;
@@ -154,7 +154,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   // If TLB miss and translating we want to not have faults from the PMA and PMP checkers.
   assign InstrAccessFaultF    = (PMAInstrAccessFaultF    | PMPInstrAccessFaultF)    & ~TLBMiss;
   assign LoadAccessFaultM     = (PMALoadAccessFaultM     | PMPLoadAccessFaultM     | AtomicMisalignedCausesAccessFaultM & ReadNoAmoAccessM)     & ~TLBMiss;
-  assign StoreAmoAccessFaultM = (PMAStoreAmoAccessFaultM | PMPStoreAmoAccessFaultM | AtomicMisalignedCausesAccessFaultM & WriteAccessM) & ~TLBMiss & ~(SelHPTW & (|CMOpM));
+  assign StoreAmoAccessFaultM = (PMAStoreAmoAccessFaultM | PMPStoreAmoAccessFaultM | AtomicMisalignedCausesAccessFaultM & WriteAccessM) & ~TLBMiss;
 
   // Specify which type of page fault is occurring
   assign InstrPageFaultF    = TLBPageFault & ExecuteAccessF;
