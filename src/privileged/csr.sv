@@ -215,10 +215,10 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   assign NextCauseM = TrapM ? {InterruptM, CauseM}: {CSRWriteValM[P.XLEN-1], CSRWriteValM[3:0]};
   assign NextMtvalM = TrapM ? NextFaultMtvalM : CSRWriteValM;
   assign UngatedCSRMWriteM = CSRWriteM & (PrivilegeModeW == P.M_MODE);
-  assign CSRMWriteM = UngatedCSRMWriteM & InstrValidNotFlushedM;
-  assign CSRSWriteM = CSRWriteM & (|PrivilegeModeW) & InstrValidNotFlushedM;
-  assign CSRUWriteM = CSRWriteM  & InstrValidNotFlushedM;
-  assign CSRDWriteM = CSRWriteM & InstrValidNotFlushedM;
+  assign CSRMWriteM = DebugMode ? DebugRegWrite : UngatedCSRMWriteM & InstrValidNotFlushedM;
+  assign CSRSWriteM = DebugMode ? DebugRegWrite : CSRWriteM & (|PrivilegeModeW) & InstrValidNotFlushedM;
+  assign CSRUWriteM = DebugMode ? DebugRegWrite : CSRWriteM  & InstrValidNotFlushedM;
+  assign CSRDWriteM = DebugMode ? DebugRegWrite : CSRWriteM & InstrValidNotFlushedM;
   assign MTrapM = TrapM & (NextPrivilegeModeM == P.M_MODE);
   assign STrapM = TrapM & (NextPrivilegeModeM == P.S_MODE) & P.S_SUPPORTED;
 
