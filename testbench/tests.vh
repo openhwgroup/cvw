@@ -33,12 +33,12 @@
 `define BUILDROOT "6"
 
 string tvpaths[] = '{
-  "$WALLY/tests/riscof/work/riscv-arch-test/",
-  "$WALLY/tests/riscof/work/wally-riscv-arch-test/",
-  "$WALLY/benchmarks/coremark/work/",
-  "$WALLY/addins/embench-iot/",
-  "$WALLY/tests/custom/work/",
-  "$WALLY/tests/coverage/"
+  "../../tests/riscof/work/riscv-arch-test/",
+  "../../tests/riscof/work/wally-riscv-arch-test/",
+  "../../benchmarks/coremark/work/",
+  "../../addins/embench-iot/",
+  "../../tests/custom/work/",
+  "../../tests/coverage/"
 };
 
 string coverage64gc[] = '{
