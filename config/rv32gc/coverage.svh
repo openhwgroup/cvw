@@ -67,7 +67,7 @@
 `define ZIFENCEI_COVERAGE
 
 // Privileged extensions
-`define RV32VM_COVERAGE
+`define VM_COVERAGE
 `define RV32VM_PMP_COVERAGE
 `define RV32PMP_COVERAGE
 `define ZICSRM_COVERAGE
