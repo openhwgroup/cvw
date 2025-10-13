@@ -216,11 +216,11 @@ string arch32pmp[] = '{
   //"rv32i_m/pmp/src/pmpm_na4_legal_lwxr.S",
   //"rv32i_m/pmp/src/pmpm_misaligned_na4.S",
   //"rv32i_m/pmp/src/pmpm_cfg_na4_all.S",
-  // *** Uncomment following when PMP Enteries = 64
-  //"rv32i_m/pmp/src/pmpm_all_enteries_check-01.S",  
-  //"rv32i_m/pmp/src/pmpm_all_enteries_check-02.S",
-  //"rv32i_m/pmp/src/pmpm_all_enteries_check-03.S",
-  //"rv32i_m/pmp/src/pmpm_all_enteries_check-04.S",
+  // *** Uncomment following when PMP Entries = 64
+  //"rv32i_m/pmp/src/pmpm_all_entries_check-01.S",  
+  //"rv32i_m/pmp/src/pmpm_all_entries_check-02.S",
+  //"rv32i_m/pmp/src/pmpm_all_entries_check-03.S",
+  //"rv32i_m/pmp/src/pmpm_all_entries_check-04.S",
   // *** Uncomment following when PR#705 is merged
   //"rv32i_m/pmp/src/pmpm_csr_walk.S",
   //"rv32i_m/pmp/src/pmpzicbo_prefetch.S",
@@ -286,11 +286,11 @@ string arch64pmp[] = '{
   "rv64i_m/pmp/src/pmpzca_misaligned_tor.S",
   "rv64i_m/pmp/src/pmpzcb_legal_lwxr.S",
   "rv64i_m/pmp/src/pmpzcd_legal_lwxr.S"
-  // *** Uncomment following when PMP Enteries = 64
-  //"rv64i_m/pmp/src/pmpm_all_enteries_check-01.S",  
-  //"rv64i_m/pmp/src/pmpm_all_enteries_check-02.S",
-  //"rv64i_m/pmp/src/pmpm_all_enteries_check-03.S",
-  //"rv64i_m/pmp/src/pmpm_all_enteries_check-04.S",
+  // *** Uncomment following when PMP Entries = 64
+  //"rv64i_m/pmp/src/pmpm_all_entries_check-01.S",  
+  //"rv64i_m/pmp/src/pmpm_all_entries_check-02.S",
+  //"rv64i_m/pmp/src/pmpm_all_entries_check-03.S",
+  //"rv64i_m/pmp/src/pmpm_all_entries_check-04.S",
   // *** Uncomment following when G = 0
   //"rv64i_m/pmp/src/pmpm_access_double_region.S",
   //"rv64i_m/pmp/src/pmpm_cfg_na4_all.S",
