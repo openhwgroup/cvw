@@ -23,7 +23,7 @@ ASFLAGS := $(MARCH) $(MABI) -mcmodel=medany -nostartfiles -L $(RISCV)/riscv64-un
 
 TARGET = program.elf
 
-.PHONY: all clean sim32 sim64 debug32 debug64 bitbang32 bitbang64
+.PHONY: all clean sim32 sim64 debug32 debug64 bitbang32 bitbang64 generate
 all: $(TARGET).objdump
 
 $(TARGET): $(SOURCE)
@@ -54,3 +54,6 @@ bitbang32:
 
 bitbang64:
 	spike --isa=rv64gc_zicsr --rbb-port=9824 +signature=$(TARGET).signature.output +signature-granularity=8 $(TARGET)
+
+generate:
+	@echo "Temp"
