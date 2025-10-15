@@ -1,3 +1,5 @@
+log_output build/log/WALLY-debug-01.log
+debug_level 3
 init
 # Without this line it endlessly polls the processor, cluttering the
 # testvectors.

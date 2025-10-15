@@ -10,7 +10,9 @@ BASENAMES := $(basename $(notdir $(SOURCE)))
 OBJ := $(SOURCE:.s=.o)
 LDSCRIPT := ./link.ld
 
+# Build directories
 BUILD := build
+LOGSDIR := $(BUILD)/log
 
 # RV32
 # MARCH = -march=rv32imfdc_zicsr_zifencei
@@ -22,14 +24,19 @@ MARCH = -march=rv64gc_zicsr_zifencei
 MABI = -mabi=lp64
 ASFLAGS := $(MARCH) $(MABI) -mcmodel=medany -nostartfiles -L $(RISCV)/riscv64-unknown-elf/lib -T$(LDSCRIPT)
 
-TARGET := $(SOURCE:.S=.elf)
-
+TARGET := $(BUILD)/$(BASENAMES).elf
 TVDIR := testvectors
-TESTVECTORS := $(BUILD)/$(BASENAMES).tv
+TVBUILDDIR := $(BUILD)/testvectors
+TESTVECTORS := $(TVBUILDDIR)/$(BASENAMES).tv
 #TARGET = program.elf
 
-.PHONY: all clean sim32 sim64 debug32 debug64 bitbang32 bitbang64 generate
-all: $(TARGET).objdump $(TESTVECTORS)
+.PHONY: all clean sim32 sim64 debug32 debug64 bitbang32 bitbang64 generate dirs
+all: dirs $(TARGET).objdump $(TESTVECTORS)
+
+dirs:
+	mkdir -p $(BUILD)
+	mkdir -p $(LOGSDIR)
+	mkdir -p $(TVBUILDDIR)
 
 $(TARGET): $(SOURCE)
 	$(CC) $(ASFLAGS) -o $@ $(SOURCE)
@@ -41,6 +48,7 @@ clean:
 	@rm -f $(TARGET)
 	@rm -f $(TARGET).objdump
 	@rm -f $(TARGET).signature.output
+	@rm -rf $(BUILD)
 
 sim32:
 	spike --isa=rv32imfdc_zicsr +signature=$(TARGET).signature.output +signature-granularity=8 $(TARGET)
@@ -61,6 +69,5 @@ bitbang64:
 	spike --isa=rv64gc_zicsr --rbb-port=9824 +signature=$(TARGET).signature.output +signature-granularity=8 $(TARGET)
 
 $(TESTVECTORS): $(TARGET)
-	mkdir -p $(BUILD)
 	./debugtestgen.py -s $< -t $(TVDIR)/$(basename $(notdir $<)).tcl
-	grep "41b" openocd.log | sed 's/.*41b \([^;]*\).*/\1/' > $@
+	grep "41b" $(LOGSDIR)/$(basename $(notdir $<)).log | sed 's/.*41b \([^;]*\).*/\1/' > $@
