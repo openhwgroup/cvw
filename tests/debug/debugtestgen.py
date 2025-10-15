@@ -2,14 +2,19 @@
 import argparse
 import os
 import subprocess
+import time
 
 WALLY = os.environ.get("WALLY")
 DEBUGTESTS = f"{WALLY}/tests/debug/build"
+ISA = "rv64gc_zicsr"
+RBBPORT = "9824"
 
-SPIKEARGS = " ".join([
+SPIKEARGS = [
+    "spike",
     "--isa=rv64gc_zicsr",
-    "--rbb-port=9824"
-])
+    "--rbb-port=9824",
+    "+signature-granularity=8"
+]
 
 def non_empty_string(value):
     if not isinstance(value, str):
@@ -22,24 +27,25 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--test", "-s", help="Assembly test.", type=non_empty_string)
     parser.add_argument("--tcl", "-t", help="TCL script to run parallel to assembly test.", type=non_empty_string)
-    return parser.parse_args()
-
-# def validate_args(args):
-#     if (len(args.test) == 0):
-        
+    return parser.parse_args()    
 
 def start_spike(test):
-    return subprocess.Popen(["spike", SPIKEARGS, test])
+    spikeargs = SPIKEARGS
+    spikeargs = spikeargs + [f"+signature={os.path.splitext(args.test)[0]}.signature.output", test]
+    print(" ".join(spikeargs))
+    return subprocess.Popen(spikeargs)
 
 def start_openocd(tclscript):
-    return subprocess.Popen(["openocd", "-f", "openocd.cfg", "-c", tclscript])
-
-
+    openocd_args = ["openocd", "-f", "openocd.cfg", "-c", f"source {tclscript}"]
+    print(" ".join(openocd_args))
+    return subprocess.Popen(openocd_args)
 
 def main(args):
-    # spike_proc = start_spike(args.test)
-    # openocd_proc = start_openocd(args.tcl)
-    print(args)
+    start_spike(args.test)
+    time.sleep(0.1)
+    openocd_proc = start_openocd(args.tcl)
+    openocd_proc.wait()
+    print(os.path.splitext(args.test))
 
 if __name__ == "__main__":
     args = parse_args()

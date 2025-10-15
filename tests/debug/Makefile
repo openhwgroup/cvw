@@ -5,11 +5,12 @@ CC = riscv64-unknown-elf-gcc
 AS = riscv64-unknown-elf-as
 LD = riscv64-unknown-elf-ld
 OBJDUMP = riscv64-unknown-elf-objdump
-
 SOURCE := $(shell find . -type f -name "*.S")
+BASENAMES := $(basename $(notdir $(SOURCE)))
 OBJ := $(SOURCE:.s=.o)
-
 LDSCRIPT := ./link.ld
+
+BUILD := build
 
 # RV32
 # MARCH = -march=rv32imfdc_zicsr_zifencei
@@ -21,10 +22,14 @@ MARCH = -march=rv64gc_zicsr_zifencei
 MABI = -mabi=lp64
 ASFLAGS := $(MARCH) $(MABI) -mcmodel=medany -nostartfiles -L $(RISCV)/riscv64-unknown-elf/lib -T$(LDSCRIPT)
 
-TARGET = program.elf
+TARGET := $(SOURCE:.S=.elf)
+
+TVDIR := testvectors
+TESTVECTORS := $(BUILD)/$(BASENAMES).tv
+#TARGET = program.elf
 
 .PHONY: all clean sim32 sim64 debug32 debug64 bitbang32 bitbang64 generate
-all: $(TARGET).objdump
+all: $(TARGET).objdump $(TESTVECTORS)
 
 $(TARGET): $(SOURCE)
 	$(CC) $(ASFLAGS) -o $@ $(SOURCE)
@@ -55,5 +60,7 @@ bitbang32:
 bitbang64:
 	spike --isa=rv64gc_zicsr --rbb-port=9824 +signature=$(TARGET).signature.output +signature-granularity=8 $(TARGET)
 
-generate:
-	@echo "Temp"
+$(TESTVECTORS): $(TARGET)
+	mkdir -p $(BUILD)
+	./debugtestgen.py -s $< -t $(TVDIR)/$(basename $(notdir $<)).tcl
+	grep "41b" openocd.log | sed 's/.*41b \([^;]*\).*/\1/' > $@
