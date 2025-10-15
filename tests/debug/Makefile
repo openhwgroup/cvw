@@ -24,30 +24,44 @@ MARCH = -march=rv64gc_zicsr_zifencei
 MABI = -mabi=lp64
 ASFLAGS := $(MARCH) $(MABI) -mcmodel=medany -nostartfiles -L $(RISCV)/riscv64-unknown-elf/lib -T$(LDSCRIPT)
 
-TARGET := $(BUILD)/$(BASENAMES).elf
+#TARGET := $(BUILD)/$(BASENAMES).elf
+TARGET := $(addsuffix .elf, $(addprefix $(BUILD)/, $(BASENAMES)))
 TVDIR := testvectors
 TVBUILDDIR := $(BUILD)/testvectors
-TESTVECTORS := $(TVBUILDDIR)/$(BASENAMES).tv
-#TARGET = program.elf
+#TESTVECTORS := $(TVBUILDDIR)/$(BASENAMES).tv
+TESTVECTORS := $(addsuffix .tv, $(addprefix $(TVBUILDDIR), $(BASENAMES)))
 
-.PHONY: all clean sim32 sim64 debug32 debug64 bitbang32 bitbang64 generate dirs
-all: dirs $(TARGET).objdump $(TESTVECTORS)
+.PHONY: all clean sim32 sim64 debug32 debug64 bitbang32 bitbang64 generate dirs debug
+
+
+all: debug dirs $(TARGET).objdump $(TESTVECTORS)
+
+debug:
+	@echo $(TARGET)
 
 dirs:
 	mkdir -p $(BUILD)
 	mkdir -p $(LOGSDIR)
 	mkdir -p $(TVBUILDDIR)
 
-$(TARGET): $(SOURCE)
-	$(CC) $(ASFLAGS) -o $@ $(SOURCE)
+# Build targets
+#$(TARGET): $(SOURCE)
+#	$(CC) $(ASFLAGS) -o $@ $<
 
-$(TARGET).objdump: $(TARGET)
+$(BUILD)/%.elf.objdump: $(BUILD)/%.elf
 	$(OBJDUMP) -s -D $< > $@
 
+$(BUILD)/%.elf: rv64/%.S
+	$(CC) $(ASFLAGS) -o $@ $<
+
+$(TESTVECTORS): $(TARGET)
+	./debugtestgen.py -s $< -t $(TVDIR)/$(basename $(notdir $<)).tcl
+	grep "41b" $(LOGSDIR)/$(basename $(notdir $<)).log | sed 's/.*41b \([^;]*\).*/\1/' > $@
+
 clean:
-	@rm -f $(TARGET)
-	@rm -f $(TARGET).objdump
-	@rm -f $(TARGET).signature.output
+	#@rm -f $(TARGET)
+	#@rm -f $(TARGET).objdump
+	#@rm -f $(TARGET).signature.output
 	@rm -rf $(BUILD)
 
 sim32:
@@ -67,7 +81,3 @@ bitbang32:
 
 bitbang64:
 	spike --isa=rv64gc_zicsr --rbb-port=9824 +signature=$(TARGET).signature.output +signature-granularity=8 $(TARGET)
-
-$(TESTVECTORS): $(TARGET)
-	./debugtestgen.py -s $< -t $(TVDIR)/$(basename $(notdir $<)).tcl
-	grep "41b" $(LOGSDIR)/$(basename $(notdir $<)).log | sed 's/.*41b \([^;]*\).*/\1/' > $@
