@@ -421,6 +421,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic ValidCommand;
   logic NextCSRDebugEnable;
   logic NextGPRDebugEnable;
+  logic NextFPRDebugEnable;
    
   assign aarsize = Command[22:20];
   // assign StartCommand = DMIVALID & DMIRSPREADY & (DMIADDR == COMMAND) & ~|cmderr;
@@ -462,24 +463,43 @@ module dm import cvw::*; #(parameter cvw_t P) (
           16'h101c, 16'h101d, 16'h101e, 16'h101f: begin // GPRs
             ValidCommand = 1;
             NextGPRDebugEnable = 1;
+            NextFPRDebugEnable = 0;	     
             NextCSRDebugEnable = 0;
-          end
+           end
 
+	// Need to test FPRs: 0x1020–0x103F
+        16'h1020, 16'h1021, 16'h1022, 16'h1023,
+          16'h1024, 16'h1025, 16'h1026, 16'h1027,
+          16'h1028, 16'h1029, 16'h102a, 16'h102b,
+          16'h102c, 16'h102d, 16'h102e, 16'h102f,
+          16'h1030, 16'h1031, 16'h1032, 16'h1033,
+          16'h1034, 16'h1035, 16'h1036, 16'h1037,
+          16'h1038, 16'h1039, 16'h103a, 16'h103b,
+          16'h103c, 16'h103d, 16'h103e, 16'h103f: begin // FPRs
+            ValidCommand = 1;
+            NextGPRDebugEnable = 0;	     
+            NextFPRDebugEnable = 1;
+            NextCSRDebugEnable = 0;
+          end	
+	
         16'h0300, 16'h0301, 16'h0305,
           16'h0341, 16'h0342, 16'h0343,
           16'h07B0, 16'h07B1, 16'h07B2: begin // CSRs
             ValidCommand = 1;
             NextGPRDebugEnable = 0;
+            NextFPRDebugEnable = 0;	     
             NextCSRDebugEnable = 1;
           end
         default: begin 
           ValidCommand = 0;
+          NextFPRDebugEnable = 0;
           NextGPRDebugEnable = 0;
           NextCSRDebugEnable = 0;
         end
       endcase
     end else begin
       ValidCommand = 0;
+      NextFPRDebugEnable = 0;
       NextGPRDebugEnable = 0;
       NextCSRDebugEnable = 0;
     end
