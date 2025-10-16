@@ -27,21 +27,12 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Instructions
-// `define BYPASS 5'b11111
-// `define IDCODE 5'b00001
-// `define DTMCS 5'b10000
-// `define DMIREG 5'b10001
-
-// `include "debug.vh"
-  
 module inst_reg #(parameter ADRWIDTH=5) (
    input logic tck,
     input logic                 tdi,
     input logic                 resetn, ShiftIR, CaptureIR, ClockIR, UpdateIR,
     output logic                tdo,
     output logic [ADRWIDTH-1:0] instreg
-    //output logic bypass
 );
    logic [ADRWIDTH-1:0] 	shiftreg;
    
@@ -58,5 +49,4 @@ module inst_reg #(parameter ADRWIDTH=5) (
    
    assign tdo = shiftreg[0];
    
-   //assign bypass = (instreg == DTMINST.BYPASS);
 endmodule

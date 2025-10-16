@@ -35,17 +35,6 @@ module dtm import cvw::*; #(parameter cvw_t P) (
   input logic         tms, 
   input logic         tdi,
   output logic        tdo,
-  // output              dmi_req_t dmi_req,
-  // dmi_req.addr
-  // dmi_req.data
-  // dmi_req.op
-  // dmi_req.ready
-  // dmi_req.valid
-
-  // dmi_rsp.data
-  // dmi_rsp.op
-  // dmi_rsp.ready
-  // dmi_rsp.valid
 
   // DMI REQUEST
   output logic [6:0]  DMIADDR,
@@ -60,7 +49,6 @@ module dtm import cvw::*; #(parameter cvw_t P) (
   input logic         DMIRSPREADY,
   input logic         DMIRSPVALID
                             
- // input               dmi_rsp_t dmi_rsp
 );
    
   // Tap Controller stuff
@@ -88,12 +76,9 @@ module dtm import cvw::*; #(parameter cvw_t P) (
   logic        UpdateDRValid;
    
   // Test Data Register Stuff
-  //dtmcs_t dtmcs, dtmcs_next;
   logic [31:0] dtmcs, DTMCSNext;
-  // dmi_t dmi_next, dmi_next_reg, dmi;
 
   logic [P.ABITS + 34 - 1:0] DMINextReg, DMINext, dmi;
-  // logic [1:0] DMIStat;
    
   // Debug Module Interface Control
   logic 		   UpdateDMI;
@@ -172,17 +157,6 @@ module dtm import cvw::*; #(parameter cvw_t P) (
     end
   end 
    
-  //assign dtmcs_next = {11'b0, 3'd4, 4'b0, dmi_next.op, `ABITS, 4'b1};
-  // assign dtmcs_next.reserved0 = 11'b0;
-  // assign dtmcs_next.errinfo = 3'd4;
-  // assign dtmcs_next.dtmhardreset = DTMHardReset;
-  // assign dtmcs_next.dmireset = DMIReset;
-  // assign dtmcs_next.reserved1 = 1'b0;
-  // assign dtmcs_next.idle = 3'd0;
-  // assign dtmcs_next.dmistat = dmi_next.op;
-  // assign dtmcs_next.abits = P.ABITS;
-  // assign dtmcs_next.version = 4'b1;
-  
   assign DTMCSNext = {11'b0, 3'd4, DTMHardReset, DMIReset, 1'b0, 3'd0, DMINextReg[1:0], P.ABITS, 4'b1};
    
   // Sticky error

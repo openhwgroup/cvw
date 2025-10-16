@@ -35,7 +35,6 @@ module idreg #(parameter WIDTH = 8) (
 );
    logic [WIDTH-1:0] 	    y;
    
-   // logic [WIDTH-1:0] shiftreg;
    always @(posedge tck, negedge resetn) begin
       if (~resetn) begin
          y <= val;

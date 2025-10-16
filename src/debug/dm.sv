@@ -31,11 +31,6 @@ module dm import cvw::*; #(parameter cvw_t P) (
   input  logic              clk,
   input  logic              reset,
   
-  // Currently implementing NeoRV32 signals. Subject to change if I
-  // prefer a different DMI.
-  // input               dmi_req_t dmi_req,
-  // output              dmi_rsp_t dmi_rsp,
-  
   // CPU Signals
   output logic              NDMReset,
   output logic              HaltReq,
