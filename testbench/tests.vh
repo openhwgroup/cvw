@@ -322,10 +322,6 @@ string arch64pmp[] = '{
 string arch32vm_sv32[] = '{
   `RISCVARCHTEST,
   "rv32i_m/vm_sv32/src/mstatus_tvm_test.S",
-  "rv32i_m/vm_sv32/src/pmp_check_on_pa_S_mode.S",
-  "rv32i_m/vm_sv32/src/pmp_check_on_pa_U_mode.S",
-  //"rv32i_m/vm_sv32/src/pmp_check_on_pte_S_mode.S", *** restore when PMP tests work with G > 0
-  //"rv32i_m/vm_sv32/src/pmp_check_on_pte_U_mode.S",
   "rv32i_m/vm_sv32/src/satp_access_tests.S",
   "rv32i_m/vm_sv32/src/vm_A_and_D_S_mode.S",
   "rv32i_m/vm_sv32/src/vm_A_and_D_U_mode.S",
@@ -357,7 +353,11 @@ string arch32vm_sv32[] = '{
   "rv32i_m/vm_sv32/src/vm_reserved_rwx_pte_U_mode.S",
   "rv32i_m/vm_sv32/src/vm_sum_set_S_mode.S",
   "rv32i_m/vm_sv32/src/vm_sum_set_U_Bit_unset_S_mode.S",
-  "rv32i_m/vm_sv32/src/vm_sum_unset_S_mode.S"
+  "rv32i_m/vm_sv32/src/vm_sum_unset_S_mode.S",
+  "rv32i_m/vm_pmp/src/sv32_pmp_on_pa_S_mode.S",
+  "rv32i_m/vm_pmp/src/sv32_pmp_on_pa_U_mode.S",
+  "rv32i_m/vm_pmp/src/sv32_pmp_on_pte_S_mode.S",
+  "rv32i_m/vm_pmp/src/sv32_pmp_on_pte_U_mode.S"
 };
 
 string arch64vm_sv39[] = '{
@@ -397,7 +397,11 @@ string arch64vm_sv39[] = '{
   "rv64i_m/vm_sv39/src/vm_spage_access_U_mode.S",
   "rv64i_m/vm_sv39/src/vm_sum_set_S_mode.S",
   "rv64i_m/vm_sv39/src/vm_sum_set_U_bit_unset_S_mode.S",
-  "rv64i_m/vm_sv39/src/vm_sum_unset_S_mode.S"
+  "rv64i_m/vm_sv39/src/vm_sum_unset_S_mode.S",
+  "rv64i_m/vm_pmp/src/sv39/sv39_pmp_on_pa_S_mode.S",
+  "rv64i_m/vm_pmp/src/sv39/sv39_pmp_on_pa_U_mode.S",
+  "rv64i_m/vm_pmp/src/sv39/sv39_pmp_on_pte_S_mode.S",
+  "rv64i_m/vm_pmp/src/sv39/sv39_pmp_on_pte_U_mode.S"
 };
 
 string arch64vm_sv48[] = '{
@@ -437,7 +441,11 @@ string arch64vm_sv48[] = '{
   "rv64i_m/vm_sv48/src/sv48_spage_access_U_mode.S",
   "rv64i_m/vm_sv48/src/sv48_sum_set_S_mode.S",
   "rv64i_m/vm_sv48/src/sv48_sum_set_U_bit_unset_S_mode.S",
-  "rv64i_m/vm_sv48/src/sv48_sum_unset_S_mode.S"
+  "rv64i_m/vm_sv48/src/sv48_sum_unset_S_mode.S",
+  "rv64i_m/vm_pmp/src/sv48/sv48_pmp_on_pa_S_mode.S",
+  "rv64i_m/vm_pmp/src/sv48/sv48_pmp_on_pa_U_mode.S",
+  "rv64i_m/vm_pmp/src/sv48/sv48_pmp_on_pte_S_mode.S",
+  "rv64i_m/vm_pmp/src/sv48/sv48_pmp_on_pte_U_mode.S"
 };
 
 string arch64priv[] = '{
