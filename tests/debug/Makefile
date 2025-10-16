@@ -26,27 +26,28 @@ ASFLAGS := $(MARCH) $(MABI) -mcmodel=medany -nostartfiles -L $(RISCV)/riscv64-un
 
 #TARGET := $(BUILD)/$(BASENAMES).elf
 TARGET := $(addsuffix .elf, $(addprefix $(BUILD)/, $(BASENAMES)))
+TARGETDUMPS := $(addsuffix .elf.objdump, $(addprefix $(BUILD)/, $(BASENAMES)))
 TVDIR := testvectors
 TVBUILDDIR := $(BUILD)/testvectors
 #TESTVECTORS := $(TVBUILDDIR)/$(BASENAMES).tv
 TESTVECTORS := $(addsuffix .tv, $(addprefix $(TVBUILDDIR), $(BASENAMES)))
 
-.PHONY: all clean sim32 sim64 debug32 debug64 bitbang32 bitbang64 generate dirs debug
+.PHONY: all build clean sim32 sim64 debug32 debug64 bitbang32 bitbang64 generate dirs debug
 
+all: debug dirs $(TARGETDUMPS) $(TESTVECTORS)
 
-all: debug dirs $(TARGET).objdump $(TESTVECTORS)
+build: debug dirs $(TARGETDUMPS)
+
+generate: $(TESTVECTORS)
 
 debug:
 	@echo $(TARGET)
+	@echo $(TESTVECTORS)
 
 dirs:
 	mkdir -p $(BUILD)
 	mkdir -p $(LOGSDIR)
 	mkdir -p $(TVBUILDDIR)
-
-# Build targets
-#$(TARGET): $(SOURCE)
-#	$(CC) $(ASFLAGS) -o $@ $<
 
 $(BUILD)/%.elf.objdump: $(BUILD)/%.elf
 	$(OBJDUMP) -s -D $< > $@
@@ -59,9 +60,6 @@ $(TESTVECTORS): $(TARGET)
 	grep "41b" $(LOGSDIR)/$(basename $(notdir $<)).log | sed 's/.*41b \([^;]*\).*/\1/' > $@
 
 clean:
-	#@rm -f $(TARGET)
-	#@rm -f $(TARGET).objdump
-	#@rm -f $(TARGET).signature.output
 	@rm -rf $(BUILD)
 
 sim32:
