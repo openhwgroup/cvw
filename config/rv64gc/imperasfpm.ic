@@ -1,0 +1,90 @@
+# imperas.ic
+# Initialization file for rv64gc ImperasDV lock step simulation
+# David_Harris@hmc.edu 15 August 2024
+# jcarlin@hmc.edu 19 March 2025
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
+# Base configuration
+--variant RV64GCK # for RV64GC
+--override iss/cpu0/simulateexceptions=T
+--override iss/cpu0/defaultsemihost=F
+--override iss/cpu0/ec/onWriteToHost=T
+--extlib iss/cpu0/ec=riscv.ovpworld.org/intercept/exitControl/1.0
+--override iss/cpu0/verbose=T
+--verbose
+--tracefull
+
+# Bit manipulation
+--override iss/cpu0/add_Extensions=B
+--override iss/cpu0/misa_B_Zba_Zbb_Zbs=T
+
+# Cache block operations
+--override iss/cpu0/Zicbom=T
+--override iss/cpu0/Zicbop=T
+--override iss/cpu0/Zicboz=T
+--override cmomp_bytes=64  # Zic64b
+--override cmoz_bytes=64   # Zic64b
+--override lr_sc_grain=8   # Za64rs requires <=64; we use native word size
+
+# Virtual memory
+--override iss/cpu0/Sv_modes=768 # SV39 and SV48 supported
+--override iss/cpu0/Svadu=T # Enable SVADU hardware update of A/D bits when menvcfg.ADUE=1
+--override iss/cpu0/Svinval=T
+--override iss/cpu0/Svpbmt=T
+--override iss/cpu0/aligned_uncached_PBMT=T # when PBMT designates a page as uncachable, require aligned accesses
+--override iss/cpu0/Svnapot_page_mask=65536 # 64 KiB continuous huge pages supported
+
+# Crypto extensions
+--override iss/cpu0/Zkr=F # Zkr entropy source and seed register not supported.
+--override iss/cpu0/Zksed=F # ShangMi Crypto not supported
+--override iss/cpu0/Zksh=F # ShangMi Crypto not supported
+--override iss/cpu0/mnoise_undefined=T # nonratified mnoise register not implemented
+
+# Miscellaneous extensions
+--override iss/cpu0/Zicond=T
+--override iss/cpu0/Zfh=T
+--override iss/cpu0/Zfa=T
+--override iss/cpu0/Zcb=T
+--override iss/cpu0/Sstc=T
+
+# mcause and scause only have 4 lsbs of code and 1 msb of interrupt flag
+--override iss/cpu0/ecode_mask=0x800000000000000F # for RV64
+
+# Misaligned access (Zicclsm) is supported
+--override iss/cpu0/unaligned=T
+--override iss/cpu0/unaligned_low_pri=T
+
+# Timeout
+#--override iss/cpu0/TW_time_limit=65536  # *** attempted adding this summer 2025 for interrupt tests, but it breaks WALLY-status-tw-01.elf test and tests/coverage/priv.elf.  Not in rv32gc either
+
+# PMP Configuration
+--override iss/cpu0/PMP_registers=16
+--override iss/cpu0/PMP_grain=4   # 64-byte grains to match cache line width
+--override iss/cpu0/PMP_decompose=T  # unaligned accesses are decomposed into separate aligned accesses
+--override iss/cpu0/PMP_undefined=T # access to unimplemented PMP registers cause illegal instruction exception
+
+# PMA Settings
+# 'r': read access allowed
+# 'w': write access allowed
+# 'x': execute access allowed
+# 'a': aligned access required
+# 'A': atomic instructions NOT allowed (actually USER1 privilege needed)
+# 'P': push/pop instructions NOT allowed (actually USER2 privilege needed)
+# '1': 1-byte accesses allowed
+# '2': 2-byte accesses allowed
+# '4': 4-byte accesses allowed
+# '8': 8-byte accesses allowed
+# '-', space: ignored (use for input string formatting).
+#
+# SVxx Memory 0x0000000000 0x7FFFFFFFFF
+#
+--callcommand iss/cpu0/setPMA -lo 0x0000000000 -hi 0xFFFFFFFFFFFFFFFFFF -attributes " ---a-- ---- " # All memory inaccessible unless defined otherwise
+--callcommand iss/cpu0/setPMA -lo 0x0000000000 -hi 0x7FFFFFFFFF -attributes " ---a-- ---- " # INITIAL
+--callcommand iss/cpu0/setPMA -lo 0x0000001000 -hi 0x0000001FFF -attributes " r-x-A- 1248 " # BOOTROM
+--callcommand iss/cpu0/setPMA -lo 0x0000012100 -hi 0x000001211F -attributes " rw-aA- --48 " # SDC
+--callcommand iss/cpu0/setPMA -lo 0x0002000000 -hi 0x000200FFFF -attributes " rw-aA- 1248 " # CLINT
+--callcommand iss/cpu0/setPMA -lo 0x000C000000 -hi 0x000FFFFFFF -attributes " rw-aA- --4- " # PLIC
+--callcommand iss/cpu0/setPMA -lo 0x0010000000 -hi 0x0010000007 -attributes " rw-aA- 1--- " # UART0
+--callcommand iss/cpu0/setPMA -lo 0x0010060000 -hi 0x00100600FF -attributes " rw-aA- --4- " # GPIO
+--callcommand iss/cpu0/setPMA -lo 0x0010040000 -hi 0x0010040FFF -attributes " rw-aA- --4- " # SPI
+--callcommand iss/cpu0/setPMA -lo 0x0080000000 -hi 0x008FFFFFFF -attributes " rwx--- 1248 " # UNCORE_RAM
