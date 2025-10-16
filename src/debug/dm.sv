@@ -422,6 +422,9 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic NextCSRDebugEnable;
   logic NextGPRDebugEnable;
   logic NextFPRDebugEnable;
+
+  // eventually make an output
+  logic FPRDebugEnable;    
    
   assign aarsize = Command[22:20];
   // assign StartCommand = DMIVALID & DMIRSPREADY & (DMIADDR == COMMAND) & ~|cmderr;
@@ -441,10 +444,13 @@ module dm import cvw::*; #(parameter cvw_t P) (
       StartCommand <= 0;
       DebugRegAddr <= '0;
       CSRDebugEnable <= 0;
+      // FPRDebugEnable <= 0; is this needed as GPR not there
+      // GPRDebugEnable <= 0; is this is a bug?
     end else begin
       StartCommand <= DMIVALID & DMIRSPREADY & (DMIADDR == COMMAND) & ~|cmderr;
       DebugRegAddr <= DMIDATA[11:0];
       GPRDebugEnable <= NextGPRDebugEnable;
+      FPRDebugEnable <= NextFPRDebugEnable;       
       CSRDebugEnable <= NextCSRDebugEnable;
     end
   end
