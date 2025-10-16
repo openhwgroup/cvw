@@ -30,11 +30,12 @@ TARGETDUMPS := $(addsuffix .elf.objdump, $(addprefix $(BUILD)/, $(BASENAMES)))
 TVDIR := testvectors
 TVBUILDDIR := $(BUILD)/testvectors
 #TESTVECTORS := $(TVBUILDDIR)/$(BASENAMES).tv
-TESTVECTORS := $(addsuffix .tv, $(addprefix $(TVBUILDDIR), $(BASENAMES)))
+TESTVECTORS := $(addsuffix .tv, $(addprefix $(TVBUILDDIR)/, $(BASENAMES)))
 
 .PHONY: all build clean sim32 sim64 debug32 debug64 bitbang32 bitbang64 generate dirs debug
+.PRECIOUS: $(BUILD)/%.elf
 
-all: debug dirs $(TARGETDUMPS) $(TESTVECTORS)
+all: dirs $(TARGETDUMPS) $(TESTVECTORS)
 
 build: debug dirs $(TARGETDUMPS)
 
@@ -50,14 +51,14 @@ dirs:
 	mkdir -p $(TVBUILDDIR)
 
 $(BUILD)/%.elf.objdump: $(BUILD)/%.elf
-	$(OBJDUMP) -s -D $< > $@
+	$(OBJDUMP) -D $< > $@
 
 $(BUILD)/%.elf: rv64/%.S
 	$(CC) $(ASFLAGS) -o $@ $<
 
-$(TESTVECTORS): $(TARGET)
-	./debugtestgen.py -s $< -t $(TVDIR)/$(basename $(notdir $<)).tcl
-	grep "41b" $(LOGSDIR)/$(basename $(notdir $<)).log | sed 's/.*41b \([^;]*\).*/\1/' > $@
+$(TVBUILDDIR)/%.tv:
+	./debugtestgen.py -s $(BUILD)/$(basename $(notdir $@)).elf -t $(TVDIR)/$(basename $(notdir $@)).tcl
+	grep "41b" $(LOGSDIR)/$(basename $(notdir $@)).log | sed 's/.*41b \([^;]*\).*/\1/' > $@
 
 clean:
 	@rm -rf $(BUILD)

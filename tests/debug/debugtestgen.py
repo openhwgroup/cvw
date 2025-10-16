@@ -42,7 +42,7 @@ def start_openocd(tclscript):
 
 def main(args):
     start_spike(args.test)
-    time.sleep(0.1)
+    time.sleep(0.2)
     openocd_proc = start_openocd(args.tcl)
     openocd_proc.wait()
     print(os.path.splitext(args.test))
