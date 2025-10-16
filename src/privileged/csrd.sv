@@ -36,7 +36,9 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0] CSRDReadValM,
   output logic              DebugMode,
   input logic [P.XLEN-1:0]  PCM,
-  output logic              IllegalCSRDAccessM
+  output logic              IllegalCSRDAccessM,
+  output logic              DebugResume,
+  output [P.XLEN-1:0]       DPC_REGW
 );
 
   localparam DCSR = 12'h7B0;
@@ -61,7 +63,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
     
   // Register Outputs
   //logic [31:0]       DCSR_REGW;
-  logic [P.XLEN-1:0] DPC_REGW;
+  // logic [P.XLEN-1:0] DPC_REGW;
 
   // DCSR Fields
   logic [3:0] debugver;
@@ -129,6 +131,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
     DCSR_REGW);
   
   flopenr #(P.XLEN) DPCreg(clk, reset, WriteDPC, PCM, DPC_REGW);
+  // assign DPC = DPC_REGW;
 
   assign ebreakm = DCSR_REGW[dcsrwidth - 1];
   assign ebreaks = DCSR_REGW[dcsrwidth - 2];
@@ -185,9 +188,9 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
       default: state_n = RUNNING;
     endcase
   end
-
+  
   assign DebugMode = (state == HALTED);
-
+  assign DebugResume = (state == HALTED) && (state_n == RUNNING);
   // Halt cause
   // 000: No cause - Reset
   // 001: ebreak

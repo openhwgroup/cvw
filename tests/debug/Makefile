@@ -32,14 +32,17 @@ TVBUILDDIR := $(BUILD)/testvectors
 #TESTVECTORS := $(TVBUILDDIR)/$(BASENAMES).tv
 TESTVECTORS := $(addsuffix .tv, $(addprefix $(TVBUILDDIR)/, $(BASENAMES)))
 
-.PHONY: all build clean sim32 sim64 debug32 debug64 bitbang32 bitbang64 generate dirs debug
+.PHONY: all build clean sim32 sim64 debug32 debug64 bitbang32 bitbang64 generate dirs debug memfile
 .PRECIOUS: $(BUILD)/%.elf
 
-all: dirs $(TARGETDUMPS) $(TESTVECTORS)
+all: dirs $(TARGETDUMPS) $(TESTVECTORS) memfile
 
 build: debug dirs $(TARGETDUMPS)
 
 generate: $(TESTVECTORS)
+
+memfile:
+	$(MAKE) -f ../riscof/makefile-memfile WORKDIR=$(WALLY)/tests/debug/$(BUILD)
 
 debug:
 	@echo $(TARGET)

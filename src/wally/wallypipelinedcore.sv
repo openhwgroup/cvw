@@ -182,6 +182,8 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
 
   // Debug Signals
   logic [P.XLEN-1:0]             DebugIEURDATA;
+  logic                          DebugResume;
+  logic [P.XLEN-1:0]             DPC;
 
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu #(P) ifu(.clk, .reset,
@@ -204,7 +206,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .PrivilegeModeW, .PTE, .PageType, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV,
     .STATUS_MPP, .ENVCFG_PBMTE, .ENVCFG_ADUE, .ITLBWriteF, .sfencevmaM, .ITLBMissOrUpdateAF,
     // pmp/pma (inside mmu) signals. 
-    .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW, .InstrAccessFaultF); 
+    .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW, .InstrAccessFaultF,
+    .DebugResume, .DPC
+  ); 
     
   // integer execution unit: integer register file, datapath and controller
   ieu #(P) ieu(.clk, .reset,
@@ -324,14 +328,15 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
       .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM,
       .DebugMode, .HaltReq, .ResumeReq, .DebugControl, .CSRDebugEnable,
-      .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite);
+      .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite, .DebugResume, .DPC);
   end else begin
     assign {CSRReadValW, PrivilegeModeW, 
             SATP_REGW, STATUS_MXR, STATUS_SUM, STATUS_MPRV, STATUS_MPP, STATUS_FS, FRM_REGW,
             // PMPCFG_ARRAY_REGW, PMPADDR_ARRAY_REGW, 
             ENVCFG_CBE, ENVCFG_PBMTE, ENVCFG_ADUE, 
             EPCM, TrapVectorM, RetM, TrapM,
-            sfencevmaM, BigEndianM, wfiM, IntPendingM, DebugMode} = '0;
+            sfencevmaM, BigEndianM, wfiM, IntPendingM, DebugMode,
+            DebugResume, DPC} = '0;
   end
 
   // multiply/divide unit

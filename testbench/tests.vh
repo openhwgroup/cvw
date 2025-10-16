@@ -31,6 +31,8 @@
 `define CUSTOM "4"
 `define COVERAGE "5"
 `define BUILDROOT "6"
+`define DEBUGELFS "7"
+`define DEBUGTV "8"
 
 string tvpaths[] = '{
   "../../tests/riscof/work/riscv-arch-test/",
@@ -38,7 +40,10 @@ string tvpaths[] = '{
   "../../benchmarks/coremark/work/",
   "../../addins/embench-iot/",
   "../../tests/custom/work/",
-  "../../tests/coverage/"
+  "../../tests/coverage/",
+  "",
+  "../../tests/debug/build/",
+  "../../tests/debug/build/testvectors/"
 };
 
 string coverage64gc[] = '{
@@ -3616,13 +3621,21 @@ string ahb32[] = '{
 };
 
 string wally32debug[] = '{
-  `WALLYTEST,
+  `DEBUGELFS,
   "rv32i_m/privilege/src/WALLY-spi-01.S"
-  // "NULL"
+};
+
+string wally32debug_jtag[] = '{
+  `DEBUGTV,
+  ""
 };
 
 string wally64debug[] = '{
-  `WALLYTEST,
-  "rv64i_m/privilege/src/WALLY-mmu-sv39-svadu-svnapot-svpbmt-01.S",  // run this if SVADU_SUPPORTED = 1
-  "NULL"
+  `DEBUGELFS,
+  "WALLY-debug-02"
+};
+
+string wally64debug_jtag[] = '{
+  `DEBUGTV,
+  "WALLY-debug-02"
 };

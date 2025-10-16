@@ -102,7 +102,9 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   // output logic [P.XLEN-1:0]     DebugCSRRDATA,
   input  logic [P.XLEN-1:0]        DebugRegWDATA,
   input  logic [11:0]              DebugRegAddr,
-  input  logic                     DebugRegWrite
+  input  logic                     DebugRegWrite,
+  output logic                     DebugResume,
+  output logic [P.XLEN-1:0]        DPC
 );
 
   localparam MIP = 12'h344;
@@ -306,11 +308,13 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   if (P.DEBUG_SUPPORTED) begin : debug
     csrd #(P) csrd(.clk, .reset, .HaltReq, .ResumeReq,
       .CSRDWriteM, .CSRWriteValM, .CSRAdrM, .CSRDReadValM, 
-      .DebugMode, .PCM, .IllegalCSRDAccessM);
+      .DebugMode, .PCM, .IllegalCSRDAccessM, .DebugResume, .DPC_REGW(DPC));
   end else begin
     assign DebugMode = 1'b0;
     assign CSRDReadValM = '0;
     assign IllegalCSRDAccessM = 1'b1;
+    assign DebugResume = 1'b0;
+    assign DPC = 0;
   end
 
    // Broadcast appropriate environment configuration based on privilege mode

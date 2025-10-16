@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// debuggers.sv
+// debugger.sv
 //
 // Written: Jacob Pease jacob.pease@okstate.edu, James Stine james.stine@okstate.edu
 // Modified: 
@@ -41,9 +41,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module debugger import cvw::*;  #(parameter cvw_t P)(
-  input logic clk, reset,
+  input  logic clk, reset,
   output logic tck, tms, tdi,
-  input logic tdo
+  input  logic tdo,
+  input string filename
 );
   localparam int tcktime = 52;
   
@@ -317,8 +318,13 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
       string line;
       string items[$];
       int    file = $fopen(filename, "r");
+
+      // if (file <= 0) begin
+      //   $display("Nope: %s", filename);
+      //   $finish;
+      // end
          
-      while (!$feof(file)) begin
+      while (!$feof(file)) begin        
         if ($fgets(line, file)) begin
           // Allow comments and whitespace
           if (line[0] == "#" | line[0] == " " | line[0] == "\n") begin
@@ -362,11 +368,10 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
     JTAG_DR #(32) dtmcs = new();
     DMI dmireg = new();
     Debugger debugger = new();
-
-    debugger.get_testvectors("../../tests/debug/testvectors.mem");
     
     forever begin
       @(negedge reset);
+      debugger.get_testvectors(filename);
       debugger.initialize();
       debugger.run_testvectors();
     end
