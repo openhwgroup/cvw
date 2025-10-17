@@ -2,26 +2,26 @@
 // wallypipelinedsocwrapper.sv
 //
 // Written: Rose Thompson rose@rosethompson.net 16 June 2023
-// Modified: 
+// Modified:
 //
 // Purpose: A wrapper to set parameters.  Vivado cannot set the top level parameters because it only supports verilog,
 //          not system verilog.
-// 
+//
 // A component of the Wally configurable RISC-V project.
-// 
+//
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -31,7 +31,7 @@
 import cvw::*;
 
 module wallypipelinedsocwrapper (
-  input  logic                clk, 
+  input  logic                clk,
   input  logic                reset_ext,        // external asynchronous reset pin
   output logic                reset,            // reset synchronized to clk to prevent races on release
   // AHB Interface
@@ -65,6 +65,6 @@ module wallypipelinedsocwrapper (
   wallypipelinedsoc  #(P) wallypipelinedsoc(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT, .HSELEXT,
     .HSELEXTSDC, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
-    .UARTSin, .UARTSout, .SDCIntr); 
+    .UARTSin, .UARTSout, .SDCIntr);
 
 endmodule

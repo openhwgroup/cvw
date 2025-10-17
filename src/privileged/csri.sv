@@ -2,34 +2,34 @@
 // csri.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
-// Modified: 
+// Modified:
 //
 // Purpose: Interrupt Control & Status Registers (IP, EI)
 //          See RISC-V Privileged Mode Specification 20190608 & 20210108 draft
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module csri import cvw::*;  #(parameter cvw_t P) (
-  input  logic              clk, reset, 
+  input  logic              clk, reset,
   input  logic              CSRMWriteM, CSRSWriteM,
   input  logic [P.XLEN-1:0] CSRWriteValM,
   input  logic [11:0]       CSRAdrM,
@@ -67,7 +67,7 @@ module csri import cvw::*;  #(parameter cvw_t P) (
       assign MIP_WRITE_MASK = 12'h222; // SEIP, STIP, SSIP are writeable in MIP (20210108-draft 3.1.9)
       assign STIP = MIP_REGW_writeable[5];
     end
-    assign SIP_WRITE_MASK = 12'h002 & MIDELEG_REGW; // SSIP is writeable in SIP (privileged 20210108-draft 4.1.3) 
+    assign SIP_WRITE_MASK = 12'h002 & MIDELEG_REGW; // SSIP is writeable in SIP (privileged 20210108-draft 4.1.3)
     assign MIE_WRITE_MASK = 12'hAAA;
   end else begin:mask
     assign MIP_WRITE_MASK = 12'h000;

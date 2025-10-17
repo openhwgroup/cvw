@@ -8,29 +8,29 @@
 //
 // Purpose: CAM line for the translation lookaside buffer (TLB)
 //          Determines whether a virtual page number matches the stored key.
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module tlbcamline import cvw::*;  #(parameter cvw_t P, 
+module tlbcamline import cvw::*;  #(parameter cvw_t P,
                                     parameter KEY_BITS = 20, SEGMENT_BITS = 10) (
   input  logic                  clk, reset,
   input  logic [P.VPN_BITS-1:0]  VPN, // The requested page number to compare against the key
@@ -41,7 +41,7 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
   input  logic                  PTE_NAPOT,  // entry is in NAPOT mode (N bit set and PPN[3:0] = 1000)
   input  logic [1:0]            PageTypeWriteVal,
   input  logic                  TLBFlush,   // Flush this line (set valid to 0)
-  output logic [1:0]            PageTypeRead,  
+  output logic [1:0]            PageTypeRead,
   output logic                  Match
 );
 
@@ -55,13 +55,13 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
   logic                Valid;
   logic [KEY_BITS-1:0] Key;
   logic [1:0]          PageType;
-  
+
   // Split up key and query into sections for each page table level.
   logic [P.ASID_BITS-1:0] Key_ASID;
   logic [SEGMENT_BITS-1:0] Key0, Key1, Query0, Query1;
   logic MatchASID, Match0, Match1;
 
-  assign MatchASID = (SATP_ASID == Key_ASID) | PTE_G; 
+  assign MatchASID = (SATP_ASID == Key_ASID) | PTE_G;
 
   if (P.XLEN == 32) begin: match
 
@@ -92,7 +92,7 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
     assign Match1 = (Query1 == Key1) | (PageType > 2'd1);
     assign Match2 = (Query2 == Key2) | (PageType > 2'd2);
     assign Match3 = (Query3 == Key3) | SV39Mode; // this should always match in sv39 because they aren't used
-    
+
     assign Match = Match0 & Match1 & Match2 & Match3 & MatchASID & Valid;
   end
 

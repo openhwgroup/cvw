@@ -7,25 +7,25 @@
 //
 // Purpose: Arbitrates requests from instruction and data streams
 //          LSU has priority.
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -34,19 +34,19 @@ module ebufsmarb (
   input  logic       HRESETn,
   input  logic [2:0] HBURST,
  //  AHB burst length
-  
+
   input  logic       HREADY,
 
   input  logic       LSUReq,
   input  logic       IFUReq,
-  
+
   output logic       IFUSave,
   output logic       IFURestore,
   output logic       IFUDisable,
   output logic       IFUSelect,
   output logic       LSUDisable,
   output logic       LSUSelect);
-  
+
   typedef enum       logic [1:0] {IDLE, ARBITRATE} statetype;
   statetype          CurrState, NextState;
 
@@ -66,9 +66,9 @@ module ebufsmarb (
 
   assign both = LSUReq & IFUReq;
   flopenl #(.TYPE(statetype)) busreg(HCLK, ~HRESETn, 1'b1, NextState, IDLE, CurrState);
-  always_comb 
-    case (CurrState) 
-      IDLE:      if (both)                                      NextState = ARBITRATE; 
+  always_comb
+    case (CurrState)
+      IDLE:      if (both)                                      NextState = ARBITRATE;
                  else                                           NextState = IDLE;
       ARBITRATE: if (HREADY & FinalBeatD & ~both)               NextState = IDLE;
                  else                                           NextState = ARBITRATE;
@@ -99,14 +99,14 @@ module ebufsmarb (
 
   assign BeatCntReset = NextState == IDLE;
   assign FinalBeat = (BeatCount == Threshold); // Detect when we are waiting on the final access.
-  // Counting the beats in the EBU is only necessary when both the LSU and IFU request concurrently.  
+  // Counting the beats in the EBU is only necessary when both the LSU and IFU request concurrently.
   // LSU has priority. HREADY serves double duty during a burst transaction.  It indicates when the
   // beat completes and when the transaction finishes.  However there is nothing external to
-  // differentiate them.  The EBU counts the HREADY beats so it knows when to switch to the IFU's 
+  // differentiate them.  The EBU counts the HREADY beats so it knows when to switch to the IFU's
   // request.
-  assign BeatCntEn = (NextState == ARBITRATE) & HREADY; 
-  counter #(4) BeatCounter(HCLK, ~HRESETn | BeatCntReset | FinalBeat, BeatCntEn, BeatCount);  
- 
+  assign BeatCntEn = (NextState == ARBITRATE) & HREADY;
+  counter #(4) BeatCounter(HCLK, ~HRESETn | BeatCntReset | FinalBeat, BeatCntEn, BeatCount);
+
   // Used to store data from data phase of AHB.
   flopenr #(1) FinalBeatReg(HCLK, ~HRESETn | BeatCntReset, BeatCntEn, FinalBeat, FinalBeatD);
 
@@ -116,7 +116,7 @@ module ebufsmarb (
   //  01          4      3
   //  10          8      7
   //  11          16     15
-  always_comb 
+  always_comb
     if (HBURST[2:1] == 2'b00) Threshold = 4'b0000;
     else                      Threshold = ('d2 << HBURST[2:1]) - 'd1;
 endmodule

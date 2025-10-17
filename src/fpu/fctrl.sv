@@ -5,25 +5,25 @@
 // Modified: 7/5/2022
 //
 // Purpose: floating-point control unit
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -37,16 +37,16 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   input  logic [2:0]           FRM_REGW,                           // rounding mode from CSR
   input  logic [1:0]           STATUS_FS,                          // is FPU enabled?
   input  logic                 FDivBusyE,                          // is the divider busy
-  // instruction                                                   
+  // instruction
   input  logic [31:0]          InstrD,                             // the full instruction
   input  logic [6:0]           Funct7D,                            // bits 31:25 of instruction - may contain precision
   input  logic [6:0]           OpD,                                // bits 6:0 of instruction
   input  logic [4:0]           Rs2D,                               // bits 24:20 of instruction
   input  logic [2:0]           Funct3D,                            // bits 14:12 of instruction - may contain rounding mode
-  // input mux selections                                         
+  // input mux selections
   output logic                 XEnD, YEnD, ZEnD,                   // enable inputs
   output logic                 XEnE, YEnE, ZEnE,                   // enable inputs
-  // operation mux selections                                    
+  // operation mux selections
   output logic                 FCvtIntE, FCvtIntW,                 // convert to integer operation
   output logic [2:0]           FrmE, FrmM,                          // FP rounding mode
   output logic [P.FMTBITS-1:0] FmtE, FmtM,                         // FP format
@@ -100,14 +100,14 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   /*assign SupportedRM =  ~(Funct3D == 3'b101 | Funct3D == 3'b110 | (Funct3D == 3'b111 & (FRM_REGW == 3'b101 | FRM_REGW == 3'b110 | FRM_REGW == 3'b111))) |
                           (OpD == 7'b1010011 & P.ZFA_SUPPORTED);
 */
-  // decode the instruction                       
+  // decode the instruction
   // FRegWrite_FWriteInt_FResSel_PostProcSel_FOpCtrl_FDivStart_IllegalFPUInstr_FCvtInt_Zfa_FroundNX
   always_comb
     if (STATUS_FS == 2'b00) // FPU instructions are illegal when FPU is disabled
       ControlsD = `FCTRLW'b0_0_00_00_000_0_1_0_0_0;
-    else if (OpD != 7'b0000111 & OpD != 7'b0100111 & (~SupportedFmt | ~SupportedRM)) 
+    else if (OpD != 7'b0000111 & OpD != 7'b0100111 & (~SupportedFmt | ~SupportedRM))
       ControlsD = `FCTRLW'b0_0_00_00_000_0_1_0_0_0; // for anything other than loads and stores, check for supported format and rounding mode
-    else begin 
+    else begin
       ControlsD = `FCTRLW'b0_0_00_00_000_0_1_0_0_0; // default: non-implemented instruction
       /* verilator lint_off CASEINCOMPLETE */   // default value above has priority so no other default needed
       case(OpD)
@@ -151,29 +151,29 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
                                     3'b100:  if (P.ZFA_SUPPORTED) ControlsD = `FCTRLW'b0_1_00_00_011_0_0_0_1_0; // fleq  (Zfa)
                                     3'b101:  if (P.ZFA_SUPPORTED) ControlsD = `FCTRLW'b0_1_00_00_001_0_0_0_1_0; // fltq  (Zfa)
                                   endcase
-                      7'b11100??: if (Funct3D == 3'b001 & Rs2D == 5'b00000)          
+                      7'b11100??: if (Funct3D == 3'b001 & Rs2D == 5'b00000)
                                                 ControlsD = `FCTRLW'b0_1_10_00_000_0_0_0_0_0; // fclass
                                   else if (Funct3D == 3'b000 & Rs2D == 5'b00000) begin
                                     if (Fmt[1:0] == 2'b00 | Fmt[1:0] == 2'b10 | (P.XLEN == 64 & Fmt[1:0] == 2'b01)) // coverage-tag: fmv fp to int
                                                 ControlsD = `FCTRLW'b0_1_11_00_000_0_0_0_0_0; // fmv.x.w/d/h  fp to int register (double only in RV64)
-                                  end else if (P.ZFA_SUPPORTED & P.XLEN == 32 & P.D_SUPPORTED & Funct7D[1:0] == 2'b01 & Funct3D == 3'b000 & Rs2D == 5'b00001) 
-                                                ControlsD = `FCTRLW'b0_1_11_00_000_0_0_0_1_0; // fmvh.x.d  (Zfa) 
+                                  end else if (P.ZFA_SUPPORTED & P.XLEN == 32 & P.D_SUPPORTED & Funct7D[1:0] == 2'b01 & Funct3D == 3'b000 & Rs2D == 5'b00001)
+                                                ControlsD = `FCTRLW'b0_1_11_00_000_0_0_0_1_0; // fmvh.x.d  (Zfa)
                                   //  Q not supported in RV64GC
-                                  // coverage off   
-                                  else if (P.ZFA_SUPPORTED & P.XLEN == 64 & P.Q_SUPPORTED & Funct7D[1:0] == 2'b11 & Funct3D == 3'b000 & Rs2D == 5'b00001) 
+                                  // coverage off
+                                  else if (P.ZFA_SUPPORTED & P.XLEN == 64 & P.Q_SUPPORTED & Funct7D[1:0] == 2'b11 & Funct3D == 3'b000 & Rs2D == 5'b00001)
                                                 ControlsD = `FCTRLW'b0_1_11_00_000_0_0_0_1_0; // fmvh.x.q  (Zfa)
                                   // coverage on
                       7'b11110??: if (Funct3D == 3'b000 & Rs2D == 5'b00000) begin
                                     if (Fmt[1:0] == 2'b00 | Fmt[1:0] == 2'b10 | (P.XLEN == 64 & Fmt[1:0] == 2'b01))  // coverage-tag: fmv int to fp
                                                 ControlsD = `FCTRLW'b1_0_00_00_011_0_0_0_0_0; // fmv.w/d/h.x  int to fp reg (double only in RV64)
-                                  end else if (P.ZFA_SUPPORTED & Funct3D == 3'b000 & Rs2D == 5'b00001) 
+                                  end else if (P.ZFA_SUPPORTED & Funct3D == 3'b000 & Rs2D == 5'b00001)
                                                 ControlsD = `FCTRLW'b1_0_00_00_111_0_0_0_1_0; // fli  (Zfa)
                       7'b0100000: if (Rs2D[4:2] == 3'b000 & SupportedFmt2 & Rs2D[1:0] != 2'b00)
                                                 ControlsD = `FCTRLW'b1_0_01_00_000_0_0_0_0_0; // fcvt.s.(d/q/h)
                                   else if (Rs2D == 5'b00100 & P.ZFA_SUPPORTED)
-                                                ControlsD = `FCTRLW'b1_0_00_00_100_0_0_0_1_0; // fround.s  (Zfa) 
+                                                ControlsD = `FCTRLW'b1_0_00_00_100_0_0_0_1_0; // fround.s  (Zfa)
                                   else if (Rs2D == 5'b00101 & P.ZFA_SUPPORTED)
-                                                ControlsD = `FCTRLW'b1_0_00_00_100_0_0_0_1_1; // froundnx.s  (Zfa) 
+                                                ControlsD = `FCTRLW'b1_0_00_00_100_0_0_0_1_1; // froundnx.s  (Zfa)
                       7'b0100001: if (Rs2D[4:2] == 3'b000  & SupportedFmt2 & Rs2D[1:0] != 2'b01)
                                                 ControlsD = `FCTRLW'b1_0_01_00_001_0_0_0_0_0; // fcvt.d.(s/h/q)
                                   else if (Rs2D == 5'b00100 & P.ZFA_SUPPORTED)
@@ -218,7 +218,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
                                     5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1_0_0; // fcvt.wu.d  d->wu
                                     5'b00010:    if (P.XLEN == 64) ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1_0_0; // fcvt.l.d   d->l
                                     5'b00011:    if (P.XLEN == 64) ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1_0_0; // fcvt.lu.d  d->lu
-                                    5'b01000: if (P.ZFA_SUPPORTED & P.D_SUPPORTED & Funct3D == 3'b001) 
+                                    5'b01000: if (P.ZFA_SUPPORTED & P.D_SUPPORTED & Funct3D == 3'b001)
                                                  ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1_1_0; // fcvtmod.w.d (Zfa)
                                   endcase
                       7'b1101010: case(Rs2D)
@@ -249,9 +249,9 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
                                   endcase
                       // coverage off
                       // Not covered in testing because rv64gc is not RV64Q or RV32D
-                      7'b1011001: if (P.ZFA_SUPPORTED & P.XLEN == 32 & P.D_SUPPORTED & Funct3D == 3'b000) 
-                                                  ControlsD = `FCTRLW'b1_0_00_00_011_0_0_0_1_0; // fmvp.d.x  (Zfa) 
-                      7'b1011011: if (P.ZFA_SUPPORTED & P.XLEN == 64 & P.Q_SUPPORTED & Funct3D == 3'b000) 
+                      7'b1011001: if (P.ZFA_SUPPORTED & P.XLEN == 32 & P.D_SUPPORTED & Funct3D == 3'b000)
+                                                  ControlsD = `FCTRLW'b1_0_00_00_011_0_0_0_1_0; // fmvp.d.x  (Zfa)
+                      7'b1011011: if (P.ZFA_SUPPORTED & P.XLEN == 64 & P.Q_SUPPORTED & Funct3D == 3'b000)
                                                   ControlsD = `FCTRLW'b1_0_00_00_011_0_0_0_1_0; // fmvp.q.x  (Zfa)
                       // coverage on
                    endcase
@@ -261,7 +261,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
 
   // unswizzle control bits
   assign {FRegWriteD, FWriteIntD, FResSelD, PostProcSelD, OpCtrlD, FDivStartD, IllegalFPUInstrD, FCvtIntD, ZfaD, ZfaFRoundNXD} = ControlsD;
-  
+
   // rounding modes:
   //    000 - round to nearest, ties to even
   //    001 - round twords 0 - round to min magnitude
@@ -276,7 +276,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   //    01 - double
   //    10 - half
   //    11 - quad
-  
+
     if (P.FPSIZES == 1)
       assign FmtD = 1'b0;
     else if (P.FPSIZES == 2) begin
@@ -288,20 +288,20 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
 
   // Enables indicate that a source register is used and may need stalls. Also indicate special cases for infinity or NaN.
   // When disabled infinity and NaN on source registers are ignored by the unpacker and thus special case logic.
-  
+
   //    X - all except int->fp, store, load, mv int->fp
   assign XEnD = ~(((FResSelD==2'b10)&~FWriteIntD)|                                                 // load/store
                   ((FResSelD==2'b00)&FRegWriteD&(OpCtrlD==3'b011))|                                // mv int to float
                   ((FResSelD==2'b01)&(PostProcSelD==2'b00)&OpCtrlD[2]));                           // cvt int to float
 
   //    Y - all except cvt, mv, load, class, sqrt
-  assign YEnD = ~(((FResSelD==2'b10)&(FWriteIntD|FRegWriteD))|                                     // load or class 
+  assign YEnD = ~(((FResSelD==2'b10)&(FWriteIntD|FRegWriteD))|                                     // load or class
                   ((FResSelD==2'b00)&FRegWriteD&(OpCtrlD==3'b011))|                                // mv int to float as above
-                  ((FResSelD==2'b11)&(PostProcSelD==2'b00))|                                       // mv float to int 
+                  ((FResSelD==2'b11)&(PostProcSelD==2'b00))|                                       // mv float to int
                   ((FResSelD==2'b01)&((PostProcSelD==2'b00)|((PostProcSelD==2'b01)&OpCtrlD[0])))); // cvt both or sqrt
 
   //    Z - fma ops only
-  assign ZEnD = (PostProcSelD==2'b10)&(~OpCtrlD[2]|OpCtrlD[1]);                                    // fma, add, sub   
+  assign ZEnD = (PostProcSelD==2'b10)&(~OpCtrlD[2]|OpCtrlD[1]);                                    // fma, add, sub
 
   //  Final Res Sel:
   //        fp      int
@@ -335,7 +335,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   //        100 - mul
   //        110 - add
   //        111 - sub
-  //    Div: 
+  //    Div:
   //        0 - div
   //        1 - sqrt
   //    Cvt Int: {Int to Fp?, 64 bit int?, signed int?}
@@ -359,9 +359,9 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   assign Adr1D = InstrD[19:15];
   assign Adr2D = InstrD[24:20];
   assign Adr3D = InstrD[31:27];
- 
+
   // D/E pipeline register
-  flopenrc #(`FCTRLW+2+P.FMTBITS) DECtrlReg3(clk, reset, FlushE, ~StallE, 
+  flopenrc #(`FCTRLW+2+P.FMTBITS) DECtrlReg3(clk, reset, FlushE, ~StallE,
               {FRegWriteD, PostProcSelD, FResSelD, FrmD, FmtD, OpCtrlD, FWriteIntD, FCvtIntD, ZfaD, ZfaFRoundNXD, ~IllegalFPUInstrD},
               {FRegWriteE, PostProcSelE, FResSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, FCvtIntE, ZfaE, ZfaFRoundNXE, FPUActiveE});
   flopenrc #(15) DEAdrReg(clk, reset, FlushE, ~StallE, {Adr1D, Adr2D, Adr3D}, {Adr1E, Adr2E, Adr3E});
@@ -370,7 +370,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
 
   // Integer division on FPU divider
   if (P.M_SUPPORTED & P.IDIV_ON_FPU) assign IDivStartE = IntDivE;
-  else                               assign IDivStartE = 1'b0; 
+  else                               assign IDivStartE = 1'b0;
 
   // E/M pipeline register
   flopenrc #(14+int'(P.FMTBITS)) EMCtrlReg (clk, reset, FlushM, ~StallM,

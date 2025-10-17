@@ -16,15 +16,15 @@
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -35,7 +35,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   input  logic                   Stall,             // Stall the cache, preventing new accesses. In-flight access finished but does not return to READY
   input  logic                   FlushStage,        // Pipeline flush of second stage (prevent writes and bus operations)
   // cpu side
-  input  logic [1:0]             CacheRW,           // [1] Read, [0] Write 
+  input  logic [1:0]             CacheRW,           // [1] Read, [0] Write
   input  logic                   FlushCache,        // Flush all dirty lines back to memory
   input  logic                   InvalidateCache,   // Clear all valid bits
   input  logic [3:0]             CMOpM,              // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
@@ -97,7 +97,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   logic [LINELEN/8-1:0]          LineByteMask;
   logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0] WordOffsetAddr;
   genvar                         index;
-  
+
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Read Path
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -128,7 +128,7 @@ module cache import cvw::*; #(parameter cvw_t P,
     cacheLRU #(NUMWAYS, SETLEN, NUMSETS) cacheLRU(
       .clk, .reset, .FlushStage, .CacheEn, .HitWay, .ValidWay, .VictimWay, .CacheSetLRU, .LRUWriteEn,
       .SetValid, .PAdr(PAdr[SETTOP-1:OFFSETLEN]), .InvalidateCache);
-  end else 
+  end else
     assign VictimWay = 1'b1; // one hot.
 
   assign Hit = |HitWay;
@@ -142,33 +142,33 @@ module cache import cvw::*; #(parameter cvw_t P,
   or_rows #(NUMWAYS, TAGLEN) TagAOMux(.a(TagWay), .y(Tag));
 
   // Data cache needs to choose word offset from PAdr or BeatCount to writeback dirty lines
-  if(!READ_ONLY_CACHE) 
-    mux2 #(LOGBWPL) WordAdrrMux(.d0(PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)]), 
+  if(!READ_ONLY_CACHE)
+    mux2 #(LOGBWPL) WordAdrrMux(.d0(PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)]),
       .d1(BeatCount), .s(SelBusBeat),
-      .y(WordOffsetAddr)); 
-  else 
+      .y(WordOffsetAddr));
+  else
     assign WordOffsetAddr = PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)];
-  
+
   // Bypass cache array to save a cycle when finishing a load miss
   mux2 #(LINELEN) EarlyReturnMux(ReadDataLineCache, FetchBuffer, SelFetchBuffer, ReadDataLine);
 
   // Select word from cache line
   subcachelineread #(LINELEN, WORDLEN, MUXINTERVAL) subcachelineread(
     .PAdr(WordOffsetAddr), .ReadDataLine, .ReadDataWord);
-  
+
   // Bus address for fetch, writeback, or flush writeback
   mux3 #(PA_BITS) CacheBusAdrMux(.d0({PAdr[PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
     .d1({Tag, PAdr[SETTOP-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
     .d2({Tag, FlushAdr, {OFFSETLEN{1'b0}}}),
     .s({FlushCache, SelWriteback}), .y(CacheBusAdr));
-  
+
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path
   /////////////////////////////////////////////////////////////////////////////////////////////
   if(!READ_ONLY_CACHE) begin:WriteSelLogic
     logic [LINELEN/8-1:0]          DemuxedByteMask, FetchBufferByteSel;
 
-    // Adjust byte mask from word to cache line    
+    // Adjust byte mask from word to cache line
     logic [LINELEN/8-1:0]          BlankByteMask;
     assign BlankByteMask[WORDLEN/8-1:0] = ByteMask;
     assign BlankByteMask[LINELEN/8-1:WORDLEN/8] = 0;
@@ -190,7 +190,7 @@ module cache import cvw::*; #(parameter cvw_t P,
       assign LineWriteData = FetchBuffer;
       assign LineByteMask = '1;
     end
-  
+
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Flush logic
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -218,17 +218,17 @@ module cache import cvw::*; #(parameter cvw_t P,
     assign FlushAdrFlag = 1'b0;
     assign FlushAdr = '0;
   end
-   
+
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Cache FSM
   /////////////////////////////////////////////////////////////////////////////////////////////
-  
-  cachefsm #(READ_ONLY_CACHE) cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
+
+  cachefsm #(READ_ONLY_CACHE) cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck,
     .FlushStage, .CacheRW, .Stall,
-    .Hit, .LineDirty, .HitLineDirty, .CacheStall, .CacheCommitted, 
+    .Hit, .LineDirty, .HitLineDirty, .CacheStall, .CacheCommitted,
     .CacheMiss, .CacheAccess, .SelAdrData, .SelAdrTag, .SelVictim,
     .ClearDirty, .SetDirty, .SetValid, .ClearValid, .SelWriteback,
     .FlushAdrCntEn, .FlushWayCntEn, .FlushCntRst,
     .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
     .InvalidateCache, .CMOpM, .CacheEn, .LRUWriteEn);
-endmodule 
+endmodule

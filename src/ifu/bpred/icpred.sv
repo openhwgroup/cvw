@@ -7,31 +7,31 @@
 //
 // Purpose: Partial decode of instructions into control flow instructions (cfi)P
 //          Call, Return, Jump, and Branch
-// 
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module icpred import cvw::*;  #(parameter cvw_t P, 
+module icpred import cvw::*;  #(parameter cvw_t P,
                                 parameter INSTR_CLASS_PRED = 1)(
   input  logic             clk, reset,
   input  logic             StallD, StallE, StallM, StallW,
-  input  logic             FlushD, FlushE, FlushM, 
+  input  logic             FlushD, FlushE, FlushM,
   input  logic [31:0]      PostSpillInstrRawF, InstrD,        // Instruction
   input  logic             BranchD, BranchE,
   input  logic             JumpD, JumpE,
@@ -47,7 +47,7 @@ module icpred import cvw::*;  #(parameter cvw_t P,
   logic                    IClassWrongD;
   logic                    BPBranchD, BPJumpD, BPReturnD, BPCallD;
   logic                    IClassWrongE;
-  
+
   if (!INSTR_CLASS_PRED) begin : DirectClassDecode
     // This section is mainly for testing, verification, and PPA comparison.
     // An alternative to using the BTB to store the instruction class is to partially decode
@@ -71,12 +71,12 @@ module icpred import cvw::*;  #(parameter cvw_t P,
 
     assign NCJumpF = PostSpillInstrRawF[6:0] == 7'h67 | PostSpillInstrRawF[6:0] == 7'h6F;
     assign NCBranchF = PostSpillInstrRawF[6:0] == 7'h63;
-    
+
     assign BPBranchF = NCBranchF | (P.ZCA_SUPPORTED & CBranchF);
     assign BPJumpF = NCJumpF | (P.ZCA_SUPPORTED & (CJumpF));
     assign BPReturnF = (NCJumpF & (PostSpillInstrRawF[19:15] & 5'h1B) == 5'h01 & PostSpillInstrRawF[11:7] == 5'b0) | // return must return to ra or r5
         (P.ZCA_SUPPORTED & cjr & ((PostSpillInstrRawF[11:7] & 5'h1B) == 5'h01));
-    
+
     assign BPCallF = (NCJumpF & (PostSpillInstrRawF[11:07] & 5'h1B) == 5'h01) | // call(r) must link to ra or x5
         (P.ZCA_SUPPORTED & (cjal | (cjalr & (PostSpillInstrRawF[11:7] & 5'h1b) == 5'h01)));
 
@@ -84,7 +84,7 @@ module icpred import cvw::*;  #(parameter cvw_t P,
     // This section connects the BTB's instruction class prediction.
     assign {BPCallF, BPReturnF, BPJumpF, BPBranchF} = {BTBCallF, BTBReturnF, BTBJumpF, BTBBranchF};
   end
-  
+
   assign ReturnD = JumpD & (InstrD[19:15] & 5'h1B) == 5'h01; // returnurn must returnurn to ra or x5
   assign CallD = JumpD & (InstrD[11:7] & 5'h1B) == 5'h01; // call(r) must link to ra or x5
 

@@ -1,20 +1,20 @@
 ///////////////////////////////////////////
 // ../wally-riscv-arch-test/riscv-test-suite/rv64i_m/I/src/WALLY-ADD.S
 // David_Harris@hmc.edu & Rose Thompson
-// Created 07 March 2024 
+// Created 07 March 2024
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 #include "model_test.h"
@@ -58,15 +58,15 @@ fsq f7, 0(x1)
 fsh f5, 16(x3)
 flh f6, 16(x3)
 fsh f6, 16(x1)
-	
+
 # 1 + 2 = 3           # 4000 8000 0000 0000 0000 0000 0000 0000
 fadd.q f8, f2, f4
 fsq f8, 32(x1)
-	
+
 # 1 - 2 = -1
 fsub.q f9, f4, f2     # bfff 0000000000000000000000000000
 fsq f9, 48(x1)
-	
+
 # 2 * 3 = 6
 fmul.q f10, f2, f8     # 4001 8000000000000000000000000000
 fsq f10, 64(x1)
@@ -86,7 +86,7 @@ fsq f13, 112(x1)
 # sqrt(4)  = 2
 fsqrt.q f14, f13    # 4000 0000000000000000000000000000
 fsq f14, 128(x1)
-        
+
 
 RVTEST_CODE_END
 RVMODEL_HALT

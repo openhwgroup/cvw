@@ -5,25 +5,25 @@
 // Modified: 7/5/2022
 //
 // Purpose: special case selection
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -105,7 +105,7 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
           assign YNaNRes    = OutFmt ? {1'b0, {P.NE{1'b1}}, 1'b1, Ym[P.NF-2:0]} : {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, Ym[P.NF-2:P.NF-P.NF1]};
           assign ZNaNRes    = OutFmt ? {1'b0, {P.NE{1'b1}}, 1'b1, Zm[P.NF-2:0]} : {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, Zm[P.NF-2:P.NF-P.NF1]};
           assign InvalidRes = OutFmt ? {1'b0, {P.NE{1'b1}}, 1'b1, {P.NF-1{1'b0}}} : {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, (P.NF1-1)'(0)};
-      end else begin 
+      end else begin
           assign InvalidRes = OutFmt ? {1'b0, {P.NE{1'b1}}, 1'b1, {P.NF-1{1'b0}}} : {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, (P.NF1-1)'(0)};
       end
 
@@ -122,43 +122,43 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
   end else if (P.FPSIZES == 3) begin
       always_comb
           case (OutFmt)
-              P.FMT: begin  
+              P.FMT: begin
                   if(P.IEEE754) begin
                       XNaNRes    = {1'b0, {P.NE{1'b1}}, 1'b1, Xm[P.NF-2:0]};
                       YNaNRes    = {1'b0, {P.NE{1'b1}}, 1'b1, Ym[P.NF-2:0]};
                       ZNaNRes    = {1'b0, {P.NE{1'b1}}, 1'b1, Zm[P.NF-2:0]};
                       InvalidRes = {1'b0, {P.NE{1'b1}}, 1'b1, {P.NF-1{1'b0}}};
-                  end else begin 
+                  end else begin
                       InvalidRes = {1'b0, {P.NE{1'b1}}, 1'b1, {P.NF-1{1'b0}}};
                   end
-                  
+
                   OfRes   = OfResMax ? {Rs, {P.NE-1{1'b1}}, 1'b0, {P.NF{1'b1}}} : {Rs, {P.NE{1'b1}}, {P.NF{1'b0}}};
                   UfRes   = {Rs, (P.FLEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
                   NormRes = {Rs, Re, Rf};
               end
-              P.FMT1: begin  
+              P.FMT1: begin
                   if(P.IEEE754) begin
                       XNaNRes    = {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, Xm[P.NF-2:P.NF-P.NF1]};
                       YNaNRes    = {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, Ym[P.NF-2:P.NF-P.NF1]};
                       ZNaNRes    = {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, Zm[P.NF-2:P.NF-P.NF1]};
                       InvalidRes = {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, (P.NF1-1)'(0)};
-                  end else begin 
+                  end else begin
                       InvalidRes = {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, (P.NF1-1)'(0)};
                   end
                   OfRes          = OfResMax ? {{P.FLEN-P.LEN1{1'b1}}, Rs, {P.NE1-1{1'b1}}, 1'b0, {P.NF1{1'b1}}} : {{P.FLEN-P.LEN1{1'b1}}, Rs, {P.NE1{1'b1}}, (P.NF1)'(0)};
                   UfRes          = {{P.FLEN-P.LEN1{1'b1}}, Rs, (P.LEN1-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
                   NormRes        = {{P.FLEN-P.LEN1{1'b1}}, Rs, Re[P.NE1-1:0], Rf[P.NF-1:P.NF-P.NF1]};
               end
-              P.FMT2: begin  
+              P.FMT2: begin
                   if(P.IEEE754) begin
                       XNaNRes    = {{P.FLEN-P.LEN2{1'b1}}, 1'b0, {P.NE2{1'b1}}, 1'b1, Xm[P.NF-2:P.NF-P.NF2]};
                       YNaNRes    = {{P.FLEN-P.LEN2{1'b1}}, 1'b0, {P.NE2{1'b1}}, 1'b1, Ym[P.NF-2:P.NF-P.NF2]};
                       ZNaNRes    = {{P.FLEN-P.LEN2{1'b1}}, 1'b0, {P.NE2{1'b1}}, 1'b1, Zm[P.NF-2:P.NF-P.NF2]};
                       InvalidRes = {{P.FLEN-P.LEN2{1'b1}}, 1'b0, {P.NE2{1'b1}}, 1'b1, (P.NF2-1)'(0)};
-                  end else begin 
+                  end else begin
                       InvalidRes = {{P.FLEN-P.LEN2{1'b1}}, 1'b0, {P.NE2{1'b1}}, 1'b1, (P.NF2-1)'(0)};
                   end
-                  
+
                   OfRes   = OfResMax ? {{P.FLEN-P.LEN2{1'b1}}, Rs, {P.NE2-1{1'b1}}, 1'b0, {P.NF2{1'b1}}} : {{P.FLEN-P.LEN2{1'b1}}, Rs, {P.NE2{1'b1}}, (P.NF2)'(0)};
                   UfRes   = {{P.FLEN-P.LEN2{1'b1}}, Rs, (P.LEN2-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
                   NormRes = {{P.FLEN-P.LEN2{1'b1}}, Rs, Re[P.NE2-1:0], Rf[P.NF-1:P.NF-P.NF2]};
@@ -169,7 +169,7 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
                       YNaNRes    = (P.FLEN)'(0);
                       ZNaNRes    = (P.FLEN)'(0);
                       InvalidRes = (P.FLEN)'(0);
-                  end else begin 
+                  end else begin
                       InvalidRes = (P.FLEN)'(0);
                   end
                   OfRes          = (P.FLEN)'(0);
@@ -178,61 +178,61 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
               end
           endcase
 
-  end else if (P.FPSIZES == 4) begin 
+  end else if (P.FPSIZES == 4) begin
       always_comb
           case (OutFmt)
-              2'h3: begin  
+              2'h3: begin
                   if(P.IEEE754) begin
                       XNaNRes    = {1'b0, {P.NE{1'b1}}, 1'b1, Xm[P.NF-2:0]};
                       YNaNRes    = {1'b0, {P.NE{1'b1}}, 1'b1, Ym[P.NF-2:0]};
                       ZNaNRes    = {1'b0, {P.NE{1'b1}}, 1'b1, Zm[P.NF-2:0]};
                       InvalidRes = {1'b0, {P.NE{1'b1}}, 1'b1, {P.NF-1{1'b0}}};
-                  end else begin 
+                  end else begin
                       InvalidRes = {1'b0, {P.NE{1'b1}}, 1'b1, {P.NF-1{1'b0}}};
                   end
-                  
+
                   OfRes   = OfResMax ? {Rs, {P.NE-1{1'b1}}, 1'b0, {P.NF{1'b1}}} : {Rs, {P.NE{1'b1}}, {P.NF{1'b0}}};
                   UfRes   = {Rs, (P.FLEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
                   NormRes = {Rs, Re, Rf};
               end
-              2'h1: begin  
+              2'h1: begin
                   if(P.IEEE754) begin
                       XNaNRes    = {{P.FLEN-P.D_LEN{1'b1}}, 1'b0, {P.D_NE{1'b1}}, 1'b1, Xm[P.NF-2:P.NF-P.D_NF]};
                       YNaNRes    = {{P.FLEN-P.D_LEN{1'b1}}, 1'b0, {P.D_NE{1'b1}}, 1'b1, Ym[P.NF-2:P.NF-P.D_NF]};
                       ZNaNRes    = {{P.FLEN-P.D_LEN{1'b1}}, 1'b0, {P.D_NE{1'b1}}, 1'b1, Zm[P.NF-2:P.NF-P.D_NF]};
                       InvalidRes = {{P.FLEN-P.D_LEN{1'b1}}, 1'b0, {P.D_NE{1'b1}}, 1'b1, (P.D_NF-1)'(0)};
-                  end else begin 
+                  end else begin
                       InvalidRes = {{P.FLEN-P.D_LEN{1'b1}}, 1'b0, {P.D_NE{1'b1}}, 1'b1, (P.D_NF-1)'(0)};
                   end
                   OfRes   = OfResMax ? {{P.FLEN-P.D_LEN{1'b1}}, Rs, {P.D_NE-1{1'b1}}, 1'b0, {P.D_NF{1'b1}}} : {{P.FLEN-P.D_LEN{1'b1}}, Rs, {P.D_NE{1'b1}}, (P.D_NF)'(0)};
                   UfRes   = {{P.FLEN-P.D_LEN{1'b1}}, Rs, (P.D_LEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
                   NormRes = {{P.FLEN-P.D_LEN{1'b1}}, Rs, Re[P.D_NE-1:0], Rf[P.NF-1:P.NF-P.D_NF]};
               end
-              2'h0: begin  
+              2'h0: begin
                   if(P.IEEE754) begin
                       XNaNRes    = {{P.FLEN-P.S_LEN{1'b1}}, 1'b0, {P.S_NE{1'b1}}, 1'b1, Xm[P.NF-2:P.NF-P.S_NF]};
                       YNaNRes    = {{P.FLEN-P.S_LEN{1'b1}}, 1'b0, {P.S_NE{1'b1}}, 1'b1, Ym[P.NF-2:P.NF-P.S_NF]};
                       ZNaNRes    = {{P.FLEN-P.S_LEN{1'b1}}, 1'b0, {P.S_NE{1'b1}}, 1'b1, Zm[P.NF-2:P.NF-P.S_NF]};
                       InvalidRes = {{P.FLEN-P.S_LEN{1'b1}}, 1'b0, {P.S_NE{1'b1}}, 1'b1, (P.S_NF-1)'(0)};
-                  end else begin 
+                  end else begin
                       InvalidRes = {{P.FLEN-P.S_LEN{1'b1}}, 1'b0, {P.S_NE{1'b1}}, 1'b1, (P.S_NF-1)'(0)};
                   end
-                  
+
                   OfRes   = OfResMax ? {{P.FLEN-P.S_LEN{1'b1}}, Rs, {P.S_NE-1{1'b1}}, 1'b0, {P.S_NF{1'b1}}} : {{P.FLEN-P.S_LEN{1'b1}}, Rs, {P.S_NE{1'b1}}, (P.S_NF)'(0)};
                   UfRes   = {{P.FLEN-P.S_LEN{1'b1}}, Rs, (P.S_LEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
                   NormRes = {{P.FLEN-P.S_LEN{1'b1}}, Rs, Re[P.S_NE-1:0], Rf[P.NF-1:P.NF-P.S_NF]};
               end
-              2'h2: begin  
+              2'h2: begin
                   if(P.IEEE754) begin
                       XNaNRes    = {{P.FLEN-P.H_LEN{1'b1}}, 1'b0, {P.H_NE{1'b1}}, 1'b1, Xm[P.NF-2:P.NF-P.H_NF]};
                       YNaNRes    = {{P.FLEN-P.H_LEN{1'b1}}, 1'b0, {P.H_NE{1'b1}}, 1'b1, Ym[P.NF-2:P.NF-P.H_NF]};
                       ZNaNRes    = {{P.FLEN-P.H_LEN{1'b1}}, 1'b0, {P.H_NE{1'b1}}, 1'b1, Zm[P.NF-2:P.NF-P.H_NF]};
                       InvalidRes = {{P.FLEN-P.H_LEN{1'b1}}, 1'b0, {P.H_NE{1'b1}}, 1'b1, (P.H_NF-1)'(0)};
-                  end else begin 
+                  end else begin
                       InvalidRes = {{P.FLEN-P.H_LEN{1'b1}}, 1'b0, {P.H_NE{1'b1}}, 1'b1, (P.H_NF-1)'(0)};
                   end
-                  
-                  OfRes   = OfResMax ? {{P.FLEN-P.H_LEN{1'b1}}, Rs, {P.H_NE-1{1'b1}}, 1'b0, {P.H_NF{1'b1}}} : {{P.FLEN-P.H_LEN{1'b1}}, Rs, {P.H_NE{1'b1}}, (P.H_NF)'(0)};      
+
+                  OfRes   = OfResMax ? {{P.FLEN-P.H_LEN{1'b1}}, Rs, {P.H_NE-1{1'b1}}, 1'b0, {P.H_NF{1'b1}}} : {{P.FLEN-P.H_LEN{1'b1}}, Rs, {P.H_NE{1'b1}}, (P.H_NF)'(0)};
                 // zero is exact if dividing by infinity so don't add 1
                   UfRes   = {{P.FLEN-P.H_LEN{1'b1}}, Rs, (P.H_LEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
                   NormRes = {{P.FLEN-P.H_LEN{1'b1}}, Rs, Re[P.H_NE-1:0], Rf[P.NF-1:P.NF-P.H_NF]};
@@ -245,10 +245,10 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
   //      - dont set to zero if fp input is zero but not using the fp input
   //      - dont set to zero if int input is zero but not using the int input
   assign KillRes = CvtOp ? (CvtResUf|(XZero&~IntToFp)|(IntZero&IntToFp)) : FullRe[P.NE+1] | (((YInf&~XInf)|XZero)&DivOp);//Underflow & ~ResSubnorm & (Re!=1);
-  
+
   // calculate if the overflow result should be selected
   assign SelOfRes = Overflow|DivByZero|(InfIn&~(YInf&DivOp));
-  
+
   // output infinity with result sign if divide by zero
   if(P.IEEE754)
     always_comb
@@ -267,18 +267,18 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
       else                        PostProcRes = NormRes;
 
   ///////////////////////////////////////////////////////////////////////////////////////
-  // integer result selection        
-  ///////////////////////////////////////////////////////////////////////////////////////        
+  // integer result selection
+  ///////////////////////////////////////////////////////////////////////////////////////
 
   // Causes undefined behavior for invalid:
 
   // Invalid cases are different for IEEE 754 vs. RISC-V.  For RISC-V, typical results are used
   // unsigned: if invalid (e.g., negative fp to unsigned int, result should overflow and
-  //           overflows to the maximum value 
-  // signed: if invalid, result should overflow to maximum negative value 
+  //           overflows to the maximum value
+  // signed: if invalid, result should overflow to maximum negative value
   //         but is undefined and used for information only
   // Note: The IEEE 754 result comes from values in TestFloat for x86_64
-   
+
   // IEEE 754
   // select the overflow integer res
   //      - negative infinity and out of range negative input
@@ -307,17 +307,17 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
   //
   //      other: 32 bit unsigned res should be sign extended as if it were a signed number
 
-    if(P.IEEE754) begin   
+    if(P.IEEE754) begin
       always_comb
         if(Signed)
             if(Xs&~NaNIn) // signed negative
                     if(Int64)   OfIntRes = {1'b1, {P.XLEN-1{1'b0}}};
                     else        OfIntRes = {{P.XLEN-32{1'b1}}, 1'b1, {31{1'b0}}};
             else          // signed positive
-                    if(Int64)   OfIntRes = {1'b1, {P.XLEN-1{1'b0}}}; 
-                    else        OfIntRes = {{P.XLEN-32{1'b1}}, 1'b1, {31{1'b0}}}; 
+                    if(Int64)   OfIntRes = {1'b1, {P.XLEN-1{1'b0}}};
+                    else        OfIntRes = {{P.XLEN-32{1'b1}}, 1'b1, {31{1'b0}}};
         else
-            if(Xs&~NaNIn) OfIntRes = {P.XLEN{1'b1}}; // unsigned negative 
+            if(Xs&~NaNIn) OfIntRes = {P.XLEN{1'b1}}; // unsigned negative
             else          OfIntRes = {P.XLEN{1'b1}}; // unsigned positive
     end else begin
       always_comb
@@ -331,8 +331,8 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
         else
             if(Xs&~NaNIn) OfIntRes = {P.XLEN{1'b0}}; // unsigned negative
             else          OfIntRes = {P.XLEN{1'b1}}; // unsigned positive
-    end  
-   
+    end
+
   // fcvtmod.w.d logic
   // fcvtmod.w.d is like fcvt.w.d excep that it takes bits [31:0] and sign extends the rest,
   // and converts +/-inf and NaN to zero.
@@ -346,7 +346,7 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
         if (Zfa) SelCvtOfRes = InfIn | NaNIn | (CvtCe > 32 + 52); // fcvtmod.w.d only overflows to 0 on NaN or Infinity, or if the shift is so large that only zeros are left
         else     SelCvtOfRes = IntInvalid;    // regular fcvt gives an overflow if out of range
     end
-  else 
+  else
     always_comb begin // no fcvtmod.w.d support
         OfIntRes2 = OfIntRes;
         Int64Res = CvtNegRes[P.XLEN-1:0];
@@ -360,8 +360,8 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
   //          - otherwise output a rounded 0
   //      - otherwise output the normal res (trmined and sign extended if necessary)
   always_comb
-    if(SelCvtOfRes)         FCvtIntRes = OfIntRes2; 
-    else if(CvtCe[P.NE]) 
+    if(SelCvtOfRes)         FCvtIntRes = OfIntRes2;
+    else if(CvtCe[P.NE])
       if(Xs&Signed&Plus1)   FCvtIntRes = {{P.XLEN{1'b1}}};
       else                  FCvtIntRes = {{P.XLEN-1{1'b0}}, Plus1};
     else if(Int64)          FCvtIntRes = Int64Res;

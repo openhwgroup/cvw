@@ -2,36 +2,36 @@
 // csrc.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
-// Modified: 
+// Modified:
 //
 // Purpose: Counter CSRs
 //          See RISC-V Privileged Mode Specification 20190608 3.1.10-11
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module csrc  import cvw::*;  #(parameter cvw_t P) (
   input  logic              clk, reset,
-  input  logic              StallE, StallM, 
-  input  logic              FlushM, 
+  input  logic              StallE, StallM,
+  input  logic              FlushM,
   input  logic              InstrValidNotFlushedM, LoadStallD, StoreStallD,
   input  logic              CSRMWriteM, CSRWriteM,
   input  logic              BPDirWrongM,
@@ -56,7 +56,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   input  logic [1:0]        PrivilegeModeW,
   input  logic [P.XLEN-1:0] CSRWriteValM,
   input  logic [31:0]       MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
-  input  logic [63:0]       MTIME_CLINT, 
+  input  logic [63:0]       MTIME_CLINT,
   output logic [P.XLEN-1:0] CSRCReadValM,
   output logic              IllegalCSRCAccessM
 );
@@ -85,11 +85,11 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
 
   // Interface signals
   flopenrc #(1) LoadStallEReg(.clk, .reset, .clear(1'b0), .en(~StallE), .d(LoadStallD), .q(LoadStallE));  // don't flush the load stall during a load stall.
-  flopenrc #(1) LoadStallMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d(LoadStallE), .q(LoadStallM));  
+  flopenrc #(1) LoadStallMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d(LoadStallE), .q(LoadStallM));
 
   flopenrc #(1) StoreStallEReg(.clk, .reset, .clear(1'b0), .en(~StallE), .d(StoreStallD), .q(StoreStallE));  // don't flush the load stall during a load stall.
-  flopenrc #(1) StoreStallMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d(StoreStallE), .q(StoreStallM));  
-  
+  flopenrc #(1) StoreStallMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d(StoreStallE), .q(StoreStallM));
+
   // Determine when to increment each counter
   assign CounterEvent[0]    = 1'b1;                                                      // MCYCLE always increments
   assign CounterEvent[1]    = 1'b0;                                                      // Counter 1 doesn't exist
@@ -126,7 +126,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   end else begin: cevent
     assign CounterEvent[P.COUNTERS-1:3] = '0;
   end
-  
+
   // Counter update and write logic
   for (i = 0; $unsigned(i) < P.COUNTERS; i = i+1) begin:cntr
       assign WriteHPMCOUNTERM[i] = CSRMWriteM & (CSRAdrM == MHPMCOUNTERBASE + i); // coverage tag: MTIME traps
@@ -152,8 +152,8 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
 
   // Read Counters, or cause excepiton if insufficient privilege in light of COUNTEREN flags
   assign CounterNumM = CSRAdrM[4:0]; // which counter to read?
-  always_comb 
-    if (PrivilegeModeW == P.M_MODE | 
+  always_comb
+    if (PrivilegeModeW == P.M_MODE |
         MCOUNTEREN_REGW[CounterNumM] & (!P.S_SUPPORTED | PrivilegeModeW == P.S_MODE | SCOUNTEREN_REGW[CounterNumM])) begin
       IllegalCSRCAccessM = 1'b0;
       if (CSRAdrM >= MHPMEVENTBASE & CSRAdrM <= MHPMEVENTLAST) begin
@@ -161,10 +161,10 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
       end else begin
         if (P.XLEN==64) begin // 64-bit counter reads
           // Veri lator doesn't realize this only occurs for XLEN=64
-          /* verilator lint_off WIDTH */  
+          /* verilator lint_off WIDTH */
           if      (CSRAdrM == TIME & ~CSRWriteM)  CSRCReadValM = MTIME_CLINT; // TIME register is a shadow of the memory-mapped MTIME from the CLINT
-          /* verilator lint_on WIDTH */  
-          else if (CSRAdrM >= MHPMCOUNTERBASE & CSRAdrM < MHPMCOUNTERBASE+P.COUNTERS & CSRAdrM != MTIME) 
+          /* verilator lint_on WIDTH */
+          else if (CSRAdrM >= MHPMCOUNTERBASE & CSRAdrM < MHPMCOUNTERBASE+P.COUNTERS & CSRAdrM != MTIME)
                   CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
           else if (CSRAdrM >= HPMCOUNTERBASE  & CSRAdrM  < HPMCOUNTERBASE+P.COUNTERS & ~CSRWriteM)  // read-only
                   CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
@@ -174,25 +174,25 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
           end
         end else begin // 32-bit counter reads
           // Veril ator doesn't realize this only occurs for XLEN=32
-          /* verilator lint_off WIDTH */  
+          /* verilator lint_off WIDTH */
           if      (CSRAdrM == TIME & ~CSRWriteM)  CSRCReadValM = MTIME_CLINT[31:0];// TIME register is a shadow of the memory-mapped MTIME from the CLINT
           else if (CSRAdrM == TIMEH & ~CSRWriteM) CSRCReadValM = MTIME_CLINT[63:32];
-          /* verilator lint_on WIDTH */  
-          else if (CSRAdrM >= MHPMCOUNTERBASE  & CSRAdrM < MHPMCOUNTERBASE+P.COUNTERS & CSRAdrM != MTIME)   
+          /* verilator lint_on WIDTH */
+          else if (CSRAdrM >= MHPMCOUNTERBASE  & CSRAdrM < MHPMCOUNTERBASE+P.COUNTERS & CSRAdrM != MTIME)
                   CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
           else if (CSRAdrM >= HPMCOUNTERBASE   & CSRAdrM < HPMCOUNTERBASE+P.COUNTERS  & ~CSRWriteM)    // read-only
                   CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
-          else if (CSRAdrM >= MHPMCOUNTERHBASE & CSRAdrM < MHPMCOUNTERHBASE+P.COUNTERS & CSRAdrM != MTIMEH)  
+          else if (CSRAdrM >= MHPMCOUNTERHBASE & CSRAdrM < MHPMCOUNTERHBASE+P.COUNTERS & CSRAdrM != MTIMEH)
                   CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
           else if (CSRAdrM >= HPMCOUNTERHBASE  & CSRAdrM < HPMCOUNTERHBASE+P.COUNTERS  & ~CSRWriteM)   // read-only
                   CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
           else begin
             CSRCReadValM = '0;
             IllegalCSRCAccessM = 1'b1; // requested CSR doesn't exist
-          end            
+          end
         end
       end
-    end else begin 
+    end else begin
       CSRCReadValM = '0;
       IllegalCSRCAccessM = 1'b1; // no privileges for this csr
     end

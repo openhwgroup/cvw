@@ -2,38 +2,38 @@
 // crsr.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
-// Modified: 
+// Modified:
 //
 // Purpose: Status register (and environment configuration register and others shared across modes)
-//          See RISC-V Privileged Mode Specification 20190608 
-// 
+//          See RISC-V Privileged Mode Specification 20190608
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module csrsr import cvw::*;  #(parameter cvw_t P) (
   input  logic              clk, reset, StallW,
-  input  logic              WriteMSTATUSM, WriteMSTATUSHM, WriteSSTATUSM, 
+  input  logic              WriteMSTATUSM, WriteMSTATUSHM, WriteSSTATUSM,
   input  logic              TrapM, FRegWriteM,
   input  logic [1:0]        NextPrivilegeModeM, PrivilegeModeW,
-  input  logic              mretM, sretM, 
+  input  logic              mretM, sretM,
   input  logic              WriteFRMM, SetOrWriteFFLAGSM,
   input  logic [P.XLEN-1:0] CSRWriteValM,
   input  logic              SelHPTW,
@@ -46,12 +46,12 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
   output logic [1:0]        STATUS_FS,
   output logic              BigEndianM
 );
-  
+
   logic STATUS_SD, STATUS_TW_INT, STATUS_TSR_INT, STATUS_TVM_INT, STATUS_MXR_INT, STATUS_SUM_INT, STATUS_MPRV_INT;
   logic [1:0] STATUS_SXL, STATUS_UXL, STATUS_XS, STATUS_FS_INT, STATUS_MPP_NEXT;
   logic STATUS_MPIE, STATUS_SPIE, STATUS_UBE, STATUS_SBE, STATUS_MBE;
   logic nextMBE, nextSBE;
-  
+
   // STATUS REGISTER FIELD
   // See Privileged Spec Section 3.1.6
   // Lower privilege status registers are a subset of the full status register
@@ -72,7 +72,7 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
                            STATUS_TSR, STATUS_TW, STATUS_TVM, STATUS_MXR, STATUS_SUM, STATUS_MPRV,
                            STATUS_XS, STATUS_FS, STATUS_MPP, 2'b0,
                            STATUS_SPP, STATUS_MPIE, STATUS_UBE, STATUS_SPIE, 1'b0, STATUS_MIE, 1'b0, STATUS_SIE, 1'b0};
-    assign MSTATUSH_REGW = {26'b0, STATUS_MBE, STATUS_SBE, 4'b0}; 
+    assign MSTATUSH_REGW = {26'b0, STATUS_MBE, STATUS_SBE, 4'b0};
     assign SSTATUS_REGW  = {STATUS_SD, 11'b0,
                           /*STATUS_TSR, STATUS_TW, STATUS_TVM, */STATUS_MXR, STATUS_SUM, /* STATUS_MPRV, */ 1'b0,
                            STATUS_XS, STATUS_FS, /*STATUS_MPP, 2'b0*/ 4'b0,
@@ -124,7 +124,7 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
       //coverage on
       else                                               EndiannessPrivMode = PrivilegeModeW;
 
-      case (EndiannessPrivMode) 
+      case (EndiannessPrivMode)
         P.M_MODE: BigEndianM = STATUS_MBE;
         P.S_MODE: BigEndianM = STATUS_SBE;
         default: BigEndianM  = STATUS_UBE;
@@ -145,12 +145,12 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
       STATUS_SUM_INT  <= 1'b0;
       STATUS_MPRV_INT <= 1'b0; // Per Priv 3.3
       STATUS_FS_INT   <= 2'b00; // leave floating-point off until activated, even if F_SUPPORTED
-      STATUS_MPP      <= 2'b00; 
-      STATUS_SPP      <= 1'b0; 
-      STATUS_MPIE     <= 1'b0; 
-      STATUS_SPIE     <= 1'b0; 
-      STATUS_MIE      <= 1'b0; 
-      STATUS_SIE      <= 1'b0; 
+      STATUS_MPP      <= 2'b00;
+      STATUS_SPP      <= 1'b0;
+      STATUS_MPIE     <= 1'b0;
+      STATUS_SPIE     <= 1'b0;
+      STATUS_MIE      <= 1'b0;
+      STATUS_SIE      <= 1'b0;
       STATUS_MBE      <= 1'b0;
       STATUS_SBE      <= 1'b0;
       STATUS_UBE      <= 1'b0;
@@ -171,12 +171,12 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
        end
       end else if (mretM) begin // Privileged 3.1.6.1
         STATUS_MIE      <= STATUS_MPIE; // restore global interrupt enable
-        STATUS_MPIE     <= 1'b1; // 
+        STATUS_MPIE     <= 1'b1; //
         STATUS_MPP      <= P.U_SUPPORTED ? P.U_MODE : P.M_MODE; // set MPP to lowest supported privilege level
         STATUS_MPRV_INT <= STATUS_MPRV_INT & (STATUS_MPP == P.M_MODE); // page 21 of privileged spec.
       end else if (sretM & P.S_SUPPORTED) begin
         STATUS_SIE      <= STATUS_SPIE; // restore global interrupt enable
-        STATUS_SPIE     <= P.S_SUPPORTED; 
+        STATUS_SPIE     <= P.S_SUPPORTED;
         STATUS_SPP      <= 1'b0; // set SPP to lowest supported privilege level to catch bugs
         STATUS_MPRV_INT <= 1'b0; // always clear MPRV
       end else if (WriteMSTATUSM) begin
@@ -210,6 +210,6 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
         STATUS_SPIE     <= P.S_SUPPORTED & CSRWriteValM[5];
         STATUS_SIE      <= P.S_SUPPORTED & CSRWriteValM[1];
         STATUS_UBE      <= P.U_SUPPORTED & P.BIGENDIAN_SUPPORTED & CSRWriteValM[6];
-      end else if (FRegWriteM | WriteFRMM | SetOrWriteFFLAGSM) STATUS_FS_INT <= 2'b11; 
+      end else if (FRegWriteM | WriteFRMM | SetOrWriteFFLAGSM) STATUS_FS_INT <= 2'b11;
     end
 endmodule

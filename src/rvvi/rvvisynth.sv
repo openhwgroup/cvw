@@ -7,7 +7,7 @@
 //
 // Purpose: Synthesizable rvvi bridge from Wally to generic compressed format.
 //
-// Documentation: 
+// Documentation:
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 //
@@ -15,20 +15,20 @@
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module rvvisynth import cvw::*; #(parameter cvw_t P,
-                                  parameter integer MAX_CSRS = 5, 
+                                  parameter integer MAX_CSRS = 5,
                                   parameter integer TOTAL_CSRS = 36)(
   input logic clk, reset,
   input logic                                     StallE, StallM, StallW, FlushE, FlushM, FlushW,
@@ -68,12 +68,12 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
   logic [56+3*P.XLEN-1:0]                   Required;
   logic [16+2*P.XLEN-1:0]                   Registers;
   logic [MAX_CSRS*(P.XLEN+16)-1:0]          CSRs;
-     
+
   assign XLENZeros = '0;
 
   // start out easy and just populate Required
   // PC, inst, mcycle, minstret, trap, mode
-  
+
   flopenrc #(1)      InstrValidMReg (clk, reset, FlushW, ~StallW, InstrValidM, InstrValidW);
   flopenrc #(P.XLEN) PCWReg (clk, reset, FlushW, ~StallW, PCM, PCW);
   flopenrc #(32)     InstrRawEReg (clk, reset, FlushE, ~StallE, InstrRawD, InstrRawE);
@@ -105,7 +105,7 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
   // step 3a
   logic [TOTAL_CSRS-1:0] CSRWenPriorityMatrix [MAX_CSRS-1:0];
   logic [TOTAL_CSRS-1:0] CSRWenFilterMatrix [MAX_CSRS-1:0];
-  
+
   priorityaomux #(TOTAL_CSRS, P.XLEN) firstpriorityaomux(CSRArrayWen, CSRArray, CSRValue[0], CSRWenPriorityMatrix[0]);
   assign CSRWenFilterMatrix[0] = CSRArrayWen;
 
@@ -133,6 +133,5 @@ module rvvisynth import cvw::*; #(parameter cvw_t P,
 
   assign CSRCount = {{{12-MAX_CSRS}{1'b0}}, CSRCountShort};
   assign rvvi = {CSRs, Registers, Required};
-  
+
 endmodule
-                                                                 

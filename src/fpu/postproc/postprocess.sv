@@ -5,25 +5,25 @@
 // Modified: 7/5/2022
 //
 // Purpose: Post-Processing: normalization, rounding, sign, flags, special cases
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -65,7 +65,7 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   output logic [4:0]                       PostProcFlg,         // postprocesser flags
   output logic [P.XLEN-1:0]                FCvtIntRes           // the integer conversion result
   );
-  
+
   // general signals
   logic                        Rs;                   // result sign
   logic [P.NF-1:0]             Rf;                   // Result fraction
@@ -130,10 +130,10 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   // choose the output format depending on the operation
   //      - fp -> fp: OpCtrl contains the precision of the output
   //      - otherwise: Fmt contains the precision of the output
-  if (P.FPSIZES == 2) 
-      assign OutFmt = IntToFp|~CvtOp ? Fmt : (OpCtrl[1:0] == P.FMT); 
-  else if (P.FPSIZES == 3 | P.FPSIZES == 4) 
-      assign OutFmt = IntToFp|~CvtOp ? Fmt : OpCtrl[1:0]; 
+  if (P.FPSIZES == 2)
+      assign OutFmt = IntToFp|~CvtOp ? Fmt : (OpCtrl[1:0] == P.FMT);
+  else if (P.FPSIZES == 3 | P.FPSIZES == 4)
+      assign OutFmt = IntToFp|~CvtOp ? Fmt : OpCtrl[1:0];
   else assign OutFmt = 0; // FPSIZES = 1
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -141,7 +141,7 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   ///////////////////////////////////////////////////////////////////////////////
 
   // final claulations before shifting
-  cvtshiftcalc #(P) cvtshiftcalc(.ToInt, .CvtCe, .CvtResSubnormUf, .Xm, .CvtLzcIn,  
+  cvtshiftcalc #(P) cvtshiftcalc(.ToInt, .CvtCe, .CvtResSubnormUf, .Xm, .CvtLzcIn,
       .XZero, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);
 
   fmashiftcalc #(P) fmashiftcalc(.FmaSCnt, .Fmt, .NormSumExp, .FmaSe, .FmaSm,
@@ -164,12 +164,12 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
         ShiftAmt = DivShiftAmt;
         ShiftIn  = {{P.NF{1'b0}}, DivUm, {P.NORMSHIFTSZ-(P.DIVb+1+P.NF){1'b0}}};
       end
-      default: begin 
-        ShiftAmt = {P.LOGNORMSHIFTSZ{1'bx}}; 
-        ShiftIn  = {P.NORMSHIFTSZ{1'bx}}; 
+      default: begin
+        ShiftAmt = {P.LOGNORMSHIFTSZ{1'bx}};
+        ShiftIn  = {P.NORMSHIFTSZ{1'bx}};
       end
     endcase
-  
+
   // main normalization shift
   normshift #(P) normshift (.ShiftIn, .ShiftAmt, .Shifted);
 
@@ -205,7 +205,7 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
   // Flags
   ///////////////////////////////////////////////////////////////////////////////
 
-  flags #(P) flags(.XSNaN, .YSNaN, .ZSNaN, .XInf, .YInf, .ZInf, .InfIn, .XZero, .YZero, 
+  flags #(P) flags(.XSNaN, .YSNaN, .ZSNaN, .XInf, .YInf, .ZInf, .InfIn, .XZero, .YZero,
               .Xs, .Sqrt, .ToInt, .IntToFp, .Int64, .Signed, .OutFmt, .CvtCe,
               .NaNIn, .FmaAs, .FmaPs, .Round, .IntInvalid, .DivByZero,
               .Guard, .Sticky, .UfPlus1, .CvtOp, .DivOp, .FmaOp, .FullRe, .Plus1,
@@ -217,8 +217,8 @@ module postprocess import cvw::*;  #(parameter cvw_t P) (
 
   negateintres #(P) negateintres(.Xs, .Shifted, .Signed, .Int64, .Plus1, .CvtNegResMsbs, .CvtNegRes);
 
-  specialcase #(P) specialcase(.Xs, .Xm, .Ym, .Zm, .XZero, .IntInvalid, 
-      .IntZero, .Frm, .OutFmt, .XNaN, .YNaN, .ZNaN, .CvtResUf, 
+  specialcase #(P) specialcase(.Xs, .Xm, .Ym, .Zm, .XZero, .IntInvalid,
+      .IntZero, .Frm, .OutFmt, .XNaN, .YNaN, .ZNaN, .CvtResUf,
       .NaNIn, .IntToFp, .Int64, .Signed, .Zfa, .CvtOp, .FmaOp, .Plus1, .Invalid, .Overflow, .InfIn, .CvtNegRes,
       .XInf, .YInf, .DivOp, .DivByZero, .FullRe, .CvtCe, .Rs, .Re, .Rf, .PostProcRes, .FCvtIntRes);
 

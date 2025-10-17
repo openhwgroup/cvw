@@ -2,28 +2,28 @@
 // tlbcontrol.sv
 //
 // Written: David_Harris@hmc.edu 5 July 2021
-// Modified: 
+// Modified:
 //
 // Purpose: Control signals for TLB
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -64,7 +64,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   logic                           PreUpdateDA, PrePageFault;
 
   // Grab the sv mode from SATP and determine whether translation should occur
-  assign Translate = (SATP_MODE != P.NO_TRANSLATE[P.SVMODE_BITS-1:0]) & (EffectivePrivilegeModeW != P.M_MODE) & ~DisableTranslation; 
+  assign Translate = (SATP_MODE != P.NO_TRANSLATE[P.SVMODE_BITS-1:0]) & (EffectivePrivilegeModeW != P.M_MODE) & ~DisableTranslation;
 
   // Determine whether TLB is being used
   assign TLBAccess = ReadAccess | WriteAccess | (|CMOpM);
@@ -81,13 +81,13 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
 
   // Send PMA a 2-bit MemoryType that is PBMT during leaf page table accesses and 0 otherwise
   assign PBMemoryType = PTE_PBMT & {2{Translate & TLBHit & P.SVPBMT_SUPPORTED}};
- 
+
   // check if reserved, N, or PBMT bits are malformed w in RV64
   assign BadPBMT = ((PTE_PBMT != 0) & ~(P.SVPBMT_SUPPORTED & ENVCFG_PBMTE)) | PTE_PBMT == 3; // PBMT must be zero if not supported; value of 3 is reserved
   assign BadNAPOT = PTE_N & (~P.SVNAPOT_SUPPORTED | ~NAPOT4);              // N must be be 0 if CVNAPOT is not supported or not 64 KiB contiguous region
   assign BadReserved = PTE_RESERVED;                                       // Reserved bits must be zero
   assign ReservedRW = PTE_W & ~PTE_R;                                      // page fault on reserved encoding with R=0, W=1 per Privileged Spec 10.3.1
- 
+
   // Check whether the access is allowed, page faulting if not.
   if (ITLB == 1) begin:itlb // Instruction TLB fault checking
     // User mode may only execute user mode pages, and supervisor mode may

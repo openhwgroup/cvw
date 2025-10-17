@@ -6,25 +6,25 @@
 // Modified: 3 March 2023
 //
 // Purpose: Top level controller module
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -44,7 +44,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic        LoadStallD,              // Structural stalls for load, sent to performance counters
   output logic        StoreStallD,             // load after store hazard
   output logic [4:0]  Rs1D, Rs2D, Rs2E,        // Register sources to read in Decode or Execute stage
-  // Execute stage control signals             
+  // Execute stage control signals
   input  logic        StallE, FlushE,          // Stall, flush Execute stage
   input  logic [1:0]  FlagsE,                  // Comparison flags ({eq, lt})
   input  logic        FWriteIntE,              // Write integer register, coming from FPU controller
@@ -73,8 +73,8 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic [1:0]  ForwardAE, ForwardBE,    // Select signals for forwarding multiplexers
   // Memory stage control signals
   input  logic        StallM, FlushM,          // Stall, flush Memory stage
-  output logic [1:0]  MemRWE,                  // Mem read/write: MemRWM[1] = 1 for read, MemRWM[0] = 1 for write 
-  output logic [1:0]  MemRWM,                  // Mem read/write: MemRWM[1] = 1 for read, MemRWM[0] = 1 for write 
+  output logic [1:0]  MemRWE,                  // Mem read/write: MemRWM[1] = 1 for read, MemRWM[0] = 1 for write
+  output logic [1:0]  MemRWM,                  // Mem read/write: MemRWM[1] = 1 for read, MemRWM[0] = 1 for write
   output logic        CSRReadM, CSRWriteM, PrivilegedM, // CSR read, write, or privileged instruction
   output logic [1:0]  AtomicM,                 // Atomic (AMO) instruction
   output logic [2:0]  Funct3M,                 // Instruction's funct3 field
@@ -129,11 +129,11 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        subD, sraD, sltD, sltuD;        // Indicates if is one of these instructions
   logic        BranchTakenE;                   // Branch is taken
   logic        eqE, ltE;                       // Comparator outputs
-  logic        unused; 
+  logic        unused;
   logic        BranchFlagE;                    // Branch flag to use (chosen between eq or lt)
-  logic        IEURegWriteE;                   // Register write 
+  logic        IEURegWriteE;                   // Register write
   logic        IllegalERegAdrD;                // RV32E attempts to write upper 16 registers
-  logic [1:0]  AtomicE;                        // Atomic instruction 
+  logic [1:0]  AtomicE;                        // Atomic instruction
   logic        FenceD, FenceE;                 // Fence instruction
   logic        SFenceVmaD;                     // sfence.vma instruction
   logic        IntDivM;                        // Integer divide instruction
@@ -156,10 +156,10 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        IFUPrefetchD;                   // instruction prefetch
   logic        LSUPrefetchD, LSUPrefetchE;     // data prefetch
   logic        MatchDE;                        // Match between a source register in Decode stage and destination register in Execute stage
-  logic        FCvtIntStallD, MDUStallD, CSRRdStallD; // Stall due to conversion, load, multiply/divide, CSR read 
+  logic        FCvtIntStallD, MDUStallD, CSRRdStallD; // Stall due to conversion, load, multiply/divide, CSR read
   logic        FunctCZeroD;                    // Funct7 and Funct3 indicate czero.* (not including Op check)
   logic        BUW64D;                         // Indicates if it is a .uw type B instruction in Decode Stage
-  
+
   // Extract fields
   assign OpD     = InstrD[6:0];
   assign Funct3D = InstrD[14:12];
@@ -172,8 +172,8 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   // Be rigorous about detecting illegal instructions if CSRs or bit manipulation or conditional ops are supported
   // otherwise be cheap
 
-  if (P.ZICSR_SUPPORTED | P.ZBA_SUPPORTED  | P.ZBB_SUPPORTED  | P.ZBC_SUPPORTED  | P.ZBS_SUPPORTED | 
-      P.ZBKB_SUPPORTED  | P.ZBKC_SUPPORTED | P.ZBKX_SUPPORTED | P.ZKNE_SUPPORTED | 
+  if (P.ZICSR_SUPPORTED | P.ZBA_SUPPORTED  | P.ZBB_SUPPORTED  | P.ZBC_SUPPORTED  | P.ZBS_SUPPORTED |
+      P.ZBKB_SUPPORTED  | P.ZBKC_SUPPORTED | P.ZBKX_SUPPORTED | P.ZKNE_SUPPORTED |
       P.ZKND_SUPPORTED  | P.ZKNH_SUPPORTED | P.ZICOND_SUPPORTED) begin:legalcheck // Exact integer decoding
     logic Funct7ZeroD, Funct7b5D, IShiftD, INoShiftD;
     logic Funct7ShiftZeroD, Funct7Shiftb5D;
@@ -188,14 +188,14 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign IFunctD          = IShiftD | INoShiftD;
     assign RFunctD          = ((Funct3D == 3'b000 | Funct3D == 3'b101) & Funct7b5D) | FunctCZeroD | Funct7ZeroD;
     assign MFunctD          = (Funct7D == 7'b0000001) & (P.M_SUPPORTED | (P.ZMMUL_SUPPORTED & ~Funct3D[2])); // muldiv
-    assign LFunctD          = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b010 | Funct3D == 3'b100 | Funct3D == 3'b101 | 
+    assign LFunctD          = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b010 | Funct3D == 3'b100 | Funct3D == 3'b101 |
                               ((P.XLEN == 64) & (Funct3D == 3'b011 | Funct3D == 3'b110));
     assign FLSFunctD        = (STATUS_FS != 2'b00) & ((Funct3D == 3'b010 & P.F_SUPPORTED) | (Funct3D == 3'b011 & P.D_SUPPORTED) |
                               (Funct3D == 3'b100 & P.Q_SUPPORTED) | (Funct3D == 3'b001 & P.ZFH_SUPPORTED));
     assign FenceFunctD      = (Funct3D == 3'b000) | (P.ZIFENCEI_SUPPORTED & Funct3D == 3'b001);
-    assign CMOFunctD        = (Funct3D == 3'b010 & RdD == 5'b0) & 
+    assign CMOFunctD        = (Funct3D == 3'b010 & RdD == 5'b0) &
                               ((P.ZICBOZ_SUPPORTED & InstrD[31:20] == 12'd4 & ENVCFG_CBE[3]) |
-                               (P.ZICBOM_SUPPORTED & ((InstrD[31:20] == 12'd0 & (ENVCFG_CBE[1:0] != 2'b00))) | 
+                               (P.ZICBOM_SUPPORTED & ((InstrD[31:20] == 12'd0 & (ENVCFG_CBE[1:0] != 2'b00))) |
                                                       (InstrD[31:20] == 12'd1 | InstrD[31:20] == 12'd2) & ENVCFG_CBE[2]));
     assign AFunctD          = (Funct3D == 3'b010) | (P.XLEN == 64 & Funct3D == 3'b011);
     assign AMOFunctD        = (InstrD[31:27] == 5'b00001) |
@@ -210,12 +210,12 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign RWFunctD         = ((Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b101) & Funct7ZeroD |
                               (Funct3D == 3'b000 | Funct3D == 3'b101) & Funct7b5D) & (P.XLEN == 64);
     assign MWFunctD         = MFunctD & (P.XLEN == 64) & ~(Funct3D == 3'b001 | Funct3D == 3'b010 | Funct3D == 3'b011);
-    assign SFunctD          = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b010 | 
+    assign SFunctD          = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b010 |
                               ((P.XLEN == 64) & (Funct3D == 3'b011));
     assign BFunctD          = Funct3D[2:1] != 2'b01; // legal branches
     assign JRFunctD         = Funct3D == 3'b000;
     assign PFunctD          = Funct3D == 3'b000 & RdD == 5'b0;
-    assign CSRFunctD        = Funct3D[1:0] != 2'b00; 
+    assign CSRFunctD        = Funct3D[1:0] != 2'b00;
     assign IWValidFunct3D   = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b101;
   end else begin:legalcheck2
     assign IFunctD = 1'b1; // Don't bother to separate out shift decoding
@@ -243,9 +243,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_0_1; // default: Illegal instruction
     case(OpD)
     // RegWrite_ImmSrc_ALUSrc(A_B)_MemRW_ResultSrc_Branch_ALUOp_Jump_ALUResultSrc_BaseW64_CSRRead_Privileged_Fence_MDU_Atomic_CMO_Illegal
-      7'b0000011: if (LFunctD) 
+      7'b0000011: if (LFunctD)
                       ControlsD = `CTRLW'b1_000_01_10_001_0_0_0_0_0_0_0_0_0_00_0_0; // loads
-      7'b0000111: if (FLSFunctD)  
+      7'b0000111: if (FLSFunctD)
                       ControlsD = `CTRLW'b0_000_01_10_001_0_0_0_0_0_0_0_0_0_00_0_1; // flw - only legal if FP supported
       7'b0001111: if (FenceFunctD) begin
                     if (P.ZIFENCEI_SUPPORTED)
@@ -255,12 +255,12 @@ module controller import cvw::*;  #(parameter cvw_t P) (
                   end else if (CMOFunctD) begin
                       ControlsD = `CTRLW'b0_101_01_00_000_0_0_0_0_0_0_0_0_0_00_1_0; // CMO Instruction
                   end
-      7'b0010011: if (IFunctD)    
+      7'b0010011: if (IFunctD)
                       ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_0_0_0_0_0_00_0_0; // I-type ALU
       7'b0010111:     ControlsD = `CTRLW'b1_100_11_00_000_0_0_0_0_0_0_0_0_0_00_0_0; // auipc
       7'b0011011: if (IFunctD & IWValidFunct3D & P.XLEN == 64)
                       ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_1_0_0_0_0_00_0_0; // IW-type ALU for RV64i
-      7'b0100011: if (SFunctD) 
+      7'b0100011: if (SFunctD)
                       ControlsD = `CTRLW'b0_001_01_01_000_0_0_0_0_0_0_0_0_0_00_0_0; // stores
       7'b0100111: if (FLSFunctD)
                       ControlsD = `CTRLW'b0_001_01_01_000_0_0_0_0_0_0_0_0_0_00_0_1; // fsw - only legal if FP supported
@@ -269,11 +269,11 @@ module controller import cvw::*;  #(parameter cvw_t P) (
                       ControlsD = `CTRLW'b1_000_00_10_001_0_0_0_0_0_0_0_0_0_01_0_0; // lr
                     else if (P.ZALRSC_SUPPORTED & InstrD[31:27] == 5'b00011)
                       ControlsD = `CTRLW'b1_101_01_01_100_0_0_0_0_0_0_0_0_0_01_0_0; // sc
-                    else if (P.ZAAMO_SUPPORTED & AMOFunctD) 
+                    else if (P.ZAAMO_SUPPORTED & AMOFunctD)
                       ControlsD = `CTRLW'b1_101_01_11_001_0_0_0_0_0_0_0_0_0_10_0_0; // amo
                  end
       7'b0110011: if (RFunctD)
-                      ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_0_0_0_0_0_00_0_0; // R-type 
+                      ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_0_0_0_0_0_00_0_0; // R-type
                   else if (MFunctD)
                       ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_0_0_0_0_1_00_0_0; // Multiply/Divide
       7'b0110111:     ControlsD = `CTRLW'b1_100_01_00_000_0_0_0_1_0_0_0_0_0_00_0_0; // lui
@@ -281,7 +281,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
                       ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_1_0_0_0_0_00_0_0; // R-type W instructions for RV64i
                   else if (MWFunctD)
                       ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_1_0_0_0_1_00_0_0; // W-type Multiply/Divide
-      7'b1100011: if (BFunctD)   
+      7'b1100011: if (BFunctD)
                       ControlsD = `CTRLW'b0_010_11_00_000_1_0_0_0_0_0_0_0_0_00_0_0; // branches
       7'b1100111: if (JRFunctD)
                       ControlsD = `CTRLW'b1_000_01_00_000_0_0_1_1_0_0_0_0_0_00_0_0; // jalr
@@ -299,26 +299,26 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   // Unswizzle control bits
   // Squash control signals if coming from an illegal compressed instruction
   // On RV32E, can't write to upper 16 registers.  Checking reads to upper 16 is more costly so disregard them.
-  assign IllegalERegAdrD = P.E_SUPPORTED & P.ZICSR_SUPPORTED & ControlsD[`CTRLW-1] & InstrD[11]; 
+  assign IllegalERegAdrD = P.E_SUPPORTED & P.ZICSR_SUPPORTED & ControlsD[`CTRLW-1] & InstrD[11];
   assign {BaseRegWriteD, PreImmSrcD, ALUSrcAD, BaseALUSrcBD, MemRWD,
-          ResultSrcD, BranchD, ALUOpD, JumpD, ALUResultSrcD, BaseW64D, CSRReadD, 
+          ResultSrcD, BranchD, ALUOpD, JumpD, ALUResultSrcD, BaseW64D, CSRReadD,
           PrivilegedD, FenceXD, MDUD, AtomicD, CMOD, unused} = IllegalIEUFPUInstrD ? `CTRLW'b0 : ControlsD;
-  
+
   assign CSRZeroSrcD = InstrD[14] ? (InstrD[19:15] == 0) : (Rs1D == 0); // Is a CSR instruction using zero as the source?
   assign CSRWriteD = CSRReadD & !(CSRZeroSrcD & InstrD[13]);            // Don't write if setting or clearing zeros
   assign SFenceVmaD = PrivilegedD & (InstrD[31:25] ==  7'b0001001);
   assign FenceD = SFenceVmaD | FenceXD; // possible sfence.vma or fence.i
-  
+
   // ALU Decoding is lazy, only using func7[5] to distinguish add/sub and srl/sra
-  assign sltuD = (Funct3D == 3'b011); 
+  assign sltuD = (Funct3D == 3'b011);
   assign subD = (Funct3D == 3'b000 & Funct7D[5] & OpD[5]);  // OpD[5] needed to distinguish sub from addi
   assign sraD = (Funct3D == 3'b101 & Funct7D[5]);
   assign BaseSubArithD = ALUOpD & (subD | sraD | sltD | sltuD);
 
   // bit manipulation Configuration Block
   if (P.ZBS_SUPPORTED  | P.ZBA_SUPPORTED  | P.ZBB_SUPPORTED  | P.ZBC_SUPPORTED |
-      P.ZBKB_SUPPORTED | P.ZBKC_SUPPORTED | P.ZBKX_SUPPORTED | P.ZKNE_SUPPORTED | 
-      P.ZKND_SUPPORTED | P.ZKNH_SUPPORTED) begin: bitmanipi 
+      P.ZBKB_SUPPORTED | P.ZBKC_SUPPORTED | P.ZBKX_SUPPORTED | P.ZKNE_SUPPORTED |
+      P.ZKND_SUPPORTED | P.ZKNH_SUPPORTED) begin: bitmanipi
     logic IllegalBitmanipInstrD;          // Unrecognized B instruction
     logic BRegWriteD;                     // Indicates if it is a R type BMU instruction in decode stage
     logic BW64D;                          // Indicates if it is a W type BMU instruction in decode stage
@@ -326,7 +326,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     logic BALUSrcBD;                      // BMU alu src select signal
 
     bmuctrl #(P) bmuctrl(.clk, .reset, .InstrD, .ALUOpD,
-      .BRegWriteD, .BALUSrcBD, .BW64D, .BUW64D, .BSubArithD, .IllegalBitmanipInstrD, .StallE, .FlushE, 
+      .BRegWriteD, .BALUSrcBD, .BW64D, .BUW64D, .BSubArithD, .IllegalBitmanipInstrD, .StallE, .FlushE,
       .ALUSelectD(PreALUSelectD), .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE);
     if (P.ZBA_SUPPORTED) begin
       // ALU Decoding is more comprehensive when ZBA is supported. slt and slti conflicts with sh1add, sh1add.uw
@@ -337,7 +337,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     // coverage off: IllegalERegAdr can't occur in rv64gc; only applicable to E mode
     assign IllegalBaseInstrD = (ControlsD[0] & IllegalBitmanipInstrD) | IllegalERegAdrD ;
     // coverage on
-    assign RegWriteD = BaseRegWriteD | BRegWriteD; 
+    assign RegWriteD = BaseRegWriteD | BRegWriteD;
     assign W64D = BaseW64D | BW64D;
     assign ALUSrcBD = BaseALUSrcBD | BALUSrcBD;
     assign SubArithD = BaseSubArithD | BSubArithD; // TRUE If BMU or R-type instruction involves inverted operand
@@ -346,7 +346,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign PreALUSelectD = ALUOpD ? Funct3D : 3'b000; // add for address generation when not doing ALU operation
     assign sltD = (Funct3D == 3'b010);
     assign IllegalBaseInstrD = ControlsD[0] | IllegalERegAdrD ;
-    assign RegWriteD = BaseRegWriteD; 
+    assign RegWriteD = BaseRegWriteD;
     assign W64D = BaseW64D;
     assign ALUSrcBD = BaseALUSrcBD;
     assign SubArithD = BaseSubArithD; // TRUE If B-type or R-type instruction involves inverted operand
@@ -390,9 +390,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     end
     if ((P.ZICBOM_SUPPORTED) & CMOD) begin
       CMOpD[2] = (InstrD[31:20] == 12'd2); // cbo.clean
-      CMOpD[1] = (InstrD[31:20] == 12'd1) | ((InstrD[31:20] == 12'd0) & (ENVCFG_CBE[1:0] == 2'b01)); // cbo.flush 
+      CMOpD[1] = (InstrD[31:20] == 12'd1) | ((InstrD[31:20] == 12'd0) & (ENVCFG_CBE[1:0] == 2'b01)); // cbo.flush
       CMOpD[0] = (InstrD[31:20] == 12'd0) & (ENVCFG_CBE[1:0] == 2'b11); // cbo.inval
-    end 
+    end
   end
 
   // Prefetch Hints
@@ -403,7 +403,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     ImmSrcD = PreImmSrcD;
     if (P.ZICBOP_SUPPORTED & (InstrD[14:0] == 15'b110_00000_0010011)) begin // ori with destination x0 is hint for Prefetch
       /* verilator lint_off CASEINCOMPLETE */
-      case (Rs2D) // which type of prefectch?  Note: prefetch.r and .w are handled the same in Wally 
+      case (Rs2D) // which type of prefectch?  Note: prefetch.r and .w are handled the same in Wally
         5'b00000: IFUPrefetchD = 1'b1; // prefetch.i
         5'b00001: LSUPrefetchD = 1'b1; // prefetch.r
         5'b00011: LSUPrefetchD = 1'b1; // prefetch.w
@@ -440,17 +440,17 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   assign MDUActiveE = (ResultSrcE == 3'b011);
   assign RegWriteE = IEURegWriteE | FWriteIntE; // IRF register writes could come from IEU or FPU controllers
   assign IntDivE = MDUE & Funct3E[2]; // Integer division operation
-  
+
   // Memory stage pipeline control register
   flopenrc #(25) controlregM(clk, reset, FlushM, ~StallM,
                          {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE, IntDivE, CMOpE, LSUPrefetchE},
                          {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, InstrValidM, IntDivM, CMOpM, LSUPrefetchM});
-  flopenrc #(5)  RdMReg(clk, reset, FlushM, ~StallM, RdE, RdM);  
+  flopenrc #(5)  RdMReg(clk, reset, FlushM, ~StallM, RdE, RdM);
 
   // Writeback stage pipeline control register
   flopenrc #(5) controlregW(clk, reset, FlushW, ~StallW,
                          {RegWriteM, ResultSrcM, IntDivM},
-                         {RegWriteW, ResultSrcW, IntDivW});  
+                         {RegWriteW, ResultSrcW, IntDivW});
   flopenrc #(5) RdWReg(clk, reset, FlushW, ~StallW, RdM, RdW);
 
   // Flush F, D, and E stages on a CSR write or Fence.I or SFence.VMA
@@ -463,7 +463,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     if (Rs1E != 5'b0)
       if      ((Rs1E == RdM) & RegWriteM) ForwardAE = 2'b10;
       else if ((Rs1E == RdW) & RegWriteW) ForwardAE = 2'b01;
- 
+
     if (Rs2E != 5'b0)
       if      ((Rs2E == RdM) & RegWriteM) ForwardBE = 2'b10;
       else if ((Rs2E == RdW) & RegWriteW) ForwardBE = 2'b01;
@@ -472,7 +472,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   // Stall on dependent operations that finish in Mem Stage and can't bypass in time
   // Structural hazard causes stall if any of these events occur
   assign MatchDE = ((Rs1D == RdE) | (Rs2D == RdE)) & (RdE != 5'b0); // Decode-stage instruction source depends on result from execute stage instruction
-  assign LoadStallD = (MemReadE|SCE) & MatchDE;  
+  assign LoadStallD = (MemReadE|SCE) & MatchDE;
   assign StoreStallD = MemRWD[1] & MemRWE[0];   // Store or AMO followed by load or AMO
   assign CSRRdStallD = CSRReadE & MatchDE;
   assign MDUStallD = MDUE & MatchDE; // Int mult/div is at least two cycle latency, even when coming from the FDIV

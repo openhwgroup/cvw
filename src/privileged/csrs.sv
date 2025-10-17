@@ -2,45 +2,45 @@
 // csrs.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
-// Modified: 
+// Modified:
 //          dottolia@hmc.edu 3 May 2021 - fix bug with stvec getting wrong value
 //
 // Purpose: Supervisor-Mode Control and Status Registers
-//          See RISC-V Privileged Mode Specification 20190608 
+//          See RISC-V Privileged Mode Specification 20190608
 //
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module csrs import cvw::*;  #(parameter cvw_t P) (
-  input  logic              clk, reset, 
+  input  logic              clk, reset,
   input  logic              CSRSWriteM, STrapM,
   input  logic [11:0]       CSRAdrM,
-  input  logic [P.XLEN-1:0] NextEPCM, NextMtvalM, SSTATUS_REGW, 
+  input  logic [P.XLEN-1:0] NextEPCM, NextMtvalM, SSTATUS_REGW,
   input  logic [4:0]        NextCauseM,
   input  logic              STATUS_TVM,
   input  logic [P.XLEN-1:0] CSRWriteValM,
   input  logic [1:0]        PrivilegeModeW,
   output logic [P.XLEN-1:0] CSRSReadValM, STVEC_REGW,
-  output logic [P.XLEN-1:0] SEPC_REGW,      
-  output logic [31:0]       SCOUNTEREN_REGW, 
+  output logic [P.XLEN-1:0] SEPC_REGW,
+  output logic [31:0]       SCOUNTEREN_REGW,
   output logic [P.XLEN-1:0] SATP_REGW,
   input  logic [11:0]       MIP_REGW, MIE_REGW, MIDELEG_REGW,
   input  logic [63:0]       MTIME_CLINT,
@@ -79,7 +79,7 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]               TVECWriteValM;
 
   logic [63:0]             STIMECMP_REGW;
-  
+
   // write enables
   assign WriteSSTATUSM    = CSRSWriteM & (CSRAdrM == SSTATUS);
   assign WriteSTVECM      = CSRSWriteM & (CSRAdrM == STVEC);
@@ -100,9 +100,9 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
 
   // CSRs
   assign TVECWriteValM = CSRWriteValM[0] ? {CSRWriteValM[P.XLEN-1:6], 6'b000001} : {CSRWriteValM[P.XLEN-1:2], 2'b00}; // could share this with MTVEC, but reduces to 4-bit AND to mask bits [5:2]
-  flopenr #(P.XLEN) STVECreg(clk, reset, WriteSTVECM, TVECWriteValM, STVEC_REGW); 
+  flopenr #(P.XLEN) STVECreg(clk, reset, WriteSTVECM, TVECWriteValM, STVEC_REGW);
   flopenr #(P.XLEN) SSCRATCHreg(clk, reset, WriteSSCRATCHM, CSRWriteValM, SSCRATCH_REGW);
-  flopenr #(P.XLEN) SEPCreg(clk, reset, WriteSEPCM, NextEPCM, SEPC_REGW); 
+  flopenr #(P.XLEN) SEPCreg(clk, reset, WriteSEPCM, NextEPCM, SEPC_REGW);
   flopenr #(P.XLEN) SCAUSEreg(clk, reset, WriteSCAUSEM, {NextCauseM[4], {(P.XLEN-5){1'b0}}, NextCauseM[3:0]}, SCAUSE_REGW);
   flopenr #(P.XLEN) STVALreg(clk, reset, WriteSTVALM, NextMtvalM, STVAL_REGW);
   if (P.VIRTMEM_SUPPORTED)
@@ -123,7 +123,7 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
   // Spec is a bit peculiar - Machine timer interrupts are produced in CLINT, while Supervisor timer interrupts are in CSRs
   if (P.SSTC_SUPPORTED)
    assign STimerInt  = ({1'b0, MTIME_CLINT} >= {1'b0, STIMECMP_REGW}); // unsigned comparison
-  else 
+  else
     assign STimerInt = 1'b0;
 
   logic [1:0] LegalizedCBIE;
@@ -135,17 +135,17 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
     LegalizedCBIE     & {2{P.ZICBOM_SUPPORTED}},
     3'b0,
     CSRWriteValM[0]   & P.VIRTMEM_SUPPORTED
-  }; 
+  };
 
   flopenr #(P.XLEN) SENVCFGreg(clk, reset, WriteSENVCFGM, SENVCFG_WriteValM, SENVCFG_REGW);
-    
+
   // CSR Reads
   always_comb begin:csrr
     IllegalCSRSAccessM = 1'b0;
-    case (CSRAdrM) 
+    case (CSRAdrM)
       SSTATUS:   CSRSReadValM = SSTATUS_REGW;
       STVEC:     CSRSReadValM = STVEC_REGW;
-      SIP:       CSRSReadValM = {{(P.XLEN-12){1'b0}}, MIP_REGW & 12'h222 & MIDELEG_REGW}; // only read supervisor fields  
+      SIP:       CSRSReadValM = {{(P.XLEN-12){1'b0}}, MIP_REGW & 12'h222 & MIDELEG_REGW}; // only read supervisor fields
       SIE:       CSRSReadValM = {{(P.XLEN-12){1'b0}}, MIE_REGW & 12'h222 & MIDELEG_REGW}; // only read supervisor fields
       SSCRATCH:  CSRSReadValM = SSCRATCH_REGW;
       SEPC:      CSRSReadValM = SEPC_REGW;
@@ -158,22 +158,22 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
                  end
       SCOUNTEREN:CSRSReadValM = {{(P.XLEN-32){1'b0}}, SCOUNTEREN_REGW};
       SENVCFG:   CSRSReadValM = SENVCFG_REGW;
-      STIMECMP:  if (STCE) 
-                   CSRSReadValM = STIMECMP_REGW[P.XLEN-1:0]; 
-                 else begin 
+      STIMECMP:  if (STCE)
+                   CSRSReadValM = STIMECMP_REGW[P.XLEN-1:0];
+                 else begin
                    CSRSReadValM = '0;
                    IllegalCSRSAccessM = 1'b1;
                  end
       STIMECMPH: if (STCE & P.XLEN == 32) // not supported for RV64
                    CSRSReadValM = {{(P.XLEN-32){1'b0}}, STIMECMP_REGW[63:32]};
-                 else begin 
+                 else begin
                    CSRSReadValM = '0;
                    IllegalCSRSAccessM = 1'b1;
                  end
       default: begin
-                  CSRSReadValM = '0; 
-                  IllegalCSRSAccessM = 1'b1;  
-               end       
+                  CSRSReadValM = '0;
+                  IllegalCSRSAccessM = 1'b1;
+               end
     endcase
   end
 endmodule

@@ -2,28 +2,28 @@
 // ieu.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
-// Modified: 
+// Modified:
 //
 // Purpose: Integer Execution Unit: datapath and controller
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -41,7 +41,7 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   output logic              PCSrcE,                          // Select next PC (between PC+4 and IEUAdrE)
   input  logic              FWriteIntE, FCvtIntE,            // FPU writes to integer register file, FPU converts float to int
   output logic [P.XLEN-1:0] IEUAdrE,                         // Memory address
-  output logic              IntDivE, W64E,                   // Integer divide, RV64 W-type instruction 
+  output logic              IntDivE, W64E,                   // Integer divide, RV64 W-type instruction
   output logic [2:0]        Funct3E,                         // Funct3 instruction field
   output logic [P.XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE,  // ALU src inputs before the mux choosing between them and PCE to put in srcA/B
   output logic [4:0]        RdE,                             // Destination register
@@ -65,7 +65,7 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   output logic              JumpD, JumpE,
   // Writeback stage signals
   input  logic [P.XLEN-1:0] FIntDivResultW,                  // Integer divide result from FPU fdivsqrt)
-  input  logic [P.XLEN-1:0] CSRReadValW,                     // CSR read value, 
+  input  logic [P.XLEN-1:0] CSRReadValW,                     // CSR read value,
   input  logic [P.XLEN-1:0] MDUResultW,                      // multiply/divide unit result
   input  logic [P.XLEN-1:0] FCvtIntResW,                     // FPU's float to int conversion result
   input  logic              FCvtIntW,                        // FPU converts float to int
@@ -81,7 +81,7 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   output logic              CSRWriteFenceM                   // CSR write or fence instruction needs to flush subsequent instructions
 );
 
-  logic [2:0] ImmSrcD;                                       // Select type of immediate extension 
+  logic [2:0] ImmSrcD;                                       // Select type of immediate extension
   logic [1:0] FlagsE;                                        // Comparison flags ({eq, lt})
   logic       ALUSrcAE, ALUSrcBE;                            // ALU source operands
   logic [2:0] ResultSrcW;                                    // Selects result in Writeback stage
@@ -105,15 +105,15 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   logic       BranchSignedE;                                 // Branch does signed comparison on operands
   logic       BMUActiveE;                                    // Bit manipulation instruction being executed
   logic [1:0] CZeroE;                                        // {czero.nez, czero.eqz} instructions active
-           
+
   controller #(P) c(
     .clk, .reset, .StallD, .FlushD, .InstrD, .STATUS_FS, .ENVCFG_CBE, .ImmSrcD,
-    .IllegalIEUFPUInstrD, .IllegalBaseInstrD, 
+    .IllegalIEUFPUInstrD, .IllegalBaseInstrD,
     .StructuralStallD, .LoadStallD, .StoreStallD, .Rs1D, .Rs2D,  .Rs2E,
     .StallE, .FlushE, .FlagsE, .FWriteIntE,
     .PCSrcE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE,
     .Funct3E, .Funct7E, .IntDivE, .W64E, .UW64E, .SubArithE, .BranchD, .BranchE, .JumpD, .JumpE,
-    .BranchSignedE, .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE, .CZeroE, .MDUActiveE, 
+    .BranchSignedE, .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE, .CZeroE, .MDUActiveE,
     .FCvtIntE, .ForwardAE, .ForwardBE, .CMOpM, .IFUPrefetchE, .LSUPrefetchM,
     .StallM, .FlushM, .MemRWE, .MemRWM, .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
     .FlushDCacheM, .InstrValidM, .InstrValidE, .InstrValidD, .FWriteIntM,
@@ -122,9 +122,9 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
 
   datapath #(P) dp(
     .clk, .reset, .ImmSrcD, .InstrD, .Rs1D, .Rs2D, .Rs2E, .StallE, .FlushE, .ForwardAE, .ForwardBE, .W64E, .UW64E, .SubArithE,
-    .Funct3E, .Funct7E, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .JumpE, .BranchSignedE, 
+    .Funct3E, .Funct7E, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .JumpE, .BranchSignedE,
     .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE, .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE, .CZeroE,
     .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataM, .FCvtIntW,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .SquashSCW, .ResultSrcW, .ReadDataW, .FCvtIntResW,
-    .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW);             
+    .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW);
 endmodule

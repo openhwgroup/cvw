@@ -4,23 +4,23 @@
 // Written: David_Harris@hmc.edu 8/24/22
 //
 // Purpose: Single-ported ROM
-// 
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -36,7 +36,7 @@ module rom1p1r #(parameter ADDR_WIDTH = 8, DATA_WIDTH = 32, PRELOAD_ENABLED = 0)
 
    // Core Memory
    bit [DATA_WIDTH-1:0]    ROM [(2**ADDR_WIDTH)-1:0];
-   
+
    // dh 10/30/23 ROM macros are presently commented out
    // because they don't point to a generated ROM
 /*   if ((`USE_SRAM == 1) & (ADDR_WDITH == 7) & (DATA_WIDTH == 64)) begin
@@ -50,13 +50,13 @@ module rom1p1r #(parameter ADDR_WIDTH = 8, DATA_WIDTH = 32, PRELOAD_ENABLED = 0)
   `ifdef VERILATOR
     import "DPI-C" function string getenvval(input string env_name);
   `endif
-  
-  initial 
+
+  initial
     if (PRELOAD_ENABLED) begin
       if (DATA_WIDTH == 64) begin
         `ifdef VERILATOR
             // because Verilator doesn't automatically accept $WALLY from shell
-            string       WALLY_DIR = getenvval("WALLY"); 
+            string       WALLY_DIR = getenvval("WALLY");
             $readmemh({WALLY_DIR,"/fpga/src/boot.mem"}, ROM, 0);  // load boot ROM for FPGA
         `else
             $readmemh({"$WALLY/fpga/src/boot.mem"}, ROM, 0);  // load boot ROM for FPGA
@@ -66,9 +66,9 @@ module rom1p1r #(parameter ADDR_WIDTH = 8, DATA_WIDTH = 32, PRELOAD_ENABLED = 0)
       end
     end
 
-  always_ff @ (posedge clk) 
+  always_ff @ (posedge clk)
     if(ce) dout <= ROM[addr];
-   
+
    // for FPGA, initialize with zero-stage bootloader
    /*if(PRELOAD_ENABLED) begin
       initial begin
@@ -214,8 +214,8 @@ module rom1p1r #(parameter ADDR_WIDTH = 8, DATA_WIDTH = 32, PRELOAD_ENABLED = 0)
         ROM[139]=64'h3083d53ff0ef0556;
         ROM[140]=64'h4501400134034081;
         ROM[141]=64'h0000808241010113;
-        
-      end // if (PRELOAD_ENABLED)  
+
+      end // if (PRELOAD_ENABLED)
    end*/
 
-endmodule 
+endmodule

@@ -2,28 +2,28 @@
 // fma.sv
 //
 // Written:  6/23/2021 me@KatherineParry.com, David_Harris@hmc.edu
-// Modified: 
+// Modified:
 //
 // Purpose: Floating point multiply-accumulate of configurable size
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -67,28 +67,28 @@ module fma import cvw::*;  #(parameter cvw_t P) (
   //      - If the product is zero then kill the exponent
   //      - Multiply the mantissas
   ///////////////////////////////////////////////////////////////////////////////
-  
-  // calculate the product's exponent 
+
+  // calculate the product's exponent
   fmaexpadd #(P) expadd(.Xe, .Ye, .XZero, .YZero, .Pe);
 
   // multiplication of the mantissa's
   fmamult #(P) mult(.Xm, .Ym, .Pm);
-  
+
   // calculate the signs and take the operation into account
   fmasign sign(.OpCtrl, .Xs, .Ys, .Zs, .Ps, .As, .InvA);
 
   ///////////////////////////////////////////////////////////////////////////////
   // Alignment shifter
   ///////////////////////////////////////////////////////////////////////////////
-  
+
   fmaalign #(P) align(.Ze, .Zm, .XZero, .YZero, .ZZero, .Xe, .Ye, .Am, .ASticky, .KillProd);
-                      
+
   // ///////////////////////////////////////////////////////////////////////////////
   // // Addition/LZA
   // ///////////////////////////////////////////////////////////////////////////////
-      
+
   fmaadd #(P) add(.Am, .Pm, .Ze, .Pe, .Ps, .KillProd, .ASticky, .AmInv, .PmKilled, .InvA, .Sm, .Se, .Ss);
 
   fmalza #(P.FMALEN, P.NF) lza(.A(AmInv), .Pm(PmKilled), .Cin(InvA & (~ASticky | KillProd)), .sub(InvA), .SCnt);
-  
+
 endmodule
