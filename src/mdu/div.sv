@@ -2,28 +2,28 @@
 // intdivrestoring.sv
 //
 // Written: David_Harris@hmc.edu 12 September 2021
-// Modified: 
+// Modified:
 //
 // Purpose: Restoring integer division using a shift register and subtractor
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -33,7 +33,7 @@ module div import cvw::*;  #(parameter cvw_t P) (
   input  logic              StallM,
   input  logic              FlushE,
   input  logic              IntDivE,                        // integer division/remainder instruction of any type
-  input  logic              DivSignedE,                     // signed division 
+  input  logic              DivSignedE,                     // signed division
   input  logic              W64E,                           // W-type instructions (divw, divuw, remw, remuw)
   input  logic [P.XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // Forwarding mux outputs for Source A and B
   output logic              DivBusyE,                       // Divide is busy - stall pipeline
@@ -60,13 +60,13 @@ module div import cvw::*;  #(parameter cvw_t P) (
   logic                DivStartE;                           // start integer division
   logic                SignXE, SignDE;                      // sign of dividend and divisor
   logic                NegQE, NegWM, NegQM;                 // negate quotient or residual during postprocessing
- 
+
   //////////////////////////////
   // Execute Stage: prepare for division calculation with control logic, W logic and absolute values, initialize W and XQ
   //////////////////////////////
 
   // Divider control signals
-  assign DivStartE = IntDivE & (state == IDLE) & ~StallM; 
+  assign DivStartE = IntDivE & (state == IDLE) & ~StallM;
   assign DivBusyE = (state == BUSY) | DivStartE;
 
   // Handle sign extension for W-type instructions
@@ -75,11 +75,11 @@ module div import cvw::*;  #(parameter cvw_t P) (
     mux2 #(P.XLEN) dinmux(ForwardedSrcBE, {{32{ForwardedSrcBE[31]&DivSignedE}}, ForwardedSrcBE[31:0]}, W64E, DinE);
   end else begin // RV32 has no W-type instructions
     assign XinE = ForwardedSrcAE;
-    assign DinE = ForwardedSrcBE;      
-    end   
+    assign DinE = ForwardedSrcBE;
+    end
 
   // Extract sign bits and check for division by zero
-  assign SignDE = DivSignedE & DinE[P.XLEN-1]; 
+  assign SignDE = DivSignedE & DinE[P.XLEN-1];
   assign SignXE = DivSignedE & XinE[P.XLEN-1];
   assign NegQE = SignDE ^ SignXE;
   assign Div0E = (DinE == 0);
@@ -99,7 +99,7 @@ module div import cvw::*;  #(parameter cvw_t P) (
   mux2 #(P.XLEN) xmux(XQ[P.IDIV_BITSPERCYCLE], XInitE, DivStartE, XQNext);
 
   // registers before division steps
-  flopen #(P.XLEN) wreg(clk, DivBusyE, WNext, W[0]); 
+  flopen #(P.XLEN) wreg(clk, DivBusyE, WNext, W[0]);
   flopen #(P.XLEN) xreg(clk, DivBusyE, XQNext, XQ[0]);
   flopen #(P.XLEN) dabsreg(clk, DivStartE, DAbsBE, DAbsB);
 
@@ -113,7 +113,7 @@ module div import cvw::*;  #(parameter cvw_t P) (
   //////////////////////////////
 
   flopen #(3) Div0eMReg(clk, DivStartE, {Div0E, NegQE, SignXE}, {Div0M, NegQM, NegWM});
-  
+
   // On final setp of signed operations, negate outputs as needed to get correct sign
   neg #(P.XLEN) qneg(XQ[0], XQnM);
   neg #(P.XLEN) wneg(W[0], WnM);
@@ -125,10 +125,10 @@ module div import cvw::*;  #(parameter cvw_t P) (
   // Divider FSM to sequence Busy and Done
   //////////////////////////////
 
- always_ff @(posedge clk) 
+ always_ff @(posedge clk)
     if (reset | FlushE) begin
-        state <= IDLE; 
-    end else if (DivStartE) begin 
+        state <= IDLE;
+    end else if (DivStartE) begin
         step <= 1;
         if (Div0E) state <= DONE;
         else       state <= BUSY;
@@ -140,5 +140,5 @@ module div import cvw::*;  #(parameter cvw_t P) (
     end else if (state == DONE) begin
       if (StallM) state <= DONE;
       else        state <= IDLE;
-    end 
-endmodule 
+    end
+endmodule

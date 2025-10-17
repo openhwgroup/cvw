@@ -6,35 +6,35 @@
 // Created: 15 April 2023
 //
 // Purpose: Local history branch predictor with speculation and repair using CBH.
-// 
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module localrepairbp import cvw::*; #(parameter cvw_t P,
                                       parameter XLEN,
-                       parameter m = 6, // 2^m = number of local history branches 
+                       parameter m = 6, // 2^m = number of local history branches
                        parameter k = 10) ( // number of past branches stored
   input logic             clk,
   input logic             reset,
   input logic             StallF, StallD, StallE, StallM, StallW,
   input logic             FlushD, FlushE, FlushM, FlushW,
-  output logic [1:0]      BPDirD, 
+  output logic [1:0]      BPDirD,
   output logic            BPDirWrongE,
   // update
   input logic [XLEN-1:0] PCNextF, PCE, PCM,
@@ -57,8 +57,8 @@ module localrepairbp import cvw::*; #(parameter cvw_t P,
   logic [m-1:0]           IndexLHRD;
   logic [k-1:0]           LHRNextE;
   logic                   SpeculativeFlushedF;
-  
-  
+
+
   ram2p1r1wbe #(.USE_SRAM(P.USE_SRAM), .DEPTH(2**k), .WIDTH(2)) PHT(.clk(clk),
     .ce1(~StallD), .ce2(~StallW & ~FlushW),
     .ra1(LHRF),
@@ -78,7 +78,7 @@ module localrepairbp import cvw::*; #(parameter cvw_t P,
 
   assign BPDirWrongE = PCSrcE != BPDirM[1] & BranchE;
 
-  // This is the main difference between global and local history basic implementations. In global, 
+  // This is the main difference between global and local history basic implementations. In global,
   // the ghr wraps back into itself directly without
   // being pipelined.  I.E. GHR is not read in F and then pipelined to M where it is updated.  Instead
   // GHR is both read and update in M.  GHR is still pipelined so that the PHT is updated with the correct
@@ -124,7 +124,7 @@ module localrepairbp import cvw::*; #(parameter cvw_t P,
   mux2 #(k) LHRMux(LHRSpeculativeF, LHRCommittedF, SpeculativeFlushedF, LHRF);
 
   flopenrc #(1) PCSrcMReg(clk, reset, FlushM, ~StallM, PCSrcE, PCSrcM);
-    
+
   //flopenrc #(k) LHRFReg(clk, reset, FlushD, ~StallF, LHRNextF, LHRF);
   //assign LHRF = LHRNextF;
   flopenrc #(k) LHRDReg(clk, reset, FlushD, ~StallD, LHRF, LHRD);

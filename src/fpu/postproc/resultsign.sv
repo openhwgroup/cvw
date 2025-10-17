@@ -5,25 +5,25 @@
 // Modified: 7/5/2022
 //
 // Purpose: calculating the result's sign
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -47,10 +47,10 @@ module resultsign(
   logic Infs;     // infinity result sign
 
   // determine the sign for a result of 0
-  //  The IEEE754-2019 standard specifies: 
+  //  The IEEE754-2019 standard specifies:
   //      - the sign of an exact zero sum (with operands of different signs) should be positive unless rounding toward negative infinity
   //      - when the exact result of an FMA operation is non-zero, but is zero due to rounding, use the sign of the exact result
-  //      - if x = +0 or -0 then x+x=x and x-(-x)=x 
+  //      - if x = +0 or -0 then x+x=x and x-(-x)=x
   //      - the sign of a product is the exclisive or or the opperand's signs
   //  Zero sign will only be selected if:
   //      - P=Z and a cancellation occurs - exact zero
