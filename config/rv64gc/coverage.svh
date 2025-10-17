@@ -9,6 +9,10 @@
 `define XLEN64
 `define VLEN512
 
+// Virtual Memory Modes
+`define SV39
+`define SV48
+
 // PMP Grain (G)
 // Set G as needed (e.g., 0, 1, 2, ...)
 `define G 4
@@ -66,7 +70,7 @@
 `define ZIFENCEI_COVERAGE
 
 // Privileged extensions
-`define RV64VM_COVERAGE
+`define VM_COVERAGE
 `define RV64PMP_COVERAGE
 `define ZICSRM_COVERAGE
 `define ZICSRS_COVERAGE
