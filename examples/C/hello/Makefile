@@ -1,7 +1,7 @@
 TARGET = hello
 
 $(TARGET).objdump: $(TARGET)
-	riscv64-unknown-elf-objdump -S -D $(TARGET) > $(TARGET).objdump
+	riscv64-unknown-elf-objdump -S -d $(TARGET) > $(TARGET).objdump
     
 $(TARGET): $(TARGET).c Makefile
 	riscv64-unknown-elf-gcc -o $(TARGET) -gdwarf-2 -O\
