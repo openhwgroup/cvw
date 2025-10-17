@@ -61,11 +61,3 @@ fromhost: .dword 0
 # a syscall buffer?
 .align 6
 magic_mem: .word 0, 0, 0, 0, 0, 0, 0, 0
-	  
-
-.data
-/*
-addi
-j 1b
-
-*/
