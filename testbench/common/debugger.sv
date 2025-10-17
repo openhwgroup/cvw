@@ -318,11 +318,6 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
       string line;
       string items[$];
       int    file = $fopen(filename, "r");
-
-      // if (file <= 0) begin
-      //   $display("Nope: %s", filename);
-      //   $finish;
-      // end
          
       while (!$feof(file)) begin        
         if ($fgets(line, file)) begin

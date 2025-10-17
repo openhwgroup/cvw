@@ -122,6 +122,8 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
                          {CSRWriteValM[15], CSRWriteValM[13], CSRWriteValM[12], CSRWriteValM[11], CSRWriteValM[8:6], CSRWriteValM[2], CSRWriteValM[1:0]} :
                          {ebreakm, ebreaks, ebreaku, stepie, cause, step, prv};
 
+  assign DPCWriteValM = WriteDPC & (state == HALTED) ? CSRWriteValM : PCM;
+
   ////////////////////////////////////////////////////////////////////
   // CSRs
   ////////////////////////////////////////////////////////////////////
@@ -130,7 +132,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
     {ebreakm, ebreaks, ebreaku, stepie, cause, step, prv},
     DCSR_REGW);
   
-  flopenr #(P.XLEN) DPCreg(clk, reset, WriteDPC, PCM, DPC_REGW);
+  flopenr #(P.XLEN) DPCreg(clk, reset, WriteDPC, DPCWriteValM, DPC_REGW);
   // assign DPC = DPC_REGW;
 
   assign ebreakm = DCSR_REGW[dcsrwidth - 1];
@@ -190,7 +192,16 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   end
   
   assign DebugMode = (state == HALTED);
-  assign DebugResume = (state == HALTED) && (state_n == RUNNING);
+  // assign DebugResume = (state == HALTED) && (state_n == RUNNING);
+
+  // Needs to be delayed so StallF can be low
+  always @(posedge clk) begin
+    if (reset) begin
+      DebugResume <= 0;
+    end else begin
+      DebugResume <= (state == HALTED) && (state_n == RUNNING);
+    end
+  end
   // Halt cause
   // 000: No cause - Reset
   // 001: ebreak

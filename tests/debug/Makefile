@@ -19,7 +19,10 @@
 #  Last Updated :  $(shell date +"%Y-%m-%d")
 ###############################################################################
 
-$(info WALLY is set to $(WALLY))
+# Check for $WALLY environment variable
+ifndef WALLY
+$(error WALLY is not set. Source setup.sh in your local cvw, and then run make)
+endif
 
 RISCV ?= /opt/riscv
 

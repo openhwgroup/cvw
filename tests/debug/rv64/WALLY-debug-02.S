@@ -46,7 +46,7 @@ tohost_exit:
 	slli a0, a0, 1
 	ori a0, a0, 1
 	la t0, tohost
-	sd a0, 0(t0)
+	sw a0, 0(t0)
 1: j 1b
 	
 .section .tohost, "aw", @progbits
@@ -62,3 +62,10 @@ fromhost: .dword 0
 .align 6
 magic_mem: .word 0, 0, 0, 0, 0, 0, 0, 0
 	  
+
+.data
+/*
+addi
+j 1b
+
+*/

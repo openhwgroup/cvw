@@ -705,6 +705,25 @@ add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/pri
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/DebugMode
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/ResumeReq
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/DPC_REGW
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/StartCommand
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/ValidCommand
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/ValidSize
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/GPRDebugEnable
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/CSRDebugEnable
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/FPRDebugEnable
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/DebugMode
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/DebugControl
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/DebugRegRDATA
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/DebugRegWDATA
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/DebugRegAddr
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/DebugRegWrite
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/debug.csrd/CSRDReadValM
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/debug.csrd/CSRDWriteM
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/CSRAdrM
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/CSRReadValM
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/CSRWriteValM
+
+
 
 
 

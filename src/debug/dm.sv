@@ -142,7 +142,8 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic        WriteRequest;
    
   logic StartCommand;
-  logic NextValid;   
+  logic NextValid;
+  logic ValidSize;   
    
   // Abstract Commands:
   // 0: Access Register Command
@@ -287,7 +288,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
       if (reset) begin
         Data1 <= '0;
       end else begin
-        Data1 <= Data0;
+        Data1 <= Data1;
         if (WriteRequest & (DMIADDR == DATA1)) begin
           Data1 <= DMIDATA;
         end else if (ReadRegister) begin
@@ -309,7 +310,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   // AbstractCS
   always_ff @(posedge clk) begin
     if (reset) begin
-      AbstractCS <= 32'h0000_0001;
+      AbstractCS <= P.XLEN == 32 ? 32'h0000_0001 : 32'h000_0002;
     end else if (WriteRequest & (DMIADDR == ABSTRACTCS)) begin
       AbstractCS <= {AbstractCS[31:12],
                      DMIDATA[11], // Relaxedpriv
@@ -510,10 +511,17 @@ module dm import cvw::*; #(parameter cvw_t P) (
       NextCSRDebugEnable = 0;
     end
   end
-   
-  assign nextaarsize = DMIDATA[22:20];  
+ 
+  assign nextaarsize = DMIDATA[22:20];
+
+  if (P.XLEN == 32) begin
+    assign ValidSize = nextaarsize == 3'd2 | nextaarsize == 3'd0;
+  end else begin
+    assign ValidSize = nextaarsize == 3'd2 | nextaarsize == 3'd3 | nextaarsize == 3'd0;
+  end
+  
   always_comb begin
-    if (ValidCommand & nextaarsize != 3'd2 & nextaarsize != 3'd0) cmderr = 3'd2;
+    if (ValidCommand & ~ValidSize) cmderr = 3'd2;
     else if (~ValidCommand & nextaarsize == 3'd2) cmderr = 3'd3;
     else cmderr = 3'd0;
   end 
