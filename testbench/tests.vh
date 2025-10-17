@@ -206,7 +206,9 @@ string arch32pmp[] = '{
   "rv32i_m/pmp/src/pmpzca_misaligned_tor.S",
   "rv32i_m/pmp/src/pmpzcb_legal_lxwr.S",
   "rv32i_m/pmp/src/pmpzcd_legal_lxwr.S",
-  "rv32i_m/pmp/src/pmpzcf_legal_lxwr.S"
+  "rv32i_m/pmp/src/pmpzcf_legal_lxwr.S",
+  "rv32i_m/pmp/src/pmpm_csr_walk.S",
+  "rv32i_m/pmp/src/pmpzicbo_prefetch.S"
   // *** Uncomment following when G = 0
   //"rv32i_m/pmp/src/pmpzca_misaligned_na4.S",
   //"rv32i_m/pmp/src/pmpzca_cret_na4.S",
@@ -217,15 +219,12 @@ string arch32pmp[] = '{
   //"rv32i_m/pmp/src/pmpm_misaligned_na4.S",
   //"rv32i_m/pmp/src/pmpm_cfg_na4_all.S",
   // *** Uncomment following when PMP Entries = 64
-  //"rv32i_m/pmp/src/pmpm_all_entries_check-01.S",  
+  //"rv32i_m/pmp/src/pmpm_all_entries_check-01.S",
   //"rv32i_m/pmp/src/pmpm_all_entries_check-02.S",
   //"rv32i_m/pmp/src/pmpm_all_entries_check-03.S",
   //"rv32i_m/pmp/src/pmpm_all_entries_check-04.S",
-  // *** Uncomment following when PR#705 is merged
-  //"rv32i_m/pmp/src/pmpm_csr_walk.S",
-  //"rv32i_m/pmp/src/pmpzicbo_prefetch.S",
   // *** Uncomment following when PR#699 is merged
-  //"rv32i_m/pmp/src/pmpzicbo_cbo_WR_01.S",  
+  //"rv32i_m/pmp/src/pmpzicbo_cbo_WR_01.S",
   //"rv32i_m/pmp/src/pmpzicbo_cbo_WR_02.S",
   //"rv32i_m/pmp/src/pmpzicbo_cbo_WR_03.S",
   //"rv32i_m/pmp/src/pmpzalrsc_cfg_wr.S"
@@ -285,9 +284,10 @@ string arch64pmp[] = '{
   "rv64i_m/pmp/src/pmpzca_misaligned_off.S",
   "rv64i_m/pmp/src/pmpzca_misaligned_tor.S",
   "rv64i_m/pmp/src/pmpzcb_legal_lwxr.S",
-  "rv64i_m/pmp/src/pmpzcd_legal_lwxr.S"
+  "rv64i_m/pmp/src/pmpzcd_legal_lwxr.S",
+  "rv64i_m/pmp/src/pmpzicbo_prefetch.S"
   // *** Uncomment following when PMP Entries = 64
-  //"rv64i_m/pmp/src/pmpm_all_entries_check-01.S",  
+  //"rv64i_m/pmp/src/pmpm_all_entries_check-01.S",
   //"rv64i_m/pmp/src/pmpm_all_entries_check-02.S",
   //"rv64i_m/pmp/src/pmpm_all_entries_check-03.S",
   //"rv64i_m/pmp/src/pmpm_all_entries_check-04.S",
@@ -304,10 +304,8 @@ string arch64pmp[] = '{
   //"rv64i_m/pmp/src/pmpzca_aligned_na4.S",
   //"rv64i_m/pmp/src/pmpzca_cret_na4.S",
   //"rv64i_m/pmp/src/pmpzca_misaligned_na4.S",
-  // *** Uncomment following when PR#705 is merged
-  //"rv64i_m/pmp/src/pmpzicbo_prefetch.S",
   // *** Uncomment following when PR#699 is merged
-  //"rv64i_m/pmp/src/pmpzicbo_cbo_WR_01.S",  
+  //"rv64i_m/pmp/src/pmpzicbo_cbo_WR_01.S",
   //"rv64i_m/pmp/src/pmpzicbo_cbo_WR_02.S",
   //"rv64i_m/pmp/src/pmpzicbo_cbo_WR_03.S",
   //"rv64i_m/pmp/src/pmpzalrsc_cfg_wr.S",
