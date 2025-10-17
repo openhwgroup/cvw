@@ -1,4 +1,26 @@
-# This Makefile compiles for 32 bit configurations exclusively for now
+###############################################################################
+#  WALLY Debug Build System
+#  -------------------------------------------------------------
+#  Description :  Makefile for building and generating testvectors
+#                 for the WALLY RISC-V System-on-Chip (SoC) debug flow.
+#
+#  Authors      :  Jacob Pease and James E. Stine
+#
+#  License      :  Open-source educational use permitted.
+#                  Developed as part of the WALLY RISC-V SoC ecosystem.
+#
+#  Notes        :  This Makefile supports both RV32 and RV64 configurations.
+#                  Ensure RISCV and WALLY environment variables are properly set.
+#                  Invoke with:
+#                      make all       – build ELF files, dumps, and testvectors
+#                      make memfile   – generate memory files for simulation
+#                      make clean     – remove build artifacts
+#
+#  Last Updated :  $(shell date +"%Y-%m-%d")
+###############################################################################
+
+$(info WALLY is set to $(WALLY))
+
 RISCV ?= /opt/riscv
 
 CC = riscv64-unknown-elf-gcc
