@@ -45,6 +45,7 @@ module pmpchecker import cvw::*;  #(parameter cvw_t P) (
   input  logic                     ExecuteAccessF, WriteAccessM, ReadAccessM,
   input  logic [1:0]               Size,
   input  logic [3:0]               CMOpM,
+  input  logic                     SelHPTW,
   output logic                     PMPInstrAccessFaultF,
   output logic                     PMPLoadAccessFaultM,
   output logic                     PMPStoreAmoAccessFaultM
@@ -89,6 +90,6 @@ module pmpchecker import cvw::*;  #(parameter cvw_t P) (
   assign PMPCMOAccessFault      = PMPCBOZAccessFault | PMPCBOMAccessFault;              // exclusion-tag: immu-pmpcboaccess
 
   assign PMPInstrAccessFaultF     = EnforcePMP & ExecuteAccessF & ~MatchingX ;
-  assign PMPStoreAmoAccessFaultM  = (EnforcePMP & WriteAccessM & ~MatchingW)  | PMPCMOAccessFault; // exclusion-tag: immu-pmpstoreamoaccessfault
+  assign PMPStoreAmoAccessFaultM  = (EnforcePMP & WriteAccessM & ~MatchingW)  | (PMPCMOAccessFault & ~SelHPTW); // exclusion-tag: immu-pmpstoreamoaccessfault
   assign PMPLoadAccessFaultM      = EnforcePMP & ReadAccessM & ~WriteAccessM & ~MatchingR;
  endmodule
