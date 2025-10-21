@@ -33,7 +33,6 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.PA_BITS-1:0] PhysicalAddress,
   input  logic [1:0]           Size,
   input  logic [3:0]           CMOpM,
-  input  logic                 SelHPTW,
   input  logic                 AtomicAccessM,  // Atomic access
   input  logic                 ExecuteAccessF, // Execute access 
   input  logic                 WriteAccessM,   // Write access 
@@ -77,5 +76,5 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
   assign PMAAccessFault          = SelRegions[0] & AccessRWXC | AtomicAccessM & ~AtomicAllowed;  
   assign PMAInstrAccessFaultF    = ExecuteAccessF & PMAAccessFault;
   assign PMALoadAccessFaultM     = ReadAccessM & ~WriteAccessM & PMAAccessFault;
-  assign PMAStoreAmoAccessFaultM = (WriteAccessM | (~SelHPTW & |CMOpM))   & PMAAccessFault;
+  assign PMAStoreAmoAccessFaultM = (WriteAccessM | (|CMOpM))   & PMAAccessFault;
 endmodule

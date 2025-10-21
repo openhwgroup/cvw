@@ -108,6 +108,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic [2:0]            LSUFunct3M;                             // IEU or HPTW memory operation size
   logic [6:0]            LSUFunct7M;                             // AMO function gated by HPTW
   logic [1:0]            LSUAtomicM;                             // AMO signal gated by HPTW
+  logic [3:0]            LSUCMOpM;                               // CMOpM gated by HPTW
 
   logic                  GatedStallW;                            // Hazard unit StallW gated when SelHPTW = 1
   
@@ -149,8 +150,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   logic                  SelDTIM;                                // Select DTIM rather than bus or D$
   logic [P.XLEN-1:0]     WriteDataZM;
   logic                  LSULoadPageFaultM, LSUStoreAmoPageFaultM;
-  logic 		 DTLBMissOrUpdateDAM;
-   
+  logic 		             DTLBMissOrUpdateDAM;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Pipeline for IEUAdr E to M
@@ -181,7 +181,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   end
 
     if(P.ZICBOZ_SUPPORTED) begin : cboz
-      assign WriteDataZM = CMOpM[3] ? 0 : WriteDataM;
+      assign WriteDataZM = LSUCMOpM[3] ? 0 : WriteDataM;
    end else begin : cboz
       assign WriteDataZM = WriteDataM;
     end
@@ -199,8 +199,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       .ReadDataM(ReadDataM[P.XLEN-1:0]), // ReadDataM is LLEN, but HPTW only needs XLEN
       .WriteDataM(WriteDataZM), .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
       .IEUAdrExtM, .PTE, .IHWriteDataM, .PageType, .PreLSURWM, .LSUAtomicM,
-      .IHAdrM, .HPTWStall, .SelHPTW, 
-      .HPTWFlushW, .CMOpM, .LSULoadAccessFaultM, .LSUStoreAmoAccessFaultM, 
+      .IHAdrM, .CMOpM, .LSUCMOpM, .HPTWStall, .SelHPTW, 
+      .HPTWFlushW, .LSULoadAccessFaultM, .LSUStoreAmoAccessFaultM, 
       .LoadAccessFaultM, .StoreAmoAccessFaultM, .HPTWInstrAccessFaultF,
       .LoadPageFaultM, .StoreAmoPageFaultM, .LSULoadPageFaultM, .LSUStoreAmoPageFaultM, .HPTWInstrPageFaultF
 );
@@ -210,6 +210,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign LSUFunct3M = Funct3M;
     assign LSUFunct7M = Funct7M; 
     assign LSUAtomicM = AtomicM;
+    assign LSUCMOpM = CMOpM;
     assign IHWriteDataM = WriteDataZM;
     assign LoadAccessFaultM = LSULoadAccessFaultM;
     assign StoreAmoAccessFaultM = LSUStoreAmoAccessFaultM;
@@ -248,7 +249,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       .StoreAmoAccessFaultM(LSUStoreAmoAccessFaultM), .InstrPageFaultF(), .LoadPageFaultM(LSULoadPageFaultM), 
       .StoreAmoPageFaultM(LSUStoreAmoPageFaultM),
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
-      .UpdateDA(DataUpdateDAM), .CMOpM(CMOpM), .SelHPTW,
+      .UpdateDA(DataUpdateDAM), .CMOpM(LSUCMOpM),
       .AtomicAccessM(|LSUAtomicM), .ExecuteAccessF(1'b0), 
       .WriteAccessM, .ReadAccessM(PreLSURWM[1]),
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
@@ -314,7 +315,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       logic                    BusAtomic;
 
       if(P.ZICBOZ_SUPPORTED) begin 
-        assign BusCMOZero = CMOpM[3] & ~CacheableM;
+        assign BusCMOZero = LSUCMOpM[3] & ~CacheableM;
         assign CacheCMOpM = (CacheableM & ~SelHPTW) ? CMOpM : '0;
         assign BusAtomic = AtomicM[1] & ~CacheableM;
       end else begin
