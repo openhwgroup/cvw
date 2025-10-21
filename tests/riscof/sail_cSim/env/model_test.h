@@ -1,6 +1,9 @@
 #ifndef _COMPLIANCE_MODEL_H
 #define _COMPLIANCE_MODEL_H
 
+#define RVMODEL_PMP_GRAIN 4
+#define RVMODEL_NUM_PMPS 16
+
 #define RVMODEL_DATA_SECTION \
         .pushsection .tohost,"aw",@progbits;                            \
         .align 8; .global tohost; tohost: .dword 0;                     \

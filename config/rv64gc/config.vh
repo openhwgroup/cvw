@@ -6,22 +6,22 @@
 //
 // Purpose: Specify which features of Wally are enabled and set
 //          configuration parameters
-// 
+//
 // A component of the Wally configurable RISC-V project.
-// 
+//
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -140,7 +140,7 @@ localparam PMP_ENTRIES = 32'd16;
 
 // grain size should be a full cache line to avoid problems with accesses within a cache line
 // that span grain boundaries but are handled without a spill
-localparam PMP_G = 32'd0;  //e.g. 4 for 64-byte grains (512-bit cache lines)
+localparam PMP_G = 32'd4;  //e.g. 4 for 64-byte grains (512-bit cache lines)
 
 // Address space
 localparam logic [63:0] RESET_VECTOR = 64'h0000000080000000;
@@ -192,7 +192,7 @@ localparam AHBW = (XLEN);
 
 // Test modes
 
-// AHB 
+// AHB
 localparam RAM_LATENCY = 32'b0;
 localparam logic BURST_EN = 1;
 

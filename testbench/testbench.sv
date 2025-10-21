@@ -199,6 +199,8 @@ module testbench;
         "arch64zkne":    if (P.ZKNE_SUPPORTED)    tests = arch64zkne;
         "arch64zknh":    if (P.ZKNH_SUPPORTED)    tests = arch64zknh;
         "arch64pmp":     if (P.PMP_ENTRIES > 0)   tests = arch64pmp;
+        "arch64vm_sv39": if (P.VIRTMEM_SUPPORTED) tests = arch64vm_sv39;
+        "arch64vm_sv48": if (P.VIRTMEM_SUPPORTED) tests = arch64vm_sv48;
       endcase
     end else begin // RV32
       case (TEST)

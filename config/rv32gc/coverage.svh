@@ -21,7 +21,7 @@
 
 // Base addresses specific for PMP
 `define RAM_BASE_ADDR       32'h80000000  // PMP Region starts at RAM_BASE_ADDR + LARGEST_PROGRAM 
-`define LARGEST_PROGRAM     32'h00001000
+`define LARGEST_PROGRAM     32'h00002000
 
 // Define relevant addresses
 `define ACCESS_FAULT_ADDRESS 32'h0000
@@ -67,7 +67,7 @@
 `define ZIFENCEI_COVERAGE
 
 // Privileged extensions
-`define RV32VM_COVERAGE
+`define VM_COVERAGE
 `define RV32VM_PMP_COVERAGE
 `define RV32PMP_COVERAGE
 `define ZICSRM_COVERAGE
