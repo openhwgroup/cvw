@@ -49,6 +49,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   input  logic              ITLBMissOrUpdateAF,
   input  logic              DTLBMissOrUpdateDAM,
   input  logic              FlushW,
+  input  logic [3:0]        CMOpM,
   output logic [P.XLEN-1:0] PTE,                    // page table entry to TLBs
   output logic [1:0]        PageType,               // page type to TLBs
   output logic              ITLBWriteF, DTLBWriteM, // write TLB with new entry
@@ -58,6 +59,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   output logic [1:0]        LSUAtomicM,
   output logic [2:0]        LSUFunct3M,
   output logic [6:0]        LSUFunct7M,
+  output logic [3:0]        LSUCMOpM,
   output logic              HPTWFlushW,
   output logic              SelHPTW,
   output logic              HPTWStall,
@@ -113,10 +115,10 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   assign PBMTOrDAUFaultM         = PBMTFaultM | DAUFaultM;
   assign HPTWFaultM              = LSUAccessFaultM | PBMTOrDAUFaultM;
   assign HPTWLoadAccessFault     = LSUAccessFaultM & DTLBWalk & MemRWM[1] & ~MemRWM[0];  
-  assign HPTWStoreAmoAccessFault = LSUAccessFaultM & DTLBWalk & MemRWM[0];
+  assign HPTWStoreAmoAccessFault = LSUAccessFaultM & DTLBWalk & (MemRWM[0] | (|CMOpM));
   assign HPTWInstrAccessFault    = LSUAccessFaultM & ~DTLBWalk;
   assign HPTWLoadPageFault       = PBMTOrDAUFaultM & DTLBWalk & MemRWM[1] & ~MemRWM[0];
-  assign HPTWStoreAmoPageFault   = PBMTOrDAUFaultM & DTLBWalk & MemRWM[0];
+  assign HPTWStoreAmoPageFault   = PBMTOrDAUFaultM & DTLBWalk & (MemRWM[0] | (|CMOpM));
   assign HPTWInstrPageFault      = PBMTOrDAUFaultM & ~DTLBWalk;
 
   flopr #(6) HPTWAccesFaultReg(clk, reset, {HPTWLoadAccessFault, HPTWStoreAmoAccessFault, HPTWInstrAccessFault, 
@@ -326,6 +328,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, LSUFunct3M);
   mux2 #(7) funct7mux(Funct7M, 7'b0, SelHPTW, LSUFunct7M);    
   mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LSUAtomicM);
+  mux2 #(4) cmomux(CMOpM, 4'b0, SelHPTW, LSUCMOpM);
   mux2 #(P.XLEN+2) lsupadrmux(IEUAdrExtM, HPTWAdrExt, SelHPTWAdr, IHAdrM);
   if (P.SVADU_SUPPORTED) 
     mux2 #(P.XLEN) lsuwritedatamux(WriteDataM, PTE, SelHPTW, IHWriteDataM);
