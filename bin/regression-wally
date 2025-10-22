@@ -357,7 +357,7 @@ def addTestsByDir(testDir, config, sim, coverStr, configs, lockstepMode=0, breke
     elif coverStr == "--fcov":
         gs = "Functional coverage test complete."
     else:
-        gs = "Single Elf file tests are not signatured verified."
+        gs = "Elf test complete."
     for dirpath, _, filenames in os.walk(os.path.abspath(testDir)):
         for file in filenames:
             if file.endswith(fileEnd) and file.startswith(fileStart):
@@ -382,8 +382,9 @@ def search_log_for_text(text, grepfile):
         for line in content:
             if "warning:" in line.lower():
                 print(f"{bcolors.WARNING}{line.strip()}{bcolors.ENDC}")
-            if "error:" in line.lower():
+            if "error:" in line.lower() or "failed" in line.lower():
                 print(f"{bcolors.FAIL}{line.strip()}{bcolors.ENDC}")
+                return False
         return any(text in line for line in content)
 
 def run_test_case(config, dryrun: bool = False):
@@ -436,6 +437,7 @@ def parse_args():
     parser.add_argument("--dryrun", help="Print commands invoked to console without running regression", action="store_true")
     parser.add_argument("--benchmark", help="Check for performance changes or discrepancies in embench and coremark", action="store_true")
     parser.add_argument("--cache", help="Run cache performance validation tests", action="store_true")
+    parser.add_argument("--dir", help="Run all tests from the specified directory", default="")
     return parser.parse_args()
 
 
@@ -518,7 +520,7 @@ def selectTests(args, sims, coverStr):
     if args.breker:
         addTestsByDir(WALLY+"/tests/breker/work", "rv64breker", "questa", coverStr, configs, brekerMode=1)
     # standard tests
-    if not(args.testfloat or args.ccov or args.fcov or args.fcov_act or args.cache or args.branch or args.benchmark or args.breker):
+    if not(args.testfloat or args.ccov or args.fcov or args.fcov_act or args.cache or args.branch or args.benchmark or args.breker or args.dir):
         for sim in sims:
             if not (args.buildroot and sim == lockstepsim):  # skip short buildroot sim if running long one
                 addTests(tests_buildrootshort, sim, coverStr, configs)
@@ -548,7 +550,6 @@ def selectTests(args, sims, coverStr):
                         grepstr="All Tests completed with          0 errors",
                         grepfile = sim_log)
                 configs.append(tc)
-
     if (args.benchmark or args.nightly):
         # RUNNING THE EMBENCH TEST
         embench_dir = f"{WALLY}/benchmarks/embench/"
@@ -565,7 +566,6 @@ def selectTests(args, sims, coverStr):
             altcommand=f"diff -ru {actual_embench_directory} {expected_embench_directory} >> {embench_logfile_path}"
         )
         configs.append(embench_test)
-
 
         # RUNNING THE COREMARK TEST
         coremark_logfile_path = f"{regressionDir}/{defaultsim}/logs/validation.log"
@@ -588,6 +588,9 @@ def selectTests(args, sims, coverStr):
     if (args.cache or args.nightly):
         # RUNNING THE CACHE TESTS FOR RV64GC
         addTests(tests64gc_cache, defaultsim, coverStr, configs)
+
+    if args.dir != "":
+        addTestsByDir(args.dir, "rv32gc", defaultsim, coverStr, configs)
 
     return configs
 
