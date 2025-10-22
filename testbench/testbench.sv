@@ -448,7 +448,7 @@ module testbench;
         `elsif FCOV
           $display("Functional coverage test complete.");
         `else
-          $display("Single Elf file tests are not signatured verified.");
+          $display("Elf test complete.");
         `endif
 `ifdef QUESTA
         $stop;  // if this is changed to $finish for Questa, wally-batch.do does not go to the next step to run coverage, and wally.do terminates without allowing GUI debug

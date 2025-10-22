@@ -118,7 +118,7 @@ module div import cvw::*;  #(parameter cvw_t P) (
   neg #(P.XLEN) qneg(XQ[0], XQnM);
   neg #(P.XLEN) wneg(W[0], WnM);
   // Select appropriate output: normal, negated, or for divide by zero
-  mux3 #(P.XLEN) qmux(XQ[0], XQnM, {P.XLEN{1'b1}}, {Div0M, NegQM}, QuotM); // Q taken from XQ register, negated if necessary, or all 1s when dividing by zero
+  mux3 #(P.XLEN) qmux(XQ[0], XQnM, {P.XLEN{1'b0}}, {Div0M, NegQM}, QuotM); // Q taken from XQ register, negated if necessary, or all 1s when dividing by zero
   mux3 #(P.XLEN) remmux(W[0], WnM, XQ[0], {Div0M, NegWM}, RemM); // REM taken from W register, negated if necessary, or from X when dividing by zero
 
   //////////////////////////////
