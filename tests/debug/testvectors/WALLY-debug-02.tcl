@@ -46,4 +46,4 @@ while {$pc1 != 0x00000000800001a4} {
 }
 set_reg {dpc 0x800001a6}
 resume
-#puts "Welp..."
+halt

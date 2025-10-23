@@ -38,7 +38,9 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   input logic [P.XLEN-1:0]  PCM,
   output logic              IllegalCSRDAccessM,
   output logic              DebugResume,
-  output [P.XLEN-1:0]       DPC_REGW
+  output [P.XLEN-1:0]       DPC_REGW,
+  output logic              HaveReset,
+  input logic              HaveResetAck
 );
 
   localparam DCSR = 12'h7B0;
@@ -219,6 +221,16 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
       NextCause = 3'd1;*/
     end else begin
       NextCause = '0;
+    end
+  end
+
+
+  // Have reset logic
+  always_ff @(posedge clk) begin
+    if (reset) begin
+      HaveReset <= 1'b1;
+    end else if (HaveResetAck) begin
+      HaveReset <= 1'b0;
     end
   end
   

@@ -719,6 +719,8 @@ add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/DebugRegWrite
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/debug.csrd/CSRDReadValM
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/debug.csrd/CSRDWriteM
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/debug.csrd/HaveReset
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/debug.csrd/HaveResetAck
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/CSRAdrM
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/CSRReadValM
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/CSRWriteValM

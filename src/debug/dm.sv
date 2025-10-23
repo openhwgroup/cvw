@@ -57,7 +57,11 @@ module dm import cvw::*; #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] DebugRegRDATA,
   output logic [P.XLEN-1:0] DebugRegWDATA,
   output logic [11:0]       DebugRegAddr,
-  output logic              DebugRegWrite
+  output logic              DebugRegWrite,
+
+  // Run State
+  input  logic              HaveReset,
+  output logic              HaveResetAck
 );
 
   typedef enum logic [6:0] {
@@ -210,11 +214,12 @@ module dm import cvw::*; #(parameter cvw_t P) (
             
         DMSTATUS: begin
           // Might need a separate always_comb for every register.
-          DMIRSPDATA <= {DMStatus[31:18],
-                           allrunning, allrunning, // Shouldn't be necessary, check FIXME
-                           DMStatus[15:12],
-                           allrunning, anyrunning, allhalted, anyhalted,
-                           DMStatus[7:0]};
+          DMIRSPDATA <= {DMStatus[31:20],
+                         HaveReset, HaveReset,
+                         anyresumeack, anyresumeack,
+                         DMStatus[15:12],
+                         allrunning, anyrunning, allhalted, anyhalted,
+                         DMStatus[7:0]};
         end
             
         HARTINFO: DMIRSPDATA <= HartInfo;
@@ -244,9 +249,9 @@ module dm import cvw::*; #(parameter cvw_t P) (
     end else if (WriteRequest & (DMIADDR == DMCONTROL)) begin
       DMControl <= DMControl;
       if (HaltReq) begin 
-        DMControl <= {DMIDATA[31], 1'b0, DMIDATA[29], 25'b0, DMIDATA[3:0]};
+        DMControl <= {DMIDATA[31], 1'b0, DMIDATA[29:28], 24'b0, DMIDATA[3:0]};
       end else begin
-        DMControl <= {DMIDATA[31:29], 25'b0, DMIDATA[3:0]};
+        DMControl <= {DMIDATA[31:28], 24'b0, DMIDATA[3:0]};
       end
     end
   end
@@ -341,6 +346,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
   assign HaltReq = DMControl[31];
   assign ResumeReq = DMControl[30];
   assign resethaltreq = 1'b0;
+  assign HaveResetAck = DMControl[28];
    
   typedef enum logic [1:0] {RUNNING, HALTING, HALTED, RESUMING} HaltState;
   HaltState CurrHaltState;
@@ -383,6 +389,18 @@ module dm import cvw::*; #(parameter cvw_t P) (
   assign allhalted = NextHaltState == HALTED | CurrHaltState == HALTED;
   assign anyhalted = NextHaltState == HALTED | CurrHaltState == HALTED;
 
+  always_ff @(posedge clk) begin
+    if (reset) begin
+      anyresumeack <= 1'b0;
+    end else if ((CurrHaltState == RESUMING) && (NextHaltState == RUNNING)) begin
+      anyresumeack <= 1'b1;
+    end else if ((CurrHaltState == RUNNING) && (NextHaltState == HALTING)) begin
+      anyresumeack <= 1'b0;
+    end else begin
+      anyresumeack <= anyresumeack;
+    end
+  end
+  
   // --------------------------------------------------------------------------
   // Abstract Command FSM
   // --------------------------------------------------------------------------

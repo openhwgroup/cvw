@@ -186,6 +186,7 @@ module dtm import cvw::*; #(parameter cvw_t P) (
             //dmi_req.data <= dmi.data;
             DMIADDR <= dmi[P.ABITS+34-1:34];
             DMIDATA <= dmi[33:2];
+            DMINextReg <= dmi[33:2]; // Added this here because of Spike Discrepencies
             if ((dmi[1:0] == RD) | (dmi[1:0] == WR)) begin
               //dmi_req.op <= dmi.op;
               //dmi_req.valid <= 1'b1;
@@ -205,10 +206,18 @@ module dtm import cvw::*; #(parameter cvw_t P) (
             //dmi_next_reg.op <= dmi_rsp.op;
             DMIOP <= NOP;
             DMIVALID <= 1'b0;
-            DMINextReg[33:2] <= DMIRSPDATA;
+            // This whole if block was added because of Spike discrepencies.
+            if (DMIOP == 2'b01) begin
+              DMINextReg[33:2] <= DMIRSPDATA;
+            end else begin
+              DMINextReg[33:2] <= dmi[33:2];
+            end
+            // If above block is removed, uncomment the following.
+            // DMINextReg[33:2] <= DMIRSPDATA;
             DMINextReg[1:0] <= DMIRSPOP;
             DMIState <= IDLE;
           end else begin
+            DMINextReg[33:2] <= dmi[33:2]; // Ahem... Spike discrepency.
             DMIState <= BUSY;
           end
         end           
