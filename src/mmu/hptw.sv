@@ -185,7 +185,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
 
     assign {Dirty, Accessed} = PTE[7:6];
     assign WriteAccess = MemRWM[0]; // implies | (|AtomicM);
-    assign SetDirty = ~Dirty & DTLBWalk & WriteAccess;
+    assign SetDirty = ~Dirty & DTLBWalk & (WriteAccess | CMOpM[3]);
     assign ReadAccess = MemRWM[1];
 
     assign EffectivePrivilegeMode = DTLBWalk ? (STATUS_MPRV ? STATUS_MPP : PrivilegeModeW) : PrivilegeModeW; // DTLB uses MPP mode when MPRV is 1
@@ -304,7 +304,8 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
                   else                                                NextWalkerState = LEAF;
       LEAF:       if (P.SVADU_SUPPORTED & HPTWUpdateDA)               NextWalkerState = UPDATE_PTE;
                   else                                                NextWalkerState = IDLE;
-      UPDATE_PTE: if (DCacheBusStallM)                                NextWalkerState = UPDATE_PTE;
+      UPDATE_PTE: if (HPTWFaultM)                                     NextWalkerState = FAULT;
+                  else if (DCacheBusStallM)                           NextWalkerState = UPDATE_PTE;
                   else                                                NextWalkerState = LEAF;
       FAULT:                                                          NextWalkerState = IDLE;
       default:                                                        NextWalkerState = IDLE; // Should never be reached

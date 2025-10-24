@@ -72,6 +72,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   logic                  InterruptM, InterruptW;
   logic                  MExtInt, SExtInt, MTimerInt, MSwInt;
   logic                  valid;
+  logic                  HPTWUpdateDA, DA_updated, capture_PTE;
 
   //For VM Verification
   logic [(P.XLEN-1):0]     IVAdrF,IVAdrD,IVAdrE,IVAdrM,IVAdrW,DVAdrM,DVAdrW;
@@ -134,6 +135,7 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   //For VM Verification
   if (P.VIRTMEM_SUPPORTED) begin
     assign SelHPTW        = testbench.dut.core.lsu.hptw.hptw.SelHPTW;
+    assign HPTWUpdateDA   = testbench.dut.core.lsu.hptw.hptw.HPTWUpdateDA;
     assign IVAdrF         = testbench.dut.core.ifu.immu.immu.tlb.tlb.VAdr;
     assign DVAdrM         = testbench.dut.core.lsu.dmmu.dmmu.tlb.tlb.VAdr;
     assign IPAF           = testbench.dut.core.ifu.immu.immu.PhysicalAddress;
@@ -349,13 +351,18 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   flopenr #(P.PA_BITS)  IPAWReg (clk, reset, ~StallW, IPAM, IPAW); //Physical Address for IMMU
   flopenr #(P.PA_BITS)  DPAWReg (clk, reset, ~StallW, DPAM, DPAW); //Physical Address for DMMU
 
-  flopenr #(P.XLEN)     IPTEFReg (clk, reset, SelHPTW, IPTEF, IPTEHPTWF); //PTE for IMMU // No value for PTE when SelHPTW is low. Used to capture valid PTE during page table walk
-  flopenr #(P.XLEN)     IPTEDReg (clk, reset, ~StallD, IPTEHPTWF, IPTED); //PTE for IMMU 
-  flopenr #(P.XLEN)     IPTEEReg (clk, reset, ~StallE, IPTED, IPTEE);     //PTE for IMMU
-  flopenr #(P.XLEN)     IPTEMReg (clk, reset, ~StallM, IPTEE, IPTEM);     //PTE for IMMU
-  flopenr #(P.XLEN)     IPTEWReg (clk, reset, ~StallW, IPTEM, IPTEW);     //PTE for IMMU
-  flopenr #(P.XLEN)     DPTEMReg (clk, reset, SelHPTW, DPTEM, DPTEHPTWM); //PTE for DMMU // No value for PTE when SelHPTW is low. Used to capture valid PTE during page table walk
-  flopenr #(P.XLEN)     DPTEWReg (clk, reset, ~StallW, DPTEHPTWM, DPTEW); //PTE for DMMU
+  // 'DA_updated' is a sticky bit that latches when HPTWUpdateDA asserts. Cleared as the walk finishes.
+  flopenrc #(1)         UpdDAReg (clk, reset, ~SelHPTW, 1'b1, (HPTWUpdateDA | DA_updated), DA_updated);
+  // Capture valid PTE during page table walk; no value when SelHPTW is low
+  // Don't capture if hardware has update DA bits of PTE
+  assign capture_PTE = SelHPTW & ~DA_updated;
+  flopenr #(P.XLEN)     IPTEFReg (clk, reset, capture_PTE, IPTEF, IPTEHPTWF); //PTE for IMMU
+  flopenr #(P.XLEN)     IPTEDReg (clk, reset, ~StallD, IPTEHPTWF, IPTED);     //PTE for IMMU 
+  flopenr #(P.XLEN)     IPTEEReg (clk, reset, ~StallE, IPTED, IPTEE);         //PTE for IMMU
+  flopenr #(P.XLEN)     IPTEMReg (clk, reset, ~StallM, IPTEE, IPTEM);         //PTE for IMMU
+  flopenr #(P.XLEN)     IPTEWReg (clk, reset, ~StallW, IPTEM, IPTEW);         //PTE for IMMU
+  flopenr #(P.XLEN)     DPTEMReg (clk, reset, capture_PTE, DPTEM, DPTEHPTWM); //PTE for DMMU
+  flopenr #(P.XLEN)     DPTEWReg (clk, reset, ~StallW, DPTEHPTWM, DPTEW);     //PTE for DMMU
 
   flopenr #(2)     IPageTypeDReg (clk, reset, ~StallD, IPageTypeF, IPageTypeD); //PageType (kilo, mega, giga, tera) from IMMU 
   flopenr #(2)     IPageTypeEReg (clk, reset, ~StallE, IPageTypeD, IPageTypeE); //PageType (kilo, mega, giga, tera) from IMMU
