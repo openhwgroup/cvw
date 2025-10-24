@@ -22,10 +22,6 @@
 	sparseCheckout = true
 	path = addins/verilog-ethernet
 	url = https://github.com/rosethompson/verilog-ethernet.git
-[submodule "addins/cvw-arch-verif"]
-	path = addins/cvw-arch-verif
-	url = https://github.com/openhwgroup/cvw-arch-verif
-	ignore = dirty
 [submodule "addins/berkeley-softfloat-3"]
 	path = addins/berkeley-softfloat-3
 	url = https://github.com/ucb-bar/berkeley-softfloat-3.git
@@ -33,6 +29,7 @@
 	path = addins/berkeley-testfloat-3
 	url = https://github.com/ucb-bar/berkeley-testfloat-3
 	ignore = untracked
-[submodule "addins/cvw-riscv-arch-test"]
-	path = addins/cvw-riscv-arch-test
-	url = https://github.com/jordancarlin/riscv-arch-test
+[submodule "addins/riscv-arch-test-cvw"]
+	path = addins/riscv-arch-test-cvw
+	url = https://github.com/riscv-non-isa/riscv-arch-test
+	branch = cvw
