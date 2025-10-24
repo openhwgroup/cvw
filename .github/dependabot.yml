@@ -9,7 +9,7 @@ updates:
   - package-ecosystem: "gitsubmodule"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     ignore:
       - dependency-name: "addins/coremark"
       - dependency-name: "addins/embench-iot"
