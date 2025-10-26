@@ -1,55 +1,135 @@
-#!/bin/bash
-# check for warnings in Verilog code
-# The verilator lint tool is faster and better than Questa so it is best to run this first.
+#!/usr/bin/env python3
+##################################
+#
+# lint-wally
+# jcarlin@hmc.edu October 25, 2025
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+#
+# Check for warnings in Verilog code using Verilator lint tool.
+# The verilator lint tool is faster and better than Questa so it is best to run this first.
+#
+##################################
 
-verilator=$(which verilator)
 
-basepath=$(dirname "$0")/..
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-NC='\033[0m' # No Color
-fails=0
+import argparse
+import multiprocessing
+import os
+import signal
+import subprocess
+import sys
+from pathlib import Path
 
-if [ "$1" == "--nightly" ]; then
-    configs=(rv32e rv64gc rv32gc rv32imc rv32i rv64i) 
-    derivconfigs=$(ls "$WALLY"/config/deriv)
-    for entry in $derivconfigs
-    do
-        if [[ $entry != *"syn_sram"* ]]; then  # ignore syn_sram* configs that contain undefined module
-            configs[${#configs[@]}]=$entry
-        fi
-    done
-else
-    configs=(rv32e rv64gc rv32gc rv32imc rv32i rv64i fdqh_rv64gc)
-fi
+# ANSI color codes
+RED = "\033[0;31m"
+GREEN = "\033[0;32m"
+NC = "\033[0m"  # No Color
 
-for config in ${configs[@]}; do
-#    echo "$config linting..."
-    if ! ($verilator --lint-only --quiet --top-module wallywrapper \
-         "-I$basepath/config/shared" "-I$basepath/config/$config" "-I$basepath/config/deriv/$config" \
-         $basepath/src/cvw.sv $basepath/testbench/wallywrapper.sv $basepath/src/*/*.sv $basepath/src/*/*/*.sv \
-         -Wall -Wno-UNUSEDSIGNAL -Wno-VARHIDDEN -Wno-GENUNNAMED -Wno-PINCONNECTEMPTY); then
-        if [ "$1" == "-nightly" ]; then
-            echo -e "${RED}$config failed lint${NC}"
-            fails=$((fails+1))
-        else
-            echo -e "${RED}$config fails with lint errors or warnings"
-            exit 1
-        fi
-    else
-        echo -e "${GREEN}$config passed lint${NC}"
-    fi
-done
-if [ $fails -gt 0 ]; then
-    echo -e "${RED}Linting failed for $fails of ${#configs[@]} configurations${NC}"
-    exit 1
-fi
-echo -e "${GREEN}All ${#configs[@]} lints run with no errors or warnings${NC}"
 
-# --lint-only just runs lint rather than trying to compile and simulate
-# -I points to the include directory where files such as `include config.vh  are found
+def get_configs(nightly: bool, WALLY: Path) -> list[str]:
+    """Get list of configurations to lint."""
+    # Start with base configs
+    configs = ["rv32e", "rv64gc", "rv32gc", "rv32imc", "rv32i", "rv64i"]
 
-# For more exhaustive (and sometimes spurious) warnings, add --Wall to the Verilator command
-# verilator --lint-only -Wall --quiet --top-module wallywrapper -Iconfig/shared -Iconfig/rv64gc src/cvw.sv testbench/wallywrapper.sv src/*/*.sv src/*/*/*.sv -Wno-UNUSEDPARAM -Wno-VARHIDDEN -Wno-GENUNNAMED -Wno-PINCONNECTEMPTY
-# Unfortunately, this produces a bunch of UNUSED and UNDRIVEN signal warnings in blocks that are configured to not exist.
+    if not nightly:
+        return configs + ["fdqh_rv64gc"]
+
+    # Add derivative configs, excluding syn_sram* configs that contain undefined module
+    deriv_dir = WALLY / "config" / "deriv"
+    if deriv_dir.exists():
+        for entry in deriv_dir.iterdir():
+            if entry.is_dir() and "syn_sram" not in entry.name:
+                configs.append(entry.name)
+
+    return configs
+
+
+def lint_config(WALLY: Path, config: str) -> bool:
+    """Run verilator lint on a single configuration."""
+    # Build the verilator command
+    cmd = [
+        "verilator",
+        "--lint-only",
+        "--quiet",
+        "--top-module",
+        "wallywrapper",
+        f"-I{WALLY}/config/shared",
+        f"-I{WALLY}/config/{config}",
+        f"-I{WALLY}/config/deriv/{config}",
+        f"{WALLY}/src/cvw.sv",
+        f"{WALLY}/testbench/wallywrapper.sv",
+    ]
+
+    # Add all SystemVerilog files
+    src_dir = WALLY / "src"
+    cmd.extend(str(sv_file) for sv_file in src_dir.rglob("*.sv"))
+
+    # Add warning flags
+    cmd.extend(
+        [
+            "-Wall",
+            "-Wno-UNUSEDSIGNAL",
+            "-Wno-VARHIDDEN",
+            "-Wno-GENUNNAMED",
+            "-Wno-PINCONNECTEMPTY",
+        ]
+    )
+
+    try:
+        subprocess.run(cmd, check=True)
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Lint Verilog code using Verilator")
+    parser.add_argument("--nightly", action="store_true", help="Run lint on all configurations including derivatives")
+    args = parser.parse_args()
+
+    # Get WALLY environment variable
+    WALLY = os.getenv("WALLY")
+    if WALLY is None:
+        sys.exit(f"{RED}Error: WALLY environment variable is not set.{NC}")
+    WALLY = Path(WALLY)
+
+    # Get configurations to test
+    configs = get_configs(args.nightly, WALLY)
+    fails = 0
+
+    # Override signal handling for clean Ctrl+C
+    original_sigint_handler = signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+    try:
+        with multiprocessing.Pool() as pool:
+            # Restore original signal handler in child processes
+            signal.signal(signal.SIGINT, original_sigint_handler)
+
+            # Run lint on each configuration in parallel
+            results = [(config, pool.apply_async(lint_config, (WALLY, config))) for config in configs]
+
+            # Process results as they complete
+            for config, result in results:
+                passed = result.get()
+                if passed:
+                    print(f"{GREEN}{config} passed lint{NC}")
+                else:
+                    print(f"{RED}{config} failed lint{NC}")
+                    if not args.nightly:
+                        pool.terminate()
+                        sys.exit(1)
+                    fails += 1
+
+    # Terminate the entire linting job on Ctrl+C
+    except KeyboardInterrupt:
+        sys.exit(1)
+
+    # Report results
+    if fails > 0:
+        print(f"{RED}Linting failed for {fails} of {len(configs)} configurations{NC}")
+        sys.exit(1)
+
+    print(f"{GREEN}All {len(configs)} lints passed{NC}")
+
+
+if __name__ == "__main__":
+    main()
