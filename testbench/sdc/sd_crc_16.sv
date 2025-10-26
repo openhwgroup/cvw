@@ -12,16 +12,16 @@ module sd_crc_16(BITVAL, Enable, CLK, RST, CRC);
    input        RST;                             // Init CRC value
    output reg [15:0] CRC;                               // Current output CRC value
 
-   
+
                      // We need output registers
    wire         inv;
-   
+
    assign inv = BITVAL ^ CRC[15];                   // XOR required?
-   
+
   always @(posedge CLK or posedge RST) begin
 		if (RST) begin
-			CRC = 0;   
-		
+			CRC = 0;
+
         end
       else begin
         if (Enable==1) begin
@@ -44,5 +44,5 @@ module sd_crc_16(BITVAL, Enable, CLK, RST, CRC);
         end
          end
       end
-   
+
 endmodule

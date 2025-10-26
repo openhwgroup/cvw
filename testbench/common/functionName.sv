@@ -2,24 +2,24 @@
 // functionName.sv
 //
 // Written: Rose Thompson rose@rosethompson.net
-// 
+//
 // Purpose: decode name of function
-// 
+//
 // A component of the Wally configurable RISC-V project.
-// 
+//
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -29,11 +29,11 @@ module functionName import cvw::*; #(parameter cvw_t P) (
   input string ProgramAddrMapFile,
   input string ProgramLabelMapFile
   );
-  
+
   logic [P.XLEN-1:0] ProgramAddrMapMemory [logic [P.XLEN-1:0]];
   string 	    ProgramLabelMapMemory [logic [P.XLEN-1:0]];
   string 	    FunctionName;
-  
+
 
   logic [P.XLEN-1:0] PCF, PCD, PCE, PCM, FunctionAddr, PCM_temp, PCMOld;
   logic 	    StallD, StallE, StallM, FlushD, FlushE, FlushM;
@@ -42,8 +42,8 @@ module functionName import cvw::*; #(parameter cvw_t P) (
 
   assign PCF = testbench.dut.core.ifu.PCF;
   assign StallD = testbench.dut.core.StallD;
-  assign StallE = testbench.dut.core.StallE;  
-  assign StallM = testbench.dut.core.StallM;  
+  assign StallE = testbench.dut.core.StallE;
+  assign StallM = testbench.dut.core.StallM;
   assign FlushD = testbench.dut.core.FlushD;
   assign FlushE = testbench.dut.core.FlushE;
   assign FlushM = testbench.dut.core.FlushM;
@@ -90,7 +90,7 @@ module functionName import cvw::*; #(parameter cvw_t P) (
 	  //$display("Critical Error in FunctionName. PC, %x not found.", pc);
 	  return;
 	  //$stop();
-	end	  
+	end
       end // while (left <= right)
       // if the element pc is now found, right and left will be equal at this point.
       // we need to check if pc is less than the array at left or greater.
@@ -98,11 +98,11 @@ module functionName import cvw::*; #(parameter cvw_t P) (
       // if it is greater we want 1 less than left.
       if (array[left] < pc) begin
 	minval = array[left];
-	mid = left;      
-	return;	    
+	mid = left;
+	return;
       end else begin
 	minval = array[left-1];
-	mid = left - 1;	
+	mid = left - 1;
 	return;
       end
     end
@@ -114,7 +114,7 @@ module functionName import cvw::*; #(parameter cvw_t P) (
   logic [P.XLEN-1:0] ProgramAddrMapLine;
   string  ProgramLabelMapLine;
   integer status;
-  
+
 
   // preload
 //  initial begin
@@ -123,7 +123,7 @@ module functionName import cvw::*; #(parameter cvw_t P) (
     // cannot readmemh directly to a dynamic array. Sad times :(
     // Let's initialize a static array with FFFF_FFFF for all addresses.
     // Then we can readmemh and finally copy to the dynamic array.
-    
+
 	// clear out the old mapping between programs.
     ProgramAddrMapMemory.delete();
     ProgramLabelMapMemory.delete();
@@ -153,7 +153,7 @@ module functionName import cvw::*; #(parameter cvw_t P) (
     // Build an associative array to convert the name to an index.
     ProgramLabelMapLineCount = 0;
     ProgramLabelMapFP = $fopen(ProgramLabelMapFile, "r");
-    
+
     if (ProgramLabelMapFP != 0) begin
       while (! $feof(ProgramLabelMapFP)) begin
 	status = $fscanf(ProgramLabelMapFP, "%s\n", ProgramLabelMapLine);

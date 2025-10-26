@@ -6,13 +6,13 @@ SECTIONS
 {
   /* Read-only sections, merged into text segment: */
   /* init segment to ensure we get a consistent start routine*/
-  . = 0x0000000000001000; 
-  . = ALIGN(0x0); 
-  .init : {  
-  	*(.init) 
-  } 
+  . = 0x0000000000001000;
+  . = ALIGN(0x0);
+  .init : {
+  	*(.init)
+  }
   _start_end = .;
-  
+
   PROVIDE (__executable_start = SEGMENT_START("text-segment", 0x0)); . = SEGMENT_START("text-segment", _start_end);
   .interp         : { *(.interp) }
   .note.gnu.build-id  : { *(.note.gnu.build-id) }

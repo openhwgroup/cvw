@@ -4,26 +4,26 @@
 // Written: Rose Thompson rose@rosethompson.net
 // Modified: 14 June 2023
 // Modified by sanarayanan@hmc.edu, May 2025
-// 
+//
 // Purpose: Log branch instructions, log instruction fetches,
 //          log I$ misses, log data memory accesses, log D$ misses, and
 //          log other related operations
-// 
+//
 // A component of the Wally configurable RISC-V project.
-// 
+//
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -36,7 +36,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
   input logic  clk,
   input logic  reset,
   input logic  DCacheFlushStart,
-  input logic  DCacheFlushDone,                                                         
+  input logic  DCacheFlushDone,
 //  input logic BeginSample,
 //  input logic StartSample,
 //  input logic EndSample,
@@ -44,8 +44,8 @@ module loggers import cvw::*; #(parameter cvw_t P,
   input string sim_log_prefix,
   input string TEST
   );
-  
-  // performance counter logging 
+
+  // performance counter logging
   logic        BeginSample;
   logic StartSample, EndSample;
   if((PrintHPMCounters | BPRED_LOGGER) & P.ZICNTR_SUPPORTED) begin : HPMCSample
@@ -85,7 +85,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
 
 
     always_comb
-      if (TEST == "embench") begin  
+      if (TEST == "embench") begin
         StartSampleFirst = functionName.functionName.FunctionName == "start_trigger";
         EndSampleFirst = functionName.functionName.FunctionName == "stop_trigger";
       end else if (TEST == "coremark") begin
@@ -103,7 +103,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
       end else begin
         EndSample = DCacheFlushStart & ~DCacheFlushDone;
       end
-    
+
   /*
     if(TEST == "embench") begin
       // embench runs warmup then runs start_trigger
@@ -169,8 +169,8 @@ module loggers import cvw::*; #(parameter cvw_t P,
     logic  resetD, resetEdge;
     logic  Enable;
     logic  InvalDelayed, InvalEdge;
-    
-    assign Enable = dut.core.ifu.bus.icache.icache.cachefsm.LRUWriteEn & 
+
+    assign Enable = dut.core.ifu.bus.icache.icache.cachefsm.LRUWriteEn &
                     dut.core.ifu.immu.immu.pmachecker.Cacheable &
                     ~dut.core.ifu.bus.icache.icache.cachefsm.FlushStage &
                     dut.core.ifu.bus.icache.icache.cachefsm.CacheEn &
@@ -218,7 +218,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
                       dut.core.lsu.bus.dcache.dcache.LineDirty ? "D" : "E";
       AccessTypeString = dut.core.lsu.bus.dcache.FlushDCache ? "F" :
                          dut.core.lsu.LSUAtomicM[1] ? "A" :
-                         dut.core.lsu.bus.dcache.CacheRWM == 2'b10 ? "R" : 
+                         dut.core.lsu.bus.dcache.CacheRWM == 2'b10 ? "R" :
                          dut.core.lsu.bus.dcache.CacheRWM == 2'b01 ? "W" :
                          dut.core.lsu.bus.dcache.dcache.CMOpM == 4'b1000 ? "Z" :   // cbo.zero
                          dut.core.lsu.bus.dcache.dcache.CMOpM == 4'b0001 ? "V" :   // cbo.inval should just clear the valid and dirty bits
@@ -269,7 +269,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
         CFIfile = $fopen(CFILogFile, "w");
       end
       always @(posedge clk) begin
-        if(resetEdge) begin 
+        if(resetEdge) begin
           $fwrite(file, "TRAIN\n");
           $fwrite(CFIfile, "TRAIN\n");
         end
