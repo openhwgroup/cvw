@@ -2,17 +2,17 @@
 """
 Python Regression Build Automation Script
 
-This Python script serves the purpose of automating nightly regression builds for a software project. 
+This Python script serves the purpose of automating nightly regression builds for a software project.
 The script is designed to handle the setup, execution, and reporting aspects of the regression testing process.
 
 Features:
 
     1.  Nightly Regression Builds: The script is scheduled to run on a nightly basis, making and executing the regression builds.
 
-    2.  Markdown Report Generation: Upon completion of the regression tests, the script generates detailed reports in Markdown format. 
-        These reports provide comprehensive insights into the test results, including test cases executed, pass/fail status, and any encountered issues.    
+    2.  Markdown Report Generation: Upon completion of the regression tests, the script generates detailed reports in Markdown format.
+        These reports provide comprehensive insights into the test results, including test cases executed, pass/fail status, and any encountered issues.
 
-    3.  Email Notification: The script is configured to send out email notifications summarizing the regression test results. 
+    3.  Email Notification: The script is configured to send out email notifications summarizing the regression test results.
         These emails serve as communication channels for stakeholders, providing them with timely updates on the software's regression status.
 
 Usage:
@@ -37,14 +37,14 @@ Usage:
     4)  Syntax:
 
         Our cron job has the following syntax:
-        0 3 * * * BASH_ENV=~/.bashrc bash -l -c "*WHERE YOUR CVW IS MUST PUT FULL PATH*/cvw/bin/wrapper_nightly_runs.sh > *WHERE YOU WANT TO STORE LOG FILES/cron.log 2>&1" 
+        0 3 * * * BASH_ENV=~/.bashrc bash -l -c "*WHERE YOUR CVW IS MUST PUT FULL PATH*/cvw/bin/wrapper_nightly_runs.sh > *WHERE YOU WANT TO STORE LOG FILES/cron.log 2>&1"
 
-        This cronjob sources the .bashrc file and executes the wrapper script as a user. 
+        This cronjob sources the .bashrc file and executes the wrapper script as a user.
 
     5)  Double check:
 
         Execute the following command to see your cronjobs:
-        
+
         crontab -l
 
 Dependencies:
@@ -103,7 +103,7 @@ class FolderManager:
 
     def create_folders(self, folders):
         """
-        Create preliminary folders if they do not exist. 
+        Create preliminary folders if they do not exist.
 
         Args:
             folders (list): A list of folder names to be created.
@@ -111,7 +111,7 @@ class FolderManager:
         Returns:
             None
         """
-        
+
         for folder in folders:
             if not os.path.exists(folder):
                 os.makedirs(folder)
@@ -123,7 +123,7 @@ class FolderManager:
 
         Args:
             folders (list): A folder to be deleted
-        
+
         Returns:
             None
         """
@@ -134,7 +134,7 @@ class FolderManager:
 
     def remove_stale_folders(self, folder, days_old=30):
         """
-        Delete all folders over X days old in a folder. 
+        Delete all folders over X days old in a folder.
 
         Args:
             folder (str): Folder to delete folders and files from
@@ -145,7 +145,7 @@ class FolderManager:
         """
         dirs = os.listdir(folder)
         threshold = time.time() - days_old*86400
-        
+
         for file in dirs:
             file = os.path.join(folder, file)
             file_mtime = os.stat(file).st_mtime
@@ -177,14 +177,14 @@ class FolderManager:
 class TestRunner:
     """A class for making, running, and formatting test results."""
 
-    def __init__(self, logger, log_dir): 
+    def __init__(self, logger, log_dir):
         self.todays_date = datetime.now().strftime("%Y-%m-%d")
         self.current_datetime = datetime.now()
         self.logger = logger
         self.logger.info("Test runner object is initialized")
         self.log_dir = log_dir
-        
-        
+
+
     def copy_setup_script(self, folder):
         """
         Copy the setup script to the destination folder.
@@ -204,7 +204,7 @@ class TestRunner:
         # Define the source and destination paths
         source_script = os.path.join(self.cvw, "setup_host.sh")
         destination_folder = os.path.join(self.base_parent_dir, folder, self.todays_date, 'cvw')
-        
+
         # Check if the source script exists
         if not os.path.exists(source_script):
             self.logger.error(f"Error: Source script '{source_script}' not found.")
@@ -225,7 +225,7 @@ class TestRunner:
             self.logger.error(f"Error copying setup script: {e}")
             return False
 
-    
+
     def set_env_var(self, envar, value):
         """
         Set an environment variable to a value
@@ -279,12 +279,12 @@ class TestRunner:
         makefile_location = self.cvw.joinpath(makefile_path)
         os.chdir(makefile_location)
 
-        if target: 
+        if target:
             output_file = self.log_dir.joinpath(f"make-{target}-output.log")
         else: output_file = self.log_dir.joinpath("make-output.log")
 
         # Source setup script and execute make with target and cores/2
-        if target: 
+        if target:
             command = [f"source {os.path.join(self.cvw, 'setup.sh')} > /dev/null && make {target} --jobs=$(($(nproc)/2))"]
         else:
             command = [f"source {os.path.join(self.cvw, 'setup.sh')} > /dev/null && make --jobs=$(($(nproc)/2))"]
@@ -297,7 +297,7 @@ class TestRunner:
             f.write(formatted_datetime)
             f.write("\n\n")
             result = subprocess.run(command, stdout=f, stderr=subprocess.STDOUT, text=True, shell=True, executable="/bin/bash")
-        
+
         # Execute the command using a subprocess and not save the output
         #result = subprocess.run(command, text=True)
 
@@ -308,7 +308,7 @@ class TestRunner:
         else:
             self.logger.error(f"Error making the tests. Command: {' '.join(command)}")
             return False
-            
+
     def run_tests(self, test_type=None, test_name=None, test_extensions=None):
         """
         Run a script through the terminal and save the output to a file.
@@ -321,7 +321,7 @@ class TestRunner:
         """
 
         # Prepare the function to execute the simulation
-        
+
         output_file = self.log_dir.joinpath(f"{test_name}-output.log")
         os.chdir(self.sim_dir)
 
@@ -360,7 +360,7 @@ class TestRunner:
         Save script outputs from a directory back into the main log directory.
 
         Args:
-            sim_log_folders (list): Locations to grab logs from. Will name new log folder the directory 
+            sim_log_folders (list): Locations to grab logs from. Will name new log folder the directory
             the log directory is in
         Returns:
             None
@@ -404,8 +404,8 @@ class TestRunner:
 
         while index < len(lines):
             # Remove ANSI escape codes
-            line = re.sub(r'\x1b\[[0-9;]*[mGK]', '', lines[index])  
-            
+            line = re.sub(r'\x1b\[[0-9;]*[mGK]', '', lines[index])
+
             if "Success" in line: # test succeeds
                 passed_configs.append(line.split(':')[0].strip())
             elif "passed lint" in line:
@@ -430,7 +430,7 @@ class TestRunner:
                     failed_configs.append((f"Timeout: {config_name}", log_file))
                 except:
                     failed_configs.append((f"Timeout: {config_name}", "No Log File"))
-            
+
 
             index += 1
 
@@ -460,7 +460,7 @@ class TestRunner:
         os.chdir(self.results_dir)
         # current_directory = os.getcwd()
         output_file = os.path.join(self.results_dir, f"{test_name}.md")
-        
+
 
         with open(output_file, 'w') as md_file:
 
@@ -479,7 +479,7 @@ class TestRunner:
             else:
                 md_file.write("## Failed Configurations\n")
                 md_file.write("No Failures\n")
-            
+
             md_file.write("\n## Passed Configurations\n")
             for config in passed_configs:
                 md_file.write(f'- <span class="success" style="color: green;">{config}</span>\n')
@@ -498,7 +498,7 @@ class TestRunner:
         Args:
             passed_tests (list): a list of successful tests
             failed_tests (list): a list of failed tests
-            test_list (list): a list of the test names. 
+            test_list (list): a list of the test names.
             markdown_file (str): Path to the markdown file where test results will be saved.
 
         Returns:
@@ -507,7 +507,7 @@ class TestRunner:
 
         os.chdir(self.results_dir)
         output_file = self.results_dir.joinpath("results.md")
-        
+
 
         with open(output_file, 'w') as md_file:
             # Title
@@ -528,7 +528,7 @@ class TestRunner:
             except subprocess.CalledProcessError as e:
                 # Handle if the command fails
                 md_file.write(f"Failed to identify host and Operating System information: {e!s}")
-            
+
             # Which tests did we run
             md_file.write(f"\n**Tests made:** `make {test_type}`\n")
 
@@ -545,7 +545,7 @@ class TestRunner:
                 md_file.write(f"\n**Command used:** {test_item[0]} {test_item[1]} {' '.join(test_item[2])}\n\n")
                 md_file.write("**Failed Tests:**\n")
 
-                
+
 
                 if len(item) == 0:
                     md_file.write("\n")
@@ -568,7 +568,7 @@ class TestRunner:
                 md_file.write(f"\n**Command used:** {test_item[0]} {test_item[1]} {' '.join(test_item[2])}\n\n")
                 md_file.write("\n**Successful Tests:**\n")
 
-                
+
 
                 if len(item) == 0:
                     md_file.write("\n")
@@ -577,11 +577,11 @@ class TestRunner:
                 else:
                     for passed_tests in item:
                         config = passed_tests
-                        
+
                         md_file.write("\n")
                         md_file.write(f'* <span class="success" style="color: green;">{config}</span>\n')
                         md_file.write("\n")
-                    
+
         self.logger.info("Combining markdown files")
 
 
@@ -602,16 +602,16 @@ class TestRunner:
         with open(markdown_file) as md_file:
             md_content = md_file.read()
             html_content = markdown.markdown(md_content)
-        
+
         with open(html_file, 'w') as html_file:
             html_file.write(html_content)
-        
+
         self.logger.info("Converting markdown file to html file.")
 
     def send_email(self, receiver_emails=None, subject="Nightly Regression Test"):
         """
-        Send email with HTML content. 
-        
+        Send email with HTML content.
+
         !!! Requires mutt to be set up to send emails !!!
 
         Args:
@@ -712,7 +712,7 @@ def main():
     #############################################
     #                 LOGGER                    #
     #############################################
-    
+
 
     # Set up the logger
     logger = logging.getLogger(__name__)
@@ -720,7 +720,7 @@ def main():
 
     # Create a file handler
     #file_handler = logging.FileHandler('../../logs/nightly_build.log')
-    
+
     file_handler = logging.FileHandler(log_file_path)
     file_handler.setLevel(logging.DEBUG)
 
@@ -745,7 +745,7 @@ def main():
     logger.info(f"results path: {results_path}")
     logger.info(f"log folder path: {log_path}")
     logger.info(f"log file path: {log_file_path}")
-    
+
 
     test_runner = TestRunner(logger, log_path) # creates the object
     test_runner.source_setup(cvw_path) # ensures that the new WALLY environmental variable is set correctly
@@ -769,7 +769,7 @@ def main():
     total_success = []
 
     for test_type, test_name, test_extensions in test_list:
-        
+
         check, output_location = test_runner.run_tests(test_type=test_type, test_name=test_name, test_extensions=test_extensions)
         try:
             if check: # this checks if the test actually ran successfully
@@ -790,10 +790,10 @@ def main():
                 total_number_success += len(passed)
                 total_success.append(passed)
                 test_runner.rewrite_to_markdown(test_name, passed, failed)
-                
+
                 newlinechar = "\n"
                 logger.info(f"Failed tests: \n{newlinechar.join([x[0] for x in failed])}")
-    
+
         except Exception as e:
             logger.error(f"There was an error in running the tests: {e}")
 

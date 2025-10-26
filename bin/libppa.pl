@@ -3,7 +3,7 @@
 ###########################################
 ## libppa.pl
 ##
-## Written: David_Harris@hmc.edu 
+## Written: David_Harris@hmc.edu
 ## Created: 28 January 2023
 ##
 ## Purpose: Extract PPA information from Liberty files
@@ -19,15 +19,15 @@
 ##
 ## SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 ##
-## Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-## except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+## Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+## except in compliance with the License, or, at your option, the Apache License version 2.0. You
 ## may obtain a copy of the License at
 ##
 ## https:##solderpad.org/licenses/SHL-2.1/
 ##
-## Unless required by applicable law or agreed to in writing, any work distributed under the 
-## License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-## either express or implied. See the License for the specific language governing permissions 
+## Unless required by applicable law or agreed to in writing, any work distributed under the
+## License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+## either express or implied. See the License for the specific language governing permissions
 ## and limitations under the License.
 ################################################################################################
 
@@ -136,12 +136,12 @@ sub analyzeCell {
 #	    print $_;
 	}
     }
-    
+
     my $delay = &computeDelay($cap);
     my $cornerr = sprintf("%20s", $corner);
     my $delayr = sprintf("%2.1f", $delay*1000);
     my $leakager = sprintf("%3.3f", $leakage);
-    
+
     print("$cornerr: Delay $delayr Leakage: $leakager capacitance: $cap\n");
     #print("$cellname $corner: Area $area Leakage: $leakage capacitance: $cap delay $delay\n");
     #print(" index1: @index1\n");
@@ -184,7 +184,7 @@ sub computeDelay {
     # delay is average of rising and falling
     my $delay = ($cr2 + $cf3)/2;
     return $delay;
-    
+
 #    print("tt $tt cr0 $cr0 rt0 $rt0\n");
 #    print("cf1 $cf1 ft1 $ft1 cr2 $cr2 rt2 $rt2 cf3 $cf3 ft3 $ft3 delay $delay\n");
 }
@@ -194,7 +194,7 @@ sub interp2 {
     my @matrix = @$matref;
     my $fo4cap = shift;
     my @interp = ();
-    
+
     my $i;
     # interpolate row by row
     for ($i=0; $i <= $#index1; $i++) {
