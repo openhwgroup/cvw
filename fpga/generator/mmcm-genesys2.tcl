@@ -23,7 +23,7 @@ set_property -dict [list CONFIG.PRIM_IN_FREQ {200.000} \
                         CONFIG.CLKIN1_JITTER_PS {10.0} \
                        ] [get_ips $ipName]
 
-#set_property CONFIG.CLKOUT3_REQUESTED_OUT_FREQ $SYSTEMCLOCK_MHz [get_ips $ipName] 
+#set_property CONFIG.CLKOUT3_REQUESTED_OUT_FREQ $SYSTEMCLOCK_MHz [get_ips $ipName]
 
 generate_target {instantiation_template} [get_files ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]
 generate_target all [get_files  ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]

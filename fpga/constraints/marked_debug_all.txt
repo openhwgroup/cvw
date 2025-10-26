@@ -50,8 +50,8 @@ privileged/csrs.sv: logic        CSRSReadValM
 privileged/csrs.sv: logic        SEPC_REGW
 privileged/csrs.sv: logic        MIP_REGW
 privileged/csrs.sv: logic      SSCRATCH_REGW
-privileged/csrs.sv: logic     SCAUSE_REGW      
-privileged/csr.sv: logic    CSRReadValM  
+privileged/csrs.sv: logic     SCAUSE_REGW
+privileged/csr.sv: logic    CSRReadValM
 privileged/csr.sv: logic    CSRSrcM
 privileged/csr.sv: logic    CSRWriteValM
 privileged/csr.sv: logic    MSTATUS_REGW

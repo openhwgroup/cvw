@@ -5,10 +5,10 @@
 //
 // Purpose: SD Card protocol functions
 //
-// 
+//
 //
 // A component of the Wally configurable RISC-V project.
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
@@ -101,7 +101,7 @@ uint64_t sd_cmd(uint8_t cmd, uint32_t arg, uint8_t crc) {
   if (cmd != SD_CMD_STOP_TRANSMISSION) {
     write_reg(SPI_CSMODE, SIFIVE_SPI_CSMODE_MODE_HOLD);
   }
-  
+
   // Write all 7 bytes into transfer fifo
   // spi_sendbyte(0xff);
   spi_dummy();
@@ -141,7 +141,7 @@ uint64_t sd_cmd(uint8_t cmd, uint32_t arg, uint8_t crc) {
   // Note about the compiler. In order to compile as sll instead of
   // sllw, the number to shift has to be a 64 bit number.
   r = ((uint64_t)rbyte) << ((response_len - 1)*8);
-  
+
   // Read rxfifo response
   for (i = 1; i < response_len; i++) {
     rbyte = spi_dummy();
@@ -178,7 +178,7 @@ uint64_t sd_read64(uint16_t * crc) {
 
 // Utility defines for CMD0, CMD8, CMD55, and ACMD41
 #define CMD0()   sd_cmd( 0, 0x00000000, 0x95) // Reset SD card into IDLE state
-#define CMD8()   sd_cmd( 8, 0x000001aa, 0x87) // 
+#define CMD8()   sd_cmd( 8, 0x000001aa, 0x87) //
 #define CMD55()  sd_cmd(55, 0x00000000, 0x65) //
 #define ACMD41() sd_cmd(41, 0x40000000, 0x77) //
 
@@ -202,7 +202,7 @@ int init_sd(uint32_t freq, uint32_t sdclk){
     spi_txrx(0xff);
   }
   write_reg(SPI_CSMODE, SIFIVE_SPI_CSMODE_MODE_AUTO);
-  
+
   // CMD0 --------------------------------------------------------------
   // Reset SD Card command
   // Initializes SD card into SPI mode if CS is asserted '0'
@@ -248,7 +248,7 @@ int init_sd(uint32_t freq, uint32_t sdclk){
   print_time();
   println_with_dec("New clock frequency: ", (uint64_t)sdclk);
   spi_set_clock(freq, sdclk);
-  
+
   print_time();
   println("SD card is initialized.");
 }

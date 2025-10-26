@@ -95,7 +95,7 @@ PreProcessFiles:
 .PHONY: zsbl
 zsbl:
 	$(MAKE) -C ../zsbl clean
-	SYSTEMCLOCK=$(SYSTEMCLOCK) EXT_MEM_BASE=$(EXT_MEM_BASE) EXT_MEM_RANGE=$(EXT_MEM_RANGE) $(MAKE) -C ../zsbl 
+	SYSTEMCLOCK=$(SYSTEMCLOCK) EXT_MEM_BASE=$(EXT_MEM_BASE) EXT_MEM_RANGE=$(EXT_MEM_RANGE) $(MAKE) -C ../zsbl
 
 # Generate Individual IP Blocks
 $(dst)/%.log: %.tcl

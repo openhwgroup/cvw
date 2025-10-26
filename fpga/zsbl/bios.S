@@ -6,7 +6,7 @@ PERIOD = (SYSTEMCLOCK / 2)
 .global _start
 .type _start, @function
 
-		
+
 _start:
 	  # Initialize global pointer
 	.option push
@@ -14,7 +14,7 @@ _start:
 	1:auipc gp, %pcrel_hi(__global_pointer$)
 	addi  gp, gp, %pcrel_lo(1b)
 	.option pop
-	
+
 	li x1, 0
 	li x2, 0
 	li x4, 0
@@ -56,7 +56,7 @@ _start:
 	li a2, 127*1024*1024/512 # copy 127MB upper 1MB contains the return address (ra)
 	#li a2, 800 # copy 400KB
 	jal ra, copyFlash
-	
+
 	fence.i
 	# now toggle led so we know the copy completed.
 
@@ -69,13 +69,13 @@ loop:
 
 	# delay
 	li	t0, PERIOD/2
-delay1:	
+delay1:
 	addi	t0, t0, -1
 	bge	t0, x0, delay1
 	sw	t2, 0x0(t3)
 
 	li	t0, PERIOD/2
-delay2:	
+delay2:
 	addi	t0, t0, -1
 	bge	t0, x0, delay2
 	sw	x0, 0x0(t3)
@@ -87,12 +87,12 @@ delay2:
 	# now that the card is copied and the led toggled we
 	# jump to the copied contents of the sd card.
 
-jumpToLinux:	
+jumpToLinux:
 	csrrs	a0, 0xF14, x0   # copy hart ID to a0
 	li	a1, FDT_ADDRESS  # This is the device tree address
 	la	a2, end_of_bios
 	li	t0, EXT_MEM_BASE  # start of code
-	
+
 	jalr	x0, t0, 0
 
-end_of_bios:	
+end_of_bios:

@@ -11,7 +11,7 @@ set_property C_INPUT_PIPE_STAGES 0 [get_debug_cores u_ila_0]
 set_property C_EN_STRG_QUAL false [get_debug_cores u_ila_0]
 set_property ALL_PROBE_SAME_MU true [get_debug_cores u_ila_0]
 set_property ALL_PROBE_SAME_MU_CNT 1 [get_debug_cores u_ila_0]
-startgroup 
+startgroup
 set_property C_EN_STRG_QUAL true [get_debug_cores u_ila_0 ]
 set_property C_ADV_TRIGGER true [get_debug_cores u_ila_0 ]
 set_property ALL_PROBE_SAME_MU true [get_debug_cores u_ila_0 ]
@@ -140,7 +140,7 @@ connect_debug_port u_ila_0/probe22 [get_nets [list {wallypipelinedsoc/uncoregen.
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe23]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe23]
-connect_debug_port u_ila_0/probe23 [get_nets [list {wallypipelinedsoc/uncoregen.uncore/sdc.sdc/controller/SCLKenable} ]] 
+connect_debug_port u_ila_0/probe23 [get_nets [list {wallypipelinedsoc/uncoregen.uncore/sdc.sdc/controller/SCLKenable} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 3 [get_debug_ports u_ila_0/probe24]

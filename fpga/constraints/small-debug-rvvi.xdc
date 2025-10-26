@@ -9,7 +9,7 @@ set_property C_ADV_TRIGGER true [get_debug_cores u_ila_0 ]
 set_property ALL_PROBE_SAME_MU true [get_debug_cores u_ila_0 ]
 set_property ALL_PROBE_SAME_MU_CNT 4 [get_debug_cores u_ila_0 ]
 create_debug_port u_ila_0  trig_in
-create_debug_port u_ila_0  trig_in_ack  
+create_debug_port u_ila_0  trig_in_ack
 #set_property port_width 1 [get_debug_ports u_ila_0/trig_in]
 #set_property port_width 1 [get_debug_ports u_ila_0/trig_in_ack]
 #set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/trig_in]

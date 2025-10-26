@@ -2,25 +2,25 @@
 // fpgaTop.sv
 //
 // Written: rose@rosethompson.net November 17, 2021
-// Modified: 
+// Modified:
 //
 // Purpose: This is a top level for the fpga's implementation of wally.
 //          Instantiates wallysoc, ddr4, abh lite to axi converters, pll, etc
-// 
+//
 // A component of the Wally configurable RISC-V project.
-// 
+//
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
-// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, 
-// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software 
+// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
+// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
 // is furnished to do so, subject to the following conditions:
 //
 // The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
-// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
@@ -28,9 +28,9 @@
 
 import cvw::*;
 
-module fpgaTop 
+module fpgaTop
   (input           default_250mhz_clk1_0_n,
-   input           default_250mhz_clk1_0_p, 
+   input           default_250mhz_clk1_0_p,
    input           reset,
    input           south_rst,
 
@@ -46,7 +46,7 @@ module fpgaTop
    output        SDCCmd,
    output        SDCCS,
    input         SDCCD,
-   input         SDCWP,         
+   input         SDCWP,
 
    output          cpu_reset,
    output          ahblite_resetn,
@@ -74,7 +74,7 @@ module fpgaTop
   logic		   interconnect_aresetn;
   logic		   peripheral_aresetn;
   logic		   mb_reset;
-  
+
   logic		   HCLKOpen;
   logic		   HRESETnOpen;
   logic [64-1:0]   HRDATAEXT;
@@ -187,11 +187,11 @@ module fpgaTop
   assign GPO = GPIOOUT[4:0];
   assign ahblite_resetn = peripheral_aresetn;
   assign cpu_reset = bus_struct_reset;
-  
+
   logic [3:0] SDCCSin;
   assign SDCCS = SDCCSin[0];
 
-   
+
   // reset controller XILINX IP
   sysrst sysrst
     (.slowest_sync_clk(CPUCLK),
@@ -207,13 +207,13 @@ module fpgaTop
 
   `include "parameter-defs.vh"
 
-  // Wally 
-  wallypipelinedsoc  #(P) 
-  wallypipelinedsoc(.clk(CPUCLK), .reset_ext(bus_struct_reset), .reset(), 
+  // Wally
+  wallypipelinedsoc  #(P)
+  wallypipelinedsoc(.clk(CPUCLK), .reset_ext(bus_struct_reset), .reset(),
                     .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT,
-                    .HCLK(HCLKOpen), .HRESETn(HRESETnOpen), 
+                    .HCLK(HCLKOpen), .HRESETn(HRESETnOpen),
                     .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
-                    .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), 
+                    .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0),
                     .GPIOIN, .GPIOOUT, .GPIOEN,
                     .UARTSin, .UARTSout, .SDCIn, .SDCCmd, .SDCCS(SDCCSin), .SDCCLK, .ExternalStall(RVVIStall));
 
@@ -354,7 +354,7 @@ module fpgaTop
      .m_axi_rvalid(BUS_axi_rvalid),
      .m_axi_rlast(BUS_axi_rlast),
      .m_axi_rready(BUS_axi_rready));
-   
+
   ddr4 ddr4
     (.c0_init_calib_complete(c0_init_calib_complete),
      .dbg_clk(dbg_clk), // open
@@ -423,7 +423,7 @@ module fpgaTop
 
      .addn_ui_clkout1(CPUCLK),
      .addn_ui_clkout2(CLK208));
-  
+
   assign RVVIStall = '0;
 
 endmodule

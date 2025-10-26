@@ -5,10 +5,10 @@
 //
 // Purpose: SPI Controller API for bootloader
 //
-// 
+//
 //
 // A component of the Wally configurable RISC-V project.
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
@@ -85,7 +85,7 @@ void spi_init() {
             SIFIVE_SPI_DELAY1_INTERCS(1) |
             SIFIVE_SPI_DELAY1_INTERXFR(0));
 
-  // Initialize the SPI controller clock to 
-  // div = (20MHz/(2*400kHz)) - 1 = 24 = 0x18 
-  write_reg(SPI_SCKDIV, 0x18); 
+  // Initialize the SPI controller clock to
+  // div = (20MHz/(2*400kHz)) - 1 = 24 = 0x18
+  write_reg(SPI_SCKDIV, 0x18);
 }
