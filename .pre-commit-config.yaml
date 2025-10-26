@@ -23,8 +23,8 @@ repos:
       - id: requirements-txt-fixer
         files: requirements.txt
       - id: end-of-file-fixer
-      # - id: trailing-whitespace
-      #   args: [--markdown-linebreak-ext=md]
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
       - id: check-merge-conflict
         args: ["--assume-in-merge"]
         exclude: \.adoc$ # sections titles Level 6 "=======" get flagged otherwise
