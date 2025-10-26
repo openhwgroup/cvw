@@ -32,7 +32,7 @@ module zknh32 (
   output logic [31:0] ZKNHResult
 );
 
-   logic [31:0]	      sha256res, sha512res;
+  logic [31:0]        sha256res, sha512res;
 
   sha256 sha256(A, ZKNHSelect[1:0], sha256res);                          // 256-bit SHA support: sha256{sig0/sig1/sum0/sum1}
   sha512_32 sha512(A, B, ZKNHSelect[2:0], sha512res);                    // 512-bit SHA support: sha512{sig0h/sig0l/sig1h/sig1l/sum0r/sum1r}

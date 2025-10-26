@@ -11,17 +11,17 @@ set_property board_part $boardName [current_project]
 create_ip -name clk_wiz -vendor xilinx.com -library ip -module_name $ipName
 
 set_property -dict [list CONFIG.PRIM_IN_FREQ {200.000} \
-			CONFIG.CLK_IN1_BOARD_INTERFACE {sys_diff_clock} \
+                        CONFIG.CLK_IN1_BOARD_INTERFACE {sys_diff_clock} \
                         CONFIG.NUM_OUT_CLKS {4} \
                         CONFIG.CLKOUT2_USED {true} \
                         CONFIG.CLKOUT3_USED {true} \
                         CONFIG.CLKOUT4_USED {true} \
                         CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {200} \
                         CONFIG.CLKOUT2_REQUESTED_OUT_FREQ {200} \
-			CONFIG.CLKOUT3_REQUESTED_OUT_FREQ $SYSTEMCLOCK_MHz \
+                        CONFIG.CLKOUT3_REQUESTED_OUT_FREQ $SYSTEMCLOCK_MHz \
                         CONFIG.CLKOUT4_REQUESTED_OUT_FREQ {25} \
                         CONFIG.CLKIN1_JITTER_PS {10.0} \
-                       ] [get_ips $ipName]
+                   ] [get_ips $ipName]
 
 #set_property CONFIG.CLKOUT3_REQUESTED_OUT_FREQ $SYSTEMCLOCK_MHz [get_ips $ipName]
 

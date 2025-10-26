@@ -78,7 +78,7 @@ void spi_init() {
   // Set Delay 0 to default
   write_reg(SPI_DELAY0,
             SIFIVE_SPI_DELAY0_CSSCK(1) |
-			SIFIVE_SPI_DELAY0_SCKCS(1));
+            SIFIVE_SPI_DELAY0_SCKCS(1));
 
   // Set Delay 1 to default
   write_reg(SPI_DELAY1,

@@ -26,13 +26,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module aes32d(
-   input  logic [7:0]  SboxIn,
-   input  logic        finalround,
-   output logic [31:0] result
+  input  logic [7:0]  SboxIn,
+  input  logic        finalround,
+  output logic [31:0] result
 );
 
-   logic [7:0] 			  SboxOut;
-   logic [31:0] 		     so, mixed;
+  logic [7:0]         SboxOut;
+  logic [31:0]        so, mixed;
 
    aesinvsbox8 inv_sbox(SboxIn, SboxOut);          // Apply inverse sbox to si
    aesinvmixcolumns8 mix(SboxOut, mixed);          // Run so through the InvMixColumns AES function

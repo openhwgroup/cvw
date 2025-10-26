@@ -34,7 +34,7 @@ module zknde32 import cvw::*; #(parameter cvw_t P) (
    output logic [31:0] ZKNDEResult
 );
 
-    logic [4:0] 	shamt;
+    logic [4:0]     shamt;
     logic [7:0]     SboxIn;
     logic [31:0]    ZKNEResult, ZKNDResult, rotin, rotout;
 

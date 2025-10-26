@@ -45,7 +45,7 @@ module testbench_fma16;
       vectornum = vectornum + 1;
       if (testvectors[vectornum] === 'x) begin
         $display("%d tests completed with %d errors",
-	           vectornum, errors);
+                 vectornum, errors);
         $stop;
       end
     end

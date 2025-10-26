@@ -46,8 +46,8 @@ RVMODEL_BOOT
     sw x12, 4(x6)       # should be 00000000 (sc succeeded)
     sw x13, 8(x6)       # should be 0000002A (value written by SC, in hex)
 
- # Testcase 1:  Do an unsuccessful load-reserved / store conditional word operation
-	addi x6, x6, 12
+    # Testcase 1:  Do an unsuccessful load-reserved / store conditional word operation
+    addi x6, x6, 12
     addi x30, x31, 4
     li x11, 43
     lr.w x10, (x30)
@@ -62,41 +62,41 @@ RVMODEL_BOOT
 RVMODEL_HALT
 
 RVTEST_DATA_BEGIN
-	.align 8
+  .align 8
 test_data:
-	.dword 0xfffffffdfffffffe
-	.dword 0xfffffff7fffffffb
-	.dword 0xffffffdfffffffef
-	.dword 0xffffff7fffffffbf
-	.dword 0xfffffdfffffffeff
-	.dword 0xfffff7fffffffeff
-	.dword 0xffffdfffffffefff
-	.dword 0xffff7fffffffefff
-	.dword 0xfffdfffffffeffff
-	.dword 0xfff7fffffffbffff
-	.dword 0xffdfffffffefffff
-	.dword 0xff7fffffffbfffff
-	.dword 0xfdfffffffeffffff
-	.dword 0xf7fffffffeffffff
-	.dword 0xdfffffffefffffff
-	.dword 0x7fffffffefffffff
-	.dword 0x00000001ffffffff
-	.dword 0x0000000400000002
-	.dword 0x0000001000000008
-	.dword 0x0000004000000020
-	.dword 0x0000010000000080
-	.dword 0x0000040000000200
-	.dword 0x0000100000000800
-	.dword 0x0000400000002000
-	.dword 0x0000000100008000
-	.dword 0x0004000000000002
-	.dword 0x0000001000080000
-	.dword 0x0040000000000020
-	.dword 0x0000010000800000
-	.dword 0x0400000000000200
-	.dword 0x0000100008000000
-	.dword 0x4000000000002000
-	.dword 0x0000000080000000
+  .dword 0xfffffffdfffffffe
+  .dword 0xfffffff7fffffffb
+  .dword 0xffffffdfffffffef
+  .dword 0xffffff7fffffffbf
+  .dword 0xfffffdfffffffeff
+  .dword 0xfffff7fffffffeff
+  .dword 0xffffdfffffffefff
+  .dword 0xffff7fffffffefff
+  .dword 0xfffdfffffffeffff
+  .dword 0xfff7fffffffbffff
+  .dword 0xffdfffffffefffff
+  .dword 0xff7fffffffbfffff
+  .dword 0xfdfffffffeffffff
+  .dword 0xf7fffffffeffffff
+  .dword 0xdfffffffefffffff
+  .dword 0x7fffffffefffffff
+  .dword 0x00000001ffffffff
+  .dword 0x0000000400000002
+  .dword 0x0000001000000008
+  .dword 0x0000004000000020
+  .dword 0x0000010000000080
+  .dword 0x0000040000000200
+  .dword 0x0000100000000800
+  .dword 0x0000400000002000
+  .dword 0x0000000100008000
+  .dword 0x0004000000000002
+  .dword 0x0000001000080000
+  .dword 0x0040000000000020
+  .dword 0x0000010000800000
+  .dword 0x0400000000000200
+  .dword 0x0000100008000000
+  .dword 0x4000000000002000
+  .dword 0x0000000080000000
 
 #ifdef rvtest_mtrap_routine
 mtrap_sigptr:

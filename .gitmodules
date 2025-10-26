@@ -1,35 +1,35 @@
 [submodule "addins/riscv-dv"]
-	path = addins/riscv-dv
-	url = https://github.com/google/riscv-dv
+  path = addins/riscv-dv
+  url = https://github.com/google/riscv-dv
 [submodule "addins/embench-iot"]
-	path = addins/embench-iot
-	url = https://github.com/embench/embench-iot
-	branch = embench-1.0-branch
+  path = addins/embench-iot
+  url = https://github.com/embench/embench-iot
+  branch = embench-1.0-branch
 [submodule "addins/coremark"]
-	path = addins/coremark
-	url = https://github.com/eembc/coremark
+  path = addins/coremark
+  url = https://github.com/eembc/coremark
 [submodule "addins/vivado-boards"]
-	path = addins/vivado-boards
-	url = https://github.com/Digilent/vivado-boards/
+  path = addins/vivado-boards
+  url = https://github.com/Digilent/vivado-boards/
 [submodule "addins/riscv-arch-test"]
-	path = addins/riscv-arch-test
-	url = https://github.com/riscv-non-isa/riscv-arch-test
-	branch = dev
+  path = addins/riscv-arch-test
+  url = https://github.com/riscv-non-isa/riscv-arch-test
+  branch = dev
 [submodule "addins/branch-predictor-simulator"]
-	path = addins/branch-predictor-simulator
-	url = https://github.com/rosethompson/branch-predictor-simulator
+  path = addins/branch-predictor-simulator
+  url = https://github.com/rosethompson/branch-predictor-simulator
 [submodule "addins/verilog-ethernet"]
-	sparseCheckout = true
-	path = addins/verilog-ethernet
-	url = https://github.com/rosethompson/verilog-ethernet.git
+  sparseCheckout = true
+  path = addins/verilog-ethernet
+  url = https://github.com/rosethompson/verilog-ethernet.git
 [submodule "addins/berkeley-softfloat-3"]
-	path = addins/berkeley-softfloat-3
-	url = https://github.com/ucb-bar/berkeley-softfloat-3.git
+  path = addins/berkeley-softfloat-3
+  url = https://github.com/ucb-bar/berkeley-softfloat-3.git
 [submodule "addins/berkeley-testfloat-3"]
-	path = addins/berkeley-testfloat-3
-	url = https://github.com/ucb-bar/berkeley-testfloat-3
-	ignore = untracked
+  path = addins/berkeley-testfloat-3
+  url = https://github.com/ucb-bar/berkeley-testfloat-3
+  ignore = untracked
 [submodule "addins/riscv-arch-test-cvw"]
-	path = addins/riscv-arch-test-cvw
-	url = https://github.com/riscv-non-isa/riscv-arch-test
-	branch = cvw
+  path = addins/riscv-arch-test-cvw
+  url = https://github.com/riscv-non-isa/riscv-arch-test
+  branch = cvw

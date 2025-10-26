@@ -45,26 +45,26 @@
 #include "idv/idv.h"
 
 
-#define DEST_MAC0	0x43
-#define DEST_MAC1	0x68
-#define DEST_MAC2	0x11
-#define DEST_MAC3	0x11
-#define DEST_MAC4	0x02
-#define DEST_MAC5	0x45
+#define DEST_MAC0 0x43
+#define DEST_MAC1 0x68
+#define DEST_MAC2 0x11
+#define DEST_MAC3 0x11
+#define DEST_MAC4 0x02
+#define DEST_MAC5 0x45
 
-#define SRC_MAC0	0x54
-#define SRC_MAC1	0x16
-#define SRC_MAC2	0x00
-#define SRC_MAC3	0x00
-#define SRC_MAC4	0x54
-#define SRC_MAC5	0x8F
+#define SRC_MAC0  0x54
+#define SRC_MAC1  0x16
+#define SRC_MAC2  0x00
+#define SRC_MAC3  0x00
+#define SRC_MAC4  0x54
+#define SRC_MAC5  0x8F
 
-#define BUF_SIZ		1024
+#define BUF_SIZ   1024
 
-//#define ETHER_TYPE	0x0801  // The type defined in packetizer.sv
-#define ETHER_TYPE	0x5c00  // The type defined in packetizer.sv
-//#define ETHER_TYPE	0x0000  // The type defined in packetizer.sv
-#define DEFAULT_IF	"eno1"
+//#define ETHER_TYPE   0x0801  // The type defined in packetizer.sv
+#define ETHER_TYPE   0x5c00  // The type defined in packetizer.sv
+//#define ETHER_TYPE   0x0000  // The type defined in packetizer.sv
+#define DEFAULT_IF   "eno1"
 
 struct sockaddr_ll socket_address;
 uint8_t sendbuf[BUF_SIZ];
@@ -149,7 +149,7 @@ int main(int argc, char **argv){
 
   uint8_t buf[BUF_SIZ];
   int sockopt;
-  struct ifreq ifopts;	/* set promiscuous mode */
+  struct ifreq ifopts;   /* set promiscuous mode */
   struct ether_header *eh = (struct ether_header *) buf;
   ssize_t headerbytes, numbytes, payloadbytes;
 
@@ -178,7 +178,7 @@ int main(int argc, char **argv){
   printf("Here 3\n");
 
   /* Bind to device */
-  if (setsockopt(sockfd, SOL_SOCKET, SO_BINDTODEVICE, argv[1], IFNAMSIZ-1) == -1)	{
+  if (setsockopt(sockfd, SOL_SOCKET, SO_BINDTODEVICE, argv[1], IFNAMSIZ-1) == -1)   {
     perror("SO_BINDTODEVICE");
     close(sockfd);
     exit(EXIT_FAILURE);
@@ -427,7 +427,7 @@ void DecodeRVVI(uint8_t *payload, ssize_t payloadsize, RequiredRVVI_t *Instructi
 void PrintInstructionData(RequiredRVVI_t *InstructionData){
   int CSRIndex;
   printf("PC = %lx, insn = %x, Mcycle = %lx, Minstret = %lx, Trap = %hhx, PrivilegeMode = %hhx",
-	 InstructionData->PC, InstructionData->insn, InstructionData->Mcycle, InstructionData->Minstret, InstructionData->Trap, InstructionData->PrivilegeMode);
+    InstructionData->PC, InstructionData->insn, InstructionData->Mcycle, InstructionData->Minstret, InstructionData->Trap, InstructionData->PrivilegeMode);
   if(InstructionData->GPREn){
     printf(", GPR[%d] = %lx", InstructionData->GPRReg, InstructionData->GPRValue);
   }

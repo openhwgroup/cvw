@@ -38,11 +38,11 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   output logic RVVIStall,
   // axi 4 write address channel
   // axi 4 write data channel
-  output logic [31:0]      RvviAxiWdata,
-  output logic [3:0] 	   RvviAxiWstrb,
-  output logic  		   RvviAxiWlast,
-  output logic  		   RvviAxiWvalid,
-  input  logic  		   RvviAxiWready
+  output logic [31:0]  RvviAxiWdata,
+  output logic [3:0]   RvviAxiWstrb,
+  output logic         RvviAxiWlast,
+  output logic         RvviAxiWvalid,
+  input  logic         RvviAxiWready
   );
 
   localparam NearTotalFrameLengthBits = 2*48+16+72+(5*P.XLEN) + MAX_CSRS*(P.XLEN+16);
@@ -67,9 +67,9 @@ module packetizer import cvw::*; #(parameter cvw_t P,
   typedef enum logic [2:0] {STATE_RST, STATE_COUNT, STATE_RDY, STATE_WAIT, STATE_TRANS, STATE_TRANS_INSERT_DELAY} statetype;
 (* mark_debug = "true" *)  statetype CurrState, NextState;
 
-   logic [31:0] 	    RstCount;
-(* mark_debug = "true" *)   logic [31:0] 	    FrameCount;
-  logic 		    RstCountRst, RstCountEn, CountFlag, DelayFlag;
+  logic [31:0]       RstCount;
+(* mark_debug = "true" *)   logic [31:0]      FrameCount;
+  logic              RstCountRst, RstCountEn, CountFlag, DelayFlag;
 
 
   always_ff @(posedge m_axi_aclk) begin

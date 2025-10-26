@@ -38,14 +38,14 @@ module triggergen import cvw::*; (
   typedef enum logic[2:0] {STATE_RST, STATE_COMPARE, STATE_MISMATCH, STATE_TRIGGER, STATE_TRIGGER_DONE} statetype;
 (* mark_debug = "true" *)  statetype CurrState, NextState;
 
-  logic [31:0] 	    mem [4:0];
-  logic [2:0] 		    Counter;
-  logic 		    CounterEn, CounterRst;
-  logic [31:0] 	    RvviAxiRdataDelay;
-  logic [3:0] 	    RvviAxiRstrbDelay;
-  logic 	    RvviAxiRvalidDelay;
-  logic 	    Match, Overflow, Mismatch, Threshold;
-  logic 	    IlaTriggerOneCycle;
+  logic [31:0] mem [4:0];
+  logic [2:0]  Counter;
+  logic        CounterEn, CounterRst;
+  logic [31:0] RvviAxiRdataDelay;
+  logic [3:0]  RvviAxiRstrbDelay;
+  logic        RvviAxiRvalidDelay;
+  logic        Match, Overflow, Mismatch, Threshold;
+  logic        IlaTriggerOneCycle;
 
   assign mem[0] = 32'h1111_6843; // dst mac [31:0]
   assign mem[1] = 32'h1654_4502; // src mac [15:0], dst mac [47:32]

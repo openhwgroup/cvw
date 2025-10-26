@@ -47,7 +47,7 @@ CBOMTest:
         #sd s0, 0(sp)
         #sd ra, 8(sp)
 
-	la s0, signature
+        la s0, signature
 
         ################################################################################
         # INVALIDATE  D$

@@ -32,9 +32,9 @@ while(!(*LSR&0b100000));
 int sendstring(const char *p){
   int n=0;
     while (*p) {
-	_send_char(*p);
-	n++;
-	p++;
+    _send_char(*p);
+    n++;
+    p++;
   }
 
   return n;

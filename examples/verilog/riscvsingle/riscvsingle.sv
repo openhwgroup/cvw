@@ -99,7 +99,7 @@
 //   ori          0010011   110       immediate
 //   slti         0010011   010       immediate
 //   beq          1100011   000       immediate
-//   lw	          0000011   010       immediate
+//   lw           0000011   010       immediate
 //   sw           0100011   010       immediate
 //   jal          1101111   immediate immediate
 

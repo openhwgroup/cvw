@@ -92,49 +92,49 @@ sub analyzeCell {
     my $searchstring = "cell (".$cellname.")";
     my $area; my $leakage; my $cap;
      while (<FILE>) {
-	if (index($_, $searchstring) != -1) { $incell = 1;}
-	elsif ($incell) {
-	    if (/cell \(/) {
-		$incell = 0;
-		close(FILE);
-		last;
-	    }
-	    if (/area\s*:\s*(.*);/) { $area = $1; }
-	    if (/cell_leakage_power\s*:\s*(.*);/) { $leakage = $1; $inleakage = 2; }
-	    if ($inleakage == 0 && /leakage_power/) { $inleakage = 1; }
-	    if ($inleakage == 1 && /value\s*:\s*(.*);/) {
-		$leakage = $1;
-		$inleakage = 2;
-	    }
-	    if ($inpin == 0 && /pin/) { $inpin = 1; }
-	    if ($inpin == 1 && /\s+capacitance\s*:\s*(.*);/) {
-		$cap = $1;
-		$inpin = 2;
-	    }
-	    if ($inindex == 0 && /index_1/) { $inindex = 1; }
-	    if ($inindex == 1) {
-		if (/index_1\s*\(\"(.*)\"\);/) { @index1 = split(/, /, $1); }
-		if (/index_2\s*\(\"(.*)\"\);/) { @index2 = split(/, /, $1); $inindex = 2; }
-	    }
-	    if ($incellrise == 0 && /cell_rise/) { $incellrise = 1; $invalues = 0;}
-	    if ($incellfall == 0 && /cell_fall/) { $incellfall = 1; $invalues = 0; }
-	    if ($inrisetrans == 0 && /rise_trans/) { $inrisetrans = 1; $invalues = 0; }
-	    if ($infalltrans == 0 && /fall_trans/) { $infalltrans = 1; $invalues = 0; }
-	    if ($incellrise == 1 || $incellfall == 1 || $inrisetrans == 1 || $infalltrans == 1) {
-		if (/values/) { $invalues = 1; @values = (); }
-		elsif ($invalues == 1) {
-		    if (/\);/) {
-			$invalues = 2;
-			if ($incellrise == 1) { @cr = &parseVals(); $incellrise = 2; }
-			if ($incellfall == 1) { @cf = &parseVals(); $incellfall = 2; }
-			if ($inrisetrans == 1) { @rt = &parseVals(); $inrisetrans = 2; }
-			if ($infalltrans == 1) { @ft = &parseVals(); $infalltrans = 2; }
-		    }
-		    elsif (/\"(.*)\"/) { push(@values, $1); }
-		}
-	    }
-#	    print $_;
-	}
+    if (index($_, $searchstring) != -1) { $incell = 1;}
+    elsif ($incell) {
+        if (/cell \(/) {
+        $incell = 0;
+        close(FILE);
+        last;
+        }
+        if (/area\s*:\s*(.*);/) { $area = $1; }
+        if (/cell_leakage_power\s*:\s*(.*);/) { $leakage = $1; $inleakage = 2; }
+        if ($inleakage == 0 && /leakage_power/) { $inleakage = 1; }
+        if ($inleakage == 1 && /value\s*:\s*(.*);/) {
+        $leakage = $1;
+        $inleakage = 2;
+        }
+        if ($inpin == 0 && /pin/) { $inpin = 1; }
+        if ($inpin == 1 && /\s+capacitance\s*:\s*(.*);/) {
+        $cap = $1;
+        $inpin = 2;
+        }
+        if ($inindex == 0 && /index_1/) { $inindex = 1; }
+        if ($inindex == 1) {
+        if (/index_1\s*\(\"(.*)\"\);/) { @index1 = split(/, /, $1); }
+        if (/index_2\s*\(\"(.*)\"\);/) { @index2 = split(/, /, $1); $inindex = 2; }
+        }
+        if ($incellrise == 0 && /cell_rise/) { $incellrise = 1; $invalues = 0;}
+        if ($incellfall == 0 && /cell_fall/) { $incellfall = 1; $invalues = 0; }
+        if ($inrisetrans == 0 && /rise_trans/) { $inrisetrans = 1; $invalues = 0; }
+        if ($infalltrans == 0 && /fall_trans/) { $infalltrans = 1; $invalues = 0; }
+        if ($incellrise == 1 || $incellfall == 1 || $inrisetrans == 1 || $infalltrans == 1) {
+        if (/values/) { $invalues = 1; @values = (); }
+        elsif ($invalues == 1) {
+            if (/\);/) {
+            $invalues = 2;
+            if ($incellrise == 1) { @cr = &parseVals(); $incellrise = 2; }
+            if ($incellfall == 1) { @cf = &parseVals(); $incellfall = 2; }
+            if ($inrisetrans == 1) { @rt = &parseVals(); $inrisetrans = 2; }
+            if ($infalltrans == 1) { @ft = &parseVals(); $infalltrans = 2; }
+            }
+            elsif (/\"(.*)\"/) { push(@values, $1); }
+        }
+        }
+#       print $_;
+    }
     }
 
     my $delay = &computeDelay($cap);
@@ -198,9 +198,9 @@ sub interp2 {
     my $i;
     # interpolate row by row
     for ($i=0; $i <= $#index1; $i++) {
-	my @row = @{$matrix[$i]};
-	#print ("Extracted row $i = @row\n");
-	$interp[$i] = &interp1(\@row, \@index2, $fo4cap);
+    my @row = @{$matrix[$i]};
+    #print ("Extracted row $i = @row\n");
+    $interp[$i] = &interp1(\@row, \@index2, $fo4cap);
     }
     return @interp;
 }
@@ -230,10 +230,10 @@ sub parseVals {
     my @vals;
     my $i; my $j;
     for ($i=0; $i <= $#index1; $i++) {
-	my @row = split(/, /,$values[$i]);
-	for ($j = 0; $j <= $#index2; $j++) {
-	    $vals[$i][$j] = $row[$j];
-	}
+    my @row = split(/, /,$values[$i]);
+    for ($j = 0; $j <= $#index2; $j++) {
+        $vals[$i][$j] = $row[$j];
+    }
     }
     return @vals;
 }
@@ -243,9 +243,9 @@ sub printMatrix {
     my @matrix = @$mat;
     my $i; my $j;
     for ($i=0; $i <= $#index1; $i++) {
-	for ($j = 0; $j <= $#index2; $j++) {
-	    print($matrix[$i][$j]." ");
-	}
-	print("\n");
+    for ($j = 0; $j <= $#index2; $j++) {
+        print($matrix[$i][$j]." ");
+    }
+    print("\n");
     }
 }

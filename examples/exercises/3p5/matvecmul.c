@@ -4,13 +4,13 @@
 // Matrix-vector multiplication y = Ax.
 // A is an m rows x n columns matrix.
 void matvecmul(int A[], int x[], int y[], int m, int n) {
- 	int i, j, sum;
-	for (i=0; i<m; i = i + 1) {
-		sum = 0;
-		for (j=0; j<n; j = j + 1)
-			sum = sum + A[i*n+j] * x[j];
-		y[i] = sum;
-	}
+  int i, j, sum;
+  for (i=0; i<m; i = i + 1) {
+    sum = 0;
+    for (j=0; j<n; j = j + 1)
+      sum = sum + A[i*n+j] * x[j];
+    y[i] = sum;
+  }
 }
 
 void main(void) {

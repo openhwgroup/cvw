@@ -157,7 +157,7 @@ void KeySchedule(unsigned char *word, int iteration) {
 
 // Rijndael's key expansion:  expands an 128, 192, 256 key into an 176, 208, 240 bytes key
 void KeyExpansion(unsigned char *expandedKey, unsigned char *key,
-		  enum keySize size, size_t expandedKeySize) {
+                  enum keySize size, size_t expandedKeySize) {
 
   // current expanded keySize, in bytes
   int currentSize = 0;
@@ -182,7 +182,7 @@ void KeyExpansion(unsigned char *expandedKey, unsigned char *key,
     // For 256-bit keys, we add an extra sbox to the calculation
     if (size == SIZE_32 && ((currentSize % size) == 16)) {
       for (i = 0; i < 4; i++)
-	t[i] = getSBoxValue(t[i]);
+        t[i] = getSBoxValue(t[i]);
     }
 
     // We XOR t with the four-byte block 16, 24, 32 bytes before the new expanded key.

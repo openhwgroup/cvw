@@ -32,6 +32,13 @@ repos:
       - id: check-toml
       - id: check-yaml
 
+  # Use spaces, not tabs
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.5
+    hooks:
+      - id: forbid-tabs
+        exclude: '.*\.(diff|dump|patch|svg|mk|mak)|(M|m)akefile*'
+
   # Ruff python linter
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.4

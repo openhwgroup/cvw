@@ -17,16 +17,16 @@ Wally is presently at Technology Readiness Level 4, passing the RISC-V compatibi
 New users may wish to do the following setup to access the server via a GUI and use a text editor.
 
 - Git started with Git configuration and authentication: C.1  (replace with your name and email)
-	```bash
-	$ git config --global user.name "Ben Bitdiddle"
-	$ git config --global user.email "ben_bitdiddle@wally.edu"
-	$ git config --global pull.rebase false
-	```
+  ```bash
+  $ git config --global user.name "Ben Bitdiddle"
+  $ git config --global user.email "ben_bitdiddle@wally.edu"
+  $ git config --global pull.rebase false
+  ```
 - Optional: Download and install x2go - B.1.1
 - Optional: Download and install VSCode - B.4.2
 - Optional: Make sure you can log into your server via x2go and via a terminal
-	- Terminal on Mac, cmd on Windows, xterm on Linux
-	- See B.1 about ssh -Y login from a terminal
+  - Terminal on Mac, cmd on Windows, xterm on Linux
+  - See B.1 about ssh -Y login from a terminal
 
 Then fork and clone the repo, source setup, make the tests and run regression
 
@@ -36,47 +36,47 @@ Then fork and clone the repo, source setup, make the tests and run regression
 4. Create a fork, choosing the owner as your github account and the repository as cvw.
 5. On the Linux computer where you will be working, log in.
 6. Clone your fork of the repo. Change `<yourgithubid>` to your github id.
-	```bash
-	$ git clone --recurse-submodules https://github.com/<yourgithubid>/cvw
-	$ cd cvw
-	$ git remote add upstream https://github.com/openhwgroup/cvw
-	```
+  ```bash
+  $ git clone --recurse-submodules https://github.com/<yourgithubid>/cvw
+  $ cd cvw
+  $ git remote add upstream https://github.com/openhwgroup/cvw
+  ```
 
 > [!NOTE]
 > If you are installing on a new system without any tools installed, please jump to the next section, [Toolchain Installation](#toolchain-installation-and-configuration-sys-admin), then come back here.
 
 7. Run the setup script to update your `PATH` and activate the python virtual environment.
 
-	```bash
-	$ source ./setup.sh
-	```
+  ```bash
+  $ source ./setup.sh
+  ```
 
 8. Add the following lines to your `.bashrc` or `.bash_profile` to run the setup script each time you log in.
 
-	```bash
-	if [ -f ~/cvw/setup.sh ]; then
-		source ~/cvw/setup.sh
-	fi
-	```
+  ```bash
+  if [ -f ~/cvw/setup.sh ]; then
+    source ~/cvw/setup.sh
+  fi
+  ```
 
 9. Try compiling the HelloWally program and simulating it on the SystemVerilog with Verilator and on the Spike simulator.
-	```
-	$ cd examples/C/hello
-	$ make
-	$ wsim --sim verilator rv64gc --elf hello
-	Hello Wally!
-	0 1 2 3 4 5 6 7 8 9
-	$ spike hello
-	Hello Wally!
-	0 1 2 3 4 5 6 7 8 9
-	```
+  ```
+  $ cd examples/C/hello
+  $ make
+  $ wsim --sim verilator rv64gc --elf hello
+  Hello Wally!
+  0 1 2 3 4 5 6 7 8 9
+  $ spike hello
+  Hello Wally!
+  0 1 2 3 4 5 6 7 8 9
+  ```
 
 10. Build the tests from the cvw directory and run a regression simulation to prove everything is installed.  Building tests may take a while.
 
-	```bash
-	$ cd ~/cvw && make --jobs
-	$ regression-wally
-	```
+  ```bash
+  $ cd ~/cvw && make --jobs
+  $ regression-wally
+  ```
 
 # Toolchain Installation and Configuration (Sys Admin)
 
@@ -239,8 +239,8 @@ Parameters and options:
 --ccov, -c                                                   Code Coverage
 --fcov, -f                                                   Functional Coverage with cvw-arch-verif, implies lockstep
 --args ARGS, -a ARGS                                         Optional arguments passed to simulator via $value$plusargs
---params PARAMS, -p PARAMS            			 								 Optional top-level parameter overrides of the form param=value
---define DEFINE, -d DEFINE            											 Optional define macros passed to simulator
+--params PARAMS, -p PARAMS                                   Optional top-level parameter overrides of the form param=value
+--define DEFINE, -d DEFINE                                   Optional define macros passed to simulator
 --vcd, -v                                                    Generate testbench.vcd
 --lockstep, -l                                               Run ImperasDV lock, step, and compare.
 --lockstepverbose, -lv                                       Run ImperasDV lock, step, and compare with tracing enabled

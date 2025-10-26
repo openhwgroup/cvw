@@ -17,7 +17,7 @@ Original Author: Shay Gal-on
 */
 
 /* Topic: Description
-	This file contains configuration constants required to execute on different platforms
+  This file contains configuration constants required to execute on different platforms
 */
 #ifndef CORE_PORTME_H
 #define CORE_PORTME_H
@@ -25,40 +25,40 @@ Original Author: Shay Gal-on
 /* Data types and settings */
 /************************/
 /* Configuration: HAS_FLOAT
-	Define to 1 if the platform supports floating point.
+  Define to 1 if the platform supports floating point.
 */
 #ifndef HAS_FLOAT
 #define HAS_FLOAT 0
 #endif
 /* Configuration: HAS_TIME_H
-	Define to 1 if platform has the time.h header file,
-	and implementation of functions thereof.
+  Define to 1 if platform has the time.h header file,
+  and implementation of functions thereof.
 */
 #ifndef HAS_TIME_H
 #define HAS_TIME_H 0
 #endif
 /* Configuration: USE_CLOCK
-	Define to 1 if platform has the time.h header file,
-	and implementation of functions thereof.
+  Define to 1 if platform has the time.h header file,
+  and implementation of functions thereof.
 */
 #ifndef USE_CLOCK
 #define USE_CLOCK 0
 #endif
 /* Configuration: HAS_STDIO
-	Define to 1 if the platform has stdio.h.
+  Define to 1 if the platform has stdio.h.
 */
 #ifndef HAS_STDIO
 #define HAS_STDIO 1
 #endif
 /* Configuration: HAS_PRINTF
-	Define to 1 if the platform has stdio.h and implements the printf function.
+  Define to 1 if the platform has stdio.h and implements the printf function.
 */
 #ifndef HAS_PRINTF
 #define HAS_PRINTF 1
 #endif
 
 /* Configuration: CORE_TICKS
-	Define type of return from the timing functions.
+  Define type of return from the timing functions.
  */
 #if defined(_MSC_VER)
 #include <windows.h>
@@ -67,8 +67,8 @@ typedef size_t CORE_TICKS;
 #include <time.h>
 typedef clock_t CORE_TICKS;
 // #elif (XLEN==32)
-// 	#include <sys/types.h>
-// 	typedef ee_u32 CORE_TICKS;
+//   #include <sys/types.h>
+//   typedef ee_u32 CORE_TICKS;
 /* Configuration: size_t and clock_t
      Note these need to match the size of the clock output and the xLen the processor supports
  */
@@ -81,7 +81,7 @@ typedef unsigned long int clock_t;
 typedef clock_t CORE_TICKS;
 
 /* Definitions: COMPILER_VERSION, COMPILER_FLAGS, MEM_LOCATION
-	Initialize these strings per platform
+  Initialize these strings per platform
 */
 #ifndef COMPILER_VERSION
  #ifdef __GNUC__
@@ -99,10 +99,10 @@ typedef clock_t CORE_TICKS;
 #endif
 
 /* Data Types:
-	To avoid compiler issues, define the data types that need to be used for 8b, 16b and 32b in <core_portme.h>.
+  To avoid compiler issues, define the data types that need to be used for 8b, 16b and 32b in <core_portme.h>.
 
-	*Imprtant*:
-	ee_ptr_int needs to be the data type used to hold pointers, otherwise coremark may fail!!!
+  *Imprtant*:
+  ee_ptr_int needs to be the data type used to hold pointers, otherwise coremark may fail!!!
 */
 typedef signed short ee_s16;
 typedef unsigned short ee_u16;
@@ -110,11 +110,11 @@ typedef signed int ee_s32;
 typedef double ee_f32;
 typedef unsigned char ee_u8;
 #if (XLEN==64)
-	typedef signed int ee_u32; // replaced with signed to improve performance by avoiding zero extension in RV64 per https://github.com/sifive/benchmark-coremark/blob/master/linux64/core_portme.h#L102
-	typedef unsigned long long ee_ptr_int;
+  typedef signed int ee_u32; // replaced with signed to improve performance by avoiding zero extension in RV64 per https://github.com/sifive/benchmark-coremark/blob/master/linux64/core_portme.h#L102
+  typedef unsigned long long ee_ptr_int;
 #else
-	typedef unsigned int ee_u32;
-	typedef ee_u32 ee_ptr_int;
+  typedef unsigned int ee_u32;
+  typedef ee_u32 ee_ptr_int;
 #endif
 typedef size_t ee_size_t;
 /* align an offset to point to a 32b value */
@@ -122,170 +122,170 @@ typedef size_t ee_size_t;
 
 
 /* Configuration: SEED_METHOD
-	Defines method to get seed values that cannot be computed at compile time.
+  Defines method to get seed values that cannot be computed at compile time.
 
-	Valid values:
-	SEED_ARG - from command line.
-	SEED_FUNC - from a system function.
-	SEED_VOLATILE - from volatile variables.
+  Valid values:
+  SEED_ARG - from command line.
+  SEED_FUNC - from a system function.
+  SEED_VOLATILE - from volatile variables.
 */
 #ifndef SEED_METHOD
 #define SEED_METHOD SEED_VOLATILE
 #endif
 
 /* Configuration: MEM_METHOD
-	Defines method to get a block of memry.
+  Defines method to get a block of memry.
 
-	Valid values:
-	MEM_MALLOC - for platforms that implement malloc and have malloc.h.
-	MEM_STATIC - to use a static memory array.
-	MEM_STACK - to allocate the data block on the stack (NYI).
+  Valid values:
+  MEM_MALLOC - for platforms that implement malloc and have malloc.h.
+  MEM_STATIC - to use a static memory array.
+  MEM_STACK - to allocate the data block on the stack (NYI).
 */
 #ifndef MEM_METHOD
 #define MEM_METHOD MEM_STATIC
 #endif
 
 /* Configuration: MULTITHREAD
-	Define for parallel execution
+  Define for parallel execution
 
-	Valid values:
-	1 - only one context (default).
-	N>1 - will execute N copies in parallel.
+  Valid values:
+  1 - only one context (default).
+  N>1 - will execute N copies in parallel.
 
-	Note:
-	If this flag is defined to more then 1, an implementation for launching parallel contexts must be defined.
+  Note:
+  If this flag is defined to more then 1, an implementation for launching parallel contexts must be defined.
 
-	Two sample implementations are provided. Use <USE_PTHREAD> or <USE_FORK> to enable them.
+  Two sample implementations are provided. Use <USE_PTHREAD> or <USE_FORK> to enable them.
 
-	It is valid to have a different implementation of <core_start_parallel> and <core_end_parallel> in <core_portme.c>,
-	to fit a particular architecture.
+  It is valid to have a different implementation of <core_start_parallel> and <core_end_parallel> in <core_portme.c>,
+  to fit a particular architecture.
 */
 #ifndef MULTITHREAD
 #define MULTITHREAD 1
 #endif
 
 /* Configuration: USE_PTHREAD
-	Sample implementation for launching parallel contexts
-	This implementation uses pthread_thread_create and pthread_join.
+  Sample implementation for launching parallel contexts
+  This implementation uses pthread_thread_create and pthread_join.
 
-	Valid values:
-	0 - Do not use pthreads API.
-	1 - Use pthreads API
+  Valid values:
+  0 - Do not use pthreads API.
+  1 - Use pthreads API
 
-	Note:
-	This flag only matters if MULTITHREAD has been defined to a value greater then 1.
+  Note:
+  This flag only matters if MULTITHREAD has been defined to a value greater then 1.
 */
 #ifndef USE_PTHREAD
 #define USE_PTHREAD 0
 #endif
 
 /* Configuration: USE_FORK
-	Sample implementation for launching parallel contexts
-	This implementation uses fork, waitpid, shmget,shmat and shmdt.
+  Sample implementation for launching parallel contexts
+  This implementation uses fork, waitpid, shmget,shmat and shmdt.
 
-	Valid values:
-	0 - Do not use fork API.
-	1 - Use fork API
+  Valid values:
+  0 - Do not use fork API.
+  1 - Use fork API
 
-	Note:
-	This flag only matters if MULTITHREAD has been defined to a value greater then 1.
+  Note:
+  This flag only matters if MULTITHREAD has been defined to a value greater then 1.
 */
 #ifndef USE_FORK
 #define USE_FORK 0
 #endif
 
 /* Configuration: USE_SOCKET
-	Sample implementation for launching parallel contexts
-	This implementation uses fork, socket, sendto and recvfrom
+  Sample implementation for launching parallel contexts
+  This implementation uses fork, socket, sendto and recvfrom
 
-	Valid values:
-	0 - Do not use fork and sockets API.
-	1 - Use fork and sockets API
+  Valid values:
+  0 - Do not use fork and sockets API.
+  1 - Use fork and sockets API
 
-	Note:
-	This flag only matters if MULTITHREAD has been defined to a value greater then 1.
+  Note:
+  This flag only matters if MULTITHREAD has been defined to a value greater then 1.
 */
 #ifndef USE_SOCKET
 #define USE_SOCKET 0
 #endif
 
 /* Configuration: MAIN_HAS_NOARGC
-	Needed if platform does not support getting arguments to main.
+  Needed if platform does not support getting arguments to main.
 
-	Valid values:
-	0 - argc/argv to main is supported
-	1 - argc/argv to main is not supported
+  Valid values:
+  0 - argc/argv to main is supported
+  1 - argc/argv to main is not supported
 */
 #ifndef MAIN_HAS_NOARGC
 #define MAIN_HAS_NOARGC 1
 #endif
 
 /* Configuration: MAIN_HAS_NORETURN
-	Needed if platform does not support returning a value from main.
+  Needed if platform does not support returning a value from main.
 
-	Valid values:
-	0 - main returns an int, and return value will be 0.
-	1 - platform does not support returning a value from main
+  Valid values:
+  0 - main returns an int, and return value will be 0.
+  1 - platform does not support returning a value from main
 */
 #ifndef MAIN_HAS_NORETURN
 #define MAIN_HAS_NORETURN 0
 #endif
 
 /* Variable: default_num_contexts
-	Number of contexts to spawn in multicore context.
-	Override this global value to change number of contexts used.
+  Number of contexts to spawn in multicore context.
+  Override this global value to change number of contexts used.
 
-	Note:
-	This value may not be set higher then the <MULTITHREAD> define.
+  Note:
+  This value may not be set higher then the <MULTITHREAD> define.
 
-	To experiment, you can set the <MULTITHREAD> define to the highest value expected, and use argc/argv in the <portable_init> to set this value from the command line.
+  To experiment, you can set the <MULTITHREAD> define to the highest value expected, and use argc/argv in the <portable_init> to set this value from the command line.
 */
 extern ee_u32 default_num_contexts;
 
 #if (MULTITHREAD>1)
 #if USE_PTHREAD
-	#include <pthread.h>
-	#define PARALLEL_METHOD "PThreads"
+  #include <pthread.h>
+  #define PARALLEL_METHOD "PThreads"
 #elif USE_FORK
-	#include <unistd.h>
-	#include <errno.h>
-	#include <sys/wait.h>
-	#include <sys/shm.h>
-	#include <string.h> /* for memcpy */
-	#define PARALLEL_METHOD "Fork"
+  #include <unistd.h>
+  #include <errno.h>
+  #include <sys/wait.h>
+  #include <sys/shm.h>
+  #include <string.h> /* for memcpy */
+  #define PARALLEL_METHOD "Fork"
 #elif USE_SOCKET
-	#include <sys/types.h>
-	#include <sys/socket.h>
-	#include <netinet/in.h>
-	#include <arpa/inet.h>
-	#include <sys/wait.h>
-	#include <stdio.h>
-	#include <stdlib.h>
-	#include <string.h>
-	#include <unistd.h>
-	#include <errno.h>
-	#define PARALLEL_METHOD "Sockets"
+  #include <sys/types.h>
+  #include <sys/socket.h>
+  #include <netinet/in.h>
+  #include <arpa/inet.h>
+  #include <sys/wait.h>
+  #include <stdio.h>
+  #include <stdlib.h>
+  #include <string.h>
+  #include <unistd.h>
+  #include <errno.h>
+  #define PARALLEL_METHOD "Sockets"
 #else
-	#define PARALLEL_METHOD "Proprietary"
-	#error "Please implement multicore functionality in core_portme.c to use multiple contexts."
+  #define PARALLEL_METHOD "Proprietary"
+  #error "Please implement multicore functionality in core_portme.c to use multiple contexts."
 #endif /* Method for multithreading */
 #endif /* MULTITHREAD > 1 */
 
 typedef struct CORE_PORTABLE_S {
 #if (MULTITHREAD>1)
-	#if USE_PTHREAD
-	pthread_t thread;
-	#elif USE_FORK
-	pid_t pid;
-	int shmid;
-	void *shm;
-	#elif USE_SOCKET
-	pid_t pid;
-	int sock;
-	struct sockaddr_in sa;
-	#endif /* Method for multithreading */
+  #if USE_PTHREAD
+  pthread_t thread;
+  #elif USE_FORK
+  pid_t pid;
+  int shmid;
+  void *shm;
+  #elif USE_SOCKET
+  pid_t pid;
+  int sock;
+  struct sockaddr_in sa;
+  #endif /* Method for multithreading */
 #endif /* MULTITHREAD>1 */
-	ee_u8	portable_id;
+  ee_u8  portable_id;
 } core_portable;
 
 /* target specific init/fini */

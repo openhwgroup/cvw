@@ -32,7 +32,7 @@ module aes64d(
    output logic [63:0] result
 );
 
-   logic [63:0] 		    ShiftRowsOut, SboxOut, MixcolsIn, MixcolsOut;
+   logic [63:0]        ShiftRowsOut, SboxOut, MixcolsIn, MixcolsOut;
 
    // Apply inverse shiftrows to rs2 and rs1
    aesinvshiftrows64 srow({rs2, rs1}, ShiftRowsOut);

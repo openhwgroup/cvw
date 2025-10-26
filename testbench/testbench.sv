@@ -363,9 +363,9 @@ module testbench;
   //procedural blocks. VCS supports the dynamic types in the implicit sensitivity list of always @* block as specified in the Section 9.2 of the IEEE Standard SystemVerilog Specification 1800-2012.
   //To support memory load and dump task verbosity: flag : -diag sys_task_mem
   always @(*) begin
-  	begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
- 	end_signature_addr = ProgramAddrLabelArray["sig_end_canary"];
-  	signature_size = end_signature_addr - begin_signature_addr;
+    begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
+    end_signature_addr = ProgramAddrLabelArray["sig_end_canary"];
+    signature_size = end_signature_addr - begin_signature_addr;
   end
   logic EcallFaultM;
   if (P.ZICSR_SUPPORTED)
@@ -729,7 +729,7 @@ module testbench;
   flopenr #(P.XLEN) PCMReg(clk, reset, ~dut.core.StallM, dut.core.PCE, PCM);
   always @(posedge clk) begin
     TestComplete <= ((InstrM == 32'h6f) & dut.core.InstrValidM ) |
-		   ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"] & dut.core.lsu.IEUAdrM != 0) & InstrMName == "SW"); // |
+       ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"] & dut.core.lsu.IEUAdrM != 0) & InstrMName == "SW"); // |
     //   (functionName.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.InstrValidM & PrevPCZero));
     if (reset) PrevPCZero <= 0;
     else if (dut.core.InstrValidM) PrevPCZero <= (PCM == 0 & dut.core.ifu.InstrM == 0);
@@ -1017,7 +1017,7 @@ end
       if (signature[i] !== testbench.DCacheFlushFSM.ShadowRAM[testadr+i]) begin
         errors = errors+1;
         $display("  Error on test %s result %d: adr = %h sim (D$) %h signature = %h",
-			     TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], signature[i]);
+          TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], signature[i]);
         $stop; // if this is changed to $finish, wally-batch.do does not get to the next step to run coverage
       end
     end

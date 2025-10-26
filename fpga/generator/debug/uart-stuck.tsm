@@ -31,7 +31,7 @@ state state_begin_count:
     elseif($counter0 == 16'hFFFF && wallypipelinedsoc/uncore.uncore/uart.uart/INTR == 1'b1) then
         goto state_count1;
        else
-     	  increment_counter $counter0;
+          increment_counter $counter0;
           goto state_begin_count;
        #endif
     endif

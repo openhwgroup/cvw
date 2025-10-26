@@ -24,23 +24,23 @@ extern volatile uint64_t fromhost;
 
 void uartInit(void) {
   volatile uint8_t *UART_LCR = (uint8_t*)0x10000003;
-	*UART_LCR = 0b0000011; // 8-bit characters, 1 stop bit, no parity
+  *UART_LCR = 0b0000011; // 8-bit characters, 1 stop bit, no parity
 }
 
 void uartSend(char c) {
   volatile uint8_t *UART_THR = (uint8_t*)0x10000000;
   volatile uint8_t *UART_LSR = (uint8_t*)0x10000005;
 
-	while (!(*UART_LSR & (1<<5))); // wait for THRE (trans hold reg empty)
-	*UART_THR = c;
+  while (!(*UART_LSR & (1<<5))); // wait for THRE (trans hold reg empty)
+  *UART_THR = c;
 }
 
 char uartReceive(void) {
   volatile uint8_t *UART_RBR = (uint8_t*)0x10000000;
   volatile uint8_t *UART_LSR = (uint8_t*)0x10000005;
 
-	while (!(*UART_LSR & (1<<0))); // wait for DR (Data Ready)
-	return *UART_RBR;
+  while (!(*UART_LSR & (1<<0))); // wait for DR (Data Ready)
+  return *UART_RBR;
 }
 
 char uartPutStr(const char *str) {

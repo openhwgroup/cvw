@@ -26,20 +26,20 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module zipper #(parameter WIDTH=64) (
-   input  logic [WIDTH-1:0] A,
-   input  logic 	          ZipSelect,
-   output logic [WIDTH-1:0] ZipResult
+  input  logic [WIDTH-1:0] A,
+  input  logic             ZipSelect,
+  output logic [WIDTH-1:0] ZipResult
 );
 
-   logic [WIDTH-1:0] 	     zip, unzip;
-   genvar 		     i;
+  logic [WIDTH-1:0]       zip, unzip;
+  genvar                  i;
 
-   for (i=0; i<WIDTH/2; i+=1) begin: loop
-      assign zip[2*i]           = A[i];
-      assign zip[2*i + 1]       = A[i + WIDTH/2];
-      assign unzip[i]           = A[2*i];
-      assign unzip[i + WIDTH/2] = A[2*i + 1];
-   end
+  for (i=0; i<WIDTH/2; i+=1) begin: loop
+    assign zip[2*i]           = A[i];
+    assign zip[2*i + 1]       = A[i + WIDTH/2];
+    assign unzip[i]           = A[2*i];
+    assign unzip[i + WIDTH/2] = A[2*i + 1];
+  end
 
-   mux2 #(WIDTH) ZipMux(zip, unzip, ZipSelect, ZipResult);
+  mux2 #(WIDTH) ZipMux(zip, unzip, ZipSelect, ZipResult);
 endmodule

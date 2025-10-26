@@ -42,7 +42,7 @@ function processProgram {
 
     # skip if the wrong bit width.
     if [ -z "$listOfAddr" ]; then
-	return 0
+        return 0
     fi
 
     # parse out the addresses and the labels

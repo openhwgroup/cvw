@@ -12,7 +12,7 @@ Docker can be run on most operating systems, including Linux, Windows, and Mac. 
 
 Podman is a more secure and easier-to-use variation of Docker for Linux developed by RedHat.  Both Docker and Podman run the same containers.  
 
-D.3.1	Podman Installation on Linux
+D.3.1 Podman Installation on Linux
 
 A system administrator must install Podman if it is not already present.
 
@@ -24,14 +24,14 @@ For RedHat / Rocky:
 
 $ sudo yum -y install podman
 
-D.3.2	Pulling the Wally Container
+D.3.2 Pulling the Wally Container
 
 Once Podman is installed, a user can pull the Wally container image.  The user must sign up for a free account at docker.io, and will be prompted for the credentials when running podman login.
 
 $ podman login docker.io
 $ podman pull docker.io/wallysoc/wally-docker:latest
 
-D.3.3	Running the Docker Container in Podman
+D.3.3 Running the Docker Container in Podman
 
 To activate podman with GUI support, first identify your display port in the /tmp/.X11-unix file as shown below.  For example, the user ben is on port X51.  
 
@@ -50,9 +50,9 @@ Podman sets up all the RISC-V software in the same location of /opt/riscv as the
 
 To have permission to write to your mounted home directory, you must become root inside the Wally container.  This is an acceptable practice as the security will be maintained within podman for the user that runs podman.  To become root once inside your container:
 
-$ su			# when prompted for password, enter wally
+$ su   # when prompted for password, enter wally
 
-D.3.4	Cleaning up a Podman Container
+D.3.4 Cleaning up a Podman Container
 
 The Docker container image is large, so users may need to clean up a container when they aren’t using it anymore.
 The images that are loaded can be examined, once you pull the Wally container, by typing:
@@ -63,7 +63,7 @@ To remove individual podman images, the following Linux command will remove the 
 
 $ podman rmi -f <Image_name>
 
-D.3.5	Running the Docker Container on Windows or MacOS
+D.3.5 Running the Docker Container on Windows or MacOS
 
 Docker Desktop is easiest to use for Mac OS or Windows and can be installed by downloading from http://docker.com.  Once the desktop application is installed, users can log into their DockerHub account through the Docker Desktop application and manage their containers easily.  
 
@@ -71,7 +71,7 @@ Docker Desktop is easiest to use for Mac OS or Windows and can be installed by d
 *** questa unavailable native on Mac
 
 
-D.3.6	Regenerating the Docker File
+D.3.6 Regenerating the Docker File
 
 We use the following steps to generate the Docker file.  You can adapt them is you wish to make your own custom Docker image, such as one with commercial CAD tools installed in your local environment.
 
@@ -196,7 +196,7 @@ RUN git clone https://github.com/buildroot/buildroot.git && \
 WORKDIR /home/cad
 
 
-D.3.7	Integrating Commercial CAD Tools into a Local Docker Container
+D.3.7 Integrating Commercial CAD Tools into a Local Docker Container
 
 
 

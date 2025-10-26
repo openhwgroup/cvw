@@ -9,13 +9,13 @@
 #include "util.h"
 #undef printf
 #define SYS_write 64
-#define ZEROPAD  	(1<<0)	/* Pad with zero */
-#define SIGN    	(1<<1)	/* Unsigned/signed long */
-#define PLUS    	(1<<2)	/* Show plus */
-#define SPACE   	(1<<3)	/* Spacer */
-#define LEFT    	(1<<4)	/* Left justified */
-#define HEX_PREP 	(1<<5)	/* 0x */
-#define UPPERCASE   (1<<6)	/* 'ABCDEF' */
+#define ZEROPAD   (1<<0)  /* Pad with zero */
+#define SIGN      (1<<1)  /* Unsigned/signed long */
+#define PLUS      (1<<2)  /* Show plus */
+#define SPACE     (1<<3)  /* Spacer */
+#define LEFT      (1<<4)  /* Left justified */
+#define HEX_PREP  (1<<5)  /* 0x */
+#define UPPERCASE (1<<6)  /* 'ABCDEF' */
 typedef size_t ee_size_t;
 #define is_digit(c) ((c) >= '0' && (c) <= '9')
 /*static ee_size_t strnlen(const char *s, ee_size_t count);*/
@@ -177,9 +177,9 @@ static char *iaddr(char *str, unsigned char *addr, int size, int precision, int 
 }
 
 void ee_bufcpy(char *pd, char *ps, int count) {
-	char *pe=ps+count;
-	while (ps!=pe)
-		*pd++=*ps++;
+  char *pe=ps+count;
+  while (ps!=pe)
+    *pd++=*ps++;
 }
 
 #if HAS_FLOAT
@@ -386,7 +386,7 @@ static void cropzeros(char *buffer)
     while (*buffer == '0') buffer--;
     if (*buffer == '.') buffer--;
     while (buffer!=stop)
-		*++buffer=0;
+    *++buffer=0;
   }
 }
 
@@ -1030,9 +1030,9 @@ long atol(const char* str)
 int sendstring(const char *p){
   int n=0;
     while (*p) {
-	_send_char(*p);
-	n++;
-	p++;
+  _send_char(*p);
+  n++;
+  p++;
   }
 
   return n;
@@ -1047,10 +1047,10 @@ int gg_printf(const char *fmt, ...)
   ee_vsprintf(buf, fmt, args);
   va_end(args);
   p=buf;
- /* while (*p) {
-	_send_char(*p);
-	n++;
-	p++;
+  /* while (*p) {
+  _send_char(*p);
+  n++;
+  p++;
   }
 */
 n=sendstring(p);

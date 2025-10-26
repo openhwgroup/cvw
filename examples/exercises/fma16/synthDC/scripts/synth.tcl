@@ -12,7 +12,7 @@ suppress_message {VER-130}
 # statements in initial blocks are ignored
 suppress_message {VER-281}
 suppress_message {VER-173}
- # Unsupported system task '$warn'
+# Unsupported system task '$warn'
 suppress_message {VER-274}
 # Disable Warning:  Little argument or return value checking implemented for system task or function '$readmemh'. (VER-209)
 suppress_message {VER-209}
@@ -64,7 +64,7 @@ if { [shell_is_in_topographical_mode] } {
 
     # TLU+
     set_tlu_plus_files -max_tluplus $MAX_TLU_FILE -min_tluplus $MIN_TLU_FILE \
-	-tech2itf_map $PRS_MAP_FILE
+    -tech2itf_map $PRS_MAP_FILE
 
 } else {
     echo "In normal DC mode...processing\n"
@@ -113,7 +113,7 @@ if {  $find_clock != [list] } {
     set my_clk $my_clock_pin
     create_clock -period $my_period $my_clk
     set_clock_uncertainty $my_uncertainty [get_clocks $my_clk]
- } else {
+} else {
     echo "Did not find clock! Design is probably combinational!"
     set my_clk vclk
     create_clock -period $my_period -name $my_clk
@@ -139,19 +139,19 @@ set all_in_ex_clk [remove_from_collection [all_inputs] [get_ports $my_clk]]
 # Setting constraints on input ports
 if {$tech == "sky130"} {
     if {$drive == "INV"} {
-	    set_driving_cell -lib_cell inv -pin Y $all_in_ex_clk
+        set_driving_cell -lib_cell inv -pin Y $all_in_ex_clk
     } elseif {$drive == "FLOP"} {
-	    set_driving_cell  -lib_cell sky130_osu_sc_12T_ms__dff_1 -pin Q $all_in_ex_clk
+        set_driving_cell  -lib_cell sky130_osu_sc_12T_ms__dff_1 -pin Q $all_in_ex_clk
     }
 } elseif {$tech == "sky90"} {
     if {$drive == "INV"} {
-	    set_driving_cell -lib_cell scc9gena_inv_1 -pin Y $all_in_ex_clk
+        set_driving_cell -lib_cell scc9gena_inv_1 -pin Y $all_in_ex_clk
     } elseif {$drive == "FLOP"} {
-	    set_driving_cell  -lib_cell scc9gena_dfxbp_1 -pin Q $all_in_ex_clk
+        set_driving_cell  -lib_cell scc9gena_dfxbp_1 -pin Q $all_in_ex_clk
     }
 } elseif {$tech == "tsmc28" || $tech=="tsmc28psyn"} {
     if {$drive == "INV"} {
-	    set_driving_cell -lib_cell INVD1BWP30P140 -pin ZN $all_in_ex_clk
+        set_driving_cell -lib_cell INVD1BWP30P140 -pin ZN $all_in_ex_clk
     } elseif {$drive == "FLOP"} {
         set_driving_cell -lib_cell DFQD1BWP30P140 -pin Q $all_in_ex_clk
     }
@@ -169,19 +169,19 @@ if {$drive == "FLOP"} {
 # Setting load constraint on output ports
 if {$tech == "sky130"} {
     if {$drive == "INV"} {
-	    set_load [expr [load_of sky130_osu_sc_12T_ms_TT_1P8_25C.ccs/sky130_osu_sc_12T_ms__inv_4/A] * 1] [all_outputs]
+        set_load [expr [load_of sky130_osu_sc_12T_ms_TT_1P8_25C.ccs/sky130_osu_sc_12T_ms__inv_4/A] * 1] [all_outputs]
     } elseif {$drive == "FLOP"} {
         set_load [expr [load_of sky130_osu_sc_12T_ms_TT_1P8_25C.ccs/sky130_osu_sc_12T_ms__dff_1/D] * 1] [all_outputs]
     }
  } elseif {$tech == "sky90"} {
     if {$drive == "INV"} {
-	    set_load [expr [load_of scc9gena_tt_1.2v_25C/scc9gena_inv_4/A] * 1] [all_outputs]
+        set_load [expr [load_of scc9gena_tt_1.2v_25C/scc9gena_inv_4/A] * 1] [all_outputs]
     } elseif {$drive == "FLOP"} {
         set_load [expr [load_of scc9gena_tt_1.2v_25C/scc9gena_dfxbp_1/D] * 1] [all_outputs]
     }
 } elseif {$tech == "tsmc28" || $tech == "tsmc28psyn"} {
     if {$drive == "INV"} {
-	    set_load [expr [load_of tcbn28hpcplusbwp30p140tt0p9v25c/INVD4BWP30P140/I] * 1] [all_outputs]
+        set_load [expr [load_of tcbn28hpcplusbwp30p140tt0p9v25c/INVD4BWP30P140/I] * 1] [all_outputs]
     } elseif {$drive == "FLOP"} {
         set_load [expr [load_of tcbn28hpcplusbwp30p140tt0p9v25c/DFQD1BWP30P140/D] * 1] [all_outputs]
     }
@@ -231,11 +231,11 @@ set verilogout_equation false
 
 # setting to generate output files
 set write_v    1        ;# generates structural netlist
-set write_sdc  1	;# generates synopsys design constraint file for p&r
-set write_ddc  1	;# compiler file in ddc format
-set write_sdf  1	;# sdf file for backannotated timing sim
-set write_pow  1 	;# generates estimated power report
-set write_rep  1	;# generates estimated area and timing report
+set write_sdc  1        ;# generates synopsys design constraint file for p&r
+set write_ddc  1        ;# compiler file in ddc format
+set write_sdf  1        ;# sdf file for backannotated timing sim
+set write_pow  1        ;# generates estimated power report
+set write_rep  1        ;# generates estimated area and timing report
 set write_cst  1        ;# generate report of constraints
 set write_hier 1        ;# generate hierarchy report
 

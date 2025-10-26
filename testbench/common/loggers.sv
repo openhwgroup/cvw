@@ -118,7 +118,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
 
     end else if(TEST == "coremark") begin
       // embench runs warmup then runs start_trigger
-	    // embench end with stop_trigger.
+      // embench end with stop_trigger.
       //assign StartSampleFirst = functionName.functionName.FunctionName == "start_time";
       //flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
       //assign StartSample = StartSampleFirst & ~ StartSampleDelayed;

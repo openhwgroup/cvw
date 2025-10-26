@@ -188,7 +188,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
                  HSELBootRomD & HRESPBootRom;
 
   assign HREADY = HSELRamD & HREADYRam |
-		          HSELEXTD & HREADYEXT |
+                  HSELEXTD & HREADYEXT |
                   HSELBRIDGED & HREADYBRIDGE |
                   HSELBootRomD & HREADYBootRom |
                   HSELNoneD; // don't lock up the bus if no region is being accessed

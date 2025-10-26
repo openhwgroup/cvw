@@ -45,7 +45,7 @@ module testbench();
       //if (testvectors[vectornum] === 5'bx) begin
       if (vectornum === 10) begin
         $display("%d tests completed with %d errors",
-	           vectornum, errors);
+                  vectornum, errors);
 `ifdef QUESTA
         $stop;  // if this is changed to $finish for Questa, coverage is not collected
 `else

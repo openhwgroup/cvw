@@ -43,7 +43,7 @@ RVTEST_CODE_BEGIN
     //   Initialize a6 as a physical pointer to the test results
     //   Set up stack pointer, mscratch, sscratch
     //
-	// ---------------------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------------------------
 
     // address for test results
     la t1, test_1_res
@@ -279,7 +279,7 @@ end_trap_triggers:
 
     j trap_handler_end_\MODE\() // skip the trap handler when it is being defined.
 
-	// ---------------------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------------------------
     // General traps Handler
     //
     //   Handles traps by branching to different behaviors based on mcause.
@@ -916,7 +916,7 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
 
 .endm
 
-	// ---------------------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------------------------
     // Test Handler
     //
     // This test handler works in a similar wy to the trap handler. It takes in a few things by reading from a table in memory

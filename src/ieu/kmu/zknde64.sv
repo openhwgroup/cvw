@@ -33,7 +33,7 @@ module zknde64 import cvw::*; #(parameter cvw_t P) (
    output logic [63:0] ZKNDEResult
 );
 
-    logic [63:0] 	     aes64dRes, aes64eRes, aes64ks1iRes, aes64ks2Res;
+    logic [63:0]         aes64dRes, aes64eRes, aes64ks1iRes, aes64ks2Res;
     logic [31:0]         SboxEIn, SboxKIn, Sbox0In, Sbox0Out;
 
     if (P.ZKND_SUPPORTED) // ZKND supports aes64ds, aes64dsm, aes64im
