@@ -427,4 +427,3 @@ module fpgaTop
   assign RVVIStall = '0;
 
 endmodule
-

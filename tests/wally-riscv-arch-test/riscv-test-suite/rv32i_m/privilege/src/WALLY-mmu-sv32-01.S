@@ -200,4 +200,3 @@ test_cases:
 
 # terminate tests
 .4byte 0x0, 0x0, terminate_test # brings us back into machine mode with a final ecall, writing 0x9 to the output.
-

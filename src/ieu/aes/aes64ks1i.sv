@@ -47,4 +47,3 @@ module aes64ks1i(
    assign result[31:0]  = Sbox0Out ^ rcon;
    assign result[63:32] = Sbox0Out ^ rcon;	
 endmodule
-

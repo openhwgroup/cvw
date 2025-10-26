@@ -46,5 +46,3 @@ module clmul #(parameter WIDTH=32) (
     end
   end
 endmodule
-
-

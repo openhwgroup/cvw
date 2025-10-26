@@ -618,4 +618,3 @@ module fpgaTop #(parameter logic RVVI_SYNTH_SUPPORTED = 0)
    assign phy_reset_n = ~1'b0;
   
 endmodule
-

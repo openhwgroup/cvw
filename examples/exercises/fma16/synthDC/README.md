@@ -23,4 +23,3 @@ make synth FREQ=500
   - Options:
     - 0: switching factor power analysis
     - 1: RTL simulation driven power analysis.
-

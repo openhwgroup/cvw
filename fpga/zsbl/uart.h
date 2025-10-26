@@ -84,4 +84,3 @@ void print_uart_float(float num, int precision);
 /*   print_uart_float(getTime(),5);      \ */
 /*   clear_status_fs();                  \ */
 /*   print_uart("] ") */
-

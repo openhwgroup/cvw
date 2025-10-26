@@ -459,7 +459,3 @@ coverage exclude -scope /dut/core/priv/priv/csr/csrs/csrs -linerange [GetLineNum
 
 # Exclude EBU Beat Counter flop because it is only idle when bus has multicycle latency, but rv64gc has single cycle latency
 coverage exclude -scope /dut/core/ebu/ebu/ebufsmarb/BeatCounter/cntrflop
-
-
-
-

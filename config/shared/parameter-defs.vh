@@ -199,4 +199,3 @@ localparam cvw_t P = '{
   DIVBLEN     : DIVBLEN,
   INTDIVb     : INTDIVb
 };
-

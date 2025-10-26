@@ -124,4 +124,3 @@ proc view {args} {
 alias vrt {view report_timing -nosplit}
 alias vrtm {view report_timing -nosplit -delay min}
 alias vman {view man}
-

@@ -13,5 +13,3 @@ sim: $(TARGET).elf.objdump
 
 clean:
 	rm -f $(TARGET).elf*
-
-

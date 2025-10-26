@@ -31,4 +31,3 @@ module sd_crc_7(BITVAL, Enable, CLK, RST, CRC);
      end
    
 endmodule
-

@@ -95,4 +95,3 @@ jal cause_s_ext_interrupt_GPIO
 END_TESTS
 
 TEST_STACK_AND_DATA
-

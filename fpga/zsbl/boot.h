@@ -70,4 +70,3 @@ int disk_read(BYTE * buf, LBA_t sector, UINT count);
 #define SDCCLOCK (SYSTEMCLOCK/2 > MAXSDCCLOCK ? MAXSDCCLOCK : SYSTEMCLOCK/2)
 
 #endif // WALLYBOOT
-

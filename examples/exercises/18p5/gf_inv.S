@@ -179,4 +179,3 @@ end_signature:
 	
 .bss
     .space 512
-

@@ -33,4 +33,3 @@ module flopen #(parameter WIDTH = 8) (
   always_ff @(posedge clk)
     if (en) q <= d;
 endmodule
-

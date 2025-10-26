@@ -144,4 +144,3 @@ csrTable_clear:
 .8byte csrRasWrongCount_clear		#8
 .8byte csrReturnCount_clear		#9
 .8byte csrBTBClassWrongCount_clear	#A
-

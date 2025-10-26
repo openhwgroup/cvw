@@ -66,5 +66,3 @@ addi x16, x16, 4
 END_TESTS
 
 TEST_STACK_AND_DATA
-
-

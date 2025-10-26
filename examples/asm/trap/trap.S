@@ -128,4 +128,3 @@ topofstack:
 .bss   
     .space 512
 topoftrapstack:
-

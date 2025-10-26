@@ -72,5 +72,3 @@ module fdivsqrtstage2 import cvw::*;  #(parameter cvw_t P) (
   // Unified On-The-Fly Converter to accumulate result
   fdivsqrtuotfc2 #(P) uotfc2(.up, .un, .C(CNext), .U, .UM, .UNext, .UMNext);
 endmodule
-
-

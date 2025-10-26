@@ -96,7 +96,3 @@ jumpToLinux:
 	jalr	x0, t0, 0
 
 end_of_bios:	
-
-	
-
-

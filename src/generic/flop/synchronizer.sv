@@ -37,4 +37,3 @@ module synchronizer (
     q <= mid;
   end
 endmodule
-

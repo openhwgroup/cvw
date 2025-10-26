@@ -36,4 +36,3 @@ module flopenrc #(parameter WIDTH = 8) (
       if (clear) q <= '0;
       else       q <= d;
 endmodule
-

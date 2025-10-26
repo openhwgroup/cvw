@@ -165,6 +165,3 @@ module rvvitbwrapper import cvw::*; #(parameter cvw_t P,
   counter #(32) ethernexttxcounter(clk, reset, EthernetTXCounterEn, EthernetTXCount);
 
 endmodule  
-
-
-

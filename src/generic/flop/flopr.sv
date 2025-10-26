@@ -34,4 +34,3 @@ module flopr #(parameter WIDTH = 8) (
     if (reset) q <= '0;
     else       q <= d;
 endmodule
-

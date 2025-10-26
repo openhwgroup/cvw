@@ -22,4 +22,3 @@ sudo docker run hello-world
 
 # install podman
 sudo apt-get -y install podman
- 

@@ -78,12 +78,3 @@
 `define FIFO_TX_MEM_DEPTH 8
 `define FIFO_TX_MEM_ADR_SIZE 4
 //---------------------------
-
-
-
-
-
-
-
-
-

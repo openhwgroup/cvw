@@ -45,5 +45,3 @@ $(work_dir)/coremark.bare.riscv: $(sources) Makefile
 clean:
 	$(MAKE) -C $(cmbase) clean
 	rm -f $(work_dir)/*
-
-

@@ -238,4 +238,3 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     assign {ALTBM, W64M, AsM, BsM, BZeroM, AM, IntNormShiftM} = '0;
 
 endmodule
-

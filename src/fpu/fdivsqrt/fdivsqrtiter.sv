@@ -117,4 +117,3 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
   assign FirstUM = UM[0];
   assign FirstC  = C[0];
 endmodule
-

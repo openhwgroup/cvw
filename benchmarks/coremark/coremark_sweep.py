@@ -114,5 +114,3 @@ with open(resultfile, mode='w', newline='') as csvfile:
                             'Branches':br,'Branch Mispredicts':brm,'BTB Misses':btb,'Jump/JR':jmp,'RAS Wrong':ras,'Returns':ret,'BP Class Pred Wrong':bpc})
         csvfile.flush()
     csvfile.close()
-
-

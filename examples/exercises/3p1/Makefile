@@ -9,5 +9,3 @@ $(TARGET).elf: $(TARGET).S Makefile
 
 clean:
 	rm -f $(TARGET).elf $(TARGET).objdump
-
-

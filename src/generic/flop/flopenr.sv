@@ -34,4 +34,3 @@ module flopenr #(parameter WIDTH = 8) (
     if (reset)   q <= '0;
     else if (en) q <= d;
 endmodule
-

@@ -147,5 +147,3 @@ module cacheLRU
   mux2 #(NUMWAYS-1) ReadLRUmux(ReadLRU, NextLRU, ForwardLRU, BypassedLRU);
   flop #(NUMWAYS-1) CurrLRUReg(clk, BypassedLRU, CurrLRU);
 endmodule
-
-

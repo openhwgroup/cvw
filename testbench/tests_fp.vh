@@ -579,6 +579,3 @@ string f128fma[] = '{
 	"f128_mulAdd_rd.tv",
 	"f128_mulAdd_rnm.tv"
 };
-
-
-

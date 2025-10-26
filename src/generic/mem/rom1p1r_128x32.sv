@@ -36,4 +36,3 @@ module rom1p1r_128x32(
    generic64x128ROM sramIP (.CLK, .CEB, .A, .Q);
 
 endmodule 
-

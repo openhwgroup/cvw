@@ -252,4 +252,3 @@ int init_sd(uint32_t freq, uint32_t sdclk){
   print_time();
   println("SD card is initialized.");
 }
-

@@ -92,4 +92,3 @@ module shiftcorrection import cvw::*;  #(parameter cvw_t P) (
   // if the quotient < 1 and not Subnormal then subtract 1 to account for the normalization shift
   assign Ue = (DivResSubnorm & DivSubnormShiftPos) ? 0 : DivUe - {(P.NE+1)'(0), ~LZAPlus1};
 endmodule
-

@@ -377,4 +377,3 @@ sig_end_canary:
 rvtest_sig_end:
 	
 RVMODEL_DATA_END
-

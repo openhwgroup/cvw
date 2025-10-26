@@ -85,4 +85,3 @@ jal cause_m_ext_interrupt
 END_TESTS
 
 TEST_STACK_AND_DATA
-

@@ -33,4 +33,3 @@ module flop #(parameter WIDTH = 8) (
   always_ff @(posedge clk)
     q <= d;
 endmodule
-

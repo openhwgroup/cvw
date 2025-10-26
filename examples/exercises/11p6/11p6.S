@@ -72,6 +72,3 @@ pagetable:
 .align 12
 # L0 page table situated at 0x80011000
     .4byte 0x200000CF # VPN 0 points to physical kilopage at 0x80000000 with Dirty, Access, XWR, Valid  
-
-
-

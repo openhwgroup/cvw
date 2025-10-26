@@ -1073,4 +1073,3 @@ task automatic updateProgramAddrLabelArray;
   /* verilator lint_on WIDTHTRUNC */
   /* verilator lint_on WIDTHEXPAND */
 endtask
-

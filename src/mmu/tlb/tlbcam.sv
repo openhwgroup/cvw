@@ -60,4 +60,3 @@ module tlbcam  import cvw::*;  #(parameter cvw_t P,
   assign CAMHit = |Matches & ~TLBFlush;
   or_rows #(TLB_ENTRIES,2) PageTypeOr(PageTypeRead, HitPageType);
 endmodule
-

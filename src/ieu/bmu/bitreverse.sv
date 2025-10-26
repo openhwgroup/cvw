@@ -37,5 +37,3 @@ module bitreverse #(parameter WIDTH=32) (
     assign RevA[WIDTH-i-1] = A[i];
   end
 endmodule
-
-

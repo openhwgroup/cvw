@@ -159,4 +159,3 @@ module trickbox_apb import cvw::*;  #(parameter XLEN = 64, NUM_HARTS = 1) (
     assign HGEIP_OUT[i] = TRICKEN[6] ? HGEIP[i] : HGEIP_IN[i];
 
 endmodule
-

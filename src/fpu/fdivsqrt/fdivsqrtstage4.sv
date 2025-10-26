@@ -88,5 +88,3 @@ module fdivsqrtstage4 import cvw::*;  #(parameter cvw_t P) (
   // On-the-fly converter to accumulate result
   fdivsqrtuotfc4 #(P) fdivsqrtuotfc4(.udigit, .C(CNext[P.DIVb:0]), .U, .UM, .UNext, .UMNext);
 endmodule
-
-
