@@ -21,7 +21,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "WALLY-TEST-LIB-32.h" 
+#include "WALLY-TEST-LIB-32.h"
 
 RVTEST_ISA("RV32I_Zicsr_Zifencei")
 RVTEST_CASE(0,"//check ISA:=regex(.*32.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;",pmp)
@@ -43,13 +43,13 @@ test_cases:
 #
 #   Here is where the actual tests are held, or rather, what the actual tests do.
 #   each entry consists of 3 values that will be read in as follows:
-#   
+#
 #   '.4byte [x28 Value], [x29 Value], [x30 value]'
 #                     or
 #   '.4byte [address], [value], [test type]'
 #
 #   The encoding for x30 test type values can be found in the test handler in the framework file
-# 
+#
 # ---------------------------------------------------------------------------------------------
 
 # These tests follow the testing plan in Chapter 12 of the riscv-wally textbook *** what is it called and how do I refer to it?
@@ -83,13 +83,13 @@ test_cases:
 
 # Write executable code to regions where X = 0, 1 in main memory
 .4byte 0x80100200, 0x11100393, write32_test # write executable code for "li x7, 0x111; ret" to region with X=1 (PMP4)
-.4byte 0x80100204, 0x00008067, write32_test 
+.4byte 0x80100204, 0x00008067, write32_test
 .4byte 0x80100020, 0x11100393, write32_test # write same executable code to region with X=0 (PMP2)
-.4byte 0x80100024, 0x00008067, write32_test 
+.4byte 0x80100024, 0x00008067, write32_test
 
 
 # attempt to write to pmpaddr5 and pmp5cfg after lockout
-.4byte 0x1, 0x0018FF0C, write_pmpcfg_1 # attempt to edit only pmp5cfg (pmpcfg1[8:15]) after lockout. 
+.4byte 0x1, 0x0018FF0C, write_pmpcfg_1 # attempt to edit only pmp5cfg (pmpcfg1[8:15]) after lockout.
 # instruction ignored, output is 0x0018900C, NOT 0x0018FF0C
 .4byte 0x5, 0xFFFFFFFF, write_pmpaddr_5 # attempt to edit pmpaddr5 after lockout.
 # instruction ignored, output is 0x200400C0, NOT 0xFFFFFFFF

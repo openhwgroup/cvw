@@ -4,7 +4,7 @@
 ##
 ## Written: Jordan Carlin, jcarlin@hmc.edu
 ## Created: May 30 2025
-## Modified: 
+## Modified:
 ##
 ## Purpose: RISC-V GNU Toolchain installation script
 ##

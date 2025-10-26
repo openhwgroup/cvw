@@ -18,7 +18,7 @@ def mask(command):
 
 
 if __name__ == '__main__':
-    
+
     techs = ['sky130', 'sky90', 'tsmc28', 'tsmc28psyn']
     allConfigs = ['rv32gc', 'rv32imc', 'rv64gc', 'rv64imc', 'rv32e', 'rv32i', 'rv64i']
     freqVaryPct = [-20, -12, -8, -6, -4, -2, 0, 2, 4, 6, 8, 12, 20]
@@ -59,7 +59,7 @@ if __name__ == '__main__':
         defaultfreq = 500 if tech == 'sky90' else 1500
         freq = args.targetfreq if args.targetfreq else defaultfreq
         config = args.version if args.version else 'rv64gc'
-        for mod in ['noAtomic', 'noFPU', 'noMulDiv', 'noPriv', 'pmp0']: 
+        for mod in ['noAtomic', 'noFPU', 'noMulDiv', 'noPriv', 'pmp0']:
             runSynth(config, mod, tech, freq, maxopt, usesram)
     else:
         defaultfreq = 500 if tech == 'sky90' else 1500

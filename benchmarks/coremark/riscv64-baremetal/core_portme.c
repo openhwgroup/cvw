@@ -114,7 +114,7 @@ void portable_free(void *p) {
     #define read_csr(reg) ({ unsigned long __tmp; \
        asm volatile ("csrr %0, " #reg : "=r"(__tmp)); \
        __tmp; })
-	// #if (XLEN==64) 
+	// #if (XLEN==64)
 	// 	typedef unsigned long long ee_ptr_int;
 	// #else
 	// 	typedef unsigned long ee_ptr_int;
@@ -207,7 +207,7 @@ CORE_TICKS get_time(void) {
 	ee_printf("    Elapsed MTIME: %u\n", elapsed);
 	ee_printf("    Elapsed MINSTRET: %lu\n", instructions);
 	ee_printf("    COREMARK/MHz Score: 10,000,000 / %lu = %d.%02d \n", elapsed, cm100/100, cm100%100);
-	ee_printf("    CPI: %lu / %lu = %d.%02d\n", elapsed, instructions, cpi100/100, cpi100%100); 
+	ee_printf("    CPI: %lu / %lu = %d.%02d\n", elapsed, instructions, cpi100/100, cpi100%100);
 	return elapsed;
 }
 /* Function: time_in_secs

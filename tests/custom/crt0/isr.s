@@ -10,7 +10,7 @@ __trap_handler:
 	sw x3, 0x8(sp)
 	sw x4, 0xC(sp)
 	sw x5, 0x10(sp)
-	sw x6, 0x14(sp)	
+	sw x6, 0x14(sp)
 	sw x7, 0x18(sp)
 	sw x8, 0x1C(sp)
 	sw x9, 0x20(sp)
@@ -61,7 +61,7 @@ restore_st:
 	lw x3, 0x8(sp)
 	lw x4, 0xC(sp)
 	lw x5, 0x10(sp)
-	lw x6, 0x14(sp)	
+	lw x6, 0x14(sp)
 	lw x7, 0x18(sp)
 	lw x8, 0x1C(sp)
 	lw x9, 0x20(sp)
@@ -120,13 +120,13 @@ trap_m_ecall:
 	beq	a7, t0, trap_m_decrease_privilege
 	li	t0, 2
 	beq	a7, t0, trap_m_increase_privilege
-	
+
 	# call call back function if not zero
 	la	t1, isr_m_ecall_cb_fp
 	lw	t0, 0(t1)
 	beq	t0, x0, trap_m_ecall_skip_cb
 	jalr	ra, t0, 0
-trap_m_ecall_skip_cb:	
+trap_m_ecall_skip_cb:
 	# modify the mepc
 	csrrw	t0, mepc, x0
 	addi	t0, t0, 4
@@ -168,7 +168,7 @@ trap_m_increase_privilege:
 	or	t0, t1, t2
 	csrrw	x0, mstatus, t0
 	j 	trap_m_ecall_skip_cb
-	
+
 .data
 exception_table:
 	.int trap_instr_addr_misalign
@@ -206,7 +206,7 @@ exception_table:
 	.int restore_st
 	.int restore_st
 
-	
+
 .section .data
 .global isr_m_ecall_cb_fp
 isr_m_ecall_cb_fp:

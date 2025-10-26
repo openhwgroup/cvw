@@ -65,10 +65,10 @@ Then fork and clone the repo, source setup, make the tests and run regression
 	$ make
 	$ wsim --sim verilator rv64gc --elf hello
 	Hello Wally!
-	0 1 2 3 4 5 6 7 8 9 
+	0 1 2 3 4 5 6 7 8 9
 	$ spike hello
 	Hello Wally!
-	0 1 2 3 4 5 6 7 8 9 
+	0 1 2 3 4 5 6 7 8 9
 	```
 
 10. Build the tests from the cvw directory and run a regression simulation to prove everything is installed.  Building tests may take a while.

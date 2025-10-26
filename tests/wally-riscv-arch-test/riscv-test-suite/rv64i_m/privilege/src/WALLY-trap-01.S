@@ -35,9 +35,9 @@ li x28, 0x8
 csrs mstatus, x28 // set mstatus.MIE bit to 1
 WRITE_READ_CSR stimecmp, 0xFFFFFFFF // set timer to high value so it doesn't go off immediately
 WRITE_READ_CSR menvcfg, 0x8000000000000000 // Enable menvcfg.STCE
-WRITE_READ_CSR mie, 0xFFF // Enable interrupts from all sources 
+WRITE_READ_CSR mie, 0xFFF // Enable interrupts from all sources
 
-// test 5.3.1.4 Basic trap tests 
+// test 5.3.1.4 Basic trap tests
 
 // instr address misaligned instructions are excluded from this test since they are impossible to cause when compressed instructions are enabled.
 jal cause_instr_access
@@ -76,7 +76,7 @@ jal cause_ecall // M mode ecall
 
 jal cause_s_soft_interrupt // S Mode Interrupts Ignored in M mode. sip writeable when mideleg = 1
 jal cause_m_soft_interrupt
-jal cause_s_time_interrupt 
+jal cause_s_time_interrupt
 jal cause_m_time_interrupt
 li a3, 0x40 // these interrupts involve a time loop waiting for the interrupt to go off.
 // since interrupts are not always enabled, we need to make it stop after a certain number of loops, which is the number in a3

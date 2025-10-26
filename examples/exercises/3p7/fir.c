@@ -11,7 +11,7 @@ int mul_q31(int a, int b) {
 	long res = (long)a * (long)b;
 	int result = res >> 31; // shift right to get the 32-bit result; this is equivalent to shifting left by 1 and discarding the bottom 32 bits
 	//printf("mul_q31: a = %x, b = %x, res = %lx, result = %x\n", a, b, res, result);
-	return result; 
+	return result;
 }
 
 
@@ -23,7 +23,7 @@ void fir(int x[], int c[], int y[], int n, int m) {
 	int i, j;
 	for (j=0; j<n-m+1; j++) {
 		y[j] = 0;
-		for (i=0; i<m; i++) 
+		for (i=0; i<m; i++)
 			y[j] = add_q31(y[j], mul_q31(c[i], x[j-i+(m-1)]));
 	}
 }
@@ -50,7 +50,7 @@ int main(void) {
 		0x8643C7B3, // sin(17*2pi/10)
 		0x8643C7B3, // sin(18*2pi/10)
 		0xB4C373EE  // sin(19*2pi/10)
-	};  
+	};
 	int lowpass[4] = {0x20000001, 0x20000002, 0x20000003, 0x20000004}; // 1/4 in Q1.31 format
 	int y[17];
   	int expected[17] = { // in Q1.31 format

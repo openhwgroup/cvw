@@ -179,7 +179,7 @@ int putchar(int ch)
   // David_Harris@hmc.edu 11/30/2024
   // Replaced syscall with uartSend
   uartSend(ch);
- 
+
   /*
   static __thread char buf[64] __attribute__((aligned(64)));
   static __thread int buflen = 0;
@@ -282,7 +282,7 @@ static void vprintfmt(void (*putch)(int, void**), void **putdat, const char *fmt
     case '-':
       padc = '-';
       goto reswitch;
-      
+
     // flag to pad with 0's instead of spaces
     case '0':
       padc = '0';
@@ -391,7 +391,7 @@ static void vprintfmt(void (*putch)(int, void**), void **putdat, const char *fmt
     case '%':
       putch(ch, putdat);
       break;
-      
+
     // unrecognized escape sequence - just print it literally
     default:
       putch('%', putdat);

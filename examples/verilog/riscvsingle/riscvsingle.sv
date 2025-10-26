@@ -2,31 +2,31 @@
 // riscvsingle.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
-// Modified: 
+// Modified:
 //
 // Purpose: Simplified Single Cycle RISC-V Processor
 //          Adapted from DDCA RISC-V Edition
 //          Modified to match partitioning in RISC-V SoC Design
-// 
+//
 // A component of the Wally configurable RISC-V project.
-// 
+//
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
 // MIT LICENSE
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-// software and associated documentation files (the "Software"), to deal in the Software 
-// without restriction, including without limitation the rights to use, copy, modify, merge, 
-// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
 //
-//   The above copyright notice and this permission notice shall be included in all copies or 
+//   The above copyright notice and this permission notice shall be included in all copies or
 //   substantial portions of the Software.
 //
-//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
+//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
 //   OR OTHER DEALINGS IN THE SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -36,7 +36,7 @@
 // when the value 25 (0x19) is written to address 100 (0x64)
 
 // Single-cycle implementation of RISC-V (RV32I)
-// User-level Instruction Set Architecture V2.2 
+// User-level Instruction Set Architecture V2.2
 // Implements a subset of the base integer instructions:
 //    lw, sw
 //    add, sub, and, or, slt
@@ -106,9 +106,9 @@
 
 /* verilator lint_on UNUSED */
 
-/* verilator lint_off COMBDLY */ 
-/* verilator lint_off INITIALDLY */ 
-/* verilator lint_off STMTDLY */ 
+/* verilator lint_off COMBDLY */
+/* verilator lint_off INITIALDLY */
+/* verilator lint_off STMTDLY */
 
 module testbench();
   logic        clk;
@@ -118,7 +118,7 @@ module testbench();
 
   // instantiate device to be tested
   riscvsinglecore dut(clk, reset, WriteData, IEUAdr, MemWrite);
-  
+
   // initialize test
   initial begin
       reset <= 1; # 22; reset <= 0;
@@ -144,8 +144,8 @@ module testbench();
 endmodule
 
 module riscvsinglecore(
-  input  logic        clk, reset, 
-  output logic [31:0] WriteData, IEUAdr, 
+  input  logic        clk, reset,
+  output logic [31:0] WriteData, IEUAdr,
   output logic        MemWrite);
 
   logic [31:0] PC, PCPlus4, Instr, ReadData;
@@ -159,13 +159,13 @@ endmodule
 module ifu(
   input  logic        clk, reset,
   input  logic        PCSrc,
-  input  logic [31:0] IEUAdr, 
+  input  logic [31:0] IEUAdr,
   output logic [31:0] Instr, PC, PCPlus4);
 
   logic [31:0] PCNext;
 
   // next PC logic
-  flopr #(32) pcreg(clk, reset, PCNext, PC); 
+  flopr #(32) pcreg(clk, reset, PCNext, PC);
   adder       pcadd4(PC, 32'd4, PCPlus4);
   mux2 #(32)  pcmux(PCPlus4, IEUAdr, PCSrc, PCNext);
   irom        irom(PC, Instr);
@@ -197,7 +197,7 @@ module ieu(
   controller c(.Op(Instr[6:0]), .Funct3(Instr[14:12]), .Funct7b5(Instr[30]), .Eq,
                .ALUResultSrc, .ResultSrc, .MemWrite, .PCSrc,
                .ALUSrc, .RegWrite, .ImmSrc, .ALUControl);
-  datapath dp(.clk, .reset, .Funct3(Instr[14:12]),  
+  datapath dp(.clk, .reset, .Funct3(Instr[14:12]),
               .ALUResultSrc, .ResultSrc, .ALUSrc, .RegWrite, .ImmSrc, .ALUControl, .Eq,
               .PC, .PCPlus4, .Instr, .IEUAdr, .WriteData, .ReadData);
 endmodule
@@ -210,10 +210,10 @@ module controller(
   output logic       ALUResultSrc,
   output logic       ResultSrc,
   output logic       MemWrite,
-  output logic       PCSrc, 
-  output logic       RegWrite, 
+  output logic       PCSrc,
+  output logic       RegWrite,
   output logic [1:0] ALUSrc, ImmSrc,
-  output logic [1:0] ALUControl); 
+  output logic [1:0] ALUControl);
 
   logic       Branch, Jump;
   logic       Sub, ALUOp;
@@ -226,13 +226,13 @@ module controller(
     // RegWrite_ImmSrc_ALUSrc_ALUOp_ALUResultSrc_MemWrite_ResultSrc_Branch_Jump
       7'b0000011: controls = 11'b1_00_01_0_0_0_1_0_0; // lw
       7'b0100011: controls = 11'b0_01_01_0_0_1_0_0_0; // sw
-      7'b0110011: controls = 11'b1_xx_00_1_0_0_0_0_0; // R-type 
+      7'b0110011: controls = 11'b1_xx_00_1_0_0_0_0_0; // R-type
       7'b0010011: controls = 11'b1_00_01_1_0_0_0_0_0; // I-type ALU
       7'b1100011: controls = 11'b0_10_11_0_0_0_0_1_0; // beq
       7'b1101111: controls = 11'b1_11_11_0_1_0_0_0_1; // jal
       default:    controls = 11'bx_xx_xx_x_x_x_x_x_x; // non-implemented instruction
     endcase
-  
+
   assign {RegWrite, ImmSrc, ALUSrc, ALUOp, ALUResultSrc, MemWrite,
           ResultSrc, Branch, Jump} = controls;
 
@@ -247,7 +247,7 @@ endmodule
 module datapath(
   input  logic        clk, reset,
   input  logic [2:0]  Funct3,
-  input  logic        ALUResultSrc, ResultSrc, 
+  input  logic        ALUResultSrc, ResultSrc,
   input  logic [1:0]  ALUSrc,
   input  logic        RegWrite,
   input  logic [1:0]  ImmSrc,
@@ -263,7 +263,7 @@ module datapath(
   logic [31:0] ALUResult, IEUResult, Result;
 
   // register file logic
-  regfile     rf(.clk, .WE3(RegWrite), .A1(Instr[19:15]), .A2(Instr[24:20]), 
+  regfile     rf(.clk, .WE3(RegWrite), .A1(Instr[19:15]), .A2(Instr[24:20]),
                  .A3(Instr[11:7]), .WD3(Result), .RD1(R1), .RD2(R2));
   extend      ext(.Instr(Instr[31:7]), .ImmSrc, .ImmExt);
 
@@ -278,10 +278,10 @@ module datapath(
 endmodule
 
 module regfile(
-  input  logic        clk, 
-  input  logic        WE3, 
-  input  logic [ 4:0] A1, A2, A3, 
-  input  logic [31:0] WD3, 
+  input  logic        clk,
+  input  logic        WE3,
+  input  logic [ 4:0] A1, A2, A3,
+  input  logic [31:0] WD3,
   output logic [31:0] RD1, RD2);
 
   logic [31:0] rf[31:1];
@@ -292,7 +292,7 @@ module regfile(
   // register 0 hardwired to 0
 
   always_ff @(posedge clk)
-    if (WE3) rf[A3] <= WD3;	
+    if (WE3) rf[A3] <= WD3;
 
   assign RD1 = (A1 != 0) ? rf[A1] : 0;
   assign RD2 = (A2 != 0) ? rf[A2] : 0;
@@ -302,29 +302,29 @@ module extend(
   input  logic [31:7] Instr,
   input  logic [1:0]  ImmSrc,
   output logic [31:0] ImmExt);
- 
+
   always_comb
-    case(ImmSrc) 
-               // I-type 
-      2'b00:   ImmExt = {{20{Instr[31]}}, Instr[31:20]};  
+    case(ImmSrc)
+               // I-type
+      2'b00:   ImmExt = {{20{Instr[31]}}, Instr[31:20]};
                // S-type (stores)
-      2'b01:   ImmExt = {{20{Instr[31]}}, Instr[31:25], Instr[11:7]}; 
+      2'b01:   ImmExt = {{20{Instr[31]}}, Instr[31:25], Instr[11:7]};
                // B-type (branches)
-      2'b10:   ImmExt = {{20{Instr[31]}}, Instr[7], Instr[30:25], Instr[11:8], 1'b0}; 
+      2'b10:   ImmExt = {{20{Instr[31]}}, Instr[7], Instr[30:25], Instr[11:8], 1'b0};
                // J-type (jal)
-      2'b11:   ImmExt = {{12{Instr[31]}}, Instr[19:12], Instr[20], Instr[30:21], 1'b0}; 
+      2'b11:   ImmExt = {{12{Instr[31]}}, Instr[19:12], Instr[20], Instr[30:21], 1'b0};
       default: ImmExt = 32'bx; // undefined
-    endcase             
+    endcase
 endmodule
 
 module cmp(
   input  logic [31:0] R1, R2,
   output logic        Eq
 );
- 
+
    assign Eq = (R1 == R2);
 endmodule
-  
+
 
 module alu(
   input  logic [31:0] SrcA, SrcB,
@@ -333,7 +333,7 @@ module alu(
   output logic [31:0] ALUResult, IEUAdr);
 
   logic [31:0] CondInvb, Sum, SLT;
-  logic        ALUOp, Sub, Overflow, Neg, LT;       
+  logic        ALUOp, Sub, Overflow, Neg, LT;
   logic [2:0]  ALUFunct;
 
   assign {Sub, ALUOp} = ALUControl;
@@ -348,13 +348,13 @@ module alu(
   assign Neg  = Sum[31];
   assign LT = Neg ^ Overflow;
   assign SLT = {31'b0, LT};
- 
+
   assign ALUFunct = Funct3 & {3{ALUOp}}; // Force ALUFunct to 0 to Add when ALUOp = 0
   always_comb
     case (ALUFunct)
       3'b000:  ALUResult = Sum;          // add or sub
       3'b010:  ALUResult = SLT;          // slt
-      3'b110:  ALUResult = SrcA | SrcB;  // or 
+      3'b110:  ALUResult = SrcA | SrcB;  // or
       3'b111:  ALUResult = SrcA & SrcB;  // and
       default: ALUResult = 'x;
     endcase
@@ -375,7 +375,7 @@ endmodule
 
 module flopr #(parameter WIDTH = 8) (
   input  logic             clk, reset,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   always_ff @(posedge clk, posedge reset)
@@ -384,11 +384,11 @@ module flopr #(parameter WIDTH = 8) (
 endmodule
 
 module mux2 #(parameter WIDTH = 8) (
-  input  logic [WIDTH-1:0] d0, d1, 
-  input  logic             s, 
+  input  logic [WIDTH-1:0] d0, d1,
+  input  logic             s,
   output logic [WIDTH-1:0] y);
 
-  assign y = s ? d1 : d0; 
+  assign y = s ? d1 : d0;
 endmodule
 
 module adder(input  [31:0] a, b,

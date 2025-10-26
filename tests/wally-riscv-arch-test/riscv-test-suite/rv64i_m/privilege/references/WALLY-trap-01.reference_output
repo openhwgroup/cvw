@@ -25,7 +25,7 @@ FFFFFFFF # mtval of faulting instruction (0xFFFFFFFF)
 00000000
 00000004 # mcause from load address misaligned
 00000000
-02000001 # mtval of misaligned address 
+02000001 # mtval of misaligned address
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
@@ -37,7 +37,7 @@ FFFFFFFF # mtval of faulting instruction (0xFFFFFFFF)
 00000000
 00000006 # mcause from store misaligned
 00000000
-02000001 # mtval of misaligned address 
+02000001 # mtval of misaligned address
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
@@ -47,25 +47,25 @@ FFFFFFFF # mtval of faulting instruction (0xFFFFFFFF)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
-0000000b # mcause from M mode ecall 
+0000000b # mcause from M mode ecall
 00000000
 00000000 # mtval of ecall (*** defined to be zero for now)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
-00000008 # mcause from U mode ecall 
+00000008 # mcause from U mode ecall
 00000000
 00000000 # mtval of ecall (*** defined to be zero for now)
 00000000
 00000080 # masked out mstatus.MPP = 00 (from U mode), mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
-00000009 # mcause from S mode ecall 
+00000009 # mcause from S mode ecall
 00000000
 00000000 # mtval of ecall (*** defined to be zero for now)
 00000000
 00000880 # masked out mstatus.MPP = 01 (from S mode), mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
-0007ec01 # value to indicate successful vectoring on s soft interrupt 
+0007ec01 # value to indicate successful vectoring on s soft interrupt
 00000000
 00000001 # mcause value from s soft interrupt
 80000000
@@ -73,7 +73,7 @@ FFFFFFFF # mtval of faulting instruction (0xFFFFFFFF)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
-0007ec03 # value to indicate successful vectoring on m soft interrupt 
+0007ec03 # value to indicate successful vectoring on m soft interrupt
 00000000
 00000003 # mcause value from m soft interrupt
 80000000
@@ -81,7 +81,7 @@ FFFFFFFF # mtval of faulting instruction (0xFFFFFFFF)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
-0007ec05 # value to indicate successful vectoring on s time interrupt 
+0007ec05 # value to indicate successful vectoring on s time interrupt
 00000000
 00000005 # mcause value from s time interrupt
 80000000
@@ -89,7 +89,7 @@ FFFFFFFF # mtval of faulting instruction (0xFFFFFFFF)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
-0007ec07 # value to indicate successful vectoring on m time interrupt 
+0007ec07 # value to indicate successful vectoring on m time interrupt
 00000000
 00000007 # mcause value from m time interrupt
 80000000
@@ -97,7 +97,7 @@ FFFFFFFF # mtval of faulting instruction (0xFFFFFFFF)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
-0007ec09 # value to indicate successful vectoring on s ext interrupt 
+0007ec09 # value to indicate successful vectoring on s ext interrupt
 00000000
 00000009 # mcause value from s ext interrupt
 80000000
@@ -105,7 +105,7 @@ FFFFFFFF # mtval of faulting instruction (0xFFFFFFFF)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
-0007ec0b # value to indicate successful vectoring on m ext interrupt 
+0007ec0b # value to indicate successful vectoring on m ext interrupt
 00000000
 0000000b # mcause value from m ext interrupt
 80000000
@@ -137,7 +137,7 @@ FFFFFFFF # mtval of faulting instruction (0xFFFFFFFF)
 00000000
 00000004 # mcause from load address misaligned
 00000000
-02000001 # mtval of misaligned address 
+02000001 # mtval of misaligned address
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
@@ -149,7 +149,7 @@ FFFFFFFF # mtval of faulting instruction (0xFFFFFFFF)
 00000000
 00000006 # mcause from store misaligned
 00000000
-02000001 # mtval of misaligned address 
+02000001 # mtval of misaligned address
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
@@ -159,13 +159,13 @@ FFFFFFFF # mtval of faulting instruction (0xFFFFFFFF)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
-0000000b # mcause from M mode ecall 
+0000000b # mcause from M mode ecall
 00000000
 00000000 # mtval of ecall (*** defined to be zero for now)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
-0007ec03 # value to indicate successful vectoring on m soft interrupt 
+0007ec03 # value to indicate successful vectoring on m soft interrupt
 00000000
 00000003 # mcause value from m soft interrupt
 80000000
@@ -173,7 +173,7 @@ FFFFFFFF # mtval of faulting instruction (0xFFFFFFFF)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
-0007ec07 # value to indicate successful vectoring on m time interrupt 
+0007ec07 # value to indicate successful vectoring on m time interrupt
 00000000
 00000007 # mcause value from m time interrupt
 80000000
@@ -181,7 +181,7 @@ FFFFFFFF # mtval of faulting instruction (0xFFFFFFFF)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
-0007ec0b # value to indicate successful vectoring on m ext interrupt 
+0007ec0b # value to indicate successful vectoring on m ext interrupt
 00000000
 0000000b # mcause value from m ext interrupt
 80000000

@@ -8,15 +8,15 @@
 // Adapted from Imperas RISCV-TEST_SUITE
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
-// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, 
-// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software 
+// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
+// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
 // is furnished to do so, subject to the following conditions:
 //
 // The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
-// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
@@ -62,15 +62,15 @@ trap_handler: #####
     # 0x08: mcause (high) = 0x00000000
     # ----- If GPIO -----
     # 0x0C: claim ID = 3
-    # 0x10: input_val 
-    # 0x14: output_val 
-    # 0x18: incoming rise_ip 
+    # 0x10: input_val
+    # 0x14: output_val
+    # 0x18: incoming rise_ip
     # 0x1C: serviced rise_ip = 0
-    # 0x20: incoming fall_ip 
+    # 0x20: incoming fall_ip
     # 0x24: serviced fall_ip = 0
-    # 0x28: incoming high_ip 
+    # 0x28: incoming high_ip
     # 0x2C: serviced high_ip = 0
-    # 0x30: incoming low_ip 
+    # 0x30: incoming low_ip
     # 0x34: serviced low_ip  = 0
     # ----- If UART -----
     # 0x0C: claim ID = 0xA
@@ -83,9 +83,9 @@ trap_handler: #####
     # 0x28: SCR
 
     # 0x00: test ID = 0x<group_num>BEEF<intr_num>
-    la t0, wally_signature 
+    la t0, wally_signature
     sub t0, s0, t0 # sigout offset
-    srli t0, t0, 6 # intr_num 
+    srli t0, t0, 6 # intr_num
     add t0, t0, a1
     sw t0, 0x00(s0)
 
@@ -97,11 +97,11 @@ trap_handler: #####
     //srli t0,t0,32
     sw x0, 0x08(s0)
     # MEIP or SEIP?
-    #     MEIP is on context 0   
+    #     MEIP is on context 0
     li t4, 0x0C200004
-    li t0, 0xB 
+    li t0, 0xB
     beq t1, t0, meip
-    #     SEIP is on context 1   
+    #     SEIP is on context 1
     li t4, 0x0C201004
     meip:
 
@@ -117,42 +117,42 @@ trap_handler: #####
     bne t1, t2, trap_handler_end
 
     gpio_handler:
-        # 0x10: input_val 
+        # 0x10: input_val
         li t0, 0x10060000
         lw t1, 0x00(t0)
         sw t1, 0x10(s0)
-        # 0x14: output_val 
+        # 0x14: output_val
         lw t1, 0x0C(t0)
         sw t1, 0x14(s0)
-        # 0x18: incoming rise_ip 
+        # 0x18: incoming rise_ip
         lw t1, 0x1C(t0)
         sw t1, 0x18(s0)
         # 0x1C: serviced rise_ip = 0
         sw t1, 0x1C(t0)
         lw t1, 0x1C(t0)
         sw t1, 0x1C(s0)
-        # 0x20: incoming fall_ip 
+        # 0x20: incoming fall_ip
         lw t1, 0x24(t0)
         sw t1, 0x20(s0)
         # 0x24: serviced fall_ip = 0
         sw t1, 0x24(t0)
         lw t1, 0x24(t0)
         sw t1, 0x24(s0)
-        # 0x28: incoming high_ip 
+        # 0x28: incoming high_ip
         lw t1, 0x2C(t0)
         sw t1, 0x28(s0)
         # 0x2C: serviced high_ip = 0
         sw t1, 0x2C(t0)
         lw t1, 0x2C(t0)
         sw t1, 0x2C(s0)
-        # 0x30: incoming low_ip 
+        # 0x30: incoming low_ip
         lw t1, 0x34(t0)
         sw t1, 0x30(s0)
         # 0x34: serviced low_ip  = 0
         sw t1, 0x34(t0)
         lw t1, 0x34(t0)
         sw t1, 0x34(s0)
-        # disable high_ie and low_ie so interrupt 
+        # disable high_ie and low_ie so interrupt
         # is not taken again immediately
         li t1, 0
         sw t1, 0x28(t0)
@@ -194,7 +194,7 @@ trap_handler: #####
         mv t0, t4
         li t1, 0xA
         sw t1, 0(t0)
-    
+
     trap_handler_end:
     # increment signature pointer
     addi s0,s0,0x40
@@ -217,7 +217,7 @@ main_code: #####
     ##### Initialization #####
     ##########################
     # ========== Global Vars ==========
-    la s0, wally_signature # signature output base adr 
+    la s0, wally_signature # signature output base adr
     la sp, stack           # stack pointer
     li a0, 0               # interrupt complete flag
     # ========== Configure Privileged Unit ==========
@@ -231,7 +231,7 @@ main_code: #####
     ##################################
     ##### Test 1 - Signs of Life #####
     ##################################
-    li a1, 0x01beef00 # group ID 
+    li a1, 0x01beef00 # group ID
     # clear MEIE (good to turn off while configuring peripherals)
     li t0, 0x800
     csrrc x0, mie, t0
@@ -249,7 +249,7 @@ main_code: #####
     sw t1, 0x28(t0)
     # enable sources 3,0xA
     li t0, 0x0C002000
-    li t1, 0b10000001000 
+    li t1, 0b10000001000
     sw t1, 0(t0)
     # ========== Configure UART ==========
     # MCR: Loop = 1
@@ -308,11 +308,11 @@ Intr01BEEF03:
     li t1, 0b00011000
     1: bne t1,a0,1b
     li a0, 0
-    
+
     ##################################
     ##### Test 2 - GPIO Testing  #####
     ##################################
-    li a1, 0x02beef00 # group ID 
+    li a1, 0x02beef00 # group ID
     # clear MEIE
     li t0, 0x800
     csrrc x0, mie, t0
@@ -327,7 +327,7 @@ Intr01BEEF03:
     sw t1, 0x0C(t0)
     # enable source 3
     li t0, 0x0C002000
-    li t1, 0b1000 
+    li t1, 0b1000
     sw t1, 0(t0)
     # ========== Input Enables ==========
     # Note that this inherits
@@ -623,11 +623,11 @@ Intr02BEEF11:
     sw t1, 0x24(t0)
     sw t1, 0x2C(t0)
     sw t1, 0x34(t0)
-   
+
     ##################################
     ##### Test 3 - UART Testing  #####
     ##################################
-    li a1, 0x03beef00 # group ID 
+    li a1, 0x03beef00 # group ID
     # clear MEIE
     li t0, 0x800
     csrrc x0, mie, t0
@@ -642,7 +642,7 @@ Intr02BEEF11:
     sw t1, 0x28(t0)
     # enable source 0xA
     li t0, 0x0C002000
-    li t1, 0b10000000000 
+    li t1, 0b10000000000
     sw t1, 0(t0)
     # ========== Transmitter Holding Register Empty Interrupt (THRE) ==========
     # MCR: Loop = 1
@@ -724,7 +724,7 @@ Intr03BEEF16:
     # Same shenanigans as before, only now we also confirm
     # that you can read the RBR before new data is available
     # without messing up the receive interrupt.
-    lb t1, 0(t0) 
+    lb t1, 0(t0)
     sb t1, 7(t0)
     # wait to finish
     li t1, 0b00010000

@@ -35,4 +35,4 @@ module fma16wrapper(
     {result, flags} <= {resultint, flagsint};
   end
 
-endmodule  
+endmodule

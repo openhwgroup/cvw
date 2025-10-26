@@ -2,7 +2,7 @@
 //
 // WALLY-spi
 //
-// Author: David_Harris@hmc.edu and Naiche Whyte-Aguayo 
+// Author: David_Harris@hmc.edu and Naiche Whyte-Aguayo
 //
 // Created 2023-02-01
 //
@@ -21,7 +21,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "WALLY-TEST-LIB-32.h" 
+#include "WALLY-TEST-LIB-32.h"
 
 RVTEST_ISA("RV32I_Zicsr_Zifencei")
 RVTEST_CASE(0,"//check ISA:=regex(.*32.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;def NO_SAIL=True;",spi)
@@ -45,7 +45,7 @@ test_cases:
 #
 #   Here is where the actual tests are held, or rather, what the actual tests do.
 #   each entry consists of 3 values that will be read in as follows:
-#   
+#
 #   '.4byte [x28 Value], [x29 Value], [x30 value]'
 #                     or
 #   '.4byte [address], [value], [test type]'
@@ -101,7 +101,7 @@ test_cases:
 .4byte rx_mark, 0x00000007, write32_test    # set rx_mark to 7
 .4byte tx_data, 0xD4C3B2A1, spi_burst_send
 .4byte 0x0, 0x00000007, spi_data_wait       # rxfifo full, txfifo wptr at 1000, rxfifo wptr at 0000
-.4byte ip, 0x00000003, read32_test        
+.4byte ip, 0x00000003, read32_test
 .4byte rx_data, 0x00000074, read32_test
 .4byte rx_data, 0x00000063, read32_test     # clear 2 entries, txfifo wptr at 1000, rxfifo wptr at 0010
 
@@ -119,7 +119,7 @@ test_cases:
 
 .4byte rx_mark, 0x00000007, write32_test
 .4byte tx_data, 0xD5C5B5A5, spi_burst_send  # 8 tx1110, rx 0110
-.4byte 0x0, 0x00000007, spi_data_wait       
+.4byte 0x0, 0x00000007, spi_data_wait
 
 .4byte rx_mark, 0x00000005, write32_test
 .4byte rx_data, 0x000000C3, read32_test     # tx 1110, rx 0111
@@ -209,7 +209,7 @@ test_cases:
 .4byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 .4byte rx_data, 0x000000A0, read32_test     # read rx_data
 
-# Test polarity 
+# Test polarity
 
 .4byte sck_mode, 0x00000000, write32_test   # reset sck phase to rising edge
 .4byte sck_mode, 0x00000002, write32_test   # set sck polarity active low
@@ -231,17 +231,17 @@ test_cases:
 .4byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 .4byte rx_data, 0x00000079, read32_test     # read rx_data
 
-# Test chip id 
+# Test chip id
 
 .4byte cs_def, 0x0000000F, write32_test     # reset all cs to active low
-.4byte cs_id, 0x00000001, write32_test      # select cs[1] 
+.4byte cs_id, 0x00000001, write32_test      # select cs[1]
 .4byte tx_data, 0x00000000, write32_test   # place 8'h11 into tx_data
 .4byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 .4byte rx_data, 0x00000000, read32_test     # read rx_data
 
 # Test cs hold mode
 
-.4byte cs_id, 0x00000000, write32_test      # select cs[0] 
+.4byte cs_id, 0x00000000, write32_test      # select cs[0]
 .4byte cs_mode, 0x00000002, write32_test    # set cs_mode to HOLD
 .4byte tx_data, 0x000000C0, write32_test   # place 8'h11 into tx_data
 .4byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
@@ -394,7 +394,7 @@ test_cases:
 
 # =========== Test delay1 register ===========
 
-# Test inter cs delay 
+# Test inter cs delay
 
 .4byte sck_mode, 0x00000000, write32_test   #reset sck_mode
 .4byte delay0, 0x00010001, write32_test     # reset delay0 register
@@ -405,7 +405,7 @@ test_cases:
 .4byte rx_data, 0x00000011, read32_test
 .4byte rx_data, 0x00000022, read32_test
 .4byte rx_data, 0x00000033, read32_test
-.4byte rx_data, 0x00000044, read32_test     
+.4byte rx_data, 0x00000044, read32_test
 
 #test long inter_cs delay
 
@@ -431,7 +431,7 @@ test_cases:
 # Test inter_xfr delay of 0 (maybe change behavior to half-period instead of period)
 
 .4byte delay1, 0x00000001, write32_test     # reset inter_cs delay to 1
-.4byte cs_mode, 0x00000002, write32_test    # set cs_mode to HOLD 
+.4byte cs_mode, 0x00000002, write32_test    # set cs_mode to HOLD
 .4byte tx_data, 0x99887766, spi_burst_send
 .4byte 0x0, 0x00000003, spi_data_wait           # wait for transmission to end
 .4byte rx_data, 0x00000066, read32_test
@@ -509,7 +509,7 @@ test_cases:
 .4byte delay1, 0x00000001, write32_test     # reset delay1 register
 .4byte delay0, 0x00010001, write32_test     # reset delay0 register
 .4byte sck_mode, 0x00000000, write32_test   #reset sckmode register
-.4byte cs_mode, 0x00000000, write32_test    # set cs_mode to AUTO 
+.4byte cs_mode, 0x00000000, write32_test    # set cs_mode to AUTO
 .4byte fmt, 0x00040000, write32_test        # set frame length to 4
 .4byte rx_mark, 0x0000000, write32_test     # preset rx watermark b/c of hardware interlock
 .4byte tx_data, 0x000000F0, write32_test   # place 8'h11 into tx_data
@@ -545,9 +545,9 @@ test_cases:
 # Test big endian burst with frame length = 5
 
 .4byte rx_mark, 0x0000003, write32_test     # preset rx watermark b/c of hardware interlock
-.4byte tx_data, 0x03774FFF, spi_burst_send 
+.4byte tx_data, 0x03774FFF, spi_burst_send
 .4byte 0x0, 0x00000003, spi_data_wait
-.4byte rx_data, 0x000000F8, read32_test 
+.4byte rx_data, 0x000000F8, read32_test
 .4byte rx_data, 0x00000048, read32_test
 .4byte rx_data, 0x00000070, read32_test
 .4byte rx_data, 0x00000000, read32_test
@@ -600,7 +600,7 @@ test_cases:
 #.4byte rx_data, 0x000000FC, read32_test
 #.4byte rx_data, 0x0000003C, read32_test
 #.4byte rx_data, 0x00000070, read32_test
-#.4byte rx_data, 0x00000030, read32_test 
+#.4byte rx_data, 0x00000030, read32_test
 
 # Test quad SPI protocol, frame length = 5
 

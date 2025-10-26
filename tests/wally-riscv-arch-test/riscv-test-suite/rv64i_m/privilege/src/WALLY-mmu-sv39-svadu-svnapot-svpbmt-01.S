@@ -21,7 +21,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "WALLY-TEST-LIB-64.h" 
+#include "WALLY-TEST-LIB-64.h"
 RVTEST_ISA("RV64I_Zicsr_Zifencei")
 RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;def NO_SAIL=True;",mmu-sv39)
 
@@ -43,13 +43,13 @@ test_cases:
 #
 #   Here is where the actual tests are held, or rather, what the actual tests do.
 #   each entry consists of 3 values that will be read in as follows:
-#   
+#
 #   '.8byte [x28 Value], [x29 Value], [x30 value]'
 #                     or
 #   '.8byte [address], [value], [test type]'
 #
 #   The encoding for x30 test type values can be found in the test handler
-# 
+#
 # ---------------------------------------------------------------------------------------------
 
 # =========== test 11.3.1.1 Page Table Translation ===========
@@ -122,10 +122,10 @@ test_cases:
 .8byte 0x80205AA0, 0x0000806711100393, write64_test # 11.3.1.3.5 write same executable code
 .8byte 0x80201888, 0x0220DEADBEEF0099, write64_test # 11.3.1.1.4
 .8byte 0x84212348, 0x0330DEADBEEF0440, write64_test # 11.3.1.3.3
-.8byte 0x8020A400, 0x0550DEADBEEF0660, write64_test # 11.3.1.3.9 
+.8byte 0x8020A400, 0x0550DEADBEEF0660, write64_test # 11.3.1.3.9
 .8byte 0x80205000, 0x0770DEADBEEF0880, write64_test # 11.3.1.2.2 junk in memory location corresponding to invalid page
-	
-#.8byte 0x800ffab8, 0x0880deadbeef0990, write64_test # 11.3.1.1.4 
+
+#.8byte 0x800ffab8, 0x0880deadbeef0990, write64_test # 11.3.1.1.4
 .8byte 0x80203aa0, 0x0880deadbeef0991, write64_test # 11.3.1.3.7(a)
 #.8byte 0x80205000, 0x0770DEADBEEF0880, write64_test # 11.3.1.2.2 junk in memory location corresponding to invalid page
 
@@ -250,7 +250,7 @@ test_cases:
 # test 11.3.1.4.1 SATP ASID and PPN fields (test having two page tables with different ASID)
 // *** .8byte 0xFFFFFFFFFFFFF888, 0x0220DEADBEEF0099, write64_test # write identical value to global PTE to make sure it's still in the TLB
 .8byte 0x87FFF, 0x11, goto_sv39 # go to SV39 on a second, very minimal page table
-.8byte 0x200AB0, 0x0000DEADBEEF0000, read64_test # Read success of old written value from a new page table mapping 
+.8byte 0x200AB0, 0x0000DEADBEEF0000, read64_test # Read success of old written value from a new page table mapping
 
 # test 11.3.1.4.2 Test Global mapping
 // ***.8byte 0x7FFFFFF888, 0x0220DEADBEEF0099, read64_test # read success of global PTE undefined in current mapping.
@@ -267,7 +267,7 @@ test_cases:
 
 # test 11.3.1.5.2 mstatus.mprv clearing
 # mstatus.mprv is already 1 from the last test so going to S mode should clear it with the mret
-.8byte 0x80000000, 0x1, goto_s_mode // This should zero out the mprv bit but now to read and write mstatus, we have to 
+.8byte 0x80000000, 0x1, goto_s_mode // This should zero out the mprv bit but now to read and write mstatus, we have to
 .8byte 0x80000000, 0x1, goto_m_mode // go back to m mode to allow us to reread mstatus.
 .8byte 0x0, 0x0, read_write_mprv // read what should be a zeroed out mprv value and then force it back to zero.
 

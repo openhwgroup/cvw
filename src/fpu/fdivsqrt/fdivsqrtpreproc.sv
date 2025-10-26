@@ -5,31 +5,31 @@
 // Modified:13 January 2022
 //
 // Purpose: Divide/Square root preprocessing: integer absolute value and W64, normalization shift
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   input  logic                 clk,
-  input  logic                 IFDivStartE, 
+  input  logic                 IFDivStartE,
   input  logic [P.NF:0]        Xm, Ym,      // Floating-point significands
   input  logic [P.NE-1:0]      Xe, Ye,      // Floating-point exponents
   input  logic [P.FMTBITS-1:0] FmtE,
@@ -41,7 +41,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   output logic [P.NE+1:0]      UeM,         // biased exponent of result
   output logic [P.DIVb+3:0]    X, D,        // Q4.DIVb
   // Int-specific
-  input  logic [P.XLEN-1:0]    ForwardedSrcAE, ForwardedSrcBE, // U(XLEN.0) inputs from IEU 
+  input  logic [P.XLEN-1:0]    ForwardedSrcAE, ForwardedSrcBE, // U(XLEN.0) inputs from IEU
   input  logic                 IntDivE, W64E,
   // Outputs
   output logic                 ISpecialCaseE,
@@ -74,7 +74,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
 
     // Extract inputs, signs, zero, depending on W64 mode if applicable
     assign SignedDivE = ~Funct3E[0];
-  
+
     // Source handling
     if (P.XLEN==64) begin // 64-bit, supports W64
       mux2 #(64)    amux(ForwardedSrcAE, {{32{ForwardedSrcAE[31] & SignedDivE}}, ForwardedSrcAE[31:0]}, W64E, AE);
@@ -86,7 +86,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     assign AZeroE = ~(|AE);
     assign BZeroE = ~(|BE);
     assign AsE = AE[P.XLEN-1] & SignedDivE;
-    assign BsE = BE[P.XLEN-1] & SignedDivE; 
+    assign BsE = BE[P.XLEN-1] & SignedDivE;
 
     // Force integer inputs to be positive
     mux2 #(P.XLEN) posamux(AE, -AE, AsE, PosA);
@@ -110,7 +110,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
 
   // Normalization shift: shift leading one into most significant bit
   assign Xnorm = (IFX << ell);
-  assign Dnorm = (IFD << mE); 
+  assign Dnorm = (IFD << mE);
 
   //////////////////////////////////////////////////////
   // Integer Right Shift to digit boundary
@@ -124,7 +124,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     // calculate number of fractional bits p
     assign ZeroDiff = mE - ell;         // Difference in number of leading zeros
     assign ALTBE = ZeroDiff[P.DIVBLEN-1];  // A less than B (A has more leading zeros)
-    mux2 #(P.DIVBLEN) pmux(ZeroDiff, '0, ALTBE, p);          
+    mux2 #(P.DIVBLEN) pmux(ZeroDiff, '0, ALTBE, p);
 
     /* verilator lint_off WIDTH */
     assign IntResultBitsE = P.LOGR + p;  // Total number of result bits (r integer bits plus p fractional bits)
@@ -174,7 +174,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   assign EvenExp = Xe[0] ^ ell[0]; // effective unbiased exponent after normalization is even
   mux2 #(P.DIVb+4) sqrtxmux({4'b0,Xnorm[P.DIVb:1]}, {5'b00, Xnorm[P.DIVb:2]}, EvenExp, SqrtX); // X/2 if exponent odd, X/4 if exponent even
 
-/*  
+/*
   // Attempt to optimize radix 4 to use a left shift by 1 or zero initially, followed by no more left shift
   // This saves one bit in DIVb because there is no initial right shift.
   // However, C needs to be extended further, lest it create a k with a 1 in the lsb when C is all 1s.
@@ -191,7 +191,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
 */
 
   // Initialize X for division or square root
-  mux2 #(P.DIVb+4) prexmux(DivX, SqrtX, SqrtE, PreShiftX);                    
+  mux2 #(P.DIVb+4) prexmux(DivX, SqrtX, SqrtE, PreShiftX);
 
   //////////////////////////////////////////////////////
   // Select integer or floating-point operands
@@ -205,7 +205,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
 
   // Divisor register
   flopen #(P.DIVb+4) dreg(clk, IFDivStartE, {3'b000, Dnorm}, D);
- 
+
   // Floating-point exponent
   fdivsqrtexpcalc #(P) expcalc(.Bias, .Xe, .Ye, .Sqrt(SqrtE), .ell, .m(mE), .Ue(UeE));
   flopen #(P.NE+2) expreg(clk, IFDivStartE, UeE, UeM);
@@ -229,9 +229,9 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     flopen #(1)        bzeroreg(clk, IFDivStartE, BZeroE,   BZeroM);
     flopen #(1)        asignreg(clk, IFDivStartE, AsE,      AsM);
     flopen #(1)        bsignreg(clk, IFDivStartE, BsE,      BsM);
-    flopen #(P.DIVBLEN)   nsreg(clk, IFDivStartE, IntNormShiftE, IntNormShiftM); 
+    flopen #(P.DIVBLEN)   nsreg(clk, IFDivStartE, IntNormShiftE, IntNormShiftM);
     flopen #(P.XLEN)    srcareg(clk, IFDivStartE, AE,       AM);
-    if (P.XLEN==64) 
+    if (P.XLEN==64)
       flopen #(1)        w64reg(clk, IFDivStartE, W64E,     W64M);
     else assign W64M = 0;
   end else

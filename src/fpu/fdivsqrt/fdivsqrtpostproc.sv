@@ -5,25 +5,25 @@
 // Modified:13 January 2022
 //
 // Purpose: Divide/Square root postprocessing
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -35,16 +35,16 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.DIVb:0]      FirstU, FirstUM,   // U1.DIVb
   input  logic [P.DIVb+1:0]    FirstC,            // Q2.DIVb
   input  logic                 SqrtE,
-  input  logic                 SqrtM, SpecialCaseM, 
+  input  logic                 SqrtM, SpecialCaseM,
   input  logic [P.XLEN-1:0]    AM,                // U/Q(XLEN.0)
   input  logic                 RemOpM, ALTBM, BZeroM, AsM, BsM, W64M,
-  input  logic [P.DIVBLEN-1:0] IntNormShiftM,     
+  input  logic [P.DIVBLEN-1:0] IntNormShiftM,
   output logic [P.DIVb:0]      UmM,               // U1.DIVb result significand
   output logic                 WZeroE,
   output logic                 DivStickyM,
   output logic [P.XLEN-1:0]    FIntDivResultM     // U/Q(XLEN.0)
 );
-  
+
   logic [P.DIVb+3:0]         Sum;
   logic [P.INTDIVb+3:0]      W;
   logic [P.DIVb:0]           PreUmM;
@@ -57,7 +57,7 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
   // Execute Stage: Detect early termination for an exact result
   //////////////////////////
 
-  // check for early termination on an exact result. 
+  // check for early termination on an exact result.
   aplusbeq0 #(P.DIVb+4) wspluswceq0(WS, WC, weq0E);
 
   if (P.RADIX == 2) begin: R2EarlyTerm
@@ -75,12 +75,12 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
     assign WZeroE = weq0E | wfeq0E;
   end else begin
     assign WZeroE = weq0E;
-  end 
+  end
 
   //////////////////////////
   // E/M Pipeline register
   //////////////////////////
- 
+
   flopenr #(1) WZeroMReg(clk, reset, ~StallM, WZeroE, WZeroM);
 
   //////////////////////////
@@ -88,9 +88,9 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
   //////////////////////////
 
   //  If the result is not exact, the sticky should be set
-  assign DivStickyM = ~WZeroM & ~SpecialCaseM; 
+  assign DivStickyM = ~WZeroM & ~SpecialCaseM;
 
-  // Determine if sticky bit is negative 
+  // Determine if sticky bit is negative
   assign Sum = WC + WS;
   assign NegStickyM = Sum[P.DIVb+3];
   mux2 #(P.DIVb+1) preummux(FirstU, FirstUM, NegStickyM, PreUmM); // Select U or U-1 depending on negative sticky bit
@@ -124,7 +124,7 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
     // terminates immediately when B is Zero (div 0) or |A| has more leading 0s than |B|
     always_comb
       if (BZeroM) begin         // Divide by zero
-        if (RemOpM) IntDivResultM = AM;  
+        if (RemOpM) IntDivResultM = AM;
         else        IntDivResultM = {(P.XLEN){1'b1}};
      end else if (ALTBM) begin // Numerator is small
         if (RemOpM) IntDivResultM = AM;
@@ -133,10 +133,10 @@ module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
 
     // sign extend result for W64
     if (P.XLEN==64) begin
-      mux2 #(64) resmux(IntDivResultM[P.XLEN-1:0], 
+      mux2 #(64) resmux(IntDivResultM[P.XLEN-1:0],
         {{(P.XLEN-32){IntDivResultM[31]}}, IntDivResultM[31:0]}, // Sign extending in case of W64
         W64M, FIntDivResultM);
-    end else 
+    end else
       assign FIntDivResultM = IntDivResultM[P.XLEN-1:0];
   end else
     assign FIntDivResultM = '0;

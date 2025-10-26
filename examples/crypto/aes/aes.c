@@ -1,11 +1,11 @@
 //
-// aes.c 
+// aes.c
 // Modified based on ideas from https://github.com/m3y54m/aes-in-c.git and FIPS 197
 // james.stine@okstate.edu 11 October 2024
 //
 
-#include <stdio.h>  
-#include <stdlib.h> 
+#include <stdio.h>
+#include <stdlib.h>
 
 enum errorCode {
     SUCCESS = 0,
@@ -35,7 +35,7 @@ unsigned char sbox[256] = {
 
 // inverse S-box used in the InvSubBytes() (page 23 FIPS 197 Table 6)
 unsigned char rsbox[256] =
-  // 0     1    2      3     4    5     6     7      8    9     A      B    C     D     E     F  
+  // 0     1    2      3     4    5     6     7      8    9     A      B    C     D     E     F
   {0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb,  // 0
    0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87, 0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb,  // 1
    0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2, 0x23, 0x3d, 0xee, 0x4c, 0x95, 0x0b, 0x42, 0xfa, 0xc3, 0x4e,  // 2
@@ -134,7 +134,7 @@ void rotate(unsigned char *word) {
   word[3] = temp;
 }
 
-unsigned char getRconValue(unsigned char num) {  
+unsigned char getRconValue(unsigned char num) {
   return Rcon[num];
 }
 
@@ -144,7 +144,7 @@ void KeySchedule(unsigned char *word, int iteration) {
   // Key Schedule: RotWord → SubWord → XOR with Rcon
   // used during key expansion to transform the input word before XORing it with a
   // word from earlier in the expanded key array.
-  
+
   // rotate the 32-bit word 8 bits to the left
   rotate(word);
   // apply S-Box substitution on all 4 parts of the 32-bit word
@@ -155,10 +155,10 @@ void KeySchedule(unsigned char *word, int iteration) {
   word[0] = word[0] ^ getRconValue(iteration);
 }
 
-// Rijndael's key expansion:  expands an 128, 192, 256 key into an 176, 208, 240 bytes key 
+// Rijndael's key expansion:  expands an 128, 192, 256 key into an 176, 208, 240 bytes key
 void KeyExpansion(unsigned char *expandedKey, unsigned char *key,
 		  enum keySize size, size_t expandedKeySize) {
-  
+
   // current expanded keySize, in bytes
   int currentSize = 0;
   int rconIteration = 1;
@@ -173,18 +173,18 @@ void KeyExpansion(unsigned char *expandedKey, unsigned char *key,
     // assign the previous 4 bytes to the temporary value t
     for (i = 0; i < 4; i++) {
       t[i] = expandedKey[(currentSize - 4) + i];
-    }    
+    }
     // every 16, 24, 32 bytes we apply the core schedule to t
     // and increment rconIteration afterwards
     if (currentSize % size == 0) {
       KeySchedule(t, rconIteration++);
-    }    
+    }
     // For 256-bit keys, we add an extra sbox to the calculation
     if (size == SIZE_32 && ((currentSize % size) == 16)) {
       for (i = 0; i < 4; i++)
 	t[i] = getSBoxValue(t[i]);
     }
-    
+
     // We XOR t with the four-byte block 16, 24, 32 bytes before the new expanded key.
     // This becomes the next four bytes in the expanded key.
     for (i = 0; i < 4; i++) {
@@ -372,7 +372,7 @@ char aes_encrypt(unsigned char *input, unsigned char *output,
     }
   }
 
-  // de-allocate memory for expandedKey  
+  // de-allocate memory for expandedKey
   free(expandedKey);
   return SUCCESS;
 }
@@ -524,7 +524,7 @@ char aes_decrypt(unsigned char *input, unsigned char *output,
     }
   }
 
-  // de-allocate memory for expandedKey  
+  // de-allocate memory for expandedKey
   free(expandedKey);
   return SUCCESS;
 }
@@ -536,14 +536,14 @@ int main(int argc, char *argv[]) {
   // Round Keys: Total words in expanded key = Nb × (Rounds + 1)
   // KeyExp (B): Key expansion size in bytes = Round Keys × 4
   // Block (B): Block size in bytes = 128 bits / 8 = 16
-  
+
   //+-----------+ Block Size | Rounds | Words/Key | Round Keys | KeyExp (B) | Block (B) |
   //|-----------|------------|--------|-----------|------------|------------|-----------|
   //| AES-128   | 128 bits   | 10     | 4         | 44         | 176        | 16        |
   //| AES-192   | 128 bits   | 12     | 4         | 52         | 208        | 16        |
   //| AES-256   | 128 bits   | 14     | 4         | 60         | 240        | 16        |
   //+-----------+------------+--------+-----------+------------+------------+-----------+
-  
+
   // the expanded keySize to store full set of round keys
   int expandedKeySize = 240;
   unsigned char expandedKey[expandedKeySize];
@@ -557,7 +557,7 @@ int main(int argc, char *argv[]) {
   // AES operates on 128-bit blocks (16 bytes), always — regardless of key size (128, 192, 256).
   //unsigned char plaintext[16] = {0x32, 0x43, 0xf6, 0xa8, 0x88, 0x5a, 0x30, 0x8d,
   //                               0x31, 0x31, 0x98, 0xa2, 0xe0, 0x37, 0x07, 0x34};
-  
+
   // the cipher key size defined on Line 86
   enum keySize size = SIZE_32;
 
@@ -567,24 +567,24 @@ int main(int argc, char *argv[]) {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
     0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f
   };
-  
+
   unsigned char plaintext[16] = {
     0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
     0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff
   };
 
-  // AES-192 key and plaintext input 
+  // AES-192 key and plaintext input
   unsigned char key192[24] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
     0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
     0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17
   };
-  
+
   unsigned char plaintext192[16] = {
     0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
     0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff
   };
-  
+
   // AES-256 key and plaintext input
   unsigned char key256[32] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -592,7 +592,7 @@ int main(int argc, char *argv[]) {
     0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
     0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f
   };
-  
+
   unsigned char plaintext256[16] = {
     0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
     0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff
@@ -616,20 +616,20 @@ int main(int argc, char *argv[]) {
   printf("\nExpanded Key (hex format):\n");
   for (i = 0; i < expandedKeySize; i++) {
     printf("%2.2x%c", expandedKey[i], ((i + 1) % 16) ? ' ' : '\n');
-  }  
-  
+  }
+
   printf("\nPlaintext (hex format):\n");
   for (i = 0; i < 16; i++) {
     printf("%2.2x%c", plaintext[i], ((i + 1) % 16) ? ' ' : '\n');
   }
 
   // AES Encryption
-  aes_encrypt(plaintext, ciphertext, key, SIZE_32);  
+  aes_encrypt(plaintext, ciphertext, key, SIZE_32);
   printf("\nCiphertext (hex format):\n");
   for (i = 0; i < 16; i++) {
       printf("%02x%c", ciphertext[i], ((i + 1) % 16) ? ' ' : '\n');
     }
-    
+
   // AES Decryption
   aes_decrypt(ciphertext, decryptedtext, key, SIZE_32);
   printf("\nDecrypted text (hex format):\n");

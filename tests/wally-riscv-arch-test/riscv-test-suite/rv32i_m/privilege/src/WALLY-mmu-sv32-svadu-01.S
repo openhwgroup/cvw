@@ -21,7 +21,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "WALLY-TEST-LIB-32.h" 
+#include "WALLY-TEST-LIB-32.h"
 
 RVTEST_ISA("RV32I_Zicsr_Zifencei")
 RVTEST_CASE(0,"//check ISA:=regex(.*32.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True; def NO_SAIL=True;",mmu)
@@ -43,13 +43,13 @@ test_cases:
 #
 #   Here is where the actual tests are held, or rather, what the actual tests do.
 #   each entry consists of 3 values that will be read in as follows:
-#   
+#
 #   '.4byte [x28 Value], [x29 Value], [x30 value]'
 #                     or
 #   '.4byte [address], [value], [test type]'
 #
 #   The encoding for x30 test type values can be found in the test handler in the framework file
-# 
+#
 # ---------------------------------------------------------------------------------------------
 
 # =========== test 11.3.1.1 Page Table Translation ===========
@@ -59,7 +59,7 @@ test_cases:
 # Level 1 page table, situated at 0x8000D000
 .4byte 0x8000D000, 0x20004C01, write32_test  # points to level 0 page table A
 .4byte 0x8000D004, 0x200000CB, write32_test  # Vaddr 0x400000 Paddr 0x80000000: aligned megapage, W=0, used for execute tests
-.4byte 0x8000D008, 0x20005401, write32_test  # points to level 0 page table B 
+.4byte 0x8000D008, 0x20005401, write32_test  # points to level 0 page table B
 .4byte 0x8000D00C, 0x000800C7, write32_test  # Vaddr 0xC00000: misaligned megapage
 .4byte 0x8000D800, 0x200000CF, write32_test  # Vaddr 0x80000000 Paddr 0x80000000: aligned megapage (program and data memory)
 .4byte 0x8000D804, 0x200000DF, write32_test  # Vaddr 0x80400000 Paddr 0x80000000: aligned megapage, U=1 (aliased with program and data memory)
@@ -82,7 +82,7 @@ test_cases:
 # each of these values is used for 11.3.1.1.3 and some other tests, specified in the comments.
 # when a test is supposed to fault, nothing is written into where it'll be reading/executing since it should fault before getting there.
 .4byte 0x800AAAA8, 0xBEEF0055, write32_test # 11.3.1.1.4 megapage
-.4byte 0x800FFAC0, 0xBEEF0033, write32_test # 11.3.1.3.2 
+.4byte 0x800FFAC0, 0xBEEF0033, write32_test # 11.3.1.3.2
 .4byte 0x800E3130, 0xBEEF0077, write32_test # 11.3.1.3.2
 .4byte 0x808017E0, 0xBEEF0099, write32_test # 11.3.1.1.4 kilopage
 .4byte 0x80805EA0, 0xBEEF0440, write32_test # 11.3.1.3.3
@@ -155,7 +155,7 @@ test_cases:
 
 # test 11.3.1.3.5 eXecute flag
 # *** fetches on pages with X = 1 already tested in 11.3.1.3.1
-.4byte 0xBFFDE0, 0xbad, executable_test             # instr page fault when X=0 
+.4byte 0xBFFDE0, 0xbad, executable_test             # instr page fault when X=0
 
 # In the following two tests, SVADU is supported, so the hardware handles the A/D bits
 # Initially test with ADUE = 0, so needing to set A/D bits triggers page fault
@@ -188,7 +188,7 @@ test_cases:
 # test 11.3.1.4.1 SATP ASID and PPN fields (test having two page tables with different ASID)
 // *** .4byte 0xFFFFFFFFFFFFF888, 0x0220DEADBEEF0099, write32_test # write identical value to global PTE to make sure it's still in the TLB
 .4byte 0x8000F, 0x11, goto_sv32 # go to SV39 on a second, very minimal page table
-.4byte 0xE3130, 0xBEEF0077, read32_test # Read success of old written value from a new page table mapping 
+.4byte 0xE3130, 0xBEEF0077, read32_test # Read success of old written value from a new page table mapping
 
 # test 11.3.1.4.2 Test Global mapping
 // ***.4byte 0x7FFFFFF888, 0x0220DEADBEEF0099, read32_test # read success of global PTE undefined in current mapping.
@@ -205,7 +205,7 @@ test_cases:
 
 # test 11.3.1.5.2 mstatus.mprv clearing
 # mstatus.mprv is already 1 from the last test so going to S mode should clear it with the mret
-.4byte 0x80000000, 0x1, goto_s_mode // This should zero out the mprv bit but now to read and write mstatus, we have to 
+.4byte 0x80000000, 0x1, goto_s_mode // This should zero out the mprv bit but now to read and write mstatus, we have to
 .4byte 0x80000000, 0x1, goto_m_mode // go back to m mode to allow us to reread mstatus.
 .4byte 0x0, 0x0, read_write_mprv // read what should be a zeroed out mprv value and then force it back to zero.
 

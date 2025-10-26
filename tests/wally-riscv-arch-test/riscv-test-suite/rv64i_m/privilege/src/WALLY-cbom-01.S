@@ -1,6 +1,6 @@
 ///////////////////////////////////////////
 //
-// WALLY-cache-management-tests 
+// WALLY-cache-management-tests
 // invalidate, clean, and flush
 //
 // Author: Rose Thompson <rose@rosethompson.net>
@@ -21,7 +21,7 @@
 # -----------
 #
 # This assembly file tests the cbo.inval, cbo.clean, and cbo.flush instructions of the RISC-V Zicbom extension.
-# 
+#
 
 #include "model_test.h"
 #include "arch_test.h"
@@ -29,7 +29,7 @@ RVTEST_ISA("RV64I_Zicbom")
 # Test code region
 .section .text.init
 .globl rvtest_entry_point
-	
+
 rvtest_entry_point:
 RVMODEL_BOOT
 RVTEST_CODE_BEGIN
@@ -37,7 +37,7 @@ RVTEST_CODE_BEGIN
 RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;def NO_SAIL=True;",cbo.inval)
 
 RVMODEL_IO_WRITE_STR(x31, "# Test Begin\n")
-	
+
 CBOMTest:
         # *** TODO
         # first need to discover the length of the cacheline.
@@ -62,14 +62,14 @@ CBOMTest:
         # but the next should have the copied data.
 
         # step 1
-CBOMTest_inval_step1: 
+CBOMTest_inval_step1:
         la a0, SourceData
         la a1, Destination1
         li a2, 64
         jal ra, memcpy8
 
         # step 2
-CBOMTest_inval_step2: 
+CBOMTest_inval_step2:
         la a0, SourceData
         la a1, Destination1
         li a2, 64
@@ -78,7 +78,7 @@ CBOMTest_inval_step2:
         addi s0, s0, 8
 
         # step 3
-CBOMTest_inval_step3: 
+CBOMTest_inval_step3:
         la a1, Destination1
         cbo.inval (a1)
         # step 4  (should be Invalid)
@@ -90,7 +90,7 @@ CBOMTest_inval_step3:
         addi s0, s0, 8
 
         # step 4 next line (should still be valid)
-CBOMTest_inval_step4: 
+CBOMTest_inval_step4:
         la a0, SourceData+64
         la a1, Destination1+64
         li a2, 8
@@ -99,7 +99,7 @@ CBOMTest_inval_step4:
         addi s0, s0, 8
 
         # step 3 (Invalidate all remaining lines)
-CBOMTest_inval_step3_all: 
+CBOMTest_inval_step3_all:
         la a1, Destination1+64
         cbo.inval (a1)
         cbo.inval (a1)          # verify invalidating an already non present line does not cause an issue.
@@ -115,9 +115,9 @@ CBOMTest_inval_step3_all:
         cbo.inval (a1)
         la a1, Destination1+448
         cbo.inval (a1)
-	
+
         # step 4 All should be invalid
-CBOMTest_inval_step4_all: 
+CBOMTest_inval_step4_all:
         la a0, DeadBeafData1
         la a1, Destination1
         li a2, 64
@@ -136,24 +136,24 @@ CBOMTest_inval_step4_all:
         # 4. Verify the second region has the original invalid data
         # DON'T batch each step.  We want to see the transition between cachelines. The current should be invalidated
         # but the next should have the copied data.
-	
+
         # step 0 copy deadbeef to remote regions spaced 4KiB apart
-CBOMTest_way_inval_4096_step0: 
+CBOMTest_way_inval_4096_step0:
         la a0, DeadBeafData1
         la a1, Destination1+4096
         li a2, 8
         jal ra, memcpy8
-CBOMTest_way_inval_8192_step0: 
+CBOMTest_way_inval_8192_step0:
         la a0, DeadBeafData1
         la a1, Destination1+8192
         li a2, 8
         jal ra, memcpy8
-CBOMTest_way_inval_12288_step0: 
+CBOMTest_way_inval_12288_step0:
         la a0, DeadBeafData1
         la a1, Destination1+12288
         li a2, 8
         jal ra, memcpy8
-CBOMTest_way_inval_16384_step0:       
+CBOMTest_way_inval_16384_step0:
         la a0, DeadBeafData1
         la a1, Destination1+16384
         li a2, 8
@@ -179,44 +179,44 @@ CBOMTest_way_inval_32768_step0:       # this one should force eviction of _4096
         la a1, Destination1+32768
         li a2, 8
         jal ra, memcpy8
-        
+
         # step 1
-CBOMTest_way_inval_4096_step1: 
+CBOMTest_way_inval_4096_step1:
         la a0, SourceData
         la a1, Destination1+4096
         li a2, 8
         jal ra, memcpy8
 
-CBOMTest_way_inval_8192_step1: 
+CBOMTest_way_inval_8192_step1:
         la a0, SourceData
         la a1, Destination1+8192
         li a2, 8
         jal ra, memcpy8
 
-CBOMTest_way_inval_12288_step1: 
+CBOMTest_way_inval_12288_step1:
         la a0, SourceData
         la a1, Destination1+12288
         li a2, 8
         jal ra, memcpy8
-        
-CBOMTest_way_inval_16384_step1: 
+
+CBOMTest_way_inval_16384_step1:
         la a0, SourceData
         la a1, Destination1+16384
         li a2, 8
         jal ra, memcpy8
 
         # don't want to ca      use a write back for the previous writes since we want to invalidate them
-	
+
         # step 2
-CBOMTest_way_inval_4096_step2: 
+CBOMTest_way_inval_4096_step2:
         la a0, SourceData
         la a1, Destination1+4096
         li a2, 8
         jal ra, memcmp8
         sd a0, 0(s0)     # should be -1
         addi s0, s0, 8
-	
-CBOMTest_way_inval_8192_step2: 
+
+CBOMTest_way_inval_8192_step2:
         la a0, SourceData
         la a1, Destination1+8192
         li a2, 8
@@ -224,7 +224,7 @@ CBOMTest_way_inval_8192_step2:
         sd a0, 0(s0)     # should be -1
         addi s0, s0, 8
 
-CBOMTest_way_inval_12288_step2: 
+CBOMTest_way_inval_12288_step2:
         la a0, SourceData
         la a1, Destination1+12288
         li a2, 8
@@ -232,7 +232,7 @@ CBOMTest_way_inval_12288_step2:
         sd a0, 0(s0)     # should be -1
         addi s0, s0, 8
 
-CBOMTest_way_inval_16384_step2: 
+CBOMTest_way_inval_16384_step2:
         la a0, SourceData
         la a1, Destination1+16384
         li a2, 8
@@ -240,18 +240,18 @@ CBOMTest_way_inval_16384_step2:
         sd a0, 0(s0)     # should be -1
         addi s0, s0, 8
 
-CBOMTest_way_inval_step3_all_again: 
+CBOMTest_way_inval_step3_all_again:
         la a1, Destination1+4096
         la a2, Destination1+8192
         la a3, Destination1+12288
         la a4, Destination1+16384
         cbo.inval (a1)
-        cbo.inval (a2)          
+        cbo.inval (a2)
         cbo.inval (a3)
-        cbo.inval (a4)          
-        
+        cbo.inval (a4)
+
         # step 4 All should be invalid
-CBOMTest_way_inval_4096_step4_all: 
+CBOMTest_way_inval_4096_step4_all:
         la a0, DeadBeafData1
         la a1, Destination1+4096
         li a2, 8
@@ -259,7 +259,7 @@ CBOMTest_way_inval_4096_step4_all:
         sd a0, 0(s0)    # should be -1
         addi s0, s0, 8
 
-CBOMTest_way_inval_8192_step4_all: 
+CBOMTest_way_inval_8192_step4_all:
         la a0, DeadBeafData1
         la a1, Destination1+8192
         li a2, 8
@@ -267,22 +267,22 @@ CBOMTest_way_inval_8192_step4_all:
         sd a0, 0(s0)    # should be -1
         addi s0, s0, 8
 
-CBOMTest_way_inval_12288_step4_all: 
+CBOMTest_way_inval_12288_step4_all:
         la a0, DeadBeafData1
         la a1, Destination1+12288
         li a2, 8
         jal ra, memcmp8
         sd a0, 0(s0)    # should be -1
         addi s0, s0, 8
-	
-CBOMTest_way_inval_16384_step4_all: 
+
+CBOMTest_way_inval_16384_step4_all:
         la a0, DeadBeafData1
         la a1, Destination1+16384
         li a2, 8
         jal ra, memcmp8
         sd a0, 0(s0)    # should be -1
         addi s0, s0, 8
-	
+
         ################################################################################
         # Clean D$
         ################################################################################
@@ -299,9 +299,9 @@ CBOMTest_way_inval_16384_step4_all:
         # 9. Verify again but this time it should contain the same data
         # DON'T batch each step.  We want to see the transition between cachelines. The current should be invalidated
         # but the next should have the copied data.
-        
+
         # step 1
-CBOMTest_clean_step1: 
+CBOMTest_clean_step1:
         la a0, SourceData
         la a1, Destination2
         li a2, 64
@@ -352,7 +352,7 @@ CBOMTest_clean_step4:
         jal ra, memcmp8
         sd a0, 0(s0)    # should be -1
         addi s0, s0, 8
-        
+
         # step 5
 CBOMTest_clean_step5:
         la a0, SourceData
@@ -364,7 +364,7 @@ CBOMTest_clean_step5:
 CBOMTest_clean_step6:
         la a1, Destination2
         cbo.clean (a1)
-	
+
         # step 7  only check that 1 line
 CBOMTest_clean_step7:
         la a0, SourceData
@@ -380,7 +380,7 @@ CBOMTest_clean_step8:
         cbo.inval (a1)
         la a1, Destination2+64
         cbo.inval (a1)
-	
+
         # step 9  that 1 line should contain the valid data
 CBOMTest_clean_step9_line1:
         la a0, SourceData
@@ -430,7 +430,7 @@ CBOMTest_clean_step6_clean_all:
         cbo.clean (a1)
         cbo.clean (a1)
         cbo.clean (a1)
-	
+
         # step 8 # invalidate all remaining
 CBOMTest_clean_step7_invalidate_all:
         la a1, Destination2
@@ -449,7 +449,7 @@ CBOMTest_clean_step7_invalidate_all:
         cbo.inval (a1)
         la a1, Destination2+448
         cbo.inval (a1)
-	
+
         # step 9 # check all
 CBOMTest_clean_step9_check_all:
         la a0, SourceData
@@ -472,7 +472,7 @@ CBOMTest_clean_step9_check_all:
         # 6. Verify whole region
 
         # step 1
-CBOMTest_flush_step1: 
+CBOMTest_flush_step1:
         la a0, SourceData
         la a1, Destination3
         li a2, 64
@@ -492,7 +492,7 @@ CBOMTest_flush_step3:
         la a1, Destination3
         cbo.flush (a1)
 
-        # step 4 
+        # step 4
 CBOMTest_flush_step4_verify:
         la a0, SourceData
         la a1, Destination3
@@ -524,7 +524,7 @@ CBOMTest_flush_step5_flush_all:
         cbo.flush (a1)
         cbo.flush (a1)
         cbo.flush (a1)
-	
+
         # step 6
 CBOMTest_flush_step6_verify:
         la a0, SourceData
@@ -533,7 +533,7 @@ CBOMTest_flush_step6_verify:
         jal ra, memcmp8
         sd a0, 0(s0)     # should be -1
         addi s0, s0, 8
-        
+
 
         #ld s0, 0(sp)
         #ld ra, 8(sp)
@@ -541,16 +541,16 @@ CBOMTest_flush_step6_verify:
         #ret
 RVMODEL_HALT
 
-	
+
 .type memcpy8, @function
-memcpy8:        
+memcpy8:
         # a0 is the source
         # a1 is the dst
         # a2 is the number of 8 byte words
         mv t0, a0
         mv t1, a1
         li t2, 0
-memcpy8_loop:   
+memcpy8_loop:
         ld t3, 0(t0)
         sd t3, 0(t1)
         addi t0, t0, 8
@@ -561,7 +561,7 @@ memcpy8_loop:
 
 .type memcmp8, @function
 # returns which index mismatch, -1 if none
-memcmp8:        
+memcmp8:
         # a0 is the source1
         # a1 is the source2
         # a2 is the number of 8 byte words
@@ -583,7 +583,7 @@ memcmp8_ne:
         ret
 
 RVTEST_CODE_END
-        
+
 
 RVTEST_DATA_BEGIN
 # Input data section.
@@ -619,7 +619,7 @@ RVMODEL_DATA_BEGIN
         .align 6
 Destination1:
         .fill 128, 4, 0xdeadbeef
-Destination2:   
+Destination2:
         .fill 128, 4, 0xdeadbeef
 Destination3:
         .fill 128, 4, 0xdeadbeef
@@ -628,5 +628,5 @@ signature:
 sig_end_canary:
 .int 0x0
 rvtest_sig_end:
-	
+
 RVMODEL_DATA_END

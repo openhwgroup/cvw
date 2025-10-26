@@ -13,14 +13,14 @@ disablePerfCnt:
 	# a0 is the mask
 	csrrs x0, 0x320, a0 # set bits to disable inhibit register
 	ret
-	
+
 
 .section .text
 .global readPerfCnt
 .type readPerfCnt, @function
 readPerfCnt:
 	# a0 is the counter to read
-	# a1 is the flag to clear the register 
+	# a1 is the flag to clear the register
 	# return the value of the counter in a0
 
 	li t0, 0xB
@@ -36,10 +36,10 @@ readPerfCnt:
 	la t0, csrTable
 	j skip
 
-readPerfCntClear:	
-	la t0, csrTable_clear	
+readPerfCntClear:
+	la t0, csrTable_clear
 
-skip:	
+skip:
 	add t0, t0, a0
 	ld t0, 0(t0)
 	jr t0
@@ -77,7 +77,7 @@ csrReturnCount:
 csrBTBClassWrongCount:
 	csrrs a0, 0xB0A, x0
 	ret
-	
+
 csrCycle_clear:
 	csrrw a0, 0xB00, x0
 	ret
@@ -115,11 +115,11 @@ csrBTBClassWrongCount_clear:
 readPerfCntError:
 	li a0, -1
 	ret
-	
-	
+
+
 .section .data
 .align 3
-csrTable:	
+csrTable:
 .8byte csrCycle			#0
 .8byte csrNull			#1
 .8byte csrInstrCount		#2
@@ -132,7 +132,7 @@ csrTable:
 .8byte csrReturnCount		#9
 .8byte csrBTBClassWrongCount	#A
 
-csrTable_clear:	
+csrTable_clear:
 .8byte csrCycle_clear			#0
 .8byte csrNull_clear			#1
 .8byte csrInstrCount_clear		#2

@@ -8,7 +8,7 @@ set tech $::env(TECH)
 if { [info exists ::env(RISCV)] } {
   set timing_lib $::env(RISCV)/cad/lib
 } else {
-  set timing_lib ../addins   
+  set timing_lib ../addins
 }
 
 if {$tech == "sky130"} {
@@ -48,9 +48,9 @@ if {$tech == "sky130"} {
 } elseif {$tech == "tsmc28"} {
     lappend target_library $s10lib/tcbn28hpcplusbwp30p140tt0p9v25c.db
 } elseif {$tech == "tsmc28psyn"} {
-    set mw_reference_library [list ]    
+    set mw_reference_library [list ]
     lappend target_library $s10lib/tcbn28hpcplusbwp30p140tt0p9v25c.db
-    lappend mw_reference_library $MW_REFERENCE_LIBRARY/tcbn28hpcplusbwp30p140    
+    lappend mw_reference_library $MW_REFERENCE_LIBRARY/tcbn28hpcplusbwp30p140
 }
 
 # Set up DesignWare cache read and write directories to speed up compile.
@@ -93,13 +93,13 @@ alias csi compile -scan -incr -map high
 alias h history
 history keep 100
 alias all_gone {remove_design -designs}
- 
+
 alias page_on {set sh_enable_page_mode true}
 alias page_off {set sh_enable_page_mode false}
 
 # specify directory for intermediate files from analyze
 define_design_lib DEFAULT -path ./analyzed
- 
+
 # suppress Driving cell warning
 suppress_message {UID-401}
 

@@ -28,7 +28,7 @@ OUTFLAG= -o
 # Flag: CC
 #	Use this flag to define compiler to use
 # david_harris@hmc.edu 20 Nov 2021 removed full path; require
-CC = $(RISCVTOOLS)/bin/$(RISCVTYPE)-gcc 
+CC = $(RISCVTOOLS)/bin/$(RISCVTYPE)-gcc
 #CC = $(RISCVTYPE)-gcc
 # Flag: CFLAGS
 #	Use this flag to define compiler options. Note, you can add compiler options from the command line using XCFLAGS="other flags"

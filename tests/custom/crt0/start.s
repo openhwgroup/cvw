@@ -9,7 +9,7 @@ _start:
 	1:auipc gp, %pcrel_hi(__global_pointer$)
 	addi  gp, gp, %pcrel_lo(1b)
 	.option pop
-	
+
 	li x1, 0
 	li x2, 0
 	li x4, 0

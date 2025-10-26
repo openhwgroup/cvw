@@ -21,7 +21,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "WALLY-TEST-LIB-64.h" 
+#include "WALLY-TEST-LIB-64.h"
 RVTEST_ISA("RV64I_Zicsr_Zifencei")
 RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;",pmp)
 
@@ -44,13 +44,13 @@ test_cases:
 #
 #   Here is where the actual tests are held, or rather, what the actual tests do.
 #   each entry consists of 3 values that will be read in as follows:
-#   
+#
 #   '.8byte [x28 Value], [x29 Value], [x30 value]'
 #                     or
 #   '.8byte [address], [value], [test type]'
 #
 #   The encoding for x30 test type values can be found in the test handler in the framework file
-# 
+#
 # ---------------------------------------------------------------------------------------------
 
 # These tests follow the testing plan in Chapter 12 of the riscv-wally textbook *** what is it called and how do I refer to it?
@@ -83,7 +83,7 @@ test_cases:
 .8byte 0x80100020, 0x0000806711100393, write64_test # Write same executable code to region with X=0 (PMP2)
 
 # attempt to write to pmpaddr5 and pmp5cfg after lockout
-.8byte 0x0, 0x0018FF0C0009001F, write_pmpcfg_0 # attempt to edit only pmp5cfg (pmpcfg0[47:40]) after lockout. 
+.8byte 0x0, 0x0018FF0C0009001F, write_pmpcfg_0 # attempt to edit only pmp5cfg (pmpcfg0[47:40]) after lockout.
 # instruction ignored, output is 0x0018900C0009001F, NOT 0x0018FF0C0009001F
 .8byte 0x5, 0xFFFFFFFF, write_pmpaddr_5 # attempt to edit pmpaddr5 after lockout.
 # instruction ignored, output is 0x200400c0, NOT 0xFFFFFFFF

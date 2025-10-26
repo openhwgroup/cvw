@@ -24,7 +24,7 @@ static char *digits = "0123456789abcdefghijklmnopqrstuvwxyz";
 static char *upper_digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 char *ecvtbuf(double arg, int ndigits, int *decpt, int *sign, char *buf);
 char *fcvtbuf(double arg, int ndigits, int *decpt, int *sign, char *buf);
-static void ee_bufcpy(char *d, char *s, int count); 
+static void ee_bufcpy(char *d, char *s, int count);
 extern volatile uint64_t tohost;
 extern volatile uint64_t fromhost;
 ee_size_t strnlen(const char *s, ee_size_t count)
@@ -42,7 +42,7 @@ static char *number(char *str, long num, int base, int size, int precision, int 
   if (type & UPPERCASE)  dig = upper_digits;
   if (type & LEFT) type &= ~ZEROPAD;
   if (base < 2 || base > 36) return 0;
-  
+
   c = (type & ZEROPAD) ? '0' : ' ';
   sign = 0;
   if (type & SIGN)
@@ -90,7 +90,7 @@ static char *number(char *str, long num, int base, int size, int precision, int 
   size -= precision;
   if (!(type & (ZEROPAD | LEFT))) while (size-- > 0) *str++ = ' ';
   if (sign) *str++ = sign;
-  
+
   if (type & HEX_PREP)
   {
     if (base == 8)
@@ -147,19 +147,19 @@ static char *iaddr(char *str, unsigned char *addr, int size, int precision, int 
   {
     if (i != 0) tmp[len++] = '.';
     n = addr[i];
-    
+
     if (n == 0)
       tmp[len++] = digits[0];
     else
     {
-      if (n >= 100) 
+      if (n >= 100)
       {
         tmp[len++] = digits[n / 100];
         n = n % 100;
         tmp[len++] = digits[n / 10];
         n = n % 10;
       }
-      else if (n >= 10) 
+      else if (n >= 10)
       {
         tmp[len++] = digits[n / 10];
         n = n % 10;
@@ -175,7 +175,7 @@ static char *iaddr(char *str, unsigned char *addr, int size, int precision, int 
 
   return str;
 }
- 
+
 void ee_bufcpy(char *pd, char *ps, int count) {
 	char *pe=ps+count;
 	while (ps!=pe)
@@ -359,7 +359,7 @@ static void decimal_point(char *buffer)
   if (*buffer)
   {
     int n = strnlen(buffer,256);
-    while (n > 0) 
+    while (n > 0)
     {
       buffer[n + 1] = buffer[n];
       n--;
@@ -411,7 +411,7 @@ static int ee_vsprintf(char *buf, const char *fmt, va_list args)
       *str++ = *fmt;
       continue;
     }
-                  
+
     // Process flags
     flags = 0;
 repeat:
@@ -424,7 +424,7 @@ repeat:
       case '#': flags |= HEX_PREP; goto repeat;
       case '0': flags |= ZEROPAD; goto repeat;
     }
-          
+
     // Get field width
     field_width = -1;
     if (is_digit(*fmt))
@@ -444,7 +444,7 @@ repeat:
     precision = -1;
     if (*fmt == '.')
     {
-      ++fmt;    
+      ++fmt;
       if (is_digit(*fmt))
         precision = skip_atoi(&fmt);
       else if (*fmt == '*')
@@ -549,7 +549,7 @@ repeat:
   }
 
   *str = '\0';
-  return str - buf; 
+  return str - buf;
 }
 
 static uintptr_t syscall(uintptr_t which, uint64_t arg0, uint64_t arg1, uint64_t arg2)
@@ -769,7 +769,7 @@ static void vprintfmt(void (*putch)(int, void**), void **putdat, const char *fmt
     case '-':
       padc = '-';
       goto reswitch;
-      
+
     // flag to pad with 0's instead of spaces
     case '0':
       padc = '0';
@@ -879,7 +879,7 @@ static void vprintfmt(void (*putch)(int, void**), void **putdat, const char *fmt
     case '%':
       putch(ch, putdat);
       break;
-      
+
     // unrecognized escape sequence - just print it literally
     default:
       putch('%', putdat);
@@ -909,7 +909,7 @@ volatile unsigned char *LSR=(unsigned char *)0x10000005;
 
 while(!(*LSR&0b100000));
 *THR=c;
-while(!(*LSR&0b100000)); 
+while(!(*LSR&0b100000));
 }
 
 

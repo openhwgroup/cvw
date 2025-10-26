@@ -1,4 +1,4 @@
-# Synthesis 
+# Synthesis
 
 This subdirectory contains synthesis scripts for use with Synopsys
 (snps) Design Compiler (DC).  Synthesis commands are found in
@@ -6,7 +6,7 @@ This subdirectory contains synthesis scripts for use with Synopsys
 
 ## Example Usage
 ```bash
-make synth FREQ=500 
+make synth FREQ=500
 ```
 
 ## Environment Variables

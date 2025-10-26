@@ -22,11 +22,11 @@ state state_reset:
     else
         goto state_reset;
     endif
-    
+
 state state_begin_count:
     if(wallypipelinedsoc/uncore.uncore/uart.uart/INTR == 1'b0) then
         reset_counter $counter0;
-        reset_counter $counter1;	
+        reset_counter $counter1;
         goto state_reset;
     elseif($counter0 == 16'hFFFF && wallypipelinedsoc/uncore.uncore/uart.uart/INTR == 1'b1) then
         goto state_count1;
@@ -44,6 +44,6 @@ state state_count1:
        reset_counter $counter0;
        goto state_begin_count;
     endif
-    
+
 state state_trigger:
     trigger;

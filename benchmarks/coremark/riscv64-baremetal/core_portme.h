@@ -66,13 +66,13 @@ typedef size_t CORE_TICKS;
 #elif HAS_TIME_H
 #include <time.h>
 typedef clock_t CORE_TICKS;
-// #elif (XLEN==32) 
+// #elif (XLEN==32)
 // 	#include <sys/types.h>
 // 	typedef ee_u32 CORE_TICKS;
 /* Configuration: size_t and clock_t
      Note these need to match the size of the clock output and the xLen the processor supports
  */
-#elif (XLEN==64) 
+#elif (XLEN==64)
 typedef unsigned long int size_t;
 typedef unsigned long int clock_t;
 #else
@@ -109,7 +109,7 @@ typedef unsigned short ee_u16;
 typedef signed int ee_s32;
 typedef double ee_f32;
 typedef unsigned char ee_u8;
-#if (XLEN==64) 
+#if (XLEN==64)
 	typedef signed int ee_u32; // replaced with signed to improve performance by avoiding zero extension in RV64 per https://github.com/sifive/benchmark-coremark/blob/master/linux64/core_portme.h#L102
 	typedef unsigned long long ee_ptr_int;
 #else
