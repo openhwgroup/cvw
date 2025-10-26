@@ -22,7 +22,7 @@ repos:
         exclude: bin/sim_bp # symlink to compiled executable
       - id: requirements-txt-fixer
         files: requirements.txt
-      # - id: end-of-file-fixer
+      - id: end-of-file-fixer
       # - id: trailing-whitespace
       #   args: [--markdown-linebreak-ext=md]
       - id: check-merge-conflict
