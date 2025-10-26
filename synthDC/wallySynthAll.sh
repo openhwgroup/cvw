@@ -1,3 +1,4 @@
+#!/bin/bash
 # Run all Wally synthesis experiments from chapter 8
 # However, trying to run the freqsweeps at the same time maxes out licenses and some runs fail
 # Adding the sleep gives them time to finish.

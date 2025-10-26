@@ -1,2 +1,2 @@
+#!/bin/bash
 vsim -do "do fma.do"
-

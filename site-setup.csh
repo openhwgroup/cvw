@@ -1,5 +1,3 @@
-#!/bin/csh
-
 # site-setup.csh
 # System Admin should install this into $RISCV/site-setup.csh
 # It is automatically placed in the $RISCV directory by wally-toolchain-install.sh

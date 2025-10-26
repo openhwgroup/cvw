@@ -16,8 +16,8 @@ repos:
       - id: check-added-large-files
       - id: check-case-conflict
       - id: check-docstring-first
-      # - id: check-executables-have-shebangs
-      # - id: check-shebang-scripts-are-executable
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
       - id: check-symlinks
         exclude: bin/sim_bp # symlink to compiled executable
       - id: requirements-txt-fixer

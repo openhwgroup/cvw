@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # setup.sh
 # David_Harris@hmc.edu and kekim@hmc.edu 1 December 2021
 # jcarlin@hmc.edu 2025

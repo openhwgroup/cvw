@@ -1,7 +1,8 @@
+#!/bin/bash
 #######################################################################
 # splitfile.sh
 #
-# Written: Jaocb Pease jacob.pease@okstate.edu 7/22/2024
+# Written: Jacob Pease jacob.pease@okstate.edu 7/22/2024
 #
 # Purpose: Used to split boot.mem into two sections for FPGA
 #
