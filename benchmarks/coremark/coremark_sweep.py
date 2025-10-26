@@ -5,26 +5,26 @@
 ## Written: Shreesh Kulkarni, kshreesh5@gmail.com
 ## Created: 20 March 2024
 ## Modified: 08 April 2024
-## Purpose: Wally  Coremark sweep Script for both 32 and 64 bit configs with csv file extraction. 
- 
-## Documentation: 
+## Purpose: Wally  Coremark sweep Script for both 32 and 64 bit configs with csv file extraction.
+
+## Documentation:
 
 # A component of the CORE-V-WALLY configurable RISC-V project.
 # https://github.com/openhwgroup/cvw
- 
+
 # Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 #
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
-# Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-# except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+# Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+# except in compliance with the License, or, at your option, the Apache License version 2.0. You
 # may obtain a copy of the License at
 
 # https://solderpad.org/licenses/SHL-2.1/
 
-# Unless required by applicable law or agreed to in writing, any work distributed under the 
-# License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-# either express or implied. See the License for the specific language governing permissions 
+# Unless required by applicable law or agreed to in writing, any work distributed under the
+# License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+# either express or implied. See the License for the specific language governing permissions
 # and limitations under the License.
 ###########################################################################################
 
@@ -40,7 +40,7 @@ coremark_dir = os.path.join(WALLY, "benchmarks/coremark")
 os.chdir(coremark_dir)
 
 
-# list of architectures to run. 
+# list of architectures to run.
 arch_list = [
     "rv32i_zicsr",
     "rv32im_zicsr",
@@ -55,7 +55,7 @@ arch_list = [
     "rv64gc",
     "rv64gc_zba_zbb_zbs"
 ]
-        
+
 # Define regular expressions to match the desired fields
 mt_regex = r"Elapsed MTIME: (\d+).*?Elapsed MINSTRET: (\d+).*?COREMARK/MHz Score: [\d,]+ / [\d,]+ = (\d+\.\d+).*?CPI: \d+ / \d+ = (\d+\.\d+).*?Load Stalls (\d+).*?Store Stalls (\d+).*?D-Cache Accesses (\d+).*?D-Cache Misses (\d+).*?I-Cache Accesses (\d+).*?I-Cache Misses (\d+).*?Branches (\d+).*?Branches Miss Predictions (\d+).*?BTB Misses (\d+).*?Jump and JR (\d+).*?RAS Wrong (\d+).*?Returns (\d+).*?BP Class Wrong (\d+)"
 #cpi_regex = r"CPI: \d+ / \d+ = (\d+\.\d+)"
@@ -89,7 +89,7 @@ with open(resultfile, mode='w', newline='') as csvfile:
         #minstret_match = re.search(minstret_regex,output)
 
         # Write the architecture and extracted values to the CSV file
-    
+
         mtime = mt_match.group(1)
         minstret= mt_match.group(2)
         cmhz= mt_match.group(3)

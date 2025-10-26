@@ -31,7 +31,7 @@ localparam logic C_SUPPORTED = ZCA_SUPPORTED & (D_SUPPORTED ? ZCD_SUPPORTED : 1)
 localparam logic ZKN_SUPPORTED = (ZBKB_SUPPORTED & ZBKC_SUPPORTED & ZBKX_SUPPORTED & ZKND_SUPPORTED & ZKNE_SUPPORTED & ZKNH_SUPPORTED);
 
 // Configure MISA based on supported extensions
-localparam MISA = {6'b0, 5'b0, U_SUPPORTED, 1'b0, S_SUPPORTED, 1'b0, Q_SUPPORTED, 3'b0, M_SUPPORTED, 3'b0, I_SUPPORTED, 2'b0, 
+localparam MISA = {6'b0, 5'b0, U_SUPPORTED, 1'b0, S_SUPPORTED, 1'b0, Q_SUPPORTED, 3'b0, M_SUPPORTED, 3'b0, I_SUPPORTED, 2'b0,
                    F_SUPPORTED, E_SUPPORTED, D_SUPPORTED, C_SUPPORTED, B_SUPPORTED, A_SUPPORTED};
 
 // logarithm of XLEN, used for number of index bits to select
@@ -41,7 +41,7 @@ localparam LOG_XLEN = (XLEN == 32 ? 32'd5 : 32'd6);
 localparam PMPCFG_ENTRIES = (PMP_ENTRIES/32'd8);
 
 // Floating point constants for Quad, Double, Single, and Half precisions
-// Lim: I've made some of these 64 bit to avoid width warnings. 
+// Lim: I've made some of these 64 bit to avoid width warnings.
 // If errors crop up, try downsizing back to 32.
 localparam Q_LEN = 32'd128;
 localparam Q_NE = 32'd15;
@@ -97,7 +97,7 @@ localparam RK          = LOGR*DIVCOPIES;                            // r*k bits 
 localparam FPDIVMINb   = NF + 2; // minimum length of fractional part: Nf result bits + guard and round bits + 1 extra bit to allow sqrt being shifted right
 localparam DIVMINb     = ((FPDIVMINb<XLEN) & IDIV_ON_FPU) ? XLEN : FPDIVMINb; // minimum fractional bits b = max(XLEN, FPDIVMINb)
 localparam RESBITS     = DIVMINb + LOGR; // number of bits in a result: r integer + b fractional
-                 
+
 // division constants
 localparam FPDUR       = (RESBITS-1)/RK + 1 ;                       // ceiling((r+b)/rk)
 localparam DIVb        = FPDUR*RK - LOGR;                           // divsqrt fractional bits, so total number of bits is a multiple of rk after r integer bits
@@ -106,8 +106,8 @@ localparam DIVBLEN     = $clog2(DIVb+1);                            // enough bi
 
 // integer division/remainder constants
 localparam INTRESBITS     = XLEN + LOGR; // number of bits in a result: r integer + XLEN fractional
-localparam INTFPDUR       = (INTRESBITS-1)/RK + 1 ;                 
-localparam INTDIVb        = INTFPDUR*RK - LOGR;                     
+localparam INTFPDUR       = (INTRESBITS-1)/RK + 1 ;
+localparam INTDIVb        = INTFPDUR*RK - LOGR;
 
 // largest length in IEU/FPU
 localparam BASECVTLEN = `max(XLEN, NF); // convert length excluding Zfa fcvtmod.w.d

@@ -14,7 +14,7 @@ debug = True
 def loadCoremark(coremarkData):
     """loads the coremark data dictionary"""
     coremarkPath = "riscv-coremark/work/coremark.sim.log"
-    
+
     keywordlist = ["CoreMark 1.0", "CoreMark Size", "MTIME", "MINSTRET", "Branches Miss Predictions", "BTB Misses"]
     for keyword in keywordlist:
         bashInst = "cat " + coremarkPath + ' | grep "' + keyword +  "\" | cut -d ':' -f 2 | cut -d \" \" -f 2 | tail -1"
@@ -36,7 +36,7 @@ def graphEmbench(embenchSpeedOpt_SpeedData, embenchSizeOpt_SpeedData, embenchSpe
                         # subplot_titles( "Wally's Embench Cycles and Instret (with -O2)","Wally's Embench Cycles Per Instruction (with -O2)"))
                         subplot_titles=( "Wally's Embench Cycles and Instret (with -O2)","Wally's Embench Cycles Per Instruction (with -O2)","Wally's Embench Speed Score (with -O2)","Wally's Embench Size Score (with -O2)",
                                      "Wally's Embench Cycles and Instret (with -Os)","Wally's Embench Cycles Per Instruction (with -Os)","Wally's Embench Speed Score (with -Os)","Wally's Embench Size Score (with -Os)"))
-    
+
     ydata = list(embenchSpeedOpt_SpeedData["speed results"]["detailed speed results"].keys()) + ["speed geometric mean","speed geometric sd","speed geometric range"]
     xdata = list(embenchSpeedOpt_SpeedData["speed results"]["detailed speed results"].values()) + [embenchSpeedOpt_SpeedData["speed results"]["speed geometric mean"],embenchSpeedOpt_SpeedData["speed results"]["speed geometric sd"],embenchSpeedOpt_SpeedData["speed results"]["speed geometric range"]]
 
@@ -57,7 +57,7 @@ def graphEmbench(embenchSpeedOpt_SpeedData, embenchSizeOpt_SpeedData, embenchSpe
             orientation='h'),
             row=2,col=3)
 
-    
+
     ydata = list(embenchSpeedOpt_SizeData["size results"]["detailed size results"].keys()) + ["size geometric mean","size geometric sd","size geometric range"]
     xdata = list(embenchSpeedOpt_SizeData["size results"]["detailed size results"].values()) + [embenchSpeedOpt_SizeData["size results"]["size geometric mean"],embenchSpeedOpt_SizeData["size results"]["size geometric sd"],embenchSpeedOpt_SizeData["size results"]["size geometric range"]]
 
@@ -77,7 +77,7 @@ def graphEmbench(embenchSpeedOpt_SpeedData, embenchSizeOpt_SpeedData, embenchSpe
             textposition='outside', text=xdata,
             orientation='h'),
             row=2,col=4)
-        
+
     #         facet_row="Score", facet_col="Optimization Flag",
     #         category_orders={"Score": ["Cycles & Instr", "CPI", "SpeedScore", "SizeScore"],
     #                           "Optimization Flag": ["O2", "Os"]}),
