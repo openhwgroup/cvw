@@ -5,25 +5,25 @@
 // Modified: 7/5/2022
 //
 // Purpose: Floating-point comparison unit
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -54,7 +54,7 @@ module fcmp import cvw::*;  #(parameter cvw_t P) (
   logic [P.FLEN-1:0] NaNRes;    // NaN result
   logic BothZero;               // are both inputs zero
   logic EitherNaN, EitherSNaN;  // are either input a (signaling) NaN
-  
+
   assign LTabs= {1'b0, Xe, Xm} < {1'b0, Ye, Ym}; // unsigned comparison, treating FP as integers
   assign LT = (Xs & ~Ys) | (Xs & Ys & ~LTabs & ~EQ) | (~Xs & ~Ys & LTabs); // signed comparison
   assign EQ = (X == Y);
@@ -69,16 +69,16 @@ module fcmp import cvw::*;  #(parameter cvw_t P) (
   //    EQ - quiet - sets invalid if signaling NaN input
   always_comb begin
     casez (OpCtrl[2:0])
-        3'b110: CmpNV = EitherSNaN; //min 
+        3'b110: CmpNV = EitherSNaN; //min
         3'b101: CmpNV = EitherSNaN; //max
         3'b010: CmpNV = EitherSNaN; //equal
-        3'b0?1: if (P.ZFA_SUPPORTED) 
+        3'b0?1: if (P.ZFA_SUPPORTED)
                   CmpNV = Zfa ? EitherSNaN : EitherNaN; // fltq,fleq / flt,fle perform CompareQuietLess / CompareSignalingLess differing on when to set invalid
                 else CmpNV = EitherNaN;                 // flt, fle
         3'b100: CmpNV = 1'b0;
         default: CmpNV = 1'bx;
     endcase
-  end 
+  end
 
   // fmin/fmax of two NaNs returns a quiet NaN of the appropriate size
   // for IEEE, return the payload of X
@@ -89,14 +89,14 @@ module fcmp import cvw::*;  #(parameter cvw_t P) (
     if(P.IEEE754) assign NaNRes = {Xs, {P.NE{1'b1}}, 1'b1, Xm[P.NF-2:0]};
     else          assign NaNRes = {1'b0, {P.NE{1'b1}}, 1'b1, {P.NF-1{1'b0}}};
 
-  else if (P.FPSIZES == 2) 
+  else if (P.FPSIZES == 2)
     if(P.IEEE754) assign NaNRes = Fmt ? {Xs, {P.NE{1'b1}}, 1'b1, Xm[P.NF-2:0]} : {{P.FLEN-P.LEN1{1'b1}}, Xs, {P.NE1{1'b1}}, 1'b1, Xm[P.NF-2:P.NF-P.NF1]};
     else          assign NaNRes = Fmt ? {1'b0, {P.NE{1'b1}}, 1'b1, {P.NF-1{1'b0}}} : {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, (P.NF1-1)'(0)};
-  
+
   else if (P.FPSIZES == 3)
     always_comb
           case (Fmt)
-              P.FMT:  
+              P.FMT:
                 if(P.IEEE754) NaNRes = {Xs, {P.NE{1'b1}}, 1'b1, Xm[P.NF-2:0]};
                 else         NaNRes = {1'b0, {P.NE{1'b1}}, 1'b1, {P.NF-1{1'b0}}};
               P.FMT1:
@@ -111,13 +111,13 @@ module fcmp import cvw::*;  #(parameter cvw_t P) (
   else if (P.FPSIZES == 4)
     always_comb
           case (Fmt)
-              2'h3:  
+              2'h3:
                 if(P.IEEE754) NaNRes = {Xs, {P.NE{1'b1}}, 1'b1, Xm[P.NF-2:0]};
                 else         NaNRes = {1'b0, {P.NE{1'b1}}, 1'b1, {P.NF-1{1'b0}}};
-              2'h1:  
+              2'h1:
                 if(P.IEEE754) NaNRes = {{P.FLEN-P.D_LEN{1'b1}}, Xs, {P.D_NE{1'b1}}, 1'b1, Xm[P.NF-2:P.NF-P.D_NF]};
                 else         NaNRes = {{P.FLEN-P.D_LEN{1'b1}}, 1'b0, {P.D_NE{1'b1}}, 1'b1, (P.D_NF-1)'(0)};
-              2'h0: 
+              2'h0:
                 if(P.IEEE754) NaNRes = {{P.FLEN-P.S_LEN{1'b1}}, Xs, {P.S_NE{1'b1}}, 1'b1, Xm[P.NF-2:P.NF-P.S_NF]};
                 else         NaNRes = {{P.FLEN-P.S_LEN{1'b1}}, 1'b0, {P.S_NE{1'b1}}, 1'b1, (P.S_NF-1)'(0)};
               2'h2:
@@ -161,7 +161,7 @@ module fcmp import cvw::*;  #(parameter cvw_t P) (
             else // X,Y != NaN
                 if(LT)  CmpFpRes = X;        // X < Y
                 else    CmpFpRes = Y;        // X > Y
-                                  
+
   // LT/LE/EQ
   //    - -0 = 0
   //    - inf = inf and -inf = -inf

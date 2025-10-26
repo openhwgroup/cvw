@@ -5,25 +5,25 @@
 // Modified: 4/21/2024
 //
 // Purpose: Floating-point round to integer for Zfa
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -60,12 +60,12 @@ module fround import cvw::*;  #(parameter cvw_t P) (
   //      else					// positive exponents truncate fraction and may add 1
   //              IMask = 1.0000…000 >>> E  		// (in U1.Nf form); implies thermometer code generator
   //              TMask = ~(IMask >>> 1) 			// 0.01111…111 >> E
-  //              HotE = IMask & ~(IMask << 1) 		// a 1 in column E, where 0 is the integer bit, 
+  //              HotE = IMask & ~(IMask << 1) 		// a 1 in column E, where 0 is the integer bit,
  	//				// 1 is the most significant fractional bit, etc.
   //              HotEP1 = HotE >> 1			// a 1 in column E+1
-  //              L' = OR(Xm & HotE) 			// Xm[E], where Xm[0] is the integer bit, 
+  //              L' = OR(Xm & HotE) 			// Xm[E], where Xm[0] is the integer bit,
  	//				// Xm[1] is the most significant fractional bit, etc.
-  //              R' = OR(Xm & HotEP1)			// Xm[E+1] 
+  //              R' = OR(Xm & HotEP1)			// Xm[E+1]
   //              TRUNC = Xm & IMask			// Truncated fraction, corresponds to truncated integer value
   //              RND =  TRUNC + HotE 			// TRUNC + (1 >> E), corresponds to next integer
   //      T' = OR(Xm & TMask)				// T’ = OR(Xm[E+2:Nf]) if E >= 0, OR(Xf) if E = -1, 1 if E < -1
@@ -93,14 +93,14 @@ module fround import cvw::*;  #(parameter cvw_t P) (
   assign Tp = |(Xm & Tmask);
 
   ///////////////////////////
-  // Rounding, flags, special Cases 
+  // Rounding, flags, special Cases
   //      Flags = 0						// unless overridden later
   //      if (X is NaN)
   //              W = Canonical NaN
   //              Invalid = (X is signaling NaN)
-  //      else if (E >= Nf) 
+  //      else if (E >= Nf)
   //              W = X						// is exact; this also handles infinity
-  //      else 
+  //      else
   //              RoundUp = RoundingLogic(Xs, L', R', T', rm)	// Table 16.4
   //              if (E < 0) 					// 0 <= X < 1 rounds to 0 or 1
   //                      if (RoundUp)     {Ws, We, Wf} = {Xs, bias, 0}	// +/- 1.0

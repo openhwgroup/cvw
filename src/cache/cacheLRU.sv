@@ -16,28 +16,28 @@
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+ // except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module cacheLRU
   #(parameter NUMWAYS = 4, SETLEN = 9, NUMSETS = 128) (
-  input  logic                clk, 
+  input  logic                clk,
   input  logic                reset,
   input  logic                FlushStage,
   input  logic                CacheEn,         // Enable the cache memory arrays.  Disable hold read data constant
   input  logic [NUMWAYS-1:0]  HitWay,          // Which way is valid and matches PAdr's tag
   input  logic [NUMWAYS-1:0]  ValidWay,        // Which ways for a particular set are valid, ignores tag
   input  logic [SETLEN-1:0]   CacheSetLRU,     // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
-  input  logic [SETLEN-1:0]   PAdr,            // Physical address 
+  input  logic [SETLEN-1:0]   PAdr,            // Physical address
   input  logic                LRUWriteEn,      // Update the LRU state
   input  logic                SetValid,        // Set the dirty bit in the selected way and set
   input  logic                InvalidateCache, // Clear all valid bits
@@ -52,7 +52,7 @@ module cacheLRU
   logic [NUMWAYS-2:0]                  WayExpanded;
   logic                                AllValid;
   logic                                ForwardLRU;
- 
+
   genvar                               row;
 
   /* verilator lint_off UNOPTFLAT */
@@ -137,7 +137,7 @@ module cacheLRU
 
   // LRU memory must be reset for Questa to run. The reset value does not matter but it is best to be deterministc.
   always_ff @(posedge clk)
-    if (reset | (InvalidateCache & ~FlushStage)) 
+    if (reset | (InvalidateCache & ~FlushStage))
       for (int set = 0; set < NUMSETS; set++) LRUMemory[set] <= '0; // exclusion-tag: initialize
     else if (CacheEn & LRUWriteEn) LRUMemory[PAdr] <= NextLRU;
 

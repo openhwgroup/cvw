@@ -10,25 +10,25 @@
 //          Arbitrates requests from instruction and data streams
 //          Connects core to peripherals and I/O pins on SOC
 //          Bus width presently matches XLEN
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -51,7 +51,7 @@ module ebu import cvw::*;  #(parameter cvw_t P) (
   output logic                LSUHREADY, // AHB peripheral. Never gated as LSU always has priority
 
   // AHB-Lite external signals
-  output logic                HCLK, HRESETn, 
+  output logic                HCLK, HRESETn,
   input  logic                HREADY,    // AHB peripheral ready
   input  logic                HRESP,     // AHB peripheral response. 0: OK 1: Error.  Presently ignored.
   output logic [P.PA_BITS-1:0]  HADDR,     // AHB address to peripheral after arbitration
@@ -77,7 +77,7 @@ module ebu import cvw::*;  #(parameter cvw_t P) (
   logic [2:0]                 IFUHBURSTOut;
   logic [2:0]                 IFUHSIZEOut;
   logic                       IFUHWRITEOut;
-  
+
   logic [P.PA_BITS-1:0]         LSUHADDROut;
   logic [1:0]                 LSUHTRANSOut;
   logic [2:0]                 LSUHBURSTOut;
@@ -110,9 +110,9 @@ module ebu import cvw::*;  #(parameter cvw_t P) (
     .HWRITEOut(LSUHWRITEOut), .HSIZEOut(LSUHSIZEOut), .HBURSTOut(LSUHBURSTOut),
     .HTRANSOut(LSUHTRANSOut), .HADDROut(LSUHADDROut), .HREADYIn(HREADY));
 
-  // output mux 
+  // output mux
   assign HADDR = LSUSelect ? LSUHADDROut : IFUSelect ? IFUHADDROut : '0;
-  assign HSIZE = LSUSelect ? LSUHSIZEOut : IFUSelect ? IFUHSIZEOut: '0; 
+  assign HSIZE = LSUSelect ? LSUHSIZEOut : IFUSelect ? IFUHSIZEOut: '0;
   assign HBURST = LSUSelect ? LSUHBURSTOut : IFUSelect ? IFUHBURSTOut : '0; // If doing memory accesses, use LSUburst, else use Instruction burst.
   assign HTRANS = LSUSelect ? LSUHTRANSOut : IFUSelect ? IFUHTRANSOut: '0; // SEQ if not first read or write, NONSEQ if first read or write, IDLE otherwise
   assign HWRITE = LSUSelect ? LSUHWRITEOut : '0;
@@ -126,5 +126,5 @@ module ebu import cvw::*;  #(parameter cvw_t P) (
 
   ebufsmarb ebufsmarb(.HCLK, .HRESETn, .HBURST, .HREADY, .LSUReq, .IFUReq, .IFUSave,
           .IFURestore, .IFUDisable, .IFUSelect, .LSUDisable, .LSUSelect);
-  
+
 endmodule

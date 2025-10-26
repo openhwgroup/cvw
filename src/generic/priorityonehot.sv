@@ -6,7 +6,7 @@
 //              Temporarily removed parameterized priority encoder for non-parameterized one
 //              To get synthesis working quickly
 //           Kmacsaigoren@hmc.edu 28 May 2021:
-//              Added working version of parameterized priority encoder. 
+//              Added working version of parameterized priority encoder.
 //           David_Harris@Hmc.edu switched to one-hot output
 //
 // Purpose: Priority circuit producing a 1 in the output in the column where
@@ -40,7 +40,7 @@ module priorityonehot #(parameter N = 8) (
 );
 
   genvar i;
-  
+
   assign y[0] = a[0];
   for (i=1; i<N; i++) begin:poh
     assign y[i] = a[i] & ~|a[i-1:0];
