@@ -704,7 +704,7 @@ def main():
     elif (args.tests == "regression"):
         test_list = [["python", "./regression-wally", []]]
     elif (args.tests == "lint"):
-        test_list = [["bash", "./lint-wally", ["--nightly"]]]
+        test_list = [["python", "./lint-wally", ["--nightly"]]]
     else:
         print(f"Error: Invalid test {args.tests} specified")
         raise SystemExit
