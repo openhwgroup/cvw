@@ -60,7 +60,7 @@
 
 000000B4    # tx_data write test
 
-000000A5    # spi_burst_send    
+000000A5    # spi_burst_send
 
 000000B5    # spi_burst_send
 
@@ -250,7 +250,7 @@
 
 00000070
 
-00000000 
+00000000
 
 00000008
 
@@ -303,4 +303,3 @@
 00000000 #read rx wm
 
 00000000 #read mip 99
-

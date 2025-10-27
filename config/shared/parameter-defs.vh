@@ -3,11 +3,11 @@
 
 `include "BranchPredictorType.vh"
 
-localparam cvw_t P = '{ 
-  XLEN :                 XLEN,  
-  IEEE754 :              IEEE754, 
-  MISA :                 MISA, 
-  AHBW :                 AHBW, 
+localparam cvw_t P = '{
+  XLEN :                 XLEN,
+  IEEE754 :              IEEE754,
+  MISA :                 MISA,
+  AHBW :                 AHBW,
   RAM_LATENCY :          RAM_LATENCY,
   BURST_EN :             BURST_EN,
   ZICSR_SUPPORTED :      ZICSR_SUPPORTED,
@@ -32,7 +32,7 @@ localparam cvw_t P = '{
   SVNAPOT_SUPPORTED :    SVNAPOT_SUPPORTED,
   SVINVAL_SUPPORTED :    SVINVAL_SUPPORTED,
   ZAAMO_SUPPORTED :      ZAAMO_SUPPORTED,
-  ZALRSC_SUPPORTED :     ZALRSC_SUPPORTED, 
+  ZALRSC_SUPPORTED :     ZALRSC_SUPPORTED,
   BUS_SUPPORTED :        BUS_SUPPORTED,
   DCACHE_SUPPORTED :     DCACHE_SUPPORTED,
   ICACHE_SUPPORTED :     ICACHE_SUPPORTED,
@@ -98,7 +98,7 @@ localparam cvw_t P = '{
   BPRED_SUPPORTED :        BPRED_SUPPORTED,
   BPRED_TYPE :        BPRED_TYPE,
   BPRED_SIZE :        BPRED_SIZE,
-  BPRED_NUM_LHR : BPRED_NUM_LHR,                       
+  BPRED_NUM_LHR : BPRED_NUM_LHR,
   BTB_SIZE :        BTB_SIZE,
   RAS_SIZE :        RAS_SIZE,
   INSTR_CLASS_PRED :  INSTR_CLASS_PRED,
@@ -120,9 +120,9 @@ localparam cvw_t P = '{
   ZKNH_SUPPORTED:        ZKNH_SUPPORTED,
   ZKN_SUPPORTED :        ZKN_SUPPORTED,
   USE_SRAM :        USE_SRAM,
-  M_MODE  : M_MODE, 
-  S_MODE  : S_MODE, 
-  U_MODE  : U_MODE, 
+  M_MODE  : M_MODE,
+  S_MODE  : S_MODE,
+  U_MODE  : U_MODE,
   VPN_SEGMENT_BITS : VPN_SEGMENT_BITS,
   VPN_BITS : VPN_BITS,
   PPN_BITS : PPN_BITS,
@@ -199,4 +199,3 @@ localparam cvw_t P = '{
   DIVBLEN     : DIVBLEN,
   INTDIVb     : INTDIVb
 };
-

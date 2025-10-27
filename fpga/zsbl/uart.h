@@ -5,10 +5,10 @@
 //
 // Purpose: Header for the UART functions.
 //
-// 
+//
 //
 // A component of the Wally configurable RISC-V project.
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
@@ -84,4 +84,3 @@ void print_uart_float(float num, int precision);
 /*   print_uart_float(getTime(),5);      \ */
 /*   clear_status_fs();                  \ */
 /*   print_uart("] ") */
-

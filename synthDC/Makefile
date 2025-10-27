@@ -1,4 +1,4 @@
-#  
+#
 # Makefile for synthesis
 # Shreya Sanghai (ssanghai@hmc.edu) 2/28/2022
 # Madeleine Masser-Frye (mmasserfrye@hmc.edu) 1/27/2023
@@ -9,7 +9,7 @@ export FREQ ?= 10000
 export CONFIG ?= rv64gc
 export MOD ?= orig
 # title to add a note in the synth's directory name
-TITLE = 
+TITLE =
 # tsmc28, sky130, and sky90 presently supported
 export TECH ?= sky130
 # MAXCORES allows parallel compilation, which is faster but less CPU-efficient
@@ -69,7 +69,7 @@ rundc:
 ifeq ($(TECH), tsmc28psyn)
 	dc_shell-xg-t -64bit -topographical_mode -f scripts/$(NAME).tcl | tee $(OUTPUTDIR)/$(NAME).out
 else
-	dc_shell-xg-t -64bit -f scripts/$(NAME).tcl | tee $(OUTPUTDIR)/$(NAME).out	
+	dc_shell-xg-t -64bit -f scripts/$(NAME).tcl | tee $(OUTPUTDIR)/$(NAME).out
 endif
 
 
@@ -83,4 +83,3 @@ clean:
 	rm -f power.saif
 	rm -f Synopsys_stack_trace_*.txt
 	rm -f crte_*.txt
-	

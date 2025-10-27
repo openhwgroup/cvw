@@ -9,7 +9,7 @@
 ## Purpose: Analyze a RISC-V ELF file and report which instructions are used,
 ##          along with their frequency. The script disassembles the ELF using
 ##          riscv64-unknown-elf-objdump, filters real instructions (excluding
-##          pseudo-ops and section headers), and displays a histogram of 
+##          pseudo-ops and section headers), and displays a histogram of
 ##          instruction use.
 ##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
@@ -80,4 +80,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

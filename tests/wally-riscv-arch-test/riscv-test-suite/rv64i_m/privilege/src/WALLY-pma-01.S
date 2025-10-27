@@ -34,7 +34,7 @@
 #define PLIC_BASE      0x0C000000
 #define PLIC_RANGE     0x03FFFFFF
 
-#include "WALLY-TEST-LIB-64.h" 
+#include "WALLY-TEST-LIB-64.h"
 RVTEST_ISA("RV64I_Zicsr_Zifencei")
 RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;def NO_SAIL=True;",pma)
 
@@ -57,13 +57,13 @@ test_cases:
 #
 #   Here is where the actual tests are held, or rather, what the actual tests do.
 #   each entry consists of 3 values that will be read in as follows:
-#   
+#
 #   '.8byte [x28 Value], [x29 Value], [x30 value]'
 #                     or
 #   '.8byte [address], [value], [test type]'
 #
 #   The encoding for x30 test type values can be found in the test handler
-#   
+#
 # ---------------------------------------------------------------------------------------------
 
 # =========== test 12.3.2.1 PMAs: Memory Access Size, Type protection test ===========
@@ -78,11 +78,11 @@ test_cases:
 
 # *** Cacheable, Idempotent, Atomic tests are not implemented yet.
 
-#  ----------------- ROM --------------------- 
-# ROM goes untested because it isn't writeable and these tests rely on writing a known value to memory. 
+#  ----------------- ROM ---------------------
+# ROM goes untested because it isn't writeable and these tests rely on writing a known value to memory.
 
 
-#  ----------------- CLINT --------------------- 
+#  ----------------- CLINT ---------------------
 
 # Use timecmp register as readable and writable section of the CLINT
 .8byte CLINT_BASE + 0x4000, 0x0000DEADBEEF00B4, write64_test  # 64-bit write:  success
@@ -96,7 +96,7 @@ test_cases:
 
 .8byte CLINT_BASE, 0xbad, executable_test# execute: instruction access fault
 
-#  ----------------- PLIC --------------------- 
+#  ----------------- PLIC ---------------------
 
 .8byte PLIC_BASE, 0x0000DEADBEEF00B8, write64_test  # 64-bit write:  store access fault
 .8byte PLIC_BASE, 0x0000DEADBEEF00B8, read64_test  # 64-bit read:   load access fault
@@ -110,7 +110,7 @@ test_cases:
 
 .8byte PLIC_BASE, 0xbad, executable_test# execute: instruction access fault
 
-#  ----------------- UART0 --------------------- 
+#  ----------------- UART0 ---------------------
 
 .8byte UART_BASE, 0x0000DEADBEEF00BC, write64_test      # 64-bit write:  store access fault
 .8byte UART_BASE, 0x0000DEADBEEF00BC, read64_test      # 64-bit read:   load access fault
@@ -124,7 +124,7 @@ test_cases:
 
 .8byte UART_BASE, 0xbad, executable_test# execute: instruction access fault
 
-#  ----------------- GPIO --------------------- 
+#  ----------------- GPIO ---------------------
 
 .8byte GPIO_BASE, 0x0000DEADBEEF00C0, write64_test          # 64-bit write:  store access fault
 .8byte GPIO_BASE, 0x0000DEADBEEF00C0, read64_test          # 64-bit read:   load access fault
@@ -137,9 +137,9 @@ test_cases:
 
 .8byte GPIO_BASE, 0xbad, executable_test# execute: instruction access fault
 
-#  ----------------- Inaccessible --------------------- 
+#  ----------------- Inaccessible ---------------------
 
-# show that load, store, and jalr cause faults in regions not defined by PMAs.  
+# show that load, store, and jalr cause faults in regions not defined by PMAs.
 
 # Tests 'random' place in unimplemented memory
 .8byte 0x40000000, 0x0000DEADBEEF00C7, write64_test # 64-bit write:  store access fault
@@ -168,22 +168,3 @@ test_cases:
 .8byte (GPIO_BASE+GPIO_RANGE+1), 0x111, executable_test               # execute:       instruction access fault
 
 .8byte 0x0, 0x0, terminate_test# terminate tests
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    

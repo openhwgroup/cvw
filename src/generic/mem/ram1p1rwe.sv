@@ -8,25 +8,25 @@
 // Purpose: ram1p1wre, but without byte-enable. Used for icache data.
 //          Be careful using this module, since coverage is turned off for (ce & we).
 //          In read-only caches, we never get (we=1, ce=0), so this waiver is needed.
-// 
-// Documentation: 
+//
+// Documentation:
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -47,21 +47,21 @@ module ram1p1rwe import cvw::* ; #(parameter USE_SRAM=0, DEPTH=64, WIDTH=44) (
   if ((USE_SRAM == 1) & (WIDTH == 128) & (DEPTH == 64)) begin // Cache data subarray
     // 64 x 128-bit SRAM
     ram1p1rwbe_64x128 sram1A (.CLK(clk), .CEB(~ce), .WEB(~we),
-      .A(addr), .D(din), 
+      .A(addr), .D(din),
       .BWEB('0), .Q(dout));
-    
+
   end else if ((USE_SRAM == 1) & (WIDTH == 44)  & (DEPTH == 64)) begin // RV64 cache tag
     // 64 x 44-bit SRAM
     ram1p1rwbe_64x44 sram1B (.CLK(clk), .CEB(~ce), .WEB(~we),
-      .A(addr), .D(din), 
+      .A(addr), .D(din),
       .BWEB('0), .Q(dout));
 
   end else if ((USE_SRAM == 1) & (WIDTH == 22)  & (DEPTH == 64)) begin // RV32 cache tag
     // 64 x 22-bit SRAM
     ram1p1rwbe_64x22 sram1 (.CLK(clk), .CEB(~ce), .WEB(~we),
-      .A(addr), .D(din), 
-      .BWEB('0), .Q(dout));     
-    
+      .A(addr), .D(din),
+      .BWEB('0), .Q(dout));
+
     //////////////////////////////////////////////////////////////////////////////
     // READ first SRAM model
     //////////////////////////////////////////////////////////////////////////////
@@ -77,12 +77,12 @@ module ram1p1rwe import cvw::* ; #(parameter USE_SRAM=0, DEPTH=64, WIDTH=44) (
     assign dout = RAM[addrd];
 
     /*      // Alternate read logic reads the old contents of mem[addr].  Increases setup time and adds dout reg, but reduces clk to q
-     always_ff @(posedge clk) 
+     always_ff @(posedge clk)
      if(ce) dout <= mem[addr]; */
 
     // Write divided into part for bytes and part for extra msbs
     // Questa sim version 2022.3_2 does not allow multiple drivers for RAM when using always_ff.
-    // Therefore these always blocks use the older always @(posedge clk) 
+    // Therefore these always blocks use the older always @(posedge clk)
     always @(posedge clk)
       // coverage off
       // ce only goes low when cachefsm is in READY state and Flush is asserted.

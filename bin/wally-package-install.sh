@@ -100,7 +100,7 @@ case "$FAMILY" in
         BUILDROOT_PACKAGES+=(ncurses-base ncurses-bin libncurses-dev gfortran) # gfortran is only needed for compiling spec benchmarks on buildroot linux
         VIVADO_PACKAGES+=(libncurses*) # Vivado hangs on the third stage of installation without this
         ;;
-    suse) 
+    suse)
         PYTHON_VERSION=python3.12
         PYTHON_VERSION_PACKAGE=python312
         PACKAGE_MANAGER="zypper -n"

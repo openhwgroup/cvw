@@ -20,4 +20,3 @@ if __name__ == "__main__":
         print(f"IntrNum 0x{test_num:02X}")
         print(f"Offset 0x{offset:02X}")
         print("LineNum "+str(line_num))
-   

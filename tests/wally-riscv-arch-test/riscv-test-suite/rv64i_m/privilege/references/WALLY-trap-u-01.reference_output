@@ -26,7 +26,7 @@ FFFFFFFF # stval of faulting instruction (0xFFFFFFFF)
 00000000
 00000004 # scause from load address misaligned
 00000000
-02000001 # mtval of misaligned address 
+02000001 # mtval of misaligned address
 00000000
 00000000 # masked out mstatus.mpp = 0, mstatus.MPIE = 0, and mstatus.MIE = 0
 00000000
@@ -38,7 +38,7 @@ FFFFFFFF # stval of faulting instruction (0xFFFFFFFF)
 00000000
 00000006 # scause from store misaligned
 00000000
-02000001 # mtval of misaligned address 
+02000001 # mtval of misaligned address
 00000000
 00000000 # masked out mstatus.mpp = 0, mstatus.MPIE = 0, and mstatus.MIE = 0
 00000000
@@ -48,13 +48,13 @@ FFFFFFFF # stval of faulting instruction (0xFFFFFFFF)
 00000000
 00000000 # masked out mstatus.mpp = 0, mstatus.MPIE = 0, and mstatus.MIE = 0
 00000000
-00000008 # scause from U mode ecall 
+00000008 # scause from U mode ecall
 00000000
 00000000 # stval of ecall (*** defined to be zero for now)
 00000000
 00000000 # masked out mstatus.mpp = 0 (from U mode), mstatus.MPIE = 0, and mstatus.MIE = 0
 00000000
-0007ec03 # value to indicate successful vectoring on m soft interrupt 
+0007ec03 # value to indicate successful vectoring on m soft interrupt
 00000000
 00000003 # scause value from m soft interrupt
 80000000
@@ -62,7 +62,7 @@ FFFFFFFF # stval of faulting instruction (0xFFFFFFFF)
 00000000
 00000000 # masked out mstatus.mpp = 0, mstatus.MPIE = 0, and mstatus.MIE = 0
 00000000
-0007ec07 # value to indicate successful vectoring on m time interrupt 
+0007ec07 # value to indicate successful vectoring on m time interrupt
 00000000
 00000007 # scause value from m time interrupt
 80000000
@@ -70,7 +70,7 @@ FFFFFFFF # stval of faulting instruction (0xFFFFFFFF)
 00000000
 00000000 # masked out mstatus.mpp = 0, mstatus.MPIE = 0, and mstatus.MIE = 0
 00000000
-0007ec09 # value to indicate successful vectoring on s ext interrupt 
+0007ec09 # value to indicate successful vectoring on s ext interrupt
 00000000
 00000009 # scause value from s ext interrupt
 80000000
@@ -78,7 +78,7 @@ FFFFFFFF # stval of faulting instruction (0xFFFFFFFF)
 00000000
 00000000 # masked out mstatus.mpp = 0, mstatus.MPIE = 0, and mstatus.MIE = 0
 00000000
-0007ec0b # value to indicate successful vectoring on m ext interrupt 
+0007ec0b # value to indicate successful vectoring on m ext interrupt
 00000000
 0000000b # scause value from m ext interrupt
 80000000
@@ -86,7 +86,7 @@ FFFFFFFF # stval of faulting instruction (0xFFFFFFFF)
 00000000
 00000000 # masked out mstatus.mpp = 0, mstatus.MPIE = 0, and mstatus.MIE = 0
 00000000
-00000008 # scause from U mode ecall 
+00000008 # scause from U mode ecall
 00000000
 00000000 # stval of ecall (*** defined to be zero for now)
 00000000
@@ -96,7 +96,7 @@ FFFFFFFF # stval of faulting instruction (0xFFFFFFFF)
 00000000
 00000222 # mideleg after attempted write of all 1's (only some bits are writeable)
 00000000
-0000000b # scause from M mode ecall 
+0000000b # scause from M mode ecall
 00000000
 00000000 # stval of ecall (*** defined to be zero for now)
 00000000
@@ -122,7 +122,7 @@ FFFFFFFF # stval of faulting instruction (0xFFFFFFFF)
 00000000
 00000004 # scause from load address misaligned
 00000000
-02000001 # mtval of misaligned address 
+02000001 # mtval of misaligned address
 00000000
 00000020 # masked out sstatus.SPP = 0, sstatus.SPIE = 1, and sstatus.SIE = 0
 00000000
@@ -134,7 +134,7 @@ FFFFFFFF # stval of faulting instruction (0xFFFFFFFF)
 00000000
 00000006 # scause from store misaligned
 00000000
-02000001 # mtval of misaligned address 
+02000001 # mtval of misaligned address
 00000000
 00000020 # masked out sstatus.SPP = 0, sstatus.SPIE = 1, and sstatus.SIE = 0
 00000000
@@ -144,13 +144,13 @@ FFFFFFFF # stval of faulting instruction (0xFFFFFFFF)
 00000000
 00000020 # masked out sstatus.SPP = 0, sstatus.SPIE = 1, and sstatus.SIE = 0
 00000000
-00000008 # scause from U mode ecall 
+00000008 # scause from U mode ecall
 00000000
 00000000 # stval of ecall (*** defined to be zero for now)
 00000000
 00000020 # masked out sstatus.SPP = 0, sstatus.SPIE = 1, and sstatus.SIE = 0
 00000000
-0007ec09 # value to indicate successful vectoring on s ext interrupt 
+0007ec09 # value to indicate successful vectoring on s ext interrupt
 00000000
 00000009 # scause value from s ext interrupt
 80000000

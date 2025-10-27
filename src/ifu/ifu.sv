@@ -140,8 +140,8 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   logic [15:0]                 InstrRawE, InstrRawM;
   logic [LINELEN-1:0]          FetchBuffer;
   logic [31:0]                 ShiftUncachedInstr;
-  logic 		       ITLBMissF;
-  logic 		       InstrUpdateAF;                            // ITLB hit needs to update dirty or access bits
+  logic                        ITLBMissF;
+  logic                        InstrUpdateAF;                            // ITLB hit needs to update dirty or access bits
 
   assign PCFExt = {2'b00, PCSpillF};
 

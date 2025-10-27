@@ -8,7 +8,7 @@
 
 void fir(int N, int M, double X[], double c[], double Y[]) {
   int i, n;
-  double sum; 
+  double sum;
 
   for (n=0; n<N; n++) {
       sum = 0;
@@ -23,8 +23,8 @@ int main(void) {
     double X[20] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
     double c[5] = {0.2, 0.2, 0.2, 0.2, 0.2};
     double Y[15];
-    double Yexpected[15] = {3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17}; 
- 
+    double Yexpected[15] = {3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17};
+
     setStats(1);
     fir(15, 5, X, c, Y);
     setStats(0);

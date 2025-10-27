@@ -57,7 +57,7 @@ def tabulate_arch_sweep(directory):
             geomean = calcgeomean(d, arch)
             print(geomean, end="\t")
         print("\n\n")
- 
+
 def run_arch_sweep():
     # make a folder whose name depends on the date
     # Get current date
@@ -68,7 +68,7 @@ def run_arch_sweep():
     # Create a directory with the date string as its name
     os.mkdir(target_dir)
 
-    # make a directory with the current date as its name 
+    # make a directory with the current date as its name
 
     # sweep the runs and save the results in the run directory
     for arch in archs:

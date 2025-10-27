@@ -18,7 +18,7 @@ OBJECTS		:= $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(OBJECTS))
 TARGETDIR	:= bin
 TARGET		:= $(TARGETDIR)/spitest.elf
 ROOT		:= ..
-LIBRARY_DIRS	:= 
+LIBRARY_DIRS	:=
 LIBRARY_FILES	:=
 
 MARCH           :=-march=rv64imfdc
@@ -46,7 +46,7 @@ directories:
 	@mkdir -p $(BUILDDIR)
 
 clean:
-	rm -rf $(BUILDDIR) $(TARGETDIR) *.memfile *.objdump 
+	rm -rf $(BUILDDIR) $(TARGETDIR) *.memfile *.objdump
 
 
 #Needed for building additional library projects
@@ -54,7 +54,7 @@ ifdef LIBRARY_DIRS
 LIBS+=${LIBRARY_DIRS:%=-L%}  ${LIBRARY_FILES:%=-l%}
 INC+=${LIBRARY_DIRS:%=-I%}
 
-${LIBRARY_DIRS}: 
+${LIBRARY_DIRS}:
 	$(MAKE) -C $@ -j 1
 
 .PHONY: $(LIBRARY_DIRS) $(TARGET)

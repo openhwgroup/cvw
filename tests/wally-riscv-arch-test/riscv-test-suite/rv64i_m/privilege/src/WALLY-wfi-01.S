@@ -57,5 +57,3 @@ WRITE_READ_CSR mie, 0xFFF // Enable interrupts from all sources
 END_TESTS
 
 TEST_STACK_AND_DATA
-
-

@@ -2,28 +2,28 @@
 // mmu.sv
 //
 // Written: david_harris@hmc.edu and kmacsaigoren@hmc.edu 4 June 2021
-// Modified: 
+// Modified:
 //
 // Purpose: Memory management unit, including TLB, PMA, PMP
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -62,7 +62,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   input var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0]                   // PMP addresses
 );
 
-  logic [P.PA_BITS-1:0]        TLBPAdr;                  // physical address for TLB                   
+  logic [P.PA_BITS-1:0]        TLBPAdr;                  // physical address for TLB
   logic                        PMAInstrAccessFaultF;     // Instruction access fault from PMA
   logic                        PMPInstrAccessFaultF;     // Instruction access fault from PMP
   logic                        PMALoadAccessFaultM;      // Load access fault from PMA
@@ -76,7 +76,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   logic [1:0]                  PBMemoryType;             // PBMT field of PTE during TLB hit, or 00 otherwise
   logic                        AtomicMisalignedCausesAccessFaultM; // Misaligned atomics are not handled by hardware even with ZICCLSM, so it throws an access fault instead of misaligned with ZICCLSM
   logic [1:0]                  EffectivePrivilegeModeW;  // Effective privilege mode accounting for MPRV
-  
+
 
   // Get Effective Privilege Mode
   // for DLB, when mstatus.MPRV=1, use mstatus.MPP rather than the current privilege mode
@@ -110,20 +110,20 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   // non translated address.
   mux2 #(P.PA_BITS-12) addressmux(VAdr[P.PA_BITS-1:12], TLBPAdr[P.PA_BITS-1:12], Translate, PhysicalAddress[P.PA_BITS-1:12]);
   assign PhysicalAddress[11:0] = VAdr[11:0];
-  
+
   ///////////////////////////////////////////
   // Check physical memory accesses
   ///////////////////////////////////////////
 
-  pmachecker #(P) pmachecker(.PhysicalAddress, .Size, .CMOpM, 
+  pmachecker #(P) pmachecker(.PhysicalAddress, .Size, .CMOpM,
     .AtomicAccessM, .ExecuteAccessF, .WriteAccessM, .ReadAccessM, .PBMemoryType,
-    .Cacheable, .Idempotent, .SelTIM, 
+    .Cacheable, .Idempotent, .SelTIM,
     .PMAInstrAccessFaultF, .PMALoadAccessFaultM, .PMAStoreAmoAccessFaultM);
- 
+
   if (P.PMP_ENTRIES > 0) begin : pmp
     pmpchecker #(P) pmpchecker(.PhysicalAddress, .EffectivePrivilegeModeW,
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
-      .ExecuteAccessF, .WriteAccessM, .ReadAccessM, .Size, .CMOpM, 
+      .ExecuteAccessF, .WriteAccessM, .ReadAccessM, .Size, .CMOpM,
       .PMPInstrAccessFaultF, .PMPLoadAccessFaultM, .PMPStoreAmoAccessFaultM);
   end else begin
     assign PMPInstrAccessFaultF     = 1'b0;
@@ -135,14 +135,14 @@ module mmu import cvw::*;  #(parameter cvw_t P,
 
   // Misaligned faults
   always_comb // exclusion-tag: immu-wordaccess
-    case(Size) 
+    case(Size)
       2'b00:  DataMisalignedM = 1'b0;              // lb, sb, lbu
       2'b01:  DataMisalignedM = VAdr[0];           // lh, sh, lhu
       2'b10:  DataMisalignedM = VAdr[1] | VAdr[0]; // lw, sw, flw, fsw, lwu
       2'b11:  DataMisalignedM = |VAdr[2:0];        // ld, sd, fld, fsd
-    endcase 
+    endcase
   // When ZiCCLSM_SUPPORTED, misalgined cacheable loads and stores are handled in hardware so they do not throw a misaligned fault
-  assign LoadMisalignedFaultM     = DataMisalignedM & ReadNoAmoAccessM & ~(P.ZICCLSM_SUPPORTED & Cacheable) & ~TLBMiss; 
+  assign LoadMisalignedFaultM     = DataMisalignedM & ReadNoAmoAccessM & ~(P.ZICCLSM_SUPPORTED & Cacheable) & ~TLBMiss;
   assign StoreAmoMisalignedFaultM = DataMisalignedM & WriteAccessM & ~(P.ZICCLSM_SUPPORTED & Cacheable) & ~TLBMiss; // Store and AMO both assert WriteAccess
 
   // a misaligned Atomic causes an access fault rather than a misaligned fault if a misaligned load/store is handled in hardware
@@ -157,6 +157,6 @@ module mmu import cvw::*;  #(parameter cvw_t P,
 
   // Specify which type of page fault is occurring
   assign InstrPageFaultF    = TLBPageFault & ExecuteAccessF;
-  assign LoadPageFaultM     = TLBPageFault & ReadNoAmoAccessM; 
+  assign LoadPageFaultM     = TLBPageFault & ReadNoAmoAccessM;
   assign StoreAmoPageFaultM = TLBPageFault & (WriteAccessM | (|CMOpM));
 endmodule

@@ -161,7 +161,7 @@ main:
     csrw pmpaddr2, zero
     li t0, 0xFFFFFFFF  # full range
     csrw pmpaddr3, t0
-    
+
     # switch to supervisor mode
     li a0, 1
     ecall
@@ -171,7 +171,7 @@ main:
 
     li a0, 3
     ecall     # return to M mode
-   
+
     j done
 
 .align 2

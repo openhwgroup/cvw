@@ -141,7 +141,7 @@ jobs:
       - name: Clone Necessary Submodules
         run: |
               git config --global --add safe.directory '*'
-              git submodule update --init addins/riscv-arch-test addins/cvw-arch-verif addins/verilog-ethernet
+              git submodule update --init addins/riscv-arch-test addins/riscv-arch-test-cvw addins/verilog-ethernet
       # Free up space on the host machine, either from the container or the host
       - name: Free Up Storage
         run: |

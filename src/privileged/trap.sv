@@ -5,30 +5,30 @@
 // Modified: dottolia@hmc.edu 14 April 2021: Add support for vectored interrupts
 //
 // Purpose: Handle Traps: Exceptions and Interrupts
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module trap import cvw::*;  #(parameter cvw_t P) (
-  input  logic                 reset, 
+  input  logic                 reset,
   input  logic                 InstrMisalignedFaultM, InstrAccessFaultM, HPTWInstrAccessFaultM, HPTWInstrPageFaultM, IllegalInstrFaultM,
   input  logic                 BreakpointFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM,
   input  logic                 LoadAccessFaultM, StoreAmoAccessFaultM, EcallFaultM, InstrPageFaultM,
@@ -67,17 +67,17 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   assign Committed     = CommittedM | CommittedF;
   assign EnabledIntsM  = (MIntGlobalEnM ? PendingIntsM & ~MIDELEG_REGW : '0) | (SIntGlobalEnM ? PendingIntsM & MIDELEG_REGW : '0);
   assign ValidIntsM    = Committed ? '0 : EnabledIntsM;
-  assign InterruptM    = (|ValidIntsM) & InstrValidM & (~wfiM | wfiW); // suppress interrupt if the memory system has partially processed a request. Delay interrupt until wfi is in the W stage. 
+  assign InterruptM    = (|ValidIntsM) & InstrValidM & (~wfiM | wfiW); // suppress interrupt if the memory system has partially processed a request. Delay interrupt until wfi is in the W stage.
   // wfiW is to support possible but unlikely back to back wfi instructions. wfiM would be high in the M stage, while also in the W stage.
-  assign DelegateM     = P.S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM] : MEDELEG_REGW[CauseM]) & 
+  assign DelegateM     = P.S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM] : MEDELEG_REGW[CauseM]) &
                      (PrivilegeModeW == P.U_MODE | PrivilegeModeW == P.S_MODE);
 
   ///////////////////////////////////////////
-  // Trigger Traps 
+  // Trigger Traps
   // According to RISC-V Spec Section 1.6, exceptions are caused by instructions.  Interrupts are external asynchronous.
   // Traps are the union of exceptions and interrupts.
   ///////////////////////////////////////////
-  
+
   assign BothInstrAccessFaultM = InstrAccessFaultM | HPTWInstrAccessFaultM;
   assign BothInstrPageFaultM = InstrPageFaultM | HPTWInstrPageFaultM;
   // coverage off -item e 1 -fecexprrow 2
@@ -99,9 +99,9 @@ module trap import cvw::*;  #(parameter cvw_t P) (
     else if (ValidIntsM[11])           CauseM = 4'd11; // Machine External Int
     else if (ValidIntsM[3])            CauseM = 4'd3;  // Machine Sw Int
     else if (ValidIntsM[7])            CauseM = 4'd7;  // Machine Timer Int
-    else if (ValidIntsM[9])            CauseM = 4'd9;  // Supervisor External Int 
-    else if (ValidIntsM[1])            CauseM = 4'd1;  // Supervisor Sw Int       
-    else if (ValidIntsM[5])            CauseM = 4'd5;  // Supervisor Timer Int    
+    else if (ValidIntsM[9])            CauseM = 4'd9;  // Supervisor External Int
+    else if (ValidIntsM[1])            CauseM = 4'd1;  // Supervisor Sw Int
+    else if (ValidIntsM[5])            CauseM = 4'd5;  // Supervisor Timer Int
     else if (BothInstrPageFaultM)      CauseM = 4'd12;
     else if (BothInstrAccessFaultM)    CauseM = 4'd1;
     else if (IllegalInstrFaultM)       CauseM = 4'd2;

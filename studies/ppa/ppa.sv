@@ -199,23 +199,23 @@ module ppa_alu #(parameter WIDTH=32) (
   // addition
   assign CondInvB = SubArith ? ~B : B;
   assign {Carry, Sum} = A + CondInvB + {{(WIDTH-1){1'b0}}, SubArith};
-  
+
   // Shifts
   ppa_shifter #(WIDTH) sh(.A, .Amt(B[$clog2(WIDTH)-1:0]), .Right(Funct3[2]), .Arith(SubArith), .W64, .Y(Shift));
 
   // condition code flags based on subtract output Sum = A-B
-  // Overflow occurs when the numbers being subtracted have the opposite sign 
+  // Overflow occurs when the numbers being subtracted have the opposite sign
   // and the result has the opposite sign of A
   assign Neg  = Sum[WIDTH-1];
   assign Asign = A[WIDTH-1];
   assign Bsign = B[WIDTH-1];
   assign LT = Asign & ~Bsign | Asign & Neg | ~Bsign & Neg; // simplified from Overflow = Asign & Bsign & Asign & Neg; LT = Neg ^ Overflow
   assign LTU = ~Carry;
- 
+
   // SLT
   assign SLT = {{(WIDTH-1){1'b0}}, LT};
   assign SLTU = {{(WIDTH-1){1'b0}}, LTU};
- 
+
   // Select appropriate ALU Result
   assign ALUFunct = Funct3 & {3{ALUOp}}; // Force ALUFunct to 0 to Add when ALUOp = 0
   always_comb
@@ -225,7 +225,7 @@ module ppa_alu #(parameter WIDTH=32) (
       3'b010: FullResult = SLT;       // slt
       3'b011: FullResult = SLTU;      // sltu
       3'b100: FullResult = A ^ B;     // xor
-      3'b110: FullResult = A | B;     // or 
+      3'b110: FullResult = A | B;     // or
       3'b111: FullResult = A & B;     // and
     endcase
 
@@ -286,7 +286,7 @@ module ppa_shifter #(parameter WIDTH=32) (
   logic [$clog2(WIDTH)-1:0]    amttrunc, offset;
 
   // Handle left and right shifts with a funnel shifter.
-  // For RV32, only 32-bit shifts are needed.   
+  // For RV32, only 32-bit shifts are needed.
   // For RV64, 32 and 64-bit shifts are needed, with sign extension.
 
   // funnel shifter input (see CMOS VLSI Design 4e Section 11.8.1, note Table 11.11 shift types wrong)
@@ -301,20 +301,20 @@ module ppa_shifter #(parameter WIDTH=32) (
   //       if (Right)
   //         if (Arith) z = {{WIDTH-1{A[WIDTH-1]}}, A};
   //         else       z = {{WIDTH-1{1'b0}}, A};
-  //       else         z = {A, {WIDTH-1{1'b0}}};         
+  //       else         z = {A, {WIDTH-1{1'b0}}};
   //     end
-  //     assign amttrunc = W64  ? {1'b0, Amt[$clog2(WIDTH)-2:0]} : Amt; // 32 or 64-bit shift 
+  //     assign amttrunc = W64  ? {1'b0, Amt[$clog2(WIDTH)-2:0]} : Amt; // 32 or 64-bit shift
   // end else begin:shifter // RV32 or less
   //   always_comb  // funnel mux
-  //     if (Right) 
+  //     if (Right)
   //       if (Arith) z = {{WIDTH-1{A[WIDTH-1]}}, A};
   //       else       z = {{WIDTH-1{1'b0}}, A};
   //     else         z = {A, {WIDTH-1{1'b0}}};
   //   assign amttrunc = Amt; // shift amount
-  // end 
-    
+  // end
+
   always_comb  // funnel mux
-      if (Right) 
+      if (Right)
         if (Arith) z = {{WIDTH-1{A[WIDTH-1]}}, A};
         else       z = {{WIDTH-1{1'b0}}, A};
       else         z = {A, {WIDTH-1{1'b0}}};
@@ -322,10 +322,10 @@ module ppa_shifter #(parameter WIDTH=32) (
 
   // opposite offset for right shfits
   assign offset = Right ? amttrunc : ~amttrunc;
-  
+
   // funnel operation
   assign zshift = z >> offset;
-  assign Y = zshift[WIDTH-1:0];    
+  assign Y = zshift[WIDTH-1:0];
 endmodule
 
   //   module ppa_shifter_8 #(parameter WIDTH=8) (
@@ -372,7 +372,7 @@ endmodule
 
   //   ppa_shifter #(WIDTH) sh (.*);
   // endmodule
-  
+
 module ppa_prioritythermometer #(parameter N = 8) (
   input  logic  [N-1:0] a,
   output logic  [N-1:0] y);
@@ -519,192 +519,192 @@ endmodule
 module ppa_decoder #(parameter WIDTH = 8) (
   input  logic  [$clog2(WIDTH)-1:0] a,
   output logic  [WIDTH-1:0] y);
-  always_comb begin 
+  always_comb begin
     y = 0;
     y[a] = 1;
   end
 endmodule
 
 module ppa_mux2d_1 #(parameter WIDTH = 1) (
-  input  logic [WIDTH-1:0] d0, d1, 
-  input  logic             s, 
+  input  logic [WIDTH-1:0] d0, d1,
+  input  logic             s,
   output logic [WIDTH-1:0] y);
 
-  assign y = s ? d1 : d0; 
+  assign y = s ? d1 : d0;
 endmodule
 
 module ppa_mux4d_1 #(parameter WIDTH = 1) (
   input  logic [WIDTH-1:0] d0, d1, d2, d3,
-  input  logic [1:0]       s, 
+  input  logic [1:0]       s,
   output logic [WIDTH-1:0] y);
 
-  assign y = s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0); 
+  assign y = s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0);
 endmodule
 
 module ppa_mux8d_1 #(parameter WIDTH = 1) (
   input  logic [WIDTH-1:0] d0, d1, d2, d3, d4, d5, d6, d7,
-  input  logic [2:0]       s, 
+  input  logic [2:0]       s,
   output logic [WIDTH-1:0] y);
 
-  assign y = s[2] ? (s[1] ? (s[0] ? d5 : d4) : (s[0] ? d6 : d7)) : (s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0)); 
+  assign y = s[2] ? (s[1] ? (s[0] ? d5 : d4) : (s[0] ? d6 : d7)) : (s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0));
 endmodule
 
 module ppa_mux2_1 #(parameter WIDTH = 1) (
-  input  logic [WIDTH-1:0] d0, d1, 
-  input  logic             s, 
+  input  logic [WIDTH-1:0] d0, d1,
+  input  logic             s,
   output logic [WIDTH-1:0] y);
 
-  assign y = s ? d1 : d0; 
+  assign y = s ? d1 : d0;
 endmodule
 
 module ppa_mux4_1 #(parameter WIDTH = 1) (
   input  logic [WIDTH-1:0] d0, d1, d2, d3,
-  input  logic [1:0]       s, 
+  input  logic [1:0]       s,
   output logic [WIDTH-1:0] y);
 
-  assign y = s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0); 
+  assign y = s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0);
 endmodule
 
 module ppa_mux8_1 #(parameter WIDTH = 1) (
   input  logic [WIDTH-1:0] d0, d1, d2, d3, d4, d5, d6, d7,
-  input  logic [2:0]       s, 
+  input  logic [2:0]       s,
   output logic [WIDTH-1:0] y);
 
-  assign y = s[2] ? (s[1] ? (s[0] ? d5 : d4) : (s[0] ? d6 : d7)) : (s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0)); 
+  assign y = s[2] ? (s[1] ? (s[0] ? d5 : d4) : (s[0] ? d6 : d7)) : (s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0));
 endmodule
 
 module ppa_mux2_8 #(parameter WIDTH = 8) (
-  input  logic [WIDTH-1:0] d0, d1, 
-  input  logic             s, 
+  input  logic [WIDTH-1:0] d0, d1,
+  input  logic             s,
   output logic [WIDTH-1:0] y);
 
-  assign y = s ? d1 : d0; 
+  assign y = s ? d1 : d0;
 endmodule
 
 module ppa_mux4_8 #(parameter WIDTH = 8) (
   input  logic [WIDTH-1:0] d0, d1, d2, d3,
-  input  logic [1:0]       s, 
+  input  logic [1:0]       s,
   output logic [WIDTH-1:0] y);
 
-  assign y = s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0); 
+  assign y = s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0);
 endmodule
 
 module ppa_mux8_8 #(parameter WIDTH = 8) (
   input  logic [WIDTH-1:0] d0, d1, d2, d3, d4, d5, d6, d7,
-  input  logic [2:0]       s, 
+  input  logic [2:0]       s,
   output logic [WIDTH-1:0] y);
 
-  assign y = s[2] ? (s[1] ? (s[0] ? d5 : d4) : (s[0] ? d6 : d7)) : (s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0)); 
+  assign y = s[2] ? (s[1] ? (s[0] ? d5 : d4) : (s[0] ? d6 : d7)) : (s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0));
 endmodule
 
 module ppa_mux2_16 #(parameter WIDTH = 16) (
-  input  logic [WIDTH-1:0] d0, d1, 
-  input  logic             s, 
+  input  logic [WIDTH-1:0] d0, d1,
+  input  logic             s,
   output logic [WIDTH-1:0] y);
 
-  assign y = s ? d1 : d0; 
+  assign y = s ? d1 : d0;
 endmodule
 
 module ppa_mux4_16 #(parameter WIDTH = 16) (
   input  logic [WIDTH-1:0] d0, d1, d2, d3,
-  input  logic [1:0]       s, 
+  input  logic [1:0]       s,
   output logic [WIDTH-1:0] y);
 
-  assign y = s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0); 
+  assign y = s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0);
 endmodule
 
 module ppa_mux8_16 #(parameter WIDTH = 16) (
   input  logic [WIDTH-1:0] d0, d1, d2, d3, d4, d5, d6, d7,
-  input  logic [2:0]       s, 
+  input  logic [2:0]       s,
   output logic [WIDTH-1:0] y);
 
-  assign y = s[2] ? (s[1] ? (s[0] ? d5 : d4) : (s[0] ? d6 : d7)) : (s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0)); 
+  assign y = s[2] ? (s[1] ? (s[0] ? d5 : d4) : (s[0] ? d6 : d7)) : (s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0));
 endmodule
 
 module ppa_mux2_32 #(parameter WIDTH = 32) (
-  input  logic [WIDTH-1:0] d0, d1, 
-  input  logic             s, 
+  input  logic [WIDTH-1:0] d0, d1,
+  input  logic             s,
   output logic [WIDTH-1:0] y);
 
-  assign y = s ? d1 : d0; 
+  assign y = s ? d1 : d0;
 endmodule
 
 module ppa_mux4_32 #(parameter WIDTH = 32) (
   input  logic [WIDTH-1:0] d0, d1, d2, d3,
-  input  logic [1:0]       s, 
+  input  logic [1:0]       s,
   output logic [WIDTH-1:0] y);
 
-  assign y = s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0); 
+  assign y = s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0);
 endmodule
 
 module ppa_mux8_32 #(parameter WIDTH = 32) (
   input  logic [WIDTH-1:0] d0, d1, d2, d3, d4, d5, d6, d7,
-  input  logic [2:0]       s, 
+  input  logic [2:0]       s,
   output logic [WIDTH-1:0] y);
 
-  assign y = s[2] ? (s[1] ? (s[0] ? d5 : d4) : (s[0] ? d6 : d7)) : (s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0)); 
+  assign y = s[2] ? (s[1] ? (s[0] ? d5 : d4) : (s[0] ? d6 : d7)) : (s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0));
 endmodule
 
 module ppa_mux2_64 #(parameter WIDTH = 64) (
-  input  logic [WIDTH-1:0] d0, d1, 
-  input  logic             s, 
+  input  logic [WIDTH-1:0] d0, d1,
+  input  logic             s,
   output logic [WIDTH-1:0] y);
 
-  assign y = s ? d1 : d0; 
+  assign y = s ? d1 : d0;
 endmodule
 
 module ppa_mux4_64 #(parameter WIDTH = 64) (
   input  logic [WIDTH-1:0] d0, d1, d2, d3,
-  input  logic [1:0]       s, 
+  input  logic [1:0]       s,
   output logic [WIDTH-1:0] y);
 
-  assign y = s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0); 
+  assign y = s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0);
 endmodule
 
 module ppa_mux8_64 #(parameter WIDTH = 64) (
   input  logic [WIDTH-1:0] d0, d1, d2, d3, d4, d5, d6, d7,
-  input  logic [2:0]       s, 
+  input  logic [2:0]       s,
   output logic [WIDTH-1:0] y);
 
-  assign y = s[2] ? (s[1] ? (s[0] ? d5 : d4) : (s[0] ? d6 : d7)) : (s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0)); 
+  assign y = s[2] ? (s[1] ? (s[0] ? d5 : d4) : (s[0] ? d6 : d7)) : (s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0));
 endmodule
 
 module ppa_mux2_128 #(parameter WIDTH = 128) (
-  input  logic [WIDTH-1:0] d0, d1, 
-  input  logic             s, 
+  input  logic [WIDTH-1:0] d0, d1,
+  input  logic             s,
   output logic [WIDTH-1:0] y);
 
-  assign y = s ? d1 : d0; 
+  assign y = s ? d1 : d0;
 endmodule
 
 module ppa_mux4_128 #(parameter WIDTH = 128) (
   input  logic [WIDTH-1:0] d0, d1, d2, d3,
-  input  logic [1:0]       s, 
+  input  logic [1:0]       s,
   output logic [WIDTH-1:0] y);
 
-  assign y = s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0); 
+  assign y = s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0);
 endmodule
 
 module ppa_mux8_128 #(parameter WIDTH = 128) (
   input  logic [WIDTH-1:0] d0, d1, d2, d3, d4, d5, d6, d7,
-  input  logic [2:0]       s, 
+  input  logic [2:0]       s,
   output logic [WIDTH-1:0] y);
 
-  assign y = s[2] ? (s[1] ? (s[0] ? d5 : d4) : (s[0] ? d6 : d7)) : (s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0)); 
+  assign y = s[2] ? (s[1] ? (s[0] ? d5 : d4) : (s[0] ? d6 : d7)) : (s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0));
 endmodule
 
-module ppa_flop #(parameter WIDTH = 8) ( 
+module ppa_flop #(parameter WIDTH = 8) (
   input  logic             clk,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   always_ff @(posedge clk)
     q <= #1 d;
 endmodule
 
-module ppa_flop_8 #(parameter WIDTH = 8) ( 
+module ppa_flop_8 #(parameter WIDTH = 8) (
   input  logic             clk,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   logic [WIDTH-1:0] q1;
@@ -713,9 +713,9 @@ module ppa_flop_8 #(parameter WIDTH = 8) (
   ppa_flop #(WIDTH) f2(clk, q1, q);
 endmodule
 
-module ppa_flop_16 #(parameter WIDTH = 16) ( 
+module ppa_flop_16 #(parameter WIDTH = 16) (
   input  logic             clk,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   logic [WIDTH-1:0] q1;
@@ -724,9 +724,9 @@ module ppa_flop_16 #(parameter WIDTH = 16) (
   ppa_flop #(WIDTH) f2(clk, q1, q);
 endmodule
 
-module ppa_flop_32 #(parameter WIDTH = 32) ( 
+module ppa_flop_32 #(parameter WIDTH = 32) (
   input  logic             clk,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   logic [WIDTH-1:0] q1;
@@ -735,9 +735,9 @@ module ppa_flop_32 #(parameter WIDTH = 32) (
   ppa_flop #(WIDTH) f2(clk, q1, q);
 endmodule
 
-module ppa_flop_64 #(parameter WIDTH = 64) ( 
+module ppa_flop_64 #(parameter WIDTH = 64) (
   input  logic             clk,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   logic [WIDTH-1:0] q1;
@@ -746,9 +746,9 @@ module ppa_flop_64 #(parameter WIDTH = 64) (
   ppa_flop #(WIDTH) f2(clk, q1, q);
 endmodule
 
-module ppa_flop_128 #(parameter WIDTH = 128) ( 
+module ppa_flop_128 #(parameter WIDTH = 128) (
   input  logic             clk,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   logic [WIDTH-1:0] q1;
@@ -757,9 +757,9 @@ module ppa_flop_128 #(parameter WIDTH = 128) (
   ppa_flop #(WIDTH) f2(clk, q1, q);
 endmodule
 
-module ppa_flopr #(parameter WIDTH = 8) ( 
+module ppa_flopr #(parameter WIDTH = 8) (
   input  logic             clk, reset,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   always_ff @(posedge clk)
@@ -767,9 +767,9 @@ module ppa_flopr #(parameter WIDTH = 8) (
     else       q <= #1 d;
 endmodule
 
-module ppa_flopr_8 #(parameter WIDTH = 8) ( 
+module ppa_flopr_8 #(parameter WIDTH = 8) (
   input  logic             clk, reset,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   logic [WIDTH-1:0] q1;
@@ -778,9 +778,9 @@ module ppa_flopr_8 #(parameter WIDTH = 8) (
   ppa_flopr #(WIDTH) f2(clk, reset, q1, q);
 endmodule
 
-module ppa_flopr_16 #(parameter WIDTH = 16) ( 
+module ppa_flopr_16 #(parameter WIDTH = 16) (
   input  logic             clk, reset,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   logic [WIDTH-1:0] q1;
@@ -789,9 +789,9 @@ module ppa_flopr_16 #(parameter WIDTH = 16) (
   ppa_flopr #(WIDTH) f2(clk, reset, q1, q);
 endmodule
 
-module ppa_flopr_32 #(parameter WIDTH = 32) ( 
+module ppa_flopr_32 #(parameter WIDTH = 32) (
   input  logic             clk, reset,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   logic [WIDTH-1:0] q1;
@@ -800,9 +800,9 @@ module ppa_flopr_32 #(parameter WIDTH = 32) (
   ppa_flopr #(WIDTH) f2(clk, reset, q1, q);
 endmodule
 
-module ppa_flopr_64 #(parameter WIDTH = 64) ( 
+module ppa_flopr_64 #(parameter WIDTH = 64) (
   input  logic             clk, reset,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   logic [WIDTH-1:0] q1;
@@ -811,9 +811,9 @@ module ppa_flopr_64 #(parameter WIDTH = 64) (
   ppa_flopr #(WIDTH) f2(clk, reset, q1, q);
 endmodule
 
-module ppa_flopr_128 #(parameter WIDTH = 128) ( 
+module ppa_flopr_128 #(parameter WIDTH = 128) (
   input  logic             clk, reset,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   logic [WIDTH-1:0] q1;
@@ -822,9 +822,9 @@ module ppa_flopr_128 #(parameter WIDTH = 128) (
   ppa_flopr #(WIDTH) f2(clk, reset, q1, q);
 endmodule
 
-module ppa_floprasync #(parameter WIDTH = 8) ( 
+module ppa_floprasync #(parameter WIDTH = 8) (
   input  logic             clk, reset,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   always_ff @(posedge clk or posedge reset)
@@ -832,9 +832,9 @@ module ppa_floprasync #(parameter WIDTH = 8) (
     else       q <= #1 d;
 endmodule
 
-module ppa_floprasync_8 #(parameter WIDTH = 8) ( 
+module ppa_floprasync_8 #(parameter WIDTH = 8) (
   input  logic             clk, reset,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   logic [WIDTH-1:0] q1;
@@ -843,9 +843,9 @@ module ppa_floprasync_8 #(parameter WIDTH = 8) (
   ppa_floprasync #(WIDTH) f2(clk, reset, q1, q);
 endmodule
 
-module ppa_floprasync_16 #(parameter WIDTH = 16) ( 
+module ppa_floprasync_16 #(parameter WIDTH = 16) (
   input  logic             clk, reset,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   logic [WIDTH-1:0] q1;
@@ -854,9 +854,9 @@ module ppa_floprasync_16 #(parameter WIDTH = 16) (
   ppa_floprasync #(WIDTH) f2(clk, reset, q1, q);
 endmodule
 
-module ppa_floprasync_32 #(parameter WIDTH = 32) ( 
+module ppa_floprasync_32 #(parameter WIDTH = 32) (
   input  logic             clk, reset,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   logic [WIDTH-1:0] q1;
@@ -865,9 +865,9 @@ module ppa_floprasync_32 #(parameter WIDTH = 32) (
   ppa_floprasync #(WIDTH) f2(clk, reset, q1, q);
 endmodule
 
-module ppa_floprasync_64 #(parameter WIDTH = 64) ( 
+module ppa_floprasync_64 #(parameter WIDTH = 64) (
   input  logic             clk, reset,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   logic [WIDTH-1:0] q1;
@@ -876,9 +876,9 @@ module ppa_floprasync_64 #(parameter WIDTH = 64) (
   ppa_floprasync #(WIDTH) f2(clk, reset, q1, q);
 endmodule
 
-module ppa_floprasync_128 #(parameter WIDTH = 128) ( 
+module ppa_floprasync_128 #(parameter WIDTH = 128) (
   input  logic             clk, reset,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   logic [WIDTH-1:0] q1;
@@ -889,7 +889,7 @@ endmodule
 
 module ppa_flopenr #(parameter WIDTH = 8) (
   input  logic             clk, reset, en,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   always_ff @(posedge clk)
@@ -899,7 +899,7 @@ endmodule
 
 module ppa_flopenr_8 #(parameter WIDTH = 8) (
   input  logic             clk, reset, en,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   logic [WIDTH-1:0] q1;
@@ -910,7 +910,7 @@ endmodule
 
 module ppa_flopenr_16 #(parameter WIDTH = 16) (
   input  logic             clk, reset, en,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   logic [WIDTH-1:0] q1;
@@ -921,7 +921,7 @@ endmodule
 
 module ppa_flopenr_32 #(parameter WIDTH = 32) (
   input  logic             clk, reset, en,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   logic [WIDTH-1:0] q1;
@@ -932,7 +932,7 @@ endmodule
 
 module ppa_flopenr_64 #(parameter WIDTH = 64) (
   input  logic             clk, reset, en,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   logic [WIDTH-1:0] q1;
@@ -943,7 +943,7 @@ endmodule
 
 module ppa_flopenr_128 #(parameter WIDTH = 128) (
   input  logic             clk, reset, en,
-  input  logic [WIDTH-1:0] d, 
+  input  logic [WIDTH-1:0] d,
   output logic [WIDTH-1:0] q);
 
   logic [WIDTH-1:0] q1;
@@ -954,52 +954,52 @@ endmodule
 
 module ppa_csa_8 #(parameter WIDTH = 8) (
   input logic [WIDTH-1:0] a, b, c,
-	output logic [WIDTH-1:0] sum, carry);
+  output logic [WIDTH-1:0] sum, carry);
 
-   assign sum = a ^ b ^ c;
-   assign carry = (a & (b | c)) | (b & c);
+  assign sum = a ^ b ^ c;
+  assign carry = (a & (b | c)) | (b & c);
 
 endmodule
 
 module ppa_csa_16 #(parameter WIDTH = 16) (
   input logic [WIDTH-1:0] a, b, c,
-	output logic [WIDTH-1:0] sum, carry);
+  output logic [WIDTH-1:0] sum, carry);
 
-   assign sum = a ^ b ^ c;
-   assign carry = (a & (b | c)) | (b & c);
+  assign sum = a ^ b ^ c;
+  assign carry = (a & (b | c)) | (b & c);
 
 endmodule
 
 module ppa_csa_32 #(parameter WIDTH = 32) (
   input logic [WIDTH-1:0] a, b, c,
-	output logic [WIDTH-1:0] sum, carry);
+  output logic [WIDTH-1:0] sum, carry);
 
-   assign sum = a ^ b ^ c;
-   assign carry = (a & (b | c)) | (b & c);
+  assign sum = a ^ b ^ c;
+  assign carry = (a & (b | c)) | (b & c);
 
 endmodule
 
 module ppa_csa_64 #(parameter WIDTH = 64) (
   input logic [WIDTH-1:0] a, b, c,
-	output logic [WIDTH-1:0] sum, carry);
+  output logic [WIDTH-1:0] sum, carry);
 
-   assign sum = a ^ b ^ c;
-   assign carry = (a & (b | c)) | (b & c);
+  assign sum = a ^ b ^ c;
+  assign carry = (a & (b | c)) | (b & c);
 
 endmodule
 
 module ppa_csa_128 #(parameter WIDTH = 128) (
   input logic [WIDTH-1:0] a, b, c,
-	output logic [WIDTH-1:0] sum, carry);
+  output logic [WIDTH-1:0] sum, carry);
 
-   assign sum = a ^ b ^ c;
-   assign carry = (a & (b | c)) | (b & c);
+  assign sum = a ^ b ^ c;
+  assign carry = (a & (b | c)) | (b & c);
 
 endmodule
 
 module ppa_inv_1 #(parameter WIDTH = 1) (
   input logic [WIDTH-1:0] a,
   output logic [WIDTH-1:0] y);
-  
+
   assign y = ~a;
 endmodule

@@ -20,7 +20,7 @@ make synth DESIGN=wallypipelinedcore FREQ=500 CONFIG=rv32e
   - Examples: rv32e, rv64gc, rv32gc
 - `TECH`
   - The target standard cell library.  The default is sky130.
-	- Options:
+  - Options:
     - sky90: skywater 90nm TT 25C
     - sky130: skywater 130nm TT 25C
 - `SAIFPOWER`

@@ -128,7 +128,7 @@ def main():
         print(f"{RED}Linting failed for {fails} of {len(configs)} configurations{NC}")
         sys.exit(1)
 
-    print(f"{GREEN}All {len(configs)} lints passed{NC}")
+    print(f"{GREEN}All lints passed with no errors or warnings{NC}")
 
 
 if __name__ == "__main__":

@@ -477,7 +477,7 @@ def selectTests(args, sims, coverStr):
             name="lints",
             variant="all",
             cmd=f"lint-wally {'--nightly' if args.nightly else ''} | tee {regressionDir}/verilator/logs/all_lints.log",
-            grepstr="lints run with no errors or warnings",
+            grepstr="All lints passed with no errors or warnings",
             grepfile = f"{regressionDir}/verilator/logs/all_lints.log")
         ]
 

@@ -12,7 +12,7 @@ Docker can be run on most operating systems, including Linux, Windows, and Mac. 
 
 Podman is a more secure and easier-to-use variation of Docker for Linux developed by RedHat.  Both Docker and Podman run the same containers.  
 
-D.3.1	Podman Installation on Linux
+D.3.1 Podman Installation on Linux
 
 A system administrator must install Podman if it is not already present.
 
@@ -24,14 +24,14 @@ For RedHat / Rocky:
 
 $ sudo yum -y install podman
 
-D.3.2	Pulling the Wally Container
+D.3.2 Pulling the Wally Container
 
 Once Podman is installed, a user can pull the Wally container image.  The user must sign up for a free account at docker.io, and will be prompted for the credentials when running podman login.
 
 $ podman login docker.io
 $ podman pull docker.io/wallysoc/wally-docker:latest
 
-D.3.3	Running the Docker Container in Podman
+D.3.3 Running the Docker Container in Podman
 
 To activate podman with GUI support, first identify your display port in the /tmp/.X11-unix file as shown below.  For example, the user ben is on port X51.  
 
@@ -49,21 +49,21 @@ $ podman run -it --net=host -e DISPLAY=:51 -v /tmp/.X11-unix:/tmp/.X11-unix -v /
 Podman sets up all the RISC-V software in the same location of /opt/riscv as the cad user as discussed previously.  This shared directory is called $RISCV.  This environmental variable should also be set up within the Docker container automatically and ready to use once the container is run.  It is important to understand that Docker containers are self-contained, and any data created within your container is lost when you exit the container. Therefore, be sure to work in your mounted home directory (e.g. /home/ben) to permanently save your work outside the container.
 
 To have permission to write to your mounted home directory, you must become root inside the Wally container.  This is an acceptable practice as the security will be maintained within podman for the user that runs podman.  To become root once inside your container:
-  
-$ su			# when prompted for password, enter wally
 
-D.3.4	Cleaning up a Podman Container
+$ su   # when prompted for password, enter wally
+
+D.3.4 Cleaning up a Podman Container
 
 The Docker container image is large, so users may need to clean up a container when they aren’t using it anymore.
 The images that are loaded can be examined, once you pull the Wally container, by typing:
 
-$ podman images 
+$ podman images
 
-To remove individual podman images, the following Linux command will remove the specific podman image where the image name is obtained from the  podman images command (this command also works equally well using the <Image_ID> instead of the <Image_name>, as well). 
+To remove individual podman images, the following Linux command will remove the specific podman image where the image name is obtained from the  podman images command (this command also works equally well using the <Image_ID> instead of the <Image_name>, as well).
 
-$ podman rmi -f <Image_name> 
+$ podman rmi -f <Image_name>
 
-D.3.5	Running the Docker Container on Windows or MacOS
+D.3.5 Running the Docker Container on Windows or MacOS
 
 Docker Desktop is easiest to use for Mac OS or Windows and can be installed by downloading from http://docker.com.  Once the desktop application is installed, users can log into their DockerHub account through the Docker Desktop application and manage their containers easily.  
 
@@ -71,7 +71,7 @@ Docker Desktop is easiest to use for Mac OS or Windows and can be installed by d
 *** questa unavailable native on Mac
 
 
-D.3.6	Regenerating the Docker File
+D.3.6 Regenerating the Docker File
 
 We use the following steps to generate the Docker file.  You can adapt them is you wish to make your own custom Docker image, such as one with commercial CAD tools installed in your local environment.
 
@@ -176,7 +176,7 @@ RUN eval $(opam config env) && \
  make && \
  ARCH=RV32 make && \
  ARCH=RV64 make && \
- ln -s $RISCV/sail-riscv/c_emulator/riscv_sim_RV64 $RISCV/bin/riscv_sim_RV64 && 
+ ln -s $RISCV/sail-riscv/c_emulator/riscv_sim_RV64 $RISCV/bin/riscv_sim_RV64 &&
 \
  ln -s $RISCV/sail-riscv/c_emulator/riscv_sim_RV32 $RISCV/bin/riscv_sim_RV32
 
@@ -196,11 +196,10 @@ RUN git clone https://github.com/buildroot/buildroot.git && \
 WORKDIR /home/cad
 
 
-D.3.7	Integrating Commercial CAD Tools into a Local Docker Container
+D.3.7 Integrating Commercial CAD Tools into a Local Docker Container
 
 
 
-RISC-V System-on-Chip Design Lecture Notes 
+RISC-V System-on-Chip Design Lecture Notes
 © 2023 D. Harris, J. Stine, , R. Thompson, and S. Harris
 These notes may be used and modified for educational and/or non-commercial purposes so long as the source is attributed.
-
