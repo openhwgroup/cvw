@@ -58,6 +58,7 @@ EXT_MEM_RANGE       64'h7FFFFFFF
 SDC_SUPPORTED       1
 PLIC_SDC_ID         32'd20
 BPRED_SIZE          32'd12
+DEBUG_SUPPORTED     1
 
 # RV32GC with Debug Mode supported
 deriv debug32 rv32gc

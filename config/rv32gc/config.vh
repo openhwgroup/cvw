@@ -228,6 +228,6 @@ localparam DIVCOPIES = 32'd2;
 localparam logic USE_SRAM = 0;
 
 // Debug
-localparam DEBUG_SUPPORTED = 0;
+localparam logic DEBUG_SUPPORTED = 0;
 
 `include "config-shared.vh"

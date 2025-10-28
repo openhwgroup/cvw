@@ -148,7 +148,9 @@ module dm import cvw::*; #(parameter cvw_t P) (
   logic StartCommand;
   logic NextValid;
   logic ValidSize;   
-   
+
+  logic DMActive;
+  
   // Abstract Commands:
   // 0: Access Register Command
   // 1: Quick Access
@@ -343,10 +345,11 @@ module dm import cvw::*; #(parameter cvw_t P) (
   // Halt FSM
   // --------------------------------------------------------------------------
    
-  assign HaltReq = DMControl[31];
+  assign HaltReq = DMControl[31] & DMActive;
   assign ResumeReq = DMControl[30];
   assign resethaltreq = 1'b0;
   assign HaveResetAck = DMControl[28];
+  assign DMActive = DMControl[0]; 
    
   typedef enum logic [1:0] {RUNNING, HALTING, HALTED, RESUMING} HaltState;
   HaltState CurrHaltState;
@@ -422,15 +425,15 @@ module dm import cvw::*; #(parameter cvw_t P) (
         end
 
         BUSY: begin
-               
+          // To be implemented; necessary for abstract memory
         end
 
         ERRORWAIT: begin
-
+          
         end
 
         ERRORBUSY: begin
-               
+          
         end
         default: AbstractState <= IDLE;
       endcase
@@ -466,7 +469,7 @@ module dm import cvw::*; #(parameter cvw_t P) (
       // FPRDebugEnable <= 0; is this needed as GPR not there
       // GPRDebugEnable <= 0; is this is a bug?
     end else begin
-      StartCommand <= DMIVALID & DMIRSPREADY & (DMIADDR == COMMAND) & ~|cmderr;
+      StartCommand <= DMIVALID & DMIRSPREADY & (DMIADDR == COMMAND) & ~|cmderr & DMActive;
       DebugRegAddr <= DMIDATA[11:0];
       GPRDebugEnable <= NextGPRDebugEnable;
       FPRDebugEnable <= NextFPRDebugEnable;       

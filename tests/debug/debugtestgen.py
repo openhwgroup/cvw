@@ -11,14 +11,14 @@ RBBPORT = "9824"
 
 SPIKEARGS = [
     "spike",
-    "--isa=rv64gc_zicsr",
+    "--isa=rv64gc_zicsr_zicntr",
     "--rbb-port=9824",
     "--dm-progsize=0",
     "--dm-no-hasel",
     "--dm-no-abstract-fpr",
     "--dm-no-halt-groups",
     "--dm-no-impebreak",
-    "+signature-granularity=8"
+    "+signature-granularity=4"
 ]
 
 def non_empty_string(value):
