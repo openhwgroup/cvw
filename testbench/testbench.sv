@@ -133,6 +133,12 @@ module testbench;
   logic TestComplete;
   logic PrevPCZero;
   logic RVVIStall;
+  
+  integer elfFD;
+  integer elfBitWidth;
+  integer dutBitWidth;
+  byte header[0:4];
+  byte readBytes;
 
   initial begin
     // look for arguments passed to simulation, or use defaults
@@ -148,6 +154,18 @@ module testbench;
     end
     //$display("TEST = %s ElfFile = %s", TEST, ElfFile);
 
+    if(ElfFile!="none")begin//If Elf File passed in, check its bit width
+      elfFD = $fopen(ElfFile, "rb");
+      readBytes = $fread(header, elfFD);
+      $fclose(elfFD);
+
+      if(header[4] ==1)begin
+        elfBitWidth = 32;
+      end else if(header[4] == 2)begin
+        elfBitWidth = 64;
+      end
+      dutBitWidth = integer'(P.XLEN);
+    end
     // pick tests based on modes supported
     //tests = '{};
     if (P.XLEN == 64) begin // RV64
@@ -253,11 +271,12 @@ module testbench;
         "arch32vm_sv32": if (P.VIRTMEM_SUPPORTED) tests = arch32vm_sv32;
       endcase
     end
-    if (tests.size() == 0 & ElfFile == "none") begin
-      if (tests.size() == 0) begin
+    if (tests.size() == 0 & ElfFile == "none" || ElfFile != "none" & dutBitWidth!=elfBitWidth) begin
+      if (tests.size() == 0 & ElfFile == "none") begin
         $display("TEST %s not supported in this configuration", TEST);
-      end else if(ElfFile == "none") begin
         $display("ElfFile %s not found", ElfFile);
+      end else begin
+        $display("You are running a %d bit elf on a %d bit DUT", elfBitWidth, dutBitWidth);
       end
       $finish;
     end
