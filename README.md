@@ -1,5 +1,38 @@
 [![Installation CI](https://github.com/openhwgroup/cvw/actions/workflows/install.yml/badge.svg?branch=main)](https://github.com/openhwgroup/cvw/actions/workflows/install.yml)
 
+# RISC-V Dev Day 2025 Instructions
+The workshop slides can be found [here](https://docs.google.com/presentation/d/17NhJBu8i4Bp2IPEB7JNU-1Ai-qp4eiMmlhaGAyUimDs/edit?slide=id.g38621a448e0_0_0#slide=id.g38621a448e0_0_0)
+1. Install Docker Desktop ([macOS](https://docs.docker.com/desktop/setup/install/mac-install/) or [Windows](https://docs.docker.com/desktop/setup/install/windows-install/)) or Docker Engine ([Linux](https://docs.docker.com/engine/install/))
+2. Pull and start the workshop Docker container: `docker run -i -t --name workshop blueberrycoder/rvsna2025-verif:v1.0.0 /bin/bash`
+3. Run the following commands inside of the Docker container:
+   ```bash
+   $ cd cvw                                             # switch into cvw repository
+   $ git pull                                           # update git repo
+   $ source update.sh                                   # update environment variables and git submodules
+   $ cd addins/cvw-arch-verif                           # switch into ACT 4.0 repository
+   $ make tests                                         # generate coverpoints and tests for M extension
+   $ make                                               # compile generated assembly tests to produce elf files
+   $ regression-wally --dir work/cvw-rv32gc/elfs/rv32/M # run tests on CVW in Verilator simulation (this make take a while)
+   ```
+4. The division tests (`M-div.elf` and `M-divu.elf`) will fail due to a bug deliberately introduced into CVW. Rerun one of the failing tests using wsim (a simulation wrapper for CVW) to begin debugging.
+   ```bash
+   $ wsim --sim verilator rv32gc work/cvw-rv32gc/elfs/rv32/M/M-div.elf # run M-div.elf on CVW's rv32gc configuration using Verilator
+   ```
+   This should produce the following error message:
+   ```
+   TEST FAILED
+   DEBUG INFORMATION FOLLOWS
+   Instruction: 0x020b44b3
+   Address: 0x8000066c
+   Register: 0x00000009
+   Bad Value: 0x00000000
+   Expected Value: 0xffffffff
+   END OF DEBUG INFORMATION
+   ```
+5. Correcting the bug (an exercise left to participants) and rerunning the regression script should result in all tests passing.
+6. A live demo collecting coverage against the generated coverpoints using Sail will also be shown, but this requires Questa (a commercial tool) and is not possible inside the Docker image.
+
+
 # core-v-wally
 
 Wally is a 5-stage pipelined processor configurable to support all the standard RISC-V options, including RV32/64, A, B, C, D, F, M, Q, and Zk* extensions, virtual memory, PMP, and the various privileged modes and CSRs. It provides optional caches, branch prediction, and standard RISC-V peripherals (CLINT, PLIC, UART, GPIO).   Wally is written in SystemVerilog.  It passes the [RISC-V Arch Tests](https://github.com/riscv-non-isa/riscv-arch-test) and boots Linux on an FPGA.  Configurations range from a minimal RV32E core to a fully featured RV64GC application processor with all of the RVA22S64 profile extensions. Wally is part of the OpenHWGroup family of robust open RISC-V cores.
