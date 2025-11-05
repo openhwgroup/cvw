@@ -6,7 +6,7 @@
 ## Created: May 30 2025
 ## Modified: James Stine, james.stine@okstate.edu, 5 Nov 2025
 ##
-## Purpose: QEMU installation script
+## Purpose: Install OSU SKY130 Standard-Cell Library
 ##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
 ## https://github.com/openhwgroup/cvw
