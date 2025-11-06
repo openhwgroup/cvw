@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Polito setup. 
+
+module load license/default
+module load synopsys/vcs/2023.12-SP1 
+# module load compiler/riscv/general32_64
+module load synopsys/syn/2022.12
+module load compiler/riscv/wally
+module load synopsys/tmax/2022.12
+module load siemens/questa_core_prime/2022.4
+module load synopsys/zoix/2022.06-SP2
+
+# Colors for terminal output
+WARNING_COLOR='\033[93m'
+FAIL_COLOR='\033[91m'
+ENDC='\033[0m' # Reset to default color
+
+echo "Executing Wally setup.sh"
+
+# Path to Wally repository
+WALLY=$(dirname "${BASH_SOURCE[0]:-$0}")
+WALLY=$(cd "$WALLY" && pwd)
+export WALLY
+echo \$WALLY set to "${WALLY}"
+# utility functions in Wally repository
+export PATH=$WALLY/bin:$PATH
+
+# Verilator needs a larger core file size to simulate CORE-V Wally
+ulimit -c 300000
+

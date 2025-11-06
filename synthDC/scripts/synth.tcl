@@ -242,7 +242,8 @@ if { $maxopt == 1 } {
     compile_ultra -retime
     optimize_registers
 } else {
-    compile_ultra -no_seq_output_inversion -no_boundary_optimization
+    compile -exact_map
+    # compile_ultra -no_seq_output_inversion -no_boundary_optimization
 }
 
 # Eliminate need for assign statements (yuck!)
@@ -276,6 +277,9 @@ if { $wrapper == 1 } {
         set my_clk vclk
         create_clock -period $my_period -name $my_clk
     }
+
+    # ADDED (POLITO)
+    rename_design $designname ${my_design}_gate
 }
 
 # Report Constraint Violators
@@ -284,6 +288,8 @@ redirect $filename {report_constraint -all_violators}
 
 # Check design
 redirect $outputDir/reports/check_design.rpt { check_design }
+
+
 
 # Report Final Netlist (Hierarchical)
 set filename [format "%s%s%s%s" $outputDir "/mapped/" $my_design ".sv"]

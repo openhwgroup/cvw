@@ -73,6 +73,18 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic [63:0]                MTIME_CLINT;      // from CLINT to CSRs
   logic                       MExtInt,SExtInt;  // from PLIC
 
+  // Added by Emad
+  logic                  HCLK_gate, HRESETn_gate;
+  logic [P.PA_BITS-1:0]  HADDR_gate;
+  logic [P.AHBW-1:0]     HWDATA_gate;
+  logic [P.XLEN/8-1:0]   HWSTRB_gate;
+  logic                  HWRITE_gate;
+  logic [2:0]            HSIZE_gate;
+  logic [2:0]            HBURST_gate;
+  logic [3:0]            HPROT_gate;
+  logic [1:0]            HTRANS_gate;
+  logic                  HMASTLOCK_gate;
+
   // synchronize reset to SOC clock domain
   synchronizer resetsync(.clk, .d(reset_ext), .q(reset));
 
@@ -81,6 +93,12 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .ExternalStall
+   );
+
+   wallypipelinedcore_gate core_gate(.clk, .reset,
+    .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
+    .HRDATA, .HREADY, .HRESP, .HCLK(HCLK_gate), .HRESETn(HRESETn_gate), .HADDR(HADDR_gate), .HWDATA(HWDATA_gate), .HWSTRB(HWSTRB_gate),
+    .HWRITE(HWRITE_gate), .HSIZE(HSIZE_gate), .HBURST(HBURST_gate), .HPROT(HPROT_gate), .HTRANS(HTRANS_gate), .HMASTLOCK(HMASTLOCK_gate), .ExternalStall
    );
 
   // instantiate uncore if a bus interface exists

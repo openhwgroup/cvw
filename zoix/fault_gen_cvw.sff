@@ -1,0 +1,15 @@
+
+
+FaultGenerate
+{
+    #SAF    
+        NA [0,1] {PORT "wallypipelinedcore_gate.**"}
+        #NA [0,1] {PORT "riscv_core.ex_stage_i_mult_i.**"}
+        #NA [0,1] {PORT "riscv_core.**"}
+
+    #TDF
+        #NA [R,F] {PORT "riscv_core.ex_stage_i_alu_i.**"}
+        #NA [R,F] {PORT "riscv_core.ex_stage_i_mult_i.**"}
+        # NA [R,F] {PORT "riscv_core.**"}
+
+}

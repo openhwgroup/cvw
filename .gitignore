@@ -182,3 +182,7 @@ config/deriv
 sim/slack-notifier/slack-webhook-url.txt
 docs/docker/buildroot-config-src
 docs/docker/testvector-generation
+
+gate/
+zoix/*.txt
+zoix/run*

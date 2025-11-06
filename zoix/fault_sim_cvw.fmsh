@@ -1,0 +1,17 @@
+set(var=[defines], format=[standard])
+#set(var=[fdef], method=[fr], fr.fr=[../fault_gen_cvw.sff],abort=[warning])
+set(var=[fsim],hyperfault=[0])
+set(var=[defines], progress.enable=[1], progress.limit=[300])
+set(var=[defines], progress.style=[long])
+#set(var=[fdef], fstrobe=[../strobe.strobe])
+set(var=[coats],method=[allf])
+
+design()
+
+addtst(test=[cvw], stimtype=[vcd], stim=[../../sim/questa/core.vcd],stim.limit.mismatch=[100], dut.stim=[wallypipelinedcore_gate, testbench.dut.core_gate], stim_options=[+TESTNAME=cvw,+vcd+clk+clk])
+
+fsim()
+coverage(group=[detail])
+
+coverage(file=[cvw_coverage.sff])
+coverage(file=[cvw_coverage_hierachical.sff],hierarchical=[4])
