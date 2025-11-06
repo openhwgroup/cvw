@@ -56,7 +56,8 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    input  logic [11:0]           DebugRegAddr,
    input  logic                  DebugRegWrite,
    output logic                  HaveReset,
-   input  logic                  HaveResetAck
+   input  logic                  HaveResetAck,
+   input  logic                  ResetHaltReq
 );
 
   logic                          StallF, StallD, StallE, StallM, StallW;
@@ -331,7 +332,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE, .wfiM, .IntPendingM, .BigEndianM,
       .DebugMode, .HaltReq, .ResumeReq, .DebugControl, .CSRDebugEnable,
       .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite, .DebugResume, .DPC,
-      .HaveReset, .HaveResetAck);
+      .HaveReset, .HaveResetAck, .ResetHaltReq);
   end else begin
     assign {CSRReadValW, PrivilegeModeW, 
             SATP_REGW, STATUS_MXR, STATUS_SUM, STATUS_MPRV, STATUS_MPP, STATUS_FS, FRM_REGW,

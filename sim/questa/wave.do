@@ -689,34 +689,36 @@ add wave -noupdate -group Debug -expand -group dtm /testbench/dut/debug/dtm/DMIV
 add wave -noupdate -group Debug -expand -group dtm -group {registers} /testbench/dut/debug/dtm/currentInst
 add wave -noupdate -group Debug -expand -group dtm -group {registers} /testbench/dut/debug/dtm/dmi
 add wave -noupdate -group Debug -expand -group dtm -group {registers} /testbench/dut/debug/dtm/dtmcs
-add wave -noupdate -group Debug -expand -group dm /testbench/dut/debug/dm/DMIRSPDATA
-add wave -noupdate -group Debug -expand -group dm /testbench/dut/debug/dm/DMIRSPOP
-add wave -noupdate -group Debug -expand -group dm /testbench/dut/debug/dm/DMIRSPREADY
-add wave -noupdate -group Debug -expand -group dm /testbench/dut/debug/dm/DMIRSPVALID
-add wave -noupdate -group Debug -expand -group dm -group {Debug Registers} /testbench/dut/debug/dm/DMControl
-add wave -noupdate -group Debug -expand -group dm -group {Debug Registers} /testbench/dut/debug/dm/DMStatus
-add wave -noupdate -group Debug -expand -group dm -group {Debug Registers} /testbench/dut/debug/dm/Data0
-add wave -noupdate -group Debug -expand -group dm -group {Debug Registers} /testbench/dut/debug/dm/Data1
-add wave -noupdate -group Debug -expand -group dm -group {Debug Registers} /testbench/dut/debug/dm/AbstractCS
-add wave -noupdate -group Debug -expand -group dm -group {Debug Registers} /testbench/dut/debug/dm/Command
+add wave -noupdate -group Debug -expand -group dm /testbench/dut/debug/debug/DMIRSPDATA
+add wave -noupdate -group Debug -expand -group dm /testbench/dut/debug/debug/DMIRSPOP
+add wave -noupdate -group Debug -expand -group dm /testbench/dut/debug/debug/DMIRSPREADY
+add wave -noupdate -group Debug -expand -group dm /testbench/dut/debug/debug/DMIRSPVALID
+add wave -noupdate -group Debug -expand -group dm /testbench/dut/debug/debug/NDMReset
+add wave -noupdate -group Debug -expand -group dm -group {Debug Registers} /testbench/dut/debug/debug/DMControl
+add wave -noupdate -group Debug -expand -group dm -group {Debug Registers} /testbench/dut/debug/debug/DMStatus
+add wave -noupdate -group Debug -expand -group dm -group {Debug Registers} /testbench/dut/debug/debug/Data0
+add wave -noupdate -group Debug -expand -group dm -group {Debug Registers} /testbench/dut/debug/debug/Data1
+add wave -noupdate -group Debug -expand -group dm -group {Debug Registers} /testbench/dut/debug/debug/AbstractCS
+add wave -noupdate -group Debug -expand -group dm -group {Debug Registers} /testbench/dut/debug/debug/Command
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/cause
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/HaltReq
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/ResumeReq
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/DebugMode
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/ResumeReq
+add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/ResetHaltReq
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/DPC_REGW
-add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/StartCommand
-add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/ValidCommand
-add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/ValidSize
-add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/GPRDebugEnable
-add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/CSRDebugEnable
-add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/FPRDebugEnable
-add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/DebugMode
-add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/DebugControl
-add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/DebugRegRDATA
-add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/DebugRegWDATA
-add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/DebugRegAddr
-add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/dm/DebugRegWrite
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/StartCommand
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/ValidCommand
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/ValidSize
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/GPRDebugEnable
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/CSRDebugEnable
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/FPRDebugEnable
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/DebugMode
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/DebugControl
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/DebugRegRDATA
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/DebugRegWDATA
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/DebugRegAddr
+add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/DebugRegWrite
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/debug.csrd/CSRDReadValM
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/debug.csrd/CSRDWriteM
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/core/priv/priv/csr/debug.csrd/HaveReset

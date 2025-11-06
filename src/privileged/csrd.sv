@@ -33,14 +33,17 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   input logic               CSRDWriteM,
   input logic [P.XLEN-1:0]  CSRWriteValM,
   input logic [11:0]        CSRAdrM,
+  input logic               InstrValidM,
   output logic [P.XLEN-1:0] CSRDReadValM,
+  
   output logic              DebugMode,
   input logic [P.XLEN-1:0]  PCM,
   output logic              IllegalCSRDAccessM,
   output logic              DebugResume,
   output [P.XLEN-1:0]       DPC_REGW,
   output logic              HaveReset,
-  input logic              HaveResetAck
+  input logic               HaveResetAck,
+  input logic               ResetHaltReq
 );
 
   localparam DCSR = 12'h7B0;
@@ -174,7 +177,9 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   always_ff @(posedge clk) begin
     if (reset) begin
       state <= RUNNING;
-    end else if (HaltReq | ResumeReq) begin // Using the requests as enables
+    end else if (HaveReset & ResetHaltReq & InstrValidM) begin
+      state <= HALTED;
+    end else if ((HaltReq | ResumeReq) & InstrValidM) begin // Using the requests as enables
       state <= state_n;
     end
   end

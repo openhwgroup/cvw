@@ -110,7 +110,8 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   output logic              DebugResume,
   output logic [P.XLEN-1:0] DPC,
   output logic              HaveReset,
-  input  logic              HaveResetAck
+  input  logic              HaveResetAck,
+  input  logic              ResetHaltReq
 );                                                                         
                                                                            
   logic [3:0]               CauseM;                                         // trap cause
@@ -164,7 +165,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .CSRReadValM, .CSRReadValW, .IllegalCSRAccessM, .BigEndianM,
     .DebugMode, .HaltReq, .ResumeReq, .DebugControl, .CSRDebugEnable, .DebugRegWDATA,
     .DebugRegAddr, .DebugRegWrite, .DebugResume, .DPC,
-    .HaveReset, .HaveResetAck);
+    .HaveReset, .HaveResetAck, .ResetHaltReq);
 
   // pipeline early-arriving trap sources
   privpiperegs ppr(.clk, .reset, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,

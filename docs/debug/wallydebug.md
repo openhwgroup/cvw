@@ -10,8 +10,8 @@ General Overview of Implemented Features:
 - [x] Abstract GPR read and write access.
 - [x] Abstract CSR read and write access.
 - [ ] Stepping
-- [ ] Resetting from Debug Module
-- [ ] Halt on Reset
+- [x] Resetting from Debug Module
+- [x] Halt on Reset
 - [ ] Trigger Modules 🔶
 - [ ] Program buffer 🔶
 - [ ] System bus access 🔶
@@ -23,10 +23,10 @@ DTM Registers
 
 Debug Module
 - [x] DMControl
-  - [x] haltreq
+  - [x] haltreq 
   - [x] resumereq
   - [ ] hartreset
-  - [ ] ackhavereset
+  - [x] ackhavereset 
   - [ ] ackunavail :x:
     - I can't imagine there's a scenario where the only hart that exists wouldn't be available, but I need to investigate further, just in case.
   - [ ] hasel :x:
@@ -35,16 +35,16 @@ Debug Module
   - [ ] hartselhi :x:
   - [ ] setkeepalive
   - [ ] clrkeepalive
-  - [ ] setresethaltreq
-  - [ ] clrresethaltreq
-  - [ ] ndmreset
+  - [x] setresethaltreq
+  - [x] clrresethaltreq
+  - [x] ndmreset
   - [x] dmactive. Note: Partially implemented. It needs to actually block writes to other debug module registers when set low.
 - [x] DMStatus
-  - [ ] ndmresetpending
+  - [x] ndmresetpending
   - [ ] stickyunavail 🔶
   - [ ] impebreak 🔶
-  - [ ] allhavereset
-  - [ ] anyhavereset
+  - [x] allhavereset
+  - [x] anyhavereset
   - [x] allresumeack
   - [x] anyresumeack
   - [ ] allnonexistent

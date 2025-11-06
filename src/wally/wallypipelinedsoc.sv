@@ -100,19 +100,20 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                       DebugRegWrite;
   logic                       HaveReset;
   logic                       HaveResetAck;
+  logic                       ResetHaltReq;
   
 
   // synchronize reset to SOC clock domain
   synchronizer resetsync(.clk, .d(reset_ext), .q(reset)); 
    
   // instantiate processor and internal memories
-  wallypipelinedcore #(P) core(.clk, .reset,
+  wallypipelinedcore #(P) core(.clk, .reset(reset | NDMReset),
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .ExternalStall,
     .DebugMode, .HaltReq, .ResumeReq, .DebugControl, .GPRDebugEnable, .CSRDebugEnable, 
     .DebugRegRDATA, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite,
-    .HaveReset, .HaveResetAck
+    .HaveReset, .HaveResetAck, .ResetHaltReq
    );
 
   // instantiate uncore if a bus interface exists
@@ -132,12 +133,12 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
       .DMIADDR, .DMIDATA, .DMIOP, .DMIREADY, .DMIVALID,
       .DMIRSPDATA, .DMIRSPOP, .DMIRSPREADY, .DMIRSPVALID);
     
-    dm #(P) dm(.clk, .reset, .NDMReset, .HaltReq, .ResumeReq, .DebugMode, .DebugControl,
+    debug #(P) debug(.clk, .reset, .NDMReset, .HaltReq, .ResumeReq, .DebugMode, .DebugControl,
       .GPRDebugEnable, .CSRDebugEnable,
       .DMIADDR, .DMIDATA, .DMIOP, .DMIREADY, .DMIVALID,
       .DMIRSPDATA, .DMIRSPOP, .DMIRSPREADY, .DMIRSPVALID,
       .DebugRegRDATA, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite,
-      .HaveReset, .HaveResetAck);
+      .HaveReset, .HaveResetAck, .ResetHaltReq);
   end else begin
     assign tdo = 1'bz;
     assign GPRDebugEnable = 0;
@@ -150,6 +151,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     assign ResumeReq = 0;
     assign NDMReset = 0;
     assign HaveResetAck = 0;
+    assign ResetHaltReq = 0;
   end
   
 endmodule

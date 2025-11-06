@@ -106,7 +106,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   output logic                     DebugResume,
   output logic [P.XLEN-1:0]        DPC,
   output logic                     HaveReset,
-  input  logic                     HaveResetAck
+  input  logic                     HaveResetAck,
+  input  logic                     ResetHaltReq
 );
 
   localparam MIP = 12'h344;
@@ -309,9 +310,9 @@ module csr import cvw::*;  #(parameter cvw_t P) (
 
   if (P.DEBUG_SUPPORTED) begin : debug
     csrd #(P) csrd(.clk, .reset, .HaltReq, .ResumeReq,
-      .CSRDWriteM, .CSRWriteValM, .CSRAdrM, .CSRDReadValM, 
+      .CSRDWriteM, .CSRWriteValM, .CSRAdrM, .CSRDReadValM, .InstrValidM,
       .DebugMode, .PCM, .IllegalCSRDAccessM, .DebugResume, .DPC_REGW(DPC),
-      .HaveReset, .HaveResetAck);
+      .HaveReset, .HaveResetAck, .ResetHaltReq);
   end else begin
     assign DebugMode = 1'b0;
     assign CSRDReadValM = '0;
