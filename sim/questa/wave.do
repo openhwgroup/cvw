@@ -4,6 +4,7 @@ quietly WaveActivateNextPane {} 0
 add wave -noupdate /testbench/clk
 add wave -noupdate /testbench/reset
 add wave -noupdate /testbench/memfilename
+add wave -noupdate /testbench/debugger_filename
 add wave -noupdate /testbench/dut/core/SATP_REGW
 add wave -noupdate /testbench/dut/core/InstrValidM
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/RetM

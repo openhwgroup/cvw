@@ -363,13 +363,24 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
     JTAG_DR #(32) dtmcs = new();
     DMI dmireg = new();
     Debugger debugger = new();
-    
-    forever begin
-      @(negedge reset);
-      debugger.get_testvectors(filename);
-      debugger.initialize();
-      debugger.run_testvectors();
-    end
+
+    fork : debugger_main
+      begin
+        forever begin
+          @(negedge reset);
+
+          disable debug_sequence;
+
+          fork : debug_sequence
+            begin
+              debugger.get_testvectors(filename);
+              debugger.initialize();
+              debugger.run_testvectors();
+            end
+          join_none
+        end
+      end
+      join_none
   end
     
 endmodule
