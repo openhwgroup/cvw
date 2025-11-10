@@ -51,3 +51,21 @@ module lzc #(
   endgenerate
 
 endmodule
+
+// Below is the prior version of this module. This works with Cadence Design Compiler and AMD
+// Vivado 2024.1 but other tools (yosys 0.49, Intel Quartus Prime Lite 21.1.1, Cadence Jasper
+// v2024.12, and possibly others) fail to synthesize the while loop.
+//
+// module lzc #(parameter WIDTH = 1) (
+//   input  logic [WIDTH-1:0]            num,    // number to count the leading zeroes of
+//   output logic [$clog2(WIDTH+1)-1:0]  ZeroCnt // the number of leading zeroes
+// );
+//
+//   integer i;
+//
+//   always_comb begin
+//     i = 0;
+//     while ((i < WIDTH) & ~num[WIDTH-1-i]) i = i+1;  // search for leading one
+//     ZeroCnt = i[$clog2(WIDTH+1)-1:0];
+//   end
+// endmodule
