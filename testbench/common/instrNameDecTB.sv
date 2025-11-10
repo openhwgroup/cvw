@@ -2,22 +2,22 @@
 // instrNameDecTB.sv
 //
 // Purpose: decode name of function
-// 
+//
 // A component of the Wally configurable RISC-V project.
-// 
+//
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -51,7 +51,7 @@ module instrNameDecTB #(parameter XLEN) (
   assign compressed15_10 = instr[15:10];
   assign CRrs2 = instr[6:2];
 
-  // it would be nice to add the operands to the name 
+  // it would be nice to add the operands to the name
   // create another variable called decoded
 
   always_comb
@@ -163,14 +163,14 @@ module instrNameDecTB #(parameter XLEN) (
           10'b0010011_011: name = "SLTIU";
           10'b0010011_100: name = "XORI";
           10'b0010011_101: if (funct7[6:1] == 6'b000000)      name = "SRLI";
-                          else if (funct7[6:1] == 6'b010000) name = "SRAI"; 
+                          else if (funct7[6:1] == 6'b010000) name = "SRAI";
                           else if (funct7[6:1] == 6'b011010 & rs2 == 5'b11000) name = "REV8";
                           else if (funct7[6:1] == 6'b011000) name = "RORI";
                           else if (funct7[6:1] == 6'b010010) name = "BEXTI";
                           else if (funct7 == 7'b0010100 & rs2 == 5'b00111) name = "ORC.B";
                           else if (imm == 12'b011010000111) name = "BREV8";
                           else if (funct7 == 7'b0000100 & rs2 == 5'b01111) name = "UNZIP";
-                          else                           name = "ILLEGAL"; 
+                          else                           name = "ILLEGAL";
           10'b0010011_110: if      (rd == 0 & rs2 == 0) name = "PREFETCH.I";
                           else if (rd == 0 & rs2 == 1) name = "PREFETCH.R";
                           else if (rd == 0 & rs2 == 3) name = "PREFETCH.W";
@@ -222,7 +222,7 @@ module instrNameDecTB #(parameter XLEN) (
                           else                           name = "ILLEGAL";
           10'b0110011_000: if      (funct7 == 7'b0000000) name = "ADD";
                           else if (funct7 == 7'b0000001) name = "MUL";
-                          else if (funct7 == 7'b0100000) name = "SUB"; 
+                          else if (funct7 == 7'b0100000) name = "SUB";
                           else if (funct7[4:0] == 5'b10101) name = "AES32DSI";
                           else if (funct7[4:0] == 5'b10111) name = "AES32DSMI";
                           else if (funct7 == 7'b0011101)    name = "AES64DS";
@@ -238,7 +238,7 @@ module instrNameDecTB #(parameter XLEN) (
                           else if (funct7 == 7'b0101011) name = "SHA512SIG1L";
                           else if (funct7 == 7'b0101000) name = "SHA512SUM0R";
                           else if (funct7 == 7'b0101001) name = "SHA512SUM1R";
-                          else                           name = "ILLEGAL"; 
+                          else                           name = "ILLEGAL";
           10'b0110011_001: if      (funct7 == 7'b0000000) name = "SLL";
                           else if (funct7 == 7'b0000001) name = "MULH";
                           else if (funct7 == 7'b0110000) name = "ROL";
@@ -340,8 +340,8 @@ module instrNameDecTB #(parameter XLEN) (
           10'b0001111_010: if      (instr[31:20] == 12'd0) name = "CBO.INVAL";
                           else if (instr[31:20] == 12'd1) name = "CBO.CLEAN";
                           else if (instr[31:20] == 12'd2) name = "CBO.FLUSH";
-                          else if (instr[31:20] == 12'd4) name = "CBO.ZERO";    
-                          else                            name = "ILLEGAL";                   
+                          else if (instr[31:20] == 12'd4) name = "CBO.ZERO";
+                          else                            name = "ILLEGAL";
           10'b1000011_???: name = "FMADD";
           10'b1000111_???: name = "FMSUB";
           10'b1001011_???: name = "FNMSUB";
@@ -400,7 +400,7 @@ module instrNameDecTB #(parameter XLEN) (
                           else if (funct7 == 7'b1110000 & rs2 == 5'b00000 & funct3 == 3'b000) name = "FMV.X.W";
                           else if (funct7 == 7'b1111000 & rs2 == 5'b00000 & funct3 == 3'b000) name = "FMV.W.X";
                           else if (funct7 == 7'b1110001 & rs2 == 5'b00000 & funct3 == 3'b000) name = "FMV.X.D";
-                          else if (funct7 == 7'b1111001 & rs2 == 5'b00000 & funct3 == 3'b000) name = "FMV.D.X"; 
+                          else if (funct7 == 7'b1111001 & rs2 == 5'b00000 & funct3 == 3'b000) name = "FMV.D.X";
                           else if (funct7 == 7'b1110010 & rs2 == 5'b00000 & funct3 == 3'b000) name = "FMV.X.H";
                           else if (funct7 == 7'b1111010 & rs2 == 5'b00000 & funct3 == 3'b000) name = "FMV.H.X";
                           else if (funct7[6:2] == 5'b00100 & funct3 == 3'b000) name = "FSGNJ";

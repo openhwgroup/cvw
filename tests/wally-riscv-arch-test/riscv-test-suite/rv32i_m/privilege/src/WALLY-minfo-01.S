@@ -30,12 +30,12 @@ INIT_TESTS
 
 TRAP_HANDLER m
 
-// Test 5.2.3.1: testing Read-only access to Machine info CSRs 
+// Test 5.2.3.1: testing Read-only access to Machine info CSRs
 CSR_R_ACCESS mvendorid
-CSR_R_ACCESS marchid 
-CSR_R_ACCESS mimpid 
-CSR_R_ACCESS mhartid 
-CSR_R_ACCESS mconfigptr 
+CSR_R_ACCESS marchid
+CSR_R_ACCESS mimpid
+CSR_R_ACCESS mhartid
+CSR_R_ACCESS mconfigptr
 
 END_TESTS
 

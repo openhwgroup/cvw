@@ -9,15 +9,15 @@
 // Adapted from Imperas RISCV-TEST_SUITE
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
-// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, 
-// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software 
+// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
+// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
 // is furnished to do so, subject to the following conditions:
 //
 // The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
-// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
@@ -38,7 +38,7 @@ RVMODEL_BOOT
     la  x31, test_data
 
     # Testcase 0:  Do a successful load-reserved / store conditional word operation
-    li x11, 42  
+    li x11, 42
     lr.w x10, (x31)
     sc.w x12, x11, (x31)
     lw x13, 0(x31)
@@ -46,8 +46,8 @@ RVMODEL_BOOT
     sd x12, 8(x6)       # should be 0000000000000000 (sc succeeded)
     sd x13, 16(x6)      # should be 000000000000002A (value written by SC, in hex)
 
- # Testcase 1:  Do an unsuccessful load-reserved / store conditional word operation
-	addi x6, x6, 24
+    # Testcase 1:  Do an unsuccessful load-reserved / store conditional word operation
+    addi x6, x6, 24
     addi x30, x31, 8    # 8 bytes later (reservation set size is 8 bytes)
     li x11, 43
     lr.w x10, (x30)
@@ -58,7 +58,7 @@ RVMODEL_BOOT
     sd x13, 16(x6)      # should be 000000000000002A (previous value written by sc)
 
     # Testcase 2:  Do a successful load-reserved / store conditional doubleword operation
- 	addi x6, x6, 24
+    addi x6, x6, 24
     addi x31, x30, 8
     li x11, 44
     lr.d x10, (x31)
@@ -68,8 +68,8 @@ RVMODEL_BOOT
     sd x12, 8(x6)       # should be 0000000000000000 (sc succeeded)
     sd x13, 16(x6)      # should be 000000000000002C (value written by SC)
 
- # Testcase 3:  Do an unsuccessful load-reserved / store conditional doubleword operation
-	addi x6, x6, 24
+    # Testcase 3:  Do an unsuccessful load-reserved / store conditional doubleword operation
+    addi x6, x6, 24
     addi x30, x31, 8
     li x11, 45
     lr.d x10, (x30)
@@ -83,42 +83,42 @@ RVMODEL_BOOT
 RVMODEL_HALT
 
 RVTEST_DATA_BEGIN
-	.align 8
+    .align 8
 test_data:
 
-	.dword 0xfffffffdfffffffe
-	.dword 0xfffffff7fffffffb
-	.dword 0xffffffdfffffffef
-	.dword 0xffffff7fffffffbf
-	.dword 0xfffffdfffffffeff
-	.dword 0xfffff7fffffffeff
-	.dword 0xffffdfffffffefff
-	.dword 0xffff7fffffffefff
-	.dword 0xfffdfffffffeffff
-	.dword 0xfff7fffffffbffff
-	.dword 0xffdfffffffefffff
-	.dword 0xff7fffffffbfffff
-	.dword 0xfdfffffffeffffff
-	.dword 0xf7fffffffeffffff
-	.dword 0xdfffffffefffffff
-	.dword 0x7fffffffefffffff
-	.dword 0x00000001ffffffff
-	.dword 0x0000000400000002
-	.dword 0x0000001000000008
-	.dword 0x0000004000000020
-	.dword 0x0000010000000080
-	.dword 0x0000040000000200
-	.dword 0x0000100000000800
-	.dword 0x0000400000002000
-	.dword 0x0000000100008000
-	.dword 0x0004000000000002
-	.dword 0x0000001000080000
-	.dword 0x0040000000000020
-	.dword 0x0000010000800000
-	.dword 0x0400000000000200
-	.dword 0x0000100008000000
-	.dword 0x4000000000002000
-	.dword 0x0000000080000000
+    .dword 0xfffffffdfffffffe
+    .dword 0xfffffff7fffffffb
+    .dword 0xffffffdfffffffef
+    .dword 0xffffff7fffffffbf
+    .dword 0xfffffdfffffffeff
+    .dword 0xfffff7fffffffeff
+    .dword 0xffffdfffffffefff
+    .dword 0xffff7fffffffefff
+    .dword 0xfffdfffffffeffff
+    .dword 0xfff7fffffffbffff
+    .dword 0xffdfffffffefffff
+    .dword 0xff7fffffffbfffff
+    .dword 0xfdfffffffeffffff
+    .dword 0xf7fffffffeffffff
+    .dword 0xdfffffffefffffff
+    .dword 0x7fffffffefffffff
+    .dword 0x00000001ffffffff
+    .dword 0x0000000400000002
+    .dword 0x0000001000000008
+    .dword 0x0000004000000020
+    .dword 0x0000010000000080
+    .dword 0x0000040000000200
+    .dword 0x0000100000000800
+    .dword 0x0000400000002000
+    .dword 0x0000000100008000
+    .dword 0x0004000000000002
+    .dword 0x0000001000080000
+    .dword 0x0040000000000020
+    .dword 0x0000010000800000
+    .dword 0x0400000000000200
+    .dword 0x0000100008000000
+    .dword 0x4000000000002000
+    .dword 0x0000000080000000
 #ifdef rvtest_mtrap_routine
 mtrap_sigptr:
     .fill 64*(XLEN/32),4,0xdeadbeef

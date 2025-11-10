@@ -2,19 +2,7 @@ name: Lint
 
 on:
   push:
-    paths:
-      - '**/*.py'
-      - 'bin/*'
-      - 'sim/vcs/run_vcs'
-      - '.ruff.toml'
-      - '!addins/*'
   pull_request:
-    paths:
-      - '**/*.py'
-      - 'bin/*'
-      - 'sim/vcs/run_vcs'
-      - '.ruff.toml'
-      - '!addins/*'
 
 jobs:
   lint:

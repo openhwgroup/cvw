@@ -53,12 +53,12 @@ def synthsintocsv():
                 bashCommand = 'grep "{}" '+ oneSynth[2:]+'/reports/*qor*'
                 bashCommand = bashCommand.format(phrase)
     #            print(bashCommand)
-                try: 
+                try:
                     output = subprocess.check_output(['bash','-c', bashCommand])
                     nums = metricReg.findall(str(output))
                     nums = [float(m) for m in nums]
                     metrics += nums
-                except: 
+                except:
                     print(width + config + tech + '_' + freq + " doesn't have reports")
             if metrics == []:
                 pass
@@ -77,7 +77,7 @@ def synthsfromcsv(filename):
         for i in range(len(allSynths)):
             for j in range(len(allSynths[0])):
                 try: allSynths[i][j] = int(allSynths[i][j])
-                except: 
+                except:
                     try: allSynths[i][j] = float(allSynths[i][j])
                     except: pass
             allSynths[i] = Synth(*allSynths[i])
@@ -95,7 +95,7 @@ def freqPlot(tech, width, config):
             freqsL[ind] += [oneSynth.freq]
             delaysL[ind] += [oneSynth.delay]
             areasL[ind] += [oneSynth.area]
-    
+
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
     allFreqs = list(flatten(freqsL))
     median = np.median(allFreqs) if allFreqs != [] else 0
@@ -111,7 +111,7 @@ def freqPlot(tech, width, config):
 
         ax1.scatter(targs, delays, color=c)
         ax2.scatter(targs, areas, color=c)
-    
+
     freqs = list(flatten(freqsL))
     delays = list(flatten(delaysL))
     areas = list(flatten(areasL))
@@ -144,15 +144,15 @@ def areaDelay(tech, delays, areas, labels, fig, ax, norm=False):
     if norm:
         delays = [d/fo4 for d in delays]
         areas = [a/add32area for a in areas]
-   
+
     plt.scatter(delays, areas, marker=marker, color=color)
     plt.xlabel('Cycle time (ns)')
     plt.ylabel('Area (sq microns)')
     ytop = ax.get_ylim()[1]
     plt.ylim(ymin=0, ymax=1.1*ytop)
-    
+
     ax.yaxis.set_major_formatter(ticker.StrMethodFormatter('{x:,.0f}'))
-    
+
     if (len(labels) > 0):
         texts = [plt.text(delays[i], areas[i], labels[i], ha='center', va='center') for i in range(len(labels))]
         adjust_text(texts)
@@ -216,7 +216,7 @@ def normAreaDelay(mod=''):
 
     ax.set_title('Normalized Area & Cycle Time by Configuration')
     ax.set_xlabel('Cycle Time (FO4)')
-    ax.set_ylabel('Area (add32)')        
+    ax.set_ylabel('Area (add32)')
     ax.legend(handles = fullLeg, loc='upper left')
     plt.savefig(final_directory + '/normAreaDelay.png')
 

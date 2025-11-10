@@ -7,16 +7,16 @@ rvtest_entry_point:
     # Define region 0 to cover all addresses as RWX
     nop
     csrw pmpcfg0, 0xF   # configure PMP0 to TOR RWX
-    li t0, 0xFFFFFFFF   
+    li t0, 0xFFFFFFFF
     csrw pmpaddr0, t0   # configure PMP0 top of range to 0xFFFFFFFF to allow all 32-bit addresses
 
     # switch to supervisor mode
     # Set mstatus.MPP to 01, set MPEC to a trampoline address where supervisor should begin, do mret
     la t0, supervisorstart
     csrw mepc, t0           # set address for supervisor code to starting
-    li t0, 1                
+    li t0, 1
     slli t1, t0, 11         # 1 in bit 11
-    csrs mstatus, t1        
+    csrs mstatus, t1
     slli t1, t0, 12         # 1 in bit 12
     csrc mstatus, t1        # change mstatus.MPP to 01 (for supervisor mode)
     mret                    # enter supervisor mode at supervisorstart
@@ -29,17 +29,17 @@ supervisorstart:
     slli t1, t1, 31         # 1 in bit 31
     or t0, t0, t1           # satp value to enable SV32 with root page table
     csrw satp, t0           # enable virtual memory
-    
+
     # now we are execuiting on virtual page 0x80000, which is also physical page 0x80000
-    li t0, 0x90000300       
+    li t0, 0x90000300
     li t1, 42
     sw t1, 0(t0)
 
 
     la t0, testcode         # address of a routine to run
-    lui t1, 0x10000         
-    add t0, t0, t1          # address of testcode on virtual page 0x90000 
-    jr t0                   # jump to the testcode on Virtual page 0x90000, 
+    lui t1, 0x10000
+    add t0, t0, t1          # address of testcode on virtual page 0x90000
+    jr t0                   # jump to the testcode on Virtual page 0x90000,
                             #   which still points to same code on physical page 0x80000
     nop                     # shouldn't be executed
 
@@ -71,7 +71,4 @@ pagetable:
 
 .align 12
 # L0 page table situated at 0x80011000
-    .4byte 0x200000CF # VPN 0 points to physical kilopage at 0x80000000 with Dirty, Access, XWR, Valid  
-
-
-
+    .4byte 0x200000CF # VPN 0 points to physical kilopage at 0x80000000 with Dirty, Access, XWR, Valid

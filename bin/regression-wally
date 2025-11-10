@@ -477,7 +477,7 @@ def selectTests(args, sims, coverStr):
             name="lints",
             variant="all",
             cmd=f"lint-wally {'--nightly' if args.nightly else ''} | tee {regressionDir}/verilator/logs/all_lints.log",
-            grepstr="lints run with no errors or warnings",
+            grepstr="All lints passed with no errors or warnings",
             grepfile = f"{regressionDir}/verilator/logs/all_lints.log")
         ]
 
@@ -490,7 +490,7 @@ def selectTests(args, sims, coverStr):
         addTestsByDir(f"{WALLY}/tests/riscof/work/riscv-arch-test/rv64i_m/pmp", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
         addTestsByDir(f"{WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m/privilege", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
         addTestsByDir(f"{archVerifDir}/work/cvw-rv64gc/elfs", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
-        addTestsByDir(WALLY+"/tests/coverage/", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
+        addTestsByDir(f"{WALLY}/tests/coverage/", "rv64gc", coveragesim, coverStr, configs, lockstepMode=1)
     # run tests in lockstep in functional coverage mode
     if args.fcov or args.nightly:
         addTestsByDir(f"{archVerifDir}/work/cvw-rv32gc/elfs/rv32/I", "rv32gc", coveragesim, coverStr, configs, lockstepMode=1)
@@ -508,7 +508,7 @@ def selectTests(args, sims, coverStr):
         addTests(bpredtests, defaultsim, coverStr, configs)
     # run Breker tests (requires a license for the breker tool)
     if args.breker:
-        addTestsByDir(WALLY+"/tests/breker/work", "rv64breker", "questa", coverStr, configs, brekerMode=1)
+        addTestsByDir(f"{WALLY}/tests/breker/work", "rv64breker", "questa", coverStr, configs, brekerMode=1)
     # standard tests
     if not(args.testfloat or args.ccov or args.fcov or args.cache or args.branch or args.benchmark or args.breker):
         for sim in sims:
@@ -517,9 +517,9 @@ def selectTests(args, sims, coverStr):
             addTests(standard_tests, sim, coverStr, configs)
     # run derivative configurations and lockstep tests in nightly regression
     if args.nightly:
-        addTestsByDir(WALLY+"/tests/coverage", "rv64gc", lockstepsim, coverStr, configs, lockstepMode=1)
-        addTestsByDir(WALLY+"/tests/riscof/work/wally-riscv-arch-test/rv64i_m", "rv64gc", lockstepsim, coverStr, configs, lockstepMode=1)
-        addTestsByDir(WALLY+"/tests/riscof/work/wally-riscv-arch-test/rv32i_m", "rv32gc", lockstepsim, coverStr, configs, lockstepMode=1)
+        addTestsByDir(f"{WALLY}/tests/coverage", "rv64gc", lockstepsim, coverStr, configs, lockstepMode=1)
+        addTestsByDir(f"{WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m", "rv64gc", lockstepsim, coverStr, configs, lockstepMode=1)
+        addTestsByDir(f"{WALLY}/tests/riscof/work/wally-riscv-arch-test/rv32i_m", "rv32gc", lockstepsim, coverStr, configs, lockstepMode=1)
         addTests(derivconfigtests, defaultsim, coverStr, configs)
         # addTests(bpredtests, defaultsim) # This is currently broken in regression due to something related to the new wsim script.
     # testfloat tests

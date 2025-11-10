@@ -1,6 +1,6 @@
 00000aaa # test 5.3.1.6: enabling all of MIE
 00000000
-0007ec03 # value to indicate successful vectoring on m soft interrupt 
+0007ec03 # value to indicate successful vectoring on m soft interrupt
 00000000
 00000003 # mcause value from m time interrupt
 80000000

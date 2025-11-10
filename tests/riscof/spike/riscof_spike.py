@@ -155,7 +155,7 @@ class spike(pluginTemplate):
           # convert from G to bytes: g = 2^(G+2) bytes
           self.granularity = pow(2, ispec['PMP']['pmp-grain']+2)
       else:
-        self.granularity = 4  # default granularity is 4 bytes 
+        self.granularity = 4  # default granularity is 4 bytes
 
     def runTests(self, testList):
 
@@ -231,7 +231,7 @@ class spike(pluginTemplate):
       #make.execute_all(self.work_dir)
       # DH 7/26/22 increase timeout to 1800 seconds so sim will finish on slow machines
       # DH 5/17/23 increase timeout to 3600 seconds
-      make.execute_all(self.work_dir, timeout = 3600) 
+      make.execute_all(self.work_dir, timeout = 3600)
 
 
       # if target runs are not required then we simply exit as this point after running all

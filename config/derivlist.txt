@@ -2,9 +2,9 @@
 ## derivlist.txt
 ## Wally Derivative Configuration List
 ##
-## Written: David_Harris@hmc.edu, kekim@hmc.edu 
+## Written: David_Harris@hmc.edu, kekim@hmc.edu
 ## Created: 29 January 2024
-## Modified: 
+## Modified:
 ##
 ## Purpose: Used by sim/make deriv to generate derivative configurations
 ##          in config/deriv that are variants of the base configurations.
@@ -16,15 +16,15 @@
 ##
 ## SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 ##
-## Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-## except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+## Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+## except in compliance with the License, or, at your option, the Apache License version 2.0. You
 ## may obtain a copy of the License at
 ##
 ## https:##solderpad.org/licenses/SHL-2.1/
 ##
-## Unless required by applicable law or agreed to in writing, any work distributed under the 
-## License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-## either express or implied. See the License for the specific language governing permissions 
+## Unless required by applicable law or agreed to in writing, any work distributed under the
+## License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+## either express or implied. See the License for the specific language governing permissions
 ## and limitations under the License.
 ################################################################################################
 
@@ -32,7 +32,7 @@
 # begin a derivative with "deriv <derivative name> <base configuration name> <inherited config name>
 # Followed by a list of parameters and their new value in the derivative configuration
 # All other parameter values are inherited from the original configuration
-# If <inherited config name> is not empty, all the list of parameter changes in the inherited 
+# If <inherited config name> is not empty, all the list of parameter changes in the inherited
 # configuration are also applied to this configuration
 
 
@@ -42,12 +42,12 @@ RESET_VECTOR    64'h1000
 UNCORE_RAM_RANGE    64'h0FFFFFFF
 UNCORE_RAM_PRELOAD  1
 GPIO_LOOPBACK_TEST  0
-SPI_LOOPBACK_TEST   0   
+SPI_LOOPBACK_TEST   0
 UART_PRESCALE       32'd0
 PLIC_NUM_SRC        32'd53
 
 # fpga is used for FPGA hardware.  It adds the SDC and DDR (EXT_MEM)
-deriv fpga  buildroot 
+deriv fpga  buildroot
 BOOTROM_PRELOAD     1
 UNCORE_RAM_BASE     64'h2000
 UNCORE_RAM_RANGE    64'h1FFF
@@ -78,7 +78,7 @@ SDC_SUPPORTED       1
 PLIC_SDC_ID         32'd20
 BPRED_SIZE          32'd12
 
-# The syn configurations are trimmed down for faster synthesis.  
+# The syn configurations are trimmed down for faster synthesis.
 deriv   syn_rv32e       rv32e
 DTIM_RANGE              64'h1FF
 IROM_RANGE              64'h1FF
@@ -89,7 +89,7 @@ ICACHE_WAYSIZEINBYTES   32'd512
 DCACHE_NUMWAYS          32'd1
 ICACHE_NUMWAYS          32'd1
 BPRED_SIZE              32'd5
-BTB_SIZE                32'd5 
+BTB_SIZE                32'd5
 
 # The other syn configurations have the same trimming
 deriv syn_rv32i rv32i syn_rv32e
@@ -270,10 +270,10 @@ BURST_EN            1
 
 # Branch predictor simulations
 
-deriv nobpred_rv32gc rv32gc 
+deriv nobpred_rv32gc rv32gc
 BPRED_SUPPORTED     0
 
-deriv bpred_GSHARE_6_16_10_1_rv32gc rv32gc 
+deriv bpred_GSHARE_6_16_10_1_rv32gc rv32gc
 BPRED_SIZE          32'd6
 
 deriv bpred_GSHARE_8_16_10_1_rv32gc rv32gc
@@ -342,7 +342,7 @@ BTB_SIZE          32'd16
 
 
 
-deriv bpred_GSHARE_6_16_10_0_rv32gc bpred_GSHARE_6_16_10_1_rv32gc 
+deriv bpred_GSHARE_6_16_10_0_rv32gc bpred_GSHARE_6_16_10_1_rv32gc
 INSTR_CLASS_PRED  0
 
 deriv bpred_GSHARE_8_16_10_0_rv32gc bpred_GSHARE_8_16_10_1_rv32gc
@@ -576,244 +576,244 @@ deriv zalrsc_rv64gc rv64gc
 ZAAMO_SUPPORTED     0
 
 deriv zba_rv32gc rv32gc
-ZBA_SUPPORTED     1     
-ZBB_SUPPORTED     0     
-ZBS_SUPPORTED     0     
-ZBC_SUPPORTED     0     
-ZBKB_SUPPORTED     0     
-ZBKC_SUPPORTED     0     
-ZBKX_SUPPORTED     0     
-ZKND_SUPPORTED     0     
-ZKNE_SUPPORTED     0     
-ZKNH_SUPPORTED     0     
+ZBA_SUPPORTED     1
+ZBB_SUPPORTED     0
+ZBS_SUPPORTED     0
+ZBC_SUPPORTED     0
+ZBKB_SUPPORTED     0
+ZBKC_SUPPORTED     0
+ZBKX_SUPPORTED     0
+ZKND_SUPPORTED     0
+ZKNE_SUPPORTED     0
+ZKNH_SUPPORTED     0
 
 deriv zbb_rv32gc rv32gc
-ZBA_SUPPORTED     0     
-ZBB_SUPPORTED     1     
-ZBS_SUPPORTED     0     
-ZBC_SUPPORTED     0     
-ZBKB_SUPPORTED     0     
-ZBKC_SUPPORTED     0     
-ZBKX_SUPPORTED     0     
-ZKND_SUPPORTED     0     
-ZKNE_SUPPORTED     0     
-ZKNH_SUPPORTED     0     
+ZBA_SUPPORTED     0
+ZBB_SUPPORTED     1
+ZBS_SUPPORTED     0
+ZBC_SUPPORTED     0
+ZBKB_SUPPORTED     0
+ZBKC_SUPPORTED     0
+ZBKX_SUPPORTED     0
+ZKND_SUPPORTED     0
+ZKNE_SUPPORTED     0
+ZKNH_SUPPORTED     0
 
 deriv zbc_rv32gc rv32gc
-ZBA_SUPPORTED     0     
-ZBB_SUPPORTED     0     
-ZBS_SUPPORTED     0     
-ZBC_SUPPORTED     1     
-ZBKB_SUPPORTED     0     
-ZBKC_SUPPORTED     0     
-ZBKX_SUPPORTED     0     
-ZKND_SUPPORTED     0     
-ZKNE_SUPPORTED     0     
-ZKNH_SUPPORTED     0     
+ZBA_SUPPORTED     0
+ZBB_SUPPORTED     0
+ZBS_SUPPORTED     0
+ZBC_SUPPORTED     1
+ZBKB_SUPPORTED     0
+ZBKC_SUPPORTED     0
+ZBKX_SUPPORTED     0
+ZKND_SUPPORTED     0
+ZKNE_SUPPORTED     0
+ZKNH_SUPPORTED     0
 
 deriv zbs_rv32gc rv32gc
-ZBA_SUPPORTED     0     
-ZBB_SUPPORTED     0     
-ZBS_SUPPORTED     1     
-ZBC_SUPPORTED     0     
-ZBKB_SUPPORTED     0     
-ZBKC_SUPPORTED     0     
-ZBKX_SUPPORTED     0     
-ZKND_SUPPORTED     0     
-ZKNE_SUPPORTED     0     
-ZKNH_SUPPORTED     0     
+ZBA_SUPPORTED     0
+ZBB_SUPPORTED     0
+ZBS_SUPPORTED     1
+ZBC_SUPPORTED     0
+ZBKB_SUPPORTED     0
+ZBKC_SUPPORTED     0
+ZBKX_SUPPORTED     0
+ZKND_SUPPORTED     0
+ZKNE_SUPPORTED     0
+ZKNH_SUPPORTED     0
 
 deriv zbkb_rv32gc rv32gc
-ZBA_SUPPORTED     0     
-ZBB_SUPPORTED     0     
-ZBS_SUPPORTED     0     
-ZBC_SUPPORTED     0     
-ZBKB_SUPPORTED     1     
-ZBKC_SUPPORTED     0     
-ZBKX_SUPPORTED     0     
-ZKND_SUPPORTED     0     
-ZKNE_SUPPORTED     0     
-ZKNH_SUPPORTED     0     
+ZBA_SUPPORTED     0
+ZBB_SUPPORTED     0
+ZBS_SUPPORTED     0
+ZBC_SUPPORTED     0
+ZBKB_SUPPORTED     1
+ZBKC_SUPPORTED     0
+ZBKX_SUPPORTED     0
+ZKND_SUPPORTED     0
+ZKNE_SUPPORTED     0
+ZKNH_SUPPORTED     0
 
 deriv zbkc_rv32gc rv32gc
-ZBA_SUPPORTED     0     
-ZBB_SUPPORTED     0     
-ZBS_SUPPORTED     0     
-ZBC_SUPPORTED     0     
-ZBKB_SUPPORTED     0     
-ZBKC_SUPPORTED     1     
-ZBKX_SUPPORTED     0     
-ZKND_SUPPORTED     0     
-ZKNE_SUPPORTED     0     
-ZKNH_SUPPORTED     0     
+ZBA_SUPPORTED     0
+ZBB_SUPPORTED     0
+ZBS_SUPPORTED     0
+ZBC_SUPPORTED     0
+ZBKB_SUPPORTED     0
+ZBKC_SUPPORTED     1
+ZBKX_SUPPORTED     0
+ZKND_SUPPORTED     0
+ZKNE_SUPPORTED     0
+ZKNH_SUPPORTED     0
 
 deriv zbkx_rv32gc rv32gc
-ZBA_SUPPORTED     0     
-ZBB_SUPPORTED     0     
-ZBS_SUPPORTED     0     
-ZBC_SUPPORTED     0     
-ZBKB_SUPPORTED     0     
-ZBKC_SUPPORTED     0     
-ZBKX_SUPPORTED     1     
-ZKND_SUPPORTED     0     
-ZKNE_SUPPORTED     0     
-ZKNH_SUPPORTED     0     
+ZBA_SUPPORTED     0
+ZBB_SUPPORTED     0
+ZBS_SUPPORTED     0
+ZBC_SUPPORTED     0
+ZBKB_SUPPORTED     0
+ZBKC_SUPPORTED     0
+ZBKX_SUPPORTED     1
+ZKND_SUPPORTED     0
+ZKNE_SUPPORTED     0
+ZKNH_SUPPORTED     0
 
 deriv zknd_rv32gc rv32gc
-ZBA_SUPPORTED     0     
-ZBB_SUPPORTED     0     
-ZBS_SUPPORTED     0     
-ZBC_SUPPORTED     0     
-ZBKB_SUPPORTED     0     
-ZBKC_SUPPORTED     0     
-ZBKX_SUPPORTED     0     
-ZKND_SUPPORTED     1     
-ZKNE_SUPPORTED     0     
-ZKNH_SUPPORTED     0     
+ZBA_SUPPORTED     0
+ZBB_SUPPORTED     0
+ZBS_SUPPORTED     0
+ZBC_SUPPORTED     0
+ZBKB_SUPPORTED     0
+ZBKC_SUPPORTED     0
+ZBKX_SUPPORTED     0
+ZKND_SUPPORTED     1
+ZKNE_SUPPORTED     0
+ZKNH_SUPPORTED     0
 
 deriv zkne_rv32gc rv32gc
-ZBA_SUPPORTED     0     
-ZBB_SUPPORTED     0     
-ZBS_SUPPORTED     0     
-ZBC_SUPPORTED     0     
-ZBKB_SUPPORTED     0     
-ZBKC_SUPPORTED     0     
-ZBKX_SUPPORTED     0     
-ZKND_SUPPORTED     0     
-ZKNE_SUPPORTED     1     
-ZKNH_SUPPORTED     0     
+ZBA_SUPPORTED     0
+ZBB_SUPPORTED     0
+ZBS_SUPPORTED     0
+ZBC_SUPPORTED     0
+ZBKB_SUPPORTED     0
+ZBKC_SUPPORTED     0
+ZBKX_SUPPORTED     0
+ZKND_SUPPORTED     0
+ZKNE_SUPPORTED     1
+ZKNH_SUPPORTED     0
 
 deriv zknh_rv32gc rv32gc
-ZBA_SUPPORTED     0     
-ZBB_SUPPORTED     0     
-ZBS_SUPPORTED     0     
-ZBC_SUPPORTED     0     
-ZBKB_SUPPORTED     0     
-ZBKC_SUPPORTED     0     
-ZBKX_SUPPORTED     0     
-ZKND_SUPPORTED     0     
-ZKNE_SUPPORTED     0     
-ZKNH_SUPPORTED     1     
+ZBA_SUPPORTED     0
+ZBB_SUPPORTED     0
+ZBS_SUPPORTED     0
+ZBC_SUPPORTED     0
+ZBKB_SUPPORTED     0
+ZBKC_SUPPORTED     0
+ZBKX_SUPPORTED     0
+ZKND_SUPPORTED     0
+ZKNE_SUPPORTED     0
+ZKNH_SUPPORTED     1
 
 deriv zba_rv64gc rv64gc
-ZBA_SUPPORTED     1     
-ZBB_SUPPORTED     0     
-ZBS_SUPPORTED     0     
-ZBC_SUPPORTED     0     
-ZBKB_SUPPORTED     0     
-ZBKC_SUPPORTED     0     
-ZBKX_SUPPORTED     0     
-ZKND_SUPPORTED     0     
-ZKNE_SUPPORTED     0     
-ZKNH_SUPPORTED     0     
+ZBA_SUPPORTED     1
+ZBB_SUPPORTED     0
+ZBS_SUPPORTED     0
+ZBC_SUPPORTED     0
+ZBKB_SUPPORTED     0
+ZBKC_SUPPORTED     0
+ZBKX_SUPPORTED     0
+ZKND_SUPPORTED     0
+ZKNE_SUPPORTED     0
+ZKNH_SUPPORTED     0
 
 deriv zbb_rv64gc rv64gc
-ZBA_SUPPORTED     0     
-ZBB_SUPPORTED     1     
-ZBS_SUPPORTED     0     
-ZBC_SUPPORTED     0     
-ZBKB_SUPPORTED     0     
-ZBKC_SUPPORTED     0     
-ZBKX_SUPPORTED     0     
-ZKND_SUPPORTED     0     
-ZKNE_SUPPORTED     0     
-ZKNH_SUPPORTED     0     
+ZBA_SUPPORTED     0
+ZBB_SUPPORTED     1
+ZBS_SUPPORTED     0
+ZBC_SUPPORTED     0
+ZBKB_SUPPORTED     0
+ZBKC_SUPPORTED     0
+ZBKX_SUPPORTED     0
+ZKND_SUPPORTED     0
+ZKNE_SUPPORTED     0
+ZKNH_SUPPORTED     0
 
 deriv zbc_rv64gc rv64gc
-ZBA_SUPPORTED     0     
-ZBB_SUPPORTED     0     
-ZBS_SUPPORTED     0     
-ZBC_SUPPORTED     1     
-ZBKB_SUPPORTED     0     
-ZBKC_SUPPORTED     0     
-ZBKX_SUPPORTED     0     
-ZKND_SUPPORTED     0     
-ZKNE_SUPPORTED     0     
-ZKNH_SUPPORTED     0     
+ZBA_SUPPORTED     0
+ZBB_SUPPORTED     0
+ZBS_SUPPORTED     0
+ZBC_SUPPORTED     1
+ZBKB_SUPPORTED     0
+ZBKC_SUPPORTED     0
+ZBKX_SUPPORTED     0
+ZKND_SUPPORTED     0
+ZKNE_SUPPORTED     0
+ZKNH_SUPPORTED     0
 
 deriv zbs_rv64gc rv64gc
-ZBA_SUPPORTED     0     
-ZBB_SUPPORTED     0     
-ZBS_SUPPORTED     1     
-ZBC_SUPPORTED     0     
-ZBKB_SUPPORTED     0     
-ZBKC_SUPPORTED     0     
-ZBKX_SUPPORTED     0     
-ZKND_SUPPORTED     0     
-ZKNE_SUPPORTED     0     
-ZKNH_SUPPORTED     0     
+ZBA_SUPPORTED     0
+ZBB_SUPPORTED     0
+ZBS_SUPPORTED     1
+ZBC_SUPPORTED     0
+ZBKB_SUPPORTED     0
+ZBKC_SUPPORTED     0
+ZBKX_SUPPORTED     0
+ZKND_SUPPORTED     0
+ZKNE_SUPPORTED     0
+ZKNH_SUPPORTED     0
 
 deriv zbkb_rv64gc rv64gc
-ZBA_SUPPORTED     0     
-ZBB_SUPPORTED     0     
-ZBS_SUPPORTED     0     
-ZBC_SUPPORTED     0     
-ZBKB_SUPPORTED     1     
-ZBKC_SUPPORTED     0     
-ZBKX_SUPPORTED     0     
-ZKND_SUPPORTED     0     
-ZKNE_SUPPORTED     0     
-ZKNH_SUPPORTED     0     
+ZBA_SUPPORTED     0
+ZBB_SUPPORTED     0
+ZBS_SUPPORTED     0
+ZBC_SUPPORTED     0
+ZBKB_SUPPORTED     1
+ZBKC_SUPPORTED     0
+ZBKX_SUPPORTED     0
+ZKND_SUPPORTED     0
+ZKNE_SUPPORTED     0
+ZKNH_SUPPORTED     0
 
 deriv zbkc_rv64gc rv64gc
-ZBA_SUPPORTED     0     
-ZBB_SUPPORTED     0     
-ZBS_SUPPORTED     0     
-ZBC_SUPPORTED     0     
-ZBKB_SUPPORTED     0     
-ZBKC_SUPPORTED     1     
-ZBKX_SUPPORTED     0     
-ZKND_SUPPORTED     0     
-ZKNE_SUPPORTED     0     
-ZKNH_SUPPORTED     0     
+ZBA_SUPPORTED     0
+ZBB_SUPPORTED     0
+ZBS_SUPPORTED     0
+ZBC_SUPPORTED     0
+ZBKB_SUPPORTED     0
+ZBKC_SUPPORTED     1
+ZBKX_SUPPORTED     0
+ZKND_SUPPORTED     0
+ZKNE_SUPPORTED     0
+ZKNH_SUPPORTED     0
 
 deriv zbkx_rv64gc rv64gc
-ZBA_SUPPORTED     0     
-ZBB_SUPPORTED     0     
-ZBS_SUPPORTED     0     
-ZBC_SUPPORTED     0     
-ZBKB_SUPPORTED     0     
-ZBKC_SUPPORTED     0     
-ZBKX_SUPPORTED     1     
-ZKND_SUPPORTED     0     
-ZKNE_SUPPORTED     0     
-ZKNH_SUPPORTED     0     
+ZBA_SUPPORTED     0
+ZBB_SUPPORTED     0
+ZBS_SUPPORTED     0
+ZBC_SUPPORTED     0
+ZBKB_SUPPORTED     0
+ZBKC_SUPPORTED     0
+ZBKX_SUPPORTED     1
+ZKND_SUPPORTED     0
+ZKNE_SUPPORTED     0
+ZKNH_SUPPORTED     0
 
 deriv zknd_rv64gc rv64gc
-ZBA_SUPPORTED     0     
-ZBB_SUPPORTED     0     
-ZBS_SUPPORTED     0     
-ZBC_SUPPORTED     0     
-ZBKB_SUPPORTED     0     
-ZBKC_SUPPORTED     0     
-ZBKX_SUPPORTED     0     
-ZKND_SUPPORTED     1     
-ZKNE_SUPPORTED     0     
-ZKNH_SUPPORTED     0     
+ZBA_SUPPORTED     0
+ZBB_SUPPORTED     0
+ZBS_SUPPORTED     0
+ZBC_SUPPORTED     0
+ZBKB_SUPPORTED     0
+ZBKC_SUPPORTED     0
+ZBKX_SUPPORTED     0
+ZKND_SUPPORTED     1
+ZKNE_SUPPORTED     0
+ZKNH_SUPPORTED     0
 
 deriv zkne_rv64gc rv64gc
-ZBA_SUPPORTED     0     
-ZBB_SUPPORTED     0     
-ZBS_SUPPORTED     0     
-ZBC_SUPPORTED     0     
-ZBKB_SUPPORTED     0     
-ZBKC_SUPPORTED     0     
-ZBKX_SUPPORTED     0     
-ZKND_SUPPORTED     0     
-ZKNE_SUPPORTED     1     
-ZKNH_SUPPORTED     0     
+ZBA_SUPPORTED     0
+ZBB_SUPPORTED     0
+ZBS_SUPPORTED     0
+ZBC_SUPPORTED     0
+ZBKB_SUPPORTED     0
+ZBKC_SUPPORTED     0
+ZBKX_SUPPORTED     0
+ZKND_SUPPORTED     0
+ZKNE_SUPPORTED     1
+ZKNH_SUPPORTED     0
 
 deriv zknh_rv64gc rv64gc
-ZBA_SUPPORTED     0     
-ZBB_SUPPORTED     0     
-ZBS_SUPPORTED     0     
-ZBC_SUPPORTED     0     
-ZBKB_SUPPORTED     0     
-ZBKC_SUPPORTED     0     
-ZBKX_SUPPORTED     0     
-ZKND_SUPPORTED     0     
-ZKNE_SUPPORTED     0     
-ZKNH_SUPPORTED     1     
+ZBA_SUPPORTED     0
+ZBB_SUPPORTED     0
+ZBS_SUPPORTED     0
+ZBC_SUPPORTED     0
+ZBKB_SUPPORTED     0
+ZBKC_SUPPORTED     0
+ZBKX_SUPPORTED     0
+ZKND_SUPPORTED     0
+ZKNE_SUPPORTED     0
+ZKNH_SUPPORTED     1
 
 deriv noS_rv32gc rv32gc
 S_SUPPORTED        0
@@ -894,12 +894,12 @@ ZFH_SUPPORTED   1
 #### MORE DIVIDER variants
 
 #### F_only, RK variable
-deriv f_div_2_1_rv32gc    div_2_1_rv32gc    
+deriv f_div_2_1_rv32gc    div_2_1_rv32gc
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   0
 
-deriv f_div_2_2_rv32gc    div_2_2_rv32gc    
+deriv f_div_2_2_rv32gc    div_2_2_rv32gc
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   0
@@ -909,59 +909,59 @@ D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   0
 
-deriv f_div_4_1_rv32gc    div_4_1_rv32gc    
+deriv f_div_4_1_rv32gc    div_4_1_rv32gc
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   0
 
-deriv f_div_4_2_rv32gc    div_4_2_rv32gc    
+deriv f_div_4_2_rv32gc    div_4_2_rv32gc
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   0
 
-deriv f_div_4_4_rv32gc    div_4_4_rv32gc    
+deriv f_div_4_4_rv32gc    div_4_4_rv32gc
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   0
 
-deriv f_div_2_1_rv64gc    div_2_1_rv64gc    
+deriv f_div_2_1_rv64gc    div_2_1_rv64gc
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   0
 
-deriv f_div_2_2_rv64gc    div_2_2_rv64gc    
+deriv f_div_2_2_rv64gc    div_2_2_rv64gc
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   0
 
-deriv f_div_2_4_rv64gc    div_2_4_rv64gc    
+deriv f_div_2_4_rv64gc    div_2_4_rv64gc
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   0
 
-deriv f_div_4_1_rv64gc    div_4_1_rv64gc    
+deriv f_div_4_1_rv64gc    div_4_1_rv64gc
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   0
 
-deriv f_div_4_2_rv64gc    div_4_2_rv64gc    
+deriv f_div_4_2_rv64gc    div_4_2_rv64gc
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   0
 
-deriv f_div_4_4_rv64gc    div_4_4_rv64gc    
+deriv f_div_4_4_rv64gc    div_4_4_rv64gc
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   0
 
 
 #### FH_only, RK variable
-deriv fh_div_2_1_rv32gc    div_2_1_rv32gc    
+deriv fh_div_2_1_rv32gc    div_2_1_rv32gc
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   1
 
-deriv fh_div_2_2_rv32gc    div_2_2_rv32gc    
+deriv fh_div_2_2_rv32gc    div_2_2_rv32gc
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   1
@@ -971,135 +971,135 @@ D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   1
 
-deriv fh_div_4_1_rv32gc    div_4_1_rv32gc    
+deriv fh_div_4_1_rv32gc    div_4_1_rv32gc
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   1
 
-deriv fh_div_4_2_rv32gc    div_4_2_rv32gc    
+deriv fh_div_4_2_rv32gc    div_4_2_rv32gc
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   1
 
-deriv fh_div_4_4_rv32gc    div_4_4_rv32gc    
+deriv fh_div_4_4_rv32gc    div_4_4_rv32gc
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   1
 
-deriv fh_div_2_1_rv64gc    div_2_1_rv64gc    
+deriv fh_div_2_1_rv64gc    div_2_1_rv64gc
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   1
 
-deriv fh_div_2_2_rv64gc    div_2_2_rv64gc    
+deriv fh_div_2_2_rv64gc    div_2_2_rv64gc
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   1
 
-deriv fh_div_2_4_rv64gc    div_2_4_rv64gc    
+deriv fh_div_2_4_rv64gc    div_2_4_rv64gc
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   1
 
-deriv fh_div_4_1_rv64gc    div_4_1_rv64gc    
+deriv fh_div_4_1_rv64gc    div_4_1_rv64gc
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   1
 
-deriv fh_div_4_2_rv64gc    div_4_2_rv64gc    
+deriv fh_div_4_2_rv64gc    div_4_2_rv64gc
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   1
 
-deriv fh_div_4_4_rv64gc    div_4_4_rv64gc    
+deriv fh_div_4_4_rv64gc    div_4_4_rv64gc
 D_SUPPORTED     0
 ZCD_SUPPORTED   0
 ZFH_SUPPORTED   1
 
 # FD only , rk variable
 
-deriv fd_div_2_1_rv32gc    div_2_1_rv32gc    
+deriv fd_div_2_1_rv32gc    div_2_1_rv32gc
 ZFH_SUPPORTED   0
 
-deriv fd_div_2_2_rv32gc    div_2_2_rv32gc    
+deriv fd_div_2_2_rv32gc    div_2_2_rv32gc
 ZFH_SUPPORTED   0
 
 deriv fd_div_2_4_rv32gc    div_2_4_rv32gc
 ZFH_SUPPORTED   0
 
-deriv fd_div_4_1_rv32gc    div_4_1_rv32gc    
+deriv fd_div_4_1_rv32gc    div_4_1_rv32gc
 ZFH_SUPPORTED   0
 
-deriv fd_div_4_2_rv32gc    div_4_2_rv32gc    
+deriv fd_div_4_2_rv32gc    div_4_2_rv32gc
 ZFH_SUPPORTED   0
 
-deriv fd_div_4_4_rv32gc    div_4_4_rv32gc    
+deriv fd_div_4_4_rv32gc    div_4_4_rv32gc
 ZFH_SUPPORTED   0
 
-deriv fd_div_2_1_rv64gc    div_2_1_rv64gc    
+deriv fd_div_2_1_rv64gc    div_2_1_rv64gc
 ZFH_SUPPORTED   0
 
-deriv fd_div_2_2_rv64gc    div_2_2_rv64gc    
+deriv fd_div_2_2_rv64gc    div_2_2_rv64gc
 ZFH_SUPPORTED   0
 
-deriv fd_div_2_4_rv64gc    div_2_4_rv64gc    
+deriv fd_div_2_4_rv64gc    div_2_4_rv64gc
 ZFH_SUPPORTED   0
 
-deriv fd_div_4_1_rv64gc    div_4_1_rv64gc    
+deriv fd_div_4_1_rv64gc    div_4_1_rv64gc
 ZFH_SUPPORTED   0
 
-deriv fd_div_4_2_rv64gc    div_4_2_rv64gc    
+deriv fd_div_4_2_rv64gc    div_4_2_rv64gc
 ZFH_SUPPORTED   0
 
-deriv fd_div_4_4_rv64gc    div_4_4_rv64gc    
+deriv fd_div_4_4_rv64gc    div_4_4_rv64gc
 ZFH_SUPPORTED   0
 
 
 # FDH only , rk variable
 
-deriv fdh_div_2_1_rv32gc    div_2_1_rv32gc    
+deriv fdh_div_2_1_rv32gc    div_2_1_rv32gc
 ZFH_SUPPORTED   1
 
-deriv fdh_div_2_2_rv32gc    div_2_2_rv32gc    
+deriv fdh_div_2_2_rv32gc    div_2_2_rv32gc
 ZFH_SUPPORTED   1
 
 deriv fdh_div_2_4_rv32gc    div_2_4_rv32gc
 ZFH_SUPPORTED   1
 
-deriv fdh_div_4_1_rv32gc    div_4_1_rv32gc    
+deriv fdh_div_4_1_rv32gc    div_4_1_rv32gc
 ZFH_SUPPORTED   1
 
-deriv fdh_div_4_2_rv32gc    div_4_2_rv32gc    
+deriv fdh_div_4_2_rv32gc    div_4_2_rv32gc
 ZFH_SUPPORTED   1
 
-deriv fdh_div_4_4_rv32gc    div_4_4_rv32gc    
+deriv fdh_div_4_4_rv32gc    div_4_4_rv32gc
 ZFH_SUPPORTED   1
 
-deriv fdh_div_2_1_rv64gc    div_2_1_rv64gc    
+deriv fdh_div_2_1_rv64gc    div_2_1_rv64gc
 ZFH_SUPPORTED   1
 
-deriv fdh_div_2_2_rv64gc    div_2_2_rv64gc    
+deriv fdh_div_2_2_rv64gc    div_2_2_rv64gc
 ZFH_SUPPORTED   1
 
-deriv fdh_div_2_4_rv64gc    div_2_4_rv64gc    
+deriv fdh_div_2_4_rv64gc    div_2_4_rv64gc
 ZFH_SUPPORTED   1
 
-deriv fdh_div_4_1_rv64gc    div_4_1_rv64gc    
+deriv fdh_div_4_1_rv64gc    div_4_1_rv64gc
 ZFH_SUPPORTED   1
 
-deriv fdh_div_4_2_rv64gc    div_4_2_rv64gc    
+deriv fdh_div_4_2_rv64gc    div_4_2_rv64gc
 ZFH_SUPPORTED   1
 
-deriv fdh_div_4_4_rv64gc    div_4_4_rv64gc    
+deriv fdh_div_4_4_rv64gc    div_4_4_rv64gc
 ZFH_SUPPORTED   1
 
 # FDQ only , rk variable
 
-deriv fdq_div_2_1_rv32gc    div_2_1_rv32gc    
+deriv fdq_div_2_1_rv32gc    div_2_1_rv32gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
-deriv fdq_div_2_2_rv32gc    div_2_2_rv32gc    
+deriv fdq_div_2_2_rv32gc    div_2_2_rv32gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
@@ -1107,49 +1107,49 @@ deriv fdq_div_2_4_rv32gc    div_2_4_rv32gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
-deriv fdq_div_4_1_rv32gc    div_4_1_rv32gc    
+deriv fdq_div_4_1_rv32gc    div_4_1_rv32gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
-deriv fdq_div_4_2_rv32gc    div_4_2_rv32gc    
+deriv fdq_div_4_2_rv32gc    div_4_2_rv32gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
-deriv fdq_div_4_4_rv32gc    div_4_4_rv32gc    
+deriv fdq_div_4_4_rv32gc    div_4_4_rv32gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
-deriv fdq_div_2_1_rv64gc    div_2_1_rv64gc    
+deriv fdq_div_2_1_rv64gc    div_2_1_rv64gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
-deriv fdq_div_2_2_rv64gc    div_2_2_rv64gc    
+deriv fdq_div_2_2_rv64gc    div_2_2_rv64gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
-deriv fdq_div_2_4_rv64gc    div_2_4_rv64gc    
+deriv fdq_div_2_4_rv64gc    div_2_4_rv64gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
-deriv fdq_div_4_1_rv64gc    div_4_1_rv64gc    
+deriv fdq_div_4_1_rv64gc    div_4_1_rv64gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
-deriv fdq_div_4_2_rv64gc    div_4_2_rv64gc    
+deriv fdq_div_4_2_rv64gc    div_4_2_rv64gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
-deriv fdq_div_4_4_rv64gc    div_4_4_rv64gc    
+deriv fdq_div_4_4_rv64gc    div_4_4_rv64gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   0
 
 # FDQH only , rk variable
 
-deriv fdqh_div_2_1_rv32gc    div_2_1_rv32gc    
+deriv fdqh_div_2_1_rv32gc    div_2_1_rv32gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
-deriv fdqh_div_2_2_rv32gc    div_2_2_rv32gc    
+deriv fdqh_div_2_2_rv32gc    div_2_2_rv32gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
@@ -1157,39 +1157,39 @@ deriv fdqh_div_2_4_rv32gc    div_2_4_rv32gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
-deriv fdqh_div_4_1_rv32gc    div_4_1_rv32gc    
+deriv fdqh_div_4_1_rv32gc    div_4_1_rv32gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
-deriv fdqh_div_4_2_rv32gc    div_4_2_rv32gc    
+deriv fdqh_div_4_2_rv32gc    div_4_2_rv32gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
-deriv fdqh_div_4_4_rv32gc    div_4_4_rv32gc    
+deriv fdqh_div_4_4_rv32gc    div_4_4_rv32gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
-deriv fdqh_div_2_1_rv64gc    div_2_1_rv64gc    
+deriv fdqh_div_2_1_rv64gc    div_2_1_rv64gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
-deriv fdqh_div_2_2_rv64gc    div_2_2_rv64gc    
+deriv fdqh_div_2_2_rv64gc    div_2_2_rv64gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
-deriv fdqh_div_2_4_rv64gc    div_2_4_rv64gc    
+deriv fdqh_div_2_4_rv64gc    div_2_4_rv64gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
-deriv fdqh_div_4_1_rv64gc    div_4_1_rv64gc    
+deriv fdqh_div_4_1_rv64gc    div_4_1_rv64gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
-deriv fdqh_div_4_2_rv64gc    div_4_2_rv64gc    
+deriv fdqh_div_4_2_rv64gc    div_4_2_rv64gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 
-deriv fdqh_div_4_4_rv64gc    div_4_4_rv64gc    
+deriv fdqh_div_4_4_rv64gc    div_4_4_rv64gc
 Q_SUPPORTED     1
 ZFH_SUPPORTED   1
 

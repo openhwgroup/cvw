@@ -12,13 +12,13 @@
 # s2: PERIOD
 
 rvtest_entry_point:
-   
+
     # initialize LED to off
     li s0, GPIO_OUTPUT_VAL
     sw zero, 0(s0)      # LEDs off
 
     # configure timer interrupt
-    li s2, PERIOD       
+    li s2, PERIOD
     csrr t0, time       # read lower 32 bits of timer
     csrr t1, timeh      # read upper 32 bits of timer
     add t0, t0, s2      # increment by PERIOD
@@ -35,7 +35,7 @@ rvtest_entry_point:
     li t0, 0b11         # 3
     slli t0, t0, 11     # 11 in bits 12:11
     csrc mstatus, t0    # mstatus.MPP = 00 (for user mode)
-    la t0, user_start   # 
+    la t0, user_start   #
     csrw mepc, t0       # where to go when entering user mode
     mret
 */
@@ -45,7 +45,7 @@ wait_loop:
     csrr t0, time       # check time before timer fires
     wfi                 # wait until timer interrupt fires.
     csrr t0, time       # check time again after timer fires for debugging
-    # interrupts are globally disabled, so when the timer fires, 
+    # interrupts are globally disabled, so when the timer fires,
     # wfi will advance here rather than going to an interrupt handler
     lw t0, 0(s0)        # read GPIO_OUTPUT_VAL
     xori t0, t0, 1      # toggle least significant bits
@@ -58,4 +58,3 @@ wait_loop:
 
 self_loop:
     j self_loop
-

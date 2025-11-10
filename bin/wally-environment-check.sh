@@ -182,7 +182,7 @@ echo "Distribution: $PRETTY_NAME"
 echo "Version: $VERSION"
 echo "Running as root: $ROOT"
 
-if [ $packages_only != true ]; then 
+if [ $packages_only != true ]; then
     # Set installation directory based on execution privileges
     # If the script is run as root, the default installation path is /opt/riscv
     # If the script is run as a user, the default installation path is ~/riscv

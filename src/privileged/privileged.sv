@@ -2,28 +2,28 @@
 // privileged.sv
 //
 // Written: David_Harris@hmc.edu 5 January 2021
-// Modified: 
+// Modified:
 //
 // Purpose: Implements the CSRs, Exceptions, and Privileged operations
-//          See RISC-V Privileged Mode Specification 20190608 
-// 
+//          See RISC-V Privileged Mode Specification 20190608
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
-// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, 
-// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software 
+// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
+// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
 // is furnished to do so, subject to the following conditions:
 //
 // The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
-// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 ///////////////////////////////////////////
@@ -31,7 +31,7 @@
 module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic              clk, reset,
   input  logic              StallD, StallE, StallM, StallW,
-  input  logic              FlushD, FlushE, FlushM, FlushW, 
+  input  logic              FlushD, FlushE, FlushM, FlushW,
   // CSR Reads and Writes, and values needed for traps
   input  logic              CSRReadM, CSRWriteM,                            // Read or write CSRs
   input  logic [P.XLEN-1:0] SrcAM,                                          // GPR register to write
@@ -40,11 +40,11 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] IEUAdrxTvalM,                                   // address from IEU
   input  logic [P.XLEN-1:0] PCM,                                            // program counter
   input  logic [P.XLEN-1:0] PCSpillM,                                       // program counter
-  // control signals                                                       
+  // control signals
   input  logic              InstrValidM,                                    // Current instruction is valid (not flushed)
   input  logic              CommittedM, CommittedF,                         // current instruction is using bus; don't interrupt
   input  logic              PrivilegedM,                                    // privileged instruction
-  // processor events for performance counter logging                      
+  // processor events for performance counter logging
   input  logic              FRegWriteM,                                     // instruction will write floating-point registers
   input  logic              LoadStallD,                                     // load instruction is stalling
   input  logic              StoreStallD,                                    // store instruction is stalling
@@ -62,7 +62,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic              ICacheAccess,                                   // instruction cache access
   input  logic              DivBusyE,                                       // integer divide busy
   input  logic              FDivBusyE,                                      // floating point divide busy
-  // fault sources                                                         
+  // fault sources
   input  logic              InstrAccessFaultF,                              // instruction access fault
   input  logic              LoadAccessFaultM, StoreAmoAccessFaultM,         // load or store access fault
   input  logic              HPTWInstrAccessFaultF,                          // hardware page table access fault while fetching instruction PTE
@@ -76,7 +76,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic [63:0]       MTIME_CLINT,                                    // timer value from CLINT
   input  logic [4:0]        SetFflagsM,                                     // set FCSR flags from FPU
   input  logic              SelHPTW,                                        // HPTW in use.  Causes system to use S-mode endianness for accesses
-  // CSR outputs                                                           
+  // CSR outputs
   output logic [P.XLEN-1:0] CSRReadValW,                                    // Value read from CSR
   output logic [1:0]        PrivilegeModeW,                                 // current privilege mode
   output logic [P.XLEN-1:0] SATP_REGW,                                      // supervisor address translation register
@@ -88,18 +88,18 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   output logic [3:0]        ENVCFG_CBE,                                     // Cache block operation enables
   output logic              ENVCFG_PBMTE,                                   // Page-based memory type enable
   output logic              ENVCFG_ADUE,                                    // HPTW A/D Update enable
-  // PC logic output from privileged unit to IFU                                  
+  // PC logic output from privileged unit to IFU
   output logic [P.XLEN-1:0] EPCM,                                           // Exception Program counter to IFU PC logic
   output logic [P.XLEN-1:0] TrapVectorM,                                    // Trap vector, to IFU PC logic
-  // control outputs                                                       
+  // control outputs
   output logic              RetM, TrapM,                                    // return instruction, or trap
   output logic              sfencevmaM,                                     // sfence.vma instruction
   input  logic              InvalidateICacheM,                              // fence instruction
   output logic              BigEndianM,                                     // Use big endian in current privilege mode
-  // Fault outputs                                                         
+  // Fault outputs
   output logic              wfiM, IntPendingM                               // Stall in Memory stage for WFI until interrupt pending or timeout
-);                                                                         
-                                                                           
+);
+
   logic [3:0]               CauseM;                                         // trap cause
   logic [15:0]              MEDELEG_REGW;                                   // exception delegation CSR
   logic [11:0]              MIDELEG_REGW;                                   // interrupt delegation CSR
@@ -119,22 +119,22 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   logic                     HPTWInstrAccessFaultM;                          // Hardware page table access fault while fetching instruction PTE
   logic                     HPTWInstrPageFaultM;                            // Hardware page table page fault while fetching instruction PTE
   logic                     BreakpointFaultM, EcallFaultM;                  // breakpoint and Ecall traps should retire
-  
+
   logic                     wfiW;
-  
+
   // track the current privilege level
   privmode #(P) privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .DelegateM,
     .STATUS_MPP, .STATUS_SPP, .NextPrivilegeModeM, .PrivilegeModeW);
 
   // decode privileged instructions
-  privdec #(P) pmd(.clk, .reset, .StallW, .FlushW, .InstrM(InstrM[31:7]), 
-    .PrivilegedM, .IllegalIEUFPUInstrM, .IllegalCSRAccessM, 
-    .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .IllegalInstrFaultM, 
+  privdec #(P) pmd(.clk, .reset, .StallW, .FlushW, .InstrM(InstrM[31:7]),
+    .PrivilegedM, .IllegalIEUFPUInstrM, .IllegalCSRAccessM,
+    .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .IllegalInstrFaultM,
     .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .RetM, .wfiM, .wfiW, .sfencevmaM);
 
   // Control and Status Registers
   csr #(P) csr(.clk, .reset, .FlushM, .FlushW, .StallE, .StallM, .StallW,
-    .InstrM, .InstrOrigM, .PCM, .PCSpillM, .SrcAM, .IEUAdrxTvalM, 
+    .InstrM, .InstrOrigM, .PCM, .PCSpillM, .SrcAM, .IEUAdrxTvalM,
     .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
     .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
@@ -152,7 +152,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
 
   // pipeline early-arriving trap sources
   privpiperegs ppr(.clk, .reset, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
-    .InstrPageFaultF, .InstrAccessFaultF, .HPTWInstrAccessFaultF, .HPTWInstrPageFaultF, .IllegalIEUFPUInstrD, 
+    .InstrPageFaultF, .InstrAccessFaultF, .HPTWInstrAccessFaultF, .HPTWInstrPageFaultF, .IllegalIEUFPUInstrD,
     .InstrPageFaultM, .InstrAccessFaultM, .HPTWInstrAccessFaultM, .HPTWInstrPageFaultM, .IllegalIEUFPUInstrM);
 
   // trap logic
@@ -160,7 +160,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .InstrMisalignedFaultM, .InstrAccessFaultM, .HPTWInstrAccessFaultM, .HPTWInstrPageFaultM, .IllegalInstrFaultM,
     .BreakpointFaultM, .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
     .LoadAccessFaultM, .StoreAmoAccessFaultM, .EcallFaultM, .InstrPageFaultM,
-    .LoadPageFaultM, .StoreAmoPageFaultM, .PrivilegeModeW, 
+    .LoadPageFaultM, .StoreAmoPageFaultM, .PrivilegeModeW,
     .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .STATUS_MIE, .STATUS_SIE,
     .InstrValidM, .CommittedM, .CommittedF,
     .TrapM, .wfiM, .wfiW, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM);

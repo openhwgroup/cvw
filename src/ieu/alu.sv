@@ -8,23 +8,23 @@
 // Purpose: RISC-V Arithmetic/Logic Unit
 //
 // Documentation: RISC-V System on Chip Design
-// 
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -46,7 +46,7 @@ module alu import cvw::*; #(parameter cvw_t P) (
 
   // CondInvB = ~B when subtracting, B otherwise. Shift = shift result. SLT/U = result of a slt/u instruction.
   // FullResult = ALU result before adjusting for a RV64 w-suffix instruction.
-  logic [P.XLEN-1:0] CondMaskInvB, Shift, FullResult, PreALUResult;               // Intermediate Signals 
+  logic [P.XLEN-1:0] CondMaskInvB, Shift, FullResult, PreALUResult;               // Intermediate Signals
   logic [P.XLEN-1:0] CondMaskB;                                                   // Result of B mask select mux
   logic [P.XLEN-1:0] CondShiftA;                                                  // Result of A shifted select mux
   logic [P.XLEN-1:0] ZeroCondMaskInvB;                                            // B input to AND gate, accounting for czero.* instructions
@@ -64,11 +64,11 @@ module alu import cvw::*; #(parameter cvw_t P) (
   // Zicond block conditionally zeros B
   if (P.ZICOND_SUPPORTED) begin: zicond
     logic  BZero;
-    
+
     assign BZero = (B == 0); // check if rs2 = 0
     // Create a signal that is 0 when czero.* instruction should clear result
     // If B = 0 for czero.eqz or if B != 0 for czero.nez
-    always_comb 
+    always_comb
      case (CZero)
         2'b01:   ZeroCondMaskInvB = {P.XLEN{~BZero}}; // czero.eqz: kill if B = 0
         2'b10:   ZeroCondMaskInvB = {P.XLEN{BZero}};  // czero.nez: kill if B != 0
@@ -80,19 +80,19 @@ module alu import cvw::*; #(parameter cvw_t P) (
   shifter #(P) sh(.A(CondShiftA), .Amt(B[P.LOG_XLEN-1:0]), .Right(Funct3[2]), .W64, .SubArith, .Y(Shift), .Rotate(BALUControl[2]));
 
   // Condition code flags are based on subtraction output Sum = A-B.
-  // Overflow occurs when the numbers being subtracted have the opposite sign 
+  // Overflow occurs when the numbers being subtracted have the opposite sign
   // and the result has the opposite sign of A.
   // LT is simplified from Overflow = Asign & Bsign & Asign & Neg; LT = Neg ^ Overflow
   assign Neg  = Sum[P.XLEN-1];
   assign Asign = A[P.XLEN-1];
   assign Bsign = B[P.XLEN-1];
-  assign LT = Asign & ~Bsign | Asign & Neg | ~Bsign & Neg; 
+  assign LT = Asign & ~Bsign | Asign & Neg | ~Bsign & Neg;
   assign LTU = ~Carry;
   assign AndResult = A & ZeroCondMaskInvB;
- 
+
   // Select appropriate ALU Result
-  always_comb 
-    case (ALUSelect)                                
+  always_comb
+    case (ALUSelect)
       3'b000: FullResult = Sum;                            // add or sub (including address generation)
       3'b001: FullResult = Shift;                          // sll, sra, or srl
       3'b010: FullResult = {{(P.XLEN-1){1'b0}}, LT};       // slt
@@ -109,7 +109,7 @@ module alu import cvw::*; #(parameter cvw_t P) (
 
   // Bit manipulation muxing
   if (P.ZBC_SUPPORTED  | P.ZBS_SUPPORTED  | P.ZBA_SUPPORTED  | P.ZBB_SUPPORTED |
-      P.ZBKB_SUPPORTED | P.ZBKC_SUPPORTED | P.ZBKX_SUPPORTED | 
+      P.ZBKB_SUPPORTED | P.ZBKC_SUPPORTED | P.ZBKX_SUPPORTED |
       P.ZKND_SUPPORTED | P.ZKNE_SUPPORTED | P.ZKNH_SUPPORTED) begin : bitmanipalu
     bitmanipalu #(P) balu(
       .A, .B, .W64, .UW64, .BSelect, .ZBBSelect, .BMUActive,

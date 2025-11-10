@@ -5,25 +5,25 @@
 // Modified: 7/5/2022
 //
 // Purpose: unpack input: extract sign, exponent, significand, characteristics
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -32,7 +32,7 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
   input  logic                     En,         // enable the input
   input  logic [P.FMTBITS-1:0]     Fmt,        // format signal 00 - single 01 - double 11 - quad 10 - half
   input  logic                     FPUActive,  // Kill inputs when FPU is not active
-  output logic                     Sgn,        // sign bits of the number 
+  output logic                     Sgn,        // sign bits of the number
   output logic [P.NE-1:0]          Exp,        // exponent of the number  (converted to largest supported precision)
   output logic [P.NF:0]            Man,        // mantissa of the number  (converted to largest supported precision)
   output logic                     NaN,        // is the number a NaN
@@ -61,7 +61,7 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
       assign Exp = {In[P.FLEN-2:P.NF+1], In[P.NF]|~ExpNonZero};  // exponent.  subnormal numbers have effective biased exponent of 1
       assign ExpMax = &In[P.FLEN-2:P.NF];  // is the exponent all 1's
       assign PostBox = In;
-  
+
   end else if (P.FPSIZES == 2) begin   // if there are 2 floating point formats supported
       // largest format | smaller format
       //----------------------------------
@@ -85,7 +85,7 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
       always_comb
         if (BadNaNBox) begin
           PostBox = {{(P.FLEN-P.LEN1){1'b1}}, 1'b1, {(P.NE1+1){1'b1}}, {(P.LEN1-P.NE1-2){1'b0}}};
-        end else 
+        end else
           PostBox = In;
 
       // choose sign bit depending on format - 1=larger precision 0=smaller precision
@@ -95,23 +95,23 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
       assign Frac = Fmt ? In[P.NF-1:0] : {In[P.NF1-1:0], (P.NF-P.NF1)'(0)};
 
       // is the exponent non-zero
-      assign ExpNonZero = Fmt ? |In[P.FLEN-2:P.NF] : |In[P.LEN1-2:P.NF1]; 
+      assign ExpNonZero = Fmt ? |In[P.FLEN-2:P.NF] : |In[P.LEN1-2:P.NF1];
 
       // example double to single conversion:
       // 1023 = 0011 1111 1111
       // 127  = 0000 0111 1111 (subtract this)
       // 896  = 0011 1000 0000
-      // sexp = 0000 bbbb bbbb (add this) b = bit d = ~b 
-      // dexp = 0bdd dbbb bbbb 
+      // sexp = 0000 bbbb bbbb (add this) b = bit d = ~b
+      // dexp = 0bdd dbbb bbbb
       // also need to take into account possible zero/Subnorm/inf/NaN values
 
       // extract the exponent, converting the smaller exponent into the larger precision if necessary
       //      - if the original precision had a Subnormal number convert the exponent value 1
-      assign Exp = Fmt ? {In[P.FLEN-2:P.NF+1], In[P.NF]|~ExpNonZero} : {In[P.LEN1-2], {P.NE-P.NE1{~In[P.LEN1-2]}}, In[P.LEN1-3:P.NF1+1], In[P.NF1]|~ExpNonZero}; 
+      assign Exp = Fmt ? {In[P.FLEN-2:P.NF+1], In[P.NF]|~ExpNonZero} : {In[P.LEN1-2], {P.NE-P.NE1{~In[P.LEN1-2]}}, In[P.LEN1-3:P.NF1+1], In[P.NF1]|~ExpNonZero};
 
       // is the exponent all 1's
       assign ExpMax = Fmt ? &In[P.FLEN-2:P.NF] : &In[P.LEN1-2:P.NF1];
-  
+
   end else if (P.FPSIZES == 3) begin       // three floating point precisions supported
 
       // largest format | larger format  | smallest format
@@ -173,23 +173,23 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
               P.FMT:   ExpNonZero = |In[P.FLEN-2:P.NF];   // if input is largest precision (P.FLEN - ie quad or double)
               P.FMT1:  ExpNonZero = |In[P.LEN1-2:P.NF1];  // if input is larger precision (P.LEN1 - double or single)
               P.FMT2:  ExpNonZero = |In[P.LEN2-2:P.NF2];  // if input is smallest precision (P.LEN2 - single or half)
-              default: ExpNonZero = 1'bx; 
+              default: ExpNonZero = 1'bx;
           endcase
-          
+
       // example double to single conversion:
       // 1023 = 0011 1111 1111
       // 127  = 0000 0111 1111 (subtract this)
       // 896  = 0011 1000 0000
-      // sexp = 0000 bbbb bbbb (add this) b = bit d = ~b 
-      // dexp = 0bdd dbbb bbbb 
+      // sexp = 0000 bbbb bbbb (add this) b = bit d = ~b
+      // dexp = 0bdd dbbb bbbb
       // also need to take into account possible zero/Subnorm/inf/NaN values
 
       // convert the larger precision's exponent to use the largest precision's bias
-      always_comb 
+      always_comb
           case (Fmt)
               P.FMT:  Exp = {In[P.FLEN-2:P.NF+1], In[P.NF]|~ExpNonZero};
-              P.FMT1: Exp = {In[P.LEN1-2], {P.NE-P.NE1{~In[P.LEN1-2]}}, In[P.LEN1-3:P.NF1+1], In[P.NF1]|~ExpNonZero}; 
-              P.FMT2: Exp = {In[P.LEN2-2], {P.NE-P.NE2{~In[P.LEN2-2]}}, In[P.LEN2-3:P.NF2+1], In[P.NF2]|~ExpNonZero}; 
+              P.FMT1: Exp = {In[P.LEN1-2], {P.NE-P.NE1{~In[P.LEN1-2]}}, In[P.LEN1-3:P.NF1+1], In[P.NF1]|~ExpNonZero};
+              P.FMT2: Exp = {In[P.LEN2-2], {P.NE-P.NE2{~In[P.LEN2-2]}}, In[P.LEN2-3:P.NF2+1], In[P.NF2]|~ExpNonZero};
               default: Exp = {P.NE{1'bx}};
           endcase
 
@@ -203,8 +203,8 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
           endcase
 
   end else if (P.FPSIZES == 4) begin      // if all precsisons are supported - quad, double, single, and half
-  
-      //    quad   |  double  |  single  |  half    
+
+      //    quad   |  double  |  single  |  half
       //-------------------------------------------------------------------
       //   P.Q_LEN  |  P.D_LEN  |  P.S_LEN  |  P.H_LEN     length of floating point number
       //   P.Q_NE   |  P.D_NE   |  P.S_NE   |  P.H_NE      length of exponent
@@ -229,7 +229,7 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
             2'b00: PostBox = {{(P.Q_LEN-P.S_LEN){1'b1}}, 1'b1, {(P.S_NE+1){1'b1}}, {(P.S_LEN-P.S_NE-2){1'b0}}};
             2'b10: PostBox = {{(P.Q_LEN-P.H_LEN){1'b1}}, 1'b1, {(P.H_NE+1){1'b1}}, {(P.H_LEN-P.H_NE-2){1'b0}}};
           endcase
-        end else 
+        end else
           PostBox = In;
 
       // extract sign bit
@@ -257,18 +257,18 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
           case (Fmt)
               2'b11: ExpNonZero = |In[P.Q_LEN-2:P.Q_NF];
               2'b01: ExpNonZero = |In[P.D_LEN-2:P.D_NF];
-              2'b00: ExpNonZero = |In[P.S_LEN-2:P.S_NF]; 
-              2'b10: ExpNonZero = |In[P.H_LEN-2:P.H_NF]; 
+              2'b00: ExpNonZero = |In[P.S_LEN-2:P.S_NF];
+              2'b10: ExpNonZero = |In[P.H_LEN-2:P.H_NF];
           endcase
 
       // example double to single conversion:
       // 1023 = 0011 1111 1111
       // 127  = 0000 0111 1111 (subtract this)
       // 896  = 0011 1000 0000
-      // sexp = 0000 bbbb bbbb (add this) b = bit d = ~b 
-      // dexp = 0bdd dbbb bbbb 
+      // sexp = 0000 bbbb bbbb (add this) b = bit d = ~b
+      // dexp = 0bdd dbbb bbbb
       // also need to take into account possible zero/Subnorm/inf/NaN values
-      
+
       // convert the double precision exponent into quad precision
       // 1 is added to the exponent if the input is zero or subnormal
       always_comb
@@ -276,11 +276,11 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
               2'b11: Exp = {In[P.Q_LEN-2:P.Q_NF+1], In[P.Q_NF]|~ExpNonZero};
               2'b01: Exp = {In[P.D_LEN-2], {P.Q_NE-P.D_NE{~In[P.D_LEN-2]}}, In[P.D_LEN-3:P.D_NF+1], In[P.D_NF]|~ExpNonZero};
               2'b00: Exp = {In[P.S_LEN-2], {P.Q_NE-P.S_NE{~In[P.S_LEN-2]}}, In[P.S_LEN-3:P.S_NF+1], In[P.S_NF]|~ExpNonZero};
-              2'b10: Exp = {In[P.H_LEN-2], {P.Q_NE-P.H_NE{~In[P.H_LEN-2]}}, In[P.H_LEN-3:P.H_NF+1], In[P.H_NF]|~ExpNonZero}; 
+              2'b10: Exp = {In[P.H_LEN-2], {P.Q_NE-P.H_NE{~In[P.H_LEN-2]}}, In[P.H_LEN-3:P.H_NF+1], In[P.H_NF]|~ExpNonZero};
           endcase
-  
+
       // is the exponent all 1's
-      always_comb 
+      always_comb
           case (Fmt)
               2'b11: ExpMax = &In[P.Q_LEN-2:P.Q_NF];
               2'b01: ExpMax = &In[P.D_LEN-2:P.D_NF];

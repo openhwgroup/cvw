@@ -21,7 +21,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "WALLY-TEST-LIB-64.h" 
+#include "WALLY-TEST-LIB-64.h"
 
 RVTEST_ISA("RV64I_Zicsr")
 RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;",csr-permission-s)
@@ -32,7 +32,7 @@ TRAP_HANDLER m
 
 # Test 5.2.3.6: Test that all the machine mode CSR's are inaccessible for reads and writes in S mode.
 
-# *** several of these appear not to be implemented in the assembler? 
+# *** several of these appear not to be implemented in the assembler?
 # I get "assembler messages: error: unknown CSR" with many of them.
 
 GOTO_S_MODE 0x0, 0x0
@@ -69,7 +69,7 @@ WRITE_READ_CSR mseccfg, 0x111
 
 # Machine Memory Protection
 WRITE_READ_CSR pmpcfg0, 0x111
-WRITE_READ_CSR pmpcfg2, 0x111 # pmpcfg 1 and 3 dont exist in rv64. there's 1 pmpcfg reg per 8 pmpaddr regs 
+WRITE_READ_CSR pmpcfg2, 0x111 # pmpcfg 1 and 3 dont exist in rv64. there's 1 pmpcfg reg per 8 pmpaddr regs
 
 WRITE_READ_CSR pmpaddr0, 0x111
 WRITE_READ_CSR pmpaddr1, 0x111

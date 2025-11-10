@@ -21,9 +21,9 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "WALLY-TEST-LIB-64.h" 
+#include "WALLY-TEST-LIB-64.h"
 RVTEST_ISA("RV64I_Zicsr_Zifencei")
-RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;def NO_SAIL=True;",clint) 
+RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;def NO_SAIL=True;",clint)
 
 INIT_TESTS
 
@@ -44,13 +44,13 @@ test_cases:
 #
 #   Here is where the actual tests are held, or rather, what the actual tests do.
 #   each entry consists of 3 values that will be read in as follows:
-#   
+#
 #   '.8byte [x28 Value], [x29 Value], [x30 value]'
 #                     or
 #   '.8byte [address], [value], [test type]'
 #
 #   The encoding for x30 test type values can be found in the test handler in the framework file
-# 
+#
 # ---------------------------------------------------------------------------------------------
 
 # =========== Define CLINT registers ===========
@@ -71,7 +71,7 @@ test_cases:
 .8byte msip, 0xFFFFFFFE, write32_test   # write to invalid bits of msip
 .8byte 0x0, 0x00000000, readmip_test    # msip bit should be zero
 .8byte msip, 0x00000001, write32_test   # set msip to one
-.8byte 0x0, 0x00000008, readmip_test    # msip bit is set  
+.8byte 0x0, 0x00000008, readmip_test    # msip bit is set
 .8byte msip, 0x00000000, write32_test   # set msip to zero
 .8byte 0x0, 0x00000000, readmip_test    # msip bit is released
 

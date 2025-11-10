@@ -3,7 +3,7 @@
 ###########################################
 ## Written: Rose Thompson rose@rosethompson.net
 ## Created: 20 September 2023
-## Modified: 
+## Modified:
 ##
 ## Purpose: Parses the performance counters from a modelsim trace.
 ##
@@ -14,15 +14,15 @@
 ##
 ## SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 ##
-## Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-## except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+## Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+## except in compliance with the License, or, at your option, the Apache License version 2.0. You
 ## may obtain a copy of the License at
 ##
 ## https:##solderpad.org/licenses/SHL-2.1/
 ##
-## Unless required by applicable law or agreed to in writing, any work distributed under the 
-## License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-## either express or implied. See the License for the specific language governing permissions 
+## Unless required by applicable law or agreed to in writing, any work distributed under the
+## License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+## either express or implied. See the License for the specific language governing permissions
 ## and limitations under the License.
 ################################################################################################
 
@@ -57,7 +57,7 @@ def ParseBranchListFile(path):
             lst.append([predictorLog, predictorType, predictorParams])
             #print(predictorLog, predictorType, predictorParams)
     return lst
-    
+
 def ProcessFile(fileName):
     '''Extract performance counters from a modelsim log.  Outputs a list of tuples for each test/benchmark.
     The tuple contains the test name, optimization characteristics, and dictionary of performance counters.'''
@@ -163,7 +163,7 @@ def ComputePredSize(predictorType, predictorParams):
     else:
         print(f'Error unsupported predictor type {predictorType}')
         sys.exit(-1)
-        
+
 def BuildDataBase(predictorLogs):
     # Once done with the following loop, performanceCounterList will contain the predictor type and size along with the
     # raw performance counter data and the processed data on a per benchmark basis.  It also includes the geometric mean.
@@ -233,12 +233,12 @@ def ReportAsTable(benchmarkDict):
     sys.stdout.write('benchmark\t\t')
     for name in FirstLine:
         if(len(name) < 8): sys.stdout.write(f'{name}\t\t')
-        else: sys.stdout.write(f'{name}\t')        
+        else: sys.stdout.write(f'{name}\t')
     sys.stdout.write('\n')
     sys.stdout.write('size\t\t\t')
     for size in SecondLine:
         if(len(str(size)) < 8): sys.stdout.write(f'{size}\t\t')
-        else: sys.stdout.write(f'{size}\t')        
+        else: sys.stdout.write(f'{size}\t')
     sys.stdout.write('\n')
 
     if(args.summary):
@@ -263,7 +263,7 @@ def ReportAsText(benchmarkDict):
         print('Mean')
         for (name, typ, entries, size, val) in mean:
             sys.stdout.write(f'{name} {entries if not args.size else size} {val if not args.invert else 100 - val:0.2f}\n')
-        
+
     if(not args.summary):
         for benchmark in benchmarkDict:
             print(benchmark)
@@ -345,7 +345,7 @@ def ReportAsGraph(benchmarkDict, bar, FileName):
         else: plt.title(titles[ReportPredictorType])
         for branchPredName in sequences:
             data = sequences[branchPredName]
-            (xdata, ydata) = zip(*data) 
+            (xdata, ydata) = zip(*data)
             if args.invert: ydata = [100 - x for x in ydata]
             axes.plot(xdata, ydata, color=colors[index])
             axes.scatter(xdata, ydata, label=branchPredName, color=colors[index], marker=markers[index])
@@ -359,7 +359,7 @@ def ReportAsGraph(benchmarkDict, bar, FileName):
         axes.set_xticklabels(xdata)
         axes.grid(color='b', alpha=0.5, linestyle='dashed', linewidth=0.5)
         if FileName is None: plt.show()
-        else: plt.savefig(FileName)        
+        else: plt.savefig(FileName)
 
     # if(not args.summary):
     #     size = len(benchmarkDict)
@@ -487,7 +487,7 @@ if(ReportMode == 'text'):
 
 if(ReportMode == 'gui'):
     ReportAsGraph(benchmarkDict, args.bar, args.FileName)
-            
+
 # *** this is only needed of -b (no -s)
 
 # debug

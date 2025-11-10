@@ -6,25 +6,25 @@
 // Modified: 6 March 2023, 9 March 2024
 //
 // Purpose: Top level bit manipulation instruction decoder
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -39,7 +39,7 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
   output logic        BUW64D,                  // Indicates if it is a .uw type B instruction in Decode Stage
   output logic        BSubArithD,              // TRUE if ext, clr, andn, orn, xnor instruction in Decode Stage
   output logic        IllegalBitmanipInstrD,   // Indicates if it is unrecognized B instruction in Decode Stage
-  // Execute stage control signals             
+  // Execute stage control signals
   input  logic        StallE, FlushE,          // Stall, flush Execute stage
   output logic [2:0]  ALUSelectD,              // ALU select
   output logic [3:0]  BSelectE,                // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding
@@ -106,7 +106,7 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
       endcase
       if (P.XLEN==32)
         casez({OpD, Funct7D, Funct3D})
-          17'b0110011_0000100_100: BMUControlsD = `BMUCTRLW'b000_0010_0001_1_1_0_0_1_0_0_0_0_0;  // zexth (rv32)                       
+          17'b0110011_0000100_100: BMUControlsD = `BMUCTRLW'b000_0010_0001_1_1_0_0_1_0_0_0_0_0;  // zexth (rv32)
         endcase
       else if (P.XLEN==64)
         casez({OpD, Funct7D, Funct3D})
@@ -121,7 +121,7 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
         17'b0110011_0000101_010: BMUControlsD = `BMUCTRLW'b000_0011_0001_1_0_0_0_1_0_0_0_0_0;  // clmulr
         17'b0110011_0000101_0?1: BMUControlsD = `BMUCTRLW'b000_0011_0000_1_0_0_0_1_0_0_0_0_0;  // clmul/clmulh
       endcase
-    if (P.ZBKC_SUPPORTED) begin   
+    if (P.ZBKC_SUPPORTED) begin
       casez({OpD, Funct7D, Funct3D})
         17'b0110011_0000101_0?1: BMUControlsD = `BMUCTRLW'b000_0011_0000_1_0_0_0_1_0_0_0_0_0;  // clmul/clmulh
       endcase
@@ -163,7 +163,7 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
         17'b0011011_0000000_001: if (P.XLEN == 64) BMUControlsD = `BMUCTRLW'b001_0000_0000_1_1_1_0_1_0_0_0_0_0;  // slliw
         17'b0011011_0?00000_101: if (P.XLEN == 64) BMUControlsD = `BMUCTRLW'b001_0000_0000_1_1_1_0_1_0_0_0_0_0;  // sraiw, srliw
       endcase
-    
+
     if (P.ZBKB_SUPPORTED) begin // ZBKB Bitmanip
       casez({OpD,Funct7D, Funct3D})
         17'b0110011_0000100_100: BMUControlsD = `BMUCTRLW'b000_0100_0001_1_0_0_0_1_0_0_0_0_0;  // pack
@@ -173,9 +173,9 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
       endcase
       if (P.XLEN==32)
         casez({OpD, Funct7D, Funct3D})
-          17'b0010011_0000100_001: if (Rs2D == 5'b01111) 
+          17'b0010011_0000100_001: if (Rs2D == 5'b01111)
                                    BMUControlsD = `BMUCTRLW'b000_0100_0011_1_1_0_0_1_0_0_0_0_0;  //zip
-          17'b0010011_0000100_101: if (Rs2D == 5'b01111) 
+          17'b0010011_0000100_101: if (Rs2D == 5'b01111)
                                    BMUControlsD = `BMUCTRLW'b000_0100_0011_1_1_0_0_1_0_0_0_0_0;  //unzip
         endcase
       else if (P.XLEN==64)
@@ -195,14 +195,14 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
       endcase
       if (P.XLEN==32)
         casez({OpD, Funct7D, Funct3D})
-          17'b0010011_0110000_101: BMUControlsD = `BMUCTRLW'b001_0000_0111_1_1_0_0_1_0_1_0_0_0;  // rori (rv32)   
+          17'b0010011_0110000_101: BMUControlsD = `BMUCTRLW'b001_0000_0111_1_1_0_0_1_0_1_0_0_0;  // rori (rv32)
         endcase
       else if (P.XLEN==64)
         casez({OpD, Funct7D, Funct3D})
           17'b0111011_0110000_001: BMUControlsD = `BMUCTRLW'b001_0000_0111_1_0_1_0_1_0_1_0_0_0;  // rolw
           17'b0111011_0110000_101: BMUControlsD = `BMUCTRLW'b001_0000_0111_1_0_1_0_1_0_1_0_0_0;  // rorw
           17'b0010011_011000?_101: BMUControlsD = `BMUCTRLW'b001_0000_0111_1_1_0_0_1_0_1_0_0_0;  // rori (rv64)
-          17'b0011011_0110000_101: BMUControlsD = `BMUCTRLW'b001_0000_0111_1_1_1_0_1_0_1_0_0_0;  // roriw 
+          17'b0011011_0110000_101: BMUControlsD = `BMUCTRLW'b001_0000_0111_1_1_1_0_1_0_1_0_0_0;  // roriw
         endcase
     end
 
@@ -239,8 +239,8 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
           17'b0110011_0011001_000: BMUControlsD = `BMUCTRLW'b000_0111_0101_1_0_0_0_1_0_0_0_0_0;  // aes64es - encrypt final round
           17'b0110011_0011011_000: BMUControlsD = `BMUCTRLW'b000_0111_0001_1_0_0_0_1_0_0_0_0_0;  // aes64esm - encrypt mid round
         endcase
-    end  
-    
+    end
+
     if ((P.ZKND_SUPPORTED | P.ZKNE_SUPPORTED) & P.XLEN == 64) begin // ZKND and ZKNE shared instructions
       casez({OpD, Funct7D, Funct3D})
         17'b0010011_0011000_001: if (Rs2D[4] == 1'b1 & $unsigned(Rs2D[3:0]) <= 10)
@@ -251,7 +251,7 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
 
     if (P.ZKNH_SUPPORTED) begin // ZKNH
       casez({OpD, Funct7D, Funct3D})
-        17'b0010011_0001000_001: 
+        17'b0010011_0001000_001:
           if      (Rs2D == 5'b00010)   BMUControlsD = `BMUCTRLW'b000_1000_0000_1_0_0_0_1_0_0_0_0_0;  // sha256sig0
           else if (Rs2D == 5'b00011)   BMUControlsD = `BMUCTRLW'b000_1000_0001_1_0_0_0_1_0_0_0_0_0;  // sha256sig1
           else if (Rs2D == 5'b00000)   BMUControlsD = `BMUCTRLW'b000_1000_0010_1_0_0_0_1_0_0_0_0_0;  // sha256sum0
@@ -270,7 +270,7 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
 
       else if (P.XLEN==64)
         casez({OpD, Funct7D, Funct3D})
-          17'b0010011_0001000_001: 
+          17'b0010011_0001000_001:
             if      (Rs2D == 5'b00110) BMUControlsD = `BMUCTRLW'b000_1000_1000_1_0_0_0_1_0_0_0_0_0;  // sha512sig0
             else if (Rs2D == 5'b00111) BMUControlsD = `BMUCTRLW'b000_1000_1001_1_0_0_0_1_0_0_0_0_0;  // sha512sig1
             else if (Rs2D == 5'b00100) BMUControlsD = `BMUCTRLW'b000_1000_1010_1_0_0_0_1_0_0_0_0_0;  // sha512sum0
@@ -281,7 +281,7 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
 
   // Unpack Control Signals
   assign {BALUSelectD, BSelectD, ZBBSelectD, BRegWriteD,BALUSrcBD, BW64D, BUW64D, BALUOpD, BSubArithD, RotateD, MaskD, PreShiftD, IllegalBitmanipInstrD} = BMUControlsD;
-  
+
   // Pack BALUControl Signals
   assign BALUControlD = {RotateD, MaskD, PreShiftD};
 

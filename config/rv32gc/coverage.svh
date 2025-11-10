@@ -20,7 +20,7 @@
 `define PMP_16     // Choose between PMP_16 or PMP_64 or None
 
 // Base addresses specific for PMP
-`define RAM_BASE_ADDR       32'h80000000  // PMP Region starts at RAM_BASE_ADDR + LARGEST_PROGRAM 
+`define RAM_BASE_ADDR       32'h80000000  // PMP Region starts at RAM_BASE_ADDR + LARGEST_PROGRAM
 `define LARGEST_PROGRAM     32'h00002000
 
 // Define relevant addresses

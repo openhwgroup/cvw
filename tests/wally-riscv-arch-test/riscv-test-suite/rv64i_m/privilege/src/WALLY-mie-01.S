@@ -34,11 +34,11 @@ li x28, 0x8
 csrs mstatus, x28 // set mstatus.MIE bit to 1.
 WRITE_READ_CSR mie, 0x0 // force zeroing out mie CSR.
 
-// test 5.3.1.6 Interrupt enabling and priority tests 
+// test 5.3.1.6 Interrupt enabling and priority tests
 // testing with MIE bits set already tested in WALLY-trap
 // note that none of these interrupts should be caught or handled.
 
-jal cause_s_soft_interrupt 
+jal cause_s_soft_interrupt
 jal cause_m_soft_interrupt
 jal cause_s_time_interrupt
 jal cause_m_time_interrupt
@@ -51,4 +51,3 @@ jal cause_m_ext_interrupt
 END_TESTS
 
 TEST_STACK_AND_DATA
-

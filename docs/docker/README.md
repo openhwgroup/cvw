@@ -295,20 +295,20 @@ There are stages in the old Dockerfile:
 Description: permission problem in `/home/$USERNAME/cvw`.
 
 ```text
-$ podman run -v cvw_temp:/home/cad/cvw -e CLEAN_CVW=1 -e BUILD_RISCOF=1 -e RUN_QUESTA=1 -v /cad/mentor/questa_sim-2023.4:/cad/mentor/questa_sim-xxxx.x_x --rm wallysoc/regression_wally                          
-No CVW_GIT is provided                                                                                 
-rm: cannot remove '/home/cad/cvw': Device or resource busy                                             
-Cloning into '/home/cad/cvw'...                                                                        
-/home/cad/cvw/.git: Permission denied                                                                  
-chmod: cannot access '/home/cad/cvw/setup.sh': No such file or directory                               
-chmod: cannot access '/home/cad/cvw/site-setup.sh': No such file or directory                          
-make: *** No rule to make target 'install'.  Stop.                                                     
-make: *** No rule to make target 'verify'.  Stop.                                                      
-make: *** No rule to make target 'coverage'.  Stop.                                                    
-make: *** No rule to make target 'benchmarks'.  Stop.                                                  
-/home/cad/run_regression.sh: line 64: cd: /home/cad/cvw/sim: No such file or directory                 
+$ podman run -v cvw_temp:/home/cad/cvw -e CLEAN_CVW=1 -e BUILD_RISCOF=1 -e RUN_QUESTA=1 -v /cad/mentor/questa_sim-2023.4:/cad/mentor/questa_sim-xxxx.x_x --rm wallysoc/regression_wally  
+No CVW_GIT is provided  
+rm: cannot remove '/home/cad/cvw': Device or resource busy  
+Cloning into '/home/cad/cvw'...  
+/home/cad/cvw/.git: Permission denied  
+chmod: cannot access '/home/cad/cvw/setup.sh': No such file or directory  
+chmod: cannot access '/home/cad/cvw/site-setup.sh': No such file or directory  
+make: *** No rule to make target 'install'.  Stop.  
+make: *** No rule to make target 'verify'.  Stop.  
+make: *** No rule to make target 'coverage'.  Stop.  
+make: *** No rule to make target 'benchmarks'.  Stop.  
+/home/cad/run_regression.sh: line 64: cd: /home/cad/cvw/sim: No such file or directory  
 /home/cad/run_regression.sh: line 65: /home/cad/cvw/sim/regression_verilator.out: No such file or direc
-tory       
+tory  
 ```
 
 It may be caused by podman and I am not sure why it happens.

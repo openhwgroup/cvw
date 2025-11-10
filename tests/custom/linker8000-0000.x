@@ -1,18 +1,18 @@
 OUTPUT_FORMAT("elf64-littleriscv", "elf64-littleriscv",
-	      "elf64-littleriscv")
+              "elf64-littleriscv")
 OUTPUT_ARCH(riscv)
 ENTRY(_start)
 SECTIONS
 {
   /* Read-only sections, merged into text segment: */
   /* init segment to ensure we get a consistent start routine*/
-  . = 0x0000000080000000; 
-  . = ALIGN(0x0); 
-  .init : {  
-  	*(.init) 
-  } 
+  . = 0x0000000080000000;
+  . = ALIGN(0x0);
+  .init : {
+    *(.init)
+  }
   _start_end = .;
-  
+
   PROVIDE (__executable_start = SEGMENT_START("text-segment", 0x0)); . = SEGMENT_START("text-segment", _start_end);
   .interp         : { *(.interp) }
   .note.gnu.build-id  : { *(.note.gnu.build-id) }
@@ -93,12 +93,12 @@ SECTIONS
   .gcc_except_table   : ONLY_IF_RW { *(.gcc_except_table .gcc_except_table.*) }
   .exception_ranges   : ONLY_IF_RW { *(.exception_ranges*) }
   /* Thread Local Storage sections  */
-  .tdata	  :
-   {
-     PROVIDE_HIDDEN (__tdata_start = .);
+  .tdata   :
+  {
+    PROVIDE_HIDDEN (__tdata_start = .);
      *(.tdata .tdata.* .gnu.linkonce.td.*)
-   }
-  .tbss		  : { *(.tbss .tbss.* .gnu.linkonce.tb.*) *(.tcommon) }
+  }
+  .tbss     : { *(.tbss .tbss.* .gnu.linkonce.tb.*) *(.tcommon) }
   .preinit_array    :
   {
     PROVIDE_HIDDEN (__preinit_array_start = .);
@@ -195,7 +195,7 @@ SECTIONS
   . = ALIGN(64 / 8);
   __BSS_END__ = .;
     __global_pointer$ = MIN(__SDATA_BEGIN__ + 0x800,
-		            MAX(__DATA_BEGIN__ + 0x800, __BSS_END__ - 0x800));
+                          MAX(__DATA_BEGIN__ + 0x800, __BSS_END__ - 0x800));
   _end = .; PROVIDE (end = .);
   . = DATA_SEGMENT_END (.);
   /* Stabs debugging sections.  */

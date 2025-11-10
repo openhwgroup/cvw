@@ -155,7 +155,7 @@ module testbench;
         "arch64i":                                tests = arch64i;
         "arch64priv":                             tests = arch64priv;
         "arch64c":      if (P.ZCA_SUPPORTED)
-                          if (P.ZICSR_SUPPORTED)  
+                          if (P.ZICSR_SUPPORTED)
                             if (P.ZCD_SUPPORTED)  tests = {arch64c, arch64cpriv, arch64zcd};
                             else                  tests = {arch64c, arch64cpriv};
                           else                    tests = {arch64c};
@@ -184,7 +184,7 @@ module testbench;
         "arch64zbs":     if (P.ZBS_SUPPORTED)     tests = arch64zbs;
         "arch64zicboz":  if (P.ZICBOZ_SUPPORTED)  tests = arch64zicboz;
         "arch64zcb":     if (P.ZCB_SUPPORTED)     tests = arch64zcb;
-        "arch64zfh":     if (P.ZFH_SUPPORTED)     
+        "arch64zfh":     if (P.ZFH_SUPPORTED)
                            if (P.D_SUPPORTED)     tests = {arch64zfh, arch64zfh_d};
                            else                   tests = arch64zfh;
         "arch64zfh_fma": if (P.ZFH_SUPPORTED)     tests = arch64zfh_fma;
@@ -208,8 +208,8 @@ module testbench;
         "arch32i":                                tests = arch32i;
         "arch32priv":                             tests = arch32priv;
         "arch32c":      if (P.C_SUPPORTED)
-                          if (P.ZICSR_SUPPORTED)  
-                            if (P.ZCF_SUPPORTED)  
+                          if (P.ZICSR_SUPPORTED)
+                            if (P.ZCF_SUPPORTED)
                               if (P.ZCD_SUPPORTED)  tests = {arch32c, arch32cpriv, arch32zcf, arch32zcd};
                               else                tests = {arch32c, arch32cpriv, arch32zcf};
                             else                  tests = {arch32c, arch32cpriv};
@@ -236,7 +236,7 @@ module testbench;
         "arch32zbs":     if (P.ZBS_SUPPORTED)     tests = arch32zbs;
         "arch32zicboz":  if (P.ZICBOZ_SUPPORTED)  tests = arch32zicboz;
         "arch32zcb":     if (P.ZCB_SUPPORTED)     tests = arch32zcb;
-        "arch32zfh":     if (P.ZFH_SUPPORTED)     
+        "arch32zfh":     if (P.ZFH_SUPPORTED)
                            if (P.D_SUPPORTED)     tests = {arch32zfh, arch32zfh_d};
                            else                   tests = arch32zfh;
         "arch32zfh_fma": if (P.ZFH_SUPPORTED)     tests = arch32zfh_fma;
@@ -363,9 +363,9 @@ module testbench;
   //procedural blocks. VCS supports the dynamic types in the implicit sensitivity list of always @* block as specified in the Section 9.2 of the IEEE Standard SystemVerilog Specification 1800-2012.
   //To support memory load and dump task verbosity: flag : -diag sys_task_mem
   always @(*) begin
-  	begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
- 	end_signature_addr = ProgramAddrLabelArray["sig_end_canary"];
-  	signature_size = end_signature_addr - begin_signature_addr;
+    begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
+    end_signature_addr = ProgramAddrLabelArray["sig_end_canary"];
+    signature_size = end_signature_addr - begin_signature_addr;
   end
   logic EcallFaultM;
   if (P.ZICSR_SUPPORTED)
@@ -729,7 +729,7 @@ module testbench;
   flopenr #(P.XLEN) PCMReg(clk, reset, ~dut.core.StallM, dut.core.PCE, PCM);
   always @(posedge clk) begin
     TestComplete <= ((InstrM == 32'h6f) & dut.core.InstrValidM ) |
-		   ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"] & dut.core.lsu.IEUAdrM != 0) & InstrMName == "SW"); // |
+       ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"] & dut.core.lsu.IEUAdrM != 0) & InstrMName == "SW"); // |
     //   (functionName.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.InstrValidM & PrevPCZero));
     if (reset) PrevPCZero <= 0;
     else if (dut.core.InstrValidM) PrevPCZero <= (PCM == 0 & dut.core.ifu.InstrM == 0);
@@ -1017,7 +1017,7 @@ end
       if (signature[i] !== testbench.DCacheFlushFSM.ShadowRAM[testadr+i]) begin
         errors = errors+1;
         $display("  Error on test %s result %d: adr = %h sim (D$) %h signature = %h",
-			     TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], signature[i]);
+          TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], signature[i]);
         $stop; // if this is changed to $finish, wally-batch.do does not get to the next step to run coverage
       end
     end
@@ -1073,4 +1073,3 @@ task automatic updateProgramAddrLabelArray;
   /* verilator lint_on WIDTHTRUNC */
   /* verilator lint_on WIDTHEXPAND */
 endtask
-

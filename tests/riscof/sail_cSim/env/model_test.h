@@ -32,7 +32,7 @@
 //RV_COMPLIANCE_DATA_END
 #define RVMODEL_DATA_END                                                      \
   .align 4;\
-  .global end_signature; end_signature:  
+  .global end_signature; end_signature:
 
 //RVTEST_IO_INIT
 #define RVMODEL_IO_INIT
@@ -143,10 +143,10 @@ sw zero, 0x30(t0);
 #define RVMODEL_CLR_SSW_INT
 
 #define RVMODEL_MCLR_SSW_INT \
-csrrci t6, mip, 2; 
+csrrci t6, mip, 2;
 
 #define RVMODEL_SCLR_SSW_INT \
-csrrci t6, sip, 2; 
+csrrci t6, sip, 2;
 
 #define RVMODEL_CLR_STIMER_INT
 

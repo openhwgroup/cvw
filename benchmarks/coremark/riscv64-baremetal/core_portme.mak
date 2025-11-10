@@ -17,38 +17,38 @@
 #File: core_portme.mak
 
 # Flag: RISCVTOOLS
-#	Use this flag to point to your RISCV tools
+# Use this flag to point to your RISCV tools
 RISCVTOOLS=$(RISCV)
 # Flag: RISCVTYPE
 #   Type of toolchain to use
 RISCVTYPE=riscv64-unknown-elf
 # Flag: OUTFLAG
-#	Use this flag to define how to to get an executable (e.g -o)
+# Use this flag to define how to to get an executable (e.g -o)
 OUTFLAG= -o
 # Flag: CC
-#	Use this flag to define compiler to use
+# Use this flag to define compiler to use
 # david_harris@hmc.edu 20 Nov 2021 removed full path; require
-CC = $(RISCVTOOLS)/bin/$(RISCVTYPE)-gcc 
+CC = $(RISCVTOOLS)/bin/$(RISCVTYPE)-gcc
 #CC = $(RISCVTYPE)-gcc
 # Flag: CFLAGS
-#	Use this flag to define compiler options. Note, you can add compiler options from the command line using XCFLAGS="other flags"
+# Use this flag to define compiler options. Note, you can add compiler options from the command line using XCFLAGS="other flags"
 #PORT_CFLAGS = -O2 -static -std=gnu99
 PORT_CFLAGS = -mcmodel=medany -fno-tree-loop-distribute-patterns -fno-common -lm -lgcc -T $(PORT_DIR)/link.ld
 FLAGS_STR = "$(PORT_CFLAGS) $(XCFLAGS) $(XLFLAGS) $(LFLAGS_END)"
 CFLAGS = $(PORT_CFLAGS) -I$(PORT_DIR) -I. -DFLAGS_STR=\"$(FLAGS_STR)\"
-#Flag: LFLAGS_END
-#	Define any libraries needed for linking or other flags that should come at the end of the link line (e.g. linker scripts).
-#	Note: On certain platforms, the default clock_gettime implementation is supported but requires linking of librt.
+# Flag: LFLAGS_END
+# Define any libraries needed for linking or other flags that should come at the end of the link line (e.g. linker scripts).
+# Note: On certain platforms, the default clock_gettime implementation is supported but requires linking of librt.
 LFLAGS_END += -static-libgcc -lgcc
 # Flag: PORT_SRCS
 # Port specific source files can be added here
 PORT_SRCS = $(PORT_DIR)/core_portme.c $(PORT_DIR)/syscalls.c $(PORT_DIR)/crt.S
 # Flag: LOAD
-#	Define this flag if you need to load to a target, as in a cross compile environment.
+# Define this flag if you need to load to a target, as in a cross compile environment.
 
 # Flag: RUN
-#	Define this flag if running does not consist of simple invocation of the binary.
-#	In a cross compile environment, you need to define this.
+# Define this flag if running does not consist of simple invocation of the binary.
+# In a cross compile environment, you need to define this.
 
 #For flashing and using a tera term macro, you could use
 #LOAD = flash ADDR
@@ -70,11 +70,11 @@ EXE = .bare.riscv
 # In this case, you also need to define below how to create an object file, and how to link.
 ifdef SEPARATE_COMPILE
 
-LD		= $(RISCVTOOLS)/bin/$(RISCVTYPE)-gcc
-OBJOUT 	= -o
-LFLAGS 	=
-OFLAG 	= -o
-COUT 	= -c
+LD.    = $(RISCVTOOLS)/bin/$(RISCVTYPE)-gcc
+OBJOUT = -o
+LFLAGS =
+OFLAG  = -o
+COUT   = -c
 # Flag: PORT_OBJS
 # Port specific object files can be added here
 PORT_OBJS = $(PORT_DIR)/core_portme$(OEXT)
@@ -116,26 +116,26 @@ build_pgo_gcc:
 port_postbuild:
 
 # Target: port_postrun
-# 	Do platform specific after run stuff.
-#	E.g. reset the board, backup the logfiles etc.
+# Do platform specific after run stuff.
+# E.g. reset the board, backup the logfiles etc.
 .PHONY: port_postrun
 port_postrun:
 
 # Target: port_prerun
-# 	Do platform specific after run stuff.
-#	E.g. reset the board, backup the logfiles etc.
+# Do platform specific after run stuff.
+# E.g. reset the board, backup the logfiles etc.
 .PHONY: port_prerun
 port_prerun:
 
 # Target: port_postload
-# 	Do platform specific after load stuff.
-#	E.g. reset the reset power to the flash eraser
+#  Do platform specific after load stuff.
+# E.g. reset the reset power to the flash eraser
 .PHONY: port_postload
 port_postload:
 
 # Target: port_preload
-# 	Do platform specific before load stuff.
-#	E.g. reset the reset power to the flash eraser
+#  Do platform specific before load stuff.
+# E.g. reset the reset power to the flash eraser
 .PHONY: port_preload
 port_preload:
 

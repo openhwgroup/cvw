@@ -129,7 +129,7 @@ fi
 # Calculate partition information =====================================
 
 # Size of OpenSBI and the Kernel in 512B blocks
-DST_SIZE=$(ls -la --block-size=512 $DEVICE_TREE | cut -d' ' -f 5 ) 
+DST_SIZE=$(ls -la --block-size=512 $DEVICE_TREE | cut -d' ' -f 5 )
 FW_JUMP_SIZE=$(ls -la --block-size=512 $FW_JUMP | cut -d' ' -f 5 )
 KERNEL_SIZE=$(ls -la --block-size=512 $LINUX_KERNEL | cut -d' ' -f 5 )
 
@@ -148,7 +148,7 @@ echo
 if [[ $REPLY =~ ^[Yy]$ ]] ; then
     DEVBASENAME=$(basename $SDCARD)
     CHECKMOUNT=$(lsblk | grep "$DEVBASENAME"4 | tr -s ' ' | cut -d' ' -f 7)
-    
+
     if [ ! -z $CHECKMOUNT ] ; then
         sudo umount -v $CHECKMOUNT
     fi
@@ -170,7 +170,7 @@ if [[ $REPLY =~ ^[Yy]$ ]] ; then
     sudo sgdisk -z $SDCARD
 
     sleep 1
-    
+
     echo -e "$NAME Creating GUID Partition Table"
     sudo sgdisk -g --clear --set-alignment=1 \
          --new=1:34:+$DST_SIZE: --change-name=1:'fdt' \
@@ -199,7 +199,7 @@ if [[ $REPLY =~ ^[Yy]$ ]] ; then
     sudo fsck -fv "$SDCARD""$PART_PREFIX"4
     sudo mkdir /mnt/$MNT_DIR
 
-    sudo mount -o init_itable=0 -v "$SDCARD""$PART_PREFIX"4 /mnt/$MNT_DIR 
+    sudo mount -o init_itable=0 -v "$SDCARD""$PART_PREFIX"4 /mnt/$MNT_DIR
 
     sudo umount -v /mnt/$MNT_DIR
 

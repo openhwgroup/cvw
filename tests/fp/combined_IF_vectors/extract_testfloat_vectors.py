@@ -61,7 +61,7 @@ for vector in sqrt_vectors:
     config_list = vector.split(".")[0].split("_")
     operation = "2" #sqrt
     rounding_mode = round_dict[str(config_list[2])]
-    # use name to create our new tv and open vector    
+    # use name to create our new tv and open vector
     with open(dest_dir + "cvw_" + vector, 'a') as dest_file, open(source_dir + vector) as src_file:
         # for each test in the vector
         for i in src_file.readlines():

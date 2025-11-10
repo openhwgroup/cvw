@@ -39,7 +39,7 @@ $(TESTDIR)/%: | $(TESTDIR)
 
 # Compile c code
 .PRECIOUS: $(TESTDIR)/%.elf
-$(TESTDIR)/%.elf: $(TESTDIR)/%.c 
+$(TESTDIR)/%.elf: $(TESTDIR)/%.c
 	riscv64-unknown-elf-gcc $(MARCH) $(MABI) $(CFLAGS) $(LINK_FLAGS) -T$(LINKER) -I$(START_LIB_DIR) $(START_LIB) -g -o $@ $< > /dev/null
 	$(MAKE) $@.objdump
 

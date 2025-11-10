@@ -39,7 +39,7 @@ csrc mstatus, x28 // clear mstatus.MIE bit
 WRITE_READ_CSR sie, 0x0 // force zeroing out mie CSR.
 
 
-// test 5.3.1.6 Interrupt enabling and priority tests 
+// test 5.3.1.6 Interrupt enabling and priority tests
 // testing with SIE bits set already tested in WALLY-trap-s
 // note that none of these interrupts should be caught or handled.
 

@@ -16,21 +16,28 @@ repos:
       - id: check-added-large-files
       - id: check-case-conflict
       - id: check-docstring-first
-      # - id: check-executables-have-shebangs
-      # - id: check-shebang-scripts-are-executable
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
       - id: check-symlinks
         exclude: bin/sim_bp # symlink to compiled executable
       - id: requirements-txt-fixer
         files: requirements.txt
-      # - id: end-of-file-fixer
-      # - id: trailing-whitespace
-      #   args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
       - id: check-merge-conflict
         args: ["--assume-in-merge"]
         exclude: \.adoc$ # sections titles Level 6 "=======" get flagged otherwise
       - id: check-json
       - id: check-toml
       - id: check-yaml
+
+  # Use spaces, not tabs
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.5
+    hooks:
+      - id: forbid-tabs
+        exclude: '.*\.(diff|dump|patch|svg|mk|mak)|(M|m)akefile*'
 
   # Ruff python linter
   - repo: https://github.com/astral-sh/ruff-pre-commit
