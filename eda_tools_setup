@@ -29,5 +29,5 @@ export PATH=$WALLY/bin:$PATH
 # Verilator needs a larger core file size to simulate CORE-V Wally
 ulimit -c 300000
 
-export LIBRARY_SIM_PATH="/data/libraries/NangateOpenCellLibrary_PDKv1_3v2010_12/Front_End/Verilog/NangateOpenCellLibrary_fixed.v"
+export LIBRARY_SIM_PATH="/data/libraries/NangateOpenCellLibrary_PDKv1_3_v2010_12/Front_End/Verilog/NangateOpenCellLibrary_fixed.v"
 
