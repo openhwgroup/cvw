@@ -38,7 +38,7 @@ It currently supports only the nangate45 tech library without any additional mod
 # How to simulate
 In order to run a simulation and dump the vcd (for the fault simulation):
 ```bash
-wsim wsim --elf ./examples/asm/sbst/sbst --sim questa --tb testbench --vcd syn_polito_rv32e --define GATE_LEVEL
+wsim wsim --elf ./examples/asm/sbst/sbst.elf --sim questa --tb testbench --vcd syn_polito_rv32e
 ```
 # How to run the fault simulation on the gate-level netlist
 
