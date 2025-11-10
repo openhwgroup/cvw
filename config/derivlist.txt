@@ -1461,6 +1461,7 @@ derive cache_rv64gc rv64gc
 
 deriv   syn_polito_rv32e       rv32e
 ZICSR_SUPPORTED         1
+E_SUPPORTED             0
 PMP_ENTRIES             16
 DTIM_RANGE              64'h1FF
 IROM_RANGE              64'h1FF
@@ -1472,3 +1473,7 @@ DCACHE_NUMWAYS          32'd1
 ICACHE_NUMWAYS          32'd1
 BPRED_SIZE              32'd5
 BTB_SIZE                32'd5
+DCACHE_SUPPORTED        0
+ICACHE_SUPPORTED        0
+# User mode supported
+U_SUPPORTED             1
