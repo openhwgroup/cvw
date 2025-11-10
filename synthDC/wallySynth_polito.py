@@ -2,18 +2,31 @@
 # Madeleine Masser-Frye mmasserfrye@hmc.edu 1/2023
 
 import argparse
-import subprocess
+import subprocess, os, shutil
+import re
 from multiprocessing import Pool
+from datetime import datetime
 
+def extract_datetime(s):
+    match = re.search(r'\d{4}-\d{2}-\d{2}-\d{2}-\d{2}', s)
+    if match:
+        return datetime.strptime(match.group(), "%Y-%m-%d-%H-%M")
+    else:
+        return datetime.min  # or raise an error
+    
 
 def runSynth(config, mod, tech, freq, maxopt, usesram, cores):
     global pool
     command = f"make synth DESIGN=wallypipelinedcore CONFIG={config} MOD={mod} TECH={tech} DRIVE=FLOP FREQ={freq} MAXOPT={maxopt} USESRAM={usesram} MAXCORES={cores}"
-    pool.map(mask, [command])
-
-def mask(command):
-    subprocess.Popen(command, shell=True)
-
+    subprocess.run([command],shell=True)
+    
+    gateFolder = os.path.join(os.environ['WALLY'],"gate")
+    currDir = "./runs/"
+    folders = [name for name in os.listdir(currDir) if os.path.isdir(os.path.join(currDir, name))]
+    sorted_folders = sorted(folders, key=extract_datetime, reverse=True)
+    
+    folderOfInterest = os.path.join(currDir, sorted_folders[0], "mapped")
+    shutil.copytree(folderOfInterest, gateFolder)
 
 if __name__ == '__main__':
 
