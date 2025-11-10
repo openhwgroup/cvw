@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 //
 // Written: me@KatherineParry.com
-// Modified: 7/5/2022
+// Modified: 01/23/2025 by marcus@infinitymdm.dev
 //
 // Purpose: Leading Zero Counter
 //
@@ -24,16 +24,30 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module lzc #(parameter WIDTH = 1) (
-  input  logic [WIDTH-1:0]            num,    // number to count the leading zeroes of
-  output logic [$clog2(WIDTH+1)-1:0]  ZeroCnt // the number of leading zeroes
+module lzc #(
+  parameter WIDTH = 1,
+  parameter CBITS = $clog2(WIDTH+1)
+) (
+  input  logic [WIDTH-1:0]  num,    // number to count the leading zeroes of
+  output logic [CBITS-1:0]  ZeroCnt // the number of leading zeroes
 );
 
-  integer i;
+  // Use a recursive binary tree structure to avoid unsynthesizable loops
+  logic [WIDTH/2-1:0] Lnum, Rnum;
+  logic [CBITS-2:0]   LCnt, RCnt;
 
-  always_comb begin
-    i = 0;
-    while ((i < WIDTH) & ~num[WIDTH-1-i]) i = i+1;  // search for leading one
-    ZeroCnt = i[$clog2(WIDTH+1)-1:0];
-  end
+  assign Lnum = num[WIDTH-1-:WIDTH/2];
+  assign Rnum = num[WIDTH/2-1-:WIDTH/2];
+  generate
+    if (WIDTH <= 2) begin
+      assign ZeroCnt = (num == 2'b00) ? 2'b10 :
+                       (num == 2'b01) ? 2'b01 : 2'b00;
+    end else begin
+      lzc #(WIDTH/2) l_lcz (Lnum, LCnt);
+      lzc #(WIDTH/2) r_lcz (Rnum, RCnt);
+      assign ZeroCnt = (~LCnt[CBITS-2]) ? {LCnt[CBITS-2] & RCnt[CBITS-2],           1'b0, LCnt[CBITS-3:0]} :
+                                          {LCnt[CBITS-2] & RCnt[CBITS-2], ~RCnt[CBITS-2], RCnt[CBITS-3:0]};
+    end
+  endgenerate
+
 endmodule
