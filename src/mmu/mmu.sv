@@ -76,7 +76,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   logic [1:0]                  PBMemoryType;             // PBMT field of PTE during TLB hit, or 00 otherwise
   logic                        AtomicMisalignedCausesAccessFaultM; // Misaligned atomics are not handled by hardware even with ZICCLSM, so it throws an access fault instead of misaligned with ZICCLSM
   logic [1:0]                  EffectivePrivilegeModeW;  // Effective privilege mode accounting for MPRV
-
+  logic                        MisalignedAllowedM;       // System can throw misaligned if ZICCLSM is not supported, or access is uncachable and TLB has found the entry.
 
   // Get Effective Privilege Mode
   // for DLB, when mstatus.MPRV=1, use mstatus.MPP rather than the current privilege mode
@@ -141,9 +141,13 @@ module mmu import cvw::*;  #(parameter cvw_t P,
       2'b10:  DataMisalignedM = VAdr[1] | VAdr[0]; // lw, sw, flw, fsw, lwu
       2'b11:  DataMisalignedM = |VAdr[2:0];        // ld, sd, fld, fsd
     endcase
-  // When ZiCCLSM_SUPPORTED, misalgined cacheable loads and stores are handled in hardware so they do not throw a misaligned fault
-  assign LoadMisalignedFaultM     = DataMisalignedM & ReadNoAmoAccessM & ~(P.ZICCLSM_SUPPORTED & Cacheable) & ~TLBMiss;
-  assign StoreAmoMisalignedFaultM = DataMisalignedM & WriteAccessM & ~(P.ZICCLSM_SUPPORTED & Cacheable) & ~TLBMiss; // Store and AMO both assert WriteAccess
+
+  // When ZICCLSM_SUPPORTED, misaligned cacheable loads and stores are handled in hardware so they do not throw a misaligned fault
+  // When ZICCLSM_SUPPORTED, misaligned uncachable accesses are lower priority than page and access faults, so must wait for TLB to resolve
+  // When ZICCLSM is not supported, misaligned accesses always fault, with higher priority than access or page fault
+  assign MisalignedAllowedM       = ~P.ZICCLSM_SUPPORTED | (~Cacheable & ~TLBMiss); // should a misaligned access fault?
+  assign LoadMisalignedFaultM     = DataMisalignedM & ReadNoAmoAccessM & MisalignedAllowedM;
+  assign StoreAmoMisalignedFaultM = DataMisalignedM & WriteAccessM & MisalignedAllowedM; // Store and AMO both assert WriteAccess
 
   // a misaligned Atomic causes an access fault rather than a misaligned fault if a misaligned load/store is handled in hardware
   // this is subtle - see privileged spec 3.6.3.3
