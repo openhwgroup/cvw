@@ -28,6 +28,11 @@ def runSynth(config, mod, tech, freq, maxopt, usesram, cores):
     folderOfInterest = os.path.join(currDir, sorted_folders[0], "mapped")
     shutil.copytree(folderOfInterest, gateFolder)
 
+    # Adding link to tech lib for simulation 
+    techLibSimModel = os.environ['LIBRARY_SIM_PATH']
+    techLibSimModelLink = os.path.join(gateFolder, "techLib.v" )
+    os.symlink(techLibSimModel,techLibSimModelLink)
+
 if __name__ == '__main__':
 
     techs = ['sky130', 'sky90', 'tsmc28', 'tsmc28psyn', 'nangate45']
