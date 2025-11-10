@@ -21,7 +21,7 @@ args=parser.parse_args()
 
 fin_path = glob.glob(f"{os.getenv('WALLY')}/src/**/{args.DESIGN}.sv",recursive=True)[0]
 
-with open(fin_path) as fin:
+with open(fin_path, encoding='utf-8') as fin:
     lines = fin.readlines()
 
     # keeps track of what line number the module header begins
