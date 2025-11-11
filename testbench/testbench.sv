@@ -134,6 +134,10 @@ module testbench;
   logic PrevPCZero;
   logic RVVIStall;
 
+  integer elfFD;
+  byte header[0:4];
+  byte readBytes;
+
   initial begin
     // look for arguments passed to simulation, or use defaults
     if (!$value$plusargs("TEST=%s", TEST))
@@ -147,6 +151,21 @@ module testbench;
         sim_log_prefix = "";  // Assign default value if not passed
     end
     //$display("TEST = %s ElfFile = %s", TEST, ElfFile);
+
+    if (ElfFile != "none") begin // If Elf File passed in, check its bit width
+      elfFD = $fopen(ElfFile, "rb");
+      readBytes = $fread(header, elfFD);
+      $fclose(elfFD);
+
+      // If DUT and elf bit width misaligned, exit and return error message
+      if (header[4] == 1 & integer'(P.XLEN) == 64) begin
+        $display("Error: You can not run a 32 bit elf on a 64 bit DUT");
+        $finish;
+      end else if (header[4] == 2 & integer'(P.XLEN) == 32) begin
+        $display("Error: You can not run a 64 bit elf on a 32 bit DUT");
+        $finish;
+      end
+    end
 
     // pick tests based on modes supported
     //tests = '{};
@@ -254,11 +273,7 @@ module testbench;
       endcase
     end
     if (tests.size() == 0 & ElfFile == "none") begin
-      if (tests.size() == 0) begin
-        $display("TEST %s not supported in this configuration", TEST);
-      end else if(ElfFile == "none") begin
-        $display("ElfFile %s not found", ElfFile);
-      end
+      $display("TEST %s not supported in this configuration", TEST);
       $finish;
     end
     if (MAKE_VCD) begin
