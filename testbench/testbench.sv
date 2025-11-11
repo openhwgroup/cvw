@@ -133,7 +133,7 @@ module testbench;
   logic TestComplete;
   logic PrevPCZero;
   logic RVVIStall;
-  
+
   integer elfFD;
   byte header[0:4];
   byte readBytes;
@@ -163,7 +163,7 @@ module testbench;
         $finish;
       end else if (header[4] == 2 & integer'(P.XLEN) == 32) begin
         $display("Error: You can not run a 64 bit elf on a 32 bit DUT");
-        $finish; 
+        $finish;
       end
     end
 
