@@ -30,8 +30,13 @@
 SKYWATER_LIB_VERSION=3e7dac7af98731b59982f99df6a71e979a44bff7 # Last commit as of Nov. 5, 2025
 
 # Ensure repo always comes from NEW GitHub
-if [ -d "$RISCV/cad/lib/sky130_osu_sc_t12/.git" ]; then
-  rm -rf $RISCV/cad/lib/sky130_osu_sc_t12/.git
+if check_tool_version $SKYWATER_LIB_VERSION; then
+    rm -rf $RISCV/cad/lib/sky130_osu_sc_t12
+    git_checkout "sky130_osu_sc_t12" "https://github.com/stineje/sky130_osu_sc_t12" "$SKYWATER_LIB_VERSION"
+    echo "$SKYWATER_LIB_VERSION" > "$RISCV"/versions/$STATUS.version
+    echo -e "${SUCCESS_COLOR}OSU Skywater library successfully installed!${ENDC}"
+else
+  rm -rf "$RISCV/cad/lib/sky130_osu_sc_t12"
 fi
 
 set -e # break on error
