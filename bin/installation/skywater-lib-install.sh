@@ -31,11 +31,7 @@ SKYWATER_LIB_VERSION=3e7dac7af98731b59982f99df6a71e979a44bff7 # Last commit as o
 
 # Ensure repo always comes from NEW GitHub
 if [ -d "$RISCV/cad/lib/sky130_osu_sc_t12/.git" ]; then
-  git -C "$RISCV/cad/lib/sky130_osu_sc_t12" remote set-url origin https://github.com/stineje/sky130_osu_sc_t12.git
-  git -C "$RISCV/cad/lib/sky130_osu_sc_t12" fetch --all --prune
-  git -C "$RISCV/cad/lib/sky130_osu_sc_t12" reset --hard "$SKYWATER_LIB_VERSION"
-else
-  rm -rf "$RISCV/cad/lib/sky130_osu_sc_t12"
+  rm -rf $RISCV/cad/lib/sky130_osu_sc_t12/.git
 fi
 
 set -e # break on error
