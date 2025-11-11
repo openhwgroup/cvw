@@ -135,8 +135,6 @@ module testbench;
   logic RVVIStall;
   
   integer elfFD;
-  integer elfBitWidth;
-  integer dutBitWidth;
   byte header[0:4];
   byte readBytes;
 
@@ -152,20 +150,23 @@ module testbench;
     if (!$value$plusargs("sim_log_prefix=%s", sim_log_prefix)) begin
         sim_log_prefix = "";  // Assign default value if not passed
     end
-    //$display("TEST = %s ElfFile = %s", TEST, ElfFile);
+    // $display("TEST = %s ElfFile = %s", TEST, ElfFile);
 
-    if(ElfFile!="none")begin//If Elf File passed in, check its bit width
+    if (ElfFile != "none") begin // If Elf File passed in, check its bit width
       elfFD = $fopen(ElfFile, "rb");
       readBytes = $fread(header, elfFD);
       $fclose(elfFD);
 
-      if(header[4] ==1)begin
-        elfBitWidth = 32;
-      end else if(header[4] == 2)begin
-        elfBitWidth = 64;
+      // If DUT and elf bit width misaligned, exit and return error message
+      if (header[4] == 1 & integer'(P.XLEN) == 64) begin
+        $display("Error: You can not run a 32 bit elf on a 64 bit DUT");
+        $finish;
+      end else if (header[4] == 2 & integer'(P.XLEN) == 32) begin
+        $display("Error: You can not run a 64 bit elf on a 32 bit DUT");
+        $finish; 
       end
-      dutBitWidth = integer'(P.XLEN);
     end
+
     // pick tests based on modes supported
     //tests = '{};
     if (P.XLEN == 64) begin // RV64
@@ -271,13 +272,8 @@ module testbench;
         "arch32vm_sv32": if (P.VIRTMEM_SUPPORTED) tests = arch32vm_sv32;
       endcase
     end
-    if (tests.size() == 0 & ElfFile == "none" || ElfFile != "none" & dutBitWidth!=elfBitWidth) begin
-      if (tests.size() == 0 & ElfFile == "none") begin
-        $display("TEST %s not supported in this configuration", TEST);
-        $display("ElfFile %s not found", ElfFile);
-      end else begin
-        $display("You are running a %d bit elf on a %d bit DUT", elfBitWidth, dutBitWidth);
-      end
+    if (tests.size() == 0 & ElfFile == "none") begin
+      $display("TEST %s not supported in this configuration", TEST);
       $finish;
     end
     if (MAKE_VCD) begin
