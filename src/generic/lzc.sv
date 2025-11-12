@@ -39,10 +39,7 @@ module lzc #(parameter WIDTH = 1) (
 
   assign {LNum, RNum} = num;
   generate
-    if (WIDTH == 2)
-      assign ZeroCnt = (num == 2'b00) ? 2'b10 :
-                       (num == 2'b01) ? 2'b01 : 2'b00;
-    else if (WIDTH == 1)
+    if (WIDTH == 1)
       assign ZeroCnt = ~num;
     else begin
       lzc #(LWIDTH) l_lcz (LNum, LCnt);
