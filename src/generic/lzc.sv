@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 //
 // Written: me@KatherineParry.com
-// Modified: 01/23/2025 by marcus@infinitymdm.dev
+// Modified: 11/12/2025 by marcus@infinitymdm.dev
 //
 // Purpose: Leading Zero Counter
 //
@@ -24,29 +24,30 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module lzc #(
-  parameter WIDTH = 1,
-  parameter CBITS = $clog2(WIDTH+1)
-) (
-  input  logic [WIDTH-1:0]  num,    // number to count the leading zeroes of
-  output logic [CBITS-1:0]  ZeroCnt // the number of leading zeroes
+module lzc #(parameter WIDTH = 1) (
+  input  logic [WIDTH-1:0]           num,    // number to count the leading zeroes of
+  output logic [$clog2(WIDTH+1)-1:0] ZeroCnt // the number of leading zeroes
 );
 
   // Use a recursive binary tree structure to avoid unsynthesizable loops
-  logic [WIDTH/2-1:0] Lnum, Rnum;
-  logic [CBITS-2:0]   LCnt, RCnt;
+  localparam LWIDTH = WIDTH - WIDTH/2; // May be 1 bit larger than WIDTH/2 due to floor division
+  localparam RWIDTH = WIDTH/2;
+  logic [LWIDTH-1:0] LNum;
+  logic [RWIDTH-1:0] RNum;
+  logic [$clog2(LWIDTH+1):0] LCnt;
+  logic [$clog2(RWIDTH+1):0] RCnt;
 
-  assign Lnum = num[WIDTH-1-:WIDTH/2];
-  assign Rnum = num[WIDTH/2-1-:WIDTH/2];
+  assign {LNum, RNum} = num;
   generate
-    if (WIDTH <= 2) begin
+    if (WIDTH == 2)
       assign ZeroCnt = (num == 2'b00) ? 2'b10 :
                        (num == 2'b01) ? 2'b01 : 2'b00;
-    end else begin
-      lzc #(WIDTH/2) l_lcz (Lnum, LCnt);
-      lzc #(WIDTH/2) r_lcz (Rnum, RCnt);
-      assign ZeroCnt = (~LCnt[CBITS-2]) ? {LCnt[CBITS-2] & RCnt[CBITS-2],           1'b0, LCnt[CBITS-3:0]} :
-                                          {LCnt[CBITS-2] & RCnt[CBITS-2], ~RCnt[CBITS-2], RCnt[CBITS-3:0]};
+    else if (WIDTH == 1)
+      assign ZeroCnt = ~num;
+    else begin
+      lzc #(LWIDTH) l_lcz (LNum, LCnt);
+      lzc #(RWIDTH) r_lcz (RNum, RCnt);
+      assign ZeroCnt = (LCnt == LWIDTH) ? LCnt + RCnt: LCnt;
     end
   endgenerate
 
