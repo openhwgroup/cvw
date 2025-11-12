@@ -119,12 +119,18 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   logic                     HPTWInstrAccessFaultM;                          // Hardware page table access fault while fetching instruction PTE
   logic                     HPTWInstrPageFaultM;                            // Hardware page table page fault while fetching instruction PTE
   logic                     BreakpointFaultM, EcallFaultM;                  // breakpoint and Ecall traps should retire
+  logic                     TrapToM, TrapToHS, TrapToVS;                    // trap destination modes
+  logic                     VirtModeW;                                       // current virtual mode
+  logic                     HSTATUS_SPV;                                     // HSTATUS.SPV field
+  logic                     MSTATUS_MPV;                                      // MSTATUS.MPV field (from csr)
 
   logic                     wfiW;
 
   // track the current privilege level
   privmode #(P) privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .DelegateM,
-    .STATUS_MPP, .STATUS_SPP, .NextPrivilegeModeM, .PrivilegeModeW);
+    .STATUS_MPP, .STATUS_SPP, .MSTATUS_MPV, .HSTATUS_SPV,
+    .TrapToM, .TrapToHS, .TrapToVS,
+    .NextPrivilegeModeM, .PrivilegeModeW, .NextVirtModeM, .VirtModeW);
 
   // decode privileged instructions
   privdec #(P) pmd(.clk, .reset, .StallW, .FlushW, .InstrM(InstrM[31:7]),
@@ -142,13 +148,14 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .sfencevmaM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
     .IClassWrongM, .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
     .NextPrivilegeModeM, .PrivilegeModeW, .CauseM, .SelHPTW,
+    .VirtModeW, .TrapToVS,
     .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,
     .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TW, .STATUS_FS,
     .MEDELEG_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
     .SATP_REGW, .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
     .SetFflagsM, .FRM_REGW, .ENVCFG_CBE, .ENVCFG_PBMTE, .ENVCFG_ADUE,
     .EPCM, .TrapVectorM,
-    .CSRReadValW, .IllegalCSRAccessM, .BigEndianM);
+    .CSRReadValW, .IllegalCSRAccessM, .BigEndianM, .HSTATUS_SPV, .MSTATUS_MPV);
 
   // pipeline early-arriving trap sources
   privpiperegs ppr(.clk, .reset, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
@@ -163,5 +170,6 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .LoadPageFaultM, .StoreAmoPageFaultM, .PrivilegeModeW,
     .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .STATUS_MIE, .STATUS_SIE,
     .InstrValidM, .CommittedM, .CommittedF,
-    .TrapM, .wfiM, .wfiW, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM);
+    .TrapM, .wfiM, .wfiW, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM,
+    .TrapToM, .TrapToHS, .TrapToVS);
 endmodule
