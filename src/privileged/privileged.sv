@@ -151,7 +151,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .BPDirWrongM, .BTAWrongM, .RASPredPCWrongM, .BPWrongM,
     .sfencevmaM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
     .IClassWrongM, .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
-    .NextPrivilegeModeM, .PrivilegeModeW, .CauseM, .SelHPTW,
+    .NextPrivilegeModeM, .PrivilegeModeW, .VirtModeW, .NextVirtModeM, .CauseM, .SelHPTW,
     .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,
     .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TW, .STATUS_FS,
     .MEDELEG_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,

@@ -52,6 +52,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic [4:0]               SetFflagsM,                // Set floating point flag bits in FCSR
   input  logic [1:0]               NextPrivilegeModeM,        // STATUS bits updated based on next privilege mode
   input  logic [1:0]               PrivilegeModeW,            // current privilege mode
+  input  logic                     VirtModeW,                 // current V Bit
+  input  logic                     NextVirtModeM,             // next V Bit
   input  logic [3:0]               CauseM,                    // Trap cause
   input  logic                     SelHPTW,                   // hardware page table walker active, so base endianness on supervisor mode
   // inputs for performance counters
@@ -207,9 +209,13 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   assign UngatedCSRMWriteM = CSRWriteM & (PrivilegeModeW == P.M_MODE);
   assign CSRMWriteM = UngatedCSRMWriteM & InstrValidNotFlushedM;
   assign CSRSWriteM = CSRWriteM & (|PrivilegeModeW) & InstrValidNotFlushedM;
+  assign CSRHWriteM = CSRWriteM & (PrivilegeModeW == P.S_MODE & ~VirtModeW) & InstrValidNotFlushedM;
   assign CSRUWriteM = CSRWriteM  & InstrValidNotFlushedM;
   assign MTrapM = TrapM & (NextPrivilegeModeM == P.M_MODE);
   assign STrapM = TrapM & (NextPrivilegeModeM == P.S_MODE) & P.S_SUPPORTED;
+  assign HSTrapM = TrapM & (NextPrivilegeModeM == P.S_MODE & !VirtModeW) & P.H_SUPPORTED;
+  assign PrivReturnHS = sretM & (PrivilegeModeW == P.S_MODE & !VirtModeW) & P.H_SUPPORTED;
+  assign NextTinstM = TrapM ? {{P.XLEN-32{1'b0}}, InstrM[31:0]} : CSRWriteValM;
 
   ///////////////////////////////////////////
   // CSRs
@@ -262,6 +268,60 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign IllegalCSRSAccessM = 1'b1;
     assign STimerInt = '0;
     assign SENVCFG_REGW = '0;
+  end
+
+  logic CSRHWriteM;
+  logic [P.XLEN-1:0] CSRHReadValM;
+  logic IllegalCSRHAccessM;
+
+  logic HSTrapM;
+  logic PrivReturnHS;
+  logic [P.XLEN-1:0] NextTinstM;
+
+  logic [P.XLEN-1:0] HSTATUS_REGW;
+  logic [P.XLEN-1:0] HEDELEG_REGW;
+  logic [P.XLEN-1:0] HIDELEG_REGW;
+  logic [P.XLEN-1:0] HEPC_REGW;
+  logic [P.XLEN-1:0] HCAUSE_REGW;
+  logic [11:0] HVIP_REGW;
+  logic [P.XLEN-1:0] HIE_REGW;
+  logic [P.XLEN-1:0] HGEIE_REGW;
+  logic [P.XLEN-1:0] HENVCFG_REGW;
+  logic [P.XLEN-1:0] HENVCFGH_REGW;
+  logic [P.XLEN-1:0] HCOUNTEREN_REGW;
+  logic [P.XLEN-1:0] HGATP_REGW;
+  logic [P.XLEN-1:0] HTVAL_REGW;
+  logic [P.XLEN-1:0] HTINST_REGW;
+
+  if (P.H_SUPPORTED) begin:csrh
+    csrh #(P) csrh(.clk, .reset,
+      .CSRHWriteM, .CSRAdrM, .CSRWriteValM,
+      .PrivilegeModeW, .VirtModeW, .MIP_REGW,
+      .HSTrapM, .NextEPCM, .NextCauseM, .NextMtvalM,
+      .NextTinstM, .PrivReturnHS, .NextVirtModeM,
+      .CSRHReadValM, .IllegalCSRHAccessM,
+      .HSTATUS_REGW, .HEDELEG_REGW, .HIDELEG_REGW,
+      .HEPC_REGW, .HCAUSE_REGW, .HVIP_REGW, .HIE_REGW,
+      .HGEIE_REGW, .HENVCFG_REGW, .HENVCFGH_REGW,
+      .HCOUNTEREN_REGW, .HGATP_REGW, .HTVAL_REGW, .HTINST_REGW);
+  end else begin: no_csrh
+    assign CSRHReadValM = '0;
+    assign IllegalCSRHAccessM = 1'b1;
+
+    assign HSTATUS_REGW    = '0;
+    assign HEDELEG_REGW    = '0;
+    assign HIDELEG_REGW    = '0;
+    assign HEPC_REGW       = '0;
+    assign HCAUSE_REGW     = '0;
+    assign HVIP_REGW       = '0;
+    assign HIE_REGW        = '0;
+    assign HGEIE_REGW      = '0;
+    assign HENVCFG_REGW    = '0;
+    assign HENVCFGH_REGW   = '0;
+    assign HCOUNTEREN_REGW = '0;
+    assign HGATP_REGW      = '0;
+    assign HTVAL_REGW      = '0;
+    assign HTINST_REGW     = '0;
   end
 
   // Floating Point CSRs in User Mode only needed if Floating Point is supported
