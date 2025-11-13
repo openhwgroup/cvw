@@ -41,12 +41,12 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   input  logic                 InstrValidM,                                     // current instruction is valid, not flushed
   input  logic                 CommittedM, CommittedF,                          // LSU/IFU has committed to a bus operation that can't be interrupted
   output logic                 TrapM,                                           // Trap is occurring
-  output logic                 TrapToM, TrapToHS, TrapToVS,
   output logic                 InterruptM,                                      // Interrupt is occurring
   output logic                 ExceptionM,                                      // exception is occurring
   output logic                 IntPendingM,                                     // Interrupt is pending, might occur if enabled
   output logic                 DelegateM,                                       // Delegate trap to supervisor handler
-  output logic [3:0]           CauseM                                           // trap cause
+  output logic [3:0]           CauseM,                                          // trap cause
+  output logic                 TrapToM, TrapToHS, TrapToVS
 );
 
   logic                        MIntGlobalEnM, SIntGlobalEnM;                    // Global interrupt enables
@@ -73,9 +73,9 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   assign DelegateM     = P.S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM] : MEDELEG_REGW[CauseM]) &
                      (PrivilegeModeW == P.U_MODE | PrivilegeModeW == P.S_MODE);
 
-  assign TrapToVS = 1'b0; // TODO: until hedeleg/hideleg are implemented
+  assign TrapToVS = 1'b0; // until hedeleg/hideleg are implemented
   assign TrapToHS = DelegateM;
-  assign TrapToM = TrapM & ~TrapToHS & ~TrapToVS; // and not VS
+  assign TrapToM  = TrapM & ~TrapToHS; // and not VS
 
   ///////////////////////////////////////////
   // Trigger Traps

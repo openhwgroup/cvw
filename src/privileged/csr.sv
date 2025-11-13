@@ -54,9 +54,6 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic [1:0]               PrivilegeModeW,            // current privilege mode
   input  logic [3:0]               CauseM,                    // Trap cause
   input  logic                     SelHPTW,                   // hardware page table walker active, so base endianness on supervisor mode
-  input  logic                     VirtModeW,                 // current virtual mode (for hypervisor)
-  input  logic                     TrapToVS,                  // trap to virtual supervisor mode
-  output logic                     HSTATUS_SPV,                // HSTATUS.SPV field for privmode
   // inputs for performance counters
   input  logic                     LoadStallD, StoreStallD,
   input  logic                     ICacheStallF,
@@ -96,15 +93,13 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   //
   output logic [P.XLEN-1:0]        CSRReadValW,               // value read from CSR
   output logic                     IllegalCSRAccessM,         // Illegal CSR access: CSR doesn't exist or is inaccessible at this privilege level
-  output logic                     BigEndianM,                // memory access is big-endian based on privilege mode and STATUS register endian fields
-  output logic                     HSTATUS_SPV,               // HSTATUS.SPV field for privmode
-  output logic                     MSTATUS_MPV                 // MSTATUS.MPV field extracted from MSTATUS_REGW
+  output logic                     BigEndianM                 // memory access is big-endian based on privilege mode and STATUS register endian fields
 );
 
   localparam MIP = 12'h344;
   localparam SIP = 12'h144;
 
-  logic [P.XLEN-1:0]       CSRMReadValM, CSRSReadValM, CSRUReadValM, CSRCReadValM, CSRHReadValM;
+  logic [P.XLEN-1:0]       CSRMReadValM, CSRSReadValM, CSRUReadValM, CSRCReadValM;
   logic [P.XLEN-1:0]       CSRReadValM;
   logic [P.XLEN-1:0]       CSRSrcM;
   logic [P.XLEN-1:0]       CSRRWM, CSRRSM, CSRRCM;
@@ -114,19 +109,19 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]       MEPC_REGW, SEPC_REGW;
   logic [31:0]             MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW;
   logic                    WriteMSTATUSM, WriteMSTATUSHM, WriteSSTATUSM;
-  logic                    CSRMWriteM, CSRSWriteM, CSRUWriteM, CSRHWriteM;
+  logic                    CSRMWriteM, CSRSWriteM, CSRUWriteM;
   logic                    UngatedCSRMWriteM;
   logic                    WriteFRMM, SetOrWriteFFLAGSM;
   logic [P.XLEN-1:0]       UnalignedNextEPCM, NextEPCM, NextMtvalM;
   logic [4:0]              NextCauseM;
   logic [11:0]             CSRAdrM;
-  logic                    IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM, IllegalCSRHAccessM;
+  logic                    IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM;
   logic                    InsufficientCSRPrivilegeM;
   logic                    IllegalCSRMWriteReadonlyM;
   logic [P.XLEN-1:0]       CSRReadVal2M;
   logic [11:0]             MIP_REGW_writeable;
   logic [P.XLEN-1:0]       TVecM,NextFaultMtvalM;
-  logic                    MTrapM, STrapM, HTrapM;
+  logic                    MTrapM, STrapM;
   logic                    SelMtvecM;
   logic [P.XLEN-1:0]       TVecAlignedM;
   logic                    InstrValidNotFlushedM;
@@ -213,10 +208,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   assign CSRMWriteM = UngatedCSRMWriteM & InstrValidNotFlushedM;
   assign CSRSWriteM = CSRWriteM & (|PrivilegeModeW) & InstrValidNotFlushedM;
   assign CSRUWriteM = CSRWriteM  & InstrValidNotFlushedM;
-  assign CSRHWriteM = CSRWriteM & (PrivilegeModeW == P.M_MODE) & InstrValidNotFlushedM; // hypervisor CSRs only accessible from M mode
   assign MTrapM = TrapM & (NextPrivilegeModeM == P.M_MODE);
   assign STrapM = TrapM & (NextPrivilegeModeM == P.S_MODE) & P.S_SUPPORTED;
-  assign HTrapM = TrapM & TrapToVS & P.H_SUPPORTED; // trap to virtual supervisor mode
 
   ///////////////////////////////////////////
   // CSRs
@@ -299,32 +292,10 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign IllegalCSRCAccessM = 1'b1; // counters aren't enabled
   end
 
-  if (P.H_SUPPORTED) begin:csrh
-    csrh #(P) csrh(.clk, .reset,
-      .CSRHWriteM, .HTrapM, .CSRAdrM,
-      .NextEPCM, .NextMtvalM, .NextCauseM,
-      .CSRWriteValM, .PrivilegeModeW, .VirtModeW,
-      .CSRHReadValM, .WriteHSTATUSM, .IllegalCSRHAccessM, .HSTATUS_SPV);
-  end else begin
-    assign CSRHReadValM = '0;
-    assign IllegalCSRHAccessM = 1'b1;
-    assign HSTATUS_SPV = 1'b0;
-  end
-
    // Broadcast appropriate environment configuration based on privilege mode
   assign ENVCFG_STCE =  MENVCFG_REGW[63]; // supervisor timer counter enable
   assign ENVCFG_PBMTE = MENVCFG_REGW[62]; // page-based memory types enable
   assign ENVCFG_ADUE  = MENVCFG_REGW[61]; // Hardware A/D Update enable
-
-  // Extract MSTATUS.MPV field (Machine Previous Virtual mode)
-  // MPV is at bit 39 in RV64, or needs to be extracted from MSTATUSH in RV32
-  if (P.H_SUPPORTED) begin
-    if (P.XLEN == 64)
-      assign MSTATUS_MPV = MSTATUS_REGW[39]; // RV64: MPV at bit 39
-    else
-      assign MSTATUS_MPV = MSTATUSH_REGW[5]; // RV32: MPV in MSTATUSH at bit 5
-  end else
-    assign MSTATUS_MPV = 1'b0;
   assign ENVCFG_CBE =   (PrivilegeModeW == P.M_MODE) ? 4'b1111 :
                         (PrivilegeModeW == P.S_MODE | !P.S_SUPPORTED) ? MENVCFG_REGW[7:4] :
                                                                        (MENVCFG_REGW[7:4] & SENVCFG_REGW[7:4]);
@@ -334,13 +305,13 @@ module csr import cvw::*;  #(parameter cvw_t P) (
                                                                        (MENVCFG_REGW[0] & SENVCFG_REGW[0]);
 
   // merge CSR Reads
-  assign CSRReadValM = CSRUReadValM | CSRSReadValM | CSRMReadValM | CSRCReadValM | CSRHReadValM;
+  assign CSRReadValM = CSRUReadValM | CSRSReadValM | CSRMReadValM | CSRCReadValM;
   flopenrc #(P.XLEN) CSRValWReg(clk, reset, FlushW, ~StallW, CSRReadValM, CSRReadValW);
 
   // merge illegal accesses: illegal if none of the CSR addresses is legal or privilege is insufficient
   assign InsufficientCSRPrivilegeM = (CSRAdrM[9:8] == 2'b11 & PrivilegeModeW != P.M_MODE) |
                                      (CSRAdrM[9:8] == 2'b01 & PrivilegeModeW == P.U_MODE);
   assign IllegalCSRAccessM = ((IllegalCSRCAccessM & IllegalCSRMAccessM &
-    IllegalCSRSAccessM & IllegalCSRUAccessM & IllegalCSRHAccessM |
+    IllegalCSRSAccessM & IllegalCSRUAccessM |
     InsufficientCSRPrivilegeM) & CSRReadM) | IllegalCSRMWriteReadonlyM;
 endmodule
