@@ -1,0 +1,11 @@
+volatile unsigned int checksum = 0u;
+volatile unsigned int atpg_values[4];
+extern unsigned int atpg_func(void);
+
+int main(void)
+{
+    atpg_values[0] = atpg_values[1] = atpg_values[2] = atpg_values[3] = 0u;
+    checksum = 0xCAFECAFE;
+    checksum = atpg_func();
+    return atpg_values[0]+atpg_values[1]+atpg_values[2]+atpg_values[3];
+}
