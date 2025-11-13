@@ -122,9 +122,19 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
 
   logic                     wfiW;
 
+    // --- Hypervisor ---
+  logic                     NextVirtModeM;   // next V (from privmode)
+  logic                     VirtModeW;       // current V (from privmode)
+  /* verilator lint_off UNDRIVEN */
+  logic                     MSTATUS_MPV;     // from CSR (prev V for MRET)
+  logic                     HSTATUS_SPV;     // from CSR (prev V for SRET in HS)
+  logic                     TrapToM, TrapToHS, TrapToVS; // trap target one-hots
+  /* verilator lint_on UNDRIVEN */
+
   // track the current privilege level
   privmode #(P) privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .DelegateM,
-    .STATUS_MPP, .STATUS_SPP, .NextPrivilegeModeM, .PrivilegeModeW);
+    .STATUS_MPP, .STATUS_SPP, .MSTATUS_MPV, .HSTATUS_SPV, .TrapToM, .TrapToHS, .TrapToVS,
+    .NextPrivilegeModeM, .PrivilegeModeW, .NextVirtModeM, .VirtModeW);
 
   // decode privileged instructions
   privdec #(P) pmd(.clk, .reset, .StallW, .FlushW, .InstrM(InstrM[31:7]),
@@ -141,7 +151,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .BPDirWrongM, .BTAWrongM, .RASPredPCWrongM, .BPWrongM,
     .sfencevmaM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
     .IClassWrongM, .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
-    .NextPrivilegeModeM, .PrivilegeModeW, .CauseM, .SelHPTW,
+    .NextPrivilegeModeM, .PrivilegeModeW, .VirtModeW, .NextVirtModeM, .CauseM, .SelHPTW,
     .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,
     .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TW, .STATUS_FS,
     .MEDELEG_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
@@ -163,5 +173,6 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .LoadPageFaultM, .StoreAmoPageFaultM, .PrivilegeModeW,
     .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .STATUS_MIE, .STATUS_SIE,
     .InstrValidM, .CommittedM, .CommittedF,
-    .TrapM, .wfiM, .wfiW, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM);
+    .TrapM, .wfiM, .wfiW, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM,
+    .TrapToM, .TrapToHS, .TrapToVS);
 endmodule
