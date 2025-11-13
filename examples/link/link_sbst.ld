@@ -24,9 +24,13 @@ SECTIONS
 {
 
   /* text: test code section */
+  /*. = 0x80000000;*/
   . = 0x80000000;
-  .text.init : { *(.text.init) }
-
+  .text.init : 
+  { 
+    *(.text.init);
+    KEEP(*(.text.init));
+   }
   . = ALIGN(0x1000);
   .tohost : { *(.tohost) }
 
@@ -84,6 +88,8 @@ SECTIONS
     *(.tbss.end)
   }
 
+
+  
   /* End of uninitialized data segment */
   _end = .;
 }

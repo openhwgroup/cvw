@@ -10,7 +10,7 @@
  */
 
 /* Entry point for bare metal programs */
-.section .text.start
+.section .text.init
 .global _start
 .type _start, @function
 
@@ -26,26 +26,27 @@ _start:
 	la sp, _sp
 
 /* set vector table address and vectored mode */
-	la a0, __vector_start
-        ori a0, a0, 0x1
+	la a0, pmp_handler
+    #ori a0, a0, 0x1
 	csrw mtvec, a0
 
-/* clear the bss segment */
-	la a0, __bss_start
-	la a2, __bss_end
-	sub a2, a2, a0
-	li a1, 0
-	call memset
+#
+#/* clear the bss segment */
+#	la a0, __bss_start
+#	la a2, __bss_end
+#	sub a2, a2, a0
+#	li a1, 0
+#	call memset
+#
+#/* new-style constructors and destructors */
+#	la a0, __libc_fini_array
+#	call atexit
+#	call __libc_init_array
 
-/* new-style constructors and destructors */
-	la a0, __libc_fini_array
-	call atexit
-	call __libc_init_array
-
-/* call main */
-	lw a0, 0(sp)                    /* a0 = argc */
-	li a2, 0                        /* a1 = argv */
-	li a2, 0                        /* a2 = envp = NULL */
+#/* call main */
+#	lw a0, 0(sp)                    /* a0 = argc */
+#	li a2, 0                        /* a1 = argv */
+#	li a2, 0                        /* a2 = envp = NULL */
 	call main
 	tail exit
 

@@ -2,8 +2,9 @@
 
 FaultGenerate
 {
-    #SAF    
-        NA [0,1] {PORT "wallypipelinedcore_gate.**"}
+    #SAF 
+        NA [0,1] {PORT "wallypipelinedcore_gate.ifu.immu.immu.pmp.pmpchecker.**"} 
+        #NA [0,1] {PORT "wallypipelinedcore_gate.**"}
         #NA [0,1] {PORT "riscv_core.ex_stage_i_mult_i.**"}
         #NA [0,1] {PORT "riscv_core.**"}
 
