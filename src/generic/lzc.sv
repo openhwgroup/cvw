@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 //
 // Written: me@KatherineParry.com
-// Modified: 11/12/2025 by marcus@infinitymdm.dev
+// Modified: 11/19/2025 by marcus@infinitymdm.dev
 //
 // Purpose: Leading Zero Counter
 //
@@ -25,26 +25,30 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module lzc #(parameter WIDTH = 1) (
-  input  logic [WIDTH-1:0]           num,    // number to count the leading zeroes of
-  output logic [$clog2(WIDTH+1)-1:0] ZeroCnt // the number of leading zeroes
+  input  logic [WIDTH-1:0]           num,     // number to count the leading zeroes of
+  output logic [$clog2(WIDTH+1)-1:0] ZeroCnt, // the number of leading zeroes
+  output logic                       AllZeros // Indicates the number is entirely zeroes
 );
 
   // Use a recursive binary tree structure to avoid unsynthesizable loops
-  localparam LWIDTH = WIDTH - WIDTH/2; // May be 1 bit larger than WIDTH/2 due to floor division
-  localparam RWIDTH = WIDTH/2;
+  localparam LWIDTH = 2**($clog2(WIDTH)-1); // Largest power of 2 < WIDTH
+  localparam RWIDTH = WIDTH - LWIDTH; // Remaining bits
   logic [LWIDTH-1:0] LNum;
   logic [RWIDTH-1:0] RNum;
   logic [$clog2(LWIDTH+1):0] LCnt;
   logic [$clog2(RWIDTH+1):0] RCnt;
+  logic LAllZeros, RAllZeros;
 
   assign {LNum, RNum} = num;
   generate
-    if (WIDTH == 1)
+    if (WIDTH == 1) begin
       assign ZeroCnt = ~num;
-    else begin
-      lzc #(LWIDTH) l_lcz (LNum, LCnt);
-      lzc #(RWIDTH) r_lcz (RNum, RCnt);
-      assign ZeroCnt = (LCnt == LWIDTH) ? LCnt + RCnt: LCnt;
+      assign AllZeros = ~num;
+    end else begin
+      lzc #(LWIDTH) l_lcz (LNum, LCnt, LAllZeros);
+      lzc #(RWIDTH) r_lcz (RNum, RCnt, RAllZeros);
+      assign ZeroCnt = LAllZeros ? LWIDTH + RCnt: LCnt;
+      assign AllZeros = LAllZeros & RAllZeros;
     end
   endgenerate
 
