@@ -35,8 +35,8 @@ module lzc #(parameter WIDTH = 1) (
   localparam RWIDTH = WIDTH - LWIDTH; // Remaining bits
   logic [LWIDTH-1:0] LNum;
   logic [RWIDTH-1:0] RNum;
-  logic [$clog2(LWIDTH+1):0] LCnt;
-  logic [$clog2(RWIDTH+1):0] RCnt;
+  logic [$clog2(LWIDTH+1)-1:0] LCnt;
+  logic [$clog2(RWIDTH+1)-1:0] RCnt;
   logic LAllZeros, RAllZeros;
 
   assign {LNum, RNum} = num;
