@@ -315,7 +315,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .CSRReadM, .CSRWriteM, .SrcAM, .PCM, .PCSpillM, 
       .InstrM, .InstrOrigM, .CSRReadValM, .CSRReadValW, .EPCM, .TrapVectorM,
       .RetM, .TrapM, .sfencevmaM, .InvalidateICacheM, .DCacheStallM, .ICacheStallF,
-      .InstrValidM, .CommittedM, .CommittedF,
+      .InstrValidM, .InstrValidE, .CommittedM, .CommittedF,
       .FRegWriteM, .LoadStallD, .StoreStallD,
       .BPDirWrongM, .BTAWrongM, .BPWrongM,
       .RASPredPCWrongM, .IClassWrongM, .DivBusyE, .FDivBusyE,

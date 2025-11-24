@@ -48,6 +48,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic                     MSwInt,                    // software interrupt
   input  logic [63:0]              MTIME_CLINT,               // TIME value from CLINT
   input  logic                     InstrValidM,               // current instruction is valid
+  input  logic                     InstrValidE,               // Valid instruction in execute stage (for halt on reset)
   input  logic                     FRegWriteM,                // writes to floating point registers change STATUS.FS
   input  logic [4:0]               SetFflagsM,                // Set floating point flag bits in FCSR
   input  logic [1:0]               NextPrivilegeModeM,        // STATUS bits updated based on next privilege mode
@@ -310,7 +311,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
 
   if (P.DEBUG_SUPPORTED) begin : debug
     csrd #(P) csrd(.clk, .reset, .HaltReq, .ResumeReq,
-      .CSRDWriteM, .CSRWriteValM, .CSRAdrM, .CSRDReadValM, .InstrValidM,
+      .CSRDWriteM, .CSRWriteValM, .CSRAdrM, .InstrValidE, .CSRDReadValM, .PrivilegeModeW,
       .DebugMode, .PCM, .IllegalCSRDAccessM, .DebugResume, .DPC_REGW(DPC),
       .HaveReset, .HaveResetAck, .ResetHaltReq);
   end else begin

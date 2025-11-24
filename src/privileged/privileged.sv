@@ -42,6 +42,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] PCSpillM,                                       // program counter
   // control signals                                                       
   input  logic              InstrValidM,                                    // Current instruction is valid (not flushed)
+  input  logic              InstrValidE,                                    // Current valid instruction in Execute stage (needed for debug reset on halt)
   input  logic              CommittedM, CommittedF,                         // current instruction is using bus; don't interrupt
   input  logic              PrivilegedM,                                    // privileged instruction
   // processor events for performance counter logging                      
@@ -151,7 +152,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .InstrM, .InstrOrigM, .PCM, .PCSpillM, .SrcAM, .IEUAdrxTvalM, 
     .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
-    .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
+    .MTIME_CLINT, .InstrValidM, .InstrValidE, .FRegWriteM, .LoadStallD, .StoreStallD,
     .BPDirWrongM, .BTAWrongM, .RASPredPCWrongM, .BPWrongM,
     .sfencevmaM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
     .IClassWrongM, .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,

@@ -33,8 +33,9 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   input logic               CSRDWriteM,
   input logic [P.XLEN-1:0]  CSRWriteValM,
   input logic [11:0]        CSRAdrM,
-  input logic               InstrValidM,
+  input logic               InstrValidE,
   output logic [P.XLEN-1:0] CSRDReadValM,
+  input logic [1:0]         PrivilegeModeW,
   
   output logic              DebugMode,
   input logic [P.XLEN-1:0]  PCM,
@@ -102,7 +103,9 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   // NOTE: When set to 0, mprven allows MPRV to be ignored while in
   // DebugMode. This can be added later. For now, tying it to 1
   // implies that MPRV takes effect if it is set, thus DebugMode can't
-  // alter it's behavior.
+  // alter it's behavior. Since I haven't changed anything related to
+  // privileged modes, I'm setting this to 1 temporarily, implying
+  // that the privilege mode always takes effect.
 
   // Read only and unimplemented DCSR Fields
   assign debugver = 4'b0100; // version 1.0
@@ -125,7 +128,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
 
   assign DCSRWriteValM = CSRDWriteM ?
                          {CSRWriteValM[15], CSRWriteValM[13], CSRWriteValM[12], CSRWriteValM[11], CSRWriteValM[8:6], CSRWriteValM[2], CSRWriteValM[1:0]} :
-                         {ebreakm, ebreaks, ebreaku, stepie, cause, step, prv};
+                         {ebreakm, ebreaks, ebreaku, stepie, NextCause, step, PrivilegeModeW};
 
   assign DPCWriteValM = WriteDPC & (state == HALTED) ? CSRWriteValM : PCM;
 
@@ -134,7 +137,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   ////////////////////////////////////////////////////////////////////
   
   flopenr #(dcsrwidth) DCSRreg(clk, reset, WriteDCSR,
-    {ebreakm, ebreaks, ebreaku, stepie, cause, step, prv},
+    {ebreakm, ebreaks, ebreaku, stepie, NextCause, step, PrivilegeModeW},
     DCSR_REGW);
   
   flopenr #(P.XLEN) DPCreg(clk, reset, WriteDPC, DPCWriteValM, DPC_REGW);
@@ -177,9 +180,9 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   always_ff @(posedge clk) begin
     if (reset) begin
       state <= RUNNING;
-    end else if (HaveReset & ResetHaltReq & InstrValidM) begin
+    end else if (HaveReset & ResetHaltReq & InstrValidE) begin
       state <= HALTED;
-    end else if ((HaltReq | ResumeReq) & InstrValidM) begin // Using the requests as enables
+    end else if ((HaltReq | ResumeReq) & InstrValidE) begin // Using the requests as enables
       state <= state_n;
     end
   end

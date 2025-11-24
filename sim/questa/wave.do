@@ -708,6 +708,7 @@ add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/pri
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/ResumeReq
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/ResetHaltReq
 add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/DPC_REGW
+add wave -noupdate -group Debug -expand -group csrd /testbench/dut/core/priv/priv/csr/debug/csrd/DCSR_REGW
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/StartCommand
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/ValidCommand
 add wave -noupdate -group Debug -expand -group abstract /testbench/dut/debug/debug/ValidSize

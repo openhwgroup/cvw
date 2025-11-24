@@ -11,7 +11,7 @@ RBBPORT = "9824"
 
 SPIKEARGS = [
     "spike",
-    "--isa=rv64gc_zicsr_zicntr",
+    "--isa=rv64gcB_zicsr_zicntr",
     "--rbb-port=9824",
     "--dm-progsize=0",
     "--dm-no-hasel",
