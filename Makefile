@@ -6,10 +6,9 @@ MAKEFLAGS += --output-sync --no-print-directory
 
 SIM = ${WALLY}/sim
 
-.PHONY: all riscof testfloat combined_IF_vectors zsbl coverage cvw-arch-verif sim_bp deriv clean
+.PHONY: all riscof testfloat combined_IF_vectors zsbl coverage sim_bp deriv clean
 
-#all: riscof	testfloat combined_IF_vectors zsbl coverage sim_bp cvw-arch-verif deriv
-all: riscof	testfloat combined_IF_vectors zsbl coverage sim_bp deriv # david_harris 10 Oct 2025 removed broken cvw-arch-verif pending switch to new framework
+all: riscof	testfloat combined_IF_vectors zsbl coverage sim_bp deriv
 
 # riscof builds the riscv-arch-test and wally-riscv-arch-test suites
 riscof:

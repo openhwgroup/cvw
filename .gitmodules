@@ -32,4 +32,4 @@
 [submodule "addins/riscv-arch-test-cvw"]
   path = addins/riscv-arch-test-cvw
   url = https://github.com/riscv-non-isa/riscv-arch-test
-  branch = cvw
+  branch = act4
