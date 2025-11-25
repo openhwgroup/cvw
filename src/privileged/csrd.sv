@@ -63,6 +63,9 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   logic      WriteDPC;
   logic      WriteCause;
 
+  // Need this for resuming
+  logic      DPCset;
+
   // WriteVals
   logic [31:0] DCSRWriteValM;
   logic [P.XLEN-1:0] DPCWriteValM;
@@ -209,9 +212,18 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
     if (reset) begin
       DebugResume <= 0;
     end else begin
-      DebugResume <= (state == HALTED) && (state_n == RUNNING);
+      DebugResume <= (state == HALTED) && (state_n == RUNNING) & DPCset;
     end
   end
+
+  always_ff @(posedge clk) begin
+    if (reset | ~DebugMode) begin
+      DPCset <= 0;
+    end else if (CSRDWriteM & (CSRAdrM == DPC)) begin
+      DPCset <= 1'b1;
+    end
+  end
+  
   // Halt cause
   // 000: No cause - Reset
   // 001: ebreak
