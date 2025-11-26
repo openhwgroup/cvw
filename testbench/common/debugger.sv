@@ -219,7 +219,13 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
     // For running testvectors instead of the encapsulated tests.
     logic [40:0] testvectors[$];
     logic [40:0] expected_outputs[$];
-      
+
+    // Error tracking
+    int          error_locations[$];
+
+    // Get the last resume for triggering error read out.
+    int          endIndex;
+    
     function new();
       state = IDLE;
       idcode = new();
@@ -231,13 +237,13 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
     task initialize();
       write_instr(5'b00001);
       this.idcode.read();
-      assert(this.idcode.result == 32'h1002AC05) $display("Received IDCODE");
+      assert(this.idcode.result == 32'h1002AC05) 
       else $display("IDCODE was corrupted: 0x%0h", this.idcode.result);
 
       // Reading DTMCS value
       write_instr(5'b10000);
       this.dtmcs.read();
-      assert(this.dtmcs.result == 32'h00100071) $display("DTMCS properly captures default value. dtmcs = 0x%8h", this.dtmcs.result);
+      assert(this.dtmcs.result == 32'h00100071) 
       else $display("Something is wrong with DTMCS on reset and capture: dtmcs = 0x%0h", this.dtmcs.result);
 
       // Set instruction DMI
@@ -327,7 +333,9 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
       string line;
       string items[$];
       int    file = $fopen(filename, "r");
-         
+
+      testvectors = {};
+      expected_outputs = {};
       while (!$feof(file)) begin        
         if ($fgets(line, file)) begin
           // Allow comments and whitespace
@@ -421,7 +429,7 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
      */
     function logic knownExceptions(logic [40:0] expected, logic [40:0] actual);
       logic result;
-      $display("last_addr = %2h", last_addr);
+      // $display("last_addr = %2h", last_addr);
       if (state == DATA0_READ | state == DATA1_READ) begin
         case (last_abstract_reg)
           16'h7b0: begin
@@ -460,7 +468,7 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
           // a decent reason to make that go high. I'll examine the code
           // later.
           7'h16: begin
-            $display("HERE");
+            // $display("HERE");
             if ((expected[14] != actual[14]) | (expected[17] != actual[17])) begin
               result = 1;
             end else begin
@@ -486,7 +494,14 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
      */
     task run_testvectors();
       logic exception;
+      // Reset errors back to zero
+      error_locations = {};
+      this.getEndVector();
       foreach (testvectors[i]) begin
+        if (i == endIndex - 1) begin
+          this.reportErrors();
+        end
+        
         if (i > 0) begin
           last_addr = testvectors[i-1][40:34];
           if (last_addr == 7'h17) begin
@@ -495,12 +510,12 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
         end
         
         this.dmireg.write(testvectors[i]);
-        $display("\n");
-        $display("%2h", last_addr);
-        $display("%2h", last_abstract_reg);
-        $display("\033[1mtestvector\033[0m[%0d]: \033[1m addr:\033[0m %2h, data: %8h, op: %2b", i, this.testvectors[i][40:34], this.testvectors[i][33:2], this.testvectors[i][1:0]);
+        // $display("\n");
+        // $display("%2h", last_addr);
+        // $display("%2h", last_abstract_reg);
+        // $display("\033[1mtestvector\033[0m[%0d]: \033[1m addr:\033[0m %2h, data: %8h, op: %2b", i, this.testvectors[i][40:34], this.testvectors[i][33:2], this.testvectors[i][1:0]);
 
-        $display("state = %s", state.name());
+        // $display("state = %s", state.name());
         if (state == DATA0_READ | state == DATA1_READ | state == DMREG_READ | state == ABSTRACT_READ) begin
           exception = this.knownExceptions(this.expected_outputs[i], this.dmireg.result);
         end
@@ -511,17 +526,41 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
         // Assert that the output should equal what Spike outputs.
         assert(this.dmireg.result == expected_outputs[i] | exception | i == 0) begin
           exception = 0;
-          $display("%sMATCHES%s", green, normal);
+          // $display("%sMATCHES%s", green, normal);
         end else begin 
           $display("%sFAILED:%s Wally does not match Spike.", red, normal);
+          // Report both the expected and actual results
+          $display("  Expected[%0d] = \033[1m addr:\033[0m %2h, data: %8h, op: %2b", i, this.expected_outputs[i][40:34], this.expected_outputs[i][33:2], this.expected_outputs[i][1:0]);
+          $display("  Actual[%0d] =  addr: %2h, data: %8h, op: %2b", i, this.dmireg.result[40:34], this.dmireg.result[33:2], this.dmireg.result[1:0]);
+          error_locations.push_back(i);
         end
-
-        // Report both the expected and actual results
-        $display("  Expected[%0d] = \033[1m addr:\033[0m %2h, data: %8h, op: %2b", i, this.expected_outputs[i][40:34], this.expected_outputs[i][33:2], this.expected_outputs[i][1:0]);
-        $display("  Actual[%0d] =  addr: %2h, data: %8h, op: %2b", i, this.dmireg.result[40:34], this.dmireg.result[33:2], this.dmireg.result[1:0]);
       end
     endtask
-     
+
+    function getEndVector();
+      logic [6:0] addr;
+      logic [31:0] data;
+      int          endVector;
+      int          i;
+      for (i = testvectors.size() - 1; i >= 0; i--) begin
+        addr = testvectors[i][40:34];
+        data = testvectors[i][33:2];
+        if (data[30] & addr == 7'h10) begin
+          endIndex = i;
+          return 0;
+        end
+      end
+    endfunction
+
+    function reportErrors();
+      if (error_locations.size() > 0) begin
+        $display("errors: %d", error_locations.size());
+        $display("Number of errors: %d. The following testvector indices had errors.", error_locations.size());
+        foreach (error_locations[i]) begin
+          $display("%d", error_locations[i]);
+        end
+      end
+    endfunction
   endclass
   
   // ----------------------------------------------------------------
@@ -539,7 +578,6 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
       begin
         forever begin
           @(negedge reset);
-
           disable debug_sequence;
 
           fork : debug_sequence
@@ -551,9 +589,8 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
           join_none
         end
       end
-      join_none
+    join_none
   end
-    
 endmodule
 
 typedef string stringarr[];
@@ -602,4 +639,8 @@ function automatic logic [1:0] op_decode(string op_str, logic response);
     end
   end
   return 2'b00;
+endfunction
+
+function printArr();
+  
 endfunction

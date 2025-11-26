@@ -3633,13 +3633,13 @@ string wally32debug_jtag[] = '{
 string wally64debug[] = '{
   `DEBUGELFS,
   //"WALLY-debug-02",
-  "WALLY-debug-dmactive"
-  //"WALLY-debug-03"
+  "WALLY-debug-dmactive",
+  "WALLY-debug-03"
 };
 
 string wally64debug_jtag[] = '{
   `DEBUGTV,
   //"WALLY-debug-02",
-  "WALLY-debug-dmactive"
-  //"WALLY-debug-03"
+  "WALLY-debug-dmactive",
+  "WALLY-debug-03"
 };
