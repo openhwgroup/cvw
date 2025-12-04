@@ -59,7 +59,7 @@ _start:
 #else
   bltz t0, 1f
 #endif
-2: # store 000001 to tohost to terminate with HTIF
+2: # store 000...0001 to tohost to terminate with HTIF
   li a0, 1
   la t0, tohost
   sw a0, 0(t0)
