@@ -45,7 +45,8 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   output logic                 ExceptionM,                                      // exception is occurring
   output logic                 IntPendingM,                                     // Interrupt is pending, might occur if enabled
   output logic                 DelegateM,                                       // Delegate trap to supervisor handler
-  output logic [3:0]           CauseM                                           // trap cause
+  output logic [3:0]           CauseM,                                          // trap cause
+  output logic                 TrapToM, TrapToHS, TrapToVS
 );
 
   logic                        MIntGlobalEnM, SIntGlobalEnM;                    // Global interrupt enables
@@ -71,6 +72,10 @@ module trap import cvw::*;  #(parameter cvw_t P) (
   // wfiW is to support possible but unlikely back to back wfi instructions. wfiM would be high in the M stage, while also in the W stage.
   assign DelegateM     = P.S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM] : MEDELEG_REGW[CauseM]) &
                      (PrivilegeModeW == P.U_MODE | PrivilegeModeW == P.S_MODE);
+
+  assign TrapToVS = 1'b0; // until hedeleg/hideleg are implemented
+  assign TrapToHS = DelegateM;
+  assign TrapToM  = TrapM & ~TrapToHS; // and not VS
 
   ///////////////////////////////////////////
   // Trigger Traps
