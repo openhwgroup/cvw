@@ -29,9 +29,6 @@ coverage:
 deriv:
 	derivgen.pl
 
-cvw-arch-verif:
-	$(MAKE) -C ${WALLY}/addins/cvw-arch-verif
-
 sim_bp: ${WALLY}/addins/branch-predictor-simulator/src/sim_bp
 
 ${WALLY}/addins/branch-predictor-simulator/src/sim_bp:
@@ -47,4 +44,3 @@ clean:
 	$(MAKE) clean -C ${WALLY}/tests/fp
 	$(MAKE) clean -C ${WALLY}/fpga/zsbl
 	$(MAKE) clean -C ${WALLY}/tests/coverage
-	$(MAKE) clean -C ${WALLY}/addins/cvw-arch-verif
