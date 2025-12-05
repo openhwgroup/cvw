@@ -46,7 +46,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   output logic                     TLBHit,
   output logic                     TLBPageFault,
   output logic                     UpdateDA,
-  output logic                     SV39Mode,
+  output logic                     SV57Mode,
   output logic                     Translate,
   output logic                     PTE_N,         // NAPOT page table entry
   output logic [1:0]               PBMemoryType   // PBMT field of PTE during TLB hit, or 00 otherwise
@@ -70,7 +70,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   assign TLBAccess = ReadAccess | WriteAccess | (|CMOpM);
 
   // Check that upper bits are legal (all 0s or all 1s)
-  vm64check #(P) vm64check(.SATP_MODE, .VAdr, .SV39Mode, .UpperBitsUnequal);
+  vm64check #(P) vm64check(.SATP_MODE, .VAdr, .SV57Mode, .UpperBitsUnequal);
 
   // unswizzle useful PTE bits
   assign PTE_N = PTEAccessBits[11];

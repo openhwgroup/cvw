@@ -84,10 +84,10 @@ module tlb import cvw::*;  #(parameter cvw_t P,
   logic [P.PPN_BITS-1:0]          PPN;
   // Sections of the page table entry
   logic [11:0]                    PTEAccessBits;
-  logic [1:0]                     HitPageType;
+  logic [2:0]                     HitPageType;
   logic                           CAMHit;
   logic                           TLBHit;
-  logic                           SV39Mode;
+  logic                           SV57Mode;
   logic                           Misaligned;
   logic                           MegapageMisaligned;
   logic                           PTE_N;         // NAPOT page table entry
@@ -95,15 +95,18 @@ module tlb import cvw::*;  #(parameter cvw_t P,
 
   if(P.XLEN == 32) begin
     assign MegapageMisaligned = |(PPN[9:0]); // must have zero PPN0
-    assign Misaligned = (HitPageType == 2'b01) & MegapageMisaligned;
+    assign Misaligned = (HitPageType == 3'b001) & MegapageMisaligned;
   end else begin // 64-bit
-    logic  GigapageMisaligned, TerapageMisaligned;
+    logic  GigapageMisaligned, TerapageMisaligned, PetapageMisaligned;
+    assign PetapageMisaligned = |(PPN[35:0]);     // must have zero PPN3, PPN2, PPN1, PPN0
     assign TerapageMisaligned = |(PPN[26:0]); // must have zero PPN2, PPN1, PPN0
     assign GigapageMisaligned = |(PPN[17:0]); // must have zero PPN1 and PPN0
     assign MegapageMisaligned = |(PPN[8:0]); // must have zero PPN0
-    assign Misaligned = ((HitPageType == 2'b11) & TerapageMisaligned) |
-              ((HitPageType == 2'b10) & GigapageMisaligned) |
-              ((HitPageType == 2'b01) & MegapageMisaligned);
+    assign Misaligned =
+              ((HitPageType == 3'b100) & PetapageMisaligned) |
+              ((HitPageType == 3'b011) & TerapageMisaligned) |
+              ((HitPageType == 3'b010) & GigapageMisaligned) |
+              ((HitPageType == 3'b001) & MegapageMisaligned);
   end
 
   assign VPN = VAdr[P.VPN_BITS+11:12];
@@ -113,11 +116,11 @@ module tlb import cvw::*;  #(parameter cvw_t P,
     .EffectivePrivilegeModeW, .ReadAccess, .WriteAccess, .CMOpM, .DisableTranslation,
     .PTEAccessBits, .CAMHit, .Misaligned, .NAPOT4,
     .TLBMiss, .TLBHit, .TLBPageFault,
-    .UpdateDA, .SV39Mode, .Translate, .PTE_N, .PBMemoryType);
+    .UpdateDA, .SV57Mode, .Translate, .PTE_N, .PBMemoryType);
 
   tlblru #(TLB_ENTRIES) lru(.clk, .reset, .TLBWrite, .Matches, .TLBHit, .WriteEnables);
   tlbcam #(P, TLB_ENTRIES, P.VPN_BITS + P.ASID_BITS, P.VPN_SEGMENT_BITS)
-    tlbcam(.clk, .reset, .VPN, .PageTypeWriteVal, .SV39Mode, .TLBFlush, .WriteEnables, .PTE_Gs, .PTE_NAPOTs,
+    tlbcam(.clk, .reset, .VPN, .PageTypeWriteVal, .SV57Mode, .TLBFlush, .WriteEnables, .PTE_Gs, .PTE_NAPOTs,
            .SATP_ASID, .Matches, .HitPageType, .CAMHit);
   tlbram #(P, TLB_ENTRIES) tlbram(.clk, .reset, .PTE, .Matches, .WriteEnables, .PPN, .PTEAccessBits, .PTE_Gs, .PTE_NAPOTs);
 
