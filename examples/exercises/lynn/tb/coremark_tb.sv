@@ -2,16 +2,13 @@
 
 // If DUT_MODULE isn't defined on the vlog command line,
 // fall back to a default name.
-`ifndef DUT_MODULE
-  `define DUT_MODULE your_core
-`endif
 
 module coremark_tb;
 
   // ------------------------------------------------------------
   // Parameters
   // ------------------------------------------------------------
-  parameter int MEM_WORDS  = 16384;                      // words in memfile
+  parameter int MEM_WORDS  = 64000;                      // words in memfile
   localparam int BYTES_PER_WORD = `XLEN / 8;
   localparam int MEM_BYTES  = MEM_WORDS * BYTES_PER_WORD;
 
@@ -40,10 +37,10 @@ module coremark_tb;
   // Unified memory: instructions + data
   // ------------------------------------------------------------
   // 1) Word-level buffer for $readmemh (matches elf2hex output)
-  logic [`XLEN-1:0] mem_words [0:MEM_WORDS-1];
+  logic [`XLEN-1:0] mem_words [MEM_WORDS-1:0];
 
   // 2) Actual byte-addressable memory used by the DUT
-  logic [7:0] mem [0:MEM_BYTES-1];
+  logic [7:0] mem [MEM_BYTES-1:0];
 
   // Instruction side interface (byte addresses)
   logic [`XLEN-1:0] imem_addr;
@@ -76,6 +73,7 @@ module coremark_tb;
 
         if (!addr_in_range(addr) && !reset) begin
             $display("[%0t] ERROR: load_word out-of-range addr: %h", $time, addr);
+            $finish(-1);
             return '0;
         end
 
@@ -115,6 +113,7 @@ module coremark_tb;
 
         if (!addr_in_range(addr) && !reset) begin
             $display("[%0t] ERROR: store_word out-of-range addr %h", $time, addr);
+            $finish(-1);
             return;
         end
 
@@ -137,7 +136,7 @@ module coremark_tb;
   // DEBUG
   always @(negedge clk) begin
     $display("PC: %h \tInstruction run: %h", imem_addr, imem_rdata);
-    $display("PC: %h PC_NEXT: %h", dut.PC, dut.ifu.PCNext);
+    // $display("PC: %h PC_NEXT: %h", dut.PC, dut.ifu.PCNext);
   end
 
   always_ff @(posedge clk) begin
@@ -188,6 +187,20 @@ module coremark_tb;
   // ------------------------------------------------------------
   // DUT instantiation
   // ------------------------------------------------------------
+  // `DUT_MODULE dut (
+  //   .clk        (clk),
+  //   .reset      (reset),
+
+  //   // Instruction memory interface (byte address)
+  //   .imem_a,
+  //   .imem_rd,
+
+  //   // Data memory interface (byte address + strobes)
+  //   .dmem_a,
+  //   .dmem_rd,
+  //   .dmem_wd,
+  //   .dmem_we
+  // );
 
   `DUT_MODULE dut (
     .clk        (clk),
@@ -211,18 +224,11 @@ initial begin
     // Wait until reset deasserts
     @(negedge reset);
     $display("[%0t] INFO: Starting simulation.", $time);
-
-    // Wait 20 cycles
-    //repeat (20) @(posedge clk);
-
-    // $display("[%0t] INFO: PC reached finish address %h. Ending simulation.", $time, FINISH_PC);
-    // $finish;
 end
 
 always @(negedge clk) begin
-  if (!reset && imem_addr === 'x) begin
-      $display("[%0t] INFO: PC reached finish address %h. Ending simulation.",
-                $time, FINISH_PC);
+  if (!reset && imem_rdata == `XLEN'h06f) begin
+      $display("[%0t] INFO: Program Finished! Ending simulation.", $time);
       $finish;
   end
 end

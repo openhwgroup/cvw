@@ -6,10 +6,14 @@
 XLEN ?=32
 
 # Directory containing all processor RTL (will scan for .sv / .svh)
-PROCESSOR     ?= $(CURDIR)/sample_processor
+#PROCESSOR     ?= $(CURDIR)/sample_processor
+PROCESSOR     ?= $(CURDIR)/my_processor/RISC-V-Pipelined-Processor/src
+
+INC_DIR       ?= $(CURDIR)/my_processor/RISC-V-Pipelined-Processor/incdir/
 
 # Name of the DUT module
-DUT_MODULE ?= riscvsingle  # or whatever your top-level is called
+#DUT_MODULE ?= riscvsingle  # or whatever your top-level is called
+DUT_MODULE ?= CoremarkCore
 
 # Path to your testbench file
 TESTBENCH_FILE ?= $(CURDIR)/tb/coremark_tb.sv
@@ -27,11 +31,11 @@ WAVES_DO    ?= $(CURDIR)/coremark_waves.do
 
 # ----    Coremark Configuration ---- #
 
-ARCH := rv$(XLEN)im_zicsr_zba_zbb_zbs
+#ARCH := rv$(XLEN)im_zicsr_zba_zbb_zbs
 #ARCH := rv$(XLEN)gc
 #ARCH := rv$(XLEN)imc_zicsr
 #ARCH := rv$(XLEN)im_zicsr
-#ARCH := rv$(XLEN)i_zicsr
+ARCH := rv$(XLEN)i_zicsr
 
 ABI := $(if $(findstring "64","$(XLEN)"),lp64,ilp32)
 
@@ -77,42 +81,53 @@ sources=$(cmbase)/core_main.c $(cmbase)/core_list_join.c $(cmbase)/coremark.h  \
     $(PORT_DIR)/crt.S $(PORT_DIR)/encoding.h $(PORT_DIR)/util.h $(PORT_DIR)/syscalls.c
 
 # All RTL sources under PROCESSOR, plus the testbench file
-SV_SOURCES_RAW := $(shell find $(PROCESSOR) -type f \( -name "*.sv" -o -name "*.svh" \))
-SV_SOURCES     := $(abspath $(SV_SOURCES_RAW) $(TESTBENCH_FILE))
+SV_SOURCES := $(shell find $(PROCESSOR) -type f \( -name "*.sv" -o -name "*.svh" \))
 
 # Path to the generated memfile
 MEMFILE_PATH      := $(work_dir)/coremark.bare.riscv.elf.memfile
-MEMFILE_PLUSARG   ?= +MEMFILE=$(MEMFILE_PATH)
 
 # ----          Targets            ---- #
 
 # Default target: just build (memfile + compiled RTL)
 all: build
 
-# Build = generate memfile + compile RTL + testbench into $(work_dir)/work
-build: $(MEMFILE_PATH)
+# Build = compile RTL
+build:
 	@mkdir -p $(work_dir)
 	@cd $(work_dir) && \
 	  echo "[BUILD] Creating/using local 'work' library..." && \
 	  (vlib work 2>/dev/null || true) && \
 	  echo "[BUILD] Compiling SystemVerilog sources..." && \
-	  vlog +define+DUT_MODULE=$(DUT_MODULE) +define+XLEN=$(XLEN) $(SV_SOURCES)
+	  vlog +incdir+$(INC_DIR) +define+DUT_MODULE=$(DUT_MODULE) \
+      +define+XLEN=$(XLEN) $(abspath $(SV_SOURCES) $(TESTBENCH_FILE))
 
 # Run = build first, then simulate
 # Use:  make run          -> batch mode
 #       make run GUI=1    -> GUI mode with waves
-run: build
+coremark: $(MEMFILE_PATH)
+	@mkdir -p $(work_dir)
+
+  # build coremark
+  # generate memfile + compile RTL + testbench into $(work_dir)/work
+	@cd $(work_dir) && \
+	  echo "[BUILD] Creating/using local 'work' library..." && \
+	  (vlib work 2>/dev/null || true) && \
+	  echo "[BUILD] Compiling SystemVerilog sources..." && \
+	  vlog +incdir+$(INC_DIR) +define+DUT_MODULE=$(DUT_MODULE) \
+      +define+XLEN=$(XLEN) $(abspath $(SV_SOURCES) $(TESTBENCH_FILE))
+
+  # run coremark
 	@cd $(work_dir) && \
 	if [ "$(GUI)" = "1" ]; then \
 	  echo "[RUN] Starting vsim in GUI mode..."; \
 	  time $(VSIM) $(VSIM_FLAGS) work.$(TB_TOP) \
-	    $(MEMFILE_PLUSARG) \
+	    +MEMFILE=$(MEMFILE_PATH) \
 	    -do "if {[file exists $(WAVES_DO)]} {do $(WAVES_DO)}; run -all" \
 	    2>&1 | tee coremark.sim.log; \
 	else \
 	  echo "[RUN] Starting vsim in batch mode..."; \
 	  time $(VSIM) -c $(VSIM_FLAGS) work.$(TB_TOP) \
-	    $(MEMFILE_PLUSARG) \
+	    +MEMFILE=$(MEMFILE_PATH) \
 	    -do "run -all; quit -f" \
 	    2>&1 | tee coremark.sim.log; \
 	fi

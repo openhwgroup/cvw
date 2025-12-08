@@ -100,10 +100,10 @@ module controller(
             default: begin
                 controls = 11'bx_xx_xx_x_x_x_x_x_x_x; // non-implemented instruction
 
-                if (insn_debug !== 'x) begin
-                    $display("Instruction not implemented: %h", insn_debug);
-                    $finish(-1);
-                end
+                // if (insn_debug !== 'x) begin
+                //     $display("Instruction not implemented: %h", insn_debug);
+                //     $finish(-1);
+                // end
             end
         endcase
 
