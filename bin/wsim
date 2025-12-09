@@ -14,9 +14,11 @@
 import argparse
 import os
 import sys
+from pathlib import Path
 
 # Global variable
-WALLY = os.environ.get("WALLY")
+WALLY = Path(os.environ.get("WALLY", Path(__file__).resolve().parent.parent))
+
 
 def parseArgs():
     parser = argparse.ArgumentParser()
@@ -37,6 +39,7 @@ def parseArgs():
     parser.add_argument("--rvvi", "-r", help="Simulate rvvi hardware interface and ethernet.", action="store_true")
     return parser.parse_args()
 
+
 def validateArgs(args):
     if not args.testsuite and not args.elf:
         print("Error: Missing test suite or ELF file")
@@ -47,7 +50,7 @@ def validateArgs(args):
     elif args.gui and args.sim != "questa":
         print("GUI only supported by Questa")
         sys.exit(1)
-    elif any([args.gui, args.ccov, args.fcov]) and args.sim != "questa":
+    elif (args.ccov or args.fcov) and args.sim != "questa":
         print("Coverage only supported by Questa")
         sys.exit(1)
     elif any([args.lockstep, args.lockstepverbose]) and args.sim not in ["questa", "vcs"]:
@@ -57,6 +60,7 @@ def validateArgs(args):
         print("Error: testbench_fp presently only supported by Questa, not VCS or Verilator, because of a touchy testbench")
         sys.exit(1)
 
+
 def elfFileCheck(args):
     ElfFile = ""
     if os.path.isfile(args.elf):
@@ -65,7 +69,7 @@ def elfFileCheck(args):
     elif args.elf:
         print(f"ELF file not found: {args.elf}")
         sys.exit(1)
-    elif args.testsuite.endswith(".elf"): # No --elf argument; check if testsuite has a .elf extension and use that instead
+    elif args.testsuite.endswith(".elf"):  # No --elf argument; check if testsuite has a .elf extension and use that instead
         if os.path.isfile(args.testsuite):
             ElfFile = os.path.abspath(args.testsuite)
         else:
@@ -82,8 +86,9 @@ def elfFileCheck(args):
         else:
             args.testsuite = f"{fields[2]}_{fields[3]}"
     elif "/" in args.testsuite:
-        args.testsuite = args.testsuite.rsplit("/", 1)[1] # strip off path if present
+        args.testsuite = args.testsuite.rsplit("/", 1)[1]  # strip off path if present
     return ElfFile
+
 
 def prepSim(args, ElfFile):
     prefix = ""
@@ -114,7 +119,7 @@ def prepSim(args, ElfFile):
         flagsList.append("--lockstep")
         prefix += lockstepSetup(args)
         defineList.append("+define+USE_IMPERAS_DV")
-    if "breker" in args.config and args.sim != "verilator": # Requires a license for the breker tool. See tests/breker/README.md for details
+    if "breker" in args.config and args.sim != "verilator":  # Requires a license for the breker tool. See tests/breker/README.md for details
         ElfFileNoExtension = os.path.splitext(ElfFile)[0]
         flagsList.append("--breker")
         defineList.append("+define+USE_TREK_DV")
@@ -128,21 +133,24 @@ def prepSim(args, ElfFile):
     flags = " ".join(flagsList)
     return flags, prefix
 
+
 def lockstepSetup(args):
-    imperasicSharedPath = os.path.join(WALLY, "config", "shared", "imperas-shared.ic")
-    imperasicVerbosePath = os.path.join(WALLY, "sim", "imperas-verbose.ic")
-    imperasicPath = os.path.join(WALLY, "config", args.config, "imperas.ic")
-    if not os.path.isfile(imperasicPath): # If config is a derivative, look for imperas.ic in derivative configs
-        imperasicPath = os.path.join(WALLY, "config", "deriv", args.config, "imperas.ic")
-        if not os.path.isfile(imperasicPath):
+    imperasicSharedPath = WALLY / "config" / "shared" / "imperas-shared.ic"
+    imperasicVerbosePath = WALLY / "sim" / "imperas-verbose.ic"
+    imperasicPath = WALLY / "config" / str(args.config) / "imperas.ic"
+    if not imperasicPath.is_file():  # If config is a derivative, look for imperas.ic in derivative configs
+        imperasicPath = WALLY / "config" / "deriv" / str(args.config) / "imperas.ic"
+        if not imperasicPath.is_file():
             print("Error: imperas.ic not found")
             sys.exit(1)
     prefix = f"IMPERAS_TOOLS={imperasicSharedPath}:{imperasicPath}{f':{imperasicVerbosePath}' if args.lockstepverbose else ''}"
     return prefix
 
-def createDirs(sim):
+
+def createDirs(sim: str):
     for d in ["logs", "wkdir", "cov", "ucdb", "fcov", "fcov_ucdb"]:
-        os.makedirs(os.path.join(WALLY, "sim", sim, d), exist_ok=True)
+        (WALLY / "sim" / sim / d).mkdir(parents=True, exist_ok=True)
+
 
 def runSim(args, flags, prefix):
     if args.sim == "questa":
@@ -152,23 +160,26 @@ def runSim(args, flags, prefix):
     elif args.sim == "vcs":
         runVCS(args, flags, prefix)
 
+
 def runQuesta(args, flags, prefix):
     # Force Questa to use 64-bit mode, sometimes it defaults to 32-bit even on 64-bit machines
     prefix = "MTI_VCO_MODE=64 " + prefix
     if args.args:
-        args.args = fr'--args \"{args.args}\"'
+        args.args = rf"--args \"{args.args}\""
     if args.params:
-        args.params = fr'--params \"{args.params}\"'
+        args.params = rf"--params \"{args.params}\""
     if args.define:
-        args.define = fr'--define \"{args.define}\"'
+        args.define = rf"--define \"{args.define}\""
     cmd = f"do wally.do {args.config} {args.testsuite} {args.tb} {args.args} {args.params} {args.define} {flags}"
     cmd = f'cd $WALLY/sim/questa; {prefix} vsim {"-c" if not args.gui else ""} -do "{cmd}"'
     print(f"Running Questa with command: {cmd}")
     os.system(cmd)
 
+
 def runVerilator(args):
     print(f"Running Verilator on {args.config} {args.testsuite}")
     os.system(f'make -C {WALLY}/sim/verilator WALLYCONF={args.config} TEST={args.testsuite} TESTBENCH={args.tb} PLUS_ARGS="{args.args}" PARAM_ARGS="{args.params}" DEFINE_ARGS="{args.define}"')
+
 
 def runVCS(args, flags, prefix):
     print(f"Running VCS on {args.config} {args.testsuite}")
@@ -182,6 +193,7 @@ def runVCS(args, flags, prefix):
     print(cmd)
     os.system(cmd)
 
+
 def main(args):
     validateArgs(args)
     print(f"Config={args.config} tests={args.testsuite} sim={args.sim} gui={args.gui} args='{args.args}' params='{args.params}' define='{args.define}'")
@@ -189,6 +201,7 @@ def main(args):
     flags, prefix = prepSim(args, ElfFile)
     createDirs(args.sim)
     sys.exit(runSim(args, flags, prefix))
+
 
 if __name__ == "__main__":
     args = parseArgs()
