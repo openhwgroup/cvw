@@ -11,6 +11,11 @@ PROCESSOR     ?= $(CURDIR)/my_processor/RISC-V-Pipelined-Processor/src
 
 INC_DIR       ?= $(CURDIR)/my_processor/RISC-V-Pipelined-Processor/incdir/
 
+# TEST_DIR
+TEST_DIR      ?= $(CURDIR)/tests/sample_processor
+
+RISCV_ARCH_TEST ?= $(WALLY)/addins/riscv-arch-test-cvw
+
 # Name of the DUT module
 #DUT_MODULE ?= riscvsingle  # or whatever your top-level is called
 DUT_MODULE ?= CoremarkCore
@@ -83,6 +88,8 @@ sources=$(cmbase)/core_main.c $(cmbase)/core_list_join.c $(cmbase)/coremark.h  \
 # All RTL sources under PROCESSOR, plus the testbench file
 SV_SOURCES := $(shell find $(PROCESSOR) -type f \( -name "*.sv" -o -name "*.svh" \))
 
+TEST_SOURCES := $(shell find $(TEST_DIR))
+
 # Path to the generated memfile
 MEMFILE_PATH      := $(work_dir)/coremark.bare.riscv.elf.memfile
 
@@ -92,7 +99,9 @@ MEMFILE_PATH      := $(work_dir)/coremark.bare.riscv.elf.memfile
 all: build
 
 # Build = compile RTL
-build:
+.PHONY: build
+
+build: Makefile
 	@mkdir -p $(work_dir)
 	@cd $(work_dir) && \
 	  echo "[BUILD] Creating/using local 'work' library..." && \
@@ -101,10 +110,19 @@ build:
 	  vlog +incdir+$(INC_DIR) +define+DUT_MODULE=$(DUT_MODULE) \
       +define+XLEN=$(XLEN) $(abspath $(SV_SOURCES) $(TESTBENCH_FILE))
 
+.PHONY: test
+
+test: $(TEST_SOURCES)
+	$(MAKE) -C $(RISCV_ARCH_TEST) \
+   CONFIG_FILE=$(TEST_DIR)/test_config.yaml \
+   WORKDIR=$(TEST_DIR)/work
+
 # Run = build first, then simulate
 # Use:  make run          -> batch mode
 #       make run GUI=1    -> GUI mode with waves
-coremark: $(MEMFILE_PATH)
+.PHONY: coremark
+
+coremark: $(MEMFILE_PATH) Makefile
 	@mkdir -p $(work_dir)
 
   # build coremark
@@ -134,9 +152,9 @@ coremark: $(MEMFILE_PATH)
 
 # ----  Coremark binary + memfile  ---- #
 
-$(MEMFILE_PATH): $(work_dir)/coremark.bare.riscv
+$(MEMFILE_PATH): $(work_dir)/coremark.bare.riscv Makefile
 	riscv64-unknown-elf-objdump -D $< > $<.elf.objdump
-	riscv64-unknown-elf-elf2hex --bit-width $(XLEN) --input $< --output $@
+	riscv64-unknown-elf-elf2hex --bit-width 8 --input $< --output $@
 	extractFunctionRadix.sh $<.elf.objdump
 
 $(work_dir)/coremark.bare.riscv: $(sources) Makefile
