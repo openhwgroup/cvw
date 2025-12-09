@@ -198,7 +198,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
 
     // Check for page faults
     vm64check #(P) vm64check(.SATP_MODE(SATP_REGW[P.XLEN-1:P.XLEN-P.SVMODE_BITS]), .VAdr(TranslationVAdr),
-      .SV39Mode(), .UpperBitsUnequal);
+      .SV39Mode(), .SV48Mode(), .UpperBitsUnequal);
     // This register is not functionally necessary, but improves the critical path.
     flopr #(1) upperbitsunequalreg(clk, reset, UpperBitsUnequal, UpperBitsUnequalD);
     assign InvalidRead = ReadAccess & ~Readable & (~STATUS_MXR | ~Executable);
@@ -230,14 +230,14 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   assign ITLBWriteF = (WalkerState == LEAF & ~HPTWUpdateDA) & ~DTLBWalk;
 
   // FSM to track PageType based on the levels of the page table traversed
-  flopr #(2) PageTypeReg(clk, reset, NextPageType, PageType);
+  flopr #(3) PageTypeReg(clk, reset, NextPageType, PageType);
   always_comb
     case (WalkerState)
-      L4_RD:  NextPageType = 2'b100; // added petapage for sv57
-      L3_RD:  NextPageType = 2'b011; // terapage
-      L2_RD:  NextPageType = 2'b010; // gigapage
-      L1_RD:  NextPageType = 2'b001; // megapage
-      L0_RD:  NextPageType = 2'b000; // kilopage
+      L4_RD:  NextPageType = 3'b100; // added petapage for sv57
+      L3_RD:  NextPageType = 3'b011; // terapage
+      L2_RD:  NextPageType = 3'b010; // gigapage
+      L1_RD:  NextPageType = 3'b001; // megapage
+      L0_RD:  NextPageType = 3'b000; // kilopage
       default: NextPageType = PageType;
     endcase
 
@@ -273,7 +273,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
     assign MegapageMisaligned = |(CurrentPPN[9:0]); // must have zero PPN0
     assign Misaligned = ((WalkerState == L0_ADR) & MegapageMisaligned);
   end else begin
-    logic  petapageMisaligned, GigapageMisaligned, TerapageMisaligned; //decared petapage for sv57
+    logic  PetapageMisaligned, GigapageMisaligned, TerapageMisaligned; //decared petapage for sv57
     assign InitialWalkerState = (SvMode == P.SV57) ? L4_ADR : (SvMode == P.SV48) ? L3_ADR : L2_ADR ; // Added sv57 mode.
     assign PetapageMisaligned = |(CurrentPPN[35:0]);  // Must have zero PPN3, PPN2, PPN1, PPN0 for sv57
     assign TerapageMisaligned = |(CurrentPPN[26:0]); // Must have zero PPN2, PPN1, PPN0
@@ -291,7 +291,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
       L4_ADR:                                                         NextWalkerState = L4_RD; // First access in SV57
       L4_RD:      if (HPTWFaultM)                                     NextWalkerState = FAULT;
                   else if (DCacheBusStallM)                           NextWalkerState = L4_RD;
-                  else                                                NextWalkerState = L3_ADR;   // Transition to level 3        
+                  else                                                NextWalkerState = L3_ADR;   // Transition to level 3
       L3_ADR:                                                         NextWalkerState = L3_RD; // First access in SV48
       L3_RD:      if (HPTWFaultM)                                     NextWalkerState = LEAF;
                   else if (InitialWalkerState == L3_ADR | ValidNonLeafPTE) NextWalkerState = L3_RD;

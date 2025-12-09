@@ -26,16 +26,23 @@ cvw-riscv-arch-test: # cvw-arch32e
 	$(MAKE) cvw-arch64
 
 wally-riscv-arch-test: wally32 wally64
+vm: arch64
 
 # Generate config.ini files
 config%.ini: config.ini
 	sed 's,{0},$(current_dir),g;s,{1},$(patsubst %64,%64gc,$(patsubst %32,%32gc,$*)),g;s,{2},$(nproc),g' config.ini > $@
 
 # Generate riscv-arch-test targets
+#arch%: config$$*.ini | $(work_dir) $(arch_workdir)
+#	-riscof run --work-dir=$(work_dir)/$@ --config=$< --suite=$(arch_dir)/riscv-test-suite/rv64i_m/vm_pmp/src/sv39 --env=$(arch_dir)/riscv-test-suite/env --no-browser
+#	#$(MAKE) -f makefile-memfile WORKDIR=$(work_dir)/$@ BITWIDTH=$(patsubst %32e,%32,$*)
+#	rsync -a $(work_dir)/$@/ $(arch_workdir)/rv64i_m/vm_pmp/src/sv39 || echo "error suppressed"
+#
+# Generate riscv-arch-test targets
 arch%: config$$*.ini | $(work_dir) $(arch_workdir)
-	riscof run --work-dir=$(work_dir)/$@ --config=$< --suite=$(arch_dir)/riscv-test-suite/ --env=$(arch_dir)/riscv-test-suite/env --no-browser
-	$(MAKE) -f makefile-memfile WORKDIR=$(work_dir)/$@ BITWIDTH=$(patsubst %32e,%32,$*)
-	rsync -a $(work_dir)/$@/rv*/* $(arch_workdir)/rv$(patsubst %64,%64i,$(patsubst %32,%32i,$*))_m || echo "error suppressed"
+	-riscof run --work-dir=$(work_dir)/$@ --config=$< --suite=$(arch_dir)/riscv-test-suite/rv64i_m/vm_sv57 --env=$(arch_dir)/riscv-test-suite/env --no-browser
+	#$(MAKE) -f makefile-memfile WORKDIR=$(work_dir)/$@ BITWIDTH=$(patsubst %32e,%32,$*)
+	rsync -a $(work_dir)/$@/src $(arch_workdir)/rv64i_m/vm_sv57/ || echo "error suppressed"
 
 # Generate cvw-riscv-arch-test targets
 # Generate riscv-arch-test targets

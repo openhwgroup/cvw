@@ -38,32 +38,27 @@ module vm64check import cvw::*;  #(parameter cvw_t P) (
   if (P.XLEN == 64) begin
     assign SV39Mode = (SATP_MODE == P.SV39);
     assign SV48Mode = (SATP_MODE == P.SV48);
-    assign SV57Mode = (SATP_MODE == P.SV57);
-    
+
     // page fault if upper bits aren't all the same
     logic all0_46_38, all1_46_38;
-    logic all0_56_47, all1_56_47;
-    logic all0_63_57, all1_63_57;
-    logic                           eq_46_38,eq_56_47, eq_63_57;
+    logic all0_55_47, all1_55_47;
+    logic all0_63_56, all1_63_56;
 
     assign all0_46_38 = ~|VAdr[46:38];
     assign all1_46_38 =  &VAdr[46:38];
 
     assign all0_55_47 = ~|VAdr[55:47];
-    assign all1_55_47 =  &VAdr[55:47]; 
+    assign all1_55_47 =  &VAdr[55:47];
 
     assign all0_63_56 = ~|VAdr[63:56];
     assign all1_63_56 =  &VAdr[63:56];
 
-    UpperBitsUnequal =
+    assign UpperBitsUnequal =
       SV39Mode ? ~((all0_46_38 & all0_55_47 & all0_63_56 ) | (all1_46_38 & all1_55_47 & all1_63_56 ) ) :  // if SV39Mode
-      SV48Mode ? ~((all0_55_47 & all0_63_56) | (all1_55_47 & all1_63_56 )):
-      SV57Mode ? ~((all0_63_56 | all1_63_56)):                // else if SV57Mode
-      1'b0;     
+      (SV48Mode ? ~((all0_55_47 & all0_63_56) | (all1_55_47 & all1_63_56 )) : ~((all0_63_56 | all1_63_56)));
     end else begin
-    assign SV39Mode = 1'b0;
-    assign SV48Mode = 1'b0;
-    assign SV57Mode = 1'b0;
-    assign UpperBitsUnequal = 1'b0;
+      assign SV39Mode = 1'b0;
+      assign SV48Mode = 1'b0;
+      assign UpperBitsUnequal = 1'b0;
   end
 endmodule

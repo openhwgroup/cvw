@@ -47,7 +47,7 @@ module tlbcam  import cvw::*;  #(parameter cvw_t P,
   output logic                    CAMHit
 );
 
-  logic [1:0] PageTypeRead [TLB_ENTRIES-1:0];
+  logic [2:0] PageTypeRead [TLB_ENTRIES-1:0];
 
   // TLB_ENTRIES CAM lines, each of which will independently consider
   // whether the requested virtual address is a match. Each line stores the

@@ -34,7 +34,7 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
                                     parameter KEY_BITS = 20, SEGMENT_BITS = 10) (
   input  logic                  clk, reset,
   input  logic [P.VPN_BITS-1:0]  VPN, // The requested page number to compare against the key
-  input  logic [P.ASID_BITS-1:0] SATP_ASID, 
+  input  logic [P.ASID_BITS-1:0] SATP_ASID,
   input  logic                  SV39Mode,
   input  logic                  SV48Mode,
   input  logic                  WriteEnable,  // Write a new entry to this line
@@ -51,7 +51,7 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
   // PageType == 3'b001 --> megapage
   // PageType == 3'b010 --> gigapage
   // PageType == 3'b011 --> terapage
-  // ***PageType == 3'b100 --> petapage
+  // PageType == 3'b100 --> petapage
   // This entry has KEY_BITS for the key plus one valid bit.
   logic                Valid;
   logic [KEY_BITS-1:0] Key;
@@ -92,13 +92,13 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
     assign Match0 = (Query0 == Key0) | (PageType > 3'd0) | MatchNAPOT; // least significant section
     assign Match1 = (Query1 == Key1) | (PageType > 3'd1);
     assign Match2 = (Query2 == Key2) | (PageType > 3'd2);
-    assign Match3 = (Query3 == Key3) | (PageType > 3'd3) | SV39Mode; 
+    assign Match3 = (Query3 == Key3) | (PageType > 3'd3) | SV39Mode;
     assign Match4 = (Query4 == Key4) | SV39Mode| SV48Mode;
     assign Match = Match0 & Match1 & Match2 & Match3 & Match4 & MatchASID & Valid;
   end
 
   // On a write, update the type of the page referred to by this line.
-  flopenr #(2) pagetypeflop(clk, reset, WriteEnable, PageTypeWriteVal, PageType);
+  flopenr #(3) pagetypeflop(clk, reset, WriteEnable, PageTypeWriteVal, PageType);
   assign PageTypeRead = PageType & {3{Match}};
 
   // On a write, set the valid bit high and update the stored key.

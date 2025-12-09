@@ -67,7 +67,7 @@ module tlb import cvw::*;  #(parameter cvw_t P,
   input  logic                     DisableTranslation,
   input  logic [P.XLEN-1:0]        VAdr,             // address input before translation (could be physical or virtual)
   input  logic [P.XLEN-1:0]        PTE,              // page table entry to write
-  input  logic [1:0]               PageTypeWriteVal,
+  input  logic [2:0]               PageTypeWriteVal,
   input  logic                     TLBWrite,
   input  logic                     TLBFlush,
   output logic [P.PA_BITS-1:0]     TLBPAdr,
@@ -87,7 +87,8 @@ module tlb import cvw::*;  #(parameter cvw_t P,
   logic [2:0]                     HitPageType;
   logic                           CAMHit;
   logic                           TLBHit;
-  logic                           SV57Mode;
+  logic                           SV39Mode;
+  logic                           SV48Mode;
   logic                           Misaligned;
   logic                           MegapageMisaligned;
   logic                           PTE_N;         // NAPOT page table entry
@@ -116,11 +117,11 @@ module tlb import cvw::*;  #(parameter cvw_t P,
     .EffectivePrivilegeModeW, .ReadAccess, .WriteAccess, .CMOpM, .DisableTranslation,
     .PTEAccessBits, .CAMHit, .Misaligned, .NAPOT4,
     .TLBMiss, .TLBHit, .TLBPageFault,
-    .UpdateDA, .SV57Mode, .Translate, .PTE_N, .PBMemoryType);
+    .UpdateDA, .SV39Mode, .SV48Mode, .Translate, .PTE_N, .PBMemoryType);
 
   tlblru #(TLB_ENTRIES) lru(.clk, .reset, .TLBWrite, .Matches, .TLBHit, .WriteEnables);
   tlbcam #(P, TLB_ENTRIES, P.VPN_BITS + P.ASID_BITS, P.VPN_SEGMENT_BITS)
-    tlbcam(.clk, .reset, .VPN, .PageTypeWriteVal, .SV57Mode, .TLBFlush, .WriteEnables, .PTE_Gs, .PTE_NAPOTs,
+    tlbcam(.clk, .reset, .VPN, .PageTypeWriteVal, .SV39Mode, .SV48Mode, .TLBFlush, .WriteEnables, .PTE_Gs, .PTE_NAPOTs,
            .SATP_ASID, .Matches, .HitPageType, .CAMHit);
   tlbram #(P, TLB_ENTRIES) tlbram(.clk, .reset, .PTE, .Matches, .WriteEnables, .PPN, .PTEAccessBits, .PTE_Gs, .PTE_NAPOTs);
 

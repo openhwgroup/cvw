@@ -22,6 +22,7 @@ localparam NO_TRANSLATE = 4'd0;
 localparam SV32 = 4'd1;
 localparam SV39 = 4'd8;
 localparam SV48 = 4'd9;
+localparam SV57 = 4'd10;
 
 // macros to define supported modes
 localparam logic I_SUPPORTED = (!E_SUPPORTED);
