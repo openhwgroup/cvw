@@ -10,23 +10,23 @@ poll off
 # Utility function for scraping object dump files and grabbing label
 # addresses.
 proc get_address {filename label} {
-	 if {[catch {set fd [open $filename r]} err]} {
-		  error "Couldn't open $filename: $err"
-	 } else {
-		  puts "Successfully opened the file $filename"
-	 }
+    if {[catch {set fd [open $filename r]} err]} {
+        error "Couldn't open $filename: $err"
+    } else {
+        puts "Successfully opened the file $filename"
+    }
 
-	 # Iterate over every line and find the match. There should be only
-	 # one match.
-	 set regex "^(\[0-9a-fA-f\]{16})\\s+<${label}"
-	 while {[gets $fd line] != -1} {
-		  if {[regexp $regex $line match address]} {
+    # Iterate over every line and find the match. There should be only
+    # one match.
+    set regex "^(\[0-9a-fA-f\]{16})\\s+<${label}"
+    while {[gets $fd line] != -1} {
+        if {[regexp $regex $line match address]} {
             # Convert address to OpenOCD format (e.g., 0x80000010)
             return "0x[string range $address 0 15]"
         }
-	 }
+    }
 
-	 error "Label not find in $filename: $label"
+    error "Label not find in $filename: $label"
 }
 
 # --------------------------------------------------------------------

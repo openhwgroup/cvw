@@ -4,33 +4,33 @@
 // Written: Jacob Pease jacobpease@protonmail.com,
 //          James E. Stine james.stine@okstate.edu
 // Created: August 12th, 2025
-// Modified: 
+// Modified:
 //
 // Purpose: The Debug Module (DM)
-// 
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-25 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module debug import cvw::*; #(parameter cvw_t P) (
   input  logic              clk,
   input  logic              reset,
-  
+
   // CPU Signals
   output logic              NDMReset,
   output logic              HaltReq,
@@ -52,7 +52,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
   output logic [1:0]        DMIRSPOP,
   output logic              DMIRSPREADY,
   output logic              DMIRSPVALID,
-  
+
   // Reading and Writing Registers
   input  logic [P.XLEN-1:0] DebugRegRDATA,
   output logic [P.XLEN-1:0] DebugRegWDATA,
@@ -66,26 +66,26 @@ module debug import cvw::*; #(parameter cvw_t P) (
 );
 
   typedef enum logic [6:0] {
-    DATA0 = 7'h04,       
-    DATA1 = 7'h05,       
-    DATA2 = 7'h06,       
-    DATA3 = 7'h07,       
-    DATA4 = 7'h08,       
-    DATA5 = 7'h09,       
-    DATA6 = 7'h0a,       
-    DATA7 = 7'h0b,       
-    DATA8 = 7'h0c,       
-    DATA9 = 7'h0d,       
-    DATA10 = 7'h0e,      
-    DATA11 = 7'h0f,      
-    DMCONTROL = 7'h10,   
-    DMSTATUS = 7'h11,    
-    HARTINFO = 7'h12,    
-    HALTSUM0 = 7'h40,    
-    HALTSUM1 = 7'h13,                           
-    COMMAND  = 7'h17,    
-    ABSTRACTCS = 7'h16,  
-    ABSTRACTAUTO = 7'h18                       
+    DATA0 = 7'h04,
+    DATA1 = 7'h05,
+    DATA2 = 7'h06,
+    DATA3 = 7'h07,
+    DATA4 = 7'h08,
+    DATA5 = 7'h09,
+    DATA6 = 7'h0a,
+    DATA7 = 7'h0b,
+    DATA8 = 7'h0c,
+    DATA9 = 7'h0d,
+    DATA10 = 7'h0e,
+    DATA11 = 7'h0f,
+    DMCONTROL = 7'h10,
+    DMSTATUS = 7'h11,
+    HARTINFO = 7'h12,
+    HALTSUM0 = 7'h40,
+    HALTSUM1 = 7'h13,
+    COMMAND  = 7'h17,
+    ABSTRACTCS = 7'h16,
+    ABSTRACTAUTO = 7'h18
   } DMADDR;
 
   typedef enum logic [1:0] {
@@ -93,9 +93,9 @@ module debug import cvw::*; #(parameter cvw_t P) (
     RD  = 2'b01,
     WR  = 2'b10
   } DMIOPW;
-  
+
   logic      InitRequest;
-           
+
   // Registers
   logic [31:0] DMControl;
   logic [31:0] DMStatus;
@@ -129,12 +129,12 @@ module debug import cvw::*; #(parameter cvw_t P) (
   logic        ndmresetpending;
 
   // AbstractCS fields
-  logic [4:0] progbufsize;  
-  logic        busy;        
-  logic        relaxedpriv; 
-  logic [2:0]  cmderr;      
-  logic [3:0]  datacount;   
-   
+  logic [4:0] progbufsize;
+  logic        busy;
+  logic        relaxedpriv;
+  logic [2:0]  cmderr;
+  logic [3:0]  datacount;
+
   logic allresumeack;
   logic anyresumeack;
 
@@ -142,7 +142,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
   logic anyrunning;
   logic allhalted;
   logic anyhalted;
-   
+
   // Abstract Register signals
   logic [7:0]  cmdtype;
   logic [2:0]  aarsize;
@@ -151,13 +151,13 @@ module debug import cvw::*; #(parameter cvw_t P) (
 
   logic        ReadRequest;
   logic        WriteRequest;
-   
+
   logic StartCommand;
   logic NextValid;
-  logic ValidSize;   
+  logic ValidSize;
 
   logic DMActive;
-  
+
   // Abstract Commands:
   // 0: Access Register Command
   // 1: Quick Access
@@ -171,7 +171,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
   assign InitRequest = ((DMIOP == RD) | (DMIOP == WR)) & DMIVALID;
   assign ReadRequest = DMIOP == RD & DMIVALID;
   assign WriteRequest = DMIOP == WR & DMIVALID;
-   
+
   always_ff @(posedge clk) begin
     if (reset) begin
       DMIRSPVALID <= 1'b0;
@@ -194,7 +194,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
       endcase
     end else begin
       NextValid = 1'b0;
-    end    
+    end
   end
 
   // Reading Registers
@@ -220,13 +220,13 @@ module debug import cvw::*; #(parameter cvw_t P) (
           end else begin
             DMIRSPDATA <= '0;
           end
-        end 
-            
+        end
+
         DMCONTROL: begin
           DMIRSPDATA[31] <= 1'b0;
           DMIRSPDATA[30:0] <= DMControl[30:0];
         end
-            
+
         DMSTATUS: begin
           // Might need a separate always_comb for every register.
           DMIRSPDATA <= {ndmresetpending,
@@ -237,12 +237,12 @@ module debug import cvw::*; #(parameter cvw_t P) (
                          allrunning, anyrunning, allhalted, anyhalted,
                          DMStatus[7:0]};
         end
-            
+
         HARTINFO: DMIRSPDATA <= HartInfo;
         HALTSUM0: DMIRSPDATA <= HaltSum0;
         ABSTRACTCS: DMIRSPDATA <= AbstractCS;
         default: DMIRSPDATA <= 32'b0;
-      endcase 
+      endcase
     end
   end
 
@@ -252,19 +252,19 @@ module debug import cvw::*; #(parameter cvw_t P) (
   /*
     These contain complicated enable logic. Conditions that happen based
     on state can cause these to change outside of DMI transactions.
-    
+
     In order to not confuse synthesis, these are placed in their own
     behavioral blocks. The enable logic is now clear for all of these
     registers.
     */
-   
+
   // DMControl
   always_ff @(posedge clk) begin
     if (reset) begin
       DMControl <= '0;
     end else if (WriteRequest & (DMIADDR == DMCONTROL)) begin
       DMControl <= DMControl;
-      if (HaltReq) begin 
+      if (HaltReq) begin
         DMControl <= {DMIDATA[31], 1'b0, DMIDATA[29:28], 24'b0, DMIDATA[3:0]};
       end else begin
         DMControl <= {DMIDATA[31:28], 24'b0, DMIDATA[3:0]};
@@ -288,7 +288,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
 
   logic ReadRegister;
   assign ReadRegister = StartCommand & ~Command[16];
-   
+
   // Data[0]
   always_ff @(posedge clk) begin
     if (reset) begin
@@ -303,7 +303,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
     end
   end
 
-  // Data[1] -- only need this for 
+  // Data[1] -- only need this for
   if (P.XLEN == 64) begin
     always_ff @(posedge clk) begin
       if (reset) begin
@@ -358,7 +358,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
   // --------------------------------------------------------------------------
   // Halt FSM
   // --------------------------------------------------------------------------
-   
+
   assign HaltReq = DMControl[31] & DMActive;
   assign ResumeReq = DMControl[30];
   assign hartreset = 1'b0;
@@ -368,12 +368,12 @@ module debug import cvw::*; #(parameter cvw_t P) (
 
   // DMStatus signals
   assign ndmresetpending = NDMReset;
-   
+
   typedef enum logic [1:0] {RUNNING, HALTING, HALTED, RESUMING} HaltState;
   HaltState CurrHaltState;
   HaltState NextHaltState;
 
-  // 
+  //
   always_ff @(posedge clk) begin
     if (reset | clrresethaltreq) begin
       ResetHaltReq <= 1'b0;
@@ -381,7 +381,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
       ResetHaltReq <= 1'b1;
     end
   end
-  
+
   // see Figure 2 Debug Specification (2/21/25)
   always_ff @(posedge clk) begin
     if (reset) begin
@@ -397,23 +397,23 @@ module debug import cvw::*; #(parameter cvw_t P) (
       RUNNING: begin
         if (HaltReq) NextHaltState = HALTING;
         else NextHaltState = RUNNING;
-      end	   
+      end
       HALTING: begin
         if (DebugMode) NextHaltState = HALTED;
         else NextHaltState = HALTING;
-      end	   
+      end
       HALTED: begin
         if (ResumeReq) NextHaltState = RESUMING;
         else NextHaltState = HALTED;
-      end	   
+      end
       RESUMING: begin
         if (~DebugMode) NextHaltState = RUNNING;
         else NextHaltState = RESUMING;
-      end           
+      end
       default: NextHaltState = RUNNING;
     endcase
   end
-                                 
+
   assign allrunning = NextHaltState == RUNNING | CurrHaltState == RUNNING;
   assign anyrunning = NextHaltState == RUNNING | CurrHaltState == RUNNING;
   assign allhalted = NextHaltState == HALTED | CurrHaltState == HALTED;
@@ -430,11 +430,11 @@ module debug import cvw::*; #(parameter cvw_t P) (
       anyresumeack <= anyresumeack;
     end
   end
-  
+
   // --------------------------------------------------------------------------
   // Abstract Command FSM
   // --------------------------------------------------------------------------
-   
+
   enum logic [1:0] {IDLE, BUSY, ERRORWAIT, ERRORBUSY} AbstractState;
 
   // Abstract Command FSM
@@ -447,7 +447,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
           if (Command[31:24] == 8'b0) begin
             AbstractState <= IDLE; // Reading and writing to registers should be immediate.
           end else begin
-            AbstractState <= BUSY; // This would be for Quick Access or Memory Access conditions 
+            AbstractState <= BUSY; // This would be for Quick Access or Memory Access conditions
           end
         end
 
@@ -456,11 +456,11 @@ module debug import cvw::*; #(parameter cvw_t P) (
         end
 
         ERRORWAIT: begin
-          
+
         end
 
         ERRORBUSY: begin
-          
+
         end
         default: AbstractState <= IDLE;
       endcase
@@ -473,8 +473,8 @@ module debug import cvw::*; #(parameter cvw_t P) (
   logic NextFPRDebugEnable;
 
   // eventually make an output
-  logic FPRDebugEnable;    
-   
+  logic FPRDebugEnable;
+
   assign aarsize = Command[22:20];
   // assign StartCommand = DMIVALID & DMIRSPREADY & (DMIADDR == COMMAND) & ~|cmderr;
   assign DebugControl = StartCommand;
@@ -486,7 +486,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
     assign DebugRegWDATA = aarsize == 3'd2 ? {32'h0, Data0} : {Data1, Data0};
   end else begin
     assign DebugRegWDATA = Data0;
-  end 
+  end
 
   always_ff @(posedge clk) begin
     if (reset) begin
@@ -499,7 +499,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
       StartCommand <= DMIVALID & DMIRSPREADY & (DMIADDR == COMMAND) & ~|cmderr & DMActive;
       DebugRegAddr <= DMIDATA[11:0];
       GPRDebugEnable <= NextGPRDebugEnable;
-      FPRDebugEnable <= NextFPRDebugEnable;       
+      FPRDebugEnable <= NextFPRDebugEnable;
       CSRDebugEnable <= NextCSRDebugEnable;
     end
   end
@@ -518,11 +518,11 @@ module debug import cvw::*; #(parameter cvw_t P) (
           16'h101c, 16'h101d, 16'h101e, 16'h101f: begin // GPRs
             ValidCommand = 1;
             NextGPRDebugEnable = 1;
-            NextFPRDebugEnable = 0;	     
+            NextFPRDebugEnable = 0;
             NextCSRDebugEnable = 0;
            end
 
-	     // Need to test FPRs: 0x1020–0x103F
+        // Need to test FPRs: 0x1020–0x103F
         16'h1020, 16'h1021, 16'h1022, 16'h1023,
           16'h1024, 16'h1025, 16'h1026, 16'h1027,
           16'h1028, 16'h1029, 16'h102a, 16'h102b,
@@ -532,20 +532,20 @@ module debug import cvw::*; #(parameter cvw_t P) (
           16'h1038, 16'h1039, 16'h103a, 16'h103b,
           16'h103c, 16'h103d, 16'h103e, 16'h103f: begin // FPRs
             ValidCommand = 1;
-            NextGPRDebugEnable = 0;	     
+            NextGPRDebugEnable = 0;
             NextFPRDebugEnable = 1;
             NextCSRDebugEnable = 0;
-          end	
-	
+          end
+
         16'h0300, 16'h0301, 16'h0305,
           16'h0341, 16'h0342, 16'h0343,
           16'h07B0, 16'h07B1, 16'h07B2: begin // CSRs
             ValidCommand = 1;
             NextGPRDebugEnable = 0;
-            NextFPRDebugEnable = 0;	     
+            NextFPRDebugEnable = 0;
             NextCSRDebugEnable = 1;
           end
-        default: begin 
+        default: begin
           ValidCommand = 0;
           NextFPRDebugEnable = 0;
           NextGPRDebugEnable = 0;
@@ -559,7 +559,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
       NextCSRDebugEnable = 0;
     end
   end
- 
+
   assign nextaarsize = DMIDATA[22:20];
 
   if (P.XLEN == 32) begin
@@ -567,11 +567,11 @@ module debug import cvw::*; #(parameter cvw_t P) (
   end else begin
     assign ValidSize = nextaarsize == 3'd2 | nextaarsize == 3'd3 | nextaarsize == 3'd0;
   end
-  
+
   always_comb begin
     if (~DebugMode) cmderr = 3'd4;
     else if (ValidCommand & ~ValidSize) cmderr = 3'd2;
     else if (~ValidCommand & ValidSize) cmderr = 3'd3;
     else cmderr = 3'd0;
-  end 
+  end
 endmodule

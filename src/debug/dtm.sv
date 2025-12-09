@@ -4,35 +4,35 @@
 // Written: Jacob Pease jacobpease@protonmail.com,
 //          James E. Stine james.stine@okstate.edu
 // Created: August 1st, 2025
-// Modified: 
+// Modified:
 //
 // Purpose: Debug Transport Module
-// 
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-25 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 //`include "debug.vh"
 module dtm import cvw::*; #(parameter cvw_t P) (
-  input logic         clk, 
+  input logic         clk,
   input logic         reset,
-  input logic         tck, 
-  input logic         tms, 
+  input logic         tck,
+  input logic         tms,
   input logic         tdi,
   output logic        tdo,
 
@@ -48,53 +48,53 @@ module dtm import cvw::*; #(parameter cvw_t P) (
   input logic [1:0]   DMIRSPOP,
   input logic         DMIRSPREADY,
   input logic         DMIRSPVALID
-                            
+
 );
-   
+
   // Tap Controller stuff
-  logic 	resetn; 
-  logic 	enable;
-  logic 	select; 
-  logic 	ShiftIR;
-  logic 	CaptureIR;
-  logic 	ClockIR;
-  logic 	UpdateIR;
-  logic 	ShiftDR;
-  logic 	ClockDR;
-  logic 	UpdateDR;
+  logic  resetn;
+  logic  enable;
+  logic  select;
+  logic  ShiftIR;
+  logic  CaptureIR;
+  logic  ClockIR;
+  logic  UpdateIR;
+  logic  ShiftDR;
+  logic  ClockDR;
+  logic  UpdateDR;
 
   // Instruction Register
   logic [P.DTM_INSTR_WIDTH-1:0]  currentInst;
-   
+
   // Select outputs
-  logic 		   tdo_dr, tdo_ir, tdo_mux, tdo_delayed;
-   
+  logic        tdo_dr, tdo_ir, tdo_mux, tdo_delayed;
+
   // Edge detecting UpdateDR. Avoids cases where UpdateDR is still
   // high for multiple clock cycles.
   logic        UpdateDRSync;
   logic [1:0]  UpdateDRSamples;
   logic        UpdateDRValid;
-   
+
   // Test Data Register Stuff
   logic [31:0] dtmcs, DTMCSNext;
 
   logic [P.ABITS + 34 - 1:0] DMINextReg, DMINext, dmi;
-   
+
   // Debug Module Interface Control
-  logic 		   UpdateDMI;
-  logic 		   UpdateDTMCS;
-  logic 		   DTMHardReset;
-  logic 		   DMIReset;   
-  logic 		   Sticky;
+  logic        UpdateDMI;
+  logic        UpdateDTMCS;
+  logic        DTMHardReset;
+  logic        DMIReset;
+  logic        Sticky;
 
   typedef enum logic [1:0] {
     NOP = 2'b00,
     RD  = 2'b01,
     WR  = 2'b10
   } DMIOPW;
-  
+
   enum logic {IDLE, BUSY} DMIState;
-   
+
   // Temporarily tying tresetn to resetn. This isn't the way JTAG
   // recommends doing it, but the debug spec and neorv32 seem to
   // imply it's ok to do so.
@@ -111,8 +111,8 @@ module dtm import cvw::*; #(parameter cvw_t P) (
   // tdr = Test Data Register
   data_reg tdr (tck, tdi, resetn, currentInst, ShiftDR, ClockDR, UpdateDR,
     DTMCSNext, dtmcs, DMINext, dmi, tdo_dr);
-   
-  // Choose output of tdo 
+
+  // Choose output of tdo
   always_comb begin
     case(select)
       1'b0: tdo_mux = tdo_dr;
@@ -125,9 +125,9 @@ module dtm import cvw::*; #(parameter cvw_t P) (
   assign tdo = enable ? tdo_delayed : 1'bz;
   // The JTAG-side of the DTM runs on TCK, while the Debug Module
   // (DM) and DMI bus live on our system clock, we need a clean
-  // clock-domain crossing (CDC) between them.   
+  // clock-domain crossing (CDC) between them.
   synchronizer updatesync (clk, UpdateDR, UpdateDRSync);
-   
+
   always_ff @(posedge clk) begin
     if (reset) begin
       UpdateDRSamples <= 2'b0;
@@ -138,7 +138,7 @@ module dtm import cvw::*; #(parameter cvw_t P) (
     end
   end
 
-  assign UpdateDRValid = (UpdateDRSamples == 2'b01);    
+  assign UpdateDRValid = (UpdateDRSamples == 2'b01);
   assign UpdateDTMCS = UpdateDRValid & (currentInst[4:0] == 5'b10000);
   assign UpdateDMI = UpdateDRValid & (currentInst[4:0] == 5'b10001);
 
@@ -155,10 +155,10 @@ module dtm import cvw::*; #(parameter cvw_t P) (
     end else if (DMIReset) begin
       DMIReset <= 0;
     end
-  end 
-   
+  end
+
   assign DTMCSNext = {11'b0, 3'd4, DTMHardReset, DMIReset, 1'b0, 3'd0, DMINextReg[1:0], P.ABITS, 4'b1};
-   
+
   // Sticky error
   always_ff @(posedge clk) begin
     if (reset | ~resetn | DMIReset == 1 | DTMHardReset == 1) begin
@@ -167,7 +167,7 @@ module dtm import cvw::*; #(parameter cvw_t P) (
       Sticky <= 1;
     end
   end
-  
+
   // DMI
   always_ff @(posedge clk) begin
     if (reset | ~resetn | DTMHardReset) begin
@@ -197,7 +197,7 @@ module dtm import cvw::*; #(parameter cvw_t P) (
           end else begin
             DMIState <= IDLE;
           end
-        end           
+        end
         BUSY: begin
           if (DMIRSPVALID) begin
             //dmi_req.op <= NOP;
@@ -220,17 +220,17 @@ module dtm import cvw::*; #(parameter cvw_t P) (
             DMINextReg[33:2] <= dmi[33:2]; // Ahem... Spike discrepency.
             DMIState <= BUSY;
           end
-        end           
+        end
         default: DMIState <= IDLE;
       endcase
     end
-  end 
-   
+  end
+
   // assign dmi_next.addr = dmi_req.addr;
   // assign dmi_next.data = dmi_next_reg.data;
   // assign dmi_next.op = Sticky ? 2'b11 : dmi_next_reg.op;
 
   assign DMINext = {DMIADDR, DMINextReg[33:2], Sticky ? 2'b11 : DMINextReg[1:0]};
-  
-   
+
+
 endmodule

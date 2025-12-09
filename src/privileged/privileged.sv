@@ -78,7 +78,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic [4:0]        SetFflagsM,                                     // set FCSR flags from FPU
   input  logic              SelHPTW,                                        // HPTW in use.  Causes system to use S-mode endianness for accesses
   // CSR outputs
-  output logic [P.XLEN-1:0] CSRReadValM,                                                         
+  output logic [P.XLEN-1:0] CSRReadValM,
   output logic [P.XLEN-1:0] CSRReadValW,                                    // Value read from CSR
   output logic [1:0]        PrivilegeModeW,                                 // current privilege mode
   output logic [P.XLEN-1:0] SATP_REGW,                                      // supervisor address translation register
@@ -98,7 +98,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   output logic              sfencevmaM,                                     // sfence.vma instruction
   input  logic              InvalidateICacheM,                              // fence instruction
   output logic              BigEndianM,                                     // Use big endian in current privilege mode
-  // Fault outputs                                                         
+  // Fault outputs
   output logic              wfiM, IntPendingM,                              // Stall in Memory stage for WFI until interrupt pending or timeout
   // Debug Mode
   output logic              DebugMode,
@@ -113,8 +113,8 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   output logic              HaveReset,
   input  logic              HaveResetAck,
   input  logic              ResetHaltReq
-);                                                                         
-                                                                           
+);
+
   logic [3:0]               CauseM;                                         // trap cause
   logic [15:0]              MEDELEG_REGW;                                   // exception delegation CSR
   logic [11:0]              MIDELEG_REGW;                                   // interrupt delegation CSR

@@ -91,7 +91,7 @@ module testbench;
 
   // Debugger signals
   logic        tck, tms, tdi, tdo;
-  
+
   // DUT signals
   logic [P.AHBW-1:0]    HRDATAEXT;
   logic                 HREADYEXT, HRESPEXT;
@@ -231,7 +231,7 @@ module testbench;
             debugger_tests = wally64debug_jtag;
           end
         end
-         
+
         "arch64vm_sv39": if (P.VIRTMEM_SUPPORTED) tests = arch64vm_sv39;
         "arch64vm_sv48": if (P.VIRTMEM_SUPPORTED) tests = arch64vm_sv48;
       endcase
@@ -290,7 +290,7 @@ module testbench;
             debugger_tests = wally32debug_jtag;
           end
         end
-          
+
       endcase
     end
     if (tests.size() == 0 & ElfFile == "none") begin
@@ -687,7 +687,7 @@ module testbench;
     assign tdi = 0;
     assign tms = 0;
   end
-        
+
   wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .ExternalStall(RVVIStall),
     .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HSELEXT,
     .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
@@ -785,11 +785,10 @@ module testbench;
     if (P.DEBUG_SUPPORTED) begin
       TestComplete <= ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"] & dut.core.lsu.IEUAdrM != 0) & InstrMName == "SW");
     end else begin
-      TestComplete <= ((InstrM == 32'h6f) & dut.core.InstrValidM ) |
-		   ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"] & dut.core.lsu.IEUAdrM != 0) & InstrMName == "SW");
+      TestComplete <= ((InstrM == 32'h6f) & dut.core.InstrValidM ) | ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"] & dut.core.lsu.IEUAdrM != 0) & InstrMName == "SW");
     end
     // TestComplete <= ((InstrM == 32'h6f) & dut.core.InstrValidM ) |
-	 //      ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"] & dut.core.lsu.IEUAdrM != 0) & InstrMName == "SW"); // |
+    //      ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"] & dut.core.lsu.IEUAdrM != 0) & InstrMName == "SW"); // |
     //   (functionName.PCM == 0 & dut.core.ifu.InstrM == 0 & dut.core.InstrValidM & PrevPCZero));
     if (reset) PrevPCZero <= 0;
     else if (dut.core.InstrValidM) PrevPCZero <= (PCM == 0 & dut.core.ifu.InstrM == 0);

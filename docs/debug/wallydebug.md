@@ -19,14 +19,14 @@ General Overview of Implemented Features:
 DTM Registers
 - [x] idcode
 - [x] dtmcs
-- [x] dmi 
+- [x] dmi
 
 Debug Module
 - [x] DMControl
-  - [x] haltreq 
+  - [x] haltreq
   - [x] resumereq
   - [ ] hartreset
-  - [x] ackhavereset 
+  - [x] ackhavereset
   - [ ] ackunavail :x:
     - I can't imagine there's a scenario where the only hart that exists wouldn't be available, but I need to investigate further, just in case.
   - [ ] hasel :x:
@@ -82,7 +82,7 @@ Debug Extension
   - [x] Halt cause updating
   - [ ] Stepping
   - [ ] Stepie 🔶
-    - This is for enabling interrupts during stepping. Not as important as implementing stepping itself for now. 
+    - This is for enabling interrupts during stepping. Not as important as implementing stepping itself for now.
   - [ ] Ebreak to Debug mode in all modes
   - [ ] Stop counters 🔶
   - [ ] Stop time 🔶

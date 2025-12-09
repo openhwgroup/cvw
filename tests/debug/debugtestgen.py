@@ -32,7 +32,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--test", "-s", help="Assembly test.", type=non_empty_string)
     parser.add_argument("--tcl", "-t", help="TCL script to run parallel to assembly test.", type=non_empty_string)
-    return parser.parse_args()    
+    return parser.parse_args()
 
 def start_spike(test):
     spikeargs = SPIKEARGS

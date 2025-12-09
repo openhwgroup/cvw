@@ -106,7 +106,7 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   logic [4:0]        Rs1, Rd;
   logic              RegWrite;
   logic [P.XLEN-1:0] Result;
-  
+
   // Debug Spec muxing of regfile inputs
   if (P.DEBUG_SUPPORTED) begin
     mux2 #(5) rfreadaddrmux (Rs1D, DebugRegAddr[4:0], DebugControl & GPRDebugEnable, Rs1);
@@ -119,14 +119,14 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
     assign Result = ResultW;
     assign RegWrite = RegWriteW;
   end
-  
+
   // Decode stage
   regfile #(P.XLEN, P.E_SUPPORTED) regf(clk, reset, RegWrite, Rs1, Rs2D, Rd, Result, R1D, R2D);
   extend #(P)        ext(.InstrD(InstrD[31:7]), .ImmSrcD, .ImmExtD);
 
   // Return regfile read to Debug Module
   assign DebugIEURDATA = R1D;
- 
+
   // Execute stage pipeline register and logic
   flopenrc #(P.XLEN) RD1EReg(clk, reset, FlushE, ~StallE, R1D, R1E);
   flopenrc #(P.XLEN) RD2EReg(clk, reset, FlushE, ~StallE, R2D, R2E);

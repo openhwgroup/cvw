@@ -4,7 +4,7 @@
 // Width of Debug Transport Module instructions inside the instruction
 // register.
 `define INSTWIDTH 5
- 
+
 // ABITS is equal to the width of Addresses inside the Debug Module.
 `define ABITS 7
 
@@ -26,7 +26,7 @@ typedef struct packed {
    logic [31:0]  data;
    logic [1:0]   op;
 } dmi_t;
-  
+
 // Debug Module Interface fields
 typedef struct packed {
    logic [6:0]   addr;

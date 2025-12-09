@@ -1,5 +1,5 @@
 /* OUTPUT_FORMAT("elf32-littleriscv", "elf32-littleriscv", */
-/* 	      "elf32-littleriscv") */
+/*          "elf32-littleriscv") */
 OUTPUT_ARCH( "riscv" )
 ENTRY(rvtest_entry_point)
 
@@ -18,4 +18,3 @@ SECTIONS
   .text : { *(.text.main) }
   _end = .;
 }
-

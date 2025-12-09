@@ -97,7 +97,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   output logic                 InstrAccessFaultF,                        // Instruction access fault
   output logic                 ICacheAccess,                             // Report I$ read to performance counters
   output logic                 ICacheMiss,                               // Report I$ miss to performance counters
-  input  logic                 DebugResume,                              // 
+  input  logic                 DebugResume,                              //
   input  logic [P.XLEN-1:0]    DPC
 );
 
@@ -325,15 +325,15 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   else assign PC2NextF = PC1NextF;
 
   logic [P.XLEN-1:0] DebugPCNextF;
-  
+
   mux3 #(P.XLEN) pcmux3(PC2NextF, EPCM, TrapVectorM, {TrapM, RetM}, UnalignedPCNextF);
-  
+
   if (P.DEBUG_SUPPORTED) begin
     mux2 #(P.XLEN) pcmuxdebug(UnalignedPCNextF, DPC, DebugResume, DebugPCNextF);
   end else begin
     assign DebugPCNextF = UnalignedPCNextF;
   end
-  
+
   mux2 #(P.XLEN) pcresetmux({DebugPCNextF[P.XLEN-1:1], 1'b0}, P.RESET_VECTOR[P.XLEN-1:0], reset, PCNextF);
   flopen #(P.XLEN) pcreg(clk, ~StallF | reset, PCNextF, PCF);
 

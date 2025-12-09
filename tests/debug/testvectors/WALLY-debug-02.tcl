@@ -40,9 +40,9 @@ reg t6
 puts [reg pc]
 set pc1 [lindex [reg pc] 2]
 while {$pc1 != 0x00000000800001a4} {
-	 puts [reg pc]
-	 set pc1 [lindex [reg pc] 2]
- 	 puts "STUCK HERE: $pc1"
+    puts [reg pc]
+    set pc1 [lindex [reg pc] 2]
+    puts "STUCK HERE: $pc1"
 }
 set_reg {dpc 0x800001a6}
 resume

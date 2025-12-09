@@ -135,5 +135,5 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
     .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataM, .FCvtIntW,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .SquashSCW, .ResultSrcW, .ReadDataW, .FCvtIntResW,
     .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW,
-    .DebugMode, .DebugControl, .GPRDebugEnable, .DebugIEURDATA, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite); 
+    .DebugMode, .DebugControl, .GPRDebugEnable, .DebugIEURDATA, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite);
 endmodule

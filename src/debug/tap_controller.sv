@@ -2,43 +2,43 @@
 // tap_controller.sv
 //
 // Written: james.stine@okstate.edu, jacob.pease@okstate.edu 28 July 2025
-// Modified: 
+// Modified:
 //
 // Purpose: IEEE 1149.1 tap controller
-// 
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-25 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module tap_controller
-  (input  logic tck, 
-   input logic 	trst, 
-   input logic 	tms, 
-   input logic 	tdi,
-   output logic reset, 
-   output logic enable, 
+  (input  logic tck,
+   input logic    trst,
+   input logic    tms,
+   input logic    tdi,
+   output logic reset,
+   output logic enable,
    output logic select,
    output logic ShiftIR,
    output logic CaptureIR,
-   output logic ClockIR, 
+   output logic ClockIR,
    output logic UpdateIR,
-   output logic ShiftDR, 
-   output logic ClockDR, 
+   output logic ShiftDR,
+   output logic ClockDR,
    output logic UpdateDR);
 
 
@@ -66,63 +66,63 @@ module tap_controller
    //   TLReset        | 0xF      | 1111    |    1     | Special state
    // -----------------------------------------------------------------------------
     typedef enum logic [3:0] {
-		EXIT2_DR         = 4'h0,
-		EXIT1_DR         = 4'h1,
-		SHIFT_DR         = 4'h2,
-		PAUSE_DR         = 4'h3,
-		SELECT_IR        = 4'h4,
-		UPDATE_DR        = 4'h5,
-		CAPTURE_DR       = 4'h6,
-		SELECT_DR        = 4'h7,
-		EXIT2_IR         = 4'h8,
-		EXIT1_IR         = 4'h9,
-		SHIFT_IR         = 4'hA,
-		PAUSE_IR         = 4'hB,
-		RUN_TEST_IDLE    = 4'hC,
-		UPDATE_IR        = 4'hD,
-		CAPTURE_IR       = 4'hE,
-		TEST_LOGIC_RESET = 4'hF
-	} statetype;
-   
-   statetype State, NextState;   
+      EXIT2_DR         = 4'h0,
+      EXIT1_DR         = 4'h1,
+      SHIFT_DR         = 4'h2,
+      PAUSE_DR         = 4'h3,
+      SELECT_IR        = 4'h4,
+      UPDATE_DR        = 4'h5,
+      CAPTURE_DR       = 4'h6,
+      SELECT_DR        = 4'h7,
+      EXIT2_IR         = 4'h8,
+      EXIT1_IR         = 4'h9,
+      SHIFT_IR         = 4'hA,
+      PAUSE_IR         = 4'hB,
+      RUN_TEST_IDLE    = 4'hC,
+      UPDATE_IR        = 4'hD,
+      CAPTURE_IR       = 4'hE,
+      TEST_LOGIC_RESET = 4'hF
+   } statetype;
+
+   statetype State, NextState;
 
     always @(posedge tck, posedge trst) begin
-        if (trst) State <= TEST_LOGIC_RESET; 
+        if (trst) State <= TEST_LOGIC_RESET;
         else case (State)
-	       TEST_LOGIC_RESET : State <= tms ? TEST_LOGIC_RESET : RUN_TEST_IDLE;
-	       RUN_TEST_IDLE    : State <= tms ? SELECT_DR : RUN_TEST_IDLE;
-	       SELECT_DR        : State <= tms ? SELECT_IR : CAPTURE_DR;
-	       CAPTURE_DR       : State <= tms ? EXIT1_DR : SHIFT_DR;
-	       SHIFT_DR         : State <= tms ? EXIT1_DR : SHIFT_DR;
-	       EXIT1_DR         : State <= tms ? UPDATE_DR : PAUSE_DR;
-	       PAUSE_DR         : State <= tms ? EXIT2_DR : PAUSE_DR;
-	       EXIT2_DR         : State <= tms ? UPDATE_DR : SHIFT_DR;
-	       UPDATE_DR        : State <= tms ? SELECT_DR : RUN_TEST_IDLE;
-	       SELECT_IR        : State <= tms ? TEST_LOGIC_RESET : CAPTURE_IR;
-	       CAPTURE_IR       : State <= tms ? EXIT1_IR : SHIFT_IR;
-	       SHIFT_IR         : State <= tms ? EXIT1_IR : SHIFT_IR;
-	       EXIT1_IR         : State <= tms ? UPDATE_IR : PAUSE_IR;
-	       PAUSE_IR         : State <= tms ? EXIT2_IR : PAUSE_IR;
-	       EXIT2_IR         : State <= tms ? UPDATE_IR : SHIFT_IR;
-	       UPDATE_IR        : State <= tms ? SELECT_DR : RUN_TEST_IDLE;
+          TEST_LOGIC_RESET : State <= tms ? TEST_LOGIC_RESET : RUN_TEST_IDLE;
+          RUN_TEST_IDLE    : State <= tms ? SELECT_DR : RUN_TEST_IDLE;
+          SELECT_DR        : State <= tms ? SELECT_IR : CAPTURE_DR;
+          CAPTURE_DR       : State <= tms ? EXIT1_DR : SHIFT_DR;
+          SHIFT_DR         : State <= tms ? EXIT1_DR : SHIFT_DR;
+          EXIT1_DR         : State <= tms ? UPDATE_DR : PAUSE_DR;
+          PAUSE_DR         : State <= tms ? EXIT2_DR : PAUSE_DR;
+          EXIT2_DR         : State <= tms ? UPDATE_DR : SHIFT_DR;
+          UPDATE_DR        : State <= tms ? SELECT_DR : RUN_TEST_IDLE;
+          SELECT_IR        : State <= tms ? TEST_LOGIC_RESET : CAPTURE_IR;
+          CAPTURE_IR       : State <= tms ? EXIT1_IR : SHIFT_IR;
+          SHIFT_IR         : State <= tms ? EXIT1_IR : SHIFT_IR;
+          EXIT1_IR         : State <= tms ? UPDATE_IR : PAUSE_IR;
+          PAUSE_IR         : State <= tms ? EXIT2_IR : PAUSE_IR;
+          EXIT2_IR         : State <= tms ? UPDATE_IR : SHIFT_IR;
+          UPDATE_IR        : State <= tms ? SELECT_DR : RUN_TEST_IDLE;
                default          : State <= TEST_LOGIC_RESET;
-	     endcase 
-    end 
-   
+        endcase
+    end
+
    // The following assignments and flops are based completely on the
    // IEEE 1149.1-2001 spec.
-   
+
    // Instruction Register and Test Data Register should be clocked
    // on their respective CAPTURE and SHIFT states
    assign ClockIR = (State == CAPTURE_IR) | (State == SHIFT_IR);
    assign ClockDR = (State == CAPTURE_DR) | (State == SHIFT_DR);
-   
+
    assign UpdateIR = (State == UPDATE_IR);
    assign UpdateDR = (State == UPDATE_DR);
-   
-   // signal present in the IEEE 1149.1-2001 spec Figure 6-5 (may not be needed) 
+
+   // signal present in the IEEE 1149.1-2001 spec Figure 6-5 (may not be needed)
    assign select = State[3];
-   
+
    always @(negedge tck, posedge trst)
      if (trst) begin
         CaptureIR <= 0;
@@ -136,6 +136,5 @@ module tap_controller
         ShiftDR <= (State == SHIFT_DR);
         reset <= ~(State == TEST_LOGIC_RESET);
         enable <= (State == SHIFT_IR) | (State == SHIFT_DR);
-     end 
-endmodule 
-
+     end
+endmodule

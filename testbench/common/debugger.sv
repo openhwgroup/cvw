@@ -2,7 +2,7 @@
 // debugger.sv
 //
 // Written: Jacob Pease jacob.pease@okstate.edu, James Stine james.stine@okstate.edu
-// Modified: 
+// Modified:
 //
 // Purpose:
 //   Testbench JTAG driver that emulates a RISC-V debugger to exercise the
@@ -21,22 +21,22 @@
 // Operation:
 //   On reset deassertion, initializes JTAG/DTM, then runs the testvectors
 //   in a loop, comparing FPGA/simulation results and reporting mismatches.
-// 
+//
 // A component of the Wally configurable RISC-V project.
-// 
+//
 // Copyright (C) 2025 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -47,7 +47,7 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
   input string filename
 );
   localparam int tcktime = 52;
-  
+
   // ANSII color codes
   string red     = "\033[1;31m"; // Red text
   string green   = "\033[1;32m"; // Green text
@@ -56,7 +56,7 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
   string bold    = "\033[1m";
 
   //enum logic {RUN, WAIT} debugger_state;
-  
+
   // ----------------------------------------------------------------
   //  Write instruction task.
   // ----------------------------------------------------------------
@@ -65,7 +65,7 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
   // only make a single task for this. The only time we may need to
   // revisit this after initializing is if we need to set DMIReset if
   // we encounter the sticky error in the DMI.
-  
+
   // Task for writing instructions to the DTM
   task write_instr(input logic [4:0] INST);
     logic [11:0] tms_seq;
@@ -74,14 +74,14 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
       tms_seq = {4'b0110, 5'b0, 3'b110};
       // Reverse instruction so LSB is first
       tdi_seq = {5'b0, {<<{INST}}, 2'b0};
-      
+
       // Clock should be idling high, TMS should be low keeping
       // us in the Run-test/Idle state and the input should not
       // be driven.
       tck = 1;
       tms = 0;
       tdi = 0;
-      
+
       // SelectIR -> CaptureIR -> ShiftIR
       for (int i = 11; i >= 0; i--) begin
         #(tcktime) tck = ~tck; // low
@@ -89,25 +89,25 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
         tdi = tdi_seq[i];
         #(tcktime) tck = ~tck; // high
       end
-    end   
+    end
   endtask // instr
-  
+
   // ----------------------------------------------------------------
   // Classes
   // ----------------------------------------------------------------
-   
+
   // JTAG_DR Class that generalizes the task of reading and writing
-  // to the Test Data Regisers. 
+  // to the Test Data Regisers.
   class JTAG_DR #(parameter WIDTH = 32);
     logic [WIDTH-1:0] result;
-      
+
     task read();
       logic [5 + WIDTH + 2 - 1:0] tms_seq = {5'b01000, {(WIDTH-1){1'b0}}, 1'b1, 2'b10};
       for (int i = 5 + WIDTH + 2 - 1; i >= 0; i--) begin
-        #(tcktime) tck = ~tck; 
+        #(tcktime) tck = ~tck;
         tdi = 0;
         tms = tms_seq[i];
-        if ((i < WIDTH + 2) && (i >= 2)) begin               
+        if ((i < WIDTH + 2) && (i >= 2)) begin
           this.result[WIDTH - i + 2-1] = tdo;
         end
         #(tcktime) tck = ~tck;
@@ -117,7 +117,7 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
     task write(input logic [WIDTH-1:0] val);
       logic [5 + WIDTH + 2 - 1:0] tms_seq = {5'b01000, {(WIDTH-1){1'b0}}, 1'b1, 2'b10};
       for (int i = 5 + WIDTH + 2 - 1; i >= 0; i--) begin
-        #(tcktime) tck = ~tck; 
+        #(tcktime) tck = ~tck;
         tms = tms_seq[i];
         if ((i < WIDTH + 2) && (i >= 2)) begin
           tdi = val[WIDTH - i + 2-1];
@@ -127,7 +127,7 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
       end
     endtask
   endclass
-   
+
   // Debug Module Interface Abstraction.
   // TODO: Can probably be further abstracted with a Debugger class
   class DMI extends JTAG_DR #(41);
@@ -175,11 +175,11 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
 
     task write_data0(input logic [31:0] data);
       this.write({7'h04, data, 2'b10});
-    endtask      
+    endtask
   endclass
 
   // Debugger Class
-   
+
   /* This class is special. It simulates what the debugger is
     * supposed to do as outlined in the RISC-V Debug Specification.
     *
@@ -194,14 +194,14 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
     * - Debugger.resume():
     *   Sets resumereq high and polls DMStatus for when the processor
     *   resumes.
-    *   
+    *
     * - Debugger.readreg(regno):
     *   Reads a GPR of the user's choice
-    * 
+    *
     * - Debugger.readcsr():
-    *   
+    *
     */
-   
+
   class Debugger;
     // Primary JTAG Registers
     JTAG_DR #(32) idcode;
@@ -215,7 +215,7 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
     // Need to store these to allow exceptions for certain values during assertions
     logic [6:0] last_addr;
     logic [15:0] last_abstract_reg;
-    
+
     // For running testvectors instead of the encapsulated tests.
     logic [40:0] testvectors[$];
     logic [40:0] expected_outputs[$];
@@ -225,25 +225,25 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
 
     // Get the last resume for triggering error read out.
     int          endIndex;
-    
+
     function new();
       state = IDLE;
       idcode = new();
       dtmcs = new();
       dmireg = new();
     endfunction
-      
-    // Confirm the DTM is working 
+
+    // Confirm the DTM is working
     task initialize();
       write_instr(5'b00001);
       this.idcode.read();
-      assert(this.idcode.result == 32'h1002AC05) 
+      assert(this.idcode.result == 32'h1002AC05)
       else $display("IDCODE was corrupted: 0x%0h", this.idcode.result);
 
       // Reading DTMCS value
       write_instr(5'b10000);
       this.dtmcs.read();
-      assert(this.dtmcs.result == 32'h00100071) 
+      assert(this.dtmcs.result == 32'h00100071)
       else $display("Something is wrong with DTMCS on reset and capture: dtmcs = 0x%0h", this.dtmcs.result);
 
       // Set instruction DMI
@@ -267,7 +267,7 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
       assert(this.dmireg.result[33:2] == 32'h0000_0001) $display("AbstractCS: 0x%8h, CORRECT", this.dmireg.result[33:2]);
       else $display("AbstractCS: 0x%8h, FAILED", this.dmireg.result[33:2]);
     endtask
-      
+
     // Halt the processor, and confirm halted
     task halt();
       this.dmireg.read_dmcontrol();
@@ -298,7 +298,7 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
       this.dmireg.read_dmcontrol();
       this.dmireg.write_dmcontrol(32'hbfff_ffff & this.dmireg.result);
       this.dmireg.read_dmcontrol();
-         
+
       assert(|(this.dmireg.result[33:2] & 32'h4000_0000) == 0) $display("Resumereq de-asserted. DMControl = 0x%8h, CORRECT", this.dmireg.result[33:2]);
       else $display("Resumereq NOT de-asserted. DMControl = 0x%8h, FAILED", this.dmireg.result[33:2]);
     endtask
@@ -336,7 +336,7 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
 
       testvectors = {};
       expected_outputs = {};
-      while (!$feof(file)) begin        
+      while (!$feof(file)) begin
         if ($fgets(line, file)) begin
           // Allow comments and whitespace
           if (line[0] == "#" | line[0] == " " | line[0] == "\n") begin
@@ -346,18 +346,18 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
           this.testvectors.push_back({items[2].substr(1, 2).atohex(), items[1].atohex(), op_decode(items[0], 0)});
           this.expected_outputs.push_back({items[6].substr(1, 2).atohex(), items[5].atohex(), op_decode(items[4], 1)});
         end
-      end 
+      end
 
       // foreach (this.testvectors[i]) begin
       //    $display("testvector[%0d]:\n  addr: %2h, data: %8h, op: %2b", i, this.testvectors[i][40:34], this.testvectors[i][33:2], this.testvectors[i][1:0]);
       // end
-         
+
     endfunction
 
     function changeState(logic [40:0] testvector);
       logic [6:0]  addr;
       logic [31:0] data;
-      logic [1:0]  op;   
+      logic [1:0]  op;
       addr = testvector[40:34];
       data = testvector[33:2];
       op = testvector[1:0];
@@ -368,7 +368,7 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
           if (data[16]) begin // Checking for WRITE signal
             state = IDLE;
           end else begin
-            state = ABSTRACT_READ;           
+            state = ABSTRACT_READ;
           end
         end else if (addr != 7'h00 & op == 2'b01) begin
           state = DMREG_READ;
@@ -412,17 +412,17 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
             // read the data should be fed out of the JTAG interface
             // immediately before doing anything else. If this state
             // is reached, it means we'll be stuck here.
-            state = DMREG_READ; 
+            state = DMREG_READ;
           end
         end
-        
+
         default: state = IDLE;
       endcase
     endfunction
 
     /*
      knownExceptions
-     
+
      Checks the results of Debug Module register and Abstract Register
      Reads. If any difference is a known and acceptable difference
      between Spike and Wally, it allows the assertion to pass.
@@ -440,12 +440,12 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
               result = 0;
             end
           end
-          
+
           default:  begin
             result = 0;
           end
         endcase
-        
+
       end else if (state == DMREG_READ | state == ABSTRACT_READ) begin
         case (last_addr)
           7'h11: begin
@@ -475,11 +475,11 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
               result = 0;
             end
           end
-          
+
           default: result = 0;
         endcase
       end
-      
+
       return result;
     endfunction
 
@@ -501,14 +501,14 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
         if (i == endIndex - 1) begin
           this.reportErrors();
         end
-        
+
         if (i > 0) begin
           last_addr = testvectors[i-1][40:34];
           if (last_addr == 7'h17) begin
             last_abstract_reg = testvectors[i-1][17:2];
           end
         end
-        
+
         this.dmireg.write(testvectors[i]);
         // $display("\n");
         // $display("%2h", last_addr);
@@ -519,7 +519,7 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
         if (state == DATA0_READ | state == DATA1_READ | state == DMREG_READ | state == ABSTRACT_READ) begin
           exception = this.knownExceptions(this.expected_outputs[i], this.dmireg.result);
         end
-        
+
         // Update State after using the previous state to determine exception value
         this.changeState(testvectors[i]);
 
@@ -527,7 +527,7 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
         assert(this.dmireg.result == expected_outputs[i] | exception | i == 0) begin
           exception = 0;
           // $display("%sMATCHES%s", green, normal);
-        end else begin 
+        end else begin
           $display("%sFAILED:%s Wally does not match Spike.", red, normal);
           // Report both the expected and actual results
           $display("  Expected[%0d] = \033[1m addr:\033[0m %2h, data: %8h, op: %2b", i, this.expected_outputs[i][40:34], this.expected_outputs[i][33:2], this.expected_outputs[i][1:0]);
@@ -562,11 +562,11 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
       end
     endfunction
   endclass
-  
+
   // ----------------------------------------------------------------
   // THE TESTS
   // ----------------------------------------------------------------
-  
+
   // Debug Commands
   initial begin
     JTAG_DR #(32) idcode = new();
@@ -642,5 +642,5 @@ function automatic logic [1:0] op_decode(string op_str, logic response);
 endfunction
 
 function printArr();
-  
+
 endfunction

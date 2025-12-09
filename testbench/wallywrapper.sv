@@ -68,7 +68,7 @@ module wallywrapper import cvw::*;(
   logic        ExternalStall;
 
   logic        tck, tms, tdi, tdo;
-  
+
   // instantiate device to be tested
   assign GPIOIN = 0;
   assign UARTSin = 1;
@@ -87,6 +87,6 @@ module wallywrapper import cvw::*;(
                         .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
                         .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
                         .UARTSin, .UARTSout, .SPIIn, .SPIOut, .SPICS, .SPICLK, .SDCIn, .SDCCmd, .SDCCS, .SDCCLK,
-                        .tck, .tms, .tdi, .tdo); 
+                        .tck, .tms, .tdi, .tdo);
 
 endmodule

@@ -4,26 +4,26 @@
 // Written: Jacob Pease jacobpease@protonmail.com 19 September 2025
 //
 // Purpose: Debug Control and Status Registers
-//          See RISC-V Privileged Mode Specification 20190608 
-// 
+//          See RISC-V Privileged Mode Specification 20190608
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 //////////////////////////////////////////////////////////////////////
 
@@ -36,7 +36,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   input logic               InstrValidE,
   output logic [P.XLEN-1:0] CSRDReadValM,
   input logic [1:0]         PrivilegeModeW,
-  
+
   output logic              DebugMode,
   input logic [P.XLEN-1:0]  PCM,
   output logic              IllegalCSRDAccessM,
@@ -69,7 +69,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   // WriteVals
   logic [31:0] DCSRWriteValM;
   logic [P.XLEN-1:0] DPCWriteValM;
-    
+
   // Register Outputs
   //logic [31:0]       DCSR_REGW;
   // logic [P.XLEN-1:0] DPC_REGW;
@@ -102,7 +102,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   // Need this for
   logic [2:0] NextCause;     // Cause of halt
   logic       ebreak;
-  
+
   // NOTE: When set to 0, mprven allows MPRV to be ignored while in
   // DebugMode. This can be added later. For now, tying it to 1
   // implies that MPRV takes effect if it is set, thus DebugMode can't
@@ -138,11 +138,11 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
   ////////////////////////////////////////////////////////////////////
   // CSRs
   ////////////////////////////////////////////////////////////////////
-  
+
   flopenr #(dcsrwidth) DCSRreg(clk, reset, WriteDCSR,
     {ebreakm, ebreaks, ebreaku, stepie, NextCause, step, PrivilegeModeW},
     DCSR_REGW);
-  
+
   flopenr #(P.XLEN) DPCreg(clk, reset, WriteDPC, DPCWriteValM, DPC_REGW);
   // assign DPC = DPC_REGW;
 
@@ -156,7 +156,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
 
   // CSR Reads
   always_comb begin
-    if (DebugMode == 0) begin // Debug Spec p. 
+    if (DebugMode == 0) begin // Debug Spec p.
       IllegalCSRDAccessM = 1'b1;
       CSRDReadValM = '0;
     end else begin
@@ -175,11 +175,11 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
       endcase
     end
   end
-  
+
   ////////////////////////////////////////////////////////////////////
   // Halt Machine
   ////////////////////////////////////////////////////////////////////
-  
+
   always_ff @(posedge clk) begin
     if (reset) begin
       state <= RUNNING;
@@ -189,21 +189,21 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
       state <= state_n;
     end
   end
-  
+
   always_comb begin
     case (state)
-	   RUNNING: begin 
+      RUNNING: begin
         if (HaltReq) state_n = HALTED;
         else state_n = RUNNING;
         end
-	   HALTED: begin
+      HALTED: begin
         if (ResumeReq) state_n = RUNNING;
         else state_n = HALTED;
         end
       default: state_n = RUNNING;
     endcase
   end
-  
+
   assign DebugMode = (state == HALTED);
   // assign DebugResume = (state == HALTED) && (state_n == RUNNING);
 
@@ -223,7 +223,7 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
       DPCset <= 1'b1;
     end
   end
-  
+
   // Halt cause
   // 000: No cause - Reset
   // 001: ebreak
@@ -253,5 +253,5 @@ module csrd import cvw::*;  #(parameter cvw_t P) (
       HaveReset <= 1'b0;
     end
   end
-  
+
 endmodule
