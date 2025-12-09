@@ -578,10 +578,10 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
       begin
         forever begin
           @(negedge reset);
-          disable debug_sequence;
+          disable fork;
 
-          fork : debug_sequence
-            begin
+          fork
+            begin : debug_sequence
               debugger.get_testvectors(filename);
               debugger.initialize();
               debugger.run_testvectors();
