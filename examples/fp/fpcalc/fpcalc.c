@@ -1,6 +1,6 @@
 // softfloat_calc.c
 // David_Harris@hmc.edu 27 February 2022
-// 
+//
 // Use SoftFloat as a calculator
 
 #include <stdio.h>
@@ -43,13 +43,13 @@ void long2binstr(unsigned long  val, char *str, int bits) {
 
   if (val == 0) { // just return zero
     str[0] = '0';
-    str[1] = 0; 
+    str[1] = 0;
   } else {
     //    printf("long2binstr %lx %s %d\n", val, str, bits);
     for (i=0; (i<bits) && (val != 0); i++) {
       shamt = bits - i - 1;
       mask = 1;
-      mask = (mask << shamt); 
+      mask = (mask << shamt);
       masked = val & ~mask; // mask off the bit
       if (masked != val) str[i] = '1';
       else str[i] = '0';
@@ -57,7 +57,7 @@ void long2binstr(unsigned long  val, char *str, int bits) {
       val = masked;
       if (!val) str[i+1] = 0; // terminate when out of nonzero digits
     }
-  } 
+  }
 }
 
 void printF16(char *msg, float16_t f) {
@@ -82,7 +82,7 @@ void printF16(char *msg, float16_t f) {
   else if (exp == 31 && fract != 0) sprintf(sci, "NaN Payload: %c%s", sign, fractstr);
   else sprintf(sci, "%c1.%s x 2^%ld", sign, fractstr, exp-15);
 
-  printf ("%s: 0x%04x = %g = %s: Biased Exp %ld Fract 0x%lx\n", 
+  printf ("%s: 0x%04x = %g = %s: Biased Exp %ld Fract 0x%lx\n",
     msg, convh.v, convf.f, sci, exp, fract);  // no easy way to print half prec.
 }
 
@@ -110,8 +110,8 @@ void printF32(char *msg, float32_t f) {
   printf("_");
   printf("%04x", (conv.v & 0xFF));
   printf(" = %g = %s: Biased Exp %ld Fract 0x%lx\n", conv.f, sci, exp, fract);
-  //printf ("%s: 0x%08x = %g = %s: Biased Exp %d Fract 0x%lx\n", 
-  //  msg, conv.v, conv.f, sci, exp, fract);  
+  //printf ("%s: 0x%08x = %g = %s: Biased Exp %d Fract 0x%lx\n",
+  //  msg, conv.v, conv.f, sci, exp, fract);
 }
 
 void printF64(char *msg, float64_t f) {
@@ -141,11 +141,11 @@ void printF64(char *msg, float64_t f) {
   printf("%04lx", (conv.v >> 32) & 0xFFFF);
   printf("_");
   printf("%04lx", (conv.v >> 16) & 0xFFFF);
-  printf("_");  
+  printf("_");
   printf("%04lx", (conv.v & 0xFFFF));
   printf(" = %lg = %s: Biased Exp %ld Fract 0x%lx\n", conv.d, sci, exp, fract);
-  //printf ("%s: 0x%016lx = %lg = %s: Biased Exp %d Fract 0x%lx\n", 
-  //  msg, conv.v, conv.d, sci, exp, fract); 
+  //printf ("%s: 0x%016lx = %lg = %s: Biased Exp %d Fract 0x%lx\n",
+  //  msg, conv.v, conv.d, sci, exp, fract);
 }
 
 void printF128 (char *msg, float128_t q) {
@@ -157,15 +157,15 @@ void printF128 (char *msg, float128_t q) {
   //v128 = v128 << 64 | q.v[0]; // use union to convert between hexadecimal and floating-point views
   //conv.v = v128;
   conv.v64[0] = q.v[0]; // use union to convert between hexadecimal and floating-point views
-  conv.v64[1] = q.v[1]; // use union to convert between hexadecimal and floating-point views  
+  conv.v64[1] = q.v[1]; // use union to convert between hexadecimal and floating-point views
   printf("%s: ", msg);  // print out nicely
 
   // Some compilers can understand %Q for printf on quad precision instead of the
   // API call of quadmath_snprintf
   // printf("0x%016" PRIx64 "_%016" PRIx64 " = %1.15Qe\n", q.v[1], q.v[0], conv.q);
   quadmath_snprintf (buf, sizeof buf, "%1.15Qe", conv.q);
-  //printf("0x%032" PRIx12 " = %s\n", q.v, buf);  
-  printf("0x%016" PRIx64 "_%016" PRIx64 " = %s\n", q.v[1], q.v[0], buf);  
+  //printf("0x%032" PRIx12 " = %s\n", q.v, buf);
+  printf("0x%016" PRIx64 "_%016" PRIx64 " = %s\n", q.v[1], q.v[0], buf);
 
 }
 
@@ -178,13 +178,13 @@ void printF128val(float128_t q) {
   //v128 = v128 << 64 | q.v[0]; // use union to convert between hexadecimal and floating-point views
   //conv.v = v128;
   conv.v64[0] = q.v[0]; // use union to convert between hexadecimal and floating-point views
-  conv.v64[1] = q.v[1]; // use union to convert between hexadecimal and floating-point views  
+  conv.v64[1] = q.v[1]; // use union to convert between hexadecimal and floating-point views
 
   // Some compilers can understand %Q for printf on quad precision instead of the
   // API call of quadmath_snprintf
   // printf("0x%016" PRIx64 "_%016" PRIx64 " = %1.15Qe\n", q.v[1], q.v[0], conv.q);
   //quadmath_snprintf (buf, sizeof buf, "%1.15Qe", conv.q);
-  printf("%016" PRIx64 "%016" PRIx64 "\n", q.v[1], q.v[0]);  
+  printf("%016" PRIx64 "%016" PRIx64 "\n", q.v[1], q.v[0]);
 }
 
 void printFlags(void) {
@@ -193,7 +193,7 @@ void printFlags(void) {
   int OF = (softfloat_exceptionFlags >> 2) % 2;
   int DZ = (softfloat_exceptionFlags >> 3) % 2;
   int NV = (softfloat_exceptionFlags >> 4) % 2;
-  printf ("exceptions: Inexact %d Underflow %d Overflow %d DivideZero %d Invalid %d\n", 
+  printf ("exceptions: Inexact %d Underflow %d Overflow %d DivideZero %d Invalid %d\n",
           NX, UF, OF, DZ, NV);
 }
 
@@ -202,7 +202,7 @@ void softfloatInit(void) {
     //                 RZ:  softfloat_round_minMag
     //                 RP:  softfloat_round_max
     //                 RM:  softfloat_round_min
-    softfloat_roundingMode = softfloat_round_near_even; 
+    softfloat_roundingMode = softfloat_round_near_even;
     softfloat_exceptionFlags = 0; // clear exceptions
     softfloat_detectTininess = softfloat_tininess_afterRounding; // RISC-V behavior for tininess
 }
@@ -232,12 +232,12 @@ __uint128_t parseNum(char *num) {
   } else if (num[0] == 'x') {
     num += 1; // Skip "x"
   }
-  
-  int size; // size of operands in bytes (2= half, 4=single, 8 = double)                                                                                                                          
+
+  int size; // size of operands in bytes (2= half, 4=single, 8 = double)
   if (strlen(num) < 8) size = 2;
   else if (strlen(num) < 16) size = 4;
   else if (strlen(num) < 32) size = 8;
-  else if (strlen(num) < 35) size = 16;                                                                                                                          
+  else if (strlen(num) < 35) size = 16;
   else {
     printf("Error: only half, single, double, or quad precision supported");
     exit(1);
@@ -271,7 +271,7 @@ __uint128_t parseNum(char *num) {
       num++;
     }
   }
-  
+
   //printf("Parsed %s as 0x%lx\n", num, result);
   return result;
 }
@@ -302,7 +302,7 @@ int main(int argc, char *argv[]) {
     char op1, op2;
     char cmd[200];
 
-    softfloatInit(); 
+    softfloatInit();
 
     if (argc < 4 || argc > 7) {
       printf("Usage: %s x op y [RNE/RZ/RM/RP]  or  x x y + z [RNE/RZ/RM/RP]\n  Example: 0x3f800000 + 0x3fC00000\n  Use x for multiplication\n", argv[0]);
@@ -334,7 +334,7 @@ int main(int argc, char *argv[]) {
             r = f32_mulAdd(x, y, z);
             printF32("X", x); printF32("Y", y); printF32("Z", z);
             printF32("result = X*Y+Z", r); printFlags();
-          } else if (opSize == 8) { 
+          } else if (opSize == 8) {
             float64_t x, y, z, r;
             x.v = xn; y.v = yn; z.v = zn;
             r = f64_mulAdd(x, y, z);
@@ -364,7 +364,7 @@ int main(int argc, char *argv[]) {
             case '%': r = f16_rem(x, y); break;
             default: printf("Unknown op %c\n", op1); exit(1);
           }
-          printF16("X", x); printF16("Y", y); 
+          printF16("X", x); printF16("Y", y);
           sprintf(cmd, "0x%04x %c 0x%04x", x.v, op1, y.v);
           printF16(cmd, r); printFlags();
         } else if (opSize == 4) {
@@ -378,7 +378,7 @@ int main(int argc, char *argv[]) {
             case '%': r = f32_rem(x, y); break;
             default: printf("Unknown op %c\n", op1); exit(1);
           }
-          printF32("X", x); printF32("Y", y); 
+          printF32("X", x); printF32("Y", y);
           sprintf(cmd, "0x%08x %c 0x%08x", x.v, op1, y.v);
           printF32(cmd, r); printFlags();
 
@@ -393,7 +393,7 @@ int main(int argc, char *argv[]) {
             case '%': r = f64_rem(x, y); break;
             default: printf("Unknown op %c\n", op1); exit(1);
           }
-          printF64("X", x); printF64("Y", y); 
+          printF64("X", x); printF64("Y", y);
           sprintf(cmd, "0x%016lx %c 0x%016lx", x.v, op1, y.v);
           printF64(cmd, r); printFlags();
         } else { // opSize = 16
@@ -411,12 +411,12 @@ int main(int argc, char *argv[]) {
             case '%': r = f128_rem(x, y); break;
             default: printf("Unknown op %c\n", op1); exit(1);
           }
-          printF128("X", x); printF128("Y", y); 
+          printF128("X", x); printF128("Y", y);
           //sprintf(cmd, "0x%016lx %c 0x%016lx", x.v, op1, y.v);
           printf("0x%016" PRIx64 "_%016" PRIx64 " %c ", x.v[1], x.v[0], op1);
           printf("0x%016" PRIx64 "_%016" PRIx64 " ", y.v[1], y.v[0]);
           printF128(cmd, r); printFlags();
-          // printF128val(r); 
+          // printF128val(r);
         }
       }
     }

@@ -100,7 +100,7 @@ case "$FAMILY" in
         BUILDROOT_PACKAGES+=(ncurses-base ncurses-bin libncurses-dev gfortran) # gfortran is only needed for compiling spec benchmarks on buildroot linux
         VIVADO_PACKAGES+=(libncurses*) # Vivado hangs on the third stage of installation without this
         ;;
-    suse) 
+    suse)
         PYTHON_VERSION=python3.12
         PYTHON_VERSION_PACKAGE=python312
         PACKAGE_MANAGER="zypper -n"
@@ -161,8 +161,9 @@ else
     # Vivado looks for ncurses5 libraries, but Ubuntu 24.04 only has ncurses6
     # Create symbolic links to the ncurses6 libraries to fool Vivado
     if (( UBUNTU_VERSION >= 24 )); then
-        ln -vsf /lib/x86_64-linux-gnu/libncurses.so.6 /lib/x86_64-linux-gnu/libncurses.so.5
-        ln -vsf /lib/x86_64-linux-gnu/libtinfo.so.6 /lib/x86_64-linux-gnu/libntinfo.so.5
+        lib_dir=$(gcc -dumpmachine)
+        ln -vsf /lib/"$lib_dir"/libncurses.so.6 /lib/"$lib_dir"/libncurses.so.5
+        ln -vsf /lib/"$lib_dir"/libtinfo.so.6 /lib/"$lib_dir"/libntinfo.so.5
     fi
 
     echo -e "${SUCCESS_COLOR}Packages successfully installed.${ENDC}"

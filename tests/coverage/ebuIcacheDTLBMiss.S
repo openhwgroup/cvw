@@ -204,7 +204,7 @@ label1:
     lw t0, 0x234(a1)        # trigger DTLB miss
     addi t2, t3, 0x10E  # occupy part of cache line
     cbo.inval (a2)
-        
+
     addi t2, t3, 0x100  # occupy part of cache line
     sfence.vma          # flush tlb
     lw t0, 0x234(a0)        # load to get an entry in the DTLB accessing top-level PTE
@@ -278,7 +278,7 @@ pagetable:
 .align 12
     .8byte 0x000000000000100F # misaligned gigapage at 0x00000000
     .8byte 0x0000000020005801 # PTE for pages at 0x40000000
-    .8byte 0x0000000020004801 # 
+    .8byte 0x0000000020004801 #
 
 
 # Next page table at 0x80012000 for gigapage at 0x80000000

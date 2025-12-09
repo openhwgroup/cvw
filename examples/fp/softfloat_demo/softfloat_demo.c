@@ -1,6 +1,6 @@
 // softfloat_demo.c
 // David_Harris@hmc.edu 27 February 2022
-// 
+//
 // Demonstrate using SoftFloat do compute a floating-point, then print results
 
 #include <stdio.h>
@@ -26,7 +26,7 @@ void printFlags(void) {
   int OF = (softfloat_exceptionFlags >> 2) % 2;
   int DZ = (softfloat_exceptionFlags >> 3) % 2;
   int NV = (softfloat_exceptionFlags >> 4) % 2;
-  printf ("Flags: Inexact %d Underflow %d Overflow %d DivideZero %d Invalid %d\n", 
+  printf ("Flags: Inexact %d Underflow %d Overflow %d DivideZero %d Invalid %d\n",
           NX, UF, OF, DZ, NV);
 }
 
@@ -35,7 +35,7 @@ void softfloatInit(void) {
     //                 RZ:  softfloat_round_minMag
     //                 RP:  softfloat_round_max
     //                 RM:  softfloat_round_min
-    softfloat_roundingMode = softfloat_round_near_even; 
+    softfloat_roundingMode = softfloat_round_near_even;
     softfloat_exceptionFlags = 0; // clear exceptions
     softfloat_detectTininess = softfloat_tininess_afterRounding; // RISC-V behavior for tininess
 }
@@ -48,7 +48,7 @@ int main()
     y.v = 0x3fc00000;
     z.v = 0x00000001;
 
-    softfloatInit(); 
+    softfloatInit();
     r = f32_mulAdd(x, y, z);
     printF32("X", x); printF32("Y", y); printF32("Z", z);
     printF32("result = X*Y+Z", r); printFlags();

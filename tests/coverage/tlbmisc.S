@@ -66,7 +66,7 @@ main:
     li t0, 0x7FFFFFFF80000000
     jalr ra, t0 # jump to page with UpperBitsUnequal
     li t0, 0x8000000080C00000
-    jalr ra, t0 
+    jalr ra, t0
     li t0, 0x000000080C00000
     jalr ra, t0 # jump to page with bad reserved bits 60:54 in PTE
 
@@ -169,7 +169,7 @@ ConcurrentICacheMissDTLBMiss:
     sw t1, 0(t0) # have something to return from
     jalr ra, t0
 
-    # Good PBMT with menvcfg.PBMT = 1, 
+    # Good PBMT with menvcfg.PBMT = 1,
     li t0, 0x80806000
     jalr ra, t0
 

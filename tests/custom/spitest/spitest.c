@@ -5,10 +5,10 @@
 //
 // Purpose: C code to test SPI bugs
 //
-// 
+//
 //
 // A component of the Wally configurable RISC-V project.
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
@@ -64,23 +64,23 @@ void spi_init(uint32_t clkin) {
   // Set Delay 0 to default
   write_reg(SPI_DELAY0,
             SIFIVE_SPI_DELAY0_CSSCK(1) |
-			SIFIVE_SPI_DELAY0_SCKCS(1));
+            SIFIVE_SPI_DELAY0_SCKCS(1));
 
   // Set Delay 1 to default
   write_reg(SPI_DELAY1,
             SIFIVE_SPI_DELAY1_INTERCS(1) |
             SIFIVE_SPI_DELAY1_INTERXFR(0));
 
-  // Initialize the SPI controller clock to 
-  // div = (20MHz/(2*400kHz)) - 1 = 24 = 0x18 
-  write_reg(SPI_SCKDIV, 0x18); 
+  // Initialize the SPI controller clock to
+  // div = (20MHz/(2*400kHz)) - 1 = 24 = 0x18
+  write_reg(SPI_SCKDIV, 0x18);
 }
 
 void main() {
   spi_init(100000000);
 
   spi_set_clock(100000000,50000000);
-  
+
   volatile uint8_t *p = (uint8_t *)(0x8F000000);
   int j;
   uint64_t n = 0;
@@ -94,12 +94,12 @@ void main() {
     for (j = 0; j < 8; j++) {
       spi_sendbyte(0xaa + j);
     }
-    
+
     // Reset counter. Process bytes AS THEY COME IN.
     for (j = 0; j < 8; j++) {
       while (!(read_reg(SPI_IP) & 2)) {}
       uint8_t x = spi_readbyte();
-      *p++ = x;      
+      *p++ = x;
     }
   } while(--n > 0);
 

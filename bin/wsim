@@ -27,7 +27,7 @@ def parseArgs():
     parser.add_argument("--tb", "-t", help="Testbench", choices=["testbench", "testbench_fp"], default="testbench")
     parser.add_argument("--gui", "-g", help="Simulate with GUI", action="store_true")
     parser.add_argument("--ccov", "-c", help="Code Coverage", action="store_true")
-    parser.add_argument("--fcov", "-f", help="Functional Coverage with cvw-arch-verif", action="store_true")
+    parser.add_argument("--fcov", "-f", help="Functional Coverage; Currently does nothing", action="store_true")
     parser.add_argument("--args", "-a", help="Optional arguments passed to simulator via $value$plusargs", default="")
     parser.add_argument("--params", "-p", help="Optional top-level parameter overrides of the form param=value", default="")
     parser.add_argument("--define", "-d", help="Optional define macros passed to simulator", default="")
@@ -105,9 +105,9 @@ def prepSim(args, ElfFile):
         paramsList.append("DEBUG=1")
     if args.ccov:
         flagsList.append("--ccov")
-    if args.fcov:
-        flagsList.append("--fcov")
-        defineList.append("+define+FCOV")
+    # if args.fcov:
+    #     flagsList.append("--fcov")
+    #     defineList.append("+define+FCOV")
     if args.gui:
         flagsList.append("--gui")
     if args.lockstep or args.lockstepverbose:

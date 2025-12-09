@@ -7,20 +7,20 @@
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -46,21 +46,21 @@ rvtest_entry_point:
     # functional coverage tests, and these three lines will be restored.
 #    li t0, -1           # set mtimecmp to biggest number so it doesnt interrupt again
 #    li t1, 0x02004000   # MTIMECMP in CLINT
-#    sd t0, 0(t1)      
-    li t0, 0x80         
-#    li t0, 0x00         
+#    sd t0, 0(t1)
+    li t0, 0x80
+#    li t0, 0x00
     csrw mie, t0        # Enable machine timer interrupt
-    la t0, topoftrapstack 
+    la t0, topoftrapstack
     csrw mscratch, t0   # MSCRATCH holds trap stack pointer
     csrsi mstatus, 0x8  # Turn on mstatus.MIE global interrupt enable
     # set up PMP so user and supervisor mode can access full address space
     csrw pmpcfg0, 0xF   # configure PMP0 to TOR RWX
-    li t0, 0xFFFFFFFF   
+    li t0, 0xFFFFFFFF
     csrw pmpaddr0, t0   # configure PMP0 top of range to 0xFFFFFFFF to allow all 32-bit addresses
     j main              # Call main function in user test program
 
 done:
-    li a0, 4            # argument to finish program    
+    li a0, 4            # argument to finish program
     ecall               # system call to finish program
     j self_loop         # wait forever (not taken)
 
@@ -74,11 +74,11 @@ trap_handler:
     csrr t1, mtval      # And the trap value
     bgez t0, exception  # if msb is clear, it is an exception
 
-interrupt:              # must be a timer interrupt 
+interrupt:              # must be a timer interrupt
     li t0, -1           # set mtimecmp to biggest number so it doesnt interrupt again
     li t1, 0x02004000   # MTIMECMP in CLIN
-    sd t0, 0(t1)      
-    csrw stimecmp, t0   # sets stimecmp to big number so it doesnt interrupt 
+    sd t0, 0(t1)
+    csrw stimecmp, t0   # sets stimecmp to big number so it doesnt interrupt
     li t0, 32
     csrc sip, t0        # clears stimer interrupt
     j trap_return       # clean up and return
@@ -104,7 +104,7 @@ changeprivilege:
 
 trap_return:            # return from trap handler
     csrr t0, mepc  # get address of instruction that caused exception
-    li t1, 0x20000  
+    li t1, 0x20000
     csrs mstatus, t1    # set mprv bit to fetch instruction with permission of code that trapped
     lh t0, 0(t0)   # get instruction that caused exception
     csrc mstatus, t1    # clear mprv bit to restore normal operation
@@ -132,8 +132,8 @@ write_tohost:
 
 self_loop:
     j self_loop         # wait
-    
-.section .tohost 
+
+.section .tohost
 tohost:                 # write to HTIF
     .dword 0
 fromhost:
@@ -141,7 +141,7 @@ fromhost:
 
 .EQU XLEN,64
 begin_signature:
-    .fill 6*(XLEN/32),4,0xdeadbeef    # 
+    .fill 6*(XLEN/32),4,0xdeadbeef    #
 end_signature:
 
 # Initialize stack with room for 512 bytes
@@ -149,7 +149,7 @@ end_signature:
     .space 512
 topofstack:
 # And another stack for the trap handler
-.bss   
+.bss
     .space 512
 topoftrapstack:
 

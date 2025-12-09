@@ -41,63 +41,84 @@ jobs:
             image: ubuntu:20.04
             imageFamily: debian
             regressionFail: true
+            os: ubuntu-latest
           - name: ubuntu-22.04
             image: ubuntu:22.04
             imageFamily: debian
+            os: ubuntu-latest
           - name: ubuntu-24.04
             image: ubuntu:24.04
             imageFamily: debian
+            os: ubuntu-latest
+          # Ubuntu ARM64 Installation
+          - name: ubuntu-24.04-arm
+            image: ubuntu:24.04
+            imageFamily: debian
+            os: ubuntu-24.04-arm
           # Debian Installations
           - name: debian-11
             image: debian:11
             imageFamily: debian
+            os: ubuntu-latest
           - name: debian-12
             image: debian:12
             imageFamily: debian
+            os: ubuntu-latest
           - name: debian-13
             image: debian:13
             imageFamily: debian
+            os: ubuntu-latest
           # Red Hat Installations
           - name: rocky-8
             image: rockylinux/rockylinux:8
             imageFamily: redhat
             regressionFail: true
+            os: ubuntu-latest
           - name: rocky-9
             image: rockylinux/rockylinux:9
             imageFamily: redhat
+            os: ubuntu-latest
           - name: rocky-10
             image: rockylinux/rockylinux:10
             imageFamily: redhat
+            os: ubuntu-latest
           - name: almalinux-8
             image: almalinux:8
             imageFamily: redhat
             regressionFail: true
+            os: ubuntu-latest
           - name: almalinux-9
             image: almalinux:9
             imageFamily: redhat
+            os: ubuntu-latest
           - name: almalinux-10
             image: almalinux:10
             imageFamily: redhat
+            os: ubuntu-latest
           # SUSE Installations
           - name: opensuse-15.6
             image: opensuse/leap:15.6
             imageFamily: suse
+            os: ubuntu-latest
           # User level installation
           - name: user-install
             image: null
             user: true
+            os: ubuntu-latest
           # Custom location installation
           - name: custom-install
             image: null
             riscv_path: /home/riscv
+            os: ubuntu-latest
           # Custom location user level installation
           - name: custom-user-install
             image: null
             user: true
             riscv_path: $HOME/riscv-toolchain
+            os: ubuntu-latest
 
     # run on selected version of ubuntu or on ubuntu-latest with docker image
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     container:
       image: ${{ matrix.image }}
       options: --privileged --mount type=bind,source=/,target=/host --pid=host --entrypoint /bin/bash # Allow for connection with host
@@ -116,11 +137,11 @@ jobs:
               zypper install -y git
             fi
       # Only clone submodules needed for standard tests/regression to save space
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Clone Necessary Submodules
         run: |
               git config --global --add safe.directory '*'
-              git submodule update --init addins/riscv-arch-test addins/cvw-arch-verif addins/verilog-ethernet
+              git submodule update --init addins/riscv-arch-test addins/riscv-arch-test-cvw addins/verilog-ethernet
       # Free up space on the host machine, either from the container or the host
       - name: Free Up Storage
         run: |
@@ -159,7 +180,7 @@ jobs:
         run: sed -i 's,~/riscv,${{ matrix.riscv_path }},g' setup.sh
       # Upload installation logs for debugging
       - name: Upload Installation Logs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: installation-logs-${{ matrix.name }}
@@ -191,7 +212,7 @@ jobs:
               wsim rv32i arch32i --sim verilator | tee $WALLY/sim/verilator/logs/rv32i_arch32i.log
       # Upload regression logs for debugging
       - name: Upload regression logs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: regression-logs-${{ matrix.name }}

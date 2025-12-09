@@ -22,7 +22,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "WALLY-TEST-LIB-64.h" 
+#include "WALLY-TEST-LIB-64.h"
 
 RVTEST_ISA("RV64I_Zicsr_Zifencei")
 RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;def NO_SAIL=True;",plic-s)
@@ -46,13 +46,13 @@ test_cases:
 #
 #   Here is where the actual tests are held, or rather, what the actual tests do.
 #   each entry consists of 3 values that will be read in as follows:
-#   
+#
 #   '.8byte [x28 Value], [x29 Value], [x30 value]'
 #                     or
 #   '.8byte [address], [value], [test type]'
 #
 #   The encoding for x30 test type values can be found in the test handler in the framework file
-# 
+#
 # ---------------------------------------------------------------------------------------------
 
 # =========== Define PLIC registers ===========
@@ -98,7 +98,7 @@ test_cases:
 
 # =========== Initialize relevant PLIC registers ===========
 
-.8byte PLIC_INTPRI_UART, 0x00000000, write32_test   # set UART priority to 0 to never interrupt 
+.8byte PLIC_INTPRI_UART, 0x00000000, write32_test   # set UART priority to 0 to never interrupt
 
 # =========== Enter Supervisor Mode ===========
 
@@ -121,7 +121,7 @@ test_cases:
 .8byte output_val, 0x00000000, write32_test         # clear output_val
 .8byte rise_ip, 0x00000001, write32_test            # clear GPIO interrupt
 .8byte PLIC_CLAIM1, 0x00000003, write32_test        # complete claim made earlier
-.8byte 0x0, 0x0, claim_s_plic_interrupts	    # clear interrupt from PLIC
+.8byte 0x0, 0x0, claim_s_plic_interrupts            # clear interrupt from PLIC
 .8byte PLIC_INTPENDING0, 0x00000000, read32_test    # no interrupts pending
 
 # Case 1.2:
@@ -138,7 +138,7 @@ test_cases:
 .8byte output_val, 0x00000000, write32_test         # clear output_val
 .8byte rise_ip, 0x00000001, write32_test            # clear GPIO interrupt
 .8byte PLIC_CLAIM1, 0x00000003, write32_test        # complete claim made earlier
-.8byte 0x0, 0x0, claim_s_plic_interrupts	    # clear interrupt from PLIC
+.8byte 0x0, 0x0, claim_s_plic_interrupts            # clear interrupt from PLIC
 .8byte PLIC_INTPENDING0, 0x00000000, read32_test    # no interrupts pending
 
 # Case 1.3:
@@ -155,7 +155,7 @@ test_cases:
 .8byte output_val, 0x00000000, write32_test         # clear output_val
 .8byte rise_ip, 0x00000001, write32_test            # clear GPIO interrupt
 .8byte PLIC_CLAIM1, 0x00000003, write32_test        # complete claim made earlier
-.8byte 0x0, 0x0, claim_s_plic_interrupts	    # clear interrupt from PLIC
+.8byte 0x0, 0x0, claim_s_plic_interrupts            # clear interrupt from PLIC
 .8byte PLIC_INTPENDING0, 0x00000000, read32_test    # no interrupts pending
 
 # Case 1.4:
@@ -172,7 +172,7 @@ test_cases:
 .8byte output_val, 0x00000000, write32_test         # clear output_val
 .8byte rise_ip, 0x00000001, write32_test            # clear GPIO interrupt
 .8byte PLIC_CLAIM1, 0x00000003, write32_test        # complete claim made earlier
-.8byte 0x0, 0x0, claim_s_plic_interrupts	    # clear interrupt from PLIC
+.8byte 0x0, 0x0, claim_s_plic_interrupts            # clear interrupt from PLIC
 .8byte PLIC_INTPENDING0, 0x00000000, read32_test    # no interrupts pending
 
 # Case 1.5:
@@ -189,7 +189,7 @@ test_cases:
 .8byte output_val, 0x00000000, write32_test         # clear output_val
 .8byte rise_ip, 0x00000001, write32_test            # clear GPIO interrupt
 .8byte PLIC_CLAIM1, 0x00000003, write32_test        # complete claim made earlier
-.8byte 0x0, 0x0, claim_s_plic_interrupts	    # clear interrupt from PLIC
+.8byte 0x0, 0x0, claim_s_plic_interrupts            # clear interrupt from PLIC
 .8byte PLIC_INTPENDING0, 0x00000000, read32_test    # no interrupts pending
 
 # Case 1.6:
@@ -206,7 +206,7 @@ test_cases:
 .8byte output_val, 0x00000000, write32_test         # clear output_val
 .8byte rise_ip, 0x00000001, write32_test            # clear GPIO interrupt
 .8byte PLIC_CLAIM1, 0x00000003, write32_test        # complete claim made earlier
-.8byte 0x0, 0x0, claim_s_plic_interrupts	    # clear interrupt from PLIC
+.8byte 0x0, 0x0, claim_s_plic_interrupts            # clear interrupt from PLIC
 .8byte PLIC_INTPENDING0, 0x00000000, read32_test    # no interrupts pending
 
 # Case 1.7:
@@ -223,9 +223,9 @@ test_cases:
 .8byte output_val, 0x00000000, write32_test         # clear output_val
 .8byte rise_ip, 0x00000001, write32_test            # clear GPIO interrupt
 .8byte PLIC_CLAIM1, 0x00000003, write32_test        # complete claim made earlier
-.8byte 0x0, 0x0, claim_s_plic_interrupts	    # clear interrupt from PLIC
+.8byte 0x0, 0x0, claim_s_plic_interrupts            # clear interrupt from PLIC
 .8byte PLIC_INTPENDING0, 0x00000000, read32_test    # no interrupts pending
 
 # All done
-	
+
 .8byte 0x0, 0x0, terminate_test # terminate tests

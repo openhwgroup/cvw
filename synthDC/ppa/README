@@ -10,7 +10,7 @@ ppaSynth.py
 
 Run to synthesize datapath modules from src/ppa.
 To run a specific combination of widths, modules, techs, and freqs,
-modify those lists and use allCombos() to generate synthsToRun (comment out freqSweep).  
+modify those lists and use allCombos() to generate synthsToRun (comment out freqSweep).
 To run a sweep of frequencies around the best delay found in existing syntheses (according to bestSynths.csv), modify the parameters and use freqSweep to generate synthsToRun.
 To remove synths to be run that already exist in /runs from synthsToRun, use filterRedundant().
 Syntheses run in parallel but you may encounter issues doing more than a dozen or so at once.

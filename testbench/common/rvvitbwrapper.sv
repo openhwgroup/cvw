@@ -3,24 +3,24 @@
 //
 // Written: Rose Thompson rose@rosethompson.net
 // Modified: 24 July 2024
-// 
+//
 // Purpose: Wraps all the synthesizable rvvi hardware into a single module for the testbench.
-// 
+//
 // A component of the Wally configurable RISC-V project.
-// 
+//
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -44,7 +44,7 @@ module rvvitbwrapper import cvw::*; #(parameter cvw_t P,
   logic [72+(5*P.XLEN) + MAX_CSRS*(P.XLEN+16)-1:0] rvvi;
 
   localparam TOTAL_CSRS = 36;
-  
+
   // pipeline controls
   logic                                             StallE, StallM, StallW, FlushE, FlushM, FlushW;
   // required
@@ -134,7 +134,7 @@ module rvvitbwrapper import cvw::*; #(parameter cvw_t P,
   assign CSRArray[35] = {dut.core.priv.priv.csr.csru.csru.FRM_REGW, dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW}; // 12'h003
 
   rvvisynth #(P, MAX_CSRS, TOTAL_CSRS) rvvisynth(.clk, .reset, .StallE, .StallM, .StallW, .FlushE, .FlushM, .FlushW,
-                                                 .PCM, .InstrValidM, .InstrRawD, .Mcycle, .Minstret, .TrapM, 
+                                                 .PCM, .InstrValidM, .InstrRawD, .Mcycle, .Minstret, .TrapM,
                                                  .PrivilegeModeW, .GPRWen, .FPRWen, .GPRAddr, .FPRAddr, .GPRValue, .FPRValue, .CSRArray,
                                                  .valid, .rvvi);
 
@@ -157,14 +157,11 @@ module rvvitbwrapper import cvw::*; #(parameter cvw_t P,
 
     // status
     .tx_error_underflow, .tx_fifo_overflow, .tx_fifo_bad_frame, .tx_fifo_good_frame, .rx_error_bad_frame,
-    .rx_error_bad_fcs, .rx_fifo_overflow, .rx_fifo_bad_frame, .rx_fifo_good_frame, 
+    .rx_error_bad_fcs, .rx_fifo_overflow, .rx_fifo_bad_frame, .rx_fifo_good_frame,
     .cfg_ifg(8'd12), .cfg_tx_enable(1'b1), .cfg_rx_enable(1'b1));
 
   flopr #(1) txedgereg(clk, reset, mii_tx_en, MiiTxEnDelay);
   assign EthernetTXCounterEn = ~mii_tx_en & MiiTxEnDelay;
   counter #(32) ethernexttxcounter(clk, reset, EthernetTXCounterEn, EthernetTXCount);
 
-endmodule  
-
-
-
+endmodule

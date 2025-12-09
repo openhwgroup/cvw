@@ -36,7 +36,7 @@ WRITE_READ_CSR mie, 0xFFF // Enable interrupts from all sources
 
 // Code copied from test library to cause m time interrupt, with time loop replaced with wfi.
 
-/* Note: the following line might cause problems in the future. If more than 0x100 cycles are needed before the wfi 
+/* Note: the following line might cause problems in the future. If more than 0x100 cycles are needed before the wfi
  instruction begins, then the program might fall into a loop and run forever*/
     li x28, 0x100          // Desired offset from the present time
     mv a3, x28            // copy value in to know to stop waiting for interrupt after this many cycles
@@ -66,5 +66,3 @@ addi x16, x16, 4
 END_TESTS
 
 TEST_STACK_AND_DATA
-
-

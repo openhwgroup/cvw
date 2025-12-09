@@ -21,7 +21,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "WALLY-TEST-LIB-32.h" 
+#include "WALLY-TEST-LIB-32.h"
 
 RVTEST_ISA("RV32I_Zicsr")
 RVTEST_CASE(0,"//check ISA:=regex(.*32.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;",csr-permission-u)
@@ -82,13 +82,13 @@ WRITE_READ_CSR mip, 0xAAA
 
 # Machine Configuration
 WRITE_READ_CSR menvcfg, 0xAAA
-WRITE_READ_CSR menvcfgh, 0xAAA 
-WRITE_READ_CSR senvcfg, 0xAAA 
+WRITE_READ_CSR menvcfgh, 0xAAA
+WRITE_READ_CSR senvcfg, 0xAAA
 WRITE_READ_CSR mseccfg, 0xAAA
 
 # Machine Memory Protection
 WRITE_READ_CSR pmpcfg0, 0xAAA
-WRITE_READ_CSR pmpcfg2, 0xAAA # pmpcfg 1 and 3 dont exist in rv64. there's 1 pmpcfg reg per 8 pmpaddr regs 
+WRITE_READ_CSR pmpcfg2, 0xAAA # pmpcfg 1 and 3 dont exist in rv64. there's 1 pmpcfg reg per 8 pmpaddr regs
 
 WRITE_READ_CSR pmpaddr0, 0xAAA
 WRITE_READ_CSR pmpaddr1, 0xAAA

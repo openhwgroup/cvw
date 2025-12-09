@@ -57,7 +57,7 @@ label1:
 
     j instrVPNJumpPoint1
 
-goback: 
+goback:
 
     # wrap up
     li a0, 3 # switch back to machine mode because code at 0x80000000 may not have clean page table entry
@@ -4150,7 +4150,7 @@ labelCodeVPN1:
         lui t1, 0xdeadb
         lui t1, 0xdeadb
         lui t1, 0xdeadb
-instrVPNJumpPoint1:     
+instrVPNJumpPoint1:
         sfence.vma
         lui t1, 0xdeadb
         lui t1, 0xdeadb
@@ -4185,7 +4185,7 @@ pagetable:
 .align 12
     .8byte 0x000000000000100F # misaligned gigapage at 0x00000000
     .8byte 0x0000000020005801 # PTE for pages at 0x40000000
-    .8byte 0x0000000020004801 #  
+    .8byte 0x0000000020004801 #
 
 
 # Next page table at 0x80012000 for gigapage at 0x80000000

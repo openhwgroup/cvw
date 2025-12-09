@@ -2,19 +2,7 @@ name: Lint
 
 on:
   push:
-    paths:
-      - '**/*.py'
-      - 'bin/*'
-      - 'sim/vcs/run_vcs'
-      - '.ruff.toml'
-      - '!addins/*'
   pull_request:
-    paths:
-      - '**/*.py'
-      - 'bin/*'
-      - 'sim/vcs/run_vcs'
-      - '.ruff.toml'
-      - '!addins/*'
 
 jobs:
   lint:
@@ -26,7 +14,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
 
     - name: Set Python version
       run: sed -i '/^target-version/c\target-version = "py${{matrix.version}}"' .ruff.toml

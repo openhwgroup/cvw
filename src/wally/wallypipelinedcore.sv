@@ -2,28 +2,28 @@
 // wallypipelinedcore.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
-// Modified: 
+// Modified:
 //
 // Purpose: Pipelined RISC-V Processor
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -31,7 +31,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    input  logic                  clk, reset,
    // Privileged
    input  logic                  MTimerInt, MExtInt, SExtInt, MSwInt,
-   input  logic [63:0]           MTIME_CLINT, 
+   input  logic [63:0]           MTIME_CLINT,
    // Bus Interface
    input  logic [P.AHBW-1:0]     HRDATA,
    input  logic                  HREADY, HRESP,
@@ -106,9 +106,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          FPUStallD;
   logic                          FWriteIntE;
   logic [P.FLEN-1:0]             FWriteDataM;
-  logic [P.XLEN-1:0]             FIntResM;  
-  logic [P.XLEN-1:0]             FCvtIntResW; 
-  logic                          FCvtIntW; 
+  logic [P.XLEN-1:0]             FIntResM;
+  logic [P.XLEN-1:0]             FCvtIntResW;
+  logic                          FCvtIntW;
   logic                          FDivBusyE;
   logic                          FRegWriteM;
   logic                          FpLoadStoreM;
@@ -141,9 +141,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic [2:0]                    Funct3M;
   logic [P.XLEN-1:0]             IEUAdrE;
   logic [P.XLEN-1:0]             WriteDataM;
-  logic [P.XLEN-1:0]             IEUAdrM;  
-  logic [P.XLEN-1:0]             IEUAdrxTvalM;  
-  logic [P.LLEN-1:0]             ReadDataW;  
+  logic [P.XLEN-1:0]             IEUAdrM;
+  logic [P.XLEN-1:0]             IEUAdrxTvalM;
+  logic [P.LLEN-1:0]             ReadDataW;
   logic                          CommittedM;
 
   // AHB ifu interface
@@ -153,14 +153,14 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic [2:0]                    IFUHSIZE;
   logic                          IFUHWRITE;
   logic                          IFUHREADY;
-  
+
   // AHB LSU interface
   logic [P.PA_BITS-1:0]          LSUHADDR;
   logic [P.XLEN-1:0]             LSUHWDATA;
   logic [P.XLEN/8-1:0]           LSUHWSTRB;
   logic                          LSUHWRITE;
   logic                          LSUHREADY;
-  
+
   logic                          BPWrongE, BPWrongM;
   logic                          BPDirWrongM;
   logic                          BTAWrongM;
@@ -171,7 +171,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic [2:0]                    LSUHSIZE;
   logic [2:0]                    LSUHBURST;
   logic [1:0]                    LSUHTRANS;
-  
+
   logic                          DCacheMiss;
   logic                          DCacheAccess;
   logic                          ICacheMiss;
@@ -194,11 +194,11 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .InstrValidE, .InstrValidD,
     .BranchD, .BranchE, .JumpD, .JumpE, .ICacheStallF,
     // Fetch
-    .HRDATA, .PCSpillF, .IFUHADDR, 
+    .HRDATA, .PCSpillF, .IFUHADDR,
     .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUHSIZE, .IFUHREADY, .IFUHWRITE,
     .ICacheAccess, .ICacheMiss,
     // Execute
-    .PCLinkE, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCE, .BPWrongE,  .BPWrongM, 
+    .PCLinkE, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCE, .BPWrongE,  .BPWrongM,
     // Mem
     .CommittedF, .EPCM, .TrapVectorM, .RetM, .TrapM, .InvalidateICacheM, .CSRWriteFenceM,
     .InstrD, .InstrM, .InstrOrigM, .PCM, .PCSpillM, .IClassM, .BPDirWrongM,
@@ -245,11 +245,11 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .clk, .reset, .StallM, .FlushM, .StallW, .FlushW,
     // CPU interface
     .MemRWE, .MemRWM, .Funct3M, .Funct7M(InstrM[31:25]), .AtomicM,
-    .CommittedM, .DCacheMiss, .DCacheAccess, .SquashSCW,            
+    .CommittedM, .DCacheMiss, .DCacheAccess, .SquashSCW,
     .FpLoadStoreM, .FWriteDataM, .IEUAdrE, .IEUAdrM, .WriteDataM,
     .ReadDataW, .FlushDCacheM, .CMOpM, .LSUPrefetchM,
     // connected to ahb (all stay the same)
-    .LSUHADDR,  .HRDATA, .LSUHWDATA, .LSUHWSTRB, .LSUHSIZE, 
+    .LSUHADDR,  .HRDATA, .LSUHWDATA, .LSUHWSTRB, .LSUHSIZE,
     .LSUHBURST, .LSUHTRANS, .LSUHWRITE, .LSUHREADY,
     // connect to csr or privilege and stay the same.
     .PrivilegeModeW, .BigEndianM, // connects to csr
@@ -259,8 +259,8 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .SATP_REGW,                   // from csr
     .STATUS_MXR,                  // from csr
     .STATUS_SUM,                  // from csr
-    .STATUS_MPRV,                 // from csr            
-    .STATUS_MPP,                  // from csr     
+    .STATUS_MPRV,                 // from csr
+    .STATUS_MPP,                  // from csr
     .ENVCFG_PBMTE,                // from csr
     .ENVCFG_ADUE,                 // from csr
     .sfencevmaM,                  // connects to privilege
@@ -275,7 +275,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .StoreAmoMisalignedFaultM,    // connects to privilege
     .StoreAmoAccessFaultM,        // connects to privilege
     .PCSpillF, .ITLBMissOrUpdateAF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
-    .LSUStallM);                    
+    .LSUStallM);
 
   if(P.BUS_SUPPORTED) begin : ebu
     ebu #(P) ebu(// IFU connections
@@ -294,7 +294,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
             HWSTRB, HWRITE, HSIZE, HBURST, HPROT, HTRANS, HMASTLOCK} = '0;
   end
 
-  // global stall and flush control  
+  // global stall and flush control
   hazard hzu(
     .BPWrongE, .CSRWriteFenceM, .RetM, .TrapM,
     .StructuralStallD,
@@ -305,7 +305,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .DebugMode, .DebugResume,
     // Stall & flush outputs
     .StallF, .StallD, .StallE, .StallM, .StallW,
-    .FlushD, .FlushE, .FlushM, .FlushW);    
+    .FlushD, .FlushE, .FlushM, .FlushW);
 
   // privileged unit
   if (P.ZICSR_SUPPORTED) begin:priv
@@ -321,7 +321,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .RASPredPCWrongM, .IClassWrongM, .DivBusyE, .FDivBusyE,
       .IClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
       .InstrPageFaultF, .LoadPageFaultM, .StoreAmoPageFaultM,
-      .InstrMisalignedFaultM, .IllegalIEUFPUInstrD, 
+      .InstrMisalignedFaultM, .IllegalIEUFPUInstrD,
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
       .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
       .MTIME_CLINT, .IEUAdrxTvalM, .SetFflagsM,
@@ -333,11 +333,12 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .DebugMode, .HaltReq, .ResumeReq, .DebugControl, .CSRDebugEnable,
       .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite, .DebugResume, .DPC,
       .HaveReset, .HaveResetAck, .ResetHaltReq);
+
   end else begin
-    assign {CSRReadValW, PrivilegeModeW, 
+    assign {CSRReadValW, PrivilegeModeW,
             SATP_REGW, STATUS_MXR, STATUS_SUM, STATUS_MPRV, STATUS_MPP, STATUS_FS, FRM_REGW,
-            // PMPCFG_ARRAY_REGW, PMPADDR_ARRAY_REGW, 
-            ENVCFG_CBE, ENVCFG_PBMTE, ENVCFG_ADUE, 
+            // PMPCFG_ARRAY_REGW, PMPADDR_ARRAY_REGW,
+            ENVCFG_CBE, ENVCFG_PBMTE, ENVCFG_ADUE,
             EPCM, TrapVectorM, RetM, TrapM,
             sfencevmaM, BigEndianM, wfiM, IntPendingM, DebugMode,
             DebugResume, DPC, HaveReset} = '0;
@@ -346,11 +347,11 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   // multiply/divide unit
   if (P.ZMMUL_SUPPORTED) begin:mdu
     mdu #(P) mdu(.clk, .reset, .StallM, .StallW, .FlushE, .FlushM, .FlushW,
-      .ForwardedSrcAE, .ForwardedSrcBE, 
+      .ForwardedSrcAE, .ForwardedSrcBE,
       .Funct3E, .Funct3M, .IntDivE, .W64E, .MDUActiveE,
-      .MDUResultW, .DivBusyE); 
+      .MDUResultW, .DivBusyE);
   end else begin // no M instructions supported
-    assign MDUResultW = '0; 
+    assign MDUResultW = '0;
     assign DivBusyE   = 1'b0;
   end
 
@@ -379,7 +380,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .FDivBusyE,                          // Is the divide/sqrt unit busy (stall execute stage)
       .IllegalFPUInstrD,                   // Is the instruction an illegal fpu instruction
       .SetFflagsM,                         // FPU flags (to privileged unit)
-      .FIntDivResultW); 
+      .FIntDivResultW);
   end else begin                           // no F_SUPPORTED or D_SUPPORTED; tie outputs low
     assign {FPUStallD, FWriteIntE, FCvtIntE, FIntResM, FCvtIntW, FRegWriteM,
             IllegalFPUInstrD, SetFflagsM, FpLoadStoreM,

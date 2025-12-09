@@ -80,7 +80,7 @@ pagetable:
 .align 12
     .8byte 0x000000000000100F # misaligned gigapage at 0x00000000
     .8byte 0x0000000020005801 # PTE for pages at 0x40000000
-    .8byte 0x0000000020004801 #  
+    .8byte 0x0000000020004801 #
 
 
 # Next page table at 0x80012000 for gigapage at 0x80000000

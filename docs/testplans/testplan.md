@@ -2,7 +2,7 @@
 
 CORE-V Wally is functionally tested in the following ways.  Each test is run in lock-step against ImperasDV to ensure all architectural state is correct after each instruction.
 
-| Tests               | Section        | TRL3         | TRL5   | Coverage Method       | Status | Command | 
+| Tests               | Section        | TRL3         | TRL5   | Coverage Method       | Status | Command |
 | ------------------- | -------------- | ------------ | ------ | --------------------- | ------ | ------- |
 | Verilator Lint      | 5.3            | All configs  | rv64gc | lint-wally            | PASS   | regression-wally --nightly |
 | Instructions        | 3.7            | All configs  | rv64gc | riscv-arch-test       | PASS   | regression-wally --nightly |

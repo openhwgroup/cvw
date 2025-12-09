@@ -4,7 +4,7 @@
 ##
 ## Written: Jordan Carlin, jcarlin@hmc.edu
 ## Created: May 30 2025
-## Modified: 
+## Modified:
 ##
 ## Purpose: Sail installation script
 ##
@@ -27,9 +27,9 @@
 ## and limitations under the License.
 ################################################################################################
 
-SAIL_COMPILER_VERSION=0.19.1 # Last release as of June 26, 2025
+SAIL_COMPILER_VERSION=0.20 # Last release as of Oct 17, 2025
 CMAKE_VERSION=3.31.5 # Only used for distros with a system CMake that is too old (< 3.20)
-RISCV_SAIL_MODEL_VERSION=964277c8fca367e22917421c07ec9c35304782c8 # Last commit as of July 29, 2025
+RISCV_SAIL_MODEL_VERSION=06e9628b5227dd49bdffd33395c8e1768f575fca # Last commit as of Oct 16, 2025
 
 set -e # break on error
 # If run standalone, check environment. Otherwise, use info from main install script
@@ -49,7 +49,7 @@ section_header "Installing/Updating Sail Compiler"
 STATUS="sail_compiler"
 cd "$RISCV"
 if check_tool_version $SAIL_COMPILER_VERSION; then
-    wget -nv --retry-connrefused $retry_on_host_error --output-document=sail.tar.gz "https://github.com/rems-project/sail/releases/download/$SAIL_COMPILER_VERSION-linux-binary/sail.tar.gz"
+    wget -nv --retry-connrefused $retry_on_host_error --output-document=sail.tar.gz "https://github.com/rems-project/sail/releases/download/$SAIL_COMPILER_VERSION-linux-binary/sail-$(uname)-$(arch).tar.gz"
     tar xz --directory="$RISCV" --strip-components=1 -f sail.tar.gz
     rm -f sail.tar.gz
     echo "$SAIL_COMPILER_VERSION" > "$RISCV"/versions/$STATUS.version # Record installed version

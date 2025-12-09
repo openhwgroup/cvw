@@ -208,7 +208,7 @@ def create_vectors(my_config):
                                 # print("det2")
                                 # parse line
                                 # handle special case where destination register is hardwired to zero
-                                if "dest:x0" in line: 
+                                if "dest:x0" in line:
                                     answer = "x" * len(answer)
                                 op1val = line.split("op1val")[1].split("x")[1].split(";")[0]
                                 if "-" in line.split("op1val")[1].split("x")[0]: # neg sign handling
@@ -232,7 +232,7 @@ def create_vectors(my_config):
                             dest_file.write(translation + "\n")
                     else:
                         # print("read false")
-                        reading = False 
+                        reading = False
             else:
                 while reading:
                     # get answer and flags from Ref...signature
@@ -256,7 +256,7 @@ def create_vectors(my_config):
                                 # parse line
 
                                 # handle special case where destination register is hardwired to zero
-                                if "dest:x0" in line: 
+                                if "dest:x0" in line:
                                     answer = "x" * len(answer)
 
                                 op1val = line.split("op1val")[1].split("x")[1].split(";")[0]
@@ -274,7 +274,7 @@ def create_vectors(my_config):
                         # rounding mode for float
                         if not done and (my_config.op == "fsqrt" or my_config.op == "fdiv"):
                             flags, rounding_mode = unpack_rf(packed)
-                        
+
                         # put it all together
                         if not done:
                             translation = f"{operation}_{ext_bits(op1val)}_{ext_bits(op2val)}_{ext_bits(answer.strip())}_{flags}_{rounding_mode}"

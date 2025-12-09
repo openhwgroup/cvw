@@ -35,7 +35,7 @@ module binencoder #(parameter N = 8) (
   // consider redesigning to take advanteage of one-hot nature of input
   always_comb  begin
     Y = '0;
-    for(index = 0; index < N; index++) 
+    for(index = 0; index < N; index++)
       if(A[index] == 1'b1) Y = index[$clog2(N)-1:0];
   end
 

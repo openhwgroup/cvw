@@ -10,28 +10,28 @@
 //          XLEN/8 boundary.
 //
 // Documentation: RISC-V System on Chip Design
-// 
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module spill import cvw::*;  #(parameter cvw_t P) (
-  input logic               clk,               
+  input logic               clk,
   input logic               reset,
   input logic               StallF, FlushD,
   input logic [P.XLEN-1:0]  PCF,               // 2 byte aligned PC in Fetch stage
@@ -52,7 +52,7 @@ module spill import cvw::*;  #(parameter cvw_t P) (
   typedef enum logic [1:0]  {STATE_READY, STATE_SPILL} statetype;
 
   statetype          CurrState, NextState;
-  logic [P.XLEN-1:0] PCPlus2NextF, PCPlus2F;         
+  logic [P.XLEN-1:0] PCPlus2NextF, PCPlus2F;
   logic              TakeSpillF;
   logic              SpillF;
   logic              SpillSaveF;
@@ -60,15 +60,15 @@ module spill import cvw::*;  #(parameter cvw_t P) (
   logic              EarlyCompressedF;
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
-  // PC logic 
+  // PC logic
   ////////////////////////////////////////////////////////////////////////////////////////////////////
-  
+
   // compute PCF+2 from the raw PC+4
   mux2 #(P.XLEN) pcplus2mux(.d0({PCF[P.XLEN-1:2], 2'b10}), .d1({PCPlus4F, 2'b00}), .s(PCF[1]), .y(PCPlus2NextF));
   // select between PCNextF and PCF+2
   mux2 #(P.XLEN) pcnextspillmux(.d0(PCNextF), .d1(PCPlus2NextF), .s(SelSpillNextF & ~FlushD), .y(PCSpillNextF));
   // select between PCF and PCF+2
-  // not required for functional correctness, but improves critical path.  pcspillf ends up on the hptw's ihadr 
+  // not required for functional correctness, but improves critical path.  pcspillf ends up on the hptw's ihadr
   // and into the dmmu.  Cutting the path here removes the PC+4 adder.
   flopr #(P.XLEN) pcplus2reg(clk, reset, PCPlus2NextF, PCPlus2F);
   mux2 #(P.XLEN) pcspillmux(.d0(PCF), .d1(PCPlus2F), .s(SelSpillF), .y(PCSpillF));
@@ -80,13 +80,13 @@ module spill import cvw::*;  #(parameter cvw_t P) (
   if (P.ICACHE_SUPPORTED) begin
     logic SpillCachedF, SpillUncachedF;
     assign SpillCachedF = &PCF[$clog2(P.ICACHE_LINELENINBITS/32)+1:1];
-    assign SpillUncachedF = PCF[1]; 
+    assign SpillUncachedF = PCF[1];
     assign SpillF = (CacheableF ? SpillCachedF : SpillUncachedF);
   end else
     assign SpillF = PCF[1];
   // Don't take the spill if there is a stall, TLB miss, or hardware update to the D/A bits
   assign TakeSpillF = SpillF & ~EarlyCompressedF & ~IFUCacheBusStallF & ~ITLBMissOrUpdateAF;
-  
+
   always_ff @(posedge clk)
     if (reset | FlushD)    CurrState <= STATE_READY;
     else CurrState <= NextState;

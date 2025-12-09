@@ -9,6 +9,10 @@
 `define XLEN64
 `define VLEN512
 
+// Virtual Memory Modes
+`define SV39
+`define SV48
+
 // PMP Grain (G)
 // Set G as needed (e.g., 0, 1, 2, ...)
 `define G 4
@@ -20,7 +24,7 @@
 `define PMP_16     // Choose between PMP_16 or PMP_64 or None
 
 // Base addresses specific for PMP
-`define RAM_BASE_ADDR       32'h80000000  // PMP Region starts at RAM_BASE_ADDR + LARGEST_PROGRAM 
+`define RAM_BASE_ADDR       32'h80000000  // PMP Region starts at RAM_BASE_ADDR + LARGEST_PROGRAM
 `define LARGEST_PROGRAM     32'h00002000
 
 // Define relevant addresses
@@ -66,7 +70,7 @@
 `define ZIFENCEI_COVERAGE
 
 // Privileged extensions
-`define RV64VM_COVERAGE
+`define VM_COVERAGE
 `define RV64PMP_COVERAGE
 `define ZICSRM_COVERAGE
 `define ZICSRS_COVERAGE

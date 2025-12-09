@@ -138,6 +138,10 @@ module testbench;
   logic PrevPCZero;
   logic RVVIStall;
 
+  integer elfFD;
+  byte header[0:4];
+  byte readBytes;
+
   // Debugger tests
   string debugger_tests[];
 
@@ -155,6 +159,21 @@ module testbench;
     end
     //$display("TEST = %s ElfFile = %s", TEST, ElfFile);
 
+    if (ElfFile != "none") begin // If Elf File passed in, check its bit width
+      elfFD = $fopen(ElfFile, "rb");
+      readBytes = $fread(header, elfFD);
+      $fclose(elfFD);
+
+      // If DUT and elf bit width misaligned, exit and return error message
+      if (header[4] == 1 & integer'(P.XLEN) == 64) begin
+        $display("Error: You can not run a 32 bit elf on a 64 bit DUT");
+        $finish;
+      end else if (header[4] == 2 & integer'(P.XLEN) == 32) begin
+        $display("Error: You can not run a 64 bit elf on a 32 bit DUT");
+        $finish;
+      end
+    end
+
     // pick tests based on modes supported
     //tests = '{};
     if (P.XLEN == 64) begin // RV64
@@ -162,7 +181,7 @@ module testbench;
         "arch64i":                                tests = arch64i;
         "arch64priv":                             tests = arch64priv;
         "arch64c":      if (P.ZCA_SUPPORTED)
-                          if (P.ZICSR_SUPPORTED)  
+                          if (P.ZICSR_SUPPORTED)
                             if (P.ZCD_SUPPORTED)  tests = {arch64c, arch64cpriv, arch64zcd};
                             else                  tests = {arch64c, arch64cpriv};
                           else                    tests = {arch64c};
@@ -191,7 +210,7 @@ module testbench;
         "arch64zbs":     if (P.ZBS_SUPPORTED)     tests = arch64zbs;
         "arch64zicboz":  if (P.ZICBOZ_SUPPORTED)  tests = arch64zicboz;
         "arch64zcb":     if (P.ZCB_SUPPORTED)     tests = arch64zcb;
-        "arch64zfh":     if (P.ZFH_SUPPORTED)     
+        "arch64zfh":     if (P.ZFH_SUPPORTED)
                            if (P.D_SUPPORTED)     tests = {arch64zfh, arch64zfh_d};
                            else                   tests = arch64zfh;
         "arch64zfh_fma": if (P.ZFH_SUPPORTED)     tests = arch64zfh_fma;
@@ -212,7 +231,9 @@ module testbench;
             debugger_tests = wally64debug_jtag;
           end
         end
-          
+         
+        "arch64vm_sv39": if (P.VIRTMEM_SUPPORTED) tests = arch64vm_sv39;
+        "arch64vm_sv48": if (P.VIRTMEM_SUPPORTED) tests = arch64vm_sv48;
       endcase
     end else begin // RV32
       case (TEST)
@@ -220,8 +241,8 @@ module testbench;
         "arch32i":                                tests = arch32i;
         "arch32priv":                             tests = arch32priv;
         "arch32c":      if (P.C_SUPPORTED)
-                          if (P.ZICSR_SUPPORTED)  
-                            if (P.ZCF_SUPPORTED)  
+                          if (P.ZICSR_SUPPORTED)
+                            if (P.ZCF_SUPPORTED)
                               if (P.ZCD_SUPPORTED)  tests = {arch32c, arch32cpriv, arch32zcf, arch32zcd};
                               else                tests = {arch32c, arch32cpriv, arch32zcf};
                             else                  tests = {arch32c, arch32cpriv};
@@ -248,7 +269,7 @@ module testbench;
         "arch32zbs":     if (P.ZBS_SUPPORTED)     tests = arch32zbs;
         "arch32zicboz":  if (P.ZICBOZ_SUPPORTED)  tests = arch32zicboz;
         "arch32zcb":     if (P.ZCB_SUPPORTED)     tests = arch32zcb;
-        "arch32zfh":     if (P.ZFH_SUPPORTED)     
+        "arch32zfh":     if (P.ZFH_SUPPORTED)
                            if (P.D_SUPPORTED)     tests = {arch32zfh, arch32zfh_d};
                            else                   tests = arch32zfh;
         "arch32zfh_fma": if (P.ZFH_SUPPORTED)     tests = arch32zfh_fma;
@@ -273,11 +294,7 @@ module testbench;
       endcase
     end
     if (tests.size() == 0 & ElfFile == "none") begin
-      if (tests.size() == 0) begin
-        $display("TEST %s not supported in this configuration", TEST);
-      end else if(ElfFile == "none") begin
-        $display("ElfFile %s not found", ElfFile);
-      end
+      $display("TEST %s not supported in this configuration", TEST);
       $finish;
     end
     if (MAKE_VCD) begin
@@ -385,9 +402,9 @@ module testbench;
   //procedural blocks. VCS supports the dynamic types in the implicit sensitivity list of always @* block as specified in the Section 9.2 of the IEEE Standard SystemVerilog Specification 1800-2012.
   //To support memory load and dump task verbosity: flag : -diag sys_task_mem
   always @(*) begin
-  	begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
- 	end_signature_addr = ProgramAddrLabelArray["sig_end_canary"];
-  	signature_size = end_signature_addr - begin_signature_addr;
+    begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
+    end_signature_addr = ProgramAddrLabelArray["sig_end_canary"];
+    signature_size = end_signature_addr - begin_signature_addr;
   end
   logic EcallFaultM;
   if (P.ZICSR_SUPPORTED)
@@ -730,7 +747,7 @@ module testbench;
   // watch for problems such as lockup, reading uninitialized memory, bad configs
   watchdog #(P.XLEN, 1000000) watchdog(.clk, .reset, .TEST);  // check if PCW is stuck
   ramxdetector #(P.XLEN, P.LLEN) ramxdetector(clk, dut.core.lsu.MemRWM[1], dut.core.lsu.LSULoadAccessFaultM, dut.core.lsu.ReadDataM,
-                                      dut.core.ifu.PCM, InstrM, dut.core.lsu.IEUAdrM, InstrMName);
+                                      dut.core.ifu.PCM, InstrM, dut.core.lsu.IEUAdrM, dut.core.lsu.StallW, InstrMName);
   riscvassertions       #(P) riscvassertions();     // check assertions for a legal architectural configuration
   riscvassertions_wally #(P) riscvassertions_wally();  // check assertions for a legal microarchitectural configuration
   loggers #(P, PrintHPMCounters, I_CACHE_ADDR_LOGGER, D_CACHE_ADDR_LOGGER, BPRED_LOGGER)
@@ -1060,7 +1077,7 @@ end
       if (signature[i] !== testbench.DCacheFlushFSM.ShadowRAM[testadr+i]) begin
         errors = errors+1;
         $display("  Error on test %s result %d: adr = %h sim (D$) %h signature = %h",
-			     TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], signature[i]);
+          TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], signature[i]);
         $stop; // if this is changed to $finish, wally-batch.do does not get to the next step to run coverage
       end
     end
@@ -1116,4 +1133,3 @@ task automatic updateProgramAddrLabelArray;
   /* verilator lint_on WIDTHTRUNC */
   /* verilator lint_on WIDTHEXPAND */
 endtask
-

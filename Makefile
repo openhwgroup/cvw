@@ -6,9 +6,9 @@ MAKEFLAGS += --output-sync --no-print-directory
 
 SIM = ${WALLY}/sim
 
-.PHONY: all riscof testfloat combined_IF_vectors zsbl coverage cvw-arch-verif sim_bp deriv clean
+.PHONY: all riscof testfloat combined_IF_vectors zsbl coverage sim_bp deriv clean
 
-all: riscof	testfloat combined_IF_vectors zsbl coverage sim_bp cvw-arch-verif deriv
+all: riscof	testfloat combined_IF_vectors zsbl coverage sim_bp deriv
 
 # riscof builds the riscv-arch-test and wally-riscv-arch-test suites
 riscof:
@@ -29,9 +29,6 @@ coverage:
 deriv:
 	derivgen.pl
 
-cvw-arch-verif:
-	$(MAKE) -C ${WALLY}/addins/cvw-arch-verif
-
 sim_bp: ${WALLY}/addins/branch-predictor-simulator/src/sim_bp
 
 ${WALLY}/addins/branch-predictor-simulator/src/sim_bp:
@@ -47,4 +44,3 @@ clean:
 	$(MAKE) clean -C ${WALLY}/tests/fp
 	$(MAKE) clean -C ${WALLY}/fpga/zsbl
 	$(MAKE) clean -C ${WALLY}/tests/coverage
-	$(MAKE) clean -C ${WALLY}/addins/cvw-arch-verif

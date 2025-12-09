@@ -21,8 +21,8 @@ write_tohost:
 
 self_loop:
     j self_loop         # wait
-    
-.section .tohost 
+
+.section .tohost
 tohost:                 # write to HTIF
     .dword 0
 fromhost:
@@ -34,7 +34,7 @@ N:
 
 .EQU XLEN,64
 begin_signature:
-    .fill 2*(XLEN/32),4,0xdeadbeef    # 
+    .fill 2*(XLEN/32),4,0xdeadbeef    #
 end_signature:
 
 # Initialize stack with room for 512 bytes

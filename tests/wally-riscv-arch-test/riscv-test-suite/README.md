@@ -9,7 +9,7 @@ been ratified by RVI.
 The coverage report (in html format) of the tests available in this suite is generated through
 [RISCOF](https://github.com/riscv-software-src/riscof) and is available here: [Coverage Report](../riscv-test-stats/coverage/README.md).
 
-These tests have been generated using the open source Compatibility Test Generator from InCore Semiconductors available 
+These tests have been generated using the open source Compatibility Test Generator from InCore Semiconductors available
 at: [CTG](https://github.com/riscv/riscv-ctg).
 
 The reference signatures are generated using [SAIL](https://github.com/riscv/sail-riscv) or
@@ -38,7 +38,7 @@ Directory structure
     ├── K_unratified          # include tests and references for "K" extension
     │   ├── references        # static references signatures for "K" extension
     │   └── src               # assembly tests for "K" extension
-    ├── privilege             # include tests and references for tests which require Privilege Spec 
+    ├── privilege             # include tests and references for tests which require Privilege Spec
     │   ├── references        # static references signatures for tests which require Privilege Spec
     │   └── src               # assembly tests for tests which require Privilege Spec
     └── Zifencei              # include tests and references for "Zifencei" extension
@@ -57,7 +57,7 @@ Directory structure
     ├── K_unratified          # include tests and references for "K" extension
     │   ├── references        # static references signatures for "K" extension
     │   └── src               # assembly tests for "K" extension
-    ├── privilege             # include tests and references for tests which require Privilege Spec 
+    ├── privilege             # include tests and references for tests which require Privilege Spec
     │   ├── references        # static references signatures for tests which require Privilege Spec
     │   └── src               # assembly tests for tests which require Privilege Spec
     └── Zifencei              # include tests and references for "Zifencei" extension

@@ -18,14 +18,14 @@
 `define RESEND_MAX_CNT 3
 
 //MAX 255 BD
-//BD size/4 
+//BD size/4
 
 `ifdef ACTEL
-	`define BD_WIDTH 5
-	`define BD_SIZE 32
-	`define RAM_MEM_WIDTH_16
-	`define RAM_MEM_WIDTH 16
-  
+  `define BD_WIDTH 5
+  `define BD_SIZE 32
+  `define RAM_MEM_WIDTH_16
+  `define RAM_MEM_WIDTH 16
+
 `endif
 
 //`ifdef CUSTOM
@@ -78,12 +78,3 @@
 `define FIFO_TX_MEM_DEPTH 8
 `define FIFO_TX_MEM_ADR_SIZE 4
 //---------------------------
-
-
-
-
-
-
-
-
-

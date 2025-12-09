@@ -11,15 +11,15 @@
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -41,7 +41,7 @@ typedef struct packed {
   logic         IEEE754;  // IEEE754 NaN handling (0 = use RISC-V NaN propagation instead)
   int           MISA;     // Machine Instruction Set Architecture
   int           AHBW;     // AHB bus width (usually = XLEN)
-  int           RAM_LATENCY; // Latency to stress AHB 
+  int           RAM_LATENCY; // Latency to stress AHB
   logic         BURST_EN; // Support AHB Burst Mode
 
   // RISC-V Features
@@ -95,7 +95,7 @@ typedef struct packed {
 
 // Legal number of PMP entries are 0, 16, or 64
   int           PMP_ENTRIES;
-  int           PMP_G; // grain 
+  int           PMP_G; // grain
 
 // Address space
   logic [63:0]  RESET_VECTOR;
@@ -213,7 +213,7 @@ typedef struct packed {
 // constants to check SATP_MODE against
 // defined in Table 4.3 of the privileged spec
   logic [3:0] NO_TRANSLATE;
-  logic [3:0] SV32; 
+  logic [3:0] SV32;
   logic [3:0] SV39;
   logic [3:0] SV48;
 
@@ -229,7 +229,7 @@ typedef struct packed {
   logic Q_SUPPORTED;
   logic S_SUPPORTED;
   logic U_SUPPORTED;
-  
+
 // logarithm of XLEN, used for number of index bits to select
   int LOG_XLEN;
 

@@ -1,19 +1,19 @@
-CEXT		:= c
-CPPEXT		:= cpp
-AEXT		:= s
-SEXT		:= S
-SRCEXT 		:= \([$(CEXT)$(AEXT)$(SEXT)]\|$(CPPEXT)\)
-OBJEXT		:= o
-DEPEXT		:= d
-SRCDIR		:= .
-BUILDDIR	:= OBJ
-WIDTH           := 64
-SOURCES		?= $(shell find $(SRCDIR) -type f -regex ".*\.$(SRCEXT)" | sort)
-OBJECTS		:= $(SOURCES:.$(CEXT)=.$(OBJEXT))
-OBJECTS		:= $(OBJECTS:.$(AEXT)=.$(OBJEXT))
-OBJECTS		:= $(OBJECTS:.$(SEXT)=.$(OBJEXT))
-OBJECTS		:= $(OBJECTS:.$(CPPEXT)=.$(OBJEXT))
-OBJECTS		:= $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(OBJECTS))
+CEXT     := c
+CPPEXT   := cpp
+AEXT     := s
+SEXT     := S
+SRCEXT   := \([$(CEXT)$(AEXT)$(SEXT)]\|$(CPPEXT)\)
+OBJEXT   := o
+DEPEXT   := d
+SRCDIR   := .
+BUILDDIR := OBJ
+WIDTH    := 64
+SOURCES  ?= $(shell find $(SRCDIR) -type f -regex ".*\.$(SRCEXT)" | sort)
+OBJECTS  := $(SOURCES:.$(CEXT)=.$(OBJEXT))
+OBJECTS  := $(OBJECTS:.$(AEXT)=.$(OBJEXT))
+OBJECTS  := $(OBJECTS:.$(SEXT)=.$(OBJEXT))
+OBJECTS  := $(OBJECTS:.$(CPPEXT)=.$(OBJEXT))
+OBJECTS  := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(OBJECTS))
 
 #Default Make
 all: directories  $(TARGET).memfile
@@ -27,7 +27,7 @@ directories:
 	@mkdir -p $(BUILDDIR)
 
 clean:
-	rm -rf $(BUILDDIR) $(TARGETDIR) *.memfile *.objdump 
+	rm -rf $(BUILDDIR) $(TARGETDIR) *.memfile *.objdump
 
 
 #Needed for building additional library projects
@@ -35,7 +35,7 @@ ifdef LIBRARY_DIRS
 LIBS+=${LIBRARY_DIRS:%=-L%}  ${LIBRARY_FILES:%=-l%}
 INC+=${LIBRARY_DIRS:%=-I%}
 
-${LIBRARY_DIRS}: 
+${LIBRARY_DIRS}:
 	make -C $@ -j 1
 
 .PHONY: $(LIBRARY_DIRS) $(TARGET)

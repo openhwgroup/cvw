@@ -19,7 +19,7 @@ def runCommand(module, width, tech, freq):
 def deleteRedundant(synthsToRun):
     '''removes any previous runs for the current synthesis specifications'''
     synthStr = "rm -rf runs/{}_{}_rv32e_{}_{}_*"
-    for synth in synthsToRun:   
+    for synth in synthsToRun:
         bashCommand = synthStr.format(*synth)
         subprocess.check_output(['bash','-c', bashCommand])
 
@@ -71,14 +71,14 @@ def allCombos(widths, modules, techs, freqs):
 
 
 if __name__ == '__main__':
-    
+
     ##### Run specific syntheses for a specific frequency
-    widths = [8, 16, 32, 64, 128] 
+    widths = [8, 16, 32, 64, 128]
     modules = ['mul', 'adder', 'shifter', 'flop', 'comparator', 'binencoder', 'csa', 'mux2', 'mux4', 'mux8']
     techs = ['sky90', 'sky130', 'tsmc28', 'tsmc28psyn']
     freqs = [5000]
     synthsToRun = allCombos(widths, modules, techs, freqs)
-    
+
     ##### Run a sweep based on best delay found in existing syntheses
     module = 'adder'
     width = 32
@@ -87,13 +87,13 @@ if __name__ == '__main__':
 
     ##### Run a sweep for multiple modules/widths based on best delay found in existing syntheses
     modules = ['adder']
-#	widths = [8, 16, 32, 64, 128]
+    # widths = [8, 16, 32, 64, 128]
     widths = [32]
     tech = 'sky130'
-    synthsToRun = freqModuleSweep(widths, modules, tech)	
-        
+    synthsToRun = freqModuleSweep(widths, modules, tech)
+
     ##### Only do syntheses for which a run doesn't already exist
-    synthsToRun = filterRedundant(synthsToRun)	
+    synthsToRun = filterRedundant(synthsToRun)
     pool = Pool(processes=25)
 
 pool.starmap(runCommand, synthsToRun)

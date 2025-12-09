@@ -1,5 +1,3 @@
-#!/bin/csh
-
 # site-setup.csh
 # System Admin should install this into $RISCV/site-setup.csh
 # It is automatically placed in the $RISCV directory by wally-toolchain-install.sh
@@ -49,9 +47,9 @@ else
 endif
 
 # environment variables needed for RISCV-DV
-setenv RISCV_GCC `which riscv64-unknown-elf-gcc`		            # Copy this as it is
-setenv RISCV_OBJCOPY `which riscv64-unknown-elf-objcopy`	        # Copy this as it is
-setenv SPIKE_PATH $RISCV/bin										# Change this for your path to riscv-isa-sim (spike)
+setenv RISCV_GCC `which riscv64-unknown-elf-gcc`                  # Copy this as it is
+setenv RISCV_OBJCOPY `which riscv64-unknown-elf-objcopy`          # Copy this as it is
+setenv SPIKE_PATH $RISCV/bin                                      # Change this for your path to riscv-isa-sim (spike)
 
 # Imperas; put this in if you are using it
 #set path = ($RISCV/imperas-riscv-tests/riscv-ovpsim-plus/bin/Linux64 $path)

@@ -11,7 +11,7 @@ set_property PACKAGE_PIN AD12 [get_ports default_200mhz_clk_p]
 set_property PACKAGE_PIN AD11 [get_ports default_200mhz_clk_n]
 set_property IOSTANDARD LVDS [get_ports default_200mhz_clk_p]
 
-# *** don't love this hack.  RT: Don't understand why the recomemded input clock is causing a clock routing issue.  
+# *** don't love this hack.  RT: Don't understand why the recomemded input clock is causing a clock routing issue.
 set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets default_200mhz_clk_p]
 set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets default_200mhz_clk_n]
 

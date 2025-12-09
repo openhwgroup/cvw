@@ -27,9 +27,9 @@ rvtest_entry_point:
     csrw mtvec, t0      # Initialize MTVEC to trap_handler
     csrw mideleg, zero  # Don't delegate interrupts
     csrw medeleg, zero  # Don't delegate exceptions
-    li t0, 0x080       
+    li t0, 0x080
     csrw mie, t0        # Enable machine timer interrupt
-    la t0, topoftrapstack 
+    la t0, topoftrapstack
     csrw mscratch, t0   # MSCRATCH holds trap stack pointer
     csrsi mstatus, 0x8  # Turn on mstatus.MIE global interrupt enable
 
@@ -40,12 +40,12 @@ main:
 
     # Wait for timer interrupts
     li t0, 0x1000       # loop counter start value
-loop: 
+loop:
     addi t0, t0, -1     # decrement counter
     bne t0, zero, loop  # and repeat until zero
 
 done:
-    li a0, 4            # argument to finish program    
+    li a0, 4            # argument to finish program
     ecall               # system call to finish program
     j self_loop         # wait forever (not taken)
 
@@ -66,11 +66,11 @@ trap_handler:
     csrr t0, mcause     # Check the cause
     csrr t1, mtval      # And the trap value
     sd t0, 0(s6)        # Save MCAUSE and MTVAL in the signature
-    sd t1, 8(s6)            
-    addi s6, s6, 16     
+    sd t1, 8(s6)
+    addi s6, s6, 16
     bgez t0, exception  # if msb is clear, it is an exception
 
-interrupt:              # must be a timer interrupt 
+interrupt:              # must be a timer interrupt
     jal set_timecmp     # Increment compare for next timer interrupt
     j trap_return       # clean up and return
 
@@ -108,8 +108,8 @@ write_tohost:
 
 self_loop:
     j self_loop         # wait
-    
-.section .tohost 
+
+.section .tohost
 tohost:                 # write to HTIF
     .dword 0
 fromhost:
@@ -117,7 +117,7 @@ fromhost:
 
 .EQU XLEN,64
 begin_signature:
-    .fill 6*(XLEN/32),4,0xdeadbeef    # 
+    .fill 6*(XLEN/32),4,0xdeadbeef    #
 end_signature:
 
 # Initialize stack with room for 512 bytes
@@ -125,7 +125,6 @@ end_signature:
     .space 512
 topofstack:
 # And another stack for the trap handler
-.bss   
+.bss
     .space 512
 topoftrapstack:
-

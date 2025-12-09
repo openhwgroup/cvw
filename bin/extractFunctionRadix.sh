@@ -9,23 +9,23 @@
 ## Modified: March 10, 2021
 ##
 ## Purpose: Processes all compiled object files into 2 types of files which assist in debugging applications.
-##          File 1: .addr: A sorted list of function starting addresses. 
+##          File 1: .addr: A sorted list of function starting addresses.
 ##                  When a the PCE is greater than or equal to the function's starting address, the label will be associated with this address.
 ##          File 2: .lab: A sorted list of function labels. The names of functions.  Modelsim will display these names rather than the function address.
-## 
+##
 ## Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 ##
 ## SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 ##
-## Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-## except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+## Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+## except in compliance with the License, or, at your option, the Apache License version 2.0. You
 ## may obtain a copy of the License at
 ##
 ## https:##solderpad.org/licenses/SHL-2.1/
 ##
-## Unless required by applicable law or agreed to in writing, any work distributed under the 
-## License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-## either express or implied. See the License for the specific language governing permissions 
+## Unless required by applicable law or agreed to in writing, any work distributed under the
+## License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+## either express or implied. See the License for the specific language governing permissions
 ## and limitations under the License.
 ################################################################################################
 
@@ -42,7 +42,7 @@ function processProgram {
 
     # skip if the wrong bit width.
     if [ -z "$listOfAddr" ]; then
-	return 0
+        return 0
     fi
 
     # parse out the addresses and the labels
@@ -52,7 +52,7 @@ function processProgram {
 
     # output per program function address list
     echo "$addresses" > $objDumpFile.addr
-    echo "$labelsName" > $objDumpFile.lab    
+    echo "$labelsName" > $objDumpFile.lab
 
     # need to add some formatting to each line
     local numLines=$(echo "$listOfAddr" | wc -l)
@@ -70,8 +70,7 @@ do
     processProgram "$objDumpFile" 64 "$index"
 
     index=$(($index+1))
-    
+
 done
 
 exit 0
-

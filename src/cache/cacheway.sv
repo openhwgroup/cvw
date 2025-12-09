@@ -1,34 +1,34 @@
 ///////////////////////////////////////////
 // cacheway
 //
-// Written: Rose Thompson rose@rosethompson.net 
+// Written: Rose Thompson rose@rosethompson.net
 // Created: 7 July 2021
 // Modified: 20 January 2023
 //
 // Purpose: Storage and read/write access to data cache data, tag valid, dirty, and replacement.
-// 
+//
 // Documentation: RISC-V System on Chip Design
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // https://github.com/openhwgroup/cvw
-// 
+//
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
-// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You
 // may obtain a copy of the License at
 //
 // https://solderpad.org/licenses/SHL-2.1/
 //
-// Unless required by applicable law or agreed to in writing, any work distributed under the 
-// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-// either express or implied. See the License for the specific language governing permissions 
+// Unless required by applicable law or agreed to in writing, any work distributed under the
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+// either express or implied. See the License for the specific language governing permissions
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module cacheway import cvw::*; #(parameter cvw_t P, 
+module cacheway import cvw::*; #(parameter cvw_t P,
                   parameter PA_BITS, NUMSETS=512, LINELEN = 256, TAGLEN = 26,
                   OFFSETLEN = 5, INDEXLEN = 9, READ_ONLY_CACHE = 0) (
   input  logic                        clk,
@@ -37,7 +37,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   input  logic                        CacheEn,        // Enable the cache memory arrays.  Disable hold read data constant
   input  logic [$clog2(NUMSETS)-1:0]  CacheSetData,       // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
   input  logic [$clog2(NUMSETS)-1:0]  CacheSetTag,       // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
-  input  logic [PA_BITS-1:0]          PAdr,           // Physical address 
+  input  logic [PA_BITS-1:0]          PAdr,           // Physical address
   input  logic [LINELEN-1:0]          LineWriteData,  // Final data written to cache (D$ only)
   input  logic                        SetValid,       // Set the valid bit in the selected way and set
   input  logic                        ClearValid,     // Clear the valid bit in the selected way and set
@@ -72,7 +72,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   logic                               ClearDirtyWay;
   logic                               SelectedWay;
   logic                               InvalidateCacheDelay;
-  
+
   if (!READ_ONLY_CACHE) begin:flushlogic
     mux2 #(1) seltagmux(VictimWay, FlushWay, FlushCache, SelecteDirty);
     mux3 #(1) selectedmux(HitWay, FlushWay, VictimWay, {SelVictim, FlushCache}, SelectedWay);
@@ -125,7 +125,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
 
   localparam           NUMSRAM = LINELEN/P.CACHE_SRAMLEN;
   localparam           SRAMLENINBYTES = P.CACHE_SRAMLEN/8;
-  
+
   for(words = 0; words < NUMSRAM; words++) begin: word
     if (READ_ONLY_CACHE) begin:wordram // no byte-enable needed for i$.
       ram1p1rwe #(.USE_SRAM(P.USE_SRAM), .DEPTH(NUMSETS), .WIDTH(P.CACHE_SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSetData),
@@ -146,10 +146,10 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Valid Bits
   /////////////////////////////////////////////////////////////////////////////////////////////
-  
-  always_ff @(posedge clk) begin // Valid bit array, 
+
+  always_ff @(posedge clk) begin // Valid bit array,
     if (reset) ValidBits        <= '0;
-    if(CacheEn) begin 
+    if(CacheEn) begin
       ValidWay <= ValidBits[CacheSetTag];
       if(InvalidateCache)                    ValidBits <= '0; // exclusion-tag: dcache invalidateway
       else if (SetValidEN) ValidBits[CacheSetData] <= SetValidWay;
@@ -165,7 +165,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   if (!READ_ONLY_CACHE) begin:dirty
     always_ff @(posedge clk) begin
       // reset is optional.  Consider merging with TAG array in the future.
-      //if (reset) DirtyBits <= {NUMSETS{1'b0}}; 
+      //if (reset) DirtyBits <= {NUMSETS{1'b0}};
       if(CacheEn) begin
         Dirty <= DirtyBits[CacheSetTag];
         if((SetDirtyWay | ClearDirtyWay) & ~FlushStage) begin
