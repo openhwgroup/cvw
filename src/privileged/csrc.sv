@@ -150,12 +150,13 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
       end
   end
 
-  // Read Counters, or cause excepiton if insufficient privilege in light of COUNTEREN flags
+  // Read Counters, or cause exception if insufficient privilege in light of COUNTEREN flags
   assign CounterNumM = CSRAdrM[4:0]; // which counter to read?
-  always_comb
+  always_comb begin
+    CSRCReadValM = '0; // default value
+    IllegalCSRCAccessM = 1'b0;
     if (PrivilegeModeW == P.M_MODE |
         MCOUNTEREN_REGW[CounterNumM] & (!P.S_SUPPORTED | PrivilegeModeW == P.S_MODE | SCOUNTEREN_REGW[CounterNumM])) begin
-      IllegalCSRCAccessM = 1'b0;
       if (CSRAdrM >= MHPMEVENTBASE & CSRAdrM <= MHPMEVENTLAST) begin
         CSRCReadValM = '0; // mphmevent[3:31] tied to read-only zero
       end else begin
@@ -168,10 +169,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
                   CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
           else if (CSRAdrM >= HPMCOUNTERBASE  & CSRAdrM  < HPMCOUNTERBASE+P.COUNTERS & ~CSRWriteM)  // read-only
                   CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
-          else begin
-              CSRCReadValM = '0;
-              IllegalCSRCAccessM = 1'b1;  // requested CSR doesn't exist
-          end
+          else IllegalCSRCAccessM = 1'b1;  // requested CSR doesn't exist
         end else begin // 32-bit counter reads
           // Veril ator doesn't realize this only occurs for XLEN=32
           /* verilator lint_off WIDTH */
@@ -186,16 +184,11 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
                   CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
           else if (CSRAdrM >= HPMCOUNTERHBASE  & CSRAdrM < HPMCOUNTERHBASE+P.COUNTERS  & ~CSRWriteM)   // read-only
                   CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
-          else begin
-            CSRCReadValM = '0;
-            IllegalCSRCAccessM = 1'b1; // requested CSR doesn't exist
-          end
+          else    IllegalCSRCAccessM = 1'b1; // requested CSR doesn't exist
         end
       end
-    end else begin
-      CSRCReadValM = '0;
-      IllegalCSRCAccessM = 1'b1; // no privileges for this csr
-    end
+    end else IllegalCSRCAccessM = 1'b1; // no privileges for this csr
+  end
 endmodule
 
 //  mounteren should only exist if u-mode exists

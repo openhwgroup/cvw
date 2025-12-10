@@ -141,6 +141,7 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
 
   // CSR Reads
   always_comb begin:csrr
+    CSRSReadValM = '0;
     IllegalCSRSAccessM = 1'b0;
     case (CSRAdrM)
       SSTATUS:   CSRSReadValM = SSTATUS_REGW;
@@ -152,28 +153,14 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
       SCAUSE:    CSRSReadValM = SCAUSE_REGW;
       STVAL:     CSRSReadValM = STVAL_REGW;
       SATP:      if (P.VIRTMEM_SUPPORTED & (PrivilegeModeW == P.M_MODE | ~STATUS_TVM)) CSRSReadValM = SATP_REGW;
-                 else begin
-                   CSRSReadValM = '0;
-                   IllegalCSRSAccessM = 1'b1;
-                 end
+                 else IllegalCSRSAccessM = 1'b1;
       SCOUNTEREN:CSRSReadValM = {{(P.XLEN-32){1'b0}}, SCOUNTEREN_REGW};
       SENVCFG:   CSRSReadValM = SENVCFG_REGW;
-      STIMECMP:  if (STCE)
-                   CSRSReadValM = STIMECMP_REGW[P.XLEN-1:0];
-                 else begin
-                   CSRSReadValM = '0;
-                   IllegalCSRSAccessM = 1'b1;
-                 end
-      STIMECMPH: if (STCE & P.XLEN == 32) // not supported for RV64
-                   CSRSReadValM = {{(P.XLEN-32){1'b0}}, STIMECMP_REGW[63:32]};
-                 else begin
-                   CSRSReadValM = '0;
-                   IllegalCSRSAccessM = 1'b1;
-                 end
-      default: begin
-                  CSRSReadValM = '0;
-                  IllegalCSRSAccessM = 1'b1;
-               end
+      STIMECMP:  if (STCE) CSRSReadValM = STIMECMP_REGW[P.XLEN-1:0];
+                 else IllegalCSRSAccessM = 1'b1;
+      STIMECMPH: if (STCE & P.XLEN == 32) CSRSReadValM = {{(P.XLEN-32){1'b0}}, STIMECMP_REGW[63:32]};
+                 else IllegalCSRSAccessM = 1'b1; // not supported for RV64
+      default:   IllegalCSRSAccessM = 1'b1;
     endcase
   end
 endmodule
