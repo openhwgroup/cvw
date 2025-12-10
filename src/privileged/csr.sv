@@ -213,8 +213,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   assign CSRUWriteM = CSRWriteM  & InstrValidNotFlushedM;
   assign MTrapM = TrapM & (NextPrivilegeModeM == P.M_MODE);
   assign STrapM = TrapM & (NextPrivilegeModeM == P.S_MODE) & P.S_SUPPORTED;
-  assign HSTrapM = TrapM & (NextPrivilegeModeM == P.S_MODE & !VirtModeW) & P.H_SUPPORTED;
-  assign PrivReturnHSM = sretM & (PrivilegeModeW == P.S_MODE & !VirtModeW) & P.H_SUPPORTED;
+  assign HSTrapM = TrapM & (NextPrivilegeModeM == P.S_MODE & ~VirtModeW) & P.H_SUPPORTED;
+  assign PrivReturnHSM = sretM & (PrivilegeModeW == P.S_MODE & ~VirtModeW) & P.H_SUPPORTED;
   assign NextTinstM = TrapM ? {{P.XLEN-32{1'b0}}, InstrM[31:0]} : CSRWriteValM;
 
   ///////////////////////////////////////////
