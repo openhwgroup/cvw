@@ -13,6 +13,8 @@ from datetime import datetime
 archs = ["rv32i_zicsr", "rv32im_zicsr", "rv32imc_zicsr",
          "rv32imc_zba_zbb_zbc_zbs_zicsr", "rv32imafdc_zba_zbb_zbc_zbs_zicsr"]
 
+
+# Official Embench benchmarks (19) https://github.com/embench/embench-iot.git
 benchmarks = [
     "aha-mont64", "crc32", "cubic", "edn", "huffbench", "matmult-int", "minver",
     "nbody", "nettle-aes", "nettle-sha256", "nsichneu", "picojpeg", "qrduino",
@@ -55,17 +57,39 @@ def tabulate_arch_sweep(directory):
         # Header
         print("\t".join([""] + archs))
 
-        # Use the first arch that has data
-        first_arch = next(iter(d.keys()))
-        proglist = d[first_arch].keys()
+        # Collect all unique programs across all architectures
+        all_progs = set()
+        for arch_data in d.values():
+            all_progs.update(arch_data.keys())
 
+        # summary rows we don't want in the main table
+        summary_rows = [
+            "size geometric mean",
+            "size geometric standard deviation",
+            "speed geometric mean",
+            "speed geometric standard deviation",
+        ]
+
+        # filter these out of the main proglist
+        proglist = sorted(p for p in all_progs if p not in summary_rows)
+
+        # main table rows (benchmarks + extras like md5sum, primecount, tarfind)
         for prog in proglist:
             row = [prog] + [d[a].get(prog, "n/a") for a in archs]
             print("\t".join(row))
 
-        print("New geo mean", end="\t")
+        # print any JSON-provided geometric summary rows at the bottom
+        for label in summary_rows:
+            if label in all_progs:
+                row = [label] + [d[a].get(label, "n/a") for a in archs]
+                print("\t".join(row))
+
+        print("Total cvw Geometric Mean", end="\t")
         for arch in archs:
-            print(calcgeomean(d, arch), end="\t")
+            if arch in d:
+                print(calcgeomean(d, arch), end="\t")
+            else:
+                print("n/a", end="\t")
         print("\n")
 
 
@@ -77,10 +101,7 @@ def run_arch_sweep():
 
     # these are the four JSONs your Makefile creates in actual_embench_results/
     results = [
-        "SizeOpt_size",
-        "SizeOpt_speed",
-        "SpeedOpt_size",
-        "SpeedOpt_speed",
+        "SizeOpt_size", "SizeOpt_speed", "SpeedOpt_size", "SpeedOpt_speed",
     ]
 
     # sweep the runs and save the results in the run directory
