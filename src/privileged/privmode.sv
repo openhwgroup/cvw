@@ -35,8 +35,13 @@ module privmode import cvw::*;  #(parameter cvw_t P) (
   input  logic             DelegateM,           // trap delegated to supervisor mode
   input  logic [1:0]       STATUS_MPP,          // machine trap previous privilege mode
   input  logic             STATUS_SPP,          // supervisor trap previous privilege mode
+  input  logic             MSTATUS_MPV,         // from mstatus
+  input  logic             HSTATUS_SPV,         // from hstatus
+  input  logic             TrapToM, TrapToHS, TrapToVS, // resolved trap target
   output logic [1:0]       NextPrivilegeModeM,  // next privilege mode, used when updating STATUS CSR on a trap
-  output logic [1:0]       PrivilegeModeW       // current privilege mode
+  output logic [1:0]       PrivilegeModeW,      // current privilege mode
+  output logic             NextVirtModeM,       // next V
+  output logic             VirtModeW            // current V
 );
 
   if (P.U_SUPPORTED) begin:privmode
@@ -54,5 +59,25 @@ module privmode import cvw::*;  #(parameter cvw_t P) (
   end else begin  // only machine mode supported
     assign NextPrivilegeModeM = P.M_MODE;
     assign PrivilegeModeW = P.M_MODE;
+  end
+
+  if (P.H_SUPPORTED) begin:virtmode
+    always_comb begin
+      NextVirtModeM = VirtModeW;
+      if (TrapM) begin
+        if (TrapToVS)  NextVirtModeM = 1'b1;
+        else           NextVirtModeM = 1'b0;
+      end else if (mretM) begin
+        NextVirtModeM = MSTATUS_MPV;
+      end else if (sretM) begin
+        NextVirtModeM = (VirtModeW == 1'b0) ? HSTATUS_SPV : 1'b1;
+      end
+    end
+
+    flopenl #(1) virtmodereg(clk, reset, ~StallW, NextVirtModeM, 1'b0, VirtModeW);
+
+  end else begin
+    assign NextVirtModeM = 1'b0;
+    assign VirtModeW     = 1'b0;
   end
 endmodule
