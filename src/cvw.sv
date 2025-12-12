@@ -216,6 +216,7 @@ typedef struct packed {
   logic [3:0] SV32;
   logic [3:0] SV39;
   logic [3:0] SV48;
+  logic [3:0] SV57;
 
 // macros to define supported modes
   logic A_SUPPORTED;

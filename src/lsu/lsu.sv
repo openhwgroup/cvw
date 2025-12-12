@@ -89,7 +89,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0]       PCSpillF,                             // Fetch PC
   input  logic                    ITLBMissOrUpdateAF,                   // ITLB miss causes HPTW (hardware pagetable walker) walk or update access bit
   output logic [P.XLEN-1:0]       PTE,                                  // Page table entry write to ITLB
-  output logic [1:0]              PageType,                             // Type of page table entry to write to ITLB
+  output logic [2:0]              PageType,                             // Type of page table entry to write to ITLB
   output logic                    ITLBWriteF,                           // Write PTE to ITLB
   output logic                    SelHPTW,                              // During a HPTW walk the effective privilege mode becomes S_MODE
   input var logic [7:0]           PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0], // PMP configuration from privileged unit

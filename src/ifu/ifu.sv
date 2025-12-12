@@ -81,7 +81,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   // mmu management
   input  logic [1:0]           PrivilegeModeW,                           // Privilege mode in Writeback stage
   input  logic [P.XLEN-1:0]    PTE,                                      // Hardware page table walker (HPTW) writes Page table entry (PTE) to ITLB
-  input  logic [1:0]           PageType,                                 // Hardware page table walker (HPTW) writes PageType to ITLB
+  input  logic [2:0]           PageType,                                 // Hardware page table walker (HPTW) writes PageType to ITLB
   input  logic                 ITLBWriteF,                               // Writes PTE and PageType to ITLB
   input  logic [P.XLEN-1:0]    SATP_REGW,                                // Location of the root page table and page table configuration
   input  logic                 STATUS_MXR,                               // Status CSR: make executable page readable
