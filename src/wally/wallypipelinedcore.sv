@@ -51,6 +51,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
    input  logic                  DebugControl,
    input  logic                  GPRDebugEnable,
    input  logic                  CSRDebugEnable,
+   input  logic                  FPRDebugEnable,
    output logic [P.XLEN-1:0]     DebugRegRDATA,
    input  logic [P.XLEN-1:0]     DebugRegWDATA,
    input  logic [11:0]           DebugRegAddr,
@@ -185,6 +186,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
 
   // Debug Signals
   logic [P.XLEN-1:0]             DebugIEURDATA;
+  logic [P.XLEN-1:0]             DebugFPURDATA;
   logic                          DebugResume;
   logic [P.XLEN-1:0]             DPC;
 
@@ -380,7 +382,15 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .FDivBusyE,                          // Is the divide/sqrt unit busy (stall execute stage)
       .IllegalFPUInstrD,                   // Is the instruction an illegal fpu instruction
       .SetFflagsM,                         // FPU flags (to privileged unit)
-      .FIntDivResultW);
+      .FIntDivResultW,
+      .DebugMode,
+      .DebugControl,
+      .FPRDebugEnable,
+      .DebugFPURDATA,
+      .DebugRegWDATA,
+      .DebugRegAddr,
+      .DebugRegWrite
+      );
   end else begin                           // no F_SUPPORTED or D_SUPPORTED; tie outputs low
     assign {FPUStallD, FWriteIntE, FCvtIntE, FIntResM, FCvtIntW, FRegWriteM,
             IllegalFPUInstrD, SetFflagsM, FpLoadStoreM,
@@ -388,7 +398,11 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   end
 
   if (P.DEBUG_SUPPORTED) begin
-    mux2 #(P.XLEN) debugregmux(DebugIEURDATA, CSRReadValM, CSRDebugEnable, DebugRegRDATA);
+    if (P.F_SUPPORTED) begin
+      mux3 #(P.XLEN) debugregmux(DebugIEURDATA, CSRReadValM, DebugFPURDATA, {FPRDebugEnable, CSRDebugEnable}, DebugRegRDATA);
+    end else begin
+      mux2 #(P.XLEN) debugregmux(DebugIEURDATA, CSRReadValM, CSRDebugEnable, DebugRegRDATA);
+    end
   end else begin
     assign DebugRegRDATA = '0;
   end

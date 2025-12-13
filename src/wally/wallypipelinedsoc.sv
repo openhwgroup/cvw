@@ -94,6 +94,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   logic                       DebugControl;
   logic                       GPRDebugEnable;
   logic                       CSRDebugEnable;
+  logic                       FPRDebugEnable;
   logic [P.XLEN-1:0]          DebugRegRDATA;
   logic [P.XLEN-1:0]          DebugRegWDATA;
   logic [11:0]                DebugRegAddr;
@@ -111,7 +112,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .ExternalStall,
-    .DebugMode, .HaltReq, .ResumeReq, .DebugControl, .GPRDebugEnable, .CSRDebugEnable,
+    .DebugMode, .HaltReq, .ResumeReq, .DebugControl, .GPRDebugEnable, .CSRDebugEnable, .FPRDebugEnable,
     .DebugRegRDATA, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite,
     .HaveReset, .HaveResetAck, .ResetHaltReq
    );
@@ -134,7 +135,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
       .DMIRSPDATA, .DMIRSPOP, .DMIRSPREADY, .DMIRSPVALID);
 
     debug #(P) debug(.clk, .reset, .NDMReset, .HaltReq, .ResumeReq, .DebugMode, .DebugControl,
-      .GPRDebugEnable, .CSRDebugEnable,
+      .GPRDebugEnable, .CSRDebugEnable, .FPRDebugEnable,
       .DMIADDR, .DMIDATA, .DMIOP, .DMIREADY, .DMIVALID,
       .DMIRSPDATA, .DMIRSPOP, .DMIRSPREADY, .DMIRSPVALID,
       .DebugRegRDATA, .DebugRegWDATA, .DebugRegAddr, .DebugRegWrite,
@@ -143,6 +144,7 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
     assign tdo = 1'bz;
     assign GPRDebugEnable = 0;
     assign CSRDebugEnable = 0;
+    assign FPRDebugEnable = 0;
     assign DebugRegWDATA = '0;
     assign DebugRegAddr = '0;
     assign DebugRegWrite = 0;

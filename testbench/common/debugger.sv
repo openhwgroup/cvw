@@ -526,7 +526,9 @@ module debugger import cvw::*;  #(parameter cvw_t P)(
         // Assert that the output should equal what Spike outputs.
         assert(this.dmireg.result == expected_outputs[i] | exception | i == 0) begin
           exception = 0;
-          // $display("%sMATCHES%s", green, normal);
+          //$display("%sMATCHES%s", green, normal);
+          // $display("  Expected[%0d] = \033[1m addr:\033[0m %2h, data: %8h, op: %2b", i, this.expected_outputs[i][40:34], this.expected_outputs[i][33:2], this.expected_outputs[i][1:0]);
+          // $display("  Actual[%0d] =  addr: %2h, data: %8h, op: %2b", i, this.dmireg.result[40:34], this.dmireg.result[33:2], this.dmireg.result[1:0]);
         end else begin
           $display("%sFAILED:%s Wally does not match Spike.", red, normal);
           // Report both the expected and actual results

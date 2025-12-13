@@ -4078,12 +4078,14 @@ string wally64debug[] = '{
   `DEBUGELFS,
   //"WALLY-debug-02",
   "WALLY-debug-dmactive",
-  "WALLY-debug-03"
+  "WALLY-debug-03",
+  "WALLY-debug-fpu"
 };
 
 string wally64debug_jtag[] = '{
   `DEBUGTV,
   //"WALLY-debug-02",
   "WALLY-debug-dmactive",
-  "WALLY-debug-03"
+  "WALLY-debug-03",
+  "WALLY-debug-fpu"
 };

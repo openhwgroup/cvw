@@ -11,11 +11,10 @@ RBBPORT = "9824"
 
 SPIKEARGS = [
     "spike",
-    "--isa=rv64gcB_zicsr_zicntr",
+    "--isa=rv64gcB_Zicbom_Zicsr_zicntr",
     "--rbb-port=9824",
     "--dm-progsize=0",
     "--dm-no-hasel",
-    "--dm-no-abstract-fpr",
     "--dm-no-halt-groups",
     "--dm-no-impebreak",
     "+signature-granularity=4"
@@ -47,7 +46,7 @@ def start_openocd(tclscript):
 
 def main(args):
     start_spike(args.test)
-    time.sleep(0.5)
+    time.sleep(1)
     openocd_proc = start_openocd(args.tcl)
     openocd_proc.wait()
     print(os.path.splitext(args.test))

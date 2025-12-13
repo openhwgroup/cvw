@@ -87,6 +87,7 @@ $(BUILD)/%.elf: rv64/%.S
 $(TVBUILDDIR)/%.tv:
 	./debugtestgen.py -s $(BUILD)/$(basename $(notdir $@)).elf -t $(TVDIR)/$(basename $(notdir $@)).tcl
 	grep "41b" $(LOGSDIR)/$(basename $(notdir $@)).log | sed 's/.*41b \([^;]*\).*/\1/' > $@
+	echo 'w 40000001 @10 -> + 00000000 @00' >> $@
 
 clean:
 	@rm -rf $(BUILD)

@@ -39,6 +39,7 @@ module debug import cvw::*; #(parameter cvw_t P) (
   output logic              DebugControl,
   output logic              GPRDebugEnable,
   output logic              CSRDebugEnable,
+  output logic              FPRDebugEnable,
 
   // DMI REQUEST
   input  logic [6:0]         DMIADDR,
@@ -471,9 +472,6 @@ module debug import cvw::*; #(parameter cvw_t P) (
   logic NextCSRDebugEnable;
   logic NextGPRDebugEnable;
   logic NextFPRDebugEnable;
-
-  // eventually make an output
-  logic FPRDebugEnable;
 
   assign aarsize = Command[22:20];
   // assign StartCommand = DMIVALID & DMIRSPREADY & (DMIADDR == COMMAND) & ~|cmderr;
