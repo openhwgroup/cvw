@@ -2,7 +2,7 @@ TARGET = aes128
 
 $(TARGET).objdump: $(TARGET)
 	riscv64-unknown-elf-objdump -D $(TARGET) > $(TARGET).objdump
-    
+
 $(TARGET): $(TARGET).S Makefile
 	riscv64-unknown-elf-gcc -g -o $(TARGET) -march=rv32gc_zk -mabi=ilp32 -mcmodel=medany \
 	    -nostartfiles -T../../link/link.ld $(TARGET).S
@@ -14,7 +14,3 @@ sim:
 clean:
 	rm -f $(TARGET) $(TARGET).objdump $(TARGET).signature.output
 	rm -f *~
-
-
-
-

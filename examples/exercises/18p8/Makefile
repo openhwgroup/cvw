@@ -2,7 +2,7 @@ TARGET = test2
 
 $(TARGET).objdump: $(TARGET)
 	riscv64-unknown-elf-objdump -D $(TARGET) > $(TARGET).objdump
-    
+
 $(TARGET): $(TARGET).S Makefile
 	riscv64-unknown-elf-gcc -g -o $(TARGET) -march=rv64gcv_zk -mabi=lp64d -mcmodel=medany \
 	    -nostartfiles -T../../link/link.ld $(TARGET).S
@@ -14,7 +14,3 @@ sim:
 clean:
 	rm -f $(TARGET) $(TARGET).objdump $(TARGET).signature.output $(TARGET).memfile
 	rm -f *~
-
-
-
-

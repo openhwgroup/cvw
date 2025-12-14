@@ -17,7 +17,7 @@ _start:
     # Store initial state in signature
     la s11, begin_signature
     csrr s10, instret  				# count instructions at beginning
-	
+
     la s0, M					# Load point to padded message
     la s1, W					# See NIST 180-4 6.2.2
     li t1, 0					# Initialize counter (t)
@@ -43,7 +43,7 @@ gen_loop:
     lw t5, -28(t3)				# W_{t-7}
     lw t6, -60(t3)				# W_{t-15}
     lw t0, -64(t3)				# W_{t-16}
-	
+
     sha256sig1 t4, t4				# Sigma1 transformation
     sha256sig0 t6, t6				# Sigma0 transofmration
 
@@ -52,7 +52,7 @@ gen_loop:
     add t4, t4, t0				# Message Schedule W_t
 
     sw t4, 0(t3)				# Store W_t
-	
+
     addi t1, t1, 1
     li t5, 64
     blt t1, t5, gen_loop
@@ -76,7 +76,7 @@ gen_loop:
     sw s7, 20(sp)            			# Save f on the stack
     sw s8, 24(sp)            			# Save g on the stack
     sw s9, 28(sp)            			# Save h on the stack
-	
+
     li t0, 0           				# schedule counter
     la t1, K
     la t2, W
@@ -94,19 +94,19 @@ sha_round:
     and a1, s6, s7      			# a1 = x & y
     not a2, s6          			# a2 = ~x
     and a2, a2, s8     	 			# a2 = ~x & z
-    xor a1, a1, a2      			
+    xor a1, a1, a2
     add a2, a0, a1
     add a2, a2, s9
     add a2, a2, t5				# Ch = a1 = (x & y) ^ (~x & z) (4 instructions)
     add a2, a2, t6     				# T1 = h + SUM1(e) + Ch(e,f,g) + K[i] + W[i]
-				
+
     sha256sum0 a3, s2				# Sum0 transformation
     and a4, s2, s3                              # a4 = a & b
     and a5, s2, s4                              # a5 = a & c
     xor a4, a4, a5                              # a4 = (a & b) ^ (a & c)
     and a5, s3, s4                              # a5 = b & c
     xor a4, a4, a5                              # a4 = Maj(a, b, c) (5 instructions)
-    add a5, a3, a4     				# T2 = SUM0(a) + Maj(a,b,c)	
+    add a5, a3, a4     				# T2 = SUM0(a) + Maj(a,b,c)
 
     # Compression Function Shift
     mv s9, s8					# h
@@ -122,7 +122,7 @@ sha_round:
     li a7, 64
     blt t0, a7, sha_round
 
-    # Restore eight working variables 
+    # Restore eight working variables
     lw a0,  0(sp)              			# Restore a0 (a)
     lw a1,  4(sp)              			# Restore a1 (b)
     lw a2,  8(sp)              			# Restore a2 (c)
@@ -132,7 +132,7 @@ sha_round:
     lw a6, 24(sp)              			# Restore a6 (g)
     lw a7, 28(sp)              			# Restore a7 (h)
     addi sp, sp, 64            			# Deallocate stack space
-	
+
     # Intermediate Hash (e.g., H_0^i = a + H_0^{i-1})
     add a0, a0, s2				# H0
     add a1, a1, s3				# H1
@@ -144,22 +144,22 @@ sha_round:
     add a7, a7, s9				# H7
 
     # Print out hash value or digest
-    sw a0, 0(s11)	
+    sw a0, 0(s11)
     sw a1, 4(s11)
     sw a2, 8(s11)
     sw a3, 12(s11)
-    sw a4, 16(s11)	
+    sw a4, 16(s11)
     sw a5, 20(s11)
     sw a6, 24(s11)
-    sw a7, 28(s11)	
+    sw a7, 28(s11)
     addi s11, s11, 32
-	
+
 # Finalize
 done:
     csrr s9, instret       			# Read instruction count
-    sub s9, s9, s10	        		# get number of #instructions executed	
+    sub s9, s9, s10	        		# get number of #instructions executed
     sw s9, 0(s11)				# Print instruction count
-	
+
 write_tohost:
     la t1, tohost
     li t0, 1               			# Success code
@@ -186,7 +186,7 @@ end_signature:
 H:
     .word 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a
     .word 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
-	
+
 # K constants for SHA-256 (NIST 180-4 4.2.2)
 K:
     .word 0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5
@@ -209,19 +209,19 @@ K:
     .word 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208
     .word 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
 
-# One padded 512-bit block for message "Go Wally!" 
+# One padded 512-bit block for message "Go Wally!"
 M:
     .word 0x476f2057, 0x616c6c79, 0x21800000, 0x00000000
     .word 0x00000000, 0x00000000, 0x00000000, 0x00000000
     .word 0x00000000, 0x00000000, 0x00000000, 0x00000000
     .word 0x00000000, 0x00000000, 0x00000000, 0x00000048
 
-# Space for W[0..63] (64 x 4 bytes)	
+# Space for W[0..63] (64 x 4 bytes)
 W:
-     .skip 256   
+     .skip 256
 
 .bss
     .space 512
 topofstack:
 
-	
+

@@ -11,7 +11,7 @@ _start:
     ld s1, 8(a1)
     # Load plaintext
     ld s2, 0(a2)
-    ld s3, 8(a2)	
+    ld s3, 8(a2)
 
     # Store initial state in signature
     la s11, begin_signature
@@ -20,8 +20,8 @@ _start:
 
     xor s0, s0, s2   				# state0 ^= roundkey0
     xor s1, s1, s3   				# state1 ^= roundkey1
-	
-    # Initialize loop counter and max rounds 
+
+    # Initialize loop counter and max rounds
     li s4, 1
     li s5, 10
     addi a2, a2, 16
@@ -57,20 +57,20 @@ final_round:
     xor s1, t3, s3
 
     # Print out through HTIF
-    sd s0, 0(s11)	
+    sd s0, 0(s11)
     sd s1, 8(s11)
-    addi s11, s11, 16	
+    addi s11, s11, 16
 
     # Store ciphertext
     sd a4, 0(a0)
     sd a5, 8(a0)
-	
+
 # Finalize
 done:
     csrr s9, instret       			# Read instruction count
-    sub s9, s9, s8	        		# get number of #instructions executed	
-    sd s9, 0(s11)	
-	
+    sub s9, s9, s8	        		# get number of #instructions executed
+    sd s9, 0(s11)
+
 write_tohost:
     la a0, tohost
     li a1, 1               			# Success code
@@ -98,8 +98,8 @@ plaintext:
   .dword 0x8d305a88a8f64332, 0x340737e0a2983131
 
 key:
-  .dword 0xa6d2ae2816157e2b, 0x3c4fcf098815f7ab  
-	
+  .dword 0xa6d2ae2816157e2b, 0x3c4fcf098815f7ab
+
 # Key Expansion Example Appendix B AES-128
 key_schedule:
   .dword 0xa6d2ae2816157e2b, 0x3c4fcf098815f7ab  # Round 0
@@ -119,4 +119,3 @@ ciphertext:
 
 .bss
     .space 512
-

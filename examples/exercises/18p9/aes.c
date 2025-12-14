@@ -1,10 +1,10 @@
 //
-// aes.c 
+// aes.c
 // Based on and enhanced work by https://github.com/m3y54m/aes-in-c.git
 // james.stine@okstate.edu 11 November 2024
-// 
+//
 
-#include <stdio.h>  
+#include <stdio.h>
 #include "util.h"   // supports verify
 
 enum errorCode {
@@ -33,7 +33,7 @@ unsigned char sbox[256] = {
   0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16}; // F
 
 unsigned char rsbox[256] =
-  // 0     1    2      3     4    5     6     7      8    9     A      B    C     D     E     F  
+  // 0     1    2      3     4    5     6     7      8    9     A      B    C     D     E     F
   {0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb,  // 0
    0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87, 0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb,  // 1
    0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2, 0x23, 0x3d, 0xee, 0x4c, 0x95, 0x0b, 0x42, 0xfa, 0xc3, 0x4e,  // 2
@@ -141,7 +141,7 @@ unsigned char getSBoxInvert(unsigned char num) {
   return rsbox[num];
 }
 
-// left circular rotation (i.e., byte-wise rotate left) on a 4-byte word                                  
+// left circular rotation (i.e., byte-wise rotate left) on a 4-byte word
 void rotate(unsigned char *word) {
   unsigned char temp = word[0];
   word[0] = word[1];
@@ -150,7 +150,7 @@ void rotate(unsigned char *word) {
   word[3] = temp;
 }
 
-unsigned char getRconValue(unsigned char num) {  
+unsigned char getRconValue(unsigned char num) {
   return Rcon[num];
 }
 
@@ -158,47 +158,47 @@ unsigned char getRconValue(unsigned char num) {
 void KeySchedule(unsigned char *word, int iteration) {
   int i;
 
-  // rotate the 32-bit word 8 bits to the left                                                            
+  // rotate the 32-bit word 8 bits to the left
   rotate(word);
-  // apply S-Box substitution on all 4 parts of the 32-bit word                                           
+  // apply S-Box substitution on all 4 parts of the 32-bit word
   for (i = 0; i < 4; ++i) {
     word[i] = getSBoxValue(word[i]);
   }
-  // XOR the output of the rcon operation with i to the first part (leftmost) only                        
+  // XOR the output of the rcon operation with i to the first part (leftmost) only
   word[0] = word[0] ^ getRconValue(iteration);
 }
 
-// Rijndael's key expansion:  expands an 128, 192, 256 key into an 176, 208, 240 bytes key                
+// Rijndael's key expansion:  expands an 128, 192, 256 key into an 176, 208, 240 bytes key
 void KeyExpansion(unsigned char *expandedKey, unsigned char *key,
                   enum keySize size, unsigned int expandedKeySize) {
 
   int currentSize = 0;
   int rconIteration = 1;
   int i;
-  unsigned char t[4] = {0}; // temporary 4-byte variable                                                  
+  unsigned char t[4] = {0}; // temporary 4-byte variable
 
-  // set the 16, 24,32 bytes of the expanded key to the input key                                         
+  // set the 16, 24,32 bytes of the expanded key to the input key
   for (i = 0; i < size; i++)
     expandedKey[i] = key[i];
   currentSize += size;
   while (currentSize < expandedKeySize) {
-    // assign the previous 4 bytes to the temporary value t                                               
+    // assign the previous 4 bytes to the temporary value t
     for (i = 0; i < 4; i++) {
       t[i] = expandedKey[(currentSize - 4) + i];
     }
-    // every 16, 24, 32 bytes we apply the core schedule to t                                             
-    // and increment rconIteration afterwards                                                             
+    // every 16, 24, 32 bytes we apply the core schedule to t
+    // and increment rconIteration afterwards
     if (currentSize % size == 0) {
       KeySchedule(t, rconIteration++);
     }
-    // For 256-bit keys, we add an extra sbox to the calculation                                          
+    // For 256-bit keys, we add an extra sbox to the calculation
     if (size == SIZE_32 && ((currentSize % size) == 16)) {
       for (i = 0; i < 4; i++)
         t[i] = getSBoxValue(t[i]);
     }
 
-    // We XOR t with the four-byte block 16, 24, 32 bytes before the new expanded key.                    
-    // This becomes the next four bytes in the expanded key.                                              
+    // We XOR t with the four-byte block 16, 24, 32 bytes before the new expanded key.
+    // This becomes the next four bytes in the expanded key.
     for (i = 0; i < 4; i++) {
       expandedKey[currentSize] = expandedKey[currentSize - size] ^ t[i];
       currentSize++;
@@ -221,12 +221,12 @@ void shiftRows(unsigned char *state) {
 void shiftRow(unsigned char *state, unsigned char nbr) {
   unsigned char temp[4];
 
-  // Perform rotation directly                                                                            
+  // Perform rotation directly
   for (int i = 0; i < 4; i++) {
     temp[i] = state[(i + nbr) % 4];
   }
 
-  // Copy result back to state                                                                            
+  // Copy result back to state
   for (int i = 0; i < 4; i++) {
     state[i] = temp[i];
   }
@@ -238,8 +238,8 @@ void addRoundKey(unsigned char *state, unsigned char *roundKey) {
     state[i] = state[i] ^ roundKey[i];
 }
 
-// Based on work by Tom St. Denis/Simon Johnson                                                           
-// https://www.amazon.com/Cryptography-Developers-Tom-St-Denis/dp/1597491047                              
+// Based on work by Tom St. Denis/Simon Johnson
+// https://www.amazon.com/Cryptography-Developers-Tom-St-Denis/dp/1597491047
 unsigned char gfmul(unsigned char a, unsigned char b) {
   unsigned char p = 0;
   for (unsigned char counter = 0; counter < 8; counter++) {
@@ -251,20 +251,20 @@ unsigned char gfmul(unsigned char a, unsigned char b) {
   return p;
 }
 
-// Section 5.1.3 of FIPS 197                                                                              
+// Section 5.1.3 of FIPS 197
 void mixColumns(unsigned char *state) {
   unsigned char column[4];
 
   for (int col = 0; col < 4; col++) {
-    // Extract the column from the state                                                                  
+    // Extract the column from the state
     for (int row = 0; row < 4; row++) {
       column[row] = state[row * 4 + col];
     }
 
-    // Mix the column                                                                                     
+    // Mix the column
     mixColumn(column);
 
-    // Store the mixed column back into the state                                                         
+    // Store the mixed column back into the state
     for (int row = 0; row < 4; row++) {
       state[row * 4 + col] = column[row];
     }
@@ -285,23 +285,23 @@ void mixColumn(unsigned char *column) {
   column[3] = b[3] ^ a[2] ^ a[1] ^ gfmul(a[0], 3);
 }
 
-// The rounds in the specifcation of aes_cipher() are composed of the following 4 byte-oriented               
-// transformations on the state (Section 5.1 of FIPS 197) - outputs hex after each step                   
+// The rounds in the specifcation of aes_cipher() are composed of the following 4 byte-oriented
+// transformations on the state (Section 5.1 of FIPS 197) - outputs hex after each step
 void aes_cipher(unsigned char *state, unsigned char *roundKey) {
   subBytes(state);
-  
+
   shiftRows(state);
-  
+
   mixColumns(state);
-  
+
   addRoundKey(state, roundKey);
 }
 
 void createRoundKey(unsigned char *expandedKey, unsigned char *roundKey) {
   int i, j;
-  // iterate over the columns                                                                             
+  // iterate over the columns
   for (i = 0; i < 4; i++) {
-    // iterate over the rows                                                                              
+    // iterate over the rows
     for (j = 0; j < 4; j++)
       roundKey[(i + (j * 4))] = expandedKey[(i * 4) + j];
   }
@@ -310,21 +310,21 @@ void createRoundKey(unsigned char *expandedKey, unsigned char *roundKey) {
 void aes_main(unsigned char *state, unsigned char *expandedKey, int nbrRounds) {
   unsigned char roundKey[16];
 
-  // Initial round key                                                                                    
+  // Initial round key
   createRoundKey(expandedKey, roundKey);
   addRoundKey(state, roundKey);
 
   for (int i = 1; i < nbrRounds; i++) {
     createRoundKey(expandedKey + 16 * i, roundKey);
-    aes_cipher(state, roundKey);  
+    aes_cipher(state, roundKey);
   }
 
   // Final round (no MixColumns)
   createRoundKey(expandedKey + 16 * nbrRounds, roundKey);
   subBytes(state);
-  
+
   shiftRows(state);
-  
+
   addRoundKey(state, roundKey);
 }
 
@@ -334,7 +334,7 @@ char aes_encrypt(unsigned char *input, unsigned char *output,
   int expandedKeySize;
   unsigned char block[16];
 
-  // Determine number of rounds based on key size                                                         
+  // Determine number of rounds based on key size
   switch (size) {
     case SIZE_16: nbrRounds = 10; break;
     case SIZE_24: nbrRounds = 12; break;
@@ -345,18 +345,18 @@ char aes_encrypt(unsigned char *input, unsigned char *output,
   expandedKeySize = 16 * (nbrRounds + 1);
   unsigned char expandedKey[expandedKeySize];
 
-  // Map input (row-major to column-major for AES)                                                        
+  // Map input (row-major to column-major for AES)
   for (int row = 0; row < 4; row++) {
     for (int col = 0; col < 4; col++) {
       block[row + 4 * col] = input[4 * row + col];
     }
   }
-  
-  // Expand the key                                                                                       
+
+  // Expand the key
   KeyExpansion(expandedKey, key, size, expandedKeySize);
-  // Encrypt the block                                                                                    
+  // Encrypt the block
   aes_main(block, expandedKey, nbrRounds);
-  // Map block back to output (column-major to row-major)                                                 
+  // Map block back to output (column-major to row-major)
   for (int row = 0; row < 4; row++) {
     for (int col = 0; col < 4; col++) {
       output[4 * row + col] = block[row + 4 * col];
@@ -381,12 +381,12 @@ void invShiftRows(unsigned char *state) {
 void invShiftRow(unsigned char *state, unsigned char nbr) {
   unsigned char temp[4];
 
-  // Perform rotation to the right by `nbr` positions                                                     
+  // Perform rotation to the right by `nbr` positions
   for (int i = 0; i < 4; i++) {
     temp[i] = state[(i - nbr + 4) % 4];
   }
 
-  // Copy back the rotated values                                                                         
+  // Copy back the rotated values
   for (int i = 0; i < 4; i++) {
     state[i] = temp[i];
   }
@@ -396,15 +396,15 @@ void invMixColumns(unsigned char *state) {
   unsigned char column[4];
 
   for (int col = 0; col < 4; col++) {
-    // Extract one column (4 bytes from each row)                                                         
+    // Extract one column (4 bytes from each row)
     for (int row = 0; row < 4; row++) {
       column[row] = state[row * 4 + col];
     }
 
-    // Apply inverse MixColumn transformation                                                             
+    // Apply inverse MixColumn transformation
     invMixColumn(column);
 
-    // Store transformed column back into the state                                                       
+    // Store transformed column back into the state
     for (int row = 0; row < 4; row++) {
       state[row * 4 + col] = column[row];
     }
@@ -454,17 +454,17 @@ void aes_invRound(unsigned char *state, unsigned char *roundKey) {
 void aes_invCipher(unsigned char *state, unsigned char *expandedKey, int nbrRounds) {
   unsigned char roundKey[16];
 
-  // Initial round key for final round                                                                    
+  // Initial round key for final round
   createRoundKey(expandedKey + 16 * nbrRounds, roundKey);
   addRoundKey(state, roundKey);
 
-  // Inverse rounds (excluding final round)                                                               
+  // Inverse rounds (excluding final round)
   for (int round = nbrRounds - 1; round > 0; round--) {
     createRoundKey(expandedKey + 16 * round, roundKey);
     aes_invRound(state, roundKey);
   }
 
-  // Final inverse round (no invMixColumns)                                                               
+  // Final inverse round (no invMixColumns)
   createRoundKey(expandedKey, roundKey);
   invShiftRows(state);
   invSubBytes(state);
@@ -477,7 +477,7 @@ char aes_decrypt(unsigned char *input, unsigned char *output,
   int expandedKeySize;
   unsigned char block[16];
 
-  // Determine the number of rounds based on key size                                                     
+  // Determine the number of rounds based on key size
   switch (size) {
     case SIZE_16: nbrRounds = 10; break;
     case SIZE_24: nbrRounds = 12; break;
@@ -488,20 +488,20 @@ char aes_decrypt(unsigned char *input, unsigned char *output,
   expandedKeySize = 16 * (nbrRounds + 1);
   unsigned char expandedKey[expandedKeySize];
 
-  // Transpose input (column-major block for AES)                                                         
+  // Transpose input (column-major block for AES)
   for (int row = 0; row < 4; row++) {
     for (int col = 0; col < 4; col++) {
       block[row + 4 * col] = input[4 * row + col];
     }
   }
 
-  // Key expansion                                                                                        
+  // Key expansion
   KeyExpansion(expandedKey, key, size, expandedKeySize);
 
-  // Decrypt                                                                                              
+  // Decrypt
   aes_invCipher(block, expandedKey, nbrRounds);
 
-  // Transpose back into output (row-major)                                                               
+  // Transpose back into output (row-major)
   for (int row = 0; row < 4; row++) {
     for (int col = 0; col < 4; col++) {
       output[4 * row + col] = block[row + 4 * col];
@@ -513,29 +513,29 @@ char aes_decrypt(unsigned char *input, unsigned char *output,
 
 int main(int argc, char *argv[]) {
 
-  // FIPS 197-2 Appendix A/B results for ciphertext  
-  unsigned char expected[16] = { 
+  // FIPS 197-2 Appendix A/B results for ciphertext
+  unsigned char expected[16] = {
      0x39, 0x25, 0x84, 0x1d, 0x02, 0xdc, 0x09, 0xfb,
      0xdc, 0x11, 0x85, 0x97, 0x19, 0x6a, 0x0b, 0x32};
-     
+
   // Rounds: Number of AES rounds
   // Words/Key: Number of 32-bit words per round key (Nb = 4 for AES)
   // Round Keys: Total words in expanded key = Nb × (Rounds + 1)
   // KeyExp (B): Key expansion size in bytes = Round Keys × 4
   // Block (B): Block size in bytes = 128 bits / 8 = 16
-  
+
   //+-----------+ Block Size | Rounds | Words/Key | Round Keys | KeyExp (B) | Block (B) |
   //|-----------|------------|--------|-----------|------------|------------|-----------|
   //| AES-128   | 128 bits   | 10     | 4         | 44         | 176        | 16        |
   //| AES-192   | 128 bits   | 12     | 4         | 52         | 208        | 16        |
   //| AES-256   | 128 bits   | 14     | 4         | 60         | 240        | 16        |
   //+-----------+------------+--------+-----------+------------+------------+-----------+
-  
+
   // the expanded keySize to store full set of round keys (change according to table)
   int expandedKeySize = 176;
 
   // the cipher key size defined on Line 81 (change for different AES key)
-  enum keySize size = SIZE_16;  
+  enum keySize size = SIZE_16;
 
   unsigned char expandedKey[expandedKeySize];
 
@@ -548,16 +548,16 @@ int main(int argc, char *argv[]) {
   // AES operates on 128-bit blocks (16 bytes), always — regardless of key size (128, 192, 256).
   unsigned char plaintext[16] = {0x32, 0x43, 0xf6, 0xa8, 0x88, 0x5a, 0x30, 0x8d,
                                  0x31, 0x31, 0x98, 0xa2, 0xe0, 0x37, 0x07, 0x34};
-  
+
   unsigned char ciphertext[16];
   unsigned char decryptedtext[16];
   int i;
 
   KeyExpansion(expandedKey, key, size, expandedKeySize);
-  
+
   // AES Encryption
   setStats(1);        // record initial mcycle and minstret
-  aes_encrypt(plaintext, ciphertext, key, size);  
+  aes_encrypt(plaintext, ciphertext, key, size);
   setStats(0);        // record elapsed mcycle and minstret
   return verifyChar(16, ciphertext, expected);
 
@@ -565,13 +565,13 @@ int main(int argc, char *argv[]) {
   for (i = 0; i < 16; i++) {
     printf("%02x%c", ciphertext[i], ((i + 1) % 16) ? ' ' : '\n');
   }
-    
+
   // AES Decryption
   aes_decrypt(ciphertext, decryptedtext, key, size);
   printf("\nDecrypted text (hex format):\n");
   for (i = 0; i < 16; i++) {
     printf("%2.2x%c", decryptedtext[i], ((i + 1) % 16) ? ' ' : '\n');
-  }  
+  }
 
   return 0;
 }

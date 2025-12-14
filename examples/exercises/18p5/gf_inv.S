@@ -1,8 +1,8 @@
 .text
-	
+
 .global rvtest_entry_point
 rvtest_entry_point:
-	
+
     li a0, 0x43        # Input value to invert in GF(2^8)
     li t0, 0x11B       # Modulus: irreducible poly x^8 + x^4 + x^3 + x + 1
 
@@ -28,8 +28,8 @@ rvtest_entry_point:
     # a3: temporary for SLT result
     # a4/a5: shift results, temporaries
     # s8: initial seed of instruction count (instret)
-    # s9: final value of instruction count (instret)	
-	
+    # s9: final value of instruction count (instret)
+
 # --------------------------------------
 # Main loop: Extended Euclidean Division
 # --------------------------------------
@@ -51,14 +51,14 @@ inv_loop:
     slt a3, a2, zero       	# Check if shift < 0
     bnez a3, swap_and_negate
 
-    # Perform r0 ^= r1 << shift 
+    # Perform r0 ^= r1 << shift
     # Polynomial subtraction in GF(2)
     sll a4, t4, a2
     xor t3, t3, a4
     andi t3, t3, 0x1FF     	# Mask off 9 bits to stay in GF(2^8)
 
     # Update s0: s0 ^= s1 << shift - Update Bezout coefficient
-    sll a5, t2, a2		
+    sll a5, t2, a2
     xor t1, t1, a5
     andi t1, t1, 0x1FF		# Mask off 9 bits to stay in GF(2^8)
 
@@ -143,25 +143,25 @@ done_deg:
 done:
     mv a0, t1             	# Result is a0
     andi a0, a0, 0xFF     	# Mask to 8 bits
-    csrr s9, instret		# count instructions at end	
-    sub s9, s9, s8	        # get number of #instructions executed	
+    csrr s9, instret		# count instructions at end
+    sub s9, s9, s8	        # get number of #instructions executed
 
 write_tohost:			# HTIF stuff
     la t1, tohost
     li t0, 1            	# 1 for success, 3 for failure
     sw t0, 0(t1)        	# send success code
-    
+
     la t0, begin_signature	# Address of signature
     sw a0, 0(t0)            	# Store result (i.e., a0)
     sw s9, 4(t0)            	# record #instructions executed
-    
+
 fail:
     li a0, 0xff			# Signal failure: no inverse exists
-	
+
 self_loop:
     j self_loop
 
-.section .tohost 
+.section .tohost
 tohost:                 	# write to HTIF
     .word 0
 fromhost:
@@ -170,10 +170,9 @@ fromhost:
 .data
 .EQU XLEN,32
 begin_signature:
-    .fill 2*(XLEN/32),4,0xdeadbeef     
+    .fill 2*(XLEN/32),4,0xdeadbeef
 end_signature:
 
-	
+
 .bss
     .space 512
-

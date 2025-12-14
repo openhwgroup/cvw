@@ -14,16 +14,16 @@ _start:
     # Copy initial 128-bit key into key_schedule
     ld s2, 0(s4)              			# First 64 bits - {w3, w2}
     ld s3, 8(s4)              			# Second 64 bits - {w1, w0}
-	
+
     # Store initial state in signature
     la s11, begin_signature
     csrr s8, instret  				# count instructions at beginning
     addi sp, sp, -8           			# Allocate 8 bytes on the stack
-    sd s8,  0(sp)            			# Save instreg on the stack	
+    sd s8,  0(sp)            			# Save instreg on the stack
 
     xor s0, s0, s2   				# state0 ^= roundkey0
     xor s1, s1, s3   				# state1 ^= roundkey1
-	
+
     # Set round counter (i = 1)
     li s4, 1                  			# round index (1-based)
     li s5, 10                 			# total number of additional rounds
@@ -35,7 +35,7 @@ enc_loop:
     bge s4, s5, final_round
 
     # Extract high 32 bits from s8 (last word of previous round key)
-    srli s9, s3, 32   
+    srli s9, s3, 32
 
     # SubWord(s9): apply RotWord and S-box to each byte
     srli a0, s9, 8
@@ -72,13 +72,13 @@ enc_loop:
     xor s9, s9, a6     				# SubWord result ^= Rcon
 
     # Reconstruct new words
-    xor s2, s2, s9                 
-    slli a0, s2, 32                
-    xor s2, s2, a0                
-    srli a1, s2, 32                
-    xor s3, s3, a1                 
-    slli a2, s3, 32    
-    xor s3, s3, a2                
+    xor s2, s2, s9
+    slli a0, s2, 32
+    xor s2, s2, a0
+    srli a1, s2, 32
+    xor s3, s3, a1
+    slli a2, s3, 32
+    xor s3, s3, a2
 
     ####################################################
     # Middle AES Round
@@ -94,7 +94,7 @@ enc_loop:
 
 final_round:
     # Extract high 32 bits from s8 (last word of previous round key)
-    srli s9, s3, 32   
+    srli s9, s3, 32
 
     # SubWord(s9): apply RotWord and S-box to each byte
     srli a0, s9, 8
@@ -131,13 +131,13 @@ final_round:
     xor s9, s9, a6     				# SubWord result ^= Rcon
 
     # Reconstruct new words
-    xor s2, s2, s9                 
-    slli a0, s2, 32                
-    xor s2, s2, a0                
-    srli a1, s2, 32                
-    xor s3, s3, a1                 
-    slli a2, s3, 32    
-    xor s3, s3, a2    
+    xor s2, s2, s9
+    slli a0, s2, 32
+    xor s2, s2, a0
+    srli a1, s2, 32
+    xor s3, s3, a1
+    slli a2, s3, 32
+    xor s3, s3, a2
 
     #########################################################
     # Final AES round without MixColumns
@@ -148,19 +148,19 @@ final_round:
     xor s1, t1, s3
 
     # Store HTIF
-    sd s0, 0(s11)	
+    sd s0, 0(s11)
     sd s1, 8(s11)
-    addi s11, s11, 16	
+    addi s11, s11, 16
 
 # Finalize
 done:
     ld s8,  0(sp)             			# Restore instret (s8)
     addi sp, sp, 8            			# Deallocate stack space
     csrr s9, instret       			# Read instruction count
-    sub s9, s9, s8	        		# get number of #instructions executed	
+    sub s9, s9, s8	        		# get number of #instructions executed
     sd s9, 0(s11)				# store number of #instructions executed
-    addi s11, s11, 8	
-	
+    addi s11, s11, 8
+
 write_tohost:
     la a0, tohost
     li a1, 1               			# Success code
@@ -183,18 +183,18 @@ begin_signature:
     .fill (2+1)*(XLEN/32),4,0xdeadbeef
 end_signature:
 
-topofstack:	
-	
+topofstack:
+
 # FIPS 197 Example Appendix A AES-128 (stored little endian)
 plaintext:
   .dword 0x8d305a88a8f64332, 0x340737e0a2983131
 
 key:
-  .dword 0xa6d2ae2816157e2b, 0x3c4fcf098815f7ab  
+  .dword 0xa6d2ae2816157e2b, 0x3c4fcf098815f7ab
 
 rcon:
     .byte 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36
-	
+
 sbox:
     .byte 0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5
     .byte 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76
@@ -228,10 +228,9 @@ sbox:
     .byte 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf
     .byte 0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68
     .byte 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
-	
+
 ciphertext:
     .space 16
 
 .bss
     .space 512
-

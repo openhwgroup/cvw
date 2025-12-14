@@ -1,7 +1,7 @@
 .section .text
 .global _start
 
-# Elaborated routines based on https://github.com/riscv/riscv-crypto	
+# Elaborated routines based on https://github.com/riscv/riscv-crypto
 _start:
     la a0, ciphertext
     la a1, plaintext
@@ -23,7 +23,7 @@ _start:
     lw t3, 12(a2)
 
     csrr s8, instret   				# count instructions at beginning
-	
+
     # XOR state with round key
     xor a4, a4, t0
     xor a5, a5, t1
@@ -116,24 +116,24 @@ final_round:
     xor a7, t3, a7
 
     # DEBUG
-    sw a4, 0(s11)	
+    sw a4, 0(s11)
     sw a5, 4(s11)
     sw a6, 8(s11)
     sw a7, 12(s11)
     addi s11, s11, 16
-	
+
     # Store ciphertext
     sw a4, 0(a0)
     sw a5, 4(a0)
     sw a6, 8(a0)
-    sw a7, 12(a0)	
+    sw a7, 12(a0)
 
 # Finalize
 done:
     csrr s9, instret       			# Read instruction count
-    sub s9, s9, s8	        		# get number of #instructions executed	
-    sw s9, 0(s11)	
-	
+    sub s9, s9, s8	        		# get number of #instructions executed
+    sw s9, 0(s11)
+
 write_tohost:
     la t1, tohost
     li t0, 1               			# Success code

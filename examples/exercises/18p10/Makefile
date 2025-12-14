@@ -5,7 +5,7 @@ $(TARGET).objdump: $(TARGET)
 	riscv64-unknown-elf-objdump -d $(TARGET) > $(TARGET).objdump
 	$(ELF2HEX) --bit-width 32 --input $(TARGET) --output $(TARGET).memfile
 
-    
+
 $(TARGET): $(TARGET).S Makefile
 	riscv64-unknown-elf-gcc -g -o $(TARGET) -march=rv64gc_zk -mabi=lp64d -mcmodel=medany \
 	    -nostartfiles -T../../link/link.ld $(TARGET).S
@@ -17,7 +17,3 @@ sim:
 clean:
 	rm -f $(TARGET) $(TARGET).objdump $(TARGET).signature.output $(TARGET).memfile
 	rm -f *~
-
-
-
-
