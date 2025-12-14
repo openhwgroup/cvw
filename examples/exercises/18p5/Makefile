@@ -15,7 +15,3 @@ sim:
 clean:
 	rm -f $(TARGET) $(TARGET).objdump $(TARGET).signature.output
 	rm -f *~
-
-
-
-
