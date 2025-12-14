@@ -292,9 +292,11 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
       L4_RD:      if (HPTWFaultM)                                     NextWalkerState = FAULT;
                   else if (DCacheBusStallM)                           NextWalkerState = L4_RD;
                   else                                                NextWalkerState = L3_ADR;   // Transition to level 3
-      L3_ADR:                                                         NextWalkerState = L3_RD; // First access in SV48
-      L3_RD:      if (HPTWFaultM)                                     NextWalkerState = LEAF;
-                  else if (InitialWalkerState == L3_ADR | ValidNonLeafPTE) NextWalkerState = L3_RD;
+      L3_ADR:     if (HPTWFaultM)                                     NextWalkerState = FAULT;
+                  else if (InitialWalkerState == L3_ADR | ValidNonLeafPTE) NextWalkerState = L3_RD; // First access in SV48
+                  else                                                NextWalkerState = LEAF;
+      L3_RD:      if (HPTWFaultM)                                     NextWalkerState = FAULT;
+                  else if (DCacheBusStallM)                           NextWalkerState = L3_RD;
                   else                                                NextWalkerState = L2_ADR;
       L2_ADR:     if (HPTWFaultM)                                     NextWalkerState = FAULT;
                   else if (InitialWalkerState == L2_ADR | ValidNonLeafPTE) NextWalkerState = L2_RD; // First access in SV39
