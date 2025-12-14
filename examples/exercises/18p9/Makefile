@@ -14,4 +14,3 @@ $(TARGET): $(TARGET).c Makefile
 clean:
 	rm -f $(TARGET) $(TARGET).objdump
 	rm -f *~
-
