@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # sha256.py
 # Secure Hash Algorithm - SHA-256
 # james.stine@okstate.edu 5 Sept 2024
