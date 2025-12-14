@@ -54,7 +54,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   input  logic              FlushW,
   input  logic [3:0]        CMOpM,
   output logic [P.XLEN-1:0] PTE,                    // page table entry to TLBs
-  output logic [2:0]        PageType,               // page type to TLBs // expanded to 3 bit for adding 5th page size.
+  output logic [2:0]        PageType,               // page type to TLBs 
   output logic              ITLBWriteF, DTLBWriteM, // write TLB with new entry
   output logic [1:0]        PreLSURWM,
   output logic [P.XLEN+1:0] IHAdrM,
@@ -76,7 +76,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
           L1_ADR, L1_RD,
           L2_ADR, L2_RD,
           L3_ADR, L3_RD,
-          L4_ADR, L4_RD, // Added level 4 Address and read states for sv57
+          L4_ADR, L4_RD, 
           LEAF, IDLE, UPDATE_PTE,
           FAULT} statetype;
 
@@ -183,7 +183,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
     mux2 #(P.XLEN) NextPTEMux(ReadDataM, AccessedPTE, UpdatePTE, NextPTE); // NextPTE = ReadDataM when ADUE = 0 because UpdatePTE = 0
     flopenr #(P.PA_BITS) HPTWAdrWriteReg(clk, reset, SaveHPTWAdr, HPTWReadAdr, HPTWWriteAdr);
 
-    assign SaveHPTWAdr = (NextWalkerState == L0_RD | NextWalkerState == L1_RD | NextWalkerState == L2_RD | NextWalkerState == L3_RD | NextWalkerState == L4_RD ); // save the HPTWAdr when the walker is about to read the PTE at any level; the last level read is the one to write during UpdatePTE //added L4_RD for sv57
+    assign SaveHPTWAdr = (NextWalkerState == L0_RD | NextWalkerState == L1_RD | NextWalkerState == L2_RD | NextWalkerState == L3_RD | NextWalkerState == L4_RD ); // save the HPTWAdr when the walker is about to read the PTE at any level; the last level read is the one to write during UpdatePTE 
     assign SelHPTWWriteAdr = UpdatePTE | HPTWRW[0];
     mux2 #(P.PA_BITS) HPTWWriteAdrMux(HPTWReadAdr, HPTWWriteAdr, SelHPTWWriteAdr, HPTWAdr);
 
@@ -225,7 +225,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
 
   // Enable and select signals based on states
   assign StartWalk  = (WalkerState == IDLE) & TLBMissOrUpdateDA;
-  assign HPTWRW[1]  = (WalkerState == L4_RD) | (WalkerState == L3_RD) | (WalkerState == L2_RD) | (WalkerState == L1_RD) | (WalkerState == L0_RD); // Added walker state = L4_RD for sv57
+  assign HPTWRW[1]  = (WalkerState == L4_RD) | (WalkerState == L3_RD) | (WalkerState == L2_RD) | (WalkerState == L1_RD) | (WalkerState == L0_RD); 
   assign DTLBWriteM = (WalkerState == LEAF & ~HPTWUpdateDA) & DTLBWalk;
   assign ITLBWriteF = (WalkerState == LEAF & ~HPTWUpdateDA) & ~DTLBWalk;
 
@@ -233,7 +233,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   flopr #(3) PageTypeReg(clk, reset, NextPageType, PageType);
   always_comb
     case (WalkerState)
-      L4_RD:  NextPageType = 3'b100; // added petapage for sv57
+      L4_RD:  NextPageType = 3'b100; // petapage
       L3_RD:  NextPageType = 3'b011; // terapage
       L2_RD:  NextPageType = 3'b010; // gigapage
       L1_RD:  NextPageType = 3'b001; // megapage
@@ -273,13 +273,13 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
     assign MegapageMisaligned = |(CurrentPPN[9:0]); // must have zero PPN0
     assign Misaligned = ((WalkerState == L0_ADR) & MegapageMisaligned);
   end else begin
-    logic  PetapageMisaligned, GigapageMisaligned, TerapageMisaligned; //decared petapage for sv57
-    assign InitialWalkerState = (SvMode == P.SV57) ? L4_ADR : (SvMode == P.SV48) ? L3_ADR : L2_ADR ; // Added sv57 mode.
+    logic  PetapageMisaligned, GigapageMisaligned, TerapageMisaligned; 
+    assign InitialWalkerState = (SvMode == P.SV57) ? L4_ADR : (SvMode == P.SV48) ? L3_ADR : L2_ADR ;
     assign PetapageMisaligned = |(CurrentPPN[35:0]);  // Must have zero PPN3, PPN2, PPN1, PPN0 for sv57
     assign TerapageMisaligned = |(CurrentPPN[26:0]); // Must have zero PPN2, PPN1, PPN0
     assign GigapageMisaligned = |(CurrentPPN[17:0]); // Must have zero PPN1 and PPN0
     assign MegapageMisaligned = |(CurrentPPN[8:0]);  // Must have zero PPN0
-    assign Misaligned = ((WalkerState == L3_ADR) & PetapageMisaligned) | ((WalkerState == L2_ADR) & TerapageMisaligned) | ((WalkerState == L1_ADR) & GigapageMisaligned) | ((WalkerState == L0_ADR) & MegapageMisaligned); // added petapage misalignment for sv57
+    assign Misaligned = ((WalkerState == L3_ADR) & PetapageMisaligned) | ((WalkerState == L2_ADR) & TerapageMisaligned) | ((WalkerState == L1_ADR) & GigapageMisaligned) | ((WalkerState == L0_ADR) & MegapageMisaligned); 
   end
 
   // Page Table Walker FSM
