@@ -1,7 +1,7 @@
 # Copyright 1991-2016 Mentor Graphics Corporation
-# 
+#
 # Modification by Oklahoma State University
-# Use with Testbench 
+# Use with Testbench
 # James Stine, 2008
 # Go Cowboys!!!!!!
 #
@@ -151,7 +151,7 @@ add wave -noupdate -expand -group ih1 /stimulus/dut/main/ih1/*
 
 
 
--- Set Wave Output Items 
+-- Set Wave Output Items
 TreeUpdate [SetDefaultTree]
 WaveRestoreZoom {0 ps} {75 ns}
 configure wave -namecolwidth 350
@@ -163,6 +163,6 @@ configure wave -datasetprefix 0
 configure wave -rowmargin 4
 configure wave -childrowmargin 2
 
--- Run the Simulation 
+-- Run the Simulation
 run 25 ns
 quit
