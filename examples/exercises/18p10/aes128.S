@@ -2,7 +2,7 @@
 .global _start
 
 _start:
-    la sp, topofstack   			# Initialize stack pointer
+    la sp, topofstack               # Initialize stack pointer
     la s4, key
     la a0, ciphertext
     la a1, plaintext
@@ -12,24 +12,24 @@ _start:
     ld s1, 8(a1)
 
     # Copy initial 128-bit key into key_schedule
-    ld s2, 0(s4)              			# First 64 bits - {w3, w2}
-    ld s3, 8(s4)              			# Second 64 bits - {w1, w0}
+    ld s2, 0(s4)                        # First 64 bits - {w3, w2}
+    ld s3, 8(s4)                        # Second 64 bits - {w1, w0}
 
     # Store initial state in signature
     la s11, begin_signature
-    csrr s8, instret  				# count instructions at beginning
-    addi sp, sp, -8           			# Allocate 8 bytes on the stack
-    sd s8,  0(sp)            			# Save instreg on the stack
+    csrr s8, instret                # count instructions at beginning
+    addi sp, sp, -8                     # Allocate 8 bytes on the stack
+    sd s8,  0(sp)                       # Save instreg on the stack
 
-    xor s0, s0, s2   				# state0 ^= roundkey0
-    xor s1, s1, s3   				# state1 ^= roundkey1
+    xor s0, s0, s2                  # state0 ^= roundkey0
+    xor s1, s1, s3                  # state1 ^= roundkey1
 
     # Set round counter (i = 1)
-    li s4, 1                  			# round index (1-based)
-    li s5, 10                 			# total number of additional rounds
+    li s4, 1                            # round index (1-based)
+    li s5, 10                           # total number of additional rounds
 
     # key_ptr points to start of last written round key
-    addi s6, s1, 16           			# move to next write location
+    addi s6, s1, 16                     # move to next write location
 
 enc_loop:
     bge s4, s5, final_round
@@ -39,12 +39,12 @@ enc_loop:
 
     # SubWord(s9): apply RotWord and S-box to each byte
     srli a0, s9, 8
-    and a0, a0, 0xff   				# byte0
+    and a0, a0, 0xff                # byte0
     srli a1, s9, 16
-    and a1, a1, 0xff   				# byte1
+    and a1, a1, 0xff                # byte1
     srli a2, s9, 24
-    and a2, a2, 0xff   				# byte2
-    and a3, s9, 0xff   				# byte3
+    and a2, a2, 0xff                # byte2
+    and a3, s9, 0xff                # byte3
 
     # Lookup each byte in S-box table
     la a4, sbox
@@ -68,8 +68,8 @@ enc_loop:
     # Rcon XOR
     la a5, rcon
     add a5, a5, s4
-    lbu a6, -1(a5)     				# rcon[s4-1]
-    xor s9, s9, a6     				# SubWord result ^= Rcon
+    lbu a6, -1(a5)                  # rcon[s4-1]
+    xor s9, s9, a6                  # SubWord result ^= Rcon
 
     # Reconstruct new words
     xor s2, s2, s9
@@ -98,12 +98,12 @@ final_round:
 
     # SubWord(s9): apply RotWord and S-box to each byte
     srli a0, s9, 8
-    and a0, a0, 0xff   				# byte0
+    and a0, a0, 0xff                # byte0
     srli a1, s9, 16
-    and a1, a1, 0xff   				# byte1
+    and a1, a1, 0xff                # byte1
     srli a2, s9, 24
-    and a2, a2, 0xff   				# byte2
-    and a3, s9, 0xff   				# byte3
+    and a2, a2, 0xff                # byte2
+    and a3, s9, 0xff                # byte3
 
     # Lookup each byte in S-box table
     la a4, sbox
@@ -127,8 +127,8 @@ final_round:
     # Rcon XOR
     la a5, rcon
     add a5, a5, s4
-    lbu a6, -1(a5)     				# rcon[s4-1]
-    xor s9, s9, a6     				# SubWord result ^= Rcon
+    lbu a6, -1(a5)                  # rcon[s4-1]
+    xor s9, s9, a6                  # SubWord result ^= Rcon
 
     # Reconstruct new words
     xor s2, s2, s9
@@ -154,17 +154,17 @@ final_round:
 
 # Finalize
 done:
-    ld s8,  0(sp)             			# Restore instret (s8)
-    addi sp, sp, 8            			# Deallocate stack space
-    csrr s9, instret       			# Read instruction count
-    sub s9, s9, s8	        		# get number of #instructions executed
-    sd s9, 0(s11)				# store number of #instructions executed
+    ld s8,  0(sp)                       # Restore instret (s8)
+    addi sp, sp, 8                      # Deallocate stack space
+    csrr s9, instret                # Read instruction count
+    sub s9, s9, s8                  # get number of #instructions executed
+    sd s9, 0(s11)               # store number of #instructions executed
     addi s11, s11, 8
 
 write_tohost:
     la a0, tohost
-    li a1, 1               			# Success code
-    sd a1, 0(a0)           			# Send success code
+    li a1, 1                        # Success code
+    sd a1, 0(a0)                    # Send success code
 
 self_loop:
     j self_loop

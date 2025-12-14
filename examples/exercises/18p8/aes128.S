@@ -16,10 +16,10 @@ _start:
     # Store initial state in signature
     la s11, begin_signature
 
-    csrr s8, instret   				# count instructions at beginning
+    csrr s8, instret                # count instructions at beginning
 
-    xor s0, s0, s2   				# state0 ^= roundkey0
-    xor s1, s1, s3   				# state1 ^= roundkey1
+    xor s0, s0, s2                  # state0 ^= roundkey0
+    xor s1, s1, s3                  # state1 ^= roundkey1
 
     # Initialize loop counter and max rounds
     li s4, 1
@@ -67,14 +67,14 @@ final_round:
 
 # Finalize
 done:
-    csrr s9, instret       			# Read instruction count
-    sub s9, s9, s8	        		# get number of #instructions executed
+    csrr s9, instret                # Read instruction count
+    sub s9, s9, s8                  # get number of #instructions executed
     sd s9, 0(s11)
 
 write_tohost:
     la a0, tohost
-    li a1, 1               			# Success code
-    sd a1, 0(a0)           			# Send success code
+    li a1, 1                        # Success code
+    sd a1, 0(a0)                    # Send success code
 
 self_loop:
     j self_loop

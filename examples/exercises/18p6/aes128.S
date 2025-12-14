@@ -22,7 +22,7 @@ _start:
     lw t2, 8(a2)
     lw t3, 12(a2)
 
-    csrr s8, instret   				# count instructions at beginning
+    csrr s8, instret                # count instructions at beginning
 
     # XOR state with round key
     xor a4, a4, t0
@@ -130,14 +130,14 @@ final_round:
 
 # Finalize
 done:
-    csrr s9, instret       			# Read instruction count
-    sub s9, s9, s8	        		# get number of #instructions executed
+    csrr s9, instret                # Read instruction count
+    sub s9, s9, s8                  # get number of #instructions executed
     sw s9, 0(s11)
 
 write_tohost:
     la t1, tohost
-    li t0, 1               			# Success code
-    sw t0, 0(t1)           			# Send success code
+    li t0, 1                        # Success code
+    sw t0, 0(t1)                    # Send success code
 
 self_loop:
     j self_loop

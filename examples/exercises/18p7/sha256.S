@@ -2,7 +2,7 @@
 .global _start
 
 _start:
-    la sp, topofstack   			# Initialize stack pointer
+    la sp, topofstack               # Initialize stack pointer
     # Load initial hash state into a0–a7
     la t0, H
     lw a0, 0(t0)
@@ -16,18 +16,18 @@ _start:
 
     # Store initial state in signature
     la s11, begin_signature
-    csrr s10, instret  				# count instructions at beginning
+    csrr s10, instret               # count instructions at beginning
 
-    la s0, M					# Load point to padded message
-    la s1, W					# See NIST 180-4 6.2.2
-    li t1, 0					# Initialize counter (t)
+    la s0, M                    # Load point to padded message
+    la s1, W                    # See NIST 180-4 6.2.2
+    li t1, 0                    # Initialize counter (t)
 
 load_loop:
     lw t2, 0(s0)
     sw t2, 0(s1)
-    addi s0, s0, 4				# increment source M ptr
-    addi s1, s1, 4				# increment destination W ptr
-    addi t1, t1, 1				# increment t
+    addi s0, s0, 4              # increment source M ptr
+    addi s1, s1, 4              # increment destination W ptr
+    addi t1, t1, 1              # increment t
     li t3, 16
     blt t1, t3, load_loop
 
@@ -36,48 +36,48 @@ load_loop:
     li t1, 16
 
 gen_loop:
-    slli t2, t1, 2				# addr{W[16]} <- 16 * 4 (XLEN=32)
-    add t3, s1, t2				# Compute addr{W[16]}
+    slli t2, t1, 2              # addr{W[16]} <- 16 * 4 (XLEN=32)
+    add t3, s1, t2              # Compute addr{W[16]}
 
-    lw t4, -8(t3)				# W_{t-2}
-    lw t5, -28(t3)				# W_{t-7}
-    lw t6, -60(t3)				# W_{t-15}
-    lw t0, -64(t3)				# W_{t-16}
+    lw t4, -8(t3)               # W_{t-2}
+    lw t5, -28(t3)              # W_{t-7}
+    lw t6, -60(t3)              # W_{t-15}
+    lw t0, -64(t3)              # W_{t-16}
 
-    sha256sig1 t4, t4				# Sigma1 transformation
-    sha256sig0 t6, t6				# Sigma0 transofmration
+    sha256sig1 t4, t4               # Sigma1 transformation
+    sha256sig0 t6, t6               # Sigma0 transofmration
 
-    add t4, t4, t5				# temp = Sigma1+W_{t-7}
-    add t4, t4, t6				# temp = temp + Sigma0
-    add t4, t4, t0				# Message Schedule W_t
+    add t4, t4, t5              # temp = Sigma1+W_{t-7}
+    add t4, t4, t6              # temp = temp + Sigma0
+    add t4, t4, t0              # Message Schedule W_t
 
-    sw t4, 0(t3)				# Store W_t
+    sw t4, 0(t3)                # Store W_t
 
     addi t1, t1, 1
     li t5, 64
     blt t1, t5, gen_loop
 
     # Working variables: s2–s9 = a-h
-    addi sp, sp, -64           			# Allocate 64 bytes on the stack
-    mv s2, a0					# a
-    mv s3, a1					# b
-    mv s4, a2					# c
-    mv s5, a3					# d
-    mv s6, a4					# e
-    mv s7, a5					# f
-    mv s8, a6					# g
-    mv s9, a7					# h
+    addi sp, sp, -64                    # Allocate 64 bytes on the stack
+    mv s2, a0                   # a
+    mv s3, a1                   # b
+    mv s4, a2                   # c
+    mv s5, a3                   # d
+    mv s6, a4                   # e
+    mv s7, a5                   # f
+    mv s8, a6                   # g
+    mv s9, a7                   # h
 
-    sw s2,  0(sp)            			# Save a on the stack
-    sw s3,  4(sp)            			# Save b on the stack
-    sw s4,  8(sp)            			# Save c on the stack
-    sw s5, 12(sp)            			# Save d on the stack
-    sw s6, 16(sp)            			# Save e on the stack
-    sw s7, 20(sp)            			# Save f on the stack
-    sw s8, 24(sp)            			# Save g on the stack
-    sw s9, 28(sp)            			# Save h on the stack
+    sw s2,  0(sp)                       # Save a on the stack
+    sw s3,  4(sp)                       # Save b on the stack
+    sw s4,  8(sp)                       # Save c on the stack
+    sw s5, 12(sp)                       # Save d on the stack
+    sw s6, 16(sp)                       # Save e on the stack
+    sw s7, 20(sp)                       # Save f on the stack
+    sw s8, 24(sp)                       # Save g on the stack
+    sw s9, 28(sp)                       # Save h on the stack
 
-    li t0, 0           				# schedule counter
+    li t0, 0                        # schedule counter
     la t1, K
     la t2, W
 
@@ -85,63 +85,63 @@ gen_loop:
 sha_round:
     slli t3, t0, 2
     add t4, t1, t3
-    lw t5, 0(t4)       				# K[t]
+    lw t5, 0(t4)                    # K[t]
 
     add t4, t2, t3
-    lw t6, 0(t4)       				# W[t]
+    lw t6, 0(t4)                    # W[t]
 
-    sha256sum1 a0, s6				# Sum1 transformation
-    and a1, s6, s7      			# a1 = x & y
-    not a2, s6          			# a2 = ~x
-    and a2, a2, s8     	 			# a2 = ~x & z
+    sha256sum1 a0, s6               # Sum1 transformation
+    and a1, s6, s7                  # a1 = x & y
+    not a2, s6                      # a2 = ~x
+    and a2, a2, s8                  # a2 = ~x & z
     xor a1, a1, a2
     add a2, a0, a1
     add a2, a2, s9
-    add a2, a2, t5				# Ch = a1 = (x & y) ^ (~x & z) (4 instructions)
-    add a2, a2, t6     				# T1 = h + SUM1(e) + Ch(e,f,g) + K[i] + W[i]
+    add a2, a2, t5              # Ch = a1 = (x & y) ^ (~x & z) (4 instructions)
+    add a2, a2, t6                  # T1 = h + SUM1(e) + Ch(e,f,g) + K[i] + W[i]
 
-    sha256sum0 a3, s2				# Sum0 transformation
+    sha256sum0 a3, s2               # Sum0 transformation
     and a4, s2, s3                              # a4 = a & b
     and a5, s2, s4                              # a5 = a & c
     xor a4, a4, a5                              # a4 = (a & b) ^ (a & c)
     and a5, s3, s4                              # a5 = b & c
     xor a4, a4, a5                              # a4 = Maj(a, b, c) (5 instructions)
-    add a5, a3, a4     				# T2 = SUM0(a) + Maj(a,b,c)
+    add a5, a3, a4                  # T2 = SUM0(a) + Maj(a,b,c)
 
     # Compression Function Shift
-    mv s9, s8					# h
-    mv s8, s7					# g
-    mv s7, s6					# f
-    add s6, s5, a2				# e = d+T1
-    mv s5, s4					# d
-    mv s4, s3					# c
-    mv s3, s2					# b
-    add s2, a2, a5				# a = T1+T2
+    mv s9, s8                   # h
+    mv s8, s7                   # g
+    mv s7, s6                   # f
+    add s6, s5, a2              # e = d+T1
+    mv s5, s4                   # d
+    mv s4, s3                   # c
+    mv s3, s2                   # b
+    add s2, a2, a5              # a = T1+T2
 
-    addi t0, t0, 1				# Modify branch ctr for t
+    addi t0, t0, 1              # Modify branch ctr for t
     li a7, 64
     blt t0, a7, sha_round
 
     # Restore eight working variables
-    lw a0,  0(sp)              			# Restore a0 (a)
-    lw a1,  4(sp)              			# Restore a1 (b)
-    lw a2,  8(sp)              			# Restore a2 (c)
-    lw a3, 12(sp)              			# Restore a3 (d)
-    lw a4, 16(sp)              			# Restore a4 (e)
-    lw a5, 20(sp)              			# Restore a5 (f)
-    lw a6, 24(sp)              			# Restore a6 (g)
-    lw a7, 28(sp)              			# Restore a7 (h)
-    addi sp, sp, 64            			# Deallocate stack space
+    lw a0,  0(sp)                       # Restore a0 (a)
+    lw a1,  4(sp)                       # Restore a1 (b)
+    lw a2,  8(sp)                       # Restore a2 (c)
+    lw a3, 12(sp)                       # Restore a3 (d)
+    lw a4, 16(sp)                       # Restore a4 (e)
+    lw a5, 20(sp)                       # Restore a5 (f)
+    lw a6, 24(sp)                       # Restore a6 (g)
+    lw a7, 28(sp)                       # Restore a7 (h)
+    addi sp, sp, 64                     # Deallocate stack space
 
     # Intermediate Hash (e.g., H_0^i = a + H_0^{i-1})
-    add a0, a0, s2				# H0
-    add a1, a1, s3				# H1
-    add a2, a2, s4				# H2
-    add a3, a3, s5				# H3
-    add a4, a4, s6				# H4
-    add a5, a5, s7				# H5
-    add a6, a6, s8				# H6
-    add a7, a7, s9				# H7
+    add a0, a0, s2              # H0
+    add a1, a1, s3              # H1
+    add a2, a2, s4              # H2
+    add a3, a3, s5              # H3
+    add a4, a4, s6              # H4
+    add a5, a5, s7              # H5
+    add a6, a6, s8              # H6
+    add a7, a7, s9              # H7
 
     # Print out hash value or digest
     sw a0, 0(s11)
@@ -156,14 +156,14 @@ sha_round:
 
 # Finalize
 done:
-    csrr s9, instret       			# Read instruction count
-    sub s9, s9, s10	        		# get number of #instructions executed
-    sw s9, 0(s11)				# Print instruction count
+    csrr s9, instret                # Read instruction count
+    sub s9, s9, s10                 # get number of #instructions executed
+    sw s9, 0(s11)               # Print instruction count
 
 write_tohost:
     la t1, tohost
-    li t0, 1               			# Success code
-    sw t0, 0(t1)           			# Send success code
+    li t0, 1                        # Success code
+    sw t0, 0(t1)                    # Send success code
 
 self_loop:
     j self_loop
@@ -223,5 +223,3 @@ W:
 .bss
     .space 512
 topofstack:
-
-
