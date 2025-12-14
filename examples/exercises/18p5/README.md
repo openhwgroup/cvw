@@ -59,16 +59,16 @@ LaTeX
     \State $d_0 \gets \text{deg}(r_0)$
     \State $d_1 \gets \text{deg}(r_1)$
     \State $\text{shift} \gets d_0 - d_1$
-
+    
     \If{$\text{shift} < 0$}
         \State Swap $r_0 \leftrightarrow r_1$
         \State Swap $s_0 \leftrightarrow s_1$
         \State $\text{shift} \gets -\text{shift}$
     \EndIf
-
+    
     \State $r_0 \gets r_0 \oplus (r_1 \ll \text{shift})$
     \State $s_0 \gets s_0 \oplus (s_1 \ll \text{shift})$
-
+    
     \State Mask $r_0$ and $s_0$ to 9 bits: $r_0 \gets r_0 \mathbin{\&} 0x1FF$, $s_0 \gets s_0 \mathbin{\&} 0x1FF$
 \EndWhile
 
