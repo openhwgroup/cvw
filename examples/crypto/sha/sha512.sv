@@ -39,18 +39,24 @@ module top #(parameter MSG_SIZE = 112,
    
 endmodule // sha_512
 
-module sha_padder #(parameter MSG_SIZE = 112,	     
-		    parameter PADDED_SIZE = 1024) 
-   (input logic [MSG_SIZE-1:0] message,
-    output logic [PADDED_SIZE-1:0] padded);
+module sha_padder #(
+    parameter int MSG_SIZE    = 112,
+    parameter int PADDED_SIZE = 1024
+)(
+    input  logic [MSG_SIZE-1:0]    message,
+    output logic [PADDED_SIZE-1:0] padded
+);
 
-   // Padding for sha512 is same form as sha256, except message size is 128 bits 
-   // and must be padded to 1024 bits for a 1 block sha512.    
-   localparam zero_width = PADDED_SIZE - 128 - MSG_SIZE - 1;
-   localparam back_0_width = 128 - $bits(MSG_SIZE);
-   assign padded = {message, 1'b1, {zero_width{1'b0}}, {back_0_width{1'b0}}, MSG_SIZE};
+    // message || 1 || zeros || 128-bit length
+    localparam int zero_width = PADDED_SIZE - MSG_SIZE - 1 - 128;
 
-endmodule // sha_padder
+    logic [127:0] msg_len;
+    assign msg_len = 128'(MSG_SIZE);  // explicit cast for lint
+
+    assign padded = {message, 1'b1, {zero_width{1'b0}},  msg_len
+    };
+
+endmodule
 
 module sha512 #(parameter PADDED_SIZE = 1024)
    (input logic [PADDED_SIZE-1:0] padded,

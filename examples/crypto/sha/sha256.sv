@@ -39,15 +39,21 @@ module top #(parameter MSG_SIZE = 24,
    
 endmodule // sha_256
 
-module sha_padder #(parameter MSG_SIZE = 24,
-		    parameter PADDED_SIZE = 512) 
-   (input logic [MSG_SIZE-1:0] message,
-    output logic [PADDED_SIZE-1:0] padded);
+module sha_padder #(
+    parameter int MSG_SIZE    = 24,
+    parameter int PADDED_SIZE = 512
+)(
+    input  logic [MSG_SIZE-1:0]    message,
+    output logic [PADDED_SIZE-1:0] padded
+);
 
-   localparam zero_width = PADDED_SIZE-MSG_SIZE-1-64;
-   localparam back_0_width = 64-$bits(MSG_SIZE);
-   
-   assign padded = {message, 1'b1, {zero_width{1'b0}}, {back_0_width{1'b0}}, MSG_SIZE};
+    // SHA-256 padding: message || 1 || zeros || 64-bit length
+    localparam int zero_width = PADDED_SIZE - MSG_SIZE - 1 - 64;
+
+    logic [63:0] msg_len;
+    assign msg_len = 64'(MSG_SIZE);   // length in bits, 64-bit field
+
+    assign padded = {message, 1'b1, {zero_width{1'b0}}, msg_len};
 
 endmodule // sha_padder
 
