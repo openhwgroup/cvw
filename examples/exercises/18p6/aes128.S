@@ -179,5 +179,3 @@ ciphertext:
 
 .bss
     .space 512
-
-
