@@ -166,41 +166,15 @@ module coremark_tb;
     end
 
     // Load program into word buffer
-    $display("[%0t] INFO: Loading mem_words from '%s'", $time, memfile);
-    $readmemh(memfile, mem_words);
-    $display("[%0t] INFO: mem_words load complete, expanding into bytes.", $time);
+    $display("[%0t] INFO: Loading mem from '%s'", $time, memfile);
+    $readmemh(memfile, mem);
+    $display("[%0t] INFO: mem load complete.", $time);
 
-    // Expand each XLEN-bit word from mem_words[] into byte-addressable mem[]
-    for (i = 0; i < MEM_WORDS; i++) begin
-        base = i * (`XLEN/8);  // starting byte position for this word
-
-        // For each byte in the XLEN-bit word
-        for (int b = 0; b < (`XLEN/8); b++) begin
-            // Extract byte b from mem_words[i], little-endian
-            mem[base + b] = mem_words[i][(b*8 + 7) -: 8];
-        end
-    end
-
-    $display("[%0t] INFO: Unified byte-addressable memory initialized.", $time);
   end
 
   // ------------------------------------------------------------
   // DUT instantiation
   // ------------------------------------------------------------
-  // `DUT_MODULE dut (
-  //   .clk        (clk),
-  //   .reset      (reset),
-
-  //   // Instruction memory interface (byte address)
-  //   .imem_a,
-  //   .imem_rd,
-
-  //   // Data memory interface (byte address + strobes)
-  //   .dmem_a,
-  //   .dmem_rd,
-  //   .dmem_wd,
-  //   .dmem_we
-  // );
 
   `DUT_MODULE dut (
     .clk        (clk),

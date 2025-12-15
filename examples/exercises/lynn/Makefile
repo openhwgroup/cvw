@@ -2,37 +2,32 @@
 # Daniel Torres & David Harris 28 July 2022
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
+# ---- Command line optional parameters ---- #
+
+ELFS ?=
+
 # ---- Processor / Testbench Configuration ---- #
 XLEN ?=32
+PROCESSOR     ?= $(CURDIR)/my_processor/RISC-V-Pipelined-Processor/src      # Directory containing all processor RTL (will scan for .sv / .svh)
+INC_DIR       ?= $(CURDIR)/my_processor/RISC-V-Pipelined-Processor/incdir/  # Optional directory for include files for RTL compilation (parameters)
 
-# Directory containing all processor RTL (will scan for .sv / .svh)
-#PROCESSOR     ?= $(CURDIR)/sample_processor
-PROCESSOR     ?= $(CURDIR)/my_processor/RISC-V-Pipelined-Processor/src
-
-INC_DIR       ?= $(CURDIR)/my_processor/RISC-V-Pipelined-Processor/incdir/
-
-# TEST_DIR
-TEST_DIR      ?= $(CURDIR)/tests/sample_processor
-
-RISCV_ARCH_TEST ?= $(WALLY)/addins/riscv-arch-test-cvw
-
-# Name of the DUT module
-#DUT_MODULE ?= riscvsingle  # or whatever your top-level is called
+#DUT_MODULE ?= riscvsingle  # top-level module name
 DUT_MODULE ?= CoremarkCore
 
-# Path to your testbench file
-TESTBENCH_FILE ?= $(CURDIR)/tb/coremark_tb.sv
+TEST_DIR        ?= $(CURDIR)/tests/sample_processor
 
-# Name of the testbench top module/entity
-TB_TOP        ?= coremark_tb
+# ---- Repo paths ---- #
+TESTBENCH_FILE  ?= $(CURDIR)/tb/coremark_tb.sv
+TB_TOP          ?= coremark_tb
+WAVES_DO        ?= $(CURDIR)/coremark_waves.do
+
+WORK_DIR        ?= $(CURDIR)/work
+RISCV_ARCH_TEST ?= $(WALLY)/addins/riscv-arch-test-cvw
 
 # ----    Simulation Settings    ---- #
-
 VSIM        ?= vsim
 VSIM_FLAGS  ?= -voptargs=+acc
-
-# Optional DO file to preload waves in GUI mode
-WAVES_DO    ?= $(CURDIR)/coremark_waves.do
+VSIM_EXTRA_FLAGS ?= # Extra flags if you want them
 
 # ----    Coremark Configuration ---- #
 
@@ -76,91 +71,98 @@ PORT_CFLAGS = \
 
 # ----    Files and Directories    ---- #
 
+SV_SOURCES  := $(shell find $(PROCESSOR) -type f \( -name "*.sv" -o -name "*.svh" \)) # All RTL sources under PROCESSOR, plus the testbench file
+TEST_ELFS := $(sort $(shell find $(TEST_DIR) -type f -name '*.elf'))
+
 PORT_DIR = $(CURDIR)/riscv64-baremetal
 cmbase  = $(WALLY)/addins/coremark
-work_dir= $(CURDIR)/work
 
 sources=$(cmbase)/core_main.c $(cmbase)/core_list_join.c $(cmbase)/coremark.h  \
     $(cmbase)/core_matrix.c $(cmbase)/core_state.c $(cmbase)/core_util.c \
     $(PORT_DIR)/core_portme.h $(PORT_DIR)/core_portme.c $(PORT_DIR)/core_portme.mak \
     $(PORT_DIR)/crt.S $(PORT_DIR)/encoding.h $(PORT_DIR)/util.h $(PORT_DIR)/syscalls.c
 
-# All RTL sources under PROCESSOR, plus the testbench file
-SV_SOURCES := $(shell find $(PROCESSOR) -type f \( -name "*.sv" -o -name "*.svh" \))
-
-TEST_SOURCES := $(shell find $(TEST_DIR))
-
-# Path to the generated memfile
-MEMFILE_PATH      := $(work_dir)/coremark.bare.riscv.elf.memfile
+# Coremark memfile (optional artifact)
+MEMFILE_PATH      := $(WORK_DIR)/coremark.bare.riscv.memfile
 
 # ----          Targets            ---- #
 
-# Default target: just build (memfile + compiled RTL)
+# Default target: just build (compile RTL/testbench once)
 all: build
 
-# Build = compile RTL
+# Build = compile RTL once into $(WORK_DIR)/work
 .PHONY: build
-
 build: Makefile
-	@mkdir -p $(work_dir)
-	@cd $(work_dir) && \
+	@mkdir -p $(WORK_DIR)
+	@cd $(WORK_DIR) && \
 	  echo "[BUILD] Creating/using local 'work' library..." && \
 	  (vlib work 2>/dev/null || true) && \
 	  echo "[BUILD] Compiling SystemVerilog sources..." && \
 	  vlog +incdir+$(INC_DIR) +define+DUT_MODULE=$(DUT_MODULE) \
       +define+XLEN=$(XLEN) $(abspath $(SV_SOURCES) $(TESTBENCH_FILE))
 
-.PHONY: test
+# ----  Generic memfile / run / test flow  ---- #
 
-test: $(TEST_SOURCES)
+# Any file -> file.memfile
+%.memfile: %
+	@echo "[MEM] Generating memfile $@ from $<"
+	riscv64-unknown-elf-elf2hex --bit-width 8 --input $< --output $@
+
+# run:
+#   Use: make run ELFS="path/to/a.elf path/to/b.elf" [-j]
+.PHONY: run
+run: $(ELFS:%=%.run)
+
+# foo.elf.run depends on foo.elf.memfile and build
+%.run: %.memfile | build
+	@set -e; \
+	MEMFILE="$(abspath $<)"; \
+	ELF="$${MEMFILE%.memfile}"; \
+	NAME="$${ELF##*/}"; \
+	LOGFILE="$(WORK_DIR)/$${NAME}.sim.log"; \
+	echo "[RUN] ELF: $$ELF"; \
+	echo "[VSIM] Using memfile $$MEMFILE (log: $$LOGFILE)"; \
+	cd "$(WORK_DIR)"; \
+	if [ "$(GUI)" = "1" ]; then \
+	  $(VSIM) $(VSIM_FLAGS) $(VSIM_EXTRA_FLAGS) work.$(TB_TOP) \
+	    +MEMFILE="$$MEMFILE" \
+	    -do "if {[file exists $(WAVES_DO)]} {do $(WAVES_DO)}; run -all" \
+	    2>&1 | tee "$$LOGFILE"; \
+	else \
+	  $(VSIM) -c $(VSIM_FLAGS) $(VSIM_EXTRA_FLAGS) work.$(TB_TOP) \
+	    +MEMFILE="$$MEMFILE" \
+	    -do "run -all; quit -f" \
+	    2>&1 | tee "$$LOGFILE"; \
+	fi
+
+# test: run ALL .elf files in TEST_DIR in parallel with -j
+.PHONY: test
+test:
+	$(MAKE) run ELFS="$(TEST_ELFS)"
+
+# Keep the old riscv-arch-test flow
+.PHONY: arch-test
+arch-test:
 	$(MAKE) -C $(RISCV_ARCH_TEST) \
    CONFIG_FILE=$(TEST_DIR)/test_config.yaml \
    WORKDIR=$(TEST_DIR)/work
 
-# Run = build first, then simulate
-# Use:  make run          -> batch mode
-#       make run GUI=1    -> GUI mode with waves
+# ----  Coremark flow  ---- #
+
 .PHONY: coremark
 
-coremark: $(MEMFILE_PATH) Makefile
-	@mkdir -p $(work_dir)
+coremark: $(WORK_DIR)/coremark.bare.riscv
+	$(MAKE) run ELFS="$<"
 
-  # build coremark
-  # generate memfile + compile RTL + testbench into $(work_dir)/work
-	@cd $(work_dir) && \
-	  echo "[BUILD] Creating/using local 'work' library..." && \
-	  (vlib work 2>/dev/null || true) && \
-	  echo "[BUILD] Compiling SystemVerilog sources..." && \
-	  vlog +incdir+$(INC_DIR) +define+DUT_MODULE=$(DUT_MODULE) \
-      +define+XLEN=$(XLEN) $(abspath $(SV_SOURCES) $(TESTBENCH_FILE))
-
-  # run coremark
-	@cd $(work_dir) && \
-	if [ "$(GUI)" = "1" ]; then \
-	  echo "[RUN] Starting vsim in GUI mode..."; \
-	  time $(VSIM) $(VSIM_FLAGS) work.$(TB_TOP) \
-	    +MEMFILE=$(MEMFILE_PATH) \
-	    -do "if {[file exists $(WAVES_DO)]} {do $(WAVES_DO)}; run -all" \
-	    2>&1 | tee coremark.sim.log; \
-	else \
-	  echo "[RUN] Starting vsim in batch mode..."; \
-	  time $(VSIM) -c $(VSIM_FLAGS) work.$(TB_TOP) \
-	    +MEMFILE=$(MEMFILE_PATH) \
-	    -do "run -all; quit -f" \
-	    2>&1 | tee coremark.sim.log; \
-	fi
-
-# ----  Coremark binary + memfile  ---- #
-
-$(MEMFILE_PATH): $(work_dir)/coremark.bare.riscv Makefile
+$(MEMFILE_PATH): $(WORK_DIR)/coremark.bare.riscv Makefile
 	riscv64-unknown-elf-objdump -D $< > $<.elf.objdump
 	riscv64-unknown-elf-elf2hex --bit-width 8 --input $< --output $@
 	extractFunctionRadix.sh $<.elf.objdump
 
-$(work_dir)/coremark.bare.riscv: $(sources) Makefile
+$(WORK_DIR)/coremark.bare.riscv: $(sources) Makefile
 	$(MAKE) -C $(cmbase) PORT_DIR=$(PORT_DIR) compile RISCV=$(RISCV) XCFLAGS="$(PORT_CFLAGS)"
-	mkdir -p $(work_dir)
-	mv $(cmbase)/coremark.bare.riscv $(work_dir)
+	mkdir -p $(WORK_DIR)
+	mv $(cmbase)/coremark.bare.riscv $(WORK_DIR)
 
 # ----            Clean             ---- #
 
@@ -168,4 +170,4 @@ $(work_dir)/coremark.bare.riscv: $(sources) Makefile
 
 clean:
 	$(MAKE) -C $(cmbase) clean
-	rm -rf $(work_dir)
+	rm -rf $(WORK_DIR)
