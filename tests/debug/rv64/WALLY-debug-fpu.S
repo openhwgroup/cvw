@@ -37,7 +37,7 @@ loop:
    fmul.s f1, f4, f1 # final result
 
    fsw f1, 0(t1)     # store iteration result to memory
-   addi t1, t1, 8    # increment signature address
+   addi t1, t1, 4    # increment signature address
    addi t2, t2, -1
 1: j 1b              # pause for debugger. Can be implemented as ebreak later
 
@@ -45,6 +45,7 @@ resume_addr:
    bnez t2, loop
 
 test_end:
+   # fence.i
    li a0, 0
    j tohost_exit
 
@@ -59,7 +60,7 @@ tohost_exit:
 .data
 # Spike memory regions ###############################################
 begin_signature:
-   .fill 32*2, 4, 0xdeadbeef
+   .fill 4*2, 4, 0xdeadbeef
 end_signature:
 
 .section .tohost, "aw", @progbits
