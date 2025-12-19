@@ -30,6 +30,7 @@ SECTIONS
 
   .text : { *(.text) }
 
+  . = 0x80010000;
   /* data segment */
   .data : { *(.data) }
 

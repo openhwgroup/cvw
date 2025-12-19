@@ -6,26 +6,27 @@ module riscvsingle(
     input   logic                       clk,
     input   logic                       reset,
 
-    output  logic [`XLEN-1:0]           imem_addr,  // instruction memory target address
-    input   logic [`XLEN-1:0]           imem_rdata, // instruction memory read data
+    output  logic [`XLEN-1:0]           PC,  // instruction memory target address
+    input   logic [`XLEN-1:0]           Instr, // instruction memory read data
 
-    output  logic [`XLEN-1:0]           dmem_addr,  // data memory target address
-    input   logic [`XLEN-1:0]           dmem_rdata, // data memory read data
-    output  logic [`XLEN-1:0]           dmem_wdata, // data memory write data
+    output  logic [`XLEN-1:0]           IEUAdr,  // data memory target address
+    input   logic [`XLEN-1:0]           ReadData, // data memory read data
+    output  logic [`XLEN-1:0]           WriteData, // data memory write data
 
-    output  logic                       dmem_rvalid,
-    output  logic [$clog2(`XLEN)-1:0]   dmem_wstrb  // strobes, 1 hot stating weather a byte should be written on a store
+    output  logic                       MemEn,
+    output  logic                       WriteEn,
+    output  logic [`XLEN/8-1:0]         WriteByteEn  // strobes, 1 hot stating weather a byte should be written on a store
   );
-    logic [31:0] PC, PCPlus4;
+    logic [`XLEN-1:0] PCPlus4;
     logic PCSrc;
 
-    ifu ifu(.clk, .reset, .PCSrc, .IEUAdr(dmem_addr), .PC, .PCPlus4);
-    ieu ieu(.clk, .reset, .Instr(imem_rdata), .PC, .PCPlus4, .PCSrc,
-            .MemWriteStrb(dmem_wstrb), .IEUAdr(dmem_addr),
-            .WriteData(dmem_wdata), .ReadData(dmem_rdata), .Load(dmem_rvalid),
-            .insn_debug(imem_rdata));
+    ifu ifu(.clk, .reset, .PCSrc, .IEUAdr(IEUAdr), .PC, .PCPlus4);
+    ieu ieu(.clk, .reset, .Instr(Instr), .PC, .PCPlus4, .PCSrc,
+            .MemWriteStrb(WriteByteEn), .IEUAdr(IEUAdr),
+            .WriteData(WriteData), .ReadData(ReadData), .Load(MemEn),
+            .insn_debug(Instr));
 
-    assign  imem_addr = PC;
+    assign WriteEn = |WriteByteEn;
 endmodule
 
 module ifu(
