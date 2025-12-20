@@ -37,7 +37,23 @@ module ifu(
     );
     logic [31:0] PCNext;
     // next PC logic
-    flopr #(32, 32'h8000_0000) pcreg(clk, reset, PCNext, PC);
+    logic [`XLEN-1:0] entry_addr;
+
+    initial begin
+        // default
+        entry_addr = '0;
+
+        // override if provided
+        void'($value$plusargs("ENTRY_ADDR=%h", entry_addr));
+
+        $display("[TB] ENTRY_ADDR = 0x%h", entry_addr);
+    end
+
+    always_ff @(posedge clk or posedge reset) begin
+    if (reset)  PC <= entry_addr;
+    else        PC <= PCNext;
+    end
+
     adder pcadd4(PC, 32'd4, PCPlus4);
     mux2 #(32) pcmux(PCPlus4, IEUAdr, PCSrc, PCNext);
 endmodule

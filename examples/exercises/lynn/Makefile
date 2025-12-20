@@ -4,18 +4,22 @@
 
 # ---- Command line optional parameters ---- #
 
-ELFS ?=
+ELFS 			?=
 
 # ---- Processor / Testbench Configuration ---- #
-XLEN ?=32
-PROCESSOR     ?= $(CURDIR)/my_processor/RISC-V-Pipelined-Processor/src      # Directory containing all processor RTL (will scan for .sv / .svh)
-INC_DIR       ?= $(CURDIR)/my_processor/RISC-V-Pipelined-Processor/incdir/  # Optional directory for include files for RTL compilation (parameters)
+XLEN 			?=32
+PROCESSOR     	?= $(CURDIR)/my_processor/RISC-V-Pipelined-Processor/src      # Directory containing all processor RTL (will scan for .sv / .svh)
+INC_DIR       	?= $(CURDIR)/my_processor/RISC-V-Pipelined-Processor/incdir/  # Optional directory for include files for RTL compilation (parameters)
 
 #DUT_MODULE ?= riscvsingle  # top-level module name
-DUT_MODULE ?= testingCore
+DUT_MODULE 		?= testingCore
 
+C_TEST_DIR		?= $(CURDIR)/tests/C
 TEST_DIR        ?= $(CURDIR)/tests/sample_processor
 
+LDSCRIPT		?= $(TEST_DIR)/link.ld
+
+C_TEST_WORK_DIR ?= $(C_TEST_DIR)/work
 TEST_WORK_DIR	?= $(TEST_DIR)/work
 ARCH_WORK_DIR 	?= $(TEST_WORK_DIR)/arch_test
 CM_WORK_DIR		?= $(TEST_WORK_DIR)/coremark
@@ -43,6 +47,22 @@ else
   VSIM_MODE_FLAGS := -c
   VSIM_DO := run -all; quit -f
 endif
+
+# Map XLEN -> toolchain prefix
+# ifeq ($(XLEN),64)
+TOOLPREFIX := riscv64-unknown-elf-
+# else ifeq ($(XLEN),32)
+#   TOOLPREFIX := riscv32-unknown-elf-
+# else
+#   $(error XLEN must be 32 or 64 (got $(XLEN)))
+# endif
+
+# Derive tools from the prefix
+CC      := $(TOOLPREFIX)gcc
+OBJDUMP := $(TOOLPREFIX)objdump
+READELF := $(TOOLPREFIX)readelf
+SIZE    := $(TOOLPREFIX)size
+ELF2HEX := $(TOOLPREFIX)elf2hex
 
 # ----    Coremark Configuration ---- #
 
@@ -86,8 +106,9 @@ PORT_CFLAGS = \
 
 # ----    Files and Directories    ---- #
 
-SV_SOURCES := $(shell find $(PROCESSOR) -type f \( -name "*.sv" -o -name "*.svh" \))
-TEST_ELFS  := $(sort $(shell find $(TEST_DIR) -type f -name '*.elf'))
+SV_PACKAGES := /home/jcassidy/cvw/examples/exercises/lynn/my_processor/RISC-V-Pipelined-Processor/src/Packages/HighLevelControl.svh#$(sort $(shell find $(PROCESSOR) -type f -name '*.pkg'))
+SV_SOURCES 	:= $(sort $(shell find $(PROCESSOR) -type f \( -name "*.sv" -o -name "*.svh" \)))
+TEST_ELFS  	:= $(sort $(shell find $(TEST_DIR) -type f -name '*.elf'))
 
 PORT_DIR = $(WALLY)/benchmarks/coremark/riscv64-baremetal
 cmbase  = $(WALLY)/addins/coremark
@@ -104,7 +125,7 @@ all: build
 
 # Build = compile RTL once into $(WORK_DIR)/build
 .PHONY: build
-$(WORK_DIR)/work/_info: $(SV_SOURCES) $(TESTBENCH_FILES) Makefile
+$(WORK_DIR)/work/_info: $(SV_PACKAGES) $(SV_SOURCES) $(TESTBENCH_FILES) Makefile
 	@mkdir -p $(WORK_DIR)
 	@cd $(WORK_DIR) && \
 	  echo "[BUILD] Creating/using local 'work' library..." && \
@@ -113,16 +134,21 @@ $(WORK_DIR)/work/_info: $(SV_SOURCES) $(TESTBENCH_FILES) Makefile
 	  vlog \
 	  	+incdir+$(INC_DIR) \
 		+define+DUT_MODULE=$(DUT_MODULE) \
-      	+define+XLEN=$(XLEN) $(abspath $(SV_SOURCES) $(TESTBENCH_FILES))
+      	+define+XLEN=$(XLEN) $(abspath $(SV_PACKAGES) $(SV_SOURCES) $(TESTBENCH_FILES))
 
 build: $(WORK_DIR)/work/_info Makefile
 
 # ----  Generic memfile / run / test flow  ---- #
 
 # Any file -> file.memfile
+.PRECIOUS: %.elf.memfile
 %.elf.memfile: %.elf
-	@echo "[MEM] Generating memfile $@ from $<"
-	riscv64-unknown-elf-elf2hex --bit-width 32 --input $< --output $@
+	@echo "[MEM] Generating memfile $@ from $< along with debug files"
+	$(SIZE) -A $< > $<.elf.size
+	$(READELF) -S $< > $<.elf.read
+	$(OBJDUMP) -D $< > $<.elf.objdump
+	$(ELF2HEX) --bit-width 32 --input $< --output $@
+	extractFunctionRadix.sh $<.elf.objdump
 
 #   Use: make run ELFS="path/to/a.elf path/to/b.elf" [-j]
 .PHONY: run
@@ -133,28 +159,46 @@ run: $(ELFS:%=%.run)
 # score:
 
 
+
 # foo.elf.run depends on foo.elf.memfile and build
 %.run: %.memfile | build
 	@set -e; \
 	mkdir -p $(WORK_DIR)/runs; \
 	MEMFILE="$(abspath $<)"; \
 	ELF="$${MEMFILE%.memfile}"; \
+	ENTRY_ADDR="$$(riscv64-unknown-elf-readelf -h "$$ELF" | awk '/Entry point address:/ {print $$NF}')"; \
 	NAME="$${ELF##*/}"; \
-	LOGFILE="${WORK_DIR}/runs/$${NAME}.sim.log"; \
+	LOGFILE="$(WORK_DIR)/runs/$${NAME}.sim.log"; \
 	echo "[RUN] ELF: $$ELF"; \
+	echo "[RUN] Entry PC: $$ENTRY_ADDR"; \
 	echo "[VSIM] Using memfile $$MEMFILE (log: $$LOGFILE)"; \
 	cd "$(WORK_DIR)"; \
 	if [ "$(GUI)" = "1" ]; then \
 	  $(VSIM) $(VSIM_FLAGS) $(VSIM_EXTRA_FLAGS) work.$(TB_TOP) \
 	    +MEMFILE="$$MEMFILE" \
+	    +ENTRY_ADDR="$$ENTRY_ADDR" \
 	    -do "$(VSIM_DO)" \
 	    2>&1 | tee "$$LOGFILE"; \
 	else \
 	  $(VSIM) $(VSIM_MODE_FLAGS) $(VSIM_FLAGS) $(VSIM_EXTRA_FLAGS) work.$(TB_TOP) \
 	    +MEMFILE="$$MEMFILE" \
+	    +ENTRY_ADDR="$$ENTRY_ADDR" \
 	    -do "$(VSIM_DO)" \
 	    > "$$LOGFILE" 2>&1; \
 	fi
+
+CFLAGS 				:= -march=$(ARCH) -mabi=$(ABI) -O0 -g -ffreestanding -ffunction-sections -fdata-sections -Wall -Wextra
+LDFLAGS 			:= -march=$(ARCH) -mabi=$(ABI) -nostdlib -Wl,--gc-sections -T $(LDSCRIPT)
+
+C_TEST_SOURCEFILES 	?= $(sort $(shell find $(C_TEST_DIR) -type f \( -name "*.S" -o -name "*.c" \)))
+
+$(C_TEST_WORK_DIR)/c_test.elf: $(C_TEST_SOURCEFILES)
+	@mkdir -p $(C_TEST_WORK_DIR)
+	$(CC) $(CFLAGS) $(C_TEST_SOURCEFILES) $(LDFLAGS) -o $@;
+
+.PHONY: C_test
+C_test: $(C_TEST_WORK_DIR)/c_test.elf
+	$(MAKE) run ELFS="$(C_TEST_WORK_DIR)/c_test.elf"
 
 
 # test: run ALL .elf files in TEST_DIR in parallel with -j
@@ -179,11 +223,12 @@ arch-test:
 
 coremark: $(CM_WORK_DIR)/coremark.bare.riscv.run
 
+# redundant can be replaced by %.memfile
 $(CM_WORK_DIR)/coremark.bare.riscv.memfile: $(CM_WORK_DIR)/coremark.bare.riscv Makefile
-	riscv64-unknown-elf-size -A $< > $<.elf.size
-	riscv64-unknown-elf-readelf -S $< > $<.elf.read
-	riscv64-unknown-elf-objdump -D $< > $<.elf.objdump
-	riscv64-unknown-elf-elf2hex --bit-width 32 --input $< --output $@
+	$(SIZE) -A $< > $<.elf.size
+	$(READELF) -S $< > $<.elf.read
+	$(OBJDUMP) -D $< > $<.elf.objdump
+	$(ELF2HEX) --bit-width 32 --input $< --output $@
 	extractFunctionRadix.sh $<.elf.objdump
 
 $(CM_WORK_DIR)/coremark.bare.riscv: $(cmsources) Makefile
@@ -202,3 +247,4 @@ clean:
 	rm -rf $(ARCH_WORK_DIR)
 	rm -rf $(WORK_DIR)
 	rm -rf $(CM_WORK_DIR)
+	rm -rf $(C_TEST_WORK_DIR)

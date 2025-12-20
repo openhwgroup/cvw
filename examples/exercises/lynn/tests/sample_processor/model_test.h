@@ -26,6 +26,7 @@
     j self_loop_fail      ;\
 
 #define RVMODEL_BOOT
+  la sp, _stack_top
 
 # Expects a PC16550-compatible UART.
 # Change these addresses to match your memory map
