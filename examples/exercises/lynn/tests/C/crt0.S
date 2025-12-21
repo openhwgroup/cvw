@@ -10,6 +10,7 @@
     .section .text.init
     .globl fail
     .globl pass
+    .globl end
     .globl rvtest_entry_point
     .type  rvtest_entry_point, @function
 
@@ -56,8 +57,8 @@ rvtest_entry_point:
 
     /* ---- call C entry ---- */
     #call partial_load_test
-    call partial_load_store_test
-    #call main
+    #call partial_load_store_test
+    call main
 
     /* ---- fallthrough to end ---- */
     j end
@@ -78,13 +79,15 @@ pass:
     li   gp, 1
     j    finish
 
+end:
+    li   gp, 3
+    j finish              /* infinite loop */
+    .size end, .-end
+
+
     .section .tohost,"aw",@progbits
     .balign 4
     .globl tohost
+
 tohost:
     .word 0
-
-end:
-    li   gp, 3
-    j end              /* infinite loop */
-    .size end, .-end

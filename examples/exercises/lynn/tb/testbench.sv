@@ -6,23 +6,17 @@
 `define INSTR_BITS 32
 
 `define MaxInstrSizeWords 16384
-`define MaxDataSizeWords 4096
+`define MaxDataSizeWords 1048576
 
-`define THR_POINTER (`XLEN'h10000000)
-`define LSR_POINTER (`XLEN'h10000005)
+`define THR_POINTER (`XLEN'h1000_0000)
+`define LSR_POINTER (`THR_POINTER + `XLEN'h5)
 
 module testbench;
 
   // ------------------------------------------------------------
   // Parameters
   // ------------------------------------------------------------
-  parameter int MEM_WORDS  = 64000;                      // words in instr_memfile
-  localparam int BYTES_PER_WORD = `XLEN / 8;
-  localparam int MEM_BYTES  = MEM_WORDS * BYTES_PER_WORD;
-
-  // Base address of memory (first byte)
-  localparam logic [`XLEN-1:0] MEM_BASE_ADDR = `XLEN'(1 << `XLEN-1); // 80000000 base pc
-  localparam logic [`XLEN-1:0] MEM_LIMIT_ADDR = MEM_BASE_ADDR + MEM_BYTES;
+  int unsigned STDOUT= 32'h8000_0001;
 
   // ------------------------------------------------------------
   // Clock / Reset
@@ -45,7 +39,7 @@ module testbench;
 
   // Instruction side interface (byte addresses)
   logic [`XLEN-1:0]               PC;
-  logic [`INSTR_BITS-1:0]         Instr, Prev_Instr;
+  logic [`INSTR_BITS-1:0]         Instr;
 
   // Data side interface (byte addresses)
   logic [`XLEN-1:0]               DataAdr;
@@ -57,26 +51,47 @@ module testbench;
 
   logic                           TestbenchRequest;
 
-  always_comb begin
+  assign TestbenchRequest = DataAdr >= `THR_POINTER & DataAdr < `THR_POINTER + `XLEN'hF;
+
+  always_ff @(negedge clk) begin
+    byte ch;
     int unsigned i;
-    TestbenchRequest = 1'b0;
     TestbenchRequestReadData = 'x;
-    if (DataAdr == `THR_POINTER) begin
-      TestbenchRequest = 1'b1;
-      $display("Attempting to write char from program");
-      if (MemEn & WriteEn) begin
+
+    if (TestbenchRequest) begin
+      if (MemEn) begin
         for (int i = 0; i < `XLEN/8; i++) begin
-            if (WriteByteEn[i]) begin
-                $write("%c", WriteData[(i+1)*8-1 -: 8]);
-                $fflush();
+          if (DataAdr + i == `LSR_POINTER) begin
+            TestbenchRequestReadData[(i+1)*8-1 -: 8] = 8'b0010_0000;
+          end else if (DataAdr + i == `THR_POINTER) begin
+            if (WriteEn & WriteByteEn[i]) begin
+              ch = WriteData[(i+1)*8-1 -: 8];
+              $write("%c", ch);
+              if (ch == "\n") $fflush(STDOUT);
             end
+          end
         end
       end
-    end else if (DataAdr == `LSR_POINTER) begin
-      $display("Reading LSR Pointer");
-      TestbenchRequest = 1'b1;
-      TestbenchRequestReadData = `XLEN'b100000;
+      // if (TestbenchRequestReadData !== 'x) $display("Request Return Data: %h", TestbenchRequestReadData);
     end
+
+
+    // if (DataAdr == `THR_POINTER) begin
+    //   $display("Attempting to write char from program");
+    //   $display("Writing %h to addr: %h, byte en: %b", WriteData, DataAdr, WriteByteEn);
+    //   if (MemEn & WriteEn) begin
+    //     for (int i = 0; i < `XLEN/8; i++) begin
+    //         if (WriteByteEn[i]) begin
+    //             $write("%c", WriteData[(i+1)*8-1 -: 8]);
+    //             $fflush();
+    //         end
+    //     end
+    //   end
+    // end else if (DataAdr == `LSR_POINTER) begin
+    //   $display("Writing %h to addr: %h, byte en: %b", WriteData, DataAdr, WriteByteEn);
+    //   $display("Reading LSR Pointer");
+    //   TestbenchRequestReadData = `XLEN'b100000;
+    // end
   end
 
   vectorStorage #(
@@ -104,20 +119,23 @@ module testbench;
   // DEBUG
   always @(negedge clk) begin
     #1;
-    $display("PC: %h \tInstruction run: %h", PC, Instr);
-    $display("DEBUG: x6: %h, x7: %h DataMemAdrByteOffset_C: %h, MemWriteDataPreShift_C: %h, MemWriteData_C: %h",
-      dut.ComputeCore.RegisterFile.register_values[6],
-      dut.ComputeCore.RegisterFile.register_values[7],
-      dut.ComputeCore.DataMemAdrByteOffset_C,
-      dut.ComputeCore.MemWriteDataPreShift_C,
-      dut.ComputeCore.MemWriteData_C
+    //$display("PC: %h \tInstruction run: %h", PC, Instr);
+    //$display("DEBUG: Data Adr: %h", DataAdr);
+   // $display("DEBUG: a0: %h, a5: %h",
+      // dut.ComputeCore.RegisterFile.register_values[10],
+      // dut.ComputeCore.RegisterFile.register_values[15],
+
+      // dut.ComputeCore.DataMemAdrByteOffset_C,
+      // dut.ComputeCore.MemWriteDataPreShift_C,
+      // dut.ComputeCore.MemWriteData_C
       // dut.ComputeCore.RegisterFile.register_values[2],
       // dut.ComputeCore.RegisterFile.register_values[15],
       // dut.ComputeCore.RegisterFile.register_values[6],
       // dut.ComputeCore.DataMemAdr_C,
       // DataMemory.Memory[(TO_HOST_ADR-`XLEN'h8001_0000)>>2],
       // dut.ComputeCore.StoreType_C.name()
-      );
+
+      //);
     if (Instr === 'x & ~reset) begin
 
       $finish(-1);
@@ -161,18 +179,19 @@ initial begin
 end
 
 logic[`XLEN-1:0] to_host_result;
+logic[3:0]       jump_to_self_count;
 
 always_ff @(posedge clk) begin
-  if (reset)  Prev_Instr <= '0;
-  else        Prev_Instr <= Instr;
+  if (reset)                    jump_to_self_count <= '0;
+  else if (Instr == `XLEN'h06f) jump_to_self_count <= jump_to_self_count + 1;
 end
 
 always @(negedge clk) begin
   // Jump to self
 
-  if (!reset && Prev_Instr == `XLEN'h06f) begin
+  if (!reset && (&jump_to_self_count)) begin
       to_host_result = DataMemory.Memory[(TO_HOST_ADR-`XLEN'h8001_0000)>>2];
-      $display("To Host local Adr: %h, To Host: %h", (TO_HOST_ADR-`XLEN'h8001_0000)>>2, to_host_result);
+      //$display("To Host local Adr: %h, To Host: %h", (TO_HOST_ADR-`XLEN'h8001_0000)>>2, to_host_result);
 
       if(to_host_result == 1) begin
         $display("INFO: Test Passed!");

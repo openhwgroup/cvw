@@ -31,7 +31,7 @@ module vectorStorage #(
 
     assign ReadData = En ? Memory[(MemoryAddress-MEMORY_ADR_OFFSET)>>2] : 'x;
 
-    always_ff @(posedge clk) begin
+    always_ff @(negedge clk) begin
         if (reset) begin
             int i;
             for (i = 0; i < MEMORY_SIZE_ENTRIES; i++) begin
@@ -48,7 +48,7 @@ module vectorStorage #(
 
             LocalReadData = Memory[(MemoryAddress-MEMORY_ADR_OFFSET)>>2];
 
-            $display("%s Writing to local adr: %h, Write Data: %h, byte en: %b", MEMORY_NAME, (MemoryAddress-MEMORY_ADR_OFFSET)>>2, WriteData, WriteByteEn);
+            //$display("%s Writing to local adr: %h, Write Data: %h, byte en: %b", MEMORY_NAME, (MemoryAddress-MEMORY_ADR_OFFSET)>>2, WriteData, WriteByteEn);
 
             for (int i = 0; i < (DATA_BITS/8); i++) begin
                 if (WriteByteEn[i]) begin
@@ -65,15 +65,15 @@ module vectorStorage #(
         int i;
 
         if (MEMORY_FILE_PATH !== "") begin
-            $display("Loading Memory: " + MEMORY_FILE_PATH);
+            $display("%s Loading Memory: " + MEMORY_FILE_PATH, MEMORY_NAME);
             $readmemh(MEMORY_FILE_PATH, InitMem);
         end else if (MEMFILE_PLUS_ARG !== "") begin
             // Try to read +MEMFILE=<path> from vsim command line
-            if (!$value$plusargs({MEMFILE_PLUS_ARG,"=%s"}, memfile)) begin
-                $display("ERROR: +%s not supplied", MEMFILE_PLUS_ARG);
+            if (!$value$plusargs({MEMFILE_PLUS_ARG,"=%s"},  memfile)) begin
+                $display("ERROR: %s +%s not supplied",MEMORY_NAME, MEMFILE_PLUS_ARG);
                 $finish(-1);
             end else begin
-                $display("INFO: Using MEMFILE = '%s'", memfile);
+                $display("INFO: %s Using MEMFILE = '%s'", MEMORY_NAME, memfile);
             end
             $readmemh(memfile, InitMem);
         end else begin

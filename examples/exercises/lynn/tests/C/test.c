@@ -19,7 +19,7 @@ void _send_char(char c) {
 
 int sendstring(const char *p){
   int n=0;
-    while (*p) {
+  while (*p) {
     _send_char(*p);
     n++;
     p++;
@@ -29,7 +29,7 @@ int sendstring(const char *p){
 }
 
 int main(void) {
-    sendstring("Hello World");
+    sendstring("Hello World\n");
     end();         // never returns
     return 0;      // unreachable, but keeps compilers happy
 }
