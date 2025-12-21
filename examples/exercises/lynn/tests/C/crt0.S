@@ -3,7 +3,13 @@
 // kacassidy@hmc.edu
 // 12/19/2025
 
+    .extern partial_load_store_test
+    .extern main
+    .extern partial_load_test
+
     .section .text.init
+    .globl fail
+    .globl pass
     .globl rvtest_entry_point
     .type  rvtest_entry_point, @function
 
@@ -49,14 +55,36 @@ rvtest_entry_point:
     li   t6, 0        /* x31 */
 
     /* ---- call C entry ---- */
-    call main
+    #call partial_load_test
+    call partial_load_store_test
+    #call main
 
     /* ---- fallthrough to end ---- */
     j end
 
-    .section .text
-    .globl end
-    .type  end, @function
+finish:
+    /* write gp to tohost and hang */
+    la   t0, tohost
+    sw   gp, 0(t0)
+1:  j    1b
+
+fail:
+    /* encode a non-1 fail code (gp already holds something else if you want) */
+    li   gp, 2
+    j    finish
+
+pass:
+    /* encode a non-1 fail code (gp already holds something else if you want) */
+    li   gp, 1
+    j    finish
+
+    .section .tohost,"aw",@progbits
+    .balign 4
+    .globl tohost
+tohost:
+    .word 0
+
 end:
+    li   gp, 3
     j end              /* infinite loop */
     .size end, .-end

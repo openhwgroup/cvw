@@ -7,7 +7,7 @@
 ELFS 			?=
 
 # ---- Processor / Testbench Configuration ---- #
-XLEN 			?=32
+XLEN 			?= 32
 PROCESSOR     	?= $(CURDIR)/my_processor/RISC-V-Pipelined-Processor/src      # Directory containing all processor RTL (will scan for .sv / .svh)
 INC_DIR       	?= $(CURDIR)/my_processor/RISC-V-Pipelined-Processor/incdir/  # Optional directory for include files for RTL compilation (parameters)
 
@@ -161,12 +161,13 @@ run: $(ELFS:%=%.run)
 
 
 # foo.elf.run depends on foo.elf.memfile and build
-%.run: %.memfile | build
+%.run: %.memfile $(WORK_DIR)/work/_info Makefile
 	@set -e; \
 	mkdir -p $(WORK_DIR)/runs; \
 	MEMFILE="$(abspath $<)"; \
 	ELF="$${MEMFILE%.memfile}"; \
 	ENTRY_ADDR="$$(riscv64-unknown-elf-readelf -h "$$ELF" | awk '/Entry point address:/ {print $$NF}')"; \
+	TOHOST_ADDR="$$(riscv64-unknown-elf-readelf --syms --wide "$$ELF" | awk '$$8=="tohost" {print "0x"$$2; exit}')" \
 	NAME="$${ELF##*/}"; \
 	LOGFILE="$(WORK_DIR)/runs/$${NAME}.sim.log"; \
 	echo "[RUN] ELF: $$ELF"; \
@@ -177,12 +178,14 @@ run: $(ELFS:%=%.run)
 	  $(VSIM) $(VSIM_FLAGS) $(VSIM_EXTRA_FLAGS) work.$(TB_TOP) \
 	    +MEMFILE="$$MEMFILE" \
 	    +ENTRY_ADDR="$$ENTRY_ADDR" \
+		+TOHOST_ADDR="$$TOHOST_ADDR" \
 	    -do "$(VSIM_DO)" \
 	    2>&1 | tee "$$LOGFILE"; \
 	else \
 	  $(VSIM) $(VSIM_MODE_FLAGS) $(VSIM_FLAGS) $(VSIM_EXTRA_FLAGS) work.$(TB_TOP) \
 	    +MEMFILE="$$MEMFILE" \
 	    +ENTRY_ADDR="$$ENTRY_ADDR" \
+		+TOHOST_ADDR="$$TOHOST_ADDR" \
 	    -do "$(VSIM_DO)" \
 	    > "$$LOGFILE" 2>&1; \
 	fi
@@ -192,7 +195,7 @@ LDFLAGS 			:= -march=$(ARCH) -mabi=$(ABI) -nostdlib -Wl,--gc-sections -T $(LDSCR
 
 C_TEST_SOURCEFILES 	?= $(sort $(shell find $(C_TEST_DIR) -type f \( -name "*.S" -o -name "*.c" \)))
 
-$(C_TEST_WORK_DIR)/c_test.elf: $(C_TEST_SOURCEFILES)
+$(C_TEST_WORK_DIR)/c_test.elf: $(C_TEST_SOURCEFILES) $(LDSCRIPT) Makefile
 	@mkdir -p $(C_TEST_WORK_DIR)
 	$(CC) $(CFLAGS) $(C_TEST_SOURCEFILES) $(LDFLAGS) -o $@;
 
@@ -208,10 +211,10 @@ test:
 
 # Keep the old riscv-arch-test flow
 .PHONY: arch-test
-arch-test:
+arch-test: Makefile $(TEST_DIR)/test_config.yaml
 	uv run --with $(WALLY)/addins/riscv-arch-test-cvw/framework make -C \
 	$(WALLY)/addins/riscv-arch-test-cvw \
-	CONFIG_FILE=$(TEST_DIR)/test_config.yaml \
+	CONFIG_FILES=$(TEST_DIR)/test_config.yaml \
 	WORKDIR=$(ARCH_WORK_DIR)
 # 	$(MAKE) -C $(RISCV_ARCH_TEST) \
 #    CONFIG_FILE=$(TEST_DIR)/test_config.yaml \

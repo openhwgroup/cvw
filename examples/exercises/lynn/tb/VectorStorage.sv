@@ -1,6 +1,7 @@
 //James Kaden Cassidy jkc.cassidy@gmail.com 12/20/2024
 
 module vectorStorage #(
+    parameter MEMORY_NAME,
     parameter ADDRESS_BITS,
     parameter DATA_BITS,
     parameter MEMORY_SIZE_ENTRIES,
@@ -36,15 +37,18 @@ module vectorStorage #(
             for (i = 0; i < MEMORY_SIZE_ENTRIES; i++) begin
                 Memory[i] = InitMem [EXTRA_ENTRIES + i];
             end
-        end else if (En && unsigned'(MemoryAddress) < MEMORY_ADR_OFFSET ||
-                    unsigned'(MemoryAddress) > MEMORY_ADR_OFFSET + (MEMORY_SIZE_ENTRIES-1) * DATA_BITS) begin
-            $display("ERROR: memory out-of-range addr %h", MemoryAddress);
+        end else if (En && ((unsigned'(MemoryAddress) < unsigned'(MEMORY_ADR_OFFSET)) ||
+                    (unsigned'(MemoryAddress) > unsigned'(MEMORY_ADR_OFFSET + (MEMORY_SIZE_ENTRIES-1) * (DATA_BITS/8))))) begin
+            $display("ERROR: %s memory out-of-range addr %h", MEMORY_NAME, MemoryAddress);
+            $display("DEBUG: MEM_ADR_OFFSET(%h) MEMORY_SIZE_ENTRIES(%h) DATA_BITS(%h) TOP(%h)", MEMORY_ADR_OFFSET, MEMORY_SIZE_ENTRIES, DATA_BITS, (MEMORY_ADR_OFFSET + (MEMORY_SIZE_ENTRIES-1) * DATA_BITS));
             $finish(-1);
 
         end else if (WriteEn && En) begin
             logic[DATA_BITS-1:0] LocalReadData;
 
             LocalReadData = Memory[(MemoryAddress-MEMORY_ADR_OFFSET)>>2];
+
+            $display("%s Writing to local adr: %h, Write Data: %h, byte en: %b", MEMORY_NAME, (MemoryAddress-MEMORY_ADR_OFFSET)>>2, WriteData, WriteByteEn);
 
             for (int i = 0; i < (DATA_BITS/8); i++) begin
                 if (WriteByteEn[i]) begin
