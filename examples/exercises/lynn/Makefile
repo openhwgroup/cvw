@@ -19,8 +19,8 @@ TEST_DIR        ?= $(CURDIR)/tests/sample_processor
 
 LDSCRIPT		?= $(TEST_DIR)/link.ld
 
-C_TEST_WORK_DIR ?= $(C_TEST_DIR)/work
 TEST_WORK_DIR	?= $(TEST_DIR)/work
+C_TEST_WORK_DIR ?= $(TEST_WORK_DIR)/c_test
 ARCH_WORK_DIR 	?= $(TEST_WORK_DIR)/arch_test
 CM_WORK_DIR		?= $(TEST_WORK_DIR)/coremark
 
@@ -234,7 +234,9 @@ $(CM_WORK_DIR)/coremark.bare.riscv.memfile: $(CM_WORK_DIR)/coremark.bare.riscv M
 	$(ELF2HEX) --bit-width 32 --input $< --output $@
 	extractFunctionRadix.sh $<.elf.objdump
 
-$(CM_WORK_DIR)/coremark.bare.riscv: $(cmsources) Makefile
+PORT_FILES := $(sort $(wildcard $(PORTDIR)/*))
+
+$(CM_WORK_DIR)/coremark.bare.riscv: $(cmsources) $(PORT_FILES) Makefile
 	$(MAKE) -C $(cmbase) PORT_DIR=$(PORT_DIR) compile RISCV=$(RISCV) XCFLAGS="$(PORT_CFLAGS)"
 	mkdir -p $(CM_WORK_DIR)
 	mv $(cmbase)/coremark.bare.riscv $(CM_WORK_DIR)

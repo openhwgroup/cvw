@@ -10,6 +10,7 @@
 
 `define THR_POINTER (`XLEN'h1000_0000)
 `define LSR_POINTER (`THR_POINTER + `XLEN'h5)
+`define MTIME_POINTER (`XLEN'h0200bff8)
 
 module testbench;
 
@@ -51,7 +52,7 @@ module testbench;
 
   logic                           TestbenchRequest;
 
-  assign TestbenchRequest = DataAdr >= `THR_POINTER & DataAdr < `THR_POINTER + `XLEN'hF;
+  assign TestbenchRequest = DataAdr >= `THR_POINTER & DataAdr < `THR_POINTER + `XLEN'hF | DataAdr == `MTIME_POINTER;
 
   always_ff @(negedge clk) begin
     byte ch;
@@ -70,6 +71,9 @@ module testbench;
               if (ch == "\n") $fflush(STDOUT);
             end
           end
+        end
+        if (DataAdr == `MTIME_POINTER) begin
+          TestbenchRequestReadData = $time;
         end
       end
       // if (TestbenchRequestReadData !== 'x) $display("Request Return Data: %h", TestbenchRequestReadData);
@@ -119,7 +123,7 @@ module testbench;
   // DEBUG
   always @(negedge clk) begin
     #1;
-    //$display("PC: %h \tInstruction run: %h", PC, Instr);
+    $display("PC: %h \tInstruction run: %h", PC, Instr);
     //$display("DEBUG: Data Adr: %h", DataAdr);
    // $display("DEBUG: a0: %h, a5: %h",
       // dut.ComputeCore.RegisterFile.register_values[10],
@@ -174,7 +178,6 @@ initial begin
     // Wait until reset deasserts
     @(negedge reset);
     $display("[%0t] INFO: Starting simulation.", $time);
-
 
 end
 
