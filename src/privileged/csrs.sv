@@ -89,7 +89,7 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
   assign WriteSTVALM      = STrapM | (CSRSWriteM & (CSRAdrM == STVAL));
   if(P.XLEN == 64) begin
     logic LegalSatpModeM;
-    assign LegalSatpModeM = P.VIRTMEM_SUPPORTED & (CSRWriteValM[63:60] == 0 | CSRWriteValM[63:60] == P.SV39 | CSRWriteValM[63:60] == P.SV48); // supports SV39 and 48
+    assign LegalSatpModeM = P.VIRTMEM_SUPPORTED & (CSRWriteValM[63:60] == 0 | CSRWriteValM[63:60] == P.SV39 | CSRWriteValM[63:60] == P.SV48 | CSRWriteValM[63:60] == P.SV57); // supports SV39, SV48 & SV57
     assign WriteSATPM     = CSRSWriteM & (CSRAdrM == SATP) & (PrivilegeModeW == P.M_MODE | ~STATUS_TVM) & LegalSatpModeM;
   end else  // RV32
     assign WriteSATPM     = CSRSWriteM & (CSRAdrM == SATP) & (PrivilegeModeW == P.M_MODE | ~STATUS_TVM) & P.VIRTMEM_SUPPORTED;

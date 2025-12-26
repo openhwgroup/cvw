@@ -9,7 +9,7 @@ localparam U_MODE  = (2'b00);
 
 // Virtual Memory Constants
 localparam VPN_SEGMENT_BITS = (XLEN == 32 ? 32'd10 : 32'd9);
-localparam VPN_BITS = (XLEN==32 ? (2*VPN_SEGMENT_BITS) : (4*VPN_SEGMENT_BITS));
+localparam VPN_BITS = (XLEN==32 ? (2*VPN_SEGMENT_BITS) : (5*VPN_SEGMENT_BITS));
 localparam PPN_BITS = (XLEN==32 ? 32'd22 : 32'd44);
 localparam PA_BITS = (XLEN==32 ? 32'd34 : 32'd56);
 localparam SVMODE_BITS = (XLEN==32 ? 32'd1 : 32'd4);
@@ -22,6 +22,7 @@ localparam NO_TRANSLATE = 4'd0;
 localparam SV32 = 4'd1;
 localparam SV39 = 4'd8;
 localparam SV48 = 4'd9;
+localparam SV57 = 4'd10;
 
 // macros to define supported modes
 localparam logic I_SUPPORTED = (!E_SUPPORTED);

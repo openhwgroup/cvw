@@ -36,25 +36,26 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
   input  logic [P.VPN_BITS-1:0]  VPN, // The requested page number to compare against the key
   input  logic [P.ASID_BITS-1:0] SATP_ASID,
   input  logic                  SV39Mode,
+  input  logic                  SV48Mode,
   input  logic                  WriteEnable,  // Write a new entry to this line
   input  logic                  PTE_G,
   input  logic                  PTE_NAPOT,  // entry is in NAPOT mode (N bit set and PPN[3:0] = 1000)
-  input  logic [1:0]            PageTypeWriteVal,
+  input  logic [2:0]            PageTypeWriteVal,
   input  logic                  TLBFlush,   // Flush this line (set valid to 0)
-  output logic [1:0]            PageTypeRead,
+  output logic [2:0]            PageTypeRead,
   output logic                  Match
 );
 
   // PageTypeRead is a key for a tera, giga, mega, or kilopage.
-  // PageType == 2'b00 --> kilopage
-  // PageType == 2'b01 --> megapage
-  // PageType == 2'b10 --> gigapage
-  // PageType == 2'b11 --> terapage
-
+  // PageType == 3'b000 --> kilopage
+  // PageType == 3'b001 --> megapage
+  // PageType == 3'b010 --> gigapage
+  // PageType == 3'b011 --> terapage
+  // PageType == 3'b100 --> petapage
   // This entry has KEY_BITS for the key plus one valid bit.
   logic                Valid;
   logic [KEY_BITS-1:0] Key;
-  logic [1:0]          PageType;
+  logic [2:0]          PageType;
 
   // Split up key and query into sections for each page table level.
   logic [P.ASID_BITS-1:0] Key_ASID;
@@ -77,28 +78,28 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
     assign Match = Match0 & Match1 & MatchASID & Valid;
   end else begin: match
 
-    logic [SEGMENT_BITS-1:0] Key2, Key3, Query2, Query3;
-    logic Match2, Match3, MatchNAPOT;
+    logic [SEGMENT_BITS-1:0] Key2, Key3,Key4, Query2, Query3,Query4;
+    logic Match2, Match3,Match4, MatchNAPOT;
 
-    assign {Query3, Query2, Query1, Query0} = VPN;
-    assign {Key_ASID, Key3, Key2, Key1, Key0} = Key;
+    assign {Query4, Query3, Query2, Query1, Query0} = VPN;
+    assign {Key_ASID, Key4, Key3, Key2, Key1, Key0} = Key;
 
     // Calculate the actual match value based on the input vpn and the page type.
     // For example, a gigapage in SV39 only cares about VPN[2], so VPN[0] and VPN[1]
     // should automatically match.
     // In Svnapot, if N bit is set and bottom 4 bits of PPN = 1000, then these bits don't need to match
     assign MatchNAPOT = P.SVNAPOT_SUPPORTED & PTE_NAPOT & (Query0[SEGMENT_BITS-1:4] == Key0[SEGMENT_BITS-1:4]);
-    assign Match0 = (Query0 == Key0) | (PageType > 2'd0) | MatchNAPOT; // least significant section
-    assign Match1 = (Query1 == Key1) | (PageType > 2'd1);
-    assign Match2 = (Query2 == Key2) | (PageType > 2'd2);
-    assign Match3 = (Query3 == Key3) | SV39Mode; // this should always match in sv39 because they aren't used
-
-    assign Match = Match0 & Match1 & Match2 & Match3 & MatchASID & Valid;
+    assign Match0 = (Query0 == Key0) | (PageType > 3'd0) | MatchNAPOT; // least significant section
+    assign Match1 = (Query1 == Key1) | (PageType > 3'd1);
+    assign Match2 = (Query2 == Key2) | (PageType > 3'd2);
+    assign Match3 = (Query3 == Key3) | (PageType > 3'd3) | SV39Mode;
+    assign Match4 = (Query4 == Key4) | SV39Mode | SV48Mode;
+    assign Match = Match0 & Match1 & Match2 & Match3 & Match4 & MatchASID & Valid;
   end
 
   // On a write, update the type of the page referred to by this line.
-  flopenr #(2) pagetypeflop(clk, reset, WriteEnable, PageTypeWriteVal, PageType);
-  assign PageTypeRead = PageType & {2{Match}};
+  flopenr #(3) pagetypeflop(clk, reset, WriteEnable, PageTypeWriteVal, PageType);
+  assign PageTypeRead = PageType & {3{Match}};
 
   // On a write, set the valid bit high and update the stored key.
   // On a flush, zero the valid bit and leave the key unchanged.
