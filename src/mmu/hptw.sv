@@ -8,7 +8,7 @@
 //            adding support for terapage encoding, and for setting the HPTWAdr using the new level,
 //            adding the internal SvMode signal
 //
-//            implemented SV57 on top of SV8, SV39. This included, adding a level of the FSM for the extra page number segment
+//            implemented SV57 on top of SV48, SV39. This included, adding a level of the FSM for the extra page number segment
 //            adding support for petapage encoding, and for setting the HPTWAdr using the new level,
 //            adding the internal SvMode signal
 // Purpose: Hardware Page Table Walker
@@ -183,7 +183,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
     mux2 #(P.XLEN) NextPTEMux(ReadDataM, AccessedPTE, UpdatePTE, NextPTE); // NextPTE = ReadDataM when ADUE = 0 because UpdatePTE = 0
     flopenr #(P.PA_BITS) HPTWAdrWriteReg(clk, reset, SaveHPTWAdr, HPTWReadAdr, HPTWWriteAdr);
 
-    assign SaveHPTWAdr = (NextWalkerState == L0_RD | NextWalkerState == L1_RD | NextWalkerState == L2_RD | NextWalkerState == L3_RD | NextWalkerState == L4_RD ); // save the HPTWAdr when the walker is about to read the PTE at any level; the last level read is the one to write during UpdatePTE 
+    assign SaveHPTWAdr = (NextWalkerState == L0_RD | NextWalkerState == L1_RD | NextWalkerState == L2_RD | NextWalkerState == L3_RD | NextWalkerState == L4_RD); // save the HPTWAdr when the walker is about to read the PTE at any level; the last level read is the one to write during UpdatePTE
     assign SelHPTWWriteAdr = UpdatePTE | HPTWRW[0];
     mux2 #(P.PA_BITS) HPTWWriteAdrMux(HPTWReadAdr, HPTWWriteAdr, SelHPTWWriteAdr, HPTWAdr);
 
@@ -260,7 +260,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
         L1_ADR, L1_RD:   VPN = TranslationVAdr[29:21];
         default:    VPN = TranslationVAdr[20:12];
       endcase
-      assign PPN = ( (SvMode == P.SV57 & (WalkerState == L4_ADR | WalkerState == L4_RD)) | // added 4th level for sv57
+      assign PPN = ( (SvMode == P.SV57 & (WalkerState == L4_ADR | WalkerState == L4_RD)) | 
                  (SvMode == P.SV48 & (WalkerState == L3_ADR | WalkerState == L3_RD)) |
                  (SvMode == P.SV39 & (WalkerState == L2_ADR | WalkerState == L2_RD)) ) ? BasePageTablePPN : CurrentPPN;
     assign HPTWReadAdr = {PPN, VPN, 3'b000};

@@ -93,7 +93,7 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
     assign Match1 = (Query1 == Key1) | (PageType > 3'd1);
     assign Match2 = (Query2 == Key2) | (PageType > 3'd2);
     assign Match3 = (Query3 == Key3) | (PageType > 3'd3) | SV39Mode;
-    assign Match4 = (Query4 == Key4) | SV39Mode| SV48Mode;
+    assign Match4 = (Query4 == Key4) | SV39Mode | SV48Mode;
     assign Match = Match0 & Match1 & Match2 & Match3 & Match4 & MatchASID & Valid;
   end
 

@@ -59,7 +59,11 @@ module tlbmixer import cvw::*;  #(parameter cvw_t P) (
     mux5 #(44) pnm(44'h00000000000, 44'h000000001FF, 44'h0000003FFFF, 44'h00007FFFFFF,44'h00FFFFFFFFF, HitPageType, PageNumberMask);
 
   // merge low segments of VPN with high segments of PPN decided by the pagetype.
-  assign ZeroExtendedVPN = {{EXTRA_BITS{1'b0}}, VPN}; // forces the VPN to be the same width as PPN.
+  if (P.PPN_BITS > P.VPN_BITS)
+    assign ZeroExtendedVPN = {{EXTRA_BITS{1'b0}}, VPN}; // forces the VPN to be the same width as PPN.
+  else 
+    assign ZeroExtendedVPN = VPN[43:0];
+
   assign PPNMixed = PPN | ZeroExtendedVPN & PageNumberMask; // low bits of PPN are already zero
 
   // In Svnapot, when N=1, use bottom bits of VPN for contiugous translations
