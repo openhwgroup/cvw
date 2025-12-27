@@ -58,6 +58,8 @@ typedef struct packed {
   logic         SVNAPOT_SUPPORTED;
   logic         SVINVAL_SUPPORTED;
   logic         SVADU_SUPPORTED;
+  logic         SV32_SUPPORTED;
+  logic         SV39_SUPPORTED;
   logic         SV48_SUPPORTED;
   logic         SV57_SUPPORTED;
   logic         VECTORED_INTERRUPTS_SUPPORTED;

@@ -102,13 +102,14 @@ localparam logic ZICBOZ_SUPPORTED = 1;
 localparam logic ZICBOP_SUPPORTED = 1;
 
 // Virtual memory extensions
-localparam logic VIRTMEM_SUPPORTED = 1;
+localparam logic SV32_SUPPORTED    = 0;
+localparam logic SV39_SUPPORTED    = 1;
+localparam logic SV48_SUPPORTED    = 1;
+localparam logic SV57_SUPPORTED    = 1;
 localparam logic SVPBMT_SUPPORTED  = 1;
 localparam logic SVNAPOT_SUPPORTED = 1;
 localparam logic SVINVAL_SUPPORTED = 1;
 localparam logic SVADU_SUPPORTED   = 1;
-localparam logic SV48_SUPPORTED    = 1;
-localparam logic SV57_SUPPORTED    = 1;
 
 
 // LSU microarchitectural Features

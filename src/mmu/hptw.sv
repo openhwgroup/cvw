@@ -227,7 +227,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   assign StartWalk  = (WalkerState == IDLE) & TLBMissOrUpdateDA;
   assign HPTWRW[1]  = (WalkerState == L4_RD & P.SV57_SUPPORTED) |
                       (WalkerState == L3_RD & P.SV48_SUPPORTED) |
-                      (WalkerState == L2_RD & P.XLEN == 64) |
+                      (WalkerState == L2_RD & P.SV39_SUPPORTED) |
                       (WalkerState == L1_RD) | (WalkerState == L0_RD);
   assign DTLBWriteM = (WalkerState == LEAF & ~HPTWUpdateDA) & DTLBWalk;
   assign ITLBWriteF = (WalkerState == LEAF & ~HPTWUpdateDA) & ~DTLBWalk;
@@ -282,7 +282,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
                                                                         L2_ADR ;
     assign PetapageMisaligned = P.SV57_SUPPORTED & |(CurrentPPN[35:0]); // Must have zero PPN3, PPN2, PPN1, PPN0
     assign TerapageMisaligned = P.SV48_SUPPORTED & |(CurrentPPN[26:0]); // Must have zero PPN2, PPN1, PPN0
-    assign GigapageMisaligned =                    |(CurrentPPN[17:0]);   // Must have zero PPN1 and PPN0
+    assign GigapageMisaligned =                    |(CurrentPPN[17:0]); // Must have zero PPN1 and PPN0
     assign MegapageMisaligned = |(CurrentPPN[8:0]);  // Must have zero PPN0
     assign Misaligned = (P.SV57_SUPPORTED & (WalkerState == L3_ADR) & PetapageMisaligned) |
                         (P.SV48_SUPPORTED & (WalkerState == L2_ADR) & TerapageMisaligned) |
