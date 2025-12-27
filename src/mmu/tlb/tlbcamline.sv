@@ -74,32 +74,32 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
   assign Query0 = VPN[SEGMENT_BITS-1:0];
   // In Svnapot, if N bit is set and bottom 4 bits of PPN = 1000, then these bits don't need to match
   assign MatchNAPOT = P.SVNAPOT_SUPPORTED & PTE_NAPOT & (Query0[SEGMENT_BITS-1:4] == Key0[SEGMENT_BITS-1:4]);
-  assign Match0 = (Query0 == Key0) | (PageType > 3'd0) | MatchNAPOT; // least significant section
+  assign Match0 = (Query0 == Key0) | (PageType > 3'd0) | MatchNAPOT; // always match for megapage or larger
 
   // segment 1
   assign Key1   = Key[2*SEGMENT_BITS-1:SEGMENT_BITS];
   assign Query1 = VPN[2*SEGMENT_BITS-1:SEGMENT_BITS];
-  assign Match1 = (Query1 == Key1) | (PageType > 3'd1);
+  assign Match1 = (Query1 == Key1) | (PageType > 3'd1); // always match for gigapage or larger
 
   if (P.SV39_SUPPORTED) begin: segment2
     logic [SEGMENT_BITS-1:0] Key2, Query2;
     assign Key2   = Key[3*SEGMENT_BITS-1:2*SEGMENT_BITS];
     assign Query2 = VPN[3*SEGMENT_BITS-1:2*SEGMENT_BITS];
-    assign Match2 = (Query2 == Key2) | (PageType > 3'd2);
+    assign Match2 = (Query2 == Key2) | (PageType > 3'd2);  // always match for terapage or larger
   end else assign Match2 = 1'b1;
 
   if (P.SV48_SUPPORTED) begin: segment3
     logic [SEGMENT_BITS-1:0] Key3, Query3;
     assign Key3   = Key[4*SEGMENT_BITS-1:3*SEGMENT_BITS];
     assign Query3 = VPN[4*SEGMENT_BITS-1:3*SEGMENT_BITS];
-    assign Match3 = (Query3 == Key3) | (PageType > 3'd3);
+    assign Match3 = (Query3 == Key3) | (PageType > 3'd3) | SV39Mode; // always match in SV39 mode or for petapage
   end else assign Match3 = 1'b1;
 
   if (P.SV57_SUPPORTED) begin: segment4
     logic [SEGMENT_BITS-1:0] Key4, Query4;
     assign Key4   = Key[5*SEGMENT_BITS-1:4*SEGMENT_BITS];
     assign Query4 = VPN[5*SEGMENT_BITS-1:4*SEGMENT_BITS];
-    assign Match4 = (Query4 == Key4) | (PageType > 3'd4);
+    assign Match4 = (Query4 == Key4) | SV39Mode | SV48Mode; // always match in SV39/SV48 mode
   end else assign Match4 = 1'b1;
 
   assign Match = Match0 & Match1 & Match2 & Match3 & Match4 & MatchASID & Valid;
