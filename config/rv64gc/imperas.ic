@@ -20,7 +20,7 @@
 --override lr_sc_grain=8   # Za64rs requires <=64; we use native word size
 
 # Virtual memory
---override cpu/Sv_modes=768 # SV39 and SV48 supported
+--override cpu/Sv_modes=1792 # SV39 and SV48 and SV57 supported
 --override cpu/Svadu=T # Enable SVADU hardware update of A/D bits when menvcfg.ADUE=1
 --override cpu/Svinval=T
 --override cpu/Svpbmt=T

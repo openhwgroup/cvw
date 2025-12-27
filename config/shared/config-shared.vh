@@ -8,13 +8,17 @@ localparam S_MODE  = (2'b01);
 localparam U_MODE  = (2'b00);
 
 // Virtual Memory Constants
+localparam VIRTMEM_SUPPORTED = (SV32_SUPPORTED | SV39_SUPPORTED);
 localparam VPN_SEGMENT_BITS = (XLEN == 32 ? 32'd10 : 32'd9);
-localparam VPN_BITS = (XLEN==32 ? (2*VPN_SEGMENT_BITS) : (5*VPN_SEGMENT_BITS));
-localparam PPN_BITS = (XLEN==32 ? 32'd22 : 32'd44);
-localparam PA_BITS = (XLEN==32 ? 32'd34 : 32'd56);
-localparam SVMODE_BITS = (XLEN==32 ? 32'd1 : 32'd4);
-localparam ASID_BASE = (XLEN==32 ? 32'd22 : 32'd44);
-localparam ASID_BITS = (XLEN==32 ? 32'd9 : 32'd16);
+localparam VPN_BITS = (SV57_SUPPORTED ? (5*VPN_SEGMENT_BITS) :
+                       SV48_SUPPORTED ? (4*VPN_SEGMENT_BITS) :
+                       SV39_SUPPORTED ? (3*VPN_SEGMENT_BITS) :
+                                        (2*VPN_SEGMENT_BITS));
+localparam PPN_BITS    = (XLEN==32 ? 32'd22 : 32'd44);
+localparam PA_BITS     = (XLEN==32 ? 32'd34 : 32'd56);
+localparam SVMODE_BITS = (XLEN==32 ? 32'd1  : 32'd4);
+localparam ASID_BASE   = (XLEN==32 ? 32'd22 : 32'd44);
+localparam ASID_BITS   = (XLEN==32 ? 32'd9  : 32'd16);
 
 // constants to check SATP_MODE against
 // defined in Table 4.3 of the privileged spec
