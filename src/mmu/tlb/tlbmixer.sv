@@ -61,8 +61,8 @@ module tlbmixer import cvw::*;  #(parameter cvw_t P) (
   // merge low segments of VPN with high segments of PPN decided by the pagetype.
   if (P.PPN_BITS > P.VPN_BITS)
     assign ZeroExtendedVPN = {{EXTRA_BITS{1'b0}}, VPN}; // forces the VPN to be the same width as PPN.
-  else 
-    assign ZeroExtendedVPN = VPN[43:0];
+  else
+    assign ZeroExtendedVPN = VPN[P.PPN_BITS-1:0];
 
   assign PPNMixed = PPN | ZeroExtendedVPN & PageNumberMask; // low bits of PPN are already zero
 

@@ -56,6 +56,12 @@ module riscvassertions_wally import cvw::*; #(parameter cvw_t P);
     assert ((P.ZICBOZ_SUPPORTED == 0) | (P.DTIM_SUPPORTED == 0)) else $fatal(1, "ZICBOZ incompatible with DTIM");
     assert ((P.LLEN == P.XLEN) | (P.DCACHE_SUPPORTED & P.DTIM_SUPPORTED == 0)) else $fatal(1, "LLEN > XLEN (D on RV32 or Q on RV64) requires data cache");
     assert ((P.ZICCLSM_SUPPORTED == 0) | (P.DCACHE_SUPPORTED == 1)) else $fatal(1, "ZICCLSM requires DCACHE_SUPPORTED");
+    assert ((P.VIRTMEM_SUPPORTED & P.XLEN == 64) | P.SVPBMT_SUPPORTED == 0) else $fatal(1, "SVPBMT requires RV64 with virtual memory");
+    assert ((P.VIRTMEM_SUPPORTED & P.XLEN == 64) | P.SVNAPOT_SUPPORTED == 0) else $fatal(1, "SVNAPOT requires RV64 with virtual memory");
+    assert ((P.VIRTMEM_SUPPORTED) | P.SVINVAL_SUPPORTED == 0) else $fatal(1, "SVINVAL requires virtual memory");
+    assert ((P.VIRTMEM_SUPPORTED) | P.SVADU_SUPPORTED == 0) else $fatal(1, "SVADU requires virtual memory");
+    assert ((P.VIRTMEM_SUPPORTED & P.XLEN == 64) | P.SV48_SUPPORTED == 0) else $fatal(1, "SV48 requires RV64 with virtual memory");
+    assert ((P.VIRTMEM_SUPPORTED & P.XLEN == 64 & P.SV48_SUPPORTED) | P.SV57_SUPPORTED == 0) else $fatal(1, "SV57 requires RV64 and SV48 with virtual memory");
   end
 
 endmodule

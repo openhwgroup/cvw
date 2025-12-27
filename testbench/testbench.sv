@@ -220,6 +220,7 @@ module testbench;
         "arch64pmp":     if (P.PMP_ENTRIES > 0)   tests = arch64pmp;
         "arch64vm_sv39": if (P.VIRTMEM_SUPPORTED) tests = arch64vm_sv39;
         "arch64vm_sv48": if (P.VIRTMEM_SUPPORTED) tests = arch64vm_sv48;
+        "arch64vm_sv57": if (P.VIRTMEM_SUPPORTED) tests = arch64vm_sv57;
       endcase
     end else begin // RV32
       case (TEST)
