@@ -99,10 +99,10 @@ module tlb import cvw::*;  #(parameter cvw_t P,
     assign Misaligned = (HitPageType == 3'b001) & MegapageMisaligned;
   end else begin // 64-bit
     logic  GigapageMisaligned, TerapageMisaligned, PetapageMisaligned;
-    assign PetapageMisaligned = |(PPN[35:0]);     // must have zero PPN3, PPN2, PPN1, PPN0
-    assign TerapageMisaligned = |(PPN[26:0]); // must have zero PPN2, PPN1, PPN0
-    assign GigapageMisaligned = |(PPN[17:0]); // must have zero PPN1 and PPN0
-    assign MegapageMisaligned = |(PPN[8:0]); // must have zero PPN0
+    assign PetapageMisaligned = |(PPN[35:0]) & P.SV57_SUPPORTED;  // must have zero PPN3, PPN2, PPN1, PPN0
+    assign TerapageMisaligned = |(PPN[26:0]) & P.SV48_SUPPORTED;  // must have zero PPN2, PPN1, PPN0
+    assign GigapageMisaligned = |(PPN[17:0]);                     // must have zero PPN1 and PPN0
+    assign MegapageMisaligned = |(PPN[8:0]);                      // must have zero PPN0
     assign Misaligned =
               ((HitPageType == 3'b100) & PetapageMisaligned) |
               ((HitPageType == 3'b011) & TerapageMisaligned) |

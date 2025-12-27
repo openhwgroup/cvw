@@ -33,7 +33,7 @@
 module tlbcam  import cvw::*;  #(parameter cvw_t P,
                                  parameter TLB_ENTRIES = 8, KEY_BITS = 20, SEGMENT_BITS = 10) (
   input  logic                    clk, reset,
-  input  logic [P.VPN_BITS-1:0]    VPN,
+  input  logic [P.VPN_BITS-1:0]   VPN,
   input  logic [2:0]              PageTypeWriteVal,
   input  logic                    SV39Mode,
   input  logic                    SV48Mode,
