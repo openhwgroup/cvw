@@ -377,7 +377,7 @@ string arch64vm_sv39[] = '{
   "rv64i_m/vm_sv39/src/vm_mprv_U_set_sum_set_S_mode.S",
   "rv64i_m/vm_sv39/src/vm_mprv_U_set_sum_unset_S_mode.S",
   "rv64i_m/vm_sv39/src/vm_mprv_bare_mode.S",
-  //"rv64i_m/vm_sv39/src/vm_mstatus_sbe_set_S_mode.S",   //Uncomment these lines when Sail supports Supervisor Big Endian
+  //"rv64i_m/vm_sv39/src/vm_mstatus_sbe_set_S_mode.S",   // uncomment these lines when Sail supports Supervisor Big Endian
   //"rv64i_m/vm_sv39/src/vm_mstatus_sbe_set_sum_set_S_mode.S",
   "rv64i_m/vm_sv39/src/vm_mstatus_tvm_test.S",
   "rv64i_m/vm_sv39/src/vm_mxr_S_mode.S",
@@ -389,7 +389,7 @@ string arch64vm_sv39[] = '{
   "rv64i_m/vm_sv39/src/vm_reserved_rsw_pte_U_mode.S",
   "rv64i_m/vm_sv39/src/vm_reserved_rwx_pte_S_mode.S",
   "rv64i_m/vm_sv39/src/vm_reserved_rwx_pte_U_mode.S",
-  //"rv64i_m/vm_sv39/src/vm_reserved_svnapot_S_mode.S",  // Run this if SVNAPOT_SUPPORTED == 0
+  //"rv64i_m/vm_sv39/src/vm_reserved_svnapot_S_mode.S",  // run this if SVNAPOT_SUPPORTED == 0
   "rv64i_m/vm_sv39/src/vm_reserved_svpbmt_S_mode.S",
   "rv64i_m/vm_sv39/src/vm_satp_access_tests.S",
   "rv64i_m/vm_sv39/src/vm_spage_access_U_mode.S",
@@ -464,7 +464,7 @@ string arch64vm_sv57[] = '{
   "rv64i_m/vm_sv57/src/sv57_mprv_U_mode.S",
   "rv64i_m/vm_sv57/src/sv57_mprv_U_set_sum_set_S_mode.S",
   "rv64i_m/vm_sv57/src/sv57_mprv_U_set_sum_unset_S_mode.S",
-  //"rv64i_m/vm_sv57/src/sv57_mstatus_sbe_set_S_mode.S",  //Uncomment these lines when Sail supports Supervisor Big Endian
+  //"rv64i_m/vm_sv57/src/sv57_mstatus_sbe_set_S_mode.S",  // uncomment these lines when Sail supports Supervisor Big Endian
   //"rv64i_m/vm_sv57/src/sv57_mstatus_sbe_set_sum_set_S_mode.S",
   "rv64i_m/vm_sv57/src/sv57_mxr_S_mode.S",
   "rv64i_m/vm_sv57/src/sv57_mxr_U_mode.S",
