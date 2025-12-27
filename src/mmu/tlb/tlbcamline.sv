@@ -60,42 +60,49 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
   // Split up key and query into sections for each page table level.
   logic [P.ASID_BITS-1:0] Key_ASID;
   logic [SEGMENT_BITS-1:0] Key0, Key1, Query0, Query1;
-  logic MatchASID, Match0, Match1;
+  logic MatchASID, MatchNAPOT, Match0, Match1, Match2, Match3, Match4;
 
+  assign Key_ASID = Key[KEY_BITS-1 -: P.ASID_BITS];
   assign MatchASID = (SATP_ASID == Key_ASID) | PTE_G;
 
-  if (P.XLEN == 32) begin: match
+  // Calculate a match against a segment of the key based on the input vpn and the page type.
+  // For example, a petapage in SV57 only cares about VPN[4], so VPN[0], VPN[1], VPN[2], and VPN[3]
+  // should automatically match.
 
-    assign {Key_ASID, Key1, Key0} = Key;
-    assign {Query1, Query0} = VPN;
+  // segment 0
+  assign Key0   = Key[SEGMENT_BITS-1:0];
+  assign Query0 = VPN[SEGMENT_BITS-1:0];
+  // In Svnapot, if N bit is set and bottom 4 bits of PPN = 1000, then these bits don't need to match
+  assign MatchNAPOT = P.SVNAPOT_SUPPORTED & PTE_NAPOT & (Query0[SEGMENT_BITS-1:4] == Key0[SEGMENT_BITS-1:4]);
+  assign Match0 = (Query0 == Key0) | (PageType > 3'd0) | MatchNAPOT; // least significant section
 
-    // Calculate the actual match value based on the input vpn and the page type.
-    // For example, a megapage in SV32 only cares about VPN[1], so VPN[0]
-    // should automatically match.
-    assign Match0 = (Query0 == Key0) | (PageType[0]); // least significant section
-    assign Match1 = (Query1 == Key1);
+  // segment 1
+  assign Key1   = Key[2*SEGMENT_BITS-1:SEGMENT_BITS];
+  assign Query1 = VPN[2*SEGMENT_BITS-1:SEGMENT_BITS];
+  assign Match1 = (Query1 == Key1) | (PageType > 3'd1);
 
-    assign Match = Match0 & Match1 & MatchASID & Valid;
-  end else begin: match
-
-    logic [SEGMENT_BITS-1:0] Key2, Key3,Key4, Query2, Query3,Query4;
-    logic Match2, Match3,Match4, MatchNAPOT;
-
-    assign {Query4, Query3, Query2, Query1, Query0} = VPN;
-    assign {Key_ASID, Key4, Key3, Key2, Key1, Key0} = Key;
-
-    // Calculate the actual match value based on the input vpn and the page type.
-    // For example, a gigapage in SV39 only cares about VPN[2], so VPN[0] and VPN[1]
-    // should automatically match.
-    // In Svnapot, if N bit is set and bottom 4 bits of PPN = 1000, then these bits don't need to match
-    assign MatchNAPOT = P.SVNAPOT_SUPPORTED & PTE_NAPOT & (Query0[SEGMENT_BITS-1:4] == Key0[SEGMENT_BITS-1:4]);
-    assign Match0 = (Query0 == Key0) | (PageType > 3'd0) | MatchNAPOT; // least significant section
-    assign Match1 = (Query1 == Key1) | (PageType > 3'd1);
+  if (P.SV39_SUPPORTED) begin: segment2
+    logic [SEGMENT_BITS-1:0] Key2, Query2;
+    assign Key2   = Key[3*SEGMENT_BITS-1:2*SEGMENT_BITS];
+    assign Query2 = VPN[3*SEGMENT_BITS-1:2*SEGMENT_BITS];
     assign Match2 = (Query2 == Key2) | (PageType > 3'd2);
-    assign Match3 = (Query3 == Key3) | (PageType > 3'd3) | SV39Mode | ~P.SV48_SUPPORTED; // Always matches if SV48 unsupported
-    assign Match4 = (Query4 == Key4) | SV39Mode | SV48Mode | ~P.SV57_SUPPORTED;          // Always matches if SV57 unsupported
-    assign Match = Match0 & Match1 & Match2 & Match3 & Match4 & MatchASID & Valid;
-  end
+  end else assign Match2 = 1'b1;
+
+  if (P.SV48_SUPPORTED) begin: segment3
+    logic [SEGMENT_BITS-1:0] Key3, Query3;
+    assign Key3   = Key[4*SEGMENT_BITS-1:3*SEGMENT_BITS];
+    assign Query3 = VPN[4*SEGMENT_BITS-1:3*SEGMENT_BITS];
+    assign Match3 = (Query3 == Key3) | (PageType > 3'd3);
+  end else assign Match3 = 1'b1;
+
+  if (P.SV57_SUPPORTED) begin: segment4
+    logic [SEGMENT_BITS-1:0] Key4, Query4;
+    assign Key4   = Key[5*SEGMENT_BITS-1:4*SEGMENT_BITS];
+    assign Query4 = VPN[5*SEGMENT_BITS-1:4*SEGMENT_BITS];
+    assign Match4 = (Query4 == Key4) | (PageType > 3'd4);
+  end else assign Match4 = 1'b1;
+
+  assign Match = Match0 & Match1 & Match2 & Match3 & Match4 & MatchASID & Valid;
 
   // On a write, update the type of the page referred to by this line.
   flopenr #(3) pagetypeflop(clk, reset, WriteEnable, PageTypeWriteVal, PageType);
