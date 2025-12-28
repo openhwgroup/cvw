@@ -6,6 +6,9 @@
 
 ELFS 			?=
 
+# Example options (space separated): I M
+ACT3_EXTENSIONS ?= I
+
 # ---- Processor / Testbench Configuration ---- #
 XLEN 			?= 32
 PROCESSOR     	?= $(CURDIR)/my_processor/RISC-V-Pipelined-Processor/src      # Directory containing all processor RTL (will scan for .sv / .svh)
@@ -16,6 +19,7 @@ DUT_MODULE 		?= testingCore
 
 C_TEST_DIR		?= $(CURDIR)/tests/C
 TEST_DIR        ?= $(CURDIR)/tests/sample_processor
+RISCOF_DIR		?= $(CURDIR)/tests/riscof
 
 LDSCRIPT		?= $(TEST_DIR)/link.ld
 
@@ -37,7 +41,8 @@ VSIM        ?= vsim
 VSIM_FLAGS  ?= -voptargs=+acc
 VSIM_EXTRA_FLAGS ?= # Extra flags if you want them
 
-GUI ?= 0
+GUI  ?= 0
+ACT3 ?= 0
 
 # Build the vsim mode flags from GUI
 ifeq ($(GUI),1)
@@ -47,6 +52,8 @@ else
   VSIM_MODE_FLAGS := -c
   VSIM_DO := run -all; quit -f
 endif
+
+PYTHON := python3
 
 # Map XLEN -> toolchain prefix
 # ifeq ($(XLEN),64)
@@ -106,8 +113,8 @@ PORT_CFLAGS = \
 
 # ----    Files and Directories    ---- #
 
-SV_PACKAGES := /home/jcassidy/cvw/examples/exercises/lynn/my_processor/RISC-V-Pipelined-Processor/src/Packages/HighLevelControl.svh#$(sort $(shell find $(PROCESSOR) -type f -name '*.pkg'))
-SV_SOURCES 	:= $(sort $(shell find $(PROCESSOR) -type f \( -name "*.sv" -o -name "*.svh" \)))
+SV_PACKAGES := /home/jcassidy/cvw/examples/exercises/lynn/my_processor/RISC-V-Pipelined-Processor/src/Packages/HighLevelControl.svh #$(sort $(shell find $(PROCESSOR) -type f -name '*.pkg'))
+SV_SOURCES 	:= $(sort $(shell find $(PROCESSOR) -type f \( -name "*.sv" -o -name "*.svh" \)) $(shell find $(INC_DIR) -type f \( -name "*.sv" -o -name "*.svh" \)))
 TEST_ELFS  	:= $(sort $(shell find $(TEST_DIR) -type f -name '*.elf'))
 
 PORT_DIR = $(WALLY)/benchmarks/coremark/riscv64-baremetal
@@ -167,25 +174,40 @@ run: $(ELFS:%=%.run)
 	MEMFILE="$(abspath $<)"; \
 	ELF="$${MEMFILE%.memfile}"; \
 	ENTRY_ADDR="$$(riscv64-unknown-elf-readelf -h "$$ELF" | awk '/Entry point address:/ {print $$NF}')"; \
-	TOHOST_ADDR="$$(riscv64-unknown-elf-readelf --syms --wide "$$ELF" | awk '$$8=="tohost" {print "0x"$$2; exit}')" \
+	TOHOST_ADDR="$$(riscv64-unknown-elf-readelf --syms --wide "$$ELF" | awk '$$NF=="tohost" {print "0x"$$2; exit}')" \
+	DMEM_BASE_ADDR="$$(riscv64-unknown-elf-readelf --syms --wide "$$ELF" | awk '$$NF=="dmem_base" {print "0x"$$2; exit}')" \
 	NAME="$${ELF##*/}"; \
 	LOGFILE="$(WORK_DIR)/runs/$${NAME}.sim.log"; \
+	SIG_BASE_ADDR=""; \
+	SIG_END_ADDR=""; \
+	if [ "$(ACT3)" = "1" ]; then \
+	  SIG_BASE_ADDR="$$(riscv64-unknown-elf-readelf --syms --wide "$$ELF" | awk '$$NF=="sig_begin_canary" {print "0x"$$2; exit}')" ; \
+	  SIG_END_ADDR="$$(riscv64-unknown-elf-readelf --syms --wide "$$ELF" | awk '$$NF=="rvtest_sig_end" {print "0x"$$2; exit}')" ; \
+	  echo "[ACT3] signature_base=$$SIG_BASE_ADDR sig_end_canary=$$SIG_END_ADDR"; \
+	fi; \
 	echo "[RUN] ELF: $$ELF"; \
-	echo "[RUN] Entry PC: $$ENTRY_ADDR"; \
 	echo "[VSIM] Using memfile $$MEMFILE (log: $$LOGFILE)"; \
 	cd "$(WORK_DIR)"; \
 	if [ "$(GUI)" = "1" ]; then \
 	  $(VSIM) $(VSIM_FLAGS) $(VSIM_EXTRA_FLAGS) work.$(TB_TOP) \
+	  	+TESTNAME="$$NAME" \
 	    +MEMFILE="$$MEMFILE" \
 	    +ENTRY_ADDR="$$ENTRY_ADDR" \
 		+TOHOST_ADDR="$$TOHOST_ADDR" \
+		+DMEM_BASE_ADDR="$$DMEM_BASE_ADDR" \
+		+ACT3="$(ACT3)" \
+	    $(if $(filter 1,$(ACT3)),+SIG_BASE_ADDR="$$SIG_BASE_ADDR" +SIG_END_ADDR="$$SIG_END_ADDR",) \
 	    -do "$(VSIM_DO)" \
 	    2>&1 | tee "$$LOGFILE"; \
 	else \
 	  $(VSIM) $(VSIM_MODE_FLAGS) $(VSIM_FLAGS) $(VSIM_EXTRA_FLAGS) work.$(TB_TOP) \
+	  	+TESTNAME="$$NAME" \
 	    +MEMFILE="$$MEMFILE" \
 	    +ENTRY_ADDR="$$ENTRY_ADDR" \
 		+TOHOST_ADDR="$$TOHOST_ADDR" \
+		+DMEM_BASE_ADDR="$$DMEM_BASE_ADDR" \
+		+ACT3="$(ACT3)" \
+	    $(if $(filter 1,$(ACT3)),+SIG_BASE_ADDR="$$SIG_BASE_ADDR" +SIG_END_ADDR="$$SIG_END_ADDR",) \
 	    -do "$(VSIM_DO)" \
 	    > "$$LOGFILE" 2>&1; \
 	fi
@@ -205,9 +227,30 @@ C_test: $(C_TEST_WORK_DIR)/c_test.elf
 
 
 # test: run ALL .elf files in TEST_DIR in parallel with -j
-.PHONY: test
+.PHONY: test act3
 test:
 	$(MAKE) run ELFS="$(TEST_ELFS)"
+	$(PYTHON) bin/scan_test_logs.py
+
+act3:
+	@mkdir -p $(RISCOF_DIR)
+	$(PYTHON) bin/copy_riscof_elfs.py --wally "$(WALLY)" $(ACT3_EXTENSIONS)
+	@ELFS="$$(find "$(RISCOF_DIR)" -type f -name '*.elf' | sort -u)"; \
+	  echo "Found $$(echo "$$ELFS" | wc -w) elfs"; \
+	  $(MAKE) run ELFS="$$ELFS" ACT3=1
+	$(PYTHON) bin/check_signatures.py --wally "$(WALLY)"
+
+.PHONY: disassemble
+
+%.bin: %.hex
+	@sed -E 's/^[[:space:]]*#[[:space:]]*//; s/^[[:space:]]+//; /^[[:space:]]*$$/d' $< | \
+	$(PYTHON) -c 'import sys,struct; \
+	[sys.stdout.buffer.write(struct.pack("<I", int(l.strip(),16))) for l in sys.stdin if l.strip()]' \
+	> $@
+
+%.dis: %.bin
+	@riscv64-unknown-elf-objdump -D -b binary -m riscv:rv32 $< > $@
+	@echo "Wrote $@"
 
 # Keep the old riscv-arch-test flow
 .PHONY: arch-test
@@ -253,3 +296,4 @@ clean:
 	rm -rf $(WORK_DIR)
 	rm -rf $(CM_WORK_DIR)
 	rm -rf $(C_TEST_WORK_DIR)
+	rm -rf $(RISCOF_DIR)

@@ -5,12 +5,19 @@
 
 `define INSTR_BITS 32
 
-`define MaxInstrSizeWords 16384
+`define ELF_BASE_ADR (`XLEN'h8000_0000)
+`define IMEM_BASE_ADR (`ELF_BASE_ADR)
+`define DMEM_BASE_ADR (`ELF_BASE_ADR)
+
+`define MaxInstrSizeWords 1048576
+// 16384
 `define MaxDataSizeWords 1048576
 
 `define THR_POINTER (`XLEN'h1000_0000)
 `define LSR_POINTER (`THR_POINTER + `XLEN'h5)
 `define MTIME_POINTER (`XLEN'h0200bff8)
+
+
 
 module testbench;
 
@@ -51,8 +58,8 @@ module testbench;
   logic [`XLEN/8-1:0]             WriteByteEn;   // byte enables, one per 8 bits
 
   logic                           TestbenchRequest;
-
-  assign TestbenchRequest = DataAdr >= `THR_POINTER & DataAdr < `THR_POINTER + `XLEN'hF | DataAdr == `MTIME_POINTER;
+  // | DataAdr == `MTIME_POINTER
+  assign TestbenchRequest = DataAdr >= `THR_POINTER & DataAdr < `THR_POINTER + `XLEN'hF;
 
   always_ff @(negedge clk) begin
     byte ch;
@@ -72,9 +79,9 @@ module testbench;
             end
           end
         end
-        if (DataAdr == `MTIME_POINTER) begin
-          TestbenchRequestReadData = $time;
-        end
+        // if (DataAdr == `MTIME_POINTER) begin
+        //   TestbenchRequestReadData = $time;
+        // end
       end
       // if (TestbenchRequestReadData !== 'x) $display("Request Return Data: %h", TestbenchRequestReadData);
     end
@@ -103,8 +110,8 @@ module testbench;
     .ADDRESS_BITS             (`XLEN),
     .DATA_BITS                (32),
     .MEMORY_SIZE_ENTRIES      (`MaxInstrSizeWords),
-    .MEMORY_FILE_BASE_ADDRESS (`XLEN'h8000_0000),
-    .MEMORY_ADR_OFFSET        (`XLEN'h8000_0000),
+    .MEMORY_FILE_BASE_ADDRESS (`ELF_BASE_ADR),
+    .MEMORY_ADR_OFFSET        (`IMEM_BASE_ADR),
     .MEMFILE_PLUS_ARG         ("MEMFILE")
   ) InstructionMemory (.clk, .reset, .En(1'b1), .WriteEn(1'b0), .WriteByteEn(4'b0), .MemoryAddress(PC), .WriteData(), .ReadData(Instr));
 
@@ -112,9 +119,9 @@ module testbench;
     .MEMORY_NAME              ("Data Memory"),
     .ADDRESS_BITS             (`XLEN),
     .DATA_BITS                (`XLEN),
-    .MEMORY_SIZE_ENTRIES      (`MaxDataSizeWords),
-    .MEMORY_FILE_BASE_ADDRESS (`XLEN'h8000_0000),
-    .MEMORY_ADR_OFFSET        (`XLEN'h8001_0000),
+    .MEMORY_SIZE_ENTRIES      ((`MaxInstrSizeWords + `MaxDataSizeWords)),
+    .MEMORY_FILE_BASE_ADDRESS (`ELF_BASE_ADR),
+    .MEMORY_ADR_OFFSET        (`DMEM_BASE_ADR),
     .MEMFILE_PLUS_ARG         ("MEMFILE")
   ) DataMemory (.clk, .reset, .En(MemEn & ~TestbenchRequest), .WriteEn, .WriteByteEn, .MemoryAddress(DataAdr), .WriteData, .ReadData(MemReadData));
 
@@ -124,6 +131,22 @@ module testbench;
   always @(negedge clk) begin
     #1;
     $display("PC: %h \tInstruction run: %h", PC, Instr);
+    $display("DEBUG: AluSrcA_R: %s, s1: a0: %h, a1: %h",
+      dut.ComputeCore.AluSrcA_R.name(),
+      dut.ComputeCore.RegisterFile.register_values[9],
+      dut.ComputeCore.RegisterFile.register_values[10],
+      dut.ComputeCore.RegisterFile.register_values[11]
+    );
+    // $display("DEBUG: CSREn_C: %h, CSRAdr_C: %h, CSRAdrValid_C: %h, Rs1ForwardSrc_C: %s, AluOperandAForwardEn_C: %h, AluSrcA_R: %s",
+    //    dut.ComputeCore.CSREn_C,
+    //    dut.ComputeCore.CSRAdr_C,
+    //    dut.ComputeCore.CSRAdrValid_C,
+    //    dut.ComputeCore.Rs1ForwardSrc_C.name(),
+    //    dut.ComputeCore.AluOperandAForwardEn_C,
+    //    dut.ComputeCore.AluSrcA_R.name()
+    // ); // output the register where the value is stored
+
+    //$display("%h", Instr);
     //$display("DEBUG: Data Adr: %h", DataAdr);
    // $display("DEBUG: a0: %h, a5: %h",
       // dut.ComputeCore.RegisterFile.register_values[10],
@@ -181,6 +204,31 @@ initial begin
 
 end
 
+bit        act3_en;
+longint    sig_base_addr, sig_end_addr;
+string     testname;
+
+initial begin
+  // defaults
+  act3_en = 0;
+  sig_base_addr = 0;
+  sig_end_addr  = 0;
+
+  void'($value$plusargs("ACT3=%d", act3_en));
+  void'($value$plusargs("TESTNAME=%s", testname));
+
+  if (act3_en) begin
+    if (!$value$plusargs("SIG_BASE_ADDR=%h", sig_base_addr) ||
+        !$value$plusargs("SIG_END_ADDR=%h",  sig_end_addr)) begin
+      $fatal(1, "[ACT3] ACT3=1 but SIG_BASE_ADDR / SIG_END_ADDR not provided");
+    end
+    if (sig_end_addr <= sig_base_addr) begin
+      $fatal(1, "[ACT3] Bad signature range: base=%h end=%h", sig_base_addr, sig_end_addr);
+    end
+    $display("[ACT3] Enabled. Signature range: [%h, %h)", sig_base_addr, sig_end_addr);
+  end
+end
+
 logic[`XLEN-1:0] to_host_result;
 logic[3:0]       jump_to_self_count;
 
@@ -189,11 +237,15 @@ always_ff @(posedge clk) begin
   else if (Instr == `XLEN'h06f) jump_to_self_count <= jump_to_self_count + 1;
 end
 
+integer sig_fd;
+integer sig_idx;
+logic [31:0] sig_word;
+
 always @(negedge clk) begin
   // Jump to self
+  to_host_result = DataMemory.Memory[(TO_HOST_ADR-`DMEM_BASE_ADR)>>2];
 
-  if (!reset && (&jump_to_self_count)) begin
-      to_host_result = DataMemory.Memory[(TO_HOST_ADR-`XLEN'h8001_0000)>>2];
+  if (!reset && ((&jump_to_self_count) | (|to_host_result))) begin
       //$display("To Host local Adr: %h, To Host: %h", (TO_HOST_ADR-`XLEN'h8001_0000)>>2, to_host_result);
 
       if(to_host_result == 1) begin
@@ -201,6 +253,38 @@ always @(negedge clk) begin
       end else if (to_host_result == 2) begin
         $display("ERROR: Test Failed");
       end
+
+      // -------------------------------
+      // ACT3 signature extraction TODO ONLY WORKS FOR XLEN=32 TODO
+      // -------------------------------
+      if (act3_en) begin
+        string sig_path;
+        int unsigned base_idx;
+        int unsigned end_idx;
+
+        sig_path = $sformatf("runs/%s.signature", testname);
+
+        base_idx = (sig_base_addr - `DMEM_BASE_ADR) >> 2;
+        end_idx  = (sig_end_addr  - `DMEM_BASE_ADR) >> 2;
+
+        sig_fd = $fopen(sig_path, "w");
+        if (sig_fd == 0) begin
+          $fatal(1, "[ACT3] Could not open signature file %s", sig_path);
+        end
+
+        $display("[ACT3] Dumping signature [%h, %h) to %s",
+                sig_base_addr, sig_end_addr, sig_path);
+
+        for (sig_idx = base_idx; sig_idx < end_idx; sig_idx++) begin
+          sig_word = DataMemory.Memory[sig_idx];
+          $fdisplay(sig_fd, "%08x", sig_word);
+        end
+
+        $fclose(sig_fd);
+        $display("[ACT3] Signature dump complete.");
+      end
+      // -------------------------------
+
       // if(to_host_result != 0) begin
       $display("[%0t] INFO: Program Finished! Ending simulation.", $time);
       $finish;
