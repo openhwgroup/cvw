@@ -24,7 +24,7 @@ module vectorStorage #(
 );
 
     // allows memory to be loaded from arbitrary position within InitMem rather than just from the beginning
-    localparam int EXTRA_ENTRIES = (MEMORY_ADR_OFFSET - MEMORY_FILE_BASE_ADDRESS) / (DATA_BITS/8);
+    localparam [`XLEN-1:0] EXTRA_ENTRIES = (MEMORY_ADR_OFFSET - MEMORY_FILE_BASE_ADDRESS) / (DATA_BITS/8);
     logic[DATA_BITS-1:0] InitMem [MEMORY_SIZE_ENTRIES - 1 + EXTRA_ENTRIES : 0];
 
     logic[DATA_BITS-1:0] Memory[MEMORY_SIZE_ENTRIES-1:0];
@@ -34,13 +34,21 @@ module vectorStorage #(
     always_ff @(negedge clk) begin
         if (reset) begin
             int i;
+            logic[DATA_BITS-1:0] memory_entry;
             for (i = 0; i < MEMORY_SIZE_ENTRIES; i++) begin
-                Memory[i] = InitMem [EXTRA_ENTRIES + i];
+                memory_entry = InitMem [EXTRA_ENTRIES + i];
+                if (memory_entry === 'x)    Memory[i] <= '0;
+                else                        Memory[i] <= memory_entry;
+                // Memory[i] <= memory_entry;
             end
         end else if (En && ((unsigned'(MemoryAddress) < unsigned'(MEMORY_ADR_OFFSET)) ||
                     (unsigned'(MemoryAddress) > unsigned'(MEMORY_ADR_OFFSET + (MEMORY_SIZE_ENTRIES-1) * (DATA_BITS/8))))) begin
             $display("ERROR: %s memory out-of-range addr %h", MEMORY_NAME, MemoryAddress);
-            $display("DEBUG: MEM_ADR_OFFSET(%h) MEMORY_SIZE_ENTRIES(%h) DATA_BITS(%h) TOP(%h)", MEMORY_ADR_OFFSET, MEMORY_SIZE_ENTRIES, DATA_BITS, (MEMORY_ADR_OFFSET + (MEMORY_SIZE_ENTRIES-1) * DATA_BITS));
+            $display("DEBUG: MEM_ADR_OFFSET(%h) MEMORY_SIZE_ENTRIES(%h) DATA_BITS(%h) TOP(%h)", MEMORY_ADR_OFFSET, MEMORY_SIZE_ENTRIES, DATA_BITS, (MEMORY_ADR_OFFSET + (MEMORY_SIZE_ENTRIES-1) * DATA_BITS/8));
+            $finish(-1);
+
+        end else if (En & ~WriteEn & ReadData === 'x) begin
+            $display("ERROR: %s attempting to read uninitialized memory: %h", MEMORY_NAME, MemoryAddress);
             $finish(-1);
 
         end else if (WriteEn && En) begin
@@ -82,6 +90,13 @@ module vectorStorage #(
             end
         end
 
+    end
+
+    initial begin
+        if (MEMORY_ADR_OFFSET < MEMORY_FILE_BASE_ADDRESS) begin
+            $display("ERROR: MEMORY_ADR_OFFSET < MEMORY_FILE_BASE_ADDRESS");
+            $fatal(-1);
+        end
     end
 
 

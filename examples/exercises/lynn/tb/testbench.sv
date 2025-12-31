@@ -58,8 +58,8 @@ module testbench;
   logic [`XLEN/8-1:0]             WriteByteEn;   // byte enables, one per 8 bits
 
   logic                           TestbenchRequest;
-  // | DataAdr == `MTIME_POINTER
-  assign TestbenchRequest = DataAdr >= `THR_POINTER & DataAdr < `THR_POINTER + `XLEN'hF;
+
+  assign TestbenchRequest = DataAdr >= `THR_POINTER & DataAdr < `THR_POINTER + `XLEN'hF | DataAdr == `MTIME_POINTER;
 
   always_ff @(negedge clk) begin
     byte ch;
@@ -79,9 +79,9 @@ module testbench;
             end
           end
         end
-        // if (DataAdr == `MTIME_POINTER) begin
-        //   TestbenchRequestReadData = $time;
-        // end
+        if (DataAdr == `MTIME_POINTER) begin
+          TestbenchRequestReadData = $time;
+        end
       end
       // if (TestbenchRequestReadData !== 'x) $display("Request Return Data: %h", TestbenchRequestReadData);
     end
@@ -130,13 +130,29 @@ module testbench;
   // DEBUG
   always @(negedge clk) begin
     #1;
-    $display("PC: %h \tInstruction run: %h", PC, Instr);
-    $display("DEBUG: AluSrcA_R: %s, s1: a0: %h, a1: %h",
-      dut.ComputeCore.AluSrcA_R.name(),
-      dut.ComputeCore.RegisterFile.register_values[9],
-      dut.ComputeCore.RegisterFile.register_values[10],
-      dut.ComputeCore.RegisterFile.register_values[11]
-    );
+    // $display("PC: %h \tInstruction run: %h", PC, Instr);
+    // $display("PC_Next: %h, a1: %h, a2: %h, a3: %h",
+    //   dut.ComputeCore.PCNext_I,
+    //   dut.ComputeCore.RegisterFile.register_values[11],
+    //   dut.ComputeCore.RegisterFile.register_values[12],
+    //   dut.ComputeCore.RegisterFile.register_values[13]
+    //   );
+    // $display("DEBUG: AluSrcA_R: %s, s1: %h a0: %h, a1: %h a6: %h, s0: %h, sp: %h, DataMemAdr: %h, MemEn: %h, WriteEn: %h",
+    //   dut.ComputeCore.AluSrcA_R.name(),
+    //   dut.ComputeCore.RegisterFile.register_values[9],
+    //   dut.ComputeCore.RegisterFile.register_values[10],
+    //   dut.ComputeCore.RegisterFile.register_values[11],
+    //   dut.ComputeCore.RegisterFile.register_values[16],
+    //   dut.ComputeCore.RegisterFile.register_values[8],
+    //   dut.ComputeCore.RegisterFile.register_values[2],
+    //   DataAdr,
+    //   MemEn,
+    //   WriteEn
+    // );
+    // $display("Data at 8000de88: %h", DataMemory.Memory[(`XLEN'h8000de88 - `DMEM_BASE_ADR)>>2]);
+
+
+
     // $display("DEBUG: CSREn_C: %h, CSRAdr_C: %h, CSRAdrValid_C: %h, Rs1ForwardSrc_C: %s, AluOperandAForwardEn_C: %h, AluSrcA_R: %s",
     //    dut.ComputeCore.CSREn_C,
     //    dut.ComputeCore.CSRAdr_C,
