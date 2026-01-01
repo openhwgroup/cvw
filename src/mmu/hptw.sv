@@ -54,7 +54,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   input  logic              FlushW,
   input  logic [3:0]        CMOpM,
   output logic [P.XLEN-1:0] PTE,                    // page table entry to TLBs
-  output logic [2:0]        PageType,               // page type to TLBs 
+  output logic [2:0]        PageType,               // page type to TLBs
   output logic              ITLBWriteF, DTLBWriteM, // write TLB with new entry
   output logic [1:0]        PreLSURWM,
   output logic [P.XLEN+1:0] IHAdrM,
@@ -76,7 +76,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
           L1_ADR, L1_RD,
           L2_ADR, L2_RD,
           L3_ADR, L3_RD,
-          L4_ADR, L4_RD, 
+          L4_ADR, L4_RD,
           LEAF, IDLE, UPDATE_PTE,
           FAULT} statetype;
 
@@ -225,7 +225,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
 
   // Enable and select signals based on states
   assign StartWalk  = (WalkerState == IDLE) & TLBMissOrUpdateDA;
-  assign HPTWRW[1]  = (WalkerState == L4_RD) | (WalkerState == L3_RD) | (WalkerState == L2_RD) | (WalkerState == L1_RD) | (WalkerState == L0_RD); 
+  assign HPTWRW[1]  = (WalkerState == L4_RD) | (WalkerState == L3_RD) | (WalkerState == L2_RD) | (WalkerState == L1_RD) | (WalkerState == L0_RD);
   assign DTLBWriteM = (WalkerState == LEAF & ~HPTWUpdateDA) & DTLBWalk;
   assign ITLBWriteF = (WalkerState == LEAF & ~HPTWUpdateDA) & ~DTLBWalk;
 
@@ -260,7 +260,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
         L1_ADR, L1_RD:   VPN = TranslationVAdr[29:21];
         default:    VPN = TranslationVAdr[20:12];
       endcase
-      assign PPN = ( (SvMode == P.SV57 & (WalkerState == L4_ADR | WalkerState == L4_RD)) | 
+      assign PPN = ( (SvMode == P.SV57 & (WalkerState == L4_ADR | WalkerState == L4_RD)) |
                  (SvMode == P.SV48 & (WalkerState == L3_ADR | WalkerState == L3_RD)) |
                  (SvMode == P.SV39 & (WalkerState == L2_ADR | WalkerState == L2_RD)) ) ? BasePageTablePPN : CurrentPPN;
     assign HPTWReadAdr = {PPN, VPN, 3'b000};
@@ -273,13 +273,13 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
     assign MegapageMisaligned = |(CurrentPPN[9:0]); // must have zero PPN0
     assign Misaligned = ((WalkerState == L0_ADR) & MegapageMisaligned);
   end else begin
-    logic  PetapageMisaligned, GigapageMisaligned, TerapageMisaligned; 
+    logic  PetapageMisaligned, GigapageMisaligned, TerapageMisaligned;
     assign InitialWalkerState = (SvMode == P.SV57) ? L4_ADR : (SvMode == P.SV48) ? L3_ADR : L2_ADR ;
     assign PetapageMisaligned = |(CurrentPPN[35:0]);  // Must have zero PPN3, PPN2, PPN1, PPN0 for sv57
     assign TerapageMisaligned = |(CurrentPPN[26:0]); // Must have zero PPN2, PPN1, PPN0
     assign GigapageMisaligned = |(CurrentPPN[17:0]); // Must have zero PPN1 and PPN0
     assign MegapageMisaligned = |(CurrentPPN[8:0]);  // Must have zero PPN0
-    assign Misaligned = ((WalkerState == L3_ADR) & PetapageMisaligned) | ((WalkerState == L2_ADR) & TerapageMisaligned) | ((WalkerState == L1_ADR) & GigapageMisaligned) | ((WalkerState == L0_ADR) & MegapageMisaligned); 
+    assign Misaligned = ((WalkerState == L3_ADR) & PetapageMisaligned) | ((WalkerState == L2_ADR) & TerapageMisaligned) | ((WalkerState == L1_ADR) & GigapageMisaligned) | ((WalkerState == L0_ADR) & MegapageMisaligned);
   end
 
   // Page Table Walker FSM

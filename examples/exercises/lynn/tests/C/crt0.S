@@ -1,0 +1,93 @@
+// C Runtime entry point
+// James Kaden Cassidy
+// kacassidy@hmc.edu
+// 12/19/2025
+
+    .extern partial_load_store_test
+    .extern main
+    .extern partial_load_test
+
+    .section .text.init
+    .globl fail
+    .globl pass
+    .globl end
+    .globl rvtest_entry_point
+    .type  rvtest_entry_point, @function
+
+rvtest_entry_point:
+    /* ---- stack pointer ---- */
+    la   sp, _stack_top
+
+    /* ---- zero all integer registers (except x0, sp) ---- */
+    li   ra, 0        /* x1  */
+    li   gp, 0        /* x3  */
+    li   tp, 0        /* x4  */
+
+    li   t0, 0        /* x5  */
+    li   t1, 0        /* x6  */
+    li   t2, 0        /* x7  */
+
+    li   s0, 0        /* x8  / fp */
+    li   s1, 0        /* x9  */
+
+    li   a0, 0        /* x10 */
+    li   a1, 0        /* x11 */
+    li   a2, 0        /* x12 */
+    li   a3, 0        /* x13 */
+    li   a4, 0        /* x14 */
+    li   a5, 0        /* x15 */
+    li   a6, 0        /* x16 */
+    li   a7, 0        /* x17 */
+
+    li   s2, 0        /* x18 */
+    li   s3, 0        /* x19 */
+    li   s4, 0        /* x20 */
+    li   s5, 0        /* x21 */
+    li   s6, 0        /* x22 */
+    li   s7, 0        /* x23 */
+    li   s8, 0        /* x24 */
+    li   s9, 0        /* x25 */
+    li   s10, 0       /* x26 */
+    li   s11, 0       /* x27 */
+
+    li   t3, 0        /* x28 */
+    li   t4, 0        /* x29 */
+    li   t5, 0        /* x30 */
+    li   t6, 0        /* x31 */
+
+    /* ---- call C entry ---- */
+    #call partial_load_test
+    #call partial_load_store_test
+    call main
+
+    /* ---- fallthrough to end ---- */
+    j end
+
+finish:
+    /* write gp to tohost and hang */
+    la   t0, tohost
+    sw   gp, 0(t0)
+1:  j    1b
+
+fail:
+    /* encode a non-1 fail code (gp already holds something else if you want) */
+    li   gp, 2
+    j    finish
+
+pass:
+    /* encode a non-1 fail code (gp already holds something else if you want) */
+    li   gp, 1
+    j    finish
+
+end:
+    li   gp, 3
+    j finish              /* infinite loop */
+    .size end, .-end
+
+
+    .section .tohost,"aw",@progbits
+    .balign 4
+    .globl tohost
+
+tohost:
+    .word 0
