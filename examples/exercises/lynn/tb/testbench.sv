@@ -17,20 +17,14 @@
 `define LSR_POINTER (`THR_POINTER + `XLEN'h5)
 `define MTIME_POINTER (`XLEN'h0200bff8)
 
+`define STDOUT (`XLEN'h8000_0001)
 
 
 module testbench;
 
-  // ------------------------------------------------------------
-  // Parameters
-  // ------------------------------------------------------------
-  int unsigned STDOUT= 32'h8000_0001;
-
-  // ------------------------------------------------------------
-  // Clock / Reset
-  // ------------------------------------------------------------
   logic clk;
-  logic reset;  // active-high reset
+  logic reset;
+  logic [`XLEN-1:0] cycle_count;
 
   // 100 MHz clock: 10 ns period (change as needed)
   initial clk = 0;
@@ -61,7 +55,12 @@ module testbench;
 
   assign TestbenchRequest = DataAdr >= `THR_POINTER & DataAdr < `THR_POINTER + `XLEN'hF | DataAdr == `MTIME_POINTER;
 
-  always_ff @(negedge clk) begin
+  always_ff @ ( posedge clk ) begin
+    if (reset) cycle_count <= 0;
+    else       cycle_count <= cycle_count + 1;
+  end
+
+  always_ff @ ( negedge clk ) begin
     byte ch;
     int unsigned i;
     TestbenchRequestReadData = 'x;
@@ -75,34 +74,16 @@ module testbench;
             if (WriteEn & WriteByteEn[i]) begin
               ch = WriteData[(i+1)*8-1 -: 8];
               $write("%c", ch);
-              if (ch == "\n") $fflush(STDOUT);
+              if (ch == "\n") $fflush(`STDOUT);
             end
           end
         end
         if (DataAdr == `MTIME_POINTER) begin
-          TestbenchRequestReadData = $time;
+          TestbenchRequestReadData = cycle_count;
         end
       end
       // if (TestbenchRequestReadData !== 'x) $display("Request Return Data: %h", TestbenchRequestReadData);
     end
-
-
-    // if (DataAdr == `THR_POINTER) begin
-    //   $display("Attempting to write char from program");
-    //   $display("Writing %h to addr: %h, byte en: %b", WriteData, DataAdr, WriteByteEn);
-    //   if (MemEn & WriteEn) begin
-    //     for (int i = 0; i < `XLEN/8; i++) begin
-    //         if (WriteByteEn[i]) begin
-    //             $write("%c", WriteData[(i+1)*8-1 -: 8]);
-    //             $fflush();
-    //         end
-    //     end
-    //   end
-    // end else if (DataAdr == `LSR_POINTER) begin
-    //   $display("Writing %h to addr: %h, byte en: %b", WriteData, DataAdr, WriteByteEn);
-    //   $display("Reading LSR Pointer");
-    //   TestbenchRequestReadData = `XLEN'b100000;
-    // end
   end
 
   vectorStorage #(
@@ -129,61 +110,23 @@ module testbench;
 
   // DEBUG
   always @(negedge clk) begin
+    int i;
     #1;
-    // $display("PC: %h \tInstruction run: %h", PC, Instr);
-    // $display("PC_Next: %h, a1: %h, a2: %h, a3: %h",
-    //   dut.ComputeCore.PCNext_I,
-    //   dut.ComputeCore.RegisterFile.register_values[11],
-    //   dut.ComputeCore.RegisterFile.register_values[12],
-    //   dut.ComputeCore.RegisterFile.register_values[13]
-    //   );
-    // $display("DEBUG: AluSrcA_R: %s, s1: %h a0: %h, a1: %h a6: %h, s0: %h, sp: %h, DataMemAdr: %h, MemEn: %h, WriteEn: %h",
-    //   dut.ComputeCore.AluSrcA_R.name(),
-    //   dut.ComputeCore.RegisterFile.register_values[9],
-    //   dut.ComputeCore.RegisterFile.register_values[10],
-    //   dut.ComputeCore.RegisterFile.register_values[11],
-    //   dut.ComputeCore.RegisterFile.register_values[16],
-    //   dut.ComputeCore.RegisterFile.register_values[8],
-    //   dut.ComputeCore.RegisterFile.register_values[2],
-    //   DataAdr,
-    //   MemEn,
-    //   WriteEn
-    // );
-    // $display("Data at 8000de88: %h", DataMemory.Memory[(`XLEN'h8000de88 - `DMEM_BASE_ADR)>>2]);
-
-
-
-    // $display("DEBUG: CSREn_C: %h, CSRAdr_C: %h, CSRAdrValid_C: %h, Rs1ForwardSrc_C: %s, AluOperandAForwardEn_C: %h, AluSrcA_R: %s",
-    //    dut.ComputeCore.CSREn_C,
-    //    dut.ComputeCore.CSRAdr_C,
-    //    dut.ComputeCore.CSRAdrValid_C,
-    //    dut.ComputeCore.Rs1ForwardSrc_C.name(),
-    //    dut.ComputeCore.AluOperandAForwardEn_C,
-    //    dut.ComputeCore.AluSrcA_R.name()
-    // ); // output the register where the value is stored
-
-    //$display("%h", Instr);
-    //$display("DEBUG: Data Adr: %h", DataAdr);
-   // $display("DEBUG: a0: %h, a5: %h",
-      // dut.ComputeCore.RegisterFile.register_values[10],
-      // dut.ComputeCore.RegisterFile.register_values[15],
-
-      // dut.ComputeCore.DataMemAdrByteOffset_C,
-      // dut.ComputeCore.MemWriteDataPreShift_C,
-      // dut.ComputeCore.MemWriteData_C
-      // dut.ComputeCore.RegisterFile.register_values[2],
-      // dut.ComputeCore.RegisterFile.register_values[15],
-      // dut.ComputeCore.RegisterFile.register_values[6],
-      // dut.ComputeCore.DataMemAdr_C,
-      // DataMemory.Memory[(TO_HOST_ADR-`XLEN'h8001_0000)>>2],
-      // dut.ComputeCore.StoreType_C.name()
-
-      //);
+    // $display("PC: %h, Instruction %h", PC, Instr);
     if (Instr === 'x & ~reset) begin
-
+      $display("Instruction data x (PC: %h)", PC);
       $finish(-1);
     end
-    // $display("PC: %h PC_NEXT: %h", dut.PC, dut.ifu.PCNext);
+    for (i =0; i < 32; i++) begin
+      if (~reset & dut.ComputeCore.RegisterFile.register_values[i] === 'x) begin
+        $display("Register %d = 'x", i);
+        $finish(-1);
+      end
+      if (~reset & dut.ComputeCore.RegisterFile.register_values[i] === 'z) begin
+        $display("Register %d = 'z", i);
+        $finish(-1);
+      end
+    end
   end
 
   // ------------------------------------------------------------

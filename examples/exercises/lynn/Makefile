@@ -113,7 +113,7 @@ PORT_CFLAGS = \
 
 # ----    Files and Directories    ---- #
 
-SV_PACKAGES := /home/jcassidy/cvw/examples/exercises/lynn/my_processor/RISC-V-Pipelined-Processor/src/Packages/HighLevelControl.svh #$(sort $(shell find $(PROCESSOR) -type f -name '*.pkg'))
+SV_PACKAGES := $(sort $(shell find $(PROCESSOR) -type f -name '*.pkg'))
 SV_SOURCES 	:= $(sort $(shell find $(PROCESSOR) -type f \( -name "*.sv" -o -name "*.svh" \)) $(shell find $(INC_DIR) -type f \( -name "*.sv" -o -name "*.svh" \)))
 TEST_ELFS  	:= $(sort $(shell find $(TEST_DIR) -type f -name '*.elf'))
 
@@ -138,7 +138,7 @@ $(WORK_DIR)/work/_info: $(SV_PACKAGES) $(SV_SOURCES) $(TESTBENCH_FILES) Makefile
 	  echo "[BUILD] Creating/using local 'work' library..." && \
 	  (vlib work 2>/dev/null || true) && \
 	  echo "[BUILD] Compiling SystemVerilog sources..." && \
-	  vlog \
+	  vlog -sv \
 	  	+incdir+$(INC_DIR) \
 		+define+DUT_MODULE=$(DUT_MODULE) \
       	+define+XLEN=$(XLEN) $(abspath $(SV_PACKAGES) $(SV_SOURCES) $(TESTBENCH_FILES))
