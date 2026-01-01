@@ -30,8 +30,8 @@ SECTIONS
 
   .text : { *(.text) }
 
-  . = 0x80010000;
-
+  . = ALIGN(0x1000);
+  dmem_base = .;
   .rodata : { *(.rodata .rodata.*) *(.srodata .srodata.*) } /* Read-only data in DMEM */
   . = ALIGN(16);
 
