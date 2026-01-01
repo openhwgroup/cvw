@@ -446,6 +446,44 @@ string arch64vm_sv48[] = '{
   "rv64i_m/vm_pmp/src/sv48/sv48_pmp_on_pte_U_mode.S"
 };
 
+string arch64vm_sv57[] = '{
+  `RISCVARCHTEST,
+  "rv64i_m/vm_sv57/src/sv57_A_and_D_S_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_A_and_D_U_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_VA_all_ones_S_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_VA_all_zeros_S_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_canonical_S_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_canonical_U_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_global_pte_S_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_global_pte_U_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_invalid_pte_S_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_invalid_pte_U_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_misaligned_S_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_misaligned_U_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_mprv_S_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_mprv_U_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_mprv_U_set_sum_set_S_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_mprv_U_set_sum_unset_S_mode.S",
+  //"rv64i_m/vm_sv57/src/sv57_mstatus_sbe_set_S_mode.S",  //Uncomment these lines when Sail supports Supervisor Big Endian
+  //"rv64i_m/vm_sv57/src/sv57_mstatus_sbe_set_sum_set_S_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_mxr_S_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_mxr_U_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_nleaf_pte_level0_S_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_nleaf_pte_level0_U_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_pte_reserved_field_S_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_reserved_rsw_pte_S_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_reserved_rsw_pte_U_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_reserved_rwx_pte_S_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_reserved_rwx_pte_U_mode.S",
+  //"rv64i_m/vm_sv57/src/sv57_reserved_svnapot_S_mode.S",  // Run this if SVNAPOT_SUPPORTED == 0
+  "rv64i_m/vm_sv57/src/sv57_reserved_svpbmt_S_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_satp_access_tests.S",
+  "rv64i_m/vm_sv57/src/sv57_spage_access_U_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_sum_set_S_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_sum_set_U_bit_unset_S_mode.S",
+  "rv64i_m/vm_sv57/src/sv57_sum_unset_S_mode.S"
+};
+
 string arch64priv[] = '{
   `RISCVARCHTEST,
   "rv64i_m/privilege/src/ebreak.S",

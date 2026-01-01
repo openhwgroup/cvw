@@ -679,7 +679,7 @@ def plotPPA(mod, freq=None, norm=True, aleOpt=False):
                 if (arr[i][j] == "delay") and (f == 10):
                     pass
                 else:
-                    # print(f"Pasing in widths {widths}")
+                    # print(f"Passing in widths {widths}")
                     r2 = oneMetricPlot(
                         mod, widths, arr[i][j], ax=axs[i, j], freq=f, norm=norm
                     )

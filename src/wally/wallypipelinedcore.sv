@@ -111,7 +111,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic [1:0]                    STATUS_MPP, STATUS_FS;
   logic [1:0]                    PrivilegeModeW;
   logic [P.XLEN-1:0]             PTE;
-  logic [1:0]                    PageType;
+  logic [2:0]                    PageType;
   logic                          sfencevmaM;
   logic                          SelHPTW;
 

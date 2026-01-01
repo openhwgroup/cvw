@@ -43,3 +43,4 @@ clean:
 
 $(work_dir) $(arch_workdir) $(wally_workdir):
 	mkdir -p $@
+	
