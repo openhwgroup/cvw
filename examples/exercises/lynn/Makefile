@@ -1,5 +1,5 @@
 # Wally Coremark Makefile
-# Daniel Torres & David Harris 28 July 2022
+# James Kaden Cassidy 1/1/2026
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 # ---- Command line optional parameters ---- #
@@ -23,11 +23,6 @@ RISCOF_DIR		?= $(CURDIR)/tests/riscof
 
 LDSCRIPT		?= $(TEST_DIR)/link.ld
 
-TEST_WORK_DIR	?= $(TEST_DIR)/work
-C_TEST_WORK_DIR ?= $(TEST_WORK_DIR)/c_test
-ARCH_WORK_DIR 	?= $(TEST_WORK_DIR)/arch_test
-CM_WORK_DIR		?= $(TEST_WORK_DIR)/coremark
-
 # ---- Repo paths ---- #
 TESTBENCH_FILES ?= $(CURDIR)/tb/testbench.sv $(CURDIR)/tb/VectorStorage.sv
 TB_TOP          ?= testbench
@@ -35,6 +30,13 @@ WAVES_DO        ?= $(CURDIR)/waves.do
 
 WORK_DIR        ?= $(CURDIR)/work
 RISCV_ARCH_TEST ?= $(WALLY)/addins/riscv-arch-test-cvw
+
+TEST_WORK_DIR	?= $(TEST_DIR)/work
+C_TEST_WORK_DIR ?= $(TEST_WORK_DIR)/c_test
+ARCH_WORK_DIR 	?= $(TEST_WORK_DIR)/arch_test
+CM_WORK_DIR		?= $(WORK_DIR)/coremark
+
+
 
 # ----    Simulation Settings    ---- #
 VSIM        ?= vsim
@@ -54,15 +56,7 @@ else
 endif
 
 PYTHON := python3
-
-# Map XLEN -> toolchain prefix
-# ifeq ($(XLEN),64)
 TOOLPREFIX := riscv64-unknown-elf-
-# else ifeq ($(XLEN),32)
-#   TOOLPREFIX := riscv32-unknown-elf-
-# else
-#   $(error XLEN must be 32 or 64 (got $(XLEN)))
-# endif
 
 # Derive tools from the prefix
 CC      := $(TOOLPREFIX)gcc
@@ -129,6 +123,16 @@ cmsources=$(cmbase)/core_main.c $(cmbase)/core_list_join.c $(cmbase)/coremark.h 
 
 # Default target: just build (compile RTL/testbench once)
 all: build
+
+.PHONY: lint
+lint:
+	verilator --lint-only --quiet \
+		--top-module $(DUT_MODULE) \
+		-DDUT_MODULE=$(DUT_MODULE) \
+		-I$(abspath $(INC_DIR)) \
+		$(abspath $(SV_PACKAGES) $(SV_SOURCES) $(TESTBENCH_FILES)) \
+		-Wall -Wno-UNUSEDSIGNAL -Wno-VARHIDDEN -Wno-GENUNNAMED -Wno-PINCONNECTEMPTY
+
 
 # Build = compile RTL once into $(WORK_DIR)/build
 .PHONY: build
@@ -252,13 +256,13 @@ act3:
 	@riscv64-unknown-elf-objdump -D -b binary -m riscv:rv32 $< > $@
 	@echo "Wrote $@"
 
-# Keep the old riscv-arch-test flow
 .PHONY: arch-test
 arch-test: Makefile $(TEST_DIR)/test_config.yaml
 	uv run --with $(WALLY)/addins/riscv-arch-test-cvw/framework make -C \
 	$(WALLY)/addins/riscv-arch-test-cvw \
 	CONFIG_FILES=$(TEST_DIR)/test_config.yaml \
 	WORKDIR=$(ARCH_WORK_DIR)
+# Target flow below but using substitute above while act4 broken
 # 	$(MAKE) -C $(RISCV_ARCH_TEST) \
 #    CONFIG_FILE=$(TEST_DIR)/test_config.yaml \
 #    WORKDIR=$(TEST_DIR)/work
@@ -267,22 +271,14 @@ arch-test: Makefile $(TEST_DIR)/test_config.yaml
 
 .PHONY: coremark
 
-coremark: $(CM_WORK_DIR)/coremark.bare.riscv.run
-
-# redundant can be replaced by %.memfile
-$(CM_WORK_DIR)/coremark.bare.riscv.memfile: $(CM_WORK_DIR)/coremark.bare.riscv Makefile
-	$(SIZE) -A $< > $<.elf.size
-	$(READELF) -S $< > $<.elf.read
-	$(OBJDUMP) -D $< > $<.elf.objdump
-	$(ELF2HEX) --bit-width 32 --input $< --output $@
-	extractFunctionRadix.sh $<.elf.objdump
+coremark: $(CM_WORK_DIR)/coremark.bare.riscv.elf.run
 
 PORT_FILES := $(sort $(wildcard $(PORTDIR)/*))
 
-$(CM_WORK_DIR)/coremark.bare.riscv: $(cmsources) $(PORT_FILES) Makefile
+$(CM_WORK_DIR)/coremark.bare.riscv.elf: $(cmsources) $(PORT_FILES) Makefile
 	$(MAKE) -C $(cmbase) PORT_DIR=$(PORT_DIR) compile RISCV=$(RISCV) XCFLAGS="$(PORT_CFLAGS)"
 	mkdir -p $(CM_WORK_DIR)
-	mv $(cmbase)/coremark.bare.riscv $(CM_WORK_DIR)
+	mv $(cmbase)/coremark.bare.riscv $(CM_WORK_DIR)/coremark.bare.riscv.elf
 
 # ----            Clean             ---- #
 

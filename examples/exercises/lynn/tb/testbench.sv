@@ -173,8 +173,10 @@ initial begin
   sig_base_addr = 0;
   sig_end_addr  = 0;
 
-  void'($value$plusargs("ACT3=%d", act3_en));
   void'($value$plusargs("TESTNAME=%s", testname));
+  $display("[TB] TESTNAME = %s", testname);
+  void'($value$plusargs("ACT3=%d", act3_en));
+  $display("[TB] ACT3 = %b", act3_en);
 
   if (act3_en) begin
     if (!$value$plusargs("SIG_BASE_ADDR=%h", sig_base_addr) ||
