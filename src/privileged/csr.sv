@@ -52,6 +52,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic [4:0]               SetFflagsM,                // Set floating point flag bits in FCSR
   input  logic [1:0]               NextPrivilegeModeM,        // STATUS bits updated based on next privilege mode
   input  logic [1:0]               PrivilegeModeW,            // current privilege mode
+  input  logic                     NextVirtModeM,             // next V Bit
+  input  logic                     VirtModeW,                 // current V Bit
   input  logic [3:0]               CauseM,                    // Trap cause
   input  logic                     SelHPTW,                   // hardware page table walker active, so base endianness on supervisor mode
   // inputs for performance counters
@@ -207,9 +209,13 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   assign UngatedCSRMWriteM = CSRWriteM & (PrivilegeModeW == P.M_MODE);
   assign CSRMWriteM = UngatedCSRMWriteM & InstrValidNotFlushedM;
   assign CSRSWriteM = CSRWriteM & (|PrivilegeModeW) & InstrValidNotFlushedM;
+  assign CSRHWriteM = CSRWriteM & (PrivilegeModeW == P.S_MODE & ~VirtModeW) & InstrValidNotFlushedM & P.H_SUPPORTED;
   assign CSRUWriteM = CSRWriteM  & InstrValidNotFlushedM;
   assign MTrapM = TrapM & (NextPrivilegeModeM == P.M_MODE);
   assign STrapM = TrapM & (NextPrivilegeModeM == P.S_MODE) & P.S_SUPPORTED;
+  assign HSTrapM = TrapM & (NextPrivilegeModeM == P.S_MODE & ~VirtModeW) & P.H_SUPPORTED;
+  assign PrivReturnHSM = sretM & (PrivilegeModeW == P.S_MODE & ~VirtModeW) & P.H_SUPPORTED;
+  assign NextHtinstM = 0; // not implemented; TODO: add module to transform appropriate instructions
 
   ///////////////////////////////////////////
   // CSRs
@@ -262,6 +268,26 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign IllegalCSRSAccessM = 1'b1;
     assign STimerInt = '0;
     assign SENVCFG_REGW = '0;
+  end
+
+  logic CSRHWriteM;
+  logic [P.XLEN-1:0] CSRHReadValM;
+  logic IllegalCSRHAccessM;
+
+  logic HSTrapM;
+  logic PrivReturnHSM;
+  logic [P.XLEN-1:0] NextHtinstM;
+
+  if (P.H_SUPPORTED) begin:csrh
+    csrh #(P) csrh(.clk, .reset,
+      .CSRHWriteM, .CSRAdrM, .CSRWriteValM,
+      .PrivilegeModeW, .NextVirtModeM, .VirtModeW, .MIP_REGW,
+      .HSTrapM, .PrivReturnHSM, .NextEPCM, .NextCauseM, .NextHtvalM(NextMtvalM),
+      .NextHtinstM,
+      .CSRHReadValM, .IllegalCSRHAccessM);
+  end else begin: no_csrh
+    assign CSRHReadValM = '0;
+    assign IllegalCSRHAccessM = 1'b1;
   end
 
   // Floating Point CSRs in User Mode only needed if Floating Point is supported
