@@ -62,7 +62,7 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
   logic [SEGMENT_BITS-1:0] Key0, Key1, Query0, Query1;
   logic MatchASID, MatchNAPOT, Match0, Match1, Match2, Match3, Match4;
 
-  assign Key_ASID = Key[KEY_BITS-1 -: P.ASID_BITS];
+  assign Key_ASID = Key[KEY_BITS-1:KEY_BITS-P.ASID_BITS];
   assign MatchASID = (SATP_ASID == Key_ASID) | PTE_G;
 
   // Calculate a match against a segment of the key based on the input vpn and the page type.
