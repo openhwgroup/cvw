@@ -225,7 +225,10 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
 
   // Enable and select signals based on states
   assign StartWalk  = (WalkerState == IDLE) & TLBMissOrUpdateDA;
-  assign HPTWRW[1]  = (WalkerState == L4_RD) | (WalkerState == L3_RD) | (WalkerState == L2_RD) | (WalkerState == L1_RD) | (WalkerState == L0_RD);
+  assign HPTWRW[1]  = (WalkerState == L4_RD & P.SV57_SUPPORTED) |
+                      (WalkerState == L3_RD & P.SV48_SUPPORTED) |
+                      (WalkerState == L2_RD & P.SV39_SUPPORTED) |
+                      (WalkerState == L1_RD) | (WalkerState == L0_RD);
   assign DTLBWriteM = (WalkerState == LEAF & ~HPTWUpdateDA) & DTLBWalk;
   assign ITLBWriteF = (WalkerState == LEAF & ~HPTWUpdateDA) & ~DTLBWalk;
 
@@ -260,9 +263,9 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
         L1_ADR, L1_RD:   VPN = TranslationVAdr[29:21];
         default:    VPN = TranslationVAdr[20:12];
       endcase
-      assign PPN = ( (SvMode == P.SV57 & (WalkerState == L4_ADR | WalkerState == L4_RD)) |
-                 (SvMode == P.SV48 & (WalkerState == L3_ADR | WalkerState == L3_RD)) |
-                 (SvMode == P.SV39 & (WalkerState == L2_ADR | WalkerState == L2_RD)) ) ? BasePageTablePPN : CurrentPPN;
+      assign PPN = ((P.SV57_SUPPORTED & SvMode == P.SV57 & (WalkerState == L4_ADR | WalkerState == L4_RD)) |
+                    (P.SV48_SUPPORTED & SvMode == P.SV48 & (WalkerState == L3_ADR | WalkerState == L3_RD)) |
+                    (SvMode == P.SV39 & (WalkerState == L2_ADR | WalkerState == L2_RD)) ) ? BasePageTablePPN : CurrentPPN;
     assign HPTWReadAdr = {PPN, VPN, 3'b000};
     assign HPTWSize = 3'b011;
   end
@@ -274,12 +277,17 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
     assign Misaligned = ((WalkerState == L0_ADR) & MegapageMisaligned);
   end else begin
     logic  PetapageMisaligned, GigapageMisaligned, TerapageMisaligned;
-    assign InitialWalkerState = (SvMode == P.SV57) ? L4_ADR : (SvMode == P.SV48) ? L3_ADR : L2_ADR ;
-    assign PetapageMisaligned = |(CurrentPPN[35:0]);  // Must have zero PPN3, PPN2, PPN1, PPN0 for sv57
-    assign TerapageMisaligned = |(CurrentPPN[26:0]); // Must have zero PPN2, PPN1, PPN0
-    assign GigapageMisaligned = |(CurrentPPN[17:0]); // Must have zero PPN1 and PPN0
+    assign InitialWalkerState = (P.SV57_SUPPORTED & SvMode == P.SV57) ? L4_ADR :
+                                (P.SV48_SUPPORTED & SvMode == P.SV48) ? L3_ADR :
+                                                                        L2_ADR ;
+    assign PetapageMisaligned = P.SV57_SUPPORTED & |(CurrentPPN[35:0]); // Must have zero PPN3, PPN2, PPN1, PPN0
+    assign TerapageMisaligned = P.SV48_SUPPORTED & |(CurrentPPN[26:0]); // Must have zero PPN2, PPN1, PPN0
+    assign GigapageMisaligned =                    |(CurrentPPN[17:0]); // Must have zero PPN1 and PPN0
     assign MegapageMisaligned = |(CurrentPPN[8:0]);  // Must have zero PPN0
-    assign Misaligned = ((WalkerState == L3_ADR) & PetapageMisaligned) | ((WalkerState == L2_ADR) & TerapageMisaligned) | ((WalkerState == L1_ADR) & GigapageMisaligned) | ((WalkerState == L0_ADR) & MegapageMisaligned);
+    assign Misaligned = (P.SV57_SUPPORTED & (WalkerState == L3_ADR) & PetapageMisaligned) |
+                        (P.SV48_SUPPORTED & (WalkerState == L2_ADR) & TerapageMisaligned) |
+                                           ((WalkerState == L1_ADR) & GigapageMisaligned) |
+                                           ((WalkerState == L0_ADR) & MegapageMisaligned);
   end
 
   // Page Table Walker FSM

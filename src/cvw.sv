@@ -54,18 +54,22 @@ typedef struct packed {
   logic         ZFA_SUPPORTED;
   logic         SSTC_SUPPORTED;
   logic         VIRTMEM_SUPPORTED;
+  logic         SVPBMT_SUPPORTED;
+  logic         SVNAPOT_SUPPORTED;
+  logic         SVINVAL_SUPPORTED;
+  logic         SVADU_SUPPORTED;
+  logic         SV32_SUPPORTED;
+  logic         SV39_SUPPORTED;
+  logic         SV48_SUPPORTED;
+  logic         SV57_SUPPORTED;
   logic         VECTORED_INTERRUPTS_SUPPORTED;
   logic         BIGENDIAN_SUPPORTED;
-  logic         SVADU_SUPPORTED;
   logic         ZMMUL_SUPPORTED;
   logic         ZICBOM_SUPPORTED;
   logic         ZICBOZ_SUPPORTED;
   logic         ZICBOP_SUPPORTED;
   logic         ZICCLSM_SUPPORTED;
   logic         ZICOND_SUPPORTED;
-  logic         SVPBMT_SUPPORTED;
-  logic         SVNAPOT_SUPPORTED;
-  logic         SVINVAL_SUPPORTED;
   logic         ZAAMO_SUPPORTED;
   logic         ZALRSC_SUPPORTED;
 
