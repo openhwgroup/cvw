@@ -62,35 +62,9 @@ static uintptr_t syscall(uintptr_t which, uint64_t arg0, uint64_t arg1, uint64_t
 static uintptr_t counters[NUM_COUNTERS];
 static char* counter_names[NUM_COUNTERS];
 
-void setStats(int enable)
+void setStats()
 {
-  int i = 0;
-#define READ_CTR(name) do { \
-    while (i >= NUM_COUNTERS) ; \
-    uintptr_t csr = read_csr(name); \
-    if (!enable) { csr -= counters[i]; counter_names[i] = #name; } \
-    counters[i++] = csr; \
-  } while (0)
-
-  READ_CTR(mcycle);
-  READ_CTR(minstret);
-  READ_CTR(mhpmcounter3);
-  READ_CTR(mhpmcounter4);
-  READ_CTR(mhpmcounter5);
-  READ_CTR(mhpmcounter6);
-  READ_CTR(mhpmcounter7);
-  READ_CTR(mhpmcounter8);
-  READ_CTR(mhpmcounter9);
-  READ_CTR(mhpmcounter10);
-  READ_CTR(mhpmcounter11);
-  READ_CTR(mhpmcounter12);
-  READ_CTR(mhpmcounter13);
-  READ_CTR(mhpmcounter14);
-  READ_CTR(mhpmcounter15);
-  READ_CTR(mhpmcounter16);
-  READ_CTR(mhpmcounter17);
-
-#undef READ_CTR
+  // not currently implemented
 }
 
 void __attribute__((noreturn)) tohost_exit(uintptr_t code)
@@ -149,48 +123,12 @@ void _init(int cid, int nc)
 {
   init_tls();
   thread_entry(cid, nc);
-  //setStats(1);
+  setStats();
 
   // only single-threaded programs should ever get here.
   int ret = main(0, 0);
 
-  char buf[NUM_COUNTERS * 32] __attribute__((aligned(64)));
-  char* pbuf = buf;
-  for (int i = 0; i < NUM_COUNTERS; i++)
-    if (counters[i])
-      pbuf += sprintf(pbuf, "%s = %d\n", counter_names[i], counters[i]);
-  if (pbuf != buf)
-    printstr(buf);
-  counters[3] = read_csr(mhpmcounter3) - counters[3];
-  counters[4] = read_csr(mhpmcounter4) - counters[4];
-  counters[5] = read_csr(mhpmcounter5) - counters[5];
-  counters[6] = read_csr(mhpmcounter6) - counters[6];
-  counters[7] = read_csr(mhpmcounter7) - counters[7];
-  counters[8] = read_csr(mhpmcounter8) - counters[8];
-  counters[9] = read_csr(mhpmcounter9) - counters[9];
-  counters[10] = read_csr(mhpmcounter10) - counters[10];
-  counters[11] = read_csr(mhpmcounter11) - counters[11];
-  counters[12] = read_csr(mhpmcounter12) - counters[12];
-  counters[13] = read_csr(mhpmcounter13) - counters[13];
-  counters[14] = read_csr(mhpmcounter14) - counters[14];
-  counters[15] = read_csr(mhpmcounter15) - counters[15];
-  counters[16] = read_csr(mhpmcounter16) - counters[16];
-  counters[17] = read_csr(mhpmcounter17) - counters[17];
-
-  ee_printf("Load Stalls %d\n", counters[11]);
-  ee_printf("Store Stalls %d\n", counters[12]);
-  ee_printf("D-Cache Accesses %d\n", counters[13]);
-  ee_printf("D-Cache Misses %d\n", counters[14]);
-  ee_printf("I-Cache Accesses %d\n", counters[16]);
-  ee_printf("I-Cache Misses %d\n", counters[17]);
-  ee_printf("Branches %d\n", counters[3]);
-  ee_printf("Branches Miss Predictions %d\n", counters[7]);
-  ee_printf("BTB Misses %d\n", counters[8]);
-  ee_printf("Jump and JR %d\n", counters[4]);
-  ee_printf("RAS Wrong %d\n", counters[9]);
-  ee_printf("Returns %d\n", counters[5]);
-  ee_printf("BP Class Wrong %d\n", counters[10]);
-  ee_printf("Done printing performance counters\n");
+  // Can implement printing counter stats here
 
   exit(ret);
 }

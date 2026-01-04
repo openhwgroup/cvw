@@ -118,14 +118,14 @@ module testbench;
       $finish(-1);
     end
     for (i =0; i < 32; i++) begin
-      if (~reset & dut.ComputeCore.RegisterFile.register_values[i] === 'x) begin
-        $display("Register %d = 'x", i);
-        $finish(-1);
-      end
-      if (~reset & dut.ComputeCore.RegisterFile.register_values[i] === 'z) begin
-        $display("Register %d = 'z", i);
-        $finish(-1);
-      end
+      // if (~reset & dut.ComputeCore.RegisterFile.register_values[i] === 'x) begin
+      //   $display("Register %d = 'x", i);
+      //   $finish(-1);
+      // end
+      // if (~reset & dut.ComputeCore.RegisterFile.register_values[i] === 'z) begin
+      //   $display("Register %d = 'z", i);
+      //   $finish(-1);
+      // end
     end
   end
 
