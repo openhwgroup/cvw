@@ -4,13 +4,7 @@
 // kacassidy@hmc.edu
 // 12/19/2025
 
-extern void partial_load_store_test(void);
-extern void micro_test(void);
-extern void sendstring_like_test(void);
-extern void partial_load_test(void);
-extern void hazard_test(void);
 extern void end(void);
-extern void loop_copy_test(void);
 
 void _send_char(char c) {
   /*#error "You must implement the method _send_char to use this file!\n";
@@ -32,10 +26,6 @@ int sendstring(const char *p){
   }
 
   return n;
-}
-
-void print_check() {
-  sendstring("Check\n");
 }
 
 int main(void) {

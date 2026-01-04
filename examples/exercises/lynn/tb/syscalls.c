@@ -73,11 +73,6 @@ void __attribute__((noreturn)) tohost_exit(uintptr_t code)
   exit(0);
 }
 
-// uintptr_t __attribute__((weak)) handle_trap(uintptr_t cause, uintptr_t epc, uintptr_t regs[32])
-// {
-//   tohost_exit(1337);
-// }
-
 void exit(int code)
 {
   tohost_exit(code);
