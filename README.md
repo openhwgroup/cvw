@@ -285,4 +285,4 @@ wsim buildroot buildroot --args +INSTR_LIMIT=600000000 --lockstep
 
 # Textbook Errata
 
-See [errata.md](https://github.com/openhwgroup/cvw/blob/main/errata.md) for errata on the [RISC-V System-on-Chip Design](https://www.amazon.com/RISC-V-Microprocessor-System-Chip-Design/dp/0323994989/ref=sr_1_1?crid=YOSKDWK56LXC&dib=eyJ2IjoiMSJ9.i4blNUie7NEcJ_TrpjJwYQ_y6wL-OSpvTGm0v2Wh2IoJEaId29iR3DrWO5fSXIZU.3W9njvBVqXebkFyqQkDg46q8zg1hjoo5cqXEPYe3k5c&dib_tag=se&keywords=riscv+system+on+chip+design&qid=1767552817&sprefix=riscv+system+on+chip+design%2Caps%2C175&sr=8-1) textbook.
+See [errata.md](./errata.md) for errata on the [RISC-V System-on-Chip Design](https://www.amazon.com/RISC-V-Microprocessor-System-Chip-Design/dp/0323994989/ref=sr_1_1?crid=YOSKDWK56LXC&dib=eyJ2IjoiMSJ9.i4blNUie7NEcJ_TrpjJwYQ_y6wL-OSpvTGm0v2Wh2IoJEaId29iR3DrWO5fSXIZU.3W9njvBVqXebkFyqQkDg46q8zg1hjoo5cqXEPYe3k5c&dib_tag=se&keywords=riscv+system+on+chip+design&qid=1767552817&sprefix=riscv+system+on+chip+design%2Caps%2C175&sr=8-1) textbook.
