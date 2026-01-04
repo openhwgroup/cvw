@@ -157,7 +157,7 @@ Running code or functional coverage simulations or lock-step presently require c
 
 Note: Some EDA tools utilize `LM_LICENSE_FILE` for their environmental variable to point to their license server.  Some operating systems may also utilize `MGLS_LICENSE_FILE` instead, therefore, it is important to read the user manual on the preferred environmental variable required to point to a user’s license file.  Although there are different mechanisms to allow licenses to work, many companies commonly utilize the FlexLM (i.e., Flex-enabled) license server manager that runs off a node locked license.
 
-Although most EDA tools are Linux-friendly, they tend to have issues when not installed on recommended OS flavors.  Red Hat Enterprise Linux (and its free Rocky clone) and SUSE Linux products  typically tend to be recommended for installing commercial-based EDA tools and are recommended for utilizing complex simulation and architecture exploration.  
+Although most EDA tools are Linux-friendly, they tend to have issues when not installed on recommended OS flavors.  Red Hat Enterprise Linux (and its free Rocky clone) and SUSE Linux products  typically tend to be recommended for installing commercial-based EDA tools and are recommended for utilizing complex simulation and architecture exploration.
 
 ### Siemens Questa
 
@@ -282,3 +282,7 @@ Run Linux boot simulation in lock step between Wally and ImperasDV
 ```bash
 wsim buildroot buildroot --args +INSTR_LIMIT=600000000 --lockstep
 ```
+
+# Textbook Errata
+
+See [errata.md](./errata.md) for errata on the [RISC-V System-on-Chip Design](https://www.amazon.com/RISC-V-Microprocessor-System-Chip-Design/dp/0323994989/ref=sr_1_1?crid=YOSKDWK56LXC&dib=eyJ2IjoiMSJ9.i4blNUie7NEcJ_TrpjJwYQ_y6wL-OSpvTGm0v2Wh2IoJEaId29iR3DrWO5fSXIZU.3W9njvBVqXebkFyqQkDg46q8zg1hjoo5cqXEPYe3k5c&dib_tag=se&keywords=riscv+system+on+chip+design&qid=1767552817&sprefix=riscv+system+on+chip+design%2Caps%2C175&sr=8-1) textbook.
