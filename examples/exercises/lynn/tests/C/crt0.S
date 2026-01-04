@@ -9,6 +9,7 @@
 
     .section .text.init
     .globl fail
+    .globl finish
     .globl pass
     .globl end
     .globl rvtest_entry_point
