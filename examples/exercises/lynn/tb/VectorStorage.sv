@@ -5,10 +5,10 @@ module vectorStorage #(
     parameter ADDRESS_BITS,
     parameter DATA_BITS,
     parameter MEMORY_SIZE_ENTRIES,
-    parameter MEMORY_FILE_BASE_ADDRESS   = 0,
-    parameter MEMORY_ADR_OFFSET     = 0,
-    parameter MEMORY_FILE_PATH      = "",
-    parameter MEMFILE_PLUS_ARG      = ""
+    parameter MEMORY_FILE_BASE_ADDRESS  = 0,
+    parameter MEMORY_ADR_OFFSET         = 0,
+    parameter MEMORY_FILE_PATH          = "",
+    parameter MEMFILE_PLUS_ARG          = ""
 ) (
     input   logic                       clk,
     input   logic                       reset,

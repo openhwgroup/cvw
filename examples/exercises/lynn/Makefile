@@ -1,5 +1,5 @@
 # Wally Coremark Makefile
-# Daniel Torres & David Harris 28 July 2022
+# James Kaden Cassidy 1/1/2026
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 # ---- Command line optional parameters ---- #
@@ -15,26 +15,28 @@ PROCESSOR     	?= $(CURDIR)/my_processor/RISC-V-Pipelined-Processor/src      # D
 INC_DIR       	?= $(CURDIR)/my_processor/RISC-V-Pipelined-Processor/incdir/  # Optional directory for include files for RTL compilation (parameters)
 
 #DUT_MODULE ?= riscvsingle  # top-level module name
-DUT_MODULE 		?= testingCore
-
-C_TEST_DIR		?= $(CURDIR)/tests/C
-TEST_DIR        ?= $(CURDIR)/tests/sample_processor
-RISCOF_DIR		?= $(CURDIR)/tests/riscof
-
-LDSCRIPT		?= $(TEST_DIR)/link.ld
-
-TEST_WORK_DIR	?= $(TEST_DIR)/work
-C_TEST_WORK_DIR ?= $(TEST_WORK_DIR)/c_test
-ARCH_WORK_DIR 	?= $(TEST_WORK_DIR)/arch_test
-CM_WORK_DIR		?= $(TEST_WORK_DIR)/coremark
+DUT_MODULE 			?= testingCore
+PROCESSOR_TEST_DIR	?= $(CURDIR)/tests/sample_processor
 
 # ---- Repo paths ---- #
-TESTBENCH_FILES ?= $(CURDIR)/tb/testbench.sv $(CURDIR)/tb/VectorStorage.sv
+C_TEST_DIR		?= $(CURDIR)/tests/C
+TESTBENCH_DIR 	?= $(CURDIR)/tb
+RISCOF_DIR		?= $(CURDIR)/tests/riscof
+
+LINKER			?= $(PROCESSOR_TEST_DIR)/link.ld
+
+# ---- Repo paths cont ---- #
+TESTBENCH_FILES ?= $(TESTBENCH_DIR)/testbench.sv $(TESTBENCH_DIR)/VectorStorage.sv
 TB_TOP          ?= testbench
 WAVES_DO        ?= $(CURDIR)/waves.do
 
 WORK_DIR        ?= $(CURDIR)/work
 RISCV_ARCH_TEST ?= $(WALLY)/addins/riscv-arch-test-cvw
+
+TEST_WORK_DIR	?= $(PROCESSOR_TEST_DIR)/work
+C_TEST_WORK_DIR ?= $(TEST_WORK_DIR)/c_test
+ARCH_WORK_DIR 	?= $(TEST_WORK_DIR)/arch_test
+CM_WORK_DIR		?= $(WORK_DIR)/coremark
 
 # ----    Simulation Settings    ---- #
 VSIM        ?= vsim
@@ -54,15 +56,7 @@ else
 endif
 
 PYTHON := python3
-
-# Map XLEN -> toolchain prefix
-# ifeq ($(XLEN),64)
 TOOLPREFIX := riscv64-unknown-elf-
-# else ifeq ($(XLEN),32)
-#   TOOLPREFIX := riscv32-unknown-elf-
-# else
-#   $(error XLEN must be 32 or 64 (got $(XLEN)))
-# endif
 
 # Derive tools from the prefix
 CC      := $(TOOLPREFIX)gcc
@@ -115,20 +109,22 @@ PORT_CFLAGS = \
 
 SV_PACKAGES := $(sort $(shell find $(PROCESSOR) -type f -name '*.pkg'))
 SV_SOURCES 	:= $(sort $(shell find $(PROCESSOR) -type f \( -name "*.sv" -o -name "*.svh" \)) $(shell find $(INC_DIR) -type f \( -name "*.sv" -o -name "*.svh" \)))
-TEST_ELFS  	:= $(sort $(shell find $(TEST_DIR) -type f -name '*.elf'))
-
-PORT_DIR = $(WALLY)/benchmarks/coremark/riscv64-baremetal
-cmbase  = $(WALLY)/addins/coremark
-
-cmsources=$(cmbase)/core_main.c $(cmbase)/core_list_join.c $(cmbase)/coremark.h  \
-    $(cmbase)/core_matrix.c $(cmbase)/core_state.c $(cmbase)/core_util.c \
-    $(PORT_DIR)/core_portme.h $(PORT_DIR)/core_portme.c $(PORT_DIR)/core_portme.mak \
-    $(PORT_DIR)/crt.S $(PORT_DIR)/encoding.h $(PORT_DIR)/util.h $(PORT_DIR)/syscalls.c
+TEST_ELFS  	:= $(sort $(shell find $(PROCESSOR_TEST_DIR) -type f -name '*.elf'))
 
 # ----          Targets            ---- #
 
 # Default target: just build (compile RTL/testbench once)
 all: build
+
+.PHONY: lint
+lint:
+	@verilator --lint-only --quiet \
+		--top-module $(DUT_MODULE) \
+		-DDUT_MODULE=$(DUT_MODULE) \
+		-I$(abspath $(INC_DIR)) \
+		$(abspath $(SV_PACKAGES) $(SV_SOURCES) $(TESTBENCH_FILES)) \
+		-Wall -Wno-UNUSEDSIGNAL -Wno-VARHIDDEN -Wno-GENUNNAMED -Wno-PINCONNECTEMPTY -Wno-DECLFILENAME -Wno-TIMESCALEMOD -Wno-CASEX
+
 
 # Build = compile RTL once into $(WORK_DIR)/build
 .PHONY: build
@@ -213,11 +209,11 @@ run: $(ELFS:%=%.run)
 	fi
 
 CFLAGS 				:= -march=$(ARCH) -mabi=$(ABI) -O0 -g -ffreestanding -ffunction-sections -fdata-sections -Wall -Wextra
-LDFLAGS 			:= -march=$(ARCH) -mabi=$(ABI) -nostdlib -Wl,--gc-sections -T $(LDSCRIPT)
+LDFLAGS 			:= -march=$(ARCH) -mabi=$(ABI) -nostdlib -Wl,--gc-sections -T $(LINKER)
 
 C_TEST_SOURCEFILES 	?= $(sort $(shell find $(C_TEST_DIR) -type f \( -name "*.S" -o -name "*.c" \)))
 
-$(C_TEST_WORK_DIR)/c_test.elf: $(C_TEST_SOURCEFILES) $(LDSCRIPT) Makefile
+$(C_TEST_WORK_DIR)/c_test.elf: $(C_TEST_SOURCEFILES) $(LINKER) Makefile
 	@mkdir -p $(C_TEST_WORK_DIR)
 	$(CC) $(CFLAGS) $(C_TEST_SOURCEFILES) $(LDFLAGS) -o $@;
 
@@ -226,7 +222,7 @@ C_test: $(C_TEST_WORK_DIR)/c_test.elf
 	$(MAKE) run ELFS="$(C_TEST_WORK_DIR)/c_test.elf"
 
 
-# test: run ALL .elf files in TEST_DIR in parallel with -j
+# test: run ALL .elf files in PROCESSOR_TEST_DIR in parallel with -j
 .PHONY: test act3
 test:
 	$(MAKE) run ELFS="$(TEST_ELFS)"
@@ -252,37 +248,39 @@ act3:
 	@riscv64-unknown-elf-objdump -D -b binary -m riscv:rv32 $< > $@
 	@echo "Wrote $@"
 
-# Keep the old riscv-arch-test flow
 .PHONY: arch-test
-arch-test: Makefile $(TEST_DIR)/test_config.yaml
+arch-test: Makefile $(PROCESSOR_TEST_DIR)/test_config.yaml
 	uv run --with $(WALLY)/addins/riscv-arch-test-cvw/framework make -C \
 	$(WALLY)/addins/riscv-arch-test-cvw \
-	CONFIG_FILES=$(TEST_DIR)/test_config.yaml \
+	CONFIG_FILES=$(PROCESSOR_TEST_DIR)/test_config.yaml \
 	WORKDIR=$(ARCH_WORK_DIR)
+# Target flow below but using substitute above while act4 broken
 # 	$(MAKE) -C $(RISCV_ARCH_TEST) \
-#    CONFIG_FILE=$(TEST_DIR)/test_config.yaml \
-#    WORKDIR=$(TEST_DIR)/work
+#    CONFIG_FILE=$(PROCESSOR_TEST_DIR)/test_config.yaml \
+#    WORKDIR=$(PROCESSOR_TEST_DIR)/work
 
 # ----  Coremark flow  ---- #
 
 .PHONY: coremark
 
-coremark: $(CM_WORK_DIR)/coremark.bare.riscv.run
+coremark: $(CM_WORK_DIR)/coremark.bare.riscv.elf.run
 
-# redundant can be replaced by %.memfile
-$(CM_WORK_DIR)/coremark.bare.riscv.memfile: $(CM_WORK_DIR)/coremark.bare.riscv Makefile
-	$(SIZE) -A $< > $<.elf.size
-	$(READELF) -S $< > $<.elf.read
-	$(OBJDUMP) -D $< > $<.elf.objdump
-	$(ELF2HEX) --bit-width 32 --input $< --output $@
-	extractFunctionRadix.sh $<.elf.objdump
+WALLY_PORT_DIR = $(WALLY)/benchmarks/coremark/riscv64-baremetal
+cmbase  = $(WALLY)/addins/coremark
 
-PORT_FILES := $(sort $(wildcard $(PORTDIR)/*))
+cmscript_files=$(cmbase)/core_main.c $(cmbase)/core_list_join.c $(cmbase)/coremark.h  \
+    $(cmbase)/core_matrix.c $(cmbase)/core_state.c $(cmbase)/core_util.c
 
-$(CM_WORK_DIR)/coremark.bare.riscv: $(cmsources) $(PORT_FILES) Makefile
-	$(MAKE) -C $(cmbase) PORT_DIR=$(PORT_DIR) compile RISCV=$(RISCV) XCFLAGS="$(PORT_CFLAGS)"
+cmconfig_files=$(WALLY_PORT_DIR)/core_portme.h $(WALLY_PORT_DIR)/core_portme.c $(WALLY_PORT_DIR)/core_portme.mak \
+    $(TESTBENCH_DIR)/crt.S $(WALLY_PORT_DIR)/encoding.h $(WALLY_PORT_DIR)/util.h $(TESTBENCH_DIR)/syscalls.c \
+	$(LINKER)
+
+$(CM_WORK_DIR)/coremark.bare.riscv.elf: $(cmscript_file) $(cmconfig_files) Makefile
+	@mkdir -p $(CM_WORK_DIR)/portdir
+	cp -f $(cmconfig_files) $(CM_WORK_DIR)/portdir
+	$(MAKE) -C $(cmbase) PORT_DIR=$(CM_WORK_DIR)/portdir compile RISCV=$(RISCV) XCFLAGS="$(PORT_CFLAGS)"
 	mkdir -p $(CM_WORK_DIR)
-	mv $(cmbase)/coremark.bare.riscv $(CM_WORK_DIR)
+	mv $(cmbase)/coremark.bare.riscv $(CM_WORK_DIR)/coremark.bare.riscv.elf
 
 # ----            Clean             ---- #
 
