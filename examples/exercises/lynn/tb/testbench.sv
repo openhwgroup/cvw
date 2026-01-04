@@ -112,7 +112,29 @@ module testbench;
   always @(negedge clk) begin
     int i;
     #1;
-    // $display("PC: %h, Instruction %h", PC, Instr);
+    //$display("PC: %h, Instruction %h", PC, Instr);
+    // $display("T0: %h, s4: %h, PCSrcPostConditional_C: %s PredictionCorrect_C: %b,
+    // Rs1ForwardSrc_C: %s, Rs2ForwardSrc_C: %s, AluHazzardSafeOperandA_C: %h, AluHazzardSafeOperandB_C: %h
+    // Result_W: %h, MemReadData_M: %h, MemReadData_W: %h, ResultSrc_W: %s, FlushRC: %b H:%b B:%b
+    // ",
+    // dut.ComputeCore.RStage.RegisterFile.register_values[5],
+    // dut.ComputeCore.RStage.RegisterFile.register_values[20],
+    // dut.ComputeCore.PCSrcPostConditional_C.name(),
+    // dut.ComputeCore.PredictionCorrect_C,
+    // dut.ComputeCore.Rs1ForwardSrc_C,
+    // dut.ComputeCore.Rs2ForwardSrc_C,
+    // dut.ComputeCore.CStage.AluHazzardSafeOperandA_C,
+    // dut.ComputeCore.CStage.AluHazzardSafeOperandB_C,
+    // dut.ComputeCore.Result_W,
+    // dut.ComputeCore.MemReadData_M,
+    // dut.ComputeCore.MemReadData_W,
+    // dut.ComputeCore.ResultSrc_W.name(),
+    // dut.ComputeCore.FlushRC,
+    // dut.ComputeCore.FlushRC_Hazzard,
+    // dut.ComputeCore.FlushRC_Branch
+
+
+    // );
     if (Instr === 'x & ~reset) begin
       $display("Instruction data x (PC: %h)", PC);
       $finish(-1);
@@ -209,10 +231,11 @@ always @(negedge clk) begin
   if (!reset && ((&jump_to_self_count) | (|to_host_result))) begin
       //$display("To Host local Adr: %h, To Host: %h", (TO_HOST_ADR-`XLEN'h8001_0000)>>2, to_host_result);
 
-      if(to_host_result == 1) begin
+      if (to_host_result == 1) begin
         $display("INFO: Test Passed!");
-      end else if (to_host_result == 2) begin
+      end else if (to_host_result != 3) begin
         $display("ERROR: Test Failed");
+        if (to_host_result != 2) $display("TO_HOST_DATA: %h", to_host_result);
       end
 
       // -------------------------------

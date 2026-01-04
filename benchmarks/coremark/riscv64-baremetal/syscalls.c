@@ -149,7 +149,6 @@ void _init(int cid, int nc)
 {
   init_tls();
   thread_entry(cid, nc);
-  //setStats(1);
 
   // only single-threaded programs should ever get here.
   int ret = main(0, 0);

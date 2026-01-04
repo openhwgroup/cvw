@@ -70,14 +70,13 @@ void setStats()
 void __attribute__((noreturn)) tohost_exit(uintptr_t code)
 {
   tohost = (code << 1) | 1;
-  asm ("ecall");
   exit(0);
 }
 
-uintptr_t __attribute__((weak)) handle_trap(uintptr_t cause, uintptr_t epc, uintptr_t regs[32])
-{
-  tohost_exit(1337);
-}
+// uintptr_t __attribute__((weak)) handle_trap(uintptr_t cause, uintptr_t epc, uintptr_t regs[32])
+// {
+//   tohost_exit(1337);
+// }
 
 void exit(int code)
 {
@@ -136,21 +135,8 @@ void _init(int cid, int nc)
 #undef putchar
 int putchar(int ch)
 {
-  /*static __thread char buf[64] __attribute__((aligned(64)));
-  static __thread int buflen = 0;
-
-  buf[buflen++] = ch;
-
-  if (ch == '\n' || buflen == sizeof(buf))
-  {
-    syscall(SYS_write, 1, (uintptr_t)buf, buflen);
-    buflen = 0;
-  }
-
-  return 0;*/
   _send_char(ch);
   return 0;
-
 }
 
 void printhex(uint64_t x)
