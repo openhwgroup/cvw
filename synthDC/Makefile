@@ -45,6 +45,8 @@ $(CONFIG):
 	@echo $(CONFIG)
 	cp -r $(OLDCONFIGDIR)/shared/*.vh $(CONFIGDIR)
 ifeq ($(MOD), orig)
+	# Copy the config.vh file from either config/${CONFIG} or config/deriv/${CONFIG} depending on what exists
+	cp -rf $(OLDCONFIGDIR)/$(CONFIG)/config.vh $(CONFIGDIR) | true
 	cp -rf $(OLDCONFIGDIR)/deriv/$(CONFIG)/config.vh $(CONFIGDIR) | true
 else
 	cp -rf $(OLDCONFIGDIR)/deriv/$(CONFIG)_$(MOD)/config.vh $(CONFIGDIR) | true
