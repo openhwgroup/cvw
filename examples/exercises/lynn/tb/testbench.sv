@@ -1,8 +1,9 @@
 `timescale 1ns/1ps
 
+`include "parameters.svh"
+
 // If DUT_MODULE isn't defined on the vlog command line,
 // fall back to a default name.
-
 `define INSTR_BITS 32
 
 `define ELF_BASE_ADR (`XLEN'h8000_0000)
@@ -51,9 +52,32 @@ module testbench;
   logic                           MemEn;
   logic [`XLEN/8-1:0]             WriteByteEn;   // byte enables, one per 8 bits
 
+
+  // DEBUG
+  always @(negedge clk) begin
+    int i;
+    #1;
+
+    if (~reset) begin
+
+      $display("PC: %h \t Instr: %h", PC, Instr);
+
+      // $display("MemEn: %b",
+      //         MemEn
+      //         );
+
+      if (Instr === 'x) begin
+        $display("Instruction data x (PC: %h)", PC);
+        $finish(-1);
+    end
+
+    end
+
+  end
+
   logic                           TestbenchRequest;
 
-  assign TestbenchRequest = DataAdr >= `THR_POINTER & DataAdr < `THR_POINTER + `XLEN'hF | DataAdr == `MTIME_POINTER;
+  assign TestbenchRequest = (DataAdr >= `THR_POINTER) & (DataAdr < `THR_POINTER + `XLEN'hF) | (DataAdr == `MTIME_POINTER);
 
   always_ff @ ( posedge clk ) begin
     if (reset) cycle_count <= 0;
@@ -108,49 +132,6 @@ module testbench;
 
   assign ReadData = TestbenchRequest ? TestbenchRequestReadData : MemReadData;
 
-  // DEBUG
-  always @(negedge clk) begin
-    int i;
-    #1;
-    //$display("PC: %h, Instruction %h", PC, Instr);
-    // $display("T0: %h, s4: %h, PCSrcPostConditional_C: %s PredictionCorrect_C: %b,
-    // Rs1ForwardSrc_C: %s, Rs2ForwardSrc_C: %s, AluHazzardSafeOperandA_C: %h, AluHazzardSafeOperandB_C: %h
-    // Result_W: %h, MemReadData_M: %h, MemReadData_W: %h, ResultSrc_W: %s, FlushRC: %b H:%b B:%b
-    // ",
-    // dut.ComputeCore.RStage.RegisterFile.register_values[5],
-    // dut.ComputeCore.RStage.RegisterFile.register_values[20],
-    // dut.ComputeCore.PCSrcPostConditional_C.name(),
-    // dut.ComputeCore.PredictionCorrect_C,
-    // dut.ComputeCore.Rs1ForwardSrc_C,
-    // dut.ComputeCore.Rs2ForwardSrc_C,
-    // dut.ComputeCore.CStage.AluHazzardSafeOperandA_C,
-    // dut.ComputeCore.CStage.AluHazzardSafeOperandB_C,
-    // dut.ComputeCore.Result_W,
-    // dut.ComputeCore.MemReadData_M,
-    // dut.ComputeCore.MemReadData_W,
-    // dut.ComputeCore.ResultSrc_W.name(),
-    // dut.ComputeCore.FlushRC,
-    // dut.ComputeCore.FlushRC_Hazzard,
-    // dut.ComputeCore.FlushRC_Branch
-
-
-    // );
-    if (Instr === 'x & ~reset) begin
-      $display("Instruction data x (PC: %h)", PC);
-      $finish(-1);
-    end
-    for (i =0; i < 32; i++) begin
-      // if (~reset & dut.ComputeCore.RegisterFile.register_values[i] === 'x) begin
-      //   $display("Register %d = 'x", i);
-      //   $finish(-1);
-      // end
-      // if (~reset & dut.ComputeCore.RegisterFile.register_values[i] === 'z) begin
-      //   $display("Register %d = 'z", i);
-      //   $finish(-1);
-      // end
-    end
-  end
-
   // ------------------------------------------------------------
   // DUT instantiation
   // ------------------------------------------------------------
@@ -185,33 +166,6 @@ initial begin
 
 end
 
-bit        act3_en;
-longint    sig_base_addr, sig_end_addr;
-string     testname;
-
-initial begin
-  // defaults
-  act3_en = 0;
-  sig_base_addr = 0;
-  sig_end_addr  = 0;
-
-  void'($value$plusargs("TESTNAME=%s", testname));
-  $display("[TB] TESTNAME = %s", testname);
-  void'($value$plusargs("ACT3=%d", act3_en));
-  $display("[TB] ACT3 = %b", act3_en);
-
-  if (act3_en) begin
-    if (!$value$plusargs("SIG_BASE_ADDR=%h", sig_base_addr) ||
-        !$value$plusargs("SIG_END_ADDR=%h",  sig_end_addr)) begin
-      $fatal(1, "[ACT3] ACT3=1 but SIG_BASE_ADDR / SIG_END_ADDR not provided");
-    end
-    if (sig_end_addr <= sig_base_addr) begin
-      $fatal(1, "[ACT3] Bad signature range: base=%h end=%h", sig_base_addr, sig_end_addr);
-    end
-    $display("[ACT3] Enabled. Signature range: [%h, %h)", sig_base_addr, sig_end_addr);
-  end
-end
-
 logic[`XLEN-1:0] to_host_result;
 logic[3:0]       jump_to_self_count;
 
@@ -233,41 +187,10 @@ always @(negedge clk) begin
 
       if (to_host_result == 1) begin
         $display("INFO: Test Passed!");
-      end else if (to_host_result != 3) begin
+      end else begin
         $display("ERROR: Test Failed");
         if (to_host_result != 2) $display("TO_HOST_DATA: %h", to_host_result);
       end
-
-      // -------------------------------
-      // ACT3 signature extraction TODO ONLY WORKS FOR XLEN=32 TODO
-      // -------------------------------
-      if (act3_en) begin
-        string sig_path;
-        int unsigned base_idx;
-        int unsigned end_idx;
-
-        sig_path = $sformatf("runs/%s.signature", testname);
-
-        base_idx = (sig_base_addr - `DMEM_BASE_ADR) >> 2;
-        end_idx  = (sig_end_addr  - `DMEM_BASE_ADR) >> 2;
-
-        sig_fd = $fopen(sig_path, "w");
-        if (sig_fd == 0) begin
-          $fatal(1, "[ACT3] Could not open signature file %s", sig_path);
-        end
-
-        $display("[ACT3] Dumping signature [%h, %h) to %s",
-                sig_base_addr, sig_end_addr, sig_path);
-
-        for (sig_idx = base_idx; sig_idx < end_idx; sig_idx++) begin
-          sig_word = DataMemory.Memory[sig_idx];
-          $fdisplay(sig_fd, "%08x", sig_word);
-        end
-
-        $fclose(sig_fd);
-        $display("[ACT3] Signature dump complete.");
-      end
-      // -------------------------------
 
       // if(to_host_result != 0) begin
       $display("[%0t] INFO: Program Finished! Ending simulation.", $time);

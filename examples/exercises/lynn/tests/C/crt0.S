@@ -62,7 +62,9 @@ rvtest_entry_point:
     call main
 
     /* ---- fallthrough to end ---- */
-    j end
+    li  t0, 1
+    bne a0, t0, fail
+    j   pass
 
 finish:
     /* write gp to tohost and hang */
@@ -72,6 +74,8 @@ finish:
 
 fail:
     /* encode a non-1 fail code (gp already holds something else if you want) */
+    li   t0, 1
+    bne  gp, t0, finish
     li   gp, 2
     j    finish
 
@@ -80,12 +84,7 @@ pass:
     li   gp, 1
     j    finish
 
-end:
-    li   gp, 3
-    j finish              /* infinite loop */
-    .size end, .-end
-
-
+/* to host data section */
     .section .tohost,"aw",@progbits
     .balign 4
     .globl tohost

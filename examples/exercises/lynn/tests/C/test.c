@@ -5,6 +5,8 @@
 // 12/19/2025
 
 extern void end(void);
+extern void example_test(void);
+extern int  macro_example_test(void);
 
 void _send_char(char c) {
   /*#error "You must implement the method _send_char to use this file!\n";
@@ -29,7 +31,11 @@ int sendstring(const char *p){
 }
 
 int main(void) {
-    sendstring("Hello World\n");
-    end();         // never returns
-    return 0;      // unreachable, but keeps compilers happy
+
+    example_test(); // never returns
+
+    //return macro_example_test(); // returns 1 or 0 depending on pass or fail
+
+    // sendstring("Hello World\n");
+    // return 1;
 }
