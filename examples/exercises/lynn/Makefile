@@ -5,6 +5,7 @@
 # ---- Processor / Testbench Configuration ---- #
 XLEN 			?= 32
 PROCESSOR     	?= $(CURDIR)/sample_processor/src      # Directory containing all processor RTL (will scan for .sv / .svh)
+
 SYNTH_SRC 		?= $(PROCESSOR) 					   # Directory used to copy hdl for synthesis
 INC_DIR       	?= $(CURDIR)/sample_processor/incdir/  # Optional directory for include files for RTL compilation (parameters)
 
@@ -105,7 +106,7 @@ PORT_CFLAGS = \
 
 SV_PACKAGES := $(sort $(shell find $(PROCESSOR) -type f -name '*.pkg'))
 SV_SOURCES 	:= $(sort $(shell find $(PROCESSOR) -type f \( -name "*.sv" -o -name "*.svh" \)) $(shell find $(INC_DIR) -type f \( -name "*.sv" -o -name "*.svh" \)))
-TEST_ELFS  	:= $(sort $(shell find $(PROCESSOR_TEST_DIR) -type f -name '*.elf'))
+TEST_ELFS  	= $(sort $(shell find -L $(PROCESSOR_TEST_DIR) -type f -name '*.elf'))
 
 # ----          Targets            ---- #
 
@@ -238,12 +239,23 @@ $(C_TEST_WORK_DIR)/c_test.elf: $(C_TEST_SOURCEFILES) $(LINKER) Makefile
 C_test: $(C_TEST_WORK_DIR)/c_test.elf
 	$(MAKE) run ELFS="$(C_TEST_WORK_DIR)/c_test.elf"
 
+COPY_ACT4_FILES := $(TEST_WORK_DIR)/copy_stamp
+
+$(COPY_ACT4_FILES):
+	@mkdir -p $(TEST_WORK_DIR)
+	$(MAKE) -C $(RISCV_ARCH_TEST)
+	cp -r $(RISCV_ARCH_TEST)/work/common/elfs/rv32i/I/* $(TEST_WORK_DIR)/
+	touch $(COPY_ACT4_FILES)
+
 
 # test: run ALL .elf files in PROCESSOR_TEST_DIR in parallel with -j
 .PHONY: test
-test:
+test: | $(COPY_ACT4_FILES)
+	$(info CURDIR=$(CURDIR))
+	$(info PROCESSOR_TEST_DIR=$(PROCESSOR_TEST_DIR))
+	$(info TEST_ELFS=$(TEST_ELFS))
 	$(MAKE) run ELFS="$(TEST_ELFS)"
-	$(PYTHON) bin/scan_test_logs.py
+	cd tests/act4_sample_processor && $(PYTHON) ../../bin/scan_test_logs.py
 
 .PHONY: disassemble
 
@@ -291,6 +303,12 @@ $(CM_WORK_DIR)/coremark.bare.riscv.elf: $(cmscript_file) $(cmconfig_files) Makef
 	mkdir -p $(CM_WORK_DIR)
 	mv $(cmbase)/coremark.bare.riscv $(CM_WORK_DIR)/coremark.bare.riscv.elf
 
+# ----  Bug lab  ---- #
+
+.PHONY: bug
+bug:
+	$(CURDIR)/bug_scripts/bugall_riscvsingle.sh
+
 # ----            Clean             ---- #
 
 .PHONY: clean
@@ -303,5 +321,4 @@ clean:
 	rm -rf $(WORK_DIR)
 	rm -rf $(CM_WORK_DIR)
 	rm -rf $(C_TEST_WORK_DIR)
-	rm -rf $(RISCOF_DIR)
 #rm -rf $(SYNTH_DIR)

@@ -10,8 +10,8 @@ PASS_STR = "INFO: Test Passed!"
 FAIL_STR = "ERROR: Test Failed"
 
 def main():
-    # Default path: work/runs (relative to repo root)
-    runs_dir = Path("work/runs")
+    # Default path: work (relative to repo root)
+    runs_dir = Path("work")
 
     if not runs_dir.exists():
         print(f"ERROR: directory not found: {runs_dir}")
