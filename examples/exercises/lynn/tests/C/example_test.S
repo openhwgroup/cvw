@@ -2,8 +2,6 @@
 // kacassidy@hmc.edu
 // 1/5/2026
 
-    .extern finish
-
     .section .text
     .globl example_test
     .type  example_test, @function
@@ -70,3 +68,51 @@ pass:
     /* encode a non-1 fail code (gp already holds something else if you want) */
     li   gp, 1
     j    finish
+
+finish:
+    /* write gp to tohost and hang */
+    /* la   t0, tohost */
+        li  t0, 0x400        # 1024, safe imm12
+    li  t1, 0x001        # 1, safe imm12
+
+    # t0 = 0x400 << 21 = 0x80000000
+    add t0, t0, t0       # 1
+    add t0, t0, t0       # 2
+    add t0, t0, t0       # 3
+    add t0, t0, t0       # 4
+    add t0, t0, t0       # 5
+    add t0, t0, t0       # 6
+    add t0, t0, t0       # 7
+    add t0, t0, t0       # 8
+    add t0, t0, t0       # 9
+    add t0, t0, t0       # 10
+    add t0, t0, t0       # 11
+    add t0, t0, t0       # 12
+    add t0, t0, t0       # 13
+    add t0, t0, t0       # 14
+    add t0, t0, t0       # 15
+    add t0, t0, t0       # 16
+    add t0, t0, t0       # 17
+    add t0, t0, t0       # 18
+    add t0, t0, t0       # 19
+    add t0, t0, t0       # 20
+    add t0, t0, t0       # 21   -> t0 = 0x8000_0000
+
+    # t1 = 1 << 12 = 0x1000
+    add t1, t1, t1       # 1
+    add t1, t1, t1       # 2
+    add t1, t1, t1       # 3
+    add t1, t1, t1       # 4
+    add t1, t1, t1       # 5
+    add t1, t1, t1       # 6
+    add t1, t1, t1       # 7
+    add t1, t1, t1       # 8
+    add t1, t1, t1       # 9
+    add t1, t1, t1       # 10
+    add t1, t1, t1       # 11
+    add t1, t1, t1       # 12   -> t1 = 0x0000_1000
+
+    add t0, t0, t1       # t0 = 0x8000_1000
+
+    sw   gp, 0(t0)
+1:  j    1b

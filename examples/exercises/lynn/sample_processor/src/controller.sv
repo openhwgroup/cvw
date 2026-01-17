@@ -16,7 +16,7 @@ module controller(
         output  logic         RegWrite,
         output  logic [1:0]   ALUSrc, ImmSrc,
         output  logic [1:0]   ALUControl,
-        output  logic         Load
+        output  logic         MemEn
     `ifdef DEBUG
         , input   logic [31:0]  insn_debug
     `endif
@@ -32,7 +32,7 @@ module controller(
         case(Op)
             // RegWrite_ImmSrc_ALUSrc_ALUOp_ALUResultSrc_MemWrite_ResultSrc_Branch_Jump_Load
             7'b0000011: controls = 12'b1_00_01_0_0_0_1_0_0_1; // lw
-            7'b0100011: controls = 12'b0_01_01_0_0_1_0_0_0_0; // sw
+            7'b0100011: controls = 12'b0_01_01_0_0_1_0_0_0_1; // sw
             7'b0110011: controls = 12'b1_xx_00_1_0_0_0_0_0_0; // R-type
             7'b0010011: controls = 12'b1_00_01_1_0_0_0_0_0_0; // I-type ALU
             7'b1100011: controls = 12'b0_10_11_0_0_0_0_1_0_0; // beq
@@ -51,7 +51,7 @@ module controller(
         endcase
 
     assign {RegWrite, ImmSrc, ALUSrc, ALUOp, ALUResultSrc, MemWrite,
-        ResultSrc, Branch, Jump, Load} = controls;
+        ResultSrc, Branch, Jump, MemEn} = controls;
 
     // ALU Control Logic
     assign Sub = ALUOp & ((Funct3 == 3'b000) & Funct7b5 & Op[5] | (Funct3 == 3'b010)); // subtract or SLT

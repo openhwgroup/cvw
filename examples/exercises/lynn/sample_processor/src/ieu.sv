@@ -12,7 +12,7 @@ module ieu(
         output  logic [3:0]     WriteByteEn,
         output  logic [31:0]    IEUAdr, WriteData,
         input   logic [31:0]    ReadData,
-        output  logic           Load
+        output  logic           MemEn
     );
 
     logic RegWrite, Jump, Eq, ALUResultSrc, ResultSrc;
@@ -21,7 +21,7 @@ module ieu(
 
     controller c(.Op(Instr[6:0]), .Funct3(Instr[14:12]), .Funct7b5(Instr[30]), .Eq,
         .ALUResultSrc, .ResultSrc, .WriteByteEn, .PCSrc,
-        .ALUSrc, .RegWrite, .ImmSrc, .ALUControl, .Load
+        .ALUSrc, .RegWrite, .ImmSrc, .ALUControl, .MemEn
     `ifdef DEBUG
         , .insn_debug(Instr)
     `endif

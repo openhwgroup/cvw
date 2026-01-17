@@ -60,11 +60,17 @@ module testbench;
 
     if (~reset) begin
 
-      //$display("PC: %h \t Instr: %h", PC, Instr);
+      // $display("PC: %h \t Instr: %h", PC, Instr);
 
       // $display("MemEn: %b",
       //         MemEn
       //         );
+
+      // $display("DataAdr: %h, t0: %h",
+      //         DataAdr,
+      //         dut.ieu.dp.rf.rf[5]
+      //         );
+
 
       if (Instr === 'x) begin
         $display("Instruction data x (PC: %h)", PC);
