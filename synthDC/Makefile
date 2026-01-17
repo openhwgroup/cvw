@@ -49,7 +49,9 @@ configs: $(CONFIG)
 $(CONFIG):
 	@echo $(CONFIG)
 ifeq ($(LYNN), 1)
-
+	@mkdir -p $(OUTPUTDIR)/hdl
+	@echo "Copying HDL sources into $(OUTPUTDIR)/hdl"
+	@find $(CONFIGDIR) $(HDLDIR) -type f \( -name "*.sv" -o -name "*.svh" -o -name "*.vh" -o -name "*.pkg" \) -exec cp -f {} $(OUTPUTDIR)/hdl \; || true
 else
 	cp -r $(OLDCONFIGDIR)/shared/*.vh $(CONFIGDIR)
 ifeq ($(MOD), orig)

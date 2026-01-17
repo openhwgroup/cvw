@@ -29,13 +29,7 @@ set maxopt $::env(MAXOPT)
 set drive $::env(DRIVE)
 set width $::env(WIDTH)
 
-eval file copy -force [glob ${cfg}/*.vh] {$outputDir/hdl/}
-eval file copy -force [glob ${cfg}/*.svh] {$outputDir/hdl/}
-eval file copy -force [glob ${hdl_src}/*.sv] {$outputDir/hdl/}
-eval file copy -force [glob ${hdl_src}/*/*.sv] {$outputDir/hdl/}
-eval file copy -force [glob ${hdl_src}/*/*/*.sv] {$outputDir/hdl/}
-eval file copy -force [glob ${hdl_src}/*/*/*/*.sv] {$outputDir/hdl/}
-eval file copy -force [glob ${hdl_src}/*/*/*/*/*.sv] {$outputDir/hdl/}
+set search_path "$search_path $outputDir/hdl"
 
 # Build include-dir list from env var (allow space-separated dirs)
 set incdirs {}
@@ -63,9 +57,6 @@ if {[catch {eval exec grep "cvw_t" $outputDir/hdl/$::env(DESIGN).sv}] == 0} {
 if { $saifpower == 1 } {
     saif_map -start
 }
-
-# Verilog files
-set my_verilog_files [glob $outputDir/hdl/cvw.sv $outputDir/hdl/*.sv]
 
 # Set toplevel
 if { $wrapper == 1 } {
@@ -105,7 +96,19 @@ if { [shell_is_in_topographical_mode] } {
 #
 #set alib_library_analysis_path ./$outputDir
 define_design_lib WORK -path ./$outputDir/WORK
-analyze -f sverilog -lib WORK $my_verilog_files
+
+set pkg_files  [glob -nocomplain $outputDir/hdl/*.pkg $outputDir/hdl/*pkg*.sv $outputDir/hdl/*Type*.sv $outputDir/hdl/*Package*.sv]
+set sv_files   [glob -nocomplain $outputDir/hdl/*.sv]
+
+# If you know exact package naming patterns, add them above.
+# Analyze packages first
+if {[llength $pkg_files] > 0} {
+    analyze -format sverilog -lib WORK $pkg_files
+}
+
+# Then analyze the rest
+analyze -format sverilog -lib WORK $sv_files
+
 # If wrapper=0, we want to run against a specific module and pass
 # width to DC
 if { $wrapper == 1 } {

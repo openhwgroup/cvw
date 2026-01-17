@@ -8,9 +8,8 @@ PROCESSOR     	?= $(CURDIR)/sample_processor/src      # Directory containing all
 SYNTH_SRC 		?= $(PROCESSOR) 					   # Directory used to copy hdl for synthesis
 INC_DIR       	?= $(CURDIR)/sample_processor/incdir/  # Optional directory for include files for RTL compilation (parameters)
 
-#DUT_MODULE ?= riscvsingle  # top-level module name
-DUT_MODULE 			?= riscvsingle
-SYNTH_TOP 			?= $(DUT_MODULE)
+DUT_MODULE 			?= riscvsingle # top-level module name
+SYNTH_TOP 			?= $(DUT_MODULE) # useful for analyzing timing of specific modules (pipelining)
 PROCESSOR_TEST_DIR	?= $(CURDIR)/tests/act4_sample_processor
 
 # ----    Coremark Configuration ---- #
@@ -273,7 +272,7 @@ arch-test: Makefile $(PROCESSOR_TEST_DIR)/test_config.yaml
 
 .PHONY: coremark
 
-coremark: $(CM_WORK_DIR)/coremark.bare.riscv.elf.run
+coremark: $(CM_WORK_DIR)/coremark.bare.riscv.run
 
 WALLY_PORT_DIR = $(WALLY)/benchmarks/coremark/riscv64-baremetal
 cmbase  = $(WALLY)/addins/coremark
@@ -305,4 +304,4 @@ clean:
 	rm -rf $(CM_WORK_DIR)
 	rm -rf $(C_TEST_WORK_DIR)
 	rm -rf $(RISCOF_DIR)
-	rm -rf $(SYNTH_DIR)
+#rm -rf $(SYNTH_DIR)

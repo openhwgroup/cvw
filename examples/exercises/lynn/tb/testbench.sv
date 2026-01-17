@@ -60,7 +60,7 @@ module testbench;
 
     if (~reset) begin
 
-      $display("PC: %h \t Instr: %h", PC, Instr);
+      //$display("PC: %h \t Instr: %h", PC, Instr);
 
       // $display("MemEn: %b",
       //         MemEn
