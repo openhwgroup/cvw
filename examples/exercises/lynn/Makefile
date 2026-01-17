@@ -303,6 +303,12 @@ $(CM_WORK_DIR)/coremark.bare.riscv.elf: $(cmscript_file) $(cmconfig_files) Makef
 	mkdir -p $(CM_WORK_DIR)
 	mv $(cmbase)/coremark.bare.riscv $(CM_WORK_DIR)/coremark.bare.riscv.elf
 
+# ----  Bug lab  ---- #
+
+.PHONY: bug
+bug:
+	$(CURDIR)/bug_scripts/bugall_riscvsingle.sh
+
 # ----            Clean             ---- #
 
 .PHONY: clean
