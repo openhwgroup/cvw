@@ -22,13 +22,18 @@ export DRIVE ?= FLOP
 export USESRAM ?= 0
 export WIDTH ?= 32
 
+LYNN = 0
+
 time := $(shell date +%F-%H-%M)
 hash := $(shell git rev-parse --short HEAD)
-export OUTPUTDIR := runs/$(DESIGN)_$(CONFIG)_$(MOD)_$(TECH)nm_$(FREQ)_MHz_$(time)_$(TITLE)_$(hash)
+OUTPUTBASEDIR 	 := runs
+export OUTPUTDIR := $(OUTPUTBASEDIR)/$(DESIGN)_$(CONFIG)_$(MOD)_$(TECH)nm_$(FREQ)_MHz_$(time)_$(TITLE)_$(hash)
 export SAIFPOWER ?= 0
 
 OLDCONFIGDIR ?= ${WALLY}/config
 export CONFIGDIR ?= $(OUTPUTDIR)/config
+export HDLDIR ?= $(WALLY)/src
+export INCDIR ?=
 
 default:
 	@echo "  Basic synthesis procedure for Wally:"
@@ -43,6 +48,11 @@ DIRS = $(DIRS32) $(DIRS64)
 configs: $(CONFIG)
 $(CONFIG):
 	@echo $(CONFIG)
+ifeq ($(LYNN), 1)
+	@mkdir -p $(OUTPUTDIR)/hdl
+	@echo "Copying HDL sources into $(OUTPUTDIR)/hdl"
+	@find $(CONFIGDIR) $(HDLDIR) -type f \( -name "*.sv" -o -name "*.svh" -o -name "*.vh" -o -name "*.pkg" \) -exec cp -f {} $(OUTPUTDIR)/hdl \; || true
+else
 	cp -r $(OLDCONFIGDIR)/shared/*.vh $(CONFIGDIR)
 ifeq ($(MOD), orig)
 	# Copy the config.vh file from either config/${CONFIG} or config/deriv/${CONFIG} depending on what exists
@@ -50,6 +60,7 @@ ifeq ($(MOD), orig)
 	cp -rf $(OLDCONFIGDIR)/deriv/$(CONFIG)/config.vh $(CONFIGDIR) | true
 else
 	cp -rf $(OLDCONFIGDIR)/deriv/$(CONFIG)_$(MOD)/config.vh $(CONFIGDIR) | true
+endif
 endif
 
 ifeq ($(SAIFPOWER), 1)

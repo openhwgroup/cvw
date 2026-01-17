@@ -2,68 +2,15 @@
 # James Kaden Cassidy 1/1/2026
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
-# ---- Command line optional parameters ---- #
-
-ELFS 			?=
-
-# Example options (space separated): I M
-ACT3_EXTENSIONS ?= I
-
 # ---- Processor / Testbench Configuration ---- #
 XLEN 			?= 32
-PROCESSOR     	?= $(CURDIR)/my_processor/RISC-V-Pipelined-Processor/src      # Directory containing all processor RTL (will scan for .sv / .svh)
-INC_DIR       	?= $(CURDIR)/my_processor/RISC-V-Pipelined-Processor/incdir/  # Optional directory for include files for RTL compilation (parameters)
+PROCESSOR     	?= $(CURDIR)/sample_processor/src      # Directory containing all processor RTL (will scan for .sv / .svh)
+SYNTH_SRC 		?= $(PROCESSOR) 					   # Directory used to copy hdl for synthesis
+INC_DIR       	?= $(CURDIR)/sample_processor/incdir/  # Optional directory for include files for RTL compilation (parameters)
 
-#DUT_MODULE ?= riscvsingle  # top-level module name
-DUT_MODULE 			?= testingCore
-PROCESSOR_TEST_DIR	?= $(CURDIR)/tests/sample_processor
-
-# ---- Repo paths ---- #
-C_TEST_DIR		?= $(CURDIR)/tests/C
-TESTBENCH_DIR 	?= $(CURDIR)/tb
-RISCOF_DIR		?= $(CURDIR)/tests/riscof
-
-LINKER			?= $(PROCESSOR_TEST_DIR)/link.ld
-
-# ---- Repo paths cont ---- #
-TESTBENCH_FILES ?= $(TESTBENCH_DIR)/testbench.sv $(TESTBENCH_DIR)/VectorStorage.sv
-TB_TOP          ?= testbench
-WAVES_DO        ?= $(CURDIR)/waves.do
-
-WORK_DIR        ?= $(CURDIR)/work
-RISCV_ARCH_TEST ?= $(WALLY)/addins/riscv-arch-test-cvw
-
-TEST_WORK_DIR	?= $(PROCESSOR_TEST_DIR)/work
-C_TEST_WORK_DIR ?= $(TEST_WORK_DIR)/c_test
-ARCH_WORK_DIR 	?= $(TEST_WORK_DIR)/arch_test
-CM_WORK_DIR		?= $(WORK_DIR)/coremark
-
-# ----    Simulation Settings    ---- #
-VSIM        ?= vsim
-VSIM_FLAGS  ?= -voptargs=+acc
-VSIM_EXTRA_FLAGS ?= # Extra flags if you want them
-
-GUI  ?= 0
-ACT3 ?= 0
-
-# Build the vsim mode flags from GUI
-ifeq ($(GUI),1)
-  VSIM_MODE_FLAGS :=
-  VSIM_DO := if {[file exists $(WAVES_DO)]} {do $(WAVES_DO)}; run -all
-else
-  VSIM_MODE_FLAGS := -c
-  VSIM_DO := run -all; quit -f
-endif
-
-PYTHON := python3
-TOOLPREFIX := riscv64-unknown-elf-
-
-# Derive tools from the prefix
-CC      := $(TOOLPREFIX)gcc
-OBJDUMP := $(TOOLPREFIX)objdump
-READELF := $(TOOLPREFIX)readelf
-SIZE    := $(TOOLPREFIX)size
-ELF2HEX := $(TOOLPREFIX)elf2hex
+DUT_MODULE 			?= riscvsingle # top-level module name
+SYNTH_TOP 			?= $(DUT_MODULE) # useful for analyzing timing of specific modules (pipelining)
+PROCESSOR_TEST_DIR	?= $(CURDIR)/tests/act4_sample_processor
 
 # ----    Coremark Configuration ---- #
 
@@ -72,6 +19,55 @@ ELF2HEX := $(TOOLPREFIX)elf2hex
 #ARCH := rv$(XLEN)imc_zicsr
 #ARCH := rv$(XLEN)im_zicsr
 ARCH := rv$(XLEN)i_zicsr
+
+# ---- Command line optional parameters ---- #
+
+ELFS 				?=
+GUI  				?= 0
+SAIL  				?= 0
+VSIM_EXTRA_FLAGS 	?= # Extra flags if you want them
+
+# ---- Repo paths ---- #
+LINKER			?= $(PROCESSOR_TEST_DIR)/link.ld
+
+TB_TOP          ?= testbench
+TESTBENCH_FILES ?= $(TESTBENCH_DIR)/testbench.sv $(TESTBENCH_DIR)/VectorStorage.sv
+WAVES_DO        ?= $(CURDIR)/waves.do
+
+# ---- Repo paths cont ---- #
+COREMARK_DIR 	?= $(CURDIR)/coremark
+C_TEST_DIR		?= $(CURDIR)/tests/C
+TESTBENCH_DIR 	?= $(CURDIR)/tb
+SYNTH_DIR 		?= $(CURDIR)/synth
+
+WORK_DIR        ?= $(CURDIR)/work
+RISCV_ARCH_TEST ?= $(WALLY)/addins/riscv-arch-test-cvw
+
+TEST_WORK_DIR	?= $(PROCESSOR_TEST_DIR)/work
+ARCH_WORK_DIR 	?= $(TEST_WORK_DIR)/arch_test
+C_TEST_WORK_DIR ?= $(C_TEST_DIR)/work
+CM_WORK_DIR		?= $(COREMARK_DIR)/work
+
+# ----    Simulation Settings    ---- #
+VSIM        		?= vsim
+VSIM_FLAGS  		?= -voptargs=+acc
+
+SYNTH_TECH 			?= sky130 #tsmc28 #tsmc28psyn
+
+# ----    Tools    ---- #
+
+PYTHON 		:= python3
+SAIL_RUN   	:= sail_riscv_sim
+TOOLPREFIX 	:= riscv64-unknown-elf-
+
+# Derive tools from the prefix
+CC      := $(TOOLPREFIX)gcc
+OBJDUMP := $(TOOLPREFIX)objdump
+READELF := $(TOOLPREFIX)readelf
+SIZE    := $(TOOLPREFIX)size
+ELF2HEX := $(TOOLPREFIX)elf2hex
+
+# ----    Coremark Parameters ---- #
 
 ABI := $(if $(findstring "64","$(XLEN)"),lp64,ilp32)
 
@@ -128,24 +124,22 @@ lint:
 
 # Build = compile RTL once into $(WORK_DIR)/build
 .PHONY: build
-$(WORK_DIR)/work/_info: $(SV_PACKAGES) $(SV_SOURCES) $(TESTBENCH_FILES) Makefile
-	@mkdir -p $(WORK_DIR)
-	@cd $(WORK_DIR) && \
-	  echo "[BUILD] Creating/using local 'work' library..." && \
-	  (vlib work 2>/dev/null || true) && \
-	  echo "[BUILD] Compiling SystemVerilog sources..." && \
-	  vlog -sv \
-	  	+incdir+$(INC_DIR) \
+$(WORK_DIR)/_info: $(SV_PACKAGES) $(SV_SOURCES) $(TESTBENCH_FILES) Makefile
+	echo "[BUILD] Creating/using local 'work' library..." && \
+	(vlib work 2>/dev/null || true) && \
+	echo "[BUILD] Compiling SystemVerilog sources..." && \
+	vlog -sv \
+		+incdir+$(INC_DIR) \
 		+define+DUT_MODULE=$(DUT_MODULE) \
-      	+define+XLEN=$(XLEN) $(abspath $(SV_PACKAGES) $(SV_SOURCES) $(TESTBENCH_FILES))
+		+define+XLEN=$(XLEN) $(abspath $(SV_PACKAGES) $(SV_SOURCES) $(TESTBENCH_FILES))
 
-build: $(WORK_DIR)/work/_info Makefile
+build: $(WORK_DIR)/_info Makefile
 
 # ----  Generic memfile / run / test flow  ---- #
 
 # Any file -> file.memfile
-.PRECIOUS: %.elf.memfile
-%.elf.memfile: %.elf
+.PRECIOUS: %.memfile
+%.memfile: %.elf
 	@echo "[MEM] Generating memfile $@ from $< along with debug files"
 	$(SIZE) -A $< > $<.elf.size
 	$(READELF) -S $< > $<.elf.read
@@ -155,35 +149,61 @@ build: $(WORK_DIR)/work/_info Makefile
 
 #   Use: make run ELFS="path/to/a.elf path/to/b.elf" [-j]
 .PHONY: run
-run: $(ELFS:%=%.run)
+run: $(addsuffix .run,$(basename $(ELFS)))
+
+.PHONY: synth
+synth:
+	@$(MAKE) -C $(WALLY)/synthDC \
+		OUTPUTBASEDIR=$(SYNTH_DIR) \
+		NAME=lynn \
+		DESIGN=$(SYNTH_TOP) \
+		INCDIR=$(INC_DIR) \
+		CONFIG=- \
+		MOD=- \
+		HDLDIR=$(PROCESSOR) \
+		LYNN=1 \
+		TECH=$(SYNTH_TECH) \
+		synth
 
 # Generate score for the project based on coremark score and timing
 # .PHONY
 # score:
 
-
+ifeq ($(SAIL),1)
+RUNNER := sail
+else
+RUNNER := processor
+endif
 
 # foo.elf.run depends on foo.elf.memfile and build
-%.run: %.memfile $(WORK_DIR)/work/_info Makefile
+%.run: %.$(RUNNER) Makefile
+	@:
+
+%.sail: %.elf Makefile
+	$(SAIL_RUN) $< > $@.log 2>&1
+
+# Build the vsim mode flags from GUI
+ifeq ($(GUI),1)
+  VSIM_MODE_FLAGS :=
+  VSIM_DO := if {[file exists $(WAVES_DO)]} {do $(WAVES_DO)}; run -all
+else
+  VSIM_MODE_FLAGS := -c
+  VSIM_DO := run -all; quit -f
+endif
+
+%.processor: %.memfile $(WORK_DIR)/_info Makefile
 	@set -e; \
-	mkdir -p $(WORK_DIR)/runs; \
 	MEMFILE="$(abspath $<)"; \
-	ELF="$${MEMFILE%.memfile}"; \
+	ELF="$${MEMFILE%.memfile}.elf"; \
 	ENTRY_ADDR="$$(riscv64-unknown-elf-readelf -h "$$ELF" | awk '/Entry point address:/ {print $$NF}')"; \
 	TOHOST_ADDR="$$(riscv64-unknown-elf-readelf --syms --wide "$$ELF" | awk '$$NF=="tohost" {print "0x"$$2; exit}')" \
 	DMEM_BASE_ADDR="$$(riscv64-unknown-elf-readelf --syms --wide "$$ELF" | awk '$$NF=="dmem_base" {print "0x"$$2; exit}')" \
 	NAME="$${ELF##*/}"; \
-	LOGFILE="$(WORK_DIR)/runs/$${NAME}.sim.log"; \
+	LOGFILE="$${ELF}.sim.log"; \
 	SIG_BASE_ADDR=""; \
 	SIG_END_ADDR=""; \
-	if [ "$(ACT3)" = "1" ]; then \
-	  SIG_BASE_ADDR="$$(riscv64-unknown-elf-readelf --syms --wide "$$ELF" | awk '$$NF=="sig_begin_canary" {print "0x"$$2; exit}')" ; \
-	  SIG_END_ADDR="$$(riscv64-unknown-elf-readelf --syms --wide "$$ELF" | awk '$$NF=="rvtest_sig_end" {print "0x"$$2; exit}')" ; \
-	  echo "[ACT3] signature_base=$$SIG_BASE_ADDR sig_end_canary=$$SIG_END_ADDR"; \
-	fi; \
 	echo "[RUN] ELF: $$ELF"; \
 	echo "[VSIM] Using memfile $$MEMFILE (log: $$LOGFILE)"; \
-	cd "$(WORK_DIR)"; \
 	if [ "$(GUI)" = "1" ]; then \
 	  $(VSIM) $(VSIM_FLAGS) $(VSIM_EXTRA_FLAGS) work.$(TB_TOP) \
 	  	+TESTNAME="$$NAME" \
@@ -191,8 +211,6 @@ run: $(ELFS:%=%.run)
 	    +ENTRY_ADDR="$$ENTRY_ADDR" \
 		+TOHOST_ADDR="$$TOHOST_ADDR" \
 		+DMEM_BASE_ADDR="$$DMEM_BASE_ADDR" \
-		+ACT3="$(ACT3)" \
-	    $(if $(filter 1,$(ACT3)),+SIG_BASE_ADDR="$$SIG_BASE_ADDR" +SIG_END_ADDR="$$SIG_END_ADDR",) \
 	    -do "$(VSIM_DO)" \
 	    2>&1 | tee "$$LOGFILE"; \
 	else \
@@ -202,11 +220,10 @@ run: $(ELFS:%=%.run)
 	    +ENTRY_ADDR="$$ENTRY_ADDR" \
 		+TOHOST_ADDR="$$TOHOST_ADDR" \
 		+DMEM_BASE_ADDR="$$DMEM_BASE_ADDR" \
-		+ACT3="$(ACT3)" \
-	    $(if $(filter 1,$(ACT3)),+SIG_BASE_ADDR="$$SIG_BASE_ADDR" +SIG_END_ADDR="$$SIG_END_ADDR",) \
 	    -do "$(VSIM_DO)" \
 	    > "$$LOGFILE" 2>&1; \
 	fi
+
 
 CFLAGS 				:= -march=$(ARCH) -mabi=$(ABI) -O0 -g -ffreestanding -ffunction-sections -fdata-sections -Wall -Wextra
 LDFLAGS 			:= -march=$(ARCH) -mabi=$(ABI) -nostdlib -Wl,--gc-sections -T $(LINKER)
@@ -223,18 +240,10 @@ C_test: $(C_TEST_WORK_DIR)/c_test.elf
 
 
 # test: run ALL .elf files in PROCESSOR_TEST_DIR in parallel with -j
-.PHONY: test act3
+.PHONY: test
 test:
 	$(MAKE) run ELFS="$(TEST_ELFS)"
 	$(PYTHON) bin/scan_test_logs.py
-
-act3:
-	@mkdir -p $(RISCOF_DIR)
-	$(PYTHON) bin/copy_riscof_elfs.py --wally "$(WALLY)" $(ACT3_EXTENSIONS)
-	@ELFS="$$(find "$(RISCOF_DIR)" -type f -name '*.elf' | sort -u)"; \
-	  echo "Found $$(echo "$$ELFS" | wc -w) elfs"; \
-	  $(MAKE) run ELFS="$$ELFS" ACT3=1
-	$(PYTHON) bin/check_signatures.py --wally "$(WALLY)"
 
 .PHONY: disassemble
 
@@ -263,7 +272,7 @@ arch-test: Makefile $(PROCESSOR_TEST_DIR)/test_config.yaml
 
 .PHONY: coremark
 
-coremark: $(CM_WORK_DIR)/coremark.bare.riscv.elf.run
+coremark: $(CM_WORK_DIR)/coremark.bare.riscv.run
 
 WALLY_PORT_DIR = $(WALLY)/benchmarks/coremark/riscv64-baremetal
 cmbase  = $(WALLY)/addins/coremark
@@ -272,7 +281,7 @@ cmscript_files=$(cmbase)/core_main.c $(cmbase)/core_list_join.c $(cmbase)/corema
     $(cmbase)/core_matrix.c $(cmbase)/core_state.c $(cmbase)/core_util.c
 
 cmconfig_files=$(WALLY_PORT_DIR)/core_portme.h $(WALLY_PORT_DIR)/core_portme.c $(WALLY_PORT_DIR)/core_portme.mak \
-    $(TESTBENCH_DIR)/crt.S $(WALLY_PORT_DIR)/encoding.h $(WALLY_PORT_DIR)/util.h $(TESTBENCH_DIR)/syscalls.c \
+    $(COREMARK_DIR)/crt.S $(WALLY_PORT_DIR)/encoding.h $(WALLY_PORT_DIR)/util.h $(COREMARK_DIR)/syscalls.c \
 	$(LINKER)
 
 $(CM_WORK_DIR)/coremark.bare.riscv.elf: $(cmscript_file) $(cmconfig_files) Makefile
@@ -295,3 +304,4 @@ clean:
 	rm -rf $(CM_WORK_DIR)
 	rm -rf $(C_TEST_WORK_DIR)
 	rm -rf $(RISCOF_DIR)
+#rm -rf $(SYNTH_DIR)
