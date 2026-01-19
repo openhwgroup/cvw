@@ -57,7 +57,6 @@ source "${WALLY}"/bin/installation/activate-tools.sh
 
 
 # Newer version of glib required for QEMU.
-# Anything newer than this won't build on red hat 8
 # Used for all installed tools because mixing glib versions can cause issues.
 if (( RHEL_VERSION == 8 )) || (( UBUNTU_VERSION == 20 )); then
     source "$WALLY"/bin/installation/glib-installation.sh
