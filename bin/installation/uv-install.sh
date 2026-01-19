@@ -3,15 +3,15 @@
 ## Tool chain install script.
 ##
 ## Written: Jordan Carlin, jcarlin@hmc.edu
-## Created: May 30 2025
+## Created: January 19 2026
 ## Modified:
 ##
-## Purpose: Activate gcc and python virtual environment
+## Purpose: uv/Python installation script
 ##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
 ## https://github.com/openhwgroup/cvw
 ##
-## Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
+## Copyright (C) 2021-26 Harvey Mudd College & Oklahoma State University
 ##
 ## SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 ##
@@ -27,6 +27,8 @@
 ## and limitations under the License.
 ################################################################################################
 
+UV_VERSION=0.9.26 # Latest version as of January 19, 2026
+
 set -e # break on error
 # If run standalone, check environment. Otherwise, use info from main install script
 if [ -z "$FAMILY" ]; then
@@ -36,28 +38,15 @@ if [ -z "$FAMILY" ]; then
     source "${dir}"/../wally-environment-check.sh
 fi
 
-# Enable newer version of gcc for older distros (required for QEMU/Verilator)
-if [ "$FAMILY" == rhel ] && (( RHEL_VERSION < 10 )); then
-    if [ -e /opt/rh/gcc-toolset-13/enable ]; then
-        source /opt/rh/gcc-toolset-13/enable
-    else
-        echo -e "${FAIL_COLOR}GCC toolset 13 not found. Please install it with wally-package-install.sh.${ENDC}"
-        return 1
-    fi
-elif [ "$FAMILY" == suse ]; then
-    if [ ! -e "$RISCV"/gcc-13/bin/gcc ]; then
-        mkdir -p "$RISCV"/gcc-13/bin
-        for f in gcc cpp g++ gcc-ar gcc-nm gcc-ranlib gcov gcov-dump gcov-tool lto-dump; do
-            ln -vsf /usr/bin/$f-13 "$RISCV"/gcc-13/bin/$f
-        done
-    fi
-    export PATH="$RISCV"/gcc-13/bin:$PATH
-elif (( UBUNTU_VERSION == 20 )); then
-    if [ ! -e "$RISCV"/gcc-10/bin/gcc ]; then
-        mkdir -p "$RISCV"/gcc-10/bin
-        for f in gcc cpp g++ gcc-ar gcc-nm gcc-ranlib gcov gcov-dump gcov-tool lto-dump; do
-            ln -vsf /usr/bin/$f-10 "$RISCV"/gcc-10/bin/$f
-        done
-    fi
-    export PATH="$RISCV"/gcc-10/bin:$PATH
+# uv (https://docs.astral.sh/uv/)
+# uv is a Python package manager and virtual environment tool.
+section_header "Installing/Updating uv"
+STATUS="uv"
+cd "$RISCV"
+if check_tool_version $UV_VERSION; then
+    curl -LsSf https://astral.sh/uv/$UV_VERSION/install.sh | env UV_INSTALL_DIR="$RISCV/bin" UV_NO_MODIFY_PATH=1 sh
+    echo "$UV_VERSION" > "$RISCV"/versions/$STATUS.version # Record installed version
+    echo -e "${SUCCESS_COLOR}uv successfully installed/updated!${ENDC}"
+else
+    echo -e "${SUCCESS_COLOR}uv already up to date.${ENDC}"
 fi

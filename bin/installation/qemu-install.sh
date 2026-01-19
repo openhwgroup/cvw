@@ -46,7 +46,15 @@ cd "$RISCV"
 if check_tool_version $QEMU_VERSION; then
     git_checkout "qemu" "https://github.com/qemu/qemu" "$QEMU_VERSION"
     cd "$RISCV"/qemu
-    ./configure --target-list=riscv64-softmmu --prefix="$RISCV"
+    # Create Python venv for QEMU dependencies
+    uv venv
+    uv pip install sphinx sphinx_rtd_theme
+    # QEMU requires tomllib which is only available in Python 3.11+
+    if ! python3 -c "import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)"; then
+        uv pip install tomli
+    fi
+    QEMU_PYTHON="$RISCV/qemu/.venv/bin/python3"
+    ./configure --target-list=riscv64-softmmu --prefix="$RISCV" --python=$QEMU_PYTHON
     make -j "${NUM_THREADS}" 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
     make install 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
     if [ "$clean" = true ]; then
