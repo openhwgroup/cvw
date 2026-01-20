@@ -47,7 +47,7 @@ if check_tool_version $QEMU_VERSION; then
     git_checkout "qemu" "https://github.com/qemu/qemu" "$QEMU_VERSION"
     cd "$RISCV"/qemu
     # Create Python venv for QEMU dependencies
-    uv venv --python >=3.9
+    uv venv --python '>=3.9'
     uv pip install sphinx sphinx_rtd_theme pip setuptools
     # QEMU requires tomllib which is only available in Python 3.11+
     if ! python3 -c "import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)"; then
