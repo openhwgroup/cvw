@@ -47,14 +47,6 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH:+${LD_LIBRARY_PATH}:}$RISCV/riscv64-unk
 export LD_LIBRARY_PATH=$RISCV/lib:$RISCV/lib64:$LD_LIBRARY_PATH:$RISCV/lib/x86_64-linux-gnu/
 export PATH=$PATH:$RISCV/bin
 
-# Activate riscv-python Virtual Environment
-if [ -e "$RISCV"/riscv-python/bin/activate ]; then
-    source "$RISCV"/riscv-python/bin/activate
-else
-    echo -e "${FAIL_COLOR}Python virtual environment not found. Rerun wally-toolchain-install.sh to automatically create it.${ENDC}"
-    return 1
-fi
-
 # Environment variables needed for RISCV-DV
 export RISCV_GCC=$(which riscv64-unknown-elf-gcc)
 export RISCV_OBJCOPY=$(which riscv64-unknown-elf-objcopy)
