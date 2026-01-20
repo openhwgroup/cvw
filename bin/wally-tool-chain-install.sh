@@ -47,11 +47,9 @@ else
 fi
 
 
-# Create python virtual environment so the python command targets desired version of python
-# and installed packages are isolated from the rest of the system. Also installs python packages,
-# including RISCOF (https://github.com/riscv-software-src/riscof.git)
-# RISCOF is a RISC-V compliance test framework that is used to run the RISC-V Arch Tests.
-source "$WALLY"/bin/installation/python-setup.sh
+# uv (https://docs.astral.sh/uv/)
+# uv is a Python package manager and virtual environment tool.
+source "$WALLY"/bin/installation/uv-install.sh
 
 
 # Activate tools (python virtual environment and possibly newer version of gcc)
@@ -59,7 +57,6 @@ source "${WALLY}"/bin/installation/activate-tools.sh
 
 
 # Newer version of glib required for QEMU.
-# Anything newer than this won't build on red hat 8
 # Used for all installed tools because mixing glib versions can cause issues.
 if (( RHEL_VERSION == 8 )) || (( UBUNTU_VERSION == 20 )); then
     source "$WALLY"/bin/installation/glib-installation.sh

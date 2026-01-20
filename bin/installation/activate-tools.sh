@@ -36,15 +36,6 @@ if [ -z "$FAMILY" ]; then
     source "${dir}"/../wally-environment-check.sh
 fi
 
-# Activate python virtual environment
-# Activate riscv-python Virtual Environment
-if [ -e "$RISCV"/riscv-python/bin/activate ]; then
-    source "$RISCV"/riscv-python/bin/activate
-else
-    echo -e "${FAIL_COLOR}Python virtual environment not found. Run wally-toolchain-install.sh or python-setup.sh to automatically create it.${ENDC}"
-    return 1
-fi
-
 # Enable newer version of gcc for older distros (required for QEMU/Verilator)
 if [ "$FAMILY" == rhel ] && (( RHEL_VERSION < 10 )); then
     if [ -e /opt/rh/gcc-toolset-13/enable ]; then

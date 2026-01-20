@@ -3,15 +3,15 @@
 ## Tool chain install script.
 ##
 ## Written: Jordan Carlin, jcarlin@hmc.edu
-## Created: May 30 2025
+## Created: January 19 2026
 ## Modified:
 ##
-## Purpose: glib installation script
+## Purpose: uv/Python installation script
 ##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
 ## https://github.com/openhwgroup/cvw
 ##
-## Copyright (C) 2021-24 Harvey Mudd College & Oklahoma State University
+## Copyright (C) 2021-26 Harvey Mudd College & Oklahoma State University
 ##
 ## SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 ##
@@ -27,7 +27,7 @@
 ## and limitations under the License.
 ################################################################################################
 
-GLIB_VERSION=2.86.3
+UV_VERSION=0.9.26 # Latest version as of January 19, 2026
 
 set -e # break on error
 # If run standalone, check environment. Otherwise, use info from main install script
@@ -38,21 +38,15 @@ if [ -z "$FAMILY" ]; then
     source "${dir}"/../wally-environment-check.sh
 fi
 
-# Newer version of glib required for QEMU.
-section_header "Installing glib"
-STATUS="glib"
+# uv (https://docs.astral.sh/uv/)
+# uv is a Python package manager and virtual environment tool.
+section_header "Installing/Updating uv"
+STATUS="uv"
 cd "$RISCV"
-if [ ! -e "$RISCV"/include/glib-2.0 ]; then
-    wget -nv --retry-connrefused $retry_on_host_error --output-document=glib.tar.xz https://download.gnome.org/sources/glib/${GLIB_VERSION%.*}/glib-$GLIB_VERSION.tar.xz
-    tar -xJf glib.tar.xz
-    rm -f glib.tar.xz
-    cd glib-$GLIB_VERSION
-    uvx meson setup _build --prefix="$RISCV"
-    uvx meson compile -C _build -j "${NUM_THREADS}" 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
-    uvx meson install -C _build 2>&1 | logger; [ "${PIPESTATUS[0]}" == 0 ]
-    cd "$RISCV"
-    rm -rf glib-$GLIB_VERSION
-    echo -e "${SUCCESS_COLOR}glib successfully installed!${ENDC}"
+if check_tool_version $UV_VERSION; then
+    curl -LsSf https://astral.sh/uv/$UV_VERSION/install.sh | env UV_INSTALL_DIR="$RISCV/bin" UV_NO_MODIFY_PATH=1 sh
+    echo "$UV_VERSION" > "$RISCV"/versions/$STATUS.version # Record installed version
+    echo -e "${SUCCESS_COLOR}uv successfully installed/updated!${ENDC}"
 else
-    echo -e "${OK_COLOR}glib already installed.${ENDC}"
+    echo -e "${SUCCESS_COLOR}uv already up to date.${ENDC}"
 fi
