@@ -35,7 +35,4 @@ int main(void) {
     example_test(); // never returns
 
     //return macro_example_test(); // returns 1 or 0 depending on pass or fail
-
-    // sendstring("Hello World\n");
-    // return 1;
 }

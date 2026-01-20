@@ -4,14 +4,19 @@
 
 # ---- Processor / Testbench Configuration ---- #
 XLEN 			?= 32
-PROCESSOR     	?= $(CURDIR)/sample_processor/src      # Directory containing all processor RTL (will scan for .sv / .svh)
+#sample_processor
+#RISC-V-Pipelined-Processor
+PROCESSOR     	?= $(CURDIR)/RISC-V-Pipelined-Processor/src      # Directory containing all processor RTL (will scan for .sv / .svh)
 
 SYNTH_SRC 		?= $(PROCESSOR) 					   # Directory used to copy hdl for synthesis
-INC_DIR       	?= $(CURDIR)/sample_processor/incdir/  # Optional directory for include files for RTL compilation (parameters)
+#sample_processor
+INC_DIR       	?= $(CURDIR)/RISC-V-Pipelined-Processor/incdir/  # Optional directory for include files for RTL compilation (parameters)
 
-DUT_MODULE 			?= riscvsingle # top-level module name
+#DUT_MODULE 			?= riscvsingle # top-level module name
+DUT_MODULE 			?= testingCore
 SYNTH_TOP 			?= $(DUT_MODULE) # useful for analyzing timing of specific modules (pipelining)
-PROCESSOR_TEST_DIR	?= $(CURDIR)/tests/act4_sample_processor
+ACT4_TEST_DIR		?= $(CURDIR)/tests/act4
+PROCESSOR_CONFIG 	?= $(CURDIR)/sample_processor/config
 
 # ----    Coremark Configuration ---- #
 
@@ -29,7 +34,7 @@ SAIL  				?= 0
 VSIM_EXTRA_FLAGS 	?= # Extra flags if you want them
 
 # ---- Repo paths ---- #
-LINKER			?= $(PROCESSOR_TEST_DIR)/link.ld
+LINKER			?= $(PROCESSOR_CONFIG)/link.ld
 
 TB_TOP          ?= testbench
 TESTBENCH_FILES ?= $(TESTBENCH_DIR)/testbench.sv $(TESTBENCH_DIR)/VectorStorage.sv
@@ -44,7 +49,7 @@ SYNTH_DIR 		?= $(CURDIR)/synth
 WORK_DIR        ?= $(CURDIR)/work
 RISCV_ARCH_TEST ?= $(WALLY)/addins/riscv-arch-test-cvw
 
-TEST_WORK_DIR	?= $(PROCESSOR_TEST_DIR)/work
+TEST_WORK_DIR	?= $(ACT4_TEST_DIR)/work
 ARCH_WORK_DIR 	?= $(TEST_WORK_DIR)/arch_test
 C_TEST_WORK_DIR ?= $(C_TEST_DIR)/work
 CM_WORK_DIR		?= $(COREMARK_DIR)/work
@@ -106,7 +111,7 @@ PORT_CFLAGS = \
 
 SV_PACKAGES := $(sort $(shell find $(PROCESSOR) -type f -name '*.pkg'))
 SV_SOURCES 	:= $(sort $(shell find $(PROCESSOR) -type f \( -name "*.sv" -o -name "*.svh" \)) $(shell find $(INC_DIR) -type f \( -name "*.sv" -o -name "*.svh" \)))
-TEST_ELFS  	= $(sort $(shell find -L $(PROCESSOR_TEST_DIR) -type f -name '*.elf'))
+TEST_ELFS  	= $(sort $(shell find -L $(ACT4_TEST_DIR) -type f -name '*.elf'))
 
 # ----          Targets            ---- #
 
@@ -120,7 +125,8 @@ lint:
 		-DDUT_MODULE=$(DUT_MODULE) \
 		-I$(abspath $(INC_DIR)) \
 		$(abspath $(SV_PACKAGES) $(SV_SOURCES) $(TESTBENCH_FILES)) \
-		-Wall -Wno-UNUSEDSIGNAL -Wno-VARHIDDEN -Wno-GENUNNAMED -Wno-PINCONNECTEMPTY -Wno-DECLFILENAME -Wno-TIMESCALEMOD -Wno-CASEX
+		-Wall -Wno-UNUSEDSIGNAL -Wno-VARHIDDEN -Wno-GENUNNAMED -Wno-PINCONNECTEMPTY -Wno-DECLFILENAME -Wno-TIMESCALEMOD -Wno-CASEX \
+		&& echo "[LINT] Linting completed without errors."
 
 
 # Build = compile RTL once into $(WORK_DIR)/build
@@ -181,7 +187,11 @@ endif
 	@:
 
 %.sail: %.elf Makefile
-	$(SAIL_RUN) $< > $@.log 2>&1
+	$(SAIL_RUN) $< \
+	--config $(PROCESSOR_CONFIG)/sail.json \
+	--trace-all \
+	--trace-output $@.trace \
+	 > $@.log 2>&1
 
 # Build the vsim mode flags from GUI
 ifeq ($(GUI),1)
@@ -198,6 +208,7 @@ endif
 	ELF="$${MEMFILE%.memfile}.elf"; \
 	ENTRY_ADDR="$$(riscv64-unknown-elf-readelf -h "$$ELF" | awk '/Entry point address:/ {print $$NF}')"; \
 	TOHOST_ADDR="$$(riscv64-unknown-elf-readelf --syms --wide "$$ELF" | awk '$$NF=="tohost" {print "0x"$$2; exit}')" \
+	FROMHOST_ADDR="$$(riscv64-unknown-elf-readelf --syms --wide "$$ELF" | awk '$$NF=="fromhost" {print "0x"$$2; exit}')" \
 	DMEM_BASE_ADDR="$$(riscv64-unknown-elf-readelf --syms --wide "$$ELF" | awk '$$NF=="dmem_base" {print "0x"$$2; exit}')" \
 	NAME="$${ELF##*/}"; \
 	LOGFILE="$${ELF}.sim.log"; \
@@ -211,6 +222,7 @@ endif
 	    +MEMFILE="$$MEMFILE" \
 	    +ENTRY_ADDR="$$ENTRY_ADDR" \
 		+TOHOST_ADDR="$$TOHOST_ADDR" \
+		+FROMHOST_ADDR="$$FROMHOST_ADDR" \
 		+DMEM_BASE_ADDR="$$DMEM_BASE_ADDR" \
 	    -do "$(VSIM_DO)" \
 	    2>&1 | tee "$$LOGFILE"; \
@@ -220,6 +232,7 @@ endif
 	    +MEMFILE="$$MEMFILE" \
 	    +ENTRY_ADDR="$$ENTRY_ADDR" \
 		+TOHOST_ADDR="$$TOHOST_ADDR" \
+		+FROMHOST_ADDR="$$FROMHOST_ADDR" \
 		+DMEM_BASE_ADDR="$$DMEM_BASE_ADDR" \
 	    -do "$(VSIM_DO)" \
 	    > "$$LOGFILE" 2>&1; \
@@ -243,21 +256,25 @@ COPY_ACT4_FILES := $(TEST_WORK_DIR)/copy_stamp
 
 $(COPY_ACT4_FILES):
 	@mkdir -p $(TEST_WORK_DIR)
-	$(MAKE) -C $(RISCV_ARCH_TEST)
+	$(MAKE) -C $(RISCV_ARCH_TEST) \
+		CONFIG_FILES=$(RISCV_ARCH_TEST)/config/ref/sail-rv32gc/test_config.yaml \
+		EXTENSIONS=I,Zicntr,Zihpm,Zicsr \
+		DEBUG=True \
+		--jobs $(nproc)
 	cp -r $(RISCV_ARCH_TEST)/work/common/elfs/rv32i/I/* $(TEST_WORK_DIR)/
 	touch $(COPY_ACT4_FILES)
 
 .PHONY: act4
 act4: $(COPY_ACT4_FILES)
 
-# test: run ALL .elf files in PROCESSOR_TEST_DIR in parallel with -j
+# test: run ALL .elf files in ACT4_TEST_DIR in parallel with -j
 .PHONY: test
 test: | $(COPY_ACT4_FILES)
 	$(info CURDIR=$(CURDIR))
-	$(info PROCESSOR_TEST_DIR=$(PROCESSOR_TEST_DIR))
+	$(info ACT4_TEST_DIR=$(ACT4_TEST_DIR))
 	$(info TEST_ELFS=$(TEST_ELFS))
 	$(MAKE) run ELFS="$(TEST_ELFS)"
-	cd tests/act4_sample_processor && $(PYTHON) ../../bin/scan_test_logs.py
+	cd $(ACT4_TEST_DIR) && $(PYTHON) ../../bin/scan_test_logs.py --sail $(SAIL)
 
 .PHONY: disassemble
 
@@ -272,15 +289,15 @@ test: | $(COPY_ACT4_FILES)
 	@echo "Wrote $@"
 
 .PHONY: arch-test
-arch-test: Makefile $(PROCESSOR_TEST_DIR)/test_config.yaml
+arch-test: Makefile $(ACT4_TEST_DIR)/test_config.yaml
 	uv run --with $(WALLY)/addins/riscv-arch-test-cvw/framework make -C \
 	$(WALLY)/addins/riscv-arch-test-cvw \
-	CONFIG_FILES=$(PROCESSOR_TEST_DIR)/test_config.yaml \
+	CONFIG_FILES=$(ACT4_TEST_DIR)/test_config.yaml \
 	WORKDIR=$(ARCH_WORK_DIR)
 # Target flow below but using substitute above while act4 broken
 # 	$(MAKE) -C $(RISCV_ARCH_TEST) \
-#    CONFIG_FILE=$(PROCESSOR_TEST_DIR)/test_config.yaml \
-#    WORKDIR=$(PROCESSOR_TEST_DIR)/work
+#    CONFIG_FILE=$(AC4_TEST_DIR)/test_config.yaml \
+#    WORKDIR=$(ACT4_TEST_DIR)/work
 
 # ----  Coremark flow  ---- #
 
@@ -313,14 +330,15 @@ bug:
 
 # ----            Clean             ---- #
 
-.PHONY: clean
+.PHONY: clean, clean-tests
 
 clean:
 	$(MAKE) -C $(cmbase) clean
 	$(MAKE) -C $(RISCV_ARCH_TEST) clean
-	rm -rf $(TEST_WORK_DIR)
 	rm -rf $(ARCH_WORK_DIR)
 	rm -rf $(WORK_DIR)
 	rm -rf $(CM_WORK_DIR)
-	rm -rf $(C_TEST_WORK_DIR)
 #rm -rf $(SYNTH_DIR)
+
+clean-tests:
+	rm -rf $(C_TEST_WORK_DIR)

@@ -81,40 +81,40 @@ module testbench;
 
   end
 
-  logic                           TestbenchRequest;
+  // logic                           TestbenchRequest;
 
-  assign TestbenchRequest = (DataAdr >= `THR_POINTER) & (DataAdr < `THR_POINTER + `XLEN'hF) | (DataAdr == `MTIME_POINTER);
+  // assign TestbenchRequest = (DataAdr >= `THR_POINTER) & (DataAdr < `THR_POINTER + `XLEN'hF) | (DataAdr == `MTIME_POINTER);
 
-  always_ff @ ( posedge clk ) begin
-    if (reset) cycle_count <= 0;
-    else       cycle_count <= cycle_count + 1;
-  end
+  // always_ff @ ( posedge clk ) begin
+  //   if (reset) cycle_count <= 0;
+  //   else       cycle_count <= cycle_count + 1;
+  // end
 
-  always_ff @ ( negedge clk ) begin
-    byte ch;
-    int unsigned i;
-    TestbenchRequestReadData = 'x;
+  // always_ff @ ( negedge clk ) begin
+  //   byte ch;
+  //   int unsigned i;
+  //   TestbenchRequestReadData = 'x;
 
-    if (TestbenchRequest) begin
-      if (MemEn) begin
-        for (int i = 0; i < `XLEN/8; i++) begin
-          if (DataAdr + i == `LSR_POINTER) begin
-            TestbenchRequestReadData[(i+1)*8-1 -: 8] = 8'b0010_0000;
-          end else if (DataAdr + i == `THR_POINTER) begin
-            if (WriteEn & WriteByteEn[i]) begin
-              ch = WriteData[(i+1)*8-1 -: 8];
-              $write("%c", ch);
-              if (ch == "\n") $fflush(`STDOUT);
-            end
-          end
-        end
-        if (DataAdr == `MTIME_POINTER) begin
-          TestbenchRequestReadData = cycle_count;
-        end
-      end
-      // if (TestbenchRequestReadData !== 'x) $display("Request Return Data: %h", TestbenchRequestReadData);
-    end
-  end
+  //   if (TestbenchRequest) begin
+  //     if (MemEn) begin
+  //       for (int i = 0; i < `XLEN/8; i++) begin
+  //         if (DataAdr + i == `LSR_POINTER) begin
+  //           TestbenchRequestReadData[(i+1)*8-1 -: 8] = 8'b0010_0000;
+  //         end else if (DataAdr + i == `THR_POINTER) begin
+  //           if (WriteEn & WriteByteEn[i]) begin
+  //             ch = WriteData[(i+1)*8-1 -: 8];
+  //             $write("%c", ch);
+  //             if (ch == "\n") $fflush(`STDOUT);
+  //           end
+  //         end
+  //       end
+  //       if (DataAdr == `MTIME_POINTER) begin
+  //         TestbenchRequestReadData = cycle_count;
+  //       end
+  //     end
+  //     // if (TestbenchRequestReadData !== 'x) $display("Request Return Data: %h", TestbenchRequestReadData);
+  //   end
+  // end
 
   vectorStorage #(
     .MEMORY_NAME              ("Instruction Memory"),
@@ -172,7 +172,6 @@ initial begin
 
 end
 
-logic[`XLEN-1:0] to_host_result;
 logic[3:0]       jump_to_self_count;
 
 always_ff @(posedge clk) begin
@@ -180,29 +179,59 @@ always_ff @(posedge clk) begin
   else if (Instr == `XLEN'h06f) jump_to_self_count <= jump_to_self_count + 1;
 end
 
-integer sig_fd;
-integer sig_idx;
-logic [31:0] sig_word;
-
 always @(negedge clk) begin
-  // Jump to self
-  to_host_result = DataMemory.Memory[(TO_HOST_ADR-`DMEM_BASE_ADR)>>2];
-
-  if (!reset && ((&jump_to_self_count) | (|to_host_result))) begin
-      //$display("To Host local Adr: %h, To Host: %h", (TO_HOST_ADR-`XLEN'h8001_0000)>>2, to_host_result);
-
-      if (to_host_result == 1) begin
-        $display("INFO: Test Passed!");
-      end else begin
-        $display("ERROR: Test Failed");
-        if (to_host_result != 2) $display("TO_HOST_DATA: %h", to_host_result);
-      end
-
-      // if(to_host_result != 0) begin
-      $display("[%0t] INFO: Program Finished! Ending simulation.", $time);
-      $finish;
-      // end
+  if (!reset && ((&jump_to_self_count))) begin
+      $display("ERROR: Jump to self count exceeded");
+      $finish(-1);
   end
 end
+
+assign TestbenchRequest = (DataAdr == `MTIME_POINTER);
+
+always_ff @(posedge clk) begin
+  if (reset) cycle_count <= 0;
+  else       cycle_count <= cycle_count + 1;
+end
+
+// Only respond to mtime reads
+always_ff @(negedge clk) begin
+  TestbenchRequestReadData = 'x;
+  if (TestbenchRequest && MemEn && !WriteEn) begin
+    TestbenchRequestReadData = cycle_count;
+  end
+end
+
+logic[`XLEN-1:0] tohost_lo, tohost_hi, payload;
+
+always @(negedge clk) begin
+  byte ch;
+
+  #1;
+
+  tohost_lo = DataMemory.Memory[(TO_HOST_ADR-`DMEM_BASE_ADR)>>2];
+  tohost_hi = DataMemory.Memory[((TO_HOST_ADR-`DMEM_BASE_ADR)>>2) + 1];
+
+  if (MemEn && WriteEn && DataAdr == TO_HOST_ADR + 4) begin
+    if (tohost_hi == 32'h0) begin
+      payload = tohost_lo;
+
+      if (payload[0]) begin
+        $display("INFO: Test Completed!");
+      end else begin
+        $display("ERROR: Test Failed (code=0x%h)", (payload >> 1));
+      end
+
+      $display("[%0t] INFO: Program Finished! Ending simulation.", $time);
+      $finish;
+
+    // Otherwise: check for putchar code in top word, then print a character (format you can change)
+    end if (tohost_hi == 32'h01010000) begin
+      ch = tohost_lo[7:0]; // adjust payload->char mapping if you want
+      $write("%c", ch);
+      if (ch == "\n") $fflush(`STDOUT);
+    end
+  end
+end
+
 
 endmodule

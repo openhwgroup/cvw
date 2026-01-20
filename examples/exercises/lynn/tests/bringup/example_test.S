@@ -62,6 +62,7 @@ Fail_Sub_1:
 
 fail:
     // gp stores a number identifying which test failed and will be printed to logfile under "TO_HOST"
+    add  gp, gp, gp # failure code needs to be shifted left by 1 # exit needs 1 in bottom most bit
     j    finish
 
 pass:
@@ -72,7 +73,7 @@ pass:
 finish:
     /* write gp to tohost and hang */
     /* la   t0, tohost */
-        li  t0, 0x400        # 1024, safe imm12
+    li  t0, 0x400        # 1024, safe imm12
     li  t1, 0x001        # 1, safe imm12
 
     # t0 = 0x400 << 21 = 0x80000000
@@ -115,4 +116,5 @@ finish:
     add t0, t0, t1       # t0 = 0x8000_1000
 
     sw   gp, 0(t0)
+    sw   x0, 4(t0)
 1:  j    1b
