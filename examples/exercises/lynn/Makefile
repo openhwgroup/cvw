@@ -247,6 +247,8 @@ $(COPY_ACT4_FILES):
 	cp -r $(RISCV_ARCH_TEST)/work/common/elfs/rv32i/I/* $(TEST_WORK_DIR)/
 	touch $(COPY_ACT4_FILES)
 
+.PHONY: act4
+act4: $(COPY_ACT4_FILES)
 
 # test: run ALL .elf files in PROCESSOR_TEST_DIR in parallel with -j
 .PHONY: test
