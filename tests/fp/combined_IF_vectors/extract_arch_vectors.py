@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run
 
 # author: Alessandro Maiuolo, Kevin Kim
 # contact: amaiuolo@g.hmc.edu, kekim@hmc.edu

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run
 # James Kaden Cassidy
 # kacassidy@hmc.edu
 # Dec 25 2025

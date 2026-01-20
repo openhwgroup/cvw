@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run
 # sha512.py
 # Secure Hash Algorithm - SHA-512
 # james.stine@okstate.edu

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run
 # sha256.py
 # Secure Hash Algorithm - SHA-256
 # james.stine@okstate.edu 5 Sept 2024
