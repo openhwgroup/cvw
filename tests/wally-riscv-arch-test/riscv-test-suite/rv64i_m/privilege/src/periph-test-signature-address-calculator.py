@@ -1,4 +1,4 @@
-#!/usr/bin/env -S uv run
+#!/usr/bin/env -S uv run --script
 if __name__ == "__main__":
     import sys
     if (('-h' in sys.argv) or ('--help' in sys.argv)):

@@ -1,4 +1,4 @@
-#!/usr/bin/env -S uv run
+#!/usr/bin/env -S uv run --script
 # extract sqrt and float div testfloat vectors
 
 # author: Alessandro Maiuolo

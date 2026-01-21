@@ -1,4 +1,4 @@
-#!/usr/bin/env -S uv run
+#!/usr/bin/env -S uv run --script
 # Madeleine Masser-Frye (mmmasserfrye@hmc.edu) 06/2022
 import argparse
 import csv

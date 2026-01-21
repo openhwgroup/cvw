@@ -1,4 +1,4 @@
-#!/usr/bin/env -S uv run
+#!/usr/bin/env -S uv run --script
 # sha512.py
 # Secure Hash Algorithm - SHA-512
 # james.stine@okstate.edu

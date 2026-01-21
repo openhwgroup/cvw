@@ -1,4 +1,4 @@
-#!/usr/bin/env -S uv run
+#!/usr/bin/env -S uv run --script
 """
 Copy RISCOF ref.elf files into lynn/tests/riscof/<extension>/<test>.elf
 
