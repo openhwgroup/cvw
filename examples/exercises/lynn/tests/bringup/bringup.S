@@ -1,0 +1,32 @@
+// C Runtime entry point
+// James Kaden Cassidy
+// kacassidy@hmc.edu
+// 1/21/2026
+
+.extern add_test
+.extern or_test
+.extern and_test
+.extern sub_test
+
+    .section .text.init
+    .globl main
+    .globl return_add_test
+    .globl return_or_test
+    .globl return_and_test
+    .globl return_sub_test
+    .type  main, @function
+
+main:
+    j add_test
+
+return_add_test:
+    j or_test
+
+return_or_test:
+    j and_test
+
+return_and_test:
+    j sub_test
+
+return_sub_test:
+    j pass
