@@ -132,13 +132,13 @@
       "supported": true
     },
     "A": {
-      "supported": true
+      "supported": false
     },
     "F": {
-      "supported": true
+      "supported": false
     },
     "D": {
-      "supported": true
+      "supported": false
     },
     "V": {
       "support_level": "Disabled",
@@ -147,28 +147,28 @@
       "vl_use_ceil": false
     },
     "B": {
-      "supported": true
+      "supported": false
     },
     "S": {
-      "supported": true
+      "supported": false
     },
     "U": {
-      "supported": true
+      "supported": false
     },
     "Zicbom": {
-      "supported": true
+      "supported": false
     },
     "Zicbop": {
-      "supported": true
+      "supported": false
     },
     "Zicboz": {
-      "supported": true
+      "supported": false
     },
     "Zicfilp": {
       "supported": false
     },
     "Zicond": {
-      "supported": true
+      "supported": false
     },
     "Zicntr": {
       "supported": true
@@ -177,13 +177,13 @@
       "supported": true
     },
     "Zifencei": {
-      "supported": true
+      "supported": false
     },
     "Zihintntl": {
-      "supported": true
+      "supported": false
     },
     "Zihintpause": {
-      "supported": true
+      "supported": false
     },
     "Zihpm": {
       "supported": true
@@ -216,13 +216,13 @@
       }
     },
     "Zfa": {
-      "supported": true
+      "supported": false
     },
     "Zfbfmin": {
       "supported": false
     },
     "Zfh": {
-      "supported": true
+      "supported": false
     },
     "Zfhmin": {
       "supported": false
@@ -231,16 +231,16 @@
       "supported": false
     },
     "Zca": {
-      "supported": true
+      "supported": false
     },
     "Zcf": {
-      "supported": true
+      "supported": false
     },
     "Zcd": {
-      "supported": true
+      "supported": false
     },
     "Zcb": {
-      "supported": true
+      "supported": false
     },
     "Zcmop": {
       "supported": false
@@ -255,25 +255,25 @@
       "supported": false
     },
     "Zbc": {
-      "supported": true
+      "supported": false
     },
     "Zbkb": {
-      "supported": true
+      "supported": false
     },
     "Zbkc": {
-      "supported": true
+      "supported": false
     },
     "Zbkx": {
-      "supported": true
+      "supported": false
     },
     "Zknd": {
-      "supported": true
+      "supported": false
     },
     "Zkne": {
-      "supported": true
+      "supported": false
     },
     "Zknh": {
-      "supported": true
+      "supported": false
     },
     "Zkr": {
       "supported": false,
@@ -289,7 +289,7 @@
       "supported": false
     },
     "Zkt": {
-      "supported": true
+      "supported": false
     },
     "Zhinx": {
       "supported": false
@@ -346,20 +346,20 @@
       "supported": false
     },
     "Sstc": {
-      "supported": true
+      "supported": false
     },
     "Svinval": {
-      "supported": true
+      "supported": false
     },
     "Svrsw60t59b": {
       "supported": false
     },
     "Svbare": {
-      "supported": true,
-      "sfence_vma_illegal_if_svbare_only": true
+      "supported": false,
+      "sfence_vma_illegal_if_svbare_only": false
     },
     "Sv32": {
-      "supported": true
+      "supported": false
     },
     "Sv39": {
       "supported": false
