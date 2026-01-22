@@ -5,7 +5,6 @@ ARCH       ?= rv$(XLEN)i_zicsr
 ABI        ?= $(if $(findstring 64,$(XLEN)),lp64,ilp32)
 
 TOOLPREFIX ?= riscv64-unknown-elf-
-WALLY      ?= $(WALLY)
 
 LINKER     ?= $(CURDIR)/../sample_processor/config/link.ld
 

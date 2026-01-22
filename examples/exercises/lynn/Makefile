@@ -22,6 +22,9 @@ SYNTH_TOP 			?= $(DUT_MODULE) # useful for analyzing timing of specific modules 
 ACT4_TEST_DIR		?= $(CURDIR)/tests/act4
 PROCESSOR_CONFIG 	?= $(CURDIR)/sample_processor/config
 
+#--trace-all
+SAIL_TRACE_FLAGS ?=
+
 # ----    Coremark Configuration ---- #
 
 #ARCH := rv$(XLEN)im_zicsr_zba_zbb_zbs
@@ -156,9 +159,10 @@ endif
 %.sail: %.elf Makefile
 	$(SAIL_RUN) $< \
 	--config $(PROCESSOR_CONFIG)/sail.json \
-	--trace-all \
+	$(SAIL_TRACE_FLAGS) \
 	--trace-output $@.trace \
 	 > $@.log 2>&1
+
 
 # Build the vsim mode flags from GUI
 ifeq ($(GUI),1)
@@ -243,8 +247,7 @@ bringup_test:
 .PHONY: coremark
 coremark:
 	@$(MAKE) -C $(COREMARK_DIR) \
-		XLEN=$(XLEN) ARCH="$(ARCH)" ABI=$(ABI) LINKER=$(LINKER) TOOLPREFIX=$(TOOLPREFIX) WALLY=$(WALLY) \
-		work/coremark.bare.riscv.elf
+		XLEN=$(XLEN) ARCH="$(ARCH)" ABI=$(ABI) LINKER=$(LINKER) TOOLPREFIX=$(TOOLPREFIX)
 	@$(MAKE) run ELFS="$(COREMARK_DIR)/work/coremark.bare.riscv.elf"
 
 # ---- Act4 flow ---- #
@@ -296,16 +299,15 @@ bug:
 
 # ----            Clean             ---- #
 
-.PHONY: clean, clean-tests
+.PHONY: clean, clean-act4
 
 clean:
 	$(MAKE) -C $(COREMARK_DIR) clean
 	$(MAKE) -C $(RISCV_ARCH_TEST) clean
-	$(MAKE) -C $(ACT4_TEST_DIR) clean
 	$(MAKE) -C $(C_TEST_DIR) clean
 	rm -rf $(ARCH_WORK_DIR)
 	rm -rf $(WORK_DIR)
 #rm -rf $(SYNTH_DIR)
 
-clean-tests:
-	rm -rf $(C_TEST_WORK_DIR)
+clean-act4:
+	$(MAKE) -C $(ACT4_TEST_DIR) clean
