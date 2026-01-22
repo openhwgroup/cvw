@@ -14,8 +14,6 @@
 // 16384
 `define MaxDataSizeWords 1048576
 
-`define THR_POINTER (`XLEN'h1000_0000)
-`define LSR_POINTER (`THR_POINTER + `XLEN'h5)
 `define MTIME_POINTER (`XLEN'h0200bff8)
 
 `define STDOUT (`XLEN'h8000_0001)
@@ -25,7 +23,6 @@ module testbench;
 
   logic clk;
   logic reset;
-  logic [`XLEN-1:0] cycle_count;
 
   // 100 MHz clock: 10 ns period (change as needed)
   initial clk = 0;
@@ -37,8 +34,6 @@ module testbench;
     #10;         // hold reset for a bit
     reset = 0;   // release reset
   end
-
-  logic [`XLEN-1:0]               prev_write_adr, prev_write_data;
 
   // Instruction side interface (byte addresses)
   logic [`XLEN-1:0]               PC;
@@ -52,8 +47,8 @@ module testbench;
   logic                           MemEn;
   logic [`XLEN/8-1:0]             WriteByteEn;   // byte enables, one per 8 bits
 
+/* ------- DEBUG PRINTS ------- */
 
-  // DEBUG
   always @(negedge clk) begin
     int i;
     #1;
@@ -81,40 +76,7 @@ module testbench;
 
   end
 
-  // logic                           TestbenchRequest;
-
-  // assign TestbenchRequest = (DataAdr >= `THR_POINTER) & (DataAdr < `THR_POINTER + `XLEN'hF) | (DataAdr == `MTIME_POINTER);
-
-  // always_ff @ ( posedge clk ) begin
-  //   if (reset) cycle_count <= 0;
-  //   else       cycle_count <= cycle_count + 1;
-  // end
-
-  // always_ff @ ( negedge clk ) begin
-  //   byte ch;
-  //   int unsigned i;
-  //   TestbenchRequestReadData = 'x;
-
-  //   if (TestbenchRequest) begin
-  //     if (MemEn) begin
-  //       for (int i = 0; i < `XLEN/8; i++) begin
-  //         if (DataAdr + i == `LSR_POINTER) begin
-  //           TestbenchRequestReadData[(i+1)*8-1 -: 8] = 8'b0010_0000;
-  //         end else if (DataAdr + i == `THR_POINTER) begin
-  //           if (WriteEn & WriteByteEn[i]) begin
-  //             ch = WriteData[(i+1)*8-1 -: 8];
-  //             $write("%c", ch);
-  //             if (ch == "\n") $fflush(`STDOUT);
-  //           end
-  //         end
-  //       end
-  //       if (DataAdr == `MTIME_POINTER) begin
-  //         TestbenchRequestReadData = cycle_count;
-  //       end
-  //     end
-  //     // if (TestbenchRequestReadData !== 'x) $display("Request Return Data: %h", TestbenchRequestReadData);
-  //   end
-  // end
+  /* ------- PROCESSOR Instantiation ------- */
 
   vectorStorage #(
     .MEMORY_NAME              ("Instruction Memory"),
@@ -142,7 +104,7 @@ module testbench;
   // DUT instantiation
   // ------------------------------------------------------------
 
-  `DUT_MODULE dut (
+  `PROCESSOR_TOP dut (
     .clk            (clk),
     .reset          (reset),
 
@@ -159,49 +121,10 @@ module testbench;
     .WriteByteEn    (WriteByteEn)
   );
 
+/* ------- TOHOST Handling ------- */
+
 logic [`XLEN-1:0] TO_HOST_ADR;
-initial begin
-
-    TO_HOST_ADR = '0; // default
-    void'($value$plusargs("TOHOST_ADDR=%h", TO_HOST_ADR)); // override if provided
-    $display("[TB] TOHOST_ADDR = 0x%h", TO_HOST_ADR);
-
-    // Wait until reset deasserts
-    @(negedge reset);
-    $display("[%0t] INFO: Starting simulation.", $time);
-
-end
-
-logic[3:0]       jump_to_self_count;
-
-always_ff @(posedge clk) begin
-  if (reset)                    jump_to_self_count <= '0;
-  else if (Instr == `XLEN'h06f) jump_to_self_count <= jump_to_self_count + 1;
-end
-
-always @(negedge clk) begin
-  if (!reset && ((&jump_to_self_count))) begin
-      $display("ERROR: Jump to self count exceeded");
-      $finish(-1);
-  end
-end
-
-assign TestbenchRequest = (DataAdr == `MTIME_POINTER);
-
-always_ff @(posedge clk) begin
-  if (reset) cycle_count <= 0;
-  else       cycle_count <= cycle_count + 1;
-end
-
-// Only respond to mtime reads
-always_ff @(negedge clk) begin
-  TestbenchRequestReadData = 'x;
-  if (TestbenchRequest && MemEn && !WriteEn) begin
-    TestbenchRequestReadData = cycle_count;
-  end
-end
-
-logic[31:0] tohost_lo, tohost_hi, payload;
+logic [31:0] tohost_lo, tohost_hi, payload;
 
 always @(negedge clk) begin
   byte ch;
@@ -240,6 +163,53 @@ always @(negedge clk) begin
     // `ifdef XLEN32
     // DataMemory.Memory[((TO_HOST_ADR-`DMEM_BASE_ADR)>>2) + 1] = '0;
     // `endif
+  end
+end
+
+initial begin
+
+    TO_HOST_ADR = '0; // default
+    void'($value$plusargs("TOHOST_ADDR=%h", TO_HOST_ADR)); // override if provided
+    $display("[TB] TOHOST_ADDR = 0x%h", TO_HOST_ADR);
+
+    // Wait until reset deasserts
+    @(negedge reset);
+    $display("[%0t] INFO: Starting simulation.", $time);
+
+end
+
+/* ------- Safety jump-to-self exit ------- */
+
+logic[3:0]       jump_to_self_count;
+
+always_ff @(posedge clk) begin
+  if (reset)                    jump_to_self_count <= '0;
+  else if (Instr == `XLEN'h06f) jump_to_self_count <= jump_to_self_count + 1;
+end
+
+always @(negedge clk) begin
+  if (!reset && ((&jump_to_self_count))) begin
+      $display("ERROR: Jump to self count exceeded");
+      $finish(-1);
+  end
+end
+
+/* ------- MTIME DATA REQUEST ------- */
+
+assign TestbenchRequest = (DataAdr == `MTIME_POINTER);
+
+logic [`XLEN-1:0] cycle_count;
+
+always_ff @(posedge clk) begin
+  if (reset) cycle_count <= 0;
+  else       cycle_count <= cycle_count + 1;
+end
+
+// Only respond to mtime reads
+always_ff @(negedge clk) begin
+  TestbenchRequestReadData = 'x;
+  if (TestbenchRequest && MemEn && !WriteEn) begin
+    TestbenchRequestReadData = cycle_count;
   end
 end
 

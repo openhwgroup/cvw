@@ -10,20 +10,19 @@
 XLEN 			?= 32
 #sample_processor
 #RISC-V-Pipelined-Processor
-PROCESSOR     	?= $(CURDIR)/RISC-V-Pipelined-Processor/src      # Directory containing all processor RTL (will scan for .sv / .svh)
-
-SYNTH_SRC 		?= $(PROCESSOR) 					   # Directory used to copy hdl for synthesis
+PROCESSOR_DIR   ?= $(CURDIR)/sample_processor/src      # Directory containing all PROCESSOR RTL (will scan for .sv / .svh)
 #sample_processor
-INC_DIR       	?= $(CURDIR)/RISC-V-Pipelined-Processor/incdir/  # Optional directory for include files for RTL compilation (parameters)
+INC_DIR       	?= $(CURDIR)/sample_processor/incdir/  # Optional directory for include files for RTL compilation (parameters)
 
-#DUT_MODULE 			?= riscvsingle # top-level module name
-DUT_MODULE 			?= testingCore
-SYNTH_TOP 			?= $(DUT_MODULE) # useful for analyzing timing of specific modules (pipelining)
-ACT4_TEST_DIR		?= $(CURDIR)/tests/act4
+PROCESSOR_TOP 			?= riscvsingle # top-level module name
+#PROCESSOR_TOP 			?= testingCore
 PROCESSOR_CONFIG 	?= $(CURDIR)/sample_processor/config
 
 #--trace-all
 SAIL_TRACE_FLAGS ?=
+
+# ----    Synthesis Configuration ---- #
+SYNTH_TECH 			?= sky130 #tsmc28 #tsmc28psyn
 
 # ----    Coremark Configuration ---- #
 
@@ -32,9 +31,6 @@ SAIL_TRACE_FLAGS ?=
 #ARCH := rv$(XLEN)imc_zicsr
 #ARCH := rv$(XLEN)im_zicsr
 ARCH := rv$(XLEN)i_zicsr
-
-# ----    Synthesis Configuration ---- #
-SYNTH_TECH 			?= sky130 #tsmc28 #tsmc28psyn
 
 # ---- Command line optional parameters ---- #
 ELFS 				?=
@@ -58,6 +54,7 @@ WAVES_DO        ?= $(CURDIR)/waves.do
 # ---- Repo paths cont ---- #
 COREMARK_DIR 	?= $(CURDIR)/coremark
 C_TEST_DIR		?= $(CURDIR)/tests/C
+ACT4_TEST_DIR	?= $(CURDIR)/tests/act4
 BRINGUP_TEST_DIR?= $(CURDIR)/tests/bringup
 TESTBENCH_DIR 	?= $(CURDIR)/tb
 SYNTH_DIR 		?= $(CURDIR)/synth
@@ -66,13 +63,12 @@ WORK_DIR        ?= $(CURDIR)/work
 RISCV_ARCH_TEST ?= $(WALLY)/addins/riscv-arch-test-cvw
 
 TEST_WORK_DIR	?= $(ACT4_TEST_DIR)/work
-ARCH_WORK_DIR 	?= $(TEST_WORK_DIR)/arch_test
 C_TEST_WORK_DIR ?= $(C_TEST_DIR)/work
 CM_WORK_DIR		?= $(COREMARK_DIR)/work
 
 # ----    Simulation Settings    ---- #
-VSIM        		?= vsim
-VSIM_FLAGS  		?= -voptargs=+acc
+VSIM        	?= vsim
+VSIM_FLAGS  	?= -voptargs=+acc
 
 # ----    Tools    ---- #
 PYTHON 		:= python3
@@ -91,8 +87,8 @@ ELF2HEX := $(TOOLPREFIX)elf2hex
 ABI := $(if $(findstring "64","$(XLEN)"),lp64,ilp32)
 
 # ----    Files and Directories    ---- #
-SV_PACKAGES := $(sort $(shell find $(PROCESSOR) -type f -name '*.pkg'))
-SV_SOURCES 	:= $(sort $(shell find $(PROCESSOR) -type f \( -name "*.sv" -o -name "*.svh" \)) $(shell find $(INC_DIR) -type f \( -name "*.sv" -o -name "*.svh" \)))
+SV_PACKAGES := $(sort $(shell find $(PROCESSOR_DIR) -type f -name '*.pkg'))
+SV_SOURCES 	:= $(sort $(shell find $(PROCESSOR_DIR) -type f \( -name "*.sv" -o -name "*.svh" \)) $(shell find $(INC_DIR) -type f \( -name "*.sv" -o -name "*.svh" \)))
 TEST_ELFS  	= $(sort $(shell find -L $(ACT4_TEST_DIR) -type f -name '*.elf'))
 
 # ----          Targets            ---- #
@@ -100,13 +96,15 @@ TEST_ELFS  	= $(sort $(shell find -L $(ACT4_TEST_DIR) -type f -name '*.elf'))
 # Default target: just build (compile RTL/testbench once)
 all: build
 
+SYNTH_FILE := $(CURDIR)/synth/synth_top.sv
+
 .PHONY: lint
 lint:
 	@verilator --lint-only --quiet \
-		--top-module $(DUT_MODULE) \
-		-DDUT_MODULE=$(DUT_MODULE) \
+		--top-module $(PROCESSOR_TOP) \
+		-DPROCESSOR_TOP=$(PROCESSOR_TOP) \
 		-I$(abspath $(INC_DIR)) \
-		$(abspath $(SV_PACKAGES) $(SV_SOURCES) $(TESTBENCH_FILES)) \
+		$(abspath $(SV_PACKAGES) $(SV_SOURCES) $(TESTBENCH_FILES) $(SYNTH_FILE)) \
 		-Wall -Wno-UNUSEDSIGNAL -Wno-VARHIDDEN -Wno-GENUNNAMED -Wno-PINCONNECTEMPTY -Wno-DECLFILENAME -Wno-TIMESCALEMOD -Wno-CASEX \
 		&& echo "[LINT] Linting completed without errors."
 
@@ -119,7 +117,7 @@ $(WORK_DIR)/_info: $(SV_PACKAGES) $(SV_SOURCES) $(TESTBENCH_FILES) Makefile
 	echo "[BUILD] Compiling SystemVerilog sources..." && \
 	vlog -sv \
 		+incdir+$(INC_DIR) \
-		+define+DUT_MODULE=$(DUT_MODULE) \
+		+define+PROCESSOR_TOP=$(PROCESSOR_TOP) \
 		+define+XLEN=$(XLEN) $(abspath $(SV_PACKAGES) $(SV_SOURCES) $(TESTBENCH_FILES))
 	@mkdir -p $(WORK_DIR)
 	@touch $@
@@ -143,8 +141,8 @@ build: $(WORK_DIR)/_info Makefile
 run: $(addsuffix .run,$(basename $(ELFS)))
 
 # Generate score for the project based on coremark score and timing
-# .PHONY
-# score:
+.PHONY: score
+score:
 
 ifeq ($(SAIL),1)
 RUNNER := sail
@@ -206,20 +204,12 @@ VSIM_PLUSARGS_BASE  ?= \
 	    > "$$LOGFILE" 2>&1; \
 	fi
 
-SYNTH_MAKE_FLAGS 	?= \
-	OUTPUTBASEDIR=$(SYNTH_DIR) \
-	NAME=lynn \
-	DESIGN=$(SYNTH_TOP) \
-	INCDIR=$(INC_DIR) \
-	CONFIG=- \
-	MOD=- \
-	HDLDIR=$(PROCESSOR) \
-	LYNN=1 \
-	TECH=$(SYNTH_TECH)
-
 .PHONY: synth
 synth:
-	@$(MAKE) -C $(WALLY)/synthDC $(SYNTH_MAKE_FLAGS) synth
+	$(MAKE) -C $(SYNTH_DIR) \
+		SYNTH_TECH=$(SYNTH_TECH) PROCESSOR_DIR=$(PROCESSOR_DIR) INC_DIR=$(INC_DIR) \
+		PROCESSOR_TOP=$(PROCESSOR_TOP) XLEN=$(XLEN)
+
 
 # ----  C test flow  ---- #
 # (build moved into tests/C/Makefile)
@@ -266,9 +256,6 @@ test: | act4
 	@$(MAKE) run ELFS="$$( $(MAKE) -s -C $(ACT4_TEST_DIR) list-elfs )"
 	@cd $(ACT4_TEST_DIR) && $(PYTHON) ../../bin/scan_test_logs.py --sail $(SAIL)
 
-
-.PHONY: disassemble
-
 %.bin: %.hex
 	@sed -E 's/^[[:space:]]*#[[:space:]]*//; s/^[[:space:]]+//; /^[[:space:]]*$$/d' $< | \
 	$(PYTHON) -c 'import sys,struct; \
@@ -279,12 +266,12 @@ test: | act4
 	@riscv64-unknown-elf-objdump -D -b binary -m riscv:rv32 $< > $@
 	@echo "Wrote $@"
 
-.PHONY: arch-test
-arch-test: Makefile $(ACT4_TEST_DIR)/test_config.yaml
-	uv run --with $(WALLY)/addins/riscv-arch-test-cvw/framework make -C \
-	$(WALLY)/addins/riscv-arch-test-cvw \
-	CONFIG_FILES=$(ACT4_TEST_DIR)/test_config.yaml \
-	WORKDIR=$(ARCH_WORK_DIR)
+# .PHONY: arch-test
+# arch-test: Makefile $(ACT4_TEST_DIR)/test_config.yaml
+# 	uv run --with $(WALLY)/addins/riscv-arch-test-cvw/framework make -C \
+# 	$(WALLY)/addins/riscv-arch-test-cvw \
+# 	CONFIG_FILES=$(ACT4_TEST_DIR)/test_config.yaml \
+# 	WORKDIR=$(ARCH_WORK_DIR)
 # Target flow below but using substitute above while act4 broken
 # 	$(MAKE) -C $(RISCV_ARCH_TEST) \
 #    CONFIG_FILE=$(AC4_TEST_DIR)/test_config.yaml \
@@ -304,9 +291,12 @@ clean:
 	$(MAKE) -C $(COREMARK_DIR) clean
 	$(MAKE) -C $(RISCV_ARCH_TEST) clean
 	$(MAKE) -C $(C_TEST_DIR) clean
-	rm -rf $(ARCH_WORK_DIR)
 	rm -rf $(WORK_DIR)
-#rm -rf $(SYNTH_DIR)
 
 clean-act4:
 	$(MAKE) -C $(ACT4_TEST_DIR) clean
+
+clean-synth:
+	$(MAKE) -C $(SYNTH_DIR) clean
+
+clean-all: clean clean-act4 clean-synth

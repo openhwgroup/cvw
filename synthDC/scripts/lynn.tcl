@@ -37,6 +37,11 @@ if {[info exists ::env(INCDIR)] && $::env(INCDIR) ne ""} {
     foreach d [split $::env(INCDIR)] { lappend incdirs $d }
 }
 
+set processortop ""
+if {[info exists ::env(PROCESSORTOP)] && $::env(PROCESSORTOP) ne ""} {
+    set processortop $::env(PROCESSORTOP)
+}
+
 # Presto uses search_path to find `include files (and also other source/library files)
 set sp [get_app_var search_path]
 set sp [concat [list . $outputDir/hdl $cfg] $incdirs $sp]
@@ -46,7 +51,7 @@ puts "DC search_path = $sp"
 
 # Check if a wrapper is needed and create it (to pass parameters when cvw_t parameters are used)
 set wrapper 0
-if {[catch {eval exec grep "cvw_t" $outputDir/hdl/$::env(DESIGN).sv}] == 0} {
+if {[catch {exec grep "cvw_t" "$outputDir/hdl/$::env(DESIGN).sv"}] == 0} {
     echo "Creating wrapper"
     set wrapper 1
     # make the wrapper
@@ -101,13 +106,23 @@ set pkg_files  [glob -nocomplain $outputDir/hdl/*.pkg $outputDir/hdl/*pkg*.sv $o
 set sv_files   [glob -nocomplain $outputDir/hdl/*.sv]
 
 # If you know exact package naming patterns, add them above.
-# Analyze packages first
+# Analyze packages first (DC uses -define, not +define+...)
+set analyze_defs {}
+if {$processortop ne ""} {
+    lappend analyze_defs -define "PROCESSORTOP=$processortop"
+}
+
 if {[llength $pkg_files] > 0} {
-    analyze -format sverilog -lib WORK $pkg_files
+    foreach f $pkg_files {
+        analyze -format sverilog -lib WORK {*}$analyze_defs $f
+    }
 }
 
 # Then analyze the rest
-analyze -format sverilog -lib WORK $sv_files
+foreach f $sv_files {
+    analyze -format sverilog -lib WORK {*}$analyze_defs $f
+}
+
 
 # If wrapper=0, we want to run against a specific module and pass
 # width to DC
