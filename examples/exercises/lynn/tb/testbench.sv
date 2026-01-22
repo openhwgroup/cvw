@@ -60,7 +60,7 @@ module testbench;
 
     if (~reset) begin
 
-      // $display("PC: %h \t Instr: %h", PC, Instr);
+      //$display("PC: %h \t Instr: %h", PC, Instr);
 
       // $display("MemEn: %b",
       //         MemEn
@@ -201,17 +201,23 @@ always_ff @(negedge clk) begin
   end
 end
 
-logic[`XLEN-1:0] tohost_lo, tohost_hi, payload;
+logic[31:0] tohost_lo, tohost_hi, payload;
 
 always @(negedge clk) begin
   byte ch;
 
   #1;
-
+  `ifdef XLEN32
   tohost_lo = DataMemory.Memory[(TO_HOST_ADR-`DMEM_BASE_ADR)>>2];
   tohost_hi = DataMemory.Memory[((TO_HOST_ADR-`DMEM_BASE_ADR)>>2) + 1];
+  `endif
+  `ifdef XLEN64
+  {tohost_hi, tohost_lo} = DataMemory.Memory[(TO_HOST_ADR-`DMEM_BASE_ADR)>>2];
+  `endif
 
-  if (MemEn && WriteEn && DataAdr == TO_HOST_ADR + 4) begin
+  //$display("TOHOST DATA: %h%h, Addr %h, base %h", tohost_hi, tohost_lo, TO_HOST_ADR, `DMEM_BASE_ADR);
+
+  if (MemEn && WriteEn && DataAdr == TO_HOST_ADR`ifdef XLEN32 + 4`endif) begin
     if (tohost_hi == 32'h0) begin
       payload = tohost_lo;
 
@@ -225,11 +231,15 @@ always @(negedge clk) begin
       $finish;
 
     // Otherwise: check for putchar code in top word, then print a character (format you can change)
-    end if (tohost_hi == 32'h01010000) begin
+    end else if (tohost_hi == 32'h01010000) begin
       ch = tohost_lo[7:0]; // adjust payload->char mapping if you want
       $write("%c", ch);
       if (ch == "\n") $fflush(`STDOUT);
     end
+    // DataMemory.Memory[(TO_HOST_ADR-`DMEM_BASE_ADR)>>2] = '0;
+    // `ifdef XLEN32
+    // DataMemory.Memory[((TO_HOST_ADR-`DMEM_BASE_ADR)>>2) + 1] = '0;
+    // `endif
   end
 end
 
