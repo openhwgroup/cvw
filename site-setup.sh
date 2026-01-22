@@ -24,6 +24,7 @@ export DC_HOME=/cad/synopsys/SYN                                    # Change thi
 export VCS_HOME=/cad/synopsys/VCS                                   # Change this for your path to Synopsys VCS, excluding bin
 export BREKER_HOME=/cad/breker/TREK                                 # Change this for your path to Breker Trek
 export SPYGLASS_HOME=/cad/synopsys/SPYGLASS_HOME                    # Change this for your path to Synopsys Spyglass
+export IMPERAS_HOME=/cad/imperas/IMPERAS_DV                         # Change this for your path to Synopsys ImperasDV
 
 # Tools
 # Questa and Synopsys
@@ -53,7 +54,6 @@ export RISCV_OBJCOPY=$(which riscv64-unknown-elf-objcopy)
 export SPIKE_PATH=$RISCV/bin
 
 # Imperas DV setup
-export IMPERAS_HOME=$RISCV/ImperasDV-OpenHW
 if [ -e "$IMPERAS_HOME" ]; then
     export IMPERAS_PERSONALITY=CPUMAN_DV_ASYNC
     source "${IMPERAS_HOME}"/bin/setup.sh &> /dev/null || {
