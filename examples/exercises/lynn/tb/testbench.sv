@@ -152,10 +152,10 @@ always @(negedge clk) begin
   //$display("TOHOST DATA: %h%h, Addr %h, base %h", tohost_hi, tohost_lo, TO_HOST_ADR, `DMEM_BASE_ADR);
 
   if (MemEn && WriteEn && DataAdr == TO_HOST_ADR`ifdef XLEN32 + 4`endif) begin
-    if (tohost_hi == 32'h0) begin
-      payload = tohost_lo;
+    payload = tohost_lo;
+    if (tohost_hi == 32'h0 & payload[0]) begin
 
-      if (payload[0] && ~(|(payload >> 1))) begin
+      if (~(|(payload >> 1))) begin
         $display("INFO: Test Completed!");
       end else begin
         $display("ERROR: Test Failed (code=%d)", (payload >> 1));
